@@ -217,25 +217,8 @@ int xv_open_display(int reopen)
         XvAttribute *attr;
 	unsigned int height, width;
 
-        /* set the aspect_ratio, do this here since
-           this can change yarbsize */
+        /* set aspect_ratio, do this early since this can change yarbsize */
         mode_set_aspect_ratio((double)screen->width/screen->height);
-
-        width      = sysdep_display_params.max_width *
-          sysdep_display_params.widthscale;
-        height     = sysdep_display_params.max_height*
-          sysdep_display_params.heightscale;
-
-        switch(sysdep_display_params.effect)
-        {
-          case SYSDEP_DISPLAY_EFFECT_NONE:     /* Xv does normal scaling for us */
-            height = sysdep_display_params.max_height;
-            sysdep_display_params.heightscale = 1;
-            sysdep_display_params.yarbsize    = 0;
-          case SYSDEP_DISPLAY_EFFECT_FAKESCAN: /* Xv does width scaling for us */
-            width  = sysdep_display_params.max_width;
-            sysdep_display_params.widthscale  = 1;
-        }
 
 	if (!reopen)
 	{
@@ -249,66 +232,24 @@ int xv_open_display(int reopen)
 	  if (x11_create_resizable_window(&window_width, &window_height))
             return 1;
           
-          fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
+          fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use.\n");
           /* find a suitable format */
           switch(hwscale_force_yuv)
           {
             case 0: /* try normal RGB */
               if(FindRGBXvFormat())
                 break;
-              fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
+              fprintf(stderr,"Can't find a suitable RGB format - trying YUY2 instead... ");
             case 1: /* force YUY2 */
               if(FindXvPort(FOURCC_YUY2))
-              {
-                /* Xv does normal scaling for us */
-                if (hwscale_perfect_yuv)
-                {
-                  switch(sysdep_display_params.effect)
-                  {
-                    case SYSDEP_DISPLAY_EFFECT_NONE:     /* Xv does normal scaling for us */
-                    case SYSDEP_DISPLAY_EFFECT_FAKESCAN: /* Xv does width scaling for us */
-                      width  = 2 * sysdep_display_params.max_width;
-                      sysdep_display_params.widthscale = 2;
-                  }
-                }
                 break;
-              }
-              fprintf(stderr,"\nYUY2 not available - trying YV12... ");
+              fprintf(stderr,"YUY2 not available - trying YV12... ");
             case 2: /* forced YV12 */
-            case 3:
               if(FindXvPort(FOURCC_YV12))
-              {
-                /* YV12 always does normal scaling, no effects! */
-                if (sysdep_display_params.effect)
-                {
-                  fprintf(stderr, "\nWarning: YV12 doesn't do effects... ");
-                  sysdep_display_params.effect = 0;
-                }
-                /* setup the image size and scaling params for YV12:
-                   -align width and x-coordinates to 8, I don't know
-                    why, this is needed, but it is.
-                   -align height and y-coodinates to 2.
-                   Note these alignment demands are always met for
-                   perfect blit. */
-                if (hwscale_perfect_yuv)
-                {
-                  width  = 2*sysdep_display_params.max_width;
-                  height = 2*sysdep_display_params.max_height;
-                  sysdep_display_params.widthscale  = 2;
-                  sysdep_display_params.heightscale = 2;
-                }
-                else
-                {
-                  width  = (sysdep_display_params.max_width+7)&~7;
-                  height = (sysdep_display_params.max_height+1)&~1;
-                  sysdep_display_params.widthscale  = 1;
-                  sysdep_display_params.heightscale = 1;
-                }
                 break;
-              }
-              fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
-              fprintf(stderr,"\n  Either all ports are in use, or the video card");
-              fprintf(stderr,"\n  doesn't provide a suitable format.\n");
+              fprintf(stderr,"Error: Couldn't initialise Xv port - \n");
+              fprintf(stderr,"  Either all ports are in use, or the video card\n");
+              fprintf(stderr,"  doesn't provide a suitable format.\n");
               return 1;
           }
 
@@ -329,110 +270,201 @@ int xv_open_display(int reopen)
         }
         else
         {
-          xv_destroy_image();
-          fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use... ");
+          sysdep_display_effect_close();
+          x11_resize_resizable_window(&window_width, &window_height);
         }
-          
-        /* Create an XV MITSHM image. */
-        x11_mit_shm_error = 0;
-        XSetErrorHandler (x11_test_mit_shm);
-        xvimage = XvShmCreateImage (display,
-                xv_port,
-                sysdep_display_properties.palette_info.fourcc_format,
-                0,
-                width,
-                height,
-                &shm_info);
-        if (!xvimage)
-        {
-          fprintf(stderr, "\nError creating XvShmImage.\n");
+        
+        if (sysdep_display_effect_open())
           return 1;
-        }
-
-        /* sometimes xv gives us a smaller image then we want ! */
-        if ((xvimage->width  < width) ||
-            (xvimage->height < height))
-        {
-            fprintf (stderr, "\nError: XVimage is smaller then the requested size.\n");
-            return 1;
-        }
-
-        shm_info.readOnly = False;
-        shm_info.shmid = shmget (IPC_PRIVATE,
-                        xvimage->data_size,
-                        (IPC_CREAT | 0777));
-        if (shm_info.shmid < 0)
-        {
-                fprintf (stderr, "\nError: failed to create MITSHM block.\n");
-                return 1;
-        }
-
-        /* And allocate the bitmap buffer. */
-        xvimage->data = shm_info.shmaddr =
-                (char *) shmat (shm_info.shmid, 0, 0);
-        if (!xvimage->data)
-        {
-                fprintf (stderr, "\nError: failed to allocate MITSHM bitmap buffer.\n");
-                return 1;
-        }
-
-        /* Attach the MITSHM block. this will cause an exception if */
-        /* MIT-SHM is not available. so trap it and process         */
-        if (!XShmAttach (display, &shm_info))
-        {
-                fprintf (stderr, "\nError: failed to attach MITSHM block.\n");
-                return 1;
-        }
-        XSync (display, False);  /* be sure to get request processed */
-        /* sleep (2);          enought time to notify error if any */
-        /* Mark segment as deletable after we attach.  When all processes
-           detach from the segment (progam exits), it will be deleted.
-           This way it won't be left in memory if we crash or something.
-           Grr, have todo this after X attaches too since slowlaris doesn't
-           like it otherwise */
-        shmctl(shm_info.shmid, IPC_RMID, NULL);
-
-        if (x11_mit_shm_error)
-        {
-                fprintf (stderr, "\nError: failed to attach MITSHM block.\n");
-                return 1;
-        }
-
-        mit_shm_attached = 1;
-          
-        /* HACK, GRRR sometimes this all succeeds, but the first call to
-           XvShmPutImage to a mapped window fails with:
-           "BadAlloc (insufficient resources for operation)" */
+        
+        /* determine width and height for the image creation, these defaults
+           are used when the blitting is done by the effect code (all effects
+           except none and fakescan) */
+        width  = sysdep_display_params.max_width *
+          sysdep_display_params.widthscale;
+        height = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.max_height * sysdep_display_params.heightscale;
         switch(sysdep_display_properties.palette_info.fourcc_format)
         {
-          case FOURCC_YUY2:
-            ClearYUY2();
-            break;
           case FOURCC_YV12:
-            ClearYV12();
+            /* YV12 always does normal scaling, no effects!.
+               Setup the image size and scaling params for YV12:
+               -align width and x-coordinates to 8, I don't know
+                why, this is needed, but it is.
+               -align height and y-coodinates to 2.
+               Note these alignment demands are always met for
+               perfect blit. */
+            if (hwscale_perfect_yuv)
+            {
+              width  = 2*sysdep_display_params.max_width;
+              height = 2*sysdep_display_params.max_height;
+              sysdep_display_params.widthscale  = 2;
+              sysdep_display_params.heightscale = 2;
+              sysdep_display_params.yarbsize    = 0;
+            }
+            else
+            {
+              width  = (sysdep_display_params.max_width+7)&~7;
+              height = (sysdep_display_params.max_height+1)&~1;
+              sysdep_display_params.widthscale  = 1;
+              sysdep_display_params.heightscale = 1;
+              sysdep_display_params.yarbsize    = 0;
+            }
             break;
-          default:
-            sysdep_display_properties.palette_info.fourcc_format = 0;
-        }
-          
-        mode_clip_aspect(window_width, window_height, &width, &height);
-        XvShmPutImage (display, xv_port, window, gc, xvimage,
-          0, 0, xvimage->width, xvimage->height,
-          (window_width-width)/2, (window_height-height)/2, width, height,
-          True);
-          
-        XSync (display, False);  /* be sure to get request processed */
-        /* sleep (1);          enought time to notify error if any */
-        
-        if (x11_mit_shm_error)
-        {
-                fprintf(stderr, "XvShmPutImage failed, probably due to: \"BadAlloc (insufficient resources for operation)\"\n");
-                return 1;
+          case FOURCC_YUY2:
+            if (hwscale_perfect_yuv)
+            {
+              switch(sysdep_display_params.effect)
+              {
+                case SYSDEP_DISPLAY_EFFECT_NONE:
+                  /* Xv does scaling for us */
+                  height = 1 * sysdep_display_params.max_height;
+                  width  = 2 * sysdep_display_params.max_width;
+                  sysdep_display_params.widthscale  = 2;
+                  sysdep_display_params.heightscale = 1;
+                  sysdep_display_params.yarbsize    = 0;
+                  break;
+                case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+                  /* Xv does scaling for us */
+                  height = 2 * sysdep_display_params.max_height;
+                  width  = 2 * sysdep_display_params.max_width;
+                  sysdep_display_params.widthscale  = 2;
+                  sysdep_display_params.heightscale = 2;
+                  sysdep_display_params.yarbsize    = 0;
+              }
+              break;
+            }
+            /* fall through: non perfect blit case is identical to RGB */
+          default: /* RGB */
+            switch(sysdep_display_params.effect)
+            {
+              case SYSDEP_DISPLAY_EFFECT_NONE:
+                /* Xv does scaling for us */
+                height = sysdep_display_params.max_height;
+                width  = sysdep_display_params.max_width;
+                sysdep_display_params.widthscale  = 1;
+                sysdep_display_params.heightscale = 1;
+                sysdep_display_params.yarbsize    = 0;
+                break;
+              case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+                /* Xv does scaling for us */
+                height = 2 * sysdep_display_params.max_height;
+                width  = 1 * sysdep_display_params.max_width;
+                sysdep_display_params.widthscale  = 1;
+                sysdep_display_params.heightscale = 2;
+                sysdep_display_params.yarbsize    = 0;
+            }
         }
 
-        fprintf (stderr, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
-        XSetErrorHandler (None);  /* Restore error handler to default */
+        if (xvimage &&
+            ((width  > xvimage->width ) ||
+             (height > xvimage->height)))
+          xv_destroy_image();
 
+        if (!xvimage)
+        {          
+          /* Create an XV MITSHM image. */
+          x11_mit_shm_error = 0;
+          XSetErrorHandler (x11_test_mit_shm);
+          xvimage = XvShmCreateImage (display,
+                  xv_port,
+                  sysdep_display_properties.palette_info.fourcc_format,
+                  0,
+                  width,
+                  height,
+                  &shm_info);
+          if (!xvimage)
+          {
+            fprintf(stderr, "Error creating XvShmImage.\n");
+            return 1;
+          }
+
+          /* sometimes xv gives us a smaller image then we want ! */
+          if ((xvimage->width  < width) ||
+              (xvimage->height < height))
+          {
+              fprintf (stderr, "Error: XVimage is smaller then the requested size.\n");
+              return 1;
+          }
+
+          shm_info.readOnly = False;
+          shm_info.shmid = shmget (IPC_PRIVATE,
+                          xvimage->data_size,
+                          (IPC_CREAT | 0777));
+          if (shm_info.shmid < 0)
+          {
+                  fprintf (stderr, "Error: failed to create MITSHM block.\n");
+                  return 1;
+          }
+
+          /* And allocate the bitmap buffer. */
+          xvimage->data = shm_info.shmaddr =
+                  (char *) shmat (shm_info.shmid, 0, 0);
+          if (!xvimage->data)
+          {
+                  fprintf (stderr, "Error: failed to allocate MITSHM bitmap buffer.\n");
+                  return 1;
+          }
+
+          /* Attach the MITSHM block. this will cause an exception if */
+          /* MIT-SHM is not available. so trap it and process         */
+          if (!XShmAttach (display, &shm_info))
+          {
+                  fprintf (stderr, "Error: failed to attach MITSHM block.\n");
+                  return 1;
+          }
+          XSync (display, False);  /* be sure to get request processed */
+          /* sleep (2);          enought time to notify error if any */
+          /* Mark segment as deletable after we attach.  When all processes
+             detach from the segment (progam exits), it will be deleted.
+             This way it won't be left in memory if we crash or something.
+             Grr, have todo this after X attaches too since slowlaris doesn't
+             like it otherwise */
+          shmctl(shm_info.shmid, IPC_RMID, NULL);
+
+          if (x11_mit_shm_error)
+          {
+                  fprintf (stderr, "Error: failed to attach MITSHM block.\n");
+                  return 1;
+          }
+
+          mit_shm_attached = 1;
+            
+          /* HACK, GRRR sometimes this all succeeds, but the first call to
+             XvShmPutImage to a mapped window fails with:
+             "BadAlloc (insufficient resources for operation)" */
+          switch(sysdep_display_properties.palette_info.fourcc_format)
+          {
+            case FOURCC_YUY2:
+              ClearYUY2();
+              break;
+            case FOURCC_YV12:
+              ClearYV12();
+              break;
+            default:
+              sysdep_display_properties.palette_info.fourcc_format = 0;
+          }
+            
+          mode_clip_aspect(window_width, window_height, &width, &height);
+          XvShmPutImage (display, xv_port, window, gc, xvimage,
+            0, 0, xvimage->width, xvimage->height,
+            (window_width-width)/2, (window_height-height)/2, width, height,
+            True);
+            
+          XSync (display, False);  /* be sure to get request processed */
+          /* sleep (1);          enought time to notify error if any */
+          
+          if (x11_mit_shm_error)
+          {
+                  fprintf(stderr, "XvShmPutImage failed, probably due to: \"BadAlloc (insufficient resources for operation)\"\n");
+                  return 1;
+          }
+
+          fprintf (stderr, "Using Xv & Shared Memory Features to speed up\n");
+          XSetErrorHandler (None);  /* Restore error handler to default */
+        }
+ 
 	/* get a blit function */
         if(sysdep_display_properties.palette_info.fourcc_format == FOURCC_YV12)
         {
@@ -492,6 +524,9 @@ void xv_close_display (void)
    /* Restore error handler to default */
    XSetErrorHandler (None);
 
+   /* close effects */
+   sysdep_display_effect_close();
+   
    /* ungrab keyb and mouse */
    xinput_close();
 
@@ -507,7 +542,6 @@ void xv_close_display (void)
       XvUngrabPort(display,xv_port,CurrentTime);
       xv_port=-1;
    }
-   
    xv_destroy_image();
    
    XSync (display, True); /* send all events to sync; discard events */
@@ -540,12 +574,6 @@ static void xv_destroy_image(void)
       free (hwscale_yv12_rotate_buf1);
       hwscale_yv12_rotate_buf1 = NULL;
    }
-}
-
-int xv_resize_display(void)
-{
-  /* no op */
-  return 0;
 }
 
 /* invoked by main tree code to update bitmap into screen */

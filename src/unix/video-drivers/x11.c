@@ -59,7 +59,6 @@ struct x_func_struct {
 	int  (*init)(void);
 	int  (*open_display)(int reopen);
 	void (*close_display)(void);
-	int  (*resize_display)(void);
 	void (*update_display)(struct mame_bitmap *bitmap,
 	  struct rectangle *src_bounds,  struct rectangle *dest_bounds,
 	  struct sysdep_palette_struct *palette, unsigned int flags,
@@ -76,19 +75,16 @@ typedef struct {
 	long input_mode;
 } MotifWmHints;
 
-
 static struct x_func_struct x_func[] = {
 { x11_window_init,
   x11_window_open_display,
   x11_window_close_display,
-  x11_window_resize_display,
   x11_window_update_display,
   NULL },
 #ifdef USE_XV
 { xv_init,
   xv_open_display,
   xv_close_display,
-  xv_resize_display,
   xv_update_display,
   NULL },
 #else
@@ -98,7 +94,6 @@ static struct x_func_struct x_func[] = {
 { xgl_init,
   xgl_open_display,
   xgl_close_display,
-  xgl_resize_display,
   xgl_update_display,
   NULL },
 #else
@@ -108,7 +103,6 @@ static struct x_func_struct x_func[] = {
 { xfx_init,
   xfx_open_display,
   xfx_close_display,
-  xfx_resize_display,
   xfx_update_display,
   xfx_exit },
 #else
@@ -118,7 +112,6 @@ static struct x_func_struct x_func[] = {
 { xil_init,
   xil_open_display,
   xil_close_display,
-  xil_resize_display,
   xil_update_display,
   NULL },
 #else
@@ -128,7 +121,6 @@ static struct x_func_struct x_func[] = {
 { xf86_dga_init,
   xf86_dga_open_display,
   xf86_dga_close_display,
-  xf86_dga_resize_display,
   xf86_dga_update_display,
   NULL }
 #else
@@ -258,7 +250,7 @@ int sysdep_display_driver_open(int reopen)
 	return x_func[mode].open_display(reopen);
 }
 
-void sysdep_display_driver_close(void)
+void sysdep_display_close(void)
 {
   int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
     sysdep_display_params.fullscreen)? X11_DGA:
@@ -266,15 +258,6 @@ void sysdep_display_driver_close(void)
   
   if (display)
     (*x_func[mode].close_display)();
-}
-
-int sysdep_display_driver_resize(void)
-{
-  int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
-    sysdep_display_params.fullscreen)? X11_DGA:
-    sysdep_display_params.video_mode;
-  
-  return x_func[mode].resize_display();
 }
 
 void sysdep_display_update(struct mame_bitmap *bitmap,
@@ -356,6 +339,37 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height)
         }
         
         return x11_create_window(width, height, 1);
+}
+
+void x11_resize_resizable_window(unsigned int *width, unsigned int *height)
+{
+	if (run_in_root_window || sysdep_display_params.fullscreen)
+                return;
+
+        /* determine window size */
+        if (custom_window_width)
+        {
+          mode_clip_aspect(custom_window_width, custom_window_height,
+            width, height);
+        }
+        else
+        {
+          *width  = sysdep_display_params.max_width *
+            sysdep_display_params.widthscale;
+          *height = sysdep_display_params.yarbsize?
+            sysdep_display_params.yarbsize:
+            sysdep_display_params.max_height *
+              sysdep_display_params.heightscale;
+          mode_stretch_aspect(window_width, window_height,
+            width, height);
+        }
+
+        /* set window hints to resizable */
+        x11_set_window_hints(window_width, window_height, 2);
+        /* resize */
+        XResizeWindow(display, window, window_width, window_height);
+        /* set window hints to keep aspect resizable */
+        x11_set_window_hints(window_width, window_height, 1);
 }
 
 /* Create a window, type can be:

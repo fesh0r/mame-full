@@ -70,6 +70,7 @@ static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
 static int signals_caught = 0;
 static GrScreenResolution_t Gr_resolution;
 
+static void FreeTextures(void);
 static void UpdateTexture(struct mame_bitmap *bitmap,
 	  struct rectangle *dirty_area,  struct rectangle *vis_area,
 	  struct sysdep_palette_struct *palette);
@@ -172,17 +173,213 @@ void VScreenRestoreSignals(void)
   signals_caught = 0;
 }
 
-int xfx_resize_display(void)
+typedef struct {
+    int         res;
+    int       width;
+    int       height;
+} ResToRes;
+		
+static ResToRes resTable[] = {
+    { GR_RESOLUTION_320x200,   320,  200 },  /* 0x0 */
+    { GR_RESOLUTION_320x240,   320,  240 },  /* 0x1 */
+    { GR_RESOLUTION_400x256,   400,  256 },  /* 0x2 */
+    { GR_RESOLUTION_512x384,   512,  384 },  /* 0x3 */
+    { GR_RESOLUTION_640x200,   640,  200 },  /* 0x4 */
+    { GR_RESOLUTION_640x350,   640,  350 },  /* 0x5 */
+    { GR_RESOLUTION_640x400,   640,  400 },  /* 0x6 */
+    { GR_RESOLUTION_640x480,   640,  480 },  /* 0x7 */
+    { GR_RESOLUTION_800x600,   800,  600 },  /* 0x8 */
+    { GR_RESOLUTION_960x720,   960,  720 },  /* 0x9 */
+    { GR_RESOLUTION_856x480,   856,  480 },  /* 0xA */
+    { GR_RESOLUTION_512x256,   512,  256 },  /* 0xB */
+    { GR_RESOLUTION_1024x768,  1024, 768 },  /* 0xC */
+    { GR_RESOLUTION_1280x1024, 1280, 1024 }, /* 0xD */
+    { GR_RESOLUTION_1600x1200, 1600, 1200 }, /* 0xE */
+    { GR_RESOLUTION_400x300,   400,  300 }   /* 0xF */
+};
+			
+static long resTableSize = sizeof( resTable ) / sizeof( ResToRes );
+
+static int fxgen_set_resolution(struct rc_option *option, const char *arg,
+   int priority)
+{
+  int i;
+
+  if (sscanf(arg, "%ux%u", &fxwidth, &fxheight) != 2)
+    return 1;
+  
+  for( i = 0; i < resTableSize; i++ )
+  {
+    if(fxwidth==resTable[i].width && fxheight==resTable[i].height)
+    {
+      Gr_resolution = resTable[i].res;
+      break;
+    }
+  }
+  if(i == resTableSize)
+  {
+    fprintf(stderr,
+        "error: unknown resolution: \"%dx%d\".\n"
+        "   Valid resolutions are:\n", fxwidth, fxheight);
+    for( i = 0; i < resTableSize; i++ )
+    {
+       fprintf(stderr, "   \"%dx%d\"", resTable[i].width,
+          resTable[i].height);
+       if (i && (i % 5) == 0)
+          fprintf(stderr, "\n");
+    }
+    return 1;
+  } 
+
+  option->priority = priority;
+
+  return 0;
+}
+
+/* Set up the virtual screen */
+int InitVScreen(int reopen)
 {
   int i,j,x=0,y=0;
   struct TexSquare *tsq;
+  long texmem,memaddr;
   float firsttexdestwidthfac=0.0, firsttexdestheightfac=0.0;
   float texpercx, texpercy;
   /* the original (unoriented) width & height */
   int orig_width; 
   int orig_height;
+  static int firsttime = 1;
+
+  if (firsttime)
+  {
+    grGlideGetVersion(version);
+    fprintf(stderr, "info: using Glide version %s\n", version);
+    firsttime = 0;
+  }
   
-  printf("orient: %x\n", sysdep_display_params.orientation);
+  if(!reopen)
+  {
+    mode_set_aspect_ratio((double)fxwidth/fxheight);
+    
+    grSstSelect(0);
+    if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
+       GR_ORIGIN_LOWER_LEFT,2,1)))
+    {
+       fprintf(stderr, "error opening Glide window, do you have enough memory on your 3dfx for the selected mode?\n");
+       return 1;
+    }
+    fprintf(stderr,
+       "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
+  }
+  else
+    FreeTextures();
+
+  /* clear the buffer */
+  grBufferClear(0,0,0);
+  
+  /* calculate the vscreen boundaries */
+  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
+  vscrntlx=(fxwidth -vscrnwidth )/2;
+  vscrntly=(fxheight-vscrnheight)/2;
+
+  vecvscrnwidth  = vscrnwidth;
+  vecvscrnheight = vscrnheight;
+  vecvscrntlx    = vscrntlx;
+  vecvscrntly    = vscrntly;
+  
+  /* fill the sysdep_display_properties struct */
+  sysdep_display_properties.palette_info.fourcc_format = 0;
+  switch(sysdep_display_params.depth) {
+    case 15:
+    case 16:
+      sysdep_display_properties.palette_info.red_mask   = 0x7C00;
+      sysdep_display_properties.palette_info.green_mask = 0x03E0;
+      sysdep_display_properties.palette_info.blue_mask  = 0x001F;
+      sysdep_display_properties.palette_info.depth      = 15;
+      sysdep_display_properties.palette_info.bpp        = 16;
+      break;
+    case 32:
+      sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
+      sysdep_display_properties.palette_info.green_mask = 0x00FF00;
+      sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
+      sysdep_display_properties.palette_info.depth      = 24;
+      sysdep_display_properties.palette_info.bpp        = 32;
+      break;
+  }
+  sysdep_display_properties.vector_renderer = fxvec_renderer;
+  
+  /* force an update of the bitmap for the first frame */
+  bitmap_dirty = 1;
+
+  /* init the textures */   
+  texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
+  texinfo.aspectRatio=GR_ASPECT_1x1;
+  texinfo.format=GR_TEXFMT_ARGB_1555;
+
+  texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
+
+  if(sysdep_display_params.vec_src_bounds)
+  {
+    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
+                                       GR_COMBINE_FACTOR_LOCAL,
+                                       GR_COMBINE_LOCAL_CONSTANT,
+                                       GR_COMBINE_OTHER_NONE,
+                                       FXFALSE);
+
+    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
+						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
+  }                                          
+	
+  if (!reopen)
+  {
+    grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
+                                     GR_COMBINE_FACTOR_ONE,
+                                     GR_COMBINE_LOCAL_NONE,
+                                     GR_COMBINE_OTHER_TEXTURE,
+                                     FXFALSE);
+
+    grTexCombine(GR_TMU0,
+                             GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
+                             GR_COMBINE_FUNCTION_NONE,GR_COMBINE_FACTOR_NONE,
+                             FXFALSE, FXFALSE);
+
+    grTexMipMapMode(GR_TMU0,
+                                    GR_MIPMAP_DISABLE,
+                                    FXFALSE);
+
+    grTexClampMode(GR_TMU0,
+                                   GR_TEXTURECLAMP_CLAMP,
+                                   GR_TEXTURECLAMP_CLAMP);
+
+    if(bilinear)
+          grTexFilterMode(GR_TMU0,
+                                          GR_TEXTUREFILTER_BILINEAR,
+                                          GR_TEXTUREFILTER_BILINEAR);
+    else
+          grTexFilterMode(GR_TMU0,
+                                          GR_TEXTUREFILTER_POINT_SAMPLED,
+                                          GR_TEXTUREFILTER_POINT_SAMPLED);
+  }
+
+  /* Allocate the texture memory */
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+  {
+    texnumx = (sysdep_display_params.max_height + texsize - 1) / texsize;
+    texnumy = (sysdep_display_params.max_width  + texsize - 1) / texsize;
+  }
+  else
+  {
+    texnumx = (sysdep_display_params.max_width  + texsize - 1) / texsize;
+    texnumy = (sysdep_display_params.max_height + texsize - 1) / texsize;
+  }
+  
+  texgrid=calloc(texnumx*texnumy, sizeof(struct TexSquare));
+  texdata=calloc(texnumx*texnumy*texsize*texsize, sizeof(unsigned short));
+  if (!texgrid || !texdata)
+  {
+    fprintf(stderr, "Error allocating texture memory\n");
+    return 1;
+  }
+  memaddr=grTexMinAddress(GR_TMU0);
   
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
@@ -210,6 +407,14 @@ int xfx_resize_display(void)
   for(i=0;i<texnumy;i++) {
 	for(j=0;j<texnumx;j++) {
 	  tsq=texgrid+i*texnumx+j;
+
+	  tsq->texadd=memaddr;
+	  memaddr+=texmem;
+
+	  tsq->vtxA.oow=1.0;
+	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
+
+	  tsq->texture = texdata + (i*texnumx + j) * texsize*texsize;
 
 	  if(j==(texnumx-1) && orig_width%texsize)
 		tsq->xcov=(float)(orig_width%texsize)/(float)texsize;
@@ -354,221 +559,11 @@ int xfx_resize_display(void)
     /* fprintf(stderr, "vec: %dx%d, %dx%d\n", vecvscrntlx, vecvscrntly,
       vecvscrnwidth, vecvscrnheight); */
   }
-
-  return 0;
-}
-
-typedef struct {
-    int         res;
-    int       width;
-    int       height;
-} ResToRes;
-		
-static ResToRes resTable[] = {
-    { GR_RESOLUTION_320x200,   320,  200 },  /* 0x0 */
-    { GR_RESOLUTION_320x240,   320,  240 },  /* 0x1 */
-    { GR_RESOLUTION_400x256,   400,  256 },  /* 0x2 */
-    { GR_RESOLUTION_512x384,   512,  384 },  /* 0x3 */
-    { GR_RESOLUTION_640x200,   640,  200 },  /* 0x4 */
-    { GR_RESOLUTION_640x350,   640,  350 },  /* 0x5 */
-    { GR_RESOLUTION_640x400,   640,  400 },  /* 0x6 */
-    { GR_RESOLUTION_640x480,   640,  480 },  /* 0x7 */
-    { GR_RESOLUTION_800x600,   800,  600 },  /* 0x8 */
-    { GR_RESOLUTION_960x720,   960,  720 },  /* 0x9 */
-    { GR_RESOLUTION_856x480,   856,  480 },  /* 0xA */
-    { GR_RESOLUTION_512x256,   512,  256 },  /* 0xB */
-    { GR_RESOLUTION_1024x768,  1024, 768 },  /* 0xC */
-    { GR_RESOLUTION_1280x1024, 1280, 1024 }, /* 0xD */
-    { GR_RESOLUTION_1600x1200, 1600, 1200 }, /* 0xE */
-    { GR_RESOLUTION_400x300,   400,  300 }   /* 0xF */
-};
-			
-static long resTableSize = sizeof( resTable ) / sizeof( ResToRes );
-
-static int fxgen_set_resolution(struct rc_option *option, const char *arg,
-   int priority)
-{
-  int i;
-
-  if (sscanf(arg, "%ux%u", &fxwidth, &fxheight) != 2)
-    return 1;
-  
-  for( i = 0; i < resTableSize; i++ )
-  {
-    if(fxwidth==resTable[i].width && fxheight==resTable[i].height)
-    {
-      Gr_resolution = resTable[i].res;
-      break;
-    }
-  }
-  if(i == resTableSize)
-  {
-    fprintf(stderr,
-        "error: unknown resolution: \"%dx%d\".\n"
-        "   Valid resolutions are:\n", fxwidth, fxheight);
-    for( i = 0; i < resTableSize; i++ )
-    {
-       fprintf(stderr, "   \"%dx%d\"", resTable[i].width,
-          resTable[i].height);
-       if (i && (i % 5) == 0)
-          fprintf(stderr, "\n");
-    }
-    return 1;
-  } 
-
-  option->priority = priority;
-
-  return 0;
-}
-
-/* Set up the virtual screen */
-int InitVScreen(void)
-{
-  int i,j;
-  struct TexSquare *tsq;
-  long texmem,memaddr;
-
-  grGlideGetVersion(version);
-  fprintf(stderr, "info: using Glide version %s\n", version);
-
-  mode_set_aspect_ratio((double)fxwidth/fxheight);
-  
-  grSstSelect(0);
-  if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
-     GR_ORIGIN_LOWER_LEFT,2,1)))
-  {
-     fprintf(stderr, "error opening Glide window, do you have enough memory on your 3dfx for the selected mode?\n");
-     return 1;
-  }
-  fprintf(stderr,
-     "info: screen resolution set to %dx%d\n", fxwidth, fxheight);
-
-  /* clear the buffer */
-  grBufferClear(0,0,0);
-  
-  /* calculate the vscreen boundaries */
-  mode_clip_aspect(fxwidth, fxheight, &vscrnwidth, &vscrnheight);
-  vscrntlx=(fxwidth -vscrnwidth )/2;
-  vscrntly=(fxheight-vscrnheight)/2;
-
-  vecvscrnwidth  = vscrnwidth;
-  vecvscrnheight = vscrnheight;
-  vecvscrntlx    = vscrntlx;
-  vecvscrntly    = vscrntly;
-  
-  /* fill the sysdep_display_properties struct */
-  sysdep_display_properties.palette_info.fourcc_format = 0;
-  switch(sysdep_display_params.depth) {
-    case 15:
-    case 16:
-      sysdep_display_properties.palette_info.red_mask   = 0x7C00;
-      sysdep_display_properties.palette_info.green_mask = 0x03E0;
-      sysdep_display_properties.palette_info.blue_mask  = 0x001F;
-      sysdep_display_properties.palette_info.depth      = 15;
-      sysdep_display_properties.palette_info.bpp        = 16;
-      break;
-    case 32:
-      sysdep_display_properties.palette_info.red_mask   = 0xFF0000;
-      sysdep_display_properties.palette_info.green_mask = 0x00FF00;
-      sysdep_display_properties.palette_info.blue_mask  = 0x0000FF;
-      sysdep_display_properties.palette_info.depth      = 24;
-      sysdep_display_properties.palette_info.bpp        = 32;
-      break;
-  }
-  sysdep_display_properties.vector_renderer = fxvec_renderer;
-  
-  /* force an update of the bitmap for the first frame */
-  bitmap_dirty = 1;
-
-  /* init the textures */   
-  texinfo.smallLod=texinfo.largeLod=GR_LOD_256;
-  texinfo.aspectRatio=GR_ASPECT_1x1;
-  texinfo.format=GR_TEXFMT_ARGB_1555;
-
-  texmem=grTexTextureMemRequired(GR_MIPMAPLEVELMASK_BOTH,&texinfo);
-
-  if(sysdep_display_params.vec_src_bounds)
-  {
-    grAlphaCombine(GR_COMBINE_FUNCTION_LOCAL,
-                                       GR_COMBINE_FACTOR_LOCAL,
-                                       GR_COMBINE_LOCAL_CONSTANT,
-                                       GR_COMBINE_OTHER_NONE,
-                                       FXFALSE);
-
-    grAlphaBlendFunction(GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE,
-						 GR_BLEND_ALPHA_SATURATE,GR_BLEND_ONE);
-  }                                          
-	
-  grColorCombine(GR_COMBINE_FUNCTION_SCALE_OTHER,
-				   GR_COMBINE_FACTOR_ONE,
-				   GR_COMBINE_LOCAL_NONE,
-				   GR_COMBINE_OTHER_TEXTURE,
-				   FXFALSE);
-
-  grTexCombine(GR_TMU0,
-			   GR_COMBINE_FUNCTION_LOCAL,GR_COMBINE_FACTOR_NONE,
-			   GR_COMBINE_FUNCTION_NONE,GR_COMBINE_FACTOR_NONE,
-			   FXFALSE, FXFALSE);
-
-  grTexMipMapMode(GR_TMU0,
-				  GR_MIPMAP_DISABLE,
-				  FXFALSE);
-
-  grTexClampMode(GR_TMU0,
-				 GR_TEXTURECLAMP_CLAMP,
-				 GR_TEXTURECLAMP_CLAMP);
-
-  if(bilinear)
-	grTexFilterMode(GR_TMU0,
-					GR_TEXTUREFILTER_BILINEAR,
-					GR_TEXTUREFILTER_BILINEAR);
-  else
-	grTexFilterMode(GR_TMU0,
-					GR_TEXTUREFILTER_POINT_SAMPLED,
-					GR_TEXTUREFILTER_POINT_SAMPLED);
-
-  /* Allocate the texture memory */
-  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-  {
-    texnumx = (sysdep_display_params.max_height + texsize - 1) / texsize;
-    texnumy = (sysdep_display_params.max_width  + texsize - 1) / texsize;
-  }
-  else
-  {
-    texnumx = (sysdep_display_params.max_width  + texsize - 1) / texsize;
-    texnumy = (sysdep_display_params.max_height + texsize - 1) / texsize;
-  }
-  
-  texgrid=calloc(texnumx*texnumy, sizeof(struct TexSquare));
-  texdata=calloc(texnumx*texnumy*texsize*texsize, sizeof(unsigned short));
-  if (!texgrid || !texdata)
-  {
-    fprintf(stderr, "Error allocating texture memory\n");
-    return 1;
-  }
-  memaddr=grTexMinAddress(GR_TMU0);
-  
-  for(i=0;i<texnumy;i++) {
-	for(j=0;j<texnumx;j++) {
-	  tsq=texgrid+i*texnumx+j;
-
-	  tsq->texadd=memaddr;
-	  memaddr+=texmem;
-
-	  tsq->vtxA.oow=1.0;
-	  tsq->vtxB=tsq->vtxC=tsq->vtxD=tsq->vtxA;
-
-	  tsq->texture = texdata + (i*texnumx + j) * texsize*texsize;
-        }
-  }
-  
-  xfx_resize_display();
   
   return 0;
 }
 
-/* Close down the virtual screen */
-void CloseVScreen(void)
+static void FreeTextures(void)
 {
   /* Free Texture stuff */
   if(texgrid)
@@ -581,7 +576,12 @@ void CloseVScreen(void)
 	free(texdata);
 	texdata = NULL;
   }
+}
 
+/* Close down the virtual screen */
+void CloseVScreen(void)
+{
+  FreeTextures();
   if (context)
   {
     grSstCloseWin(context);

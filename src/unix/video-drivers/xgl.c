@@ -40,9 +40,9 @@ static GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
   1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, -1 };
 static XSetWindowAttributes window_attr;
 static GLXContext glContext=NULL;
-static int window_type;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+static int window_type;
 
 struct rc_option xgl_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -100,81 +100,69 @@ int xgl_init(void)
    mouse and keyboard can't be setup before the display has. */
 int xgl_open_display(int reopen)
 {
+  int force_grab;
+  unsigned long winmask;
+  char *glxfx;
+
+  /* Determine window size, type, etc. If using 3Dfx */
+  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
+  {
+    winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+    if(custom_window_width)
+    {
+      window_width  = custom_window_width;
+      window_height = custom_window_height;
+    }
+    else
+    {
+      window_width  = 640;
+      window_height = 480;
+    }
+    window_type = 0; /* non resizable */
+    force_grab  = 2; /* grab mouse and keyb */
+  }
+  else if(sysdep_display_params.fullscreen)
+  {
+    winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
+                    CWColormap | CWDontPropagate | CWCursor;
+    window_width  = screen->width;
+    window_height = screen->height;
+    window_type   = 3; /* fullscreen */
+    force_grab    = 1; /* grab mouse */
+  }
+  else
+  {
+    winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+    if(custom_window_width)
+      mode_clip_aspect(custom_window_width, custom_window_height,
+        &window_width, &window_height);
+    else
+    {
+      window_width     = sysdep_display_params.max_width * 
+        sysdep_display_params.widthscale;
+      window_height    = sysdep_display_params.yarbsize?
+        sysdep_display_params.yarbsize:
+        sysdep_display_params.max_height * sysdep_display_params.heightscale;
+      mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
+    }
+    if (cabview)
+      window_type = 2; /* resizable */
+    else
+      window_type = 1; /* resizable, keep aspect */
+    force_grab    = 0; /* no grab */
+  }
+
   if(!reopen)
   {
     XEvent event;
-    unsigned long winmask;
-    char *glxfx;
     VisualGC vgc;
     int ownwin = 1;
-    int force_grab;
     XVisualInfo *myvisual;
     
     mode_set_aspect_ratio((double)screen->width/screen->height);
 
     fprintf(stderr, xgl_version_str);
     
-    /* Determine window size, type, etc. If using 3Dfx */
-    if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
-    {
-      winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-      if(custom_window_width)
-      {
-        window_width  = custom_window_width;
-        window_height = custom_window_height;
-      }
-      else
-      {
-        window_width  = 640;
-        window_height = 480;
-      }
-      window_type = 0; /* non resizable */
-      force_grab  = 2; /* grab mouse and keyb */
-    }
-    else if(sysdep_display_params.fullscreen)
-    {
-      winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
-                      CWColormap | CWDontPropagate | CWCursor;
-      window_width  = screen->width;
-      window_height = screen->height;
-      window_type   = 3; /* fullscreen */
-      force_grab    = 1; /* grab mouse */
-    }
-    else
-    {
-      winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-      if(cabview)
-      {
-        if(custom_window_width)
-        {
-          window_width  = custom_window_width;
-          window_height = custom_window_height;
-        }
-        else
-        {
-          window_width  = 640;
-          window_height = 480;
-        }
-        window_type = 2; /* resizable window */
-      }
-      else
-      {
-        if(custom_window_width)
-          mode_clip_aspect(custom_window_width, custom_window_height,
-            &window_width, &window_height);
-        else
-        {
-          window_width     = sysdep_display_params.max_width * 
-            sysdep_display_params.widthscale;
-          window_height    = sysdep_display_params.yarbsize?
-            sysdep_display_params.yarbsize:
-            sysdep_display_params.max_height * sysdep_display_params.heightscale;
-          mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
-        }
-        window_type = 1; /* resizable, keep aspect */
-      }
-      force_grab    = 0; /* no grab */
-    }
 
     window_attr.background_pixel=0;
     window_attr.border_pixel=WhitePixelOfScreen(screen);
@@ -237,10 +225,18 @@ int xgl_open_display(int reopen)
   }
   else
   {
-    gl_close_display();
+    if((window_type == 1) || (window_type == 2))
+    {
+      /* set window hints to resizable, no aspect */
+      x11_set_window_hints(window_width, window_height, 2);
+      /* resize */
+      XResizeWindow(display, window, window_width, window_height);
+      /* set window hints back */
+      x11_set_window_hints(window_width, window_height, window_type);
+    }
   }
 
-  return gl_open_display();
+  return gl_open_display(reopen);
 }
 
 /*
@@ -273,13 +269,6 @@ void xgl_close_display (void)
 #endif
 }
 
-int xgl_resize_display(void)
-{
-  /* force a reinit of the textures */
-  gl_texture_init = 0;
-  return 0;
-}
-
 void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -297,6 +286,23 @@ void xgl_update_display(struct mame_bitmap *bitmap,
     gl_set_windowsize();
   }
 
+  if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1)
+  {
+    gl_set_cabview (1-cabview);
+    if(cabview)
+    {
+      *status_msg = "cabinet view on";
+      if((window_type == 1) || (window_type == 2))
+        x11_set_window_hints(window_width, window_height, 2); /* resizable */
+    }
+    else
+    {
+      *status_msg = "cabinet view off";
+      if((window_type == 1) || (window_type == 2))
+        x11_set_window_hints(window_width, window_height, 1); /* keep aspect */
+    }
+  }
+  
   gl_update_display(bitmap, vis_area, dirty_area, palette, flags, status_msg);
 
   if (glCaps.buffer)

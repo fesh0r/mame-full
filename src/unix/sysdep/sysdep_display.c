@@ -73,17 +73,6 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
     return 1;
   }
   
-  /* lett the effect code do its magic */
-  sysdep_display_check_effect_params(&sysdep_display_params);
-  
-  if (!params->effect && (sysdep_display_properties.mode[params->video_mode] &
-        SYSDEP_DISPLAY_HWSCALE))
-  {
-    params->widthscale  = 1;
-    params->heightscale = 1;
-    params->yarbsize    = 0;
-  }
-  
   if (!(sysdep_display_properties.mode[params->video_mode] &
         SYSDEP_DISPLAY_WINDOWED))
     params->fullscreen = 1;
@@ -91,6 +80,9 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
   if (!(sysdep_display_properties.mode[params->video_mode] &
         SYSDEP_DISPLAY_FULLSCREEN))
     params->fullscreen = 0;
+  
+  /* lett the effect code do its magic */
+  sysdep_display_check_effect_params(&sysdep_display_params);
   
   return 0;
 }  
@@ -135,29 +127,11 @@ int sysdep_display_open (struct sysdep_display_open_params *params)
   if (sysdep_display_driver_open(0))
     return 1;
 
-  if ((sysdep_display_properties.mode[params->video_mode] &
-       SYSDEP_DISPLAY_EFFECTS) && sysdep_display_effect_open())
-    return 1;
-    
-  /* update current params with and report back, any changes to scaling
-     and effects made by the display driver or effect code. */
-  current_params.widthscale  = params->widthscale  =
-    sysdep_display_params.widthscale;
-  current_params.heightscale = params->heightscale =
-    sysdep_display_params.heightscale;
-  current_params.yarbsize = params->yarbsize = sysdep_display_params.yarbsize;
-  current_params.effect   = params->effect   = sysdep_display_params.effect;
+  /* update current params with and report back changes to effect made by the
+     effect code, which is called from the display driver code */
+  current_params.effect = params->effect = sysdep_display_params.effect;
   
   return 0;
-}
-
-void sysdep_display_close(void)
-{
-  if (sysdep_display_properties.mode[sysdep_display_params.video_mode] &
-      SYSDEP_DISPLAY_EFFECTS)
-    sysdep_display_effect_close();
-
-  sysdep_display_driver_close();
 }
 
 int sysdep_display_change_params(
@@ -183,31 +157,15 @@ int sysdep_display_change_params(
     return 0;
   }
 
-  /* if any of these change we have to recreate the display */
-  if ((new_params->depth        != current_params.depth)        ||
-      ((new_params->orientation & SYSDEP_DISPLAY_SWAPXY) !=
-       (current_params.orientation & SYSDEP_DISPLAY_SWAPXY))    ||
-      (new_params->max_width    != current_params.max_width)    ||
-      (new_params->max_height   != current_params.max_height)   ||
-      (new_params->title        != current_params.title)        ||
-      (new_params->video_mode   != current_params.video_mode)   ||
-      (new_params->widthscale   != current_params.widthscale)   ||
-      (new_params->yarbsize     != current_params.yarbsize)     ||
-      (!new_params->yarbsize &&
-       (new_params->heightscale != current_params.heightscale)) ||
-      (new_params->fullscreen   != current_params.fullscreen)   ||
-      (new_params->aspect_ratio != current_params.aspect_ratio) )
+  if (memcmp(new_params, &current_params, sizeof(current_params)))
   {
     int reopen = 1;
     
-    /* close effect, apply the new params */
-    sysdep_display_effect_close();
-
     /* do we need todo a full open and close, or just a reopen? */
-    if ((new_params->video_mode != orig_params.video_mode) ||
-        (new_params->fullscreen != orig_params.fullscreen))
+    if ((new_params->video_mode != current_params.video_mode) ||
+        (new_params->fullscreen != current_params.fullscreen))
     {
-      sysdep_display_driver_close();
+      sysdep_display_close();
       force_keyboard_dirty = 1;
       reopen = 0;
     }
@@ -216,7 +174,7 @@ int sysdep_display_change_params(
     sysdep_display_set_params(new_params);
     if (sysdep_display_driver_open(reopen))
     {
-      sysdep_display_driver_close();
+      sysdep_display_close();
       force_keyboard_dirty = 1;
 
       if (force)
@@ -226,60 +184,22 @@ int sysdep_display_change_params(
       sysdep_display_set_params(&orig_params);
       if (sysdep_display_driver_open(0))
       {
-        sysdep_display_driver_close();
+        sysdep_display_close();
         goto sysdep_display_change_params_error;
       }
       /* report back we're using the orig params */
       *new_params = orig_params;
     }
+    /* update current params with and report back changes to effect made by
+       the effect code, which is called from the display driver code */
+    current_params.effect = new_params->effect = sysdep_display_params.effect;
 
-    /* open effects again if nescesarry */
-    if ((sysdep_display_properties.mode[current_params.video_mode] &
-        SYSDEP_DISPLAY_EFFECTS) && sysdep_display_effect_open())
-      goto sysdep_display_change_params_error;
-  }
-  else
-  {
-    /* apply the new params */
-    sysdep_display_set_params(new_params);
-    
-    /* Do we need to reinit the effect code? No need to check if the
-       video_mode can handle effects because if can't effect always is 0. */
-    if (new_params->effect != orig_params.effect)
-    {
-      sysdep_display_effect_close();
-      if (sysdep_display_effect_open())
-        goto sysdep_display_change_params_error;
-    }
-    
-    /* do we need to resize? */
-    if ((new_params->width           != orig_params.width)  ||
-        (new_params->height          != orig_params.height) ||
-        (new_params->vec_src_bounds  != orig_params.vec_src_bounds) ||
-        (new_params->vec_dest_bounds != orig_params.vec_dest_bounds))
-    {
-      if (sysdep_display_driver_resize())
-        goto sysdep_display_change_params_error;
-    }
+    if(memcmp(&sysdep_display_properties, &orig_properties,
+        sizeof(struct sysdep_display_properties_struct)))
+      return 1;
   }
 
-  /* update current params with and report back, any changes to scaling
-     and effects made by the display driver or effect code. */
-  current_params.widthscale  = new_params->widthscale  =
-    sysdep_display_params.widthscale;
-  current_params.heightscale = new_params->heightscale =
-    sysdep_display_params.heightscale;
-  current_params.yarbsize    = new_params->yarbsize    = 
-    sysdep_display_params.yarbsize;
-  current_params.effect      = new_params->effect      = 
-    sysdep_display_params.effect;
-  
-  /* other changes are handled 100% on the fly */
-  if(memcmp(&sysdep_display_properties, &orig_properties,
-      sizeof(struct sysdep_display_properties_struct)))
-    return 1;
-  else
-    return 0;
+  return 0;
   
 sysdep_display_change_params_error:
   /* oops this sorta sucks, FIXME don't use exit! */

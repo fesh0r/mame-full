@@ -1113,7 +1113,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	{
           show_effect_or_scale--;
           i = snprintf(dest, bufsize, "\n%s (%dx%d)",
-            sysdep_display_effect_names[normal_params.effect],
+            sysdep_display_effect_properties[normal_params.effect].name,
             normal_params.widthscale, normal_params.heightscale);
 	  if ((i < 0) || (i >= (bufsize-1)))
 	    return buffer;

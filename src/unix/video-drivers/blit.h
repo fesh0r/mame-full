@@ -49,10 +49,10 @@ These routines assume dirty_params->min_x and DEST_WIDTH are a multiple off 4!
 #ifdef DFB
 #define COPY_LINE_FOR_Y(YV, YMAX, SRC, END, DST) \
 { \
-   int reps = REPS_FOR_Y(1, YV, YMAX); \
-   if (reps >0) { \
-     do { COPY_LINE2(SRC, END, (DST)+(reps*(CORRECTED_DEST_WIDTH))); \
-     } while (--reps > scanlines); \
+   int i = scanlines, reps = REPS_FOR_Y(1, YV, YMAX); \
+   if (reps > 0) { \
+     do { COPY_LINE2(SRC, END, (DST)+(i*(CORRECTED_DEST_WIDTH))); \
+     } while (++i < reps); \
    } \
 }
 #else

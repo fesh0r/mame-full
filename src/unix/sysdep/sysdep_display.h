@@ -182,6 +182,7 @@ struct sysdep_display_effect_properties_struct {
   int min_heightscale;
   int max_heightscale;
   int lock_scale;
+  const char *name;
 };
 
 /* init / exit */
@@ -199,6 +200,7 @@ void sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned int flags,
   const char **status_msg);
+void sysdep_display_clear(void);
 
 /* input */
 int  sysdep_display_update_keyboard(void);
@@ -214,7 +216,6 @@ extern struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_
 extern struct rc_option sysdep_display_opts[];
 extern struct sysdep_display_properties_struct sysdep_display_properties;
 extern const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[];
-extern const char *sysdep_display_effect_names[];
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_H */

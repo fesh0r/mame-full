@@ -35,6 +35,8 @@ static XilImage back_image = NULL;
 static blit_func_p xil_update_display_func;
 static unsigned char *scaled_buffer_ptr;
 
+static void xil_destroy_images(void);
+
 int xil_init( void )
 {
   if( (state = xil_open()) == NULL ) {
@@ -85,67 +87,13 @@ int xil_open_display(int reopen)
           /* init the input code */
           xinput_open(sysdep_display_params.fullscreen, 0);
         }
-
-        xil_resize_display();
-        
-        /* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
-        xil_update_display_func = sysdep_display_get_blitfunc();
-        if (x11_window_update_display_func == NULL)
+        else
         {
-                fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
-                return 1;
+          sysdep_display_effect_close();
+          xil_destroy_images(void);
+          x11_resize_resizable_window(&window_width, &window_height);
         }
 
-        return 0;
-}
-
-/*
- * Shut down the display, also called by the core to clean up if any error
- * happens when creating the display.
- */
-void xil_close_display (void)
-{
-   /* ungrab keyb and mouse */
-   xinput_close();
-
-   /* now just free everything else */
-   if (window)
-   {
-     XDestroyWindow (display, window);
-     window = 0;
-   }
-   if (window_image)
-   {
-     xil_destroy(window_image);
-     window_image = NULL;
-   }
-   if (draw_image)
-   {
-     xil_destroy(draw_image);
-     draw_image = NULL;
-   }
-   if (back_image)
-   {
-     xil_destroy(back_image);
-     back_image = NULL;
-   }
-
-   XSync (display, True); /* send all events to sync; discard events */
-}
-
-int xil_resize_display(void)
-{
-        if (draw_image)
-        {
-          xil_destroy(draw_image);
-          draw_image = NULL;
-        }
-        if (back_image)
-        {
-          xil_destroy(back_image);
-          back_image = NULL;
-        }
-        
         /* xil does normal scaling for us */
         if (sysdep_display_params.effect == 0)
         {
@@ -178,7 +126,55 @@ int xil_resize_display(void)
           back_image = xil_create( state, draw_image_width, draw_image_height, 1, XIL_BYTE );
           pthread_mutex_unlock( &img_mutex );
         }
-        return 0;
+        
+        /* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
+        xil_update_display_func = sysdep_display_get_blitfunc();
+        if (x11_window_update_display_func == NULL)
+        {
+                fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
+                return 1;
+        }
+
+        return sysdep_display_effect_open();;
+}
+
+static void xil_destroy_images(void)
+{
+   if (draw_image)
+   {
+     xil_destroy(draw_image);
+     draw_image = NULL;
+   }
+   if (back_image)
+   {
+     xil_destroy(back_image);
+     back_image = NULL;
+   }
+}
+
+/*
+ * Shut down the display, also called by the core to clean up if any error
+ * happens when creating the display.
+ */
+void xil_close_display (void)
+{
+   /* ungrab keyb and mouse */
+   xinput_close();
+
+   /* now just free everything else */
+   if (window)
+   {
+     XDestroyWindow (display, window);
+     window = 0;
+   }
+   if (window_image)
+   {
+     xil_destroy(window_image);
+     window_image = NULL;
+   }
+   xil_destroy_images();
+
+   XSync (display, True); /* send all events to sync; discard events */
 }
 
 /* invoked by main tree code to update bitmap into screen */

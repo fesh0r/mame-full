@@ -100,8 +100,7 @@ int x11_window_open_display(int reopen)
         int image_height, image_width;
         char *scaled_buffer_ptr;
 
-        /* set the aspect_ratio, do this here since
-           this can change yarbsize */
+        /* set aspect_ratio, do this early since this can change yarbsize */
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
         window_width     = sysdep_display_params.width * 
@@ -114,13 +113,6 @@ int x11_window_open_display(int reopen)
         image_height     = sysdep_display_params.yarbsize?
           sysdep_display_params.yarbsize:
           sysdep_display_params.max_height * sysdep_display_params.heightscale;
-
-#ifdef USE_MITSHM        
-        if (mit_shm_available && use_mit_shm)
-          x11_window_update_method = X11_MITSHM;
-        else
-#endif
-          x11_window_update_method = X11_NORMAL;
 
         if(!reopen)
         {
@@ -161,13 +153,35 @@ int x11_window_open_display(int reopen)
         }
         else
         {
-          x11_window_destroy_image();
-          x11_window_resize_display();
+          sysdep_display_effect_close();
+          
+          if ( (image_width  > image->width)  ||
+               (image_height > image->height) )
+            x11_window_destroy_image();
+
+          if(!run_in_root_window)
+          {
+            /* set window hints to resizable */
+            x11_set_window_hints(window_width, window_height, 2);
+            /* resize */
+            XResizeWindow(display, window, window_width, window_height);
+            /* set window hints to nonresizable */
+            x11_set_window_hints(window_width, window_height, 0);
+          }
         }
 
         /* create and setup the image */
-        switch (x11_window_update_method)
+        if (!image)
         {
+#ifdef USE_MITSHM        
+          if (mit_shm_available && use_mit_shm)
+            x11_window_update_method = X11_MITSHM;
+          else
+#endif
+            x11_window_update_method = X11_NORMAL;
+
+          switch (x11_window_update_method)
+          {
 #ifdef USE_MITSHM
                 case X11_MITSHM:
                         /* Create a MITSHM image. */
@@ -264,8 +278,9 @@ int x11_window_open_display(int reopen)
                 default:
                         fprintf (stderr, "Error unknown X11 update method, this shouldn't happen\n");
                         return 1;
+          }
+          sysdep_display_properties.palette_info.bpp = image->bits_per_pixel;
         }
-        sysdep_display_properties.palette_info.bpp = image->bits_per_pixel;
 
         /* get a blit function */
         x11_window_update_display_func = sysdep_display_get_blitfunc();
@@ -275,7 +290,7 @@ int x11_window_open_display(int reopen)
                 return 1;
         }
 
-        return 0;
+        return sysdep_display_effect_open();
 }
 
 /*
@@ -286,7 +301,10 @@ void x11_window_close_display (void)
 {
    /* Restore error handler to default */
    XSetErrorHandler (None);
-
+   
+   /* close effects */
+   sysdep_display_effect_close();
+   
    /* ungrab keyb and mouse */
    xinput_close();
 
@@ -297,9 +315,8 @@ void x11_window_close_display (void)
       XDestroyWindow (display, window);
       window = 0;
    }
-   
    x11_window_destroy_image();
-
+   
    XSync (display, True); /* send all events to sync; discard events */
 }
 
@@ -322,25 +339,6 @@ static void x11_window_destroy_image(void)
        XDestroyImage (image);
        image = NULL;
    }
-}
-
-int x11_window_resize_display(void)
-{
-  /* force a full update the next frame */
-  x11_exposed = 1;
-
-  /* set window hints to resizable */
-  x11_set_window_hints(window_width, window_height, 2);
-  /* determine window size and resize */
-  window_width  = sysdep_display_params.widthscale * 
-    sysdep_display_params.width;
-  window_height = sysdep_display_params.yarbsize?
-    sysdep_display_params.yarbsize:
-    sysdep_display_params.height*sysdep_display_params.heightscale;
-  XResizeWindow(display, window, window_width, window_height);
-  /* set window hints to nonresizable */
-  x11_set_window_hints(window_width, window_height, 0);
-  return 0;
 }
 
 /* invoked by main tree code to update bitmap into screen */

@@ -17,7 +17,6 @@
 
 static int  (*p_xf86_dga_open_display)(int reopen);
 static void (*p_xf86_dga_close_display)(void);
-static int  (*p_xf86_dga_resize_display)(void);
 static void (*p_xf86_dga_update_display)(struct mame_bitmap *,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette, unsigned int flags,
@@ -51,7 +50,6 @@ int xf86_dga_init(void)
         {
                 p_xf86_dga_open_display   = xf86_dga2_open_display;
                 p_xf86_dga_close_display  = xf86_dga2_close_display;
-                p_xf86_dga_resize_display = xf86_dga2_resize_display;
                 p_xf86_dga_update_display = xf86_dga2_update_display;
                 return xf86_dga2_init();
         }
@@ -60,7 +58,6 @@ int xf86_dga_init(void)
         {
                 p_xf86_dga_open_display   = xf86_dga1_open_display;
                 p_xf86_dga_close_display  = xf86_dga1_close_display;
-                p_xf86_dga_resize_display = xf86_dga1_resize_display;
                 p_xf86_dga_update_display = xf86_dga1_update_display;
                 return xf86_dga1_init();
         }
@@ -77,11 +74,6 @@ int  xf86_dga_open_display(int reopen)
 void xf86_dga_close_display(void)
 {
 	(*p_xf86_dga_close_display)();
-}
-
-int  xf86_dga_resize_display(void)
-{
-	return (*p_xf86_dga_resize_display)();
 }
 
 void xf86_dga_update_display(struct mame_bitmap *bitmap,

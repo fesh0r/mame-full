@@ -30,7 +30,8 @@ static struct
 	int vidmode_changed;
 } xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,NULL,{0},0,0};
 
-static int xf86_dga_vidmode_check_exts(void);
+static int xf86_vidmode_check_exts(void);
+static int xf86_dga1_set_mode(void);
 		
 int xf86_dga1_init(void)
 {
@@ -53,7 +54,7 @@ int xf86_dga1_init(void)
                    &xf86ctx.base_addr,&xf86ctx.width,
                    &xf86ctx.bank_size,&xf86ctx.ram_size))
                   fprintf(stderr,"XF86DGAGetVideo failed\n");
-          else if(!xf86_dga_vidmode_check_exts())
+          else if(!xf86_vidmode_check_exts())
                   return SYSDEP_DISPLAY_FULLSCREEN|SYSDEP_DISPLAY_EFFECTS; 
         }
 		
@@ -61,7 +62,7 @@ int xf86_dga1_init(void)
 	return 0;
 }
 
-static int xf86_dga_vidmode_check_exts(void)
+static int xf86_vidmode_check_exts(void)
 {
 	int major,minor,event_base,error_base;
 
@@ -80,7 +81,7 @@ static int xf86_dga_vidmode_check_exts(void)
 	return 0;
 }
 
-static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(void)
+static XF86VidModeModeInfo *xf86_vidmode_find_best_vidmode(void)
 {
 	XF86VidModeModeInfo *bestmode = NULL;
 	int i, score, best_score = 0;
@@ -111,7 +112,7 @@ static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(void)
 	return bestmode;
 }
 
-static Bool xf86_dga_vidmode_getmodeinfo(XF86VidModeModeInfo *modeinfo)
+static Bool xf86_vidmode_getmodeinfo(XF86VidModeModeInfo *modeinfo)
 {
 	XF86VidModeModeLine modeline;
 	int dotclock;
@@ -136,7 +137,7 @@ static Bool xf86_dga_vidmode_getmodeinfo(XF86VidModeModeInfo *modeinfo)
 	return err;
 }
 
-static void xf86_dga_vidmode_restoremode(Display *disp)
+static void xf86_vidmode_restoremode(Display *disp)
 {
 	XF86VidModeSwitchToMode(disp, xf86ctx.screen, &xf86ctx.orig_mode);
 	/* 'Mach64-hack': restores screen when screwed up */
@@ -145,13 +146,13 @@ static void xf86_dga_vidmode_restoremode(Display *disp)
 	/**************************************************/
 }
 
-static int xf86_dga_vidmode_setup_mode_restore(void)
+static int xf86_vidmode_setup_mode_restore(void)
 {
 	Display *disp;
 	int status;
 	pid_t pid;
 
-	if(!xf86_dga_vidmode_getmodeinfo(&xf86ctx.orig_mode))
+	if(!xf86_vidmode_getmodeinfo(&xf86ctx.orig_mode))
 	{
 		fprintf(stderr,"XF86VidModeGetModeLine failed\n");
 		return 1;
@@ -162,7 +163,7 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 	{
 		waitpid(pid,&status,0);
 		disp = XOpenDisplay(NULL);
-		xf86_dga_vidmode_restoremode(disp);
+		xf86_vidmode_restoremode(disp);
 		XCloseDisplay(disp);
 		_exit(!WIFEXITED(status));
 	}
@@ -215,7 +216,10 @@ int xf86_dga1_open_display(int reopen)
 	XPixmapFormatValues *pixmaps;
 
         if (reopen)
-          return xf86_dga1_resize_display();
+        {
+          sysdep_display_effect_close();
+          return xf86_dga1_set_mode();
+        }
 
 	window  = RootWindow(display,xf86ctx.screen);
 
@@ -262,10 +266,10 @@ int xf86_dga1_open_display(int reopen)
 		return 1;
 	}
 
-	return xf86_dga1_resize_display();
+	return xf86_dga1_set_mode();
 }
 
-int xf86_dga1_resize_display(void)
+static int xf86_dga1_set_mode(void)
 {
 	XF86VidModeModeInfo *bestmode;
 	/* only have todo the fork's the first time we go DGA, otherwise people
@@ -276,7 +280,7 @@ int xf86_dga1_resize_display(void)
 	xf86_dga_fix_viewport  = 0;
 	xf86_dga_first_click   = 1;
 	
-	bestmode = xf86_dga_vidmode_find_best_vidmode();
+	bestmode = xf86_vidmode_find_best_vidmode();
 	if(!bestmode)
 	{
 		fprintf(stderr,"no suitable mode found\n");
@@ -289,7 +293,7 @@ int xf86_dga1_resize_display(void)
 
 	if (first_time)
 	{
-		if(xf86_dga_vidmode_setup_mode_restore())
+		if(xf86_vidmode_setup_mode_restore())
 			return 1;
 	}
 
@@ -327,7 +331,8 @@ int xf86_dga1_resize_display(void)
 	}
 
 	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
-	return 0;
+
+	return sysdep_display_effect_open();
 }
 
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
@@ -347,11 +352,12 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 
 void xf86_dga1_close_display(void)
 {
+        sysdep_display_effect_close();
 	xinput_close();
 	XF86DGADirectVideo(display,xf86ctx.screen, 0);
 	if(xf86ctx.vidmode_changed)
 	{
-		xf86_dga_vidmode_restoremode(display);
+		xf86_vidmode_restoremode(display);
 		xf86ctx.vidmode_changed = 0;
 	}
 	if(xf86ctx.modes)

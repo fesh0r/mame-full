@@ -53,10 +53,8 @@ int xfx_open_display(int reopen)
       
     xinput_open(2, 0);
   }
-  else
-    CloseVScreen();
   
-  if (InitVScreen() != 0)
+  if (InitVScreen(reopen) != 0)
     return 1;
 
   if(!reopen)
@@ -69,7 +67,6 @@ int xfx_open_display(int reopen)
  * Shut down the display, also used to clean up if any error happens
  * when creating the display
  */
-
 void xfx_close_display (void)
 {
    VScreenRestoreSignals();

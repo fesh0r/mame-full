@@ -64,7 +64,6 @@ extern int cabview;
 extern char *cabname;
 
 /* glgen.c */
-extern int gl_texture_init;
 extern GLuint veclist;
 extern GLdouble  s__cscr_w_view, s__cscr_h_view;
 extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, 
@@ -80,7 +79,7 @@ int glvec_renderer(point *start, int num_points);
 int LoadCabinet (const char *fname);
 
 /* glgen.c */
-int  gl_open_display(void);
+int  gl_open_display(int reopen);
 void gl_close_display(void);
 void gl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
@@ -90,6 +89,7 @@ void CalcCabPointbyViewpoint(
   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p);
 int  gl_set_windowsize(void);
+int  gl_set_cabview (int new_value);
 
 /* glexport */
 void gl_save_screen_snapshot();

@@ -6,7 +6,7 @@
 int  InitGlide(void);
 void ExitGlide(void);
 int  InitParams(void);
-int  InitVScreen(void);
+int  InitVScreen(int reopen);
 void CloseVScreen(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);

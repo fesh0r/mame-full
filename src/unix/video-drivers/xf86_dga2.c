@@ -49,6 +49,8 @@ struct rc_option xf86_dga2_opts[] = {
   { NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
+static int xf86_dga2_set_mode(void);
+
 int xf86_dga2_init(void)
 {
 	int i,j ;
@@ -244,7 +246,10 @@ int xf86_dga2_open_display(int reopen)
 	xf86_dga_first_click   = 0;
 	
         if (reopen)
-          return xf86_dga2_resize_display();
+        {
+          sysdep_display_effect_close();
+          return xf86_dga2_set_mode();
+        }
 
 	window  = RootWindow(display,xf86ctx.screen);
 	
@@ -270,7 +275,7 @@ int xf86_dga2_open_display(int reopen)
 	    return 1;
 	}
 
-	if(xf86_dga2_resize_display())
+	if(xf86_dga2_set_mode())
 	    return 1;
 	    
 	/* setup the colormap */
@@ -281,9 +286,11 @@ int xf86_dga2_open_display(int reopen)
 	return 0;
 }
 
-int xf86_dga2_resize_display(void)
+static int xf86_dga2_set_mode(void)
 {
 	int bestmode = xf86_dga_vidmode_find_best_vidmode();
+	
+        sysdep_display_effect_close();
 
 	if (bestmode == -1)
 	{
@@ -292,6 +299,7 @@ int xf86_dga2_resize_display(void)
 	}
 	if (bestmode != xf86ctx.current_mode)
 	{
+
           if(xf86ctx.device)
                   XFree(xf86ctx.device);
 
@@ -331,8 +339,9 @@ int xf86_dga2_resize_display(void)
           sysdep_display_properties.palette_info.depth = xf86ctx.device->mode.depth;
           sysdep_display_properties.palette_info.bpp   = xf86ctx.device->mode.bitsPerPixel;
 	  sysdep_display_properties.vector_renderer    = NULL;
-	}
 
+	}
+	
         if(xf86_dga_setup_graphics(xf86ctx.device->mode))
           return 1;
 
@@ -341,7 +350,7 @@ int xf86_dga2_resize_display(void)
 	       xf86ctx.device->mode.bytesPerScanline
 	       * xf86ctx.device->mode.imageHeight);
 
-	return 0;
+        return sysdep_display_effect_open();
 }
 
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
@@ -392,6 +401,7 @@ void xf86_dga2_close_display(void)
 		XFreeColormap(display,xf86ctx.cmap);
 		xf86ctx.cmap = 0;
 	}
+        sysdep_display_effect_close();
 	xinput_close();
 	if(xf86ctx.current_mode != -1)
 	{

@@ -20,6 +20,7 @@
 #include "x11.h"
 
 /* private functions */
+static void gl_free_textures(void);
 static GLdouble CompareVec (GLdouble i, GLdouble j, GLdouble k,
 	    GLdouble x, GLdouble y, GLdouble z);
 static void TranslatePointInPlane   (
@@ -59,6 +60,8 @@ static GLsizei text_width;
 static GLsizei text_height;
 static int texnumx;
 static int texnumy;
+static int maxtexnumx;
+static int maxtexnumy;
 
 /* The squares that are tiled to make up the game screen polygon */
 struct TexSquare
@@ -169,13 +172,14 @@ static GLdouble mxModel[16];
 static GLdouble mxProjection[16];
 
 /* Camera panning variables */
-static int currentpan;
-static int lastpan;
-static int panframe;
+static int currentpan = 0;
+static int lastpan    = 0;
+static int panframe   = 0;
 
 /* Misc variables */
-int gl_texture_init = 0;
+static int gl_texture_init = 0;
 static unsigned short *colorBlittedMemory = NULL;
+static int colorBlittedMemorySize;
 static int cab_loaded = 0;
 static unsigned char *empty_text = NULL;
 
@@ -210,9 +214,9 @@ static int gl_set_bilinear (int new_value)
 	    RETURN_IF_GL_ERROR ();
     }
 
-    for (y = 0; y < texnumy; y++)
+    for (y = 0; y < maxtexnumy; y++)
     {
-      for (x = 0; x < texnumx; x++)
+      for (x = 0; x < maxtexnumx; x++)
       {
         disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
 	RETURN_IF_GL_ERROR ();
@@ -235,9 +239,9 @@ static int gl_set_bilinear (int new_value)
 	    RETURN_IF_GL_ERROR ();
     }
 
-    for (y = 0; y < texnumy; y++)
+    for (y = 0; y < maxtexnumy; y++)
     {
-      for (x = 0; x < texnumx; x++)
+      for (x = 0; x < maxtexnumx; x++)
       {
         disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
         RETURN_IF_GL_ERROR ();
@@ -251,8 +255,11 @@ static int gl_set_bilinear (int new_value)
   return 0;
 }
 
-static int gl_set_cabview (int new_value)
+int gl_set_cabview (int new_value)
 {
+  if (!cab_loaded)
+    return 0;
+
   cabview = new_value;
   if (cabview)
   {
@@ -296,16 +303,16 @@ static int gl_set_antialias(int new_value)
 
 static int gl_set_beam(float new_value)
 {
-	GLenum err;
-	gl_beam = new_value;
-	disp__glLineWidth(gl_beam);
-        RETURN_IF_GL_ERROR ();
-	disp__glPointSize(gl_beam);
-        RETURN_IF_GL_ERROR ();
-	return 0;
+  GLenum err;
+  gl_beam = new_value;
+  disp__glLineWidth(gl_beam);
+  RETURN_IF_GL_ERROR ();
+  disp__glPointSize(gl_beam);
+  RETURN_IF_GL_ERROR ();
+  return 0;
 }
 
-int gl_open_display (void)
+int gl_open_display (int reopen)
 {
   const unsigned char * glVersion;
   int x, y;
@@ -315,34 +322,99 @@ int gl_open_display (void)
   GLint tidxsize=0;
   int format_ok=0;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
+  static int firsttime = 1;
 
-  glVersion = disp__glGetString(GL_VERSION);
-  RETURN_IF_GL_ERROR ();
+  /* force init of textures on first update */  
+  gl_texture_init = 0;
 
-  fprintf(stderr, "\nGLINFO: OpenGL Driver Information:\n");
-  fprintf(stderr, "\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
-  	disp__glGetString(GL_VENDOR), 
-	disp__glGetString(GL_RENDERER),
-	glVersion);
-
-  if(!(glVersion[0]>'1' ||
-       (glVersion[0]=='1' && glVersion[2]>='2') ) )
+  if (firsttime)
   {
-       fprintf(stderr, "error: an OpenGL >= 1.2 capable driver is required!\n");
-       return 1;
-  }
+    glVersion = disp__glGetString(GL_VERSION);
+    RETURN_IF_GL_ERROR ();
 
-  fprintf(stderr, "GLINFO: GLU Driver Information:\n");
-  fprintf(stderr, "\tversion %s\n",
-        disp__gluGetString(GLU_VERSION));
+    fprintf(stderr, "\nGLINFO: OpenGL Driver Information:\n");
+    fprintf(stderr, "\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
+          disp__glGetString(GL_VENDOR), 
+          disp__glGetString(GL_RENDERER),
+          glVersion);
 
-  /* load cabinet, do this only once! */
-  if (!cab_loaded)  
+    if(!(glVersion[0]>'1' ||
+         (glVersion[0]=='1' && glVersion[2]>='2') ) )
+    {
+         fprintf(stderr, "error: an OpenGL >= 1.2 capable driver is required!\n");
+         return 1;
+    }
+
+    fprintf(stderr, "GLINFO: GLU Driver Information:\n");
+    fprintf(stderr, "\tversion %s\n",
+          disp__gluGetString(GLU_VERSION));
+
     cab_loaded = LoadCabinet (cabname);
-  if (cabview && !cab_loaded)
-  {
-    fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
-    cabview = 0;
+    if (cabview && !cab_loaded)
+    {
+      fprintf(stderr, "GLERROR: Unable to load cabinet %s\n", cabname);
+      cabview = 0;
+    }
+
+    if (cab_loaded)
+    {
+      /* Calulate delta vectors for screen height and width */
+      DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
+                &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+      DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p4, vy_cscr_p4, vz_cscr_p4,
+                &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
+
+      s__cscr_w = LengthOfVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
+      s__cscr_h = LengthOfVec (vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
+
+
+              /*	  
+              ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
+              ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
+              */
+
+      CopyVec( &vx_scr_nx, &vy_scr_nx, &vz_scr_nx,
+                vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+      NormThisVec (&vx_scr_nx, &vy_scr_nx, &vz_scr_nx);
+
+      CopyVec( &vx_scr_ny, &vy_scr_ny, &vz_scr_ny,
+                vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+      NormThisVec (&vx_scr_ny, &vy_scr_ny, &vz_scr_ny);
+
+      CrossVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw,
+                vx_cscr_dh, vy_cscr_dh, vz_cscr_dh,
+                &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+      NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
+
+  #ifndef NDEBUG
+      /**
+       * assertions ...
+       */
+      CopyVec( &t1x, &t1y, &t1z,
+               vx_scr_nx, vy_scr_nx, vz_scr_nx);
+      ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
+                    &t1x, &t1y, &t1z);
+      t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+
+      fprintf(stderr, "GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
+      fprintf(stderr, "\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+      fprintf(stderr, "\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+      fprintf(stderr, "\t s__cscr_w  = %f \n", s__cscr_w);
+
+      CopyVec( &t1x, &t1y, &t1z,
+               vx_scr_ny, vy_scr_ny, vz_scr_ny);
+      ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
+                    &t1x, &t1y, &t1z);
+      t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+
+      fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+      fprintf(stderr, "\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+      fprintf(stderr, "\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+      fprintf(stderr, "\t s__cscr_h   = %f \n", s__cscr_h);
+  #endif
+
+    }
+    firsttime = 0;
   }
 
   disp__glClearColor (0, 0, 0, 1);
@@ -351,80 +423,15 @@ int gl_open_display (void)
   RETURN_IF_GL_ERROR ();
   disp__glFlush ();
   RETURN_IF_GL_ERROR ();
-
-  if (gl_set_windowsize())
-    return 1;
-
   disp__glDepthFunc (GL_LEQUAL);
   RETURN_IF_GL_ERROR ();
+  disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE);
+  RETURN_IF_GL_ERROR ();
 
-  if (cab_loaded)
-  {
-    /* Calulate delta vectors for screen height and width */
-    DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
-              &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
-    DeltaVec (vx_cscr_p1, vy_cscr_p1, vz_cscr_p1, vx_cscr_p4, vy_cscr_p4, vz_cscr_p4,
-              &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
-
-    s__cscr_w = LengthOfVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw);
-    s__cscr_h = LengthOfVec (vx_cscr_dh, vy_cscr_dh, vz_cscr_dh);
-
-
-            /*	  
-            ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dh, &vy_cscr_dh, &vz_cscr_dh);
-            ScaleThisVec ( -1.0,  1.0,  1.0, &vx_cscr_dw, &vy_cscr_dw, &vz_cscr_dw);
-            */
-
-    CopyVec( &vx_scr_nx, &vy_scr_nx, &vz_scr_nx,
-              vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-    NormThisVec (&vx_scr_nx, &vy_scr_nx, &vz_scr_nx);
-
-    CopyVec( &vx_scr_ny, &vy_scr_ny, &vz_scr_ny,
-              vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-    NormThisVec (&vx_scr_ny, &vy_scr_ny, &vz_scr_ny);
-
-    CrossVec (vx_cscr_dw, vy_cscr_dw, vz_cscr_dw,
-              vx_cscr_dh, vy_cscr_dh, vz_cscr_dh,
-              &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
-    NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
-
-#ifndef NDEBUG
-    /**
-     * assertions ...
-     */
-    CopyVec( &t1x, &t1y, &t1z,
-             vx_scr_nx, vy_scr_nx, vz_scr_nx);
-    ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
-                  &t1x, &t1y, &t1z);
-    t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-
-    fprintf(stderr, "GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
-    fprintf(stderr, "\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-    fprintf(stderr, "\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-    fprintf(stderr, "\t s__cscr_w  = %f \n", s__cscr_w);
-
-    CopyVec( &t1x, &t1y, &t1z,
-             vx_scr_ny, vy_scr_ny, vz_scr_ny);
-    ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
-                  &t1x, &t1y, &t1z);
-    t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-
-    fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-    fprintf(stderr, "\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-    fprintf(stderr, "\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-    fprintf(stderr, "\t s__cscr_h   = %f \n", s__cscr_h);
-#endif
-
-  }
-  
-  if (sysdep_display_params.vec_src_bounds)
+  if (sysdep_display_params.vec_src_bounds && !veclist)
   {
     veclist=disp__glGenLists(1);
     RETURN_IF_GL_ERROR ();
-    disp__glBlendFunc (GL_SRC_ALPHA, GL_ONE);
-    RETURN_IF_GL_ERROR ();
-    if (gl_set_beam(gl_beam))
-      return 1;
   }
 
   /* no alpha .. important, because mame has no alpha set ! */
@@ -458,160 +465,177 @@ int gl_open_display (void)
   }
   sysdep_display_properties.vector_renderer = glvec_renderer;
 
-  /* determine the texture size to use */
-  if(force_text_width_height>0)
+  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
-    text_height = text_width = force_text_width_height;
-    fprintf (stderr, "GLINFO: force_text_width_height := %d x %d\n",
-             text_height, text_width);
+    x = sysdep_display_params.height;
+    y = sysdep_display_params.width;
   }
   else
   {
+    x = sysdep_display_params.width;
+    y = sysdep_display_params.height;
+  }
+    
+  if(!reopen || ((maxtexnumx*text_width) > x) || ((maxtexnumy*text_height) > y))
+  {
+    if (reopen)
+      gl_free_textures();
+
     if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
     {
-      text_width  = sysdep_display_params.max_height;
-      text_height = sysdep_display_params.max_width;
+      x = sysdep_display_params.max_height;
+      y = sysdep_display_params.max_width;
     }
     else
     {
-      text_width  = sysdep_display_params.max_width;
-      text_height = sysdep_display_params.max_height;
+      x = sysdep_display_params.max_width;
+      y = sysdep_display_params.max_height;
     }
 
-    /* round text_width and height up to a power of 2 */
-    for(x=1;x<text_width;x*=2) {}
-    text_width=x;
-
-    for(y=1;y<text_height;y*=2) {}
-    text_height=y;
-  }
-
-  /* Test the max texture size */
-  while(!format_ok && text_width>=64 && text_height>=64)
-  {
-    disp__glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
-		  gl_internal_format,
-		  text_width, text_height,
-		  0, gl_bitmap_format, gl_bitmap_type, 0);
-    CHECK_GL_ERROR ();
-
-    disp__glGetTexLevelParameteriv
-      (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-    CHECK_GL_ERROR ();
-
-#ifndef NOTEXIDXSIZE
-    disp__glGetTexLevelParameteriv
-      (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
-    CHECK_GL_ERROR ();
-#else
-    tidxsize = -1;
-#endif
-    
-    switch(sysdep_display_params.depth)
+    /* determine the texture size to use */
+    if(force_text_width_height>0)
     {
-      case 15:
-      case 16:
-        if(format == GL_RGB || format == GL_RGB5)
-          format_ok = 1;
-        break;
-      case 32:
-        if(format == GL_RGB || format == GL_RGB8)
-          format_ok = 1;
-        break;
+      text_height = text_width = force_text_width_height;
+      fprintf (stderr, "GLINFO: force_text_width_height := %d x %d\n",
+               text_height, text_width);
+    }
+    else
+    {
+      /* round text_width and height up to a power of 2 */
+      for(text_width =1;text_width <x;text_width *=2) {}
+      for(text_height=1;text_height<y;text_height*=2) {}
     }
 
-    if (!format_ok)
+    /* Test the max texture size */
+    while(!format_ok && text_width>=64 && text_height>=64)
     {
-      fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), ",
-		text_height, text_width, format, tidxsize);
-      if (text_width > text_height)
-	text_width /= 2;
-      else
-	text_height /= 2;
-      fprintf (stderr, "trying [%dx%d] !\n", text_height, text_width);
-    }
-  }
+      disp__glTexImage2D (GL_PROXY_TEXTURE_2D, 0,
+                    gl_internal_format,
+                    text_width, text_height,
+                    0, gl_bitmap_format, gl_bitmap_type, 0);
+      CHECK_GL_ERROR ();
 
-  if(!format_ok)
-  {
-    fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
-    return 1;
-  }
+      disp__glGetTexLevelParameteriv
+        (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+      CHECK_GL_ERROR ();
 
-  /* calculate the number of textures we need */  
-  if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-  {
-    texnumx = (sysdep_display_params.max_height + text_width  - 1) / text_width;
-    texnumy = (sysdep_display_params.max_width  + text_height - 1) / text_height;
-  }
-  else
-  {
-    texnumx = (sysdep_display_params.max_width  + text_width  - 1) / text_width;
-    texnumy = (sysdep_display_params.max_height + text_height - 1) / text_height;
-  }
-  fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
-		 (int) texnumx, (int) text_width, (int) texnumy,
-		 (int) text_height);
-
-  /* allocate some buffers */
-  texgrid    = calloc(texnumx * texnumy, sizeof (struct TexSquare));
-  empty_text = calloc(text_width*text_height, bytes_per_pixel);
-  if (!texgrid || !empty_text)
-  {
-    fprintf(stderr, "GLERROR: couldn't allocate memory\n");
-    return 1;
-  }
-
-  /* create the textures */
-  for (y = 0; y < texnumy; y++)
-  {
-    for (x = 0; x < texnumx; x++)
-    {
-      tsq = texgrid + y * texnumx + x;
-  
-      tsq->texobj=0;
-      disp__glGenTextures (1, &(tsq->texobj));
-      RETURN_IF_GL_ERROR ();
-      disp__glBindTexture (GL_TEXTURE_2D, tsq->texobj);
-      RETURN_IF_GL_ERROR ();
-
-      if(disp__glIsTexture(tsq->texobj) == GL_FALSE)
+  #ifndef NOTEXIDXSIZE
+      disp__glGetTexLevelParameteriv
+        (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
+      CHECK_GL_ERROR ();
+  #else
+      tidxsize = -1;
+  #endif
+      
+      switch(sysdep_display_params.depth)
       {
-	fprintf (stderr, "GLERROR ain't a texture (glGenText): texnum x=%d, y=%d, texture=%d\n",
-		x, y, tsq->texobj);
+        case 15:
+        case 16:
+          if(format == GL_RGB || format == GL_RGB5)
+            format_ok = 1;
+          break;
+        case 32:
+          if(format == GL_RGB || format == GL_RGB8)
+            format_ok = 1;
+          break;
       }
-      RETURN_IF_GL_ERROR ();
 
-      disp__glTexImage2D (GL_TEXTURE_2D, 0,
-		    gl_internal_format,
-		    text_width, text_height,
-		    0, gl_bitmap_format, gl_bitmap_type, empty_text);
-      RETURN_IF_GL_ERROR ();
-      disp__glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
-      RETURN_IF_GL_ERROR ();
-      disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      RETURN_IF_GL_ERROR ();
-      disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-      RETURN_IF_GL_ERROR ();
-      disp__glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-      RETURN_IF_GL_ERROR ();
-    }	/* for all texnumx */
-  }  /* for all texnumy */
-  free (empty_text);
-  empty_text   = NULL;
+      if (!format_ok)
+      {
+        fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), ",
+                  text_height, text_width, format, tidxsize);
+        if (text_width > text_height)
+          text_width /= 2;
+        else
+          text_height /= 2;
+        fprintf (stderr, "trying [%dx%d] !\n", text_height, text_width);
+      }
+    }
 
-  /* lets init the rest of the customizings ... */
-  if (gl_set_bilinear (bilinear))
-    return 1;
-  if (gl_set_antialias (antialias))
-    return 1;
-  if (gl_set_cabview (cabview))
-    return 1;
+    if(!format_ok)
+    {
+      fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
+      return 1;
+    }
 
-  /* done */
+    /* calculate the number of textures we need */  
+    maxtexnumx = (x + text_width  - 1) / text_width;
+    maxtexnumy = (y + text_height - 1) / text_height;
+    fprintf (stderr, "GLINFO: texture-usage %d*width=%d, %d*height=%d\n",
+                   (int) maxtexnumx, (int) text_width, (int) maxtexnumy,
+                   (int) text_height);
+
+    /* allocate some buffers */
+    texgrid    = calloc(maxtexnumx * maxtexnumy, sizeof (struct TexSquare));
+    empty_text = calloc(text_width*text_height, bytes_per_pixel);
+    if (!texgrid || !empty_text)
+    {
+      fprintf(stderr, "GLERROR: couldn't allocate memory\n");
+      return 1;
+    }
+
+    /* create the textures */
+    for (y = 0; y < maxtexnumy; y++)
+    {
+      for (x = 0; x < maxtexnumx; x++)
+      {
+        tsq = texgrid + y * maxtexnumx + x;
+    
+        tsq->texobj=0;
+        disp__glGenTextures (1, &(tsq->texobj));
+        RETURN_IF_GL_ERROR ();
+        disp__glBindTexture (GL_TEXTURE_2D, tsq->texobj);
+        RETURN_IF_GL_ERROR ();
+
+        if(disp__glIsTexture(tsq->texobj) == GL_FALSE)
+        {
+          fprintf (stderr, "GLERROR ain't a texture (glGenText): texnum x=%d, y=%d, texture=%d\n",
+                  x, y, tsq->texobj);
+        }
+        RETURN_IF_GL_ERROR ();
+
+        disp__glTexImage2D (GL_TEXTURE_2D, 0,
+                      gl_internal_format,
+                      text_width, text_height,
+                      0, gl_bitmap_format, gl_bitmap_type, empty_text);
+        RETURN_IF_GL_ERROR ();
+        disp__glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
+        RETURN_IF_GL_ERROR ();
+        disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        RETURN_IF_GL_ERROR ();
+        disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        RETURN_IF_GL_ERROR ();
+        disp__glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        RETURN_IF_GL_ERROR ();
+      }	/* for all texnumx */
+    }  /* for all texnumy */
+    free (empty_text);
+    empty_text   = NULL;
+
+    if (gl_set_bilinear (bilinear))
+      return 1;
+  }
+  
+  if(!reopen)
+  {
+    if (gl_set_antialias (antialias))
+
+      return 1;
+    if (gl_set_beam(gl_beam))
+      return 1;
+  }
+
+  /* do we need a buffer to write the bitmap to after palette lookup? */
   if(sysdep_display_params.depth == 16)
   {
-    colorBlittedMemory = malloc( sysdep_display_params.max_width * sysdep_display_params.max_height * bytes_per_pixel);
+    if (!colorBlittedMemory || (colorBlittedMemorySize <
+        (sysdep_display_params.width * sysdep_display_params.height *
+         bytes_per_pixel)))
+    {
+      colorBlittedMemorySize = sysdep_display_params.max_width *
+        sysdep_display_params.max_height * bytes_per_pixel;
+      colorBlittedMemory = malloc(colorBlittedMemorySize);
+    }
     if (!colorBlittedMemory)
     {
       fprintf(stderr, "GLERROR: couldn't allocate memory\n");
@@ -619,15 +643,36 @@ int gl_open_display (void)
     }
     fprintf(stderr, "GLINFO: Using bit blit to map color indices !!\n");
   } else {
+    if(colorBlittedMemory!=NULL)
+    {
+      free(colorBlittedMemory);
+      colorBlittedMemory = NULL;
+    }
     fprintf(stderr, "GLINFO: Using true color mode (no color indices, but direct color)!!\n");
   }
 
+  /* done */
   fprintf(stderr, "GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
 		sysdep_display_params.depth, 
 		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
 		sysdep_display_properties.palette_info.blue_mask);
   
-  return 0;
+  return gl_set_windowsize();
+}
+
+static void gl_free_textures(void)
+{
+  /* FIXME free opengl texture ids */
+  if (empty_text)
+  {
+    free (empty_text);
+    empty_text = NULL;
+  }
+  if (texgrid)
+  {
+    free(texgrid);
+    texgrid = NULL;
+  }
 }
 
 /* Close down the virtual screen */
@@ -641,30 +686,13 @@ void gl_close_display (void)
     free(colorBlittedMemory);
     colorBlittedMemory = NULL;
   }
-  if (empty_text)
-  {
-    free (empty_text);
-    empty_text = NULL;
-  }
-  if (texgrid)
-  {
-    free(texgrid);
-    texgrid = NULL;
-  }
-  if (cpan)
-  {
-    free(cpan);
-    cpan = NULL;
-  }
-
   if (veclist)
   {
     disp__glDeleteLists(veclist, 1);
     CHECK_GL_ERROR();
     veclist = 0;
   }
-
-  gl_texture_init = 0;
+  gl_free_textures();
 }
 
 /**
@@ -683,7 +711,7 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
   /* the original (unoriented) width & height */
   int orig_width; 
   int orig_height;
-  
+
   if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
   {
     orig_width  = sysdep_display_params.height; 
@@ -1657,14 +1685,6 @@ void gl_update_display(struct mame_bitmap *bitmap,
       *status_msg = "bilinear filtering on";
     else
       *status_msg = "bilinear filtering off";
-  }
-  if (cab_loaded && (flags & SYSDEP_DISPLAY_HOTKEY_OPTION1))
-  {
-    gl_set_cabview (1-cabview);
-    if(cabview)
-      *status_msg = "cabinet view on";
-    else
-      *status_msg = "cabinet view off";
   }
   if (flags & SYSDEP_DISPLAY_HOTKEY_OPTION3)
   {

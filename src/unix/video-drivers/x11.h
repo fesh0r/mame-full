@@ -77,6 +77,7 @@ int x11_create_resizable_window(unsigned int *width, unsigned int *height);
       kept to sysdep_display_params.aspect .
    2: Resizable initial size is width and height
    3: Fullscreen return width and height in width and height */
+void x11_resize_resizable_window(unsigned int *width, unsigned int *height);
 int x11_create_window(unsigned int *width, unsigned int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size
@@ -89,7 +90,6 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type);
 int  x11_window_init(void);
 int  x11_window_open_display(int reopen);
 void x11_window_close_display(void);
-int  x11_window_resize_display(void);
 void x11_window_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -102,7 +102,6 @@ int  x11_test_mit_shm (Display * display, XErrorEvent * error);
 int  xv_init(void);
 int  xv_open_display(int reopen);
 void xv_close_display(void);
-int  xv_resize_display(void);
 void xv_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -113,7 +112,6 @@ void xv_update_display(struct mame_bitmap *bitmap,
 int  xgl_init(void);
 int  xgl_open_display(int reopen);
 void xgl_close_display(void);
-int  xgl_resize_display(void);
 void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -125,7 +123,6 @@ int  xfx_init(void);
 void xfx_exit(void);
 int  xfx_open_display(int reopen);
 void xfx_close_display(void);
-int  xfx_resize_display(void);
 void xfx_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -136,7 +133,6 @@ void xfx_update_display(struct mame_bitmap *bitmap,
 int  xil_init(void);
 int  xil_open_display(int reopen);
 void xil_close_display(void);
-int  xil_resize_display(void);
 void xil_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -147,7 +143,6 @@ void xil_update_display(struct mame_bitmap *bitmap,
 int  xf86_dga_init(void);
 int  xf86_dga_open_display(int reopen);
 void xf86_dga_close_display(void);
-int  xf86_dga_resize_display(void);
 void xf86_dga_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -155,7 +150,6 @@ void xf86_dga_update_display(struct mame_bitmap *bitmap,
 int  xf86_dga1_init(void);
 int  xf86_dga1_open_display(int reopen);
 void xf86_dga1_close_display(void);
-int  xf86_dga1_resize_display(void);
 void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -163,7 +157,6 @@ void xf86_dga1_update_display(struct mame_bitmap *bitmap,
 int  xf86_dga2_init(void);
 int  xf86_dga2_open_display(int reopen);
 void xf86_dga2_close_display(void);
-int  xf86_dga2_resize_display(void);
 void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area, struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
