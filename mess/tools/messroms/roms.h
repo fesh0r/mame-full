@@ -802,6 +802,10 @@ static struct {
 	{ 0x3e785f6f , 0x4000 , "Micro Digital TK-90x Color Computer" },
 	{ 0x17368e07 , 0x4000 , "Micro Digital TK-95 Color Computer" },
 
+	{ 0x6ab16f36 , 0x2000 , "Elwro 800-3 Junior basic (0000h)" },
+	{ 0xa743eb80 , 0x2000 , "Elwro 800-3 Junior basic (2000h)" },
+	{ 0xde5fa37d , 0x2000 , "Elwro 800-3 Junior boot" },
+
 	{ 0xf1b5fa67 , 0x4000 , "Timex TC-2048" },
 
 	{ 0xbf44ec3f , 0x4000 , "Timex TS-2068 (main)" },
@@ -1325,6 +1329,31 @@ static struct {
 
 	{ 0xe6ea96dc ,0x1000, "ZRT80" },
 	{ 0x4dbdc60f ,0x800, "ZRT80 char" },
+
+/* Palm OS PDA *****************************************************************/
+	/* some of this roms may be modified */
+	/* most of them is probably hacked to turn off flash support */
+	/* size of clear dumps should be 2 or 4 MB */
+
+	{ 0xedb269d8 , 0x180000, "Palm III OS v3.5" },
+	{ 0x50961ee6 , 0x180000, "Palm III OS v3.5 (debug)" },
+	{ 0x280f1090 , 0x198000, "Palm III OS v4.0" },
+	{ 0x70bedb7e , 0x180000, "Palm IIIc OS v3.5" },
+	{ 0x38a191e2 , 0x180000, "Palm IIIc OS v3.5 (debug)" },
+	{ 0xefb05a31 , 0x198000, "Palm IIIc OS v4.0" },
+	{ 0xc3ea0bb7 , 0x258000, "Palm IIIc OS v4.0 (EFIGS)" },
+	{ 0xd5e03642 , 0x278000, "Palm IIIc OS v4.0 (EFIGS) (debug)" },
+	{ 0x695f379e , 0x258000, "Palm IIIc OS v4.0 (EFIGS) (alt)" },
+	{ 0xb9fdb1ce , 0x178000, "Palm IIIx/V/Vx OS v3.5" },
+	{ 0x4c700386 , 0x178000, "Palm IIIx/V/Vx OS v3.5 (debug)" },
+	{ 0xcfbdef34 , 0x198000, "Palm IIIx/V/Vx OS v4.0" },
+	{ 0xb7b0eb15 , 0x258000, "Palm IIIx/V/Vx OS v4.0 (EFIGS)" },
+	{ 0x39f24dc0 , 0x358000, "Palm V/Vx OS v4.0 (EFIGS)" },
+	{ 0x80b78ab7 , 0x338000, "Palm V/Vx OS v4.0 (EFIGS) (debug)" },
+	{ 0x9bd7c6fe , 0x178000, "Palm m100 OS v3.5.1" },
+
+	{ 0xb47295a8 , 0x200000, "Handspring Visor OS v3.1" },
+	{ 0xc9e55271 , 0x200000, "Handspring Visor Platinum/Prism/Edge OS v3.5.2" },
 
 	{ 0xa0b059f9 , 0x119000, "BAD Dump PalmOs" },
 
