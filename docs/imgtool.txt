@@ -253,4 +253,28 @@ The file date information is not supported at this time.
 The card filesystem reading/writing in imgtool has not been heavily tested.
 
 
+Ti99 floppy disk images (ti99)
+------------------------------
 
+You can create and catalog these images, you can delete individual files, and
+you can get and put files in TIFILE format.  (The TIFILE format uses a data
+format similar to the one used on ti99 floppies (i.e. logical records are
+grouped in records of 256 bytes matching the sector size of 256 bytes), with
+a custom 128-byte header, and it is supported by many ti99 utilities.)
+
+Parameters for create:
+--label=...: an optional string of up to 10 characters.  May include any upper
+	case ASCII character (lower case is not recommended because TI99/4 does not
+	support it), except period ('.'), as this character is used as a path
+	separator by TI systems.  (Of course, the TI99 fdc DSR only implements one
+	directory level (i.e. the root directory), but other TI systems implement
+	this convention extensively.)
+--density=[1|2]: 1 for single density (FM), 2 for double density (MFM).  The
+	original TI floppy disk controller only supports single density.
+--sides=[1|2]: 1 for single-sided, 2 for double-sided
+--tracks=[1-40]: number of track per side.  From 1 to 40.
+--sectors=[1-18]:	number of sectors per track.  From 1 to 9 in single density
+	(FM), from 1 to 18 in double density (MFM).
+
+Create can only create 5.25'' floppy images.  Other utilities should support 3.5''
+floppy images fine.
