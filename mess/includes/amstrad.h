@@ -6,9 +6,7 @@
 void amstrad_setup_machine(void);
 void amstrad_shutdown_machine(void);
 
-extern SNAPSHOT_LOAD( amstrad );
-
-DEVICE_LOAD( amstrad_cassette );
+SNAPSHOT_LOAD( amstrad );
 
 void Amstrad_Reset(void);
 

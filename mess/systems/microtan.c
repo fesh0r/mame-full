@@ -36,6 +36,7 @@
  *****************************************************************************/
 
 #include "includes/microtan.h"
+#include "devices/cassette.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -189,12 +190,6 @@ INPUT_PORTS_START( microtan )
     PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
     PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
     PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-
-    PORT_START /* tape control */
-    PORT_BITX(0x01, 0x00, IPT_KEYBOARD, "TAPE STOP", KEYCODE_F5,          IP_JOY_NONE )
-    PORT_BITX(0x02, 0x00, IPT_KEYBOARD, "TAPE PLAY", KEYCODE_F6,          IP_JOY_NONE )
-    PORT_BITX(0x04, 0x00, IPT_KEYBOARD, "TAPE REW",  KEYCODE_F7,          IP_JOY_NONE )
-    PORT_BIT (0xf8, 0x80, IPT_UNUSED)
 INPUT_PORTS_END
 
 static struct GfxLayout char_layout =
@@ -294,7 +289,7 @@ ROM_START(microtan)
 ROM_END
 
 SYSTEM_CONFIG_START(microtan)
-	CONFIG_DEVICE_CASSETTE(1,		"tap\0", device_load_microtan_cassette)
+	CONFIG_DEVICE_CASSETTE(1,		NULL)
 	CONFIG_DEVICE_SNAPSHOT_DELAY(	"m65\0", microtan, 0.5)
 	CONFIG_DEVICE_QUICKLOAD_DELAY(	"hex\0", microtan_hexfile, 0.5)
 SYSTEM_CONFIG_END

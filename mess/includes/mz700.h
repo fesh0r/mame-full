@@ -22,11 +22,9 @@ extern MACHINE_STOP(mz700);
 
 DEVICE_LOAD( mz700_cassette );
 
-extern INTERRUPT_GEN(mz700_interrupt);
-
-extern READ_HANDLER ( mz700_mmio_r );
-extern WRITE_HANDLER ( mz700_mmio_w );
-extern WRITE_HANDLER ( mz700_bank_w );
+READ_HANDLER ( mz700_mmio_r );
+WRITE_HANDLER ( mz700_mmio_w );
+WRITE_HANDLER ( mz700_bank_w );
 
 /* from src/mess/vidhrdw/mz700.c */
 

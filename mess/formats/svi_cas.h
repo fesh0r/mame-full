@@ -1,8 +1,17 @@
-/*
- * converts fMSX's .cas files into samples for the MSX driver
- */
+/*********************************************************************
 
-#include "driver.h"
+	svi_cas.h
 
-int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen);
+	Format code for SVI casette files
+
+*********************************************************************/
+
+#ifndef SVI_CAS_H
+#define SVI_CAS_H
+
+#include "cassimg.h"
+
+CASSETTE_FORMATLIST_EXTERN(svi_cassette_formats);
+
+#endif /* SVI_CAS_H */
 

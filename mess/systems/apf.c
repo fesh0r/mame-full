@@ -8,6 +8,8 @@
 #include "machine/6821pia.h"
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
+#include "devices/cassette.h"
+#include "formats/apf_apt.h"
 
  /*
 0000- 2000-2003 PIA of M1000. is itself repeated until 3fff. 
@@ -275,9 +277,13 @@ static WRITE_HANDLER(apf_imagination_pia_out_b_func)
 	keyboard_data = readinputport(keyboard_line+4);
 
 	/* bit 4: cassette motor control */
-	device_status(image_from_devtype_and_index(IO_CASSETTE,0), ((data>>4) & 0x01));
+	cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),
+		(data & 0x10) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+		CASSETTE_MASK_MOTOR);
+
 	/* bit 6: cassette write */
-	device_output(image_from_devtype_and_index(IO_CASSETTE,0), (data & (1<<6)) ? -32768 : 32767);
+	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0),
+		(data & 0x40) ? -1.0 : 1.0);
 
 
 	logerror("pia 1 b w: %04x %02x\n",offset,data);
@@ -779,7 +785,7 @@ ROM_START(apfm1000)
 ROM_END
 
 SYSTEM_CONFIG_START( apfimag )
-	CONFIG_DEVICE_CASSETTE			(1, "apt\0", device_load_apf_cassette)
+	CONFIG_DEVICE_CASSETTE			(1, apf_cassette_formats)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "apd\0", device_load_apfimag_floppy)
 SYSTEM_CONFIG_END
 

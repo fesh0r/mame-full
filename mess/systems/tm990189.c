@@ -222,15 +222,6 @@ static void machine_init_tm990_189_v(void)
 }
 
 
-static DEVICE_LOAD( tm990_189_cassette )
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, &args);
-}
-
-
 /*
 	tm990_189 video emulation.
 
@@ -530,8 +521,7 @@ static WRITE_HANDLER(ext_instr_decode)
 		LED_state |= 0x20;
 		{
 			mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
-
-			device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
+			cassette_change_state(img, CASSETTE_MOTOR_ENABLED, CASSETTE_MASK_MOTOR);
 		}
 		break;
 
@@ -539,8 +529,7 @@ static WRITE_HANDLER(ext_instr_decode)
 		LED_state &= ~0x20;
 		{
 			mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
-
-			device_status(img, device_status(img, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+			cassette_change_state(img, CASSETTE_MOTOR_DISABLED, CASSETTE_MASK_MOTOR);
 		}
 		break;
 
@@ -1025,7 +1014,7 @@ INPUT_PORTS_END
 
 SYSTEM_CONFIG_START(tm990_189)
 	/* a tape interface and a rs232 interface... */
-	CONFIG_DEVICE_CASSETTE		(1, "",		device_load_tm990_189_cassette)
+	CONFIG_DEVICE_CASSETTE		(1, NULL)
 	CONFIG_DEVICE_LEGACY		(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_tm990_189_rs232,	device_unload_tm990_189_rs232,	NULL)
 SYSTEM_CONFIG_END
 

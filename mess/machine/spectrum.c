@@ -1079,37 +1079,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  SPECTRUM WAVE CASSETTE SUPPORT
 --------------------------------------------------*/
 
-DEVICE_LOAD( spectrum_cassette )
-{
-	struct cassette_args args;
-
-	TapePosition = 0;
-	if (!image_has_been_created(image) && !strcmpi(image_filetype(image), "tap"))
-	{
-		cassette_snapshot_size = mame_fsize(file);
-		cassette_snapshot = image_malloc(image, cassette_snapshot_size);
-		if (!cassette_snapshot)
-			return INIT_FAIL;
-		mame_fread(file, cassette_snapshot, cassette_snapshot_size);
-		return INIT_PASS;
-	}
-	else
-	{
-		cassette_snapshot = NULL;
-		cassette_snapshot_size = 0;
-		memset(&args, 0, sizeof(args));
-		args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-		return cassette_init(image, file, &args);
-	}
-}
-
-DEVICE_UNLOAD( spectrum_cassette )
-{
-	cassette_exit(image);
-	cassette_snapshot = NULL;
-	cassette_snapshot_size = 0;
-}
-
 /*************************************
  *
  *      Interrupt handlers.

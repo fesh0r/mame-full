@@ -3,7 +3,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 #include "devices/cassette.h"
-#include "includes/dragon.h"		/* for coco_cassette_init() */
+#include "formats/coco_cas.h"
 #include "inputx.h"
 
 
@@ -161,7 +161,7 @@ ROM_START(mc10)
 ROM_END
 
 SYSTEM_CONFIG_START(mc10)
-	CONFIG_DEVICE_CASSETTE(1, "cas\0", device_load_coco_cassette)
+	CONFIG_DEVICE_CASSETTEX	(1, coco_cassette_formats, CASSETTE_PLAY )
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE   INPUT 	INIT	  CONFIG   COMPANY               FULLNAME */

@@ -13,6 +13,8 @@
 #include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "devices/cartslot.h"
+#include "devices/cassette.h"
+#include "formats/svi_cas.h"
 
 
 static MEMORY_READ_START (readmem)
@@ -374,7 +376,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_CASSETTE			(1,	"cas\0",	device_load_svi318_cassette)
+	CONFIG_DEVICE_CASSETTE			(1,	svi_cassette_formats)
 	CONFIG_DEVICE_CARTSLOT_OPT		(1,	"rom\0",	NULL, NULL, device_load_svi318_cart, device_unload_svi318_cart, NULL, NULL)
 #ifdef SVI_DISK
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2,	"dsk\0",	device_load_svi318_floppy)

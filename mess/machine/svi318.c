@@ -20,6 +20,7 @@
 #include "vidhrdw/tms9928a.h"
 #include "devices/basicdsk.h"
 #include "devices/printer.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 static SVI_318 svi;
@@ -140,24 +141,24 @@ Bit 0: Keyboard: Line select 0
 */
 static WRITE_HANDLER ( svi318_ppi_port_c_w )
 {
-	static int old_val = 0xff;
 	int val;
 
     /* key click */
-    if ( (old_val ^ data) & 0xc0)
-		{
-		val = (data & 0x80) ? 0x3e : 0;
-		val += (data & 0x40) ? 0x3e : 0;
-        DAC_signed_data_w (0, val);
-		}
-    /* cassette motor on/off */
-    if (svi318_cassette_present (0) )
-        device_status(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x10) ? 0 : 1);
-    /* cassette signal write */
-    if ( (old_val ^ data) & 0x20)
-        device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x20) ? -32767 : 32767);
+	val = (data & 0x80) ? 0x3e : 0;
+	val += (data & 0x40) ? 0x3e : 0;
+    DAC_signed_data_w (0, val);
 
-	old_val = data;
+	/* cassette motor on/off */
+    if (svi318_cassette_present (0) )
+	{
+		cassette_change_state(
+			image_from_devtype_and_index(IO_CASSETTE, 0),
+			(data & 0x10) ? CASSETTE_MOTOR_DISABLED : CASSETTE_MOTOR_ENABLED,
+			CASSETTE_MOTOR_DISABLED);
+	}
+
+    /* cassette signal write */
+	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x20) ? -1.0 : +1.0);
 }
 
 static ppi8255_interface svi318_ppi8255_interface =
@@ -606,95 +607,6 @@ static void svi318_set_banks ()
 /*
 ** Cassette
 */
-
-
-static INT16* cas_samples;
-static int cas_len;
-
-static int svi318_cassette_fill_wave (INT16* samples, int wavlen, UINT8* casdata)
-	{
-	if (casdata == CODE_HEADER || casdata == CODE_TRAILER)
-		return 0;
-
-	if (wavlen < cas_len)
-		{
-		logerror ("Not enough space to store converted cas file!\n");
-		return 0;
-		}
-
-	memcpy (samples, cas_samples, cas_len * 2);
-
-	return cas_len;
-	}
-
-static int check_svi_cas (mame_file *f)
-	{
-	UINT8* casdata;
-	int caslen, ret;
-
-    caslen = mame_fsize (f);
-	if (caslen < 9) return -1;
-
-    casdata = (UINT8*)malloc (caslen);
-    if (!casdata)
-		{
-       	logerror ("cas2wav: out of memory!\n");
-       	return -1;
-   		}
-
-    mame_fseek (f, 0, SEEK_SET);
- 	if (caslen != mame_fread (f, casdata, caslen) ) return -1;
-   	mame_fseek (f, 0, SEEK_SET);
-
-    ret = svi_cas_to_wav (casdata, caslen, &cas_samples, &cas_len);
-    if (ret == 2)
-	logerror ("cas2wav: out of memory\n");
-    else if (ret)
-	logerror ("cas2wav: conversion error\n");
-
-    free (casdata);
-
-    return ret;
-}
-
-DEVICE_LOAD( svi318_cassette )
-{
-	int ret;
-
-	if (! image_has_been_created(image))
-	{
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-		/* for cas files */
-		cas_samples = NULL;
-		cas_len = -1;
-		if (!check_svi_cas (file) )
-		{
-			wa.smpfreq = 22050;
-			wa.fill_wave = svi318_cassette_fill_wave;
-			wa.header_samples = cas_len;
-			wa.trailer_samples = 0;
-			wa.chunk_size = cas_len;
-			wa.chunk_samples = 0;
-		}
-		ret = device_open(image, 0,&wa);
-		free (cas_samples);
-		cas_samples = NULL;
-		cas_len = -1;
-
-		return (ret ? INIT_FAIL : INIT_PASS);
-	}
-	else
-	{
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-		wa.smpfreq = 44100;
-		if( device_open(image, 1,&wa) )
-			return INIT_FAIL;
-	}
-	return INIT_PASS;
-}
-
 int svi318_cassette_present (int id)
 {
 	return image_exists(image_from_devtype_and_index(IO_CASSETTE, id));

@@ -1,6 +1,7 @@
-#include "orictap.h"
+#include "oric_tap.h"
 
 /* this code based heavily on tap2wav by Fabrice Frances */
+#if 0
 
 #define ORIC_SYNC_BYTE	0x016
 
@@ -475,3 +476,20 @@ int oric_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 }
 	return p - buffer;
 }
+
+#endif
+
+/*struct CassetteFormat oric_tap_format =
+{
+	"tap\0",
+	oric_tap_identify,
+	oric_tap_load,
+	NULL
+};*/
+
+
+
+CASSETTE_FORMATLIST_START(oric_cassette_formats)
+	/* TODO - Readd support for Oric TAP files */
+	/*	CASSETTE_FORMAT(oric_tap_format) */
+CASSETTE_FORMATLIST_END

@@ -1,38 +1,230 @@
-#include <assert.h>
-#include <string.h>
+/*********************************************************************
 
+	wavfile.c
+
+	Format code for wave (*.wav) files
+
+*********************************************************************/
+
+#include "wavfile.h"
+#include "cassimg.h"
 #include "utils.h"
-#include "formats/wavfile.h"
 
-UINT32 wavfile_decode_header(const struct wav_header *hdr)
+static const char magic1[4] = "RIFF";
+static const char magic2[4] = "WAVE";
+static const char format_tag_id[4] = "fmt ";
+static const char data_tag_id[4] = "data";
+
+#define WAV_FORMAT_PCM		1
+
+
+
+static UINT32 get_leuint32(const void *ptr)
 {
+	UINT32 value;
+	memcpy(&value, ptr, sizeof(value));
+	return LITTLE_ENDIANIZE_INT32(value);
+}
+
+
+
+static UINT16 get_leuint16(const void *ptr)
+{
+	UINT16 value;
+	memcpy(&value, ptr, sizeof(value));
+	return LITTLE_ENDIANIZE_INT16(value);
+}
+
+
+
+static void put_leuint32(void *ptr, UINT32 value)
+{
+	value = LITTLE_ENDIANIZE_INT32(value);
+	memcpy(ptr, &value, sizeof(value));
+}
+
+
+
+static void put_leuint16(void *ptr, UINT16 value)
+{
+	value = LITTLE_ENDIANIZE_INT16(value);
+	memcpy(ptr, &value, sizeof(value));
+}
+
+
+
+static casserr_t wavfile_process(cassette_image *cassette, struct CassetteOptions *opts,
+	int read_waveform)
+{
+	UINT8 file_header[12];
+	UINT8 tag_header[8];
+	UINT8 format_tag[16];
+	UINT32 stated_size;
+	UINT32 tag_size;
+	UINT32 tag_samples;
+	UINT64 offset;
+	int format_specified = FALSE;
+
+	UINT16 format_type = 0;
+	UINT32 bytes_per_second = 0;
+	UINT16 block_align = 0;
+	int waveform_flags = 0;
+
+	cassette_image_read(cassette, file_header, 0, sizeof(file_header));
+	offset = sizeof(file_header);
+
+	if (memcmp(&file_header[0], magic1, 4))
+		return CASSETTE_ERROR_INVALIDIMAGE;
+	if (memcmp(&file_header[8], magic2, 4))
+		return CASSETTE_ERROR_INVALIDIMAGE;
+		
+	stated_size = get_leuint32(&file_header[4]) + 8;
+	if (stated_size > cassette_image_size(cassette))
+		return CASSETTE_ERROR_INVALIDIMAGE;
+
+	while(offset < stated_size)
+	{
+		cassette_image_read(cassette, tag_header, offset, sizeof(tag_header));
+		tag_size = get_leuint32(&tag_header[4]);
+		offset += sizeof(tag_header);
+
+		if (!memcmp(tag_header, format_tag_id, 4))
+		{
+			/* format tag */
+			if (format_specified || (tag_size != sizeof(format_tag)))
+				return CASSETTE_ERROR_INVALIDIMAGE;
+			format_specified = TRUE;
+
+			cassette_image_read(cassette, format_tag, offset, sizeof(format_tag));
+
+			format_type				= get_leuint16(&format_tag[0]);
+			opts->channels			= get_leuint16(&format_tag[2]);
+			opts->sample_frequency	= get_leuint32(&format_tag[4]);
+			bytes_per_second		= get_leuint32(&format_tag[8]);
+			block_align				= get_leuint16(&format_tag[12]);
+			opts->bits_per_sample	= get_leuint16(&format_tag[14]);
+
+			if (format_type != WAV_FORMAT_PCM)
+				return CASSETTE_ERROR_INVALIDIMAGE;
+			if (opts->sample_frequency * opts->bits_per_sample * opts->channels / 8 != bytes_per_second)
+				return CASSETTE_ERROR_INVALIDIMAGE;
+
+			switch(opts->bits_per_sample) {
+			case 8:
+				waveform_flags = CASSETTE_WAVEFORM_8BIT;
+				break;
+			case 16:
+				waveform_flags = CASSETTE_WAVEFORM_16BITLE;
+				break;
+			case 32:
+				waveform_flags = CASSETTE_WAVEFORM_32BITLE;
+				break;
+			default:
+				return CASSETTE_ERROR_INVALIDIMAGE;
+			}
+		}
+		else if (!memcmp(tag_header, data_tag_id, 4))
+		{
+			/* data tag */
+			if (!format_specified)
+				return CASSETTE_ERROR_INVALIDIMAGE;
+
+			if (read_waveform)
+			{
+				tag_samples = tag_size / (opts->bits_per_sample / 8) / opts->channels; 
+				cassette_read_samples(cassette, opts->channels, 0.0, tag_samples / ((double) opts->sample_frequency),
+					tag_samples, offset, waveform_flags);
+			}
+		}
+		else
+		{
+			/* ignore other tags */
+		}
+		offset += tag_size;
+	}
+
+	return CASSETTE_ERROR_SUCCESS;
+}
+
+
+
+static casserr_t wavfile_identify(cassette_image *cassette, struct CassetteOptions *opts)
+{
+	return wavfile_process(cassette, opts, FALSE);
+}
+
+
+
+static casserr_t wavfile_load(cassette_image *cassette)
+{
+	struct CassetteOptions opts;
+	memset(&opts, 0, sizeof(opts));
+	return wavfile_process(cassette, &opts, TRUE);
+}
+
+
+
+static casserr_t wavfile_save(cassette_image *cassette, const struct CassetteInfo *info)
+{
+	casserr_t err;
+	UINT8 consolidated_header[12 + 8 + 16 + 8];
+	UINT8 *header				= &consolidated_header[0];
+	UINT8 *format_tag_header	= &consolidated_header[12];
+	UINT8 *format_tag_data		= &consolidated_header[12 + 8];
+	UINT8 *data_tag_header		= &consolidated_header[12 + 8 + 16];
 	UINT32 file_size;
+	UINT32 bytes_per_second;
+	UINT16 bits_per_sample;
+	UINT32 data_size;
+	size_t bytes_per_sample = 2;
+	int waveform_flags = CASSETTE_WAVEFORM_16BITLE;
+	UINT16 block_align;
 
-	assert(sizeof(struct wav_header) == 12);
+	bits_per_sample = (UINT16) (bytes_per_sample * 8);
+	bytes_per_second = info->sample_frequency * bytes_per_sample * info->channels;
+	data_size = (UINT32) (info->sample_count * bytes_per_sample * info->channels);
+	file_size = data_size + sizeof(consolidated_header) - 8;
+	block_align = (UINT16) (bytes_per_sample * info->channels);
 
-	if (memcmp(hdr->magic1, "RIFF", 4))
-		return 0;
-	if (memcmp(hdr->magic2, "WAVE", 4))
-		return 0;
-	
-	file_size = LITTLE_ENDIANIZE_INT32(hdr->file_size);
-	return file_size;
+	/* set up header */
+	memcpy(&header[0],					magic1, 4);
+	memcpy(&header[8],					magic2, 4);
+	put_leuint32(&header[4],			file_size);
+
+	/* set up format tag */
+	memcpy(&format_tag_header[0],		format_tag_id, 4);
+	put_leuint32(&format_tag_header[4],	16);
+	put_leuint16(&format_tag_data[0],	WAV_FORMAT_PCM);
+	put_leuint16(&format_tag_data[2],	info->channels);
+	put_leuint32(&format_tag_data[4],	info->sample_frequency);
+	put_leuint32(&format_tag_data[8],	bytes_per_second);
+	put_leuint16(&format_tag_data[12],	block_align);
+	put_leuint16(&format_tag_data[14],	bits_per_sample);
+
+	/* set up data tag */
+	memcpy(&data_tag_header[0],			data_tag_id, 4);
+	put_leuint32(&data_tag_header[4],	data_size);
+
+	/* write consolidated header */
+	cassette_image_write(cassette, consolidated_header, 0, sizeof(consolidated_header));
+
+	/* write out the actual data */
+	err = cassette_write_samples(cassette, info->channels, 0.0, info->sample_count
+		/ (double) info->sample_frequency, info->sample_count, sizeof(consolidated_header),
+		waveform_flags);
+	if (err)
+		return err;
+
+	return CASSETTE_ERROR_SUCCESS;
 }
 
-int wavfile_decode_tag(const struct wav_tag *tag, UINT32 *tag_size)
+
+
+struct CassetteFormat wavfile_format =
 {
-	int tag_type;
-
-	if (tag_size)
-		*tag_size = LITTLE_ENDIANIZE_INT32(tag->tag_size);
-
-	if (!memcmp(tag->tag_type, "fmt ", 4))
-		tag_type = WAV_TAGTYPE_FMT;
-	else if (!memcmp(tag->tag_type, "data", 4))
-		tag_type = WAV_TAGTYPE_DATA;
-	else
-		tag_type = WAV_TAGTYPE_UNKNOWN;
-
-	return tag_type;
-}
+	"wav\0",
+	wavfile_identify,
+	wavfile_load,
+	wavfile_save
+};
 

@@ -1,5 +1,14 @@
+/**************************************************************************
+
+	coco_cas.c
+
+	Format code for Sord M5 Cassettes
+
+**************************************************************************/
+
 #include "sord_cas.h"
 
+#if 0
 #define CAS_SAMPLERATE     22050   // output samplerate
 #define CAS_SAMPLELEN      14      // length in Hz of one short sample
 #define CAS_SILENCE        1       // silence in seconds
@@ -13,10 +22,10 @@ int sord_cas_to_wav_size( UINT8 *casdata, int caslen)
 	int wavlen, err;
 	
 	err = sord_cas_to_wav( casdata, caslen, NULL, &wavlen);
-	return ((err==SORD_CAS_ERROR_SUCCESS)?wavlen:-1);
+	return ((err==CASSETTE_ERROR_SUCCESS)?wavlen:-1);
 }
 
-int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
+casserr_t sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 {
 	int cas_pos, samples_size, samples_pos, size;
 	INT16 *samples, *nsamples;
@@ -27,12 +36,12 @@ int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 
 	// check header
 	if (caslen < 16) return 1;
-	if (memcmp( casdata, CasHeader, sizeof(CasHeader)) != 0) return SORD_CAS_ERROR_CORRUPTIMAGE;
+	if (memcmp( casdata, CasHeader, sizeof(CasHeader)) != 0) return CASSETTE_ERROR_INVALIDIMAGE;
 	cas_pos = 16;
 	// alloc mem (size not really important)
 	samples_size = 666;
 	samples = (INT16*) malloc( samples_size * 2);
-	if (!samples) return SORD_CAS_ERROR_OUTOFMEMORY;
+	if (!samples) return CASSETTE_ERROR_OUTOFMEMORY;
 	//
 	iSampSize = (CAS_SAMPLELEN * ((float)CAS_SAMPLERATE / 44100)) / 2;
 	iSampLeft = 0;
@@ -45,7 +54,7 @@ int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 		if ((iBlockType != 'H') && (iBlockType != 'D'))
 		{
 			free( samples);
-			return SORD_CAS_ERROR_CORRUPTIMAGE;
+			return CASSETTE_ERROR_INVALIDIMAGE;
 		}
 		// get block size
 		iBlockSize = casdata[cas_pos+1];
@@ -63,7 +72,7 @@ int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 			if (!nsamples)
 			{
 				free( samples);
-				return SORD_CAS_ERROR_OUTOFMEMORY;
+				return CASSETTE_ERROR_OUTOFMEMORY;
 			}
 			samples = nsamples;
 		}
@@ -101,7 +110,7 @@ int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 					if (iByte != (crc & 0xFF))
 					{
 						free( samples);
-						return SORD_CAS_ERROR_CORRUPTIMAGE;
+						return CASSETTE_ERROR_INVALIDIMAGE;
 					};
 				}
 				if (i > 2) crc += iByte;
@@ -143,4 +152,19 @@ int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 	//
 	return 0;
 }
+#endif
 
+/*struct CassetteFormat sordm5_cas_format =
+{
+	"tap\0",
+	oric_tap_identify,
+	oric_tap_load,
+	NULL
+};*/
+
+
+
+CASSETTE_FORMATLIST_START(sordm5_cassette_formats)
+	/* TODO - Readd support for Sord Cassette files files */
+	/*	CASSETTE_FORMAT(sordm5_cas_format) */
+CASSETTE_FORMATLIST_END

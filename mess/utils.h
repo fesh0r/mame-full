@@ -57,6 +57,14 @@
 #define MAX(a, b)		((a) > (b) ? (a) : (b))
 #endif /* MIN */
 
+#ifndef TRUE
+#define TRUE	1
+#endif
+
+#ifndef FALSE
+#define FALSE	0
+#endif
+
 /* -----------------------------------------------------------------------
  * strncpyz
  * strncatz
@@ -157,5 +165,7 @@ int compute_log2(int val);
 #define LITTLE_ENDIANIZE_INT16(x)	(FLIPENDIAN_INT16(x))
 #define LITTLE_ENDIANIZE_INT32(x)	(FLIPENDIAN_INT32(x))
 #endif /* LSB_FIRST */
+
+int findextension(const char *extensions, const char *ext);
 
 #endif /* UTILS_H */

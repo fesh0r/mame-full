@@ -73,6 +73,8 @@
 #include "vidhrdw/m6847.h"
 #include "includes/vtech1.h"
 #include "devices/snapquik.h"
+#include "devices/cassette.h"
+#include "formats/vt_cas.h"
 
 #define VERBOSE 0
 
@@ -417,7 +419,7 @@ ROM_END
 ***************************************************************************/
 
 SYSTEM_CONFIG_START(vtech1)
-	CONFIG_DEVICE_CASSETTE(			1,	"cas\0", device_load_vtech1_cassette )
+	CONFIG_DEVICE_CASSETTE(			1,	vt_cassette_formats )
 	CONFIG_DEVICE_SNAPSHOT_DELAY(		"vz\0",  vtech1, 0.5)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2,	"dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, device_load_vtech1_floppy, NULL, NULL)
 SYSTEM_CONFIG_END

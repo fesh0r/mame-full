@@ -1,13 +1,16 @@
-/*
- * converts Sord M5 .cas files into samples for the SORD driver
- */
+/*********************************************************************
 
-#include "driver.h"
+	sord_cas.h
 
-#define SORD_CAS_ERROR_SUCCESS        0
-#define SORD_CAS_ERROR_CORRUPTIMAGE   1
-#define SORD_CAS_ERROR_OUTOFMEMORY    2
+	Format code for Sord M5 casette files
 
-int sord_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen);
-int sord_cas_to_wav_size (UINT8 *casdata, int caslen);
+*********************************************************************/
 
+#ifndef SORD_CAS_H
+#define SORD_CAS_H
+
+#include "cassimg.h"
+
+CASSETTE_FORMATLIST_EXTERN(sordm5_cassette_formats);
+
+#endif /* SORD_CAS_H */

@@ -3,7 +3,6 @@ MACHINE_INIT( mbee );
 
 void mbee_interrupt(void);
 
-DEVICE_LOAD( mbee_cassette );
 DEVICE_LOAD( mbee_cart );
 
 READ_HANDLER ( mbee_pio_r );

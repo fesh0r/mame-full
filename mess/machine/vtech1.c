@@ -30,6 +30,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/m6847.h"
 #include "includes/vtech1.h"
+#include "devices/cassette.h"
 #include "cpu/z80/z80.h"
 #include "image.h"
 
@@ -121,158 +122,13 @@ MACHINE_INIT( laser310 )
 /***************************************************************************
  * CASSETTE HANDLING
  ***************************************************************************/
-static mess_image *cassette_image(void)
+
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
 
-/*
-int vtech1_cassette_id(int id)
-{
-	UINT8 buff[256];
-    mame_file *file;
 
-	file = image_fopen(cassette_image(), FILETYPE_IMAGE, OSD_FOPEN_READ);
-    if( file )
-    {
-		int i;
-
-        mame_fread(file, buff, sizeof(buff));
-
-        for( i = 0; i < 128; i++ )
-			if( buff[i] != 0x80 )
-				return 1;
-		for( i = 128; i < 128+5; i++ )
-			if( buff[i] != 0xfe )
-				return 1;
-		for( i = 128+5+1; i < 128+5+1+17; i++ )
-		{
-			if( buff[i] == 0x00 )
-				break;
-		}
-		if( i == 128+5+1+17 )
-			return 1;
-        if( buff[128+5] == 0xf0 )
-        {
-			logerror("vtech1_cassette_id: BASIC magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-			return ID_OK;
-        }
-		if( buff[128+5] == 0xf1 )
-        {
-			logerror("vtech1_cassette_id: MCODE magic $%02X '%s' found\n", buff[128+5], buff+128+5+1);
-			return ID_OK;
-        }
-    }
-	return ID_FAILED;
-}
-*/
-
-#define LO	-32768
-#define HI	+32767
-
-#define BITSAMPLES	6
-#define BYTESAMPLES 8*BITSAMPLES
-#define SILENCE 8000
-
-static INT16 *fill_wave_byte(INT16 *buffer, int byte)
-{
-	int i;
-
-    for( i = 7; i >= 0; i-- )
-	{
-		*buffer++ = HI; 	/* initial cycle */
-		*buffer++ = LO;
-		if( (byte >> i) & 1 )
-		{
-			*buffer++ = HI; /* two more cycles */
-            *buffer++ = LO;
-			*buffer++ = HI;
-            *buffer++ = LO;
-        }
-		else
-		{
-			*buffer++ = HI; /* one slow cycle */
-			*buffer++ = HI;
-			*buffer++ = LO;
-			*buffer++ = LO;
-        }
-	}
-    return buffer;
-}
-
-static int fill_wave(INT16 *buffer, int length, UINT8 *code)
-{
-	static int nullbyte;
-
-    if( code == CODE_HEADER )
-    {
-		int i;
-
-        if( length < SILENCE )
-			return -1;
-		for( i = 0; i < SILENCE; i++ )
-			*buffer++ = 0;
-
-		nullbyte = 0;
-
-        return SILENCE;
-    }
-
-	if( code == CODE_TRAILER )
-    {
-		int i;
-
-        /* silence at the end */
-		for( i = 0; i < length; i++ )
-			*buffer++ = 0;
-        return length;
-    }
-
-    if( length < BYTESAMPLES )
-		return -1;
-
-	buffer = fill_wave_byte(buffer, *code);
-
-    if( !nullbyte && *code == 0 )
-	{
-		int i;
-		for( i = 0; i < 2*BITSAMPLES; i++ )
-			*buffer++ = LO;
-        nullbyte = 1;
-		return BYTESAMPLES + 2 * BITSAMPLES;
-	}
-
-    return BYTESAMPLES;
-}
-
-DEVICE_LOAD( vtech1_cassette )
-{
-	if (! image_has_been_created(image))
-	{
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-		wa.fill_wave = fill_wave;
-		wa.smpfreq = 600*BITSAMPLES;
-		wa.header_samples = SILENCE;
-		wa.trailer_samples = SILENCE;
-		wa.chunk_size = 1;
-		wa.chunk_samples = BYTESAMPLES;
-		if (device_open(cassette_image(), 0, &wa) )
-			return INIT_FAIL;
-		return INIT_PASS;
-	}
-	else
-    {
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-		wa.fill_wave = fill_wave;
-		wa.smpfreq = 600*BITSAMPLES;
-		if( device_open(cassette_image(), 1, &wa) )
-			return INIT_FAIL;
-        return INIT_PASS;
-	}
-    return INIT_PASS;
-}
 
 /***************************************************************************
  * SNAPSHOT HANDLING
@@ -603,7 +459,8 @@ READ_HANDLER( vtech1_joystick_r )
 READ_HANDLER( vtech1_keyboard_r )
 {
 	static int cassette_bit = 0;
-	int level, data = 0xff;
+	int data = 0xff;
+	double level;
 
     if( !(offset & 0x01) )
     {
@@ -658,10 +515,10 @@ READ_HANDLER( vtech1_keyboard_r )
         data &= ~0x80;
 
 	/* cassette input is bit 5 (0x40) */
-	level = device_input(cassette_image());
-	if( level < -511 )
+	level = cassette_input(cassette_device_image());
+	if( level < -0.008 )
 		cassette_bit = 0x00;
-	if( level > +511 )
+	if( level > +0.008 )
 		cassette_bit = 0x40;
 
 	data &= ~cassette_bit;
@@ -685,8 +542,8 @@ WRITE_HANDLER( vtech1_latch_w )
 	/* cassette data bits toggle? */
 	if( (vtech1_latch ^ data ) & 0x06 )
 	{
-		static int amp[4] = {32767,16383,-16384,-32768};
-		device_output(cassette_image(), amp[(data >> 1) & 3]);
+		static double amp[4] = { +1.0, +0.5, -0.5, -1.0 };
+		cassette_output(cassette_device_image(), amp[(data >> 1) & 3]);
 	}
 
 	/* speaker data bits toggle? */

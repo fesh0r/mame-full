@@ -14,6 +14,8 @@
 #include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "devices/cartslot.h"
+#include "devices/cassette.h"
+#include "formats/fmsx_cas.h"
 
 static MEMORY_READ_START (readmem)
     { 0x0000, 0x1fff, MRA_BANK1 },
@@ -837,7 +839,7 @@ ROM_END
 */
 
 SYSTEM_CONFIG_START(msx)
-	CONFIG_DEVICE_CASSETTE(1, "cas\0", device_load_msx_cassette)
+	CONFIG_DEVICE_CASSETTE(1, fmsx_cassette_formats)
 	CONFIG_DEVICE_PRINTER(1)
 	CONFIG_DEVICE_CARTSLOT_OPT(MSX_MAX_CARTS, "mx1\0rom\0", NULL, NULL, device_load_msx_cart, device_unload_msx_cart, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK(2, "dsk\0", device_load_msx_floppy)

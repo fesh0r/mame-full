@@ -12,12 +12,11 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "devices/cassette.h"
+#include "devices/snapquik.h"
 #include "cpu/i8085/i8085.h"
 #include "includes/lviv.h"
 #include "machine/8255ppi.h"
-#include "formats/lviv_lvt.h"
 #include "image.h"
-#include "devices/snapquik.h"
 
 #define LVIV_SNAPSHOT_SIZE	82219
 
@@ -62,7 +61,7 @@ static READ_HANDLER ( lviv_ppi_0_portb_r )
 static READ_HANDLER ( lviv_ppi_0_portc_r )
 {
 	UINT8 data = lviv_ppi_port_outputs[0][2] & 0x0f;
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038)
 		data |= 0x10;
 	if (lviv_ppi_port_outputs[0][0] & readinputport(13))
 		data |= 0x80;
@@ -85,7 +84,7 @@ static WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off 
 	lviv_ppi_port_outputs[0][2] = data;
 	if (lviv_ppi_port_outputs[0][1]&0x80)
 		speaker_level_w(0, data&0x01);
-	device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
+	cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -1.0 : 1.0);
 	lviv_update_memory();
 }
 
@@ -241,30 +240,6 @@ MACHINE_INIT( lviv )
 	/*memset(mess_ram, 0, sizeof(unsigned char)*0xffff);*/
 }
 
-static void lviv_cassette_calcchunkinfo(mame_file *file, int *chunk_size, int *chunk_samples)
-{
-	int lviv_wave_size = mame_fsize(file);
-	*chunk_size = lviv_wave_size;
-	*chunk_samples = lviv_cassette_calculate_size_in_samples(lviv_wave_size);
-}
-
-static struct cassette_args lviv_cassette_args =
-{
-	0,						/* initial_status */
-	lviv_cassette_fill_wave,									/* fill_wave */
-	lviv_cassette_calcchunkinfo,			/* calc_chunk_info */
-	44100,											/* input_smpfreq */
-	0,						/* header_samples */
-	0,						/* trailer_samples */
-	0,												/* NA */
-	0,												/* NA */
-	44100											/* create_smpfreq */
-};
-
-DEVICE_LOAD( lviv_cassette )
-{
-	return cassette_init(image, file, &lviv_cassette_args);
-}
 
 /*******************************************************************************
 Lviv snapshot files (SAV)

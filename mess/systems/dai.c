@@ -64,6 +64,7 @@ Timings:
 #include "includes/pit8253.h"
 #include "machine/8255ppi.h"
 #include "machine/tms5501.h"
+#include "devices/cassette.h"
 
 /* I/O ports */
 PORT_READ_START( dai_readport )
@@ -231,7 +232,7 @@ ROM_END
 
 SYSTEM_CONFIG_START(dai)
 	CONFIG_RAM_DEFAULT(48 * 1024)
-	CONFIG_DEVICE_CASSETTE(1, "", device_load_dai_cassette)
+	CONFIG_DEVICE_CASSETTE(1, NULL)
 SYSTEM_CONFIG_END
 
 

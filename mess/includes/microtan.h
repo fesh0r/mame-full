@@ -29,8 +29,6 @@ extern UINT8 *microtan_chunky_buffer;
 void init_microtan(void);
 MACHINE_INIT( microtan );
 
-DEVICE_LOAD( microtan_cassette );
-
 SNAPSHOT_LOAD( microtan );
 QUICKLOAD_LOAD( microtan_hexfile );
 

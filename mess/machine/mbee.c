@@ -1,4 +1,5 @@
 /***************************************************************************
+
 	microbee.c
 
     machine driver
@@ -41,7 +42,7 @@ MACHINE_INIT( mbee )
     wd179x_init(WD_TYPE_179X,mbee_fdc_callback);
 }
 
-static mess_image *cassette_image(void)
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -63,7 +64,7 @@ READ_HANDLER ( mbee_pio_r )
 		return data;
 
     data |= 0x01;
-	if (device_input(cassette_image()) > 255)
+	if (cassette_input(cassette_device_image()) > 0.03)
 		data &= ~0x01;
 
     return data;
@@ -74,7 +75,7 @@ WRITE_HANDLER ( mbee_pio_w )
     z80pio_0_w(offset,data);
 	if( offset == 2 )
 	{
-		device_output(cassette_image(), (data & 0x02) ? -32768 : 32767);
+		cassette_output(cassette_device_image(), (data & 0x02) ? -1.0 : +1.0);
 		speaker_level_w(0, (data >> 6) & 1);
 	}
 }
@@ -133,27 +134,10 @@ WRITE_HANDLER ( mbee_fdc_motor_w )
 
 void mbee_interrupt(void)
 {
-	int tape = readinputport(9);
-
-	if( tape & 1 )
-		device_status(cassette_image(), 1);
-	if( tape & 2 )
-		device_status(cassette_image(), 0);
-	if( tape & 4 )
-		device_seek(cassette_image(), 0, SEEK_SET);
-
     /* once per frame, pulse the PIO B bit 7 */
     logerror("mbee interrupt\n");
 	z80pio_p_w(0, 1, 0x80);
     z80pio_p_w(0, 1, 0x00);
-}
-
-DEVICE_LOAD( mbee_cassette )
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = 11025;
-	return cassette_init(image, file, &args);
 }
 
 DEVICE_LOAD( mbee_cart )

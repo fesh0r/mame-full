@@ -1,4 +1,4 @@
-
+#include <string.h>
 #include "fmsx_cas.h"
 
 #define CAS_PERIOD        (16)
@@ -133,3 +133,17 @@ int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 	return 0;
 	}
 
+/*struct CassetteFormat fmsx_cas_format =
+{
+	"tap\0",
+	fmsx_cas_identify,
+	fmsx_cas_load,
+	NULL
+};*/
+
+
+
+CASSETTE_FORMATLIST_START(fmsx_cassette_formats)
+	/* TODO - Readd support for MSX Cassette files files */
+	/*	CASSETTE_FORMAT(fmsx_cas_format) */
+CASSETTE_FORMATLIST_END

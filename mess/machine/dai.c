@@ -233,8 +233,8 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 #endif
 		dai_cassette_motor[0] = (data&0x10)>>4;
 		dai_cassette_motor[1] = (data&0x20)>>5;
-		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), !dai_cassette_motor[0]);
-		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -32768 : 32767);
+		cassette_set_state(image_from_devtype_and_index(IO_CASSETTE, 0), !dai_cassette_motor[0]);
+		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & 0x01) ? -1.0 : 1.0);
 #if LOG_TAPE
 		logerror ("Cassette: motor 1: %02x motor 2: %02x\n", dai_cassette_motor[0], dai_cassette_motor[1]);
 #endif
@@ -268,12 +268,3 @@ WRITE_HANDLER( amd9511_w )
 {
 }
 
-
-DEVICE_LOAD( dai_cassette )
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.initial_status = WAVE_STATUS_MOTOR_INHIBIT;
-	args.create_smpfreq = 44100;
-	return cassette_init(image, file, &args);
-}

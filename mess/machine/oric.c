@@ -1,33 +1,33 @@
-/* ORIC driver */
+/*********************************************************************
 
-/* By:
+	machine/oric.c
 
+	Paul Cook
+	Kev Thacker
 
-  - Paul Cook
-  - Kev Thacker
+	Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver
+	http://oric.ifrance.com/oric/
 
-  Thankyou to Fabrice Frances for his ORIC documentation which helped with this driver
-  http://oric.ifrance.com/oric/
+	TODO:
+	- there are problems loading some .wav's. Try to fix these.
+	- fix more graphics display problems
+	- check the printer works
+	- fix more disc drive/wd179x problems so more software will run
 
-  TODO:
-   - there are problems loading some .wav's. Try to fix these.
-   - fix more graphics display problems
-   - check the printer works
-   - fix more disc drive/wd179x problems so more software will run
-*/
+*********************************************************************/
 
 
 #include <stdio.h>
 #include "driver.h"
 #include "includes/oric.h"
-#include "devices/basicdsk.h"
-#include "devices/mfmdisk.h"
-#include "devices/printer.h"
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
 #include "includes/6551.h"
 #include "includes/centroni.h"
-#include "formats/orictap.h"
+#include "devices/basicdsk.h"
+#include "devices/mfmdisk.h"
+#include "devices/printer.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 static int enable_logging = 0;
@@ -335,7 +335,7 @@ PB7
  */
 
 
-static mess_image *cassette_image(void)
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -349,11 +349,11 @@ static void oric_refresh_tape(int dummy)
 
 	data = 0;
 
-	if (device_input(cassette_image()) > 255)
-		data |=1;
+	if (cassette_input(cassette_device_image()) > 0.0038)
+		data |= 1;
 
 	/* "A simple cable to catch the vertical retrace signal !
-	 This cable connects the video output for the television/monitor
+		This cable connects the video output for the television/monitor
 	to the via cb1 input. Interrupts can be generated from the vertical
 	sync, and flicker free games can be produced */
 
@@ -365,24 +365,7 @@ static void oric_refresh_tape(int dummy)
 		data = input_port_9>>4;
 	}
 
-    via_set_input_cb1(0, data);
-
-#ifdef ORIC_DUMP_RAM
-	{
-		int input_port_data = readinputport(0);
-
-		if (((previous_input_port5^input_port_data) & 0x01)!=0)
-		{
-			if (input_port_data & 0x01)
-			{
-				logerror("do dump");
-                                oric_dump_video();
-			}
-		}
-		previous_input_port5 = input_port_data;
-	}
-#endif
-
+	via_set_input_cb1(0, data);
 }
 
 static unsigned char previous_portb_data = 0;
@@ -398,15 +381,16 @@ static WRITE_HANDLER ( oric_via_out_b_func )
 	if ((previous_portb_data^data) & (1<<6))
 	{
 		if (data & (1<<6))
-		{
-                        enable_logging = 1;
-		}
+			enable_logging = 1;
 	}
 
-	device_status(cassette_image(), ((data>>6) & 0x01));
+	cassette_change_state(
+		cassette_device_image(),
+		(data & 0x40) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+		CASSETTE_MOTOR_DISABLED);
 
 	/* cassette data out */
-	device_output(cassette_image(), (data & (1<<7)) ? -32768 : 32767);
+	cassette_output(cassette_device_image(), (data & (1<<7)) ? -1.0 : +1.0);
 
 
 	/* PRINTER STROBE */
@@ -1432,91 +1416,6 @@ WRITE_HANDLER ( oric_IO_w )
 	via_0_w(offset & 0x0f,data);
 }
 
-
-DEVICE_LOAD( oric_cassette )
-{
-	struct wave_args_legacy wa;
-
-	if (! image_has_been_created(image))
-	{
-		int oric_tap_size;
-
-		/* get size of .tap file */
-		oric_tap_size = mame_fsize(file);
-
-		logerror("oric .tap size: %04x\n",oric_tap_size);
-
-		if (oric_tap_size!=0)
-		{
-			UINT8 *oric_tap_data;
-
-			/* allocate a temporary buffer to hold .tap image */
-			/* this is used to calculate the number of samples that would be filled when this
-			file is converted */
-			oric_tap_data = (UINT8 *)malloc(oric_tap_size);
-
-			if (oric_tap_data!=NULL)
-			{
-				/* number of samples to generate */
-				int size_in_samples;
-
-				/* read data into temporary buffer */
-				mame_fread(file, oric_tap_data, oric_tap_size);
-
-				/* calculate size in samples */
-				size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
-
-				/* seek back to start */
-				mame_fseek(file, 0, SEEK_SET);
-
-				/* free temporary buffer */
-				free(oric_tap_data);
-
-				/* size of data in samples */
-				logerror("size in samples: %d\n",size_in_samples);
-
-
-				/* 30000, 416 */
-
-				/* internal calculation used in wave.c:
-
-				length =
-					wa->header_samples +
-					((mame_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
-					wa->trailer_samples;
-				*/
-
-
-				memset(&wa, 0, sizeof(&wa));
-				wa.file = file;
-				wa.chunk_size = oric_tap_size;
-				wa.chunk_samples = size_in_samples;
-				wa.smpfreq = ORIC_WAV_FREQUENCY;
-				wa.fill_wave = oric_cassette_fill_wave;
-				wa.header_samples = ORIC_WAVESAMPLES_HEADER;
-				wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
-				if( device_open(cassette_image(), 0, &wa) )
-					return INIT_FAIL;
-
-				return INIT_PASS;
-			}
-
-			return INIT_FAIL;
-		}
-	}
-	/*else*/
-	{
-		memset(&wa, 0, sizeof(&wa));
-		wa.file = file;
-		wa.smpfreq = 19200;
-		if( device_open(cassette_image(),1,&wa) )
-			return INIT_FAIL;
-
-		/* immediately inhibit/mute/play the output */
-		/*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
-		return INIT_PASS;
-	}
-}
 
 #if 0
 

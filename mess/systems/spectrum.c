@@ -146,6 +146,7 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "eventlst.h"
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
+#include "devices/cassette.h"
 
 /* +3 hardware */
 #include "includes/nec765.h"
@@ -2432,7 +2433,7 @@ ROM_START(pentagon)
 ROM_END
 
 SYSTEM_CONFIG_START(spectrum_common)
-	CONFIG_DEVICE_CASSETTEX(1,	"tap\0blk\0",	device_load_spectrum_cassette, device_unload_spectrum_cassette)
+	CONFIG_DEVICE_CASSETTE(1,	NULL)
 	CONFIG_DEVICE_SNAPSHOT(		"sna\0z80\0sp\0",	spectrum)
 	CONFIG_DEVICE_QUICKLOAD(	"scr\0",			spectrum)
 SYSTEM_CONFIG_END

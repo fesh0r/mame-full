@@ -463,14 +463,6 @@ void init_ti99_4p(void)
 	/*console_GROMs.data_ptr = memory_region(region_grom);*/
 }
 
-DEVICE_LOAD( ti99_cassette )
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, &args);
-}
-
 /*
 	Load ROM.  All files are in raw binary format.
 	1st ROM: GROM (up to 40kb)
@@ -2288,11 +2280,7 @@ static void ti99_8_PTGEN(int offset, int data)
 static void ti99_CS_motor(int offset, int data)
 {
 	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, offset-6);
-
-	if (data)
-		device_status(img, device_status(img, -1) & ~ WAVE_STATUS_MOTOR_INHIBIT);
-	else
-		device_status(img, device_status(img, -1) | WAVE_STATUS_MOTOR_INHIBIT);
+	cassette_change_state(img, data ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED, CASSETTE_MASK_MOTOR);
 }
 
 /*

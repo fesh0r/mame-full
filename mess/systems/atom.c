@@ -65,8 +65,9 @@ Hardware:	PPIA 8255
 #include "includes/i8271.h"
 #include "devices/basicdsk.h"
 #include "devices/flopdrv.h"
-#include "machine/6522via.h"
 #include "devices/printer.h"
+#include "devices/cassette.h"
+#include "machine/6522via.h"
 #include "includes/centroni.h"
 
 /* functions */
@@ -304,7 +305,7 @@ ROM_START (atomeb)
 ROM_END
 
 SYSTEM_CONFIG_START(atom)
-	CONFIG_DEVICE_CASSETTE			(1, "",			device_load_atom_cassette)
+	CONFIG_DEVICE_CASSETTE			(1, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(2, "ssd\0",	device_load_atom_floppy)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_QUICKLOAD			(	"atm\0",	atom)

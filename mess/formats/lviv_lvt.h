@@ -1,9 +1,16 @@
+/*********************************************************************
+
+	lviv_lvt.h
+
+	Format code for Lviv casette files
+
+*********************************************************************/
+
 #ifndef LVIV_LVT_H
 #define LVIV_LVT_H
 
-#include "driver.h"
+#include "cassimg.h"
 
-int lviv_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes);
-int lviv_cassette_calculate_size_in_samples(int length);
+CASSETTE_FORMATLIST_EXTERN(lviv_lvt_format);
 
 #endif /* LVIV_LVT_H */

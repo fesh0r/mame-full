@@ -13,7 +13,6 @@ MACHINE_INIT( laser110 );
 MACHINE_INIT( laser210 );
 MACHINE_INIT( laser310 );
 
-DEVICE_LOAD( vtech1_cassette );
 DEVICE_LOAD( vtech1_floppy );
 
 SNAPSHOT_LOAD( vtech1 );

@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "ioprocs.h"
+#include "utils.h"
 
 
 /*********************************************************************
@@ -105,6 +106,11 @@ void io_generic_write(struct io_generic *generic, const void *buffer, UINT64 off
 	size_t bytes_to_write;
 	UINT64 size;
 
+	if (offset > 0x29c50)
+	{
+		offset = offset;
+	}
+
 	size = io_generic_size(generic);
 
 	if (size < offset)
@@ -138,11 +144,11 @@ void io_generic_write_filler(struct io_generic *generic, UINT8 filler, UINT64 of
 	UINT8 buffer[512];
 	size_t this_length;
 
-	memset(buffer, filler, length > sizeof(buffer) ? sizeof(buffer) : length);
+	memset(buffer, filler, MIN(length, sizeof(buffer)));
 
 	while(length > 0)
 	{
-		this_length = length > sizeof(buffer) ? sizeof(buffer) : length;
+		this_length = MIN(length, sizeof(buffer));
 		io_generic_write(generic, buffer, offset, this_length);
 		offset += this_length;
 		length -= this_length;

@@ -16,17 +16,16 @@ extern PALETTE_INIT( kc85 );
 
 void kc85_video_set_blink_state(int data);
 
-extern VIDEO_START( kc85_3 );
-extern VIDEO_START( kc85_4 );
-extern VIDEO_UPDATE( kc85_3 );
-extern VIDEO_UPDATE( kc85_4 );
-extern MACHINE_INIT( kc85_3 );
-extern MACHINE_INIT( kc85_4 );
-extern MACHINE_INIT( kc85_4d );
+VIDEO_START( kc85_3 );
+VIDEO_START( kc85_4 );
+VIDEO_UPDATE( kc85_3 );
+VIDEO_UPDATE( kc85_4 );
+MACHINE_INIT( kc85_3 );
+MACHINE_INIT( kc85_4 );
+MACHINE_INIT( kc85_4d );
 
 /* cassette */
 DEVICE_LOAD( kc85_floppy );
-DEVICE_LOAD( kc_cassette );
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);

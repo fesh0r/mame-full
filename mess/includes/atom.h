@@ -22,9 +22,6 @@ DEVICE_LOAD( atom_floppy );
 READ_HANDLER(atom_via_r);
 WRITE_HANDLER(atom_via_w);
 
-/* for .WAV */
-DEVICE_LOAD( atom_cassette );
-
 READ_HANDLER(atom_eprom_box_r);
 WRITE_HANDLER(atom_eprom_box_w);
 void atom_eprom_box_init(void);

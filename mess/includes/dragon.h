@@ -90,9 +90,6 @@ MACHINE_STOP( coco );
 
 INTERRUPT_GEN( coco3_vh_interrupt );
 
-DEVICE_LOAD(coco_cassette);
-/*int coco3_cassette_init(mess_image *img);*/
-
 DEVICE_LOAD(coco_rom);
 DEVICE_LOAD(coco3_rom);
 DEVICE_UNLOAD(coco_rom);

@@ -64,6 +64,8 @@
  *****************************************************************************/
 
 #include "includes/mz700.h"
+#include "devices/cassette.h"
+#include "formats/mz_cas.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1
@@ -266,16 +268,12 @@ INPUT_PORTS_START( mz700 )
     PORT_BITX(0x80, 0x80, IPT_KEYBOARD, "F1",        KEYCODE_F1,          IP_JOY_NONE )
 
 	PORT_START /* KEY ROW 10 */
-	PORT_START /* joystick / tape control */
+	PORT_START /* joystick */
 	PORT_BIT( 0x01, 0x00, IPT_UNUSED												  )
 	PORT_BIT( 0x02, 0x00, IPT_JOYSTICK_UP	 | IPF_8WAY 							  )
 	PORT_BIT( 0x04, 0x00, IPT_JOYSTICK_DOWN  | IPF_8WAY 							  )
 	PORT_BIT( 0x08, 0x00, IPT_JOYSTICK_LEFT  | IPF_8WAY 							  )
 	PORT_BIT( 0x10, 0x00, IPT_JOYSTICK_RIGHT | IPF_8WAY 							  )
-    PORT_BITX(0x20, 0x00, IPT_KEYBOARD, "TAPE STOP", KEYCODE_F5,          IP_JOY_NONE )
-	PORT_BITX(0x40, 0x00, IPT_KEYBOARD, "TAPE PLAY", KEYCODE_F6,          IP_JOY_NONE )
-	PORT_BITX(0x80, 0x00, IPT_KEYBOARD, "TAPE REW",  KEYCODE_F7,          IP_JOY_NONE )
-
 INPUT_PORTS_END
 
 static struct GfxLayout char_layout =
@@ -306,55 +304,6 @@ static struct Wave_interface wave_interface =
 	1,
 	{ 50 }
 };
-
-#if 0
-
-static struct MachineDriver machine_driver_mz700 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3500000,	/* 3,5 MHz */
-			readmem_mz700,writemem_mz700,readport_mz700,writeport_mz700,
-			mz700_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	50, 2500,
-	1,					/* single CPU */
-	mz700_init_machine,
-	mz700_stop_machine, /* stop machine */
-
-	/* video hardware - include overscan */
-	40*8, 25*8, { 0*8, 40*8 - 1, 0*8, 25*8 - 1},
-	gfxdecodeinfo,
-	8,
-	2*256,
-	mz700_init_colors,		 /* convert color prom */
-
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	mz700_vh_start,
-	mz700_vh_stop,
-	mz700_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_BEEP,
-			&mz700_beep_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-		},
-    }
-};
-
-#else
-
 static MACHINE_DRIVER_START(mz700)
 
 	/* basic machine hardware */
@@ -364,7 +313,6 @@ static MACHINE_DRIVER_START(mz700)
 	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_MEMORY(readmem_mz700, writemem_mz700)
 	MDRV_CPU_PORTS(readport_mz700, writeport_mz700)
-	MDRV_CPU_VBLANK_INT(mz700_interrupt, 1)
 	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
 	MDRV_FRAMES_PER_SECOND(50)
@@ -395,80 +343,23 @@ static MACHINE_DRIVER_START(mz700)
 	MDRV_SOUND_ADD(WAVE, wave_interface)
 
 MACHINE_DRIVER_END
-
-#endif
-
-#if 0
-
-static struct MachineDriver machine_driver_mz800 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3500000,	/* 3,5 MHz */
-			readmem_mz800,writemem_mz800,readport_mz800,writeport_mz800,
-			mz700_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	50, 2500,
-	1,					/* single CPU */
-	mz700_init_machine,
-	mz700_stop_machine, /* stop machine */
-
-	/* video hardware - include overscan */
-	40*8, 25*8, { 0*8, 40*8 - 1, 0*8, 25*8 - 1},
-	gfxdecodeinfo,
-	8,
-	2*256,
-	mz700_init_colors,		 /* convert color prom */
-
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-	mz700_vh_start,
-	mz700_vh_stop,
-	mz700_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_BEEP,
-			&mz700_beep_interface
-        },
-        {
-            SOUND_WAVE,
-            &wave_interface
-		},
-    }
-};
-
-#else
 
 static MACHINE_DRIVER_START(mz800)
 
 	/* basic machine hardware */
 	/* Z80 CPU @ 3.5 MHz */
 	MDRV_CPU_ADD(Z80, 3500000)
-	/*MDRV_CPU_FLAGS(0)*/
-	/*MDRV_CPU_CONFIG(0)*/
 	MDRV_CPU_MEMORY(readmem_mz800, writemem_mz800)
 	MDRV_CPU_PORTS(readport_mz800, writeport_mz800)
-	MDRV_CPU_VBLANK_INT(mz700_interrupt, 1)
-	/*MDRV_CPU_PERIODIC_INT(func, rate)*/
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(2500)
-	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( mz700 )
 	MDRV_MACHINE_STOP( mz700 )
-	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - include overscan */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(40*8, 25*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8 - 1, 0*8, 25*8 - 1)
 
@@ -478,7 +369,6 @@ static MACHINE_DRIVER_START(mz800)
 
 	MDRV_PALETTE_INIT(mz700)
 	MDRV_VIDEO_START(mz700)
-	/*MDRV_VIDEO_EOF(mz700)*/
 	MDRV_VIDEO_UPDATE(mz700)
 
 	MDRV_SOUND_ATTRIBUTES(0)
@@ -487,7 +377,7 @@ static MACHINE_DRIVER_START(mz800)
 
 MACHINE_DRIVER_END
 
-#endif
+
 
 ROM_START(mz700)
 	ROM_REGION(0x18000,REGION_CPU1,0)
@@ -513,7 +403,7 @@ ROM_START(mz800)
 ROM_END
 
 SYSTEM_CONFIG_START(mz700)
-	CONFIG_DEVICE_CASSETTE(1, "m12\0", device_load_mz700_cassette)
+	CONFIG_DEVICE_CASSETTE(1, mz700_cassette_formats)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT	CONFIG	COMPANY      FULLNAME */

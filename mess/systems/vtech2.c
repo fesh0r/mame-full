@@ -65,8 +65,10 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "devices/cartslot.h"
 #include "includes/vtech2.h"
+#include "devices/cartslot.h"
+#include "devices/cassette.h"
+#include "formats/vt_cas.h"
 
 #define VERBOSE 0
 
@@ -323,12 +325,6 @@ INPUT_PORTS_START( laser500 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "DEL",         KEYCODE_DEL,        IP_JOY_NONE )
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "INS",         KEYCODE_INSERT,     IP_JOY_NONE )
 
-	PORT_START /* IN12 Tape control */
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape start",         KEYCODE_SLASH_PAD, IP_JOY_NONE )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape stop",          KEYCODE_ASTERISK,  IP_JOY_NONE )
-    PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape rewind",        KEYCODE_MINUS_PAD, IP_JOY_NONE )
-	PORT_BIT (0x1f, IP_ACTIVE_HIGH, IPT_UNUSED )
-
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout_80 =
@@ -482,21 +478,8 @@ static struct Wave_interface wave_interface = {
 	{ 50 }
 };
 
-static mess_image *cassette_image(void)
-{
-	return image_from_devtype_and_index(IO_CASSETTE, 0);
-}
-
 static INTERRUPT_GEN( vtech2_interrupt )
 {
-	int tape_control = readinputport(12);
-	if( tape_control & 0x80 )
-		device_status(cassette_image(), 1);
-	if( tape_control & 0x40 )
-		device_status(cassette_image(), 0);
-	if( tape_control & 0x20 )
-		device_seek(cassette_image(), 0, SEEK_SET);
-
 	cpu_set_irq_line(0, 0, PULSE_LINE);
 }
 
@@ -578,7 +561,7 @@ ROM_END
 ***************************************************************************/
 
 SYSTEM_CONFIG_START(laser)
-	CONFIG_DEVICE_CASSETTE(1, "cas\0", device_load_laser_cassette)
+	CONFIG_DEVICE_CASSETTE(1, vt_cassette_formats)
 	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_laser_cart, device_unload_laser_cart, NULL, NULL)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_laser_floppy, NULL, NULL)
 SYSTEM_CONFIG_END

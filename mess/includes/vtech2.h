@@ -13,7 +13,6 @@ DEVICE_LOAD( laser_cart );
 DEVICE_UNLOAD( laser_cart );
 
 DEVICE_LOAD( laser_floppy );
-DEVICE_LOAD( laser_cassette );
 
 extern READ_HANDLER ( laser_fdc_r );
 extern WRITE_HANDLER ( laser_fdc_w );

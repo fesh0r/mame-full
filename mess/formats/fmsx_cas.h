@@ -1,9 +1,16 @@
-/*
- * converts fMSX's .cas files into samples for the MSX driver
- */
+/*********************************************************************
 
-#include "driver.h"
+	fmsx_cas.h
 
-int fmsx_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen);
-int fmsx_cas_to_wav_size (UINT8 *casdata, int caslen);
+	Format code for MSX casette files
 
+*********************************************************************/
+
+#ifndef FMSX_CAS_H
+#define FMSX_CAS_H
+
+#include "cassimg.h"
+
+CASSETTE_FORMATLIST_EXTERN(fmsx_cassette_formats);
+
+#endif /* FMSX_CAS_H */

@@ -61,10 +61,9 @@
 #include "includes/6551.h"
 #include "vidhrdw/m6847.h"
 #include "formats/cocopak.h"
-#include "formats/cococas.h"
-#include "devices/cassette.h"
 #include "devices/bitbngr.h"
 #include "devices/printer.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 static UINT8 *coco_rom;
@@ -76,7 +75,7 @@ static int pia0_irq_a, pia0_irq_b;
 static int pia1_firq_a, pia1_firq_b;
 static int gime_firq, gime_irq;
 static int cart_line, cart_inserted;
-static UINT8 pia0_pb, pia1_pb1, soundmux_status, tape_motor;
+static UINT8 pia0_pb, pia1_pb1, soundmux_status;
 static UINT8 joystick_axis, joystick;
 static int d_dac;
 
@@ -114,9 +113,6 @@ static void dragon64_sam_set_maptype(int val);
 static void coco3_sam_set_maptype(int val);
 static void coco_setcartline(int data);
 static void coco3_setcartline(int data);
-
-#define myMIN(a, b) ((a) < (b) ? (a) : (b))
-#define myMAX(a, b) ((a) > (b) ? (a) : (b))
 
 /* These sets of defines control logging.  When MAME_DEBUG is off, all logging
  * is off.  There is a different set of defines for when MAME_DEBUG is on so I
@@ -903,7 +899,7 @@ static mess_image *cartslot_image(void)
 	return image_from_devtype_and_index(IO_CARTSLOT, 0);
 }
 
-static mess_image *cassette_image(void)
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -920,30 +916,20 @@ static void soundmux_update(void)
 	 * It also calls a function into the cartridges device to tell it if it is
 	 * switch on or off.
 	 */
-
-	int casstatus, new_casstatus;
-
-	casstatus = device_status(cassette_image(), -1);
-	new_casstatus = casstatus | WAVE_STATUS_MUTED;
+	cassette_state new_state;
 
 	switch(soundmux_status) {
 	case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
 		/* CSN */
-		new_casstatus &= ~WAVE_STATUS_MUTED;
+		new_state = CASSETTE_SPEAKER_ENABLED;
 		break;
 	default:
+		new_state = CASSETTE_SPEAKER_MUTED;
 		break;
 	}
 
 	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
-
-	if (casstatus != new_casstatus)
-	{
-#if LOG_CASSETTE
-		logerror("CoCo: Turning cassette speaker %s\n", new_casstatus ? "on" : "off");
-#endif
-		device_status(cassette_image(), new_casstatus);
-	}
+	cassette_change_state(cassette_device_image(), new_state, CASSETTE_MASK_SPEAKER);
 }
 
 void dragon_sound_update(void)
@@ -1161,7 +1147,7 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
-		device_output(cassette_image(), ((int) d_dac - 0x80) * 0x100);
+		cassette_output(cassette_device_image(), ((int) d_dac - 0x80) * 0x1000000);
 
 	device_output(bitbanger_image(), (data & 2) >> 1);
 }
@@ -1218,22 +1204,15 @@ static WRITE_HANDLER( coco3_pia1_pb_w )
 
 static WRITE_HANDLER ( d_pia1_ca2_w )
 {
-	int status;
-
-	if (tape_motor ^ data)
-	{
-		status = device_status(cassette_image(), -1);
-		status &= ~WAVE_STATUS_MOTOR_INHIBIT;
-		if (!data)
-			status |= WAVE_STATUS_MOTOR_INHIBIT;
-		device_status(cassette_image(), status);
-		tape_motor = data;
-	}
+	cassette_change_state(
+		cassette_device_image(),
+		data ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+		CASSETTE_MASK_MOTOR);
 }
 
 static READ_HANDLER ( d_pia1_pa_r )
 {
-	return (device_input(cassette_image()) >= 0) ? 1 : 0;
+	return (cassette_input(cassette_device_image()) >= 0) ? 1 : 0;
 }
 
 static READ_HANDLER ( d_pia1_pb_r_coco )
@@ -1976,37 +1955,6 @@ static void autocenter_init(int dipport, int dipmask)
 }
 
 /***************************************************************************
-  Cassette support
-***************************************************************************/
-
-static void coco_cassette_calcchunkinfo(mame_file *file, int *chunk_size,
-	int *chunk_samples)
-{
-	coco_wave_size = mame_fsize(file);
-	*chunk_size = coco_wave_size;
-	*chunk_samples = 8*8 * coco_wave_size;	/* 8 bits * 4 samples */
-}
-
-static struct cassette_args coco_cassette_args =
-{
-	WAVE_STATUS_MOTOR_ENABLE | WAVE_STATUS_MUTED
-		| WAVE_STATUS_MOTOR_INHIBIT,				/* initial_status */
-	coco_cassette_fill_wave,									/* fill_wave */
-	coco_cassette_calcchunkinfo,					/* calc_chunk_info */
-	4800,											/* input_smpfreq */
-	COCO_WAVESAMPLES_HEADER,						/* header_samples */
-	COCO_WAVESAMPLES_TRAILER,						/* trailer_samples */
-	0,												/* NA */
-	0,												/* NA */
-	19200											/* create_smpfreq */
-};
-
-DEVICE_LOAD(coco_cassette)
-{
-	return cassette_init(image, file, &coco_cassette_args);
-}
-
-/***************************************************************************
   Cartridge Expansion Slot
  ***************************************************************************/
 
@@ -2169,7 +2117,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia1_firq_a = CLEAR_LINE;
 	pia1_firq_b = CLEAR_LINE;
 
-	pia0_pb = pia1_pb1 = soundmux_status = tape_motor = 0;
+	pia0_pb = pia1_pb1 = soundmux_status = 0;
 	joystick_axis = joystick = 0;
 	d_dac = 0;
 

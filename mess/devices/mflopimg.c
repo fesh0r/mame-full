@@ -144,12 +144,12 @@ static int mame_fseek_thunk(void *file, INT64 offset, int whence)
 	return mame_fseek((mame_file *) file, offset, whence);
 }
 
-static size_t mame_fread_thunk(void *file, void *buffer, size_t length)
+static UINT32 mame_fread_thunk(void *file, void *buffer, UINT32 length)
 {
 	return mame_fread((mame_file *) file, buffer, length);
 }
 
-static size_t mame_fwrite_thunk(void *file, const void *buffer, size_t length)
+static UINT32 mame_fwrite_thunk(void *file, const void *buffer, UINT32 length)
 {
 	return mame_fwrite((mame_file *) file, buffer, length);
 }
@@ -161,7 +161,7 @@ static UINT64 mame_fsize_thunk(void *file)
 
 /* ----------------------------------------------------------------------- */
 
-static struct io_procs mess_ioprocs =
+struct io_procs mess_ioprocs =
 {
 	NULL,
 	mame_fseek_thunk,
@@ -212,13 +212,12 @@ static DEVICE_LOAD(floppy)
 	else
 	{
 		/* opening an image */
-		floppy_flags = image_is_writable(image) ? FLOPPY_FLAGS_READONLY : FLOPPY_FLAGS_READWRITE;
+		floppy_flags = image_is_writable(image) ? FLOPPY_FLAGS_READWRITE : FLOPPY_FLAGS_READONLY;
 		extension = image_filetype(image);
 		err = floppy_open_choices(file, &mess_ioprocs, extension, floppy_options, floppy_flags, &flopimg->floppy);
 		if (err)
 			goto error;
 	}
-
 	return INIT_PASS;
 
 error:
@@ -237,7 +236,7 @@ static DEVICE_UNLOAD(floppy)
 
 
 
-static void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
+void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 {
 	char *s;
 

@@ -5,7 +5,6 @@ extern unsigned char * lviv_video_ram;
 READ_HANDLER ( lviv_io_r );
 WRITE_HANDLER ( lviv_io_w );
 MACHINE_INIT( lviv );
-DEVICE_LOAD( lviv_cassette );
 SNAPSHOT_LOAD( lviv );
 
 /* vidhrdw/lviv.c */

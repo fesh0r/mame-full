@@ -155,6 +155,19 @@ int compute_log2(int val)
 
 
 
+int findextension(const char *extensions, const char *ext)
+{
+	while(*extensions)
+	{
+		if (!strcmpi(extensions, ext))
+			return 1;
+		extensions += strlen(extensions) + 1;
+	}
+	return 0;
+}
+
+
+
 /*
    Compute CCITT CRC-16 using the correct bit order for floppy disks.
    CRC code courtesy of Tim Mann.

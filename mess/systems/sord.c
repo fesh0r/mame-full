@@ -1,7 +1,8 @@
 /******************************************************************************
 
-	sord m5
-	system driver
+	systems/sorc.c
+	
+	Sord m5	system driver
 
 	Thankyou to Roman Stec and Jan P. Naidr for the documentation and much
 	help.
@@ -43,6 +44,7 @@
 /* PI-5 interface is required. mode 2 of the 8255 is used to communicate with the FD-5 */
 
 #include "includes/nec765.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 static MACHINE_INIT( sord_m5 );
@@ -200,7 +202,7 @@ static MACHINE_INIT( sord_m5_fd5 )
 }
 
 
-static mess_image *cassette_image(void)
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -369,104 +371,6 @@ static DEVICE_LOAD( sord_floppy )
 	return INIT_FAIL;
 }
 
-static INT16* cas_samples;
-static int cas_len;
-
-static int sord_cassette_fill_wave( INT16* samples, int wavlen, UINT8* casdata)
-{
-	if ((casdata == CODE_HEADER) || casdata == CODE_TRAILER) return 0;
-
-	if (wavlen < cas_len)
-	{
-		logerror( "Not enough space to store converted cas file!\n");
-		return 0;
-	}
-
-	memcpy( samples, cas_samples, cas_len * 2);
-
-	return cas_len;
-}
-
-static int check_sord_cas( mame_file *f)
-{
-	UINT8* casdata;
-	int caslen, ret;
-
-	caslen = mame_fsize( f);
-	if (caslen < 16) return -1;
-
-	casdata = (UINT8*)malloc( caslen);
-	if (!casdata)
-	{
-		logerror( "cas2wav: out of memory!\n");
-		return -1;
-	}
-
-	mame_fseek( f, 0, SEEK_SET);
-	if (caslen != mame_fread( f, casdata, caslen)) return -1;
-	mame_fseek( f, 0, SEEK_SET);
-
-	ret = sord_cas_to_wav( casdata, caslen, &cas_samples, &cas_len);
-	if (ret == SORD_CAS_ERROR_OUTOFMEMORY)
-		logerror ("cas2wav: out of memory\n");
-	else if (ret)
-		logerror ("cas2wav: conversion error (%d)\n", ret);
-
-	free( casdata);
-
-	return ret;
-}
-
-static DEVICE_LOAD( sord_cassette )
-{
-	const char *ext;
-	
-	ext = image_filetype(image);
-	if ((ext != NULL) && (strcmpi( ext, "cas") == 0))
-	{
-		if (! image_has_been_created(image))
-		{
-			int ret;
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			/* for cas files */
-			cas_samples = NULL;
-			cas_len = -1;
-			if (!check_sord_cas( file))
-			{
-				wa.smpfreq = 22050;
-				wa.fill_wave = sord_cassette_fill_wave;
-				wa.header_samples = cas_len;
-				wa.trailer_samples = 0;
-				wa.chunk_size = cas_len;
-				wa.chunk_samples = 0;
-			}
-			ret = device_open( image,0,&wa);
-			free( cas_samples);
-			cas_samples = NULL;
-			cas_len = -1;
-			return (ret ? INIT_FAIL : INIT_PASS);
-		}
-		else
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.smpfreq = 44100;
-			if( device_open(image,1,&wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
-		return INIT_FAIL;
-	}
-	else
-	{
-		struct cassette_args args;
-		memset(&args, 0, sizeof(args));
-		args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-		return cassette_init(image, file, &args);
-	}
-}
-
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
@@ -551,7 +455,7 @@ static READ_HANDLER(sord_sys_r)
 	data = 0;
 
 	/* cassette read */
-	if (device_input(cassette_image()) >=0)
+	if (cassette_input(cassette_device_image()) >=0)
 		data |=(1<<0);
 
 	printer_handshake = centronics_read_handshake(0);
@@ -588,10 +492,13 @@ static WRITE_HANDLER(sord_sys_w)
 	}
 
 	/* cassette remote */
-	device_status(cassette_image(), ((data>>1) & 0x01));
+	cassette_change_state(
+		cassette_device_image(),
+		(data & 0x02) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+		CASSETTE_MASK_MOTOR);
 
 	/* cassette data */
-	device_output(cassette_image(), (data & (1<<0)) ? -32768 : 32767);
+	cassette_output(cassette_device_image(), (data & (1<<0)) ? -1.0 : 1.0);
 
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
@@ -645,7 +552,7 @@ PORT_END
 //
 //	data = 0;
 //	/* cassette read */
-//	if (device_input(cassette_image()) > 255)
+//	if (device_input(cassette_device_image()) > 255)
 //		data |=(1<<0);
 //
 //	z80ctc_0_trg2_w(0,data);
@@ -947,7 +854,7 @@ ROM_END
 SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER			(1)
-	CONFIG_DEVICE_CASSETTE			(1, "cas\0",			device_load_sord_cassette)
+	CONFIG_DEVICE_CASSETTE			(1, sordm5_cassette_formats)
 	CONFIG_DEVICE_CARTSLOT_REQ		(1, "rom\0",	NULL, NULL, device_load_sord_cartslot, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 

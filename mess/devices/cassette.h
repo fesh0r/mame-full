@@ -1,27 +1,72 @@
+/*********************************************************************
+
+	cassette.h
+
+	MESS interface to the cassette image abstraction code
+
+*********************************************************************/
+
 #ifndef CASSETTE_H
 #define CASSETTE_H
 
-#include "driver.h"
+#include "formats/cassimg.h"
+#include "image.h"
 
-struct cassette_args
+
+
+typedef enum
 {
-	/* Args that always apply whenever a cassette is there */
-	int initial_status;
+	/* this part of the state is controlled by the UI */
+	CASSETTE_STOPPED			= 0,
+	CASSETTE_PLAY				= 1,
+	CASSETTE_RECORD				= 2,
 
-	/* Args to use when the wave file is already there */
-	int (*fill_wave)(INT16 *buffer, int length, UINT8 *bytes);
-	void (*calc_chunk_info)(mame_file *file, int *chunk_size, int *chunk_samples);
-	int input_smpfreq;
-    int header_samples;
-    int trailer_samples;
-    int chunk_size;		/* used if calc_chunk_info is NULL */
-	int chunk_samples;	/* used if calc_chunk_info is NULL */
+	/* this part of the state is controlled by drivers */
+	CASSETTE_MOTOR_ENABLED		= 0,
+	CASSETTE_MOTOR_DISABLED		= 4,
+	CASSETTE_SPEAKER_ENABLED	= 0,
+	CASSETTE_SPEAKER_MUTED		= 8,
 
-	/* Args to use when the wave file is being created */
-	int create_smpfreq;
-};
+	/* masks */
+	CASSETTE_MASK_UISTATE		= 3,
+	CASSETTE_MASK_MOTOR			= 4,
+	CASSETTE_MASK_SPEAKER		= 8,
+	CASSETTE_MASK_DRVSTATE		= 12
+} cassette_state;
 
-int cassette_init(mess_image *img, mame_file *file, const struct cassette_args *args);
-void cassette_exit(mess_image *img);
+/* cassette prototypes */
+cassette_state cassette_get_state(mess_image *cassette);
+void cassette_set_state(mess_image *cassette, cassette_state state);
+void cassette_change_state(mess_image *cassette, cassette_state state, cassette_state mask);
+
+double cassette_input(mess_image *cassette);
+void cassette_output(mess_image *cassette, double value);
+
+cassette_image *cassette_get_image(mess_image *cassette);
+double cassette_get_position(mess_image *cassette);
+double cassette_get_length(mess_image *cassette);
+void cassette_seek(mess_image *cassette, double time, int origin);
+
+/* device specification */
+const struct IODevice *cassette_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
+	int count, const struct CassetteFormat **formats, cassette_state default_state);
+
+#define CONFIG_DEVICE_CASSETTE(count, formats)								\
+	if (cfg->device_num-- == 0)												\
+	{																		\
+		static struct IODevice iodev;										\
+		static char extbuf[33];												\
+		cfg->dev = cassette_device_specify(&iodev, extbuf, sizeof(extbuf) /	\
+			sizeof(extbuf[0]),	(count), (formats), (CASSETTE_STOPPED));	\
+	}																		\
+
+#define CONFIG_DEVICE_CASSETTEX(count, formats, default_state)				\
+	if (cfg->device_num-- == 0)												\
+	{																		\
+		static struct IODevice iodev;										\
+		static char extbuf[33];												\
+		cfg->dev = cassette_device_specify(&iodev, extbuf, sizeof(extbuf) /	\
+			sizeof(extbuf[0]),	(count), (formats), (default_state));		\
+	}																		\
 
 #endif /* CASSETTE_H */

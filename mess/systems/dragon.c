@@ -22,6 +22,7 @@
 #include "devices/basicdsk.h"
 #include "includes/6551.h"
 #include "formats/coco_dsk.h"
+#include "formats/coco_cas.h"
 #include "devices/printer.h"
 #include "devices/mflopimg.h"
 #include "devices/cassette.h"
@@ -481,8 +482,9 @@ static struct DACinterface d_dac_interface =
 	{ 100 }
 };
 
-static struct Wave_interface d_wave_interface = {
-	1,			/* number of waves */
+static struct Wave_interface d_wave_interface =
+{
+	1,
 	{ 25 }		/* mixing levels */
 };
 
@@ -752,7 +754,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_BITBANGER (1, &coco_bitbanger_config )
 
 	/* cassette */
-	CONFIG_DEVICE_CASSETTE	(1, "cas\0", device_load_coco_cassette)
+	CONFIG_DEVICE_CASSETTEX	(1, coco_cassette_formats, CASSETTE_PLAY | CASSETTE_MOTOR_DISABLED | CASSETTE_SPEAKER_MUTED )
 
 	/* floppy */
 	CONFIG_DEVICE_FLOPPY	(4, coco )

@@ -48,7 +48,7 @@ static void atom_via_irq_func(int state)
 
 }
 
-static mess_image *cassette_image(void)
+static mess_image *cassette_device_image(void)
 {
 	return image_from_devtype_and_index(IO_CASSETTE, 0);
 }
@@ -225,7 +225,7 @@ static void atom_timer_callback(int dummy)
 		result = (~(B & atom_8255_portc)) & 0x01;
 
 		/* tape output */
-		device_output(cassette_image(), (result & 0x01) ? -32768 : 32767);
+		cassette_output(cassette_device_image(), (result & 0x01) ? -1.0 : +1.0);
 	}
 }
 
@@ -263,9 +263,6 @@ MACHINE_INIT( atom )
 
 	timer_state = 0;
 	timer_pulse(TIME_IN_HZ(2400*2), 0, atom_timer_callback);
-
-	/* cassette motor control */
-	device_status(cassette_image(), 1);
 
 	memory_set_opbase_handler(0,atom_opbase_handler);
 }
@@ -383,7 +380,7 @@ READ_HANDLER ( atom_8255_portc_r )
 	atom_8255_portc &= 0x0f;
 
 	/* cassette input */
-	if (device_input(cassette_image())>255)
+	if (device_input(cassette_device_image())>255)
 	{
 		atom_8255_portc |= (1<<5);
 	}
@@ -482,15 +479,6 @@ WRITE_HANDLER(atom_8271_w)
 		default:
 			break;
 	}
-}
-
-
-DEVICE_LOAD( atom_cassette )
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, &args);
 }
 
 

@@ -30,6 +30,7 @@
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
 #include "devices/printer.h"
+#include "devices/cassette.h"
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
 /* for event list */
@@ -230,7 +231,7 @@ static READ_HANDLER (amstrad_ppi_portb_r)
 	data = 0x0;
 
 	/* cassette read */
-	if (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 255)
+	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.03)
 		data |=0x080;
 
 	/* printer busy */
@@ -270,13 +271,16 @@ static WRITE_HANDLER ( amstrad_ppi_portc_w )
 	if ((changed_data & (1<<4))!=0)
 	{
 		/* cassette motor control */
-		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), ((data>>4) & 0x01));
+		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),
+			(data & 0x10) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+			CASSETTE_MASK_MOTOR);
 	}
 
 	/* cassette write data changed state */
 	if ((changed_data & (1<<5))!=0)
 	{
-		device_output(image_from_devtype_and_index(IO_CASSETTE, 0), (data & (1<<5)) ? -32768 : 32767);
+		cassette_output(image_from_devtype_and_index(IO_CASSETTE, 0),
+			(data & 0x20) ? -1.0 : +1.0);
 	}
 
 	/* psg operation */
@@ -2775,7 +2779,7 @@ ROM_END
 SYSTEM_CONFIG_START(cpc6128)
 	CONFIG_RAM_DEFAULT(128 * 1024)
 	CONFIG_DEVICE_LEGACY_DSK(2)
-	CONFIG_DEVICE_CASSETTE(1, "", device_load_amstrad_cassette)
+	CONFIG_DEVICE_CASSETTE(1, NULL)
 	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 

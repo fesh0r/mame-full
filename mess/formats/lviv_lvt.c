@@ -105,3 +105,20 @@ int lviv_cassette_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 
 	return p - buffer;
 }
+
+
+
+/*struct CassetteFormat lviv_lvt_format =
+{
+	"lvt\0",
+	lviv_lvt_identify,
+	lviv_lvt_load,
+	NULL
+};*/
+
+
+
+CASSETTE_FORMATLIST_START(lviv_lvt_format)
+	/* TODO - Readd support for Lviv LVT files */
+	/*	CASSETTE_FORMAT(lviv_lvt_format) */
+CASSETTE_FORMATLIST_END

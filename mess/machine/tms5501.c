@@ -3,7 +3,7 @@
 	Krzysztof Strzecha, Nathan Woods, 2003
 	Based on TMS9901 emulator by Raphael Nabet
 
-	19.10.2003 -	Status register added. Reset fixed. Some cleanups.
+	19-Oct-2003 -	Status register added. Reset fixed. Some cleanups.
 			INTA enable/disable.
 
 	TODO:

@@ -73,7 +73,6 @@ TODO :
 */
 
 #include "driver.h"
-//#include "inputx.h"
 #include "cpu/tms9900/tms9900.h"
 #include "vidhrdw/tms9928a.h"
 #include "devices/cartslot.h"
@@ -228,14 +227,6 @@ static WRITE_HANDLER(tutor_mapper_w)
 	There are other output ports: @>ee80, @>eea0, @>eec0 & @>eee0.  I don't
 	know their exact meaning.
 */
-
-static DEVICE_LOAD(tutor_cassette)
-{
-	struct cassette_args args;
-	memset(&args, 0, sizeof(args));
-	args.create_smpfreq = /*22050*/44100;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(image, file, &args);
-}
 
 static void tape_interrupt_handler(int dummy)
 {
@@ -643,7 +634,7 @@ SYSTEM_CONFIG_START(tutor)
 
 	/* cartridge port is not emulated */
 	CONFIG_DEVICE_CARTSLOT_OPT(1,	"",	NULL,	NULL,	device_load_tutor_cart,	device_unload_tutor_cart,	NULL,	NULL)
-	CONFIG_DEVICE_CASSETTE	(1, "",		device_load_tutor_cassette)
+	CONFIG_DEVICE_CASSETTE	(1,		NULL)
 	CONFIG_DEVICE_LEGACY	(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_WRITE,	NULL,	NULL,	device_load_tutor_printer,	device_unload_tutor_printer,		NULL)
 
 SYSTEM_CONFIG_END

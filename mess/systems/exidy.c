@@ -63,12 +63,13 @@
  ******************************************************************************/
 #include "driver.h"
 #include "../includes/exidy.h"
-#include "devices/printer.h"
 #include "includes/centroni.h"
 #include "includes/hd6402.h"
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
+#include "devices/cassette.h"
+#include "devices/printer.h"
 #include "image.h"
 
 static DEVICE_LOAD( exidy_floppy )
@@ -444,9 +445,14 @@ static WRITE_HANDLER(exidy_fe_port_w)
 	if ((changed_bits & EXIDY_CASSETTE_MOTOR_MASK)!=0)
 	{
 		/* cassette 1 motor */
-		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), ((data>>4) & 0x01));
+		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),
+			(data & 0x10) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+			CASSETTE_MASK_MOTOR);
+
 		/* cassette 2 motor */
-		device_status(image_from_devtype_and_index(IO_CASSETTE, 1), ((data>>5) & 0x01));
+		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 1),
+			(data & 0x20) ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+			CASSETTE_MASK_MOTOR);
 
 		if ((data & EXIDY_CASSETTE_MOTOR_MASK)==0)
 		{
@@ -819,7 +825,7 @@ ROM_END
 SYSTEM_CONFIG_START(exidy)
 	CONFIG_DEVICE_PRINTER			(1)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_exidy_floppy)
-	//CONFIG_DEVICE_CASSETTE		(2,	"",			device_load_exidy_cassette)
+	//CONFIG_DEVICE_CASSETTE		(2,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	PARENT	COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY        FULLNAME */

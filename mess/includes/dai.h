@@ -9,7 +9,6 @@ READ_HANDLER( dai_io_discrete_devices_r );
 WRITE_HANDLER( dai_io_discrete_devices_w );
 READ_HANDLER( amd9511_r );
 WRITE_HANDLER( amd9511_w );
-DEVICE_LOAD( dai_cassette );
 extern UINT8 dai_noise_volume;
 extern UINT8 dai_osc_volume[3];
 

@@ -41,6 +41,7 @@
 #include "includes/mbee.h"
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
+#include "devices/cassette.h"
 
 #define VERBOSE 1
 
@@ -194,11 +195,6 @@ INPUT_PORTS_START( mbee )
     PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "(Insert)",       KEYCODE_RIGHT,      IP_JOY_NONE )
     PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_RESETCPU, "Reset", KEYCODE_F3,IP_JOY_NONE )
     PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
-    PORT_START /* IN9 tape control */
-    PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape start",     KEYCODE_F5,         IP_JOY_NONE )
-    PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape stop",      KEYCODE_F6,         IP_JOY_NONE )
-    PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Tape rewind",    KEYCODE_F7,         IP_JOY_NONE )
-    PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 struct GfxLayout mbee_charlayout =
@@ -368,7 +364,7 @@ ROM_END
 ***************************************************************************/
 
 SYSTEM_CONFIG_START(mbee)
-	CONFIG_DEVICE_CASSETTE			(1, "",			device_load_mbee_cassette)
+	CONFIG_DEVICE_CASSETTE			(1, NULL)
 	CONFIG_DEVICE_CARTSLOT_OPT		(1, "rom\0",	NULL, NULL, device_load_mbee_cart, NULL, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_basicdsk_floppy)
 SYSTEM_CONFIG_END

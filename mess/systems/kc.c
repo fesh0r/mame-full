@@ -10,11 +10,13 @@
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
+
 #include "driver.h"
 #include "cpuintrf.h"
 #include "machine/z80fmly.h"
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
+#include "devices/cassette.h"
 
 /* pio is last in chain and therefore has highest priority */
 
@@ -452,7 +454,7 @@ ROM_START(kc85_3)
 ROM_END
 
 SYSTEM_CONFIG_START(kc85)
-	CONFIG_DEVICE_CASSETTE	(1, "",			device_load_kc_cassette)
+	CONFIG_DEVICE_CASSETTE	(1, NULL)
 	CONFIG_DEVICE_QUICKLOAD	(	"kcc\0",	kc)
 SYSTEM_CONFIG_END
 

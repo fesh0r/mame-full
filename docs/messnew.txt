@@ -1,4 +1,4 @@
-0.74.1
+0.76
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -30,12 +30,15 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.75.  This incorporates all features of the
+- The core is based on MAME 0.76.  This incorporates all features of the
   update to this core.  [MAME team]
 
-- Overhaul on generic floppy image system; added new generic parameter layer.
-  Moved CoCo, Apple II and PC drivers onto the new system.  [Nate Woods]
-
+- Overhaul on generic floppy and cassette image systems; added new generic
+  parameter layer.  Read/write cassette images are now supported.  Also moved
+  CoCo, Apple II and PC drivers onto the new floppy system.  Note that there
+  is potential for breakage here, but in the long run both of these overhauls
+  will be worth it.  [Nate Woods]
+  
 - Fixed cheat engine.  [Nate Woods]
 
 - The documentation was gutted and integrated with Paul Vince's easyEmu

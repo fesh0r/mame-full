@@ -1,6 +1,7 @@
 
 #include "svi_cas.h"
 
+#if 0
 #define CAS_PERIOD_0		(40)
 #define CAS_PERIOD_1		(18)
 #define CAS_HEADER_PERIODS (1600)
@@ -131,3 +132,20 @@ int svi_cas_to_wav (UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 	return 0;
 	}
 
+#endif
+
+	
+/*struct CassetteFormat svi_cas_format =
+{
+	"cas\0",
+	svi_cas_identify,
+	svi_cas_load,
+	NULL
+};*/
+
+
+
+CASSETTE_FORMATLIST_START(svi_cassette_formats)
+	/* TODO - Readd support for SVI Cassette files files */
+	/*	CASSETTE_FORMAT(svi_cas_format) */
+CASSETTE_FORMATLIST_END

@@ -79,19 +79,6 @@ static void floppy_close_internal(floppy_image *floppy, int close_file);
 	opening, closing and creating of floppy images
 *********************************************************************/
 
-static int findextension(const char *extensions, const char *ext)
-{
-	while(*extensions)
-	{
-		if (!strcmpi(extensions, ext))
-			return 1;
-		extensions += strlen(extensions) + 1;
-	}
-	return 0;
-}
-
-
-
 /* basic floppy_image initialization common to floppy_open() and floppy_create() */
 static floppy_image *floppy_init(void *fp, const struct io_procs *procs, int flags)
 {

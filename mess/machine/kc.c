@@ -3,6 +3,7 @@
 #include "machine/z80fmly.h"
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
+#include "devices/cassette.h"
 #include "image.h"
 
 #define KC_DEBUG
@@ -411,31 +412,8 @@ static void kc85_module_system_init(void)
 
 #define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(4800)
 
-DEVICE_LOAD( kc_cassette )
-{
-	if (! image_has_been_created(image))
-	{
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-
-		if (device_open(image, 0, &wa))
-			return INIT_FAIL;
-	}
-	else
-	/* HJB 02/18: no file, created a new file instead */
-	{
-		struct wave_args_legacy wa = {0,};
-		wa.file = file;
-		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
-		/* open in write mode */
-		if (device_open(image, 1, &wa))
-			return INIT_FAIL;
-	}
-	return INIT_PASS;
-}
-
 /* this timer is used to update the cassette */
-static void *kc_cassette_timer;
+static mame_timer *kc_cassette_timer;
 /* this is the current state of the cassette motor */
 static int kc_cassette_motor_state;
 /* ardy output from pio */
@@ -469,7 +447,9 @@ static void	kc_cassette_set_motor(int motor_state)
 	if (((kc_cassette_motor_state^motor_state)&0x01)!=0)
 	{
 		/* set new motor state in cassette device */
-		device_status(image_from_devtype_and_index(IO_CASSETTE, 0), motor_state);
+		cassette_change_state(image_from_devtype_and_index(IO_CASSETTE, 0),
+			motor_state ? CASSETTE_MOTOR_ENABLED : CASSETTE_MOTOR_DISABLED,
+			CASSETTE_MASK_MOTOR);
 
 		if (motor_state)
 		{
