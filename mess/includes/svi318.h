@@ -35,9 +35,6 @@ WRITE_HANDLER (svi318_ppi_w);
 WRITE_HANDLER (svi318_psg_port_b_w);
 READ_HANDLER (svi318_psg_port_a_r);
 
-WRITE_HANDLER (svi318_vdp_w);
-READ_HANDLER (svi318_vdp_r);
-
 /* cassette functions */
 int svi318_cassette_init (int id);
 void svi318_cassette_exit (int id);

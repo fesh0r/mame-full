@@ -42,7 +42,8 @@ static PORT_READ_START (readport)
 	{ 0x34, 0x34, fdc_status_r },
 #endif
     { 0x35, 0x83, svi318_null_r },
-    { 0x84, 0x85, svi318_vdp_r },
+    { 0x84, 0x84, TMS9928A_vram_r },
+    { 0x85, 0x85, TMS9928A_register_r },
     { 0x86, 0x8f, svi318_null_r },
 	{ 0x90, 0x90, AY8910_read_port_0_r },
     { 0x91, 0x95, svi318_null_r },
@@ -60,7 +61,8 @@ static PORT_WRITE_START (writeport)
 	{ 0x34, 0x34, fdc_disk_motor_w },
 	{ 0x38, 0x38, fdc_density_side_w },
 #endif
-	{ 0x80, 0x81, svi318_vdp_w },
+    { 0x80, 0x80, TMS9928A_vram_w },
+    { 0x81, 0x81, TMS9928A_register_w },
 	{ 0x88, 0x88, AY8910_control_port_0_w },
  	{ 0x8c, 0x8c, AY8910_write_port_0_w },
     { 0x96, 0x97, svi318_ppi_w },
@@ -69,6 +71,8 @@ PORT_END
 /*
 
 From: "Tomas Karlsson" <tomas.k@home.se>
+
+http://www.hut.fi/~mstuomel/328/svikoko.gif
 
 Keyboard status table
 
@@ -294,11 +298,6 @@ SVI_318_KEYS
 
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-    { -1 } /* end of array */
-};
-
 static struct AY8910interface ay8910_interface =
 {
     1,  /* 1 chip */
@@ -344,8 +343,8 @@ static struct MachineDriver machine_driver_svi318 =
 
     /* video hardware */
     32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
-    gfxdecodeinfo,
-    TMS9928A_PALETTE_SIZE,TMS9928A_COLORTABLE_SIZE,
+    0,
+    TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
     tms9928A_init_palette,
 
     VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
