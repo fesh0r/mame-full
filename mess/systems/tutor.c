@@ -231,7 +231,7 @@ static WRITE8_HANDLER(tutor_mapper_w)
 static void tape_interrupt_handler(int dummy)
 {
 	//assert(tape_interrupt_enable);
-	cpu_set_irq_line(0, 1, (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 1, (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 /* CRU handler */
@@ -267,7 +267,7 @@ static WRITE8_HANDLER(tutor_cassette_w)
 				else
 				{
 					timer_adjust(tape_interrupt_timer, TIME_NEVER, 0, 0.);
-					cpu_set_irq_line(0, 1, CLEAR_LINE);
+					cpunum_set_input_line(0, 1, CLEAR_LINE);
 				}
 			}
 			break;

@@ -430,19 +430,19 @@ static void smpc_execcomm(int commcode)
 	  break;
 	case 0x7 :
 	  printf /*logerror*/ ("smpc - Sound OFF (0x7)\n");
-	  cpu_set_halt_line(2, ASSERT_LINE);
+	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 	  break;
 	case 0x6 :
 	  printf /*logerror*/("smpc - Sound ON (0x6)\n");
-	  cpu_set_halt_line(2, ASSERT_LINE);
-	  cpu_set_reset_line(2,PULSE_LINE);
-	  cpu_set_halt_line(2, CLEAR_LINE);
+	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+	  cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+	  cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 	  break;
 	case 0xD :
 	  logerror("smpc - Reset System (0xD)\n");
-	  cpu_set_halt_line(2, ASSERT_LINE);
-	  cpu_set_reset_line(0,PULSE_LINE);
-	  cpu_set_reset_line(1,PULSE_LINE);
+	  cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+	  cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
+	  cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 	  break;
 	}
       smpc_state.smpc_regs[OREG(31)] = commcode;
@@ -735,7 +735,7 @@ static void scu_set_imask(void)
         if ((scu_regs[0x28] & (1 <<irq)) == 0)
             logerror(" %s,", int_names[irq]);
         else
-	  cpu_set_irq_line(0, scu_irq_line[irq], CLEAR_LINE);
+	  cpunum_set_input_line(0, scu_irq_line[irq], CLEAR_LINE);
     }
     LOG(("\n"));
 }
@@ -752,8 +752,8 @@ static void scu_pulse_interrupt(int irq)
         if ((scu_regs[0x28] & (1 << irq)) == 0)
         {
             LOG((" - pulsed"));
-            cpu_irq_line_vector_w(0, scu_irq_line[irq], 0x40 + irq + (scu_irq_levels[irq] << 8)); 
-            cpu_set_irq_line(0, scu_irq_line[irq], HOLD_LINE);
+            cpunum_set_input_line_vector(0, scu_irq_line[irq], 0x40 + irq + (scu_irq_levels[irq] << 8)); 
+            cpunum_set_input_line(0, scu_irq_line[irq], HOLD_LINE);
         }
         else
         {

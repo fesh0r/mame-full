@@ -198,7 +198,7 @@ static int input_port_read_ver_8(mame_file *f, struct InputPort *in)
 		return -1;
 	in->default_value = w;
 
-	if (seq_read_ver_8(f,&in->seq) != 0)
+	if (seq_read_ver_8(f,&in->seq[0]) != 0)
 		return -1;
 
 	return 0;
@@ -377,7 +377,7 @@ int config_read_ports(config_file *cfg, struct InputPort *input_ports_default, s
 		if (in->mask != saved.mask ||
 				in->default_value != saved.default_value ||
 				in->type != saved.type ||
-				seq_cmp(&in->seq, &saved.seq) !=0 )
+				seq_cmp(&in->seq[0], &saved.seq[0]) !=0 )
 		{
 			return CONFIG_ERROR_CORRUPT;	/* the default values are different */
 		}
@@ -536,7 +536,7 @@ static void input_port_write(mame_file *f, const struct InputPort *in)
 	writeint(f, in->type);
 	writeword(f, in->mask);
 	writeword(f, in->default_value);
-	seq_write(f, &in->seq);
+	seq_write(f, &in->seq[0]);
 }
 
 

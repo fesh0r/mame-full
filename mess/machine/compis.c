@@ -184,8 +184,8 @@ static TYP_COMPIS compis;
 /*-------------------------------------------------------------------------*/
 void compis_irq_set(UINT8 irq)
 {
-	cpu_irq_line_vector_w(0,0,irq);
-	cpu_set_irq_line(0,0,HOLD_LINE);
+	cpunum_set_input_line_vector(0, 0, irq);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /*-------------------------------------------------------------------------*/
@@ -605,7 +605,7 @@ static int int_callback(int line)
       		logerror("(%f) **** Acknowledged interrupt vector %02X\n", timer_get_time(), i186.intr.poll_status & 0x1f);
 
 	/* clear the interrupt */
-	activecpu_set_irq_line(0, CLEAR_LINE);
+	activecpu_set_input_line(0, CLEAR_LINE);
 	i186.intr.pending = 0;
 
 	/* clear the request and set the in-service bit */
@@ -713,7 +713,7 @@ generate_int:
 	/* generate the appropriate interrupt */
 	i186.intr.poll_status = 0x8000 | new_vector;
 	if (!i186.intr.pending)
-		cpu_set_irq_line(2, 0, ASSERT_LINE);
+		cpunum_set_input_line(2, 0, ASSERT_LINE);
 	i186.intr.pending = 1;
 	cpu_trigger(CPU_RESUME_TRIGGER);
 	if (LOG_OPTIMIZATION) logerror("  - trigger due to interrupt pending\n");

@@ -374,10 +374,10 @@ static int init_machine(void)
 	}
 
 	/* if we have inputs, process them now */
-	if (gamedrv->input_ports)
+	if (gamedrv->construct_ipt)
 	{
 		/* allocate input ports */
-		Machine->input_ports = input_port_allocate(gamedrv->input_ports);
+		Machine->input_ports = input_port_allocate(gamedrv->construct_ipt);
 		if (!Machine->input_ports)
 		{
 			logerror("could not allocate Machine->input_ports\n");
@@ -385,7 +385,7 @@ static int init_machine(void)
 		}
 
 		/* allocate default input ports */
-		Machine->input_ports_default = input_port_allocate(gamedrv->input_ports);
+		Machine->input_ports_default = input_port_allocate(gamedrv->construct_ipt);
 		if (!Machine->input_ports_default)
 		{
 			logerror("could not allocate Machine->input_ports_default\n");
@@ -1423,16 +1423,6 @@ int mame_highscore_enabled(void)
 	if (he_did_cheat != 0)
 		return 0;
 
-	/* disable high score when playing network game */
-	/* (this forces all networked machines to start from the same state!) */
-#ifdef MAME_NET
-	if (net_active())
-		return 0;
-#elif defined XMAME_NET
-	if (osd_net_active())
-		return 0;
-#endif
-
 	return 1;
 }
 
@@ -1718,6 +1708,7 @@ static int validitychecks(void)
 	int i,j,cpu;
 	UINT8 a,b;
 	int error = 0;
+	const struct InputPort *inp;
 
 
 	a = 0xff;
@@ -1737,7 +1728,6 @@ static int validitychecks(void)
 	{
 		struct InternalMachineDriver drv;
 		const struct RomModule *romp;
-		const struct InputPortTiny *inp;
 
 		expand_machine_driver(drivers[i]->drv, &drv);
 
@@ -2051,10 +2041,12 @@ static int validitychecks(void)
 		}
 
 
-		inp = drivers[i]->input_ports;
-
-		if (inp)
+		if (drivers[i]->construct_ipt)
 		{
+			begin_resource_tracking();
+			
+			inp = input_port_allocate(drivers[i]->construct_ipt);
+
 			while (inp->type != IPT_END)
 			{
 				if (inp->name && inp->name != IP_NAME_DEFAULT)
@@ -2071,16 +2063,19 @@ static int validitychecks(void)
 						}
 					}
 
-					if (inp->name == DEF_STR( On ) && (inp+1)->name == DEF_STR( Off ))
+					if (inp->type == IPT_DIPSWITCH_SETTING && (inp+1)->type == IPT_DIPSWITCH_SETTING)
 					{
-						printf("%s: %s has inverted Off/On dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
-						error = 1;
-					}
+						if (inp->name == DEF_STR( On ) && (inp+1)->name == DEF_STR( Off ))
+						{
+							printf("%s: %s has inverted Off/On dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
 
-					if (inp->name == DEF_STR( Yes ) && (inp+1)->name == DEF_STR( No ))
-					{
-						printf("%s: %s has inverted No/Yes dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
-						error = 1;
+						if (inp->name == DEF_STR( Yes ) && (inp+1)->name == DEF_STR( No ))
+						{
+							printf("%s: %s has inverted No/Yes dipswitch order\n",drivers[i]->source_file,drivers[i]->name);
+							error = 1;
+						}
 					}
 
 					if (!my_stricmp(inp->name,"table"))
@@ -2132,6 +2127,7 @@ static int validitychecks(void)
 
 				inp++;
 			}
+			end_resource_tracking();
 		}
 	}
 

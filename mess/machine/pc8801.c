@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.21 2004/06/12 21:03:58 npwoods Exp $
+  $Id: pc8801.c,v 1.22 2004/06/13 22:01:18 npwoods Exp $
 
 ***************************************************************************/
 
@@ -108,7 +108,7 @@ static void pc8801_update_interrupt(void)
     if((interrupt_trig_reg & (1<<i))!=0) level=i;
   }
   if(level>=0 && level<interrupt_level_reg) {
-    cpu_set_irq_line (0, 0, HOLD_LINE);
+    cpunum_set_input_line (0, 0, HOLD_LINE);
   }
 }
 
@@ -778,7 +778,7 @@ ppi8255_interface pc8801_8255_config =
 /* callback for /INT output from FDC */
 static void pc8801_fdc_interrupt(int state)
 {
-    cpu_set_irq_line (1, 0, state ? HOLD_LINE : CLEAR_LINE);
+    cpunum_set_input_line (1, 0, state ? HOLD_LINE : CLEAR_LINE);
 }
 
 /* callback for /DRQ output from FDC */
@@ -801,7 +801,7 @@ void pc8801_init_5fd(void)
 	else
 		cpunum_resume(1, SUSPEND_REASON_DISABLE);
 	nec765_init(&pc8801_fdc_interface,NEC765A);
-	cpu_irq_line_vector_w(1,0,0);
+	cpunum_set_input_line_vector(1,0,0);
 	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1);
 	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1);
 	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,0);

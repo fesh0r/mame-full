@@ -43,13 +43,13 @@ static void z88_interrupt_refresh(void)
 			)
 		{
 			logerror("set int\n");
-			cpu_set_irq_line(0,0,HOLD_LINE);
+			cpunum_set_input_line(0,0,HOLD_LINE);
 			return;
 		}
 	}
 	
 	logerror("clear int\n");
-	cpu_set_irq_line(0,0,CLEAR_LINE);
+	cpunum_set_input_line(0,0,CLEAR_LINE);
 }
 
 static void z88_update_rtc_interrupt(void)

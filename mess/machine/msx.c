@@ -279,7 +279,7 @@ DEVICE_UNLOAD (msx_cart)
 
 void msx_vdp_interrupt(int i)
 {
-	cpu_set_irq_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
+	cpunum_set_input_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
 }
 
 static void msx_ch_reset_core (void)
@@ -340,7 +340,7 @@ DRIVER_INIT( msx )
 	wd179x_set_density (DEN_FM_HI);
 	msx1.dsk_stat = 0x7f;
 
-	cpu_irq_line_vector_w (0, 0, 0xff);
+	cpunum_set_input_line_vector (0, 0, 0xff);
 	ppi8255_init (&msx_ppi8255_interface);
 
 	msx_memory_init ();

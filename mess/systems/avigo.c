@@ -165,9 +165,9 @@ static WRITE8_HANDLER(avigo_flash_0x8000_write_handler)
 static void avigo_refresh_ints(void)
 {
 	if (avigo_irq!=0)
-		cpu_set_irq_line(0,0, HOLD_LINE);
+		cpunum_set_input_line(0,0, HOLD_LINE);
 	else
-		cpu_set_irq_line(0,0, CLEAR_LINE);
+		cpunum_set_input_line(0,0, CLEAR_LINE);
 }
 
 
@@ -221,7 +221,7 @@ static void avigo_dummy_timer_callback(int dummy)
 		if ((current_input_port_data[3] & 0x02)!=0)
 		{
 			/* ????? causes a NMI */
-			cpu_set_nmi_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 		}
 	}
 

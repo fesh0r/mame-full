@@ -292,8 +292,8 @@ static void atarist_mfp_interrupt(int level)
 {
 	/* The highest level should take priority over lower levels, but does
 	  it really matter?  There will be very few interrupt conflicts anyway */
-	cpu_irq_line_vector_w(0, 6, 0x40 + level);
-	cpu_set_irq_line(0, 6, ASSERT_LINE);
+	cpunum_set_input_line_vector(0, 6, 0x40 + level);
+	cpunum_set_input_line(0, 6, ASSERT_LINE);
 }
 
 static void timer_a_callback(int param)

@@ -121,24 +121,6 @@ READ32_HANDLER( watchdog_reset32_r );
 
 /*************************************
  *
- *	CPU halt/reset lines
- *
- *************************************/
-
-/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the RESET line on a CPU */
-void cpunum_set_reset_line(int cpunum, int state);
-
-/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the HALT line on a CPU */
-void cpunum_set_halt_line(int cpunum, int state);
-
-/* Backwards compatibility */
-#define cpu_set_reset_line 		cpunum_set_reset_line
-#define cpu_set_halt_line 		cpunum_set_halt_line
-
-
-
-/*************************************
- *
  *	CPU scheduling
  *
  *************************************/

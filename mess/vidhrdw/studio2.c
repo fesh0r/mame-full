@@ -37,7 +37,7 @@ void studio2_video_dma(int cycles)
 	case 1:
 		studio2_video.count=COLUMNS-cycles;
 		studio2_video.state++;
-		cpu_set_irq_line(0, CDP1802_IRQ, PULSE_LINE);
+		cpunum_set_input_line(0, CDP1802_IRQ, PULSE_LINE);
 		studio2_video.dma_activ=1;
 		break;
 	case 2:

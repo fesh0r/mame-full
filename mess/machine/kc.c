@@ -143,7 +143,7 @@ DEVICE_LOAD( kc85_floppy )
 #if 0
 static void kc85_disc_hw_ctc_interrupt(int state)
 {
-	cpu_set_irq_line(1, 0, state);
+	cpunum_set_input_line(1, 0, state);
 }
 #endif
 
@@ -239,7 +239,7 @@ static void kc_disc_interface_init(void)
 	z80ctc_reset(1); 
 
 	/* hold cpu at reset */
-	cpu_set_reset_line(1,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 /*****************/
@@ -1771,12 +1771,12 @@ WRITE8_HANDLER ( kc85_ctc_w )
 
 static void kc85_pio_interrupt(int state)
 {
-	cpu_set_irq_line(0, 0, state);
+	cpunum_set_input_line(0, 0, state);
 }
 
 static void kc85_ctc_interrupt(int state)
 {
-	cpu_set_irq_line(0, 1, state);
+	cpunum_set_input_line(0, 1, state);
 }
 
 /* callback for ardy output from PIO */

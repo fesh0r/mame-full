@@ -17,22 +17,22 @@
 
 static struct
 {
-	INT8   vol_left;
-	INT8   vol_right;
-	INT8   evol_left;
-	INT8   evol_right;
-	UINT8  key_on;
-	UINT8  key_off;
-	UINT8  flags;
-	UINT8  end_block;
-	UINT8  pitch_mod;
-	UINT8  noise_on;
+	INT8  vol_left;
+	INT8  vol_right;
+	INT8  evol_left;
+	INT8  evol_right;
+	UINT8 key_on;
+	UINT8 key_off;
+	UINT8 flags;
+	UINT8 end_block;
+	UINT8 pitch_mod;
+	UINT8 noise_on;
 	UINT16 dir_offset;
-	UINT8  echo_on;
-	UINT8  echo_fback;
-	UINT8  echo_offset;
-	UINT8  echo_delay;
-	UINT8  echo_coeff[8];
+	UINT8 echo_on;
+	UINT8 echo_fback;
+	UINT8 echo_offset;
+	UINT8 echo_delay;
+	UINT8 echo_coeff[8];
 	struct
 	{
 		INT8   vol_left;
@@ -154,17 +154,17 @@ void snes_sh_update( int param, INT16 **buffer, int length )
  ***************************/
 
 static void snes_dsp_decode_sample( UINT8 chnl )
-{
+	{
 	/* FIXME: Need to fill this in! */
-}
+	}
 
-READ_HANDLER( snes_dsp_io_r )
+READ8_HANDLER( snes_dsp_io_r )
 {
 	/* FIXME: Need to fill this in! */
 	return 0xff;
 }
 
-WRITE_HANDLER( snes_dsp_io_w )
+WRITE8_HANDLER( snes_dsp_io_w )
 {
 	switch( offset )
 	{
@@ -368,7 +368,7 @@ WRITE_HANDLER( snes_dsp_io_w )
 /***************************
  *     I/O for SPC700      *
  ***************************/
-READ_HANDLER( spc_io_r )
+READ8_HANDLER( spc_io_r )
 {
 	switch( offset )	/* Offset is from 0x00f0 */
 	{
@@ -392,12 +392,12 @@ READ_HANDLER( spc_io_r )
 			UINT8 value = spc_ram[0xf0 + offset] & 0xf;
 			spc_ram[0xf0 + offset] = 0;
 			return value;
-		}
+	}
 	}
 	return 0xff;
 }
 
-WRITE_HANDLER( spc_io_w )
+WRITE8_HANDLER( spc_io_w )
 {
 	switch( offset )	/* Offset is from 0x00f0 */
 	{
@@ -454,10 +454,10 @@ WRITE_HANDLER( spc_io_w )
 		case 0xF:		/* Counter 2 */
 			return;
 	}
-	spc_ram[0xf0 + offset] = data;
+			spc_ram[0xf0 + offset] = data;
 }
 
-READ_HANDLER( spc_bank_r )
+READ8_HANDLER( spc_bank_r )
 {
 	if( spc_showrom )
 	{
@@ -469,7 +469,7 @@ READ_HANDLER( spc_bank_r )
 	}
 }
 
-WRITE_HANDLER( spc_bank_w )
+WRITE8_HANDLER( spc_bank_w )
 {
 	spc_ram[0xffc0 + offset] = data;
 }
@@ -480,7 +480,7 @@ WRITE_HANDLER( spc_bank_w )
  * When sound is disabled the SPC700 is stopped so we need to      *
  * simulate the behaviour of the ROM in the SPC700 as best we can. *
  *******************************************************************/
-WRITE_HANDLER( fakespc_port_w )
+WRITE8_HANDLER( fakespc_port_w )
 {
 	if( offset == 0 )
 	{
@@ -491,7 +491,7 @@ WRITE_HANDLER( fakespc_port_w )
 	fakeapu_port[offset] = data;
 }
 
-READ_HANDLER( fakespc_port_r )
+READ8_HANDLER( fakespc_port_r )
 {
 /*  G65816_PC=1, G65816_S, G65816_P, G65816_A, G65816_X, G65816_Y,
  *  G65816_PB, G65816_DB, G65816_D, G65816_E,

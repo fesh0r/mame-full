@@ -147,11 +147,11 @@ static void pcw_interrupt_handle(void)
 		((fdc_interrupt_code==1) && ((pcw_system_status & (1<<5))!=0))
 		)
 	{
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(0,0,CLEAR_LINE);
+		cpunum_set_input_line(0,0,CLEAR_LINE);
 	}
 }
 
@@ -191,7 +191,7 @@ static void	pcw_trigger_fdc_int(void)
 				{
 					/* I'll pulse it because if I used hold-line I'm not sure
 					it would clear - to be checked */
-					cpu_set_nmi_line(0, PULSE_LINE);
+					cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 				}
 			}
 		}
@@ -484,7 +484,7 @@ static WRITE8_HANDLER(pcw_system_control_w)
 				/* yes */
 
 				/* clear nmi interrupt */
-				cpu_set_nmi_line(0,CLEAR_LINE);
+				cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 			}
 
 			/* re-issue interrupt */
@@ -506,7 +506,7 @@ static WRITE8_HANDLER(pcw_system_control_w)
 				/* yes */
 
 				/* Clear NMI */
-				cpu_set_nmi_line(0, CLEAR_LINE);
+				cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 
 			}
 
@@ -740,7 +740,7 @@ static DRIVER_INIT(pcw)
 {
 	pcw_boot = 1;
 
-	cpu_irq_line_vector_w(0, 0,0x0ff);
+	cpunum_set_input_line_vector(0, 0,0x0ff);
 
     nec765_init(&pcw_nec765_interface,NEC765A);
 

@@ -232,10 +232,10 @@ INTERRUPT_GEN( odyssey2_line )
 
     switch (line) {
     case 252:
-		cpu_set_irq_line(0, 1, ASSERT_LINE); //vsync??
+		cpunum_set_input_line(0, 1, ASSERT_LINE); //vsync??
 		break;
     case 253:
-		cpu_set_irq_line(0, 1, CLEAR_LINE); //vsync??
+		cpunum_set_input_line(0, 1, CLEAR_LINE); //vsync??
 		break;
     }
 }
@@ -459,7 +459,7 @@ void odyssey2_sh_update( int param, INT16 *buffer, int length )
 			/* Throw an interrupt if enabled */
 			if( o2_vdc.s.control & 0x4 )
 			{
-				cpu_set_irq_line(0, 1, HOLD_LINE); /* Is this right? */
+				cpunum_set_input_line(0, 1, HOLD_LINE); /* Is this right? */
 			}
 
 			/* Adjust volume */

@@ -619,7 +619,7 @@ static void bbc_via_system_irq(int level)
 {
   via_system_irq=level;
 //  logerror("SYSTEM via irq %d %d %d\n",via_system_irq,via_user_irq,level);
-  cpu_set_irq_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
+  cpunum_set_input_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
 }
 
 
@@ -703,7 +703,7 @@ static void bbc_via_user_irq(int level)
 {
   via_user_irq=level;
 //  logerror("USER via irq %d %d %d\n",via_system_irq,via_user_irq,level);
-  cpu_set_irq_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
+  cpunum_set_input_line(0, M6502_IRQ_LINE, via_system_irq|via_user_irq);
 }
 
 
@@ -797,7 +797,7 @@ static void	bbc_i8271_interrupt(int state)
 		{
 			/* I'll pulse it because if I used hold-line I'm not sure
 			it would clear - to be checked */
-			cpu_set_nmi_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI,PULSE_LINE);
 		}
 	}
 
@@ -949,7 +949,7 @@ static void bbc_wd177x_callback(int event)
 		{
 			/* I'll pulse it because if I used hold-line I'm not sure
 			it would clear - to be checked */
-			cpu_set_nmi_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI,PULSE_LINE);
 		}
 	}
 

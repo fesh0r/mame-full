@@ -223,7 +223,7 @@ static void cdp1802_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + CDP1802_IRQ_STATE:	cdp1802_set_irq_line(CDP1802_IRQ, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + CDP1802_IRQ_STATE:	cdp1802_set_irq_line(CDP1802_IRQ, info->i);	break;
 
 		case CPUINFO_INT_REGISTER + CDP1802_P: cdp1802.p = info->i; break;
 		case CPUINFO_INT_REGISTER + CDP1802_X: cdp1802.x = info->i; break;
@@ -263,7 +263,7 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(cdp1802);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_INPUT_LINES:						info->i = 1;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 8;							break;
@@ -282,7 +282,7 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 3;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + CDP1802_IRQ_STATE:		info->i = cdp1802.irq_state;		break;
+		case CPUINFO_INT_INPUT_STATE + CDP1802_IRQ_STATE:		info->i = cdp1802.irq_state;		break;
 
 		case CPUINFO_INT_PREVIOUSPC:						info->i = cdp1802.oldpc;			break;
 

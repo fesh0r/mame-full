@@ -224,7 +224,7 @@ static struct Speaker_interface aquarius_speaker =
 
 static INTERRUPT_GEN( aquarius_interrupt )
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 /* Machine definition */

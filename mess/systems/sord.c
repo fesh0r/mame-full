@@ -172,11 +172,11 @@ static void sord_fd5_fdc_interrupt(int state)
 {
 	if (state)
 	{
-		cpu_set_irq_line(1,0, HOLD_LINE);
+		cpunum_set_input_line(1,0, HOLD_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(1,0,CLEAR_LINE);
+		cpunum_set_input_line(1,0,CLEAR_LINE);
 
 	}
 }
@@ -279,8 +279,8 @@ static WRITE8_HANDLER(sord_ppi_portb_w)
 
 	if (data==0x0f0)
 	{
-		cpu_set_reset_line(1,ASSERT_LINE);
-		cpu_set_reset_line(1,CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	}
 #ifdef SORD_DEBUG
 	logerror("m5 write to pi5 port b: %02x %04x\n",data,activecpu_get_pc());
@@ -351,7 +351,7 @@ static DEVICE_LOAD( sord_cartslot )
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-	cpu_set_irq_line_and_vector( 0, 0, HOLD_LINE, Z80_VECTOR( 0, state));
+	cpunum_set_input_line_and_vector( 0, 0, HOLD_LINE, Z80_VECTOR( 0, state));
 }
 
 static z80ctc_interface	sord_m5_ctc_intf =
@@ -676,7 +676,7 @@ static struct SN76496interface sn76496_interface =
 static INTERRUPT_GEN( sord_interrupt )
 {
 	if (TMS9928A_interrupt())
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 static const TMS9928a_interface tms9928a_interface =

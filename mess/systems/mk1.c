@@ -191,8 +191,8 @@ ROM_END
 
 static void mk1_interrupt(UINT16 addr, bool level)
 {
-    cpu_irq_line_vector_w(0, 0, addr);
-    cpu_set_irq_line(0, F8_INT_INTR, level);
+    cpunum_set_input_line_vector(0, 0, addr);
+    cpunum_set_input_line(0, F8_INT_INTR, level);
 }
 
 static DRIVER_INIT( mk1 )

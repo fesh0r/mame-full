@@ -469,7 +469,7 @@ static struct Wave_interface wave_interface = {
 
 static INTERRUPT_GEN( vtech2_interrupt )
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( laser350 )

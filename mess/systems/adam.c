@@ -452,7 +452,7 @@ static void adam_vdp_interrupt (int state)
     /* only if it goes up */
 	if (state && !last_state)
 	    {
-	        cpu_set_nmi_line(0, PULSE_LINE);
+	        cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	    }
 	last_state = state;
 }
@@ -477,7 +477,7 @@ void adam_paddle_callback (int param)
 		adam_joy_stat[1] = 1;
 
 	if (adam_joy_stat[0] || adam_joy_stat[1])
-		cpu_set_irq_line (0, 0, HOLD_LINE);
+		cpunum_set_input_line (0, 0, HOLD_LINE);
 }
 
 void set_memory_banks(void)

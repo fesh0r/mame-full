@@ -65,7 +65,7 @@ static INTERRUPT_GEN( pce_interrupt )
         }
     }
 	if (ret)
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 /* stubs for the irq/psg/timer code */

@@ -2009,7 +2009,7 @@ static PALETTE_INIT( spectrum )
 
 static INTERRUPT_GEN( spec_interrupt )
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 static struct Speaker_interface spectrum_speaker_interface=

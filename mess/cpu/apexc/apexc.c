@@ -842,7 +842,7 @@ static void apexc_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 	/* --- the following bits of info are set as 64-bit signed integers --- */
-	/*case CPUINFO_INT_IRQ_STATE + ...:*/							/* no interrupts */
+	/*case CPUINFO_INT_INPUT_STATE + ...:*/							/* no interrupts */
 
 	case CPUINFO_INT_PC:
 		/* keep address 9 LSBits - 10th bit depends on whether we are accessing the permanent
@@ -896,7 +896,7 @@ void apexc_get_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(apexc);				break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 0;							break;
+	case CPUINFO_INT_INPUT_LINES:						info->i = 0;							break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	/*don't care*/	break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -923,7 +923,7 @@ void apexc_get_info(UINT32 state, union cpuinfo *info)
 		break;
 	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* no PC */				break;
 
-	/*case CPUINFO_INT_IRQ_STATE + ...:*/							/* no interrupts */
+	/*case CPUINFO_INT_INPUT_STATE + ...:*/							/* no interrupts */
 
 	case CPUINFO_INT_REGISTER + APEXC_CR:			info->i = apexc.cr;						break;
 	case CPUINFO_INT_REGISTER + APEXC_A:			info->i = apexc.a;						break;

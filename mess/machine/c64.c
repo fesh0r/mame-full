@@ -87,13 +87,19 @@ static void c64_nmi(void)
     if (nmilevel != KEY_RESTORE||cia1irq)
     {
 	if (c128) {
-	    if (cpu_getactivecpu()==0) { /* z80 */
-		cpu_set_nmi_line (0, KEY_RESTORE||cia1irq);
-	    } else {
-		cpu_set_nmi_line (1, KEY_RESTORE||cia1irq);
+	    if (cpu_getactivecpu()==0) 
+		{
+			/* z80 */
+			cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
 	    }
-	} else {
-	    cpu_set_nmi_line (0, KEY_RESTORE||cia1irq);
+		else
+		{
+			cpunum_set_input_line(1, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
+	    }
+	}
+	else
+	{
+	    cpunum_set_input_line(0, INPUT_LINE_NMI, KEY_RESTORE||cia1irq);
 	}
 	nmilevel = KEY_RESTORE||cia1irq;
     }
@@ -276,12 +282,12 @@ static void c64_irq (int level)
 		DBG_LOG (3, "mos6510", ("irq %s\n", level ? "start" : "end"));
 		if (c128) {
 			if (0&&(cpu_getactivecpu()==0)) {
-				cpu_set_irq_line (0, 0, level);
+				cpunum_set_input_line (0, 0, level);
 			} else {
-				cpu_set_irq_line (1, M6510_IRQ_LINE, level);
+				cpunum_set_input_line (1, M6510_IRQ_LINE, level);
 			}
 		} else {
-			cpu_set_irq_line (0, M6510_IRQ_LINE, level);
+			cpunum_set_input_line (0, M6510_IRQ_LINE, level);
 		}
 		old_level = level;
 	}
@@ -362,19 +368,8 @@ static void c64_cia1_port_a_w (int offset, int data)
 
 static void c64_cia1_interrupt (int level)
 {
-	cia1irq=level;
+	cia1irq = level;
 	c64_nmi();
-#if 0
-	static int old_level = 0;
-
-	if (level != old_level)
-	{
-		DBG_LOG (1, "mos6510", ("nmi %s\n", level ? "start" : "end"));
-
-		/*      cpu_set_nmi_line(0, level); */
-		old_level = level;
-	}
-#endif
 }
 
 struct cia6526_interface c64_cia0 =

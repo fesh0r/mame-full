@@ -312,20 +312,20 @@ static void einstein_scan_keyboard(void)
 static void einstein_update_interrupts(void)
 {
 	if (einstein_int & einstein_int_mask & EINSTEIN_KEY_INT)
-		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_IEO, PULSE_LINE);
 
 	if (einstein_int & einstein_int_mask & EINSTEIN_ADC_INT)
-		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_IEO, PULSE_LINE);
 
 /*
 	if (einstein_int & einstein_int_mask & EINSTEIN_FIRE_INT)
-		cpu_set_irq_line(0, Z80_INT_REQ, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_REQ, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, Z80_INT_IEO, PULSE_LINE);
+		cpunum_set_input_line(0, Z80_INT_IEO, PULSE_LINE);
 */
 }
 
@@ -362,13 +362,13 @@ static void	einstein_keyboard_timer_callback(int dummy)
 static void einstein_ctc_interrupt(int state)
 {
 	logerror("ctc irq state: %02x\n",state);
-	cpu_set_irq_line(0, 1, state);
+	cpunum_set_input_line(0, 1, state);
 }
 
 static void einstein_pio_interrupt(int state)
 {
 	logerror("pio irq state: %02x\n",state);
-	cpu_set_irq_line(0, 3, state);
+	cpunum_set_input_line(0, 3, state);
 }
 
 static WRITE8_HANDLER(einstein_serial_transmit_clock)

@@ -1515,7 +1515,7 @@ void gb_scanline_interrupt (void)
 			LCDSTAT |= 0x04;
 			/* Generate lcd interrupt if requested */
 			if( LCDSTAT & 0x40 )
-				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 		}
 		else
 			LCDSTAT &= 0xFB;
@@ -1526,7 +1526,7 @@ void gb_scanline_interrupt (void)
 			LCDSTAT = (LCDSTAT & 0xFC) | 0x02;
 			/* Generate lcd interrupt if requested */
 			if (LCDSTAT & 0x20)
-				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+				cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 
 			/* First  lcdstate change after aprox 19 uS */
 			timer_set (19.0 / 1000000.0, 0, gb_scanline_interrupt_set_mode3);
@@ -1539,12 +1539,12 @@ void gb_scanline_interrupt (void)
 			if (CURLINE == 144)
 			{
 				/* Cause VBlank interrupt */
-				cpu_set_irq_line(0, VBL_INT, HOLD_LINE);
+				cpunum_set_input_line(0, VBL_INT, HOLD_LINE);
 				/* Set VBlank lcdstate */
 				LCDSTAT = (LCDSTAT & 0xFC) | 0x01;
 				/* Generate lcd interrupt if requested */
 				if( LCDSTAT & 0x10 )
-					cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+					cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 			}
 		}
 		CURLINE = (CURLINE + 1) % 154;
@@ -1557,7 +1557,7 @@ void gb_scanline_interrupt (void)
 		if (!--SIOCount)
 		{
 			SIOCONT &= 0x7F;
-			cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
+			cpunum_set_input_line(0, SIO_INT, HOLD_LINE);
 		}
 	}
 }
@@ -1568,7 +1568,7 @@ void gb_scanline_interrupt_set_mode0 (int param)
 	LCDSTAT &= 0xFC;
 	/* Generate lcd interrupt if requested */
 	if( LCDSTAT & 0x08 )
-		cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+		cpunum_set_input_line(0, LCD_INT, HOLD_LINE);
 
 	/* Check for HBLANK DMA */
 	if( gbc_hdma_enabled && (CURLINE < 144) )

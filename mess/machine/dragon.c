@@ -660,17 +660,17 @@ static int is_cpu_suspended(void)
 static void d_recalc_irq(void)
 {
 	if (((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE)) && is_cpu_suspended())
-		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
 static void d_recalc_firq(void)
 {
 	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE)) && is_cpu_suspended())
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 static void coco3_recalc_irq(void)
@@ -681,7 +681,7 @@ static void coco3_recalc_irq(void)
 #endif
 
 	if ((coco3_gimereg[0] & 0x20) && gime_irq && is_cpu_suspended())
-		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_irq();
 }
@@ -689,7 +689,7 @@ static void coco3_recalc_irq(void)
 static void coco3_recalc_firq(void)
 {
 	if ((coco3_gimereg[0] & 0x10) && gime_firq && is_cpu_suspended())
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_firq();
 }
@@ -839,7 +839,7 @@ static void (*recalc_interrupts)(int dummy);
 
 void coco_set_halt_line(int halt_line)
 {
-	cpu_set_halt_line(0, halt_line);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, halt_line);
 	if (halt_line == CLEAR_LINE)
 		timer_set(TIME_IN_CYCLES(1,0), 0, recalc_interrupts);
 }

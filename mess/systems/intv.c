@@ -377,7 +377,7 @@ ADDRESS_MAP_END
 
 static INTERRUPT_GEN( intv_interrupt2 )
 {
-	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( intv )

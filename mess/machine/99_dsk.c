@@ -392,9 +392,9 @@ void ti99_fdc_init(void)
 static void fdc_handle_hold(void)
 {
 	if (DSKhold && (!DRQ_IRQ_status) && DVENA)
-		cpu_set_halt_line(0, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 	else
-		cpu_set_halt_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_HALT, CLEAR_LINE);
 }
 
 /*

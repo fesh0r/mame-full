@@ -89,7 +89,7 @@ static void raise_nmi(int dummy)
 {
 	LOG(("cococart: Raising NMI (and clearing halt), source: wd179x INTRQ\n" ));
 
-	cpu_set_nmi_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 static void raise_halt(int dummy)
@@ -104,8 +104,9 @@ static void coco_fdc_callback(int event)
 	switch(event) {
 	case WD179X_IRQ_CLR:
 		intrq_state = CLEAR_LINE;
-		cpu_set_nmi_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		break;
+
 	case WD179X_IRQ_SET:
 		intrq_state = ASSERT_LINE;
 		CLEAR_COCO_HALTENABLE;
@@ -113,8 +114,9 @@ static void coco_fdc_callback(int event)
 		if( COCO_NMIENABLE )
 			timer_set( TIME_IN_USEC(0), 0, raise_nmi);
 		else
-			cpu_set_nmi_line(0, CLEAR_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		break;
+
 	case WD179X_DRQ_CLR:
 		drq_state = CLEAR_LINE;
 		if( COCO_HALTENABLE )
@@ -134,7 +136,7 @@ static void dragon_fdc_callback(int event)
 	switch(event) {
 	case WD179X_IRQ_CLR:
 		LOG(("dragon_fdc_callback(): WD179X_IRQ_CLR\n" ));
-		cpu_set_nmi_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		break;
 	case WD179X_IRQ_SET:
 		LOG(("dragon_fdc_callback(): WD179X_IRQ_SET\n" ));
@@ -205,7 +207,7 @@ static void set_coco_dskreg(int data)
 		timer_set( TIME_IN_USEC(0), 0, raise_nmi);
 	}
 	else
-		cpu_set_nmi_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 
 	wd179x_set_drive(drive);
 	wd179x_set_side(head);

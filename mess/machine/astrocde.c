@@ -68,5 +68,5 @@ INTERRUPT_GEN( astrocade_interrupt )
     /* Scanline interrupt enabled ? */
     if ((screen_interrupts_enabled) && (screen_interrupt_mode == 0)
 	                                && (CurrentScan == NextScanInt))
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 }

@@ -150,8 +150,8 @@ READ16_HANDLER( atarigen_slapstic_r );
 void atarigen_sound_io_reset(int cpu_num);
 
 INTERRUPT_GEN( atarigen_6502_irq_gen );
-READ_HANDLER( atarigen_6502_irq_ack_r );
-WRITE_HANDLER( atarigen_6502_irq_ack_w );
+READ8_HANDLER( atarigen_6502_irq_ack_r );
+WRITE8_HANDLER( atarigen_6502_irq_ack_w );
 
 void atarigen_ym2151_irq_gen(int irq);
 
@@ -165,8 +165,8 @@ READ32_HANDLER( atarigen_sound_upper32_r );
 
 void atarigen_sound_reset(void);
 WRITE16_HANDLER( atarigen_sound_reset_w );
-WRITE_HANDLER( atarigen_6502_sound_w );
-READ_HANDLER( atarigen_6502_sound_r );
+WRITE8_HANDLER( atarigen_6502_sound_w );
+READ8_HANDLER( atarigen_6502_sound_r );
 
 
 /*---------------------------------------------------------------

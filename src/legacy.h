@@ -384,7 +384,7 @@ static int input_port_read_ver_5(mame_file *f, struct InputPort *in)
 		return -1;
 	in->default_value = w;
 
-	if (seq_read_ver_5(f,&in->seq) != 0)
+	if (seq_read_ver_5(f,&in->seq[0]) != 0)
 		return -1;
 	return 0;
 }
@@ -405,7 +405,7 @@ static int input_port_read_ver_6(mame_file *f, struct InputPort *in)
 		return -1;
 	in->default_value = w;
 
-	if (seq_read_ver_6(f,&in->seq) != 0)
+	if (seq_read_ver_6(f,&in->seq[0]) != 0)
 		return -1;
 	return 0;
 }
@@ -426,7 +426,7 @@ static int input_port_read_ver_7(mame_file *f, struct InputPort *in)
 		return -1;
 	in->default_value = w;
 
-	if (seq_read_ver_7(f,&in->seq) != 0)
+	if (seq_read_ver_7(f,&in->seq[0]) != 0)
 		return -1;
 	return 0;
 }

@@ -572,12 +572,12 @@ READ16_HANDLER(ti990_10_internal_r)
 /*
 	accessor for the first 252 bytes of internal RAM
 */
-READ_HANDLER(tms9995_internal1_r)
+READ8_HANDLER(tms9995_internal1_r)
 {
 	return I.RAM[offset];
 }
 
-WRITE_HANDLER(tms9995_internal1_w)
+WRITE8_HANDLER(tms9995_internal1_w)
 {
 	I.RAM[offset]=data;
 }
@@ -585,12 +585,12 @@ WRITE_HANDLER(tms9995_internal1_w)
 /*
 	accessor for the last 4 bytes of internal RAM
 */
-READ_HANDLER(tms9995_internal2_r)
+READ8_HANDLER(tms9995_internal2_r)
 {
 	return I.RAM[offset+0xfc];
 }
 
-WRITE_HANDLER(tms9995_internal2_w)
+WRITE8_HANDLER(tms9995_internal2_w)
 {
 	I.RAM[offset+0xfc]=data;
 }
@@ -1125,7 +1125,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 #define WRITEREG(reg, data)  writeword((I.WP+(reg)) & 0xffff, (data))
 
 #if (TMS99XX_MODEL == TI990_10_ID)
-	READ_HANDLER(ti990_10_mapper_cru_r)
+	READ8_HANDLER(ti990_10_mapper_cru_r)
 	{
 		int reply = 0;
 
@@ -1163,7 +1163,7 @@ WRITE_HANDLER(tms9995_internal2_w)
 			return reply & 0xff;
 	}
 
-	WRITE_HANDLER(ti990_10_mapper_cru_w)
+	WRITE8_HANDLER(ti990_10_mapper_cru_w)
 	{
 		switch (offset)
 		{
@@ -1204,12 +1204,12 @@ WRITE_HANDLER(tms9995_internal2_w)
 			(*I.error_interrupt_callback)(I.error_interrupt_register ? 1 : 0);
 	}
 
-	READ_HANDLER(ti990_10_eir_cru_r)
+	READ8_HANDLER(ti990_10_eir_cru_r)
 	{
 		return (offset == 1) ? (I.error_interrupt_register & 0xff) : 0;
 	}
 
-	WRITE_HANDLER(ti990_10_eir_cru_w)
+	WRITE8_HANDLER(ti990_10_eir_cru_w)
 	{
 		if (offset < 4)	/* does not work for EIR_MAPERR */
 		{
@@ -1609,7 +1609,7 @@ static void tms99xx_set_context(void *src)
 
 static void tms99xx_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		I.load_state = state;   /* save new state */
 
@@ -1641,7 +1641,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 #elif (TMS99XX_MODEL == TMS9900_ID)
 
 /*
-void tms99xx_set_irq_line(IRQ_LINE_NMI, int state) : change the state of the LOAD* line
+void tms99xx_set_irq_line(INPUT_LINE_NMI, int state) : change the state of the LOAD* line
 
 	state == 0 -> LOAD* goes high (inactive)
 	state != 0 -> LOAD* goes low (active)
@@ -1711,7 +1711,7 @@ void tms99xx_set_irq_line(int irqline, int state) : sets the state of the interr
 */
 static void tms99xx_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		I.load_state = state;   /* save new state */
 
@@ -1764,7 +1764,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 #else
 		int level;
 
-		if (irqline == IRQ_LINE_NMI)
+		if (irqline == INPUT_LINE_NMI)
 			level = 2;	/* translate MAME's convention to CPU's representation */
 		else
 			level = (* I.irq_callback)(0);
@@ -1873,7 +1873,7 @@ static void reset_decrementer(void)
 */
 static void tms99xx_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		I.load_state = state;   /* save new state */
 
@@ -4640,10 +4640,10 @@ static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		tms99xx_set_irq_line(IRQ_LINE_NMI, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + 0:					tms99xx_set_irq_line(0, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + 1:					tms99xx_set_irq_line(1, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + 2:					tms99xx_set_irq_line(2, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		tms99xx_set_irq_line(INPUT_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + 0:					tms99xx_set_irq_line(0, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + 1:					tms99xx_set_irq_line(1, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + 2:					tms99xx_set_irq_line(2, info->i);		break;
 
 #if (TMS99XX_MODEL == TI990_10_ID)
 		case CPUINFO_INT_PC:
@@ -4726,7 +4726,7 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(I);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 3;							break;
+		case CPUINFO_INT_INPUT_LINES:						info->i = 3;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -4784,10 +4784,10 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
 /* not implemented */
-/*		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = get_irq_line(IRQ_LINE_NMI);	break;
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = get_irq_line(0);				break;
-		case CPUINFO_INT_IRQ_STATE + 1:					info->i = get_irq_line(1);				break;
-		case CPUINFO_INT_IRQ_STATE + 2:					info->i = get_irq_line(2);				break;*/
+/*		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		info->i = get_irq_line(INPUT_LINE_NMI);	break;
+		case CPUINFO_INT_INPUT_STATE + 0:					info->i = get_irq_line(0);				break;
+		case CPUINFO_INT_INPUT_STATE + 1:					info->i = get_irq_line(1);				break;
+		case CPUINFO_INT_INPUT_STATE + 2:					info->i = get_irq_line(2);				break;*/
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 

@@ -145,12 +145,12 @@ void apf_update_ints(void)
 {
 	if (apf_ints!=0)
 	{
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 		logerror("set int\n");
 	}
 	else
 	{
-		cpu_set_irq_line(0,0,CLEAR_LINE);
+		cpunum_set_input_line(0,0,CLEAR_LINE);
 		logerror("clear int\n");
 	}
 }

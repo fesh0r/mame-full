@@ -44,30 +44,27 @@ enum
 #define UCHAR_SHIFT_BEGIN	(UCHAR_SHIFT_1)
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
-#define PORT_UCHAR(uchar) \
-	{ (UINT16) ((uchar) >> 16), (UINT16) ((uchar) >> 0), IPT_UCHAR, 0 },
-
 #define PORT_KEY0(mask,default,name,key1,key2)						\
 	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
-	PORT_CODE(key1,key2)											\
+	PORT_CODELEGACY(key1,key2)										\
 
 #define PORT_KEY1(mask,default,name,key1,key2,uchar)				\
 	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
-	PORT_CODE(key1,key2)											\
-	PORT_UCHAR(uchar)												\
+	PORT_CODELEGACY(key1,key2)										\
+	port->u.keyboard.chars[0] = (uchar);							\
 
 #define PORT_KEY2(mask,default,name,key1,key2,uchar1,uchar2)		\
 	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
-	PORT_CODE(key1,key2)											\
-	PORT_UCHAR(uchar1)												\
-	PORT_UCHAR(uchar2)												\
+	PORT_CODELEGACY(key1,key2)										\
+	port->u.keyboard.chars[0] = (uchar1);							\
+	port->u.keyboard.chars[1] = (uchar2);							\
 
 #define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
 	PORT_BIT_NAME(mask, default, IPT_KEYBOARD, name)				\
-	PORT_CODE(key1,key2)											\
-	PORT_UCHAR(uchar1)												\
-	PORT_UCHAR(uchar2)												\
-	PORT_UCHAR(uchar3)												\
+	PORT_CODELEGACY(key1,key2)										\
+	port->u.keyboard.chars[0] = (uchar1);							\
+	port->u.keyboard.chars[1] = (uchar2);							\
+	port->u.keyboard.chars[2] = (uchar3);							\
 
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \
@@ -77,8 +74,8 @@ enum
 	PORT_BIT_NAME(0, default, IPT_CONFIG_SETTING, name)
 
 /* categories */
-#define PORT_CATEGORY(category) \
-	{ 0, category, IPT_CATEGORY, 0 },
+#define PORT_CATEGORY(category_) \
+	port->category = (category_);	\
 
 #define PORT_CATEGORY_CLASS(mask,default,name) \
 	PORT_BIT_NAME(mask, default, IPT_CATEGORY_NAME, name)
@@ -98,8 +95,7 @@ enum
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
 void inputx_update(unsigned short *ports);
-const struct InputPortTiny *inputx_handle_mess_extensions(
-	const struct InputPortTiny *ext, struct InputPort *dst, int port_size);
+void inputx_handle_mess_extensions(struct InputPort *ipt);
 
 #ifdef MAME_DEBUG
 int inputx_validitycheck(const struct GameDriver *gamedrv);

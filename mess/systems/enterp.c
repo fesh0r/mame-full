@@ -158,9 +158,9 @@ static void enterprise_dave_reg_read(int RegIndex)
 static void enterprise_dave_interrupt(int state)
 {
 	if (state)
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 	else
-		cpu_set_irq_line(0,0,CLEAR_LINE);
+		cpunum_set_input_line(0,0,CLEAR_LINE);
 }
 
 /* enterprise interface to dave - ok, so Dave chip is unique
@@ -229,7 +229,7 @@ void Enterprise_Initialise()
 	Dave_reg_w(0x012,0);
 	Dave_reg_w(0x013,0);
 
-	cpu_irq_line_vector_w(0,0,0x0ff);
+	cpunum_set_input_line_vector(0,0,0x0ff);
 
 	wd179x_init(WD_TYPE_177X, enterp_wd177x_callback);
 

@@ -119,7 +119,7 @@ static void pit_irq_2(int which)
 {
 	/* INTMSK: interrupt enabled? */
     if (pio_port_c_output & 0x04)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /************************ PIO ************************************************/

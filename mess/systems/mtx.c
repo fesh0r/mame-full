@@ -135,7 +135,7 @@ static  READ8_HANDLER ( mtx_key_hi_r )
 static void mtx_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
-	cpu_set_irq_line(0, 0, state);
+	cpunum_set_input_line(0, 0, state);
 }
 
 static  READ8_HANDLER ( mtx_ctc_r )

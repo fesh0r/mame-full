@@ -640,5 +640,5 @@ WRITE8_HANDLER(vtech1_serial_w)
 
 INTERRUPT_GEN(vtech1_interrupt)
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }

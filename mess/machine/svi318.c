@@ -420,7 +420,7 @@ static struct {
 
 void svi318_vdp_interrupt (int i)
 {
-	cpu_set_irq_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
+	cpunum_set_input_line (0, 0, (i ? HOLD_LINE : CLEAR_LINE));
 }
 
 DRIVER_INIT( svi318 )
@@ -487,7 +487,7 @@ MACHINE_INIT( svi318 )
 	{
 	/* video stuff */
 	TMS9928A_reset ();
-	cpu_irq_line_vector_w(0,0,0xff);
+	cpunum_set_input_line_vector(0,0,0xff);
 
 	/* PPI */
 	ppi8255_0_w (3, 0x92);

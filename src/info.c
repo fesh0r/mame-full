@@ -163,11 +163,15 @@ static void print_statement_string(int OUTPUT_XML, FILE* out, const char* s)
 
 static void print_game_switch(int OUTPUT_XML, FILE* out, const struct GameDriver* game)
 {
-	const struct InputPortTiny* input = game->input_ports;
+	const struct InputPort* input;
 
-	while ((input->type & ~IPF_MASK) != IPT_END)
+	begin_resource_tracking();
+	
+	input = input_port_allocate(game->construct_ipt);
+	
+	while (input->type != IPT_END)
 	{
-		if ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_NAME)
+		if (input->type==IPT_DIPSWITCH_NAME)
 		{
 			int def = input->default_value;
 
@@ -180,7 +184,7 @@ static void print_game_switch(int OUTPUT_XML, FILE* out, const struct GameDriver
 
 			fprintf(out, "%s", SELECT("", ">\n"));
 
-			while ((input->type & ~IPF_MASK)==IPT_DIPSWITCH_SETTING)
+			while (input->type==IPT_DIPSWITCH_SETTING)
 			{
 				fprintf(out, SELECT(L2P "entry ", "\t\t\t<dipvalue"));
 				fprintf(out, "%s", SELECT("", " name=\""));
@@ -210,11 +214,13 @@ static void print_game_switch(int OUTPUT_XML, FILE* out, const struct GameDriver
 		else
 			++input;
 	}
+	
+	end_resource_tracking();
 }
 
 static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver* game)
 {
-	const struct InputPortTiny* input = game->input_ports;
+	const struct InputPort* input;
 	int nplayer = 0;
 	const char* control = 0;
 	int nbutton = 0;
@@ -222,47 +228,22 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 	const char* service = 0;
 	const char* tilt = 0;
 
-	while ((input->type & ~IPF_MASK) != IPT_END)
-	{
-		/* skip analog extension fields */
-		if ((input->type & ~IPF_MASK) != IPT_EXTENSION)
-		{
-			switch (input->type & IPF_PLAYERMASK)
+	begin_resource_tracking();
+	
+	input = input_port_allocate(game->construct_ipt);
+	
+	while (input->type != IPT_END)
 			{
-				case IPF_PLAYER1:
-					if (nplayer<1) nplayer = 1;
-					break;
-				case IPF_PLAYER2:
-					if (nplayer<2) nplayer = 2;
-					break;
-				case IPF_PLAYER3:
-					if (nplayer<3) nplayer = 3;
-					break;
-				case IPF_PLAYER4:
-					if (nplayer<4) nplayer = 4;
-					break;
-				case IPF_PLAYER5:
-					if (nplayer<5) nplayer = 5;
-					break;
-				case IPF_PLAYER6:
-					if (nplayer<6) nplayer = 6;
-					break;
-				case IPF_PLAYER7:
-					if (nplayer<7) nplayer = 7;
-					break;
-				case IPF_PLAYER8:
-					if (nplayer<8) nplayer = 8;
-					break;
-			}
-			switch (input->type & ~IPF_MASK)
+		if (nplayer < input->player+1)
+			nplayer = input->player+1;
+
+		switch (input->type)
 			{
 				case IPT_JOYSTICK_UP:
 				case IPT_JOYSTICK_DOWN:
 				case IPT_JOYSTICK_LEFT:
 				case IPT_JOYSTICK_RIGHT:
-					if (input->type & IPF_2WAY)
-						control = "joy2way";
-					else if (input->type & IPF_4WAY)
+				if (input->four_way)
 						control = "joy4way";
 					else
 						control = "joy8way";
@@ -275,9 +256,7 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 				case IPT_JOYSTICKLEFT_DOWN:
 				case IPT_JOYSTICKLEFT_LEFT:
 				case IPT_JOYSTICKLEFT_RIGHT:
-					if (input->type & IPF_2WAY)
-						control = "doublejoy2way";
-					else if (input->type & IPF_4WAY)
+				if (input->four_way)
 						control = "doublejoy4way";
 					else
 						control = "doublejoy8way";
@@ -361,7 +340,6 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 					tilt = "yes";
 					break;
 			}
-		}
 		++input;
 	}
 
@@ -378,6 +356,8 @@ static void print_game_input(int OUTPUT_XML, FILE* out, const struct GameDriver*
 	if (tilt)
 		fprintf(out, SELECT(L2P "tilt %s" L2N, " tilt=\"%s\""), tilt );
 	fprintf(out, SELECT(L2E L1N, "/>\n"));
+
+	end_resource_tracking();
 }
 
 static void print_game_bios(int OUTPUT_XML, FILE* out, const struct GameDriver* game)

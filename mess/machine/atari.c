@@ -943,7 +943,7 @@ void atari_interrupt_cb(int mask)
 			logerror("atari interrupt_cb TIMR1\n");
 #endif
 
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /**************************************************************

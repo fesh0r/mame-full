@@ -211,11 +211,11 @@ static void update_gpu_irq(void)
 {
 	if (gpu_irq_state & dsp_regs[JINTCTRL] & 0x1f)
 	{
-		cpu_set_irq_line(1, 1, ASSERT_LINE);
+		cpunum_set_input_line(1, 1, ASSERT_LINE);
 		jaguar_gpu_resume();
 	}
 	else
-		cpu_set_irq_line(1, 1, CLEAR_LINE);
+		cpunum_set_input_line(1, 1, CLEAR_LINE);
 }
 
 
@@ -395,7 +395,7 @@ static WRITE32_HANDLER( dsp_flags_w )
 static void serial_chunky_callback(int param)
 {
 	/* assert the A2S IRQ on CPU #2 (DSP) */
-	cpu_set_irq_line(2, 1, ASSERT_LINE);
+	cpunum_set_input_line(2, 1, ASSERT_LINE);
 	jaguar_dsp_resume();
 
 	/* fix flaky code in interrupt handler which thwarts our speedup */
@@ -414,7 +414,7 @@ static void serial_chunky_callback(int param)
 static void serial_callback(int param)
 {
 	/* assert the A2S IRQ on CPU #2 (DSP) */
-	cpu_set_irq_line(2, 1, ASSERT_LINE);
+	cpunum_set_input_line(2, 1, ASSERT_LINE);
 	jaguar_dsp_resume();
 }
 

@@ -503,8 +503,8 @@ static void c128_bankswitch (int reset)
 					memory_set_context(0);
 					c128_bankswitch_z80();
 					memory_set_context(1);
-					cpu_set_halt_line (0, 0);
-					cpu_set_halt_line (1, 1);
+					cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
+					cpunum_set_input_line(1, INPUT_LINE_HALT, 1);
 				}
 			}
 		else
@@ -514,8 +514,8 @@ static void c128_bankswitch (int reset)
 				memory_set_context(1);
 				c128_bankswitch_128(reset);
 				memory_set_context(0);
-				cpu_set_halt_line (1, 0);
-				cpu_set_halt_line (0, 1);
+				cpunum_set_input_line(1, INPUT_LINE_HALT, 0);
+				cpunum_set_input_line(0, INPUT_LINE_HALT, 1);
 			}
 		mmu_cpu = MMU_CPU8502;
 		return;
@@ -802,8 +802,8 @@ MACHINE_INIT( c128 )
 
 	c64mode = 0;
 	c128_mmu8722_reset ();
-	cpu_set_halt_line (0, 0);
-	cpu_set_halt_line (1, 1);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, 1);
 }
 
 VIDEO_START( c128 )

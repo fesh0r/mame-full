@@ -664,7 +664,7 @@ static void m6530_timer_cb(int chip)
 	logerror("m6530(%d) timer expired\n", chip);
 	m6530[chip].state |= 0x80;
 	if (m6530[chip].irqen)			   /* with IRQ? */
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 INTERRUPT_GEN( kim1_interrupt )

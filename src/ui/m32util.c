@@ -380,64 +380,58 @@ BOOL DriverUsesSamples(int driver_index)
 
 BOOL DriverUsesTrackball(int driver_index)
 {
-    const struct InputPortTiny *input_ports;
+	const struct InputPort *input_ports;
+	BOOL result = FALSE;
 
-	if (drivers[driver_index]->input_ports == NULL)
-        return FALSE;
+	begin_resource_tracking();
 
-    input_ports = drivers[driver_index]->input_ports;
-
-	while (1)
-    {
+	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
+	while(input_ports->type != IPT_END)
+	{
         UINT32 type;
 
         type = input_ports->type;
-
-        if (type == IPT_END)
-            break;
-
-        type &= ~IPF_MASK;
         
         if (type == IPT_DIAL || type == IPT_PADDLE || 
 			type == IPT_TRACKBALL_X || type == IPT_TRACKBALL_Y ||
             type == IPT_AD_STICK_X || type == IPT_AD_STICK_Y)
         {
-            return TRUE;
+            result = TRUE;
+			break;
         }
         
         input_ports++;
     }
 
-    return FALSE;
+	end_resource_tracking();
+    return result;
 }
 
 BOOL DriverUsesLightGun(int driver_index)
 {
-    const struct InputPortTiny *input_ports;
+	const struct InputPort *input_ports;
+	BOOL result = FALSE;
 
-	if (drivers[driver_index]->input_ports == NULL)
-        return FALSE;
+	begin_resource_tracking();
 
-    input_ports = drivers[driver_index]->input_ports;
-
-	while (1)
-    {
+	input_ports = input_port_allocate(drivers[driver_index]->construct_ipt);
+	while(input_ports->type != IPT_END)
+	{
         UINT32 type;
 
         type = input_ports->type;
-
-        if (type == IPT_END)
-			break;
-
-		type &= ~IPF_MASK;
         
 		if (type == IPT_LIGHTGUN_X || type == IPT_LIGHTGUN_Y)
-            return TRUE;
+        {
+            result = TRUE;
+			break;
+        }
         
         input_ports++;
     }
 
-    return FALSE;
+	end_resource_tracking();
+    return result;
 }
 
 

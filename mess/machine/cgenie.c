@@ -987,7 +987,7 @@ INTERRUPT_GEN( cgenie_timer_interrupt )
 	if( (irq_status & IRQ_TIMER) == 0 )
 	{
 		irq_status |= IRQ_TIMER;
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 	}
 }
 
@@ -996,7 +996,7 @@ static INTERRUPT_GEN( cgenie_fdc_interrupt )
 	if( (irq_status & IRQ_FDC) == 0 )
 	{
 		irq_status |= IRQ_FDC;
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 	}
 }
 
@@ -1163,11 +1163,4 @@ INTERRUPT_GEN( cgenie_frame_interrupt )
 		cgenie_port_ff_w(0, port_ff ^ FF_BGD0);
 	}
 }
-
-#if 0
-static void cgenie_nmi_generate(int param)
-{
-	cpu_set_nmi_line(0, PULSE_LINE);
-}
-#endif
 

@@ -227,7 +227,7 @@ static struct Speaker_interface speaker_interface =
 
 static INTERRUPT_GEN( p2000_interrupt )
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 /* Machine definition */

@@ -1220,7 +1220,7 @@ WRITE16_HANDLER( genesis_68000_z80_busreq_w )
 	// write 0100 requests z80 bus (z80 paused)
 	if (data == 0x0000)
 	{
-		cpu_set_halt_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_HALT,  CLEAR_LINE);
 		genesis_68k_has_z80_bus = 0;
 //			printf("-- z80 running %04x\n",data);
 
@@ -1228,7 +1228,7 @@ WRITE16_HANDLER( genesis_68000_z80_busreq_w )
 
 	if (data == 0x0100)
 	{
-		cpu_set_halt_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_HALT,  ASSERT_LINE);
 		genesis_68k_has_z80_bus = 1;
 //			printf("-- z80 stopped %04x\n",data);
 
@@ -1245,13 +1245,13 @@ WRITE16_HANDLER ( genesis_68000_z80_reset_w )
 
 	if (data == 0x0000)
 	{
-		cpu_set_reset_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 		genesis_z80_is_reset = 1;
 	}
 
 	if (data == 0x0100)
 	{
-		cpu_set_reset_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 		genesis_z80_is_reset = 0;
 	}
 }
@@ -2308,7 +2308,7 @@ INTERRUPT_GEN( genesis_interrupt )
 	//	if (!irqlevel)
 			irqlevel = 6;
 
-		cpu_set_irq_line(1,0, HOLD_LINE); // z80 interrupt, always?
+		cpunum_set_input_line(1,0, HOLD_LINE); // z80 interrupt, always?
 	}
 
 
@@ -2318,7 +2318,7 @@ INTERRUPT_GEN( genesis_interrupt )
 		genesis_vdp_draw_scanline(&genesis_vdp,genesis_vdp.sline);
 	}
 
-	cpu_set_irq_line(0,irqlevel, HOLD_LINE);
+	cpunum_set_input_line(0,irqlevel, HOLD_LINE);
 }
 
 //static void ym3438_interrupt(int state)
@@ -2330,10 +2330,10 @@ MACHINE_INIT ( genesis )
 {
 //	printf("MACHINE_INIT ( genesis )\n");
 	/* prevent the z80 from running (code must be uploaded by the 68k first) */
-	cpu_set_reset_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	genesis_z80_is_reset = 1;
 
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT,  ASSERT_LINE);
 	genesis_68k_has_z80_bus = 1;
 
 	memset(memory_region(REGION_CPU2), 0xcf, 0x2000);
@@ -2367,10 +2367,10 @@ void genesis_common_init( void )
 //	cpu_setbank(3,memory_region(REGION_CPU2));  /* BANK3 = mainram */
 
 	/* prevent the z80 from running (code must be uploaded by the 68k first) */
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT,  ASSERT_LINE);
 	genesis_68k_has_z80_bus = 0;
 
-	cpu_set_reset_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	genesis_z80_is_reset = 1;
 
 //	memset(genesis_z80ram, 0x00, 0x2000);

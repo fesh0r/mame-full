@@ -25,7 +25,7 @@
 ** nes_apu.h
 **
 ** NES APU emulation header file
-** $Id: nes_apu2.h,v 1.2 2004/02/06 02:49:59 npwoods Exp $
+** $Id: nes_apu2.h,v 1.3 2004/06/13 22:01:27 npwoods Exp $
 */
 
 #ifndef _NES_APU_H_
@@ -59,7 +59,7 @@
 #ifndef HOLD_LINE
 #define HOLE_LINE 1
 #define cpunum_readmem(cpu,address) program_read_byte(address)
-#define cpu_set_irq_line(cpu,line,state) n2a03_irq()
+#define cpunum_set_input_line(cpu,line,state) n2a03_irq()
 #endif
 
 /* define this for realtime generated noise */
@@ -302,6 +302,11 @@ extern void apu_write(uint32 address, uint8 value);
 
 /*
 ** $Log: nes_apu2.h,v $
+** Revision 1.3  2004/06/13 22:01:27  npwoods
+**
+**
+** Updated MAME core to 0.83u2
+**
 ** Revision 1.2  2004/02/06 02:49:59  npwoods
 **
 **

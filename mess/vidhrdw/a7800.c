@@ -438,7 +438,7 @@ void a7800_interrupt(void)
 	if( maria_dli )
 	{
 		maria_dli = 0;
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 
 }

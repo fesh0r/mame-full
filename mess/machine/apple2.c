@@ -506,7 +506,7 @@ void apple2_interrupt(void)
 			irq_freq = 1;
 
 		if (irq_freq)
-			cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
+			cpunum_set_input_line(0, M6502_IRQ_LINE, PULSE_LINE);
 	}
 
 	force_partial_update(scanline);

@@ -327,6 +327,6 @@ INTERRUPT_GEN(wswan_scanline_interrupt)
 	if( (ws_portram[0xb2] & WSWAN_IFLAG_VBL) && (vdp.current_line == 144) )
 	{
 		ws_portram[0xb6] &= ~WSWAN_IFLAG_VBL;
-		cpu_set_irq_line( 0, (ws_portram[0xb0] + WSWAN_INT_VBL), HOLD_LINE );
+		cpunum_set_input_line( 0, (ws_portram[0xb0] + WSWAN_INT_VBL), HOLD_LINE );
 	}
 }

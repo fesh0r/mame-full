@@ -1538,9 +1538,7 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if ((in->type & ~IPF_MASK) == switch_name && input_port_name(in) != 0 &&
-				(in->type & IPF_UNUSED) == 0 &&
-				!(!options.cheat && (in->type & IPF_CHEAT)))
+		if (in->type == switch_name && input_port_active(in))
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -1564,11 +1562,11 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		if (i < total - 1)
 		{
 			in = entry[i] + 1;
-			while ((in->type & ~IPF_MASK) == switch_setting &&
+			while (in->type == switch_setting &&
 					in->default_value != entry[i]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != switch_setting)
+			if (in->type != switch_setting)
 				menu_subitem[i] = ui_getstring (UI_INVALID);
 			else menu_subitem[i] = input_port_name(in);
 		}
@@ -1579,34 +1577,34 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 	if (sel < total - 1)
 	{
 		in = entry[sel] + 1;
-		while ((in->type & ~IPF_MASK) == switch_setting &&
+		while (in->type == switch_setting &&
 				in->default_value != entry[sel]->default_value)
 			in++;
 
-		if ((in->type & ~IPF_MASK) != switch_setting)
+		if (in->type != switch_setting)
 			/* invalid setting: revert to a valid one */
 			arrowize |= 1;
 		else
 		{
 			if (((in-1)->type & ~IPF_MASK) == switch_setting &&
-					!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
+					!(!options.cheat && ((in-1)->cheat)))
 				arrowize |= 1;
 		}
 	}
 	if (sel < total - 1)
 	{
 		in = entry[sel] + 1;
-		while ((in->type & ~IPF_MASK) == switch_setting &&
+		while (in->type == switch_setting &&
 				in->default_value != entry[sel]->default_value)
 			in++;
 
-		if ((in->type & ~IPF_MASK) != switch_setting)
+		if (in->type != switch_setting)
 			/* invalid setting: revert to a valid one */
 			arrowize |= 2;
 		else
 		{
 			if (((in+1)->type & ~IPF_MASK) == switch_setting &&
-					!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
+					!(!options.cheat && ((in+1)->cheat)))
 				arrowize |= 2;
 		}
 	}
@@ -1624,17 +1622,17 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		if (sel < total - 1)
 		{
 			in = entry[sel] + 1;
-			while ((in->type & ~IPF_MASK) == switch_setting &&
+			while (in->type == switch_setting &&
 					in->default_value != entry[sel]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != switch_setting)
+			if (in->type != switch_setting)
 				/* invalid setting: revert to a valid one */
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
 				if (((in+1)->type & ~IPF_MASK) == switch_setting &&
-						!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
+						!(!options.cheat && ((in+1)->cheat)))
 					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
 
@@ -1648,17 +1646,17 @@ static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_na
 		if (sel < total - 1)
 		{
 			in = entry[sel] + 1;
-			while ((in->type & ~IPF_MASK) == switch_setting &&
+			while (in->type == switch_setting &&
 					in->default_value != entry[sel]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != switch_setting)
+			if (in->type != switch_setting)
 				/* invalid setting: revert to a valid one */
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
 				if (((in-1)->type & ~IPF_MASK) == switch_setting &&
-						!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
+						!(!options.cheat && ((in-1)->cheat)))
 					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
 			}
 
@@ -1740,7 +1738,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (in->name != 0  && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & ~IPF_MASK) != IPT_OSD_RESERVED && (in->type & IPF_UNUSED) == 0
+		if (in->name != 0  && in->type != IPT_UNKNOWN && in->type != IPT_OSD_RESERVED && !(in->type & IPF_UNUSED)
 			&& !(!options.cheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
@@ -1852,6 +1850,7 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	const char *menu_item[500];
 	const char *menu_subitem[500];
 	struct InputPort *entry[500];
+	InputSeq *seq[500];
 	char flag[500];
 	int i,sel;
 	struct InputPort *in;
@@ -1869,17 +1868,21 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE
-			&& ((in->type & ~IPF_MASK) != IPT_UNKNOWN)
+		for (i = 0; i < input_port_seq_count(in); i++)
+		{
+			if (input_port_name(in) != 0 && seq_get_1(&in->seq[i]) != CODE_NONE
+				&& (in->type != IPT_UNKNOWN)
 #ifdef MESS
 			&& ((in->category == 0) || input_category_active(in->category))
 #endif /* MESS */
-			&& (in->type & ~IPF_MASK) != IPT_OSD_RESERVED)
+				&& in->type != IPT_OSD_RESERVED)
 		{
 			entry[total] = in;
+				seq[total] = input_port_seq(in, i);
 			menu_item[total] = input_port_name(in);
 
 			total++;
+		}
 		}
 
 		in++;
@@ -1895,11 +1898,11 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	{
 		if (i < total - 1)
 		{
-			seq_name(input_port_seq(entry[i]),menu_subitem_buffer[i],sizeof(menu_subitem_buffer[0]));
+			seq_name(seq[i], menu_subitem_buffer[i], sizeof(menu_subitem_buffer[0]));
 			menu_subitem[i] = menu_subitem_buffer[i];
 
 			/* If the key isn't the default, flag it */
-			if (seq_get_1(&entry[i]->seq) != CODE_DEFAULT)
+			if (seq_get_1(seq[i]) != CODE_DEFAULT)
 				flag[i] = 1;
 			else
 				flag[i] = 0;
@@ -1915,15 +1918,15 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 		menu_subitem[sel & SEL_MASK] = "    ";
 		ui_displaymenu(bitmap,menu_item,menu_subitem,flag,sel & SEL_MASK,3);
 
-		ret = seq_read_async(&entry[sel & SEL_MASK]->seq,record_first_insert);
+		ret = seq_read_async(seq[sel & SEL_MASK],record_first_insert);
 
 		if (ret >= 0)
 		{
 			sel &= SEL_MASK;
 
-			if (ret > 0 || seq_get_1(&entry[sel]->seq) == CODE_NONE)
+			if (ret > 0 || seq_get_1(seq[sel]) == CODE_NONE)
 			{
-				seq_set_1(&entry[sel]->seq, CODE_DEFAULT);
+				seq_set_1(seq[sel], CODE_DEFAULT);
 				ret = 1;
 			}
 
@@ -2069,7 +2072,7 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 	while (in->type != IPT_END)
 	{
 		if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-				&& !(!options.cheat && (in->type & IPF_CHEAT)))
+				&& !(!options.cheat && (in->cheat)))
 		{
 			entry[total] = in;
 			total++;
@@ -2100,9 +2103,9 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 			int reverse;
 
 			strcpy (label[i], input_port_name(entry[i/ENTRIES]));
-			sensitivity = IP_GET_SENSITIVITY(entry[i/ENTRIES]);
-			delta = IP_GET_DELTA(entry[i/ENTRIES]);
-			reverse = (entry[i/ENTRIES]->type & IPF_REVERSE);
+			sensitivity = entry[i/ENTRIES]->u.analog.sensitivity;
+			delta = entry[i/ENTRIES]->u.analog.delta;
+			reverse = entry[i/ENTRIES]->u.analog.reverse;
 
 			strcat (label[i], " ");
 			switch (i%ENTRIES)
@@ -2148,33 +2151,27 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 		if(sel != total2 - 1)
 		{
 			if ((sel % ENTRIES) == 0)
-			/* keyboard/joystick delta */
 			{
-				int val = IP_GET_DELTA(entry[sel/ENTRIES]);
+				/* keyboard/joystick delta */
+				int val = entry[sel/ENTRIES]->u.analog.delta;
 
 				val --;
 				if (val < 1) val = 1;
-				IP_SET_DELTA(entry[sel/ENTRIES],val);
+				entry[sel/ENTRIES]->u.analog.delta = val;
 			}
 			else if ((sel % ENTRIES) == 1)
-			/* reverse */
 			{
-				int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
-				if (reverse)
-					reverse=0;
-				else
-					reverse=IPF_REVERSE;
-				entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
-				entry[sel/ENTRIES]->type |= reverse;
+				/* reverse */
+				entry[sel/ENTRIES]->u.analog.reverse ^= 1;
 			}
 			else if ((sel % ENTRIES) == 2)
-			/* sensitivity */
 			{
-				int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
+				/* sensitivity */
+				int val = entry[sel/ENTRIES]->u.analog.sensitivity;
 
 				val --;
 				if (val < 1) val = 1;
-				IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+				entry[sel/ENTRIES]->u.analog.sensitivity = val;
 			}
 		}
 	}
@@ -2184,33 +2181,27 @@ static int settraksettings(struct mame_bitmap *bitmap,int selected)
 		if(sel != total2 - 1)
 		{
 			if ((sel % ENTRIES) == 0)
-			/* keyboard/joystick delta */
 			{
-				int val = IP_GET_DELTA(entry[sel/ENTRIES]);
+				/* keyboard/joystick delta */
+				int val = entry[sel/ENTRIES]->u.analog.delta;
 
 				val ++;
 				if (val > 255) val = 255;
-				IP_SET_DELTA(entry[sel/ENTRIES],val);
+				entry[sel/ENTRIES]->u.analog.delta = val;
 			}
 			else if ((sel % ENTRIES) == 1)
-			/* reverse */
 			{
-				int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
-				if (reverse)
-					reverse=0;
-				else
-					reverse=IPF_REVERSE;
-				entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
-				entry[sel/ENTRIES]->type |= reverse;
+				/* reverse */
+				entry[sel/ENTRIES]->u.analog.reverse ^= 1;
 			}
 			else if ((sel % ENTRIES) == 2)
-			/* sensitivity */
 			{
-				int val = IP_GET_SENSITIVITY(entry[sel/ENTRIES]);
+				/* sensitivity */
+				int val = entry[sel/ENTRIES]->u.analog.sensitivity;
 
 				val ++;
 				if (val > 255) val = 255;
-				IP_SET_SENSITIVITY(entry[sel/ENTRIES],val);
+				entry[sel/ENTRIES]->u.analog.sensitivity = val;
 			}
 		}
 	}
@@ -3131,8 +3122,7 @@ static void setup_menu_init(void)
 		num = 0;
 		while (in->type != IPT_END)
 		{
-			if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && input_port_name(in) != 0 &&
-					(in->type & IPF_UNUSED) == 0 &&	!(!options.cheat && (in->type & IPF_CHEAT)))
+			if (in->type == IPT_DIPSWITCH_NAME && input_port_active(in))
 				num++;
 			in++;
 		}
@@ -3165,7 +3155,7 @@ static void setup_menu_init(void)
 		while (in->type != IPT_END)
 		{
 			if (((in->type & 0xff) > IPT_ANALOG_START) && ((in->type & 0xff) < IPT_ANALOG_END)
-					&& !(!options.cheat && (in->type & IPF_CHEAT)))
+					&& !(!options.cheat && in->cheat))
 				num++;
 			in++;
 		}
@@ -4078,9 +4068,6 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 		while (!input_ui_pressed(IPT_UI_PAUSE))
 		{
-#ifdef MAME_NET
-			osd_net_sync();
-#endif /* MAME_NET */
 			profiler_mark(PROFILER_VIDEO);
 			if (osd_skip_this_frame() == 0)
 			{

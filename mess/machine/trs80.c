@@ -613,7 +613,7 @@ INTERRUPT_GEN( trs80_timer_interrupt )
 	if( (irq_status & IRQ_TIMER) == 0 )
 	{
 		irq_status |= IRQ_TIMER;
-		cpu_set_irq_line (0, 0, HOLD_LINE);
+		cpunum_set_input_line (0, 0, HOLD_LINE);
 	}
 }
 
@@ -622,7 +622,7 @@ INTERRUPT_GEN( trs80_fdc_interrupt )
 	if ((irq_status & IRQ_FDC) == 0)
 	{
 		irq_status |= IRQ_FDC;
-		cpu_set_irq_line (0, 0, HOLD_LINE);
+		cpunum_set_input_line (0, 0, HOLD_LINE);
 	}
 }
 
@@ -645,7 +645,7 @@ INTERRUPT_GEN( trs80_frame_interrupt )
 
 static void trs80_nmi_generate (int param)
 {
-	cpu_set_irq_line (0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line (0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /*************************************

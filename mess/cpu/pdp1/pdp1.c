@@ -525,7 +525,7 @@ static void field_interrupt(void)
 
 static void pdp1_set_irq_line (int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		/* no specific NMI line */
 	}
@@ -908,22 +908,22 @@ static void pdp1_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 	/* --- the following bits of info are set as 64-bit signed integers --- */
-	case CPUINFO_INT_IRQ_STATE + 0:
-	case CPUINFO_INT_IRQ_STATE + 1:
-	case CPUINFO_INT_IRQ_STATE + 2:
-	case CPUINFO_INT_IRQ_STATE + 3:
-	case CPUINFO_INT_IRQ_STATE + 4:
-	case CPUINFO_INT_IRQ_STATE + 5:
-	case CPUINFO_INT_IRQ_STATE + 6:
-	case CPUINFO_INT_IRQ_STATE + 7:
-	case CPUINFO_INT_IRQ_STATE + 8:
-	case CPUINFO_INT_IRQ_STATE + 9:
-	case CPUINFO_INT_IRQ_STATE + 10:
-	case CPUINFO_INT_IRQ_STATE + 11:
-	case CPUINFO_INT_IRQ_STATE + 12:
-	case CPUINFO_INT_IRQ_STATE + 13:
-	case CPUINFO_INT_IRQ_STATE + 14:
-	case CPUINFO_INT_IRQ_STATE + 15:			pdp1_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i); break;
+	case CPUINFO_INT_INPUT_STATE + 0:
+	case CPUINFO_INT_INPUT_STATE + 1:
+	case CPUINFO_INT_INPUT_STATE + 2:
+	case CPUINFO_INT_INPUT_STATE + 3:
+	case CPUINFO_INT_INPUT_STATE + 4:
+	case CPUINFO_INT_INPUT_STATE + 5:
+	case CPUINFO_INT_INPUT_STATE + 6:
+	case CPUINFO_INT_INPUT_STATE + 7:
+	case CPUINFO_INT_INPUT_STATE + 8:
+	case CPUINFO_INT_INPUT_STATE + 9:
+	case CPUINFO_INT_INPUT_STATE + 10:
+	case CPUINFO_INT_INPUT_STATE + 11:
+	case CPUINFO_INT_INPUT_STATE + 12:
+	case CPUINFO_INT_INPUT_STATE + 13:
+	case CPUINFO_INT_INPUT_STATE + 14:
+	case CPUINFO_INT_INPUT_STATE + 15:			pdp1_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i); break;
 
 	case CPUINFO_INT_SP:						(void) info->i;	/* no SP */					break;
 	case CPUINFO_INT_PC:
@@ -982,7 +982,7 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(pdp1);					break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 16;							break;
+	case CPUINFO_INT_INPUT_LINES:						info->i = 16;							break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	/*don't care*/	break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -1005,22 +1005,22 @@ void pdp1_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_PC:							info->i = PC;							break;
 	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* TODO??? */			break;
 
-	case CPUINFO_INT_IRQ_STATE + 0:
-	case CPUINFO_INT_IRQ_STATE + 1:
-	case CPUINFO_INT_IRQ_STATE + 2:
-	case CPUINFO_INT_IRQ_STATE + 3:
-	case CPUINFO_INT_IRQ_STATE + 4:
-	case CPUINFO_INT_IRQ_STATE + 5:
-	case CPUINFO_INT_IRQ_STATE + 6:
-	case CPUINFO_INT_IRQ_STATE + 7:
-	case CPUINFO_INT_IRQ_STATE + 8:
-	case CPUINFO_INT_IRQ_STATE + 9:
-	case CPUINFO_INT_IRQ_STATE + 10:
-	case CPUINFO_INT_IRQ_STATE + 11:
-	case CPUINFO_INT_IRQ_STATE + 12:
-	case CPUINFO_INT_IRQ_STATE + 13:
-	case CPUINFO_INT_IRQ_STATE + 14:
-	case CPUINFO_INT_IRQ_STATE + 15:				info->i = (pdp1.irq_state >> (state-CPUINFO_INT_IRQ_STATE)) & 1;	break;
+	case CPUINFO_INT_INPUT_STATE + 0:
+	case CPUINFO_INT_INPUT_STATE + 1:
+	case CPUINFO_INT_INPUT_STATE + 2:
+	case CPUINFO_INT_INPUT_STATE + 3:
+	case CPUINFO_INT_INPUT_STATE + 4:
+	case CPUINFO_INT_INPUT_STATE + 5:
+	case CPUINFO_INT_INPUT_STATE + 6:
+	case CPUINFO_INT_INPUT_STATE + 7:
+	case CPUINFO_INT_INPUT_STATE + 8:
+	case CPUINFO_INT_INPUT_STATE + 9:
+	case CPUINFO_INT_INPUT_STATE + 10:
+	case CPUINFO_INT_INPUT_STATE + 11:
+	case CPUINFO_INT_INPUT_STATE + 12:
+	case CPUINFO_INT_INPUT_STATE + 13:
+	case CPUINFO_INT_INPUT_STATE + 14:
+	case CPUINFO_INT_INPUT_STATE + 15:				info->i = (pdp1.irq_state >> (state-CPUINFO_INT_INPUT_STATE)) & 1;	break;
 
 	case CPUINFO_INT_REGISTER + PDP1_PC:			info->i = PC;							break;
 	case CPUINFO_INT_REGISTER + PDP1_IR:			info->i = IR;							break;

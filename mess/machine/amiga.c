@@ -102,9 +102,9 @@ static void check_ints( void ) {
 
 	for ( i = 0; i < 7; i++ ) {
 		if ( ( ints >> i ) & 1 )
-			cpu_set_irq_line( 0, i + 1, ASSERT_LINE );
+			cpunum_set_input_line( 0, i + 1, ASSERT_LINE );
 		else
-			cpu_set_irq_line( 0, i + 1, CLEAR_LINE );
+			cpunum_set_input_line( 0, i + 1, CLEAR_LINE );
 	}
 }
 #endif

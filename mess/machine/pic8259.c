@@ -107,12 +107,12 @@ static void pic8259_timerproc(int which)
 
 			LOG(("pic8259_timerproc(): PIC #%d triggering IRQ #%d\n", which, irq));
 
-			cpu_irq_line_vector_w(0, 0, irq + p->base);
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line_vector(0, 0, irq + p->base);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 			return;
 		}
 	}
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 

@@ -80,7 +80,7 @@ static RIOT_CONFIG riot={
 
 static void sym1_irq(int level)
 {
-	cpu_set_irq_line(0, M6502_IRQ_LINE, level);
+	cpunum_set_input_line(0, M6502_IRQ_LINE, level);
 }
 
 static struct via6522_interface via0={

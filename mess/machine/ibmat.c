@@ -562,7 +562,7 @@ WRITE8_HANDLER(at_8042_8_w)
 			 * the bits low set in the command byte.  The only pulse that has
 			 * an effect currently is bit 0, which pulses the CPU's reset line
 			 */
-			cpu_set_reset_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 			at_8042_set_outport(at_8042.outport | 0x02, 0);
 			break;
 		}

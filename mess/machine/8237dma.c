@@ -209,8 +209,8 @@ static void dma8237_update_status(int which)
 		/* set the halt line */
 		if (dma[which].intf && dma[which].intf->cpunum >= 0)
 		{
-			cpunum_set_halt_line(dma[which].intf->cpunum, pending_transfer
-				? ASSERT_LINE : CLEAR_LINE);
+			cpunum_set_input_line(dma[which].intf->cpunum, INPUT_LINE_HALT,
+				pending_transfer ? ASSERT_LINE : CLEAR_LINE);
 		}
 
 		/* set the eop line, if it has changed */

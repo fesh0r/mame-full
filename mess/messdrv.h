@@ -184,7 +184,7 @@ const struct GameDriver driver_##NAME = 	\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
@@ -206,7 +206,7 @@ const struct GameDriver driver_##NAME = 	\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
@@ -228,7 +228,7 @@ const struct GameDriver driver_##NAME = 	\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\
@@ -250,7 +250,7 @@ const struct GameDriver driver_##NAME = 	\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	construct_sysconfig_##CONFIG,			\

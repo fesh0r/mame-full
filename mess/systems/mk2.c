@@ -240,7 +240,7 @@ static void mk2_write_b(int chip, int value)
 
 static void mk2_irq(int chip, int level)
 {
-	cpu_set_irq_line(0, M6502_IRQ_LINE, level);
+	cpunum_set_input_line(0, M6502_IRQ_LINE, level);
 }
 
 static RRIOT_CONFIG riot={

@@ -84,9 +84,9 @@ static void dai_keyboard_write (UINT8 data)
 static void dai_interrupt_callback(int intreq, UINT8 vector)
 {
 	if (intreq)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, vector);
 	else
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 static const tms5501_init_param dai_tms5501_init_param =

@@ -31,27 +31,10 @@ enum {
 #define CP1610_INT_NONE		0
 #define CP1610_INT_INTRM	1				/* Maskable */
 #define CP1610_RESET		2				/* Non-Maskable */
-#define CP1610_INT_INTR		IRQ_LINE_NMI	/* Non-Maskable */
+#define CP1610_INT_INTR		INPUT_LINE_NMI	/* Non-Maskable */
 
 extern int cp1610_icount;				 /* cycle count */
 
-#if 0
-extern void cp1610_init (void);
-extern void cp1610_reset (void *param); 		 /* Reset registers to the initial values */
-extern void cp1610_exit  (void);				 /* Shut down CPU core */
-extern int	cp1610_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
-extern unsigned cp1610_get_context (void *dst);  /* Get registers, return context size */
-extern void cp1610_set_context (void *src); 	 /* Set registers */
-extern unsigned cp1610_get_reg (int regnum);
-extern void cp1610_set_reg (int regnum, unsigned val);
-extern void cp1610_set_nmi_line(int state);
-extern void cp1610_set_irq_line(int irqline, int state);
-extern void cp1610_set_irq_callback(int (*callback)(int irqline));
-extern void cp1610_state_save(void *file);
-extern void cp1610_state_load(void *file);
-extern const char *cp1610_info(void *context, int regnum);
-extern unsigned cp1610_dasm(char *buffer, unsigned pc);
-#endif
 
 void cp1610_get_info(UINT32 state, union cpuinfo *info);
 

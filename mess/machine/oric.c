@@ -79,11 +79,11 @@ static void oric_refresh_ints(void)
 	/* any irq set? */
 	if ((oric_irqs & 0x0f)!=0)
 	{
-		cpu_set_irq_line(0,0, HOLD_LINE);
+		cpunum_set_input_line(0,0, HOLD_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(0,0, CLEAR_LINE);
+		cpunum_set_input_line(0,0, CLEAR_LINE);
 	}
 }
 

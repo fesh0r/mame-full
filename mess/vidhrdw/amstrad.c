@@ -447,7 +447,7 @@ static void amstrad_Set_HS(int offset, int data)
 			{
 				if (amstrad_CRTC_HS_Counter >= 32)
 				{
-					cpu_set_irq_line(0,0, ASSERT_LINE);
+					cpunum_set_input_line(0,0, ASSERT_LINE);
 				}
 				amstrad_CRTC_HS_Counter = 0;
 			}
@@ -456,7 +456,7 @@ static void amstrad_Set_HS(int offset, int data)
 		if (amstrad_CRTC_HS_Counter == 52)
 		{
 			amstrad_CRTC_HS_Counter = 0;
-			cpu_set_irq_line(0,0, ASSERT_LINE);
+			cpunum_set_input_line(0,0, ASSERT_LINE);
 		}
 	}
 	amstrad_CRTC_HS = data;

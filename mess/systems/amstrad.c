@@ -476,7 +476,7 @@ Bit 4 controls the interrupt generation. It can be used to delay interrupts.*/
  then the interrupt request is cleared and the 6-bit counter is reset to "0".  */
   			if ((amstrad_GateArray_ModeAndRomConfiguration & (1<<4)) != 0) {
             amstrad_CRTC_HS_Counter = 0;
-  			    cpu_set_irq_line(0,0, CLEAR_LINE);
+  			    cpunum_set_input_line(0,0, CLEAR_LINE);
   			}
 /* b3b2 != 0 then change the state of upper or lower rom area and rethink memory */
         if (((amstrad_GateArray_ModeAndRomConfiguration & 0x0C)^(Previous_GateArray_ModeAndRomConfiguration & 0x0C)) != 0) {
@@ -889,7 +889,7 @@ void	multiface_stop(void)
 		multiface_rethink_memory();
 
 		/* pulse the nmi line */
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 
 		/* initialise 0065 override to monitor calls to 0065 */
 		memory_set_opbase_handler(0,amstrad_multiface_opbaseoverride);
@@ -1053,7 +1053,7 @@ static WRITE8_HANDLER(multiface_io_write)
 /* this ensures that the next interrupt is no closer than 32 lines */
 static int 	amstrad_cpu_acknowledge_int(int cpu)
 {
-  cpu_set_irq_line(0,0, CLEAR_LINE);
+  cpunum_set_input_line(0,0, CLEAR_LINE);
 	amstrad_CRTC_HS_Counter &= 0x1F;
 	return 0xFF;
 }
@@ -1235,7 +1235,7 @@ static void amstrad_common_init(void)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_BANK16);
 
 	cpuint_reset_cpu(0);
-	cpu_irq_line_vector_w(0, 0,0x0ff);
+	cpunum_set_input_line_vector(0, 0,0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
 	ppi8255_init(&amstrad_ppi8255_interface);

@@ -66,11 +66,11 @@ typedef struct ti990_10reset_param
 extern READ16_HANDLER(ti990_10_internal_r);
 
 /* CRU accessor for the mapper registers (R12 base 0x1fa0) */
-extern READ_HANDLER(ti990_10_mapper_cru_r);
-extern WRITE_HANDLER(ti990_10_mapper_cru_w);
+extern READ8_HANDLER(ti990_10_mapper_cru_r);
+extern WRITE8_HANDLER(ti990_10_mapper_cru_w);
 /* CRU accessor for the error interrupt register (R12 base 0x1fc0) */
-extern READ_HANDLER(ti990_10_eir_cru_r);
-extern WRITE_HANDLER(ti990_10_eir_cru_w);
+extern READ8_HANDLER(ti990_10_eir_cru_r);
+extern WRITE8_HANDLER(ti990_10_eir_cru_w);
 
 #endif
 
@@ -166,11 +166,11 @@ typedef struct tms9995reset_param
 } tms9995reset_param;
 
 /* accessor for the first 252 bytes of internal RAM */
-extern READ_HANDLER(tms9995_internal1_r);
-extern WRITE_HANDLER(tms9995_internal1_w);
+extern READ8_HANDLER(tms9995_internal1_r);
+extern WRITE8_HANDLER(tms9995_internal1_w);
 /* accessors for the last 4 bytes of internal RAM */
-extern READ_HANDLER(tms9995_internal2_r);
-extern WRITE_HANDLER(tms9995_internal2_w);
+extern READ8_HANDLER(tms9995_internal2_r);
+extern WRITE8_HANDLER(tms9995_internal2_w);
 
 #endif
 

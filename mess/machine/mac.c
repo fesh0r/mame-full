@@ -131,13 +131,13 @@ static void mac_field_interrupts(void)
 {
 	if (scc_interrupt)
 		/* SCC interrupt */
-		cpu_set_irq_line(0, 2, ASSERT_LINE);
+		cpunum_set_input_line(0, 2, ASSERT_LINE);
 	else if (via_interrupt)
 		/* VIA interrupt */
-		cpu_set_irq_line(0, 1, ASSERT_LINE);
+		cpunum_set_input_line(0, 1, ASSERT_LINE);
 	else
 		/* clear all interrupts */
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 static void set_scc_interrupt(int value)
@@ -1090,7 +1090,7 @@ void mac_scc_mouse_irq( int x, int y)
 			scc_status = 0x02;
 	}
 
-	//cpu_set_irq_line(0, 2, ASSERT_LINE);
+	//cpunum_set_input_line(0, 2, ASSERT_LINE);
 	set_scc_interrupt(1);
 }
 
@@ -1114,7 +1114,7 @@ static void scc_putareg(int data)
 	if (scc_reg == 0)
 	{
 		if (data & 0x10)
-			//cpu_set_irq_line(0, 2, CLEAR_LINE);	/* ack irq */
+			//cpunum_set_input_line(0, 2, CLEAR_LINE);	/* ack irq */
 			set_scc_interrupt(0);
 	}
 }
@@ -1124,7 +1124,7 @@ static void scc_putbreg(int data)
 	if (scc_reg == 0)
 	{
 		if (data & 0x10)
-			//cpu_set_irq_line(0, 2, CLEAR_LINE);	/* ack irq */
+			//cpunum_set_input_line(0, 2, CLEAR_LINE);	/* ack irq */
 			set_scc_interrupt(0);
 	}
 }
@@ -1664,7 +1664,7 @@ static WRITE8_HANDLER(mac_via_out_b)
 static void mac_via_irq(int state)
 {
 	/* interrupt the 68k (level 1) */
-	//cpu_set_irq_line(0, 1, state);
+	//cpunum_set_input_line(0, 1, state);
 	set_via_interrupt(state);
 }
 

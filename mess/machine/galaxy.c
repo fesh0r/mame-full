@@ -37,7 +37,7 @@ WRITE8_HANDLER( galaxy_kbd_w )
 
 INTERRUPT_GEN( galaxy_interrupt )
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
 static int galaxy_irq_callback (int cpu)
@@ -98,8 +98,8 @@ static void galaxy_setup_snapshot (const UINT8 * data)
 	cpunum_set_reg(0, Z80_IM, data[60]&0x0ff);
 	cpunum_set_reg(0, Z80_I, data[64]&0x0ff);
 	cpunum_set_reg(0, Z80_R, (data[68]&0x7f) | (data[72]&0x80));
-	activecpu_set_irq_line(IRQ_LINE_NMI, 0);
-	activecpu_set_irq_line(0, 0);
+	activecpu_set_input_line(INPUT_LINE_NMI, 0);
+	activecpu_set_input_line(0, 0);
 
 	/* Memory dump */
 	for (i = 0; i < GALAXY_SNAPSHOT_SIZE-76; i++)

@@ -491,9 +491,9 @@ void spectrum_setup_sp(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	}
 
 	data = (status & 0x10)>>4;
-	activecpu_set_irq_line(0, data);
-	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	cpunum_set_halt_line(0, 0);
+	activecpu_set_input_line(0, data);
+	activecpu_set_input_line(INPUT_LINE_NMI, data);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
 
 	spectrum_page_basicrom();
 
@@ -594,9 +594,9 @@ void spectrum_setup_sna(unsigned char *pSnapshot, unsigned long SnapshotSize)
 	set_last_border_color(pSnapshot[26] & 0x07);
 	force_border_redraw();
 
-	activecpu_set_irq_line(0, data);
-	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	cpunum_set_halt_line(0, 0);
+	activecpu_set_input_line(0, data);
+	activecpu_set_input_line(INPUT_LINE_NMI, data);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
 
 	if (SnapshotSize == 49179)
 		/* 48K Snapshot */
@@ -902,9 +902,9 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
 		/* cpunum_set_reg(0, Z80_IRQ_STATE, 1); */
 	}
 
-	activecpu_set_irq_line(0, data);
-	activecpu_set_irq_line(IRQ_LINE_NMI, data);
-	cpu_set_halt_line(0, 0);
+	activecpu_set_input_line(0, data);
+	activecpu_set_input_line(INPUT_LINE_NMI, data);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
 
 	/* IFF2 */
 	if (pSnapshot[28] != 0)
@@ -1057,13 +1057,6 @@ void spectrum_setup_z80(unsigned char *pSnapshot, unsigned long SnapshotSize)
  *      Interrupt handlers.
  *
  *************************************/
-
-#if 0
-static void spectrum_nmi_generate(int param)
-{
-	cpu_set_irq_line(0, 0, IRQ_LINE_NMI);
-}
-#endif
 
 QUICKLOAD_LOAD(spectrum)
 {

@@ -1013,16 +1013,6 @@ do {																					\
 #define cpu_setbank(bank, base) memory_set_bankptr(bank, base)
 
 
-
-/***************************************************************************
-
-	Backwards compatibility
-
-***************************************************************************/
-
-#define READ_HANDLER READ8_HANDLER
-#define WRITE_HANDLER WRITE8_HANDLER
-
 #ifdef __cplusplus
 }
 #endif

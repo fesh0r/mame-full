@@ -17,7 +17,7 @@
 struct InputCode
 {
 	UINT16 port[NUM_SIMUL_KEYS];
-	const struct InputPortTiny *ipt[NUM_SIMUL_KEYS];
+	const struct InputPort *ipt[NUM_SIMUL_KEYS];
 };
 
 enum
@@ -231,49 +231,40 @@ static const char *charstr(unicode_char_t ch)
 }
 #endif
 
-static int scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, UINT16 *ports, const struct InputPortTiny **ipts, int keys, int shift)
+static int scan_keys(const struct InputPort *input_ports, struct InputCode *codes, UINT16 *ports, const struct InputPort **shift_ports, int keys, int shift)
 {
 	int result = 0;
-	const struct InputPortTiny *ipt;
-	const struct InputPortTiny *ipt_key = NULL;
-	int key_shift = 0;
+	const struct InputPort *ipt;
+	const struct InputPort *ipt_key = NULL;
 	UINT16 port = (UINT16) -1;
 	unicode_char_t code;
 
 	assert(keys < NUM_SIMUL_KEYS);
 
-	ipt = gamedrv->input_ports;
+	ipt = input_ports;
 	while(ipt->type != IPT_END)
 	{
-		switch(ipt->type & ~IPF_MASK) {
-		case IPT_EXTENSION:
-			break;
-
+		switch(ipt->type) {
 		case IPT_KEYBOARD:
 			ipt_key = ipt;
-			key_shift = 0;
-			break;
 
-		case IPT_UCHAR:
-			assert(ipt_key);
-
-			result = 1;
-			if (key_shift == shift)
+			code = ipt->u.keyboard.chars[shift];
+			if (code)
 			{
-				code = ipt->mask;
-				code <<= 16;
-				code |= ipt->default_value;
+				/* mark that we have found some natural keyboard codes */
+				result = 1;
 
+				/* is this a shifter key? */
 				if ((code >= UCHAR_SHIFT_BEGIN) && (code <= UCHAR_SHIFT_END))
 				{
 					ports[keys] = port;
-					ipts[keys] = ipt_key;
-					scan_keys(gamedrv, codes, ports, ipts, keys+1, code - UCHAR_SHIFT_1 + 1);
+					shift_ports[keys] = ipt_key;
+					scan_keys(input_ports, codes, ports, shift_ports, keys+1, code - UCHAR_SHIFT_1 + 1);
 				}
 				else if (code < NUM_CODES)
 				{
 					memcpy(codes[code].port, ports, sizeof(ports[0]) * keys);
-					memcpy((void *) codes[code].ipt, ipts, sizeof(ipts[0]) * keys);
+					memcpy((void *) codes[code].ipt, shift_ports, sizeof(shift_ports[0]) * keys);
 					codes[code].port[keys] = port;
 					codes[code].ipt[keys] = ipt_key;
 #if LOG_INPUTX
@@ -282,7 +273,6 @@ static int scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, 
 #endif
 				}
 			}
-			key_shift++;
 			break;
 
 		case IPT_PORT:
@@ -305,17 +295,18 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 
 #define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES)
 
-static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes, int map_lowercase)
+static int build_codes(const struct InputPort *input_ports, struct InputCode *codes, int map_lowercase)
 {
 	UINT16 ports[NUM_SIMUL_KEYS];
-	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
-	int switch_upper;
+	const struct InputPort *ipts[NUM_SIMUL_KEYS];
+	int switch_upper, rc = 0;
 	unicode_char_t c;
 
+	/* first clear the buffer */
 	memset(codes, 0, CODE_BUFFER_SIZE);
 
-	if (!scan_keys(gamedrv, codes, ports, ipts, 0, 0))
-		return 0;
+	if (!scan_keys(input_ports, codes, ports, ipts, 0, 0))
+		goto done;
 
 	if (map_lowercase)
 	{
@@ -333,7 +324,11 @@ static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes
 		if (switch_upper)
 			memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
 	}
-	return 1;
+
+	rc = 1;
+
+done:
+	return rc;
 }
 
 /***************************************************************************
@@ -347,7 +342,8 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 {
 	char buf[CODE_BUFFER_SIZE];
 	struct InputCode *codes;
-	const struct InputPortTiny *ipt;
+	const struct InputPort *input_ports;
+	const struct InputPort *ipt;
 	int port_count, i, j;
 	int error = 0;
 	unicode_char_t last_char = 0;
@@ -358,10 +354,15 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 		if (gamedrv->flags & GAME_COMPUTER)
 		{
 			codes = (struct InputCode *) buf;
-			build_codes(gamedrv, codes, FALSE);
+
+			begin_resource_tracking();
+
+			input_ports = input_port_allocate(gamedrv->construct_ipt);
+
+			build_codes(input_ports, codes, FALSE);
 
 			port_count = 0;
-			for (ipt = gamedrv->input_ports; ipt->type != IPT_END; ipt++)
+			for (ipt = input_ports; ipt->type != IPT_END; ipt++)
 			{
 				if (ipt->type == IPT_PORT)
 					port_count++;
@@ -378,6 +379,7 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 					}
 				}
 			}
+			end_resource_tracking();
 		}
 	}
 	else
@@ -406,7 +408,9 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	}
 	return error;
 }
-#endif
+#endif /* MAME_DEBUG */
+
+
 
 /***************************************************************************
 
@@ -456,7 +460,7 @@ void inputx_init(void)
 			codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
 			if (!codes)
 				goto error;
-			if (!build_codes(Machine->gamedrv, codes, TRUE))
+			if (!build_codes(Machine->input_ports, codes, TRUE))
 				goto error;
 		}
 
@@ -684,7 +688,7 @@ void inputx_update(unsigned short *ports)
 {
 	const struct KeyBuffer *keybuf;
 	const struct InputCode *code;
-	const struct InputPortTiny *ipt;
+	const struct InputPort *ipt;
 	unicode_char_t ch;
 	int i;
 	int value;
@@ -718,56 +722,28 @@ void inputx_update(unsigned short *ports)
 
 
 
-const struct InputPortTiny *inputx_handle_mess_extensions(
-	const struct InputPortTiny *ext, struct InputPort *dst, int port_size)
+void inputx_handle_mess_extensions(struct InputPort *ipt)
 {
 	char buf[256];
 	int i, pos = 0;
-	const char *s;
 	unicode_char_t ch;
 
 	/* process MESS specific extensions to the port */
 	buf[0] = '\0';
-	while((ext->type & ~IPF_MASK) == IPT_UCHAR ||
-		(ext->type & ~IPF_MASK) == IPT_CATEGORY)
-	{
-		switch(ext->type & ~IPF_MASK)
-		{
-			case IPT_CATEGORY:
-				for (i = 0; i < port_size; i++)
-					dst[i].category = ext->default_value;
-				break;
-			case IPT_UCHAR:
-				ch = ext->mask;
-				ch <<= 16;
-				ch |= ext->default_value;
-				pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
-				break;
-		}
-		ext++;
-	}
 
-	if (buf[0])
+	/* is this a keyboard port with the default name? */
+	if (ipt->type == IPT_KEYBOARD && (ipt->name == IP_NAME_DEFAULT))
 	{
-		/* we have a default name for this keyboard port; iterate through the
-		 * ports and identify any keyboard ports that use IP_NAME_DEFAULT */
-		s = NULL;
-		for (i = 0; i < port_size; i++)
+		for (i = 0; ipt->u.keyboard.chars[i] && (i < sizeof(ipt->u.keyboard.chars)
+			/ sizeof(ipt->u.keyboard.chars[0])); i++)
 		{
-			if (dst[i].name == IP_NAME_DEFAULT)
-			{
-				if (!s)
-				{
-					/* we have not allocated our copy of buf yet; allocate it
-					 * now */
-					rtrim(buf);
-					s = auto_strdup(buf);
-				}
-				dst[i].name = s;
-			}
+			ch = ipt->u.keyboard.chars[i];
+			pos += sprintf(&buf[pos], "%s ", inputx_key_name(ch));
 		}
+
+		rtrim(buf);
+		ipt->name = auto_strdup(buf);
 	}
-	return ext;
 }
 
 
@@ -993,18 +969,16 @@ void inputx_post_utf8(const char *text)
 	This stuff is here more out of convienience than anything else
 ***************************************************************************/
 
-/* this function needs to be used with InputPort and InputPortTiny structs,
- * so we have to put the type and name as separate parameters */
-static int categorize_port_type(UINT32 type, const char *name, UINT16 category)
+int input_classify_port(const struct InputPort *port)
 {
 	int result;
 
-	if ((type & IPF_MASK) == IPF_UNUSED)
+	if (port->unused)
 		return INPUT_CLASS_INTERNAL;
-	if (category && ((type & ~IPF_MASK) != IPT_CATEGORY_SETTING))
+	if (port->category && (port->type != IPT_CATEGORY_SETTING))
 		return INPUT_CLASS_CATEGORIZED;
 
-	switch(type & ~IPF_MASK) {
+	switch(port->type) {
 	case IPT_JOYSTICK_UP:
 	case IPT_JOYSTICK_DOWN:
 	case IPT_JOYSTICK_LEFT:
@@ -1054,7 +1028,7 @@ static int categorize_port_type(UINT32 type, const char *name, UINT16 category)
 		break;
 
 	case 0:
-		if (name && (name != (const char *) -1))
+		if (port->name && (port->name != (const char *) -1))
 			result = INPUT_CLASS_MISC;
 		else
 			result = INPUT_CLASS_INTERNAL;
@@ -1065,15 +1039,6 @@ static int categorize_port_type(UINT32 type, const char *name, UINT16 category)
 		break;
 	}
 	return result;
-}
-
-
-
-int input_classify_port(const struct InputPort *port)
-{
-	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
-		port--;
-	return categorize_port_type(port->type, port->name, port->category);
 }
 
 
@@ -1102,16 +1067,16 @@ int input_has_input_class(int inputclass)
 
 int input_count_players(void)
 {
-	const struct InputPortTiny *in;
+	const struct InputPort *in;
 	int joystick_count;
 
 	joystick_count = 0;
-	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		if (categorize_port_type(in->type, in->name, 0) == INPUT_CLASS_CONTROLLER)
+		if (input_classify_port(in) == INPUT_CLASS_CONTROLLER)
 		{
-			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
-				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
+			if (joystick_count <= in->player + 1)
+				joystick_count = in->player + 1;
 		}
 	}
 	return joystick_count;

@@ -1033,7 +1033,7 @@ static void antic_issue_dli(int param)
 	{
 		LOG(("           @cycle #%3d issue DLI\n", cycle()));
 		antic.r.nmist |= DLI_NMI;
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
 	{
@@ -1490,7 +1490,7 @@ static void generic_atari_interrupt(void (*handle_keyboard)(void), int button_co
 			LOG(("           cause VBL NMI\n"));
 			/* set the VBL NMI status bit */
 			antic.r.nmist |= VBL_NMI;
-			cpu_set_nmi_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 		}
     }
 

@@ -114,7 +114,7 @@ static void machine_stop_ti99_2(void)
 static void ti99_2_vblank_interrupt(void)
 {
 	/* We trigger a level-4 interrupt.  The PULSE_LINE is a mere guess. */
-	cpu_set_irq_line(0, 1, PULSE_LINE);
+	cpunum_set_input_line(0, 1, PULSE_LINE);
 }
 
 

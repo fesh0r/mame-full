@@ -1565,7 +1565,7 @@ static void cp1610_xori(int d)
 void cp1610_reset(void *param)
 {
 	/* This is how we set the reset vector */
-	cpu_set_irq_line(cpu_getactivecpu(), CP1610_RESET, PULSE_LINE);
+	cpunum_set_input_line(cpu_getactivecpu(), CP1610_RESET, PULSE_LINE);
 }
 
 /* Shut down CPU core */
@@ -3455,10 +3455,10 @@ static void cp1610_set_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_PREVIOUSPC:	break;	/* TODO? */
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:
-	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:
-			cp1610_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + CP1610_INT_INTRM:
+	case CPUINFO_INT_INPUT_STATE + CP1610_RESET:
+	case CPUINFO_INT_INPUT_STATE + CP1610_INT_INTR:
+			cp1610_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i);		break;
 
 	case CPUINFO_INT_REGISTER + CP1610_R0: cp1610.r[0] = info->i; 			break;
 	case CPUINFO_INT_REGISTER + CP1610_R1: cp1610.r[1] = info->i;			break;
@@ -3483,7 +3483,7 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(cp1610_Regs);	break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 2;			break;
+	case CPUINFO_INT_INPUT_LINES:						info->i = 2;			break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;			break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;			break;
@@ -3504,9 +3504,9 @@ void cp1610_get_info(UINT32 state, union cpuinfo *info)
 
 	case CPUINFO_INT_PREVIOUSPC:		info->i = 0;	/* TODO??? */		break;
 
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTRM:	info->i = cp1610.intrm_state;	break;
-	case CPUINFO_INT_IRQ_STATE + CP1610_RESET:		info->i = cp1610.reset_state;	break;
-	case CPUINFO_INT_IRQ_STATE + CP1610_INT_INTR:	info->i = cp1610.intr_state;	break;
+	case CPUINFO_INT_INPUT_STATE + CP1610_INT_INTRM:	info->i = cp1610.intrm_state;	break;
+	case CPUINFO_INT_INPUT_STATE + CP1610_RESET:		info->i = cp1610.reset_state;	break;
+	case CPUINFO_INT_INPUT_STATE + CP1610_INT_INTR:	info->i = cp1610.intr_state;	break;
 
 	case CPUINFO_INT_REGISTER + CP1610_R0: info->i = cp1610.r[0];			break;
 	case CPUINFO_INT_REGISTER + CP1610_R1: info->i = cp1610.r[1];			break;

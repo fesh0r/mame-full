@@ -113,7 +113,7 @@ static void ti85_timer_callback (int param)
 	{
 		if (ti85_ON_interrupt_mask && !ti85_ON_pressed)
 		{
-			cpu_set_irq_line(0,0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 			ti85_ON_interrupt_status = 1;
 			if (!ti85_timer_interrupt_mask) ti85_timer_interrupt_mask = 1;
 		}
@@ -124,7 +124,7 @@ static void ti85_timer_callback (int param)
 		ti85_ON_pressed = 0;
 	if (ti85_timer_interrupt_mask)
 	{
-		cpu_set_irq_line(0,0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 		ti85_timer_interrupt_status = 1;
 	}
 }
@@ -543,9 +543,9 @@ static void ti8x_snapshot_setup_registers (UINT8 * data)
 
 	cpunum_set_reg(0, Z80_R, (reg[0x44]&0x7f) | (reg[0x48]&0x80));
 
-	activecpu_set_irq_line(0, 0);
-	activecpu_set_irq_line(IRQ_LINE_NMI, 0);
-	cpunum_set_halt_line(0, 0);
+	activecpu_set_input_line(0, 0);
+	activecpu_set_input_line(INPUT_LINE_NMI, 0);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, 0);
 }
 
 static void ti85_setup_snapshot (UINT8 * data)

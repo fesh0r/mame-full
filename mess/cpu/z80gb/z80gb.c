@@ -395,11 +395,11 @@ static void z80gb_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 	/* --- the following bits of info are set as 64-bit signed integers --- */
-	case CPUINFO_INT_IRQ_STATE + 0:
-	case CPUINFO_INT_IRQ_STATE + 1:
-	case CPUINFO_INT_IRQ_STATE + 2:
-	case CPUINFO_INT_IRQ_STATE + 3:
-	case CPUINFO_INT_IRQ_STATE + 4:				z80gb_set_irq_line(state-CPUINFO_INT_IRQ_STATE, info->i); break;
+	case CPUINFO_INT_INPUT_STATE + 0:
+	case CPUINFO_INT_INPUT_STATE + 1:
+	case CPUINFO_INT_INPUT_STATE + 2:
+	case CPUINFO_INT_INPUT_STATE + 3:
+	case CPUINFO_INT_INPUT_STATE + 4:				z80gb_set_irq_line(state-CPUINFO_INT_INPUT_STATE, info->i); break;
 
 	case CPUINFO_INT_SP:						Regs.w.SP = info->i;						break;
 	case CPUINFO_INT_PC:						Regs.w.PC = info->i; change_pc(Regs.w.PC); break;
@@ -422,7 +422,7 @@ void z80gb_get_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(Regs);					break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 5;							break;
+	case CPUINFO_INT_INPUT_LINES:						info->i = 5;							break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -445,11 +445,11 @@ void z80gb_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_PC:							info->i = Regs.w.PC;					break;
 	case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* TODO??? */			break;
 
-	case CPUINFO_INT_IRQ_STATE + 0:
-	case CPUINFO_INT_IRQ_STATE + 1:
-	case CPUINFO_INT_IRQ_STATE + 2:
-	case CPUINFO_INT_IRQ_STATE + 3:
-	case CPUINFO_INT_IRQ_STATE + 4:					info->i = IFLAGS & (1 << (state-CPUINFO_INT_IRQ_STATE)); break;
+	case CPUINFO_INT_INPUT_STATE + 0:
+	case CPUINFO_INT_INPUT_STATE + 1:
+	case CPUINFO_INT_INPUT_STATE + 2:
+	case CPUINFO_INT_INPUT_STATE + 3:
+	case CPUINFO_INT_INPUT_STATE + 4:					info->i = IFLAGS & (1 << (state-CPUINFO_INT_INPUT_STATE)); break;
 
 	case CPUINFO_INT_REGISTER + Z80GB_PC:			info->i = Regs.w.PC;					break;
 	case CPUINFO_INT_REGISTER + Z80GB_SP:			info->i = Regs.w.SP;					break;

@@ -214,7 +214,7 @@ static void coleco_vdp_interrupt (int state)
 	static int last_state = 0;
 
     /* only if it goes up */
-	if (state && !last_state) cpu_set_nmi_line(0, PULSE_LINE);
+	if (state && !last_state) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	last_state = state;
 }
 
@@ -232,12 +232,12 @@ void paddle_callback (int param)
     else JoyStat[1] = 1;
 
 /*printf("%0d\n",port7);*/
-    if (JoyStat[0] || JoyStat[1]) cpu_set_irq_line (0, 0, HOLD_LINE);
+    if (JoyStat[0] || JoyStat[1]) cpunum_set_input_line (0, 0, HOLD_LINE);
 }
 
 static MACHINE_INIT(coleco)
 {
-    cpu_irq_line_vector_w(0,0,0xff);
+    cpunum_set_input_line_vector(0,0,0xff);
 	memset(&memory_region(REGION_CPU1)[0x6000], 0xFF, 0x2000); /* Initializing RAM */
     timer_pulse(TIME_IN_MSEC(20), 0, paddle_callback);
 } 

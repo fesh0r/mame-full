@@ -952,12 +952,12 @@ static LRESULT seqselect_apply(dialog_box *dialog, HWND editwnd, UINT message, W
 //============================================================
 
 static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
-	short cx, short cy, struct InputPort *port)
+	short cx, short cy, struct InputPort *port, int seq)
 {
 	struct seqselect_stuff *stuff;
 	InputSeq *code;
 
-	code = input_port_seq(port);
+	code = input_port_seq(port, seq);
 
 	if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_ENDELLIPSIS | ES_CENTER | SS_SUNKEN,
 			x, y, cx, cy, "", DLGITEM_EDIT, NULL))
@@ -989,40 +989,48 @@ int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const 
 	short height;
 	short width;
 	const char *port_name;
+	int seq;
+	int seq_count;
 
 	port_name = input_port_name(port);
+	seq_count = input_port_seq_count(port);
 
-	if (!r)
+	for (seq = 0; seq < seq_count; seq++)
 	{
-		dialog_new_control(di, &x, &y);
+		if (!r)
+		{
+			/* no positions specified */
+			dialog_new_control(di, &x, &y);
 
-		if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, x, y, 
-				dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
-			return 1;
-		x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
+			if (dialog_write_item(di, WS_CHILD | WS_VISIBLE | SS_LEFT | SS_NOPREFIX, x, y, 
+					dialog->layout->label_width, DIM_NORMAL_ROW_HEIGHT, port_name, DLGITEM_STATIC, NULL))
+				return 1;
+			x += dialog->layout->label_width + DIM_HORIZONTAL_SPACING;
 
-		if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port))
-			return 1;
-		y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
-		x += DIM_EDIT_WIDTH + DIM_HORIZONTAL_SPACING;
+			if (dialog_add_single_seqselect(di, x, y, DIM_EDIT_WIDTH, DIM_NORMAL_ROW_HEIGHT, port, seq))
+				return 1;
+			y += DIM_VERTICAL_SPACING + DIM_NORMAL_ROW_HEIGHT;
+			x += DIM_EDIT_WIDTH + DIM_HORIZONTAL_SPACING;
 
-		dialog_finish_control(di, x, y);
-	}
-	else
-	{
-		x = r->left;
-		y = r->top;
-		width = r->right - r->left;
-		height = r->bottom - r->top;
+			dialog_finish_control(di, x, y);
+		}
+		else
+		{
+			/* positions specified */
+			x = r[seq].left;
+			y = r[seq].top;
+			width = r[seq].right - r[seq].left;
+			height = r[seq].bottom - r[seq].top;
 
-		calc_dlgunits_multiple();
-		x		/= pixels_to_xdlgunits;
-		y		/= pixels_to_ydlgunits;
-		width	/= pixels_to_xdlgunits;
-		height	/= pixels_to_ydlgunits;
+			calc_dlgunits_multiple();
+			x		/= pixels_to_xdlgunits;
+			y		/= pixels_to_ydlgunits;
+			width	/= pixels_to_xdlgunits;
+			height	/= pixels_to_ydlgunits;
 
-		if (dialog_add_single_seqselect(di, x, y, width, height, port))
-			return 1;
+			if (dialog_add_single_seqselect(di, x, y, width, height, port, seq))
+				return 1;
+		}
 	}
 	return 0;
 }

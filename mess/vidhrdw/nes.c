@@ -15,7 +15,7 @@ int nes_vram_sprite[8]; /* Used only by mmc5 for now */
 
 static void ppu_nmi(int num, int *ppu_regs)
 {
-	cpu_set_nmi_line(0, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 VIDEO_START( nes )

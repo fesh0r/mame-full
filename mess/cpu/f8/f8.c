@@ -1945,7 +1945,7 @@ static void f8_set_info(UINT32 state, union cpuinfo *info)
     	f8.pc0 += 1;
   		break;
 	case CPUINFO_INT_PREVIOUSPC:	break;	/* TODO? */
-	case CPUINFO_INT_IRQ_STATE:		f8.irq_request = info->i;				break;
+	case CPUINFO_INT_INPUT_STATE:		f8.irq_request = info->i;				break;
 	case CPUINFO_INT_REGISTER + F8_PC0:
 		f8.pc0 = info->i;
 		f8.dbus = cpu_readop(f8.pc0);
@@ -2040,7 +2040,7 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 	{
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
 	case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(f8_Regs);	break;
-	case CPUINFO_INT_IRQ_LINES:						info->i = 1;			break;
+	case CPUINFO_INT_INPUT_LINES:						info->i = 1;			break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;			break;
 	case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;	break;
 	case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;			break;
@@ -2063,7 +2063,7 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_PC:				info->i = (f8.pc0 - 1) & 0xffff;	break;
 	case CPUINFO_INT_PREVIOUSPC:		info->i = 0;	/* TODO??? */		break;
 
-	case CPUINFO_INT_IRQ_STATE:			info->i = f8.irq_request;			break;
+	case CPUINFO_INT_INPUT_STATE:			info->i = f8.irq_request;			break;
 
 	case CPUINFO_INT_REGISTER + F8_PC0:	info->i = (f8.pc0 - 1) & 0xffff;	break;
 	case CPUINFO_INT_REGISTER + F8_PC1: info->i = f8.pc1;					break;

@@ -145,7 +145,7 @@ MACHINE_INIT( coupe )
 
 static void coupe_nmi_generate(int param)
 {
-	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 

@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu2.c,v 1.1 2001/03/17 01:02:40 ben Exp $
+** $Id: nes_apu2.c,v 1.2 2004/06/13 22:01:26 npwoods Exp $
 */
 
 #include <string.h>
@@ -511,7 +511,7 @@ static int32 apu_dmc(dmc_t *chan)
                if (chan->irq_gen)
                {
                   chan->irq_occurred = TRUE;
-                  cpu_set_irq_line(apu->cpunum, 0, HOLD_LINE);
+                  cpunum_set_input_line(apu->cpunum, 0, HOLD_LINE);
                }
 
                /* bodge for timestamp queue */
@@ -1006,6 +1006,11 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu2.c,v $
+** Revision 1.2  2004/06/13 22:01:26  npwoods
+**
+**
+** Updated MAME core to 0.83u2
+**
 ** Revision 1.1  2001/03/17 01:02:40  ben
 ** moved sound CPU cores
 **
