@@ -49,6 +49,9 @@ Hardware:	PPIA 8255
 #include "machine/8255ppi.h"
 #include "vidhrdw/m6847.h"
 #include "includes/atom.h"
+#include "includes/i8271.h"
+#include "includes/basicdsk.h"
+#include "includes/flopdrv.h"
 
 /* functions */
 
@@ -64,7 +67,7 @@ static struct MemoryReadAddress atom_readmem[] =
 	{ 0xa000, 0xafff, MRA_ROM },
 	{ 0xb000, 0xb7ff, ppi8255_0_r },	// PPIA 8255
 	{ 0xb800, 0xb9ff, MRA_NOP },		// VIA 6522
-	{ 0xba00, 0xbfdf, MRA_NOP },		// FDC 8271
+	{ 0xba00, 0xbfdf, atom_8271_r },	// FDC 8271
 	{ 0xbfe0, 0xbfff, MRA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MRA_ROM },
 	{ -1 }
@@ -79,7 +82,7 @@ static struct MemoryWriteAddress atom_writemem[] =
 	{ 0xb000, 0xb7ff, ppi8255_0_w },	// PIA 8255
 
 	{ 0xb800, 0xb9ff, MWA_NOP },		// VIA 6522
-	{ 0xba00, 0xbfdf, MWA_NOP },		// FDC 8271
+	{ 0xba00, 0xbfdf, atom_8271_w },	// FDC 8271
 	{ 0xbfe0, 0xbfff, MWA_NOP },		// MOUSE
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }
@@ -264,6 +267,25 @@ static const struct IODevice io_atom[] =
 		NULL,					/* open */
 		NULL,					/* close */
 		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{
+		IO_FLOPPY,				/* type */
+		2,						/* count */
+		"ssd\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		basicdsk_floppy_id, 	/* id */
+		atom_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
 		NULL,					/* seek */
 		NULL,					/* tell */
 		NULL,					/* input */
