@@ -252,10 +252,10 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310						*/
 /*
  * Macintosh 			 January			 1984
  * Macintosh 512k		 July?				 1984
- * Macintosh 512ke		 ?					 1986
- * Macintosh Plus 		 ?					 1986
- * Macintosh SE			 ?					 1987
- * Macintosh II 		 ?					 1987
+ * Macintosh 512ke		 April				 1986
+ * Macintosh Plus 		 January			 1986
+ * Macintosh SE			 March				 1987
+ * Macintosh II 		 March				 1987
  */
 //TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k						*/
 	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
@@ -446,8 +446,8 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
 //TESTDRIVER( ti990_4 )	/* 1976 TI 990/4									*/
 
-//TESTDRIVER( ti99_224 )/* 1983 TI 99/2 (24kb ROMs) 						*/
-//TESTDRIVER( ti99_232 )/* 1983 TI 99/2 (32kb ROMs) 						*/
+TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 (24kb ROMs) 						*/
+TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 						*/
 	DRIVER( ti99_4 )	/* 1979 TI 99/4 									*/
 	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video						*/
 	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
