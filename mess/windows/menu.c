@@ -1292,19 +1292,36 @@ static void prepare_menus(void)
 #if HAS_TOGGLEMENUBAR
 void win_toggle_menubar(void)
 {
+	RECT before_rect = { 100, 100, 200, 200 };
+	RECT after_rect = { 100, 100, 200, 200 };
+	LONG width_diff;
+	LONG height_diff;
+	DWORD style, exstyle;
 	extern void win_pause_input(int pause_);
+
+	// get before rect
+	style = GetWindowLong(win_video_window, GWL_STYLE);
+	exstyle = GetWindowLong(win_video_window, GWL_EXSTYLE);
+	AdjustWindowRectEx(&before_rect, style, win_has_menu(), exstyle);
 
 	win_pause_input(1);
 	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
 	win_pause_input(0);
-	
+
+	// get after rect, and width/height diff
+	AdjustWindowRectEx(&after_rect, style, win_has_menu(), exstyle);
+	width_diff = (after_rect.right - after_rect.left) - (before_rect.right - before_rect.left);
+	height_diff = (after_rect.bottom - after_rect.top) - (before_rect.bottom - before_rect.top);
+
 	if (win_window_mode)
 	{
 		RECT window;
 		GetWindowRect(win_video_window, &window);
+		SetWindowPos(win_video_window, HWND_TOP, 0, 0,
+			window.right - window.left + width_diff,
+			window.bottom - window.top + height_diff,
+			SWP_NOMOVE | SWP_NOZORDER);
 		win_constrain_to_aspect_ratio(&window, WMSZ_BOTTOM, 0, COORDINATES_DESKTOP);
-		SetWindowPos(win_video_window, HWND_TOP, window.left, window.top,
-			window.right - window.left, window.bottom - window.top, SWP_NOZORDER);
 	}
 
 	win_adjust_window();

@@ -18,7 +18,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [WINDOWS] Toggling the menu bar will no longer change the window size.
+  [Nate Woods]
 
 
 
