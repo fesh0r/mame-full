@@ -166,7 +166,7 @@ LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.3
 endif
 
 ifdef MAME_DEBUG
-MY_CFLAGS += -DMAME_DEBUG -DMESS_DEBUG
+MY_CFLAGS += -DMAME_DEBUG
 MY_LIBS   += -lcurses
 endif
    
