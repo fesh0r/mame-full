@@ -107,7 +107,7 @@ CORE_OBJDIRS = $(OBJ) \
 	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
 	$(OBJ)/cpu $(OBJ)/sound \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools \
+	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/sound $(OBJ)/mess/tools \
 	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool
 
