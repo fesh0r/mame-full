@@ -189,13 +189,13 @@ In short:
 	of a TI99/4(a) CPU ROMs).  They can used to store large pieces of data,
 	too.
 
-	Both TI99/4 and TI99/4a include three GROMs, with some start-up code,
-	system routines and TI-Basic.  TI99/4 reportedly includes an additional
-	Equation Editor.  Maybe a part of the Hand Held Unit DSR lurks there, too
-	(this is only a supposition).  TI99/8 includes the three standard GROMs and
-	16 GROMs for the UCSD p-system.  TI99/2 does not include GROMs at all, and
-	was not designed to support any, although it should be relatively easy to
-	create an expansion card with the GPL interpreter and a /4a cartridge port.
+	Both TI-99/4 and TI-99/4a include three GROMs, with some start-up code,
+	system routines and TI-Basic.  TI99/4 includes an additional Equation
+	Editor.  According to the preliminary schematics found on ftp.whtech.com,
+	TI-99/8 includes the three standard GROMs and 16 GROMs for the UCSD
+	p-system.  TI99/2 does not include GROMs at all, and was not designed to
+	support any, although it should be relatively easy to create an expansion
+	card with the GPL interpreter and a /4a cartridge port.
 
 The simple way:
 
@@ -662,6 +662,10 @@ void ti99_4ev_hblank_interrupt(void)
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark MEMORY HANDLERS
+#endif
 /*
 	Memory handlers.
 
@@ -1033,6 +1037,10 @@ WRITE16_HANDLER ( ti99_ww_wgpl )
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark TI-99/4 HANDSETS
+#endif
 /*
 	Handset support (TI99/4 only)
 
@@ -1261,6 +1269,10 @@ static void ti99_handset_task(void)
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark TMS9901 INTERFACE
+#endif
 /*
 	TI99/4x-specific tms9901 I/O handlers
 
@@ -1507,6 +1519,10 @@ static void ti99_CS_output(int offset, int data)
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark PERIPHERAL EXPANSION SYSTEM
+#endif
 /*
 	Peripheral expansion card support.
 
@@ -2005,6 +2021,10 @@ WRITE16_HANDLER ( ti99_4p_ww_expansion )
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark SGCPU INTERNAL DSR
+#endif
 /*
 	SNUG SGCPU (a.k.a. 99/4p) internal DSR support.
 
@@ -2079,6 +2099,10 @@ static READ16_HANDLER(ti99_4p_rw_internal_dsr)
 }
 
 
+#if 0
+#pragma mark -
+#pragma mark MEMORY EXPANSION CARDS
+#endif
 /*===========================================================================*/
 /*
 	TI memory extension support.
@@ -2527,6 +2551,10 @@ static WRITE16_HANDLER ( ti99_ww_myarcxramhigh )
 
 
 /*===========================================================================*/
+#if 0
+#pragma mark -
+#pragma mark EVPC VIDEO CARD
+#endif
 /*
 	SNUG's EVPC emulation
 */
