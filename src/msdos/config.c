@@ -67,6 +67,11 @@ extern char *history_filename,*mameinfo_filename;
 
 /* from fileio.c */
 void decompose_rom_sample_path (char *rompath, char *samplepath);
+
+#ifdef MESS
+void decompose_software_path (char *softwarepath);
+#endif
+
 extern char *nvdir, *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
@@ -74,7 +79,8 @@ extern char *cheatdir;
 
 #ifdef MESS
 /* path to the CRC database files */
-char *crcdir;
+	char *crcdir;
+	char *softwarepath;  /* for use in fileio.c */
 #endif
 
 /* from video.c, for centering tweaked modes */
@@ -316,7 +322,9 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	game = game_index;
 
 	rompath    = get_string ("directory", "rompath",    NULL, ".;ROMS");
+	#ifndef MESS
 	samplepath = get_string ("directory", "samplepath", NULL, ".;SAMPLES");
+	#endif
 
 	/* handle '-romdir' hack. We should get rid of this BW */
 	alternate_name = 0;
@@ -332,6 +340,7 @@ void get_rom_sample_path (int argc, char **argv, int game_index)
 	/* decompose paths into components (handled by fileio.c) */
 	decompose_rom_sample_path (rompath, samplepath);
 }
+
 
 /* for playback of .inp files */
 void init_inpdir(void)
@@ -453,13 +462,15 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	resolution  = get_string ("config", "resolution", NULL, "auto");
 
 	/* set default subdirectories */
+	#ifndef MESS
 	nvdir      = get_string ("directory", "nvram",   NULL, "NVRAM");
 	hidir      = get_string ("directory", "hi",      NULL, "HI");
-	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
-	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
 	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
+	#endif
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
+	cfgdir     = get_string ("directory", "cfg",     NULL, "CFG");
+	screenshotdir = get_string ("directory", "snap",     NULL, "SNAP");
 
  	#ifndef MESS
 		cheatdir = get_string ("directory", "cheat", NULL, ".");
@@ -631,5 +642,29 @@ void parse_cmdline (int argc, char **argv, int game_index)
 			break;
 		}
 	}
+
+	#ifdef MESS
+	/* create the default software directories ensuring they all exist */
+	{
+	int l=0;
+	char buf[20];
+	while (drivers[l])
+		{
+			sprintf(buf,"SOFTWARE\\%s", drivers[l]->name);
+			softwarepath = get_string ((char*)drivers[l]->name, "softwarepath", NULL,buf);
+			l++;
+		}
+
+    /* Grab the required Software Path from mess.cfg */
+    softwarepath = get_string ((char*)drivers[game]->name, "softwarepath", NULL,buf);
+	logerror("Using Software Path %s for %s\n",softwarepath, drivers[game]->name);
+
+	decompose_software_path(softwarepath);
+
 }
+	#endif
+
+}
+
+
 
