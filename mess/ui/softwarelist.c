@@ -197,10 +197,20 @@ static void MessDiscoverImageType(ImageData *img, mess_image_type *imagetypes, B
 			{
 				lpExt = NULL;
 				pZipEnt = readzip(pZip);
-				if (pZipEnt)
+				while (pZipEnt)
 				{
 					lpExt = strrchr(pZipEnt->name, '.');
-					zipcrc = pZipEnt->crc32;
+					if( lpExt )
+					{
+						imgtype = MessLookupImageType(imagetypes, lpExt+1);
+						if (imgtype)
+						{
+							zipcrc = pZipEnt->crc32;
+							break;
+						}
+						lpExt = NULL;
+					}
+					pZipEnt = readzip(pZip);
 				}
 			}
 		}
@@ -210,8 +220,7 @@ static void MessDiscoverImageType(ImageData *img, mess_image_type *imagetypes, B
 
 	if (lpExt)
 	{
-		lpExt++;
-		imgtype = MessLookupImageType(imagetypes, lpExt);
+		imgtype = MessLookupImageType(imagetypes, lpExt+1);
 		if (imgtype)
 		{
 			img->dev = imgtype->dev;
