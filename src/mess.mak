@@ -692,9 +692,6 @@ OBJDIRS += $(OBJ)/mess/messroms
 messroms$(EXE):	$(OBJ)/mess/messroms/main.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-ifndef DEBUG
-	upx messroms$(EXE)
-endif
 
 
 imgtool$(EXE):	     \
@@ -726,9 +723,6 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/fs.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
-ifndef DEBUG
-	upx imgtool$(EXE)
-endif
 
 #transdsk$(EXE):       \
 #      $(TRANSDISK_OBJS) \
