@@ -83,6 +83,9 @@ ifdef X11_DGA
 CFLAGS.x11 += -DUSE_DGA
 LIBS.x11   += -lXxf86dga -lXxf86vm
 endif
+ifdef TDFX_DGA_WORKAROUND
+CFLAGS.x11 +=  -DTDFX_DGA_WORKAROUND 
+endif
 ifdef X11_XIL
 CFLAGS.x11 += -DUSE_XIL
 LIBS.x11   += -lxil -lpthread
@@ -126,7 +129,7 @@ INCLUDE_PATH = -I. -Isrc -Isrc/includes -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -I
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
 ifdef ZLIB
-ZLIB    = src/unix/contrib/cutzlib-1.1.3/libz.a
+ZLIB    = src/unix/contrib/cutzlib-1.1.4/libz.a
 endif
 
 all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
@@ -167,8 +170,8 @@ MY_LIBS += -lm
 endif
 
 ifdef ZLIB
-MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.3 -I../../contrib/cutzlib-1.1.3
-LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.3
+MY_CFLAGS += -Isrc/unix/contrib/cutzlib-1.1.4 -I../../contrib/cutzlib-1.1.4
+LDFLAGS   = -Lsrc/unix/contrib/cutzlib-1.1.4
 endif
 
 ifdef MAME_DEBUG
@@ -220,7 +223,16 @@ CONFIG += -DLIN_FM_TOWNS
 endif
 ifdef JOY_USB
 CONFIG += -DUSB_JOYSTICK
+ifeq ($(ARCH), netbsd)
+ifeq ($(shell test -f /usr/include/usbhid.h && echo have_usbhid), have_usbhid)
+CONFIG += -DHAVE_USBHID_H
+MY_LIBS += -lusbhid
+else
 MY_LIBS += -lusb
+endif
+else
+MY_LIBS += -lusb
+endif
 endif
 
 ifdef EFENCE
@@ -268,9 +280,9 @@ osdepend:
 	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" \
 	 )
 
-src/unix/contrib/cutzlib-1.1.3/libz.a:
+src/unix/contrib/cutzlib-1.1.4/libz.a:
 	( \
-	cd src/unix/contrib/cutzlib-1.1.3; \
+	cd src/unix/contrib/cutzlib-1.1.4; \
 	./configure; \
 	$(MAKE) libz.a \
 	)
@@ -388,7 +400,7 @@ copycab:
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
-	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.1.3/libz.a src/unix/contrib/cutzlib-1.1.3/*.o $(TOOLS)
+	rm -fr $(OBJ) $(NAME).* xlistdev src/unix/contrib/cutzlib-1.1.4/libz.a src/unix/contrib/cutzlib-1.1.4/*.o $(TOOLS)
 #	cd makedep; make clean
 
 clean68k:
