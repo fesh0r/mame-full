@@ -2,6 +2,32 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+(none)
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+(none)
+
+
+
+0.95
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
 - LASER128 Rev4, LASER128ex Rev4a [Cowering]
 
 - Apple //c (Original Memory Expansion) [Christopher Stone]
