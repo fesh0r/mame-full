@@ -154,6 +154,8 @@ DRVLIBS = \
 	$(OBJ)/arcadia.a  \
 	$(OBJ)/acorn.a    \
 	$(OBJ)/tangerin.a \
+	$(OBJ)/kaypro.a   \
+	$(OBJ)/cgenie.a   \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
@@ -182,11 +184,9 @@ DRVLIBS = \
 #	$(OBJ)/cbm.a      \
 #	$(OBJ)/cbmshare.a \
 #	$(OBJ)/ascii.a	  \
-#	$(OBJ)/kaypro.a   \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
-#	$(OBJ)/cgenie.a   \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/gce.a	  \

@@ -29,49 +29,29 @@ static int off_y = 0;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int cgenie_vh_start(void)
+VIDEO_START( cgenie )
 {
 	videoram_size = 0x4000;
 
 	if( video_start_generic() != 0 )
         return 1;
 
-    dlybitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
+    dlybitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
 	if( !dlybitmap )
 		return 1;
 
-    cleanbuffer = (UINT8*)malloc(64 * 32 * 8);
+    cleanbuffer = (UINT8*)auto_malloc(64 * 32 * 8);
 	if( !cleanbuffer )
 		return 1;
 	memset(cleanbuffer, 0, 64 * 32 * 8);
 
 
-	colorbuffer = (UINT8*)malloc(64 * 32 * 8);
+	colorbuffer = (UINT8*)auto_malloc(64 * 32 * 8);
 	if( !colorbuffer )
 		return 1;
 	memset(colorbuffer, 0, 64 * 32 * 8);
 
 	return 0;
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void cgenie_vh_stop(void)
-{
-	if( dlybitmap )
-		free(dlybitmap);
-	dlybitmap = NULL;
-
-	if( cleanbuffer )
-		free(cleanbuffer);
-	cleanbuffer = NULL;
-
-	if( colorbuffer )
-		free(colorbuffer);
-	colorbuffer = NULL;
 }
 
 /***************************************************************************
@@ -511,8 +491,9 @@ static void cgenie_refresh_tv_set(struct mame_bitmap * bitmap, int full_refresh)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void cgenie_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh)
+VIDEO_UPDATE( cgenie )
 {
+	int full_refresh = 1;
     if( cgenie_tv_mode )
 		cgenie_refresh_tv_set(bitmap,full_refresh);
 	else

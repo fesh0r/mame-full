@@ -129,7 +129,7 @@ void kaypro_putstr(char * src)
 		kaypro_conout_w(0, *src++);
 }
 
-int kaypro_vh_start(void)
+VIDEO_START( kaypro )
 {
 	int i;
 
@@ -188,16 +188,12 @@ int kaypro_vh_start(void)
 	return 0;
 }
 
-void kaypro_vh_stop(void)
-{
-	video_buffer = NULL;
-}
-
-void kaypro_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh)
+VIDEO_UPDATE( kaypro )
 {
 	static int blink_count = 0;
 	static int cursor_count = 0;
 	int i, j = -1;
+	int full_refresh = 1;
 
 	blink_count++;
 	if (!(blink_count & 15))

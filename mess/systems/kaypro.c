@@ -206,7 +206,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { 1, 0, &charlayout, 0, 4},
 MEMORY_END   /* end of array */
 
-static unsigned char palette[] =
+static unsigned char kaypro_palette[] =
 {
       0,  0,  0,    /* black */
       0,240,  0,    /* green */
@@ -220,7 +220,7 @@ static unsigned char palette[] =
     240,240,240,
 };
 
-static unsigned short colortable[] =
+static unsigned short kaypro_colortable[] =
 {
     0,  1,      /* green on black */
     0,  2,      /* dim green on black */
@@ -230,48 +230,38 @@ static unsigned short colortable[] =
 
 
 /* Initialise the palette */
-static void kaypro_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( kaypro )
 {
-    memcpy(sys_palette,palette,sizeof(palette));
-    memcpy(sys_colortable,colortable,sizeof(colortable));
+	palette_set_colors(0, kaypro_palette, sizeof(kaypro_palette) / 3);
+    memcpy(colortable, kaypro_colortable, sizeof(kaypro_colortable));
 }
 
-static struct MachineDriver machine_driver_kaypro =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_Z80,
-            4000000,    /* 4 Mhz */
-            readmem_kaypro,writemem_kaypro,
-            readport_kaypro,writeport_kaypro,
-            kaypro_interrupt,1,     /* one interrupt per frame */
-        },
-    },
-    60, DEFAULT_60HZ_VBLANK_DURATION,   /* frames per second, vblank duration */
-    4,
-    kaypro_init_machine,
-    kaypro_stop_machine,
+static MACHINE_DRIVER_START( kaypro )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)        /* 4 Mhz */
+	MDRV_CPU_MEMORY(readmem_kaypro,writemem_kaypro)
+	MDRV_CPU_PORTS(readport_kaypro,writeport_kaypro)
+	MDRV_CPU_VBLANK_INT(kaypro_interrupt, 1)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(4)
+
+	MDRV_MACHINE_INIT( kaypro )
+	MDRV_MACHINE_STOP( kaypro )
 
     /* video hardware */
-    80*KAYPRO_FONT_W,                   /* screen width */
-    25*KAYPRO_FONT_H,                   /* screen height */
-    { 0*KAYPRO_FONT_W, 80*KAYPRO_FONT_W-1,
-      0*KAYPRO_FONT_H, 25*KAYPRO_FONT_H-1}, /* visible_area */
-    gfxdecodeinfo,                      /* graphics decode info */
-    sizeof(palette) / sizeof(palette[0]) / 3,   /* palette */
-    sizeof(colortable) / sizeof(colortable[0]), /* colortable */
-    kaypro_init_palette,                        /* initialise palette */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(80*KAYPRO_FONT_W, 25*KAYPRO_FONT_H)
+	MDRV_VISIBLE_AREA(0*KAYPRO_FONT_W, 80*KAYPRO_FONT_W-1, 0*KAYPRO_FONT_H, 25*KAYPRO_FONT_H-1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(kaypro_palette) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(kaypro_colortable) / sizeof(kaypro_colortable[0]))
+	MDRV_PALETTE_INIT( kaypro )
 
-    VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-    0,
-    kaypro_vh_start,
-    kaypro_vh_stop,
-    kaypro_vh_screenrefresh,
+	MDRV_VIDEO_START( kaypro )
+	MDRV_VIDEO_UPDATE( kaypro )
+MACHINE_DRIVER_END
 
-    /* sound hardware */
-    0,0,0,0,
-};
 
 ROM_START (kaypro)
     ROM_REGION(0x10000,REGION_CPU1,0) /* 64K for the Z80 */

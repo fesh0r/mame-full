@@ -13,19 +13,18 @@
 
 extern int kaypro_floppy_init(int id);
 extern void init_kaypro(void);
-extern void kaypro_init_machine(void);
-extern void kaypro_stop_machine(void);
+extern MACHINE_INIT( kaypro );
+extern MACHINE_STOP( kaypro );
 
-extern int kaypro_interrupt(void);
+extern INTERRUPT_GEN( kaypro_interrupt );
 
 #define KAYPRO_FONT_W 	8
 #define KAYPRO_FONT_H 	16
 #define KAYPRO_SCREEN_W	80
 #define KAYPRO_SCREEN_H   25
 
-extern int	kaypro_vh_start(void);
-extern void kaypro_vh_stop(void);
-extern void kaypro_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh);
+extern VIDEO_START( kaypro );
+extern VIDEO_UPDATE( kaypro );
 
 extern READ_HANDLER ( kaypro_const_r );
 extern WRITE_HANDLER ( kaypro_const_w );

@@ -130,7 +130,7 @@ void init_kaypro(void)
 		gfx[0x2000 + i] = gfx[i] ^ 0xff;
 }
 
-void kaypro_init_machine(void)
+MACHINE_INIT( kaypro )
 {
 	/* disable CapsLock LED initially */
 	set_led_status(1, 1);
@@ -138,7 +138,7 @@ void kaypro_init_machine(void)
 	cpm_init(4, disk_ids);
 }
 
-void kaypro_stop_machine(void)
+MACHINE_STOP( kaypro )
 {
 	cpm_exit();
 }
@@ -155,13 +155,13 @@ int kaypro_floppy_init(int id)
  * also drives keyboard LEDs and
  * and handles autorepeating keys
  ******************************************************/
-int kaypro_interrupt(void)
+INTERRUPT_GEN( kaypro_interrupt )
 {
 	int mod, row, col, chg, new;
 	static int lastrow = 0, mask = 0x00, key = 0x00, repeat = 0, repeater = 0;
 
 	if( setup_active() || onscrd_active() )
-		return ignore_interrupt();
+		return;
 
 	if( repeat )
 	{
@@ -243,11 +243,9 @@ int kaypro_interrupt(void)
 		}
 		repeat = repeater;
 	}
-	else
-	if ( key && (keyrows[lastrow] & mask) && repeat == 0 )
+	else if ( key && (keyrows[lastrow] & mask) && repeat == 0 )
 	{
 		kaypro_conin_w(0, key);
 	}
-	return ignore_interrupt();
 }
 

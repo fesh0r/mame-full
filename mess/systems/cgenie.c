@@ -299,7 +299,7 @@ static struct GfxDecodeInfo cgenie_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char palette[] = {
+static unsigned char cgenie_palette[] = {
 	 0*4,  0*4,  0*4,  /* background   */
 
 /* this is the 'RGB monitor' version, strong and clean */
@@ -358,7 +358,7 @@ static unsigned char palette[] = {
 
 };
 
-static unsigned short colortable[] =
+static unsigned short cgenie_colortable[] =
 {
 	0, 1, 0, 2, 0, 3, 0, 4, /* RGB monitor set of text colors */
 	0, 5, 0, 6, 0, 7, 0, 8,
@@ -381,10 +381,10 @@ static unsigned short colortable[] =
 };
 
 /* Initialise the palette */
-static void cgenie_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( cgenie )
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	palette_set_colors(0, cgenie_palette, sizeof(cgenie_palette) / 3);
+	memcpy(colortable, cgenie_colortable, sizeof(cgenie_colortable));
 }
 
 
@@ -405,52 +405,36 @@ static struct DACinterface DAC_interface =
 	{ 25 }		/* volume */
 };
 
-static struct MachineDriver machine_driver_cgenie =
-{
+static MACHINE_DRIVER_START( cgenie )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2216800,		/* 2,2168 Mhz */
-			readmem,writemem,
-			readport,writeport,
-			cgenie_frame_interrupt,1,
-			cgenie_timer_interrupt,40
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
-	4,
-	cgenie_init_machine,
-	cgenie_stop_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 2216800)        /* 2,2168 Mhz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(cgenie_frame_interrupt,1)
+	MDRV_CPU_PERIODIC_INT(cgenie_timer_interrupt,40)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(4)
 
-	/* video hardware */
-	48*8,										/* screen width */
-	(32)*8, 									/* screen height */
-	{ 0*8, 48*8-1,0*8,32*8-1},					/* visible_area */
-	cgenie_gfxdecodeinfo,						/* graphics decode info */
-	sizeof(palette) / sizeof(palette[0]) / 3,	/* palette */
-	sizeof(colortable) / sizeof(colortable[0]), /* colortable */
-	cgenie_init_palette,						/* init palette */
+	MDRV_MACHINE_INIT( cgenie )
+	MDRV_MACHINE_STOP( cgenie )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	cgenie_vh_start,
-	cgenie_vh_stop,
-	cgenie_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(48*8, (32)*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1,0*8,32*8-1)
+	MDRV_GFXDECODE( cgenie_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(sizeof(cgenie_palette) / sizeof(cgenie_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(cgenie_colortable) / sizeof(cgenie_colortable[0]))
+	MDRV_PALETTE_INIT( cgenie )
+
+	MDRV_VIDEO_START( cgenie )
+	MDRV_VIDEO_UPDATE( cgenie )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&DAC_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, DAC_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

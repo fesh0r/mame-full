@@ -4,8 +4,8 @@ extern int cgenie_cassette_init(int id);
 extern int cgenie_floppy_init(int id);
 extern int cgenie_rom_load(int id);
 
-extern int cgenie_vh_start(void);
-extern void cgenie_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( cgenie );
+extern VIDEO_UPDATE( cgenie );
 
 extern void cgenie_sh_sound_init(const char * gamename);
 extern WRITE_HANDLER ( cgenie_sh_control_port_w );
@@ -22,8 +22,8 @@ extern WRITE_HANDLER ( cgenie_psg_port_a_w );
 extern WRITE_HANDLER ( cgenie_psg_port_b_w );
 
 extern void init_cgenie(void);
-extern void cgenie_init_machine(void);
-extern void cgenie_stop_machine(void);
+extern MACHINE_INIT( cgenie );
+extern MACHINE_STOP( cgenie );
 
 extern READ_HANDLER ( cgenie_colorram_r );
 extern READ_HANDLER ( cgenie_fontram_r );
@@ -37,8 +37,8 @@ extern WRITE_HANDLER ( cgenie_port_ff_w );
 extern READ_HANDLER ( cgenie_port_ff_r );
 extern int cgenie_port_xx_r(int offset);
 
-extern void cgenie_timer_interrupt(void);
-extern void cgenie_frame_interrupt(void);
+extern INTERRUPT_GEN( cgenie_timer_interrupt );
+extern INTERRUPT_GEN( cgenie_frame_interrupt );
 
 extern READ_HANDLER ( cgenie_status_r );
 extern READ_HANDLER ( cgenie_track_r );
@@ -82,8 +82,8 @@ typedef struct {         // CRTC 6845
 
 extern	int 	cgenie_font_offset[4];
 
-extern	int 	cgenie_vh_start(void);
-extern	void	cgenie_vh_stop(void);
+extern VIDEO_START( cgenie );
+extern VIDEO_UPDATE( cgenie );
 
 extern	READ_HANDLER ( cgenie_index_r );
 extern	READ_HANDLER ( cgenie_register_r );
@@ -96,12 +96,3 @@ extern	int 	cgenie_get_register(int indx);
 extern	void	cgenie_mode_select(int graphics);
 extern	void	cgenie_invalidate_range(int l, int h);
 
-extern	void	cgenie_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh);
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void cgenie_runtime_loader_init(void);
-# else
-	extern void cgenie_runtime_loader_init(void);
-# endif
-#endif

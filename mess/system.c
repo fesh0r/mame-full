@@ -603,7 +603,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 //	DRIVER( ep128a )	/* Enterprise 128 k 							  */
 
 	/* NON LINEAR SYSTEMS */
-//	DRIVER( kaypro )	/* Kaypro 2X									  */
+	DRIVER( kaypro )	/* Kaypro 2X									  */
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
@@ -628,8 +628,8 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC				  */
 	DRIVER( sys80 ) 	/* EACA System 80								  */
 	DRIVER( lnw80 ) 	/* LNW Research LNW-80							  */
-//	DRIVER( trs80m2 )	/* TRS-80 Model II -							  */
-//TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
+	//DRIVER( trs80m2 )	/* TRS-80 Model II -							  */
+TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)			  */
@@ -644,7 +644,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( mc10 )		/* MC-10										  */
 
 	/* EACA */
-//	DRIVER( cgenie )	/* Colour Genie EG2000							  */
+	DRIVER( cgenie )	/* Colour Genie EG2000							  */
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */

@@ -242,7 +242,7 @@ void init_cgenie(void)
 
 static void cgenie_fdc_callback(int);
 
-void cgenie_init_machine(void)
+MACHINE_INIT( cgenie )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
@@ -335,7 +335,7 @@ void cgenie_init_machine(void)
 	memory_set_opbase_handler(0, opbaseoverride);
 }
 
-void cgenie_stop_machine(void)
+MACHINE_STOP( cgenie )
 {
 	tape_put_close();
 }
@@ -912,8 +912,7 @@ WRITE_HANDLER( cgenie_port_ff_w )
 				b = 15;
 			}
 		}
-		osd_modify_pen(0, r, g, b);
-		osd_modify_pen(Machine->pens[0], r, g, b);
+		palette_set_color(0, r, g, b);
 	}
 
 	/* character mode changed ? */
@@ -1088,26 +1087,22 @@ int result = irq_status;
 	return result;
 }
 
-int cgenie_timer_interrupt(void)
+INTERRUPT_GEN( cgenie_timer_interrupt )
 {
 	if( (irq_status & IRQ_TIMER) == 0 )
 	{
 		irq_status |= IRQ_TIMER;
-		cpu_cause_interrupt(0, 0);
-		return 0;
+		cpu_set_irq_line(0, 0, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
-int cgenie_fdc_interrupt(void)
+static INTERRUPT_GEN( cgenie_fdc_interrupt )
 {
 	if( (irq_status & IRQ_FDC) == 0 )
 	{
 		irq_status |= IRQ_FDC;
-		cpu_cause_interrupt(0, 0);
-		return 0;
+		cpu_set_irq_line(0, 0, PULSE_LINE);
 	}
-	return ignore_interrupt();
 }
 
 void cgenie_fdc_callback(int event)
@@ -1265,7 +1260,7 @@ WRITE_HANDLER( cgenie_fontram_w )
  *
  *************************************/
 
-int cgenie_frame_interrupt(void)
+INTERRUPT_GEN( cgenie_frame_interrupt )
 {
 	if( cgenie_tv_mode != (readinputport(0) & 0x10) )
 	{
@@ -1275,8 +1270,6 @@ int cgenie_frame_interrupt(void)
 		port_ff ^= FF_BGD0;
 		cgenie_port_ff_w(0, port_ff ^ FF_BGD0);
 	}
-
-	return 0;
 }
 
 void cgenie_nmi_generate(int param)
