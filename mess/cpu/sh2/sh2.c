@@ -256,15 +256,17 @@ INLINE void WL(offs_t A, data32_t V)
 INLINE void sh2_exception(char *message, int irqline)
 {
   int vector;
-  
-  if ((15-irqline) <= ((sh2.sr >> 4) & 15)) /* This has been modifed JF 20010623 */
+  int level;
+
+  vector = (*sh2.irq_callback)(irqline);
+  level = (vector >> 8) & 0xF;
+  vector &= 0xFF;  
+
+  if (level <= ((sh2.sr >> 4) & 15)) /* If the cpu forbids this interrupt */
     return;
   
-  vector = (*sh2.irq_callback)(irqline);
   if (sh2.m[(SH2_ICR+1) & 0x1ff] & 1)
     {
-//      vector = 0x40 + irqline / 2;
-      vector = 0x40 + irqline;
       LOG(("SH-2 #%d exception #%d (autovector: $%x) after [%s]\n", cpu_getactivecpu(), irqline, vector, message));
     }
   else
@@ -277,10 +279,10 @@ INLINE void sh2_exception(char *message, int irqline)
   WL( sh2.r[15], sh2.pc );		/* push PC onto stack */
   
   /* set I flags in SR */
-  if (irqline > SH2_INT_15)
+  if (level > SH2_INT_15)
     sh2.sr = sh2.sr | I;
   else
-    sh2.sr = (sh2.sr & ~I) | (irqline << 4);
+    sh2.sr = (sh2.sr & ~I) | (level << 4);
   
   /* fetch PC */
   sh2.pc = RL( sh2.vbr + vector * 4 );
