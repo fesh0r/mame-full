@@ -24,7 +24,7 @@
 #include "machine/wd179x.h"
 #include "cpuintrf.h"
 
-extern const char *ep128_floppy_name[4];
+//extern const char *ep128_floppy_name[4];
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -385,11 +385,11 @@ static WRITE_HANDLER ( exdos_card_w )
 
 	int drive = EXDOS_GetDriveSelection(data);
 
-        if (ep128_floppy_name[drive]!=NULL)
-        {
-                wd179x_select_drive(drive, head, wd177x_callback,ep128_floppy_name[drive]);
-                wd179x_set_geometry(drive, 80, 2,9,512, 10,3, 1);
-        }
+//        if (ep128_floppy_name[drive]!=NULL)
+//        {
+//                wd179x_select_drive(drive, head, wd177x_callback,ep128_floppy_name[drive]);
+//                wd179x_set_geometry(drive, 80, 2,9,512, 10,3, 1);
+//        }
 }
 
 /* bit 0 - ??
