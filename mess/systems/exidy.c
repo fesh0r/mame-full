@@ -795,21 +795,21 @@ ROM_START(exidy)
 	/* these are common to all because they are inside the machine */
 	ROM_REGION(64*1024+32, REGION_CPU1,0)
 
-	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, BAD_DUMP CRC(d82a40d6))
+	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, BAD_DUMP CRC(d82a40d6) SHA1(cd1ef5fb0312cd1640e0853d2442d7d858bc3e3b))
 
 	/* char rom */
-	ROM_LOAD("exchr-1.dat",0x0f800, 1024, CRC(4a7e1cdd))
+	ROM_LOAD("exchr-1.dat",0x0f800, 1024, CRC(4a7e1cdd) SHA1(2bf07a59c506b6e0c01ec721fb7b747b20f5dced))
 
 	/* video prom */
-	ROM_LOAD("bruce.dat", 0x010000, 32, CRC(fae922cb))
+	ROM_LOAD("bruce.dat", 0x010000, 32, CRC(fae922cb) SHA1(470a86844cfeab0d9282242e03ff1d8a1b2238d1))
 
-	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, CRC(ac924f67))
-	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, CRC(ead1d0f6))
+	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, CRC(ac924f67) SHA1(72fcad6dd1ed5ec0527f967604401284d0e4b6a1))
+	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, CRC(ead1d0f6) SHA1(c68bed7344091bca135e427b4793cc7d49ca01be))
 
-	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, CRC(1dd20d80))
-	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, CRC(1068a3f8))
-	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, CRC(e6332518))
-	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19))	
+	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, CRC(1dd20d80) SHA1(dd34364ca1a35caa7255b18e6c953f6df664cc74))
+	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, CRC(1068a3f8) SHA1(6395f2c9829d537d68b75a750acbf27145f1bbad))
+	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, CRC(e6332518) SHA1(fe27fccc82f86b90453c4fae55371f3a050dd6dc))
+	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, CRC(a370cb19) SHA1(75fffd897aec8c3dbe1a918f5a29485e603004cb))	
 ROM_END
 
 SYSTEM_CONFIG_START(exidy)

@@ -277,12 +277,12 @@ MACHINE_DRIVER_END
 
 ROM_START (coleco)
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD ("coleco.rom", 0x0000, 0x2000, CRC(3aa93ef3))
+    ROM_LOAD ("coleco.rom", 0x0000, 0x2000, CRC(3aa93ef3) SHA1(45bedc4cbdeac66c7df59e9e599195c778d86a92))
 ROM_END
 
 ROM_START (colecoa)
     ROM_REGION(0x10000,REGION_CPU1, 0)
-    ROM_LOAD ("colecoa.rom", 0x0000, 0x2000, CRC(39bb16fc))
+    ROM_LOAD ("colecoa.rom", 0x0000, 0x2000, CRC(39bb16fc) SHA1(99ba9be24ada3e86e5c17aeecb7a2d68c5edfe59))
 
 	/* differences to 0x3aa93ef3
 	   modified characters, added a pad 2 related fix */

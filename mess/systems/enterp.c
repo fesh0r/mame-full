@@ -571,17 +571,17 @@ MACHINE_DRIVER_END
 ROM_START( ep128 )
 		/* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
 		ROM_REGION(0x24000,REGION_CPU1,0)
-		ROM_LOAD("exos.rom",0x10000,0x8000, CRC(d421795f))
-		ROM_LOAD("exbas.rom",0x18000,0x4000, CRC(683cf455))
-		ROM_LOAD("exdos.rom",0x1c000,0x8000, CRC(d1d7e157))
+		ROM_LOAD("exos.rom",0x10000,0x8000, CRC(d421795f) SHA1(6033a0535136c40c47137e4d1cd9273c06d5fdff))
+		ROM_LOAD("exbas.rom",0x18000,0x4000, CRC(683cf455) SHA1(50a548d1df3ea86f9b5fa669afd8ff124050e776))
+		ROM_LOAD("exdos.rom",0x1c000,0x8000, CRC(d1d7e157) SHA1(31c8be089526aa8aa019c380cdf51ddd3ee76454))
 ROM_END
 
 ROM_START( ep128a )
 		/* 128k ram + 32k rom (OS) + 16k rom (BASIC) + 32k rom (EXDOS) */
 		ROM_REGION(0x24000,REGION_CPU1,0)
-		ROM_LOAD("exos21.rom",0x10000,0x8000, CRC(982a3b44))
-		ROM_LOAD("exbas.rom",0x18000,0x4000, CRC(683cf455))
-		ROM_LOAD("exdos.rom",0x1c000,0x8000, CRC(d1d7e157))
+		ROM_LOAD("exos21.rom",0x10000,0x8000, CRC(982a3b44) SHA1(55315b20fecb4441a07ee4bc5dc7153f396e0a2e))
+		ROM_LOAD("exbas.rom",0x18000,0x4000, CRC(683cf455) SHA1(50a548d1df3ea86f9b5fa669afd8ff124050e776))
+		ROM_LOAD("exdos.rom",0x1c000,0x8000, CRC(d1d7e157) SHA1(31c8be089526aa8aa019c380cdf51ddd3ee76454))
 ROM_END
 
 /***************************************************************************

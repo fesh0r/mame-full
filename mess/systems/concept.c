@@ -210,7 +210,7 @@ ROM_START( concept )
 #else
 	// version $F lvl 8 (development version found on a floppy disk along with
 	// the source code)
-	ROM_LOAD16_WORD("cc.prm", 0x010000, 0x2000, CRC(b5a87dab))
+	ROM_LOAD16_WORD("cc.prm", 0x010000, 0x2000, CRC(b5a87dab) SHA1(0da59af6cfeeb38672f71731527beac323d9c3d6))
 #endif
 
 #if 0
