@@ -414,7 +414,7 @@ WRITE_HANDLER(coco3_palette_w)
 #endif
 }
 
-static void coco3_artifact(int *artifactcolors)
+static void coco3_artifact(UINT16 *artifactcolors)
 {
 	int c1, c2, r1, r2, g1, g2, b1, b2;
 	static int oldc1, oldc2;
@@ -431,14 +431,14 @@ static void coco3_artifact(int *artifactcolors)
 	}
 }
 
-static void coco3_artifact_red(int *artifactcolors)
+static void coco3_artifact_red(UINT16 *artifactcolors)
 {
 	coco3_artifact(artifactcolors);
 	artifactcolors[2] = 18;
 	artifactcolors[1] = 17;
 }
 
-static void coco3_artifact_blue(int *artifactcolors)
+static void coco3_artifact_blue(UINT16 *artifactcolors)
 {
 	coco3_artifact(artifactcolors);
 	artifactcolors[1] = 18;
@@ -612,7 +612,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
-	static int coco3_metapalette[] = {
+	static UINT16 coco3_pens[] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 	};
 	static artifactproc artifacts[] = {
@@ -667,7 +667,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		rs->position = coco3_hires_vidbase();
 		rs->db = full_refresh ? NULL : dirtybuffer;
 		rvm->height = (rows + linesperrow - 1) / linesperrow;
-		rvm->metapalette = NULL;
+		rvm->pens = NULL;
 		rvm->flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
 		if (coco3_gimevhreg[7]) {
 			rvm->flags |= RASTERBITS_FLAG_WRAPINROW;
@@ -787,7 +787,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			full_refresh = 1;
 
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
-			full_refresh, coco3_metapalette,
+			full_refresh, coco3_pens,
 			&RAM[coco3_lores_vidbase()],
 			1, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);

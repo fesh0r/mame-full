@@ -30,7 +30,6 @@ struct m6847_state {
 };
 
 static struct m6847_state the_state;
-static void m6847_timer_initial_state(int dummy);
 
 enum {
 	M6847_MODEBIT_AG		= 0x80,
@@ -275,8 +274,6 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyram
 	if (generic_vh_start())
 		return 1;
 
-	m6847_timer_initial_state(0);
-
 	return 0;
 }
 
@@ -290,23 +287,25 @@ int m6847_vh_start(const struct m6847_init_params *params)
  *
  * This M6847 code attempts to emulate the tricky timing of the M6847.  There
  * are two signals in question:  HS (Horizontal Sync) and FS (Field Sync).
+ *
+ * MAME/MESS timing will call us at vblank time; so all of our timing must be
+ * relative to that point.
+ *
  * Below are tables that show when each signal changes
  *
  * How to read these tables:
  *     "@ CLK(i) + j"  means "at clock cycle i plus j"
  *
  * HS:  Total Period: 227.5 clock cycles
- *		@ CLK(0) + DHS_F			- Turns low
- *		@ CLK(16.5) + DHS_R			- Turns high
- *		@ CLK(227.5) + DHS_F		- Turns low
+ *		@ CLK(0) + DHS_F			- falling edge (high to low)
+ *		@ CLK(16.5) + DHS_R			- rising edge (low to high)
+ *		@ CLK(227.5) + DHS_F		- falling edge (high to low)
  *		...	
  *   
  * FS:	Total Period 262*227.5 clock cycles
- *      @ CLK(0) + DFS_F			- Turns low
- *		@ CLK(32*227.5) + DFS_R		- Turns high
- *		@ CLK(262*227.5) + DFS_F	- Turns low
- *
- * The only difference is on the M6847Y, replace 262 with 262.5
+ *		@ CLK(0) + DFS_R			- rising edge (low to high)
+ *      @ CLK(230) + DFS_F			- falling edge (high to low) (230.5 for the M6847Y)
+ *		@ CLK(262*227.5) + DFS_R	- rising edge (low to high) (262.5 for the M6847Y)
  *
  * Source: Motorola M6847 Manual
  * -------------------------------------------------- */
@@ -402,36 +401,37 @@ static void fs_rise(int dummy)
 #endif
 }
 
-static void m6847_timer_initial_state(int dummy)
+int m6847_vblank(void)
 {
-	double rows;
+	double adjustment;
 	int hsyncs;
 
 	switch(the_state.initparams.version) {
 	case M6847_VERSION_ORIGINAL:
-		rows = 262;
+		adjustment = 0.0;
 		hsyncs = 262;
 		break;
 
 	case M6847_VERSION_M6847T1:
 	case M6847_VERSION_M6847Y:
-		rows = 262.5;
+		adjustment = 0.5;
 		hsyncs = 263;
 		break;
 
 	default:
 		/* Not allowed */
-		rows = 0;
+		adjustment = 0.0;
 		hsyncs = 0;
 		assert(0);
 		break;
 	}
 
-	timer_set(CLK * 0			+ DHS_F,	hsyncs-1,	hs_fall);
-	timer_set(CLK * 16.5		+ DHS_R,	hsyncs-1,	hs_rise);
-	timer_set(CLK * 0			+ DFS_F,	0,			fs_fall);
-	timer_set(CLK * 227.5*32	+ DFS_R,	0,			fs_rise);
-	timer_set(CLK * 227.5*rows,				0,			m6847_timer_initial_state);
+	timer_set(CLK * 0                         + DHS_F,	hsyncs-1,	hs_fall);
+	timer_set(CLK * 16.5                      + DHS_R,	hsyncs-1,	hs_rise);
+	timer_set(CLK * 0                         + DFS_F,	0,			fs_fall);
+	timer_set(CLK * 227.5* (230.0+adjustment) + DFS_R,	0,			fs_rise);
+
+	return ignore_interrupt();
 }
 
 /* --------------------------------------------------
@@ -528,7 +528,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 }
 
 /* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
- * mode.  Internally, it treats the colors like a CoCo 3 and uses the 'metapalette' to
+ * mode.  Internally, it treats the colors like a CoCo 3 and uses the pens array to
  * translate those colors to the proper palette.
  *
  * video_vmode
@@ -540,14 +540,9 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
  */
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	const int *metapalette, UINT8 *vrambase,
+	UINT16 *pens, UINT8 *vrambase,
 	int skew_up, int border_color, int wf, artifactproc artifact)
 {
-/*	static int rowheights[] = {
-		12,		12,		12,		12,		12,		12,		12,		12,
-		3,		3,		3,		2,		2,		1,		1,		1
-	};
-*/
 	rs->videoram = vrambase;
 	rs->size = the_state.initparams.ramsize;
 	rs->position = the_state.videooffset;
@@ -575,7 +570,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) == (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 8;
 			rvm->depth = 1;
-			rvm->metapalette = &metapalette[the_state.modebits & M6847_MODEBIT_CSS ? 10 : 8];
+			rvm->pens = &pens[the_state.modebits & M6847_MODEBIT_CSS ? 10 : 8];
 
 			if (artifact && (rvm->bytesperrow == 32)) {
 				/* I am here because we are doing PMODE 4 artifact colors */
@@ -589,7 +584,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 			rvm->bytesperrow = ((the_state.modebits & (M6847_MODEBIT_GM2|M6847_MODEBIT_GM1)) != 0) ? 32 : 16;
 			rvm->width = rvm->bytesperrow * 4;
 			rvm->depth = 2;
-			rvm->metapalette = &metapalette[the_state.modebits & M6847_MODEBIT_CSS ? 4: 0];
+			rvm->pens = &pens[the_state.modebits & M6847_MODEBIT_CSS ? 4: 0];
 		}
 	}
 	else
@@ -598,7 +593,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 		rvm->bytesperrow = 32;
 		rvm->width = 32;
 		rvm->depth = 8;
-		rvm->metapalette = metapalette;
+		rvm->pens = pens;
 		rvm->u.text.mapper = mapper_alphanumeric;
 		rvm->u.text.mapper_param = skew_up;
 		rvm->u.text.fontheight = 12;
@@ -607,7 +602,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 }
 
 
-static void m6847_artifact_red(int *artifactcolors)
+static void m6847_artifact_red(UINT16 *artifactcolors)
 {
 	switch(artifactcolors[3]) {
 	case 1:
@@ -621,7 +616,7 @@ static void m6847_artifact_red(int *artifactcolors)
 	}
 }
 
-static void m6847_artifact_blue(int *artifactcolors)
+static void m6847_artifact_blue(UINT16 *artifactcolors)
 {
 	switch(artifactcolors[3]) {
 	case 1:
@@ -684,7 +679,7 @@ static int m6847_bordercolor(void)
 
 void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 {
-	static int m6847_metapalette[] = {
+	static UINT16 m6847_metapalette[] = {
 		1, 2, 3, 4, 5, 6, 7, 8, 0, 1, 0, 5, 13, 14, 15, 16
 	};
 	static artifactproc artifacts[] = {

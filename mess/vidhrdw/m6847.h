@@ -62,6 +62,9 @@ void m6847_touch_vram(int offset);
 void m6847_set_row_height(int rowheight);
 void m6847_set_cannonical_row_height(void);
 
+/* Call this function at vblank; so fs and hs will be properly set */
+int m6847_vblank(void);
+
 /******************* 1-bit mode port interfaces *******************/
 
 READ_HANDLER( m6847_ag_r );
