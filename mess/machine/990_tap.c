@@ -1,6 +1,7 @@
 /*
-	990_tap.c: emulation of a generic ti990 tape controller, for use with TILINE-based
-	TI990 systems (TI990/10, /12, /12LR, /10A, Business system 300 and 600).
+	990_tap.c: emulation of a generic ti990 tape controller, for use with
+	TILINE-based TI990 systems (TI990/10, /12, /12LR, /10A, Business system 300
+	and 300A).
 
 	This core will emulate the common feature set found in every tape controller.
 	Most controllers support additional features, but are still compatible with
@@ -14,8 +15,18 @@
 
 	Raphael Nabet 2002
 */
+/*
+	Image encoding:
 
-#define IGNORE_EOF 0
+
+	2 bytes: record len - little-endian
+	2 bytes: always 0s (length MSBs?)
+	len bytes: data
+	2 bytes: record len - little-endian
+	2 bytes: always 0s (length MSBs?)
+
+	4 0s: EOF mark
+*/
 
 #include "driver.h"
 
@@ -95,22 +106,13 @@ static tpc_t tpc;
 
 
 /*
-	Image encoding:
-
-
-	2 bytes: record len - little-endian
-	2 bytes: always 0s (length MSBs?)
-	len bytes: data
-	2 bytes: record len - little-endian
-	2 bytes: always 0s (length MSBs?)
-
-	4 0s: EOF mark
+	Open a tape image
 */
-
-
 int ti990_tape_init(int id)
 {
 	tape_unit_t *t;
+	int effective_mode;
+
 
 	if ((id < 0) || (id >= MAX_TAPE_UNIT))
 		return INIT_FAIL;
@@ -121,14 +123,13 @@ int ti990_tape_init(int id)
 	if (!device_filename(IO_CASSETTE,id))
 		return INIT_PASS;
 
-	t->fd = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-	if (!t->fd)
-	{
-		t->fd = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (!t->fd)
-			goto error;
-		t->wp = 1;
-	}
+	/* open file */
+	t->fd = image_fopen_new(IO_CASSETTE, id, & effective_mode);
+	if (! t->fd)
+		goto error;
+	/* tell whether the image is writable */
+	t->wp = ! ((t->fd) && is_effective_mode_writable(effective_mode));
+
 	t->bot = 1;
 
 	return INIT_PASS;
@@ -139,6 +140,9 @@ error:
 	return INIT_FAIL;
 }
 
+/*
+	Close a tape image
+*/
 void ti990_tape_exit(int id)
 {
 	tape_unit_t *t;
@@ -872,72 +876,73 @@ static void execute_command(void)
 
 	switch ((tpc.w[6] & w6_command) >> 8)
 	{
-	case 0x00: //0b0000:
-	case 0x0C: //0b1100:
-	case 0x0E: //0b1110:
+	case 0x00:
+	case 0x0C:
+	case 0x0E:
 		/* NOP */
 		logerror("NOP\n");
 		tpc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
-	case 0x01: //0b0001:
+	case 0x01:
 		/* buffer sync: means nothing under emulation */
 		logerror("buffer sync\n");
 		tpc.w[7] |= w7_idle | w7_complete;
 		update_interrupt();
 		break;
-	case 0x02: //0b0010:
+	case 0x02:
 		/* write EOF - not emulated */
 		logerror("write EOF\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0x03: //0b0011:
+	case 0x03:
 		/* record skip reverse - not fully tested */
+		logerror("record skip reverse\n");
 		cmd_record_skip_reverse();
 		break;
-	case 0x04: //0b0100:
+	case 0x04:
 		/* read binary forward */
 		logerror("read binary forward\n");
 		cmd_read_binary_forward();
 		break;
-	case 0x05: //0b0101:
+	case 0x05:
 		/* record skip forward - not tested */
 		logerror("record skip forward\n");
 		cmd_record_skip_forward();
 		break;
-	case 0x06: //0b0110:
+	case 0x06:
 		/* write binary forward - not emulated */
 		logerror("write binary forward\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0x07: //0b0111:
+	case 0x07:
 		/* erase - not emulated */
 		logerror("erase\n");
 		/* ... */
 		tpc.w[7] |= w7_idle | w7_error | w7_hard_error;
 		update_interrupt();
 		break;
-	case 0x08: //0b1000:
-	case 0x09: //0b1001:
+	case 0x08:
+	case 0x09:
 		/* read transport status */
 		logerror("read transport status\n");
 		read_transport_status();
 		break;
-	case 0x0A: //0b1010:
+	case 0x0A:
 		/* rewind - not tested */
 		logerror("rewind\n");
 		cmd_rewind();
 		break;
-	case 0x0B: //0b1011:
+	case 0x0B:
 		/* rewind and offline - not tested */
 		logerror("rewind and offline\n");
 		cmd_rewind_and_offline();
 		break;
-	case 0x0F: //0b1111:
+	case 0x0F:
 		/* extended control and status - not emulated */
 		logerror("extended control and status\n");
 		/* ... */
