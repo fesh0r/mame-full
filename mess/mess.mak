@@ -236,8 +236,7 @@ DRVLIBS = \
 	$(OBJ)/sony.a     \
 	$(OBJ)/concept.a  \
 	$(OBJ)/dai.a      \
-
-#	Anthony - commit mess/sndhrdw/wswan.c to CVS
+	
 #	$(OBJ)/bandai.a   \
 
 
@@ -406,7 +405,7 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/vidhrdw/apple2.o	 \
 	  $(OBJ)/mess/machine/apple2.o	 \
 	  $(OBJ)/mess/systems/apple2.o   \
-	  $(OBJ)/mess/formats/ap2_disk.o \
+	  $(OBJ)/mess/formats/ap2_dsk.o  \
 	  $(OBJ)/mess/machine/ay3600.o	 \
 	  $(OBJ)/mess/sndhrdw/mac.o	     \
 	  $(OBJ)/mess/machine/sonydriv.o \
@@ -791,10 +790,9 @@ COREOBJS += \
 	$(OBJ)/mess/utils.o            \
 	$(OBJ)/mess/eventlst.o         \
 	$(OBJ)/mess/videomap.o         \
-	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/mscommon.o         \
 	$(OBJ)/mess/devices/cartslot.o \
-	$(OBJ)/mess/devices/messfmts.o \
+	$(OBJ)/mess/devices/mflopimg.o \
 	$(OBJ)/mess/devices/printer.o  \
 	$(OBJ)/mess/devices/cassette.o \
 	$(OBJ)/mess/devices/bitbngr.o  \
@@ -828,7 +826,9 @@ COREOBJS += \
 	$(OBJ)/mess/machine/nec765.o   \
 	$(OBJ)/mess/machine/wd179x.o   \
 	$(OBJ)/mess/machine/serial.o   \
-	$(OBJ)/mess/formats/wavfile.o
+	$(OBJ)/mess/formats/wavfile.o  \
+	$(OBJ)/mess/formats/flopimg.o  \
+	$(OBJ)/mess/formats/basicdsk.o \
 
 
 # additional tools
