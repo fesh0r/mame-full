@@ -113,7 +113,7 @@ READ_HANDLER ( uPD7002_r )
 WRITE_HANDLER ( uPD7002_w )
 {
 
-	logerror("write to uPD7002 $%02X = $%02X\n",offset,data);
+	/* logerror("write to uPD7002 $%02X = $%02X\n",offset,data); */
 
 	switch(offset&0x03)
 	{
