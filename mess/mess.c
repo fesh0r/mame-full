@@ -70,19 +70,15 @@ int DECL_SPEC mess_printf(char *fmt, ...)
 {
 	va_list arg;
 	int length = 0;
-	int (DECL_SPEC *mess_printf_output)(char *fmt, va_list arg);
 
-	mess_printf_output = options.mess_printf_output;
+	va_start(arg,fmt);
 
-	if (!mess_printf_output && !options.gui_host)
-		mess_printf_output = vprintf;
+	if (options.mess_printf_output)
+		length = options.mess_printf_output(fmt, arg);
+	else if (!options.gui_host)
+		length = vprintf(fmt, arg);
 
-	if (mess_printf_output)
-	{
-		va_start(arg,fmt);
-		length = mess_printf_output(fmt, arg);
-		va_end(arg);
-	}
+	va_end(arg);
 
 	return length;
 }
