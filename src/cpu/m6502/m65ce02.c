@@ -115,6 +115,8 @@ static m65ce02_Regs m65ce02;
 
 #include "t65ce02.c"
 
+extern void m65ce02_init(void) {return}
+
 void m65ce02_reset (void *param)
 {
 	m65ce02.insn = insn65ce02;
@@ -337,6 +339,7 @@ void m65ce02_set_irq_callback(int (*callback)(int))
 
 void m65ce02_state_save(void *file)
 {
+#if 0
 	int cpu = cpu_getactivecpu();
 	/* insn is set at restore since it's a pointer */
 	state_save_UINT16(file,"m65ce02",cpu,"PC",&m65ce02.pc.w.l,2);
@@ -351,10 +354,12 @@ void m65ce02_state_save(void *file)
 	state_save_UINT8(file,"m65ce02",cpu,"AFTER_CLI",&m65ce02.after_cli,1);
 	state_save_UINT8(file,"m65ce02",cpu,"NMI_STATE",&m65ce02.nmi_state,1);
 	state_save_UINT8(file,"m65ce02",cpu,"IRQ_STATE",&m65ce02.irq_state,1);
+#endif
 }
 
 void m65ce02_state_load(void *file)
 {
+#if 0
 	int cpu = cpu_getactivecpu();
 	m65ce02.insn = insn65ce02;
 	state_load_UINT16(file,"m65ce02",cpu,"PC",&m65ce02.pc.w.l,2);
@@ -369,6 +374,7 @@ void m65ce02_state_load(void *file)
 	state_load_UINT8(file,"m65ce02",cpu,"AFTER_CLI",&m65ce02.after_cli,1);
 	state_load_UINT8(file,"m65ce02",cpu,"NMI_STATE",&m65ce02.nmi_state,1);
 	state_load_UINT8(file,"m65ce02",cpu,"IRQ_STATE",&m65ce02.irq_state,1);
+#endif
 }
 
 /****************************************************************************
