@@ -24,7 +24,9 @@
  * ----------------------------------------------------------------------- */
 
 #ifdef __GNUC__
+#if (__GNUC__ > 2)
 #define FUNCATTR_MALLOC		__attribute__ ((malloc))
+#endif
 
 #if (__GNUC__ > 2) || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
 #define FUNCATTR_PURE		__attribute__ ((pure))
