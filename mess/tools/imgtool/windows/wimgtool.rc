@@ -64,6 +64,7 @@ BEGIN
     BEGIN
         MENUITEM "&Insert File...\tCtrl+I",     ID_IMAGE_INSERT
         MENUITEM "&Extract File...\tCtrl+E",    ID_IMAGE_EXTRACT
+        MENUITEM "&New Directory...\tCtrl+Y",   ID_IMAGE_CREATEDIR
         MENUITEM "&Delete\tDel",                ID_IMAGE_DELETE
     END
     POPUP "&View"
@@ -81,6 +82,7 @@ BEGIN
     POPUP "Context Menu"
     BEGIN
         MENUITEM "&Extract File...",            ID_IMAGE_EXTRACT
+        MENUITEM "&New Directory...",           ID_IMAGE_CREATEDIR
         MENUITEM "&Delete",                     ID_IMAGE_DELETE
     END
 END
@@ -98,6 +100,7 @@ BEGIN
     "W",            ID_FILE_CLOSE,          VIRTKEY, CONTROL, NOINVERT
     "I",            ID_IMAGE_INSERT,        VIRTKEY, CONTROL, NOINVERT
     "E",            ID_IMAGE_EXTRACT,       VIRTKEY, CONTROL, NOINVERT
+    "Y",            ID_IMAGE_CREATEDIR,     VIRTKEY, CONTROL, NOINVERT
     VK_DELETE,      ID_IMAGE_DELETE,        VIRTKEY, NOINVERT
 END
 
@@ -136,6 +139,18 @@ BEGIN
     PUSHBUTTON      "Cancel",IDCANCEL,7,7,50,14
 END
 
+IDD_CREATEDIR DIALOGEX 0, 0, 186, 47
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
+    WS_SYSMENU
+CAPTION "New Directory"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "OK",IDOK,129,26,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,7,26,50,14
+    LTEXT           "Directory Name:",IDC_STATIC,7,7,53,8
+    EDITTEXT        IDC_EDIT,63,7,116,14,ES_AUTOHSCROLL
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -167,6 +182,14 @@ BEGIN
         RIGHTMARGIN, 179
         TOPMARGIN, 7
         BOTTOMMARGIN, 21
+    END
+
+    IDD_CREATEDIR, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 179
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 40
     END
 END
 #endif    // APSTUDIO_INVOKED

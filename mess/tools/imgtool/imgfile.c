@@ -163,7 +163,7 @@ static imgtoolerr_t cannonicalize_path(imgtool_image *image, int mandate_dir_pat
 	if (path_separator == '\0')
 	{
 		/* do we specify a path when paths are not supported? */
-		if (mandate_dir_path && path && *path)
+		if (mandate_dir_path && *path && **path)
 		{
 			err = IMGTOOLERR_CANNOTUSEPATH | IMGTOOLERR_SRC_FUNCTIONALITY;
 			goto done;

@@ -689,6 +689,8 @@ static void menu_insert(HWND window)
 	s = s ? s + 1 : ofn.lpstrFile;
 	image_filename = T2A(s);
 
+	// TODO:  Need to fully qualify the path
+
 	err = img_putfile(info->image, NULL, ofn.lpstrFile, opts, NULL);
 	if (err)
 		goto done;
@@ -727,6 +729,8 @@ static void menu_extract(HWND window)
 		goto done;
 	filename = entry.filename;
 
+	// TODO:  Need to fully qualify the path
+
 	strcpy(host_filename, image_filename);
 
 	memset(&ofn, 0, sizeof(ofn));
@@ -756,6 +760,91 @@ done:
 
 
 
+struct createdir_dialog_info
+{
+	HWND ok_button;
+	HWND edit_button;
+	TCHAR buf[256];
+};
+
+
+
+static INT_PTR CALLBACK createdir_dialog_proc(HWND dialog, UINT message, WPARAM wparam, LPARAM lparam)
+{
+	struct createdir_dialog_info *info;
+	LONG_PTR l;
+	INT_PTR rc = 0;
+	int id;
+
+	switch(message)
+	{
+		case WM_INITDIALOG:
+			EnableWindow(GetDlgItem(dialog, IDOK), FALSE);
+			SetWindowLongPtr(dialog, GWLP_USERDATA, lparam);
+			info = (struct createdir_dialog_info *) lparam;
+
+			info->ok_button = GetDlgItem(dialog, IDOK);
+			info->edit_button = GetDlgItem(dialog, IDC_EDIT);
+			break;
+
+		case WM_COMMAND:
+			l = GetWindowLongPtr(dialog, GWLP_USERDATA);
+			info = (struct createdir_dialog_info *) l;
+
+			switch(HIWORD(wparam))
+			{
+				case BN_CLICKED:
+					id = LOWORD(wparam);
+					if (id == IDCANCEL)
+						info->buf[0] = '\0';
+					EndDialog(dialog, id);
+					break;
+
+				case EN_CHANGE:
+					GetWindowText(info->edit_button,
+						info->buf, sizeof(info->buf) / sizeof(info->buf[0]));
+					EnableWindow(info->ok_button, info->buf[0] != '\0');
+					break;
+			}
+			break;
+	}
+	return rc;
+}
+
+
+
+static void menu_createdir(HWND window)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	struct createdir_dialog_info cdi;
+	struct wimgtool_info *info;
+
+	info = get_wimgtool_info(window);
+
+	memset(&cdi, 0, sizeof(cdi));
+	DialogBoxParam(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_CREATEDIR),
+		window, createdir_dialog_proc, (LPARAM) &cdi);
+
+	if (cdi.buf[0] == '\0')
+		goto done;
+
+	// TODO:  Need to fully qualify the path
+
+	err = img_createdir(info->image, T2U(cdi.buf));
+	if (err)
+		goto done;
+
+	err = refresh_image(window);
+	if (err)
+		goto done;
+
+done:
+	if (err)
+		report_error(window, err);
+}
+
+
+
 static void menu_delete(HWND window)
 {
 	imgtoolerr_t err;
@@ -772,7 +861,12 @@ static void menu_delete(HWND window)
 	if (err)
 		goto done;
 
-	err = img_deletefile(info->image, image_filename);
+	// TODO:  Need to fully qualify the path
+
+	if (entry.directory)
+		err = img_deletedir(info->image, image_filename);
+	else
+		err = img_deletefile(info->image, image_filename);
 	if (err)
 		goto done;
 
@@ -1076,6 +1170,8 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 				MF_BYCOMMAND | (features.supports_writing ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem(menu, ID_IMAGE_EXTRACT,
 				MF_BYCOMMAND | (features.supports_reading ? MF_ENABLED : MF_GRAYED));
+			EnableMenuItem(menu, ID_IMAGE_CREATEDIR,
+				MF_BYCOMMAND | (features.supports_createdir ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem(menu, ID_IMAGE_DELETE,
 				MF_BYCOMMAND | (features.supports_deletefile ? MF_ENABLED : MF_GRAYED));
 			break;
@@ -1105,6 +1201,10 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 
 				case ID_IMAGE_EXTRACT:
 					menu_extract(window);
+					break;
+
+				case ID_IMAGE_CREATEDIR:
+					menu_createdir(window);
 					break;
 
 				case ID_IMAGE_DELETE:

@@ -56,4 +56,30 @@
 	</checkdirectory>
 </imgtooltest>
 
+
+<imgtooltest name="coco_os9_002">
+	<createimage driver="coco_jvc_os9"/>
+	
+	<createdirectory path="FOO"/>
+	<putfile name="/FOO/BAR.TXT">'Party'</putfile>
+
+	<checkdirectory path="/">
+		<entry name="FOO"/>
+	</checkdirectory>
+	<checkdirectory path="/FOO">
+		<entry name="BAR.TXT"/>
+	</checkdirectory>
+
+	<deletefile name="/FOO/BAR.TXT"/>
+
+	<checkdirectory path="/">
+		<entry name="FOO"/>
+	</checkdirectory>
+	<checkdirectory path="/FOO"/>
+
+	<deletedirectory path="/FOO"/>
+
+	<checkdirectory path="/"/>
+</imgtooltest>
+
 </tests>

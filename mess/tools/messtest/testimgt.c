@@ -165,6 +165,14 @@ static void deletefile_start_handler(const char **attributes)
 
 static void checkdirectory_start_handler(const char **attributes)
 {
+	const char *filename;
+
+	filename = find_attribute(attributes, "path");
+	if (filename)
+		snprintf(filename_buffer, sizeof(filename_buffer) / sizeof(filename_buffer[0]), "%s", filename);
+	else
+		filename_buffer[0] = '\0';
+
 	memset(&entries, 0, sizeof(entries));
 	entry_count = 0;
 }
@@ -211,7 +219,7 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum;
 	imgtool_dirent ent;
-	char filename_buffer[1024];
+	char filename_entbuffer[1024];
 	char expected_listing[128];
 	char actual_listing[128];
 	int i, actual_count;
@@ -239,10 +247,10 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	mismatch = FALSE;
 
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = filename_buffer;
-	ent.filename_len = sizeof(filename_buffer) / sizeof(filename_buffer[0]);
+	ent.filename = filename_entbuffer;
+	ent.filename_len = sizeof(filename_entbuffer) / sizeof(filename_entbuffer[0]);
 
-	err = img_beginenum(image, NULL, &imageenum);
+	err = img_beginenum(image, filename_buffer, &imageenum);
 	if (err)
 		goto done;
 
@@ -282,6 +290,50 @@ done:
 		img_closeenum(imageenum);
 	if (err)
 		report_imgtoolerr(err);
+}
+
+
+
+static void createdirectory_start_handler(const char **attributes)
+{
+	imgtoolerr_t err;
+	const char *dirname;
+
+	dirname = find_attribute(attributes, "path");
+	if (!dirname)
+	{
+		error_missingattribute("path");
+		return;
+	}
+
+	err = img_createdir(image, dirname);
+	if (err)
+	{
+		report_imgtoolerr(err);
+		return;
+	}
+}
+
+
+
+static void deletedirectory_start_handler(const char **attributes)
+{
+	imgtoolerr_t err;
+	const char *dirname;
+
+	dirname = find_attribute(attributes, "path");
+	if (!dirname)
+	{
+		error_missingattribute("path");
+		return;
+	}
+
+	err = img_deletedir(image, dirname);
+	if (err)
+	{
+		report_imgtoolerr(err);
+		return;
+	}
 }
 
 
@@ -328,11 +380,13 @@ static const struct messtest_tagdispatch checkdirectory_dispatch[] =
 
 const struct messtest_tagdispatch testimgtool_dispatch[] =
 {
-	{ "createimage",	DATA_NONE,		createimage_handler,			NULL },
-	{ "checkfile",		DATA_BINARY,	file_start_handler,				checkfile_end_handler },
-	{ "checkdirectory",	DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
-	{ "putfile",		DATA_BINARY,	file_start_handler,				putfile_end_handler },
-	{ "deletefile",		DATA_BINARY,	deletefile_start_handler,		NULL },
+	{ "createimage",		DATA_NONE,		createimage_handler,			NULL },
+	{ "checkfile",			DATA_BINARY,	file_start_handler,				checkfile_end_handler },
+	{ "checkdirectory",		DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
+	{ "putfile",			DATA_BINARY,	file_start_handler,				putfile_end_handler },
+	{ "deletefile",			DATA_NONE,		deletefile_start_handler,		NULL },
+	{ "createdirectory",	DATA_NONE,		createdirectory_start_handler,	NULL },
+	{ "deletedirectory",	DATA_NONE,		deletedirectory_start_handler,	NULL },
 	{ NULL }
 };
 

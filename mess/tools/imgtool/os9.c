@@ -1016,9 +1016,10 @@ static imgtoolerr_t os9_diskimage_delete(imgtool_image *image, const char *path,
 	imgtoolerr_t err;
 	const struct os9_diskinfo *disk_info;
 	struct os9_fileinfo file_info;
-	UINT32 dirent_lsn, dirent_index, j, lsn;
+	UINT32 dirent_lsn, dirent_index;
+	UINT32 entry_lsn, entry_index;
+	UINT32 i, j, lsn;
 	UINT8 b;
-	int i;
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -1029,8 +1030,22 @@ static imgtoolerr_t os9_diskimage_delete(imgtool_image *image, const char *path,
 		return IMGTOOLERR_FILENOTFOUND;
 
 	/* make sure that if we are deleting a directory, it is empty */
-	if (delete_directory && file_info.file_size > 64)
-		return IMGTOOLERR_DIRNOTEMPTY;
+	if (delete_directory)
+	{
+		for (i = 64; i < file_info.file_size; i += 32)
+		{
+			entry_index = i;
+			entry_lsn = os9_lookup_lsn(image, &file_info, &entry_index);
+
+			err = os9_read_lsn(image, entry_lsn, entry_index, &b, 1);
+			if (err)
+				return err;
+
+			/* this had better be a deleted file, if not we can't delete */
+			if (b != 0)
+				return IMGTOOLERR_DIRNOTEMPTY;
+		}
+	}
 
 	/* zero out the file entry */
 	b = '\0';

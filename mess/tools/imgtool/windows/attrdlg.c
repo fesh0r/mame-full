@@ -41,7 +41,7 @@ static int create_option_controls(HWND dialog, HFONT font, int margin, int *y,
 	{
 		// set up label control
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s:", guide[i].display_name);
-		control = CreateWindow("STATIC", U2T(buf), WS_CHILD | WS_VISIBLE,
+		control = CreateWindow(TEXT("STATIC"), U2T(buf), WS_CHILD | WS_VISIBLE,
 			margin, *y + 2, label_width, control_height, dialog, NULL, NULL, NULL);
 		SendMessage(control, WM_SETFONT, (WPARAM) font, 0);
 		SetProp(control, owner_prop, (HANDLE) 1);
