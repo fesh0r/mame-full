@@ -16,10 +16,12 @@
 #include "input.h"
 #include "keyboard.h"
 
+#ifdef USE_XV
 int use_xv = 1;  /* use xv extension if available */
 long xv_redmask;
 long xv_greenmask;
 long xv_bluemask;
+#endif
 
 extern int force_dirty_palette;
 
