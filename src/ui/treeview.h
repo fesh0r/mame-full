@@ -170,7 +170,7 @@ LPTREEFOLDER GetCurrentFolder(void);
 int GetNumFolders(void);
 LPTREEFOLDER GetFolder(UINT nFolder);
 LPTREEFOLDER GetFolderByID(UINT nID);
-LPTREEFOLDER GetFolderByName(int iParentIndex, char *cFolderName);
+LPTREEFOLDER GetFolderByName(int nParentId, const char *pszFolderName);
 
 void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
 void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);

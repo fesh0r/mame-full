@@ -62,6 +62,7 @@
 #include "Properties.h"
 #include "ColumnEdit.h"
 #include "picker.h"
+#include "tabview.h"
 #include "bitmask.h"
 #include "TreeView.h"
 #include "Splitters.h"
@@ -264,13 +265,6 @@ static void             KeyboardStateClear(void);
 static void             UpdateStatusBar(void);
 static BOOL             PickerHitTest(HWND hWnd);
 static BOOL             TreeViewNotify(NMHDR *nm);
-// "tab" = value in options.h (TAB_SCREENSHOT, for example)
-// "tab index" = index in the ui tab control
-static int GetTabFromTabIndex(int tab_index);
-static int CalculateCurrentTabIndex(void);
-static void CalculateNextTab(void);
-
-static BOOL             TabNotify(NMHDR *nm);
 
 static void             ResetBackground(char *szFile);
 static void				RandomSelectBackground(void);
@@ -278,7 +272,6 @@ static void             LoadBackgroundBitmap(void);
 static void             PaintBackgroundImage(HWND hWnd, HRGN hRgn, int x, int y);
 
 static int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2);
-static void             ResetTabControl(void);
 static int              GamePicker_Compare(int index1, int index2, int sort_subitem);
 
 static void             DisableSelection(void);
@@ -505,9 +498,8 @@ static BOOL bListReady     = FALSE;
 /* use a joystick subsystem in the gui? */
 static struct OSDJoystick* g_pJoyGUI = NULL;
 
-#define __code_key_last KEYCODE_MENU
 /* store current keyboard state (in internal codes) here */
-static input_code_t keyboard_state[ __code_key_last ]; /* __code_key_last #defines the number of internal key_codes */
+static input_code_t keyboard_state[ __code_max ]; /* __code_max #defines the number of internal key_codes */
 
 /* table copied from windows/inputs.c */
 // table entry indices
@@ -786,7 +778,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
 
-	folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(nGameIndex) );
+	folder = GetFolderByName(FOLDER_SOURCE, GetDriverFilename(nGameIndex) );
 	if( folder )
 	{
 		pOpts = GetGameOptions(nGameIndex, folder->m_nFolderId);
@@ -1381,11 +1373,12 @@ void UpdateScreenShot(void)
 	if (have_selection)
 	{
 #ifdef MESS
-		if (!s_szSelectedItem[0] || !LoadScreenShotEx(Picker_GetSelectedItem(hwndList), s_szSelectedItem, GetCurrentTab()))
+		if (!s_szSelectedItem[0] || !LoadScreenShotEx(Picker_GetSelectedItem(hwndList), s_szSelectedItem,
+			TabView_GetCurrentTab(hTabCtrl)))
 #endif
 		{
 			// load and set image, or empty it if we don't have one
-			LoadScreenShot(Picker_GetSelectedItem(hwndList), GetCurrentTab());
+			LoadScreenShot(Picker_GetSelectedItem(hwndList), TabView_GetCurrentTab(hTabCtrl));
 		}
 	}
 
@@ -1408,7 +1401,7 @@ void UpdateScreenShot(void)
 		// - we have history for the game
 		// - we're on the first tab
 		// - we DON'T have a separate history tab
-		showing_history = (have_history && (GetCurrentTab() == GetHistoryTab() || GetHistoryTab() == TAB_ALL ) &&
+		showing_history = (have_history && (TabView_GetCurrentTab(hTabCtrl) == GetHistoryTab() || GetHistoryTab() == TAB_ALL ) &&
 						   GetShowTab(TAB_HISTORY) == FALSE);
 		CalculateBestScreenShotRect(GetDlgItem(hMain, IDC_SSFRAME), &rect,showing_history);
 			
@@ -1424,7 +1417,7 @@ void UpdateScreenShot(void)
 				   TRUE);
 		
 		ShowWindow(GetDlgItem(hMain,IDC_SSPICTURE),
-				   (GetCurrentTab() != TAB_HISTORY) ? SW_SHOW : SW_HIDE);
+				   (TabView_GetCurrentTab(hTabCtrl) != TAB_HISTORY) ? SW_SHOW : SW_HIDE);
 		ShowWindow(GetDlgItem(hMain,IDC_SSFRAME),SW_SHOW);
 		ShowWindow(GetDlgItem(hMain,IDC_SSTAB),bShowTabCtrl ? SW_SHOW : SW_HIDE);
 
@@ -1636,28 +1629,6 @@ int CLIB_DECL DriverDataCompareFunc(const void *arg1,const void *arg2)
     return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
 }
 
-static void ResetTabControl(void)
-{
-	TC_ITEM tci;
-	int i;
-
-	TabCtrl_DeleteAllItems(hTabCtrl);
-
-	ZeroMemory(&tci, sizeof(TC_ITEM));
-
-	tci.mask = TCIF_TEXT;
-	tci.cchTextMax = 20;
-
-	for (i=0;i<MAX_TAB_TYPES;i++)
-	{
-		if (GetShowTab(i))
-		{
-			tci.pszText = (char *)GetImageTabLongName(i);
-			TabCtrl_InsertItem(hTabCtrl, i, &tci);
-		}
-	}
-}
-
 static void ResetBackground(char *szFile)
 {
 	char szDestFile[MAX_PATH];
@@ -1807,6 +1778,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
 	RegisterClass(&wndclass);
 
+#ifdef MESS
+	uistring_init(NULL);
+	DevView_RegisterClass();
+#endif //MESS
+
 	InitCommonControls();
 
 	// Are we using an Old comctl32.dll?
@@ -1842,7 +1818,30 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	hMain = CreateDialog(hInstance, MAKEINTRESOURCE(IDD_MAIN), 0, NULL);
 	SetMainTitle();
 	hTabCtrl = GetDlgItem(hMain, IDC_SSTAB);
-	ResetTabControl();
+	
+	{
+		struct TabViewOptions opts;
+
+		static struct TabViewCallbacks s_tabviewCallbacks =
+		{
+			GetShowTabCtrl,			// pfnGetShowTabCtrl
+			SetCurrentTab,			// pfnSetCurrentTab
+			GetCurrentTab,			// pfnGetCurrentTab
+			SetShowTab,				// pfnSetShowTab
+			GetShowTab,				// pfnGetShowTab
+
+			GetImageTabShortName,	// pfnGetTabShortName
+			GetImageTabLongName,	// pfnGetTabLongName
+			UpdateScreenShot		// pfnOnSelectionChanged
+		};
+
+		memset(&opts, 0, sizeof(opts));
+		opts.pCallbacks = &s_tabviewCallbacks;
+		opts.nTabCount = MAX_TAB_TYPES;
+
+		if (!SetupTabView(hTabCtrl, &opts))
+			return FALSE;
+	}
 
 	/* subclass history window */
 	g_lpHistoryWndProc = (WNDPROC)(LONG)(int)GetWindowLong(GetDlgItem(hMain, IDC_HISTORY), GWL_WNDPROC);
@@ -1910,7 +1909,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	/* Initial adjustment of controls on the Picker window */
 	ResizePickerControls(hMain);
 
-	TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+	TabView_UpdateSelection(hTabCtrl);
 
 	bDoGameCheck = GetGameCheck();
 	idle_work    = TRUE;
@@ -1928,7 +1927,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	CheckMenuItem(GetMenu(hMain), ID_VIEW_STATUS, (bShowStatusBar) ? MF_CHECKED : MF_UNCHECKED);
 	ShowWindow(hStatusBar, (bShowStatusBar) ? SW_SHOW : SW_HIDE);
 	CheckMenuItem(GetMenu(hMain), ID_VIEW_PAGETAB, (bShowTabCtrl) ? MF_CHECKED : MF_UNCHECKED);
-	ShowWindow(hTabCtrl, (bShowTabCtrl) ? SW_SHOW : SW_HIDE);
 
 	if (oldControl)
 	{
@@ -2213,9 +2211,9 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			PollGUIJoystick();
 			break;
 		case SCREENSHOT_TIMER:
-			CalculateNextTab();
+			TabView_CalculateNextTab(hTabCtrl);
 			UpdateScreenShot();
-			TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+			TabView_UpdateSelection(hTabCtrl);
 			break;
 		default:
 			break;
@@ -2372,12 +2370,12 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 
 			if (lpNmHdr->hwndFrom == hTreeView)
 				return TreeViewNotify(lpNmHdr);
-			if (lpNmHdr->hwndFrom == hTabCtrl)
-				return TabNotify(lpNmHdr);
 
 			GetClassName(lpNmHdr->hwndFrom, szClass, sizeof(szClass) / sizeof(szClass[0]));
 			if (!strcmp(szClass, "SysListView32"))
-				return Picker_HandleNotify(lpNmHdr);	
+				return Picker_HandleNotify(lpNmHdr);
+			if (!strcmp(szClass, "SysTabControl32"))
+				return TabView_HandleNotify(lpNmHdr);
 		}
 		break;
 
@@ -3026,8 +3024,8 @@ static void UpdateHistory(void)
 	}
 
 	if (have_history && GetShowScreenShot()
-		&& ((GetCurrentTab() == TAB_HISTORY) || 
-			(GetCurrentTab() == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ||
+		&& ((TabView_GetCurrentTab(hTabCtrl) == TAB_HISTORY) || 
+			(TabView_GetCurrentTab(hTabCtrl) == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ||
 			(TAB_ALL == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ))
 	{
 		Edit_GetRect(GetDlgItem(hMain, IDC_HISTORY),&rect);
@@ -3259,71 +3257,6 @@ static BOOL TreeViewNotify(LPNMHDR nm)
 	return FALSE;
 }
 
-static int GetTabFromTabIndex(int tab_index)
-{
-	int shown_tabs = -1;
-	int i;
-
-	for (i=0;i<MAX_TAB_TYPES;i++)
-	{
-		if (GetShowTab(i))
-		{
-			shown_tabs++;
-			if (shown_tabs == tab_index)
-				return i;
-		}
-	}
-	dprintf("invalid tab index %i",tab_index);
-	return 0;
-}
-
-static int CalculateCurrentTabIndex(void)
-{
-	int shown_tabs = 0;
-	int i;
-
-	for (i=0;i<MAX_TAB_TYPES;i++)
-	{
-		if (GetCurrentTab() == i)
-			break;
-
-		if (GetShowTab(i))
-			shown_tabs++;
-
-	}
-	
-	return shown_tabs;
-}
-
-static void CalculateNextTab(void)
-{
-	int i;
-
-	// at most loop once through all options
-	for (i=0;i<MAX_TAB_TYPES;i++)
-	{
-		SetCurrentTab((GetCurrentTab() + 1) % MAX_TAB_TYPES);
-
-		if (GetShowTab(GetCurrentTab()))
-		{
-			// this tab is being shown, so we're all set
-			return;
-		}
-	}
-}
-
-static BOOL TabNotify(NMHDR *nm)
-{
-	switch (nm->code)
-	{
-	case TCN_SELCHANGE:
-		SetCurrentTab(GetTabFromTabIndex(TabCtrl_GetCurSel(hTabCtrl)));
-		UpdateScreenShot();
-		return TRUE;
-	}
-	return FALSE;
-}
-
 
 
 static void GamePicker_OnHeaderContextMenu(POINT pt, int nColumn)
@@ -3432,7 +3365,7 @@ static void KeyboardStateClear(void)
 {
 	int i;
 
-	for (i = 0; i < __code_key_last; i++)
+	for (i = 0; i < __code_max; i++)
 		keyboard_state[i] = 0;
 
 	dprintf("keyboard gui state cleared.\n");
@@ -3488,7 +3421,7 @@ static void KeyboardKeyDown(int syskey, int vk_code, int special)
 	}
 	else
 	{
-		for (i = 0; i < __code_key_last; i++)
+		for (i = 0; i < __code_max; i++)
 		{
 			if ( vk_code == win_key_trans_table[i][VIRTUAL_KEY])
 			{
@@ -3558,7 +3491,7 @@ static void KeyboardKeyUp(int syskey, int vk_code, int special)
 	}
 	else
 	{
-		for (i = 0; i < __code_key_last; i++)
+		for (i = 0; i < __code_max; i++)
 		{
 			if (vk_code == win_key_trans_table[i][VIRTUAL_KEY])
 			{
@@ -4155,9 +4088,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (id == ID_VIEW_TAB_HISTORY && GetShowTab(TAB_HISTORY) == FALSE)
 			break;
 
-		SetCurrentTab(id - ID_VIEW_TAB_SCREENSHOT);
+		TabView_SetCurrentTab(hTabCtrl, id - ID_VIEW_TAB_SCREENSHOT);
 		UpdateScreenShot();
-		TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+		TabView_UpdateSelection(hTabCtrl);
 		break;
 
 		// toggle tab's existence
@@ -4180,12 +4113,12 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 		SetShowTab(toggle_flag,!GetShowTab(toggle_flag));
 
-		ResetTabControl();
+		TabView_Reset(hTabCtrl);
 
-		if (GetCurrentTab() == toggle_flag && GetShowTab(toggle_flag) == FALSE)
+		if (TabView_GetCurrentTab(hTabCtrl) == toggle_flag && GetShowTab(toggle_flag) == FALSE)
 		{
 			// we're deleting the tab we're on, so go to the next one
-			CalculateNextTab();
+			TabView_CalculateNextTab(hTabCtrl);
 		}
 
 
@@ -4195,7 +4128,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		ResizePickerControls(hMain);
 		UpdateScreenShot();
     
-		TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+		TabView_UpdateSelection(hTabCtrl);
 
 		break;
 	}
@@ -4229,11 +4162,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		if (!oldControl)
 		{
 			//folder = GetSelectedFolder();
-#ifdef MESS
-			folder = GetFolderByName(7, (char*)GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
-#else
-			folder = GetFolderByName(FOLDER_SOURCE-1, (char*)GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
-#endif
+			folder = GetFolderByName(FOLDER_SOURCE, GetDriverFilename(Picker_GetSelectedItem(hwndList)) );
 			InitPropertyPage(hInst, hwnd, Picker_GetSelectedItem(hwndList), GetSelectedPickItemIcon(), folder->m_nFolderId, SRC_GAME);
 			SaveGameOptions(Picker_GetSelectedItem(hwndList));
 #ifdef MESS
@@ -4482,9 +4411,9 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
  		break;
 
 	case IDC_SSFRAME:
-		CalculateNextTab();
+		TabView_CalculateNextTab(hTabCtrl);
 		UpdateScreenShot();
-		TabCtrl_SetCurSel(hTabCtrl, CalculateCurrentTabIndex());
+		TabView_UpdateSelection(hTabCtrl);
 		break;
 
 	case ID_CONTEXT_SELECT_RANDOM:
@@ -5908,7 +5837,7 @@ static void UpdateMenu(HMENU hMenu)
 		EnableMenuItem(hMenu,ID_FOLDER_PROPERTIES,MF_GRAYED);
 
 	CheckMenuRadioItem(hMenu, ID_VIEW_TAB_SCREENSHOT, ID_VIEW_TAB_HISTORY,
-					   ID_VIEW_TAB_SCREENSHOT + GetCurrentTab(), MF_BYCOMMAND);
+					   ID_VIEW_TAB_SCREENSHOT + TabView_GetCurrentTab(hTabCtrl), MF_BYCOMMAND);
 
 	// set whether we're showing the tab control or not
 	if (bShowTabCtrl)
@@ -6059,8 +5988,8 @@ static LRESULT CALLBACK PictureFrameWndProc(HWND hWnd, UINT uMsg, WPARAM wParam,
 		// by the history window to reduce mistaken clicks)
 		// no more no man's land, the Cursor changes when Edit control is left, should be enough feedback
 		if (have_history &&        
-			( ( (GetCurrentTab() == TAB_HISTORY) || 
-			 (GetCurrentTab() == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ||
+			( ( (TabView_GetCurrentTab(hTabCtrl) == TAB_HISTORY) || 
+			 (TabView_GetCurrentTab(hTabCtrl) == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ||
 			(TAB_ALL == GetHistoryTab() && GetShowTab(TAB_HISTORY) == FALSE) ) &&
 //			  (rect.top - 6) < pt.y && pt.y < (rect.bottom + 6) ) )
 			  		PtInRect( &rect, pt ) ) )

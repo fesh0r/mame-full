@@ -144,8 +144,6 @@ static BOOL TryAddExtraFolderAndChildren(int parent_index);
 
 static BOOL TrySaveExtraFolder(LPTREEFOLDER lpFolder);
 
-LPTREEFOLDER GetFolderByName(int iParentIndex, char *cFolderName);
-
 /***************************************************************************
     public functions
  ***************************************************************************/
@@ -1920,18 +1918,19 @@ LPFOLDERDATA FindFilter(DWORD folderID)
 
 /**************************************************************************/
 
-LPTREEFOLDER GetFolderByName(int iParentIndex, char *cFolderName)
+LPTREEFOLDER GetFolderByName(int nParentId, const char *pszFolderName)
 {
-	int i = 0;
+	int i = 0, nParent;
+
 	//First Get the Parent TreeviewItem
-	//LPTREEFOLDER lpChild = NULL;
 	//Enumerate Children
 	for(i = 0; i < numFolders/* ||treeFolders[i] != NULL*/; i++)
 	{
-		if( ( strcmp(treeFolders[i]->m_lpTitle, cFolderName) == 0) && treeFolders[i]->m_nParent == iParentIndex )
+		if (!strcmp(treeFolders[i]->m_lpTitle, pszFolderName))
 		{
-			//If Foldername and ParentId the same -> Folder exists
-			return treeFolders[i];
+			nParent = treeFolders[i]->m_nParent;
+			if ((nParent >= 0) && treeFolders[nParent]->m_nFolderId == nParentId)
+				return treeFolders[i];
 		}
 	}
 	return NULL;

@@ -40,6 +40,8 @@ struct mess_specific_settings
 
 	char*    softwaredirs;
 	char*    hashdir;
+
+	char*    software_tab;
 };
 
 void SetMessColumnWidths(int widths[]);
@@ -68,6 +70,9 @@ const char *GetSelectedSoftware(int driver_index, int devtype);
 
 void SetExtraSoftwarePaths(int driver_index, const char *extra_paths);
 const char *GetExtraSoftwarePaths(int driver_index);
+
+void SetCurrentSoftwareTab(const char *shortname);
+const char *GetCurrentSoftwareTab(void);
 
 #endif /* OPTIONSMS_H */
 

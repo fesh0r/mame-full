@@ -279,7 +279,7 @@ typedef struct
     BOOL     show_tabctrl;
 	int      show_tab_flags;
 	int      history_tab;
-    int      current_tab;
+    char     *current_tab;
     BOOL     game_check;        /* Startup GameCheck */
     BOOL     use_joygui;
 	BOOL     use_keygui;
@@ -516,8 +516,8 @@ BOOL GetShowToolBar(void);
 void SetShowTabCtrl(BOOL val);
 BOOL GetShowTabCtrl(void);
 
-void SetCurrentTab(int val);
-int  GetCurrentTab(void);
+void SetCurrentTab(const char *shortname);
+const char *GetCurrentTab(void);
 
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);

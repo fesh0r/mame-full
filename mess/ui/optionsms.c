@@ -169,4 +169,15 @@ const char *GetExtraSoftwarePaths(int driver_index)
 	return paths ? paths : "";
 }
 
+void SetCurrentSoftwareTab(const char *shortname)
+{
+	FreeIfAllocated(&settings.mess.software_tab);
+	if (shortname != NULL)
+		settings.mess.software_tab = strdup(shortname);
+}
+
+const char *GetCurrentSoftwareTab(void)
+{
+	return settings.mess.software_tab;
+}
 

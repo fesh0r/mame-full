@@ -1,3 +1,9 @@
+//============================================================
+//
+//	mess32ui.c - MESS extensions to src/ui/win32ui.c
+//
+//============================================================
+
 #define WIN32_LEAN_AND_MEAN
 #include <assert.h>
 #include <string.h>
@@ -15,7 +21,8 @@
 #include "ui/options.h"
 #include "mess.h"
 #include "configms.h"
-#include "SoftwareList.h"
+#include "softwarelist.h"
+#include "devview.h"
 #include "windows/window.h"
 #include "messwin.h"
 #include "rc.h"
@@ -33,6 +40,12 @@ static int SoftwarePicker_GetItemImage(int nItem);
 static void SoftwarePicker_LeavingItem(int nItem);
 static void SoftwarePicker_EnteringItem(int nItem);
 static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn);
+
+static LPCTSTR SoftwareTabView_GetTabShortName(int tab);
+static LPCTSTR SoftwareTabView_GetTabLongName(int tab);
+static void SoftwareTabView_OnSelectionChanged(void);
+static void SoftwareTabView_OnMoveSize(void);
+static void SetupSoftwareTabView(void);
 
 static const char *mess_column_names[] =
 {
@@ -59,12 +72,17 @@ static BOOL CreateMessIcons(void);
 
 static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify);
 
+static BOOL DevView_GetOpenFileName(HWND hwndDevView, const struct IODevice *dev, LPTSTR pszFilename, UINT nFilenameLength);
+static BOOL DevView_GetCreateFileName(HWND hwndDevView, const struct IODevice *dev, LPTSTR pszFilename, UINT nFilenameLength);
+static void DevView_SetSelectedSoftware(HWND hwndDevView, int nDriverIndex, const struct IODevice *dev, int nID, LPCTSTR pszFilename);
+static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex, const struct IODevice *dev, int nID, LPTSTR pszBuffer, UINT nBufferLength);
+
 #ifdef MAME_DEBUG
 static void MessTestsBegin(void);
 #endif /* MAME_DEBUG */
 
 static int s_nCurrentGame;
-static char s_szSelectedItem[256];
+static char s_szSelectedItem[MAX_PATH];
 
 #include "ui/win32ui.c"
 
@@ -75,41 +93,112 @@ struct deviceentry
 	const char *dlgname;
 };
 
-/* ------------------------------------------------------------------------ *
- * Image types
- *
- * IO_ZIP is used for ZIP files
- * IO_ALIAS is used for unknown types
- * IO_COUNT is used for bad files
- * ------------------------------------------------------------------------ */
+// The Device View is not fully implemented, so for the time being, the tab
+// view will be there, but just hidden
+#define HIDE_TABVIEW
+
+#ifdef HIDE_TABVIEW
+static BOOL AlwaysFalse(void)
+{
+	return FALSE;
+}
+#endif
+
+
+
+static const struct PickerCallbacks s_softwareListCallbacks =
+{
+	SetMessSortColumn,					// pfnSetSortColumn
+	GetMessSortColumn,					// pfnGetSortColumn
+	SetMessSortReverse,					// pfnSetSortReverse
+	GetMessSortReverse,					// pfnGetSortReverse
+	NULL,								// pfnSetViewMode
+	GetViewMode,						// pfnGetViewMode
+	SetMessColumnWidths,				// pfnSetColumnWidths
+	GetMessColumnWidths,				// pfnGetColumnWidths
+	SetMessColumnOrder,					// pfnSetColumnOrder
+	GetMessColumnOrder,					// pfnGetColumnOrder
+	SetMessColumnShown,					// pfnSetColumnShown
+	GetMessColumnShown,					// pfnGetColumnShown
+	NULL,								// pfnGetOffsetChildren
+
+	NULL,								// pfnCompare
+	MamePlayGame,						// pfnDoubleClick
+	SoftwarePicker_GetItemString,		// pfnGetItemString
+	SoftwarePicker_GetItemImage,		// pfnGetItemImage
+	SoftwarePicker_LeavingItem,			// pfnLeavingItem
+	SoftwarePicker_EnteringItem,		// pfnEnteringItem
+	NULL,								// pfnBeginListViewDrag
+	NULL,								// pfnFindItemParent
+	SoftwarePicker_OnIdle,				// pfnIdle
+	SoftwarePicker_OnHeaderContextMenu,	// pfnOnHeaderContextMenu
+	NULL								// pfnOnBodyContextMenu 
+};
+
+
+
+static const struct TabViewCallbacks s_softwareTabViewCallbacks =
+{
+#ifdef HIDE_TABVIEW
+	AlwaysFalse,						// pfnGetShowTabCtrl
+	NULL,								// pfnSetCurrentTab
+	NULL,								// pfnGetCurrentTab
+#else
+	NULL,								// pfnGetShowTabCtrl
+	SetCurrentSoftwareTab,				// pfnSetCurrentTab
+	GetCurrentSoftwareTab,				// pfnGetCurrentTab
+#endif
+	NULL,								// pfnSetShowTab 
+	NULL,								// pfnGetShowTab 
+
+	SoftwareTabView_GetTabShortName,	// pfnGetTabShortName
+	SoftwareTabView_GetTabLongName,		// pfnGetTabLongName
+
+	SoftwareTabView_OnSelectionChanged,	// pfnOnSelectionChanged
+	SoftwareTabView_OnMoveSize			// pfnOnMoveSize 
+};
+
+
+
+// ------------------------------------------------------------------------
+// Image types
+//
+// IO_ZIP is used for ZIP files
+// IO_ALIAS is used for unknown types
+// IO_COUNT is used for bad files
+// ------------------------------------------------------------------------
 
 #define IO_ZIP		(IO_COUNT + 0)
 #define IO_BAD		(IO_COUNT + 1)
 #define IO_UNKNOWN	(IO_COUNT + 2)
 
-/* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
+// TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape!
 static struct deviceentry s_devices[] =
 {
-	{ IO_CARTSLOT,	"roms",		"Cartridge images" },	/* IO_CARTSLOT */
-	{ IO_FLOPPY,	"floppy",	"Floppy disk images" },	/* IO_FLOPPY */
-	{ IO_HARDDISK,	"hard",		"Hard disk images" },	/* IO_HARDDISK */
-	{ IO_CYLINDER,	NULL,		"Cylinders" },			/* IO_CYLINDER */
-	{ IO_CASSETTE,	NULL,		"Cassette images" },	/* IO_CASSETTE */
-	{ IO_PUNCHCARD,	NULL,		"Punchcard images" },	/* IO_PUNCHCARD */
-	{ IO_PUNCHTAPE,	NULL,		"Punchtape images" },	/* IO_PUNCHTAPE */
-	{ IO_PRINTER,	NULL,		"Printer Output" },		/* IO_PRINTER */
-	{ IO_SERIAL,	NULL,		"Serial Output" },		/* IO_SERIAL */
-	{ IO_PARALLEL,	NULL,		"Parallel Output" },	/* IO_PARALLEL */
-	{ IO_SNAPSHOT,	"snapshot",	"Snapshots" },			/* IO_SNAPSHOT */
-	{ IO_QUICKLOAD,	"snapshot",	"Quickloads" },			/* IO_QUICKLOAD */
-	{ IO_MEMCARD,	NULL,		"Memory cards" }		/* IO_MEMCARD */
+	{ IO_CARTSLOT,	"roms",		"Cartridge images" },
+	{ IO_FLOPPY,	"floppy",	"Floppy disk images" },
+	{ IO_HARDDISK,	"hard",		"Hard disk images" },
+	{ IO_CYLINDER,	NULL,		"Cylinders" },			
+	{ IO_CASSETTE,	NULL,		"Cassette images" },
+	{ IO_PUNCHCARD,	NULL,		"Punchcard images" },
+	{ IO_PUNCHTAPE,	NULL,		"Punchtape images" },
+	{ IO_PRINTER,	NULL,		"Printer Output" },
+	{ IO_SERIAL,	NULL,		"Serial Output" },
+	{ IO_PARALLEL,	NULL,		"Parallel Output" },
+	{ IO_SNAPSHOT,	"snapshot",	"Snapshots" },
+	{ IO_QUICKLOAD,	"snapshot",	"Quickloads" },
+	{ IO_MEMCARD,	NULL,		"Memory cards" }
 };
+
+
 
 static void AssertValidDevice(int d)
 {
 	assert((sizeof(s_devices) / sizeof(s_devices[0])) == IO_COUNT);
 	assert(((d >= 0) && (d < IO_COUNT)) || (d == IO_UNKNOWN) || (d == IO_BAD) || (d == IO_ZIP));
 }
+
+
 
 static const struct deviceentry *lookupdevice(int d)
 {
@@ -119,7 +208,9 @@ static const struct deviceentry *lookupdevice(int d)
 	return &s_devices[d];
 }
 
-/* ------------------------------------------------------------------------ */
+
+
+// ------------------------------------------------------------------------
 
 static int requested_device_type(char *tchar)
 {
@@ -145,9 +236,11 @@ static int requested_device_type(char *tchar)
 	return device;
 }
 
-/* ************************************************************************ */
-/* UI                                                                       */
-/* ************************************************************************ */
+
+
+// ------------------------------------------------------------------------
+// UI
+// ------------------------------------------------------------------------
 
 static BOOL CreateMessIcons(void)
 {
@@ -168,6 +261,8 @@ static BOOL CreateMessIcons(void)
 	ListView_SetImageList(GetDlgItem(hMain, IDC_SWLIST), hLarge, LVSIL_NORMAL);
 	return TRUE;
 }
+
+
 
 static int GetMessIcon(int nGame, int nSoftwareType)
 {
@@ -230,6 +325,8 @@ static void MyFillSoftwareList(int nGame, BOOL bForce)
 		return;
 	s_nCurrentGame = nGame;
 
+	DevView_SetDriver(GetDlgItem(hMain, IDC_SWDEVVIEW), Picker_GetSelectedItem(hwndList));
+
 	drv = drivers[nGame];
 	software_dirs = GetSoftwareDirs();
 	extra_path = GetExtraSoftwarePaths(nGame);
@@ -277,6 +374,21 @@ static BOOL IsSoftwarePaneDevice(int devtype)
 	assert(devtype >= 0);
 	assert(devtype < IO_COUNT);
 	return devtype != IO_PRINTER;
+}
+
+
+
+static void InternalSetSelectedSoftware(int nGame, int nDevType, const char *pszSoftware)
+{
+	if (!pszSoftware)
+		pszSoftware = TEXT("");
+
+	if (strcmp(GetSelectedSoftware(nGame, nDevType), pszSoftware))
+	{
+		SetSelectedSoftware(nGame, nDevType, pszSoftware);
+		SetGameUsesDefaults(nGame, FALSE);
+		SaveGameOptions(nGame);
+	}
 }
 
 
@@ -333,11 +445,12 @@ static void MessReadMountedSoftware(int nGame)
 	}
 }
 
+
+
 static void MessWriteMountedSoftware(int nGame)
 {
 	int i;
 	int devtype;
-	BOOL dirty = FALSE;
 	const char *softwarename;
 	char *newsoftware[IO_COUNT];
 	char *s;
@@ -382,21 +495,10 @@ static void MessWriteMountedSoftware(int nGame)
 		if (!IsSoftwarePaneDevice(devtype))
 			continue;
 
-		softwarename = newsoftware[devtype] ? newsoftware[devtype] : "";
-		if (strcmp(GetSelectedSoftware(nGame, devtype), softwarename))
-		{
-			SetSelectedSoftware(nGame, devtype, newsoftware[devtype]);
-			dirty = TRUE;
-		}
+		InternalSetSelectedSoftware(nGame, devtype, newsoftware[devtype]);
 
 		if (newsoftware[devtype])
 			free(newsoftware[devtype]);
-	}
-
-	if (dirty)
-	{
-		SetGameUsesDefaults(nGame, FALSE);
-		SaveGameOptions(nGame);
 	}
 }
 
@@ -404,35 +506,6 @@ static void MessWriteMountedSoftware(int nGame)
 
 static void InitMessPicker(void)
 {
-	static const struct PickerCallbacks s_softwareListCallbacks =
-	{
-		SetMessSortColumn,					/* pfnSetSortColumn */
-		GetMessSortColumn,					/* pfnGetSortColumn */
-		SetMessSortReverse,					/* pfnSetSortReverse */
-		GetMessSortReverse,					/* pfnGetSortReverse */
-		NULL,								/* pfnSetViewMode */
-		GetViewMode,						/* pfnGetViewMode */
-		SetMessColumnWidths,				/* pfnSetColumnWidths */
-		GetMessColumnWidths,				/* pfnGetColumnWidths */
-		SetMessColumnOrder,					/* pfnSetColumnOrder */
-		GetMessColumnOrder,					/* pfnGetColumnOrder */
-		SetMessColumnShown,					/* pfnSetColumnShown */
-		GetMessColumnShown,					/* pfnGetColumnShown */
-		NULL,								/* pfnGetOffsetChildren */
-
-		NULL,								/* pfnCompare */
-		MamePlayGame,						/* pfnDoubleClick */
-		SoftwarePicker_GetItemString,		/* pfnGetItemString */
-		SoftwarePicker_GetItemImage,		/* pfnGetItemImage */
-		SoftwarePicker_LeavingItem,			/* pfnLeavingItem */
-		SoftwarePicker_EnteringItem,		/* pfnEnteringItem */
-		NULL,								/* pfnBeginListViewDrag */
-		NULL,								/* pfnFindItemParent */
-		SoftwarePicker_OnIdle,				/* pfnIdle */
-		SoftwarePicker_OnHeaderContextMenu,	/* pfnOnHeaderContextMenu */
-		NULL								/* pfnOnBodyContextMenu */
-	};
-
 	struct PickerOptions opts;
 	HWND hwndSoftware;
 
@@ -448,6 +521,19 @@ static void InitMessPicker(void)
 		| LVS_REPORT | LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED);
 
 	s_nCurrentGame = -1;
+
+	SetupSoftwareTabView();
+
+	{
+		static const struct DevViewCallbacks s_devViewCallbacks =
+		{
+			DevView_GetOpenFileName,
+			DevView_GetCreateFileName,
+			DevView_SetSelectedSoftware,
+			DevView_GetSelectedSoftware
+		};
+		DevView_SetCallbacks(GetDlgItem(hMain, IDC_SWDEVVIEW), &s_devViewCallbacks);
+	}
 }
 
 
@@ -474,9 +560,11 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -writeconfig");
 }
 
-/* ------------------------------------------------------------------------ *
- * Open others dialog                                                       *
- * ------------------------------------------------------------------------ */
+
+
+// ------------------------------------------------------------------------
+// Open others dialog
+// ------------------------------------------------------------------------
 
 static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
 {
@@ -564,6 +652,8 @@ static BOOL CommonFileImageDialog(char *the_last_directory, common_file_dialog_p
     return success;
 }
 
+
+
 static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 {
 	char filename[MAX_PATH];
@@ -575,19 +665,156 @@ static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 		MessIntroduceItem(GetDlgItem(hMain, IDC_SWLIST), filename, imagetypes);
 }
 
+
+
 static void MessOpenOtherSoftware(int iDevice)
 {
 	MessSetupDevice(GetOpenFileName, iDevice);
 }
+
+
 
 static void MessCreateDevice(int iDevice)
 {
 	MessSetupDevice(GetSaveFileName, iDevice);
 }
 
-/* ------------------------------------------------------------------------ *
- * Software List Class                                                      *
- * ------------------------------------------------------------------------ */
+
+
+static BOOL DevView_GetOpenFileName(HWND hwndDevView, const struct IODevice *dev, LPTSTR pszFilename, UINT nFilenameLength)
+{
+	mess_image_type imagetypes[64];
+	SetupImageTypes(Picker_GetSelectedItem(hwndList), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, dev->type);
+	return CommonFileImageDialog(last_directory, GetOpenFileName, pszFilename, imagetypes);
+}
+
+
+
+static BOOL DevView_GetCreateFileName(HWND hwndDevView, const struct IODevice *dev, LPTSTR pszFilename, UINT nFilenameLength)
+{
+	mess_image_type imagetypes[64];
+	SetupImageTypes(Picker_GetSelectedItem(hwndList), imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, dev->type);
+	return CommonFileImageDialog(last_directory, GetSaveFileName, pszFilename, imagetypes);
+}
+
+
+
+static void DevView_SetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
+	const struct IODevice *dev, int nID, LPCTSTR pszFilename)
+{
+	LPCSTR pszSelection;
+	LPSTR pszSelectionCopy, pszNewSelection;
+	LPCSTR *ppszNewSelections;
+	LPSTR s, s2;
+	int i, nLength;
+	int nSelectionCount, nNewSelectionCount;
+
+	// normalize filename
+	if (!pszFilename)
+		pszFilename = TEXT("");
+	
+	// get the selection
+	pszSelection = GetSelectedSoftware(nDriverIndex, dev->type);
+
+	// copy the selection into something that we can modify
+	pszSelectionCopy = (LPSTR) alloca((strlen(pszSelection) + 1) * sizeof(*pszSelection));
+	strcpy(pszSelectionCopy, pszSelection);
+
+	// count number of selections and replace the commas with NULs
+	s = pszSelectionCopy;
+	nSelectionCount = 0;
+	while(s && s[0])
+	{
+		nSelectionCount++;
+		s = strchr(s, ',');
+		if (s)
+		{
+			*s = '\0';
+			s++;
+		}
+	}
+
+	// Allocate an array of selection parts
+	nNewSelectionCount = MAX(nSelectionCount, nID + 1);
+	ppszNewSelections = (LPCSTR *) alloca(sizeof(*ppszNewSelections) * nNewSelectionCount);
+	s = pszSelectionCopy;
+	nLength = 0;
+	for (i = 0; i < nNewSelectionCount; i++)
+	{
+		if (i == nID)
+			ppszNewSelections[i] = pszFilename;
+		else if (s && s[0])
+			ppszNewSelections[i] = s;
+		else
+			ppszNewSelections[i] = TEXT("");
+		nLength += strlen(ppszNewSelections[i]) + 1;
+
+		if (s)
+		{
+			s = strchr(s, ',');
+			if (s)
+				s++;
+		}
+	}
+
+	// ...and finally assemble the new selection string
+	pszNewSelection = (LPSTR) alloca(nLength * sizeof(*pszNewSelection));
+	s = pszNewSelection;
+	for (i = 0; i < nNewSelectionCount; i++)
+	{
+		if (i > 0)
+			*(s++) = ',';
+		strcpy(s, ppszNewSelections[i]);
+		s += strlen(s);
+	}
+
+	InternalSetSelectedSoftware(nDriverIndex, dev->type, pszNewSelection);
+	MessReadMountedSoftware(Picker_GetSelectedItem(hwndList));
+}
+
+
+
+static LPCTSTR DevView_GetSelectedSoftware(HWND hwndDevView, int nDriverIndex,
+	const struct IODevice *dev, int nID, LPTSTR pszBuffer, UINT nBufferLength)
+{
+	LPCSTR pszSelection, s;
+	
+	pszSelection = GetSelectedSoftware(nDriverIndex, dev->type);
+
+	// skip over irrelevant selections
+	while(pszSelection && pszSelection[0] && (nID > 0))
+	{
+		nID--;
+		pszSelection = strchr(pszSelection, ',');
+		if (pszSelection)
+			pszSelection++;
+
+	}
+	if (!pszSelection || !pszSelection[0])
+	{
+		pszSelection = NULL;
+	}
+	else
+	{
+		s = strchr(pszSelection, ',');
+		if (s)
+		{
+			// extract the filename, minus the comma
+			nBufferLength = MIN(nBufferLength, (s - pszSelection + 1));
+			memcpy(pszBuffer, pszSelection, nBufferLength * sizeof(*pszSelection));
+			if (nBufferLength)
+				pszBuffer[nBufferLength] = '\0';
+			pszSelection = pszBuffer;
+		}
+	}
+	return pszSelection;
+}
+
+
+
+// ------------------------------------------------------------------------
+// Software List Class
+// ------------------------------------------------------------------------
 
 static int LookupIcon(const char *icon_name)
 {
@@ -616,13 +843,13 @@ static int SoftwarePicker_GetItemImage(int nItem)
 		switch(nType)
 		{
 			case IO_UNKNOWN:
-				/* Unknowns */
+				// Unknowns 
 				nIcon = FindIconIndex(IDI_WIN_UNKNOWN);
 				break;
 
 			case IO_BAD:
 			case IO_ZIP:
-				/* Bad files */
+				// Bad files
 				nIcon = FindIconIndex(IDI_WIN_REDX);
 				break;
 
@@ -671,9 +898,9 @@ static void SoftwarePicker_EnteringItem(int nItem)
 
 
 
-/* ------------------------------------------------------------------------
- * Header context menu stuff
- * ------------------------------------------------------------------------ */
+// ------------------------------------------------------------------------
+// Header context menu stuff
+// ------------------------------------------------------------------------
 
 static HWND MyColumnDialogProc_hwndPicker;
 static int *MyColumnDialogProc_order;
@@ -780,9 +1007,9 @@ static void SoftwarePicker_OnHeaderContextMenu(POINT pt, int nColumn)
 
 
 
-/* ------------------------------------------------------------------------
- * MessCommand
- * ------------------------------------------------------------------------ */
+// ------------------------------------------------------------------------
+// MessCommand
+// ------------------------------------------------------------------------
 
 static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 {
@@ -806,9 +1033,118 @@ static BOOL MessCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 
 
-/* ------------------------------------------------------------------------ *
- * Mess32 Diagnostics                                                       *
- * ------------------------------------------------------------------------ */
+// ------------------------------------------------------------------------
+// Software Tab View 
+// ------------------------------------------------------------------------
+
+static LPCTSTR s_tabs[] =
+{
+	TEXT("picker\0Picker"),
+	TEXT("devview\0Device View")
+};
+
+
+
+static LPCTSTR SoftwareTabView_GetTabShortName(int tab)
+{
+	return s_tabs[tab];
+}
+
+
+
+static LPCTSTR SoftwareTabView_GetTabLongName(int tab)
+{
+	return s_tabs[tab] + _tcslen(s_tabs[tab]) + 1;
+}
+
+
+
+static void SoftwareTabView_OnSelectionChanged(void)
+{
+	int nTab;
+	HWND hwndSoftwarePicker;
+	HWND hwndSoftwareDevView;
+
+	hwndSoftwarePicker = GetDlgItem(hMain, IDC_SWLIST);
+	hwndSoftwareDevView = GetDlgItem(hMain, IDC_SWDEVVIEW);
+
+	nTab = TabView_GetCurrentTab(GetDlgItem(hMain, IDC_SWTAB));
+
+	switch(nTab)
+	{
+		case 0:
+			MessReadMountedSoftware(Picker_GetSelectedItem(hwndList));
+			ShowWindow(hwndSoftwarePicker, SW_SHOW);
+			ShowWindow(hwndSoftwareDevView, SW_HIDE);
+			break;
+
+		case 1:
+			MessWriteMountedSoftware(Picker_GetSelectedItem(hwndList));
+			ShowWindow(hwndSoftwarePicker, SW_HIDE);
+			ShowWindow(hwndSoftwareDevView, SW_SHOW);
+			break;
+	}
+}
+
+
+
+static void SoftwareTabView_OnMoveSize(void)
+{
+	HWND hwndSoftwareTabView;
+	HWND hwndSoftwarePicker;
+	HWND hwndSoftwareDevView;
+	RECT rMain, rSoftwareTabView, rClient, rTab;
+
+	hwndSoftwareTabView = GetDlgItem(hMain, IDC_SWTAB);
+	hwndSoftwarePicker = GetDlgItem(hMain, IDC_SWLIST);
+	hwndSoftwareDevView = GetDlgItem(hMain, IDC_SWDEVVIEW);
+
+	GetWindowRect(hwndSoftwareTabView, &rSoftwareTabView);
+	GetClientRect(hMain, &rMain);
+	ClientToScreen(hMain, &((POINT *) &rMain)[0]);
+	ClientToScreen(hMain, &((POINT *) &rMain)[1]);
+
+	// Calculate rClient from rSoftwareTabView in terms of rMain coordinates
+	rClient.left = rSoftwareTabView.left - rMain.left;
+	rClient.top = rSoftwareTabView.top - rMain.top;
+	rClient.right = rSoftwareTabView.right - rMain.left;
+	rClient.bottom = rSoftwareTabView.bottom - rMain.top;
+
+	// If the tabs are visible, then make sure that the tab view's tabs are
+	// not being covered up
+	if (GetWindowLong(hwndSoftwareTabView, GWL_STYLE) & WS_VISIBLE)
+	{
+		TabCtrl_GetItemRect(hwndSoftwareTabView, 0, &rTab);
+		rClient.top += rTab.bottom - rTab.top + 4;
+	}
+
+	/* Now actually move the controls */
+	MoveWindow(hwndSoftwarePicker, rClient.left, rClient.top,
+		rClient.right - rClient.left, rClient.bottom - rClient.top,
+		TRUE);
+	MoveWindow(hwndSoftwareDevView, rClient.left, rClient.top,
+		rClient.right - rClient.left, rClient.bottom - rClient.top,
+		TRUE);
+}
+
+
+
+static void SetupSoftwareTabView(void)
+{
+	struct TabViewOptions opts;
+
+	memset(&opts, 0, sizeof(opts));
+	opts.pCallbacks = &s_softwareTabViewCallbacks;
+	opts.nTabCount = sizeof(s_tabs) / sizeof(s_tabs[0]);
+
+	SetupTabView(GetDlgItem(hMain, IDC_SWTAB), &opts);
+}
+
+
+
+// ------------------------------------------------------------------------
+// Mess32 Diagnostics
+// ------------------------------------------------------------------------
 
 #ifdef MAME_DEBUG
 
@@ -845,8 +1181,8 @@ static void CALLBACK MessTestsTimerProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent, 
 {
 	int nNewGame;
 
-	/* if either of the pickers have further idle work to do, or we are
-	 * already in this timerproc, do not do anything */
+	// if either of the pickers have further idle work to do, or we are
+	// already in this timerproc, do not do anything
 	if (s_bInTimerProc || Picker_IsIdling(GetDlgItem(hMain, IDC_LIST))
 		|| Picker_IsIdling(GetDlgItem(hMain, IDC_SWLIST)))
 		return;
@@ -880,8 +1216,8 @@ static void MessTestsBegin(void)
 
 	nOriginalPick = GetSelectedPick();
 
-	/* If we are not currently running tests, set up the timer and keep track
-	 * of the original selected pick item */
+	// If we are not currently running tests, set up the timer and keep track
+	// of the original selected pick item
 	if (!s_nTestingTimer)
 	{
 		s_nTestingTimer = SetTimer(NULL, 0, 50, MessTestsTimerProc);
@@ -899,4 +1235,4 @@ static void MessTestsBegin(void)
 
 
 
-#endif /* MAME_DEBUG */
+#endif // MAME_DEBUG

@@ -107,9 +107,6 @@ static void D3DPrescaleDecodeString(const char *str,void *data);
 static void CleanStretchEncodeString(void *data,char *str);
 static void CleanStretchDecodeString(const char *str,void *data);
 
-static void CurrentTabEncodeString(void *data,char *str);
-static void CurrentTabDecodeString(const char *str,void *data);
-
 static void FolderFlagsEncodeString(void *data,char *str);
 static void FolderFlagsDecodeString(const char *str,void *data);
 
@@ -160,15 +157,25 @@ static REG_OPTION regSettings[] =
 #endif
 	{ "default_folder_id",          RO_INT,     &settings.folder_id,		         "0" },
 	{ "show_image_section",         RO_BOOL,    &settings.show_screenshot,           "1" },
-	{ "current_tab",                RO_ENCODE,  &settings.current_tab,               "0", FALSE, CurrentTabEncodeString, CurrentTabDecodeString },
+	{ "current_tab",                RO_STRING,  &settings.current_tab,               "0" },
 	{ "show_tool_bar",              RO_BOOL,    &settings.show_toolbar,              "1" },
 	{ "show_status_bar",            RO_BOOL,    &settings.show_statusbar,            "1" },
+#ifdef MESS
+	{ "show_folder_section",        RO_BOOL,    &settings.show_folderlist,           "0" },
+#else
 	{ "show_folder_section",        RO_BOOL,    &settings.show_folderlist,           "1" },
+#endif
 	{ "hide_folders",               RO_ENCODE,  &settings.show_folder_flags,         NULL, FALSE, FolderFlagsEncodeString, FolderFlagsDecodeString },
 
+#ifdef MESS
+	{ "show_tabs",                  RO_BOOL,    &settings.show_tabctrl,              "0" },
+	{ "hide_tabs",                  RO_ENCODE,  &settings.show_tab_flags,            "flyer, cabinet, marquee, title, cpanel", FALSE, TabFlagsEncodeString, TabFlagsDecodeString },
+	{ "history_tab",				RO_INT,		&settings.history_tab,				 "1" },
+#else
 	{ "show_tabs",                  RO_BOOL,    &settings.show_tabctrl,              "1" },
 	{ "hide_tabs",                  RO_ENCODE,  &settings.show_tab_flags,            "marquee, title, cpanel, history", FALSE, TabFlagsEncodeString, TabFlagsDecodeString },
 	{ "history_tab",				RO_INT,		&settings.history_tab,				 0, 0},
+#endif
 
 	{ "check_game",                 RO_BOOL,    &settings.game_check,                "1" },
 	{ "joystick_in_interface",      RO_BOOL,    &settings.use_joygui,                "0" },
@@ -276,6 +283,8 @@ static REG_OPTION regSettings[] =
 
 	{ "mess_sort_column",           RO_INT,     &settings.mess.mess_sort_column,    "0" },
 	{ "mess_sort_reversed",         RO_BOOL,    &settings.mess.mess_sort_reverse,   "0" },
+
+	{ "current_software_tab",       RO_STRING,  &settings.mess.software_tab,        "0" },
 #endif
 	{ "" }
 };
@@ -1310,12 +1319,14 @@ BOOL GetShowToolBar(void)
 	return settings.show_toolbar;
 }
 
-void SetCurrentTab(int val)
+void SetCurrentTab(const char *shortname)
 {
-	settings.current_tab = val;
+	FreeIfAllocated(&settings.current_tab);
+	if (shortname != NULL)
+		settings.current_tab = strdup(shortname);
 }
 
-int GetCurrentTab(void)
+const char *GetCurrentTab(void)
 {
 	return settings.current_tab;
 }
@@ -2713,30 +2724,6 @@ static void CleanStretchDecodeString(const char *str,void *data)
 		}
 	}
 	dprintf("invalid clean stretch string %s",str);
-}
-
-static void CurrentTabEncodeString(void *data,char *str)
-{
-	int tab_index = *(int *)data;
-
-	strcpy(str,GetImageTabShortName(tab_index));
-}
-
-static void CurrentTabDecodeString(const char *str,void *data)
-{
-	int i;
-
-	*(int *)data = TAB_SCREENSHOT;
-
-	for (i=0;i<MAX_TAB_TYPES;i++)
-	{
-		if (stricmp(GetImageTabShortName(i),str) == 0)
-		{
-			*(int *)data = i;
-			return;
-		}
-	}
-	dprintf("invalid tab index string %s",str);
 }
 
 static void FolderFlagsEncodeString(void *data,char *str)
