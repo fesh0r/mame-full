@@ -1,17 +1,5 @@
 #include <windows.h>
-
-#define SHHandleWMSettingChange dummy_SHHandleWMSettingChange
-#define SHCreateMenuBar			dummy_SHCreateMenuBar
-#define SHInitDialog			dummy_SHInitDialog
 #include <aygshell.h>
-#undef SHHandleWMSettingChange
-#undef SHCreateMenuBar
-#undef SHInitDialog
-
-WINSHELLAPI BOOL WINAPI SHHandleWMSettingChange(HWND hwnd, WPARAM wParam, LPARAM lParam, SHACTIVATEINFO* psai);
-WINSHELLAPI BOOL WINAPI SHCreateMenuBar(SHMENUBARINFO *pmbi);
-BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi);
-
 #include <commctrl.h>
 
 #include "resource.h"

@@ -207,7 +207,9 @@ endif
 CFLAGS = -W3 -nologo $(INCLUDES)
 
 ifdef USE_FASTCALL
+ifneq "$(OS)" "wince"
 CFLAGS += -Gr
+endif
 endif
 
 ifdef DEBUG
