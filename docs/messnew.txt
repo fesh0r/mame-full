@@ -11,8 +11,8 @@ System Driver Changes:
 - [APPLE2] Changed joystick default key mapping so not conflict with keyboard
   mappings.  [Nate Woods]
   
-- [APPLE2EE] Fixed a regression introduced in MESS 0.91.  (bug #635) [Nate
-  Woods]
+- [APPLE2] Fixed a regression that prevented certain Apple II models from
+  booting introduced in MESS 0.91.  (bug #635) [Nate Woods]
 
 
 
