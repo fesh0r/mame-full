@@ -732,12 +732,18 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
+/*#define REORDERED_VBLANK */
+
 INTERRUPT_GEN( coco3_vh_interrupt )
 {
 	int border_top, border_bottom, body_scanlines;
 	int scanline;
 
 	body_scanlines = coco3_calculate_rows(&border_top, &border_bottom);
+#ifdef REORDERED_VBLANK
+	border_top -= 4;
+	border_bottom -= 4;
+#endif
 
 	scanline = internal_m6847_getadjustedscanline();
 
@@ -746,7 +752,11 @@ INTERRUPT_GEN( coco3_vh_interrupt )
 	else if (scanline >= border_top+body_scanlines)
 		coco3_raise_interrupt(COCO3_INT_VBORD, ASSERT_LINE);
 
+#ifdef REORDERED_VBLANK
+	internal_m6847_vh_interrupt(scanline, 0, 263-4);
+#else
 	internal_m6847_vh_interrupt(scanline, 4, 0);
+#endif
 }
 
 
@@ -2092,6 +2102,7 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	pia_reset();
 
 	sam_init(samintf);
+	sam_reset();
 
 	if (trailer_load) {
 		trailer_load = 0;
@@ -2142,8 +2153,9 @@ MACHINE_INIT( coco3 )
 {
 	int i;
 
-	/* Tepolt verifies that the GIME registers are all cleared on initialization */
+	videomap_reset();
 
+	/* Tepolt verifies that the GIME registers are all cleared on initialization */
 	coco3_enable_64k = 0;
 	gime_irq = 0;
 	gime_firq = 0;
@@ -2156,6 +2168,7 @@ MACHINE_INIT( coco3 )
 
 	coco3_mmu_update(0, 8);
 	coco3_timer_init();
+	coco3_vh_reset();
 
 	coco3_interupt_line = 0;
 
@@ -2167,7 +2180,6 @@ MACHINE_STOP( coco )
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
-	sam_reset();
 }
 
 /***************************************************************************

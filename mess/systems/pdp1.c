@@ -303,7 +303,9 @@ static void palette_init_pdp1(unsigned short *sys_colortable, const unsigned cha
 	const double update_period = 1./refresh_rate;
 	double decay_1, decay_2;	/* decay factor for the CRT */
 	double cur_level_1, cur_level_2;
+#ifdef MAME_DEBUG
 	double cut_level = .03;		/* level at which we stop the decay and say the pixel is black */
+#endif
 	int r, g, b;
 
 

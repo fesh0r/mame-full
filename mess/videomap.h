@@ -76,6 +76,7 @@ struct videomap_config
 
 /* called at beginning */
 int videomap_init(const struct videomap_config *config);
+void videomap_reset(void);
 
 /* called by hardware */
 void videomap_invalidate_border(void);

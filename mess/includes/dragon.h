@@ -65,6 +65,8 @@ extern WRITE_HANDLER ( coco_ram_w );
 extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
 extern WRITE_HANDLER ( coco3_palette_w );
+
+extern void coco3_vh_reset(void);
 extern void coco3_vh_blink(void);
 
 /* ----------------------------------------------------------------------- *

@@ -889,11 +889,16 @@ int videomap_init(const struct videomap_config *config)
 	videoram_dirtybuffer = config->dirtybuffer;
 	videoram_dirtybuffer_pos = videoram_dirtybuffer;
 
+	videomap_reset();
+	return 0;
+}
+
+void videomap_reset(void)
+{
 	get_border_color();
 	get_frame_info();
 	get_line_info();
 	calc_videoram_pos();
-	return 0;
 }
 
 #endif /* !VIDEOMAP_TEST */

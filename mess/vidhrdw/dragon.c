@@ -45,10 +45,10 @@
 #include "includes/dragon.h"
 
 static int coco3_hires;
-static int coco3_gimevhreg[8];
 static int sam_videomode;
 static int coco3_blinkstatus;
 static int coco3_vidbase;
+static int coco3_gimevhreg[8];
 
 #define MAX_HIRES_VRAM	57600
 
@@ -425,7 +425,6 @@ static struct videomap_interface coco3_videomap_interface =
 
 VIDEO_START( coco3 )
 {
-    int i;
 	struct m6847_init_params p;
 
 	m6847_vh_normalparams(&p);
@@ -448,12 +447,18 @@ VIDEO_START( coco3 )
 		return 1;
 	}
 
+	coco3_vh_reset();
+	return 0;
+}
+
+void coco3_vh_reset(void)
+{
+	int i;
 	for (i = 0; i < (sizeof(coco3_gimevhreg) / sizeof(coco3_gimevhreg[0])); i++)
 		coco3_gimevhreg[i] = 0;
 
 	coco3_hires = coco3_blinkstatus = 0;
 	coco3_palette_recalc(1);
-	return 0;
 }
 
 static void get_composite_color(int color, int *r, int *g, int *b)
