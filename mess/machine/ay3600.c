@@ -27,7 +27,8 @@
 
 static void AY3600_poll(int dummy);
 
-static unsigned char ay3600_key_remap[2][7*8][4] = {
+static const unsigned char ay3600_key_remap[2][7*8][4] =
+{
 /* caps lock off  norm ctrl shft both */
 	{
 		{ 0x7f,0x7f,0x7f,0x7f },	/* Backspace	*/
@@ -154,17 +155,21 @@ static UINT8 keycode;
 static UINT8 keywaiting;
 static UINT8 keystilldown;
 
-#define A2_KEY_NORMAL  0
-#define A2_KEY_CONTROL 1
-#define A2_KEY_SHIFT   2
-#define A2_KEY_BOTH    3
-#define MAGIC_KEY_REPEAT_NUMBER 80
+#define A2_KEY_NORMAL				0
+#define A2_KEY_CONTROL				1
+#define A2_KEY_SHIFT				2
+#define A2_KEY_BOTH					3
+#define MAGIC_KEY_REPEAT_NUMBER		80
 
-#define AY3600_KEYS_LENGTH	256
+#define AY3600_KEYS_LENGTH			256
+#define AY3600_KEYS_BASEPORT		0
+
+
 
 /***************************************************************************
   AY3600_init
 ***************************************************************************/
+
 int AY3600_init(void)
 {
 	/* Init the key remapping table */
@@ -186,9 +191,12 @@ int AY3600_init(void)
 	return 0;
 }
 
+
+
 /***************************************************************************
   AY3600_poll
 ***************************************************************************/
+
 static void AY3600_poll(int dummy)
 {
 	int switchkey;	/* Normal, Shift, Control, or both */
@@ -239,7 +247,7 @@ static void AY3600_poll(int dummy)
 	/* Run through real keys and see what's being pressed */
 	for( port = 0; port < 7; port++ )
 	{
-		data = readinputport(1 + port);
+		data = readinputport(AY3600_KEYS_BASEPORT + port);
 		for( bit = 0; bit < 8; bit++ )
 		{
 			curkey = ay3600_key_remap[caps_lock][port*8+bit][switchkey];
@@ -291,9 +299,12 @@ static void AY3600_poll(int dummy)
 	keystilldown = (last_key == keycode);
 }
 
+
+
 /***************************************************************************
   AY3600_keydata_strobe_r ($C00x)
 ***************************************************************************/
+
 int AY3600_keydata_strobe_r(void)
 {
 	int rc;
@@ -303,9 +314,11 @@ int AY3600_keydata_strobe_r(void)
 }
 
 
+
 /***************************************************************************
   AY3600_anykey_clearstrobe_r ($C01x)
 ***************************************************************************/
+
 int AY3600_anykey_clearstrobe_r(void)
 {
 	int rc;
@@ -314,6 +327,8 @@ int AY3600_anykey_clearstrobe_r(void)
 	LOG(("AY3600_anykey_clearstrobe_r(): rc=0x%02x\n", rc));
 	return rc;
 }
+
+
 
 /***************************************************************************
   QUEUE_CHARS( AY3600 )
@@ -327,6 +342,8 @@ QUEUE_CHARS( AY3600 )
 	keywaiting = 1;
 	return 1;
 }
+
+
 
 /***************************************************************************
   ACCEPT_CHAR( AY3600 )
