@@ -397,9 +397,9 @@ static int ti990_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int ti990_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void ti990_image_closeenum(IMAGEENUM *enumeration);
 static size_t ti990_image_freespace(IMAGE *img);
-static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options_);
-static int ti990_image_deletefile(IMAGE *img, const char *fname);
+static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf);
+static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *options_);
+static int ti990_image_deletefile(IMAGE *img, const char *fpath);
 static int ti990_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *options_);
 
 static int ti990_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length);
@@ -686,14 +686,14 @@ static int write_sector_logical(STREAM *file_handle, int secnum, const ti990_geo
 	Find the catalog entry and fdr record associated with a file name
 
 	image: ti990_image image record
-	fname: name of the file to search
+	fpath: path of the file to search
 	fdr: pointer to buffer where the fdr record should be stored (may be NULL)
 	catalog_index: on output, index of file catalog entry (may be NULL)
 	out_fdr_secnum: on output, sector address of the fdr (may be NULL)
 	out_parent_fdr_secnum: on output, sector offset of the fdr for the parent
 		directory fdr (-1 if root) (may be NULL)
 */
-static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1], int *catalog_index, int *out_fdr_secnum, int *out_parent_fdr_secnum)
+static int find_fdr(ti990_image *image, const char fpath[MAX_PATH_LEN+1], int *catalog_index, int *out_fdr_secnum, int *out_parent_fdr_secnum)
 {
 	int fdr_secnum = -1, parent_fdr_secnum;
 	int i;
@@ -711,7 +711,7 @@ static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1], int *c
 
 	base = (unsigned) get_UINT16BE(image->sec0.vda) * get_UINT16BE(image->sec0.spa);
 
-	element_start = fname;
+	element_start = fpath;
 	do
 	{
 		/* read directory header */
@@ -1464,14 +1464,14 @@ static size_t ti990_image_freespace(IMAGE *img)
 /*
 	Extract a file from a ti990_image.
 */
-static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
+static int ti990_image_readfile(IMAGE *img, const char *fpath, STREAM *destf)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
 	int reply;
 
 
-	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	reply = find_fdr(image, fpath, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
 	if (reply)
 		return reply;
 
@@ -1560,7 +1560,7 @@ static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 /*
 	Add a file to a ti990_image.
 */
-static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
+static int ti990_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
@@ -1568,7 +1568,7 @@ static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 
 
 	/* check that file does not exist */
-	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	reply = find_fdr(image, fpath, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
 	if ((reply) && (reply != IMGTOOLERR_FILENOTFOUND))
 		return reply;
 
@@ -1683,14 +1683,14 @@ static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 /*
 	Delete a file from a ti990_image.
 */
-static int ti990_image_deletefile(IMAGE *img, const char *fname)
+static int ti990_image_deletefile(IMAGE *img, const char *fpath)
 {
 	ti990_image *image = (ti990_image*) img;
 	int catalog_index, fdr_secnum, parent_fdr_secnum;
 	int reply;
 
 
-	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	reply = find_fdr(image, fpath, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
 	if (reply)
 		return reply;
 
