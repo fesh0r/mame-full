@@ -314,6 +314,7 @@ static int cmd_info(struct command *c, int argc, char *argv[])
 	fprintf(stdout, "CRC:          %08x\n", (int)info.crc);
 	if (info.extrainfo)
 		fprintf(stdout, "Extra Info:   %s\n", info.extrainfo);
+        fprintf(stdout, "\n");
 	return 0;
 
 error:
@@ -336,7 +337,7 @@ static int cmd_crc(struct command *c, int argc, char *argv[])
 
 	fprintf(stdout, "%08x = %s | %s | %s | %s\n",
 		(int) info.crc,
-		info.longname ? info.longname : "",
+                info.longname ? info.longname : basename(argv[1]),
 		info.year ? yearbuf : "",
 		info.manufacturer ? info.manufacturer : "",
 		info.playable ? info.playable : "");
