@@ -1,4 +1,6 @@
-0.37b6
+0.37b6 
+
+Note: DELETE mess.cfg!
 
 Note: .inp record/playback does still not work currently.
 
