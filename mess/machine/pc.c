@@ -41,7 +41,7 @@
 #include "includes/pcshare.h"
 
 #include "includes/pc.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 static DMA8237_CONFIG dma= { DMA8237_PC };
 

@@ -10,8 +10,8 @@
 
 #include "windowsui/mame32.h"
 #include "windowsui/Directories.h"
-#include "mess/mess.h"
-#include "mess/utils.h"
+#include "mess.h"
+#include "utils.h"
 
 static void MessOptionsToProp(HWND hWnd, options_type *o);
 static void MessPropToOptions(HWND hWnd, options_type *o);

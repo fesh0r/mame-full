@@ -9,7 +9,7 @@
 
 #include "includes/crtc6845.h"
 #include "includes/pc_cga.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #define VERBOSE_CGA 0		/* CGA (Color Graphics Adapter) */
 
@@ -654,7 +654,7 @@ VIDEO_UPDATE( pc_cga )
 		else logerror("video %d %d\n",width, height);
 #endif
 	}
-//	state_display(bitmap);
+//	statetext_display(bitmap);
 }
 
 static struct {

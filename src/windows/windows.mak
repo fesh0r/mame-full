@@ -33,7 +33,7 @@ $(OBJ)/windows/asmtile.o: src/windows/asmtile.asm
 ifndef MSVC
 CFLAGS += -mwindows -include src/$(MAMEOS)/winprefix.h
 else
-CFLAGS += /FI"src/windows/winprefix.h"
+CFLAGS += /FI"windows/winprefix.h"
 endif
 
 # add the windows libaries

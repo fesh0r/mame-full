@@ -20,7 +20,7 @@
 
 #include "includes/pic8259.h"
 #include "includes/dma8237.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #include "includes/pc_hdc.h"
 
@@ -792,7 +792,7 @@ void pc_harddisk_state(void)
 		if (display[i]) {
 			snprintf(text, sizeof(text), "HDD:%d track:%-3d head:%-2d sector:%-2d %s",
 					 i,cylinder[i],head[i],sector[i], display[i]&2?"writing":"reading" );
-			state_display_text(text);
+			statetext_display_text(text);
 			display[i]=0;
 		}
 	}

@@ -16,7 +16,7 @@
 #include <assert.h>
 #include "osd_cpu.h"
 #include "driver.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #include "includes/crtc6845.h" // include only several register defines
 #include "includes/vdc8563.h"
@@ -567,7 +567,7 @@ VIDEO_UPDATE( vdc8563 )
 
 	vdc.changed=0;
 
-	state_display(bitmap);
+	statetext_display(bitmap);
 }
 
 extern void vdc8563_state (void)
@@ -580,6 +580,6 @@ extern void vdc8563_state (void)
 	snprintf (text, sizeof (text), "enable:%.2x occured:%.2x",
 			  vdc.reg[0x1a], vdc.reg[0x19]);
 #endif
-	state_display_text (text);
+	statetext_display_text (text);
 #endif
 }

@@ -200,9 +200,9 @@ DRVLIBS = \
 	$(OBJ)/motorola.a \
 	$(OBJ)/ssystem3.a \
 	$(OBJ)/hp48.a     \
+	$(OBJ)/cpschngr.a \
 #	$(OBJ)/pdp1.a	  \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/cpschngr.a \
 
 
 
@@ -707,7 +707,7 @@ COREOBJS += \
 	$(OBJ)/mess/eventlst.o \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/bitbngr.o          \
-	$(OBJ)/mess/vidhrdw/state.o    \
+	$(OBJ)/mess/statetxt.o         \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \

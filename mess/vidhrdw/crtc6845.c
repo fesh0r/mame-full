@@ -11,7 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "includes/state.h"
+#include "statetxt.h"
 #include "includes/crtc6845.h"
 
 #define VERBOSE 0
@@ -209,7 +209,7 @@ void crtc6845_state (void)
 	snprintf (text, sizeof (text), "crtc6845 %.2x %.2x %.2x %.2x",
 			  crtc6845->reg[0xc], crtc6845->reg[0xd], crtc6845->reg[0xe],crtc6845->reg[0xf]);
 
-	state_display_text(text);
+	statetext_display_text(text);
 }
 
 WRITE_HANDLER ( crtc6845_0_port_w ) { crtc6845_port_w(crtc6845, offset, data); }

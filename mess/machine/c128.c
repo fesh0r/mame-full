@@ -19,7 +19,7 @@
 #include "includes/vic6567.h"
 #include "includes/vdc8563.h"
 #include "includes/sid6581.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #include "includes/c128.h"
 
@@ -789,7 +789,7 @@ void c128_driver_init (void)
 	vic2_set_rastering(0);
 	vdc8563_init(0);
 	vdc8563_set_rastering(1);
-	state_add_function(c128_state);
+	statetext_add_function(c128_state);
 }
 
 void c128pal_driver_init (void)
@@ -801,7 +801,7 @@ void c128pal_driver_init (void)
 	vic2_set_rastering(1);
 	vdc8563_init(0);
 	vdc8563_set_rastering(0);
-	state_add_function(c128_state);
+	statetext_add_function(c128_state);
 }
 
 void c128_driver_shutdown (void)
@@ -849,7 +849,7 @@ void c128_state(void)
 #if VERBOSE_DBG
 # if 0
 	cia6526_status (text, sizeof (text));
-	state_display_text (This, text, &y);
+	statetext_display_text (This, text, &y);
 
 #  if 1
 	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
@@ -860,20 +860,20 @@ void c128_state(void)
 			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
 			  MMU_PAGE0, MMU_PAGE1);
 #  endif
-	state_display_text (text);
+	statetext_display_text (text);
 # endif
 
 #endif
 
 	vc20_tape_status (text, sizeof (text));
-	state_display_text (text);
+	statetext_display_text (text);
 #ifdef VC1541
 	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif
-	state_display_text (text);
+	statetext_display_text (text);
 
 	cbm_drive_1_status (text, sizeof (text));
-	state_display_text (text);
+	statetext_display_text (text);
 }

@@ -7,7 +7,7 @@
 #include <wingdi.h>
 
 #include "windowsui/mame32.h"
-#include "mess/mess.h"
+#include "mess.h"
 #include "config.h"
 #include "SmartListView.h"
 #include "SoftwareList.h"

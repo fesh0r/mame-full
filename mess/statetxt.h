@@ -3,13 +3,13 @@ extern "C" {
 #endif
 
 // call this at init time to add your state functions
-void state_add_function(void (*function)(void));
+void statetext_add_function(void (*function)(void));
 
 // call this in your state function to output text
-void state_display_text(const char *text);
+void statetext_display_text(const char *text);
 
 // call this at last after updating your frame
-void state_display(struct mame_bitmap *bitmap);
+void statetext_display(struct mame_bitmap *bitmap);
 
 
 #ifdef __cplusplus

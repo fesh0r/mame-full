@@ -499,15 +499,3 @@ CONSX( 1982, arcadia,	0,	arcadia,  arcadia,  arcadia,		"Emerson",		"Arcadia 2001
 // different cartridge connector (same size as mpt03, but different pinout!)
 // 16 keys instead of 12
 CONSX( 198?, vcg,	arcadia,arcadia,  vcg,  arcadia,		"Palladium",		"VIDEO - COMPUTER - GAME", GAME_IMPERFECT_SOUND )
-
-
-#ifdef RUNTIME_LOADER
-extern void arcadia_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"arcadia")==0) drivers[i]=&driver_arcadia;
-		if ( strcmp(drivers[i]->name,"vcg")==0) drivers[i]=&driver_vcg;
-	}
-}
-#endif

@@ -8,7 +8,7 @@
 
 #include "includes/pc_mda.h"
 #include "includes/pc_cga.h" //for the cga palette hack
-#include "includes/state.h"
+#include "statetxt.h"
 
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
 
@@ -502,6 +502,6 @@ VIDEO_UPDATE( pc_mda )
 		else logerror("video %d %d\n",width, height);
 	}
 
-//	state_display(bitmap);
+//	statetext_display(bitmap);
 }
 

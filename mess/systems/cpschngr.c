@@ -136,12 +136,12 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
     }
 }
 
-static int cps1_interrupt(void)
+static INTERRUPT_GEN( cps1_interrupt )
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
 	/* *only* game to have that. */
-	return 2;
+	cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 /********************************************************************
@@ -153,7 +153,7 @@ static int cps1_interrupt(void)
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
-int cps1_qsound_interrupt(void)
+INTERRUPT_GEN( cps1_qsound_interrupt )
 {
 #if 0
 I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
@@ -162,7 +162,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 		qsound_sharedram1[0xfff] = 0x77;
 #endif
 
-	return 2;
+	cpu_set_irq_line(cpu_getactivecpu(), 2, HOLD_LINE);
 }
 
 
@@ -434,48 +434,36 @@ static struct OKIM6295interface okim6295_interface_7576 =
 	{ 30 }
 };
 
-static struct MachineDriver machine_driver_sfzch =
-{
+
+static MACHINE_DRIVER_START( sfzch )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,
-			cps1_readmem,cps1_writemem,0,0,
-			cps1_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,  /* 4 Mhz ??? TODO: find real FRQ */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-    60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)
+	MDRV_CPU_MEMORY(cps1_readmem,cps1_writemem)
+	MDRV_CPU_VBLANK_INT(cps1_interrupt, 1)
 
-	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 Mhz ??? TODO: find real FRQ */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 
-	cps1_gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	cps1_eof_callback,
-	cps1_vh_start,
-	cps1_vh_stop,
-	cps1_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE( cps1_gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_EOF( cps1 )
+	MDRV_VIDEO_START( cps1 )
+	MDRV_VIDEO_UPDATE( cps1 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{ { SOUND_YM2151,  &ym2151_interface },
-	  { SOUND_OKIM6295,  &okim6295_interface_7576 }
-	},
-	0
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface_7576)
+MACHINE_DRIVER_END
+
 
 struct QSound_interface qsound_interface =
 {

@@ -60,7 +60,7 @@
 #include "osd_cpu.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 
 #define VERBOSE_DBG 1
@@ -1453,7 +1453,7 @@ INTERRUPT_GEN( vic2_raster_irq )
 			/* lightpen timer starten */
 			timer_set (tme, 1, vic2_timer_timeout);
 		}
-		//state_display(vic2.bitmap);
+		//statetext_display(vic2.bitmap);
 	}
 	if (vic2.rasterline == C64_2_RASTERLINE (RASTERLINE))
 	{
@@ -1478,7 +1478,7 @@ VIDEO_UPDATE( vic2 )
 	}
     }
 #endif
-	state_display(bitmap);
+	statetext_display(bitmap);
 }
 
 static PALETTE_INIT( vic2 )

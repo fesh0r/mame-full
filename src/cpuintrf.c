@@ -145,37 +145,37 @@
 #ifdef MESS
 
 #if (HAS_APEXC)
-#include "mess/cpu/apexc/apexc.h"
+#include "cpu/apexc/apexc.h"
 #endif
 #if (HAS_CDP1802)
-#include "mess/cpu/cdp1802/cdp1802.h"
+#include "cpu/cdp1802/cdp1802.h"
 #endif
 #if (HAS_CP1600)
-#include "mess/cpu/cp1600/cp1600.h"
+#include "cpu/cp1600/cp1600.h"
 #endif
 #if (HAS_F8)
-#include "mess/cpu/f8/f8.h"
+#include "cpu/f8/f8.h"
 #endif
 #if (HAS_G65816)
-#include "mess/cpu/g65816/g65816.h"
+#include "cpu/g65816/g65816.h"
 #endif
 #if (HAS_LH5801)
-#include "mess/cpu/lh5801/lh5801.h"
+#include "cpu/lh5801/lh5801.h"
 #endif
 #if (HAS_PDP1)
-#include "mess/cpu/pdp1/pdp1.h"
+#include "cpu/pdp1/pdp1.h"
 #endif
 #if (HAS_SATURN)
-#include "mess/cpu/saturn/saturn.h"
+#include "cpu/saturn/saturn.h"
 #endif
 #if (HAS_SC61860)
-#include "mess/cpu/sc61860/sc61860.h"
+#include "cpu/sc61860/sc61860.h"
 #endif
 #if (HAS_SPC700)
-#include "mess/cpu/spc700/spc700.h"
+#include "cpu/spc700/spc700.h"
 #endif
 #if (HAS_Z80GB)
-#include "mess/cpu/z80gb/z80gb.h"
+#include "cpu/z80gb/z80gb.h"
 #endif
 #if (HAS_Z80_MSX)
 #include "cpu/z80/z80_msx.h"

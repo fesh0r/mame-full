@@ -9,7 +9,7 @@
 #include "cpu/m6809/m6809.h"
 
 #include "vidhrdw/generic.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
@@ -432,7 +432,7 @@ static void pet_common_driver_init (void)
 	pia_config(0,PIA_STANDARD_ORDERING,&pet_pia0);
 	pia_config(1,PIA_STANDARD_ORDERING,&pet_pia1);
 
-	state_add_function(pet_state);
+	statetext_add_function(pet_state);
 
 	cbm_drive_open ();
 
@@ -901,12 +901,12 @@ void pet_state(void)
 			 pet_keyline[7],
 			 pet_keyline[8],
 			 pet_keyline[9]);
-	state_display_text(text);
+	statetext_display_text(text);
 #endif
 
 	cbm_drive_0_status (text, sizeof (text));
-	state_display_text(text);
+	statetext_display_text(text);
 
 	cbm_drive_1_status (text, sizeof (text));
-	state_display_text(text);
+	statetext_display_text(text);
 }

@@ -74,7 +74,7 @@ typedef struct {
 	cpm_dpb dpb;			/* associated dpb */
 } dsk_fmt;
 
-#include "mess/machine/cpm_disk.c"
+#include "machine/cpm_disk.c"
 
 void usage(void)
 {

@@ -12,7 +12,7 @@
 
 #include "includes/crtc6845.h"
 #include "includes/vga.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 //#define VGA_GFX
 
@@ -1202,7 +1202,7 @@ VIDEO_UPDATE( ega )
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}
-//	state_display(bitmap);
+//	statetext_display(bitmap);
 }
 
 VIDEO_UPDATE( vga )
@@ -1279,5 +1279,5 @@ VIDEO_UPDATE( vga )
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}
-//	state_display(bitmap);
+//	statetext_display(bitmap);
 }

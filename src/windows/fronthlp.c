@@ -12,7 +12,7 @@
 
 #ifdef MESS
 #ifdef _MSC_VER
-#include "src/windowsui/dirent.h"
+#include "windowsui/dirent.h"
 #endif
 #endif
 

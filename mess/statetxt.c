@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 typedef void (*STATE_FUNCTION)(void);
 static struct {
@@ -15,13 +15,13 @@ static struct {
 } state= {0};
 
 // call this at init time to add your state functions
-void state_add_function(void (*function)(void))
+void statetext_add_function(void (*function)(void))
 {
 	state.functions[state.count++]=function;
 }
 
 // call this in your state function to output text
-void state_display_text(const char *text)
+void statetext_display_text(const char *text)
 {
 	int x, x0, y2, width = Machine->uiwidth / Machine->uifont->width;
 
@@ -52,7 +52,7 @@ void state_display_text(const char *text)
 }
 
 // call this at last after updating your frame
-void state_display(struct mame_bitmap *bitmap)
+void statetext_display(struct mame_bitmap *bitmap)
 {
 	int i;
 

@@ -45,7 +45,7 @@
 #include "includes/nec765.h"
 
 #include "includes/pcshare.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #define VERBOSE_DBG 0       /* general debug messages */
 #if VERBOSE_DBG
@@ -614,8 +614,8 @@ void init_pc_common(void)
 	at_keyboard_set_scan_code_set(1);
 	at_keyboard_set_input_port_base(4);
 
-	state_add_function(pc_harddisk_state);
-//	state_add_function(nec765_state);
+	statetext_add_function(pc_harddisk_state);
+//	statetext_add_function(nec765_state);
 }
 
 void pc_mda_init(void)

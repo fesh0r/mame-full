@@ -18,7 +18,7 @@
 #include "includes/vic6567.h"
 #include "includes/crtc6845.h"
 #include "includes/sid6581.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #include "includes/cbmb.h"
 
@@ -258,7 +258,7 @@ static CRTC6845_CONFIG cbm600_crtc= { 1600000 /*?*/, cbmb_vh_cursor };
 void cbm600_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	state_add_function(cbmb_state);
+	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
 	crtc6845_init(crtc6845, &cbm600_crtc);
 }
@@ -266,7 +266,7 @@ void cbm600_driver_init (void)
 void cbm600pal_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	state_add_function(cbmb_state);
+	statetext_add_function(cbmb_state);
 	cbm600_vh_init();
 	crtc6845_init(crtc6845, &cbm600_crtc);
 }
@@ -274,7 +274,7 @@ void cbm600pal_driver_init (void)
 void cbm600hu_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	state_add_function(cbmb_state);
+	statetext_add_function(cbmb_state);
 	crtc6845_init(crtc6845, &cbm600_crtc);
 }
 
@@ -282,7 +282,7 @@ static CRTC6845_CONFIG cbm700_crtc= { 2000000 /*?*/, cbmb_vh_cursor };
 void cbm700_driver_init (void)
 {
 	cbmb_common_driver_init ();
-	state_add_function(cbmb_state);
+	statetext_add_function(cbmb_state);
 	cbm700_vh_init();
 	crtc6845_init(crtc6845, &cbm700_crtc);
 }
@@ -291,7 +291,7 @@ void cbm500_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	cbm500=1;
-	state_add_function(cbmb_state);
+	statetext_add_function(cbmb_state);
 	vic6567_init (0, 0, cbmb_dma_read, cbmb_dma_read_color, NULL);
 }
 
@@ -626,11 +626,11 @@ void cbmb_state(void)
 	snprintf(text, sizeof(text),
 			 "%.2x %.2x",
 			 MODELL_700, VIDEO_NTSC);
-	state_display_text (text);
+	statetext_display_text (text);
 
 #if 0
 	cia6526_status (text, sizeof (text));
-	state_display_text (text);
+	statetext_display_text (text);
 #endif
 #endif
 }

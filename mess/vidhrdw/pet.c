@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/state.h"
+#include "statetxt.h"
 
 #include "includes/crtc6845.h"
 #include "includes/pet.h"
@@ -92,7 +92,7 @@ VIDEO_UPDATE( pet )
 		}
 	}
 
-	state_display(bitmap);
+	statetext_display(bitmap);
 }
 
 //  commodore pet crtc video circuit for 40 columns display (standard crtc6845)
@@ -119,7 +119,7 @@ VIDEO_UPDATE( pet40 )
 		}
 	}
 
-	state_display(bitmap);
+	statetext_display(bitmap);
 }
 
 // special hardware to allow crtc programmed for pet 40 column mode! to generate
@@ -156,6 +156,6 @@ VIDEO_UPDATE( pet80 )
 			}
 		}
 	}
-	state_display(bitmap);
+	statetext_display(bitmap);
 }
 
