@@ -854,6 +854,7 @@ static int address_size;
 static int operand_size;
 static UINT32 pc;
 static UINT8 modrm;
+static UINT32 segment;
 static offs_t dasm_flags;
 static char modrm_string[256];
 
@@ -939,6 +940,16 @@ static void handle_modrm(char* s)
 	if( modrm >= 0xc0 )
 		return;
 
+	switch(segment)
+	{
+		case SEG_CS: s += sprintf( s, "cs:" ); break;
+		case SEG_DS: s += sprintf( s, "ds:" ); break;
+		case SEG_ES: s += sprintf( s, "es:" ); break;
+		case SEG_FS: s += sprintf( s, "fs:" ); break;
+		case SEG_GS: s += sprintf( s, "gs:" ); break;
+		case SEG_SS: s += sprintf( s, "ss:" ); break;
+	}
+
 	s += sprintf( s, "[" );
 	if( address_size ) {
 		switch( rm )
@@ -978,7 +989,7 @@ static void handle_modrm(char* s)
 			case 6:
 				if( mod == 0 ) {
 					disp16 = FETCH16();
-					s += sprintf( s, "$%04X", disp16 );
+					s += sprintf( s, "$%04X", (unsigned) (UINT16) disp16 );
 				} else {
 					s += sprintf( s, "bp" );
 				}
@@ -1180,6 +1191,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 		case SEG_FS:
 		case SEG_GS:
 		case SEG_SS:
+			segment = op->flags;
 			op2 = FETCH();
 			decode_opcode( s, &opcode_table1[op2] );
 			return;
@@ -1249,6 +1261,7 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 	operand_size = op_size;
 	pc = eip;
 	dasm_flags = 0;
+	segment = 0;
 
 	op = FETCH();
 
