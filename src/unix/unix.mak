@@ -732,7 +732,7 @@ doinstallsuid:
 
 copycab:
 	@echo installing cabinet files under $(XMAMEROOT)...
-	@for i in cab/*; do \
+	@for i in src/unix/cab/*; do \
 	if test ! -d $(XMAMEROOT)/$$i; then \
 	$(INSTALL_DATA_DIR) $(XMAMEROOT)/$$i; fi; \
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
