@@ -304,7 +304,8 @@ ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
 endif
 ifdef LIRC
-COMMON_OBJS += $(OBJDIR)/lirc_client.o
+CONFIG  += -I/usr/include/lirc
+MY_LIBS += -L/usr/lib -llirc_client
 endif
 
 # sysdep objs

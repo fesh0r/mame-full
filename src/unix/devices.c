@@ -29,8 +29,7 @@
 #include "sysdep/sysdep_display.h"
 #ifdef LIRC
 	#include <fcntl.h>
-	#include "lirc_client.h"
-	#include "config.h" 
+	#include <lirc/lirc_client.h>
 #endif
 
 /*============================================================ */
@@ -55,6 +54,7 @@ struct axis_history
 static struct lirc_config *config;
 static int lirc_pressed = 0;
 static int lirc_scancode;
+static char *lircrc;
 #define MIN_LIRC_WAIT 4
 #endif
 /*============================================================ */
@@ -123,6 +123,9 @@ struct rc_option input_opts[] =
 	{ "ugcicoin", NULL, rc_bool, &ugcicoin, "0", 0, 0, NULL, "Enable/disable UGCI(tm) Coin/Play support" },
 #ifdef USE_LIGHTGUN_ABS_EVENT
 	{ NULL, NULL, rc_link, lightgun_abs_event_opts, NULL, 0, 0, NULL, NULL },
+#endif
+#ifdef LIRC
+	{ "lircrc", NULL, rc_string, &lircrc, 0, 0, 0, NULL, "LIRC config file" },
 #endif
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "Enable steadykey support" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "Minimal analog value for digital input" },
@@ -630,7 +633,7 @@ int osd_input_initpre(void)
 	sock=lirc_init("xmame",1);
 /*	if(lirc_init("xmame",1)==-1) exit(EXIT_FAILURE); */
 
-	if(lirc_readconfig("/home/mythtv/.lircrc",&config,NULL)==0)
+	if(lirc_readconfig(lircrc,&config,NULL)==0)
 	{
 		printf("Success reading lircrc!\n");
 	}

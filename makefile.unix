@@ -642,8 +642,7 @@ ARCH  = linux
 # seems to vary by distribution.
 # LIGHTGUN_DEFINE_INPUT_ABSINFO = 1
 
-# Uncomment this to add LIRC support to xmame. You must copy config.h, 
-# lirc_client.c and lirc_client.h to $XMAME_SRC_DIR/src/unix
+# Uncomment this to add LIRC support to xmame.
 # LIRC = 1
 
 ###########################################################################
