@@ -19,11 +19,13 @@ $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
 #	$(ASM) -e $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
+ifndef MSVC
 # add our prefix files to the mix
 CFLAGS += -mwindows -include src/windows/winprefix.h
 
 # add the windows libaries
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
+endif
 
 # due to quirks of using /bin/sh, we need to explicitly specify the current path
 CURPATH = ./

@@ -477,7 +477,7 @@ int win_init_window(void)
 	return 0;
 }
 
-void win32_shutdown_window(void)
+void win_shutdown_window(void)
 {
 	UnregisterClass(TEXT("MAME"), NULL);
 

@@ -9,11 +9,11 @@ needs it ;-)
 #include <ctype.h>
 #include <dirent.h>
 
-#ifndef UNDER_CE
+#ifndef _MSC_VER
 #include <sys/stat.h>
 #include <dos.h>
 #include <unistd.h>
-#endif /* UNDER_CE */
+#endif /* _MSC_VER */
 
 /* fronthlp functions */
 extern int strwildcmp(const char *sp1, const char *sp2);

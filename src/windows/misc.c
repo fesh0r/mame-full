@@ -32,10 +32,13 @@ Version 0.2, May 2000
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
-#include <sys/time.h>
 #include "misc.h"
+
+#ifndef _MSC_VER
+#include <unistd.h>
+#include <sys/time.h>
+#endif
 
 
 #ifdef HAVE_GETTIMEOFDAY

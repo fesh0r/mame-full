@@ -1,7 +1,6 @@
 #####################################################################
 
-MAME_VERSION = -DMAME_VERSION=37
-BETA_VERSION = -DBETA_VERSION=15
+MAME_VERSION = -DMAME_VERSION=54
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -44,9 +43,9 @@ MIDAS = 1
 # HELP = 1
 
 # set this the operating system you're building for
-OS = win32
+# OS = win32
 # OS = wince
-# OS = windows
+OS = windows
 
 # extension for executables
 EXE = .exe
@@ -72,13 +71,14 @@ ifeq "$(TARGET)" "tinyms"
 MESS = 1
 endif
 
+MSVC = 1
 WINDOWS_PROGRAM = -subsystem:windows
 CONSOLE_PROGRAM = -subsystem:console
 
 ifdef DEBUG
-NAME = $(TARGET)32d
+NAME = $(TARGET)vcd
 else
-NAME = $(TARGET)32
+NAME = $(TARGET)vc
 endif
 
 # build the targets in different object dirs, since mess changes
@@ -116,8 +116,6 @@ DEFS = \
         -DLSB_FIRST=1 \
         -DZLIB_DLL \
         $(MAME_VERSION) \
-        $(BETA_VERSION) \
-        $(RELEASE_CANDIDATE) \
         $(MAME_NET) \
         $(MAME_MMX) \
         $(MAME_DEBUG) \
@@ -138,6 +136,7 @@ endif
 INCLUDES = \
         -I. \
         -Isrc \
+		-Isrc/windows \
         -Isrc/Win32 \
         -Isrc/cpu/m68000 \
         -I$(OBJ)/cpu/m68000
@@ -146,9 +145,8 @@ ifeq "$(TARGET)" "mess"
 INCLUDES += \
         -Imess \
         -Imess/includes \
-        -Imess/Win32 \
 		-Imess/windows \
-		-Isrc/windows
+        -Imess/Win32
 endif
 
 ifdef DX_INCPATH
@@ -209,6 +207,8 @@ LIBS = \
         vfw32.lib \
         dxguid.lib \
         dinput.lib \
+		dsound.lib \
+		ddraw.lib \
         zlib.lib
 
 ifdef MAME_NET
@@ -309,13 +309,15 @@ extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES) 
+OSOBJS += $(OBJ)/Win32/dirent.o
+
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -FR$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 ifdef BSCMAKE
-	$(BSCMAKE) -nologo -o$(EMULATOR:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
+	$(BSCMAKE) -nologo -o$(EMULATOR:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr)
 endif
 ifndef DEBUG
 ifdef UPX
@@ -350,6 +352,9 @@ $(OBJ)/cpu/tms9900/%.o:	src/cpu/tms9900/%.c
 endif
 
 $(OBJ)/%.o: src/%.asm
+	$(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
+
+$(OBJ)/%.o: src/windows/%.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
 
 $(OBJ)/%.o: src/%.c

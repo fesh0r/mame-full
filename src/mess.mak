@@ -724,7 +724,7 @@ TOOLS +=  dat2html$(EXE)       \
 	  tools/mkimage$(EXE)
 
 
-ifeq ($(OS),win32)
+ifdef MSVC
 OUTOPT = $(OBJ)/Win32/dirent.o -out:$@
 else
 OUTOPT = -o $@

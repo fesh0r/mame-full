@@ -4,6 +4,8 @@
 #include "driver.h"
 #include "..\windows\window.h"
 
+char *rompath_extra = NULL;
+
 void decompose_rom_sample_path (const char *_rompath, const char *_samplepath);
 #ifdef MESS
 void decompose_software_path (const char *_softwarepath);

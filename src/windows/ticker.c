@@ -13,17 +13,19 @@
 #include "driver.h"
 #include "ticker.h"
 
-
+#ifndef _MSC_VER
+#define HAS_RDTSC 1
+#else
+#define HAS_RDTSC 0
+#endif
 
 //============================================================
 //	PROTOTYPES
 //============================================================
 
 static TICKER init_ticker(void);
-static TICKER rdtsc_ticker(void);
 static TICKER time_ticker(void);
-
-
+static TICKER rdtsc_ticker(void);
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -39,6 +41,7 @@ TICKER			ticks_per_sec;
 //	init_ticker
 //============================================================
 
+#if HAS_RDTSC
 static int has_rdtsc(void)
 {
 	int result;
@@ -58,7 +61,9 @@ static int has_rdtsc(void)
 	);
 	return result;
 }
-
+#else
+#define has_rdtsc()	(0)
+#endif // HAS_RDTSC
 
 
 //============================================================
@@ -128,6 +133,7 @@ static TICKER init_ticker(void)
 
 static TICKER rdtsc_ticker(void)
 {
+#if HAS_RDTSC
 	INT64 result;
 
 	// use RDTSC
@@ -137,8 +143,10 @@ static TICKER rdtsc_ticker(void)
 	);
 
 	return result;
+#else
+	return 0;
+#endif // HAS_RDTSC
 }
-
 
 
 //============================================================

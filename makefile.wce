@@ -1,7 +1,6 @@
 #####################################################################
 
-MAME_VERSION = -DMAME_VERSION=37
-BETA_VERSION = -DBETA_VERSION=15
+MAME_VERSION = -DMAME_VERSION=54
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -142,8 +141,6 @@ DEFS = \
         -DHAS_SOUND \
         -DLSB_FIRST=1 \
         $(MAME_VERSION) \
-        $(BETA_VERSION) \
-        $(RELEASE_CANDIDATE) \
         $(MAME_NET) \
         $(MAME_MMX) \
         $(MAME_DEBUG) \

@@ -48,7 +48,15 @@ extern int verbose;
 //	TYPE DEFINITIONS
 //============================================================
 
-typedef void (*blitter_func)(void);
+#ifdef _MSC_VER
+#define BLITDECL	__cdecl
+UINT32 asmblit_mmxmask1[4];
+UINT32 asmblit_mmxmask2[4];
+#else
+#define BLITDECL
+#endif
+
+typedef void (BLITDECL *blitter_func)(void);
 
 struct rgb_descriptor
 {
@@ -61,102 +69,102 @@ struct rgb_descriptor
 //	IMPORTS
 //============================================================
 
-extern void asmblit1_16_to_16_x1(void);
-extern void asmblit1_16_to_16_x2(void);
-extern void asmblit1_16_to_16_x3(void);
-extern void asmblit1_16_to_24_x1(void);
-extern void asmblit1_16_to_24_x2(void);
-extern void asmblit1_16_to_24_x3(void);
-extern void asmblit1_16_to_32_x1(void);
-extern void asmblit1_16_to_32_x2(void);
-extern void asmblit1_16_to_32_x3(void);
+extern void BLITDECL asmblit1_16_to_16_x1(void);
+extern void BLITDECL asmblit1_16_to_16_x2(void);
+extern void BLITDECL asmblit1_16_to_16_x3(void);
+extern void BLITDECL asmblit1_16_to_24_x1(void);
+extern void BLITDECL asmblit1_16_to_24_x2(void);
+extern void BLITDECL asmblit1_16_to_24_x3(void);
+extern void BLITDECL asmblit1_16_to_32_x1(void);
+extern void BLITDECL asmblit1_16_to_32_x2(void);
+extern void BLITDECL asmblit1_16_to_32_x3(void);
 
-extern void asmblit1_24_to_16_x1(void);
-extern void asmblit1_24_to_16_x2(void);
-extern void asmblit1_24_to_16_x3(void);
-extern void asmblit1_24_to_24_x1(void);
-extern void asmblit1_24_to_24_x2(void);
-extern void asmblit1_24_to_24_x3(void);
-extern void asmblit1_24_to_32_x1(void);
-extern void asmblit1_24_to_32_x2(void);
-extern void asmblit1_24_to_32_x3(void);
+extern void BLITDECL asmblit1_24_to_16_x1(void);
+extern void BLITDECL asmblit1_24_to_16_x2(void);
+extern void BLITDECL asmblit1_24_to_16_x3(void);
+extern void BLITDECL asmblit1_24_to_24_x1(void);
+extern void BLITDECL asmblit1_24_to_24_x2(void);
+extern void BLITDECL asmblit1_24_to_24_x3(void);
+extern void BLITDECL asmblit1_24_to_32_x1(void);
+extern void BLITDECL asmblit1_24_to_32_x2(void);
+extern void BLITDECL asmblit1_24_to_32_x3(void);
 
-extern void asmblit1_32_to_16_x1(void);
-extern void asmblit1_32_to_16_x2(void);
-extern void asmblit1_32_to_16_x3(void);
-extern void asmblit1_32_to_24_x1(void);
-extern void asmblit1_32_to_24_x2(void);
-extern void asmblit1_32_to_24_x3(void);
-extern void asmblit1_32_to_32_x1(void);
-extern void asmblit1_32_to_32_x2(void);
-extern void asmblit1_32_to_32_x3(void);
+extern void BLITDECL asmblit1_32_to_16_x1(void);
+extern void BLITDECL asmblit1_32_to_16_x2(void);
+extern void BLITDECL asmblit1_32_to_16_x3(void);
+extern void BLITDECL asmblit1_32_to_24_x1(void);
+extern void BLITDECL asmblit1_32_to_24_x2(void);
+extern void BLITDECL asmblit1_32_to_24_x3(void);
+extern void BLITDECL asmblit1_32_to_32_x1(void);
+extern void BLITDECL asmblit1_32_to_32_x2(void);
+extern void BLITDECL asmblit1_32_to_32_x3(void);
 
-extern void asmblit16_16_to_16_x1(void);
-extern void asmblit16_16_to_16_x1_mmx(void);
-extern void asmblit16_16_to_16_x2(void);
-extern void asmblit16_16_to_16_x2_mmx(void);
-extern void asmblit16_16_to_16_x3(void);
-extern void asmblit16_16_to_16_x3_mmx(void);
-extern void asmblit16_16_to_24_x1(void);
-extern void asmblit16_16_to_24_x2(void);
-extern void asmblit16_16_to_24_x3(void);
-extern void asmblit16_16_to_32_x1(void);
-extern void asmblit16_16_to_32_x1_mmx(void);
-extern void asmblit16_16_to_32_x2(void);
-extern void asmblit16_16_to_32_x2_mmx(void);
-extern void asmblit16_16_to_32_x3(void);
-extern void asmblit16_16_to_32_x3_mmx(void);
+extern void BLITDECL asmblit16_16_to_16_x1(void);
+extern void BLITDECL asmblit16_16_to_16_x1_mmx(void);
+extern void BLITDECL asmblit16_16_to_16_x2(void);
+extern void BLITDECL asmblit16_16_to_16_x2_mmx(void);
+extern void BLITDECL asmblit16_16_to_16_x3(void);
+extern void BLITDECL asmblit16_16_to_16_x3_mmx(void);
+extern void BLITDECL asmblit16_16_to_24_x1(void);
+extern void BLITDECL asmblit16_16_to_24_x2(void);
+extern void BLITDECL asmblit16_16_to_24_x3(void);
+extern void BLITDECL asmblit16_16_to_32_x1(void);
+extern void BLITDECL asmblit16_16_to_32_x1_mmx(void);
+extern void BLITDECL asmblit16_16_to_32_x2(void);
+extern void BLITDECL asmblit16_16_to_32_x2_mmx(void);
+extern void BLITDECL asmblit16_16_to_32_x3(void);
+extern void BLITDECL asmblit16_16_to_32_x3_mmx(void);
 
-extern void asmblit16_24_to_16_x1(void);
-extern void asmblit16_24_to_16_x2(void);
-extern void asmblit16_24_to_16_x3(void);
-extern void asmblit16_24_to_24_x1(void);
-extern void asmblit16_24_to_24_x2(void);
-extern void asmblit16_24_to_24_x3(void);
-extern void asmblit16_24_to_32_x1(void);
-extern void asmblit16_24_to_32_x2(void);
-extern void asmblit16_24_to_32_x3(void);
+extern void BLITDECL asmblit16_24_to_16_x1(void);
+extern void BLITDECL asmblit16_24_to_16_x2(void);
+extern void BLITDECL asmblit16_24_to_16_x3(void);
+extern void BLITDECL asmblit16_24_to_24_x1(void);
+extern void BLITDECL asmblit16_24_to_24_x2(void);
+extern void BLITDECL asmblit16_24_to_24_x3(void);
+extern void BLITDECL asmblit16_24_to_32_x1(void);
+extern void BLITDECL asmblit16_24_to_32_x2(void);
+extern void BLITDECL asmblit16_24_to_32_x3(void);
 
-extern void asmblit16_32_to_16_x1(void);
-extern void asmblit16_32_to_16_x2(void);
-extern void asmblit16_32_to_16_x3(void);
-extern void asmblit16_32_to_24_x1(void);
-extern void asmblit16_32_to_24_x2(void);
-extern void asmblit16_32_to_24_x3(void);
-extern void asmblit16_32_to_32_x1(void);
-extern void asmblit16_32_to_32_x2(void);
-extern void asmblit16_32_to_32_x3(void);
+extern void BLITDECL asmblit16_32_to_16_x1(void);
+extern void BLITDECL asmblit16_32_to_16_x2(void);
+extern void BLITDECL asmblit16_32_to_16_x3(void);
+extern void BLITDECL asmblit16_32_to_24_x1(void);
+extern void BLITDECL asmblit16_32_to_24_x2(void);
+extern void BLITDECL asmblit16_32_to_24_x3(void);
+extern void BLITDECL asmblit16_32_to_32_x1(void);
+extern void BLITDECL asmblit16_32_to_32_x2(void);
+extern void BLITDECL asmblit16_32_to_32_x3(void);
 
-extern void asmblit1_16_to_16_rgb(void);
-extern void asmblit16_16_to_16_rgb(void);
-extern void asmblit1_16_to_32_rgb(void);
-extern void asmblit16_16_to_32_rgb(void);
+extern void BLITDECL asmblit1_16_to_16_rgb(void);
+extern void BLITDECL asmblit16_16_to_16_rgb(void);
+extern void BLITDECL asmblit1_16_to_32_rgb(void);
+extern void BLITDECL asmblit16_16_to_32_rgb(void);
 
-extern void asmblit_header(void);
-extern void asmblit_header_dirty(void);
-extern void asmblit_yloop_top(void);
-extern void asmblit_yloop_top_dirty(void);
-extern void asmblit_middlexloop_header(void);
-extern void asmblit_middlexloop_header_dirty(void);
-extern void asmblit_middlexloop_top(void);
-extern void asmblit_middlexloop_top_dirty(void);
-extern void asmblit_middlexloop_bottom(void);
-extern void asmblit_middlexloop_bottom_dirty(void);
-extern void asmblit_lastxloop_header(void);
-extern void asmblit_lastxloop_header_dirty(void);
-extern void asmblit_lastxloop_top(void);
-extern void asmblit_lastxloop_top_dirty(void);
-extern void asmblit_lastxloop_bottom(void);
-extern void asmblit_lastxloop_bottom_dirty(void);
-extern void asmblit_yloop_bottom_dirty(void);
-extern void asmblit_yloop_bottom(void);
-extern void asmblit_footer(void);
-extern void asmblit_footer_dirty(void);
-extern void asmblit_footer_mmx(void);
-extern void asmblit_footer_mmx_dirty(void);
+extern void BLITDECL asmblit_header(void);
+extern void BLITDECL asmblit_header_dirty(void);
+extern void BLITDECL asmblit_yloop_top(void);
+extern void BLITDECL asmblit_yloop_top_dirty(void);
+extern void BLITDECL asmblit_middlexloop_header(void);
+extern void BLITDECL asmblit_middlexloop_header_dirty(void);
+extern void BLITDECL asmblit_middlexloop_top(void);
+extern void BLITDECL asmblit_middlexloop_top_dirty(void);
+extern void BLITDECL asmblit_middlexloop_bottom(void);
+extern void BLITDECL asmblit_middlexloop_bottom_dirty(void);
+extern void BLITDECL asmblit_lastxloop_header(void);
+extern void BLITDECL asmblit_lastxloop_header_dirty(void);
+extern void BLITDECL asmblit_lastxloop_top(void);
+extern void BLITDECL asmblit_lastxloop_top_dirty(void);
+extern void BLITDECL asmblit_lastxloop_bottom(void);
+extern void BLITDECL asmblit_lastxloop_bottom_dirty(void);
+extern void BLITDECL asmblit_yloop_bottom_dirty(void);
+extern void BLITDECL asmblit_yloop_bottom(void);
+extern void BLITDECL asmblit_footer(void);
+extern void BLITDECL asmblit_footer_dirty(void);
+extern void BLITDECL asmblit_footer_mmx(void);
+extern void BLITDECL asmblit_footer_mmx_dirty(void);
 
-extern int asmblit_has_mmx(void);
-extern int asmblit_has_xmm(void);
+extern int BLITDECL asmblit_has_mmx(void);
+extern int BLITDECL asmblit_has_xmm(void);
 
 
 //============================================================
@@ -315,7 +323,7 @@ static void generate_blitter(const struct win_blit_params *blit);
 //	BLITTER CORE TABLES
 //============================================================
 
-static void (*blit1_core[4][4][3])(void) =
+static void (BLITDECL *blit1_core[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -343,7 +351,7 @@ static void (*blit1_core[4][4][3])(void) =
 	}
 };
 
-static void (*blit16_core[4][4][3])(void) =
+static void (BLITDECL *blit16_core[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -371,7 +379,7 @@ static void (*blit16_core[4][4][3])(void) =
 	}
 };
 
-static void (*blit16_core_mmx[4][4][3])(void) =
+static void (BLITDECL *blit16_core_mmx[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -399,7 +407,7 @@ static void (*blit16_core_mmx[4][4][3])(void) =
 	}
 };
 
-static void (*blit1_core_rgb[4][4])(void) =
+static void (BLITDECL *blit1_core_rgb[4][4])(void) =
 {
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit1_16_to_16_rgb, NULL, asmblit1_16_to_32_rgb },
@@ -407,7 +415,7 @@ static void (*blit1_core_rgb[4][4])(void) =
 	{ NULL, NULL, NULL, NULL }
 };
 
-static void (*blit16_core_rgb[4][4])(void) =
+static void (BLITDECL *blit16_core_rgb[4][4])(void) =
 {
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit16_16_to_16_rgb, NULL, asmblit16_16_to_32_rgb },

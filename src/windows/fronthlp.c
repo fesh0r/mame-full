@@ -92,7 +92,13 @@ struct rc_option frontend_opts[] = {
 
 int silentident,knownstatus;
 
-extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+#ifdef _MSC_VER
+#define ZEXPORT WINAPI
+#else
+#define ZEXPORT
+#endif
+
+extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath);
 
