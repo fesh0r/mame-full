@@ -59,6 +59,9 @@ filter_real filter_compute(filter* f, filter_state* s);
 #define FILTER_HIGHPASS		1
 #define FILTER_BANDPASS		2
 
+#define Q_TO_DAMP(q)	(1.0/q)
+
+
 struct filter2_context
 {
 	double x0, x1, x2;	/* x[k], x[k-1], x[k-2], current and previous 2 input values */

@@ -1206,8 +1206,11 @@ ROM_END
 */
 ROM_START( loffirej )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr12794.bin", 0x000000, 0x20000, BAD_DUMP CRC(e9289fd6) SHA1(2bf686859f67048fe87fda59e7856f5f66a0af46) )
-	ROM_LOAD16_BYTE( "epr12795.bin", 0x000001, 0x20000, BAD_DUMP CRC(fe9cb12d) SHA1(c8c9ae99fd5230cf5944bdc7abf4b53158bd8e1c) )
+	/* repaired using data from the loffire set since they are mostly identical
+	   when decrypted, they pass the rom check so are assumed to be ok but double
+	   checking them when possible never hurts */
+	ROM_LOAD16_BYTE( "epr12794.bin", 0x000000, 0x20000, CRC(1e588992) SHA1(fe7107e83c12643e7d22fd4b4cd0c7bcff0d84c3) )
+	ROM_LOAD16_BYTE( "epr12795.bin", 0x000001, 0x20000, CRC(d43d7427) SHA1(ecbd425bab6aa65ffbd441d6a0936ac055d5f06d) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
 	ROM_LOAD( "317-0134.key", 0x0000, 0x2000, CRC(732626d4) SHA1(75ed7ca417758dd62afb4edbb9daee754932c392) )

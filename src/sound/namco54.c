@@ -543,9 +543,9 @@ void NAMCO54xxUpdateOne(int num, INT16 **buffers, int length)
 
 		/* Convert the binary value to a voltage and filter it. */
 		/* I am assuming a 4V output when a bit is high. */
-		filter54[0].x0 = 3.4/15 * out1 - 2;
-		filter54[1].x0 = 3.4/15 * out2 - 2;
-		filter54[2].x0 = 3.4/15 * out3 - 2;
+		filter54[0].x0 = 4.0/15 * out1 - 2;
+		filter54[1].x0 = 4.0/15 * out2 - 2;
+		filter54[2].x0 = 4.0/15 * out3 - 2;
 		for (loop = 0; loop < 3; loop++)
 		{
 			filter2_step(&filter54[loop]);
@@ -555,9 +555,9 @@ void NAMCO54xxUpdateOne(int num, INT16 **buffers, int length)
 			if (filter54[loop].y0 < -2) filter54[loop].y0 = -2;
 		}
 
-		(buf1)[i] = filter54[0].y0 * intf->gain;
-		(buf2)[i] = filter54[1].y0 * intf->gain;
-		(buf3)[i] = filter54[2].y0 * intf->gain;
+		(buf1)[i] = filter54[0].y0 * (32768/2);
+		(buf2)[i] = filter54[1].y0 * (32768/2);
+		(buf3)[i] = filter54[2].y0 * (32768/2);
 
 		advance();
 	}
@@ -689,7 +689,7 @@ int namco_54xx_sh_start(const struct MachineSound *msound)
 
 	for (i = 0; i < NAMCO54xx_NUMBUF; i++)
 	{
-		vol[i] = 100;
+		vol[i] = intf->mixing_level;
 		name[i] = buf[i];
 		sprintf(buf[i],"%s Ch %d",sound_name(msound),i);
 	}

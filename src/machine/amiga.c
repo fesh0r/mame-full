@@ -1504,6 +1504,20 @@ INTERRUPT_GEN(amiga_vblank_irq)
 		amiga_intf->interrupt_callback();
 }
 
+INTERRUPT_GEN(amiga_irq)
+{
+	int scanline = 261 - cpu_getiloops();
+
+	if ( scanline == 0 )
+	{
+		/* vblank start */
+		amiga_prepare_frame();
+		amiga_vblank_irq();
+	}
+
+	amiga_render_scanline(scanline);
+}
+
 /***************************************************************************
 
 	Init Machine

@@ -976,24 +976,6 @@ VIDEO_START( system16 ){
 	return 1;
 }
 
-VIDEO_START( hangon ){
-	int ret;
-	sys16_bg1_trans=1;
-	ret = video_start_system16();
-	if(ret) return 1;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0;
-	sys16_textlayer_hi_min=0;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_bg_priority_mode=-1;
-	sys16_bg_priority_value=0x1800;
-	sys16_fg_priority_value=0x2000;
-	return 0;
-}
-
-
 VIDEO_START( system18old ){
 	int i;
 
@@ -1568,27 +1550,6 @@ if( code_pressed( KEYCODE_S ) ){
 	}
 }
 
-VIDEO_UPDATE( hangon ){
-	if (!sys16_refreshenable) return;
-	if( sys16_update_proc ) sys16_update_proc();
-	update_page();
-
-	tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-	tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-	fillbitmap(priority_bitmap,0,cliprect);
-
-	render_gr(bitmap,cliprect,0); /* sky */
-	tilemap_draw( bitmap,cliprect, background, 0, 0 );
-	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
-	render_gr(bitmap,cliprect,1); /* floor */
-	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
-
-	draw_sprites( bitmap,cliprect, 0 );
-}
-
 static void render_grv2(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int priority)
 {
 	int i,j;
@@ -1749,45 +1710,6 @@ static void render_grv2(struct mame_bitmap *bitmap,const struct rectangle *clipr
 	}
 }
 
-
-VIDEO_START( old_outrun ){
-	int ret;
-	sys16_bg1_trans=1;
-	ret = video_start_system16();
-	if(ret) return 1;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0;
-	sys16_textlayer_hi_min=0;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_bg_priority_mode=-1;
-	sys16_bg_priority_value=0x1800;
-	sys16_fg_priority_value=0x2000;
-	return 0;
-}
-
-VIDEO_UPDATE( old_outrun ){
-	if( sys16_refreshenable ){
-		if( sys16_update_proc ) sys16_update_proc();
-		update_page();
-
-		tilemap_set_scrollx( background, 0, -320-sys16_bg_scrollx+sys16_bgxoffset );
-		tilemap_set_scrollx( foreground, 0, -320-sys16_fg_scrollx+sys16_fgxoffset );
-
-		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
-		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-		render_grv2(bitmap,cliprect,1);
-		tilemap_draw( bitmap,cliprect, background, 0, 0 );
-		tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
-		render_grv2(bitmap,cliprect,0);
-
-		draw_sprites( bitmap,cliprect, 1 );
-
-		tilemap_draw( bitmap,cliprect, text_layer, 0, 0 );
-	}
-}
 
 /***************************************************************************/
 

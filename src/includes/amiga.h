@@ -127,8 +127,11 @@ extern data16_t *amiga_autoconfig_mem;
 
 /* vidhrdw */
 extern INTERRUPT_GEN(amiga_vblank_irq);
+extern INTERRUPT_GEN(amiga_irq);
 extern VIDEO_UPDATE(amiga);
 extern VIDEO_START(amiga);
 extern PALETTE_INIT(amiga);
+extern void amiga_prepare_frame(void);
+extern void amiga_render_scanline(int scanline);
 
 #endif /* __AMIGA_H__ */

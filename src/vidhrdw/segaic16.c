@@ -4,6 +4,239 @@
 
 ****************************************************************************
 
+	Hang On
+	------------
+		Control Board (834-5668):
+			315-5011       -- sprite line comparitor
+			315-5012       -- sprite generator control
+			315-5049 (x2)  -- tilemaps
+			315-5107 (PAL x2) -- horizontal timing control
+			315-5108       -- vertical timing control
+			315-5122 (PAL) -- timing
+
+	Enduro Racer
+	------------
+		CPU Side (171-5319):
+			315-5164 (PAL)
+			315-5165 (PAL)
+			315-5166 (PAL)
+			315-5167 (PAL)
+		
+		Video Side (171-5320):
+			315-5049 (x2)  -- tilemaps
+			315-5011       -- sprite line comparitor
+			315-5012       -- sprite generator control
+			315-5106 (PAL)
+			315-5107 (PAL)
+			315-5108 (PAL)
+			315-5168 (PAL)
+			315-5170 (PAL)
+			315-5171 (PAL)
+			315-5172 (PAL)
+
+	Pre-System 16
+	-------------
+		Main Board (171-5335):
+			315-5011       -- sprite line comparitor
+			315-5012       -- sprite generator control
+			315-5049 (x2)  -- tilemaps
+			315-5107 (PAL) -- display timing
+			315-5108 (PAL) -- display timing
+			315-5141 (PAL) -- Z80 address decoding
+			315-5143 (PAL) -- sprite-related?
+			315-5144 (PAL) -- sprite-related?
+			315-5147 (PAL) -- unknown, DTACK-related
+			315-5149 (PAL) -- video mixing
+			315-5193 (PAL) -- 68000/MCU interface & address decoding
+			315-5202 (PAL) -- 68000/MCU interface & address decoding
+			
+	Sega System 16A
+	---------------
+		Bottom Board (171-5307):
+			315-5011       -- sprite line comparitor
+			315-5012       -- sprite generator control
+			315-5049 (x2)  -- tilemaps
+			315-5107 (PAL) -- display timing
+			315-5108 (PAL) -- display timing
+			315-5143 (PAL) -- sprite-related?
+			315-5144 (PAL) -- sprite-related?
+			315-5145 (PAL)
+		
+		Top Board (171-5306):
+			315-5141 (PAL) -- Z80 address decoding
+			315-5142 (PAL)
+			315-5149 (PAL) -- video mixing
+			315-5150 (PAL)
+
+	Sega System 16B
+	---------------
+		Main Board (171-5357):
+			315-5195       -- memory mapper
+			315-5196       -- sprite generator
+			315-5197       -- tilemap generator
+			315-5213 (PAL) -- sprite-related
+			315-5214 (PAL) -- unknown
+			
+		ROM Board (171-5521):
+			315-5298 (PAL)
+			
+		ROM Board (171-5704):
+			315-5298 (PAL)
+
+		ROM Board (171-5797):
+			315-5248       -- hardware multiplier
+			315-5250       -- compare/timer
+			315-5298 (PAL)
+
+	Sega System 18
+	--------------
+		Main Board (171-5873B):
+			315-5242       -- color encoder
+			315-5296       -- I/O chip
+			315-5313       -- VDP
+			315-5360       -- memory mapper?
+			315-5361       -- sprite generator
+			315-5362       -- tilemap generator
+			315-5373 (PAL) -- video mixing
+			315-5374 (PAL) -- sprite timing
+			315-5375 (PAL) -- system timing
+			315-5389 (PAL) -- VDP sync
+			315-5390 (PAL)
+			315-5391 (PAL) -- Z80 address decoding
+
+		Main Board (171-5873-02B):
+			315-5242       -- color encoder
+			315-5296       -- I/O chip
+			315-5313       -- VDP
+			315-5360       -- memory mapper?
+			315-5361       -- sprite generator
+			315-5362       -- tilemap generator
+			315-5374 (PAL) -- sprite timing
+			315-5375 (PAL) -- system timing
+			315-5389 (PAL) -- VDP sync
+			315-5391 (PAL) -- Z80 address decoding
+			315-5430 (PAL) -- video mixing
+			
+		ROM Board (171-5987A):
+			315-5436       -- tile/sprite banking
+	
+	Sega System C
+	-------------
+		Main Board:
+			315-5242       -- color encoder
+			315-5296       -- I/O chip
+			315-5313       -- VDP
+			315-5393 (PAL)
+			315-5394 (PAL)
+			315-5395 (PAL)
+
+	Super Hang On
+	-------------
+		CPU Board 171-5376-01:
+			315-5195       -- memory mapper
+			315-5218       -- PCM sound controller
+			315-5155 (PAL)
+			315-5222 (PAL)
+			315-5223a (PAL)
+			315-5224 (PAL)
+			315-5225 (PAL)
+			315-5226 (PAL)
+
+		VIDEO Board: (not the same as out run !) 171-5480
+			315-5196       -- sprite generator
+			315-5197       -- tilemap generator
+			315-5213 (PAL) -- sprite-related
+			315-5242       -- color encoder
+			315-5251 (PAL)
+
+			
+	Sega System 32
+	--------------
+		Main Board (317-5964):
+			315-5242       -- color encoder
+			315-5296       -- I/O chip
+			315-5385
+			315-5386       -- tilemap generator
+			315-5387       -- sprite generator
+			315-5388       -- video mixing
+			315-5441 (PAL)
+			315-5476
+
+	X-Board
+	-------
+		Main Board:
+			315-5197       -- tilemap generator
+			315-5211A      -- sprite generator
+			315-5218       -- PCM sound controller
+			315-5242       -- color encoder
+			315-5248 (x2)  -- hardware multiplier
+			315-5249 (x2)  -- hardware divider
+			315-5250 (x2)  -- compare/timer
+			315-5275       -- road generator
+			315-5278 (PAL) -- sprite ROM bank control
+			315-5279 (PAL) -- video mixing (Afterburner)
+			315-5280 (PAL) -- Z80 address decoding
+			315-5290 (PAL) -- main CPU address decoding
+			315-5291 (PAL) -- main CPU address decoding
+			315-5304 (PAL) -- video mixing (Line of Fire)
+
+	Y-Board
+	-------
+		Main Board (837-6565):
+			315-5218       -- PCM sound controller
+			315-5248 (x3)  -- hardware multiplier
+			315-5249 (x3)  -- hardware divider
+			315-5280 (PAL) -- Z80 address decoding
+			315-5296       -- I/O chip
+			315-5314 (PAL)
+			315-5315 (PAL)
+			315-5316 (PAL)
+			315-5317 (PAL)
+			315-5318 (PAL)
+			315-5328 (PAL)
+			
+		Video Board (837-6566):
+			315-5196       -- sprite generator
+			315-5213 (PAL) -- sprite-related
+			315-5242       -- color encoder
+			315-5305
+			315-5306
+			315-5312       -- video mixing
+			315-5319 (PAL)
+			315-5325 (PAL)
+
+
+	Custom parts
+	------------
+		           SYS1  SYS2  PR16  S16A  S16B  SY18  XBRD  YBRD  SYSC  SY24  SY32
+		315-5011:   xx    xx    xx    xx                                             -- sprite line comparitor
+		315-5012:   xx    xx    xx    xx                                             -- sprite generator control
+		315-5049:         xx    x2    x2                                             -- tilemap generator
+		315-5195:                           xx                                       -- memory mapper
+		315-5196:                           xx                xx                     -- sprite genereator
+		315-5197:                           xx          xx                           -- tilemap generator
+		315-5211A:                                      xx                           -- sprite generator
+		315-5242:                                 xx    xx    xx    xx    xx    xx   -- color encoder
+		315-5248:                           xx          x2    x3                     -- hardware multiplier
+		315-5249:                                       x2    x3                     -- hardware divider
+		315-5250:                           xx          x2                           -- compare/timer
+		315-5275:                                       xx                           -- road generator
+		315-5296:                                 xx          xx    xx          xx   -- I/O chip
+		315-5305:                                             xx                     --
+		315-5312:                                             xx                     -- video mixing
+		315-5313:                                 xx                xx               -- VDP
+		315-5360:                                 xx                                 -- memory mapper
+		315-5361:                                 xx                                 -- sprite generator
+		315-5362:                                 xx                                 -- tilemap generator
+		315-5385:                                                               xx   -- ???
+		315-5386:                                                               xx   -- tilemap generator
+		315-5387:                                                               xx   -- sprite generator
+		315-5388:                                                               xx   -- video mixing
+		315-5436:                                 xx                                 -- sprite/tile banking
+		315-5476:                                                               xx   -- ????
+
+****************************************************************************
+
   Sega system16 and friends hardware
 
                CPU      Tiles      Sprites   Priority  Color     SCPU  Sound                Other
@@ -151,6 +384,7 @@ struct sprite_info
 	UINT8			index;							/* index of this structure */
 	UINT8			type;							/* type of sprite system (see segaic16.h for details) */
 	UINT8			flip;							/* screen flip? */
+	UINT8			shadow;							/* shadow or hilight? */
 	UINT8			bank[16];						/* banking redirection */
 	UINT16			colorbase;						/* base color index */
 	UINT16			ramsize;						/* size of sprite RAM */
@@ -463,9 +697,10 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
 
 /*******************************************************************************************
  *
- *	System 16A-style tilemaps
+ *	Hang On/System 16A-style tilemaps
  *
- *	8 total pages
+ *	4 total pages (Hang On)
+ *	8 total pages (System 16A)
  *	Column/rowscroll enabled via external signals
  *
  *	Tile format:
@@ -478,8 +713,8 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, struct mame_bitmap
  *
  *	Text format:
  *		Bits               Usage
- *		?????--- --------  Unknown
- *		-------- --------  Priority -- unknown for sure
+ *		????---- --------  Unknown
+ *		----p--- --------  Priority
  *		-----ccc --------  Tile color palette
  *		-------- nnnnnnnn  Tile index
  *
@@ -516,7 +751,7 @@ static void segaic16_tilemap_16a_text_info(int tile_index)
 	int code = data & 0xff;
 
 	SET_TILE_INFO(0, code, color, 0);
-	tile_info.priority = (data >> 15) & 1;
+	tile_info.priority = (data >> 11) & 1;
 }
 
 
@@ -533,7 +768,9 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, struct ma
 
 	/* pages are swapped along the X direction, and there are only 8 of them */
 	pages = ((pages >> 4) & 0x0707) | ((pages << 4) & 0x7070);
-
+	if (info->numpages == 4)
+		pages &= 0x3333;
+	
 	/* column AND row scroll */
 	if (info->colscroll && info->rowscroll)
 	{
@@ -901,6 +1138,14 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 	/* determine the parameters of the tilemaps */
 	switch (type)
 	{
+		case SEGAIC16_TILEMAP_HANGON:
+			get_text_info = segaic16_tilemap_16a_text_info;
+			get_tile_info = segaic16_tilemap_16a_tile_info;
+			info->numpages = 4;
+			info->draw_layer = segaic16_tilemap_16a_draw_layer;
+			info->reset = NULL;
+			break;
+		
 		case SEGAIC16_TILEMAP_16A:
 			get_text_info = segaic16_tilemap_16a_text_info;
 			get_tile_info = segaic16_tilemap_16a_tile_info;
@@ -1111,6 +1356,349 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 
 /*******************************************************************************************
  *
+ *	Hang On-style sprites
+ *
+ *		Offs  Bits               Usage
+ *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *		 +0   -------- tttttttt  Top scanline of sprite - 1
+ *		 +2   bbbb---- --------  Sprite bank
+ *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *		 +4   pppppppp pppppppp  Signed 16-bit pitch value between scanlines
+ *		 +6   -ooooooo oooooooo  Offset within selected sprite bank
+ *		 +6   f------- --------  Horizontal flip: read the data backwards if set
+ *		 +8   --cccccc --------  Sprite color palette
+ *		 +8   -------- zzzzzz--  Zoom factor
+ *		 +8   -------- ------pp  Sprite priority
+ *		 +E   dddddddd dddddddd  Scratch space for current address
+ *
+ *	Special notes:
+ *	
+ *		There is an interaction between the horizonal flip bit and the offset.
+ *		The offset is maintained as a 16-bit value, even though only the lower
+ *		15 bits are used for the address. The top bit is used to control flipping.
+ *		This means that if the low 15 bits overflow during rendering, the sprite
+ *		data will be read backwards after the overflow. This is important to
+ *		emulate correctly as many games make use of this feature to render sprites
+ *		at the beginning of a bank.
+ *
+ *******************************************************************************************/
+
+#define hangon_draw_pixel()													\
+	/* only draw if onscreen, not 0 or 15 */								\
+	if (pix != 0 && pix != 15)												\
+	{																		\
+		/* are we high enough priority to be visible? */					\
+		if (sprpri > pri[x])												\
+		{																	\
+			/* shadow/hilight mode? */										\
+			if (color == info->colorbase + (0x3f << 4))						\
+				dest[x] += info->shadow ? palette.entries*2 : palette.entries;	\
+																			\
+			/* regular draw */												\
+			else															\
+				dest[x] = pix | color;										\
+		}																	\
+																			\
+		/* always mark priority so no one else draws here */				\
+		pri[x] = 0xff;														\
+	}																		\
+
+static void segaic16_sprites_hangon_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x10000;
+	const UINT16 *spritebase = (const UINT16 *)memory_region(REGION_GFX2);
+	const UINT8 *zoom = (const UINT8 *)memory_region(REGION_PROMS);
+	UINT16 *data;
+
+	/* first scan forward to find the end of the list */
+	for (data = *info->spriteram; data < *info->spriteram + info->ramsize/2; data += 8)
+		if ((data[0] >> 8) > 0xf0)
+			break;
+
+	/* now scan backwards and render the sprites in order */
+	for (data -= 8; data >= *info->spriteram; data -= 8)
+	{
+		int bottom  = (data[0] >> 8) + 1;
+		int top     = (data[0] & 0xff) + 1;
+		int bank    = info->bank[(data[1] >> 12) & 0xf];
+		int xpos    = (data[1] & 0x1ff) - 0xbd;
+		int pitch   = (INT16)data[2];
+		UINT16 addr = data[3];
+		int color   = info->colorbase + (((data[4] >> 8) & 0x3f) << 4);
+		int vzoom   = (data[4] >> 2) & 0x3f;
+		int hzoom   = vzoom << 1;
+		int sprpri  = 1 << ((data[4] >> 0) & 0x3);
+		int x, y, pix, zaddr, zmask;
+		const UINT16 *spritedata;
+
+		/* initialize the end address to the start address */
+		data[7] = addr;
+
+		/* if hidden, or top greater than/equal to bottom, or invalid bank, punt */
+		if ((top >= bottom) || bank == 255)
+			continue;
+
+		/* clamp to within the memory region size */
+		if (numbanks)
+			bank %= numbanks;
+		spritedata = spritebase + 0x8000 * bank;
+		
+		/* for the non-flipped case, we start one row ahead */
+		
+		/* note that the System 16A sprites have a design flaw that allows the address */
+		/* to carry into the flip flag, which is the topmost bit -- it is very important */
+		/* to emulate this as the games compensate for it */
+		if (!(addr & 0x8000))
+			addr += pitch;
+		
+		/* determine the starting zoom address and mask */
+		zaddr = (vzoom & 0x38) << 5;
+		zmask = 1 << (vzoom & 7);
+
+		/* loop from top to bottom */
+		for (y = top; y < bottom; y++)
+		{
+			/* skip drawing if not within the cliprect */
+			if (y >= cliprect->min_y && y <= cliprect->max_y)
+			{
+				UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				int xacc = 0x00;
+
+				/* non-flipped case */
+				if (!(addr & 0x8000))
+				{
+					/* start at the word before because we preincrement below */
+					data[7] = addr - 1;
+					for (x = xpos; x <= cliprect->max_x; )
+					{
+						UINT16 pixels = spritedata[++data[7] & 0x7fff];
+
+						/* draw four pixels */
+						pix = (pixels >> 12) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  8) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  4) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  0) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+
+						/* stop if the last pixel in the group was 0xf */
+						if (pix == 15)
+							break;
+					}
+				}
+
+				/* flipped case */
+				else
+				{
+					/* start at the word after because we predecrement below */
+					data[7] = addr + pitch + 1;
+					for (x = xpos; x <= cliprect->max_x; )
+					{
+						UINT16 pixels = spritedata[--data[7] & 0x7fff];
+
+						/* draw four pixels */
+						pix = (pixels >>  0) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  4) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  8) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 12) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) hangon_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+
+						/* stop if the last pixel in the group was 0xf */
+						if (pix == 15)
+							break;
+					}
+				}
+			}
+
+			/* advance a row */
+			addr += pitch;
+
+			/* if the zoom bit says so, add pitch a second time */
+			if (zoom[zaddr++] & zmask)
+				addr += pitch;
+		}
+	}
+}
+
+
+
+/*******************************************************************************************
+ *
+ *	Space Harrier-style sprites
+ *
+ *		Offs  Bits               Usage
+ *		 +0   bbbbbbbb --------  Bottom scanline of sprite - 1
+ *		 +0   -------- tttttttt  Top scanline of sprite - 1
+ *		 +2   bbbb---- --------  Sprite bank
+ *		 +2   -------x xxxxxxxx  X position of sprite (position $BD is screen position 0)
+ *		 +4   s------- --------  Sprite shadow enable (0=enable, 1=disable)
+ *		 +4   -p------ --------  Sprite priority
+ *		 +4   --cccccc --------  Sprite color palette
+ *		 +4   -------- -ppppppp  Signed 7-bit pitch value between scanlines
+ *		 +6   f------- --------  Horizontal flip: read the data backwards if set
+ *		 +6   -ooooooo oooooooo  Offset within selected sprite bank
+ *		 +8   --zzzzzz --------  Horizontal zoom factor
+ *		 +8   -------- --zzzzzz  Vertical zoom factor
+ *		 +E   dddddddd dddddddd  Scratch space for current address
+ *
+ *	Special notes:
+ *	
+ *		There is an interaction between the horizonal flip bit and the offset.
+ *		The offset is maintained as a 16-bit value, even though only the lower
+ *		15 bits are used for the address. The top bit is used to control flipping.
+ *		This means that if the low 15 bits overflow during rendering, the sprite
+ *		data will be read backwards after the overflow. This is important to
+ *		emulate correctly as many games make use of this feature to render sprites
+ *		at the beginning of a bank.
+ *
+ *******************************************************************************************/
+
+#define sharrier_draw_pixel()												\
+	/* only draw if onscreen, not 0 or 15 */								\
+	if (pix != 0 && pix != 15)												\
+	{																		\
+		/* are we high enough priority to be visible? */					\
+		if (sprpri > pri[x])												\
+		{																	\
+			/* shadow/hilight mode? */										\
+			if (shadow && pix == 0xa)										\
+				dest[x] += (paletteram16[dest[x]] & 0x8000) ? palette.entries*2 : palette.entries;	\
+																			\
+			/* regular draw */												\
+			else															\
+				dest[x] = pix | color;										\
+		}																	\
+																			\
+		/* always mark priority so no one else draws here */				\
+		pri[x] = 0xff;														\
+	}																		\
+
+static void segaic16_sprites_sharrier_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+{
+	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x20000;
+	const UINT32 *spritebase = (const UINT32 *)memory_region(REGION_GFX2);
+	const UINT8 *zoom = (const UINT8 *)memory_region(REGION_PROMS);
+	UINT16 *data;
+
+	/* first scan forward to find the end of the list */
+	for (data = *info->spriteram; data < *info->spriteram + info->ramsize/2; data += 8)
+		if ((data[0] >> 8) > 0xf0)
+			break;
+
+	/* now scan backwards and render the sprites in order */
+	for (data -= 8; data >= *info->spriteram; data -= 8)
+	{
+		int bottom  = (data[0] >> 8) + 1;
+		int top     = (data[0] & 0xff) + 1;
+		int bank    = info->bank[(data[1] >> 12) & 0x7];
+		int xpos    = (data[1] & 0x1ff) - 0xbd;
+		int shadow  = (~data[2] >> 15) & 1;
+		int sprpri  = ((data[2] >> 14) & 1) ? (1<<3) : (1<<1);
+		int color   = info->colorbase + (((data[2] >> 8) & 0x3f) << 4);
+		int pitch   = (INT16)(data[2] << 9) >> 9;
+		UINT16 addr = data[3];
+		int hzoom   = ((data[4] >> 8) & 0x3f) << 1;
+		int vzoom   = (data[4] >> 0) & 0x3f;
+		int x, y, pix, zaddr, zmask;
+		const UINT32 *spritedata;
+
+		/* initialize the end address to the start address */
+		data[7] = addr;
+
+		/* if hidden, or top greater than/equal to bottom, or invalid bank, punt */
+		if ((top >= bottom) || bank == 255)
+			continue;
+
+		/* clamp to within the memory region size */
+		if (numbanks)
+			bank %= numbanks;
+		spritedata = spritebase + 0x8000 * bank;
+		
+		/* for the non-flipped case, we start one row ahead */
+		
+		/* note that the System 16A sprites have a design flaw that allows the address */
+		/* to carry into the flip flag, which is the topmost bit -- it is very important */
+		/* to emulate this as the games compensate for it */
+		if (!(addr & 0x8000))
+			addr += pitch;
+
+		/* determine the starting zoom address and mask */
+		zaddr = (vzoom & 0x38) << 5;
+		zmask = 1 << (vzoom & 7);
+
+		/* loop from top to bottom */
+		for (y = top; y < bottom; y++)
+		{
+			/* skip drawing if not within the cliprect */
+			if (y >= cliprect->min_y && y <= cliprect->max_y)
+			{
+				UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT8 *pri = (UINT8 *)priority_bitmap->line[y];
+				int xacc = 0x00;
+
+				/* non-flipped case */
+				if (!(addr & 0x8000))
+				{
+					/* start at the word before because we preincrement below */
+					data[7] = addr - 1;
+					for (x = xpos; x <= cliprect->max_x; )
+					{
+						UINT32 pixels = spritedata[++data[7] & 0x7fff];
+
+						/* draw 8 pixels */
+						pix = (pixels >> 28) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 24) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 20) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 16) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 12) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  8) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  4) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  0) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+
+						/* stop if the last pixel in the group was 0xf */
+						if (pix == 15)
+							break;
+					}
+				}
+
+				/* flipped case */
+				else
+				{
+					/* start at the word after because we predecrement below */
+					data[7] = addr + pitch + 1;
+					for (x = xpos; x <= cliprect->max_x; )
+					{
+						UINT32 pixels = spritedata[--data[7] & 0x7fff];
+
+						/* draw 8 pixels */
+						pix = (pixels >>  0) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  4) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >>  8) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 12) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 16) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 20) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 24) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+						pix = (pixels >> 28) & 0xf; if (!(xacc & 0x100)) { if (x >= cliprect->min_x) sharrier_draw_pixel(); x++; } xacc &= 0xff; xacc += hzoom;
+
+						/* stop if the last pixel in the group was 0xf */
+						if (pix == 15)
+							break;
+					}
+				}
+			}
+
+			/* advance a row */
+			addr += pitch;
+
+			/* if the zoom bit says so, add pitch a second time */
+			if (zoom[zaddr++] & zmask)
+				addr += pitch;
+		}
+	}
+}
+
+
+
+/*******************************************************************************************
+ *
  *	System 16A-style sprites
  *
  *		Offs  Bits               Usage
@@ -1160,7 +1748,7 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x10000;
-	UINT16 *spritebase = (UINT16 *)memory_region(REGION_GFX2);
+	const UINT16 *spritebase = (const UINT16 *)memory_region(REGION_GFX2);
 	UINT16 *data;
 
 	/* first scan forward to find the end of the list */
@@ -1179,8 +1767,8 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 		int color   = info->colorbase + (((data[4] >> 8) & 0x3f) << 4);
 		int bank    = info->bank[(data[4] >> 4) & 0x7];
 		int sprpri  = 1 << ((data[4] >> 0) & 0x3);
+		const UINT16 *spritedata;
 		int x, y, pix;
-		UINT16 *spritedata;
 
 		/* initialize the end address to the start address */
 		data[7] = addr;
@@ -1193,9 +1781,9 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 		if (numbanks)
 			bank %= numbanks;
 		spritedata = spritebase + 0x8000 * bank;
-
+		
 		/* for the non-flipped case, we start one row ahead */
-
+		
 		/* note that the System 16A sprites have a design flaw that allows the address */
 		/* to carry into the flip flag, which is the topmost bit -- it is very important */
 		/* to emulate this as the games compensate for it */
@@ -1307,7 +1895,7 @@ static void segaic16_sprites_16a_draw(struct sprite_info *info, struct mame_bitm
 static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x20000;
-	UINT16 *spritebase = (UINT16 *)memory_region(REGION_GFX2);
+	const UINT16 *spritebase = (const UINT16 *)memory_region(REGION_GFX2);
 	UINT16 *data;
 
 	/* first scan forward to find the end of the list */
@@ -1330,7 +1918,7 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 		int color   = info->colorbase + ((data[4] & 0x3f) << 4);
 		int vzoom   = (data[5] >> 5) & 0x1f;
 		int hzoom   = data[5] & 0x1f;
-		UINT16 *spritedata;
+		const UINT16 *spritedata;
 		int x, y, pix;
 
 		/* initialize the end address to the start address */
@@ -1475,7 +2063,7 @@ static void segaic16_sprites_16b_draw(struct sprite_info *info, struct mame_bitm
 static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	UINT8 numbanks = memory_region_length(REGION_GFX2) / 0x40000;
-	UINT32 *spritebase = (UINT32 *)memory_region(REGION_GFX2);
+	const UINT32 *spritebase = (const UINT32 *)memory_region(REGION_GFX2);
 	UINT16 *data;
 
 	/* first scan forward to find the end of the list */
@@ -1502,7 +2090,7 @@ static void segaic16_sprites_outrun_draw(struct sprite_info *info, struct mame_b
 		int height  = ((info->type == SEGAIC16_SPRITES_OUTRUN) ? (data[5] >> 8) : (data[5] & 0xfff)) + 1;
 		int color   = info->colorbase + (((info->type == SEGAIC16_SPRITES_OUTRUN) ? (data[5] & 0x7f) : (data[6] & 0xff)) << 4);
 		int x, y, ytarget, yacc = 0, pix;
-		UINT32 *spritedata;
+		const UINT32 *spritedata;
 
 		/* adjust X coordinate */
 		/* note: if this threshhold is too close to 0, rachero will draw garbage */
@@ -1636,16 +2224,26 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 	/* determine the parameters of the sprites */
 	switch (type)
 	{
+		case SEGAIC16_SPRITES_HANGON:
+			info->draw = segaic16_sprites_hangon_draw;
+			info->ramsize = 0x800;
+			break;
+			
 		case SEGAIC16_SPRITES_16A:
 			info->draw = segaic16_sprites_16a_draw;
 			info->ramsize = 0x800;
 			break;
-
+		
 		case SEGAIC16_SPRITES_16B:
 			info->draw = segaic16_sprites_16b_draw;
 			info->ramsize = 0x800;
 			break;
 
+		case SEGAIC16_SPRITES_SHARRIER:
+			info->draw = segaic16_sprites_sharrier_draw;
+			info->ramsize = 0x1000;
+			break;
+			
 		case SEGAIC16_SPRITES_OUTRUN:
 		case SEGAIC16_SPRITES_XBOARD:
 			info->draw = segaic16_sprites_outrun_draw;
@@ -1724,6 +2322,26 @@ void segaic16_sprites_set_flip(int which, int flip)
 
 /*************************************
  *
+ *	General sprite shadows
+ *
+ *************************************/
+
+void segaic16_sprites_set_shadow(int which, int shadow)
+{
+	struct sprite_info *info = &sprites[which];
+
+	shadow = (shadow != 0);
+	if (info->shadow != shadow)
+	{
+		force_partial_update(cpu_getscanline());
+		info->shadow = shadow;
+	}
+}
+
+
+
+/*************************************
+ *
  *	General sprite buffer control
  *
  *************************************/
@@ -1761,6 +2379,302 @@ WRITE16_HANDLER( segaic16_sprites_draw_0_w )
 WRITE16_HANDLER( segaic16_sprites_draw_1_w )
 {
 	segaic16_sprites_buffer(&sprites[1]);
+}
+
+
+
+/*******************************************************************************************
+ *
+ *	Hang On-style road chip
+ *
+ *	Road RAM:
+ *		Offset   Bits               Usage
+ *		000-1FF  -----s-- --------  Solid fill (0) or ROM fill
+ *		         -------- ----cccc  Solid color (if solid fill)
+ *		         -------- iiiiiiii  Index for other tables
+ *		         -------- rrrrrrrr  Road ROM line select
+ *		200-3FF  ----hhhh hhhhhhhh  horizontal scroll
+ *		400-5FF  --bbbbbb --------  background color (colorset 1)
+ *		         -------- --bbbbbb  background color (colorset 0)
+ *		600-7FF  -------- s-------  stripe color index (colorset 1)
+ *		         -------- -s------  stripe color index (colorset 0)
+ *		         -------- --a-----  pixel value 2 color index (colorset 1)
+ *		         -------- ---a----  pixel value 2 color index (colorset 0)
+ *		         -------- ----b---  pixel value 1 color index (colorset 1)
+ *		         -------- -----b--  pixel value 1 color index (colorset 0)
+ *		         -------- ------c-  pixel value 0 color index (colorset 1)
+ *		         -------- -------c  pixel value 0 color index (colorset 0)
+ *
+ *	Logic:
+ *		First, the scanline is used to index into the tables at 000-1FF/200-3FF
+ *			- if solid fill, the background is filled with the specified color index
+ *			- otherwise, the remaining tables are used
+ *
+ *		If indirect mode is selected, the index is taken from the low 9 bits of the
+ *			table value from 000-1FF/200-3FF
+ *		If direct scanline mode is selected, the index is set equal to the scanline
+ *			for road 0, or the scanline + 256 for road 1
+ *
+ *		The horizontal scroll value is looked up using the index in the tables at 
+ *			400-7FF/800-BFF
+ *
+ *		The color information is looked up using the index in the table at C00-FFF. Note
+ *			that the same table is used for both roads.
+ *
+ *******************************************************************************************/
+
+
+/*
+
+	Final output = MC0-7
+	
+	From LS399x2 @ 4P/4R:
+		Select = 0 if (M0 && M1 && flip flop @ 9S)
+		If select = 0:
+			MC7 = 1
+			MC6 = 1
+			MC5-0 = output from LS159x2 @ 8R/8P
+
+		If select = 1:
+			MC7 = 0
+			MC6 = 0
+			MC5 = 1
+			MC4 = 1
+			MC3 = A input on LS151 @ 8H = Q3 output from LS164 @ 8S = select (1 if counting up, 0 if counting down)
+			MC2 = C input on LS151 @ 8H (M1)
+			MC1 = B input on LS151 @ 8H (M0)
+			MC0 = Y output on LS151 @ 8H (color select bit)
+			
+	From LS159x2 @ 8R/8P:
+		select = 1 if counting up, 0 if counting down
+		If select = 0
+			Take bits MD8-13
+		If select = 1
+			Take bits MD0-5
+
+	From LS151 @ 8H:
+		A = select (1 if counting up, 0 if counting down)
+		B = M0
+		C = M1
+		Output = bit selected from low 8 bits of color select field
+
+	Flip flop @ 9S: controls whether to use background color for color 3
+		- if MD9 == 0, this is forced to 1 always
+		- otherwise, if not in stripe area, use background color
+		
+	Hcounter:
+		On /HSYNC, clock MD0-10 into 11-bit up/down counter
+		On /HSYNC, clock MD11 into flip flop @ 9S
+		Counter direction is determined by output of flip flop @ 9S: 1=count up, 0=count down
+		On a carry out of the 11-bit up/down counter, flip flip @ 9S is forcibly cleared, causing down counting
+		Control data bit 8, if clear, forcibly sets flip flop @ 9S, causing up counting only
+
+
+	Control data:
+		MD11 = PLYCONT1
+		MD10 = PLYCONT0
+		MD9 = if 0, force preset of flip flop at 9J (disables alternate stripe coloring)
+		MD8 = if 0, force preset of flip flop at 9S (counter direction = always up)
+*/
+
+
+static void segaic16_road_hangon_decode(struct road_info *info)
+{
+	int x, y;
+
+	/* allocate memory for the unpacked road data */
+	info->gfx = auto_malloc(256 * 512);
+	if (!info->gfx)
+		osd_die("Out of memory for decoded road graphics\n");
+	
+	/* loop over rows */
+	for (y = 0; y < 256; y++)
+	{
+		UINT8 *src = memory_region(REGION_GFX3) + ((y & 0xff) * 0x40) % memory_region_length(REGION_GFX3);
+		UINT8 *dst = info->gfx + y * 512;
+
+		/* loop over columns */
+		for (x = 0; x < 512; x++)
+			dst[x] = (((src[x/8] >> (~x & 7)) & 1) << 0) | (((src[x/8 + 0x4000] >> (~x & 7)) & 1) << 1);
+	}
+}
+
+
+static void segaic16_road_hangon_draw(struct road_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
+{
+	UINT16 *roadram = *info->roadram;
+	int x, y;
+
+	/* for debugging road issues */
+	if (DEBUG_ROAD)
+	{
+		static int dx,dy;
+		if (code_pressed(KEYCODE_J)) dx--;
+		if (code_pressed(KEYCODE_L)) dx++;
+		if (code_pressed(KEYCODE_I)) dy--;
+		if (code_pressed(KEYCODE_K)) dy++;
+		usrintf_showmessage("X=%d Y=%d", dx, dy);
+
+		if (code_pressed(KEYCODE_D))
+		{
+			palette_set_color(0, 0, 0, 255);
+			palette_set_color(1, 0, 255, 0);
+			palette_set_color(2, 255, 0, 0);
+			palette_set_color(3, 255, 0, 255);
+			palette_set_color(7, 255, 255, 255);
+
+			for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+			{
+				UINT16 *dest = (UINT16 *)bitmap->line[y];
+				UINT8 *src = info->gfx + ((y + dy) & 0xff) * 512;
+				for (x = cliprect->min_x; x <= cliprect->max_x; x++)
+					dest[x] = src[(x + dx) & 0x3ff];
+			}
+			return;
+		}
+		else
+		{
+			for (x = 0; x < 8; x++)
+				segaic16_paletteram_w(x, paletteram16[x], 0);
+		}
+		info->xoffs = dx;
+	}
+
+	/* loop over scanlines */
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+	{
+		UINT16 *dest = (UINT16 *)bitmap->line[y];
+		int control = roadram[0x000 + y];
+		int hpos = roadram[0x100 + (control & 0xff)];
+		int color0 = roadram[0x200 + (control & 0xff)];
+		int color1 = roadram[0x300 + (control & 0xff)];
+		int ff9j1, ff9j2, ctr9m, ctr9n9p, ctr9n9p_ena, ss8j, plycont;
+		UINT8 *src;
+		
+		/* the PLYCONT signal controls the road layering */
+		plycont = (control >> 10) & 3;
+		
+		/* skip layers we aren't supposed to be drawing */
+		if ((plycont == 0 && priority != SEGAIC16_ROAD_BACKGROUND) ||
+			(plycont != 0 && priority != SEGAIC16_ROAD_FOREGROUND))
+			continue;
+
+		/* compute the offset of the road graphics for this line */
+		src = info->gfx + (0x000 + (control & 0xff)) * 512;
+
+		/* initialize the 4-bit counter at 9M, which counts bits within each road byte */
+		ctr9m = hpos & 7;
+		
+		/* initialize the two 4-bit counters at 9P (low) and 9N (high), which count road data bytes */
+		ctr9n9p = (hpos >> 3) & 0xff;
+
+		/* initialize the flip-flop at 9J (lower half), which controls the counting direction */
+		ff9j1 = (hpos >> 11) & 1;
+		
+		/* initialize the flip-flop at 9J (upper half), which controls the background color */
+		ff9j2 = 1;
+		
+		/* initialize the serial shifter at 8S, which delays several signals after we flip */
+		ss8j = 0;
+
+		/* draw this scanline from the beginning */		
+		for (x = -24; x <= cliprect->max_x; x++)
+		{
+			int md, color, select;
+			
+			/* ---- the following logic all happens constantly ---- */
+
+			/* the enable is controlled by the value in the counter at 9M */
+			ctr9n9p_ena = (ctr9m == 7);
+			
+			/* if we carried out of the 9P/9N counters, we will forcibly clear the flip-flop at 9J (lower half) */
+			if ((ctr9n9p & 0xff) == 0xff)
+				ff9j1 = 0;
+			
+			/* if the control word bit 8 is clear, we will forcibly set the flip-flop at 9J (lower half) */
+			if (!(control & 0x100))
+				ff9j1 = 1;
+			
+			/* for the Hang On/Super Hang On case only: if the control word bit 9 is clear, we will forcibly */
+			/* set the flip-flip at 9J (upper half) */
+			if (info->type == SEGAIC16_ROAD_HANGON && !(control & 0x200))
+				ff9j2 = 1;
+
+			/* ---- now process the pixel ---- */
+			md = 3;
+			
+			/* the Space Harrier/Enduro Racer hardware has a tweak that maps the control word bit 9 to the */
+			/* /CE line on the road ROM; use this to effectively disable the road data */
+			if (info->type != SEGAIC16_ROAD_SHARRIER || !(control & 0x200))
+			
+				/* the /OE line on the road ROM is linked to the AND of bits 2 & 3 of the counter at 9N */
+				if ((ctr9n9p & 0xc0) == 0xc0)
+				{
+					/* note that the pixel logic is hidden in a custom at 9S; this is just a guess */
+					if (ss8j & 1)
+						md = src[((ctr9n9p & 0x3f) << 3) | ctr9m];
+					else
+						md = src[((ctr9n9p & 0x3f) << 3) | (ctr9m ^ 7)];
+				}
+
+			/* "select" is a made-up signal that comes from bit 3 of the serial shifter and is */
+			/* used in several places for color selection */
+			select = (ss8j >> 3) & 1;
+
+			/* check the flip-flop at 9J (upper half) to determine if we should use the background color; */
+			/* the output of this is ANDed with M0 and M1 so it only affects pixels with a value of 3; */
+			/* this is done by the AND gates at 9L and 7K */
+			if (ff9j2 && md == 3)
+			{
+				/* in this case, the "select" signal is used to select which background color to use */
+				/* since the color0 control word contains two selections */
+				color = (color0 >> (select ? 0 : 8)) & 0x3f;
+				color |= info->colorbase2;
+			}
+			
+			/* if we're not using the background color, we select pixel data from an alternate path */
+			else
+			{
+				/* the AND gates at 7L, 9K, and 7K clamp the pixel value to 0 if bit 7 of the color 1 */
+				/* signal is 1 and if the pixel value is 3 (both M0 and M1 == 1) */
+				if ((color1 & 0x80) && md == 3)
+					md = 0;
+				
+				/* the pixel value plus the "select" line combine to form a mux into the low 8 bits of color1 */
+				color = (color1 >> ((md << 1) | select)) & 1;
+				
+				/* this value becomes the low bit of the final color; the "select" line itself and the pixel */
+				/* value form the other bits */
+				color |= select << 3;
+				color |= md << 1;
+				color |= info->colorbase1;
+			}
+
+			/* write the pixel if we're past the minimum clip */			
+			if (x >= cliprect->min_x)
+				dest[x] = color;
+			
+			/* ---- the following logic all happens on the 6M clock ---- */
+			
+			/* clock the counter at 9M */
+			ctr9m = (ctr9m + 1) & 7;
+			
+			/* if enabled, clock on the two cascaded 4-bit counters at 9P and 9N */
+			if (ctr9n9p_ena)
+			{
+				if (ff9j1)
+					ctr9n9p++;
+				else
+					ctr9n9p--;
+			}
+			
+			/* clock the flip-flop at 9J (upper half) */
+			ff9j2 = !(!ff9j1 && (ss8j & 0x80));
+			
+			/* clock the serial shift register at 8J */
+			ss8j = (ss8j << 1) | ff9j1;
+		}
+	}
 }
 
 
@@ -1839,7 +2753,7 @@ static void segaic16_road_outrun_decode(struct road_info *info)
 			dst[x] = (((src[x/8] >> (~x & 7)) & 1) << 0) | (((src[x/8 + 0x4000] >> (~x & 7)) & 1) << 1);
 
 			/* pre-mark road data in the "stripe" area with a high bit */
-			if (x >= 248 && x < 256 && dst[x] == 3)
+			if (x >= 256-8 && x < 256 && dst[x] == 3)
 				dst[x] |= 4;
 		}
 	}
@@ -1851,6 +2765,7 @@ static void segaic16_road_outrun_decode(struct road_info *info)
 
 static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap *bitmap, const struct rectangle *cliprect, int priority)
 {
+	UINT16 *roadram = *info->roadram;
 	int x, y;
 
 	/* for debugging road issues */
@@ -1882,8 +2797,8 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
 		UINT16 *dest = (UINT16 *)bitmap->line[y];
-		int data0 = segaic16_roadram_0[0x000 + y];
-		int data1 = segaic16_roadram_0[0x100 + y];
+		int data0 = roadram[0x000 + y];
+		int data1 = roadram[0x100 + y];
 
 		/* background case: look for solid fill scanlines */
 		if (priority == SEGAIC16_ROAD_BACKGROUND)
@@ -1947,13 +2862,13 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 
 			/* get road 0 data */
 			src0 = (data0 & 0x800) ? info->gfx + 256 * 2 * 512 : (info->gfx + (0x000 + ((data0 >> 1) & 0xff)) * 512);
-			hpos0 = (segaic16_roadram_0[0x200 + ((info->control & 4) ? y : (data0 & 0x1ff))]) & 0xfff;
-			color0 = segaic16_roadram_0[0x600 + ((info->control & 4) ? y : (data0 & 0x1ff))];
+			hpos0 = (roadram[0x200 + ((info->control & 4) ? y : (data0 & 0x1ff))]) & 0xfff;
+			color0 = roadram[0x600 + ((info->control & 4) ? y : (data0 & 0x1ff))];
 
 			/* get road 1 data */
 			src1 = (data1 & 0x800) ? info->gfx + 256 * 2 * 512 : (info->gfx + (0x100 + ((data1 >> 1) & 0xff)) * 512);
-			hpos1 = (segaic16_roadram_0[0x400 + ((info->control & 4) ? (0x100 + y) : (data1 & 0x1ff))]) & 0xfff;
-			color1 = segaic16_roadram_0[0x600 + ((info->control & 4) ? (0x100 + y) : (data1 & 0x1ff))];
+			hpos1 = (roadram[0x400 + ((info->control & 4) ? (0x100 + y) : (data1 & 0x1ff))]) & 0xfff;
+			color1 = roadram[0x600 + ((info->control & 4) ? (0x100 + y) : (data1 & 0x1ff))];
 
 			/* determine the 5 colors for road 0 */
 			color_table[0x00] = info->colorbase1 ^ 0x00 ^ ((color0 >> 0) & 1);
@@ -1977,44 +2892,56 @@ static void segaic16_road_outrun_draw(struct road_info *info, struct mame_bitmap
 				case 0:
 					if (data0 & 0x800)
 						continue;
-					for (x = cliprect->min_x; x <= cliprect->max_x; x++, hpos0++)
+					hpos0 = (hpos0 - (0x5f8 + info->xoffs)) & 0xfff;
+					for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 					{
-						int pix0 = (hpos0 >= 0x5f8 + info->xoffs && hpos0 < 0x7f8 + info->xoffs) ? src0[hpos0 - (0x5f8 + info->xoffs)] : 3;
+						int pix0 = (hpos0 < 0x200) ? src0[hpos0] : 3;
 						dest[x] = color_table[0x00 + pix0];
+						hpos0 = (hpos0 + 1) & 0xfff;
 					}
 					break;
 
 				case 1:
-					for (x = cliprect->min_x; x <= cliprect->max_x; x++, hpos0++, hpos1++)
+					hpos0 = (hpos0 - (0x5f8 + info->xoffs)) & 0xfff;
+					hpos1 = (hpos1 - (0x5f8 + info->xoffs)) & 0xfff;
+					for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 					{
-						int pix0 = (hpos0 >= 0x5f8 + info->xoffs && hpos0 < 0x7f8 + info->xoffs) ? src0[hpos0 - (0x5f8 + info->xoffs)] : 3;
-						int pix1 = (hpos1 >= 0x5f8 + info->xoffs && hpos1 < 0x7f8 + info->xoffs) ? src1[hpos1 - (0x5f8 + info->xoffs)] : 3;
+						int pix0 = (hpos0 < 0x200) ? src0[hpos0] : 3;
+						int pix1 = (hpos1 < 0x200) ? src1[hpos1] : 3;
 						if ((priority_map[0][pix0] >> pix1) & 1)
 							dest[x] = color_table[0x10 + pix1];
 						else
 							dest[x] = color_table[0x00 + pix0];
+						hpos0 = (hpos0 + 1) & 0xfff;
+						hpos1 = (hpos1 + 1) & 0xfff;
 					}
 					break;
 
 				case 2:
-					for (x = cliprect->min_x; x <= cliprect->max_x; x++, hpos0++, hpos1++)
+					hpos0 = (hpos0 - (0x5f8 + info->xoffs)) & 0xfff;
+					hpos1 = (hpos1 - (0x5f8 + info->xoffs)) & 0xfff;
+					for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 					{
-						int pix0 = (hpos0 >= 0x5f8 + info->xoffs && hpos0 < 0x7f8 + info->xoffs) ? src0[hpos0 - (0x5f8 + info->xoffs)] : 3;
-						int pix1 = (hpos1 >= 0x5f8 + info->xoffs && hpos1 < 0x7f8 + info->xoffs) ? src1[hpos1 - (0x5f8 + info->xoffs)] : 3;
+						int pix0 = (hpos0 < 0x200) ? src0[hpos0] : 3;
+						int pix1 = (hpos1 < 0x200) ? src1[hpos1] : 3;
 						if ((priority_map[1][pix0] >> pix1) & 1)
 							dest[x] = color_table[0x10 + pix1];
 						else
 							dest[x] = color_table[0x00 + pix0];
+						hpos0 = (hpos0 + 1) & 0xfff;
+						hpos1 = (hpos1 + 1) & 0xfff;
 					}
 					break;
 
 				case 3:
 					if (data1 & 0x800)
 						continue;
-					for (x = cliprect->min_x; x <= cliprect->max_x; x++, hpos1++)
+					hpos1 = (hpos1 - (0x5f8 + info->xoffs)) & 0xfff;
+					for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 					{
-						int pix1 = (hpos1 >= 0x5f8 + info->xoffs && hpos1 < 0x7f8 + info->xoffs) ? src1[hpos1 - (0x5f8 + info->xoffs)] : 3;
+						int pix1 = (hpos1 < 0x200) ? src1[hpos1] : 3;
 						dest[x] = color_table[0x10 + pix1];
+						hpos1 = (hpos1 + 1) & 0xfff;
 					}
 					break;
 			}
@@ -2057,13 +2984,19 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 	/* determine the parameters of the road */
 	switch (type)
 	{
+		case SEGAIC16_ROAD_HANGON:
+		case SEGAIC16_ROAD_SHARRIER:
+			info->draw = segaic16_road_hangon_draw;
+			segaic16_road_hangon_decode(info);
+			break;
+		
 		case SEGAIC16_ROAD_OUTRUN:
 			info->draw = segaic16_road_outrun_draw;
 			segaic16_road_outrun_decode(info);
 			break;
-
+		
 		default:
-			osd_die("Invalid sprite system specified in segaic16_road_init\n");
+			osd_die("Invalid road system specified in segaic16_road_init\n");
 	}
 	return 0;
 }

@@ -33,6 +33,7 @@ struct update_regs_def {
 	int sprite_h_start[8];
 	int sprite_attached[8];
 	int sprite_dma_enabled;
+	UINT16 sprite_data[8][2];
 /* update time variables */
 	int	current_bit;
 	int fetch_pending;
@@ -42,6 +43,8 @@ struct update_regs_def {
 	unsigned char *RAM;
 	unsigned int *sprite_in_scanline;
 	int once_per_frame; /* for unimplemented modes */
+/* HAM mode */
+	UINT16 last_ham_pixel_color;
 };
 
 static struct update_regs_def update_regs;
@@ -237,7 +240,6 @@ void amiga_sprite_set_pos( int spritenum, unsigned short data ) {
 }
 
 void amiga_sprite_set_ctrl( int spritenum, unsigned short data ) {
-	int i;
 	
 	update_regs.sprite_h_start[spritenum] &= 0x1fe;
 	update_regs.sprite_h_start[spritenum] |= data & 1;
@@ -255,12 +257,6 @@ void amiga_sprite_set_ctrl( int spritenum, unsigned short data ) {
 	if ( update_regs.sprite_v_start[spritenum] > update_regs.sprite_v_stop[spritenum] )
 		update_regs.sprite_v_stop[spritenum] = update_regs.sprite_v_start[spritenum];
 	
-	for( i = update_regs.sprite_v_start[spritenum]; i < update_regs.sprite_v_stop[spritenum]; i++ ) {
-		if ( i < Machine->drv->screen_height ) {
-			if ( update_regs.sprite_in_scanline[i] < ( update_regs.sprite_h_start[spritenum] + 16 ) )
-				 update_regs.sprite_in_scanline[i] = ( update_regs.sprite_h_start[spritenum] + 16 );
-		}
-	}			
 }	
 
 void amiga_reload_sprite_info( int spritenum ) {
@@ -271,7 +267,6 @@ void amiga_reload_sprite_info( int spritenum ) {
 
 	amiga_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
 
-	custom_regs.SPRxPT[spritenum] += 4;
 }
 
 INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
@@ -285,11 +280,6 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 		if ( x < update_regs.sprite_h_start[num] || x > update_regs.sprite_h_start[num] + 15 )
 			return;
 
-		if ( y >= update_regs.sprite_v_stop[num] ) {
-			amiga_reload_sprite_info( num );
-			return;
-		}
-
 		bit = 15 - ( x - update_regs.sprite_h_start[num] );
 
 		/* check for attached sprites */
@@ -297,10 +287,10 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 			unsigned short word[4];
 			int color, i;
 
-			word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
-			word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
-			word[2] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+1]] );
-			word[3] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num+1]+2] );
+			word[0] = update_regs.sprite_data[num][0];
+			word[1] = update_regs.sprite_data[num][1];
+			word[2] = update_regs.sprite_data[num+1][0];
+			word[3] = update_regs.sprite_data[num+1][1];
 
 			color = 0;
 
@@ -314,8 +304,8 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 				unsigned short word[2];
 				int color, i;
 
-				word[0] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
-				word[1] = *((data16_t *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
+				word[0] = update_regs.sprite_data[num][0];
+				word[1] = update_regs.sprite_data[num][1];
 
 				color = 0;
 
@@ -329,8 +319,38 @@ INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 			}
 		}
 
-		if ( bit == 0 )
-			custom_regs.SPRxPT[num] += 4;
+	}
+}
+
+void amiga_sprite_dma( int scanline )
+{
+	int num;
+	UINT16 dataA, dataB;
+
+	if ( ( custom_regs.DMACON & ( DMACON_SPREN | DMACON_DMAEN ) ) == ( DMACON_SPREN | DMACON_DMAEN ) )
+	{
+		for ( num = 0; num < 8; num++ )
+		{
+			if ( scanline >= update_regs.sprite_v_start[num] && scanline <= update_regs.sprite_v_stop[num] )
+			{
+				custom_regs.SPRxPT[num] += 4;
+				dataA = *((UINT16 *) &update_regs.RAM[custom_regs.SPRxPT[num]] );
+				dataB = *((UINT16 *) &update_regs.RAM[custom_regs.SPRxPT[num]+2] );
+
+				if ( scanline >= update_regs.sprite_v_stop[num] )
+				{
+					amiga_sprite_set_pos( num, dataA );
+					amiga_sprite_set_ctrl( num, dataB );
+					update_regs.sprite_in_scanline[scanline] = 0;
+				}
+				else
+				{
+					update_regs.sprite_data[num][0] = dataA;
+					update_regs.sprite_data[num][1] = dataB;
+					update_regs.sprite_in_scanline[scanline] = update_regs.sprite_h_start[num] + 16;
+				}
+			}
+		}
 	}
 }
 
@@ -624,7 +644,34 @@ UNIMPLEMENTED( render_pixel_dualplayfield_hires_lace_sprites )
 	
 ***********************************************************************************/
 
-UNIMPLEMENTED( render_pixel_ham )
+BEGIN_UPDATE( render_pixel_ham ) {
+	/* now we're ready to render it */
+	int color = 0;
+	
+	for ( i = 0; i < planes; i++ ) {
+		color |= ( ( ( custom_regs.BPLxDAT[i] ) >> update_regs.current_bit ) & 1 ) << i;
+	}
+
+	switch( (color >> 4) & 0x3 )
+	{
+		case 0x0:
+			update_regs.last_ham_pixel_color = custom_regs.COLOR[color];
+			break;
+		case 0x1:
+			update_regs.last_ham_pixel_color = (update_regs.last_ham_pixel_color & 0x0ff0) | (color & 0xf);
+			break;
+		case 0x2:
+			update_regs.last_ham_pixel_color = (update_regs.last_ham_pixel_color & 0xf0ff) | ((color & 0xf) << 8);
+			break;
+		case 0x3:
+			update_regs.last_ham_pixel_color = (update_regs.last_ham_pixel_color & 0xff0f) | ((color & 0xf) << 4);
+			break;
+	}
+
+	dst[x] = Machine->pens[update_regs.last_ham_pixel_color];
+
+} END_UPDATE(1)
+
 UNIMPLEMENTED( render_pixel_ham_lace )
 UNIMPLEMENTED( render_pixel_ham_sprites )
 UNIMPLEMENTED( render_pixel_ham_lace_sprites )
@@ -694,91 +741,126 @@ INLINE int get_mode( void ) {
 	return ret;
 }
 
+VIDEO_START(amiga)
+{
+	/* init cached data */
+	update_regs.old_COLOR0 = -1;
+	update_regs.old_DIWSTRT = -1;
+	update_regs.old_DIWSTOP = -1;
+	update_regs.old_DDFSTRT = -1;
+	update_regs.RAM = memory_region(REGION_CPU1);
+	
+	update_regs.sprite_in_scanline = auto_malloc( Machine->drv->screen_height * sizeof( int ) );
+	if ( update_regs.sprite_in_scanline == 0 )
+		return 1;
+
+	memset( update_regs.sprite_in_scanline, 0, Machine->drv->screen_height * sizeof( int ) );
+
+	return video_start_generic_bitmapped();
+}
+
 VIDEO_UPDATE(amiga)
+{
+#ifdef MESS
+	video_update_generic_bitmapped(bitmap, cliprect, do_skip);
+#else
+	video_update_generic_bitmapped(bitmap, cliprect);
+#endif
+}
+
+void amiga_prepare_frame(void)
+{
+	/* reset the copper */
+	copper_reset();
+
+	/* preload HAM pixel color */
+	update_regs.last_ham_pixel_color = update_regs.back_color;
+
+}
+
+void amiga_render_scanline(int scanline)
 {
 	int planes = 0, sw = Machine->drv->screen_width;
 	int min_x = Machine->visible_area.min_x;
 	int y, x, start_x, end_x, line_done;
 	unsigned short *dst;
+	int bitplane_dma_disabled;
+	render_pixel_def local_render;
 
-	update_regs.once_per_frame = 0;
+	amiga_sprite_dma(scanline);
 
-	/* reset the copper */
-	copper_reset();
-
+	y = scanline;
+	
 	/* normalize some register values */
 	if ( custom_regs.DDFSTOP < custom_regs.DDFSTRT )
 		custom_regs.DDFSTOP = custom_regs.DDFSTRT;
 	
-	for ( y = 0; y < Machine->drv->screen_height; y++ ) {
-		int bitplane_dma_disabled;
-		render_pixel_def local_render;
+	/* start of a new line, signal we're not done with it and fill up vars */
+	line_done = 0;
+	start_x = 0;
+	dst = ( unsigned short * )tmpbitmap->line[y];
+
+	update_regs.fetch_pending = 1;
+	update_regs.fetch_count = 0;
+
+	/* make sure we complete the line */
+	do {
 		
-		/* start of a new line, signal we're not done with it and fill up vars */
-		line_done = 0;
-		start_x = 0;
-		dst = ( unsigned short * )bitmap->line[y];
+		/* start of a new line... check if the copper is (still) enabled */
+		line_done = copper_update( start_x, y, &end_x );
+		
+		if ( line_done )
+			end_x = sw;
+		
+		/* precaulculate some update registers */
+		init_update_regs();
+		
+		/* get the number of planes */
+		planes = ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) >> 12;
 
-		update_regs.fetch_pending = 1;
-		update_regs.fetch_count = 0;
-
-		/* make sure we complete the line */
-		do {
+		/* precalculate if the bitplane dma is enabled */
+		bitplane_dma_disabled = ( custom_regs.DMACON & ( DMACON_BPLEN | DMACON_DMAEN ) ) != ( DMACON_BPLEN | DMACON_DMAEN );
+		
+		
+		/***************************************************************************
+			First we check for a number of conditions to see if we can render image
+			pixels yet. Otherwise, we fill with the background color.
+		 **************************************************************************/
+		
+		if ( bitplane_dma_disabled || planes == 0 || y < update_regs.v_start || y >= update_regs.v_stop ) {
+			for ( x = start_x; x < end_x; x++ )
+				dst[x] = update_regs.back_color;
+		} else { /* render the pixels (inlined for readability ) */
+			if ( update_regs.sprite_in_scanline[y] >= update_regs.h_start )
+				local_render = render_pixel[get_mode()+10];
+			else
+				local_render = render_pixel[get_mode()];
 			
-			/* start of a new line... check if the copper is (still) enabled */
-			line_done = copper_update( start_x, y, &end_x );
-			
-			if ( line_done )
-				end_x = sw;
-			
-			/* precaulculate some update registers */
-			init_update_regs();
-			
-			/* get the number of planes */
-			planes = ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) >> 12;
-
-			/* precalculate if the bitplane dma is enabled */
-			bitplane_dma_disabled = ( custom_regs.DMACON & ( DMACON_BPLEN | DMACON_DMAEN ) ) != ( DMACON_BPLEN | DMACON_DMAEN );
-			
-			
-			/***************************************************************************
-				First we check for a number of conditions to see if we can render image
-				pixels yet. Otherwise, we fill with the background color.
-			 **************************************************************************/
-			
-			if ( bitplane_dma_disabled || planes == 0 || y < update_regs.v_start || y >= update_regs.v_stop ) {
+			/* first clear buffer */
+			if ( start_x == 0 ) {
 				for ( x = start_x; x < end_x; x++ )
 					dst[x] = update_regs.back_color;
-			} else { /* render the pixels (inlined for readability ) */
-				if ( update_regs.sprite_in_scanline[y] >= update_regs.h_start )
-					local_render = render_pixel[get_mode()+10];
-				else
-					local_render = render_pixel[get_mode()];
-				
-				/* first clear buffer */
-				if ( start_x == 0 ) {
-					for ( x = start_x; x < end_x; x++ )
-						dst[x] = update_regs.back_color;
-				} else {
-					for ( x = start_x + update_regs.h_scroll[0]; x < end_x; x++ )
-						dst[x] = update_regs.back_color;
-				}
-
-				for ( x = start_x; x < end_x; x++ )
-					(*local_render)( bitmap, dst, planes, x, y, min_x );
+			} else {
+				for ( x = start_x + update_regs.h_scroll[0]; x < end_x; x++ )
+					dst[x] = update_regs.back_color;
 			}
-			
-			/* now we start from where we left off */
-			start_x = end_x;
 
-		} while ( !line_done );
-
-		if ( y >= update_regs.v_start && y < update_regs.v_stop )
-			update_modulos( planes ); /* update modulos */
+			for ( x = start_x; x < end_x; x++ )
+				(*local_render)( tmpbitmap, dst, planes, x, y, min_x );
+		}
 		
-		update_regs.sprite_in_scanline[y] = 0;
-	}
+		/* now we start from where we left off */
+		start_x = end_x;
+
+	} while ( !line_done );
+
+	if ( y >= update_regs.v_start && y < update_regs.v_stop )
+		update_modulos( planes ); /* update modulos */
+	
+	update_regs.sprite_in_scanline[y] = 0;
+
 }
+
 
 PALETTE_INIT( amiga )
 {
@@ -800,20 +882,3 @@ PALETTE_INIT( amiga )
 	}
 }
 
-VIDEO_START(amiga)
-{
-	/* init cached data */
-	update_regs.old_COLOR0 = -1;
-	update_regs.old_DIWSTRT = -1;
-	update_regs.old_DIWSTOP = -1;
-	update_regs.old_DDFSTRT = -1;
-	update_regs.RAM = memory_region(REGION_CPU1);
-	
-	update_regs.sprite_in_scanline = auto_malloc( Machine->drv->screen_height * sizeof( int ) );
-	if ( update_regs.sprite_in_scanline == 0 )
-		return 1;
-
-	memset( update_regs.sprite_in_scanline, 0, Machine->drv->screen_height * sizeof( int ) );
-
-	return 0;
-}

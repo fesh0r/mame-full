@@ -1061,20 +1061,6 @@ NGIN3
 NGIN4
 	/* Fake*/
 	PORT_START_TAG("IN5")
-#if 0
-	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
-//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-//	PORT_DIPSETTING(	0x00,"Home" )
-//	PORT_DIPSETTING(	0x04,"Arcade" )
-	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
-	PORT_DIPSETTING(	0x60,"2" )
-//	PORT_DIPSETTING(	0x40,"2" )
-	PORT_DIPSETTING(	0x20,"4" )
-	PORT_DIPSETTING(	0x00,"6" )
-#endif
 
 NGIN6
 INPUT_PORTS_END
@@ -1110,20 +1096,6 @@ NGIN2
 NGIN4
 	/* Fake*/
 	PORT_START_TAG("IN5")
-#if 0
-	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
-//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-//	PORT_DIPSETTING(	0x00,"Home" )
-//	PORT_DIPSETTING(	0x04,"Arcade" )
-	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
-	PORT_DIPSETTING(	0x60,"2" )
-//	PORT_DIPSETTING(	0x40,"2" )
-	PORT_DIPSETTING(	0x20,"4" )
-	PORT_DIPSETTING(	0x00,"6" )
-#endif
 
 NGIN6
 
@@ -1184,18 +1156,9 @@ INPUT_PORTS_START( irrmaze )
 
 	NGIN3
 	NGIN4
-	
+
 	/* Fake */
 	PORT_START_TAG("IN5")
-#if 0
-	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
-//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-//	PORT_DIPSETTING(	0x00,"Home" )
-//	PORT_DIPSETTING(	0x04,"Arcade" )
-#endif
 
 	PORT_START_TAG("IN6")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1230,29 +1193,15 @@ INPUT_PORTS_START( popbounc )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 
-	NGIN2	
+	NGIN2
 	NGIN3
 	NGIN4
-	
+
 	/* Fake*/
 	PORT_START_TAG("IN5")
-#if 0
-	PORT_DIPNAME( 0x03, 0x02,"Territory" )
-	PORT_DIPSETTING(	0x00,DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x01,DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x02,DEF_STR( Europe ) )
-//	PORT_DIPNAME( 0x04, 0x04,"Machine Mode" )
-//	PORT_DIPSETTING(	0x00,"Home" )
-//	PORT_DIPSETTING(	0x04,"Arcade" )
-	PORT_DIPNAME( 0x60, 0x60,"Game Slots" )		// Stored at 0x47 of NVRAM
-	PORT_DIPSETTING(	0x60,"2" )
-//	PORT_DIPSETTING(	0x40,"2" )
-	PORT_DIPSETTING(	0x20,"4" )
-	PORT_DIPSETTING(	0x00,"6" )
-#endif
-	
+
 	NGIN6
-	
+
 	PORT_START_TAG("IN7")		/* IN0 multiplexed */
 	PORT_BIT( 0xff, 0x7f, IPT_DIAL ) PORT_SENSITIVITY(10) PORT_KEYDELTA(20)
 
@@ -1427,11 +1376,12 @@ SYSTEM_BIOS_START( neogeo )
 	SYSTEM_BIOS_ADD( 4, "asia",       "Asia MVS (Ver. 3)" )
 	SYSTEM_BIOS_ADD( 5, "japan",      "Japan MVS (Ver. 3)" )
 	SYSTEM_BIOS_ADD( 6, "japan-s2",   "Japan MVS (Ver. 2)" )
+	SYSTEM_BIOS_ADD( 7, "japan-s1",   "Japan MVS (Ver. 1)" )
 
-//	SYSTEM_BIOS_ADD( 7, "uni-bios.10","Unibios MVS (Hack, Ver. 1.0)" )
-//	SYSTEM_BIOS_ADD( 8, "uni-bios.11","Unibios MVS (Hack, Ver. 1.1)" )
-//	SYSTEM_BIOS_ADD( 9, "debug",      "Debug MVS (Hack?)" )
-//	SYSTEM_BIOS_ADD(10, "asia-aes",   "Asia AES" )
+//	SYSTEM_BIOS_ADD( 8, "uni-bios.10","Unibios MVS (Hack, Ver. 1.0)" )
+//	SYSTEM_BIOS_ADD( 9, "uni-bios.11","Unibios MVS (Hack, Ver. 1.1)" )
+//	SYSTEM_BIOS_ADD(10, "debug",      "Debug MVS (Hack?)" )
+//	SYSTEM_BIOS_ADD(11, "asia-aes",   "Asia AES" )
 SYSTEM_BIOS_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \
@@ -1445,11 +1395,12 @@ SYSTEM_BIOS_END
 	ROM_LOAD16_WORD_SWAP_BIOS( 4, "asia-s3.rom",  0x00000, 0x020000, CRC(91b64be3) SHA1(720a3e20d26818632aedf2c2fd16c54f213543e1) ) /* Asia */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 5, "vs-bios.rom",  0x00000, 0x020000, CRC(f0e8f27d) SHA1(ecf01eda815909f1facec62abf3594eaa8d11075) ) /* Japan, Ver 6 VS Bios */ \
 	ROM_LOAD16_WORD_SWAP_BIOS( 6, "sp-j2.rom",    0x00000, 0x020000, CRC(acede59c) SHA1(b6f97acd282fd7e94d9426078a90f059b5e9dd91) ) /* Japan, Older */ \
+	ROM_LOAD16_WORD_SWAP_BIOS( 7, "sp1.jipan.1024",0x00000, 0x020000,  CRC(9fb0abe4) SHA1(18a987ce2229df79a8cf6a84f968f0e42ce4e59d) ) /* Japan, Older */ \
 
-//	ROM_LOAD16_WORD_SWAP_BIOS( 7, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
-//	ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
-//	ROM_LOAD16_WORD_SWAP_BIOS( 9, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
-//	ROM_LOAD16_WORD_SWAP_BIOS(10, "aes-bios.bin", 0x00000, 0x020000, CRC(d27a71f1) SHA1(1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07) ) /* AES Console (Asia?) Bios */
+//	ROM_LOAD16_WORD_SWAP_BIOS( 8, "uni-bios.10",  0x00000, 0x020000, CRC(0ce453a0) SHA1(3b4c0cd26c176fc6b26c3a2f95143dd478f6abf9) ) /* Universe Bios v1.0 (hack) */
+//	ROM_LOAD16_WORD_SWAP_BIOS( 9, "uni-bios.11",  0x00000, 0x020000, CRC(5dda0d84) SHA1(4153d533c02926a2577e49c32657214781ff29b7) ) /* Universe Bios v1.1 (hack) */
+//	ROM_LOAD16_WORD_SWAP_BIOS(10, "neodebug.rom", 0x00000, 0x020000, CRC(698ebb7d) SHA1(081c49aa8cc7dad5939833dc1b18338321ea0a07) ) /* Debug (Development) Bios */
+//	ROM_LOAD16_WORD_SWAP_BIOS(11, "aes-bios.bin", 0x00000, 0x020000, CRC(d27a71f1) SHA1(1b3b22092f30c4d1b2c15f04d1670eb1e9fbea07) ) /* AES Console (Asia?) Bios */
 
 /* note you'll have to modify the last for lines of each block to use the extra bios roms,
    they're hacks / homebrew / console bios roms so Mame doesn't list them by default */

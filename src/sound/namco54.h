@@ -25,17 +25,18 @@
 
 struct namco_54xx_interface
 {
-	int		baseclock;			/* clock */
+	int		baseclock;		/* clock */
+	int		mixing_level;	/* volume */
 	double	r1[3];
 	double	r2[3];
 	double	r3[3];
 	double	r4[3];
 	double	c1[3];
 	double	c2[3];
-	int		gain;
 };
 
 int namco_54xx_sh_start(const struct MachineSound *msound);
+void namco_54xx_sh_reset(void);
 void namco_54xx_sh_stop(void);
 
 void namcoio_54XX_write(int data);

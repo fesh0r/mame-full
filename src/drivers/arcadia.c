@@ -9,15 +9,13 @@ SportTime Bowling
 Leader Board
 Ninja Mission
 Road Wars
+Sidewinder
+Space Ranger
+SportTime Table Hockey
 Spot
 Magic Johnson's Fast Break
 World Darts
 Xenon
-
-Non-working games supported:
-Sidewinder
-Space Ranger
-SportTime Table Hockey
 
 Other Arcadia games (not dumped):
 Aaargh!
@@ -54,6 +52,13 @@ Maybe there were two system layouts - first for standalone games and second for
 several games with bios roms contained on main board?
 - Revise autoconfig support, I think that some rom should map into autoconfig area
 somehow? At least boot vectors can be read from roms.
+
+Issues:
+- ar_fast is missing score and time display, this needs non-dma sprite emulation
+- ar_sdwr tries to write above chip mem, at the moment chip mem is extended to 1MB to avoid crash
+  it looks that incorrect blitter accesses should be discarded
+- ar_dart has some sprite glitches on game screen
+- ar_sdwr has some gfx glitches on background
 
 ***************************************************************************/
 
@@ -192,9 +197,9 @@ static MACHINE_DRIVER_START( arcadia )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(amiga_vblank_irq,1)
+	MDRV_CPU_VBLANK_INT(amiga_irq, 262)
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( amiga )
@@ -202,7 +207,7 @@ static MACHINE_DRIVER_START( arcadia )
 
 
     /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(456, 262)
 	MDRV_VISIBLE_AREA(120, 456-1, 32, 262-1)
 	MDRV_GFXDECODE( gfxdecodeinfo )
@@ -507,7 +512,7 @@ There is also a PAL16L8 but I cannot read that.
 */
 
 ROM_START( ar_sdwr )
-	ROM_REGION(0x80000, REGION_CPU1, 0) /* for ram, etc */
+	ROM_REGION(0x100000, REGION_CPU1, 0) /* for ram, etc */
 
 	ROM_REGION(0x80000, REGION_USER1, 0)
 	ROM_LOAD16_WORD_SWAP( "kick13.rom", 0x000000, 0x80000, CRC(f6290043) SHA1(90933936cce43ca9bc6bf375662c076b27e3c458) )
@@ -1032,6 +1037,7 @@ DRIVER_INIT( ar_xeon )
 GAMEX( 1988, ar_bios,	0,		 arcadia, arcadia, 0,		 0, "Arcadia Systems", "Arcadia System BIOS", NOT_A_DRIVER )
 
 /* working */
+GAMEX( 1988, ar_airh,	ar_bios, arcadia, arcadia, ar_airh,	 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_bowl,	ar_bios, arcadia, arcadia, ar_bowl,	 0, "Arcadia Systems", "SportTime Bowling (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1987, ar_dart,	ar_bios, arcadia, arcadia, ar_dart,	 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_fast,	ar_bios, arcadia, arcadia, ar_fast,  0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8?)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -1039,17 +1045,7 @@ GAMEX( 1988, ar_ldrb,	ar_bios, arcadia, arcadia, ar_ldrb,	 0, "Arcadia Systems",
 GAMEX( 1988, ar_ldrba,	ar_ldrb, arcadia, arcadia, ar_ldrba, 0, "Arcadia Systems", "Leader Board Golf (Arcadia, V 2.5)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1987, ar_ninj,	ar_bios, arcadia, arcadia, ar_ninj,  0, "Arcadia Systems", "Ninja Mission (Arcadia, V 2.5)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1988, ar_rdwr,	ar_bios, arcadia, arcadia, ar_rdwr,	 0, "Arcadia Systems", "Road Wars (Arcadia, V 2.3)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1988, ar_sdwr,	ar_bios, arcadia, arcadia, ar_sdwr,	 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1990, ar_spot,	ar_bios, arcadia, arcadia, ar_spot,	 0, "Arcadia Systems", "Spot (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1987, ar_sprg,	ar_bios, arcadia, arcadia, ar_sprg,	 0, "Arcadia Systems", "Space Ranger (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1987, ar_xeon,	ar_bios, arcadia, arcadia, ar_xeon,	 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-
-/* almost playable */
-/* slight gfx bugs (video timing)*/
-GAMEX( 1987, ar_sprg,	ar_bios, arcadia, arcadia, ar_sprg,	 0, "Arcadia Systems", "Space Ranger (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-
-/* not playable */
-/* gfx glitches, no player sprites (?) in game */
-GAMEX( 1988, ar_airh,	ar_bios, arcadia, arcadia, ar_airh,	 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-
-/* crashes due to incorrect blitter memory access */
-GAMEX( 1988, ar_sdwr,	ar_bios, arcadia, arcadia, ar_sdwr,	 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-

@@ -2005,6 +2005,25 @@ ROM_START( kabukiz )
 	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
 
 	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "b50-08.1e",  0x00000, 0x08000, CRC(cb92d34c) SHA1(3a666f0e3ff9d3daa599123edee228d94eeae754) )
+	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the third CPU */
+	ROM_LOAD( "b50_07.u34", 0x00000, 0x10000, CRC(fdc300c9) SHA1(1b576662b7b824c8f20a45aad6f88b90c82c5553) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b50-04.u35", 0x000000, 0x80000, CRC(04829aa9) SHA1(a501ec7c802478fc41ec8ef4270b1a6872bcbf34) )
+	ROM_LOAD( "b50-03.u39", 0x080000, 0x80000, CRC(31489a4c) SHA1(a4b7e00e2074287b47c7e16add963c1470534376) )
+	ROM_LOAD( "b50-02.u43", 0x100000, 0x80000, CRC(90b8a8e7) SHA1(a55e327307606142fbb9d500e757655b35e1f252) )
+	ROM_LOAD( "b50-01.u46", 0x180000, 0x80000, CRC(f4277751) SHA1(8f50f843f0eda30d639ba397889236ff0a3edce5) )
+ROM_END
+
+ROM_START( kabukizj )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 64k + bankswitch areas for the first CPU */
+	ROM_LOAD( "b50_05.u1",  0x00000, 0x08000, CRC(9cccb129) SHA1(054faf7657bad7237182e36bcc4388b1748af935) )
+	ROM_CONTINUE(           0x18000, 0x18000 )		/* banked at 8000-bfff */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "b50_06.u3",  0x00000, 0x08000, CRC(45650aab) SHA1(00d1fc6044a6ad1e82476ccbe730907b4d780cb9) )
 	ROM_CONTINUE(           0x10000, 0x08000 )		/* banked at 8000-9fff */
 
@@ -2050,5 +2069,6 @@ GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Cor
 GAME( 1988, tnzs,     0,        tnzsb,    tnzsb,    tnzsb,    ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, newer)" )
 GAME( 1988, tnzsj,    tnzs,     tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
 GAME( 1988, tnzso,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, older)" )
-GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation Japan", "Kabuki-Z (World)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX(1988, kabukizj, kabukiz,  kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )

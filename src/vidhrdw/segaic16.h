@@ -22,9 +22,10 @@ WRITE16_HANDLER( segaic16_paletteram_w );
 /* tilemap systems */
 #define SEGAIC16_MAX_TILEMAPS		1
 
-#define SEGAIC16_TILEMAP_16A		0
-#define SEGAIC16_TILEMAP_16B		1
-#define SEGAIC16_TILEMAP_16B_ALT	2
+#define SEGAIC16_TILEMAP_HANGON		0
+#define SEGAIC16_TILEMAP_16A		1
+#define SEGAIC16_TILEMAP_16B		2
+#define SEGAIC16_TILEMAP_16B_ALT	3
 
 #define SEGAIC16_TILEMAP_FOREGROUND	0
 #define SEGAIC16_TILEMAP_BACKGROUND	1
@@ -44,24 +45,28 @@ WRITE16_HANDLER( segaic16_textram_0_w );
 /* sprite systems */
 #define SEGAIC16_MAX_SPRITES		2
 
-#define SEGAIC16_SPRITES_16A		0
-#define SEGAIC16_SPRITES_HANGON		1
+#define SEGAIC16_SPRITES_HANGON		0
+#define SEGAIC16_SPRITES_16A		1
 #define SEGAIC16_SPRITES_16B		2
-#define SEGAIC16_SPRITES_OUTRUN		3
-#define SEGAIC16_SPRITES_XBOARD		4
-#define SEGAIC16_SPRITES_YBOARD		5
+#define SEGAIC16_SPRITES_SHARRIER	3
+#define SEGAIC16_SPRITES_OUTRUN		4
+#define SEGAIC16_SPRITES_XBOARD		5
+#define SEGAIC16_SPRITES_YBOARD		6
 
 int segaic16_sprites_init(int which, int type, int colorbase, int xoffs);
 void segaic16_sprites_draw(int which, struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 void segaic16_sprites_set_bank(int which, int banknum, int offset);
 void segaic16_sprites_set_flip(int which, int flip);
+void segaic16_sprites_set_shadow(int which, int shadow);
 WRITE16_HANDLER( segaic16_sprites_draw_0_w );
 WRITE16_HANDLER( segaic16_sprites_draw_1_w );
 
 /* road systems */
 #define SEGAIC16_MAX_ROADS			1
 
-#define SEGAIC16_ROAD_OUTRUN		0
+#define SEGAIC16_ROAD_HANGON		0
+#define SEGAIC16_ROAD_SHARRIER		1
+#define SEGAIC16_ROAD_OUTRUN		2
 
 #define SEGAIC16_ROAD_BACKGROUND	0
 #define SEGAIC16_ROAD_FOREGROUND	1

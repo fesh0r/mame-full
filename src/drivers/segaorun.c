@@ -1209,7 +1209,7 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Super Hangon
-	CPU: FD1094 (317-????)
+	CPU: FD1089B (317-0034)
 */
 ROM_START( shangon )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1305,6 +1305,108 @@ ROM_END
 
 /**************************************************************************************************************************
 	Super Hangon
+	CPU: FD1089B (317-0034)
+*/
+ROM_START( shangonb )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
+	ROM_LOAD16_BYTE( "epr10636a.133", 0x000000, 0x10000, CRC(74a64f4f) SHA1(3266a9a3c68e147bc8626de7ec45b59fd28f9d1d) )
+	ROM_LOAD16_BYTE( "epr10634a.118", 0x000001, 0x10000, CRC(1608cb4a) SHA1(56b0a6a0a4951f15a269d94d18821809ac0d3d53) )
+	ROM_LOAD16_BYTE( "epr10637a.132", 0x020000, 0x10000, CRC(ad6c1308) SHA1(ee63168205bcb8b2c3dcbc3d7ba8a7f8f8a85952) )
+	ROM_LOAD16_BYTE( "epr10635a.117", 0x020001, 0x10000, CRC(a2415595) SHA1(2a8b960ea70066bf43c7b3772a0ed53d7c737b2c) )
+
+	ROM_REGION( 0x60000, REGION_CPU2, 0 ) /* second 68000 CPU */
+	ROM_LOAD16_BYTE( "ep10640.76", 0x00000, 0x10000, CRC(02be68db) SHA1(8c9f98ee49db54ee53b721ecf53f91737ae6cd73) )
+	ROM_LOAD16_BYTE( "ep10638.58", 0x00001, 0x10000, CRC(f13e8bee) SHA1(1c16c018f58f1fb49e240314a7e97a947087fad9) )
+	ROM_LOAD16_BYTE( "ep10641.75", 0x20000, 0x10000, CRC(38c3f808) SHA1(36fae99b56980ef33853170afe10b363cd41c053) )
+	ROM_LOAD16_BYTE( "ep10639.57", 0x20001, 0x10000, CRC(8cdbcde8) SHA1(0bcb4df96ee16db3dd4ce52fccd939f48a4bc1a0) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep10652.54",        0x00000, 0x08000, CRC(260286f9) SHA1(dc7c8d2c6ef924a937328685eed19bda1c8b1819) )
+	ROM_LOAD( "ep10651.55",        0x08000, 0x08000, CRC(c609ee7b) SHA1(c6dacf81cbfe7e5df1f9a967cf571be1dcf1c429) )
+	ROM_LOAD( "ep10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
+
+	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "ep10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "ep10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
+	ROM_LOAD16_BYTE( "ep10676.7",   0x020001, 0x010000, CRC(25ebf2c5) SHA1(abcf673ae4e280417dd9f46d18c0ec7c0e4802ae) )
+	ROM_LOAD16_BYTE( "ep10683.15",  0x020000, 0x010000, CRC(6365d2e9) SHA1(688e2ba194e859f86cd3486c2575ebae257e975a) )
+	ROM_LOAD16_BYTE( "ep10677.6",   0x040001, 0x010000, CRC(8a57b8d6) SHA1(df1a31559dd2d1e7c2c9d800bf97526bdf3e84e6) )
+	ROM_LOAD16_BYTE( "ep10684.14",  0x040000, 0x010000, CRC(3aff8910) SHA1(4b41a49a7f02363424e814b37edce9a7a44a112e) )
+	ROM_LOAD16_BYTE( "ep10678.5",   0x060001, 0x010000, CRC(af473098) SHA1(a2afaba1cbf672949dc50e407b46d7e9ae183774) )
+	ROM_LOAD16_BYTE( "ep10685.13",  0x060000, 0x010000, CRC(80bafeef) SHA1(f01bcf65485e60f34e533295a896fca0b92e5b14) )
+	ROM_LOAD16_BYTE( "ep10679.4",   0x080001, 0x010000, CRC(03bc4878) SHA1(548fc58bcc620204e30fa12fa4c4f0a3f6a1e4c0) )
+	ROM_LOAD16_BYTE( "ep10686.12",  0x080000, 0x010000, CRC(274b734e) SHA1(906fa528659bc17c9b4744cec52f7096711adce8) )
+	ROM_LOAD16_BYTE( "ep10680.3",   0x0a0001, 0x010000, CRC(9f0677ed) SHA1(5964642b70bfad418da44f2d91476f887b021f74) )
+	ROM_LOAD16_BYTE( "ep10687.11",  0x0a0000, 0x010000, CRC(508a4701) SHA1(d17aea2aadc2e2cd65d81bf91feb3ef6923d5c0b) )
+	ROM_LOAD16_BYTE( "ep10681.2",   0x0c0001, 0x010000, CRC(b176ea72) SHA1(7ec0eb0f13398d014c2e235773ded00351edb3e2) )
+	ROM_LOAD16_BYTE( "ep10688.10",  0x0c0000, 0x010000, CRC(42fcd51d) SHA1(0eacb3527dc21746e5b901fcac83f2764a0f9e2c) )
+
+	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* road gfx */
+	ROM_LOAD( "mp10642.47", 0x0000, 0x8000, CRC(7836bcc3) SHA1(26f308bf96224311ddf685799d7aa29aac42dd2f) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
+	ROM_LOAD( "ic88", 0x0000, 0x08000, CRC(1254efa6) SHA1(997770ccdd776de6e335a6d8b1e15d200cbd4410) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* sound PCM data */
+	ROM_LOAD( "ep10643.66", 0x00000, 0x08000, CRC(06f55364) SHA1(fd685795e12541e3d0059d383fab293b3980d247) )
+	ROM_LOAD( "ep10644.67", 0x10000, 0x08000, CRC(b41d541d) SHA1(28bbfa5edaa4a5901c74074354ba6f14d8f42ff6) )
+	ROM_LOAD( "ep10645.68", 0x20000, 0x08000, CRC(a60dabff) SHA1(bbef0fb0d7837cc7efc866226bfa2bd7fab06459) )
+	ROM_LOAD( "ep10646.69", 0x30000, 0x08000, CRC(473cc411) SHA1(04ca2d047eb59581cd5d76e0ac6eca8b19eef497) )
+ROM_END
+
+/**************************************************************************************************************************
+	Super Hangon
+	CPU: FD1089B (317-0034)
+*/
+ROM_START( shangonc )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
+	ROM_LOAD16_BYTE( "epr10789.133", 0x000000, 0x10000, CRC(6092c5ce) SHA1(dc010ab6d4dbbcb2f38de9f4f80674e9e1502dea) )
+	ROM_LOAD16_BYTE( "epr10788.118", 0x000001, 0x10000, CRC(c3d8a1ea) SHA1(b7f5de5e9ab9e5fb59937c11acd960f8e4a9bc2f) )
+	ROM_LOAD16_BYTE( "epr10637a.132", 0x020000, 0x10000, CRC(ad6c1308) SHA1(ee63168205bcb8b2c3dcbc3d7ba8a7f8f8a85952) )
+	ROM_LOAD16_BYTE( "epr10635a.117", 0x020001, 0x10000, CRC(a2415595) SHA1(2a8b960ea70066bf43c7b3772a0ed53d7c737b2c) )
+
+	ROM_REGION( 0x60000, REGION_CPU2, 0 ) /* second 68000 CPU */
+	ROM_LOAD16_BYTE( "ep10640.76", 0x00000, 0x10000, CRC(02be68db) SHA1(8c9f98ee49db54ee53b721ecf53f91737ae6cd73) )
+	ROM_LOAD16_BYTE( "ep10638.58", 0x00001, 0x10000, CRC(f13e8bee) SHA1(1c16c018f58f1fb49e240314a7e97a947087fad9) )
+	ROM_LOAD16_BYTE( "ep10641.75", 0x20000, 0x10000, CRC(38c3f808) SHA1(36fae99b56980ef33853170afe10b363cd41c053) )
+	ROM_LOAD16_BYTE( "ep10639.57", 0x20001, 0x10000, CRC(8cdbcde8) SHA1(0bcb4df96ee16db3dd4ce52fccd939f48a4bc1a0) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "ep10652.54",        0x00000, 0x08000, CRC(260286f9) SHA1(dc7c8d2c6ef924a937328685eed19bda1c8b1819) )
+	ROM_LOAD( "ep10651.55",        0x08000, 0x08000, CRC(c609ee7b) SHA1(c6dacf81cbfe7e5df1f9a967cf571be1dcf1c429) )
+	ROM_LOAD( "ep10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
+
+	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "ep10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "ep10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
+	ROM_LOAD16_BYTE( "ep10676.7",   0x020001, 0x010000, CRC(25ebf2c5) SHA1(abcf673ae4e280417dd9f46d18c0ec7c0e4802ae) )
+	ROM_LOAD16_BYTE( "ep10683.15",  0x020000, 0x010000, CRC(6365d2e9) SHA1(688e2ba194e859f86cd3486c2575ebae257e975a) )
+	ROM_LOAD16_BYTE( "ep10677.6",   0x040001, 0x010000, CRC(8a57b8d6) SHA1(df1a31559dd2d1e7c2c9d800bf97526bdf3e84e6) )
+	ROM_LOAD16_BYTE( "ep10684.14",  0x040000, 0x010000, CRC(3aff8910) SHA1(4b41a49a7f02363424e814b37edce9a7a44a112e) )
+	ROM_LOAD16_BYTE( "ep10678.5",   0x060001, 0x010000, CRC(af473098) SHA1(a2afaba1cbf672949dc50e407b46d7e9ae183774) )
+	ROM_LOAD16_BYTE( "ep10685.13",  0x060000, 0x010000, CRC(80bafeef) SHA1(f01bcf65485e60f34e533295a896fca0b92e5b14) )
+	ROM_LOAD16_BYTE( "ep10679.4",   0x080001, 0x010000, CRC(03bc4878) SHA1(548fc58bcc620204e30fa12fa4c4f0a3f6a1e4c0) )
+	ROM_LOAD16_BYTE( "ep10686.12",  0x080000, 0x010000, CRC(274b734e) SHA1(906fa528659bc17c9b4744cec52f7096711adce8) )
+	ROM_LOAD16_BYTE( "ep10680.3",   0x0a0001, 0x010000, CRC(9f0677ed) SHA1(5964642b70bfad418da44f2d91476f887b021f74) )
+	ROM_LOAD16_BYTE( "ep10687.11",  0x0a0000, 0x010000, CRC(508a4701) SHA1(d17aea2aadc2e2cd65d81bf91feb3ef6923d5c0b) )
+	ROM_LOAD16_BYTE( "ep10681.2",   0x0c0001, 0x010000, CRC(b176ea72) SHA1(7ec0eb0f13398d014c2e235773ded00351edb3e2) )
+	ROM_LOAD16_BYTE( "ep10688.10",  0x0c0000, 0x010000, CRC(42fcd51d) SHA1(0eacb3527dc21746e5b901fcac83f2764a0f9e2c) )
+
+	ROM_REGION( 0x8000, REGION_GFX3, 0 ) /* road gfx */
+	ROM_LOAD( "mp10642.47", 0x0000, 0x8000, CRC(7836bcc3) SHA1(26f308bf96224311ddf685799d7aa29aac42dd2f) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
+	ROM_LOAD( "epr10649a.88", 0x0000, 0x08000, CRC(bf38330f) SHA1(3d825bb02ef5a9f5c4fcaa71b3735e7f8e47f178) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* sound PCM data */
+	ROM_LOAD( "ep10643.66", 0x00000, 0x08000, CRC(06f55364) SHA1(fd685795e12541e3d0059d383fab293b3980d247) )
+	ROM_LOAD( "ep10644.67", 0x10000, 0x08000, CRC(b41d541d) SHA1(28bbfa5edaa4a5901c74074354ba6f14d8f42ff6) )
+	ROM_LOAD( "ep10645.68", 0x20000, 0x08000, CRC(a60dabff) SHA1(bbef0fb0d7837cc7efc866226bfa2bd7fab06459) )
+	ROM_LOAD( "ep10646.69", 0x30000, 0x08000, CRC(473cc411) SHA1(04ca2d047eb59581cd5d76e0ac6eca8b19eef497) )
+ROM_END
+
+/**************************************************************************************************************************
+	Limited Edition Hangon
 	CPU: 68000 (317-????)
 */
 ROM_START( shangnle )
@@ -1382,54 +1484,28 @@ static DRIVER_INIT( outrunb )
 	custom_io_r = outrun_custom_io_r;
 	custom_io_w = outrun_custom_io_w;
 
-/*
-  Main Processor
-	Comparing the bootleg with the custom bootleg, it seems that:-
-
-  if even bytes &0x28 == 0x20 or 0x08 then they are xored with 0x28
-  if odd bytes &0xc0 == 0x40 or 0x80 then they are xored with 0xc0
-
-  ie. data lines are switched.
-*/
-
+	/* main CPU: swap bits 11,12 and 6,7 */
 	word = (data16_t *)memory_region(REGION_CPU1);
 	length = memory_region_length(REGION_CPU1) / 2;
 	for (i = 0; i < length; i++)
 		word[i] = BITSWAP16(word[i], 15,14,11,12,13,10,9,8,6,7,5,4,3,2,1,0);
 
-/*
-  Second Processor
-
-  if even bytes &0xc0 == 0x40 or 0x80 then they are xored with 0xc0
-  if odd bytes &0x0c == 0x04 or 0x08 then they are xored with 0x0c
-*/
+	/* sub CPU: swap bits 14,15 and 2,3 */
 	word = (data16_t *)memory_region(REGION_CPU2);
 	length = memory_region_length(REGION_CPU2) / 2;
 	for (i = 0; i < length; i++)
 		word[i] = BITSWAP16(word[i], 14,15,13,12,11,10,9,8,7,6,5,4,2,3,1,0);
 
-/*
-  Road GFX
-
-	rom orun_me.rom
-	if bytes &0x60 == 0x40 or 0x20 then they are xored with 0x60
-
-	rom orun_mf.rom
-	if bytes &0xc0 == 0x40 or 0x80 then they are xored with 0xc0
-
-  I don't know why there's 2 road roms, but I'm using orun_me.rom
-*/
+	/* road gfx */
+	/* rom orun_me.rom - swap bits 5,6 */
+	/* rom orun_mf.rom - swap bits 6,7 */
+	/* I don't know why there's 2 road roms, but I'm using orun_me.rom */
 	byte = memory_region(REGION_GFX3);
 	length = memory_region_length(REGION_GFX3);
 	for (i = 0; i < length; i++)
 		byte[i] = BITSWAP8(byte[i], 7,5,6,4,3,2,1,0);
 
-/*
-  Z80 Code
-	rom orun_ma.rom
-	if bytes &0x60 == 0x40 or 0x20 then they are xored with 0x60
-
-*/
+	/* Z80 code: swap bits 5,6 */
 	byte = memory_region(REGION_CPU3);
 	length = memory_region_length(REGION_CPU3);
 	for (i = 0; i < length; i++)
@@ -1466,9 +1542,11 @@ GAME( 1986, outrun,   0,        outrun,  outrun,   outrun,   ROT0, "Sega",    "O
 GAME( 1986, outruna,  outrun,   outrun,  outrun,   outrun,   ROT0, "Sega",    "Out Run (set 2)" )
 GAME( 1986, outrundx, outrun,   outrun,  outrundx, outrun,   ROT0, "Sega",    "Out Run (Deluxe?)" )
 GAME( 1986, outrunb,  outrun,   outrun,  outrun,   outrunb,  ROT0, "bootleg", "Out Run (bootleg)" )
-GAME( 1987, shangon,  0,        shangon, shangon,  shangon,  ROT0, "Sega",    "Super Hang-On" )
-GAME( 1987, shangona, shangon,  shangon, shangon,  shangona, ROT0, "Sega",    "Super Hang-On (alt)" )
-GAME( 1987, shangnle, shangon,  shangon, shangon,  shangona, ROT0, "Sega",    "Super Hang-On Limited Edition" )
-GAMEX(1989, toutrun,  0,        outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 1)", GAME_NOT_WORKING ) // not decrypted
-GAME( 1989, toutruna, toutrun,  outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 2, upright, 317-unknown)" )
-GAME( 1989, toutrunk, toutrun,  outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 3, upgrade kit, 317-0118)"  )
+GAME( 1987, shangon,  0,        shangon, shangon,  shangon,  ROT0, "Sega",    "Super Hang-On (set 1, FD1089B 317-0034)" )
+GAME( 1987, shangona, shangon,  shangon, shangon,  shangona, ROT0, "Sega",    "Super Hang-On (set 2, 68000)" )
+GAME( 1987, shangonb, shangon,  shangon, shangon,  shangon,  ROT0, "Sega",    "Super Hang-On (set 3, FD1089B 317-0034)" )
+GAME( 1987, shangonc, shangon,  shangon, shangon,  shangon,  ROT0, "Sega",    "Super Hang-On (set 4, FD1089B 317-0034)" )
+GAME( 1991, shangnle, shangon,  shangon, shangon,  shangona, ROT0, "Sega",    "Limited Edition Hang-On" )
+GAMEX(1989, toutrun,  0,        outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 1, FD1094 317-unknown)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1989, toutruna, toutrun,  outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 2, upright, FD1094 317-unknown)" )
+GAME( 1989, toutrunk, toutrun,  outrun,  toutrun,  outrun,   ROT0, "Sega",    "Turbo Out Run (set 3, upgrade kit, FD1094 317-0118)"  )

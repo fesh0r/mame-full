@@ -4534,10 +4534,10 @@ ROM_START( sjryuko )
 	ROM_LOAD16_BYTE( "epr12257.a5",  0x010000, 0x08000, CRC(3a2acc3f) SHA1(8776c37b8092bece6928e68a86ed8f6cfbd0d5cf) )
 	ROM_LOAD16_BYTE( "epr12254.a2",  0x010001, 0x08000, CRC(7e908217) SHA1(509962c45dda7423ad081acdcac9ffa10807840a) )
 
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "12224-95.b9",  0x00000, 0x08000, CRC(eac17ba1) SHA1(6dfea3383b7c9c47bc0943a8d86fc89efcb85ae2) )
-	ROM_LOAD( "12225-94.b10", 0x10000, 0x08000, CRC(2310fc98) SHA1(c40ca62edbe5cfa2f84811426233412cd5bd398c) )
-	ROM_LOAD( "12226-93.b11", 0x20000, 0x08000, CRC(210e6999) SHA1(5707cc613060b0070a822850b9afab8293f64dd7) )
+	ROM_LOAD( "12225-94.b10", 0x08000, 0x08000, CRC(2310fc98) SHA1(c40ca62edbe5cfa2f84811426233412cd5bd398c) )
+	ROM_LOAD( "12226-93.b11", 0x10000, 0x08000, CRC(210e6999) SHA1(5707cc613060b0070a822850b9afab8293f64dd7) )
 	/*(EPR xxxxx - S16a location . S16b location */
 
 	ROM_REGION16_BE( 0x80000, REGION_GFX2, ROMREGION_ERASE00 ) /* sprites */
@@ -5307,7 +5307,7 @@ GAME( 1987, shinobi,  0,        system16b,      shinobi,  generic_5358,  ROT0,  
 GAME( 1987, shinobib, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )
 GAME( 1987, shinobic, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)" )
 GAME( 1987, sonicbom, 0,        system16b,      sonicbom, generic_5358,  ROT270, "Sega",           "Sonic Boom (FD1094 317-0053)" )
-GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, sjryuko,       ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089B 317-5021)",GAME_NOT_WORKING )
+GAMEX(198?, sjryuko,  0,        timescn,        sonicbom, sjryuko,       ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089B 317-5021)",GAME_NOT_WORKING )
 GAMEX(19??, suprleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Super League (FD1094 317-0045?)", GAME_NOT_WORKING )
 GAME( 1988, tetrisb,  tetris,   system16b,      tetris,   generic_5704,  ROT0,   "Sega",           "Tetris (Japan, set 1, System 16B, FD1094 317-0092)" )
 GAME( 1988, tetrisba, tetris,   system16b,      tetris,   generic_5358,  ROT0,   "Sega",           "Tetris (Japan, set 2, System 16B, FD1094 317-0091)" )

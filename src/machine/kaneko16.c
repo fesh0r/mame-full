@@ -444,6 +444,7 @@ extern const struct GameDriver driver_gtmr;
 extern const struct GameDriver driver_gtmre;
 extern const struct GameDriver driver_gtmrusa;
 extern const struct GameDriver driver_gtmr2;
+extern const struct GameDriver driver_gtmr2u;
 extern const struct GameDriver driver_gtmr2a;
 
 void toybox_mcu_run(void)
@@ -462,6 +463,7 @@ void toybox_mcu_run(void)
 		 (Machine->gamedrv == &driver_gtmre)   ||
 		 (Machine->gamedrv == &driver_gtmrusa) ||
 		 (Machine->gamedrv == &driver_gtmr2)   ||
+		 (Machine->gamedrv == &driver_gtmr2u)  ||
 		 (Machine->gamedrv == &driver_gtmr2a) )
 	{
 		gtmr_mcu_run();
@@ -793,6 +795,7 @@ void gtmr_mcu_run(void)
 			else if ( (Machine->gamedrv == &driver_gtmre)  ||
 					  (Machine->gamedrv == &driver_gtmrusa) ||
 					  (Machine->gamedrv == &driver_gtmr2) ||
+					  (Machine->gamedrv == &driver_gtmr2u) ||
 					  (Machine->gamedrv == &driver_gtmr2a) )
 
 			{
