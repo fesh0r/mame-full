@@ -15,6 +15,7 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/bbc.h"
 #include "machine/6522via.h"
+#include "includes/upd7002.h"
 #include "includes/basicdsk.h"
 
 
@@ -39,13 +40,13 @@ SHEILA
 &E0-&FF Tube ULA		Tube system interface			32
 ******************************************************************************/
 
-/* for the model A just address the 4 on board rom sockets */
+/* for the model A just address the 4 on board ROM sockets */
 static WRITE_HANDLER ( page_selecta_w )
 {
 	cpu_setbank(3,memory_region(REGION_CPU2)+((data&0x03)<<14));
 }
 
-/* for the model B address all 16 of the rom sockets */
+/* for the model B address all 16 of the ROM sockets */
 static WRITE_HANDLER ( page_selectb_w )
 {
 	cpu_setbank(3,memory_region(REGION_CPU2)+((data&0x0f)<<14));
@@ -81,13 +82,13 @@ static READ_HANDLER ( BBC_NOP_FF_r )
 
 
 /****************************************/
-/* BBC B Plus memory handeling function */
+/* BBC B Plus memory handling function */
 /****************************************/
 
 static int pagedRAM=0;
 static int vdusel=0;
 static int rombankselect=0;
-/* the model B plus addresses all 16 of the rom sockets plus the extra 12K of ram at 0x8000
+/* the model B plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
    and 20K of shadow ram at 0x3000 */
 static WRITE_HANDLER ( page_selectbp_w )
 {
@@ -305,7 +306,7 @@ static MEMORY_READ_START(readmem_bbcb)
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_i8271_read   },  /* &80-&9f  8271 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_r	       },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_BANK2		   },
 MEMORY_END
@@ -325,7 +326,7 @@ static MEMORY_WRITE_START(writemem_bbcb)
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_i8271_write  },  /* &80-&9f  8271 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_w        },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MWA_ROM		   },
 MEMORY_END
@@ -346,7 +347,7 @@ static MEMORY_READ_START(readmem_bbcb1770)
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_r  	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_BANK2		   },
 MEMORY_END
@@ -366,7 +367,7 @@ static MEMORY_WRITE_START(writemem_bbcb1770)
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MWA_ROM		   },
 MEMORY_END
@@ -389,7 +390,7 @@ static MEMORY_READ_START(readmem_bbcbp)
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_r 	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_BANK2		   },
 MEMORY_END
@@ -411,7 +412,7 @@ static MEMORY_WRITE_START(writemem_bbcbp)
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MWA_ROM		   },
 MEMORY_END
@@ -435,7 +436,7 @@ static MEMORY_READ_START(readmem_bbcbp128)
 	{ 0xfe60, 0xfe7f, via_1_r		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_read  },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_r 	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MRA_BANK2		   },
 MEMORY_END
@@ -457,7 +458,7 @@ static MEMORY_WRITE_START(writemem_bbcbp128)
 	{ 0xfe60, 0xfe7f, via_1_w		   },  /* &60-&7f  6522 VIA 	 USER VIA					   */
 	{ 0xfe80, 0xfe9f, bbc_wd1770_write },  /* &80-&9f  1770 FDC      Floppy disc controller 	   */
 	{ 0xfea0, 0xfebf, MWA_NOP		   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
-	{ 0xfec0, 0xfedf, MWA_NOP		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
+	{ 0xfec0, 0xfedf, uPD7002_w		   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, MWA_NOP		   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
 	{ 0xff00, 0xffff, MWA_ROM		   },
 MEMORY_END
@@ -618,6 +619,30 @@ INPUT_PORTS_START(bbca)
 	PORT_BITX(0x80,  IP_ACTIVE_LOW, IPT_KEYBOARD, "CURSOR RIGHT",KEYCODE_RIGHT,     IP_JOY_NONE)
 
 
+	PORT_START  // KEYBOARD COLUMN 10 RESERVED FOR BBC MASTER
+	PORT_START  // KEYBOARD COLUMN 11 RESERVED FOR BBC MASTER
+	PORT_START  // KEYBOARD COLUMN 12 RESERVED FOR BBC MASTER
+	PORT_START  // KEYBOARD COLUMN 13 RESERVED FOR BBC MASTER
+	PORT_START  // KEYBOARD COLUMN 14 RESERVED FOR BBC MASTER
+	PORT_START  // KEYBOARD COLUMN 15 RESERVED FOR BBC MASTER
+
+
+	PORT_START
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER1, 100, 1, 0x0, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 1, 0x0, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X | IPF_PLAYER2, 100, 1, 0x0, 0xff )
+
+	PORT_START
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 1, 0x0, 0xff )
+
 INPUT_PORTS_END
 
 /* the BBC came with 4 rom sockets on the mother board as shown in the model A driver */
@@ -668,7 +693,7 @@ ROM_START(bbcb)
 
 	/* just use one of the following DFS roms */
 
-	/* dnfs is acorns disc and network fileing system rom it replaced dfs 0.9  */
+	/* dnfs is acorns disc and network filing system rom it replaced dfs 0.9  */
 //	ROM_LOAD("dnfs.rom",    0x38000, 0x4000, 0x8ccd2157 ) /* rom page 14 38000 */
 
 	/* dfs 0.9 was the standard acorn dfs rom before it was replaced with the dnfs rom */
@@ -1058,7 +1083,7 @@ static const struct IODevice io_bbcb[] = {
 	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
-        "ssd\0bbc\0",                /* file extensions */
+        "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
 		bbc_floppy_init,		/* init */
@@ -1100,7 +1125,7 @@ static const struct IODevice io_bbcb1770[] = {
 	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
-        "ssd\0bbc\0",                /* file extensions */
+        "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
 		bbc_floppy_init,		/* init */
@@ -1142,7 +1167,7 @@ static const struct IODevice io_bbcbp[] = {
 	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
-        "ssd\0bbc\0",                /* file extensions */
+        "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
 		bbc_floppy_init,		/* init */
@@ -1183,7 +1208,7 @@ static const struct IODevice io_bbcbp128[] = {
 	},	{
 		IO_FLOPPY,				/* type */
 		2,						/* count */
-        "ssd\0bbc\0",                /* file extensions */
+        "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		basicdsk_floppy_id, 	/* id */
 		bbc_floppy_init,		/* init */

@@ -56,3 +56,4 @@ WRITE_HANDLER ( BBC_6845_w );
 READ_HANDLER ( BBC_6845_r );
 
 extern unsigned char vidmem[0x10000];
+

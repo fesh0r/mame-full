@@ -129,6 +129,7 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include "machine/6522via.h"
 #include "includes/wd179x.h"
 #include "includes/bbc.h"
+#include "includes/upd7002.h"
 #include "includes/i8271.h"
 #include "includes/basicdsk.h"
 
@@ -361,22 +362,25 @@ static READ_HANDLER( bbcb_via_system_read_porta )
   return via_system_porta;
 }
 
+
+// D4 of portb is joystick fire button 1
+// D5 of portb is joystick fire button 2
 static READ_HANDLER( bbcb_via_system_read_portb )
 {
-  return 0xff;
+  return (0xcf | readinputport(16));
 }
 
 /* vertical sync pulse from video circuit */
 static READ_HANDLER( bbcb_via_system_read_ca1 )
 {
-  return 0xf0;
+  return 0x01;
 }
 
 
-/* joystick EOC (not emulated yet) */
+/* joystick EOC */
 static READ_HANDLER( bbcb_via_system_read_cb1 )
 {
-  return 0x01;
+  return uPD7002_EOC_r(0);
 }
 
 
@@ -387,7 +391,7 @@ static READ_HANDLER( bbcb_via_system_read_ca2 )
 }
 
 
-/* light pen strobe detect (not emulated yet) */
+/* light pen strobe detect (not emulated) */
 static READ_HANDLER( bbcb_via_system_read_cb2 )
 {
   return 0x01;
@@ -446,7 +450,7 @@ bbcb_system_via= {
 /**********************************************************************
 USER VIA
 Port A output is buffered before being connected to the printer connector.
-This means that hey can only be operated as output lines.
+This means that they can only be operated as output lines.
 CA1 is pulled high by a 4K7 resistor. CA1 normally acts as an acknowledge
 line when a printer is used. CA2 is buffered so that it has become an open
 collector output only. It usially acts as the printer strobe line.
@@ -516,6 +520,43 @@ bbcb_user_via= {
   bbcb_via_user_write_ca2,//via_user_write_ca2,
   0,//via_user_write_cb2,
   bbc_via_user_irq //via_user_irq
+};
+
+
+/**************************************
+BBC Joystick Support
+**************************************/
+
+int BBC_get_analogue_input(int channel_number)
+{
+	switch(channel_number)
+	{
+		case 0:
+			return ((0xff-readinputport(17))<<8);
+			break;
+		case 1:
+			return ((0xff-readinputport(18))<<8);
+			break;
+		case 2:
+			return ((0xff-readinputport(19))<<8);
+			break;
+		case 3:
+			return ((0xff-readinputport(20))<<8);
+			break;
+	}
+
+	return 0;
+}
+
+void BBC_uPD7002_EOC(int data)
+{
+	via_0_cb1_w(0,data);
+}
+
+static struct uPD7002_interface
+BBC_uPD7002= {
+	BBC_get_analogue_input,
+	BBC_uPD7002_EOC
 };
 
 /**************************************
@@ -842,8 +883,12 @@ void init_machine_bbcb(void)
 
 	bbcb_IC32_initialise();
 
+	uPD7002_config(&BBC_uPD7002);
+
 	i8271_init(&bbc_i8271_interface);
 	i8271_reset();
+
+
 }
 
 
@@ -867,6 +912,8 @@ void init_machine_bbcb1770(void)
 	via_reset();
 
 	bbcb_IC32_initialise();
+
+	uPD7002_config(&BBC_uPD7002);
 
 	previous_wd179x_int_state=1;
     wd179x_init(bbc_wd179x_callback);
@@ -900,6 +947,8 @@ void init_machine_bbcbp(void)
 	via_reset();
 
 	bbcb_IC32_initialise();
+
+	uPD7002_config(&BBC_uPD7002);
 
 	previous_wd179x_int_state=1;
     wd179x_init(bbc_wd179x_callback);
