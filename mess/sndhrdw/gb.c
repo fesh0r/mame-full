@@ -30,6 +30,9 @@
 *	 5/4/2002		AK - Mode 4 is done correctly, using a polynomial counter instead
 *						 of being a total hack.
 *	 6/4/2002		AK - Slight tweak to mode 3's frequency calculation.
+*	13/4/2002		AK - Reset envelope value when sound is initialized.
+*	21/4/2002		AK - Backed out the mode 3 frequency calculation change.
+*						 Merged init functions into gameboy_sound_w().
 *
 ***************************************************************************************/
 
@@ -168,54 +171,6 @@ static struct SOUND3 snd_3;
 static struct SOUND4 snd_4;
 static struct SOUNDC snd_control;
 
-void gameboy_init_1(void)
-{
-	if( !snd_1.on )
-		snd_1.pos = 0;
-	snd_1.on = 1;
-	snd_1.count = 0;
-	snd_1.env_count = 0;
-	snd_1.swp_count = 0;
-	snd_1.signal = 0x1;
-	gb_ram[NR52] |= 0x1;
-}
-
-void gameboy_init_2(void)
-{
-	if( !snd_2.on )
-		snd_2.pos = 0;
-	snd_2.on = 1;
-	snd_2.count = 0;
-	snd_2.env_count = 0;
-	snd_2.signal = 0x1;
-	gb_ram[NR52] |= 0x2;
-}
-
-void gameboy_3_init(void)
-{
-	if( !snd_3.on )
-	{
-		snd_3.pos = 0;
-		snd_3.offset = 0;
-		snd_3.duty = 0;
-	}
-	snd_3.on = 1;
-	snd_3.count = 0;
-	gb_ram[NR52] |= 0x4;
-}
-
-void gameboy_4_init(void)
-{
-	if( !snd_4.on )
-		snd_4.pos = 0;
-	snd_4.on = 1;
-	snd_4.count = 0;
-	snd_4.env_count = 0;
-	snd_4.signal = rand();
-	snd_4.ply_value = 0x7fff;
-	gb_ram[NR52] |= 0x8;
-}
-
 void gameboy_update(int param, INT16 **buffer, int length);
 
 void gameboy_sound_w(int offset, int data)
@@ -256,11 +211,21 @@ void gameboy_sound_w(int offset, int data)
 		snd_1.period = period_table[snd_1.frequency];
 		break;
 	case NR14: /* Frequency hi / Initialize (R/W) */
+		snd_1.mode = (data & 0x40) >> 6;
 		snd_1.frequency = ((gb_ram[NR14]&0x7)<<8) | gb_ram[NR13];
 		snd_1.period = period_table[snd_1.frequency];
-		snd_1.mode = (data & 0x40) >> 6;
 		if( data & 0x80 )
-			gameboy_init_1();
+		{
+			if( !snd_1.on )
+				snd_1.pos = 0;
+			snd_1.on = 1;
+			snd_1.count = 0;
+			snd_1.env_value = gb_ram[NR12] >> 4;
+			snd_1.env_count = 0;
+			snd_1.swp_count = 0;
+			snd_1.signal = 0x1;
+			gb_ram[NR52] |= 0x1;
+		}
 		break;
 
 	/*MODE 2 */
@@ -281,7 +246,16 @@ void gameboy_sound_w(int offset, int data)
 		snd_2.mode = (data & 0x40) >> 6;
 		snd_2.period = period_table[((gb_ram[NR24]&0x7)<<8) | gb_ram[NR23]];
 		if( data & 0x80 )
-			gameboy_init_2();
+		{
+			if( !snd_2.on )
+				snd_2.pos = 0;
+			snd_2.on = 1;
+			snd_2.count = 0;
+			snd_2.env_value = gb_ram[NR22] >> 4;
+			snd_2.env_count = 0;
+			snd_2.signal = 0x1;
+			gb_ram[NR52] |= 0x2;
+		}
 		break;
 
 	/*MODE 3 */
@@ -301,7 +275,17 @@ void gameboy_sound_w(int offset, int data)
 		snd_3.mode = (data & 0x40) >> 6;
 		snd_3.period = period_mode3_table[((gb_ram[NR34]&0x7)<<8) + gb_ram[NR33]];
 		if( data & 0x80 )
-			gameboy_3_init();
+		{
+			if( !snd_3.on )
+			{
+				snd_3.pos = 0;
+				snd_3.offset = 0;
+				snd_3.duty = 0;
+			}
+			snd_3.on = 1;
+			snd_3.count = 0;
+			gb_ram[NR52] |= 0x4;
+		}
 		break;
 
 	/*MODE 4 */
@@ -321,7 +305,17 @@ void gameboy_sound_w(int offset, int data)
 	case NR44: /* Counter/Consecutive / Initialize (R/W)  */
 		snd_4.mode = (data & 0x40) >> 6;
 		if( data & 0x80 )
-			gameboy_4_init();
+		{
+			if( !snd_4.on )
+				snd_4.pos = 0;
+			snd_4.on = 1;
+			snd_4.count = 0;
+			snd_4.env_value = gb_ram[NR42] >> 4;
+			snd_4.env_count = 0;
+			snd_4.signal = rand();
+			snd_4.ply_value = 0x7fff;
+			gb_ram[NR52] |= 0x8;
+		}
 		break;
 
 	/* CONTROL */
@@ -357,7 +351,7 @@ void gameboy_sound_w(int offset, int data)
 
 void gameboy_update(int param, INT16 **buffer, int length)
 {
-	INT16 sample = 0, left = 0, right = 0, mode4_mask;
+	INT16 sample, left, right, mode4_mask;
 
 	while( length-- > 0 )
 	{
@@ -464,7 +458,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 			if( snd_2.env_length )
 			{
 				snd_2.env_count++;
-				if( snd_2.env_count > snd_2.env_length )
+				if( snd_2.env_count >= snd_2.env_length )
 				{
 					snd_2.env_count = 0;
 					snd_2.env_value += snd_2.env_direction;
@@ -503,7 +497,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample = 0;
 
 			snd_3.pos++;
-			if( snd_3.pos >= (UINT32)(((snd_3.period ) >> 16 ) / 32) )
+			if( snd_3.pos > (UINT32)(((snd_3.period ) >> 21)) ) /* 21 = .. >> 16) / 32 */
 /*			if( (snd_3.pos<<16) >= (UINT32)(((snd_3.period / 31) + (1<<16))) ) */
 			{
 				snd_3.pos = 0;
