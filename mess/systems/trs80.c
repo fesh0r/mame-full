@@ -26,12 +26,12 @@ NMI
 #include "includes/basicdsk.h"
 
 #define FW	TRS80_FONT_W
-#define FH  TRS80_FONT_H
+#define FH	TRS80_FONT_H
 
 static struct MemoryReadAddress readmem_level1[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
-    { 0x3800, 0x38ff, trs80_keyboard_r },
+	{ 0x3800, 0x38ff, trs80_keyboard_r },
 	{ 0x3c00, 0x3fff, MRA_RAM },
 	{ 0x4000, 0x7fff, MRA_RAM },
 	{ -1 }	/* end of table */
@@ -48,7 +48,7 @@ static struct MemoryWriteAddress writemem_level1[] =
 static struct IOReadPort readport_level1[] =
 {
 	{ 0xff, 0xfe, trs80_port_xx_r },
-    { 0xff, 0xff, trs80_port_ff_r },
+	{ 0xff, 0xff, trs80_port_ff_r },
 	{ -1 }
 };
 
@@ -98,7 +98,7 @@ static struct MemoryWriteAddress writemem_model1[] =
 static struct IOReadPort readport_model1[] =
 {
 	{ 0xff, 0xfe, trs80_port_xx_r },
-    { 0xff, 0xff, trs80_port_ff_r },
+	{ 0xff, 0xff, trs80_port_ff_r },
 	{ -1 }
 };
 
@@ -465,8 +465,8 @@ static struct MachineDriver machine_driver_model3 =
 	{
 		{
 			SOUND_SPEAKER,
-            &speaker_interface
-        }
+			&speaker_interface
+		}
 	}
 };
 
@@ -529,104 +529,104 @@ ROM_END
 
 static const struct IODevice io_trs80l1[] = {
 	{
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cas_id,		/* id */
-		trs80_cas_init, 	/* init */
-		trs80_cas_exit, 	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"cas\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		trs80_cas_id,			/* id */
+		trs80_cas_init, 		/* init */
+		trs80_cas_exit, 		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
 	},
 	{
-		IO_QUICKLOAD,		/* type */
-		1,					/* count */
-		"cmd\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cmd_id,		/* id */
-		trs80_cmd_init, 	/* init */
-		trs80_cmd_exit, 	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
+		IO_QUICKLOAD,			/* type */
+		1,						/* count */
+		"cmd\0",                /* file extensions */
+		IO_RESET_CPU,			/* reset if file changed */
+		trs80_cmd_id,			/* id */
+		trs80_cmd_init, 		/* init */
+		trs80_cmd_exit, 		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
 	{ IO_END }
 };
 
 
 static const struct IODevice io_trs80[] = {
 	{
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cas_id,		/* id */
-		trs80_cas_init, 	/* init */
-		trs80_cas_exit, 	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"cas\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		trs80_cas_id,			/* id */
+		trs80_cas_init, 		/* init */
+		trs80_cas_exit, 		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
 	},
 	{
-		IO_QUICKLOAD,		/* type */
-		1,					/* count */
-		"cmd\0",            /* file extensions */
-		NULL,				/* private */
-		trs80_cmd_id,		/* id */
-		trs80_cmd_init, 	/* init */
-		trs80_cmd_exit, 	/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-    {
-		IO_FLOPPY,			/* type */
-		4,					/* count */
-		"dsk\0",            /* file extensions */
-		NULL,				/* private */
-                basicdsk_floppy_id,                         /* id */
-                trs80_floppy_init,       /* init */
-                basicdsk_floppy_exit,       /* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-                floppy_status,                           /* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
+		IO_QUICKLOAD,			/* type */
+		1,						/* count */
+		"cmd\0",                /* file extensions */
+		IO_RESET_CPU,			/* reset if file changed */
+		trs80_cmd_id,			/* id */
+		trs80_cmd_init, 		/* init */
+		trs80_cmd_exit, 		/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{
+		IO_FLOPPY,				/* type */
+		4,						/* count */
+		"dsk\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		basicdsk_floppy_id, 	/* id */
+		trs80_floppy_init,		/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
 	},
 	{ IO_END }
 };

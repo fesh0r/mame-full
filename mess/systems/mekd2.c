@@ -79,29 +79,29 @@ static WRITE_HANDLER(mekd2_kbd_w)
 		{
 			videoram[1*2+0] = ~pia[0];
 			videoram[1*2+1] = 14;
-        }
+		}
 		if( data & 0x08 )
 		{
 			videoram[2*2+0] = ~pia[0];
 			videoram[2*2+1] = 14;
-        }
+		}
 		if( data & 0x04 )
 		{
 			videoram[3*2+0] = ~pia[0];
 			videoram[3*2+1] = 14;
-        }
+		}
 		if( data & 0x02 )
 		{
 			videoram[4*2+0] = ~pia[0];
 			videoram[4*2+1] = 14;
-        }
+		}
 		if( data & 0x01 )
 		{
 			videoram[5*2+0] = ~pia[0];
 			videoram[5*2+1] = 14;
-        }
+		}
 		break;
-    }
+	}
 }
 
 
@@ -117,7 +117,7 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0xc000, 0xc7ff, MRA_RAM },	/* optional, set up in mekd2_init_machine */
 	{ 0xe000, 0xe3ff, MRA_ROM },	/* JBUG ROM */
 	{ 0xe400, 0xffff, mekd2_mirror_r },
-    {-1}
+	{-1}
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -129,9 +129,9 @@ static struct MemoryWriteAddress writemem[] =
 //	  { 0x8008, 0x8008, mekd2_cas_w },
 	{ 0x8020, 0x8023, mekd2_kbd_w },
 	{ 0xa000, 0xa07f, MWA_RAM },
-//  { 0xc000, 0xc7ff, MWA_RAM },    /* optional, set up in mekd2_init_machine */
+//	{ 0xc000, 0xc7ff, MWA_RAM },	/* optional, set up in mekd2_init_machine */
 	{ 0xe000, 0xe3ff, MWA_ROM },	/* JBUG ROM */
-    {-1}
+	{-1}
 };
 
 INPUT_PORTS_START( mekd2 )
@@ -195,7 +195,7 @@ static struct MachineDriver machine_driver_mekd2 =
 			614400, /* 614.4 kHz */
 			readmem,writemem,0,0,
 			mekd2_interrupt, 1
-        }
+		}
 	},
 	/* frames per second, VBL duration */
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -219,11 +219,11 @@ static struct MachineDriver machine_driver_mekd2 =
 	/* sound hardware */
 	0,0,0,0,
 	{
-        {
+		{
 			SOUND_DAC,
 			&dac_interface
 		}
-    }
+	}
 };
 
 ROM_START(mekd2)
@@ -238,26 +238,26 @@ ROM_END
 
 
 static const struct IODevice io_mekd2[] = {
-    {
-        IO_CARTSLOT,        /* type */
-        1,                  /* count */
+	{
+		IO_CARTSLOT,		/* type */
+		1,					/* count */
 		"d2\0",             /* file extensions */
-        NULL,               /* private */
+		IO_RESET_ALL,		/* reset if file changed */
 		mekd2_rom_id,		/* id */
 		mekd2_rom_load, 	/* init */
 		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{ IO_END }
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	  FULLNAME */

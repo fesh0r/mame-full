@@ -126,14 +126,14 @@ INPUT_PORTS_START( nes )
 
 	PORT_START	/* IN2 - fake */
 	PORT_DIPNAME( 0x0f, 0x00, "P1 Controller")
-	PORT_DIPSETTING(    0x00, "Joypad" )
-	PORT_DIPSETTING(    0x01, "Zapper" )
-	PORT_DIPSETTING(    0x02, "P1/P3 multi-adapter" )
+	PORT_DIPSETTING(	0x00, "Joypad" )
+	PORT_DIPSETTING(	0x01, "Zapper" )
+	PORT_DIPSETTING(	0x02, "P1/P3 multi-adapter" )
 	PORT_DIPNAME( 0xf0, 0x00, "P2 Controller")
-	PORT_DIPSETTING(    0x00, "Joypad" )
-	PORT_DIPSETTING(    0x10, "Zapper" )
-	PORT_DIPSETTING(    0x20, "P2/P4 multi-adapter" )
-	PORT_DIPSETTING(    0x30, "Arkanoid paddle" )
+	PORT_DIPSETTING(	0x00, "Joypad" )
+	PORT_DIPSETTING(	0x10, "Zapper" )
+	PORT_DIPSETTING(	0x20, "P2/P4 multi-adapter" )
+	PORT_DIPSETTING(	0x30, "Arkanoid paddle" )
 
 	PORT_START	/* IN3 - generic analog */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 70, 30, 0, 255 )
@@ -149,11 +149,11 @@ INPUT_PORTS_START( nes )
 
 	PORT_START	/* IN7 - fake dips */
 	PORT_DIPNAME( 0x01, 0x00, "Draw Top/Bottom 8 Lines")
-	PORT_DIPSETTING(    0x01, DEF_STR(No) )
-	PORT_DIPSETTING(    0x00, DEF_STR(Yes) )
+	PORT_DIPSETTING(	0x01, DEF_STR(No) )
+	PORT_DIPSETTING(	0x00, DEF_STR(Yes) )
 	PORT_DIPNAME( 0x02, 0x00, "Enforce 8 Sprites/line")
-	PORT_DIPSETTING(    0x02, DEF_STR(No) )
-	PORT_DIPSETTING(    0x00, DEF_STR(Yes) )
+	PORT_DIPSETTING(	0x02, DEF_STR(No) )
+	PORT_DIPSETTING(	0x00, DEF_STR(Yes) )
 
 	PORT_START	/* IN8 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
@@ -202,14 +202,14 @@ INPUT_PORTS_START( famicom )
 
 	PORT_START	/* IN2 - fake */
 	PORT_DIPNAME( 0x0f, 0x00, "P1 Controller")
-	PORT_DIPSETTING(    0x00, "Joypad" )
-	PORT_DIPSETTING(    0x01, "Zapper" )
-	PORT_DIPSETTING(    0x02, "P1/P3 multi-adapter" )
+	PORT_DIPSETTING(	0x00, "Joypad" )
+	PORT_DIPSETTING(	0x01, "Zapper" )
+	PORT_DIPSETTING(	0x02, "P1/P3 multi-adapter" )
 	PORT_DIPNAME( 0xf0, 0x00, "P2 Controller")
-	PORT_DIPSETTING(    0x00, "Joypad" )
-	PORT_DIPSETTING(    0x10, "Zapper" )
-	PORT_DIPSETTING(    0x20, "P2/P4 multi-adapter" )
-	PORT_DIPSETTING(    0x30, "Arkanoid paddle" )
+	PORT_DIPSETTING(	0x00, "Joypad" )
+	PORT_DIPSETTING(	0x10, "Zapper" )
+	PORT_DIPSETTING(	0x20, "P2/P4 multi-adapter" )
+	PORT_DIPSETTING(	0x30, "Arkanoid paddle" )
 
 	PORT_START	/* IN3 - generic analog */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 70, 30, 0, 255 )
@@ -225,11 +225,11 @@ INPUT_PORTS_START( famicom )
 
 	PORT_START	/* IN7 - fake dips */
 	PORT_DIPNAME( 0x01, 0x00, "Draw Top/Bottom 8 Lines")
-	PORT_DIPSETTING(    0x01, DEF_STR(No) )
-	PORT_DIPSETTING(    0x00, DEF_STR(Yes) )
+	PORT_DIPSETTING(	0x01, DEF_STR(No) )
+	PORT_DIPSETTING(	0x00, DEF_STR(Yes) )
 	PORT_DIPNAME( 0x02, 0x00, "Enforce 8 Sprites/line")
-	PORT_DIPSETTING(    0x02, DEF_STR(No) )
-	PORT_DIPSETTING(    0x00, DEF_STR(Yes) )
+	PORT_DIPSETTING(	0x02, DEF_STR(No) )
+	PORT_DIPSETTING(	0x00, DEF_STR(Yes) )
 
 	PORT_START	/* IN8 */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
@@ -266,7 +266,7 @@ struct GfxLayout nes_charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters - changed at runtime */
 	2,	/* 2 bits per pixel */
-	{ 8*8, 0 },	/* the two bitplanes are separated */
+	{ 8*8, 0 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
@@ -278,7 +278,7 @@ struct GfxLayout nes_vram_charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	{ 8*8, 0 },	/* the two bitplanes are separated */
+	{ 8*8, 0 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	16*8	/* every char takes 16 consecutive bytes */
@@ -287,7 +287,7 @@ struct GfxLayout nes_vram_charlayout =
 
 static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &nes_charlayout,        0, 8 },
+	{ REGION_GFX1, 0x0000, &nes_charlayout, 	   0, 8 },
 	{ REGION_GFX2, 0x0000, &nes_vram_charlayout,   0, 8 },
 	{ -1 } /* end of array */
 };
@@ -314,26 +314,26 @@ static struct NESinterface nespal_interface =
 };
 
 ROM_START( nes )
-	ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
-	ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
-	ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* Main RAM + program banks */
+	ROM_REGION( 0x2000,  REGION_GFX1 )	/* VROM */
+	ROM_REGION( 0x2000,  REGION_GFX2 )	/* VRAM */
 	ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
 ROM_END
 
 ROM_START( nespal )
-	ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
-	ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
-	ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* Main RAM + program banks */
+	ROM_REGION( 0x2000,  REGION_GFX1 )	/* VROM */
+	ROM_REGION( 0x2000,  REGION_GFX2 )	/* VRAM */
 	ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
 ROM_END
 
 ROM_START( famicom )
-	ROM_REGION( 0x10000, REGION_CPU1 )  /* Main RAM + program banks */
-    ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, 0x5e607dcf)
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* Main RAM + program banks */
+	ROM_LOAD_OPTIONAL ("disksys.rom", 0xe000, 0x2000, 0x5e607dcf)
 
-	ROM_REGION( 0x2000,  REGION_GFX1 )  /* VROM */
+	ROM_REGION( 0x2000,  REGION_GFX1 )	/* VROM */
 
-	ROM_REGION( 0x2000,  REGION_GFX2 )  /* VRAM */
+	ROM_REGION( 0x2000,  REGION_GFX2 )	/* VRAM */
 
 	ROM_REGION( 0x10000, REGION_USER1 ) /* WRAM */
 ROM_END
@@ -346,12 +346,12 @@ static struct MachineDriver machine_driver_nes =
 	{
 		{
 			CPU_N2A03,
-			N2A03_DEFAULTCLOCK,	/* 1.79 Mhz - good timing test is Bayou Billy startup wave */
+			N2A03_DEFAULTCLOCK, /* 1.79 Mhz - good timing test is Bayou Billy startup wave */
 			readmem,writemem,0,0,
 			nes_interrupt,NTSC_SCANLINES_PER_FRAME /* one for each scanline */
 		}
 	},
-	60, 114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE),	/* frames per second, vblank duration */
+	60, 114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE), /* frames per second, vblank duration */
 	1,
 	nes_init_machine,
 	nes_stop_machine,
@@ -434,92 +434,92 @@ static struct MachineDriver machine_driver_nespal =
 
 
 static const struct IODevice io_famicom[] = {
-    {
+	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"nes\0",            /* file extensions */
-		NULL,               /* private */
+		IO_RESET_CPU,		/* reset if file changed */
 		nes_id_rom, 		/* id */
 		nes_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
 	},
-    {
+	{
 		IO_FLOPPY,			/* type */
 		1,					/* count */
 		"dsk\0",            /* file extensions */
-		NULL,               /* private */
-		NULL, 				/* id */
+		IO_RESET_NONE,		/* reset if file changed */
+		NULL,				/* id */
 		nes_load_disk,		/* init */
 		nes_exit_disk,		/* exit */
 		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL,                /* output_chunk */
-		nes_partialcrc      /* correct CRC */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL,				 /* output_chunk */
+		nes_partialcrc		/* correct CRC */
 	},
 	{ IO_END }
 };
 
 static const struct IODevice io_nes[] = {
-    {
+	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"nes\0",            /* file extensions */
-		NULL,               /* private */
+		IO_RESET_CPU,		/* reset if file changed */
 		nes_id_rom, 		/* id */
 		nes_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL,                /* output_chunk */
-		nes_partialcrc      /* correct CRC */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL,				 /* output_chunk */
+		nes_partialcrc		/* correct CRC */
 	},
 	{ IO_END }
 };
 
 static const struct IODevice io_nespal[] = {
-    {
+	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
 		"nes\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-        nes_id_rom,         /* id */
+		nes_id_rom, 		/* id */
 		nes_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
 		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL,                /* output_chunk */
-		nes_partialcrc      /* correct CRC */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL,				 /* output_chunk */
+		nes_partialcrc		/* correct CRC */
 	},
 	{ IO_END }
 };
@@ -532,11 +532,12 @@ static const struct IODevice io_nespal[] = {
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
 #ifdef COLOR_INTENSITY
-CONSX( 1983, famicom,  0,		 nes,	   famicom,	 nes,	   "Nintendo", "Famicom", GAME_REQUIRES_16BIT )
+CONSX( 1983, famicom,  0,		 nes,	   famicom,  nes,	   "Nintendo", "Famicom", GAME_REQUIRES_16BIT )
 CONSX( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System (NTSC)", GAME_REQUIRES_16BIT )
-CONSX( 1987, nespal,   nes,		 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)", GAME_REQUIRES_16BIT )
+CONSX( 1987, nespal,   nes, 	 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)", GAME_REQUIRES_16BIT )
 #else
-CONS( 1983, famicom,   0,		 nes,	   famicom,	 nes,	   "Nintendo", "Famicom" )
+CONS( 1983, famicom,   0,		 nes,	   famicom,  nes,	   "Nintendo", "Famicom" )
 CONS( 1985, nes,	   0,		 nes,	   nes, 	 nes,	   "Nintendo", "Nintendo Entertainment System (NTSC)" )
-CONS( 1987, nespal,	   nes,		 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)" )
+CONS( 1987, nespal,    nes, 	 nespal,   nes, 	 nespal,   "Nintendo", "Nintendo Entertainment System (PAL)" )
 #endif
+

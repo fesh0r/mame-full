@@ -2,14 +2,14 @@
 	commodore c16 home computer
 
 	peter.trauner@jk.uni-linz.ac.at
-    documentation
- 	 www.funet.fi
+	documentation
+	 www.funet.fi
 
 ***************************************************************************/
 
 /*
 ------------------------------------
-c16	commodore c16/c116/c232/c264 (pal version)
+c16 commodore c16/c116/c232/c264 (pal version)
 plus4	commodore plus4 (ntsc version)
 c364 commodore c364/v364 prototype (ntsc version)
 ------------------------------------
@@ -171,7 +171,7 @@ when problems start with -log and look into error.log file
  *
  * ports 0xfd00 till 0xff3f are always read/writeable for the cpu
  * for the video interface chip it seams to read from
- * ram or from rom in this  area
+ * ram or from rom in this	area
  *
  * writes go always to ram
  * only 16 KByte Ram mapped to 0x4000,0x8000,0xc000
@@ -214,7 +214,7 @@ static struct MemoryReadAddress c16_readmem[] =
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
 	MEMORY_TABLE_END
 };
 
@@ -271,7 +271,7 @@ static struct MemoryReadAddress plus4_readmem[] =
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
 	MEMORY_TABLE_END
 };
 
@@ -317,7 +317,7 @@ static struct MemoryReadAddress c364_readmem[] =
 #endif
 	{0xff00, 0xff1f, ted7360_port_r},
 	{0xff20, 0xffff, MRA_BANK8},
-/*  { 0x10000, 0x3ffff, MRA_ROM }, */
+/*	{ 0x10000, 0x3ffff, MRA_ROM }, */
 	MEMORY_TABLE_END
 };
 
@@ -413,7 +413,7 @@ static struct MemoryWriteAddress c364_writemem[] =
 	PORT_DIPSETTING(  0, DEF_STR(Off) )\
 	PORT_DIPSETTING( 0x8000, DEF_STR(On) )\
 	/*PORT_BITX( 0x8000, IP_ACTIVE_HIGH, IPF_TOGGLE,*/\
-		     /*"SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)*/\
+			 /*"SHIFT-LOCK (switch)", KEYCODE_CAPSLOCK, IP_JOY_NONE)*/\
 	DIPS_HELPER( 0x4000, "A", KEYCODE_A)\
 	DIPS_HELPER( 0x2000, "S", KEYCODE_S)\
 	DIPS_HELPER( 0x1000, "D", KEYCODE_D)\
@@ -493,7 +493,7 @@ INPUT_PORTS_START (c16)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
-	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
 	PORT_DIPSETTING (0, "16 KByte")
 	PORT_DIPSETTING (2, "32 KByte")
@@ -514,7 +514,7 @@ INPUT_PORTS_START (c16c)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
-	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
 	PORT_DIPSETTING (0, "16 KByte")
 	PORT_DIPSETTING (2, "32 KByte")
@@ -535,7 +535,7 @@ INPUT_PORTS_START (c16v)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x0, IPT_UNUSED)		   /* pal */
-	PORT_BIT (0xc, 0x0, IPT_UNUSED)		   /* c16 */
+	PORT_BIT (0xc, 0x0, IPT_UNUSED) 	   /* c16 */
 	PORT_DIPNAME (3, 3, "Memory")
 	PORT_DIPSETTING (0, "16 KByte")
 	PORT_DIPSETTING (2, "32 KByte")
@@ -562,8 +562,8 @@ INPUT_PORTS_START (plus4)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
-	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 INPUT_PORTS_START (plus4c)
@@ -580,8 +580,8 @@ INPUT_PORTS_START (plus4c)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
-	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 INPUT_PORTS_START (plus4v)
@@ -598,8 +598,8 @@ INPUT_PORTS_START (plus4v)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
-	PORT_BIT (0xc, 0x4, IPT_UNUSED)		   /* plus4 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	PORT_BIT (0xc, 0x4, IPT_UNUSED) 	   /* plus4 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 INPUT_PORTS_END
 
 #if 0
@@ -623,16 +623,16 @@ INPUT_PORTS_START (c364)
 	PORT_DIPSETTING(  0, "MOS6581" )
 	PORT_DIPSETTING( 0x40, "MOS8580" )
 	PORT_BIT (0x10, 0x10, IPT_UNUSED)		   /* ntsc */
-	PORT_BIT (0xc, 0x8, IPT_UNUSED)		   /* 364 */
-	PORT_BIT (0x3, 0x3, IPT_UNUSED)		   /* 64K Memory */
+	PORT_BIT (0xc, 0x8, IPT_UNUSED) 	   /* 364 */
+	PORT_BIT (0x3, 0x3, IPT_UNUSED) 	   /* 64K Memory */
 	 /* numeric block
-        hardware wired to other keys?
-        @ + - =
-        7 8 9 *
-        4 5 6 /
-        1 2 3
-        ? ? ? ?
-        ( 0 , . Return ???) */
+		hardware wired to other keys?
+		@ + - =
+		7 8 9 *
+		4 5 6 /
+		1 2 3
+		? ? ? ?
+		( 0 , . Return ???) */
 INPUT_PORTS_END
 #endif
 
@@ -646,7 +646,7 @@ static void c16_init_palette (unsigned char *sys_palette, unsigned short *sys_co
 /* cbm version in kernel at 0xff80 (offset 0x3f80)
    0x80 means pal version */
 
-     /* basic */
+	 /* basic */
 	 ROM_LOAD ("318006.01", 0x10000, 0x4000, 0x74eaae87)
 
 	 /* kernal pal */
@@ -743,7 +743,7 @@ static struct MachineDriver machine_driver_c16 =
 			ted7360_raster_interrupt, TED7360_HRETRACERATE,
 		},
 	},
-	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
+	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
 	0,
 	c16_init_machine,
 	c16_shutdown_machine,
@@ -785,7 +785,7 @@ static struct MachineDriver machine_driver_c16c =
 		},
 		C1551_CPU
 	},
-	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
+	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
 #ifdef CPU_SYNC
 	1,
 #else
@@ -831,7 +831,7 @@ static struct MachineDriver machine_driver_c16v =
 		},
 		VC1541_CPU
 	},
-	TED7360PAL_VRETRACERATE, 0,		/* frames per second, vblank duration */
+	TED7360PAL_VRETRACERATE, 0, 	/* frames per second, vblank duration */
 #ifdef CPU_SYNC
 	1,
 #else
@@ -1046,9 +1046,9 @@ static const struct IODevice io_c16[] =
 	{
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",				   /* file extensions */
-		NULL,						   /* private */
-		c16_rom_id,					   /* id */
+		"bin\0rom\0",                  /* file extensions */
+		IO_RESET_ALL,				   /* reset if file changed */
+		c16_rom_id, 				   /* id */
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */
 		NULL,						   /* info */
@@ -1072,9 +1072,9 @@ static const struct IODevice io_c16c[] =
 	{
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",				   /* file extensions */
-		NULL,						   /* private */
-		c16_rom_id,					   /* id */
+		"bin\0rom\0",                  /* file extensions */
+		IO_RESET_ALL,				   /* reset if file changed */
+		c16_rom_id, 				   /* id */
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */
 		NULL,						   /* info */
@@ -1098,9 +1098,9 @@ static const struct IODevice io_c16v[] =
 	{
 		IO_CARTSLOT,				   /* type */
 		2,							   /* normal 1 *//* count */
-		"bin\0rom\0",				   /* file extensions */
-		NULL,						   /* private */
-		c16_rom_id,					   /* id */
+		"bin\0rom\0",                  /* file extensions */
+		IO_RESET_ALL,				   /* reset if file changed */
+		c16_rom_id, 				   /* id */
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */
 		NULL,						   /* info */
@@ -1122,24 +1122,25 @@ static const struct IODevice io_c16v[] =
 #define io_plus4		io_c16
 #define io_plus4c		io_c16c
 #define io_plus4v		io_c16v
-#define io_c364			io_c16
+#define io_c364 		io_c16
 
 #define init_c16		c16_driver_init
-#define init_c16hun		c16_driver_init
+#define init_c16hun 	c16_driver_init
 #define init_c16c		c16_driver_init
 #define init_c16v		c16_driver_init
 #define init_plus4		c16_driver_init
-#define init_plus4c		c16_driver_init
-#define init_plus4v		c16_driver_init
+#define init_plus4c 	c16_driver_init
+#define init_plus4v 	c16_driver_init
 #define init_c364		c16_driver_init
 
-/*		YEAR	NAME	PARENT	MACHINE	INPUT	INIT	COMPANY									FULLNAME */
-COMPX (	1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore 16/116/232/264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	1984,	c16hun,	c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",		"Commodore 16 (PAL), Hungarian Character Set Hack", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	1984,	c16c,	c16,   	c16c,	c16c,	c16,	"Commodore Business Machines Co.",		"Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	1984,	plus4c,	c16,	plus4c,	plus4c,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",		"Commodore 364 (Prototype)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+/*		YEAR	NAME	PARENT	MACHINE INPUT	INIT	COMPANY 								FULLNAME */
+COMPX ( 1984,	c16,	0,		c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	c16hun, c16,	c16,	c16,	c16,	"Commodore Business Machines Co.",      "Commodore 16 (PAL), Hungarian Character Set Hack", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	c16c,	c16,	c16c,	c16c,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	plus4,	c16,	plus4,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	plus4c, c16,	plus4c, plus4c, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), 1551", GAME_NOT_WORKING | GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 198?,	c364,	c16,	c364,	plus4,	plus4,	"Commodore Business Machines Co.",      "Commodore 364 (Prototype)", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
 // please leave the following as testdriver only
-COMPX (	1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",		"Commodore 16/116/232/264 (PAL), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
-COMPX (	1984,	plus4v,	c16,	plus4v,	plus4v,	plus4,	"Commodore Business Machines Co.",		"Commodore +4 (NTSC), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	c16v,	c16,	c16v,	c16v,	c16,	"Commodore Business Machines Co.",      "Commodore 16/116/232/264 (PAL), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+COMPX ( 1984,	plus4v, c16,	plus4v, plus4v, plus4,	"Commodore Business Machines Co.",      "Commodore +4 (NTSC), VC1541", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND)
+

@@ -1,20 +1,20 @@
 /***************************************************************************
-HAD to change the PORT_ANALOG defs in this file...  please check ;-)
+HAD to change the PORT_ANALOG defs in this file...	please check ;-)
 
 Colour Genie memory map
 
 CPU #1:
-0000-3fff ROM basic & bios        R   D0-D7
+0000-3fff ROM basic & bios		  R   D0-D7
 
 4000-bfff RAM
-c000-dfff ROM dos                 R   D0-D7
-e000-efff ROM extra               R   D0-D7
-f000-f3ff color ram               W/R D0-D3
-f400-f7ff font ram                W/R D0-D7
-f800-f8ff keyboard matrix         R   D0-D7
-ffe0-ffe3 floppy motor            W   D0-D2
-          floppy head select      W   D3
-ffec-ffef FDC WD179x              R/W D0-D7
+c000-dfff ROM dos				  R   D0-D7
+e000-efff ROM extra 			  R   D0-D7
+f000-f3ff color ram 			  W/R D0-D3
+f400-f7ff font ram				  W/R D0-D7
+f800-f8ff keyboard matrix		  R   D0-D7
+ffe0-ffe3 floppy motor			  W   D0-D2
+		  floppy head select	  W   D3
+ffec-ffef FDC WD179x			  R/W D0-D7
 		  ffec command			  W
 		  ffec status			  R
 		  ffed track			  R/W
@@ -97,7 +97,7 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0xc000, 0xdfff, MRA_ROM },	// installed in cgenie_init_machine
 //	{ 0xe000, 0xefff, MRA_ROM },	// installed in cgenie_init_machine
 	{ 0xf000, 0xf3ff, cgenie_colorram_r },
-	{ 0xf400, 0xf7ff, cgenie_fontram_r  },
+	{ 0xf400, 0xf7ff, cgenie_fontram_r	},
 	{ 0xf800, 0xf8ff, cgenie_keyboard_r },
 	{ 0xf900, 0xffdf, MRA_NOP },
 	{ 0xffe0, 0xffe3, cgenie_irq_status_r },
@@ -108,7 +108,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xffee, 0xffee, cgenie_sector_r },
 	{ 0xffef, 0xffef, cgenie_data_r },
 	{ 0xfff0, 0xffff, MRA_NOP },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
@@ -129,7 +129,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xffee, 0xffee, cgenie_sector_w },
 	{ 0xffef, 0xffef, cgenie_data_w },
 	{ 0xfff0, 0xffff, MWA_NOP },
-	{ -1 }  /* end of table */
+	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort readport[] =
@@ -155,15 +155,15 @@ static struct IOWritePort writeport[] =
 INPUT_PORTS_START( cgenie )
 	PORT_START /* IN0 */
 	PORT_BITX(	  0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Floppy Disc Drives", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 	PORT_BITX(	  0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "CG-DOS ROM C000-DFFF", IP_KEY_NONE, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
 	PORT_BITX(	  0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Extension  E000-EFFF", IP_KEY_NONE, IP_JOY_NONE )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-    PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video Display accuracy", KEYCODE_F5, IP_JOY_NONE )
+	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
+	PORT_BITX(	  0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Video Display accuracy", KEYCODE_F5, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x10, "TV set" )
 	PORT_DIPSETTING(	0x00, "RGB monitor" )
 	PORT_BITX(	  0x08, 0x08, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Virtual tape support", KEYCODE_F6, IP_JOY_NONE )
@@ -172,11 +172,11 @@ INPUT_PORTS_START( cgenie )
 	PORT_BITX(	  0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Memory Size", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(	0x04, "32K" )
 	PORT_DIPSETTING(	0x00, "16K" )
-    PORT_BIT(0x07, 0x07, IPT_UNUSED)
+	PORT_BIT(0x07, 0x07, IPT_UNUSED)
 
 /**************************************************************************
-   +-------------------------------+     +-------------------------------+
-   | 0   1   2   3   4   5   6   7 |     | 0   1   2   3   4   5   6   7 |
+   +-------------------------------+	 +-------------------------------+
+   | 0	 1	 2	 3	 4	 5	 6	 7 |	 | 0   1   2   3   4   5   6   7 |
 +--+---+---+---+---+---+---+---+---+  +--+---+---+---+---+---+---+---+---+
 |0 | @ | A | B | C | D | E | F | G |  |0 | ` | a | b | c | d | e | f | g |
 |  +---+---+---+---+---+---+---+---+  |  +---+---+---+---+---+---+---+---+
@@ -250,7 +250,7 @@ INPUT_PORTS_START( cgenie )
 		PORT_BITX(0x40, 0x00, IPT_KEYBOARD, "4.6: 6  &",   KEYCODE_6,           IP_JOY_NONE )
 		PORT_BITX(0x80, 0x00, IPT_KEYBOARD, "4.7: 7  '",   KEYCODE_7,           IP_JOY_NONE )
 
-        PORT_START /* IN6 KEY ROW 5 */
+		PORT_START /* IN6 KEY ROW 5 */
 		PORT_BITX(0x01, 0x00, IPT_KEYBOARD, "5.0: 8  (",   KEYCODE_8,           IP_JOY_NONE )
 		PORT_BITX(0x02, 0x00, IPT_KEYBOARD, "5.1: 9  )",   KEYCODE_9,           IP_JOY_NONE )
 		PORT_BITX(0x04, 0x00, IPT_KEYBOARD, "5.2: :  +",   KEYCODE_COLON,       IP_JOY_NONE )
@@ -294,13 +294,13 @@ INPUT_PORTS_START( cgenie )
 	PORT_ANALOG( 0xff, 0x60, IPT_AD_STICK_Y | IPF_REVERSE | IPF_PLAYER2,  40, 0, 0x00, 0xcf )
 
 	/* Joystick Keypad */
-	/* keypads were organized a 3 x 4 matrix and it looked     */
+	/* keypads were organized a 3 x 4 matrix and it looked	   */
 	/* exactly like a our northern telephone numerical pads    */
 	/* The addressing was done with a single clear bit 0..6    */
-	/* on i/o port A,  while all other bits were set.          */
+	/* on i/o port A,  while all other bits were set.		   */
 	/* (e.g. 0xFE addresses keypad1 row 0, 0xEF keypad2 row 1) */
 
-	/*       bit  0   1   2   3   */
+	/*		 bit  0   1   2   3   */
 	/* FE/F7  0  [3] [6] [9] [#]  */
 	/* FD/EF  1  [2] [5] [8] [0]  */
 	/* FB/DF  2  [1] [4] [7] [*]  */
@@ -338,24 +338,24 @@ INPUT_PORTS_END
 
 struct GfxLayout cgenie_charlayout =
 {
-	8,8,           /* 8*8 characters */
-	384,           /* 256 fixed + 128 defineable characters */
-	1,             /* 1 bits per pixel */
-	{ 0 },         /* no bitplanes; 1 bit per pixel */
+	8,8,		   /* 8*8 characters */
+	384,		   /* 256 fixed + 128 defineable characters */
+	1,			   /* 1 bits per pixel */
+	{ 0 },		   /* no bitplanes; 1 bit per pixel */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },   /* x offsets */
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
-	8*8            /* every char takes 8 bytes */
+	8*8 		   /* every char takes 8 bytes */
 };
 
 static struct GfxLayout cgenie_gfxlayout =
 {
-	8,8,            /* 4*8 characters */
-	256,            /* 256 graphics patterns */
-	2,              /* 2 bits per pixel */
-	{ 0, 1 },       /* two bitplanes; 2 bit per pixel */
+	8,8,			/* 4*8 characters */
+	256,			/* 256 graphics patterns */
+	2,				/* 2 bits per pixel */
+	{ 0, 1 },		/* two bitplanes; 2 bit per pixel */
 	{ 0, 0, 2, 2, 4, 4, 6, 6}, /* x offsets */
 	{ 0*8,1*8,2*8,3*8,4*8,5*8,6*8,7*8 },
-	8*8             /* every char takes 8 bytes */
+	8*8 			/* every char takes 8 bytes */
 };
 
 static struct GfxDecodeInfo cgenie_gfxdecodeinfo[] =
@@ -369,21 +369,21 @@ static unsigned char palette[] = {
 	 0*4,  0*4,  0*4,  /* background   */
 
 /* this is the 'RGB monitor' version, strong and clean */
-    15*4, 15*4, 15*4,  /* gray         */
-	 0*4, 48*4, 48*4,  /* cyan         */
-	60*4,  0*4,  0*4,  /* red          */
-	47*4, 47*4, 47*4,  /* white        */
-	55*4, 55*4,  0*4,  /* yellow       */
-	 0*4, 56*4,  0*4,  /* green        */
-	42*4, 32*4,  0*4,  /* orange       */
+	15*4, 15*4, 15*4,  /* gray		   */
+	 0*4, 48*4, 48*4,  /* cyan		   */
+	60*4,  0*4,  0*4,  /* red		   */
+	47*4, 47*4, 47*4,  /* white 	   */
+	55*4, 55*4,  0*4,  /* yellow	   */
+	 0*4, 56*4,  0*4,  /* green 	   */
+	42*4, 32*4,  0*4,  /* orange	   */
 	63*4, 63*4,  0*4,  /* light yellow */
-	 0*4,  0*4, 48*4,  /* blue         */
+	 0*4,  0*4, 48*4,  /* blue		   */
 	 0*4, 24*4, 63*4,  /* light blue   */
-	60*4,  0*4, 38*4,  /* pink         */
-	38*4,  0*4, 60*4,  /* purple       */
+	60*4,  0*4, 38*4,  /* pink		   */
+	38*4,  0*4, 60*4,  /* purple	   */
 	31*4, 31*4, 31*4,  /* light gray   */
 	 0*4, 63*4, 63*4,  /* light cyan   */
-	58*4,  0*4, 58*4,  /* magenta      */
+	58*4,  0*4, 58*4,  /* magenta	   */
 	63*4, 63*4, 63*4,  /* bright white */
 
 /* this is the 'TV screen' version, weak and blurred by repeating pixels */
@@ -404,22 +404,22 @@ static unsigned char palette[] = {
 	58*2+80,  0*2+80, 58*2+80,	/* magenta		*/
 	63*2+80, 63*2+80, 63*2+80,	/* bright white */
 
-    15*2+96, 15*2+96, 15*2+96,  /* gray         */
-     0*2+96, 48*2+96, 48*2+96,  /* cyan         */
-    60*2+96,  0*2+96,  0*2+96,  /* red          */
-    47*2+96, 47*2+96, 47*2+96,  /* white        */
-    55*2+96, 55*2+96,  0*2+96,  /* yellow       */
-     0*2+96, 56*2+96,  0*2+96,  /* green        */
-    42*2+96, 32*2+96,  0*2+96,  /* orange       */
-    63*2+96, 63*2+96,  0*2+96,  /* light yellow */
-     0*2+96,  0*2+96, 48*2+96,  /* blue         */
-     0*2+96, 24*2+96, 63*2+96,  /* light blue   */
-    60*2+96,  0*2+96, 38*2+96,  /* pink         */
-    38*2+96,  0*2+96, 60*2+96,  /* purple       */
-    31*2+96, 31*2+96, 31*2+96,  /* light gray   */
-     0*2+96, 63*2+96, 63*2+96,  /* light cyan   */
-    58*2+96,  0*2+96, 58*2+96,  /* magenta      */
-    63*2+96, 63*2+96, 63*2+96,  /* bright white */
+	15*2+96, 15*2+96, 15*2+96,	/* gray 		*/
+	 0*2+96, 48*2+96, 48*2+96,	/* cyan 		*/
+	60*2+96,  0*2+96,  0*2+96,	/* red			*/
+	47*2+96, 47*2+96, 47*2+96,	/* white		*/
+	55*2+96, 55*2+96,  0*2+96,	/* yellow		*/
+	 0*2+96, 56*2+96,  0*2+96,	/* green		*/
+	42*2+96, 32*2+96,  0*2+96,	/* orange		*/
+	63*2+96, 63*2+96,  0*2+96,	/* light yellow */
+	 0*2+96,  0*2+96, 48*2+96,	/* blue 		*/
+	 0*2+96, 24*2+96, 63*2+96,	/* light blue	*/
+	60*2+96,  0*2+96, 38*2+96,	/* pink 		*/
+	38*2+96,  0*2+96, 60*2+96,	/* purple		*/
+	31*2+96, 31*2+96, 31*2+96,	/* light gray	*/
+	 0*2+96, 63*2+96, 63*2+96,	/* light cyan	*/
+	58*2+96,  0*2+96, 58*2+96,	/* magenta		*/
+	63*2+96, 63*2+96, 63*2+96,	/* bright white */
 
 
 };
@@ -467,7 +467,7 @@ static struct AY8910interface ay8910_interface =
 
 static struct DACinterface DAC_interface =
 {
-	1, 			/* number of DACs */
+	1,			/* number of DACs */
 	{ 25 }		/* volume */
 };
 
@@ -484,7 +484,7 @@ static struct MachineDriver machine_driver_cgenie =
 			cgenie_timer_interrupt,40
 		},
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,		/* frames per second, vblank duration */
 	4,
 	cgenie_init_machine,
 	cgenie_stop_machine,
@@ -539,65 +539,84 @@ ROM_END
 
 static const struct IODevice io_cgenie[] = {
 	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"rom\0",            /* file extensions */
-        NULL,               /* private */
-		cgenie_rom_id,		/* id */
-		cgenie_rom_load,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    {
-		IO_CASSETTE,		/* type */
-		1,					/* count */
-		"cas\0cmd\0",       /* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
-		cgenie_cassette_init,/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+		IO_CARTSLOT,			/* type */
+		1,						/* count */
+		"rom\0",                /* file extensions */
+		IO_RESET_CPU,			/* reset if file changed */
+		cgenie_rom_id,			/* id */
+		cgenie_rom_load,		/* init */
+		NULL,					/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
 	{
-		IO_FLOPPY,			/* type */
-		4,					/* count */
-		"dsk\0",            /* file extensions */
-        NULL,               /* private */
-        basicdsk_floppy_id,               /* id */
-                cgenie_floppy_init, /* init */
-                basicdsk_floppy_exit,                               /* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        floppy_status,               /* status */
-        NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
+		IO_CASSETTE,			/* type */
+		1,						/* count */
+		"cas\0",                /* file extensions */
+		IO_RESET_NONE,			/* reset if file changed */
+		NULL,					/* id */
+		cgenie_cassette_init,	/* init */
+		NULL,					/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{
+		IO_QUICKLOAD,			/* type */
+		1,						/* count */
+		"cmd\0",                /* file extensions */
+		IO_RESET_CPU,			/* reset if file changed */
+		NULL,					/* id */
+		cgenie_snapshot_init,	/* init */
+		NULL,					/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		NULL,					/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{
+		IO_FLOPPY,				/* type */
+		4,						/* count */
+		"dsk\0",                /* file extensions */
+		NULL,					/* private */
+		basicdsk_floppy_id, 	/* id */
+		cgenie_floppy_init, 	/* init */
+		basicdsk_floppy_exit,	/* exit */
+		NULL,					/* info */
+		NULL,					/* open */
+		NULL,					/* close */
+		floppy_status,			/* status */
+		NULL,					/* seek */
+		NULL,					/* tell */
+		NULL,					/* input */
+		NULL,					/* output */
+		NULL,					/* input_chunk */
+		NULL					/* output_chunk */
+	},
+	{ IO_END }
 };
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
 COMP( 1982, cgenie,   0,		cgenie,   cgenie,	cgenie,   "EACA Computers Ltd.",  "Colour Genie EG2000" )
 

@@ -4,16 +4,16 @@
  *	Nate Woods
  *
  *
- *		0x000000 - 0x3fffff		RAM/ROM (switches based on overlay)
- *		0x400000 - 0x4fffff		ROM
- *		0x580000 - 0x5fffff		5380 NCR/Symbios SCSI peripherals chip (Mac Plus only)
- *		0x600000 - 0x6fffff		RAM
- *		0x800000 - 0x9fffff		Zilog 8530 SCC (Serial Control Chip) Read
- *		0xa00000 - 0xbfffff		Zilog 8530 SCC (Serial Control Chip) Write
- *		0xc00000 - 0xdfffff		IWM (Integrated Woz Machine; floppy)
- *		0xe80000 - 0xefffff		Rockwell 6522 VIA
- *		0xf00000 - 0xffffef		??? (the ROM appears to be accessing here)
- *		0xfffff0 - 0xffffff		Auto Vector
+ *		0x000000 - 0x3fffff 	RAM/ROM (switches based on overlay)
+ *		0x400000 - 0x4fffff 	ROM
+ *		0x580000 - 0x5fffff 	5380 NCR/Symbios SCSI peripherals chip (Mac Plus only)
+ *		0x600000 - 0x6fffff 	RAM
+ *		0x800000 - 0x9fffff 	Zilog 8530 SCC (Serial Control Chip) Read
+ *		0xa00000 - 0xbfffff 	Zilog 8530 SCC (Serial Control Chip) Write
+ *		0xc00000 - 0xdfffff 	IWM (Integrated Woz Machine; floppy)
+ *		0xe80000 - 0xefffff 	Rockwell 6522 VIA
+ *		0xf00000 - 0xffffef 	??? (the ROM appears to be accessing here)
+ *		0xfffff0 - 0xffffff 	Auto Vector
  *
  *
  *	Interrupts:
@@ -27,7 +27,7 @@
  *			CA2 from 1 Hz clock (RTC)
  *			CB1 from Keyboard Clock
  *			CB2 from Keyboard Data
- *			SR  from Keyboard Data Ready
+ *			SR	from Keyboard Data Ready
  *
  *		SCC:
  *			PB_EXT	from mouse Y circuitry
@@ -135,7 +135,7 @@ static struct MachineDriver machine_driver_mac512ke =
 
 	/* video hardware */
 	512, 342, /* screen width, screen height */
-	{ 0, 512-1, 0, 342-1 },			/* visible_area */
+	{ 0, 512-1, 0, 342-1 }, 		/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -177,7 +177,7 @@ static struct MachineDriver machine_driver_macplus =
 
 	/* video hardware */
 	512, 342, /* screen width, screen height */
-	{ 0, 512-1, 0, 342-1 },			/* visible_area */
+	{ 0, 512-1, 0, 342-1 }, 		/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -387,22 +387,22 @@ static const struct IODevice io_mac512ke[] = {
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
-		"dsk\0img\0",		/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
+		"dsk\0img\0",       /* file extensions */
+		IO_RESET_NONE,		/* reset if file changed */
+		NULL,				/* id */
 		mac_floppy_init,	/* init */
 		mac_floppy_exit,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{ IO_END }
 };
 
 /* MacPlus should eventually support hard disks, possibly CD-ROMs, etc. */
@@ -410,29 +410,29 @@ static const struct IODevice io_macplus[] = {
 	{
 		IO_FLOPPY,			/* type */
 		2,					/* count */
-		"dsk\0img\0",		/* file extensions */
-        NULL,               /* private */
-        NULL,               /* id */
+		"dsk\0img\0",       /* file extensions */
+		IO_RESET_NONE,		/* reset if file changed */
+		NULL,				/* id */
 		mac_floppy_init,	/* init */
 		mac_floppy_exit,	/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
-    { IO_END }
+		NULL,				/* info */
+		NULL,				/* open */
+		NULL,				/* close */
+		NULL,				/* status */
+		NULL,				/* seek */
+		NULL,				/* input */
+		NULL,				/* output */
+		NULL,				/* input_chunk */
+		NULL				/* output_chunk */
+	},
+	{ IO_END }
 };
 
 /*	   YEAR  NAME	   PARENT	 MACHINE   INPUT	 INIT	   COMPANY	 FULLNAME */
-/*COMPX( 1984, mac128k,  0,        mac128k,  macplus,	 mac128k,  "Apple Computer",  "Macintosh 128k",  0 )
-COMPX( 1984, mac512k,  mac128k,  mac128k,  macplus,	 mac512k,  "Apple Computer",  "Macintosh 512k",  0 )*/
-COMPX( 1986, mac512ke, macplus,  mac512ke, macplus,	 mac512ke, "Apple Computer",  "Macintosh 512ke", 0 )
-COMPX( 1986, macplus,  0,		 macplus,  macplus,	 macplus,  "Apple Computer",  "Macintosh Plus",  0 )
+/*COMPX( 1984, mac128k,  0, 	   mac128k,  macplus,	 mac128k,  "Apple Computer",  "Macintosh 128k",  0 )
+COMPX( 1984, mac512k,  mac128k,  mac128k,  macplus,  mac512k,  "Apple Computer",  "Macintosh 512k",  0 )*/
+COMPX( 1986, mac512ke, macplus,  mac512ke, macplus,  mac512ke, "Apple Computer",  "Macintosh 512ke", 0 )
+COMPX( 1986, macplus,  0,		 macplus,  macplus,  macplus,  "Apple Computer",  "Macintosh Plus",  0 )
 
 #if 0
 
@@ -478,7 +478,7 @@ static struct MachineDriver machine_driver_mac2 =
 
 	/* video hardware */
 	640, 480, /* screen width, screen height */
-	{ 0, 640-1, 0, 480-1 },			/* visible_area */
+	{ 0, 640-1, 0, 480-1 }, 		/* visible_area */
 
 	0,					/* graphics decode info */
 	2, 2,						/* number of colors, colortable size */
@@ -511,9 +511,10 @@ ROM_START( mac2 )
 ROM_END
 
 static const struct IODevice io_mac2[] = {
-    { IO_END }
+	{ IO_END }
 };
 
-COMPX( 1987, mac2,     0,		 mac2,     mac2,     0/*mac2*/,  "Apple Computer",	  "Macintosh II",  GAME_NOT_WORKING )
+COMPX( 1987, mac2,	   0,		 mac2,	   mac2,	 0/*mac2*/,  "Apple Computer",    "Macintosh II",  GAME_NOT_WORKING )
 
 #endif
+
