@@ -66,8 +66,11 @@
 #if (HAS_M6805 || HAS_M68705 || HAS_HD63705)
 #include "cpu/m6805/m6805.h"
 #endif
-#if (HAS_HD6309 || HAS_M6809)
+#if (HAS_M6809)
 #include "cpu/m6809/m6809.h"
+#endif
+#if (HAS_HD6309)
+#include "cpu/hd6309/hd6309.h"
 #endif
 #if (HAS_KONAMI)
 #include "cpu/konami/konami.h"
@@ -568,7 +571,7 @@ struct cpu_interface cpuintf[] =
 	CPU3(TMS320C10,tms320c10,2,  0,1.00,TMS320C10_INT_NONE,-1,			   -1,			   16,	 -1,16,BE,2, 4,16	),
 #endif
 #if (HAS_CCPU)
-	CPU0(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
+	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
 #endif
 #if (HAS_PDP1)
 	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,18,LE,1, 3,16	),
