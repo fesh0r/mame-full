@@ -5657,11 +5657,11 @@ void MAME_Debug(void)
 			{
 				update_video_and_audio();
 				debug_trace_delay = dbg_trace_delay;
-				if( keyboard_pressed(KEYCODE_SPACE) ||
-					keyboard_pressed(KEYCODE_TILDE) )
+				if( debug_key_pressed )
 				{
 					dbg_trace = 0;
 					dbg_step = 0;
+					osd_debugger_focus(1);
 				}
 			}
 		}
