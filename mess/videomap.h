@@ -41,8 +41,17 @@ struct videomap_linecallback_info
 	UINT8 flags;
 };
 
+enum
+{
+	VIDEOMAP_FLAGS_MEMORY8 = 0,
+	VIDEOMAP_FLAGS_MEMORY16_BE = 1,
+	VIDEOMAP_FLAGS_MEMORY16_LE = 2
+};
+
 struct videomap_interface
 {
+	int memory_flags;
+
 	/* called once per frame */
 	void (*frame_callback)(struct videomap_framecallback_info *info);
 
@@ -61,7 +70,7 @@ struct videomap_config
 };
 
 /* called at beginning */
-void videomap_init(const struct videomap_config *config);
+int videomap_init(const struct videomap_config *config);
 
 /* called by hardware */
 void videomap_invalidate_border(void);
