@@ -719,7 +719,7 @@ static void change_device(mess_image *img, int is_save)
 		initial_dir = get_devicedirectory(dev->type);
 
 	// add custom dialog elements, if appropriate
-	if (dev->createimage_optguide && dev->createimage_options[0].optspec)
+	if (is_save && dev->createimage_optguide && dev->createimage_options[0].optspec)
 	{
 		dialog = build_option_dialog(dev, filter, sizeof(filter) / sizeof(filter[0]), &create_format, &create_args);
 		if (!dialog)

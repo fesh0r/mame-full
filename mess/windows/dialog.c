@@ -1313,6 +1313,7 @@ static UINT_PTR CALLBACK file_dialog_hook(HWND dlgwnd, UINT message, WPARAM wpar
 BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *custom_dialog, const char *filter,
 	const char *initial_dir, char *filename, size_t filename_len)
 {
+	extern int win_suspend_directx;
 	OPENFILENAME ofn;
 	BOOL result;
 #ifdef UNICODE
@@ -1350,6 +1351,8 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 	ofn.nMaxFile = filename_len;
 #endif
 
+	win_suspend_directx = 1;
+
 	switch(dlgtype) {
 	case FILE_DIALOG_OPEN:
 		result = GetOpenFileName(&ofn);
@@ -1364,6 +1367,8 @@ BOOL win_file_dialog(HWND parent, enum file_dialog_type dlgtype, dialog_box *cus
 		result = FALSE;
 		break;
 	}
+
+	win_suspend_directx = 0;
 
 #ifdef UNICODE
 	strcpyz(filename, buf, filename_len);

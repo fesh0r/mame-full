@@ -112,6 +112,7 @@ int win_sync_refresh;
 float win_gfx_brightness;
 int win_blit_effect;
 float win_screen_aspect = (4.0 / 3.0);
+int win_suspend_directx;
 
 // windows
 HWND win_video_window;
@@ -737,7 +738,7 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, const struct
 
 	// if we have a blit surface, use that
 	
-	if (win_use_directx)
+	if (win_use_directx && !win_suspend_directx)
 	{
 		if (win_use_directx == USE_D3D)
 		{
