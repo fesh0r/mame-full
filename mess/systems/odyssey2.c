@@ -6,18 +6,6 @@
 
 ***************************************************************************/
 
-/**********************************************
-8048 Ports:???????????
-P1	Bit 0..1  - RAM bank select
-	Bit 3..7  - Keypad input:
-
-P2	Bit 0..3  - A8-A11
-	Bit 4..7  - Sound control
-
-T1	Mirror sync pulse
-
-***********************************************/
-
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
@@ -104,7 +92,7 @@ INPUT_PORTS_START( odyssey2 )
 	DIPS_HELPER( 0x08, "=", KEYCODE_EQUALS, CODE_NONE)
 	DIPS_HELPER( 0x10, "Yes ", KEYCODE_Y, CODE_NONE)
 	DIPS_HELPER( 0x20, "No ", KEYCODE_N, CODE_NONE)
-	DIPS_HELPER( 0x40, "CLR", KEYCODE_ESC, CODE_NONE)
+	DIPS_HELPER( 0x40, "CLR", KEYCODE_BACKSPACE, CODE_NONE)
 	DIPS_HELPER( 0x80, "ENT", KEYCODE_ENTER, CODE_NONE)
 	PORT_START		/* IN6 */
 	DIPS_HELPER( 0x01, "Player 1/left up", KEYCODE_UP, CODE_NONE)
@@ -121,28 +109,6 @@ INPUT_PORTS_START( odyssey2 )
 	DIPS_HELPER( 0x10, "Player 2/right fire", KEYCODE_LALT, CODE_NONE)
 	PORT_BIT ( 0xe0, 0xe0,	 IPT_UNUSED )
 INPUT_PORTS_END
-
-static struct GfxLayout odyssey2_charlayout =
-{
-        8,8,
-        0x40,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 
-	    0,
-	    1,
-	    2,
-	    3,
-	    4,
-	    5,
-	    6,
-	    7,
-        },
-        /* y offsets */
-        { 0,8,16,24,32,40,48,56 },
-        8*8
-};
 
 static struct GfxLayout odyssey2_graphicslayout =
 {
@@ -166,9 +132,25 @@ static struct GfxLayout odyssey2_graphicslayout =
         1*8
 };
 
+
+static struct GfxLayout odyssey2_spritelayout =
+{
+        8,1,
+        256,                                    /* 256 characters */
+        1,                      /* 1 bits per pixel */
+        { 0 },                  /* no bitplanes; 1 bit per pixel */
+        /* x offsets */
+        { 
+	    7,6,5,4,3,2,1,0
+        },
+        /* y offsets */
+        { 0 },
+        1*8
+};
+
 static struct GfxDecodeInfo odyssey2_gfxdecodeinfo[] = {
     { REGION_GFX1, 0x0000, &odyssey2_graphicslayout,                     0, 2 },
-    { REGION_GFX1, 0x0100, &odyssey2_charlayout,                     0, 2 },
+    { REGION_GFX1, 0x0000, &odyssey2_spritelayout,                     0, 2 },
     { -1 } /* end of array */
 };
 
@@ -198,7 +180,8 @@ static struct MachineDriver machine_driver_odyssey2 =
 	0,						/* stop_machine */
 
 	/* video hardware */
-	262,240, {0,262-1,0,240-1},
+//	262,240, {0,262-1,0,240-1},
+	320,300, {0,320-1,0,300-1},
 	odyssey2_gfxdecodeinfo,			   /* graphics decode info */
 	ARRAY_LENGTH(odyssey2_colors),
 	2,
@@ -221,7 +204,7 @@ static struct MachineDriver machine_driver_odyssey2 =
 ROM_START (odyssey2)
     ROM_REGION(0x10000,REGION_CPU1,0)    /* safer for the memory handler/bankswitching??? */
     ROM_LOAD ("o2bios.rom", 0x0000, 0x0400, 0x8016a315)
-    ROM_REGION(sizeof(o2_shape)+0x100, REGION_GFX1, 0)
+    ROM_REGION(0x100, REGION_GFX1, 0)
     ROM_REGION(0x2000, REGION_USER1, 0)
 ROM_END
 
@@ -230,7 +213,6 @@ void init_odyssey2(void)
 	int i;
 	UINT8 *gfx=memory_region(REGION_GFX1);
 	for (i=0; i<256; i++) gfx[i]=i;
-	memcpy(gfx+0x100, o2_shape,sizeof(o2_shape));
 }
 
 static const struct IODevice io_odyssey2[] = {
@@ -257,7 +239,7 @@ static const struct IODevice io_odyssey2[] = {
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-CONSX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NO_SOUND )
+COMPX( 1982, odyssey2, 0,		odyssey2, odyssey2, odyssey2,		  "Magnavox",  "ODYSSEY 2", GAME_NO_SOUND )
 // philips g7000/videopac
 
 

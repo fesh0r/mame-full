@@ -19,7 +19,6 @@ extern int odyssey2_load_rom (int id);
 extern int odyssey2_vh_hpos;
 
 extern UINT8 odyssey2_colors[24][3];
-extern UINT8 o2_shape[0x40][8];
 
 extern int odyssey2_vh_start(void);
 extern void odyssey2_vh_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
