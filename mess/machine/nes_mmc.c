@@ -45,7 +45,7 @@ mem_read_handler mmc_read_low;
 mem_write_handler mmc_write_mid;
 mem_read_handler mmc_read_mid;
 mem_write_handler mmc_write;
-void (*ppu_latch)(offs_t offset);
+/*void (*ppu_latch)(offs_t offset);*/
 
 static int vrom_bank[16];
 static int mult1, mult2;
