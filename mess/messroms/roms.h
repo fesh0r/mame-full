@@ -658,7 +658,7 @@ static struct {
 	{ 0xee229390 , 0x8000, "MSXJ" },
 	{ 0xe9ccd789 , 0x8000, "MSXUK" },
 	{ 0x3ab0cd3b , 0x8000, "MSXKR" },
-	{ 0xa781f7ca , 0x8000, "MSXKR alt" },
+	{ 0xa781f7ca , 0x8000, "MSXKR 0x3ab0cd3b hacked to boot like jap/eu msx for increased compatiblity" },
 
 	{ 0x97478efb , 0x4000, "BAD DUMP? MSXKR han" },
 
@@ -842,6 +842,7 @@ static struct {
 	{ 0x278f7bf3 , 0x800, "7916E C48091 82c210-1 Chess Champion MK1 (2716 compatible)" },
 	{ 0x4f28c443 , 0x400, "MOS6530 024 1879 Chess Champion MK2" },
 	{ 0x6f10991b , 0x1000, "MOS6332 005 2179 Chess Champion MK2 (not full 2732 compatible)" },
+	{ 0x52741e0b , 0x1000, "Signetics c19082 Chess Champion MK3 (not full 2732 compatible)" },
 
 	{ 0x2bf4b1a8 , 0x80000, "Epoxy DIL32 Comquest Plus German (dumped as 278001, gave 2 identical halfes" },
 
