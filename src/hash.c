@@ -565,7 +565,12 @@ void hash_data_print(const char* data, unsigned int functions, char* buffer)
 			first = 0;
 			
 			strcpy(temp, hash_function_name(func));
-			strupr(temp);
+			/*strupr(temp);*/
+			{
+				int i;
+				for (i=0; temp[i]; i++)
+					temp[i] = toupper(temp[i]);
+			}
 			strcat(buffer, temp);
 			strcat(buffer, "(");
             
