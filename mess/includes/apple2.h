@@ -66,7 +66,10 @@ struct apple2_config
 extern const struct apple2_slotdevice apple2_slot_langcard;
 extern const struct apple2_slotdevice apple2_slot_mockingboard;
 extern const struct apple2_slotdevice apple2_slot_floppy525;
+extern const struct apple2_slotdevice apple2_slot_iwm;
 
+void apple2_iwm_setdiskreg(data8_t data);
+data8_t apple2_iwm_getdiskreg(void);
 
 /* machine/apple2.c */
 void apple2_init_common(const struct apple2_config *config);

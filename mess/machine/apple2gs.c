@@ -131,7 +131,6 @@ UINT8 *apple2gs_slowmem;
 data8_t apple2gs_newvideo;
 
 static UINT8 apple2gs_vgcint;
-static UINT8 apple2gs_diskreg;
 static UINT8 apple2gs_langsel;
 static UINT8 apple2gs_sltromsel;
 static UINT8 apple2gs_cyareg;
@@ -986,7 +985,7 @@ static READ8_HANDLER( apple2gs_c0xx_r )
 			break;
 
 		case 0x31:	/* C031 - DISKREG */
-			result = apple2gs_diskreg;
+			result = apple2_iwm_getdiskreg();
 			break;
 
 		case 0x33:	/* C033 - CLOCKDATA */
@@ -1043,13 +1042,6 @@ static READ8_HANDLER( apple2gs_c0xx_r )
 		case 0x7c: case 0x7d: case 0x7e: case 0x7f:
 			offset |= (memory_region_length(REGION_CPU1) - 1) & ~0x3FFF;
 			result = memory_region(REGION_CPU1)[offset];
-			break;
-
-		case 0xe0: case 0xe1: case 0xe2: case 0xe3:
-		case 0xe4: case 0xe5: case 0xe6: case 0xe7:
-		case 0xe8: case 0xe9: case 0xea: case 0xeb:
-		case 0xec: case 0xed: case 0xee: case 0xef:
-			result = iwm_r(offset - 0xe0);
 			break;
 
 		case 0x21:	/* C021 - MONOCOLOR */
@@ -1120,8 +1112,7 @@ static WRITE8_HANDLER( apple2gs_c0xx_w )
 			break;
 
 		case 0x31:	/* C031 - DISKREG */
-			apple2gs_diskreg = data & 0xC0;
-			sony_set_sel_line(apple2gs_diskreg & 0x80);
+			apple2_iwm_setdiskreg(data);
 			break;
 
 		case 0x32:	/* C032 - SCANINT */
@@ -1192,139 +1183,11 @@ static WRITE8_HANDLER( apple2gs_c0xx_w )
 				VAR_ALTZP | VAR_PAGE2 | VAR_RAMRD | VAR_RAMWRT | VAR_LCRAM | VAR_LCRAM2 | VAR_INTCXROM);
 			break;
 
-		case 0xe0: case 0xe1: case 0xe2: case 0xe3:
-		case 0xe4: case 0xe5: case 0xe6: case 0xe7:
-		case 0xe8: case 0xe9: case 0xea: case 0xeb:
-		case 0xec: case 0xed: case 0xee: case 0xef:
-			iwm_w(offset - 0xe0, data);
-			break;
-
 		default:
 			apple2_c0xx_w(offset, data);
 			break;
 	}
 }
-
-
-
-static void apple2gs_set_lines(data8_t lines)
-{
-	if (apple2gs_diskreg & 0x40)
-	{
-		/* slot 5: 3.5" disks */
-		sony_set_lines(lines);
-	}
-#if APPLE2GS_SUPPORT_SLOT6
-	else
-	{
-		/* slot 6: 5.25" disks */
-		if (apple2gs_cur_slot6_image)
-			apple2_slot6_set_lines(apple2gs_cur_slot6_image, lines);
-	}
-#endif /* APPLE2GS_SUPPORT_SLOT6 */
-}
-
-
-
-static void apple2gs_set_enable_lines(int enable_mask)
-{
-	int slot5_enable_mask = 0;
-	int slot6_enable_mask = 0;
-	mess_image *image;
-
-	if (apple2gs_diskreg & 0x40)
-		slot5_enable_mask = enable_mask;
-	else
-		slot6_enable_mask = enable_mask;
-
-	/* set the 3.5" enable lines */
-	sony_set_enable_lines(slot5_enable_mask);
-
-	/* set the 5.25" enable lines */
-	apple2gs_cur_slot6_image = NULL;
-	image = image_from_devtag_and_index(APDISK_DEVTAG, 0);
-	floppy_drive_set_motor_state(image, (slot6_enable_mask == 1));
-	if (slot6_enable_mask == 1)
-		apple2gs_cur_slot6_image = image;
-	image = image_from_devtag_and_index(APDISK_DEVTAG, 1);
-	floppy_drive_set_motor_state(image, (slot6_enable_mask == 2));
-	if (slot6_enable_mask == 2)
-		apple2gs_cur_slot6_image = image;
-}
-
-
-
-static data8_t apple2gs_read_data(void)
-{
-	data8_t result = 0x00;
-
-	if (apple2gs_diskreg & 0x40)
-	{
-		/* slot 5: 3.5" disks */
-		result = sony_read_data();
-	}
-#if APPLE2GS_SUPPORT_SLOT6
-	else
-	{
-		/* slot 6: 5.25" disks */
-		if (apple2gs_cur_slot6_image)
-			result = apple2_slot6_readbyte(apple2gs_cur_slot6_image);
-	}
-#endif /* APPLE2GS_SUPPORT_SLOT6 */
-	return result;
-}
-
-
-
-static void apple2gs_write_data(data8_t data)
-{
-	if (apple2gs_diskreg & 0x40)
-	{
-		/* slot 5: 3.5" disks */
-		sony_write_data(data);
-	}
-#if APPLE2GS_SUPPORT_SLOT6
-	else
-	{
-		/* slot 6: 5.25" disks */
-		if (apple2gs_cur_slot6_image)
-			apple2_slot6_writebyte(apple2gs_cur_slot6_image, data);
-	}
-#endif /* APPLE2GS_SUPPORT_SLOT6 */
-}
-
-
-
-static int apple2gs_read_status(void)
-{
-	int result = 0;
-
-	if (apple2gs_diskreg & 0x40)
-	{
-		/* slot 5: 3.5" disks */
-		result = sony_read_status();
-	}
-#if APPLE2GS_SUPPORT_SLOT6
-	else
-	{
-		/* slot 6: 5.25" disks */
-		if (apple2gs_cur_slot6_image)
-			result = image_is_writable(apple2gs_cur_slot6_image) ? 0x00 : 0x80;
-	}
-#endif /* APPLE2GS_SUPPORT_SLOT6 */
-	return result;
-}
-
-
-
-static const struct iwm_interface apple2gs_iwm_interface =
-{
-	apple2gs_set_lines,
-	apple2gs_set_enable_lines,
-	apple2gs_read_data,
-	apple2gs_write_data,
-	apple2gs_read_status
-};
 
 
 
@@ -1796,6 +1659,7 @@ DRIVER_INIT( apple2gs )
 	cfg.keyboard_type = AP2_KEYBOARD_2GS;
 	cfg.slots[0] = &apple2_slot_langcard;
 	cfg.slots[4] = &apple2_slot_mockingboard;
+	cfg.slots[6] = &apple2_slot_iwm;
 	
 	apple2_init_common(&cfg);
 
@@ -1804,7 +1668,6 @@ DRIVER_INIT( apple2gs )
 
 	/* setup globals */
 	apple2gs_cur_slot6_image = NULL;
-	apple2gs_diskreg = 0;
 	apple2gs_langsel = 0;
 	apple2gs_cyareg = 0x80;
 	apple2gs_inten = 0x00;
@@ -1838,6 +1701,5 @@ DRIVER_INIT( apple2gs )
 
 	/* init the various subsystems */
 	scc_init(NULL);
-	iwm_init(&apple2gs_iwm_interface);
 	apple2gs_setup_memory();
 }

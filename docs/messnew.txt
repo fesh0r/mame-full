@@ -13,6 +13,8 @@ System Driver Changes:
 
 - [APPLE1] Implemented a proper reset key.  (bug #349) [Colin Howell]
 
+- [APPLE2C0] Now uses the IWM chip.  [Nate Woods]
+
 - [APPLE2GS] Implemented Ensoniq ES5503 sound system.  [R. Belmont]
 
 - [C64] Fixed a regression intorduced in 0.92 that prevented the first floppy

@@ -18,6 +18,8 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
+#include "machine/sonydriv.h"
+#include "machine/iwm.h"
 #include "devices/flopdrv.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
@@ -1303,6 +1305,222 @@ const struct apple2_slotdevice apple2_slot_floppy525 =
 
 
 /* -----------------------------------------------------------------------
+ * IWM
+ * ----------------------------------------------------------------------- */
+
+static int apple2_iwm_has_35;
+static int apple2_iwm_has_525;
+static int apple2_iwm_diskreg;
+static mess_image *apple2_iwm_cur_slot6_image;
+
+static void apple2_iwm_set_lines(data8_t lines)
+{
+	if (apple2_iwm_diskreg & 0x40)
+	{
+		if (apple2_iwm_has_35)
+		{
+			/* slot 5: 3.5" disks */
+			sony_set_lines(lines);
+		}
+	}
+	else
+	{
+		if (apple2_iwm_has_525)
+		{
+			/* slot 6: 5.25" disks */
+			if (apple2_iwm_cur_slot6_image)
+				apple2_slot6_set_lines(apple2_iwm_cur_slot6_image, lines);
+		}
+	}
+}
+
+
+
+static void apple2_iwm_set_enable_lines(int enable_mask)
+{
+	int slot5_enable_mask = 0;
+	int slot6_enable_mask = 0;
+	mess_image *image;
+
+	if (apple2_iwm_diskreg & 0x40)
+		slot5_enable_mask = enable_mask;
+	else
+		slot6_enable_mask = enable_mask;
+
+	if (apple2_iwm_has_35)
+	{
+		/* set the 3.5" enable lines */
+		sony_set_enable_lines(slot5_enable_mask);
+	}
+
+	if (apple2_iwm_has_525)
+	{
+		/* set the 5.25" enable lines */
+		apple2_iwm_cur_slot6_image = NULL;
+		image = image_from_devtag_and_index(APDISK_DEVTAG, 0);
+		floppy_drive_set_motor_state(image, (slot6_enable_mask == 1));
+		if (slot6_enable_mask == 1)
+			apple2_iwm_cur_slot6_image = image;
+		image = image_from_devtag_and_index(APDISK_DEVTAG, 1);
+		floppy_drive_set_motor_state(image, (slot6_enable_mask == 2));
+		if (slot6_enable_mask == 2)
+			apple2_iwm_cur_slot6_image = image;
+	}
+}
+
+
+
+static data8_t apple2_iwm_read_data(void)
+{
+	data8_t result = 0x00;
+
+	if (apple2_iwm_diskreg & 0x40)
+	{
+		if (apple2_iwm_has_35)
+		{
+			/* slot 5: 3.5" disks */
+			result = sony_read_data();
+		}
+	}
+	else
+	{
+		if (apple2_iwm_has_525)
+		{
+			/* slot 6: 5.25" disks */
+			if (apple2_iwm_cur_slot6_image)
+				result = apple2_slot6_readbyte(apple2_iwm_cur_slot6_image);
+		}
+	}
+	return result;
+}
+
+
+
+static void apple2_iwm_write_data(data8_t data)
+{
+	if (apple2_iwm_diskreg & 0x40)
+	{
+		if (apple2_iwm_has_35)
+		{
+			/* slot 5: 3.5" disks */
+			sony_write_data(data);
+		}
+	}
+	else
+	{
+		if (apple2_iwm_has_525)
+		{
+			/* slot 6: 5.25" disks */
+			if (apple2_iwm_cur_slot6_image)
+				apple2_slot6_writebyte(apple2_iwm_cur_slot6_image, data);
+		}
+	}
+}
+
+
+
+static int apple2_iwm_read_status(void)
+{
+	int result = 0;
+
+	if (apple2_iwm_diskreg & 0x40)
+	{
+		if (apple2_iwm_has_35)
+		{
+			/* slot 5: 3.5" disks */
+			result = sony_read_status();
+		}
+	}
+	else
+	{
+		if (apple2_iwm_has_525)
+		{
+			/* slot 6: 5.25" disks */
+			if (apple2_iwm_cur_slot6_image)
+				result = image_is_writable(apple2_iwm_cur_slot6_image) ? 0x00 : 0x80;
+		}
+	}
+	return result;
+}
+
+
+
+void apple2_iwm_setdiskreg(data8_t data)
+{
+	apple2_iwm_diskreg = data & 0xC0;
+	if (apple2_iwm_has_35)
+		sony_set_sel_line(apple2_iwm_diskreg & 0x80);
+}
+
+
+
+data8_t apple2_iwm_getdiskreg(void)
+{
+	return apple2_iwm_diskreg;
+}
+
+
+
+static const struct iwm_interface apple2_iwm_interface =
+{
+	apple2_iwm_set_lines,
+	apple2_iwm_set_enable_lines,
+	apple2_iwm_read_data,
+	apple2_iwm_write_data,
+	apple2_iwm_read_status
+};
+
+
+
+static void *apple2_iwm_init(int slot)
+{
+	const struct IODevice *dev;
+
+	apple2_iwm_has_35 = FALSE;
+	apple2_iwm_has_525 = FALSE;
+	apple2_iwm_diskreg = 0x00;
+
+	for (dev = Machine->devices; dev->type < IO_COUNT; dev++)
+	{
+		if (!strcmp(dev->tag, "sonydriv"))
+			apple2_iwm_has_35 = !dev->not_working;
+		else if (!strcmp(dev->tag, APDISK_DEVTAG))
+			apple2_iwm_has_525 = !dev->not_working;
+	}
+
+	iwm_init(&apple2_iwm_interface);
+	return (void *) ~0;
+}
+
+
+
+static data8_t apple2_iwm_read(void *token, offs_t offset)
+{
+	return iwm_r(offset);
+}
+
+
+
+static void apple2_iwm_write(void *token, offs_t offset, data8_t data)
+{
+	iwm_w(offset, data);
+}
+
+
+
+const struct apple2_slotdevice apple2_slot_iwm =
+{
+	"iwm",
+	"IWM",
+	apple2_iwm_init,
+	NULL,
+	apple2_iwm_read,
+	apple2_iwm_write
+};
+
+
+
+/* -----------------------------------------------------------------------
  * Driver init
  * ----------------------------------------------------------------------- */
 
@@ -1375,9 +1593,18 @@ DRIVER_INIT( apple2 )
 		a2_cfg.keyboard_type = AP2_KEYBOARD_2;
 
 	/* specify slots */
-	a2_cfg.slots[0] = &apple2_slot_langcard;
-	a2_cfg.slots[4] = &apple2_slot_mockingboard;
-	a2_cfg.slots[6] = &apple2_slot_floppy525;
+	if (!strcmp(Machine->gamedrv->name, "apple2c0"))
+	{
+		a2_cfg.slots[0] = &apple2_slot_langcard;
+		a2_cfg.slots[4] = &apple2_slot_mockingboard;
+		a2_cfg.slots[6] = &apple2_slot_iwm;
+	}
+	else
+	{
+		a2_cfg.slots[0] = &apple2_slot_langcard;
+		a2_cfg.slots[4] = &apple2_slot_mockingboard;
+		a2_cfg.slots[6] = &apple2_slot_floppy525;
+	}
 
 	apple2_init_common(&a2_cfg);
 
