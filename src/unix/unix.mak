@@ -742,15 +742,14 @@ doinstallsuid:
 
 copycab:
 	@echo installing cabinet files under $(XMAMEROOT)...
-	@cd src/unix
-	@for i in cab/*; do \
+	@cd src/unix; \
+	for i in cab/*; do \
 	if test ! -d $(XMAMEROOT)/$$i; then \
 	$(INSTALL_DATA_DIR) $(XMAMEROOT)/$$i; fi; \
 	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
 	rm -fr $(OBJ) $(NAME).* xlistdev $(TOOLS)
-#	cd makedep; make clean
 
 clean68k:
 	@echo Deleting 68k files...
