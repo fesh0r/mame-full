@@ -1721,28 +1721,20 @@ int coco3_hblank(void)
 		scanline = 0;
 	}
 
+	scanline += 8;
+
 	inborder = (scanline < bordertop) || (scanline >= (bordertop + rows));
 
 #if LOG_VBORD
-	if (scanline == (bordertop + rows))
+	if (scanline == (bordertop + rows)) {
 		logerror("coco3_hblank(): raising VBORD at absolute scanline #%i\n", bordertop + rows);
+	}
 #endif
 
 	coco3_raise_interrupt(COCO3_INT_VBORD, inborder);
 
 	return ignore_interrupt();
 }
-
-/*int coco3_vblank(void)
-{
-	pia_0_cb1_w(0, 0);
-	pia_0_cb1_w(0, 1);
-	coco3_raise_interrupt(COCO3_INT_VBORD, 1);
-	coco3_raise_interrupt(COCO3_INT_VBORD, 0);
-	rastertrack_vblank();
-	return dragon_interrupt();
-}
-*/
 
 static void generic_init_machine(struct pia6821_interface *piaintf)
 {

@@ -678,7 +678,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_metapalette,
 			&RAM[coco3_lores_vidbase()], &the_state,
-			TRUE, (full_refresh ? 16 : -1), 2,
+			TRUE, 1, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
 }
