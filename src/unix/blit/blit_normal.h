@@ -74,71 +74,25 @@ BLIT_BEGIN(blit_normal)
   }
 BLIT_END
 
+BLIT_BEGIN(blit_fakescan_h)
+  switch(sysdep_display_params.widthscale)
+  {
+    case 1:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_1)
+      break;
+    case 2:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_2)
+      break;
+    case 3:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_3)
+      break;
+    default:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_x)
+  }
+BLIT_END
+
 /* some left overs of the old blit code which we might need when re-implementing
    black scanlines */
-
-#if 0 /* def SCANLINES */
-#define LOOP() \
-if (sysdep_display_params.orientation) { \
-  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] & \
-      SYSDEP_DISPLAY_DIRECT_FB) \
-  { \
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) { \
-      int reps = sysdep_display_params.heightscale-1; \
-      rotate_func(rotate_dbbuf0, bitmap, y, dirty_area); \
-      while (reps) { \
-        COPY_LINE2((SRC_PIXEL *)rotate_dbbuf0, \
-          (SRC_PIXEL *)rotate_dbbuf0 + src_bounds_width, line_dest); \
-        line_dest += DEST_WIDTH; \
-        reps--; \
-      } \
-      line_dest += DEST_WIDTH; \
-    } \
-  } else { \
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) { \
-      int reps = sysdep_display_params.heightscale-1; \
-      rotate_func(rotate_dbbuf0, bitmap, y, dirty_area); \
-      COPY_LINE2((SRC_PIXEL *)rotate_dbbuf0, \
-        (SRC_PIXEL *)rotate_dbbuf0 + src_bounds_width, line_dest); \
-      while (--reps) { \
-        memcpy(line_dest+DEST_WIDTH, line_dest, \
-          dest_bounds_width*DEST_PIXEL_SIZE); \
-        line_dest += DEST_WIDTH; \
-      } \
-      line_dest += 2*DEST_WIDTH; \
-    } \
-  } \
-} else { \
-  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] & \
-      SYSDEP_DISPLAY_DIRECT_FB) \
-  { \
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) { \
-      int reps = sysdep_display_params.heightscale-1; \
-      while (reps) { \
-        COPY_LINE2(((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x, \
-          ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->max_x + 1, \
-          line_dest); \
-        line_dest += DEST_WIDTH; \
-        reps--; \
-      } \
-      line_dest += DEST_WIDTH; \
-    } \
-  } else { \
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) { \
-      int reps = sysdep_display_params.heightscale-1; \
-      COPY_LINE2(((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x, \
-        ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->max_x + 1, \
-        line_dest); \
-      while (--reps) { \
-        memcpy(line_dest+DEST_WIDTH, line_dest, \
-          dest_bounds_width*DEST_PIXEL_SIZE); \
-        line_dest += DEST_WIDTH; \
-      } \
-      line_dest += 2*DEST_WIDTH; \
-    } \
-  } \
-}
-#endif /* SCANLINES? */
 
 /* Normal, speedup hack in case we just have to memcpy */
 #if 0 /* #ifdef SCANLINES */

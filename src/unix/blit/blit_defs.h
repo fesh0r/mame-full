@@ -297,3 +297,66 @@ void FUNC_NAME(NAME)(struct mame_bitmap *bitmap, \
   } else { \
     BLIT_LOOP_YARBSIZE_NORMAL(RENDER_LINE) \
   }
+
+#define BLIT_LOOP_FAKESCAN(BLIT_LINE) \
+if (sysdep_display_params.orientation) { \
+  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] & \
+      SYSDEP_DISPLAY_DIRECT_FB) \
+  { \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      int reps = sysdep_display_params.heightscale; \
+      rotate_func(rotate_dbbuf0, bitmap, y, dirty_area); \
+      while (--reps) { \
+        FUNC_NAME(BLIT_LINE)((SRC_PIXEL *)rotate_dbbuf0, \
+          (SRC_PIXEL *)rotate_dbbuf0 + (dirty_area->max_x-dirty_area->min_x), \
+          line_dest, palette->lookup); \
+        line_dest += DEST_WIDTH; \
+      } \
+      line_dest += DEST_WIDTH; \
+    } \
+  } else { \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      int reps = sysdep_display_params.heightscale-1; \
+      rotate_func(rotate_dbbuf0, bitmap, y, dirty_area); \
+      FUNC_NAME(BLIT_LINE)((SRC_PIXEL *)rotate_dbbuf0, \
+        (SRC_PIXEL *)rotate_dbbuf0 + (dirty_area->max_x-dirty_area->min_x), \
+        line_dest, palette->lookup); \
+      while (--reps) { \
+        memcpy(line_dest+DEST_WIDTH, line_dest, \
+          (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*DEST_PIXEL_SIZE); \
+        line_dest += DEST_WIDTH; \
+      } \
+      line_dest += 2*DEST_WIDTH; \
+    } \
+  } \
+} else { \
+  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] & \
+      SYSDEP_DISPLAY_DIRECT_FB) \
+  { \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      int reps = sysdep_display_params.heightscale; \
+      while (--reps) { \
+        FUNC_NAME(BLIT_LINE)( \
+          ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x, \
+          ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->max_x, \
+          line_dest, palette->lookup); \
+        line_dest += DEST_WIDTH; \
+      } \
+      line_dest += DEST_WIDTH; \
+    } \
+  } else { \
+    for (y = dirty_area->min_y; y < dirty_area->max_y; y++) { \
+      int reps = sysdep_display_params.heightscale-1; \
+      FUNC_NAME(BLIT_LINE)( \
+        ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x, \
+        ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->max_x, \
+        line_dest, palette->lookup); \
+      while (--reps) { \
+        memcpy(line_dest+DEST_WIDTH, line_dest, \
+          (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*DEST_PIXEL_SIZE); \
+        line_dest += DEST_WIDTH; \
+      } \
+      line_dest += 2*DEST_WIDTH; \
+    } \
+  } \
+}

@@ -11,9 +11,6 @@
 #undef XQ2X_NAME
 #undef XQ2X_FUNC_NAME
 
-#ifdef HQ2X_USE_YUV_LOOKUP
-#undef HQ2X_USE_YUV_LOOKUP
-#endif
-#ifdef HQ2X_YUVLOOKUP
+/* this saves us from having to undef these each time in the files using
+   the blit macros */
 #undef HQ2X_YUVLOOKUP
-#endif

@@ -189,7 +189,7 @@ void blit_6tap_render_line_16(unsigned short *dst0, unsigned short *dst1,
 void blit_6tap_render_line_32(unsigned int *dst0, unsigned int *dst1,
   unsigned int count);
 
-void blit_6tap_render_line_yuy2(unsigned int *dst0, unsigned int *dst1,
+void blit_6tap_render_line_yuy2(unsigned short *dst0, unsigned short *dst1,
   unsigned int count);
 
 void blit_6tap_15_15_direct(struct mame_bitmap *bitmap,
@@ -514,43 +514,85 @@ void blit_scan3_v_32_YUY2_direct(struct mame_bitmap *bitmap,
 
 /****************************************************************************/
 
-void blit_fakescan_15_15_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_15_15_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_16_16(struct mame_bitmap *bitmap,
+void blit_fakescan_h_16_16(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_16_24(struct mame_bitmap *bitmap,
+void blit_fakescan_h_16_24(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_16_32(struct mame_bitmap *bitmap,
+void blit_fakescan_h_16_32(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_16_YUY2(struct mame_bitmap *bitmap,
+void blit_fakescan_h_16_YUY2(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_32_15_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_32_15_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_32_16_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_32_16_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_32_24_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_32_24_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_32_32_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_32_32_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
-void blit_fakescan_32_YUY2_direct(struct mame_bitmap *bitmap,
+void blit_fakescan_h_32_YUY2_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+/****************************************************************************/
+
+void blit_fakescan_v_15_15_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_16_16(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_16_24(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_16_32(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_16_YUY2(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_32_15_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_32_16_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_32_24_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_32_32_direct(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
+
+void blit_fakescan_v_32_YUY2_direct(struct mame_bitmap *bitmap,
   struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
   struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 

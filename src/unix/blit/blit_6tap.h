@@ -11,7 +11,7 @@
 #  define _6TAP_ADDLINE(NAME) NAME##_addline_32
 #endif
 
-#ifdef _6TAP_YUY2
+#ifdef RENDER_YUY2
 #  define _6TAP_RENDER_LINE(NAME) NAME##_render_line_yuy2
 #elif RENDER_DEPTH == 15
 #  define _6TAP_RENDER_LINE(NAME) NAME##_render_line_15
@@ -23,7 +23,7 @@
 
 
 /* only 3 versions of addline and render_line: 15, 16 and 32 */
-#if SRC_DEPTH==DEST_DEPTH && !defined _6TAP_YUY2
+#if SRC_DEPTH==DEST_DEPTH && !defined RENDER_YUY2
 void _6TAP_ADDLINE(blit_6tap)(SRC_PIXEL *src, unsigned int count,
   unsigned int *lookup)
 {

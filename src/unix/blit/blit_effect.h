@@ -233,3 +233,71 @@ INLINE void FUNC_NAME(blit_scan3_v_line)(SRC_PIXEL *src,
 BLIT_BEGIN(blit_scan3_v)
 BLIT_LOOP_YARBSIZE(blit_scan3_v_line)
 BLIT_END
+
+
+INLINE void FUNC_NAME(blit_fakescan_v_line_2)(SRC_PIXEL *src,
+  SRC_PIXEL *end, RENDER_PIXEL *dst, unsigned int *lookup)
+{
+   for(;src<end; src+=4, dst+=8)
+   {
+      *(dst   ) = GETPIXEL(*(src  ));
+      *(dst+ 1) = 0;
+      *(dst+ 2) = GETPIXEL(*(src+1));
+      *(dst+ 3) = 0;
+      *(dst+ 4) = GETPIXEL(*(src+2));
+      *(dst+ 5) = 0;
+      *(dst+ 6) = GETPIXEL(*(src+3));
+      *(dst+ 7) = 0;
+   }
+}
+
+INLINE void FUNC_NAME(blit_fakescan_v_line_3)(SRC_PIXEL *src,
+  SRC_PIXEL *end, RENDER_PIXEL *dst, unsigned int *lookup)
+{
+   for(;src<end; src+=4, dst+=12)
+   {
+      *(dst+ 1) = *(dst   ) = GETPIXEL(*(src  ));
+      *(dst+ 2) = 0;
+      *(dst+ 4) = *(dst+ 3) = GETPIXEL(*(src+1));
+      *(dst+ 5) = 0;
+      *(dst+ 7) = *(dst+ 6) = GETPIXEL(*(src+2));
+      *(dst+ 8) = 0;
+      *(dst+10) = *(dst+ 9) = GETPIXEL(*(src+3));
+      *(dst+11) = 0;
+   }
+}
+
+INLINE void FUNC_NAME(blit_fakescan_v_line_x)(SRC_PIXEL *src,
+  SRC_PIXEL *end, RENDER_PIXEL *dst, unsigned int *lookup)
+{
+   for(;src<end;src++)
+   {
+      const DEST_PIXEL v = GETPIXEL(*(src));
+      dst+=sysdep_display_params.widthscale;
+      switch (sysdep_display_params.widthscale)
+      {
+         case 8:      *(dst-8) = v;
+         case 7:      *(dst-7) = v;
+         case 6:      *(dst-6) = v;
+         case 5:      *(dst-5) = v;
+         case 4:      *(dst-4) = v;
+                      *(dst-3) = v;
+                      *(dst-2) = v;
+                      *(dst-1) = 0;
+      }
+   }
+}
+
+BLIT_BEGIN(blit_fakescan_v)
+  switch(sysdep_display_params.widthscale)
+  {
+    case 2:
+      BLIT_LOOP_YARBSIZE(blit_fakescan_v_line_2)
+      break;
+    case 3:
+      BLIT_LOOP_YARBSIZE(blit_fakescan_v_line_3)
+      break;
+    default:
+      BLIT_LOOP_YARBSIZE(blit_fakescan_v_line_x)
+  }
+BLIT_END

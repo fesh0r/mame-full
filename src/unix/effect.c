@@ -29,6 +29,7 @@ char *rotate_dbbuf0 = NULL;
 char *rotate_dbbuf1 = NULL;
 char *rotate_dbbuf2 = NULL;
 void (*rotate_func)(void *dst, struct mame_bitmap *bitamp, int y, struct rectangle *bounds);
+unsigned int effect_rgb2yuv[65536];
 /* for the 6tap filter */
 char *_6tap2x_buf0 = NULL;
 char *_6tap2x_buf1 = NULL;
@@ -36,8 +37,6 @@ char *_6tap2x_buf2 = NULL;
 char *_6tap2x_buf3 = NULL;
 char *_6tap2x_buf4 = NULL;
 char *_6tap2x_buf5 = NULL;
-/* for hq2x */
-unsigned int effect_rgb2yuv[65536];
 
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
   { 1, 8, 1, 8, 0,                                  "no effect" },
@@ -48,14 +47,12 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
   { 1, 4, 2, 2, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "light scanlines (h)" },
   { 1, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "rgb scanlines (h)" }, 
   { 2, 6, 3, 3, SYSDEP_DISPLAY_Y_SCALE_LOCKED,      "deluxe scanlines (h)" },
+  { 1, 8, 2, 8, 0,                                  "black scanlines (h)" },
   { 2, 2, 1, 8, SYSDEP_DISPLAY_X_SCALE_LOCKED,      "light scanlines (v)" },
   { 3, 3, 1, 8, SYSDEP_DISPLAY_X_SCALE_LOCKED,      "rgb scanlines (v)" }, 
-  { 3, 3, 1, 8, SYSDEP_DISPLAY_X_SCALE_LOCKED,      "deluxe scanlines (v)" }
+  { 3, 3, 1, 8, SYSDEP_DISPLAY_X_SCALE_LOCKED,      "deluxe scanlines (v)" },
+  { 2, 8, 1, 8, 0,                                  "black scanlines (v)" }
 };
-
-#if 0  
-  { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
-#endif
  
 /* Private variables
    
@@ -225,6 +222,25 @@ static blit_func_p effect_funcs[] = {
    blit_scan3_h_32_32_direct,
    blit_scan3_h_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
+   /* fakescan_h */
+   blit_fakescan_h_15_15_direct,
+   blit_fakescan_h_16_16, /* just use the 16 bpp src versions, since we need */
+   blit_fakescan_h_16_24, /* to go through the lookup anyways */
+   blit_fakescan_h_16_32,
+   blit_fakescan_h_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_fakescan_h_16_16, /* We use the lookup and don't do any calculations */
+   blit_fakescan_h_16_16, /* with the result so these are the same. */
+   blit_fakescan_h_16_24,
+   blit_fakescan_h_16_32,
+   blit_fakescan_h_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_fakescan_h_32_15_direct,
+   blit_fakescan_h_32_16_direct,
+   blit_fakescan_h_32_24_direct,
+   blit_fakescan_h_32_32_direct,
+   blit_fakescan_h_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
    /* scan2 */
    blit_scan2_v_15_15_direct,
    blit_scan2_v_16_16, /* just use the 16 bpp src versions, since we need */
@@ -282,29 +298,26 @@ static blit_func_p effect_funcs[] = {
    blit_scan3_v_32_32_direct,
    blit_scan3_v_32_YUY2_direct,
    NULL, /* reserved for 32_YV12_direct */
+   /* fakescan_v */
+   blit_fakescan_v_15_15_direct,
+   blit_fakescan_v_16_16, /* just use the 16 bpp src versions, since we need */
+   blit_fakescan_v_16_24, /* to go through the lookup anyways */
+   blit_fakescan_v_16_32,
+   blit_fakescan_v_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_fakescan_v_16_16, /* We use the lookup and don't do any calculations */
+   blit_fakescan_v_16_16, /* with the result so these are the same. */
+   blit_fakescan_v_16_24,
+   blit_fakescan_v_16_32,
+   blit_fakescan_v_16_YUY2,
+   NULL, /* reserved for 16_YV12 */
+   blit_fakescan_v_32_15_direct,
+   blit_fakescan_v_32_16_direct,
+   blit_fakescan_v_32_24_direct,
+   blit_fakescan_v_32_32_direct,
+   blit_fakescan_v_32_YUY2_direct,
+   NULL, /* reserved for 32_YV12_direct */
 };
-
-#if 0
-   /* fakescan */
-   blit_fakescan_15_15_direct,
-   blit_fakescan_16_16, /* just use the 16 bpp src versions, since we need */
-   blit_fakescan_16_24, /* to go through the lookup anyways */
-   blit_fakescan_16_32,
-   blit_fakescan_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   blit_fakescan_16_16, /* We use the lookup and don't do any calculations */
-   blit_fakescan_16_16, /* with the result so these are the same. */
-   blit_fakescan_16_24,
-   blit_fakescan_16_32,
-   blit_fakescan_16_YUY2,
-   NULL, /* reserved for 16_YV12 */
-   blit_fakescan_32_15_direct,
-   blit_fakescan_32_16_direct,
-   blit_fakescan_32_24_direct,
-   blit_fakescan_32_32_direct,
-   blit_fakescan_32_YUY2_direct,
-   NULL /* reserved for 32_YV12_direct */
-#endif
 
 static void rotate_16_16(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
 static void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle *bounds);
@@ -317,7 +330,10 @@ int sysdep_display_check_effect_params(
   struct sysdep_display_open_params *params)
 {
   if ((params->effect < 0) || (params->effect > SYSDEP_DISPLAY_EFFECT_LAST))
+  {
+    fprintf(stderr, "Error invalid effect: %d\n", params->effect);
     return 1;
+  }
 
   /* Can we do effects? */  
   if (!(sysdep_display_properties.mode_info[params->video_mode] &
@@ -375,7 +391,7 @@ blit_func_p sysdep_display_effect_open(void)
     "YV12"
   };
   int effect_index = EFFECT_UNKNOWN;
-  int need_rgb888_lookup = 0;
+  int need_yuv_lookup = 0;
   
 #ifdef EFFECT_MMX_ASM
   /* patch mmx asm blit functions into the table */
@@ -538,6 +554,9 @@ blit_func_p sysdep_display_effect_open(void)
   switch (sysdep_display_params.effect)
   {
     case SYSDEP_DISPLAY_EFFECT_HQ2X:
+      /* HQ2X needs a special format yuv lookup when rendering with a
+         colordepth of 15 or 16 bits. */
+      if (sysdep_display_params.depth != 32)
       {
         int r,g,b,y,u,v; 
         switch(effect_index%EFFECT_COLOR_FORMATS)
@@ -578,44 +597,58 @@ blit_func_p sysdep_display_effect_open(void)
         fprintf(stderr, "Error: couldnot allocate memory\n");
         return NULL;
       }
+      /* We need the palette lookup table to be 888 rgb, this means that the
+         lookup table won't be usable for normal blitting anymore but that is
+         not a problem, since we're not doing normal blitting, we do need to
+         restore it on close though! */
+      orig_palette_info = sysdep_display_properties.palette_info;
+      orig_palette_info_saved = 1;
+      memset(&(sysdep_display_properties.palette_info), 0,
+        sizeof(struct sysdep_palette_info));
+      sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
+      sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
+      sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
       if((effect_index%EFFECT_COLOR_FORMATS) == EFFECT_YUY2)
-      {
-        int r,g,b,y,u,v; 
-        
-        for(r=0; r<32; r++)
-          for(g=0; g<64; g++)
-            for(b=0; b<32; b++)
-            {
-              RGB2YUV(r*8,g*4,b*8,y,u,v);
-              effect_rgb2yuv[(r<<11)|(g<<5)|b] =
-                (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT);
-            }
-      }
-      need_rgb888_lookup = 1;
+        need_yuv_lookup = 1;
       break;
     case SYSDEP_DISPLAY_EFFECT_RGBSCAN_H:
     case SYSDEP_DISPLAY_EFFECT_RGBSCAN_V:
       if((effect_index%EFFECT_COLOR_FORMATS) == EFFECT_YUY2)
-        need_rgb888_lookup = 1;
+      {
+        /* We need the palette lookup table to be 565 rgb, this means that the
+           lookup table won't be usable for normal blitting anymore but that is
+           not a problem, since we're not doing normal blitting, we do need to
+           restore it on close though! */
+        orig_palette_info = sysdep_display_properties.palette_info;
+        orig_palette_info_saved = 1;
+        memset(&(sysdep_display_properties.palette_info), 0,
+          sizeof(struct sysdep_palette_info));
+        sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
+        sysdep_display_properties.palette_info.green_mask = 0x000007E0;
+        sysdep_display_properties.palette_info.blue_mask  = 0x0000001F;
+        need_yuv_lookup = 1;
+      }
       break;
-/*  case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
-      sysdep_display_driver_clear_buffer(); */
+    case SYSDEP_DISPLAY_EFFECT_FAKESCAN_H:
+    case SYSDEP_DISPLAY_EFFECT_FAKESCAN_V:
+      sysdep_display_driver_clear_buffer();
       break;
   }
   
-  if (need_rgb888_lookup)
+  if (need_yuv_lookup)
   {
-    /* HACK: we need the palette lookup table to be 888 rgb, this means
-       that the lookup table won't be usable for normal blitting anymore
-       but that is not a problem, since we're not doing normal blitting,
-       we do need to restore it on close though! */
-    orig_palette_info = sysdep_display_properties.palette_info;
-    orig_palette_info_saved = 1;
-    sysdep_display_properties.palette_info.fourcc_format = 0;
-    sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
-    sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
-    sysdep_display_properties.palette_info.blue_mask  = 0x000000FF;
+    int r,g,b,y,u,v; 
+    
+    for(r=0; r<32; r++)
+      for(g=0; g<64; g++)
+        for(b=0; b<32; b++)
+        {
+          RGB2YUV(r*8,g*4,b*8,y,u,v);
+          effect_rgb2yuv[(r<<11)|(g<<5)|b] =
+            (y<<Y1SHIFT)|(u<<USHIFT)|(y<<Y2SHIFT)|(v<<VSHIFT);
+        }
   }
+  
   return effect_funcs[effect_index];
 }
 

@@ -1,13 +1,12 @@
 /* Configuration defines and includes */
 #define XQ2X_GETPIXEL(p) YUV_TO_XQ2X_YUV(GET_YUV_PIXEL(p))
+#define HQ2X_YUVLOOKUP(p) (p)
+#include "xq2x_yuv.h"
 #ifdef HQ2X
-#  define HQ2X_USE_YUV_LOOKUP 1
-#  define HQ2X_YUVLOOKUP(p) (p)
 #  include "hq2x_defs.h"
 #else
 #  include "lq2x_defs.h"
 #endif
-#include "xq2x_yuv.h"
 
 /* Pixel glue define, so that we can use the advancemame lookup
    tables unmodified. */
@@ -15,11 +14,11 @@
 
 INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
   SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
-  RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
+  unsigned short *dst, int dest_width, unsigned int *lookup)
 {
-  RENDER_PIXEL *dst0 = dst;
-  RENDER_PIXEL *dst1 = dst + dest_width/2;
-  RENDER_PIXEL p_0_0 = 0, p_0_1 = 0, p_1_0 = 0, p_1_1 = 0;
+  unsigned int *dst0 = (unsigned int *)dst;
+  unsigned int *dst1 = (unsigned int *)(dst + dest_width);
+  unsigned int p_0_0 = 0, p_0_1 = 0, p_1_0 = 0, p_1_1 = 0;
   unsigned int y1,y2,uv;
 
   XQ2X_LINE_LOOP_BEGIN

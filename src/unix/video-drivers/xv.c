@@ -371,7 +371,7 @@ int xv_open_display(int reopen)
           switch(sysdep_display_params.effect)
           {
             case SYSDEP_DISPLAY_EFFECT_NONE:
-            case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+            case SYSDEP_DISPLAY_EFFECT_FAKESCAN_H:
               if (hwscale_perfect_yuv)
                 sysdep_display_params.widthscale = min_widthscale;
               else
@@ -383,6 +383,7 @@ int xv_open_display(int reopen)
             case SYSDEP_DISPLAY_EFFECT_SCALE2X:
             case SYSDEP_DISPLAY_EFFECT_LQ2X:
             case SYSDEP_DISPLAY_EFFECT_HQ2X:
+            case SYSDEP_DISPLAY_EFFECT_6TAP2X:
               sysdep_display_params.heightscale =
                 sysdep_display_params.widthscale;
               break;
@@ -401,6 +402,10 @@ int xv_open_display(int reopen)
             case SYSDEP_DISPLAY_EFFECT_SCAN2_V:
             case SYSDEP_DISPLAY_EFFECT_SCAN3_V:
             case SYSDEP_DISPLAY_EFFECT_RGBSCAN_V:
+              sysdep_display_params.heightscale = 1;
+              break;
+            case SYSDEP_DISPLAY_EFFECT_FAKESCAN_V:
+              sysdep_display_params.widthscale  = min_widthscale;
               sysdep_display_params.heightscale = 1;
               break;
             default:

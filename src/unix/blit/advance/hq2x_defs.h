@@ -8,10 +8,10 @@
 #define MUL FUNC_NAME(is_distant)(c[3], c[1])
 
 /* 2 variants of the is_distant function and mask making code */
-#if HQ2X_USE_YUV_LOOKUP
+#if RENDER_DEPTH != 32
 #include "xq2x_yuv.h"
 
-INLINE int FUNC_NAME(is_distant)(RENDER_PIXEL w1, RENDER_PIXEL w2)
+INLINE int FUNC_NAME(is_distant)(interp_uint16 w1, interp_uint16 w2)
 {
   int yuv1, yuv2;
 
@@ -26,7 +26,7 @@ INLINE int FUNC_NAME(is_distant)(RENDER_PIXEL w1, RENDER_PIXEL w2)
 }
 
 #define XQ2X_LINE_LOOP_BEGIN \
-  RENDER_PIXEL c[9]; \
+  interp_uint16 c[9]; \
   int i, y, u, v, yuv; \
   \
   c[1] = XQ2X_GETPIXEL(src0[-1]); \
@@ -70,7 +70,7 @@ INLINE int FUNC_NAME(is_distant)(RENDER_PIXEL w1, RENDER_PIXEL w2)
       flag <<= 1; \
     }
 
-#else
+#else /* RENDER_DEPTH != 32 */
 
 INLINE int FUNC_NAME(is_distant)(RENDER_PIXEL w1, RENDER_PIXEL w2)
 {
@@ -140,7 +140,7 @@ INLINE int FUNC_NAME(is_distant)(RENDER_PIXEL w1, RENDER_PIXEL w2)
       flag <<= 1; \
     }
 
-#endif
+#endif /* RENDER_DEPTH != 32 */
 
 #define XQ2X_LINE_LOOP_END \
     src0++; \

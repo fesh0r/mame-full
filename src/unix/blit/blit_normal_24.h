@@ -67,3 +67,17 @@ BLIT_BEGIN(blit_normal)
       BLIT_LOOP_YARBSIZE(blit_normal_line_x)
   }
 BLIT_END
+
+BLIT_BEGIN(blit_fakescan_h)
+  switch(sysdep_display_params.widthscale)
+  {
+    case 1:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_1)
+      break;
+    case 2:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_2)
+      break;
+    default:
+      BLIT_LOOP_FAKESCAN(blit_normal_line_x)
+  }
+BLIT_END

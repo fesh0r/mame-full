@@ -8,7 +8,7 @@
 #define MUL (c[3] != c[1])
 
 #define XQ2X_LINE_LOOP_BEGIN \
-  RENDER_PIXEL c[9]; \
+  interp_uint16 c[9]; \
   \
   c[1] = XQ2X_GETPIXEL(src0[-1]); \
   c[2] = XQ2X_GETPIXEL(src0[ 0]); \

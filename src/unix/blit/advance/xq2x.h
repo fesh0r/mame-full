@@ -74,13 +74,8 @@
 
 /* Configuration defines and includes */
 #define XQ2X_GETPIXEL(p) GETPIXEL(p)
+#define HQ2X_YUVLOOKUP(p) effect_rgb2yuv[p]
 #ifdef HQ2X
-#  if RENDER_DEPTH != 32
-#    define HQ2X_USE_YUV_LOOKUP 1
-#    define HQ2X_YUVLOOKUP(p) effect_rgb2yuv[p]
-#  else
-#    define HQ2X_USE_YUV_LOOKUP 0
-#  endif
 #  include "hq2x_defs.h"
 #else
 #  include "lq2x_defs.h"
