@@ -2744,8 +2744,8 @@ static struct MachineDriver machine_driver_kccomp =
 	kccomp_init_machine,			   /* init machine */
 	amstrad_shutdown_machine,
 	/* video hardware */
-		AMSTRAD_MONITOR_SCREEN_WIDTH,					   /* screen width */
-		AMSTRAD_MONITOR_SCREEN_HEIGHT,					   /* screen height */
+		AMSTRAD_SCREEN_WIDTH,					   /* screen width */
+		AMSTRAD_SCREEN_HEIGHT,					   /* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
@@ -2802,8 +2802,8 @@ static struct MachineDriver machine_driver_cpcplus =
 	amstrad_init_machine,			   /* init machine */
 	amstrad_shutdown_machine,
 	/* video hardware */
-	AMSTRAD_MONITOR_SCREEN_WIDTH, /* screen width */
-	AMSTRAD_MONITOR_SCREEN_HEIGHT,	/* screen height */
+	AMSTRAD_SCREEN_WIDTH, /* screen width */
+	AMSTRAD_SCREEN_HEIGHT,	/* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
