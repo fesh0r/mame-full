@@ -60,7 +60,7 @@ CPUS+=S2650@
 #CPUS+=TMS34020@
 CPUS+=TMS9900@
 #CPUS+=TMS9940@
-#CPUS+=TMS9980@
+CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
 CPUS+=TMS9995@
@@ -457,6 +457,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/rtc65271.o \
 	  $(OBJ)/mess/systems/geneve.o   \
 	  $(OBJ)/mess/machine/geneve.o   \
+	  $(OBJ)/mess/systems/tm990189.o \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 
