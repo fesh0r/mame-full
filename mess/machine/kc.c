@@ -1513,7 +1513,7 @@ static void kc85_3_update_0x0e000(void)
 }
 
 /* update status of memory area 0x0000-0x03fff */
-/* MRA8_BANK1 is used for read operations and MRA8_BANK5 is used
+/* MRA8_BANK1 is used for read operations and MWA8_BANK6 is used
 for write operations */
 static void kc85_3_update_0x00000(void)
 {
@@ -1570,7 +1570,7 @@ static void kc85_3_update_0x00000(void)
 }
 
 /* update status of memory area 0x08000-0x0ffff */
-/* MRA8_BANK2 is used for read, MRA8_BANK6 is used for write */
+/* MRA8_BANK3 is used for read, MWA8_BANK8 is used for write */
 static void kc85_3_update_0x08000(void)
 {
 	read8_handler rh;
