@@ -68,6 +68,15 @@ rom/eprom in epoxy:
  These are in the same ordering as the pinout of the chip
  (helped finding out watara super vision cartridge pinout)
 
+soldered roms/eproms, and you can't or want unsolder them:
+ wire an adapter with 2 sockets 
+ (a cheap one to place on top of the eprom, and another one for the eprommer)
+ cut 1 of the power lines with a sharp knife
+ solder socket on 2 points over the eprom for mechanical stability
+ now you should be able to read it out
+ unsolder the piggyback socket
+ reconnect the cut pin
+
 MOS6530: rom, ram, input, output timer
  difficult to read
  look into mess/messroms/read6530.c
