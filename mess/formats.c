@@ -14,11 +14,15 @@ struct bdf_file
 	int is_readonly;
 	int (*read_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 	int (*write_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+	UINT16 (*get_sector_size)(void *bdf, UINT8 track, UINT8 head, UINT8 sector);
+	UINT8 (*get_sector_count)(void *bdf, UINT8 track, UINT8 head);
 	char header;
 };
 
 static int default_read_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
+static UINT16 default_get_sector_size(void *bdf, UINT8 track, UINT8 head, UINT8 sector);
+static UINT8 default_get_sector_count(void *bdf, UINT8 track, UINT8 head);
 
 static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT32 file_size, UINT32 header_size,
 	 UINT8 *tracks, UINT8 *heads, UINT8 *sectors)
@@ -257,6 +261,8 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	bdffile->is_readonly = is_readonly;
 	bdffile->read_sector = drv.read_sector ? drv.read_sector : default_read_sector;
 	bdffile->write_sector = drv.write_sector ? drv.write_sector : default_write_sector;
+	bdffile->get_sector_size = drv.get_sector_size ? drv.get_sector_size : default_get_sector_size;
+	bdffile->get_sector_count = drv.get_sector_size ? drv.get_sector_count : default_get_sector_count;
 	err = BLOCKDEVICE_ERROR_SUCCESS;
 
 done:
@@ -340,6 +346,16 @@ static int default_write_sector(void *bdf, const void *header, UINT8 track, UINT
 	return 0;
 }
 
+static UINT16 default_get_sector_size(void *bdf, UINT8 track, UINT8 head, UINT8 sector)
+{
+	return bdf_get_geometry(bdf)->sector_size;
+}
+
+static UINT8 default_get_sector_count(void *bdf, UINT8 track, UINT8 head)
+{
+	return bdf_get_geometry(bdf)->sectors;
+}
+
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
@@ -356,6 +372,18 @@ int bdf_is_readonly(void *bdf)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
 	return bdffile->is_readonly;
+}
+
+UINT16 bdf_get_sector_size(void *bdf, UINT8 track, UINT8 head, UINT8 sector)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
+	return bdffile->get_sector_size(bdf, track, head, sector);
+}
+
+UINT8 bdf_get_sector_count(void *bdf, UINT8 track, UINT8 head)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;	
+	return bdffile->get_sector_count(bdf, track, head);
 }
 
 #ifdef MAME_DEBUG

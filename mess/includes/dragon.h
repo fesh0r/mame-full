@@ -68,6 +68,9 @@ extern WRITE_HANDLER ( coco3_palette_w );
 
 extern void coco3_vh_reset(void);
 extern void coco3_vh_blink(void);
+extern int coco3_calculate_rows(int *bordertop, int *borderbottom);
+
+#define REORDERED_VBLANK
 
 /* ----------------------------------------------------------------------- *
  * from machine/dragon.c                                                   *

@@ -67,7 +67,6 @@ static int coco3_gimevhreg[8];
 #endif /* MAME_DEBUG */
 
 static int coco3_palette_recalc(int force);
-int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
 /* --------------------------------------------------
  * CoCo 1/2 Stuff
@@ -682,6 +681,11 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom)
 		b = 12;
 		break;
 	}
+
+#ifdef REORDERED_VBLANK
+	t -= 4;
+	b -= 4;
+#endif
 
 	if (bordertop)
 		*bordertop = t;

@@ -730,20 +730,12 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 	coco3_raise_interrupt(COCO3_INT_HBORD, data);
 }
 
-int coco3_calculate_rows(int *bordertop, int *borderbottom);
-
-/*#define REORDERED_VBLANK */
-
 INTERRUPT_GEN( coco3_vh_interrupt )
 {
-	int border_top, border_bottom, body_scanlines;
+	int border_top, body_scanlines;
 	int scanline;
 
-	body_scanlines = coco3_calculate_rows(&border_top, &border_bottom);
-#ifdef REORDERED_VBLANK
-	border_top -= 4;
-	border_bottom -= 4;
-#endif
+	body_scanlines = coco3_calculate_rows(&border_top, NULL);
 
 	scanline = internal_m6847_getadjustedscanline();
 

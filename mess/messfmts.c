@@ -46,6 +46,7 @@ static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 {
 	struct mess_bdf *messbdf;
 	const struct disk_geometry *geo;
+	UINT16 sector_size;
 	
 	messbdf = get_messbdf(drive);
 	geo = bdf_get_geometry(messbdf->bdf);
@@ -56,7 +57,8 @@ static void bdf_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	id->data_id = geo->first_sector_id + id_index;
 	id->flags = 0;
 
-	switch(geo->sector_size) {
+	sector_size = bdf_get_sector_size(messbdf->bdf, messbdf->track, side, geo->first_sector_id + id_index);
+	switch(sector_size) {
 	case 128:
 		id->N = 0;
 		break;
