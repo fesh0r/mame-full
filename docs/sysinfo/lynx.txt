@@ -4,6 +4,8 @@ Atari Lynx II
 
 color handheld
 
+developed by EPYX (2 colors, 4 colors, cassettes instead of cartridges)
+
 Lynx II is a redisign: smaller,  shorter power down timer and stereo
 
 Features
@@ -19,6 +21,7 @@ Batterie Port
 Notes
 -----
 Lynx is flipable for optimal support of left and right hand players
+(hold down pause and press option 2 in many games)
 Some games want to be rotated by 90 degree
 
 
