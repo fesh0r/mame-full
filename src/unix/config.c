@@ -288,7 +288,6 @@ int config_init (int argc, char *argv[])
 
    /* some settings which are static for xmame and thus aren't controled
       by options */
-   options.use_emulated_ym3812 = TRUE;
    options.gui_host = 1;
    cheatfile = NULL;
    db_filename = NULL;
