@@ -1298,6 +1298,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( vigilntj )	/* (c) 1988 (Japan) */
 	DRIVER( kikcubic )	/* (c) 1988 (Japan) */
 	DRIVER( buccanrs )	/* (c) 1989 Duintronic */
+	DRIVER( buccanra )	/* (c) 1989 Duintronic */
 	/* M72 (and derivatives) */
 	DRIVER( rtype )		/* (c) 1987 (Japan) */
 	DRIVER( rtypepj )	/* (c) 1987 (Japan) */
@@ -2566,7 +2567,8 @@ V-V                           TP-027
 	/* Namco System 11 */
 	DRIVER( tekken )	/* Tekken (TE4/VER.C) */
 	DRIVER( tekkena )	/* Tekken (TE2/VER.B) */
-	DRIVER( tekkenb )	/* Tekken (TE1/VER.B) */
+	DRIVER( tekkenb )	/* Tekken (TE2/VER.B) */
+	DRIVER( tekkenc )	/* Tekken (TE1/VER.B) */
 	DRIVER( tekken2 )	/* Tekken 2 Ver.B (TES3/VER.B) */
 	DRIVER( tekken2a )	/* Tekken 2 Ver.B (TES2/VER.B) */
 	DRIVER( tekken2b )	/* Tekken 2 (TES2/VER.A) */
@@ -2584,6 +2586,7 @@ V-V                           TP-027
 
 	/* Namco System 12 */
 	DRIVER( tekken3 )	/* Tekken 3 (TET1/VER.E1) */
+	DRIVER( lbgrande )	/* Libero Grande (LG1/VER.A) */
 	DRIVER( soulclbr )	/* Soul Calibur (SOC14/VER.C) */
 	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.A2) */
 	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
@@ -2984,7 +2987,6 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( altbeaj1 )
 	DRIVER( aurail )	/* (c) 1990 Sega / Westone */
 	DRIVER( aurail1 )	/* (c) 1990 Sega / Westone (protected) */
-	DRIVER( atomicp )	/* (c) 1990 Philko - korean clone board */
 	DRIVER( bayroute )	/* (c) 1989 Sunsoft / Sega */
 	DRIVER( bayroutj )	/* (c) 1989 (protected) */
 	DRIVER( bayrout1 )	/* (c) 1989 (protected) */
@@ -3008,7 +3010,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( hwchamp )	/* (c) 1987 */
 	DRIVER( mvp )		/* (protected) */
 	DRIVER( mvpj )		/* (protected) */
-	DRIVER( passsht )	/* (protected) */
+	DRIVER( passsht )	/* (c) 1988 Sega (FD1094, decrypted) */
+	DRIVER( passshtj )	/* (c) 1988 Sega (FD1094, decrypted) */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( ryukyu )	/* (protected) */
 	DRIVER( sdib )		/* (c) 1987 */
@@ -3026,11 +3029,17 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( tturf )		/* (c) 1989 Sega / Sunsoft */
 	DRIVER( tturfu )	/* (c) 1989 Sega / Sunsoft */
 	DRIVER( wb3 )		/* (c) 1988 Sega / Westone */
+	DRIVER( wb34 )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wb33 )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wb32 )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wrestwar )	/* (c) 1989 */
 	DRIVER( wrestwa2 )	/* (c) 1989 */
 	DRIVER( wrestwa1 )	/* (c) 1989 Sega (FD1094, decrypted) */
+
+	/* Philko Boards */
+	DRIVER( atomicp )	/* (c) 1990 Philko - korean clone board */
+	DRIVER( snapper )	/* (c) 1990 Philko - korean clone board */
+
 
 	/* S16 Bootlegs */
 	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
@@ -3151,13 +3160,14 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( qrouka )	/* (c) 1994 */
 	DRIVER( mahmajn2 )	/* (c) 1994 */
 	DRIVER( sspirits ) 	/* (c) 1988 */
+	DRIVER( gground )	/* (c) 1988 */
+
 	/* not working */
 	DRIVER( sgmast )
 	DRIVER( sgmastc )
 	DRIVER( sspirtfc )
-	DRIVER( sspirtf )
+
 	DRIVER( qsww )
-	DRIVER( gground )
 	DRIVER( crkdown )
 
 	/* Sega System 32 games */
@@ -5964,6 +5974,7 @@ Other Sun games
 	/* Tecfri games */
 	DRIVER( holeland )	/* (c) 1984 */
 	DRIVER( crzrally )	/* (c) 1985 */
+	DRIVER( crzrallg )	/* (c) 1985 */
 	DRIVER( speedbal )	/* (c) 1987 */
 	DRIVER( sauro )		/* (c) 1987 */
 	DRIVER( trckydoc )	/* (c) 1987 */
