@@ -13,8 +13,8 @@
 	Raphael Nabet, 2002-2003.
 */
 
-//#include "harddisk.h"
-#include "idectrl.h"
+/*#include "harddisk.h" */
+#include "machine/idectrl.h"
 #include "ti99_4x.h"
 #include "99_ide.h"
 

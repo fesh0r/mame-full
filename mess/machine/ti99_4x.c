@@ -3384,25 +3384,34 @@ static READ_HANDLER(hfdc_mem_r)
 	int reply = 0;
 
 	if (offset < 0x0fc0)
+	{
 		/* dsr ROM */
 		reply = ti99_disk_DSR[hfdc_rom_offset+offset];
+	}
 	else if (offset < 0x0fd0)
+	{
 		/* tape controller */
-		;
+	}
 	else if (offset < 0x0fe0)
+	{
 		/* disk controller */
-		;
+	}
 	else if (offset < 0x1000)
+	{
 		/* rtc */
 		if (! (offset & 1))
 			reply = mm58274c_r((offset - 0x1FE0) >> 1);
+	}
 	else if (offset < 0x1400)
+	{
 		/* ram page >10 */
 		reply = hfdc_ram[0x4000+(offset-0x1000)];
+	}
 	else
+	{
 		/* ram with mapper */
 		reply = hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)];
-
+	}
 	return reply;
 }
 
@@ -3412,24 +3421,33 @@ static READ_HANDLER(hfdc_mem_r)
 static WRITE_HANDLER(hfdc_mem_w)
 {
 	if (offset < 0x0fc0)
+	{
 		/* dsr ROM */
-		;
+	}
 	else if (offset < 0x0fd0)
+	{
 		/* tape controller */
-		;
+	}
 	else if (offset < 0x0fe0)
+	{
 		/* disk controller */
-		;
+	}
 	else if (offset < 0x1000)
+	{
 		/* rtc */
 		if (! (offset & 1))
 			mm58274c_w((offset - 0x1FE0) >> 1, data);
+	}
 	else if (offset < 0x1400)
+	{
 		/* ram page >10 */
 		hfdc_ram[0x4000+(offset-0x1000)] = data;
+	}
 	else
+	{
 		/* ram with mapper */
 		hfdc_ram[hfdc_ram_offset[(offset-0x1000) >> 10]+((offset-0x1000) & 0x3ff)] = data;
+	}
 }
 
 /*===========================================================================*/

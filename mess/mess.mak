@@ -434,6 +434,7 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/mm58274c.o \
 	  $(OBJ)/mess/machine/994x_ser.o \
 	  $(OBJ)/mess/systems/ti99_4p.o  \
+	  $(OBJ)/mess/machine/99_ide.o   \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 
