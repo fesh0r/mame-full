@@ -189,8 +189,32 @@ void snes_shutdown_machine(void)
 #endif
 }
 
-/* ROM LOADING STUFF - Also allocates Save Ram - In Future will make SRAM File correct size */
 
+
+/* Simple Id done as - divide total size of rom by 32*1024... if remainder is 512 smc header present file is valid, else
+  header not present... don't load file! */
+/*
+static int snes_verify_cart (UINT8 *magic)
+{
+    FILE *romfile;
+	unsigned char magic[4];
+	int retval=0,filePos;
+
+	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
+
+	osd_fseek (romfile,0,SEEK_END);
+	filePos=osd_ftell(romfile);
+	printf("file position = %d , %08X\n",filePos,filePos);
+
+	if ( (filePos % (32*1024))==512)
+		retval=1;
+	osd_fread (romfile, magic, 4);
+	osd_fclose (romfile);
+	return retval;
+}
+*/
+
+/* ROM LOADING STUFF - Also allocates Save Ram - In Future will make SRAM File correct size */
 int snes_load_rom (int id)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
@@ -296,29 +320,4 @@ void snes_exit_rom(int id)
 
 	free(SNES_SRAM);
 }
-
-/* Simple Id done as - divide total size of rom by 32*1024... if remainder is 512 smc header present file is valid, else
-  header not present... don't load file! */
-
-#ifdef VERIFY_IMAGE
-int snes_id_rom (int id)
-{
-    FILE *romfile;
-	unsigned char magic[4];
-	int retval=0,filePos;
-
-	if (!(romfile = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) return 0;
-
-	osd_fseek (romfile,0,SEEK_END);
-	filePos=osd_ftell(romfile);
-	printf("file position = %d , %08X\n",filePos,filePos);
-
-	if ( (filePos % (32*1024))==512)
-		retval=1;
-	osd_fread (romfile, magic, 4);
-	osd_fclose (romfile);
-	return retval;
-}
-#endif
-
 
