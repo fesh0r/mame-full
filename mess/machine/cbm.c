@@ -46,7 +46,7 @@ int cbm_quick_init (int id)
 
 	quick.specified = 1;
 
-	fp = image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 		return INIT_FAILED;
 
@@ -77,7 +77,7 @@ int cbm_quick_init (int id)
 		osd_fclose (fp);
 		return INIT_FAILED;
 	}
-	if ((quick.data = malloc (quick.length)) == NULL)
+	if ((quick.data = (UINT8*)malloc (quick.length)) == NULL)
 	{
 		osd_fclose (fp);
 		return INIT_FAILED;
@@ -96,7 +96,7 @@ void cbm_quick_exit (int id)
 int cbm_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -114,7 +114,7 @@ int cbm_quick_open (int id, int mode, void *arg)
 int cbm_pet_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -132,7 +132,7 @@ int cbm_pet_quick_open (int id, int mode, void *arg)
 int cbm_pet1_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -150,7 +150,7 @@ int cbm_pet1_quick_open (int id, int mode, void *arg)
 int cbmb_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -168,7 +168,7 @@ int cbmb_quick_open (int id, int mode, void *arg)
 int cbm500_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -186,7 +186,7 @@ int cbm500_quick_open (int id, int mode, void *arg)
 int cbm_c65_quick_open (int id, int mode, void *arg)
 {
 	int addr;
-	UINT8 *memory = arg;
+	UINT8 *memory = (UINT8*)arg;
 
 	if (quick.data == NULL)
 		return 1;
@@ -231,7 +231,7 @@ int cbm_rom_init(int id)
 	int i;
 	int size, j, read;
 	char *cp;
-	unsigned int adr = 0;
+	int adr = 0;
 	const struct IODevice *dev;
 
 	if (device_filename(IO_CARTSLOT,id) == NULL)
@@ -244,7 +244,7 @@ int cbm_rom_init(int id)
 	dev=cbm_rom_find_device();
 	if ( (dev->id!=NULL) && !dev->id(id) ) return INIT_FAILED;
 
-	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
@@ -264,7 +264,7 @@ int cbm_rom_init(int id)
 			size -= 2;
 			logerror("loading rom %s at %.4x size:%.4x\n",
 						 device_filename(IO_CARTSLOT,id), in, size);
-			if (!(cbm_rom[i].chip=malloc(size)) ) {
+			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAILED;
 			}
@@ -301,7 +301,7 @@ int cbm_rom_init(int id)
 				logerror("loading chip at %.4x size:%.4x\n", adr, in);
 
 
-				if (!(cbm_rom[i].chip=malloc(size)) ) {
+				if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 					osd_fclose(fp);
 					return INIT_FAILED;
 				}
@@ -353,7 +353,7 @@ int cbm_rom_init(int id)
 			else adr = CBM_ROM_ADDR_UNKNOWN;
 			logerror("loading %s rom at %.4x size:%.4x\n",
 						 device_filename(IO_CARTSLOT,id), adr, size);
-			if (!(cbm_rom[i].chip=malloc(size)) ) {
+			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAILED;
 			}

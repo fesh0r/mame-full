@@ -271,7 +271,7 @@ void c64_rom_load(void);
 void c64_rom_recognition (void);
 extern int c64_rom_id (int id);
 
-void c64_state(PRASTER *this);
+void c64_state(PRASTER *This);
 
 /* private area */
 

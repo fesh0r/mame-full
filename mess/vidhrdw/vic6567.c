@@ -167,7 +167,7 @@ unsigned char vic2_palette[] =
 
 unsigned char vic3_palette[0x100*3]={0};
 
-void (*vic2_display_state)(PRASTER *this); /* calls machine after rastering frame*/
+void (*vic2_display_state)(PRASTER *This); /* calls machine after rastering frame*/
 
 static struct {
 	UINT8 reg[0x80];
@@ -737,14 +737,14 @@ int vic2_vh_start (void)
 	vic2.bitmap = Machine->scrbitmap;
 
 	if (vic2.vic3) {
-		vic2.screen[0] = malloc (sizeof (UINT8) * 216 * 656 / 8);
+		vic2.screen[0] = (UINT8*)malloc (sizeof (UINT8) * 216 * 656 / 8);
 
 		if (!vic2.screen[0])
 			return 1;
 		for (i = 1; i < 216; i++)
 			vic2.screen[i] = vic2.screen[i - 1] + 656 / 8;
 	} else {
-		vic2.screen[0] = malloc (sizeof (UINT8) * 216 * 336 / 8);
+		vic2.screen[0] = (UINT8*)malloc (sizeof (UINT8) * 216 * 336 / 8);
 
 		if (!vic2.screen[0])
 			return 1;
@@ -1892,7 +1892,7 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 		break;
     case 0xff:
 		VIC3_MASK(0xff)
-        break;
+		break;
 	default:
 		if (VIC3_BITPLANES_MASK&1) {
 			colors[0]=c64_memory[VIC3_BITPLANE_IADDR(0)+offset];
@@ -2166,10 +2166,10 @@ int vic2_raster_irq (void)
 		vic2.lastline = 0;
 		if (LIGHTPEN_BUTTON)
 		{
-			double time = 0.0;
+			double tme = 0.0;
 
 			/* lightpen timer starten */
-			vic2.lightpentimer = timer_set (time, 1, vic2_timer_timeout);
+			vic2.lightpentimer = timer_set (tme, 1, vic2_timer_timeout);
 		}
 		if (vic2.on&&raster1.display_state) raster1.display_state(&raster1);
 	}

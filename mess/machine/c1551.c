@@ -123,13 +123,13 @@ static int d64_open (int id)
 
 	cbm_drive[id].d.d64.image_type = IO_FLOPPY;
 	cbm_drive[id].d.d64.image_id = id;
-	if (!(in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(in = (FILE*)image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror(" image %s not found\n", device_filename(IO_FLOPPY,id));
 		return 1;
 	}
 	size = osd_fsize (in);
-	if (!(cbm_drive[id].d.d64.image = malloc (size)))
+	if (!(cbm_drive[id].d.d64.image = (UINT8*)malloc (size)))
 	{
 		osd_fclose (in);
 		return 1;

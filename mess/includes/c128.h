@@ -103,7 +103,7 @@ extern void c128_vh_stop (void);
 extern void c128_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int c128_raster_irq (void);
 
-extern void c128_state(PRASTER *this);
+extern void c128_state(PRASTER *This);
 
 /* private area */
 extern int c128;					   /* computer is commodore c128 */

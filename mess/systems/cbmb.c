@@ -241,7 +241,7 @@ static struct MemoryReadAddress cbmb_readmem[] =
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress cbmb_writemem[] =
@@ -310,7 +310,7 @@ static struct MemoryWriteAddress cbmb_writemem[] =
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
 	{0x100000, 0x101fff, MWA_ROM, &cbmb_chargen },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress cbm500_readmem[] =
@@ -383,7 +383,7 @@ static struct MemoryReadAddress cbm500_readmem[] =
 	{0xfde00, 0xfdeff, tpi6525_0_port_r},
 	{0xfdf00, 0xfdfff, tpi6525_1_port_r},
 	{0xfe000, 0xfffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress cbm500_writemem[] =
@@ -453,7 +453,7 @@ static struct MemoryWriteAddress cbm500_writemem[] =
 	{0xfdf00, 0xfdfff, tpi6525_1_port_w},
 	{0xfe000, 0xfffff, MWA_ROM, &cbmb_kernal },
 	{0x100000, 0x100fff, MWA_ROM, &cbmb_chargen },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

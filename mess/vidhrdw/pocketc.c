@@ -84,7 +84,7 @@ void pocketc_init_colors (unsigned char *sys_palette,
 int pocketc_vh_start(void)
 {
     videoram_size = 6 * 2 + 24;
-    videoram = malloc (videoram_size);
+    videoram = (UINT8*)malloc (videoram_size);
 	if (!videoram)
         return 1;
 
@@ -253,7 +253,7 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[CONTRAST][1]];
 
     if (backdrop)
-        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
+        copybitmap (bitmap, backdrop->artwork_, 0, 0, 0, 0, NULL, 
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
@@ -340,7 +340,7 @@ void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[PC1251_CONTRAST][1]];
 
     if (backdrop)
-        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
+        copybitmap (bitmap, backdrop->artwork_, 0, 0, 0, 0, NULL, 
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
@@ -426,7 +426,7 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	color[1] = Machine->pens[pc1401_colortable[PC1350_CONTRAST][1]];
 
     if (backdrop)
-        copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
+        copybitmap (bitmap, backdrop->artwork_, 0, 0, 0, 0, NULL, 
 					TRANSPARENCY_NONE, 0);
 	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);

@@ -87,7 +87,7 @@ static struct MemoryReadAddress pc1401_readmem[] =
 	{ 0x6800, 0x685f, sc61860_read_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_read },
 	{ 0x8000, 0xffff, MRA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pc1401_writemem[] =
@@ -100,8 +100,7 @@ static struct MemoryWriteAddress pc1401_writemem[] =
 	{ 0x6800, 0x685f, sc61860_write_internal },
 	{ 0x7000, 0x77ff, pc1401_lcd_write },
 	{ 0x8000, 0xffff, MWA_ROM },
-
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress pc1251_readmem[] =
@@ -112,7 +111,7 @@ static struct MemoryReadAddress pc1251_readmem[] =
 	{ 0xa000, 0xcbff, MRA_ROM },
 	{ 0xf800, 0xf8ff, pc1251_lcd_read },
 	{ 0xff00, 0xff5f, sc61860_read_internal },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pc1251_writemem[] =
@@ -122,7 +121,7 @@ static struct MemoryWriteAddress pc1251_writemem[] =
 //	{ 0xa000, 0xcbff, MWA_ROM }, // c600 b800 b000 a000 tested
 	{ 0xf800, 0xf8ff, pc1251_lcd_write },
 	{ 0xff00, 0xff5f, sc61860_write_internal },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 
@@ -135,7 +134,7 @@ static struct MemoryReadAddress pc1350_readmem[] =
 	{ 0x7000, 0x7eff, pc1350_lcd_read },
 	{ 0x7f00, 0x7f5f, sc61860_read_internal },
 	{ 0x8000, 0xffff, MRA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pc1350_writemem[] =
@@ -147,7 +146,7 @@ static struct MemoryWriteAddress pc1350_writemem[] =
 	{ 0x7000, 0x7eff, pc1350_lcd_write },
 	{ 0x7f00, 0x7f5f, sc61860_write_internal },
 	{ 0x8000, 0xffff, MWA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 
@@ -157,7 +156,7 @@ static struct MemoryReadAddress pc1421_readmem[] =
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x3800, 0x47ff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pc1421_writemem[] =
@@ -166,8 +165,7 @@ static struct MemoryWriteAddress pc1421_writemem[] =
 	{ 0x2000, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x47ff, MWA_RAM },
 	{ 0x8000, 0xffff, MWA_ROM },
-
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress pc1260_readmem[] =
@@ -175,7 +173,7 @@ static struct MemoryReadAddress pc1260_readmem[] =
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x5fff, MRA_RAM },
 	{ 0x8000, 0xffff, MRA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pc1260_writemem[] =
@@ -186,7 +184,7 @@ static struct MemoryWriteAddress pc1260_writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM },
 
 	{ 0x8000, 0xffff, MWA_ROM },
-    {-1}
+	MEMORY_TABLE_END
 };
 #endif
 

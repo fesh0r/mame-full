@@ -39,7 +39,6 @@ typedef struct {
 
 extern SID6581 sid6581[2];
 
-UINT16 sid6581_read_word(SID6581 *this, int offset);
-
+UINT16 sid6581_read_word(SID6581 *This, int offset);
 
 #endif

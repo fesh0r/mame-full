@@ -12,6 +12,10 @@
 
 #include "praster.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* call to init videodriver */
 extern void crtc6845_init (UINT8 *memory);
 extern void crtc6845_pet_init (UINT8 *memory);
@@ -45,4 +49,9 @@ extern WRITE_HANDLER ( crtc6845_pet_port_w );
 extern READ_HANDLER ( crtc6845_port_r );
 
 extern void crtc6845_status (char *text, int size);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

@@ -607,7 +607,7 @@ void cbmb_frame_interrupt (int param)
 #endif
 }
 
-void cbmb_state(PRASTER *this)
+void cbmb_state(PRASTER *This)
 {
 #if VERBOSE_DBG
 	int y;
@@ -618,14 +618,14 @@ void cbmb_state(PRASTER *this)
 	snprintf(text, sizeof(text),
 			 "%.2x %.2x",
 			 MODELL_700, VIDEO_NTSC);
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	crtc6845_status(text, sizeof(text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 #if 0
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #endif
 #endif
 }

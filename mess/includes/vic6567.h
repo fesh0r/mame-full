@@ -79,7 +79,7 @@ WRITE_HANDLER( vic3_palette_w );
 /* to be called each vertical retrace */
 extern int vic2_frame_interrupt (void);
 
-extern void (*vic2_display_state)(PRASTER *this); /* calls machine after rastering frame*/
+extern void (*vic2_display_state)(PRASTER *This); /* calls machine after rastering frame*/
 
 /* private area */
 

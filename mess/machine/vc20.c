@@ -493,7 +493,7 @@ int vc20_rom_load (int id)
 
 	if (!vc20_rom_id (id))
 		return 1;
-	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
@@ -565,7 +565,7 @@ int vc20_rom_id (int id)
 	int retval;
 
 	logerror("vc20_rom_id %s\n", device_filename(IO_CARTSLOT,id));
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
 		return 0;

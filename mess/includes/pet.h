@@ -232,6 +232,6 @@ extern void pet_frame_interrupt (int param);
 int pet_rom_id (int id);
 void pet_rom_load(void);
 
-void pet_state(PRASTER *this);
+void pet_state(PRASTER *This);
 
 #endif

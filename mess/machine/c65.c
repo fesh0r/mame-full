@@ -821,7 +821,7 @@ void c65_shutdown_machine (void)
 {
 }
 
-void c65_state (PRASTER *this)
+void c65_state (PRASTER *This)
 {
 	int y;
 	char text[70];
@@ -831,14 +831,14 @@ void c65_state (PRASTER *this)
 
 #if VERBOSE_DBG
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	snprintf (text, sizeof(text), "c65 vic:%.4x m6510:%d c64:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7, c64mode);
 #endif
 	cbm_drive_0_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 }

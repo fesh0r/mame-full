@@ -874,7 +874,7 @@ void pet_frame_interrupt (int param)
 	osd_led_w (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
 }
 
-void pet_state(PRASTER *this)
+void pet_state(PRASTER *This)
 {
 	int y;
 	char text[70];
@@ -894,12 +894,12 @@ void pet_state(PRASTER *this)
 			 pet_keyline[7],
 			 pet_keyline[8],
 			 pet_keyline[9]);
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #endif
 
 	cbm_drive_0_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 }

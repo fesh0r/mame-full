@@ -189,14 +189,14 @@ int ted7360_custom_start (const struct MachineSound *driver)
 
 	channel = stream_init ("ted7360", 50, options.samplerate, 0, ted7360_update);
 
-	tone = malloc (tonesize * sizeof (tone[0]));
+	tone = (INT8*)malloc (tonesize * sizeof (tone[0]));
 	if (!tone)
 		return 1;
 
 	/* buffer for fastest played sample for 5 second
 	 * so we have enough data for min 5 second */
 	noisesize = NOISE_FREQUENCY_MAX * NOISE_BUFFER_SIZE_SEC;
-	noise = malloc (noisesize * sizeof (noise[0]));
+	noise = (INT8*)malloc (noisesize * sizeof (noise[0]));
 	if (!noise)
 	{
 		free (tone);
@@ -205,7 +205,7 @@ int ted7360_custom_start (const struct MachineSound *driver)
 
 	for (i = 0; i < tonesize; i++)
 	{
-		tone[i] = (sin (2 * M_PI * i / tonesize) * 127 + 0.5);
+		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
 
 	{

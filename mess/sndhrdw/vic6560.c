@@ -224,7 +224,7 @@ int vic6560_custom_start (const struct MachineSound *driver)
 	/* buffer for fastest played sample for 5 second
 	 * so we have enough data for min 5 second */
 	noisesize = NOISE_FREQUENCY_MAX * NOISE_BUFFER_SIZE_SEC;
-	noise = malloc (noisesize * sizeof (noise[0]));
+	noise = (INT8*)malloc (noisesize * sizeof (noise[0]));
 	if (!noise)
 		return 1;
 	{
@@ -259,7 +259,7 @@ int vic6560_custom_start (const struct MachineSound *driver)
 	}
 	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
 
-	tone = malloc (tonesize * sizeof (tone[0]));
+	tone = (INT16*)malloc (tonesize * sizeof (tone[0]));
 	if (!tone)
 	{
 		free (noise);
@@ -267,7 +267,7 @@ int vic6560_custom_start (const struct MachineSound *driver)
 	}
 	for (i = 0; i < tonesize; i++)
 	{
-		tone[i] = (sin (2 * M_PI * i / tonesize) * 127 + 0.5);
+		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
 	return 0;
 }

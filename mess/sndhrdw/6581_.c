@@ -1620,9 +1620,9 @@ void initMixerEngine(void)
 
 	filterAmpl = 0.7;
 
-	ampMod1x8=malloc(256*256);
-	signedPanMix8=malloc(256*256);
-	signedPanMix16=malloc(256*256*2);
+	ampMod1x8=(INT8*)malloc(256*256);
+	signedPanMix8=(INT8*)malloc(256*256);
+	signedPanMix16=(INT16*)malloc(256*256*2);
 	if (!ampMod1x8 || !signedPanMix8 || !signedPanMix16) {
 		printf("out of memory\n");exit(1);
 	}

@@ -109,6 +109,12 @@ INLINE void vic3_draw_block(int x, int y, UINT8 colors[8])
 #else
 // very recognizable SPEED improvement
 #define VIC3_ADDR(a) VIC3_BITPLANE_IADDR(a)
+
+
+
+
+
+
 void vic3_interlace_draw_block(int x, int y, int offset)
 {
 	int colors[8]={0};

@@ -10,6 +10,10 @@
 
 #include "praster.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* call to init videodriver */
 extern void vdc8563_init (UINT8 *memory, int ram16konly);
 
@@ -31,4 +35,9 @@ extern WRITE_HANDLER ( vdc8563_port_w );
 extern READ_HANDLER ( vdc8563_port_r );
 
 extern void vdc8563_status (char *text, int size);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

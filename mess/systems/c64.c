@@ -210,7 +210,7 @@ static struct MemoryReadAddress ultimax_readmem[] =
 	{0xd800, 0xdbff, MRA_RAM},		   /* colorram  */
 	{0xdc00, 0xdcff, cia6526_0_port_r},
 	{0xe000, 0xffff, MRA_ROM},		   /* ram or kernel rom */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress ultimax_writemem[] =
@@ -223,7 +223,7 @@ static struct MemoryWriteAddress ultimax_writemem[] =
 	{0xd800, 0xdbff, c64_colorram_write, &c64_colorram},
 	{0xdc00, 0xdcff, cia6526_0_port_w},
 	{0xe000, 0xffff, MWA_ROM, &c64_romh},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress c64_readmem[] =
@@ -251,7 +251,7 @@ static struct MemoryReadAddress c64_readmem[] =
 	{0x12000, 0x13fff, MRA_ROM},	   /* kernal at 0xe000 */
 	{0x14000, 0x14fff, MRA_ROM},	   /* charrom at 0xd000 */
 	{0x15000, 0x153ff, MRA_RAM},	   /* colorram at 0xd800 */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c64_writemem[] =
@@ -279,7 +279,7 @@ static struct MemoryWriteAddress c64_writemem[] =
 	{0x15000, 0x153ff, MWA_RAM, &c64_colorram},		/* colorram at 0xd800 */
 	{0x15400, 0x173ff, MWA_ROM, &c64_roml},	/* basic at 0xa000 */
 	{0x17400, 0x193ff, MWA_ROM, &c64_romh},	/* kernal at 0xe000 */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

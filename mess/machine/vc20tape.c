@@ -188,7 +188,7 @@ static struct GameSample *vc20_read_wav_sample (void *f)
 	}
 
 	/* allocate the game sample */
-	result = malloc (sizeof (struct GameSample) + length);
+	result = (struct GameSample *)malloc (sizeof (struct GameSample) + length);
 
 	if (result == NULL)
 		return NULL;
@@ -294,7 +294,7 @@ static void vc20_wav_open (int image_type, int image_id)
 {
 	FILE *fp;
 
-	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", device_filename(image_type,image_id));
@@ -432,7 +432,7 @@ static void vc20_prg_open (int image_type, int image_id)
     FILE *fp;
 	int i;
 
-	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", device_filename(image_type,image_id));

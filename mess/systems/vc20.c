@@ -187,7 +187,7 @@ static struct MemoryReadAddress vc20_readmem[] =
 	{0xa000, 0xbfff, MRA_RAM},		   /* or nothing */
 #endif
 	{0xc000, 0xffff, MRA_ROM},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress vc20_writemem[] =
@@ -203,7 +203,7 @@ static struct MemoryWriteAddress vc20_writemem[] =
 	{0x9400, 0x97ff, vc20_write_9400, &vc20_memory_9400},
 	{0x9800, 0x9fff, MWA_NOP},
 	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress vc20i_readmem[] =
@@ -228,7 +228,7 @@ static struct MemoryReadAddress vc20i_readmem[] =
 	{0x9810, 0x981f, via_5_r},
 	{0xa000, 0xbfff, MRA_ROM},
 	{0xc000, 0xffff, MRA_ROM},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress vc20i_writemem[] =
@@ -245,7 +245,7 @@ static struct MemoryWriteAddress vc20i_writemem[] =
 	{0x9810, 0x981f, via_5_w},
 	{0xa000, 0xbfff, MWA_ROM},
 	{0xc000, 0xffff, MWA_NOP},		   /* MWA_ROM }, but logfile */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

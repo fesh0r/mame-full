@@ -5,6 +5,9 @@
   MOS video interface chip 6560, 6561
 
 ***************************************************************************/
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * if you need this chip in another mame/mess emulation than let it me know
@@ -131,5 +134,8 @@ extern void vic6560_custom_update (void);
 extern void vic6560_soundport_w (int mode, int data);
 
 extern UINT8 vic6560[16];
+#ifdef __cplusplus
+}
+#endif
 
 #endif

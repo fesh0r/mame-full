@@ -339,7 +339,7 @@ static struct MemoryReadAddress c128_z80_readmem[] =
 	{0xff00, 0xff04, c128_mmu8722_ff00_r},
 	{0xff05, 0xffff, MRA_BANK9},
 #endif
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c128_z80_writemem[] =
@@ -375,7 +375,7 @@ static struct MemoryWriteAddress c128_z80_writemem[] =
 	{0x122000, 0x1227ff, MWA_RAM, &c64_colorram},
 	{0x122800, 0x1327ff, MWA_RAM, &c128_vdcram},
 	/* 2 kbyte by 8 bits, only 1 kbyte by 4 bits used) */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct IOReadPort c128_z80_readio[] =
@@ -388,7 +388,7 @@ static struct IOReadPort c128_z80_readio[] =
 	{0xdc00, 0xdcff, cia6526_0_port_r},
 	{0xdd00, 0xddff, cia6526_1_port_r},
 	/*{ 0xdf00, 0xdfff, dma_port_r }, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct IOWritePort c128_z80_writeio[] =
@@ -401,7 +401,7 @@ static struct IOWritePort c128_z80_writeio[] =
 	{0xdc00, 0xdcff, cia6526_0_port_w},
 	{0xdd00, 0xddff, cia6526_1_port_w},
 	/*{ 0xdf00, 0xdfff, dma_port_w }, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress c128_readmem[] =
@@ -423,7 +423,7 @@ static struct MemoryReadAddress c128_readmem[] =
 	{0xe000, 0xfeff, MRA_BANK14},
 	{0xff00, 0xff04, MRA_BANK15},	   /* mmu c128 modus */
 	{0xff05, 0xffff, MRA_BANK16},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c128_writemem[] =
@@ -443,7 +443,7 @@ static struct MemoryWriteAddress c128_writemem[] =
 	{0xe000, 0xfeff, c128_write_e000},
 	{0xff00, 0xff04, c128_write_ff00},
 	{0xff05, 0xffff, c128_write_ff05},
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

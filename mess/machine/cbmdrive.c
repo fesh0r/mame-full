@@ -142,7 +142,7 @@ static void d64_readprg (CBM_Drive * c1551, int pos)
 
 	DBG_LOG (3, "d64 readprg", ("size %d\n", c1551->size));
 
-	c1551->buffer = realloc (c1551->buffer, c1551->size);
+	c1551->buffer = (UINT8*)realloc (c1551->buffer, c1551->size);
 	if (!c1551->buffer) {
 		logerror("out of memory %s %d\n",
 				__FILE__, __LINE__);
@@ -184,7 +184,7 @@ static void d64_read_sector (CBM_Drive * c1551, int track, int sector)
 
 	pos = d64_tracksector2offset (track, sector);
 
-	c1551->buffer = realloc (c1551->buffer,256);
+	c1551->buffer = (UINT8*)realloc (c1551->buffer,256);
 	if (!c1551->buffer) {
 		logerror("out of memory %s %d\n",__FILE__, __LINE__);
 		osd_exit();
@@ -203,7 +203,7 @@ static void d64_read_directory (CBM_Drive * c1551)
 {
 	int pos, track, sector, i, j, blocksfree, addr = 0x0101/*0x1001*/;
 
-	c1551->buffer = realloc (c1551->buffer, 8 * 18 * 25);
+	c1551->buffer = (UINT8*)realloc (c1551->buffer, 8 * 18 * 25);
 	if (!c1551->buffer) {
 		logerror("out of memory %s %d\n",
 				__FILE__, __LINE__);
@@ -343,46 +343,46 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 	char n[32];
 
 	strcpy(n,(char*)name);
-	fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
 		strcpy(n, (char*)name);
 		strcat ((char *) n, ".prg");
 
-		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
 		type=1;
 		strcpy(n,(char*)name);
 		strcat(n,".p00");
-		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (!fp)
 	{
 		for (i = 0; n[i] != 0; i++)
 			n[i] = tolower (n[i]);
-		fp = osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
+		fp = (FILE*)osd_fopen (Machine->gamedrv->name, n, OSD_FILETYPE_IMAGE_R, 0);
 	}
 	if (fp)
 	{
 		if (type==1)
 		{
 			c1551->size = osd_fsize (fp);
-			c1551->buffer = realloc (c1551->buffer, c1551->size);
+			c1551->buffer = (UINT8*)realloc (c1551->buffer, c1551->size);
 			if (!c1551->buffer) {
 				logerror("out of memory %s %d\n",__FILE__, __LINE__);
 				osd_exit();
@@ -397,7 +397,7 @@ static int c1551_fs_command (CBM_Drive * c1551, unsigned char *name)
 		else
 		{
 			c1551->size = osd_fsize (fp);
-			c1551->buffer = realloc (c1551->buffer,c1551->size);
+			c1551->buffer = (UINT8*)realloc (c1551->buffer,c1551->size);
 			if (!c1551->buffer) {
 				logerror("out of memory %s %d\n",__FILE__, __LINE__);
 				osd_exit();

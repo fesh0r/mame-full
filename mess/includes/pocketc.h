@@ -1,3 +1,4 @@
+
 int pc1401_reset(void);
 int pc1401_brk(void);
 void pc1401_outa(int data);
@@ -277,3 +278,4 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 #define PC1350_RAM12K (input_port_8_r(0)&0x80)==0x40
 #define PC1350_RAM20K (input_port_8_r(0)&0x80)==0x80
 #define PC1350_CONTRAST (input_port_8_r(0)&7)
+

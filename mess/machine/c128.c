@@ -829,7 +829,7 @@ int c128_raster_irq (void)
 	return vdc8563_raster_irq()|vic2_raster_irq();
 }
 
-void c128_state(PRASTER *this)
+void c128_state(PRASTER *This)
 {
 	int y;
 	char text[70];
@@ -839,7 +839,7 @@ void c128_state(PRASTER *this)
 #if VERBOSE_DBG
 # if 0
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 #  if 1
 	snprintf (text, size, "c128 vic:%.5x m6510:%d exrom:%d game:%d",
@@ -850,22 +850,22 @@ void c128_state(PRASTER *this)
 			  MMU_SIZE, MMU_BOTTOM?"bottom":"", MMU_TOP?"top":"",MMU_RAM_ADDR, MMU_IO_ON?"io":"",
 			  MMU_PAGE0, MMU_PAGE1);
 #  endif
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 # endif
 
 	vdc8563_status(text, sizeof(text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #endif
 
 	vc20_tape_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #ifdef VC1541
 	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 }

@@ -86,292 +86,292 @@ TPI6525 tpi6525[4]={
 	{ 3 }
 };
 
-#define INTERRUPT_MODE (this->cr&1)
-#define PRIORIZED_INTERRUPTS (this->cr&2)
-#define INTERRUPT3_RISING_EDGE (this->cr&4)
-#define INTERRUPT4_RISING_EDGE (this->cr&8)
-#define CA_MANUAL_OUT (this->cr&0x20)
-#define CA_MANUAL_LEVEL ((this->cr&0x10)?1:0)
-#define CB_MANUAL_OUT (this->cr&0x80)
-#define CB_MANUAL_LEVEL ((this->cr&0x40)?1:0)
+#define INTERRUPT_MODE (This->cr&1)
+#define PRIORIZED_INTERRUPTS (This->cr&2)
+#define INTERRUPT3_RISING_EDGE (This->cr&4)
+#define INTERRUPT4_RISING_EDGE (This->cr&8)
+#define CA_MANUAL_OUT (This->cr&0x20)
+#define CA_MANUAL_LEVEL ((This->cr&0x10)?1:0)
+#define CB_MANUAL_OUT (This->cr&0x80)
+#define CB_MANUAL_LEVEL ((This->cr&0x40)?1:0)
 
-static void tpi6525_reset(TPI6525 *this)
+static void tpi6525_reset(TPI6525 *This)
 {
-	this->cr=0;this->air=0;
-	this->a.ddr=0;this->a.port=0;
-	this->b.ddr=0;this->b.port=0;
-	this->c.ddr=0;this->c.port=0;
-	this->a.in=0xff;
-	this->b.in=0xff;
-	this->c.in=0xff;
-	this->interrupt.level=
-		this->irq_level[0]=
-		this->irq_level[1]=
-		this->irq_level[2]=
-		this->irq_level[3]=
-		this->irq_level[4]=0;
+	This->cr=0;This->air=0;
+	This->a.ddr=0;This->a.port=0;
+	This->b.ddr=0;This->b.port=0;
+	This->c.ddr=0;This->c.port=0;
+	This->a.in=0xff;
+	This->b.in=0xff;
+	This->c.in=0xff;
+	This->interrupt.level=
+		This->irq_level[0]=
+		This->irq_level[1]=
+		This->irq_level[2]=
+		This->irq_level[3]=
+		This->irq_level[4]=0;
 }
 
-static void tpi6525_set_interrupt(TPI6525 *this)
+static void tpi6525_set_interrupt(TPI6525 *This)
 {
-	if (!this->interrupt.level && (this->air!=0)) {
-		this->interrupt.level=1;
-		DBG_LOG (3, "tpi6525",("%d set interrupt\n",this->number));
-		if (this->interrupt.output!=NULL)
-			this->interrupt.output(this->interrupt.level);
+	if (!This->interrupt.level && (This->air!=0)) {
+		This->interrupt.level=1;
+		DBG_LOG (3, "tpi6525",("%d set interrupt\n",This->number));
+		if (This->interrupt.output!=NULL)
+			This->interrupt.output(This->interrupt.level);
 	}
 }
 
-static void tpi6525_clear_interrupt(TPI6525 *this)
+static void tpi6525_clear_interrupt(TPI6525 *This)
 {
-	if (this->interrupt.level && (this->air==0)) {
-		this->interrupt.level=0;
-		DBG_LOG (3, "tpi6525",("%d clear interrupt\n",this->number));
-		if (this->interrupt.output!=NULL)
-			this->interrupt.output(this->interrupt.level);
+	if (This->interrupt.level && (This->air==0)) {
+		This->interrupt.level=0;
+		DBG_LOG (3, "tpi6525",("%d clear interrupt\n",This->number));
+		if (This->interrupt.output!=NULL)
+			This->interrupt.output(This->interrupt.level);
 	}
 }
 
-static void tpi6525_irq0_level(TPI6525 *this, int level)
+static void tpi6525_irq0_level(TPI6525 *This, int level)
 {
-	if (INTERRUPT_MODE && (level!=this->irq_level[0]) ) {
-		this->irq_level[0]=level;
-		if ((level==0)&&!(this->air&1)&&(this->c.ddr&1)) {
-			this->air|=1;
-			tpi6525_set_interrupt(this);
+	if (INTERRUPT_MODE && (level!=This->irq_level[0]) ) {
+		This->irq_level[0]=level;
+		if ((level==0)&&!(This->air&1)&&(This->c.ddr&1)) {
+			This->air|=1;
+			tpi6525_set_interrupt(This);
 		}
 	}
 }
 
-static void tpi6525_irq1_level(TPI6525 *this, int level)
+static void tpi6525_irq1_level(TPI6525 *This, int level)
 {
-	if (INTERRUPT_MODE && (level!=this->irq_level[1]) ) {
-		this->irq_level[1]=level;
-		if ((level==0)&&!(this->air&2)&&(this->c.ddr&2)) {
-			this->air|=2;
-			tpi6525_set_interrupt(this);
+	if (INTERRUPT_MODE && (level!=This->irq_level[1]) ) {
+		This->irq_level[1]=level;
+		if ((level==0)&&!(This->air&2)&&(This->c.ddr&2)) {
+			This->air|=2;
+			tpi6525_set_interrupt(This);
 		}
 	}
 }
 
-static void tpi6525_irq2_level(TPI6525 *this, int level)
+static void tpi6525_irq2_level(TPI6525 *This, int level)
 {
-	if (INTERRUPT_MODE && (level!=this->irq_level[2]) ) {
-		this->irq_level[2]=level;
-		if ((level==0)&&!(this->air&4)&&(this->c.ddr&4)) {
-			this->air|=4;
-			tpi6525_set_interrupt(this);
+	if (INTERRUPT_MODE && (level!=This->irq_level[2]) ) {
+		This->irq_level[2]=level;
+		if ((level==0)&&!(This->air&4)&&(This->c.ddr&4)) {
+			This->air|=4;
+			tpi6525_set_interrupt(This);
 		}
 	}
 }
 
-static void tpi6525_irq3_level(TPI6525 *this, int level)
+static void tpi6525_irq3_level(TPI6525 *This, int level)
 {
-	if (INTERRUPT_MODE && (level!=this->irq_level[3]) ) {
-		this->irq_level[3]=level;
+	if (INTERRUPT_MODE && (level!=This->irq_level[3]) ) {
+		This->irq_level[3]=level;
 		if ( ((INTERRUPT3_RISING_EDGE&&(level==1))
 			  ||(!INTERRUPT3_RISING_EDGE&&(level==0)))
-			 &&!(this->air&8)&&(this->c.ddr&8)) {
-			this->air|=8;
-			tpi6525_set_interrupt(this);
+			 &&!(This->air&8)&&(This->c.ddr&8)) {
+			This->air|=8;
+			tpi6525_set_interrupt(This);
 		}
 	}
 }
 
-static void tpi6525_irq4_level(TPI6525 *this, int level)
+static void tpi6525_irq4_level(TPI6525 *This, int level)
 {
-	if (INTERRUPT_MODE &&(level!=this->irq_level[4]) ) {
-		this->irq_level[4]=level;
+	if (INTERRUPT_MODE &&(level!=This->irq_level[4]) ) {
+		This->irq_level[4]=level;
 		if ( ((INTERRUPT4_RISING_EDGE&&(level==1))
 			  ||(!INTERRUPT4_RISING_EDGE&&(level==0)))
-			  &&!(this->air&0x10)&&(this->c.ddr&0x10)) {
-			this->air|=0x10;
-			tpi6525_set_interrupt(this);
+			  &&!(This->air&0x10)&&(This->c.ddr&0x10)) {
+			This->air|=0x10;
+			tpi6525_set_interrupt(This);
 		}
 	}
 }
 
-static int tpi6525_port_a_r(TPI6525 *this, int offset)
+static int tpi6525_port_a_r(TPI6525 *This, int offset)
 {
-	int data=this->a.in;
+	int data=This->a.in;
 
-	if (this->a.read) data=this->a.read();
-	data=(data&~this->a.ddr)|(this->a.ddr&this->a.port);
+	if (This->a.read) data=This->a.read();
+	data=(data&~This->a.ddr)|(This->a.ddr&This->a.port);
 
 	return data;
 }
 
-static void tpi6525_port_a_w(TPI6525 *this, int offset, int data)
+static void tpi6525_port_a_w(TPI6525 *This, int offset, int data)
 {
-	this->a.in=data;
+	This->a.in=data;
 }
 
-static int tpi6525_port_b_r(TPI6525 *this, int offset)
+static int tpi6525_port_b_r(TPI6525 *This, int offset)
 {
-	int data=this->b.in;
+	int data=This->b.in;
 
-	if (this->b.read) data=this->b.read();
-	data=(data&~this->b.ddr)|(this->b.ddr&this->b.port);
+	if (This->b.read) data=This->b.read();
+	data=(data&~This->b.ddr)|(This->b.ddr&This->b.port);
 
 	return data;
 }
 
-static void tpi6525_port_b_w(TPI6525 *this, int offset, int data)
+static void tpi6525_port_b_w(TPI6525 *This, int offset, int data)
 {
-	this->b.in=data;
+	This->b.in=data;
 }
 
-static int tpi6525_port_c_r(TPI6525 *this, int offset)
+static int tpi6525_port_c_r(TPI6525 *This, int offset)
 {
-	int data=this->c.in;
+	int data=This->c.in;
 
-	if (this->c.read) data&=this->c.read();
-	data=(data&~this->c.ddr)|(this->c.ddr&this->c.port);
+	if (This->c.read) data&=This->c.read();
+	data=(data&~This->c.ddr)|(This->c.ddr&This->c.port);
 
 	return data;
 }
 
-static void tpi6525_port_c_w(TPI6525 *this, int offset, int data)
+static void tpi6525_port_c_w(TPI6525 *This, int offset, int data)
 {
-	this->c.in=data;
+	This->c.in=data;
 }
 
-static int tpi6525_port_r(TPI6525 *this, int offset)
+static int tpi6525_port_r(TPI6525 *This, int offset)
 {
 	int data=0xff;
 	switch (offset&7) {
 	case 0:
-		data=this->a.in;
-		if (this->a.read) data&=this->a.read();
-		data=(data&~this->a.ddr)|(this->a.ddr&this->a.port);
+		data=This->a.in;
+		if (This->a.read) data&=This->a.read();
+		data=(data&~This->a.ddr)|(This->a.ddr&This->a.port);
 		break;
 	case 1:
-		data=this->b.in;
-		if (this->b.read) data&=this->b.read();
-		data=(data&~this->b.ddr)|(this->b.ddr&this->b.port);
+		data=This->b.in;
+		if (This->b.read) data&=This->b.read();
+		data=(data&~This->b.ddr)|(This->b.ddr&This->b.port);
 		break;
 	case 2:
 		if (INTERRUPT_MODE) {
 			data=0;
-			if (this->irq_level[0]) data|=1;
-			if (this->irq_level[1]) data|=2;
-			if (this->irq_level[2]) data|=4;
-			if (this->irq_level[3]) data|=8;
-			if (this->irq_level[4]) data|=0x10;
-			if (!this->interrupt.level) data|=0x20;
-			if (this->ca.level) data|=0x40;
-			if (this->cb.level) data|=0x80;
+			if (This->irq_level[0]) data|=1;
+			if (This->irq_level[1]) data|=2;
+			if (This->irq_level[2]) data|=4;
+			if (This->irq_level[3]) data|=8;
+			if (This->irq_level[4]) data|=0x10;
+			if (!This->interrupt.level) data|=0x20;
+			if (This->ca.level) data|=0x40;
+			if (This->cb.level) data|=0x80;
 		} else {
-			data=this->c.in;
-			if (this->c.read) data&=this->c.read();
-			data=(data&~this->c.ddr)|(this->c.ddr&this->c.port);
+			data=This->c.in;
+			if (This->c.read) data&=This->c.read();
+			data=(data&~This->c.ddr)|(This->c.ddr&This->c.port);
 		}
 		DBG_LOG (2, "tpi6525",
-				 ("%d read %.2x %.2x\n",this->number, offset,data));
+				 ("%d read %.2x %.2x\n",This->number, offset,data));
 		break;
 	case 3:
-		data=this->a.ddr;
+		data=This->a.ddr;
 		break;
 	case 4:
-		data=this->b.ddr;
+		data=This->b.ddr;
 		break;
 	case 5:
-		data=this->c.ddr;
+		data=This->c.ddr;
 		break;
 	case 6: /* cr */
-		data=this->cr;
+		data=This->cr;
 		break;
 	case 7: /* air */
 		if (PRIORIZED_INTERRUPTS) {
-			if (this->air&0x10) {
+			if (This->air&0x10) {
 				data=0x10;
-				this->air&=~0x10;
-			} else if (this->air&8) {
+				This->air&=~0x10;
+			} else if (This->air&8) {
 				data=8;
-				this->air&=~8;
-			} else if (this->air&4) {
+				This->air&=~8;
+			} else if (This->air&4) {
 				data=4;
-				this->air&=~4;
-			} else if (this->air&2) {
+				This->air&=~4;
+			} else if (This->air&2) {
 				data=2;
-				this->air&=~2;
-			} else if (this->air&1) {
+				This->air&=~2;
+			} else if (This->air&1) {
 				data=1;
-				this->air&=~1;
+				This->air&=~1;
 			}
 		} else {
-			data=this->air;
-			this->air=0;
+			data=This->air;
+			This->air=0;
 		}
-		tpi6525_clear_interrupt(this);
+		tpi6525_clear_interrupt(This);
 		break;
 	}
 	DBG_LOG (3, "tpi6525",
-			 ("%d read %.2x %.2x\n",this->number, offset,data));
+			 ("%d read %.2x %.2x\n",This->number, offset,data));
 	return data;
 }
 
-static void tpi6525_port_w(TPI6525 *this, int offset, int data)
+static void tpi6525_port_w(TPI6525 *This, int offset, int data)
 {
 	DBG_LOG (2, "tpi6525",
-			 ("%d write %.2x %.2x\n",this->number, offset,data));
+			 ("%d write %.2x %.2x\n",This->number, offset,data));
 
 	switch (offset&7) {
 	case 0:
-		this->a.port=data;
-		if (this->a.output) {
-			this->a.output(this->a.port&this->a.ddr);
+		This->a.port=data;
+		if (This->a.output) {
+			This->a.output(This->a.port&This->a.ddr);
 		}
 		break;
 	case 1:
-		this->b.port=data;
-		if (this->b.output) {
-			this->b.output(this->b.port&this->b.ddr);
+		This->b.port=data;
+		if (This->b.output) {
+			This->b.output(This->b.port&This->b.ddr);
 		}
 		break;
 	case 2:
-		this->c.port=data;
-		if (!INTERRUPT_MODE&&this->c.output) {
-			this->c.output(this->c.port&this->c.ddr);
+		This->c.port=data;
+		if (!INTERRUPT_MODE&&This->c.output) {
+			This->c.output(This->c.port&This->c.ddr);
 		}
 		break;
 	case 3:
-		this->a.ddr=data;
-		if (this->a.output) {
-			this->a.output(this->a.port&this->a.ddr);
+		This->a.ddr=data;
+		if (This->a.output) {
+			This->a.output(This->a.port&This->a.ddr);
 		}
 		break;
 	case 4:
-		this->b.ddr=data;
-		if (this->b.output) {
-			this->b.output(this->b.port&this->b.ddr);
+		This->b.ddr=data;
+		if (This->b.output) {
+			This->b.output(This->b.port&This->b.ddr);
 		}
 		break;
 	case 5:
-		this->c.ddr=data;
-		if (!INTERRUPT_MODE&&this->c.output) {
-			this->c.output(this->c.port&this->c.ddr);
+		This->c.ddr=data;
+		if (!INTERRUPT_MODE&&This->c.output) {
+			This->c.output(This->c.port&This->c.ddr);
 		}
 		break;
 	case 6:
-		this->cr=data;
+		This->cr=data;
 		if (INTERRUPT_MODE) {
 			if (CA_MANUAL_OUT) {
-				if (this->ca.level!=CA_MANUAL_LEVEL) {
-					this->ca.level=CA_MANUAL_LEVEL;
-					if (this->ca.output) this->ca.output(this->ca.level);
+				if (This->ca.level!=CA_MANUAL_LEVEL) {
+					This->ca.level=CA_MANUAL_LEVEL;
+					if (This->ca.output) This->ca.output(This->ca.level);
 				}
 			}
 			if (CB_MANUAL_OUT) {
-				if (this->cb.level!=CB_MANUAL_LEVEL) {
-					this->cb.level=CB_MANUAL_LEVEL;
-					if (this->cb.output) this->cb.output(this->cb.level);
+				if (This->cb.level!=CB_MANUAL_LEVEL) {
+					This->cb.level=CB_MANUAL_LEVEL;
+					if (This->cb.output) This->cb.output(This->cb.level);
 				}
 			}
 		}
 		break;
 	case 7:
-		/*this->air=data; */
+		/*This->air=data; */
 		break;
 	}
 }

@@ -28,10 +28,10 @@ SID6581 sid6581[2]= {{0}};
 
 static int channel;
 
-static void sid6581_init (SID6581 *this, int (*paddle) (int offset), int pal)
+static void sid6581_init (SID6581 *This, int (*paddle) (int offset), int pal)
 {
-	memset(this, 0, sizeof(SID6581));
-	this->paddle_read = paddle;
+	memset(This, 0, sizeof(SID6581));
+	This->paddle_read = paddle;
 	initMixerEngine();
 	filterTableInit();
 	if (pal)
@@ -48,17 +48,17 @@ static void sid6581_init (SID6581 *this, int (*paddle) (int offset), int pal)
 	sidEmuReset();
 }
 
-void sid6581_configure (SID6581 *this, SIDTYPE type)
+void sid6581_configure (SID6581 *This, SIDTYPE type)
 {
 	sidEmuConfigure(options.samplerate, true, type, true, 0);
 }
 
-static void sid6581_reset(SID6581 *this)
+static void sid6581_reset(SID6581 *This)
 {
 	sidEmuReset();
 }
 
-static void sid6581_port_w (SID6581 *this, int offset, int data)
+static void sid6581_port_w (SID6581 *This, int offset, int data)
 {
 	DBG_LOG (1, "sid6581 write", ("offset %.2x value %.2x\n",
 								  offset, data));
@@ -71,16 +71,17 @@ static void sid6581_port_w (SID6581 *this, int offset, int data)
 		break;
 	default:
 		/*stream_update(channel,0); */
-		this->reg[offset] = data;
+		This->reg[offset] = data;
 		if (data&1)
-			this->sidKeysOn[offset]=1;
+			This->sidKeysOn[offset]=1;
 		else
-			this->sidKeysOff[offset]=1;
+			This->sidKeysOff[offset]=1;
 	}
 }
 
-static int sid6581_port_r (SID6581 *this, int offset)
+static int sid6581_port_r (SID6581 *This, int offset)
 {
+	int data;
 /* SIDPLAY reads last written at a sid address value */
 	offset &= 0x1f;
 	switch (offset)
@@ -88,27 +89,36 @@ static int sid6581_port_r (SID6581 *this, int offset)
 	case 0x1d:
 	case 0x1e:
 	case 0x1f:
-		return 0xff;
+		data=0xff;
+		break;
 	case 0x19:						   /* paddle 1 */
-		if (this->paddle_read != NULL)
-			return this->paddle_read (0);
-		return 0;
+		if (This->paddle_read != NULL)
+			data=This->paddle_read (0);
+		else
+			data=0;
+		break;
 	case 0x1a:						   /* paddle 2 */
-		if (this->paddle_read != NULL)
-			return this->paddle_read (1);
-		return 0;
+		if (This->paddle_read != NULL)
+			data=This->paddle_read (1);
+		else
+			data=0;
+		break;
 #if 0
 	case 0x1b:case 0x1c: /* noise channel readback? */
-		return rand();
+		data=rand();
+		break;
 #endif
 	default:
-		return this->reg[offset];
+		data=This->reg[offset];
 	}
+	DBG_LOG (1, "sid6581 read", ("offset %.2x value %.2x\n",
+								  offset, data));
+    return data;
 }
 
-UINT16 sid6581_read_word(SID6581 *this, int offset)
+UINT16 sid6581_read_word(SID6581 *This, int offset)
 {
-	return this->reg[offset&0x1f]|this->reg[(offset+1)&0x1f]<<8;
+	return This->reg[offset&0x1f]|This->reg[(offset+1)&0x1f]<<8;
 }
 
 void sid6581_0_init (int (*paddle) (int offset), int pal)

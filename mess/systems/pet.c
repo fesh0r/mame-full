@@ -133,7 +133,7 @@ static struct MemoryReadAddress pet_readmem[] =
 	{0xe840, 0xe84f, via_0_r },
 /*	{0xe900, 0xe91f, cbm_ieee_state }, // for debugging */
 	{0xf000, 0xffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pet_writemem[] =
@@ -145,7 +145,7 @@ static struct MemoryWriteAddress pet_writemem[] =
 	{0xe820, 0xe823, pia_1_w },
 	{0xe840, 0xe84f, via_0_w },
 	{0xf000, 0xffff, MWA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress pet40_readmem[] =
@@ -158,7 +158,7 @@ static struct MemoryReadAddress pet40_readmem[] =
 	{0xe840, 0xe84f, via_0_r },
 	{0xe880, 0xe881, crtc6845_port_r },
 	{0xf000, 0xffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pet40_writemem[] =
@@ -171,7 +171,7 @@ static struct MemoryWriteAddress pet40_writemem[] =
 	{0xe840, 0xe84f, via_0_w },
 	{0xe880, 0xe881, crtc6845_port_w },
 	{0xf000, 0xffff, MWA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress pet80_readmem[] =
@@ -191,7 +191,7 @@ static struct MemoryReadAddress pet80_readmem[] =
 	{0xe880, 0xe881, crtc6845_port_r },
 #endif
 	{0xf000, 0xffff, MRA_BANK8 },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress pet80_writemem[] =
@@ -212,7 +212,7 @@ static struct MemoryWriteAddress pet80_writemem[] =
 #endif
 	{0xf000, 0xffef, MWA_BANK8 },
     {0xfff1, 0xffff, MWA_BANK9 },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 
@@ -244,7 +244,7 @@ static struct MemoryReadAddress superpet_readmem[] =
 	/* 0xeff0, 0xeff3, acia6551 */
 	{0xeff8, 0xefff, superpet_r },
 	{0xf000, 0xffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress superpet_writemem[] =
@@ -258,7 +258,7 @@ static struct MemoryWriteAddress superpet_writemem[] =
 	{0xe880, 0xe881, crtc6845_pet_port_w },
 	{0xeff8, 0xefff, superpet_w },
 	{0xf000, 0xffff, MWA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryReadAddress superpet_m6809_readmem[] =
@@ -273,7 +273,7 @@ static struct MemoryReadAddress superpet_m6809_readmem[] =
 	{0xe880, 0xe881, crtc6845_port_r },
 	{0xeff8, 0xefff, superpet_r },
 	{0xf000, 0xffff, MRA_ROM },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress superpet_m6809_writemem[] =
@@ -289,7 +289,7 @@ static struct MemoryWriteAddress superpet_m6809_writemem[] =
 	{0xeff8, 0xefff, superpet_w },
 	{0xf000, 0xffff, MWA_ROM },
 	{0x10000, 0x1ffff, MWA_RAM, &superpet_memory },
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

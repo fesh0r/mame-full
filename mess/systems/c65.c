@@ -166,7 +166,7 @@ static struct MemoryReadAddress c65_readmem[] =
 	{0x40000, 0x7ffff, MRA_NOP},
 	{0x80000, 0xfffff, MRA_RAM},
 	/* 8 megabyte full address space! */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 static struct MemoryWriteAddress c65_writemem[] =
@@ -196,7 +196,7 @@ static struct MemoryWriteAddress c65_writemem[] =
 	{0x40000, 0x7ffff, MWA_NOP},
 	{0x80000, 0xfffff, MWA_RAM},
 /*	{0x80000, 0xfffff, MWA_BANK16}, */
-	{-1}							   /* end of table */
+	MEMORY_TABLE_END
 };
 
 #define DIPS_HELPER(bit, name, keycode) \

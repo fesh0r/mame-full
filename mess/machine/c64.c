@@ -796,7 +796,7 @@ int c64_rom_id (int id)
 
 	logerror("c64_rom_id %s\n", device_filename(IO_CARTSLOT,id));
 	retval = 0;
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
 		return 0;
@@ -1333,7 +1333,7 @@ int c64_frame_interrupt (void)
 	return ignore_interrupt ();
 }
 
-void c64_state(PRASTER *this)
+void c64_state(PRASTER *This)
 {
 	int y;
 	char text[70];
@@ -1343,28 +1343,28 @@ void c64_state(PRASTER *this)
 #if VERBOSE_DBG
 #if 0
 	cia6526_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	snprintf (text, sizeof(text), "c64 vic:%.4x m6510:%d exrom:%d game:%d",
 			  c64_vicaddr - c64_memory, c64_port6510 & 7,
 			  c64_exrom, c64_game);
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #endif
 
 	vdc8563_status(text, sizeof(text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #endif
 
 	vc20_tape_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 #ifdef VC1541
 	vc1541_drive_status (text, sizeof (text));
 #else
 	cbm_drive_0_status (text, sizeof (text));
 #endif
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 
 	cbm_drive_1_status (text, sizeof (text));
-	praster_draw_text (this, text, &y);
+	praster_draw_text (This, text, &y);
 }
 
