@@ -16,11 +16,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
-/* from mess/vidhrdw/vtech2.c */
-extern char laser_frame_message[64+1];
-extern int laser_frame_time;
+#include "includes/vtech2.h"
 
 /* public */
 int laser_latch = -1;
@@ -164,7 +160,7 @@ static READ_HANDLER ( mra_empty )
 	return 0xff;
 }
 
-void laser_bank_select_w(int offs, int data)
+WRITE_HANDLER( laser_bank_select_w )
 {
     static const char *bank_name[16] = {
         "ROM lo","ROM hi","MM I/O","Video RAM lo",
@@ -174,39 +170,39 @@ void laser_bank_select_w(int offs, int data)
 
     data &= 15;
 
-	if( data != laser_bank[offs] )
+	if( data != laser_bank[offset] )
     {
-        laser_bank[offs] = data;
-		logerror("select bank #%d $%02X [$%05X] %s\n", offs+1, data, 0x4000 * (data & 15), bank_name[data]);
+        laser_bank[offset] = data;
+		logerror("select bank #%d $%02X [$%05X] %s\n", offset+1, data, 0x4000 * (data & 15), bank_name[data]);
 
         /* memory mapped I/O bank selected? */
 		if (data == 2)
 		{
-			cpu_setbankhandler_r(1+offs,mra_bank_soft[offs]);
-			cpu_setbankhandler_w(1+offs,mwa_bank_soft[offs]);
+			cpu_setbankhandler_r(1+offset,mra_bank_soft[offset]);
+			cpu_setbankhandler_w(1+offset,mwa_bank_soft[offset]);
 		}
 		else
 		{
-			cpu_setbank(offs+1, &mem[0x4000*laser_bank[offs]]);
+			cpu_setbank(offset+1, &mem[0x4000*laser_bank[offset]]);
 			if( laser_bank_mask & (1 << data) )
 			{
-				cpu_setbankhandler_r(1+offs,mra_bank_hard[offs]);
+				cpu_setbankhandler_r(1+offset,mra_bank_hard[offset]);
 				/* video RAM bank selected? */
 				if( data == laser_video_bank )
 				{
-					logerror("select bank #%d VIDEO!\n", offs+1);
-                    cpu_setbankhandler_w(1+offs,mwa_bank_soft[offs]);
+					logerror("select bank #%d VIDEO!\n", offset+1);
+                    cpu_setbankhandler_w(1+offset,mwa_bank_soft[offset]);
 				}
 				else
 				{
-					cpu_setbankhandler_w(1+offs,mwa_bank_hard[offs]);
+					cpu_setbankhandler_w(1+offset,mwa_bank_hard[offset]);
 				}
 			}
 			else
 			{
-				logerror("select bank #%d MASKED!\n", offs+1);
-				cpu_setbankhandler_r(1+offs,mra_empty);
-				cpu_setbankhandler_w(1+offs,mwa_empty);
+				logerror("select bank #%d MASKED!\n", offset+1);
+				cpu_setbankhandler_r(1+offset,mra_empty);
+				cpu_setbankhandler_w(1+offset,mwa_empty);
 			}
 		}
     }
@@ -637,7 +633,7 @@ static void laser_put_track(void)
 #define PHI2(n) (((n)>>2)&1)
 #define PHI3(n) (((n)>>3)&1)
 
-int laser_fdc_r(int offset)
+READ_HANDLER( laser_fdc_r )
 {
     int data = 0xff;
     switch( offset )
@@ -681,7 +677,7 @@ int laser_fdc_r(int offset)
     return data;
 }
 
-void laser_fdc_w(int offset, int data)
+WRITE_HANDLER( laser_fdc_w )
 {
     int drive;
 

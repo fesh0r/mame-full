@@ -17,6 +17,8 @@
 #include "drawgfx.h"
 #include "zlib.h"
 
+#include "includes/a2600.h"
+
 UINT8 Bankswitch_Method = 0;
 static union {
 		UINT8 pf[4];
@@ -367,7 +369,7 @@ READ_HANDLER  ( a2600_bs_r )
   RIOT Reads.
 
 ***************************************************************************/
-int a2600_riot_r(int offset)
+READ_HANDLER( a2600_riot_r )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	INT32 riotdiff = (global_tia_cycle + TIME_TO_CYCLES(0, timer_timeelapsed(HSYNC_timer))) - previous_tia_cycle;
@@ -411,7 +413,7 @@ int a2600_riot_r(int offset)
 
 ***************************************************************************/
 
-void a2600_riot_w(int offset, int data)
+WRITE_HANDLER( a2600_riot_w )
 {
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -487,7 +489,7 @@ void a2600_riot_w(int offset, int data)
 
 ***************************************************************************/
 
-int a2600_TIA_r(int offset)
+READ_HANDLER( a2600_TIA_r )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	unsigned int pc;
@@ -569,7 +571,7 @@ int a2600_TIA_r(int offset)
 
 ***************************************************************************/
 
-void a2600_TIA_w(int offset, int data)
+WRITE_HANDLER( a2600_TIA_w )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 

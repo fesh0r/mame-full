@@ -29,9 +29,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-extern char vtech1_frame_message[64+1];
-extern int vtech1_frame_time;
+#include "includes/vtech1.h"
 
 int vtech1_latch = -1;
 
@@ -492,7 +490,7 @@ static void vtech1_put_track(void)
 #define PHI2(n) (((n)>>2)&1)
 #define PHI3(n) (((n)>>3)&1)
 
-int vtech1_fdc_r(int offset)
+READ_HANDLER( vtech1_fdc_r )
 {
     int data = 0xff;
     switch( offset )
@@ -536,7 +534,7 @@ int vtech1_fdc_r(int offset)
     return data;
 }
 
-void vtech1_fdc_w(int offset, int data)
+WRITE_HANDLER( vtech1_fdc_w )
 {
 	int drive;
 
@@ -628,7 +626,7 @@ void vtech1_fdc_w(int offset, int data)
     }
 }
 
-int vtech1_joystick_r(int offset)
+READ_HANDLER( vtech1_joystick_r )
 {
     int data = 0xff;
 
@@ -653,7 +651,7 @@ int vtech1_joystick_r(int offset)
 #define KEY_UP  0x02
 #define KEY_INS 0x01
 
-int vtech1_keyboard_r(int offset)
+READ_HANDLER( vtech1_keyboard_r )
 {
 	static int cassette_bit = 0;
 	int level, data = 0xff;
@@ -732,7 +730,7 @@ int vtech1_keyboard_r(int offset)
  * 1    cassette out (LSB)
  * 0    speaker A
  ************************************************/
-void vtech1_latch_w(int offset, int data)
+WRITE_HANDLER( vtech1_latch_w )
 {
     logerror("vtech1_latch_w $%02X\n", data);
 	/* cassette data bits toggle? */

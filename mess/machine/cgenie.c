@@ -12,7 +12,7 @@
 #include "timer.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/cgenie.h"
+#include "includes/cgenie.h"
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
 
@@ -854,7 +854,7 @@ static void tape_get_bit(void)
 #define FF_BGD2 0x80		   /* background color select 2 */
 #define FF_BGD	(FF_BGD0 | FF_BGD1 | FF_BGD2)
 
-void cgenie_port_ff_w(int offset, int data)
+WRITE_HANDLER( cgenie_port_ff_w )
 {
 	int port_ff_changed = port_ff ^ data;
 
@@ -941,7 +941,7 @@ void cgenie_port_ff_w(int offset, int data)
 	port_ff = data;
 }
 
-int cgenie_port_ff_r(int offset)
+READ_HANDLER( cgenie_port_ff_r )
 {
 	/* virtual tape ? */
 
@@ -951,7 +951,7 @@ int cgenie_port_ff_r(int offset)
 	return port_ff;
 }
 
-int cgenie_port_xx_r(int offset)
+int cgenie_port_xx_r( int offset )
 {
 	return 0xff;
 }
@@ -967,12 +967,12 @@ static UINT8 psg_b_out = 0x00;
 static UINT8 psg_a_inp = 0x00;
 static UINT8 psg_b_inp = 0x00;
 
-int cgenie_psg_port_a_r(int port)
+READ_HANDLER( cgenie_psg_port_a_r )
 {
 	return psg_a_inp;
 }
 
-int cgenie_psg_port_b_r(int port)
+data8_t cgenie_psg_port_b_r(offs_t port)
 {
 	if( psg_a_out < 0xd0 )
 	{
@@ -1007,17 +1007,17 @@ int cgenie_psg_port_b_r(int port)
 	return psg_b_inp;
 }
 
-void cgenie_psg_port_a_w(int port, int val)
+WRITE_HANDLER( cgenie_psg_port_a_w )
 {
-	psg_a_out = val;
+	psg_a_out = data;
 }
 
-void cgenie_psg_port_b_w(int port, int val)
+WRITE_HANDLER( cgenie_psg_port_b_w )
 {
-	psg_b_out = val;
+	psg_b_out = data;
 }
 
-int cgenie_status_r(int offset)
+READ_HANDLER( cgenie_status_r )
 {
 	/* If the floppy isn't emulated, return 0 */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1025,7 +1025,7 @@ int cgenie_status_r(int offset)
 	return wd179x_status_r(offset);
 }
 
-int cgenie_track_r(int offset)
+READ_HANDLER( cgenie_track_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1033,7 +1033,7 @@ int cgenie_track_r(int offset)
 	return wd179x_track_r(offset);
 }
 
-int cgenie_sector_r(int offset)
+READ_HANDLER( cgenie_sector_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1041,7 +1041,7 @@ int cgenie_sector_r(int offset)
 	return wd179x_sector_r(offset);
 }
 
-int cgenie_data_r(int offset)
+READ_HANDLER(cgenie_data_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1049,7 +1049,7 @@ int cgenie_data_r(int offset)
 	return wd179x_data_r(offset);
 }
 
-void cgenie_command_w(int offset, int data)
+WRITE_HANDLER( cgenie_command_w )
 {
 	/* If the floppy isn't emulated, return immediately */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1057,7 +1057,7 @@ void cgenie_command_w(int offset, int data)
 	wd179x_command_w(offset, data);
 }
 
-void cgenie_track_w(int offset, int data)
+WRITE_HANDLER( cgenie_track_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1065,7 +1065,7 @@ void cgenie_track_w(int offset, int data)
 	wd179x_track_w(offset, data);
 }
 
-void cgenie_sector_w(int offset, int data)
+WRITE_HANDLER( cgenie_sector_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1073,7 +1073,7 @@ void cgenie_sector_w(int offset, int data)
 	wd179x_sector_w(offset, data);
 }
 
-void cgenie_data_w(int offset, int data)
+WRITE_HANDLER( cgenie_data_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -1081,7 +1081,7 @@ void cgenie_data_w(int offset, int data)
 	wd179x_data_w(offset, data);
 }
 
-int cgenie_irq_status_r(int offset)
+READ_HANDLER( cgenie_irq_status_r )
 {
 int result = irq_status;
 
@@ -1128,7 +1128,7 @@ void cgenie_fdc_callback(int event)
 	}
 }
 
-void cgenie_motor_w(int offset, int data)
+WRITE_HANDLER( cgenie_motor_w )
 {
 	UINT8 drive = 255;
 
@@ -1159,7 +1159,7 @@ void cgenie_motor_w(int offset, int data)
 /*************************************
  *		Keyboard					 *
  *************************************/
-int cgenie_keyboard_r(int offset)
+READ_HANDLER( cgenie_keyboard_r )
 {
 	int result = 0;
 
@@ -1190,12 +1190,12 @@ int cgenie_keyboard_r(int offset)
  *		Video RAM					 *
  *************************************/
 
-int cgenie_videoram_r(int offset)
+int cgenie_videoram_r( int offset )
 {
 	return videoram[offset];
 }
 
-void cgenie_videoram_w(int offset, int data)
+WRITE_HANDLER( cgenie_videoram_w )
 {
 	/* write to video RAM */
 	if( data == videoram[offset] )
@@ -1204,12 +1204,12 @@ void cgenie_videoram_w(int offset, int data)
 	dirtybuffer[offset] = 1;
 }
 
-int cgenie_colorram_r(int offset)
+READ_HANDLER( cgenie_colorram_r )
 {
 	return colorram[offset] | 0xf0;
 }
 
-void cgenie_colorram_w(int offset, int data)
+WRITE_HANDLER( cgenie_colorram_w )
 {
 	int a;
 
@@ -1228,12 +1228,12 @@ void cgenie_colorram_w(int offset, int data)
 		dirtybuffer[a] = 1;
 }
 
-int cgenie_fontram_r(int offset)
+READ_HANDLER( cgenie_fontram_r )
 {
 	return cgenie_fontram[offset];
 }
 
-void cgenie_fontram_w(int offset, int data)
+WRITE_HANDLER( cgenie_fontram_w )
 {
 	UINT8 *dp;
 	int code;

@@ -14,6 +14,9 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
+#include "includes/a7800.h"
+
+
 #define TRIGGER_HSYNC	64717
 
 #define READ_MEM(x) cpu_readmem16(x)
@@ -507,7 +510,7 @@ void a7800_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /****** MARIA ***************************************/
 
-int a7800_MARIA_r(int offset) {
+READ_HANDLER( a7800_MARIA_r ) {
 	UINT8 *ROM = memory_region(REGION_CPU1);
     switch (offset) {
 
@@ -519,7 +522,7 @@ int a7800_MARIA_r(int offset) {
     }
 }
 
-void a7800_MARIA_w(int offset, int data) {
+WRITE_HANDLER( a7800_MARIA_w ) {
 	UINT8 *ROM = memory_region(REGION_CPU1);
     switch (offset) {
 

@@ -13,6 +13,8 @@
 #include "cpuintrf.h"
 #include "zlib.h"
 
+#include "includes/a7800.h"
+
 unsigned char *a7800_cart_f000;
 unsigned char *a7800_bios_f000;
 int a7800_ctrl_lock;
@@ -207,7 +209,7 @@ int a7800_load_rom (int id)
 
 /******  TIA  *****************************************/
 
-int a7800_TIA_r(int offset) {
+READ_HANDLER( a7800_TIA_r ) {
     switch (offset) {
         case 0x08:
               return ((input_port_1_r(0) & 0x02) << 6);
@@ -234,7 +236,7 @@ int a7800_TIA_r(int offset) {
     return 0xFF;
 }
 
-void a7800_TIA_w(int offset, int data) {
+WRITE_HANDLER( a7800_TIA_w ) {
     switch(offset) {
         case 0x01:
             if (data & 0x01) {
@@ -256,7 +258,7 @@ void a7800_TIA_w(int offset, int data) {
 
 /****** RIOT ****************************************/
 
-int a7800_RIOT_r(int offset) {
+READ_HANDLER( a7800_RIOT_r ) {
     switch (offset) {
         case 0:
             if (a7800_stick_type == 0x01)
@@ -272,39 +274,39 @@ int a7800_RIOT_r(int offset) {
     return 0xFF;
 }
 
-void a7800_RIOT_w(int offset, int data) {
+WRITE_HANDLER( a7800_RIOT_w ) {
 }
 
 
 /****** RAM Mirroring ******************************/
 
-int a7800_MAINRAM_r(int offset) {
+READ_HANDLER( a7800_MAINRAM_r ) {
     return ROM[0x2000 + offset];
 }
 
-void a7800_MAINRAM_w(int offset, int data) {
+WRITE_HANDLER( a7800_MAINRAM_w ) {
     ROM[0x2000 + offset] = data;
 }
 
-int a7800_RAM0_r(int offset) {
+READ_HANDLER( a7800_RAM0_r ) {
     return ROM[0x2040 + offset];
 }
 
-void a7800_RAM0_w(int offset, int data) {
+WRITE_HANDLER( a7800_RAM0_w ) {
     ROM[0x2040 + offset] = data;
     ROM[0x40 + offset] = data;
 }
 
-int a7800_RAM1_r(int offset) {
+READ_HANDLER( a7800_RAM1_r ) {
     return ROM[0x2140 + offset];
 }
 
-void a7800_RAM1_w(int offset, int data) {
+WRITE_HANDLER( a7800_RAM1_w ) {
     ROM[0x2140 + offset] = data;
 }
 
 
-void a7800_cart_w(int offset, int data) {
+WRITE_HANDLER( a7800_cart_w ) {
 
     if (offset < 0x4000) {
         if (a7800_cart_type & 0x04) {

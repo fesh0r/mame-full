@@ -11,6 +11,8 @@
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/mekd2.h"
+
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
@@ -540,7 +542,7 @@ void init_mekd2(void)
 
 	dst = memory_region(2);
 	memset(dst, 0, 24 * 18 * 24 / 8);
-	for (i = 0; i < 24; i++)
+	for (i = 0; (i < 24)&&(keys[i]); i++) // only 23 keys inited!
 	{
 		for (y = 0; y < 18; y++)
 		{

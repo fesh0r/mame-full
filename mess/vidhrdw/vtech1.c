@@ -26,8 +26,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/vtech1.h"
+
 /* from machine/vz.c */
-extern int vtech1_latch;
+//extern int vtech1_latch;
 
 char vtech1_frame_message[64+1];
 int vtech1_frame_time = 0;
@@ -55,7 +57,8 @@ void vtech1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
         else
 		{
-			fillbitmap(Machine->scrbitmap, Machine->pens[16], &Machine->visible_area);
+			fillbitmap(Machine->scrbitmap, Machine->pens[0], &Machine->visible_area);
+//			fillbitmap(Machine->scrbitmap, Machine->pens[16], &Machine->visible_area); // only 13 entries
 		}
         memset(dirtybuffer, 0xff, videoram_size);
     }

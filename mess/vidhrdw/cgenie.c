@@ -8,10 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "vidhrdw/cgenie.h"
-
-/* from src/mess/machine/cgenie.c */
-extern int cgenie_tv_mode;
+#include "includes/cgenie.h"
 
 int cgenie_font_offset[4] = {0, 0, 0, 0};
 char cgenie_frame_message[64];

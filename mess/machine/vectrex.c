@@ -3,6 +3,8 @@
 #include "machine/6522via.h"
 #include "cpu/m6809/m6809.h"
 
+#include "includes/vectrex.h"
+
 #define BLACK 0x00
 #define RED	  0x04
 #define GREEN 0x02
@@ -12,11 +14,6 @@
 
 #define PORTB 0
 #define PORTA 1
-
-/* from vidhrdw/vectrex.c */
-extern void vector_add_point_stereo (int x, int y, int color, int intensity);
-extern void (*vector_add_point_function) (int, int, int, int);
-extern void vectrex_set_palette (void);
 
 /*********************************************************************
   Global variables
@@ -225,7 +222,7 @@ void v_via_irq (int level)
 	}
 }
 
-int v_via_pb_r (int offset)
+READ_HANDLER( v_via_pb_r )
 {
 	/* Joystick */
 	if (vectrex_via_out[PORTA] & 0x80)
@@ -245,7 +242,7 @@ int v_via_pb_r (int offset)
 	return vectrex_via_out[PORTB];
 }
 
-int v_via_pa_r (int offset)
+READ_HANDLER( v_via_pa_r )
 {
 	if ((!(vectrex_via_out[PORTB] & 0x10)) && (vectrex_via_out[PORTB] & 0x08))
 		/* BDIR inactive, we can read the PSG. BC1 has to be active. */
@@ -257,7 +254,7 @@ int v_via_pa_r (int offset)
 	return vectrex_via_out[PORTA];
 }
 
-int s1_via_pb_r (int offset)
+READ_HANDLER( s1_via_pb_r )
 {
 	return (vectrex_via_out[PORTB] & ~0x40) | ((input_port_1_r(0) & 0x1)<<6);
 }

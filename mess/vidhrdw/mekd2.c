@@ -11,6 +11,8 @@
 #include "artwork.h"
 #include "vidhrdw/generic.h"
 
+#include "includes/mekd2.h"
+
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif

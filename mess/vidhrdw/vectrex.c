@@ -2,6 +2,8 @@
 #include "vidhrdw/vector.h"
 #include "machine/6522via.h"
 
+#include "includes/vectrex.h"
+
 #define RAMP_DELAY 6.333e-6
 #define BLANK_DELAY 0
 #define SH_DELAY 6.333e-6
@@ -22,18 +24,6 @@
 #ifndef M_SQRT1_2
 #define M_SQRT1_2 0.70710678118654752440
 #endif
-
-/* From machine/vectrex.c */
-extern int vectrex_refresh_with_T2;
-extern int vectrex_imager_status;
-extern int vectrex_beam_color;
-extern unsigned char vectrex_via_out[2];
-
-extern void vectrex_imager_left_eye (double time);
-extern void vectrex_configuration(void);
-extern READ_HANDLER (v_via_pa_r);
-extern READ_HANDLER(v_via_pb_r );
-extern void v_via_irq (int level);
 
 /*********************************************************************
   Local variables
@@ -536,7 +526,7 @@ void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,con
 		}
 }
 
-void raaspec_led_w (int offset, int data)
+WRITE_HANDLER( raaspec_led_w )
 {
 	int i, y, width;
 	struct rectangle clip;
