@@ -455,11 +455,18 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
     int is_dir;
     size_t pathlen;
     mess_image_type imagetypes[64];
+	const char *olddirc;
+	char *olddir;
 
     SetupImageTypes(nDriver, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
 
     d = osd_dir_open(dir, "*.*");
     if (d) {
+		/* Cache the old directory */
+		olddirc = osd_get_cwd();
+		olddir = alloca(strlen(olddirc) + 1);
+		strcpy(olddir, olddirc);
+
         osd_change_directory(dir);
 
         strncpyz(buffer, osd_get_cwd(), buffersz);
@@ -473,13 +480,15 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
             }
             else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
                 AddImagesFromDirectory(nDriver, buffer + pathlen, bRecurse, buffer, buffersz, listend);
-                osd_change_directory("..");
 
                 strncpyz(buffer, osd_get_cwd(), buffersz);
                 pathlen = strlen(buffer);
             }
         }
         osd_dir_close(d);
+
+		/* Restore the old directory */
+		osd_change_directory(olddir);
     }
 }
 
