@@ -149,8 +149,8 @@ static FLOPPY_IDENTIFY(apple2_dsk_identify)
 
 	if (size == expected_size)
 		*vote = 100;
-	else if ((size > expected_size) && (size < expected_size + 8))
-		*vote = 90;		/* tolerate images with up to eight extra bytes (bug #638) */
+	else if (abs(size - expected_size) < 8)
+		*vote = 90;		/* tolerate images with up to eight fewer/extra bytes (bug #638) */
 	else
 		*vote = 0;
 	return FLOPPY_ERROR_SUCCESS;
