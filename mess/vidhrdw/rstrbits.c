@@ -52,6 +52,13 @@ static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 
 		if (pixbottom >= pixtop) {
 			for (x = 0; x < sizex; x++) {
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
+
 				if (!db || *db) {
 					for (b = 0; b < 8; b++) {
 						p = ((*vidram) & (1<<(7-b))) ? fg : bg;
@@ -64,13 +71,6 @@ static void blitgraphics2(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 					db++;
 				}
 				vidram++;
-
-				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
-				if (x == loopbackpos) {
-					vidram += loopbackadj;
-					if (db)
-						db += loopbackadj;
-				}
 			}
 		}
 		else {
@@ -132,6 +132,13 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 
 		if (pixbottom >= pixtop) {
 			for (x = 0; x < sizex; x++) {
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
+
 				if (!db || *db) {
 					for (b = 0; b < 4; b++) {
 						p = (((*vidram) >> (6-(2*b)))) & 3;
@@ -162,13 +169,6 @@ static void blitgraphics4(struct osd_bitmap *bitmap, struct rasterbits_clip *cli
 					db++;
 				}
 				vidram++;
-
-				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
-				if (x == loopbackpos) {
-					vidram += loopbackadj;
-					if (db)
-						db += loopbackadj;
-				}
 			}
 			if (crunlen) {
 				plot_box(bitmap, thisx, pixtop, scalex * crunlen, (pixbottom - pixtop + 1), c[crunc]);
@@ -402,6 +402,13 @@ static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *cl
 
 		if (pixbottom >= pixtop) {
 			for (x = 0; x < sizex; x++) {
+				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
+				if (x == loopbackpos) {
+					vidram += loopbackadj;
+					if (db)
+						db += loopbackadj;
+				}
+
 				if (!db || *db) {
 					b = *vidram;
 
@@ -442,13 +449,6 @@ static void blitgraphics16(struct osd_bitmap *bitmap, struct rasterbits_clip *cl
 					}
 				}
 				vidram++;
-
-				/* Check loopback; this is used to support $FF9F in the CoCo 3 */
-				if (x == loopbackpos) {
-					vidram += loopbackadj;
-					if (db)
-						db += loopbackadj;
-				}
 			}
 
 			if (crunlen > 0) {
@@ -543,10 +543,10 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	}
 
 	/* Do we need loopback? */
-	if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * bytesperchar + mode->offset) > mode->bytesperrow)) {
-		loopbackpos = (mode->bytesperrow - mode->offset + (bytesperchar - 1)) / bytesperchar;
-		loopbackadj = -mode->bytesperrow;
-		additionalrowbytes += mode->bytesperrow;
+	if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * bytesperchar + mode->offset) > mode->wrapbytesperrow)) {
+		loopbackpos = (mode->wrapbytesperrow - mode->offset + (bytesperchar - 1)) / bytesperchar;
+		loopbackadj = -mode->wrapbytesperrow;
+		additionalrowbytes += mode->wrapbytesperrow;
 	}
 	else {
 		loopbackpos = -1;
@@ -805,10 +805,10 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 			additionalrowbytes = mode->bytesperrow - (mode->width * mode->depth / 8);
 
 			/* Do we need loopback? */
-			if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * mode->depth / 8 + mode->offset) > mode->bytesperrow)) {
-				loopbackpos = mode->bytesperrow - mode->offset;
-				loopbackadj = -mode->bytesperrow;
-				additionalrowbytes += mode->bytesperrow;
+			if ((mode->flags & RASTERBITS_FLAG_WRAPINROW) && ((mode->width * mode->depth / 8 + mode->offset) > mode->wrapbytesperrow)) {
+				loopbackpos = mode->wrapbytesperrow - mode->offset;
+				loopbackadj = -mode->wrapbytesperrow;
+				additionalrowbytes += mode->wrapbytesperrow;
 			}
 			else {
 				loopbackpos = -1;

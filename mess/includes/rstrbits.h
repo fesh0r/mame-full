@@ -39,6 +39,7 @@ struct rasterbits_videomode {
 	int depth;						/* bits per pixel/char */
 	int bytesperrow;				/* number of bytes per row */
 	int offset;						/* only meaningful if used in conjunction with RASTERBITS_FLAG_WRAPINROW */
+	int wrapbytesperrow;			/* the number of bytes per row with regard to RASTERBITS_FLAG_WRAPINROW */
 	const int *metapalette;			/* color translation layer; can be NULL */
 	union {
 		artifactproc artifact;

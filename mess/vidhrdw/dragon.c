@@ -653,9 +653,10 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		rvm->height = (rows + linesperrow - 1) / linesperrow;
 		rvm->metapalette = NULL;
 		rvm->flags = (coco3_gimevhreg[0] & 0x80) ? RASTERBITS_FLAG_GRAPHICS : RASTERBITS_FLAG_TEXT;
-		if (coco3_gimevhreg[7] & 0x80) {
-			rvm->offset = ((coco3_gimevhreg[7] & 0x7f) * 2);
+		if (coco3_gimevhreg[7]) {
 			rvm->flags |= RASTERBITS_FLAG_WRAPINROW;
+			rvm->offset = ((coco3_gimevhreg[7] & 0x7f) * 2);
+			rvm->wrapbytesperrow = 256;
 		}
 		else {
 			rvm->offset = 0;
