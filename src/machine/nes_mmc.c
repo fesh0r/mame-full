@@ -39,14 +39,38 @@ static int MMC1_bank1, MMC1_bank2, MMC1_bank3, MMC1_bank4;
 static int MMC1_extended_bank;
 static int MMC1_extended_base;
 static int MMC1_extended_swap;
+
+static int MMC5_rom_bank_mode;
 static int MMC5_vrom_bank_mode;
 static int MMC5_exram_tile_enable;
 static int MMC5_exram_color_enable;
+static int MMC5_scanline;
+
 static int mapper_warning;
 
 void nes_mapper_w (int offset, int data)
 {
 	(*mmc_write)(offset, data);
+}
+
+/* Handle unusual mapper reads from $4100-$5fff */
+int nes_strange_mapper_r (int offset)
+{
+	if (errorlog) fprintf (errorlog, "low mapper area read, addr: %04x\n", offset + 0x4100);
+	switch (Mapper)
+	{
+		case 5:
+			switch (offset)
+			{
+				/* $5204 - irq scanline hit? */
+				case 0x1104:
+					if (current_scanline == MMC5_scanline)
+						return 0x80;
+					else return (rand() & 0xff);
+			}
+			break;
+	}
+	return 0;
 }
 
 /* Handle unusual mapper writes to $4100-$5fff */
@@ -63,13 +87,16 @@ void nes_strange_mapper_w (int offset, int data)
 				/* $5011 - sound sample register? */
 				/* $5015 - ?? uncharted sets to 0 */
 				
-				/* $5100 - vrom banking? cv3 sets to 2 */
 				/* $5101 - vrom banking? - uncharted sets these 3 to 3, 2, 1 respectively */
 				/* $5102 - vrom banking? */
 				/* $5104 - exram control? uncharted sets to 1, cv3 sets to 0 */
 				/* $5105 - Mirroring? uncharted sets to 0, cv3 to 44 */
 				/* $5106 - ?? cv3 sets to 0 */
 				/* $5107 - ?? cv3 sets to 0 */
+				/* $5100 - ROM bank mode, 0:32k, 1:16k, 2,3:8k */
+				case 0x1000:
+					MMC5_rom_bank_mode = data & 0x03;
+					break;
 				case 0x1003:
 					/*
 					There are 4 CHRROM modes:
@@ -115,20 +142,60 @@ void nes_strange_mapper_w (int offset, int data)
 				/* $5115 - Select 8k ROM bank at $8000 */
 				case 0x1014:
 					data &= ((PRG_Rom << 1) - 1);
-					cpu_setbank (1, &RAM[data * 0x2000 + 0x10000]);
+					cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
 					break;
 				/* $5115 - Select 16k (8k also?) ROM bank at $a000 */
 				case 0x1015:
-					data &= ((PRG_Rom << 1) - 1);
-					cpu_setbank (1, &RAM[data * 0x2000 + 0x10000]);
-					cpu_setbank (2, &RAM[data * 0x2000 + 0x12000]);
+					if (MMC5_rom_bank_mode == 0x02)
+					{
+						data &= ((PRG_Rom << 1) - 1);
+						cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
+						cpu_setbank (2, &ROM[data * 0x2000 + 0x12000]);
+					}
+					else
+					{
+						data &= ((PRG_Rom << 1) - 1);
+						cpu_setbank (2, &ROM[data * 0x2000 + 0x10000]);
+					}
 					break;
 				/* $5116 - Select 8k ROM bank at $c000 */
 				case 0x1016:
 					data &= ((PRG_Rom << 1) - 1);
-					cpu_setbank (3, &RAM[data * 0x2000 + 0x10000]);
+					cpu_setbank (3, &ROM[data * 0x2000 + 0x10000]);
 					break;
-					
+				/* $5117 - Select 8k ROM bank at $e000 */
+				case 0x1017:
+					if (MMC5_rom_bank_mode == 0x00)
+					{
+						/* 32k switch */
+						data &= ((PRG_Rom << 1) - 1);
+						cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
+						cpu_setbank (2, &ROM[data * 0x2000 + 0x12000]);
+						cpu_setbank (3, &ROM[data * 0x2000 + 0x14000]);
+						cpu_setbank (4, &ROM[data * 0x2000 + 0x16000]);
+					}
+					else if (MMC5_rom_bank_mode == 0x02)
+					{
+						/* 16k switch */
+						data &= ((PRG_Rom << 1) - 1);
+						cpu_setbank (3, &ROM[data * 0x2000 + 0x10000]);
+						cpu_setbank (4, &ROM[data * 0x2000 + 0x12000]);
+					}
+					else
+					{
+						/* 8k switch */
+						data &= ((PRG_Rom << 1) - 1);
+						cpu_setbank (4, &ROM[data * 0x2000 + 0x10000]);
+					}
+					break;
+				
+				case 0x1103:
+					MMC3_IRQ = data;
+					MMC5_scanline = data;
+					break;
+				case 0x1104:
+					MMC3_DOIRQ = data & 0x80;
+					break;
 				/* $5200 - ?? uncharted, cv3 sets to 0 */
 				default:
 					break;
@@ -158,8 +225,8 @@ static void NoneWR (int offset, int data)
 	{
 		case 0x7fde:
 			data &= (PRG_Rom - 1);
-			cpu_setbank (3, &RAM[data * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[data * 0x4000 + 0x12000]);
+			cpu_setbank (3, &ROM[data * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[data * 0x4000 + 0x12000]);
 			break;
 	}
 #endif
@@ -172,8 +239,8 @@ static void RomSw_Write (int offset, int data)
 {
 	if (errorlog) fprintf (errorlog, "* Mapper 2 switch %02x\n", data);
 	data &= (PRG_Rom - 1);
-	cpu_setbank (1, &RAM[data * 0x4000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x4000 + 0x12000]);
+	cpu_setbank (1, &ROM[data * 0x4000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
 /* 
@@ -191,8 +258,8 @@ static void Mapper8_Write (int offset, int data)
 		nes_vram[i] = bank * 512 + 64*i;
 	/* Switch 16k ROM bank */
 	data = (data >> 3) & (PRG_Rom - 1);
-	cpu_setbank (1, &RAM[data * 0x4000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x4000 + 0x12000]);
+	cpu_setbank (1, &ROM[data * 0x4000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
 /* 
@@ -211,10 +278,10 @@ static void CDrms_Write (int offset, int data)
 		nes_vram[i] = bank * 512 + 64*i;
 	/* Switch 32k ROM bank */
 	data &= ((PRG_Rom >> 1) - 1);
-	cpu_setbank (1, &RAM[data * 0x8000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x8000 + 0x12000]);
-	cpu_setbank (3, &RAM[data * 0x8000 + 0x14000]);
-	cpu_setbank (4, &RAM[data * 0x8000 + 0x16000]);
+	cpu_setbank (1, &ROM[data * 0x8000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x8000 + 0x12000]);
+	cpu_setbank (3, &ROM[data * 0x8000 + 0x14000]);
+	cpu_setbank (4, &ROM[data * 0x8000 + 0x16000]);
 
 }
 
@@ -333,10 +400,10 @@ static void MMC1_Write (int offset, int data)
 				 	{
 						/* Pick 1st or 4th 256k bank */
 						MMC1_extended_base = 0xc0000 * (MMC1_extended_bank & 0x01) + 0x10000;
-						cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-						cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+						cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+						cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+						cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+						cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 						if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (no reg) select: %02x\n", MMC1_extended_bank);
 					}
 					else
@@ -345,10 +412,10 @@ static void MMC1_Write (int offset, int data)
 						if (MMC1_extended_swap)
 						{
 							MMC1_extended_base = 0x40000 * MMC1_extended_bank + 0x10000;
-							cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-							cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-							cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+							cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+							cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+							cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+							cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 							if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (reg 1) select: %02x\n", MMC1_extended_bank);
 							MMC1_extended_swap = 0;
 						}
@@ -359,10 +426,10 @@ static void MMC1_Write (int offset, int data)
 				{
 					/* Pick 1st or 2nd 256k bank */
 					MMC1_extended_base = 0x40000 * (MMC1_extended_bank & 0x01) + 0x10000;
-					cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-					cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-					cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-					cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+					cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+					cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+					cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+					cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 					if (errorlog) fprintf (errorlog, "MMC1_extended 512k bank select: %02x\n", MMC1_extended_bank & 0x01);
 				}
 				else if (CHR_Rom > 0)
@@ -408,10 +475,10 @@ static void MMC1_Write (int offset, int data)
 					{
 						/* Set 256k bank based on the 256k bank select register */
 						MMC1_extended_base = 0x40000 * MMC1_extended_bank + 0x10000;
-						cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-						cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+						cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+						cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+						cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+						cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 						if (errorlog) fprintf (errorlog, "MMC1_extended 1024k bank (reg 2) select: %02x\n", MMC1_extended_bank);
 						MMC1_extended_swap = 0;
 					}
@@ -446,14 +513,14 @@ static void MMC1_Write (int offset, int data)
 
 					MMC1_bank1 = bank * 0x4000;
 					MMC1_bank2 = bank * 0x4000 + 0x2000;
-					cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-					cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
+					cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+					cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
 					if (!MMC1_extended)
 					{
 						MMC1_bank3 = bank * 0x4000 + 0x4000;
 						MMC1_bank4 = bank * 0x4000 + 0x6000;
-						cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-						cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+						cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+						cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 					}
 					if (errorlog) fprintf (errorlog, "MMC1 32k bank select: %02x\n", MMC1_reg);
 				}
@@ -467,14 +534,14 @@ static void MMC1_Write (int offset, int data)
 						MMC1_bank1 = bank * 0x4000;
 						MMC1_bank2 = bank * 0x4000 + 0x2000;
 						
-						cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-						cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
+						cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+						cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
 						if (!MMC1_extended)
 						{
 							MMC1_bank3 = MMC1_High;
 							MMC1_bank4 = MMC1_High + 0x2000;
-							cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+							cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+							cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 						}
 						if (errorlog) fprintf (errorlog, "MMC1 16k-low bank select: %02x\n", MMC1_reg);
 					}
@@ -490,10 +557,10 @@ static void MMC1_Write (int offset, int data)
 							MMC1_bank3 = bank * 0x4000;
 							MMC1_bank4 = bank * 0x4000 + 0x2000;
 
-							cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-							cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-							cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-							cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+							cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+							cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+							cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+							cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 						}
 						if (errorlog) fprintf (errorlog, "MMC1 16k-high bank select: %02x\n", MMC1_reg);
 					}
@@ -556,11 +623,11 @@ static void Mapper4_Write (int offset, int data)
 				/* TODO: this makes PowerPunch 2 work, but is it correct? */
 				if (data & 0x40)
 				{
-					cpu_setbank (1, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+					cpu_setbank (1, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 				}
 				else
 				{
-					cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+					cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 				}
 			}
 			select_high = data & 0x40;
@@ -604,12 +671,12 @@ static void Mapper4_Write (int offset, int data)
 					data &= ((PRG_Rom << 1) - 1);
 					if (select_high)
 					{
-						cpu_setbank (3, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (3, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     MMC3 switch ($c000) cmd 6 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     MMC3 switch ($8000) cmd 6 value: %02x\n", data);
 					}
 					break;
@@ -617,7 +684,7 @@ static void Mapper4_Write (int offset, int data)
 					/* These damn games will go to great lengths to switch to banks which are outside the valid range */
 					/* i.e. the Simpsons series, the Batman games, Gauntlet 2, etc. */
 					data &= ((PRG_Rom << 1) - 1);
-					cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+					cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 					if (errorlog) fprintf (errorlog, "     MMC3 switch ($a000) cmd 7 value: %02x select_high: %02x\n", data, select_high);
 					break;
 			}
@@ -670,10 +737,10 @@ void Mapper7_Write (int offset, int data)
 	
 	/* Castle of Deceit tries to deceive us by switching to invalid banks */
 	data &= ((PRG_Rom >> 1) - 1);
-	cpu_setbank (1, &RAM[data * 0x8000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x8000 + 0x12000]);
-	cpu_setbank (3, &RAM[data * 0x8000 + 0x14000]);
-	cpu_setbank (4, &RAM[data * 0x8000 + 0x16000]);
+	cpu_setbank (1, &ROM[data * 0x8000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x8000 + 0x12000]);
+	cpu_setbank (3, &ROM[data * 0x8000 + 0x14000]);
+	cpu_setbank (4, &ROM[data * 0x8000 + 0x16000]);
 }
 
 /*
@@ -742,7 +809,7 @@ videoram you access.
 	switch (offset & 0x7000)
 	{
 		case 0x2000:
-			cpu_setbank (1, &RAM[data * 0x2000 + 0x10000]);
+			cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
 			break;
 		case 0x3000:
 		case 0x4000:
@@ -795,7 +862,7 @@ void MMC4_Write (int offset, int data)
 	{
 		case 0x2000:
 			/* Switch the first 8k ROM bank */
-			cpu_setbank (1, &RAM[data * 0x2000 + 0x10000]);
+			cpu_setbank (1, &ROM[data * 0x2000 + 0x10000]);
 			break;
 			
 		case 0x3000:
@@ -831,28 +898,28 @@ static void Mapper15_Write (int offset, int data)
 	{
 		case 0x0000:
 			Mirroring = (!(data & 0x40)) + 1;
-			cpu_setbank (1, &RAM[bank + base]);
-			cpu_setbank (2, &RAM[bank + (base ^ 0x2000)]);
-			cpu_setbank (3, &RAM[bank + base + 0x4000]);
-			cpu_setbank (4, &RAM[bank + (base ^ 0x2000) + 0x4000]);
+			cpu_setbank (1, &ROM[bank + base]);
+			cpu_setbank (2, &ROM[bank + (base ^ 0x2000)]);
+			cpu_setbank (3, &ROM[bank + base + 0x4000]);
+			cpu_setbank (4, &ROM[bank + (base ^ 0x2000) + 0x4000]);
 			break;
 
 		case 0x0001:
-			cpu_setbank (3, &RAM[bank + base]);
-			cpu_setbank (4, &RAM[bank + (base ^ 0x2000)]);
+			cpu_setbank (3, &ROM[bank + base]);
+			cpu_setbank (4, &ROM[bank + (base ^ 0x2000)]);
 			break;
 
 		case 0x0002:
-			cpu_setbank (1, &RAM[bank + base]);
-			cpu_setbank (2, &RAM[bank + base]);
-			cpu_setbank (3, &RAM[bank + base]);
-			cpu_setbank (4, &RAM[bank + base]);
+			cpu_setbank (1, &ROM[bank + base]);
+			cpu_setbank (2, &ROM[bank + base]);
+			cpu_setbank (3, &ROM[bank + base]);
+			cpu_setbank (4, &ROM[bank + base]);
         	break;
 
 		case 0x0003:
 			Mirroring = (!(data & 0x40)) + 1;
-			cpu_setbank (3, &RAM[bank + base]);
-			cpu_setbank (4, &RAM[bank + (base ^ 0x2000)]);
+			cpu_setbank (3, &ROM[bank + base]);
+			cpu_setbank (4, &ROM[bank + (base ^ 0x2000)]);
         	break;
 	}
 }
@@ -861,8 +928,8 @@ static void Bandai_Write (int offset, int data)
 {
 	int i;
 	
-	cpu_setbank (1, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
-	cpu_setbank (2, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
+	cpu_setbank (1, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
+	cpu_setbank (2, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
 
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = (data & 0x03) * 512 + 64*i;
@@ -882,42 +949,42 @@ static void Mapper18_Write (int offset, int data)
 			/* Switch 8k bank at $8000 - low 4 bits */
 			bank_8000 = (bank_8000 & 0xf0) | (data & 0x0f);
 			bank_8000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (1, &RAM[0x2000 * (bank_8000) + 0x10000]);
+			cpu_setbank (1, &ROM[0x2000 * (bank_8000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($8000 low 4) value: %02x\n", data);
 			break;
 		case 0x0001:
 			/* Switch 8k bank at $8000 - high 4 bits */
 			bank_8000 = (bank_8000 & 0x0f) | (data << 4);
 			bank_8000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (1, &RAM[0x2000 * (bank_8000) + 0x10000]);
+			cpu_setbank (1, &ROM[0x2000 * (bank_8000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($8000 high 4) value: %02x\n", data);
 			break;
 		case 0x0002:
 			/* Switch 8k bank at $a000 - low 4 bits */
 			bank_a000 = (bank_a000 & 0xf0) | (data & 0x0f);
 			bank_a000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (2, &RAM[0x2000 * (bank_a000) + 0x10000]);
+			cpu_setbank (2, &ROM[0x2000 * (bank_a000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($a000 low 4) value: %02x\n", data);
 			break;
 		case 0x0003:
 			/* Switch 8k bank at $a000 - high 4 bits */
 			bank_a000 = (bank_a000 & 0x0f) | (data << 4);
 			bank_a000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (2, &RAM[0x2000 * (bank_a000) + 0x10000]);
+			cpu_setbank (2, &ROM[0x2000 * (bank_a000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($a000 high 4) value: %02x\n", data);
 			break;
 		case 0x1000:
 			/* Switch 8k bank at $c000 - low 4 bits */
 			bank_c000 = (bank_c000 & 0xf0) | (data & 0x0f);
 			bank_c000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (3, &RAM[0x2000 * (bank_c000) + 0x10000]);
+			cpu_setbank (3, &ROM[0x2000 * (bank_c000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($c000 low 4) value: %02x, new bank: %02x\n", data, bank_c000);
 			break;
 		case 0x1001:
 			/* Switch 8k bank at $c000 - high 4 bits */
 			bank_c000 = (bank_c000 & 0x0f) | (data << 4);
 			bank_c000 &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (3, &RAM[0x2000 * (bank_c000) + 0x10000]);
+			cpu_setbank (3, &ROM[0x2000 * (bank_c000) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 18 switch ($c000 high 4) value: %02x, new bank: %02x\n", data, bank_c000);
 			break;
 		case 0x2000:
@@ -1074,14 +1141,14 @@ static void Mapper25_Write (int offset, int data)
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 //			if (errorlog) fprintf (errorlog, "     Mapper 25 switch ($8000) value: %02x\n", data);
 			break;
 
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 //			if (errorlog) fprintf (errorlog, "     Mapper 25 switch ($a000) value: %02x\n", data);
 			break;
 		case 0x3000:
@@ -1212,14 +1279,14 @@ static void Mapper33_Write (int offset, int data)
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 33 switch ($8000) value: %02x\n", data);
 			break;
 
 		case 0x0001:
 			/* Switch 8k bank at $A000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 33 switch ($c000) value: %02x\n", data);
 			break;
 		case 0x0002:
@@ -1285,10 +1352,10 @@ static void Mapper34_Write (int offset, int data)
 	/* Deadly Towers is really a Mapper 34 game - the demo screens look wrong using mapper 7. */
 	if (errorlog) fprintf (errorlog, "Mapper 34 w, offset: %04x, data: %02x\n", offset, data);
 	data &= ((PRG_Rom >> 1) - 1);
-	cpu_setbank (1, &RAM[data * 0x8000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x8000 + 0x12000]);
-	cpu_setbank (3, &RAM[data * 0x8000 + 0x14000]);
-	cpu_setbank (4, &RAM[data * 0x8000 + 0x16000]);
+	cpu_setbank (1, &ROM[data * 0x8000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x8000 + 0x12000]);
+	cpu_setbank (3, &ROM[data * 0x8000 + 0x14000]);
+	cpu_setbank (4, &ROM[data * 0x8000 + 0x16000]);
 }	
 
 static void Mapper64_Write (int offset, int data)
@@ -1317,11 +1384,11 @@ static void Mapper64_Write (int offset, int data)
 				if (errorlog) fprintf (errorlog, "HACK ALERT -- select_high has changed!\n");
 				if (data & 0x40)
 				{
-					cpu_setbank (1, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+					cpu_setbank (1, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 				}
 				else
 				{
-					cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+					cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
 				}
 			}
 				
@@ -1365,12 +1432,12 @@ static void Mapper64_Write (int offset, int data)
 					data &= ((PRG_Rom << 1) - 1);
 					if (select_high)
 					{
-						cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 6 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($8000) cmd 6 value: %02x\n", data);
 					}
 					break;
@@ -1378,12 +1445,12 @@ static void Mapper64_Write (int offset, int data)
 					data &= ((PRG_Rom << 1) - 1);
 					if (select_high)
 					{
-						cpu_setbank (3, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (3, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($C000) cmd 7 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 7 value: %02x\n", data);
 					}
 					break;
@@ -1399,12 +1466,12 @@ static void Mapper64_Write (int offset, int data)
 					data &= ((PRG_Rom << 1) - 1);
 					if (select_high)
 					{
-						cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($C000) cmd 15 value: %02x\n", data);
 					}
 					else
 					{
-						cpu_setbank (3, &RAM[0x2000 * (data) + 0x10000]);
+						cpu_setbank (3, &ROM[0x2000 * (data) + 0x10000]);
 						if (errorlog) fprintf (errorlog, "     Mapper 64 switch ($A000) cmd 15 value: %02x\n", data);
 					}
 					break;
@@ -1428,14 +1495,14 @@ static void Mapper65_Write (int offset, int data)
 		case 0x0000:
 			/* Switch 8k bank at $8000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (1, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (1, &ROM[0x2000 * (data) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 65 switch ($8000) value: %02x\n", data);
 			break;
 
 		case 0x2000:
 			/* Switch 8k bank at $a000 */
 			data &= ((PRG_Rom << 1) - 1);
-			cpu_setbank (2, &RAM[0x2000 * (data) + 0x10000]);
+			cpu_setbank (2, &ROM[0x2000 * (data) + 0x10000]);
 			if (errorlog) fprintf (errorlog, "     Mapper 65 switch ($a000) value: %02x\n", data);
 			break;
 
@@ -1487,10 +1554,10 @@ static void Mapper66_Write (int offset, int data)
 	int i;
 	if (errorlog) fprintf (errorlog, "* Mapper 66 switch, offset %04x, data: %02x\n", offset, data);
 	
-	cpu_setbank (1, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
-	cpu_setbank (2, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
-	cpu_setbank (3, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x14000]);
-	cpu_setbank (4, &RAM[((data & 0x30) >> 4) * 0x8000 + 0x16000]);
+	cpu_setbank (1, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x10000]);
+	cpu_setbank (2, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x12000]);
+	cpu_setbank (3, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x14000]);
+	cpu_setbank (4, &ROM[((data & 0x30) >> 4) * 0x8000 + 0x16000]);
 
 	for (i = 0; i < 8; i ++)
 		nes_vram[i] = (data & 0x03) * 512 + 64*i;
@@ -1501,8 +1568,6 @@ static void Mapper66_Write (int offset, int data)
  */
 static void Mapper68_Write (int offset, int data)
 {
-	int i;
-	
 	/* TODO: I can't figure out the mirroring/ppu screen base! */
 	if (errorlog) fprintf (errorlog, "mapper68_w offset: %04x, data: %02x\n", offset, data);
 	
@@ -1553,8 +1618,8 @@ static void Mapper68_Write (int offset, int data)
 			break;
 		case 0x7000:
 			data &= (PRG_Rom - 1);
-			cpu_setbank (1, &RAM[data * 0x4000 + 0x10000]);
-			cpu_setbank (2, &RAM[data * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[data * 0x4000 + 0x10000]);
+			cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 			break;
 	}
 }
@@ -1566,8 +1631,8 @@ static void Mapper71_Write (int offset, int data)
 {
 	if (errorlog) fprintf (errorlog, "* Mapper 71 switch %02x\n", data);
 	data &= (PRG_Rom - 1);
-	cpu_setbank (1, &RAM[data * 0x4000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x4000 + 0x12000]);
+	cpu_setbank (1, &ROM[data * 0x4000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
 /* 
@@ -1585,8 +1650,8 @@ static void Mapper78_Write (int offset, int data)
 		nes_vram[i] = bank * 512 + 64*i;
 
 	data &= (PRG_Rom - 1);
-	cpu_setbank (1, &RAM[data * 0x4000 + 0x10000]);
-	cpu_setbank (2, &RAM[data * 0x4000 + 0x12000]);
+	cpu_setbank (1, &ROM[data * 0x4000 + 0x10000]);
+	cpu_setbank (2, &ROM[data * 0x4000 + 0x12000]);
 }
 
 /*
@@ -1626,10 +1691,10 @@ int Reset_Mapper (int mapperNum)
 	{
 		case 0:
 			err = 1; /* No mapper found */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;			
 		case 1:
 			/* Reset the latch */
@@ -1655,10 +1720,10 @@ int Reset_Mapper (int mapperNum)
 			MMC1_bank3 = MMC1_High;
 			MMC1_bank4 = MMC1_High + 0x2000;
 
-			cpu_setbank (1, &RAM[MMC1_extended_base + MMC1_bank1]);
-			cpu_setbank (2, &RAM[MMC1_extended_base + MMC1_bank2]);
-			cpu_setbank (3, &RAM[MMC1_extended_base + MMC1_bank3]);
-			cpu_setbank (4, &RAM[MMC1_extended_base + MMC1_bank4]);
+			cpu_setbank (1, &ROM[MMC1_extended_base + MMC1_bank1]);
+			cpu_setbank (2, &ROM[MMC1_extended_base + MMC1_bank2]);
+			cpu_setbank (3, &ROM[MMC1_extended_base + MMC1_bank3]);
+			cpu_setbank (4, &ROM[MMC1_extended_base + MMC1_bank4]);
 			if (errorlog)
 			{
 				fprintf (errorlog, "-- page1: %06x\n", MMC1_bank1);
@@ -1670,157 +1735,161 @@ int Reset_Mapper (int mapperNum)
 		case 2:
 			/* These games don't switch VROM, but some ROMs incorrectly have CHR-ROM chunks */
 			CHR_Rom = 0;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 3:
 			/* Doesn't bank-switch */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		case 4:
 			/* Can switch 8k ROM banks */
 			MMC3_DOIRQ = 0;
 			MMC3_IRQ = 0;
 			uses_irqs = 1;
-			cpu_setbank (1, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (2, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (2, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 5:
 			/* Can switch 8k ROM banks, but they are saved as 16k in size */
+			MMC5_rom_bank_mode = 0;
 			MMC5_vrom_bank_mode = 0;
 			MMC5_exram_tile_enable = 0;
 			MMC5_exram_color_enable = 0;
-			cpu_setbank (1, &RAM[(PRG_Rom-2) * 0x4000 + 0x10000]);
-			cpu_setbank (2, &RAM[(PRG_Rom-2) * 0x4000 + 0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			MMC3_DOIRQ = 0;
+			MMC3_IRQ = 0;
+			uses_irqs = 1;
+			cpu_setbank (1, &ROM[(PRG_Rom-2) * 0x4000 + 0x10000]);
+			cpu_setbank (2, &ROM[(PRG_Rom-2) * 0x4000 + 0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 7:
 			/* Bankswitches 32k at a time */
 			PPU_one_screen = 0x2000;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 8:
 			/* Switches 16k banks at $8000, 1st 2 16k banks loaded on reset */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		case 9:
 			/* Can switch 8k ROM banks */
 			/* Note that the iNES header defines the number of banks as 8k in size, rather than 16k */
 			/* Reset VROM latches */
 			MMC2_bank0 = MMC2_bank1 = 0xfe;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[(PRG_Rom-3) * 0x2000 + 0x10000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-2) * 0x2000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x2000 + 0x10000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[(PRG_Rom-3) * 0x2000 + 0x10000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-2) * 0x2000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x2000 + 0x10000]);
 			break;
 		case 10:
 			/* Reset VROM latches */
 			MMC2_bank0 = MMC2_bank1 = 0xfe;
 			MMC2_hibank1_val = MMC2_hibank2_val = 0;
 			/* On reset, the second-to-last 16k of the cart is swapped in $8000-bfff */
-			cpu_setbank (1, &RAM[(PRG_Rom-2) * 0x4000 + 0x10000]);
-			cpu_setbank (2, &RAM[(PRG_Rom-2) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[(PRG_Rom-2) * 0x4000 + 0x10000]);
+			cpu_setbank (2, &ROM[(PRG_Rom-2) * 0x4000 + 0x12000]);
 			/* On reset, the last 16k of the cart is swapped in $c000-ffff */
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 11:
 			/* Switches 32k banks, 1st 32k bank loaded on reset (?) May be more like mapper 7... */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 15:
 			/* Can switch 8k ROM banks */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		case 16:
 			uses_irqs = 1;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 18:
 			uses_irqs = 1;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 25:
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 33:
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;		
 		case 34:
 			/* Can switch 32k ROM banks */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		case 64:
 			/* Can switch 3 8k ROM banks */
-			cpu_setbank (1, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
-			cpu_setbank (2, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (2, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 65:
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;		
 		case 66:
 			/* Can switch 32k ROM banks */
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		case 68:
 		case 69:
 		case 71:
 		case 78:
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[(PRG_Rom-1) * 0x4000 + 0x10000]);
-			cpu_setbank (4, &RAM[(PRG_Rom-1) * 0x4000 + 0x12000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[(PRG_Rom-1) * 0x4000 + 0x10000]);
+			cpu_setbank (4, &ROM[(PRG_Rom-1) * 0x4000 + 0x12000]);
 			break;
 		case 79:
 			/* Mirroring always horizontal...? */
 //			Mirroring = 1;
-			cpu_setbank (1, &RAM[0x10000]);
-			cpu_setbank (2, &RAM[0x12000]);
-			cpu_setbank (3, &RAM[0x14000]);
-			cpu_setbank (4, &RAM[0x16000]);
+			cpu_setbank (1, &ROM[0x10000]);
+			cpu_setbank (2, &ROM[0x12000]);
+			cpu_setbank (3, &ROM[0x14000]);
+			cpu_setbank (4, &ROM[0x16000]);
 			break;
 		default:
 			/* Mapper not supported */

@@ -1,6 +1,3 @@
-/* MODIFIED FOR MESS!!! */
-/* (Based on the 5/14/98 version of config.c) */
-
 /*
  * Configuration routines.
  *
@@ -30,7 +27,7 @@ extern int use_mouse, joystick;
 
 /* from fileio.c */
 void decompose_rom_path (char *rompath);
-extern char *hidir, *cfgdir, *inpdir, *pcxdir;
+extern char *hidir, *cfgdir, *inpdir, *pcxdir, *alternate_name;
 
 
 static int mame_argc;
@@ -52,7 +49,7 @@ static int get_bool (char *section, char *option, char *shortcut, int def)
 
 	if (ignorecfg) goto cmdline;
 
-	/* look into mame.cfg, [section] */
+	/* look into mess.cfg, [section] */
 	if (def == 0)
 		yesnoauto = get_config_string(section, option, "no");
 	else if (def > 0)
@@ -64,7 +61,7 @@ static int get_bool (char *section, char *option, char *shortcut, int def)
 	if (get_config_string(section, option, "#") == "#")
 		set_config_string(section, option, yesnoauto);
 
-	/* look into mame.cfg, [gamename] */
+	/* look into mess.cfg, [gamename] */
 	yesnoauto = get_config_string((char *)drivers[game]->name, option, yesnoauto);
 
 	/* also take numerical values instead of "yes", "no" and "auto" */
@@ -116,10 +113,10 @@ static int get_int (char *section, char *option, char *shortcut, int def)
 		if (get_config_int (section, option, -777) == -777)
 			set_config_int (section, option, def);
 
-		/* look into mame.cfg, [section] */
+		/* look into mess.cfg, [section] */
 		res = get_config_int (section, option, def);
 
-		/* look into mame.cfg, [gamename] */
+		/* look into mess.cfg, [gamename] */
 		res = get_config_int ((char *)drivers[game]->name, option, res);
 	}
 
@@ -151,10 +148,10 @@ static float get_float (char *section, char *option, char *shortcut, float def)
 		if (get_config_float (section, option, 9999.0) == 9999.0)
 			set_config_float (section, option, def);
 
-		/* look into mame.cfg, [section] */
+		/* look into mess.cfg, [section] */
 		res = get_config_float (section, option, def);
 
-		/* look into mame.cfg, [gamename] */
+		/* look into mess.cfg, [gamename] */
 		res = get_config_float ((char *)drivers[game]->name, option, res);
 	}
 
@@ -186,10 +183,10 @@ static char *get_string (char *section, char *option, char *shortcut, char *def)
 		if (get_config_string (section, option, "#") == "#" )
 			set_config_string (section, option, def);
 
-		/* look into mame.cfg, [section] */
+		/* look into mess.cfg, [section] */
 		res = get_config_string(section, option, def);
 
-		/* look into mame.cfg, [gamename] */
+		/* look into mess.cfg, [gamename] */
 		res = get_config_string((char*)drivers[game]->name, option, res);
 	}
 
@@ -213,11 +210,23 @@ void get_rom_path (int argc, char **argv, int game_index)
 {
 	int i;
 
+	alternate_name = 0;
 	mame_argc = argc;
 	mame_argv = argv;
 	game = game_index;
 
-	rompath    = get_string ("directory", "imagepath",    NULL, ".;IMAGES");
+	rompath    = get_string ("directory", "imagepath", NULL, ".;IMAGES");
+
+	/* handle '-romdir' hack. We should get rid of this BW */
+	alternate_name = 0;
+	for (i = 1; i < argc; i++)
+	{
+		if (stricmp (argv[i], "-romdir") == 0)
+		{
+			i++;
+			if (i < argc) alternate_name = argv[i];
+		}
+	}
 
 	/* decompose paths into components (handled by fileio.c) */
 	decompose_rom_path (rompath);
@@ -246,7 +255,7 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	ntsc        = get_bool   ("config", "ntsc",         NULL,  0);
 	vgafreq     = get_int    ("config", "vgafreq",      NULL,  -1);
 	always_synced = get_bool ("config", "alwayssynced", NULL, 0);
-	color_depth = get_int    ("config", "depth",        NULL, 16);
+	color_depth = get_int	 ("config", "depth",        NULL, 8);
 	skiplines   = get_int    ("config", "skiplines",    NULL, 0);
 	skipcolumns = get_int    ("config", "skipcolumns",  NULL, 0);
 	f_beam      = get_float  ("config", "beam",         NULL, 1.0);
@@ -254,6 +263,11 @@ void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game
 	gamma_correction = get_float ("config", "gamma",   NULL, 1.2);
 
 	options->frameskip = get_int  ("config", "frameskip", NULL, 0);
+	options->norotate  = get_bool ("config", "norotate",  NULL, 0);
+	options->ror       = get_bool ("config", "ror",       NULL, 0);
+	options->rol       = get_bool ("config", "rol",       NULL, 0);
+	options->flipx     = get_bool ("config", "flipx",     NULL, 0);
+	options->flipy     = get_bool ("config", "flipy",     NULL, 0);
 
 	/* read sound configuration */
 	soundcard           = get_int  ("config", "soundcard",  NULL, -1);

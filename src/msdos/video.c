@@ -1,5 +1,5 @@
-/* Modified for MESS!!! */
-/* (Built from the 5/13/98 version of video.c) */
+/* MODIFIED FOR MESS!!! */
+/* (built from the 8/09/98 version of fileio.c) */
 
 #include "driver.h"
 #include <math.h>
@@ -11,6 +11,7 @@
 #include "TwkUser.c"
 #include <allegro.h>
 #include "vgafreq.h"
+#include "vidhrdw/vector.h"
 
 DECLARE_GFX_DRIVER_LIST(
 	GFX_DRIVER_VGA
@@ -26,6 +27,7 @@ DECLARE_COLOR_DEPTH_LIST(
 #define MAX_GFX_WIDTH 1600
 
 
+void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height);
 void joy_calibration(void);
 
 
@@ -62,6 +64,7 @@ static int skipcolumnsmax;
 static int skiplinesmin;
 static int skipcolumnsmin;
 
+static int vector_game;
 static int use_dirty;
 
 static Register *reg = 0;       /* for VGA modes */
@@ -184,11 +187,9 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 void osd_clearbitmap(struct osd_bitmap *bitmap)
 {
 	int i;
-        extern int scrbitmap_dirty;
 
-        scrbitmap_dirty = 1;
 
-        for (i = 0;i < bitmap->height;i++)
+	for (i = 0;i < bitmap->height;i++)
 	{
 		if (bitmap->depth == 16)
 			memset(bitmap->line[i],0,2*bitmap->width);
@@ -204,7 +205,6 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 		/* signal the layer system that the screen needs a complete refresh */
 		layer_mark_full_screen_dirty();
 	}
-
 }
 
 
@@ -364,6 +364,17 @@ static void select_display_mode(void)
 		{
 			gfx_width = 640;
 			gfx_height = 480;
+			/* but if the graphics won't fit... */
+			if (width > 640 || height > 480)
+			{
+				gfx_width = 800;
+				gfx_height = 600;
+				if (width > 800 || height > 600)
+				{
+					gfx_width = 1024;
+					gfx_height = 768;
+                }
+			}
 		}
 		else
 		{
@@ -448,6 +459,22 @@ static void adjust_display (int xmin, int ymin, int xmax, int ymax)
 	{
 		w = Machine->drv->screen_width;
 		h = Machine->drv->screen_height;
+	}
+
+	if (!vector_game)
+	{
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+		{
+			temp = w - xmin - 1;
+			xmin = w - xmax - 1;
+			xmax = temp;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = h - ymin - 1;
+			ymin = h - ymax - 1;
+			ymax = temp;
+		}
 	}
 
 	viswidth  = xmax - xmin + 1;
@@ -552,7 +579,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int attributes)
 
 
 	/* Is the game using a dirty system? */
-	if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
+	if ((Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
 		use_dirty = 1;
 	else
 		use_dirty = 0;
@@ -613,6 +640,14 @@ int osd_set_display(int width,int height, int attributes)
 		return 0;
 	}
 
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = width;
+		width = height;
+		height = temp;
+	}
 	/* Mark the dirty buffers as dirty */
 
 	if (use_dirty)
@@ -862,7 +897,11 @@ void osd_close_display(void)
 	}
 }
 
-
+/* skip a frame */
+int osd_skip_this_frame (int skipme)
+{
+	return skipme;
+}
 
 /* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
 /* in *pens the pen values corresponding to the requested colors. */
@@ -1348,12 +1387,14 @@ void osd_update_display(void)
 	int i;
 	static float gamma_update = 0.00;
 	static int showgammatemp;
-	static int showfps,showfpstemp,f8pressed,f10pressed,f11pressed;
+	static int showfps,showfpstemp;
+	static int frameskip_pressed,throttle_pressed,show_fps_pressed;
 	uclock_t curr;
 	#define MEMORY 10
 	static uclock_t prev[MEMORY];
 	static int memory,speed;
 	extern int frameskip;
+	static int vups,vfcount;
 	int need_to_clear_bitmap = 0;
 
 
@@ -1363,9 +1404,9 @@ void osd_update_display(void)
 		pan_display();
 
 
-	if (osd_key_pressed(OSD_KEY_F8))
+	if (osd_key_pressed(OSD_KEY_FRAMESKIP))
 	{
-		if (f8pressed == 0)
+		if (frameskip_pressed == 0)
 		{
 			frameskip = (frameskip + 1) % 4;
 			showfpstemp = 50;
@@ -1374,13 +1415,13 @@ void osd_update_display(void)
 			/* we'll measure the average FPS on a consistent status. */
 			frames_displayed = 0;
 		}
-		f8pressed = 1;
+		frameskip_pressed = 1;
 	}
-	else f8pressed = 0;
+	else frameskip_pressed = 0;
 
-	if (osd_key_pressed(OSD_KEY_F10))
+	if (osd_key_pressed(OSD_KEY_THROTTLE))
 	{
-		if (f10pressed == 0)
+		if (throttle_pressed == 0)
 		{
 			throttle ^= 1;
 
@@ -1388,13 +1429,13 @@ void osd_update_display(void)
 			/* we'll measure the average FPS on a consistent status. */
 			frames_displayed = 0;
 		}
-		f10pressed = 1;
+		throttle_pressed = 1;
 	}
-	else f10pressed = 0;
+	else throttle_pressed = 0;
 
-	if (osd_key_pressed(OSD_KEY_F11))
+	if (osd_key_pressed(OSD_KEY_SHOW_FPS))
 	{
-		if (f11pressed == 0)
+		if (show_fps_pressed == 0)
 		{
 			showfps ^= 1;
 			if (showfps == 0)
@@ -1402,9 +1443,9 @@ void osd_update_display(void)
 				need_to_clear_bitmap = 1;
 			}
 		}
-		f11pressed = 1;
+		show_fps_pressed = 1;
 	}
-	else f11pressed = 0;
+	else show_fps_pressed = 0;
 
 	if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
 	{
@@ -1462,6 +1503,13 @@ void osd_update_display(void)
 
 	prev[memory] = curr;
 
+	vfcount += frameskip+1;
+	if (vfcount >= Machine->drv->frames_per_second)
+	{
+		vfcount = 0;
+		vups = 1;
+	}
+
 	if (showfps || showfpstemp) /* MAURY: nuove opzioni */
 	{
 		int trueorientation;
@@ -1479,6 +1527,13 @@ void osd_update_display(void)
 		l = strlen(buf);
 		for (i = 0;i < l;i++)
 			drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines,0,TRANSPARENCY_NONE,0);
+		if (vector_game)
+		{
+			sprintf(buf," %d vector updates",vups);
+			l = strlen(buf);
+			for (i = 0;i < l;i++)
+				drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,gfx_display_columns+skipcolumns-(l-i)*Machine->uifont->width,skiplines+8,0,TRANSPARENCY_NONE,0);
+		}
 
 		Machine->orientation = trueorientation;
 	}
@@ -1490,14 +1545,14 @@ void osd_update_display(void)
 
 	if (scrbitmap->depth == 8)
 	{
-		if (osd_key_pressed(OSD_KEY_LSHIFT) &&
-				(osd_key_pressed(OSD_KEY_PLUS_PAD) || osd_key_pressed(OSD_KEY_MINUS_PAD)))
+		if (osd_key_pressed(OSD_KEY_GAMMA_DOWN) ||
+			osd_key_pressed(OSD_KEY_GAMMA_UP))
 		{
 			for (i = 0;i < 256;i++) dirtycolor[i] = 1;
 			dirtypalette = 1;
 
-			if (osd_key_pressed(OSD_KEY_MINUS_PAD)) gamma_update -= 0.02;
-			if (osd_key_pressed(OSD_KEY_PLUS_PAD)) gamma_update += 0.02;
+			if (osd_key_pressed(OSD_KEY_GAMMA_DOWN)) gamma_update -= 0.02;
+			if (osd_key_pressed(OSD_KEY_GAMMA_UP)) gamma_update += 0.02;
 
 			if (gamma_update < -0.09)
 			{
@@ -1603,11 +1658,13 @@ void osd_update_display(void)
 	if (need_to_clear_bitmap)
 		osd_clearbitmap(scrbitmap);
 
-	/* if the user pressed F12, save a snapshot of the screen. */
-	if (osd_key_pressed(OSD_KEY_F12))
+	/* if the user pressed KEY_SNAPSHOT, save a snapshot of the screen. */
+	if (osd_key_pressed(OSD_KEY_SNAPSHOT))
 	{
 		save_screen();
-		/* wait for the user to release F12 */
-		while (osd_key_pressed(OSD_KEY_F12));
+		/* wait for the user to release the key*/
+		while (osd_key_pressed(OSD_KEY_SNAPSHOT))
+			;
 	}
 }
+

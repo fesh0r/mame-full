@@ -4,9 +4,6 @@
 
   Functions which handle the CPU memory and I/O port access.
 
-  MESS changes
-  	. memory_allocate_ext () is removed; 68k drivers need to take care of this themselves
-  	
 ***************************************************************************/
 
 #include "driver.h"

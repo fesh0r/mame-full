@@ -4,10 +4,7 @@
 
   Input ports handling
 
-TODO:	remove the 1 analog device per port limitation
-		support more than 1 "real" analog device
-		support for inputports producing interrupts
-		support for extra "real" hardware (PC throttle's, spinners etc)
+TODO: remove the 1 analog device per port limitation
 
 	MESS Changes
 	. Some of the default keys are changed - COIN changed to START, 1p & 2p start changed
@@ -338,15 +335,15 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
 	{ IPT_BUTTON3 | IPF_PLAYER4, "4 Button 3",        0,               0 },
 	{ IPT_BUTTON4 | IPF_PLAYER4, "4 Button 4",        0,               0 },
-	{ IPT_COIN1,               "Coin A",          OSD_KEY_3,           0 },
-	{ IPT_COIN2,               "Coin B",          OSD_KEY_4,           0 },
-	{ IPT_COIN3,               "Coin C",          OSD_KEY_5,           0 },
-	{ IPT_COIN4,               "Coin D",          OSD_KEY_6,           0 },
+	{ IPT_SELECT1,               "P1 Select",          OSD_KEY_1,       IP_JOY_NONE },
+	{ IPT_SELECT2,               "P2 Select",          OSD_KEY_2,       IP_JOY_NONE },
+	{ IPT_SELECT3,               "P3 Select",          OSD_KEY_3,       IP_JOY_NONE },
+	{ IPT_SELECT4,               "P4 Select",          OSD_KEY_4,       IP_JOY_NONE },
 	{ IPT_TILT,                "Tilt",            OSD_KEY_T,       IP_JOY_NONE },
-	{ IPT_START1,              "1 Player Start",  OSD_KEY_1,           0 },
-	{ IPT_START2,              "2 Players Start", OSD_KEY_2,           0 },
-	{ IPT_START3,              "3 Players Start", OSD_KEY_7,           0 },
-	{ IPT_START4,              "4 Players Start", OSD_KEY_8,           0 },
+	{ IPT_START1,              "1 Player Start",  OSD_KEY_ENTER,   IP_JOY_NONE },
+	{ IPT_START2,              "2 Players Start", OSD_KEY_6,       IP_JOY_NONE },
+	{ IPT_START3,              "3 Players Start", OSD_KEY_7,       IP_JOY_NONE },
+	{ IPT_START4,              "4 Players Start", OSD_KEY_8,       IP_JOY_NONE },
 	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },

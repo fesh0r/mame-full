@@ -10,7 +10,6 @@
 #include "generic.h"
 #include "TMS9928A.h"
 
-
 /***************************************************************************
 
   Start the video hardware emulation.
@@ -33,14 +32,14 @@ void coleco_vh_stop(void)
 }
 
 
-
 /***************************************************************************
 
   Refresh the video screen
 
 ***************************************************************************/
+
 /* This routine is called at the start of vblank to refresh the screen */
-void coleco_vh_screenrefresh(struct osd_bitmap *bitmap)
+void coleco_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	TMS9928A_refresh(bitmap);
 	return;

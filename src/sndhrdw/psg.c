@@ -13,7 +13,12 @@
 #include "driver.h"
 #include "psg.h"
 
-
+/* Self Update Customize */
+/* minimum update step */
+#define MIN_UPDATE 10
+/* Get Update Point */
+#define SELF_UPDATE
+#define GetUpdatePos() cpu_scalebyfcount(AYBufSize)
 
 #ifdef SIGNED_SAMPLES
 	#define MAX_OUTPUT 0x7fff
@@ -21,13 +26,14 @@
 	#define MAX_OUTPUT 0xffff
 #endif
 
-#define STEP 0x8000
+#define STEP 0x10000
 
 struct AY8910
 {
 	unsigned char Regs[16];
 	void *Buf;			/* sound buffer */
-	int bufp;				/* update buffer point */
+	int addr;			/* address register */
+	int bufp;			/* update buffer point */
 	unsigned int UpdateStep;
 	int PeriodA,PeriodB,PeriodC,PeriodN,PeriodE;
 	int CountA,CountB,CountC,CountN,CountE;
@@ -124,6 +130,7 @@ void AYResetChip(int num)
 	PSG->OutputC = 0;
 	PSG->OutputN = 0xff;
 
+	PSG->addr = 0;
 	PSG->bufp = 0;
 	for (i = 0;i < AY_PORTA;i++)
 		AYWriteReg(num,i,0);
@@ -143,7 +150,16 @@ if (errorlog) fprintf(errorlog,"error: write to 8910 #%d, allocated only %d\n",n
 	}
 
 	if (r > 15) return;
-
+#ifdef SELF_UPDATE
+	if( r < 14 )
+	{
+		/* self update */
+		int pos = GetUpdatePos();
+		if( pos > AYBufSize ) pos = AYBufSize;
+		if( PSG->bufp+MIN_UPDATE <= pos )
+			AYUpdateOne(n,pos);
+	}
+#endif
 	PSG->Regs[r] = v;
 
 	/* A note about the period of tones, noise and envelope: for speed reasons,*/
@@ -308,7 +324,32 @@ if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output
 	return PSG->Regs[r];
 }
 
+void AY8910Write(int n, int a, int v)
+{
+	struct AY8910 *PSG = &AYPSG[n];
 
+	if( !(a&1) )
+	{	/* Reister port */
+		PSG->addr = v & 0x0f;
+	}
+	else
+	{	/* Data port */
+		/* update check */
+		AYWriteReg(n,PSG->addr,v);
+	}
+}
+
+int AY8910Read(int n, int a)
+{
+	struct AY8910 *PSG = &AYPSG[n];
+
+	if( !(a&1) )
+	{	/* Reister port */
+		return 0;
+	}
+	/* Data port */
+	return AYReadReg(n,PSG->addr);
+}
 
 void AYUpdateOne(int chip,int endp)
 {
@@ -380,6 +421,7 @@ void AYUpdateOne(int chip,int endp)
 	while (length)
 	{
 		int vola,volb,volc;
+		int output;
 		int left;
 
 
@@ -571,20 +613,9 @@ void AYUpdateOne(int chip,int endp)
 			}
 		}
 
-		if (sample_16bit)
-		{
-			buffer_16[0]           = vola*PSG->VolA / STEP;
-			buffer_16[AYBufSize]   = volb*PSG->VolB / STEP;
-			buffer_16[2*AYBufSize] = volc*PSG->VolC / STEP;
-			buffer_16++;
-		}
-		else
-		{
-			buffer_8[0]           = vola*PSG->VolA / (STEP*256);
-			buffer_8[AYBufSize]   = volb*PSG->VolB / (STEP*256);
-			buffer_8[2*AYBufSize] = volc*PSG->VolC / (STEP*256);
-			buffer_8++;
-		}
+		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
+		if( sample_16bit ) *buffer_16++ = output / STEP;
+		else               *buffer_8++  = output / (STEP*256);
 
 		length--;
 	}
@@ -646,7 +677,7 @@ void AYSetGain(int n,int gain)
 	gain &= 0xff;
 
 	/* increase max output basing on gain (0.2 dB per step) */
-	out = MAX_OUTPUT;
+	out = MAX_OUTPUT/3;
 	while (gain-- > 0)
 		out *= 1.023292992;	/* = (10 ^ (0.2/20)) */
 
@@ -657,7 +688,7 @@ void AYSetGain(int n,int gain)
 	for (i = 31;i > 0;i--)
 	{
 		/* limit volume to avoid clipping */
-		if (out > MAX_OUTPUT) PSG->VolTable[i] = MAX_OUTPUT;
+		if (out > MAX_OUTPUT/3) PSG->VolTable[i] = MAX_OUTPUT/3;
 		else PSG->VolTable[i] = out;
 
 		out /= 1.188502227;	/* = 10 ^ (1.5/20) */

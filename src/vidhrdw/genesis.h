@@ -32,10 +32,10 @@ int genesis_vdp_hv_r (int offset);
 void genesis_vdp_hv_w (int offset, int data);
 
 void genesis_dma_poll (int amount);
-void genesis_initialise_dma (char *src, int dest, int length, int id, int increment);
+void genesis_initialise_dma (unsigned char *src, int dest, int length, int id, int increment);
 
 void genesis_videoram1_w (int offset, int data);
 
 int genesis_vh_start (void);
 void genesis_vh_stop (void);
-void genesis_vh_screenrefresh (struct osd_bitmap *bitmap);
+void genesis_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);

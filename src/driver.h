@@ -7,6 +7,8 @@
 		. Input ports have COIN changed to SELECT
 		. Added IPT_KEYBOARD to reflect a general keyboard setting for computers
 		. Added fields to the GameDriver to support number of peripherals
+		. PDP1 CPU added
+		. YM2612 sound chip added
 */
 
 #include "common.h"
@@ -205,6 +207,7 @@ struct MachineCPU
 #define CPU_M68000 9
 #define CPU_T11    10	/* ASG 030598 */
 #define CPU_S2650  11	/* HJB 070598 */
+#define CPU_PDP1   12   /* PDP1 - MESS */
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
@@ -246,9 +249,12 @@ struct MachineSound
 #define SOUND_OKIM6295 16	/* ROM-based ADPCM system */
 #define SOUND_MSM5205  17	/* CPU-based ADPCM system */
 #define	SOUND_HC55516  18	/* Harris family of CVSD CODECs */
+#define SOUND_YM2612   19   /* MESS */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
+
+
 
 struct MachineDriver
 {
@@ -264,6 +270,7 @@ struct MachineDriver
 								/* However, an higher setting also means slower */
 								/* performance. */
 	void (*init_machine)(void);
+	void (*stop_machine)(void); /* MESS */
 
 	/* video hardware */
 	int screen_width,screen_height;
@@ -348,9 +355,8 @@ struct GameDriver
 	int flags;	/* see defines below */
 	const struct MachineDriver *drv;
 
-#ifndef MESS
 	const struct RomModule *rom;
-#else
+#ifdef MESS
 	int (*rom_load)(void); /* used to load the ROM and set up memory regions */
 	int (*rom_id)(const char *name, const char *gamename); /* returns 1 if the ROM will work with this driver */
 	int num_of_rom_slots;
@@ -381,11 +387,16 @@ struct GameDriver
 						/* returns nonzero */
 	void (*hiscore_save)(void);	/* will not be called if hiscore_load() hasn't yet */
 						/* returned nonzero, to avoid saving an invalid table */
+
+	int (*state_load)(void);
+	void (*state_save)(void);
 };
 
 
 /* values for the flags field */
-#define GAME_NOT_WORKING	0x0001
+#define GAME_NOT_WORKING		0x0001
+#define GAME_WRONG_COLORS		0x0002	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
 
 
 #define PROM_MEMORY_REGION(region) ((const unsigned char *)-region-1)

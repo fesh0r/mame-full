@@ -38,3 +38,4 @@ extern int PPU_scanline_effects;
 extern int scroll_adjust;
 
 #endif
+

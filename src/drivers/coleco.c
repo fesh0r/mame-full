@@ -19,11 +19,10 @@
 /* vidhrdw/coleco.c */
 extern int coleco_vh_start(void);
 extern void coleco_vh_stop(void);
-extern void coleco_vh_screenrefresh(struct osd_bitmap *bitmap);
+extern void coleco_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 /* machine/coleco.c */
 extern unsigned char *coleco_ram;
-extern unsigned char *coleco_rom;
 extern unsigned char *coleco_cartridge_rom;
 
 extern int coleco_id_rom (const char *name, const char *gamename);
@@ -39,7 +38,7 @@ extern void coleco_VDP_w(int offset, int data);
 
 static struct MemoryReadAddress readmem[] =
 {
-    { 0x0000, 0x1fff, MRA_ROM, &coleco_rom }, /* COLECO.ROM */
+    { 0x0000, 0x1fff, MRA_ROM }, /* COLECO.ROM */
     { 0x6000, 0x63ff, coleco_ram_r, &coleco_ram },
     { 0x6400, 0x67ff, coleco_ram_r },
     { 0x6800, 0x6bff, coleco_ram_r },
@@ -177,6 +176,7 @@ static struct MachineDriver machine_driver =
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0, /* init_machine */
+	0, /* stop_machine */
 
 	/* video hardware */
 	32*8, 24*8, { 0*8, 32*8-1, 0*8, 24*8-1 },
@@ -208,14 +208,25 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
+ROM_START (coleco_rom)
+	ROM_REGION (0x10000)
+	ROM_LOAD ("coleco.rom", 0x0000, 0x2000, 0x6e6bc567)
+	
+ROM_END
 
 struct GameDriver coleco_driver =
 {
-	"Colecovision",
+	__FILE__,
+	0,	
 	"coleco",
+	"Colecovision",
+	"1982",
+	"Coleco",
 	"Marat Fayzullin (ColEm source)\nMike Balfour",
+	0,
 	&machine_driver,
 
+	coleco_rom,
 	coleco_load_rom,
 	coleco_id_rom,
 	1,	/* number of ROM slots */
@@ -231,5 +242,6 @@ struct GameDriver coleco_driver =
 	0, TMS9928A_palette, TMS9928A_colortable,
 	ORIENTATION_DEFAULT,
 
+	0, 0,
 	0, 0
 };

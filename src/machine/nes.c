@@ -9,6 +9,8 @@ extern int dirtychar[];
 extern unsigned char *dirtybuffer2;
 extern unsigned char *dirtybuffer3;
 extern unsigned char *dirtybuffer4;
+extern unsigned char *nes_io_0;
+extern unsigned char *nes_io_1;
 
 void nes_vh_renderscanline (int scanline, int drawline);
 
@@ -94,12 +96,12 @@ int nes_IN0_r (int offset)
 	int Joypad_1;
 	
 	Joypad_1 = readinputport (0);
-	RAM[0x4016] = (Joypad_1 >> (Joypad_Read_1 & 0x07)) & 0x01;
+	*nes_io_0 = (Joypad_1 >> (Joypad_Read_1 & 0x07)) & 0x01;
 	Joypad_Read_1 ++;
 //	if (errorlog) fprintf (errorlog, "Joy 0 r, # in a row: %02x\n", Joypad_Read_1);
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
 	/* in the unused upper 3 bits, so typically a read from $4016 leaves 0x40 there. */
-	return (RAM[0x4016] | 0x40);
+	return (*nes_io_0 | 0x40);
 }
 
 int nes_IN1_r (int offset)
@@ -107,28 +109,28 @@ int nes_IN1_r (int offset)
 	int Joypad_2;
 	
 	Joypad_2 = readinputport (1);
-	RAM[0x4017] = (Joypad_2 >> (Joypad_Read_2 & 0x07)) & 0x01;
+	*nes_io_1 = (Joypad_2 >> (Joypad_Read_2 & 0x07)) & 0x01;
 	Joypad_Read_2 ++;
 //	if (errorlog) fprintf (errorlog, "Joy 1 r, # in a row: %02x\n", Joypad_Read_2);
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
 	/* in the unused upper 3 bits, so typically a read from $4016 leaves 0x40 there. */
-	return (RAM[0x4017] | 0x40);
+	return (*nes_io_1 | 0x40);
 }
 
 void nes_IN0_w (int offset, int data)
 {
 	/* Toggling bit 0 high then low resets the controller */
-	if (((RAM[0x4016] & 0x01) == 1) && (data == 0))
+	if (((*nes_io_0 & 0x01) == 1) && (data == 0))
 		Joypad_Read_1 = 0;
-	RAM[0x4016] = data;    
+	*nes_io_0 = data;    
 }
 
 void nes_IN1_w (int offset, int data)
 {
 	/* Toggling bit 0 high then low resets the controller */
-	if (((RAM[0x4017] & 0x01) == 1) && (data == 0))
+	if (((*nes_io_1 & 0x01) == 1) && (data == 0))
 		Joypad_Read_2 = 0;
-	RAM[0x4017] = data;    
+	*nes_io_1 = data;    
 }
 
 int nes_interrupt (void)
@@ -136,7 +138,7 @@ int nes_interrupt (void)
 	static int first_time_in_vblank = 0;
 	int ret; 
     
-	ret = INT_NONE;
+	ret = M6502_INT_NONE;
     
 	if (current_scanline <= BOTTOM_VISIBLE_SCANLINE)
 	{
@@ -146,7 +148,7 @@ int nes_interrupt (void)
 			/* Decrement & check the IRQ scanline counter */
 			if (MMC3_DOIRQ && (--MMC3_IRQ == 0))
 			{
-				ret = INT_IRQ;
+				ret = M6502_INT_IRQ;
 			}
 		}
 	
@@ -173,13 +175,13 @@ int nes_interrupt (void)
 		/* VBlank in progress, set flag */
 		PPU_Status |= 0x80;
 		
-		RAM[0x4016] &= 0xfd;
-		RAM[0x4017] &= 0xfd;
+		*nes_io_0 &= 0xfd;
+		*nes_io_1 &= 0xfd;
 			
 //		if (current_scanline == BOTTOM_VISIBLE_SCANLINE + 8)
 		{
 			/* Check if NMIs are enabled on vblank */
-			if (PPU_Control0 & 0x80) ret = INT_NMI;
+			if (PPU_Control0 & 0x80) ret = M6502_INT_NMI;
 		}
 		
 		/* This code only needs to be executed once per frame */
@@ -226,10 +228,10 @@ int nes_interrupt (void)
 #endif
 	}
 
-	if ((ret != INT_NONE) && (errorlog))
+	if ((ret != M6502_INT_NONE) && (errorlog))
 	{
     	fprintf (errorlog, "--- scanline %d", current_scanline);
-    	if (ret == INT_IRQ)
+    	if (ret == M6502_INT_IRQ)
     		fprintf (errorlog, " IRQ\n");
     	else fprintf (errorlog, " NMI\n");
     }
@@ -290,11 +292,6 @@ int nes_ppu_r (int offset)
 			PPU_addr_toggle = 0;
 			PPU_scroll_toggle = 0;
 
-#if 0 /* Enabling this code breaks 1943 */
-			/* Reset PPU name table if appropriate */
-			if ((current_scanline <= BOTTOM_VISIBLE_SCANLINE) && !(PPU_Control0 & 0x80))
-				PPU_name_table = 0x2000;
-#endif
 			return (retval);
 		}
 		case 3: /* Sprite Memory Address */
@@ -304,9 +301,12 @@ int nes_ppu_r (int offset)
 			return (PPU_Sprite_Addr);
 
 		case 5: /* PPU Scroll register */
-			return (RAM [0x2005]);
+			/* TODO - this can't be right */
+			return 0x00;
+//			return (RAM [0x2005]);
 					
 		case 6: /* PPU Memory Address */
+			/* TODO - this can't be right */
 			return (PPU_Addr);
 
 		case 7: /* PPU I/O Register */
@@ -878,7 +878,7 @@ int nes_load_rom (void)
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 		Machine->memory_region[region] = 0;
 
-	RAM = ROM = calloc (0x10000 + (PRG_Rom+1) * 0x4000, 1);
+	ROM = calloc (0x10000 + (PRG_Rom+1) * 0x4000, 1);
 	VROM = calloc ((CHR_Rom+1) * 0x2000, 1);
 	VRAM = calloc (0x2000, 1);
 	
@@ -888,7 +888,7 @@ int nes_load_rom (void)
 		goto bad;
 	}
 	
-	Machine->memory_region[0] = RAM;
+	Machine->memory_region[0] = ROM;
 	Machine->memory_region[1] = VROM;
 	Machine->memory_region[2] = VRAM;
 		
@@ -898,7 +898,7 @@ int nes_load_rom (void)
 	/* Load the 0x200 byte trainer at 0x7000 if it exists */
 	if (trainer)
 	{
-		osd_fread (romfile, &RAM[0x7000], 0x200);
+		osd_fread (romfile, &ROM[0x7000], 0x200);
 		if (errorlog) fprintf (errorlog, "-- Trainer found\n");
 	}
 
@@ -906,12 +906,12 @@ int nes_load_rom (void)
 	
 	if (PRG_Rom == 1)
 	{
-		osd_fread (romfile, &RAM[0x14000], 0x4000);
+		osd_fread (romfile, &ROM[0x14000], 0x4000);
 		/* Mirror this bank into $8000 */
-		memcpy (&RAM[0x10000], &RAM [0x14000], 0x4000);
+		memcpy (&ROM[0x10000], &ROM [0x14000], 0x4000);
 	}
 	else
-		osd_fread (romfile, &RAM[0x10000], 0x4000 * PRG_Rom);
+		osd_fread (romfile, &ROM[0x10000], 0x4000 * PRG_Rom);
 		
 	if (errorlog) fprintf (errorlog, "**\n");
 	if (errorlog) fprintf (errorlog, "Mapper: %d\n", Mapper);
@@ -959,7 +959,7 @@ bad:
 int nes_id_rom (const char *name, const char *gamename)
 {
 	FILE *romfile;
-	char magic[4];
+	unsigned char magic[4];
 	int retval;
 		
 	if (!(romfile = osd_fopen (name, gamename, OSD_FILETYPE_ROM_CART, 0))) return 0;

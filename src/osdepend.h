@@ -1,6 +1,8 @@
 #ifndef OSDEPEND_H
 #define OSDEPEND_H
 
+#define MESS /* MESS, also added OSD_FILETYPE_ROM_CART */
+
 /** suggested by  Scott Trent */
 #ifdef aix
 #include <sys/time.h>
@@ -21,6 +23,7 @@ struct osd_bitmap
 };
 
 
+#define OSD_KEY_NONE		0
 #define OSD_KEY_ESC         1        /* keyboard scan codes */
 #define OSD_KEY_1           2        /* (courtesy of allegro.h) */
 #define OSD_KEY_2           3
@@ -131,6 +134,35 @@ struct osd_bitmap
 
 #define OSD_MAX_KEY         115
 
+/* 116 - 119 */
+/* The following are defined in Allegro */
+/* 120 KEY_RCONTROL */
+/* 121 KEY_ALTGR */
+/* 122 KEY_SLASH2 */
+/* 123 KEY_PAUSE */
+
+/*
+ * ASG 980730: these are pseudo-keys that the os-dependent code can
+ *			   map to whatever they see fit
+ * HJB 980812: added some more names and used higher values because
+ *			   there were some clashes with Allegro's scancodes :(
+ */
+#define OSD_KEY_FAST_EXIT		128
+#define OSD_KEY_RESET_MACHINE	129
+#define OSD_KEY_VOLUME_DOWN 	130
+#define OSD_KEY_VOLUME_UP		131
+#define OSD_KEY_GAMMA_DOWN		132
+#define OSD_KEY_GAMMA_UP		133
+#define OSD_KEY_PAUSE			134
+#define OSD_KEY_UNPAUSE 		135
+#define OSD_KEY_CONFIGURE		136
+#define OSD_KEY_SHOW_GFX		137
+#define OSD_KEY_FRAMESKIP		138
+#define OSD_KEY_THROTTLE		139
+#define OSD_KEY_SHOW_FPS		140
+#define OSD_KEY_SNAPSHOT		141
+
+#define OSD_MAX_PSEUDO			141
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -207,7 +239,6 @@ void osd_exit(void);
 /* routines don't clip at boundaries of the bitmap. */
 struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
 #define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
-/* ASG 980209 struct osd_bitmap *osd_create_bitmap(int width,int height);*/
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
@@ -224,6 +255,7 @@ void osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,u
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+int osd_skip_this_frame(int recommend);
 void osd_update_display(void);
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
@@ -252,10 +284,6 @@ void osd_trak_read(int *deltax,int *deltay);
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
 void osd_analogjoy_read(int *analog_x, int *analog_y);
 
-/* handle events during emulation (menu, volume etc.)
-   return true if the emulation shall exit */
-int osd_handle_event(void);
-
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1
 #define OSD_FILETYPE_SAMPLE 2
@@ -270,7 +298,7 @@ int osd_handle_event(void);
 /* it is opened for read. */
 
 int osd_faccess (const char *filename, int filetype);
-void *osd_fopen (const char *gamename,const char *filename,int filetype,int write);
+void *osd_fopen (const char *gamename,const char *filename,int filetype,int wrmode);
 int osd_fread (void *file,void *buffer,int length);
 int osd_fwrite (void *file,const void *buffer,int length);
 int osd_fseek (void *file,int offset,int whence);
@@ -286,31 +314,55 @@ int osd_get_config_samplerate(int def_samplerate);
 int osd_get_config_samplebits(int def_samplebits);
 int osd_get_config_frameskip(int def_frameskip);
 
-/* floppy disc controller direct access */
+/******************************************************************************
+ *	floppy disc controller direct access
+ *	osd_fdc_init
+ *		initialize the needed hardware & structures;
+ *		returns 0 on success
+ *	osd_fdc_exit
+ *		shut down
+ *	osd_fdc_motors
+ *		start motors for <unit> number (0 = A:, 1 = B:)
+ *	osd_fdc_density
+ *		set type of drive from bios info (1: 360K, 2: 1.2M, 3: 720K, 4: 1.44M)
+ *		set density (0:FM,LO 1:FM,HI 2:MFM,LO 3:MFM,HI) ( FM doesn't work )
+ *		tracks, sectors per track and sector length code are given to
+ *		calculate the appropriate double step and GAP II, GAP III values
+ *	osd_fdc_interrupt
+ *		stop motors and interrupt the current command
+ *	osd_fdc_recal
+ *		recalibrate the current drive and update *track if not NULL
+ *	osd_fdc_seek
+ *		seek to a given track number and update *track if not NULL
+ *	osd_fdc_step
+ *		step into a direction (+1/-1) and update *track if not NULL
+ *	osd_fdc_format
+ *		format track t, head h, spt sectors per track
+ *		sector map at *fmt
+ *	osd_fdc_put_sector
+ *		put a sector from memory *buff to track 'track', side 'side',
+ *		head number 'head', sector number 'sector';
+ *		write deleted data address mark if ddam is non zero
+ *	osd_fdc_get_sector
+ *		read a sector to memory *buff from track 'track', side 'side',
+ *		head number 'head', sector number 'sector'
+ *
+ * NOTE: side and head
+ * the terms are used here in the following way:
+ * side = physical side of the floppy disk
+ * head = logical head number (can be 0 though side 1 is to be accessed)
+ *****************************************************************************/
 
-/* initialize the needed hardware & structures; returns 0 on success */
 int  osd_fdc_init(void);
-/* shut down */
 void osd_fdc_exit(void);
-/* start motors for <unit> number (0 = A:, 1 = B:) and */
-/* set type of drive (0 = 360K, 1 = 720K, 2 = 1.2M, 3 = 1.44M) */
-void osd_fdc_motors(unsigned char unit, unsigned char type);
-/* set single (den == 0) or double (den != 0) density */
-void osd_fdc_density(unsigned char den);
-/* interrupt the current command */
-void osd_fdc_interrupt(void);
-/* recalibrate the current drive and update *track */
-unsigned char osd_fdc_recal(unsigned char * track);
-/* seek to a given track number and update *track */
+void osd_fdc_motors(unsigned char unit);
+void osd_fdc_density(unsigned char unit, unsigned char density, unsigned char tracks, unsigned char spt, unsigned char eot, unsigned char secl);
+void osd_fdc_interrupt(int param);
+unsigned char osd_fdc_recal(unsigned char *track);
 unsigned char osd_fdc_seek(unsigned char t, unsigned char *track);
-/* step into a direction (+1/-1) and update *track */
 unsigned char osd_fdc_step(int dir, unsigned char *track);
-/* format a track t, head h, spt sectors per track. sector map at *fmt */
-unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char * fmt);
-/* put a sector from memory *buff to track t, head h, sector s */
-/* write deleted data address mark if deleted != 0 */
-unsigned char osd_fdc_put_sector(unsigned char t, unsigned char h, unsigned char s, unsigned char * buff, unsigned char deleted);
-/* read a sector to memory *buff from track t, head h, sector s */
-unsigned char osd_fdc_get_sector(unsigned char t, unsigned char h, unsigned char s, unsigned char * buff);
+unsigned char osd_fdc_format(unsigned char t, unsigned char h, unsigned char spt, unsigned char *fmt);
+unsigned char osd_fdc_put_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff, unsigned char ddam);
+unsigned char osd_fdc_get_sector(unsigned char track, unsigned char side, unsigned char head, unsigned char sector, unsigned char *buff);
 
 #endif

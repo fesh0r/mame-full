@@ -322,7 +322,7 @@ static int sample_16bit;
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
+int NESInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -338,7 +338,7 @@ int NESInit(int num, int clk, int rate, int bitsize, int bufsiz, void **buffer )
 	for ( i = 0 ; i < NESNumChips; i++ )
 	{
 		memset(&NESPSG[i],0,sizeof(struct NESPSG));
-		NESSetClock(i,clk,rate);
+		NESSetClock(i,clock,rate);
 		NESPSG[i].Buf = buffer[i];
 		NESSetGain(i,0x00);
 		NESResetChip(i);
@@ -538,17 +538,17 @@ void NESUpdateOne(int chip,int endp)
 
 /*		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;*/
 		output = 0;
-		if (PSG->ActiveTimeA > 0)
+		if ((PSG->ActiveTimeA > 0) && (PSG->Regs[NES_ENABLE] & 0x01))
 		{
 			PSG->ActiveTimeA--;
 			output += vola*0x2aaa;
 		}
-		if (PSG->ActiveTimeB > 0)
+		if ((PSG->ActiveTimeB > 0) && (PSG->Regs[NES_ENABLE] & 0x02))
 		{
 			PSG->ActiveTimeB--;
 			output += volb*0x2aaa;
 		}
-		if (PSG->ActiveTimeC > 0)
+		if ((PSG->ActiveTimeC > 0) && (PSG->Regs[NES_ENABLE] & 0x04))
 		{
 			PSG->ActiveTimeC--;
 			output += volc*0x2aaa;
@@ -580,9 +580,9 @@ void NESUpdate(void)
 
 
 
-void NESSetClock(int n,int clk,int rate)
+void NESSetClock(int n,int clock,int rate)
 {
-	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clk;
+	NESPSG[n].UpdateStep = ((double)STEP * rate * 128) / clock;
 }
 
 

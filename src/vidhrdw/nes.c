@@ -151,20 +151,27 @@ void nes_vh_renderscanline (int scanline, int drawline)
 		int color_byte;
 		int color_bits;
 		int pos;
-		int index;
+		int index1;
+
 		int index2;
 
-		index = tile_index + x;
+		index1 = tile_index + x;
+
 		
 		/* Figure out which byte in the color table to use */
-		pos = ((index & 0x380) >> 4) | ((index & 0x1f) >> 2);
+		pos = ((index1 & 0x380) >> 4) | ((index1 & 0x1f) >> 2);
+
 		/* TODO: this only needs calculating every 4th tile - link it to "x" */
-		color_byte = videoram [(index & 0x3c00) + 0x3c0 + pos];
+		color_byte = videoram [(index1 & 0x3c00) + 0x3c0 + pos];
+
 
 		/* Figure out which bits in the color table to use */
-		color_bits = ((index & 0x40) >> 4) + (index & 0x02);
+		color_bits = ((index1 & 0x40) >> 4) + (index1 & 0x02);
+
 		
-		index2 = nes_vram[(videoram[index] >> 6) | PPU_tile_page] + (videoram[index] & 0x3f);
+
+		index2 = nes_vram[(videoram[index1] >> 6) | PPU_tile_page] + (videoram[index1] & 0x3f);
+
 
 		{
 			const unsigned short *paldata;
@@ -217,7 +224,8 @@ void nes_vh_renderscanline (int scanline, int drawline)
 static void render_sprites (int scanline)
 {
 	int     x,y;
-	int     tile, i, index, page;
+	int 	tile, i, index1, page;
+
 	int     flipx, flipy, color;
 	int     Size;
 
@@ -250,7 +258,8 @@ static void render_sprites (int scanline)
 		}
 		else page = (tile >> 6) | PPU_sprite_page;
 
-		index = nes_vram[page] + (tile & 0x3f);
+		index1 = nes_vram[page] + (tile & 0x3f);
+
 		{
 			int y2;
 			int bank;
@@ -266,14 +275,22 @@ static void render_sprites (int scanline)
 			if (spriteram[i+2] & 0x20)
 				/* Draw sprites with the priority bit set behind the background */
 				drawgfx_line (Machine->scrbitmap, Machine->gfx[bank],
-					index,
+					index1,
+
 					color,
+
 					flipx,y2,
+
 					x,scanline,
+
 					&Machine->drv->visible_area,TRANSPARENCY_THROUGH, PPU_background_color);
+
 			else
+
 				drawgfx_line (Machine->scrbitmap, Machine->gfx[bank],
-					index,
+
+					index1,
+
 					color,
 					flipx,y2,
 					x,scanline,
@@ -284,11 +301,14 @@ static void render_sprites (int scanline)
 
 void nes_vh_sprite_dma_w (int offset, int data)
 {
+	/* TODO: remove this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
 	memcpy (spriteram, &RAM[data * 0x100], 0x100);
 }
 
 /* This routine is called at the start of vblank to refresh the screen */
-void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
+void nes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int page;
 	int offs;
@@ -321,7 +341,8 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer[offs])
 		{
 			int sx,sy;
-			int index, index2, index3;
+			int index1, index2, index3;
+
 			int pos, color;
 			int bank;
 
@@ -338,17 +359,28 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 			color = videoram [(index2 & 0x3c00) + 0x3c0 + pos];
 
 			/* Figure out which bits in the color table to use */
-			index = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+			index1 = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+
 		
+
 			index3 = nes_vram[(videoram[index2] >> 6) | PPU_tile_page] + (videoram[index2] & 0x3f);
+
 			if (use_vram[index3])
+
 				bank = 1;
+
 			else
+
 				bank = 0;
+
 			
+
 			drawgfx(tmpbitmap, Machine->gfx[bank],
+
 				index3,
-				(color >> index) & 0x03,
+
+				(color >> index1) & 0x03,
+
 				0,0,
 				8*sx,8*sy,
 				0,TRANSPARENCY_NONE,0);
@@ -359,7 +391,8 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer2[offs])
 		{
 			int sx,sy;
-			int index, index2, index3;
+			int index1, index2, index3;
+
 			int pos, color;
 			int bank;
 
@@ -376,17 +409,28 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 			color = videoram [(index2 & 0x3c00) + 0x3c0 + pos];
 
 			/* Figure out which bits in the color table to use */
-			index = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+			index1 = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+
 		
+
 			index3 = nes_vram[(videoram[index2] >> 6) | PPU_tile_page] + (videoram[index2] & 0x3f);
+
 			if (use_vram[index3])
+
 				bank = 1;
+
 			else
+
 				bank = 0;
+
 			
+
 			drawgfx(tmpbitmap, Machine->gfx[bank],
+
 				index3,
-				(color >> index) & 0x03,
+
+				(color >> index1) & 0x03,
+
 				0,0,
 				Machine->drv->screen_width + 8*sx,8*sy,
 				0,TRANSPARENCY_NONE,0);
@@ -397,7 +441,8 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer3[offs])
 		{
 			int sx,sy;
-			int index, index2, index3;
+			int index1, index2, index3;
+
 			int pos, color;
 			int bank;
 
@@ -414,17 +459,28 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 			color = videoram [(index2 & 0x3c00) + 0x3c0 + pos];
 
 			/* Figure out which bits in the color table to use */
-			index = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+			index1 = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+
 		
+
 			index3 = nes_vram[(videoram[index2] >> 6) | PPU_tile_page] + (videoram[index2] & 0x3f);
+
 			if (use_vram[index3])
+
 				bank = 1;
+
 			else
+
 				bank = 0;
+
 			
+
 			drawgfx(tmpbitmap, Machine->gfx[bank],
+
 				index3,
-				(color >> index) & 0x03,
+
+				(color >> index1) & 0x03,
+
 				0,0,
 				8*sx, Machine->drv->screen_height + 8*sy,
 				0,TRANSPARENCY_NONE,0);
@@ -435,7 +491,8 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtybuffer4[offs])
 		{
 			int sx,sy;
-			int index, index2, index3;
+			int index1, index2, index3;
+
 			int pos, color;
 			int bank;
 
@@ -452,17 +509,28 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 			color = videoram [(index2 & 0x3c00) + 0x3c0 + pos];
 
 			/* Figure out which bits in the color table to use */
-			index = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+			index1 = ((index2 & 0x40) >> 4) + (index2 & 0x02);
+
 		
+
 			index3 = nes_vram[(videoram[index2] >> 6) | PPU_tile_page] + (videoram[index2] & 0x3f);
+
 			if (use_vram[index3])
+
 				bank = 1;
+
 			else
+
 				bank = 0;
+
 			
+
 			drawgfx(tmpbitmap, Machine->gfx[bank],
+
 				index3,
-				(color >> index) & 0x03,
+
+				(color >> index1) & 0x03,
+
 				0,0,
 				Machine->drv->screen_width + 8*sx, Machine->drv->screen_height + 8*sy,
 				0,TRANSPARENCY_NONE,0);
@@ -498,7 +566,8 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	for (i = 0xfc; i >= 0; i -= 4)        
 	{
-		int y, tile, index;
+		int y, tile, index1;
+
 		
 		y = spriteram[i] + 1; /* TODO: is the +1 hack needed? see if PPU_Scroll_Y of 255 has any effect */
 
@@ -521,29 +590,55 @@ void nes_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else page = (tile >> 6) | PPU_sprite_page;
 
 		/* TODO: add code to draw 8x16 sprites */
-		index = nes_vram[page] + (tile & 0x3f);
+		index1 = nes_vram[page] + (tile & 0x3f);
+
 		{
+
 			int bank;
+
 			
+
 			if (CHR_Rom == 0)
+
 				bank = 1;
+
 			else bank = 0;
 
+
+
 			if (spriteram[i+2] & 0x20)
+
 				/* Draw sprites with the priority bit set behind the background */
+
 				drawgfx (bitmap, Machine->gfx[bank],
-					index,
+
+					index1,
+
 					(spriteram[i+2] & 0x03) + 4,
+
 					spriteram[i+2] & 0x40,spriteram[i+2] & 0x80,
+
 					spriteram[i+3],y,
+
 					&Machine->drv->visible_area,TRANSPARENCY_THROUGH, PPU_background_color);
+
 			else
+
 				drawgfx (bitmap, Machine->gfx[bank],
-					index,
+
+					index1,
+
 					(spriteram[i+2] & 0x03) + 4,
+
 					spriteram[i+2] & 0x40,spriteram[i+2] & 0x80,
+
 					spriteram[i+3],y,
+
 					&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+
 		}
+
 	}
+
 }
+

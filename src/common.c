@@ -14,7 +14,7 @@
 #include "driver.h"
 
 /* These globals are only kept on a machine basis - LBO 042898 */
-extern unsigned int dispensed_tickets;
+unsigned int dispensed_tickets;
 unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 
@@ -46,15 +46,15 @@ INLINE int read_dword(int *address)
 	if ((int)address & 3)
 	{
 #ifdef LSB_FIRST  /* little endian version */
-  		return (    *((unsigned char *)address) +
+  		return (*((unsigned char *)address) +
   			   (*((unsigned char *)address+1) << 8)  +
   		   	   (*((unsigned char *)address+2) << 16) +
-  		           (*((unsigned char *)address+3) << 24) );
+			   (*((unsigned char *)address+3) << 24) );
 #else             /* big endian version */
-  		return (    *((unsigned char *)address+3) +
+  		return (*((unsigned char *)address+3) +
   			   (*((unsigned char *)address+2) << 8)  +
-  		   	   (*((unsigned char *)address+1) << 16) +
-  		           (*((unsigned char *)address)   << 24) );
+			   (*((unsigned char *)address+1) << 16) +
+			   (*((unsigned char *)address)   << 24) );
 #endif
 	}
 	else
@@ -171,11 +171,19 @@ int readroms(void)
 			}
 
 			name = romp->name;
+#ifndef MESS
 			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_ROM,0);
+#else
+			f = osd_fopen(Machine->gamedrv->name,name,OSD_FILETYPE_IMAGE,0);
+#endif
 			if (f == 0 && Machine->gamedrv->clone_of)
 			{
 				/* if the game is a clone, try loading the ROM from the main version */
+#ifndef MESS
 				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_ROM,0);
+#else
+				f = osd_fopen(Machine->gamedrv->clone_of->name,name,OSD_FILETYPE_IMAGE,0);
+#endif
 			}
 
 			if (f == 0)
@@ -309,7 +317,7 @@ int readroms(void)
 					"WARNING: the game might not run correctly.\r"
 					"Expected:%08x  Found:%08x\r",name,expchecksum,sum);
 				#else
-				if (checksumwarning == 0)
+				if (checksumwarning == 0) /* MESS */
 					printf("The checksum of some ROMs does not match that of the ones MESS was tested with.\n"
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
@@ -393,10 +401,7 @@ void printromlist(const struct RomModule *romp,const char *basename)
 	}
 }
 
-int find_driver (const char *gamename)
-{
-	return 1; /* default to Genesis for now */
-}
+
 
 /***************************************************************************
 

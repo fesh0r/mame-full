@@ -6,6 +6,7 @@
 #include "driver.h"
 #include "machine/genesis.h"
 #include "vidhrdw/genesis.h"
+#include "z80/z80.h"
 
 
 int z80running;
@@ -14,21 +15,27 @@ int	port_b_io = 0;
 #define MRAM_SIZE	0x10000
 #define SRAM_SIZE	0x10000
 
+#define HALT		0
+#define RESUME		1
+void genesis_modify_display(int);
 int genesis_sharedram_size = 0x10000;
 int genesis_soundram_size = 0x10000;
 /*unsigned char *genesis_sharedram;*/
 unsigned char genesis_sharedram[0x10000];
-unsigned char genesis_soundram[0x10000];
+unsigned char *genesis_soundram;
 void genesis_init_machine (void)
 {
-	cpu_setbank(1, &genesis_soundram[0]);
+  //	genesis_soundram = malloc(0x10000);
+	/* the following ensures that the Z80 begins without running away from 0 */
+	/* 0x76 is just a forced 'halt' as soon as the CPU is initially run */
+	genesis_soundram[0] = 0x76;
+	genesis_soundram[0x38]=0x76;
+   	cpu_setbank(1, &genesis_soundram[0]);
 	cpu_setbank(2, &genesis_sharedram[0]);
 
-	cpu_halt (1,0);
-	cpu_reset (1);
-	cpu_halt (1,0);
-	
-	z80running = 1;
+	cpu_halt (1,HALT);
+  	
+	z80running = 0;
 	if (errorlog) fprintf (errorlog, "Machine init\n");
 }
 
@@ -36,19 +43,22 @@ void genesis_init_machine (void)
 int genesis_load_rom (void)
 {
 	FILE *romfile;
-	char *tmpROMnew, *tmpROM;
+	unsigned char *tmpROMnew, *tmpROM;
 	int region;
 	unsigned char *rawROM;
 	int relocate;
 
 	int ptr, x;
+
+if (errorlog) fprintf (errorlog, "ROM load/init regsions\n");
+
      
 	if (!(romfile = osd_fopen (Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0))) return 1;
 	/* Allocate memory and set up memory regions */
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 		Machine->memory_region[region] = 0;
    	rawROM = calloc (0x405000, 1);
-	RAM = ROM = rawROM /*+ 512*/;
+	ROM = rawROM /*+ 512*/;
    /*	genesis_sharedram = calloc (MRAM_SIZE, 1);
 	genesis_soundram = calloc (SRAM_SIZE, 1);  */
 	
@@ -93,6 +103,8 @@ int genesis_load_rom (void)
 	}
 
 	Machine->memory_region[0] = ROM;
+	Machine->memory_region[1] = malloc(0x10000);
+	genesis_soundram = Machine->memory_region[1];
 	 
   	
    	for (ptr = 0; ptr < 0x402000; ptr+=2) /* mangle bytes for littleendian machines */
@@ -140,6 +152,12 @@ int genesis_id_rom (const char *name, const char *gamename)
 
 int genesis_interrupt (void)
 {
+static int inter = 0;
+//inter ++;
+if (inter > 223) inter = 0;
+//genesis_modify_display(inter);
+if (inter == 0)
+{
 //static int inter=0;
 //	inter = (inter+1);
 //	if (inter < 20) return -1;
@@ -158,6 +176,8 @@ int genesis_interrupt (void)
 		/*printf("denied\n");*/
 	return -1;
 }
+return -1;
+}
 void genesis_io_w (int offset, int data)
 {
   	data = COMBINE_WORD(0, data);
@@ -165,10 +185,17 @@ void genesis_io_w (int offset, int data)
   	switch (offset)
 		{
 			case 2: /* joystick port a IO bit set */
+			if (errorlog) fprintf(errorlog, "port a set to %x\n", port_a_io);
 				port_a_io = data & 0xff;
 				break;
 			case 4: /* joystick port b IO bit set */
 				port_b_io = data & 0xff;
+				break;
+			case 8:
+			 if (errorlog) fprintf(errorlog, "port a dir set to %x\n", data & 0xff);
+
+				break;
+			case 0x0a:
 				break;
  		}
 }
@@ -179,7 +206,7 @@ int genesis_io_r (int offset)
 
    //	fprintf(errorlog, "inputport 3 is %d\n", readinputport(3));
 
-	switch (readinputport(3))
+	switch (readinputport(4))
 
 	{
 
@@ -238,24 +265,27 @@ int genesis_io_r (int offset)
 	switch (offset)
 		{
 			case 0:
-  				if (errorlog) fprintf(errorlog,"coo!\n");
+  				// if (errorlog) fprintf(errorlog,"coo!\n");
   				return returnval; /* was just NTSC, overseas (USA) no FDD, now auto */
 				break;
 			case 2: /* joystick port a */
 				if (port_a_io == 0x00)
-					return input_port_1_r(0);
+					return readinputport(1);
 				else
-					return input_port_0_r(0);
+					return readinputport(0);
 				break;
 			case 4: /* joystick port b */
-				return 0;
+				if (port_b_io == 0x00)
+					return readinputport(3);
+				else
+					return readinputport(2);
 				break;
  		}
  	return 0x00;
 }
 int genesis_ctrl_r (int offset)
 {
-	int returnval;
+	//int returnval;
 	if (errorlog) fprintf(errorlog, "genesis_ctrl_r %x\n", offset);
 	switch (offset)
 		{
@@ -264,8 +294,9 @@ int genesis_ctrl_r (int offset)
 				break;
 			case 0x100: /* return Z80 CPU Function Stop Accessible or not */
 				if (errorlog) fprintf(errorlog, "Returning z80 state\n");
-				returnval = rand();
-				return returnval;/*(z80running ? 0x00 : 0x00);*/ /* this is the MSB */
+				return (z80running ? 0x0100 : 0x0);
+				/* docs comflict here, page 91 says 0 == z80 has access */
+				/* page 76 says 0 means you can access the space */
 				break;
 			case 0x200: /* Z80 CPU Reset - write only */
 				return 0xffff;
@@ -286,30 +317,39 @@ void genesis_ctrl_w (int offset, int data)
 				return;
 				break;
 			case 0x100: /* Z80 BusReq */
-				if (data == 0x100)/* dealing with MSB again */
+				if (data == 0x100)
 					{
-					   	z80running = 0;
-						cpu_halt(1,0);
-						if (errorlog) fprintf(errorlog, "z80 stopped\n");
+					  	z80running = 0;
+					 	cpu_halt(1,HALT); /* halt Z80 */
+						if (errorlog) fprintf(errorlog, "z80 stopped by 68k BusReq\n");
 					}
 					else
 					{
-						z80running = 1;
-						cpu_halt(1,1);  
-//						if (errorlog) fprintf(errorlog, "z80 started, RAM base = %x\n", &genesis_s_ram[0]);
+					  	z80running = 1;
+						cpu_setbank(1, &genesis_soundram[0]);
+
+					 	cpu_halt(1,RESUME);  
+						if (errorlog) fprintf(errorlog, "z80 started, BusReq ends\n");
 					}
 				return;
 				break;
 			case 0x200: /* Z80 CPU Reset */
-				if (data == 0x100)
+				if (data == 0x00)
 				{ 
-			      /* 	 cpu_halt(1,0);
-				  cpu_reset(1);
-				  cpu_halt(1,0); */
-				  if (errorlog) fprintf(errorlog, "z80 reset, ram is %x\n", genesis_sharedram[0]);
-				  z80running = 0;
-				  return;
+			       	cpu_halt(1,HALT);
+					cpu_reset(1);
+			   
+			   	  	cpu_halt(1,HALT); 
+				  	if (errorlog) fprintf(errorlog, "z80 reset, ram is %p\n", &genesis_soundram[0]);
+			   	  	z80running = 0;
+				  	return;
 				}
+				else
+				{
+				   if (errorlog) fprintf(errorlog, "z80 out of reset\n");
+				}
+				return;	 
+					
 				break;
 		}
 }

@@ -6,6 +6,8 @@
   Functions needed to interface the CPU emulator with the other parts of
   the emulation.
 
+  MESS changes
+  . added code to call (Machine->drv->stop_machine)()
 ***************************************************************************/
 
 #include "driver.h"
@@ -19,6 +21,7 @@
 #include "M68000/M68000.h"
 #include "S2650/s2650.h"
 #include "T11/t11.h"
+#include "pdp1/pdp1.h"
 #include "I86/I86intrf.h"
 #include "timer.h"
 
@@ -98,7 +101,7 @@ static double cpu_computerate (int value);
 static void cpu_inittimers (void);
 
 
-
+#if 0
 /* interfaces to the 6502 so that it looks like the other CPUs */
 static void m6502_SetRegs(M6502 *Regs);
 static void m6502_GetRegs(M6502 *Regs);
@@ -107,10 +110,11 @@ static void m6502_Reset(void);
 static int m6502_Execute(int cycles);
 static void m6502_Cause_Interrupt(int type);
 static void m6502_Clear_Pending_Interrupts(void);
-static int dummy_icount;
-
-/* dummy interfaces for non-CPUs */
 static M6502 Current6502;
+#endif
+
+static int dummy_icount;
+/* dummy interfaces for non-CPUs */
 static void Dummy_SetRegs(void *Regs);
 static void Dummy_GetRegs(void *Regs);
 static unsigned Dummy_GetPC(void);
@@ -183,6 +187,7 @@ struct cpu_interface cpuintf[] =
 		16,                                 /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16    /* Address bits, for the memory system */
 	},
+#if 0
 	/* #define CPU_M6502  3 */
 	{
 		m6502_Reset,                       /* Reset CPU */
@@ -193,13 +198,32 @@ struct cpu_interface cpuintf[] =
 		m6502_Cause_Interrupt,             /* Generate an interrupt */
 		m6502_Clear_Pending_Interrupts,    /* Clear pending interrupts */
 		&Current6502.ICount,               /* Pointer to the instruction count */
-		INT_NONE,INT_IRQ,INT_NMI,          /* Interrupt types: none, IRQ, NMI */
+		M6502_INT_NONE,M6502_INT_IRQ,M6502_INT_NMI, /* Interrupt types: none, IRQ, NMI */
 		cpu_readmem16,                     /* Memory read */
 		cpu_writemem16,                    /* Memory write */
 		cpu_setOPbase16,                   /* Update CPU opcode base */
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
+#else
+	/* #define CPU_M6502  3 */
+	{
+		M6502_Reset,                       /* Reset CPU */
+		M6502_Execute,                     /* Execute a number of cycles */
+		(void (*)(void *))M6502_SetRegs,   /* Set the contents of the registers */
+		(void (*)(void *))M6502_GetRegs,   /* Get the contents of the registers */
+		M6502_GetPC,                       /* Return the current PC */
+		M6502_Cause_Interrupt,             /* Generate an interrupt */
+		M6502_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+		&M6502_ICount,                     /* Pointer to the instruction count */
+		M6502_INT_NONE,M6502_INT_IRQ,M6502_INT_NMI, /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                     /* Memory read */
+		cpu_writemem16,                    /* Memory write */
+		cpu_setOPbase16,                   /* Update CPU opcode base */
+		16,                                /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
+	},
+#endif
 	/* #define CPU_I86    4 */
 	{
 		i86_Reset,                         /* Reset CPU */
@@ -335,6 +359,23 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,                    /* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+	},
+	/* #define CPU_PDP1  12 */
+	{
+		pdp1_reset,                        /* Reset CPU */
+		pdp1_execute,                      /* Execute a number of cycles */
+		(void (*)(void *))pdp1_SetRegs,    /* Set the contents of the registers */
+		(void (*)(void *))pdp1_GetRegs,    /* Get the contents of the registers */
+		pdp1_GetPC,                        /* Return the current PC */
+		pdp1_Cause_Interrupt,              /* Generate an interrupt */
+		pdp1_Clear_Pending_Interrupts,     /* Clear pending interrupts */
+		&pdp1_ICount,                      /* Pointer to the instruction count */
+		0,-1,-1,                           /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                     /* Memory read */
+		cpu_writemem16,                    /* Memory write */
+		cpu_setOPbase16,                   /* Update CPU opcode base */
+		16,                                /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	}
 };
 
@@ -466,7 +507,12 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		int cpunum;
 
 		/* was machine_reset() called? */
-		if (have_to_reset) goto reset;
+		if (have_to_reset)
+		{
+			/* MESS */
+			if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
+			goto reset;
+		}
 
 		/* ask the timer system to schedule */
 		if (timer_schedule_cpu (&cpunum, &running))
@@ -500,6 +546,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 	/* write hi scores to disk - No scores saving if cheat */
 	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
 		(*Machine->gamedrv->hiscore_save)();
+
+	/* MESS */
+	if (Machine->drv->stop_machine) (*Machine->drv->stop_machine)();
 }
 
 
@@ -1411,7 +1460,7 @@ void Z80_Retn (void)
 }
 
 
-
+#if 0
 /* interfaces to the 6502 so that it looks like the other CPUs */
 static void m6502_SetRegs(M6502 *Regs)
 {
@@ -1441,7 +1490,7 @@ static void m6502_Clear_Pending_Interrupts(void)
 {
 	M6502_Clear_Pending_Interrupts (&Current6502);
 }
-
+#endif
 
 /* dummy interfaces for non-CPUs */
 static void Dummy_SetRegs(void *Regs) { }

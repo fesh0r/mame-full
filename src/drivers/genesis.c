@@ -33,6 +33,7 @@ $6000         : bank register
 $7f11         : psg 76489
 $8000 - $ffff : shared RAM w/68k
 
+											   
 
 ***************************************************************************/
 #ifndef FALSE
@@ -47,37 +48,21 @@ $8000 - $ffff : shared RAM w/68k
 
 #include "machine/genesis.h"
 #include "vidhrdw/genesis.h"
+#include "sndhrdw/psgintf.h"
 
 #define ARMLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 
 extern int data_width;
 
-//char palmode 				= NTSC;
-//char writefifo 				= FIFO_EMPTY;
+int deb = 0;
 
-int z80_68000_latch			= 0;
-int	z80_latch_bitcount		= 0;
+
+unsigned int	z80_68000_latch			= 0;
+unsigned int	z80_latch_bitcount		= 0;
 
 unsigned char cartridge_ram[0x1000]; /* any cartridge RAM */
 
-void genesis_paletteram_w(int offset,int data);
-int genesis_paletteram_r(int offset);
-void genesis_spriteram_w(int offset,int data);
-int genesis_spriteram_r(int offset);
 void genesis_videoram1_w(int offset,int data);
-int genesis_videoram1_r(int offset);
-void genesis_videoram2_w(int offset,int data);
-int genesis_videoram2_r(int offset);
-void genesis_videoram3_w(int offset,int data);
-int genesis_videoram3_r(int offset);
-void genesis_videoram4_w(int offset,int data);
-int genesis_videoram4_r(int offset);
-
-void genesis_scrollY_w(int offset,int data);
-void genesis_scrollX_w(int offset,int data);
-
-void genesis_s_ram_w(int offset,int data);
-int genesis_s_ram_r(int offset);
 
 /* machine/genesis.c */
 void genesis_init_machine (void);
@@ -91,28 +76,22 @@ void genesis_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 int genesis_s_interrupt(void);
 
-void genesis_sound_port_w(int offset,int data);
-int genesis_sound_port_r(int offset);
-void genesis_sound_comm_w(int offset,int data);
-int genesis_sound_comm_r(int offset);
+void YM2612_68000_w(int offset, int data);
+int YM2612_68000_r(int offset);
 
-int genesis_rYMport(int offset);
-int genesis_rYMdata(int offset);
-void genesis_wYMport(int offset,int data);
-void genesis_wYMdata(int offset,int data);
 
-int genesis_r_rd_a000(int offset);
-int genesis_r_rd_a001(int offset);
-void genesis_r_wr_a000(int offset,int data);
-void genesis_r_wr_a001(int offset,int data);
+int YM2612_0_r(int address);
+int YM2612_1_r(int address);
+int YM2612_2_r(int address);
+int YM2612_3_r(int address);
 
-/*void osd_ym2151_update(void); */
+void YM2612_0_w(int address, int data);
+void YM2612_1_w(int address, int data);
+void YM2612_2_w(int address, int data);
+void YM2612_3_w(int address, int data);
 
-void genesis_r_wr_b000(int offset,int data);
-void genesis_r_wr_c000(int offset,int data);
-void genesis_r_wr_d000(int offset,int data);
-void genesis_ym2612_w (int offset, int data);
-int genesis_ym2612_r (int offset);
+
+int z80running;
 
 #if LSB_FIRST
 	#define BYTE_XOR(a) ((a) ^ 1)
@@ -125,7 +104,7 @@ int genesis_ym2612_r (int offset);
 
 int genesis_vdp_76489_r(int offset)
 {
-  return -1;
+  return 0;
 }
 void genesis_vdp_76489_w(int offset, int data)
 {
@@ -135,31 +114,36 @@ void genesis_vdp_76489_w(int offset, int data)
 void genesis_ramlatch_w(int offset, int data) /* note value will be meaningless unless all bits are correctly set in */
 {
   	if (offset !=0 ) return;
+	if (errorlog && !z80running) fprintf(errorlog, "undead Z80 latch write!\n");
+  //	cpu_halt(0,0);
 	if (z80_latch_bitcount == 0) z80_68000_latch = 0;
 /*	if (errorlog) fprintf(errorlog, "latch update\n");*/
-	z80_68000_latch |= ((data & 0x01) << (15+z80_latch_bitcount));
+  	z80_68000_latch = z80_68000_latch | ((( ((unsigned char)data) & 0x01) << (15+z80_latch_bitcount)));
+ 	if (errorlog) fprintf(errorlog, "value %x written to latch\n", data);
 	z80_latch_bitcount++;
-	if (z80_latch_bitcount > 8)
+	if (z80_latch_bitcount == 9)
 	{
+	   //	cpu_halt(0,1);
 		z80_latch_bitcount = 0;
 		if (errorlog) fprintf (errorlog, "latch set, value %x\n", z80_68000_latch);
 	}
 }
 void genesis_s_68000_ram_w (int offset, int data)
 {
-	int address = (z80_68000_latch) + offset;
-//	if (address > 0xff0000) *(&mainram[address & 0xffff]) = data;
+	unsigned int address = (z80_68000_latch) + (offset & 0x7fff);
+	if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 write!\n");
+	if (z80_latch_bitcount != 0 && errorlog) fprintf(errorlog, "writing whilst latch being set!\n");
 
- //	if (address > 0xff0000) genesis_sharedram[offset] = data;
+  	if (address > 0xff0000) genesis_sharedram[BYTE_XOR(offset)] = data;
 	if (errorlog) fprintf (errorlog, "z80 poke to address %x\n", address);
 }
 int genesis_s_68000_ram_r (int offset)
 {
-	int address = (z80_68000_latch) + offset;
-/*  return -1;*/
-//	if (address < 0x400000)
-//		return Machine->memory_region[0][(z80_68000_latch) + offset];
-//	else if (address > 0xff0000) return *(&mainram[address & 0xffff]);
+	int address = (z80_68000_latch) + (offset & 0x7fff);
+
+if (errorlog && !z80running) fprintf(errorlog, "undead Z80->68000 read!\n");
+
+	if (z80_latch_bitcount != 0 && errorlog) fprintf(errorlog, "reading whilst latch being set!\n");
 
 	if (errorlog) fprintf (errorlog, "z80 read from address %x\n", address);
 
@@ -173,41 +157,55 @@ int genesis_s_68000_ram_r (int offset)
 
 void genesis_soundram_w (int offset,int data)
 {
-	genesis_soundram[offset] = data;
+	if (z80running && errorlog) fprintf(errorlog, "Z80 written whilst running!\n");
+	if (errorlog) fprintf(errorlog,"68000->z80 sound write, %x to %x\n", data, offset);
+
+	if (LOWER_BYTE_ACCESS(data)) genesis_soundram[offset+1] = data & 0xff;
+	if (UPPER_BYTE_ACCESS(data)) genesis_soundram[offset] = (data >> 8) & 0xff;
 }
 
 int genesis_soundram_r (int offset)
 {
-	return genesis_sharedram[offset];
+	if (z80running && errorlog) fprintf(errorlog, "Z80 read whilst running!\n");
+	if (errorlog) fprintf(errorlog, "soundram_r returning %x\n",(genesis_soundram[offset] << 8) + genesis_soundram[offset+1]); 
+	return (genesis_soundram[offset] << 8) + genesis_soundram[offset+1];
+
 }
 
 void genesis_sharedram_w (int offset,int data)
 {
-	genesis_soundram[offset] = data;
+   	COMBINE_WORD_MEM(&genesis_sharedram[offset], data);
 }
 
 int genesis_sharedram_r (int offset)
 {
-	return genesis_sharedram[offset];
+	return READ_WORD(&genesis_sharedram[offset]);
 }
+
+
+
+
 
 
 static struct MemoryReadAddress genesis_readmem[] =
 {
 	{ 0x000000, 0x3fffff, MRA_ROM },
-	{ 0xff0000, 0xffffff, MRA_BANK2, (unsigned char **)&genesis_sharedram[0], (int *)&genesis_sharedram_size}, /* RAM */
+	{ 0xff0000, 0xffffff, MRA_BANK2}, /* RAM */
 	{ 0xc00014, 0xfeffff, MRA_NOP },
 
    	{ 0xc00000, 0xc00003, genesis_vdp_data_r },
 	{ 0xc00004, 0xc00007, genesis_vdp_ctrl_r },
 	{ 0xc00008, 0xc0000b, genesis_vdp_hv_r },
-	{ 0xc00010, 0xc00013, MRA_NOP /*genesis_vdp_76489_r*/ },
+	{ 0xc00010, 0xc00013, MRA_NOP /*would be genesis_vdp_76489_r*/ },
 	{ 0xa11204, 0xbfffff, MRA_NOP },
 
 	{ 0xa11000, 0xa11203, genesis_ctrl_r },
-	{ 0xa10000, 0xa1001f, genesis_io_r},
-	{ 0xa00000, 0xa03fff, genesis_soundram_r },
-//	{ 0xa04000, 0xa05fff, MRA_NOP },
+	{ 0xa10000, 0xa1001f, genesis_io_r },
+	{ 0xa00000, 0xa01fff, genesis_soundram_r },
+  	{ 0xa04000, 0xa04003, YM2612_68000_r },
+
+
+
 /*	{ 0x200000, 0x200fff, cartridge_ram_r},*/
 	{ -1 }  /* end of table */
 };
@@ -215,7 +213,7 @@ static struct MemoryReadAddress genesis_readmem[] =
 
 static struct MemoryWriteAddress genesis_writemem[] =
 {
-	{ 0xff0000, 0xffffff, MWA_BANK2/*genesis_sharedram_w*/ },
+	{ 0xff0000, 0xffffff, MWA_BANK2, /*genesis_sharedram_w*/ },
    	{ 0xd00000, 0xd03fff, genesis_videoram1_w, &videoram, &videoram_size }, /*this is just a fake */
 	{ 0xc00014, 0xcfffff, MWA_NOP },
 	{ 0xc00000, 0xc00003, genesis_vdp_data_w },
@@ -225,10 +223,10 @@ static struct MemoryWriteAddress genesis_writemem[] =
 	{ 0xa11204, 0xbfffff, MWA_NOP },
 	{ 0xa11000, 0xa11203, genesis_ctrl_w },
 	{ 0xa10000, 0xa1001f, genesis_io_w},
-	{ 0xa07010, 0xa07013, genesis_vdp_76489_w },
+	{ 0xa07f10, 0xa07f13, genesis_vdp_76489_w },
 	{ 0xa06000, 0xa06003, genesis_ramlatch_w },
-	{ 0xa00000, 0xa03fff, genesis_soundram_w },
-//	{ 0xa04000, 0xa05fff, MWA_NOP },
+	{ 0xa00000, 0xa01fff, genesis_soundram_w },
+	{ 0xa04000, 0xa04003, YM2612_68000_w },  
 /*	{ 0x200000, 0x200fff, cartridge_ram_w },	*/
 	{ 0x000000, 0x3fffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -239,16 +237,24 @@ static struct MemoryWriteAddress genesis_writemem[] =
 
 static struct MemoryReadAddress genesis_s_readmem[] =
 {
- 	{ 0x0000, 0x3fff, MRA_BANK1, (unsigned char **)&genesis_soundram[0], (int *)&genesis_soundram_size/*genesis_soundram_r*/ },
-  //	{ 0x4000, 0x7fff, genesis_ym2612_r },
+ 	{ 0x0000, 0x1fff, MRA_BANK1, /*&genesis_soundram*//*genesis_soundram_r*/ },
+    { 0x4000, 0x4000, YM2612_0_r },
+	{ 0x4001, 0x4001, YM2612_1_r },
+	{ 0x4002, 0x4002, YM2612_2_r },
+	{ 0x4003, 0x4003, YM2612_3_r },
 	{ 0x8000, 0xffff, genesis_s_68000_ram_r },
+	{ 0x7f11, 0x7f11, genesis_vdp_76489_r },
  	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress genesis_s_writemem[] =
 {
-	{ 0x0000, 0x3fff, MWA_BANK1 /*genesis_soundram_w*/ },
-   //	{ 0x4000, 0x5fff, genesis_ym2612_w },
+	{ 0x0000, 0x1fff, MWA_BANK1 /*genesis_soundram_w*/ },
+  	{ 0x4000, 0x4000, YM2612_0_w },
+	{ 0x4001, 0x4001, YM2612_1_w },
+	{ 0x4002, 0x4002, YM2612_2_w },
+	{ 0x4003, 0x4003, YM2612_3_w },
+
 	{ 0x6000, 0x6000, genesis_ramlatch_w },
    	{ 0x7f11, 0x7f11, SN76496_0_w },  
    	{ 0x8000, 0xffff, genesis_s_68000_ram_w }, 
@@ -257,7 +263,6 @@ static struct MemoryWriteAddress genesis_s_writemem[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0, 0, interrupt_vector_w },
 	{ 0x7f, 0x7f, SN76496_0_w },
 	{ -1 }	/* end of table */
 };
@@ -265,31 +270,37 @@ static struct IOWritePort writeport[] =
 
 
 INPUT_PORTS_START( genesis_input_ports )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_START	/* IN0 player 1 controller */
+	PORT_BIT(	0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT(	0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT(	0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT(	0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2,	"Player 1 B",		OSD_KEY_X,		IP_JOY_NONE,0 )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3,	"Player 1 C",		OSD_KEY_C,		IP_JOY_NONE,0 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )	
+	PORT_START	/* IN1 playter 1 controller, part 2 */
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1,	"Player 1 A",		OSD_KEY_Z,		IP_JOY_NONE,0 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+ 	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1,	"Player 1 Start",	OSD_KEY_LSHIFT, IP_JOY_NONE,0 )
+  
+	PORT_START	/* IN2 player 2 controller */
+   
+	PORT_BIT(	0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	| IPF_PLAYER2 )
+	PORT_BIT(	0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	| IPF_PLAYER2 )
+	PORT_BIT(	0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT	| IPF_PLAYER2 )
+	PORT_BIT(	0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT	| IPF_PLAYER2 )
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON2		| IPF_PLAYER2,	"Player 2 B",		OSD_KEY_O,		IP_JOY_NONE,0 )
+	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_BUTTON3		| IPF_PLAYER2,	"Player 2 C",		OSD_KEY_P,		IP_JOY_NONE,0 )
+
+	PORT_START	/* IN3 player 2 controller, part 2 */
+	PORT_BITX(	0x10, IP_ACTIVE_LOW, IPT_BUTTON1		| IPF_PLAYER2,	"Player 2 A",		OSD_KEY_I,		IP_JOY_NONE,0 )
+
+ 	PORT_BITX(	0x20, IP_ACTIVE_LOW, IPT_START1			| IPF_PLAYER2,	"Player 2 Start",	OSD_KEY_U,		IP_JOY_NONE,0 )
 
 
 
-	PORT_START	/* IN3 - fake */
+
+	PORT_START	/* IN4 - finternal switches, and fake 'Auto' */
 
 	PORT_DIPNAME( 0x03, 0x00, "Country", IP_KEY_NONE )
 
@@ -304,33 +315,24 @@ INPUT_PORTS_END
 
 											  
 
-/* genesis doesn't have a color PROM, it uses a RAM to generate colors */
+/* Genesis doesn't have a color PROM, it uses VDP 'CRAM' to generate colours */
 /* and change them during the game. */
 
 static struct SN76496interface sn76496_interface =
 {
 	1,	/* 1 chip */
-	34318180/8,	/*  1.7897725 Mhz */
+	53693100/11,
 	{ 255*2, 255*2 }
 };
 
-static struct YM2151interface ym2151_interface =
+static struct YM2612interface ym2612_interface =
 {
 	1,			/* 1 chip */
-	7580000,	/* 3.58 MHZ ? */
-	{ 255 },
-	{ 0 }
+	53693100 / 8,
+	{ 0x7fffffff,0x7fffffff },
+	{ 0 },
 };
 
-#if 0
-static struct DACinterface DAC_interface =
-{
-	1,
-	441000,
-	{255,255 },
-	{  1,  1 }
-};
-#endif
 
 static struct MachineDriver machine_driver =
 {
@@ -338,23 +340,23 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 8 Mhz */
+			53693100 /7 ,	/* 8 Mhz..ish */
 			0, /* number of memory regions */
 			genesis_readmem,genesis_writemem,0,0, /* zeros are ioport read/write */
-			genesis_interrupt,1	/* 1 interrupt per frame */
+			genesis_interrupt,1	/* up to 224 interrupts per frame */
 		},
 	 	{
 	 		CPU_Z80 | CPU_AUDIO_CPU,
-	 		3500000,	/* 4 Mhz */
-	 		2,
+	 		53693100 / 16, /* 4 Mhz..ish */
+	 		1,
 	 		genesis_s_readmem,genesis_s_writemem,0,writeport,
 	 		genesis_s_interrupt,1
 	 	}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	80,	/* 80 CPU slices per frame */
 	genesis_init_machine,
-
+	0,
 	/* video hardware */  
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	0,/*gfxdecodeinfo,*/
@@ -368,23 +370,15 @@ static struct MachineDriver machine_driver =
 	genesis_vh_screenrefresh,
 
 	/* sound hardware */
-	/* sound hardware */
 	0,0,0,0,
 	{
-//		{
-// 			SOUND_YM2151_ALT,
-//			SOUND_YM2151,
-//			&ym2151_interface
-//		},
+		{
+ 			SOUND_YM2612,
+			&ym2612_interface
+		},
 		{
 			SOUND_SN76496,
 			&sn76496_interface
-#if 0
-		},
-		{
-			SOUND_DAC,
-			&DAC_interface
-#endif
 		}
 	}
 };
@@ -395,21 +389,20 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
-#if 0
-ROM_START( genesis_rom )
-	ROM_REGION( 0x400000 )
-
-	ROM_REGION( 0x10000 ) /* Z80 memory */
-ROM_END
-#endif
 
 struct GameDriver genesis_driver =
 {
-	"Sega Megadrive/Genesis",
+	__FILE__,
+	0,
 	"genesis",
+	"Sega Megadrive/Genesis",
+	"19??",
+	"Sega",
 	"Gareth S. Long\n\n\nIn Memory Of Haruki Ikeda",
+	0,
 	&machine_driver,
 
+	0,
 	genesis_load_rom,
 	genesis_id_rom,
 	1,	/* number of ROM slots */
@@ -424,5 +417,6 @@ struct GameDriver genesis_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
+	0, 0,
 	0, 0
 };

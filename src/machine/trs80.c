@@ -60,7 +60,7 @@ static  void    tape_put_close(void);
 
 void    trs80_init_machine(void)
 {
-        wd179x_init(1);
+		wd179x_init(1);
         first_fdc_access = 1;
 }
 
@@ -153,7 +153,7 @@ int     i;
                         Machine->memory_region[0][4] = *s++;
                         size -= 3;
                         /* disable floppy controller */
-                        wd179x_init(0);
+						wd179x_init(0);
                         break;
                 default:        /* ignore other data */
                         size--;
@@ -166,66 +166,9 @@ int     i;
 int     trs80_rom_load(void)
 {
 int     result  = 0;
-static  char    filename[200];
-void    *file;
-byte    *rom, *fnt;
-int     size;
 void    *cmd;
-        /* load the bios ROM */
 
-        rom = calloc(0x10000, 1);
-        if (!rom)
-                return 1;
-
-        sprintf(filename, "trs80.rom");
-        file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
-        if (!file)
-        {
-                if (errorlog) fprintf(errorlog,"TRS80.ROM not found!\n");
-                free(rom);
-                return 2;
-        }
-
-        size = osd_fread(file, rom, 0x03000);
-        osd_fclose(file);
-
-        if (size < 0x03000)
-        {
-                free(rom);
-                return 3;
-        }
-
-        RAM = ROM = Machine->memory_region[0] = rom;
-
-        /* load the character generator */
-        fnt = malloc(TRS80_FONT_H * 256);
-        if (!fnt)
-        {
-                free(rom);
-                return 4;
-        }
-
-        sprintf(filename, "trs80.fnt");
-        file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM_CART, 0);
-        if (!file)
-        {
-                if (errorlog) fprintf(errorlog,"TRS80.FNT not found!\n");
-                free(fnt);
-                free(rom);
-                return 5;
-        }
-
-        size = osd_fread(file, fnt, TRS80_FONT_H * 256);
-        osd_fclose(file);
-
-        if (size < TRS80_FONT_H * 256)
-        {
-                free(rom);
-                return 6;
-        }
-
-        Machine->memory_region[1] = fnt;
-
+        /* load a cmd file */
         if (rom_name[0])
         {
                 cmd = osd_fopen(Machine->gamedrv->name, rom_name[0], OSD_FILETYPE_ROM_CART, 0);
@@ -241,7 +184,8 @@ void    *cmd;
 
 int     trs80_rom_id(const char *name, const char *gamename)
 {
-        return 1;
+	/* This driver cannot ID ROMs */
+	return 0;
 }
 
 
@@ -347,6 +291,9 @@ byte    value;
 
 static  void    tape_get_open(void)
 {
+	/* TODO: remove this */
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
         if (!tape_get_file)
         {
         char filename[12+1];
@@ -524,53 +471,52 @@ int     trs80_port_xx_r(int offset)
  *
  *************************************/
 
-int     trs80_timer_interrupt(void)
+int trs80_timer_interrupt(void)
 {
-        if ((irq_status & IRQ_TIMER) == 0)
-        {
-                irq_status |= IRQ_TIMER;
-                cpu_cause_interrupt (0, 0);
-                return 0;
-        }
-        return ignore_interrupt ();
+	if ((irq_status & IRQ_TIMER) == 0)
+	{
+		irq_status |= IRQ_TIMER;
+		cpu_cause_interrupt (0, 0);
+		return 0;
+	}
+	return ignore_interrupt ();
 }
 
-int     trs80_fdc_interrupt(void)
+int trs80_fdc_interrupt(void)
 {
-        if ((irq_status & IRQ_FDC) == 0)
-        {
-                irq_status |= IRQ_FDC;
-                cpu_cause_interrupt (0, 0);
-                return 0;
-        }
-        return ignore_interrupt ();
+	if ((irq_status & IRQ_FDC) == 0)
+	{
+		irq_status |= IRQ_FDC;
+		cpu_cause_interrupt (0, 0);
+		return 0;
+	}
+	return ignore_interrupt ();
 }
 
-void    trs80_fdc_callback(int event)
+void trs80_fdc_callback(int event)
 {
-        switch (event)
-        {
-                case WD179X_IRQ_CLR:
-                        irq_status &= ~IRQ_FDC;
-                        break;
-                case WD179X_IRQ_SET:
-                        trs80_fdc_interrupt();
-                        break;
-        }
+	switch (event)
+	{
+		case WD179X_IRQ_CLR:
+			irq_status &= ~IRQ_FDC;
+			break;
+		case WD179X_IRQ_SET:
+			trs80_fdc_interrupt();
+			break;
+	}
 }
 
-int     trs80_frame_interrupt (void)
+int trs80_frame_interrupt (void)
 {
-        if (motor_count)
-                if (!--motor_count)
-                        wd179x_stop_drive();
-
-        return 0;
+    if (motor_count)
+		if (!--motor_count)
+			wd179x_stop_drive();
+	return 0;
 }
 
 void    trs80_nmi_generate (int param)
 {
-        cpu_cause_interrupt (0, Z80_NMI_INT);
+	cpu_cause_interrupt (0, Z80_NMI_INT);
 }
 /*************************************
  *                                   *
@@ -580,13 +526,13 @@ void    trs80_nmi_generate (int param)
 
 int     trs80_printer_r(int offset)
 {
-        /* nothing yet :( */
-        return 0;
+	/* nothing yet :( */
+	return 0;
 }
 
 void    trs80_printer_w(int offset, int data)
 {
-        /* nothing yet :( */
+	/* nothing yet :( */
 }
 
 int     trs80_status_r(int offset)
@@ -598,49 +544,49 @@ int     trs80_status_r(int offset)
 
 int     trs80_track_r(int offset)
 {
-        return wd179x_track_r(offset);
+	return wd179x_track_r(offset);
 }
 
 int     trs80_sector_r(int offset)
 {
-        return wd179x_sector_r(offset);
+	return wd179x_sector_r(offset);
 }
 
 int     trs80_data_r(int offset)
 {
-        return wd179x_data_r(offset);
+	return wd179x_data_r(offset);
 }
 
 void    trs80_command_w(int offset, int data)
 {
-        wd179x_command_w(offset, data);
+	wd179x_command_w(offset, data);
 }
 
 void    trs80_track_w(int offset, int data)
 {
-        wd179x_track_w(offset, data);
+	wd179x_track_w(offset, data);
 }
 
 void    trs80_sector_w(int offset, int data)
 {
-        wd179x_sector_w(offset, data);
+	wd179x_sector_w(offset, data);
 }
 
 void    trs80_data_w(int offset, int data)
 {
-        wd179x_data_w(offset, data);
+	wd179x_data_w(offset, data);
 }
 
 int     trs80_irq_status_r(int offset)
 {
-int     result = irq_status;
-        irq_status &= ~(IRQ_TIMER | IRQ_FDC);
-        return result;
+int result = irq_status;
+	irq_status &= ~(IRQ_TIMER | IRQ_FDC);
+	return result;
 }
 
 void    trs80_irq_mask_w(int offset, int data)
 {
-//      irq_mask = data;
+//	irq_mask = data;
 }
 
 void    trs80_motor_w(int offset, int data)
@@ -650,92 +596,105 @@ byte    drive = 255;
 int     n;
 void    *file0, *file1;
 
-        if (errorlog) fprintf(errorlog, "trs80 motor_w $%02X\n", data);
+	if (errorlog) fprintf(errorlog, "trs80 motor_w $%02X\n", data);
 
-        switch (data)
-        {
-                case 1:
-                        drive = 0;
-                        head[drive] = 0;
-                        break;
-                case 2:
-                        drive = 1;
-                        head[drive] = 0;
-                        break;
-                case 4:
-                        drive = 2;
-                        head[drive] = 0;
-                        break;
-                case 8:
-                        drive = 3;
-                        head[drive] = 0;
-                        break;
-                case 9:
-                        drive = 0;
-                        head[drive] = 1;
-                        break;
-                case 10:
-                        drive = 1;
-                        head[drive] = 1;
-                        break;
-                case 12:
-                        drive = 2;
-                        head[drive] = 1;
-                        break;
+	switch (data)
+	{
+		case 1:
+			drive = 0;
+			head[drive] = 0;
+			break;
+		case 2:
+			drive = 1;
+			head[drive] = 0;
+			break;
+		case 4:
+			drive = 2;
+			head[drive] = 0;
+			break;
+		case 8:
+			drive = 3;
+			head[drive] = 0;
+			break;
+		case 9:
+			drive = 0;
+			head[drive] = 1;
+			break;
+		case 10:
+			drive = 1;
+			head[drive] = 1;
+			break;
+		case 12:
+			drive = 2;
+			head[drive] = 1;
+			break;
+	}
+
+	if (drive > 3)
+		return;
+
+	/* no image name given for that drive ? */
+	if (!floppy_name[drive])
+		return;
+
+	/* currently selected drive */
+	motor_drive = drive;
+
+	/* let it run about 5 seconds */
+	motor_count = 5 * 60;
+
+	/* select the drive / head */
+	file0 = wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
+
+	if (!file0)
+		return;
+	/* first drive selected first time ? */
+	if (!first_fdc_access)
+		return;
+
+	first_fdc_access = 0;
+
+	if (file0 == REAL_FDD)
+		return;
+
+	/* read first bytes from boot sector */
+	for (n = 0; n < 4; n++)
+	{
+		file1 = wd179x_select_drive(n, head[n], trs80_fdc_callback, floppy_name[n]);
+		if (!file1)
+			continue;
+		if (file1 == REAL_FDD)
+		{
+			osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
+			osd_fread(file0, buff, 16);
+			tracks[n] = buff[3] + 1;
+			heads[n] = (buff[7] & 0x40) ? 2 : 1;
+			s_p_t[n] = buff[4] / heads[n];
+			dir_sector[n] = 5 * buff[0] * buff[5];
+			dir_length[n] = 5 * buff[9];
         }
-
-        if (drive > 3)
-                return;
-
-        /* no image name given for that drive ? */
-        if (!floppy_name[drive])
-                return;
-
-        /* currently selected drive */
-        motor_drive = drive;
-
-        /* let it run about 5 seconds */
-        motor_count = 5 * 60;
-
-        /* select the drive / head */
-        file0 = wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
-
-        if (!file0)
-                return;
-        /* first drive selected first time ? */
-        if (!first_fdc_access)
-                return;
-
-        first_fdc_access = 0;
-
-        if (file0 == (void *)-1)
-                return;
-
-        /* read first bytes from boot sector */
-        for (n = 0; n < 4; n++)
-        {
-                file1 = wd179x_select_drive(n, head[n], trs80_fdc_callback, floppy_name[n]);
-                if (!file1)
-                        continue;
-                osd_fseek(file1, 0, SEEK_SET);
-                osd_fread(file1, buff, 2);
-                if (buff[0] != 0x00 || buff[1] != 0xfe)
-                {
-                        wd179x_read_sectormap(n, &tracks[n], &heads[n], &s_p_t[n]);
-                }
-                else
-                {
-                        osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
-                        osd_fread(file0, buff, 16);
-                        tracks[n] = buff[3] + 1;
-                        heads[n] = (buff[7] & 0x40) ? 2 : 1;
-                        s_p_t[n] = buff[4] / heads[n];
-                        dir_sector[n] = 5 * buff[0] * buff[5];
-                        dir_length[n] = 5 * buff[9];
-                        wd179x_set_geometry(n, tracks[n], heads[n], s_p_t[n], 256, dir_sector[n], dir_length[n]);
-                }
+		else
+		{
+			osd_fseek(file1, 0, SEEK_SET);
+			osd_fread(file1, buff, 2);
+			if (buff[0] != 0x00 || buff[1] != 0xfe)
+			{
+				wd179x_read_sectormap(n, &tracks[n], &heads[n], &s_p_t[n]);
+			}
+			else
+			{
+				osd_fseek(file0, 2 * 256 + n * 16, SEEK_SET);
+				osd_fread(file0, buff, 16);
+				tracks[n] = buff[3] + 1;
+				heads[n] = (buff[7] & 0x40) ? 2 : 1;
+				s_p_t[n] = buff[4] / heads[n];
+				dir_sector[n] = 5 * buff[0] * buff[5];
+				dir_length[n] = 5 * buff[9];
+			}
         }
-        wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
+		wd179x_set_geometry(n, tracks[n], heads[n], s_p_t[n], 256, dir_sector[n], dir_length[n]);
+	}
+	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
 }
 
 /*************************************

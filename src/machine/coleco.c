@@ -14,7 +14,6 @@
 
 /* local */
 unsigned char *coleco_ram;
-unsigned char *coleco_rom;
 unsigned char *coleco_cartridge_rom;
 
 static int JoyMode=0;
@@ -44,17 +43,8 @@ int coleco_id_rom (const char *name, const char *gamename)
 
 int coleco_load_rom (void)
 {
-	FILE *romfile;
     FILE *cartfile;
-	int region;
 	
-	/* COLECO.ROM is mandatory.  It's a bad idea to use a Colecovision without one */
-	if (!(romfile = osd_fopen (Machine->gamedrv->name, "COLECO.ROM", OSD_FILETYPE_ROM_CART, 0)))
-	{
-		if (errorlog) fprintf(errorlog,"Coleco - Unable to locate COLECO.ROM\n");
-		return 1;
-	}
-
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
 	if (strlen(rom_name[0])==0)
@@ -67,24 +57,7 @@ int coleco_load_rom (void)
 		return 1;
 	}
 
-	/* Allocate memory and set up memory regions */
-	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
-		Machine->memory_region[region] = 0;
-
-	RAM = ROM = malloc (0x10000);
-	if (RAM == NULL)
-	{
-		if (errorlog) fprintf(errorlog,"Coleco - RAM allocation failed on cartridge load!\n");
-		return 1;
-	}
-	
-	Machine->memory_region[0] = RAM;
-		
-	coleco_rom = &(RAM[0x0000]);
-	coleco_cartridge_rom = &(RAM[0x8000]);
-
-	osd_fread (romfile, coleco_rom, 0x2000);
-	osd_fclose (romfile);
+	coleco_cartridge_rom = &(ROM[0x8000]);
 
 	if (cartfile!=NULL)
 	{

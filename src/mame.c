@@ -2,7 +2,7 @@
 
 /* Mame frontend interface rountines by Maurizio Zanello */
 
-char messversion[8] = "0.1";
+char mameversion[] = "0.33 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -13,11 +13,6 @@ int nocheat;    /* 0 when the -cheat option was specified */
 int mame_debug; /* !0 when -debug option is specified */
 
 int frameskip;
-int framecount; /* MESS */
-char rom_name[MAX_ROM][32]; /* MESS */
-char floppy_name[MAX_FLOPPY][32]; /* MESS */
-char hard_name[MAX_HARD][32]; /* MESS */
-char cassette_name[MAX_CASSETTE][32]; /* MESS */
 int VolumePTR = 0;
 int CurrentVolume = 100;
 static int settingsloaded;
@@ -31,9 +26,6 @@ FILE *errorlog;
 void *record;   /* for -record */
 void *playback; /* for -playback */
 
-/* HJB 980601: should be set by osd_clearbitmap */
-/* tested and reset by non gfxlayer vidhrdw drivers */
-int   scrbitmap_dirty = 0;
 
 int init_machine(void);
 void shutdown_machine(void);
@@ -43,7 +35,6 @@ int run_machine(void);
 int run_game(int game, struct GameOptions *options)
 {
 	int err;
-	int i;
 
 	errorlog   = options->errorlog;
 	record     = options->record;
@@ -90,16 +81,6 @@ int run_game(int game, struct GameOptions *options)
 	/* Do the work*/
 	err = 1;
 
-	/* MESS - set up the storage peripherals */
-	for (i = 0; i < MAX_ROM; i ++)
-		strcpy (rom_name[i], options->rom_name[i]);
-	for (i = 0; i < MAX_FLOPPY; i ++)
-		strcpy (floppy_name[i], options->floppy_name[i]);
-	for (i = 0; i < MAX_HARD; i ++)
-		strcpy (hard_name[i], options->hard_name[i]);
-	for (i = 0; i < MAX_CASSETTE; i ++)
-		strcpy (cassette_name[i], options->cassette_name[i]);
-	
 	if (init_machine() == 0)
 	{
 		if (osd_init() == 0)
@@ -144,10 +125,7 @@ int init_machine(void)
 		} while ((from++)->type != IPT_END);
 
 		if ((Machine->input_ports = malloc(total * sizeof(struct InputPort))) == 0)
-		{
-			printf ("Failed to allocate input ports\n");
 			return 1;
-		}
 
 		from = gamedrv->new_input_ports;
 		to = Machine->input_ports;
@@ -164,7 +142,6 @@ int init_machine(void)
 	if (readroms() != 0)
 	{
 		free(Machine->input_ports);
-		printf("Failed on ROM load.\n");
 		return 1;
 	}
 
@@ -199,7 +176,6 @@ int init_machine(void)
 
 		(*gamedrv->opcode_decode)();
 	}
-#endif
 
 
 	/* read audio samples if available */
@@ -217,7 +193,6 @@ int init_machine(void)
 	if( !initmemoryhandlers() )
 	{
 		free(Machine->input_ports);
-		printf("Failed on memory handler init.\n");
 		return 1;
 	}
 
@@ -280,12 +255,15 @@ static int vh_open(void)
 	int i;
 
 
-	framecount = 0; /* MESS */
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
 	Machine->uifont = 0;
 
 	if (palette_start() != 0)
-		goto badnews;
+	{
+		vh_close();
+		return 1;
+	}
+
 
 	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
 	/* convert_color_prom() routine (in palette_init()) because it might need to check the */
@@ -297,7 +275,10 @@ static int vh_open(void)
 			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
-				goto badnews;
+			{
+				vh_close();
+				return 1;
+			}
 			Machine->gfx[i]->colortable = &Machine->colortable[drv->gfxdecodeinfo[i].color_codes_start];
 			Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 		}
@@ -305,7 +286,10 @@ static int vh_open(void)
 
 	/* build our private user interface font */
 	if ((Machine->uifont = builduifont()) == 0)
-		goto badnews;
+	{
+		vh_close();
+		return 1;
+	}
 
 
 	/* if the GfxLayer system is enabled, create the dirty map needed by the */
@@ -322,7 +306,10 @@ static int vh_open(void)
 		ml.width = drv->screen_width;
 		ml.height = drv->screen_height;
 		if ((Machine->dirtylayer = create_tile_layer(&ml)) == 0)
-			goto badnews;
+		{
+			vh_close();
+			return 1;
+		}
 	}
 	else Machine->dirtylayer = 0;
 
@@ -331,17 +318,15 @@ static int vh_open(void)
 	if ((Machine->scrbitmap = osd_create_display(
 			drv->screen_width,drv->screen_height,
 			drv->video_attributes)) == 0)
-		goto badnews;
+	{
+		vh_close();
+		return 1;
+	}
 
 	/* initialize the palette - must be done after osd_create_display() */
 	palette_init();
 
 	return 0;
-
-badnews:
-	vh_close();
-	printf ("vh_open failed!\n");
-	return 1;
 }
 
 
