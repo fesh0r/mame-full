@@ -899,6 +899,7 @@ int img_goodname_byname(const char *modulename, const char *fname, const char *b
 	return img_goodname(module, fname, base, result);
 }
 
+#ifndef macintosh
 /* copying osd_basename() here because we cannot separate it from fileio.c */
 char *osd_basename (char *filename)
 {
@@ -918,7 +919,7 @@ char *osd_basename (char *filename)
 
 	return filename;
 }
-
+#endif
 
 
 
