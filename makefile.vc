@@ -259,6 +259,8 @@ OBJDIRS += \
         $(OBJ)/mess/windowsui
 endif
 
+PLATFORM_IMGTOOL_OBJS = $(OBJ)/mess/windows/glob.o
+
 #####################################################################
 
 all: maketree $(EMULATORCLI) $(EMULATORGUI) extra

@@ -181,6 +181,7 @@ static int cmd_dir(struct command *c, int argc, char *argv[])
 	char buf[128];
 	char attrbuf[50];
 
+	/* attempt to open image */
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
 		goto error;
@@ -264,31 +265,37 @@ error:
 
 static int cmd_put(struct command *c, int argc, char *argv[])
 {
-	int err;
+	int err, i;
 	IMAGE *img;
-	char *newfname;
+	const char *fname = NULL;
 	int unnamedargs;
 	FILTERMODULE filter;
 	struct NamedOption nopts[32];
 
-	unnamedargs = parse_options(argc, argv, 3, 4, nopts, sizeof(nopts) / sizeof(nopts[0]), &filter);
+	unnamedargs = parse_options(argc, argv, 3, 0xffff, nopts, sizeof(nopts) / sizeof(nopts[0]), &filter);
 	if (unnamedargs < 0)
 		return -1;
-	newfname = (unnamedargs == 4) ? argv[3] : NULL;
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-	err = img_putfile(img, newfname, argv[2], nopts, filter);
-	img_close(img);
-	if (err)
-		goto error;
+	for (i = 2; i < unnamedargs; i++)
+	{
+		fname = argv[i];
+		printf("Putting file '%s'...\n", fname);
+		err = img_putfile(img, NULL, fname, nopts, filter);
+		if (err)
+			goto error;
+	}
 
+	img_close(img);
 	return 0;
 
 error:
-	reporterror(err, c, argv[0], argv[1], argv[2], newfname, nopts);
+	if (img)
+		img_close(img);
+	reporterror(err, c, argv[0], argv[1], fname, NULL, nopts);
 	return -1;
 }
 
@@ -652,7 +659,7 @@ static struct command cmds[] = {
 	{ "create", "<format> <imagename>", cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
 	{ "get", "<format> <imagename> <filename> [newname] [--filter=filter]", cmd_get, 3, 4, 0 },
-	{ "put", "<format> <imagename> <filename> [newname] [--(fileoption)==value] [--filter=filter]", cmd_put, 3, 8, 0 },
+	{ "put", "<format> <imagename> <filename>...[--(fileoption)==value] [--filter=filter]", cmd_put, 3, 0xffff, 0 },
 	{ "getall", "<format> <imagename> [--filter=filter]", cmd_getall, 2, 2, 0 },
 	{ "del", "<format> <imagename> <filename>...", cmd_del, 3, 3, 1 },
 	{ "info", "<format> <imagename>...", cmd_info, 2, 2, 1 },
@@ -663,15 +670,37 @@ static struct command cmds[] = {
 	{ "listdriveroptions", "<format>", cmd_listdriveroptions, 1, 1, 0 }
 };
 
+#ifdef WIN32
+#include "glob.h"
+void win_expand_wildcards(int *argc, char **argv[])
+{
+	int i;
+	glob_t g;
+
+	memset(&g, 0, sizeof(g));
+
+	for (i = 0; i < *argc; i++)
+		glob((*argv)[i], (g.gl_pathc > 0) ? GLOB_APPEND|GLOB_NOCHECK : GLOB_NOCHECK, NULL, &g);
+
+	*argc = g.gl_pathc;
+	*argv = g.gl_pathv;
+}
+#endif
+
 int CLIB_DECL main(int argc, char *argv[])
 {
 	int i;
 	int result;
 	struct command *c;
 
+#ifdef WIN32
+	win_expand_wildcards(&argc, &argv);
+#endif
+
 	putchar('\n');
 
 	if (argc > 1) {
+		/* figure out what command they are running, and run it */
 		for (i = 0; i < (sizeof(cmds) / sizeof(cmds[0])); i++) {
 			c = &cmds[i];
 			if (!stricmp(c->name, argv[1])) {

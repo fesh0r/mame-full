@@ -134,6 +134,8 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
 		$(OBJ)/windowsui $(OBJ)/mess/windowsui
 
+PLATFORM_IMGTOOL_OBJS = $(OBJ)/mess/windows/glob.o
+
 #MESS CPU's
 OBJDIRS += $(OBJ)/mess/cpu
 

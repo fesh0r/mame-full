@@ -446,27 +446,27 @@ static struct OptionTemplate fat_createopts[] =
 
 IMAGEMODULE(
 	msdos,
-	"MSDOS/PCDOS Diskette",			/* human readable name */
-	"dsk",							/* file extension */
-	NULL,							/* crcfile */
-	NULL,							/* crc system name */
-	EOLN_CRLF,						/* eoln */
-	0,								/* flags */
-	fat_image_init,					/* init function */
-	fat_image_exit,					/* exit function */
-	fat_image_info,					/* info function */
-	fat_image_beginenum,			/* begin enumeration */
-	fat_image_nextenum,				/* enumerate next */
-	fat_image_closeenum,			/* close enumeration */
-	fat_image_freespace,			/*  free space on image    */
-	fat_image_readfile,				/* read file */
-	fat_image_writefile,			/* write file */
-	fat_image_deletefile,			/* delete file */
-	fat_image_create,				/* create image */
+	"MSDOS/PCDOS Diskette",					/* human readable name */
+	"dsk",									/* file extension */
+	NULL,									/* crcfile */
+	NULL,									/* crc system name */
+	EOLN_CRLF,								/* eoln */
+	IMGMODULE_FLAG_FILENAMES_PREFERUCASE,	/* flags */
+	fat_image_init,							/* init function */
+	fat_image_exit,							/* exit function */
+	fat_image_info,							/* info function */
+	fat_image_beginenum,					/* begin enumeration */
+	fat_image_nextenum,						/* enumerate next */
+	fat_image_closeenum,					/* close enumeration */
+	fat_image_freespace,					/*  free space on image    */
+	fat_image_readfile,						/* read file */
+	fat_image_writefile,					/* write file */
+	fat_image_deletefile,					/* delete file */
+	fat_image_create,						/* create image */
 	fat_read_sector,
 	fat_write_sector,
-	NULL,							/* file options */
-	fat_createopts					/* create options */
+	NULL,									/* file options */
+	fat_createopts							/* create options */
 )
 
 static int fathd_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
@@ -493,26 +493,26 @@ static struct OptionTemplate fathd_createopts[] =
 IMAGEMODULE(
 	msdoshd,
 	"MSDOS/PCDOS Harddisk",	/* human readable name */
-	"img",								/* file extension */
-	NULL,								/* crcfile */
-	NULL,								/* crc system name */
+	"img",									/* file extension */
+	NULL,									/* crcfile */
+	NULL,									/* crc system name */
 	EOLN_CRLF,								/* eoln */
-	0,									/* flags */
-	fathd_image_init,				/* init function */
-	fat_image_exit,				/* exit function */
-	fat_image_info,		/* info function */
-	fat_image_beginenum,			/* begin enumeration */
-	fat_image_nextenum,			/* enumerate next */
-	fat_image_closeenum,			/* close enumeration */
-	fat_image_freespace,			 /*  free space on image    */
-	fat_image_readfile,			/* read file */
-	fat_image_writefile,			/* write file */
-	fat_image_deletefile,			/* delete file */
-	fathd_image_create,				/* create image */
+	IMGMODULE_FLAG_FILENAMES_PREFERUCASE,	/* flags */
+	fathd_image_init,						/* init function */
+	fat_image_exit,							/* exit function */
+	fat_image_info,							/* info function */
+	fat_image_beginenum,					/* begin enumeration */
+	fat_image_nextenum,						/* enumerate next */
+	fat_image_closeenum,					/* close enumeration */
+	fat_image_freespace,					/*  free space on image    */
+	fat_image_readfile,						/* read file */
+	fat_image_writefile,					/* write file */
+	fat_image_deletefile,					/* delete file */
+	fathd_image_create,						/* create image */
 	fat_read_sector,
 	fat_write_sector,
-	NULL,							/* file options_ */
-	fathd_createopts				/* create options */
+	NULL,									/* file options */
+	fathd_createopts						/* create options */
 )
 
 static int fat_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
