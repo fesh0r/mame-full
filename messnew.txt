@@ -18,4 +18,9 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-(none)
+- Made some debugger fixes when dealing with 8 or 16 bit numbers.  [Nate
+  Woods]
+
+- [Windows] When the new UI is active and MESS is paused, MESS now should not
+  waste any excess CPU time.  [Nate Woods]
+

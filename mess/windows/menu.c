@@ -502,11 +502,12 @@ static void pause(void)
 	{
 		is_paused = 1;
 		mame_pause(1);
+		draw_screen();
 		while(is_paused && !win_trying_to_quit)
 		{
-			draw_screen();
 			update_video_and_audio();
-			reset_partial_updates();
+			WaitMessage();
+			win_process_events();
 		}
 		mame_pause(0);
 	}
