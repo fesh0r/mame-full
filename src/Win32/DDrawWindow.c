@@ -145,14 +145,14 @@ static struct osd_bitmap* DDrawWindow_alloc_bitmap(int width, int height, int de
 static void               DDrawWindow_clearbitmap(struct osd_bitmap* bitmap);
 static void               DDrawWindow_free_bitmap(struct osd_bitmap* bitmap);
 static int                DDrawWindow_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
-static int                DDrawWindow_set_display(int width, int height, int depth, int attributes, int orientation);
 static void               DDrawWindow_close_display(void);
 static void               DDrawWindow_set_visible_area(int min_x, int max_x, int min_y, int max_y);
-static int                DDrawWindow_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable);
+static void               DDrawWindow_set_debugger_focus(int debugger_has_focus);
+static int                DDrawWindow_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               DDrawWindow_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2, int ui);
-static void               DDrawWindow_update_display(struct osd_bitmap *bitmap);
+static void               DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDrawWindow_led_w(int led, int on);
 static void               DDrawWindow_set_gamma(float gamma);
 static void               DDrawWindow_set_brightness(int brightness);
@@ -174,9 +174,9 @@ struct OSDDisplay   DDrawWindowDisplay =
     { DDrawWindow_clearbitmap },        /* clearbitmap       */
     { DDrawWindow_free_bitmap },        /* free_bitmap       */
     { DDrawWindow_create_display },     /* create_display    */
-    { DDrawWindow_set_display },        /* set_display       */
     { DDrawWindow_close_display },      /* close_display     */
     { DDrawWindow_set_visible_area },   /* set_visible_area  */
+    { DDrawWindow_set_debugger_focus }, /* set_debugger_focus*/
     { DDrawWindow_allocate_colors },    /* allocate_colors   */
     { DDrawWindow_modify_pen },         /* modify_pen        */
     { DDrawWindow_get_pen },            /* get_pen           */
@@ -551,15 +551,6 @@ static int DDrawWindow_create_display(int width, int height, int depth, int fps,
 }
 
 /*
-    Set the actual display screen but don't allocate the screen bitmap.
-*/
-static int DDrawWindow_set_display(int width, int height, int depth, int attributes, int orientation)
-{
-    SetForegroundWindow(MAME32App.m_hWnd);
-    return 0;
-}
-
-/*
      Shut down the display
 */
 
@@ -581,13 +572,12 @@ static void DDrawWindow_set_visible_area(int min_x, int max_x, int min_y, int ma
 
 }
 
-/*
-    palette is an array of 'totalcolors' R,G,B triplets. The function returns
-    in *pens the pen values corresponding to the requested colors.
-    If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled
-    with pen values corresponding to a 5-5-5 15-bit palette
-*/
-static int DDrawWindow_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable)
+static void DDrawWindow_set_debugger_focus(int debugger_has_focus)
+{
+
+}
+
+static int DDrawWindow_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens)
 {
     unsigned int    i;
 
@@ -804,7 +794,7 @@ static void DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 /*
     Update the display.
 */
-static void DDrawWindow_update_display(struct osd_bitmap *bitmap)
+static void DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
     DrawGame();
 

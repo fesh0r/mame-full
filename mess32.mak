@@ -5,7 +5,7 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=5
+BETA_VERSION = -DBETA_VERSION=6
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
@@ -321,7 +321,6 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/coleco.o   \
           $(OBJ)/mess/vidhrdw/coleco.o   \
           $(OBJ)/mess/systems/coleco.o	\
-	  $(OBJ)/mess/systems/channelf.o  \
           $(OBJ)/mess/vidhrdw/smsvdp.o   \
           $(OBJ)/mess/machine/sms.o      \
           $(OBJ)/mess/systems/sms.o      \
@@ -439,6 +438,9 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/avigo.o    \
           $(OBJ)/mess/vidhrdw/avigo.o    \
           $(OBJ)/mess/machine/28f008sa.o \
+		  $(OBJ)/mess/systems/studio2.o  \
+		  $(OBJ)/mess/vidhrdw/studio2.o  \
+		  $(OBJ)/mess/systems/channelf.o  \
           $(OBJ)/mess/machine/tms9901.o  \
           $(OBJ)/mess/machine/ti99_4x.o  \
           $(OBJ)/mess/systems/ti99_4x.o  \

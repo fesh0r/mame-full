@@ -40,7 +40,6 @@ static void         DIKeyboard_exit(void);
 static const struct KeyboardInfo * DIKeyboard_get_key_list(void);
 static void         DIKeyboard_customize_inputport_defaults(struct ipd *defaults);
 static int          DIKeyboard_is_key_pressed(int keycode);
-static int          DIKeyboard_wait_keypress(void);
 static int          DIKeyboard_readkey_unicode(int flush);
 
 static BOOL         DIKeyboard_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
@@ -61,7 +60,6 @@ struct OSDKeyboard  DIKeyboard =
     { DIKeyboard_get_key_list },                 /* get_key_list                 */
     { DIKeyboard_customize_inputport_defaults }, /* customize_inputport_defaults */
     { DIKeyboard_is_key_pressed },               /* is_key_pressed               */
-    { DIKeyboard_wait_keypress },                /* wait_keypress                */
     { DIKeyboard_readkey_unicode },              /* readkey_unicode              */
 
     { DIKeyboard_OnMessage },                    /* OnMessage                    */
@@ -310,36 +308,6 @@ static int DIKeyboard_is_key_pressed(int keycode)
    DIKeyboard_PollKeyboard();
 
    return This.m_key[keycode] != 0;
-}
-
-/*
-  wait for the user to press a key and return its code. This function is not
-  required to do anything, it is here so we can avoid bogging down multitasking
-  systems while using the debugger. If you don't want to or can't support this
-  function you can just return OSD_KEY_NONE.
-*/
-
-#define OSD_KEY_NONE 0
-
-static int DIKeyboard_wait_keypress(void)
-{
-    int i;
-
-    while (1)
-    {
-       Sleep(1);
-       MAME32App.ProcessMessages();
-
-       osd_poll_joysticks();
-       DIKeyboard_PollKeyboard();
-
-       for (i=0;i<256;i++)
-       {
-          if (This.m_key[i] != 0)
-             return OSD_KEY_NONE; /* perhaps should return the actual key here */
-       }
-    }
-    return OSD_KEY_NONE;
 }
 
 static int DIKeyboard_readkey_unicode(int flush)

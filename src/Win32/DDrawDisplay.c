@@ -99,6 +99,7 @@ struct tDisplay_private
     PALETTEENTRY*       m_pAdjustedPalette;
     UINT32*             m_p16BitLookup;
     UINT32              m_nTotalColors;
+    int                 m_nDepth;
     struct tPixelInfo   m_Red;
     struct tPixelInfo   m_Green;
     struct tPixelInfo   m_Blue;
@@ -142,14 +143,14 @@ static struct osd_bitmap* DDraw_alloc_bitmap(int width, int height, int depth);
 static void               DDraw_clearbitmap(struct osd_bitmap* bitmap);
 static void               DDraw_free_bitmap(struct osd_bitmap* bitmap);
 static int                DDraw_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
-static int                DDraw_set_display(int width, int height, int depth, int attributes, int orientation);
 static void               DDraw_close_display(void);
 static void               DDraw_set_visible_area(int min_x, int max_x, int min_y, int max_y);
-static int                DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable);
+static void               DDraw_set_debugger_focus(int debugger_has_focus);
+static int                DDraw_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               DDraw_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui);
-static void               DDraw_update_display(struct osd_bitmap *bitmap);
+static void               DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDraw_led_w(int led, int on);
 static void               DDraw_set_gamma(float gamma);
 static void               DDraw_set_brightness(int brightness);
@@ -171,9 +172,9 @@ struct OSDDisplay   DDrawDisplay =
     { DDraw_clearbitmap },          /* clearbitmap       */
     { DDraw_free_bitmap },          /* free_bitmap       */
     { DDraw_create_display },       /* create_display    */
-    { DDraw_set_display },          /* set_display       */
     { DDraw_close_display },        /* close_display     */
     { DDraw_set_visible_area },     /* set_visible_area  */
+    { DDraw_set_debugger_focus },   /* set_debugger_focus*/
     { DDraw_allocate_colors },      /* allocate_colors   */
     { DDraw_modify_pen },           /* modify_pen        */
     { DDraw_get_pen },              /* get_pen           */
@@ -254,6 +255,7 @@ static int DDraw_init(options_type *options)
     This.m_pAdjustedPalette   = NULL;
     This.m_p16BitLookup       = NULL;
     This.m_nTotalColors       = 0;
+    This.m_nDepth             = 0;
 
     memset(&This.m_Red,   0, sizeof(struct tPixelInfo));
     memset(&This.m_Green, 0, sizeof(struct tPixelInfo));
@@ -334,8 +336,12 @@ static void DDraw_free_bitmap(struct osd_bitmap* pBitmap)
 */
 static int DDraw_create_display(int width, int height, int depth, int fps, int attributes, int orientation)
 {
-    DDSURFACEDESC           ddSurfaceDesc;
-    HRESULT                 hResult = DD_OK;
+    DDSURFACEDESC   ddSurfaceDesc;
+    HRESULT         hResult = DD_OK;
+    int             bmwidth;
+    int             bmheight;
+
+    This.m_nDepth = depth;
 
     /*
         Set up the DirectDraw object.
@@ -414,7 +420,30 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
     /* Center display. */
     AdjustDisplay(0, 0, width - 1, height - 1);
 
-    InitDirty(Machine->scrbitmap->width, Machine->scrbitmap->height, This.m_eDirtyMode);
+    /*
+        Crap. The scrbitmap is no longer created before osd_create_display() is called.
+        The following code is to figure out how big the actual scrbitmap will be.
+    */
+    if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+    {
+        bmwidth  = width;
+	    bmheight = height;
+    }
+    else
+    {
+        bmwidth  = Machine->drv->screen_width;
+	    bmheight = Machine->drv->screen_height;
+
+        if (Machine->orientation & ORIENTATION_SWAP_XY)
+	    {
+		    int temp;
+		    temp     = bmwidth;
+            bmwidth  = bmheight;
+            bmheight = temp;
+	    }
+    }
+
+    InitDirty(bmwidth, bmheight, This.m_eDirtyMode);
 
     /*
         Modify the main window to suit our needs.
@@ -449,7 +478,7 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
     }
 
     {
-        int frame_rate = (int)Machine->drv->frames_per_second;
+        int frame_rate = (int)fps;
         // most monitors can't go this low
         if (frame_rate < 50)
             frame_rate *= 2;
@@ -461,7 +490,7 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
         hResult = IDirectDraw2_SetDisplayMode(This.m_pDDraw,
                                               This.m_nScreenWidth,
                                               This.m_nScreenHeight,
-                                              depth,frame_rate,0);
+                                              depth, frame_rate, 0);
         
         if (FAILED(hResult))
         {
@@ -626,14 +655,6 @@ error:
 }
 
 /*
-    Set the actual display screen but don't allocate the screen bitmap.
-*/
-static int DDraw_set_display(int width, int height, int depth, int attributes, int orientation)
-{
-    return 0; 
-}
-
-/*
      Shut down the display
 */
 static void DDraw_close_display(void)
@@ -672,19 +693,17 @@ static void DDraw_set_visible_area(int min_x, int max_x, int min_y, int max_y)
     AdjustDisplay(min_x, min_y, max_x, max_y);
 }
 
-/*
-    osd_allocate_colors() is called after osd_create_display(),
-    to create and initialize the palette.
-    palette is an array of 'totalcolors' R,G,B triplets. The function returns
-    in *pens the pen values corresponding to the requested colors.
-    When modifiable is not 0, the palette will be modified later via calls to
-    osd_modify_pen(). Otherwise, the code can assume that the palette will not change,
-    and activate special optimizations (e.g. direct copy for a 16-bit display).
-    The function must also initialize Machine->uifont->colortable[] to get proper
-    white-on-black and black-on-white text.
-    Return 0 for success.
-*/
-static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable)
+static void DDraw_set_debugger_focus(int debugger_has_focus)
+{
+
+}
+
+static int DDraw_allocate_colors(unsigned int totalcolors,
+                                 const UINT8* palette,
+                                 UINT16*      pens,
+                                 int          modifiable,
+                                 const UINT8* debug_palette,
+                                 UINT16*      debug_pens)
 {
     unsigned int    i;
     BOOL            bResult = TRUE;
@@ -694,12 +713,12 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
     This.m_bModifiablePalette = modifiable ? TRUE : FALSE;
 
     This.m_nTotalColors = totalcolors;
-    if (Machine->scrbitmap->depth != 8)
+    if (This.m_nDepth != 8)
         This.m_nTotalColors += 2;
     else
         This.m_nTotalColors = OSD_NUMPENS;
 
-    if (Machine->scrbitmap->depth == 16
+    if (This.m_nDepth             == 16
     &&  This.m_bModifiablePalette == TRUE)
         bPalette16 = TRUE;
     else
@@ -711,7 +730,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
     if (This.m_p16BitLookup == NULL || This.m_pPalEntries == NULL || This.m_pAdjustedPalette == NULL)
         return 1;
 
-    if (Machine->scrbitmap->depth != 8)
+    if (This.m_nDepth != 8)
     {
         DDPIXELFORMAT   ddPixelFormat;
 
@@ -730,7 +749,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
         GetPixelInfo(ddPixelFormat.dwBBitMask, &This.m_Blue);
     }
 
-    if (Machine->scrbitmap->depth != 8 && This.m_bModifiablePalette == FALSE)
+    if (This.m_nDepth != 8 && This.m_bModifiablePalette == FALSE)
     {
         int r, g, b;
         /* 16 bit static palette. */
@@ -754,7 +773,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
             Set the palette Entries.
         */
 
-		if (Machine->scrbitmap->depth == 8 && 255 <= totalcolors)
+		if (This.m_nDepth == 8 && 255 <= totalcolors)
         {
             int bestblack;
             int bestwhite;
@@ -835,7 +854,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
             Create the DirectDrawPalette.
         */
 
-        if (Machine->scrbitmap->depth == 8)
+        if (This.m_nDepth == 8)
         {
             bResult = BuildPalette(This.m_pDDraw, This.m_pPalEntries, &This.m_pDDPal);
             if (bResult == FALSE)
@@ -864,7 +883,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
                                          FALSE,
                                          FALSE,
                                          This.m_eDirtyMode,
-                                         Machine->scrbitmap->depth == 16 ? TRUE : FALSE,
+                                         This.m_nDepth == 16 ? TRUE : FALSE,
                                          bPalette16,
                                          This.m_p16BitLookup,
                                          MAME32App.m_bMMXDetected && !This.m_bDisableMMX ? TRUE: FALSE);
@@ -876,7 +895,7 @@ static int DDraw_allocate_colors(unsigned int totalcolors, const unsigned char *
                                          This.m_bHScanLines,
                                          This.m_bVScanLines,
                                          This.m_eDirtyMode,
-                                         Machine->scrbitmap->depth == 16 ? TRUE : FALSE,
+                                         This.m_nDepth == 16 ? TRUE : FALSE,
                                          bPalette16,
                                          This.m_p16BitLookup,
                                          MAME32App.m_bMMXDetected && !This.m_bDisableMMX ? TRUE: FALSE);
@@ -925,7 +944,7 @@ static void DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, u
     assert(pGreen != NULL);
     assert(pBlue  != NULL);
 
-    if (Machine->scrbitmap->depth != 8 && This.m_bModifiablePalette == FALSE)
+    if (This.m_nDepth != 8 && This.m_bModifiablePalette == FALSE)
     {
         *pRed   = GETC(pen, &This.m_Red);
         *pGreen = GETC(pen, &This.m_Green);
@@ -952,7 +971,7 @@ static void DDraw_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 /*
     Update the display using Machine->scrbitmap.
 */
-static void DDraw_update_display(struct osd_bitmap *bitmap)
+static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
     HRESULT     hResult;
 
@@ -1157,7 +1176,7 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
 
     if (This.m_bBltDouble == TRUE)
     {
-        if (Machine->scrbitmap->depth == 8)
+        if (This.m_nDepth == 8)
         {
             pbScreen = &((BYTE*)(ddSurfaceDesc.lpSurface))
                         [This.m_nSkipLines * ddSurfaceDesc.lPitch +
@@ -1172,7 +1191,7 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     }
     else
     {
-        if (Machine->scrbitmap->depth == 8)
+        if (This.m_nDepth == 8)
         {
             pbScreen = &((BYTE*)(ddSurfaceDesc.lpSurface))
                         [This.m_GameRect.m_Top * ddSurfaceDesc.lPitch +
@@ -1264,7 +1283,7 @@ static BOOL BuildPalette(IDirectDraw2* pDDraw, PALETTEENTRY* pPalEntries, IDirec
 {
     HRESULT hResult;
 
-    assert(Machine->scrbitmap->depth == 8);
+    assert(This.m_nDepth == 8);
 
     hResult = IDirectDraw_CreatePalette(pDDraw,
                                         DDPCAPS_8BIT | DDPCAPS_ALLOW256,
@@ -1329,7 +1348,7 @@ static void SetPaletteColors()
     assert(This.m_pPalEntries      != NULL);
     assert(This.m_pAdjustedPalette != NULL);
 
-    if (Machine->scrbitmap->depth == 8)
+    if (This.m_nDepth == 8)
     {
         HRESULT hResult;
 
@@ -1346,7 +1365,7 @@ static void SetPaletteColors()
         }
     }
 
-    if (Machine->scrbitmap->depth == 16 && This.m_bModifiablePalette == TRUE)
+    if (This.m_nDepth == 16 && This.m_bModifiablePalette == TRUE)
     {
         UINT i;
 
@@ -1361,7 +1380,7 @@ static void SetPaletteColors()
 
 static int FindBlackPen(void)
 {    
-    if (Machine->scrbitmap->depth == 8 || This.m_bModifiablePalette == TRUE)
+    if (This.m_nDepth == 8 || This.m_bModifiablePalette == TRUE)
     {
         int i;
 
@@ -1826,7 +1845,7 @@ static void DDraw_Refresh()
 {
     This.m_bUpdateBackground = TRUE;
 
-    DDraw_update_display(Machine->scrbitmap);
+    DDraw_update_display(Machine->scrbitmap, Machine->debug_bitmap);
 }
 
 static int DDraw_GetBlackPen(void)
@@ -1855,7 +1874,7 @@ static void DDraw_UpdateFPS(BOOL bShow, int nSpeed, int nFPS, int nMachineFPS, i
 
 static void AdjustPalette(void)
 {
-    if (Machine->scrbitmap->depth == 8 || This.m_bModifiablePalette == TRUE)
+    if (This.m_nDepth == 8 || This.m_bModifiablePalette == TRUE)
     {
         UINT i;
         

@@ -285,6 +285,7 @@ typedef union {
 #define HAS_ASTROCADE   1
 #define HAS_NAMCO       0
 #define HAS_TMS36XX     0
+#define HAS_TMS5110     0
 #define HAS_TMS5220     1
 #define HAS_VLM5030     0
 #define HAS_ADPCM       0
@@ -304,7 +305,6 @@ typedef union {
 #define HAS_SPEAKER     1
 #define HAS_WAVE        1
 #define HAS_BEEP        1
-#define HAS_TMS5110     0
 #else
 #define HAS_CUSTOM      1
 #define HAS_SAMPLES     1
@@ -331,6 +331,7 @@ typedef union {
 #define HAS_ASTROCADE   1
 #define HAS_NAMCO       1
 #define HAS_TMS36XX     1
+#define HAS_TMS5110     1
 #define HAS_TMS5220     1
 #define HAS_VLM5030     1
 #define HAS_ADPCM       1
@@ -350,7 +351,6 @@ typedef union {
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
 #define HAS_BEEP        0
-#define HAS_TMS5110     1
 #endif
 
 #endif  /* !NEOMAME */

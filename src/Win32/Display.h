@@ -33,15 +33,15 @@ struct OSDDisplay
     void                (*clearbitmap)(struct osd_bitmap *bitmap);
     void                (*free_bitmap)(struct osd_bitmap* bitmap);
     int                 (*create_display)(int width, int height, int depth, int fps, int attributes, int orientation);
-    int                 (*set_display)(int width, int height, int depth, int attributes, int orientation);
     void                (*close_display)(void);
     void                (*set_visible_area)(int min_x, int max_x, int min_y, int max_y);
-    int                 (*allocate_colors)(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable);
+    void                (*set_debugger_focus)(int debugger_has_focus);
+    int                 (*allocate_colors)(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
     void                (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
     void                (*get_pen)(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
     void                (*mark_dirty)(int x1, int y1, int x2, int y2, int ui);
     int                 (*skip_this_frame)(void);
-    void                (*update_display)(struct osd_bitmap *bitmap);
+    void                (*update_display)(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
     void                (*led_w)(int led, int on);
     void                (*set_gamma)(float gamma);
     float               (*get_gamma)(void);

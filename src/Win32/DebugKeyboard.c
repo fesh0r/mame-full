@@ -52,7 +52,6 @@ struct OSDKeyboard DebugKeyboard =
     { DebugKeyboard_get_key_list },                 /* get_key_list                 */
     { DebugKeyboard_customize_inputport_defaults }, /* customize_inputport_defaults */
     { DebugKeyboard_is_key_pressed },               /* is_key_pressed               */
-    { DebugKeyboard_wait_keypress },                /* wait_keypress                */
     { DebugKeyboard_readkey_unicode },              /* readkey_unicode              */
 
     { DebugKeyboard_OnMessage }                     /* OnMessage                    */

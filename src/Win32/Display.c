@@ -44,7 +44,7 @@ static struct osd_bitmap* Display_alloc_bitmap(int width,int height,int depth);
 static void               Display_clearbitmap(struct osd_bitmap* bitmap);
 static void               Display_free_bitmap(struct osd_bitmap* bitmap);
 static int                Display_skip_this_frame(void);
-static void               Display_update_display(struct osd_bitmap *bitmap);
+static void               Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               Display_set_gamma(float gamma);
 static void               Display_set_brightness(int brightness);
 
@@ -63,9 +63,9 @@ struct OSDDisplay   OSDDisplay =
     { Display_clearbitmap },        /* clearbitmap       */
     { Display_free_bitmap },        /* free_bitmap       */
     { 0 },                          /* create_display    */
-    { 0 },                          /* set_display       */
     { 0 },                          /* close_display     */
     { 0 },                          /* set_visible_area  */
+    { 0 },                          /*        */
     { 0 },                          /* allocate_colors   */
     { 0 },                          /* modify_pen        */
     { 0 },                          /* get_pen           */
@@ -320,7 +320,7 @@ static Display_skip_this_frame(void)
 /*
     Update the display.
 */
-static void Display_update_display(struct osd_bitmap *bitmap)
+static void Display_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
     int need_to_clear_bitmap = 0;
 
@@ -361,7 +361,7 @@ static void Display_update_display(struct osd_bitmap *bitmap)
         /* Wait until it's time to update the screen. */
         Throttle();
 
-        MAME32App.m_pDisplay->update_display(bitmap);
+        MAME32App.m_pDisplay->update_display(game_bitmap, debug_bitmap);
 
         if (need_to_clear_bitmap)
             osd_clearbitmap(Machine->scrbitmap);

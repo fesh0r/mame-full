@@ -62,14 +62,14 @@ static struct osd_bitmap* GDI_alloc_bitmap(int width, int height,int depth);
 static void               GDI_clearbitmap(struct osd_bitmap* bitmap);
 static void               GDI_free_bitmap(struct osd_bitmap* bitmap);
 static int                GDI_create_display(int width, int height, int depth, int fps, int attributes, int orientation);
-static int                GDI_set_display(int width, int height, int depth, int attributes, int orientation);
 static void               GDI_close_display(void);
 static void               GDI_set_visible_area(int min_x, int max_x, int min_y, int max_y);
-static int                GDI_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable);
+static void               GDI_set_debugger_focus(int debugger_has_focus);
+static int                GDI_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT16 *pens, int modifiable, const UINT8 *debug_palette, UINT16 *debug_pens);
 static void               GDI_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
 static void               GDI_mark_dirty(int x1, int y1, int x2, int y2, int ui);
-static void               GDI_update_display(struct osd_bitmap *bitmap);
+static void               GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               GDI_led_w(int led, int on);
 static void               GDI_set_gamma(float gamma);
 static void               GDI_set_brightness(int brightness);
@@ -91,9 +91,9 @@ struct OSDDisplay   GDIDisplay =
     { GDI_clearbitmap },        /* clearbitmap       */
     { GDI_free_bitmap },        /* free_bitmap       */
     { GDI_create_display },     /* create_display    */
-    { GDI_set_display },        /* set_display       */
     { GDI_close_display },      /* close_display     */
     { GDI_set_visible_area },   /* set_visible_area  */
+    { GDI_set_debugger_focus }, /* set_debugger_focus*/
     { GDI_allocate_colors },    /* allocate_colors   */
     { GDI_modify_pen },         /* modify_pen        */
     { GDI_get_pen },            /* get_pen           */
@@ -253,6 +253,9 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     HMENU           hMenu;
     LOGPALETTE      LogPalette;
     char            TitleBuf[256];
+    int             bmwidth;
+    int             bmheight;
+
 
     This.m_nDepth = depth;
 
@@ -289,15 +292,36 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
         This.m_nClientHeight *= 2;
     }
 
-    if (This.m_bUseDirty == TRUE)
+    /*
+        Crap. The scrbitmap is no longer created before osd_create_display() is called.
+        The following code is to figure out how big the actual scrbitmap will be.
+    */
+    if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
     {
-        InitDirty(Machine->scrbitmap->width, Machine->scrbitmap->height, NO_DIRTY);
+        bmwidth  = width;
+	    bmheight = height;
+    }
+    else
+    {
+        bmwidth  = Machine->drv->screen_width;
+	    bmheight = Machine->drv->screen_height;
+
+        if (orientation & ORIENTATION_SWAP_XY)
+	    {
+		    int temp;
+		    temp     = bmwidth;
+            bmwidth  = bmheight;
+            bmheight = temp;
+	    }
     }
 
-    /* For 16 bit palette lookup. */
-    This.m_pTempBitmap = osd_alloc_bitmap(Machine->scrbitmap->width,
-                                          Machine->scrbitmap->height,
-                                          Machine->scrbitmap->depth);
+    if (This.m_bUseDirty == TRUE)
+    {
+        InitDirty(bmwidth, bmheight, NO_DIRTY);
+    }
+
+    /* Make a copy of the scrbitmap for 16 bit palette lookup. */
+    This.m_pTempBitmap = osd_alloc_bitmap(bmwidth, bmheight, This.m_nDepth);
 
     /* Palette */
     if (This.m_nDepth == 8)
@@ -313,7 +337,7 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
                                        sizeof(RGBQUAD) * OSD_NUMPENS);
 
     This.m_pInfo->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER); 
-    This.m_pInfo->bmiHeader.biWidth         =  (Machine->scrbitmap->line[1] - Machine->scrbitmap->line[0]) / (This.m_nDepth / 8);
+    This.m_pInfo->bmiHeader.biWidth         =  (This.m_pTempBitmap->line[1] - This.m_pTempBitmap->line[0]) / (This.m_nDepth / 8);
     This.m_pInfo->bmiHeader.biHeight        = -(int)(This.m_VisibleRect.m_Height); /* Negative means "top down" */
     This.m_pInfo->bmiHeader.biPlanes        = 1;
     This.m_pInfo->bmiHeader.biBitCount      = This.m_nDepth;
@@ -375,17 +399,6 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     SetForegroundWindow(MAME32App.m_hWnd);
 
     return 0;
-}
-
-/*
-    Set the actual display screen but don't allocate the screen bitmap.
-*/
-
-static int GDI_set_display(int width, int height, int depth, int attributes, int orientation)
-{
-    SetForegroundWindow(MAME32App.m_hWnd);
-
-    return 0; 
 }
 
 /*
@@ -452,16 +465,18 @@ static void GDI_set_visible_area(int min_x, int max_x, int min_y, int max_y)
                    This.m_VisibleRect.m_Top  + This.m_VisibleRect.m_Height - 1);
 }
 
-/*
-    palette is an array of 'totalcolors' R,G,B triplets. The function returns
-    in *pens the pen values corresponding to the requested colors.
-    If 'totalcolors' is 32768, 'palette' is ignored and the *pens array is filled
-    with pen values corresponding to a 5-5-5 15-bit palette
-*/
-static int GDI_allocate_colors(unsigned int         totalcolors,
-                               const unsigned char* palette,
-                               unsigned short*      pens,
-                               int                  modifiable)
+static void GDI_set_debugger_focus(int debugger_has_focus)
+{
+    if (!debugger_has_focus)
+        SetForegroundWindow(MAME32App.m_hWnd);
+}
+
+static int GDI_allocate_colors(unsigned int totalcolors,
+                               const UINT8* palette,
+                               UINT16*      pens,
+                               int          modifiable,
+                               const UINT8* debug_palette,
+                               UINT16*      debug_pens)
 {
     unsigned int i;
 
@@ -632,7 +647,7 @@ static void GDI_mark_dirty(int x1, int y1, int x2, int y2, int ui)
 /*
     Update the display.
 */
-static void GDI_update_display(struct osd_bitmap *bitmap)
+static void GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap)
 {
     if (This.m_bUpdatePalette == TRUE)
     {

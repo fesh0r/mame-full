@@ -16,6 +16,7 @@
 #include "osdepend.h"
 
 #define OSD_MAX_VALUE (OSD_MAX_PSEUDO)
+
 struct OSDKeyboard
 {
     int             (*init)(options_type *options);
@@ -23,7 +24,6 @@ struct OSDKeyboard
     const struct KeyboardInfo * (*get_key_list)(void);
     void            (*customize_inputport_defaults)(struct ipd *defaults);
     int             (*is_key_pressed)(int keycode);
-    int             (*wait_keypress)(void);
     int             (*readkey_unicode)(int flush);
 
     BOOL            (*OnMessage)(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);

@@ -302,7 +302,8 @@ static void OnActivateApp(HWND hWnd, BOOL fActivate, DWORD dwThreadId)
                 orig_brt = osd_get_brightness();
 		        osd_set_brightness(orig_brt * 0.65);
 
-                MAME32App.m_pDisplay->update_display(Machine->scrbitmap);
+                MAME32App.m_pDisplay->update_display(Machine->scrbitmap,
+                                                     Machine->debug_bitmap);
 
                 osd_sound_enable(0);
             }
@@ -327,7 +328,8 @@ static void OnActivateApp(HWND hWnd, BOOL fActivate, DWORD dwThreadId)
                            Machine->scrbitmap->width  - 1,
                            Machine->scrbitmap->height - 1, 1);
            
-            MAME32App.m_pDisplay->update_display(Machine->scrbitmap);
+            MAME32App.m_pDisplay->update_display(Machine->scrbitmap,
+                                                 Machine->debug_bitmap);
         }
     }
 }

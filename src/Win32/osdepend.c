@@ -337,27 +337,6 @@ int osd_create_display(int width, int height, int depth, int fps, int attributes
     return MAME32App.m_pDisplay->create_display(width, height, depth, fps, attributes, orientation);
 }
 
-int osd_set_display(int width, int height, int depth, int attributes, int orientation)
-{
-
-#if defined(MAME_DEBUG)
-    /*
-       osd_set_display is usually called when breaking out of
-       debug mode.
-       The keyboard is replaced by DebugKeyboard when debugging,
-       so restore the original keyboard object here.
-    */
-
-    options_type *options = GetPlayingGameOptions();
-    if (options->di_keyboard)
-        MAME32App.m_pKeyboard = &DIKeyboard;
-    else
-        MAME32App.m_pKeyboard = &Keyboard;
-#endif
-
-    return MAME32App.m_pDisplay->set_display(width, height, depth, attributes, orientation);
-}
-
 void osd_close_display(void)
 {
     MAME32App.m_pDisplay->close_display();
@@ -368,12 +347,17 @@ void osd_set_visible_area(int min_x, int max_x, int min_y, int max_y)
     MAME32App.m_pDisplay->set_visible_area(min_x, max_x, min_y, max_y);
 }
 
-int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette, unsigned short *pens, int modifiable,
-	const unsigned char *debug_palette,unsigned short *debug_pens)
+int osd_allocate_colors(unsigned int totalcolors,
+                        const UINT8* palette,
+                        UINT16*      pens,
+                        int          modifiable,
+                        const UINT8* debug_palette,
+                        UINT16*      debug_pens)
 {
     int nResult;
 
-    nResult = MAME32App.m_pDisplay->allocate_colors(totalcolors, palette, pens, modifiable);
+    nResult = MAME32App.m_pDisplay->allocate_colors(totalcolors, palette, pens, modifiable,
+                                                    debug_palette, debug_pens);
     
     /* Fully initialized only after colors are successfully allocated. */
     if (nResult == 0)
@@ -392,12 +376,15 @@ void osd_get_pen(int pen, unsigned char* red, unsigned char* green, unsigned cha
     MAME32App.m_pDisplay->get_pen(pen, red, green, blue);
 }
 
-void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,
+                                struct osd_bitmap *debug_bitmap)
 {
     MAME32App.m_pSound->update_audio();
-    OSDDisplay.update_display(game_bitmap);
+    OSDDisplay.update_display(game_bitmap, debug_bitmap);
 
     MAME32App.HandleAutoPause();
+
+    MAME32App.m_pJoystick->poll_joysticks();
 }
 
 void osd_clearbitmap(struct osd_bitmap *bitmap)
@@ -532,17 +519,6 @@ int osd_is_key_pressed(int keycode)
 }
 
 /*
-  wait for the user to press a key. This function is not required to do anything,
-  it is only here so we can avoid bogging down multitasking systems while using
-  the debugger. If you don't want to or can't support this function you can just
-  return immediately.
-*/
-int osd_wait_keypress(void)
-{
-   return MAME32App.m_pKeyboard->wait_keypress();
-}
-
-/*
   Return the Unicode value of the most recently pressed key. This
   function is used only by text-entry routines in the user interface and should
   not be used by drivers. The value returned is in the range of the first 256
@@ -574,7 +550,7 @@ void osd_pause(int paused)
 		osd_set_brightness(orig_brt);
     }
 
-    MAME32App.m_pDisplay->update_display(Machine->scrbitmap);
+    MAME32App.m_pDisplay->update_display(Machine->scrbitmap, Machine->debug_bitmap);
 }
 
 /***************************************************************************
