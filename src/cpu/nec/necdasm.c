@@ -151,7 +151,7 @@ static int addrsize;
 
 /* watch out for aad && aam with odd operands */
 
-static char *opmap1[256] = {
+char *opmap1[256] = {
 /* 0 */
   "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
   "add al,%Ib",       "",                "push es",        "pop es",
