@@ -2,11 +2,73 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.58.3 (xmame only)
+	- Cleaned up src/unix/effect.c a bit.  It should now be able to compile 
+	  better with non-GCC compilers.  (Inspiration by Marcus Herbert.)
+	- Fixed a memory core bug in drivers/btoads.c.  (Aaron Giles)
+	- Fixed an endian bug in sndhrdw/williams.c that could affect 
+	  big-endian architectures.  (Aaron Giles)
+	- Worked around several warnings about 'PPC' being redefined when 
+	  building under LinuxPPC.
+	- Added support for using multiple mice as trackballs under X11.  (Gerd
+	  Sussner)
+	- Updated NetMAME to 0.4.1, which fixes several problems that prevented 
+	  3+ player sessions from working.  (Steve Freeland)
+
+Release 0.58.2 (xmame only)
+	- Applied a tilemap fix needed for Numan Athletics.  (Phil Stroffolino)
+	- Fixed a bug that caused the network code to break in FreeBSD.  (Stijn 
+	  Hoop)
+	- The xfx and svgafx targets failed to build in 0.58.1 because of a 
+	  core patch that was inadvertently overwritten.  They now build again.
+	  (Steve Freeland)
+	- Applied sound fix for Final Fight and Truxton 2 and possibly other 
+	  games which use FM timers; applied QSound fix for CPS1; applied sound
+	  fix for Yie Ar Kung-Fu.  (Aaron Giles)
+	- Outrun no longer segfaults on startup.  (Steve Freeland)
+	- Fixed several multiply-defined variables that caused link warnings.
+	- The OSS audio driver no longer automatically falls back on timer-
+	  based audio if the requested fragment size/numfrags cannot be 
+	  obtained from the sound device.
+	- Fixed a few gcc 3.0.x warnings.
+	- The xgl target compiles again, but may have problems with vector 
+	  games.
+
+Release 0.58.1 (xmame only)
+	- Everything from MAME 0.58.
+	- Fixed several C++-style comments.
+	- The problem with compiling src/cpu/v60/v60.c in LinuxPPC should really
+	  be fixed now.
+	- Updated to GLmame 0.93, which fixes a bug affecting Voodoo cards.  
+	  (Sven Goethel)
+	- Pausing while in fullscreen DGA mode no longer causes the sound to be 
+	  lost.  (Steve Slaven)
+	- The short version of "-loadconfig" is now "-lcf", since "-lc" was 
+	  conflicting with -listcpu.
+	- Corrected a minor error with the help info for "-stdout-file" and 
+	  "-stderr-file".
+	- Added an SDL sound plugin that is enabled by default for the BeOS 
+	  target.  (Jack Burton, Caz Jones)
+	- Updated/cleaned up some bits of the DGA2 code.  (Fernand Albarracin, 
+	  Shyouzou Sugitani)
+	- The xfx target is working again.  (Steve Freeland)
+	- Updated netmame to version 0.4, which should tolerate latency better.
+	  (Steve Freeland)
+
+Release 0.57.1 (xmame only)
+	- Everything from MAME 0.57.
+	- src/cpu/z80.c now builds with gcc 3.0.x using -O3.  (Andrea Mazzoleni)
+	- Fixed a minor typo in src/cpuintrf.c.  (Quench)
+	- Fixed a bug in src/vidhrdw/nmk16.c that caused bad/leftover sprites 
+	  in gunnail.  (David Haywood)
+	- Added experimental network support.  To enable it, uncomment 
+	  MAME_NET=1 in the makefile.  See src/unix/doc/multiplayer-readme.txt. 
+	  (Steve Freeland)
+
 Release 0.56.2
 	- Added contrib/kxmame.  This script launches xmame.x11 in builds of KDE
 	  which have problems with the window not opening.  (Sylvain Trosset and
 	  Hoonis)
-	- Updated dga2.txt to reflect Radeon DGA2 fixes that are in the XFree86
 	  cvs tree.  (Shyouzou Sugitani)
 	- Updated GLmame to v0.92--see src/unix/doc/changes.opengl.  (Sven
 	  Goethel)
@@ -18,7 +80,6 @@ Release 0.56.2
 	  e.g., 'xmame.x11 /path/to/mspacman.zip' should now work.  (Peter
 	  Trauner)
 
-Release 0.56.1
 	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
@@ -40,7 +101,6 @@ Release 0.56.1
 	  using -warn-common.
 	- Added DGA2 documentation: src/unix/doc/dga2.txt.  (Shyouzou Sugitani)
 
-Release 0.55.2
 	- Added special-cased fast 2x1 and 3x1 scaling to the blit core.  (Adam
 	  Moss)
 	- Added several AdvanceMAME effects, available via -effect/-ef.  Note
@@ -50,7 +110,6 @@ Release 0.55.2
 	- Fixed compilation errors reported in snprintf.c on some platforms,
 	  e.g. HP-UX 10.20 with GCC 3.0.  (Stefan Becker)
 
-Release 0.55.1
         - Everything from MAME 0.55.
 	- Removed the romcheck script until its author considers it far enough
 	  along for public consumption.
@@ -60,7 +119,6 @@ Release 0.55.1
 	  -alsapcm(-pcm) to -alsa-pcm(-apcm); changed the default value of
 	  -alsa-pcm.  (Shyouzou Sugitani)
 
-Release 0.54.2
 	- Applied a fix for the Bubble Bobble driver.  (Haze)
 	- Added a couple words to the makefile to indicate that the 68020 asm
 	  core is broken.
@@ -74,7 +132,6 @@ Release 0.54.2
 	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
 	- Added romcheck to contrib/tools.  (David Griffith)
 
-Release 0.54.1
 	- Everything from MAME 0.54.
 	- Fixed a compile error in the xgl target caused by a change in the
 	  core.  (Sven Goethel)
