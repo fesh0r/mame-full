@@ -192,15 +192,15 @@ void	flash_init(int index1)
 	flash[index1].flash_erase_status = FLASH_ERASE_STATUS_NONE;
 }
 
-void	flash_finish(int index1)
+void flash_finish(int index1)
 {
 	if (flash[index1].base!=NULL)
 		flash[index1].base = NULL;
 }
 
-void	flash_store(int index1, const char *flash_name)
+void flash_store(int index1, const char *flash_name)
 {
-	void *file;
+	mame_file *file;
 
 	if (flash[index1].base!=NULL)
 	{
@@ -217,9 +217,9 @@ void	flash_store(int index1, const char *flash_name)
 
 
 
-void	flash_restore(int index1, const char *flash_name)
+void flash_restore(int index1, const char *flash_name)
 {
-	void *file;
+	mame_file *file;
 
 	if (flash[index1].base!=NULL)
 	{

@@ -613,7 +613,7 @@ static MACHINE_INIT( sord_m5 )
 #ifdef SORD_DUMP_RAM
 static void sord_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "sord.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  
@@ -637,7 +637,7 @@ static void sord_dump_ram(void)
 
 static void sordfd5_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "sordfd5.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  

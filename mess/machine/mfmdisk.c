@@ -231,7 +231,7 @@ static unsigned long mfm_get_long(unsigned char *addr)
 /* check a mfm_disk image is valid */
 int	mfm_disk_floppy_id(int id)
 {
-	void *file;
+	mame_file *file;
 	int result = 0;
 
 	/* open file and determine image geometry */
@@ -294,7 +294,7 @@ int	mfm_disk_floppy_id(int id)
 
 
 /* load image */
-static int mfm_disk_load(int type, int id, void *file, unsigned char **ptr)
+static int mfm_disk_load(int type, int id, mame_file *file, unsigned char **ptr)
 {
 	if (file)
 	{

@@ -15,7 +15,7 @@ void mc146818_init(MC146818_TYPE type);
 // loads data from standard nvram file
 void mc146818_load(void);
 // loads data from file stream
-void mc146818_load_stream(void *file);
+void mc146818_load_stream(mame_file *file);
 // set mc146818 to actual time
 void mc146818_set_time(void);
 // sets realtime clock to given time
@@ -23,7 +23,7 @@ void mc146818_set_gmtime(struct tm *tmtime);
 // saves data into standard nvram file
 void mc146818_save(void);
 // saves data into file stream
-void mc146818_save_stream(void *file);
+void mc146818_save_stream(mame_file *file);
 
 extern NVRAM_HANDLER( mc146818 );
 

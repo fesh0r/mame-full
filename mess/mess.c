@@ -548,7 +548,7 @@ void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
 
 void ram_dump(const char *filename)
 {
-	void *file;
+	mame_file *file;
 
 	if (!filename)
 		filename = "ram.bin";

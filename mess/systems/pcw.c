@@ -127,7 +127,7 @@ static unsigned char pcw_bank_force = 0;
 /* load image */
 void pcw_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "pcwram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 

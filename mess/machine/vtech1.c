@@ -126,7 +126,7 @@ MACHINE_INIT( laser310 )
 int vtech1_cassette_id(int id)
 {
 	UINT8 buff[256];
-    void *file;
+    mame_file *file;
 
 	file = image_fopen(IO_CASSETTE, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
@@ -317,7 +317,7 @@ static void vtech1_snapshot_copy(UINT8 *vtech1_snapshot_data, int vtech1_snapsho
 int vtech1_snapshot_id(int id)
 {
 	UINT8 buff[256];
-    void *file;
+    mame_file *file;
 
 	logerror("VTECH snapshot_id\n");
     file = image_fopen_new(IO_SNAPSHOT, id, NULL);
@@ -361,7 +361,7 @@ SNAPSHOT_LOAD(vtech1)
 /*
 int vtech1_floppy_id(int id)
 {
-    void *file;
+    mame_file *file;
     UINT8 buff[32];
 
 	file = image_fopen(IO_FLOPPY, id, FILETYPE_IMAGE, OSD_FOPEN_READ);

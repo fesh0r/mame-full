@@ -437,7 +437,7 @@ static void nc_refresh_memory_config(void)
 }
 
 
-static void *file;
+static mame_file *file;
 
 /* restore a block of memory from the nvram file */
 static void nc_common_restore_memory_from_stream(void)

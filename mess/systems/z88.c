@@ -36,7 +36,7 @@ static void blink_reset(void)
 /* load image */
 static void z88_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "z88.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
  

@@ -42,7 +42,7 @@ bit 0: TRUCK */
 /* load image */
 static void kc_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "kcram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
@@ -65,7 +65,7 @@ static void kc_dump_ram(void)
 }
 
 /* load image */
-static int kc_load(void *file, unsigned char **ptr)
+static int kc_load(mame_file *file, unsigned char **ptr)
 {
 	if (file)
 	{

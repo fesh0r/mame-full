@@ -9,9 +9,10 @@
 #include "driver.h"
 
 /* Our private wave file structure */
-struct wave_file {
+struct wave_file
+{
 	int channel;			/* channel for playback */
-	void *file; 			/* osd file handle */
+	mame_file *file; 		/* mame file handle */
 	int mode;				/* write mode? */
 	int (*fill_wave)(INT16 *,int,UINT8*);
 	void *timer;			/* timer (TIME_NEVER) for reading sample values */

@@ -20,7 +20,7 @@ static void apf_charproc(UINT8 c)
 #ifdef APF_DUMP_RAM
 static void apf_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "apfram.bin", FILETYPE_NVRAM,OSD_FOPEN_WRITE);
 

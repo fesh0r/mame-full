@@ -322,12 +322,12 @@ WRITE_HANDLER( europc_rtc_w )
 	}
 }
 
-static void europc_rtc_load_stream(void *file)
+static void europc_rtc_load_stream(mame_file *file)
 {
 	mame_fread(file, europc_rtc.data, sizeof(europc_rtc.data));
 }
 
-static void europc_rtc_save_stream(void *file)
+static void europc_rtc_save_stream(mame_file *file)
 {
 	mame_fwrite(file, europc_rtc.data, sizeof(europc_rtc.data));
 }

@@ -134,7 +134,7 @@ void mc146818_init(MC146818_TYPE type)
 
 void mc146818_load(void)
 {
-	void *file;
+	mame_file *file;
 
 	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0))==NULL)
 		return;
@@ -142,9 +142,9 @@ void mc146818_load(void)
 	mame_fclose(file);
 }
 
-void mc146818_load_stream(void *file)
+void mc146818_load_stream(mame_file *file)
 {
-	mame_fread(file,mc146818.data, sizeof(mc146818.data));
+	mame_fread(file, mc146818.data, sizeof(mc146818.data));
 }
 
 void mc146818_set_gmtime(struct tm *tmtime)
@@ -198,14 +198,14 @@ void mc146818_set_time(void)
 
 void mc146818_save(void)
 {
-	void *file;
+	mame_file *file;
 	if ( (file=mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1))==NULL)
 		return;
 	mame_fwrite(file, mc146818.data, sizeof(mc146818.data));
 	mame_fclose(file);
 }
 
-void mc146818_save_stream(void *file)
+void mc146818_save_stream(mame_file *file)
 {
 	mame_fwrite(file, mc146818.data, sizeof(mc146818.data));
 }

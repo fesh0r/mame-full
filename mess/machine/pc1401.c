@@ -166,7 +166,7 @@ bool pc1401_reset(void)
 /* currently enough to save the external ram */
 static void pc1401_load(void)
 {
-	void *file;
+	mame_file *file;
 	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
 
@@ -182,7 +182,7 @@ static void pc1401_load(void)
 
 static void pc1401_save(void)
 {
-	void *file;
+	mame_file *file;
 	UINT8 *ram=memory_region(REGION_CPU1)+0x2000,
 		*cpu=sc61860_internal_ram();
 

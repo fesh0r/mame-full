@@ -144,7 +144,7 @@ void pcw16_dump_ram(void)
 #ifdef PCW16_DUMP_CPU_RAM
 void pcw16_dump_cpu_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "pcwcpuram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 

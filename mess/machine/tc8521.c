@@ -128,7 +128,7 @@ static struct tc8521 rtc;
 
 
 /* read tc8521 data from supplied file */
-void	tc8521_load_stream(void *file)
+void tc8521_load_stream(mame_file *file)
 {
 	if (file)
 	{
@@ -139,7 +139,7 @@ void	tc8521_load_stream(void *file)
 }
 
 /* write tc8521 data to supplied file */
-void	tc8521_save_stream(void *file)
+void tc8521_save_stream(mame_file *file)
 {
 	if (file)
 	{

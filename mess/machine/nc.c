@@ -25,7 +25,7 @@ extern int nc_membank_card_ram_mask;
 /* save card data back */
 static void	nc_card_save(int id)
 {
-	void *file;
+	mame_file *file;
 
 	/* if there is no data to write, quit */
 	if ((nc_card_ram==NULL) || (nc_card_size==0))
@@ -71,7 +71,7 @@ static int nc_card_calculate_mask(int size)
 
 
 /* load card image */
-static int nc_card_load(int id, void *file, unsigned char **ptr)
+static int nc_card_load(int id, mame_file *file, unsigned char **ptr)
 {
 	if (file)
 	{

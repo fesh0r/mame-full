@@ -601,7 +601,7 @@ void	serial_device_connect(int id, struct serial_connection *connection)
 
 
 /* load image */
-static int serial_device_load(int type, int id, void *file, unsigned char **ptr, int *pDataSize)
+static int serial_device_load(int type, int id, mame_file *file, unsigned char **ptr, int *pDataSize)
 {
 	if (file)
 	{

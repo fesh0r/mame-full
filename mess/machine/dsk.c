@@ -47,7 +47,7 @@ static void dsk_disk_image_init(dsk_drive *);
 static dsk_drive drives[dsk_NUM_DRIVES]; /* the drives */
 
 /* load image */
-static int dsk_load(void *file, int id, unsigned char **ptr)
+static int dsk_load(mame_file *file, int id, unsigned char **ptr)
 {
 	int datasize;
 	unsigned char *data;
@@ -111,7 +111,7 @@ int dsk_floppy_load(int id, mame_file *fp, int open_mode)
 
 static int dsk_save(int id, unsigned char **ptr)
 {
-	void *file;
+	mame_file *file;
 
 	file = image_fp(IO_FLOPPY, id);
 

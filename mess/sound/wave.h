@@ -79,7 +79,7 @@ extern void wave_specify(struct IODevice *iodev, int count, char *actualext, con
  *****************************************************************************/
 struct wave_args_legacy
 {
-    void *file;
+    mame_file *file;
 	int (*fill_wave)(INT16 *buffer, int length, UINT8 *bytes);
 	int smpfreq;
     int header_samples;

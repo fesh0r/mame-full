@@ -115,7 +115,7 @@ static int previous_input_port5;
 /* load image */
 static void oric_dump_ram(void)
 {
-	void *file;
+	mame_file *file;
 
 	file = mame_fopen(Machine->gamedrv->name, "oricram.bin", FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
 
@@ -1550,7 +1550,7 @@ int oric_cassette_init(int id, mame_file *file, int open_mode)
 
 int oric_cassette_init(int id)
 {
-	void *file;
+	mame_file *file;
 	int effective_mode;
 
 

@@ -1021,7 +1021,7 @@ static WRITE16_HANDLER(atarist_fakehdc_w)
 #if 0
 	static int dta_high,dta_low,ok_to_go=0;
 	static char *str_ptr;
-	static void *file0;
+	static mame_file *file0;
 
 	COMBINE_WORD_MEM(&atarist_fakehdc_ram[offset],data);
 //	logerror("%06x: Write mish_fs (%d) %04x\n",activecpu_get_pc(),offset,data);
@@ -1889,10 +1889,8 @@ static int atarist_basic_floppy_init(int id, mame_file *file, int open_mode)
 
 
 /* load image */
-int atarist_load(void *file, unsigned char **ptr)
+int atarist_load(mame_file *file, unsigned char **ptr)
 {
-	void *file;
-
 	if (file)
 	{
 		int datasize;
