@@ -10,10 +10,6 @@
 
 #include "includes/vc4000.h"
 
-#ifndef __cplusplus
-typedef int bool;
-#endif
-
 static struct {
     int channel;
     UINT8 reg[1];
@@ -42,9 +38,9 @@ void vc4000_soundport_w (int offset, int data)
 void vc4000_update (int param, INT16 *buffer, int length)
 {
     int i;
-    
+
     for (i = 0; i < length; i++, buffer++)
-    {	
+    {
 	*buffer = 0;
 	if (vc4000_sound.reg[0]!=0 && vc4000_sound.pos<=vc4000_sound.size/2) {
 	    *buffer = 0x7fff;
@@ -60,9 +56,9 @@ void vc4000_update (int param, INT16 *buffer, int length)
 int vc4000_custom_start (const struct MachineSound *driver)
 {
     if (!options.samplerate) return 0;
-    
+
     vc4000_sound.channel = stream_init ("VC4000", 50, options.samplerate, 0, vc4000_update);
-    
+
     return 0;
 }
 
