@@ -45,12 +45,22 @@ enum
 	DEVOPTION_MAX
 };
 
+#ifdef MAME_DEBUG
+#define HAS_PROFILER	1
+#else
+#define HAS_PROFILER	0
+#endif
+
 //============================================================
 //	GLOBAL VARIABLES
 //============================================================
 
 int win_use_natural_keyboard;
 char *win_state_hack;
+
+#if HAS_PROFILER
+extern int show_profiler;
+#endif
 
 
 //============================================================
@@ -487,6 +497,9 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
+#if HAS_PROFILER
+	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	show_profiler				? MFS_CHECKED : MFS_ENABLED);
+#endif
 
 	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	inputx_can_post() ?
@@ -635,6 +648,19 @@ static int invoke_command(UINT command)
 		throttle = !throttle;
 		break;
 
+#if HAS_PROFILER
+	case ID_OPTIONS_PROFILER:
+		show_profiler ^= 1;
+		if (show_profiler)
+			profiler_start();
+		else
+		{
+			profiler_stop();
+			schedule_full_refresh();
+		}
+		break;
+#endif
+
 	case ID_OPTIONS_DIPSWITCHES:
 		setdipswitches();
 		break;
@@ -726,6 +752,13 @@ HMENU win_create_menus(void)
 	menu_bar = LoadMenu(module, MAKEINTRESOURCE(IDR_RUNTIME_MENU));
 	if (!menu_bar)
 		return NULL;
+
+	// remove the profiler menu item if it doesn't exist
+#if HAS_PROFILER
+	show_profiler = 0;
+#else
+	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
+#endif
 
 	// set up frameskip menu
 	frameskip_menu = find_sub_menu(menu_bar, "&Options\0&Frameskip\0", FALSE);

@@ -3607,11 +3607,10 @@ static void display_fps(struct mame_bitmap *bitmap)
 #endif
 #endif /* MESS */
 
+int show_profiler;
 
 int handle_user_interface(struct mame_bitmap *bitmap)
 {
-	static int show_profiler;
-
 #ifdef MESS
 	static int mess_pause_for_ui = 0;
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
@@ -3665,7 +3664,10 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 			/* return only if UI wasn't posted */
 			if (input_ui_posted() == 0)
+			{
+				if (show_profiler) profiler_show(bitmap);
 				return 0;
+			}
 		}
 	}
 #endif

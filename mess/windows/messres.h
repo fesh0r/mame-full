@@ -2,31 +2,29 @@
 // Microsoft Visual C++ generated include file.
 // Used by mess.rc
 //
-#define ID_OPTIONS_HIDEMENUBAR          0
-#define ID_EDIT_PASTE                   101
-#define ID_HELP_ABOUT                   102
-#define ID_OPTIONS_KEYBOARD             103
-#define ID_KEYBOARD_EMULATED            104
-#define ID_KEYBOARD_NATURAL             105
-#define ID_OPTIONS_DIPSWITCHES          106
-#define ID_Menu                         107
-#define ID_HELP_ABOUTMACHINE            108
-#define ID_HELP_RUNTHISHTMLINFLEXEDIT   109
-#define ID_DEVICES                      110
-#define ID_FILE_SAVESTATE               111
-#define ID_OPTIONS_TOGGLEMENUBAR        112
-#define ID_OPTIONS_SHOWINTERNALGRAPHICS 113
-#define ID_OPTIONS_RESET                114
-#define ID_OPTIONS_THROTTLE             115
-#define ID_Menu116                      116
-#define ID_OPTIONS_FRAMESKIP            117
-#define ID_OPTIONS_PAUSE                118
-#define ID_FILE_LOADSTATE               119
-#define ID_FRAMESKIP_AUTO               120
-#define ID_OPTIONS_JOYSTICKS            121
-#define ID_OPTIONS_FULLSCREEN           122
+#define ID_FILE_LOADSTATE               101
+#define ID_FILE_SAVESTATE               102
+#define ID_FILE_EXIT                    103
+#define ID_EDIT_PASTE                   104
+#define ID_OPTIONS_HIDEMENUBAR          105
+#define ID_OPTIONS_KEYBOARD             106
+#define ID_OPTIONS_DIPSWITCHES          107
+#define ID_OPTIONS_TOGGLEMENUBAR        108
+#define ID_OPTIONS_RESET                109
+#define ID_OPTIONS_THROTTLE             110
+#define ID_OPTIONS_FRAMESKIP            111
+#define ID_OPTIONS_PAUSE                112
+#define ID_OPTIONS_JOYSTICKS            113
+#define ID_OPTIONS_FULLSCREEN           114
+#define ID_OPTIONS_PROFILER		115
+#define ID_KEYBOARD_EMULATED            116
+#define ID_KEYBOARD_NATURAL             117
+#define ID_FRAMESKIP_AUTO               118
+#define ID_DEVICES                      119
+#define ID_HELP_ABOUT                   120
+#define ID_HELP_ABOUTMACHINE            121
+#define ID_HELP_RUNTHISHTMLINFLEXEDIT   122
 #define IDR_RUNTIME_MENU                6000
-#define ID_FILE_EXIT                    6001
 
 // Next default values for new objects
 // 

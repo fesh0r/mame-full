@@ -60,9 +60,7 @@ BEGIN
         MENUITEM SEPARATOR
         MENUITEM "Hide Menubar",                ID_OPTIONS_TOGGLEMENUBAR
         MENUITEM "Full Screen",                 ID_OPTIONS_FULLSCREEN
-        MENUITEM SEPARATOR
-        MENUITEM "Show P&rofiler",              ID_OPTIONS_FRAMESKIP, GRAYED
-        MENUITEM "Show &Internal Graphics",     ID_OPTIONS_SHOWINTERNALGRAPHICS
+        MENUITEM "Show P&rofiler",              ID_OPTIONS_PROFILER, GRAYED
         , GRAYED
     END
     POPUP "&Devices"
