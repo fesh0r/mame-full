@@ -432,12 +432,13 @@ VIDEO_UPDATE( odyssey2 )
     return;
 }
 
-void odyssey2_sh_update( int param, INT16 *buffer, int length )
+void odyssey2_sh_update( void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length )
 {
 	static UINT32 signal;
 	static UINT16 count = 0;
 	int ii;
 	int period;
+	stream_sample_t *buffer = _buffer[0];
 
 	/* Generate the signal */
 	signal = o2_vdc.s.shift3 | (o2_vdc.s.shift2 << 8) | (o2_vdc.s.shift1 << 16);
