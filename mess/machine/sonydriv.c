@@ -1268,7 +1268,7 @@ static void sony_doaction(void)
 				memset(f, 0, sizeof(*f));
 			}*/
 			/* somewhat hackish, but better method (?) */
-			device_filename_change(IO_FLOPPY, sony_floppy_select, NULL);
+			osd_device_eject(IO_FLOPPY, sony_floppy_select);
 			break;
 		default:
 			#if LOG_SONY
