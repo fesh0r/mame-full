@@ -115,6 +115,15 @@ struct tDisplay_private
     BOOL                m_triple_buffer;
 
     RenderMethod        Render;
+
+#ifdef MAME_DEBUG
+	RenderMethod		DebugRender;
+	int					debugger_has_focus;
+	unsigned char		oldpalette_red[DEBUGGER_TOTAL_COLORS];
+	unsigned char		oldpalette_green[DEBUGGER_TOTAL_COLORS];
+	unsigned char		oldpalette_blue[DEBUGGER_TOTAL_COLORS];
+	const UINT8			*debug_palette;
+#endif /* MAME_DEBUG */
 };
 
 /***************************************************************************
@@ -719,7 +728,25 @@ static void DDraw_set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 static void DDraw_set_debugger_focus(int debugger_has_focus)
 {
+#ifdef MAME_DEBUG
+	int i;
 
+	if (!debugger_has_focus && This.debugger_has_focus) {
+		/* Debugger losing focus */
+		This.m_bUpdateBackground = 1;
+		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++) {
+			DDraw_modify_pen(i+2, This.oldpalette_red[i], This.oldpalette_green[i], This.oldpalette_blue[i]);
+		}
+	}
+	else if (debugger_has_focus && !This.debugger_has_focus) {
+		/* Debugger gaining focus */
+		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++) {
+			DDraw_get_pen(i+2, &This.oldpalette_red[i], &This.oldpalette_green[i], &This.oldpalette_blue[i]);
+			DDraw_modify_pen(i+2, This.debug_palette[i*3+0], This.debug_palette[i*3+1], This.debug_palette[i*3+2]);
+		}
+	}
+	This.debugger_has_focus = debugger_has_focus;
+#endif
 }
 
 static int DDraw_allocate_colors(unsigned int totalcolors,
@@ -734,6 +761,14 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
     HRESULT         hResult = DD_OK;
     BOOL            bPalette16;
 
+#ifdef MAME_DEBUG
+	modifiable = TRUE;
+	This.debug_palette = debug_palette;
+	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++) {
+		debug_pens[i] = i+2;
+	}
+#endif /* MAME_DEBUG */
+
     This.m_bModifiablePalette = modifiable ? TRUE : FALSE;
 
     This.m_nTotalColors = totalcolors;
@@ -741,6 +776,11 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
         This.m_nTotalColors += 2;
     else
         This.m_nTotalColors = OSD_NUMPENS;
+
+#ifdef MAME_DEBUG
+	if (This.m_nTotalColors < (DEBUGGER_TOTAL_COLORS+2))
+		This.m_nTotalColors = DEBUGGER_TOTAL_COLORS+2;
+#endif /* MAME_DEBUG */
 
     if (This.m_nDepth             == 16
     &&  This.m_bModifiablePalette == TRUE)
@@ -927,6 +967,19 @@ static int DDraw_allocate_colors(unsigned int totalcolors,
                                          MAME32App.m_bMMXDetected && !This.m_bDisableMMX ? TRUE: FALSE);
     }
 
+#ifdef MAME_DEBUG
+    This.DebugRender = SelectRenderMethod(FALSE,
+                                     FALSE,
+                                     FALSE,
+                                     FALSE,
+                                     FALSE,
+                                     NO_DIRTY,
+                                     This.m_nDepth == 16 ? TRUE : FALSE,
+                                     bPalette16,
+                                     This.m_p16BitLookup,
+                                     FALSE);
+#endif
+
     /* Find the black pen to use for background. It may not be zero. */
     This.m_nBlackPen = FindBlackPen();
 
@@ -1005,7 +1058,11 @@ static void DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitm
     ||  This.m_pDDSPrimary == NULL)
         return;
 
-    This.m_pBitmap = game_bitmap;
+#ifdef MAME_DEBUG
+    This.m_pBitmap = This.debugger_has_focus ? debug_bitmap : game_bitmap;
+#else /* !MAME_DEBUG */
+	This.m_pBitmap = game_bitmap;
+#endif /* MAME_DEBUG */
 
     if (This.m_triple_buffer)
         ClearSurface(This.m_pDDSBack);
@@ -1173,11 +1230,47 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
     BYTE*           pbScreen;
     HRESULT         hResult;
     DDSURFACEDESC   ddSurfaceDesc;
+	UINT            nDisplayLines, nDisplayColumns, nSkipLines, nSkipColumns;
+	RenderMethod	Render;
+	tRect			*pGameRect;
+#ifdef MAME_DEBUG
+	tRect			DebugRect;
+#endif
 
     if (pddSurface == NULL)
         return;
 
     assert(This.m_pBitmap != NULL);
+
+#ifdef MAME_DEBUG
+	if (This.debugger_has_focus)
+	{
+		Render = This.DebugRender;
+		nSkipLines = This.m_nScreenHeight - This.m_pBitmap->height;
+		nSkipColumns = This.m_nScreenWidth - This.m_pBitmap->width;
+
+		nDisplayLines = This.m_pBitmap->height;
+		nDisplayColumns = This.m_pBitmap->width;
+		pGameRect = &DebugRect;
+		DebugRect.m_Top = nSkipLines;
+		DebugRect.m_Left = nSkipColumns;
+		DebugRect.m_Height = nDisplayLines;
+		DebugRect.m_Width = nDisplayColumns;
+
+		logerror("nSkipLines=%i nSkipColumsn=%i nDisplayLines=%i nDisplayColumns=%i\n", nSkipLines, nSkipColumns, nDisplayLines, nDisplayColumns);
+		logerror("m_nScreenHeight=%i m_nScreenWidth=%i\n", This.m_nScreenHeight, This.m_nScreenWidth);
+	}
+	else
+#endif
+	{
+		Render = This.Render;
+		nSkipLines = This.m_nSkipLines;
+		nSkipColumns = This.m_nSkipColumns;
+
+		nDisplayLines = This.m_nDisplayLines;
+		nDisplayColumns = This.m_nDisplayColumns;
+		pGameRect = &This.m_GameRect;
+	}
 
     ddSurfaceDesc.dwSize = sizeof(ddSurfaceDesc);
 
@@ -1204,17 +1297,19 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
 
     if (This.m_bBltDouble == TRUE)
     {
+
+
         if (This.m_nDepth == 8)
         {
             pbScreen = &((BYTE*)(ddSurfaceDesc.lpSurface))
-                        [This.m_nSkipLines * ddSurfaceDesc.lPitch +
-                         This.m_nSkipColumns];
+                        [nSkipLines * ddSurfaceDesc.lPitch +
+                         nSkipColumns];
         }
         else
         {
             pbScreen = (BYTE*)&((unsigned short*)(ddSurfaceDesc.lpSurface))
-                        [This.m_nSkipLines * ddSurfaceDesc.lPitch / 2 +
-                         This.m_nSkipColumns];
+                        [nSkipLines * ddSurfaceDesc.lPitch / 2 +
+                         nSkipColumns];
         }
     }
     else
@@ -1222,14 +1317,14 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
         if (This.m_nDepth == 8)
         {
             pbScreen = &((BYTE*)(ddSurfaceDesc.lpSurface))
-                        [This.m_GameRect.m_Top * ddSurfaceDesc.lPitch +
-                         This.m_GameRect.m_Left];
+                        [pGameRect->m_Top * ddSurfaceDesc.lPitch +
+                         pGameRect->m_Left];
         }
         else
         {
             pbScreen = (BYTE*)&((unsigned short*)(ddSurfaceDesc.lpSurface))
-                        [This.m_GameRect.m_Top * ddSurfaceDesc.lPitch / 2 +
-                         This.m_GameRect.m_Left];
+                        [pGameRect->m_Top * ddSurfaceDesc.lPitch / 2 +
+                         pGameRect->m_Left];
         }
     }
 
@@ -1246,15 +1341,15 @@ static void DrawSurface(IDirectDrawSurface* pddSurface)
         ui_text(This.m_pBitmap, buf, Machine->uiwidth - strlen(buf) * Machine->uifontwidth, 0);        
     }
 
-    assert(This.Render != NULL);
+    assert(Render != NULL);
 
-    This.Render(This.m_pBitmap,
-                This.m_nSkipLines,
-                This.m_nSkipColumns,
-                This.m_nDisplayLines,
-                This.m_nDisplayColumns,
-                pbScreen,
-                ddSurfaceDesc.lPitch);
+	Render(This.m_pBitmap,
+				nSkipLines,
+				nSkipColumns,
+				nDisplayLines,
+				nDisplayColumns,
+				pbScreen,
+				ddSurfaceDesc.lPitch);
 
     hResult = IDirectDrawSurface_Unlock(pddSurface, NULL);
     if (FAILED(hResult))
@@ -1514,6 +1609,13 @@ static BOOL FindBestDisplayMode(DWORD  dwWidthIn,   DWORD  dwHeightIn, DWORD dwD
     DWORD   dwBestHeight = 10000;
     DWORD   dwBiggestWidth  = 0;
     DWORD   dwBiggestHeight = 0;
+
+#ifdef MAME_DEBUG
+	if (dwWidthIn < options.debug_width)
+		dwWidthIn = options.debug_width;
+	if (dwHeightIn < options.debug_width)
+		dwHeightIn = options.debug_height;
+#endif /* MAME_DEBUG */
 
     pDisplayModes = DirectDraw_GetDisplayModes();
 

@@ -143,12 +143,7 @@ int osd_init()
     if (bUseWindow == TRUE)
         MAME32App.m_pDisplay = &GDIDisplay;/*&DDrawWindowDisplay;*/
     else
-#if defined(MAME_DEBUG)
-        /* don't do fullscreen debugging */
-        MAME32App.m_pDisplay = &GDIDisplay;
-#else
         MAME32App.m_pDisplay = &DDrawDisplay;
-#endif
 
     if (bNoSound == TRUE)
         MAME32App.m_pSound = &NullSound;
