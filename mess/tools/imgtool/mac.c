@@ -5682,8 +5682,7 @@ static imgtoolerr_t mfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	}
 
 	/* copy info */
-	mac_to_c_strncpy(ent->filename, ent->filename_len, cur_dir_entry->name);
-	snprintf(ent->attr, ent->attr_len, "%s", "");
+	mac_to_c_strncpy(ent->filename, sizeof(ent->filename) / sizeof(ent->filename[0]), cur_dir_entry->name);
 	ent->filesize = get_UINT32BE(cur_dir_entry->dataPhysicalSize)
 						+ get_UINT32BE(cur_dir_entry->rsrcPhysicalSize);
 
@@ -5767,19 +5766,19 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 	switch (get_UINT16BE(catrec_data->dataType))
 	{
 	case hcrt_Folder:
-		snprintf(ent->attr, ent->attr_len, "%s", "DIR");
+		snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "%s", "DIR");
 		ent->filesize = 0;
 		break;
 
 	case hcrt_File:
-		snprintf(ent->attr, ent->attr_len, "%s", "FILE");
+		snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "%s", "FILE");
 		ent->filesize = get_UINT32BE(catrec_data->file.dataPhysicalSize)
 							+ get_UINT32BE(catrec_data->file.rsrcPhysicalSize);
 		break;
 	}
 
 	/* initialize file path buffer */
-	cur_name_head = ent->filename_len;
+	cur_name_head = sizeof(ent->filename) / sizeof(ent->filename[0]);
 	if (cur_name_head > 0)
 	{
 		cur_name_head--;
@@ -5788,8 +5787,7 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 
 	/* insert folder/file name in buffer */
 	mac_to_c_strncpy(buf, sizeof(buf), catrec_key->cName);
-	if (ent->filename_len > 0)
-		concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, buf);
+	concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1, buf);
 	/* extract parent directory ID */
 	parID = get_UINT32BE(catrec_key->parID);
 
@@ -5802,12 +5800,10 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		if (errorcode)
 		{
 			/* error */
-			if (ent->filename_len > 0)
-			{
-				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
-				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, "???");
-			}
-			memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
+			concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1, ":");
+			concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1, "???");
+
+			memmove(ent->filename, ent->filename+cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - cur_name_head);
 			ent->corrupt = 1;
 			return errorcode;
 		}
@@ -5817,12 +5813,10 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		if (dataRecType != hcrt_FolderThread)
 		{
 			/* error */
-			if (ent->filename_len > 0)
-			{
-				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
-				concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, "???");
-			}
-			memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
+			concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0])-1, ":");
+			concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0])-1, "???");
+
+			memmove(ent->filename, ent->filename+cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0])-cur_name_head);
 			ent->corrupt = 1;
 			return IMGTOOLERR_CORRUPTIMAGE;
 		}
@@ -5830,15 +5824,13 @@ static imgtoolerr_t hfs_image_nextenum(mac_iterator *iter, imgtool_dirent *ent)
 		/* got folder thread record: insert the folder name at the start of
 		file path, then iterate */
 		mac_to_c_strncpy(buf, sizeof(buf), catrec_data->thread.nodeName);
-		if (ent->filename_len > 0)
-		{
-			concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, ":");
-			concat_fname(ent->filename, &cur_name_head, ent->filename_len-1, buf);
-		}
+		concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1, ":");
+		concat_fname(ent->filename, &cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) - 1, buf);
+
 		/* extract parent directory ID */
 		parID = get_UINT32BE(catrec_data->thread.parID);
 	}
-	memmove(ent->filename, ent->filename+cur_name_head, ent->filename_len-cur_name_head);
+	memmove(ent->filename, ent->filename+cur_name_head, sizeof(ent->filename) / sizeof(ent->filename[0]) -cur_name_head);
 
 	return IMGTOOLERR_SUCCESS;
 }

@@ -222,7 +222,6 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum;
 	imgtool_dirent ent;
-	char filename_entbuffer[1024];
 	char expected_listing[128];
 	char actual_listing[128];
 	int i, actual_count;
@@ -250,8 +249,6 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	mismatch = FALSE;
 
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = filename_entbuffer;
-	ent.filename_len = sizeof(filename_entbuffer) / sizeof(filename_entbuffer[0]);
 
 	err = img_beginenum(image, filename_buffer, &imageenum);
 	if (err)

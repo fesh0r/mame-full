@@ -150,7 +150,6 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 	imgtool_imageenum *imgenum = NULL;
 	imgtool_dirent ent;
 	char buf[512];
-	char attrbuf[50];
 	const char *path;
 
 	/* attempt to open image */
@@ -165,11 +164,6 @@ static int cmd_dir(const struct command *c, int argc, char *argv[])
 		goto done;
 
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = buf;
-	ent.filename_len = sizeof(buf);
-	ent.attr = attrbuf;
-	ent.attr_len = sizeof(attrbuf);
-
 	total_count = 0;
 	total_size = 0;
 
@@ -310,7 +304,6 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 	imgtool_dirent ent;
 	FILTERMODULE filter;
 	int unnamedargs;
-	char buf[128];
 	const char *path = NULL;
 	int arg;
 
@@ -333,8 +326,6 @@ static int cmd_getall(const struct command *c, int argc, char *argv[])
 		goto done;
 
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = buf;
-	ent.filename_len = sizeof(buf);
 
 	while (((err = img_nextenum(imgenum, &ent)) == 0) && !ent.eof)
 	{

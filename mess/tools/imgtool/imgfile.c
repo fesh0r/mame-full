@@ -274,12 +274,13 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	/* This makes it so that drivers don't have to take care of clearing
 	 * the attributes if they don't apply
 	 */
-	if (ent->filename_len)
-		ent->filename[0] = '\0';
-	if (ent->attr_len)
-		ent->attr[0] = '\0';
+	ent->filename[0] = '\0';
+	ent->attr[0] = '\0';
 	ent->creation_time = 0;
 	ent->lastmodified_time = 0;
+	ent->eof = 0;
+	ent->corrupt = 0;
+	ent->filesize = 0;
 
 	err = module->next_enum(enumeration, ent);
 	if (err)
@@ -327,7 +328,7 @@ imgtoolerr_t img_getdirent(imgtool_image *img, const char *path, int index, imgt
 
 done:
 	if (err)
-		memset(ent->filename, 0, ent->filename_len);
+		memset(ent->filename, 0, sizeof(ent->filename));
 	if (imgenum)
 		img_closeenum(imgenum);
 	return err;
@@ -351,12 +352,9 @@ imgtoolerr_t img_countfiles(imgtool_image *img, int *totalfiles)
 	int err;
 	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
-	char fnamebuf[256];
 
 	*totalfiles = 0;
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = fnamebuf;
-	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
 	err = img_beginenum(img, NULL, &imgenum);
 	if (err)
@@ -385,15 +383,12 @@ imgtoolerr_t img_filesize(imgtool_image *img, const char *fname, UINT64 *filesiz
 	int err;
 	imgtool_imageenum *imgenum;
 	imgtool_dirent ent;
-	char fnamebuf[256];
 	const char *path;
 
 	path = NULL;	/* TODO: Need to parse off the path */
 
 	*filesize = -1;
 	memset(&ent, 0, sizeof(ent));
-	ent.filename = fnamebuf;
-	ent.filename_len = sizeof(fnamebuf) / sizeof(fnamebuf[0]);
 
 	err = img_beginenum(img, path, &imgenum);
 	if (err)

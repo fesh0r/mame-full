@@ -56,8 +56,6 @@ static imgtoolerr_t evaluate_module(const char *fname,
 	imgtoolerr_t err;
 	imgtool_image *image = NULL;
 	imgtool_imageenum *imageenum = NULL;
-	char filename[256];
-	char attr[32];
 	imgtool_dirent ent;
 	float current_result;
 
@@ -76,11 +74,6 @@ static imgtoolerr_t evaluate_module(const char *fname,
 			goto done;
 
 		memset(&ent, 0, sizeof(ent));
-		ent.filename = filename;
-		ent.filename_len = sizeof(filename) / sizeof(filename[0]);
-		ent.attr = attr;
-		ent.attr_len = sizeof(attr) / sizeof(attr[0]);
-
 		do
 		{
 			err = img_nextenum(imageenum, &ent);

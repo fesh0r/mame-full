@@ -1237,24 +1237,21 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 	else
 	{
 #if 0
-		fname_to_str(ent->filename, iter->xdr[iter->level].fdr.fnm, ent->filename_len);
+		fname_to_str(ent->filename, iter->xdr[iter->level].fdr.fnm, sizeof(ent->filename) / sizeof(ent->filename[0]));
 #else
 		{
 			int i;
 			char buf[9];
 
-			if (ent->filename_len)
+			ent->filename[0] = '\0';
+			for (i=0; i<iter->level; i++)
 			{
-				ent->filename[0] = '\0';
-				for (i=0; i<iter->level; i++)
-				{
-					fname_to_str(buf, iter->xdr[i].fdr.fnm, 9);
-					strncat(ent->filename, buf, ent->filename_len);
-					strncat(ent->filename, ".", ent->filename_len);
-				}
-				fname_to_str(buf, iter->xdr[iter->level].fdr.fnm, 9);
-				strncat(ent->filename, buf, ent->filename_len);
+				fname_to_str(buf, iter->xdr[i].fdr.fnm, 9);
+				strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
+				strncat(ent->filename, ".", sizeof(ent->filename) / sizeof(ent->filename[0]));
 			}
+			fname_to_str(buf, iter->xdr[iter->level].fdr.fnm, 9);
+			strncat(ent->filename, buf, sizeof(ent->filename) / sizeof(ent->filename[0]));
 		}
 #endif
 
@@ -1262,7 +1259,7 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 		flag = get_UINT16BE(iter->xdr[iter->level].fdr.flg);
 		if (flag & fdr_flg_cdr)
 		{
-			snprintf(ent->attr, ent->attr_len, "CHANNEL");
+			snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "CHANNEL");
 
 			ent->filesize = 0;
 		}
@@ -1280,7 +1277,7 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 
 			fname_to_str(buf, target_fdr.fnm, 9);
 
-			snprintf(ent->attr, ent->attr_len, "ALIAS OF %s", buf);
+			snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "ALIAS OF %s", buf);
 
 			ent->filesize = 0;
 		}
@@ -1330,7 +1327,7 @@ static imgtoolerr_t ti990_image_nextenum(imgtool_imageenum *enumeration, imgtool
 				}
 				break;
 			}
-			snprintf(ent->attr, ent->attr_len,
+			snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]),
 						"%s %c %s%s%s%s%s", fmt, (flag & fdr_flg_all) ? 'N' : 'C', type,
 							(flag & fdr_flg_blb) ? "" : " BLK",
 							(flag & fdr_flg_tmp) ? " TMP" : "",

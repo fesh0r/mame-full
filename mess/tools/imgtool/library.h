@@ -36,10 +36,8 @@ imgtool_libsort_t;
 
 typedef struct
 {
-	char *filename;
-	size_t filename_len;
-	char *attr;
-	size_t attr_len;
+	char filename[1024];
+	char attr[64];
 	UINT64 filesize;
 
 	time_t creation_time;

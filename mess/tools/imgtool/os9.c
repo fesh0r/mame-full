@@ -874,22 +874,17 @@ static imgtoolerr_t os9_diskimage_nextenum(imgtool_imageenum *enumeration, imgto
 		return err;
 
 	/* fill out imgtool_dirent structure */
-	if (ent->filename_len > 0)
-	{
-		snprintf(ent->filename, ent->filename_len, "%s", filename);
-	}
-	if (ent->attr_len > 0)
-	{
-		snprintf(ent->attr, ent->attr_len, "%c%c%c%c%c%c%c%c", 
-			file_info.directory      ? 'd' : '-',
-			file_info.non_sharable   ? 's' : '-',
-			file_info.public_execute ? 'x' : '-',
-			file_info.public_write   ? 'w' : '-',
-			file_info.public_read    ? 'r' : '-',
-			file_info.user_execute   ? 'x' : '-',
-			file_info.user_write     ? 'w' : '-',
-			file_info.user_read      ? 'r' : '-');
-	}
+	snprintf(ent->filename, sizeof(ent->filename) / sizeof(ent->filename[0]), "%s", filename);
+	snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "%c%c%c%c%c%c%c%c", 
+		file_info.directory      ? 'd' : '-',
+		file_info.non_sharable   ? 's' : '-',
+		file_info.public_execute ? 'x' : '-',
+		file_info.public_write   ? 'w' : '-',
+		file_info.public_read    ? 'r' : '-',
+		file_info.user_execute   ? 'x' : '-',
+		file_info.user_write     ? 'w' : '-',
+		file_info.user_read      ? 'r' : '-');
+
 	ent->directory = file_info.directory;
 	ent->corrupt = (dir_entry[28] != 0);
 	ent->filesize = file_info.file_size;

@@ -292,11 +292,7 @@ static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 	{
 		rsenum->eof = 1;
 eof:
-		ent->filesize = 0;
-		ent->corrupt = 0;
 		ent->eof = 1;
-		if (ent->filename_len > 0)
-			ent->filename[0] = '\0';
 	}
 	else
 	{
@@ -320,10 +316,8 @@ eof:
 
 		get_dirent_fname(fname, &rsent);
 
-		if (ent->filename_len)
-			snprintf(ent->filename, ent->filename_len, "%s", fname);
-		if (ent->attr_len)
-			snprintf(ent->attr, ent->attr_len, "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
+		snprintf(ent->filename, sizeof(ent->filename) / sizeof(ent->filename[0]), "%s", fname);
+		snprintf(ent->attr, sizeof(ent->attr) / sizeof(ent->attr[0]), "%d %c", (int) rsent.ftype, (char) (rsent.asciiflag + 'B'));
 	}
 	return IMGTOOLERR_SUCCESS;
 }

@@ -119,7 +119,7 @@ static imgtoolerr_t get_selected_dirent(HWND window, imgtool_dirent *entry)
 		s = (char *) alloca((curdir_sz + filename_sz + 1) * sizeof(*s));
 		strcpy(s, info->current_directory);
 		strcpy(s + curdir_sz, entry->filename);
-		snprintf(entry->filename, entry->filename_len, "%s", s);
+		snprintf(entry->filename, sizeof(entry->filename) / sizeof(entry->filename[0]), "%s", s);
 	}
 
 done:
@@ -234,7 +234,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	memset(&lvi, 0, sizeof(lvi));
 	lvi.iItem = ListView_GetItemCount(info->listview);
 	lvi.mask = LVIF_TEXT | LVIF_PARAM | LVIF_IMAGE;
-	lvi.pszText = U2T(entry->filename);
+	lvi.pszText = U2T((char *) entry->filename);
 	lvi.iImage = icon_index;
 	lvi.lParam = index;
 	new_index = ListView_InsertItem(info->listview, &lvi);
@@ -266,7 +266,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	}
 
 	if (entry->attr)
-		ListView_SetItemText(info->listview, new_index, column_index++, U2T(entry->attr));
+		ListView_SetItemText(info->listview, new_index, column_index++, U2T((char *) entry->attr));
 	if (entry->corrupt)
 		ListView_SetItemText(info->listview, new_index, column_index++, (LPTSTR) TEXT("Corrupt"));
 	return 0;
@@ -279,8 +279,6 @@ static imgtoolerr_t refresh_image(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct wimgtool_info *info;
 	imgtool_imageenum *imageenum = NULL;
-	char filename_buf[256];
-	char attributes_buf[256];
 	char size_buf[32];
 	imgtool_dirent entry;
 	UINT64 filesize;
@@ -312,10 +310,6 @@ static imgtoolerr_t refresh_image(HWND window)
 		}
 
 		memset(&entry, 0, sizeof(entry));
-		entry.filename = filename_buf;
-		entry.filename_len = sizeof(filename_buf) / sizeof(filename_buf[0]);
-		entry.attr = attributes_buf;
-		entry.attr_len = sizeof(attributes_buf) / sizeof(attributes_buf[0]);
 
 		if (!is_root_directory)
 		{
@@ -820,7 +814,6 @@ static void menu_extract(HWND window)
 {
 	imgtoolerr_t err;
 	imgtool_dirent entry;
-	char image_filename[MAX_PATH];
 	TCHAR host_filename[MAX_PATH];
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
@@ -831,18 +824,16 @@ static void menu_extract(HWND window)
 	info = get_wimgtool_info(window);
 
 	memset(&entry, 0, sizeof(entry));
-	entry.filename = image_filename;
-	entry.filename_len = sizeof(image_filename) / sizeof(image_filename[0]);
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;
 	filename = entry.filename;
 
-	image_basename = image_filename;
-	for (i = 0; image_filename[i]; i++)
+	image_basename = entry.filename;
+	for (i = 0; entry.filename[i]; i++)
 	{
-		if (image_filename[i] == img_module(info->image)->path_separator)
-			image_basename = &image_filename[i + 1];
+		if (entry.filename[i] == img_module(info->image)->path_separator)
+			image_basename = &entry.filename[i + 1];
 	}
 
 	_tcscpy(host_filename, U2T(image_basename));
@@ -964,22 +955,19 @@ static void menu_delete(HWND window)
 {
 	imgtoolerr_t err;
 	imgtool_dirent entry;
-	char image_filename[MAX_PATH];
 	struct wimgtool_info *info;
 
 	info = get_wimgtool_info(window);
 
 	memset(&entry, 0, sizeof(entry));
-	entry.filename = image_filename;
-	entry.filename_len = sizeof(image_filename) / sizeof(image_filename[0]);
 	err = get_selected_dirent(window, &entry);
 	if (err)
 		goto done;
 
 	if (entry.directory)
-		err = img_deletedir(info->image, image_filename);
+		err = img_deletedir(info->image, entry.filename);
 	else
-		err = img_deletefile(info->image, image_filename);
+		err = img_deletefile(info->image, entry.filename);
 	if (err)
 		goto done;
 
@@ -1151,7 +1139,6 @@ static imgtoolerr_t double_click(HWND window)
 	DWORD pos;
 	imgtool_dirent entry;
 	int selected_item;
-	char buf[256];
 
 	info = get_wimgtool_info(window);
 
@@ -1166,8 +1153,6 @@ static imgtoolerr_t double_click(HWND window)
 	if (htinfo.flags & LVHT_ONITEM)
 	{
 		memset(&entry, 0, sizeof(entry));
-		entry.filename = buf;
-		entry.filename_len = sizeof(buf) / sizeof(buf[0]);
 
 		item.mask = LVIF_PARAM;
 		item.iItem = htinfo.iItem;
