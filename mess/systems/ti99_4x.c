@@ -387,7 +387,7 @@ INPUT_PORTS_START(ti99_4)
 	PORT_START	/* joystick 4, Y axis */
 		PORT_ANALOG( 0xf, 0x7,  IPT_AD_STICK_Y | IPF_PLAYER4 | IPF_CENTER | IPF_REVERSE, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xe )
 
-	/* 8 pseudo-ports for the 4 IR remote keypads */
+	/* 5 pseudo-ports for the 4 IR remote keypads */
 	PORT_START	/* keypad 1, keys 1 to 16 */
 		PORT_BITX(0x0001, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_PLAYER1, "1: CLR",  KEYCODE_1, IP_JOY_NONE)
 		PORT_BITX(0x0002, IP_ACTIVE_HIGH, IPT_KEYBOARD | IPF_PLAYER1, "1: GO",   KEYCODE_Q, IP_JOY_NONE)
