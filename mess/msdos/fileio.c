@@ -438,7 +438,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 			{
 				/* try with a .zip extension */
 				sprintf(name, "%s/%s.zip", dir_name, gamename);
-				logerror("Trying %s file\n", name);
+				logerror("Trying %s\n", name);
 				if (cache_stat(name, &stat_buffer) == 0)
 				{
 					if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -496,9 +496,13 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 		logerror("Open IMAGE_R '%s' for %s\n", filename, game);
 		for (indx = 0; indx < pathc && !found; indx++)
 		{
-			const char *dir_name = pathv[indx];
+			char file[256];
+            char *extension;
+            const char *dir_name = pathv[indx];
 
-			/* load from exact path specified in mess.cfg */
+			strcpy(file, filename);
+
+            /* load from exact path specified in mess.cfg */
 			if (!found)
 			{
 				sprintf(name, "%s", dir_name);
@@ -535,15 +539,13 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 			/* load zipped image from exact path specified in mess.cfg */
 			if (!found)
 			{
-				char *extension;
-
 				sprintf(name, "%s/%s", dir_name, filename);
 				extension = strrchr(name, '.');		/* find extension */
 				if (extension)
 					strcpy(extension, ".zip");
 				else
 					strcat(name, ".zip");
-				logerror("Trying %s file\n", name);
+				logerror("Trying %s\n", name);
 				if (cache_stat(name, &stat_buffer) == 0)
 				{
 					if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -557,18 +559,16 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 				}
 			}
 
-			/* load zipped image from exact path specified in mess.cfg with system name appended */
+			/* load zipped image from path specified in mess.cfg with system name appended */
 			if (!found)
 			{
-				char *extension;
-
 				sprintf(name, "%s/%s/%s", dir_name, game, filename);
 				extension = strrchr(name, '.');		/* find extension */
 				if (extension)
 					strcpy(extension, ".zip");
 				else
 					strcat(name, ".zip");
-				logerror("Trying %s file\n", name);
+				logerror("Trying %s\n", name);
 				if (cache_stat(name, &stat_buffer) == 0)
 				{
 					if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -586,7 +586,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 			if (!found)
 			{
 				sprintf(name, "%s/%s.zip", dir_name, game);
-				logerror("Trying %s file\n", name);
+				logerror("Trying %s\n", name);
 				if (cache_stat(name, &stat_buffer) == 0)
 				{
 					if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -598,7 +598,100 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 						found = 1;
 					}
 				}
-			}
+            }
+			extension = strrchr(file, '.');
+			if (extension && strchr(extension, '/') == NULL && strchr(extension,'\\') == NULL)
+			{
+				/* strip extension */
+				*extension++ = '\0';
+				/* load from path specified in mess.cfg but append extension */
+				if (!found)
+				{
+					sprintf(name, "%s/%s", dir_name, extension);
+					if (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
+					{
+						sprintf(name, "%s/%s/%s", dir_name, extension, filename);
+						if (checksum_file(name, &f->data, &f->length, &f->crc) == 0)
+						{
+							logerror("Found '%s'\n", name);
+							f->type = kRAMFile;
+							f->offset = 0;
+							found = 1;
+						}
+					}
+				}
+
+				/* load from path specified in mess.cfg with system name and extension appended */
+				if (!found)
+				{
+					sprintf(name, "%s/%s/%s", dir_name, game, extension);
+					if (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
+					{
+						sprintf(name, "%s/%s/%s/%s", dir_name, game, extension, filename);
+						if (checksum_file(name, &f->data, &f->length, &f->crc) == 0)
+						{
+							logerror("Found '%s'\n", name);
+							f->type = kRAMFile;
+							f->offset = 0;
+							found = 1;
+						}
+					}
+				}
+
+				/* load zipped image from path specified in mess.cfg with extension appended */
+				if (!found)
+				{
+					sprintf(name, "%s/%s/%s.zip", dir_name, extension, file);
+					logerror("Trying %s\n", name);
+					if (cache_stat(name, &stat_buffer) == 0)
+					{
+						if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
+						{
+							logerror("Found '%s'\n", name);
+							f->type = kZippedFile;
+							f->offset = 0;
+							f->crc = crc32(0L, f->data, f->length);
+							found = 1;
+						}
+					}
+				}
+
+				/* load zipped image from path specified in mess.cfg with system name and extension appended */
+				if (!found)
+				{
+					sprintf(name, "%s/%s/%s/%s.zip", dir_name, game, extension, file);
+					logerror("Trying %s\n", name);
+					if (cache_stat(name, &stat_buffer) == 0)
+					{
+						if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
+						{
+							logerror("Found '%s'\n", name);
+							f->type = kZippedFile;
+							f->offset = 0;
+							f->crc = crc32(0L, f->data, f->length);
+							found = 1;
+						}
+					}
+				}
+
+				/* load image from path specified in mess.cfg and try appended extension/system.zip */
+				if (!found)
+				{
+					sprintf(name, "%s/%s/%s.zip", dir_name, extension, game);
+					logerror("Trying %s\n", name);
+					if (cache_stat(name, &stat_buffer) == 0)
+					{
+						if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
+						{
+							logerror("Found '%s'\n", name);
+							f->type = kZippedFile;
+							f->offset = 0;
+							f->crc = crc32(0L, f->data, f->length);
+							found = 1;
+						}
+					}
+				}
+            }
 
             if (found)
 				logerror("IMAGE_R %s FOUND in %s!\n", filename, name);
@@ -632,7 +725,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 						if (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
 						{
 							sprintf(name, "%s/%s/%s", dir_name, gamename, file);
-							logerror("Trying %s file\n", name);
+							logerror("Trying %s\n", name);
 							f->file = fopen(name, write_modes[_write]);
 							found = f->file != 0;
 							if (!found && _write == 3)
@@ -652,7 +745,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 							strcpy(extension, ".zip");
 						else
 							strcat(extension, ".zip");
-						logerror("Trying %s file\n", name);
+						logerror("Trying %s\n", name);
 						if (cache_stat(name, &stat_buffer) == 0)
 						{
 							if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -673,7 +766,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 						if (cache_stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
 						{
 							sprintf(name, "%s/%s", dir_name, file);
-							logerror("Trying %s file\n", name);
+							logerror("Trying %s\n", name);
 							f->file = fopen(name, write_modes[_write]);
 							found = f->file != 0;
 							if (!found && _write == 3)
@@ -692,7 +785,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 							strcpy(extension, ".zip");
 						else
 							strcat(extension, ".zip");
-						logerror("Trying %s file\n", name);
+						logerror("Trying %s\n", name);
 						if (cache_stat(name, &stat_buffer) == 0)
 						{
 							if (load_zipped_file(name, filename, &f->data, &f->length) == 0)
@@ -710,7 +803,7 @@ void *osd_fopen(const char *game, const char *filename, int filetype, int _write
 					{
 						/* try with a .zip extension */
 						sprintf(name, "%s/%s.zip", dir_name, gamename);
-						logerror("Trying %s file\n", name);
+						logerror("Trying %s\n", name);
 						if (cache_stat(name, &stat_buffer) == 0)
 						{
 							if (load_zipped_file(name, file, &f->data, &f->length) == 0)
@@ -1461,9 +1554,7 @@ int osd_display_loading_rom_message(const char *name, int current, int total)
 	return 0;
 }
 
-#ifdef MESS
 int osd_select_file(int sel, char *filename)
 {
 	return 0;
 }
-#endif
