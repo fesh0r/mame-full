@@ -258,6 +258,7 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
 	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
 	DRIVER( apple2c )	/* 1984 Apple //c									*/
 	DRIVER( apple2c0 )	/* 1986 Apple //c (3.5 ROM) 						*/
+	DRIVER( apple2c3 )	/* 1986 Apple //c (Original Mem. Exp.)				*/
 	DRIVER( apple2cp )	/* 1988 Apple //c+									*/
 	DRIVER( apple2e )	/* 1983 Apple //e									*/
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/

@@ -4,6 +4,8 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - LASER128 Rev4, LASER128ex Rev4a [Cowering]
 
+- Apple //c (Original Memory Expansion) [Christopher Stone]
+
 
 
 System Driver Changes:
