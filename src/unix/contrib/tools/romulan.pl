@@ -1,30 +1,45 @@
 #!/usr/bin/perl
 
 require 5.000;
+use Data::Dumper;
 
 # config options, nothing fancy
 
-$quiet = 0;
 $zipdir = "/usr/lib/games/xmame/roms";
 $unzip_binary = "unzip";
 $xmame_binary = "xmame";
 
-# examine zipfiles, extract fileinfo
+# useful things
+
+sub array_subtract {
+        my($ref1, $ref2, %mark) = @_;
+        grep $mark{$_}++, @{$ref2};
+        return grep !$mark{$_}, @{$ref1};
+}
+
+sub array_intersect {
+        my($ref1, $ref2, %mark) = @_;
+        grep $mark{$_}++, @{$ref2};
+        return grep $mark{$_}, @{$ref1};
+}
+
+# examine files, extract fileinfo
 
 opendir(DIR, $zipdir) || die "cannont opendir $zipdir: $!";
-@zipfiles = grep { -f "$zipdir/$_" } readdir(DIR);
+@files = grep { -f "$zipdir/$_" } readdir(DIR);
 closedir(DIR);
 
-foreach $zipfile (@zipfiles) {
-        foreach $file (`$unzip_binary -v -qq $zipdir/$zipfile`) {
+foreach $file (@files) {
+        foreach $line (`$unzip_binary -v -qq $zipdir/$file`) {
+                $line =~ tr/A-Z/a-z/;
+                @line = split /\s+/, $line;
+                ($dum, $len, $met, $siz, $rat, $dat, $tim, $crc, $nam) = @line;
+
                 $file =~ tr/A-Z/a-z/;
-                @file = split(/\s+/, $file);
+                $file =~ s/\.zip$//;
+                $info = "name $nam size $len crc $crc";
 
-                $zipfile =~ tr/A-Z/a-z/;
-                $zipfile =~ s/\.zip$//;
-
-                ($dum, $len, $met, $siz, $rat, $dat, $tim, $crc, $nam) = @file;
-                push(@{$zips{$zipfile}}, "name $nam size $len crc $crc");
+                push @{$zips{$file}}, $info;
         }
 }
 
@@ -32,10 +47,6 @@ foreach $zipfile (@zipfiles) {
 
 foreach $line (`$xmame_binary -listinfo 2>/dev/null`) {
         chop $line;
-
-        if ($line eq "game (" || $line eq "resource (") {
-                undef $name;
-        }
 
         $name = $1                     if ($line =~ /^\s+name\s(.*)$/);
         $description{$name} = $1       if ($line =~ /^\s+description\s(.*)$/);
@@ -49,33 +60,28 @@ foreach $line (`$xmame_binary -listinfo 2>/dev/null`) {
         $master{$name} = $1            if ($line =~ /^\s+cloneof\s(.*)$/);
         $master{$name} = $1            if ($line =~ /^\s+romof\s(.*)$/);
 
-        push(@{$roms{$name}}, $1)         if ($line =~ /^\s+rom\s(.*)$/);
-        push(@{$chips{$name}}, $1)        if ($line =~ /^\s+chip\s(.*)$/);
-        push(@{$dipswitches{$name}}, $1)  if ($line =~ /^\s+dipswitch\s(.*)$/);
-
-        if ($line eq ")") {
-                print "processed $name\n" unless $quiet;
+        if ($line =~ /^\s+rom\s\(\s(.*)\s\)$/) {
+                %info = split /\s+/, $1;
+                push @{$roms{$name}}, "name $info{name} size $info{size} crc $info{crc}";
         }
-}
 
-# strip merge info from all roms in all sets
+        if ($line =~ /^\s+chip\s\(\s(.*)\s\)$/) {
+                push @{$chips{$name}}, $1;
+        }
 
-foreach $set (keys %description) {
-        @{$roms{$set}} = map {s/merge\s\S+\s//; $_} @{$roms{$set}};
-}
+        if ($line =~ /^\s+dipswitch\s\(\s(.*)\s\)$/) {
+                push @{$dipswitches{$name}}, $1;
+        }
 
-# strip everything except name, size, crc
-
-foreach $set (keys %description) {
-        @{$roms{$set}} = map {s/.*(name\s\S+\ssize\s\S+\scrc\s\S+)\s.*/\1/; $_} @{$roms{$set}};
+        if ($line eq "game (" || $line eq "resource (") {
+                undef $rom;
+        }
 }
 
 # strip master roms from clone sets
 
 foreach $clone (keys %master) {
-        local(%mark);
-        grep($mark{$_}++, @{$roms{$master{$clone}}});
-        @{$roms{$clone}} = grep(!$mark{$_}, @{$roms{$clone}});
+        @{$roms{$clone}} = &array_subtract($roms{$clone}, $roms{$master{$clone}});
 }
 
 # move shared roms from clones to master
@@ -90,65 +96,70 @@ foreach $clone (keys %master) {
         foreach $cousin (keys %description) {
                 next if $clone eq $cousin;
                 next if $master{$clone} ne $master{$cousin};
-
-                local(%mark);
-                grep($mark{$_}++, @{$roms{$cousin}});
-                push(@common_roms, grep($mark{$_}, @{$roms{$clone}}));
+                push @common_roms, &array_intersect($roms{$cousin}, $roms{$clone});
         }
 
         foreach $cousin (keys %description) {
                 next if $master{$clone} ne $master{$cousin};
-
-                local(%mark);
-                grep($mark{$_}++, @common_roms);
-                @{$roms{$cousin}} = grep(!$mark{$_}, @{$roms{$cousin}});
+                @{$roms{$cousin}} = &array_subtract($roms{$cousin}, \@common_roms);
         }
 
         local(%mark);
-        grep($mark{$_}++, @common_roms);
-        push(@{$roms{$master{$clone}}}, keys(%mark));
+        grep $mark{$_}++, @common_roms;
+        push @{$roms{$master{$clone}}}, keys %mark;
 }
 
-# find sets without a correspondig zip
+# find sets without a corresponding zip, and vice versa
 
-local(%mark);
-grep($mark{$_}++, keys %zips);
-@missing_zips = grep(!$mark{$_}, keys %roms);
+@zipkeys = keys %zips;
+@romkeys = keys %roms;
 
-foreach $zip (@missing_zips) {
-        print "zipfile $zip is missing!\n" unless $quiet;
+foreach $zip (&array_subtract(\@romkeys, \@zipkeys)) {
+        print "file for $zip is missing!\n";
 }
 
-# find zips without a corresponding rom
-
-local(%mark);
-grep($mark{$_}++, keys %roms);
-@extra_zips = grep(!$mark{$_}, keys %zips);
-
-foreach $zip (@extra_zips) {
-        print "what is zipfile $zip for?\n" unless $quiet;
+foreach $zip (&array_subtract(\@zipkeys, \@romkeys)) {
+        print "what is file $zip for?\n";
 }
 
 # info received and mangled, time to analyse
 
 foreach $set (keys %description) {
-        local(%mark);
-        grep($mark{$_}++, @{$zips{$set}});
-        @missing_roms = grep(!$mark{$_}, @{$roms{$set}});
+        @missing_roms = &array_subtract($roms{$set}, $zips{$set});
+        @extra_roms = &array_subtract($zips{$set}, $roms{$set});
 
-        local(%mark);
-        grep($mark{$_}++, @{$roms{$set}});
-        @extra_roms = grep(!$mark{$_}, @{$zips{$set}});
+        @misnamed_roms = grep {
+                %info = split /\s+/, $rom=$_;
+                push @notmissing, grep {
+                        $misnamed_be{$rom} = $1 if /name (.*) size $info{size} crc $info{crc}/;
+                } @missing_roms;
+                $misnamed_be{$rom};
+        } @extra_roms;
 
-        print "examining zipfile $set... " unless $quiet;
-        print "broken!\n" if scalar(@missing_roms) || scalar(@extra_roms);
-        print "perfect!\n" unless scalar(@missing_roms) || scalar(@extra_roms);
+        @wrongcrc_roms = grep {
+                %info = split /\s+/, $rom=$_;
+                push @notmissing, grep {
+                        $wrongcrc_be{$rom} = $1 if /name $info{name} size $info{size} crc (.*)/;
+                } @missing_roms;
+                $wrongcrc_be{$rom};
+        } @extra_roms;
 
-        foreach $rom (@missing_roms) {
-                print "\tmissing rom $rom\n" unless $quiet;
-        }
-        foreach $rom (@extra_roms) {
-                print "\textra rom $rom\n" unless $quiet;
+        @extra_roms = &array_subtract(\@extra_roms, \@misnamed_roms);
+        @extra_roms = &array_subtract(\@extra_roms, \@wrongcrc_roms);
+        @missing_roms = &array_subtract(\@missing_roms, \@notmissing);
+
+        print "examining $set... ";
+        print "broken!\n" if @missing_roms || @extra_roms || @misnamed_roms || @wrongcrc_roms;
+        print "perfect!\n" unless @missing_roms || @extra_roms || @misnamed_roms || @wrongcrc_roms;
+
+        foreach $rom (@missing_roms)    { print "\tmissing:   $rom\n"; }
+        foreach $rom (@extra_roms)      { print "\textra:     $rom\n"; }
+        foreach $rom (@misnamed_roms)   { print "\tmisnamed:  $rom should be $misnamed_be{$rom}\n"; }
+        foreach $rom (@wrongcrc_roms)   {
+                if ($wrongcrc_be{$rom} eq "00000000") {
+                        print "\twrongcrc:  $rom BEST DUMP KNOWN\n";
+                } else {
+                        print "\twrongcrc:  $rom should be $wrongcrc_be{$rom}\n"
+                }
         }
 }
-
