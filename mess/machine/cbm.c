@@ -13,6 +13,8 @@ static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapsh
 	UINT32 bytesread;
 	UINT16 address = 0;
 
+	assert(memory);
+
 	if (!file_type)
 		goto error;
 
@@ -63,10 +65,22 @@ static void cbm_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hi
 	memory[0x32] = memory[0x30] = memory[0x2e] = hiaddress >> 8;
 }
 
-QUICKLOAD_LOAD( cbm )
+QUICKLOAD_LOAD( cbm_c16 )
+{
+	extern UINT8 *c16_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, c16_memory, cbm_quick_open);
+}
+
+QUICKLOAD_LOAD( cbm_c64 )
 {
 	extern UINT8 *c64_memory;
 	return general_cbm_loadsnap(fp, file_type, quickload_size, c64_memory, cbm_quick_open);
+}
+
+QUICKLOAD_LOAD( cbm_vc20 )
+{
+	extern UINT8 *vc20_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, vc20_memory, cbm_quick_open);
 }
 
 static void cbm_pet_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)

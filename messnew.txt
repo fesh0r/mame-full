@@ -6,7 +6,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [C16/VC20] Fixed crashes in quickloader. [Nate Woods]
+- [C16] Improved TED7360 sound emulation. [Attila Grosz]
 
 Source Changes:
 ---------------

@@ -95,14 +95,14 @@ void ted7360_soundport_w (int offset, int data)
 /************************************/
 static void ted7360_update (int param, INT16 *buffer, int length)
 {
-    int i, v;
+    int i, v, a;
     
     for (i = 0; i < length; i++)
     {
 	v = 0;
 	if (TONE1_ON)
 	{
-	    if (tone1pos<=tone1samples/2) {
+	    if (tone1pos<=tone1samples/2 || !TONE_ON) {
 		v += 0x2ff; // depends on the volume between sound and noise
 	    }
 	    tone1pos++;
@@ -112,7 +112,7 @@ static void ted7360_update (int param, INT16 *buffer, int length)
 	{
 	    if (TONE2_ON)
 	    {						   /*higher priority ?! */
-		if (tone2pos<=tone2samples/2) {
+		if (tone2pos<=tone2samples/2 || !TONE_ON) {
 		    v += 0x2ff;
 		}
 		tone2pos++;
@@ -129,15 +129,11 @@ static void ted7360_update (int param, INT16 *buffer, int length)
 	    }
 	}
 	
-	if (TONE_ON)
-	{
-	    int a=VOLUME;
-	    if (a>8) a=8;
-	    v = v * a;
-	    buffer[i] = v;
-	}
-	else
-	    buffer[i] = 0;
+	a = VOLUME;
+	if (a>8)
+		a=8;
+	v = v * a;
+	buffer[i] = v;
     }
 }
 
