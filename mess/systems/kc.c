@@ -55,6 +55,127 @@ PORT_WRITE_START( writeport_kc85_4 )
 
 PORT_END
 
+static READ_HANDLER(kc85_module_r)
+{
+	int port_upper;
+
+	logerror("kc85 module r: %04x\n",offset);
+
+	port_upper = (offset>>8) & 0x0ff;
+
+	switch (port_upper)
+	{
+		default:
+			return 0x00;
+
+
+
+
+	}
+
+	/* module not enabled */
+	return 0x0ff;
+}
+
+
+
+static READ_HANDLER(kc85_4_port_r)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+		case 0x080:
+			return kc85_module_r(offset);
+		
+		case 0x085:
+		case 0x084:
+			return kc85_4_84_r(offset);
+	
+
+		case 0x086:
+		case 0x087:
+			return kc85_4_86_r(offset);
+
+		case 0x088:
+		case 0x089:
+			return kc85_pio_data_r(port-0x088);
+		case 0x08a:
+		case 0x08b:
+			return kc85_pio_control_r(port-0x08a);
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			return kc85_ctc_r(port-0x08c);
+		case 0x0f0:
+		case 0x0f1:
+		case 0x0f2:
+		case 0x0f3:
+			return kc85_disc_interface_ram_r(offset);
+	
+	}
+
+	logerror("unhandled port r: %04x\n",offset);
+	return 0x0ff;
+}
+
+static WRITE_HANDLER(kc85_4_port_w)
+{
+	int port;
+
+	port = offset & 0x0ff;
+
+	switch (port)
+	{
+		case 0x085:
+		case 0x084:
+			kc85_4_84_w(offset,data);
+			return;
+
+		case 0x086:
+		case 0x087:
+			kc85_4_86_w(offset,data);
+			return;
+
+		case 0x088:
+		case 0x089:
+			kc85_4_pio_data_w(port-0x088, data);
+			return;
+
+		case 0x08a:
+		case 0x08b:
+			kc85_pio_control_w(port-0x08a, data);
+			return;
+
+		case 0x08c:
+		case 0x08d:
+		case 0x08e:
+		case 0x08f:
+			kc85_ctc_w(port-0x08c, data);
+			return;
+
+		case 0x0f0:
+		case 0x0f1:
+		case 0x0f2:
+		case 0x0f3:
+			kc85_disc_interface_ram_w(offset,data);
+			return;	
+	}
+
+	logerror("unhandled port w: %04x\n",offset);
+}
+
+PORT_READ_START( readport_kc85_4d )
+	{0x0000, 0x0ffff, kc85_4_port_r},
+PORT_END
+
+PORT_WRITE_START( writeport_kc85_4d )
+	{0x0000, 0x0ffff, kc85_4_port_w},
+PORT_END
+
 MEMORY_READ_START( readmem_kc85_4 )
 	{0x00000, 0x03fff, MRA_BANK1},
 	{0x04000, 0x07fff, MRA_BANK2},
@@ -215,24 +336,24 @@ static struct MachineDriver machine_driver_kc85_4d =
 	{
 			/* MachineCPU */
 		{
-			CPU_Z80,  /* type */
+			CPU_Z80 | CPU_16BIT_PORT,  /* type */
 			KC85_4_CLOCK,
 			readmem_kc85_4,		   /* MemoryReadAddress */
 			writemem_kc85_4,		   /* MemoryWriteAddress */
-			readport_kc85_4,		   /* IOReadPort */
-			writeport_kc85_4,		   /* IOWritePort */
+			readport_kc85_4d,		   /* IOReadPort */
+			writeport_kc85_4d,		   /* IOWritePort */
 			0,		/* VBlank  Interrupt */
 			0,				   /* vblanks per frame */
 			0, 0,	/* every scanline */
             kc85_daisy_chain
 	    },
-		KC_DISC_INTERFACE_CPU
+/*		KC_DISC_INTERFACE_CPU */
 	},
 	50,								   /* frames per second */
 	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	kc85_4_init_machine,			   /* init machine */
-	kc85_4_shutdown_machine,
+	2,								   /* cpu slices per frame */
+	kc85_4d_init_machine,			   /* init machine */
+	kc85_4d_shutdown_machine,
 	/* video hardware */
 	KC85_SCREEN_WIDTH,			   /* screen width */
 	KC85_SCREEN_HEIGHT,			   /* screen height */
@@ -329,7 +450,7 @@ ROM_START(kc85_4d)
     ROM_LOAD("caos__c0.854", 0x12000, 0x1000, 0x57d9ab02)
     ROM_LOAD("caos__e0.854", 0x13000, 0x2000, 0xd64cd50b)
 	
-	KC85_DISK_INTERFACE_ROM
+	ROM_REGION(0x010000, REGION_CPU2,0)
 ROM_END
 
 ROM_START(kc85_3)

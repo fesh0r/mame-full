@@ -15,6 +15,7 @@ int	kc_quickload_load(int id);
 
 void kc85_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom);
 
+void	kc85_video_set_blink_state(int data);
 
 int kc85_4_vh_start(void);
 void kc85_4_vh_stop(void);
@@ -27,6 +28,9 @@ void kc85_3_vh_stop(void);
 void kc85_3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void kc85_3_shutdown_machine(void);
 void kc85_3_init_machine(void);
+
+void kc85_4d_init_machine(void);
+void kc85_4d_shutdown_machine(void);
 
 /* cassette */
 int kc_cassette_device_init(int id);
@@ -81,7 +85,7 @@ The keys are converted into codes which are transmitted by the keyboard to the b
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE) \
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE) \
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "^/ss", KEYCODE_NONE, IP_JOY_NONE) \
-	PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CLR", KEYCODE_DEL, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CLR", KEYCODE_BACKSPACE, IP_JOY_NONE) \
 	PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, ":",KEYCODE_COLON, IP_JOY_NONE) \
 	PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F3", KEYCODE_F3, IP_JOY_NONE) \
 	PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE) \
@@ -91,7 +95,7 @@ The keys are converted into codes which are transmitted by the keyboard to the b
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE) \
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5", KEYCODE_5, IP_JOY_NONE) \
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE) \
-	PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE) \
+	PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_DEL, IP_JOY_NONE) \
 	PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0",KEYCODE_0, IP_JOY_NONE) \
 	PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F5", KEYCODE_F5, IP_JOY_NONE) \
 	PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE) \
@@ -165,6 +169,13 @@ int kc85_floppy_init(int id);
 
 /* used to setup machine */
 
+#define KC_DISC_INTERFACE_PORT_R \
+	{0x0f0, 0x0f3, kc85_disc_interface_ram_r},
+
+#define KC_DISC_INTERFACE_PORT_W \
+	{0x0f0, 0x0f3, kc85_disc_interface_ram_w}, \
+	{0x0f4, 0x0f4, kc85_disc_interface_latch_w},
+
 #define KC_DISC_INTERFACE_CPU \
 { \
 	CPU_Z80,  /* type */ \
@@ -179,13 +190,9 @@ int kc85_floppy_init(int id);
     0 \
 }
 
-/* disc rom in disc interface address space */
-#define KC85_DISK_INTERFACE_ROM 
+#define KC_DISC_INTERFACE_ROM
 
-#if 0
-	ROM_REGION(0x0E000, REGION_CPU2,0) \
-	ROM_LOAD("floppy.rom", 0x10000, 0x2000, 0x0)
-#endif
+
 
 /* these are internal to the disc interface */
 

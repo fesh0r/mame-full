@@ -4,7 +4,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
 
-#define KC_DEBUG
+//#define KC_DEBUG
 
 static int kc85_pio_data[2];
 
@@ -28,7 +28,7 @@ bit 0: CAOS ROM E
 */
 
 /* PIO PORT B: port 0x089:
-bit 7: BLINK
+bit 7: BLINK ENABLE (1=blink, 0=no blink)
 bit 6: WRITE PROTECT RAM 8
 bit 5: ACCESS RAM 8
 bit 4: TONE 4
@@ -168,8 +168,6 @@ int kc_quickload_load(int id)
 /* bit 4: Index pulse from disc */
 static unsigned char kc85_disc_hw_input_gate;
 
-static unsigned char *kc85_disc_interface_ram;
-
 int kc85_floppy_init(int id)
 {
 	if (basicdsk_floppy_init(id)==INIT_OK)
@@ -268,21 +266,16 @@ void	kc_disc_interface_init(void)
 	nec765_init(&kc_fdc_interface,NEC765A);
 
 	/* reset ctc */
-	z80ctc_reset(1);
+	/*z80ctc_reset(1); */
 
-	kc85_disc_interface_ram = malloc(1024);
+	/* hold cpu at reset */
+	cpu_set_reset_line(1,ASSERT_LINE);
 }
 
 
 void	kc_disc_interface_exit(void)
 {
 	nec765_stop();
-
-	if (kc85_disc_interface_ram)
-	{
-		free(kc85_disc_interface_ram);
-		kc85_disc_interface_ram = NULL;
-	}
 }
 
 
@@ -305,7 +298,7 @@ void	kc_disc_interface_exit(void)
 */
 
 
-#define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(22050)
+#define KC_CASSETTE_TIMER_FREQUENCY TIME_IN_HZ(4800)
 
 int kc_cassette_device_init(int id)
 {
@@ -462,7 +455,7 @@ static void	kc_cassette_set_motor(int motor_state)
 /* The basic transmit proceedure is working, keys are received */
 /* Todo: Key-repeat, and allowing the same key to be pressed twice! */
 
-#define KC_KEYBOARD_DEBUG
+//#define KC_KEYBOARD_DEBUG
 
 /*
 
@@ -1425,7 +1418,6 @@ WRITE_HANDLER ( kc85_4_pio_data_w )
 {
 	kc85_pio_data[offset] = data;
 	z80pio_d_w(0, offset, data);
-	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
 
 	switch (offset)
 	{
@@ -1461,8 +1453,9 @@ WRITE_HANDLER ( kc85_4_pio_data_w )
 
 WRITE_HANDLER ( kc85_4_86_w )
 {
+#ifdef KC_DEBUG
 	logerror("0x086 W: %02x\n",data);
-	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
+#endif
 
 	kc85_86_data = data;
 
@@ -1478,9 +1471,9 @@ READ_HANDLER ( kc85_4_86_r )
 
 WRITE_HANDLER ( kc85_4_84_w )
 {
+#ifdef KC_DEBUG
 	logerror("0x084 W: %02x\n",data);
-	logerror("PIO W: PC: %04x offs: %04x data: %02x\n",cpu_get_pc(),offset,data);
-
+#endif
 	kc85_84_data = data;
 
 	kc85_4_video_ram_select_bank(data & 0x01);
@@ -1662,7 +1655,7 @@ bit 0: CAOS ROM E
 */
 
 /* PIO PORT B: port 0x089:
-bit 7: BLINK
+bit 7: BLINK ENABLE
 bit 6: WRITE PROTECT RAM 8
 bit 5: ACCESS RAM 8
 bit 4: TONE 4
@@ -1710,6 +1703,8 @@ WRITE_HANDLER ( kc85_3_pio_data_w )
 /*****************************************************************/
 
 /* used by KC85/4 and KC85/3 */
+static void *kc85_50hz_timer;
+static int kc85_50hz_state;
 
 READ_HANDLER ( kc85_unmapped_r )
 {
@@ -1720,7 +1715,8 @@ static OPBASE_HANDLER( kc85_opbaseoverride )
 {
 	memory_set_opbase_handler(0,0);
 
-	cpu_set_reg(Z80_PC, 0x0f000);
+	cpu_set_pc(0x0f000);
+//	cpu_set_reg(Z80_PC, 0x0f000);
 
 	return (cpu_get_pc() & 0x0ffff);
 }
@@ -1749,14 +1745,16 @@ READ_HANDLER ( kc85_ctc_r )
 	unsigned char data;
 
 	data = z80ctc_0_r(offset);
-#ifdef KC_KEYBOARD_DEBUG
-	logerror("ctc data:%02x\n",data);
-#endif
+//#ifdef KC_KEYBOARD_DEBUG
+	//logerror("ctc data r:%02x\n",data);
+//#endif
 	return data;
 }
 
 WRITE_HANDLER ( kc85_ctc_w )
 {
+	//logerror("ctc data w:%02x\n",data);
+
 	z80ctc_0_w(offset,data);
 }
 
@@ -1798,7 +1796,6 @@ static void kc85_pio_brdy_callback(int state)
 #endif
 }
 
-
 static z80pio_interface kc85_pio_intf =
 {
 	1,					/* number of PIOs to emulate */
@@ -1811,6 +1808,7 @@ static z80pio_interface kc85_pio_intf =
 static WRITE_HANDLER(kc85_zc0_callback)
 {
 
+
 }
 
 /* used in cassette write -> K1 */
@@ -1819,10 +1817,26 @@ static WRITE_HANDLER(kc85_zc1_callback)
 
 }
 
+static void kc85_50hz_timer_callback(int dummy)
+{
+
+	/* toggle state of square wave */
+	kc85_50hz_state^=1;
+
+	/* set input to ctc */
+	z80ctc_0_trg2_w(0,kc85_50hz_state);
+}
+
 /* video blink */
 static WRITE_HANDLER(kc85_zc2_callback)
 {
-
+	/* is blink enabled? */
+	if (kc85_pio_data[1] & (1<<7))
+	{
+		/* yes */
+		/* toggle state of blink to video hardware */
+		kc85_video_set_blink_state(data);
+	}
 }
 
 static z80ctc_interface	kc85_ctc_intf =
@@ -1853,10 +1867,22 @@ static void	kc85_common_init(void)
 	can't see yet where it disables it later!!!! so for now
 	here will be a override */
 	memory_set_opbase_handler(0, kc85_opbaseoverride);
+
+	/* kc85 has a 50hz input to the ctc channel 2 */
+	/* this is used to blink the cursor */
+	kc85_50hz_state = 0;
+	kc85_50hz_timer = timer_pulse(TIME_IN_HZ(50), 0, kc85_50hz_timer_callback);
+
 }
 
 static void	kc85_common_shutdown_machine(void)
 {
+	if (kc85_50hz_timer)
+	{
+		timer_remove(kc85_50hz_timer);
+		kc85_50hz_timer = NULL;
+	}
+
 	kc_keyboard_exit();
 	kc_cassette_exit();
 }
@@ -1894,6 +1920,19 @@ void kc85_4_shutdown_machine(void)
 
 	kc85_common_shutdown_machine();
 }
+
+void kc85_4d_init_machine(void)
+{
+	kc85_4_init_machine();
+	kc_disc_interface_init();
+}
+
+void kc85_4d_shutdown_machine(void)
+{
+	kc85_4_shutdown_machine();
+	kc_disc_interface_exit();
+}
+
 
 void kc85_3_init_machine(void)
 {
