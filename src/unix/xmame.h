@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "osdepend.h"
+#include "driver.h"
 #include "mame.h"
 #include "common.h"
 #include "sysdep/sysdep_palette.h"
@@ -84,7 +85,7 @@ EXTERN int	 	widthscale;        /* X scale */
 EXTERN int	 	heightscale;       /* Y scale */
 extern int		yarbsize;          /* arbitrary height */
 EXTERN int		video_colors_used; /* max colors used by any palette */
-EXTERN int		video_fps;
+EXTERN float		video_fps;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		use_mouse;
