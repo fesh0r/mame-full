@@ -27,8 +27,28 @@ struct KeyBuffer
 	char buffer[4096];
 };
 
+struct InputMapEntry
+{
+	const char *name;
+	int code;
+};
+
+static struct InputMapEntry input_map[] =
+{
+	{ "UP",			'^' },
+	{ "DOWN",		0 },
+	{ "LEFT",		8 },
+	{ "RIGHT",		9 },
+	{ "ENTER",		13 },
+	{ "SPACE",		' ' },
+	{ DEF_STR( Unused ), 	0 },
+	{ "L-SHIFT",		0 },
+	{ "R-SHIFT",		0 }
+};
+
 static int find_code(const char *name)
 {
+	int i;
 	int code;
 	int len = strlen(name);
 
@@ -37,7 +57,17 @@ static int find_code(const char *name)
 	else if ((len == 4) && isspace(name[1]) && isspace(name[2]))
 		code = name[0];
 	else
+	{
 		code = -1;
+		for (i = 0; i < sizeof(input_map) / sizeof(input_map[0]); i++)
+		{
+			if (!strcmp(name, input_map[i].name))
+			{
+				code = input_map[i].code;
+				break;
+			}
+		}
+	}
 	return code;
 }
 
@@ -60,11 +90,14 @@ static void scan_keys(struct InputCode *codes, UINT16 *ports, UINT16 *masks, int
 			if (code < 0)
 			{
 				/* we've failed to translate this system's codes */
-				//codes = NULL;
+				codes = NULL;
 				return;
 			}
-			codes[code].port[keys] = port;
-			codes[code].ipt[keys] = ipt;
+			if (code > 0)
+			{
+				codes[code].port[keys] = port;
+				codes[code].ipt[keys] = ipt;
+			}
 			break;
 		}
 		ipt++;
@@ -82,16 +115,22 @@ void inputx_init(void)
 	UINT16 masks[NUM_SIMUL_KEYS];
 	size_t buffer_size;
 
-	buffer_size = sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer);
+	codes = NULL;
+	inputx_timer = NULL;
 
-	codes = (struct InputCode *) auto_malloc(buffer_size);
-	if (!codes)
-		return;
-	memset(codes, 0, buffer_size);
+	if (Machine->gamedrv->flags & GAME_COMPUTER)
+	{
+		buffer_size = sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer);
 
-	scan_keys(codes, ports, masks, 0);
+		codes = (struct InputCode *) auto_malloc(buffer_size);
+		if (!codes)
+			return;
+		memset(codes, 0, buffer_size);
 
-	inputx_timer = timer_alloc(inputx_timerproc);
+		scan_keys(codes, ports, masks, 0);
+
+		inputx_timer = timer_alloc(inputx_timerproc);
+	}
 }
 
 int inputx_can_post(void)
