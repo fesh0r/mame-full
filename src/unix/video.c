@@ -30,7 +30,7 @@ static int brightness = 100;
 float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
 static int rgb_direct;
-static struct osd_bitmap *scrbitmap = NULL;
+static struct mame_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct my_rectangle normal_visual;
 static struct my_rectangle debug_visual;
@@ -41,10 +41,6 @@ UINT16 *color_values;
 
 
 float gamma_correction = 1.0;
-
-#ifdef xgl
-	static int bitmap4GLTexture = 0;
-#endif
 
 /* some prototypes */
 static int video_handle_scale(struct rc_option *option, const char *arg,
@@ -239,131 +235,6 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
    return 0;
 }
 
-/* Create a bitmap. */
-/* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
-/* around the bitmap. This is required because, for performance reasons, some graphic */
-/* routines don't clip at boundaries of the bitmap. */
-struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG 980209 */
-{
-	struct osd_bitmap *bitmap;
-#ifdef xgl
-	int w,h;
-#endif
-
-	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
-	{
-		fprintf(stderr_file, "osd_alloc_bitmap() unknown depth %d\n", 
-			depth);
-		return NULL;
-	}
-
-	if ((bitmap = malloc(sizeof(struct osd_bitmap))) != 0)
-	{
-		unsigned char *bitmap_data=0;
-		int i,rowlen,rdwidth, bytes_per_pixel;
-		int y_rows;
-		int bitmap_size;
-
-		bitmap->depth = depth;
-		bitmap->width = width;
-		bitmap->height = height;
-
-		rdwidth = (width + 7) & ~7;     /* round width to a quadword */
-
-		bytes_per_pixel=(depth+7)/8;
-
-		rowlen = bytes_per_pixel * (rdwidth + 2 * safety) * sizeof(unsigned char);
-		
-		y_rows = height + 2 * safety;
-
-		bitmap_size = y_rows * rowlen ;
-
-#ifdef xgl
-		if(bitmap4GLTexture) 
-		{
-			int tw_size, th_rows;
-
-			/* JAU: find some n,m for 
-				(w=2**n)>=text_width, (h=2**m)>=text_height */
-			/* we try to use the bitmap for OpenGL 
-			   textures directly .. no copies */
-
-			text_width  = width;
-			text_height = height;
-			w=1; h=1;
-
-			while (w<text_width)
-			{ w*=2; }
-
-			while (h<text_height)
-			{ h*=2; }
-
-			text_width=w;
-			text_height=h;
-
-			/* The rows must not be expanded, just the bitmap
-			   memory - because of read access :-)
-
-			   Question: 
-			     Is the bitmap allocated after osd_create_display
-			     the only, which must be displayed as a texture ?
-			     If not - work must be done ..
-			 */
-			
-			tw_size  = bytes_per_pixel * 
-			           (text_width + 2 * safety) ;
-
-			th_rows = text_height + 2 * safety ;
-			
-			bitmap_size = th_rows * tw_size;
-
-			bitmap4GLTexture = FALSE; /* thats it */
-
-		}
-#endif
-
-		if ((bitmap_data = malloc(bitmap_size)) == 0)
-		{
-			free(bitmap);
-			return 0;
-		}
-	
-		/* clear ALL bitmap, including safety area, to avoid garbage on right */
-		/* side of screen is width is not a multiple of 4 */
-		memset(bitmap_data, 0, (height + 2 * safety) * rowlen);
-
-		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
-		{
-		    free(bitmap_data);
-		    free(bitmap);
-		    return 0;
-		}
-
-		for (i = 0; i < height + 2 * safety; i++)
-		{
-		    bitmap->line[i] = &bitmap_data[i * rowlen + safety * bytes_per_pixel];
-		}
-
-		bitmap->line += safety;
-
-		bitmap->_private = bitmap_data ;
-	}
-
-	return bitmap;
-}
-
-void osd_free_bitmap(struct osd_bitmap *bitmap)
-{
-	if (bitmap)
-	{
-		bitmap->line -= safety;
-		free(bitmap->line);
-		free(bitmap->_private);
-		free(bitmap);
-		bitmap = NULL;
-	}
-}
-
 int osd_create_display(int width, int height, int depth,
    int fps, int attributes, int orientation)
 {
@@ -383,7 +254,7 @@ int osd_create_display(int width, int height, int depth,
       use_dirty = FALSE;
    }
    
-   if(use_auto_double)
+   if (use_auto_double)
    {
       if ( (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK) ==
          VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -403,14 +274,7 @@ int osd_create_display(int width, int height, int depth,
       }
    }
   
-   if (osd_dirty_init()!=OSD_OK) return -1;
-
-#ifdef xgl
-   /* yes create a OpenGL-Texture compatible bitmap this time ... 
-      the next call to alloc_bitmap uses this information ...
-    */
-   bitmap4GLTexture=1; 
-#endif
+   if (osd_dirty_init() != OSD_OK) return -1;
 
    visual_width     = width;
    visual_height    = height;
@@ -795,7 +659,7 @@ void osd_modify_pen(int pen, unsigned char red,unsigned char green,unsigned char
 
 static int skip_next_frame = 0;
 
-typedef int (*skip_next_frame_func)(int show_fps_counter, struct osd_bitmap *bitmap);
+typedef int (*skip_next_frame_func)(int show_fps_counter, struct mame_bitmap *bitmap);
 static skip_next_frame_func skip_next_frame_functions[FRAMESKIP_DRIVER_COUNT] =
 {
    dos_skip_next_frame,
@@ -824,12 +688,12 @@ void osd_debugger_focus(int new_debugger_focus)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
-   struct osd_bitmap *debug_bitmap, int leds_status)
+void osd_update_video_and_audio(struct mame_bitmap *normal_bitmap,
+   struct mame_bitmap *debug_bitmap, int leds_status)
 {
    static int showfps=0, showfpstemp=0; 
    int skip_this_frame;
-   struct osd_bitmap *current_bitmap = normal_bitmap;
+   struct mame_bitmap *current_bitmap = normal_bitmap;
    
    
 /* save the active bitmap for use in osd_clearbitmap, I know this
@@ -1019,7 +883,7 @@ int osd_get_brightness(void)
 }
 
 #ifndef xgl
-void osd_save_snapshot(struct osd_bitmap *bitmap)
+void osd_save_snapshot(struct mame_bitmap *bitmap)
 {
    save_screen_snapshot(bitmap);
 }
