@@ -498,7 +498,7 @@ static int rasterline = 0, lastline = 0;
 static double rastertime;
 static void ted7360_drawlines (int first, int last);
 
-static unsigned short cursorcolortable[2] =
+static UINT32 cursorcolortable[2] =
 {0};
 static struct GfxLayout cursorlayout =
 {
