@@ -11,24 +11,7 @@
 	For the actual emulation of these devices look at the machine/pdp1.c.  This
 	file only includes the display routines.
 
-
-Theory of operation for CRT:
-
-	What makes the pdp-1 CRT so odd is that there is no video processor, no scan logic,
-	no refresh logic.  The beam position and intensity is controlled by the program completely:
-	in order to draw an object, the program must direct the beam to each point of the object,
-	and in order to refresh it, the program must redraw the object periodically.
-
-	Since the refresh rates are highly variable (completely controlled by the
-	program), I needed to simulate CRT remanence: the intensity of each pixel
-	on display decreases regularly.  In order to keep this efficient, I keep
-	a list of non-black pixels, and only process these pixels on each refresh.
-	In order to improve efficiency further, I keep a distinct list for each
-	line of the display.  I have found that it improves drawing speed slightly
-	(probably because it improves the cache hit rate).
-
-
-	Raphael Nabet 2002
+	Raphael Nabet 2002-2004
 	Based on earlier work by Chris Salomon
 */
 
@@ -38,26 +21,8 @@ Theory of operation for CRT:
 
 #include "cpu/pdp1/pdp1.h"
 #include "includes/pdp1.h"
+#include "vidhrdw/crt.h"
 
-
-enum
-{
-	intensity_pixel_not_in_list = -1,				/* special value that tells that the node is not in list */
-	intensity_new_pixel = pen_crt_max_intensity+1	/* special value that tells that the node is new, and the pixel should not be decayed */
-};
-
-typedef struct
-{
-	int intensity;		/* current intensity of the pixel */
-							/* a node is not in the list when (intensity == -1) */
-	int next;			/* index of next pixel in list */
-} point;
-
-static point *list;			/* array of (crt_window_width*crt_window_height) point */
-static int list_head[crt_window_height];	/* head of the list of lit pixels (index in the array) */
-											/* keep a separate list for each display line (makes the video code slightly faster) */
-
-static int decay_counter;	/* incremented each frame (tells for how many frames the CRT has decayed between two screen refresh) */
 
 static struct mame_bitmap *panel_bitmap;
 static struct mame_bitmap *typewriter_bitmap;
@@ -86,8 +51,6 @@ static void pdp1_draw_lightpen(struct mame_bitmap *bitmap);
 */
 VIDEO_START( pdp1 )
 {
-	int i;
-
 	/* alloc bitmaps for our private fun */
 	panel_bitmap = auto_bitmap_alloc(panel_window_width, panel_window_height);
 	if (!panel_bitmap)
@@ -97,25 +60,14 @@ VIDEO_START( pdp1 )
 	if (!typewriter_bitmap)
 		return 1;
 
-	/* alloc the array */
-	list = auto_malloc(crt_window_width * crt_window_height * sizeof(point));
-	if (!list)
-		return 1;
-
-	/* fill with black and set up list as empty */
-	for (i=0; i<(crt_window_width * crt_window_height); i++)
-	{
-		list[i].intensity = intensity_pixel_not_in_list;
-	}
-
-	for (i=0; i<crt_window_height; i++)
-		list_head[i] = -1;
-
-	decay_counter = 0;
-
+	/* set up out bitmaps */
 	pdp1_draw_panel_backdrop(panel_bitmap);
 
 	fillbitmap(typewriter_bitmap, Machine->pens[pen_typewriter_bg], &typewriter_bitmap_bounds);
+
+	/* initialize CRT */
+	if (video_start_crt(pen_crt_num_levels, crt_window_offset_x, crt_window_offset_y, crt_window_width, crt_window_height))
+		return 1;
 
 	return 0;
 }
@@ -126,94 +78,10 @@ VIDEO_START( pdp1 )
 */
 void pdp1_plot(int x, int y)
 {
-	point *node;
-	int list_index;
-
-	/* compute pixel coordinates */
+	/* compute pixel coordinates and plot */
 	x = x*crt_window_width/01777;
 	y = y*crt_window_height/01777;
-	if (x<0) x=0;
-	if (y<0) y=0;
-	if ((x>(crt_window_width-1)) || ((y>crt_window_height-1)))
-		return;
-	y = (crt_window_height-1) - y;
-
-	/* find entry in list */
-	list_index = x + y*crt_window_width;
-
-	node = & list[list_index];
-
-	if (node->intensity == intensity_pixel_not_in_list)
-	{	/* insert node in list if it is not in it */
-		node->next = list_head[y];
-		list_head[y] = list_index;
-	}
-	/* set intensity */
-	node->intensity = intensity_new_pixel;
-}
-
-
-/*
-	update the bitmap
-*/
-static void set_points(struct mame_bitmap *bitmap)
-{
-	int i, p_i;
-	int y;
-
-	//if (decay_counter)
-	{
-		/* some time has elapsed: let's update the screen */
-		for (y=0; y<crt_window_height; y++)
-		{
-			UINT16 *line = (UINT16 *)bitmap->line[y+crt_window_offset_y];
-
-			p_i = -1;
-
-			for (i=list_head[y]; (i != -1); i=list[i].next)
-			{
-				point *node = & list[i];
-				int x = (i % crt_window_width) + crt_window_offset_x;
-
-				if (node->intensity == intensity_new_pixel)
-					/* new pixel: set to max intensity */
-					node->intensity = pen_crt_max_intensity;
-				else
-				{
-					/* otherwise, apply intensity decay */
-					node->intensity -= decay_counter;
-					if (node->intensity < 0)
-						node->intensity = 0;
-				}
-
-				/* draw pixel on screen */
-				//plot_pixel(bitmap, x, y+crt_window_offset_y, Machine->pens[node->intensity]);
-				line[x] = Machine->pens[node->intensity];
-
-				if (node->intensity != 0)
-					p_i = i;	/* current node will be next iteration's previous node */
-				else
-				{	/* delete current node */
-					node->intensity = intensity_pixel_not_in_list;
-					if (p_i != -1)
-						list[p_i].next = node->next;
-					else
-						list_head[y] = node->next;
-				}
-			}
-		}
-
-		decay_counter = 0;
-	}
-}
-
-
-/*
-	video_eof_pdp1: keep track of time
-*/
-VIDEO_EOF( pdp1 )
-{
-	decay_counter++;
+	crt_plot(x, y);
 }
 
 
@@ -223,7 +91,7 @@ VIDEO_EOF( pdp1 )
 VIDEO_UPDATE( pdp1 )
 {
 	pdp1_erase_lightpen(bitmap);
-	set_points(bitmap);
+	video_update_crt(bitmap);
 	pdp1_draw_lightpen(bitmap);
 
 	pdp1_draw_panel(panel_bitmap);
@@ -640,6 +508,12 @@ void pdp1_typewriter_drawchar(int character)
 	}
 }
 
+
+
+/*
+	lightpen code
+*/
+
 void pdp1_update_lightpen_state(const lightpen_t *new_state)
 {
 	lightpen_state = *new_state;
@@ -746,4 +620,3 @@ static void pdp1_draw_lightpen(struct mame_bitmap *bitmap)
 	}
 	previous_lightpen_state = lightpen_state;
 }
-
