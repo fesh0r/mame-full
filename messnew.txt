@@ -19,7 +19,10 @@ System Driver Changes:
 
 - [BBC] Added a new BBC clone (BBCB1770) to use the WD1770 disc controller.
   Much improved SAA5050 teletext support (mode 7), There is still a
-  problem with the Mode 7 cursor [Gordon Jefferyes]
+  problem with the Mode 7 cursor.
+  Added two new BBC clones they are BBCBP the BBC B Plus with 64K and
+  the BBCBP128 the BBC B plus with 128K.
+  Also Joystick support has now been added [Gordon Jefferyes]
 
 - [AMSTRAD CPC] Added support for printer. [Kev Thacker]
 
