@@ -9,6 +9,10 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE2] Fixed a regression in caching disk data that would cause data to
+  be lost when switching disks, or for switching disks to not be acknowledged.
+  [Nate Woods]
+
 - [MSX] Rewrote memory emulation.
   * Adds support for subslots
   * Proper memory layout for the MSX2 drivers, with the diskrom

@@ -17,11 +17,13 @@
 
 	Note - only one driver light can be on at once; regardless of the motor
 	state; if we support drive lights we must take this into consideration
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "image.h"
 #include "devices/flopdrv.h"
+#include "devices/mflopimg.h"
 #include "includes/apple2.h"
 #include "formats/ap2_dsk.h"
 
@@ -54,16 +56,30 @@ struct apple2_drive
 
 static struct apple2_drive *apple2_drives;
 
+static void apple2_floppy_unload(mess_image *image);
+
+
 /***************************************************************************
   apple2_slot6_init
 ***************************************************************************/
 
 void apple2_slot6_init(void)
 {
-	apple2_drives = auto_malloc(sizeof(struct apple2_drive) * 2);
+	int floppy_count, i;
+	mess_image *image;
+
+	floppy_count = device_count(IO_FLOPPY);
+
+	apple2_drives = auto_malloc(sizeof(struct apple2_drive) * floppy_count);
 	if (!apple2_drives)
 		return;
-	memset(apple2_drives, 0, sizeof(struct apple2_drive) * 2);
+	memset(apple2_drives, 0, sizeof(struct apple2_drive) * floppy_count);
+
+	for (i = 0; i < floppy_count; i++)
+	{
+		image = image_from_devtype_and_index(IO_FLOPPY, i);
+		floppy_install_unload_proc(image, apple2_floppy_unload);
+	}
 }
 
 
@@ -88,6 +104,16 @@ static void save_current_track(mess_image *image, struct apple2_drive *disk)
 		floppy_drive_write_track_data_info_buffer(image, 0, disk->track_data, &len);
 		disk->transient_state &= ~TRSTATE_DIRTY;
 	}
+}
+
+
+
+static void apple2_floppy_unload(mess_image *image)
+{
+	struct apple2_drive *cur_disk;
+	cur_disk = &apple2_drives[image_index_in_device(image)];
+	save_current_track(image, cur_disk);
+	cur_disk->transient_state &= ~TRSTATE_LOADED;
 }
 
 

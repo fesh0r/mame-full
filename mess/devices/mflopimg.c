@@ -10,6 +10,7 @@ struct mess_flopimg
 {
 	floppy_image *floppy;
 	int track;
+	void (*unload_proc)(mess_image *image);
 };
 
 
@@ -266,6 +267,11 @@ static DEVICE_UNLOAD(floppy)
 {
 	struct mess_flopimg *flopimg;
 	flopimg = image_lookuptag(image, FLOPPY_TAG);
+
+	/* if we have one of our hacky unload procs, call it */
+	if (flopimg->unload_proc)
+		flopimg->unload_proc(image);
+
 	floppy_close(flopimg->floppy);
 	flopimg->floppy = NULL;
 }
@@ -303,6 +309,15 @@ void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 		/* next extension */
 		extension += strlen(extension) + 1;
 	}
+}
+
+
+
+void floppy_install_unload_proc(mess_image *image, void (*proc)(mess_image *image))
+{
+	struct mess_flopimg *flopimg;
+	flopimg = image_lookuptag(image, FLOPPY_TAG);
+	flopimg->unload_proc = proc;
 }
 
 
