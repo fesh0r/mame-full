@@ -288,6 +288,77 @@ void m6847_set_artifact_dipswitch(int sw)
 	artifact_dipswitch = sw;
 }
 
+static UINT8 *mapper_semigraphics6(UINT8 *mem, int param, int *fg, int *bg, int *attr)
+{
+	UINT8 b;
+
+	b = *mem;
+	*bg = 8;
+	*fg = ((b >> 6) & 0x3) + param;
+	return &fontdata8x12[(64 + (b & 0x3f)) * 12];
+}
+
+static UINT8 *mapper_text(UINT8 *mem, int param, int *fg, int *bg, int *attr)
+{
+	int fgc = 0, bgc = 0;
+	int b;
+	UINT8 *result;
+
+	b = *mem;
+
+	if (b >= 0x80) {
+		/* Semigraphics 4 */
+		switch(b & 0x0f) {
+		case 0:
+			bgc = 8;
+			result = NULL;
+			break;
+		case 15:
+			bgc = (b >> 4) & 0x7;
+			result = NULL;
+			break;
+		default:
+			bgc = 8;
+			fgc = (b >> 4) & 0x7;
+			result = &fontdata8x12[(128 + (b & 0x0f)) * 12];
+			break;
+		}
+	}
+	else {
+		/* Text */
+		bgc = (param & 0x01) ? 14 : 12;
+
+		/* On the M6847T1 and the CoCo 3 GIME chip, bit 2 of video_gmode
+		 * reversed the colors
+		 *
+		 * TODO: Find out what the normal M6847 did with bit 2
+		 */
+		if (param & 0x04)
+			bgc ^= 1;
+
+		/* Is this character lowercase or inverse? */
+		if ((param & 0x02) && (b < 0x20)) {
+			/* This character is lowercase */
+			b += 144;
+		}
+		else if (b < 0x40) {
+			/* This character is inverse */
+			bgc ^= 1;
+		}
+
+		fgc = bgc;
+		bgc ^= 1;
+		if ((b & 0x3f) == 0x20)
+			result = NULL;
+		else
+			result = &fontdata8x12[(b & 0xbf) * 12];
+	}
+
+	*fg = fgc;
+	*bg = bgc;
+	return result;
+}
+
 /* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
  * mode.  Internally, it treats the colors like a CoCo 3 and uses the 'metapalette' to
  * translate those colors to the proper palette.
@@ -303,15 +374,19 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact)
 {
-	int x, y, fg, bg, x2, y2;
+//	int x, y, fg, bg, x2, y2;
 	int artifacting;
-	UINT8 *db;
-	UINT8 b;
+//	UINT8 *db;
+//	UINT8 b;
 	int artifactpalette[4];
-	UINT8 *cptr;
+//	UINT8 *cptr;
 	int vrampos;
 	int vramsize;
 	int video_rowheight;
+
+	struct rasterbits_source rs;
+	struct rasterbits_videomode rvm;
+	struct rasterbits_frame rf;
 
 	static int rowheights[] = {
 		12,		12,		12,		12,		12,		12,		12,		12,
@@ -322,26 +397,22 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	vrampos = currentstate->video_offset;
 	vramsize = currentstate->vram_mask + 1;
 
-	db = dirtybuffer;
+	rs.videoram = vrambase;
+	rs.size = vramsize;
+	rs.position = vrampos;
+	rs.db = dirtybuffer;
+	rvm.height = 192 / video_rowheight;
+	rf.width = 256 * wf;
+	rf.height = 192;
+	rf.border_pen = -1;
+
 	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
 
 	if (currentstate->video_gmode & 0x10)
 	{
-		struct rasterbits_source rs;
-		struct rasterbits_videomode rvm;
-		struct rasterbits_frame rf;
-
-		rs.videoram = vrambase;
-		rs.size = vramsize;
-		rs.position = vrampos;
-		rs.db = db;
-		rvm.height = 192 / video_rowheight;
 		rvm.flags = RASTERBITS_FLAG_GRAPHICS;
-		rf.width = 256 * wf;
-		rf.height = 192;
-		rf.border_pen = -1;
 
 		if ((currentstate->video_gmode & 0x02) && !(artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)))
 		{
@@ -349,7 +420,7 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
 			rvm.width = rvm.bytesperrow * 8;
 			rvm.depth = 1;
-			rvm.u.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
+			rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
 		}
 		else
 		{
@@ -366,20 +437,38 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 
 				rvm.width = rvm.bytesperrow * 8;
 				rvm.depth = 1;
-				rvm.u.metapalette = artifactpalette;
+				rvm.metapalette = artifactpalette;
 				rvm.flags |= RASTERBITS_FLAG_ARTIFACT;
 			}
 			else {
 				/* If not, calculate offset normally */
 				rvm.width = rvm.bytesperrow * 4;
 				rvm.depth = 2;
-				rvm.u.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
+				rvm.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
 			}
 		}
-		raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 	}
 	else
 	{
+		rvm.flags = RASTERBITS_FLAG_TEXT;
+		rvm.bytesperrow = 32;
+		rvm.width = 32;
+		rvm.depth = 8;
+		rvm.metapalette = metapalette;
+
+		if (!has_lowercase && (currentstate->video_gmode & 0x02)) {
+			/* Semigraphics 6 */
+			rvm.u.text.mapper = mapper_semigraphics6;
+			rvm.u.text.mapper_param = (currentstate->video_gmode & 0x1) ? 4 : 0;
+		}
+		else {
+			/* Text (or Semigraphics 4) */
+			rvm.u.text.mapper = mapper_text;
+			rvm.u.text.mapper_param = currentstate->video_gmode & 0x7;
+		}
+		rvm.u.text.modulo = 12;
+
+#if 0
 		UINT8 *vidram;
 
 		vidram = vrambase + vrampos;
@@ -449,7 +538,9 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 		/* Check to see if the video RAM has wrapped around */
 		if (vidram > vrambase + vramsize)
 			vidram -= vramsize;
+#endif
 	}
+	raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 }
 
 

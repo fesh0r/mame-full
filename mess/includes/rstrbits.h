@@ -34,8 +34,8 @@ struct rasterbits_videomode {
 	int height;						/* in pixels/chars */
 	int depth;						/* bits per pixel/char */
 	int bytesperrow;				/* number of bytes per row */
+	const int *metapalette;			/* color translation layer; can be NULL */
 	union {
-		const int *metapalette;		/* color translation layer; can be NULL */
 		struct {
 			UINT8 *(*mapper)(UINT8 *mem, int param, int *fg, int *bg, int *attr);
 			int mapper_param;

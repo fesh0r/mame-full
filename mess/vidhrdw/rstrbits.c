@@ -363,7 +363,9 @@ static void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
 /* -------------------------------------------------------------------------
  * One of the few modern cals yet
  * ------------------------------------------------------------------------- */
- 
+
+#define COUNTDIRTYCHARS 0
+
 static raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, int scalex, int scaley, int basex, int basey)
 {
@@ -379,6 +381,10 @@ static raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	int fg, bg, attr;
 	int additionalrowbytes;
 
+#if COUNTDIRTYCHARS
+	int dirtychars = 0;
+#endif
+
 	assert((mode->depth == 8) || (mode->depth == 16));
 
 	bytesperchar = mode->depth / 8;
@@ -391,25 +397,40 @@ static raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	vramtop = vram + (src->size - (src->position % src->size));
 	additionalrowbytes = mode->bytesperrow - (mode->width * bytesperchar);
 
+	charbottom = basey - 1;
+	
 	for (y = 0; y < mode->height; y++) {
-		chartop = y * scaley + basey;
-		charbottom = chartop + scaley - 1;
+		chartop = charbottom + 1;
+		charbottom += scaley;
 
 		for (x = 0; x < mode->width; x++) {
 			if (!db || db[0] || ((bytesperchar == 2) && db[1])) {
 				thechar = mode->u.text.mapper(vram, mode->u.text.mapper_param, &fg, &bg, &attr);
 drawchar:
+#if COUNTDIRTYCHARS
+				dirtychars++;
+#endif
 				if ((mode->flags & RASTERBITS_FLAG_BLINKNOW) && (attr & RASTERBITS_CHARATTR_BLINKING))
 					thechar = NULL;
 
 				charleft = x * scalex + basex;
 
+				if (mode->metapalette) {
+					fg = Machine->pens[mode->metapalette[fg]];
+					bg = Machine->pens[mode->metapalette[bg]];
+				}
+				else {
+					fg = Machine->pens[fg];
+					bg = Machine->pens[bg];
+				}
+
 				if (thechar) {
+					/* We're a bonafide character */
 					for (yi = chartop; yi <= charbottom; yi++) {
 						if ((attr & RASTERBITS_CHARATTR_UNDERLINE) && (yi == charbottom))
 							c = 0xff;
 						else
-							c = thechar[yi % mode->u.text.modulo];
+							c = thechar[(yi-basey) % mode->u.text.modulo];
 
 						switch(c) {
 						case 0x00:
@@ -420,7 +441,7 @@ drawchar:
 							break;
 						default:
 							for (xi = 0; xi < scalex; xi+=(scalex/8)) {
-								plot_box(bitmap, xi + charleft, yi, scalex / 8, scaley, (c & 0x80) ? fg : bg);
+								plot_box(bitmap, xi + charleft, yi, scalex / 8, 1, (c & 0x80) ? fg : bg);
 								c <<= 1;
 							}
 							break;
@@ -429,7 +450,14 @@ drawchar:
 				}
 				else {
 					/* We're a space */
-					plot_box(bitmap, charleft, chartop, 8 * scalex, (charbottom - chartop + 1) * scaley, bg);
+					plot_box(bitmap, charleft, chartop, scalex, (charbottom - chartop + 1), bg);
+				}
+
+				/* Make us 'undirty', if appropriate */
+				if (db) {
+					db[0] = '\0';
+					if (bytesperchar == 2)
+						db[1] = '\0';
 				}
 			}
 			else if (mode->flags & RASTERBITS_FLAG_BLINKNOW) {
@@ -437,9 +465,9 @@ drawchar:
 				if (attr & RASTERBITS_CHARATTR_BLINKING)
 					goto drawchar;
 			}
-			vram++;
+			vram += bytesperchar;
 			if (db)
-				db++;
+				db += bytesperchar;
 		}
 
 		vram += additionalrowbytes;
@@ -448,6 +476,10 @@ drawchar:
 		if (vram >= vramtop)
 			vram -= src->size;
 	}
+
+#if COUNTDIRTYCHARS
+	logerror("%i / %i chars dirty\n", dirtychars, mode->height * mode->width);
+#endif
 }
 
 /* -------------------------------------------------------------------------
@@ -513,22 +545,23 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 		case 1:
 			if (mode->flags & RASTERBITS_FLAG_ARTIFACT) {
 				assert(mode->bytesperrow == (mode->width / 8));
-				blitgraphics4artifact(bitmap, src->videoram, src->position, src->size, src->db, mode->u.metapalette,
+				assert(src->db);
+				blitgraphics4artifact(bitmap, src->videoram, src->position, src->size, src->db, mode->metapalette,
 					mode->width / 8, mode->height, basex, basey, scalex, scaley);
 			}
 			else {
-				blitgraphics2(bitmap, src->videoram, src->position, src->size, src->db, mode->u.metapalette,
+				blitgraphics2(bitmap, src->videoram, src->position, src->size, src->db, mode->metapalette,
 					mode->width / 8, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 8));
 			}
 			break;
 
 		case 2:
-			blitgraphics4(bitmap, src->videoram, src->position, src->size, src->db, mode->u.metapalette,
+			blitgraphics4(bitmap, src->videoram, src->position, src->size, src->db, mode->metapalette,
 				mode->width / 4, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 4));
 			break;
 
 		case 4:
-			assert(!mode->u.metapalette);
+			assert(!mode->metapalette);
 			blitgraphics16(bitmap, src->videoram, src->position, src->size, src->db,
 				mode->width / 2, mode->height, basex, basey, scalex, scaley, mode->bytesperrow - (mode->width / 2));
 			break;
