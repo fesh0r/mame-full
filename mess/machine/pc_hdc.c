@@ -679,12 +679,16 @@ static void pc_HDC_w(int chip, int offs, int data)
 
 /*************************************
  *
- *		port handlers.
+ *		Port handlers
  *
  *************************************/
 
-READ_HANDLER ( pc_HDC1_r ) { return pc_HDC_r(0, offset); }
-READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
+READ8_HANDLER ( pc_HDC1_r ) { return pc_HDC_r(0, offset); }
+READ8_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
+WRITE8_HANDLER ( pc_HDC1_w ) { pc_HDC_w(0, offset, data); }
+WRITE8_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
 
-WRITE_HANDLER ( pc_HDC1_w ) { pc_HDC_w(0, offset, data); }
-WRITE_HANDLER ( pc_HDC2_w ) { pc_HDC_w(1, offset, data); }
+READ32_HANDLER ( pc32_HDC1_r ) { return read32_with_read8_handler(pc_HDC1_r, offset, mem_mask); }
+READ32_HANDLER ( pc32_HDC2_r ) { return read32_with_read8_handler(pc_HDC2_r, offset, mem_mask); }
+WRITE32_HANDLER ( pc32_HDC1_w ) { write32_with_write8_handler(pc_HDC1_w, offset, data, mem_mask); }
+WRITE32_HANDLER ( pc32_HDC2_w ) { write32_with_write8_handler(pc_HDC2_w, offset, data, mem_mask); }

@@ -110,22 +110,12 @@ static WRITE8_HANDLER(at_dma8237_1_w)
 
 static READ32_HANDLER(at32_dma8237_1_r)
 {
-	return (((data32_t) at_dma8237_1_r(offset * 4 + 0)) << 0)
-		|  (((data32_t) at_dma8237_1_r(offset * 4 + 1)) << 8)
-		|  (((data32_t) at_dma8237_1_r(offset * 4 + 2)) << 16)
-		|  (((data32_t) at_dma8237_1_r(offset * 4 + 3)) << 24);
+	return read32_with_read8_handler(at_dma8237_1_r, offset, mem_mask);
 }
 
 static WRITE32_HANDLER(at32_dma8237_1_w)
 {
-	if ((mem_mask & 0x000000FF) == 0)
-		at_dma8237_1_w(offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		at_dma8237_1_w(offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		at_dma8237_1_w(offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		at_dma8237_1_w(offset * 4 + 3, data >> 24);
+	write32_with_write8_handler(at_dma8237_1_w, offset, data, mem_mask);
 }
 
 
@@ -172,6 +162,8 @@ static ADDRESS_MAP_START(at386_io, ADDRESS_SPACE_IO, 32)
 	AM_RANGE(0x0278, 0x027f) AM_READWRITE(pc32_parallelport2_r,		pc32_parallelport2_w)
 	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc32_COM4_r,				pc32_COM4_w)
 	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc32_COM2_r,				pc32_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc32_HDC1_r,				pc32_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc32_HDC2_r,				pc32_HDC2_w)
 	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc32_parallelport1_r,		pc32_parallelport1_w)
 	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc32_fdc_r,				pc32_fdc_w)
 	AM_RANGE(0x03bc, 0x03bf) AM_READWRITE(pc32_parallelport0_r,		pc32_parallelport0_w)

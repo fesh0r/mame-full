@@ -294,24 +294,14 @@ WRITE8_HANDLER(at_page8_w)
 
 READ32_HANDLER(at_page32_r)
 {
-	return (((data32_t) at_page8_r(offset * 4 + 0)) << 0)
-		|  (((data32_t) at_page8_r(offset * 4 + 1)) << 8)
-		|  (((data32_t) at_page8_r(offset * 4 + 2)) << 16)
-		|  (((data32_t) at_page8_r(offset * 4 + 3)) << 24);
+	return read32_with_read8_handler(at_page8_r, offset, mem_mask);
 }
 
 
 
 WRITE32_HANDLER(at_page32_w)
 {
-	if ((mem_mask & 0x000000FF) == 0)
-		at_page8_w(offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		at_page8_w(offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		at_page8_w(offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		at_page8_w(offset * 4 + 3, data >> 24);
+	write32_with_write8_handler(at_page8_w, offset, data, mem_mask);
 }
 
 
