@@ -19,16 +19,6 @@
 #include "devices/snapquik.h"
 #include "includes/psx.h"
 
-/* remove these hacks when core is updated to 0.79 */
-#undef AM_RAM
-#undef AM_ROM
-#undef AM_WRITENOP
-#undef AM_READNOP
-#define AM_RAM								AM_READWRITE((read32_handler)STATIC_RAM, (write32_handler)STATIC_RAM)
-#define AM_ROM								AM_READ((read32_handler)STATIC_ROM)
-#define AM_WRITENOP							AM_WRITE((write32_handler)STATIC_NOP)
-#define AM_READNOP							AM_READ((read32_handler)STATIC_NOP)
-
 /* this seems to have disappeared */
 static void mips_stop( void ) {}
 
