@@ -449,6 +449,7 @@ static ResizeItem main_resize_items[] =
 	{ RA_ID,   { IDC_SSPICTURE },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_HISTORY },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_SSDEFPIC }, RA_RIGHT | RA_TOP,                 NULL },
+	{ RA_ID,   { IDC_SSTAB },    RA_RIGHT | RA_TOP,                 NULL },
 #ifdef MESS
 	{ RA_ID,   { IDC_LIST2 },    RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
 	{ RA_ID,   { IDC_SPLITTER3 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
@@ -934,28 +935,44 @@ void GetRealColumnOrder(int order[])
 
 BOOL GameUsesTrackball(int game)
 {
-	int port;
+    const struct InputPortTiny* input_ports;
 
 	/* new trackball support */
-	if (drivers[game]->input_ports != 0)
-	{
-		port = 0;
-		while (drivers[game]->input_ports[port].type != IPT_END)
-		{
-			int type = drivers[game]->input_ports[port].type & ~IPF_MASK;
-			if (type == IPT_DIAL
-			||	type == IPT_PADDLE
-			||	type == IPT_TRACKBALL_X
-			||	type == IPT_TRACKBALL_Y
-			||	type == IPT_AD_STICK_X
-			||	type == IPT_AD_STICK_Y)
-			{
-				return TRUE;
-			}
-			port++;
-		}
-		return FALSE;
-	}
+
+	if ( drivers[game]->input_ports == 0 )
+    {
+        /* no input ports, so no trackball */
+
+        return FALSE;
+    }
+
+    input_ports = drivers[game]->input_ports;
+
+    for ( ; ; )
+    {
+        UINT32  type;
+
+        type = (*input_ports).type;
+        if ( type == IPT_END )
+        {
+            break;
+        }
+
+        type &= ~IPF_MASK;
+        
+        if (type == IPT_DIAL
+            ||	type == IPT_PADDLE
+            ||	type == IPT_TRACKBALL_X
+            ||	type == IPT_TRACKBALL_Y
+            ||	type == IPT_AD_STICK_X
+            ||	type == IPT_AD_STICK_Y)
+        {
+            return TRUE;
+        }
+        
+        ++input_ports;
+    }
+
 	return FALSE;
 }
 
@@ -2157,11 +2174,15 @@ static BOOL PumpMessage()
 static BOOL PumpAndReturnMessage(MSG *pmsg)
 {
 	if (!(GetMessage(pmsg, NULL, 0, 0)))
+    {
 		return FALSE;
+    }
 
-#if HAS_HELP
-	if (!Help_HtmlHelp(NULL, NULL, HH_PRETRANSLATEMESSAGE, (DWORD)pmsg))
-#endif
+    /* I couldn't see any difference without this call here,
+        and it chews up alot of cpu time if it's present,
+        so I removed it as this is critical path code */
+    
+	/* if (!Help_HtmlHelp(NULL, NULL, HH_PRETRANSLATEMESSAGE, (DWORD)pmsg)) */
 	{
 		if (IsWindow(hMain))
 		{
@@ -3284,7 +3305,6 @@ static void SetView(int menu_id, int listview_style)
 
 static void ResetListView()
 {
-	RECT	rect;
 	int 	i;
 	int 	current_game;
 	LV_ITEM lvi;
@@ -3293,13 +3313,17 @@ static void ResetListView()
 	LPTREEFOLDER lpFolder = GetCurrentFolder();
 
 	if (!lpFolder)
+    {
 		return;
+    }
 
 	SetWindowRedraw(hwndList, FALSE);
 
 	/* If the last folder was empty, no_selection is TRUE */
 	if (have_selection == FALSE)
+    {
 		no_selection = TRUE;
+    }
 
 	current_game = GetSelectedPickItem();
 
@@ -3344,22 +3368,23 @@ static void ResetListView()
 
 	ColumnSort(column - 1, TRUE);
 
-	/* If last folder was empty, select the first item in this folder */
-	if (no_selection)
+	if (bListReady)
 	{
-		SetSelectedPick(0);
-	}
-	else
-		SetSelectedPickItem(current_game);
+	    /* If last folder was empty, select the first item in this folder */
+	    if (no_selection)
+		    SetSelectedPick(0);
 
-	GetClientRect(hwndList, &rect);
-	InvalidateRect(hwndList, &rect, TRUE);
+		else
+		    SetSelectedPickItem(current_game);
+	}
 	/* if (current_view_id == ID_VIEW_SMALL_ICON) */
 		ListView_Arrange(hwndList, LVA_DEFAULT);/* LVA_ALIGNTOP); */
 
+	SetWindowRedraw(hwndList, TRUE);
+    InvalidateRect( hwndList, NULL, FALSE );
+
 	UpdateStatusBar();
 
-	SetWindowRedraw(hwndList, TRUE);
 }
 
 static void UpdateGameList()

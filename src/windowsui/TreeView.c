@@ -90,11 +90,7 @@ enum
 	ICON_WORKING,
 	ICON_NONWORKING,
 	ICON_YEAR,
-	ICON_STEREO,
-	ICON_NEOGEO
-#ifdef CPS_FOLDER
-	,ICON_CPS
-#endif /* CPS_FOLDER */
+	ICON_STEREO
 };
 
 /* Name used for user-defined custom icons */
@@ -113,10 +109,6 @@ static char treeIconNames[][15] =
 	"nonwork",
 	"year",
 	"sound",
-	"neo-geo"
-#ifdef CPS_FOLDER
-	,"cps"
-#endif /* CPS_FOLDER */
 };
 
 
@@ -139,18 +131,8 @@ FOLDERDATA folderData[] =
 #endif
 	{"Available",   IS_ROOT,  FOLDER_AVAILABLE,   FOLDER_NONE,  0,        ICON_FOLDER_AVAILABLE},
 #ifdef SHOW_UNAVAILABLE_FOLDER
-	{"Unavailable", IS_ROOT,  FOLDER_UNAVAILABLE, FOLDER_NONE,  0,        ICON_FOLDER_UNAVAILABLE}
+	{"Unavailable",   IS_ROOT,   FOLDER_UNAVAILABLE, FOLDER_NONE,  0,        ICON_FOLDER_UNAVAILABLE},
 #endif
-#if !defined(NEOFREE)
-	{"Neo-Geo",     IS_ROOT,  FOLDER_NEOGEO,      FOLDER_NONE,  0,        ICON_NEOGEO},
-#endif
-#ifdef CPS_FOLDER
-	{"CPS",         IS_FOLDER,FOLDER_CPS,         FOLDER_TYPES, 0,        ICON_CPS},
-	{"Sega System", IS_FOLDER,FOLDER_SEGASYS,     FOLDER_TYPES, 0,        ICON_FOLDER},
-	{"Irem Hardware", IS_FOLDER, FOLDER_IREMM,    FOLDER_TYPES, 0,        ICON_FOLDER},
-	{"NES Hardware",  IS_FOLDER, FOLDER_NES,	  FOLDER_TYPES, 0,        ICON_FOLDER},
-	{"DECO Cassette", IS_FOLDER, FOLDER_DECOCASS, FOLDER_TYPES, 0,        ICON_FOLDER},
-#endif /* CPS_FOLDER */
 #ifdef MESS
 	{"Console",     IS_ROOT,  FOLDER_CONSOLE,     FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Computer",    IS_ROOT,  FOLDER_COMPUTER,    FOLDER_NONE,  0,        ICON_FOLDER},
@@ -162,10 +144,9 @@ FOLDERDATA folderData[] =
 	{"CPU",         IS_ROOT,  FOLDER_CPU,         FOLDER_NONE,  0,        ICON_FOLDER},
 	{"SND",         IS_ROOT,  FOLDER_SND,         FOLDER_NONE,  0,        ICON_FOLDER},
 #endif /* CPUSND_FOLDER */
-
 	{"Working",     IS_ROOT,  FOLDER_WORKING,     FOLDER_NONE,  0,        ICON_WORKING},
 	{"Non-Working", IS_ROOT,  FOLDER_NONWORKING,  FOLDER_NONE,  0,        ICON_NONWORKING},
-	{"Custom",      IS_ROOT,  FOLDER_CUSTOM,      FOLDER_NONE,  F_CUSTOM, ICON_FOLDER_CUSTOM},
+//	{"Custom",        IS_ROOT,   FOLDER_CUSTOM,      FOLDER_NONE,  F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Played",      IS_FOLDER,FOLDER_PLAYED,      FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Favorites",   IS_FOLDER,FOLDER_FAVORITE,    FOLDER_CUSTOM,F_CUSTOM, ICON_FOLDER_CUSTOM},
 	{"Originals",   IS_ROOT,  FOLDER_ORIGINAL,    FOLDER_NONE,  0,        ICON_FOLDER},
@@ -174,9 +155,7 @@ FOLDERDATA folderData[] =
 	{"Vector",      IS_ROOT,  FOLDER_VECTOR,      FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Trackball",   IS_ROOT,  FOLDER_TRACKBALL,   FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Stereo",      IS_ROOT,  FOLDER_STEREO,      FOLDER_NONE,  0,        ICON_STEREO}
-#ifdef SHOW_UNAVAILABLE_FOLDER
-	,{"Unavailable", IS_ROOT,  FOLDER_UNAVAILABLE, FOLDER_NONE,  0,        ICON_FOLDER_UNAVAILABLE}
-#endif
+
 };
 
 #define NUM_FOLDERS (sizeof(folderData) / sizeof(FOLDERDATA))
@@ -235,6 +214,8 @@ static int InitExtraFolders(void);
 static void FreeExtraFolder(void);
 static void SetExtraIcons(char *name, int *id);
 INLINE int GetIndexByName(const char *name);
+BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId );
+int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 );
 #endif /* EXTRA_FOLDER */
 
 /***************************************************************************
@@ -425,6 +406,160 @@ int FindGame(LPTREEFOLDER lpFolder, int nGame)
 
 /* #define BUILD_LIST */
 
+#ifdef EXTRA_FOLDER
+
+typedef struct
+{
+    const char* name;
+    BOOL        fAdded;
+    int         GameIndex;
+} EXTRAGAMEDATA;
+
+/* Called to add "extra" folders */
+BOOL AddExtraFolders( LPTREEFOLDER lpFolder, UINT nGames, UINT* pnFolderId )
+{
+    EXTRAGAMEDATA*  pData = NULL;
+    EXTRAGAMEDATA*  pCurrData;
+    FILE*   fp = NULL;
+    char    fname[MAX_PATH];
+    char    readbuf[256];
+    char*   p;
+    char*   name;
+    int     nIndex, id, current_id;
+    LPTREEFOLDER lpTemp = 0;
+    
+    current_id = lpFolder->m_nFolderId;
+    
+    id = lpFolder->m_nFolderId - FOLDER_END - 1;
+
+    /* "folder\title.ini" */
+
+    sprintf( fname, "%s\\%s.ini", 
+        GetFolderDir(), 
+        ExtraFolderData[id]->m_szTitle);
+    
+    fp = fopen(fname, "r");
+    if (fp == NULL)
+    {
+        return FALSE;
+    }
+    
+    /* create a sorted list of all games and their indices */
+
+    pData = (EXTRAGAMEDATA*)malloc( sizeof(EXTRAGAMEDATA) * nGames );
+
+    for ( nIndex = 0, pCurrData = pData; 
+          nIndex < nGames; 
+          ++nIndex )
+    {
+        pCurrData->name = drivers[nIndex]->name;
+        pCurrData->fAdded = FALSE;
+        pCurrData->GameIndex = nIndex;
+
+        ++pCurrData;
+    }
+
+    qsort( pData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
+    
+    while ( fgets(readbuf, 256, fp) )
+    {
+        /* do we have [...] ? */
+
+        if (readbuf[0] == '[')
+        {
+            p = strchr(readbuf, ']');
+            if (p == NULL)
+            {
+                continue;
+            }
+            
+            *p = '\0';
+            name = &readbuf[1];
+     
+            /* is it [FOLDER_SETTINGS]? */
+
+            if (!strcmp(name, "FOLDER_SETTINGS"))
+            {
+                current_id = -1;
+                continue;
+            }
+            else
+            {
+                /* it it [ROOT_FOLDER]? */
+
+                if (!strcmp(name, "ROOT_FOLDER"))
+                {
+                    current_id = lpFolder->m_nFolderId;
+                    lpTemp = lpFolder;
+                }
+                else
+                {
+                    /* must be [folder name] */
+
+                    current_id = (*pnFolderId)++;
+
+                    /* create a new folder with this name,
+                       and the flags for this folder as read from the registry */
+
+                    lpTemp = NewFolder( name, 
+                                        IS_FOLDER, 
+                                        (*pnFolderId)++,
+                                        lpFolder->m_nFolderId, 
+                                        ExtraFolderData[id]->m_nSubIconId,
+                                        GetFolderFlags( name ), 
+                                        nGames );
+                    AddFolder( lpTemp );
+                }
+            }
+        }
+        else if (current_id != -1)
+        {
+            /* string on a line by itself -- game name */
+
+            name = strtok(readbuf, " \t\r\n");
+            if (name == NULL)
+            {
+                current_id = -1;
+                continue;
+            }
+
+            /* IMPORTANT: This assumes that all driver names are lowercase! */
+            _strlwr( name );
+
+            /* add this game to the folder if we haven't already */
+
+            pCurrData = bsearch( &name, 
+                pData, nGames, sizeof(EXTRAGAMEDATA), ExtraGameDataCompareFunc );
+            if ( pCurrData && ! pCurrData->fAdded )
+            {
+                AddGame( lpTemp, pCurrData->GameIndex );
+                pCurrData->fAdded = TRUE;
+            }
+        }
+    }
+
+    if ( pData )
+    {
+        free( pData );
+    }
+
+    if ( fp )
+    {
+        fclose( fp );
+    }
+
+    return TRUE;
+}
+
+/* used for qsort, bsearch */
+int ExtraGameDataCompareFunc( const void* arg1, const void* arg2 )
+{
+    return strcmp( ((EXTRAGAMEDATA*)arg1)->name, 
+                   ((EXTRAGAMEDATA*)arg2)->name );
+}
+
+#endif // #ifdef EXTRA_FOLDER
+
 /* Called to re-associate games with folders */
 void InitGames(UINT nGames)
 {
@@ -433,9 +568,7 @@ void InitGames(UINT nGames)
 	UINT	tmpNumFolders;
 	BOOL*	done = NULL;
 	UINT	nFolderId = FOLDER_END;
-#ifndef NEOFREE
-	game_data_type* gameData = GetGameData();
-#endif
+
 #ifdef BUILD_LIST
 	FILE *fp = fopen("manufac.txt","wt");
 	int once = 1;
@@ -443,17 +576,22 @@ void InitGames(UINT nGames)
 
 #ifdef EXTRA_FOLDER
 	if (numExtraFolders)
+    {
 		nFolderId += numExtraFolders;
+    }
 #endif /* EXTRA_FOLDER */
 
 	if (! numFolders)
+    {
 		return;
+    }
 
 	tmpNumFolders = numFolders;
 
 	for (i = 0; i < tmpNumFolders; i++)
 	{
 		LPTREEFOLDER lpFolder = treeFolders[i];
+
 		switch(lpFolder->m_nFolderId)
 		{
 		case FOLDER_ALLGAMES:
@@ -470,7 +608,9 @@ void InitGames(UINT nGames)
 			for (jj = 0; jj < nGames; jj++)
 			{
 				if (GetHasRoms(jj) == TRUE)
+				{
 					AddGame(lpFolder, jj);
+				}
 			}
 			break;
 
@@ -480,80 +620,18 @@ void InitGames(UINT nGames)
 			for (jj = 0; jj < nGames; jj++)
 			{
 				if (GetHasRoms(jj) == FALSE)
+				{
 					AddGame(lpFolder, jj);
+				}
 			}
 			break;
 #endif
-#ifndef NEOFREE
-		case FOLDER_NEOGEO:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if (gameData[jj].neogeo)
-					AddGame(lpFolder, jj);
-			}
-			break;
-#endif
-#ifdef CPS_FOLDER
-		case FOLDER_CPS:
-			SetAllBits( lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if ((!strcmp(drivers[jj]->source_file, "src/drivers/cps1.c")) ||
-					(!strcmp(drivers[jj]->source_file, "src/drivers/cps2.c")))
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_SEGASYS:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if ((!strcmp(drivers[jj]->source_file, "src/drivers/system16.c")) ||
-					(!strcmp(drivers[jj]->source_file, "src/drivers/system18.c")) ||
-						(!strcmp(drivers[jj]->source_file, "src/drivers/aburner.c")) ||
-							(!strcmp(drivers[jj]->source_file, "src/drivers/sharrier.c")) ||
-								(!strcmp(drivers[jj]->source_file, "src/drivers/outrun.c")))
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_IREMM:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if ((!strcmp(drivers[jj]->source_file, "src/drivers/m62.c")) ||
-					(!strcmp(drivers[jj]->source_file, "src/drivers/m72.c")) ||
-						(!strcmp(drivers[jj]->source_file, "src/drivers/m90.c")) ||
-							(!strcmp(drivers[jj]->source_file, "src/drivers/m92.c")) ||
-								(!strcmp(drivers[jj]->source_file, "src/drivers/m107.c")))
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_NES:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if ((!strcmp(drivers[jj]->source_file, "src/drivers/playch10.c")) ||
-					(!strcmp(drivers[jj]->source_file, "src/drivers/vsnes.c")))
-					AddGame(lpFolder, jj);
-			}
-			break;
-
-		case FOLDER_DECOCASS:
-			SetAllBits(lpFolder->m_lpGameBits, FALSE);
-			for (jj = 0; jj < nGames; jj++)
-			{
-				if (!strcmp(drivers[jj]->source_file, "src/drivers/decocass.c"))
-					AddGame(lpFolder, jj);
-			}
-			break;
-#endif /* CPS_FOLDER */
 
 		case FOLDER_YEAR:
 			if (!firstTime)
+			{
 				break;
+			}
 
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			done = (LPBOOL)malloc(sizeof(BOOL) * nGames);
@@ -592,7 +670,9 @@ void InitGames(UINT nGames)
 #ifdef CPUSND_FOLDER
 		case FOLDER_CPU:
 			if (!firstTime)
+			{
 				break;
+			}
 
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 1; jj < CPU_COUNT; jj++)
@@ -623,7 +703,9 @@ void InitGames(UINT nGames)
 			
 		case FOLDER_SND:
 			if (!firstTime)
+			{
 				break;
+			}
 
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 1; jj < SOUND_COUNT; jj++)
@@ -663,7 +745,6 @@ void InitGames(UINT nGames)
 						if (strcmp(cTmp,sound_name(&drv.sound[n])) == 0)
 							AddGame(lpTemp, j);
 				}
-
 			}
 			break;
 			
@@ -671,7 +752,9 @@ void InitGames(UINT nGames)
 
 		case FOLDER_MANUFACTURER:
 			if (!firstTime)
+			{
 				break;
+			}
 
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			done = (LPBOOL)malloc(sizeof(BOOL) * (nGames + 1));
@@ -868,88 +951,23 @@ void InitGames(UINT nGames)
 #ifdef EXTRA_FOLDER
 		default:
 			if (!firstTime)
+            {
 				break;
+            }
 
-			if (lpFolder->m_nFolderId > FOLDER_END
-			&&  lpFolder->m_nFolderId <= FOLDER_END + numExtraFolders)
-			{
-				FILE *fp;
-				char fname[MAX_PATH];
-				char readbuf[256];
-				char *p;
-				char *name;
-				int  nIndex, id, current_id;
-				LPTREEFOLDER lpTemp = 0;
+			if (lpFolder->m_nFolderId <= FOLDER_END
+			    ||  lpFolder->m_nFolderId > FOLDER_END + numExtraFolders)
+            {
+                /* folder id is not an "extra" folder id */
+                break;
+            }
 
-				current_id = lpFolder->m_nFolderId;
-				id = lpFolder->m_nFolderId - FOLDER_END - 1;
-				sprintf(fname, "%s/%s.ini", GetFolderDir(), ExtraFolderData[id]->m_szTitle);
+            SetAllBits(lpFolder->m_lpGameBits, FALSE);
 
-				fp = fopen(fname, "r");
-				if (fp == NULL)
-				{
-					lpFolder->m_nFolderId = FOLDER_END;
-					break;
-				}
-
-				SetAllBits(lpFolder->m_lpGameBits, FALSE);
-				done = (LPBOOL)malloc(sizeof(BOOL) * nGames);
-				memset(done, '\0', sizeof(BOOL) * nGames);
-
-
-				while (fgets(readbuf, 256, fp))
-				{
-					if (readbuf[0] == '[')
-					{
-						p = strchr(readbuf, ']');
-						if (p == NULL)
-							continue;
-
-						*p = '\0';
-						name = &readbuf[1];
-
-						if (!strcmp(name, "FOLDER_SETTINGS"))
-						{
-							current_id = -1;
-							continue;
-						}
-						else
-						{
-							DWORD dwFolderFlags;
-
-							dwFolderFlags = GetFolderFlags(name);
-							if (!strcmp(name, "ROOT_FOLDER"))
-							{
-								current_id = lpFolder->m_nFolderId;
-								lpTemp = lpFolder;
-							}
-							else
-							{
-								current_id = nFolderId++;
-								lpTemp = NewFolder(name, IS_FOLDER, nFolderId++,
-								                   lpFolder->m_nFolderId, ExtraFolderData[id]->m_nSubIconId,
-								                   dwFolderFlags, nGames);
-								AddFolder(lpTemp);
-							}
-						}
-					}
-					else if (current_id != -1)
-					{
-						name = strtok(readbuf, " \t\r\n");
-						if (name == NULL)
-						{
-							current_id = -1;
-							continue;
-						}
-
-						nIndex = GetIndexByName(name);
-
-						if (nIndex != -1 && !done[nIndex])
-							AddGame(lpTemp, nIndex);
-					}
-				}
-				fclose(fp);
-			}
+            if ( !AddExtraFolders( lpFolder, nGames, &nFolderId ) )
+            {
+                lpFolder->m_nFolderId = FOLDER_END;
+            }
 			break;
 #endif /* EXTRA_FOLDER */
 
@@ -972,10 +990,8 @@ void Tree_Initialize(HWND hWnd)
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
 	BOOL vector;
-    struct InternalMachineDriver drv;
-#ifndef NEOFREE
-	game_data_type *gameData = GetGameData();
-#endif
+	struct InternalMachineDriver drv;
+
 	/* Filter games */
 	if (g_FilterText[0] != '\0')
 	{
@@ -998,25 +1014,17 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
         return TRUE;
 
 #ifdef MESS
-    /* Filter computer games */
-    if (dwMask & F_COMPUTER && drivers[nGame]->flags & GAME_COMPUTER)
-        return TRUE;
-
-    /* Filter console games */
-    if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
+	/* Filter computer games */
+	if (dwMask & F_COMPUTER && drivers[nGame]->flags & GAME_COMPUTER)
 		return TRUE;
 
-    /* Filter modified games */
-    if (dwMask & F_MODIFIED && !(drivers[nGame]->flags & GAME_COMPUTER_MODIFIED))
-        return TRUE;
-#endif
-
-#ifndef MESS
-#ifndef NEOFREE
-	/* Filter neo-geo games */
-	if (dwMask & F_NEOGEO && gameData[nGame].neogeo)
+	/* Filter console games */
+	if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
 		return TRUE;
-#endif
+
+	/* Filter modified games */
+	if (dwMask & F_MODIFIED && !(drivers[nGame]->flags & GAME_COMPUTER_MODIFIED))
+		return TRUE;
 #endif
 
 	/* Filter unavailable games */
@@ -1126,6 +1134,7 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		Button_SetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN),	GetVersionCheck());
 		Button_SetCheck(GetDlgItem(hDlg, IDC_JOY_GUI),	GetJoyGUI());
 		Button_SetCheck(GetDlgItem(hDlg, IDC_BROADCAST),	GetBroadcast());
+		Button_SetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG),	GetRandomBg());
 		return TRUE;
 
 #if HAS_HELP
@@ -1145,8 +1154,9 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		case IDOK :
 			SetGameCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK)));
 			SetVersionCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN)));
-            SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
-            SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
+			SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
+			SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
+			SetRandomBg(Button_GetCheck(GetDlgItem(hDlg, IDC_RANDOM_BG)));
 			/* Fall through */
 
 		case IDCANCEL :
@@ -1360,31 +1370,38 @@ static void BuildTreeFolders(HWND hWnd)
 static char * FixString(char *s)
 {
 	static char tmp[40];
-	char *		ptr;
+    char* ptmp;
 
-	if (*s == '?' || *s == '<' || s[3] == '?')
-		strcpy(tmp,"<unknown>");
-	else
+	if ( *s == '?' || *s == '<' || s[3] == '?' )
+    {
+		return "<unknown>";
+    }
+
+    ptmp = tmp;
+
+	while( *s++ )
 	{
-		int i = 0;
+        /* combinations where to end string */
 
-		ptr = s;
-		while(*ptr)
-		{
-			if ((*ptr == ' ') &&
-				(ptr[1] == '(' || ptr[1] == '/' || ptr[1] == '+'))
-				break;
+		if ( 
+            ( (*s == ' ') && ( s[1] == '(' || s[1] == '/' || s[1] == '+' ) ) ||
+            ( *s == ']' ) ||
+            ( *s == '/' )
+            )
+        {
+			break;
+        }
+		
+        /* skip over opening braces */
 
-			if (*ptr == '[')
-				ptr++;
-			else if (*ptr == ']' || *ptr == '/')
-				break;
-			else
-				tmp[i++] = *ptr++;
-
-		}
-		tmp[i] = '\0';
+		if ( *s != '[' )
+        {
+			*ptmp++ = *s;
+        }
+		
 	}
+
+	*ptmp = '\0';
 	return tmp;
 }
 
@@ -1396,24 +1413,34 @@ static char * LicenseManufacturer(char *s)
 
 	t = tmp;
 
-	if ((ptr = (char *)strchr(s,'(')) != NULL)
+    /* "Irem (licensed from Hudson Soft)" */
+    /* "Namco (Atari license)" */
+
+	ptr = strchr( s,'(' );
+    if ( ptr == NULL );
+    {
+        return NULL;
+    }
+
+	ptr++;
+
+	if (strncmp(ptr, "licensed from ", 14) == 0)
+    {
+		ptr += 14;
+    }
+	
+	while (*ptr != ')')
 	{
-		ptr++;
-		if (strncmp(ptr, "licensed from ", 14) == 0)
-			ptr += 14;
+		if (*ptr == ' ' && strncmp(ptr, " license", 8) == 0)
+        {
+			break;
+        }
 
-		while (*ptr != ')')
-		{
-			if (*ptr == ' ' && strncmp(ptr, " license", 8) == 0)
-				break;
-
-			*t++ = *ptr++;
-		}
-
-		*t = '\0';
-		return tmp;
+		*t++ = *ptr++;
 	}
-	return NULL;
+	
+	*t = '\0';
+	return tmp;
 }
 
 /* create iconlist and Treeview control */
@@ -1424,28 +1451,14 @@ static BOOL CreateTreeIcons(HWND hWnd)
 	HINSTANCE hInst = GetModuleHandle(0);
 
 #ifdef EXTRA_FOLDER
-#ifdef CPS_FOLDER
-	int numIcons = 12 + numExtraIcons;
-#else /* CPS_FOLDER */
 	int numIcons = 11 + numExtraIcons;
-#endif /* CPS_FOLDER */
 
 	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, numIcons, numIcons);
 #else /* EXTRA_FOLDER */
-#ifdef CPS_FOLDER
-	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, 12, 12);
-#else /* CPS_FOLDER */
 	hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, 11, 11);
-#endif /* CPS_FOLDER */
 #endif /* EXTRA_FOLDER */
 
-#ifdef MESS
 	for (i = IDI_FOLDER_OPEN; i <= IDI_SOUND; i++)
-#elif defined(CPS_FOLDER)
-	for (i = IDI_FOLDER_OPEN; i <= IDI_CPS; i++)
-#else
-	for (i = IDI_FOLDER_OPEN; i <= IDI_NEOGEO; i++)
-#endif
 	{
 		if ((hIcon = LoadIconFromFile(treeIconNames[i - IDI_FOLDER_OPEN])) == 0)
 			hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
@@ -1469,11 +1482,8 @@ static BOOL CreateTreeIcons(HWND hWnd)
 		return FALSE;
 #else /* EXTRA_FOLDER */
 	// Be sure that all the small icons were added.
-#ifdef CPS_FOLDER
-	if (ImageList_GetImageCount (hTreeSmall) < 12)
-#else /* CPS_FOLDER */
+
 	if (ImageList_GetImageCount (hTreeSmall) < 11)
-#endif /* CPS_FOLDER */
 		return FALSE;
 #endif /* EXTRA_FOLDER */
 
@@ -1667,11 +1677,6 @@ static FILTER_RECORD filterRecord[NUM_FOLDERS] =
 {
 	{FOLDER_ALLGAMES,    0,             0               },
 	{FOLDER_AVAILABLE,   F_AVAILABLE,   0               },
-#ifndef MESS
-#if !defined(NEOFREE)
-	{FOLDER_NEOGEO,      F_NEOGEO,      0               },
-#endif
-#endif
 #ifdef MESS
 	{FOLDER_CONSOLE,     0,             0               },
 	{FOLDER_COMPUTER,    0,             0               },
@@ -1709,11 +1714,6 @@ FILTER_ITEM filterList[F_NUM_FILTERS] =
 	{F_COMPUTER,     IDC_FILTER_COMPUTER},
 	{F_CONSOLE,      IDC_FILTER_CONSOLE},
 	{F_MODIFIED,     IDC_FILTER_MODIFIED},
-#endif
-#ifndef MESS
-#ifndef NEOFREE
-	{ F_NEOGEO,       IDC_FILTER_NEOGEO      },
-#endif
 #endif
 	{ F_CLONES,       IDC_FILTER_CLONES      },
 	{ F_NONWORKING,   IDC_FILTER_NONWORKING  },
@@ -2065,11 +2065,7 @@ static void SetExtraIcons(char *name, int *id)
 	ExtraFolderIcons[numExtraIcons] = malloc(strlen(name) + 1);
 	if (ExtraFolderIcons[numExtraIcons])
 	{
-#ifdef CPS_FOLDER
-		*id = (ICON_CPS + 1) + numExtraIcons;
-#else /* CPS_FOLDER */
-		*id = (ICON_NEOGEO + 1) + numExtraIcons;
-#endif /* CPS_FOLDER */
+		*id = (ICON_STEREO + 1) + numExtraIcons;
 		strcpy(ExtraFolderIcons[numExtraIcons], name);
 		numExtraIcons++;
 	}
