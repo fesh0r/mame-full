@@ -97,22 +97,22 @@ MEMORY_END
 
 static PORT_WRITE16_START(writeport)
 
-	{0x0000, 0x07ff, tms9901_CRU_write},
+	{0x0000<<1, 0x07ff<<1, tms9901_CRU_write},
 
-	{0x0880, 0x0880, ti99_DSKROM},
-	/*{0x0881, 0x0881, ti99_DSKmotor},*/
-	{0x0882, 0x0882, ti99_DSKhold},
-	{0x0883, 0x0883, ti99_DSKheads},
-	{0x0884, 0x0886, ti99_DSKsel},
-	{0x0887, 0x0887, ti99_DSKside},
+	{0x0880<<1, 0x0880<<1, ti99_DSKROM},
+	/*{0x0881<<1, 0x0881<<1, ti99_DSKmotor},*/
+	{0x0882<<1, 0x0882<<1, ti99_DSKhold},
+	{0x0883<<1, 0x0883<<1, ti99_DSKheads},
+	{0x0884<<1, 0x0886<<1, ti99_DSKsel},
+	{0x0887<<1, 0x0887<<1, ti99_DSKside},
 
 PORT_END
 
 static PORT_READ16_START(readport)
 
-	{0x0000, 0x00ff, tms9901_CRU_read},
+	{0x0000<<1, 0x00ff<<1, tms9901_CRU_read},
 
-	{0x0110, 0x0110, ti99_DSKget},
+	{0x0110<<1, 0x0110<<1, ti99_DSKget},
 
 PORT_END
 
