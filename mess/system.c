@@ -266,9 +266,9 @@ const struct GameDriver *test_drivers[] =
  * Lisa 2 				 January			 1984
  * Macintosh XL 		 January			 1985
  */
-//	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2								*/
-//	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10								*/
-//	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL							*/
+	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2								*/
+	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10								*/
+	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL							*/
 /*
  * Macintosh 			 January			 1984
  * Macintosh 512k		 July?				 1984
@@ -277,8 +277,8 @@ const struct GameDriver *test_drivers[] =
  * Macintosh SE			 March				 1987
  * Macintosh II 		 March				 1987
  */
-//	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
-//	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
+	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
+	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
 
 	/* ATARI */
 /*
@@ -631,7 +631,7 @@ XL/XE 16kB OS roms
 //TESTDRIVER( mekd2 )		/* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
+	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
 //	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
@@ -669,7 +669,7 @@ XL/XE 16kB OS roms
 //	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Andrew Donald Booth (this is the name of the designer, not a company) */
-//	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */
+	DRIVER( apexc )		/* 1951(?) APEXC: All-Purpose Electronic X-ray Computer */
 
 	/* Sony */
 //	DRIVER( psx )
