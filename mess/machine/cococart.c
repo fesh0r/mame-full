@@ -4,6 +4,7 @@
 #include "formats/dmkdsk.h"
 #include "formats/cocovdk.h"
 #include "ds1315.h"
+#include "m6242b.h"
 #include "includes/dragon.h"
 
 static const struct cartridge_callback *cartcallbacks;
@@ -354,21 +355,33 @@ READ_HANDLER(coco_floppy_r)
 		break;
 	}
 
-/* TJL - temp hack for RTC 
-   When a real cart interface this should be moved
-*/
+	if( (readinputport(13) & 0x03) == 0 )
+	{
+		/* This is the real time clock in Disto's many products */
 
-	if( offset == ( 0xff79-0xff40 ) )
-		ds1315_r_1( offset );
-		
-	if( offset == ( 0xff78-0xff40 ) )
-		ds1315_r_0( offset );
-		
-	if( offset == ( 0xff7c-0xff40 ) )
-		result = ds1315_r_data( offset );
+		if( offset == ( 0xff50-0xff40 ) )
+			result = m6242_data_r(0);
+			
+		if( offset == ( 0xff51-0xff40 ) )
+			result = m6242_address_r(0);
+	}
+	else
+	{
+		/* This is the realtime clock in the TC^3 SCSI Controller */
 
-	return result;
+		if( offset == ( 0xff79-0xff40 ) )
+			ds1315_r_1( offset );
+			
+		if( offset == ( 0xff78-0xff40 ) )
+			ds1315_r_0( offset );
+			
+		if( offset == ( 0xff7c-0xff40 ) )
+			result = ds1315_r_data( offset );
+	}
+
+/*	logerror("SCS read:  address %4.4X, data %2.2X\n", 0xff40+offset, result );*/
 	
+	return result;
 }
 
 WRITE_HANDLER(coco_floppy_w);
@@ -398,6 +411,19 @@ WRITE_HANDLER(coco_floppy_w)
 		wd179x_data_w(0, data);
 		break;
 	};
+
+	if( (readinputport(13) & 0x03) == 0 )
+	{
+		/* This is the real time clock in Disto's many products */
+
+		if( offset == ( 0xff50-0xff40 ) )
+			m6242_data_w( 0, data );
+			
+		if( offset == ( 0xff51-0xff40 ) )
+			m6242_address_w( 0, data );
+	}
+	
+/*	logerror("SCS write: address %4.4X, data %2.2X\n", 0xff40+offset, data );*/
 }
 
 READ_HANDLER(dragon_floppy_r);
