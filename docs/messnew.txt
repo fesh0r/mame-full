@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-[LASER128 Rev4, LASER128ex Rev4a]  by Cowering
+- LASER128 Rev4, LASER128ex Rev4a [Cowering]
 
 
 
