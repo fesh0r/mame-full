@@ -1054,11 +1054,33 @@ static void pdp1_keyboard(void)
 static void pdp1_lightpen(void)
 {
 	int x_delta, y_delta;
+	int current_state;
+	static int previous_state;
 
 	lightpen.active = (readinputport(pdp1_config) >> pdp1_config_lightpen_bit) & pdp1_config_lightpen_mask;
 
-	lightpen.down = lightpen.active ? readinputport(pdp1_lightpen_down) : 0;
+	current_state = readinputport(pdp1_lightpen_state);
 
+	/* update pen down state */
+	lightpen.down = lightpen.active && (current_state & pdp1_lightpen_down);
+
+	/* update size of pen tip hole */
+	if ((current_state & ~previous_state) & pdp1_lightpen_smaller)
+	{
+		lightpen.radius --;
+		if (lightpen.radius < 0)
+			lightpen.radius = 0;
+	}
+	if ((current_state & ~previous_state) & pdp1_lightpen_larger)
+	{
+		lightpen.radius ++;
+		if (lightpen.radius > 32)
+			lightpen.radius = 32;
+	}
+
+	previous_state = current_state;
+
+	/* update pen position */
 	x_delta = readinputport(pdp1_lightpen_x);
 	y_delta = readinputport(pdp1_lightpen_y);
 

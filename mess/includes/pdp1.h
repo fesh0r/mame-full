@@ -19,7 +19,7 @@ enum
 	pdp1_tw_switches_LSB = 5,
 	pdp1_typewriter = 6,			/* typewriter keys */
 	pdp1_config = 10,				/* pseudo input port with config */
-	pdp1_lightpen_down = 11,		/* pseudo input port with light pen down */
+	pdp1_lightpen_state = 11,		/* pseudo input port with light pen down */
 	pdp1_lightpen_x = 12,			/* pseudo input port with light pen x deltas */
 	pdp1_lightpen_y = 13			/* pseudo input port with light pen y deltas */
 };
@@ -84,6 +84,18 @@ enum
 	pdp1_config_type_20_sbs_mask	= 0x1,
 	pdp1_config_lightpen_bit		= 5,
 	pdp1_config_lightpen_mask		= 0x1
+};
+
+/* defines for each field in input port pdp1_lightpen_state */
+enum
+{
+	pdp1_lightpen_down_bit			= 0,
+	pdp1_lightpen_smaller_bit		= 1,
+	pdp1_lightpen_larger_bit		= 2,
+
+	pdp1_lightpen_down				= (1 << pdp1_lightpen_down_bit),
+	pdp1_lightpen_smaller			= (1 << pdp1_lightpen_smaller_bit),
+	pdp1_lightpen_larger			= (1 << pdp1_lightpen_larger_bit)
 };
 
 /* defines for our font */
