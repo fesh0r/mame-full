@@ -654,7 +654,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(LH5801,   lh5801,	 1,  0,1.00,LH5801_INT_NONE,   LH5801_IRQ,	   -1,			   8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   32, 16,	  0,18,LE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
@@ -3427,10 +3427,20 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 {
 	void m68k_set_reset_instr_callback(void  (*callback)(void));
 
-	if (CPU_TYPE(cpunum) != CPU_M68000 &&
-		CPU_TYPE(cpunum) != CPU_M68010 &&
-		CPU_TYPE(cpunum) != CPU_M68020 &&
-		CPU_TYPE(cpunum) != CPU_M68EC020)
+	if (1
+#if HAS_M68000
+		&& CPU_TYPE(cpunum) != CPU_M68000
+#endif
+#if HAS_M68010
+		&& CPU_TYPE(cpunum) != CPU_M68010
+#endif
+#if HAS_M68020
+		&& CPU_TYPE(cpunum) != CPU_M68020
+#endif
+#if HAS_M68EC020
+		&& CPU_TYPE(cpunum) != CPU_M68EC020
+#endif
+		)
 	{
 		logerror("Trying to set m68k reset vector on non-68k cpu\n");
 		exit(1);
