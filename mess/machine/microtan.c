@@ -892,7 +892,7 @@ QUICKLOAD_LOAD( microtan_hexfile )
 	return rc;
 }
 
-void init_microtan(void)
+DRIVER_INIT( microtan )
 {
     UINT8 *dst = memory_region(REGION_GFX2);
     int i;
@@ -935,21 +935,22 @@ void init_microtan(void)
 
     switch (readinputport(0) & 3)
     {
-        case 0:  /* 1K only :) */
+        case 0:  // 1K only :)
             memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0xbbff, 0, 0, MRA8_NOP);
             memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0xbbff, 0, 0, MWA8_NOP);
             break;
-        case 1:  /* +7K TANEX */
+        case 1:  // +7K TANEX
             memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0x1fff, 0, 0, MRA8_RAM);
             memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0x1fff, 0, 0, MWA8_RAM);
             memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0xbbff, 0, 0, MRA8_NOP);
             memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0xbbff, 0, 0, MWA8_NOP);
             break;
-        default: /* +7K TANEX + 40K TANRAM */
+        default: // +7K TANEX + 40K TANRAM
             memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0xbbff, 0, 0, MRA8_RAM);
             memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400, 0xbbff, 0, 0, MWA8_RAM);
             break;
     }
+
 }
 
 MACHINE_INIT( microtan )

@@ -14,88 +14,49 @@
 
 #include "includes/microtan.h"
 
-#ifndef VERBOSE
-#define VERBOSE 0
-#endif
-
-#if VERBOSE
-#define LOG(x)	logerror x
-#else
-#define LOG(x)	/* x */
-#endif
-
 UINT8 microtan_chunky_graphics = 0;
 UINT8 *microtan_chunky_buffer = NULL;
 
-char microtan_frame_message[64+1];
-int microtan_frame_time = 0;
-
-static struct tilemap *microtan_tilemap;
-
-/**************************************************************************/
-
-PALETTE_INIT( microtan )
-{
-	palette_set_color(0, 0x00, 0x00, 0x00);
-	palette_set_color(1, 0xff, 0xff, 0xff);
-
-	colortable[0] = 0;
-	colortable[1] = 1;
-}
+static struct tilemap *bg_tilemap;
 
 WRITE8_HANDLER( microtan_videoram_w )
 {
-	if (videoram[offset] != data || microtan_chunky_buffer[offset] != microtan_chunky_graphics)
+	if ((videoram[offset] != data) || (microtan_chunky_buffer[offset] != microtan_chunky_graphics))
 	{
 		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset);
 		microtan_chunky_buffer[offset] = microtan_chunky_graphics;
-		tilemap_mark_tile_dirty(microtan_tilemap, offset);
 	}
 }
 
-static void microtan_gettileinfo(int memory_offset)
+static void get_bg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(
-		microtan_chunky_buffer[memory_offset],	/* gfx */
-		videoram[memory_offset],				/* character */
-		0,										/* color */
-		0)										/* flags */
-}
+	int gfxn = microtan_chunky_buffer[tile_index];
+	int code = videoram[tile_index];
 
-/***************************************************************************
-  Start the video hardware emulation.
-***************************************************************************/
+	SET_TILE_INFO(gfxn, code, 0, 0)
+}
 
 VIDEO_START( microtan )
 {
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, 
+		TILEMAP_OPAQUE, 8, 16, 32, 16);
+
+	if (!bg_tilemap)
+		return 1;
+
 	microtan_chunky_buffer = auto_malloc(videoram_size);
 
-	microtan_tilemap = tilemap_create(
-		microtan_gettileinfo,
-		tilemap_scan_rows,
-		TILEMAP_OPAQUE,
-		8, 16,
-		32, 16);
-
-	if (!microtan_chunky_buffer || !microtan_tilemap)
+	if (!microtan_chunky_buffer)
 		return 1;
 
 	microtan_chunky_graphics = 0;
-	memset(microtan_chunky_buffer, microtan_chunky_graphics, sizeof(microtan_chunky_buffer));
+	memset(microtan_chunky_buffer, 0, videoram_size);
 
 	return 0;
 }
 
 VIDEO_UPDATE( microtan )
 {
-	if (microtan_frame_time > 0)
-    {
-		ui_text(bitmap, microtan_frame_message, 1, Machine->visible_area.max_y - 9);
-        /* if the message timed out, clear it on the next frame */
-		if( --microtan_frame_time == 0 )
-			tilemap_mark_all_tiles_dirty(microtan_tilemap);
-    }
-	tilemap_draw(bitmap, NULL, microtan_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 }
-
-

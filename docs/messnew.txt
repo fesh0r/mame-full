@@ -16,6 +16,8 @@ System Driver Changes:
 
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
+- [MICROTAN] Fixed a video hardware crash.  [Curt Coder]
+
 - [PC] New PIT8253 implementation; Styx and Digger run better now.  Also fixed
   the PIT8253 frequencies and mades some PIC8259 fixes.  [Andrew Jenner]
 

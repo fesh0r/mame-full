@@ -48,38 +48,19 @@
 #define LOG(x)  /* x */
 #endif
 
-static ADDRESS_MAP_START( readmem_mtan , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x03ff) AM_READ( MRA8_RAM )
-/*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
-/*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
-    AM_RANGE( 0xbc00, 0xbc00) AM_READ( MRA8_NOP )
-    AM_RANGE( 0xbc01, 0xbc01) AM_READ( AY8910_read_port_0_r )
-    AM_RANGE( 0xbc02, 0xbc02) AM_READ( MRA8_NOP )
-    AM_RANGE( 0xbc03, 0xbc03) AM_READ( AY8910_read_port_1_r )
-    AM_RANGE( 0xbfc0, 0xbfcf) AM_READ( microtan_via_0_r )
-    AM_RANGE( 0xbfd0, 0xbfd3) AM_READ( microtan_sio_r )
-    AM_RANGE( 0xbfe0, 0xbfef) AM_READ( microtan_via_1_r )
-    AM_RANGE( 0xbff0, 0xbfff) AM_READ( microtan_bffx_r )
-    AM_RANGE( 0xc000, 0xe7ff) AM_READ( MRA8_ROM )
-    AM_RANGE( 0xf000, 0xffff) AM_READ( MRA8_ROM )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem_mtan , ADDRESS_SPACE_PROGRAM, 8)
-    AM_RANGE( 0x0000, 0x01ff) AM_WRITE( MWA8_RAM )
-    AM_RANGE( 0x0200, 0x03ff) AM_WRITE( microtan_videoram_w) AM_BASE( &videoram) AM_SIZE( &videoram_size )
-/*  { 0x0400, 0x1fff, MRA8_RAM },    */  /* TANEX 7K RAM */
-/*  { 0x2000, 0xbbff, MRA8_RAM },    */  /* TANRAM 40K RAM */
-    AM_RANGE( 0xbc00, 0xbc00) AM_WRITE( AY8910_control_port_0_w )
-    AM_RANGE( 0xbc01, 0xbc01) AM_WRITE( AY8910_write_port_0_w )
-    AM_RANGE( 0xbc02, 0xbc02) AM_WRITE( AY8910_control_port_1_w )
-    AM_RANGE( 0xbc03, 0xbc03) AM_WRITE( AY8910_write_port_1_w )
-    AM_RANGE( 0xbc04, 0xbc04) AM_WRITE( microtan_sound_w )
-    AM_RANGE( 0xbfc0, 0xbfcf) AM_WRITE( microtan_via_0_w )
-    AM_RANGE( 0xbfd0, 0xbfd3) AM_WRITE( microtan_sio_w )
-    AM_RANGE( 0xbfe0, 0xbfef) AM_WRITE( microtan_via_1_w )
-    AM_RANGE( 0xbff0, 0xbfff) AM_WRITE( microtan_bffx_w )
-    AM_RANGE( 0xc000, 0xe7ff) AM_WRITE( MWA8_ROM )
-    AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_ROM )
+static ADDRESS_MAP_START(microtan_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x01ff) AM_RAM
+	AM_RANGE(0x0200, 0x03ff) AM_RAM AM_WRITE(microtan_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xbc00, 0xbc00) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0xbc01, 0xbc01) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0xbc02, 0xbc02) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0xbc03, 0xbc03) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
+	AM_RANGE(0xbfc0, 0xbfcf) AM_READWRITE(microtan_via_0_r, microtan_via_0_w)
+	AM_RANGE(0xbfd0, 0xbfd3) AM_READWRITE(microtan_sio_r, microtan_sio_w)
+	AM_RANGE(0xbfe0, 0xbfef) AM_READWRITE(microtan_via_1_r, microtan_via_1_w)
+	AM_RANGE(0xbff0, 0xbfff) AM_READWRITE(microtan_bffx_r, microtan_bffx_w)
+	AM_RANGE(0xc000, 0xe7ff) AM_ROM
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( microtan )
@@ -245,56 +226,55 @@ static struct AY8910interface ay8910_interface =
 };
 
 static MACHINE_DRIVER_START( microtan )
-	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6502, 750000)        /* 750 kHz */
-	MDRV_CPU_PROGRAM_MAP(readmem_mtan,writemem_mtan)
+	// basic machine hardware
+	MDRV_CPU_ADD_TAG("main", M6502, 750000)	// 750 kHz
+	MDRV_CPU_PROGRAM_MAP(microtan_map, 0)
 	MDRV_CPU_VBLANK_INT(microtan_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( microtan )
 
-    /* video hardware - include overscan */
+    // video hardware - include overscan
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 16*16)
-	MDRV_VISIBLE_AREA(0*8, 32*8 - 1, 0*16, 16*16 - 1)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*16, 16*16-1)
 	MDRV_GFXDECODE( gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(2)
 	MDRV_COLORTABLE_LENGTH(2)
-	MDRV_PALETTE_INIT( microtan )
 
+	MDRV_PALETTE_INIT( black_and_white )
 	MDRV_VIDEO_START( microtan )
 	MDRV_VIDEO_UPDATE( microtan )
 
-	/* sound hardware */
+	// sound hardware
 	MDRV_SOUND_ADD(WAVE, wave_interface)
 	MDRV_SOUND_ADD(DAC, dac_interface)
 	MDRV_SOUND_ADD(AY8910, ay8910_interface)
 MACHINE_DRIVER_END
 
-ROM_START(microtan)
-    ROM_REGION(0x10000,REGION_CPU1,0)
-        ROM_LOAD("tanex_j2.rom", 0xc000, 0x1000, CRC(3e09d384))
-        ROM_LOAD("tanex_h2.rom", 0xd000, 0x1000, CRC(75105113))
-        ROM_LOAD("tanex_d3.rom", 0xe000, 0x0800, CRC(ee6e8412))
-        ROM_LOAD("tanex_e2.rom", 0xe800, 0x0800, CRC(bd87fd34))
-        ROM_LOAD("tanex_g2.rom", 0xf000, 0x0800, CRC(9fd233ee))
-        ROM_LOAD("tanbug_2.rom", 0xf800, 0x0400, CRC(7e215313))
-        ROM_LOAD("tanbug.rom",   0xfc00, 0x0400, CRC(c8221d9e))
-    ROM_REGION(0x00800,REGION_GFX1,0)
-        ROM_LOAD("charset.rom",  0x0000, 0x0800, CRC(3b3c5360))
-    ROM_REGION(0x01000,REGION_GFX2,0)
-        /* initialized in init_microtan */
+ROM_START( microtan )
+    ROM_REGION( 0x10000, REGION_CPU1, 0 )
+    ROM_LOAD( "tanex_j2.rom", 0xc000, 0x1000, CRC(3e09d384) SHA1(15a98941a672ff16242cc73f1dcf1d81fccd8910) )
+    ROM_LOAD( "tanex_h2.rom", 0xd000, 0x1000, CRC(75105113) SHA1(c6fea4d65b7c52f43aa1589cace9467349a0f290) )
+    ROM_LOAD( "tanex_d3.rom", 0xe000, 0x0800, CRC(ee6e8412) SHA1(7e1bca84bab79d94a4ab8554d23e2bc28ccd0384) )
+    ROM_LOAD( "tanex_e2.rom", 0xe800, 0x0800, CRC(bd87fd34) SHA1(f41895df4a733dddfaf1c89ecff5040addcab804) )
+    ROM_LOAD( "tanex_g2.rom", 0xf000, 0x0800, CRC(9fd233ee) SHA1(7b0be2d0402229ec80b062f7a0bed793686bcbf9) )
+    ROM_LOAD( "tanbug_2.rom", 0xf800, 0x0400, CRC(7e215313) SHA1(c8fb3d33ce2beaf624dc75ec57d34c216b086274) )
+    ROM_LOAD( "tanbug.rom",   0xfc00, 0x0400, CRC(c8221d9e) SHA1(c7fe4c174523aaaab30be7a8c9baf2bc08b33968) )
+
+	ROM_REGION( 0x00800, REGION_GFX1, ROMREGION_DISPOSE )
+    ROM_LOAD( "charset.rom",  0x0000, 0x0800, CRC(3b3c5360) SHA1(a3a2f74149107f8b8f35b15069c71f3aa843d12f) )
+
+	ROM_REGION( 0x01000, REGION_GFX2, 0 )
+    // initialized in init_microtan
 ROM_END
 
-SYSTEM_CONFIG_START(microtan)
-	CONFIG_DEVICE_CASSETTE(1,		NULL)
-	CONFIG_DEVICE_SNAPSHOT_DELAY(	"m65\0", microtan, 0.5)
-	CONFIG_DEVICE_QUICKLOAD_DELAY(	"hex\0", microtan_hexfile, 0.5)
+SYSTEM_CONFIG_START( microtan )
+	CONFIG_DEVICE_CASSETTE( 1, NULL )
+	CONFIG_DEVICE_SNAPSHOT_DELAY( "m65\0", microtan, 0.5 )
+	CONFIG_DEVICE_QUICKLOAD_DELAY( "hex\0", microtan_hexfile, 0.5 )
 SYSTEM_CONFIG_END
 
-/*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */
+//    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME
 COMP( 1979, microtan, 0,		0,		microtan, microtan, microtan, microtan, "Tangerine", "Microtan 65" )
-
-
