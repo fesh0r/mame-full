@@ -68,13 +68,10 @@ int rc_load(struct rc_struct *rc, const char *name, int priority,
 int rc_save(struct rc_struct *rc, const char *name, int append);
 int osd_rc_read(struct rc_struct *rc, mame_file *f, const char *description,
    int priority, int continue_on_errors);
+int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description);
 int rc_read(struct rc_struct *rc, FILE *f, const char *description,
    int priority, int continue_on_errors);
 int rc_write(struct rc_struct *rc, FILE *f, const char *description);
-
-#ifdef MESS
-int osd_rc_write(struct rc_struct *rc, mame_file *f, const char *description);
-#endif
 
 /* commandline handling */
 int rc_parse_commandline(struct rc_struct *rc, int argc, char *argv[],

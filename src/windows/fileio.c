@@ -146,7 +146,7 @@ INLINE int is_pathsep(TCHAR c)
 
 static TCHAR *find_reverse_path_sep(TCHAR *name)
 {
-	TCHAR *p = name + tcslen(name) - 1;
+	TCHAR *p = name + _tcslen(name) - 1;
 	while (p >= name && !is_pathsep(*p))
 		p--;
 	return (p >= name) ? p : NULL;
@@ -405,7 +405,7 @@ static void compose_path(TCHAR *output, int pathtype, int pathindex, const char 
 	*output = 0;
 	if (basepath)
 		appendstring(output, basepath);
-	if (*output && !is_pathsep(output[tcslen(output) - 1]))
+	if (*output && !is_pathsep(output[_tcslen(output) - 1]))
 		appendstring(output, "\\");
 	appendstring(output, filename);
 

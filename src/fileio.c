@@ -1208,7 +1208,6 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 
 
 
-#ifdef MESS
 /***************************************************************************
 	mame_fputs
 ***************************************************************************/
@@ -1246,4 +1245,4 @@ int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
 	va_end(va);
 	return rc;
 }
-#endif /* MESS */
+
