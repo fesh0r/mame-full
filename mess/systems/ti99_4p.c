@@ -80,14 +80,14 @@ MEMORY_END
 
 static PORT_WRITE16_START(writecru)
 
-	{0x0000<<1, 0x01ff<<1, tms9901_CRU_write},
+	{0x0000<<1, 0x01ff<<1, tms9901_0_CRU_write16},
 	{0x0200<<1, 0x0fff<<1, ti99_4p_expansion_CRU_w},
 
 PORT_END
 
 static PORT_READ16_START(readcru)
 
-	{0x0000<<1, 0x003f<<1, tms9901_CRU_read},
+	{0x0000<<1, 0x003f<<1, tms9901_0_CRU_read16},
 	{0x0040<<1, 0x01ff<<1, ti99_4p_expansion_CRU_r},
 
 PORT_END
