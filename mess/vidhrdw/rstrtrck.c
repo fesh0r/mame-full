@@ -3,7 +3,17 @@
 #include <stdlib.h>
 #include <assert.h>
 
-/* -------------------------------------------------------------------------------------------- */
+/* ----------------------------------------------------------------------------
+ * rstrtrck.c
+ *
+ * This code, with the help of rstrbits.c, implements mid frame video register
+ * modification.
+ *
+ * TODO - Since I changed it so that the source gets attached read from the
+ * top and incremented on the way down, I need to change this code so that
+ * the rasterbits_source is passed into rastertrack_newscreen(), and not from
+ * getvideoinfo
+ */
 
 #ifdef MAME_DEBUG
 #define LOG_RASTERTRACK 1
@@ -272,20 +282,22 @@ void rastertrack_refresh(struct osd_bitmap *bitmap, int full_refresh)
 	{
 		int begin;
 		struct rastertrack_queueent *ent;
+		struct rasterbits_source rs;
 		struct rasterbits_clip rc;
 
 		ent = queue.head;
 		begin = 0;
+		rs = ent->rs;
 
 		while(ent) {
 			rc.ybegin = (ent == queue.head) ? 0 : begin + screen_adjustment;
 			rc.yend = ent->end + screen_adjustment;
 
 #if LOG_RASTERTRACK
-			logerror("rastertrack_refresh(): Calling with clip [%i..%i] rvm->offset=%i\n", rc.ybegin, rc.yend, ent->rvm.offset);
+			logerror("rastertrack_refresh(): Calling with clip [%i..%i] height=%i offset=%i\n", rc.ybegin, rc.yend, ent->rvm.height, ent->rvm.offset);
 #endif
 
-			raster_bits(bitmap, &ent->rs, &ent->rvm, &ent->rf, &rc);
+			raster_bits(bitmap, &rs, &ent->rvm, &ent->rf, &rc);
 			begin = ent->end + 1;
 
 			ent = ent->next;

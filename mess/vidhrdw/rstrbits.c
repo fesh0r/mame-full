@@ -340,7 +340,7 @@ void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16
 
 static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
-	int scalex, int scaley, int basex, int basey)
+	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
 	UINT16 artifactpens[16];
 	UINT16 *pens;
@@ -439,7 +439,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 		pens = Machine->pens;
 	}
 
-	for (y = 0; y < mode->height; y++) {
+	for (y = firstrow; y <= lastrow; y++) {
 		pixtop = basey + y * scaley;
 		pixbottom = pixtop + scaley - 1;
 		pixtop = myMAX(pixtop, clip->ybegin);
@@ -467,6 +467,8 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			db += mode->bytesperrow;
 	}
 
+
+
 done:
 	if (scanline)
 		free(scanline);
@@ -482,7 +484,7 @@ done:
 
 static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, struct rasterbits_clip *clip,
-	int scalex, int scaley, int basex, int basey)
+	int scalex, int scaley, int basex, int basey, int firstrow, int lastrow)
 {
 	int x, y, i;
 	int xi, yi;
@@ -556,7 +558,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 		loopbackadj = 0;
 	}
 
-	for (y = 0; y < mode->height; y++) {
+	for (y = firstrow; y <= lastrow; y++) {
 		chartop = basey + y * scaley;
 		charbottom = chartop + scaley - 1;
 
@@ -790,14 +792,30 @@ void raster_bits(struct osd_bitmap *bitmap, struct rasterbits_source *src, struc
 	}
 
 	if (drawingbody) {
+		int firstrow, lastrow, totalcoverage;
+
 		/* Clip to content */
 		if (myclip.ybegin < basey)
 			myclip.ybegin = basey;
 		if (myclip.yend >= (basey + frame->height))
 			myclip.yend = basey + frame->height - 1;
 
+		/* This part determines the bounds of what we are drawing; so we can update
+		 * the source when this part of the screen is gone
+		 */
+		firstrow = (myclip.ybegin - basey) / scaley;
+		lastrow = (myclip.yend - basey) / scaley;
+		totalcoverage = ((myclip.yend - myclip.ybegin + 1) / scaley) * mode->bytesperrow;
+
 		/* Render the content */
-		((mode->flags & RASTERBITS_FLAG_TEXT) ? raster_text : raster_graphics)(bitmap, src, mode, &myclip, scalex, scaley, basex, basey);
+		((mode->flags & RASTERBITS_FLAG_TEXT) ? raster_text : raster_graphics)
+			(bitmap, src, mode, &myclip, scalex, scaley, basex, basey, firstrow, lastrow);
+
+		/* Now update the source */
+		src->videoram += totalcoverage;
+		if (src->db)
+			src->db += totalcoverage;
+
 	}
 }
 

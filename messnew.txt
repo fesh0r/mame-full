@@ -22,7 +22,9 @@ System Driver Changes:
   broken). [Kev Thacker]
   
 - [COCO 3] More work on improving video timing for mid frame video register
-  modification. Now supports mid frame palette modification [Nate Woods]
+  modification. Now supports mid frame palette modification, and altered the
+  way video RAM is scanned so that John Kowalski's Boink demo now runs (albeit
+  with many glitches) [Nate Woods]
 
 Other Changes:
 --------------
