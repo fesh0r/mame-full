@@ -5,12 +5,39 @@ Last Modified by Lawrence Gold (gold@aros.net)
 Release 0.88, 9 November 2004
 	- Everything from MAME 0.88 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.88 (http://x.mame.net/changes-mess.html).
-	- The xml2info utility can now link against the system's libexpat, and 
-	  no longer requires BUILD_EXPAT to be set.  Fixes Bugzilla bug 592.
-	- Another slew of changes from Hans de Goede:
+	- Highlights of this release (PLEASE READ) (video changes by Hans de 
+	  Goede):
+	  * Completely reorganized the video code.  The OpenStep and Photon2 
+	    targets are broken as a result until someone fixes them, but the 
+	    changes are well worth it.
 	  * Renamed "-x11-mode (-x11)" to "-video-mode (-vidmod)". The help 
 	    text for this option is now auto-generated based on which options 
-	    are available.
+	    are available.  This option is also used by non-X11 displays.
+	  * The xgl and xfx drivers are now built into the X11 target, 
+	    alongside Xv and DGA.  OpenGL can be selected at runtime with 
+	    "-video-mode (-vidmod) 2", and Glide can be selected with 
+	    "-video-mode (-vidmod) 3".
+	  * Fullscreen mode is now enabled from the command line with 
+	    "-fullscreen".
+	  * Reworked the hotkeys for switching between X11 video modes and 
+	    fullscreen and windowed modes: left-alt +
+	    insert:    normal or DGA rendering
+	    home:      Xv rendering
+	    page up:   OpenGL rendering
+	    delete:    Glide rendering
+	    page down: toggle between windowed and fullscreen
+	  * Changed the hotkeys for grabbing keyboard and mouse from left-alt + 
+	    page up/page down to left-control + page up/page down.
+	  * Added an ALSA mixer plugin, which can be enabled with 
+	    "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
+	    option accepts the name of a "simple mixer control", which you can 
+	    find by executing "amixer".  (Shyouzou Sugitani)
+	  * Changed JOY_I386 in the makefile to JOY_STANDARD.
+	  * Removed support for the X11 joystick driver, which was broken 
+	    anyway.
+	  * The "-joytype (-jt)" list now only displays drivers that are 
+	    compiled in. Note that some of the values have changed!
+	- Another slew of changes from Hans de Goede:
 	  * Added "-alwaysusemouse(-aum)" to the X11 driver.  If this is not 
 	    set, mouse events won't be reported to the core when fullscreen 
 	    mode is disabled and the mouse is not grabbed.
@@ -27,19 +54,6 @@ Release 0.88, 9 November 2004
 	    offscreen image, and not for displaying on the screen.  This gets 
 	    rid of the black borders in some games, such as mspacman with 
 	    artwork enabled.
-	  * The xgl and xfx drivers are now built into the X11 target, 
-	    alongside Xv and DGA.   OpenGL can be selected at runtime with 
-	    "-video-mode (-vidmod) 2", and Glide can be selected with 
-	    "-video-mode (-vidmod) 3".
-	  * Reworked the hotkeys for switching between X11 video modes and 
-	    fullscreen and windowed modes: left-alt +
-	    insert:    normal or DGA rendering
-	    home:      Xv rendering
-	    page up:   OpenGL rendering
-	    delete:    Glide rendering
-	    page down: toggle between windowed and fullscreen
-	  * Changed the hotkeys for grabbing keyboard and mouse from left-alt + 
-	    page up/page down to left-control + page up/page down.
 	  * The DGA code can now display any color depth on any depth just like 
 	    normal windowed mode.
 	  * The DGA 2.0 code now tries to obtain a mode with the best and 
@@ -157,20 +171,14 @@ Release 0.88, 9 November 2004
 	    before -- just as fast as the native X11 driver -- and has 100% 
 	    support for fullscreen, effects, scaling, etc.
 	  * A number of games should no longer segfault on AMD x86-64 systems.
-	- Added an ALSA mixer plugin, which can be enabled with 
-	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
-	  option accepts the name of a "simple mixer control", which you can 
-	  find by executing "amixer".  (Shyouzou Sugitani)
+	- The xml2info utility can now link against the system's libexpat, and 
+	  no longer requires BUILD_EXPAT to be set.  Fixes Bugzilla bug 592.
 	- Updated the CFLAGS for IRIX MIPSpro in the makefile.  (Brandon 
 	  Corey)
 	- Fixed the IRIX AL sound driver's 8-bit output and updated rate setup 
 	  to deal with unsupported audio hardware rates.  (Brandon Corey)
-	- Enhanced joystick support a bit:
-	  * Changed JOY_I386 in the makefile to JOY_STANDARD.
-	  * Removed support for the X11 joystick driver, which was broken 
-	    anyway.
-	  * The "-joytype (-jt)" list now only displays drivers that are 
-	    compiled in.
+	- Possibly fixed a crash that occurred when a second lightgun's button 
+	  was pressed and XINPUT_DEVICES wasn't defined in the makefile.
 
 Release 0.87, 3 October 2004
 	- Everything from MAME 0.87 and MESS 0.87.  Christopher Stone's 
