@@ -43,62 +43,126 @@ static size_t fsize(FILE *f)
 	return (size_t) sz;
 }
 
-STREAM *stream_open(const char *fname, int read_or_write)
+static STREAM *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
-	const char *ext;
+	struct stream_internal *imgfile = NULL;
 	ZIP *z = NULL;
-	struct stream_internal *imgfile;
 	struct zipent *zipent;
-	static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+
+	if (read_or_write)
+		goto error;
 
 	imgfile = malloc(sizeof(struct stream_internal));
+	if (!imgfile)
+		goto error;
 
-	ext = strrchr(fname, '.');
-	if (ext && !stricmp(ext, ".zip")) {
-		/* Zip file */
-		imgfile->imgtype = IMG_MEM;
-		imgfile->write_protect = 1;
-		imgfile->u.m.pos = 0;
+	memset(imgfile, 0, sizeof(*imgfile));
+	imgfile->imgtype = IMG_MEM;
+	imgfile->write_protect = 1;
+	imgfile->u.m.pos = 0;
 
-		if (read_or_write)
-			goto error;
+	z = openzip(zipname);
+	if (!z)
+		goto error;
 
-		z = openzip(fname);
-		if (!z)
-			goto error;
-
+	do
+	{
 		zipent = readzip(z);
 		if (!zipent)
 			goto error;
-
-		imgfile->u.m.bufsz = zipent->uncompressed_size;
-		imgfile->u.m.buf = malloc(zipent->uncompressed_size);
-		if (!imgfile->u.m.buf)
-			goto error;
-
-		if (readuncompresszip(z, zipent, imgfile->u.m.buf)) {
-			free(imgfile->u.m.buf);
-			goto error;
-		}
-
-		closezip(z);
 	}
-	else {
-		/* Normal file */
-		imgfile->imgtype = IMG_FILE;
-		imgfile->write_protect = read_or_write ? 0 : 1;
+	while(subname && strcmp(subname, zipent->name));
 
-		imgfile->u.f = fopen(fname, write_modes[read_or_write]);
-		if (!imgfile->u.f)
-			goto error;
-	}
-	imgfile->name=fname;
+	imgfile->u.m.bufsz = zipent->uncompressed_size;
+	imgfile->u.m.buf = malloc(zipent->uncompressed_size);
+	if (!imgfile->u.m.buf)
+		goto error;
+
+	if (readuncompresszip(z, zipent, imgfile->u.m.buf))
+		goto error;
+
+	closezip(z);
 	return (STREAM *) imgfile;
 
 error:
 	if (z)
 		closezip(z);
-	free((void *) imgfile);
+	if (imgfile)
+	{
+		if (imgfile->u.m.buf)
+			free(imgfile->u.m.buf);
+		free(imgfile);
+	}
+	return NULL;
+}
+
+STREAM *stream_open(const char *fname, int read_or_write)
+{
+	const char *ext;
+	struct stream_internal *imgfile = NULL;
+	static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+	FILE *f = NULL;
+	char *buf = NULL;
+	int len, i;
+	STREAM *s = NULL;
+	char c;
+
+	/* maybe we are just a ZIP? */
+	ext = strrchr(fname, '.');
+	if (ext && !stricmp(ext, ".zip"))
+		return stream_open_zip(fname, NULL, read_or_write);
+
+	f = fopen(fname, write_modes[read_or_write]);
+	if (!f)
+	{
+		if (!read_or_write)
+		{
+			len = strlen(fname);
+
+			/* can't open the file; try opening ZIP files with other names */
+			buf = malloc(len + 1);
+			if (!buf)
+				goto error;
+			strcpy(buf, fname);
+
+			for(i = len-1; !s && (i >= 0); i--)
+			{
+				if ((buf[i] == '\\') || (buf[i] == '/'))
+				{
+					c = buf[i];
+					buf[i] = '\0';
+					s = stream_open_zip(buf, buf + i + 1, read_or_write);
+					buf[i] = c;
+				}
+			}
+			free(buf);
+			if (s)
+				return s;
+		}
+
+		/* ah well, it was worth a shot */
+		goto error;
+	}
+
+	imgfile = malloc(sizeof(struct stream_internal));
+	if (!imgfile)
+		goto error;
+
+	/* Normal file */
+	memset(imgfile, 0, sizeof(*imgfile));
+	imgfile->imgtype = IMG_FILE;
+	imgfile->write_protect = read_or_write ? 0 : 1;
+	imgfile->u.f = f;
+	imgfile->name = fname;
+	return (STREAM *) imgfile;
+
+error:
+	if (imgfile)
+		free((void *) imgfile);
+	if (f)
+		fclose(f);
+	if (buf)
+		free(buf);
 	return (STREAM *) NULL;
 }
 
