@@ -7,10 +7,11 @@
 /* this enum matches the possible values for bits 3-2 of the select register */
 typedef enum select_mode_t
 {
-	sm_reserved = 0,		/* I guess this will select nothing */
+	sm_undefined = -1,		/* value after reset and drive deselect(right?) */
+	sm_at_harddisk = 0,		/* hard disk in PC-AT compatible harddisk format */
 	sm_harddisk,			/* hard disk */
-	sm_floppy_slow,			/* slower 8" drives??? */
-	sm_floppy_fast			/* 5.25" and 3.5" drives??? */
+	sm_floppy_slow,			/* 8" drive (and 5.25" and 3.5" HD disks?) */
+	sm_floppy_fast			/* 5.25" and 3.5" drive */
 } select_mode_t;
 
 typedef struct smc92x4_intf

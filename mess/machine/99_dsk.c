@@ -890,10 +890,9 @@ static int hfdc_select_callback(int which, select_mode_t select_mode, int select
 
 	(void) which;
 
-	assert(select_mode != sm_reserved);
-
 	switch (select_mode)
 	{
+	/*case sm_at_harddisk:*/
 	case sm_harddisk:
 		/* hard disk */
 		disk_unit = select_line - 1;
