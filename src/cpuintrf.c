@@ -120,9 +120,6 @@
 #if (HAS_PSXCPU)
 #include "cpu/mips/mips.h"
 #endif
-#if (HAS_SH2)
-#include "cpu/sh2/sh2.h"
-#endif
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
@@ -153,6 +150,9 @@
 #endif
 #if (HAS_SC61860)
 #include "mess/cpu/sc61860/sc61860.h"
+#endif
+#if (HAS_SH2)
+#include "mess/cpu/sh2/sh2.h"
 #endif
 
 #endif
@@ -432,9 +432,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80)
 	CPU1(Z80,	   z80, 	 1,255,1.00,Z80_IGNORE_INT,    Z80_IRQ_INT,    Z80_NMI_INT,    8, 16,	  0,16,LE,1, 4	),
 #endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
-#endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   8, 16,	  0,16,LE,1, 4	),
 #endif
@@ -639,9 +636,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_PSXCPU)
 	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  16,32lew,  0,32,LE,4, 4	),
 #endif
-#if (HAS_SH2)
-	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE,	   0,			   -1,			   32,32bedw, 0,32,BE,2, 2	),
-#endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
@@ -675,6 +669,9 @@ struct cpu_interface cpuintf[] =
 #if (HAS_SC61860)
 	#define sc61860_ICount sc61860_icount
 	CPU0(SC61860,  sc61860,  1,  0,1.00,-1, 			   -1,			   -1,			   8, 16,	  0,16,BE,1, 4	),
+#endif
+#if (HAS_SH2)
+	CPU4(SH2,	   sh2, 	16,  0,1.00,SH2_INT_NONE ,				 0, 			-1,   32,32bedw,   0,32,BE,2, 2  ),
 #endif
 #endif
 };
