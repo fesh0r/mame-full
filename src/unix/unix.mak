@@ -544,15 +544,15 @@ xlistdev: src/unix/contrib/tools/xlistdev.c
 
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
 	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
 	$(CC_COMMENT) @echo 'Linking $@...'
-	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 xml2info: $(OBJ)/xml2info.o $(EXPAT)
-	$(CC_COMMENT) @echo 'Compiling $@...'
-	$(CC_COMPILE) $(CC) -O1 -o $@ $^
+	$(CC_COMMENT) @echo 'Linking $@...'
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ $(LIBS) -o $@
 
 dat2html: $(DAT2HTML_OBJS)
 	$(CC_COMMENT) @echo 'Compiling $@...'
