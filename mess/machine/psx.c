@@ -312,7 +312,7 @@ WRITE32_HANDLER( psx_cd_w )
 		if (psx_cdcmd)
 			psx_cdcmd();
 
-		psx_irq_trigger(0x0004);
+		psxirq_set(0x0004);
 	}
 	else if( mem_mask == 0xff00ffff )
 	{
@@ -351,7 +351,7 @@ WRITE32_HANDLER( psx_cd_w )
 		if ((data == 0x07) && (cd_reset == 1))
 		{
 			cd_reset = 2;
-			psx_irq_clear(0x0004);
+//			psxirq_clear(0x0004);
 		}
 		else
 		{
