@@ -222,12 +222,16 @@ static int stv_vdp2_window_process(int x,int y);
        | VCP2A03  | VCP2A02  | VCP2A01  | VCP2A00  | VCP3A03  | VCP3A02  | VCP3A01  | VCP3A00  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_CYCA0L	((stv_vdp2_regs[0x010/4] >> 16)&0x0000ffff)
+
 /* 180012 - r/w - -CYCA0U - VRAM CYCLE PATTERN (BANK A0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        | VCP4A03  | VCP4A02  | VCP4A01  | VCP4A00  | VCP5A03  | VCP5A02  | VCP5A01  | VCP5A00  |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | VCP6A03  | VCP6A02  | VCP6A01  | VCP6A00  | VCP7A03  | VCP7A02  | VCP7A01  | VCP7A00  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_CYCA0U	((stv_vdp2_regs[0x10/4] >> 0)&0x0000ffff)
 
 /* 180014 - r/w - -CYCA1L - VRAM CYCLE PATTERN (BANK A1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -236,12 +240,16 @@ static int stv_vdp2_window_process(int x,int y);
        | VCP2A13  | VCP2A12  | VCP2A11  | VCP2A10  | VCP3A13  | VCP3A12  | VCP3A11  | VCP3A10  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_CYCA1L	((stv_vdp2_regs[0x014/4] >> 16)&0x0000ffff)
+
 /* 180016 - r/w - -CYCA1U - VRAM CYCLE PATTERN (BANK A1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        | VCP4A13  | VCP4A12  | VCP4A11  | VCP4A10  | VCP5A13  | VCP5A12  | VCP5A11  | VCP5A10  |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | VCP6A13  | VCP6A12  | VCP6A11  | VCP6A10  | VCP7A13  | VCP7A12  | VCP7A11  | VCP7A10  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_CYCA1U	((stv_vdp2_regs[0x14/4] >> 0)&0x0000ffff)
 
 /* 180018 - r/w - -CYCB0L - VRAM CYCLE PATTERN (BANK B0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -250,12 +258,16 @@ static int stv_vdp2_window_process(int x,int y);
        | VCP2B03  | VCP2B02  | VCP2B01  | VCP2B00  | VCP3B03  | VCP3B02  | VCP3B01  | VCP3B00  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_CYCA2L	((stv_vdp2_regs[0x018/4] >> 16)&0x0000ffff)
+
 /* 18001A - r/w - -CYCB0U - VRAM CYCLE PATTERN (BANK B0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        | VCP4B03  | VCP4B02  | VCP4B01  | VCP4B00  | VCP5B03  | VCP5B02  | VCP5B01  | VCP5B00  |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | VCP6B03  | VCP6B02  | VCP6B01  | VCP6B00  | VCP7B03  | VCP7B02  | VCP7B01  | VCP7B00  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_CYCA2U	((stv_vdp2_regs[0x18/4] >> 0)&0x0000ffff)
 
 /* 18001C - r/w - -CYCB1L - VRAM CYCLE PATTERN (BANK B1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -264,12 +276,16 @@ static int stv_vdp2_window_process(int x,int y);
        | VCP2B13  | VCP2B12  | VCP2B11  | VCP2B10  | VCP3B13  | VCP3B12  | VCP3B11  | VCP3B10  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_CYCA3L	((stv_vdp2_regs[0x01c/4] >> 16)&0x0000ffff)
+
 /* 18001E - r/w - -CYCB1U - VRAM CYCLE PATTERN (BANK B1)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        | VCP4B13  | VCP4B12  | VCP4B11  | VCP4B10  | VCP5B13  | VCP5B12  | VCP5B11  | VCP5B10  |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | VCP6B13  | VCP6B12  | VCP6B11  | VCP6B10  | VCP7B13  | VCP7B12  | VCP7B11  | VCP7B10  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_CYCA3U	((stv_vdp2_regs[0x1c/4] >> 0)&0x0000ffff)
 
 /* 180020 - r/w - BGON - SCREEN DISPLAY ENABLE
 
@@ -1908,6 +1924,66 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 	logerror( "kast = %x, dkast = %x, dkax = %x\n", RP.kast, RP.dkast, RP.dkax );
 }
 
+#define STV_VDP2_CP_NBG0_PNMDR		0x0
+#define STV_VDP2_CP_NBG1_PNMDR		0x1
+#define STV_VDP2_CP_NBG2_PNMDR		0x2
+#define STV_VDP2_CP_NBG3_PNMDR		0x3
+#define STV_VDP2_CP_NBG0_CPDR		0x4
+#define STV_VDP2_CP_NBG1_CPDR		0x5
+#define STV_VDP2_CP_NBG2_CPDR		0x6
+#define STV_VDP2_CP_NBG3_CPDR		0x7
+
+static UINT8 stv_vdp2_check_vram_cycle_pattern_registers( 
+								UINT8 access_command_pnmdr, 
+								UINT8 access_command_cpdr,
+								UINT8 bitmap_enable )
+{
+	int i;
+	UINT8  access_command_ok = 0;
+	UINT16 cp_regs[] = 
+	{ STV_VDP2_CYCA0L, STV_VDP2_CYCA0U, STV_VDP2_CYCA1L, STV_VDP2_CYCA1U,
+	STV_VDP2_CYCA2L, STV_VDP2_CYCA2U, STV_VDP2_CYCA3L, STV_VDP2_CYCA3U };
+
+	if ( bitmap_enable ) access_command_ok = 1;
+
+	for ( i = 0; i < 8; i++ )
+	{
+		if ( ((cp_regs[i] >> 12) & 0xf) == access_command_pnmdr )
+		{
+			access_command_ok |= 1;
+		}
+		if ( ((cp_regs[i] >> 12) & 0xf) == access_command_cpdr )
+		{
+			access_command_ok |= 2;
+		}
+		if ( ((cp_regs[i] >> 8) & 0xf) == access_command_pnmdr )
+		{
+			access_command_ok |= 1;
+		}
+		if ( ((cp_regs[i] >> 8) & 0xf) == access_command_cpdr )
+		{
+			access_command_ok |= 2;
+		}
+		if ( ((cp_regs[i] >> 4) & 0xf) == access_command_pnmdr )
+		{
+			access_command_ok |= 1;
+		}
+		if ( ((cp_regs[i] >> 4) & 0xf) == access_command_cpdr )
+		{
+			access_command_ok |= 2;
+		}
+		if ( ((cp_regs[i] >> 0) & 0xf) == access_command_pnmdr )
+		{
+			access_command_ok |= 1;
+		}
+		if ( ((cp_regs[i] >> 0) & 0xf) == access_command_cpdr )
+		{
+			access_command_ok |= 2;
+		}
+	}
+	return access_command_ok == 3 ? 1 : 0;
+}
+
 static void stv_vdp2_drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex, int scaley,
@@ -2934,6 +3010,11 @@ static void stv_vdp2_draw_NBG0(struct mame_bitmap *bitmap, const struct rectangl
 
 	stv2_current_tilemap.layer_name=0;
 
+	if ( stv2_current_tilemap.enabled )
+	{
+		stv2_current_tilemap.enabled = stv_vdp2_check_vram_cycle_pattern_registers( STV_VDP2_CP_NBG0_PNMDR, STV_VDP2_CP_NBG0_CPDR, stv2_current_tilemap.bitmap_enable );
+	}
+
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -3006,6 +3087,11 @@ static void stv_vdp2_draw_NBG1(struct mame_bitmap *bitmap, const struct rectangl
 										  (STV_VDP2_N1SWA * 0x40);
 
 	stv2_current_tilemap.layer_name=1;
+
+	if ( stv2_current_tilemap.enabled )
+	{
+		stv2_current_tilemap.enabled = stv_vdp2_check_vram_cycle_pattern_registers( STV_VDP2_CP_NBG1_PNMDR, STV_VDP2_CP_NBG1_CPDR, stv2_current_tilemap.bitmap_enable );
+	}
 
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
@@ -3089,6 +3175,12 @@ static void stv_vdp2_draw_NBG2(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.layer_name=2;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N2PLSZ;
+
+	if ( stv2_current_tilemap.enabled )
+	{
+		stv2_current_tilemap.enabled = stv_vdp2_check_vram_cycle_pattern_registers( STV_VDP2_CP_NBG2_PNMDR, STV_VDP2_CP_NBG2_CPDR, stv2_current_tilemap.bitmap_enable );
+	}
+
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 
@@ -3171,6 +3263,12 @@ static void stv_vdp2_draw_NBG3(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.layer_name=3;
 
 	stv2_current_tilemap.plane_size = STV_VDP2_N3PLSZ;
+
+	if ( stv2_current_tilemap.enabled )
+	{
+		stv2_current_tilemap.enabled = stv_vdp2_check_vram_cycle_pattern_registers( STV_VDP2_CP_NBG3_PNMDR, STV_VDP2_CP_NBG3_CPDR, stv2_current_tilemap.bitmap_enable );
+	}
+
 	stv_vdp2_check_tilemap(bitmap, cliprect);
 }
 

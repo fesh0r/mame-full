@@ -267,6 +267,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/namcos3d.o \
 	$(OBJ)/vidhrdw/namcos21.o $(OBJ)/drivers/namcos21.o \
 	$(OBJ)/vidhrdw/namcos22.o $(OBJ)/drivers/namcos22.o \
+	$(OBJ)/drivers/namcos23.o \
 
 $(OBJ)/univers.a: \
 	$(OBJ)/vidhrdw/cosmic.o $(OBJ)/drivers/cosmic.o \
@@ -653,6 +654,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/drivers/starwars.o $(OBJ)/sndhrdw/starwars.o \
 	$(OBJ)/machine/mhavoc.o $(OBJ)/drivers/mhavoc.o \
 	$(OBJ)/drivers/quantum.o \
+	$(OBJ)/drivers/cball.o \
 	$(OBJ)/vidhrdw/copsnrob.o $(OBJ)/machine/copsnrob.o $(OBJ)/drivers/copsnrob.o \
 	$(OBJ)/vidhrdw/flyball.o $(OBJ)/drivers/flyball.o \
 	$(OBJ)/drivers/mgolf.o \
@@ -1098,6 +1100,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/taxidrvr.o $(OBJ)/drivers/taxidrvr.o \
 	$(OBJ)/vidhrdw/xyonix.o $(OBJ)/drivers/xyonix.o \
 	$(OBJ)/drivers/findout.o \
+	$(OBJ)/drivers/getrivia.o \
 	$(OBJ)/vidhrdw/dribling.o $(OBJ)/drivers/dribling.o \
 	$(OBJ)/drivers/ace.o \
 	$(OBJ)/vidhrdw/clayshoo.o $(OBJ)/machine/clayshoo.o $(OBJ)/drivers/clayshoo.o \

@@ -744,6 +744,9 @@ const struct GameDriver *drivers[] =
 	DRIVER( timecrsa )
 	DRIVER( propcycl )	/* (c) 1996 */
 
+	/* Namco System 23 */
+	DRIVER( gp500 )
+
 
 	/* Universal games */
 	DRIVER( cosmicg )	/* 7907 (c) 1979 */
@@ -2358,6 +2361,7 @@ V-V                           TP-027
 	DRIVER( sfex2 )		/* Street Fighter EX 2 (JAPAN 980312) */
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
+	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
 	DRIVER( techromn )	/* Tech Romancer (USA 980914) */
 	DRIVER( kikaioh )	/* Kikaioh (JAPAN 980914) */
 	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (ASIA 990611) */
@@ -2396,17 +2400,18 @@ V-V                           TP-027
 	DRIVER( sncwgltd )	/* Sonic Wings Limited (JAPAN) */
 
 	/* Taito FX1a */
-	DRIVER( psyforce )	/* Psychic Force (WORLD Ver 2.4O) */
-	DRIVER( psyforcj )	/* Psychic Force (JAPAN Ver 2.4J) */
-	DRIVER( sfchamp )	/* Super Football Champ (JAPAN) */
+	DRIVER( sfchamp )	/* Super Football Champ (Ver 2.5J) */
+	DRIVER( sfchampj )	/* Super Football Champ (Ver 2.4J) */
+	DRIVER( psyforce )	/* Psychic Force (Ver 2.4O) */
+	DRIVER( psyforcj )	/* Psychic Force (Ver 2.4J) */
 	DRIVER( mgcldate )	/* Magical Date (JAPAN Ver 2.02J) */
 	DRIVER( mgcldtex )	/* Magical Date EX (JAPAN Ver 2.01J) */
 
 	/* Taito FX1b */
-	DRIVER( raystorm )	/* Ray Storm (JAPAN) */
-	DRIVER( ftimpcta )	/* Fighter's Impact Ace (JAPAN) */
-	DRIVER( gdarius )	/* G-Darius (JAPAN) */
-	DRIVER( gdarius2 )	/* G-Darius Ver.2 (JAPAN) */
+	DRIVER( raystorm )	/* Ray Storm (Ver 2.05J) */
+	DRIVER( ftimpcta )	/* Fighters' Impact A (Ver 2.00J) */
+	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
+	DRIVER( gdarius2 )	/* G-Darius Ver.2 (Ver 2.03J) */
 
 	/* Namco System 11 */
 	DRIVER( tekken )	/* Tekken (TE4/VER.C) */
@@ -3741,6 +3746,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bmcompmx )	/* GX858 (c) 1999 (Japan) */
 	DRIVER( hmcompmx )	/* GX858 (c) 1999 */
 	DRIVER( bm4thmix )	/* GX847 (c) 1999 (Japan) */
+	DRIVER( bm5thmix )	/* GX981 (c) 1999 (Japan */
 	DRIVER( bmcorerm )	/* GXA05 (c) 1999 (Japan) */
 	DRIVER( bmdct )		/* GX995 (c) 2000 (Japan) */
 	DRIVER( hmcompm2 )	/* GX988 (c) 2000 (Japan) */
@@ -3789,6 +3795,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Atari b/w games */
 	/* Tank 8 */  		/* ??????			1976/04 [6800] */
+	DRIVER( cball )		/* ?????? prototype	1976/?? [6800] */
 	DRIVER( copsnrob )	/* 005625			1976/07 [6502] */
 	DRIVER( flyball )	/* 005629			1976/07 [6502] */
 	DRIVER( sprint2 )	/* 005922			1976/11 [6502] */
@@ -5514,6 +5521,11 @@ Other Sun games
 	DRIVER( taxidrvr )	/* [1984 Graphic Techno] */
 	DRIVER( xyonix )	/* [1989 Philko] */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
+	DRIVER( getrivia )	/* (c) 1982 Greyhound Electronics */
+	DRIVER( getrv1 )	/* (c) 1982 Greyhound Electronics */
+	DRIVER( getrv2 )	/* (c) 1982 Greyhound Electronics */
+	DRIVER( getrv3 )	/* (c) 1982 Greyhound Electronics */
+	DRIVER( getrv4 )	/* (c) 1982 Greyhound Electronics */
 	DRIVER( dribling )	/* (c) 1983 Model Racing */
 	DRIVER( driblino )	/* (c) 1983 Olympia */
 	DRIVER( ace )		/* [1976 Allied Leisure] */
@@ -5543,6 +5555,7 @@ Other Sun games
 	DRIVER( 9ballsh2 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
 	DRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Games" */
 	DRIVER( gumbo )		/* (c) 1994 Min Corp. */
+	DRIVER( mspuzzle )		/* (c) 1994 Min Corp. */
 	DRIVER( trivquiz )	/* (c) 1984 Status Games */
 	DRIVER( statriv2 )	/* (c) 1984 Status Games */
 	DRIVER( statriv4 )	/* (c) 1985 Status Games */

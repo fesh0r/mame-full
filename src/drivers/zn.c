@@ -64,6 +64,7 @@ static const unsigned char cp07[ 8 ] = { 0xf8, 0x60, 0x20, 0x3c, 0xfd, 0x03, 0xf
 static const unsigned char cp08[ 8 ] = { 0xe0, 0xf2, 0x70, 0x81, 0xc1, 0x3c, 0x04, 0xf8 };
 static const unsigned char cp09[ 8 ] = { 0xfc, 0x20, 0x38, 0x08, 0xf1, 0x03, 0x82, 0x80 }; /* brute forced */
 static const unsigned char cp10[ 8 ] = { 0xe0, 0x40, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
+static const unsigned char cp11[ 8 ] = { 0xf0, 0x20, 0xe1, 0x81, 0x7c, 0x04, 0xfa, 0x02 }; /* brute forced */
 static const unsigned char cp12[ 8 ] = { 0xfc, 0x82, 0x60, 0xe1, 0xf9, 0x38, 0x30, 0xf0 }; /* brute forced */
 static const unsigned char cp13[ 8 ] = { 0x02, 0x70, 0x08, 0x04, 0x3c, 0x20, 0xe1, 0x01 };
 static const unsigned char et01[ 8 ] = { 0x02, 0x08, 0x18, 0x1c, 0xfd, 0xc1, 0x40, 0x80 };
@@ -76,13 +77,14 @@ static const unsigned char mg04[ 8 ] = { 0xf0, 0xe1, 0x81, 0x82, 0xfa, 0x04, 0x3
 static const unsigned char mg05[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x0c, 0x10, 0xe0 }; /* brute forced */
 static const unsigned char mg09[ 8 ] = { 0xf0, 0x03, 0xe2, 0x18, 0x78, 0x7c, 0x3c, 0xc0 }; /* brute forced */
 static const unsigned char mg11[ 8 ] = { 0x80, 0xc2, 0x38, 0xf9, 0xfd, 0x1c, 0x10, 0xf0 };
+static const unsigned char mg14[ 8 ] = { 0xfc, 0xf2, 0xfa, 0x18, 0x20, 0x40, 0x81, 0x01 };
 static const unsigned char tt01[ 8 ] = { 0xe0, 0xf9, 0xfd, 0x7c, 0x70, 0x30, 0xc2, 0x02 };
 static const unsigned char tt02[ 8 ] = { 0xfc, 0x60, 0xe1, 0xc1, 0x30, 0x08, 0xfa, 0x02 }; /* brute forced */
 static const unsigned char tt03[ 8 ] = { 0xf0, 0x20, 0xe2, 0xfa, 0x78, 0x81, 0xfd, 0xfc }; /* brute forced */
 static const unsigned char tt04[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfa, 0x78, 0x7c, 0x0c, 0xf0 };
 static const unsigned char tt05[ 8 ] = { 0xc0, 0xf1, 0xf2, 0xe2, 0x60, 0x7c, 0x04, 0xf8 }; /* brute forced */
 static const unsigned char tt06[ 8 ] = { 0xfc, 0x38, 0xfa, 0xf2, 0xf1, 0xe1, 0x60, 0x80 }; /* brute forced */
-static const unsigned char tt07[ 8 ] = { 0x80, 0x10, 0xf1, 0x03, 0xfa, 0x38, 0x3c, 0xfc }; /* brute forced */
+static const unsigned char tt07[ 8 ] = { 0x80, 0x10, 0xf1, 0x03, 0xfa, 0x38, 0x3c, 0xfc }; /* brute forced & dumped */
 static const unsigned char tt10[ 8 ] = { 0x80, 0x20, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
 static const unsigned char tt16[ 8 ] = { 0xc0, 0x04, 0xf9, 0xe1, 0x60, 0x70, 0xf2, 0x02 };
 static const unsigned char kn01[ 8 ] = { 0xf8, 0xe1, 0xe2, 0xfe, 0x3c, 0x30, 0x70, 0x80 }; /* brute forced */
@@ -99,7 +101,7 @@ static struct
 	{ "jdredd",   ac01, ac02 }, /* OK ( missing guns ) */
 	{ "jdreddb",  ac01, ac02 }, /* OK ( missing guns ) */
 	{ "primrag2", tw01, tw02 }, /* locks up when starting a game */
-	{ "hvnsgate", at01, at02 }, /* bad dump? */
+	{ "hvnsgate", at01, at02 }, /* OK */
 	{ "ts2",      cp01, cp02 }, /* OK */
 	{ "ts2j",     cp01, cp02 }, /* OK */
 	{ "starglad", cp01, cp03 }, /* OK */
@@ -116,6 +118,7 @@ static struct
 	{ "sfex2",    cp10, cp08 }, /* OK ( random crashes on garuda ) */
 	{ "techromn", cp10, cp09 }, /* OK */
 	{ "kikaioh",  cp10, cp09 }, /* OK */
+	{ "tgmj",     cp10, cp11 }, /* OK */
 	{ "sfex2p",   cp10, cp12 }, /* OK */
 	{ "sfex2pj",  cp10, cp12 }, /* OK */
 	{ "strider2", cp10, cp13 }, /* OK ( random crashes on bosses ) */
@@ -132,7 +135,8 @@ static struct
 	{ "doapp",    mg01, mg05 }, /* OK */
 	{ "tondemo",  mg01, mg09 }, /* OK */
 	{ "brvblade", mg01, mg11 }, /* OK */
-	{ "sfchamp",  tt01, tt02 }, /* bad dump? */
+	{ "sfchamp",  tt01, tt02 }, /* stuck in test mode */
+	{ "sfchampj", tt01, tt02 }, /* stuck in test mode */
 	{ "psyforce", tt01, tt03 }, /* OK */
 	{ "psyforcj", tt01, tt03 }, /* OK */
 	{ "raystorm", tt01, tt04 }, /* OK */
@@ -310,11 +314,13 @@ static WRITE32_HANDLER( coin_w )
 {
 	/* 0x01=counter
 	   0x02=coin lock 1
+	   0x08=??
 	   0x20=coin lock 2
+	   0x80=??
 	*/
 	if( ( data & ~0x23 ) != 0 )
 	{
-		verboselog( 0, "coin_w %08x", data );
+		verboselog( 0, "coin_w %08x\n", data );
 	}
 }
 
@@ -629,17 +635,12 @@ static MACHINE_DRIVER_START( coh1000c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
+	MDRV_SCREEN_SIZE( 1024, 512 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -668,17 +669,12 @@ static MACHINE_DRIVER_START( coh1002c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -873,17 +869,12 @@ static MACHINE_DRIVER_START( coh3002c )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -894,6 +885,111 @@ static MACHINE_DRIVER_START( coh3002c )
 MACHINE_DRIVER_END
 
 /*
+
+Main board (Standard ZN1 Main Board with Taito ZN1 BIOS)
+ZN-1 1-659-709-12  COH-1000T
+|--------------------------------------------------------|
+|  LA4705             |---------------------------|      |
+|                     |---------------------------|      |
+|    AKM_AK4310VM      AT28C16                           |
+|  VOL                                                   |
+|       SW1            BIOS                              |
+|  TD62064                                               |
+|  TD62064        PALCE16V8                              |
+|J                                                       |
+|                                                        |
+|A                EPM7032    814260    CXD2922CQ         |
+|                                                        |
+|M                                                       |
+|                                                        |
+|M                                                       |
+|                *                                       |
+|A           DSW                                         |
+|                                CXD8561Q    CXD8530CQ   |
+|                KM4132G271Q-12                          |
+|CN505  CN506                   53.693MHz    67.737MHz   |
+|            CAT702                                      |
+|                                                        |
+|CN504  CN503                                            |
+|                                                        |
+|                                                        |
+|  NEC_78081G503         KM48V514BJ-12   KM48V514BJ-12   |
+|            MC44200FT   KM48V514BJ-12   KM48V514BJ-12   |
+|CN651  CN652            KM48V514BJ-12   KM48V514BJ-12   |
+|                CN654   KM48V514BJ-12   KM48V514BJ-12   |
+|--------------------------------------------------------|
+Notes:
+      CN506 - Connector for optional 3rd player controls
+      CN505 - Connector for optional 4th player controls
+      CN503 - Connector for optional 15kHz external video output (R,G,B,Sync, GND)
+      CN504 - Connector for optional 2nd speaker (for stereo output)
+      CN652 - Connector for optional trackball
+      CN651 - Connector for optional analog controls
+      CN654 - Connector for optional memory card
+      SW1   - Slide switch for stereo or mono sound output
+      DSW   - Dip switch (4 position, defaults all OFF)
+      
+      BIOS           - COH1000T.353, Taito ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
+      814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
+      KM4132G271Q-12 - 128K x32 x2 banks (32MBit) SGRAM (QFP100)
+      *              - Unpopulated position for KM4132G271Q-12 SGRAM
+      KM48V514BJ-6   - 512k x8 (4MBit) DRAM (SOJ28)
+      EPM7032        - Altera EPM7032QC44-15 CPLD labelled 'ZN1A' (QFP44)
+      CAT702         - Protection chip labelled 'TT01' (DIP20)
+      PALCE16V8      - PAL, labelled 'ZN1A' (PLCC20)
+
+
+Game board
+----------
+
+SROM PCB-A
+K11X0643A PSYCHIC FORCE
+M43J0308A 238102270
+|--------------------------------------------|
+|   |---------------------------|            |
+|   |---------------------------|            |
+|                                    IC1     |
+|              CAT702    E22-05.2            |
+|    E18-06                                  |
+|                        E22-10.7            |
+|                                    IC6     |
+| MB3773                                     |
+|                                            |
+|                                            |
+|              |---------|           IC12    |
+| E22-01.15    |TAITO    |                   |
+|              |TC0140SYT|                   |
+|              |         |                   |
+|              |         |          E22-02.16|
+|              |---------|                   |
+|  IC20                     16MHz            |
+|                                   E22-03.19|
+|                    84C000AM-6              |
+|                                            |
+|                                   E22-04.21|
+|TL074                                       |
+|                    LH5268AN-10LL           |
+|    MB87078                         IC27    |
+|                         E22-07.22          |
+|TL074           YM2610                      |
+|      Y3016                                 |
+|--------------------------------------------|
+Notes:
+      IC1, IC6     \
+      IC12, IC20   |   - Unpopulated positions for 16MBit SOP44 MaskROM
+      IC27         /
+      E22-01, E22-02 \
+      E22-03, E22-04 / - 23C16000 16MBit SOP44 MaskROMs
+      E22-05, E22-10   - 27C040 4MBit DIP32 EPROM
+      E22-07           - 27C010 1MBit DIP32 EPROM
+      E18-06           - AMD MACH111 CPLD stamped 'E18-06' (PLCC44)
+      LH5268AN-10LL    - Sharp 8K x8 SRAM (SOP28)
+      CAT702           - Protection chip labelled 'TT03' (DIP20)
+      MB3773           - Power Supply Monitor with Watch Dog Timer (i.e. Reset IC)
+      MB87078          - Electronic Volume Control IC
+      84C000AM-6       - Z80-A; clock 4.000MHz
+      YM2610           - clock 8.000MHz
 
 Main board (Standard ZN1 Main Board with Taito ZN1 BIOS)
 ZN-1 1-659-709-12  COH-1000T
@@ -1013,6 +1109,7 @@ static data8_t *taitofx1_eeprom2 = NULL;
 
 static WRITE32_HANDLER( bank_coh1000t_w )
 {
+	watchdog_reset_w( 0, 0 ); /* unconfirmed */
 	verboselog( 1, "bank_coh1000t_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 3 ) * 0x800000 ) );
 }
@@ -1194,17 +1291,12 @@ static MACHINE_DRIVER_START( coh1000ta )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
-	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
+	MDRV_SCREEN_SIZE( 1024, 512 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x512 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1263,17 +1355,12 @@ static MACHINE_DRIVER_START( coh1000tb )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1436,17 +1523,12 @@ static MACHINE_DRIVER_START( coh3002t )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1651,17 +1733,12 @@ static MACHINE_DRIVER_START( coh1000w )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -1900,17 +1977,12 @@ static MACHINE_DRIVER_START( coh1002e )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2238,17 +2310,12 @@ static MACHINE_DRIVER_START( coh1000a )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2303,7 +2370,7 @@ Notes:
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
       
-      BIOS           - COH1001L.353, Atlus ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
+      BIOS           - coh1001l.353, Atlus ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
       814260         - 256K x16 (4MBit) DRAM
       MB81G83222-012 - 128K x32 x2 banks (32MBit) SGRAM
@@ -2373,19 +2440,15 @@ Notes:
       VSync        - 60Hz
 */
 
-static WRITE32_HANDLER( coh1002l_bnk_w )
+static WRITE32_HANDLER( coh1001l_bnk_w )
 {
-	logerror("coh1002l banks: %x\n", (data>>16)&3);
-
-	// this bank is at least correct for the first 4 megs - the game will
-	// crash badly otherwise
-	cpu_setbank( 1, memory_region( REGION_USER2 ) + (0x800000 * ((data>>16) & 3)));
+	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( ( data >> 16 ) & 3 ) * 0x800000 ) );
 }
 
 DRIVER_INIT( coh1001l )
 {
 	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 ); /* banked rom */
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1002l_bnk_w );
+	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1001l_bnk_w );
 
 	init_znsec();
 }
@@ -2414,17 +2477,12 @@ static MACHINE_DRIVER_START( coh1001l )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2482,17 +2540,12 @@ static MACHINE_DRIVER_START( coh1002v )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2754,17 +2807,12 @@ static MACHINE_DRIVER_START( coh1002m )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2779,7 +2827,7 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
 	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
 
-	MDRV_CPU_ADD( Z80, 8000000 )
+	MDRV_CPU_ADD( Z80, 32000000/8 )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )
 	MDRV_CPU_PROGRAM_MAP( cbaj_z80_map, 0 )
 	MDRV_CPU_IO_MAP( cbaj_z80_port_map, 0 )
@@ -2792,17 +2840,12 @@ static MACHINE_DRIVER_START( coh1002msnd )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -2829,17 +2872,12 @@ static MACHINE_DRIVER_START( coh1002ml )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-#if defined( MAME_DEBUG )
 	MDRV_SCREEN_SIZE( 1024, 1024 )
-	MDRV_VISIBLE_AREA( 0, 1023, 0, 1023 )
-#else
-	MDRV_SCREEN_SIZE( 640, 480 )
 	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-#endif
 	MDRV_PALETTE_LENGTH( 65536 )
 
 	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2_1024x1024 )
+	MDRV_VIDEO_START( psx_type2 )
 	MDRV_VIDEO_UPDATE( psx )
 	MDRV_VIDEO_STOP( psx )
 
@@ -3020,7 +3058,7 @@ ROM_START( sfexp )
 	CPZN1_BIOS
 
 	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
-	ROM_LOAD( "sfpe-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
+	ROM_LOAD( "sfpu-04", 0x0000000, 0x080000, CRC(305e4ec0) SHA1(0df9572d7fc1bbc7131483960771d016fa5487a5) )
 
 	ROM_REGION32_LE( 0x1880000, REGION_USER2, 0 )
 	ROM_LOAD( "sfp-05",  0x0000000, 0x400000, CRC(ac7dcc5e) SHA1(216de2de691a9bd7982d5d6b5b1e3e35ff381a2f) )
@@ -3390,6 +3428,23 @@ ROM_START( shiryu2 )
 	ROM_RELOAD( 0x0200000, 0x200000 )
 ROM_END
 
+ROM_START( tgmj )
+	CPZN2_BIOS
+
+	ROM_REGION32_LE( 0x80000, REGION_USER3, 0 )
+	ROM_LOAD( "atej-04", 0x0000000, 0x080000, CRC(bb4bbb96) SHA1(808f4b29493e74efd661d561d11cbec2f4afd1c8) )
+
+	ROM_REGION32_LE( 0x0800000, REGION_USER2, 0 )
+	ROM_LOAD( "ate-05",  0x0000000, 0x400000, CRC(50977f5a) SHA1(78c2b1965957ff1756c25b76e549f11fc0001153) )
+	ROM_LOAD( "ate-06",  0x0400000, 0x400000, CRC(05973f16) SHA1(c9262e8de14c4a9489f7050316012913c1caf0ff) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "ate-02",  0x00000, 0x08000, CRC(f4f6e82f) SHA1(ad6c49197a60f456367c9f78353741fb847819a1) )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* Q Sound Samples */
+	ROM_LOAD( "ate-01",  0x0000000, 0x400000, CRC(a21c6521) SHA1(560e4855f6e00def5277bdd12064b49e55c3b46b) )
+ROM_END
 
 /* Tecmo */
 
@@ -3651,7 +3706,7 @@ ROM_START( psyforce )
 	ROM_LOAD16_BYTE( "pfexic2.bin",  0x0000001, 0x080000, CRC(997e4500) SHA1(4a90b452c9a877ccec55a11f36c4cbc6df1f1f41) )
 	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
 	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-03.19",           0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
 	ROM_LOAD( "e22-04.21",           0x0c00000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
@@ -3666,10 +3721,10 @@ ROM_START( psyforcj )
 	TAITOFX1_BIOS
 
 	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
 	ROM_LOAD16_BYTE( "e22-05.2",     0x0000001, 0x080000, CRC(7770242c) SHA1(dd37575d3d9ffdef60fe0e4cab6c9e42d087f714) )
+	ROM_LOAD16_BYTE( "e22-10.7",     0x0000000, 0x080000, CRC(f6341d63) SHA1(99dc27aa694ae5951148054291912a486726e8c9) )
 	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
-	ROM_LOAD( "e22-03.1",            0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-03.19",           0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
 	ROM_LOAD( "e22-04.21",           0x0c00000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
@@ -3700,12 +3755,31 @@ ROM_START( sfchamp )
 	TAITOFX1_BIOS
 
 	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e18-12.2",     0x0000001, 0x080000, CRC(72304685) SHA1(2e6f645871e19a49fcdfbdca49c6be415471eadf) )
+	ROM_LOAD16_BYTE( "e18-13.7",     0x0000000, 0x080000, CRC(fa4d01ee) SHA1(27efd8e2107d71213d35f2a58762ed8812f809d3) )
+	ROM_LOAD( "e18-02.12",           0x0600000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
+	ROM_LOAD( "e18-03.16",           0x0800000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
+	ROM_LOAD( "e18-04.19",           0x0a00000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
+	ROM_LOAD( "e18-05.21",           0x0c00000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "e18-09.22",           0x0000000, 0x004000, CRC(bb5a5319) SHA1(0bb700cafc157d3af663cc9bebb8167487ff2852) )
+	ROM_CONTINUE(                    0x0010000, 0x01c000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "e18-01.15",           0x0000000, 0x200000, CRC(dbd1408c) SHA1(ef81064f2f95e5ae25eb1f10d1e78f27f9e294f5) )
+ROM_END
+
+ROM_START( sfchampj )
+	TAITOFX1_BIOS
+
+	ROM_REGION32_LE( 0x01000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "e18-07.2",     0x0000001, 0x080000, CRC(1b484e1c) SHA1(f29f40a9988475d8abbb126095b0716133c087a0) )
 	ROM_LOAD16_BYTE( "e18-08.7",     0x0000000, 0x080000, CRC(6a5558cd) SHA1(75b26bcaaa213283e7e0dace69ee58f305b4572d) )
-	ROM_LOAD( "e18-02.12",           0x0800000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
-	ROM_LOAD( "e18-03.16",           0x0a00000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
-	ROM_LOAD( "e18-04.19",           0x0c00000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
-	ROM_LOAD( "e18-05.21",           0x0e00000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
+	ROM_LOAD( "e18-02.12",           0x0600000, 0x200000, CRC(c7b4fe29) SHA1(7f823bd61abf2b15d3ba62bca829a5b1acacfd09) )
+	ROM_LOAD( "e18-03.16",           0x0800000, 0x200000, CRC(76392346) SHA1(2c5b70c4708208f866feea0472fcc72333061124) )
+	ROM_LOAD( "e18-04.19",           0x0a00000, 0x200000, CRC(fc3731da) SHA1(58948aad8d7bb7a8449d2bf12e9d5e6d7b4426b5) )
+	ROM_LOAD( "e18-05.21",           0x0c00000, 0x200000, CRC(2e984c50) SHA1(6d8255e38c67d68bf489c9885663ed2edf148188) )
 
 	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
 	ROM_LOAD( "e18-09.22",           0x0000000, 0x004000, CRC(bb5a5319) SHA1(0bb700cafc157d3af663cc9bebb8167487ff2852) )
@@ -3908,14 +3982,15 @@ ROM_END
 ROM_START( hvnsgate )
 	ATLUS_BIOS
 
-	ROM_REGION32_LE( 0x01800000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x02000000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "athg-01b.18",  0x0000001, 0x080000, CRC(e820136f) SHA1(2bc3465928dd08060736a2a67d98864d634275d6) )
 	ROM_LOAD16_BYTE( "athg-02b.17",  0x0000000, 0x080000, CRC(11bfa89b) SHA1(f23e4c9d8eb90bd3bb3327d9950edd7a467ce8da) )
-	ROM_LOAD( "athg-07.027",         0x0400000, 0x400000, CRC(46411f67) SHA1(2e8f37c3d9d7f5f3c79fca8ffeaf4c2fd1634b91) )
-	ROM_LOAD( "athg-08.028",         0x0800000, 0x400000, CRC(85289345) SHA1(6385fe27451b80f97e7bad823b3b59eff3efa541) )
-	ROM_LOAD( "athg-09.210",         0x0c00000, 0x400000, CRC(19e558b5) SHA1(c195bc7dc3cfe4f099d27afdebd6f9cfe064e1df) )
-	ROM_LOAD( "athg-10.029",         0x1000000, 0x400000, CRC(748f936e) SHA1(134e78ea71bb9646f36cc503c704496a2b622ee9) )
-	ROM_LOAD( "athg-11.215",         0x1400000, 0x400000, CRC(f623e59c) SHA1(52ad88209ba5fa8e9002be03aee8fb777e60f256) )
+	ROM_LOAD( "athg-07.027",         0x0100000, 0x400000, CRC(46411f67) SHA1(2e8f37c3d9d7f5f3c79fca8ffeaf4c2fd1634b91) )
+	ROM_LOAD( "athg-08.028",         0x0500000, 0x400000, CRC(85289345) SHA1(6385fe27451b80f97e7bad823b3b59eff3efa541) )
+	ROM_LOAD( "athg-09.210",         0x0900000, 0x400000, CRC(19e558b5) SHA1(c195bc7dc3cfe4f099d27afdebd6f9cfe064e1df) )
+	ROM_LOAD( "athg-10.029",         0x0d00000, 0x400000, CRC(748f936e) SHA1(134e78ea71bb9646f36cc503c704496a2b622ee9) )
+	ROM_LOAD( "athg-11.215",         0x1100000, 0x200000, CRC(f623e59c) SHA1(52ad88209ba5fa8e9002be03aee8fb777e60f256) )
+	ROM_CONTINUE( 0x1100000, 0x200000 )
 
 	ROM_REGION( 0x040000, REGION_CPU2, 0 )
 	ROM_LOAD( "athg-03.22",   0x000000, 0x020000, CRC(7eef7e68) SHA1(65b8ae18ef4ff636c548326a360b481aeb316869) ) 
@@ -3955,12 +4030,13 @@ GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justic
 GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (ASIA 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* Atari */
 
@@ -3989,9 +4065,9 @@ GAMEX( 1996, jdreddb,  jdredd,   coh1000a, zn, coh1000a, ROT0, "Acclaim", "Judge
 /* it in every zip file */
 GAMEX( 1997, tps,      0,        coh1002m, zn, coh1002m, ROT0, "Sony/Tecmo", "TPS", NOT_A_DRIVER )
 
-GAMEX( 1997, glpracr2, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_NOT_WORKING )
-GAMEX( 1997, glprac2j, glpracr2, coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_NOT_WORKING )
-GAMEX( 1997, glprac2l, glpracr2, coh1002ml,zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_NOT_WORKING )
+GAMEX( 1997, glpracr2, tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2j, glpracr2, coh1002m, zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2l, glpracr2, coh1002ml,zn, coh1002m, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX( 1998, doapp,    tps,      coh1002m, zn, coh1002m, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, cbaj,     tps,      coh1002msnd, zn, coh1002m, ROT0, "Tecmo", "Cool Boarders Arcade Jam", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, shngmtkb, tps,      coh1002m, zn, coh1002m, ROT0, "Sunsoft / Activision", "Shanghai Matekibuyuu", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -4009,15 +4085,16 @@ GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT270, "Video System",
 /* it in every zip file */
 GAMEX( 1995, taitofx1, 0,        coh1000ta,zn, coh1000ta, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
-GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, psyforce, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (WORLD Ver 2.4O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1995, psyforcj, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (JAPAN Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, mgcldate, mgcldtex, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date (JAPAN Ver 2.02J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX (JAPAN Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.5O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sfchampj, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, psyforce, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, psyforcj, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, mgcldate, mgcldtex, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date (Ver 2.02J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Ray Storm (Ver 2.05J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Fighters' Impact A (Ver 2.00J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius Ver.2 (Ver 2.03J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh-3002t.353 file, so that we do not have to include */
@@ -4043,4 +4120,4 @@ GAMEX( 2000, brvblade, tps,      coh1002e, zn, coh1002e, ROT270, "Eighting/Raizi
 /* it in every zip file */
 GAMEX( 1996, atluspsx,  0,       coh1001l, zn, coh1001l, ROT0, "Sony/Atlus", "Atlus PSX", NOT_A_DRIVER )
 
-GAMEX( 1996, hvnsgate, atluspsx, coh1001l, zn, coh1001l, ROT0, "Atlus", "Heavens Gate", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, hvnsgate, atluspsx, coh1001l, zn, coh1001l, ROT0, "Atlus", "Heavens Gate", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

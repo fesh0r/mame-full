@@ -326,6 +326,134 @@ static struct stv_vdp2_sprite_list
 int stvvdp1_local_x;
 int stvvdp1_local_y;
 
+/* Gouraud shading */
+
+static struct _stv_gouraud_shading
+{
+	/* Gouraud shading table */
+	UINT16	GA;
+	UINT16	GB;
+	UINT16	GC;
+	UINT16	GD;
+	/* Gouraud shading data at drawn pixel */
+	UINT32	g_r;
+	UINT32	g_g;
+	UINT32	g_b;
+	/* Gouraud shading delta */
+	UINT32	gdelta_r;
+	UINT32	gdelta_g;
+	UINT32	gdelta_b;
+} stv_gouraud_shading;
+
+static void stv_clear_gouraud_shading(void)
+{
+	memset( &stv_gouraud_shading, 0, sizeof( stv_gouraud_shading ) );
+}
+
+static UINT8 stv_read_gouraud_table(void)
+{
+	int gaddr;
+
+	if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
+	{
+		gaddr = stv2_current_sprite.CMDGRDA * 8;
+		stv_gouraud_shading.GA = (stv_vdp1_vram[gaddr/4] >> 16) & 0xffff;
+		stv_gouraud_shading.GB = (stv_vdp1_vram[gaddr/4] >> 0) & 0xffff;
+		stv_gouraud_shading.GC = (stv_vdp1_vram[gaddr/4 + 1] >> 16) & 0xffff;
+		stv_gouraud_shading.GD = (stv_vdp1_vram[gaddr/4 + 1] >> 0) & 0xffff;
+		return 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+static UINT16 stv_compute_shading_at_pixel(int size, int pt, UINT16 g1, UINT16 g2 )
+{
+	int r,g,b;
+	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
+	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
+	r = (g2 & 0x001f) - (g1 & 0x001f);
+
+	b = (((b << 16) / size) * pt) >> 16;
+	g = (((g << 16) / size) * pt) >> 16;
+	r = (((r << 16) / size) * pt) >> 16;
+
+	b += ((g1 & 0x7c00) >> 10);
+	g += ((g1 & 0x03e0) >> 5);
+	r += (g1 & 0x001f);
+
+	if ( b < 0 ) b = 0;
+	if ( b > 0x1f ) b = 0x1f;
+	if ( g < 0 ) g = 0;
+	if ( g > 0x1f ) g = 0x1f;
+	if ( r < 0 ) r = 0;
+	if ( r > 0x1f ) r = 0x1f;
+
+	return ((b & 0x1f) << 10) | ((g & 0x1f) << 5) | (b & 0x1f) | 0x8000;
+}
+
+static void stv_setup_shading_for_line(int size, UINT16 g1, UINT16 g2 )
+{
+	int r,g,b;
+	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
+	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
+	r = (g2 & 0x001f) - (g1 & 0x001f);
+
+	stv_gouraud_shading.gdelta_b = (b << 16) / size;
+	stv_gouraud_shading.gdelta_g = (g << 16) / size;
+	stv_gouraud_shading.gdelta_r = (r << 16) / size;
+
+	stv_gouraud_shading.g_b = ((g1 & 0x7c00) >> 10) << 16;
+	stv_gouraud_shading.g_g = ((g1 & 0x03e0) >> 5) << 16;
+	stv_gouraud_shading.g_r = (g1 & 0x001f) << 16;
+}
+
+static void stv_compute_shading_for_next_point(void)
+{
+	stv_gouraud_shading.g_b += stv_gouraud_shading.gdelta_b;
+	stv_gouraud_shading.g_g += stv_gouraud_shading.gdelta_g;
+	stv_gouraud_shading.g_r += stv_gouraud_shading.gdelta_r;
+}
+
+static UINT16 stv_apply_gouraud_shading( UINT16 pix )
+{
+	int r,g,b,sr,sg,sb;
+	b = (pix & 0x7c00) >> 10;
+	g = (pix & 0x03e0) >> 5;
+	r = (pix & 0x001f);
+	sb = (stv_gouraud_shading.g_b >> 16) & 0x1f;
+	sg = (stv_gouraud_shading.g_g >> 16) & 0x1f;
+	sr = (stv_gouraud_shading.g_r >> 16) & 0x1f;
+
+	if ( sb < 0x10 )
+		b -= (0x10 - sb);
+	else
+		b += sb - 0x10;
+
+	if ( b < 0 )    b = 0;
+	if ( b > 0x1f ) b = 0x1f;
+
+	if ( sg < 0x10 )
+		g -= (0x10 - sg);
+	else
+		g += sg - 0x10;
+
+	if ( g < 0 )	g = 0;
+	if ( g > 0x1f ) g = 0x1f;
+
+	if ( sr < 0x10 )
+		r -= (0x10 - sr);
+	else
+		r += sr - 0x10;
+
+	if ( r < 0 )	r = 0;
+	if ( r > 0x1f ) r = 0x1f;
+
+	return 0x8000 | b << 10 | g << 5 | r;
+}
+
 /* note that if we're drawing
 to the framebuffer we CAN'T frameskip the vdp1 drawing as the hardware can READ the framebuffer
 and if we skip the drawing the content could be incorrect when it reads it, although i have no idea
@@ -429,9 +557,41 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 
 	/* MSBON */
 	pix |= stv2_current_sprite.CMDPMOD & 0x8000;
-	if ( pix & transmask )
+	if ( mode != 5 )
 	{
-		*dest = pix;
+		if ( pix & transmask )
+		{
+			*dest = pix;
+		}
+	}
+	else
+	{
+		if ( pix & transmask )
+		{
+			switch( stv2_current_sprite.CMDPMOD & 0x7 )
+			{
+				case 0:	/* replace */
+					*dest = pix;
+					break;
+				case 3: /* half transparent */
+					if ( *dest & 0x8000 )
+					{
+						*dest = alpha_blend_r16( *dest, pix, 0x80 ) | 0x8000;
+					}
+					else
+					{
+						*dest = pix;
+					}
+					break;
+				case 4: /* Gouraud shading */
+					*dest = stv_apply_gouraud_shading( pix );
+					break;
+				default:
+					*dest = pix;
+					//usrintf_showmessage( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
+					break;
+			}
+		}
 	}
 
 }
@@ -935,6 +1095,9 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	int x, xsize, xcnt, drawxpos;
 	int direction;
 	int patterndata;
+	UINT8 shading;
+
+	shading = stv_read_gouraud_table();
 
 	x = x2s(stv2_current_sprite.CMDXA);
 	y = y2s(stv2_current_sprite.CMDYA);
@@ -957,6 +1120,12 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 
 	for (ycnt = 0; ycnt != ysize; ycnt++) {
 
+		if ( shading )
+		{
+			stv_setup_shading_for_line( xsize,
+										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GA, stv_gouraud_shading.GD ),
+										stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GB, stv_gouraud_shading.GC ));
+		}
 
 		if (direction & 0x2) // 'yflip' (reverse direction)
 		{
@@ -989,12 +1158,21 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 
 					drawpixel(destline+drawxpos, patterndata, offsetcnt);
 				} // drawxpos
+				if  ( shading )
+				{
+					stv_compute_shading_for_next_point();
+				}
 
 			} // xcnt
 
 		} // if drawypos
 
 	} // ycny
+
+	if ( shading )
+	{
+		stv_clear_gouraud_shading();
+	}
 }
 
 void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
@@ -1009,6 +1187,8 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 	if (vdp1_sprite_log) logerror ("Sprite List Process START\n");
 
 	vdp1_nest = -1;
+
+	stv_clear_gouraud_shading();
 
 	/*Set CEF bit to 0*/
 	SET_CEF_FROM_1_TO_0;
