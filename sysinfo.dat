@@ -2945,13 +2945,14 @@ Usage:
 Under the "Options" menu, accessible by hitting TAB, you will find the following option: 
 
 
-"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese 
-or American. Many cartridges compare their country codes with that of the Genesis itself and 
+"Country" - this allows you to alter the 'flavour' of Genesis, to either European, Japanese
+or American. Many cartridges compare their country codes with that of the Genesis itself and
 may behave differently, or lock up if the two types do not match.
 
 
 'Auto' attempts to auto-set the Genesis country code to the value the cartridge will appear
- to be checking for. This may not be 100% accurate, however.
+to be checking for. This may not be 100% accurate, however.
+
 
 Links:
 
@@ -3777,6 +3778,7 @@ Pinout and instructions for reading roms are in messroms.txt
 
 
 MESS Emulation State:
+
 Random number generation is not accurate (rriot6530 emulation)
 led emulation not accurate (noticeable while computer is thinking)
 
@@ -4943,6 +4945,7 @@ pockemul for win32
 
 
 MESS Emulation State:
+
 look at pc1401
 
 
@@ -5159,6 +5162,7 @@ Some models sold with harddisk controller and 20mb harddisk
 
 
 MESS Emulation State:
+
 basically the same as mess ibmpc emulation
 special keyboard emulated
 special mouse emulated
@@ -5381,6 +5385,7 @@ Turbo Station 16 - pcenginefx.com/TS/
 
 
 MESS Emulation State:
+
 Preliminary...  Xevious and Raiden8x work OK.
 
 $end
@@ -5418,6 +5423,7 @@ listed in the files section). Cliff works at Amstrad plc, and has worked on the 
 projects from the Amstrad CPC to the latest e-mail phone.
 
 MESS Emulation State:
+
 All major functions are working and the computer is useable, however there
 are some accuracy problems.
 
@@ -6569,6 +6575,7 @@ Pinout of cartridge is in mess/messroms/svision.txt
 
 
 MESS Emulation State:
+
 very preliminary support
 preliminary sound support
 no serial port
@@ -6649,6 +6656,7 @@ to change setup
 
 
 MESS Emulation State:
+
 basically the same as ibmpcjr
 special setup memory emulated
 work stopped until dump of character rom available
