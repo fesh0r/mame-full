@@ -112,7 +112,7 @@ void oric_dump_ram(void)
 	void *file;
 
 	file = osd_fopen(Machine->gamedrv->name, "oricram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
- 
+
 	if (file)
 	{
 		int i;
@@ -253,7 +253,7 @@ WRITE_HANDLER ( oric_via_out_a_func )
 
 
 	if (oric_psg_control==0)
-	{	
+	{
 		/* if psg not selected, write to printer */
 		centronics_write_data(0,data);
 	}
@@ -317,7 +317,7 @@ static void    oric_refresh_tape(int dummy)
 
 		if (((previous_input_port5^input_port_data) & 0x01)!=0)
 		{
-			if (input_port_data & 0x01) 
+			if (input_port_data & 0x01)
 			{
 				logerror("do dump");
 				oric_dump_ram();
@@ -357,7 +357,7 @@ WRITE_HANDLER ( oric_via_out_b_func )
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 	centronics_write_handshake(0, printer_handshake, CENTRONICS_STROBE);
-	
+
 	oric_psg_connection_refresh();
 	previous_portb_data = data;
 
@@ -502,7 +502,7 @@ struct via6522_interface oric_6522_interface=
 /*********************/
 /* APPLE 2 INTERFACE */
 
-/* 
+/*
 apple2 disc drive accessed through 0x0310-0x031f (read/write)
 oric via accessed through 0x0300-0x030f. (read/write)
 disk interface rom accessed through 0x0320-0x03ff (read only)
@@ -534,7 +534,7 @@ static void oric_install_apple2_interface(void)
 	install_mem_read_handler(0, 0x0300, 0x030f, oric_IO_r);
 	install_mem_read_handler(0, 0x0310, 0x031f, apple2_interface_r);
 	install_mem_read_handler(0, 0x0320, 0x03ff, MRA_BANK4);
-	
+
 	install_mem_write_handler(0, 0x0300, 0x030f, oric_IO_w);
 	install_mem_write_handler(0, 0x0310, 0x031f, apple2_interface_w);
 	cpu_setbank(4, 	memory_region(REGION_CPU1) + 0x014000 + 0x020);
@@ -552,7 +552,7 @@ static void oric_uninstall_apple2_interface(void)
 /************************/
 /* APPLE 2 INTERFACE V2 */
 
-/* 
+/*
 apple2 disc drive accessed through 0x0310-0x031f (read/write)
 oric via accessed through 0x0300-0x030f. (read/write)
 disk interface rom accessed through 0x0320-0x03ff (read only)
@@ -591,7 +591,7 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 		cpu_setbank(3, rom_ptr+0x03800);
 		cpu_setbank(5, oric_ram_0x0c000);
 		cpu_setbank(6, oric_ram_0x0c000+0x02000);
-		cpu_setbank(7, oric_ram_0x0c000+0x03800);	
+		cpu_setbank(7, oric_ram_0x0c000+0x03800);
 	}
 	else
 	{
@@ -671,7 +671,7 @@ static void oric_jasmin_set_mem_0x0c000(void)
 
 			/* no it is disabled */
 			logerror("&c000-&ffff is os rom\n");
-			
+
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
@@ -701,7 +701,7 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			cpu_setbank(5, oric_ram_0x0c000);
 			cpu_setbank(6, oric_ram_0x0c000+0x02000);
 			cpu_setbank(7, oric_ram_0x0c000+0x03800);
-		}		
+		}
 	}
 	else
 	{
@@ -710,9 +710,9 @@ static void oric_jasmin_set_mem_0x0c000(void)
 		if ((port_3fa_w & 0x01)==0)
 		{
 			/* overlay ram disabled */
-			
+
 			logerror("&c000-&f8ff is nothing!\n");
-			
+
 			memory_set_bankhandler_r(1, 0, MRA_NOP);
 			memory_set_bankhandler_r(2, 0, MRA_NOP);
 			memory_set_bankhandler_r(3, 0, MRA_NOP);
@@ -739,17 +739,17 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			/* basic rom disabled */
 			unsigned char *rom_ptr;
 
-			logerror("&f800-&ffff is jasmin rom\n"); 	
+			logerror("&f800-&ffff is jasmin rom\n");
 			/* jasmin rom enabled */
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
 			memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000+0x04000+0x02000;
 			cpu_setbank(3, rom_ptr);
-			cpu_setbank(7, rom_ptr);		
+			cpu_setbank(7, rom_ptr);
 		}
 	}
 }
-  
+
 static void oric_jasmin_wd179x_callback(int State)
 {
 	switch (State)
@@ -758,7 +758,7 @@ static void oric_jasmin_wd179x_callback(int State)
 		case WD179X_DRQ_CLR:
 		{
 			oric_irqs &=~(1<<1);
-			
+
 			oric_refresh_ints();
 		}
 		break;
@@ -949,7 +949,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	/* /ROMDIS */
 	if ((port_314_w & (1<<1))==0)
 	{
-		logerror("&c000-&dfff is ram\n"); 
+		logerror("&c000-&dfff is ram\n");
 		/* rom disabled enable ram */
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
@@ -959,7 +959,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	else
 	{
 		unsigned char *rom_ptr;
-		logerror("&c000-&dfff is os rom\n"); 
+		logerror("&c000-&dfff is os rom\n");
 		/* basic rom */
 		memory_set_bankhandler_r(1, 0, MRA_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA_NOP);
@@ -973,7 +973,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 	if ((port_314_w & (1<<1))!=0)
 	{
 		unsigned char *rom_ptr;
-		logerror("&e000-&ffff is os rom\n"); 
+		logerror("&e000-&ffff is os rom\n");
 		/* basic rom */
 		memory_set_bankhandler_r(2, 0, MRA_BANK2);
 		memory_set_bankhandler_r(3, 0, MRA_BANK3);
@@ -992,7 +992,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		if ((port_314_w & (1<<7))==0)
 		{
 			unsigned char *rom_ptr;
-			logerror("&e000-&ffff is disk rom\n"); 
+			logerror("&e000-&ffff is disk rom\n");
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
 			memory_set_bankhandler_w(6, 0, MWA_NOP);
@@ -1004,7 +1004,7 @@ void	oric_microdisc_set_mem_0x0c000(void)
 		}
 		else
 		{
-			logerror("&e000-&ffff is ram\n"); 
+			logerror("&e000-&ffff is ram\n");
 			/* rom disabled enable ram */
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_r(3, 0, MRA_BANK3);
@@ -1080,7 +1080,7 @@ static WRITE_HANDLER(oric_microdisc_w)
 
 			port_314_w = data;
 
-			logerror("port_314_w: %02x\n",data); 
+			logerror("port_314_w: %02x\n",data);
 
 			/* bit 6,5: drive */
 			/* bit 4: side */
@@ -1258,7 +1258,7 @@ void oric_init_machine (void)
 		{
 			/* setup memory when there is no disc interface */
 			unsigned char *rom_ptr;
-			
+
 			/* os rom */
 			memory_set_bankhandler_r(1, 0, MRA_BANK1);
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
@@ -1270,11 +1270,11 @@ void oric_init_machine (void)
 			cpu_setbank(1, rom_ptr);
 			cpu_setbank(2, rom_ptr+0x02000);
 			cpu_setbank(3, rom_ptr+0x03800);
-			cpu_setbank(5, rom_ptr);			
-			cpu_setbank(6, rom_ptr+0x02000);			
-			cpu_setbank(7, rom_ptr+0x03800);			
+			cpu_setbank(5, rom_ptr);
+			cpu_setbank(6, rom_ptr+0x02000);
+			cpu_setbank(7, rom_ptr+0x03800);
 
-			
+
 			if (disc_interface_id==ORIC_FLOPPY_INTERFACE_APPLE2)
 			{
 				oric_install_apple2_interface();
@@ -1293,7 +1293,7 @@ void oric_init_machine (void)
 		}
 		break;
 
-		
+
 		case ORIC_FLOPPY_INTERFACE_MICRODISC:
 		{
 			oric_install_microdisc_interface();
@@ -1309,7 +1309,7 @@ void oric_init_machine (void)
 
 
 	wd179x_init(oric_wd179x_callback);
-	
+
 	apple2_slot6_init();
 
 }
@@ -1339,7 +1339,7 @@ READ_HANDLER ( oric_IO_r )
 		default:
 		case ORIC_FLOPPY_INTERFACE_NONE:
 			break;
-		
+
 		case ORIC_FLOPPY_INTERFACE_MICRODISC:
 		{
 			if ((offset>=0x010) && (offset<=0x01f))
@@ -1430,7 +1430,7 @@ int oric_cassette_init(int id)
 			{
 				/* number of samples to generate */
 				int size_in_samples;
-		
+
 				/* read data into temporary buffer */
 				osd_fread(file, oric_tap_data, oric_tap_size);
 
@@ -1460,9 +1460,9 @@ int oric_cassette_init(int id)
 
 				memset(&wa, 0, sizeof(&wa));
 				wa.file = file;
-				wa.chunk_size = oric_tap_size; 
-				wa.chunk_samples = size_in_samples; 
-				wa.smpfreq = ORIC_WAV_FREQUENCY; 
+				wa.chunk_size = oric_tap_size;
+				wa.chunk_samples = size_in_samples;
+				wa.smpfreq = ORIC_WAV_FREQUENCY;
 				wa.fill_wave = oric_cassette_fill_wave;
 				wa.header_samples = 0;
 				wa.trailer_samples = 0;
@@ -1832,7 +1832,7 @@ WRITE_HANDLER(telestrat_IO_w)
 		acia_6551_w(offset, data);
 		return;
 	}
-	
+
 	logerror("null write %04x %02x\n",offset,data);
 
 }
