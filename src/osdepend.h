@@ -376,7 +376,6 @@ int osd_net_sync(void);
 void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
 		unsigned short input_port_defaults[MAX_INPUT_PORTS]);
 #endif
->>>>>>> 1.28
 int osd_net_input_sync(void);
 int osd_net_exit(void);
 int osd_net_add_player(void);
