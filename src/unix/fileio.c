@@ -32,6 +32,8 @@ static char *rompathv[MAXPATHC];
 static int   rompathc = 0;
 static char *rompath = NULL;
 static char *samplepath = NULL;
+static char *diffdir = NULL;
+static char *ctrlrdir = NULL;
 static char *artworkpath = NULL;
 static char *spooldir = NULL; /* directory to store high scores */
 static char *screenshotdir = NULL;
@@ -66,10 +68,10 @@ struct rc_option fileio_opts[] = {
      XMAMEROOT"/roms",	0,			0,		NULL,
      "Set the rom search path" },
    { "samplepath",	"sp",			rc_string,	&samplepath,
-     XMAMEROOT"/samples",0,			0,		NULL,
+     XMAMEROOT"/samples",	0,		0,		NULL,
      "Set the search path for sample sets" }, 
    { "artworkpath",	"ap",			rc_string,	&artworkpath,
-     XMAMEROOT"/artwork",0,			0,		NULL,
+     XMAMEROOT"/artwork",	0,		0,		NULL,
      "Set the search path for artwork (overlays, etc.)" },
    { "spooldir",	"sd",			rc_string,	&spooldir,
      XMAMEROOT"/hi",	0,			0,		NULL,
@@ -77,6 +79,12 @@ struct rc_option fileio_opts[] = {
    { "screenshotdir",	"ssd",			rc_string,	&screenshotdir,
      ".",		0,			0,		NULL,
      "Set dir to store screenshots in" },
+   { "diffdir",		"dfd",			rc_string,	&diffdir,
+     XMAMEROOT"/diff",	0,			0,		NULL,
+     "Set the dir for hard drive image difference files" },
+   { "ctrlrdir",	"ctd",			rc_string,	&ctrlrdir,
+     XMAMEROOT"/ctrlr",	0,			0,		NULL,
+     "Set the dir for saving controller definitions" },
 #ifdef MESS
    { "cheatdir",	NULL,			rc_string,	&cheatdir,
      XMAMEROOT"/cheat",	0,			0,		NULL,
@@ -504,6 +512,14 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		            break;
 		    }
 		    break;
+		case OSD_FILETYPE_IMAGE_DIFF:
+		    snprintf(name, MAXPATHL, "%s/%s.dif", diffdir, filename);
+		    f->file = fopen(name, write ? "w" : "r");
+		    break;
+		case OSD_FILETYPE_CTRLR:
+		    snprintf(name, MAXPATHL, "%s/%s.ini", ctrlrdir, filename);
+		    f->file = fopen(name, write ? "w" : "r");
+		    break;
 		case OSD_FILETYPE_CONFIG:
 		    snprintf(name, MAXPATHL, "%s/.%s/cfg/%s.cfg", home_dir, NAME, gamename);
 		    f->file = fopen(name,write ? "w" : "r");
@@ -570,7 +586,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    /* only for reading */
 		    if (write) break;
 		    
-		    snprintf (name, MAXPATHL, "%s.lng", filename);
+		    snprintf(name, MAXPATHL, "%s.lng", filename);
 		    f->file = fopen (name, "r");
 	}
 
@@ -951,6 +967,44 @@ char *osd_dirname (char *filename)
                 dirname[0]=0;
 
         return dirname;
+}
+
+char *osd_strip_extension(char *filename)
+{
+	char *newname;
+	char *c;
+
+	/* NULL begets NULL */
+	if (!filename)
+		return NULL;
+
+	/* allocate space for it */
+	newname = malloc(strlen(filename) + 1);
+	if (!newname)
+	{
+		fprintf(stderr, "error: malloc failed in osd_newname\n");
+		return NULL;
+	}
+
+	/* copy in the name */
+	strcpy(newname, filename);
+
+	/* search backward for a period, failing if we hit a slash or a colon */
+	for (c = newname + strlen(newname) - 1; c >= newname; c--)
+	{
+		/* if we hit a period, NULL terminate and break */
+		if (*c == '.')
+		{
+			*c = 0;
+			break;
+		}
+
+		/* if we hit a slash or colon just stop */
+		if (*c == '\\' || *c == '/' || *c == ':')
+			break;
+	}
+
+	return newname;
 }
 
 #ifdef MESS
