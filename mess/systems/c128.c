@@ -1309,6 +1309,7 @@ static MACHINE_DRIVER_START( c128 )
 	MDRV_VIDEO_UPDATE( c128 )
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(ntsc_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)

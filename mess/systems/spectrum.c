@@ -2062,7 +2062,6 @@ static MACHINE_DRIVER_START( spectrum_128 )
 	MDRV_VIDEO_UPDATE( spectrum_128 )
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(AY8910, 1773400)
 	MDRV_SOUND_CONFIG(spectrum_ay_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	

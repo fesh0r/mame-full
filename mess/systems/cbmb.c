@@ -940,6 +940,7 @@ static MACHINE_DRIVER_START( cbm500 )
 	MDRV_IMPORT_FROM( vh_vic2 )
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
 	MDRV_SOUND_CONFIG(sid_sound_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
