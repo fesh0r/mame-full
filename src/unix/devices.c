@@ -995,7 +995,7 @@ static void init_joycodes(void)
 			}
 			for (button = 0; button < JOY_BUTTONS; button++)
 			{
-				snprintf(tempname, JOY_NAME_LEN, "Joy %d button %d", stick + 1 , axis + 1);
+				snprintf(tempname, JOY_NAME_LEN, "Joy %d button %d", stick + 1 , button + 1);
 				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_BUTTON, button), CODE_OTHER_DIGITAL);
 			}
 		}
