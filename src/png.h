@@ -33,6 +33,7 @@ struct png_info {
 	UINT32 width, height;
 	UINT32 xoffset, yoffset;
 	UINT32 xres, yres;
+	INT32 x_offset, y_offset;
 	double xscale, yscale;
 	double source_gamma;
 	UINT32 chromaticities[8];
