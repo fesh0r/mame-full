@@ -642,6 +642,9 @@ ARCH  = linux
 # seems to vary by distribution.
 # LIGHTGUN_DEFINE_INPUT_ABSINFO = 1
 
+# Uncomment this to add LIRC support to xmame. You must copy config.h, 
+# lirc_client.c and lirc_client.h to $XMAME_SRC_DIR/src/unix
+# LIRC = 1
 
 ###########################################################################
 # Sound Devices
@@ -752,7 +755,7 @@ SDL_CONFIG	= sdl-config
 # 3Dfx options (only needed when xfx or svgafx is the display method)
 ##############################################################################
 
-# Uncomment if you want to build against GLIDE2x instead of GLIDE3.
+# Uncomment if you want to build against Glide2x instead of Glide3.
 # GLIDE2 = 1
 
 

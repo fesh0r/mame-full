@@ -27,6 +27,11 @@
 #include "sysdep/rc.h"
 #include "sysdep/fifo.h"
 #include "sysdep/sysdep_display.h"
+#ifdef LIRC
+	#include <fcntl.h>
+	#include "lirc_client.h"
+	#include "config.h" 
+#endif
 
 /*============================================================ */
 /*	MACROS */
@@ -46,8 +51,12 @@ struct axis_history
 	int		count;
 };
 
-
-
+#ifdef LIRC
+static struct lirc_config *config;
+static int lirc_pressed = 0;
+static int lirc_scancode;
+#define MIN_LIRC_WAIT 4
+#endif
 /*============================================================ */
 /*	GLOBAL VARIABLES */
 /*============================================================ */
@@ -611,6 +620,25 @@ int osd_input_initpre(void)
 	{
 		if (ugci_init(ugci_callback, UGCI_EVENT_MASK_COIN | UGCI_EVENT_MASK_PLAY, 1) <= 0)
 			ugcicoin = 0;
+	}
+#endif
+#ifdef LIRC
+/* initialize lirc */
+	/* LIRC stuff */
+	int sock;
+	int flags;
+	sock=lirc_init("xmame",1);
+/*	if(lirc_init("xmame",1)==-1) exit(EXIT_FAILURE); */
+
+	if(lirc_readconfig("/home/mythtv/.lircrc",&config,NULL)==0)
+	{
+		printf("Success reading lircrc!\n");
+	}
+	fcntl(sock,F_SETOWN,getpid());
+	flags=fcntl(sock,F_GETFL,0);
+	if(flags!=-1)
+	{
+		fcntl(sock,F_SETFL,flags|O_NONBLOCK);
 	}
 #endif
 #ifdef USE_LIGHTGUN_ABS_EVENT
@@ -1575,6 +1603,40 @@ void restore_button_state(void)
 
 void osd_poll_joysticks(void)
 {
+#ifdef LIRC
+	char *code;
+	char *c;
+	int ret;
+	/*printf("%s\n","Polling...");*/
+	/* Poll lirc */
+	lirc_nextcode(&code);
+	if (lirc_pressed != 0) 
+		lirc_pressed++;
+	if (code!=NULL) 
+	{
+		while((ret=lirc_code2char(config,code,&c))==0 && c!=NULL)
+		{
+			printf("Received command \"%s\"\n",c);
+			struct sysdep_display_keyboard_event event;
+			event.press = 1;
+			event.scancode = atoi(c);
+			lirc_pressed++;
+			lirc_scancode = event.scancode;
+			xmame_keyboard_register_event(&event);
+			if (lirc_pressed > MIN_LIRC_WAIT)
+			{
+				event.press = 0;
+				event.scancode = lirc_scancode;
+				lirc_pressed = 0;
+				xmame_keyboard_register_event(&event);
+			}
+		}
+		free(code);
+/*		if(ret==-1) break;*/
+	}
+	/* End lirc poll */
+#endif
+	
 	sysdep_display_update_mouse();
 
 	if (joy_poll_func)

@@ -2,6 +2,28 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.89
+	- Re-added a missing "Rapid Fire" entry from the setup menu that caused 
+	  the other entries to be off by one.  Fixes Bugzilla bug 621.
+	- Another batch from Hans de Goede:
+	  * The GGI driver no longer crashes when $DISPLAY isn't set.
+	  * SDL calls mode_set_aspect when using modes.
+	  * The SDL and X11 drivers now ask the window manager to be notified 
+	    of the user closing the window and exit cleanly.
+	  * The SDL driver now supports "-alwaysusemouse (-aum)", 
+	    "-grabinput (-gi)", and "-[no]cursor (-[no]cu)", as well as 
+	    toggling input grabbing with left-ctrl + delete.
+	  * The SDL driver now forces a fullscreen update every first update 
+	    after a (re)open.  This prevents the left side of artwork 
+	    disappearing when the scale and effect options are quickly cycled 
+	    through.
+	  * Cleaned up the X11 code to be more readable.
+	  * Sped up the rgbscan effect (effect 4), especially for DGA.
+	  * Fixed a problem with OpenGL that prevented it from working with the 
+	    binary ATI driver.
+	- Added LIRC support for remote controls, e.g., with MythTV.  (Andrew 
+	  Chuah)
+
 Release 0.88, 9 November 2004
 	- Everything from MAME 0.88 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.88 (http://x.mame.net/changes-mess.html).
@@ -28,6 +50,18 @@ Release 0.88, 9 November 2004
 	    page down: toggle between windowed and fullscreen
 	  * Changed the hotkeys for grabbing keyboard and mouse from left-alt + 
 	    page up/page down to left-control + page up/page down.
+	  * Added hotkey switching for effects: Use left-ctrl + page-up or 
+	    page-down. Mouse and keyboard grabbing are now toggled with 
+	    left-ctrl + del and left-ctrl + end, respectively.
+	  * Added hotkeys for changing options for Open GL: left-ctrl + 
+	    left-alt + :
+	    insert:    toggle bilinear filtering
+	    home:      toggle cabview
+	    end:       toggle antialiasing
+	    page up:   increase vector beam size
+	    page down: decrease vector beam size
+	    Left-ctrl + left-alt + insert also works for toggling bilinear 
+	    filtering in Glide.
 	  * Added an ALSA mixer plugin, which can be enabled with 
 	    "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	    option accepts the name of a "simple mixer control", which you can 
@@ -131,23 +165,11 @@ Release 0.88, 9 November 2004
 	    scale is 1, the rotation code now writes directly to the 
 	    destination instead of to an intermediate buffer.
 	  * Cleaned up the mode handling in the DGA 2.0 driver.
-	  * Added hotkey switching for effects: Use left-ctrl + page-up or 
-	    page-down. Mouse and keyboard grabbing are now toggled with 
-	    left-ctrl + del and left-ctrl + end, respectively.
 	  * Scanlines are now an effect (number 9) instead of being controlled 
 	    by a separate option ("-scanlines").
 	  * A brief message is now displayed when effects and other options are 
 	    changed via hotkeys.
 	  * Fixed a vector clipping bug in the Glide target.
-	  * Added hotkeys for changing options for Open GL: left-ctrl + 
-	    left-alt + :
-	    insert:    toggle bilinear filtering
-	    home:      toggle cabview
-	    end:       toggle antialiasing
-	    page up:   increase vector beam size
-	    page down: decrease vector beam size
-	    Left-ctrl + left-alt + insert also works for toggling bilinear 
-	    filtering in Glide.
 	  * Core dumps are disabled when DGA is available, since dumping core 
 	    with DGA leads to X server freezes.
 	  * Fixed artwork not showing in OpenGL and Glide modes under certain 

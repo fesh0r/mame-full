@@ -171,7 +171,6 @@ INCLUDE_PATH = -I. -Imess -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -Isrc/unix
 else
 INCLUDE_PATH = -I. -Isrc -Isrc/includes -Isrc/debug -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
-
 ifeq ($(TARGET), mage)
 INCLUDE_PATH = -I. -Image/src -Image/src/includes -Isrc/includes -Isrc -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 endif
@@ -297,6 +296,9 @@ COMMON_OBJS  =  \
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o
+endif
+ifdef LIRC
+COMMON_OBJS += $(OBJDIR)/lirc_client.o
 endif
 
 # sysdep objs
@@ -504,6 +506,10 @@ endif
 ifdef UGCICOIN
 CONFIG += -DUGCICOIN
 MY_LIBS += -lugci
+endif
+
+ifdef LIRC
+CONFIG += -DLIRC
 endif
 
 ifdef LIGHTGUN_ABS_EVENT
