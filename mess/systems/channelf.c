@@ -78,6 +78,11 @@ static int val = 0;
 static int row = 0;
 static int col = 0;
 
+READ_HANDLER( channelf_read_ff )
+{
+	return 0xff;
+}
+
 WRITE_HANDLER( channelf_port_0_w )
 {
 
@@ -174,6 +179,7 @@ static struct IOReadPort readport[] =
 	{ 0x01, 0x01,	input_port_1_r },
 	{ 0x04, 0x04,	input_port_4_r },
 	{ 0x05, 0x05,	input_port_5_r },
+	{ 0x40, 0x40,	channelf_read_ff },
     {-1}
 };
 

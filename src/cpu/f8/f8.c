@@ -56,12 +56,32 @@ int f8_icount;
 
 static F8 f8;
 
-#define SZ(n)	((n==0)?Z:(n&0x80)?S:0)
-#define OC(n,m) ( ((n+m) > 0xff ? C : 0) | (((n&0x7f)+(m&0x7f)) & 0x80 ? O : 0) )
+/* clear all flags */
+#define CLR_OZCS                \
+	f8.w &= ~(O|Z|C|S)
 
-#define CLR_OZCS    f8.w &= ~(O|Z|C|S)
-#define SET_SZ(n)	f8.w |= SZ(n)
-#define SET_OC(n,m) f8.w |= OC(n,m)
+/* set sign and zero flags (note: the S flag is complementary) */
+#define SET_SZ(n)               \
+	if (n == 0) 				\
+		f8.w |= Z | S;			\
+	else						\
+	if (n < 128)				\
+		f8.w |= S
+
+/* set overflow and carry flags */
+#define SET_OC(n,m)             \
+	if (n + m > 255)			\
+		f8.w |= C;				\
+	if ((n&127)+(m&127) > 127)	\
+	{							\
+		if (!(f8.w & C))		\
+			f8.w |= O;			\
+	}							\
+	else						\
+	{							\
+		if (f8.w & C)			\
+			f8.w |= O;			\
+	}
 
 /* Layout of the registers in the debugger */
 static UINT8 f8_reg_layout[] = {
@@ -88,7 +108,7 @@ static UINT8 f8_win_layout[] = {
  * Currently the emulation does not handle distinct PCs and DCs, but
  * only one instance inside the CPU context.
  ******************************************************************************/
-INLINE void ROMC_00(void)
+static void ROMC_00(void)
 {
     /*
      * Instruction Fetch. The device whose address space includes the
@@ -101,7 +121,7 @@ INLINE void ROMC_00(void)
     f8_icount -= cS + cL;
 }
 
-INLINE void ROMC_01(void)
+static void ROMC_01(void)
 {
     /*
      * The device whose address space includes the contents of the PC0
@@ -109,12 +129,13 @@ INLINE void ROMC_01(void)
      * location addressed by PC0; then all devices add the 8-bit value
      * on the data bus as signed binary number to PC0.
      */
-    f8.dbus = cpu_readop(f8.pc0);
+	f8.dbus = cpu_readop_arg(f8.pc0);
+    f8.pc0 += 1;
     f8.pc0 += (INT16)(INT8)f8.dbus;
     f8_icount -= cL;
 }
 
-INLINE void ROMC_02(void)
+static void ROMC_02(void)
 {
     /*
      * The device whose DC0 addresses a memory word within the address
@@ -127,7 +148,7 @@ INLINE void ROMC_02(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_03(void)
+static void ROMC_03(void)
 {
     /*
      * Similiar to 0x00, except that it is used for immediate operands
@@ -138,7 +159,7 @@ INLINE void ROMC_03(void)
     f8_icount -= cL + cS;
 }
 
-INLINE void ROMC_04(void)
+static void ROMC_04(void)
 {
     /*
      * Copy the contents of PC1 into PC0
@@ -147,7 +168,7 @@ INLINE void ROMC_04(void)
     f8_icount -= cS;
 }
 
-INLINE void ROMC_05(void)
+static void ROMC_05(void)
 {
     /*
      * Store the data bus contents into the memory location pointed
@@ -158,7 +179,7 @@ INLINE void ROMC_05(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_06(void)
+static void ROMC_06(void)
 {
     /*
      * Place the high order byte of DC0 on the data bus.
@@ -167,7 +188,7 @@ INLINE void ROMC_06(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_07(void)
+static void ROMC_07(void)
 {
     /*
      * Place the high order byte of PC1 on the data bus.
@@ -176,7 +197,7 @@ INLINE void ROMC_07(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_08(void)
+static void ROMC_08(void)
 {
     /*
      * All devices copy the contents of PC0 into PC1. The CPU outputs
@@ -189,7 +210,7 @@ INLINE void ROMC_08(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_09(void)
+static void ROMC_09(void)
 {
     /*
      * The device whose address space includes the contents of the DC0
@@ -199,7 +220,7 @@ INLINE void ROMC_09(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_0A(void)
+static void ROMC_0A(void)
 {
     /*
      * All devices add the 8-bit value on the data bus, treated as
@@ -209,7 +230,7 @@ INLINE void ROMC_0A(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_0B(void)
+static void ROMC_0B(void)
 {
     /*
      * The device whose address space includes the value in PC1
@@ -219,7 +240,7 @@ INLINE void ROMC_0B(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_0C(void)
+static void ROMC_0C(void)
 {
     /*
      * The device whose address space includes the contents of the PC0
@@ -232,7 +253,7 @@ INLINE void ROMC_0C(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_0D(void)
+static void ROMC_0D(void)
 {
     /*
      * All devices store in PC1 the current contents of PC0, incremented
@@ -242,7 +263,7 @@ INLINE void ROMC_0D(void)
     f8_icount -= cS;
 }
 
-INLINE void ROMC_0E(void)
+static void ROMC_0E(void)
 {
     /*
      * The device whose address space includes the contents of the PC0
@@ -255,7 +276,7 @@ INLINE void ROMC_0E(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_0F(void)
+static void ROMC_0F(void)
 {
     /*
      * The interrupting device with highest priority must place the
@@ -269,7 +290,7 @@ INLINE void ROMC_0F(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_10(void)
+static void ROMC_10(void)
 {
     /*
      * Inhibit any modification to the interrupt priority logic.
@@ -278,7 +299,7 @@ INLINE void ROMC_10(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_11(void)
+static void ROMC_11(void)
 {
     /*
      * The device whose address space includes the contents of PC0
@@ -291,7 +312,7 @@ INLINE void ROMC_11(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_12(void)
+static void ROMC_12(void)
 {
     /*
      * All devices copy the contents of PC0 into PC1. All devices then
@@ -302,7 +323,7 @@ INLINE void ROMC_12(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_13(void)
+static void ROMC_13(void)
 {
     /*
      * The interrupting device with highest priority must move the high
@@ -318,7 +339,7 @@ INLINE void ROMC_13(void)
     f8.irq_vector = (*f8.irq_callback)(0);
 }
 
-INLINE void ROMC_14(void)
+static void ROMC_14(void)
 {
     /*
      * All devices move the contents of the data bus into the high
@@ -328,7 +349,7 @@ INLINE void ROMC_14(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_15(void)
+static void ROMC_15(void)
 {
     /*
      * All devices move the contents of the data bus into the high
@@ -338,7 +359,7 @@ INLINE void ROMC_15(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_16(void)
+static void ROMC_16(void)
 {
     /*
      * All devices move the contents of the data bus into the high
@@ -348,7 +369,7 @@ INLINE void ROMC_16(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_17(void)
+static void ROMC_17(void)
 {
     /*
      * All devices move the contents of the data bus into the low
@@ -358,7 +379,7 @@ INLINE void ROMC_17(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_18(void)
+static void ROMC_18(void)
 {
     /*
      * All devices move the contents of the data bus into the low
@@ -368,7 +389,7 @@ INLINE void ROMC_18(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_19(void)
+static void ROMC_19(void)
 {
     /*
      * All devices move the contents of the data bus into the low
@@ -378,7 +399,7 @@ INLINE void ROMC_19(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_1A(void)
+static void ROMC_1A(void)
 {
     /*
      * During the prior cycle, an I/O port timer or interrupt control
@@ -389,7 +410,7 @@ INLINE void ROMC_1A(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_1B(void)
+static void ROMC_1B(void)
 {
     /*
      * During the prior cycle, the data bus specified the address of an
@@ -398,11 +419,11 @@ INLINE void ROMC_1B(void)
      * contents of timer and interrupt control registers cannot be read
      * back onto the data bus).
      */
-    f8.dbus = cpu_readport(f8.dbus);
+	f8.dbus = cpu_readport(f8.io);
     f8_icount -= cL;
 }
 
-INLINE void ROMC_1C(void)
+static void ROMC_1C(void)
 {
     /*
      * None.
@@ -410,7 +431,7 @@ INLINE void ROMC_1C(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_1D(void)
+static void ROMC_1D(void)
 {
     /*
      * Devices with DC0 and DC1 registers must switch registers.
@@ -422,7 +443,7 @@ INLINE void ROMC_1D(void)
     f8_icount -= cS;
 }
 
-INLINE void ROMC_1E(void)
+static void ROMC_1E(void)
 {
     /*
      * The devices whose address space includes the contents of PC0
@@ -432,7 +453,7 @@ INLINE void ROMC_1E(void)
     f8_icount -= cL;
 }
 
-INLINE void ROMC_1F(void)
+static void ROMC_1F(void)
 {
     /*
      * The devices whose address space includes the contents of PC0
@@ -445,97 +466,97 @@ INLINE void ROMC_1F(void)
 /***********************************
  *	illegal opcodes
  ***********************************/
-INLINE void illegal(void)
+static void illegal(void)
 {
 	logerror("f8 illegal opcode at 0x%04x: %02x\n", f8.pc0, f8.dbus);
 	ROMC_00();
 }
 
 /***************************************************
- *	0000 0000
- *	LR	A,KU
+ *	O Z C S 0000 0000
+ *	- - - - LR	A,KU
  ***************************************************/
-INLINE void f8_lr_a_ku(void)
+static void f8_lr_a_ku(void)
 {
 	ROMC_00();
 	f8.a = f8.r[12];
 }
 
 /***************************************************
- *	0000 0001
- *	LR	A,KL
+ *	O Z C S 0000 0001
+ *	- - - - LR	A,KL
  ***************************************************/
-INLINE void f8_lr_a_kl(void)
+static void f8_lr_a_kl(void)
 {
 	ROMC_00();
 	f8.a = f8.r[13];
 }
 
 /***************************************************
- *	0000 0010
- *	LR	A,QU
+ *	O Z C S 0000 0010
+ *	- - - - LR	A,QU
  ***************************************************/
-INLINE void f8_lr_a_qu(void)
+static void f8_lr_a_qu(void)
 {
 	ROMC_00();
 	f8.a = f8.r[14];
 }
 
 /***************************************************
- *	0000 0011
- *	LR	A,QL
+ *	O Z C S 0000 0011
+ *	- - - - LR	A,QL
  ***************************************************/
-INLINE void f8_lr_a_ql(void)
+static void f8_lr_a_ql(void)
 {
 	ROMC_00();
 	f8.a = f8.r[15];
 }
 
 /***************************************************
- *	0000 0100
- *	LR	KU,A
+ *	O Z C S 0000 0100
+ *	- - - - LR	KU,A
  ***************************************************/
-INLINE void f8_lr_ku_a(void)
+static void f8_lr_ku_a(void)
 {
 	ROMC_00();
 	f8.r[12] = f8.a;
 }
 
 /***************************************************
- *	0000 0101
- *	LR	KL,A
+ *	O Z C S 0000 0101
+ *	- - - - LR	KL,A
  ***************************************************/
-INLINE void f8_lr_kl_a(void)
+static void f8_lr_kl_a(void)
 {
 	ROMC_00();
 	f8.r[13] = f8.a;
 }
 
 /***************************************************
- *	0000 0110
- *	LR	QU,A
+ *	O Z C S 0000 0110
+ *	- - - - LR	QU,A
  ***************************************************/
-INLINE void f8_lr_qu_a(void)
+static void f8_lr_qu_a(void)
 {
 	ROMC_00();
 	f8.r[14] = f8.a;
 }
 
 /***************************************************
- *	0000 0111
- *	LR	QL,A
+ *	O Z C S 0000 0111
+ *	- - - - LR	QL,A
  ***************************************************/
-INLINE void f8_lr_ql_a(void)
+static void f8_lr_ql_a(void)
 {
 	ROMC_00();
 	f8.r[15] = f8.a;
 }
 
 /***************************************************
- *	0000 1000
- *	LR	K,P
+ *	O Z C S 0000 1000
+ *	- - - - LR	K,P
  ***************************************************/
-INLINE void f8_lr_k_p(void)
+static void f8_lr_k_p(void)
 {
 	ROMC_07();
 	f8.r[12] = f8.dbus;
@@ -545,10 +566,10 @@ INLINE void f8_lr_k_p(void)
 }
 
 /***************************************************
- *	0000 1001
- *	LR	P,K
+ *	O Z C S 0000 1001
+ *	- - - - LR	P,K
  ***************************************************/
-INLINE void f8_lr_p_k(void)
+static void f8_lr_p_k(void)
 {
 	f8.dbus = f8.r[12];
 	ROMC_15();
@@ -558,30 +579,30 @@ INLINE void f8_lr_p_k(void)
 }
 
 /***************************************************
- *	0000 1010
- *	LR	A,IS
+ *	O Z C S 0000 1010
+ *	- - - - LR	A,IS
  ***************************************************/
-INLINE void f8_lr_a_is(void)
+static void f8_lr_a_is(void)
 {
 	f8.a = f8.is;
 	ROMC_00();
 }
 
 /***************************************************
- *	0000 1011
- *	LR	IS,A
+ *	O Z C S 0000 1011
+ *	- - - - LR	IS,A
  ***************************************************/
-INLINE void f8_lr_is_a(void)
+static void f8_lr_is_a(void)
 {
 	f8.is = f8.a & 0x3f;
 	ROMC_00();
 }
 
 /***************************************************
- *	0000 1100
- *	PK
+ *	O Z C S 0000 1100
+ *	- - - - PK
  ***************************************************/
-INLINE void f8_pk(void)
+static void f8_pk(void)
 {
 	f8.dbus = f8.r[13];
 	ROMC_12();
@@ -591,10 +612,10 @@ INLINE void f8_pk(void)
 }
 
 /***************************************************
- *	0000 1101
- *	LR	P0,Q
+ *	O Z C S 0000 1101
+ *	- - - - LR	P0,Q
  ***************************************************/
-INLINE void f8_lr_p0_q(void)
+static void f8_lr_p0_q(void)
 {
 	f8.dbus = f8.r[15];
 	ROMC_17();
@@ -604,10 +625,10 @@ INLINE void f8_lr_p0_q(void)
 }
 
 /***************************************************
- *	0000 1110
- *	LR	Q,DC
+ *	O Z C S 0000 1110
+ *	- - - - LR	 Q,DC
  ***************************************************/
-INLINE void f8_lr_q_dc(void)
+static void f8_lr_q_dc(void)
 {
 	ROMC_06();
 	f8.r[14] = f8.dbus;
@@ -617,10 +638,10 @@ INLINE void f8_lr_q_dc(void)
 }
 
 /***************************************************
- *	0000 1111
- *	LR	DC,Q
+ *	O Z C S 0000 1111
+ *	- - - - LR	 DC,Q
  ***************************************************/
-INLINE void f8_lr_dc_q(void)
+static void f8_lr_dc_q(void)
 {
     f8.dbus = f8.r[14];
 	ROMC_16();
@@ -630,36 +651,36 @@ INLINE void f8_lr_dc_q(void)
 }
 
 /***************************************************
- *	0001 0000
- *	LR	H,DC
+ *	O Z C S 0001 0000
+ *	- - - - LR	 DC,H
  ***************************************************/
-INLINE void f8_lr_h_dc(void)
+static void f8_lr_h_dc(void)
 {
-	ROMC_06();
-	f8.r[10] = f8.dbus;
-	ROMC_09();
-	f8.r[11] = f8.dbus;
-	ROMC_00();
-}
-
-/***************************************************
- *	0001 0001
- *	LR	DC,H
- ***************************************************/
-INLINE void f8_lr_dc_h(void)
-{
-	f8.dbus = f8.r[10];
+    f8.dbus = f8.r[10];
 	ROMC_16();
-	f8.dbus = f8.r[11];
+    f8.dbus = f8.r[11];
 	ROMC_19();
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 0010
- *	SR	1
+ *	O Z C S 0001 0001
+ *	- - - - LR	 H,DC
  ***************************************************/
-INLINE void f8_sr_1(void)
+static void f8_lr_dc_h(void)
+{
+	ROMC_06();
+    f8.r[10] = f8.dbus;
+	ROMC_09();
+    f8.r[11] = f8.dbus;
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 0001 0010
+ *	0 x 0 1 SR	 1
+ ***************************************************/
+static void f8_sr_1(void)
 {
 	f8.a >>= 1;
 	CLR_OZCS;
@@ -668,10 +689,10 @@ INLINE void f8_sr_1(void)
 }
 
 /***************************************************
- *	0001 0011
- *	SL	1
+ *	O Z C S 0001 0011
+ *	0 x 0 x SL	 1
  ***************************************************/
-INLINE void f8_sl_1(void)
+static void f8_sl_1(void)
 {
 	f8.a <<= 1;
 	CLR_OZCS;
@@ -680,10 +701,10 @@ INLINE void f8_sl_1(void)
 }
 
 /***************************************************
- *	0001 0100
- *	SR	4
+ *	O Z C S 0001 0100
+ *	0 x 0 1 SR	 4
  ***************************************************/
-INLINE void f8_sr_4(void)
+static void f8_sr_4(void)
 {
 	f8.a >>= 4;
 	CLR_OZCS;
@@ -692,10 +713,10 @@ INLINE void f8_sr_4(void)
 }
 
 /***************************************************
- *	0001 0101
- *	SL	4
+ *	O Z C S 0001 0101
+ *	0 x 0 x SL	 4
  ***************************************************/
-INLINE void f8_sl_4(void)
+static void f8_sl_4(void)
 {
 	f8.a <<= 4;
 	CLR_OZCS;
@@ -704,10 +725,10 @@ INLINE void f8_sl_4(void)
 }
 
 /***************************************************
- *	0001 0110
- *	LM
+ *	O Z C S 0001 0110
+ *	- - - - LM
  ***************************************************/
-INLINE void f8_lm(void)
+static void f8_lm(void)
 {
 	ROMC_02();
 	f8.a = f8.dbus;
@@ -715,10 +736,10 @@ INLINE void f8_lm(void)
 }
 
 /***************************************************
- *	0001 0111
- *	SM
+ *	O Z C S 0001 0111
+ *	- - - - SM
  ***************************************************/
-INLINE void f8_sm(void)
+static void f8_sm(void)
 {
 	f8.dbus = f8.a;
 	ROMC_05();
@@ -726,10 +747,10 @@ INLINE void f8_sm(void)
 }
 
 /***************************************************
- *	0001 1000
- *	COM
+ *	O Z C S 0001 1000
+ *	0 x 0 x COM
  ***************************************************/
-INLINE void f8_com(void)
+static void f8_com(void)
 {
 	f8.a = ~f8.a;
 	CLR_OZCS;
@@ -738,10 +759,10 @@ INLINE void f8_com(void)
 }
 
 /***************************************************
- *	0001 1001
- *	LNK
+ *	O Z C S 0001 1001
+ *	x x x x LNK
  ***************************************************/
-INLINE void f8_lnk(void)
+static void f8_lnk(void)
 {
     if (f8.w & C)
 	{
@@ -752,68 +773,70 @@ INLINE void f8_lnk(void)
 	else
 	{
 		CLR_OZCS;
-		SET_OC(f8.a,1);
+		SET_OC(f8.a,0);
     }
 	SET_SZ(f8.a);
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1010
- *	DI
+ *	O Z C S 0001 1010
+ *			DI
  ***************************************************/
-INLINE void f8_di(void)
+static void f8_di(void)
 {
-	f8.w &= ~I;
+	ROMC_1C();
+    f8.w &= ~I;
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1011
- *	EI
+ *	O Z C S 0001 1011
+ *			EI
  ***************************************************/
-INLINE void f8_ei(void)
+static void f8_ei(void)
 {
-	f8.w |= I;
+	ROMC_1C();
+    f8.w |= I;
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1100
- *	POP
+ *	O Z C S 0001 1100
+ *			POP
  ***************************************************/
-INLINE void f8_pop(void)
+static void f8_pop(void)
 {
 	ROMC_04();
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1101
- *	LR	W,J
+ *	O Z C S 0001 1101
+ *	x x x x LR	 W,J
  ***************************************************/
-INLINE void f8_lr_w_j(void)
+static void f8_lr_w_j(void)
 {
 	ROMC_1C();
-	f8.w = f8.r[ 9];
+	f8.w = f8.r[9];
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1110
- *	LR	J,W
+ *	O Z C S 0001 1110
+ *	- - - - LR	 J,W
  ***************************************************/
-INLINE void f8_lr_j_w(void)
+static void f8_lr_j_w(void)
 {
-	f8.r[ 9] = f8.w;
+	f8.r[9] = f8.w;
 	ROMC_00();
 }
 
 /***************************************************
- *	0001 1111
- *	INC
+ *	O Z C S 0001 1111
+ *	x x x x INC
  ***************************************************/
-INLINE void f8_inc(void)
+static void f8_inc(void)
 {
 	CLR_OZCS;
 	SET_OC(f8.a,1);
@@ -823,10 +846,10 @@ INLINE void f8_inc(void)
 }
 
 /***************************************************
- *	0010 0000
- *	LI	aa
+ *	O Z C S 0010 0000	aaaa aaaa
+ *	- - - - LI	aa
  ***************************************************/
-INLINE void f8_li(void)
+static void f8_li(void)
 {
 	ROMC_03();
     f8.a = f8.dbus;
@@ -834,49 +857,49 @@ INLINE void f8_li(void)
 }
 
 /***************************************************
- *	0010 0001
- *	NI	aa
+ *	O Z C S 0010 0001	aaaa aaaa
+ *	0 x 0 x NI	 aa
  ***************************************************/
-INLINE void f8_ni(void)
+static void f8_ni(void)
 {
 	ROMC_03();
+    CLR_OZCS;
 	f8.a &= f8.dbus;
-	CLR_OZCS;
 	SET_SZ(f8.a);
 	ROMC_00();
 }
 
 /***************************************************
- *	0010 0010
- *	OI	aa
+ *	O Z C S 0010 0010	aaaa aaaa
+ *	0 x 0 x OI	 aa
  ***************************************************/
-INLINE void f8_oi(void)
+static void f8_oi(void)
 {
 	ROMC_03();
+    CLR_OZCS;
 	f8.a |= f8.dbus;
-	CLR_OZCS;
 	SET_SZ(f8.a);
 	ROMC_00();
 }
 
 /***************************************************
- *	0010 0011
- *	XI	aa
+ *	O Z C S 0010 0011	aaaa aaaa
+ *	0 x 0 x XI	 aa
  ***************************************************/
-INLINE void f8_xi(void)
+static void f8_xi(void)
 {
 	ROMC_03();
+    CLR_OZCS;
 	f8.a ^= f8.dbus;
-	CLR_OZCS;
 	SET_SZ(f8.a);
 	ROMC_00();
 }
 
 /***************************************************
- *	0010 0100	aaaa aaaa
- *	AI	aa
+ *	O Z C S 0010 0100	aaaa aaaa
+ *	x x x x AI	 aa
  ***************************************************/
-INLINE void f8_ai(void)
+static void f8_ai(void)
 {
 	ROMC_03();
 	CLR_OZCS;
@@ -887,10 +910,10 @@ INLINE void f8_ai(void)
 }
 
 /***************************************************
- *	0010 0101	aaaa aaaa
- *	CI	aa
+ *	O Z C S 0010 0101	aaaa aaaa
+ *	x x x x CI	 aa
  ***************************************************/
-INLINE void f8_ci(void)
+static void f8_ci(void)
 {
 	UINT8 tmp = ~f8.a + 1;
 	ROMC_03();
@@ -902,36 +925,36 @@ INLINE void f8_ci(void)
 }
 
 /***************************************************
- *	0010 0110	aaaa aaaa
- *	IN	aa
+ *	O Z C S 0010 0110	aaaa aaaa
+ *	0 x 0 x IN	 aa
  ***************************************************/
-INLINE void f8_in(void)
+static void f8_in(void)
 {
 	ROMC_03();
+    CLR_OZCS;
 	ROMC_1B();
     f8.a = f8.dbus;
-	CLR_OZCS;
 	SET_SZ(f8.a);
     ROMC_00();
 }
 
 /***************************************************
- *	0010 0111	aaaa aaaa
- *	OUT aa
+ *	O Z C S 0010 0111	aaaa aaaa
+ *	- - - - OUT  aa
  ***************************************************/
-INLINE void f8_out(void)
+static void f8_out(void)
 {
 	ROMC_03();
-	f8.dbus = f8.a;
+    f8.dbus = f8.a;
 	ROMC_1A();
     ROMC_00();
 }
 
 /***************************************************
- *	0010 1000	iiii iiii	jjjj jjjj
- *	PI	iijj
+ *	O Z C S 0010 1000	iiii iiii	jjjj jjjj
+ *	- - - - PI	 iijj
  ***************************************************/
-INLINE void f8_pi(void)
+static void f8_pi(void)
 {
 	ROMC_03();
 	f8.a = f8.dbus;
@@ -943,10 +966,10 @@ INLINE void f8_pi(void)
 }
 
 /***************************************************
- *	0010 1001	iiii iiii	jjjj jjjj
- *	JMP iijj
+ *	O Z C S 0010 1001	iiii iiii	jjjj jjjj
+ *	- - - - JMP  iijj
  ***************************************************/
-INLINE void f8_jmp(void)
+static void f8_jmp(void)
 {
 	ROMC_03();
 	f8.a = f8.dbus;
@@ -957,10 +980,10 @@ INLINE void f8_jmp(void)
 }
 
 /***************************************************
- *	0010 1010	iiii iiii	jjjj jjjj
- *	DCI iijj
+ *	O Z C S 0010 1010	iiii iiii	jjjj jjjj
+ *	- - - - DCI  iijj
  ***************************************************/
-INLINE void f8_dci(void)
+static void f8_dci(void)
 {
 	ROMC_11();
 	ROMC_03();
@@ -970,31 +993,29 @@ INLINE void f8_dci(void)
 }
 
 /***************************************************
- *	0010 1011
- *	NOP
+ *	O Z C S 0010 1011
+ *	- - - - NOP
  ***************************************************/
-INLINE void f8_nop(void)
+static void f8_nop(void)
 {
     ROMC_00();
 }
 
 /***************************************************
- *	0010 1100
- *	XDC
+ *	O Z C S 0010 1100
+ *	- - - - XDC
  ***************************************************/
-INLINE void f8_xdc(void)
+static void f8_xdc(void)
 {
-	UINT16 tmp = f8.dc0;
-	f8.dc0 = f8.dc1;
-	f8.dc1 = tmp;
+	ROMC_1D();
     ROMC_00();
 }
 
 /***************************************************
- *	0011 rrrr
- *	DS	r
+ *	O Z C S 0011 rrrr
+ *	x x x x DS	 r
  ***************************************************/
-INLINE void f8_ds_r(int r)
+static void f8_ds_r(int r)
 {
 	CLR_OZCS;
 	SET_OC(f8.r[r], 0xff);
@@ -1004,168 +1025,167 @@ INLINE void f8_ds_r(int r)
 }
 
 /***************************************************
- *	0011 1100
- *	DS	ISAR
+ *	O Z C S 0011 1100
+ *	x x x x DS	 ISAR
  ***************************************************/
-INLINE void f8_ds_isar(void)
+static void f8_ds_isar(void)
 {
 	CLR_OZCS;
 	SET_OC(f8.r[f8.is], 0xff);
 	f8.r[f8.is] = f8.r[f8.is] + 0xff;
 	SET_SZ(f8.r[f8.is]);
-
     ROMC_00();
 }
 
 /***************************************************
- *	0011 1101
- *	DS	ISAR++
+ *	O Z C S 0011 1101
+ *	x x x x DS	 ISAR++
  ***************************************************/
-INLINE void f8_ds_isar_i(void)
+static void f8_ds_isar_i(void)
 {
 	CLR_OZCS;
 	SET_OC(f8.r[f8.is], 0xff);
 	f8.r[f8.is] = f8.r[f8.is] + 0xff;
 	SET_SZ(f8.r[f8.is]);
-	f8.is = (f8.is & 0x28) | (++f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
     ROMC_00();
 }
 
 
 /***************************************************
- *	0011 1110
- *	DS	ISAR--
+ *	O Z C S 0011 1110
+ *	x x x x DS	ISAR--
  ***************************************************/
-INLINE void f8_ds_isar_d(void)
+static void f8_ds_isar_d(void)
 {
 	CLR_OZCS;
 	SET_OC(f8.r[f8.is], 0xff);
 	f8.r[f8.is] = f8.r[f8.is] + 0xff;
 	SET_SZ(f8.r[f8.is]);
-	f8.is = (f8.is & 0x28) | (--f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
     ROMC_00();
 }
 
 
 /***************************************************
- *	0100 rrrr
- *	LR	A,r
+ *	O Z C S 0100 rrrr
+ *	- - - - LR	A,r
  ***************************************************/
-INLINE void f8_lr_a_r(int r)
+static void f8_lr_a_r(int r)
 {
 	f8.a = f8.r[r];
     ROMC_00();
 }
 
 /***************************************************
- *	0100 1100
- *	LR	A,ISAR
+ *	O Z C S 0100 1100
+ *	- - - - LR	A,ISAR
  ***************************************************/
-INLINE void f8_lr_a_isar(void)
+static void f8_lr_a_isar(void)
 {
 	f8.a = f8.r[f8.is];
     ROMC_00();
 }
 
 /***************************************************
- *	0100 1101
- *	LR	A,ISAR++
+ *	O Z C S 0100 1101
+ *	- - - - LR	A,ISAR++
  ***************************************************/
-INLINE void f8_lr_a_isar_i(void)
+static void f8_lr_a_isar_i(void)
 {
 	f8.a = f8.r[f8.is];
-	f8.is = (f8.is & 0x28) | (++f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
     ROMC_00();
 }
 
 /***************************************************
- *	0100 1110
- *	LR	A,ISAR--
+ *	O Z C S 0100 1110
+ *	- - - - LR	A,ISAR--
  ***************************************************/
-INLINE void f8_lr_a_isar_d(void)
+static void f8_lr_a_isar_d(void)
 {
 	f8.a = f8.r[f8.is];
-	f8.is = (f8.is & 0x28) | (--f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
     ROMC_00();
 }
 
 /***************************************************
- *	0101 rrrr
- *	LR	r,A
+ *	O Z C S 0101 rrrr
+ *	- - - - LR	r,A
  ***************************************************/
-INLINE void f8_lr_r_a(int r)
+static void f8_lr_r_a(int r)
 {
 	f8.r[r] = f8.a;
     ROMC_00();
 }
 
 /***************************************************
- *	0101 1100
- *	LR	ISAR,A
+ *	O Z C S 0101 1100
+ *	- - - - LR	ISAR,A
  ***************************************************/
-INLINE void f8_lr_isar_a(void)
+static void f8_lr_isar_a(void)
 {
 	f8.r[f8.is] = f8.a;
     ROMC_00();
 }
 
 /***************************************************
- *	0101 1101
- *	LR	ISAR++,A
+ *	O Z C S 0101 1101
+ *	- - - - LR	ISAR++,A
  ***************************************************/
-INLINE void f8_lr_isar_i_a(void)
+static void f8_lr_isar_i_a(void)
 {
 	f8.r[f8.is] = f8.a;
-	f8.is = (f8.is & 0x28) | (++f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
     ROMC_00();
 }
 
 /***************************************************
- *	0101 1110
- *	LR	ISAR--,A
+ *	O Z C S 0101 1110
+ *	- - - - LR	ISAR--,A
  ***************************************************/
-INLINE void f8_lr_isar_d_a(void)
+static void f8_lr_isar_d_a(void)
 {
 	f8.a = f8.r[f8.is];
-	f8.is = (f8.is & 0x28) | (--f8.is & 0x07);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
     ROMC_00();
 }
 
 /***************************************************
- *	0110 0eee
- *	LISU e
+ *	O Z C S 0110 0eee
+ *	- - - - LISU e
  ***************************************************/
-INLINE void f8_lisu(int e)
+static void f8_lisu(int e)
 {
 	f8.is = (f8.is & 0x07) | e;
     ROMC_00();
 }
 
 /***************************************************
- *	0110 1eee
- *	LISL e
+ *	O Z C S 0110 1eee
+ *	- - - - LISL e
  ***************************************************/
-INLINE void f8_lisl(int e)
+static void f8_lisl(int e)
 {
-	f8.is = (f8.is & 0x28) | e;
+	f8.is = (f8.is & 0x38) | e;
     ROMC_00();
 }
 
 /***************************************************
- *	0111 iiii
- *	LIS  i
+ *	O Z C S 0111 iiii
+ *	- - - - LIS  i
  ***************************************************/
-INLINE void f8_lis(int i)
+static void f8_lis(int i)
 {
 	f8.a = i;
     ROMC_00();
 }
 
 /***************************************************
- *	1000 0eee
- *	LIS  i
+ *	O Z C S 1000 0eee	aaaa aaaa
+ *			BT	 e,aa
  ***************************************************/
-INLINE void f8_bt(int e)
+static void f8_bt(int e)
 {
 	ROMC_1C();
     if (f8.w & e)
@@ -1176,10 +1196,10 @@ INLINE void f8_bt(int e)
 }
 
 /***************************************************
- *	1000 1000
- *	AM
+ *	O Z C S 1000 1000
+ *	x x x x AM
  ***************************************************/
-INLINE void f8_am(void)
+static void f8_am(void)
 {
 	ROMC_02();
 	CLR_OZCS;
@@ -1190,10 +1210,10 @@ INLINE void f8_am(void)
 }
 
 /***************************************************
- *	1000 1001
- *	AMD
+ *	O Z C S 1000 1001
+ *	x x x x AMD
  ***************************************************/
-INLINE void f8_amd(void)
+static void f8_amd(void)
 {
 	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
     ROMC_02();
@@ -1212,10 +1232,10 @@ INLINE void f8_amd(void)
 }
 
 /***************************************************
- *	1000 1010
- *	NM
+ *	O Z C S 1000 1010
+ *	0 x 0 x NM
  ***************************************************/
-INLINE void f8_nm(void)
+static void f8_nm(void)
 {
 	ROMC_02();
 	CLR_OZCS;
@@ -1225,10 +1245,10 @@ INLINE void f8_nm(void)
 }
 
 /***************************************************
- *	1000 1011
- *	OM
+ *	O Z C S 1000 1011
+ *	0 x 0 x OM
  ***************************************************/
-INLINE void f8_om(void)
+static void f8_om(void)
 {
 	ROMC_02();
 	CLR_OZCS;
@@ -1238,10 +1258,10 @@ INLINE void f8_om(void)
 }
 
 /***************************************************
- *	1000 1100
- *	XM
+ *	O Z C S 1000 1100
+ *	0 x 0 x XM
  ***************************************************/
-INLINE void f8_xm(void)
+static void f8_xm(void)
 {
     ROMC_02();
 	CLR_OZCS;
@@ -1251,10 +1271,10 @@ INLINE void f8_xm(void)
 }
 
 /***************************************************
- *	1000 1101
- *	CM
+ *	O Z C S 1000 1101
+ *	0 x 0 x CM
  ***************************************************/
-INLINE void f8_cm(void)
+static void f8_cm(void)
 {
 	UINT8 tmp = ~f8.a + 1;
 	ROMC_02();
@@ -1266,48 +1286,48 @@ INLINE void f8_cm(void)
 }
 
 /***************************************************
- *	1000 1110
- *	ADC
+ *	O Z C S 1000 1110
+ *	- - - - ADC
  ***************************************************/
-INLINE void f8_adc(void)
+static void f8_adc(void)
 {
 	f8.dbus = f8.a;
-    ROMC_0A();
-    ROMC_00();
-}
-
-/***************************************************
- *	1000 1111
- *	BR7
- ***************************************************/
-INLINE void f8_br7(void)
-{
-	if ((f8.is & 7) == 7)
-        ROMC_01();
-	else
-        ROMC_03();
+	ROMC_0A();			/* add data bus value to DC0 */
 	ROMC_00();
 }
 
 /***************************************************
- *	1001 tttt
- *	BF
+ *	O Z C S 1000 1111
+ *	- - - - BR7
  ***************************************************/
-INLINE void f8_bf(int t)
+static void f8_br7(void)
+{
+	if ((f8.is & 7) == 7)
+		ROMC_01();		/* take the relative branch */
+	else
+		ROMC_03();		/* just read the argument on the data bus */
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1001 tttt	aaaa aaaa
+ *	- - - - BF	 t,aa
+ ***************************************************/
+static void f8_bf(int t)
 {
 	ROMC_1C();
     if (f8.w & t)
-        ROMC_01();
+		ROMC_01();		/* take the relative branch */
 	else
-        ROMC_03();
+		ROMC_03();		/* just read the argument on the data bus */
 	ROMC_00();
 }
 
 /***************************************************
- *	1010 000n
- *	INS 	(n = 0-1)
+ *	O Z C S 1010 000n
+ *	0 x 0 x INS  n				(n = 0-1)
  ***************************************************/
-INLINE void f8_ins_0(int n)
+static void f8_ins_0(int n)
 {
 	ROMC_1C();
 	CLR_OZCS;
@@ -1317,13 +1337,13 @@ INLINE void f8_ins_0(int n)
 }
 
 /***************************************************
- *	1010 nnnn
- *	INS 	(n = 4-F)
+ *	O Z C S 1010 nnnn
+ *	0 x 0 x INS  n				(n = 4-F)
  ***************************************************/
-INLINE void f8_ins_1(int n)
+static void f8_ins_1(int n)
 {
 	ROMC_1C();
-	f8.dbus = n;
+	f8.io = n;
     ROMC_1B();
 	CLR_OZCS;
 	f8.a = f8.dbus;
@@ -1332,10 +1352,10 @@ INLINE void f8_ins_1(int n)
 }
 
 /***************************************************
- *	1011 000n
- *	OUTS	(n = 0-1)
+ *	O Z C S 1011 000n
+ *	- - - - OUTS n				(n = 0-1)
  ***************************************************/
-INLINE void f8_outs_0(int n)
+static void f8_outs_0(int n)
 {
 	ROMC_1C();
 	cpu_writeport(n, f8.a);
@@ -1343,15 +1363,75 @@ INLINE void f8_outs_0(int n)
 }
 
 /***************************************************
- *	1011 nnnn
- *	OUTS	(n = 4-F)
+ *	O Z C S 1011 nnnn
+ *	- - - - OUTS n				(n = 4-F)
  ***************************************************/
-INLINE void f8_outs_1(int n)
+static void f8_outs_1(int n)
 {
-    f8.dbus = n;
 	ROMC_1C();
-	ROMC_1A();
+    f8.io = n;
+	f8.dbus = f8.a;
+    ROMC_1A();
     ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1100 rrrr
+ *	x x x x AS	 r
+ ***************************************************/
+static void f8_as(int r)
+{
+	CLR_OZCS;
+	SET_OC(f8.a, f8.r[r]);
+	f8.a += f8.r[r];
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1101 rrrr
+ *	x x x x ASD  r
+ ***************************************************/
+static void f8_asd(int r)
+{
+	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	ROMC_1C();
+	sum = (tmp & 0x0f) + (f8.r[r] & 0x0f);
+	if (sum > 0x09)
+		adj += 0x06;
+	sum = (tmp & 0xf0) + (f8.r[r] & 0xf0) + adj;
+	if (sum > 0x90)
+		adj += 0x60;
+	tmp = adj + f8.r[r] - 0x66;
+	CLR_OZCS;
+	SET_OC(f8.a, tmp);
+	f8.a += tmp;
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1110 rrrr
+ *	0 x 0 x XS	 r
+ ***************************************************/
+static void f8_xs(int r)
+{
+	CLR_OZCS;
+	f8.a ^= f8.r[r];
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1111 rrrr
+ *	0 x 0 x NS	 r
+ ***************************************************/
+static void f8_ns(int r)
+{
+	CLR_OZCS;
+	f8.a &= f8.r[r];
+	SET_SZ(f8.a);
+	ROMC_00();
 }
 
 /* Reset registers to the initial values */
@@ -1419,13 +1499,13 @@ int f8_execute(int cycles)
 		case 0x21: /* 0010 0001 */	f8_ni();			break;
 		case 0x22: /* 0010 0010 */	f8_oi();			break;
 		case 0x23: /* 0010 0011 */	f8_xi();			break;
-		case 0x24: /* 0010 0100 */	f8_ci();			break;
-		case 0x25: /* 0010 0101 */	f8_in();			break;
-		case 0x26: /* 0010 0110 */	f8_out();			break;
-		case 0x27: /* 0010 0111 */	f8_pi();			break;
-		case 0x28: /* 0010 1000 */	f8_jmp();			break;
-		case 0x29: /* 0010 1001 */	f8_dci();			break;
-		case 0x2a: /* 0010 1010 */	illegal();			break;
+		case 0x24: /* 0010 0100 */	f8_ai();			break;
+		case 0x25: /* 0010 0101 */	f8_ci();			break;
+		case 0x26: /* 0010 0110 */	f8_in();			break;
+		case 0x27: /* 0010 0111 */	f8_out();			break;
+		case 0x28: /* 0010 1000 */	f8_pi();			break;
+		case 0x29: /* 0010 1001 */	f8_jmp();			break;
+		case 0x2a: /* 0010 1010 */	f8_dci();			break;
 		case 0x2b: /* 0010 1011 */	illegal();			break;
 		case 0x2c: /* 0010 1100 */	illegal();			break;
 		case 0x2d: /* 0010 1101 */	illegal();			break;
@@ -1585,73 +1665,73 @@ int f8_execute(int cycles)
 		case 0xbe: /* 1011 1110 */	f8_outs_1(0xe); 	break;
 		case 0xbf: /* 1011 1111 */	f8_outs_1(0xf); 	break;
 
-        case 0xc0: /* 1100 0000 */
-		case 0xc1: /* 1100 0001 */
-		case 0xc2: /* 1100 0010 */
-		case 0xc3: /* 1100 0011 */
-		case 0xc4: /* 1100 0100 */
-		case 0xc5: /* 1100 0101 */
-		case 0xc6: /* 1100 0110 */
-		case 0xc7: /* 1100 0111 */
-		case 0xc8: /* 1100 1000 */
-		case 0xc9: /* 1100 1001 */
-		case 0xca: /* 1100 1010 */
-		case 0xcb: /* 1100 1011 */
-		case 0xcc: /* 1100 1100 */
-		case 0xcd: /* 1100 1101 */
-		case 0xce: /* 1100 1110 */
-		case 0xcf: /* 1100 1111 */
+		case 0xc0: /* 1100 0000 */	f8_as(0x0); 		break;
+		case 0xc1: /* 1100 0001 */	f8_as(0x1); 		break;
+		case 0xc2: /* 1100 0010 */	f8_as(0x2); 		break;
+		case 0xc3: /* 1100 0011 */	f8_as(0x3); 		break;
+		case 0xc4: /* 1100 0100 */	f8_as(0x4); 		break;
+		case 0xc5: /* 1100 0101 */	f8_as(0x5); 		break;
+		case 0xc6: /* 1100 0110 */	f8_as(0x6); 		break;
+		case 0xc7: /* 1100 0111 */	f8_as(0x7); 		break;
+		case 0xc8: /* 1100 1000 */	f8_as(0x8); 		break;
+		case 0xc9: /* 1100 1001 */	f8_as(0x9); 		break;
+		case 0xca: /* 1100 1010 */	f8_as(0xa); 		break;
+		case 0xcb: /* 1100 1011 */	f8_as(0xb); 		break;
+		case 0xcc: /* 1100 1100 */	f8_as(0xc); 		break;
+		case 0xcd: /* 1100 1101 */	f8_as(0xd); 		break;
+		case 0xce: /* 1100 1110 */	f8_as(0xe); 		break;
+		case 0xcf: /* 1100 1111 */	f8_as(0xf); 		break;
 
-        case 0xd0: /* 1101 0000 */
-		case 0xd1: /* 1101 0001 */
-		case 0xd2: /* 1101 0010 */
-		case 0xd3: /* 1101 0011 */
-		case 0xd4: /* 1101 0100 */
-		case 0xd5: /* 1101 0101 */
-		case 0xd6: /* 1101 0110 */
-		case 0xd7: /* 1101 0111 */
-		case 0xd8: /* 1101 1000 */
-		case 0xd9: /* 1101 1001 */
-		case 0xda: /* 1101 1010 */
-		case 0xdb: /* 1101 1011 */
-		case 0xdc: /* 1101 1100 */
-		case 0xdd: /* 1101 1101 */
-		case 0xde: /* 1101 1110 */
-		case 0xdf: /* 1101 1111 */
+		case 0xd0: /* 1101 0000 */	f8_asd(0x0);		break;
+		case 0xd1: /* 1101 0001 */	f8_asd(0x1);		break;
+		case 0xd2: /* 1101 0010 */	f8_asd(0x2);		break;
+		case 0xd3: /* 1101 0011 */	f8_asd(0x3);		break;
+		case 0xd4: /* 1101 0100 */	f8_asd(0x4);		break;
+		case 0xd5: /* 1101 0101 */	f8_asd(0x5);		break;
+		case 0xd6: /* 1101 0110 */	f8_asd(0x6);		break;
+		case 0xd7: /* 1101 0111 */	f8_asd(0x7);		break;
+		case 0xd8: /* 1101 1000 */	f8_asd(0x8);		break;
+		case 0xd9: /* 1101 1001 */	f8_asd(0x9);		break;
+		case 0xda: /* 1101 1010 */	f8_asd(0xa);		break;
+		case 0xdb: /* 1101 1011 */	f8_asd(0xb);		break;
+		case 0xdc: /* 1101 1100 */	f8_asd(0xc);		break;
+		case 0xdd: /* 1101 1101 */	f8_asd(0xd);		break;
+		case 0xde: /* 1101 1110 */	f8_asd(0xe);		break;
+		case 0xdf: /* 1101 1111 */	f8_asd(0xf);		break;
 
-        case 0xe0: /* 1110 0000 */
-		case 0xe1: /* 1110 0001 */
-		case 0xe2: /* 1110 0010 */
-		case 0xe3: /* 1110 0011 */
-		case 0xe4: /* 1110 0100 */
-		case 0xe5: /* 1110 0101 */
-		case 0xe6: /* 1110 0110 */
-		case 0xe7: /* 1110 0111 */
-		case 0xe8: /* 1110 1000 */
-		case 0xe9: /* 1110 1001 */
-		case 0xea: /* 1110 1010 */
-		case 0xeb: /* 1110 1011 */
-		case 0xec: /* 1110 1100 */
-		case 0xed: /* 1110 1101 */
-		case 0xee: /* 1110 1110 */
-		case 0xef: /* 1110 1111 */
+		case 0xe0: /* 1110 0000 */	f8_xs(0x0); 		break;
+		case 0xe1: /* 1110 0001 */	f8_xs(0x1); 		break;
+		case 0xe2: /* 1110 0010 */	f8_xs(0x2); 		break;
+		case 0xe3: /* 1110 0011 */	f8_xs(0x3); 		break;
+		case 0xe4: /* 1110 0100 */	f8_xs(0x4); 		break;
+		case 0xe5: /* 1110 0101 */	f8_xs(0x5); 		break;
+		case 0xe6: /* 1110 0110 */	f8_xs(0x6); 		break;
+		case 0xe7: /* 1110 0111 */	f8_xs(0x7); 		break;
+		case 0xe8: /* 1110 1000 */	f8_xs(0x8); 		break;
+		case 0xe9: /* 1110 1001 */	f8_xs(0x9); 		break;
+		case 0xea: /* 1110 1010 */	f8_xs(0xa); 		break;
+		case 0xeb: /* 1110 1011 */	f8_xs(0xb); 		break;
+		case 0xec: /* 1110 1100 */	f8_xs(0xc); 		break;
+		case 0xed: /* 1110 1101 */	f8_xs(0xd); 		break;
+		case 0xee: /* 1110 1110 */	f8_xs(0xe); 		break;
+		case 0xef: /* 1110 1111 */	f8_xs(0xf); 		break;
 
-        case 0xf0: /* 1111 0000 */
-		case 0xf1: /* 1111 0001 */
-		case 0xf2: /* 1111 0010 */
-		case 0xf3: /* 1111 0011 */
-		case 0xf4: /* 1111 0100 */
-		case 0xf5: /* 1111 0101 */
-		case 0xf6: /* 1111 0110 */
-		case 0xf7: /* 1111 0111 */
-		case 0xf8: /* 1111 1000 */
-		case 0xf9: /* 1111 1001 */
-		case 0xfa: /* 1111 1010 */
-		case 0xfb: /* 1111 1011 */
-		case 0xfc: /* 1111 1100 */
-		case 0xfd: /* 1111 1101 */
-		case 0xfe: /* 1111 1110 */
-		case 0xff: /* 1111 1111 */	illegal();	break;
+		case 0xf0: /* 1111 0000 */	f8_ns(0x0); 		break;
+		case 0xf1: /* 1111 0001 */	f8_ns(0x1); 		break;
+		case 0xf2: /* 1111 0010 */	f8_ns(0x2); 		break;
+		case 0xf3: /* 1111 0011 */	f8_ns(0x3); 		break;
+		case 0xf4: /* 1111 0100 */	f8_ns(0x4); 		break;
+		case 0xf5: /* 1111 0101 */	f8_ns(0x5); 		break;
+		case 0xf6: /* 1111 0110 */	f8_ns(0x6); 		break;
+		case 0xf7: /* 1111 0111 */	f8_ns(0x7); 		break;
+		case 0xf8: /* 1111 1000 */	f8_ns(0x8); 		break;
+		case 0xf9: /* 1111 1001 */	f8_ns(0x9); 		break;
+		case 0xfa: /* 1111 1010 */	f8_ns(0xa); 		break;
+		case 0xfb: /* 1111 1011 */	f8_ns(0xb); 		break;
+		case 0xfc: /* 1111 1100 */	f8_ns(0xc); 		break;
+		case 0xfd: /* 1111 1101 */	f8_ns(0xd); 		break;
+		case 0xfe: /* 1111 1110 */	f8_ns(0xe); 		break;
+		case 0xff: /* 1111 1111 */	f8_ns(0xf); 		break;
         }
 	} while( f8_icount > 0 );
 
