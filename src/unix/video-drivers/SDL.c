@@ -66,20 +66,25 @@ typedef void (*update_func_t)(struct osd_bitmap *bitmap);
 
 update_func_t update_function;
 
+static int sdl_mapkey(struct rc_option *option, const char *arg, int priority);
+
 struct rc_option display_opts[] = {
     /* name, shortname, type, dest, deflt, min, max, func, help */
    { "SDL Related",  NULL,    rc_seperator,  NULL,
        NULL,         0,       0,             NULL,
        NULL },
-   { "listmodes",    NULL,    rc_bool,    &list_modes,
+   { "listmodes",    NULL,    rc_bool,       &list_modes,
       "0",           0,       0,             NULL,
       "List all posible full-screen modes" },
-   { "fullscreen",   NULL,    rc_bool,    &start_fullscreen,
+   { "fullscreen",   NULL,    rc_bool,       &start_fullscreen,
       "0",           0,       0,             NULL,
       "Start fullscreen" },
-   { "modenumber",    NULL,   rc_int,        &mode_number,
-      "-1",            0,      0,            NULL,
+   { "modenumber",   NULL,    rc_int,        &mode_number,
+      "-1",          0,       0,             NULL,
       "Try to use the 'n' possible full-screen mode" },
+   { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
+     NULL,		0,			0,		sdl_mapkey,
+     "Set a specific key mapping, see xmamerc.dist" },
    { NULL,           NULL,    rc_end,        NULL,
       NULL,          0,       0,             NULL,
       NULL }
@@ -332,8 +337,30 @@ int sysdep_create_display(int depth)
    return OSD_OK;
 }
 
+/*
+ *  keyboard remapping routine
+ *  invoiced in startup code
+ *  returns 0-> success 1-> invalid from or to
+ */
+static int sdl_mapkey(struct rc_option *option, const char *arg, int priority)
+{
+   unsigned int from, to;
+   /* ultrix sscanf() requires explicit leading of 0x for hex numbers */
+   if (sscanf(arg, "0x%x,0x%x", &from, &to) == 2)
+   {
+      /* perform tests */
+      /* fprintf(stderr,"trying to map %x to %x\n", from, to); */
+      if (from >= SDLK_FIRST && from < SDLK_LAST && to >= 0 && to <= 127)
+      {
+         klookup[from] = to;
+	 return OSD_OK;
+      }
+      /* stderr_file isn't defined yet when we're called. */
+      fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
+   }
+   return OSD_NOT_OK;
+}
 
-/* Update routines */
 /* Update routines */
 void sdl_update_8_to_8bpp (struct osd_bitmap *bitmap)
 {
