@@ -51,7 +51,7 @@ int xfx_open_display(int reopen)
     window_width  = fxwidth;
     window_height = fxheight;
       
-    xinput_open(X11_FORCE_INPUT_GRAB, 0);
+    xinput_open(1, 0);
   }
   
   if (InitVScreen(reopen) != 0)

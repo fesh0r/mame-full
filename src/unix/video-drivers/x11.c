@@ -33,6 +33,8 @@ static int xinerama_screen;
 #endif
 
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority);
+static void x11_get_geometry(int *x, int *y, unsigned int *width,
+  unsigned int *height, int *win_gravity, long *flags, int type);
 
 struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -336,10 +338,10 @@ void x11_resize_window(unsigned int *width, unsigned int *height,
   if ((*width != window_width) || (*height != window_height))
   {
     if (type != X11_RESIZABLE)
-      x11_set_window_hints(*width, *height, X11_RESIZABLE);
+      x11_set_window_hints(X11_RESIZABLE);
     XResizeWindow(display, window, *width, *height);
     if (type != X11_RESIZABLE)
-      x11_set_window_hints(*width, *height, type);
+      x11_set_window_hints(type);
   }
 }
 
@@ -349,13 +351,14 @@ void x11_resize_window(unsigned int *width, unsigned int *height,
       set to these, else they are determined from sysdep_display_params. The
       aspect is kept to sysdep_display_params.aspect.
    2: Same as 1, but without any aspect constrains.
-   3: Fullscreen return width and height in width and height.
    
    Notes:
    1) If run_in_root_window is set then type gets ignored, and
       the width and height of/and the root window are returned. (Else ...)
-   2) If root_window_id is set and type is not fullscreen this
-      is used as the parent window instead of the root window. */
+   2) If sysdep_display_params.fullscreen is set a fullscreen window is
+      created. (Else ...)
+   3) If root_window_id is set it is used as the parent window instead of
+      the root window. */
 int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
@@ -369,11 +372,10 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 	if (run_in_root_window)
 	{
           window = root;
-          sysdep_display_params.fullscreen = 0;
           return 0;
 	}
 	
-	if ((type != X11_FULLSCREEN) && root_window_id)
+	if (!sysdep_display_params.fullscreen && root_window_id)
           root = root_window_id;
 
         /* Create and setup the window. No buttons, no fancy stuff. */
@@ -402,10 +404,10 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
         }
         
         /* set the hints */
-        x11_set_window_hints(*width, *height, type);
+        x11_set_window_hints(type);
         
         XSelectInput (display, window, ExposureMask);
-        XMapRaised (display, window);
+        XMapRaised   (display, window);
         XClearWindow (display, window);
         XWindowEvent (display, window, ExposureMask, &event);
         
@@ -415,27 +417,29 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 /* Set the hints for a window, window-type can be:
    0: Fixed size
    1: Resizable, aspect is always kept to sysdep_display_params.aspect .
-   2: Resizable
-   3: Fullscreen */
-void x11_set_window_hints(unsigned int width, unsigned int height, int type)
+   2: Resizable */
+void x11_set_window_hints(int type)
 {
         struct rc_option *option;
         XWMHints wm_hints;
 	XSizeHints hints;
+	unsigned int width, height;
+
+        x11_get_geometry(&hints.x, &hints.y, &width, &height,
+	          &hints.win_gravity, &hints.flags, type);
 
         if (run_in_root_window)
           return;
         
 	/* WM hints */
-        wm_hints.input    = True;
-        wm_hints.flags    = InputHint;
+        wm_hints.input   = True;
+        wm_hints.flags   = InputHint;
         XSetWMHints (display, window, &wm_hints);
 
 	/* Size hints */
-        x11_get_geometry(&hints.x, &hints.y, &width, &height,
-	          &hints.win_gravity, &hints.flags, type);
-	switch (type)
-	{
+	if (!sysdep_display_params.fullscreen)
+	  switch (type)
+	  {
 	    case X11_FIXED: /* fixed size */
 		hints.flags |= PSize | PMinSize | PMaxSize;
 		break;
@@ -458,17 +462,15 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 	    case X11_RESIZABLE: /* resizable */
 		hints.flags |= PSize;
 		break;
-	    case X11_FULLSCREEN: /* fullscreen */
-		hints.flags |= PMinSize|PMaxSize;
-		break;
-	}
+	  }
+        
 	hints.min_width  = hints.max_width  = hints.base_width  = width;
 	hints.min_height = hints.max_height = hints.base_height = height;
-        
+
         XSetWMNormalHints (display, window, &hints);
         
         /* Hack to get rid of window title bar */
-        if(type == X11_FULLSCREEN)
+        if(sysdep_display_params.fullscreen)
         {
                 Atom mwmatom;
                 MotifWmHints mwmhints;
@@ -500,9 +502,12 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
         XStoreName (display, window, sysdep_display_params.title);
 }
 
-void x11_get_geometry(int *x, int *y, unsigned int *width,
+static void x11_get_geometry(int *x, int *y, unsigned int *width,
   unsigned int *height, int *win_gravity, long *flags, int type)
 {
+  /* set aspect_ratio, do this early since this can change yarbsize */
+  mode_set_aspect_ratio((double)screen->width/screen->height);
+
   if (run_in_root_window)
   {
     *x = 0;
@@ -512,8 +517,9 @@ void x11_get_geometry(int *x, int *y, unsigned int *width,
     *win_gravity = NorthWestGravity;
     if (flags)
       *flags = 0;
+    sysdep_display_params.fullscreen = 0;
   }
-  else if (type == X11_FULLSCREEN)
+  else if (sysdep_display_params.fullscreen)
   {
     /*
      * Get the window size and location for a fullscreen display.  Normally
@@ -534,7 +540,7 @@ void x11_get_geometry(int *x, int *y, unsigned int *width,
     *height = screen->height;
     *win_gravity = NorthWestGravity;
     if (flags)
-      *flags = USPosition|USSize;
+      *flags = PMinSize|PMaxSize|USPosition|USSize;
 
 #ifdef HAVE_XINERAMA
     if (!XineramaIsActive(display) || xinerama_screen < 0) {
@@ -564,7 +570,15 @@ void x11_get_geometry(int *x, int *y, unsigned int *width,
     int i;
     XSizeHints hints;
     
-    if (type != X11_FIXED)
+    if (type == X11_FIXED)
+    {
+      *width  = sysdep_display_params.width * 
+        sysdep_display_params.widthscale;
+      *height = sysdep_display_params.yarbsize?
+        sysdep_display_params.yarbsize:
+        sysdep_display_params.height * sysdep_display_params.heightscale;
+    }
+    else
     {
       struct rc_option *option;
 

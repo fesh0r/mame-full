@@ -348,11 +348,11 @@ VisualGC LIBAPIENTRY findVisualGlX( Display *display,
 		    /**
 		     * Falling-Back the exact (min. requirement) parameters ..
 		     */
-		    if(!ownwin && !offscreen) {
+		    /* if(!ownwin && !offscreen) {
 		        *glCaps=_glCaps;
 			ownwin=1;
 			if(pOwnWin) *pOwnWin=ownwin;
-		    } else if(glCaps->stereo==STEREO_ON) {
+		    } else */ if(glCaps->stereo==STEREO_ON) {
 			glCaps->stereo=STEREO_OFF;
 		    } else if(glCaps->stencilBits>32) {
 		        glCaps->stencilBits=32;

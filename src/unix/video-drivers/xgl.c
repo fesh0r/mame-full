@@ -38,11 +38,9 @@ char *cabname;
 /* local vars */
 static GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
   1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, -1 };
-static XSetWindowAttributes window_attr;
 static GLXContext glContext=NULL;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
-static int window_type;
 
 struct rc_option xgl_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -100,96 +98,25 @@ int xgl_init(void)
    mouse and keyboard can't be setup before the display has. */
 int xgl_open_display(int reopen)
 {
-  char *glxfx;
-  int force_grab;
-  int ownwin = 1;
-  unsigned long winmask = 0;
-  Window parent_win = RootWindowOfScreen (screen);
-
-  /* set aspect_ratio, do this early since this can change yarbsize */
-  mode_set_aspect_ratio((double)screen->width/screen->height);
-
-  /* Determine window size, type, etc. If using 3Dfx */
-  if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
-  {
-    winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-    if(custom_window_width)
-    {
-      window_width  = custom_window_width;
-      window_height = custom_window_height;
-    }
-    else
-    {
-      window_width  = 640;
-      window_height = 480;
-    }
-    window_type = X11_FIXED; /* non resizable */
-    force_grab  = X11_FORCE_INPUT_GRAB; /* grab mouse and keyb */
-    run_in_root_window = 0;
-    sysdep_display_params.fullscreen = 1;
-  }
-  else if (run_in_root_window)
-  {
-    window_type = X11_FIXED; /* non resizable */
-    force_grab  = X11_NO_FORCED_GRAB; /* no grab */
-    ownwin      = 0;
-  }
-  else
-  {
-    if(sysdep_display_params.fullscreen)
-    {
-      winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
-                      CWColormap | CWDontPropagate | CWCursor;
-      window_type   = X11_FULLSCREEN; /* fullscreen */
-      force_grab    = X11_FORCE_MOUSE_GRAB; /* grab mouse */
-    }
-    else
-    {
-      if (root_window_id)
-        parent_win = root_window_id;
-      
-      winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-      if (cabview)
-        window_type = X11_RESIZABLE; /* resizable */
-      else
-        window_type = X11_RESIZABLE_ASPECT; /* resizable, keep aspect */
-      force_grab    = X11_NO_FORCED_GRAB;   /* no grab */
-    }
-  }
-
   if(!reopen)
   {
-    XEvent event;
     VisualGC vgc;
-    XVisualInfo *myvisual;
-    int x, y;
     
     fprintf(stderr, xgl_version_str);
 
-    x11_get_geometry(&x, &y, &window_width, &window_height,
-      &window_attr.win_gravity, NULL, window_type);
-
-    window_attr.background_pixel=0;
-    window_attr.border_pixel=WhitePixelOfScreen(screen);
-    window_attr.bit_gravity=ForgetGravity;
-    window_attr.backing_store=NotUseful;
-    window_attr.override_redirect=False;
-    window_attr.save_under=False;
-    window_attr.event_mask=0; 
-    window_attr.do_not_propagate_mask=0;
-    window_attr.colormap=0; /* done later, within findVisualGlX .. */
-    window_attr.cursor=None;
-    window = parent_win;
-
+    /* create a window */
+    if (x11_create_window(&window_width, &window_height,
+        cabview?X11_RESIZABLE:X11_RESIZABLE_ASPECT))
+      return 1;
+    
     vgc = findVisualGlX( display, RootWindowOfScreen (screen),
-                         &window, x, y, window_width, window_height, &glCaps, 
-  		       &ownwin, &window_attr, winmask,
-  		       NULL, 0, NULL, 
-  #ifdef GLDEBUG
+                       &window, 0, 0, window_width, window_height, &glCaps, 
+  		       NULL, NULL, 0, NULL, 0, NULL, 
+#ifdef GLDEBUG
   		       1);
-  #else
+#else
   		       0);
-  #endif
+#endif
 
     if(vgc.success==0)
     {
@@ -197,37 +124,20 @@ int xgl_open_display(int reopen)
   	return 1; 
     }
 
-    myvisual =vgc.visual;
     glContext=vgc.gc;
 
-    if (!window) {
-  	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
-  	return 1; 
-    }
-    
     if(!glContext) {
   	fprintf(stderr,"OSD ERROR: failed to create OpenGL context.\n");
   	return 1; 
     }
     
-    setGLCapabilities ( display, myvisual, &glCaps);
+    setGLCapabilities ( display, vgc.visual, &glCaps);
     
-    /* set the hints */
-    x11_set_window_hints(window_width, window_height, window_type);
-
-    if (!run_in_root_window)
-    {
-      /* Map and expose the window. */
-      XSelectInput(display, window, ExposureMask);
-      XMapRaised(display,window);
-      XClearWindow(display,window);
-      XWindowEvent(display,window,ExposureMask,&event);
-    }
-    
-    xinput_open(force_grab, 0);
+    xinput_open(0, 0);
   }
   else
-    x11_resize_window(&window_width, &window_height, window_type);
+    x11_resize_window(&window_width, &window_height,
+      cabview?X11_RESIZABLE:X11_RESIZABLE_ASPECT);
     
   return gl_open_display(reopen);
 }
@@ -251,7 +161,7 @@ void xgl_close_display (void)
 
    if(window)
    {
-     destroyOwnOverlayWin(display, &window, &window_attr);
+     XDestroyWindow(display, window);
      window = 0;
    }
 
@@ -287,20 +197,12 @@ const char *xgl_update_display(struct mame_bitmap *bitmap,
     if(cabview)
     {
       msg = "cabinet view on";
-      if(window_type == X11_RESIZABLE_ASPECT)
-      {
-        window_type = X11_RESIZABLE;
-        x11_set_window_hints(window_width, window_height, window_type);
-      }
+      x11_set_window_hints(X11_RESIZABLE);
     }
     else
     {
       msg = "cabinet view off";
-      if(window_type == X11_RESIZABLE)
-      {
-        window_type = X11_RESIZABLE_ASPECT;
-        x11_set_window_hints(window_width, window_height, window_type);
-      }
+      x11_set_window_hints(X11_RESIZABLE_ASPECT);
     }
   }
   

@@ -20,6 +20,7 @@ enum { XMAME_NULLDEVICE, XMAME_TRACKBALL, XMAME_JOYSTICK };
 enum { XINPUT_MOUSE_0, XINPUT_MOUSE_1, XINPUT_MOUSE_2, XINPUT_MOUSE_3,
        XINPUT_JOYSTICK_0, XINPUT_JOYSTICK_1, XINPUT_JOYSTICK_2, XINPUT_JOYSTICK_3,
        XINPUT_MAX_NUM_DEVICES };
+enum { X11_NO_FORCED_GRAB, X11_FORCE_MOUSE_GRAB, X11_FORCE_INPUT_GRAB };
 
 /* struct which keeps all info for a XInput-devices */
 typedef struct {
@@ -415,11 +416,17 @@ static void xinput_set_leds(int leds)
   }
 }
 
-int xinput_open(int force_grab, int event_mask)
+int xinput_open(int force_grab, int extra_event_mask)
 {
-  xinput_force_grab = force_grab;
   x11_exposed  = 1;
   xinput_focus = 1;
+  
+  if (force_grab)
+    xinput_force_grab = X11_FORCE_INPUT_GRAB;
+  else if (sysdep_display_params.fullscreen)
+    xinput_force_grab = X11_FORCE_MOUSE_GRAB;
+  else
+    xinput_force_grab = 0;
   
   /* we want to be notified of window closes */
   xinput_close_atom = XInternAtom(display, xinput_close_atom_name, 0);
@@ -465,9 +472,8 @@ int xinput_open(int force_grab, int event_mask)
     	XDefineCursor (display, window, xinput_normal_cursor);
 
     /* Select event mask */
-    event_mask |= FocusChangeMask | KeyPressMask | KeyReleaseMask |
-                  ButtonPressMask | ButtonReleaseMask;
-    XSelectInput (display, window, event_mask);
+    XSelectInput (display, window, FocusChangeMask | KeyPressMask |
+      KeyReleaseMask | ButtonPressMask | ButtonReleaseMask | extra_event_mask);
   }
 
   if ((xinput_force_grab == X11_FORCE_INPUT_GRAB) || xinput_grab_keyboard)

@@ -96,26 +96,20 @@ int x11_window_init(void)
    mouse and keyboard can't be setup before the display has. */
 int x11_window_open_display(int reopen)
 {
-        XGCValues xgcv;
-        int image_height, image_width, max_image_width, max_image_height;
-        char *scaled_buffer_ptr;
+        int needed_width, needed_height;
 
         /* set aspect_ratio, do this early since this can change yarbsize */
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
-        image_width  = window_width  = sysdep_display_params.width * 
+        needed_width  = sysdep_display_params.width * 
           sysdep_display_params.widthscale;
-        image_height = window_height = sysdep_display_params.yarbsize?
+        needed_height = sysdep_display_params.yarbsize?
           sysdep_display_params.yarbsize:
           sysdep_display_params.height * sysdep_display_params.heightscale;
-        max_image_width  = sysdep_display_params.widthscale *
-          sysdep_display_params.max_width;
-        max_image_height = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.max_height * sysdep_display_params.heightscale;
 
         if(!reopen)
         {
+          XGCValues xgcv;
           /* setup the sysdep_display_properties struct */
           sysdep_display_properties.max_width  = -1;
           sysdep_display_properties.max_height = -1;
@@ -126,28 +120,28 @@ int x11_window_open_display(int reopen)
           if (x11_create_window(&window_width, &window_height, X11_FIXED))
             return 1;
 
-          if ((image_width > window_width) || (image_height > window_height))
+          if ((needed_width > window_width) || (needed_height > window_height))
           {
             fprintf (stderr, "OSD ERROR: Window is to small: %dx%d, needed %dx%d\n",
-              image_width, image_height, window_width, window_height);
+              needed_width, needed_height, window_width, window_height);
             return 1;
           }
 
-          startx        = ((window_width  - image_width)  / 2) & ~3;
-          starty        = ((window_height - window_height) / 2) & ~3;
+          startx = ((window_width  - needed_width)  / 2) & ~3;
+          starty = ((window_height - window_height) / 2) & ~3;
 
           /* create gc */
           gc = XCreateGC (display, window, 0, &xgcv);
 
 	  /* open xinput */
-          xinput_open(X11_NO_FORCED_GRAB, ExposureMask);
+          xinput_open(0, ExposureMask);
         }
         else
         {
           sysdep_display_effect_close();
           
-          if ( (image_width  > image->width)  ||
-               (image_height > image->height) )
+          if ( (needed_width  > image->width)  ||
+               (needed_height > image->height) )
             x11_window_destroy_image();
           
           x11_resize_window(&window_width, &window_height, X11_FIXED);
@@ -156,6 +150,13 @@ int x11_window_open_display(int reopen)
         /* create and setup the image */
         if (!image)
         {
+          char *scaled_buffer_ptr;
+          int image_width  = sysdep_display_params.widthscale *
+            sysdep_display_params.max_width;
+          int image_height = sysdep_display_params.yarbsize?
+            sysdep_display_params.yarbsize:
+            sysdep_display_params.max_height * sysdep_display_params.heightscale;
+
 #ifdef USE_MITSHM        
           if (mit_shm_available && use_mit_shm)
             x11_window_update_method = X11_MITSHM;
@@ -177,8 +178,8 @@ int x11_window_open_display(int reopen)
                                         ZPixmap,
                                         NULL,
                                         &shm_info,
-                                        max_image_width,
-                                        max_image_height);
+                                        image_width,
+                                        image_height);
                         if (image)
                         {
                                 shm_info.readOnly = False;
@@ -235,7 +236,7 @@ int x11_window_open_display(int reopen)
 #endif
                 case X11_NORMAL:
                         scaled_buffer_ptr=malloc(((screen->root_depth <= 16)?
-                          2:4) * max_image_width * max_image_height);
+                          2:4) * image_width * image_height);
                         if (!scaled_buffer_ptr)
                         {
                                 fprintf (stderr, "Error: failed to allocate bitmap buffer.\n");
@@ -247,7 +248,7 @@ int x11_window_open_display(int reopen)
                                         ZPixmap,
                                         0,
                                         scaled_buffer_ptr,
-                                        max_image_width, max_image_height,
+                                        image_width, image_height,
                                         32, /* image_width always is a multiple of 4 */
                                         0);
 

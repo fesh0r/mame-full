@@ -233,16 +233,13 @@ int xv_init(void)
    mouse and keyboard can't be setup before the display has. */
 int xv_open_display(int reopen)
 {
-	XGCValues xgcv;
-        XvAttribute *attr;
 	unsigned int height, width;
-
-        /* set aspect_ratio, do this early since this can change yarbsize */
-        mode_set_aspect_ratio((double)screen->width/screen->height);
 
 	if (!reopen)
 	{
           int i, count;
+  	  XGCValues xgcv;
+          XvAttribute *attr;
 
 	  /* Initial settings of the sysdep_display_properties struct,
              the FindXvXXX fucntions will fill in the palette part */
@@ -254,10 +251,12 @@ int xv_open_display(int reopen)
 
 	  /* create a window */
 	  if (x11_create_window(&window_width, &window_height,
-	      sysdep_display_params.fullscreen?
-	      X11_FULLSCREEN:X11_RESIZABLE_ASPECT))
+	      X11_RESIZABLE_ASPECT))
             return 1;
           
+          /* create gc */
+          gc = XCreateGC (display, window, 0, &xgcv);
+
           fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use.\n");
           /* find a suitable format */
           switch(hwscale_force_yuv)
@@ -288,19 +287,14 @@ int xv_open_display(int reopen)
             break;
           }
 
-          /* create gc */
-          gc = XCreateGC (display, window, 0, &xgcv);
-
 	  /* open xinput */
-          xinput_open(sysdep_display_params.fullscreen?
-            X11_FORCE_MOUSE_GRAB:X11_NO_FORCED_GRAB, 0);
+          xinput_open(0, 0);
         }
         else
         {
           sysdep_display_effect_close();
           x11_resize_window(&window_width, &window_height,
-	    sysdep_display_params.fullscreen?
-	    X11_FULLSCREEN:X11_RESIZABLE_ASPECT);
+	    X11_RESIZABLE_ASPECT);
         }
         
         /* Now we have created the window we no longer need yarbsize,

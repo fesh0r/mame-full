@@ -11,8 +11,7 @@
 #endif
 
 enum { X11_WINDOW, X11_XV, X11_OPENGL, X11_GLIDE, X11_XIL, X11_DGA };
-enum { X11_FIXED, X11_RESIZABLE_ASPECT, X11_RESIZABLE, X11_FULLSCREEN };
-enum { X11_NO_FORCED_GRAB, X11_FORCE_MOUSE_GRAB, X11_FORCE_INPUT_GRAB };
+enum { X11_FIXED, X11_RESIZABLE_ASPECT, X11_RESIZABLE };
 
 extern struct rc_option x11_window_opts[];
 extern struct rc_option	x11_input_opts[];
@@ -62,7 +61,7 @@ EXTERN int devicebuttonmotion;
 void process_x11_joy_event(XEvent *event);
 
 /* xinput functions */
-int xinput_open(int force_grab, int event_mask);
+int xinput_open(int force_grab, int extra_event_mask);
 void xinput_close(void);
 void xinput_update(int keyb_leds, int flags);
 
@@ -75,22 +74,20 @@ void x11_resize_window(unsigned int *width, unsigned int *height, int type);
       set to these, else they are determined from sysdep_display_params. The
       aspect is kept to sysdep_display_params.aspect.
    2: Same as 1, but without any aspect constrains.
-   3: Fullscreen return width and height in width and height.
    
    Notes:
    1) If run_in_root_window is set then type gets ignored, and
       the width and height of/and the root window are returned. (Else ...)
-   2) If root_window_id is set and type is not fullscreen this
-      is used as the parent window instead of the root window. */
+   2) If sysdep_display_params.fullscreen is set a fullscreen window is
+      created. (Else ...)
+   3) If root_window_id is set it is used as the parent window instead of
+      the root window. */
 int x11_create_window(unsigned int *width, unsigned int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size
    1: Resizable, aspect is always kept to sysdep_display_params.aspect .
-   2: Resizable
-   3: Fullscreen */
-void x11_set_window_hints(unsigned int width, unsigned int height, int type);
-void x11_get_geometry(int *x, int *y, unsigned int *width,
-  unsigned int *height, int *win_gravity, long *flags, int type);
+   2: Resizable */
+void x11_set_window_hints(int type);
 
 /* Normal x11_window functions */
 int  x11_window_init(void);
