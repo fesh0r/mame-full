@@ -44,3 +44,6 @@ Source Changes:
 
 - Modified flopdrv.c to reset pDrive->id_index to zero when head is moved
   from track to track. [tim lindner]
+
+- CRC calculation of hard disk images has been disabled (bug #416).
+  [Raphael Nabet]
