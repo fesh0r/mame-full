@@ -26,6 +26,7 @@ extern void init_t1000hx(void)
 void pc_t1t_init_machine(void)
 {
 //	pc_keyboard_init();
+	pc_t1t_reset();
 	dma8237_reset(dma8237);
 }
 

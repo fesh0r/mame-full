@@ -49,9 +49,6 @@ static struct {
 
 	UINT8 bank;
 
-//	UINT8 border;
-//	UINT8 _2bpp_attr;
-
 	int pc_blink;
 	int pc_framecnt;
 
@@ -62,6 +59,13 @@ static struct {
    so are in graphics mode 2 or 4 of such banks distinquished
    by line */
 
+extern void pc_t1t_reset(void)
+{
+	videoram=NULL;
+	pcjr.bank=0;
+}
+
+
 /***************************************************************************
   Mark all text positions with attribute bit 7 set dirty
  ***************************************************************************/
@@ -69,6 +73,7 @@ void pc_t1t_blink_textcolors(int on)
 {
 	int i, offs, size;
 
+	if (!videoram) return;
 	if (pcjr.pc_blink == on) return;
 
     pcjr.pc_blink = on;
