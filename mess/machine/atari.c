@@ -303,15 +303,19 @@ int a5200_rom_init(int id)
 		{
 			size = osd_fread(file, &mem[0x4000], 0x8000);
 			osd_fclose(file);
-			/* move it into upper memory */
-			if (size < 0x8000)
+			if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
+			// mirroring of smaller cartridges
+			if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);
+			if (size <= 0x2000) memcpy(mem+0x8000, mem+0xa000, 0x2000);
+			if (size <= 0x4000)
 			{
-				memcpy(&mem[0x8000], &mem[0x6000], 0x1000);
-				memcpy(&mem[0xa000], &mem[0x6000], 0x1000);
-				memcpy(&mem[0x9000], &mem[0x7000], 0x1000);
-				memcpy(&mem[0xb000], &mem[0x7000], 0x1000);
-				memcpy(&mem[0x6000], &mem[0x4000], 0x1000);
-				memcpy(&mem[0x7000], &mem[0x5000], 0x1000);
+			    const char *info;
+			    memcpy(&mem[0x4000], &mem[0x8000], 0x4000);
+			    info=device_extrainfo(IO_CARTSLOT, id);
+			    if (info!=NULL && strcmp(info, "A13MIRRORING")==0) {
+				memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
+				memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
+			    }
 			}
 			logerror("%s loaded cartridge '%s' size %dK\n",
 				Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) , size/1024);
