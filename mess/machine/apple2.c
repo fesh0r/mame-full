@@ -1062,7 +1062,7 @@ READ8_HANDLER ( apple2_c06x_r )
 
 READ8_HANDLER ( apple2_c07x_r )
 {
-	double calibration = TIME_IN_USEC(16.0);
+	double calibration = TIME_IN_USEC(12.0);
 
 	if (offset == 0)
 	{
