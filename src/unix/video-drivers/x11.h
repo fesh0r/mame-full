@@ -49,6 +49,16 @@ void process_x11_joy_event(XEvent *event);
 int xinput_open(int force_grab, int event_mask);
 void xinput_close(void);
 void xinput_check_hotkeys(void);
+/* Create a window, type can be:
+   0: Fixed size of width and height
+   1: Resizable initial size is width and height
+   2: Fullscreen return width and height in width and height */
+int x11_create_window(int *width, int *height, int type);
+/* Set the hints for a window, window-type can be:
+   0: Fixed size of width and height
+   1: Resizable initial size is width and height
+   2: Fullscreen of width and height */
+void x11_set_window_hints(int width, int height, int type);
 
 #ifdef x11
 

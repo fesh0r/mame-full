@@ -50,6 +50,9 @@ static int xinput_use_winkeys = 0;
 static int xinput_grab_mouse = 0;
 static int xinput_grab_keyboard = 0;
 static int xinput_show_cursor = 1;
+static XSizeHints x11_init_hints;
+/* not static because xgl needs these for its own window creation */
+int root_window_id; /* root window id (for swallowing the mame window) */
 
 /* private variables */
 static int xinput_force_grab = 0;
@@ -67,10 +70,14 @@ static Cursor xinput_normal_cursor;
 static Cursor xinput_invisible_cursor;
 
 static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
+static int x11_parse_geom(struct rc_option *option, const char *arg, int priority);
 static void xinput_set_leds(int leds);
 
 struct rc_option x11_input_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the location of the window" },
+	{ "root_window_id", "rid", rc_int, &root_window_id,
+ "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
 	{ "X11-input related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "grabmouse", "gm", rc_bool, &xinput_grab_mouse, "0", 0, 0, NULL, "Enable/disable mousegrabbing (also alt + pagedown)" },
 	{ "grabkeyboard", "gkb", rc_bool, &xinput_grab_keyboard, "0", 0, 0, NULL, "Enable/disable keyboardgrabbing (also alt + pageup)" },
@@ -97,6 +104,15 @@ struct rc_option x11_input_opts[] = {
 #endif
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
+
+/* HACK - HACK - HACK for fullscreen */
+#define MWM_HINTS_DECORATIONS   2
+typedef struct {
+	long flags;
+	long functions;
+	long decorations;
+	long input_mode;
+} MotifWmHints;
 
 /*
  * Parse keyboard (and other) events
@@ -271,6 +287,49 @@ static int xinput_mapkey(struct rc_option *option, const char *arg, int priority
 		fprintf(stderr,"Invalid keymapping %s. Ignoring...\n", arg);
 	}
 	return OSD_NOT_OK;
+}
+
+static int x11_parse_geom(struct rc_option *option, const char *arg, int priority)
+{
+	int i,x,y;
+	unsigned int u;
+	
+	if (strlen(arg) == 0)
+	{
+	   memset(&x11_init_hints, 0, sizeof(x11_init_hints));
+	}
+	else
+	{
+		i = XParseGeometry(arg, &x, &y, &u, &u);
+		if (i & (XValue|YValue))
+		{
+		  x11_init_hints.x = x;
+		  x11_init_hints.y = y;
+		  switch (i& (XNegative|YNegative))
+		  {
+		     case 0:
+		        x11_init_hints.win_gravity = NorthWestGravity;
+		        break;
+		     case YNegative:
+		        x11_init_hints.win_gravity = SouthWestGravity;
+		        break;
+		     case XNegative:
+		        x11_init_hints.win_gravity = NorthEastGravity;
+		        break;		     
+		     case (YNegative|XNegative):
+		        x11_init_hints.win_gravity = SouthEastGravity;
+		        break;
+		  }
+		  x11_init_hints.flags = PPosition | PWinGravity;
+		}
+		else
+		{
+		  /* stderr_file isn't defined yet when we're called. */
+		  fprintf(stderr,"Invalid geometry: %s.\n", arg);
+		  return 1;
+		}
+	}
+	return 0;
 }
 
 void sysdep_mouse_poll(void)
@@ -519,6 +578,139 @@ void xinput_check_hotkeys(void)
     }
   }
 }
+
+/* Really not input related, but just like the input code identical for all
+   X11 using display drivers, so put it in here for now */
+   
+/* Create a window, type can be:
+   0: Fixed size of width and height
+   1: Resizable initial size is width and height
+   2: Fullscreen return width and height in width and height */
+int x11_create_window(int *width, int *height, int type)
+{
+	XSetWindowAttributes winattr;
+	XEvent event;
+	int x=0,y=0;
+	Window root = RootWindowOfScreen (screen);
+	
+	switch (type)
+	{
+	    case 0: /* fixed size */
+	    case 1: /* resizable */
+	        x = x11_init_hints.x;
+	        y = x11_init_hints.y;
+	        if (root_window_id)
+	           root = root_window_id;
+		break;
+	    case 2: /* fullscreen */
+		*width  = screen->width;
+		*height = screen->height;
+		break;
+	}
+
+        /* Create and setup the window. No buttons, no fancy stuff. */
+        winattr.background_pixel  = BlackPixelOfScreen (screen);
+        winattr.border_pixel      = WhitePixelOfScreen (screen);
+        winattr.bit_gravity       = ForgetGravity;
+        winattr.win_gravity       = x11_init_hints.win_gravity;
+        winattr.backing_store     = NotUseful;
+        winattr.override_redirect = False;
+        winattr.save_under        = False;
+        winattr.event_mask        = 0;
+        winattr.do_not_propagate_mask = 0;
+        winattr.colormap          = DefaultColormapOfScreen (screen);
+        winattr.cursor            = None;
+        
+        window = XCreateWindow(display, root, x, y, *width, *height, 0,
+			screen->root_depth, InputOutput, screen->root_visual,
+                        (CWBorderPixel | CWBackPixel | CWBitGravity |
+                         CWWinGravity | CWBackingStore |
+                         CWOverrideRedirect | CWSaveUnder | CWEventMask |
+                         CWDontPropagate | CWColormap | CWCursor),
+                        &winattr);
+        if (!window)
+        {
+                fprintf (stderr_file, "OSD ERROR: failed in XCreateWindow().\n");
+                return 1;
+        }
+        
+        /* set the hints */
+        x11_set_window_hints(*width, *height, type);
+        
+        XSelectInput (display, window, ExposureMask);
+        XMapRaised (display, window);
+        XClearWindow (display, window);
+        XWindowEvent (display, window, ExposureMask, &event);
+        
+        return 0;
+}
+
+/* Set the hints for a window, window-type can be:
+   0: Fixed size of width and height
+   1: Resizable initial size is width and height
+   2: Fullscreen of width and height */
+void x11_set_window_hints(int width, int height, int type)
+{
+        XWMHints wm_hints;
+	XSizeHints hints = x11_init_hints;
+
+	/* WM hints */
+        wm_hints.input    = TRUE;
+        wm_hints.flags    = InputHint;
+        XSetWMHints (display, window, &wm_hints);
+
+	/* Size hints */
+	switch (type)
+	{
+	    case 0: /* fixed size */
+		hints.flags |= PSize | PMinSize | PMaxSize;
+		break;
+	    case 1: /* resizable */
+		hints.flags |= PSize;
+		break;
+	    case 2: /* fullscreen */
+		hints.x = hints.y = 0;
+		hints.flags = PMinSize|PMaxSize|USPosition|USSize;
+		break;
+	}
+        hints.min_width  = hints.max_width  = hints.base_width  = width;
+        hints.min_height = hints.max_height = hints.base_height = height;
+        
+        XSetWMNormalHints (display, window, &hints);
+        
+        /* Hack to get rid of window title bar */
+        if(type == 2)
+        {
+                Atom mwmatom;
+                MotifWmHints mwmhints;
+                mwmhints.flags=MWM_HINTS_DECORATIONS;
+                mwmhints.decorations=0;
+                mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
+
+                XChangeProperty(display,window,mwmatom,mwmatom,32,
+                                PropModeReplace,(unsigned char *)&mwmhints,4);
+        }
+
+#if defined(__sgi)
+{
+	/* Needed for setting the application class */
+	XClassHint class_hints = { NAME, NAME, };
+
+        /* Force first resource class char to be uppercase */
+        class_hints.res_class[0] &= 0xDF;
+        /*
+         * Set the application class (WM_CLASS) so that 4Dwm can display
+         * the appropriate pixmap when the application is iconified
+         */
+        XSetClassHint(display, window, &class_hints);
+        /* Use a simpler name for the icon */
+        XSetIconName(display, window, NAME);
+}
+#endif
+        
+        XStoreName (display, window, title);
+}
+
 
 /*
  * X-Mame XInput trackball code

@@ -36,16 +36,11 @@
 #include "xmame.h"
 #include "sysdep/sysdep_display.h"
 
+/* from xinput.c */
+extern int root_window_id;
+
 static Cursor        cursor;
 static XVisualInfo   *myvisual;
-
-typedef struct {
-#define MWM_HINTS_DECORATIONS   2
-  long flags;
-  long functions;
-  long decorations;
-  long input_mode;
-} MotifWmHints;
 
 int winwidth = 0;
 int winheight = 0;
@@ -99,7 +94,7 @@ struct rc_option display_opts[] = {
      "1",		0,			0,		NULL,
      "Enable/disable alphablending if available (default: true)" },
    { "glantialias",	"glaa",			rc_bool,	&antialias,
-     "1",		0,			0,		NULL,
+     "0",		0,			0,		NULL,
      "Enable/disable antialiasing (default: true)" },
    { "gllibname",	"gllib",		rc_string,	&libGLName,
      "libGL.so",	0,			0,		NULL,
@@ -183,11 +178,7 @@ int sysdep_create_display(int depth)
 {
   int 		myscreen;
   XEvent	event;
-  XSizeHints 	hints;
-  XWMHints 	wm_hints;
-  MotifWmHints	mwmhints;
   unsigned long winmask;
-  Atom mwmatom;
   char *glxfx;
   VisualGC vgc;
   int vw, vh;
@@ -220,7 +211,6 @@ int sysdep_create_display(int depth)
 	winheight     = screen->height;
 	winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
 	                CWColormap | CWDontPropagate | CWCursor;
-  	hints.flags   = PMinSize | PMaxSize | USPosition | USSize;
   	force_grab    = 1;
   } else {
         winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
@@ -234,10 +224,7 @@ int sysdep_create_display(int depth)
                     winwidth  = visual_height*heightscale;
                     winheight = visual_width*widthscale;
           }
-  	  hints.flags   = PSize;
         }
-        else
-          hints.flags   = PMinSize | PMaxSize;
   }
 
   window_attr.background_pixel=0;
@@ -260,7 +247,10 @@ int sysdep_create_display(int depth)
   glCaps.buffer   =(doublebuffer>0)?BUFFER_DOUBLE:BUFFER_SINGLE;
   glCaps.gl_supported = 1;
 
-  window = RootWindow(display,DefaultScreen( display ));
+  if (root_window_id)
+    window = root_window_id;
+  else
+    window = DefaultRootWindow(display);
   vgc = findVisualGlX( display, window,
                        &window, winwidth, winheight, &glCaps, 
 		       &ownwin, &window_attr, winmask,
@@ -294,28 +284,9 @@ int sysdep_create_display(int depth)
 
   alphablending= (glCaps.alphaBits>0)?1:0;
   doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
-
-  hints.min_width  = hints.max_width  = hints.base_width  = winwidth;
-  hints.min_height = hints.max_height = hints.base_height = winheight;
   
-  wm_hints.input=TRUE;
-  wm_hints.flags=InputHint;
-  
-  XSetWMHints(display,window,&wm_hints);
-  XSetWMNormalHints(display,window,&hints);
-
-  XStoreName(display,window,title);
-  
-  /* Hack to get rid of window title bar */
-  if(fullscreen) 
-  {
-	mwmhints.flags=MWM_HINTS_DECORATIONS;
-	mwmhints.decorations=0;
-	mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
-  
-	XChangeProperty(display,window,mwmatom,mwmatom,32,
-			PropModeReplace,(unsigned char *)&mwmhints,4);
-  }
+  /* set the hints */
+  x11_set_window_hints(winwidth, winheight, fullscreen? 2:(customSize? 0:1));
 	
   /* Map and expose the window. */
   XSelectInput(display, window, ExposureMask);
@@ -325,13 +296,15 @@ int sysdep_create_display(int depth)
   
   xinput_open(force_grab, 0);
   
-  mode_clip_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
   if (!fullscreen && !cabview && !customSize)
   {
+     mode_stretch_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
      XResizeWindow(display, window, vw, vh);
      winwidth  = vw;
      winheight = vh;
   }
+  else
+     mode_clip_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
 
   if (InitVScreen(vw, vh))
 	return OSD_NOT_OK; 

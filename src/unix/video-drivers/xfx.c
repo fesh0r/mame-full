@@ -26,16 +26,13 @@
 int  InitVScreen(void);
 void CloseVScreen(void);
 int  InitGlide(void);
+void ExitGlide(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
 
 extern int fxwidth;
 extern int fxheight;
 extern struct rc_option fx_opts[];
-
-static Cursor        cursor;
-static XVisualInfo   myvisual;
-static Colormap      colormap;
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -50,14 +47,6 @@ struct rc_option display_opts[] = {
      NULL }
 };
 
-typedef struct {
-#define MWM_HINTS_DECORATIONS   2
-  long flags;
-  long functions;
-  long decorations;
-  long input_mode;
-} MotifWmHints;
-
 int sysdep_init(void)
 {
   fprintf(stderr,
@@ -65,6 +54,7 @@ int sysdep_init(void)
   
   /* Open the display. */
   display=XOpenDisplay(NULL);
+  screen=DefaultScreenOfDisplay(display);
 
   if(!display) {
 	fprintf (stderr,"OSD ERROR: failed to open the display.\n");
@@ -76,6 +66,7 @@ int sysdep_init(void)
 
 void sysdep_close(void)
 {
+   ExitGlide();
    XCloseDisplay(display);
 }
 
@@ -84,125 +75,10 @@ void sysdep_close(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
-  XSetWindowAttributes winattr;
-  int 		 myscreen;
-  XEvent	 event;
-  XSizeHints 	 hints;
-  XWMHints 	 wm_hints;
-  MotifWmHints mwmhints;
-  Atom mwmatom;
-  
-  screen=DefaultScreenOfDisplay(display);
-  myscreen=DefaultScreen(display);
-  cursor=XCreateFontCursor(display,XC_trek);
-  
-  if(!XMatchVisualInfo(display,myscreen,8,PseudoColor,&myvisual)) {
-	fprintf(stderr,"8bit depth PseudoColor X-Visual not available :-( \n");
-	/* test for a 8bpp environment */
-	if      (XMatchVisualInfo(display,myscreen,8,TrueColor,&myvisual))
-	  fprintf(stderr,"Using 8bpp TrueColor X-Visual Resource\n");
-	/* test for a 15bpp environment */
-	else if (XMatchVisualInfo(display,myscreen,15,TrueColor,&myvisual))
-	  fprintf(stderr,"Using 15bpp TrueColor X-Visual Resource\n");
-	/* test for a 16bpp environment */
-	else if (XMatchVisualInfo(display,myscreen,16,TrueColor,&myvisual))
-	  fprintf(stderr,"Using 16bpp TrueColor X-Visual Resource\n");
-	/* test for a 24bpp environment */
-	else if (XMatchVisualInfo(display,myscreen,24,TrueColor,&myvisual))
-	  fprintf(stderr,"Using 24bpp TrueColor X-Visual Resource\n");
-	/* test for a 32bpp environment */
-	else if (XMatchVisualInfo(display,myscreen,32,TrueColor,&myvisual))
-	  fprintf(stderr,"Using 32bpp TrueColor X-Visual Resource\n");
-	/* if arrives here means an error :-( */
-	else
-	  {
-		fprintf(stderr,"Cannot find any supported X-Visual resource\n");
-		sysdep_display_close(); /* this will clean up for us */
-		return OSD_NOT_OK; 
-	  }
-  } else fprintf(stderr,"Using 8bpp PseudoColor Visual. Good!\n");
-
-  colormap=XCreateColormap(display,
-						   RootWindow(display,myvisual.screen),
-						   myvisual.visual,AllocNone);
-
-  winattr.background_pixel=0;
-  winattr.border_pixel=WhitePixelOfScreen(screen);
-  winattr.bit_gravity=ForgetGravity;
-  winattr.win_gravity=NorthWestGravity;
-  winattr.backing_store=NotUseful;
-  winattr.override_redirect=False;
-  winattr.save_under=False;
-  winattr.event_mask=0;
-  winattr.do_not_propagate_mask=0;
-  winattr.colormap=colormap;
-  winattr.cursor=None;
-
-  window=XCreateWindow(display,RootWindowOfScreen(screen),0,0,fxwidth,fxheight,
-					   0,myvisual.depth,
-					   InputOutput,myvisual.visual,
-					   CWBorderPixel | CWBackPixel |
-					   CWEventMask | CWDontPropagate |
-					   CWColormap | CWCursor,&winattr);
-  
-  if (!window) {
-	fprintf(stderr,"OSD ERROR: failed in XCreateWindow().\n");
-	sysdep_display_close();
-	return OSD_NOT_OK; 
-  }
-  
-  /*  Placement hints etc. */
-
-  hints.flags=PMinSize|PMaxSize|USPosition|USSize;
-  
-  hints.min_width=hints.max_width=hints.base_width=screen->width;
-  hints.min_height=hints.max_height=hints.base_height=screen->height;
-
-  hints.x=hints.y=0;
-  
-  wm_hints.input=TRUE;
-  wm_hints.flags=InputHint;
-  
-  XSetWMHints(display,window,&wm_hints);
-  XSetWMNormalHints(display,window,&hints);
-  XStoreName(display,window,title);
-  
-  XDefineCursor(display,window,cursor);
-
-  /* Hack to get rid of window title bar */
-  
-  mwmhints.flags=MWM_HINTS_DECORATIONS;
-  mwmhints.decorations=0;
-  mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
-  
-  XChangeProperty(display,window,mwmatom,mwmatom,32,
-				  PropModeReplace,(unsigned char *)&mwmhints,4);
-  
-  /* Map and expose the window. */
-
-	/* grab the pointer and query MotionNotify events */
-
-	XSelectInput(display, 
-				 window, 
-				 FocusChangeMask   | ExposureMask | 
-				 KeyPressMask      | KeyReleaseMask | 
-				 EnterWindowMask   | LeaveWindowMask |
-				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask
-				 );
-	
-	XGrabPointer(display,
-				 window, /* RootWindow(display,DefaultScreen(display)), */
-				 False,
-				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask | 
-				 EnterWindowMask   | LeaveWindowMask ,
-				 GrabModeAsync, GrabModeAsync,
-				 None, cursor, CurrentTime );
-  
-  XMapRaised(display,window);
-  XClearWindow(display,window);
-  XWindowEvent(display,window,ExposureMask,&event);
+  if (x11_create_window(&fxwidth, &fxheight, 0))
+    return 1;
+    
+  xinput_open(2, 0);
   
   if (InitVScreen() != OSD_OK)
      return OSD_NOT_OK;
@@ -221,15 +97,14 @@ void sysdep_display_close (void)
 {
    VScreenRestoreSignals();
 
-   XFreeColormap(display, colormap);
-     
+   CloseVScreen();  /* Shut down glide stuff */
+   
+   xinput_close();
+
    if(window) {
-     /* ungrab the pointer */
-
-     XUngrabPointer(display,CurrentTime);
-
-     CloseVScreen();  /* Shut down glide stuff */
+     XDestroyWindow(display, window);
+     window = 0;
    }
 
-   XSync(display,False); /* send all events to sync; */
+   XSync(display, True); /* send all events to sync; */
 }

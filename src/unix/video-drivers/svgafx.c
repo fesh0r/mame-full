@@ -21,7 +21,7 @@ void CloseVScreen(void);
 void VScreenCatchSignals(void);
 void VScreenRestoreSignals(void);
 int  InitGlide(void);
-int  SetResolution(struct rc_option *option, const char *arg, int priority);
+void ExitGlide(void);
 
 extern struct rc_option fx_opts[];
 
@@ -40,10 +40,13 @@ int sysdep_init(void)
    fprintf(stderr,
       "info: using FXmame v0.5 driver for xmame, written by Mike Oliphant\n");
    
+   /* do this before calling vga_init, since this might need root rights */
    if (InitGlide()!=OSD_OK)
       return OSD_NOT_OK;
+   
    if (vga_init())
       return OSD_NOT_OK;
+   
    if (svga_input_init())
       return OSD_NOT_OK;
    
@@ -53,6 +56,7 @@ int sysdep_init(void)
 void sysdep_close(void)
 {
    svga_input_exit();
+   ExitGlide();
 }
 
 static void release_function(void)
@@ -70,9 +74,8 @@ static void acquire_function(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_create_display(int depth)
 {
-  /* do this first since it seems todo some stuff
-     which messes up svgalib when called after
-     vga_setmode */
+  /* do this first since it seems todo some stuff which messes up svgalib
+     when called after vga_setmode */
   if (InitVScreen() != OSD_OK)
      return OSD_NOT_OK;
    
@@ -104,8 +107,7 @@ void sysdep_display_close(void)
    /* close svgalib */
    vga_setmode(TEXT);
 
-   /* do this last since it seems todo some stuff
-      which messes up svgalib when done before after
-      vga_setmode(TEXT) */
+   /* do this last since it seems todo some stuff which messes up svgalib
+      when done before vga_setmode(TEXT) */
    CloseVScreen();
 }

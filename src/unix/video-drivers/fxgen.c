@@ -25,7 +25,7 @@
 #include "sysdep/sysdep_display.h"
 
 void CalcPoint(GrVertex *vert,int x,int y);
-void InitTextures(void);
+int  InitTextures(void);
 int  InitVScreen(void);
 void CloseVScreen(void);
 void UpdateTexture(struct mame_bitmap *bitmap);
@@ -42,13 +42,12 @@ int vscrntly;
 int vscrnwidth;
 int vscrnheight;
 
-static int black;
-static int white;
 static GrScreenResolution_t Gr_resolution = GR_RESOLUTION_640x480;
 static char version[80];
 static GrTexInfo texinfo;
 static int bilinear=1; /* Do binlinear filtering? */
 static const int texsize=256;
+static GrContext_t context=0;
 
 /* The squares that are tiled to make up the game screen polygon */
 
@@ -73,6 +72,7 @@ static struct sigaction orig_sigaction[32];
 static struct sigaction vscreen_sa;  
 static int signals_to_catch[] = { SIGHUP, SIGINT, SIGQUIT, SIGILL, SIGABRT,
    SIGFPE, SIGKILL, SIGSEGV, SIGPIPE, SIGTERM, SIGBUS, -1 };
+static int signals_caught = 0;
 
 struct rc_option fx_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -129,6 +129,11 @@ int InitGlide(void)
   return OSD_OK;
 }
 
+void ExitGlide(void)
+{
+  grGlideShutdown();
+}
+
 static void VScreenSignalHandler(int signo)
 {
   grEnablePassThru();
@@ -146,20 +151,25 @@ void VScreenCatchSignals(void)
   {
      sigaction(signals_to_catch[i], &vscreen_sa, &(orig_sigaction[signals_to_catch[i]]));
   }
+  signals_caught = 1;
 }
 
 void VScreenRestoreSignals(void)
 {
   int i;
   
+  if (!signals_caught)
+     return;
+  
   /* restore signal handlers */
   for (i=0; signals_to_catch[i] != -1; i++)
   {
      sigaction(signals_to_catch[i], &(orig_sigaction[signals_to_catch[i]]), NULL);
   }
+  signals_caught = 0;
 }
 
-void InitTextures(void)
+int InitTextures(void)
 {
   int i,j,x=0,y=0;
   struct TexSquare *tsq;
@@ -238,7 +248,7 @@ void InitTextures(void)
   texdestheight=vscrnheight*texpercy;
 
   texgrid=(struct TexSquare *)
-	malloc(texnumx*texnumy*sizeof(struct TexSquare));
+	calloc(texnumx*texnumy, sizeof(struct TexSquare));
   memaddr=grTexMinAddress(GR_TMU0);
   
   for(i=0;i<texnumy;i++) {
@@ -369,9 +379,11 @@ void InitTextures(void)
           CalcPoint(&(tsq->vtxD), x  , y+1);
 	
           /* Initialize the texture memory */
-          tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture));
+          if (!(tsq->texture=calloc(texsize*texsize, sizeof *(tsq->texture))))
+             return 1;
         }
   }
+  return 0;
 }
 
 typedef struct {
@@ -444,8 +456,8 @@ int InitVScreen(void)
   
   grSstSelect(0);
 
-  if(!grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
-     GR_ORIGIN_LOWER_LEFT,2,1))
+  if(!(context = grSstWinOpen(0,Gr_resolution,GR_REFRESH_60Hz,GR_COLORFORMAT_ABGR,
+     GR_ORIGIN_LOWER_LEFT,2,1)))
   {
      fprintf(stderr_file, "error opening Glide window, do you have enough memory on your 3dfx for the selected mode?\n");
      return OSD_NOT_OK;
@@ -478,12 +490,7 @@ int InitVScreen(void)
       break;
   }
    
-  black = video_colors_used -2;
-  white = video_colors_used -1;
-
-  InitTextures();
-
-  return OSD_OK;
+  return InitTextures();
 }
 
 /* Close down the virtual screen */
@@ -497,7 +504,8 @@ void CloseVScreen(void)
   if(texgrid) {
 	for(y=0;y<texnumy;y++) {
 	  for(x=0;x<texnumx;x++) {
-		free(texgrid[y*texnumx+x].texture);
+            if (texgrid[y*texnumx+x].texture)
+	      free(texgrid[y*texnumx+x].texture);
 	  }
 	}
 	
@@ -505,7 +513,11 @@ void CloseVScreen(void)
 	texgrid = NULL;
   }
 
-  grGlideShutdown();
+  if (context)
+  {
+    grSstWinClose(context);
+    context = 0;
+  }
 }
 
 

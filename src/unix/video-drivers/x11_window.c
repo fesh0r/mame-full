@@ -92,14 +92,6 @@ static Visual hwscale_visual;
 #define FOURCC_I420 0x30323449
 #define FOURCC_UYVY 0x59565955
 
-/* HACK - HACK - HACK for fullscreen */
-#define MWM_HINTS_DECORATIONS   2
-typedef struct {
-	long flags;
-	long functions;
-	long decorations;
-	long input_mode;
-} MotifWmHints;
 #endif
 
 #ifdef USE_XV
@@ -122,8 +114,6 @@ static int x11_window_update_method;
 static int startx = 0;
 static int starty = 0;
 static int use_xsync = 0;
-static int root_window_id; /* root window id (for swallowing the mame window) */
-static char *geometry = NULL;
 static double x11_resolution_aspect=0.0;
 
 struct rc_option x11_window_opts[] = {
@@ -144,18 +134,9 @@ struct rc_option x11_window_opts[] = {
 #endif
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
-	{ "root_window_id", "rid", rc_int, &root_window_id,
- "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
-	{ "geometry", "geo", rc_string, &geometry, "640x480", 0, 0, NULL, "Specify the location of the window" },
 	{ NULL, NULL, rc_end, NULL, NULL, 0, 0, NULL, NULL }
 };
 
-#if defined(__sgi)
-/* Needed for setting the application class */
-static XClassHint class_hints = {
-  NAME, NAME,
-};
-#endif
 
 /*
  * Create a display screen, or window, large enough to accomodate a bitmap
@@ -321,89 +302,6 @@ void ClearYV12()
 }
 #endif
 
-static int x11_window_create_window(XSizeHints *hints, int width, int height)
-{
-        XWMHints wm_hints;
-	XSetWindowAttributes winattr;
-	XEvent event;
-
-        /* Create and setup the window. No buttons, no fancy stuff. */
-        winattr.background_pixel  = BlackPixelOfScreen (screen);
-        winattr.border_pixel      = WhitePixelOfScreen (screen);
-        winattr.bit_gravity       = ForgetGravity;
-        winattr.win_gravity       = hints->win_gravity;
-        winattr.backing_store     = NotUseful;
-        winattr.override_redirect = False;
-        winattr.save_under        = False;
-        winattr.event_mask        = 0;
-        winattr.do_not_propagate_mask = 0;
-        winattr.colormap          = DefaultColormapOfScreen (screen);
-        winattr.cursor            = None;
-        
-        if (root_window_id == 0)
-        {
-                root_window_id = RootWindowOfScreen (screen);
-        }
-        window = XCreateWindow (display, root_window_id, hints->x, hints->y,
-                        width, height,
-                        0, screen->root_depth,
-                        InputOutput, screen->root_visual,
-                        (CWBorderPixel | CWBackPixel | CWBitGravity |
-                         CWWinGravity | CWBackingStore |
-                         CWOverrideRedirect | CWSaveUnder | CWEventMask |
-                         CWDontPropagate | CWColormap | CWCursor),
-                        &winattr);
-        if (!window)
-        {
-                fprintf (stderr_file, "OSD ERROR: failed in XCreateWindow().\n");
-                return 1;
-        }
-        
-        wm_hints.input    = TRUE;
-        wm_hints.flags    = InputHint;
-        hints->min_width  = hints->max_width  = hints->base_width  = width;
-        hints->min_height = hints->max_height = hints->base_height = height;
-        
-        XSetWMHints (display, window, &wm_hints);
-        XSetWMNormalHints (display, window, hints);
-        
-#ifdef USE_HWSCALE
-        /* Hack to get rid of window title bar */
-        if(use_hwscale && hwscale_fullscreen)
-        {
-                Atom mwmatom;
-                MotifWmHints mwmhints;
-                mwmhints.flags=MWM_HINTS_DECORATIONS;
-                mwmhints.decorations=0;
-                mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
-
-                XChangeProperty(display,window,mwmatom,mwmatom,32,
-                                PropModeReplace,(unsigned char *)&mwmhints,4);
-        }
-#endif
-
-#if defined(__sgi)
-        /* Force first resource class char to be uppercase */
-        class_hints.res_class[0] &= 0xDF;
-        /*
-         * Set the application class (WM_CLASS) so that 4Dwm can display
-         * the appropriate pixmap when the application is iconified
-         */
-        XSetClassHint(display, window, &class_hints);
-        /* Use a simpler name for the icon */
-        XSetIconName(display, window, NAME);
-#endif
-        
-        XStoreName (display, window, title);
-        
-        XSelectInput (display, window, ExposureMask);
-        XMapRaised (display, window);
-        XClearWindow (display, window);
-        XWindowEvent (display, window, ExposureMask, &event);
-        
-        return 0;
-}
-
 /* This name doesn't really cover this function, since it also sets up mouse
    and keyboard. This is done over here, since on most display targets the
    mouse and keyboard can't be setup before the display has. */
@@ -411,10 +309,8 @@ int x11_window_create_display (int bitmap_depth)
 {
         Visual *xvisual;
 	XGCValues xgcv;
-	XSizeHints hints;
-	int geom_width, geom_height;
-	int image_height;
 	int i;
+	int image_height;
 	int window_width, window_height;
 	int event_mask = 0;
 	int dest_depth;
@@ -554,18 +450,8 @@ int x11_window_create_display (int bitmap_depth)
 	}
 	else
 	{
-		/*  Placement hints etc. */
-		hints.flags = PSize | PMinSize | PMaxSize;
-		hints.x = hints.y = 0;
-		hints.win_gravity = NorthWestGravity;
-
-		i = XWMGeometry(display, DefaultScreen(display), geometry, NULL, 0, &hints, &hints.x,
-				&hints.y, &geom_width, &geom_height, &hints.win_gravity);
-		if ((i&XValue) && (i&YValue))
-			hints.flags |= PPosition | PWinGravity;
-                
                 /* create the actual window */
-                if (x11_window_create_window(&hints, window_width, window_height))
+                if (x11_create_window(&window_width, &window_height, 0))
                         return 1;
 	}
 
@@ -647,7 +533,6 @@ int x11_window_create_display (int bitmap_depth)
                         /* if use_xv is still set we've found a suitable format */
                         if (use_xv)
                         {
-                                int i;
                                 int count;
                                 XvAttribute *attr;
 
@@ -888,9 +773,7 @@ int x11_window_create_display (int bitmap_depth)
 		if (use_xil)
 		{
 			event_mask  = StructureNotifyMask;
-			hints.flags = PSize;
-
-                        XSetWMNormalHints (display, window, &hints);
+			x11_set_window_hints(window_width, window_height, 1);
 		}
 #endif
 #ifdef USE_HWSCALE
@@ -898,27 +781,18 @@ int x11_window_create_display (int bitmap_depth)
 		{
 			if(!hwscale_fullscreen)
 			{
-			        hints.flags = PSize;
-                                XSetWMNormalHints (display, window, &hints);
-                                
+			        x11_set_window_hints(window_width, window_height, 1);
                                 mode_stretch_aspect(window_width, window_height, &window_width, &window_height, x11_resolution_aspect);
                                 XResizeWindow(display, window, window_width, window_height);
                         }
                         else    
                         {
-				window_width  = screen->width;
-				window_height = screen->height;
-
-				hints.flags=PMinSize|PMaxSize;
-				hints.flags|=USPosition|USSize;
-				
 				/* we need to recreate the window,
 				   some window managers don't
 				   allow switching to fullscreen after
 				   the window has been mapped */
 				XDestroyWindow(display,window);
-				if (x11_window_create_window(&hints, window_width,
-				    window_height))
+				if (x11_create_window(&window_width, &window_height, 2))
 				       return 1;
 			}
 		}
