@@ -18,12 +18,13 @@
 
 #include "cps1.h"       /* External CPS1 definitions */
 
+#ifndef MESS
 /* in machine/kabuki.c */
 void wof_decode(void);
 void dino_decode(void);
 void punisher_decode(void);
 void slammast_decode(void);
-
+#endif
 
 
 static READ16_HANDLER( cps1_input_r )
@@ -7179,6 +7180,7 @@ ROM_END
 
 
 
+#ifndef MESS
 static DRIVER_INIT( wof )
 {
 	wof_decode();
@@ -7226,6 +7228,7 @@ static DRIVER_INIT( pang3 )
 
 	init_cps1();
 }
+#endif
 
 
 

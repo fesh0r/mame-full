@@ -1260,12 +1260,14 @@ static void recompute_fps(int skipped_it)
 	vfcount++;
 	if (vfcount >= (int)Machine->drv->frames_per_second)
 	{
+#ifndef MESS
 		/* from vidhrdw/avgdvg.c */
 		extern int vector_updates;
 
-		vfcount -= (int)Machine->drv->frames_per_second;
 		performance.vector_updates_last_second = vector_updates;
 		vector_updates = 0;
+#endif
+		vfcount -= (int)Machine->drv->frames_per_second;
 	}
 }
 
