@@ -616,7 +616,8 @@ $(OBJ)/galaxy.a:   \
 $(OBJ)/lviv.a:   \
 	  $(OBJ)/mess/machine/lviv.o   \
 	  $(OBJ)/mess/vidhrdw/lviv.o   \
-	  $(OBJ)/mess/systems/lviv.o
+	  $(OBJ)/mess/systems/lviv.o   \
+	  $(OBJ)/mess/formats/lviv_lvt.o
 
 $(OBJ)/magnavox.a: \
 	  $(OBJ)/mess/machine/odyssey2.o \
