@@ -109,12 +109,12 @@ const char * GetAuditString(int audit_result)
 	case CORRECT :
 	case BEST_AVAILABLE :
 	case MISSING_OPTIONAL :
-		return "yes";
+		return "Yes";
 
 	case NOTFOUND :
 	case INCORRECT :
 	case CLONE_NOTFOUND :
-		return "no";
+		return "No";
 		break;
 
 	case UNKNOWN :

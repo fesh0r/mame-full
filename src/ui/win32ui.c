@@ -5734,6 +5734,7 @@ static void MameLoadState()
 		{
 			char *cPos=0;
 			int  iPos=0;
+			char romname[MAX_PATH];
 
 			cPos = strchr(bare_fname, '-' );
 			iPos = cPos ? cPos - bare_fname : strlen(bare_fname);
@@ -5765,12 +5766,15 @@ static void MameLoadState()
 #ifdef MESS
 		g_pSaveStateName = state_fname;
 #else
-		cPos = strrchr(bare_fname, '-' );
-		cPos = cPos+1;
-		if( strlen(cPos) >0)
 		{
-			g_pSaveStateName = cPos;
-			override_savestate_directory = path;
+			char *cPos;
+			cPos = strrchr(bare_fname, '-' );
+			cPos = cPos+1;
+			if( strlen(cPos) >0)
+			{
+				g_pSaveStateName = cPos;
+				override_savestate_directory = path;
+			}
 		}
 #endif
 
