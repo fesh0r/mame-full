@@ -39,8 +39,7 @@ Priority:  Todo:                                                  Done:
 #include "vidhrdw/generic.h"
 #include "machine/gb.h"
 
-static struct MemoryReadAddress readmem[] =
-{
+static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },   /* 16k fixed ROM BANK #0*/
 	{ 0x4000, 0x7fff, MRA_BANK1 }, /* 16k switched ROM bank */
 	{ 0x8000, 0x9fff, MRA_RAM },   /* 8k video ram */
@@ -49,11 +48,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xff04, 0xff04, gb_r_divreg },    /* special case for the division reg */
 	{ 0xff05, 0xff05, gb_r_timer_cnt }, /* special case for the timer count reg */
 	{ 0xff06, 0xffff, MRA_RAM },   /* IO */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+static MEMORY_WRITE_START (writemem)
 	{ 0x0000, 0x1fff, MWA_ROM },            /* plain rom */
 	{ 0x2000, 0x3fff, gb_rom_bank_select }, /* rom bank select */
 	{ 0x4000, 0x5fff, gb_ram_bank_select }, /* ram bank select */
@@ -62,8 +59,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xbfff, MWA_BANK2 },          /* banked (cartridge) ram */
 	{ 0xc000, 0xfeff, MWA_RAM, &videoram, &videoram_size }, /* video & sprite ram */
 	{ 0xff00, 0xffff, gb_w_io },	        /* gb io */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
