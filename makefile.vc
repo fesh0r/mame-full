@@ -19,7 +19,7 @@ TARGET = mess
 BSCMAKE = bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
-UPX = upx.exe -6
+UPX = upx.exe -6 --compress-icons=0
 
 # uncomment next line to use Assembler 68000 engine
 # X86_ASM_68000 = 1

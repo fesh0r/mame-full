@@ -144,26 +144,43 @@ static UINT32 ss_get_signature(void)
 
 void state_save_reset(void)
 {
-	if(ss_registry) {
-		ss_module *m = ss_registry;
-		while(m) {
-			ss_module *mn = m->next;
-			int i;
-			for(i=0; i<MAX_INSTANCES; i++) {
-				ss_entry *e = m->instances[i];
-				while(e) {
-					ss_entry *en = e->next;
-					free(e->name);
-					free(e);
-					e = en;
-				}
+	ss_func *f;
+	ss_module *m = ss_registry;
+	while(m) {
+		ss_module *mn = m->next;
+		int i;
+		for(i=0; i<MAX_INSTANCES; i++) {
+			ss_entry *e = m->instances[i];
+			while(e) {
+				ss_entry *en = e->next;
+				free(e->name);
+				free(e);
+				e = en;
+
 			}
-			free(m->name);
-			m = mn;
 		}
-		ss_registry = 0;
+		free(m->name);
+		m = mn;
 	}
+	ss_registry = 0;
+
+	f = ss_prefunc_reg;
+	while(f) {
+		ss_func *fn = f->next;
+		free(f);
+		f = fn;
+	}
+	ss_prefunc_reg = 0;
+
+	f = ss_postfunc_reg;
+	while(f) {
+		ss_func *fn = f->next;
+		free(f);
+		f = fn;
+	}
+	ss_postfunc_reg = 0;
 	ss_current_tag = 0;
+
 	ss_dump_array = 0;
 	ss_dump_file = 0;
 	ss_dump_size = 0;
