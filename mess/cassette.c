@@ -38,7 +38,7 @@ int cassette_init(int id, const struct cassette_args *args)
 		wa.smpfreq = args->input_smpfreq;
 		wa.fill_wave = args->fill_wave;
 		wa.header_samples = args->header_samples;
-		wa.trailer_samples = args->trailer_samples;;
+		wa.trailer_samples = args->trailer_samples;
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
@@ -63,6 +63,6 @@ int cassette_init(int id, const struct cassette_args *args)
         device_status(IO_CASSETTE, id, args->initial_status);
 		return INIT_PASS;
     }
-	return INIT_PASS;
+	return INIT_FAIL;
 }
 
