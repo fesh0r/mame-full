@@ -1,4 +1,4 @@
-
+#include "snapquik.h"
 
 #define KC85_4_CLOCK 1750000
 #define KC85_3_CLOCK 1750000
@@ -10,7 +10,7 @@
 #define KC85_SCREEN_WIDTH 320
 #define KC85_SCREEN_HEIGHT 256
 
-int	kc_quickload_load(int id, void *fp, int open_mode);
+extern QUICKLOAD_LOAD( kc );
 
 extern PALETTE_INIT( kc85 );
 

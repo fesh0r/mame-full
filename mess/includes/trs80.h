@@ -6,6 +6,7 @@
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/wd179x.h"
+#include "snapquik.h"
 
 #define TRS80_FONT_W 6
 #define TRS80_FONT_H 12
@@ -16,8 +17,7 @@ extern UINT8 trs80_port_ff;
 extern int trs80_cas_init(int id, void *fp, int open_mode);
 extern void trs80_cas_exit(int id);
 
-extern int trs80_cmd_init(int id, void *fp, int open_mode);
-extern void trs80_cmd_exit(int id);
+extern QUICKLOAD_LOAD( trs80_cmd );
 
 extern int trs80_floppy_init(int id, void *fp, int open_mode);
 

@@ -1,6 +1,8 @@
+#include "snapquik.h"
+
 /* machine/atom.c */
 extern MACHINE_INIT( atom );
-extern int atom_init_atm(int id, void *fp, int open_mode);
+extern QUICKLOAD_LOAD( atom );
 extern READ_HANDLER (atom_8255_porta_r);
 extern READ_HANDLER (atom_8255_portb_r);
 extern READ_HANDLER (atom_8255_portc_r);

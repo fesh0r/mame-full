@@ -459,9 +459,6 @@ SYSTEM_CONFIG_START(cgenie)
 	CONFIG_DEVICE_CARTSLOT			(1, "rom\0", cgenie_rom_load, NULL, NULL)
 	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0", cgenie_floppy_init)
 	CONFIG_DEVICE_LEGACY			(IO_CASSETTE, 1, "cas\0", IO_RESET_NONE, OSD_FOPEN_NONE, cgenie_cassette_init, NULL, NULL)
-#if 0	/* not yet working */
-	CONFIG_DEVICE_QUICKLOAD_LEGACY	(	"cmd\0", cgenie_snapshot_init, NULL)
-#endif
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  CONFIG     COMPANY	FULLNAME */

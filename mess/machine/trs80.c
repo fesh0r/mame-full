@@ -45,9 +45,6 @@ static UINT8 irq_mask = 0;
 static UINT8 *cas_buff = NULL;
 static UINT32 cas_size = 0;
 
-static UINT8 *cmd_buff = NULL;
-static UINT32 cmd_size = 0;
-
 /* current tape file handles */
 static void *tape_put_file = NULL;
 static void *tape_get_file = NULL;
@@ -190,17 +187,21 @@ void trs80_cas_exit(int id)
 	cas_size = 0;
 }
 
-static void cmd_copy_callback(int param)
+extern QUICKLOAD_LOAD( trs80_cmd )
 {
 	UINT16 entry = 0, block_ofs = 0, block_len = 0;
 	unsigned offs = 0;
+	UINT8 *cmd_buff;
 
-	while( cmd_size > 3 )
+	cmd_buff = malloc(quickload_size);
+	if (!cmd_buff)
+		return INIT_FAIL;
+
+	while( quickload_size > 3 )
 	{
 		UINT8 data = cmd_buff[offs++];
 
-		switch( data )
-		{
+		switch( data ) {
 		case 0x01:		   /* CMD file header */
 		case 0x07:		   /* another type of CMD file header */
 			block_len = cmd_buff[offs++];
@@ -212,20 +213,20 @@ static void cmd_copy_callback(int param)
 			block_len -= 2;
 			if( block_len == 0 )
 				block_len = 256;
-			cmd_size -= 4;
+			quickload_size -= 4;
 			LOG(("trs80_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs));
-			while( block_len && cmd_size )
+			while( block_len && quickload_size )
 			{
 				cpu_writemem16(block_ofs, cmd_buff[offs]);
 				offs++;
 				block_ofs++;
 				block_len--;
-				cmd_size--;
+				quickload_size--;
 			}
 			break;
 		case 0x02:
 			block_len = cmd_buff[offs++];
-			cmd_size -= 1;
+			quickload_size -= 1;
 			if (entry == 0)
 			{
 				entry = cmd_buff[offs++];
@@ -239,42 +240,16 @@ static void cmd_copy_callback(int param)
 				temp += 256 * cmd_buff[offs++];
 				LOG(("trs80_cmd_load 2nd entry ($%02X) at $%04X ignored\n", data, temp));
 			}
-			cmd_size -= 3;
+			quickload_size -= 3;
 			break;
 		default:
-			cmd_size--;
+			quickload_size--;
 		}
 	}
-	cmd_size = 0;
 	activecpu_set_reg(Z80_PC, entry);
-}
 
-int trs80_cmd_init(int id, void *file, int open_mode)
-{
-	if (file)
-	{
-		cmd_size = osd_fsize(file);
-		cmd_buff = malloc(cmd_size);
-		if (cmd_buff)
-		{
-			LOG(("trs80_cmd_init: loading %s size %d\n", image_filename(IO_QUICKLOAD,id), cmd_size));
-			osd_fread(file, cmd_buff, cmd_size);
-			osd_fclose(file);
-		}
-		else
-		{
-			cmd_size = 0;
-		}
-	}
-	return 0;
-}
-
-void trs80_cmd_exit(int id)
-{
-	if (cmd_buff)
-		free(cmd_buff);
-	cmd_buff = NULL;
-	cmd_size = 0;
+	free(cmd_buff);
+	return INIT_PASS;
 }
 
 int trs80_floppy_init(int id, void *fp, int open_mode)
@@ -357,12 +332,6 @@ MACHINE_INIT( trs80 )
 	{
 		LOG(("trs80_init_machine: schedule cas_copy_callback (%d)\n", cas_size));
 		timer_set(0.5, 0, cas_copy_callback);
-	}
-
-	if (cmd_size)
-	{
-		LOG(("trs80_init_machine: schedule cmd_copy_callback (%d)\n", cmd_size));
-		timer_set(0.5, 0, cmd_copy_callback);
 	}
 }
 

@@ -65,7 +65,7 @@ static void kc_dump_ram(void)
 }
 
 /* load image */
-static int kc_load(int type, int id, void *file, unsigned char **ptr)
+static int kc_load(void *file, unsigned char **ptr)
 {
 	if (file)
 	{
@@ -121,33 +121,25 @@ struct kcc_header
 /* now type name that has appeared! */
 
 /* load snapshot */
-int kc_quickload_load(int id, void *fp, int open_mode)
+QUICKLOAD_LOAD(kc)
 {
 	unsigned char *data;
+	struct kcc_header *header;
+	int addr;
+	int datasize;
+	int i;
 
-	if (fp == NULL)
-		return INIT_PASS;
+	if (!kc_load(fp, &data))
+		return INIT_FAIL;
 
-	if (kc_load(IO_QUICKLOAD, id, fp, &data))
-	{
-		struct kcc_header *header = (struct kcc_header *)data;
-		int addr;
-		int datasize;
-		int i;
+	header = (struct kcc_header *) data;
+	datasize = (header->length_l & 0x0ff) | ((header->length_h & 0x0ff)<<8);
+	datasize = datasize-128;
+	addr = (header->load_address_l & 0x0ff) | ((header->load_address_h & 0x0ff)<<8);
 
-		datasize = (header->length_l & 0x0ff) | ((header->length_h & 0x0ff)<<8);
-		datasize = datasize-128;
-		addr = (header->load_address_l & 0x0ff) | ((header->load_address_h & 0x0ff)<<8);
-
-		for (i=0; i<datasize; i++)
-		{
-			kc85_ram[(addr+i) & 0x0ffff] = data[i+128];
-		}
-
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	for (i=0; i<datasize; i++)
+		kc85_ram[(addr+i) & 0x0ffff] = data[i+128];
+	return INIT_PASS;
 }
 
 

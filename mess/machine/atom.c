@@ -260,46 +260,6 @@ MACHINE_INIT( atom )
 	memory_set_opbase_handler(0,atom_opbase_handler);
 }
 
-/* load image */
-static int atom_load(int type, int id, void *file, unsigned char **ptr)
-{
-	if (file)
-	{
-		int datasize;
-		unsigned char *data;
-
-		/* get file size */
-		datasize = osd_fsize(file);
-
-		if (datasize!=0)
-		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
-
-			if (data!=NULL)
-			{
-				/* read whole file */
-				osd_fread(file, data, datasize);
-
-				*ptr = data;
-
-				/* close file */
-				osd_fclose(file);
-
-				logerror("File loaded!\r\n");
-
-				/* ok! */
-				return 1;
-			}
-			osd_fclose(file);
-
-		}
-	}
-
-	return 0;
-}
-
-
 struct atm
 {
 	UINT8	atm_name[16];
@@ -314,61 +274,63 @@ struct atm
 /* this only works if loaded using file-manager. This should work
 for binary files, but will not work with basic files. This also does not support
 .tap files which contain multiple .atm files joined together! */
-int atom_init_atm (int id, void *fp, int open_mode)
+QUICKLOAD_LOAD(atom)
 {
 	unsigned char *quickload_data;
+	int i;
+	unsigned char *data;
+	struct atm *atm_header;
+	unsigned long addr;
+	unsigned long exec;
+	unsigned long size;
 
-	if (atom_load(IO_QUICKLOAD, id, fp, &quickload_data))
+	quickload_data = malloc(quickload_size);
+	if (!quickload_data)
+		return INIT_FAIL;
+
+	if (osd_fread(fp, quickload_data, quickload_size) != quickload_size)
 	{
-		if (quickload_data!=NULL)
-		{
-			int i;
-			unsigned char *data;
-			struct atm *atm_header = (struct atm *)quickload_data;
-			unsigned long addr;
-			unsigned long exec;
-			unsigned long size;
-
-			/* calculate data address */
-			data = (unsigned char *)((unsigned long)quickload_data + sizeof(struct atm));
-
-			/* get start address */
-			addr = (
-					(atm_header->atm_start_low & 0x0ff) |
-					((atm_header->atm_start_high & 0x0ff)<<8)
-					);
-
-			/* get size */
-			size = (
-					(atm_header->atm_size_low & 0x0ff) |
-					((atm_header->atm_size_high & 0x0ff)<<8)
-					);
-
-			/* get execute address */
-			exec = (
-				(atm_header->atm_exec_low & 0x0ff)	|
-				((atm_header->atm_exec_high & 0x0ff)<<8)
-				);
-
-			/* copy data into memory */
-			for (i=size-1; i>=0; i--)
-			{
-				cpu_writemem16(addr, data[0]);
-				addr++;
-				data++;
-			}
-
-
-			/* set new pc address */
-			cpunum_set_pc(0,exec);
-
-			/* free the data */
-			free(quickload_data);
-
-			return INIT_PASS;
-		}
+		free(quickload_data);
+		return INIT_FAIL;
 	}
 
+	atm_header = (struct atm *)quickload_data;
+
+	/* calculate data address */
+	data = (unsigned char *)((unsigned long)quickload_data + sizeof(struct atm));
+
+	/* get start address */
+	addr = (
+			(atm_header->atm_start_low & 0x0ff) |
+			((atm_header->atm_start_high & 0x0ff)<<8)
+			);
+
+	/* get size */
+	size = (
+			(atm_header->atm_size_low & 0x0ff) |
+			((atm_header->atm_size_high & 0x0ff)<<8)
+			);
+
+	/* get execute address */
+	exec = (
+		(atm_header->atm_exec_low & 0x0ff)	|
+		((atm_header->atm_exec_high & 0x0ff)<<8)
+		);
+
+	/* copy data into memory */
+	for (i=size-1; i>=0; i--)
+	{
+		cpu_writemem16(addr, data[0]);
+		addr++;
+		data++;
+	}
+
+
+	/* set new pc address */
+	cpunum_set_pc(0,exec);
+
+	/* free the data */
+	free(quickload_data);
 	return INIT_PASS;
 }
 

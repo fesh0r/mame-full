@@ -453,8 +453,8 @@ ROM_START(kc85_3)
 ROM_END
 
 SYSTEM_CONFIG_START(kc85)
-	CONFIG_DEVICE_CASSETTE			(1, "",			kc_cassette_device_init)
-	CONFIG_DEVICE_QUICKLOAD_LEGACY	(	"kcc\0",	kc_quickload_load, NULL)
+	CONFIG_DEVICE_CASSETTE	(1, "",			kc_cassette_device_init)
+	CONFIG_DEVICE_QUICKLOAD	(	"kcc\0",	kc)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(kc85d)
