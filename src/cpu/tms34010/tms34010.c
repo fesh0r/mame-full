@@ -15,6 +15,7 @@
 #include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
+#include "state.h"
 
 #ifdef MAME_DEBUG
 extern int debug_key_pressed;
@@ -172,6 +173,8 @@ static struct tms34010_config default_config =
 };
 
 static void check_interrupt(void);
+static void tms34010_state_presave(void);   
+static void tms34010_state_postload(void); 
 
 
 
@@ -837,6 +840,40 @@ static void check_interrupt(void)
 
 void tms34010_init(void)
 {
+	int cpunum = cpu_getactivecpu();   
+
+	/* allocate the shiftreg */   
+	state.shiftreg = malloc(SHIFTREG_SIZE);   
+
+	state_save_register_UINT32("tms34010", cpunum, "OP",        &state.op, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "PC",        &state.pc, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "ST",        &state.st, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "AREGS",     state.flat_aregs, 16);   
+	state_save_register_UINT32("tms34010", cpunum, "BREGS",     state.flat_bregs, 15);   
+	state_save_register_UINT32("tms34010", cpunum, "NFLAG",     &state.nflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "CFLAG",     &state.cflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "NOTZFLAG",  &state.notzflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "VFLAG",     &state.vflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "PFLAG",     &state.pflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "IEFLAG",    &state.ieflag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "FE0FLAG",   &state.fe0flag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "FE1FLAG",   &state.fe1flag, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "FW",        state.fw, sizeof(state.fw) / sizeof(state.fw[0]));   
+	state_save_register_UINT32("tms34010", cpunum, "FW_INC",    state.fw_inc, sizeof(state.fw_inc) / sizeof(state.fw_inc[0]));   
+	state_save_register_UINT32("tms34010", cpunum, "RESET_DEF", &state.reset_deferred, 1);   
+	state_save_register_UINT16("tms34010", cpunum, "SHIFTREG",  state.shiftreg, SHIFTREG_SIZE / sizeof(UINT16));   
+	state_save_register_UINT16("tms34010", cpunum, "IORegs",    state.IOregs, 16);   
+	state_save_register_UINT32("tms34010", cpunum, "TRANSPAR",  &state.transparency, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "WINCHK",    &state.window_checking, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "CONVSP",    &state.convsp, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "CONVDP",    &state.convdp, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "CONVMP",    &state.convmp, 1);   
+	state_save_register_UINT32("tms34010", cpunum, "PIXELSHFT", &state.pixelshift, 1);   
+	state_save_register_int("tms34010", cpunum, "gfxcycles",        &state.gfxcycles);   
+	state_save_register_int("tms34010", cpunum, "luvcount",     &state.last_update_vcount);   
+	state_save_register_int("tms34010", cpunum, "ICount",       &tms34010_ICount);   
+	state_save_register_func_presave(tms34010_state_presave);   
+	state_save_register_func_postload(tms34010_state_postload); 
 }
 
 void tms34010_reset(void *param)
@@ -1946,6 +1983,28 @@ void tms34010_state_load(int cpunum, void *f)
 	osd_fread(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
+static void tms34010_state_presave(void)   
+{   
+	int i;   
+	for (i = 0; i < 16; i++)   
+		state.flat_aregs[i] = AREG(i);   
+	for (i = 0; i < 15; i++)   
+		state.flat_bregs[i] = BREG(BINDEX(i));   
+}   
+
+static void tms34010_state_postload(void)   
+{   
+	int i;   
+	for (i = 0; i < 16; i++)   
+		AREG(i) = state.flat_aregs[i];   
+	for (i = 0; i < 15; i++)   
+		BREG(BINDEX(i)) = state.flat_bregs[i];   
+
+	SET_FW();   
+	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);   
+	set_raster_op(&state);   
+	set_pixel_function(&state);   
+} 
 
 
 /*###################################################################################################
