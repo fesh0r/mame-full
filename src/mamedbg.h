@@ -103,6 +103,10 @@ extern void mame_debug_exit(void);
 /* This is the main entry into the mame debugger */
 extern void MAME_Debug(void);
 
+extern int debug_key_pressed;	/* set to non zero to break into the debugger */
+extern int debug_key_delay; 	/* set to 0x7ffe to force keyboard check on next update */
+extern int debug_trace_delay;	/* set to 0 to force a screen update */
+
 /***************************************************************************
  * Convenience macro for the CPU cores, this is defined to empty
  * if MAME_DEBUG is not specified, so a CPU core can simply add
@@ -129,7 +133,7 @@ extern void MAME_Debug(void);
 
 extern UINT8 debugger_palette[DEBUGGER_TOTAL_COLORS*3];
 struct GfxElement *build_debugger_font(void);
-void osd_put_screen_char (int ch, int attr, int x, int y);
+void dbg_put_screen_char (int ch, int attr, int x, int y);
 
 #else	/* MAME_DEBUG */
 

@@ -869,7 +869,10 @@ void draw_screen(int _bitmap_dirty)
 ***************************************************************************/
 void update_video_and_audio(void)
 {
-	osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
+#ifdef MAME_DEBUG
+	debug_trace_delay = 0;
+#endif
+    osd_update_video_and_audio(real_scrbitmap,Machine->debug_bitmap);
 }
 
 
