@@ -6,8 +6,11 @@
  * -bat. 06/09/2000
  */
 
+#import <stdio.h>
+#import <stdlib.h>
+#import <unistd.h>
 #import <SoundKit/SoundKit.h>
-#import <libc.h>
+
 #import "sysdep/sysdep_dsp.h"
 #import "sysdep/sysdep_dsp_priv.h"
 #import "sysdep/plugin_manager.h"

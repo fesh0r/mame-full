@@ -74,7 +74,7 @@ static struct rc_option opts[] = {
      "All following images/roms are seen as floppies" }, 
    { "harddisk",	"hard",			rc_set_int,	&iodevice_type,
      NULL,		IO_HARDDISK,		0,		NULL,
-     "All following images/roms are seen as hard disks" }, 
+     "All following images/roms are seen as hard disks" },
    { "cassette",	"cass",			rc_set_int,	&iodevice_type,
      NULL,		IO_CASSETTE,		0,		NULL,
      "All following images/roms are seen as cassettes" }, 
@@ -84,11 +84,11 @@ static struct rc_option opts[] = {
    { "serial",		"serl",			rc_set_int,	&iodevice_type,
      NULL,		IO_SERIAL,		0,		NULL,
      "All following images/roms are seen as serial ports" }, 
-   { "snapshot",        "dump",                 rc_set_int,     &iodevice_type,
-     NULL,              IO_SNAPSHOT,            0,              NULL,
+   { "snapshot",        "dump",			rc_set_int,     &iodevice_type,
+     NULL,		IO_SNAPSHOT,		0,		NULL,
      "All following images/roms are seen as snapshots" },
-   { "quickload",       "quik",                 rc_set_int,     &iodevice_type,
-     NULL,              IO_QUICKLOAD,           0,              NULL,
+   { "quickload",       "quik",			rc_set_int,     &iodevice_type,
+     NULL,		IO_QUICKLOAD,		0,		NULL,
      "All following images/roms are seen as quickload images" },
 #else
    { "Mame Related",	NULL,			rc_seperator,	NULL,
@@ -649,12 +649,12 @@ void show_usage(void)
   fprintf(stdout_file, "\n"
 #ifdef MESS
      "M.E.S.S. - Multi-Emulator Super System\n"
-     "Copyright (C) 1998-2000 by the MESS team\n"
+     "Copyright (C) 1998-2001 by the MESS team\n"
 #else
      "M.A.M.E. - Multiple Arcade Machine Emulator\n"
-     "Copyright (C) 1997-2000 by Nicola Salmoria and the MAME Team\n"
+     "Copyright (C) 1997-2001 by Nicola Salmoria and the MAME Team\n"
 #endif
-     "%s port maintained by Hans de Goede\n", NAME);
+     "%s port maintained by Lawrence Gold\n", NAME);
 }
 
 #ifdef MESS

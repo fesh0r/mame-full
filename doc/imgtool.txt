@@ -30,22 +30,50 @@ you use these commands, make sure that your CRC directory is set up.
 Imgtool Subcommands
 ===================
 
-create         Creates an image
-dir            Lists the contents of an image
-get            Gets a single file from an image
-put            Puts a single file on an image
-getall         Gets all files off an image
-del            Deletes a file on an image
-info           Retrieves info about an image (by reading CRC files)
-crc            Retrieves info about an image in the same format used by the CRC
-               files
-good           CRC checks a set of images and for matching images, copy into a
-               new directory
-listformats    Lists all image file formats supported by imgtool
+create            Creates an image
+dir               Lists the contents of an image
+get               Gets a single file from an image
+put               Puts a single file on an image
+getall            Gets all files off an image
+del               Deletes a file on an image
+info              Retrieves info about an image (by reading CRC files)
+crc               Retrieves info about an image in the same format used by the
+                  CRC files
+good              CRC checks a set of images and for matching images, copy into
+                  a new directory
+listformats       Lists all image file formats supported by imgtool
+listfilters       Lists all filters supported by imgtool
+listdriveroptions Lists all format-specific options for the 'put' and 'create'
+                  commands
 
+Filters
+=======
+Filters are a means to process data being written into or read out of an image
+in a certain way.  Filters can be specified on the get, put, and getall
+commands by specifying --filter=xxxx on the command line.  Currently, only
+three filters are supported:
 
-lnx Commodore 64 Lynx Archiv
-----------------------------
+  ascii           Translates end-of-lines to the appropriate format
+  cocobas         Processes tokenized CoCo BASIC programs
+  dragonbas       Processes tokenized Dragon BASIC programs
+
+Format Info
+===========
+
+rsdos CoCo Disks
+----------------
+Fully implemented.  This format supports two format-specific options on the put
+command:
+
+  --ftype=(0|1|2|3) Specifies the file type
+  --ascii=(A|B)     Specifies the ASCII flag
+
+cococas CoCo Cassettes
+----------------------
+Both .cas and .wav supported, but read only.
+
+lnx Commodore 64 Lynx Archive
+-----------------------------
 only for early revisions of lynx archivs
 only extraction supported
 not heavily tested
@@ -54,8 +82,8 @@ Lynx archivs could and should be handled in a c64 emulation
 with the native lynx tool
 
 
-t64 Commodore 64/C64S Archiv for Tapes
---------------------------------------
+t64 Commodore 64/C64S Archive for Tapes
+---------------------------------------
 not heavily tested
 further creation/use of these archivs discouraged
 
@@ -72,6 +100,7 @@ d71 Commodore 128D/1571 Diskette
 d81 Commodore 65/1565/1581 Diskette
 -----------------------------------
 not heavily tested
+x64: further creation/use discouraged
 
 
 msdos/fat Microsoft DOS Diskette
@@ -86,13 +115,63 @@ not finished and not working
 (see also unter msdos/fat)
 
 
-fs Filesystem Direct Access
+Virtual MSX tape archive
+------------------------
+not heavily tested
+not fault-tolerant
+dir/get/getall implemented, converts to .cas 
+
+
+Virtual MSX Game Master 2 SRAM file
+-----------------------------------
+Very simple, not overly useful but some might want it. Virtual MSX stored the
+SRAM of Konami's Game Master 2 in "gmaster2.ram". To convert this to something
+useful with MESS and other MSX emulators, go:
+
+imgtool extract vmsx_gm2 gmaster2.ram gmaster2.mem
+
+
+fMSX style .cas file
+--------------------
+Converts .cas files to .wav files. The MSX driver can use .cas files directly
+so you don't have to convert them. You can use it to export files to a real
+MSX. Connect the MSX to the line out of your computer. Give the apropriate
+command on the MSX (BLOAD "CAS:",R for example) and then play the .wav file
+on your computer. 
+
+Not tested at all, but it should work fine.
+
+imgtool dir fmsx_cas file.cas
+imgtool extract fmsx_cas file.cas file.wav
+imgtool getall fmsx_cas file.cas
+imgtool get fmsx_cas file.cas file.wav newfile.wav
+
+
+Various bogus MSX disk images (xsa/img/ddi/msx)
+-----------------------------------------------
+
+These are formats you might come across, which have no actual added value
+whatsoever. The only format MESS will support (not yet!), like other MSX
+emulators, is .dsk (a plain dump without any header information). This
+filetype converts them all to .dsk format.
+
+img and ddi formats have a useless header, .msx has a weird sector order
+(which is faster to save on a real MSX). .xsa is special format, not
+nearly as useless as the others. It's basically a compressed format, it
+doesn't matter what you use it for. However it's always been used for
+disk images. The were programs written by XelaSoft which made a dump
+of a disk, and compressing them at the same time. Very useful to store
+a disk dump on another disk. zip/gzip offer much better compression and
+are mainstream, so let's stick with that.
+
+imgtool uses XSA code developed by Alex Wulms/XelaSoft.
+
+http://web.inter.nl.net/users/A.P.Wulms/
+
+
+rom16 16 bit wide rom image
 ---------------------------
-internal usage in future MESS
+allows easy access to even and odd parts
+file even: even bytes
+file odd: odd bytes
 
-
-zip ZIP Archiv Access
----------------------
-internal usage in future MESS
-only extraction supported
-(must be adapted for the MAME/MESS search path)

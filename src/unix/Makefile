@@ -43,6 +43,7 @@ SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
 SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
 SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
+SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
@@ -78,6 +79,7 @@ CFLAGS.freebsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_V
 CFLAGS.netbsd     = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
+CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
 CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.irix       = -DSYSDEP_DSP_IRIX

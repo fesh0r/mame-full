@@ -39,10 +39,6 @@
 struct alsa_dsp_priv_data
 {
   snd_pcm_t *pcm_handle;
-  char *audiobuf;
-  int frags;
-  int frag;
-  int buffer_size;
 };
 
 /* public methods prototypes (static but exported through the sysdep_dsp or
@@ -165,10 +161,10 @@ static void *alsa_dsp_create(const void *flags)
   dsp->destroy = alsa_dsp_destroy;
   dsp->hw_info.type = params->type;
   dsp->hw_info.samplerate = params->samplerate;
+  dsp->hw_info.bufsize = 0;
 
-  priv->buffer_size = -1;
   memset(&format, 0, sizeof(format));
-  format.interleave = 4;
+  format.interleave = 1;
 #ifdef LSB_FIRST
   format.format = (dsp->hw_info.type & SYSDEP_DSP_16BIT)? SND_PCM_SFMT_S16_LE:SND_PCM_SFMT_U8;
 #else
@@ -213,35 +209,13 @@ static void *alsa_dsp_create(const void *flags)
      return NULL;
    }
 
-  /* Alloc a minimal buffer */
-  priv->buffer_size = 1024;
-  priv->audiobuf = (char *)malloc(priv->buffer_size);
-  if (priv->audiobuf == NULL)
-   {
-     fprintf(stderr_file, "Alsa error: not enough memory\n");
-     return NULL;
-   }
-
   if (alsa_dsp_set_format(priv,&format)==0)
     return NULL;
 
-  dsp->hw_info.bufsize =  priv->buffer_size * priv->frags /
-    alsa_dsp_bytes_per_sample[dsp->hw_info.type];
-
-
-  memset(priv->audiobuf,0,priv->buffer_size * priv->frag);
-
-  if (snd_pcm_channel_go(priv->pcm_handle, SND_PCM_CHANNEL_PLAYBACK)<0) 
-   {
-     fprintf(stderr_file, "Alsa error: unable to start playback\n");
-     return NULL;
-   }
-
-  fprintf(stderr_file, "info: set to %dbit linear %s %dHz bufsize=%d\n",
+  fprintf(stderr_file, "info: set to %dbit linear %s %dHz\n",
       (dsp->hw_info.type & SYSDEP_DSP_16BIT)? 16:8,
       (dsp->hw_info.type & SYSDEP_DSP_STEREO)? "stereo":"mono",
-      dsp->hw_info.samplerate,
-      dsp->hw_info.bufsize);
+      dsp->hw_info.samplerate);
 
   return dsp;
 }
@@ -264,8 +238,6 @@ static void alsa_dsp_destroy(struct sysdep_dsp_struct *dsp)
 	snd_pcm_playback_drain(priv->pcm_handle);
 	snd_pcm_close(priv->pcm_handle);
       }
-     if (priv->audiobuf)
-       free(priv->audiobuf);
      free(priv);
    }
   free(dsp);
@@ -325,12 +297,6 @@ static int alsa_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
 	   fprintf(stderr_file, "Alsa error: underrun playback channel prepare error\n");
 	   return -1;
 	 }
-	priv->frag = 0;
-	return 0;
-      }
-     else
-      {
-	fprintf(stderr_file, "Alsa error: %d\n",status.status);
       }
    }
   return result / alsa_dsp_bytes_per_sample[dsp->hw_info.type];
@@ -410,7 +376,7 @@ static int alsa_device_list(struct rc_option *option, const char *arg,
 static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t *format)
 {
   unsigned int bps;	/* bytes per second */
-  unsigned int size;	/* fragment size */
+  unsigned int size;	/* queue size */
   int err;
   struct snd_pcm_channel_params params;
   struct snd_pcm_channel_setup setup;
@@ -428,7 +394,7 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
       fprintf(stderr_file,"Alsa error: playback format unknow (%d)",format->format);
       return 0;
    }
-  bps >>= 2;		/* ok.. this buffer should be 0.25 sec */
+  bps >>= 4;		/* ok.. this buffer should be 0.25 sec */
   if (bps < 16)
     bps = 16;
   size = 1;
@@ -440,13 +406,13 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
   /* Configure the device with the format specified */
   memset(&params, 0, sizeof(params));
   params.channel = SND_PCM_CHANNEL_PLAYBACK;
-  params.mode = SND_PCM_MODE_BLOCK;
+  params.mode = SND_PCM_MODE_STREAM;
   memcpy(&params.format, format, sizeof(snd_pcm_format_t));
   params.start_mode = SND_PCM_START_FULL;
   params.stop_mode = SND_PCM_STOP_STOP;
-  params.buf.block.frag_size = size;
-  params.buf.block.frags_min = 1;
-  params.buf.block.frags_max = -1;		/* little trick (playback only) */
+  params.buf.stream.queue_size = size;
+  params.buf.stream.fill = SND_PCM_FILL_SILENCE;
+  params.buf.stream.max_fill = size;
 
   if ((err = snd_pcm_channel_params(priv->pcm_handle, &params)) < 0)
    {
@@ -471,21 +437,8 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
      return 0;
    }
 
-  fprintf(stdout_file,"frag_size = %d / frags = %d / frags_min = %d / frags_max = %d\n",
-      setup.buf.block.frag_size,
-      setup.buf.block.frags,
-      setup.buf.block.frags_min,
-      setup.buf.block.frags_max);
+  fprintf(stdout_file,"queue_size = %d\n", setup.buf.stream.queue_size);
 
-  /* Fill the private structure */
-  priv->frags = setup.buf.block.frags;
-  priv->buffer_size = setup.buf.block.frag_size;
-  priv->audiobuf = (char *)realloc(priv->audiobuf, priv->buffer_size);
-  if (priv->audiobuf == NULL)
-   {
-     fprintf(stderr_file, "Alsa error: not enough memory, need to allocate %d\n",priv->buffer_size);
-     return 0;
-   }
   return 1;
 }
 

@@ -32,7 +32,7 @@
 
 #set TAGET to "mame" (without the ") to compile xmame and to "mess" to
 #compile xmess.
-TARGET = mess
+TARGET = mame
 
 
 ##############################################################################
@@ -61,40 +61,43 @@ CC	= gcc
 # linux-powerpc needs -fsigned-char
 #
 # Note3:
-# next/macosx needs -traditional-cpp
+# OpenStep needs -traditional-cpp
 #
 ### for normal optimalisation, full warnings
-# CFLAGS    = -O -Wall
+CFLAGS    = -O -Wall
 ### this should work with all compilers 
 # CFLAGS    =
 ### to get full optimization under gcc/x Intel based OS's..
-CFLAGS    = -O3 -m486 -Wall -Wno-unused -funroll-loops \
- -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
- -malign-jumps=2 -malign-loops=2
+# CFLAGS    = -O3 -m486 -Wall -Wno-unused -funroll-loops \
+#  -fstrength-reduce -fomit-frame-pointer -ffast-math -malign-functions=2 \
+#  -malign-jumps=2 -malign-loops=2
 ### for Linux/PowerPC use following opts
-CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
- -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
-### for OpenStep/MacOS X use following opts
+# CFLAGS    = -O3 -Wall  -Wno-unused -funroll-loops\
+#  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
+### for OpenStep/Intel use following opts
 # CFLAGS    = -O4 -Wall -Wno-unused -finline-functions -ffast-math \
 #  -fstrength-reduce -traditional-cpp
+### for OpenStep/PPC use following opts
+# CFLAGS    = -O4 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
+#  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 ### for IRIX with all optimization
-# CFLAGS    = -O2 -OPT:Olimit=3077
+# CFLAGS    = -O2 -OPT:Olimit=0
 ### used by me, for full ansi testing and debugging (with gcc).
 # CFLAGS    = -ggdb -ansi -pedantic -D_XOPEN_SOURCE -D_BSD_SOURCE -Wall \
-#  -Wno-long-long -Wno-trigraphs -Wno-unused -Dasm=__asm__ -O3 -m486 \
-#  -fstrength-reduce -ffast-math -malign-functions=2 -malign-jumps=2 \
-#  -malign-loops=2
+#  -Wno-long-long -Wno-trigraphs -Wp,-Wno-paste \
+#  -Dasm=__asm__ -O6 -march=pentiumpro -fstrength-reduce \
+#  -ffast-math -malign-functions=2 -malign-jumps=2 -malign-loops=2
 
 # *** Does your compiler supports inline funcs?. use appropiate item:
 # do not use IL = inline : wont work due to Z80 and 6809 stuffs
 # if strict ansi used set IL to "static"
 # This can very noticably increase xmame's performance, so enabling this is
 # encouraged, it works fine with gcc and probably with most other compilers.
-# IL	= '-DINLINE=static inline'
-IL     = -DINLINE=static
+IL	= '-DINLINE=static __inline__'
+# IL     = -DINLINE=static
 
-# *** Choose your linker & linker flags ( some OS's needs native linker
-# instead GNU one )
+# *** Choose your linker & linker flags (some OSes need native linker
+# instead GNU one)
 # normal
 LD	= $(CC) -s
 # to profile with gcc and gprof
@@ -103,6 +106,11 @@ LD	= $(CC) -s
 # LD	= $(CC)
 # for debugging only, only works with gnu-binutils !!
 # LD	= $(CC) -Wl,-warn-common
+
+# *** Does your platform have a separate libm ? only comment this out if you
+# have maths libraries included within libc. This is very rare, you will
+# probably only need it for OpenStep systems
+SEPARATE_LIBM = 1
 
 # *** Does your platform have ranlib (leave this untouched unless you are
 # using irix or Unixware 7
@@ -115,13 +123,13 @@ INSTALL = cp
 # *** Extra include and or library paths, sometimes needed for zlib,
 # with suse linux -L/usr/X11R6/lib is needed for example,
 # and with unixware7 -lsocket is needed
-LIBS     = -L/usr/X11R6/lib -L/usr/local/lib
-INCLUDES = -I/usr/X11R6/include -I/usr/local/include
+# LIBS     = -L/usr/X11R6/lib -L/usr/local/lib
+# INCLUDES = -I/usr/X11R6/include -I/usr/local/include
 
 # *** If your system doesn't have zlib, or your systems zlib is giving you
 # troubles, you can use the one distributed with xmame.
 # Uncomment the following line to use xmame's own version of zlib
-ZLIB = 1
+# ZLIB = 1
 
 # *** Does your system support gettimeofday() function? If so, we encourage
 # you to enable this feature . Else .... comment it :-(
@@ -155,6 +163,8 @@ XMAMEROOT = /usr/games/lib/x$(TARGET)
 MY_CPU = i386
 ### i386 no asm
 # MY_CPU = i386_noasm
+### ia64
+# MY_CPU = ia64
 ### alpha
 # MY_CPU = alpha
 ### m68k
@@ -176,11 +186,13 @@ ARCH  = linux
 # ARCH  = freebsd
 ### NetBSD
 # ARCH  = netbsd
+### OpenBSD
+# ARCH = openbsd
 ### Solaris / SunOS
 # ARCH  = solaris
-### OpenStep
+### OpenStep on NeXT systems
 # ARCH  = next
-### Mac OS X
+### OpenStep on Apple systems (Cocoa)
 # ARCH  = macosx
 ### IRIX ( with sound requires the dmedia package ) (*)
 # ARCH  = irix
@@ -207,6 +219,8 @@ ARCH  = linux
 # JOY_I386 = 1
 # Linux FM-TOWNS game PAD joystick emulation support, thanks to Osamu Kurati
 # JOY_PAD = 1
+# NetBSD/FreeBSD USB joystick support.
+# JOY_USB = 1
 
 
 ##############################################################################
@@ -216,6 +230,7 @@ ARCH  = linux
 # *** any additonal sound drivers you want to include, besided the native one
 # sound driver for your system
 # SOUND_ESOUND = 1
+# SOUND_ALSA = 1
 
 
 ##############################################################################
@@ -249,7 +264,7 @@ DISPLAY_METHOD = x11
 # MIT-Shared Memory X Extensions, comment the
 X11_MITSHM = 1
 # XFree86 DGA
-X11_DGA = 1
+# X11_DGA = 1
 # The XIL library (Solaris 2.5.1 and higher), uncomment
 # X11_XIL = 1
 
@@ -291,14 +306,15 @@ GLLIBS= -lGL -lGLU
 
 # *** Uncommenty the next lines to build xmame with build in debugger, only
 # supported for x11 and svgalib. Only enable this if you need it, if you
-# want to develop drivers that is, since it slows down xmame concederably.
-MAME_DEBUG = 1
+# want to develop drivers that is, since it slows down xmame considerably.
+# MAME_DEBUG = 1
 
 # *** Uncomment the next lines to use x86-asm cpu cores. This is only
 # supported for some 386 machines with nasm-0.96 or higher available in your
 # path! the asm 68k core could cause problem with certain games, please test
 # with the c-core before reporting any problems.
 # uncomment next line to use Assembler 68k engine
+# This is currently not working ! (Hint: leave commented)
 # X86_ASM_68K = 1
 #
 # And choose elf / or aout

@@ -10,8 +10,8 @@
 #  mameinfo.db  - A Berkeley DB file with all information about the ROMs
 #  mameinfo.txt - A text file with information about the supported ROMS sets
 #
-# BUGS: The NeoGeo sets like "maglordh", "puzzldpr", etc. are not handled
-#       correctly, because they are clones of clones. You have to manage them
+# BUGS: ROM sets which are clones of clones, e.g. NeoGeo "maglordh" or
+#       CVS "8ball1", are not handled correctly. You have to manage them
 #       by hand.
 #
 #-----------------------------------------------------------------------------
@@ -19,14 +19,14 @@
 # REQUIRED PERL PACKAGES
 #
 #-----------------------------------------------------------------------------
-require 5.004;
+require 5.005_03;
 use     strict;
 use     Getopt::Long;
 use     Fcntl;
 use     IO::File;
-use     File::Spec;        # CPAN (standard for Perl >= 5.005)
+use     File::Spec;
 use     MLDBM qw(DB_File); # CPAN, requires
-                           #   Data::Dumper CPAN (standard for Perl >= 5.005)
+                           #   Data::Dumper standard
                            #   DB_File      standard if BerkeleyDB exists
 use     Parse::Lex 2.07;   # CPAN
 use     Parse::Yapp;       # CPAN, at least version 0.31 required
@@ -67,6 +67,23 @@ use vars qw(%Games); # Accessed by the parser package
 #          );
 #
 #-----------------------------------------------------------------------------
+
+#-----------------------------------------------------------------------------
+#
+# ROM subroutines
+#
+#-----------------------------------------------------------------------------
+sub CreateROM(@) {
+  return({name => $_[0], size => $_[1], crc => $_[2]});
+}
+
+sub AddROM($$) {
+  my($ref, $rom) = @_;
+
+  # Create key from CRC, size and name (if CRC = 0 [NO GOOD DUMP KNOWN])
+  $ref->{roms}->{$rom->{crc}, $rom->{size},
+		 ($rom->{crc} =~ /0{8}/) ? $rom->{name} : ''} = $rom;
+}
 
 #-----------------------------------------------------------------------------
 #
@@ -189,18 +206,6 @@ if (GetOptions(\%Options,
   my $ref;
   my $count;
 
-  sub CreateROM(@) {
-    return({name => $_[0], size => $_[1], crc => $_[2]});
-  }
-
-  sub AddROM($$) {
-    my($ref, $rom) = @_;
-
-    # Create key from CRC, size and name (if CRC = 0 [NO GOOD DUMP KNOWN])
-    $ref->{roms}->{$rom->{crc}, $rom->{size},
-                   ($rom->{crc} =~ /0{8}/) ? $rom->{name} : ''} = $rom;
-  }
-
   sub AddGame() {
     # Don't replace existing game!
     if (exists $main::Games{$name}) {
@@ -233,8 +238,8 @@ info_sequence: info
 
 info: NAME game_name                            { $name = $_[2]; }
   |   ROMOF game_name                           { $ref->{clone} = $_[2]; }
-  |   ROM LEFTPAREN rom_info RIGHTPAREN         { AddROM($ref, $_[3]); }
-  |   ROM LEFTPAREN merge_info RIGHTPAREN       { AddROM($ref, $_[3]); }
+  |   ROM LEFTPAREN rom_info RIGHTPAREN         { main::AddROM($ref, $_[3]); }
+  |   ROM LEFTPAREN merge_info RIGHTPAREN       { main::AddROM($ref, $_[3]); }
   |   IDENTIFIER IDENTIFIER
   |   IDENTIFIER INTEGER
   |   IDENTIFIER STRING
@@ -243,9 +248,9 @@ info: NAME game_name                            { $name = $_[2]; }
 game_name: IDENTIFIER
   |        INTEGER;
 
-rom_info: NAME rom_name SIZE INTEGER CRC crc_value any_sequence { CreateROM(@_[2,4,6]); };
+rom_info: NAME rom_name SIZE INTEGER CRC crc_value any_sequence { main::CreateROM(@_[2,4,6]); };
 
-merge_info: NAME rom_name MERGE rom_name SIZE INTEGER CRC crc_value any_sequence { CreateROM(@_[2,6,8]); };
+merge_info: NAME rom_name MERGE rom_name SIZE INTEGER CRC crc_value any_sequence { main::CreateROM(@_[2,6,8]); };
 
 # This is what happens when the syntax is so ambigous :-(
 rom_name: IDENTIFIER
@@ -356,6 +361,29 @@ END_OF_SYNTAX
 	  # Write list of supported sets to text file
 	  print FH scalar(keys %Games), " supported sets: ",
 	  join(' ', sort keys %Games), "\n";
+
+	  # Create dummy entries for systems with BIOS ROM set
+	  $Games{cvs}      = {};
+	  $Games{neogeo}   = {};
+	  $Games{playch10} = {};
+
+	  # Add BIOS ROMs for Century Electronics CVS
+	  AddROM($Games{cvs}, CreateROM('5b.bin',     '2048', 'f055a624'));
+	  AddROM($Games{cvs}, CreateROM('82s185.10h', '2048', 'c205bca6'));
+
+	  # Add BIOS ROMs for SNK NeoGeo
+	  AddROM($Games{neogeo}, CreateROM('neo-geo.rom', '131072', '9036d879'));
+	  AddROM($Games{neogeo}, CreateROM('ng-sfix.rom', '131072', '354029fc'));
+	  AddROM($Games{neogeo}, CreateROM('ng-sm1.rom',  '131072', '97cf998b'));
+
+	  # Add BIOS ROMs for Nintendo PlayChoice-10
+	  AddROM($Games{playch10}, CreateROM('82s129.6d',   '256', '1213ebd4'));
+	  AddROM($Games{playch10}, CreateROM('82s129.6e',   '256', 'a2625c6e'));
+	  AddROM($Games{playch10}, CreateROM('82s129.6f',   '256', 'e5414ca3'));
+	  AddROM($Games{playch10}, CreateROM('pch1-c.8k',  '8192', '9acffb30'));
+	  AddROM($Games{playch10}, CreateROM('pch1-c.8m',  '8192', 'c1232eee'));
+	  AddROM($Games{playch10}, CreateROM('pch1-c.8p',  '8192', '30c15e23'));
+	  AddROM($Games{playch10}, CreateROM('pch1-c.8t', '16384', 'd52fa07a'));
 
 	  # Sort the data
 	  print "Looking for clones";

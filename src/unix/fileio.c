@@ -273,9 +273,6 @@ static int open_zip_file (FakeFileHandle *f, char *zipname, const char *name)
    return 1 on success 0 otherwise. */
 static int open_normal_file (FakeFileHandle *f, char *name, int write)
 {
-    int read;
-    char *modes[4] = {"r", "w", "r+", "r+"};
-    
 #ifdef FILEIO_DEBUG
     fprintf(stderr_file, "Trying to open: %s\n", name);
 #endif

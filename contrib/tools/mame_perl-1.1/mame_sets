@@ -13,11 +13,11 @@
 # REQUIRED PERL PACKAGES
 #
 #-----------------------------------------------------------------------------
-require 5.004;
+require 5.005_03;
 use     strict;
 use     Getopt::Long;
 use     IO::Handle;
-use     File::Spec;   # CPAN (standard for Perl >= 5.005)
+use     File::Spec;
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -26,16 +26,17 @@ use     File::Spec;   # CPAN (standard for Perl >= 5.005)
 #
 #-----------------------------------------------------------------------------
 # Default values
-my $mamedir = File::Spec->catdir($ENV{HOME}, 'mame');
+my $mamedir = File::Spec->catdir(exists $ENV{HOME} ? $ENV{HOME} : '.', 'mame');
 my %Options = (
 	       'mame-dir'  => $mamedir,
-	       'text-file' => 'mameinfo.txt'
+	       'text-file' => 'mameinfo.txt',
+	       'compare'   => 'zipcmp >/dev/null'
 	      );
 
 # Parse command line options
 if (GetOptions(\%Options,
-	       'mame-dir=s', 'text-file=s', 'rom-dir', 'beta-rom-dir',
-	       'help|h')) {
+	       'mame-dir=s', 'text-file=s', 'rom-dir=s', 'beta-rom-dir=s',
+	       'compare=s', 'help|h')) {
 
   # Help requested?
   if ($Options{help}) {
@@ -48,7 +49,8 @@ if (GetOptions(\%Options,
     print " --rom-dir <dir>      ROM sets directory      (Default: ",
     File::Spec->catdir($mamedir, 'roms'), ")\n";
     print " --beta-rom-dir <dir> Beta ROM sets directory (Default: ",
-    File::Spec->catdir($mamedir, ,'beta', 'roms'), ")\n\n";
+    File::Spec->catdir($mamedir, ,'beta', 'roms'), ")\n";
+    print " --compare <command>  ZIP compare command     (Default: zipcmp >/dev/null)\n\n";
     print " --help | -h          This help page\n";
 
   } else {
@@ -137,9 +139,9 @@ if (GetOptions(\%Options,
     foreach (sort
 	     grep { exists $supported{$_} and exists $nonbeta{$_} }
 	     keys %beta) {
-      if (system("zipcmp >/dev/null " . File::Spec->catfile($nonbetapath, $_) .
-		 ".zip "              . File::Spec->catfile($betapath, $_) .
-		 ".zip") != 0) {
+      if (system($Options{compare}                     . " " .
+		 File::Spec->catfile($nonbetapath, $_) . ".zip " .
+		 File::Spec->catfile($betapath, $_)    . ".zip") != 0) {
 	print " $_";
 	$modified++;
       }

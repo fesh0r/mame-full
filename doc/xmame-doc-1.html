@@ -17,60 +17,76 @@ Previous
 <H2><A NAME="ss1.1">1.1 Keep everything up-to-date!</A>
 </H2>
 
-<P>The most recent copy of this guide, the xmame-sources and many more can
-be found on the xmame project homepage at 
-<A HREF="http://x.mame.net/">http://x.mame.net/</A><H2><A NAME="ss1.2">1.2 Some Links</A>
+<P>The most recent copy of this guide, the xmame-sources and many
+more can be found on the xmame project homepage at 
+<A HREF="http://x.mame.net/">http://x.mame.net/</A><P>
+<H2><A NAME="ss1.2">1.2 Some Links</A>
 </H2>
 
 <P>
 <UL>
 <LI>The official M.A.M.E home is at 
-<A HREF="http://www.mame.net">http://www.mame.net</A></LI>
-<LI>The realy best ROM site on this planet is at 
-<A HREF="http://www.mame.dk/">http://www.mame.dk/</A></LI>
-<LI>grustibus the <B>very good</B> frontend (if you gnome) 
-<A HREF="http://grustibus.sourceforge.net/">http://grustibus.sourceforge.net/</A></LI>
-<LI><B>M</B>ame <B>A</B>ction <B>R</B>eplay <B>P</B>age for those who want to have a  look at other monitors
-at 
-<A HREF="http://marp.retrogames.com/">http://marp.retrogames.com/</A></LI>
-<LI>and of course dont forget our project homepage at <B>
+<A HREF="http://www.mame.net">http://www.mame.net</A>
+</LI>
+<LI>The very best ROM site on this planet is at 
+<A HREF="http://www.mame.dk/">http://www.mame.dk/</A>
+</LI>
+<LI>grustibus, the <B>very good</B> frontend (if you gnome) 
+<A HREF="http://grustibus.sourceforge.net/">http://grustibus.sourceforge.net/</A>
+</LI>
+<LI>gnomame, another great gnome-based frontend 
+<A HREF="http://gnomame.sourceforge.net/">http://gnomame.sourceforge.net/</A>
+</LI>
+<LI>tkmame, the Tcl/TK frontend that works in Linux/Unix and MS Windows
+<A HREF="http://tkmame.retrogames.com/">http://tkmame.retrogames.com/</A>
+ </LI>
+<LI><B>MAME</B> <B>A</B>ction <B>R</B>eplay <B>P</B>age for those who want to have a  look at
+other monitors at 
+<A HREF="http://marp.retrogames.com/">http://marp.retrogames.com/</A>
+</LI>
+<LI>and of course don't forget our project homepage at <B>
 <A HREF="http://x.mame.net/">http://x.mame.net/</A></B></LI>
 </UL>
 <H2><A NAME="ss1.3">1.3 Pending Jobs - or TODO</A>
 </H2>
 
-<P>If you think you can help with the todo list or you can make a  contribution
-that you feel is interesting, please send mail to the xmame/xmess coordinator.
-See 
-<A HREF="xmame-doc-5.html#Mail">Mail</A> for contact information.
+<P>If you think you can help with the todo list or you can make
+a  contribution that you feel is interesting, please send mail to
+the xmame/xmess coordinator. See 
+<A HREF="xmame-doc-5.html#Mail">Mail</A>
+for contact information.
 <P>
 <UL>
-<LI>optimise mouse warping</LI>
-<LI>remove osd_input_init_post, add display ready flag</LI>
-<LI>updating of fps is off (dirty marking problem) with vector games</LI>
-<LI>update porting.txt</LI>
-<LI>convert all remaining sound-drivers to plugins</LI>
-<LI>rewrite display/input code to be more modular, oo-ish and usable as a seperate
-library.</LI>
-<LI>split <CODE>-[no]scanline</CODE> option in emulated and real scanline options</LI>
-<LI>add an option to specify which resolution to use, add clipping and panning
-if it doesn't fit and use it anyway.</LI>
-<LI>use pentium TSC for uclock where available</LI>
-<LI>network:
+<LI>Optimise mouse warping.</LI>
+<LI>Remove osd_input_init_post, add display ready flag.</LI>
+<LI>Updating of fps is off (dirty marking problem) with vector games.</LI>
+<LI>Update porting.txt.</LI>
+<LI>Convert all remaining sound drivers to plugins.</LI>
+<LI>Rewrite display/input code to be more modular, oo-ish, and usable
+as a separate library.</LI>
+<LI>Split <CODE>-[no]scanline</CODE> option into emulated and real scanline
+options.</LI>
+<LI>Add an option to specify which resolution to use, add clipping
+and panning if it doesn't fit and use it anyway.</LI>
+<LI>Use Pentium TSC for uclock where available.</LI>
+<LI>Network:
 <UL>
-<LI>fix since the dos team broke it, find out if the dosnet team is still alive</LI>
-<LI>add mouse / joystick support to network play</LI>
-<LI>try converting networksupport to tcp, currently we have no error correction</LI>
-<LI>make network code more robust, version check, input settings check etc.</LI>
+<LI>Fix since the dos team broke it, find out if the dosnet team
+is still alive.</LI>
+<LI>Add mouse/joystick support to network play</LI>
+<LI>Try converting network support to tcp, currently we have no error
+correction.</LI>
+<LI>Make network code more robust, version check, input settings
+check, etc.</LI>
 </UL>
 </LI>
-<LI>check x11-joystick rumors have it it's broken, then again only one bug-report
-so it seems no-one is using it.</LI>
-<LI>fm soundhack for linux-i386</LI>
-<LI>Make which messages are emitted and when configurable. (log-type's and
-log-level), make fileio emit messages about which files it tries to open, to
-help debugging rom-loading problems, and walk through all messages xmame emits
-giving them all a standard format like:
+<LI>Check x11-joystick. Rumor has it it's broken, but then again
+there's only one bug-report, so it seems no one is using it.</LI>
+<LI>fm soundhack for linux-i386.</LI>
+<LI>Make which messages are emitted and when configurable (log-type's
+and log-level), make fileio emit messages about which files it tries
+to open, to help debug rom-loading problems, and walk through all
+messages xmame emits giving them all a standard format like:
 <PRE>
 OSD:        Info:    bla
 X11-window: Warning: bla
@@ -78,10 +94,12 @@ Svgalib:    Error:   bla
  
 </PRE>
 </LI>
-<LI>add scancode 128-255 for none pc keys like F13-F24, more keypad keys etc,
-update all display targets to use this.</LI>
-<LI>Also see the text todo file, kept around to quickly enter stuff while hacking:
-<A HREF="todo">todo</A>.</LI>
+<LI>Add scancode 128-255 for non-PC keys like F13 -- F24, more keypad
+keys, etc., update all display targets to use this.</LI>
+<LI>Also see the text todo file, kept around to quickly enter stuff
+while hacking: 
+<A HREF="todo">todo</A>
+.</LI>
 </UL>
 <HR>
 <A HREF="xmame-doc-2.html">Next</A>

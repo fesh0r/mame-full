@@ -1,18 +1,41 @@
 /*
  * OpenStep specific file for XMAME. Here we define OpenStep specific
  * versions of all the MAME functions necessary to get it running under
- * OpenStep. 
+ * OpenStep. The lastest version of this code now draws in a more conventional
+ * manner to try and aid portability between this and Mac OS X. Thus all the
+ * DisplayPostScript has been removed and the drawing embedded within a
+ * custom NSView.
  *
- * -bat. 11/1/1999
+ * -bat. 12/11/2000
  */
 
+#import <stdio.h> 
+#import <stdlib.h>
+#import <unistd.h> 
 #import <AppKit/AppKit.h>
-#import <libc.h>
+
 #import "xmame.h"
 #import "osdepend.h"
 #import "driver.h"
 #import "keyboard.h"
 #import "devices.h"
+
+/*
+ * There are two flavours of OpenStep - the original Display PostScript
+ * based one and the new Mac OS X version. Sadly there is no good way of
+ * distinguishing the two, thus we make a few intelligent guesses here.
+ * If we have 'Apple' we are probably an OSX machine, and if we have 'BSD43'
+ * then we are probably an old NeXT system. GNUstep is neither (and has not
+ * been tried with this driver) so the default is old style.
+ */
+
+#ifdef __APPLE__
+#define COCOA 1
+#endif
+
+#ifdef BSD43
+#undef COCOA
+#endif
 
 /* display options */
 
@@ -25,20 +48,23 @@ struct rc_option display_opts[] = {
 };
 
 /*
- * Some defines to control various code parameters.
+ * Size of the black border
  */
 
 #define BORDER 12
-#define INSET 4
-#define FLUSH 30
 
 /*
- * Variables used by command-line DPS window.
+ * Variables used by command-line window.
  */
 
 NSWindow *theWindow = nil;		/* needed by keyboard code */
 static NSBitmapImageRep *thisBitmap = nil;
 static int bitmap_width, bitmap_height;
+static double gameAspect;
+
+static NSDate *thePast = nil;		/* avoid memory leak on pause */
+
+int isMinaturised = 0;			/* used to disable sound */
 
 /*
  * Screen bitmap variable
@@ -65,6 +91,7 @@ sysdep_init(void)
 {
 	outer_pool = [NSAutoreleasePool new];
 	NSApp = [[NSApplication sharedApplication] retain];
+	thePast = [NSDate distantPast];
 	return OSD_OK;
 }
 
@@ -94,14 +121,106 @@ sysdep_display_close(void)
 extern void openstep_keyboard_init(void);
 
 /*
+ * This is the custom view we use to do all the drawing into the window, and
+ * also to handle the resizing methods to enable us to maintain the windows
+ * aspect ratio to allow resizing. The view is opaque and draws eveything
+ * on top of a black background which extends just beyound the frame being
+ * displayed to provide a black border for games such as PacMan.
+ */
+
+@interface MameView : NSView
+
+- (void)drawRect:(NSRect)aRect;
+- (BOOL)isOpaque;
+- (NSSize)windowWillResize:(NSWindow*)sender toSize:(NSSize)proposedFrameSize;
+
+@end
+
+@implementation MameView : NSView
+
+/*
+ * Maintain the aspect ratio of the game area when resizing.
+ */
+
+- (NSSize)windowWillResize:(NSWindow*)sender toSize:(NSSize)proposedFrameSize
+{
+	NSSize originalFrameSize = [sender frame].size;
+	NSSize originalViewSize = [self frame].size;
+	float extraWidth = originalFrameSize.width - originalViewSize.width;
+	float extraHeight = originalFrameSize.height - originalViewSize.height;
+
+	/* remove extras to make new view size */
+	proposedFrameSize.width -= (extraWidth + (BORDER*2));
+	proposedFrameSize.height -= (extraHeight + (BORDER*2));
+
+	/* make new view have correct aspect ratio */
+	if((proposedFrameSize.width / proposedFrameSize.height) < gameAspect)
+		proposedFrameSize.width =
+				proposedFrameSize.height * gameAspect;
+	else
+		proposedFrameSize.height =
+				proposedFrameSize.width / gameAspect;
+
+	/* add extras and return */
+	proposedFrameSize.width += (extraWidth + (BORDER*2));
+	proposedFrameSize.height += (extraHeight + (BORDER*2));
+	return proposedFrameSize;
+}
+
+/*
+ * Get the view bounds, draw the borders and then the bitmap into the
+ * centre of it. We probably do not need to redraw the borders each time,
+ * but we get strange effects onm OS X if we do not.
+ */
+
+-(void)drawRect:(NSRect)aRect
+{
+	NSRect blackRect, theRect = [self bounds];
+
+	/* draw the borders */
+	[[NSColor blackColor] set];
+	blackRect = theRect;
+	blackRect.size.width = BORDER;
+	NSRectFill(blackRect);
+	blackRect.origin.x = theRect.size.width - BORDER;
+	NSRectFill(blackRect);
+	blackRect = theRect;
+	blackRect.size.height = BORDER;
+	NSRectFill(blackRect);
+	blackRect.origin.y = theRect.size.height - BORDER;
+	NSRectFill(blackRect);
+
+	/* draw the bitmap */
+	theRect.size.width -= (BORDER*2);
+	theRect.size.height -= (BORDER*2);
+	theRect.origin.x += BORDER;
+	theRect.origin.y += BORDER;
+
+	[thisBitmap drawInRect:theRect];
+}
+
+/*
+ * This view is always opaque
+ */
+
+- (BOOL)isOpaque
+{
+	return YES;
+}
+
+@end
+
+/*
  * Create the display. We create a window of the appropriate size, then
  * make it display on the screen. Keyboard initialisation is also called
- * from this function.
+ * from this function. The view contains a custom content view with it's
+ * own graphics state (for speed) that does the actual drawing of the bitmap.
  */
 
 int
 sysdep_create_display(int depth)
 {
+	MameView *theView = nil;
 	NSRect content_rect = { {100,100}, {0,0} };
 
 	/* make the display pool */
@@ -111,8 +230,9 @@ sysdep_create_display(int depth)
 	bitmap_height = visual_height * heightscale;
 
 	/* set the size of the view */
-	content_rect.size.width = bitmap_width + (BORDER*2) - 1;
-	content_rect.size.height = bitmap_height + (BORDER*2) - 1;
+	gameAspect = (double)bitmap_width / (double)bitmap_height;
+	content_rect.size.width = bitmap_width + (BORDER*2);
+	content_rect.size.height = bitmap_height + (BORDER*2);
 
 	/* allocate memory for 12 bit colour version */
 	screen12bit = [[NSMutableData dataWithLength:
@@ -140,36 +260,37 @@ sysdep_create_display(int depth)
 	}
 	[thisBitmap autorelease];
 
-	/* create a window */
+	/* create a window - retained is broken on public beta */
 	theWindow = [[NSWindow alloc] initWithContentRect:content_rect
-		styleMask:(NSTitledWindowMask | NSMiniaturizableWindowMask)
-		backing:NSBackingStoreRetained defer:NO];
+			styleMask:(NSTitledWindowMask |
+			NSMiniaturizableWindowMask |
+			NSResizableWindowMask)
+#ifdef COCOA
+			backing:NSBackingStoreBuffered
+#else
+			backing:NSBackingStoreRetained
+#endif
+			defer:NO];
 	[theWindow setTitle:[NSString
 		stringWithCString:Machine->gamedrv->description]];
 	[theWindow setReleasedWhenClosed:YES];
 
-	puts(Machine->gamedrv->description);
+	/* create the custom content view */
+	theView = [[MameView alloc] initWithFrame:
+			[[theWindow contentView] frame]];
+	[theView allocateGState];
+	[theWindow setContentView:theView];
+	[theWindow setMinSize:[theWindow frame].size];
+	[theWindow setDelegate:theView];
 
-	/* make it key and bring it to the front */
+	/* send it front and display the game name */
 	[theWindow makeKeyAndOrderFront:nil];
-
-	/* initialise it */
-	[[theWindow contentView] lockFocus];
-/*
-	DPSPrintf(DPSGetCurrentContext(),"initgraphics 0 setgray\n");
-	DPSFlushContext(DPSGetCurrentContext());
-*/
-	PSinitgraphics();
-	PSsetgray(0);
-	PSrectfill(INSET, INSET,
-			content_rect.size.width + 1 - (INSET*2),
-			content_rect.size.height + 1 - (INSET*2));
-	PSWait();
-	[[theWindow contentView] unlockFocus];
+	puts(Machine->gamedrv->description);
 
 	/* set up the structure for the palette code */
 	display_palette_info.writable_colors = 0;
 	display_palette_info.depth = 16;
+
 #ifdef LSB_FIRST
 	display_palette_info.red_mask = 0x00f0;
 	display_palette_info.green_mask = 0x000f;
@@ -239,7 +360,10 @@ update_display_16bpp(struct osd_bitmap *bitmap)
 
 /*
  * Update the display.  We create the bitmapped data for the current frame
- * and draw it into the window.
+ * and draw it into the window. If the window is minaturised however, then
+ * we go into a loop catching events and passing them until such a time as it
+ * is no longer minaturised. This is to avoid a huge drain on CPU time when
+ * not actually playing and effectively acts like a pause.
  */
 
 void
@@ -247,7 +371,21 @@ sysdep_update_display(struct osd_bitmap *bitmap)
 {
 	int old_use_dirty;
 
-	/* call appropriate function with dirty*/
+	/* pause if minturised, setting the flag */
+	while([theWindow isMiniaturized]) {
+		NSEvent *thisEvent;
+		isMinaturised = 1;
+		thisEvent = [NSApp nextEventMatchingMask:NSAnyEventMask
+				untilDate:thePast inMode:NSDefaultRunLoopMode
+				dequeue:YES];
+		if(thisEvent)
+			[NSApp sendEvent:thisEvent];
+		else
+			usleep(50000);
+	}
+	isMinaturised = 0;
+
+	/* call appropriate function with dirty */
 	old_use_dirty = use_dirty;
 	if(current_palette->lookup_dirty)
 		use_dirty = 0;
@@ -257,12 +395,16 @@ sysdep_update_display(struct osd_bitmap *bitmap)
 		update_display_8bpp(bitmap);
 	use_dirty = old_use_dirty;
 
-	/* lock focus and draw it */
-	[[theWindow contentView] lockFocus];
-	[thisBitmap drawInRect:(NSRect){ {BORDER, BORDER},
-			{bitmap_width, bitmap_height}}];
+	/* make the view as dirty and redisplay the window */
+	[[theWindow contentView] setNeedsDisplay:YES];
+	[theWindow displayIfNeeded];
+
+	/* flushing is done differently on the two variants */
+#ifdef COCOA
+	[[NSGraphicsContext currentContext] flushGraphics];
+#else
 	PSWait();
-	[[theWindow contentView] unlockFocus];
+#endif
 }
 
 /*
@@ -276,29 +418,19 @@ sysdep_display_16bpp_capable(void)
 }
 
 /*
- * The following functions are dummies - they should never be called as
- * we never use 8 bit palletised output graphics under OpenStep. But they
- * must be present in order to link properly.
+ * The following functions are dummies - we always generate 16 bit
+ * colour output on OpenStep systems.
  */
 
 int
 sysdep_display_alloc_palette(int writable_colours)
 {
-	if(writable_colours) {
-		fprintf(stderr,
-			"Error: pallete allocation requested with %d colours\n",
-			writable_colours);
-		return -1;
-	}
-
-	return 0;
+	return OSD_OK;
 }
 
 int
 sysdep_display_set_pen(int pen,
 		unsigned char r, unsigned char g, unsigned char b)
 {
-	fprintf(stderr, "Error: request made to set pen %d to %d/%d/%d\n",
-			pen, r, g, b);
-	return -1;
+	return OSD_OK;
 }

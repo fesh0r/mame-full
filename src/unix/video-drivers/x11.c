@@ -177,7 +177,6 @@ int sysdep_display_set_pen (int pen, unsigned char red, unsigned char green,
 
 void sysdep_update_display (struct osd_bitmap *bitmap)
 {
-   extern unsigned short *shrinked_pens;
    int new_video_mode = x11_video_mode;
 
    if (keyboard_pressed (KEYCODE_LALT))

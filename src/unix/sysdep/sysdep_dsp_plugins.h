@@ -33,6 +33,9 @@ extern struct plugin_struct sysdep_dsp_solaris;
 #ifdef SYSDEP_DSP_SOUNDKIT
 extern struct plugin_struct sysdep_dsp_soundkit;
 #endif
+#ifdef SYSDEP_DSP_COREAUDIO
+extern struct plugin_struct sysdep_dsp_coreaudio;
+#endif
 #ifdef SYSDEP_DSP_IRIX
 extern struct plugin_struct sysdep_dsp_irix;
 #endif

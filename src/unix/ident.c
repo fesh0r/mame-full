@@ -47,10 +47,6 @@ void identify_rom(const char* name, int checksum, int length)
 #if 1
 	int found = 0;
 	int i;
-#ifdef IDENT_DEBUG
-	fprintf(stderr_file, "identify_rom(%s, %x, %d) called\n", name,
-		checksum, length);
-#endif
 
 	/* remove directory name */
 	for (i = strlen(name)-1;i >= 0;i--)
@@ -66,36 +62,22 @@ void identify_rom(const char* name, int checksum, int length)
 
 	for (i = 0; drivers[i]; i++)
 	{
-		const struct RomModule *romp;
+		const struct RomModule *region, *rom;
 
-		romp = drivers[i]->rom;
-		
-		/* for pong and others which don't have roms */
-		if (!romp)
-		   continue;
-
-#ifdef IDENT_DEBUG
-		fprintf(stderr_file, "in identify_rom, starting loop, driver = %d (%s), romp = %p, ROM_GETNAME (romp) = %s, ROM_GETOFFSET (romp) = 0x%X, romp->lenght = 0x%X\n",
-			i, drivers[i]->name, romp, (ROM_GETNAME (romp)==-1)? "-1":ROM_GETNAME (romp), ROM_GETOFFSET (romp), ROM_GETLENGTH (romp));
-#endif
-		while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
-		{
-			if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && checksum == ROM_GETCRC (romp))
-			{
-				if (!silentident)
-				{
-					if (found != 0)
-						fprintf(stdout_file, "             ");
-					fprintf(stdout_file, "= %-12s  %s\n",ROM_GETNAME (romp),drivers[i]->description);
-				}
-				found++;
-			}
-			romp++;
-#ifdef IDENT_DEBUG
-			fprintf(stderr_file, "in identify_rom, in loop, romp = %p, ROM_GETNAME (romp) = %s, ROM_GETOFFSET (romp) = 0x%X, romp->lenght = 0x%X\n",
-				romp, (ROM_GETNAME (romp)==-1)? "-1":ROM_GETNAME (romp), ROM_GETOFFSET (romp), ROM_GETLENGTH (romp));
-#endif
-		}
+                for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+                    for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                    {
+                        if (checksum == ROM_GETCRC(rom))
+                        {
+                            if (!silentident)
+                            {
+                                if (found != 0)
+                                   fprintf(stdout_file, "             ");
+				fprintf(stdout_file, "= %-12s %s\n",ROM_GETNAME(rom),drivers[i]->description);
+                            }
+                            found++;
+                        }
+		    }
 	}
 	if (found == 0)
 	{
@@ -128,26 +110,19 @@ void identify_rom(const char* name, int checksum, int length)
 	int i;
 	fprintf(stdout_file, "%s\n",name);
 
-	for (i = 0; drivers[i]; i++) {
-		const struct RomModule *romp;
+	for (i = 0; drivers[i]; i++)
+        {
+		const struct RomModule *region, *rom;
 
-		romp = drivers[i]->rom;
-
-		/* for pong and others which don't have roms */
-		if (!romp)
-		   continue;
-
-		while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
-		{
-			if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && checksum == ROM_GETCRC (romp))
-			{
-				fprintf(stdout_file, "\t%s/%s %s, %s, %s\n",drivers[i]->name,ROM_GETNAME (romp),
+                for (region = rom_first_region(drivers[i]; region; region = rom_next_region(region))
+                    for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                       if (checksum == ROM_GETCRC(rom)) 
+                       {
+				fprintf(stdout_file, "\t%s/%s %s, %s, %s\n",drivers[i]->name,romp->name,
 					drivers[i]->description,
 					drivers[i]->manufacturer,
 					drivers[i]->year);
-			}
-			romp++;
-		}
+                       }
 	}
 #endif
 }

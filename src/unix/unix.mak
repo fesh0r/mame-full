@@ -4,7 +4,7 @@
 
 # *** Comment this line to get verbose make output, for debugging build
 # problems
-QUIET = 1
+#QUIET = 1
 
 
 ##############################################################################
@@ -27,6 +27,8 @@ LIBS.solaris       = -lnsl -lsocket
 LIBS.irix          = -laudio
 LIBS.irix_al       = -laudio
 LIBS.aix           = -lUMSobj
+LIBS.next	   = -framework SoundKit
+LIBS.macosx	   = -framework CoreAudio
 
 ##############################################################################
 # **** Display dependent settings.
@@ -45,7 +47,7 @@ LIBS.ggi        = $(X11LIB) -lggi
 LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
 LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
-LIBS.openstep	= -framework AppKit -framework SoundKit
+LIBS.openstep	= -framework AppKit
 LIBS.SDL	= -ldl -lSDL -lpthread -D_REENTRANT
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)
@@ -106,6 +108,7 @@ IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o
 IMGTOOL_LIBS = -lz
 INCLUDE_PATH = -Isrc -Imess -Isrc/unix -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
+
 ##############################################################################
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
@@ -135,7 +138,11 @@ MY_CFLAGS = $(CFLAGS) $(IL) $(CFLAGS.$(MY_CPU)) \
 	$(INCLUDES) -Isrc -Imess -Isrc/unix \
 	-I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
-MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lz -lm
+MY_LIBS = $(LIBS) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lz
+
+ifdef SEPARATE_LIBM
+MY_LIBS += -lm
+endif
 
 ifdef ZLIB
 MY_CFLAGS += -Icontrib/cutzlib-1.1.3 -I../../contrib/cutzlib-1.1.3
@@ -286,11 +293,11 @@ $(OBJ)/vidhrdw/vector.o: bla
 doc: doc/xmame-doc.txt doc/x$(TARGET)rc.dist doc/gamelist.$(TARGET) doc/x$(TARGET).6
 
 doc/xmame-doc.txt: doc/xmame-doc.sgml
-	cd doc;
-	sgml2txt   -l en -p a4 -f          xmame-doc.sgml;
-	sgml2html  -l en -p a4             xmame-doc.sgml;
-	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml;
-	rm -f "xmame-doc.lyx~"
+	cd doc; \
+	sgml2txt   -l en -p a4 -f          xmame-doc.sgml; \
+	sgml2html  -l en -p a4             xmame-doc.sgml; \
+	sgml2latex -l en -p a4 --output=ps xmame-doc.sgml; \
+	rm -f xmame-doc.lyx~
 	
 doc/x$(TARGET)rc.dist: all src/unix/xmamerc-keybinding-notes.txt
 	./x$(TARGET).$(DISPLAY_METHOD) -noloadconfig -showconfig | \
@@ -320,7 +327,7 @@ doinstall:
 
 doinstallsuid:
 	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
+	$(INSTALL) x$(TARGET).$(DISPLAY_METHOD) $(DESTDIR)
 	chmod 4755 $(DESTDIR)/$(NAME).$(DISPLAY_METHOD)
 
 copycab:

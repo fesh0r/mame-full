@@ -8,6 +8,7 @@
 static int frontend_list_clones(char *gamename);
 static int frontend_list_cpu(void);
 static int frontend_list_gamelistheader(void);
+static int frontend_list_crcs(void);
 
 static int list       = 0;
 static int showclones = 1;
@@ -60,7 +61,7 @@ struct rc_option frontend_list_opts[] = {
      "Like -list, with the number of colors used" },
 #ifdef MESS
    { "listdevices",	"ldev",			rc_set_int,	&list,
-     NULL,		LIST_DEVICES,		0,		NULL,
+     NULL,		LIST_DEVICES,	0,		NULL,
      "Like -list, with devices and image file extensions supported" },
 #endif
    { "listromsize",	"lrs",			rc_set_int,	&list,
@@ -234,15 +235,19 @@ static void frontend_verify(int driver, int rom)
 
 static int frontend_uses_roms(int driver)
 {
-   const struct RomModule *romp = drivers[driver]->rom;
+   const struct RomModule *region, *rom;
    int total_roms = 0;
    
-   while(romp && (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp)))
+   for (region = rom_first_region(drivers[driver]); region; region = rom_next_region(region))
    {
-      if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1)
-         total_roms++;
-      
-      romp++;
+      for (rom = rom_first_file(region); rom && (ROM_GETNAME(rom) ||
+      ROM_GETOFFSET(rom) || ROM_GETLENGTH(rom)); rom = rom_next_file(rom))
+      {
+         if (ROM_GETNAME(rom) && ROM_GETNAME(rom) != (char *)-1)
+         {
+            total_roms++;
+         }
+      }
    }
    
    return total_roms;
@@ -288,25 +293,25 @@ int frontend_list(char *gamename)
 /* list             */ NAME" currently supports:\n",
 /* listfull         */ "name      description\n"
                        "--------  -----------\n",
-/* listgames        */ "name      year  manufacturer                          description\n"
-                       "--------  ----  ------------------------------------  -----------\n",
-/* listdetails      */ "name      driver      cpu 1    cpu 2    cpu 3    cpu 4    cpu 5    cpu 6    cpu 7    cpu 8     sound 1     sound 2     sound 3     sound 4     sound 5      description\n"
-                       "--------  ----------  -------- -------- -------- -------- -------- -------- -------- --------  ----------- ----------- ----------- ----------- -----------  -----------\n",
+/* listgames        */ "year manufacturer                         name\n"
+                       "---- ------------------------------------ --------------------------------\n",
+/* listdetails      */ " romname driver     cpu 1    cpu 2    cpu 3    cpu 4    cpu 5    cpu 6    cpu 7    cpu 8    sound 1     sound 2     sound 3     sound 4     sound 5     name\n"
+                       "-------- ---------- -------- -------- -------- -------- -------- -------- -------- -------- ----------- ----------- ----------- ----------- ----------- --------------------------\n",
 /* listgamelist     */ "+----------------------------------+-------+-------+-------+-------+----------+\n"
                        "|                                  |       |Correct|       |Screen | Internal |\n"
                        "| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n"
                        "+----------------------------------+-------+-------+-------+-------+----------+\n",
-/* listsourcefile   */ "name      sourcefile\n"
-                       "--------  ----------\n",
+/* listsourcefile   */ "name     sourcefile\n"
+                       "-------- ----------\n",
 /* listcolors       */ "name      colors\n"
                        "--------  ------\n",
 /* listextensions   */ "name      device      image file extensions supported\n"
                        "--------  ----------  -------------------------------\n",
-/* listromsize      */ "name      year  size\n"
-                       "--------  ----  ----\n",
+/* listromsize      */ "name    \tyear \tsize\n"
+                       "--------\t-----\t----\n",
 /* listroms         */ "",
-/* listcrc          */ "CRC       filename      description\n"
-                       "--------  ------------  -----------\n",
+/* listcrc          */ "CRC      filename     description\n"
+                       "-------- ------------ -----------\n",
 /* listsamples      */ "",
 /* listsamdir       */ "name      samples dir\n"
                        "--------  -----------\n",
@@ -319,13 +324,12 @@ int frontend_list(char *gamename)
 /*** internal verification list commands (developers only) ***/
 /* listmissingroms  */ "name      clone of  description\n"
                        "--------  --------  -----------\n",
-/* listdupcrc       */ "CRC       filename1    name1        filename2    name2\n"
-                       "--------  ------------ --------     ------------ --------\n",
+/* listdupcrc       */ "CRC      filename1    name1        filename2    name2\n"
+                       "-------- ------------ --------     ------------ --------\n",
 /* wrongorientation */ "",
-/* wrongmerge       */ "CRC       filename1    name1        filename2    name2\n"
-                       "--------  ------------ --------     ------------ --------\n",
+/* wrongmerge       */ "",
 /* wrongfps         */ "name      resolution  fps\n"
-                       "--------  ----------  ---\n"
+                       "--------  ----------  -----------\n"
    };
        
    int matching     = 0;
@@ -352,10 +356,12 @@ int frontend_list(char *gamename)
          return frontend_list_cpu();
       case LIST_GAMELISTHEADER:
          return frontend_list_gamelistheader();
+      case LIST_CRC: /* list all crc-32 */
+         return frontend_list_crcs();
    }
    
    fprintf(stdout_file, header[list-1]);
-      
+
    for (i=0;drivers[i];i++)
    {
          if ( (showclones || (drivers[i]->clone_of == 0) ||
@@ -368,27 +374,30 @@ int frontend_list(char *gamename)
             {
                /*** standard list commands ***/
                case LIST_LIST: /* simple games list */
-                  fprintf(stdout_file, "%-8s ", drivers[i]->name);
-                  if (!(matching % 8)) fprintf(stdout_file, "\n");
+                  fprintf(stdout_file, "%-8s", drivers[i]->name);
+                  if (!(matching % 8))
+                     fprintf(stdout_file, "\n");
+                  else
+                     fprintf(stdout_file, "  ");
                   break;
                case LIST_FULL: /* games list with descriptions */
-                  fprintf(stdout_file, "%-8s  %s\n", drivers[i]->name,
+                  fprintf(stdout_file, "%-10s\"%s\"\n", drivers[i]->name,
                      get_description(i));
                   break;
                case LIST_GAMES:
                {
-                  fprintf(stdout_file, "%-8s  %-4s  %-36s  %s\n",
-                     drivers[i]->name,
-                     drivers[i]->year, drivers[i]->manufacturer,
-                     get_description(i));
+                  fprintf(stdout_file, "%-5s%-36s %s\n",
+                     drivers[i]->year,
+                     drivers[i]->manufacturer, get_description(i));
                   break;
                }
                case LIST_DETAILS: /* A detailed MAMELIST.TXT type roms lister */
                   /* First, the rom name */
-                  fprintf(stdout_file, "%-8s  ",drivers[i]->name);
+                  fprintf(stdout_file, "%-8s ",drivers[i]->name);
 
                   /* source file (skip the leading path) */
                   fprintf(stdout_file, "%-10s  ", strrchr (drivers[i]->source_file, '/') + 1);
+
                   /* Then, cpus */
                   for(j=0;j<MAX_CPU;j++)
                   {
@@ -459,7 +468,7 @@ int frontend_list(char *gamename)
                         fprintf(stdout_file, "|  Yes  ");
 
                      {
-                        const char **samplenames = 0;
+                        const char **samplenames = NULL;
 #if (HAS_SAMPLES || HAS_VLM5030)
                         for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
                         {
@@ -473,7 +482,7 @@ int frontend_list(char *gamename)
 #if (HAS_VLM5030)
                            if (drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030)
                            {
-                              samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+                              samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
                               break;
                            }
 #endif
@@ -508,7 +517,7 @@ int frontend_list(char *gamename)
                   }
                   break;
                case LIST_SOURCEFILE:
-                  fprintf(stdout_file, "%-8s  %s\n", drivers[i]->name,
+                  fprintf(stdout_file, "%-8s %s\n", drivers[i]->name,
                      drivers[i]->source_file);
                   break;
                case LIST_COLORS:
@@ -516,7 +525,7 @@ int frontend_list(char *gamename)
                      drivers[i]->drv->total_colors);
                   break;
 #ifdef MESS
-               case LIST_DEVICES: /* list devices */
+               case LIST_DEVICES: /* list extensions */
                    if(drivers[i]->dev && (drivers[i]->dev->type != IO_END))
                    {
                       const struct IODevice *dev = drivers[i]->dev;
@@ -552,21 +561,18 @@ int frontend_list(char *gamename)
 #endif
                case LIST_ROMSIZE:
                   {
-                     const struct RomModule *romp;
+                     const struct RomModule *region, *rom, *chunk;
+
                      j = 0;
-                     
-                     romp = drivers[i]->rom;
-                     
-                     while (romp && (ROM_GETNAME (romp) || ROM_GETOFFSET(romp)
-						 || ROM_GETLENGTH (romp)))
-                     {
-                        j += ROM_GETLENGTH (romp);
-                        romp++;
-                     }
-                     printf("%-8s  %-4s  %u\n", drivers[i]->name,
-                        drivers[i]->year, j);
+                     for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+                        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                           for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+                              j += ROM_GETLENGTH(chunk);
+
+                              printf("%-8s\t%-5s\t%u\n", drivers[i]->name, drivers[i]->year, j);
                   }
                   break;
+
                case LIST_ROMS: /* game roms list */
                   if(!frontend_uses_roms(i))
                   {
@@ -577,44 +583,13 @@ int frontend_list(char *gamename)
                   printromlist(drivers[i]->rom, drivers[i]->name);
                   fprintf(stdout_file, "\n");
                   break;
-               case LIST_CRC: /* list all crc-32 */
-                  {
-                     const struct RomModule *romp = drivers[i]->rom;
-                     
-                     if(!frontend_uses_roms(i))
-                     {
-                        skipped++;
-                        continue;
-                     }
-/*
-                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
-                     {
-                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1)
-                        {
-                           fprintf(stdout_file, "%08x  %-12s  %s\n", ROM_GETCRC (romp),
-                              ROM_GETNAME (romp), get_description(i));
-                        }
-                        romp++;
-                     }
-*/
-for (i = 0; drivers[i]; i++)
-{
-    const struct RomModule *region, *rom;
-
-    for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
-          for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-                printf("%08x %-12s %s\n",ROM_GETCRC(rom),ROM_GETNAME(rom),drivers[i]->description);
-}
-return 0;
-                  }
-                  break;
 #if (HAS_SAMPLES || HAS_VLM5030)
                case LIST_SAMPLES: /* game samples list */
                case LIST_SAMDIR:  /* games list with samples directories */
                   {
                      int found = 0;
                      
-                     for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+                     for (j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
                      {
                         const char **samplenames = NULL;
 #if (HAS_SAMPLES)
@@ -623,7 +598,7 @@ return 0;
 #endif                        
 #if (HAS_VLM5030)
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
-                           samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+                           samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 #endif                        
                         if (samplenames && samplenames[0])
                         {
@@ -662,13 +637,13 @@ return 0;
                      
                      for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
                      {
-#if (HAS_SAMPLES)
+#ifdef HAS_SAMPLES                     
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
                            samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 #endif
-#if (HAS_VLM5030)
+#ifdef HAS_VLM5030                     
                         if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
-                           samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+                           samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
 #endif
                      }
                      
@@ -695,7 +670,7 @@ return 0;
                case LIST_MISSINGROMS:
                   if (RomsetMissing (i))
                   {
-                     fprintf(stdout_file, "%-8s  %-8s  %s\n", drivers[i]->name,
+                     fprintf(stdout_file, "%-10s%-10s%s\n", drivers[i]->name,
                         (drivers[i]->clone_of) ? drivers[i]->clone_of->name : "",
                         get_description(i));
                      not_found++;
@@ -703,7 +678,7 @@ return 0;
                   break;
                case LIST_DUPCRC:
                   {
-                     const struct RomModule *romp = drivers[i]->rom;
+                     const struct RomModule *region, *rom;
                      int found = 0;
 
                      if(!frontend_uses_roms(i))
@@ -712,32 +687,22 @@ return 0;
                         continue;
                      }
                      
-                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
-                     {
-                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && ROM_GETCRC (romp))
-                        {
-                           j = i+1;
-                           while (drivers[j])
-                           {
-                              const struct RomModule *romp1 = drivers[j]->rom;
-
-                              while (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1))
+                     for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+                        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                           if (ROM_GETCRC(rom))
+                              for (j = i + 1; drivers[j]; j++)
                               {
-                                 if (ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
-                                    strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)) &&
-                                    ROM_GETCRC (romp1) == ROM_GETCRC (romp))
-                                 {
-                                    fprintf(stdout_file, "%08x  %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC (romp),
-                                       ROM_GETNAME (romp),drivers[i]->name, ROM_GETNAME (romp1),drivers[j]->name);
-                                    found = 1;
-                                 }
-                                 romp1++;
+                                 const struct RomModule *region1, *rom1;
+
+                                 for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+                                    for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+                                       if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+                                       {
+                                          fprintf(stdout_file, "%08x %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC(rom), ROM_GETNAME(rom),drivers[i]->name, ROM_GETNAME(rom1),drivers[j]->name);
+                                          found = 1;
+                                       }
                               }
-                              j++;
-                           }
-                        }
-                        romp++;
-                     }
+
                      if (found)
                         incorrect++;
                      else
@@ -812,7 +777,7 @@ return 0;
                   break;
                case LIST_WRONGMERGE: /* list duplicate crc-32 with different ROM name in clone sets */
                   {
-                     const struct RomModule *romp = drivers[i]->rom;
+                     const struct RomModule *region, *rom;
                      int found = 0;
                      
                      if(!frontend_uses_roms(i))
@@ -820,61 +785,51 @@ return 0;
                         skipped++;
                         continue;
                      }
-                     
-                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
-                     {
-                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && ROM_GETCRC (romp))
-                        {
-                           j = 0;
-                           while (drivers[j])
-                           {
-                              if(j != i &&
-                                 drivers[j]->clone_of &&
-                                 !(drivers[j]->clone_of->flags & NOT_A_DRIVER) &&
-                                 (drivers[j]->clone_of == drivers[i] ||
-                                    (i < j &&
-                                       drivers[j]->clone_of == drivers[i]->clone_of)))
-                              {
-                                 int match = 0;
-                                 const struct RomModule *romp1 = drivers[j]->rom;
-                                 
-                                 while (romp1 && (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1)))
-                                 {
-                                    if(ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
-                                       !strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)))
+
+                     for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+                        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+                            if (ROM_GETCRC(rom))
+                                for (j = 0; drivers[j]; j++)
+                                {
+                                    if (j != i && drivers[j]->clone_of && (drivers[j]->clone_of->flags & NOT_A_DRIVER) == 0 && (drivers[j]->clone_of == drivers[i] || (i < j && drivers[j]->clone_of == drivers[i]->clone_of)))
                                     {
-                                       match = 1;
-                                       break;
-                                    }
-                                    romp1++;
-                                 }
-                                 if (match == 0)
-                                 {
-                                    romp1 = drivers[j]->rom;
-                                    
-                                    while (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1))
-                                    {
-                                       if(ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
-                                          strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)) &&
-                                          ROM_GETCRC (romp1) == ROM_GETCRC (romp))
-                                       {
-                                          fprintf(stdout_file,
-                                             "%08x  %-12s %-8s <-> %-12s %-8s\n",
-                                             ROM_GETCRC (romp), ROM_GETNAME (romp),
-                                             drivers[i]->name,
-                                             ROM_GETNAME (romp1),
-                                             drivers[j]->name);
-                                          found = 1;
-                                       }
-                                       romp1++;
+                                        const struct RomModule *region1, *rom1;
+                                        int match = 0;
+                                        
+                                        for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+                                        {
+                                            for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+                                            {
+                                                if (!strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)))
+                                                {
+                                                   if (ROM_GETCRC(rom1) && ROM_GETCRC(rom) != ROM_GETCRC(rom1) && ROM_GETCRC(rom) != BADCRC(ROM_GETCRC(rom1)))
+                                                   {
+                                                      fprintf(stdout_file,"%-12s %08x %-8s <-> %08x %-8s\n", ROM_GETNAME(rom), ROM_GETCRC(rom), drivers[i]->name, ROM_GETCRC(rom1), drivers[j]->name);
+                                                      found = 1;
+                                                   }
+                                                   else
+                                                      match = 1;
+                                                }
+                                            }
+                                        }
+
+                                        if (match == 0)
+                                        {
+                                           for (region1 = rom_first_region(drivers[j]); region1; region1 = rom_next_region(region1))
+                                           {
+                                              for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
+                                              {
+                                                 if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && ROM_GETCRC(rom) == ROM_GETCRC(rom1))
+                                                 {
+                                                    fprintf(stdout_file, "%08x %-12s %-8s <-> %-12s %-8s\n", ROM_GETCRC(rom), ROM_GETNAME(rom), drivers[i]->name, ROM_GETNAME(rom1), drivers[j]->name); found = 1;
+                                                 }
+                                              }
+                                           }
+                                        }
+                                          
                                     }
                                  }
-                              }
-                              j++;
-                           }
-                        }
-                        romp++;
-                     }
+
                      if (found)
                         incorrect++;
                      else
@@ -884,18 +839,18 @@ return 0;
                case LIST_WRONGFPS: /* list drivers with too high frame rate */
                   if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
                      (drivers[i]->clone_of == 0 ||
-                        drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
+                        (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
                      drivers[i]->drv->frames_per_second > 57 &&
                      drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 > 244 &&
                      drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 <= 256)
                   {
-                     fprintf(stdout_file, "%-8s  %-4dx%4d   %d\n",
+                     fprintf(stdout_file, "%-8s  %-4dx%4d   %fHz\n",
                         drivers[i]->name,
                         drivers[i]->drv->default_visible_area.max_x -
                            drivers[i]->drv->default_visible_area.min_x + 1,
                         drivers[i]->drv->default_visible_area.max_y -
                            drivers[i]->drv->default_visible_area.min_y + 1,
-                        (int)drivers[i]->drv->frames_per_second);
+                        drivers[i]->drv->frames_per_second);
                      incorrect++;
                   }
                   else
@@ -992,7 +947,8 @@ static int frontend_list_cpu(void)
             
             if (atoi(drivers[i]->year) == year)
             {
-               for (j = 0;j < MAX_CPU;j++)
+/*               for (j = 0;j < MAX_CPU;j++) */
+j = 0;  /* count only the main cpu */
                   count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
             }
          }
@@ -1011,49 +967,77 @@ static int frontend_list_cpu(void)
 static int frontend_list_gamelistheader(void)
 {
    fprintf(stdout_file,
-      "This is the complete list of games supported by %s %s\n",
+      "This is the complete list of games supported by %s %s.\n",
       NAME, build_version);
    if (!showclones)
       fprintf(stdout_file,
          "Variants of the same game are not included, you can use the -listclones command\n"
          "to get a list of the alternate versions of a given game.\n");
    fprintf(stdout_file, "\n"
-      "The list is generated automatically and is not 100%% accurate, particularly in\n"
-      "the \"Screen Flip\" column. Please let us know of any errors you find so we can\n"
-      "correct them.\n"
-      "\n");
-   fprintf(stdout_file,
-      "The meanings of the columns are as follows:\n"
-      "Working - \"No\" means that the emulation has shortcomings that cause the game\n"
-      "  not to work correctly. This can be anywhere from just showing a black screen\n"
-      "  to being playable with major problems.\n");
-   fprintf(stdout_file,
-      "Correct Colors - \"Yes\" means that colors should be identical to the original,\n"
-      "  \"Close\" that they are very similar but wrong in places, \"No\" that they are\n"
-      "  completely wrong. In some cases, we were not able to find the color PROMs of\n");
-   fprintf(stdout_file,
-      "  the game. Those PROMs will be reported as \"NO GOOD DUMP KNOWN\" on startup,\n"
-      "  and the game will have wrong colors. The game is still reported as \"Yes\" in\n"
-      "  this column, because the code to handle the color PROMs is in the driver and\n"
-      "  if you provide them colors will be correct.\n");
-   fprintf(stdout_file,
-      "Sound - \"Partial\" means that sound support is either incomplete or not entirely\n"
-      "  accurate. Note that, due to analog circuitry which is difficult to emulate,\n"
-      "  sound may be significantly different from the real board. A common case is\n"
-      "  the presence of low pass filters that make the real board sound less harsh\n"
-      "  than the emulation.\n");
-   fprintf(stdout_file,
-      "Screen Flip - A large number of games have a dip switch setting for \"Cocktail\"\n"
-      "  cabinet, meaning that the players sit in front of each other, and the screen\n"
-      "  is flipped when player 2 is playing. Some games also have a \"Flip Screen\" dip\n"
-      "  switch. Those need special support in the driver, which is missing in many\n"
-      "  cases.\n");
-   fprintf(stdout_file,
-      "Internal Name - This is the unique name that should be specified on the command\n"
-      "  line to run the game. ROMs must be placed in the ROM path, either in a .zip\n"
-      "  file or in a subdirectory of the same name. The former is suggested, because\n"
-      "  the files will be identified by their CRC instead of requiring specific\n"
-      "  names.\n\n");
+      "This list is generated automatically and is not 100%% accurate (particularly in\n"
+      "the Screen Flip column). Please let us know of any errors so we can correct\n"
+      "them.\n"
+      "\n"
+      "Here are the meanings of the columns:\n"
+      "\n"
+      "Working\n"
+      "=======\n"
+      "  NO: Emulation is still in progress; the game does not work correctly. This\n"
+      "  means anything from major problems to a black screen.\n"
+      "\n"
+      "Correct Colors\n"
+      "==============\n"
+      "    YES: Colors should be identical to the original.\n"
+      "  CLOSE: Colors are nearly correct.\n"
+      "     NO: Colors are completely wrong. \n" 
+      "  \n"
+      "  Note: In some cases, the color PROMs for some games are not yet available.\n"
+      "  This causes a NO GOOD DUMP KNOWN message on startup (and, of course, the game\n"
+      "  has wrong colors). The game will still say YES in this column, however,\n"
+      "  because the code to handle the color PROMs has been added to the driver. When\n"
+      "  the PROMs are available, the colors will be correct.\n"
+      "\n"
+      "Sound\n"
+      "=====\n"
+      "  PARTIAL: Sound support is incomplete or not entirely accurate. \n"
+      "\n"
+      "  Note: Some original games contain analog sound circuitry, which is difficult\n"
+      "  to emulate. Thereforce, these emulated sounds may be significantly different.\n"
+      "\n"
+      "Screen Flip\n"
+      "===========\n"
+      "  Many games were offered in cocktail-table models, allowing two players to sit\n"
+      "  across from each other; the game's image flips 180 degrees for each player's\n"
+      "  turn. Some games also have a \"Flip Screen\" DIP switch setting to turn the\n"
+      "  picture (particularly useful with vertical games).\n"
+      "  In many cases, this feature has not yet been emulated.\n"
+      "\n"
+      "Internal Name\n"
+      "=============\n"
+      "  This is the unique name that must be used when running the game from a\n"
+      "  command line.\n"
+      "\n"
+      "  Note: Each game's ROM set must be placed in the ROM path, either in a .zip\n"
+      "  file or in a subdirectory with the game's Internal Name. The former is\n"
+      "  suggested, because the files will be identified by their CRC instead of\n"
+      "  requiring specific names.\n\n");
+   fprintf(stdout_file, "+----------------------------------+-------+-------+-------+-------+----------+\n");
+   fprintf(stdout_file, "|                                  |       |Correct|       |Screen | Internal |\n");
+   fprintf(stdout_file, "| Game Name                        |Working|Colors | Sound | Flip  |   Name   |\n");
+   fprintf(stdout_file, "+----------------------------------+-------+-------+-------+-------+----------+\n");
+   return OSD_OK;
+}
+
+static int frontend_list_crcs(void)
+{
+   int i;
+   for (i = 0; drivers[i]; i++)
+   {
+      const struct RomModule *region, *rom;
+      for (region = rom_first_region(drivers[i]); region; region = rom_next_region(region))
+         for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+         fprintf(stdout_file,"%08x %-12s %s\n",ROM_GETCRC(rom),ROM_GETNAME(rom),drivers[i]->description);
+}
 
    return OSD_OK;
 }

@@ -1,4 +1,4 @@
-MAME/Raine ROM sets manager Perl scripts 1.1                       17-May-2000
+MAME/Raine ROM sets manager Perl scripts 1.2                       07-Dec-2000
 
 (c) 2000  Stefan Becker
 
@@ -6,6 +6,10 @@ THE AUTHOR GIVES NO WARRANTY - USE AT YOUR OWN RISK!
 
 Release history:
 
+07-Dec-2000 1.2   Made Perl 5.0005_03 mandatory
+                  Handles BIOS ROMs for CVS & PlayChoice-10 correctly now
+                  Replaced --clean-neogeo with the generic --clean=<parent>
+                  Corrected several errors in mame_sets
 17-May-2000 1.1   Updated for -listinfo syntax changes in MAME 0.37 Beta 2
 25-Jan-2000 1.0   Initial version
 
@@ -57,7 +61,7 @@ To use the ROM set manager you first have to create the database from MAME or
 Raine with the one of the following commands:
 
   > xmame -listinfo | mame_parse
-  > mame -listinfo * | perl mame_parse
+  > mame -listinfo  | perl mame_parse
   > raine -gameinfo | perl mame_parse
 
 After that you can use the ROM set manager, e.g.
@@ -136,12 +140,10 @@ if the two 1024 byte long files "prom1" and "prom2" are missing in ROM set
 III. Requirements
 =================
 
-You need at least Perl 5.004, but I would suggest using Perl 5.005_03. You
-also need to install the following Perl modules
+You need at least Perl 5.005_03. You also need to install the following
+Perl modules
 
  DB_File      - standard if BerkeleyDB installed before Perl
- Data::Dumper - CPAN (standard for Perl >= 5.005)
- File::Spec   - CPAN (standard for Perl >= 5.005)
  MLDBM        - CPAN
  Parse::Lex   - CPAN, at least version 2.07 required
  Parse::Yapp  - CPAN, at least version 0.31 required       
@@ -152,8 +154,8 @@ ActiveState's Perl users can install them via the ActiveState web page.
 IV. Problems
 ============
 
-The NeoGeo ROM sets like "maglordh", "puzzldpr", etc. are not handled
-correctly, because they are clones of clones. You have to manage them by hand.
+ROM sets which are clones of clones, e.g. NeoGeo "maglordh" or CVS "8ball1",
+are not handled correctly. You have to manage them by hand.
 
 
 V. Thanks to...

@@ -19,44 +19,29 @@ void osd_fdc_density(int unit, int density, int tracks, int spt, int eot, int se
 {
 }
 
-void osd_fdc_interrupt(int param)
-{
-}
-
-unsigned char osd_fdc_recal(unsigned char * track)
-{
-	return 0;
-}
-
 void osd_fdc_seek(int unit, int dir)
 {
 }
 
-unsigned char osd_fdc_step(int dir, unsigned char * track)
-{
-	return 0;
-}
-
-void osd_fdc_format(int t, int h, int spt, unsigned char * fmt)
+void osd_fdc_format(int t, int h, int spt, UINT8 *fmt)
 {
 }
 
-void osd_fdc_put_sector(int unit, int side, int C, int H, int R, int N, 
-						unsigned char *buff, int ddam)
+void osd_fdc_put_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddma)
 {
 }
-void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, 
-						unsigned char *buff, int ddma)
+
+void osd_fdc_get_sector(int unit, int side, int C, int H, int R, int N, UINT8 *buff, int ddma)
+{
+}
+
+void osd_fdc_read_id(int unit, int side, unsigned char *pBuffer)
 {
 }
 
 int osd_fdc_get_status(int unit)
 {
 	return 0;
-}
-
-void osd_fdc_read_id(int unit, int side, unsigned char *pBuffer)
-{
 }
 
 #endif /* ifdef MESS */

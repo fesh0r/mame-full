@@ -225,7 +225,6 @@ void InitTextures(void)
   
   texgrid=(struct TexSquare *)
 	malloc(texnumx*texnumy*sizeof(struct TexSquare));
-
   memaddr=grTexMinAddress(GR_TMU0);
   
   for(y=0;y<texnumy;y++) {
@@ -467,7 +466,7 @@ void UpdateTexture(struct osd_bitmap *bitmap)
 	break;
 
   case 1:
-	osd_dirty_merge();
+	/*osd_dirty_merge();*/
 
   case 2:
 	max_y=(visual.max_y+1) >> 3;

@@ -55,7 +55,8 @@ static struct
 	XF86VidModeModeInfo orig_mode;
 	int vidmode_changed;
 	int palette_dirty;
-} xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE};
+	int rpx, rpy;
+} xf86ctx = {-1,NULL,FALSE,FALSE,FALSE,NULL,-1,-1,-1,0,NULL,{0},FALSE,FALSE,0,0};
 		
 static unsigned char *doublebuffer_buffer = NULL;
 
@@ -322,6 +323,8 @@ int xf86_dga_create_display(int bitmap_depth)
 	int i, count;
 	XPixmapFormatValues *pixmaps;
 	XF86VidModeModeInfo *bestmode;
+	Window root, child;
+	int wpx, wpy, mask;
 	/* only have todo the fork's the first time we go DGA, otherwise people
 	   who do a lott of dga <-> window switching will get a lott of
 	   children */
@@ -390,16 +393,6 @@ int xf86_dga_create_display(int bitmap_depth)
 			return OSD_NOT_OK;
 	}
 
-	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
-			bestmode->hdisplay,bestmode->vdisplay);
-
-	if(!XF86VidModeSwitchToMode(display,xf86ctx.screen,bestmode))
-	{
-		fprintf(stderr_file,"XF86VidModeSwitchToMode failed\n");
-		return OSD_NOT_OK;
-	}
-	xf86ctx.vidmode_changed = TRUE;
-
 	if(XGrabKeyboard(display,window,True,
 		GrabModeAsync,GrabModeAsync,CurrentTime))
 	{
@@ -421,6 +414,9 @@ int xf86_dga_create_display(int bitmap_depth)
 			xf86ctx.grabbed_mouse = 1;
 	}
 
+	XQueryPointer(display, window, &root, &child, &xf86ctx.rpx, &xf86ctx.rpy, &wpx, &wpy, &mask);
+
+	XWarpPointer(display, None, window, 0, 0, 0, 0, 0, 0);
 	if(first_time)
 	{
 		if(XF86DGAForkApp(xf86ctx.screen))
@@ -437,6 +433,17 @@ int xf86_dga_create_display(int bitmap_depth)
 		fprintf(stderr_file,"XF86DGADirectVideo failed\n");
 		return OSD_NOT_OK;
 	}
+
+	fprintf(stderr_file,"VidMode Switching To Mode: %d x %d\n",
+			bestmode->hdisplay,bestmode->vdisplay);
+
+	XF86VidModeSwitchMode(display,xf86ctx.screen,-1);
+	if(!XF86VidModeSwitchToMode(display,xf86ctx.screen,bestmode))
+	{
+		fprintf(stderr_file,"XF86VidModeSwitchToMode failed\n");
+		return OSD_NOT_OK;
+	}
+	xf86ctx.vidmode_changed = TRUE;
 
 	if(!XF86DGASetViewPort(display,xf86ctx.screen,0,0))
 	{
@@ -574,6 +581,7 @@ void xf86_dga_close_display(void)
 		XFreeColormap(display,xf86ctx.cmap);
 		xf86ctx.cmap = 0;
 	}
+	XWarpPointer(display, None, RootWindow(display,xf86ctx.screen), 0, 0, 0, 0, xf86ctx.rpx, xf86ctx.rpy);
 	if(xf86ctx.grabbed_mouse)
 	{
 		XUngrabPointer(display,CurrentTime);

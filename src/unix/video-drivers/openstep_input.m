@@ -7,8 +7,10 @@
  * -bat. 14/3/2000
  */
 
+#import <stdio.h> 
+#import <stdlib.h>
+#import <unistd.h> 
 #import <AppKit/AppKit.h>
-#import <libc.h>
 #import "xmame.h"
 #import "osdepend.h"
 #import "driver.h"

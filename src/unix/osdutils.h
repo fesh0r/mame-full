@@ -3,10 +3,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#define strcmpi		strcasecmp
-#define strncmpi	strncasecmp
+#define strcmpi	strcasecmp
+#define strncmpi strncasecmp
 
 #define osd_mkdir(dir)	mkdir(dir, 0)
-#define PATH_SEPARATOR	'/'
-#define EOLN "\n"
 
+#define EOLN "\r\n"

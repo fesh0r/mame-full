@@ -1,6 +1,60 @@
 Xmame history:
 
+Last Modified by Lawrence Gold (gold@aros.net)
+
+Release 0.37b10.1
+	- Everything from mame 0.37b10 and mess 0.37b10
+	- ALSA sound driver uses stream mode; this fixes the problem of
+	  continuous static during games.  (Shyouzou Sugitani)
+	- Running with DGA 2.0 no longer causes a blank screen with Matrox
+	  G200/G400.  (Shyouzou Sugitani)
+	- The asm 68k code compiles again.  (Agawa Koji)
+	- Building on older gcc, non-gcc, and FreeBSD 3.3 systems works much
+	  better.  (Pete French, Olivier Galiber)
+	- New unified OpenStep 4.2 Intel/Mac OS X PowerPC code.  (Pete French)
+	- The SDL driver now has video_update for 16bpp_to_16bpp; SDL_HWPALETTE
+	  was added to the flags of SDL_SetVideoMode (Ricardo Quesada)
+	- New version of the mame_perl ROM manager.  (Stefan Becker)
+	- Fixes for getcwd/getwd for BSD43 systems.  (Pete French)
+	- Running with -listsamples no longer causes a core dump.  (me)
+	- Sprite corruption fix for the NES driver.  (Christopher Stone, Sean
+	  Young, Brad Oliver)
+	- The SDL driver now supports 32bpp XFree86 modes.  (Dan Scholnik)
+	- The SDL driver now has fullscreen support.  (Patrice Mandin)
+	- The back-quote/tilde key now toggles the on-screen display when using
+	  the SDL driver.  (me)
+	- Gave credit to Tadeusz Szczyrba for writing the original SDL driver.
+	- Added a needed call to fflush() in the error logging.  (Christopher
+	  Stone).
+	- The frontend code (-list options) should more or less resemble its
+	  MS-DOS counterpart.  Thanks to Christopher Stone for pointing out the
+	  problem areas.
+	- Added an "openbsd" ARCH define.  (Claudio Castiglia)
+	- Fixed some core files to allow building under Solaris 8 using its 
+	  native cc.  (Vincent ^_^)
+	- Changed the optimization flags in the Makefile for the IRIX platform
+	  so that the comment about turning on all optimization holds true.
+	  (Chris McCraw)
+	- The svgafx target should run again; a call to osd_dirty_merge() had to
+	  be commented out.  (henri)
+	- Updated the docs to mention problems using Red Hat 7's latest gcc;
+	  added suggestion for using ALSA with OSS emulation if OSS problems are
+	  experienced.
+	- Added a top-level README; removed old-changes.mess, which was
+	  identical to messold.txt; extended copyright notice to 2001 and listed
+	  Lawrence Gold as maintainer in config.c.  (Matt Lowry)
+
 Last Modified by Hans de Goede (hans@highrise.nl)
+
+Release 0.37b7.1
+	- Everything from mame 0.37b7, no mess yet
+	- Added support for USB joysticks under FreeBSD thanks to:
+	  Christian Weisgerber <naddy@unix-ag.uni-kl.de>
+	- Fixed xmame hanging with the message:
+	  WARNING: the game might not run correctly.
+	  Press any key to continue
+	- Made the debugger always use the aspect ratio of the actual monitor,
+	  instead of the aspect ratio of the emulated game.
 
 Release 0.37b6.1
 	- Everything from mame 0.37b6 & mess 0.37b5 & 0.37b6

@@ -159,7 +159,11 @@ const char *osd_get_cwd(void)
 {
    static char cwd[MAXPATHL];
    
+#ifdef BSD43
+   getwd(cwd);
+#else
    getcwd(cwd, MAXPATHL);
+#endif
 
    return cwd;
 }

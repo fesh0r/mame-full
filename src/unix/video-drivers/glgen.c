@@ -822,7 +822,7 @@ void sysdep_update_display(struct osd_bitmap *bitmap)
   }
 }
 
-void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui)
+void osd_mark_dirty(int x1, int y1, int x2, int y2)
 {
   screendirty=1;
 }

@@ -77,6 +77,9 @@ static const struct plugin_struct *sysdep_dsp_plugins[] = {
 #ifdef SYSDEP_DSP_SOUNDKIT
    &sysdep_dsp_soundkit,
 #endif
+#ifdef SYSDEP_DSP_COREAUDIO
+   &sysdep_dsp_coreaudio,
+#endif
 #ifdef SYSDEP_DSP_IRIX
    &sysdep_dsp_irix,
 #endif

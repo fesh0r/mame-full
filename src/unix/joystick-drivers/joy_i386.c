@@ -13,7 +13,7 @@ struct rc_option joy_i386_opts[] = {
 #include <sys/ioctl.h>
 
 /* specific joystick for PC clones */
-#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd)
+#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
 
 #include <machine/joystick.h>
 typedef struct joystick joy_struct;
@@ -30,7 +30,7 @@ typedef struct JS_DATA_TYPE joy_struct;
 #endif
 
 #else
-#error "i386 style joystick only supported under linux, netbsd & freebsd. "
+#error "i386 style joystick only supported under linux, openbsd, netbsd & freebsd. "
    "patches to support other arch's are welcome ;)"
 #endif
 
@@ -102,7 +102,7 @@ void joy_i386_init (void)
                joytype = JOY_I386;
             case JOY_I386:
                joy_data[i].num_axis = 2;
-#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd)
+#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
                joy_data[i].num_buttons = 2;
 #else
                joy_data[i].num_buttons = JOY_BUTTONS;
@@ -178,7 +178,7 @@ void joy_i386_poll (void)
          continue;
       
       /* get value of buttons */
-#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd)
+#if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
       joy_data[i].buttons[0] = my_joy_data.b1;
       joy_data[i].buttons[1] = my_joy_data.b2;
 #else
