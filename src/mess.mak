@@ -297,7 +297,8 @@ $(OBJ)/dragon.a:   \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
-	  $(OBJ)/mess/systems/dragon.o
+	  $(OBJ)/mess/systems/dragon.o	\
+	  $(OBJ)/mess/machine/cococart.o
 
 
 $(OBJ)/trs80.a:    \
