@@ -110,7 +110,6 @@ memory map :
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/tms9901.h"
-#include "vidhrdw/tms9928a.h"
 #include "cpu/tms9900/tms9900.h"
 
 static int ROM_paged;
@@ -156,8 +155,6 @@ static void machine_stop_ti99_2(void)
 
 static void ti99_2_vblank_interrupt(void)
 {
-	TMS9928A_interrupt();
-
 	/* We trigger a level-4 interrupt.  The PULSE_LINE is a mere guess. */
 	cpu_set_irq_line(0, 1, PULSE_LINE);
 }
