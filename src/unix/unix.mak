@@ -121,16 +121,19 @@ endif
 ##############################################################################
 OBJ     = $(NAME).obj
 
-CORE_OBJDIRS = $(OBJ) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw \
-	$(OBJ)/cpu $(OBJ)/sound \
-	$(OBJ)/mess $(OBJ)/mess/cpu $(OBJ)/mess/formats $(OBJ)/mess/systems \
-	$(OBJ)/mess/machine $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw \
-	$(OBJ)/mess/sound $(OBJ)/mess/devices $(OBJ)/mess/tools \
-	$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
-	$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
-	$(OBJ)/mess/tools/mkimage $(OBJ)/mess/tools/makedep \
-	$(OBJ)/mess/tools/cgafont
+OBJDIR = $(OBJ)/unix.$(DISPLAY_METHOD)
+
+OBJDIRS = $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/drivers \
+	  $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw
+ifeq ($(TARGET), mess)
+OBJDIRS += $(OBJ)/mess $(OBJ)/mess/expat $(OBJ)/mess/cpu \
+	   $(OBJ)/mess/devices $(OBJ)/mess/systems $(OBJ)/mess/machine \
+	   $(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/formats \
+	   $(OBJ)/mess/tools $(OBJ)/mess/tools/dat2html \
+	   $(OBJ)/mess/tools/mkhdimg $(OBJ)/mess/tools/messroms \
+	   $(OBJ)/mess/tools/imgtool $(OBJ)/mess/tools/messdocs \
+	   $(OBJ)/mess/tools/mkimage $(OBJ)/mess/sound
+endif
 
 IMGTOOL_LIBS = -lz
 
@@ -147,16 +150,15 @@ ifdef ZLIB
 ZLIB = src/unix/contrib/cutzlib-1.2.1/libz.a
 endif
 
-all: objdirs osdepend-objdirs
-	$(MAKE) -f $(CURMAKEFILE) $(MAKEFLAGS) $(NAME).$(DISPLAY_METHOD)
+all: maketree $(NAME).$(DISPLAY_METHOD) tools
 
 # CPU core include paths
 VPATH = src $(wildcard src/cpu/*)
 
 # Platform-dependent objects for imgtool
-PLATFORM_IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o \
-			$(OBJ)/unix.$(DISPLAY_METHOD)/fileio.o \
-			$(OBJ)/unix.$(DISPLAY_METHOD)/sysdep/misc.o
+PLATFORM_IMGTOOL_OBJS = $(OBJDIR)/dirio.o \
+			$(OBJDIR)/fileio.o \
+			$(OBJDIR)/sysdep/misc.o
 
 include src/core.mak
 
@@ -171,6 +173,8 @@ include src/rules.mak
 ifeq ($(TARGET), mess)
 include mess/rules_ms.mak
 endif
+
+include src/unix/dirs.mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
@@ -210,6 +214,14 @@ endif
 
 ifdef XMAME_NET
 MY_CFLAGS += -DXMAME_NET
+endif
+
+ifdef HAVE_MEMMOVE
+MY_CFLAGS += -DHAVE_MEMMOVE
+endif
+
+ifdef HAVE_BCOPY
+MY_CFLAGS += -DHAVE_BCOPY
 endif
 
 # CONFIG are the cflags used to build the unix tree, this is where most defines
@@ -301,11 +313,9 @@ endif
 #build rules for this object because it is display dependent.
 OBJS += $(subst $(OBJ)/vidhrdw/vector.o, ,$(COREOBJS)) $(DRVLIBS)
 
-OSDEPEND = $(OBJ)/unix.$(DISPLAY_METHOD)/osdepend.a
+OSDEPEND = $(OBJDIR)/osdepend.a
 
-VECTOR = $(OBJ)/unix.$(DISPLAY_METHOD)/vector.o
-
-MY_OBJDIRS = $(CORE_OBJDIRS) $(sort $(OBJDIRS))
+VECTOR = $(OBJDIR)/vector.o
 
 
 ##############################################################################
@@ -315,15 +325,24 @@ $(NAME).$(DISPLAY_METHOD): $(ZLIB) $(OBJS) $(OSDEPEND) $(VECTOR)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(OSDEPEND) $(VECTOR) $(MY_LIBS)
 
-tools: tooldir objdirs osdepend $(ZLIB) $(OBJDIRS) $(TOOLS)
+maketree: $(sort $(OBJDIRS))
 
-tooldir:
-	-mkdir -p tools
-
-objdirs: $(MY_OBJDIRS)
-
-$(MY_OBJDIRS):
+$(sort $(OBJDIRS)):
 	-mkdir -p $@
+
+osdepend-objdirs:
+	$(CC_COMPILE) \
+	 ( \
+	 cd src/unix; \
+	  $(MAKE) CC="$(CC)" RANLIB="$(RANLIB)" ARCH="$(ARCH)" \
+	  DISPLAY_METHOD="$(DISPLAY_METHOD)" CFLAGS="$(CONFIG)" \
+	  CC_COMMENT="$(CC_COMMENT)" CC_COMPILE="$(CC_COMPILE)" \
+	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" objdirs\
+	 )
+
+tools: $(OSDEPEND) $(ZLIB) $(TOOLS)
+
+$(PLATFORM_IMGTOOL_OBJS): $(OSDEPEND)
 
 xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'
@@ -333,20 +352,25 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
+chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-osdepend-objdirs:
-	$(CC_COMMENT) @echo 'Creating the unix obj directories...'
-	$(CC_COMPILE) \
-	 ( \
-	 cd src/unix; \
-	  $(MAKE) CC="$(CC)" RANLIB="$(RANLIB)" ARCH="$(ARCH)" \
-	  DISPLAY_METHOD="$(DISPLAY_METHOD)" CFLAGS="$(CONFIG)" \
-	  CC_COMMENT="$(CC_COMMENT)" CC_COMPILE="$(CC_COMPILE)" \
-	  AR_OPTS="$(AR_OPTS)" OBJ="$(OBJ)" objdirs\
-	 )
+xml2info: src/xml2info/xml2info.c
+	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMPILE) $(CC) -O1 -o $@ $^
+
+dat2html: $(DAT2HTML_OBJS)
+	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
+
+messdocs:
+
+imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
+	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
+
+messtest:
 
 $(OSDEPEND):
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'

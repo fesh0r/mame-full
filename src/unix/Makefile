@@ -1,4 +1,7 @@
 OBJDIR = ../../$(OBJ)/unix.$(DISPLAY_METHOD)
+
+include dirs.mak
+
 MY_TARGET = $(OBJDIR)/osdepend.a
 
 ##############################################################################
@@ -16,14 +19,12 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o
 
 # sysdep objs
-SYSDEP_DIR  = $(OBJDIR)/sysdep
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
    $(SYSDEP_DIR)/plugin_manager.o $(SYSDEP_DIR)/sound_stream.o \
    $(SYSDEP_DIR)/sysdep_palette.o $(SYSDEP_DIR)/sysdep_dsp.o \
    $(SYSDEP_DIR)/sysdep_mixer.o
 
 # video driver objs per display method
-VID_DIR = $(OBJDIR)/video-drivers
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
 	$(VID_DIR)/x11_window.o \
 	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
@@ -41,8 +42,6 @@ VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
 
 # sound driver objs per arch
-DSP_DIR = $(OBJDIR)/sysdep/dsp-drivers
-MIXER_DIR = $(OBJDIR)/sysdep/mixer-drivers
 SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o $(DSP_DIR)/alsa.o
 SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
@@ -62,22 +61,16 @@ SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
     $(DSP_DIR)/arts.o $(DSP_DIR)/sdl.o $(DSP_DIR)/waveout.o
 
 # joystick objs
-JOY_DIR  = $(OBJDIR)/joystick-drivers
 JOY_OBJS = $(JOY_DIR)/joy_i386.o $(JOY_DIR)/joy_pad.o $(JOY_DIR)/joy_x11.o \
     $(JOY_DIR)/joy_usb.o $(JOY_DIR)/joy_ps2.o $(JOY_DIR)/joy_SDL.o \
     $(JOY_DIR)/XInputDevices.o $(JOY_DIR)/lightgun_abs_event.o
 
 # framskip objs
-FRAMESKIP_DIR  = $(OBJDIR)/frameskip-drivers
 FRAMESKIP_OBJS = $(FRAMESKIP_DIR)/dos.o $(FRAMESKIP_DIR)/barath.o
 
 # all objs
 OBJS = $(COMMON_OBJS) $(SYSDEP_OBJS) $(VID_OBJS) $(SOUND_OBJS) $(JOY_OBJS) \
    $(FRAMESKIP_OBJS)
-
-# obj dirs
-OBJDIRS = $(OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
-   $(JOY_DIR) $(FRAMESKIP_DIR)
 
 
 ##############################################################################
@@ -104,7 +97,6 @@ CFLAGS.generic    =
 #all cflags
 MY_CFLAGS = -I. -I.. -I../.. -I../../mess $(CFLAGS) $(CFLAGS.$(ARCH)) 
 
-
 ##############################################################################
 # start of the real makefile
 ##############################################################################
@@ -115,15 +107,10 @@ all:
 clean:
 	rm -f $(MY_TARGET) $(OBJS)
 
-objdirs: $(OBJDIRS)
-
 $(MY_TARGET): $(OBJS)
 	$(CC_COMMENT) @echo 'Archiving $@ ...'
 	$(CC_COMPILE) ar $(AR_OPTS) $@ $(OBJS)
 	$(CC_COMPILE) $(RANLIB) $@
-
-$(OBJDIRS):
-	-mkdir -p $@
 
 $(OBJDIR)/%.o: %.c xmame.h
 	$(CC_COMMENT) @echo 'Compiling src/unix/$< ...'

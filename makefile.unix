@@ -28,12 +28,6 @@
 ###########################################################################
 
 
-##############################################################################
-# Makefile Identification
-##############################################################################
-CURMAKEFILE := $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST))
-
-
 ###########################################################################
 # Xmame or xmess or...?
 ###########################################################################
@@ -453,6 +447,11 @@ INSTALL_DATA =		$(INSTALL) -c    -o $(INSTALL_USER) -g $(INSTALL_GROUP) -m  644
 # encourage you to enable this feature.  Otherwise, comment it out.
 # :-(
 HAVE_GETTIMEOFDAY = 1
+
+# Does your system support the memmove() function?  If not, try enabling 
+# HAVE_BCOPY.  This is needed for xmess.
+HAVE_MEMMOVE = 1 
+# HAVE_BCOPY = 1
 
 # Uncomment this if you want to link with ElectricFence (for developers 
 # only).
