@@ -6,7 +6,11 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [SNES] SRAM is now saved/restored correctly. Allow values of DMA registers to
+  be read. Fixed the palette not updating in some situations. [Anthony Kruize]
+
+- [SNESPAL] Now informs carts that it's a PAL system. [Anthony Kruize]
+
 
 0.62.1
 
