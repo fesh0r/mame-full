@@ -1,3 +1,90 @@
+0.80
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- [MSX] National CF-2000 (Jirou Kaneda)
+- [MSX] National CF-1200 (Jirou Kaneda)
+- [MSX] National CF-2700 (Jirou Kaneda)
+- [MSX] National CF-3000 (Jirou Kaneda)
+- [MSX] National FS-1300 (Jirou Kaneda)
+- [MSX2] Panasonic FS-A1 (Jirou Kaneda)
+- [MSX2] Panasonic FS-A1MK2 (Jirou Kaneda)
+
+
+
+System Driver Changes:
+----------------------
+- [APPLE2] Fixed double hires colors. (bug #494) [Nate Woods]
+
+- [ATARI] Miscellaneous cleanups, and implemented Atari 5200 joystick top
+  triggers. (bug #328) [Nate Woods]
+
+- [COCO3] Video timing fixes and cleanups; certain SockMaster demos run
+  better now.  Also, fixed a bug that caused problems if a cartridge was ran
+  and then the emulation was restarted without a cartridge in the same session.
+  [Nate Woods]
+
+- [COCO3] Fixed a minor video glitch due to not properly updating a value when
+  bit 7 of $FF9F was changed. (bug #359) [Nate Woods]
+
+- [PC] Complete 8237 DMA and 8253 PIT rewrites, and associated changes in the
+  NEC765, 8259 PIC, FDC and HDC implementations.  The new 8237 and 8253
+  implementations are cleaner and purer hardware emulations and should be
+  more accurate.  In the process, fixed a critical long standing bug in the
+  PC floppy emulation and other bugs. (bugs #154, #430) [Nate Woods]
+
+- [PC] Hard disk controller enhancements; FreeDOS now boots.  [Nate Woods]
+
+- [MAC] Cleaned up the driver a bit; implemented natural keyboard support and
+  configurable RAM.  [Nate Woods]
+
+- [SORDM5] Fixed Sord M5 .cas image loading.  [Tim Schuerwegen]
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows GUI] Fixed a bug by which BIOSless systems would not be filtered
+  as available.  (bug #516) [Nate Woods]
+
+- [Windows GUI] Fixed a stupid layout bug the Miscellaneous properties tab.
+  (bug #518) [Nate Woods]
+
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.80.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Minor tools reorg; tool build rules now moved into the main makefile, and
+  the tools directory is no longer used.  [Nate Woods]
+
+- CHD will now be the standard harddrive format for MESS.  As such,
+  enhancements have been made to MESS's CHD support.  Also, the PC driver
+  has been converted over to use the new format and the old raw HD format is
+  no longer supported.  Additionally, the MAME hard disk manager (CHDMAN)
+  is now distributed with MESS.  [Nate Woods]
+
+- Fixed a bug in which low resolution systems (specifically the Channel F and
+  Gameboy) would not properly save screenshots.  (bug #521) [Nate Woods]
+  
+- WAV file code can now handle files where the format header is longer than 16
+  bytes.  [Nate Woods]
+
+- Identified a few rounding errors that caused some WAV files to not load in
+  certain drivers.  [Nate Woods]
+
+- Added a floppy_identify() function to the floppy format code.  [Nate Woods]
+
+
+
 0.79
 
 New System Drivers Supported (in no particular order):
