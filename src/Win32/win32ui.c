@@ -473,6 +473,10 @@ static ResizeItem main_resize_items[] =
     { RA_ID,   { IDC_SSPICTURE },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
     { RA_ID,   { IDC_HISTORY },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
     { RA_ID,   { IDC_SSDEFPIC }, RA_RIGHT | RA_TOP,                 NULL },
+#ifdef MESS
+    { RA_ID,   { IDC_LIST2 },    RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_SPLITTER3 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+#endif /* MESS */
     { RA_END,  { 0 },            0,                                 NULL }
 };
 
@@ -579,22 +583,16 @@ int WINAPI WinMain(HINSTANCE    hInstance,
     for (;;)
     {
         /* phase1: check to see if we can do idle work */
-#ifdef MESS
-		while ((idle_work || mess_idle_work) && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
-		{
-			/* call OnIdle while idle_work */
-			if (idle_work)
-				OnIdle();
-			else if (mess_idle_work)
-				OnMessIdle(hwndSoftware);
-		}
-#else
         while (idle_work && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
         {
             /* call OnIdle while idle_work */
             OnIdle();
         }
-#endif
+
+#ifdef MESS
+		if (!idle_work)
+			SmartListView_IdleUntilMsg(s_pSoftwareListView);
+#endif /* MESS */
 
         /* phase2: pump messages while available */
         do
@@ -946,7 +944,7 @@ void UpdateScreenShot(void)
         (nSplitterOffset[1] - nTreeWidth) - 2, (rect.bottom - rect.top) - 4 , TRUE);
 
     /* List control 2 */
-    MoveWindow(hwndSoftware, 2 + nSplitterOffset[1], rect.top + 2,
+    MoveWindow(GetDlgItem(hParent, IDC_LIST2), 2 + nSplitterOffset[1], rect.top + 2,
         (nSplitterOffset[2] - nSplitterOffset[1]) - 2, (rect.bottom - rect.top) - 4 , TRUE);	
 #else
     /* List control */
@@ -1046,7 +1044,7 @@ void ResizePickerControls(HWND hWnd)
 
 #ifdef MESS
     /* Image list control */
-    MoveWindow(hwndSoftware, 4 + nListWidth, rect.top + 2,
+    MoveWindow(GetDlgItem(hWnd, IDC_LIST2), 4 + nListWidth, rect.top + 2,
         (nListWidth2 - nListWidth) - 4, (rect.bottom - rect.top) - 4, TRUE);
 
     /* Splitter window #3 */
@@ -1141,6 +1139,11 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     WNDCLASS    wndclass;
     RECT        rect;
     int         i;
+#ifdef MESS
+	extern char *history_filename;
+	extern char *mameinfo_filename;
+	HWND hwndSoftware;
+#endif /* MESS */
 
     mame32_message = RegisterWindowMessage("MAME32");
     bDoBroadcast = FALSE;
@@ -1148,12 +1151,8 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     srand((unsigned)time(NULL));
 
 #ifdef MESS
-	{
-		extern char *history_filename;
-		extern char *mameinfo_filename;
-		history_filename = "sysinfo.dat";
-		mameinfo_filename = "sysbug.dat";
-	}
+	history_filename = "sysinfo.dat";
+	mameinfo_filename = "sysbug.dat";
 #endif /* MESS */
 
     joygui = NULL;
@@ -1259,7 +1258,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     hTreeView       = GetDlgItem(hPicker, IDC_TREE);
     hwndList        = GetDlgItem(hPicker, IDC_LIST);
 #ifdef MESS
-	hwndSoftware		= GetDlgItem(hPicker, IDC_LIST2);
+	hwndSoftware	= GetDlgItem(hPicker, IDC_LIST2);
 	assert(hwndSoftware);
 #endif
 
@@ -1364,7 +1363,23 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     /* Initialize listview columns */
     InitPicker();
 #ifdef MESS
-	InitMessPicker(hwndSoftware, TRUE);
+	{
+		struct SmartListViewOptions opts;
+		memset(&opts, 0, sizeof(opts));
+		opts.pClass = &s_softwareListClass;
+		opts.hwndParent = hPicker;
+		opts.nIDDlgItem = IDC_LIST2;
+		opts.hBackground = hBitmap;
+		opts.hPALbg = hPALbg;
+		opts.bmDesc = bmDesc;
+		opts.hSmall = hSmall;
+		opts.hLarge = hLarge;
+		opts.rgbListFontColor = GetListFontColor();
+		opts.bCenterOnParent = TRUE;
+		opts.nInsetPixels = 10;
+		s_pSoftwareListView = SmartListView_Init(&opts);
+		SmartListView_SetTotalItems(s_pSoftwareListView, mess_images_count);
+	}
 #endif
     SetFocus(hwndList);
 
@@ -1501,6 +1516,12 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
 {
     MINMAXINFO  *mminfo;
     int         i;
+
+#ifdef MESS
+	if (s_pSoftwareListView && SmartListView_IsEvent(s_pSoftwareListView, message, wParam, lParam)) {
+		return SmartListView_HandleEvent(s_pSoftwareListView, message, wParam, lParam);
+	}
+#endif /* MESS */
 
     switch (message)
     {
@@ -1651,8 +1672,10 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             if (lpNmHdr->hwndFrom == hTreeView)
                 return TreeViewNotify( lpNmHdr );
 #ifdef MESS
+#if 0
             if (lpNmHdr->hwndFrom == hwndSoftware)
                 return MessPickerNotify( hwndSoftware, lpNmHdr, MamePlayGame, MainItemChangeProc );
+#endif
 #endif
         }
         break;
@@ -1666,9 +1689,11 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 DrawItem((LPDRAWITEMSTRUCT)lParam);
                 break;
 #ifdef MESS
+#if 0
 			case IDC_LIST2:
                 DrawMessItem((LPDRAWITEMSTRUCT)lParam, hwndSoftware, hBitmap, MessIsImageSelected);
                 break;
+#endif
 #endif
             }
         }
@@ -2851,8 +2876,8 @@ static void SetView(int menu_id,int listview_style)
     SetWindowLong(hwndList,GWL_STYLE,
         (GetWindowLong(hwndList,GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
 #ifdef MESS
-	SetWindowLong(hwndSoftware,GWL_STYLE,
-		(GetWindowLong(hwndSoftware,GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
+	SetWindowLong(GetDlgItem(hPicker, IDC_LIST2),GWL_STYLE,
+		(GetWindowLong(GetDlgItem(hPicker, IDC_LIST2),GWL_STYLE) & ~LVS_TYPEMASK) | listview_style);
 #endif
 
     current_view_id = menu_id;
@@ -2867,7 +2892,7 @@ static void SetView(int menu_id,int listview_style)
     case ID_VIEW_SMALL_ICON:
         ListView_Arrange(hwndList, LVA_ALIGNTOP);
 #ifdef MESS
-		ListView_Arrange(hwndSoftware, LVA_ALIGNTOP);
+		ListView_Arrange(s_pSoftwareListView->hwndListView, LVA_ALIGNTOP);
 #endif
         break;
     }
@@ -3006,8 +3031,8 @@ static void PickFont(void)
         ListView_SetTextColor(hwndList, textColor);
         TreeView_SetTextColor(hTreeView,textColor);
 #ifdef MESS
-		SetWindowFont(hwndSoftware, hFont, TRUE);
-		ListView_SetTextColor(hwndSoftware, textColor);
+		SetWindowFont(s_pSoftwareListView->hwndListView, hFont, TRUE);
+		ListView_SetTextColor(s_pSoftwareListView->hwndListView, textColor);
 #endif
         SetListFontColor(cf.rgbColors);
         SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
@@ -5517,8 +5542,8 @@ static void AdjustMetrics(void)
 
     ListView_SetTextColor(hwndList, textColor);
 #ifdef MESS
-    ListView_SetBkColor(hwndSoftware, GetSysColor(COLOR_WINDOW));
-    ListView_SetTextColor(hwndSoftware, textColor);
+    ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
+    ListView_SetTextColor(s_pSoftwareListView->hwndListView, textColor);
 #endif
     TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
     TreeView_SetTextColor(hTreeView, textColor);

@@ -99,6 +99,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->nIDDlgItem = pOptions->nIDDlgItem;
 	pListView->hBackground = pOptions->hBackground;
 	pListView->hPALbg = pOptions->hPALbg;
+	pListView->bmDesc = pOptions->bmDesc;
 	pListView->rgbListFontColor = pOptions->rgbListFontColor;
 
 	/* Create IconsList for ListView Control */
@@ -228,12 +229,13 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     RECT        rcIcon;
     int         offset;
     SIZE        size;
-    int         i;
+    int         i, j;
     int         nColumn;
     int         nColumnMax = 0;
     int         nResults = 0;
     int         *order;
 	int nItemCount;
+	HBITMAP hBackground;
 
 	order = _alloca(pListView->pClass->nNumColumns * sizeof(int));
 
@@ -279,7 +281,9 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
 	nItemCount = ListView_GetItemCount(pListView->hwndListView);
 
-    if (pListView->hBackground) {
+	hBackground = pListView->hBackground;
+
+    if (hBackground) {
         RECT        rcClient;
         HRGN        rgnBitmap;
         RECT        rcTmpBmp = rcItem;
@@ -290,7 +294,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
         htempDC = CreateCompatibleDC(hDC);
 
-        oldBitmap = SelectObject(htempDC, pListView->hBackground);
+        oldBitmap = SelectObject(htempDC, hBackground);
 
         GetClientRect(pListView->hwndListView, &rcClient); 
         rcTmpBmp.right = rcClient.right;
@@ -312,20 +316,19 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         }
         
         ListView_GetItemRect(pListView->hwndListView, 0, &rcFirstItem, LVIR_BOUNDS);
-/*        
-        for( i = rcFirstItem.left; i < rcClient.right; i += bmDesc.bmWidth )
-            for( j = rcFirstItem.top; j < rcClient.bottom; j += bmDesc.bmHeight )
-                BitBlt(hDC, i, j, bmDesc.bmWidth, bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY );
+        
+        for( i = rcFirstItem.left; i < rcClient.right; i += pListView->bmDesc.bmWidth )
+            for( j = rcFirstItem.top; j < rcClient.bottom; j += pListView->bmDesc.bmHeight )
+                BitBlt(hDC, i, j, pListView->bmDesc.bmWidth, pListView->bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY );
 
 		SelectObject(htempDC, oldBitmap);
         DeleteDC(htempDC);
 
-        if (! bmDesc.bmColors)
+        if (!pListView->bmDesc.bmColors)
         {
             DeleteObject(hPAL);
             hPAL = 0;
         }
-		*/
     }
 
     SetTextColor(hDC, pListView->rgbListFontColor);
@@ -353,7 +356,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         SelectObject(hDC, hOldBrush);
         DeleteObject(hBrush);
     }
-    else if (!pListView->hBackground)
+    else if (!hBackground)
     {
         HBRUSH hBrush;
 
@@ -397,7 +400,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     {
         UINT nOvlImageMask = lvi.state & LVIS_OVERLAYMASK;
         if(rcItem.left < rcItem.right-1) {
-			if (!pListView->hBackground) {
+			if (!hBackground) {
 				HBRUSH hBrush;
 				hBrush = CreateSolidBrush( GetSysColor(COLOR_WINDOW));
 				FillRect(hDC, &rcIcon, hBrush);
@@ -552,16 +555,6 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 	ListView_SetTextColor(pListView->hwndListView, pListView->rgbListFontColor);
 }
 
-void SmartListView_DeleteAllItems(struct SmartListView *pListView)
-{
-	ListView_DeleteAllItems(pListView->hwndListView);
-}
-
-void SmartListView_SetItemCount(struct SmartListView *pListView, int nItemCount)
-{
-	ListView_SetItemCount(pListView->hwndListView, nItemCount);
-}
-
 void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 {
 	LV_ITEM lvi;
@@ -573,6 +566,18 @@ void SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 	lvi.pszText  = LPSTR_TEXTCALLBACK;
 	lvi.iImage   = I_IMAGECALLBACK;
 	ListView_InsertItem(pListView->hwndListView, &lvi);
+}
+
+void SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount)
+{
+	int i;
+
+	ListView_DeleteAllItems(pListView->hwndListView);
+	ListView_SetItemCount(pListView->hwndListView, nItemCount);
+
+	for (i = 0; i < nItemCount; i++) {
+		SmartListView_InsertItem(pListView, i);
+	}
 }
 
 void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL bFocus)
@@ -589,4 +594,24 @@ void SmartListView_SelectItem(struct SmartListView *pListView, int nItem, BOOL b
 void SmartListView_Update(struct SmartListView *pListView, int nItem)
 {
 	ListView_Update(pListView->hwndListView, nItem);
+}
+
+BOOL SmartListView_CanIdle(struct SmartListView *pListView)
+{
+	if (pListView->pClass->pfnCanIdle)
+		return pListView->pClass->pfnCanIdle(pListView);
+	return FALSE;
+}
+
+void SmartListView_Idle(struct SmartListView *pListView)
+{
+	if (pListView->pClass->pfnIdle)
+		pListView->pClass->pfnIdle(pListView);
+}
+
+void SmartListView_IdleUntilMsg(struct SmartListView *pListView)
+{
+	MSG msg;
+	while(SmartListView_CanIdle(pListView) && !PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+		SmartListView_Idle(pListView);
 }
