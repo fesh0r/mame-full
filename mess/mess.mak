@@ -709,7 +709,6 @@ COREOBJS += \
 	$(OBJ)/mess/bitbngr.o          \
 	$(OBJ)/mess/statetxt.o         \
 	$(OBJ)/mess/formats.o          \
-	$(OBJ)/mess/messfmts.o         \
 	$(OBJ)/mess/machine/6551.o     \
 	$(OBJ)/mess/vidhrdw/m6847.o    \
 	$(OBJ)/mess/vidhrdw/m6845.o    \
