@@ -112,7 +112,7 @@ void pdp1_vh_stop(void)
 void pdp1_plot(int x, int y)
 {
 	point *node;
-	int index;
+	int list_index;
 	int intensity;
 
 	x = x*bitmap_width/01777;
@@ -124,15 +124,15 @@ void pdp1_plot(int x, int y)
 	y = (bitmap_height-1) - y;
 	intensity = VIDEO_MAX_INTENSITY;
 
-	index = x + y*bitmap_width;
+	list_index = x + y*bitmap_width;
 
-	node = & list[index];
+	node = & list[list_index];
 
 	if (node->max_intensity == -1)
 	{	/* insert node in list if it is not in it */
 		node->max_intensity = 0;
 		node->next = list_head;
-		list_head = index;
+		list_head = list_index;
 	}
 	if (intensity > node->cur_intensity)
 		node->cur_intensity = intensity;
@@ -149,7 +149,6 @@ static void update_points(struct mame_bitmap *bitmap)
 	for (i=list_head; (i != -1); i=list[i].next)
 	{
 		point *node = & list[i];
-		int x = i % bitmap_width, y = i / bitmap_width;
 
 		/* remember maximum */
 		if (node->cur_intensity > node->max_intensity)
