@@ -258,6 +258,10 @@ REG_OPTIONS regGameOpts[] = {
     {"TripleBuffer",        RO_BOOL,    &gOpts.triple_buffer,   0, 0},
     {"Brightness",          RO_INT,     &gOpts.brightness,      0, 0},
 
+#ifdef MESS
+    {"ExtraSoftwarePaths",  RO_STRING,  &gOpts.extra_software_paths, 0, 0},
+#endif
+
     {"Gamma",               RO_DOUBLE,  &gOpts.gamma,           0, 0},
     {"Beam",                RO_DOUBLE,  &gOpts.beam,            0, 0},
     {"UseArtwork",          RO_BOOL,    &gOpts.use_artwork,     0, 0},
@@ -466,6 +470,10 @@ void OptionsInit(int total_games)
     global.has_roms     = UNKNOWN;
     global.has_samples  = UNKNOWN;
     global.is_favorite  = FALSE;
+
+#ifdef MESS
+	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
+#endif
 
     /* This allocation should be checked */
     game = (options_type *)malloc(num_games * sizeof(options_type));

@@ -178,6 +178,9 @@ typedef struct
     int    has_roms;
     int    has_samples;
     BOOL   is_favorite;
+#ifdef MESS
+	char   extra_software_paths[MAX_PATH * 10];
+#endif
 } options_type;
 
 typedef struct

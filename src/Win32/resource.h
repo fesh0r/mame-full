@@ -303,6 +303,7 @@
 #define IDI_WIN_HARD                    2105
 #define ID_MESS_OPEN_SOFTWARE           50000
 #define ID_MESS_CREATE_SOFTWARE         50001
+#define IDD_PROP_SOFTWARE               51000
 #endif
 
 // Next default values for new objects

@@ -622,7 +622,9 @@ static void FillSoftwareList(int nGame)
 	int i;
 	ImageData *imgd;
 	ImageData **pimgd;
+	const char *extrapaths;
 	char *olddir;
+	char *s;
 	char buffer[2000];
 
 	/* This fixes any changes the file manager may have introduced */
@@ -651,6 +653,7 @@ static void FillSoftwareList(int nGame)
 	pimgd = &mess_images;
 	olddir = strdup(osd_get_cwd());
 	if (olddir) {
+		/* Global paths */
 		for (i = 0; i < GetMessSoftwarePathCount(); i++) {
 			const char *dir = GetMessSoftwarePath(i);
 			const struct GameDriver *drv = drivers[nGame];
@@ -662,6 +665,25 @@ static void FillSoftwareList(int nGame)
 				drv = drv->clone_of;
 			}
 		}
+
+		/* Game-specific paths */
+		extrapaths = GetGameOptions(nGame)->extra_software_paths;
+		while(extrapaths && *extrapaths) {
+			s = strchr(extrapaths, ';');
+			if (s)
+				*s = '\0';
+
+			AddImagesFromDirectory(extrapaths, TRUE, buffer, sizeof(buffer), &pimgd);
+
+			if (s) {
+				*s = ';';
+				extrapaths = s + 1;
+			}
+			else {
+				extrapaths = NULL;
+			}
+		}
+
 		free(olddir);
 	}
 

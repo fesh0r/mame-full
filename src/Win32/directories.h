@@ -33,6 +33,8 @@
 #define DIRDLG_SOFTWARE		0x0400
 #endif
 
+#define DIRLIST_NEWENTRYTEXT "<               >"
+
 INT_PTR CALLBACK DirectoriesDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
 #endif

@@ -100,7 +100,11 @@ struct tDirInfo
  ***************************************************************************/
 
 static int CALLBACK BrowseCallbackProc(HWND hwnd, UINT uMsg, LPARAM lParam, LPARAM lpData);
+#ifdef MESS
+BOOL BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
+#else
 static BOOL         BrowseForDirectory(HWND hwnd, const char* pStartDir, char* pResult);
+#endif
 
 static void     DirInfo_SetDir(struct tDirInfo* pInfo, int nType, int nItem, const char* pText);
 static char*    DirInfo_Dir(struct tDirInfo* pInfo, int nType);
@@ -247,7 +251,7 @@ static void UpdateDirectoryList(HWND hDlg)
 #if HASDIR_SAMPLE
     case SAMPLE:
 #endif
-        Item.pszText = "<               >";
+        Item.pszText = DIRLIST_NEWENTRYTEXT;
         ListView_InsertItem(hList, &Item);
         for (i = DirInfo_NumDir(pDirInfo, nType) - 1; 0 <= i; i--)
         {
