@@ -76,7 +76,6 @@ typedef struct
 	int crc;
 	int length;
 	char * name;
-
 } image_details;
 
 /* possible values for osd_fopen() last argument
@@ -268,6 +267,12 @@ extern void device_output_chunk(int type, int id, void *src, int chunks);
 /* This is the dummy GameDriver with flag NOT_A_DRIVER set
    It allows us to use an empty PARENT field in the macros. */
 extern struct GameDriver driver_0;
+
+/* Flag is used to bail out in mame.c/run_game() and cpuintrf.c/run_cpu()
+ * but keep the program going. It will be set eg. if the filename for a
+ * device which has IO_RESET_ALL flag set is changed
+ */
+extern int mess_keep_going;
 
 /******************************************************************************
  * MESS' version of the GAME() and GAMEX() macros of MAME

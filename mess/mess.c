@@ -16,6 +16,9 @@ extern const char *pcrcfile;
 /* used to tell updatescreen() to clear the bitmap */
 extern int need_to_clear_bitmap;
 
+/* Globals */
+int mess_keep_going;
+
 struct image_info {
 	char *name;
 	UINT32 crc;
@@ -706,8 +709,14 @@ int device_filename_change(int type, int id, const char *name)
 				return 1;
 		}
 
-		if( type == IO_CARTSLOT || type == IO_SNAPSHOT )
+		if( dev->reset_depth == IO_RESET_CPU )
 			machine_reset();
+		else
+		if( dev->reset_depth == IO_RESET_ALL )
+		{
+			mess_keep_going = 1;
+
+		}
 
 		result = (*dev->init)(id);
 		if( result != INIT_OK && name )
