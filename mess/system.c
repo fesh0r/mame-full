@@ -402,7 +402,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 /*	DRIVER( ibm8580 )*/	/* 1987 IBM PS2 Model 80 (80386)					*/
 
 	/* SINCLAIR */
-#if 0
+
 	DRIVER( zx80 )		/* Sinclair ZX-80								  */
 	DRIVER( zx81 )		/* Sinclair ZX-81								  */
 	DRIVER( ts1000 )	/* Timex Sinclair 1000							  */
@@ -421,6 +421,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( tk95 )		/* 1986 TK95 Color Computer 					  */
 	DRIVER( tc2048 )	/* 198? TC2048									  */
 	DRIVER( ts2068 )	/* 1983 TS2068									  */
+	DRIVER( uk2068 )	/* 1983 UK2068									  */
 
 	DRIVER( spec128 )	/* 1986 ZX Spectrum 128"                          */
 	DRIVER( spec128s )	/* 1985 ZX Spectrum 128 (Spain) 				  */
@@ -432,7 +433,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	DRIVER( specp2sp )	/* 1986 ZX Spectrum +2 (Spain)					  */
 	DRIVER( specp3sp )	/* 1987 ZX Spectrum +3 (Spain)					  */
 	DRIVER( specpl3e )	/* 2000 ZX Spectrum +3e 						  */
-#endif
+
 	/* sinclair pc200 professional series ibmxt compatible*/
 
 	/* SHARP */
