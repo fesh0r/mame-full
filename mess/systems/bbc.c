@@ -1180,7 +1180,7 @@ static const struct IODevice io_bbcb[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -1224,7 +1224,7 @@ static const struct IODevice io_bbcb1770[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -1268,7 +1268,7 @@ static const struct IODevice io_bbcbp[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -1311,7 +1311,7 @@ static const struct IODevice io_bbcbp128[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -1356,7 +1356,7 @@ static const struct IODevice io_bbcb6502[] = {
 		2,						/* count */
         "ssd\0bbc\0img\0",      /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		OSD_FOPEN_DUMMY,		/* open mode */
+		OSD_FOPEN_RW_CREATE_OR_READ,/* open mode */
 		0,
 		bbc_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
