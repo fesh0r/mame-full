@@ -4208,3 +4208,28 @@ There is no documentation on the hardware available and more is required.
 
 $end
 #---------------------------------------------------------------------------------------------#
+
+$info=sordm5
+$bio
+Sord M5
+
+Some cartridges work. Basic is supplied on a cartridge and so must be inserted
+as a cartridge like in the real machine.
+
+Known Issues:
+
+- cassette not working
+- disc emulation not working (disk rom required)
+- no memory expansion supported
+- no extra peripherals supported
+
+
+History and Trivia:
+
+The Sord M5 is similar in design to the MSX but not compatible with it.
+(It has the same CPU (Z80), a Z80 CTC timer chip and the same video chip, but a different sound chip
+and the I/O port assignments are not the same).
+
+In fact some MSX games have been converted to the Sord by enthusiasts.
+
+$end
