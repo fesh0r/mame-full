@@ -18,6 +18,11 @@ infrared interface
 serial rs232 interface
 
 
+Official and legal HP rom images
+--------------------------------
+http://www.hpcalc.org/hp.php
+
+
 Mess Emulation State
 --------------------
 not working
