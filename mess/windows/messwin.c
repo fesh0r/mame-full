@@ -89,9 +89,9 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 	{
 		printf("                   ==========================================\n" );
 		printf("                    M.E.S.S.  -  Multi-Emulator Super System\n"  );
-		printf("                             Copyright (C) 1998-2001\n");
+		printf("                             Copyright (C) 1998-2002\n");
 		printf("                                by the MESS team\n"    );
-		printf("                    Official Page at: http://mess.emuverse.com\n");
+		printf("                    Official Page at: http://www.mess.org\n");
 		printf("                   ==========================================\n\n" );
 
 		printf("This document is generated for MESS %s\n\n",build_version);
@@ -118,7 +118,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 			   "How to Contact The MESS Team\n"
 			   "============================\n"
-			   "Visit the web page at http://mess.emuverse.com to see a list of contributers\n"
+			   "Visit the web page at http://www.mess.org to see a list of contributers\n"
 			   "If you have comments, suggestions or bug reports about an existing driver, check\n"
 			   "the page contacts section to find who has worked on it, and send comments to that \n"
 			   "person. If you are not sure who to contact, write to Ben (ben@mame.net)\n"
@@ -134,7 +134,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			   "your question, try checking the beginner's sections that many emulation pages\n"
 			   "have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc)\n"
 			   "or on the many emulation message boards.  The official MESS message board is at:\n"
-			   "   http://mess.emuverse.com\n\n");
+			   "   http://www.mess.org\n\n");
 
 
 		printf("Also, please DO NOT SEND REQUESTS FOR NEW SYSTEMS TO ADD, unless you have some original\n");
@@ -288,9 +288,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 			}
 
 			printf("+-----------------------------------------+-------+-------+-------+----------+\n");
-			printf("(1) There are variants of the system that work correctly\n");
-			printf("(2) Needs samples provided separately\n\n\n");
-
+			printf("(1) There are variants of the system that work correctly\n\n\n");
 
 		printf("QUICK MESS USAGE GUIDE!\n"
 		       "=======================\n"

@@ -2,7 +2,7 @@
 # make SUFFIX=32
 
 # don't create gamelist.txt
-TEXTS=
+# TEXTS=
 
 ifndef MSVC
 # remove pedantic

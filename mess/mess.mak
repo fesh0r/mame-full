@@ -802,9 +802,10 @@ tools/imgtool$(EXE):	     \
 
 # text files
 TEXTS = mess.txt sysinfo.htm
-mess.txt: $(EMULATOR)
+
+mess.txt: $(EMULATORCLI)
 	@echo Generating $@...
-	@$(CURPATH)$(EMULATOR) -listtext -noclones -sortname > mess.txt
+	@$(CURPATH)$(EMULATORCLI) -listtext -noclones -sortname > mess.txt
 
 sysinfo.htm: dat2html$(EXE)
 	@echo Generating $@...
