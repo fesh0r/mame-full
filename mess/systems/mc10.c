@@ -3,7 +3,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 #include "cassette.h"
-#include "dragon.h"		/* for coco_cassette_init() */
+#include "includes/dragon.h"		/* for coco_cassette_init() */
 
 
 static MEMORY_READ_START( mc10_readmem )
