@@ -21,7 +21,7 @@ static MEMORY_READ_START( readmem_apple2 )
 	{ 0x4000, 0xbfff, MRA_BANK10 },
 	{ 0xc000, 0xc00f, apple2_c00x_r },
 	{ 0xc010, 0xc01f, apple2_c01x_r },
-	{ 0xc020, 0xc02f, MRA_NOP },
+	{ 0xc020, 0xc02f, apple2_c02x_r },
 	{ 0xc030, 0xc03f, apple2_c03x_r },
 	{ 0xc040, 0xc04f, MRA_NOP },
 	{ 0xc050, 0xc05f, apple2_c05x_r },
@@ -36,8 +36,10 @@ static MEMORY_READ_START( readmem_apple2 )
 	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_r },
 	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_r },
 	{ 0xc400, 0xc4ff, apple2_slot4_r },
-	{ 0xc100, 0xc7ff, MRA_BANK3 },
-	{ 0xc800, 0xcffe, MRA_BANK6 },
+	{ 0xc100, 0xc2ff, MRA_BANK3 },
+	{ 0xc300, 0xc3ff, MRA_BANK11 },
+	{ 0xc400, 0xc7ff, MRA_BANK12 },
+	{ 0xc800, 0xcfff, MRA_BANK6 },
 	{ 0xd000, 0xdfff, MRA_BANK1 },
 	{ 0xe000, 0xffff, MRA_BANK2 },
 MEMORY_END
@@ -51,7 +53,7 @@ static MEMORY_WRITE_START( writemem_apple2 )
 	{ 0x4000, 0xbfff, MWA_BANK10 },
 	{ 0xc000, 0xc00f, apple2_c00x_w },
 	{ 0xc010, 0xc01f, apple2_c01x_w },
-	{ 0xc020, 0xc02f, MWA_NOP },
+	{ 0xc020, 0xc02f, apple2_c02x_w },
 	{ 0xc030, 0xc03f, apple2_c03x_w },
 	{ 0xc040, 0xc04f, MWA_NOP },
 	{ 0xc050, 0xc05f, apple2_c05x_w },
@@ -65,7 +67,9 @@ static MEMORY_WRITE_START( writemem_apple2 )
 	{ 0xc0d0, 0xc0df, apple2_c0xx_slot5_w },
 	{ 0xc0e0, 0xc0ef, apple2_c0xx_slot6_w },
 	{ 0xc0f0, 0xc0ff, apple2_c0xx_slot7_w },
-	{ 0xc100, 0xc7ff, MWA_BANK3 },
+	{ 0xc100, 0xc2ff, MWA_BANK3 },
+	{ 0xc300, 0xc3ff, MWA_BANK11 },
+	{ 0xc400, 0xc7ff, MWA_BANK12 },
 	{ 0xd000, 0xdfff, MWA_BANK1 },
 	{ 0xe000, 0xffff, MWA_BANK2 },
 MEMORY_END
@@ -164,10 +168,14 @@ INPUT_PORTS_START( apple2 )
     PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3,	"Button 2",	IP_KEY_DEFAULT,	IP_JOY_DEFAULT )
     PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD,	"Reset",	KEYCODE_F3,		IP_JOY_NONE )
 
-	PORT_START /* [9] Joystick X Axis */
+	PORT_START /* [9] Joystick 1 X Axis */
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER1 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_4_PAD, KEYCODE_6_PAD, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
-	PORT_START /* [10] Joystick X Axis */
+	PORT_START /* [10] Joystick 1 X Axis */
 	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER1 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_8_PAD, KEYCODE_2_PAD, JOYCODE_1_UP, JOYCODE_1_DOWN)
+	PORT_START /* [11] Joystick 2 X Axis */
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_X | IPF_PLAYER2 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_4_PAD, KEYCODE_6_PAD, JOYCODE_1_LEFT, JOYCODE_1_RIGHT)
+	PORT_START /* [12] Joystick 2 X Axis */
+	PORT_ANALOGX( 0xff, 0x80,  IPT_AD_STICK_Y | IPF_PLAYER2 | IPF_CENTER, JOYSTICK_SENSITIVITY, JOYSTICK_DELTA, 0, 0xff, KEYCODE_8_PAD, KEYCODE_2_PAD, JOYCODE_1_UP, JOYCODE_1_DOWN)
 INPUT_PORTS_END
 
 /* according to Steve Nickolas (author of Dapple), our original palette would
@@ -319,52 +327,52 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START(apple2e)
-    ROM_REGION(0x24700,REGION_CPU1,0)
+    ROM_REGION(0x4700,REGION_CPU1,0)
     /* 64k main RAM, 64k aux RAM */
 
-    ROM_LOAD ( "a2e.cd", 0x20000, 0x2000, 0xe248835e )
-    ROM_LOAD ( "a2e.ef", 0x22000, 0x2000, 0xfc3d59d8 )
+    ROM_LOAD ( "a2e.cd", 0x0000, 0x2000, 0xe248835e )
+    ROM_LOAD ( "a2e.ef", 0x2000, 0x2000, 0xfc3d59d8 )
     /* 0x700 for individual slot ROMs */
-    ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
+    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ee)
-    ROM_REGION(0x24700,REGION_CPU1,0)
-    ROM_LOAD ( "a2ee.cd", 0x20000, 0x2000, 0x443aa7c4 )
-    ROM_LOAD ( "a2ee.ef", 0x22000, 0x2000, 0x95e10034 )
+    ROM_REGION(0x4700,REGION_CPU1,0)
+    ROM_LOAD ( "a2ee.cd", 0x0000, 0x2000, 0x443aa7c4 )
+    ROM_LOAD ( "a2ee.ef", 0x2000, 0x2000, 0x95e10034 )
     /* 0x4000 for bankswitched RAM */
     /* 0x700 for individual slot ROMs */
-    ROM_LOAD ( "disk2_33.rom", 0x24500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
+    ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, 0xce7144f6 ) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2ep)
-    ROM_REGION(0x24700,REGION_CPU1,0)
-    ROM_LOAD ("a2ept.cf", 0x20000, 0x4000, 0x02b648c8)
+    ROM_REGION(0x4700,REGION_CPU1,0)
+    ROM_LOAD ("a2ept.cf", 0x0000, 0x4000, 0x02b648c8)
     /* 0x4000 for bankswitched RAM */
     /* 0x700 for individual slot ROMs */
-    ROM_LOAD ("disk2_33.rom", 0x24500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
+    ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c)
-    ROM_REGION(0x24700,REGION_CPU1,0)
-    ROM_LOAD ( "a2c.128", 0x20000, 0x4000, 0xf0edaa1b )
+    ROM_REGION(0x4700,REGION_CPU1,0)
+    ROM_LOAD ( "a2c.128", 0x0000, 0x4000, 0xf0edaa1b )
+	ROM_LOAD ("disk2_33.rom", 0x4500, 0x0100, 0xce7144f6) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
 ROM_START(apple2c0)
-    ROM_REGION(0x28000,REGION_CPU1,0)
-    ROM_LOAD("a2c.256", 0x20000, 0x8000, 0xc8b979b3)
+    ROM_REGION(0x8700,REGION_CPU1,0)
+    ROM_LOAD("a2c.256", 0x0000, 0x8000, 0xc8b979b3)
 ROM_END
 
 ROM_START(apple2cp)
-    ROM_REGION(0x28000,REGION_CPU1,0)
-    ROM_LOAD("a2cplus.mon", 0x20000, 0x8000, 0x0b996420)
+    ROM_REGION(0x8700,REGION_CPU1,0)
+    ROM_LOAD("a2cplus.mon", 0x0000, 0x8000, 0x0b996420)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, apple2_floppy_load, NULL, NULL)
-
-	/* custom devicename */
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
+	CONFIG_RAM_DEFAULT			(128 * 1024)
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */

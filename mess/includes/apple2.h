@@ -35,6 +35,7 @@
 #define VAR_LCRAM		0x010000
 #define VAR_LCRAM2		0x020000
 #define VAR_LCWRITE		0x040000
+#define VAR_ROMSWITCH	0x080000
 
 extern UINT32 a2;
 
@@ -81,6 +82,9 @@ extern WRITE_HANDLER ( apple2_c00x_w );
 
 extern READ_HANDLER ( apple2_c01x_r );
 extern WRITE_HANDLER ( apple2_c01x_w );
+
+extern READ_HANDLER ( apple2_c02x_r );
+extern WRITE_HANDLER ( apple2_c02x_w );
 
 extern READ_HANDLER ( apple2_c03x_r );
 extern WRITE_HANDLER ( apple2_c03x_w );
