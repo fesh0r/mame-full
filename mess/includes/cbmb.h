@@ -254,6 +254,7 @@ WRITE_HANDLER ( cbmb_colorram_w );
 extern void cbm500_driver_init (void);
 extern void cbm600_driver_init (void);
 extern void cbm600pal_driver_init (void);
+extern void cbm600hu_driver_init (void);
 extern void cbm700_driver_init (void);
 extern void cbmb_driver_shutdown (void);
 extern void cbmb_init_machine (void);

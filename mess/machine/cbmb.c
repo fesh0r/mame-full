@@ -257,7 +257,14 @@ void cbm600pal_driver_init (void)
 {
 	cbmb_common_driver_init ();
 	raster2.display_state=cbmb_state;
-	crtc6845_cbm600pal_init(cbmb_videoram);
+	crtc6845_cbm600_init(cbmb_videoram);
+}
+
+void cbm600hu_driver_init (void)
+{
+	cbmb_common_driver_init ();
+	raster2.display_state=cbmb_state;
+	crtc6845_cbm600hu_init(cbmb_videoram);
 }
 
 void cbm700_driver_init (void)

@@ -746,7 +746,6 @@ ROM_START (cbm610)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
 
-#if 0
 ROM_START (cbm620)
 	ROM_REGION (0x100000, REGION_CPU1)
     ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
@@ -755,16 +754,14 @@ ROM_START (cbm620)
 	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
 ROM_END
-#else
-/* hungarian version */
-ROM_START (cbm620)
+
+ROM_START (cbm620hu)
 	ROM_REGION (0x100000, REGION_CPU1)
 	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
 	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
 	ROM_REGION (0x2000, REGION_GFX1)
 	ROM_LOAD ("charhun.bin", 0x0000, 0x2000, 0x1fb5e596)
 ROM_END
-#endif
 
 ROM_START (cbm710)
 	ROM_REGION (0x100000, REGION_CPU1)
@@ -783,6 +780,16 @@ ROM_START (cbm720)
 	ROM_REGION (0x2000, REGION_GFX1)
     ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
 ROM_END
+
+ROM_START (cbm720se)
+	ROM_REGION (0x100000, REGION_CPU1)
+    ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
+    ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
+    ROM_LOAD ("901244.03", 0xfe000, 0x2000, 0x87bc142b)
+	ROM_REGION (0x2000, REGION_GFX1)
+    ROM_LOAD ("901233.03", 0x0000, 0x1000, 0x09518b19)
+ROM_END
+
 
 ROM_START (cbm500)
 	ROM_REGION (0x101000, REGION_CPU1)
@@ -1071,13 +1078,16 @@ static const struct IODevice io_cbm500[] =
 
 #define init_cbm500 cbm500_driver_init
 #define init_cbm600 cbm600_driver_init
+#define init_cbm600hu cbm600hu_driver_init
 #define init_cbm600pal cbm600pal_driver_init
 #define init_cbm700 cbm700_driver_init
 
 #define io_cbm710 io_cbmb
 #define io_cbm720 io_cbmb
+#define io_cbm720se io_cbmb
 #define io_cbm610 io_cbmb
 #define io_cbm620 io_cbmb
+#define io_cbm620hu io_cbmb
 
 #if 0
 #define rom_cbm730 rom_cbmb256hp
@@ -1086,9 +1096,11 @@ static const struct IODevice io_cbm500[] =
 /*     YEAR		NAME	PARENT	MACHINE		INPUT		INIT		COMPANY								FULLNAME */
 COMPX (1983,	cbm500,	0,		cbm500,		cbm500,		cbm500,		"Commodore Business Machines Co.",	"Commodore B128-40/Pet-II/P500 60Hz",		GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 COMPX (1983,	cbm610, 0,		cbm600, 	cbm600, 	cbm600, 	"Commodore Business Machines Co.",  "Commodore B128-80LP/610 60Hz",             GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-COMPX (1983,	cbm620,	cbm610,	cbm600pal,	cbm600pal,	cbm600pal,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm620,	cbm610,	cbm600pal,	cbm600pal,	cbm600pal,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 50Hz",	GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm620hu,	cbm610,	cbm600pal,	cbm600pal,	cbm600hu,	"Commodore Business Machines Co.",	"Commodore B256-80LP/620 Hungarian 50Hz",	GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 COMPX (1983,	cbm710, cbm610, cbm700, 	cbm700, 	cbm700, 	"Commodore Business Machines Co.",  "Commodore B128-80HP/710",                  GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 COMPX (1983,	cbm720,	cbm610,	cbm700,		cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720",					GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+COMPX (1983,	cbm720se,	cbm610,	cbm700,	cbm700,		cbm700,		"Commodore Business Machines Co.",	"Commodore B256-80HP/720 Swedish/Finnish",	GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 #if 0
 COMPX (1983,	cbm730, cbm610, cbmbx, 		cbmb, 		cbmb, 		"Commodore Business Machines Co.",	"Commodore BX128-80HP/BX256-80HP/730", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 #endif
