@@ -15,6 +15,7 @@
 #include "includes/cgenie.h"
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
+#include "devices/cartslot.h"
 #include "image.h"
 
 #define AYWriteReg(chip,port,value) \
@@ -119,102 +120,98 @@ static void tape_put_close(void);
 static OPBASE_HANDLER (opbaseoverride)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
+	mess_image *img;
+	UINT8 *buff, *s, data;
+	UINT16 size, entry = 0, block_len, block_ofs = 0;
+	mame_file *cmd;
+
 	/* check if the BASIC prompt is visible on the screen */
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
 	{
 		cgenie_load_cas = 0;
-		if (image_exists(IO_CASSETTE, 0))
-		{
-			UINT8 *buff = (UINT8*)malloc(65536), *s, data;
-			UINT16 size, entry = 0, block_len, block_ofs = 0;
-			mame_file *cmd;
 
+		img = image_instance(IO_CASSETTE, 0);
+
+		if (image_exists(img))
+		{
+			buff = (UINT8*) malloc(65536);
 			if( !buff )
 			{
 				logerror("failed to allocate 64K buff\n");
 				return address;
 			}
-			cmd = image_fopen_custom(IO_CASSETTE, 0, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if( !cmd )
-				  cmd = image_fopen_custom(IO_SNAPSHOT, 0, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if( !cmd )
+
+			cmd = image_fp(img);
+			size = mame_fread(cmd, buff, 65536);
+			s = buff;
+			if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
 			{
-				logerror("failed to open '%s'\n", image_filename(IO_CASSETTE,0));
-			}
-			else
-			{
-				size = mame_fread(cmd, buff, 65536);
-				s = buff;
-				if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
+				s = (UINT8*)memchr(s, 26, size);
+				if( s )
 				{
-					s = (UINT8*)memchr(s, 26, size);
-					if( s )
-					{
-						*s++ = '\n';
-						*s++ = '\0';
-						logerror("%s",s);
-					}
-					size -= s - buff;
+					*s++ = '\n';
+					*s++ = '\0';
+					logerror("%s",s);
 				}
-				if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
+				size -= s - buff;
+			}
+			if( s[0] == 0x66 && s[1] == 0x55 && s[8] == 0x3c )
+			{
+				logerror("image name: [%-6.6s]\n",s+1);
+				s += 8;
+				size -= 8;
+				while( size > 3 )
+				{
+					data = *s++;
+					switch( data )
 					{
-					logerror("image name: [%-6.6s]\n",s+1);
-					s += 8;
-					size -= 8;
-					while( size > 3 )
-					{
-						data = *s++;
-						switch( data )
+					case 0x01:		   /* CMD file header */
+					case 0x07:		   /* another type of CMD file header */
+					case 0x3c:		   /* CAS file header */
+						block_len = *s++;
+						/* on CMD files size zero means size 256 */
+						if( block_len == 0 )
+							block_len = 256;
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+						if( data != 0x3c )
 						{
-						case 0x01:		   /* CMD file header */
-						case 0x07:		   /* another type of CMD file header */
-						case 0x3c:		   /* CAS file header */
-							block_len = *s++;
-							/* on CMD files size zero means size 256 */
+							block_len -= 2;
 							if( block_len == 0 )
 								block_len = 256;
-							block_ofs = *s++;
-							block_ofs += 256 * *s++;
-							if( data != 0x3c )
-							{
-								block_len -= 2;
-								if( block_len == 0 )
-									block_len = 256;
-							}
-							size -= 4;
-							logerror("cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs);
-							while( block_len && size )
-							{
-								cpu_writemem16(block_ofs, *s);
-								s++;
-								block_ofs++;
-								block_len--;
-								size--;
-							}
-							if( data == 0x3c )
-								s++;
-							break;
-						case 0x02:
-							block_len = *s++;
-							size -= 1;
-						case 0x78:
-							block_ofs = *s++;
-							block_ofs += 256 * *s++;
-							if( !entry )
-								entry = block_ofs;
-							logerror( "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry);
-							size -= 3;
-							if( size <= 3 )
-							{
-								logerror("starting program at $%04X\n", block_ofs);
-							}
-							break;
-						default:
+						}
+						size -= 4;
+						logerror("cgenie_cmd_load block ($%02X) %d at $%04X\n", data, block_len, block_ofs);
+						while( block_len && size )
+						{
+							cpu_writemem16(block_ofs, *s);
+							s++;
+							block_ofs++;
+							block_len--;
 							size--;
 						}
+						if( data == 0x3c )
+							s++;
+						break;
+					case 0x02:
+						block_len = *s++;
+						size -= 1;
+					case 0x78:
+						block_ofs = *s++;
+						block_ofs += 256 * *s++;
+						if( !entry )
+							entry = block_ofs;
+						logerror( "cgenie_cmd_load entry ($%02X) at $%04X\n", data, entry);
+						size -= 3;
+						if( size <= 3 )
+						{
+							logerror("starting program at $%04X\n", block_ofs);
+						}
+						break;
+					default:
+						size--;
 					}
 				}
-				mame_fclose(cmd);
 				cpunum_set_pc(0,entry);
 			}
 			free(buff);
@@ -339,146 +336,109 @@ MACHINE_STOP( cgenie )
 	tape_put_close();
 }
 
-int cgenie_cassette_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( cgenie_cassette )
 {
 	return INIT_PASS;
 }
-
-#if 0
-			if( file == REAL_FDD )
-			{
-				PDRIVE *pd = (PDRIVE *)memory_region(REGION_CPU1) + 0x5a71 + drive * sizeof(PDRIVE);
-				/* changed pdrive parameters for drive ? */
-				if( memcmp(&pdrive[drive], pd, sizeof(PDRIVE)) )
-				{
-					/* copy them and set new geometry */
-					memcpy(&pdrive[drive], pd, sizeof(PDRIVE));
-					tracks[drive] = pd->TRK;
-					heads[drive] = (pd->SPT > 18) ? 2 : 1;
-					spt[drive] = pd->SPT / heads[drive];
-					dir_sector[drive] = pd->DDSL * pd->GATM * pd->GPL + pd->SPT;
-					dir_length[drive] = pd->DDGA * pd->GPL;
-					wd179x_set_geometry(drive, tracks[drive], heads[drive], spt[drive], 256, dir_sector[drive], dir_length[drive], 0);
-				}
-				return;
-			}
-#endif
 
 /* basic-dsk is a disk image format which has the tracks and sectors
  * stored in order, no information is stored which details the number
  * of tracks, number of sides, number of sectors etc, so we need to
  * set that up here
  */
-int cgenie_floppy_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( cgenie_floppy )
 {
-	/* A Floppy Isnt manditory, so return if none */
-	if (fp == NULL)
-	{
-		logerror("CGENIE - warning: no floppy specified!\n");
-		return INIT_PASS;
-	}
+	int i, j, dir_offset;
+	UINT8 buff[16];
+	UINT8 tracks = 0;
+	UINT8 heads = 0;
+	UINT8 spt = 0;
+	short dir_sector = 0;
+	short dir_length = 0;
 
-	if (basicdsk_floppy_load(id, fp, open_mode) != INIT_PASS)
+	/* A Floppy Isnt manditory, so return if none */
+	if (basicdsk_floppy_load(image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	/* determine image geometry */
-	if (fp)
+	mame_fseek(file, 0, SEEK_SET);
+
+	/* determine geometry from disk contents */
+	for( i = 0; i < 12; i++ )
 	{
-		int i, j, dir_offset;
-		UINT8 buff[16];
-		UINT8 tracks = 0;
-		UINT8 heads = 0;
-		UINT8 spt = 0;
-		short dir_sector = 0;
-		short dir_length = 0;
+		mame_fseek(file, pd_list[i].SPT * 256, SEEK_SET);
+		mame_fread(file, buff, 16);
+		/* find an entry with matching DDSL */
+		if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
+			continue;
+		logerror("cgenie: checking format #%d\n", i);
 
-		mame_fseek(fp, 0, SEEK_SET);
+		dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+		dir_length = pd_list[i].DDGA * pd_list[i].GPL;
 
-		/* determine geometry from disk contents */
-		for( i = 0; i < 12; i++ )
+		/* scan directory for DIR/SYS or NCW1983/JHL files */
+		/* look into sector 2 and 3 first entry relative to DDSL */
+		for( j = 16; j < 32; j += 8 )
 		{
-			mame_fseek(fp, pd_list[i].SPT * 256, SEEK_SET);
-			mame_fread(fp, buff, 16);
-			/* find an entry with matching DDSL */
-			if (buff[0] != 0x00 || buff[1] != 0xfe || buff[2] != pd_list[i].DDSL)
-				continue;
-			logerror("cgenie: checking format #%d\n", i);
-
-			dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-			dir_length = pd_list[i].DDGA * pd_list[i].GPL;
-
-			/* scan directory for DIR/SYS or NCW1983/JHL files */
-			/* look into sector 2 and 3 first entry relative to DDSL */
-			for( j = 16; j < 32; j += 8 )
+			dir_offset = dir_sector * 256 + j * 32;
+			if( mame_fseek(file, dir_offset, SEEK_SET) < 0 )
+				break;
+			if( mame_fread(file, buff, 16) != 16 )
+				break;
+			if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
+				!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
 			{
-				dir_offset = dir_sector * 256 + j * 32;
-				if( mame_fseek(fp, dir_offset, SEEK_SET) < 0 )
-					break;
-				if( mame_fread(fp, buff, 16) != 16 )
-					break;
-				if( !strncmp((char*)buff + 5, "DIR     SYS", 11) ||
-					!strncmp((char*)buff + 5, "NCW1983 JHL", 11) )
-				{
-					tracks = pd_list[i].TRK;
-					heads = (pd_list[i].SPT > 18) ? 2 : 1;
-					spt = pd_list[i].SPT / heads;
-					dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
-					dir_length = pd_list[i].DDGA * pd_list[i].GPL;
-					memcpy(memory_region(REGION_CPU1) + 0x5A71 + id * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
-					break;
-				}
+				tracks = pd_list[i].TRK;
+				heads = (pd_list[i].SPT > 18) ? 2 : 1;
+				spt = pd_list[i].SPT / heads;
+				dir_sector = pd_list[i].DDSL * pd_list[i].GATM * pd_list[i].GPL + pd_list[i].SPT;
+				dir_length = pd_list[i].DDGA * pd_list[i].GPL;
+				memcpy(memory_region(REGION_CPU1) + 0x5A71 + image_index(image) * sizeof(PDRIVE), &pd_list[i], sizeof(PDRIVE));
+				break;
 			}
-
-			logerror("cgenie: geometry %d tracks, %d heads, %d sec/track\n", tracks, heads, spt);
-			/* set geometry so disk image can be read */
-			basicdsk_set_geometry(id, tracks, heads, spt, 256, 0, 0, FALSE);
-
-			logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
-			/* mark directory sectors with deleted data address mark */
-			/* assumption dir_sector is a sector offset */
-			for (j = 0; j < dir_length; j++)
-			{
-				UINT8 track;
-				UINT8 side;
-				UINT8 sector_id;
-				UINT16 track_offset;
-				UINT16 sector_offset;
-
-				/* calc sector offset */
-				sector_offset = dir_sector + j;
-
-				/* get track offset */
-				track_offset = sector_offset / spt;
-
-				/* calc track */
-				track = track_offset / heads;
-
-				/* calc side */
-				side = track_offset % heads;
-
-				/* calc sector id - first sector id is 0! */
-				sector_id = sector_offset % spt;
-
-				/* set deleted data address mark for sector specified */
-				basicdsk_set_ddam(id, track, side, sector_id, 1);
-			}
-
 		}
 
-		return INIT_PASS;
-	}
+		logerror("cgenie: geometry %d tracks, %d heads, %d sec/track\n", tracks, heads, spt);
+		/* set geometry so disk image can be read */
+		basicdsk_set_geometry(image, tracks, heads, spt, 256, 0, 0, FALSE);
 
-	return INIT_FAIL;
+		logerror("cgenie: directory sectors %d - %d (%d sectors)\n", dir_sector, dir_sector + dir_length - 1, dir_length);
+		/* mark directory sectors with deleted data address mark */
+		/* assumption dir_sector is a sector offset */
+		for (j = 0; j < dir_length; j++)
+		{
+			UINT8 track;
+			UINT8 side;
+			UINT8 sector_id;
+			UINT16 track_offset;
+			UINT16 sector_offset;
+
+			/* calc sector offset */
+			sector_offset = dir_sector + j;
+
+			/* get track offset */
+			track_offset = sector_offset / spt;
+
+			/* calc track */
+			track = track_offset / heads;
+
+			/* calc side */
+			side = track_offset % heads;
+
+			/* calc sector id - first sector id is 0! */
+			sector_id = sector_offset % spt;
+
+			/* set deleted data address mark for sector specified */
+			basicdsk_set_ddam(image, track, side, sector_id, 1);
+		}
+
+	}
+	return INIT_PASS;
 }
 
-int cgenie_rom_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( cgenie_cart )
 {
-	UINT8 *ROM = memory_region(REGION_CPU1);
-
-	/* Initialize memory */
-	memset(&ROM[0x4000], 0xff, 0xc000);
-	mame_fread(fp, &ROM[0x12000], 0x1000);
-	return INIT_PASS;
+	return cartslot_load_generic(file, REGION_CPU1, 0x12000, 0x0000, 0x1000, 0);
 }
 
 /*************************************

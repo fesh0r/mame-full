@@ -1,6 +1,6 @@
 #ifndef MFMDISK_H
 #define MFMDISK_H
 
-int mfm_disk_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( mfm_disk );
 
 #endif /* MFMDISK_H */

@@ -293,8 +293,8 @@ XL/XE 16kB OS roms
 	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
 	/* COMMODORE */
-//	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
-//TESTDRIVER( sym1 )		/* Synertek SYM1									*/
+	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
+TESTDRIVER( sym1 )		/* Synertek SYM1									*/
 //TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
@@ -543,7 +543,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( mc10 )		/* MC-10											*/
 
 	/* EACA */
-//	DRIVER( cgenie )	/* Colour Genie EG2000								*/
+	DRIVER( cgenie )	/* Colour Genie EG2000								*/
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
@@ -562,14 +562,14 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* Creativision console */
 
 	/* TANGERINE */
-//	DRIVER( microtan )	/* 1979 Microtan 65 								*/
+	DRIVER( microtan )	/* 1979 Microtan 65 								*/
 
-//	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
-//	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
-//	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
-//	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
-//	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
-//	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
+	DRIVER( oric1 ) 	/* 1983 Oric 1										*/
+	DRIVER( orica ) 	/* 1984 Oric Atmos									*/
+	DRIVER( prav8d )    /* 1985 Pravetz 8D									*/
+	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)						*/
+	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)			*/
+	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
 
 	/* PHILIPS */
 //	DRIVER( p2000t )	/* 1980 P2000T										*/
@@ -618,7 +618,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
 						/* (Test marketed, later recalled )					*/
-//	DRIVER( aquarius )	/* 1983 Aquarius									*/
+	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
 	/*EXIDY INC */
 //	DRIVER( exidy )  /* Sorcerer											*/

@@ -334,16 +334,22 @@ PB7
 
  */
 
+
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
 /* not called yet - this will update the via with the state of the tape data.
 This allows the via to trigger on bit changes and issue interrupts */
-static void    oric_refresh_tape(int dummy)
+static void oric_refresh_tape(int dummy)
 {
 	int data;
 	int input_port_9;
 
 	data = 0;
 
-	if (device_input(IO_CASSETTE,0) > 255)
+	if (device_input(cassette_image()) > 255)
 		data |=1;
 
 	/* "A simple cable to catch the vertical retrace signal !
@@ -397,10 +403,10 @@ static WRITE_HANDLER ( oric_via_out_b_func )
 		}
 	}
 
-	device_status(IO_CASSETTE, 0, ((data>>6) & 0x01));
+	device_status(cassette_image(), ((data>>6) & 0x01));
 
 	/* cassette data out */
-	device_output(IO_CASSETTE, 0, (data & (1<<7)) ? -32768 : 32767);
+	device_output(cassette_image(), (data & (1<<7)) ? -32768 : 32767);
 
 
 	/* PRINTER STROBE */
@@ -1210,28 +1216,31 @@ static void oric_wd179x_callback(int State)
 	}
 }
 
-int oric_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( oric_floppy )
 {
+	int id = image_index(image);
+
 	/* attempt to open mfm disk */
-	if (mfm_disk_load(id, fp, open_mode) == INIT_PASS)
+	if (device_load_mfm_disk(image, file, open_mode) == INIT_PASS)
 	{
 		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_load(id, fp, open_mode) == INIT_PASS)
+	if (basicdsk_floppy_load(image, file, open_mode) == INIT_PASS)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */
-		basicdsk_set_geometry(id, 80, 2, 9, 512, 1, 0, FALSE);
+		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
 		return INIT_PASS;
 	}
 	return INIT_FAIL;
 }
 
-void oric_floppy_unload(int id)
+DEVICE_UNLOAD( oric_floppy )
 {
+	int id = image_index(image);
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
@@ -1424,99 +1433,91 @@ WRITE_HANDLER ( oric_IO_w )
 }
 
 
-int oric_cassette_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( oric_cassette )
 {
 	struct wave_args_legacy wa;
 
-
-	if (file == NULL)
-		return INIT_PASS;
-
-	if( file )
+	if (! is_effective_mode_create(open_mode))
 	{
-		if (! is_effective_mode_create(open_mode))
+		int oric_tap_size;
+
+		/* get size of .tap file */
+		oric_tap_size = mame_fsize(file);
+
+		logerror("oric .tap size: %04x\n",oric_tap_size);
+
+		if (oric_tap_size!=0)
 		{
-			int oric_tap_size;
+			UINT8 *oric_tap_data;
 
-			/* get size of .tap file */
-			oric_tap_size = mame_fsize(file);
+			/* allocate a temporary buffer to hold .tap image */
+			/* this is used to calculate the number of samples that would be filled when this
+			file is converted */
+			oric_tap_data = (UINT8 *)malloc(oric_tap_size);
 
-			logerror("oric .tap size: %04x\n",oric_tap_size);
-
-			if (oric_tap_size!=0)
+			if (oric_tap_data!=NULL)
 			{
-				UINT8 *oric_tap_data;
+				/* number of samples to generate */
+				int size_in_samples;
 
-				/* allocate a temporary buffer to hold .tap image */
-				/* this is used to calculate the number of samples that would be filled when this
-				file is converted */
-				oric_tap_data = (UINT8 *)malloc(oric_tap_size);
+				/* read data into temporary buffer */
+				mame_fread(file, oric_tap_data, oric_tap_size);
 
-				if (oric_tap_data!=NULL)
-				{
-					/* number of samples to generate */
-					int size_in_samples;
+				/* calculate size in samples */
+				size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
 
-					/* read data into temporary buffer */
-					mame_fread(file, oric_tap_data, oric_tap_size);
+				/* seek back to start */
+				mame_fseek(file, 0, SEEK_SET);
 
-					/* calculate size in samples */
-					size_in_samples = oric_cassette_calculate_size_in_samples(oric_tap_size, oric_tap_data);
+				/* free temporary buffer */
+				free(oric_tap_data);
 
-					/* seek back to start */
-					mame_fseek(file, 0, SEEK_SET);
-
-					/* free temporary buffer */
-					free(oric_tap_data);
-
-					/* size of data in samples */
-					logerror("size in samples: %d\n",size_in_samples);
+				/* size of data in samples */
+				logerror("size in samples: %d\n",size_in_samples);
 
 
-					/* 30000, 416 */
+				/* 30000, 416 */
 
-					/* internal calculation used in wave.c:
+				/* internal calculation used in wave.c:
 
-					length =
-						wa->header_samples +
-						((mame_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
-						wa->trailer_samples;
-					*/
+				length =
+					wa->header_samples +
+					((mame_fsize(w->file) + wa->chunk_size - 1) / wa->chunk_size) * wa->chunk_samples +
+					wa->trailer_samples;
+				*/
 
 
-					memset(&wa, 0, sizeof(&wa));
-					wa.file = file;
-					wa.chunk_size = oric_tap_size;
-					wa.chunk_samples = size_in_samples;
-					wa.smpfreq = ORIC_WAV_FREQUENCY;
-					wa.fill_wave = oric_cassette_fill_wave;
-					wa.header_samples = ORIC_WAVESAMPLES_HEADER;
-					wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
-					if( device_open(IO_CASSETTE,id,0,&wa) )
-						return INIT_FAIL;
+				memset(&wa, 0, sizeof(&wa));
+				wa.file = file;
+				wa.chunk_size = oric_tap_size;
+				wa.chunk_samples = size_in_samples;
+				wa.smpfreq = ORIC_WAV_FREQUENCY;
+				wa.fill_wave = oric_cassette_fill_wave;
+				wa.header_samples = ORIC_WAVESAMPLES_HEADER;
+				wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
+				if( device_open(cassette_image(), 0, &wa) )
+					return INIT_FAIL;
 
-					return INIT_PASS;
-				}
-
-				return INIT_FAIL;
+				return INIT_PASS;
 			}
-		}
-		/*else*/
-		{
-			memset(&wa, 0, sizeof(&wa));
-			wa.file = file;
-			wa.smpfreq = 19200;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
-				return INIT_FAIL;
 
-			/* immediately inhibit/mute/play the output */
-		 /*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
-			return INIT_PASS;
+			return INIT_FAIL;
 		}
 	}
+	/*else*/
+	{
+		memset(&wa, 0, sizeof(&wa));
+		wa.file = file;
+		wa.smpfreq = 19200;
+		if( device_open(cassette_image(),1,&wa) )
+			return INIT_FAIL;
 
-	return INIT_FAIL;
+		/* immediately inhibit/mute/play the output */
+		/*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
+		return INIT_PASS;
+	}
 }
+
 #if 0
 
 int oric_cassette_init(int id)

@@ -136,40 +136,39 @@ static void wd179x_set_busy(WD179X *w, double milliseconds)
 
 static void wd179x_restore(WD179X *w)
 {
-		UINT8 step_counter = 255;
+	UINT8 step_counter = 255;
 		
 #if 0
-		w->status |= STA_1_BUSY;
+	w->status |= STA_1_BUSY;
 #endif
 
-		/* setup step direction */
-		w->direction = -1;
+	/* setup step direction */
+	w->direction = -1;
 
-		w->command_type = TYPE_I;
+	w->command_type = TYPE_I;
 
-		/* reset busy count */
-		w->busy_count = 0;
+	/* reset busy count */
+	w->busy_count = 0;
 
-		/* keep stepping until track 0 is received or 255 steps have been done */
-		while (!(floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
-		{
-			/* update time to simulate seek time busy signal */
-			w->busy_count++;
-			floppy_drive_seek(wd179x_current_image(), w->direction);
-			step_counter--;
-		}
+	/* keep stepping until track 0 is received or 255 steps have been done */
+	while (!(floppy_drive_get_flag_state(wd179x_current_image(), FLOPPY_DRIVE_HEAD_AT_TRACK_0)) && (step_counter!=0))
+	{
+		/* update time to simulate seek time busy signal */
+		w->busy_count++;
+		floppy_drive_seek(wd179x_current_image(), w->direction);
+		step_counter--;
+	}
 
-		/* update track reg */
-		w->track_reg = 0;
+	/* update track reg */
+	w->track_reg = 0;
 #if 0
-		/* simulate seek time busy signal */
-		w->busy_count = 0;	//w->busy_count * ((w->data & FDC_STEP_RATE) + 1);
+	/* simulate seek time busy signal */
+	w->busy_count = 0;	//w->busy_count * ((w->data & FDC_STEP_RATE) + 1);
 	
-		/* when command completes set irq */
-		wd179x_set_irq(w);
+	/* when command completes set irq */
+	wd179x_set_irq(w);
 #endif
-		wd179x_set_busy(w,0.1);
-
+	wd179x_set_busy(w,0.1);
 }
 
 void	wd179x_reset(void)

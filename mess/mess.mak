@@ -183,14 +183,14 @@ DRVLIBS = \
 	$(OBJ)/gce.a	  \
 	$(OBJ)/arcadia.a  \
 	$(OBJ)/kaypro.a   \
-#	$(OBJ)/tangerin.a \
-#	$(OBJ)/cgenie.a   \
+	$(OBJ)/cgenie.a   \
+	$(OBJ)/aquarius.a \
+	$(OBJ)/kim1.a     \
+	$(OBJ)/sym1.a     \
+	$(OBJ)/tangerin.a \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/aquarius.a \
-#	$(OBJ)/kim1.a     \
-#	$(OBJ)/sym1.a     \
 #	$(OBJ)/p2000.a	  \
 #	$(OBJ)/veb.a	  \
 #	$(OBJ)/amstrad.a  \

@@ -11,13 +11,13 @@
 #include "devices/mfmdisk.h"
 #include "devices/flopdrv.h"
 
-static void mfm_disk_seek_callback(int,int);
-static int mfm_disk_get_sectors_per_track(int,int);
-static void mfm_disk_get_id_callback(int, chrn_id *, int, int);
-static void mfm_disk_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length);
-static void mfm_disk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length,int ddam);
+static void mfm_disk_seek_callback(mess_image *image, int);
+static int mfm_disk_get_sectors_per_track(mess_image *image, int);
+static void mfm_disk_get_id_callback(mess_image *image, chrn_id *, int, int);
+static void mfm_disk_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length);
+static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, char *ptr, int length,int ddam);
 
-floppy_interface mfm_disk_floppy_interface=
+static floppy_interface mfm_disk_floppy_interface=
 {
 	mfm_disk_seek_callback,
 	mfm_disk_get_sectors_per_track,             /* done */
@@ -100,9 +100,15 @@ static struct mfm_disk_info	mfm_disks[MAX_MFM_DISK];
   deleted data mark and data in the sector field!
 */
 
+static struct mfm_disk_info *get_disk(mess_image *image)
+{
+	int disk = image_index(image);
+	return &mfm_disks[disk];
+}
+
 /* TODO: Error checking if a id is found at very end of track, or a sector which
 goes over end of track */
-static void mfm_info_cache_sector_info(int id,unsigned char *pTrackPtr, unsigned long Length)
+static void mfm_info_cache_sector_info(mess_image *image,unsigned char *pTrackPtr, unsigned long Length)
 {
 	/* initialise these with single density values if single density */
 	unsigned char IdMark = 0x0fe;
@@ -113,7 +119,7 @@ static void mfm_info_cache_sector_info(int id,unsigned char *pTrackPtr, unsigned
 	unsigned long N = 0;
 	unsigned long SearchCode = 0;
 	unsigned char *pStart = pTrackPtr;
-	struct mfm_disk_info *mfm_disk = &mfm_disks[id];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 
 	SectorCount = 0;
 
@@ -182,9 +188,10 @@ static void mfm_info_cache_sector_info(int id,unsigned char *pTrackPtr, unsigned
 
 }
 
-static unsigned long mfm_disk_get_track_size(int id)
+static unsigned long mfm_disk_get_track_size(mess_image *image)
 {
-	switch (mfm_disks[id].Density)
+	struct mfm_disk_info *pDisk = get_disk(image);
+	switch (pDisk->Density)
 	{
 		case MFM_DISK_DENSITY_MFM_LO:
 			return TrackSizeMFMLo;
@@ -197,13 +204,15 @@ static unsigned long mfm_disk_get_track_size(int id)
 }
 
 
-static unsigned char *mfm_disk_get_track_ptr(int id, int track, int side)
+static unsigned char *mfm_disk_get_track_ptr(mess_image *image, int track, int side)
 {
+	struct mfm_disk_info *pDisk = get_disk(image);
+
 	unsigned long TrackSize;
 
-	TrackSize = mfm_disk_get_track_size(id);
+	TrackSize = mfm_disk_get_track_size(image);
 
-	return (unsigned char *)((unsigned long)mfm_disks[id].pData + mfm_disk_header_size + (unsigned long)(TrackSize*((track*mfm_disks[id].NumSides)+side)));
+	return (unsigned char *)((unsigned long)pDisk->pData + mfm_disk_header_size + (unsigned long)(TrackSize*((track*pDisk->NumSides)+side)));
 }
 
 /* this is endian safe */
@@ -294,45 +303,46 @@ int	mfm_disk_id(int id)
 
 
 /* load image */
-int mfm_disk_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( mfm_disk )
 {
 	UINT64 datasize;
+	struct mfm_disk_info *pDisk = get_disk(image);
 
-	datasize = mame_fsize(fp);
+	datasize = mame_fsize(file);
 	if (datasize <= 0)
 		return INIT_FAIL;
 
-	mfm_disks[id].pData = image_malloc(IO_FLOPPY, id, datasize);
-	if (!mfm_disks[id].pData)
+	pDisk->pData = image_malloc(image, datasize);
+	if (!pDisk->pData)
 		return INIT_FAIL;
 
-	if (mame_fread(fp, mfm_disks[id].pData, datasize) != datasize)
+	if (mame_fread(file, pDisk->pData, datasize) != datasize)
 		return INIT_FAIL;
 
-	mfm_disks[id].NumTracks = mfm_get_long(&mfm_disks[id].pData[12]);
-	mfm_disks[id].NumSides = mfm_get_long(&mfm_disks[id].pData[16]);
-	mfm_disks[id].Density = mfm_get_long(&mfm_disks[id].pData[8]);
-	mfm_disks[id].CachedTrack = -1;
-	mfm_disks[id].CachedSide = -1;
-	mfm_disks[id].NumSectors = 0;
+	pDisk->NumTracks = mfm_get_long(&pDisk->pData[12]);
+	pDisk->NumSides = mfm_get_long(&pDisk->pData[16]);
+	pDisk->Density = mfm_get_long(&pDisk->pData[8]);
+	pDisk->CachedTrack = -1;
+	pDisk->CachedSide = -1;
+	pDisk->NumSectors = 0;
 
-	floppy_drive_set_disk_image_interface(img, &mfm_disk_floppy_interface);
+	floppy_drive_set_disk_image_interface(image, &mfm_disk_floppy_interface);
 
 	logerror("mfm disk inserted!\n");
 	return INIT_PASS;
 }
 
 /* cache info about track */
-static void mfm_disk_cache_data(int drive, int track, int side)
+static void mfm_disk_cache_data(mess_image *image, int track, int side)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 
 	if ((track!=mfm_disk->CachedTrack) || (side!=mfm_disk->CachedSide))
 	{
-		unsigned char *pTrackPtr = mfm_disk_get_track_ptr(drive, track, side);
-		unsigned long TrackSize = mfm_disk_get_track_size(drive);
+		unsigned char *pTrackPtr = mfm_disk_get_track_ptr(image, track, side);
+		unsigned long TrackSize = mfm_disk_get_track_size(image);
 
-		mfm_info_cache_sector_info(drive, pTrackPtr, TrackSize);
+		mfm_info_cache_sector_info(image, pTrackPtr, TrackSize);
 
 		mfm_disk->CachedTrack = track;
 		mfm_disk->CachedSide = side;
@@ -341,11 +351,11 @@ static void mfm_disk_cache_data(int drive, int track, int side)
 
 
 
-void    mfm_disk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
+static void mfm_disk_get_id_callback(mess_image *image, chrn_id *id, int id_index, int side)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 
-	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
+	mfm_disk_cache_data(image, mfm_disk->CurrentTrack, side);
 
 	if (id_index<mfm_disk->NumSectors)
 	{
@@ -365,9 +375,9 @@ void    mfm_disk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	}
 }
 
-int  mfm_disk_get_sectors_per_track(int drive, int side)
+static int mfm_disk_get_sectors_per_track(mess_image *image, int side)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 
 	/* attempting to access an invalid side or track? */
 	if ((side>=mfm_disk->NumSides) || (mfm_disk->CurrentTrack>=mfm_disk->NumTracks))
@@ -375,39 +385,38 @@ int  mfm_disk_get_sectors_per_track(int drive, int side)
 		/* no sectors */
 		return 0;
 	}
-	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
+	mfm_disk_cache_data(image, mfm_disk->CurrentTrack, side);
 
 	/* return number of sectors per track */
 	return mfm_disk->NumSectors;
 }
 
-void    mfm_disk_seek_callback(int drive, int physical_track)
+static void mfm_disk_seek_callback(mess_image *image, int physical_track)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
-
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 	mfm_disk->CurrentTrack = physical_track;
 }
 
 /* reading and writing are not clever, they need to be so that the data is correctly written back
 to the image */
-void mfm_disk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length, int ddam)
+static void mfm_disk_write_sector_data_from_buffer(mess_image *image, int side, int index1, char *ptr, int length, int ddam)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 	unsigned char *pSectorPtr;
 
-	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
+	mfm_disk_cache_data(image, mfm_disk->CurrentTrack, side);
 
 	pSectorPtr = mfm_disk->sectors[index1].data_ptr+1;
 
 	memcpy(pSectorPtr, ptr, length);
 }
 
-void mfm_disk_read_sector_data_into_buffer(int drive, int side, int index1, char *ptr, int length)
+static void mfm_disk_read_sector_data_into_buffer(mess_image *image, int side, int index1, char *ptr, int length)
 {
-	struct mfm_disk_info *mfm_disk = &mfm_disks[drive];
+	struct mfm_disk_info *mfm_disk = get_disk(image);
 	unsigned char *pSectorPtr;
 
-	mfm_disk_cache_data(drive, mfm_disk->CurrentTrack, side);
+	mfm_disk_cache_data(image, mfm_disk->CurrentTrack, side);
 
 	pSectorPtr = mfm_disk->sectors[index1].data_ptr+1;
 

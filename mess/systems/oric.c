@@ -535,13 +535,13 @@ ROM_START(prav8dda)
 ROM_END
 
 SYSTEM_CONFIG_START(oric_common)
-	CONFIG_DEVICE_CASSETTE(1, "tap\0", oric_cassette_init)
+	CONFIG_DEVICE_CASSETTE(1, "tap\0", device_load_oric_cassette)
 	CONFIG_DEVICE_PRINTER(1)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(oric1)
 	CONFIG_IMPORT_FROM(oric_common)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, oric_floppy_load, oric_floppy_unload, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, NULL, NULL, device_load_oric_floppy, device_unload_oric_floppy, floppy_status)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(prav8)

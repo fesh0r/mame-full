@@ -1,8 +1,8 @@
 extern UINT8 *cgenie_fontram;
 
-int cgenie_cassette_load(mess_image *img, mame_file *fp, int open_mode);
-int cgenie_floppy_init(mess_image *img, mame_file *fp, int open_mode);
-int cgenie_rom_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( cgenie_cart );
+DEVICE_LOAD( cgenie_cassette );
+DEVICE_LOAD( cgenie_floppy );
 
 VIDEO_START( cgenie );
 VIDEO_UPDATE( cgenie );

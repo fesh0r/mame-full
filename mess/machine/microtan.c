@@ -136,6 +136,11 @@ static void microtan_set_irq_line(void)
     cpu_set_irq_line(0, 0, via_0_irq_line | via_1_irq_line | kbd_irq_line);
 }
 
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
 /**************************************************************
  * VIA callback functions for VIA #0
  **************************************************************/
@@ -190,7 +195,7 @@ static WRITE_HANDLER (via_0_out_b )
 {
     LOG(("microtan_via_0_out_b %02X\n", data));
     /* bit #7 is the cassette output signal */
-    wave_output(0, data & 0x80 ? +32767 : -32768);
+    device_output(cassette_image(), data & 0x80 ? +32767 : -32768);
 }
 
 static WRITE_HANDLER ( via_0_out_ca2 )
@@ -348,7 +353,7 @@ static struct via6522_interface via6522[2] =
 
 static void microtan_read_cassette(int param)
 {
-    int level = device_input(IO_CASSETTE,0);
+    int level = device_input(cassette_image());
 
     LOG(("microtan_read_cassette: %+5d\n", level));
     if (level < -511)
@@ -440,7 +445,7 @@ WRITE_HANDLER ( microtan_bffx_w )
     }
 }
 
-int microtan_cassette_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( microtan_cassette )
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
@@ -448,7 +453,7 @@ int microtan_cassette_init(mess_image *img, mame_file *fp, int open_mode)
 	args.chunk_samples = 8;
 	args.input_smpfreq = Machine->sample_rate;
 	args.create_smpfreq = Machine->sample_rate;
-	return cassette_init(id, fp, open_mode, &args);
+	return cassette_init(image, file, open_mode, &args);
 }
 
 static int microtan_varify_snapshot(UINT8 *data, int size)
@@ -662,17 +667,17 @@ INTERRUPT_GEN( microtan_interrupt )
 
     if (readinputport(11) & 1) /* F5 tape stop */
     {
-        device_status(IO_CASSETTE,0,0);
+        device_status(cassette_image(), 0);
 		timer_reset(microtan_timer, TIME_NEVER);
     }
     if (readinputport(11) & 2) /* F6 tape start */
     {
-        device_status(IO_CASSETTE,0,1);
+        device_status(cassette_image(), 1);
 		timer_adjust(microtan_timer, 0, 0, TIME_IN_HZ(11025));
     }
     if (readinputport(11) & 4) /* F7 tape rewind */
     {
-        device_seek(IO_CASSETTE,0,0,SEEK_SET);
+        device_seek(cassette_image(), 0,SEEK_SET);
     }
 
     row = 9;

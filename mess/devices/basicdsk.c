@@ -20,7 +20,7 @@ static void basicdsk_get_id_callback(mess_image *img,  chrn_id *, int, int);
 static void basicdsk_read_sector_data_into_buffer(mess_image *img, int side, int index1, char *ptr, int length);
 static void basicdsk_write_sector_data_from_buffer(mess_image *img, int side, int index1, char *ptr, int length,int ddam);
 
-floppy_interface basicdsk_floppy_interface=
+static floppy_interface basicdsk_floppy_interface =
 {
 	basicdsk_seek_callback,
 	basicdsk_get_sectors_per_track,             /* done */
@@ -505,6 +505,7 @@ static int basicdsk_get_sectors_per_track(mess_image *img, int side)
 static void basicdsk_seek_callback(mess_image *img, int physical_track)
 {
 	basicdsk *w = get_basicdsk(img);
+	assert(w->track_divider);
 	w->track = physical_track / w->track_divider;
 }
 
