@@ -184,4 +184,24 @@
 	</checkdirectory>
 </imgtooltest>
 
+<imgtooltest name="fat_007">
+	<!-- Testing many more files in a subdirectory -->
+	<createimage driver="pc_dsk_fat"/>
+	<createdirectory path="FOO"/>
+	
+	<putfile name="\FOO\1.TXT">'Alpha'</putfile>
+	<putfile name="\FOO\2.TXT">'Bravo'</putfile>
+	<putfile name="\FOO\3.TXT">'Charlie'</putfile>
+	<deletefile name="\FOO\2.TXT"/>
+	<checkdirectory path="\FOO">
+		<entry name="1.TXT" size="5"/>
+		<entry name="3.TXT" size="7"/>
+	</checkdirectory>
+
+	<putfile name="\FOO\4.TXT">'Delta'</putfile>
+	<checkfile name="\FOO\1.TXT">'Alpha'</checkfile>
+	<checkfile name="\FOO\3.TXT">'Charlie'</checkfile>
+	<checkfile name="\FOO\4.TXT">'Delta'</checkfile>
+</imgtooltest>
+
 </tests>

@@ -1192,8 +1192,12 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 				if (freeent->candidate_position > entry_index)
 					freeent->candidate_position = entry_index;
 
-				if ((entry[0] == '\0') || (freeent->candidate_position + freeent->required_size < file->filesize))
+				if ((entry[0] == '\0') || (freeent->candidate_position + freeent->required_size < file->index))
 					freeent->position = freeent->candidate_position;
+			}
+			else
+			{
+				freeent->candidate_position = ~0;
 			}
 		}
 	}
@@ -1466,6 +1470,8 @@ static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
 			err = fat_read_dirent(image, file, &ent, created_entry ? &freeent : NULL);
 			if (err)
 				goto done;
+
+			LOG(("fat_lookup_path(): %s/%s: %d\n", ent.short_filename, ent.long_filename, ent.dirent_sector_offset));
 		}
 		while(!ent.eof && stricmp(path, ent.short_filename) && stricmp(path, ent.long_filename));
 
