@@ -87,6 +87,10 @@ static void set_int_line(int line, int state)
 		cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
+static void set_int2(int state)
+{
+	set_int_line(2, state);
+}
 
 static void set_int9(int state)
 {
@@ -274,7 +278,7 @@ static PORT_WRITE16_START ( ti990_10_writeport )
 	{ 0x80 << 1, 0x8f << 1, vdt911_0_cru_w },
 
 	{ 0xfd0 << 1, 0xfdf << 1, ti990_10_mapper_cru_w },
-
+	{ 0xfe0 << 1, 0xfef << 1, ti990_10_eir_cru_w },
 	{ 0xff0 << 1, 0xfff << 1, ti990_10_panel_write },
 
 PORT_END
@@ -284,7 +288,7 @@ static PORT_READ16_START ( ti990_10_readport )
 	{ 0x10 << 1, 0x11 << 1, vdt911_0_cru_r },
 
 	{ 0x1fa << 1, 0x1fb << 1, ti990_10_mapper_cru_r },
-
+	{ 0x1fc << 1, 0x1fd << 1, ti990_10_eir_cru_r },
 	{ 0x1fe << 1, 0x1ff << 1, ti990_10_panel_read },
 
 PORT_END
@@ -294,7 +298,9 @@ ti990_10reset_param reset_params =
 	/*idle_callback*/NULL,
 	rset_callback,
 	lrex_callback,
-	ckon_ckof_callback
+	ckon_ckof_callback,
+
+	set_int2
 };
 
 static struct MachineDriver machine_driver_ti990_10 =
