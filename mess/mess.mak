@@ -187,12 +187,12 @@ DRVLIBS = \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/mtx.a	  \
+	$(OBJ)/at.a       \
+	$(OBJ)/pc.a       \
+	$(OBJ)/pcshare.a  \
 #	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
 #	$(OBJ)/cpschngr.a \
-#	$(OBJ)/pcshare.a  \
-#	$(OBJ)/pc.a       \
-#	$(OBJ)/at.a       \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/hp48.a     \
 #	$(OBJ)/mk1.a      \

@@ -243,9 +243,9 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
  * Lisa 2 				 January			 1984
  * Macintosh XL 		 January			 1985
  */
-//	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2							  */
-//	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10							  */
-//	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL						  */
+	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2							  */
+	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10							  */
+	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL						  */
 /*
  * Macintosh 			 January			 1984
  * Macintosh 512k		 July?				 1984
@@ -303,7 +303,7 @@ TESTDRIVER( aim65 )		/* Rockwell AIM65								  */
 TESTDRIVER( mmf9000 )	/* Commodore MMF9000 Swedish					  */
 
 	DRIVER( vic20 ) 	/* Commodore Vic-20 NTSC						  */
-//	DRIVER( vic1001 )	/* Commodore VIC-1001 (VIC20 Japan)				  */
+	DRIVER( vic1001 )	/* Commodore VIC-1001 (VIC20 Japan)				  */
 	DRIVER( vc20 )		/* Commodore Vic-20 PAL 						  */
 	DRIVER( vic20swe )	/* Commodore Vic-20 Sweden						  */
 TESTDRIVER( vic20v ) 	/* Commodore Vic-20 NTSC, VC1540				  */
@@ -364,32 +364,32 @@ TESTDRIVER( cdtv )
 	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
 
 	/* IBM PC & Clones */
-//	DRIVER( ibmpc )		/* 1982	IBM PC									  */
-//	DRIVER( ibmpca )	/* 1982 IBM PC									  */
-//	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)			  */
-//	DRIVER( pc )		/* 1987 PC with CGA								  */
+	DRIVER( ibmpc )		/* 1982	IBM PC									  */
+	DRIVER( ibmpca )	/* 1982 IBM PC									  */
+	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)			  */
+	DRIVER( pc )		/* 1987 PC with CGA								  */
 TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)                         	  */
-//	DRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)		  */
+	DRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)		  */
 
 	/* pc junior */
 TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
-//	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr) 		  */
+	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr) 		  */
 
 	/* xt */
-//	DRIVER( ibmxt )		/* 1986	IBM XT									  */
+	DRIVER( ibmxt )		/* 1986	IBM XT									  */
 /*	DRIVER( ibm8530 )*/	/* 1987 IBM PS2 Model 30 (MCGA)						*/
-//	DRIVER( pc200 )     /* 1988 Sinclair PC200                            */
-//	DRIVER( pc20 )      /* 1988 Amstrad PC20                              */
-//	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
-//	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)			  */
+	DRIVER( pc200 )     /* 1988 Sinclair PC200                            */
+	DRIVER( pc20 )      /* 1988 Amstrad PC20                              */
+	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
+	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)			  */
 
-//	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
+	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)				  */
 
 	/* at */
 TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 TESTDRIVER( t2500xl )	/* 19?? Tandy 2500XL (VGA)					*/
-//	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
+	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 
