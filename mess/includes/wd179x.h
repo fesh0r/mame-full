@@ -96,7 +96,7 @@ typedef struct {
 
 	UINT8	status; 				/* status register */
 	UINT8	status_drq; 			/* status register data request bit */
-	/*UINT8	status_ipl;*/ 			/* status register toggle index pulse bit */
+	UINT8	status_ipl; 			/* status register toggle index pulse bit */
 	UINT8	busy_count; 			/* how long to keep busy bit set */
 
 	UINT8	buffer[6144];			/* I/O buffer (holds up to a whole track) */

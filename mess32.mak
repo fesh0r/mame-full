@@ -310,6 +310,7 @@ COREOBJS = \
 		$(OBJ)/mess/filemngr.o         \
 		$(OBJ)/mess/tapectrl.o         \
 		$(OBJ)/mess/utils.o \
+		$(OBJ)/mess/printer.o \
 		$(OBJ)/mess/machine/rriot.o	 \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
@@ -356,9 +357,10 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/nes.o      \
           $(OBJ)/mess/machine/nes.o      \
           $(OBJ)/mess/systems/nes.o      \
-          $(OBJ)/mess/vidhrdw/gb.o       \
-          $(OBJ)/mess/machine/gb.o       \
-          $(OBJ)/mess/systems/gb.o       \
+	  $(OBJ)/mess/sndhrdw/gb.o	 \
+	  $(OBJ)/mess/vidhrdw/gb.o	 \
+	  $(OBJ)/mess/machine/gb.o	 \
+	  $(OBJ)/mess/systems/gb.o	 \
           $(OBJ)/mess/sndhrdw/snes.o     \
           $(OBJ)/mess/vidhrdw/snes.o     \
           $(OBJ)/mess/machine/snes.o     \
@@ -583,7 +585,8 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/aquarius.o \
           $(OBJ)/mess/machine/odyssey2.o \
           $(OBJ)/mess/vidhrdw/odyssey2.o \
-          $(OBJ)/mess/systems/odyssey2.o
+          $(OBJ)/mess/systems/odyssey2.o \
+	$(OBJ)/mess/systems/intv.o
 
 
 IMGTOOL_OBJS= \
