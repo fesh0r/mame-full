@@ -1,4 +1,4 @@
-/*
+
 	systems/apexc.c : APEXC driver
 
 	By Raphael Nabet
@@ -909,4 +909,4 @@ ROM_END
 
 /*		YEAR	NAME		PARENT	MACHINE		INPUT	INIT	COMPANY		FULLNAME */
 /*COMP( c. 1951,	apexc53,	0,		apexc53,	apexc,	apexc,	"Booth",	"APEXC (as described in 1953)" )*/
-COMP( c. 1955,	apexc,		/*apexc53*/0,		apexc,		apexc,	apexc,	"Booth",	"APEXC (as described in 1957)" )
+COMP( 1955,	apexc,		/*apexc53*/0,		apexc,		apexc,	apexc,	"Booth",	"APEXC (as described in 1957)" )
