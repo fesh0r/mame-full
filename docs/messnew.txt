@@ -8,10 +8,14 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [ATARI] Miscellaneous cleanups, and implemented Atari 5200 joystick top
+  triggers. (bug #328) [Nate Woods]
+
 - [PC] Complete 8237 DMA rewrite, and associated changes in the NEC765, FDC
   and HDC implementations.  The new 8237 implementation is more of a pure
   hardware emulation and should be more accurate.  In the process, fixed a
-  critical long standing bug in the PC floppy emulation (bug #154)
+  critical long standing bug in the PC floppy emulation. (bug #154) [Nate
+  Woods]
 
 
 

@@ -266,10 +266,7 @@ typedef struct {
 	UINT8	p1pl;		/* d00d player 1 player collisions */
 	UINT8	p2pl;		/* d00e player 2 player collisions */
 	UINT8	p3pl;		/* d00f player 3 player collisions */
-	UINT8	but0;		/* d010 button stick 0 */
-	UINT8	but1;		/* d011 button stick 1 */
-	UINT8	but2;		/* d012 button stick 2 */
-	UINT8	but3;		/* d013 button stick 3 */
+	UINT8	but[4];		/* d010-d013 button stick 0-3 */
 	UINT8	pal;		/* d014 PAL/NTSC config (D3,2,1 0=PAL, 1=NTSC */
 	UINT8	gtia15; 	/* d015 nothing */
 	UINT8	gtia16; 	/* d016 nothing */
@@ -788,4 +785,11 @@ void gtia_render(VIDEO *video);
 extern char atari_frame_message[64+1];
 extern int atari_frame_counter;
 
-#endif
+#define PORT_CONFIGURATION	0
+#define PORT_JOY_1_2		1
+#define PORT_JOY_2_3		2
+#define PORT_JOY_BUTTONS	3
+#define PORT_KEYBOARD_BASE	4
+
+#endif /* ATARI_H */
+

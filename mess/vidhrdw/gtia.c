@@ -106,10 +106,10 @@ READ_HANDLER ( atari_gtia_r )
 		case 14: return gtia.r.p2pl;
 		case 15: return gtia.r.p3pl;
 
-		case 16: return gtia.r.but0;
-		case 17: return gtia.r.but1;
-		case 18: return gtia.r.but2;
-		case 19: return gtia.r.but3;
+		case 16: return gtia.r.but[0];
+		case 17: return gtia.r.but[1];
+		case 18: return gtia.r.but[2];
+		case 19: return gtia.r.but[3];
 
 		case 20: return gtia.r.pal;
 

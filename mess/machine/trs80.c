@@ -730,9 +730,6 @@ READ_HANDLER( trs80_keyboard_r )
 {
 	int result = 0;
 
-	if( setup_active() || onscrd_active() )
-		return result;
-
 	if (offset & 1)
 		result |= input_port_1_r(0);
 	if (offset & 2)

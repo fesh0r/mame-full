@@ -1443,190 +1443,79 @@ static void antic_scanline_dma(int param)
 
 /*****************************************************************************
  *
- *	Atari 400 Interrupt Dispatcher
+ *	Generic Atari Interrupt Dispatcher
  *	This is called once per scanline and handles:
  *	vertical blank interrupt
  *	ANTIC DMA to possibly access the next display list command
  *
  *****************************************************************************/
+
+static void generic_atari_interrupt(void (*handle_keyboard)(void), int button_count)
+{
+	int button_port, i;
+
+	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
+
+    if( antic.scanline < VBL_START )
+    {
+		antic_scanline_dma(0);
+		return;
+    }
+
+    if( antic.scanline == VBL_START )
+    {
+		button_port = readinputport(PORT_JOY_BUTTONS);
+
+		/* specify buttons relevant to this Atari variant */
+		for (i = 0; i < button_count; i++)
+		{
+			if ((gtia.w.gractl & GTIA_TRIGGER) == 0)
+				gtia.r.but[i] = 1;
+			gtia.r.but[i] &= (button_port >> i) & 1;
+		}
+
+		/* specify buttons not relevant to this Atari variant */
+		for (i = button_count; i < 4; i++)
+			gtia.r.but[i] = 1;
+
+		handle_keyboard();
+
+		/* do nothing new for the rest of the frame */
+		antic.modelines = Machine->drv->screen_height - VBL_START;
+		antic_renderer = antic_mode_0_xx;
+
+		/* if the CPU want's to be interrupted at vertical blank... */
+		if( antic.w.nmien & VBL_NMI )
+		{
+			LOG(("           cause VBL NMI\n"));
+			/* set the VBL NMI status bit */
+			antic.r.nmist |= VBL_NMI;
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+    }
+
+	/* refresh the display (translate color clocks to pixels) */
+    antic_linerefresh();
+}
+
+
+
 void a400_interrupt(void)
 {
-	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
-
-    if( antic.scanline < VBL_START )
-    {
-		antic_scanline_dma(0);
-        return;
-    }
-
-    if( antic.scanline == VBL_START )
-    {
-		UINT8 port3 = input_port_3_r(0);
-		if( (gtia.w.gractl & GTIA_TRIGGER) == 0 )
-            gtia.r.but0 = gtia.r.but1 = gtia.r.but2 = gtia.r.but3 = 1;
-		gtia.r.but0 &= (port3 >> 0) & 1;
-		gtia.r.but1 &= (port3 >> 1) & 1;
-		gtia.r.but2 &= (port3 >> 2) & 1;
-		gtia.r.but3 &= (port3 >> 3) & 1;
-
-		a800_handle_keyboard();
-
-        /* do nothing new for the rest of the frame */
-		antic.modelines = Machine->drv->screen_height - VBL_START;
-        antic_renderer = antic_mode_0_xx;
-
-        /* if the CPU want's to be interrupted at vertical blank... */
-		if( antic.w.nmien & VBL_NMI )
-        {
-			LOG(("           cause VBL NMI\n"));
-            /* set the VBL NMI status bit */
-            antic.r.nmist |= VBL_NMI;
-			cpu_set_nmi_line(0, PULSE_LINE);
-        }
-    }
-	/* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh();
+	generic_atari_interrupt(a800_handle_keyboard, 4);
 }
 
-/*****************************************************************************
- *
- *	Atari 800 Interrupt Dispatcher
- *	This is called once per scanline and handles:
- *	vertical blank interrupt
- *	ANTIC DMA to possibly access the next display list command
- *
- *****************************************************************************/
 void a800_interrupt(void)
 {
-	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
-
-    if( antic.scanline < VBL_START )
-    {
-		antic_scanline_dma(0);
-        return;
-    }
-
-    if( antic.scanline == VBL_START )
-    {
-		UINT8 port3 = input_port_3_r(0);
-		if( (gtia.w.gractl & GTIA_TRIGGER) == 0 )
-            gtia.r.but0 = gtia.r.but1 = gtia.r.but2 = gtia.r.but3 = 1;
-		gtia.r.but0 &= (port3 >> 0) & 1;
-		gtia.r.but1 &= (port3 >> 1) & 1;
-		gtia.r.but2 &= (port3 >> 2) & 1;
-		gtia.r.but3 &= (port3 >> 3) & 1;
-
-		a800_handle_keyboard();
-
-        /* do nothing new for the rest of the frame */
-		antic.modelines = Machine->drv->screen_height - VBL_START;
-        antic_renderer = antic_mode_0_xx;
-
-        /* if the CPU want's to be interrupted at vertical blank... */
-		if( antic.w.nmien & VBL_NMI )
-        {
-			LOG(("           cause VBL NMI\n"));
-            /* set the VBL NMI status bit */
-            antic.r.nmist |= VBL_NMI;
-			cpu_set_nmi_line(0, PULSE_LINE);
-        }
-    }
-	/* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh();
+	generic_atari_interrupt(a800_handle_keyboard, 4);
 }
 
-/*****************************************************************************
- *
- *	Atari 800XL Interrupt Dispatcher
- *	This is called once per scanline and handles:
- *	vertical blank interrupt
- *	ANTIC DMA to possibly access the next display list command
- *
- *****************************************************************************/
 void a800xl_interrupt(void)
 {
-	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
-
-    if( antic.scanline < VBL_START )
-    {
-		antic_scanline_dma(0);
-        return;
-    }
-
-    if( antic.scanline == VBL_START )
-    {
-		UINT8 port3 = input_port_3_r(0);
-		if( (gtia.w.gractl & GTIA_TRIGGER) == 0 )
-			gtia.r.but0 = gtia.r.but1 = 1;
-		gtia.r.but0 &= (port3 >> 0) & 1;
-		gtia.r.but1 &= (port3 >> 1) & 1;
-		gtia.r.but2 = 1;
-		gtia.r.but3 = 1;
-
-		a800_handle_keyboard();
-
-        /* do nothing new for the rest of the frame */
-		antic.modelines = Machine->drv->screen_height - VBL_START;
-        antic_renderer = antic_mode_0_xx;
-
-        /* if the CPU want's to be interrupted at vertical blank... */
-		if( antic.w.nmien & VBL_NMI )
-        {
-			LOG(("           cause VBL NMI\n"));
-            /* set the VBL NMI status bit */
-            antic.r.nmist |= VBL_NMI;
-			cpu_set_nmi_line(0, PULSE_LINE);
-        }
-    }
-	/* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh();
+	generic_atari_interrupt(a800_handle_keyboard, 2);
 }
 
-/*****************************************************************************
- *
- *	VCS 5200 Interrupt Dispatcher
- *	This is called once per scanline and handles:
- *	vertical blank interrupt
- *	ANTIC DMA to possibly access the next display list command
- *
- *****************************************************************************/
 void a5200_interrupt(void)
 {
-	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
-
-    if( antic.scanline < VBL_START )
-    {
-		antic_scanline_dma(0);
-        return;
-    }
-
-    if( antic.scanline == VBL_START )
-    {
-		UINT8 port3 = input_port_3_r(0);
-        if( (gtia.w.gractl & GTIA_TRIGGER) == 0 )
-            gtia.r.but0 = gtia.r.but1 = gtia.r.but2 = gtia.r.but3 = 1;
-		gtia.r.but0 &= (port3 >> 0) & 1;
-		gtia.r.but1 &= (port3 >> 1) & 1;
-		gtia.r.but2 &= (port3 >> 2) & 1;
-        gtia.r.but3 &= (port3 >> 3) & 1;
-
-		a5200_handle_keypads();
-
-        /* do nothing new for the rest of the frame */
-		antic.modelines = Machine->drv->screen_height - VBL_START;
-        antic_renderer = antic_mode_0_xx;
-
-        /* if the CPU want's to be interrupted at vertical blank... */
-		if( antic.w.nmien & VBL_NMI )
-        {
-			LOG(("           cause VBL NMI\n"));
-            /* set the VBL NMI status bit */
-            antic.r.nmist |= VBL_NMI;
-			cpu_set_nmi_line(0, PULSE_LINE);
-        }
-    }
-	/* refresh the display (translate color clocks to pixels) */
-    antic_linerefresh();
+	generic_atari_interrupt(a5200_handle_keypads, 4);
 }
-
-

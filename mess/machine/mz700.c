@@ -136,9 +136,6 @@ static READ_HANDLER ( pio_port_b_r )
 {
 	data8_t demux_LS145, data = 0xff;
 
-	if( setup_active() || onscrd_active() )
-		return data;
-
     demux_LS145 = pio_port_a_output & 15;
     data = readinputport(1 + demux_LS145);
 	LOG(2,"mz700_pio_port_b_r",("%02X\n", data));

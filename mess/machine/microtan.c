@@ -640,9 +640,6 @@ INTERRUPT_GEN( microtan_interrupt )
     int mod, row, col, chg, new;
     static int lastrow = 0, mask = 0x00, key = 0x00, repeat = 0, repeater = 0;
 
-	if( setup_active() || onscrd_active() )
-		return;
-
     if( repeat )
     {
         if( !--repeat )

@@ -959,20 +959,32 @@ void atari_interrupt_cb(int mask)
 
 READ_HANDLER ( atari_pia_r )
 {
+	data8_t result;
 	switch (offset & 3)
 	{
 		case 0: /* PIA port A */
-			atari_pia.r.painp = input_port_1_r(0);
-			return (atari_pia.w.paout & atari_pia.h.pamsk) | (atari_pia.r.painp & ~atari_pia.h.pamsk);
+			atari_pia.r.painp = readinputport(PORT_JOY_1_2);
+			result = (atari_pia.w.paout & atari_pia.h.pamsk) | (atari_pia.r.painp & ~atari_pia.h.pamsk);
+			break;
+
 		case 1: /* PIA port B */
-			atari_pia.r.pbinp = input_port_2_r(0);
-			return (atari_pia.w.pbout & atari_pia.h.pbmsk) | (atari_pia.r.pbinp & ~atari_pia.h.pbmsk);
+			atari_pia.r.pbinp = readinputport(PORT_JOY_2_3);
+			result =  (atari_pia.w.pbout & atari_pia.h.pbmsk) | (atari_pia.r.pbinp & ~atari_pia.h.pbmsk);
+			break;
+
 		case 2: /* PIA port A control */
-			return atari_pia.rw.pactl;
+			result = atari_pia.rw.pactl;
+			break;
+
 		case 3: /* PIA port B control */
-			return atari_pia.rw.pbctl;
+			result = atari_pia.rw.pbctl;
+			break;
+
+		default:
+			result = 0xFF;
+			break;
 	}
-	return 0xff;
+	return result;
 }
 
 /**************************************************************
@@ -1419,12 +1431,9 @@ void a800_handle_keyboard(void)
 	static int atari_last = 0xff, joystick = 0xaa;
 	int i, modifiers, atari_code;
 
-	if( setup_active() || onscrd_active() )
-		return;
-
-	if( joystick != (readinputport(0) & 0x80) )
+	if( joystick != (readinputport(PORT_CONFIGURATION) & 0x80) )
 	{
-		joystick = readinputport(0) & 0x80;
+		joystick = readinputport(PORT_CONFIGURATION) & 0x80;
 		if( joystick )
 			sprintf(atari_frame_message, "Cursor Keys JOYSTICK");
 		else
@@ -1443,7 +1452,7 @@ void a800_handle_keyboard(void)
 
 	for( i = 0; i < 64; i++ )
 	{
-		if( readinputport(4 + i/16) & (1 << (i&15)) )
+		if( readinputport(PORT_KEYBOARD_BASE + i/16) & (1 << (i&15)) )
 		{
 			/* joystick key and joystick mode enabled ? */
 			if( i >= 60 && joystick )
@@ -1487,9 +1496,10 @@ void a5200_handle_keypads(void)
 	if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
 		modifiers |= 2;
 
+	/* check keypad */
 	for (i = 0; i < 16; i++)
 	{
-		if( readinputport(4) & (1 << i) )
+		if( readinputport(PORT_KEYBOARD_BASE) & (1 << i) )
 		{
 			if( i == atari_last )
 				return;
@@ -1503,8 +1513,22 @@ void a5200_handle_keypads(void)
 			return;
 		}
 	}
+
+	/* check top button */
+	if ((readinputport(PORT_JOY_BUTTONS) & 0x10) == 0)
+	{
+		if (atari_last == 0xFE)
+			return;
+		pokey1_kbcode_w(0x61, 1);
+		//pokey1_break_w(0x40);
+		atari_last = 0xFE;
+		return;
+	}
+	else if (atari_last == 0xFE)
+		pokey1_kbcode_w(0x21, 1);
+	
 	/* remove key pressed status bit from skstat */
-	pokey1_kbcode_w(0xff, 0);
+	pokey1_kbcode_w(0xFF, 0);
 	atari_last = 0xff;
 }
 
