@@ -27,6 +27,9 @@
 *	 3/4/2002		AK - Mode 1 sweep can still occur if shift is 0.  Don't let frequency
 *						 go past the maximum allowed value. Fixed Mode 3 length table.
 *						 Slight adjustment to Mode 4's period table generation.
+*	 5/4/2002		AK - Mode 4 is done correctly, using a polynomial counter instead
+*						 of being a total hack.
+*	 6/4/2002		AK - Slight tweak to mode 3's frequency calculation.
 *
 ***************************************************************************************/
 
@@ -72,8 +75,6 @@ static UINT32 period_mode3_table[MAX_FREQUENCIES];
 static UINT32 period_mode4_table[8][16];
 static UINT32 length_table[64];
 static UINT32 length_mode3_table[256];
-/*static UINT32 poly7_mode4_table[256];
-static UINT32 poly15_mode4_table[1024];*/
 
 struct SOUND1
 {
@@ -143,6 +144,7 @@ struct SOUND4
 	INT32 env_length;
 	INT32 env_count;
 	INT32 ply_step;
+	INT16 ply_value;
 };
 
 struct SOUNDC
@@ -210,6 +212,7 @@ void gameboy_4_init(void)
 	snd_4.count = 0;
 	snd_4.env_count = 0;
 	snd_4.signal = rand();
+	snd_4.ply_value = 0x7fff;
 	gb_ram[NR52] |= 0x8;
 }
 
@@ -354,7 +357,7 @@ void gameboy_sound_w(int offset, int data)
 
 void gameboy_update(int param, INT16 **buffer, int length)
 {
-	INT16 sample = 0, left = 0, right = 0;
+	INT16 sample = 0, left = 0, right = 0, mode4_mask;
 
 	while( length-- > 0 )
 	{
@@ -500,7 +503,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample = 0;
 
 			snd_3.pos++;
-			if( snd_3.pos > (UINT32)(((snd_3.period ) >> 16 ) / 32) )
+			if( snd_3.pos >= (UINT32)(((snd_3.period ) >> 16 ) / 32) )
 /*			if( (snd_3.pos<<16) >= (UINT32)(((snd_3.period / 31) + (1<<16))) ) */
 			{
 				snd_3.pos = 0;
@@ -532,23 +535,28 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 4 - Noise with Envelope */
 		if( snd_4.on )
 		{
-			/* A proper polynomial white noise generator is needed here */
+			/* Similar problem to Mode 3, we seem to miss some notes */
 			sample = snd_4.signal & snd_4.env_value;
 			snd_4.pos++;
 			if( snd_4.pos == (snd_4.period >> 17) )
 			{
-				snd_4.signal = rand();
-				/* *cough* hack *cough* */
-				if( snd_4.ply_step )
-					snd_4.signal >>= 4;
+				/* Using a Polynomial Counter (aka Linear Feedback Shift Register)
+				   Mode 4 has a 7 bit and 15 bit counter so we need to shift the
+				   bits around accordingly */
+				mode4_mask = (((snd_4.ply_value & 0x2) >> 1) ^ (snd_4.ply_value & 0x1)) << (snd_4.ply_step ? 6 : 14);
+				snd_4.ply_value >>= 1;
+				snd_4.ply_value |= mode4_mask;
+				snd_4.ply_value &= (snd_4.ply_step ? 0x7f : 0x7fff);
+				snd_4.signal = (INT8)snd_4.ply_value;
 			}
 			else if( snd_4.pos > (snd_4.period >> 16) )
 			{
 				snd_4.pos = 0;
-				snd_4.signal = rand();
-				/* *cough* hack *cough* */
-				if( snd_4.ply_step )
-					snd_4.signal >>= 4;
+				mode4_mask = (((snd_4.ply_value & 0x2) >> 1) ^ (snd_4.ply_value & 0x1)) << (snd_4.ply_step ? 6 : 14);
+				snd_4.ply_value >>= 1;
+				snd_4.ply_value |= mode4_mask;
+				snd_4.ply_value &= (snd_4.ply_step ? 0x7f : 0x7fff);
+				snd_4.signal = (INT8)snd_4.ply_value;
 			}
 
 			if( snd_4.length && snd_4.mode )
@@ -625,7 +633,7 @@ int gameboy_sh_start(const struct MachineSound* driver)
 		period_table[I] = ((1 << 16) / (131072 / (2048 - I))) * rate;
 		period_mode3_table[I] = ((1 << 16) / (65536 / (2048 - I))) * rate;
 	}
-	/* ... and for mode 4 */
+	/* Calculate the period table for mode 4 */
 	for( I = 0; I < 8; I++ )
 	{
 		for( J = 0; J < 16; J++ )
@@ -641,23 +649,11 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	{
 		length_table[I] = ((64 - I) * ((1 << 16)/256) * rate) >> 16;
 	}
-
 	/* Calculate the length table for mode 3 */
 	for( I = 0; I < 256; I++ )
 	{
 		length_mode3_table[I] = ((256 - I) * ((1 << 16)/256) * rate) >> 16;
 	}
-
-	/* Calculate poly 7 random noise for mode 4 */
-/*	for( I = 0; I < 256; I++ )
-	{
-		poly7_mode4_table[I] = rand();
-	}*/
-	/* Calculate poly 15 random noise for mode 4 */
-/*	for( I = 0; I < 1024; I++ )
-	{
-		poly15_mode4_table[I] = rand();
-	}*/
 
 	return 0;
 }
