@@ -248,6 +248,7 @@ void vectrex_new_palette (unsigned char *palette)
 	else
 		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
+	artwork_kill(); /* remove existing overlay */
 	overlay_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree);
 
 	if ((artwork_overlay != NULL))
@@ -295,8 +296,6 @@ void vectrex_set_palette (void)
 
 	memset (palette, 0, Machine->drv->total_colors * 3);
 	vectrex_new_palette (palette);
-	palette_recalc();
-
 
 	i = (Machine->scrbitmap->depth == 8) ? MIN(256,Machine->drv->total_colors)
 		: Machine->drv->total_colors;
