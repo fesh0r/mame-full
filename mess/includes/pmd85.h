@@ -1,11 +1,13 @@
 /* machine/pmd85.c */
 READ_HANDLER ( pmd85_io_r );
 WRITE_HANDLER ( pmd85_io_w );
-READ_HANDLER ( alfa_io_r );
-WRITE_HANDLER ( alfa_io_w );
+READ_HANDLER ( mato_io_r );
+WRITE_HANDLER ( mato_io_w );
 DRIVER_INIT ( pmd851 );
 DRIVER_INIT ( pmd852a );
+DRIVER_INIT ( pmd853 );
 DRIVER_INIT ( alfa );
+DRIVER_INIT ( mato );
 extern MACHINE_INIT( pmd85 );
 extern int pmd85_tape_init(int);
 extern void pmd85_tape_exit(int);

@@ -5,8 +5,10 @@ PMD-85 driver by Krzysztof Strzecha
 What's new:
 -----------
 
-
-15.03.2002	Added drivers for: PMD-85.2, PMD-85.2A, PMD-85.2B and Didaktik
+03.04.2004	PMD-85.3 and Mato (PMD-85.2 clone) drivers.
+		Preliminary and not working tape support.
+		Reset key fixed. PMD-85.1 fixed.
+15.03.2004	Added drivers for: PMD-85.2, PMD-85.2A, PMD-85.2B and Didaktik
 		Alfa (PMD-85.1 clone). Keyboard finished. Natural keyboard added.
 		Memory system rewritten. I/O system rewritten. Support for Basic
 		ROM module added. Video emulation rewritten.
@@ -15,14 +17,18 @@ What's new:
 
 Notes on emulation status and to do list:
 -----------------------------------------
+
 1. Tape and V.24 (8251)
 2. Support for .pmd tape
-3. 8253 (needed by at least one game 'Hlipa')
-4. PMD-85.3 and Mato drivers
-5. Flash video attribute
-6. External interfaces connectors (K2-K5)
-7. Speaker
-8. LEDs
+3. Flash video attribute
+4. External interfaces connectors (K2-K5)
+5. Speaker
+6. Clean up and fix memory banking/mapping in all drivers
+7. ROM dumps are not verified
+8. 8251 in Didaktik Alfa
+9. Colors (if any)
+10. PMD-85, Didaktik Alfa 2 and Didaktik Beta (ROMs and documentation needed)
+11. FDD interface (ROMs and disk images needed)
 
 PMD-85 technical information
 ============================
@@ -96,6 +102,38 @@ Memory map:
 	b000-bfff RAM #3
 	c000-ffff Video RAM
 
+	PMD-85.3
+	--------
+
+	start-up map (cleared by the first I/O write operation done by the CPU):
+	0000-1fff ROM mirror #1 read, RAM write
+	2000-3fff ROM mirror #2 read, RAM write
+	4000-5fff ROM mirror #3 read, RAM write
+	6000-7fff ROM mirror #4 read, RAM write
+	8000-9fff ROM mirror #5 read, RAM write
+	a000-bfff ROM mirror #6 read, RAM write
+	c000-dfff ROM mirror #7 read, Video RAM #1 write
+	e000-ffff ROM, Video RAM #2 write
+
+	normal map:
+	0000-bfff RAM
+	c000-dfff Video RAM #1
+	e000-ffff Video RAM #2 / ROM read, Video RAM #2 write
+
+	Mato
+	----
+
+	start-up map (cleared by the first I/O write operation done by the CPU):
+	0000-3fff ROM mirror #1
+	4000-7fff Video RAM mirror #1
+	8000-bfff ROM
+	c000-ffff Video RAM
+
+	normal map:
+	0000-7fff RAM
+	8000-bfff ROM
+	c000-ffff Video RAM
+
 I/O ports
 ---------
 
@@ -108,15 +146,19 @@ I/O ports
 		010011aa	8255 (GPIO/0, GPIO/1)
 		010111aa	8253
 		011111aa	8255 (IMS-2)
+	I/O board is not supported by Mato.
 
 	Motherboard
 	-----------
-	1xxx01aa	8255 (keyboard, speaker. LEDS)
+	1xxx01aa	8255 (keyboard, speaker, LEDs)
+			PMD-85.3 memory banking
+			Mato cassette recorder
 
 	ROM Module
 	----------
 	1xxx10aa	8255 (ROM reading)
-	ROM module is not supported by Didaktik Alfa.
+	ROM module is not supported by Didaktik Alfa and Mato.
+
 
 *******************************************************************************/
 
@@ -124,6 +166,7 @@ I/O ports
 #include "inputx.h"
 #include "cpu/i8085/i8085.h"
 #include "vidhrdw/generic.h"
+#include "devices/cassette.h"
 #include "includes/pmd85.h"
 
 /* I/O ports */
@@ -136,6 +179,14 @@ ADDRESS_MAP_START( pmd85_writeport , ADDRESS_SPACE_IO, 8)
 	AM_RANGE( 0x00, 0xff) AM_WRITE( pmd85_io_w )
 ADDRESS_MAP_END
 
+ADDRESS_MAP_START( mato_readport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_READ( mato_io_r )
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( mato_writeport , ADDRESS_SPACE_IO, 8)
+	AM_RANGE( 0x00, 0xff) AM_WRITE( mato_io_w )
+ADDRESS_MAP_END
+
 /* memory w/r functions */
 
 ADDRESS_MAP_START( pmd85_mem , ADDRESS_SPACE_PROGRAM, 8)
@@ -144,11 +195,22 @@ ADDRESS_MAP_START( pmd85_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x2000, 0x2fff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
 	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
 	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK5, MWA8_BANK5)
-	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK6, MWA8_BANK6)
-	AM_RANGE(0x9000, 0x9fff) AM_READWRITE(MRA8_BANK7, MWA8_BANK7)
-	AM_RANGE(0xa000, 0xafff) AM_READWRITE(MRA8_BANK8, MWA8_BANK8)
-	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_BANK9, MWA8_BANK9)
-	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+	AM_RANGE(0x8000, 0x8fff) AM_READWRITE(MRA8_BANK6, MWA8_ROM)
+	AM_RANGE(0x9000, 0x9fff) AM_READWRITE(MRA8_NOP,   MWA8_NOP)
+	AM_RANGE(0xa000, 0xafff) AM_READWRITE(MRA8_BANK7, MWA8_ROM)
+	AM_RANGE(0xb000, 0xbfff) AM_READWRITE(MRA8_NOP,   MWA8_NOP)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK8, MWA8_BANK8)
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( pmd853_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK9)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK10)
+	AM_RANGE(0x4000, 0x5fff) AM_READWRITE(MRA8_BANK3, MWA8_BANK11)
+	AM_RANGE(0x6000, 0x7fff) AM_READWRITE(MRA8_BANK4, MWA8_BANK12)
+	AM_RANGE(0x8000, 0x9fff) AM_READWRITE(MRA8_BANK5, MWA8_BANK13)
+	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(MRA8_BANK6, MWA8_BANK14)
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(MRA8_BANK7, MWA8_BANK15)
+	AM_RANGE(0xe000, 0xffff) AM_READWRITE(MRA8_BANK8, MWA8_BANK16)
 ADDRESS_MAP_END
 
 ADDRESS_MAP_START( alfa_mem , ADDRESS_SPACE_PROGRAM, 8)
@@ -160,6 +222,13 @@ ADDRESS_MAP_START( alfa_mem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x9000, 0xb3ff) AM_READWRITE(MRA8_BANK6, MWA8_BANK6)
 	AM_RANGE(0xb400, 0xbfff) AM_READWRITE(MRA8_BANK7, MWA8_BANK7)
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK8, MWA8_BANK8)
+ADDRESS_MAP_END
+
+ADDRESS_MAP_START( mato_mem , ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(MRA8_BANK2, MWA8_BANK2)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(MRA8_BANK3, MWA8_BANK3)
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_BANK4, MWA8_BANK4)
 ADDRESS_MAP_END
 
 /* keyboard input */
@@ -313,7 +382,7 @@ ADDRESS_MAP_END
 
 #define PMD85_KEYBOARD_RESET												\
 	PORT_START /* port 0x10 */											\
-		PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_KEYBOARD | IPF_RESETCPU, "RST", KEYCODE_BACKSPACE, IP_JOY_NONE )
+		PORT_KEY1(0x01, IP_ACTIVE_HIGH,"RST",		KEYCODE_BACKSPACE,	CODE_NONE,	UCHAR_MAMEKEY(BACKSPACE))
 
 #define PMD85_DIPSWITCHES						\
 	PORT_START /* port 0x11 */					\
@@ -342,10 +411,103 @@ INPUT_PORTS_START (alfa)
 	ALFA_DIPSWITCHES
 INPUT_PORTS_END
 
+INPUT_PORTS_START (mato)
+	PORT_START /* port 0x00 */
+		PORT_KEY2(0x01, IP_ACTIVE_LOW, "1 !",	KEYCODE_1,	CODE_NONE,	'1',	'!')
+		PORT_KEY2(0x02, IP_ACTIVE_LOW, "2 \"",	KEYCODE_2,	CODE_NONE,	'2',	'\"')
+		PORT_KEY2(0x04, IP_ACTIVE_LOW, "3 #",	KEYCODE_3,	CODE_NONE,	'3',	'#')
+		PORT_KEY2(0x08, IP_ACTIVE_LOW, "4 $",	KEYCODE_4,	CODE_NONE,	'4',	'$')
+		PORT_KEY2(0x10, IP_ACTIVE_LOW, "5 %",	KEYCODE_5,	CODE_NONE,	'5',	'%')
+		PORT_KEY2(0x20, IP_ACTIVE_LOW, "6 &",	KEYCODE_6,	CODE_NONE,	'6',	'&')
+		PORT_KEY2(0x40, IP_ACTIVE_LOW, "7 \'",	KEYCODE_7,	CODE_NONE,	'7',	'\'')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x01 */
+		PORT_KEY1(0x01, IP_ACTIVE_LOW, "Q",	KEYCODE_Q,	CODE_NONE,	'Q')
+		PORT_KEY1(0x02, IP_ACTIVE_LOW, "W",	KEYCODE_W,	CODE_NONE,	'W')
+		PORT_KEY1(0x04, IP_ACTIVE_LOW, "E",	KEYCODE_E,	CODE_NONE,	'E')
+		PORT_KEY1(0x08, IP_ACTIVE_LOW, "R",	KEYCODE_R,	CODE_NONE,	'R')
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "T",	KEYCODE_T,	CODE_NONE,	'T')
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "Y",	KEYCODE_Y,	CODE_NONE,	'Y')
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "U",	KEYCODE_U,	CODE_NONE,	'U')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x02 */
+		PORT_KEY1(0x01, IP_ACTIVE_LOW, "A",	KEYCODE_A,	CODE_NONE,	'A')
+		PORT_KEY1(0x02, IP_ACTIVE_LOW, "S",	KEYCODE_S,	CODE_NONE,	'S')
+		PORT_KEY1(0x04, IP_ACTIVE_LOW, "D",	KEYCODE_D,	CODE_NONE,	'D')
+		PORT_KEY1(0x08, IP_ACTIVE_LOW, "F",	KEYCODE_F,	CODE_NONE,	'F')
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "G",	KEYCODE_G,	CODE_NONE,	'G')
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "H",	KEYCODE_H,	CODE_NONE,	'H')
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "J",	KEYCODE_J,	CODE_NONE,	'J')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x03 */
+		PORT_KEY1(0x01, IP_ACTIVE_LOW, "Z",	KEYCODE_Z,	CODE_NONE,	'Z')
+		PORT_KEY1(0x02, IP_ACTIVE_LOW, "X",	KEYCODE_X,	CODE_NONE,	'X')
+		PORT_KEY1(0x04, IP_ACTIVE_LOW, "C",	KEYCODE_C,	CODE_NONE,	'C')
+		PORT_KEY1(0x08, IP_ACTIVE_LOW, "V",	KEYCODE_V,	CODE_NONE,	'V')
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "B",	KEYCODE_B,	CODE_NONE,	'B')
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "N",	KEYCODE_N,	CODE_NONE,	'N')
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "M",	KEYCODE_M,	CODE_NONE,	'M')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x04 */
+		PORT_KEY2(0x01, IP_ACTIVE_LOW, "= _",	KEYCODE_MINUS,	CODE_NONE,	'=',	'_')
+		PORT_KEY2(0x02, IP_ACTIVE_LOW, "0 -",	KEYCODE_0,	CODE_NONE,	'0',	'-')
+		PORT_KEY2(0x04, IP_ACTIVE_LOW, "\\ ^",	KEYCODE_CLOSEBRACE,	CODE_NONE,	'\\',	'^')
+		PORT_KEY2(0x08, IP_ACTIVE_LOW, "8 (",	KEYCODE_8,	CODE_NONE,	'8',	'(')
+		PORT_KEY2(0x10, IP_ACTIVE_LOW, ", <",	KEYCODE_COMMA,	CODE_NONE,	',',	'<')
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "K",	KEYCODE_K,	CODE_NONE,	'K')
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "I",	KEYCODE_I,	CODE_NONE,	'I')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x05 */
+		PORT_KEY1(0x01, IP_ACTIVE_LOW, "P",	KEYCODE_P,	CODE_NONE,	'P')
+		PORT_KEY1(0x02, IP_ACTIVE_LOW, "/",	KEYCODE_SLASH,	CODE_NONE,	'/')
+		PORT_KEY2(0x04, IP_ACTIVE_LOW, "; +",	KEYCODE_COLON,	CODE_NONE,	';',	'+')
+		PORT_KEY2(0x08, IP_ACTIVE_LOW, "9 )",	KEYCODE_9,	CODE_NONE,	'9',	')')
+		PORT_KEY2(0x10, IP_ACTIVE_LOW, ", <",	KEYCODE_STOP,	CODE_NONE,	'.',	'<')
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "L",	KEYCODE_L,	CODE_NONE,	'L')
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "O",	KEYCODE_O,	CODE_NONE,	'O')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x06 */
+		PORT_KEY1(0x01, IP_ACTIVE_LOW, "Down",	KEYCODE_DOWN,	CODE_NONE,	UCHAR_MAMEKEY(DOWN))
+		PORT_KEY1(0x02, IP_ACTIVE_LOW, "Up",	KEYCODE_UP,	CODE_NONE,	UCHAR_MAMEKEY(UP))
+		PORT_KEY1(0x04, IP_ACTIVE_LOW, "Space",	KEYCODE_SPACE,	CODE_NONE,	' ')
+		PORT_KEY1(0x08, IP_ACTIVE_LOW, "@",	KEYCODE_OPENBRACE,	CODE_NONE,	'@')
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "<-",	KEYCODE_LEFT,	CODE_NONE,	UCHAR_MAMEKEY(LEFT))
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "->",	KEYCODE_RIGHT,	CODE_NONE,	UCHAR_MAMEKEY(RIGHT))
+		PORT_KEY2(0x40, IP_ACTIVE_LOW, ": *",	KEYCODE_QUOTE,	CODE_NONE,	':',	'*')
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x07 */
+		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x10, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x20, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x40, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_KEY1(0x80, IP_ACTIVE_LOW, "EOL",	KEYCODE_ENTER,	CODE_NONE,	UCHAR_MAMEKEY(ENTER))
+	PORT_START /* port 0x08 */
+		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x04, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT (0x08, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "Stop",		KEYCODE_LCONTROL,	CODE_NONE,	UCHAR_MAMEKEY(LCONTROL))
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "Shift",		KEYCODE_LSHIFT,		CODE_NONE,	UCHAR_MAMEKEY(LSHIFT))
+		PORT_KEY1(0x20, IP_ACTIVE_LOW, "Shift",		KEYCODE_RSHIFT,		CODE_NONE,	UCHAR_MAMEKEY(RSHIFT))
+		PORT_KEY1(0x40, IP_ACTIVE_LOW, "Continue",	KEYCODE_RCONTROL,	CODE_NONE,	UCHAR_MAMEKEY(RCONTROL))
+		PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_UNUSED)
+	PORT_START /* port 0x09 */
+		PORT_KEY1(0x01, IP_ACTIVE_HIGH,"RST",		KEYCODE_BACKSPACE,	CODE_NONE,	UCHAR_MAMEKEY(BACKSPACE))
+INPUT_PORTS_END
+
+static struct Wave_interface pmd85_wave_interface = {
+	1,		/* 1 cassette recorder */
+	{ 50 }		/* mixing levels in percent */
+};
+
+
 /* machine definition */
 static MACHINE_DRIVER_START( pmd85 )
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", 8080, 2000000)
+	MDRV_CPU_ADD_TAG("main", 8080, 2000000)		/* 2.048MHz ??? */
 	MDRV_CPU_PROGRAM_MAP(pmd85_mem, 0)
 	MDRV_CPU_IO_MAP(pmd85_readport, pmd85_writeport)
 	MDRV_FRAMES_PER_SECOND(50)
@@ -354,7 +516,7 @@ static MACHINE_DRIVER_START( pmd85 )
 
 	MDRV_MACHINE_INIT( pmd85 )
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(288, 256)
 	MDRV_VISIBLE_AREA(0, 288-1, 0, 256-1)
@@ -364,12 +526,28 @@ static MACHINE_DRIVER_START( pmd85 )
 
 	MDRV_VIDEO_START( pmd85 )
 	MDRV_VIDEO_UPDATE( pmd85 )
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(WAVE, pmd85_wave_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( pmd853 )
+	MDRV_IMPORT_FROM( pmd85 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(pmd853_mem, 0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( alfa )
 	MDRV_IMPORT_FROM( pmd85 )
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(alfa_mem, 0)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( mato )
+	MDRV_IMPORT_FROM( pmd85 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(mato_mem, 0)
+	MDRV_CPU_IO_MAP(mato_readport, mato_writeport)
 MACHINE_DRIVER_END
 
 ROM_START(pmd851)
@@ -400,21 +578,47 @@ ROM_START(pmd852b)
 	ROM_LOAD_OPTIONAL("pmd85-2a.bas", 0x0000, 0x2400, CRC(6ff379ad))
 ROM_END
 
+ROM_START(pmd853)
+	ROM_REGION(0x12000,REGION_CPU1,0)
+	ROM_LOAD("pmd85-3.bin", 0x10000, 0x2000, CRC(83e22c47))
+	ROM_REGION(0x2800,REGION_USER1,0)
+	ROM_LOAD_OPTIONAL("pmd85-3.bas", 0x0000, 0x2800, CRC(1e30e91d))
+ROM_END
+
 ROM_START(alfa)
 	ROM_REGION(0x13400,REGION_CPU1,0)
 	ROM_LOAD("alfa.bin", 0x10000, 0x1000, CRC(e425eedb))
 	ROM_LOAD("alfa.bas", 0x11000, 0x2400, CRC(9a73bfd2))
 ROM_END
 
+ROM_START(mato)
+	ROM_REGION(0x14000,REGION_CPU1,0)
+	ROM_LOAD("mato.bin", 0x10000, 0x4000, CRC(574110a6))
+ROM_END
+
+ROM_START(matoh)
+	ROM_REGION(0x14000,REGION_CPU1,0)
+	ROM_LOAD("matoh.bin", 0x10000, 0x4000, CRC(ca25880d))
+ROM_END
+
+static struct CassetteOptions pmd85_cassette_options = {
+	1,		/* channels */
+	8,		/* bits per sample */
+	7200		/* sample frequency */
+};
+
 SYSTEM_CONFIG_START(pmd85)
 	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_DEVICE_CASSETTEX(1, NULL, &pmd85_cassette_options, CASSETTE_STOPPED | CASSETTE_SPEAKER_ENABLED)
 SYSTEM_CONFIG_END
 
 
 /*    YEAR  NAME     PARENT  COMPAT	MACHINE  INPUT  INIT      CONFIG COMPANY  FULLNAME */
-COMP( 1989, pmd851,  0,      0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.1" )
-COMP( 1989, pmd852,  pmd851, 0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.2" )
-COMP( 1989, pmd852a, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2A" )
-COMP( 1989, pmd852b, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2B" )
-COMP( 1989, alfa,    pmd851, 0,		alfa,    alfa,  alfa,     pmd85, "Didaktik", "Alfa" )
-
+COMP( 1985, pmd851,  0,      0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.1" )
+COMP( 1985, pmd852,  pmd851, 0,		pmd85,   pmd85, pmd851,   pmd85, "Tesla", "PMD-85.2" )
+COMP( 1985, pmd852a, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2A" )
+COMP( 1985, pmd852b, pmd851, 0,		pmd85,   pmd85, pmd852a,  pmd85, "Tesla", "PMD-85.2B" )
+COMP( 1988, pmd853,  pmd851, 0,		pmd853,  pmd85, pmd853,   pmd85, "Tesla", "PMD-85.3" )
+COMP( 1986, alfa,    pmd851, 0,		alfa,    alfa,  alfa,     pmd85, "Didaktik", "Alfa" )
+COMP( 1985, mato,    pmd851, 0,		mato,    mato,  mato,     pmd85, "Statny", "Mato (Basic ROM)" )
+COMP( 1989, matoh,   pmd851, 0,		mato,    mato,  mato,     pmd85, "Statny", "Mato (Games ROM)" )
