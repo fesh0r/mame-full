@@ -92,6 +92,10 @@ void pc_keyboard(void);
 UINT8 pc_keyb_read(void);
 void pc_keyb_set_clock(int on);
 
+WRITE_HANDLER( pc_rtc_w );
+READ_HANDLER( pc_rtc_r );
+void pc_rtc_init(void);
+
 extern WRITE_HANDLER ( pc_EXP_w );
 extern READ_HANDLER ( pc_EXP_r );
 
@@ -113,10 +117,8 @@ extern int  pc_vga_frame_interrupt(void);
 
 /* from sndhrdw/pc.c */
 extern int  pc_sh_init(const char *name);
-#if 1	/* adjustmends for mame36b */
 extern int  pc_sh_custom_start(const struct MachineSound *driver);
 extern void pc_sh_custom_update(void);
-#endif
 extern void pc_sh_stop(void);
 extern void pc_sh_update(int param, INT16 *buff, int length);
 extern void pc_sh_speaker(int mode);

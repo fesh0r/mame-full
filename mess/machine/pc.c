@@ -19,8 +19,10 @@
 	maybe SoundBlaster? EGA? VGA?
 
 ***************************************************************************/
+#include <assert.h>
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "julian.h"
 
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
@@ -708,6 +710,7 @@ void init_pccga(void)
 	dma8237_config(dma8237,&dma);
 	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
+	pc_rtc_init();
 }
 
 void init_bondwell(void)
@@ -734,10 +737,23 @@ void init_pcmda(void)
 void init_europc(void)
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x2000];
+	UINT8 *rom = &memory_region(REGION_CPU1)[0];
 	int i;
+
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
+
+	/*
+	  fix century rom bios bug !
+	  if year >79 month (and not CENTURY) is loaded with 0x20
+	*/
+	if (rom[0xff93e]==0xb6){ // mov dh,
+		UINT8 a;
+		rom[0xff93e]=0xb5; // mov ch,
+		for (i=0xf8000, a=0; i<0xfffff; i++ ) a+=rom[i];
+		rom[0xfffff]=256-a;
+	}
 
 	pc_init_setup(europc);
 	init_pc_common();
@@ -753,6 +769,7 @@ void init_europc(void)
 
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	europc_rtc_init();
+//	europc_rtc_set_time();
 }
 
 void init_pc1512(void)
@@ -1058,9 +1075,68 @@ READ_HANDLER ( pc_JOY_r )
 }
 #endif
 
+
+// damned old checkit doesn't test at standard adresses
+// will do more when I have a program supporting it
+static struct {
+	int data[0x18];
+	void *timer;
+} pc_rtc;
+
+static void pc_rtc_timer(int param)
+{
+	int year;
+	if (++pc_rtc.data[2]>=60) {
+		pc_rtc.data[2]=0;
+		if (++pc_rtc.data[3]>=60) {
+			pc_rtc.data[3]=0;
+			if (++pc_rtc.data[4]>=24) {
+				pc_rtc.data[4]=0;
+				pc_rtc.data[5]=(pc_rtc.data[5]%7)+1;
+				year=pc_rtc.data[9]+2000;
+				if (++pc_rtc.data[6]>=julian_days_in_month(pc_rtc.data[7], year)) {
+					pc_rtc.data[6]=1;
+					if (++pc_rtc.data[7]>12) {
+						pc_rtc.data[7]=1;
+						pc_rtc.data[9]=(pc_rtc.data[9]+1)%100;
+					}
+				}
+			}
+		}
+	}
+}
+
+void pc_rtc_init(void)
+{
+	memset(&pc_rtc,0,sizeof(pc_rtc));
+	pc_rtc.timer=timer_pulse(1.0,0,pc_rtc_timer);
+}
+
+READ_HANDLER( pc_rtc_r )
+{
+	int data;
+	switch (offset) {
+	default:
+		data=pc_rtc.data[offset];
+	}
+	logerror( "rtc read %.2x %.2x\n", offset, data);
+	return data;
+}
+
+WRITE_HANDLER( pc_rtc_w )
+{
+	logerror( "rtc write %.2x %.2x\n", offset, data);
+	switch(offset) {
+	default:
+		pc_rtc.data[offset]=data;
+	}
+}
+
+// I even don't know what it is!
 static struct {
 	/*
 	  reg 0 ram behaviour if in
+	  reg 3 write 1 to enable it
 	  reg 4 ram behaviour ???
 	  reg 5,6 (5 hi, 6 lowbyte) ???
 	*/
