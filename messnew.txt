@@ -39,6 +39,19 @@ System Driver Changes:
 - [C64] added support for game/exrom cartridge lines in crt files
   bankswitching fixes [PeT]
   
+- [VIC20] power up strategy changed (RAM is not filled with 0xff 0x00 pattern like in VICE
+  anymore, real SRAM is indeed filled with random pattern). Power up "support" for jelly
+  monsters. 
+  Keyboard polling support for second/alternate matrix io selection.
+  Some "dipswitch" fixes.
+
+- [C16] TED timer 1 reloading on underrun changed
+  ECM and Multicolor mode: cursor and character inversion disabled.
+  TED sound channels simplified to generate only rectangular signals:
+  digisound working, less static, clearer sound.
+
+- [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound support
+  (fx sound good now, random number generation ok)
 
 Other Changes:
 --------------
