@@ -27,7 +27,7 @@
 #include "includes/dma8237.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
 #include "includes/pc_aga.h"
@@ -1373,16 +1373,7 @@ static MACHINE_DRIVER_START( pc1640 )
 
 	MDRV_MACHINE_INIT(pc_vga)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(720, 350)
-	MDRV_VISIBLE_AREA(0,720-1, 0,350-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(ega_palette) / sizeof(ega_palette[0]))
-	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
-	MDRV_PALETTE_INIT(ega)
-
-	MDRV_VIDEO_START(ega)
-	MDRV_VIDEO_UPDATE(ega)
+	MDRV_IMPORT_FROM(pcvideo_pc1640)
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1400,16 +1391,7 @@ static MACHINE_DRIVER_START( xtvga )
 
 	MDRV_MACHINE_INIT(pc_vga)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(720, 480)
-	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(vga_palette) / sizeof(vga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
-	MDRV_PALETTE_INIT(vga)
-
-	MDRV_VIDEO_START(vga)
-	MDRV_VIDEO_UPDATE(vga)
+	MDRV_IMPORT_FROM( pcvideo_vga )
 
     /* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -1698,8 +1680,6 @@ COMP(  1986,	pc1512,		ibmpc,	0,		pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad
 COMPX( 1987,	pc1640,		ibmpc,	0,		pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
-
-// these drivers will be discarded soon
 COMP ( 1987,	pcmda,		ibmpc,	0,		pcmda,      pcmda,		pcmda,	    ibmpc,   "",  "PC (MDA)" )
-COMPX ( 1987,	xtvga,		ibmpc,	0,		xtvga,      xtvga,		pc_vga,     ibmpc,   "",  "PC/XT (VGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMP ( 1987,	xtvga,		ibmpc,	0,		xtvga,      xtvga,		pc_vga,     ibmpc,   "",  "PC/XT (VGA, MF2 Keyboard)" )
 

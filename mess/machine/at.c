@@ -7,7 +7,7 @@
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
 #include "includes/dma8237.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pcshare.h"
 #include "includes/ibmat.h"

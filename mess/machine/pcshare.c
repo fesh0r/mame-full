@@ -29,7 +29,7 @@
 #include "includes/mc146818.h"
 #include "includes/dma8237.h"
 #include "includes/uart8250.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
 #include "includes/pc_aga.h"

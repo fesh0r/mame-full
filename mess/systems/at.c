@@ -12,7 +12,7 @@
 #include "includes/dma8237.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc_mda.h"
 #include "includes/pc_video.h"
@@ -453,16 +453,7 @@ static MACHINE_DRIVER_START( ps2m30286 )
 
 	MDRV_MACHINE_INIT( at_vga )
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(720, 480)
-	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(vga_palette) / sizeof(vga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(0x100*2)
-	MDRV_PALETTE_INIT(vga)
-
-	MDRV_VIDEO_START(vga)
-	MDRV_VIDEO_UPDATE(vga)
+	MDRV_IMPORT_FROM( pcvideo_vga )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
@@ -486,16 +477,7 @@ static MACHINE_DRIVER_START( atvga )
 
 	MDRV_MACHINE_INIT( at_vga )
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(720, 480)
-	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
-	MDRV_GFXDECODE(vga_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(sizeof(vga_palette) / sizeof(vga_palette[0]))
-	MDRV_COLORTABLE_LENGTH(0x100*2)
-	MDRV_PALETTE_INIT(vga)
-
-	MDRV_VIDEO_START(vga)
-	MDRV_VIDEO_UPDATE(vga)
+	MDRV_IMPORT_FROM( pcvideo_vga )
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)

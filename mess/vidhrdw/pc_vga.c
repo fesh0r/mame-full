@@ -1,20 +1,44 @@
-/*
-   IBM PC, PC/XT, PC/AT, PS2 25/30
-   Video Graphics Adapter
+/***************************************************************************
 
-   PeT mess@utanet.at
-*/
+  Video Graphics Adapter (VGA) section
+
+	Peter Trauner	PeT mess@utanet.at
+	Nathan Woods	npwoods@mess.org
+
+   include in memory read list
+   { 0xa0000, 0xaffff, MRA_BANK1 }
+   { 0xb0000, 0xb7fff, MRA_BANK2 }
+   { 0xb8000, 0xbffff, MRA_BANK3 }
+   { 0xc0000, 0xc7fff, MRA_ROM }
+
+   and in memory write list
+   { 0xa0000, 0xaffff, MWA_BANK1 }
+   { 0xb0000, 0xb7fff, MWA_BANK2 }
+   { 0xb8000, 0xbffff, MWA_BANK3 }
+   { 0xc0000, 0xc7fff, MWA_ROM }
+
+	(oti 037 chip)
+    ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
+	(tseng labs famous et4000 isa vga card (oem))
+    ROM_LOAD("et4000b.bin", 0xc0000, 0x8000, 0xa903540d)	
+	(tseng labs famous et4000 isa vga card)
+    ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
+
+***************************************************************************/
 
 #include "driver.h"
 
-#define VERBOSE_DBG 1
-#include "includes/cbm.h"
-
 #include "includes/crtc6845.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 #include "mscommon.h"
 
-//#define VGA_GFX
+/***************************************************************************
+
+	Static declarations
+
+***************************************************************************/
+
+#define DBG_LOG(n,m,a)
 
 /* vga
  standard compatible to mda, cga, hercules?, ega
@@ -26,77 +50,90 @@
  64k (early ega 16k) words of 32 bit memory
  */
 
-unsigned char vga_palette[0x100][3] = { {0} };
+
+static PALETTE_INIT( ega );
+static PALETTE_INIT( vga );
+static VIDEO_START( ega );
+static VIDEO_START( vga );
+static VIDEO_UPDATE( ega );
+static VIDEO_UPDATE( vga );
+
+/***************************************************************************
+
+	MachineDriver stuff
+
+***************************************************************************/
 
 /* grabbed from dac inited by et4000 bios */
-unsigned char ega_palette[0x40][3] = {
-{ 0x00, 0x00, 0x00 },
-{ 0x00, 0x00, 0xa8 },
-{ 0x00, 0xa8, 0x00 },
-{ 0x00, 0xa8, 0xa8 },
-{ 0xa8, 0x00, 0x00 },
-{ 0xa8, 0x00, 0xa8 },
-{ 0xa8, 0x54, 0x00 },
-{ 0xa8, 0xa8, 0xa8 },
-{ 0x00, 0x00, 0x00 },
-{ 0x00, 0x00, 0xa8 },
-{ 0x00, 0xa8, 0x00 },
-{ 0x00, 0xa8, 0xa8 },
-{ 0xa8, 0x00, 0x00 },
-{ 0xa8, 0x00, 0xa8 },
-{ 0xa8, 0x54, 0x00 },
-{ 0xa8, 0xa8, 0xa8 },
-{ 0x54, 0x54, 0x54 },
-{ 0x54, 0x54, 0xfc },
-{ 0x54, 0xfc, 0x54 },
-{ 0x54, 0xfc, 0xfc },
-{ 0xfc, 0x54, 0x54 },
-{ 0xfc, 0x54, 0xfc },
-{ 0xfc, 0xfc, 0x54 },
-{ 0xfc, 0xfc, 0xfc },
-{ 0x54, 0x54, 0x54 },
-{ 0x54, 0x54, 0xfc },
-{ 0x54, 0xfc, 0x54 },
-{ 0x54, 0xfc, 0xfc },
-{ 0xfc, 0x54, 0x54 },
-{ 0xfc, 0x54, 0xfc },
-{ 0xfc, 0xfc, 0x54 },
-{ 0xfc, 0xfc, 0xfc },
-{ 0x00, 0x00, 0x00 },
-{ 0x00, 0x00, 0xa8 },
-{ 0x00, 0xa8, 0x00 },
-{ 0x00, 0xa8, 0xa8 },
-{ 0xa8, 0x00, 0x00 },
-{ 0xa8, 0x00, 0xa8 },
-{ 0xa8, 0x54, 0x00 },
-{ 0xa8, 0xa8, 0xa8 },
-{ 0x00, 0x00, 0x00 },
-{ 0x00, 0x00, 0xa8 },
-{ 0x00, 0xa8, 0x00 },
-{ 0x00, 0xa8, 0xa8 },
-{ 0xa8, 0x00, 0x00 },
-{ 0xa8, 0x00, 0xa8 },
-{ 0xa8, 0x54, 0x00 },
-{ 0xa8, 0xa8, 0xa8 },
-{ 0x54, 0x54, 0x54 },
-{ 0x54, 0x54, 0xfc },
-{ 0x54, 0xfc, 0x54 },
-{ 0x54, 0xfc, 0xfc },
-{ 0xfc, 0x54, 0x54 },
-{ 0xfc, 0x54, 0xfc },
-{ 0xfc, 0xfc, 0x54 },
-{ 0xfc, 0xfc, 0xfc },
-{ 0x54, 0x54, 0x54 },
-{ 0x54, 0x54, 0xfc },
-{ 0x54, 0xfc, 0x54 },
-{ 0x54, 0xfc, 0xfc },
-{ 0xfc, 0x54, 0x54 },
-{ 0xfc, 0x54, 0xfc },
-{ 0xfc, 0xfc, 0x54 },
-{ 0xfc, 0xfc, 0xfc }
+unsigned char ega_palette[0x40][3] =
+{
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0xa8 },
+	{ 0x00, 0xa8, 0x00 },
+	{ 0x00, 0xa8, 0xa8 },
+	{ 0xa8, 0x00, 0x00 },
+	{ 0xa8, 0x00, 0xa8 },
+	{ 0xa8, 0x54, 0x00 },
+	{ 0xa8, 0xa8, 0xa8 },
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0xa8 },
+	{ 0x00, 0xa8, 0x00 },
+	{ 0x00, 0xa8, 0xa8 },
+	{ 0xa8, 0x00, 0x00 },
+	{ 0xa8, 0x00, 0xa8 },
+	{ 0xa8, 0x54, 0x00 },
+	{ 0xa8, 0xa8, 0xa8 },
+	{ 0x54, 0x54, 0x54 },
+	{ 0x54, 0x54, 0xfc },
+	{ 0x54, 0xfc, 0x54 },
+	{ 0x54, 0xfc, 0xfc },
+	{ 0xfc, 0x54, 0x54 },
+	{ 0xfc, 0x54, 0xfc },
+	{ 0xfc, 0xfc, 0x54 },
+	{ 0xfc, 0xfc, 0xfc },
+	{ 0x54, 0x54, 0x54 },
+	{ 0x54, 0x54, 0xfc },
+	{ 0x54, 0xfc, 0x54 },
+	{ 0x54, 0xfc, 0xfc },
+	{ 0xfc, 0x54, 0x54 },
+	{ 0xfc, 0x54, 0xfc },
+	{ 0xfc, 0xfc, 0x54 },
+	{ 0xfc, 0xfc, 0xfc },
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0xa8 },
+	{ 0x00, 0xa8, 0x00 },
+	{ 0x00, 0xa8, 0xa8 },
+	{ 0xa8, 0x00, 0x00 },
+	{ 0xa8, 0x00, 0xa8 },
+	{ 0xa8, 0x54, 0x00 },
+	{ 0xa8, 0xa8, 0xa8 },
+	{ 0x00, 0x00, 0x00 },
+	{ 0x00, 0x00, 0xa8 },
+	{ 0x00, 0xa8, 0x00 },
+	{ 0x00, 0xa8, 0xa8 },
+	{ 0xa8, 0x00, 0x00 },
+	{ 0xa8, 0x00, 0xa8 },
+	{ 0xa8, 0x54, 0x00 },
+	{ 0xa8, 0xa8, 0xa8 },
+	{ 0x54, 0x54, 0x54 },
+	{ 0x54, 0x54, 0xfc },
+	{ 0x54, 0xfc, 0x54 },
+	{ 0x54, 0xfc, 0xfc },
+	{ 0xfc, 0x54, 0x54 },
+	{ 0xfc, 0x54, 0xfc },
+	{ 0xfc, 0xfc, 0x54 },
+	{ 0xfc, 0xfc, 0xfc },
+	{ 0x54, 0x54, 0x54 },
+	{ 0x54, 0x54, 0xfc },
+	{ 0x54, 0xfc, 0x54 },
+	{ 0x54, 0xfc, 0xfc },
+	{ 0xfc, 0x54, 0x54 },
+	{ 0xfc, 0x54, 0xfc },
+	{ 0xfc, 0xfc, 0x54 },
+	{ 0xfc, 0xfc, 0xfc }
 };
 
-struct GfxLayout vga_charlayout =
+static struct GfxLayout vga_charlayout =
 {
 	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
 	256,					/* 256 characters */
@@ -114,13 +151,14 @@ struct GfxLayout vga_charlayout =
 	128*8
 };
 
-struct GfxDecodeInfo vga_gfxdecodeinfo[] =
+static struct GfxDecodeInfo vga_gfxdecodeinfo[] =
 {
 	{ 0, 0x0000, &vga_charlayout,			  0, 256 },   /* single width */
     { -1 } /* end of array */
 };
 
-unsigned short vga_colortable[] = {
+static unsigned short vga_colortable[] =
+{
      0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
      1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
      2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
@@ -140,22 +178,50 @@ unsigned short vga_colortable[] = {
     15, 0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15
 };
 
-PALETTE_INIT( ega )
+MACHINE_DRIVER_START( pcvideo_vga )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(720, 480)
+	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
+	MDRV_GFXDECODE(vga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x100)
+	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
+	MDRV_PALETTE_INIT(vga)
+
+	MDRV_VIDEO_START(vga)
+	MDRV_VIDEO_UPDATE(vga)
+MACHINE_DRIVER_END
+
+MACHINE_DRIVER_START( pcvideo_pc1640 )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(720, 350)
+	MDRV_VISIBLE_AREA(0,720-1, 0,350-1)
+	MDRV_GFXDECODE(vga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(ega_palette) / sizeof(ega_palette[0]))
+	MDRV_COLORTABLE_LENGTH(0x100*2 /*sizeof(vga_colortable) / sizeof(vga_colortable[0])*/)
+	MDRV_PALETTE_INIT(ega)
+
+	MDRV_VIDEO_START(ega)
+	MDRV_VIDEO_UPDATE(ega)
+MACHINE_DRIVER_END
+
+/***************************************************************************/
+
+static PALETTE_INIT( ega )
 {
 	int i;
 	for(i = 0; i < (sizeof(ega_palette) / 3); i++)
 		palette_set_color(i, ega_palette[i][0], ega_palette[i][1], ega_palette[i][2]);
 
-	memcpy(colortable,vga_colortable,0x200);
+	memcpy(colortable, vga_colortable,0x200);
 }
 
-PALETTE_INIT( vga )
+static PALETTE_INIT( vga )
 {
 	int i;
-	for(i = 0; i < (sizeof(vga_palette) / 3); i++)
-		palette_set_color(i, vga_palette[i][0], vga_palette[i][1], vga_palette[i][2]);
+	for(i = 0; i < 0x100; i++)
+		palette_set_color(i, 0, 0, 0);
 
-	memcpy(colortable,vga_colortable,0x200);
+	memcpy(colortable, vga_colortable,0x200);
 }
 
 static UINT8 rotate_right[8][256];
@@ -958,158 +1024,93 @@ VIDEO_START( ega )
 
 VIDEO_START( vga )
 {
-#ifdef VGA_GFX
-	int i;
-
-    /* remove pixel column 9 for character codes 0 - 175 and 224 - 255 */
-	for( i = 0; i < 256; i++)
-	{
-		if( i < 176 || i > 223 )
-		{
-			int y;
-			for( y = 0; y < Machine->gfx[0]->height; y++ )
-				Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) * Machine->gfx[0]->width + 8] = 0;
-		}
-	}
-#endif
-	
 	vga.monitor.get_clock=vga_get_clock;
 	vga.monitor.get_lines=vga_get_crtc_lines;
 	vga.monitor.get_columns=vga_get_crtc_columns;
 	vga.monitor.get_sync_lines=vga_get_crtc_sync_lines;
 	vga.monitor.get_sync_columns=vga_get_crtc_sync_columns;
 	timer_pulse(1.0/60,0,vga_timer);
-
-
 	return 0;
 }
 
-#ifndef VGA_GFX
 static void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
 {
+	UINT8 ch, attr;
+	UINT8 bits;
+	UINT8 *font;
+	UINT16 *bitmapline;
 	int width=CHAR_WIDTH, height=CRTC6845_CHAR_HEIGHT;
 	int pos, line, column, mask, w, h, addr;
+	pen_t pen;
 
-	if (CRTC6845_CURSOR_MODE!=CRTC6845_CURSOR_OFF) {
-		if (++vga.cursor.time>=0x10) {
+	if (CRTC6845_CURSOR_MODE!=CRTC6845_CURSOR_OFF)
+	{
+		if (++vga.cursor.time>=0x10)
+		{
 			vga.cursor.visible^=1;
 			vga.cursor.time=0;
 		}
 	}
 
-	for (addr=TEXT_START_ADDRESS, line=0; line<TEXT_LINES;
-		 line+=height, addr+=TEXT_LINE_LENGTH) {
-		for (pos=addr, column=0; column<TEXT_COLUMNS; column++, pos++) {
-			UINT8 ch=vga.memory[pos<<2], attr=vga.memory[(pos<<2)+1];
-			UINT8 *font=vga.memory+2+(ch<<(5+2))+FONT1;
+	for (addr = TEXT_START_ADDRESS, line = 0; line < TEXT_LINES;
+		 line += height, addr += TEXT_LINE_LENGTH)
+	{
+		for (pos = addr, column=0; column<TEXT_COLUMNS; column++, pos++)
+		{
+			ch   = vga.memory[(pos<<2) + 0];
+			attr = vga.memory[(pos<<2) + 1];
+			font = vga.memory+2+(ch<<(5+2))+FONT1;
 
-			for (h=0; (h<height)&&(line+h<TEXT_LINES); h++) {
-				UINT8 bits=font[h<<2];
-				for (mask=0x80, w=0; (w<width)&&(w<8); w++, mask>>=1) {
-					if (bits&mask) {
-						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr&0xf]);
-					} else {
-						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr>>4]);
-					}
+			for (h=0; (h<height)&&(line+h<TEXT_LINES); h++)
+			{
+				bitmapline = (UINT16 *) bitmap->line[line+h];
+				bits = font[h<<2];
+
+				for (mask=0x80, w=0; (w<width)&&(w<8); w++, mask>>=1)
+				{
+					if (bits&mask)
+						pen = vga.pens[attr & 0x0f];
+					else
+						pen = vga.pens[attr >> 4];
+					bitmapline[column*width+w] = pen;
 				}
-				if (w<width) { /* 9 column */
-					if (TEXT_COPY_9COLUMN(ch)&&(bits&1)) {
-						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr&0xf]);
-					} else {
-						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr>>4]);
-					}
+				if (w<width)
+				{
+					/* 9 column */
+					if (TEXT_COPY_9COLUMN(ch)&&(bits&1))
+						pen = vga.pens[attr & 0x0f];
+					else
+						pen = vga.pens[attr >> 4];
+					bitmapline[column*width+w] = pen;
 				}
 			}
 			if ((CRTC6845_CURSOR_MODE!=CRTC6845_CURSOR_OFF)
-				&&vga.cursor.visible&&(pos==CRTC6845_CURSOR_POS)) {
+				&&vga.cursor.visible&&(pos==CRTC6845_CURSOR_POS))
+			{
 				for (h=CRTC6845_CURSOR_TOP;
 					 (h<=CRTC6845_CURSOR_BOTTOM)&&(h<height)&&(line+h<TEXT_LINES);
-					 h++) {
-
+					 h++)
+				{
 					plot_box(Machine->scrbitmap, column*width, line+h, width, 1, vga.pens[attr&0xf]);
 				}
 			}
 		}
 	}
 }
-#else
-void vga_vh_text(struct mame_bitmap *bitmap, int full_refresh)
-{
-	int width=CHAR_WIDTH, height=CRTC6845_CHAR_HEIGHT;
-	int pos, line, column, h, addr;
-	int i;
-
-	addr=TEXT_START_ADDRESS;
-
-	if (vga.full_refresh||full_refresh) {
-		for (i=0; i<TEXT_LINE_LENGTH*TEXT_LINES; i++) {
-			vga.dirty[addr+i*4]=1;
-		}
-	}
-
-	if (CRTC6845_CURSOR_MODE!=CRTC6845_CURSOR_OFF) {
-		if (++vga.cursor.time>=0x10) {
-			vga.dirty[CRTC6845_CURSOR_POS<<2]=1;
-			vga.cursor.visible^=1;
-			vga.cursor.time=0;
-		}
-	}
-
-	for (line=0; line<TEXT_LINES; line+=height, addr+=TEXT_LINE_LENGTH) {
-		for (pos=addr, column=0; column<TEXT_COLUMNS; column++, pos++) {
-			if (vga.dirty[pos<<2]||vga.dirty[(pos<<2)+1]) {
-			
-				UINT8 ch=vga.memory[pos<<2], attr=vga.memory[(pos<<2)+1];
-				
-				drawgfx(bitmap,Machine->gfx[0],
-						ch, attr, 0, 0, Machine->gfx[0]->width*column,line,
-						0,TRANSPARENCY_NONE,0);
-				
-				if (CRTC6845_CURSOR_MODE!=CRTC6845_CURSOR_OFF
-					&&vga.cursor.visible&&(pos==CRTC6845_CURSOR_POS)) {
-					if ((CRTC6845_CURSOR_TOP<=CRTC6845_CURSOR_BOTTOM)
-						&&(CRTC6845_CURSOR_TOP<height)) {
-
-						if (CRTC6845_CURSOR_BOTTOM<height) h=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
-						else h=height-CRTC6845_CURSOR_TOP;
-						plot_box(Machine->scrbitmap, column*width, line+CRTC6845_CURSOR_TOP, 
-								 width, h, vga.pens[attr&0xf]);
-					}
-				}
-				vga.dirty[pos<<2]=0;
-				vga.dirty[(pos<<2)+1]=0;
-			}
-		}
-	}
-}
-#endif
 
 static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int pos, line, column, c, addr;
+	UINT16 *bitmapline;
+	pen_t pen;
 
 	for (addr=EGA_START_ADDRESS, pos=0, line=0; line<LINES;
-		 line++, addr=(addr+EGA_LINE_LENGTH)&0x3ffff) {
-		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff) {
-#if 0
-			Machine->scrbitmap->line[line][c]=
-			    vga.pens[ega_bitplane_to_packed(vga.memory+pos,0)];
-			Machine->scrbitmap->line[line][c+1]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,1)];
-			Machine->scrbitmap->line[line][c+2]=
-			    vga.pens[ega_bitplane_to_packed(vga.memory+pos,2)];
-			Machine->scrbitmap->line[line][c+3]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,3)];
-			Machine->scrbitmap->line[line][c+4]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,4)];
-			Machine->scrbitmap->line[line][c+5]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,5)];
-			Machine->scrbitmap->line[line][c+6]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,6)];
-			Machine->scrbitmap->line[line][c+7]=
-				vga.pens[ega_bitplane_to_packed(vga.memory+pos,7)];
-#else
-			/* recognizable speed improvement compared to above */
+		 line++, addr=(addr+EGA_LINE_LENGTH)&0x3ffff)
+	{
+		bitmapline = (UINT16 *) Machine->scrbitmap->line[line];
+
+		for (pos=addr, c=0, column=0; column<EGA_COLUMNS; column++, c+=8, pos=(pos+4)&0x3ffff)
+		{
 			int data[4];
 			int i;
 
@@ -1117,22 +1118,17 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 			data[1]=vga.memory[pos+1]<<1;
 			data[2]=vga.memory[pos+2]<<2;
 			data[3]=vga.memory[pos+3]<<3;
-			for (i=7; i>=0; i--) {
-#if 1
-				/* plotpixel is 16 bit aware, */
-				/* but recognizable speed loss compared to following */
-				plot_pixel(Machine->scrbitmap, c+i, line,
-						   vga.pens[(data[0]&1)|(data[1]&2)|(data[2]&4)|(data[3]&8)]);
-#else
-				Machine->scrbitmap->line[line][c+i]=
-					vga.pens[(data[0]&1)|(data[1]&2)|(data[2]&4)|(data[3]&8)];
-#endif
+
+			for (i = 7; i >= 0; i--)
+			{
+				pen = vga.pens[(data[0]&1) | (data[1]&2) | (data[2]&4) | (data[3]&8)];
+				bitmapline[c+i] = pen;
+
 				data[0]>>=1;
 				data[1]>>=1;
 				data[2]>>=1;
 				data[3]>>=1;
 			}
-#endif
 		}
 	}
 }
@@ -1140,42 +1136,29 @@ static void vga_vh_ega(struct mame_bitmap *bitmap, int full_refresh)
 static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 {
 	int pos, line, column, c, addr;
+	UINT16 *bitmapline;
 
-	for (addr=VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH) {
-		for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20) {
-#if 1
-			if (*(UINT32*)(vga.dirty+pos)||full_refresh) {
-				plot_pixel(bitmap, c, line, Machine->pens[vga.memory[pos]]);
-				plot_pixel(bitmap, c+1, line, Machine->pens[vga.memory[pos+1]]);
-				plot_pixel(bitmap, c+2, line, Machine->pens[vga.memory[pos+2]]);
-				plot_pixel(bitmap, c+3, line, Machine->pens[vga.memory[pos+3]]);
+	for (addr=VGA_START_ADDRESS, line=0; line<LINES; line++, addr+=VGA_LINE_LENGTH)
+	{
+		bitmapline = (UINT16 *) bitmap->line[line];
+		for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
+		{
+			if (*(UINT32*)(vga.dirty+pos)||full_refresh)
+			{
+				bitmapline[c+0] = Machine->pens[vga.memory[pos+0]];
+				bitmapline[c+1] = Machine->pens[vga.memory[pos+1]];
+				bitmapline[c+2] = Machine->pens[vga.memory[pos+2]];
+				bitmapline[c+3] = Machine->pens[vga.memory[pos+3]];
 				*(UINT32*)(vga.dirty+pos)=0;
 			}
-			if (*(UINT32*)(vga.dirty+pos+0x10)||full_refresh) {
-				plot_pixel(bitmap, c+4, line, Machine->pens[vga.memory[pos+0x10]]);
-				plot_pixel(bitmap, c+5, line, Machine->pens[vga.memory[pos+0x11]]);
-				plot_pixel(bitmap, c+6, line, Machine->pens[vga.memory[pos+0x12]]);
-				plot_pixel(bitmap, c+7, line, Machine->pens[vga.memory[pos+0x13]]);
+			if (*(UINT32*)(vga.dirty+pos+0x10)||full_refresh)
+			{
+				bitmapline[c+4] = Machine->pens[vga.memory[pos+0x10]];
+				bitmapline[c+5] = Machine->pens[vga.memory[pos+0x11]];
+				bitmapline[c+6] = Machine->pens[vga.memory[pos+0x12]];
+				bitmapline[c+7] = Machine->pens[vga.memory[pos+0x13]];
 				*(UINT32*)(vga.dirty+pos+0x10)=0;
 			}
-#else
-			Machine->scrbitmap->line[line][c]=
-				Machine->pens[vga.memory[pos]];
-			Machine->scrbitmap->line[line][c+1]=
-				Machine->pens[vga.memory[pos+1]];
-			Machine->scrbitmap->line[line][c+2]=
-				Machine->pens[vga.memory[pos+2]];
-			Machine->scrbitmap->line[line][c+3]=
-				Machine->pens[vga.memory[pos+3]];
-			Machine->scrbitmap->line[line][c+4]=
-				Machine->pens[vga.memory[pos+0x10]];
-			Machine->scrbitmap->line[line][c+5]=
-				Machine->pens[vga.memory[pos+0x11]];
-			Machine->scrbitmap->line[line][c+6]=
-				Machine->pens[vga.memory[pos+0x12]];
-			Machine->scrbitmap->line[line][c+7]=
-				Machine->pens[vga.memory[pos+0x13]];
-#endif
 		}
 	}
 }
@@ -1207,7 +1190,6 @@ VIDEO_UPDATE( ega )
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}
-//	statetext_display(bitmap);
 }
 
 VIDEO_UPDATE( vga )
@@ -1215,68 +1197,58 @@ VIDEO_UPDATE( vga )
 	static int columns=720, raws=480;
 	int new_columns, new_raws;
 	int i;
-	if (CRTC_ON) {
-		if (vga.dac.dirty) {
-			for (i=0; i<256;i++) {
+
+	if (CRTC_ON)
+	{
+		if (vga.dac.dirty)
+		{
+			for (i=0; i<256;i++)
+			{
 				palette_set_color(i,(vga.dac.color[i].red&0x3f)<<2,
 									 (vga.dac.color[i].green&0x3f)<<2,
 									 (vga.dac.color[i].blue&0x3f)<<2);
 			}
 			vga.dac.dirty=0;
 		}
-		if (vga.attribute.data[0x10]&0x80) {
-			for (i=0; i<16;i++) {
+
+		if (vga.attribute.data[0x10]&0x80)
+		{
+			for (i=0; i<16;i++)
+			{
 				vga.pens[i]=Machine->pens[(vga.attribute.data[i]&0x0f)
 										 |((vga.attribute.data[0x14]&0xf)<<4)];
 			}
-		} else {
-			for (i=0; i<16;i++) {
+		}
+		else
+		{
+			for (i=0; i<16;i++)
+			{
 				vga.pens[i]=Machine->pens[(vga.attribute.data[i]&0x3f)
 										 |((vga.attribute.data[0x14]&0xc)<<4)];
 			}
 		}
-#if 0
-		if (input_port_4_r(0)&2) {
-			int i;
-			printf("start palette\n");
-			for (i=0;i<64;i++) {
-				printf(" 0x%.2x, 0x%.2x, 0x%.2x,\n",
-							   vga.dac.color[i].red*4,
-					   vga.dac.color[i].green*4,
-					   vga.dac.color[i].blue*4);
-			}
-		}
-#endif
-		if (!GRAPHIC_MODE) {
-#ifdef VGA_GFX
-			for (i=0; i<0x100; i++) {
-				if (vga.fontdirty[i]) {
-					decodechar(Machine->gfx[0],i,vga.memory,
-							   Machine->drv->gfxdecodeinfo[0].gfxlayout);
-					vga.fontdirty[i]=0;
-					if( i < 0xb0 || i >=0xe0 )
-					{
-						int y;
-						for( y = 0; y < Machine->gfx[0]->height; y++ )
-							Machine->gfx[0]->gfxdata[(i * Machine->gfx[0]->height + y) 
-													* Machine->gfx[0]->width + 8] = 0;
-					}
-				}
-			}
-#endif
+
+		if (!GRAPHIC_MODE)
+		{
 			vga_vh_text(bitmap, 1);
 			new_raws=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
-		} else if (vga.gc.data[5]&0x40) {
+		}
+		else if (vga.gc.data[5]&0x40)
+		{
 			vga_vh_vga(bitmap, 1);
 			new_raws=LINES;
 			new_columns=VGA_COLUMNS*8;
-		} else {
+		}
+		else
+		{
 			vga_vh_ega(bitmap, 1);
 			new_raws=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
-		if ((new_columns!=columns)||(new_raws!=raws)) {
+
+		if ((new_columns!=columns)||(new_raws!=raws))
+		{
 			raws=new_raws;
 			columns=new_columns;
 			if ((columns>100)&&(raws>100))
@@ -1284,5 +1256,4 @@ VIDEO_UPDATE( vga )
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}
-//	statetext_display(bitmap);
 }

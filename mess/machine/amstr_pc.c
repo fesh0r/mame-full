@@ -4,7 +4,7 @@
 #include "includes/pcshare.h"
 #include "includes/amstr_pc.h"
 #include "includes/pclpt.h"
-#include "includes/vga.h"
+#include "includes/pc_vga.h"
 
 /* pc20 (v2)
    fc078

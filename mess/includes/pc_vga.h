@@ -1,36 +1,8 @@
 
 #include "osdepend.h"
 
-
-#if 0
-//   include in memory read list
-   { 0xa0000, 0xaffff, MRA_BANK1 }
-   { 0xb0000, 0xb7fff, MRA_BANK2 }
-   { 0xb8000, 0xbffff, MRA_BANK3 }
-   { 0xc0000, 0xc7fff, MRA_ROM }
-
-//   and in memory write list
-   { 0xa0000, 0xaffff, MWA_BANK1 }
-   { 0xb0000, 0xb7fff, MWA_BANK2 }
-   { 0xb8000, 0xbffff, MWA_BANK3 }
-   { 0xc0000, 0xc7fff, MWA_ROM }
-
-	/* oti 037 chip */
-    ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
-	/* tseng labs famous et4000 isa vga card (oem) */
-    ROM_LOAD("et4000b.bin", 0xc0000, 0x8000, 0xa903540d)	
-	/* tseng labs famous et4000 isa vga card */
-    ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
-#endif
-
-extern unsigned char vga_palette[0x100][3];
-extern unsigned char ega_palette[0x40][3];
-extern unsigned short vga_colortable[];
-extern struct GfxLayout vga_charlayout;
-extern struct GfxDecodeInfo vga_gfxdecodeinfo[];
-
-extern PALETTE_INIT( ega );
-extern PALETTE_INIT( vga );
+MACHINE_DRIVER_EXTERN( pcvideo_vga );
+MACHINE_DRIVER_EXTERN( pcvideo_pc1640 );
 
 void vga_init(mem_read_handler read_dipswitch);
 
@@ -50,12 +22,6 @@ READ_HANDLER( vga_port_03d0_r );
 WRITE_HANDLER( vga_port_03b0_w );
 WRITE_HANDLER( vga_port_03c0_w );
 WRITE_HANDLER( vga_port_03d0_w );
-
-extern VIDEO_START( ega );
-extern VIDEO_START( vga );
-
-extern VIDEO_UPDATE( ega );
-extern VIDEO_UPDATE( vga );
 
 /*
   pega notes (paradise)
