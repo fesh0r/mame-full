@@ -100,7 +100,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld				*/
 	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge	*/
 	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld			*/
-TESTDRIVER (snes)		/* Nintendo Super Nintendo				*/
+	DRIVER( snes )		/* Nintendo Super Nintendo NTSC				*/
+	DRIVER( snespal )	/* Nintendo Super Nintendo PAL				*/
 
 	/* SEGA */
 	DRIVER( gamegear )   /* Sega Sega Master System        */

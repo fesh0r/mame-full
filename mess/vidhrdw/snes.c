@@ -1,1183 +1,1098 @@
 /***************************************************************************
 
- Super Nintendo Entertainment System Driver - Written By Lee Hammerton aKa Savoury SnaX
+  snes.c
 
- Acknowledgements
+  Video file to handle emulation of the Nintendo Super NES.
 
-	I gratefully acknowledge the work of Karl Stenerud for his work on the processor
-  cores used in this emulation and of course I hope you'll continue to work with me
-  to improve this project.
-
-	I would like to acknowledge the support of all those who helped me during SNEeSe and
-  in doing so have helped get this project off the ground. There are many, many people
-  to thank and so little space that I am keeping this as brief as I can :
-
-		All snes technical document authors!
-		All snes emulator authors!
-			ZSnes
-			Snes9x
-			Snemul
-			Nlksnes
-			and the others....
-		The original SNEeSe team members (other than myself ;-)) -
-			Charles Bilyue - Your continued work on SNEeSe is fantastic!
-			Santeri Saarimaa - Who'd have thought I'd come back to emulation ;-)
-
-	***************************************************************************
-
-	NB: This core is UNoptimised - I`m doing it accurately first!!
-
-	Mode 7 - Written from scratch slowly to ensure no problems.
+  Anthony Kruize
+  Based on the original code by Lee Hammerton (aka Savoury Snax)
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpu/g65816/g65816.h"
 #include "vidhrdw/generic.h"
+#include "includes/snes.h"
 
-#include "../machine/snes.h"
+static UINT16 scanline[SNES_SCR_WIDTH];			/* Scanline buffer. */
+static UINT8 zbuf[SNES_SCR_WIDTH + 8];			/* Z buffer.  Allows for drawing 1 tile past the edge of the screen */
+/* Lookup tables */
+static UINT8 table_bgd_pty[4][2] = { {5,7}, {4,6}, {1,3}, {0,2} };
+static UINT8 table_obj_pty[4] = { 2, 4, 6, 8 };
+static UINT16 table_hscroll[4][4] = { {0,0,0,0}, {0,0x800,0,0x800}, {0,0,0,0}, {0,0x800,0,0x800} };
+static UINT16 table_vscroll[4][4] = { {0,0,0,0}, {0,0,0,0}, {0,0x800,0,0x800}, {0,0x1000,0,0x1000} };
 
-unsigned char *zBuffer;
-
-/***************************************************************************
-  Start the video hardware emulation.
-***************************************************************************/
-VIDEO_START( snes )
+struct SCANLINE
 {
-	zBuffer = auto_malloc((256+32)*(256+32));
-	if (!zBuffer)
-		return 1;
-	if( video_start_generic_bitmapped() )
-		return 1;
-	return 0;
-}
+	UINT16 line[SNES_SCR_WIDTH + 8];
+	UINT8  zbuf[SNES_SCR_WIDTH + 8];
+	UINT32 data;
+	UINT32 map;
+};
 
-/***************************************************************************
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function,
-  it will be called by the main emulation engine.
-***************************************************************************/
+static struct SCANLINE layers[5];
+
 VIDEO_UPDATE( snes )
 {
 }
 
-/*   ------ SNES SCREEN DECODING TO BE FOUND HERE -------- */
-
-unsigned char *ScreenAddress[4];	/* Screen Address (in VRAM) for BKGs */
-unsigned char *ScreenAddressL;		/* Screen Address left pane during plane update */
-unsigned char *ScreenAddressR;		/* Screen Address right pane during plane update */
-unsigned char *TileAddress[4];		/* Tile Address (in VRAM) for tiles */
-unsigned char *TileAddress_;		/* Tile Address during plane update */
-unsigned char *TileAddress_Y;		/* Tile Address during plane update if Y flipped */
-
-struct mame_bitmap *snes_bitmap;
-
-unsigned char ColourBase1=1,ColourBase2=2,ColourBase4=4,ColourBase8=8;
-unsigned long Tile_Offset_Table_8[8]={0,2,4,6,8,10,12,14};
-unsigned long Tile_Offset_Table_8_Y[8]={14,12,10,8,6,4,2,0};
-unsigned long Tile_Offset_Table_16_2[16]={0,2,4,6,8,10,12,14,16*8*2,16*8*2+2,16*8*2+4,16*8*2+6,16*8*2+8,16*8*2+10,16*8*2+12,16*8*2+14};
-unsigned long Tile_Offset_Table_16_2_Y[16]={16*8*2+14,16*8*2+12,16*8*2+10,16*8*2+8,16*8*2+6,16*8*2+4,16*8*2+2,16*8*2,14,12,10,8,6,4,2,0};
-unsigned long Tile_Offset_Table_16_4[16]={0,2,4,6,8,10,12,14,16*8*4,16*8*4+2,16*8*4+4,16*8*4+6,16*8*4+8,16*8*4+10,16*8*4+12,16*8*4+14};
-unsigned long Tile_Offset_Table_16_4_Y[16]={16*8*4+14,16*8*4+12,16*8*4+10,16*8*4+8,16*8*4+6,16*8*4+4,16*8*4+2,16*8*4,14,12,10,8,6,4,2,0};
-unsigned long Tile_Offset_Table_16_8[16]={0,2,4,6,8,10,12,14,16*8*8,16*8*8+2,16*8*8+4,16*8*8+6,16*8*8+8,16*8*8+10,16*8*8+12,16*8*8+14};
-unsigned long Tile_Offset_Table_16_8_Y[16]={16*8*8+14,16*8*8+12,16*8*8+10,16*8*8+8,16*8*8+6,16*8*8+4,16*8*8+2,16*8*8,14,12,10,8,6,4,2,0};
-unsigned long Tile_Offset_Table_32_4[32]={0,2,4,6,8,10,12,14,16*8*4,16*8*4+2,16*8*4+4,16*8*4+6,16*8*4+8,16*8*4+10,16*8*4+12,16*8*4+14,16*8*4*2,16*8*4*2+2,16*8*4*2+4,16*8*4*2+6,16*8*4*2+8,16*8*4*2+10,16*8*4*2+12,16*8*4*2+14};
-unsigned long Tile_Offset_Table_32_4_Y[32]={16*8*4*2+14,16*8*4*2+12,16*8*4*2+10,16*8*4*2+8,16*8*4*2+6,16*8*4*2+4,16*8*4*2+2,16*8*4*2,16*8*4+14,16*8*4+12,16*8*4+10,16*8*4+8,16*8*4+6,16*8*4+4,16*8*4+2,16*8*4,14,12,10,8,6,4,2,0};
-
-static void PLOT_8x8_2BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+void snes_draw_windows( UINT8 layer, UINT8 curline, UINT8 priority )
 {
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bitmask;
+	UINT8 w1en = 0, w2en = 0, w1mode = 0, w2mode = 0;
+	UINT16 ii;
 
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-				/*  Bp0=*(TileAddress+0) */
-				/*  Bp1=*(TileAddress+1) */
-	Bitmask=0x80;
+	/* This is the wrong way to do it I think */
+	return;
 
-	for (count=0;count<8;count++)
+#ifdef MAME_DEBUG
+	if( !(readinputport( 10 ) & 0x20) )
 	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase1;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase2;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask>>=1;
+		return;
 	}
-}
+#endif
 
-static void PLOT_8x8_2BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bitmask;
-
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-			/*  Bp0=*(TileAddress+0) */
-			/*  Bp1=*(TileAddress+1) */
-	Bitmask=0x01;
-
-	for (count=0;count<8;count++)
-	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase1;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase2;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask<<=1;
-	}
-}
-
-static void PLOT_8x8_4BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bits2,Bitmask;
-
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-				//  Bp0=*(TileAddress+0)
-				//  Bp1=*(TileAddress+1)
-	Tile+=14;
-	Bits2=*Tile++;
-	Bits2|=((unsigned short)(*Tile++))<<8;
-				//  Bp2=*(TileAddress+2)
-				//  Bp3=*(TileAddress+3)
-	Bitmask=0x80;
-
-	for (count=0;count<8;count++)
-	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase1;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=ColourBase4;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase2;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=ColourBase8;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask>>=1;
-	}
-}
-
-static void PLOT_8x8_4BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bits2,Bitmask;
-
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-				/*  Bp0=*(TileAddress+0) */
-				/*  Bp1=*(TileAddress+1) */
-	Tile+=14;
-	Bits2=*Tile++;
-	Bits2|=((unsigned short)(*Tile++))<<8;
-				/*  Bp2=*(TileAddress+2) */
-				/*  Bp3=*(TileAddress+3) */
-	Bitmask=0x01;
-
-	for (count=0;count<8;count++)
-	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase1;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=ColourBase4;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=ColourBase2;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=ColourBase8;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask<<=1;
-	}
-}
-
-static void PLOT_8x8_8BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bits2,Bits3,Bits4,Bitmask;
-
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-				/*  Bp0=*(TileAddress+0) */
-				/*  Bp1=*(TileAddress+1) */
-	Tile+=14;
-	Bits2=*Tile++;
-	Bits2|=((unsigned short)(*Tile++))<<8;
-				/*  Bp2=*(TileAddress+2) */
-				/*  Bp3=*(TileAddress+3) */
-	Tile+=14;
-	Bits3=*Tile++;
-	Bits3|=((unsigned short)(*Tile++))<<8;
-				/*  Bp4=*(TileAddress+4) */
-				/*  Bp5=*(TileAddress+5) */
-	Tile+=14;
-	Bits4=*Tile++;
-	Bits4|=((unsigned short)(*Tile++))<<8;
-				/*  Bp6=*(TileAddress+6) */
-				/*  Bp7=*(TileAddress+7) */
-	Bitmask=0x80;
-
-	for (count=0;count<8;count++)
-	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=0x01;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=0x04;
-		if ((Bitmask&Bits3)==Bitmask)
-			DestPixel|=0x10;
-		if ((Bitmask&Bits4)==Bitmask)
-			DestPixel|=0x40;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=0x02;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=0x08;
-		if ((Bitmask&Bits3)==Bitmask)
-			DestPixel|=0x20;
-		if ((Bitmask&Bits4)==Bitmask)
-			DestPixel|=0x80;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask>>=1;
-	}
-}
-
-static void PLOT_8x8_8BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned char DestPixel;
-	int count;
-	unsigned short Bits,Bits2,Bits3,Bits4,Bitmask;
-
-	Bits=*Tile++;
-	Bits|=((unsigned short)(*Tile++))<<8;
-				/*  Bp0=*(TileAddress+0) */
-				/*  Bp1=*(TileAddress+1) */
-	Tile+=14;
-	Bits2=*Tile++;
-	Bits2|=((unsigned short)(*Tile++))<<8;
-				/*  Bp2=*(TileAddress+2) */
-				/*  Bp3=*(TileAddress+3) */
-	Tile+=14;
-	Bits3=*Tile++;
-	Bits3|=((unsigned short)(*Tile++))<<8;
-				/*  Bp4=*(TileAddress+4) */
-				/*  Bp5=*(TileAddress+5) */
-	Tile+=14;
-	Bits4=*Tile++;
-	Bits4|=((unsigned short)(*Tile++))<<8;
-				/*  Bp6=*(TileAddress+6) */
-				/*  Bp7=*(TileAddress+7) */
-	Bitmask=0x01;
-
-	for (count=0;count<8;count++)
-	{
-		DestPixel=0;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=0x01;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=0x02;
-		if ((Bitmask&Bits3)==Bitmask)
-			DestPixel|=0x04;
-		if ((Bitmask&Bits4)==Bitmask)
-			DestPixel|=0x08;
-		Bitmask<<=8;
-		if ((Bitmask&Bits)==Bitmask)
-			DestPixel|=0x10;
-		if ((Bitmask&Bits2)==Bitmask)
-			DestPixel|=0x20;
-		if ((Bitmask&Bits3)==Bitmask)
-			DestPixel|=0x40;
-		if ((Bitmask&Bits4)==Bitmask)
-			DestPixel|=0x80;
-		if (DestPixel)
-		{
-			if (*zCur<=depth)
-			{
-				*dst=Machine->pens[palIndx[DestPixel]];
-				*zCur=depth;
-			}
-		}
-		Bitmask>>=8;
-		dst++;
-		zCur++;
-		Bitmask<<=1;
-	}
-}
-
-static int SPLOT_4BplTile(unsigned short xPos,short tileCode,unsigned short *dst,unsigned char *zCur,int width)
-{
-	unsigned char *TileAddressSpr;
-	unsigned char Temp;
-	int depth;
-	int tileNum;
-	int a,cnt=0;
-	short xDiff;
-
-	cnt++;
-	if (tileCode & 0x8000)
-		TileAddressSpr = TileAddress_Y;
-	else
-		TileAddressSpr = TileAddress_;
-
-	depth = ((tileCode & 0x3000)>>12)+1;
-
-	tileNum = (tileCode & 0x01FF) << 5;						// 4*8
-
-	Temp=(((tileCode & 0x0E00) >>5)|0x80);					// sprites use upper 128 palette colours
-
-	ColourBase1|=Temp;
-	ColourBase2|=Temp;
-	ColourBase4|=Temp;
-	ColourBase8|=Temp;
-
-	// sign extend xPos
-	xDiff=xPos<<7;
-	xDiff>>=7;
-
-	if (tileCode & 0x4000)
-		tileNum+=(width-1)*32;
-
-	for (a=0;a<width;a++)
-	{
-		if (xDiff>-16)
-		{
-			if (tileCode & 0x4000)
-			{
-				PLOT_8x8_4BplTileX(TileAddressSpr + tileNum,dst+xDiff,zCur+xDiff,depth);
-				tileNum-=32;
-			}
-			else
-			{
-				PLOT_8x8_4BplTile(TileAddressSpr + tileNum,dst+xDiff,zCur+xDiff,depth);
-				tileNum+=32;
-			}
-		}
-		xDiff+=8;
-	}
-
-	ColourBase1=0x01;
-	ColourBase2=0x02;
-	ColourBase4=0x04;
-	ColourBase8=0x08;
-
-	return cnt;
-}
-
-static void RENDER_LINE_8x8_C2(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned short TileInfo;
-	unsigned long TileNum;
-	unsigned char Temp;
-	unsigned char adepth;
-
-	while (Count>0)
-	{
-		TileInfo=*Screen++;
-		TileInfo|=((unsigned short)(*Screen++))<<8;
-		TileNum=((unsigned long)(TileInfo&0x3FF))<<4;		/* 2*8 */
-
-		adepth=depth;
-		if (TileInfo&0x2000)
-			adepth++;
-
-		TileInfo&=0xDC00;
-		Temp=((TileInfo>>8)&0x1C)+PalOffset;
-		ColourBase1|=Temp;
-		ColourBase2|=Temp;
-
-		switch (TileInfo>>14)
-		{
-			case 0:					/* 8x8 Tile | no x flip | no y flip */
-				PLOT_8x8_2BplTile(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 1:					/* 8x8 Tile |    x flip | no y flip */
-				PLOT_8x8_2BplTileX(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 2:					/* 8x8 Tile | no x flip |    y flip */
-				PLOT_8x8_2BplTile(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-			case 3:					/* 8x8 Tile |    x flip |    y flip */
-				PLOT_8x8_2BplTileX(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-		}
-
-		ColourBase1=0x01;
-		ColourBase2=0x02;
-
-		dst+=8;
-		zCur+=8;
-		Count--;
-	}
-}
-
-static void RENDER_LINE_8x8_C4(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned short TileInfo;
-	unsigned long TileNum;
-	unsigned char Temp;
-	unsigned char adepth;
-
-	while (Count>0)
-	{
-		TileInfo=*Screen++;
-		TileInfo|=((unsigned short)(*Screen++))<<8;
-		TileNum=((unsigned long)(TileInfo&0x3FF))<<5;		/* 4*8 */
-
-		adepth=depth;
-		if (TileInfo&0x2000)
-			adepth++;
-
-		TileInfo&=0xDC00;
-		Temp=((TileInfo>>6)&0x70)/*+(Planenum*0x20)*/;
-		ColourBase1|=Temp;
-		ColourBase2|=Temp;
-		ColourBase4|=Temp;
-		ColourBase8|=Temp;
-
-		switch (TileInfo>>14)
-		{
-			case 0:					/* 8x8 Tile | no x flip | no y flip */
-				PLOT_8x8_4BplTile(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 1:					/* 8x8 Tile |    x flip | no y flip */
-				PLOT_8x8_4BplTileX(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 2:					/* 8x8 Tile | no x flip |    y flip */
-				PLOT_8x8_4BplTile(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-			case 3:					/* 8x8 Tile |    x flip |    y flip */
-				PLOT_8x8_4BplTileX(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-		}
-
-		ColourBase1=0x01;
-		ColourBase2=0x02;
-		ColourBase4=0x04;
-		ColourBase8=0x08;
-
-		dst+=8;
-		zCur+=8;
-		Count--;
-	}
-}
-
-static void RENDER_LINE_8x8_C8(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
-{
-	unsigned short TileInfo;
-	unsigned long TileNum;
-	unsigned char adepth;
-
-	while (Count>0)
-	{
-		TileInfo=*Screen++;
-		TileInfo|=((unsigned short)(*Screen++))<<8;
-		TileNum=((unsigned long)(TileInfo&0x3FF))<<6;		/* 8*8 */
-
-		adepth=depth;
-		if (TileInfo&0x2000)
-			adepth++;
-
-		TileInfo&=0xC000;
-
-		switch (TileInfo>>14)
-		{
-			case 0:					/* 8x8 Tile | no x flip | no y flip */
-				PLOT_8x8_8BplTile(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 1:					/* 8x8 Tile |    x flip | no y flip */
-				PLOT_8x8_8BplTileX(TileAddress_+TileNum,dst,zCur,adepth);
-				break;
-			case 2:					/* 8x8 Tile | no x flip |    y flip */
-				PLOT_8x8_8BplTile(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-			case 3:					/* 8x8 Tile |    x flip |    y flip */
-				PLOT_8x8_8BplTileX(TileAddress_Y+TileNum,dst,zCur,adepth);
-				break;
-		}
-
-		dst+=8;
-		zCur+=8;
-		Count--;
-	}
-}
-
-// This function sets up some pointers to allow rendering the snes screens to be a little easier
-
-static void SORT_LAYOUT_8x8(int curLine,unsigned short Planenum)
-{
-	unsigned long VScroll;
-	unsigned long VShift;
-
-	VScroll=(((unsigned long)wport21xx[1][(Planenum*2+0x0E)])<<8)+wport21xx[0][(Planenum*2+0x0E)]+curLine;	// Get VScroll amount
-	VShift=(/*curLine+*/VScroll)&0xFF;
-
-	TileAddress_=TileAddress[Planenum]+Tile_Offset_Table_8[VShift&0x07];
-	TileAddress_Y=TileAddress[Planenum]+Tile_Offset_Table_8_Y[VShift&0x07];
-
-	switch (port21xx[0x07+Planenum]&0x03)
+	/* Enable windows based on the specified background */
+	switch( layer )
 	{
 		case 0:
-			ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6);
-			ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6);
+			if( snes_ram[W12SEL] & 0x2 ) w1en = 1;
+			if( snes_ram[W12SEL] & 0x8 ) w2en = 1;
+			w1mode = snes_ram[W12SEL & 0x1];
+			w2mode = snes_ram[W12SEL & 0x4];
 			break;
 		case 1:
-			if ((wport21xx[1][(0x0D+Planenum*2)]&0x01)==0)
-			{
-				ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6);
-				ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-			}
-			else
-			{
-				ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6);
-				ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-			}
+			if( snes_ram[W12SEL] & 0x20 ) w1en = 1;
+			if( snes_ram[W12SEL] & 0x80 ) w2en = 1;
+			w1mode = snes_ram[W12SEL & 0x10];
+			w2mode = snes_ram[W12SEL & 0x40];
 			break;
 		case 2:
-			if ((VScroll&0x0100)==0)
-			{
-				ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6);
-				ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6);
-			}
-			else
-			{
-				ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-				ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-			}
+			if( snes_ram[W34SEL] & 0x2 ) w1en = 1;
+			if( snes_ram[W34SEL] & 0x8 ) w2en = 1;
+			w1mode = snes_ram[W34SEL & 0x1];
+			w2mode = snes_ram[W34SEL & 0x4];
 			break;
 		case 3:
-			if ((VScroll&0x0100)==0)
-			{
-				if ((wport21xx[1][(0x0D+Planenum*2)]&0x01)==0)
-				{
-					ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6);
-					ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-				}
-				else
-				{
-					ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6);
-					ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2);
-				}
-			}
-			else
-			{
-				if ((wport21xx[1][(0x0D+Planenum*2)]&0x01)==0)
-				{
-					ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2*2);
-					ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2*2)+(32*32*2);
-				}
-				else
-				{
-					ScreenAddressR=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2*2);
-					ScreenAddressL=ScreenAddress[Planenum]+((VShift>>3)<<6)+(32*32*2*2)+(32*32*2);
-				}
-			}
+			if( snes_ram[W34SEL] & 0x20 ) w1en = 1;
+			if( snes_ram[W34SEL] & 0x80 ) w2en = 1;
+			w1mode = snes_ram[W34SEL & 0x10];
+			w2mode = snes_ram[W34SEL & 0x40];
 			break;
+	}
+
+	for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+	{
+		/* Draw window 1 */
+		if( w1en )
+		{
+			if( w1mode )	/* Window mask is in */
+			{
+				if( ii >= snes_ram[WH0] || ii <= snes_ram[WH1] )
+				{
+					layers[layer].line[ii] = Machine->pens[0];
+				}
+			}
+			else	/* Window mask is out */
+			{
+				if( ii <= snes_ram[WH0] || ii >= snes_ram[WH1] )
+				{
+					layers[layer].line[ii] = Machine->pens[0];
+				}
+			}
+		}
+		/* Draw window 2 */
+		if( w2en )
+		{
+			if( w2mode )	/* Window mask is in */
+			{
+				if( ii >= snes_ram[WH2] || ii <= snes_ram[WH3] )
+				{
+					layers[layer].line[ii] = Machine->pens[0];
+				}
+			}
+			else	/* Window mask is out */
+			{
+				if( ii <= snes_ram[WH2] || ii >= snes_ram[WH3] )
+				{
+					layers[layer].line[ii] = Machine->pens[0];
+				}
+			}
+		}
 	}
 }
 
-static void RENDER_LINE(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char Planenum,void (*RENDER_FUNCTION)(unsigned char,unsigned char *,unsigned long,unsigned short *,unsigned char *,unsigned char),unsigned char Bitmask,unsigned char depth,unsigned char palOffset)
+/*****************************************
+ * snes_draw_tile_2()
+ *
+ * Draw tiles with 2 bit planes(4 colors)
+ *****************************************/
+INLINE void snes_draw_tile_2( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT16 y, UINT8 priority, UINT8 flip, UINT16 pal )
 {
-	unsigned char HScroll=wport21xx[0][(0x0D+Planenum*2)];
-	int Temp,Temp2;
+	UINT8 ii;
+	UINT8 plane[2];
 
-	if ((port21xx[0x05]&Bitmask)==0)		/* 8x8 Tile mode */
+	tileaddr += (line << 1);
+	plane[0] = snes_vram[tileaddr];
+	plane[1] = snes_vram[tileaddr + 1];
+
+	for( ii = 0; ii < 8; ii++ )
 	{
-		SORT_LAYOUT_8x8(curLine,Planenum);		/* This sets up the screen vert 2! */
-
-		if (HScroll==0)			/* If 0 simply plot 32 tiles! */
-			RENDER_FUNCTION(palOffset,ScreenAddressL,32,dst,zCur,depth);
+		if( flip )
+		{
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
+									(plane[1] & 0x1 ? 2 : 0);
+			if( colour )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] >>= 1;
+			plane[1] >>= 1;
+		}
 		else
 		{
-			dst-=HScroll&0x07;
-			zCur-=HScroll&0x07;
-			Temp=255-(HScroll&0xF8);
-			Temp++;
-			Temp>>=3;
-			Temp2=(32-(Temp&0xFF))*2;
-			RENDER_FUNCTION(palOffset,ScreenAddressL+Temp2,Temp,dst,zCur,depth);
-			dst+=Temp<<3;
-			zCur+=Temp<<3;
-			Temp2=(33-Temp);
-			RENDER_FUNCTION(palOffset,ScreenAddressR,Temp2,dst,zCur,depth);
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
+									(plane[1] & 0x80 ? 2 : 0);
+			if( colour )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] <<= 1;
+			plane[1] <<= 1;
 		}
-	}
-	else
-	{					/* 16x16 tiles */
-		logerror("16x16 tiles not supported yet!\n");
 	}
 }
 
-/*
-
- Mode 7 is handled differently to the other modes due to its matrix maths.
-
-	These work something like this :
-
- A B   X
- C D   Y
-
- These are the matrix in 8:8 fixed point format for each element
-
- To find x , y location within tile map the following is done :
-
- TX = (A * ((SX + HS)-XC) + C * ((SY + VS)-YC)) + XC
- TY = (B * ((SX + HS)-XC) + D * ((SY + VS)-YC)) + YC
-
- Where
-
- TX,TY 			- Tile X,Y address (Tile map is 128 x 128)
- 				- To find tile map location (TX / 8) * 2 + ((TY / 8) * 128 * 2) - Tiles are always start at beginning of VRAM
- 				- Pixel location in tile (pointed to by tilemap) is (TX & 7) * 2 + (TY & 7) * 16
- A,B,C,D		- Matrix parameters
- SX,SY			- Screen location currently drawing
- HS,VS			- Horizontal and Verticle Scroll Registers
- XC,YC			- Center X , Center Y from matrix registers
-
-*/
-
-static void RENDER_LINE_MODE7(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char depth)
+/*****************************************
+ * snes_draw_tile_4()
+ *
+ * Draw tiles with 4 bit planes(16 colors)
+ *****************************************/
+INLINE void snes_draw_tile_4( UINT8 layer, UINT8 line, UINT16 tileaddr, INT16 x, INT16 y, UINT8 priority, UINT8 flip, UINT16 pal )
 {
-	unsigned short tileNum;
-	unsigned char *tileGFX;
-	unsigned char DestPixel;
-	short SX,SXDIR,SY,HS,VS,XC,YC,A,B,C,D,TX,TY;
-	short cnt;
+	UINT8 ii;
+	UINT8 plane[4];
 
-	A=(wport21xx[1][0x1B] << 8) + wport21xx[0][0x1B];		// These 4 are 8:8 fixed point values
-	B=(wport21xx[1][0x1C] << 8) + wport21xx[0][0x1C];
-	C=(wport21xx[1][0x1D] << 8) + wport21xx[0][0x1D];
-	D=(wport21xx[1][0x1E] << 8) + wport21xx[0][0x1E];
+	tileaddr += (line << 1);
+	plane[0] = snes_vram[tileaddr];
+	plane[1] = snes_vram[tileaddr + 1];
+	plane[2] = snes_vram[tileaddr + 16];
+	plane[3] = snes_vram[tileaddr + 17];
 
-	XC=(wport21xx[1][0x1F] << 8) + wport21xx[0][0x1F];		// These are 13 bit numbers - They must be sign extended
-	YC=(wport21xx[1][0x20] << 8) + wport21xx[0][0x20];
-
-	HS=(wport21xx[1][0x0D] << 8) + wport21xx[0][0x0D];		// These are 13 bit numbers - They must be sign extended
-	VS=(wport21xx[1][0x0E] << 8) + wport21xx[0][0x0E];
-
-	XC<<=3;													// Sign extend
-	XC>>=3;
-	YC<<=3;
-	YC>>=3;
-	HS<<=3;													// Sign extend
-	HS>>=3;
-	VS<<=3;
-	VS>>=3;
-
-	// Get X and Y Flip status
-
-	SY=curLine;
-	if (port21xx[0x1A]&0x02)								// If y flipped
-		SY=255-SY;
-
-	if (port21xx[0x1A]&0x01)								// If x flipped
+	for( ii = 0; ii < 8; ii++ )
 	{
-		SX=255;
-		SXDIR=-1;
+		if( flip )
+		{
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
+									(plane[1] & 0x1 ? 2 : 0) |
+									(plane[2] & 0x1 ? 4 : 0) |
+									(plane[3] & 0x1 ? 8 : 0);
+			if( colour )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] >>= 1;
+			plane[1] >>= 1;
+			plane[2] >>= 1;
+			plane[3] >>= 1;
+		}
+		else
+		{
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
+									(plane[1] & 0x80 ? 2 : 0) |
+									(plane[2] & 0x80 ? 4 : 0) |
+									(plane[3] & 0x80 ? 8 : 0);
+			if( colour )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] <<= 1;
+			plane[1] <<= 1;
+			plane[2] <<= 1;
+			plane[3] <<= 1;
+		}
+	}
+}
+
+/*****************************************
+ * snes_draw_tile_8()
+ *
+ * Draw tiles with 8 bit planes(8 colors)
+ *****************************************/
+void snes_draw_tile_8( UINT8 layer, UINT8 line, UINT16 tileaddr, UINT16 x, UINT16 y, UINT8 priority, UINT8 flip )
+{
+	UINT8 ii;
+	UINT8 plane[8];
+
+	tileaddr += (line << 1);
+	plane[0] = snes_vram[tileaddr];
+	plane[1] = snes_vram[tileaddr + 1];
+	plane[2] = snes_vram[tileaddr + 16];
+	plane[3] = snes_vram[tileaddr + 17];
+	plane[4] = snes_vram[tileaddr + 32];
+	plane[5] = snes_vram[tileaddr + 33];
+	plane[6] = snes_vram[tileaddr + 48];
+	plane[7] = snes_vram[tileaddr + 49];
+
+	for( ii = 0; ii < 8; ii++ )
+	{
+		if( flip )
+		{
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
+									(plane[1] & 0x1 ? 2 : 0) |
+									(plane[2] & 0x1 ? 4 : 0) |
+									(plane[3] & 0x1 ? 8 : 0) |
+									(plane[4] & 0x1 ? 16 : 0) |
+									(plane[5] & 0x1 ? 32 : 0) |
+									(plane[6] & 0x1 ? 64 : 0) |
+									(plane[7] & 0x1 ? 128 : 0);
+			if( colour )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] >>= 1;
+			plane[1] >>= 1;
+			plane[2] >>= 1;
+			plane[3] >>= 1;
+			plane[4] >>= 1;
+			plane[5] >>= 1;
+			plane[6] >>= 1;
+			plane[7] >>= 1;
+		}
+		else
+		{
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
+									(plane[1] & 0x80 ? 2 : 0) |
+									(plane[2] & 0x80 ? 4 : 0) |
+									(plane[3] & 0x80 ? 8 : 0) |
+									(plane[4] & 0x80 ? 16 : 0) |
+									(plane[5] & 0x80 ? 32 : 0) |
+									(plane[6] & 0x80 ? 64 : 0) |
+									(plane[7] & 0x80 ? 128 : 0);
+			if( colour && (priority > zbuf[x+ii]) )
+			{
+				layers[layer].line[x+ii] = Machine->remapped_colortable[colour];
+				layers[layer].zbuf[x+ii] = priority;
+			}
+			plane[0] <<= 1;
+			plane[1] <<= 1;
+			plane[2] <<= 1;
+			plane[3] <<= 1;
+			plane[4] <<= 1;
+			plane[5] <<= 1;
+			plane[6] <<= 1;
+			plane[7] <<= 1;
+		}
+	}
+}
+
+/*****************************************
+ * snes_draw_object()
+ *
+ * Draw objects. The reason we don't use snes_draw_tile_4()
+ * is because we need to handle priorities of the objects
+ * on a per-pixel basis. I know it's ugly but oh well.
+ *****************************************/
+INLINE void snes_draw_object( UINT8 line, UINT16 tileaddr, INT16 x, INT16 y, UINT8 priority, UINT8 flip, UINT16 pal )
+{
+	UINT8 ii;
+	UINT8 plane[4];
+
+	tileaddr += (line << 1);
+	plane[0] = snes_vram[tileaddr];
+	plane[1] = snes_vram[tileaddr + 1];
+	plane[2] = snes_vram[tileaddr + 16];
+	plane[3] = snes_vram[tileaddr + 17];
+
+	for( ii = 0; ii < 8; ii++ )
+	{
+		if( flip )
+		{
+			register UINT8 colour = (plane[0] & 0x1 ? 1 : 0) |
+									(plane[1] & 0x1 ? 2 : 0) |
+									(plane[2] & 0x1 ? 4 : 0) |
+									(plane[3] & 0x1 ? 8 : 0);
+			if( colour && (priority > layers[4].zbuf[x+ii]) )
+			{
+				layers[4].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[4].zbuf[x+ii] = priority;
+			}
+			plane[0] >>= 1;
+			plane[1] >>= 1;
+			plane[2] >>= 1;
+			plane[3] >>= 1;
+		}
+		else
+		{
+			register UINT8 colour = (plane[0] & 0x80 ? 1 : 0) |
+									(plane[1] & 0x80 ? 2 : 0) |
+									(plane[2] & 0x80 ? 4 : 0) |
+									(plane[3] & 0x80 ? 8 : 0);
+			if( colour && (priority > layers[4].zbuf[x+ii]) )
+			{
+				layers[4].line[x+ii] = Machine->remapped_colortable[pal + colour];
+				layers[4].zbuf[x+ii] = priority;
+			}
+			plane[0] <<= 1;
+			plane[1] <<= 1;
+			plane[2] <<= 1;
+			plane[3] <<= 1;
+		}
+	}
+}
+
+/*********************************************
+ * snes_update_line_2()
+ *
+ * Update an entire line of 2 bit plane tiles.
+ *********************************************/
+void snes_update_line_2( UINT8 layer, UINT16 curline, UINT8 bg3_pty )
+{
+	UINT32 tilemap, tile;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line, tile_line;
+	UINT8 priority;
+	/* scrolling */
+	UINT32 basevmap;
+	UINT16 vscroll, hscroll;
+	UINT8 vshift, hshift, map[2], map_size;
+
+#ifdef MAME_DEBUG
+	if( !(readinputport( 10 ) & (1 << layer)) )
+	{
+		return;
+	}
+#endif
+
+	/* Bail if the bg is disabled */
+	if( !((snes_ram[TM]|snes_ram[TS]) & (1 << layer)) )
+	{
+		return;
+	}
+
+	/* Find the size of the map */
+	map_size = snes_ram[0x2107 + layer] & 0x3;
+	/* Find scroll info */
+	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
+	vshift = bg_voffset[layer] & 0x7;
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
+	hshift = bg_hoffset[layer] & 0x7;
+
+	/*  1k words */
+	tilemap = layers[layer].map + ((curline >> 3) << 6);
+	/* scroll */
+	tilemap += table_vscroll[map_size][vscroll >> 5];
+
+	/* Have we scrolled into the next map? */
+	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
+	{
+		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
+		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
+	}
+	/* figure out which line to draw */
+	line = (curline % 8) + vshift;
+	if( line > 7 )	/* scrolled into the next tile */
+	{
+		vscroll++;	/* pretend we scrolled by 1 line */
+		line -= 8;
+	}
+	/* scroll vertically */
+	tilemap += (vscroll & 0x1f) << 6;
+	/* Remember the location for later */
+	basevmap = tilemap;
+
+	/* scroll horizontally */
+	tilemap += table_hscroll[map_size][hscroll >> 5];
+	tilemap += (hscroll & 0x1f) << 1;
+
+	for( ii = 0; ii < 66; ii += 2 )
+	{
+		/* Have we scrolled into the next map? */
+		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
+		{
+			tilemap = basevmap + table_hscroll[map_size][(hscroll >> 5) + 1];
+			tilemap -= ii;
+			hscroll = 0;	/* Make sure we don't do this again */
+		}
+		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* 8 palettes of 4 colours */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+		tile_line = line;
+		if( vflip )
+			tile_line = -line + 7;
+
+		/* Special case for bg3 */
+		if( layer == 2 && bg3_pty )
+			priority = 9;
+
+		if( tile > 0 )
+			snes_draw_tile_2( layer, (UINT8)tile_line, layers[layer].data + (tile << 4), (ii >> 1) * 8, curline, priority, hflip, pal );
+	}
+
+	if( (snes_ram[TMW]|snes_ram[TSW]) & (1 << layer) )
+		snes_draw_windows( layer, curline, priority );
+}
+
+/*********************************************
+ * snes_update_line_4()
+ *
+ * Update an entire line of 4 bit plane tiles.
+ *********************************************/
+void snes_update_line_4( UINT8 layer, UINT16 curline )
+{
+	UINT32 tilemap, tile;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line, tile_line;
+	UINT8 priority;
+	/* scrolling */
+	UINT32 basevmap;
+	UINT16 vscroll, hscroll;
+	UINT8 vshift, hshift, map[2], map_size;
+
+#ifdef MAME_DEBUG
+	if( !(readinputport( 10 ) & (1 << layer)) )
+	{
+		return;
+	}
+#endif
+
+	/* Bail if the bg is disabled */
+	if( !((snes_ram[TM]|snes_ram[TS]) & (1 << layer)) )
+	{
+		return;
+	}
+
+	/* Find the size of the map */
+	map_size = snes_ram[0x2107 + layer] & 0x3;
+	/* Find scroll info */
+	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
+	vshift = bg_voffset[layer] & 0x7;
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
+	hshift = bg_hoffset[layer] & 0x7;
+
+	/*  1k words */
+	tilemap = layers[layer].map + ((curline >> 3) << 6);
+	/* scroll */
+	tilemap += table_vscroll[map_size][vscroll >> 5];
+
+	/* Have we scrolled into the next map? */
+	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
+	{
+		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
+		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
+	}
+	/* figure out which line to draw */
+	line = (curline % 8) + vshift;
+	if( line > 7 )	/* scrolled into the next tile */
+	{
+		vscroll++;	/* pretend we scrolled by 1 line */
+		line -= 8;
+	}
+	/* scroll vertically */
+	tilemap += (vscroll & 0x1f) << 6;
+	/* Remember the location for later */
+	basevmap = tilemap;
+
+	/* scroll horizontally */
+	tilemap += table_hscroll[map_size][hscroll >> 5];
+	tilemap += (hscroll & 0x1f) << 1;
+
+	for( ii = 0; ii < 66; ii += 2 )
+	{
+		/* Have we scrolled into the next map? */
+		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
+		{
+			tilemap = basevmap + table_hscroll[map_size][(hscroll >> 5) + 1];
+			tilemap -= ii;
+			hscroll = 0;	/* Make sure we don't do this again */
+		}
+		vflip = snes_vram[tilemap + ii + 1] & 0x80;
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];		/* is this even right??? */
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c) << 2;	/* 8 palettes of 16 colours */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+		tile_line = line;
+		if( vflip )
+			tile_line = -line + 7;
+		if( tile > 0 )
+			snes_draw_tile_4( layer, (UINT8)tile_line, layers[layer].data + (tile << 5), ((ii >> 1) * 8)  - hshift, curline, priority, hflip, pal );
+	}
+
+	if( (snes_ram[TMW]|snes_ram[TSW]) & (1 << layer) )
+		snes_draw_windows( layer, curline, priority );
+}
+
+/*********************************************
+ * snes_update_line_8()
+ *
+ * Update an entire line of 8 bit plane tiles.
+ *********************************************/
+void snes_update_line_8( UINT8 layer, UINT16 curline )
+{
+	UINT32 tilemap, tile;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line, tile_line;
+	UINT8 priority;
+	/* scrolling */
+	UINT32 basevmap;
+	UINT16 vscroll, hscroll;
+	UINT8 vshift, hshift, map[2], map_size;
+
+#ifdef MAME_DEBUG
+	if( !(readinputport( 10 ) & (1 << layer)) )
+	{
+		return;
+	}
+#endif
+
+	/* Bail if the bg is disabled */
+	if( !((snes_ram[TM]|snes_ram[TS]) & (1 << layer)) )
+	{
+		return;
+	}
+
+	/* Find the size of the map */
+	map_size = snes_ram[0x2107 + layer] & 0x3;
+	/* Find scroll info */
+	vscroll = (bg_voffset[layer] & 0x3ff) >> 3;
+	vshift = bg_voffset[layer] & 0x7;
+	hscroll = (bg_hoffset[layer] & 0x3ff) >> 3;
+	hshift = bg_hoffset[layer] & 0x7;
+
+	/*  1k words */
+	tilemap = layers[layer].map + ((curline >> 3) << 6);
+	/* scroll */
+	tilemap += table_vscroll[map_size][vscroll >> 5];
+
+	/* Have we scrolled into the next map? */
+	if( curline >= 256 - (bg_voffset[layer] & 0xff) )
+	{
+		tilemap = layers[layer].map + table_vscroll[map_size][(vscroll >> 5) + 1];
+		vscroll = ((curline >> 3) + (vscroll & 0x1f)) - 32;
+	}
+	/* figure out which line to draw */
+	line = (curline % 8) + vshift;
+	if( line > 7 )	/* scrolled into the next tile */
+	{
+		vscroll++;	/* pretend we scrolled by 1 line */
+		line -= 8;
+	}
+	/* scroll vertically */
+	tilemap += (vscroll & 0x1f) << 6;
+	/* Remember the location for later */
+	basevmap = tilemap;
+
+	/* scroll horizontally */
+	tilemap += table_hscroll[map_size][hscroll >> 5];
+	tilemap += (hscroll & 0x1f) << 1;
+
+	for( ii = 0; ii < 66; ii += 2 )
+	{
+		/* Have we scrolled into the next map? */
+		if( hscroll && ((ii >> 1) >= 32 - (hscroll & 0x1f)) )
+		{
+			tilemap = basevmap + table_hscroll[map_size][(hscroll >> 5) + 1];
+			tilemap -= ii;
+			hscroll = 0;	/* Make sure we don't do this again */
+		}
+		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		priority = table_bgd_pty[layer][(snes_vram[tilemap + ii + 1] & 0x20) >> 5];
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* what does this do for 8 bit screen? */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+		tile_line = line;
+		if( vflip )
+			tile_line = -line + 7;
+
+		if( tile > 0 )
+			snes_draw_tile_8( layer, (UINT8)tile_line, layers[layer].data + (tile << 6), (ii >> 1) * 8, curline, priority, hflip );
+	}
+
+	if( (snes_ram[TMW]|snes_ram[TSW]) & (1 << layer) )
+		snes_draw_windows( layer, curline, priority );
+}
+
+/*********************************************
+ * snes_update_line_mode7()
+ *
+ * Update an entire line of mode7 tiles.
+ *********************************************/
+void snes_update_line_mode7( UINT16 curline )
+{
+	UINT16 tilen, tiled, ii;
+	INT16 a, b, c, d, x0, y0, x1, y1, x2, y2, hs, vs;
+	register UINT8 colour;
+
+	a = mode7_data[M7A];
+	b = mode7_data[M7B];
+	c = mode7_data[M7C];
+	d = mode7_data[M7D];
+	x0 = mode7_data[M7X];
+	y0 = mode7_data[M7Y];
+	hs = bg_hoffset[0];
+	vs = bg_voffset[0];
+
+	/* sign extend */
+	x0 <<= 3;
+	x0 >>= 3;
+	y0 <<= 3;
+	y0 >>= 3;
+	hs <<= 3;
+	hs >>= 3;
+	vs <<= 3;
+	vs >>= 3;
+
+	/* From the original driver */
+	x1 = 0;
+	y1 = curline;
+	switch( snes_ram[M7SEL] & 0xc0 )
+	{
+		case 0x00:
+			for( ii = 0; ii < 256; ii++ )
+			{
+				x2 = (((a * ((x1 + hs) - x0) + c * ((y1 + vs) - y0)) >> 8) + x0) & 0x3ff;
+				y2 = (((b * ((x1 + hs) - x0) + d * ((y1 + vs) - y0)) >> 8) + y0) & 0x3ff;
+				tilen = snes_vram[((y2 / 8) * 128 * 2) + ((x2 / 8) * 2)];
+				tiled = 1 + (tilen * 8 * 8 * 2);
+				colour = snes_vram[tiled + ((y2 & 7) * 8 * 2) + ((x2 & 7) * 2)];
+				if( zbuf[ii] <= 1 )
+					scanline[ii] = Machine->remapped_colortable[colour];
+				x1++;
+			}
+			break;
+		case 0x80:
+			for( ii = 0; ii < 256; ii++ )
+			{
+				x2 = (((a * ((x1 + hs) - x0) + c * ((y1 + vs) - y0)) >> 8) + x0);
+				y2 = (((b * ((x1 + hs) - x0) + d * ((y1 + vs) - y0)) >> 8) + y0);
+				tilen = snes_vram[(((y2 & 0x3ff) / 8) * 128 * 2) + (((x2 & 0x3ff) / 8) * 2)];
+				if( (x2 & 0x7fff) < 1024 && (y2 & 0x7fff) < 1024 )
+					tiled = 1 + (tilen * 8 * 8 * 2);
+				else
+					tiled = 1;
+				colour = snes_vram[tiled + ((y2 & 7) * 8 * 2) + ((x2 & 7) * 2)];
+				if( zbuf[ii] <= 1 )
+					scanline[ii] = Machine->remapped_colortable[colour];
+				x1++;
+			}
+			break;
+		case 0xc0:
+			for( ii = 0; ii < 256; ii++ )
+			{
+				x2 = (((a * ((x1 + hs) - x0) + c * ((y1 + vs) - y0)) >> 8) + x0);
+				y2 = (((b * ((x1 + hs) - x0) + d * ((y1 + vs) - y0)) >> 8) + y0);
+				if( (x2 & 0x7fff) < 1024 && (y2 & 0x7fff) < 1024 )
+				{
+					tilen = snes_vram[((y2 / 8) * 128 * 2) + ((x2 / 8) * 2)];
+					tiled = 1 + (tilen * 8 * 8 * 2);
+					colour = snes_vram[tiled + ((y2 & 7) * 8 * 2) + ((x2 & 7) * 2)];
+					if( zbuf[ii] <= 1 )
+						scanline[ii] = Machine->remapped_colortable[colour];
+					x1++;
+				}
+			}
+			break;
+	}
+}
+
+/*********************************************
+ * snes_update_sprites()
+ *
+ * Update an entire line of sprites.
+ *********************************************/
+INLINE void snes_update_objects( UINT16 curline )
+{
+	INT8 xs, tileincr;
+	UINT8 i, ys, scale[2], extra, line;
+	UINT16 oam, oam_extra;
+	UINT8 range_over = 0, time_over = 0;
+	UINT8 size, vflip, hflip, priority, pal, count;
+	UINT16 x, y, tile;
+
+#ifdef MAME_DEBUG
+	if( !(readinputport( 10 ) & 0x10) )
+	{
+		return;
+	}
+#endif
+
+	/* Determine sprite size */
+	switch( (snes_ram[OBSEL] & 0xE0) >> 5 )
+	{
+		case 0:			/* 8 & 16 */
+			scale[0] = 1;
+			scale[1] = 2;
+			break;
+		case 1:			/* 8 & 32 */
+			scale[0] = 1;
+			scale[1] = 4;
+			break;
+		case 2:			/* 8 & 64 */
+			scale[0] = 1;
+			scale[1] = 8;
+			break;
+		case 3:			/* 16 & 32 */
+			scale[0] = 2;
+			scale[1] = 4;
+			break;
+		case 4:			/* 16 & 64 */
+			scale[0] = 2;
+			scale[1] = 8;
+			break;
+		case 5:			/* 32 & 64 */
+			scale[0] = 4;
+			scale[1] = 8;
+			break;
+	}
+
+	oam = 0x00;
+	oam_extra = 0x200;
+	extra = 0;
+	for( i = 0; i < 128; i++ )
+	{
+		if( (i % 4) == 0 )
+			extra = snes_oam[oam_extra++];
+
+		x = snes_oam[oam++] | ((extra & 0x1) << 8);
+		extra >>= 1;
+		size = (extra & 0x1);
+		extra >>= 1;
+		y = snes_oam[oam++];
+		tile = snes_oam[oam++];
+		tile |= (snes_oam[oam] & 0x1) << 8;
+		vflip = (snes_oam[oam] & 0x80) >> 7;
+		hflip = (snes_oam[oam] & 0x40) >> 6;
+		priority = table_obj_pty[(snes_oam[oam] & 0x30) >> 4];
+		pal = 128 + ((snes_oam[oam++] & 0xE) << 3);
+		tileincr = 16;
+		if( vflip )
+		{
+			tile += tileincr;
+			tileincr = -tileincr;
+		}
+
+		if( y > 239 )
+			y -= 256;	/* y is past sprite max pos */
+
+		/* Draw sprite if it intersects the current line */
+		for( ys = 0; ys < scale[size]; ys++ )
+		{
+			count = 0;
+			line = curline - (y + (ys << 3));
+			if( vflip )
+				line = (-1 * line) + 7;
+
+			/* If the object intersects this line, then draw it */
+			if( curline >= (y + (ys << 3)) && curline < (y + (ys << 3) + 8) )
+			{
+				if( hflip )
+				{
+					for( xs = (scale[size] - 1); xs >= 0; xs-- )
+					{
+						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
+							snes_draw_object( line, layers[4].data + ((tile + xs) << 5), x + (count++ << 3), curline, priority, hflip, pal );
+						time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
+					}
+				}
+				else
+				{
+					for( xs = 0; xs < scale[size]; xs++ )
+					{
+						if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
+							snes_draw_object( line, layers[4].data + ((tile + xs) << 5), x + (count++ << 3), curline, priority, hflip, pal );
+						time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
+					}
+				}
+
+				/* Increase range_over. 
+				 * Stop drawing if exceeded 32 objects and
+				 * enforcing that limit is enabled */
+				range_over++;
+				if( range_over == 32 && (readinputport( 8 ) & 0x1) )
+				{
+					/* Set the flag in STAT77 register */
+					snes_ram[STAT77] |= 0x40;
+					return;
+				}
+			}
+			tile += tileincr;
+		}
+	}
+
+	if( time_over >= 34 )
+	{
+		/* Set the flag in STAT77 register */
+		snes_ram[STAT77] |= 0x80;
+	}
+}
+
+#ifdef MAME_DEBUG
+/*********************************************
+ * snes_dbg_draw_maps()
+ *
+ * Debug to display maps
+ *********************************************/
+void snes_dbg_draw_maps( struct mame_bitmap *bitmap, UINT32 tilemap, UINT8 bpl, UINT16 curline, UINT8 layer )
+{
+	UINT32 tile, addr = tilemap;
+	UINT16 ii, vflip, hflip, pal;
+	INT8 line;
+
+	tilemap += (curline >> 3) * 64;
+	for( ii = 0; ii < 64; ii += 2 )
+	{
+		vflip = (snes_vram[tilemap + ii + 1] & 0x80);
+		hflip = snes_vram[tilemap + ii + 1] & 0x40;
+		pal = (snes_vram[tilemap + ii + 1] & 0x1c);		/* 8 palettes of 4 colours */
+		tile = (snes_vram[tilemap + ii + 1] & 0x3) << 8;
+		tile |= snes_vram[tilemap + ii];
+		line = curline % 8;
+		if( vflip )
+			line = -line + 7;
+
+		if( tile != 0 )
+		{
+			switch( bpl )
+			{
+				case 1:
+					snes_draw_tile_2( layer, (UINT8)line, layers[layer].data + (tile << 4), (ii >> 1) * 8, curline, 255, hflip, pal );
+					break;
+				case 2:
+					pal <<= 2;
+					snes_draw_tile_4( layer, (UINT8)line, layers[layer].data + (tile << 5), (ii >> 1) * 8, curline, 255, hflip, pal );
+					break;
+				case 4:
+					snes_draw_tile_8( layer, (UINT8)line, layers[layer].data + (tile << 6), (ii >> 1) * 8, curline, 255, hflip );
+					break;
+			}
+		}
+	}
+
+	char str[50];
+	sprintf( str, "%d : %8X  ", layer, addr );
+	ui_drawbox( bitmap, 2, 225, 87, 12 );
+	ui_text( bitmap, str, 3, 227 );
+}
+
+/*********************************************
+ * snes_dbg_draw_all_tiles()
+ *
+ * Debug to display everything in VRAM.
+ *********************************************/
+void snes_dbg_draw_all_tiles( struct mame_bitmap *bitmap, UINT32 tileaddr, UINT8 bpl, UINT16 pal )
+{
+	UINT16 ii, jj, kk;
+	UINT32 addr = tileaddr;
+
+	for( jj = 0; jj < 32; jj++ )
+	{
+		for( kk = 0; kk < 8; kk++ )
+		{
+			for( ii = 0; ii < 32; ii++ )
+			{
+				/* Clear zbuffer */
+				memset( zbuf, 0, SNES_SCR_WIDTH );
+
+				switch( bpl )
+				{
+					case 1:
+						snes_draw_tile_2( 0, kk, tileaddr, ii * 8, jj * 8 + kk, 255, 0, pal );
+						break;
+					case 2:
+						snes_draw_tile_4( 0, kk, tileaddr, ii * 8, jj * 8 + kk, 255, 0, pal );
+						break;
+					case 4:
+						snes_draw_tile_8( 0, kk, tileaddr, ii * 8, jj * 8 + kk, 255, 0 );
+						break;
+				}
+				tileaddr += (bpl * 16);
+			}
+			tileaddr = addr + kk;
+			draw_scanline16( bitmap, 0, jj * 8 + kk, SNES_SCR_WIDTH, scanline, Machine->pens, 200 );
+		}
+	}
+
+	char str[50];
+	sprintf( str, "  %8X  ", addr );
+	ui_drawbox( bitmap, 2, 225, 75, 12 );
+	ui_text( bitmap, str, 3, 227 );
+}
+#endif /* MAME_DEBUG */
+
+/*********************************************
+ * snes_refresh_scanline()
+ *
+ * Redraw the current line.
+ *********************************************/
+void snes_refresh_scanline( UINT16 curline )
+{
+	UINT16 ii;
+	INT8 jj, kk;
+	struct mame_bitmap *bitmap = Machine->scrbitmap;
+	struct rectangle r = Machine->visible_area;
+	r.min_y = r.max_y = curline;
+
+#ifdef MAME_DEBUG
+	/* Just for testing, draw as many tiles as possible */
+	UINT8 dip = readinputport( 9 );
+	UINT8 dt = 1 << ((dip & 0x3) - 1);
+	UINT8 dm = 1 << (((dip & 0xc) >> 2) - 1);
+	if( dt )
+	{
+		static INT8 tstep = 1;
+		static INT16 pal = 0;
+		static UINT32 addr = 0;
+
+		if( curline == 0 )
+		{
+			UINT8 adjust = readinputport( 1 );
+			if( adjust & 0x1 ) addr += (dt * 16);
+			if( adjust & 0x2 ) addr -= (dt * 16);
+			if( adjust & 0x1 ) addr += (dt * 16 * 32);
+			if( adjust & 0x2 ) addr -= (dt * 16 * 32);
+			struct rectangle r = Machine->visible_area;
+			fillbitmap(bitmap, Machine->pens[0], &r);
+			snes_dbg_draw_all_tiles( bitmap, addr, dt, pal * 16 );
+		}
+		return;
+	}
+	if( dm )
+	{
+		static INT8 mstep = 1;
+		static UINT32 tmaddr = 0;
+		static INT8 tmbg = 0;
+		if( curline == 0 )
+		{
+			UINT8 adjust = readinputport( 1 );
+			if( adjust & 0x1 ) tmaddr += 2;
+			if( adjust & 0x2 ) tmaddr -= 2;
+			if( adjust & 0x4 ) tmaddr += 64;
+			if( adjust & 0x8 ) tmaddr -= 64;
+		}
+		/* Clear zbuffer */
+		memset( zbuf, 0, SNES_SCR_WIDTH );
+		/* Draw back colour */
+		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+			scanline[ii] = Machine->pens[0];
+		snes_dbg_draw_maps( bitmap, tmaddr, dm, curline, tmbg );
+		draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanline, Machine->pens, 200 );
+		return;
+	}
+#endif /* MAME_DEBUG */
+
+	if( snes_ram[INIDISP] & 0x80 ) /* screen is forced blank */
+	{
+		fillbitmap(bitmap, Machine->pens[0], &r);
 	}
 	else
 	{
-		SX=0;
-		SXDIR=1;
-	}
+		/* Find the addresses for tile data */
+		layers[0].data = (snes_ram[BG12NBA] & 0xf) << 13;
+		layers[1].data = (snes_ram[BG12NBA] & 0xf0) << 9;
+		layers[2].data = (snes_ram[BG34NBA] & 0xf) << 13;
+		layers[3].data = (snes_ram[BG34NBA] & 0xf0) << 9;
+		layers[4].data = (((snes_ram[OBSEL] & 0x3) * 0x2000) + (((snes_ram[OBSEL] & 0x18)>>3) * 0x1000)) * 2;
+		/* Find the addresses for tile maps */
+		layers[0].map = ((snes_ram[BG1SC] & 0xfc) << 9);
+		layers[1].map = ((snes_ram[BG2SC] & 0xfc) << 9);
+		layers[2].map = ((snes_ram[BG3SC] & 0xfc) << 9);
+		layers[3].map = ((snes_ram[BG4SC] & 0xfc) << 9);
+		/* Clear zbuffers */
+		memset( layers[0].zbuf, 0, SNES_SCR_WIDTH );
+		memset( layers[1].zbuf, 0, SNES_SCR_WIDTH );
+		memset( layers[2].zbuf, 0, SNES_SCR_WIDTH );
+		memset( layers[3].zbuf, 0, SNES_SCR_WIDTH );
+		memset( layers[4].zbuf, 0, SNES_SCR_WIDTH );
+		memset( zbuf, 0, SNES_SCR_WIDTH );
 
-	switch (port21xx[0x1A]&0xC0)
-	{
-		case 0x00:																	// Screen Repetition
-			for (cnt=0;cnt<256;cnt++)
+		/* Draw back colour */
+		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+		{
+			if( snes_ram[CGADSUB] & 0x20 )	/* Back colour enabled for fixed colour add/sub */
+				scanline[ii] = Machine->remapped_colortable[FIXED_COLOUR];
+			else
+				scanline[ii] = Machine->pens[0];
+		}
+
+		/* Draw the sprites */
+		if( (snes_ram[TM]|snes_ram[TS]) & 0x10 )
+			snes_update_objects( curline );
+
+		/* Draw backgrounds */
+		switch( snes_ram[BGMODE] & 0x7 )
+		{
+			case 0:			/* Mode 0 - 4 Bitplanes - 4 / 4 / 4 / 4 colours */
+				snes_update_line_2( 0, curline, 0 );
+				snes_update_line_2( 1, curline, 0 );
+				snes_update_line_2( 2, curline, 0 );
+				snes_update_line_2( 3, curline, 0 );
+				break;
+			case 1:			/* Mode 1 - 3 Bitplanes - 16 / 16 / 4 colours */
+				snes_update_line_4( 0, curline );
+				snes_update_line_4( 1, curline );
+				if( snes_ram[BGMODE] & 0x8 )	/* BG3 can have highest priority if bit 3 if BGMODE is set */
+					snes_update_line_2( 2, curline, 1 );
+				else
+					snes_update_line_2( 2, curline, 0 );
+				break;
+			case 2:			/* Mode 2 - 2 Bitplanes - 16 / 16 colours */
+				snes_update_line_4( 0, curline );
+				snes_update_line_4( 1, curline );
+				break;
+			case 3:			/* Mode 3 - 2 Bitplanes - 256 / 16 colours */
+				snes_update_line_8( 0, curline );
+				snes_update_line_4( 1, curline );
+				break;
+			case 4:			/* Mode 4 - 2 Bitplanes - 256 / 4 colours */
+				snes_update_line_8( 0, curline );
+				snes_update_line_2( 1, curline, 0 );
+				break;
+			case 5:			/* Mode 5 - 2 Bitplanes - 16 / 4 colours */
+				snes_update_line_4( 0, curline );
+				snes_update_line_2( 1, curline, 0 );
+				break;
+			case 6:			/* Mode 6 - 1 Bitplane - 16 colours */
+				snes_update_line_4( 0, curline );
+				break;
+			case 7:			/* Mode 7 - 1 Bitplanes - 256 colours - matrix math stuff */
+				snes_update_line_mode7( curline );
+				break;
+		}
+
+		/* Merge all the lines together */
+		for( ii = 0; ii < SNES_SCR_WIDTH; ii++ )
+		{
+			for( jj = 4; jj >= 0; jj-- )
 			{
-				TX = (((A * ((SX + HS)-XC) + C * ((SY + VS)-YC))>>8)+XC)&0x3FF;		// Keep results within 0-1023
-				TY = (((B * ((SX + HS)-XC) + D * ((SY + VS)-YC))>>8)+YC)&0x3FF;
-
-				tileNum = SNES_VRAM[((TY / 8)*128*2)+((TX / 8)*2)];					// contents of this location is the tile number
-				tileGFX = &SNES_VRAM[1 + (tileNum*8*8*2)];							// points to start of tile gfx data
-				DestPixel = *(tileGFX + ((TY & 7)*8*2) + ((TX & 7)*2));				// pixel contains actual colour index
-
-				if (DestPixel)
+				if( layers[jj].zbuf[ii] > zbuf[ii] )
 				{
-					if (*zCur<=depth)
+					/* An attempt at transparency that doesn't work */
+/*					if( (snes_ram[CGADSUB] & (1 << jj)) && snes_ram[CGWSEL] & 0x2 )
 					{
-						*dst=Machine->pens[palIndx[DestPixel]];
-						*zCur=depth;
-					}
-				}
-				dst++;
-				zCur++;
-				SX+=SXDIR;
-			}
-			break;
-		case 0xC0:																	// No Draw If Outside Screen Area
-			for (cnt=0;cnt<256;cnt++)
-			{
-				TX = (((A * ((SX + HS)-XC) + C * ((SY + VS)-YC))>>8)+XC);
-				TY = (((B * ((SX + HS)-XC) + D * ((SY + VS)-YC))>>8)+YC);
-
-				if ((TX&0x7FFF)<1024 && (TY&0x7FFF)<1024)
-				{
-					tileNum = SNES_VRAM[((TY / 8)*128*2)+((TX / 8)*2)];					// contents of this location is the tile number
-					tileGFX = &SNES_VRAM[1 + (tileNum*8*8*2)];							// points to start of tile gfx data
-					DestPixel = *(tileGFX + ((TY & 7)*8*2) + ((TX & 7)*2));				// pixel contains actual colour index
-
-					if (DestPixel)
-					{
-						if (*zCur<=depth)
+						UINT8 r,g,b;
+						for( kk = jj + 1; kk < 3; kk++ )
 						{
-							*dst=Machine->pens[palIndx[DestPixel]];
-							*zCur=depth;
+							r = (layers[jj].line[ii] & 0x1f) + (layers[kk].line[ii] & 0x1f);
+							g = ((layers[jj].line[ii] & 0x3e0) >> 5) + ((layers[kk].line[ii] & 0x3e0) >> 5);
+							b = ((layers[jj].line[ii] & 0x7c00) >> 10) + ((layers[kk].line[ii] & 0x7c00) >> 10);
+							layers[jj].line[ii] = ((r & 0x1f) | ((g & 0x1f) << 5) | ((b & 0x1f) << 10));
 						}
-					}
-				}
-				dst++;
-				zCur++;
-				SX+=SXDIR;
-			}
-			break;
-		case 0x80:																	// Repeat Tile 00 if outside area
-			for (cnt=0;cnt<256;cnt++)
-			{
-				TX = (((A * ((SX + HS)-XC) + C * ((SY + VS)-YC))>>8)+XC);
-				TY = (((B * ((SX + HS)-XC) + D * ((SY + VS)-YC))>>8)+YC);
-
-				tileNum = SNES_VRAM[(((TY&0x3FF) / 8)*128*2)+(((TX&0x3FF) / 8)*2)];		// contents of this location is the tile number
-				if ((TX&0x7FFF)<1024 && (TY&0x7FFF)<1024)
-					tileGFX = &SNES_VRAM[1 + (tileNum*8*8*2)];							// points to start of tile gfx data
-				else
-					tileGFX = &SNES_VRAM[1];										// points to tile 0
-				DestPixel = *(tileGFX + ((TY & 7)*8*2) + ((TX & 7)*2));				// pixel contains actual colour index
-
-				if (DestPixel)
-				{
-					if (*zCur<=depth)
-					{
-						*dst=Machine->pens[palIndx[DestPixel]];
-						*zCur=depth;
-					}
-				}
-				dst++;
-				zCur++;
-				SX+=SXDIR;
-			}
-			break;
-		default:
-			logerror("Unsupported Mode 7 Draw Type [%d]\n",port21xx[0x1A]);
-			break;
-	}
-}
-
-// This also attempts to fill in the time over and range over bits of STAT77
-
-static void RenderSprites(unsigned short *dst,unsigned char *zCur,int curLine)						// dst is pointer to start of current line
-{
-	int a,b,size,cnt=0,TOver=0,ROver=0;
-	unsigned char *oamPtr=&SNES_ORAM[0x1FF];
-	short yPos,tileCode;
-	unsigned short xPos;
-	int YComp[2],Width[2];
-	unsigned long OAM_Extra;
-	int yTmp;
-	unsigned long *table[2],*tableY[2];
-	unsigned char *tmp;
-
-	tmp = &SNES_VRAM[ (((port21xx[0x01]&0x03)*0x2000) + ((port21xx[0x01]&0x18)*(0x1000>>3)))*2 ];
-
-	switch((port21xx[0x01]&0xE0)>>5)
-	{
-		case 0:												// 8 & 16
-			YComp[0]=7;
-			YComp[1]=15;
-			Width[0]=1;
-			Width[1]=2;
-			table[0]=Tile_Offset_Table_8;
-			tableY[0]=Tile_Offset_Table_8_Y;
-			table[1]=Tile_Offset_Table_16_4;
-			tableY[1]=Tile_Offset_Table_16_4_Y;
-			break;
-		case 1:												// 8 & 32
-			YComp[0]=7;
-			YComp[1]=31;
-			Width[0]=1;
-			Width[1]=4;
-			table[0]=Tile_Offset_Table_8;
-			tableY[0]=Tile_Offset_Table_8_Y;
-			table[1]=Tile_Offset_Table_32_4;
-			tableY[1]=Tile_Offset_Table_32_4_Y;
-			break;
-		case 3:												// 16 & 32
-			YComp[0]=15;
-			YComp[1]=31;
-			Width[0]=2;
-			Width[1]=4;
-			table[0]=Tile_Offset_Table_16_4;
-			tableY[0]=Tile_Offset_Table_16_4_Y;
-			table[1]=Tile_Offset_Table_32_4;
-			tableY[1]=Tile_Offset_Table_32_4_Y;
-			break;
-		default:
-			logerror("Unsupported Sprite Size! [%02X]\n",(port21xx[0x01]&0xE0)>>5);
-			return;
-	}
-
-	// Look at ORAM
-	for (a=0;a<32;a++)
-	{
-		OAM_Extra=SNES_ORAM[0x200+(31-a)];
-
-		for (b=0;b<4;b++)									// For every 2 bits in extra oam data
-		{
-			tileCode=(*oamPtr--)<<8;									// Tile Code = VHPPCCCT TTTTTTTT = vh=flip , p=priority , c=pal base , t = tile
-			tileCode|=*oamPtr--;
-			yPos=(*oamPtr--);
-			xPos=*oamPtr--;
-			size=(OAM_Extra & 0x80)>>7;
-			OAM_Extra<<=1;
-			xPos+=(OAM_Extra & 0x80)<<1;
-			OAM_Extra<<=1;
-
-			if (yPos>239)									// Y is past sprite max y position
-				yPos-=256;
-
-			yTmp=(yPos + YComp[size])-curLine+1;
-
-			if (yTmp>=0 && yTmp<=YComp[size])
-			{
-				TileAddress_=tmp + tableY[size][yTmp];
-				TileAddress_Y=tmp + table[size][yTmp];
-				cnt=SPLOT_4BplTile(xPos,tileCode,dst,zCur,Width[size]);
-
-				if (cnt)
-				{
-					TOver++;			// Number of objects rendered on a line
-					ROver+=cnt;			// Number of 8x8 tiles rendered on a line
+					}*/
+					scanline[ii] = layers[jj].line[ii];
+					zbuf[ii] = layers[jj].zbuf[ii];
 				}
 			}
 		}
-	}
 
-	port21xx[0x3E]&=0x3F;				// Clear Time Over and Range Over bits
-	if (TOver>=33)
-		port21xx[0x3E]|=0x80;
-	if (ROver>=35)
-		port21xx[0x3E]|=0x40;
-}
-
-#define TABLEA2(a) (port43xx[a+0x04]<<16) + (port43xx[a+0x09]<<8) + port43xx[a+0x08]
-#define INDIRECT(a) (port43xx[a+0x07]<<16) + (port43xx[a+0x06]<<8) + port43xx[a+0x05]
-#define BBUS(a) 0x00002100 + port43xx[a+1]
-
-static unsigned char setupHDMA(unsigned char bits)
-{
-	unsigned char bMask=0x01;
-	int dmaBase=0x00;
-	unsigned long SRC;//,a;
-
-	// This routine sets up the hdma internal variables so that updateHDMA() can work.
-
-	while (bMask)
-	{
-		if (bMask&bits)					// This port is set to perform hdma
-		{
-			// First off Set up the table address into the TABLE ADDRESS A2 registers 0x43?8 0x43?9
-
-			port43xx[dmaBase + 0x08]=port43xx[dmaBase + 0x02];
-			port43xx[dmaBase + 0x09]=port43xx[dmaBase + 0x03];
-
-			if ((port21xx[0x05] & 0x07)==7)
-			{
-				SRC=TABLEA2(dmaBase);
-/*				for (a=0;a<256*3;a++)
-				{
-					logerror("%02x ",cpu_readmem24(SRC));
-					SRC++;
-					if ((a&15)==15)
-						logerror("\n");
-				}*/
-			}
-
-			// Next set up the number of lines to execute (start at 0 to force updateHDMA to read in the first byte from the table
-			port43xx[dmaBase + 0x0A]=0;
-		}
-		dmaBase += 0x10;
-		bMask<<=1;
-	}
-
-	return bits;
-}
-
-static unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if hdma has finished then next line wont do it!)
-{
-	unsigned char bMask=0x01;
-	int dmaBase;
-	unsigned long SRC,DST;
-	unsigned char contMode;
-
-	for (dmaBase=0x00;dmaBase<0x80;dmaBase+=0x10,bMask<<=1)
-	{
-		if (bMask&bits)					// This port is performing hdma
-		{
-			// First off check to see if we need to read in a new line from the table
-			if (!(port43xx[dmaBase+0x0A]&0x7F))
-			{
-				// Out of data need to read in a new line - taken from table a2 address with a1's bank address
-				SRC = TABLEA2(dmaBase);
-				port43xx[dmaBase+0x0A]=cpu_readmem24(SRC);
-/*				if (port43xx[dmaBase + 0x00] & 0x40)
-					logerror("Indirect HDMA - Table A2 Address %06X\n",SRC);
-				if (port43xx[dmaBase + 0x00] & 0x40)
-					logerror("Indirect HDMA - Read In Number Of Lines %02X\n",port43xx[dmaBase + 0x0A]);*/
-				if (!port43xx[dmaBase+0x0A])						// If byte just read is end of table marker
-				{
-//					if (port43xx[dmaBase + 0x00] & 0x40)
-//						logerror("Indirect HDMA - End of table read\n",port43xx[dmaBase + 0x0A]);
-					bits&=~bMask;				// No more hdma table so clear hdma enable bit for rest of this screen update.
-					continue;
-				}
-				SRC++;
-				port43xx[dmaBase+0x08]=SRC&0xFF;
-				port43xx[dmaBase+0x09]=(SRC>>8)&0xFF;
-//				if (port43xx[dmaBase + 0x00] & 0x40)
-//					logerror("Indirect HDMA - Table A2 Address now = %06X\n",SRC);
-				if (port43xx[dmaBase + 0x00] & 0x40)				// Indirect hdma requested
-				{
-					// Update Indirect address pointer
-					port43xx[dmaBase+0x05]=cpu_readmem24(SRC++);
-					port43xx[dmaBase+0x06]=cpu_readmem24(SRC++);
-//					if (port43xx[dmaBase + 0x00] & 0x40)
-//						logerror("Indirect HDMA - Indirect Address %02X%02X\n",port43xx[dmaBase+0x06],port43xx[dmaBase+0x05]);
-
-					// Update A2 table pointer
-					port43xx[dmaBase+0x08]=SRC&0xFF;
-					port43xx[dmaBase+0x09]=(SRC>>8)&0xFF;
-//					if (port43xx[dmaBase + 0x00] & 0x40)
-//						logerror("Indirect HDMA - Table A2 Address now = %06X\n",SRC);
-				}
-			}
-			// If here we have a valid number of lines to do
-			contMode=(--port43xx[dmaBase+0x0A])&0x80;			// If set continue mode is required
-//			if (port43xx[dmaBase + 0x00] & 0x40 && contMode)
-//				logerror("Indirect HDMA - Continue Mode\n");
-			if (port43xx[dmaBase + 0x00] & 0x40)				// Indirect hdma requested
-				SRC=INDIRECT(dmaBase);
-			else												// Absolute mode
-				SRC=TABLEA2(dmaBase);
-//			if (port43xx[dmaBase + 0x00] & 0x40)
-//				logerror("Indirect HDMA - Indirect Address = %06X\n",SRC);
-			DST=BBUS(dmaBase);
-
-			// Now we are here we can perform the hdma copy
-			switch (port43xx[dmaBase + 0x00] & 0x07)
-			{
-				case 0x00:									// Write once L (1 src bytes)
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					break;
-				case 0x01:									// Write once L,H (2 src bytes)
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
-					break;
-				case 0x02:									// Write twice L,L (2 src bytes)
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					break;
-				case 0x03:									// Write twice L,L H,H (4 src bytes)
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					cpu_writemem24(DST,cpu_readmem24(SRC++));
-					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
-					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
-					break;
-				default:
-					logerror("HDMA Error : Unsupported HDMA Operation [%d]\n",port43xx[dmaBase + 0x00] & 0x07);
-					return 0;
-			}
-
-			if (contMode)												// Continue mode so record updated pointer
-			{
-				if (port43xx[dmaBase + 0x00] & 0x40)					// Indirect mode so update Indirect table pointer
-				{
-//					if (port43xx[dmaBase + 0x00] & 0x40)
-//						logerror("Indirect HDMA - Indirect Address Now = %06X\n",SRC);
-					port43xx[dmaBase+0x05]=SRC&0xFF;
-					port43xx[dmaBase+0x06]=(SRC>>8)&0xFF;
-				}
-				else													// Absolute mode so update SRC pointer in A2 table
-				{
-					port43xx[dmaBase+0x08]=SRC&0xFF;
-					port43xx[dmaBase+0x09]=(SRC>>8)&0xFF;
-				}
-			}
-//			if (port43xx[dmaBase + 0x00] & 0x40)
-//				logerror("Indirect HDMA - Number Of Lines %02X\n",port43xx[dmaBase + 0x0A]&0x7F);
-			if (!(port43xx[dmaBase+0x0A]&0x7F))							// If here last line
-			{
-				if (!(port43xx[dmaBase + 0x00] & 0x40))					// Absolute mode
-				{
-					if (!contMode)										// If not in continue mode then we update the A2 table address
-					{
-						port43xx[dmaBase+0x08]=SRC&0xFF;
-						port43xx[dmaBase+0x09]=(SRC>>8)&0xFF;
-					}
-				}
-			}
-		}
-	}
-
-	return bits;
-}
-
-void RenderSNESScreenLine(struct mame_bitmap *bitmap,int curLine)
-{
-	static unsigned char hdmaEnable;						// Which hdma channels to look at this scanline
-	int a,tmp;
-	unsigned char SCR_TM=port21xx[0x2C]|port21xx[0x2D];		// Temp hack until sub screens properly supported
-	unsigned short *dst=(unsigned short *)bitmap->line[curLine+16] + 16;
-	unsigned char *zCur=&zBuffer[(256+32)*(curLine+16) + 16];
-
-	if (curLine==0)											// If start of line then setup HDMA
-		hdmaEnable=setupHDMA(port42xx[0x0C]);
-
-	updateHDMA(hdmaEnable);
-
-	for (a=0;a<4;a++)
-		ScreenAddress[a]=&SNES_VRAM[(port21xx[0x07+a]&0xFC) << 9];
-
-	TileAddress[0]=&SNES_VRAM[(port21xx[0x0B]&0x0F)<<13];
-	TileAddress[1]=&SNES_VRAM[(port21xx[0x0B]&0xF0)<<9];
-	TileAddress[2]=&SNES_VRAM[(port21xx[0x0C]&0x0F)<<13];
-	TileAddress[3]=&SNES_VRAM[(port21xx[0x0C]&0xF0)<<9];
-
-	if (port21xx[0x00]&0x80)
-	{
-		// Screen is forceably blanked this line
-		for (a=0;a<256;a++)
-			*dst++=Machine->pens[0];						// Black is at pos 0 in the pens
-	}
-	else
-	{
-		tmp=palIndx[0];
-		if (port21xx[0x31] & 0x20)							// If back colour set then use fixed colour for bkg colour
-			tmp=palIndx[256];
-		for (a=0;a<256;a++)
-		{
-			dst[a]=Machine->pens[tmp];
-			zCur[a]=0;
-		}
-
-		if (SCR_TM&0x10)									// Render sprites
-			RenderSprites(dst,zCur,curLine);
-
-		switch(port21xx[0x05]&0x07)				  			// Determine background mode
-		{
-			case 7:											// Mode 7 - 1 BPL 256 - Interleaved byte word map accessed via matrix maths
-				RENDER_LINE_MODE7(dst,zCur,curLine,1);
-				break;
-			case 4:											// Mode 4 - 2 BPLS 256 / 4 colours
-			case 5:											// Mode 5 - 2 BPLS 16 / 4 colours
-			case 6:											// Mode 6 - 1 BPL 16 colour
-				logerror("Unsuported Video Mode %d\n",port21xx[0x05]&0x07);
-				break;
-			case 0:											// Mode 0 - 4 BPLs 4 / 4 / 4 / 4 colours
-				if (SCR_TM&0x01)
-					RENDER_LINE(dst,zCur,curLine,0,RENDER_LINE_8x8_C2,0x10,4,0x00);
-				if (SCR_TM&0x02)
-					RENDER_LINE(dst,zCur,curLine,1,RENDER_LINE_8x8_C2,0x20,3,0x20);
-				if (SCR_TM&0x04)
-					RENDER_LINE(dst,zCur,curLine,2,RENDER_LINE_8x8_C2,0x40,2,0x40);
-				if (SCR_TM&0x08)
-					RENDER_LINE(dst,zCur,curLine,3,RENDER_LINE_8x8_C2,0x80,1,0x60);
-				break;
-			case 1:											// Mode 1 - 3 BPLS 16 / 16 / 4 colours
-				if (port21xx[0x05]&0x08)	// if set plane 3 has highest priority
-				{
-					if (SCR_TM&0x04)
-						RENDER_LINE(dst,zCur,curLine,2,RENDER_LINE_8x8_C2,0x40,3,0);
-					if (SCR_TM&0x01)
-						RENDER_LINE(dst,zCur,curLine,0,RENDER_LINE_8x8_C4,0x10,2,0);
-					if (SCR_TM&0x02)
-						RENDER_LINE(dst,zCur,curLine,1,RENDER_LINE_8x8_C4,0x20,1,0);
-				}
-				else
-				{
-					if (SCR_TM&0x01)
-						RENDER_LINE(dst,zCur,curLine,0,RENDER_LINE_8x8_C4,0x10,2,0);
-					if (SCR_TM&0x02)
-						RENDER_LINE(dst,zCur,curLine,1,RENDER_LINE_8x8_C4,0x20,1,0);
-					if (SCR_TM&0x04)
-						RENDER_LINE(dst,zCur,curLine,2,RENDER_LINE_8x8_C2,0x40,0,0);
-				}
-				break;
-			case 2:											// Mode 2 - 2 BPLS 16 / 16 colours  (OFFSET CHANGE MODE)
-				if (SCR_TM&0x01)
-					RENDER_LINE(dst,zCur,curLine,0,RENDER_LINE_8x8_C4,0x10,2,0);
-				if (SCR_TM&0x02)
-					RENDER_LINE(dst,zCur,curLine,1,RENDER_LINE_8x8_C4,0x20,1,0);
-				break;
-			case 3:											// Mode 3 - 2 BPLS 256 / 16 colours
-				if (SCR_TM&0x01)
-					RENDER_LINE(dst,zCur,curLine,0,RENDER_LINE_8x8_C8,0x10,2,0);
-				if (SCR_TM&0x02)
-					RENDER_LINE(dst,zCur,curLine,1,RENDER_LINE_8x8_C4,0x20,1,0);
-				break;
-		}
+		/* Phew! Draw the line to screen */
+		draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanline, Machine->pens, 200 );
 	}
 }
-
-
