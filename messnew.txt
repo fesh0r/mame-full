@@ -7,7 +7,7 @@ New System Drivers Supported (in no particular order):
 - Microbee 32 PC [Stefano Priore]
 - ZX Spectrum +3e (Spain) [Stefano Priore]
 - TI-99/4P (preliminary) [Raphael Nabet]
-- TI-990/10 (preliminary) [Raphael Nabet]
+- TI-990/10 [Raphael Nabet]
 
 System Driver Changes:
 ----------------------
@@ -63,7 +63,9 @@ System Driver Changes:
     cards.
   * Improved fdc emulation.
   * Better GROM and speech timings.
-  * Support for multiple extension cards, and multiple GROM ports. [Raphael Nabet]
+  * Support for multiple extension cards, and multiple GROM ports.
+  * Speech synthesizer now works!!!
+  * Added support for EVPC video card. [Raphael Nabet]
 
 - [AMSTRAD CPC] Fixed RAM configuration selection, now the original Heroquest 
   will run [Kev Thacker, Richard Wilson]
