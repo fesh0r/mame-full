@@ -175,7 +175,7 @@ endif
 endif
 
 # gui target
-$(EMULATORGUI):	$(EMULATORDLL) mess/windowsui/guimain.o $(RESFILE)
+$(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/windowsui/guimain.o $(RESFILE)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) $^ -o $@
 ifndef DEBUG
@@ -185,7 +185,7 @@ endif
 endif
 
 # cli target
-$(EMULATORCLI):	$(EMULATORDLL) mess/windows/climain.o
+$(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -o $@
 ifndef DEBUG

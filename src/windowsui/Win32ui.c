@@ -1388,7 +1388,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	g_mame32_message = RegisterWindowMessage("MAME32");
 	g_bDoBroadcast = GetBroadcast();
 
+#if HAS_HELP
 	Help_Init();
+#endif
 
 	/* init files after OptionsInit to init paths */
 	File_Init();
@@ -1644,7 +1646,9 @@ static void Win32UI_exit()
 
 	File_Exit();
 
+#if HAS_HELP
 	Help_Exit();
+#endif
 }
 
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
@@ -1961,7 +1965,9 @@ static BOOL PumpAndReturnMessage(MSG *pmsg)
 	if (!(GetMessage(pmsg, NULL, 0, 0)))
 		return FALSE;
 
+#if HAS_HELP
 	if (!Help_HtmlHelp(NULL, NULL, HH_PRETRANSLATEMESSAGE, (DWORD)pmsg))
+#endif
 	{
 		if (IsWindow(hMain))
 		{
@@ -3468,6 +3474,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 				  LanguageDialogProc);
 		return TRUE;
 
+#if HAS_HELP
 	case ID_HELP_CONTENTS:
 //		Help_HtmlHelp(hMain, MAME32HELP, HH_DISPLAY_TOC, 0);
 		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32%20overview.htm", HH_DISPLAY_TOPIC, 0);
@@ -3482,6 +3489,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 //		Help_HtmlHelp(hMain, MAME32HELP, HH_HELP_CONTEXT, 101);
 		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32%20windows%20install-setup.htm", HH_DISPLAY_TOPIC, 0);
 		break;
+#endif /* HAS_HELP */
 
 	case ID_HELP_RELEASE:
 		DisplayTextFile(hMain, HELPTEXT_RELEASE);
@@ -4131,9 +4139,11 @@ static BOOL SelectLanguageFile(HWND hWnd, TCHAR* filename)
 static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
 	TCHAR pLangFile[MAX_PATH];
+#if HAS_HELP
 	DWORD dwHelpIDs[] = { IDC_LANGUAGECHECK, HIDC_LANGUAGECHECK,
 						  IDC_LANGUAGEEDIT,  HIDC_LANGUAGEEDIT,
 						  0, 0};
+#endif /* HAS_HELP */
 
 	switch (Msg)
 	{
@@ -4158,6 +4168,7 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 			return TRUE;
 		}
 
+#if HAS_HELP
 	case WM_HELP:
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, (DWORD)dwHelpIDs);
 		break;
@@ -4165,6 +4176,7 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
 		break;
+#endif /* HAS_HELP */
 
 	case WM_COMMAND:
 		switch (GET_WM_COMMAND_ID(wParam, lParam))

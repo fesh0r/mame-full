@@ -19,7 +19,6 @@
     Created 8/29/98 by Mike Haaland (mhaaland@hypertech.com)
 
 ***************************************************************************/
-#undef MESS
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
 #include <windows.h>
@@ -148,6 +147,7 @@ static DWORD dwDlgId[] =
 
 #define NUM_PROPSHEETS (sizeof(dwDlgId) / sizeof(dwDlgId[0]))
 
+#if HAS_HELP
 /* Help IDs */
 static DWORD dwHelpIDs[] =
 {
@@ -219,6 +219,7 @@ static DWORD dwHelpIDs[] =
 	IDC_WINDOWED,           HIDC_WINDOWED,
 	0,                      0
 };
+#endif /* HAS_HELP */
 
 static struct ComboBoxEffect
 {
@@ -245,10 +246,12 @@ static struct ComboBoxEffect
  * Public functions
  ***************************************************************/
 
+#if HAS_HELP
 DWORD GetHelpIDs(void)
 {
 	return (DWORD) (LPSTR) dwHelpIDs;
 }
+#endif /* HAS_HELP */
 
 /* Checks of all ROMs are available for 'game' and returns result
  * Returns TRUE if all ROMs found, 0 if any ROMs are missing.
@@ -1025,6 +1028,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		}
 		break;
 
+#if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
@@ -1033,7 +1037,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
-
+#endif /* HAS_HELP */
 	}
 	EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), g_bReset);
 

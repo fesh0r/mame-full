@@ -13,7 +13,7 @@
 #include "mess/utils.h"
 
 static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen);
-//static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList);
+static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList);
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem);
 static BOOL SoftwareDirectories_OnDelete(HWND hDlg);
 static BOOL SoftwareDirectories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR);
@@ -67,7 +67,6 @@ static void SoftwareDirectories_GetList(HWND hDlg, LPSTR lpBuf, UINT iBufLen)
 	}
 }
 
-/*
 static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 {
 	HWND hList;
@@ -108,7 +107,7 @@ static void SoftwareDirectories_InitList(HWND hDlg, LPCSTR lpList)
 
     ListView_SetItemState(hList, 0, LVIS_SELECTED, LVIS_SELECTED);
 }
-*/
+
 static BOOL SoftwareDirectories_OnInsertBrowse(HWND hDlg, BOOL bBrowse, LPCSTR lpItem)
 {
     int nItem;
