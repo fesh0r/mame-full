@@ -571,6 +571,14 @@ static void update_visible_area(struct mame_display *display)
 	int old_width  = normal_params.width;
 	int old_height = normal_params.height;
 	
+	set_ui_visarea(display->game_visible_area.min_x,
+			display->game_visible_area.min_y,
+			display->game_visible_area.max_x,
+			display->game_visible_area.max_y);
+			
+	if (sysdep_display_properties.hwscale)
+	  return;
+	
 	normal_params.width  = (display->game_visible_area.max_x + 1) -
 	   display->game_visible_area.min_x;
 	normal_params.height = (display->game_visible_area.max_y + 1) -
@@ -580,11 +588,6 @@ static void update_visible_area(struct mame_display *display)
 	     (normal_params.height != old_height)) &&
 	    !debugger_has_focus)
 		change_display_settings(&normal_params, 1);
-
-	set_ui_visarea(display->game_visible_area.min_x,
-			display->game_visible_area.min_y,
-			display->game_visible_area.max_x,
-			display->game_visible_area.max_y);
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)

@@ -815,8 +815,12 @@ int x11_window_open_display(void)
 	/* get a blit function */
 	fprintf(stderr, "Bits per pixel = %d... ", dest_bpp);
 #ifdef USE_HWSCALE
-	if(use_hwscale && hwscale_yuv)
-		sysdep_display_properties.palette_info.fourcc_format = hwscale_format;
+	if(use_hwscale)
+	{
+	  sysdep_display_properties.hwscale = 1;
+	  if(hwscale_yuv)
+	    sysdep_display_properties.palette_info.fourcc_format = hwscale_format;
+	}
 	if(use_hwscale && hwscale_yv12)
 	{
 	    if (sysdep_display_params.orientation)

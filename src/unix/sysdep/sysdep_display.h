@@ -155,6 +155,7 @@ struct sysdep_display_open_params {
 struct sysdep_display_properties_struct {
   struct sysdep_palette_info palette_info;
   int (*vector_renderer)(point *pt, int num_points);
+  int hwscale;
 };
 
 /* init / exit */

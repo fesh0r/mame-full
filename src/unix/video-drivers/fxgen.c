@@ -107,7 +107,6 @@ int InitGlide(void)
     close(fd);
   putenv("FX_GLIDE_NO_SPLASH=");
   grGlideInit();
-  grSetupVertexLayout();
   return 0;
 }
 
@@ -450,6 +449,9 @@ int InitVScreen(void)
   }
   fprintf(stderr,
      "info: screen resolution set to %dx%d\n", window_width, window_height);
+
+  /* setup the vertexlayout (for glide3, noop on glide2) */
+  grSetupVertexLayout();
 
   /* clear the buffer */
   grBufferClear(0,0,0);

@@ -37,7 +37,8 @@ static struct
 	int page;
 	int max_page;
 	int max_page_limit;
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,2};
+	int page_dirty;
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,2,-1};
 	
 struct rc_option xf86_dga2_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -202,6 +203,9 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
 	}
 	else
 	  xf86ctx.max_page = 0;
+	
+	/* force a full update during the max_page-s first frames */
+	xf86ctx.page_dirty = xf86ctx.max_page + 1;
 
 	return 0;
 }
@@ -309,10 +313,18 @@ void xf86_dga2_update_display(struct mame_bitmap *bitmap,
 	  struct sysdep_palette_struct *palette, unsigned int flags)
 {
   if (xf86ctx.max_page)
+  {
+    /* force a full screen update */
+    if (xf86ctx.page_dirty)
+    {
+      *dirty_area = *vis_area;
+      xf86ctx.page_dirty--;
+    }
     while(XDGAGetViewportStatus(display, xf86ctx.screen) & (0x01 <<
           (xf86ctx.max_page - 1)))
     {
     }
+  }
 
   xf86ctx.page = (xf86ctx.page + 1) % (xf86ctx.max_page + 1);
   xf86ctx.update_display_func(bitmap, vis_area, dirty_area,

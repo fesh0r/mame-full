@@ -36,8 +36,6 @@ int force_text_width_height;
 float gl_beam;
 int cabview;
 char *cabname;
-static char *libGLName;
-static char *libGLUName;
 
 /* local vars */
 static GLCapabilities glCaps = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
@@ -71,12 +69,6 @@ struct rc_option xgl_opts[] = {
    { "glantialiasvec",	"glaav",		rc_bool,	&antialiasvec,
      "0",		0,			0,		NULL,
      "Enable/disable vector antialiasing (default: true)" },
-   { "gllibname",	"gllib",		rc_string,	&libGLName,
-     "libGL.so",	0,			0,		NULL,
-     "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
-   { "glulibname",	"glulib",		rc_string,	&libGLUName,
-     "libGLU.so",	0,			0,		NULL,
-     "Choose the dynamically loaded GLU Library (default libGLU.so)" },
    { "cabview",		NULL,			rc_bool,	&cabview,
      "0",		0,			0,		NULL,
      "Start/Don't start in cabinet view mode (default: false)" },
@@ -93,6 +85,9 @@ struct rc_option xgl_opts[] = {
 
 int xgl_init(void)
 {
+  const char *libGLName = "libGL.so";
+  const char *libGLUName = "libGLU.so";
+  
   if (!loadGLLibrary(libGLName, libGLUName))
   {
     fprintf(stderr, "Use of OpenGL mode disabled\n");
