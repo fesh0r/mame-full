@@ -1546,8 +1546,27 @@ unsigned TMS99XX_GET_REG(int regnum)
 	switch( regnum )
 	{
 #if (TMS99XX_MODEL == TI990_10_ID)
-		#warning "todo: handle mapping"
-		case REG_PC: return (I.PC < 0xf800) ? I.PC : I.PC + 0x1f0000;
+		case REG_PC:
+			if ((I.cur_map == 0) && (I.PC >= 0xf800))
+				/* intercept TPCS and CPU ROM */
+				return 0x1f0000+I.PC;
+			else if (! I.mapping_on)
+				return I.PC;
+			else
+			{
+				int map_index;
+
+				if (I.PC <= I.map_files[I.cur_map].limit[0])
+					map_index = 0;
+				else if (I.PC <= I.map_files[I.cur_map].limit[1])
+					map_index = 1;
+				else if (I.PC <= I.map_files[I.cur_map].limit[2])
+					map_index = 2;
+				else
+					return I.PC;
+
+				return I.map_files[I.cur_map].bias[map_index]+I.PC;
+			}
 #else
 		case REG_PC:
 #endif
@@ -1583,15 +1602,41 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 	switch( regnum )
 	{
 #if (TMS99XX_MODEL == TI990_10_ID)
-		#warning "todo: handle reverse mapping"
 		case REG_PC:
-			if (! I.mapping_on)
 			{
-				I.PC = val & 0xffff;
+				const unsigned top = (I.cur_map == 0) ? 0xf800 : 0x10000;
+
+				if ((I.cur_map == 0) && (val >= 0x1ff800))
+					/* intercept TPCS and CPU ROM */
+					I.PC = val - 0x1f0000;
+				else if (! I.mapping_on)
+					I.PC = (val < top) ? val : 0;
+				else
+				{
+					if ((val >= I.map_files[I.cur_map].bias[0])
+							&& (val <= (I.map_files[I.cur_map].bias[0]+I.map_files[I.cur_map].limit[0])))
+						I.PC = val - I.map_files[I.cur_map].bias[0];
+					else if ((val > (I.map_files[I.cur_map].bias[1]+I.map_files[I.cur_map].limit[0]))
+							&& (val <= (I.map_files[I.cur_map].bias[1]+I.map_files[I.cur_map].limit[1])))
+						I.PC = val - I.map_files[I.cur_map].bias[1];
+					else if ((val > (I.map_files[I.cur_map].bias[2]+I.map_files[I.cur_map].limit[0]))
+							&& (val > (I.map_files[I.cur_map].bias[2]+I.map_files[I.cur_map].limit[1]))
+							&& (val <= (I.map_files[I.cur_map].bias[2]+I.map_files[I.cur_map].limit[2])))
+						I.PC = val - I.map_files[I.cur_map].bias[2];
+					else
+					{
+						if ((val < top)
+								&& (val > I.map_files[I.cur_map].limit[0])
+								&& (val > I.map_files[I.cur_map].limit[1])
+								&& (val > I.map_files[I.cur_map].limit[2]))
+							I.PC = val;
+						else
+							I.PC = 0;
+					}
+					if (val >= top)
+						I.PC = 0;
+				}
 			}
-			else
-				
-			break;
 #else
 		case REG_PC:
 #endif
@@ -1622,9 +1667,6 @@ void TMS99XX_SET_REG(int regnum, unsigned val)
 }
 
 #if (TMS99XX_MODEL == TI990_10_ID)
-
-/* FIXME */
-#warning "fixme"
 
 void ti990_10_set_irq_line(int irqline, int state)
 {
