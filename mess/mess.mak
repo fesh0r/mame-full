@@ -284,9 +284,7 @@ $(OBJ)/arcadia.a:  \
 	$(OBJ)/mess/vidhrdw/arcadia.o	\
 
 $(OBJ)/sega.a:						\
-	$(OBJ)/mess/vidhrdw/genesis.o	\
 	$(OBJ)/mess/machine/genesis.o	\
-	$(OBJ)/mess/sndhrdw/genesis.o	\
 	$(OBJ)/mess/systems/genesis.o	\
 	$(OBJ)/mess/systems/saturn.o	\
 	$(OBJ)/mess/vidhrdw/smsvdp.o	\
