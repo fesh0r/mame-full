@@ -275,8 +275,8 @@ extern int mess_keep_going;
  * COMP and COMPX are for computers
  ******************************************************************************/
 #define CONS(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME)	\
-extern const struct GameDriver driver_##PARENT; \
-const struct GameDriver driver_##NAME = 	\
+extern struct GameDriver driver_##PARENT; \
+struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
@@ -293,8 +293,8 @@ const struct GameDriver driver_##NAME = 	\
 };
 
 #define CONSX(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,COMPANY,FULLNAME,FLAGS)	\
-extern const struct GameDriver driver_##PARENT;   \
-const struct GameDriver driver_##NAME = 	\
+extern struct GameDriver driver_##PARENT;   \
+struct GameDriver driver_##NAME = 	\
 {											\
 	__FILE__,								\
 	&driver_##PARENT,						\
