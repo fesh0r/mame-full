@@ -46,6 +46,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
    IO_RESET_CPU,       /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\
@@ -68,6 +69,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
    IO_RESET_CPU,       /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\
@@ -88,6 +90,7 @@ int c1551_config(int id, int mode, C1551_CONFIG*config);
    1,                                      /* count */\
    "d64\0",            /* G64 later *//*file extensions */\
    IO_RESET_CPU,       /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    vc1541_init,        /* init */\
    vc1541_exit,        /* exit */\

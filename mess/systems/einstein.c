@@ -1760,8 +1760,9 @@ static const struct IODevice io_einstein[] =
 		4,							/* count */ 
 		"dsk\0",                    /* file extensions */ 
 		IO_RESET_NONE,				/* reset if file changed */ 
+		OSD_FOPEN_DUMMY,			/* open mode */
 		0,
-		einstein_floppy_init,			/* init */ 
+		einstein_floppy_init,		/* init */ 
 		dsk_floppy_exit,			/* exit */ 
 		NULL,						/* info */ 
 		NULL,						/* open */ 

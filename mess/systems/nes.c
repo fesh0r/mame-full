@@ -380,6 +380,7 @@ static const struct IODevice io_famicom[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
         nes_init_cart,      /* init */
         NULL,               /* exit */
@@ -400,6 +401,7 @@ static const struct IODevice io_famicom[] = {
         1,                  /* count */
         "dsk\0fds\0",       /* file extensions */
         IO_RESET_NONE,      /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
         nes_load_disk,      /* init */
         nes_exit_disk,      /* exit */
@@ -424,6 +426,7 @@ static const struct IODevice io_nes[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
         nes_init_cart,      /* init */
         NULL,               /* exit */
@@ -448,6 +451,7 @@ static const struct IODevice io_nespal[] = {
         1,                  /* count */
         "nes\0",            /* file extensions */
         IO_RESET_CPU,       /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
         nes_init_cart,      /* init */
         NULL,               /* exit */

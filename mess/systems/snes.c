@@ -264,6 +264,7 @@ static const struct IODevice io_snes[] =
 		1,                  /* count */
 		"smc,sfc,fig\0",    /* file extensions */
 		IO_RESET_ALL,       /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		snes_load_rom,      /* init */
 		NULL,               /* exit */

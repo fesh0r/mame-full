@@ -2787,6 +2787,7 @@ ROM_END
 		1,							/* count */ \
 		"sna\0",                    /* file extensions */ \
 		IO_RESET_ALL,				/* reset if file changed */ \
+		OSD_FOPEN_READ,				/* open mode */ \
 		0, \
 		amstrad_snapshot_load,		/* init */ \
 		amstrad_snapshot_exit,		/* exit */ \
@@ -2808,8 +2809,9 @@ ROM_END
 		2,							/* count */ \
 		"dsk\0",                    /* file extensions */ \
 		IO_RESET_NONE,				/* reset if file changed */ \
+		OSD_FOPEN_DUMMY,			/* open mode */ \
 		0, \
-		amstrad_floppy_init,			/* init */ \
+		amstrad_floppy_init,		/* init */ \
 		dsk_floppy_exit,			/* exit */ \
 		NULL,						/* info */ \
 		NULL,						/* open */ \
@@ -2853,14 +2855,15 @@ static const struct IODevice io_cpcplus[] =
 		1,							/* count */
 		"cpr\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
+		OSD_FOPEN_DUMMY,			/* open mode */
 		0,
 		amstrad_plus_cartridge_init,	/* init */
 		amstrad_plus_cartridge_exit,	/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
-		NULL,                                           /* status */
-		NULL,                                           /* seek */
+		NULL,                       /* status */
+		NULL,                       /* seek */
 		NULL,						/* tell */
 		NULL,						/* input */
 		NULL,						/* output */

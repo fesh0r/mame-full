@@ -473,6 +473,7 @@ static const struct IODevice io_coupe[] =
 /* Only .DSK (raw dump images) are supported at present */
         "dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		NULL,					/* id */
 		coupe_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */

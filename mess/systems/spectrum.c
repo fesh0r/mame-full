@@ -2452,6 +2452,7 @@ ROM_END
    1,				   /* count */\
    "scr\0",            /* file extensions */\
    IO_RESET_ALL,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,			   /* id */\
    spec_quick_init,    /* init */\
    spec_quick_exit,    /* exit */\
@@ -2470,8 +2471,9 @@ static const struct IODevice io_spectrum[] = {
 	{
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
-		"sna\0z80\0sp\0",       /* file extensions */
+		"sna\0z80\0sp\0",	/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2492,6 +2494,7 @@ static const struct IODevice io_spectrum[] = {
 		1,					/* count */
 		"rom\0",			/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_cart_load,	/* init */
 		NULL,				/* exit */
@@ -2512,8 +2515,9 @@ static const struct IODevice io_specpls3[] = {
 	{
 		IO_SNAPSHOT,		/* type */
 		1,					/* count */
-		"sna\0z80\0sp\0",       /* file extensions */
+		"sna\0z80\0sp\0",	/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2534,13 +2538,14 @@ static const struct IODevice io_specpls3[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		dsk_floppy_load,	/* init */
 		dsk_floppy_exit,	/* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
-                floppy_status,                           /* status */
+		floppy_status,		/* status */
 		NULL,				/* seek */
 		NULL,				/* input */
 		NULL,				/* output */
@@ -2556,6 +2561,7 @@ static const struct IODevice io_ts2068[] = {
 		1,					/* count */
 		"sna\0z80\0sp\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		spectrum_snap_load,	/* init */
 		spectrum_snap_exit,	/* exit */
@@ -2573,12 +2579,13 @@ static const struct IODevice io_ts2068[] = {
 		IO_CASSETTE_WAVE(1,"wav\0tap\0blk\0", NULL,spectrum_cassette_init, spectrum_cassette_exit),
 	{
 		IO_CARTSLOT,			/* type */
-		1,				/* count */
+		1,					/* count */
 		"dck\0",			/* file extensions */
-		IO_RESET_ALL,			/* reset if file changed */
+		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
-		timex_cart_load,		/* init */
-		timex_cart_exit,		/* exit */
+		timex_cart_load,	/* init */
+		timex_cart_exit,	/* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */

@@ -328,7 +328,7 @@ static const struct IODevice io_ti99_4p[] =
 		3,						/* count */
 		"dsk\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
-		/*OSD_FOPEN_DUMMY,*/		/* open mode */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		ti99_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */

@@ -691,6 +691,7 @@ static const struct IODevice io_ibmat[] = {
 		2,					/* count */
 		"dsk\0",            /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		pc_floppy_init, 	/* init */
 		pc_floppy_exit, 	/* exit */
@@ -711,6 +712,7 @@ static const struct IODevice io_ibmat[] = {
 		4,					/* count */
 		"img\0",            /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		pc_harddisk_init,	/* init */
 		pc_harddisk_exit,	/* exit */

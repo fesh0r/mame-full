@@ -391,6 +391,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"lnx\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		lynx_init_cart, 				/* init */
 		NULL,							/* exit */
@@ -411,6 +412,7 @@ static const struct IODevice io_lynx[] = {
 		1,								/* count */
 		"o\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		lynx_quickload, 				/* init */
 		NULL,							/* exit */

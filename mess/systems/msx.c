@@ -841,6 +841,7 @@ static const struct IODevice io_msx[] = {
     MSX_MAX_CARTS,              /* count */
     "rom\0",                    /* file extensions */
 	IO_RESET_NONE,				/* reset if file changed */
+	OSD_FOPEN_DUMMY,			/* open mode */
     0,
     msx_load_rom,               /* init */
     msx_exit_rom,               /* exit */
@@ -860,8 +861,9 @@ static const struct IODevice io_msx[] = {
         2,                      /* count */
         "dsk\0",                /* file extensions */
         IO_RESET_NONE,          /* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
         0,
-        msx_floppy_init,   	/* init */
+        msx_floppy_init,   		/* init */
         basicdsk_floppy_exit,   /* exit */
         NULL,                   /* info */
         NULL,                   /* open */

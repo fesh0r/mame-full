@@ -545,9 +545,10 @@ static const struct IODevice io_oric1[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
-		oric_floppy_init, /* init */
-		oric_floppy_exit,	/* exit */
+		oric_floppy_init,		/* init */
+		oric_floppy_exit,		/* exit */
 		NULL,					/* info */
 		NULL,					/* open */
 		NULL,					/* close */
@@ -571,6 +572,7 @@ static const struct IODevice io_prav8[] =
 		1,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		NULL, 					/* id */
 		apple2_floppy_init,		/* init */
 		apple2_floppy_exit,		/* exit */

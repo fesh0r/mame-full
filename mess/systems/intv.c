@@ -463,6 +463,7 @@ static const struct IODevice io_intv[] = {
 		1,					/* count */
 		"rom\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		intv_load_rom,		/* init */
 		NULL,				/* exit */
@@ -487,6 +488,7 @@ static const struct IODevice io_intvsrs[] = {
 		1,					/* count */
 		"rom\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		intv_load_rom,		/* init */
 		NULL,				/* exit */
@@ -511,6 +513,7 @@ static const struct IODevice io_intvkbd[] = {
 		2,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		intvkbd_load_rom,	/* init */
 		NULL,				/* exit */

@@ -310,6 +310,7 @@ static const struct IODevice io_atom[] =
 		1,						/* count */
 		"atm\0",				/* file extn */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_READ,			/* open mode */
         NULL,                   /* id */
 		atom_init_atm,			/* init */
 		NULL,					/* exit */
@@ -329,6 +330,7 @@ static const struct IODevice io_atom[] =
 		2,						/* count */
 		"ssd\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		atom_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */

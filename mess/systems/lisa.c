@@ -306,6 +306,7 @@ static const struct IODevice io_lisa2[] = {
 		1,					/* count */
 		"img\0image\0",		/* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		lisa_floppy_init,	/* init */
 		lisa_floppy_exit,	/* exit */

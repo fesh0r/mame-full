@@ -44,6 +44,7 @@ extern int wave_output_chunk(int id, void *src, int chunks);
 	count,				/* count */ 					\
 	fileext,			/* file extensions */			\
 	IO_RESET_NONE,		/* reset depth */				\
+	OSD_FOPEN_DUMMY,	/* open mode */					\
 	id, 				/* id */						\
 	init,				/* init */						\
 	exit,				/* exit */						\

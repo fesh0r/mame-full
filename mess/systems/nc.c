@@ -1792,11 +1792,12 @@ static const struct IODevice io_nc100[] =
 	{
 			IO_CARTSLOT,           /* type */
 			1,                     /* count */
-			"crd\0card\0",               /* file extensions */
+			"crd\0card\0",          /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
+			OSD_FOPEN_DUMMY,		/* open mode */
 			0,
-			nc_pcmcia_card_load, /* load */
-			nc_pcmcia_card_exit, /* exit */
+			nc_pcmcia_card_load,	/* load */
+			nc_pcmcia_card_exit,	/* exit */
 			NULL,                   /* info */
 			NULL,                   /* open */
 			NULL,                   /* close */
@@ -1813,9 +1814,10 @@ static const struct IODevice io_nc100[] =
 			1,                     /* count */
 			"txt\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			NULL,   /* id */
-			nc_serial_init, /* load */
-			serial_device_exit, /* exit */
+			OSD_FOPEN_DUMMY,		/* open mode */
+			NULL,					/* id */
+			nc_serial_init,			/* load */
+			serial_device_exit,		/* exit */
 			NULL,                   /* info */
 			NULL,                   /* open */
 			NULL,                   /* close */
@@ -1836,11 +1838,12 @@ static const struct IODevice io_nc200[] =
 	{
 			IO_CARTSLOT,           /* type */
 			1,                     /* count */
-			"crd\0card\0",               /* file extensions */
+			"crd\0card\0",          /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
+			OSD_FOPEN_DUMMY,		/* open mode */
 			0,
-			nc_pcmcia_card_load, /* load */
-			nc_pcmcia_card_exit, /* exit */
+			nc_pcmcia_card_load,	/* load */
+			nc_pcmcia_card_exit,	/* exit */
 			NULL,                   /* info */
 			NULL,                   /* open */
 			NULL,                   /* close */
@@ -1857,6 +1860,7 @@ static const struct IODevice io_nc200[] =
 			1,
 			"dsk\0",
 			IO_RESET_NONE,
+			OSD_FOPEN_DUMMY,		/* open mode */
 			NULL,
 			pc_floppy_init,
 			pc_floppy_exit,
@@ -1876,9 +1880,10 @@ static const struct IODevice io_nc200[] =
 			1,                     /* count */
 			"txt\0",               /* file extensions */
 			IO_RESET_NONE,			/* reset if file changed */
-			NULL,   /* id */
-			nc_serial_init, /* load */
-			serial_device_exit, /* exit */
+			OSD_FOPEN_DUMMY,		/* open mode */
+			NULL,					/* id */
+			nc_serial_init,			/* load */
+			serial_device_exit,		/* exit */
 			NULL,                   /* info */
 			NULL,                   /* open */
 			NULL,                   /* close */

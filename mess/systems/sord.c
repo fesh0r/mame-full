@@ -885,6 +885,7 @@ ROM_END
 		1,						/* count */\
 		"rom\0",                /* file extensions */\
 		IO_RESET_NONE,			/* reset if file changed */\
+		OSD_FOPEN_DUMMY,		/* open mode */\
 		NULL,					/* id */\
 		sord_cartslot_init,		/* init */\
 		sord_cartslot_exit,		/* exit */\
@@ -924,8 +925,9 @@ static const struct IODevice io_srdm5fd5[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		NULL, /*basicdsk_floppy_id,*/ 	/* id */
-		sord_floppy_init, /* init */
+		sord_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
 		NULL,					/* open */

@@ -511,6 +511,7 @@ static const struct IODevice io_ti85[] = {
 	1,			/* count */
 	"sav\0",        	/* file extensions */
 	IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,               	/* id */
 	ti85_load_snap,		/* load */
 	ti85_exit_snap,		/* exit */
@@ -531,6 +532,7 @@ static const struct IODevice io_ti85[] = {
 	"85p\085s\085i\085n\085c\085l\085k\085m\085v\085d\085e\085r\085g\085b\0",
 				/* file extensions */
 	IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 	0,			/* id */
 	ti85_serial_init,	/* init */
 	ti85_serial_exit,		/* exit */
@@ -554,6 +556,7 @@ static const struct IODevice io_ti86[] = {
 	1,			/* count */
 	"sav\0",        	/* file extensions */
 	IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,               	/* id */
 	ti85_load_snap,		/* init */
 	ti85_exit_snap,		/* exit */
@@ -574,6 +577,7 @@ static const struct IODevice io_ti86[] = {
 	"86p\086s\086i\086n\086c\086l\086k\086m\086v\086d\086e\086r\086g\0",
 				/* file extensions */
 	IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 	0,			/* id */
 	ti85_serial_init,	/* init */
 	ti85_serial_exit,		/* exit */

@@ -235,6 +235,7 @@ static const struct IODevice io_channelf[] = {
 		1,					/* count */
 		"bin\0",            /* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		0,
 		channelf_load_rom,	/* init */
 		NULL,				/* exit */

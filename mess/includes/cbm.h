@@ -93,6 +93,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,				   /* count */\
    "p00\0prg\0",       /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -113,6 +114,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -133,6 +135,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -153,6 +156,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -173,6 +177,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -193,6 +198,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg);
    1,                                      /* count */\
    "p00\0prg\0",            /*file extensions */\
    IO_RESET_CPU,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */\
    cbm_quick_init,     /* init */\
    cbm_quick_exit,     /* exit */\
@@ -231,6 +237,7 @@ extern CBM_ROM cbm_rom[0x20];
    2,                  /* in reality 1 *//* count */\
    extensions,            /*file extensions */\
    IO_RESET_ALL,	   /* reset if file changed */\
+	OSD_FOPEN_DUMMY,	/* open mode */\
    0, \
    cbm_rom_init,       /* init */\
    cbm_rom_exit,       /* exit */\

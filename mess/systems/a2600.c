@@ -815,6 +815,7 @@ static const struct IODevice io_a2600[] =
         1,                              /* count */
         "bin\0",                        /* file extensions */
         IO_RESET_ALL,                   /* reset if file changed */
+		OSD_FOPEN_READ,					/* open mode */
         0,
         a2600_load_rom,                 /* init */
         NULL,                           /* exit */

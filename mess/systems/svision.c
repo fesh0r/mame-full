@@ -421,6 +421,7 @@ static const struct IODevice io_svision[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		svision_load_rom, 				/* init */
 		NULL,							/* exit */

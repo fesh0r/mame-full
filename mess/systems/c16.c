@@ -856,6 +856,7 @@ static const struct IODevice io_c16[] =
 		2,							   /* normal 1 *//* count */
 		"bin\0rom\0",                  /* file extensions */
 		IO_RESET_ALL,				   /* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */
@@ -882,6 +883,7 @@ static const struct IODevice io_c16c[] =
 		2,							   /* normal 1 *//* count */
 		"bin\0rom\0",                  /* file extensions */
 		IO_RESET_ALL,				   /* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */
@@ -908,6 +910,7 @@ static const struct IODevice io_c16v[] =
 		2,							   /* normal 1 *//* count */
 		"bin\0rom\0",                  /* file extensions */
 		IO_RESET_ALL,				   /* reset if file changed */
+		OSD_FOPEN_DUMMY,				/* open mode */
 		0,
 		c16_rom_init,				   /* init */
 		NULL,						   /* exit */

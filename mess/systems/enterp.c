@@ -625,6 +625,7 @@ static const struct IODevice io_ep128[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		enterprise_floppy_init, /* init */
 		basicdsk_floppy_exit,	/* exit */
@@ -645,8 +646,9 @@ static const struct IODevice io_ep128[] = {
 		4,							/* count */
 		"dsk\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
+		OSD_FOPEN_DUMMY,			/* open mode */
 		0,
-		enterprise_dsk_floppy_init,			/* init */
+		enterprise_dsk_floppy_init,	/* init */
 		dsk_floppy_exit,			/* exit */
 		NULL,						/* info */
 		NULL,						/* open */

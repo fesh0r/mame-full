@@ -134,6 +134,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		4,\
 		"dsk\0",\
 		IO_RESET_NONE,\
+		OSD_FOPEN_DUMMY,\
 		0,\
 		dragon_floppy_init,\
 		dragon_floppy_exit,\
@@ -154,6 +155,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		1,\
 		"rom\0",\
 		IO_RESET_ALL,\
+		OSD_FOPEN_DUMMY,\
         NULL,\
 		loadproc,\
 		NULL,\
@@ -174,6 +176,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		1,\
 		"pak\0",\
 		IO_RESET_ALL,\
+		OSD_FOPEN_DUMMY,\
         NULL,\
 		loadproc,\
 		NULL,\
@@ -196,6 +199,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 	1,							/* count */				\
 	"prn\0",					/* file extensions */	\
 	IO_RESET_NONE,				/* reset depth */		\
+	OSD_FOPEN_DUMMY,			/* open mode */			\
 	NULL,						/* id */				\
 	coco_bitbanger_init,		/* init */				\
 	coco_bitbanger_exit,		/* exit */				\
@@ -219,6 +223,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 	1,							/* count */				\
 	"vhd\0",					/* file extensions */	\
 	IO_RESET_NONE,				/* reset depth */		\
+	OSD_FOPEN_DUMMY,			/* open mode */			\
 	NULL,						/* id */				\
 	coco_vhd_init,				/* init */				\
 	coco_vhd_exit,				/* exit */				\

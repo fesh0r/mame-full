@@ -958,6 +958,7 @@ static const struct IODevice io_a400[] = {
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
 		a800_rom_init,		/* init */
 		a800_rom_exit,		/* exit */
@@ -977,6 +978,7 @@ static const struct IODevice io_a400[] = {
 		4,					/* count */
 		"atr\0dsk\0xfd\0",  /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		a800_floppy_init,	/* init */
 		a800_floppy_exit,	/* exit */
@@ -1001,6 +1003,7 @@ static const struct IODevice io_a800[] = {
 		2,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
 		a800_rom_init,		/* init */
         a800_rom_exit,      /* exit */
@@ -1020,6 +1023,7 @@ static const struct IODevice io_a800[] = {
 		4,					/* count */
 		"atr\0dsk\0xfd\0",  /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
 		a800_floppy_init,	/* init */
 		a800_floppy_exit,	/* exit */
@@ -1045,6 +1049,7 @@ static const struct IODevice io_a5200[] = {
 		1,					/* count */
 		"rom\0bin\0",       /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         0,
 		a5200_rom_init, 	/* init */
 		a5200_rom_exit, 	/* exit */

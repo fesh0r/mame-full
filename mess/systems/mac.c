@@ -347,6 +347,7 @@ static const struct IODevice io_mac512ke[] = {
 		2,					/* count */
 		"dsk\0img\0",       /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		NULL,				/* id */
 		mac_floppy_init,	/* init */
 		mac_floppy_exit,	/* exit */
@@ -370,6 +371,7 @@ static const struct IODevice io_macplus[] = {
 		2,					/* count */
 		"dsk\0img\0",       /* file extensions */
 		IO_RESET_NONE,		/* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
 		NULL,				/* id */
 		mac_floppy_init,	/* init */
 		mac_floppy_exit,	/* exit */

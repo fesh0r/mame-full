@@ -438,6 +438,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */
@@ -457,6 +458,7 @@ static const struct IODevice io_trs80[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */
@@ -481,6 +483,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cas\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		trs80_cas_init, 		/* init */
 		trs80_cas_exit, 		/* exit */
@@ -500,6 +503,7 @@ static const struct IODevice io_trs80l2[] = {
 		1,						/* count */
 		"cmd\0",                /* file extensions */
 		IO_RESET_CPU,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		trs80_cmd_init, 		/* init */
 		trs80_cmd_exit, 		/* exit */
@@ -519,6 +523,7 @@ static const struct IODevice io_trs80l2[] = {
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
 		trs80_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */

@@ -271,7 +271,7 @@ ROM_END
 
 static int arcadia_init_cart(int id)
 {
-	FILE *cartfile;
+	void *cartfile;
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
@@ -334,6 +334,7 @@ static const struct IODevice io_arcadia[] = {
 		1,								/* count */
 		"bin\0",                        /* file extensions */
 		IO_RESET_ALL,					/* reset if file changed */
+		OSD_FOPEN_READ,					/* open mode */
 		0,
 		arcadia_init_cart, 				/* init */
 		NULL,							/* exit */

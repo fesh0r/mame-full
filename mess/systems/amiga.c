@@ -117,6 +117,7 @@ static const struct IODevice io_amiga[] = {
         4,                  /* count */
         "adf\0",            /* file extensions */
         IO_RESET_NONE,      /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
         amiga_fdc_init,     /* init */
         NULL,               /* exit */
@@ -148,6 +149,7 @@ static const struct IODevice io_cdtv[] = {
         4,                  /* count */
         "adf\0",            /* file extensions */
         IO_RESET_NONE,      /* reset if file changed */
+		OSD_FOPEN_DUMMY,	/* open mode */
         NULL,               /* id */
         amiga_fdc_init,     /* init */
         NULL,               /* exit */

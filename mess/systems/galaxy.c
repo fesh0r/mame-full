@@ -227,22 +227,23 @@ ROM_END
 static const struct IODevice io_galaxy[] = {
 	{
 		IO_SNAPSHOT,		/* type */
-		1,			/* count */
+		1,					/* count */
 		"gal\0",        	/* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-		NULL,               	/* id */
+		OSD_FOPEN_DUMMY,	/* open mode */
+		NULL,               /* id */
 		galaxy_load_snap,	/* init */
 		galaxy_exit_snap,	/* exit */
 		NULL,		        /* info */
 		NULL,           	/* open */
-		NULL,               	/* close */
-		NULL,               	/* status */
-		NULL,               	/* seek */
-		NULL,			/* tell */
+		NULL,               /* close */
+		NULL,               /* status */
+		NULL,               /* seek */
+		NULL,				/* tell */
 		NULL,           	/* input */
-		NULL,               	/* output */
-		NULL,               	/* input_chunk */
-		NULL                	/* output_chunk */
+		NULL,               /* output */
+		NULL,               /* input_chunk */
+		NULL                /* output_chunk */
 	},
 //    IO_CASSETTE_WAVE(1,"wav\0", NULL, galaxy_init_wav, galaxy_exit_wav),
 	{ IO_END }

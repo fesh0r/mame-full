@@ -275,6 +275,7 @@ static	const	struct	IODevice	io_uk101[] =
 		1,						/* count */
 		"bas\0",				/* file extn */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
         NULL,                   /* id */
 		uk101_init_cassette,	/* init */
 		uk101_exit_cassette,	/* exit */
@@ -299,6 +300,7 @@ static	const	struct	IODevice io_superbrd[] =
 		1,						/* count */
 		"bas\0",				/* file extn */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
         NULL,                   /* id */
 		uk101_init_cassette,	/* init */
 		uk101_exit_cassette,	/* exit */

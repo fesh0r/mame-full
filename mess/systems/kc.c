@@ -459,7 +459,8 @@ ROM_END
    IO_QUICKLOAD,	   /* type */ \
    1,				   /* count */ \
    "kcc\0",       /*file extensions */ \
-   0,	   /* reset if file changed */ \
+	IO_RESET_NONE,		/* reset if file changed */ \
+	OSD_FOPEN_DUMMY,	/* open mode */\
    NULL,               /* id */ \
    kc_quickload_load,     /* init */ \
    NULL,     /* exit */ \
@@ -490,8 +491,9 @@ static const struct IODevice io_kc85_4d[] =
 		4,						/* count */
 		"dsk\0",                /* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
+		OSD_FOPEN_DUMMY,		/* open mode */
 		0,
-		kc85_floppy_init, /* init */
+		kc85_floppy_init,		/* init */
 		basicdsk_floppy_exit,	/* exit */
 		NULL,					/* info */
 		NULL,					/* open */
