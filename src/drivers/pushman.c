@@ -8,7 +8,7 @@
 	the communication between the 68000 and MCU is probably not emulated
 	100% correct but it works.  Later levels (using the cheat mode) seem
 	to have some corrupt tilemaps, I'm not sure if this is a driver bug
-	or a game bug from using the cheat mode.	
+	or a game bug from using the cheat mode.
 
 	Text layer banking is wrong on the continue screen.
 
@@ -100,7 +100,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfe0800, 0xfe17ff, MRA_BANK2 },
 	{ 0xfe4000, 0xfe4007, pushman_control_r },
 	{ 0xfec000, 0xfec7ff, pushman_videoram_r },
-	{ 0xff8200, 0xff87ff, paletteram_word_r },
+	{ 0xff8000, 0xff87ff, paletteram_word_r },
 	{ 0xffc000, 0xffffff, MRA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -114,7 +114,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfe8000, 0xfe8003, pushman_scroll_w },
 	{ 0xfe800e, 0xfe800f, MWA_NOP }, /* ? */
 	{ 0xfec000, 0xfec7ff, pushman_videoram_w, &videoram },
-	{ 0xff8200, 0xff87ff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
+	{ 0xff8000, 0xff87ff, paletteram_xxxxRRRRGGGGBBBB_word_w, &paletteram },
 	{ 0xffc000, 0xffffff, MWA_BANK1 },
 	{ -1 }	/* end of table */
 };
@@ -178,8 +178,8 @@ INPUT_PORTS_START( pushman )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 ) 
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED ) 
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -187,12 +187,12 @@ INPUT_PORTS_START( pushman )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_VBLANK ) /* not sure, probably wrong */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 ) 
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 ) 
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x01, 0x01, "Debug Mode" )
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug Mode", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -246,21 +246,21 @@ INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	2,	/* 2 bits per pixel */
+	8,8,
+	RGN_FRAC(1,1),
+	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every char takes 16 consecutive bytes */
+	16*8
 };
 
 static struct GfxLayout spritelayout =
 {
 	16,16,
-	2048,
+	RGN_FRAC(1,4),
 	4,
-	{ 0x20000*8, 0x30000*8, 0x00000*8, 0x10000*8 },
+	{ RGN_FRAC(0,4), RGN_FRAC(1,4), RGN_FRAC(2,4), RGN_FRAC(3,4) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -271,9 +271,9 @@ static struct GfxLayout spritelayout =
 static struct GfxLayout tilelayout =
 {
 	32,32,
-	512, 
-	4,     
-	{ 4, 0, 0x20000*8+4, 0x20000*8 },
+	RGN_FRAC(1,2),
+	4,
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2)+0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			64*8+0, 64*8+1, 64*8+2, 64*8+3, 65*8+0, 65*8+1, 65*8+2, 65*8+3,
 			128*8+0, 128*8+1, 128*8+2, 128*8+3, 129*8+0, 129*8+1, 129*8+2, 129*8+3,
@@ -287,9 +287,9 @@ static struct GfxLayout tilelayout =
 
 static struct GfxDecodeInfo pushman_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &charlayout,      512, 16 },
-	{ REGION_GFX2, 0x000000, &spritelayout,    256, 16 },
-	{ REGION_GFX3, 0x000000, &tilelayout,        0, 16 },
+	{ REGION_GFX1, 0x000000, &charlayout,   0x300, 16 },	/* colors 0x300-0x33f */
+	{ REGION_GFX2, 0x000000, &spritelayout, 0x200, 16 },	/* colors 0x200-0x2ff */
+	{ REGION_GFX3, 0x000000, &tilelayout,   0x100, 16 },	/* colors 0x100-0x1ff */
 	{ -1 } /* end of array */
 };
 
@@ -312,10 +312,6 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
-static int pushman_interrupt(void)
-{
-	return 2;	/* VBL */
-}
 
 static UINT32 amask_m68705 = 0xfff;
 
@@ -324,10 +320,10 @@ static struct MachineDriver machine_driver_pushman =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M68000, 
+			CPU_M68000,
 			8000000,
-			readmem,writemem,0,0,	
-			pushman_interrupt,1
+			readmem,writemem,0,0,
+			m68_level2_irq,1
 		},
 		{
 			CPU_M68705,
@@ -352,7 +348,7 @@ static struct MachineDriver machine_driver_pushman =
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 
 	pushman_gfxdecodeinfo,
-	2048, 2048,
+	1024, 1024,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -373,34 +369,36 @@ static struct MachineDriver machine_driver_pushman =
 
 /***************************************************************************/
 
+
 ROM_START( pushman )
 	ROM_REGION( 0x20000, REGION_CPU1 )
-	ROM_LOAD_EVEN("12",   0x000000, 0x10000, 0x4251109d )
-	ROM_LOAD_ODD ("11",   0x000000, 0x10000, 0x1167ed9f )
- 
+	ROM_LOAD_EVEN( "pman-12.212", 0x000000, 0x10000, 0x4251109d )
+	ROM_LOAD_ODD ( "pman-11.197", 0x000000, 0x10000, 0x1167ed9f )
+
 	ROM_REGION( 0x01000, REGION_CPU2 )
-	ROM_LOAD("pushman.uc",0x00000, 0x01000, 0xd7916657 )
+	ROM_LOAD( "pushman.uc",  0x00000, 0x01000, 0xd7916657 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD("13",        0x00000, 0x08000, 0xbc03827a )
-
-	ROM_REGION( 0x10000, REGION_USER1 )
-	ROM_LOAD("10",        0x00000, 0x08000, 0x5f9ae9a1 )
+	ROM_LOAD( "pman-13.216", 0x00000, 0x08000, 0xbc03827a )
 
 	ROM_REGION( 0x10000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD("01",        0x00000, 0x08000, 0x14497754 )
+	ROM_LOAD( "pman-1.130",  0x00000, 0x08000, 0x14497754 )
 
 	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD("02",        0x00000, 0x10000, 0x2cb2ac29 )
-	ROM_LOAD("03",        0x10000, 0x10000, 0x8ab957c8 )
-	ROM_LOAD("04",        0x20000, 0x10000, 0x16e5ce6b )
-	ROM_LOAD("05",        0x30000, 0x10000, 0xb82140b8 )
+	ROM_LOAD( "pman-4.58", 0x00000, 0x10000, 0x16e5ce6b )
+	ROM_LOAD( "pman-5.59", 0x10000, 0x10000, 0xb82140b8 )
+	ROM_LOAD( "pman-2.56", 0x20000, 0x10000, 0x2cb2ac29 )
+	ROM_LOAD( "pman-3.57", 0x30000, 0x10000, 0x8ab957c8 )
 
 	ROM_REGION( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD("06",        0x00000, 0x10000, 0xbd0f9025 )
-	ROM_LOAD("08",        0x10000, 0x10000, 0x591bd5c0 )
-	ROM_LOAD("07",        0x20000, 0x10000, 0x208cb197 )
-	ROM_LOAD("09",        0x30000, 0x10000, 0x77ee8577 )
+	ROM_LOAD( "pman-6.131", 0x00000, 0x10000, 0xbd0f9025 )
+	ROM_LOAD( "pman-8.148", 0x10000, 0x10000, 0x591bd5c0 )
+	ROM_LOAD( "pman-7.132", 0x20000, 0x10000, 0x208cb197 )
+	ROM_LOAD( "pman-9.149", 0x30000, 0x10000, 0x77ee8577 )
+
+	ROM_REGION( 0x10000, REGION_GFX4 )	/* bg tilemaps */
+	ROM_LOAD( "pman-10.189", 0x00000, 0x08000, 0x5f9ae9a1 )
 ROM_END
 
-GAME( 1990, pushman, 0, pushman, pushman, 0, ROT0, "American Sammy Corporation / Comad", "Pushman" )
+
+GAME( 1990, pushman, 0, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman" )
