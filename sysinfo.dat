@@ -135,7 +135,7 @@ Atari 7800 ProSystem
 
 Known Issues:
 
-The Reset key "R" and Select key "S" are hardmapped to the same location as the default 
+The Reset key "R" and Select key "S" are hard-mapped to the same location as the default 
 Player 2 up and fire two, respectively. You will need to remap these manually to avoid
 control conflicts in some games.
 
@@ -153,7 +153,7 @@ releasing a speedup chipset for Atari coinop Missile Command).
 
 The 7800 was compatible with pre-existing Atari 2600 game program cartridges, without the need 
 for expansion modules or turning switches, but was also designed to use enhanced 7800-only 
-cartridges such as thepack-in "Pole Position 2". (n.b., only the 7800-specific cartridges are 
+cartridges such as the pack-in "Pole Position 2". (n.b., only the 7800-specific cartridges are 
 currently supported in MESS.) Many peripherals, including a computer/keyboard and high score 
 saving cartridge were planned but never released.
 
@@ -385,7 +385,7 @@ Known Issues:
 
 The driver should work correctly as of MESS .37b15. Still, it needs development tools, sample
 code and usage instructions desperately. I have tons of sample code (which was the reason for
-starting to write this driver), but still need to re-type it.  I have started work on an assembler,
+starting to write this driver), but still need to retype it.  I have started work on an assembler,
 too.
 
 
@@ -417,9 +417,9 @@ According to a 1956 document, the APEC series included the following machines:
 
  * APE(R)C: British Rayon Research Association ('R' must stand for 'Rayon')
 
- * UCC: University College, London (circa january 1956)
+ * UCC: University College, London (circa January 1956)
 
- * MAC (Magnetic Automatic Calculator): "built by Wharf Engineering Laboratories" (february 1955)
+ * MAC (Magnetic Automatic Calculator): "built by Wharf Engineering Laboratories" (February 1955)
 
  * The HEC (H... Electronic Computer - still no idea what 'H' can stand for), built by the British
 Tabulating Machine Company (later to become International Computers and Tabulators (ICT),
@@ -489,7 +489,7 @@ stop and resume the CPU, and to alter registers and memory when the CPU is stopp
 the machine, the address of the first instruction of the program to be executed must be entered
 in the control panel, then the run switch must be pressed. Most programs end with a stop
 instruction, which enables to check the state of the machine, possibly run some post-mortem
-debugging procedures (a core dump routine is described in an APEXC programmation book), then enter
+debugging procedures (a core dump routine is described in an APEXC programming book), then enter
 the address of another program and run it.
 
 
@@ -781,7 +781,7 @@ Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
-(This must NOT be specified on commandline, start the c16 emulation with no images specified)
+(This must NOT be specified on command line, start the c16 emulation with no images specified)
 
 
 The directory command LOAD"$",8 is supported when using d64 images.
@@ -806,7 +806,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
@@ -872,7 +872,7 @@ The rs232/v.24 interface is not supported, nor are printers and other parallel d
 
 The Plus 4's userport is not supported.
 
-Note if a game runs too fast with the ntsc version, try the pal version!
+Note if a game runs too fast with the NTSC version, try the PAL version!
 
 
 The following features are emulated:
@@ -1020,7 +1020,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
  
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Cartridge Usage:
@@ -1085,12 +1085,12 @@ Gameport B supports paddles 3 & 4, joystick 2
 If you run into difficulty, be sure to start the emulation with the -log switch, and look into
 the error.log file that is created in your mess directory.
 
-If the game runs to fast with the ntsc version, try the pal version! (c64pal)
+If the game runs to fast with the NTSC version, try the PAL version! (c64pal)
 
 
 Known Issues:
 
-The rasterline based video system currently has the following issues: no cpu holding, imperfect 
+The rasterline based video system currently has the following issues: no CPU holding, imperfect 
 scrolling support (when 40 columns or 25 lines), lightpen support not finished, rasterline not 
 finished.
 
@@ -1160,7 +1160,7 @@ Christmas '85, its release date was pushed back.
 
  
 The new model does not differ much from its predecessor, the only innovation is the 
-flatter case, which makes the keyboard (which has off-white keys now) more ergonomical 
+flatter case, which makes the keyboard (which has off-white keys now) more ergonomic 
 (it looks like the C128 case), as it is less higher than the old one. But the new case 
 did not only have advantages: due to its low profile and additional metal screening, 
 some of the numerous hardware expansions did not fit anymore. This was changed with 
@@ -1275,7 +1275,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc464 -snap "snapshot name"
@@ -1351,7 +1351,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc6128 -snap "snapshot name"
@@ -1443,7 +1443,7 @@ around the [,@,],# keys.
 The |CPM works by loading and executing the first sector on the first track of the disc.
 
 
-Snapshots, which contain a memory dump, cpu state and hardware state, can be run from a 
+Snapshots, which contain a memory dump, CPU state and hardware state, can be run from a 
 command line interface with the following command: 
 
 mess cpc664 -snap "snapshot name"
@@ -1568,7 +1568,7 @@ newe000.rom (2,772 bytes; CRC 953491a7) but not enabled by default. If you enabl
 you can type HELP (hehe ;) and DIR and simply give a name to execute a binary file.
 
 The optional newe000.rom is loaded if the corresponding "dip switch" is set from within the 
-driver itself. There is no need to specify this rom on the commandline.
+driver itself. There is no need to specify this rom on the command line.
 
 
 Miscellaneous Usage Notes:
@@ -1750,8 +1750,8 @@ Tandy Color Computer 3
 First off, also read the history for the Color Computer and Color Computer 2 drivers. Much
 of the information there also applies to this driver.
 
-Besides fully emulating the Color omputer 3 this driver also contains some extras. It contains
-two diferent real time clocks. Currently they can be set under the 'DIP switches". The two
+Besides fully emulating the Color Computer 3 this driver also contains some extras. It contains
+two different real time clocks. Currently they can be set under the 'DIP switches". The two
 types are Disto and Cloud-9.
 
 Disto Real Time Clock:
@@ -1936,7 +1936,7 @@ succeed very well in Japan, Nintendo's home country.
 It was definitely no mistake to buy the console, as I
 did in early 1990, shortly after Super Shinobi had
 been released. Among the approximetaly 1000 games
-which were produced during the Genesis´ lifespan
+which were produced during the Genesis' lifespan
 (about 10 years during 1988-1998) are a lot of
 evergreens which deserve to be played even today.
 (note taken from www.eidolons-inn.de)
@@ -1953,7 +1953,7 @@ Max Cart Size: ??
 
 Video: 
 Max resolution: 320 X 224 
-Color pallete: 512; 64 max on screen
+Color palette: 512; 64 max on screen
 Max # of sprites: 80; 20 max per scanline
 Sound: Stereo FM-based sound with 8-bit audio samples 
 
@@ -2279,7 +2279,7 @@ discontinued in May 1985 (although it was still available at much later dates). 
 an enhanced, 68020-based Lisa was in development when Apple discontinued the Lisa.
 
 Note that, contrary to a common belief, the Macintosh is not a mere offspring of the Lisa, since
-both projects were led simulteanously. While the Macintosh borrowed many ideas from the Lisa project
+both projects were led simultaneously. While the Macintosh borrowed many ideas from the Lisa project
 (which had more financial resources), the reverse is often true, too: for instance, the Macintosh
 included a GUI from the beginning.
 
@@ -2431,7 +2431,7 @@ Delivered in japan only?
 
  simpler banking chip
 
-  no portlines from cpu
+  no portlines from CPU
 
  only 1 cia6526 chip
 
@@ -2517,7 +2517,7 @@ existing computer: The Spectravideo SV 318. Microsoft designed the MSX 1 compute
 first version of the OS: MSX DOS 1 (which looks like earlier versions of MS DOS).
 
 
-Almost all japanese and Korean computer companies made their own MSX computers (except 
+Almost all Japanese and Korean computer companies made their own MSX computers (except 
 perhaps NEC). Bill Gates was then very confident about the future of the MSX standard. 
 Spectravideo (one of the MSX companies) made a 80 columns card and adapted CP/M on the MSX.
 A lot of software(especially a lot of games from Sega, Konami, Taito, Ascii,...) and 
@@ -2552,7 +2552,7 @@ Ce-Tec MPC-80: 64kB RAM (other source says 32KB)
 DPC-100: 16kB RAM, built in loudspeaker, available in green, blue or silver
 DPC-200: 64kB RAM
 DPH-64: 64kB RAM (other source says 32kB RAM)
-DPH-?: 64kB RAM, built in software, arabic version
+DPH-?: 64kB RAM, built in software, Arabic version
 IQ-1000: 32kB RAM, produced for Korea
 MX64: 64kB RAM
 
@@ -2724,7 +2724,7 @@ Sakhr/Universal/Al Alamiah (Kuwait/Yemen)
 
 AX-100: 64kB RAM
 AX-150: 64kB RAM
-AX-170: 64kB RAM, built in special roms with arabic characters set and software
+AX-170: 64kB RAM, built in special roms with Arabic characters set and software
 AX-230: 64kB RAM, same software as AX-170 + 1MB of other software
 AX-330: 64kB RAM, same as AX-230 but with built in SEGA-MEGADRIVE board
 AX-990: 64kB RAM, 50 programs built in, SEGA-MEGADRIVE board built in
@@ -3443,7 +3443,7 @@ f - FileName (1-30 signs)
 d - drive (one or two)
 v - volume
 a - beginning address
-e - end adress
+e - end address
 l - record length
 r - record number
 b - number of byte in the record
@@ -3812,7 +3812,7 @@ derived from the pc1251, reduced keyboard
 pc1260
 basic computer
 16x2 5x7 character display
-8 bit sharp cpu
+8 bit sharp CPU
 6+32kb rom, 4kb ram
 
 
@@ -4071,7 +4071,7 @@ PDP-1 currently supports a perforated tape reader (punchtape unit #1), a perfora
 (punchtape unit #2), and a typewriter (printer unit #1).
 
 The simplest way to load and run software is to insert a read-in mode tape (.rim files) in
-the perforated tape reader and press the read-in switch once (press simulteanously the Control
+the perforated tape reader and press the read-in switch once (press simultaneously the Control
 Panel key (Left Control) and the Read In key (main keypad Return)).
 
 Three dip switches (RAM size, Hardware multiply and Hardware divide) enable or disable computer
@@ -4079,18 +4079,21 @@ extensions. These switches are only read at reset. Therefore, if you edit them, 
 the emulator (press F3 in partial keyboard emulation mode) for the changes to be taken into
 account.
 
-The "RAM size" switch install and remove type 15 memory expansion control: it is disabled
-when set on 4kw, enabled with 15-bit addresses when set on 32kw, and enabled with 16-bit addresses
-when set on 64kw. All known programs work well whether memory expansion control is
-installed or not. Only LISP can take advantage of the extra RAM.
+The "RAM size" switch installs and removes type 15 memory expansion control:
+it is disabled when set on 4kw, enabled with 15-bit addresses when set on
+32kw, and enabled with 16-bit addresses when set on 64kw. All known programs
+work well whether memory expansion control is installed or not. Only LISP can
+take advantage of the extra RAM.
 
-The "Hardware multiply" and "Hardware divide" switches enable or disable automatic
-multiply/divide extension. When they are enabled, two pdp-1 machine instructions are replaced
-by two other, incompatible, instructions. Therefore, programs which uses the former variant of
-these instructions require automatic multiply/divide to be disabled, whereas programs which use
-the latter require it to be enabled. In practice, Spacewar! requires automatic multiply and
-divide to be DISABLED (i.e. both switches OFF), whereas LISP requires automatic multiply and
-divide to be ENABLED (i.e. both switches ON).
+The "Hardware multiply" and "Hardware divide" switches enable or disable
+the automatic multiply/divide extension. When they are enabled, two pdp-1
+machine instructions (namely MUS and DIS) are replaced with two other,
+incompatible, instructions (MUL and DIV, repectively). Therefore, programs
+which uses the former variant of these instructions require automatic
+multiply/divide to be disabled, whereas programs which use the latter require
+it to be enabled. In practice, Spacewar! requires automatic multiply and
+divide to be DISABLED (i.e. both switches OFF), whereas LISP requires
+automatic multiply and divide to be ENABLED (i.e. both switches ON).
 
 
 For information on pdp-1 operation, you may have a look at:
@@ -4729,7 +4732,7 @@ an all-in-one Business System 300 (1982), later replaced with the Business
 System 300A (1984). Both computers included the CPU, RAM, video terminal, and
 hard disk/tape interface in a terminal case.
 
-The TI990 series must have been abandonned around 1985, when TI introduced
+The TI990 series must have been abandoned around 1985, when TI introduced
 the S1500 series built around a 68020.
 
 The TI990 computers were primarily used for business applications.
@@ -5102,7 +5105,7 @@ Diskette Usage:
 
 Disk drives are simulated at the moment, and only file loads from drive 8 and 9 
 are implemented. You can load a program file from the rom directory (*.prg,*.p00)
-(This must NOT be specified on commandline, start the vc20 emulation with no images specified)
+(This must NOT be specified on command line, start the vc20 emulation with no images specified)
  
 
 You can also load a file from a d64 image (The directory command LOAD"$",8 is supported when 
@@ -5124,7 +5127,7 @@ When a program is loaded, type RUN or the appropriate SYS call to start it.
 
 Note that several programs rely on more features not currently emulated (such as 
 loading other file types, writing...) Some games also rely on starting programs in the 
-floppy drive's processor (and therefore cpu level emulation of the 1541 is needed).
+floppy drive's processor (and therefore CPU level emulation of the 1541 is needed).
 
 
 Quickloader Usage:
@@ -5164,7 +5167,7 @@ The emulated light pen uses Paddle 3 x-axe and Paddle 4 y-axe.
 
 While a normal or well written program will work regardless of the video system (PAL or 
 NTSC), if the screen is too wide right or low, or the screen doesn't fit in visible 
-area or gameplay is too fast try using the pal (vc20) version, instead.
+area or gameplay is too fast try using the PAL (vc20) version, instead.
 
 
 Known Issues:
@@ -5467,7 +5470,7 @@ IBM PC compatible computer
 
 Features
 --------
-cpu on pc-type adapter
+CPU on pc-type adapter
  8088 with 3.75/8 mhz (turboswitch)
  socket for 8087
  512 kb ram build in 
@@ -5529,7 +5532,7 @@ additional vdc videochip for 80 column modes with own connector (rgbi)
  (1 mbyte ram possible)
 sid6581 soundchip
 c64 expansion port with some additional pins
-z80 cpu for CPM mode
+z80 CPU for CPM mode
 
 c128d
 -----
@@ -5549,7 +5552,7 @@ uses c64 emulation for c64 mode
 so only notes for the additional subsystems here
 
 rasterline based video system
- no cpu holding
+ no CPU holding
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
  rasterline not finished
@@ -5563,7 +5566,7 @@ vdc emulation
 z80 emulation
  floppy simulation not enough for booting CPM
  so simplified z80 memory management not tested
-no cpu clock doubling
+no CPU clock doubling
 no internal function rom
 c64 mode
  differences to real c64???
@@ -5582,7 +5585,7 @@ gameport b
  2 button joystick/mouse joystick emulation
  no mouse
 simple tape support
- (not working, cia timing, cpu timing?)
+ (not working, cia timing, CPU timing?)
 serial bus
  simple disk drives
  no printer or other devices
@@ -5604,7 +5607,7 @@ no userport
 
 Video notes
 -----------
-if the game runs to fast with the ntsc version, try the pal version!
+if the game runs to fast with the NTSC version, try the PAL version!
 flickering affects in one video version, try the other video version
 
 
@@ -5632,7 +5635,7 @@ Tape
 ----
 (DAC 1 volume in noise volume)
 loading of wav, prg and prg files in zip archive
-commandline -cassette image
+command line -cassette image
 wav:
  8 or 16(not tested) bit, mono, 125000 Hz minimum
  has the same problems like an original tape drive (tone head must
@@ -5651,7 +5654,7 @@ several programs relies on more features
 Discs
 -----
 only file load from drive 8 and 9 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on commandline)
+ loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line)
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",8
 or LOAD"filename",8,1 (for loading machine language programs at their address)
@@ -5662,7 +5665,7 @@ several programs rely on more features
 (loading other file types, writing, ...)
 
 most games rely on starting own programs in the floppy drive
-(and therefor cpu level emulation is needed)
+(and therefor CPU level emulation is needed)
 
 
 Roms
@@ -5820,7 +5823,7 @@ Features
 hardware emulation mode for c64
  adapter needed for c64 cartridges (many should work)
  only standard c64 keys plus cursor-up and cursor-left
- cpu not full compatible (no illegal instructions)
+ CPU not full compatible (no illegal instructions)
 enhanced keyboard
 m65ce02 processor core (1 or 3.5 Mhz frequency)
 vic3 (4567) with additional capabilities
@@ -5845,7 +5848,7 @@ MESS emulation state
 rasterline based video system
  quick modified vic6567/c64 video chip
  no support for enhanced features, only 80 column mode
- no cpu holding
+ no CPU holding
  imperfect scrolling support (when 40 columns or 25 lines)
  lightpen support not finished
  rasterline not finished
@@ -5901,7 +5904,7 @@ Paddle 6 y-axe
 Discs
 -----
 only file load from drive 10 and 11 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on commandline
+ loads file from rom directory (*.prg,*.p00) (must NOT be specified on command line
  or file from d64 image (here also directory LOAD"$",8 supported)
 use LOAD"filename",10
 or LOAD"filename",10,1 (for loading machine language programs at their address)
@@ -5912,7 +5915,7 @@ several programs rely on more features
 (loading other file types, writing, ...)
 
 most games rely on starting own programs in the floppy drive
-(and therefor cpu level emulation is needed)
+(and therefor CPU level emulation is needed)
 
 
 Quickloader
@@ -5950,8 +5953,8 @@ cartridge slot
 
 Mess Emulation State
 --------------------
-not working (not even cpu is known)
-stopped until cpu type is recognized or info found
+not working (not even CPU is known)
+stopped until CPU type is recognized or info found
 
 $end
 
@@ -5998,7 +6001,7 @@ very early computer
 Features
 --------
 operation without builtin roms, you can enter your program directly with
-help of the cpu integrated dma.
+help of the CPU integrated dma.
 2 segment digits
 tape connector
 
@@ -6076,7 +6079,7 @@ connector with support for rs232 and centronics
 
 Mess Emulation
 --------------
-not started, need information about the hd62002 cpu
+not started, need information about the hd62002 CPU
 (should be in the normal user manual!)
 
 $end
@@ -6263,7 +6266,7 @@ rough emulation of keyboard controller
 rough emulation of keyboard
 rough emulation of dma chips
 rough emulation of pic chips
-incomplete emulation of cpu
+incomplete emulation of CPU
 no support for high density disks
 no support for at harddisks
 needs i80286 v1.5
@@ -6282,17 +6285,17 @@ the grandfather of the now common personal computer
 
 Features
 --------
-8088 cpu
+8088 CPU
 expanded through several slots for interface cards
 programmable interrupt controller
 direct memory access controller
 support for a tape drive on the motherboard of the first series
-even elementar equipment is not on the motherboard
+even elementary equipment is not on the motherboard
 even a display adapter must be plugged in
 
 Features IBMXT
 --------------
-8086 cpu (16 bit data bus)
+8086 CPU (16 bit data bus)
 
 
 Mess Emulation State
@@ -6435,7 +6438,7 @@ than you can play as white and enter your move (enter is d/play)
 Mess Emulation State
 --------------------
 operating instructions needed!
-not working (cpu core problem?)
+not working (CPU core problem?)
 
 
 $end
@@ -6834,13 +6837,13 @@ Error Codes
 
 Mess Emulation State
 --------------------
-incomplete cpu core
+incomplete CPU core
 speaker not emulated
 tape not emulated
 printer not emulated
 work stopped until 
  more "sharps" are dumped 
- info about cpu power/interrupt management is available
+ info about CPU power/interrupt management is available
 
 $end
 
@@ -6902,7 +6905,7 @@ connector for external power supply
 Mess Emulation State
 --------------------
 not working
-incomplete cpu core
+incomplete CPU core
 lh5811 not emulated
 speaker not emulated
 realtimeclock not emulated
@@ -6910,7 +6913,7 @@ tape not emulated
 printer not emulated
 work stopped until more info about
  lh5811
- cpu lh5801 power/interrupt management available
+ CPU lh5801 power/interrupt management available
 
 
 $end
@@ -7196,7 +7199,7 @@ homecomputer for tv connection in czechoslovakia?
 
 Features
 --------
-8080 compatible cpu
+8080 compatible CPU
 288x256 dots resolution
 (version 1 and 2 mono)
 (version 3 with 4 colors)
@@ -7788,7 +7791,7 @@ and 4 additional keys per controller
 
 look into messroms for cartridge pinout
 
-german version known with pal video
+german version known with PAL video
 
 controller layout
 -----------------
