@@ -56,10 +56,11 @@ LIBS.ggi        = $(X11LIB) -lggi
 LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
 ifdef GLIDE2
 LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
+LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
 else
 LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide3
-endif
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide3
+endif
 LIBS.openstep	= -framework AppKit
 LIBS.SDL	= $(X11LIB) `$(SDL_CONFIG) --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
@@ -68,10 +69,11 @@ CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
 CFLAGS.xgl      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS) $(GLCFLAGS)
 ifdef GLIDE2
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide
+CFLAGS.svgafx   = -I/usr/include/glide
 else
 CFLAGS.xfx      = $(X11INC) $(JOY_X11_CFLAGS) -I/usr/include/glide3
-endif
 CFLAGS.svgafx   = -I/usr/include/glide3
+endif
 CFLAGS.SDL      = $(X11INC) `$(SDL_CONFIG) --cflags` -D_REENTRANT
 CFLAGS.photon2	=
 
