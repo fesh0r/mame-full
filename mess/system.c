@@ -13,7 +13,7 @@
 ******************************************************************************/
 
 #include "driver.h"
-//#define MESS_DEBUG
+#define MESS_DEBUG
 
 
 #ifndef DRIVER_RECURSIVE
