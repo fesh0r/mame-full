@@ -11,7 +11,7 @@
 
 // MESS headers
 #include "driver.h"
-#include "rc.h"
+#include "windows/rc.h"
 #include "parallel.h"
 #include "menu.h"
 #include "device.h"

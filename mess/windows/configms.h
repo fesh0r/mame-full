@@ -1,7 +1,7 @@
 #ifndef CONFIGMS_H
 #define CONFIGMS_H
 
-#include "rc.h"
+#include "windows/rc.h"
 
 #define IMAGE_SEPARATOR		'|'
 
