@@ -9,8 +9,10 @@ System Driver Changes:
 - [COCO] Implemented cocodmk_sector_count() and cocodmk_sector_info() in
   coco_dsk.c (bug #378). [tim lindner]
 - [TI99] Fixed some bugs that had been introduced in IDE emulation. [Raphael Nabet]
+- [TI99 EVPC card] Implemented missing VDP ports.
 - [Geneve] Fixed sound in native mode and a mirror of the VDP ports that is
   used by the converted Tomy carts.  Enabled access to the RTC in ti99 mode.
+  Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 - [TI99, Geneve] Added hfdc HD support.  Changed floppy disk image format from
   the previous MESS-specific format to the more universal v9t9 format.  This
