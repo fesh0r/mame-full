@@ -41,13 +41,13 @@ perform the reset cycle pressing, guess what, RESET ;)
 Apple II+
 ---------
 
-RAM: 16/32/48 KB
+RAM: 16/32/48 KB + extra 16 KB at $C000 if using Apple Language Card
 ROM: 12 KB mapped to $D000-$DFFF
 
 HI-RES Palette has four more entries: 4 - black (again), 5 - orange,
 6 - blue, 7 - white (again)
 
-Fixed artifact bug in text mode
+No more artifact bug in text mode
 
 No 80 columns
 No Open/Solid Apple keys
@@ -63,12 +63,13 @@ AutoStart ROM - no more need to press RESET after switching the machine on
 Apple IIe
 ---------
 
-RAM: 48 KB + optional bank of 64 KB (see 80 columns card)
+RAM: 64 KB + optional bank of 64 KB (see 80 columns card)
 ROM: 16 KB
 
 80 columns card: this card was available in two versions - one equipped
 with 1 KB of memory to provide the extra RAM for the display, the other
-equipped with full 64 KB of RAM
+equipped with full 64 KB of RAM - the 80 columns card is not included
+in the standard configuration and is available as add-on.
 
 Open/Solid Apple keys mapped to buttons 0 and 1 of the paddle #1
 Up/Down arrows keys
@@ -78,6 +79,8 @@ Apple begins manifacturing its machines with the SHIFT key mod
 
 Revision A motherboards cannot handle double-hires graphics, Revision B can
 
+*** TODO: Should MESS emulate this via a dipswitch?
+
 Apple IIe (enhanced)
 --------------------
 
@@ -85,6 +88,8 @@ The enhancement consists in bugfix of the ROM code, a 65c02 instead of the
 6502 and a change in the character generator ROM which now includes the
 so called "MouseText" characters (thus, no flashing characters in 80
 columns mode)
+
+Double hi-res mode is supported
 
 Apple IIe (Platinum)
 --------------------
@@ -102,7 +107,7 @@ but some users did an hardware modification so that it generates CTRL-X
 The 64 KB 80 columns card is built in
 
 Due to the SHIFT key mod, if the user press both SHIFT and the paddle
-button (where the shift key was connected), a short circuit is caused
+button where the shift key was connected, a short circuit is caused
 and the power supply is shut down!
 
 Apple IIc
@@ -125,7 +130,7 @@ MouseText characters
 No numerical keypad
 
 Switchables keyboard layouts (the user, via an external switch, can choose
-between two layouts, i.e. UK and German, and in the USA QWERTY and Dvorak)
+between two layouts, i.e. US and German, and in the USA QWERTY and Dvorak)
 
 *** TODO: Should MESS emulate this?
 
@@ -145,13 +150,27 @@ network in slot 7
 Apple IIc (Original Memory Expansion)
 -------------------------------------
 
+ROMSET NOT DUMPED
+
+Identical to IIc except for:
+
+Support for Memory Expansion Board (mapped to slot 4)
+This card can provide up to 1 MB of RAM in increments of 256 MB
+The firmware in ROM sees the extra RAM as a RAMdisk
+
+Since the expansion is mapped to slot 4, mouse is now mapped to slot 7
+
 Apple IIc (Revised Memory Expansion)
 ------------------------------------
+
+ROMSET NOT DUMPED
+
+Identical to IIc (OME) except for bugfixes
 
 Apple IIc Plus
 --------------
 
-Identical to IIc except for:
+Identical to IIc (RME) except for:
 
 The 65c02 works at 4MHz
 
