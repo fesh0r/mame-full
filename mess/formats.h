@@ -158,7 +158,7 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 void bdf_close(void *bdf);
 int bdf_read(void *bdf, void *buffer, int length);
 int bdf_write(void *bdf, const void *buffer, int length);
-int bdf_seek(void *bdf, int offset, int whence);
+int bdf_seek(void *bdf, int offset);
 const struct disk_geometry *bdf_get_geometry(void *bdf);
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);

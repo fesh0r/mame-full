@@ -44,8 +44,13 @@ static int cocojvc_decode_header(const void *header, UINT32 file_size, UINT32 he
 
 	geometry->tracks = (file_size - header_size) / geometry->sectors / geometry->heads / physical_bytes_per_sector;
 
-	if ((geometry->tracks * geometry->sectors * geometry->heads * physical_bytes_per_sector) != (file_size - header_size))
+	/* do we have an oddball size?  reject this file if not */
+	if ((file_size - header_size) % physical_bytes_per_sector)
 		return -1;
+
+	/* minimum of 35 tracks; support degenerate JVC files */
+	if (geometry->tracks < 35)
+		geometry->tracks = 35;
 
 	return 0;
 }
@@ -437,7 +442,7 @@ static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, U
 	
 	/* Seek to start of track */
 	offset = DMK_HEADER_LEN + (trackLength * track * sideCount) + (trackLength * head);
-	bdf_seek( bdf, offset, SEEK_SET );
+	bdf_seek(bdf, offset);
 	
 	/* Read in DMK track table of contents */
 	count = bdf_read( bdf, &t_toc, sizeof( struct dmk_track_toc ) );
@@ -455,7 +460,7 @@ static int cocodmk_seek_to_start_of_sector( void *bdf, struct dmk_header *hdr, U
 			break;
 		}
 		
-		bdf_seek( bdf, offset+IDAM_offset, SEEK_SET );
+		bdf_seek( bdf, offset+IDAM_offset );
 		count = bdf_read( bdf, &idam, sizeof( struct dmk_IDAM ) );
 		if( count != sizeof( struct dmk_IDAM ) )
 			return BLOCKDEVICE_ERROR_OUTOFMEMORY;
@@ -588,7 +593,7 @@ static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT
 	calculated_crc = 0xE295;	/* Seed crc with proper value */
 	cocodmk_calculate_crc( &calculated_crc, sectorData, actual_sector_length );
 
-	bdf_seek( bdf, -actual_sector_length, SEEK_SET );
+	bdf_seek( bdf, -actual_sector_length );
 	bdf_write( bdf, sectorData, actual_sector_length );
 
 	calculated_crc = BIG_ENDIANIZE_INT16( calculated_crc );

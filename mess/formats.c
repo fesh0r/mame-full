@@ -3,6 +3,14 @@
 #include "formats.h"
 #include "utils.h"
 
+#ifndef MAX
+#define MAX(a,b)	(((a) > (b)) ? (a) : (b))
+#endif
+
+#ifndef MIN
+#define MIN(a,b)	(((a) < (b)) ? (a) : (b))
+#endif
+
 /**************************************************************************/
 
 struct bdf_file
@@ -10,8 +18,10 @@ struct bdf_file
 	void *file;
 	const struct bdf_procs *procs;
 	struct disk_geometry geometry;
-	int offset;
+	int offset;						/* offset of the first byte in the file */
+	int position;					/* current position */
 	int is_readonly;
+	UINT8 filler_byte;
 	int (*read_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
 	int (*write_sector)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
 	void (*get_sector_info)(void *bdf, const void *header, UINT8 track, UINT8 head, UINT8 sector_index, UINT8 *sector, UINT16 *sector_size);
@@ -259,6 +269,8 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	bdffile->file = file;
 	bdffile->procs = procs;
 	bdffile->is_readonly = is_readonly;
+	bdffile->filler_byte = drv.filler_byte;
+	bdffile->position = 0;
 	bdffile->read_sector = drv.read_sector ? drv.read_sector : default_read_sector;
 	bdffile->write_sector = drv.write_sector ? drv.write_sector : default_write_sector;
 	bdffile->get_sector_info = drv.get_sector_info ? drv.get_sector_info : default_get_sector_info;
@@ -287,19 +299,67 @@ void bdf_close(void *bdf)
 int bdf_read(void *bdf, void *buffer, int length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->procs->readproc(bdffile->file, buffer, length);
+	int file_size;
+	int actual_length = length;
+	int bytes_read;
+
+	file_size = bdffile->procs->filesizeproc(bdffile->file);
+	actual_length = MAX(MIN(length, file_size - bdffile->position), 0);
+	bytes_read = bdffile->procs->readproc(bdffile->file, buffer, actual_length);
+	if (actual_length < length)
+	{
+		memset(((UINT8 *) buffer) + actual_length, bdffile->filler_byte, length - actual_length);
+		bytes_read += length - actual_length;
+	}
+	bdffile->position += bytes_read;
+	return bytes_read;
 }
 
 int bdf_write(void *bdf, const void *buffer, int length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	return bdffile->procs->writeproc(bdffile->file, buffer, length);
+	int bytes_written;
+
+	bytes_written = bdffile->procs->writeproc(bdffile->file, buffer, length);
+	bdffile->position += bytes_written;
+	return bytes_written;
 }
 
-int bdf_seek(void *bdf, int offset, int whence)
+static void bdf_writefiller(void *bdf, int filler_length)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	bdffile->procs->seekproc(bdffile->file, offset, whence);
+	UINT8 filler[512];
+	int this_filler_length;
+
+	memset(filler, bdffile->filler_byte, MIN(sizeof(filler), filler_length));
+	while(filler_length > 0)
+	{
+		this_filler_length = MIN(sizeof(filler), filler_length);
+		bdffile->procs->writeproc(bdffile->file, filler, this_filler_length);
+		filler_length -= this_filler_length;
+	}
+	bdffile->position += filler_length;
+}
+
+int bdf_seek(void *bdf, int offset)
+{
+	struct bdf_file *bdffile = (struct bdf_file *) bdf;
+	int file_size;
+	int actual_offset = offset;
+	int grow = 0;
+
+	file_size = bdffile->procs->filesizeproc(bdffile->file);
+	if (file_size < offset)
+	{
+		grow = offset - file_size;
+		actual_offset = file_size;
+	}
+	bdffile->procs->seekproc(bdffile->file, actual_offset, SEEK_SET);
+
+	/* grow file if necessary */
+	if ((grow > 0) && !bdffile->is_readonly)
+		bdf_writefiller(bdf, grow);
+	bdffile->position = offset;
 	return 0;
 }
 
@@ -326,7 +386,7 @@ static int default_seek_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector,
 	pos *= bdffile->geometry.sector_size;
 	pos += bdffile->offset;
 	pos += offset;
-	bdf_seek(bdf, pos, SEEK_SET);
+	bdf_seek(bdf, pos);
 	return 0;
 }
 

@@ -8,6 +8,8 @@ System Driver Changes:
 ----------------------
 - [SPECTRUM] Fixed snapshot loading. [Nate Woods]
 
+- [COCO] Fixed some bugs related to handling of degenerate JVC files (where the
+  file size is less than 161280 bytes) (bug #281) [Nate Woods]
 
 Source Changes:
 ---------------

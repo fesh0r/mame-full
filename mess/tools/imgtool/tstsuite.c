@@ -171,7 +171,7 @@ syntaxerror:
 	goto error;
 
 error:
-	if (err)
+	if (err && (err != -1))
 		reporterror(err, c, module ? module->name : NULL, filename, NULL, NULL, NULL);
 
 done:
