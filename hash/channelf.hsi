@@ -77,7 +77,9 @@
 		<year>1978</year>
 		<manufacturer>Fairchild</manufacturer>
 	</hash>
-	<!-- #######= Videocart 19 - Checkers | | Zircon | -->
+	<hash crc32="fdae7044" name="Videocart 19 - Checkers">
+		<manufacturer>Zircon</manufacturer>
+	</hash>
 	<hash crc32="65fdfe49" name="Videocart 20 - Video Whizball">
 		<year>197?</year>
 		<manufacturer>Fairchild</manufacturer>
@@ -86,8 +88,12 @@
 		<year>1978</year>
 		<manufacturer>Fairchild/Zircon</manufacturer>
 	</hash>
-	<!-- #######= Videocart 22 - Slot Machine |  | Zircon | -->
-	<!-- #######= Videocart 23 - Galactic Space Wars | | Zircon | -->
+	<hash crc32="b7eabd08" name="Videocart 22 - Slot Machine">
+		<manufacturer>Zircon</manufacturer>
+	</hash>
+	<hash crc32="44bf4ccd" name="Videocart 23 - Galactic Space Wars">
+		<manufacturer>Zircon</manufacturer>
+	</hash>
 	<hash crc32="a1ae99be" name="Videocart 24 - Pro Football">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
@@ -95,7 +101,10 @@
 	<hash crc32="85e00865" name="Videocart 26 - Alien Invasion">
 		<manufacturer>Zircon</manufacturer>
 	</hash>
-	<!-- #######= Democart 1 | 1977 | Fairchild | -->
+	<hash crc32="42727ad5" name="Democart 1">
+		<year>1977</year>
+		<manufacturer>Fairchild</manufacturer>
+	</hash>
 	<!-- #######= Democart 2 | ???? | | -->
 	<!-- #######= Keyboard Videocart K-1 - Casino Poker | 1977 | Fairchild | -->
 	<!-- Game list - SABA (Germany) -->
