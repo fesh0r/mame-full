@@ -25,6 +25,8 @@ Usage and Distribution Licence:
 ===============================
 - MESS usage and distribution follows that of MAME.  Please read the MAME
   readme.txt file distributed with MESS for further information.
+- The ScrollLock Key will toggle between User Interface mode and Emulation Mode
+  For more information on User Interface mode please read the MAME readme.txt
 
 How to Contact The MESS Team
 ============================
