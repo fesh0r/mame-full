@@ -582,7 +582,11 @@ int init_devices(const void *game)
 				if( result != ID_OK && filename )
 				{
 					mess_printf("%s id failed (%s)\n", device_typename_id(dev->type,id), filename);
-					return 1;
+/* HJB: I think we can't abort if a device->id function fails _yet_, because
+ * we first would have to clean up every driver to use the correct return values.
+ * device->init will fail if a file really can't be loaded.
+ */
+/*					return 1; */
 				}
 			}
 		}
