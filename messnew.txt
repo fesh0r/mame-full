@@ -26,6 +26,9 @@ Other Changes:
   partitioned, unused parts removed, cleaned up 
   support for multiple chips finished
 
+- Imgtool now supports Virtual MSX Tape Archives (converts them to .cas files)
+  and imgtool can convert .cas to .wav files. [Sean Young]
+
 
 0.37b7 
 
