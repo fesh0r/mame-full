@@ -340,7 +340,7 @@ ROM_START(bbcb)
 														  /* rom page 3  1c000 */
 	                                                      /* rom page 4  20000 */
 	                                                      /* rom page 5  24000 */
-	ROM_LOAD("dnfs.rom", 0x028000, 0x04000, 0x0)		  /* rom page 6  28000 */
+			  											  /* rom page 6  28000 */
 	                                                      /* rom page 7  2c000 */
 														  /* rom page 8  30000 */
 														  /* rom page 9  34000 */
@@ -348,7 +348,7 @@ ROM_START(bbcb)
 														  /* rom page 11 3c000 */
 														  /* rom page 12 40000 */
 														  /* rom page 13 44000 */
-														  /* rom page 14 48000 */
+	ROM_LOAD("dnfs.rom",    0x48000, 0x4000, 0x8ccd2157 ) /* rom page 14 48000 */
 	ROM_LOAD("basic2.rom",  0x4c000, 0x4000, 0x79434781 ) /* rom page 15 4c000 */
 
 
@@ -526,6 +526,6 @@ static const struct IODevice io_bbcb[] = {
 
 
 /*	   year name	parent	machine input	init	company */
-COMPX (1981,bbca,	0,		bbca,	bbca,	0,	"Acorn","BBC Micro Model A",GAME_NOT_WORKING )
-COMPX (1981,bbcb,	bbca,	bbcb,	bbca,	0,	"Acorn","BBC Micro Model B",GAME_NOT_WORKING )
+COMP (1981,bbca,	0,		bbca,	bbca,	0,	"Acorn","BBC Micro Model A" )
+COMP (1981,bbcb,	bbca,	bbcb,	bbca,	0,	"Acorn","BBC Micro Model B" )
 
