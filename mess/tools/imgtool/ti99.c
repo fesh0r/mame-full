@@ -340,8 +340,8 @@ static int alloc_file_sectors(ti99_image *image, ti99_fdr *fdr, int nb_alloc_sec
 	int lnks_index;
 	int cur_sec, last_sec, p_last_sec;
 	int cur_block_len, cur_block_start;
-	int first_best_block_len, first_best_block_start;
-	int second_best_block_len, second_best_block_start;
+	int first_best_block_len, first_best_block_start = 0;
+	int second_best_block_len, second_best_block_start = 0;
 	int search_start;
 
 	/* compute free space */
@@ -501,7 +501,7 @@ static int new_file(ti99_image *image, char fname[10], int *out_fdr_secnum/*, ti
 {
 	int fdr_secnum;
 	int catalog_index, i;
-	int reply;
+	int reply = 0;
 
 
 	i = 0;

@@ -1472,26 +1472,28 @@ static void *generic_fopen(int pathc, const char **pathv, const char *gamename, 
 				// the name to a full zip name (i.e. a name with a zip path at the end)
 				//
 				// if this works, the file will be opened in step 5
-
-				ZIP *z = NULL;
-				struct zipent *ent = NULL;
-				const char *first_entry_name;
-
-				if (((z = openzip(name)) != NULL) && ((ent = readzip(z)) != NULL))
+				if ((flags & FILEFLAG_OPENWRITE) == 0)
 				{
-					first_entry_name = ent->name;
+					ZIP *z = NULL;
+					struct zipent *ent = NULL;
+					const char *first_entry_name;
 
-					/* if the first entry name has a './' in the front of it, remove all occurances */
-					while((first_entry_name[0] == '.') && (first_entry_name[1] == '/'))
-						first_entry_name += 2;
+					if (((z = openzip(name)) != NULL) && ((ent = readzip(z)) != NULL))
+					{
+						first_entry_name = ent->name;
 
-					strcat(name, "/");
-					strcat(name, first_entry_name);
-					LOG(("osd_fopen: opened a raw zip file; renaming as '%s'\n", name));
-					goto step5;
+						/* if the first entry name has a './' in the front of it, remove all occurances */
+						while((first_entry_name[0] == '.') && (first_entry_name[1] == '/'))
+							first_entry_name += 2;
+
+						strcat(name, "/");
+						strcat(name, first_entry_name);
+						LOG(("osd_fopen: opened a raw zip file; renaming as '%s'\n", name));
+						goto step5;
+					}
+					if (z)
+						closezip(z);
 				}
-				if (z)
-					closezip(z);
 			}
 #endif
 			// otherwise, just open it straight
