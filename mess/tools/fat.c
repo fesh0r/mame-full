@@ -42,9 +42,9 @@ typedef struct {
 		struct {
 			unsigned char head;
 			littleuword sector_cylinder;
-#define GET_CYLINDER(word) (word>>6)
+#define GET_CYLINDER(word) ( ((word&0xc0)<<2)|(word>>8))
 #define GET_SECTOR(word) (word&0x3f)
-#define PACK_SECTOR_CYLINDER(sec,cyl) ((cyl<<6)|sec)
+#define PACK_SECTOR_CYLINDER(sec,cyl) ( (((cyl)>>2)&0xc0)|(sec)|((cyl)<<8) )
 		} begin;
 		unsigned char system;
 #define FAT12 1
@@ -59,7 +59,38 @@ typedef struct {
 } PARTITION_TABLE;
 
 static PARTITION_TABLE partition_table={
-	{ 0 },
+	{  
+		// program searches active partition in table and loads its bootsector
+		0xfa ,0x2b, 0xc0 ,0x8e, 0xd0 ,0xb8, 0x00 ,0x7c,
+		0x8b ,0xe0, 0xfb ,0xfc, 0x2b ,0xc0, 0x8e, 0xd8,
+		0xbe ,0x00, 0x7c ,0xb8, 0x60 ,0x00, 0x8e ,0xc0,
+		0x2b ,0xff, 0xb9 ,0x00, 0x01 ,0xf3, 0xa5, 0xea,
+		0x24 ,0x00, 0x60 ,0x00, 0x8c ,0xc8, 0x8e ,0xd8,
+		0xb9 ,0x04, 0x00 ,0xbf, 0xbe ,0x01, 0x8b, 0x15,
+		0x80 ,0xfa, 0x80 ,0x74, 0x0c ,0x80, 0xfa ,0x00,
+		0x75 ,0x50, 0x83 ,0xc7, 0x10 ,0xe2, 0xef, 0xcd,
+		0x18 ,0x8b, 0xf7 ,0xeb, 0x0d ,0x83, 0xc7 ,0x10,
+		0x8b ,0x05, 0x3c ,0x80, 0x74 ,0x3c, 0x3c, 0x00,
+		0x75 ,0x38, 0xe2 ,0xf1, 0xb9 ,0x05, 0x00 ,0xb8,
+		0x00 ,0x00, 0x8e ,0xc0, 0xbb ,0x00, 0x7c, 0xb4,
+		0x02 ,0xb0, 0x01 ,0x51, 0x8b ,0x4c, 0x02 ,0xcd,
+		0x13 ,0x59, 0x73 ,0x0b, 0xb4 ,0x00, 0xcd, 0x13,
+		0xe2 ,0xe5, 0xbe ,0xc9, 0x00 ,0xeb, 0x16 ,0x26,
+		0x81 ,0xbf, 0xfe ,0x01, 0x55 ,0xaa, 0x75, 0x05,
+		0xea ,0x00, 0x7c ,0x00, 0x00 ,0xbe, 0xb5 ,0x00,
+		0xeb ,0x03, 0xbe ,0x9d, 0x00 ,0xac, 0x3c, 0x24,
+		0x74 ,0xfe, 0x56 ,0xbb, 0x07 ,0x00, 0xb4 ,0x0e,
+		0xcd ,0x10, 0x5e ,0xeb, 0xf0 ,0x49, 0x6e, 0x76,
+		0x61 ,0x6c, 0x69 ,0x64, 0x20 ,0x70, 0x61 ,0x72,
+		0x74 ,0x69, 0x74 ,0x69, 0x6f ,0x6e, 0x20, 0x74,
+		0x61 ,0x62, 0x6c ,0x65, 0x24 ,0x4e, 0x6f ,0x20,
+		0x6f ,0x70, 0x65 ,0x72, 0x61 ,0x74, 0x69, 0x6e,
+		0x67 ,0x20, 0x73 ,0x79, 0x73 ,0x74, 0x65 ,0x6d,
+		0x24 ,0x4f, 0x70 ,0x65, 0x72 ,0x61, 0x74, 0x69,
+		0x6e ,0x67, 0x20 ,0x73, 0x79 ,0x73, 0x74 ,0x65,
+		0x6d ,0x20, 0x6c ,0x6f, 0x61 ,0x64, 0x20, 0x65,
+		0x72 ,0x72, 0x6f ,0x72, 0x24, 0x00,
+	},
 	{
 		{ 0 }
 	},
@@ -110,14 +141,23 @@ typedef struct {
 	littleuword sectors_in_fat;
 	littleuword sectors_per_track;
 	littleuword heads;
-	littleuword hidden_sectors;
+	littleuword hidden_sectors; //littleulong?
+	// littleulong total sectors largs
+	// drive number
+	// flags
+	// signature 0x29
+	// volumeid
+	// db 11 volume lable
+	// db 8 system id
 	unsigned char reserved[0x1e0];
 	unsigned char id[2];
 } FAT_HEADER;
 
 static FAT_HEADER fat_header={
-	{ 0,0,0 },
-	{ 'M', 'E', 'S', 'S', '0', '.', '1', '@' },
+//	{ 0xcd, 0x18,0 }, // int18 starts basic
+	{ 0xeb, 0x56, 0x90 },
+//	{ 'M', 'E', 'S', 'S', '0', '.', '1', '@' },
+	{ ' ' },
 	{ 0, 2 }, /* 0x200 */
 	2,
 	{ 1, 0 },
@@ -129,7 +169,69 @@ static FAT_HEADER fat_header={
 	{ 0, 0 },
 	{ 0, 0 },
 	{ 0, 0 },
-	{ 0 },
+	{ 
+		0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,
+		// prints "cannot load dos press key to retry" 
+		// reboots after keypress
+		0x4e, 0x41, 0x4d, 0x45, 0x20, 0x20, 0x20, 0x20,
+		0x46, 0x41, 0x54, 0x31, 0x32, 0x20, 0x20, 0x20,
+		0x00, 0x00, 0x00, 0x00, 0x70, 0x00, 0xff, 0xff,
+		0x49, 0x42, 0x4d, 0x42, 0x49, 0x4f, 0x20, 0x20,
+		0x43, 0x4f, 0x4d, 0x00, 0x50, 0x00, 0x00, 0x08,
+		0x00, 0x18, 0xfc, 0x33, 0xc0, 0x8e, 0xc0, 0xfa,
+		0x8e, 0xd0, 0xbc, 0x00, 0x7c, 0xfb, 0x33, 0xd2,
+		0xcd, 0x13, 0xbd, 0x78, 0x00, 0x8b, 0xfc, 0xc5,
+		0x76, 0x00, 0x89, 0x7e, 0x00, 0x8c, 0x46, 0x02,
+		0xb9, 0x0b, 0x00, 0xf3, 0xa4, 0x91, 0x8e, 0xd8,
+		0x8b, 0xec, 0xc6, 0x46, 0x04, 0x24, 0x8a, 0x46,
+		0x0d, 0x89, 0x46, 0x3e, 0x8a, 0x46, 0x10, 0xf7,
+		0x66, 0x16, 0x03, 0x46, 0x0e, 0x83, 0xd2, 0x00,
+		0x8b, 0x4e, 0x0b, 0x81, 0xf9, 0x00, 0x02, 0x74,
+		0x11, 0x72, 0x54, 0xd1, 0xe9, 0x03, 0xc0, 0x83,
+		0xd2, 0x00, 0xd1, 0x66, 0x3e, 0xd1, 0x66, 0x16,
+		0xeb, 0xe9, 0x83, 0x7e, 0x16, 0x0c, 0x77, 0x05,
+		0xc7, 0x46, 0x44, 0xff, 0x0f, 0x03, 0x46, 0x1c,
+		0x13, 0x56, 0x1e, 0x50, 0x52, 0x8b, 0x5e, 0x11,
+		0x53, 0x83, 0xc3, 0x0f, 0xb1, 0x04, 0xd3, 0xeb,
+		0x88, 0x5e, 0x2b, 0x8e, 0x46, 0x54, 0x06, 0xe8,
+		0xab, 0x00, 0x07, 0x89, 0x46, 0x2c, 0x89, 0x56,
+		0x2e, 0x59, 0x2b, 0xff, 0x51, 0x57, 0x8d, 0x76,
+		0x46, 0xb9, 0x0b, 0x00, 0xf3, 0xa6, 0x5f, 0x59,
+		0x74, 0x13, 0x83, 0xc7, 0x20, 0xe2, 0xed, 0xbe,
+		0xd5, 0x7d, 0xe8, 0xd4, 0x00, 0x98, 0xcd, 0x16,
+		0xea, 0x00, 0x00, 0xff, 0xff, 0x26, 0x8b, 0x4d,
+		0x1a, 0x26, 0x8b, 0x45, 0x1c, 0x05, 0xff, 0x01,
+		0xd1, 0xe8, 0x88, 0x66, 0x25, 0x5a, 0x58, 0x51,
+		0x8b, 0x4e, 0x16, 0x2b, 0xc1, 0x83, 0xda, 0x00,
+		0x8e, 0x46, 0x54, 0x51, 0xc6, 0x46, 0x2b, 0x01,
+		0xe8, 0x5a, 0x00, 0x59, 0xe2, 0xf5, 0x5b, 0x8e,
+		0x46, 0x42, 0x8b, 0x46, 0x3e, 0x88, 0x46, 0x2b,
+		0x28, 0x46, 0x25, 0x9c, 0x73, 0x06, 0x8a, 0x56,
+		0x25, 0x00, 0x56, 0x2b, 0x53, 0x4b, 0x4b, 0xf7,
+		0xe3, 0x03, 0x46, 0x2c, 0x13, 0x56, 0x2e, 0xe8,
+		0x33, 0x00, 0x5b, 0x06, 0x8b, 0xc3, 0xd1, 0xe3,
+		0xc4, 0x7e, 0x54, 0x72, 0x02, 0x8e, 0xc7, 0x81,
+		0x7e, 0x44, 0xff, 0x0f, 0x75, 0x12, 0x03, 0xd8,
+		0xd1, 0xeb, 0x26, 0x8b, 0x1f, 0x73, 0x04, 0xb1,
+		0x04, 0xd3, 0xeb, 0x80, 0xe7, 0x0f, 0xeb, 0x03,
+		0x26, 0x8b, 0x1f, 0x07, 0x9d, 0x77, 0xb3, 0x8a,
+		0x56, 0x24, 0xff, 0x6e, 0x40, 0x33, 0xdb, 0x50,
+		0x52, 0xe8, 0x15, 0x00, 0x8c, 0xc0, 0x05, 0x20,
+		0x00, 0x8e, 0xc0, 0x5a, 0x58, 0x05, 0x01, 0x00,
+		0x83, 0xd2, 0x00, 0xfe, 0x4e, 0x2b, 0x75, 0xe5,
+		0xc3, 0xf7, 0x76, 0x18, 0x42, 0x8a, 0xca, 0x33,
+		0xd2, 0xf7, 0x76, 0x1a, 0x8a, 0xf2, 0xd0, 0xcc,
+		0xd0, 0xcc, 0x80, 0xe4, 0xc0, 0x0a, 0xcc, 0x8a,
+		0xe8, 0x8a, 0x56, 0x24, 0xb8, 0x01, 0x02, 0xcd,
+		0x13, 0x73, 0xdd, 0xfe, 0x4e, 0x26, 0x75, 0xf4,
+		0xe9, 0x2c, 0xff, 0xb4, 0x0e, 0x2b, 0xdb, 0xcd,
+		0x10, 0xac, 0x84, 0xc0, 0x75, 0xf5, 0xc3, 0x0d,
+		0x0a, 0x43, 0x61, 0x6e, 0x6e, 0x6f, 0x74, 0x20,
+		0x6c, 0x6f, 0x61, 0x64, 0x20, 0x44, 0x4f, 0x53,
+		0x20, 0x70, 0x72, 0x65, 0x73, 0x73, 0x20, 0x6b,
+		0x65, 0x79, 0x20, 0x74, 0x6f, 0x20, 0x72, 0x65,
+		0x74, 0x72, 0x79, 0x0d, 0x0a, 0x00, 0x00, 0x00
+	},
 	{ 0x55, 0xaa }
 };
 
@@ -236,7 +338,7 @@ static int fat_read_fat16_entry(fat_image *image, int cluster)
 
 static void fat_write_fat16_entry(fat_image *image, int cluster, int number)
 {
-	int offset=cluster+cluster*2;
+	int offset=cluster*2;
 	int i;
 	for (i=0; i<image->fat_count; i++) {
 		image->data[image->fat_offset[i]+offset]=number&0xff;
@@ -321,17 +423,26 @@ static int fat_image_create(STREAM *f, const ResolvedOption *options);
 static int fat_read_sector(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
 static int fat_write_sector(IMAGE *img, int head, int track, int sector, char *buffer, int size);
 
+#if 0
 static struct OptionTemplate fat_createopts[] =
 {
-	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [0] */
-	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [1] */
-	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		2,			NULL	},	/* [2] */
+	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [0] */
+	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		2,			NULL	},	/* [1] */
+	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [2] */
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
+#define FAT_CREATEOPTIONS_SECTORS		0
+#define FAT_CREATEOPTIONS_HEADS			1
+#define FAT_CREATEOPTIONS_CYLINDERS		2
+#else
+static struct OptionTemplate fat_createopts[] =
+{
+	{ "type",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	0,		7,		NULL	},	/* [0] */
+	{ NULL, NULL, 0, 0, 0, 0 }
+};
+#define FAT_CREATEOPTIONS_TYPE		0
+#endif
 
-#define FAT_CREATEOPTIONS_CYLINDERS		0
-#define FAT_CREATEOPTIONS_SECTORS		1
-#define FAT_CREATEOPTIONS_HEADS			2
 
 IMAGEMODULE(
 	msdos,
@@ -361,15 +472,23 @@ IMAGEMODULE(
 static int fathd_image_init(STREAM *f, IMAGE **outimg);
 static int fathd_image_create(STREAM *f, const ResolvedOption *options);
 
-/*static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,1024,16} };*/
+/*static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,16,1024} };*/
 
+#if 0
 static struct OptionTemplate fathd_createopts[] =
 {
-	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		63,		NULL	},	/* [0] */
-	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		1024,	NULL	},	/* [1] */
-	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		16,		NULL	},	/* [2] */
+	{ "sectors",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		63,		NULL	},	/* [0] */
+	{ "heads",		NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		16,		NULL	},	/* [1] */
+	{ "cylinders",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	1,		1024,	NULL	},	/* [2] */
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
+#else
+static struct OptionTemplate fathd_createopts[] =
+{
+	{ "type",	NULL, IMGOPTION_FLAG_TYPE_INTEGER,	0,		0,		NULL	},	/* [0] */
+	{ NULL, NULL, 0, 0, 0, 0 }
+};
+#endif
 
 IMAGEMODULE(
 	msdoshd,
@@ -460,6 +579,7 @@ static int fat_image_init(STREAM *f, IMAGE **outimg)
 static int fathd_image_init(STREAM *f, IMAGE **outimg)
 {
 	fat_image *image;
+	int sectors, heads;
 	int i;
 	PARTITION_TABLE *table;
 
@@ -482,6 +602,12 @@ static int fathd_image_init(STREAM *f, IMAGE **outimg)
 	table=(PARTITION_TABLE*)image->complete_image;
 
 	/* currently fixed to the 4th partition */
+	sectors=GET_SECTOR(GET_UWORD(table->partition[3].end.sector_cylinder));
+	heads=table->partition[3].end.head;
+
+	image->data=image->complete_image+0x200*sectors
+		*(heads*GET_CYLINDER(GET_UWORD(table->partition[3].begin.sector_cylinder))
+		  +table->partition[3].begin.head);
 
 	image->heads=GET_UWORD(((FAT_HEADER*)image->data)->heads);
 	image->sector_size=GET_UWORD(((FAT_HEADER*)image->data)->sector_size);
@@ -510,15 +636,9 @@ static int fathd_image_init(STREAM *f, IMAGE **outimg)
 	image->cluster_count=(GET_UWORD(((FAT_HEADER*)image->data)->sectors)
 		*image->sector_size-image->cluster_offset)/image->cluster_size;
 
-	if (image->cluster_count <= 0xff0 ) {
-		image->read_fat=fat_read_fat_entry;
-		image->write_fat=fat_write_fat_entry;
-		image->fat_is_special=fat_fat_is_special;
-	} else {
-		image->read_fat=fat_read_fat16_entry;
-		image->write_fat=fat_write_fat16_entry;
-		image->fat_is_special=fat_fat16_is_special;
-	}
+	image->read_fat=fat_read_fat16_entry;
+	image->write_fat=fat_write_fat16_entry;
+	image->fat_is_special=fat_fat16_is_special;
 
 	return 0;
 }
@@ -531,7 +651,7 @@ static void fat_image_exit(IMAGE *img)
 		stream_write(image->file_handle, image->complete_image, image->size);
 	}
 	stream_close(image->file_handle);
-	free(image->data);
+	free(image->complete_image);
 	free(image);
 }
 
@@ -619,12 +739,12 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 					sprintf(ent->attr,"%.4d-%.2d-%.2d %.2d:%.2d:%.2d %s%s%s%s%s%s",
 							DATE_GET_YEAR(date), DATE_GET_MONTH(date)+1, DATE_GET_DAY(date),
 							TIME_GET_HOUR(_time), TIME_GET_MINUTE(_time), TIME_GET_SECOND(_time),
-							entry->attribut&ATTRIBUT_HIDDEN?"Hidden ":"",
-							entry->attribut&ATTRIBUT_SYSTEM?"System ":"",
-							entry->attribut&ATTRIBUT_SUBDIRECTORY?"Dir ":"",
-							entry->attribut&ATTRIBUT_LABEL?"Label ":"",
-							entry->attribut&ATTRIBUT_ARCHIV?"Archiv ":"",
-							entry->attribut&ATTRIBUT_READ_ONLY?"Readonly ":"");
+							entry->attribut&ATTRIBUT_HIDDEN?"H":"",
+							entry->attribut&ATTRIBUT_SYSTEM?"S":"",
+							entry->attribut&ATTRIBUT_SUBDIRECTORY?"D":"",
+							entry->attribut&ATTRIBUT_LABEL?"L":"",
+							entry->attribut&ATTRIBUT_ARCHIV?"A":"",
+							entry->attribut&ATTRIBUT_READ_ONLY?"R":"");
 				}
 				if (entry->attribut&ATTRIBUT_SUBDIRECTORY) {
 					if (iter->level==0) {
@@ -822,31 +942,34 @@ typedef struct {
 
 	int fats;
 	int cluster_size, directory_entries;
+	int fat16, sectors_in_fat;
 } FAT_FORMAT;
 
 static FAT_FORMAT fat_formats[]={
 	/* standard formats */
-	{ 8, 1, 40, 0x200, 2, 0x400, 112 }, /* 160 */
-	{ 8, 2, 40, 0x200, 2, 0x400, 112 }, /* 180 */
-	{ 9, 1, 40, 0x200, 2, 0x400, 112 }, /* 320 */
-	{ 9, 2, 40, 0x200, 2, 0x400, 112 }, /* 360 ok */
-	{ 9, 2, 80, 0x200, 2, 0x400, 112 }, /* 720 ok */
-	{ 15, 2, 80, 0x200, 2, 0x400, 112 }, /* 1.2 */
-	{ 18, 2, 80, 0x200, 2, 0x400, 112 }, /* 1.44 */
-	{ 36, 2, 80, 0x200, 2, 0x400, 112 } /* 2.88 */
+	{ 8, 1, 40, 0x200, 2, 0x400, 112, 0, 2}, /* 160 */
+	{ 8, 2, 40, 0x200, 2, 0x400, 112, 0, 2 }, /* 180 */
+	{ 9, 1, 40, 0x200, 2, 0x400, 112, 0, 2 }, /* 320 */
+	{ 9, 2, 40, 0x200, 2, 0x400, 112, 0, 2 }, /* 360 ok */
+	{ 9, 2, 80, 0x200, 2, 0x400, 112, 0, 2 }, /* 720 ok */
+	{ 15, 2, 80, 0x200, 2, 0x400, 112, 0, 2 }, /* 1.2 */
+	{ 18, 2, 80, 0x200, 2, 0x400, 112, 0, 2 }, /* 1.44 */
+	{ 36, 2, 80, 0x200, 2, 0x400, 112, 0, 2 }, /* 2.88 */
 	/* tons of extended xdf formats */
 	/* use of larger and mixed sector sizes, more tracks */
 };
 
-static int fat_image_create(STREAM *f, const ResolvedOption *options)
+static FAT_FORMAT hd_formats[]={
+	{ 17, 4, 615, 0x200, 2, 0x800, 112, 1, 40 } // standard pc 20mb harddisk
+};
+
+static int fat_create(STREAM *f, FAT_FORMAT *format)
 {
-	FAT_FORMAT *format=fat_formats+3;
 	unsigned short fat_fat16[0x100]={ 0xfffd, 0xffff };
 	unsigned char fat_fat12[0x200]={ 0xfd, 0xff, 0xff };
 	unsigned char sector[0x200]={ 0 };
 	int sectors=format->sectors*format->heads*format->tracks;
-	int fat16=0;
-	int sectors_in_fat=2, i, j, s;
+	int i, j, s;
 
 /*	SET_UWORD(fat_header.sector_size, format->sector_size); */
 	SET_UWORD(fat_header.heads, format->heads);
@@ -857,14 +980,14 @@ static int fat_image_create(STREAM *f, const ResolvedOption *options)
 	SET_UWORD(fat_header.max_entries_in_root_directory, format->directory_entries);
 	fat_header.cluster_size=format->cluster_size/format->sector_size;
 
-	SET_UWORD(fat_header.sectors_in_fat, 2);
+	SET_UWORD(fat_header.sectors_in_fat, format->sectors_in_fat);
 
 	s=0;
 	if (stream_write(f, &fat_header, sizeof(fat_header)) != sizeof(fat_header))
 		return  IMGTOOLERR_WRITEERROR;
 	s++;
 	for (i=0; i<format->fats; i++) {
-		if (fat16) {
+		if (format->fat16) {
 			if (stream_write(f, fat_fat16, sizeof(fat_fat16)) != sizeof(fat_fat16))
 				return  IMGTOOLERR_WRITEERROR;
 		} else {
@@ -872,7 +995,7 @@ static int fat_image_create(STREAM *f, const ResolvedOption *options)
 				return  IMGTOOLERR_WRITEERROR;
 		}
 		s++;
-		for (j=1; j<sectors_in_fat; j++,s++) {
+		for (j=1; j<format->sectors_in_fat; j++,s++) {
 			if (stream_write(f, sector, sizeof(sector)) != sizeof(sector))
 				return  IMGTOOLERR_WRITEERROR;
 		}
@@ -888,41 +1011,70 @@ static int fat_image_create(STREAM *f, const ResolvedOption *options)
 	return 0;
 }
 
+static int fat_image_create(STREAM *f, const ResolvedOption *options)
+{
+	FAT_FORMAT format;
+#if 0
+	// maybe later (as option), when calculation of parameter available
+	format=fat_formats[3];
+	format.sectors=options[FAT_CREATEOPTIONS_SECTORS].i;
+	format.heads=options[FAT_CREATEOPTIONS_HEADS].i;
+	format.tracks=options[FAT_CREATEOPTIONS_CYLINDERS].i;
+#else
+	format=fat_formats[options[FAT_CREATEOPTIONS_TYPE].i];
+#endif
+	return fat_create(f, &format);
+}
+
 static int fathd_image_create(STREAM *f, const ResolvedOption *options)
 {
+	FAT_FORMAT format;
 	unsigned char sector[0x200]={ 0 };
-	int s, h;
+	int c, s, h;
 	PARTITION_TABLE *table = &partition_table;
+	int head=1, cylinder=0;
 
+#if 0
+	format=hd_formats[0];
+	format.sectors=options[FAT_CREATEOPTIONS_SECTORS].i;
+	format.heads=options[FAT_CREATEOPTIONS_HEADS].i;
+	format.tracks=options[FAT_CREATEOPTIONS_CYLINDERS].i;
+#else
+	format=hd_formats[options[FAT_CREATEOPTIONS_TYPE].i];
+#endif
 
-	table->partition[0].bootflag=0x80;
+	table->partition[3].bootflag=0x80;
 
-	SET_UWORD(table->partition[0].begin.sector_cylinder, PACK_SECTOR_CYLINDER(1,0));
-	table->partition[0].begin.head=1;
+	SET_UWORD(table->partition[3].begin.sector_cylinder, PACK_SECTOR_CYLINDER(1,cylinder));
+	table->partition[3].begin.head=head;
 
-	SET_UWORD(table->partition[0].begin.sector_cylinder,
-			  PACK_SECTOR_CYLINDER(options[FAT_CREATEOPTIONS_SECTORS].i,options[FAT_CREATEOPTIONS_CYLINDERS].i));
-	table->partition[0].end.head=options[FAT_CREATEOPTIONS_HEADS].i;
+	SET_UWORD(table->partition[3].end.sector_cylinder,
+			  PACK_SECTOR_CYLINDER(format.sectors,format.tracks-1));
+	table->partition[3].end.head=format.heads-1;
 
-	SET_ULONG(table->partition[0].start_sector,options[FAT_CREATEOPTIONS_SECTORS].i);
-	SET_ULONG(table->partition[0].sectors,
-			  options[FAT_CREATEOPTIONS_SECTORS].i*options[FAT_CREATEOPTIONS_HEADS].i*options[FAT_CREATEOPTIONS_CYLINDERS].i
-			  -GET_ULONG(table->partition[0].start_sector));
+	table->partition[3].system=FAT16;
 
-	h=0;
-	for (s=0; s<options[FAT_CREATEOPTIONS_SECTORS].i; s++) {
-		if ((s==0)&&(h==0)) {
-			if (stream_write(f, &table, sizeof(table)) != sizeof(table))
-				return IMGTOOLERR_WRITEERROR;
-		} else {
-			if (stream_write(f, &sector, sizeof(sector)) != sizeof(sector))
-				return IMGTOOLERR_WRITEERROR;
+	SET_ULONG(table->partition[3].start_sector,
+			  format.sectors*head+(format.sectors*format.heads*cylinder));
+	SET_ULONG(table->partition[3].sectors,
+			  format.sectors*format.heads*(format.tracks-1)
+			  -GET_ULONG(table->partition[3].start_sector));
+
+	for (c=0; c<=cylinder; c++) {
+		for (h=0; ((c<cylinder)&&(h<format.heads))||(h<head); h++) {
+			for (s=0; s<format.sectors; s++) {
+				if ((c==0)&&(h==0)&&(s==0)) {
+					if (stream_write(f, table, sizeof(*table)) != sizeof(*table))
+						return IMGTOOLERR_WRITEERROR;
+				} else {
+					if (stream_write(f, &sector, sizeof(sector)) != sizeof(sector))
+						return IMGTOOLERR_WRITEERROR;
+				}
+			}
 		}
 	}
-
-	/* write this fat partition */
-
-	return 0;
+	
+	return fat_create(f, &format);
 }
 
 
