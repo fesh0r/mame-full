@@ -62,10 +62,10 @@ struct via6522
 	UINT8 ier;
 	UINT8 ifr;
 
-	void *t1;
+	mame_timer *t1;
 	double time1;
 	char t1_active;
-	void *t2;
+	mame_timer *t2;
 	double time2;
 	char t2_active;
 

@@ -2011,8 +2011,8 @@ void osd_set_leds(int state)
 
 		// mask states and set new states
 		key_states[VK_NUMLOCK] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 0) & 1);
-		key_states[VK_CAPITAL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 1) & 1);
-		key_states[VK_SCROLL] = (key_states[VK_NUMLOCK] & ~1) | ((state >> 2) & 1);
+		key_states[VK_CAPITAL] = (key_states[VK_CAPITAL] & ~1) | ((state >> 1) & 1);
+		key_states[VK_SCROLL] = (key_states[VK_SCROLL] & ~1) | ((state >> 2) & 1);
 
 		SetKeyboardState(&key_states[0]);
 	}
