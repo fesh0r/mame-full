@@ -1710,7 +1710,7 @@ void saturn_init_machine(void)
 
   mem = (UINT32 *) memory_region(REGION_CPU1);
   mem2 = (UINT32 *) memory_region(REGION_CPU2);
-  cpu_set_halt_line(1, ASSERT_LINE); 
+  cpu_set_halt_line(1, ASSERT_LINE);
   /* cpu_set_halt_line(2, ASSERT_LINE); */
 
   for (i = 0; i < (SATURN_ROM_SIZE/4); i++)
@@ -1727,11 +1727,17 @@ void saturn_init_machine(void)
 
   base = (UINT16 *) memory_region(REGION_CPU3); /* Setup reset vector for 68k stupidity */
 
+  *(base + 0) = 0;
+  *(base + 1) = 0x1000;
+  *(base + 2) = 0;
   *(base + 3) = 4;
   *(base + 4) = 0x60fe;
 
   base = (UINT16 *) &mem[SATURN_SOUND_RAM_BASE/4]; /* Setup loop in real sound ram */
 
+  *(base + 0) = 0;
+  *(base + 1) = 0x1000;
+  *(base + 2) = 0;
   *(base + 3) = 4;
   *(base + 4) = 0x60fe;
 
@@ -1803,7 +1809,7 @@ void saturn_init_machine(void)
     }
 
   install_mem_read16_handler(2, 0x000000, 0x07ffff, MRA16_BANK3);
-  install_mem_write16_handler(2, 0x000000, 0x0fffff, MWA16_BANK3);
+  install_mem_write16_handler(2, 0x000000, 0x07ffff, MWA16_BANK3);
   install_mem_read16_handler(2, 0x100000, 0x100ee3, dsp_68k_r);
   install_mem_write16_handler(2, 0x100000, 0x100ee3, dsp_68k_w);
 
@@ -1935,7 +1941,7 @@ static struct MachineDriver machine_driver_saturn =
     },
     {
       CPU_M68000 | CPU_AUDIO_CPU,               /* Sound CPU */
-      14000000 ,	        /* 14 Mhz..ish */
+      12000000 ,	        /* 12 Mhz..ish (MC68000-12)*/
       readmem_68k,writemem_68k,
       0,0,                      /* zeros are ioport read/write */
       ignore_interrupt,1
