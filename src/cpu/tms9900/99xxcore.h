@@ -336,7 +336,6 @@ INLINE void execute(UINT16 opcode);
 #if EXTERNAL_INSTRUCTION_DECODING
 static void external_instruction_notify(int ext_op_ID);
 #endif
-static UINT16 fetch(void);
 static UINT16 decipheraddr(UINT16 opcode);
 static UINT16 decipheraddrbyte(UINT16 opcode);
 static void contextswitch(UINT16 addr);
@@ -1252,6 +1251,15 @@ void TMS99XX_EXIT(void)
 {
 	/* nothing to do ? */
 }
+
+/* fetch : read one word at * PC, and increment PC. */
+INLINE UINT16 fetch(void)
+{
+	UINT16 value = readword(I.PC);
+	I.PC += 2;
+	return value;
+}
+
 
 int TMS99XX_EXECUTE(int cycles)
 {
@@ -2524,14 +2532,6 @@ static void load_map_file(int map_file, UINT16 addr)
 	}
 }
 #endif
-
-/* fetch : read one word at * PC, and increment PC. */
-INLINE UINT16 fetch(void)
-{
-	UINT16 value = readword(I.PC);
-	I.PC += 2;
-	return value;
-}
 
 /* contextswitch : performs a BLWP, i.e. load PC, WP, and save old PC, old WP and ST... */
 static void contextswitch(UINT16 addr)
