@@ -37,7 +37,7 @@
 #include "machine/iwm.h"
 #include "machine/sonydriv.h"
 #include "machine/lisa.h"
-#include "m68k.h"
+#include "cpu/m68000/m68k.h"
 
 #include <time.h>
 
