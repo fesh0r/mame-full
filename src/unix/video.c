@@ -592,6 +592,22 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          return 1;
    }
 
+   /* create the debug palette */
+   if (debug_pens)
+   {
+      if (!(debug_palette = sysdep_palette_create(bitmap_depth,
+                               DEBUGGER_TOTAL_COLORS)))
+      {
+         osd_free_colors();
+         return 1;
+      }
+
+      if (DEBUGGER_TOTAL_COLORS > video_colors_used)
+      {
+         video_colors_used = DEBUGGER_TOTAL_COLORS;
+      }
+   }
+
    /* now alloc the total number of colors used by both palettes */
    if (sysdep_display_alloc_palette(video_colors_used))
    {
@@ -600,14 +616,16 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
    }
    
    sysdep_palette_set_gamma(normal_palette, gamma_correction);
-   sysdep_palette_set_brightness(normal_palette, brightness * brightness_paused_adjust);
+   sysdep_palette_set_brightness(normal_palette, 
+      brightness * brightness_paused_adjust);
 
    if (debug_palette)
    {
       sysdep_palette_set_gamma(debug_palette, gamma_correction);
-      sysdep_palette_set_brightness(debug_palette, brightness * brightness_paused_adjust);
-      sysdep_palette_set_pen(debug_palette, i, debugger_palette[i*3],
-         debugger_palette[i*3+1], debugger_palette[i*3+2]);
+      sysdep_palette_set_brightness(debug_palette, 
+         brightness * brightness_paused_adjust);
+      sysdep_palette_set_pen(debug_palette, i, debugger_palette[i * 3],
+         debugger_palette[i * 3 + 1], debugger_palette[i * 3 + 2]);
    }
    
    /* init the palette */
@@ -692,15 +710,6 @@ int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
          sysdep_palette_set_pen(normal_palette, i, palette[i * 3], 
             palette[i * 3 + 1], palette[i * 3 + 2]);
       }
-
-      //Machine->uifont->colortable[0] = sysdep_palette_make_pen(normal_palette,
-      //   0, 0, 0);
-      //Machine->uifont->colortable[1] = sysdep_palette_make_pen(normal_palette,
-      //   0xFF, 0xFF, 0xFF);
-      //Machine->uifont->colortable[2] = sysdep_palette_make_pen(normal_palette,
-      //   0xFF, 0xFF, 0xFF);
-      //Machine->uifont->colortable[3] = sysdep_palette_make_pen(normal_palette,
-      //   0, 0, 0);
    }
    
    /* set the current_palette to the normal_palette */
