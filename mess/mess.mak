@@ -183,23 +183,23 @@ DRVLIBS = \
 	$(OBJ)/necpc.a	  \
 	$(OBJ)/nec.a	  \
 	$(OBJ)/gce.a	  \
-#	$(OBJ)/pc.a       \
-#	$(OBJ)/sharp.a    \
-#	$(OBJ)/at.a       \
-#	$(OBJ)/pcshare.a  \
-#	$(OBJ)/hp48.a     \
-#	$(OBJ)/cpschngr.a \
-#	$(OBJ)/veb.a	  \
-#	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/mtx.a	  \
+	$(OBJ)/veb.a	  \
+	$(OBJ)/pdp1.a	  \
+	$(OBJ)/ti99.a     \
+	$(OBJ)/mtx.a	  \
+#	$(OBJ)/aim65.a    \
 #	$(OBJ)/motorola.a \
+#	$(OBJ)/cpschngr.a \
+#	$(OBJ)/pcshare.a  \
+#	$(OBJ)/pc.a       \
+#	$(OBJ)/at.a       \
+#	$(OBJ)/sharp.a    \
+#	$(OBJ)/hp48.a     \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/ssystem3.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/sym1.a     \
-#	$(OBJ)/aim65.a    \
-#	$(OBJ)/ti99.a     \
 #	$(OBJ)/avigo.a    \
 
 
@@ -366,8 +366,8 @@ $(OBJ)/apple.a:   \
 	  $(OBJ)/mess/systems/mac.o      \
 	  $(OBJ)/mess/machine/iwm.o	 \
 	  $(OBJ)/mess/machine/sonydriv.o \
-#	  $(OBJ)/mess/machine/lisa.o	 \
-#	  $(OBJ)/mess/systems/lisa.o
+	  $(OBJ)/mess/machine/lisa.o	 \
+	  $(OBJ)/mess/systems/lisa.o
 
 
 $(OBJ)/avigo.a: \
@@ -412,9 +412,9 @@ $(OBJ)/pcshare.a:	   \
 	  $(OBJ)/mess/machine/pc_fdc.o	 \
 	  $(OBJ)/mess/machine/pc_hdc.o	 \
 	  $(OBJ)/mess/machine/pcshare.o	\
-	  $(OBJ)/mess/vidhrdw/vga.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
 	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/vga.o	 \
 
 $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
@@ -453,10 +453,10 @@ $(OBJ)/amstrad.a:  \
 	  $(OBJ)/mess/vidhrdw/pcw16.o	 \
 	  $(OBJ)/mess/machine/serial.o	\
 	  $(OBJ)/mess/vidhrdw/pcw.o	 \
-#	  $(OBJ)/mess/systems/pcw.o	 \
+	  $(OBJ)/mess/systems/pcw.o	 \
+	  $(OBJ)/mess/systems/amstrad.o  \
+	  $(OBJ)/mess/machine/amstrad.o  \
 #	  $(OBJ)/mess/vidhrdw/amstrad.o  \
-#	  $(OBJ)/mess/systems/amstrad.o  \
-#	  $(OBJ)/mess/machine/amstrad.o  \
 
 $(OBJ)/veb.a:      \
 	  $(OBJ)/mess/vidhrdw/kc.o	 \
@@ -514,8 +514,8 @@ $(OBJ)/tangerin.a :\
 	  $(OBJ)/mess/machine/6551.o     \
 	  $(OBJ)/mess/formats/orictap.o  \
 	  $(OBJ)/mess/vidhrdw/oric.o     \
-#	  $(OBJ)/mess/machine/oric.o     \
-#	  $(OBJ)/mess/systems/oric.o
+	  $(OBJ)/mess/machine/oric.o     \
+	  $(OBJ)/mess/systems/oric.o
 
 $(OBJ)/vtech.a :   \
 	  $(OBJ)/mess/vidhrdw/vtech1.o	 \
@@ -563,9 +563,9 @@ $(OBJ)/acorn.a:    \
 	  $(OBJ)/mess/systems/a310.o	 \
 	  $(OBJ)/mess/systems/z88.o	 \
 	  $(OBJ)/mess/vidhrdw/z88.o \
-#	  $(OBJ)/mess/vidhrdw/atom.o	 \
-#	  $(OBJ)/mess/systems/atom.o	 \
-#	  $(OBJ)/mess/machine/atom.o	 \
+	  $(OBJ)/mess/vidhrdw/atom.o	 \
+	  $(OBJ)/mess/systems/atom.o	 \
+	  $(OBJ)/mess/machine/atom.o	 \
 
 $(OBJ)/samcoupe.a: \
 	  $(OBJ)/mess/machine/coupe.o	 \

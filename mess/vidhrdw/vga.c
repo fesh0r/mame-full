@@ -1001,16 +1001,16 @@ void vga_vh_text(struct osd_bitmap *bitmap, int full_refresh)
 				UINT8 bits=font[h<<2];
 				for (mask=0x80, w=0; (w<width)&&(w<8); w++, mask>>=1) {
 					if (bits&mask) {
-						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr&0xf];
+						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr&0xf]);
 					} else {
-						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr>>4];
+						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr>>4]);
 					}
 				}
 				if (w<width) { /* 9 column */
 					if (TEXT_COPY_9COLUMN(ch)&&(bits&1)) {
-						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr&0xf];
+						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr&0xf]);
 					} else {
-						Machine->scrbitmap->line[line+h][column*width+w]=vga.pens[attr>>4];
+						plot_pixel(Machine->scrbitmap, column*width+w, line+h, vga.pens[attr>>4]);
 					}
 				}
 			}
@@ -1019,9 +1019,8 @@ void vga_vh_text(struct osd_bitmap *bitmap, int full_refresh)
 				for (h=CRTC6845_CURSOR_TOP;
 					 (h<=CRTC6845_CURSOR_BOTTOM)&&(h<height)&&(line+h<TEXT_LINES);
 					 h++) {
-					for (w=0; w<width; w++)
-						Machine->scrbitmap->line[line+h][column*width+w]=
-							vga.pens[attr&0xf];
+
+					plot_box(Machine->scrbitmap, column*width, line+h, width, 1, vga.pens[attr&0xf]);
 				}
 			}
 		}
@@ -1113,7 +1112,7 @@ void vga_vh_ega(struct osd_bitmap *bitmap, int full_refresh)
 			data[2]=vga.memory[pos+2]<<2;
 			data[3]=vga.memory[pos+3]<<3;
 			for (i=7; i>=0; i--) {
-#if 0
+#if 1
 				/* plotpixel is 16 bit aware, */
 				/* but recognizable speed loss compared to following */
 				plot_pixel(Machine->scrbitmap, c+i, line,

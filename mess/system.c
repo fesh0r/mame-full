@@ -172,8 +172,8 @@ TESTDRIVER( vc4000 )		/* interton vc4000 */
 
 /****************COMPUTERS****************************************************/
     /* ACORN */
-//    DRIVER( atom )      /* 1979 Acorn Atom                                */
-//    DRIVER( atomeb )    /* 1979 Acorn Atom                                */
+    DRIVER( atom )      /* 1979 Acorn Atom                                */
+    DRIVER( atomeb )    /* 1979 Acorn Atom                                */
     DRIVER( bbca )      /* 1981 BBC Micro Model A                         */
     DRIVER( bbcb )      /* 1981 BBC Micro Model B                         */
     DRIVER( bbcb1770 )  /* 1981 BBC Micro Model B with WD 1770 disc       */
@@ -466,10 +466,10 @@ TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 							  */
 TESTDRIVER( ti990_4 )	/* 197? TI 990/4								  */
 TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 								  */
 TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
-//	DRIVER( ti99_4 )	/* 1978 TI 99/4 								  */
-//	DRIVER( ti99_4e )	/* 1980 TI 99/4E								  */
-//	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
-//	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
+	DRIVER( ti99_4 )	/* 1978 TI 99/4 								  */
+	DRIVER( ti99_4e )	/* 1980 TI 99/4E								  */
+	DRIVER( ti99_4a )	/* 1981 TI 99/4A								  */
+	DRIVER( ti99_4ae )	/* 1981 TI 99/4AE								  */
 
 //    DRIVER( avigo )     /*                                                */
 #endif
@@ -649,24 +649,21 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( vz300 ) 	/* 1983 Dick Smith Electronics / Sanyo VZ300	  */
 	DRIVER( fellow )	/* 1983 Salora Fellow (Finland) 				  */
 	DRIVER( tx8000 )	/* 1983 Texet TX-8000 (U.K.)					  */
-#if 0
 	DRIVER( laser350 )	/* 1984? Laser 350								  */
 	DRIVER( laser500 )	/* 1984? Laser 500								  */
 	DRIVER( laser700 )	/* 1984? Laser 700								  */
-#endif
+
 	/* Creativision console */
 
 	/* TANGERINE */
 	DRIVER( microtan )	/* 1979 Microtan 65 							  */
 
-#if 0
 	DRIVER( oric1 ) 	/* 1983 Oric 1									  */
 	DRIVER( orica ) 	/* 1984 Oric Atmos								  */
 	DRIVER( prav8d )    /* 1985 Pravetz 8D                                  */
 	DRIVER( prav8dd )   /* 1989 Pravetz 8D (Disk ROM)                       */
 	DRIVER( prav8dda )  /* 1989 Pravetz 8D (Disk ROM, alternate)            */
 	DRIVER( telstrat )	/* ??? Oric Telestrat/Stratos						*/
-#endif
 
 	/* PHILIPS */
 	DRIVER( p2000t )	/* 1980 P2000T									  */
@@ -708,10 +705,10 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1962 DEC PDP1 for SPACEWAR! - 1962             */
+	DRIVER( pdp1 )      /* 1962 DEC PDP1 for SPACEWAR! - 1962             */
 
 	/* MEMOTECH */
-//	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
+	DRIVER( mtx512 )    /* 1983 Memotech MTX512                           */
 
 	/* MATTEL */
 	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component */
