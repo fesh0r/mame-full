@@ -20,6 +20,7 @@
  *****************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "utils.h"
 
 typedef unsigned char	byte;
@@ -78,7 +79,7 @@ void usage(void)
 	fprintf(stderr, "\totherwise you must specify a format and an image name\n");
 }
 
-int main(int ac, char **av)
+int CLIB_DECL main(int ac, char **av)
 {
 int i, track, side, sector;
 FILE *fd;
