@@ -2781,7 +2781,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(cpcplus)
 	CONFIG_IMPORT_FROM(cpc6128)
-	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, amstrad_plus_cartridge_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1,	"cpr\0", NULL, NULL, device_load_amstrad_plus_cartridge, NULL, NULL, NULL)
 	CONFIG_DEVICE_SNAPSHOT(			"sna\0", amstrad)
 SYSTEM_CONFIG_END
 

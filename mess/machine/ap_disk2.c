@@ -110,14 +110,14 @@ void apple2_slot6_init(void)
 	read_state    = 1;
 }
 
-int apple2_floppy_init(mess_image *img)
+DEVICE_INIT(apple2_floppy)
 {
-	if (image_alloctag(img, APDISKTAG, sizeof(apple2_disk)))
+	if (image_alloctag(image, APDISKTAG, sizeof(apple2_disk)))
 		return INIT_FAIL;
 	return INIT_PASS;
 }
 
-int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(apple2_floppy)
 {
 	int t, s;
 	int pos;
@@ -125,9 +125,9 @@ int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	int i;
 	apple2_disk *disk;
 
-	disk = get_disk(img);
+	disk = get_disk(image);
 
-    disk->data = image_malloc(img, NIBBLE_SIZE*16*TOTAL_TRACKS);
+    disk->data = image_malloc(image, NIBBLE_SIZE*16*TOTAL_TRACKS);
 	if (!disk->data)
 		return INIT_FAIL;
 
@@ -144,7 +144,7 @@ int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
 	{
-		if (mame_fseek(fp, 256*16*t, SEEK_CUR)!=0)
+		if (mame_fseek(file, 256*16*t, SEEK_CUR)!=0)
 		{
 			LOG(("Couldn't find track %d.\n", t));
 			return INIT_FAIL;
@@ -159,13 +159,13 @@ int apple2_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 			int oldvalue;
 
 			sec_pos = 256*r_skewing6[s] + t*256*16;
-			if (mame_fseek(fp, sec_pos, SEEK_SET)!=0)
+			if (mame_fseek(file, sec_pos, SEEK_SET)!=0)
 			{
 				LOG(("Couldn't find sector %d.\n", s));
 				return INIT_FAIL;
 			}
 
-			if (mame_fread(fp, data, 256)<256)
+			if (mame_fread(file, data, 256)<256)
 			{
 				LOG(("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos));
 				return INIT_FAIL;

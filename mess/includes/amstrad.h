@@ -96,6 +96,6 @@ extern PALETTE_INIT( kccomp );
 /* initialise palette for 464plus, 6128plus */
 extern PALETTE_INIT( amstrad_plus );
 
-int amstrad_plus_cartridge_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD(amstrad_plus_cartridge);
 
 

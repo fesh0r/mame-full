@@ -218,7 +218,7 @@ ROM_START( astrocdw )
 ROM_END
 
 SYSTEM_CONFIG_START(astrocde)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, astrocade_load_rom, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, device_load_astrocade_rom, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

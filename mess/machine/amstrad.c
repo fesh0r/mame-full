@@ -206,7 +206,7 @@ SNAPSHOT_LOAD(amstrad)
 	return INIT_PASS;
 }
 
-int	amstrad_plus_cartridge_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(amstrad_plus_cartridge)
 {
 	return INIT_PASS;
 }
