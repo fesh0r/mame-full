@@ -382,7 +382,7 @@ static void dmkdsk_write_sector_data_from_buffer(int drive, int side, int index1
 {
 	dmkTrack_p	track_data;
 	UINT16		disp, crc;
-	int			i=0, size;
+	int			i=0, size=0;
 	dmkdsk 		*w = &dmkdsk_drives[drive];
 
 	/* Get track */
@@ -529,7 +529,7 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 	{
 		disp = LITTLE_ENDIANIZE_INT16(track_data->idamOffset[id_index]);
 		disp &= 0x3fff;
-		
+
 		/* Check if sector index is out of bounds */
 		if( disp == 0 )
 		{
