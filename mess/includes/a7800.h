@@ -13,7 +13,7 @@ extern unsigned char *a7800_cartridge_rom;
 extern void a7800_init_machine(void);
 extern void a7800_stop_machine(void);
 extern UINT32 a7800_partialcrc(const unsigned char *,unsigned int);
-extern int a7800_load_rom (int id);
+extern int a7800_init_cart (int id);
 extern void a7800_exit_rom (int id);
 extern READ_HANDLER  ( a7800_TIA_r );
 extern WRITE_HANDLER ( a7800_TIA_w );

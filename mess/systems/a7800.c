@@ -286,8 +286,8 @@ static const struct IODevice io_a7800[] = {
         "a78\0",            /* file extensions */
         IO_RESET_ALL,       /* reset if file changed */
         0,
-        a7800_load_rom,     /* init */
-        a7800_exit_rom,     /* exit */
+        a7800_init_cart,	/* init */
+        a7800_exit_rom,		/* exit */
         NULL,               /* info */
         NULL,               /* open */
         NULL,               /* close */
