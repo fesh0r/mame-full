@@ -30,7 +30,7 @@
  ******************************************************************************/
 #include "driver.h"
 #include "includes/nc.h"
-#include "machine/tc8521.h"
+#include "includes/tc8521.h"
 //#include "sound/beep.h"
 
 static unsigned long nc_memory_size;
@@ -249,6 +249,12 @@ static void nc_refresh_memory_config(void)
         nc_refresh_memory_bank_config(3);
 }
 
+static struct tc8521_interface nc100_tc8521_interface=
+{
+  NULL,
+  NULL
+};
+
 void nc_common_init_machine(void)
 {
         
@@ -299,7 +305,7 @@ void nc_common_init_machine(void)
                 }
         }
 
-        tc8521_init();
+        tc8521_init(&nc100_tc8521_interface);
 }
 
 void nc100_init_machine(void)
@@ -509,7 +515,7 @@ static void nc_sound_update(int channel)
         on = ((period & (1<<15))==0);
 
         /* calculate frequency from period */
-        frequency = (int)(period * 2 * 1.6276f);
+        frequency = (int)(1000000.0f/((float)((period & 0x07fff)<<1) * 1.6276f));
 
         /* set state */
         beep_set_state(channel, on);
@@ -519,6 +525,8 @@ static void nc_sound_update(int channel)
 
 WRITE_HANDLER(nc_sound_w)
 {
+        logerror("sound w: %04x %02x\r\n", offset, data);
+
         switch (offset)
         {
                 case 0x0:
