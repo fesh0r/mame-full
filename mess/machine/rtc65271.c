@@ -10,10 +10,10 @@
 
 	Todo:
 	* Save the config to NVRAM?
-	* Support interrupt pin output
 	* Support square wave pin output?
+	* Support DSE mode?
 
-	Raphael Nabet, 2003
+	Raphael Nabet, 2003-2004
 */
 
 #include <math.h>
@@ -50,6 +50,9 @@ static struct
 	/* SQW timer: called every periodic clock half-period */
 	void *SQW_timer;
 	int SQW_internal_state;
+
+	/* callback called when interrupt pin state changes (may be NULL) */
+	void (*interrupt_callback)(int state);
 } rtc;
 
 enum
@@ -90,7 +93,7 @@ enum
 	reg_C_AF	= 0x20,
 	reg_C_UF	= 0x10,
 
-	reg_D_VLT	= 0x80
+	reg_D_VRT	= 0x80
 };
 
 static const double SQW_period_table[16] =
@@ -181,11 +184,136 @@ static UINT8 BCD_to_binary(UINT8 data)
 
 
 /*
+	load the SRAM and register contents from file
+*/
+int rtc65271_file_load(mame_file *file)
+{
+	UINT8 buf;
+
+
+	/* version flag */
+	if (mame_fread(file, & buf, 1) != 1)
+		return 1;
+	if (buf != 0)
+		return 1;
+
+	/* control registers */
+	if (mame_fread(file, &buf, 1) != 1)
+		return 1;
+	rtc.regs[reg_A] = buf & (reg_A_DV /*| reg_A_RS*/);
+	if (mame_fread(file, &buf, 1) != 1)
+		return 1;
+	rtc.regs[reg_B] = buf & (reg_B_SET | reg_B_DM | reg_B_24h | reg_B_DSE);
+
+	/* alarm registers */
+	if (mame_fread(file, &rtc.regs[reg_alarm_second], 1) != 1)
+		return 1;
+	if (mame_fread(file, &rtc.regs[reg_alarm_minute], 1) != 1)
+		return 1;
+	if (mame_fread(file, &rtc.regs[reg_alarm_hour], 1) != 1)
+		return 1;
+
+	/* user RAM */
+	if (mame_fread(file, rtc.regs+14, 50) != 50)
+		return 1;
+
+	/* extended RAM */
+	if (mame_fread(file, rtc.xram, 4096) != 4096)
+		return 1;
+
+	rtc.regs[reg_D] |= reg_D_VRT;	/* the data was backed up successfully */
+	/*rtc.dirty = FALSE;*/
+
+	{
+		/* Now we copy the host clock into the rtc */
+		/* All these functions should be ANSI */
+		time_t cur_time = time(NULL);
+		struct tm expanded_time = *localtime(& cur_time);
+
+		/* set clock registers */
+		rtc.regs[reg_second] = expanded_time.tm_sec;
+		rtc.regs[reg_minute] = expanded_time.tm_min;
+		if (rtc.regs[reg_B] & reg_B_24h)
+			/* 24-hour mode */
+			rtc.regs[reg_hour] = expanded_time.tm_hour;
+		else
+		{	/* 12-hour mode */
+			if (expanded_time.tm_hour >= 12)
+			{
+				rtc.regs[reg_hour] = 0x80;
+				expanded_time.tm_hour -= 12;
+			}
+			else
+				rtc.regs[reg_hour] = 0;
+			rtc.regs[reg_hour] |= expanded_time.tm_hour ? expanded_time.tm_hour : 12;
+		}
+		rtc.regs[reg_weekday] = expanded_time.tm_wday + 1;
+		rtc.regs[reg_monthday] = expanded_time.tm_mday;
+		rtc.regs[reg_month] = expanded_time.tm_mon + 1;
+		rtc.regs[reg_year] = expanded_time.tm_year % 100;
+		if (! (rtc.regs[reg_B] & reg_B_DM))
+		{	/* BCD mode */
+			rtc.regs[reg_second] = binary_to_BCD(rtc.regs[reg_second]);
+			rtc.regs[reg_minute] = binary_to_BCD(rtc.regs[reg_minute]);
+			rtc.regs[reg_hour] = (rtc.regs[reg_hour] & 0x80) | binary_to_BCD(rtc.regs[reg_hour] & 0x7f);
+			/*rtc.regs[reg_weekday] = binary_to_BCD(rtc.regs[reg_weekday]);*/
+			rtc.regs[reg_monthday] = binary_to_BCD(rtc.regs[reg_monthday]);
+			rtc.regs[reg_month] = binary_to_BCD(rtc.regs[reg_month]);
+			rtc.regs[reg_year] = binary_to_BCD(rtc.regs[reg_year]);
+		}
+	}
+
+	return 0;
+}
+
+/*
+	save the SRAM and register contents to file
+*/
+int rtc65271_file_save(mame_file *file)
+{
+	UINT8 buf;
+
+
+	/* version flag */
+	buf = 0;
+	if (mame_fwrite(file, & buf, 1) != 1)
+		return 1;
+
+	/* control registers */
+	buf = rtc.regs[reg_A] & (reg_A_DV | reg_A_RS);
+	if (mame_fwrite(file, &buf, 1) != 1)
+		return 1;
+	buf = rtc.regs[reg_B] & (reg_B_SET | reg_B_DM | reg_B_24h | reg_B_DSE);
+	if (mame_fwrite(file, &buf, 1) != 1)
+		return 1;
+
+	/* alarm registers */
+	if (mame_fwrite(file, &rtc.regs[reg_alarm_second], 1) != 1)
+		return 1;
+	if (mame_fwrite(file, &rtc.regs[reg_alarm_minute], 1) != 1)
+		return 1;
+	if (mame_fwrite(file, &rtc.regs[reg_alarm_hour], 1) != 1)
+		return 1;
+
+	/* user RAM */
+	if (mame_fwrite(file, rtc.regs+14, 50) != 50)
+		return 1;
+
+	/* extended RAM */
+	if (mame_fwrite(file, rtc.xram, 4096) != 4096)
+		return 1;
+
+	return 0;
+}
+
+/*
 	Initialize clock
 
 	xram: pointer to 4kb RAM area
+	interrupt_callback: callback called when interrupt pin state changes (may
+		be NULL)
 */
-void rtc65271_init(UINT8 *xram)
+void rtc65271_init(UINT8 *xram, void (*interrupt_callback)(int state))
 {
 	memset(&rtc, 0, sizeof(rtc));
 
@@ -194,30 +322,7 @@ void rtc65271_init(UINT8 *xram)
 	rtc.update_timer = timer_alloc(rtc_begin_update_callback);
 	timer_adjust(rtc.update_timer, TIME_IN_SEC(1.), 0, TIME_IN_SEC(1.));
 	rtc.SQW_timer = timer_alloc(rtc_SQW_callback);
-
-	{
-		/* Now we copy the host clock into the rtc */
-		/* All these functions should be ANSI */
-		time_t cur_time = time(NULL);
-		struct tm expanded_time = *localtime(& cur_time);
-
-		/* the following bits need to be set for IDEAL to work correctly */
-		rtc.regs[reg_A] |= 0x20;
-		rtc.regs[reg_B] |= reg_B_DM;
-
-		/* set clock registers */
-		rtc.regs[reg_second] = expanded_time.tm_sec;
-		rtc.regs[reg_minute] = expanded_time.tm_min;
-		rtc.regs[reg_hour] = expanded_time.tm_hour;
-		rtc.regs[reg_weekday] = expanded_time.tm_wday + 1;
-		rtc.regs[reg_monthday] = expanded_time.tm_mday;
-		rtc.regs[reg_month] = expanded_time.tm_mon + 1;
-		rtc.regs[reg_year] = expanded_time.tm_year % 100;
-
-		/* IDEAL-specific trick (the year count in struct tm starts in 1900,
-		hence the 19 here) */
-		rtc.regs[14] = (expanded_time.tm_year / 100) + 19;
-	}
+	rtc.interrupt_callback = interrupt_callback;
 }
 
 /*
@@ -252,7 +357,7 @@ UINT8 rtc65271_r(int xramsel, offs_t offset)
 				break;
 			case reg_D:
 				reply = rtc.regs[rtc.cur_reg];
-				rtc.regs[rtc.cur_reg] = 0;
+				rtc.regs[rtc.cur_reg] = /*0*/reg_D_VRT;	/* set VRT flag so that the computer does not complain that the battery is low */
 				break;
 
 			default:
@@ -360,9 +465,17 @@ void rtc65271_w(int xramsel, offs_t offset, UINT8 data)
 static void field_interrupts(void)
 {
 	if (rtc.regs[reg_C] & rtc.regs[reg_B] & (reg_C_PF | reg_C_AF | reg_C_UF))
+	{
 		rtc.regs[reg_C] |= reg_C_IRQF;
+		if (rtc.interrupt_callback)
+			rtc.interrupt_callback(1);
+	}
 	else
+	{
 		rtc.regs[reg_C] &= ~reg_C_IRQF;
+		if (rtc.interrupt_callback)
+			rtc.interrupt_callback(0);
+	}
 }
 
 

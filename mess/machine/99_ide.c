@@ -2,7 +2,8 @@
 	Thierry Nouspikel's IDE card emulation
 
 	This card is just a prototype.  It has been designed by Thierry Nouspikel,
-	and its description was published in 2001.
+	and its description was published in 2001.  The card have been revised in
+	2004.
 
 	The specs have been published in <http://www.nouspikel.com/ti99/ide.html>.
 
@@ -50,7 +51,7 @@ static const ti99_peb_card_handlers_t ide_handlers =
 };
 
 static int sram_enable;
-static int sram_enable_dip = /*0*/1;
+static int sram_enable_dip = 0;
 static int cru_register;
 enum
 {
@@ -58,38 +59,46 @@ enum
 	cru_reg_page_0 = 0x08,
 	/*cru_reg_rambo = 0x10,*/	/* not emulated */
 	cru_reg_wp = 0x20,
-	/*cru_reg_unused = 0x40,*/
+	cru_reg_int_en = 0x40,
 	cru_reg_reset = 0x80
 };
 static int input_latch, output_latch;
 
-static int ide_irq;
+static int ide_irq, clk_irq;
 
 struct ide_interface ti99_ide_interface =
 {
 	ide_interrupt_callback
 };
 
-/* The original IDE card prototype has a 8-bit->16-bit demultiplexer that
-assumes that the LSByte of each word is accessed first.  This is true with
-ti99/4(a), but not with the tms9995 CPU used by Geneve and ti99/8.  When
-tms9995_mode is set, the emulated multiplexer is fixed to be compatible with
-tms9995 (it assumes that the MSByte of each word is accessed first).  Note that
-this feature is only available under emulation: AFAIK, no real-world IDE card
-in existence supports this feature, though it should be relatively easy to
-redesign the IDE card to support it (if anyone is interested, the USB/SM card
-by Thierry Nouspickel provides an example of a multiplexer compatible with both
-ti99/4(a) and tms9995). */
+/* The card has a 8-bit->16-bit demultiplexer that can be set-up to assume
+either that the LSByte of a word is accessed first or that the MSByte of a word
+is accessed first.  The former is true with ti-99/4(a), the latter with the
+tms9995 CPU used by Geneve and ti-99/8.  Note that the first revision of IDE
+only supported ti-99/4(a) (LSByte first) mode. */
 static int tms9995_mode;
 
 /*
 	ide_interrupt_callback()
 
-	set a flag
+	IDE interrupt callback
 */
 static void ide_interrupt_callback(int state)
 {
 	ide_irq = state;
+	if (cru_register & cru_reg_int_en)
+		ti99_peb_set_ila_bit(inta_ide_bit, state);
+}
+
+/*
+	clk_interrupt_callback()
+
+	clock interrupt callback
+*/
+static void clk_interrupt_callback(int state)
+{
+	clk_irq = state;
+	ti99_peb_set_ila_bit(inta_ide_clk_bit, state);
 }
 
 /*
@@ -121,7 +130,7 @@ DEVICE_UNLOAD( ti99_ide )
 */
 void ti99_ide_init(int in_tms9995_mode)
 {
-	rtc65271_init(memory_region(region_dsr) + offset_ide_ram2);
+	rtc65271_init(memory_region(region_dsr) + offset_ide_ram2, clk_interrupt_callback);
 
 	ti99_ide_RAM = memory_region(region_dsr) + offset_ide_ram;
 
@@ -136,6 +145,46 @@ void ti99_ide_init(int in_tms9995_mode)
 	tms9995_mode = in_tms9995_mode;
 }
 
+int ti99_ide_load_memcard(void)
+{
+	mame_file *file;
+
+
+	file = mame_fopen(Machine->gamedrv->name, "ide", FILETYPE_MEMCARD, OSD_FOPEN_READ);
+	if (! file)
+		return /*1*/0;
+	if (rtc65271_file_load(file))
+	{
+		mame_fclose(file);
+		return 1;
+	}
+
+	mame_fclose(file);
+	return 0;
+}
+
+int ti99_ide_save_memcard(void)
+{
+	mame_file *file;
+
+
+	/*if (ti99_ide_get_dirty_flag())*/
+	{
+		file = mame_fopen(Machine->gamedrv->name, "ide", FILETYPE_MEMCARD, OSD_FOPEN_WRITE);
+		if (! file)
+			return 1;
+		if (rtc65271_file_save(file))
+		{
+			mame_fclose(file);
+			return 1;
+		}
+
+		mame_fclose(file);
+	}
+
+	return 0;
+}
+
 /*
 	Read ide CRU interface
 */
@@ -146,7 +195,10 @@ static int ide_cru_r(int offset)
 	switch (offset)
 	{
 	default:
-		reply = cru_register;
+		reply = cru_register & 0x30;
+		reply |= 8;	/* IDE bus IORDY always set */
+		if (! clk_irq)
+			reply |= 4;
 		if (sram_enable_dip)
 			reply |= 2;
 		if (! ide_irq)
@@ -178,15 +230,19 @@ static void ide_cru_w(int offset, int data)
 	case 3:			/* force SRAM page 0 */
 	case 4:			/* enable SRAM in 0x6000-0x7000 ("RAMBO" mode) */
 	case 5:			/* write-protect RAM */
-	case 6:			/* not used */
+	case 6:			/* irq and reset enable */
 	case 7:			/* reset drive */
 		if (data)
 			cru_register |= 1 << offset;
 		else
 			cru_register &= ~ (1 << offset);
 
-		if ((offset == 7) && data)
-			ide_controller_reset(0);
+		if (offset == 6)
+			ti99_peb_set_ila_bit(inta_ide_bit, (cru_register & cru_reg_int_en) && ide_irq);
+
+		if ((offset == 6) || (offset == 7))
+			if ((cru_register & cru_reg_int_en) && !(cru_register & cru_reg_reset))
+				ide_controller_reset(0);
 		break;
 	}
 }
@@ -220,60 +276,26 @@ static READ8_HANDLER(ide_mem_r)
 				reply = rtc65271_r(0, 0);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (tms9995_mode)
-			{
-				if (!(offset & 1))
-				{
-					if (! (offset & 0x10))
-						reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
-
-					input_latch = reply & 0xff;
-					reply >>= 8;
-				}
-				else
-					reply = input_latch;
+			if (tms9995_mode ? (!(offset & 1)) : (offset & 1))
+			{	/* first read triggers 16-bit read cycle */
+				input_latch = (! (offset & 0x10)) ? ide_bus_0_r(0, (offset >> 1) & 0x7) : 0;
 			}
-			else
-			{
-				if (offset & 1)
-				{
-					if (! (offset & 0x10))
-						reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
 
-					input_latch = (reply >> 8) & 0xff;
-					reply &= 0xff;
-				}
-				else
-					reply = input_latch;
-			}
+			/* return latched input */
+			/*reply = (offset & 1) ? input_latch : (input_latch >> 8);*/
+			/* return latched input - bytes are swapped in 2004 IDE card */
+			reply = (offset & 1) ? (input_latch >> 8) : input_latch;
 			break;
 		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (tms9995_mode)
-			{
-				if (!(offset & 1))
-				{
-					if (! (offset & 0x10))
-						reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
-
-					input_latch = reply & 0xff;
-					reply >>= 8;
-				}
-				else
-					reply = input_latch;
+			if (tms9995_mode ? (!(offset & 1)) : (offset & 1))
+			{	/* first read triggers 16-bit read cycle */
+				input_latch = (! (offset & 0x10)) ? ide_bus_0_r(1, (offset >> 1) & 0x7) : 0;
 			}
-			else
-			{
-				if (offset & 1)
-				{
-					if (! (offset & 0x10))
-						reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
 
-					input_latch = (reply >> 8) & 0xff;
-					reply &= 0xff;
-				}
-				else
-					reply = input_latch;
-			}
+			/* return latched input */
+			/*reply = (offset & 1) ? input_latch : (input_latch >> 8);*/
+			/* return latched input - bytes are swapped in 2004 IDE card */
+			reply = (offset & 1) ? (input_latch >> 8) : input_latch;
 			break;
 		}
 	}
@@ -319,35 +341,37 @@ static WRITE8_HANDLER(ide_mem_w)
 				rtc65271_w(0, 0, data);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (tms9995_mode)
-			{
-				if (!(offset & 1))
-					output_latch = data;
-				else
-					ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) output_latch << 8) | data);
-			}
+			/* latch write */
+			/*if (offset & 1)
+				output_latch = (output_latch & 0xff00) | data;
 			else
-			{
-				if (offset & 1)
-					output_latch = data;
-				else
-					ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+				output_latch = (output_latch & 0x00ff) | (data << 8);*/
+			/* latch write - bytes are swapped in 2004 IDE card */
+			if (offset & 1)
+				output_latch = (output_latch & 0x00ff) | (data << 8);
+			else
+				output_latch = (output_latch & 0xff00) | data;
+
+			if (tms9995_mode ? (offset & 1) : (!(offset & 1)))
+			{	/* second write triggers 16-bit write cycle */
+				ide_bus_0_w(0, (offset >> 1) & 0x7, output_latch);
 			}
 			break;
 		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (tms9995_mode)
-			{
-				if (!(offset & 1))
-					output_latch = data;
-				else
-					ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) output_latch << 8) | data);
-			}
+			/* latch write */
+			/*if (offset & 1)
+				output_latch = (output_latch & 0xff00) | data;
 			else
-			{
-				if (offset & 1)
-					output_latch = data;
-				else
-					ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+				output_latch = (output_latch & 0x00ff) | (data << 8);*/
+			/* latch write - bytes are swapped in 2004 IDE card */
+			if (offset & 1)
+				output_latch = (output_latch & 0x00ff) | (data << 8);
+			else
+				output_latch = (output_latch & 0xff00) | data;
+
+			if (tms9995_mode ? (offset & 1) : (!(offset & 1)))
+			{	/* second write triggers 16-bit write cycle */
+				ide_bus_0_w(1, (offset >> 1) & 0x7, output_latch);
 			}
 			break;
 		}

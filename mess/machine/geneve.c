@@ -271,7 +271,10 @@ void machine_init_geneve(void)
 	}
 
 	if (has_ide)
+	{
 		ti99_ide_init(TRUE);
+		ti99_ide_load_memcard();
+	}
 
 	if (has_rs232)
 		ti99_rs232_init();
@@ -282,6 +285,9 @@ void machine_init_geneve(void)
 
 void machine_stop_geneve(void)
 {
+	if (has_ide)
+		ti99_ide_save_memcard();
+
 	if (has_rs232)
 		ti99_rs232_cleanup();
 

@@ -846,7 +846,10 @@ void machine_init_ti99(void)
 	}
 
 	if (has_ide)
+	{
 		ti99_ide_init(ti99_model == model_99_8);
+		ti99_ide_load_memcard();
+	}
 
 	if (has_rs232)
 		ti99_rs232_init();
@@ -876,6 +879,9 @@ void machine_stop_ti99(void)
 {
 	if (has_speech)
 		tms5220_set_variant(variant_tms5220);
+
+	if (has_ide)
+		ti99_ide_save_memcard();
 
 	if (has_hsgpl)
 		ti99_hsgpl_save_memcard();

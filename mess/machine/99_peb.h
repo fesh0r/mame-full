@@ -21,9 +21,9 @@ typedef struct ti99_peb_card_handlers_t
 } ti99_peb_card_handlers_t;
 
 /*
-	Descriptor for 16-bit peripheral expansion cards designed by the SNUG for
-	use with its SGCPU (a.k.a. 99/4p) system.  (These cards were not designed
-	by TI, TI always regarded the TI99 as an 8-bit system.)
+	Descriptor for 16-bit peripheral expansion cards designed for the snug
+	sgcpu 99/4p system.  (These cards were not designed by TI, TI always
+	regarded the ti-99 as an 8-bit system.)
 */
 typedef struct ti99_peb_16bit_card_handlers_t
 {
@@ -34,21 +34,23 @@ typedef struct ti99_peb_16bit_card_handlers_t
 	write16_handler mem_write;		/* card mem write handler (16 bits) */
 } ti99_peb_16bit_card_handlers_t;
 
-/* masks for ila and ilb (from actual ILA and ILB registers) */
+/* masks for ila and ilb */
 enum
 {
-	inta_rs232_1_bit = 0,
-	inta_rs232_2_bit = 1,
-	inta_rs232_3_bit = 4,
-	inta_rs232_4_bit = 5,
+	/* bits from actual ILA register */
+	inta_rs232_1_bit = 7-0,
+	inta_rs232_2_bit = 7-1,
+	inta_rs232_3_bit = 7-4,
+	inta_rs232_4_bit = 7-5,
 
-	/*inta_rs232_1_mask = (0x80 >> inta_rs232_1_bit),
-	inta_rs232_2_mask = (0x80 >> inta_rs232_2_bit),
-	inta_rs232_3_mask = (0x80 >> inta_rs232_3_bit),
-	inta_rs232_4_mask = (0x80 >> inta_rs232_4_bit),*/
+	/* extra "virtual" bits for devices that assert the INTA line without
+	setting a bit of the ILA register */
+	inta_ide_bit     = 8,
+	inta_ide_clk_bit = 9,
 
-	intb_fdc_bit     = 0,
-	intb_ieee488_bit = 1
+	/* bits from actual ILB register */
+	intb_fdc_bit     = 7-0,
+	intb_ieee488_bit = 7-1
 };
 
 void ti99_peb_init(int in_has_16bit_peb, void (*in_inta_callback)(int state), void (*in_intb_callback)(int state));

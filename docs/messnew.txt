@@ -8,7 +8,12 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [TI99,GENEVE] Updated the IDE card emulation with the latest changes to the
+  prototype.  The latest prototype is incompatible with earlier prototypes
+  (IDE bus has been byte-swapped), so you need to download the latest DSRs and
+  use a new, blank IDE hard disk image.  Also, the state of the IDE clock chip
+  (rtc65271) is now saved to disk, so that you can use a rtc bootstrap loader
+  to load IDEAL from the IDE harddisk, as explained in Nouspickel's IDEAL page.
 
 
 
