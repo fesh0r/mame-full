@@ -71,6 +71,7 @@ SOUNDS+=QSOUND@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
 SOUNDS+=SAA1099@
+SOUNDS+=BEEP@
 
 # Archive definitions
 DRVLIBS = $(OBJ)/advision.a \
@@ -348,6 +349,10 @@ $(OBJ)/amstrad.a:  \
           $(OBJ)/mess/systems/amstrad.o  \
           $(OBJ)/mess/vidhrdw/pcw.o      \
           $(OBJ)/mess/systems/pcw.o      \
+          $(OBJ)/mess/vidhrdw/nc.o       \
+          $(OBJ)/mess/systems/nc.o       \
+          $(OBJ)/mess/machine/nc.o       \
+          $(OBJ)/mess/machine/tc8521.o   \
           $(OBJ)/mess/systems/pcw16.o    \
           $(OBJ)/mess/vidhrdw/pcw16.o
 
@@ -434,7 +439,10 @@ $(OBJ)/acorn.a:    \
           $(OBJ)/mess/machine/atom.o     \
           $(OBJ)/mess/vidhrdw/atom.o     \
 	  $(OBJ)/mess/systems/atom.o	 \
-	  $(OBJ)/mess/systems/a310.o
+          $(OBJ)/mess/systems/a310.o     \
+          $(OBJ)/mess/systems/z88.o      \
+          $(OBJ)/mess/vidhrdw/z88.o      
+
 
 $(OBJ)/samcoupe.a: \
           $(OBJ)/mess/machine/coupe.o    \
@@ -470,7 +478,6 @@ COREOBJS +=        \
           $(OBJ)/mess/filemngr.o         \
           $(OBJ)/mess/tapectrl.o         \
           $(OBJ)/mess/machine/wd179x.o   \
-          $(OBJ)/mess/sndhrdw/beep.o     \
           $(OBJ)/mess/machine/pit8253.o  \
 
 ifndef MESS_EXCLUDE_CBM
