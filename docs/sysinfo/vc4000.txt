@@ -19,7 +19,22 @@ Features
 grid 
 4 8x10 single color sprites
 single channel sound
-2 controller with analog joystick and keypad
+special << load/reset button (must be pressed after power up)
+special > select button
+special start button
+2 controller with analog joystick and 14 key keypad
+
+controller keypad
+-----------------
+(keys do not have a label)
+a   b
+c d e
+f g h
+i j k
+l m n
+
+a,b,d are the same: fire
+
 
 Dumping Cartridges
 ------------------
@@ -30,3 +45,4 @@ look into messroms for a pinout of it
 Mess emulation state
 --------------------
 based on info by Paul Robson, Christian Windler
+sponsored by Andreas W.
