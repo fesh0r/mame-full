@@ -65,6 +65,10 @@ TARGET = mame
 # Uncomment the line below to enable the MMX assembly-language optimized
 # routines for the "light scanlines" and "6-tap filter" effects. This
 # requires an IA-32 processor with MMX capability and the NASM assembler.
+#
+# On Linux-i386 you can enable this without causing problems on non
+# MMX capable processors, the Linux code will autodetect if an MMX
+# capable processor is present and use the right code.
 # EFFECT_MMX_ASM = 1
 
 
