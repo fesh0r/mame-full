@@ -1910,14 +1910,20 @@ static int find_metadata_entry(struct chd_file *chd, UINT32 metatag, UINT32 meta
  *
  *************************************/
 
-static struct MD5Context md5;
-static struct sha1_ctx sha;
-static int hunknum;
-static UINT64 sourceoffset;
+struct chd_exfile
+{
+	struct chd_file *chd;
+	struct MD5Context md5;
+	struct sha1_ctx sha;
+	int hunknum;
+	UINT64 sourceoffset;
+};
 
-int chd_start_compress_ex(struct chd_file *chd)
+struct chd_exfile *chd_start_compress_ex(struct chd_file *chd)
 {
 	int err;
+	struct chd_exfile chdex;
+	struct chd_exfile *finalchdex;
 
 	/* punt if no interface */
 	if (!interface.open)
@@ -1939,20 +1945,28 @@ int chd_start_compress_ex(struct chd_file *chd)
 		init_crcmap(chd->parent, 1);
 
 	/* init the MD5/SHA1 computations */
-	MD5Init(&md5);
-	sha1_init(&sha);
+	MD5Init(&chdex.md5);
+	sha1_init(&chdex.sha);
+	
+	chdex.chd = chd;
+	chdex.sourceoffset = 0;
 
-	sourceoffset = 0;
+	finalchdex = malloc(sizeof(chdex));
+	if (!finalchdex)
+		SET_ERROR_AND_CLEANUP(CHDERR_OUT_OF_MEMORY);
+	*finalchdex = chdex;
+	return finalchdex;
 
 cleanup:
-	return last_error;
+	return NULL;
 }
 
-int chd_compress_ex(struct chd_file *chd, const char *rawfile, UINT64 offset, 
+int chd_compress_ex(struct chd_exfile *chdex, const char *rawfile, UINT64 offset, 
 		UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, 
 		UINT32 hunksecsize, void (*progress)(const char *, ...)) 
 {
 	struct chd_interface_file *sourcefile = NULL;
+	struct chd_file *chd;
 	clock_t lastupdate;
 	int err;
 	UINT64 sourcefileoffset = 0;
@@ -1963,8 +1977,10 @@ int chd_compress_ex(struct chd_file *chd, const char *rawfile, UINT64 offset,
 		SET_ERROR_AND_CLEANUP(CHDERR_NO_INTERFACE);
 
 	/* verify parameters */
-	if (!chd || !rawfile)
+	if (!chdex || !rawfile)
 		SET_ERROR_AND_CLEANUP(CHDERR_INVALID_PARAMETER);
+
+	chd = chdex->chd;
 
 	/* open the raw file */
 	sourcefile = multi_open(rawfile, "rb");
@@ -2001,42 +2017,42 @@ int chd_compress_ex(struct chd_file *chd, const char *rawfile, UINT64 offset,
 		/* progress */
 		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
 		{
-			UINT64 sourcepos = (UINT64)hunk+hunknum * chd->header.hunkbytes;
+			UINT64 sourcepos = (UINT64)hunk+chdex->hunknum * chd->header.hunkbytes;
 			if (progress && sourcepos)
-				(*progress)("Compressing hunk %d/%d... (ratio=%d%%)  \r", hunk+hunknum, chd->header.totalhunks, 100 - multi_length(chd->file) * 100 / sourcepos);
+				(*progress)("Compressing hunk %d/%d... (ratio=%d%%)  \r", hunk+chdex->hunknum, chd->header.totalhunks, 100 - multi_length(chd->file) * 100 / sourcepos);
 			lastupdate = curtime;
 		}
 
 		/* update the MD5/SHA1 */
 		bytestochecksum = chd->header.hunkbytes;
-		if (sourceoffset + chd->header.hunkbytes > chd->header.logicalbytes)
+		if (chdex->sourceoffset + chd->header.hunkbytes > chd->header.logicalbytes)
 		{
-			if (sourceoffset >= chd->header.logicalbytes)
+			if (chdex->sourceoffset >= chd->header.logicalbytes)
 				bytestochecksum = 0;
 			else
-				bytestochecksum = chd->header.logicalbytes - sourceoffset;
+				bytestochecksum = chd->header.logicalbytes - chdex->sourceoffset;
 		}
 		if (bytestochecksum)
 		{
-			MD5Update(&md5, chd->cache, bytestochecksum);
-			sha1_update(&sha, bytestochecksum, chd->cache);
+			MD5Update(&chdex->md5, chd->cache, bytestochecksum);
+			sha1_update(&chdex->sha, bytestochecksum, chd->cache);
 		}
 
 		/* write out the hunk */
-		err = write_hunk_from_memory(chd, hunk + hunknum, chd->cache);
+		err = write_hunk_from_memory(chd, hunk + chdex->hunknum, chd->cache);
 		if (err != CHDERR_NONE)
 			SET_ERROR_AND_CLEANUP(err);
 		
 		/* update our CRC map */
-		if ((chd->map[hunk + hunknum].flags & MAP_ENTRY_FLAG_TYPE_MASK) != MAP_ENTRY_TYPE_SELF_HUNK &&
-			(chd->map[hunk + hunknum].flags & MAP_ENTRY_FLAG_TYPE_MASK) != MAP_ENTRY_TYPE_PARENT_HUNK)
-			add_to_crcmap(chd, hunk + hunknum);
+		if ((chd->map[hunk + chdex->hunknum].flags & MAP_ENTRY_FLAG_TYPE_MASK) != MAP_ENTRY_TYPE_SELF_HUNK &&
+			(chd->map[hunk + chdex->hunknum].flags & MAP_ENTRY_FLAG_TYPE_MASK) != MAP_ENTRY_TYPE_PARENT_HUNK)
+			add_to_crcmap(chd, hunk + chdex->hunknum);
 
 		/* prepare for the next hunk */
-		sourceoffset += chd->header.hunkbytes;
+		chdex->sourceoffset += chd->header.hunkbytes;
 	}
 
-	hunknum += hunks_to_read;
+	chdex->hunknum += hunks_to_read;
 
 	return CHDERR_NONE;
 
@@ -2046,14 +2062,17 @@ cleanup:
 	return last_error;
 }
 
-int chd_end_compress_ex(struct chd_file *chd, void (*progress)(const char *, ...))
+int chd_end_compress_ex(struct chd_exfile *chdex, void (*progress)(const char *, ...))
 {
 	int err = CHDERR_NONE;
+	struct chd_file *chd;
+
+	chd = chdex->chd;
 
 	/* compute the final MD5/SHA1 values */
-	MD5Final(chd->header.md5, &md5);
-	sha1_final(&sha);
-	sha1_digest(&sha, SHA1_DIGEST_SIZE, chd->header.sha1);
+	MD5Final(chd->header.md5, &chdex->md5);
+	sha1_final(&chdex->sha);
+	sha1_digest(&chdex->sha, SHA1_DIGEST_SIZE, chd->header.sha1);
 
 	/* turn off the writeable flag and re-write the header */
 	chd->header.flags &= ~CHDFLAGS_IS_WRITEABLE;
@@ -2064,12 +2083,13 @@ int chd_end_compress_ex(struct chd_file *chd, void (*progress)(const char *, ...
 	/* final progress update */
 	if (progress)
 	{
-		UINT64 sourcepos = (UINT64)hunknum * chd->header.hunkbytes;
+		UINT64 sourcepos = (UINT64)chdex->hunknum * chd->header.hunkbytes;
 		if (sourcepos)
 			(*progress)("Compression complete ... final ratio = %d%%            \n", 100 - multi_length(chd->file) * 100 / sourcepos);
 	}
 
 cleanup:
+	free(chdex);
 	return err;
 }
 

@@ -162,6 +162,7 @@ struct chd_header
 
 
 struct chd_file;
+struct chd_exfile;
 struct chd_interface_file;
 
 struct chd_interface
@@ -202,8 +203,8 @@ int chd_set_header(const char *filename, const struct chd_header *header);
 int chd_compress(struct chd_file *chd, const char *rawfile, UINT32 offset, void (*progress)(const char *, ...));
 int chd_verify(struct chd_file *chd, void (*progress)(const char *, ...), UINT8 actualmd5[CHD_MD5_BYTES], UINT8 actualsha1[CHD_SHA1_BYTES]);
 
-int chd_start_compress_ex(struct chd_file *chd);
-int chd_compress_ex(struct chd_file *chd, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
-int chd_end_compress_ex(struct chd_file *chd, void (*progress)(const char *, ...));
+struct chd_exfile *chd_start_compress_ex(struct chd_file *chd);
+int chd_compress_ex(struct chd_exfile *chdex, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
+int chd_end_compress_ex(struct chd_exfile *chdex, void (*progress)(const char *, ...));
 
 #endif /* CHD_H */

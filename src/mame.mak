@@ -618,6 +618,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/mogura.o \
 	$(OBJ)/vidhrdw/lethal.o $(OBJ)/drivers/lethal.o \
 	$(OBJ)/machine/am53cf96.o $(OBJ)/drivers/konamigq.o \
+	$(OBJ)/machine/intelfsh.o $(OBJ)/drivers/konamigv.o \
 
 $(OBJ)/exidy.a: \
 	$(OBJ)/machine/carpolo.o $(OBJ)/vidhrdw/carpolo.o $(OBJ)/drivers/carpolo.o \
@@ -814,6 +815,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/vidhrdw/dcon.o $(OBJ)/drivers/dcon.o \
 	$(OBJ)/vidhrdw/sengokmj.o $(OBJ)/drivers/sengokmj.o \
 	$(OBJ)/vidhrdw/mustache.o $(OBJ)/drivers/mustache.o \
+	$(OBJ)/vidhrdw/seibuspi.o $(OBJ)/drivers/seibuspi.o \
 
 $(OBJ)/tad.a: \
 	$(OBJ)/vidhrdw/cabal.o $(OBJ)/drivers/cabal.o \
@@ -826,6 +828,7 @@ $(OBJ)/jaleco.a: \
 	$(OBJ)/vidhrdw/exerion.o $(OBJ)/drivers/exerion.o \
 	$(OBJ)/drivers/fcombat.o \
 	$(OBJ)/drivers/pturn.o \
+	$(OBJ)/drivers/ddayjlc.o \
 	$(OBJ)/vidhrdw/aeroboto.o $(OBJ)/drivers/aeroboto.o \
 	$(OBJ)/vidhrdw/citycon.o $(OBJ)/drivers/citycon.o \
 	$(OBJ)/vidhrdw/momoko.o $(OBJ)/drivers/momoko.o \

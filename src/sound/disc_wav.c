@@ -87,7 +87,7 @@ struct dss_schmitt_osc_context
 	int		state;			// state of the ouput
 };
 
-;struct dss_sinewave_context
+struct dss_sinewave_context
 {
 	double phase;
 };

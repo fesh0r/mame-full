@@ -29,14 +29,14 @@ enum
 	CD_TRACK_MODE2_FORM2,	/* mode 2 2324 bytes/sector */
 	CD_TRACK_MODE2_FORM_MIX, /* mode 2 2336 bytes/sector */
 	CD_TRACK_MODE2_RAW,	/* mode 2 2352 bytes / sector */
-	CD_TRACK_AUDIO,		/* redbook audio track 2352 bytes/sector (588 samples) */
+	CD_TRACK_AUDIO		/* redbook audio track 2352 bytes/sector (588 samples) */
 };
 
 enum
 {
 	CD_SUB_NORMAL = 0, 	/* "cooked" 96 bytes per sector */
 	CD_SUB_RAW,		/* raw uninterleaved 96 bytes per sector */
-	CD_SUB_NONE,		/* no subcode data stored */
+	CD_SUB_NONE		/* no subcode data stored */
 };
 
 struct cdrom_track_info

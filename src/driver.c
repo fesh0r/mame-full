@@ -2315,8 +2315,9 @@ V-V                           TP-027
 	DRIVER( ts2 )		/* Battle Arena Toshinden 2 (USA 951124) */
 	DRIVER( ts2j )		/* Battle Arena Toshinden 2 (JAPAN 951124) */
 	DRIVER( starglad )	/* Star Gladiator (USA 960627) */
-	DRIVER( sfex )		/* Street Fighter EX (ASIA 961219) */
-	DRIVER( sfexj )		/* Street Fighter EX (JAPAN 961130) */
+	DRIVER( sfex )  /* Street Fighter EX (USA 961219) */
+	DRIVER( sfexa )  /* Street Fighter EX (ASIA 961219) */
+	DRIVER( sfexj )  /* Street Fighter EX (JAPAN 961130) */
 	DRIVER( glpracr )	/* Gallop Racer (JAPAN Ver 9.01.12) */
 	DRIVER( sfexp )		/* Street Fighter EX Plus (USA 970311) */
 	DRIVER( sfexpj )	/* Street Fighter EX Plus (JAPAN 970311) */
@@ -2410,6 +2411,13 @@ V-V                           TP-027
 
 	/* Konami GQ */
 	DRIVER( cryptklr )	/* Crypt Killer (GQ420 UAA) */
+
+	/* Konami GV */
+	DRIVER( pbball96 )	/* GV017, Japan 1.03 */
+	DRIVER( hyperath )	/* GV021, Japan 1.00 */
+	DRIVER( susume )	/* GV027, Japan 1.20 */
+	DRIVER( weddingr )	/* GX624, JAA */
+	DRIVER( simpbowl )	/* GQ829, UAA */
 
 	/* Mitchell games */
 	DRIVER( mgakuen )	/* (c) 1988 Yuga */
@@ -4572,6 +4580,15 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	Senku							(c) 1997
 
 */
+	DRIVER( senkyu )
+	DRIVER( batlball )
+	DRIVER( viperp1 )
+	DRIVER( viperp1o )
+	DRIVER( ejanhs )
+	DRIVER( raidnfgt )
+	DRIVER( rf2_us )
+	DRIVER( rf2_eur )
+	DRIVER( rf2_2k )
 
 	/* Tad games (Tad games run on Seibu hardware) */
 	DRIVER( cabal )		/* (c) 1988 Tad + Fabtek license */
@@ -4605,6 +4622,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( exerionb )	/* bootleg */
 	DRIVER( fcombat )	/* (c) 1985 Jaleco */
 	DRIVER( pturn )		/* (c) 1984 Jaleco */
+	DRIVER( ddayjlc )	/* (c) 198? Jaleco */
 	DRIVER( formatz )	/* (c) 1984 Jaleco */
 	DRIVER( aeroboto )	/* (c) 1984 Williams */
 	DRIVER( citycon )	/* (c) 1985 Jaleco */

@@ -1,4 +1,4 @@
-0.80.1
+0.81
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -38,6 +38,9 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.81.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Changed around how CRC files work; changed the format to XML and they are
   no longer specific to CRC32; SHA-1 and MD5 are now supported.  The files
   are now called 'Hash' files are are in the hash directory.  [Nate Woods]
@@ -102,6 +105,7 @@ User Interface Changes:
 Imgtool Changes:
 ----------------
 (none)
+
 
 
 Source Changes:

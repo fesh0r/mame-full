@@ -516,6 +516,7 @@ static void do_createcd(int argc, char *argv[])
 {
 	char *inputfile, *outputfile;
 	struct chd_file *chd;
+	struct chd_exfile *chdex;
 	int err;
 	UINT32 totalsectors = 0;
 	UINT32 sectorsize = CD_FRAME_SIZE;
@@ -628,7 +629,7 @@ static void do_createcd(int argc, char *argv[])
 	}
 
 	/* begin state for writing */
-	chd_start_compress_ex(chd);
+	chdex = chd_start_compress_ex(chd);
 
 	/* write each track */
 	for (i = 0; i < toc.numtrks; i++)
@@ -638,7 +639,7 @@ static void do_createcd(int argc, char *argv[])
 
 		printf("Compressing track %d / %d (file %s:%d, %d frames, %d hunks)\n", i+1, toc.numtrks, track_info.fname[i], track_info.offset[i], toc.tracks[i].frames, hunks);
 
- 		err = chd_compress_ex(chd, track_info.fname[i], track_info.offset[i], 
+ 		err = chd_compress_ex(chdex, track_info.fname[i], track_info.offset[i], 
 				trkbytespersec, CD_FRAMES_PER_HUNK, hunks, 
 				CD_FRAME_SIZE, progress);
 		if (err != CHDERR_NONE)
@@ -651,7 +652,7 @@ static void do_createcd(int argc, char *argv[])
 	}
 
 	/* cleanup */
-	err = chd_end_compress_ex(chd, progress);
+	err = chd_end_compress_ex(chdex, progress);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error during compression finalization: %s\n", error_string(err));
@@ -1974,8 +1975,8 @@ int main(int argc, char **argv)
 		do_createblankhd(argc, argv);
 	if (!stricmp(argv[1], "-copydata"))
 		do_copydata(argc, argv);
-//	else if (!stricmp(argv[1], "-createcd"))
-//		do_createcd(argc, argv);
+	else if (!stricmp(argv[1], "-createcd"))
+		do_createcd(argc, argv);
 	else if (!stricmp(argv[1], "-extract"))
 		do_extract(argc, argv);
 	else if (!stricmp(argv[1], "-verify"))
