@@ -394,7 +394,7 @@ static int alsa_dsp_set_format(struct alsa_dsp_priv_data *priv, snd_pcm_format_t
       fprintf(stderr_file,"Alsa error: playback format unknow (%d)",format->format);
       return 0;
    }
-  bps >>= 4;		/* ok.. this buffer should be 0.25 sec */
+  bps >>= 4;		/* ok.. this buffer should be 1/16 sec */
   if (bps < 16)
     bps = 16;
   size = 1;
