@@ -10,9 +10,8 @@
 
 #include "driver.h"
 #include "includes/bbc.h"
-#include "vidhrdw/bbc.h"
 #include "vidhrdw/m6845.h"
-#include "vidhrdw/ttchar.h"
+#include "vidhrdw/bbctext.h"
 
 /************************************************************************
  * video_refresh flag is used in optimising the screen redrawing
@@ -137,8 +136,6 @@ void setscreenstart(int c0,int c1)
 	// emulation refresh optimisation
 	video_refresh=1;
 }
-
-
 
 /************************************************************************
  * VideoULA
@@ -307,29 +304,161 @@ void BBC_draw_hi_res_enabled(void)
 
 }
 
+/************************************************************************
+ * SAA5050 Teletext
+ ************************************************************************/
+
+enum Teletext_Colours  { Black,Red,Green,Yellow,Blue,Magenta,Cyan,White};
+enum Teletext_Flash    { Steady,Flashing };
+enum Teletext_Height   { Normal,Double };
+enum Teletext_Conceal  { No,Yes };
+
+static char *tt_lookup=teletext_characters;
+static char *tt_graphics=teletext_graphics;
+static int tt_colour=White;
+static int tt_bgcolour=Black;
+
+static int tt_linecount=0;
+
+void teletext_Vsync(void)
+{
+	tt_linecount=0;
+}
+
+void teletext_Hsync(void)
+{
+	tt_lookup=teletext_characters;
+	tt_colour=Machine->pens[0];
+	tt_bgcolour=Black;
+	tt_graphics=teletext_graphics;
+	tt_linecount=(tt_linecount+1)%10;
+}
+
 void BBC_draw_teletext_enabled(void)
 {
 	int meml;
-	unsigned char i=0;
+	int i=0;
 	int sc1;
-	int t1;
 	int c=0;
 	int pixel_temp=0;
 
+
+
+
 	meml=video_ram_lookup[crtc6845_memory_address_r(0)-1];
 	i=BBC_Video_RAM[meml]&0x7f;
-	if (i<0x20) {i=0x20;}
-	i=i-0x20;
+	switch (i)
+	{
+		// 0x00 Not used
 
+		case 0x01:  // Alpha Red
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[6];
+			break;
+		case 0x02:  // Alpha Green
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[5];
+			break;
+		case 0x03:  // Alpha Yellow
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[4];
+			break;
+		case 0x04:  // Alpha Blue
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[3];
+			break;
+		case 0x05:  //  Alpha Magenta
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[2];
+			break;
+		case 0x06:  //  Alpha Cyan
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[1];
+			break;
+		case 0x07:  //  Alpha White
+			tt_lookup=teletext_characters;
+			tt_colour=Machine->pens[0];
+			break;
+
+		// 0x08		Flash
+		// 0x09		Steady
+		// 0x0a		End Box
+		// 0x0b     Start Box
+		// 0x0c		Normal Height
+		// 0x0d		Double Height
+		// 0x0e		S0
+		// 0x0f		S1
+		// 0x10		DLE
+
+		case 0x11:  // Graphics Red
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[6];
+			break;
+		case 0x12:  // Graphics Green
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[5];
+			break;
+		case 0x13:  // Graphics Yellow
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[4];
+			break;
+		case 0x14:  // Graphics Blue
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[3];
+			break;
+		case 0x15:  //  Graphics Magenta
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[2];
+			break;
+		case 0x16:  //  Graphics Cyan
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[1];
+			break;
+		case 0x17:  //  Graphics White
+			tt_lookup=tt_graphics;
+			tt_colour=Machine->pens[0];
+			break;
+
+		// 0x18		Conceal Display
+
+		case 0x19:	//  Contiguois Graphics
+			tt_graphics=teletext_graphics;
+			if (tt_lookup!=teletext_characters)
+				tt_lookup=tt_graphics;
+			break;
+		case 0x1a:	//  Separated Graphics
+			tt_graphics=teletext_separated_graphics;
+			if (tt_lookup!=teletext_characters)
+				tt_lookup=tt_graphics;
+			break;
+
+		// 0x1b		ESC
+
+		case 0x1c:  //  Black Background
+			tt_bgcolour=Machine->pens[7];
+			break;
+		case 0x1d:  //  New Background
+			tt_bgcolour=tt_colour;
+			break;
+
+		// 0x1e		Hold Graphics
+		// 0x1f		Release Graphics
+
+	}
+
+	if (i<0x20) {i=0x20;}
+	i=(i-0x20)*60+(6*tt_linecount);
 	for(sc1=0;sc1<6;sc1++)
 	{
-		t1=teletext_characters[(60*i)+sc1+(6*(BBC_Character_Row/2))]?7:0;
-		pixel_temp=Machine->pens[7-t1];
+		pixel_temp=tt_lookup[i++]?tt_colour:tt_bgcolour;
+
 		BBC_display[c++]=pixel_temp;
 		BBC_display[c++]=pixel_temp;
 		BBC_display[c++]=pixel_temp;
 	}
 }
+
+
 
 void BBC_draw_screen_disabled(void)
 {
@@ -389,6 +518,9 @@ void BBC_Set_HSync(int offset, int data)
 		y_screen_pos+=1;
 		x_screen_pos=x_screen_offset;
 		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
+
+
+		teletext_Hsync();
 	}
 }
 
@@ -400,6 +532,8 @@ void BBC_Set_VSync(int offset, int data)
 	{
 		y_screen_pos=y_screen_offset;
 		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
+
+		teletext_Vsync();
 	};
 }
 
