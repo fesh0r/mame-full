@@ -4,12 +4,12 @@
 
 /* variables */
 
-extern unsigned char *ti99_scratch_RAM;
-extern unsigned char *ti99_xRAM_low;
-extern unsigned char *ti99_xRAM_high;
+extern UINT16 *ti99_scratch_RAM;
+extern UINT16 *ti99_xRAM_low;
+extern UINT16 *ti99_xRAM_high;
 
-extern unsigned char *ti99_cart_mem;
-extern unsigned char *ti99_DSR_mem;
+/*extern UINT16 *ti99_cart_mem;*/
+extern UINT16 *ti99_DSR_mem;
 
 
 /* protos for support code */

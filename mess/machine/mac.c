@@ -994,6 +994,7 @@ READ16_HANDLER ( macplus_scsi_r )
 	logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) cpu_get_pc());
 #endif
 
+	offset <<= 1;
 	offset %= sizeof(scsi_state);
 	offset /= sizeof(scsi_state[0]);
 
@@ -1006,6 +1007,7 @@ WRITE16_HANDLER ( macplus_scsi_w )
 	logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) cpu_get_pc());
 #endif
 
+	offset <<= 1;
 	offset %= sizeof(scsi_state);
 	offset /= sizeof(scsi_state[0]);
 
@@ -1099,9 +1101,9 @@ READ16_HANDLER ( mac_scc_r )
 #endif
 
 	result = 0;
-	offset &= 7;
+	offset &= 3;
 
-	switch(offset >> 1)
+	switch(offset)
 	{
 	case 0:
 		/* Channel B (Printer Port) Control */
@@ -1139,11 +1141,11 @@ READ16_HANDLER ( mac_scc_r )
 
 WRITE16_HANDLER ( mac_scc_w )
 {
-	offset &= 7;
+	offset &= 3;
 
 	data &= 0xff;
 
-	switch(offset >> 1)
+	switch(offset)
 	{
 	case 0:
 		/* Channel B (Printer Port) Control */
@@ -1517,7 +1519,7 @@ READ16_HANDLER ( mac_iwm_r )
 	logerror("mac_iwm_r: offset=0x%08x\n", offset);
 #endif
 
-	result = iwm_r(offset >> 9);
+	result = iwm_r(offset >> 8);
 	return (result << 8) | result;
 }
 
@@ -1528,7 +1530,7 @@ WRITE16_HANDLER ( mac_iwm_w )
 #endif
 
 	if (ACCESSING_LSB)
-		iwm_w(offset >> 9, data & 0xff);
+		iwm_w(offset >> 8, data & 0xff);
 }
 
 int mac_floppy_init(int id)
@@ -1633,7 +1635,7 @@ READ16_HANDLER ( mac_via_r )
 {
 	int data;
 
-	offset >>= 9;
+	offset >>= 8;
 	offset &= 0x0f;
 
 #if LOG_VIA
@@ -1646,7 +1648,7 @@ READ16_HANDLER ( mac_via_r )
 
 WRITE16_HANDLER ( mac_via_w )
 {
-	offset >>= 9;
+	offset >>= 8;
 	offset &= 0x0f;
 
 #if LOG_VIA
@@ -1764,15 +1766,15 @@ static OPBASE16_HANDLER (mac_OPbaseoverride)
 /* will not work with 2.5Mb RAM config */
 static READ16_HANDLER (mac_RAM_r)
 {
-	return READ_WORD(mac_ram_ptr + (offset & (mac_ram_size - 1)));
+	return ((UINT16*)mac_ram_ptr)[offset & ((mac_ram_size - 1) >> 1)];
 }
 
 /* will not work with 2.5Mb RAM config */
 static WRITE16_HANDLER (mac_RAM_w)
 {
-	UINT8 *dest = mac_ram_ptr + (offset & (mac_ram_size - 1));
+	UINT16 *dest = ((UINT16*)mac_ram_ptr) + (offset & ((mac_ram_size - 1) >> 1));
 
-	COMBINE_WORD_MEM(dest, data);
+	COMBINE_DATA(dest);
 }
 
 /* for 2.5Mb RAM config only */
@@ -1791,24 +1793,24 @@ static OPBASE16_HANDLER (mac_OPbaseoverride2)
 }
 
 /* for 2.5Mb RAM config only */
-/* will NOT work if (offset < 0x200000) */
+/* will NOT work if (offset < 0x100000) */
 static READ16_HANDLER (mac_RAM_r2)
 {
-	return READ_WORD(mac_ram_ptr + 0x200000 + (offset & 0x07ffff));
+	return ((UINT16*)mac_ram_ptr)[0x100000 + (offset & 0x03ffff)];
 }
 
 /* for 2.5Mb RAM config only */
-/* will NOT work if (offset < 0x200000) */
+/* will NOT work if (offset < 0x100000) */
 static WRITE16_HANDLER (mac_RAM_w2)
 {
-	UINT8 *dest = mac_ram_ptr + 0x200000 + (offset & 0x07ffff);
+	UINT16 *dest = ((UINT16*)mac_ram_ptr) + 0x100000 + (offset & 0x03ffff);
 
-	COMBINE_WORD_MEM(dest, data);
+	COMBINE_DATA(dest);
 }
 
 static READ16_HANDLER (mac_ROM_r)
 {
-	return READ_WORD(rom_ptr + (offset & (rom_size -1)));
+	return ((UINT16*)rom_ptr)[offset & ((rom_size -1)>>1)];
 }
 
 static int current_scanline;
