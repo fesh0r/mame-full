@@ -1006,7 +1006,7 @@ void init_saturn(void)
 
 int saturn_vh_start(void)
 {
-	videoram_size = 256*1024;
+	videoram_size = 1024;
     if (generic_vh_start())
         return 1;
 	return 0;

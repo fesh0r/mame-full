@@ -189,19 +189,28 @@ static UINT8 sh2_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-/*	ADD 	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 1100  1		 -
+ *	ADD 	Rm,Rn
+ */
 INLINE void ADD(data_t m, data_t n)
 {
 	sh2.r[n] += sh2.r[m];
 }
 
-/*	ADD 	#imm,Rn */
+/*	code				 cycles  t-bit
+ *	0111 nnnn iiii iiii  1		 -
+ *	ADD 	#imm,Rn
+ */
 INLINE void ADDI(data_t i, data_t n)
 {
 	sh2.r[n] += (INT32)(INT16)(INT8)i;
 }
 
-/*	ADDC	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 1110  1		 carry
+ *	ADDC	Rm,Rn
+ */
 INLINE void ADDC(data_t m, data_t n)
 {
 	UINT32 tmp0, tmp1;
@@ -217,7 +226,10 @@ INLINE void ADDC(data_t m, data_t n)
 		sh2.sr |= T;
 }
 
-/*	ADDV	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 1111  1		 overflow
+ *	ADDV	Rm,Rn
+ */
 INLINE void ADDV(data_t m, data_t n)
 {
 	INT32 dest, src, ans;
@@ -248,21 +260,29 @@ INLINE void ADDV(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	AND 	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0010 nnnn mmmm 1001  1		 -
+ *	AND 	Rm,Rn
+ */
 INLINE void AND(data_t m, data_t n)
 {
 	sh2.r[n] &= sh2.r[m];
 }
 
 
-/*	AND 	#imm,R0 */
+/*	code				 cycles  t-bit
+ *	1100 1001 iiii iiii  1		 -
+ *	AND 	#imm,R0
+ */
 INLINE void ANDI(data_t i)
 {
 	sh2.r[0] &= i;
-	sh2_icount -= 2;
 }
 
-/*	AND.B	#imm,@(R0,GBR) */
+/*	code				 cycles  t-bit
+ *	1100 1101 iiii iiii  1		 -
+ *	AND.B	#imm,@(R0,GBR)
+ */
 INLINE void ANDM(data_t i)
 {
 	data_t temp;
@@ -270,9 +290,13 @@ INLINE void ANDM(data_t i)
 	sh2.ea = sh2.gbr + sh2.r[0];
 	temp = i & RB( sh2.ea );
 	WB( sh2.ea, temp );
+    sh2_icount -= 2;
 }
 
-/*	BF		disp8 */
+/*	code				 cycles  t-bit
+ *	1000 1011 dddd dddd  3/1	 -
+ *	BF		disp8
+ */
 INLINE void BF(data_t d)
 {
 	if ((sh2.sr & T) == 0)
@@ -284,7 +308,10 @@ INLINE void BF(data_t d)
 	}
 }
 
-/*	BFS 	disp8 */
+/*	code				 cycles  t-bit
+ *	1000 1111 dddd dddd  3/1	 -
+ *	BFS 	disp8
+ */
 INLINE void BFS(data_t d)
 {
 	UINT32 temp = sh2.pc;
@@ -298,7 +325,10 @@ INLINE void BFS(data_t d)
 	}
 }
 
-/*	BRA 	disp12 */
+/*	code				 cycles  t-bit
+ *	1010 dddd dddd dddd  2		 -
+ *	BRA 	disp12
+ */
 INLINE void BRA(data_t d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
@@ -309,7 +339,10 @@ INLINE void BRA(data_t d)
 	sh2_icount--;
 }
 
-/*	BRAF	Rm */
+/*	code				 cycles  t-bit
+ *	0000 mmmm 0010 0011  2		 -
+ *	BRAF	Rm
+ */
 INLINE void BRAF(data_t m)
 {
 	sh2.pc += sh2.r[m] + 2;
@@ -318,7 +351,10 @@ INLINE void BRAF(data_t m)
 	sh2_icount--;
 }
 
-/*	BSR 	disp12 */
+/*	code				 cycles  t-bit
+ *	1011 dddd dddd dddd  2		 -
+ *	BSR 	disp12
+ */
 INLINE void BSR(data_t d)
 {
 	INT32 disp = ((INT32)d << 20) >> 20;
@@ -327,33 +363,43 @@ INLINE void BSR(data_t d)
 	sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
+	sh2.pr += 2;
 	sh2_icount--;
 }
 
-/*	BSRF	Rm */
+/*	code				 cycles  t-bit
+ *	0000 mmmm 0000 0011  2		 -
+ *	BSRF	Rm
+ */
 INLINE void BSRF(data_t m)
 {
 	sh2.pr = sh2.pc;
 	sh2.pc += sh2.r[m] + 2;
 	change_pc27bew(sh2.pc & AM);
 	sh2.delay = sh2.pr;
-	sh2_icount--;
+	sh2.pr += 2;
+    sh2_icount--;
 }
 
-/*	BT		disp8 */
+/*	code				 cycles  t-bit
+ *	1000 1001 dddd dddd  3/1	 -
+ *	BT		disp8
+ */
 INLINE void BT(data_t d)
 {
-	INT32 disp = ((INT32)d << 24) >> 24;
-
 	if ((sh2.sr & T) != 0)
 	{
+		INT32 disp = ((INT32)d << 24) >> 24;
 		sh2.pc = sh2.ea = sh2.pc + disp * 2 + 2;
 		change_pc27bew(sh2.pc & AM);
 		sh2_icount -= 2;
 	}
 }
 
-/*	BTS 	disp8 */
+/*	code				 cycles  t-bit
+ *	1000 1101 dddd dddd  2/1	 -
+ *	BTS 	disp8
+ */
 INLINE void BTS(data_t d)
 {
 	if ((sh2.sr & T) != 0)
@@ -366,20 +412,29 @@ INLINE void BTS(data_t d)
 	}
 }
 
-/*	CLRMAC */
+/*	code				 cycles  t-bit
+ *	0000 0000 0010 1000  1		 -
+ *	CLRMAC
+ */
 INLINE void CLRMAC(void)
 {
 	sh2.mach = 0;
 	sh2.macl = 0;
 }
 
-/*	CLRT */
+/*	code				 cycles  t-bit
+ *	0000 0000 0000 1000  1		 -
+ *	CLRT
+ */
 INLINE void CLRT(void)
 {
 	sh2.sr &= ~T;
 }
 
-/*	CMP_EQ	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0000  1		 comparison result
+ *	CMP_EQ	Rm,Rn
+ */
 INLINE void CMPEQ(data_t m, data_t n)
 {
 	if (sh2.r[n] == sh2.r[m])
@@ -388,7 +443,10 @@ INLINE void CMPEQ(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	CMP_GE	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0011  1		 comparison result
+ *	CMP_GE	Rm,Rn
+ */
 INLINE void CMPGE(data_t m, data_t n)
 {
 	if ((INT32) sh2.r[n] >= (INT32) sh2.r[m])
@@ -397,7 +455,10 @@ INLINE void CMPGE(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	CMP_GT	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0111  1		 comparison result
+ *	CMP_GT	Rm,Rn
+ */
 INLINE void CMPGT(data_t m, data_t n)
 {
 	if ((INT32) sh2.r[n] > (INT32) sh2.r[m])
@@ -406,7 +467,10 @@ INLINE void CMPGT(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	CMP_HI	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0110  1		 comparison result
+ *	CMP_HI	Rm,Rn
+ */
 INLINE void CMPHI(data_t m, data_t n)
 {
 	if ((UINT32) sh2.r[n] > (UINT32) sh2.r[m])
@@ -415,7 +479,10 @@ INLINE void CMPHI(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	CMP_HS	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0010  1		 comparison result
+ *	CMP_HS	Rm,Rn
+ */
 INLINE void CMPHS(data_t m, data_t n)
 {
 	if ((UINT32) sh2.r[n] >= (UINT32) sh2.r[m])
@@ -425,7 +492,10 @@ INLINE void CMPHS(data_t m, data_t n)
 }
 
 
-/*	CMP_PL	Rn */
+/*	code				 cycles  t-bit
+ *	0100 nnnn 0001 0101  1		 comparison result
+ *	CMP_PL	Rn
+ */
 INLINE void CMPPL(data_t n)
 {
 	if ((INT32) sh2.r[n] > 0)
@@ -434,7 +504,10 @@ INLINE void CMPPL(data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	CMP_PZ	Rn */
+/*	code				 cycles  t-bit
+ *	0100 nnnn 0001 0001  1		 comparison result
+ *	CMP_PZ	Rn
+ */
 INLINE void CMPPZ(data_t n)
 {
 	if ((INT32) sh2.r[n] >= 0)
@@ -443,27 +516,33 @@ INLINE void CMPPZ(data_t n)
 		sh2.sr &= ~T;
 }
 
-/* CMP_STR	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0010 nnnn mmmm 1100  1		 comparison result
+ * CMP_STR	Rm,Rn
+ */
 INLINE void CMPSTR(data_t m, data_t n)
 {
 	UINT32 temp;
 	INT32 HH, HL, LH, LL;
 
 	temp = sh2.r[n] ^ sh2.r[m];
-	HH = (temp >> 12) & 0x000000FF;
-	HL = (temp >> 8) & 0x000000FF;
-	LH = (temp >> 4) & 0x000000FF;
-	LL = temp & 0x000000FF;
+	HH = (temp >> 12) & 0xff;
+	HL = (temp >> 8) & 0xff;
+	LH = (temp >> 4) & 0xff;
+	LL = temp & 0xff;
 	if (HH && HL && LH && LL)
-		sh2.sr |= T;
+        sh2.sr &= ~T;
 	else
-		sh2.sr &= ~T;
+        sh2.sr |= T;
 }
 
-/*	CMP_EQ #imm,R0 */
+/*	code				 cycles  t-bit
+ *	1000 1000 iiii iiii  1		 comparison result
+ *	CMP/EQ #imm,R0
+ */
 INLINE void CMPIM(data_t i)
 {
-	UINT32 imm = (INT32)(INT16)(INT8)i;
+	UINT32 imm = (UINT32)(INT32)(INT16)(INT8)i;
 
 	if (sh2.r[0] == imm)
 		sh2.sr |= T;
@@ -471,7 +550,10 @@ INLINE void CMPIM(data_t i)
 		sh2.sr &= ~T;
 }
 
-/*	DIV0S	Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0010 nnnn mmmm 0111  1		 calculation result
+ *	DIV0S	Rm,Rn
+ */
 INLINE void DIV0S(data_t m, data_t n)
 {
 	if ((sh2.r[n] & 0x80000000) == 0)
@@ -488,13 +570,19 @@ INLINE void DIV0S(data_t m, data_t n)
 		sh2.sr &= ~T;
 }
 
-/*	DIV0U */
+/*	code				 cycles  t-bit
+ *	0000 0000 0001 1001  1		 0
+ *	DIV0U
+ */
 INLINE void DIV0U(void)
 {
 	sh2.sr &= ~(M | Q | T);
 }
 
-/*	DIV1 Rm,Rn */
+/*	code				 cycles  t-bit
+ *	0011 nnnn mmmm 0100  1		 calculation result
+ *	DIV1 Rm,Rn
+ */
 INLINE void DIV1(data_t m, data_t n)
 {
 	UINT32 tmp0;
@@ -1038,30 +1126,31 @@ INLINE void MOVI(data_t i, data_t n)
 	sh2.r[n] = (UINT32)(INT32)(INT16)(INT8) i;
 }
 
-/*	MOV.W	@(disp,PC),Rn */
+/*	MOV.W	@(disp8,PC),Rn */
 INLINE void MOVWI(data_t d, data_t n)
 {
 	UINT32 disp = d & 0xff;
-	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.pc + disp * 2 + 2 );
+	sh2.ea = sh2.pc + disp * 2 + 2;
+	sh2.r[n] = (UINT32)(INT32)(INT16) RW( sh2.ea );
 }
 
-/*	MOV.L	@(disp,PC),Rn */
+/*	MOV.L	@(disp8,PC),Rn */
 INLINE void MOVLI(data_t d, data_t n)
 {
 	UINT32 disp = d & 0xff;
-	sh2.ea = ((sh2.pc+2) & ~3) + disp * 4;
+	sh2.ea = ((sh2.pc + 2) & ~3) + disp * 4;
 	sh2.r[n] = RL( sh2.ea );
 }
 
-/*	MOV.B	@(disp,GBR),R0 */
+/*	MOV.B	@(disp8,GBR),R0 */
 INLINE void MOVBLG(data_t d)
 {
 	UINT32 disp = d & 0xff;
 	sh2.ea = sh2.gbr + disp;
-	sh2.r[0] = (INT32)(INT16)(INT8) RB( sh2.ea );
+	sh2.r[0] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.ea );
 }
 
-/*	MOV.W	@(disp,GBR),R0 */
+/*	MOV.W	@(disp8,GBR),R0 */
 INLINE void MOVWLG(data_t d)
 {
 	UINT32 disp = d & 0xff;
@@ -1069,7 +1158,7 @@ INLINE void MOVWLG(data_t d)
 	sh2.r[0] = (INT32)(INT16) RW( sh2.ea );
 }
 
-/*	MOV.L	@(disp,GBR),R0 */
+/*	MOV.L	@(disp8,GBR),R0 */
 INLINE void MOVLLG(data_t d)
 {
 	UINT32 disp = d & 0xff;
@@ -1077,7 +1166,7 @@ INLINE void MOVLLG(data_t d)
 	sh2.r[0] = RL( sh2.ea );
 }
 
-/*	MOV.B	R0,@(disp,GBR) */
+/*	MOV.B	R0,@(disp8,GBR) */
 INLINE void MOVBSG(data_t d)
 {
 	UINT32 disp = d & 0xff;
@@ -1085,7 +1174,7 @@ INLINE void MOVBSG(data_t d)
 	WB( sh2.ea, sh2.r[0] & 0x000000ff );
 }
 
-/*	MOV.W	R0,@(disp,GBR) */
+/*	MOV.W	R0,@(disp8,GBR) */
 INLINE void MOVWSG(data_t d)
 {
 	UINT32 disp = d & 0xff;
@@ -1093,7 +1182,7 @@ INLINE void MOVWSG(data_t d)
 	WW( sh2.ea, sh2.r[0] & 0x0000ffff );
 }
 
-/*	MOV.L	R0,@(disp,GBR) */
+/*	MOV.L	R0,@(disp8,GBR) */
 INLINE void MOVLSG(data_t d)
 {
 	UINT32 disp = d & 0xff;
@@ -1101,7 +1190,7 @@ INLINE void MOVLSG(data_t d)
 	WL( sh2.ea, sh2.r[0] );
 }
 
-/*	MOV.B	R0,@(disp,Rn) */
+/*	MOV.B	R0,@(disp4,Rn) */
 INLINE void MOVBS4(data_t d, data_t n)
 {
 	UINT32 disp = d & 0x0f;
@@ -1109,7 +1198,7 @@ INLINE void MOVBS4(data_t d, data_t n)
 	WB( sh2.ea, sh2.r[0] & 0x000000ff );
 }
 
-/*	MOV.W	R0,@(disp,Rn) */
+/*	MOV.W	R0,@(disp4,Rn) */
 INLINE void MOVWS4(data_t d, data_t n)
 {
 	UINT32 disp = d & 0x0f;
@@ -1117,7 +1206,7 @@ INLINE void MOVWS4(data_t d, data_t n)
 	WW( sh2.ea, sh2.r[0] & 0x0000ffff );
 }
 
-/* MOV.L Rm,@(disp,Rn) */
+/* MOV.L Rm,@(disp4,Rn) */
 INLINE void MOVLS4(data_t m, data_t d, data_t n)
 {
 	UINT32 disp = d & 0x0f;
@@ -1125,23 +1214,23 @@ INLINE void MOVLS4(data_t m, data_t d, data_t n)
 	WL( sh2.ea, sh2.r[m] );
 }
 
-/*	MOV.B	@(disp,Rm),R0 */
+/*	MOV.B	@(disp4,Rm),R0 */
 INLINE void MOVBL4(data_t m, data_t d)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[m] + disp;
-	sh2.r[0] = (INT32)(INT16)(INT8) RB( sh2.ea );
+	sh2.r[0] = (UINT32)(INT32)(INT16)(INT8) RB( sh2.ea );
 }
 
-/*	MOV.W	@(disp,Rm),R0 */
+/*	MOV.W	@(disp4,Rm),R0 */
 INLINE void MOVWL4(data_t m, data_t d)
 {
 	UINT32 disp = d & 0x0f;
 	sh2.ea = sh2.r[m] + disp * 2;
-	sh2.r[0] = (INT32)(INT16) RW( sh2.ea );
+	sh2.r[0] = (UINT32)(INT32)(INT16) RW( sh2.ea );
 }
 
-/*	MOV.L	@(disp,Rm),Rn */
+/*	MOV.L	@(disp4,Rm),Rn */
 INLINE void MOVLL4(data_t m, data_t d, data_t n)
 {
 	UINT32 disp = d & 0x0f;
@@ -1149,11 +1238,11 @@ INLINE void MOVLL4(data_t m, data_t d, data_t n)
 	sh2.r[n] = RL( sh2.ea );
 }
 
-/*	MOVA	@(disp,PC),R0 */
+/*	MOVA	@(disp8,PC),R0 */
 INLINE void MOVA(data_t d)
 {
 	UINT32 disp = d & 0xff;
-	sh2.ea = (sh2.pc & ~3) + disp * 4;
+	sh2.ea = ((sh2.pc + 2) & ~3) + disp * 4;
 	sh2.r[0] = sh2.ea;
 }
 
@@ -1589,7 +1678,6 @@ INLINE void TSTI(data_t i)
 		sh2.sr |= T;
 	else
 		sh2.sr &= ~T;
-	sh2_icount -= 2;
 }
 
 /*	TST.B	#imm,@(R0,GBR) */
@@ -1602,6 +1690,7 @@ INLINE void TSTM(data_t i)
 		sh2.sr |= T;
 	else
 		sh2.sr &= ~T;
+	sh2_icount -= 2;
 }
 
 /*	XOR 	Rm,Rn */
@@ -1615,7 +1704,6 @@ INLINE void XORI(data_t i)
 {
 	UINT32 imm = i & 0xff;
 	sh2.r[0] ^= imm;
-	sh2_icount -= 2;
 }
 
 /*	XOR.B	#imm,@(R0,GBR) */
@@ -1628,6 +1716,7 @@ INLINE void XORM(data_t i)
 	temp = RB( sh2.ea );
 	temp ^= imm;
 	WB( sh2.ea, temp );
+	sh2_icount -= 2;
 }
 
 /*	XTRCT	Rm,Rn */
