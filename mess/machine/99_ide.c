@@ -13,7 +13,7 @@
 	the clock SRAM in order to load the DSR from the HD when the computer
 	starts.
 
-	Raphael Nabet, 2002-2003.
+	Raphael Nabet, 2002-2004.
 */
 
 /*#include "harddisk.h"*/
@@ -70,6 +70,18 @@ struct ide_interface ti99_ide_interface =
 	ide_interrupt_callback
 };
 
+/* The original IDE card prototype has a 8-bit->16-bit demultiplexer that
+assumes that the LSByte of each word is accessed first.  This is true with
+ti99/4(a), but not with the tms9995 CPU used by Geneve and ti99/8.  When
+tms9995_mode is set, the emulated multiplexer is fixed to be compatible with
+tms9995 (it assumes that the MSByte of each word is accessed first).  Note that
+this feature is only available under emulation: AFAIK, no real-world IDE card
+in existence supports this feature, though it should be relatively easy to
+redesign the IDE card to support it (if anyone is interested, the USB/SM card
+by Thierry Nouspickel provides an example of a multiplexer compatible with both
+ti99/4(a) and tms9995). */
+static int tms9995_mode;
+
 /*
 	ide_interrupt_callback()
 
@@ -107,7 +119,7 @@ DEVICE_UNLOAD( ti99_ide )
 /*
 	Reset ide card, set up handlers
 */
-void ti99_ide_init(void)
+void ti99_ide_init(int in_tms9995_mode)
 {
 	rtc65271_init(memory_region(region_dsr) + offset_ide_ram2);
 
@@ -120,6 +132,8 @@ void ti99_ide_init(void)
 	cur_page = 0;
 	sram_enable = 0;
 	cru_register = 0;
+
+	tms9995_mode = in_tms9995_mode;
 }
 
 /*
@@ -180,7 +194,7 @@ static void ide_cru_w(int offset, int data)
 /*
 	read a byte in ide DSR space
 */
-static  READ8_HANDLER(ide_mem_r)
+static READ8_HANDLER(ide_mem_r)
 {
 	int reply = 0;
 
@@ -206,28 +220,60 @@ static  READ8_HANDLER(ide_mem_r)
 				reply = rtc65271_r(0, 0);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (offset & 1)
+			if (tms9995_mode)
 			{
-				if (! (offset & 0x10))
-					reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
+				if (!(offset & 1))
+				{
+					if (! (offset & 0x10))
+						reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
 
-				input_latch = (reply >> 8) & 0xff;
-				reply &= 0xff;
+					input_latch = reply & 0xff;
+					reply >>= 8;
+				}
+				else
+					reply = input_latch;
 			}
 			else
-				reply = input_latch;
+			{
+				if (offset & 1)
+				{
+					if (! (offset & 0x10))
+						reply = ide_bus_0_r(0, (offset >> 1) & 0x7);
+
+					input_latch = (reply >> 8) & 0xff;
+					reply &= 0xff;
+				}
+				else
+					reply = input_latch;
+			}
 			break;
 		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (offset & 1)
+			if (tms9995_mode)
 			{
-				if (! (offset & 0x10))
-					reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
+				if (!(offset & 1))
+				{
+					if (! (offset & 0x10))
+						reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
 
-				input_latch = (reply >> 8) & 0xff;
-				reply &= 0xff;
+					input_latch = reply & 0xff;
+					reply >>= 8;
+				}
+				else
+					reply = input_latch;
 			}
 			else
-				reply = input_latch;
+			{
+				if (offset & 1)
+				{
+					if (! (offset & 0x10))
+						reply = ide_bus_0_r(1, (offset >> 1) & 0x7);
+
+					input_latch = (reply >> 8) & 0xff;
+					reply &= 0xff;
+				}
+				else
+					reply = input_latch;
+			}
 			break;
 		}
 	}
@@ -273,16 +319,36 @@ static WRITE8_HANDLER(ide_mem_w)
 				rtc65271_w(0, 0, data);
 			break;
 		case 2:		/* IDE registers set 1 (CS1Fx) */
-			if (offset & 1)
-				output_latch = data;
+			if (tms9995_mode)
+			{
+				if (!(offset & 1))
+					output_latch = data;
+				else
+					ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) output_latch << 8) | data);
+			}
 			else
-				ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+			{
+				if (offset & 1)
+					output_latch = data;
+				else
+					ide_bus_0_w(0, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+			}
 			break;
 		case 3:		/* IDE registers set 2 (CS3Fx) */
-			if (offset & 1)
-				output_latch = data;
+			if (tms9995_mode)
+			{
+				if (!(offset & 1))
+					output_latch = data;
+				else
+					ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) output_latch << 8) | data);
+			}
 			else
-				ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+			{
+				if (offset & 1)
+					output_latch = data;
+				else
+					ide_bus_0_w(1, (offset >> 1) & 0x7, ((int) data << 8) | output_latch);
+			}
 			break;
 		}
 	}

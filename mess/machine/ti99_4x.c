@@ -837,7 +837,7 @@ void machine_init_ti99(void)
 	}
 
 	if (has_ide)
-		ti99_ide_init();
+		ti99_ide_init(ti99_model == model_99_8);
 
 	if (has_rs232)
 		ti99_rs232_init();

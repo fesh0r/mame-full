@@ -262,7 +262,7 @@ void machine_init_geneve(void)
 	}
 
 	if (has_ide)
-		ti99_ide_init();
+		ti99_ide_init(TRUE);
 
 	if (has_rs232)
 		ti99_rs232_init();
