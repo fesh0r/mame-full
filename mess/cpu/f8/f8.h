@@ -25,6 +25,10 @@
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum {
 	F8_PC0=1, F8_PC1, F8_DC0, F8_DC1, F8_W, F8_A, F8_IS,
 	F8_J, F8_HU, F8_HL, F8_KU, F8_KL, F8_QU, F8_QL
@@ -60,6 +64,14 @@ READ_HANDLER( f8_internal_r );
 
 #ifdef MAME_DEBUG
 extern unsigned DasmF8( char *dst, unsigned pc );
+#endif
+
+#ifdef RUNTIME_LOADER
+	extern void f8_runtime_loader_init(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* _F8_H */
