@@ -41,6 +41,7 @@ extern struct ImageModule imgmod_x64;	/* commodore vc1541 disketts */
 extern struct ImageModule imgmod_d71;	/* commodore 128d/1571 disketts */
 extern struct ImageModule imgmod_d81;	/* commodore 65/1565/1581 disketts */
 extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
+extern struct ImageModule imgmod_vmsx_tap;	/* vMSX .tap archiv */
 
 extern struct ImageModule imgmod_zip;
 extern struct ImageModule imgmod_fs;
@@ -76,7 +77,8 @@ static const struct ImageModule *images[] = {
 	&imgmod_ti99_4a,
 	&imgmod_vc20,
 	&imgmod_vectrex,
-	&imgmod_vic20
+	&imgmod_vic20,
+	&imgmod_vmsx_tap
 #if 1 /* these are only here for testing of these two */
 	,&imgmod_fs,
 	&imgmod_zip

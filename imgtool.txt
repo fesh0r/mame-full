@@ -86,6 +86,13 @@ not finished and not working
 (see also unter msdos/fat)
 
 
+Virtual MSX tape archive
+------------------------
+not heavily tested
+not fault-tolerant
+dir/get/getall implemented, converts to .cas 
+
+
 fs Filesystem Direct Access
 ---------------------------
 internal usage in future MESS

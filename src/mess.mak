@@ -605,6 +605,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/imgtool.o \
 	  $(OBJ)/mess/tools/imgwave.o \
 	  $(OBJ)/mess/tools/cococas.o   \
+	  $(OBJ)/mess/tools/vmsx_tap.o   \
 	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
 	  $(OBJ)/mess/tools/stream.o  \
