@@ -5,7 +5,7 @@
 
 static int frameskip_counter = 0;
 
-int dos_skip_next_frame(int show_fps_counter, struct osd_bitmap *bitmap)
+int dos_skip_next_frame(int show_fps_counter, struct mame_bitmap *bitmap)
 {
 	static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 	{

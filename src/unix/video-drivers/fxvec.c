@@ -148,7 +148,7 @@ void vector_clear_list(void)
 
 /* Called when the frame is complete */
 
-void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
+void vector_vh_update(struct mame_bitmap *bitmap,int full_refresh)
 {
 }
 

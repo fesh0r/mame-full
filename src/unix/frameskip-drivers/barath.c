@@ -15,7 +15,7 @@ static int barath_skip_this_frame(void)
   return (modframe >= FRAMESKIP_LEVELS);
 }
 
-int barath_skip_next_frame(int showfps, struct osd_bitmap *bitmap)
+int barath_skip_next_frame(int showfps, struct mame_bitmap *bitmap)
 {
   static uclock_t curr = 0;
   static uclock_t prev = 0;

@@ -3,7 +3,7 @@
 #include "vidhrdw/vector.h"
 
 /* glvec.c, ... */
-extern void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh);
+extern void vector_vh_update(struct mame_bitmap *bitmap,int full_refresh);
 
 static float intensity_correction = 1.0;
 
@@ -27,7 +27,7 @@ float vector_get_intensity(void)
 	return intensity_correction;
 }
 
-void vector_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void vector_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 {
 	vector_vh_update(bitmap, full_refresh);
 }

@@ -35,10 +35,10 @@ void CalcPoint(GrVertex *vert,int x,int y);
 void InitTextures(void);
 int  InitVScreen(void);
 void CloseVScreen(void);
-void UpdateTexture(struct osd_bitmap *bitmap);
+void UpdateTexture(struct mame_bitmap *bitmap);
 void DrawFlatBitmap(void);
 void UpdateFlatDisplay(void);
-void UpdateFXDisplay(struct osd_bitmap *bitmap);
+void UpdateFXDisplay(struct mame_bitmap *bitmap);
 static int SetResolution(struct rc_option *option, const char *arg,
    int priority);
 
@@ -426,7 +426,7 @@ void sysdep_clear_screen(void)
 
 /* Update the texture with the contents of the game screen */
 
-void UpdateTexture(struct osd_bitmap *bitmap)
+void UpdateTexture(struct mame_bitmap *bitmap)
 {
 	int y,rline,texline,xsquare,ysquare,ofs,width, i;
 	struct TexSquare *square;
@@ -560,7 +560,7 @@ void UpdateFlatDisplay(void)
   grBufferSwap(1);
 }
 
-void UpdateFXDisplay(struct osd_bitmap *bitmap)
+void UpdateFXDisplay(struct mame_bitmap *bitmap)
 {
   if(bitmap) 
     UpdateTexture(bitmap);
@@ -580,7 +580,7 @@ void osd_refresh_screen(void)
 
 /* invoked by main tree code to update bitmap into screen */
 
-void sysdep_update_display(struct osd_bitmap *bitmap)
+void sysdep_update_display(struct mame_bitmap *bitmap)
 {
   if(keyboard_pressed(KEYCODE_RCONTROL)) {
 	if(keyboard_pressed_memory(KEYCODE_B)) {
