@@ -26,7 +26,7 @@ Some games want to be rotated by 90 degree
 Emulators
 ---------
 Handy for Win32 (exzellent)
-
+xhandy (linux binary) (exzellent)
 
 Mess Emulation State
 --------------------
