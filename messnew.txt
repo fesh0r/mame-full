@@ -42,6 +42,10 @@ System Driver Changes:
 - [VTECH1] Converted back to using generic M6847 video hardware module (Bug #36)
   [Nate Woods]
 
+- [SNES] Rewrite of the driver.  Still at a preliminary stage though. Some
+  games are playable, others run but aren't playable, however most don't work.
+  [Anthony Kruize]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.60.  This incorporates all features of the 
