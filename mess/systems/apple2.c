@@ -304,7 +304,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( enhanced )
 	MDRV_IMPORT_FROM( standard )
-	MDRV_CPU_REPLACE("main", M6502, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
+	MDRV_CPU_REPLACE("main", M65C02, 1021800)		/* close to actual CPU frequency of 1.020484 MHz */
 MACHINE_DRIVER_END
 
 /***************************************************************************

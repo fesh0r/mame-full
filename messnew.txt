@@ -1,6 +1,5 @@
 0.67.1
 
-
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 (none)
@@ -17,9 +16,13 @@ System Driver Changes:
 - [AQUARIUS] The palette now corresponds to the one described in the User's
   Manual. [Stefano Priore]
 
+- [APPLE2] Enhanced models now have the M65C02 processor specified; apple2c
+  now boots. [Nate Woods]
+
 Source Changes:
 ---------------
 (none)
+
 
 
 0.67
