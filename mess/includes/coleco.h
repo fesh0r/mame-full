@@ -4,8 +4,7 @@
 extern int coleco_id_rom (int id);
 extern int coleco_load_rom (int id);
 
-extern READ_HANDLER  ( coleco_paddle_1_r );
-extern READ_HANDLER  ( coleco_paddle_2_r );
+extern READ_HANDLER  ( coleco_paddle_r );
 extern WRITE_HANDLER ( coleco_paddle_toggle_off );
 extern WRITE_HANDLER ( coleco_paddle_toggle_on );
 
