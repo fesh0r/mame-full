@@ -196,8 +196,8 @@ int xfx_resize_display(void)
   texnumx = (orig_width +texsize-1) / texsize;
   texnumy = (orig_height+texsize-1) / texsize;
   
-  texpercx=(float)texsize/(float)orig_width;
-  texpercy=(float)texsize/(float)orig_height;
+  texpercx=(float)texsize/(float)sysdep_display_params.width;
+  texpercy=(float)texsize/(float)sysdep_display_params.height;
 
   if(texpercx>1.0) texpercx=1.0;
   if(texpercy>1.0) texpercy=1.0;

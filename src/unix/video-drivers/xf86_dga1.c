@@ -24,9 +24,10 @@ static struct
 	blit_func_p update_display_func;
 	XF86VidModeModeInfo **modes;
 	XF86VidModeModeInfo orig_mode;
+	int mode_count;
 	int vidmode_changed;
 	int dest_bpp;
-} xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,NULL,{0},0,0};
+} xf86ctx = {-1,NULL,NULL,-1,-1,-1,NULL,NULL,{0},0,0,0};
 
 static int xf86_dga_vidmode_check_exts(void);
 static int xf86_dga_set_mode(void);
@@ -74,19 +75,18 @@ static int xf86_dga_vidmode_check_exts(void)
 static XF86VidModeModeInfo *xf86_dga_vidmode_find_best_vidmode(int depth)
 {
 	XF86VidModeModeInfo *bestmode = NULL;
-	int score, best_score = 0;
-	int i,modecount = 0;
+	int i, score, best_score = 0;
 
 	if(!xf86ctx.modes && !XF86VidModeGetAllModeLines(display,
-		xf86ctx.screen,	&modecount,&xf86ctx.modes))
+		xf86ctx.screen,	&xf86ctx.mode_count, &xf86ctx.modes))
 	{
 		fprintf(stderr,"XF86VidModeGetAllModeLines failed\n");
 		return NULL;
 	}
 	
-	fprintf(stderr, "XF86DGA: info: found %d modes:\n", modecount);
+	fprintf(stderr, "XF86DGA: info: found %d modes:\n", xf86ctx.mode_count);
 
-	for(i=0;i<modecount;i++)
+	for(i=0;i<xf86ctx.mode_count;i++)
 	{
 		fprintf(stderr, "XF86DGA: info: found mode: %dx%d\n",
 		   xf86ctx.modes[i]->hdisplay, xf86ctx.modes[i]->vdisplay);

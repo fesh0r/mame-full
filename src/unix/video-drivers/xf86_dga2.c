@@ -29,6 +29,7 @@ static struct
 	blit_func_p update_display_func;
 	XDGADevice *device;
 	XDGAMode *modes;
+	int mode_count;
 	int vidmode_changed;
 	int aligned_viewport_height;
 	int page;
@@ -38,7 +39,7 @@ static struct
 #ifdef TDFX_DGA_WORKAROUND
 	int current_X11_mode;
 #endif
-} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,2,-1};
+} xf86ctx = {-1,NULL,-1,0,NULL,NULL,NULL,0,0,0,0,0,2,-1};
 	
 struct rc_option xf86_dga2_opts[] = {
   /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -71,9 +72,9 @@ int xf86_dga2_init(void)
 
 static int xf86_dga_vidmode_find_best_vidmode(void)
 {
+	int i;
 	int bestmode = 0;
 	int score, best_score = 0;
-	int i,modecount = 0;
 
 #ifdef TDFX_DGA_WORKAROUND
 	int dotclock;
@@ -84,11 +85,11 @@ static int xf86_dga_vidmode_find_best_vidmode(void)
 
 	if (!xf86ctx.modes)
 	{
-		xf86ctx.modes = XDGAQueryModes(display, xf86ctx.screen, &modecount);
-		fprintf(stderr, "XDGA: info: found %d modes:\n", modecount);
+		xf86ctx.modes = XDGAQueryModes(display, xf86ctx.screen, &xf86ctx.mode_count);
+		fprintf(stderr, "XDGA: info: found %d modes:\n", xf86ctx.mode_count);
 	}
 
-	for(i=0;i<modecount;i++)
+	for(i=0;i<xf86ctx.mode_count;i++)
 	{
 #ifdef TDFX_DGA_WORKAROUND
 		if (!xf86ctx.vidmode_changed &&
