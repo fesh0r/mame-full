@@ -17,8 +17,8 @@
  *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
- *	This work is based on Frank Palazzolo's F8 emulation in a standalo
- *	Faichild Channel F emulator and the 'Fairchild F3850 CPU' data sheets.
+ *	This work is based on Frank Palazzolo's F8 emulation in a standalone
+ *	Fairchild Channel F emulator and the 'Fairchild F3850 CPU' data sheets.
  *
  *****************************************************************************/
 
@@ -116,6 +116,7 @@ static void ROMC_00(void)
      * code addressed by PC0; then all devices increment the contents
      * of PC0.
      */
+
     f8.dbus = cpu_readop(f8.pc0);
     f8.pc0 += 1;
     f8_icount -= cS + cL;
@@ -1051,7 +1052,6 @@ static void f8_ds_isar_i(void)
     ROMC_00();
 }
 
-
 /***************************************************
  *	O Z C S 0011 1110
  *	x x x x DS	ISAR--
@@ -1065,7 +1065,6 @@ static void f8_ds_isar_d(void)
 	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
     ROMC_00();
 }
-
 
 /***************************************************
  *	O Z C S 0100 rrrr
@@ -1303,9 +1302,9 @@ static void f8_adc(void)
 static void f8_br7(void)
 {
 	if ((f8.is & 7) == 7)
-		ROMC_01();		/* take the relative branch */
-	else
 		ROMC_03();		/* just read the argument on the data bus */
+	else
+		ROMC_01();		/* take the relative branch */
 	ROMC_00();
 }
 
@@ -1389,6 +1388,47 @@ static void f8_as(int r)
 }
 
 /***************************************************
+ *	O Z C S 1100 1100
+ *	x x x x AS	 ISAR
+ ***************************************************/
+static void f8_as_isar(void)
+{
+	CLR_OZCS;
+	SET_OC(f8.a, f8.r[f8.is]);
+	f8.a += f8.r[f8.is];
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1100 1101
+ *	x x x x AS	 ISAR++
+ ***************************************************/
+static void f8_as_isar_i(void)
+{
+	CLR_OZCS;
+	SET_OC(f8.a, f8.r[f8.is]);
+	f8.a += f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1100 1110
+ *	x x x x AS	 ISAR--
+ ***************************************************/
+static void f8_as_isar_d(void)
+{
+	CLR_OZCS;
+	SET_OC(f8.a, f8.r[f8.is]);
+	f8.a += f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
  *	O Z C S 1101 rrrr
  *	x x x x ASD  r
  ***************************************************/
@@ -1411,6 +1451,74 @@ static void f8_asd(int r)
 }
 
 /***************************************************
+ *	O Z C S 1101 1100
+ *	x x x x ASD  ISAR
+ ***************************************************/
+static void f8_asd_isar(void)
+{
+	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	ROMC_1C();
+	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
+	if (sum > 0x09)
+		adj += 0x06;
+	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
+	if (sum > 0x90)
+		adj += 0x60;
+	tmp = adj + f8.r[f8.is] - 0x66;
+	CLR_OZCS;
+	SET_OC(f8.a, tmp);
+	f8.a += tmp;
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1101 1101
+ *	x x x x ASD  ISAR++
+ ***************************************************/
+static void f8_asd_isar_i(void)
+{
+	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	ROMC_1C();
+	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
+	if (sum > 0x09)
+		adj += 0x06;
+	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
+	if (sum > 0x90)
+		adj += 0x60;
+	tmp = adj + f8.r[f8.is] - 0x66;
+	CLR_OZCS;
+	SET_OC(f8.a, tmp);
+	f8.a += tmp;
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1101 1110
+ *	x x x x ASD  ISAR--
+ ***************************************************/
+static void f8_asd_isar_d(void)
+{
+	UINT8 tmp = f8.a - 0x66, adj = 0x00, sum;
+	ROMC_1C();
+	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
+	if (sum > 0x09)
+		adj += 0x06;
+	sum = (tmp & 0xf0) + (f8.r[f8.is] & 0xf0) + adj;
+	if (sum > 0x90)
+		adj += 0x60;
+	tmp = adj + f8.r[f8.is] - 0x66;
+	CLR_OZCS;
+	SET_OC(f8.a, tmp);
+	f8.a += tmp;
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
  *	O Z C S 1110 rrrr
  *	0 x 0 x XS	 r
  ***************************************************/
@@ -1423,6 +1531,44 @@ static void f8_xs(int r)
 }
 
 /***************************************************
+ *	O Z C S 1110 1100
+ *	0 x 0 x XS	 ISAR
+ ***************************************************/
+static void f8_xs_isar(void)
+{
+	CLR_OZCS;
+	f8.a ^= f8.r[f8.is];
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1110 1101
+ *	0 x 0 x XS	 ISAR++
+ ***************************************************/
+static void f8_xs_isar_i(void)
+{
+	CLR_OZCS;
+	f8.a ^= f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1110 1110
+ *	0 x 0 x XS	 ISAR--
+ ***************************************************/
+static void f8_xs_isar_d(void)
+{
+	CLR_OZCS;
+	f8.a ^= f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
  *	O Z C S 1111 rrrr
  *	0 x 0 x NS	 r
  ***************************************************/
@@ -1431,6 +1577,44 @@ static void f8_ns(int r)
 	CLR_OZCS;
 	f8.a &= f8.r[r];
 	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1111 1100
+ *	0 x 0 x NS	 ISAR
+ ***************************************************/
+static void f8_ns_isar(void)
+{
+	CLR_OZCS;
+	f8.a &= f8.r[f8.is];
+	SET_SZ(f8.a);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1111 1101
+ *	0 x 0 x NS	 ISAR++
+ ***************************************************/
+static void f8_ns_isar_i(void)
+{
+	CLR_OZCS;
+	f8.a &= f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is + 1) & 0x07);
+	ROMC_00();
+}
+
+/***************************************************
+ *	O Z C S 1111 1110
+ *	0 x 0 x NS	 ISAR--
+ ***************************************************/
+static void f8_ns_isar_d(void)
+{
+	CLR_OZCS;
+	f8.a &= f8.r[f8.is];
+	SET_SZ(f8.a);
+	f8.is = (f8.is & 0x38) | ((f8.is - 1) & 0x07);
 	ROMC_00();
 }
 
@@ -1506,8 +1690,8 @@ int f8_execute(int cycles)
 		case 0x28: /* 0010 1000 */	f8_pi();			break;
 		case 0x29: /* 0010 1001 */	f8_jmp();			break;
 		case 0x2a: /* 0010 1010 */	f8_dci();			break;
-		case 0x2b: /* 0010 1011 */	illegal();			break;
-		case 0x2c: /* 0010 1100 */	illegal();			break;
+		case 0x2b: /* 0010 1011 */	f8_nop();			break;
+		case 0x2c: /* 0010 1100 */	f8_xdc();			break;
 		case 0x2d: /* 0010 1101 */	illegal();			break;
 		case 0x2e: /* 0010 1110 */	illegal();			break;
 		case 0x2f: /* 0010 1111 */	illegal();			break;
@@ -1677,10 +1861,10 @@ int f8_execute(int cycles)
 		case 0xc9: /* 1100 1001 */	f8_as(0x9); 		break;
 		case 0xca: /* 1100 1010 */	f8_as(0xa); 		break;
 		case 0xcb: /* 1100 1011 */	f8_as(0xb); 		break;
-		case 0xcc: /* 1100 1100 */	f8_as(0xc); 		break;
-		case 0xcd: /* 1100 1101 */	f8_as(0xd); 		break;
-		case 0xce: /* 1100 1110 */	f8_as(0xe); 		break;
-		case 0xcf: /* 1100 1111 */	f8_as(0xf); 		break;
+		case 0xcc: /* 1100 1100 */	f8_as_isar(); 		break;
+		case 0xcd: /* 1100 1101 */	f8_as_isar_i(); 	break;
+		case 0xce: /* 1100 1110 */	f8_as_isar_d(); 	break;
+		case 0xcf: /* 1100 1111 */	illegal(); 			break;
 
 		case 0xd0: /* 1101 0000 */	f8_asd(0x0);		break;
 		case 0xd1: /* 1101 0001 */	f8_asd(0x1);		break;
@@ -1694,10 +1878,10 @@ int f8_execute(int cycles)
 		case 0xd9: /* 1101 1001 */	f8_asd(0x9);		break;
 		case 0xda: /* 1101 1010 */	f8_asd(0xa);		break;
 		case 0xdb: /* 1101 1011 */	f8_asd(0xb);		break;
-		case 0xdc: /* 1101 1100 */	f8_asd(0xc);		break;
-		case 0xdd: /* 1101 1101 */	f8_asd(0xd);		break;
-		case 0xde: /* 1101 1110 */	f8_asd(0xe);		break;
-		case 0xdf: /* 1101 1111 */	f8_asd(0xf);		break;
+		case 0xdc: /* 1101 1100 */	f8_asd_isar();		break;
+		case 0xdd: /* 1101 1101 */	f8_asd_isar_i();	break;
+		case 0xde: /* 1101 1110 */	f8_asd_isar_d();	break;
+		case 0xdf: /* 1101 1111 */	illegal();			break;
 
 		case 0xe0: /* 1110 0000 */	f8_xs(0x0); 		break;
 		case 0xe1: /* 1110 0001 */	f8_xs(0x1); 		break;
@@ -1711,10 +1895,10 @@ int f8_execute(int cycles)
 		case 0xe9: /* 1110 1001 */	f8_xs(0x9); 		break;
 		case 0xea: /* 1110 1010 */	f8_xs(0xa); 		break;
 		case 0xeb: /* 1110 1011 */	f8_xs(0xb); 		break;
-		case 0xec: /* 1110 1100 */	f8_xs(0xc); 		break;
-		case 0xed: /* 1110 1101 */	f8_xs(0xd); 		break;
-		case 0xee: /* 1110 1110 */	f8_xs(0xe); 		break;
-		case 0xef: /* 1110 1111 */	f8_xs(0xf); 		break;
+		case 0xec: /* 1110 1100 */	f8_xs_isar();		break;
+		case 0xed: /* 1110 1101 */	f8_xs_isar_i();		break;
+		case 0xee: /* 1110 1110 */	f8_xs_isar_d();		break;
+		case 0xef: /* 1110 1111 */	illegal();			break;
 
 		case 0xf0: /* 1111 0000 */	f8_ns(0x0); 		break;
 		case 0xf1: /* 1111 0001 */	f8_ns(0x1); 		break;
@@ -1728,10 +1912,10 @@ int f8_execute(int cycles)
 		case 0xf9: /* 1111 1001 */	f8_ns(0x9); 		break;
 		case 0xfa: /* 1111 1010 */	f8_ns(0xa); 		break;
 		case 0xfb: /* 1111 1011 */	f8_ns(0xb); 		break;
-		case 0xfc: /* 1111 1100 */	f8_ns(0xc); 		break;
-		case 0xfd: /* 1111 1101 */	f8_ns(0xd); 		break;
-		case 0xfe: /* 1111 1110 */	f8_ns(0xe); 		break;
-		case 0xff: /* 1111 1111 */	f8_ns(0xf); 		break;
+		case 0xfc: /* 1111 1100 */	f8_ns_isar();		break;
+		case 0xfd: /* 1111 1101 */	f8_ns_isar_i();		break;
+		case 0xfe: /* 1111 1110 */	f8_ns_isar_d();		break;
+		case 0xff: /* 1111 1111 */	illegal();			break;
         }
 	} while( f8_icount > 0 );
 
