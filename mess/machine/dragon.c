@@ -837,39 +837,24 @@ static int coco_hiresjoy_ry(void)
 
 static void soundmux_update(void)
 {
+	/* This function is called whenever the MUX (selector switch) is changed
+	 * It mainly turns on and off the cassette audio depending on the switch.
+	 * It also calls a function into the cartridges device to tell it if it is
+	 * switch on or off.
+	 */
+	 
 	int casstatus, new_casstatus;
 
 	casstatus = device_status(IO_CASSETTE, 0, -1);
 	new_casstatus = casstatus | WAVE_STATUS_MUTED;
 
-	/* We only write the CoCo's 6-bit DAC to MESS' DAC if we are enabled;
-	 * otherwise we let it be.
-	 */
-	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
-		switch(soundmux_status) {
-		case SOUNDMUX_STATUS_ENABLE:
-			/* DAC */
-			DAC_data_w(0, pia1_pb1 + (d_dac >> 1) );  /* Mix the two sources */
-			break;
-
-		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
-			/* CSN */
-			new_casstatus &= ~WAVE_STATUS_MUTED;
-			/* This pia line is always connected to the output */
-			DAC_data_w(0, pia1_pb1);
-			break;
-
-		default:
-			/* This pia line is always connected to the output */
-			DAC_data_w(0, pia1_pb1);
-			break;
-		}
-	}
-	else
-	{
-		/* This pia line is always connected to the output */
-		/* Even if the MUX is disabled */
-		DAC_data_w(0, pia1_pb1);
+	switch(soundmux_status) {
+	case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+		/* CSN */
+		new_casstatus &= ~WAVE_STATUS_MUTED;
+		break;
+	default:
+		break;
 	}
 
 	coco_cartridge_enablesound(soundmux_status == (SOUNDMUX_STATUS_ENABLE|SOUNDMUX_STATUS_SEL2));
@@ -879,6 +864,34 @@ static void soundmux_update(void)
 		logerror("CoCo: Turning cassette speaker %s\n", new_casstatus ? "on" : "off");
 #endif
 		device_status(IO_CASSETTE, 0, new_casstatus);
+	}
+}
+
+void sound_update(void)
+{
+	/* Call this function whenever you need to update the sound. It will
+	 * automatically mute any devices that are switched out.
+	 */
+	 
+	if (soundmux_status & SOUNDMUX_STATUS_ENABLE) {
+		switch(soundmux_status) {
+		case SOUNDMUX_STATUS_ENABLE:
+			/* DAC */
+			DAC_data_w(0, pia1_pb1 + (d_dac >> 1) );  /* Mixing the two sources */
+			break;
+		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL1:
+			/* CSN */
+			DAC_data_w(0, pia1_pb1); /* Mixing happens elsewhere */
+			break;
+		case SOUNDMUX_STATUS_ENABLE | SOUNDMUX_STATUS_SEL2:
+			/* CART Sound */
+			DAC_data_w(0, pia1_pb1); /* To do: mix in cart signal */
+			break;
+		default:
+			/* This pia line is always connected to the output */
+			DAC_data_w(0, pia1_pb1);
+			break;
+		}
 	}
 }
 
@@ -1063,8 +1076,8 @@ static WRITE_HANDLER ( d_pia1_pa_w )
 	 *    1:	Serial out
 	 */
 	d_dac = data & 0xfc;
-	soundmux_update();
-
+	sound_update();
+	
 	if (joystick_mode() == JOYSTICKMODE_HIRES)
 		coco_hiresjoy_w(d_dac >= 0x80);
 	else
@@ -1099,7 +1112,7 @@ static WRITE_HANDLER( d_pia1_pb_w )
 	 */
 	 
 	 pia1_pb1 = ((data & 0x02) ? 127 : 0);
-	 soundmux_update();
+	 sound_update();
 }
 
 static WRITE_HANDLER( coco3_pia1_pb_w )
