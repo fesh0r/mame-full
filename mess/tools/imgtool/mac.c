@@ -55,6 +55,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
+#include <limits.h>
 #include "osdepend.h"
 #include "imgtoolx.h"
 
@@ -684,11 +685,12 @@ static UINT32 mac_GetDateTime(void)
 		-1	/* DST flag - we tell it is indeterminate cause it might be on in the southern hemisphere */
 	};
 	time_t base_time = mktime(&base_expanded_time);
+	double diff_time = difftime(cur_time, base_time);
 
 	/* we cast to UINT64 because the conversion from UINT64 to UINT32 will
 	cause wrap-around, whereas direct conversion from double to UINT32 may
 	cause overflow */
-	return (UINT64)difftime(cur_time, base_time);
+	return (UINT32) (UINT64) diff_time;
 }
 
 #if 0
@@ -1657,7 +1659,7 @@ static int mac_file_seek(mac_fileref *fileref, UINT32 filePos)
 static int mac_file_seteof(mac_fileref *fileref, UINT32 newEof)
 {
 	UINT32 newABEof;
-	int errorcode;
+	int errorcode = 0;
 
 	newABEof = (newEof + fileref->l2_img->blocksperAB * 512 - 1) / (fileref->l2_img->blocksperAB * 512);
 
@@ -2643,9 +2645,10 @@ static int mfs_file_allocABs(mac_fileref *fileref, UINT16 lastAB, UINT32 allocAB
 */
 static int mfs_file_setABeof(mac_fileref *fileref, UINT32 newABeof)
 {
-	UINT16 AB_address, AB_link;
+	UINT16 AB_address = 0;
+	UINT16 AB_link;
 	int i;
-	int errorcode;
+	int errorcode = 0;
 	int MDB_dirty = 0;
 
 
