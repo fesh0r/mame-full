@@ -60,7 +60,8 @@ CC	= gcc
 # Note 1:
 # xmame compilation breaks when using egcs-1.1.x or gcc-2.95; use
 # -fno-strict-aliasing to fix it.  gcc-2.95.1 does work with -fstrict-aliasing,
-# and gives a nice speed increase.
+# and gives a nice speed increase.  With gcc-3.0.x, -fstrict-aliasing is
+# automatically turned on by -O2 and higher.
 #
 # Note 2:
 # linux-powerpc needs -fsigned-char
@@ -79,7 +80,7 @@ CC	= gcc
 # try using -O instead. 
 #
 # Note 6:
-# Known problems with gcc 3.0.x on x86 platforms:
+# Known problems with gcc-3.0.x on x86 platforms:
 # * Version 3.0.2 has a buggy -fomit-frame-pointer that can produce invalid
 #   code.  It is unknown whether this ever causes problems with xmame, but the
 #   bug is fixed in 3.0.3 at any rate.
@@ -296,6 +297,7 @@ ARCH  = linux
 # SOUND_ALSA = 1
 # SOUND_ARTS_TEIRA = 1
 # SOUND_ARTS_SMOTEK = 1
+# SOUND_SDL= 1
 
 
 ##############################################################################
@@ -353,6 +355,9 @@ X11LIB		= -L/usr/X11R6/lib
 # *** The default name for the input device used by the X11 joystick driver.
 # use provided program "xlistdev" to list available ones
 X11_JOYNAME = "Joystick"
+
+# *** Uncomment this to use XInput devices, e.g. additional mice as trackballs
+# XINPUT_DEVICES = 1
 
 ##############################################################################
 # *** OpenGL info -- configure if you are using the xgl display option
