@@ -982,7 +982,7 @@ static struct MachineDriver machine_driver_snes =
 	/* basic machine hardware */
 	{
 		{
-			CPU_G65C816,
+			CPU_G65816,
 			2680000,        /* 2.68 Mhz */
 		    snes_readmem,snes_writemem,
 			0,0,									// No IO

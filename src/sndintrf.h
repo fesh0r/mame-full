@@ -152,8 +152,11 @@ enum
 #if (HAS_YM2203)
 	SOUND_YM2203,
 #endif
-#if (HAS_YM2151 || HAS_YM2151_ALT)
+#if (HAS_YM2151)
 	SOUND_YM2151,
+#endif
+#if (HAS_YM2151_ALT)
+	SOUND_YM2151_ALT,
 #endif
 #if (HAS_YM2608)
 	SOUND_YM2608,
@@ -195,7 +198,7 @@ enum
 	SOUND_POKEY,
 #endif
 #if (HAS_TIA)
-	SOUND_TIA,		/* stripped down Pokey */
+	SOUND_TIA,	/* stripped down Pokey */
 #endif
 #if (HAS_NES)
 	SOUND_NES,
@@ -207,7 +210,7 @@ enum
 	SOUND_NAMCO,
 #endif
 #if (HAS_TMS36XX)
-	SOUND_TMS36XX,		/* currently TMS3615 and TMS3617 */
+	SOUND_TMS36XX,	/* currently TMS3615 and TMS3617 */
 #endif
 #if (HAS_TMS5110)
 	SOUND_TMS5110,
@@ -275,6 +278,10 @@ enum
     SOUND_COUNT
 };
 
+
+#if (HAS_YM2151_ALT)
+#define SOUND_YM2151 SOUND_YM2151_ALT
+#endif
 
 /* structure for SOUND_CUSTOM sound drivers */
 struct CustomSound_interface

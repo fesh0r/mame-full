@@ -406,15 +406,15 @@ struct cpu_interface cpuintf[] =
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   16,	  0,16,LE,1, 4,16	),
 #endif
-#if (HAS_CDP1802)
-#define cdp1802_ICount cdp1802_icount
-	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   16,	  0,16,BE,1, 3,16	),
-#endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_8085A)
 	CPU0(8085A,    i8085,	 4,255,1.00,I8085_NONE, 	   I8085_INTR,	   I8085_TRAP,	   16,	  0,16,LE,1, 3,16	),
+#endif
+#if (HAS_CDP1802)
+#define cdp1802_ICount cdp1802_icount
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   16,	  0,16,BE,1, 3,16	),
 #endif
 #if (HAS_M6502)
 	CPU0(M6502,    m6502,	 1,  0,1.00,M6502_INT_NONE,    M6502_INT_IRQ,  M6502_INT_NMI,  16,	  0,16,LE,1, 3,16	),
@@ -443,11 +443,11 @@ struct cpu_interface cpuintf[] =
 #if (HAS_M8502)
 	CPU0(M8502,    m8502,	 1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  16,	  0,16,LE,1, 3,16	),
 #endif
-#if (HAS_N2A03)
-	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  16,	  0,16,LE,1, 3,16	),
-#endif
 #if (HAS_M4510)
 	CPU0(M4510,    m4510,	 1,  0,1.00,M4510_INT_NONE,    M4510_INT_IRQ,  M4510_INT_NMI,  20,	  0,20,LE,1, 3,20	),
+#endif
+#if (HAS_N2A03)
+	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  16,	  0,16,LE,1, 3,16	),
 #endif
 #if (HAS_H6280)
 	CPU0(H6280,    h6280,	 3,  0,1.00,H6280_INT_NONE,    -1,			   H6280_INT_NMI,  21,	  0,21,LE,1, 3,21	),
@@ -578,7 +578,6 @@ struct cpu_interface cpuintf[] =
 	CPU0(TMS99105A,tms99105a,1,  0,1.00,TMS99105A_NONE,    -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
 #endif
 #if (HAS_TMS99110A)
-	CPU0(TMS99110A,tms99110a,1,  0,1.00,TMS99110A_NONE,    -1,			   -1,			   16bew, 0,16,BE,2, 6,16BEW),
 #endif
 #if (HAS_Z8000)
 	CPU0(Z8000,    z8000,	 2,  0,1.00,Z8000_INT_NONE,    Z8000_NVI,	   Z8000_NMI,	   16bew, 0,16,BE,2, 6,16BEW),
@@ -589,17 +588,17 @@ struct cpu_interface cpuintf[] =
 #if (HAS_CCPU)
 	CPU3(CCPU,	   ccpu,	 2,  0,1.00,0,				   -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
 #endif
-#if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,18,LE,1, 3,16	),
-#endif
 #if (HAS_ADSP2100)
 	CPU3(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
 #if (HAS_ADSP2105)
 	CPU3(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
+#if (HAS_PDP1)
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,18,LE,1, 3,16	),
+#endif
 #if (HAS_PSXCPU)
-	CPU0(PSX,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+	CPU0(PSXCPU,   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
 #endif
 #if (HAS_SH2)
 	CPU4(SH2,	   sh2, 	 1,  0,1.00,SH2_INT_NONE,	   SH2_INT_NONE,   -1,			   27bew, 0,27,BE,1, 2,27BEW),
@@ -612,7 +611,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   26lew, 0,26,LE,4, 4,26LEW),
 #endif
 #if (HAS_G65816)
-	CPU0(G65C816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 24,	  0,24,BE,1, 3,24	),
+	CPU0(G65816,   g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 24,	  0,24,BE,1, 3,24	),
 #endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   16,	  0,16,LE,1, 3,16	),
@@ -2044,16 +2043,16 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				break;
 #endif
 #if (HAS_PSXCPU)
-			case CPU_PSX:
+			case CPU_PSXCPU:
 				switch (num)
 				{
-				case MIPS_IRQ0: 		irq_line = 0; LOG(("MIPS IRQ0\n")); break;
-				case MIPS_IRQ1: 		irq_line = 1; LOG(("MIPS IRQ1\n")); break;
-				case MIPS_IRQ2: 		irq_line = 2; LOG(("MIPS IRQ2\n")); break;
-				case MIPS_IRQ3: 		irq_line = 3; LOG(("MIPS IRQ3\n")); break;
-				case MIPS_IRQ4: 		irq_line = 4; LOG(("MIPS IRQ4\n")); break;
-				case MIPS_IRQ5: 		irq_line = 5; LOG(("MIPS IRQ5\n")); break;
-				default:				irq_line = 0; LOG(("MIPS unknown\n"));
+				case MIPS_IRQ0: 		irq_line = 0; LOG(("PSXCPU IRQ0\n")); break;
+				case MIPS_IRQ1: 		irq_line = 1; LOG(("PSXCPU IRQ1\n")); break;
+				case MIPS_IRQ2: 		irq_line = 2; LOG(("PSXCPU IRQ2\n")); break;
+				case MIPS_IRQ3: 		irq_line = 3; LOG(("PSXCPU IRQ3\n")); break;
+				case MIPS_IRQ4: 		irq_line = 4; LOG(("PSXCPU IRQ4\n")); break;
+				case MIPS_IRQ5: 		irq_line = 5; LOG(("PSXCPU IRQ5\n")); break;
+				default:				irq_line = 0; LOG(("PSXCPU unknown\n"));
 				}
 				break;
 #endif

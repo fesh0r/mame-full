@@ -22,17 +22,6 @@ else
 CPUDEFS += -DHAS_Z80GB=0
 endif
 
-CPU=$(strip $(findstring CDP1802@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/cdp1802
-CPUDEFS += -DHAS_CDP1802=1
-CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
-DBGOBJS += $(OBJ)/cpu/cdp1802/disasm.o
-$(OBJ)/cpu/cdp1802/cdp1802.o: table.c
-else
-CPUDEFS += -DHAS_CDP1802=0
-endif
-
 CPU=$(strip $(findstring 8080@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8085
@@ -53,6 +42,17 @@ DBGOBJS += $(OBJ)/cpu/i8085/8085dasm.o
 $(OBJ)/cpu/i8085/i8085.o: i8085.c i8085.h i8085cpu.h i8085daa.h
 else
 CPUDEFS += -DHAS_8085A=0
+endif
+
+CPU=$(strip $(findstring CDP1802@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/cdp1802
+CPUDEFS += -DHAS_CDP1802=1
+CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
+DBGOBJS += $(OBJ)/cpu/cdp1802/disasm.o
+$(OBJ)/cpu/cdp1802/cdp1802.o: table.c
+else
+CPUDEFS += -DHAS_CDP1802=0
 endif
 
 CPU=$(strip $(findstring M6502@,$(CPUS)))
@@ -667,6 +667,17 @@ DBGOBJS += $(OBJ)/cpu/tms9900/9900dasm.o
 $(OBJ)/cpu/tms9900/tms9995.o: tms9995.c tms9900.h 99xxcore.h 99xxstat.h
 else
 CPUDEFS += -DHAS_TMS99105A=0
+endif
+
+CPU=$(strip $(findstring TMS99110A@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/tms9900
+CPUDEFS += -DHAS_TMS99110A=1
+CPUOBJS += $(OBJ)/cpu/tms9900/tms9995.o
+DBGOBJS += $(OBJ)/cpu/tms9900/9900dasm.o
+$(OBJ)/cpu/tms9900/tms9995.o: tms9995.c tms9900.h 99xxcore.h 99xxstat.h
+else
+CPUDEFS += -DHAS_TMS99110A=0
 endif
 
 CPU=$(strip $(findstring Z8000@,$(CPUS)))

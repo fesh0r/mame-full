@@ -35,6 +35,10 @@ ASMFLAGS = -f coff
 MD = -mkdir
 RM = @rm -f
 
+# Utility source path
+UTIL = src/util
+MAKELIST = $(UTIL)/makelist$(EXE)
+
 ifdef DEBUG
 NAME = $(TARGET)d
 else
@@ -129,7 +133,7 @@ DBGDEFS =
 DBGOBJS =
 endif
 
-extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
+extra:	romcmp$(EXE) $(MAKELIST) $(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
@@ -146,6 +150,18 @@ endif
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+src/cpuintrf.h src/cpuintrf.c: src/rules.mak $(MAKELIST)
+	@echo Checking CPU core build rules...
+	@$(MAKELIST) src/cpuintrf.h src/cpuintrf.c src/rules.mak
+
+src/sndintrf.h src/sndintrf.c: src/rules.mak $(MAKELIST)
+	@echo Checking sound chip build rules...
+	@$(MAKELIST) src/sndintrf.h src/sndintrf.c src/rules.mak
+
+$(MAKELIST): $(UTIL)/makelist.c
+	@echo Compling $@...
+	$(CC) $(CDEFS) $(CLAGS) -o $@ $<
 
 $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
@@ -194,6 +210,8 @@ maketree: $(sort $(OBJDIRS))
 clean:
 	@echo Deleting object tree $(OBJ)...
 	$(RM) -r $(OBJ)
+	@echo Deleting $(UTIL)/makelist$(EXE)...
+	$(RM) -r $(UTIL)/makelist$(EXE)
 	@echo Deleting $(EMULATOR)...
 	$(RM) $(EMULATOR)
 
