@@ -6,11 +6,11 @@ COREDEFS += -DNEOFREE -DMESS
 
 # to split the mess into parts
 # (problem with tinymess is to only compile for 1 system)
-MESS_AMSTRAD = 1
-MESS_CBM = 1
-MESS_IBMPC = 1
-MESS_SHARP = 1
-MESS_SINCLAIR = 1
+#MESS_EXCLUDE_AMSTRAD = 1
+#MESS_EXCLUDE_CBM = 1
+#MESS_EXCLUDE_IBMPC = 1
+#MESS_EXCLUDE_SHARP = 1
+#MESS_EXCLUDE_SINCLAIR = 1
 
 # CPU cores used in MESS
 CPUS+=Z80@
@@ -106,29 +106,29 @@ DRVLIBS = $(OBJ)/advision.a \
           $(OBJ)/aquarius.a \
           #$(OBJ)/motorola.a \
 
-ifdef MESS_AMSTRAD
+ifndef MESS_EXCLUDE_AMSTRAD
 DRVLIBS += $(OBJ)/amstrad.a
-COREDEFS += -DMESS_AMSTRAD
+COREDEFS += -DMESS_EXCLUDE_AMSTRAD
 endif
 
-ifdef MESS_CBM
+ifndef MESS_EXCLUDE_CBM
 DRVLIBS += $(OBJ)/cbm.a
-COREDEFS += -DMESS_CBM
+COREDEFS += -DMESS_EXCLUDE_CBM
 endif
 
-ifdef MESS_IBMPC
+ifndef MESS_EXCLUDE_IBMPC
 DRVLIBS += $(OBJ)/pc.a
-COREDEFS += -DMESS_IBMPC
+COREDEFS += -DMESS_EXCLUDE_IBMPC
 endif
 
-ifdef MESS_SHARP
+ifndef MESS_EXCLUDE_SHARP
 DRVLIBS += $(OBJ)/sharp.a
-COREDEFS += -DMESS_SHARP
+COREDEFS += -DMESS_EXCLUDE_SHARP
 endif
 
-ifdef MESS_SINCLAIR
+ifndef MESS_EXCLUDE_SINCLAIR
 DRVLIBS += $(OBJ)/sinclair.a
-COREDEFS += -DMESS_SINCLAIR
+COREDEFS += -DMESS_EXCLUDE_SINCLAIR
 endif
 
 $(OBJ)/mess/system.o: src/mess.mak
@@ -461,13 +461,13 @@ COREOBJS +=        \
           $(OBJ)/mess/sndhrdw/beep.o     \
           $(OBJ)/mess/machine/pit8253.o  \
 
-ifdef MESS_CBM
+ifndef MESS_EXCLUDE_CBM
 COREOBJS += $(OBJ)/mess/machine/6522via.o
 endif
 
-ifndef MESS_IBMPC
-ifndef MESS_AMSTRAD
-ifndef MESS_SPECTRUM
+ifdef MESS_EXCLUDE_IBMPC
+ifdef MESS_EXCLUDE_AMSTRAD
+ifdef MESS_EXCLUDE_SPECTRUM
 EXCLUDE_NEC765 = 1
 endif
 endif
@@ -519,10 +519,10 @@ mess.txt: $(EMULATOR)
 makedep/makedep$(EXE):
 	make -Cmakedep
 
-depend $(TARGET).obj/$(TARGET).dep: makedep/makedep$(EXE)
+depend $(TARGET).dep: makedep/makedep$(EXE)
 	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Y. -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
-	mess/tools/*.c mess/formats/*.c >$(TARGET).obj/$(TARGET).dep
+	mess/tools/*.c mess/formats/*.c >$(TARGET).dep
 
 ## uncomment the following line to include dependencies
-include $(TARGET).obj/$(TARGET).dep
+include $(TARGET).dep
