@@ -2929,8 +2929,8 @@ static const struct IODevice io_cpc6128[] =
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
-                floppy_status,                                           /* status */
-                NULL,                                           /* seek */
+		floppy_status,                                           /* status */
+		NULL,                                           /* seek */
 		NULL,						/* tell */
 		NULL,						/* input */
 		NULL,						/* output */
@@ -2952,7 +2952,7 @@ static const struct IODevice io_cpc6128[] =
 COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
 COMP( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC664")
 COMP( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
-COMP( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 6128plus")
+COMP( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 464plus")
 COMP( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 6128plus")
 COMP( 19??, kccomp,   cpc464,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
 

@@ -144,6 +144,8 @@ void kccomp_init_palette(unsigned char *sys_palette, unsigned short *sys_colorta
 	int i;
 	int rgb_index = 0;
 
+	color_prom = color_prom+0x018000;
+
 	for (i=0; i<32; i++)
 	{
 		sys_colortable[i] = i;
