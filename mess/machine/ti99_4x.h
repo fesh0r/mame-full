@@ -4,6 +4,8 @@
 
 /* defines */
 
+#define HAS_99CCFDC defined(MESS_DEBUG)
+
 /* region identifiers */
 enum
 {
@@ -47,7 +49,8 @@ enum
 enum
 {
 	offset_fdc_dsr   = 0x0000,						/* TI FDC DSR (8kbytes) */
-	offset_bwg_dsr   = offset_fdc_dsr   + 0x02000,	/* BwG FDC DSR (32kbytes) */
+	offset_ccfdc_dsr = offset_fdc_dsr   + 0x02000,	/* CorcComp FDC DSR (16kbytes) */
+	offset_bwg_dsr   = offset_ccfdc_dsr + 0x04000,	/* BwG FDC DSR (32kbytes) */
 	offset_bwg_ram   = offset_bwg_dsr   + 0x08000,	/* BwG FDC RAM (2kbytes) */
 	offset_hfdc_dsr  = offset_bwg_ram   + 0x00800,	/* HFDC FDC DSR (16kbytes) */
 	offset_hfdc_ram  = offset_hfdc_dsr  + 0x04000,	/* BwG FDC RAM (32kbytes) */
@@ -95,6 +98,10 @@ typedef enum
 	fdc_kind_hfdc				/* Myarc's HFDC (handles SD and DD floppies (I
 									think an HD update existed) and prehistoric
 									MFM hard disks) */
+#if HAS_99CCFDC
+	,
+	fdc_kind_CC = 0x100			/* CorComp fdc */
+#endif
 } fdc_kind_t;
 
 /* defines for input ports */
@@ -125,7 +132,7 @@ enum
 	config_speech_bit	= 3,
 	config_speech_mask	= 0x1,
 	config_fdc_bit		= 4,
-	config_fdc_mask		= 0x3,	/* 2 bits */
+	config_fdc_mask		= 0x103,/* 3 bits (4, 5 and 12) */
 	config_rs232_bit	= 6,
 	config_rs232_mask	= 0x1,
 	/* next option only makes sense for ti99/4 */

@@ -594,6 +594,213 @@ static WRITE8_HANDLER(fdc_mem_w)
 }
 
 
+#if HAS_99CCFDC
+/*===========================================================================*/
+/*
+	Alternate fdc: CorcComp FDC
+
+	Advantages:
+	* this card supports Double Density.
+	* this card support an additional floppy drive, for a total of 4 floppies.
+
+	References:
+	* ???
+*/
+
+/* prototypes */
+static int ccfdc_cru_r(int offset);
+static void ccfdc_cru_w(int offset, int data);
+static READ8_HANDLER(ccfdc_mem_r);
+static WRITE8_HANDLER(ccfdc_mem_w);
+
+static const ti99_peb_card_handlers_t ccfdc_handlers =
+{
+	ccfdc_cru_r,
+	ccfdc_cru_w,
+	ccfdc_mem_r,
+	ccfdc_mem_w
+};
+
+
+/*
+	Reset fdc card, set up handlers
+*/
+void ti99_ccfdc_init(void)
+{
+	ti99_disk_DSR = memory_region(region_dsr) + offset_ccfdc_dsr;
+
+	DSEL = 0;
+	DSKnum = -1;
+	DSKside = 0;
+
+	DVENA = 0;
+	motor_on = 0;
+	motor_on_timer = timer_alloc(motor_on_timer_callback);
+
+	ti99_peb_set_card_handlers(0x1100, & ccfdc_handlers);
+
+	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
+	wd179x_set_density(DEN_MFM_LO);
+
+
+	use_80_track_drives = FALSE;
+
+	ti99_install_tracktranslate_procs();
+}
+
+
+/*
+	Read disk CRU interface
+
+	bit 0: drive 4 active (not emulated)
+	bit 1-3: drive n active
+	bit 4-7: dip switches 1-4
+*/
+static int ccfdc_cru_r(int offset)
+{
+	int reply;
+
+	switch (offset)
+	{
+	case 0:
+		/* CRU bits: beware, logic levels of DIP-switches are inverted  */
+		reply = 0x50;
+		if (DVENA)
+			reply |= ((DSEL << 1) | (DSEL >> 3)) & 0x0f;
+		break;
+
+	default:
+		reply = 0;
+		break;
+	}
+
+	return reply;
+}
+
+
+/*
+	Write disk CRU interface
+*/
+static void ccfdc_cru_w(int offset, int data)
+{
+	switch (offset)
+	{
+	case 0:
+		/* WRITE to DISK DSR ROM bit (bit 0) */
+		/* handled in xxx_peb_cru_w() */
+		break;
+
+	case 1:
+		/* Strobe motor (motor is on for 4.23 sec) */
+		if (data && !motor_on)
+		{	/* on rising edge, set DVENA for 4.23s */
+			DVENA = 1;
+			fdc_handle_hold();
+			timer_adjust(motor_on_timer, 4.23, 0, 0.);
+		}
+		motor_on = data;
+		break;
+
+	case 2:
+		/* Set disk ready/hold (bit 2)
+			0: ignore IRQ and DRQ
+			1: TMS9900 is stopped until IRQ or DRQ are set (OR the motor stops rotating - rotates
+			  for 4.23s after write to revelant CRU bit, this is not emulated and could cause
+			  the TI99 to lock...) */
+		DSKhold = data;
+		fdc_handle_hold();
+		break;
+
+	case 4:
+	case 5:
+	case 6:
+	case 8:
+		/* Select drive 0-2 (DSK1-DSK3) (bits 4-6) */
+		/* Select drive 3 (DSK4) (bit 8) */
+		{
+			int drive = (offset == 8) ? 3 : (offset-4);		/* drive # (0-3) */
+
+			if (data)
+			{
+				DSEL |= 1 << drive;
+
+				if (drive != DSKnum)			/* turn on drive... already on ? */
+				{
+					DSKnum = drive;
+
+					wd179x_set_drive(DSKnum);
+					/*wd179x_set_side(DSKside);*/
+				}
+			}
+			else
+			{
+				DSEL &= ~ (1 << drive);
+
+				if (drive == DSKnum)			/* geez... who cares? */
+				{
+					DSKnum = -1;				/* no drive selected */
+				}
+			}
+		}
+		break;
+
+	case 7:
+		/* Select side of disk (bit 7) */
+		DSKside = data;
+		wd179x_set_side(DSKside);
+		break;
+
+	case 10:
+		/* double density enable (active low) */
+		wd179x_set_density(data ? DEN_FM_LO : DEN_MFM_LO);
+		break;
+
+	case 11:
+		/* EPROM A13 */
+		break;
+
+	case 13:
+		/* RAM A10 */
+		break;
+
+	case 14:
+		/* override FDC with RTC (active high) */
+		break;
+
+	case 15:
+		/* EPROM A14 */
+		break;
+
+	case 3:
+	case 9:
+	case 12:
+		/* Unused (bit 3, 9 & 12) */
+		break;
+	}
+}
+
+
+/*
+	read a byte in disk DSR space
+*/
+static READ8_HANDLER(ccfdc_mem_r)
+{
+	int reply = 0;
+
+	reply = ti99_disk_DSR[offset];
+
+	return reply;
+}
+
+/*
+	write a byte in disk DSR space
+*/
+static WRITE8_HANDLER(ccfdc_mem_w)
+{
+}
+#endif
+
+
 /*===========================================================================*/
 /*
 	Alternate fdc: BwG card from SNUG

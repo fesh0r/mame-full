@@ -255,6 +255,11 @@ void machine_init_geneve(void)
 	case fdc_kind_TI:
 		ti99_fdc_init();
 		break;
+#if HAS_99CCFDC
+	case fdc_kind_CC:
+		ti99_ccfdc_init();
+		break;
+#endif
 	case fdc_kind_BwG:
 		ti99_bwg_init();
 		break;
