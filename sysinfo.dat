@@ -984,6 +984,37 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=at
+$bio
+AT (1987)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=atom
+$bio
+Acorn Atom (1979)
+
+
+Features:
+
+
+
+MESS Emulation State:
+
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=avigo
 $bio
 TI Avigo
@@ -991,6 +1022,20 @@ TI Avigo
 
 This system does not work properly.
 There is no documentation on the hardware available and more is required.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=bbca
+$bio
+Acorn BBC Micro Model A (1981)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -1939,6 +1984,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=cbm610
+$bio
+Commodore Business Machines B128-80LP/610 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=cbm710
 $bio
 Commodore B-128/80 Series
@@ -2318,6 +2377,20 @@ MESS Emulation State:
 
 not working (not even CPU is known)
 stopped until CPU type is recognized or info found
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=coupe
+$bio
+Sam Coupe (1989)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -2719,6 +2792,35 @@ simultaneously in RAM. It has a small word processing in ROM and up to 32 comput
 be linked together. Despite its great characteristics and all its interfaces, the 
 Enterprise 64 had few success. Several months later, a new model was launched : the 
 Enterprise 128 which is an Enterprise 64 with 128 KB RAM. 
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=exidy
+$bio
+Exidy Sorcerer (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=Famicom
+$bio
+Nintendo Famicom (1979)
+
+
+Features:
+
+
+MESS Emulation State:
 
 
 $end
@@ -3296,6 +3398,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=jupiter
+$bio
+Jupiter Cantab Jupiter Ace (1981)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=kaypro
 $bio
 Kaypro IIx (kaypro)
@@ -3312,6 +3428,20 @@ scroll_lock key.
 As of 37b4, this driver is once again working. 
 
   
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=kc85_3
+$bio
+VEB Mikroelektronik KC 85/3 (1981)
+
+
+Features:
+
+
+MESS Emulation State:
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -3396,6 +3526,19 @@ Known Issues:
 This driver supports the backdrop image of the KIM-1, and code images in .kim format.
 
 
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser110
+$bio
+Video Technology Laser 110 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -3431,6 +3574,34 @@ calculators that print out accounts etc. and some joysticks. The trouble with th
 computers was that they tended to die after a couple of years use. But they were cheap and 
 came with a few software titles."
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser310
+$bio
+Video Technology Laser 310 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser350
+$bio
+Video Technology Laser 350 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -3506,12 +3677,31 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=lviv
+$bio
+PK-01 Lviv (1989)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=lynx
 $bio
 Atari Lynx (1989) and Atari Lynx II (1990)
 
 
-The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and distortion graphic effects, reversible controls, and fast arcade action.  The system featured some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
+The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by 
+Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and 
+distortion graphic effects, reversible controls, and fast arcade action.  The system featured 
+some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight
+redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing
+the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
 
 
 Features:
@@ -3536,7 +3726,8 @@ Screen: 3.5" diagonal (3.25" x 1.88" approx.)
 
 
 Notes:
-Lynx is flip-able for optimal support of left and right hand players (hold down pause and press option 2 in many games) Some games want to be rotated by 90 degree
+Lynx is flip-able for optimal support of left and right hand players (hold down pause and press 
+option 2 in many games) Some games want to be rotated by 90 degree
 
 
 Links:
@@ -3724,6 +3915,32 @@ $bio
 Applied Technologies Microbee
 
 Features:
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mc10
+$bio
+Tandy Radio Shack MC-10 (1983)
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+#---------------------------------------------------------------------------------------------#
+
+$info=microtan
+$bio
+Tangerine Microtan 65 (1979)
+
+
+Features:
+
 
 MESS Emulation State:
 
@@ -4394,6 +4611,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=mz700
+$bio
+Sharp MZ-700 (1982)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=mvision
 $bio
 MB Microvision
@@ -4920,6 +5151,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=p2000t
+$bio
+Philips P2000T (1980)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=pc1251
 $bio
 Sharp Pocket Computer 1251
@@ -5351,8 +5596,21 @@ source clean-up
 printer
 RS-232C
 CD-ROM
-more good English document
+more good English documentation
 
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=pc88srl
+$bio
+NEC PC-8801 (1985)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -5916,7 +6174,14 @@ Sega Saturn (1994)
 
 
 
-In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.  The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While the Saturn was much more successful in Japan than it was in the US or Europe the lack of good software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar to that of the Master System.  The CDROM based system did have some great arcade conversions such as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
+In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.
+The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While 
+the Saturn was much more successful in Japan than it was in the US or Europe the lack of good 
+software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar 
+to that of the Master System.  The CDROM based system did have some great arcade conversions such
+as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet 
+capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the 
+Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
 
 
 Features:
@@ -5939,8 +6204,11 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 MESS Emulation State:
 
 See source code for more information.
+
 Bios starts requesting pad data so maybe we are now in the time set area ????
-Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k CPU. Probably need to emulate this shortly.
+Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
+where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k
+CPU. Probably need to emulate this shortly.
 
 $end
 
@@ -6570,6 +6838,20 @@ Mess Emulation State:
 
 no support for st2 cartridges
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=svi318
+$bio
+Spectravideo SVI-318 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
 
 $end
 
@@ -7318,6 +7600,20 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=uk101
+$bio
+Compukit UK101 (1979)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=vc4000
 $bio
 Interton VC4000
@@ -7366,7 +7662,7 @@ look into messroms for a pinout of it
 
 MESS Emulation State:
 
-based on info by Paul Robson, Christian Windler
+Based on info by Paul Robson, Christian Windler
 sponsored by Andreas W.
 
 
