@@ -583,7 +583,7 @@ int init_devices(const void *game)
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
-			mess_printf("Initialising %s\n",device_typename(dev->type));
+			mess_printf("Initialising %s device #%d\n",device_typename(dev->type), id + 1);
 			/********************************************************************
 			 * CALL INITIALISE DEVICE
 			 ********************************************************************/
@@ -617,7 +617,7 @@ int init_devices(const void *game)
 		}
 		dev++;
 	}
-	mess_printf("Device Initialising Complete\n");
+	mess_printf("Device Initialision Complete!\n");
 	return 0;
 }
 
