@@ -223,11 +223,6 @@ static void cbmb_common_driver_init (void)
 {
 	/*    memset(c64_memory, 0, 0xfd00); */
 
-#if 0
-	sid6581_0_init (c64_paddle_read);
-#else
-	sid6581_0_init (NULL, 1);
-#endif
 	cbmb_cia.todin50hz = 0;
 	cia6526_config (0, &cbmb_cia);
 
@@ -286,7 +281,7 @@ void cbmb_driver_shutdown (void)
 
 void cbmb_init_machine (void)
 {
-	sid6581_0_reset();
+	sid6581_reset(0);
 	cia6526_reset ();
 	tpi6525_0_reset();
 	tpi6525_1_reset();
