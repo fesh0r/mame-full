@@ -352,7 +352,7 @@ void dsk_extended_dsk_init_sector_offsets(dsk_drive *thedrive,int track,int side
 
 		for (i=0; i<spt; i++)
 		{
-			sector_size = id_info[6] + (id_info[7]<<8);
+                        sector_size = id_info[(i<<3) + 6] + (id_info[(i<<3) + 7]<<8);
 
 			thedrive->sector_offsets[i] = sector_offset;
 			sector_offset+=sector_size;
