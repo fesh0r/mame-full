@@ -391,10 +391,10 @@ void osd_get_pen(int pen, unsigned char* red, unsigned char* green, unsigned cha
     MAME32App.m_pDisplay->get_pen(pen, red, green, blue);
 }
 
-void osd_update_video_and_audio(struct osd_bitmap *bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap)
 {
     MAME32App.m_pSound->update_audio();
-    OSDDisplay.update_display(bitmap);
+    OSDDisplay.update_display(game_bitmap);
 
     MAME32App.HandleAutoPause();
 }
