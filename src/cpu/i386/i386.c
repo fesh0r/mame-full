@@ -225,50 +225,75 @@ static UINT32 GetEA(UINT8 modrm)
 	return i386_translate( segment, ea );
 }
 
-static void i386_interrupt(int irq)
+static void i386_trap(int irq)
 {
+	/*	I386 Interrupts/Traps/Faults:
+	 *
+	 *	0x00	Divide by zero
+	 *	0x01	Debug exception
+	 *	0x02	NMI
+	 *	0x03	Int3
+	 *	0x04	Overflow
+	 *	0x05	Array bounds check
+	 *	0x06	Illegal Opcode
+	 *	0x07	FPU not available
+	 *	0x08	Double fault
+	 *	0x09	Coprocessor segment overrun
+	 *	0x0a	Invalid task state
+	 *	0x0b	Segment not present
+	 *	0x0c	Stack exception
+	 *	0x0d	General Protection Fault
+	 *	0x0e	Page fault
+	 *	0x0f	Reserved
+	 *	0x10	Coprocessor error
+	 */
 	UINT32 v1, v2;
 	UINT32 offset;
 	UINT16 segment;
 	int entry = irq * (I.sreg[CS].d ? 8 : 4);
 
-	/* Check if the interrupts are enabled */
-	if( I.IF ) {
-		
-		/* Check if IRQ is out of IDTR's bounds */
-		if( entry > I.idtr.limit ) {
-			osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
-		}
-
-		if( !I.sreg[CS].d )
-		{
-			/* 16-bit */
-			PUSH16( get_flags() & 0xffff );
-			PUSH16( I.sreg[CS].selector );
-			PUSH16( I.eip );
-
-			I.sreg[CS].selector = READ16( I.idtr.base + entry + 2 );
-			I.eip = READ32( I.idtr.base + entry );
-		}
-		else
-		{
-			/* 32-bit */
-			PUSH32( get_flags() & 0x00fcffff );
-			PUSH32( I.sreg[CS].selector );
-			PUSH32( I.eip );
-
-			v1 = READ32( I.idtr.base + entry );
-			v2 = READ32( I.idtr.base + entry + 4 );
-			offset = (v2 & 0xffff0000) | (v1 & 0xffff);
-			segment = (v1 >> 16) & 0xffff;
-
-			I.sreg[CS].selector = segment;
-			I.eip = offset;
-		}
-		i386_load_segment_descriptor(CS);
-		CHANGE_PC(I.eip);
+	/* Check if IRQ is out of IDTR's bounds */
+	if( entry > I.idtr.limit ) {
+		osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
 	}
+
+	if( !I.sreg[CS].d )
+	{
+		/* 16-bit */
+		PUSH16( get_flags() & 0xffff );
+		PUSH16( I.sreg[CS].selector );
+		PUSH16( I.eip );
+
+		I.sreg[CS].selector = READ16( I.idtr.base + entry + 2 );
+		I.eip = READ32( I.idtr.base + entry );
+	}
+	else
+	{
+		/* 32-bit */
+		PUSH32( get_flags() & 0x00fcffff );
+		PUSH32( I.sreg[CS].selector );
+		PUSH32( I.eip );
+
+		v1 = READ32( I.idtr.base + entry );
+		v2 = READ32( I.idtr.base + entry + 4 );
+		offset = (v2 & 0xffff0000) | (v1 & 0xffff);
+		segment = (v1 >> 16) & 0xffff;
+
+		I.sreg[CS].selector = segment;
+		I.eip = offset;
+	}
+	i386_load_segment_descriptor(CS);
+	CHANGE_PC(I.eip);
 }
+
+static void i386_interrupt(int irq)
+{
+	/* Check if the interrupts are enabled */
+	if( I.IF )
+		i386_trap(irq);
+}
+
+
 
 #include "i386ops.c"
 #include "i386op16.c"

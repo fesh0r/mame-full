@@ -532,6 +532,21 @@ INLINE void PUSH8(UINT8 value)
 	}
 }
 
+INLINE UINT8 POP8(void)
+{
+	UINT8 value;
+	UINT32 ea;
+	if( STACK_32BIT ) {
+		ea = i386_translate( SS, REG32(ESP) );
+		value = READ8( ea );
+		REG32(ESP) += 1;
+	} else {
+		ea = i386_translate( SS, REG16(SP) );
+		value = READ8( ea );
+		REG16(SP) += 1;
+	}
+	return value;
+}
 INLINE UINT16 POP16(void)
 {
 	UINT16 value;
@@ -562,6 +577,24 @@ INLINE UINT32 POP32(void)
 	}
 	return value;
 }
+
+INLINE void BUMP_SI(int adjustment)
+{
+	if ( I.sreg[CS].d )
+		REG32(ESI) += ((I.DF) ? -adjustment : +adjustment);
+	else
+		REG16(SI) += ((I.DF) ? -adjustment : +adjustment);
+}
+
+INLINE void BUMP_DI(int adjustment)
+{
+	if ( I.sreg[CS].d )
+		REG32(EDI) += ((I.DF) ? -adjustment : +adjustment);
+	else
+		REG16(DI) += ((I.DF) ? -adjustment : +adjustment);
+}
+
+
 
 /***********************************************************************************/
 

@@ -247,9 +247,9 @@ static I386_OPCODE opcode_table1[256] =
 	{"sahf",			0,				0,					0,					0				},
 	{"lahf",			0,				0,					0,					0				},
 	// 0xa0
-	{"mov",				0,				PARAM_AL,			PARAM_MEM_OFFS_B,	0				},
+	{"mov",				0,				PARAM_AL,			PARAM_MEM_OFFS_V,	0				},
 	{"mov",				0,				PARAM_EAX,			PARAM_MEM_OFFS_V,	0				},
-	{"mov",				0,				PARAM_MEM_OFFS_B,	PARAM_AL,			0				},
+	{"mov",				0,				PARAM_MEM_OFFS_V,	PARAM_AL,			0				},
 	{"mov",				0,				PARAM_MEM_OFFS_V,	PARAM_EAX,			0				},
 	{"movsb",			0,				0,					0,					0				},
 	{"movsw\0movsd",	VAR_NAME,		0,					0,					6				},
@@ -1195,7 +1195,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 			} else {
 				s += sprintf( s, "%s", op->mnemonic );
 			}
-			return;
+			goto handle_params;
 
 		case GROUP:
 			handle_modrm( modrm_string );
@@ -1214,6 +1214,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 
 	s += sprintf( s, "%s ", op->mnemonic );
 
+handle_params:
 	if( op->param1 != 0 ) {
 		s = handle_param( s, op->param1 );
 	}

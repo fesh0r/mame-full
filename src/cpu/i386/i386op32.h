@@ -99,7 +99,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(pushad),				/* 0x60 */
 	I386OP(popad),				/* 0x61 */
 	I386OP(bound_r32_m32_m32),	/* 0x62 */
-	I386OP(invalid),			/* 0x63 */		/* TODO: ARPL */
+	I386OP(unimplemented),		/* 0x63 */		/* TODO: ARPL */
 	I386OP(segment_FS),			/* 0x64 */
 	I386OP(segment_GS),			/* 0x65 */
 	I386OP(operand_size),		/* 0x66 */
@@ -130,7 +130,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(jg_rel8),			/* 0x7f */
 	I386OP(group80_8),			/* 0x80 */
 	I386OP(group81_32),			/* 0x81 */
-	I386OP(invalid),			/* 0x82 */		/* TODO: Group 82, same as 0x80 ? */
+	I386OP(unimplemented),		/* 0x82 */		/* TODO: Group 82, same as 0x80 ? */
 	I386OP(group83_32),			/* 0x83 */
 	I386OP(test_rm8_r8),		/* 0x84 */
 	I386OP(test_rm32_r32),		/* 0x85 */
@@ -155,7 +155,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(cwde),				/* 0x98 */
 	I386OP(cdq),				/* 0x99 */
 	I386OP(call_abs32),			/* 0x9a */
-	I386OP(invalid),			/* 0x9b */		/* TODO: WAIT */
+	I386OP(unimplemented),		/* 0x9b */		/* TODO: WAIT */
 	I386OP(pushfd),				/* 0x9c */
 	I386OP(popfd),				/* 0x9d */
 	I386OP(sahf),				/* 0x9e */
@@ -200,10 +200,10 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(lds),				/* 0xc5 */
 	I386OP(mov_rm8_i8),			/* 0xc6 */
 	I386OP(mov_rm32_i32),		/* 0xc7 */
-	I386OP(invalid),			/* 0xc8 */		/* TODO: ENTER */
+	I386OP(unimplemented),		/* 0xc8 */		/* TODO: ENTER */
 	I386OP(leave32),			/* 0xc9 */
-	I386OP(invalid),			/* 0xca */		/* TODO: RETF */
-	I386OP(invalid),			/* 0xcb */		/* TODO: RETF */
+	I386OP(retf_i32),			/* 0xca */
+	I386OP(retf32),				/* 0xcb */
 	I386OP(int3),				/* 0xcc */
 	I386OP(int),				/* 0xcd */
 	I386OP(into),				/* 0xce */
@@ -215,7 +215,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(aam),				/* 0xd4 */
 	I386OP(aad),				/* 0xd5 */
 	I386OP(setalc),				/* 0xd6 */		/* undocumented */
-	I386OP(invalid),			/* 0xd7 */		/* TODO: XLAT */
+	I386OP(unimplemented),		/* 0xd7 */		/* TODO: XLAT */
 	I386OP(escape),				/* 0xd8 */
 	I386OP(escape),				/* 0xd9 */
 	I386OP(escape),				/* 0xda */
@@ -240,7 +240,7 @@ static void (*i386_opcode_table1_32[256])(void) =
 	I386OP(in_eax_dx),			/* 0xed */
 	I386OP(out_al_dx),			/* 0xee */
 	I386OP(out_eax_dx),			/* 0xef */
-	I386OP(invalid),			/* 0xf0 */		/* TODO: LOCK */
+	I386OP(lock),				/* 0xf0 */
 	I386OP(invalid),			/* 0xf1 */		
 	I386OP(repne),				/* 0xf2 */
 	I386OP(rep),				/* 0xf3 */
@@ -262,18 +262,18 @@ static void (*i386_opcode_table1_32[256])(void) =
 
 static void (*i386_opcode_table2_32[256])(void) =
 {
-	I386OP(invalid),			/* 0x00 */		/* TODO: Group 0F00 */
+	I386OP(unimplemented),		/* 0x00 */		/* TODO: Group 0F00 */
 	I386OP(group0F01_32),		/* 0x01 */
-	I386OP(invalid),			/* 0x02 */		/* TODO: LAR */
-	I386OP(invalid),			/* 0x03 */		/* TODO: LSL */
+	I386OP(unimplemented),		/* 0x02 */		/* TODO: LAR */
+	I386OP(unimplemented),		/* 0x03 */		/* TODO: LSL */
 	I386OP(invalid),			/* 0x04 */
 	I386OP(invalid),			/* 0x05 */
-	I386OP(invalid),			/* 0x06 */		/* TODO: CLTS */
+	I386OP(unimplemented),		/* 0x06 */		/* TODO: CLTS */
 	I386OP(invalid),			/* 0x07 */		
 	I386OP(invalid),			/* 0x08 */		/* INVD (486) */
 	I386OP(invalid),			/* 0x09 */		/* WBINVD (486) */
 	I386OP(invalid),			/* 0x0a */
-	I386OP(invalid),			/* 0x0b */		/* TODO: UD2 */
+	I386OP(unimplemented),		/* 0x0b */		/* TODO: UD2 */
 	I386OP(invalid),			/* 0x0c */
 	I386OP(invalid),			/* 0x0d */
 	I386OP(invalid),			/* 0x0e */
@@ -295,12 +295,12 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(invalid),			/* 0x1e */
 	I386OP(invalid),			/* 0x1f */
 	I386OP(mov_r32_cr),			/* 0x20 */
-	I386OP(invalid),			/* 0x21 */		/* TODO: MOV R32, DR */
+	I386OP(unimplemented),		/* 0x21 */		/* TODO: MOV R32, DR */
 	I386OP(mov_cr_r32),			/* 0x22 */
-	I386OP(invalid),			/* 0x23 */		/* TODO: MOV DR, R32 */
-	I386OP(invalid),			/* 0x24 */		/* TODO: MOV R32, TR */
+	I386OP(unimplemented),		/* 0x23 */		/* TODO: MOV DR, R32 */
+	I386OP(unimplemented),		/* 0x24 */		/* TODO: MOV R32, TR */
 	I386OP(invalid),			/* 0x25 */
-	I386OP(invalid),			/* 0x26 */		/* TODO: MOV TR, R32 */
+	I386OP(unimplemented),		/* 0x26 */		/* TODO: MOV TR, R32 */
 	I386OP(invalid),			/* 0x27 */
 	I386OP(invalid),			/* 0x28 */		/* SSE */
 	I386OP(invalid),			/* 0x29 */		/* SSE */
@@ -427,15 +427,15 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(invalid),			/* 0xa2 */		/* CPUID (486) */
 	I386OP(bt_rm32_r32),		/* 0xa3 */
 	I386OP(shld32_i8),			/* 0xa4 */
-	I386OP(invalid),			/* 0xa5 */		/* TODO: SHLD */
+	I386OP(unimplemented),		/* 0xa5 */		/* TODO: SHLD */
 	I386OP(invalid),			/* 0xa6 */
 	I386OP(invalid),			/* 0xa7 */
 	I386OP(push_gs32),			/* 0xa8 */
 	I386OP(pop_gs32),			/* 0xa9 */
-	I386OP(invalid),			/* 0xaa */		/* TODO: RSM */
+	I386OP(unimplemented),		/* 0xaa */		/* TODO: RSM */
 	I386OP(bts_rm32_r32),		/* 0xab */
 	I386OP(shrd32_i8),			/* 0xac */
-	I386OP(invalid),			/* 0xad */		/* TODO: SHRD */
+	I386OP(unimplemented),		/* 0xad */		/* TODO: SHRD */
 	I386OP(invalid),			/* 0xae */		/* SSE */
 	I386OP(imul_r32_rm32),		/* 0xaf */
 	I386OP(invalid),			/* 0xb0 */		/* CMPXCHG (486) */
@@ -450,8 +450,8 @@ static void (*i386_opcode_table2_32[256])(void) =
 	I386OP(invalid),			/* 0xb9 */
 	I386OP(group0FBA_32),		/* 0xba */
 	I386OP(btc_rm32_r32),		/* 0xbb */
-	I386OP(invalid),			/* 0xbc */		/* TODO: BSF */
-	I386OP(bsr_r32_rm32),		/* 0xbd */		/* TODO: BSR */
+	I386OP(unimplemented),		/* 0xbc */		/* TODO: BSF */
+	I386OP(bsr_r32_rm32),		/* 0xbd */
 	I386OP(movsx_r32_rm8),		/* 0xbe */
 	I386OP(movsx_r32_rm16),		/* 0xbf */
 	I386OP(invalid),			/* 0xc0 */		/* XADD (486) */

@@ -2681,7 +2681,30 @@ static void I386OP(bound_r32_m32_m32)(void)	// Opcode 0x62
 	val = LOAD_REG32(modrm);
 
 	if ((val < low) || (val > high))
-		i386_interrupt(5);
+		i386_trap(5);
 
 	CYCLES(1);	// TODO: Find out correct cycle count
+}
+
+static void I386OP(retf32)(void)			// Opcode 0xcb
+{
+	I.eip = POP32();
+	I.sreg[CS].selector = POP16();
+	CHANGE_PC(I.eip);
+	i386_load_segment_descriptor( CS );
+
+	CYCLES(1);	// TODO: deduct proper cycle count
+}
+
+static void I386OP(retf_i32)(void)			// Opcode 0xca
+{
+	UINT16 count = FETCH16();
+
+	I.eip = POP32();
+	I.sreg[CS].selector = POP16();
+	CHANGE_PC(I.eip);
+	i386_load_segment_descriptor( CS );
+
+	REG32(ESP) += count;
+	CYCLES(1);	// TODO: deduct proper cycle count
 }

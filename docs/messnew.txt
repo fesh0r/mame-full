@@ -2,6 +2,8 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- AT 386 (Not yet working) [Nate Woods]
+
 - MSX2+ and variants [Jirou Kaneda]
 	- FS-A1FX
 	- FS-A1WSX

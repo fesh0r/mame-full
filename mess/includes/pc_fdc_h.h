@@ -52,8 +52,13 @@ typedef struct pc_fdc
 	pc_fdc_hw_interface fdc_interface;
 } pc_fdc;
 
-READ_HANDLER(pc_fdc_r);
-WRITE_HANDLER(pc_fdc_w);
+READ8_HANDLER(pc_fdc_r);
+WRITE8_HANDLER(pc_fdc_w);
+
+READ32_HANDLER(pc32_fdc_r);
+WRITE32_HANDLER(pc32_fdc_w);
+
+
 
 void pc_fdc_init(pc_fdc_hw_interface *iface);
 void pc_fdc_set_tc_state(int state);

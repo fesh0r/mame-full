@@ -86,7 +86,7 @@ void channelf_sh_custom_update(void) {}
 
 void channelf_sh_update(int param, INT16 *buffer, int length)
 {
-	UINT32 mask, target;
+	UINT32 mask = 0, target = 0;
 
 	INT16 *sample = buffer;
 

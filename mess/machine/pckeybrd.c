@@ -296,6 +296,11 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 	
 };
 
+static void at_keyboard_queue_insert(UINT8 data);
+static int at_keyboard_queue_size(void);
+
+
+
 void at_keyboard_init(AT_KEYBOARD_TYPE type)
 {
 	keyboard.type = type;
@@ -315,7 +320,7 @@ void at_keyboard_init(AT_KEYBOARD_TYPE type)
 	keyboard.scan_code_set = 3;
 }
 
-static void at_keyboard_queue_insert(UINT8 data);
+
 
 void at_keyboard_reset(void)
 {
@@ -343,6 +348,8 @@ void at_keyboard_set_input_port_base(int base)
 	keyboard.input_port_base = base;
 }
 
+
+
 /* insert a code into the buffer */
 static void at_keyboard_queue_insert(UINT8 data)
 {
@@ -354,6 +361,8 @@ static void at_keyboard_queue_insert(UINT8 data)
 	keyboard.head %= (sizeof(keyboard.queue) / sizeof(keyboard.queue[0]));
 }
 
+
+
 static int at_keyboard_queue_size(void)
 {
 	int queue_size;
@@ -362,6 +371,8 @@ static int at_keyboard_queue_size(void)
 		queue_size += sizeof(keyboard.queue) / sizeof(keyboard.queue[0]);
 	return queue_size;
 }
+
+
 
 /* add a list of codes to the keyboard buffer */
 static void at_keyboard_helper(const char *codes)

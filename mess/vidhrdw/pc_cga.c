@@ -505,24 +505,14 @@ WRITE8_HANDLER( pc_cga8_w )
 
 READ32_HANDLER( pc_cga32_r )
 {
-	return (((data32_t) pc_cga8_r(offset * 4 + 0)) << 0)
-		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 8)
-		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 16)
-		|  (((data32_t) pc_cga8_r(offset * 4 + 0)) << 24);
+	return read32_with_read8_handler(pc_cga8_r, offset, mem_mask);
 }
 
 
 
 WRITE32_HANDLER( pc_cga32_w )
 {
-	if ((mem_mask & 0x000000FF) == 0)
-		pc_cga8_w(offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		pc_cga8_w(offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		pc_cga8_w(offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		pc_cga8_w(offset * 4 + 3, data >> 24);
+	write32_with_write8_handler(pc_cga8_w, offset, data, mem_mask);
 }
 
 

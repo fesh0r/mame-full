@@ -129,14 +129,18 @@ WRITE_HANDLER ( pc_video_videoram_w )
 
 WRITE32_HANDLER( pc_video_videoram32_w )
 {
-	COMBINE_DATA(((data16_t *) videoram) + offset);
+	COMBINE_DATA(((data32_t *) videoram) + offset);
 	pc_anythingdirty = 1;
 	if (dirtybuffer)
 	{
-		dirtybuffer[offset * 4 + 0] = 1;
-		dirtybuffer[offset * 4 + 1] = 1;
-		dirtybuffer[offset * 4 + 2] = 1;
-		dirtybuffer[offset * 4 + 3] = 1;
+		if ((mem_mask & 0x000000FF) == 0)
+			dirtybuffer[offset * 4 + 0] = 1;
+		if ((mem_mask & 0x0000FF00) == 0)
+			dirtybuffer[offset * 4 + 1] = 1;
+		if ((mem_mask & 0x00FF0000) == 0)
+			dirtybuffer[offset * 4 + 2] = 1;
+		if ((mem_mask & 0xFF000000) == 0)
+			dirtybuffer[offset * 4 + 3] = 1;
 	}
 }
 

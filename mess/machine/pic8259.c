@@ -342,38 +342,10 @@ READ8_HANDLER ( pic8259_1_r )	{ return pic8259_read(1, offset); }
 WRITE8_HANDLER ( pic8259_0_w )	{ pic8259_write(0, offset, data); }
 WRITE8_HANDLER ( pic8259_1_w )	{ pic8259_write(1, offset, data); }
 
-
-
-/* ----------------------------------------------------------------------- */
-
-static data32_t pic8259_read32(int which, offs_t offset)
-{
-	return (((data32_t) pic8259_read(which, offset * 4 + 0)) << 0)
-		|  (((data32_t) pic8259_read(which, offset * 4 + 1)) << 8)
-		|  (((data32_t) pic8259_read(which, offset * 4 + 2)) << 16)
-		|  (((data32_t) pic8259_read(which, offset * 4 + 3)) << 24);
-}
-
-
-
-static void pic8259_write32(int which, offs_t offset, data32_t data, data32_t mem_mask)
-{
-	if ((mem_mask & 0x000000FF) == 0)
-		pic8259_write(which, offset * 4 + 0, data >> 0);
-	if ((mem_mask & 0x0000FF00) == 0)
-		pic8259_write(which, offset * 4 + 1, data >> 8);
-	if ((mem_mask & 0x00FF0000) == 0)
-		pic8259_write(which, offset * 4 + 2, data >> 16);
-	if ((mem_mask & 0xFF000000) == 0)
-		pic8259_write(which, offset * 4 + 3, data >> 24);
-}
-
-
-
-READ32_HANDLER ( pic8259_32_0_r )	{ return pic8259_read32(0, offset); }
-READ32_HANDLER ( pic8259_32_1_r )	{ return pic8259_read32(1, offset); }
-WRITE32_HANDLER ( pic8259_32_0_w )	{ pic8259_write32(0, offset, data, mem_mask); }
-WRITE32_HANDLER ( pic8259_32_1_w )	{ pic8259_write32(1, offset, data, mem_mask); }
+READ32_HANDLER ( pic8259_32_0_r ) { return read32_with_read8_handler(pic8259_0_r, offset, mem_mask); }
+READ32_HANDLER ( pic8259_32_1_r ) { return read32_with_read8_handler(pic8259_1_r, offset, mem_mask); }
+WRITE32_HANDLER ( pic8259_32_0_w ) { write32_with_write8_handler(pic8259_0_w, offset, data, mem_mask); }
+WRITE32_HANDLER ( pic8259_32_1_w ) { write32_with_write8_handler(pic8259_1_w, offset, data, mem_mask); }
 
 
 

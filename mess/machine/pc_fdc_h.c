@@ -248,31 +248,7 @@ static void pc_fdc_dor_w(data8_t data)
 
 
 
-WRITE_HANDLER ( pc_fdc_w )
-{
-	switch(offset) {
-	case 0:	/* n/a */
-	case 1:	/* n/a */
-		break;
-	case 2:
-		pc_fdc_dor_w(data);
-		break;
-	case 3:
-		/* tape drive select? */
-		break;
-	case 4:
-		pc_fdc_data_rate_w(data);
-		break;
-	case 5:
-		nec765_data_w(0, data);
-		break;
-	case 6: /* fdc reserved */
-	case 7: /* n/a */
-		break;
-	}
-}
-
-READ_HANDLER ( pc_fdc_r )
+READ8_HANDLER ( pc_fdc_r )
 {
 	data8_t data = 0xff;
 
@@ -299,4 +275,35 @@ READ_HANDLER ( pc_fdc_r )
     }
 	return data;
 }
+
+
+
+WRITE8_HANDLER ( pc_fdc_w )
+{
+	switch(offset) {
+	case 0:	/* n/a */
+	case 1:	/* n/a */
+		break;
+	case 2:
+		pc_fdc_dor_w(data);
+		break;
+	case 3:
+		/* tape drive select? */
+		break;
+	case 4:
+		pc_fdc_data_rate_w(data);
+		break;
+	case 5:
+		nec765_data_w(0, data);
+		break;
+	case 6: /* fdc reserved */
+	case 7: /* n/a */
+		break;
+	}
+}
+
+
+
+READ32_HANDLER( pc32_fdc_r ) { return read32_with_read8_handler(pc_fdc_r, offset, mem_mask); }
+WRITE32_HANDLER( pc32_fdc_w ) { write32_with_write8_handler(pc_fdc_w, offset, data, mem_mask); }
 
