@@ -21,8 +21,6 @@
 #include "990_hd.h"
 #include "image.h"
 
-#define USE_STANDARD_FORMAT 1
-
 #include "harddisk.h"
 #include "devices/harddriv.h"
 
@@ -35,11 +33,12 @@ overriden if more than one controller is used */
 /* Max sector lenght is bytes.  Generally 256, except for a few older disk
 units which use 288-byte-long sectors, and SCSI units which generally use
 standard 512-byte-long sectors. */
-/* I chose a limit of 512.  No need to use more until someone write CD-ROMs
+/* I chose a limit of 512.  No need to use more until someone writes CD-ROMs
 for TI990. */
 #define MAX_SECTOR_SIZE 512
 
 /* Description of custom format */
+/* We can use MAME's harddisk.c image format instead. */
 
 /* machine-independant big-endian 32-bit integer */
 typedef struct UINT32BE
@@ -61,9 +60,6 @@ INLINE UINT32 get_UINT32BE(UINT32BE word)
 }*/
 
 /* disk image header */
-/* I had rather I used MAME's harddisk.c image handler, but this format only
-supports 512-byte-long sectors (whereas TI990 generally uses 256- or
-288-byte-long sectors). */
 typedef struct disk_image_header
 {
 	UINT32BE cylinders;			/* number of cylinders on hard disk (big-endian) */
