@@ -3865,12 +3865,39 @@ $end
 
 $info=pce
 $bio
-NEC PC Engine/TurboGrafx-16
+NEC PC Engine/TurboGrafx-16 (1987)
+------------------------------
+Bios = None Required
 
 
-Known Issues:
+The PC Engine (called TurboGrafx - 16 in the US)  was the first 16-Bit graphics home entertainment system to be released. The PC Engine was created by NEC of Japan. Supporting over 1000 software titles with such popular titles as Bonk's Adventure, Bomberman, Dracula X and Ys IV . The PC Engine was embraced by millions of Japanese gamers, and because of this, the system will be remembered as the starting of a legacy. This system was the first of it's kind to use credit card size game cartridges and later supported CD-ROMs and portable models with built in TV tuners.
 
+
+Features
+-------------
+Custom 8bit CPU: HuC6280 (7.16MHz)  (1.5 Million Instructions Per Second [MIPS])
+Video Processor: HuC6270 - 16 bit
+Color Processor: HuC6260 
+Resolution: 256 x 216 
+Sound Processor: 8 bit PCM stereo / 6-channel stereo 
+Ram: 8 Kbyte (64Kbit) 
+Video Ram: 64Kbyte (512 Kbit)
+Cart Size: 256Kbit - 20 Megabit Max. (S.F. 2) Normally 8 Mbits 
+colors Pallet: 512 - (256 for sprites, 256 for the background.) 
+Max # of sprites: 64
+Sprite Size: 16 x 16 , 32x64
+
+
+Links
+-------
+Universo PCENGINE - upce.netfirms.com/index.html
+Turbo Station 16 - pcenginefx.com/TS/
+
+
+Mess Emulation State
+--------------------
 Preliminary...  Xevious and Raiden8x work OK.
+
 
 $end
 
@@ -6279,46 +6306,56 @@ $end
 $info=lynx
 $bio
 
-Atari Lynx
-Atari Lynx II
+
+Atari Lynx (1989)
+Atari Lynx II (1990)
 -------------
+Bios = None Required
 
-color handheld
 
-developed by EPYX (2 colors, 4 colors, cassettes instead of cartridges)
+The Lynx was the world's first hand-held color video game system.  Sold by Atari (developed by Epyx a few years earlier), the Lynx offered true multi-player competition, built-in 3D and distortion graphic effects, reversible controls, and fast arcade action.  The system featured some accurate arcade translations such as Joust, Rampart, and Klax.  The Lynx II is a lightweight redesign and features stereo sound and shorter power down timer.  Around 1993 Atari ceased marketing the Lynx and focused on their new console, the Jaguar. (Notes taken from FAQ and Atari Age)
 
-Lynx II is a redesign: smaller,  shorter power down timer and stereo
 
 Features
 --------
-color display of 160x102 in 16 out of 4096 colors
-4 channel sound (integrated speaker mono), plug for headphones
-Controls for 1 Player
-Cartridge port
-Serial port
-Batterie Port
+Two 16-Bit custom CMOS chips running at 16Mhz(named Mikey and Suzy)
+Sound: 8 bit DAC for each channel; 4 channels integrated stereo speaker (wired for mono in original)
+Screen: 160 x 102 (horz) 60.00 Hz 
+Color: 4096 colors, 16 max per scanline
+Others: 64KB RAM of 120ns DRAM
+
+
+Ports: 
+-Headphones (mini-DIN 3.5mm stereo; wired for mono on the original Lynx)
+-ComLynx (multiple unit communications, serial)
+-Power (9V DC, 1 A)
+-Game cartridge slot
+-Battery holder (six AA) ~4-5 hours
+
+
+Size: 9.25" x 4.25" x 2" (10.75" x 4.25" x 1.5" for original Lynx)
+Screen: 3.5" diagonal (3.25" x 1.88" approx.) 
 
 
 Notes
------
-Lynx is flipable for optimal support of left and right hand players
-(hold down pause and press option 2 in many games)
-Some games want to be rotated by 90 degree
+-------
+Lynx is flip-able for optimal support of left and right hand players (hold down pause and press option 2 in many games) Some games want to be rotated by 90 degree
 
 
-Emulators
----------
-Handy for Win32 (excellent)
-xhandy (linux binary) (excellent)
+Links
+--------
+FAQ on Lynx - www.digiserve.com/eescape/atari/Atari.shtml
+Atari age - www.atariage.com (Excellent Site)
 
 
 Mess Emulation State
 --------------------
-several cartridges playable
-blitter imperfect
-timer system incomplete
-audio imperfect
-no serial port emulation
+-several cartridges playable
+-blitter imperfect
+-timer system incomplete
+-audio imperfect
+-no serial port emulation
+
 
 $end
 
@@ -7790,3 +7827,49 @@ Thankyou to Andrew Dunipace for help with the 80-column expansion card.
 
 
 $end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=saturn
+$bio
+
+
+Sega Saturn (1994)
+----------------- 
+Bios = (???)
+
+
+In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.  The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While the Saturn was much more successful in Japan than it was in the US or Europe the lack of good software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar to that of the Master System.  The CDROM based system did have some great arcade conversions such as House of The Dead and Virtua Fighter 3.  Despite being the first consoles with Internet capabilities (via the NetLink adapter), Sega was relatively quiet after the slow demise of the Saturn.  Sega turns its focus to the 128-bit Dreamcast a few years later.
+
+
+Features
+-------------
+CPU: Two Hitachi SH2 7604 32 Bit RISC chips at ~27 MHz (36 MIPS)
+Sound CPU: Motorola 68EC000 at 11.3 MHz
+Sound: 32 Channels, with 16 bit sampling at a sampling rate of 44.1 KHz max.
+Resolution: 704 x 512 (horz) 60.00 Hz 
+Colors: 32768 (static)
+Main Memory: 1 Megabyte of SDRAM and 1 Megabyte of DRAM
+Internal Memory Card 
+Video Hardware: Two VDP (video display processors) chip sets (VRAM: 512Kb each)
+-VDP1 Draw Sprites, lines, warped sprites (quads)
+-VDP2 controls background graphics.
+
+
+CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512 Kb Buffer RAM)
+
+
+Links
+-------
+
+
+MESS Emulation State
+--------------------
+See source code for more information.
+Bios starts requesting pad data so maybe we are now in the time set area ????
+Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly where we are at this current time.  Currently locks up waiting on (i guess) a response from the 68k cpu. Probably need to emulate this shortly.
+
+
+$end
+
+
