@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "formats/msx_dsk.h"
 #include "osdepend.h"
 #include "imgtool.h"
 #include "osdtools.h"
@@ -10,12 +9,26 @@
  * msx_dsk.c : converts .ddi/.img/.msx disk images to .dsk image
  */
 
+int xsa_extract (STREAM *in, STREAM *out);
+
+#ifdef LSB_FIRST
+#define intelLong(x) (x)
+#else
+#define intelLong(x) (((x << 24) | (((unsigned long) x) >> 24) | \
+                       (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
+#endif
+
+#define 	IMG_1DD		(1)
+#define 	IMG_2DD		(2)
+#define 	DDI_2DD		(3)
+#define 	MSX_2DD		(4)
+#define 	XSA_2DD		(5)
+
 typedef struct {
 	IMAGE			base;
 	char			*file_name;
 	STREAM 			*file_handle;
-	int 			size;
-	unsigned char	*data;
+	int 			size, format;
 	} DSK_IMAGE;
 
 typedef struct
@@ -34,8 +47,8 @@ static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
 
 IMAGEMODULE(
 	msx_dsk,
-	"Various bogus MSX disk images (img/ddi/msx)",		/* human readable name */
-	"ddi\0img\0msx\0",								/* file extension */
+	"Various bogus MSX disk images (xsa/img/ddi/msx)",		/* human readable name */
+	"xsa\0img\0ddi\0msx\0",								/* file extension */
 	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
@@ -60,10 +73,45 @@ IMAGEMODULE(
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 	{
 	DSK_IMAGE *image;
-	int len, ret;
-    UINT8 *data;
-	char *pbase;
-	char default_name[] = "msxdisk";
+	int len, name_len, format;
+    UINT8 header[4];
+	char *pbase, default_name[] = "msxdisk";
+
+	format = 0;
+	len=stream_size(f);
+	if (len < 5) return IMGTOOLERR_CORRUPTIMAGE;
+	if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
+
+    if (!memcmp (header, "PCK\010", 4) )
+		{
+		format = XSA_2DD; 
+		if (4 != stream_read (f, &len, 4) ) return IMGTOOLERR_READERROR;
+		len = intelLong (len);
+		if (4 != stream_read (f, header, 4) ) return IMGTOOLERR_READERROR;
+		}
+	else switch (len)
+		{
+		case 720*1024+1:
+		case 360*1024+1:
+			if ( (header[0] * 360 * 1024 + 1) == len) 
+				format = header[0]; /* bit evil, but works */
+			
+			len--;
+			break;
+		case 720*1024:
+			if (f->name)
+				{
+				name_len = strlen (f->name);
+				if (name_len > 4 || !strcasecmp (f->name + name_len - 4, ".msx") )
+					format = MSX_2DD;
+				}	
+			break;
+		case 720*1024+0x1800:
+			len -= 0x1800;
+			format = DDI_2DD;
+		}
+	
+	if (!format) return IMGTOOLERR_CORRUPTIMAGE;
 
 	image = (DSK_IMAGE*)malloc (sizeof (DSK_IMAGE) );
 	if (!image) return IMGTOOLERR_OUTOFMEMORY;
@@ -72,61 +120,54 @@ static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)
 
 	memset(image, 0, sizeof(DSK_IMAGE));
 	image->base.module = &imgmod_msx_dsk;
-	len=stream_size(f);
-	image->file_handle=f;
+	image->file_handle = f;
+	image->size = len;
+	image->format = format;
 
-	data = (UINT8*) malloc(len);
-	if (!data)
+	if (format != XSA_2DD)
 		{
-		free(image);
-		*outimg=NULL;
-		return IMGTOOLERR_OUTOFMEMORY;
-		}
+	    if (f->name) pbase = basename (f->name);
+		else pbase = NULL;
+   		if (pbase) len = strlen (pbase);
+    	else len = strlen (default_name);
 
-    if (stream_read(f, data, len)!=len) 
-		{
-		free(data);
-		free(image);
-		*outimg=NULL;
-		return IMGTOOLERR_READERROR;
-		}
-
-    ret = msx_dsk_convert (data, len, f->name, &image->data, &image->size);
-	free (data);
-	if (ret)
-		{
-		free(image);
-		*outimg=NULL;
-		switch (ret)
+    	image->file_name = malloc (len + 5);
+		if (!image->file_name)
 			{
-			case MSX_OUTOFMEMORY: return IMGTOOLERR_OUTOFMEMORY;
-			case MSX_IMAGE_ERROR: return IMGTOOLERR_CORRUPTIMAGE;
+			free(image);
+			*outimg=NULL;
+			return IMGTOOLERR_CORRUPTIMAGE;
 			}
-		return IMGTOOLERR_UNEXPECTED;
+
+	    if (!pbase)
+			strcpy (image->file_name, default_name);
+   	 	else
+			{
+			strcpy (image->file_name, pbase);
+        	if (len > 4 || image->file_name[len -4] == '.') len -= 4;
+
+			strcpy (image->file_name + len, ".dsk");
+			}
 		}
-
-    if (f->name) pbase = basename (f->name);
-	else pbase = NULL;
-    if (pbase) len = strlen (pbase);
-    else len = strlen (default_name);
-
-    image->file_name = malloc (len + 5);
-	if (!image->file_name)
+	else
 		{
-		free(image->data);
-		free(image);
-		*outimg=NULL;
-		return IMGTOOLERR_CORRUPTIMAGE;
-		}
-
-    if (!pbase)
-		strcpy (image->file_name, default_name);
-    else
-		{
-		strcpy (image->file_name, pbase);
-        if (len > 4 || image->file_name[len -4] == '.') len -= 4;
-
-		strcpy (image->file_name + len, ".dsk");
+		/* get name from XSA header, can't be longer than 8.3 really */
+#define XSA_MAX_FILENAME 	(64)
+		image->file_name = malloc (XSA_MAX_FILENAME);
+		if (!image->file_name)
+			{
+			free(image);
+			*outimg=NULL;
+			return IMGTOOLERR_OUTOFMEMORY;
+			}
+		if (XSA_MAX_FILENAME != stream_read (f, image->file_name, 
+			XSA_MAX_FILENAME) )
+			{
+			free(image->file_name);
+			free(image);
+			*outimg=NULL;
+			return IMGTOOLERR_READERROR;
+			}
 		}
 
 	return 0;
@@ -137,7 +178,6 @@ static void msx_dsk_image_exit(IMAGE *img)
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
 	stream_close(image->file_handle);
 	free(image->file_name);
-	free(image->data);
 	free(image);
 	}
 
@@ -180,13 +220,394 @@ static void msx_dsk_image_closeenum(IMAGEENUM *enumeration)
 static int msx_dsk_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	{
 	DSK_IMAGE *image=(DSK_IMAGE*)img;
+	UINT8	buf[0x1200];
+	int 	i, offset, n1, n2;
 
 	if (stricmp (fname, image->file_name) )
 		return IMGTOOLERR_MODULENOTFOUND;
 
-	if (image->size != stream_write(destf, image->data, image->size) ) 
-		return IMGTOOLERR_WRITEERROR;
+	switch (image->format)
+		{
+		case IMG_2DD: offset = 1; i = 160; break;
+		case IMG_1DD: offset = 1; i = 80; break;
+		case DDI_2DD: offset = 0x1800; i = 160; break;
+		case MSX_2DD:
+			{
+			i = 80; n1 = 0; n2 = 80;
+			while (i--)
+				{
+				stream_seek (image->file_handle, n1++ * 0x1200, SEEK_SET);
+				if (0x1200 != stream_read (image->file_handle, buf, 0x1200) )
+					return IMGTOOLERR_READERROR;
+
+				if (0x1200 != stream_write (destf, buf, 0x1200) )
+					return IMGTOOLERR_WRITEERROR;
+
+				stream_seek (image->file_handle, n2++ * 0x1200, SEEK_SET);
+				if (0x1200 != stream_read (image->file_handle, buf, 0x1200) )
+					return IMGTOOLERR_READERROR;
+
+				if (0x1200 != stream_write (destf, buf, 0x1200) )
+					return IMGTOOLERR_WRITEERROR;
+				}
+
+			return 0;
+			}
+		case XSA_2DD:	/* XSA .. special case */
+			return xsa_extract (image->file_handle, destf);
+		default:
+			return IMGTOOLERR_UNEXPECTED;
+		}
+
+	while (i--)
+		{
+		if (0x1200 != stream_read (image->file_handle, buf, 0x1200) )
+			return IMGTOOLERR_READERROR;
+
+		if (0x1200 != stream_write (destf, buf, 0x1200) )
+			return IMGTOOLERR_WRITEERROR;
+		}
 
 	return 0;
 	}
 
+
+/*
+ * .xsa decompression. Code stolen from :
+ *
+ * http://web.inter.nl.net/users/A.P.Wulms/
+ *
+ * note that this code is severly hacked to work with imgtool and mess.
+ * basically all file handling and system-specific stuff is taken out,
+ * just decompressing in memory (which is nice and fast anyways).
+ *
+ * Sean Young. For use with MSX driver (MSX specific format)
+ */
+
+
+/****************************************************************/
+/* LZ77 data decompression					*/
+/* Copyright (c) 1994 by XelaSoft				*/
+/* version history:						*/
+/*   version 0.9, start date: 11-27-1994			*/
+/****************************************************************/
+
+#define SHORT unsigned
+
+#define slwinsnrbits (13)
+#define maxstrlen (254)
+
+#define maxhufcnt (127)
+#define logtblsize (4)
+#define tblsize (1<<logtblsize)
+
+typedef struct huf_node {
+  SHORT weight;
+  struct huf_node *child1, *child2;
+} huf_node;
+
+/****************************************************************/
+/* global vars							*/
+/****************************************************************/
+static unsigned updhufcnt;
+static unsigned cpdist[tblsize+1];
+static unsigned cpdbmask[tblsize];
+static unsigned cpdext[] = { /* Extra bits for distance codes */
+          0,  0,  0,  0,  1,  2,  3,  4,
+          5,  6,  7,  8,  9, 10, 11, 12};
+
+static SHORT tblsizes[tblsize];
+static huf_node huftbl[2*tblsize-1];
+
+/****************************************************************/
+/* maak de huffman codeer informatie				*/
+/****************************************************************/
+static void mkhuftbl()
+{
+  unsigned count;
+  huf_node  *hufpos;
+  huf_node  *l1pos, *l2pos;
+  SHORT tempw;
+ 
+  /* Initialize the huffman tree */
+  for (count=0, hufpos=huftbl; count != tblsize; count++) {
+    (hufpos++)->weight=1+(tblsizes[count] >>= 1);
+  }
+  for (count=tblsize; count != 2*tblsize-1; count++)
+    (hufpos++)->weight=-1;
+
+  /* Place the nodes in the correct manner in the tree */
+  while (huftbl[2*tblsize-2].weight == -1) {
+    for (hufpos=huftbl; !(hufpos->weight); hufpos++)
+      ;
+    l1pos = hufpos++;
+    while (!(hufpos->weight))
+      hufpos++; 
+    if (hufpos->weight < l1pos->weight) {
+      l2pos = l1pos;
+      l1pos = hufpos++;
+    }
+    else
+      l2pos = hufpos++;
+    while ((tempw=(hufpos)->weight) != -1) {
+      if (tempw) {
+        if (tempw < l1pos->weight) {
+          l2pos = l1pos;
+          l1pos = hufpos;
+        }
+        else if (tempw < l2pos->weight)
+          l2pos = hufpos;
+      }
+      hufpos++;
+    }
+    hufpos->weight = l1pos->weight+l2pos->weight;
+    (hufpos->child1 = l1pos)->weight = 0;
+    (hufpos->child2 = l2pos)->weight = 0;
+  }
+  updhufcnt = maxhufcnt;
+}
+
+/****************************************************************/
+/* initialize the huffman info tables                           */
+/****************************************************************/
+static void inithufinfo()
+{
+  unsigned offs, count;
+
+  for (offs=1, count=0; count != tblsize; count++) {
+    cpdist[count] = offs;
+    offs += (cpdbmask[count] = 1<<cpdext[count]);
+  }
+  cpdist[count] = offs;
+
+  for (count = 0; count != tblsize; count++) {
+    tblsizes[count] = 0; /* reset the table counters */
+    huftbl[count].child1 = 0;  /* mark the leave nodes */
+  }
+  mkhuftbl(); /* make the huffman table */
+}
+
+/****************************************************************/
+/* global vars							*/
+/****************************************************************/
+static STREAM *in_stream, *out_stream;
+
+static UINT8 *outbuf;       /* the output buffer     */
+static UINT8 *outbufpos;    /* pos in output buffer  */
+static int outbufcnt;  /* #elements in the output buffer */
+static int error_occ;
+
+static UINT8 bitflg;  /* flag with the bits */
+static UINT8 bitcnt;  /* #resterende bits   */
+
+#define slwinsize (1 << slwinsnrbits)
+#define outbufsize (slwinsize+4096)
+
+/****************************************************************/
+/* The function prototypes					*/
+/****************************************************************/
+static void unlz77();       /* perform the real decompression       */
+static void charout(UINT8);      /* put a character in the output stream */
+static unsigned rdstrlen(); /* read string length                   */
+static unsigned rdstrpos(); /* read string pos                      */
+static void flushoutbuf();
+static UINT8 charin();       /* read a char                          */
+static UINT8 bitin();        /* read a bit                           */
+
+/****************************************************************/
+/* de hoofdlus							*/
+/****************************************************************/
+int xsa_extract (STREAM *in, STREAM *out)
+    {
+    UINT8 byt;
+
+	/* setup the in-stream */
+	stream_seek (in, 12, SEEK_SET);
+    do  {
+		if (1 != stream_read (in, &byt, 1) )
+			return IMGTOOLERR_READERROR;
+		} while (byt);
+	in_stream = in;
+    bitcnt = 0;         /* nog geen bits gelezen               */
+	
+	/* setup the out buffer */
+    outbuf = malloc (outbufsize);
+    if (!outbuf) return 2;
+    outbufcnt = 0;
+    outbufpos = outbuf; /* dadelijk vooraan in laden           */
+	out_stream = out;
+
+	/* let's do it .. */
+	inithufinfo(); /* initialize the cpdist tables */
+
+    error_occ = 0;
+    unlz77();         /* decrunch de data echt               */
+
+	free (outbuf);
+
+	return error_occ;
+    }
+
+/****************************************************************/
+/* the actual decompression algorithm itself			*/
+/****************************************************************/
+static void unlz77()
+{
+  UINT8 strlen = 0;
+  unsigned strpos;
+
+  do {
+    switch (bitin()) {
+      case 0 : charout(charin()); break;
+      case 1 : strlen = rdstrlen();
+	       if (strlen == (maxstrlen+1))
+		 break;
+	       strpos = rdstrpos();
+	       while (strlen--)
+		 charout(*(outbufpos-strpos));
+	       strlen = 0;
+	       break;
+    }
+  }
+  while (strlen != (maxstrlen+1)&&!error_occ);
+  flushoutbuf ();
+}
+
+/****************************************************************/
+/* Put the next character in the input buffer.                  */
+/* Take care that minimal 'slwinsize' chars are before the      */
+/* current position.                                            */
+/****************************************************************/
+static void charout(UINT8 ch)
+{
+  if (error_occ) return;
+
+  if ((outbufcnt++) == outbufsize) {
+    if ( (outbufsize-slwinsize) != stream_write (out_stream, outbuf, outbufsize-slwinsize) )
+	 	error_occ = IMGTOOLERR_WRITEERROR;
+
+    memcpy(outbuf, outbuf+outbufsize-slwinsize, slwinsize);
+    outbufpos = outbuf+slwinsize;
+    outbufcnt = slwinsize+1;
+  }
+  *(outbufpos++) = ch;
+}
+
+/****************************************************************/
+/* flush the output buffer                                      */
+/****************************************************************/
+static void flushoutbuf()
+{
+  if (!error_occ && outbufcnt) {
+    if (outbufcnt != stream_write (out_stream, outbuf, outbufcnt) ) 
+		error_occ = IMGTOOLERR_WRITEERROR;
+
+    outbufcnt = 0;
+  }
+}
+
+/****************************************************************/
+/* read string length						*/
+/****************************************************************/
+static unsigned rdstrlen()
+{
+  UINT8 len;
+  UINT8 nrbits;
+
+  if (!bitin())
+    return 2;
+  if (!bitin())
+    return 3;
+  if (!bitin())
+    return 4;
+
+  for (nrbits = 2; (nrbits != 7) && bitin(); nrbits++)
+    ;
+
+  len = 1;
+  while (nrbits--)
+    len = (len << 1) | bitin();
+
+  return (unsigned)(len+1);
+}
+
+/****************************************************************/
+/* read string pos						*/
+/****************************************************************/
+static unsigned rdstrpos()
+{
+  UINT8 nrbits;
+  UINT8 cpdindex;
+  unsigned strpos;
+  huf_node *hufpos;
+
+  hufpos = huftbl+2*tblsize-2;
+
+  while (hufpos->child1)
+    if (bitin()) {
+      hufpos = hufpos->child2;
+    }
+    else {
+      hufpos = hufpos->child1;
+    }
+  cpdindex = hufpos-huftbl;
+  tblsizes[cpdindex]++;
+
+  if (cpdbmask[cpdindex] >= 256) {
+    UINT8 strposmsb, strposlsb;
+
+    strposlsb = (unsigned)charin();  /* lees LSB van strpos */
+    strposmsb = 0;
+    for (nrbits = cpdext[cpdindex]-8; nrbits--; strposmsb |= bitin())
+      strposmsb <<= 1;
+    strpos = (unsigned)strposlsb | (((unsigned)strposmsb)<<8);
+  }
+  else {
+    strpos=0;
+    for (nrbits = cpdext[cpdindex]; nrbits--; strpos |= bitin())
+      strpos <<= 1;
+  }    
+  if (!(updhufcnt--))
+    mkhuftbl(); /* make the huffman table */
+
+  return strpos+cpdist[cpdindex];
+}
+
+/****************************************************************/
+/* read a bit from the input file				*/
+/****************************************************************/
+static UINT8 bitin()
+{
+  UINT8 temp;
+
+  if (!bitcnt) {
+    bitflg = charin();  /* lees de bitflg in */
+    bitcnt = 8;         /* nog 8 bits te verwerken */
+  }
+  temp = bitflg & 1;
+  bitcnt--;  /* weer 1 bit verwerkt */
+  bitflg >>= 1;
+
+  return temp;
+}
+
+/****************************************************************/
+/* Get the next character from the input buffer.                */
+/****************************************************************/
+static UINT8 charin()
+	{
+	UINT8 byte;
+
+	if (error_occ)
+		return 0;
+	else
+        { 
+		if (1 != stream_read (in_stream, &byte, 1) )
+			{
+			error_occ = IMGTOOLERR_READERROR;
+			return 0;
+			}
+		else
+			return byte;
+		}
+	}

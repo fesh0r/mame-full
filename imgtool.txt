@@ -119,6 +119,28 @@ imgtool getall fmsx_cas file.cas
 imgtool get fmsx_cas file.cas file.wav newfile.wav
 
 
+Various bogus MSX disk images (xsa/img/ddi/msx)
+-----------------------------------------------
+
+These are formats you might come across, which have no actual added value
+whatsoever. The only format MESS will support (not yet!), like other MSX
+emulators, is .dsk (a plain dump without any header information). This
+filetype converts them all to .dsk format.
+
+img and ddi formats have a useless header, .msx has a weird sector order
+(which is faster to save on a real MSX). .xsa is special format, not
+nearly as useless as the others. It's basically a compressed format, it
+doesn't matter what you use it for. However it's always been used for
+disk images. The were programs written by XelaSoft which made a dump
+of a disk, and compressing them at the same time. Very useful to store
+a disk dump on another disk. zip/gzip offer much better compression and
+are mainstream, so let's stick with that.
+
+imgtool uses XSA code developed by Alex Wulms/XelaSoft.
+
+http://web.inter.nl.net/users/A.P.Wulms/
+
+
 rom16 16 bit wide rom image
 ---------------------------
 allows easy access to even and odd parts

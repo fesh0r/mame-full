@@ -706,6 +706,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/formats/fmsx_cas.o  \
 	  $(OBJ)/mess/tools/fmsx_cas.o  \
 	  $(OBJ)/mess/formats/cococas.o  \
+	  $(OBJ)/mess/tools/msx_dsk.o  \
 	  $(OBJ)/mess/tools/rsdos.o   \
 	  $(OBJ)/mess/tools/stream.o  \
 	  $(OBJ)/mess/tools/t64.o     \
