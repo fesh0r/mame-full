@@ -152,7 +152,9 @@ static struct rc_option opts[] = {
 	{ NULL, NULL, rc_link, video_opts, NULL, 0,	0, NULL, NULL },
 	{ NULL, NULL, rc_link, sound_opts, NULL, 0,	0, NULL, NULL },
 	{ NULL, NULL, rc_link, input_opts, NULL, 0,	0, NULL, NULL },
-
+#ifdef MESS
+	{ NULL, NULL, rc_link, mess_opts, NULL, 0,	0, NULL, NULL },
+#endif
 	/* options supported by the mame core */
 	/* video */
 	{ "Mame CORE video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -366,15 +368,6 @@ int cli_frontend_init (int argc, char **argv)
 		fprintf (stderr, "error on registering opts\n");
 		exit(1);
 	}
-
-#ifdef MESS
-	/* mess registers its additional options and callbacks here */
-	if (rc_register(rc, mess_opts))
-	{
-		fprintf (stderr, "error on registering mess options\n");
-		exit(1);
-	}
-#endif
 
 	/* parse the commandline */
 	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
