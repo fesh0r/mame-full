@@ -74,7 +74,7 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
 # Resources
 
 ifndef MSVC
-RC = windres
+RC = windres --use-temp-file
 
 RCDEFS = -DMESS -DNDEBUG -D_WIN32_IE=0x0400
 
