@@ -43,9 +43,12 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 	sel = selected - 1;
 
 	img = image_from_devtype_and_index(IO_CASSETTE, id);
+	if ( !image_filename(img) )
+		return 0;
+
 	strcpy( name, image_typename_id(img) );
 	menu_item[total] = name;
-	menu_subitem[total] = image_filename(img) ? image_filename(img) : "---";
+	menu_subitem[total] = image_filename(img);
 	flag[total] = 0;
 	total++;
 
