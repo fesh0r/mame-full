@@ -213,7 +213,7 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xfa0000, 0xfa0001) AM_WRITE(mo_control_w)
 	AM_RANGE(0xfb0000, 0xfb0001) AM_WRITE(atarigen_video_int_ack_w)
 	AM_RANGE(0xfc0000, 0xfc0001) AM_READ(special_port0_r)
-	AM_RANGE(0xfc8000, 0xfc8001) AM_READWRITE(a2d_data_r, a2d_select_w)
+	AM_RANGE(0xfc8000, 0xfc8007) AM_READWRITE(a2d_data_r, a2d_select_w)
 	AM_RANGE(0xfd0000, 0xfd0001) AM_READ(atarigen_sound_upper_r)
 	AM_RANGE(0xfd8000, 0xfdffff) AM_READWRITE(atarigen_eeprom_r, atarigen_eeprom_w) AM_BASE(&atarigen_eeprom) AM_SIZE(&atarigen_eeprom_size)
 /*	AM_RANGE(0xfe0000, 0xfe7fff) AM_READ(from_r)*/

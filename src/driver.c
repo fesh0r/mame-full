@@ -1229,6 +1229,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( shtrider )	/* (c) 1984 Seibu Kaihatsu */
 	DRIVER( wilytowr )	/* M63 (c) 1984 */
 	DRIVER( atomboy )	/* M63 (c) 1985 Irem + Memetron license */
+	DRIVER( fghtbskt )	/* (c) 1984 Paradise Co. Ltd. */
 	/* M62 */
 	DRIVER( kungfum )	/* (c) 1984 */
 	DRIVER( kungfud )	/* (c) 1984 + Data East license */
@@ -1610,6 +1611,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( crimecu )	/* B99 (c) 1989 Taito America Corporation (US) */
 	DRIVER( crimecj )	/* B99 (c) 1989 Taito Corporation (Japan) */
 	DRIVER( tetrist )	/* C12 (c) 1989 Sega Enterprises,Ltd. (Japan) */
+	DRIVER( tetrista )	/* C35 (c) 1989 Sega Enterprises,Ltd. (Japan) */
 	DRIVER( viofight )	/* C16 (c) 1989 Taito Corporation Japan (World) */
 	DRIVER( viofighu )	/* C16 (c) 1989 Taito America Corporation (US) */
 	DRIVER( ashura )	/* C43 (c) 1990 Taito Corporation (Japan) */
@@ -2120,8 +2122,8 @@ V-V                           TP-027
 	DRIVER( stridrua )	/*  3/1989 (c) 1989 (not explicitly stated but should be US) */
 	DRIVER( striderj )	/*  3/1989 (c) 1989 */
 	DRIVER( stridrja )	/*  3/1989 (c) 1989 */
-	DRIVER( dw )		/*  4/1989 (c) 1989 (World) */
-	DRIVER( dwj )		/*  4/1989 (c) 1989 (Japan) */
+	DRIVER( dynwar )	/*  4/1989 (c) 1989 (World) */
+	DRIVER( dynwarj )	/*  4/1989 (c) 1989 (Japan) */
 	DRIVER( willow )	/*  6/1989 (c) 1989 (US) */
 	DRIVER( willowj )	/*  6/1989 (c) 1989 (Japan) */
 	DRIVER( willowje )	/*  6/1989 (c) 1989 (Japan) */
@@ -2200,6 +2202,7 @@ V-V                           TP-027
 	DRIVER( wofa )		/* 05/10/1992 (c) 1992 (Asia)  (CPS1 + QSound) */
 	DRIVER( wofu )		/* 31/10/1992 (c) 1992 (US) (CPS1 + QSound) */
 	DRIVER( wofj )		/* 31/10/1992 (c) 1992 (Japan) (CPS1 + QSound) */
+	DRIVER( sf2hf )		/* 09/12/1992 (c) 1992 (World) */
 	DRIVER( sf2t )		/* 09/12/1992 (c) 1992 (US)    */
 	DRIVER( sf2tj )		/* 09/12/1992 (c) 1992 (Japan) */
 	DRIVER( dino )		/* 01/02/1993 (c) 1993 (World) (CPS1 + QSound) */
@@ -5075,7 +5078,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpania )	/* (c) 1990 Kaneko */
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
 	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
-	DRIVER( jchan )		/* (c) 199? Kaneko */
+	DRIVER( jchan )		/* (c) 1995 Kaneko */
 	DRIVER( galpani3 )	/* (c) 1995 Kaneko */
 
 	/* Kaneko "AX System" games */
@@ -5787,6 +5790,8 @@ Other Sun games
 	DRIVER( trvwhiz )	/* (c) 198? Merit */
 	DRIVER( trvwhzii )	/* (c) 198? Merit */
 	DRIVER( suprgolf )	/* (c) 19?? Nasco */
+	DRIVER( hotblock )	/* (c) 1993 Nics? / Nix? */
+	DRIVER( pntnpuzl )	/* Century? */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

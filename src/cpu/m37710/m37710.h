@@ -13,8 +13,8 @@ M37710 CPU Emulator v0.1
 /* ======================================================================== */
 /* =============================== DEFINES ================================ */
 /* ======================================================================== */
-
-/* Interrupt lines - used with m37710_set_irq_line().
+/*
+   Input lines - used with cpunum_set_input_line() and the like.
    WARNING: these are in the same order as the vector table for simplicity.
    Do not alter this order!
 */
@@ -44,6 +44,16 @@ enum
 	M37710_LINE_BRK,
 	M37710_LINE_ZERODIV,
 	M37710_LINE_RESET,
+
+	// these are not interrupts, they're signals external hardware can send
+	M37710_LINE_TIMERA0TICK,
+	M37710_LINE_TIMERA1TICK,
+	M37710_LINE_TIMERA2TICK,
+	M37710_LINE_TIMERA3TICK,
+	M37710_LINE_TIMERA4TICK,
+	M37710_LINE_TIMERB0TICK,
+	M37710_LINE_TIMERB1TICK,
+	M37710_LINE_TIMERB2TICK,
 
 	M37710_LINE_MAX,
 };

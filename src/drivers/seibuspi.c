@@ -46,6 +46,9 @@ void seibuspi_text_decrypt(unsigned char *rom);
 void seibuspi_bg_decrypt(unsigned char *rom, int size);
 void seibuspi_sprite_decrypt(data16_t* src, int romsize);
 
+void seibuspi_rf2_text_decrypt(unsigned char *rom);
+void seibuspi_rf2_bg_decrypt(unsigned char *rom, int size);
+
 VIDEO_START( spi );
 VIDEO_UPDATE( spi );
 WRITE32_HANDLER( spi_textlayer_w );
@@ -162,7 +165,7 @@ WRITE32_HANDLER( z80_enable_w )
 READ32_HANDLER( spi_controls1_r )
 {
 	if( ACCESSING_LSB32 ) {
-		return (readinputportbytag("IN1") << 8) | readinputportbytag("IN0") | 0xffff0000;
+		return (readinputport(1) << 8) | readinputport(0) | 0xffff0000;
 	}
 	return 0xffffffff;
 }
@@ -173,7 +176,7 @@ READ32_HANDLER( spi_controls2_r )
 {
 	if( ACCESSING_LSB32 ) {
 		control_bit40 ^= 0x40;
-		return ((readinputportbytag("IN2") | 0xffffff00) & ~0x40 ) | control_bit40;
+		return ((readinputport(2) | 0xffffff00) & ~0x40 ) | control_bit40;
 	}
 	return 0xffffffff;
 }
@@ -235,7 +238,7 @@ static WRITE8_HANDLER( z80_bank_w )
 
 static READ8_HANDLER( z80_unk_r )
 {
-	return readinputportbytag("JP1");
+	return readinputport(3);
 }
 
 static READ32_HANDLER( soundrom_r )
@@ -267,7 +270,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x00000417) AM_WRITE(MWA32_RAM)		/* Unknown */
+	AM_RANGE(0x00000000, 0x000003ff) AM_WRITE(MWA32_RAM)		/* Unknown */
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
 	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
 	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
@@ -350,7 +353,7 @@ static ADDRESS_MAP_START( seibu386_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000418, 0x0000041b) AM_READ(spi_layer_bank_r)
 	AM_RANGE(0x0000041c, 0x0000041f) AM_READ(MRA32_NOP)
 	AM_RANGE(0x00000420, 0x0000042b) AM_READ(MRA32_RAM) AM_BASE(&scroll_ram)
-	AM_RANGE(0x0000042c, 0x00000603) AM_READ(MRA32_NOP)
+	AM_RANGE(0x0000042c, 0x00000603) AM_READ(MRA32_RAM)
 	AM_RANGE(0x00000604, 0x00000607) AM_READ(spi_controls1_r)	/* Player controls */
 	AM_RANGE(0x00000608, 0x0000060b) AM_READ(eeprom_r)
 	AM_RANGE(0x0000060c, 0x0000060f) AM_READ(spi_controls2_r)	/* Player controls (start) */
@@ -373,7 +376,7 @@ ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x00000417) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000000, 0x000003ff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x00000418, 0x0000041b) AM_WRITE(spi_layer_bank_w)
 	AM_RANGE(0x0000041c, 0x0000041f) AM_WRITE(spi_layer_enable_w)
 	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
@@ -406,7 +409,7 @@ static struct OKIM6295interface adpcm_6295_interface =
 /********************************************************************/
 
 INPUT_PORTS_START( spi_2button )
-	PORT_START_TAG("IN0")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -415,7 +418,7 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_START_TAG("IN1")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -425,14 +428,14 @@ INPUT_PORTS_START( spi_2button )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("IN2")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START_TAG("JP1")		/* JP1 */
+	PORT_START		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -440,7 +443,7 @@ INPUT_PORTS_START( spi_2button )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( spi_3button )
-	PORT_START_TAG("IN0")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -449,7 +452,7 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_START_TAG("IN1")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -459,14 +462,14 @@ INPUT_PORTS_START( spi_3button )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START_TAG("IN2")
+	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START_TAG("JP1")
+	PORT_START		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -498,7 +501,7 @@ INPUT_PORTS_END
 */
 
 INPUT_PORTS_START( spi_ejanhs )
-	PORT_START_TAG("IN0")
+	PORT_START
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 A") PORT_CODE(KEYCODE_A)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 B") PORT_CODE(KEYCODE_B)
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 E") PORT_CODE(KEYCODE_E)
@@ -511,7 +514,7 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Reach") PORT_CODE(KEYCODE_LSHIFT)
 	PORT_BIT( 0x07, IP_ACTIVE_LOW, IPT_START1 ) PORT_PLAYER(1)
 
-	PORT_START_TAG("IN1")
+	PORT_START
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 C") PORT_CODE(KEYCODE_C)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 D") PORT_CODE(KEYCODE_D)
 	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 G") PORT_CODE(KEYCODE_G)
@@ -522,12 +525,12 @@ INPUT_PORTS_START( spi_ejanhs )
 	PORT_BIT( 0x28, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Pon") PORT_CODE(KEYCODE_LALT)
 	PORT_BIT( 0x06, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 Ron") PORT_CODE(KEYCODE_Z)
 
-	PORT_START_TAG("IN2")
-	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW) /* Test Button */
+	PORT_START
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) /* Test Button */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0xf3, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START_TAG("JP1")
+	PORT_START		/* JP1 */
 	PORT_DIPNAME( 0x03, 0x03, "JP1" )
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
@@ -541,8 +544,7 @@ static struct GfxLayout spi_charlayout =
 	8,8,		/* 8*8 characters */
 	4096,		/* 4096 characters */
 	5,			/* 6 bits per pixel */
-	//{ 0, 4, 8, 12, 16, 20 },
-	{ 0, 4, 16, 16, 20 },
+	{ 0, 4, 12, 16, 20 },
 	{ 0, 1, 2, 3, 24, 25, 26, 27 },
 	{ 0*48, 1*48, 2*48, 3*48, 4*48, 5*48, 6*48, 7*48 },
 	6*8*8
@@ -553,8 +555,7 @@ static struct GfxLayout spi_tilelayout =
 	16,16,
 	RGN_FRAC(1,1),
 	6,
-	//{ 0, 4, 8, 12, 16, 20 },
-	{ 0, 4, 16, 20, 16, 20 },
+	{ 0, 4, 12, 12, 16, 20 },
 	{
 		 0, 1, 2, 3,
 	    24,25,26,27,
@@ -938,6 +939,29 @@ static DRIVER_INIT( viperp1o )
 
 
 
+static DRIVER_INIT( rf2 )
+{
+	seibuspi_rf2_text_decrypt(memory_region(REGION_GFX1));
+	seibuspi_rf2_bg_decrypt(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
+}
+
+static DRIVER_INIT( rf2_eur )
+{
+	init_rf2();
+	old_vidhw = 0;
+	bg_size = 2;
+}
+
+static DRIVER_INIT( rf2_us )
+{
+	init_rf2();
+	old_vidhw = 0;
+	bg_size = 2;
+}
+
+
+
+
 /* SYS386 */
 
 READ32_HANDLER ( rf2_2k_speedup_r )
@@ -948,7 +972,10 @@ READ32_HANDLER ( rf2_2k_speedup_r )
 
 static DRIVER_INIT( rf2_2k )
 {
+	init_rf2();
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0282AC, 0x0282AF, 0, 0, rf2_2k_speedup_r );
+	old_vidhw = 0;
+	bg_size = 2;
 }
 
 static MACHINE_INIT( seibu386 )
@@ -986,6 +1013,7 @@ MACHINE_DRIVER_END
 /*******************************************************************/
 #define ROM_LOAD24_BYTE(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_SKIP(2))
 #define ROM_LOAD24_WORD(name,offset,length,hash)		ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(1) | ROM_REVERSE)
+#define ROM_LOAD24_WORD_SWAP(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(1))
 
 /* SPI games */
 
@@ -1288,9 +1316,9 @@ ROM_START(rf2_2k)
 	ROM_LOAD24_BYTE("fix2.514", 0x000002, 0x10000, CRC(29b465da) SHA1(644454ab5e0dc1028e9512f85adfe5d8adb757de) )
 
 	ROM_REGION( 0xc00000, REGION_GFX2, 0)	/* background layer roms */
-	ROM_LOAD24_WORD("bg-1d.535", 0x000000, 0x400000, CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
+	ROM_LOAD24_WORD_SWAP("bg-1d.535", 0x000000, 0x400000, CRC(6143f576) SHA1(c034923d0663d9ef24357a03098b8cb81dbab9f8) )
 	ROM_LOAD24_BYTE("bg-1p.544", 0x000002, 0x200000, CRC(55e64ef7) SHA1(aae991268948d07342ee8ba1b3761bd180aab8ec) )
-	ROM_LOAD24_WORD("bg-2d.536", 0x600000, 0x400000, CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
+	ROM_LOAD24_WORD_SWAP("bg-2d.536", 0x600000, 0x400000, CRC(c607a444) SHA1(dc1aa96a42e9394ca6036359670a4ec6f830c96d) )
 	ROM_LOAD24_BYTE("bg-2p.545", 0x600002, 0x200000, CRC(f0830248) SHA1(6075df96b49e70d2243fef691e096119e7a4d044) )
 
 	ROM_REGION( 0x1200000, REGION_GFX3, 0)	/* sprites */
@@ -1318,11 +1346,11 @@ GAMEX( 1995, viperp1,	0,	     spi, spi_3button, viperp1,		ROT270,	"Seibu Kaihats
 GAMEX( 1995, viperp1o,  viperp1, spi, spi_3button, viperp1o,	ROT270,	"Seibu Kaihatsu",	"Viper Phase 1", GAME_NOT_WORKING )
 GAMEX( 1996, ejanhs, 	0,	     spi, spi_ejanhs, ejanhs,		ROT0,	"Seibu Kaihatsu",	"E-Jan High School (JPN)", GAME_NOT_WORKING )
 GAMEX( 1996, raidnfgt,	0,	     spi, spi_3button, raidnfgt,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters", GAME_NOT_WORKING )
-GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, spi,			ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, rf2_eur,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (EUR, SPI)", GAME_NOT_WORKING )
 /* there is another rf dump rf_spi_asia.zip but it seems strange, 1 program rom, cart pic seems to show others as a different type of rom */
 
 /* SXX2F */
-GAMEX( 1997, rf2_us,    rf2_eur,	  sxx2f, spi_2button, 0,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
+GAMEX( 1997, rf2_us,	rf2_eur,	sxx2f, spi_2button, rf2_us,		ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
 
 /* SYS386 */
-GAMEX( 2000, rf2_2k,    rf2_eur,	seibu386, spi_2button, rf2_2k,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )
+GAMEX( 2000, rf2_2k,	rf2_eur,	seibu386, spi_2button, rf2_2k,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )

@@ -17,7 +17,7 @@ CPUS+=DECO16@
 #CPUS+=M4510@
 CPUS+=H6280@
 CPUS+=I86@
-#CPUS+=I88@
+CPUS+=I88@
 CPUS+=I186@
 #CPUS+=I188@
 #CPUS+=I286@
@@ -340,7 +340,7 @@ $(OBJ)/irem.a: \
 	$(OBJ)/vidhrdw/troangel.o $(OBJ)/drivers/troangel.o \
 	$(OBJ)/vidhrdw/yard.o $(OBJ)/drivers/yard.o \
 	$(OBJ)/vidhrdw/travrusa.o $(OBJ)/drivers/travrusa.o \
-	$(OBJ)/drivers/wilytowr.o \
+	$(OBJ)/drivers/wilytowr.o $(OBJ)/sndhrdw/fghtbskt.o \
 	$(OBJ)/vidhrdw/m62.o $(OBJ)/drivers/m62.o \
 	$(OBJ)/vidhrdw/vigilant.o $(OBJ)/drivers/vigilant.o \
 	$(OBJ)/vidhrdw/m72.o $(OBJ)/sndhrdw/m72.o $(OBJ)/drivers/m72.o \
@@ -928,7 +928,7 @@ $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/galpani2.o $(OBJ)/drivers/galpani2.o \
 	$(OBJ)/drivers/galpani3.o \
 	$(OBJ)/drivers/jchan.o \
-	$(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
+	$(OBJ)/machine/kaneko16.o $(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
 	$(OBJ)/vidhrdw/suprnova.o $(OBJ)/drivers/suprnova.o \
 
 $(OBJ)/neogeo.a: \
@@ -1129,6 +1129,7 @@ $(OBJ)/other68k.a: \
 	$(OBJ)/drivers/bmcbowl.o \
 	$(OBJ)/drivers/dcheese.o \
 	$(OBJ)/drivers/micro3d.o \
+	$(OBJ)/drivers/pntnpuzl.o \
 
 $(OBJ)/otherz80.a: \
 	$(OBJ)/vidhrdw/astinvad.o $(OBJ)/sndhrdw/astinvad.o $(OBJ)/drivers/astinvad.o \
@@ -1186,6 +1187,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 	$(OBJ)/drivers/supertnk.o \
 	$(OBJ)/drivers/dynadice.o \
+	$(OBJ)/drivers/hotblock.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

@@ -343,6 +343,36 @@ static void m37710_timer_b2_cb(int num)
 	m37710_set_irq_line(M37710_LINE_TIMERB2, PULSE_LINE);
 }
 
+static void m37710_external_tick(int timer, int state)
+{
+	// we only care if the state is "on"
+	if (!state)
+	{
+		return;
+	}
+
+	// check if enabled
+	if (m37710i_cpu.m37710_regs[0x40] & (1<<timer))
+	{
+		if ((m37710i_cpu.m37710_regs[0x56+timer] & 0x3) == 1)
+		{
+			if (m37710i_cpu.m37710_regs[0x46+(timer*2)] == 0xff)
+			{
+				m37710i_cpu.m37710_regs[0x46+(timer*2)] = 0;
+				m37710i_cpu.m37710_regs[0x46+(timer*2)+1]++;
+			}
+			else
+			{
+				m37710i_cpu.m37710_regs[0x46+(timer*2)]++;
+			}
+		}
+		else
+		{
+			logerror("M37710: external tick for timer %d, not in event counter mode!\n", timer);
+		}
+	}
+}
+
 static void m37710_recalc_timer(int timer)
 {
 	int tval;
@@ -999,6 +1029,15 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ0: 	m37710_set_irq_line(M37710_LINE_IRQ0, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ1: 	m37710_set_irq_line(M37710_LINE_IRQ1, info->i); break;
 		case CPUINFO_INT_INPUT_STATE + M37710_LINE_IRQ2: 	m37710_set_irq_line(M37710_LINE_IRQ2, info->i); break;
+
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA0TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA1TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA2TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA3TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERA4TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB0TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB1TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M37710_LINE_TIMERB2TICK: m37710_external_tick(state - CPUINFO_INT_INPUT_STATE - M37710_LINE_TIMERA0TICK, info->i); break;
 
 		case CPUINFO_INT_PC:					REG_PB = info->i & 0xff0000; m37710_set_pc(info->i & 0xffff);	break;
 		case CPUINFO_INT_SP:					m37710_set_sp(info->i);	     			break;

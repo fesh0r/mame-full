@@ -440,7 +440,9 @@ static data32_t *hng_cart;
 static data32_t *hng64_dualport;
 static data32_t *hng64_spriteram;
 static data32_t *hng64_videoregs;
+static data32_t *hng64_soundram;
 data32_t no_machine_error_code;
+static int hng64_interrupt_level_request;
 WRITE32_HANDLER( hng64_videoram_w );
 
 /* DRIVER NOTE!!
@@ -742,81 +744,87 @@ VIDEO_START( hng64 )
 	return 0;
 }
 
+/* Tilemaps zoom, and probably rotate.. they can have linescroll/lineselect,
+looks like the zoom center can move too..
+not sure how these features are enabled up yet */
+
+static void hng64_drawtilemap3( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int scrollbase,xscroll,yscroll,xzoom,yzoom;
+
+	scrollbase = (hng64_videoregs[0x05]&0x3fff0000)>>16;
+	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
+	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
+	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
+	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
+	xzoom   = xzoom-xscroll;
+	yzoom   = yzoom-yscroll;
+	xzoom &=0xffff;
+	yzoom &=0xffff;
+
+	xscroll <<=16;
+	yscroll <<=16;
+	xzoom <<=8;
+	yzoom <<=8;
+
+	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap3,xscroll,yscroll,
+			xzoom,0,0,yzoom,
+			1,
+			0,0);
+}
+
+static void hng64_drawtilemap2( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int scrollbase,xscroll,yscroll,xzoom,yzoom;
+
+	scrollbase = (hng64_videoregs[0x04]&0x00003fff)>>0;
+	xscroll = hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16;
+	yscroll = hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16;
+	xzoom   = hng64_videoram[(0x40010+(scrollbase<<4))/4]>>16;
+	yzoom   = hng64_videoram[(0x4000c+(scrollbase<<4))/4]>>16;
+	xzoom   = xzoom-xscroll;
+	yzoom   = yzoom-yscroll;
+	xzoom &=0xffff;
+	yzoom &=0xffff;
+
+	xscroll <<=16;
+	yscroll <<=16;
+	xzoom <<=8;
+	yzoom <<=8;
+
+	tilemap_draw_roz(bitmap,cliprect,hng64_tilemap2,xscroll,yscroll,
+			xzoom,0,0,yzoom,
+			1,
+			0,0);
+}
+
 VIDEO_UPDATE( hng64 )
 {
 	int scrollbase;
 
 	fillbitmap(bitmap, get_black_pen(), 0);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap4,0,0);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap3,0,0);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap2,0,0);
-	tilemap_draw(bitmap,cliprect,hng64_tilemap,0,0);
 
-hng64_drawsprites(bitmap,cliprect);
-
-/*
-usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
-hng64_videoram[0x42000/4]>>16,
-hng64_videoram[0x42004/4]>>16,
-hng64_videoram[0x42008/4]>>16,
-hng64_videoram[0x4200c/4]>>16,
-hng64_videoram[0x42010/4]>>16,
-hng64_videoram[0x42014/4]>>16,
-hng64_videoram[0x42018/4]>>16,
-hng64_videoram[0x4201c/4]>>16
-*/
-
-//	scrollbase = (hng64_videoregs[0x04]&0x3fff0000)>>16;
-//	tilemap_set_scrollx(hng64_tilemap,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
-//	tilemap_set_scrolly(hng64_tilemap,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
-	scrollbase = (hng64_videoregs[0x04]&0x00003fff)>>0;
-	tilemap_set_scrollx(hng64_tilemap2,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
-	tilemap_set_scrolly(hng64_tilemap2,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
-	scrollbase = (hng64_videoregs[0x05]&0x3fff0000)>>16;
-	tilemap_set_scrollx(hng64_tilemap3,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
-	tilemap_set_scrolly(hng64_tilemap3,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
 	scrollbase = (hng64_videoregs[0x05]&0x00003fff)>>0;
 	tilemap_set_scrollx(hng64_tilemap4,0, hng64_videoram[(0x40000+(scrollbase<<4))/4]>>16);
 	tilemap_set_scrolly(hng64_tilemap4,0, hng64_videoram[(0x40008+(scrollbase<<4))/4]>>16);
+	tilemap_draw(bitmap,cliprect,hng64_tilemap4,0,0);
+
+	hng64_drawtilemap3(bitmap,cliprect);
+	hng64_drawtilemap2(bitmap,cliprect);
+
+	tilemap_draw(bitmap,cliprect,hng64_tilemap,0,0);
+
+	hng64_drawsprites(bitmap,cliprect);
 
 
+	/* hack to enable 2nd cpu when key is pressed */
+	if ( code_pressed_memory(KEYCODE_L) )
+	{
+		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
+	}
 
-	// i think it should use different scroll registers each frame
-	// probably some base regs somewhere ...
-
-//	tilemap_set_scrollx(hng64_tilemap3,0, hng64_videoram[0x44000/4]>>16);
-//	tilemap_set_scrolly(hng64_tilemap3,0, hng64_videoram[0x44008/4]>>16);
-
-/*
-usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
-hng64_videoram[0x44000/4]>>16,
-hng64_videoram[0x44004/4]>>16,
-hng64_videoram[0x44008/4]>>16,
-hng64_videoram[0x4400c/4]>>16,
-hng64_videoram[0x44010/4]>>16,
-hng64_videoram[0x44014/4]>>16,
-hng64_videoram[0x44018/4]>>16,
-hng64_videoram[0x4401c/4]>>16
-
-
-);
-
-
-
-*/
-usrintf_showmessage("4:%08x 5:%08x c:%08x",
-hng64_videoregs[0x04],
-hng64_videoregs[0x05],
-hng64_videoregs[0x0c]);
-
-
-
-//	for (i=0;i<256;i++)
-//	{
-//		palette_set_color(i^0xff,i,i,i);
-//	}
-}
-
+};
 
 /*
 READ32_HANDLER( hng64_random_reader )
@@ -851,22 +859,15 @@ static WRITE32_HANDLER( hng64_pal_w )
 }
 
 
-static READ32_HANDLER( hng64_ports )
+static READ32_HANDLER( hng64_port_read )
 {
-	static int togg=1;
-
 	if(offset==0x85b)
-		return 0x10;
+		return 0x00000010;
 	if(offset==0x421)
-		return 2;
+		return 0x00000002;
  	if(offset==0x441)
- 	{	//interrupt request number
+ 		return hng64_interrupt_level_request;
 
-		if (togg>1) togg=-1;
-
-		togg++;
- 		return togg;
-	}
 	return mame_rand();
 }
 
@@ -984,6 +985,45 @@ READ32_HANDLER ( random_read )
 	return mame_rand();
 }
 
+WRITE32_HANDLER( hng64_soundram_w )
+{
+	/* swap data around.. keep the v30 happy ;-) */
+	data =
+	(
+	((data & 0xff000000) >> 24) |
+	((data & 0x00ff0000) >> 8 ) |
+	((data & 0x0000ff00) << 8 ) |
+	((data & 0x000000ff) << 24)
+	);
+
+	/* mem mask too */
+	mem_mask =
+	(
+	((mem_mask & 0xff000000) >> 24) |
+	((mem_mask & 0x00ff0000) >> 8 ) |
+	((mem_mask & 0x0000ff00) << 8 ) |
+	((mem_mask & 0x000000ff) << 24)
+	);
+
+	COMBINE_DATA(&hng64_soundram[offset]);
+}
+
+READ32_HANDLER( hng64_soundram_r )
+{
+	int data = hng64_soundram[offset];
+
+	/* we had to swap it when we wrote it, we have to swap it when we read it */
+	data =
+	(
+	((data & 0xff000000) >> 24) |
+	((data & 0x00ff0000) >> 8 ) |
+	((data & 0x0000ff00) << 8 ) |
+	((data & 0x000000ff) << 24)
+	);
+
+	return data;
+}
+
 static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 
 	AM_RANGE(0xc0000000, 0xc000bfff) AM_RAM AM_BASE(&hng64_spriteram)/* Sprites */
@@ -1002,7 +1042,8 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xd0200000, 0xd025ffff) AM_RAM /* 3D Bank B */
 
 	AM_RANGE(0xe0000000, 0xe01fffff) AM_RAM /* Sound ?? */
-	AM_RANGE(0xe0200000, 0xe03fffff) AM_RAM /* Sound ?? */
+	AM_RANGE(0xe0200000, 0xe03fffff) AM_READWRITE(hng64_soundram_r, hng64_soundram_w) /* uploads the v53 sound program here, elsewhere on ss64-2 */
+
 	AM_RANGE(0xE8000000, 0xE8000003) AM_WRITE(MWA32_NOP)//??
 	AM_RANGE(0xE8000004, 0xE8000007) AM_READ(MRA32_NOP)//??
 
@@ -1027,7 +1068,7 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xc4000000, 0xc5ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
 	AM_RANGE(0xe4000000, 0xe5ffffff) AM_WRITENOP AM_ROM AM_SHARE(1)
 
-	AM_RANGE(0xBF700000, 0xBF702fff) AM_READ(hng64_ports)
+	AM_RANGE(0xBF700000, 0xBF702fff) AM_READ(hng64_port_read)
 
 	AM_RANGE(0xBF70100C, 0xBF70100F) AM_WRITE(MWA32_NOP)//?? often
 	AM_RANGE(0xBF70101C, 0xBF70101F) AM_WRITE(MWA32_NOP)//?? often
@@ -1056,6 +1097,13 @@ static ADDRESS_MAP_START( hng_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xdfc00000, 0xdfc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
 	AM_RANGE(0xffc00000, 0xffc7ffff) AM_WRITENOP AM_ROM AM_SHARE(2)	/* bios mirror */
 ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hng_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x3ffff) AM_READ(MRA8_BANK2)
+	AM_RANGE(0xe0000, 0xfffff) AM_READ(MRA8_BANK1)
+ADDRESS_MAP_END
+
 
 INPUT_PORTS_START( hng64 )
 	PORT_START	/* 16bit */
@@ -1345,15 +1393,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+DRIVER_INIT( hng64 )
+{
+	hng64_soundram=auto_malloc(0x200000);
+}
+
 DRIVER_INIT(hng64_fght)
 {
 	no_machine_error_code=0x01010101;
+	init_hng64();
 }
 
 DRIVER_INIT(hng64_race)
 {
 	no_machine_error_code=0x02020202;
+	init_hng64();
 }
+
 
 
 /* ?? */
@@ -1370,13 +1426,34 @@ static void irq_stop(int param)
 
 static INTERRUPT_GEN( irq_start )
 {
+	/* the irq 'level' is read in hng64_port_read */
+	/* there are more, the sources are unknown at
+       the moment */
+	switch (cpu_getiloops())
+	{
+		case 0x00: hng64_interrupt_level_request = 0;
+		break;
+		case 0x01: hng64_interrupt_level_request = 1;
+		break;
+		case 0x02: hng64_interrupt_level_request = 2;
+		break;
+	}
+
 	cpunum_set_input_line(0, 0, ASSERT_LINE);
 	timer_set(TIME_IN_USEC(50), 0, irq_stop);
 }
 
 
+
+
 MACHINE_INIT(hyperneo)
 {
+	data8_t *RAM = (data8_t*)hng64_soundram;
+	cpu_setbank(1,&RAM[0x1e0000]);
+	cpu_setbank(2,&RAM[0x100000]); // where..
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+
 	/* HACK .. put ram here on reset .. we end up replacing it with the MMU hack later so the game doesn't clear its own ram with thecode in it!!..... */
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000000, 0x0ffffff, 0, 0, hng64_mainram_w);
 }
@@ -1387,6 +1464,10 @@ MACHINE_DRIVER_START( hng64 )
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(hng_map, 0)
 	MDRV_CPU_VBLANK_INT(irq_start,3)
+
+	MDRV_CPU_ADD(V30,8000000)		 /* v53, 16? mhz! */
+	MDRV_CPU_PROGRAM_MAP(hng_sound_map,0)
+
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
