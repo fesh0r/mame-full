@@ -15,6 +15,7 @@
 #include <zlib.h>
 
 #include "mess.h"
+#include "mess/utils.h"
 #include "unzip.h"
 #include "osdepend.h"
 #include "src/win32/mame32.h"
@@ -26,43 +27,47 @@
 /* from mess/Win32/dirio.c */
 extern const char *resolve_path(const char *path, char *buf, size_t buflen);
 
-static int MessImageFopenZip(const char *filename, mame_file *mf, int write)
+static int MessImageFopenZip(const char *filename, const char *realname, mame_file *mf, int write)
 {
 	char buf1[MAX_PATH];
 	char buf2[MAX_PATH];
 	LPSTR lpSlashPos;
-	ZIP *pZip;
+	ZIP *pZip = NULL;
 	struct zipent *pZipEnt;
 
 	if (write != OSD_FOPEN_READ)
-		return 0;	/* Can't write to a ZIP file */
+		goto error;	/* Can't write to a ZIP file */
 
 	filename = resolve_path(filename, buf1, sizeof(buf1) / sizeof(buf1[0]));
 	if (!filename)
-		return 0;
+		goto error;
 
 	pZip = openzip(filename);
 	if (!pZip)
-		return 0;
+		goto error;
 
 	pZipEnt = readzip(pZip);
-	if (!pZipEnt) {
-		closezip(pZip);
-		return 0;
-	}
+	if (!pZipEnt)
+		goto error;
 
 	lpSlashPos = strrchr(pZipEnt->name, '/');
 	strncpyz(buf2, lpSlashPos ? lpSlashPos + 1 : pZipEnt->name, sizeof(buf2) / sizeof(buf2[0]));
 
-	if (load_zipped_file(filename, buf2, &mf->file_data, &mf->file_length)) {
-		closezip(pZip);
-		return 0;
-	}
+	if (realname && strcmp(realname, buf2))
+		goto error;
+
+	if (load_zipped_file(filename, buf2, &mf->file_data, &mf->file_length))
+		goto error;
 
 	mf->access_type = ACCESS_ZIP;
 	mf->crc = crc32(0L, mf->file_data, mf->file_length);
 	closezip(pZip);
 	return 1;
+
+error:
+	if (pZip)
+		closezip(pZip);
+	return 0;
 }
 
 /* MessImageFopen
@@ -83,13 +88,14 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 	unsigned int dummy;
 	int found;
 	char *s;
+	const char *realname;
 
 	assert(write < (sizeof(write_modes) / sizeof(write_modes[0])));
 
 	lpExt = strrchr(filename, '.');
 	if (lpExt && !stricmp(lpExt, zipext)) {
 		/* ZIP file */
-		if (!MessImageFopenZip(filename, mf, write))
+		if (!MessImageFopenZip(filename, NULL, mf, write))
 			return 0;
 	}
 	else {
@@ -110,7 +116,14 @@ int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksu
 				strcpy(s + (strlen(filename) - strlen(lpExt)), zipext);
 			else
 				strcat(s, zipext);
-			found = MessImageFopenZip(s, mf, write);
+
+			realname = strrchr(filename, '\\');
+			if (realname)
+				realname++;
+			else
+				realname = filename;
+
+			found = MessImageFopenZip(s, realname, mf, write);
 
 			free(s);
 			if (found)
