@@ -46,8 +46,8 @@ enum { LG_X_AXIS, LG_Y_AXIS, LG_MAX_AXIS };
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,0)
 struct input_absinfo {
 	int abs;
-	int min_value;
-	int max_value;
+	int minimum;
+	int maximum;
 	int fuzz;
 	int flat;
 };
