@@ -14,7 +14,13 @@ struct blink_hw
 {
 	int pb[4];
 	int sbr;
+
+        /* screen */
         int sbf;
+        int lores0;
+        int lores1;
+        int hires0;
+        int hires1;
 
 	int com;
 	int ints;
@@ -27,3 +33,9 @@ struct blink_hw
 	int tsta;
 };
 
+
+#define Z88_SCR_HW_REV  (1<<4)
+#define Z88_SCR_HW_HRS  (1<<5)
+#define Z88_SCR_HW_UND  (1<<1)
+#define Z88_SCR_HW_FLS  (1<<3)
+#define Z88_SCR_HW_GRY  (1<<2)
