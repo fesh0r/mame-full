@@ -362,10 +362,10 @@ static void c64_cia1_port_a_w (int offset, int data)
 
 static void c64_cia1_interrupt (int level)
 {
-	static int old_level = 0;
 	cia1irq=level;
 	c64_nmi();
 #if 0
+	static int old_level = 0;
 
 	if (level != old_level)
 	{
