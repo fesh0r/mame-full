@@ -498,7 +498,8 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 
 	DRIVER( coco )		/* Color Computer								  */
-/*	DRIVER( coco2 )*/ 	/* Color Computer 2 							  */
+	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)			  */
+	DRIVER( coco2 ) 	/* Color Computer 2 							  */
 	DRIVER( coco2b ) 	/* Color Computer 2B (uses M6847T1 video chip)    */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
