@@ -122,7 +122,9 @@ extern struct rc_option joy_pad_opts[];
 extern struct rc_option joy_x11_opts[];
 extern struct rc_option joy_usb_opts[];
 
+#ifdef USE_XINPUT_DEVICES
 #include "joystick-drivers/XInputDevices.h"
+#endif
 
 /*** prototypes ***/
 void joy_evaluate_moves(void);
