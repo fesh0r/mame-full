@@ -103,7 +103,7 @@ static char oric_keyboard_mask;
 
 static unsigned char oric_via_port_a_data;
 
-//#define ORIC_DUMP_RAM
+#define ORIC_DUMP_RAM
 
 #ifdef ORIC_DUMP_RAM
 /* load image */
@@ -1209,7 +1209,7 @@ void oric_common_init_machine(void)
 	oric_irqs = 0;
 	oric_ram_0x0c000 = NULL;
 
-    oric_tape_timer = timer_pulse(TIME_IN_HZ(11025), 0, oric_refresh_tape);
+    oric_tape_timer = timer_pulse(TIME_IN_HZ(22050), 0, oric_refresh_tape);
 
 	via_reset();
 	via_config(0, &oric_6522_interface);
@@ -1232,7 +1232,7 @@ void oric_init_machine (void)
 	int disc_interface_id;
 
 	oric_common_init_machine();
-
+	
 	oric_is_telestrat = 0;
 
 	oric_ram_0x0c000 = malloc(16384);
@@ -1306,6 +1306,10 @@ void oric_init_machine (void)
 
 void oric_shutdown_machine (void)
 {
+#ifdef ORIC_DUMP_RAM
+	oric_dump_ram();
+#endif
+
 	if (oric_ram_0x0c000)
 		free(oric_ram_0x0c000);
 	oric_ram_0x0c000 = NULL;
@@ -1456,10 +1460,10 @@ int oric_cassette_init(int id)
 				wa.file = file;
 				wa.chunk_size = oric_tap_size;
 				wa.chunk_samples = size_in_samples;
-				wa.smpfreq = ORIC_WAV_FREQUENCY;
+                                wa.smpfreq = ORIC_WAV_FREQUENCY;
 				wa.fill_wave = oric_cassette_fill_wave;
-				wa.header_samples = 0;
-				wa.trailer_samples = 0;
+				wa.header_samples = ORIC_WAVESAMPLES_HEADER;
+				wa.trailer_samples = ORIC_WAVESAMPLES_TRAILER;
 				wa.display = 1;
 				if( device_open(IO_CASSETTE,id,0,&wa) )
 					return INIT_FAIL;
