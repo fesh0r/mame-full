@@ -232,14 +232,9 @@ static void at_8042_receive(UINT8 data)
 
 void at_8042_time(void)
 {
-#if 0
-	if( !pic8259_0_irq_pending(1)
-		&&!at_8042.keyboard.received )
-#else
 	if( !pic8259_0_irq_pending(1)
 		&&(at_8042.keyboard.on&&!at_8042.keyboard.received)
 		&&!at_8042.mouse.received )
-#endif
 	{
 		int data;
 		if ( (data=at_keyboard_read())!=-1) {

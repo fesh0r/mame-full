@@ -558,18 +558,23 @@ void nec765_idle(void)
 }
 
 /* set int output */
-void	nec765_set_int(int state)
+void nec765_set_int(int state)
 {
-	fdc.nec765_flags &= ~NEC765_INT;
+	unsigned int new_flags;
 
 	if (state)
-	{
-		fdc.nec765_flags |= NEC765_INT;
-	}
+		new_flags = fdc.nec765_flags | NEC765_INT;
+	else
+		new_flags = fdc.nec765_flags & ~NEC765_INT;
 
-	if (nec765_iface.interrupt)
-		nec765_iface.interrupt((fdc.nec765_flags & NEC765_INT));
+	if (new_flags != fdc.nec765_flags)
+	{
+		if (nec765_iface.interrupt)
+			nec765_iface.interrupt((fdc.nec765_flags & NEC765_INT) ? 1 : 0);
+	}
 }
+
+
 
 /* set dma request output */
 void nec765_set_dma_drq(int state)
@@ -2070,7 +2075,7 @@ void nec765_reset(int offset)
 	}
 }
 
-void	nec765_set_reset_state(int state)
+void nec765_set_reset_state(int state)
 {
 	int flags;
 

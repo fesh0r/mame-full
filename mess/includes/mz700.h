@@ -15,10 +15,9 @@
 #include "machine/8255ppi.h"
 #include "includes/pit8253.h"
 
-/* from src/mess/machine/mz700.c */
-extern void init_mz700(void);
-extern MACHINE_INIT(mz700);
-extern MACHINE_STOP(mz700);
+/* from mess/machine/mz700.c */
+DRIVER_INIT(mz700);
+MACHINE_INIT(mz700);
 
 DEVICE_LOAD( mz700_cassette );
 

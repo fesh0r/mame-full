@@ -46,7 +46,9 @@ void init_atcga(void)
 
 	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
 
-	pit8253_config(0,&at_pit8253_config);
+	pit8253_init(1);
+	pit8253_config(0, &at_pit8253_config);
+
 	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
 
@@ -74,7 +76,8 @@ void init_at_vga(void)
 	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
 	pc_turbo_setup(0, 3, 0x02, 4.77/12, 1);
 
-	pit8253_config(0,&at_pit8253_config);
+	pit8253_init(1);
+	pit8253_config(0, &at_pit8253_config);
 
 	mc146818_init(MC146818_STANDARD);
 

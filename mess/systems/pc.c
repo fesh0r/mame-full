@@ -1590,6 +1590,7 @@ SYSTEM_CONFIG_START(ibmpc)
 	CONFIG_DEVICE_HARDDISK(4)
 	CONFIG_QUEUE_CHARS( at_keyboard )
 	CONFIG_ACCEPT_CHAR( at_keyboard )
+	CONFIG_CHARQUEUE_EMPTY( at_keyboard )
 SYSTEM_CONFIG_END
 
 /***************************************************************************

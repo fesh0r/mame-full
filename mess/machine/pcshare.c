@@ -19,6 +19,7 @@
 	maybe SoundBlaster? EGA? VGA?
 
 ***************************************************************************/
+
 #include <assert.h>
 #include "driver.h"
 #include "machine/8255ppi.h"
@@ -67,6 +68,15 @@
 #endif
 
 #define FDC_DMA 2
+
+
+static mame_timer *pc_keyboard_timer;
+
+static void pc_keyb_timer(int param);
+
+
+
+/* ---------------------------------------------------------------------- */
 
 /* called when a interrupt is set/cleared from com hardware */
 static void pc_com_interrupt(int nr, int state)
@@ -122,6 +132,16 @@ static uart8250_interface com_interface[4]=
 	}
 };
 
+
+
+static void pc_timer0_w(int state)
+{
+	if (state)
+		pic8259_0_issue_irq(0);
+}
+
+
+
 /*
  * timer0	heartbeat IRQ
  * timer1	DRAM refresh (ignored)
@@ -133,7 +153,7 @@ static struct pit8253_config pc_pit8253_config =
 	{
 		{
 			4770000/4,				/* heartbeat IRQ */
-			pic8259_0_issue_irq,
+			pc_timer0_w,
 			NULL
 		}, {
 			4770000/4,				/* dram refresh */
@@ -146,6 +166,8 @@ static struct pit8253_config pc_pit8253_config =
 		}
 	}
 };
+
+
 
 static PC_LPT_CONFIG lpt_config[3]={
 	{
@@ -291,6 +313,7 @@ void init_pc_common(UINT32 flags)
 		cpu_setbank(10, mess_ram);
 
 	/* PIT */
+	pit8253_init(1);
 	pit8253_config(0, &pc_pit8253_config);
 
 	/* FDC/HDC hardware */
@@ -331,6 +354,8 @@ void init_pc_common(UINT32 flags)
 	at_keyboard_set_scan_code_set(1);
 	at_keyboard_set_input_port_base(4);
 
+	/* PIC */
+	pic8259_init(2);
 
 	/* DMA */
 	if (flags & PCCOMMON_DMA8237_AT)
@@ -345,7 +370,11 @@ void init_pc_common(UINT32 flags)
 		dma8237_config(0, &pc_dma);
 		pc_page_offset_mask = 0x0F0000;
 	}
+
+	pc_keyboard_timer = mame_timer_alloc(pc_keyb_timer);
 }
+
+
 
 void pc_mda_init(void)
 {
@@ -470,16 +499,24 @@ UINT8 pc_keyb_read(void)
 	return pc_keyb.data;
 }
 
+
+
 static void pc_keyb_timer(int param)
 {
 	at_keyboard_reset();
 	pc_keyboard();
 }
 
+
+
 void pc_keyb_set_clock(int on)
 {
+	mame_time keyb_delay = double_to_mame_time(1/200.0);
+
 	if (!pc_keyb.on && on)
-		timer_set(1/200.0, 0, pc_keyb_timer);
+		mame_timer_adjust(pc_keyboard_timer, time_zero, 0, keyb_delay);
+	else
+		mame_timer_reset(pc_keyboard_timer, time_never);
 
 	pc_keyb.on = on;
 }
@@ -495,7 +532,6 @@ void pc_keyboard(void)
 
 	at_keyboard_polling();
 
-//	if( !pic8259_0_irq_pending(1) && ((pc_port[0x61]&0xc0)==0xc0) ) // amstrad problems
 	if( !pic8259_0_irq_pending(1) && pc_keyb.on)
 	{
 		if ( (data=at_keyboard_read())!=-1) {

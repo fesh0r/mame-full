@@ -347,7 +347,7 @@ void at_keyboard_set_input_port_base(int base)
 static void at_keyboard_queue_insert(UINT8 data)
 {
 #if LOG_KEYBOARD
-	logerror("keyboard queueing %.2x\n",data);
+	logerror("keyboard queueing 0x%02x\n",data);
 #endif
 	keyboard.queue[keyboard.head] = data;
 	keyboard.head++;

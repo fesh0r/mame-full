@@ -11,6 +11,15 @@
 #include "includes/pc_fdc_h.h"
 #include "includes/nec765.h"
 
+#define VERBOSE	0
+
+#if VERBOSE
+#define LOG(msg)	logerror msg
+#else
+#define LOG(msg)	(void)(0)
+#endif
+
+
 static pc_fdc fdc;
 
 static void pc_fdc_hw_interrupt(int state);
@@ -143,12 +152,25 @@ static void pc_fdc_data_rate_w(data8_t data)
 	fdc.data_rate_register = data;
 }
 
+
+
+/*	FDC Digitial Output Register (DOR)
+
+	|7|6|5|4|3|2|1|0|
+	 | | | | | | `------ floppy drive select (0=A, 1=B, 2=floppy C, ...)
+	 | | | | | `-------- 1 = FDC enable, 0 = hold FDC at reset
+	 | | | | `---------- 1 = DMA & I/O interface enabled
+	 | | | `------------ 1 = turn floppy drive A motor on
+	 | | `-------------- 1 = turn floppy drive B motor on
+	 | `---------------- 1 = turn floppy drive C motor on
+	 `------------------ 1 = turn floppy drive D motor on
+ */
 static void pc_fdc_dor_w(data8_t data)
 {
 	int selected_drive;
 	int floppy_count;
 
-	logerror("FDC DOR: %02x\r\n",data);
+	LOG(("FDC DOR: %02x\r\n",data));
 	floppy_count = device_count(IO_FLOPPY);
 
 	if (floppy_count > (fdc.digital_output_register & 0x03))
@@ -223,6 +245,8 @@ static void pc_fdc_dor_w(data8_t data)
 		nec765_set_reset_state(0);
 	}
 }
+
+
 
 WRITE_HANDLER ( pc_fdc_w )
 {

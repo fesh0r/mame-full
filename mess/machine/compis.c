@@ -1577,7 +1577,8 @@ void compis_cpu_init(void)
 /*-------------------------------------------------------------------------*/
 DRIVER_INIT( compis )
 {
-    	memset (&compis, 0, sizeof (compis) );
+	pic8259_init(2);
+	memset (&compis, 0, sizeof (compis) );
 }
 
 /*-------------------------------------------------------------------------*/
@@ -1590,14 +1591,13 @@ MACHINE_INIT( compis )
 	compis_cpu_init();
 
 	/* OSP PIT 8254 */
-	pit8253_config(0, &compis_osp_pit_config);
+	pit8253_init(2);
+	pit8253_config(0, &compis_pit_config);
+	pit8253_config(1, &compis_osp_pit_config);
 		
 	/* PPI */
 	ppi8255_init(&compis_ppi_interface);
 	    
-	/* PIT */
-	pit8253_config(0, &compis_pit_config);
-
 	/* FDC */
 	nec765_init(&compis_fdc_interface, NEC765A);
 	compis_fdc_reset();

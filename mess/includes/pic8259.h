@@ -1,22 +1,25 @@
+/**********************************************************************
 
+	8259 PIC interface and emulation
+
+**********************************************************************/
+
+#ifndef PIC8259_H
+#define PIC8259_H
 
 #include "driver.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int pic8259_init(int count);
 
-extern WRITE_HANDLER ( pic8259_0_w );
-extern READ_HANDLER ( pic8259_0_r );
-extern WRITE_HANDLER ( pic8259_1_w );
-extern READ_HANDLER ( pic8259_1_r );
+WRITE_HANDLER ( pic8259_0_w );
+READ_HANDLER ( pic8259_0_r );
+WRITE_HANDLER ( pic8259_1_w );
+READ_HANDLER ( pic8259_1_r );
 
-extern void pic8259_0_issue_irq(int irq);
-extern void pic8259_1_issue_irq(int irq);
+void pic8259_0_issue_irq(int irq);
+void pic8259_1_issue_irq(int irq);
 
 int pic8259_0_irq_pending(int irq);
 int pic8259_1_irq_pending(int irq);
 
-#ifdef __cplusplus
-}
-#endif
+#endif /* PIC8259_H */

@@ -321,7 +321,6 @@ static MACHINE_DRIVER_START(mz700)
 	/*MDRV_INTERLEAVE(interleave)*/
 
 	MDRV_MACHINE_INIT( mz700 )
-	MDRV_MACHINE_STOP( mz700 )
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - include overscan */
@@ -357,7 +356,6 @@ static MACHINE_DRIVER_START(mz800)
 	MDRV_VBLANK_DURATION(2500)
 
 	MDRV_MACHINE_INIT( mz700 )
-	MDRV_MACHINE_STOP( mz700 )
 
 	/* video hardware - include overscan */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
