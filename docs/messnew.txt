@@ -48,6 +48,9 @@ Imgtool Changes:
 ----------------
 - Creation and last modified dates are now supported by the core.  [Nate Woods]
 
+- Added readsector and writesector commands to the Imgtool command line app.
+  [Nate Woods]
+
 - [FAT] CHD files are now supported.  [Nate Woods]
 
 - [FAT] "Tildized" short file names are not generated when file names are

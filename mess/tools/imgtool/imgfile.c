@@ -783,6 +783,42 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
 
 
 
+imgtoolerr_t img_getsectorsize(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, UINT32 *length)
+{
+	/* implemented? */
+	if (!image->module->get_sector_size)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->get_sector_size(image, track, head, sector, length);
+}
+
+
+
+imgtoolerr_t img_readsector(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, void *buffer, size_t len)
+{
+	/* implemented? */
+	if (!image->module->read_sector)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->read_sector(image, track, head, sector, buffer, len);
+}
+
+
+
+imgtoolerr_t img_writesector(imgtool_image *image, UINT32 track, UINT32 head,
+	UINT32 sector, const void *buffer, size_t len)
+{
+	/* implemented? */
+	if (!image->module->write_sector)
+		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+
+	return image->module->write_sector(image, track, head, sector, buffer, len);
+}
+
+
+
 const struct ImageModule *img_module(imgtool_image *img)
 {
 	return img->module;

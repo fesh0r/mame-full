@@ -1,3 +1,11 @@
+/***************************************************************************
+
+	main.c
+
+	Imgtool command line front end
+
+***************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -490,44 +498,103 @@ static int cmd_readsector(const struct command *c, int argc, char *argv[])
 {
 	imgtoolerr_t err;
 	imgtool_image *img;
-	UINT32 size, track, head, sector;
+	imgtool_stream *stream = NULL;
 	void *buffer = NULL;
+	UINT32 size, track, head, sector;
 
 	/* attempt to open image */
 	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
 	if (err)
-		goto error;
+		goto done;
 
 	track = atoi(argv[2]);
 	head = atoi(argv[3]);
 	sector = atoi(argv[4]);
 
-	size = 0;
-//	err = img_getsectorsize(img, track, head, sector, &size);
-//	if (err)
-//		goto error;
+	err = img_getsectorsize(img, track, head, sector, &size);
+	if (err)
+		goto done;
 
 	buffer = malloc(size);
 	if (!buffer)
 	{
 		err = IMGTOOLERR_OUTOFMEMORY;
-		goto error;
+		goto done;
 	}
 
-	return 0;
+	err = img_readsector(img, track, head, sector, buffer, size);
+	if (err)
+		goto done;
 
-error:
+
+	stream = stream_open(argv[5], OSD_FOPEN_WRITE);
+	if (!stream)
+	{
+		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+		goto done;
+	}
+
+	stream_write(stream, buffer, size);
+
+done:
 	if (buffer)
 		free(buffer);
-	reporterror(err, c, argv[0], argv[1], NULL, NULL, 0);
-	return -1;
+	if (stream)
+		stream_close(stream);
+	if (err)
+		reporterror(err, c, argv[0], argv[1], NULL, NULL, 0);
+	return err ? -1 : 0;
 }
 
 
 
 static int cmd_writesector(const struct command *c, int argc, char *argv[])
 {
-	return -1;
+	imgtoolerr_t err;
+	imgtool_image *img;
+	imgtool_stream *stream = NULL;
+	void *buffer = NULL;
+	UINT32 size, track, head, sector;
+
+	/* attempt to open image */
+	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	if (err)
+		goto done;
+
+	track = atoi(argv[2]);
+	head = atoi(argv[3]);
+	sector = atoi(argv[4]);
+
+	stream = stream_open(argv[5], OSD_FOPEN_READ);
+	if (!stream)
+	{
+		err = IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
+		goto done;
+	}
+
+	size = (UINT32) stream_size(stream);
+
+	buffer = malloc(size);
+	if (!buffer)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	stream_read(stream, buffer, size);
+
+	err = img_writesector(img, track, head, sector, buffer, size);
+	if (err)
+		goto done;
+
+done:
+	if (buffer)
+		free(buffer);
+	if (stream)
+		stream_close(stream);
+	if (err)
+		reporterror(err, c, argv[0], argv[1], NULL, NULL, 0);
+	return err ? -1 : 0;
 }
 
 
@@ -731,8 +798,8 @@ static struct command cmds[] =
 	{ "del",				cmd_del,				"<format> <imagename> <filename>...", 3, 3, 1 },
 	{ "mkdir",				cmd_mkdir,				"<format> <imagename> <dirname>", 3, 3, 0 },
 	{ "rmdir",				cmd_rmdir,				"<format> <imagename> <dirname>...", 3, 3, 1 },
-//	{ "readsector",			cmd_readsector,			"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
-//	{ "writesector",		cmd_writesector,		"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
+	{ "readsector",			cmd_readsector,			"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
+	{ "writesector",		cmd_writesector,		"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
 	{ "identify",			cmd_identify,			"<imagename>", 1, 1 },
 	{ "listformats",		cmd_listformats,		NULL, 0, 0, 0 },
 	{ "listfilters",		cmd_listfilters,		NULL, 0, 0, 0 },
