@@ -684,7 +684,8 @@ COREOBJS += \
 		$(OBJ)/mess/diskctrl.o \
 		$(OBJ)/mess/machine/dsk.o \
 		$(OBJ)/mess/machine/flopdrv.o \
-		$(OBJ)/mess/machine/nec765.o
+		$(OBJ)/mess/machine/nec765.o \
+		$(OBJ)/mess/vidhrdw/rstrbits.o
 
 #8255ppi, 6821pia, 6522via  already in mame core
 

@@ -7,6 +7,7 @@
 
 #include "m6847.h"
 #include "vidhrdw/generic.h"
+#include "includes/rstrbits.h"
 
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
@@ -287,361 +288,6 @@ void m6847_set_artifact_dipswitch(int sw)
 	artifact_dipswitch = sw;
 }
 
-/* --------------------------------------------------
- * The big one - updating the display
- * -------------------------------------------------- */
-
-/*
- * Note that 'sizex' is in bytes, and 'sizey' is in pixels
- */
-void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
-{
-	int x, y;
-	int fg, bg;
-	int p, b;
-	UINT8 *vidram;
-
-	if (metapalette) {
-		bg = Machine->pens[metapalette[0]];
-		fg = Machine->pens[metapalette[1]];
-	}
-	else {
-		bg = Machine->pens[0];
-		fg = Machine->pens[1];
-	}
-
-	vidram = vrambase + vrampos;
-
-	for (y = 0; y < sizey; y++) {
-		for (x = 0; x < sizex; x++) {
-			if (!db || *db) {
-				for (b = 0; b < 8; b++) {
-					p = ((*vidram) & (1<<(7-b))) ? fg : bg;
-					plot_box(bitmap, (x * 8 + b) * scalex + basex, y * scaley + basey, scalex, scaley, p);
-				}
-				if (db)
-					*(db++) = 0;
-			}
-			else {
-				db++;
-			}
-			vidram++;
-		}
-		vidram += additionalrowbytes;
-		if (db)
-			db += additionalrowbytes;
-
-		/* Check to see if the video RAM has wrapped around */
-		if (vidram > vrambase + vramsize)
-			vidram -= vramsize;
-	}
-}
-
-void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes)
-{
-	int x, y;
-	int c[4];
-	int p, b;
-	int crunlen, crunc =0, thisx =0, thisy;
-	UINT8 *vidram;
-
-	if (metapalette) {
-		c[0] = Machine->pens[metapalette[0]];
-		c[1] = Machine->pens[metapalette[1]];
-		c[2] = Machine->pens[metapalette[2]];
-		c[3] = Machine->pens[metapalette[3]];
-	}
-	else {
-		c[0] = Machine->pens[0];
-		c[1] = Machine->pens[1];
-		c[2] = Machine->pens[2];
-		c[3] = Machine->pens[3];
-	}
-
-	vidram = vrambase + vrampos;
-
-	for (y = 0; y < sizey; y++) {
-		crunlen = 0;
-		thisy = y * scaley + basey;
-		for (x = 0; x < sizex; x++) {
-			if (!db || *db) {
-				for (b = 0; b < 4; b++) {
-					p = (((*vidram) >> (6-(2*b)))) & 3;
-
-					if (crunlen == 0) {
-						thisx = (x * 4 + b) * scalex + basex;
-						crunlen = 1;
-						crunc = p;
-					}
-					else if (crunc == p) {
-						crunlen++;
-					}
-					else {
-						plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
-						thisx += scalex * crunlen;
-						crunlen = 1;
-						crunc = p;
-					}
-				}
-				if (db)
-					*(db++) = 0;
-			}
-			else {
-				if (crunlen) {
-					plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
-					crunlen = 0;
-				}
-				db++;
-			}
-			vidram++;
-		}
-
-		if (crunlen) {
-			plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, c[crunc]);
-			crunlen = 0;
-		}
-
-		vidram += additionalrowbytes;
-		if (db)
-			db += additionalrowbytes;
-
-		/* Check to see if the video RAM has wrapped around */
-		if (vidram > vrambase + vramsize)
-			vidram -= vramsize;
-	}
-}
-
-static void blitgraphics4artifact(struct osd_bitmap *bitmap, UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, const int *metapalette, int sizex,
-	int sizey, int basex, int basey, int scalex, int scaley)
-{
-	/* Arifacting isn't truely the same resolution as PMODE 3
-	 * it has a bias to the higher resolution.  We need to
-	 * emulate this because some things are unreadable if we
-	 * say that its just like PMODE 3 with different colors
-	 */
-
-	/* This is the blur correction table. For any given pixel,
-	 * you can take color of that pixel, the color to the left
-	 * and right, and compute what the two resulting pixels
-	 * should look like.  The table is accessed like this:
-	 *
-	 *		blurcorrection[pix(x-1,y)*16+pix(x,y)*4+pix(x+1,y)]
-	 *
-	 * This gives you a pair of pixels to display pix(x,y) as
-	 *
-	 * Special thanks to Derek Snider for coming up with the
-	 * basis for the values in this table
-	 */
-	static int blurcorrection[64][2] = {
-		{0, 0}, {0, 0}, {0, 0}, {0, 0},
-		{0, 1}, {0, 1}, {0, 3}, {0, 3},
-		{2, 0}, {2, 0}, {2, 2}, {2, 2},
-		{3, 3}, {3, 3}, {3, 3}, {3, 3},
-
-		{0, 0}, {0, 0}, {0, 0}, {0, 0},
-		{1, 1}, {1, 1}, {1, 3}, {1, 3},
-		{3, 0}, {3, 0}, {3, 2}, {3, 2},
-		{3, 3}, {3, 3}, {3, 3}, {3, 3},
-
-		{0, 0}, {0, 0}, {0, 0}, {0, 0},
-		{0, 1}, {0, 1}, {0, 3}, {0, 3},
-		{2, 0}, {2, 0}, {2, 2}, {2, 2},
-		{3, 3}, {3, 3}, {3, 3}, {3, 3},
-
-		{0, 0}, {0, 0}, {0, 0}, {0, 0},
-		{1, 1}, {1, 1}, {1, 3}, {1, 3},
-		{3, 0}, {3, 0}, {3, 2}, {3, 2},
-		{3, 3}, {3, 3}, {3, 3}, {3, 3}
-	};
-
-	int x, y;
-	int c[4];
-	int b;
-	int c1, c2;
-	int crunc =0, crunlen;
-	int drunlen;
-	int thisx, thisy;
-	UINT8 *vidram;
-	UINT32 w;
-	int *blur;
-
-	c[0] = Machine->pens[metapalette[0]];
-	c[1] = Machine->pens[metapalette[1]];
-	c[2] = Machine->pens[metapalette[2]];
-	c[3] = Machine->pens[metapalette[3]];
-
-	vidram = vrambase + vrampos;
-	thisy = basey;
-
-	for (y = 0; y < sizey; y++) {
-		x = 0;
-		while(x < sizex) {
-			if (db[0] || ((x < (sizex-1)) && db[1])) {
-				/* We are in a run; calculate the size of the run */
-				drunlen = 1;
-				while((x + drunlen < (sizex-1)) && db[drunlen])
-					drunlen++;
-				if (x + drunlen < (sizex-1))
-					drunlen++;
-
-				thisx = (x * 8) * scalex + basex;
-
-				/* Artifacting causes pixels to appear differently depending on
-				 * their neighbors.  Thus we use 'w' to hold all bits in the
-				 * vicinity:
-				 *
-				 * bits 23-16: previous byte
-				 * bits 15-08: current byte
-				 * bits 07-00: next byte
-				 *
-				 * As we plot the run, we shift 'w' left, and bring in new data
-				 */
-				w = (((UINT32) vidram[0]) << 8);
-				if (x == 0)
-					w |= (w << 2) & 0x030000;
-				else
-					w |= ((UINT32) vidram[-1]) << 16;
-
-				crunlen = 0;
-				memset(db, 0, drunlen);
-				db += drunlen;
-				x += drunlen;
-
-				while(drunlen--) {
-					/* Bring new data into 'w' */
-					if (drunlen || (x < sizex))
-						w |= (UINT32) vidram[1];
-					else
-						w |= (w >> 2) & 0x0000e0;
-
-					for (b = 0; b < 4; b++) {
-						blur = blurcorrection[(w & 0x3f000) >> 12];
-						c1 = c[blur[0]];
-						c2 = c[blur[1]];
-						w <<= 2;
-
-						if (crunlen == 0) {
-							crunlen = 1;
-							crunc = c1;
-						}
-						else if (crunc == c1) {
-							crunlen++;
-						}
-						else {
-							plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, crunc);
-							thisx += scalex * crunlen;
-							crunlen = 1;
-							crunc = c1;
-						}
-						if (crunc == c2) {
-							crunlen++;
-						}
-						else {
-							plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, crunc);
-							thisx += scalex * crunlen;
-							crunlen = 1;
-							crunc = c2;
-						}
-					}
-					vidram++;
-				}
-				plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, crunc);
-			}
-			else {
-				db++;
-				vidram++;
-				x++;
-			}
-		}
-
-		thisy += scaley;
-
-		/* Check to see if the video RAM has wrapped around */
-		if (vidram > vrambase + vramsize)
-			vidram -= vramsize;
-	}
-}
-
-void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
-	int basey, int scalex, int scaley, int additionalrowbytes)
-{
-	int x, y;
-	int thisx =0, thisy;
-	int crunlen, crunc =0;
-	UINT8 *vidram;
-	UINT8 b;
-
-	vidram = vrambase + vrampos;
-	thisy = basey;
-
-	for (y = 0; y < sizey; y++) {
-		crunlen = 0;
-		for (x = 0; x < sizex; x++) {
-			if (!db || *db) {
-				b = *vidram;
-
-				if (crunlen == 0) {
-					thisx = (x * 2) * scalex + basex;
-					crunlen = 1;
-					crunc = b >> 4;
-				}
-				else if (crunc == (b >> 4)) {
-					crunlen++;
-				}
-				else {
-					plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, Machine->pens[crunc]);
-					thisx += scalex * crunlen;
-					crunlen = 1;
-					crunc = b >> 4;
-				}
-
-				if (crunc == (b & 15)) {
-					crunlen++;
-				}
-				else {
-					plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, Machine->pens[crunc]);
-					thisx += scalex * crunlen;
-					crunlen = 1;
-					crunc = b & 15;
-				}
-
-				if (db)
-					*(db++) = 0;
-			}
-			else {
-				db++;
-
-				if (crunlen > 0) {
-					plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, Machine->pens[crunc]);
-					crunlen = 0;
-				}
-			}
-			vidram++;
-		}
-
-		if (crunlen > 0) {
-			plot_box(bitmap, thisx, thisy, scalex * crunlen, scaley, Machine->pens[crunc]);
-			crunlen = 0;
-		}
-
-		thisy += scaley;
-
-		vidram += additionalrowbytes;
-		if (db)
-			db += additionalrowbytes;
-
-		/* Check to see if the video RAM has wrapped around */
-		if (vidram > vrambase + vramsize)
-			vidram -= vramsize;
-	}
-}
-
 /* This is a refresh function used by the Dragon/CoCo as well as the CoCo 3 when in lo-res
  * mode.  Internally, it treats the colors like a CoCo 3 and uses the 'metapalette' to
  * translate those colors to the proper palette.
@@ -658,7 +304,6 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact)
 {
 	int x, y, fg, bg, x2, y2;
-	int rowbytes;
 	int artifacting;
 	UINT8 *db;
 	UINT8 b;
@@ -684,18 +329,32 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 
 	if (currentstate->video_gmode & 0x10)
 	{
+		struct rasterbits_source rs;
+		struct rasterbits_videomode rvm;
+		struct rasterbits_frame rf;
+
+		rs.videoram = vrambase;
+		rs.size = vramsize;
+		rs.position = vrampos;
+		rs.db = db;
+		rvm.height = 192 / video_rowheight;
+		rvm.flags = RASTERBITS_FLAG_GRAPHICS;
+		rf.width = 256 * wf;
+		rf.height = 192;
+		rf.border_pen = -1;
+
 		if ((currentstate->video_gmode & 0x02) && !(artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)))
 		{
 			/* Resolution modes */
-
-			rowbytes = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
-			blitgraphics2(bitmap, vrambase, vrampos, vramsize, db, &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8],
-				rowbytes, 192 / video_rowheight, basex, basey, (32 / rowbytes) * wf, video_rowheight, 0);
+			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
+			rvm.width = rvm.bytesperrow * 8;
+			rvm.depth = 1;
+			rvm.u.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8];
 		}
 		else
 		{
 			/* Color modes */
-			rowbytes = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
+			rvm.bytesperrow = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
 
 			/* Are we doing PMODE 4 artifact colors? */
 			artifacting = ((currentstate->video_gmode & 0x0c) == 0x0c) && (currentstate->video_gmode & 0x02);
@@ -705,15 +364,19 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				artifactpalette[3] = metapalette[currentstate->video_gmode & 0x1 ? 11: 9];
 				artifact(artifactpalette);
 
-				blitgraphics4artifact(bitmap, vrambase, vrampos, vramsize, db, artifactpalette,
-					rowbytes, 192 / video_rowheight, basex, basey, 32 / rowbytes * wf, video_rowheight);
+				rvm.width = rvm.bytesperrow * 8;
+				rvm.depth = 1;
+				rvm.u.metapalette = artifactpalette;
+				rvm.flags |= RASTERBITS_FLAG_ARTIFACT;
 			}
 			else {
 				/* If not, calculate offset normally */
-				blitgraphics4(bitmap, vrambase, vrampos, vramsize, db, &metapalette[currentstate->video_gmode & 0x1 ? 4: 0],
-					rowbytes, 192 / video_rowheight, basex, basey, 64 / rowbytes * wf, video_rowheight, 0);
+				rvm.width = rvm.bytesperrow * 4;
+				rvm.depth = 2;
+				rvm.u.metapalette = &metapalette[currentstate->video_gmode & 0x1 ? 4: 0];
 			}
 		}
+		raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 	}
 	else
 	{

@@ -13,15 +13,6 @@ int internal_m6847_vh_start(int maxvram);
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
 	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact);
-void blitgraphics2(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
-void blitgraphics4(struct osd_bitmap *bitmap, UINT8 *vrambase, int vrampos,
-	int vramsize, UINT8 *db, const int *metapalette, int sizex, int sizey,
-	int basex, int basey, int scalex, int scaley, int additionalrowbytes);
-void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
-	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
-	int basey, int scalex, int scaley, int additionalrowbytes);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *

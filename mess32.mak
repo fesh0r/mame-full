@@ -5,7 +5,7 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=8
+BETA_VERSION = -DBETA_VERSION=9
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
@@ -268,7 +268,7 @@ SNDOBJS = \
          $(OBJ)/sound/vlm5030.o \
          $(OBJ)/sound/pokey.o \
          $(OBJ)/sound/sn76496.o \
-         $(OBJ)/sound/nes_apu.o \
+         $(OBJ)/sound/nes_apu2.o \
          $(OBJ)/sound/astrocde.o \
 		 $(OBJ)/sound/adpcm.o \
          $(OBJ)/sound/msm5205.o \
@@ -287,7 +287,7 @@ COREOBJS = \
          $(OBJ)/version.o $(OBJ)/mame.o \
          $(OBJ)/drawgfx.o $(OBJ)/common.o $(OBJ)/usrintrf.o $(OBJ)/ui_text.o \
          $(OBJ)/cpuintrf.o $(OBJ)/memory.o $(OBJ)/timer.o $(OBJ)/palette.o \
-	 $(OBJ)/input.o $(OBJ)/inptport.o $(OBJ)/cheat.o $(OBJ)/unzip.o \
+	 $(OBJ)/input.o $(OBJ)/inptport.o $(OBJ)/cheatms.o $(OBJ)/unzip.o \
          $(OBJ)/audit.o $(OBJ)/info.o $(OBJ)/png.o $(OBJ)/artwork.o \
          $(OBJ)/tilemap.o $(OBJ)/sprite.o  $(OBJ)/gfxobj.o \
          $(OBJ)/state.o $(OBJ)/datafile.o $(OBJ)/hiscore.o \
@@ -326,6 +326,7 @@ COREOBJS = \
 		$(OBJ)/mess/diskctrl.o \
 		$(OBJ)/mess/machine/dsk.o \
 		$(OBJ)/mess/machine/nec765.o	\
+		$(OBJ)/mess/vidhrdw/rstrbits.o	 \
 	 $(OBJ)/mess/Win32/fileio.o    \
 	 $(OBJ)/mess/Win32/dirio.o	       \
 	 $(OBJ)/mess/Win32/fdc.o
@@ -347,7 +348,7 @@ DRV_OBJS = \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-	  $(OBJ)/mess/systems/saturn.o   \
+#	  $(OBJ)/mess/systems/saturn.o   \
           $(OBJ)/mess/machine/atari.o    \
           $(OBJ)/mess/vidhrdw/antic.o    \
           $(OBJ)/mess/vidhrdw/gtia.o     \
@@ -356,7 +357,7 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/a7800.o    \
           $(OBJ)/mess/machine/a7800.o    \
           $(OBJ)/mess/systems/a7800.o    \
-          $(OBJ)/mess/machine/riot.o     \
+#          $(OBJ)/mess/machine/riot.o     \
           $(OBJ)/mess/machine/a2600.o    \
           $(OBJ)/mess/systems/a2600.o	\
           $(OBJ)/mess/vidhrdw/vectrex.o  \
@@ -374,8 +375,8 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/snes.o     \
           $(OBJ)/mess/machine/snes.o     \
           $(OBJ)/mess/systems/snes.o	\
-	  $(OBJ)/mess/vidhrdw/amiga.o	 \
-	  $(OBJ)/mess/machine/amiga.o	 \
+#	  $(OBJ)/mess/vidhrdw/amiga.o	 \
+#	  $(OBJ)/mess/machine/amiga.o	 \
 #	  $(OBJ)/mess/systems/amiga.o	 \
 	  $(OBJ)/mess/machine/tpi6525.o  \
 	  $(OBJ)/mess/machine/cia6526.o  \
@@ -401,6 +402,7 @@ DRV_OBJS = \
 	  $(OBJ)/mess/systems/vc20.o	 \
 	  $(OBJ)/mess/vidhrdw/ted7360.o  \
 	  $(OBJ)/mess/sndhrdw/ted7360.o  \
+	  $(OBJ)/mess/sndhrdw/t6721.o \
 	  $(OBJ)/mess/machine/c16.o	 \
 	  $(OBJ)/mess/systems/c16.o	 \
 	  $(OBJ)/mess/systems/cbmb.o	 \

@@ -225,7 +225,7 @@ static void ProcessNextRom()
     }
 #ifdef MESS
 	/* This change makes it so that we ROMless systems like consoles are available */
-    SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE || ((retval == NOTFOUND) && !drivers[rom_index]->rom->name)) ? 1 : 0);
+    SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE || ((retval == NOTFOUND) && !rom_first_file(drivers[rom_index]->rom))) ? 1 : 0);
 #else
     SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE) ? 1 : 0);
 #endif

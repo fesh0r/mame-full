@@ -241,19 +241,17 @@ DWORD GetHelpIDs(void)
 /* Checks of all ROMs are available for 'game' and returns result
  * Returns TRUE if all ROMs found, 0 if any ROMs are missing.
  */
-BOOL FindRomSet (int game)
+BOOL FindRomSet(int game)
 {
-    const struct RomModule  *romp;
+    const struct RomModule  *region, *rom;
     const struct GameDriver *gamedrv;
     const char              *name;
-    int                     count = 0;
 	int						err;
 	unsigned int			length, icrc;
 
     gamedrv = drivers[game];
-    romp = gamedrv->rom;
-
-    if (!osd_faccess (gamedrv->name, OSD_FILETYPE_ROM))
+ 
+    if (!osd_faccess(gamedrv->name, OSD_FILETYPE_ROM))
     {
         /* if the game is a clone, try loading the ROM from the main version */
         if (gamedrv->clone_of == 0
@@ -262,28 +260,16 @@ BOOL FindRomSet (int game)
             return FALSE;
     }
 
-    while (romp->name || romp->offset || romp->length)
+	/* loop over regions, then over files */
+    for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
     {
-        if (romp->name || romp->length)
-            return FALSE; /* expecting ROM_REGION */
-
-        romp++;
-
-        while (romp->length)
+        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
         {
             const struct GameDriver *drv;
 
-            if (romp->name == 0)
-                return FALSE;   /* ROM_CONTINUE not preceeded by ROM_LOAD */
-            else
-            if (romp->name == (char *)-1)
-                return FALSE;   /* ROM_RELOAD not preceeded by ROM_LOAD */
-
-            name = romp->name;
-            count++;
-			icrc = romp->crc;
+            name = ROM_GETNAME(rom);
+ 			icrc = ROM_GETCRC(rom);
 			length = 0;
-			count++;
 
 			/* obtain CRC-32 and length of ROM file */
 			drv = gamedrv;
@@ -295,16 +281,12 @@ BOOL FindRomSet (int game)
 
 			if (err)
 				return FALSE;
-
-            do
-            {
-                romp++;
-            }
-            while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
         }
     }
+
     return TRUE;
 }
+
 
 /* Checks if the game uses external samples at all
  * Returns TRUE if this driver expects samples

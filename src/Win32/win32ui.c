@@ -1823,22 +1823,13 @@ static void ColumnSort(int column, BOOL bColumn)
 
 static BOOL IsGameRomless(int iGame)
 {
-	const struct RomModule  *romp;
+    const struct RomModule *region, *rom;
 
-	romp = drivers[iGame]->rom;
-	if (romp)
-	{
-		while (romp->name || romp->offset || romp->length)
-		{
-			if (romp->name || romp->length)
-				return FALSE; /* expecting ROM_REGION */
-
-			romp++;
-
-			if (romp->length)
+	/* loop over regions, then over files */
+    for (region = rom_first_region(drivers[iGame]); region; region = rom_next_region(region))
+        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 				return FALSE;
-		}
-	}
+
 	return TRUE;
 }
 
@@ -5154,40 +5145,24 @@ static void MamePlayGameWithOptions()
 static char * GetRomList(int iGame)
 {
     static char buf[5000];
-    const struct RomModule *romp =  drivers[iGame]->rom;
+    const struct RomModule *region, *rom, *chunk;
 
     buf[0] = '\0';
 
-    if (NULL == romp)
-        return buf;
-
-    while (romp->name || romp->offset || romp->length)
+    for (region = rom_first_region(drivers[iGame]); region; region = rom_next_region(region))
     {
-        romp++; /* skip memory region definition */
-        
-        while (romp->length)
+        for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
         {
-            char name[100];
-            int length;
-            
-            sprintf(name, romp->name, drivers[iGame]->name);
-            
-            length = 0;
-            
-            do
-            {
-                /* ROM_RELOAD */
-                if (romp->name == (char *)-1)
-                    length = 0; /* restart */
-                
-                length += romp->length & ~ROMFLAG_MASK;
-                
-                romp++;
-            } while (romp->length && (romp->name == 0 || romp->name == (char *)-1));
-            
-            sprintf(buf + strlen(buf), "%s:\t%-12s\t%u bytes\r\n", drivers[iGame]->name, name, length);
+            int length = 0;
+
+            for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+                length += ROM_GETLENGTH(chunk);
+
+            sprintf(buf + strlen(buf), "%s:\t%-12s\t%u bytes\r\n",
+                    drivers[iGame]->name, ROM_GETNAME(rom), length);
         }
     }
+
     return buf;
 }
 

@@ -175,7 +175,7 @@ typedef union {
 #define HAS_SC61860     1
 #define HAS_ARM         1
 #define HAS_G65816      1
-#define HAS_SH2			1
+#define HAS_SH2			0
 #else
 #define HAS_Z80         1
 #define HAS_Z80GB       0

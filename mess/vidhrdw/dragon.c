@@ -40,6 +40,7 @@
 #include "vidhrdw/m6847.h"
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
+#include "includes/rstrbits.h"
 
 static int coco3_hires;
 static int coco3_gimevhreg[8];
@@ -738,33 +739,46 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			 * TODO - We should support the case where there is a rounding
 			 * error when rows is divided by linesperrow
 			 */
-			switch(coco3_gimevhreg[1] & 3) {
-			case 0:
-				/* Two colors */
-				blitgraphics2(bitmap, RAM, vidbase, 0x80000,
-					full_refresh ? NULL : dirtybuffer, NULL,
-					visualbytesperrow, rows / linesperrow, basex, basey,
-					wf, linesperrow, bytesperrow - visualbytesperrow);
-				break;
-			case 1:
-				/* Four colors */
-				blitgraphics4(bitmap, RAM, vidbase, 0x80000,
-					full_refresh ? NULL : dirtybuffer, NULL,
-					visualbytesperrow, rows / linesperrow, basex, basey,
-					wf, linesperrow, bytesperrow - visualbytesperrow);
-				break;
-			case 2:
-				/* Sixteen colors */
-				blitgraphics16(bitmap, RAM, vidbase, 0x80000,
-					full_refresh ? NULL : dirtybuffer,
-					visualbytesperrow, rows / linesperrow, basex, basey, wf, linesperrow,
-					bytesperrow - visualbytesperrow);
-				break;
-			case 3:
-				/* Blank screen */
-				/* TODO - Draw a blank screen! */
-				break;
+			{
+				struct rasterbits_source rs;
+				struct rasterbits_videomode rvm;
+				struct rasterbits_frame rf;
+
+				rs.videoram = RAM;
+				rs.size = 0x80000;
+				rs.position = vidbase;
+				rs.db = full_refresh ? NULL : dirtybuffer;
+				rvm.bytesperrow = bytesperrow;
+				rvm.height = rows / linesperrow;
+				rvm.u.metapalette = NULL;
+				rvm.flags = RASTERBITS_FLAG_GRAPHICS;
+				rf.width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
+				rf.height = rows;
+				rf.border_pen = -1;
+
+				switch(coco3_gimevhreg[1] & 3) {
+				case 0:
+					/* Two colors */
+					rvm.depth = 1;
+					break;
+				case 1:
+					/* Four colors */
+					rvm.depth = 2;
+					break;
+				case 2:
+					/* Sixteen colors */
+					rvm.depth = 4;
+					break;
+				case 3:
+					/* Blank screen */
+					/* TODO - Draw a blank screen! */
+					rvm.depth = 4;
+					break;
+				}
+				rvm.width = visualbytesperrow * 8 / rvm.depth;
+				raster_bits(bitmap, &rs, &rvm, &rf, NULL);
 			}
+
 
 			if (full_refresh)
 				memset(dirtybuffer, 0, ((rows + linesperrow - 1) / linesperrow) * bytesperrow);
