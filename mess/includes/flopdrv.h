@@ -84,6 +84,8 @@ typedef struct floppy_drive
     /* physical real drive unit */
     int fdd_unit;
 
+	unsigned char id_buffer[4];
+
 	int id_index;
     chrn_id ids[32];
 
@@ -109,6 +111,7 @@ int floppy_drive_get_current_track(int drive);
 void	floppy_drive_set_geometry(int,floppy_type type);
 
 void	floppy_drives_init(void);
+void	floppy_drives_exit(void);
 
 /* get next id from track, 1 if got a id, 0 if no id was got */
 int floppy_drive_get_next_id(int drive, int side, chrn_id *);
