@@ -5113,7 +5113,7 @@ static int GetIconForDriver(int nItem)
 {
 	int iconRoms;
 
-	iconRoms = GetHasRoms(nItem);
+	iconRoms = DriverUsesRoms(nItem) ? GetHasRoms(nItem) : 1;
 
 	/* iconRoms is now either 0 (no roms), 1 (roms), or 2 (unknown) */
 

@@ -325,6 +325,17 @@ BOOL DriverIsVector(int driver_index)
 	return (drv.video_attributes & VIDEO_TYPE_VECTOR) != 0;
 }
 
+BOOL DriverUsesRoms(int driver_index)
+{
+	const struct GameDriver *gamedrv = drivers[driver_index];
+	const struct RomModule *region, *rom;
+
+	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
+		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			return TRUE;
+	return FALSE;
+}
+
 BOOL DriverUsesSamples(int driver_index)
 {
 #if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)

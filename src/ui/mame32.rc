@@ -564,7 +564,11 @@ BEGIN
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
+#ifdef MESS
+    LTEXT           "BIOS check:",IDC_STATIC,19,45,50,8
+#else
     LTEXT           "ROM check:",IDC_STATIC,19,45,50,8
+#endif
     LTEXT           "Checking...",IDC_PROP_ROMS,74,45,139,8
     LTEXT           "Sample check:",IDC_STATIC,19,58,50,8
     LTEXT           "Checking...",IDC_PROP_SAMPLES,74,58,139,8

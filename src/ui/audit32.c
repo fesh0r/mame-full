@@ -102,6 +102,24 @@ void InitGameAudit(int gameIndex)
     Internal functions
  ***************************************************************************/
 
+// Verifies the ROM set while calling SetHasRoms	
+static int Mame32VerifyRomSet(int game)
+{
+	int iStatus;
+	iStatus = VerifyRomSet(game, (verify_printf_proc)DetailsPrintf);
+	SetHasRoms(game, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || iStatus == MISSING_OPTIONAL) ? 1 : 0);
+	return iStatus;
+}
+
+// Verifies the ROM set while calling SetHasRoms	
+static int Mame32VerifySampleSet(int game)
+{
+	int iStatus;
+	iStatus = VerifySampleSet(game, (verify_printf_proc)DetailsPrintf);
+	SetHasSamples(game, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || iStatus == MISSING_OPTIONAL) ? 1 : 0);
+	return iStatus;
+}
+
 static DWORD WINAPI AuditThreadProc(LPVOID hDlg)
 {
 	char buffer[200];
@@ -198,20 +216,6 @@ static INT_PTR CALLBACK AuditWindowProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 	return 0;
 }
 
-#ifdef MESS
-/* Checks to see if this system even has a ROM set */
-static BOOL HasRomSet(int nDriver)
-{
-	const struct GameDriver *gamedrv = drivers[nDriver];
-	const struct RomModule *region, *rom;
-
-	for (region = rom_first_region(gamedrv); region; region = rom_next_region(region))
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-			return TRUE;
-	return FALSE;
-}
-#endif
-
 /* Callback for the Audit property sheet */
 INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lParam)
 {
@@ -228,21 +232,15 @@ INT_PTR CALLBACK GameAuditDialogProc(HWND hDlg,UINT Msg,WPARAM wParam,LPARAM lPa
 		KillTimer(hDlg, 0);
 		{
 			int iStatus;
+			LPCSTR lpStatus;
 
-			iStatus = VerifyRomSet(rom_index, (verify_printf_proc)DetailsPrintf);
-#ifdef MESS
-			SetHasRoms(rom_index, (iStatus == CORRECT || iStatus == BEST_AVAILABLE || !HasRomSet(rom_index)) ? 1 : 0);
-#else
-			SetHasRoms(rom_index, (iStatus == CORRECT || iStatus == BEST_AVAILABLE) ? 1 : 0);
-#endif
-			SetWindowText(GetDlgItem(hDlg, IDC_PROP_ROMS), StatusString(iStatus));
+			iStatus = Mame32VerifyRomSet(rom_index);
+			lpStatus = DriverUsesRoms(rom_index) ? StatusString(iStatus) : "None required";
+			SetWindowText(GetDlgItem(hDlg, IDC_PROP_ROMS), lpStatus);
 
-			iStatus = VerifySampleSet(rom_index, (verify_printf_proc)DetailsPrintf);
-			SetHasSamples(rom_index,(iStatus == CORRECT || iStatus == BEST_AVAILABLE));
-			if (DriverUsesSamples(rom_index))
-				SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES),StatusString(iStatus));
-			else
-				SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES),"None required");
+			iStatus = Mame32VerifySampleSet(rom_index);
+			lpStatus = DriverUsesSamples(rom_index) ? StatusString(iStatus) : "None required";
+			SetWindowText(GetDlgItem(hDlg, IDC_PROP_SAMPLES), lpStatus);
 		}
 		ShowWindow(hDlg, SW_SHOW);
 		break;
@@ -255,11 +253,12 @@ static void ProcessNextRom()
 	int retval;
 	char buffer[200];
 
-	retval = VerifyRomSet(rom_index, (verify_printf_proc)DetailsPrintf);
+	retval = Mame32VerifyRomSet(rom_index);
 	switch (retval)
 	{
 	case BEST_AVAILABLE: /* correct, incorrect or separate count? */
 	case CORRECT:
+	case MISSING_OPTIONAL:
 		roms_correct++;
 		sprintf(buffer, "%i", roms_correct);
 		SendDlgItemMessage(hAudit, IDC_ROMS_CORRECT, WM_SETTEXT, 0, (LPARAM)buffer);
@@ -279,11 +278,6 @@ static void ProcessNextRom()
 		break;
 	}
 
-#ifdef MESS
-	SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE || !HasRomSet(rom_index)) ? 1 : 0);
-#else
-	SetHasRoms(rom_index, (retval == CORRECT || retval == BEST_AVAILABLE) ? 1 : 0);
-#endif
 	rom_index++;
 	SendDlgItemMessage(hAudit, IDC_ROMS_PROGRESS, PBM_SETPOS, rom_index, 0);
 
@@ -299,7 +293,7 @@ static void ProcessNextSample()
 	int  retval;
 	char buffer[200];
 	
-	retval = VerifySampleSet(sample_index, (verify_printf_proc)DetailsPrintf);
+	retval = Mame32VerifySampleSet(sample_index);
 	
 	switch (retval)
 	{
@@ -326,8 +320,6 @@ static void ProcessNextSample()
 		
 		break;
 	}
-	
-	SetHasSamples(sample_index, (retval == CORRECT || retval == BEST_AVAILABLE) ? 1 : 0);
 
 	sample_index++;
 	SendDlgItemMessage(hAudit, IDC_SAMPLES_PROGRESS, PBM_SETPOS, sample_index, 0);
@@ -338,7 +330,6 @@ static void ProcessNextSample()
 		SendDlgItemMessage(hAudit, IDCANCEL, WM_SETTEXT, 0, (LPARAM)"Close");
 		sample_index = -1;
 	}
-	
 }
 
 static void CLIB_DECL DetailsPrintf(const char *fmt, ...)
@@ -400,6 +391,10 @@ static const char * StatusString(int iStatus)
 		
 	case INCORRECT:
 		ptr = "Failed";
+		break;
+
+	case MISSING_OPTIONAL:
+		ptr = "Missing optional";
 		break;
 	}
 

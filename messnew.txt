@@ -8,13 +8,15 @@ System Driver Changes:
 ----------------------
 - [IBMPC] Fixed a bug in keyboard handling that caused a 'stuck key' keyboard
   error to be displayed (bug #427). [Colin Howell, Nate Woods]
-  Added support for CGA 160x100 mode and fixed bugs #100 and #225.
-  [Nate Woods]
+- Added support for CGA 160x100 mode (bugs #100 and #225).  [Nate Woods]
 
 User Interface Changes:
 -----------------------
 - [WIN32 FE] Fixed a bug whereby refreshing would reset the current system to
   the last saved one (bug #384). [Nate Woods]
+
+- [WIN32 FE] Missing optional BIOSes no longer trigger audit errors (bug
+  #424). [Nate Woods]
 
 Imgtool Changes:
 ----------------
