@@ -1203,7 +1203,7 @@ void	oric_floppy_exit(int id)
 	oric_floppy_type[id] = ORIC_FLOPPY_NONE;
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int		oric_floppy_id(int id)
 {
 	int result;

@@ -29,7 +29,7 @@ static void svi318_set_banks (void);
 ** Cartridge stuff
 */
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int svi318_id_rom (int id)
 	{
     void *f;

@@ -142,7 +142,7 @@ int dsk_save(int type, int id, unsigned char **ptr)
 }
 
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int dsk_floppy_id(int id)
 {
 	int valid;

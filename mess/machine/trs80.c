@@ -147,7 +147,7 @@ static void cas_copy_callback(int param)
 	cpu_set_reg(Z80_PC, entry);
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int trs80_cas_id(int id)
 {
 	void *file = image_fopen(IO_CASSETTE,id,OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);

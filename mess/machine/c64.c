@@ -932,7 +932,7 @@ void c64_shutdown_machine (void)
 {
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int c64_rom_id (int id)
 {
 	/* magic lowrom at offset 0x8003: $c3 $c2 $cd $38 $30 */

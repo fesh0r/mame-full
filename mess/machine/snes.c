@@ -300,7 +300,7 @@ void snes_exit_rom(int id)
 /* Simple Id done as - divide total size of rom by 32*1024... if remainder is 512 smc header present file is valid, else
   header not present... don't load file! */
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int snes_id_rom (int id)
 {
     FILE *romfile;

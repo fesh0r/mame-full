@@ -382,7 +382,7 @@ void laser_rom_exit(int id)
 	memset(&mem[0x30000], 0xff, 0x10000);
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int laser_cassette_id(int id)
 {
 	UINT8 buff[256];
@@ -563,7 +563,7 @@ void laser_cassette_exit(int id)
 	cassette_image = NULL;
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int laser_floppy_id(int id)
 {
 	void *file;

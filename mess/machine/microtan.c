@@ -509,7 +509,7 @@ void microtan_snapshot_exit(int id)
     snapshot_size = 0;
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int microtan_snapshot_id(int id)
 {
     UINT8 buff[4];

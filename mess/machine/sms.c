@@ -208,7 +208,7 @@ void sms_init_machine (void)
     sms_fm_detect = 0;
 }
 
-#ifdef IMAGE_VERIFY
+#ifdef VERIFY_IMAGE
 int sms_id_rom (int id)
 {
 	FILE *romfile;

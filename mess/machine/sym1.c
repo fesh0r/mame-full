@@ -166,26 +166,6 @@ void kim1_cassette_exit(int id)
 	/* nothing yet */
 }
 
-#ifdef VERIFY_IMAGE
-int kim1_cassette_id(int id)
-{
-	const char magic[] = "KIM1";
-	char buff[4];
-	void *file;
-
-	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, 0);
-	if (file)
-	{
-		osd_fread(file, buff, sizeof (buff));
-		if (memcmp(buff, magic, sizeof (buff)) == 0)
-		{
-			logerror("kim1_rom_id: magic '%s' found\n", magic);
-			return 1;
-		}
-	}
-	return 0;
-}
-#endif
 #endif
 
 int sym1_interrupt(void)
