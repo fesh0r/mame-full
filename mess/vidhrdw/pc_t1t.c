@@ -68,12 +68,38 @@ static struct GfxLayout t1t_gfxlayout_4bpp =
 	1*8 					/* every code takes 1 byte */
 };
 
-struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
+
+struct GfxLayout t1t_charlayout =
 {
-	{ 1, 0x0000, &europc_cga_charlayout,		  0,			 256 },	/* single width */
-	{ 1, 0x1000, &CGA_gfxlayout_1bpp,	  256*2,		  16 },	/* 640x400 1bpp gfx */
-    { 1, 0x1000, &CGA_gfxlayout_2bpp,     256*2+16*2,      4 },  /* 320x200 2bpp gfx */
-	{ 1, 0x1000, &t1t_gfxlayout_4bpp,	  256*2+16*2+2*4, 16 },	/* 160x200 4bpp gfx */
+	8,8,					/* 8 x 8 characters */
+    128,                    /* 128 characters */
+    1,                      /* 1 bits per pixel */
+    { 0 },                  /* no bitplanes; 1 bit per pixel */
+    /* x offsets */
+    { 0,1,2,3,4,5,6,7 },
+    /* y offsets */
+	{ 0*8,1*8,2*8,3*8,
+	  4*8,5*8,6*8,7*8 },
+    8*8                     /* every char takes 8 bytes */
+};
+
+struct GfxDecodeInfo t1000hx_gfxdecodeinfo[] =
+{
+	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
+	{ 0, 0xfc0a8, &t1t_charlayout,			0,				128 },	/* single width */
+	{ 1, 0x1000, &CGA_gfxlayout_1bpp,		256*2,			16 },	/* 640x400 1bpp gfx */
+    { 1, 0x1000, &CGA_gfxlayout_2bpp,		256*2+16*2,		4 },	/* 320x200 2bpp gfx */
+	{ 1, 0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
+    { -1 } /* end of array */
+};
+
+struct GfxDecodeInfo t1000sx_gfxdecodeinfo[] =
+{
+	{ 0, 0xffa6e, &t1t_charlayout,			0,				128 },	/* single width */
+	{ 0, 0xf40a3, &t1t_charlayout,			0,				128 },	/* single width */
+	{ 1, 0x1000, &CGA_gfxlayout_1bpp,		256*2,			16 },	/* 640x400 1bpp gfx */
+    { 1, 0x1000, &CGA_gfxlayout_2bpp,		256*2+16*2,		4 },	/* 320x200 2bpp gfx */
+	{ 1, 0x1000, &t1t_gfxlayout_4bpp,		256*2+16*2+2*4,	16 },	/* 160x200 4bpp gfx */
     { -1 } /* end of array */
 };
 
@@ -83,7 +109,7 @@ PALETTE_INIT( pcjr )
 	int i;
 	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
 		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
-	memcpy(colortable,pcjr_colortable,sizeof(pcjr_colortable));
+	memcpy(colortable, pcjr_colortable, sizeof(pcjr_colortable));
 }
 
 static struct { 
@@ -462,6 +488,31 @@ READ_HANDLER ( pc_T1T_r )
 }
 
 /***************************************************************************
+  Plot single text character
+***************************************************************************/
+static void t1t_plot_char(struct mame_bitmap *bitmap, const struct
+	rectangle *r, UINT8 ch, UINT8 attr)
+{
+	int width;
+	int height;
+	int bgcolor;
+	struct GfxElement *gfx;
+
+	gfx = Machine->gfx[ch & 0x80 ? 1 : 0];
+	drawgfx(bitmap, gfx, ch & 0x7f, attr, 
+			0, 0, r->min_x, r->min_y, r, TRANSPARENCY_NONE, 0);
+
+	height = r->max_y - r->min_y + 1;
+	width = r->max_x - r->min_x + 1;
+
+	if (height > 8)
+	{
+		bgcolor = gfx->colortable[gfx->color_granularity * (attr % gfx->total_colors)];
+		plot_box(bitmap, r->min_x, r->min_y + 8, width, height - 8, bgcolor);
+	}
+}
+
+/***************************************************************************
   Draw text mode with 40x25 characters (default) with high intensity bg.
 ***************************************************************************/
 static void t1t_text_inten(struct mame_bitmap *bitmap)
@@ -480,26 +531,30 @@ static void t1t_text_inten(struct mame_bitmap *bitmap)
 	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
 
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
-			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8) {
-			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
+			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8)
+		{
+			if (dirtybuffer[offs] || dirtybuffer[offs+1])
+			{
+				UINT8 ch = pcjr.displayram[offs];
+				UINT8 attr = pcjr.displayram[offs + 1];
 				
-				drawgfx(bitmap, Machine->gfx[0], pcjr.displayram[offs], pcjr.displayram[offs+1], 
-						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				t1t_plot_char(bitmap, &r, ch, attr);
 
-//				if ((cursor.on)&&(offs==cursor.pos*2)) {
-				if (cursor.on&&(pcjr.pc_framecnt&32)&&(offs==cursor.pos*2)) {
-					int k=height-cursor.top;
-					struct rectangle rect2=r;
-					rect2.min_y+=cursor.top; 
-					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
+				if (cursor.on && (pcjr.pc_framecnt & 32) && (offs == cursor.pos * 2))
+				{
+					int k = height - cursor.top;
+					struct rectangle rect2 = r;
+					rect2.min_y += cursor.top; 
+					if (cursor.bottom<height)
+						k=cursor.bottom-cursor.top+1;
 
 					if (k>0)
 						plot_box(Machine->scrbitmap, r.min_x, 
-								 r.min_y+cursor.top, 
-								 8, k, Machine->pens[7]);
+									r.min_y+cursor.top, 
+									8, k, Machine->pens[7]);
 				}
 
-				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
+				dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 			}
 		}
 	}
@@ -521,15 +576,16 @@ static void t1t_text_blink(struct mame_bitmap *bitmap)
 	crtc6845_time(pcjr.crtc);
 	crtc6845_get_cursor(pcjr.crtc, &cursor);
 
-	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height) {
-
+	for (sy=0, r.min_y=0, r.max_y=height-1; sy<lines; sy++, r.min_y+=height,r.max_y+=height)
+	{
 		for (sx=0, r.min_x=0, r.max_x=7; sx<columns; 
-			 sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8) {
+			sx++, offs=(offs+2)&0x3fff, r.min_x+=8, r.max_x+=8) {
 
-			if (dirtybuffer[offs] || dirtybuffer[offs+1]) {
-				
-				int attr = pcjr.displayram[offs+1];
-				
+			if (dirtybuffer[offs] || dirtybuffer[offs+1])
+			{
+				UINT8 ch = pcjr.displayram[offs + 0];
+				UINT8 attr = pcjr.displayram[offs + 1];
+					
 				if (attr & 0x80)	/* blinking ? */
 				{
 					if (pcjr.pc_blink)
@@ -538,23 +594,24 @@ static void t1t_text_blink(struct mame_bitmap *bitmap)
 						attr = attr & 0x7f;
 				}
 
-				drawgfx(bitmap, Machine->gfx[0], pcjr.displayram[offs], attr, 
-						0,0,r.min_x,r.min_y,&r,TRANSPARENCY_NONE,0);
+				t1t_plot_char(bitmap, &r, ch, attr);
 
-//				if ((cursor.on)&&(offs==cursor.pos*2)) {
-				if (cursor.on&&(pcjr.pc_framecnt&32)&&(offs==cursor.pos*2)) {
-					int k=height-cursor.top;
-					struct rectangle rect2=r;
-					rect2.min_y+=cursor.top; 
-					if (cursor.bottom<height) k=cursor.bottom-cursor.top+1;
+				if (cursor.on&& (pcjr.pc_framecnt & 32) && (offs == cursor.pos * 2))
+				{
+					int k = height-cursor.top;
+					struct rectangle rect2 = r;
+					rect2.min_y += cursor.top;
+
+					if (cursor.bottom < height)
+						k = cursor.bottom - cursor.top + 1;
 
 					if (k>0)
 						plot_box(Machine->scrbitmap, r.min_x, 
-								 r.min_y+cursor.top, 
-								 8, k, Machine->pens[7]);
+							r.min_y+cursor.top, 
+							8, k, Machine->pens[7]);
 				}
 
-				dirtybuffer[offs]=dirtybuffer[offs+1]=0;
+				dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 			}
 		}
 	}
@@ -581,7 +638,7 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
 			case 0: // char line 0 used as a12 line in graphic mode
 				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
+						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -590,7 +647,7 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
 			case 1:
 				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
+						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -599,7 +656,7 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
 			case 2:
 				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
+						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -608,7 +665,7 @@ static void t1t_gfx_2bpp(struct mame_bitmap *bitmap)
 			case 3:
 				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
+						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], (pcjr.color_select&0x20?1:0),
 								0,0,sx*4,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -638,7 +695,7 @@ static void t1t_gfx_1bpp(struct mame_bitmap *bitmap)
 			if (!(sh&1)) { // char line 0 used as a12 line in graphic mode
 				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[1], pcjr.displayram[i], pcjr.color_select&0xf, 0,0,sx*8,sy*height+sh,
+						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], pcjr.color_select&0xf, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -646,7 +703,7 @@ static void t1t_gfx_1bpp(struct mame_bitmap *bitmap)
 			} else {
 				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[1], pcjr.displayram[i], pcjr.color_select&0xf, 0,0,sx*8,sy*height+sh,
+						drawgfx(bitmap, Machine->gfx[2], pcjr.displayram[i], pcjr.color_select&0xf, 0,0,sx*8,sy*height+sh,
 								0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -678,7 +735,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 			case 0: // char line 0 used as a12 line in graphic mode
 				for (i=offs, sx=0; sx<columns; sx++, i=(i+1)&0x1fff) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], 0,
+						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -687,7 +744,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 			case 1:
 				for (i=offs|0x2000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x2000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], 0,
+						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -696,7 +753,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 			case 2:
 				for (i=offs|0x4000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x4000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], 0,
+						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}
@@ -705,7 +762,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 			case 3:
 				for (i=offs|0x6000, sx=0; sx<columns; sx++, i=((i+1)&0x1fff)|0x6000) {
 					if (dirtybuffer[i]) {
-						drawgfx(bitmap, Machine->gfx[3], pcjr.displayram[i], 0,
+						drawgfx(bitmap, Machine->gfx[4], pcjr.displayram[i], 0,
 								0,0,sx*2,sy*height+sh, 0,TRANSPARENCY_NONE,0);
 						dirtybuffer[i]=0;
 					}

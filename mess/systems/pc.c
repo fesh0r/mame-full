@@ -1461,7 +1461,7 @@ static MACHINE_DRIVER_START( t1000hx )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(80*8, 25*9)
 	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*9-1)
-	MDRV_GFXDECODE(t1t_gfxdecodeinfo)
+	MDRV_GFXDECODE(t1000hx_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
 	MDRV_COLORTABLE_LENGTH(sizeof(pcjr_colortable) / sizeof(pcjr_colortable[0]))
 	MDRV_PALETTE_INIT(pcjr)
@@ -1476,6 +1476,10 @@ static MACHINE_DRIVER_START( t1000hx )
 	MDRV_NVRAM_HANDLER( tandy1000 )
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( t1000sx )
+	MDRV_IMPORT_FROM(t1000hx)
+	MDRV_GFXDECODE(t1000sx_gfxdecodeinfo)
+MACHINE_DRIVER_END
 
 #if 0
 	//pcjr roms? (incomplete dump, most likely 64 kbyte)
@@ -1622,7 +1626,7 @@ ROM_START( t1000sx )
 	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
 	// partlist says it has 1 128kbyte rom
 	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
-	ROM_LOAD("tandy1t1.020", 0xf0000, 0x10000, 0x0e016ecf)
+	ROM_LOAD("t1000sx.f0", 0xf0000, 0x10000, 0x0e016ecf)
 	ROM_REGION(0x02000,REGION_GFX1, 0)
 	// expects 8x9 charset!
 	ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
@@ -1700,23 +1704,23 @@ SYSTEM_CONFIG_END
 ***************************************************************************/
 
 /*	   YEAR		NAME		PARENT	MACHINE     INPUT	    INIT	    CONFIG   COMPANY	 FULLNAME */
-COMP ( 1982,	ibmpc,		0,		pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 10/27/82" )
-COMP ( 1982,	ibmpca,		ibmpc,	pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 08/16/82" )
-COMP ( 1987,	pc,			ibmpc,	pccga,      pccga,		pccga,	    ibmpc,   "",  "PC (CGA)" )
-COMPX ( 1985,	bondwell,	ibmpc,	pccga,		bondwell,   bondwell,	ibmpc,   "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
-COMP( 1988,		europc,		ibmpc,	europc,     europc,		europc,     ibmpc,   "Schneider Rdf. AG",  "EURO PC")
+COMP(  1982,	ibmpc,		0,		pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 10/27/82" )
+COMP(  1982,	ibmpca,		ibmpc,	pccga,      pccga,	    pccga,	    ibmpc,   "International Business Machines",  "IBM PC 08/16/82" )
+COMP(  1987,	pc,			ibmpc,	pccga,      pccga,		pccga,	    ibmpc,   "",  "PC (CGA)" )
+COMPX( 1985,	bondwell,	ibmpc,	pccga,		bondwell,   bondwell,	ibmpc,   "Bondwell Holding",  "BW230 (PRO28 Series)", GAME_NOT_WORKING )
+COMP(  1988,	europc,		ibmpc,	europc,     europc,		europc,     ibmpc,   "Schneider Rdf. AG",  "EURO PC")
 
 // pcjr (better graphics, better sound)
 COMPX( 1983,	ibmpcjr,	ibmpc,	t1000hx,    tandy1t,	t1000hx,    ibmpc,   "International Business Machines",  "IBM PC Jr", GAME_NOT_WORKING|GAME_IMPERFECT_COLORS )
-COMP( 1987,		t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000HX")
-COMP( 1987,		t1000sx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000SX")
+COMP(  1987,	t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000HX")
+COMP(  1987,	t1000sx,	ibmpc,	t1000sx,    tandy1t,	t1000hx,	ibmpc,   "Tandy Radio Shack",  "Tandy 1000SX")
 
 // xt class (pc but 8086)
-COMP( 1986,		ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
-COMP ( 1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
-COMPX ( 1988,	pc20,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
-COMP ( 1986,	pc1512,		ibmpc,	pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512")
-COMPX ( 1987,	pc1640,		ibmpc,	pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
+COMP(  1986,	ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		ibmpc,   "International Business Machines",  "IBM PC/XT (CGA)" )
+COMP(  1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Sinclair Research",  "PC200 Professional Series")
+COMPX( 1988,	pc20,		ibmpc,	pc200,		pc200,		pc200,		ibmpc,   "Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
+COMP(  1986,	pc1512,		ibmpc,	pc1512,     pc1512,		pc1512,		ibmpc,   "Amstrad plc",  "Amstrad PC1512")
+COMPX( 1987,	pc1640,		ibmpc,	pc1640,     pc1640,		pc1640,		ibmpc,   "Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?
 // pc2086 pc1512 with vga??
 

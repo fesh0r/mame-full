@@ -11,6 +11,8 @@ System Driver Changes:
 - [SNES] Added support for fullgraphic VRAM transfers. Fixed VRAM reads. Fixed
   a rare clip window bug. [Anthony Kruize]
 
+- [T1000HX] Modified to use character data from the actual BIOS. [Nate Woods]
+
 Source Changes:
 ---------------
 - Moved CRC handling to use the core fileio functions. [Nate Woods]
