@@ -4975,6 +4975,11 @@ static void MamePlayGame()
 
 static void MamePlayGameWithOptions(int nGame)
 {
+#ifdef MESS
+	if (!MessApproveImageList(hMain, nGame))
+		return;
+#endif
+
 	memcpy(&playing_game_options, GetGameOptions(nGame), sizeof(options_type));
 
 	/* Deal with options that can be disabled. */

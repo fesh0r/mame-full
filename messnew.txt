@@ -18,14 +18,15 @@ System Driver Changes:
   coco_dsk.c, allowing DMK images with weird sector sizes to load properly
   (bug #378). [tim lindner]
 
-- [EINSTEIN/EP128] Fixed crashes on startup. [Nate Woods]
+- [EINSTEIN/EP128] Fixed crashes on startup (bug #407). [Nate Woods]
 
 - [GENEVE] Fixed sound in native mode and a mirror of the VDP ports that is
   used by the converted Tomy carts.  Enabled access to the RTC in ti99 mode.
   Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 
-- [PC200] Fixed bug #398 and a bug affecting floppies at startup. [John Elliott]
+- [PC200] Fixed a bug causing corrupted characters (bug #398) and a bug
+  affecting floppies at startup. [John Elliott]
 
 - [SNES] Fixed negative increment in GDMA. [Anthony Kruize]
 
@@ -39,6 +40,17 @@ System Driver Changes:
   This does make any difference for single-sided images, but you will need to
   convert double-sided image. [Raphael Nabet]
 
+User Interface Changes:
+-----------------------
+- [WIN32 FE] The emulation will not be started up if any required devices are
+  not specified with an image, like cartridges on a console system.  (bug #415)
+  [Nate Woods]
+
+Imgtool Changes:
+----------------
+- Renamed the ti99 module to ti99_old, since the format it handles has been
+  obsoleted by changes in the ti99 driver.  [Raphael Nabet]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.69.  This incorporates all features of the
@@ -47,8 +59,5 @@ Source Changes:
 - Modified flopdrv.c to reset pDrive->id_index to zero when head is moved
   from track to track. [tim lindner]
 
-- CRC calculation of hard disk images has been disabled (bug #416).
-  [Raphael Nabet]
-
-- [Imgtool] Renamed the ti99 module to ti99_old, since the format it handles
-  has been obsoleted by changes in the ti99 driver.  [Raphael Nabet]
+- CRC calculation of read/write images has been disabled (bug #416).
+  [Raphael Nabet, Nate Woods]

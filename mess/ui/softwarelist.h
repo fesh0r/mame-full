@@ -39,6 +39,7 @@ void MessIntroduceItem(struct SmartListView *pListView, const char *filename, me
 int GetImageType(int nItem);
 LPCTSTR GetImageName(int nItem);
 LPCTSTR GetImageFullName(int nItem);
+BOOL MessApproveImageList(HWND hParent, int nDriver);
 
 #ifdef MAME_DEBUG
 #include "driver.h"
