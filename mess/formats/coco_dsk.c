@@ -241,6 +241,8 @@ BLOCKDEVICE_FORMATDRIVER_END
 #define DMK_TOC_LEN 64
 #define DMK_DATA_GAP 80
 #define DMK_IDFIELD 7
+#define DMK_TRACK_LEN 0x1900
+#define DMK_RSDOS_INTERLEAVE 4
 
 struct dmk_header
 {
@@ -256,8 +258,7 @@ struct dmk_header
 							  /* Bit 6: Single density?																	*/
 							  /* Bit 7: Ignore density flags? (always write one byte, depreciated)						*/
 	UINT8		reserved[7];
-	UINT32		realDiskCode; /* If this is 0x12345678 (little endian) then access a real disk							*/
-							  /* drive (unsupported)																	*/
+	UINT32		realDiskCode; /* If this is 0x12345678 (little endian) then access a real disk drive (unsupported)		*/
 };
 
 struct dmk_track_toc
@@ -397,8 +398,28 @@ static int cocodmk_decode_header(const void *header, UINT32 file_size, UINT32 he
 
 static int cocodmk_encode_header(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry)
 {
-	/* To be implemented */
+	struct dmk_header	*hdr;
+	
+	hdr = (struct dmk_header *)buffer;
+	
+	hdr->writeProtect = 0;
+	hdr->trackCount = geometry->tracks;
+	hdr->trackLength = LITTLE_ENDIANIZE_INT16( DMK_TRACK_LEN );
+	
+	hdr->diskOptions = 0;
+	if( geometry->heads == 1 )
+		hdr->diskOptions = 0x10;
 
+	hdr->reserved[0] = 0;
+	hdr->reserved[1] = 0;
+	hdr->reserved[2] = 0;
+	hdr->reserved[3] = 0;
+	hdr->reserved[4] = 0;
+	hdr->reserved[5] = 0;
+	hdr->reserved[6] = 0;
+	
+	hdr->realDiskCode = 0;
+	
 	return 0;
 }
 
@@ -578,6 +599,153 @@ static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT
 	return error;
 }
 
+static int dmK_setUpSkipping( UINT8 *sector_array, UINT8 factor, const struct disk_geometry *geometry )
+{
+	int		i, j,
+			first = geometry->first_sector_id,
+			size = geometry->sectors;
+
+	if( factor > size )
+		return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
+
+	j = 0;
+
+	for( i = first; i <= size + first; i++ )
+	{
+		sector_array[j] = i;
+
+		j= j + factor + 1;
+
+		if( j > size )
+			j = j - size;
+	}
+	
+	return BLOCKDEVICE_ERROR_SUCCESS;
+}
+
+static void bdf_write_repeat( void *bdf, UINT8 value, int count, int *track_length )
+{
+	int i;
+	
+	for( i=0; i<count; i++ )
+		bdf_write( bdf, &value, 1 );
+		
+	track_length += count;
+}
+
+static int cocodmk_format_track(struct InternalBdFormatDriver *drv, void *bdf, const struct disk_geometry *geometry, UINT8 track, UINT8 head)
+{
+	int						i, j, track_length = 0, error;
+	UINT16					offset, calculated_crc;
+	struct dmk_IDAM			idam;
+	UINT8					sector_array[256], *sector_body;
+
+	if( geometry->sectors > DMK_TOC_LEN )
+		return BLOCKDEVICE_ERROR_CANTENCODEFORMAT;
+		
+	/* Set up track table of contents */
+	
+	for( i = 0, j = 36; i < DMK_TOC_LEN; i++ )
+	{
+		if( i >= geometry->sectors )
+			offset = 0;
+		else
+			offset = LITTLE_ENDIANIZE_INT16(j);
+			
+		bdf_write( bdf, &offset, sizeof( UINT16 ) );
+		j += 72 + geometry->sector_size;
+	}
+
+	track_length += 80 * sizeof( UINT16 ); /* Keep track of the number of bytes we have written */
+	
+	/* Write track lead in */
+	bdf_write_repeat( bdf, 0x4e, 32, &track_length );
+	
+	/* Setup interleave */
+	error = dmK_setUpSkipping( sector_array, DMK_RSDOS_INTERLEAVE, geometry );
+	if( error != BLOCKDEVICE_ERROR_SUCCESS )
+		return error;
+	
+	/* Now write each sector */
+	for(i=0; i<geometry->sectors; i++ )
+	{
+		bdf_write_repeat( bdf, 0xa1, 3, &track_length );
+		dmk_set_idam_type( idam, 0xfe );
+		dmk_set_idam_trackNumber( idam, track );
+		dmk_set_iaam_sideNumber( idam, head-1 );
+		dmk_set_idam_sectorNumber( idam, sector_array[i] );
+		
+		switch( geometry->sector_size )
+		{
+			case 128 << 1:
+				dmk_set_idam_sectorLength( idam, 1 );
+				break;
+			case 128 << 2:
+				dmk_set_idam_sectorLength( idam, 2 );
+				break;
+			case 128 << 3:
+				dmk_set_idam_sectorLength( idam, 3 );
+				break;
+			case 128 << 4:
+				dmk_set_idam_sectorLength( idam, 4 );
+				break;
+			case 128 << 5:
+				dmk_set_idam_sectorLength( idam, 5 );
+				break;
+			case 128 << 6:
+				dmk_set_idam_sectorLength( idam, 6 );
+				break;
+			default:
+				return BLOCKDEVICE_ERROR_CANTDECODEFORMAT;
+		}
+		
+		/* Calculate sector header CRC */
+		calculated_crc = 0xcdb4;	/* Seed crc with proper value */
+		cocodmk_calculate_crc( &calculated_crc, (UINT8 *)&idam, sizeof( struct dmk_IDAM ) - 2 );
+		dmk_set_idam_crc( idam, calculated_crc );
+		
+		/* Write sector header */
+		bdf_write( bdf, &idam, sizeof( struct dmk_IDAM ) );
+		track_length += sizeof( struct dmk_IDAM );
+		
+		/* Write padding between sector header and sector body */
+		bdf_write_repeat( bdf, 0x4e, 22, &track_length );
+		bdf_write_repeat( bdf, 0x00, 12, &track_length );
+
+		/* Setup sector body */
+		sector_body = (UINT8 *)malloc( geometry->sector_size + 1 );
+		if( sector_body == NULL )
+			return BLOCKDEVICE_ERROR_OUTOFMEMORY;
+		
+		sector_body[0] = 0xfb;
+		memset( sector_body+1, drv->filler_byte, geometry->sector_size );
+
+		calculated_crc = 0xcdb4;	/* Seed crc with proper value */
+		cocodmk_calculate_crc( &calculated_crc, sector_body, geometry->sector_size + 1 );
+		calculated_crc = BIG_ENDIANIZE_INT16( calculated_crc );
+
+		/* Write sector body */
+		bdf_write_repeat( bdf, 0xa1, 3, &track_length );
+		bdf_write( bdf, sector_body, geometry->sector_size + 1 );
+		free( sector_body );
+		track_length += geometry->sector_size + 1;
+		bdf_write( bdf, &calculated_crc, 2 );
+		track_length += 2;
+		
+		/* Write sector footer */
+		bdf_write_repeat( bdf, 0x4e, 24, &track_length );
+	}
+	
+	if( track_length > DMK_TRACK_LEN )
+		return BLOCKDEVICE_ERROR_CANTDECODEFORMAT;
+	
+	bdf_write_repeat( bdf, 0x4e, DMK_TRACK_LEN - track_length, &track_length );
+	
+	assert( track_length == DMK_TRACK_LEN);
+
+	return BLOCKDEVICE_ERROR_SUCCESS;
+}
+
 BLOCKDEVICE_FORMATDRIVER_START( coco_dmk )
 	BDFD_NAME( "dmk" )
 	BDFD_HUMANNAME( "DMK disk image" )
@@ -593,6 +761,7 @@ BLOCKDEVICE_FORMATDRIVER_START( coco_dmk )
 	BDFD_FILLER_BYTE( 0xFF );
 	BDFD_READ_SECTOR(cocodmk_read_sector)
 	BDFD_WRITE_SECTOR(cocodmk_write_sector)
+	BDFD_FORMAT_TRACK(cocodmk_format_track)
 BLOCKDEVICE_FORMATDRIVER_END
 
 /* ----------------------------------------------------------------------- */
