@@ -42,7 +42,7 @@ typedef enum
 	vdt911_model_Norwegian,	/* Norwegian/Danish */
 	vdt911_model_Japanese,	/* Katakana Japanese */
 	/*vdt911_model_Arabic,*//* Arabic */
-	vdt911_model_FrenchWP	/* French Word processing */
+	vdt911_model_FrenchWP	/* French word processing */
 } vdt911_model_t;
 
 typedef struct vdt911_init_params_t
@@ -56,6 +56,8 @@ void vdt911_init_palette(unsigned char *palette, unsigned short *colortable, con
 
 void vdt911_init(void);
 int vdt911_init_term(int unit, const vdt911_init_params_t *params);
+
+void vdt911_reset(void);
 
 int vdt911_cru_r(int offset, int unit);
 void vdt911_cru_w(int offset, int data, int unit);
