@@ -25,6 +25,9 @@ System Driver Changes:
 - [A7800] Suffixed the name of the a7800 driver with NTSC and marked the PAL
   version as a clone of the NTSC version. [Nate Woods]
 
+- [GBCOLOR] Implemented background priority. This fixes objects appearing over
+  the background when they shouldn't be. [Anthony Kruize]
+
 Source Changes:
 ---------------
 - The MESS core will not automatically open software images in a clone system

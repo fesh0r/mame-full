@@ -579,7 +579,7 @@ INLINE void gbc_update_sprites (void)
 			if( gbc_mode == GBC_MODE_MONO )
 				pal = (oam[3] & 0x10) ? 8 : 4;
 			else
-				pal = GBC_PAL_OBJ_OFFSET + (oam[3] & 0x7) * 4;
+				pal = GBC_PAL_OBJ_OFFSET + ((oam[3] & 0x7) * 4);
 
 			xindex = oam[1] - 8;
 			if (oam[3] & 0x40)		   /* flip y ? */
@@ -609,6 +609,8 @@ INLINE void gbc_update_sprites (void)
 				for (bit = 0; bit < 8; bit++, xindex++)
 				{
 					register int colour = ((data & 0x0100) ? 2 : 0) | ((data & 0x0001) ? 1 : 0);
+					if((bg_zbuf[xindex] & 0x80) && (bg_zbuf[xindex] & 0x7f) && (LCDCONT & 0x1))
+						colour = 0;
 					if (colour)
 						plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[pal + colour]);
 					data >>= 1;
@@ -627,6 +629,8 @@ INLINE void gbc_update_sprites (void)
 				for (bit = 0; bit < 8; bit++, xindex++)
 				{
 					register int colour = ((data & 0x8000) ? 2 : 0) | ((data & 0x0080) ? 1 : 0);
+					if((bg_zbuf[xindex] & 0x80) && (bg_zbuf[xindex] & 0x7f) && (LCDCONT & 0x1))
+						colour = 0;
 					if (colour)
 						plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[pal + colour]);
 					data <<= 1;
@@ -757,7 +761,9 @@ void gbc_refresh_scanline (void)
 				}
 				plot_pixel(bitmap, xindex, yindex, Machine->remapped_colortable[(((gbcmap[xidx] & 0x7) * 4) + colour)]);
 				xindex++;
-				*zbuf++ = colour;
+				/* If the priority bit is set then bump up the value, we'll
+				 * check this when drawing sprites */
+				*zbuf++ = colour + (gbcmap[xidx] & 0x80);
 				bit++;
 				i--;
 			}
