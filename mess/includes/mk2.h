@@ -1,4 +1,4 @@
-extern UINT8 mk2_led[4];
+extern UINT8 mk2_led[5];
 extern unsigned short mk2_colortable[1][2];
 extern unsigned char mk2_palette[242][3];
 

@@ -4,7 +4,7 @@
 
 #include "includes/mk2.h"
 
-UINT8 mk2_led[4]= {0};
+UINT8 mk2_led[5]= {0};
 
 static struct artwork_info *backdrop;
 
@@ -153,6 +153,27 @@ static const char* single_led=
 " 111"
 ;
 
+static void mk2_draw_led(struct osd_bitmap *bitmap,INT16 color, int x, int y)
+{
+	int j, xi=0;
+	for (j=0; single_led[j]; j++) {
+		switch (single_led[j]) {
+		case '1': 
+			plot_pixel(bitmap, x+xi, y, color);
+			osd_mark_dirty(x+xi,y,x+xi,y);
+			xi++;
+			break;
+		case ' ': 
+			xi++;
+			break;
+		case '\r':
+			xi=0;
+			y++;
+			break;				
+		};
+	}
+}
+
 void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
@@ -167,31 +188,14 @@ void mk2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		mk2_draw_7segment(bitmap, mk2_led[i]&0x7f, mk2_led_pos[i].x, mk2_led_pos[i].y);
 	}
 
-	for (i=0; i<4; i++) {
-		int x=mk2_led_pos[4+i].x,y=mk2_led_pos[4+i].y,j, xi=0;
-		INT16 color;
-		for (j=0; single_led[j]; j++) {
-		    switch (single_led[j]) {
-			case '1': 
-				color=Machine->pens[(mk2_led[i]&0x80)?1:0];
-				plot_pixel(bitmap, x+xi, y, color);
-				osd_mark_dirty(x+xi,y,x+xi,y);
-				xi++;
-				break;
-			case ' ': 
-				xi++;
-				break;
-			case '\r':
-				xi=0;
-				y++;
-				break;				
-			};
-		}
-	}
+	mk2_draw_led(bitmap, Machine->pens[mk2_led[4]&8?1:0], 
+				 mk2_led_pos[4].x, mk2_led_pos[4].y);
+	mk2_draw_led(bitmap, Machine->pens[mk2_led[4]&0x20?1:0], 
+				 mk2_led_pos[5].x, mk2_led_pos[5].y); //?
+	mk2_draw_led(bitmap, Machine->pens[mk2_led[4]&0x10?1:0], 
+				 mk2_led_pos[6].x, mk2_led_pos[6].y);
+	mk2_draw_led(bitmap, Machine->pens[mk2_led[4]&0x10?0:1], 
+				 mk2_led_pos[7].x, mk2_led_pos[7].y);
 
-#if 0
-			drawgfx(bitmap, Machine->gfx[0], studio2_video.data[y][j],0,
-					0,0,x,y,
-					0, TRANSPARENCY_NONE,0);
-#endif
+	mk2_led[0]= mk2_led[1]= mk2_led[2]= mk2_led[3]= mk2_led[4]= 0;
 }
