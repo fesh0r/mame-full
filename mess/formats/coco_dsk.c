@@ -402,6 +402,9 @@ static floperr_t coco_os9_post_format(floppy_image *floppy, option_resolution *p
 	header[0x0320] = 0xAE;
 	header[0x033F] = 0x02;
 
+	if (total_sectors % 8)
+		header[0x0100 + (total_sectors / 8)] = 0xFF >> (total_sectors % 8);
+
 	err = floppy_write_sector(floppy, 0, 0, 1, 0, &header[0x0000], 256);
 	if (err)
 		return err;
