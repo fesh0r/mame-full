@@ -29,7 +29,7 @@ struct rc_option input_opts[] = {
       NULL },
    { "joytype",		"jt",			rc_int,		&joytype,
       "0",      	0,			5,		NULL,
-      "Select type of joysticksupport to use:\n0 No joystick\n1 i386 style joystick driver (if compiled in)\n2 Fm Town Pad support (if compiled in)\n3 X11 input extension joystick (if compiled in)\n4 new i386 linux 1.x.x joystick driver(if compiled in)\n5 NetBSD USB joystick driver (if compiled in)" },
+      "Select type of joystick support to use:\n0 No joystick\n1 i386 style joystick driver (if compiled in)\n2 Fm Town Pad support (if compiled in)\n3 X11 input extension joystick (if compiled in)\n4 new i386 linux 1.x.x joystick driver(if compiled in)\n5 NetBSD USB joystick driver (if compiled in)" },
    { "analogstick",	"as",			rc_bool,	&analogstick,
      "0",		0,			0,		NULL,
      "Use Joystick as analog for analog controls" },
@@ -48,6 +48,9 @@ struct rc_option input_opts[] = {
    { "mouse",		"m",			rc_bool,	&use_mouse,
      "1",		0,			0,		NULL,
      "Enable/disable mouse (if supported)" },
+   { "hotrod",		"hr",			rc_int,		&use_hotrod,
+      "0",      	0,			2,		NULL,
+      "Select type of HotRod joystick support to use:\n0 No HotRod\n1 HotRod\n2 HotRod SE" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
