@@ -704,7 +704,7 @@ void c16_shutdown_machine (void)
 int c16_rom_init (int id)
 {
 	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
-	return rom_specified[id] || !c16_rom_id(id);
+	return !rom_specified[id] || !c16_rom_id(id);
 }
 
 
