@@ -111,7 +111,7 @@ void set_video_memory_lookups(int ramsize)
 					m=((ma&0xff)<<3)|(s<<11);
 				} else {
 					m=((ma&0x3ff)|0x3c00)|((s&0x8)<<11);
-				};
+				}
 				if (ramsize==16)
 				{
 					video_ram_lookup[ma]=m & 0x3fff;
@@ -119,9 +119,9 @@ void set_video_memory_lookups(int ramsize)
 					video_ram_lookup[ma]=m;
 				}
 
-			};
-		};
-	};
+			}
+		}
+	}
 }
 
 
@@ -231,7 +231,7 @@ WRITE_HANDLER ( videoULA_w )
 		videoULA_pallet2[tpal]=Machine->pens[tcol^7];
 		videoULA_pallet3[tpal]=tcol>7?Machine->pens[tcol^7^7]:Machine->pens[tcol^7];
 		break;
-	};
+	}
 
 
 	// emulation refresh optimisation
@@ -320,15 +320,14 @@ void teletext_select_pallet(void)
 	if ( VideoULA_CR) teletext_pallet_lookup=teletext_cursor_pallette;
 }
 
-enum Teletext_Colours  { Black,Red,Green,Yellow,Blue,Magenta,Cyan,White};
 enum Teletext_Flash    { Steady,Flashing };
 enum Teletext_Height   { Normal,Double };
 enum Teletext_Conceal  { No,Yes };
 
 static char *tt_lookup=teletext_characters;
 static char *tt_graphics=teletext_graphics;
-static int tt_colour=White;
-static int tt_bgcolour=Black;
+static int tt_colour=7;
+static int tt_bgcolour=0;
 static int tt_start_line=0;
 static int tt_double_height=0;
 static int tt_double_height_set=0;
@@ -345,8 +344,8 @@ void teletext_DEW(void)
 void teletext_LOSE(void)
 {
 	tt_lookup=teletext_characters;
-	tt_colour=Machine->pens[0];
-	tt_bgcolour=Black;
+	tt_colour=7;
+	tt_bgcolour=0;
 	tt_graphics=teletext_graphics;
 	tt_linecount=(tt_linecount+1)%10;
 	tt_start_line=0;
@@ -578,7 +577,7 @@ void BBC_Set_VSync(int offset, int data)
 		BBC_display=(BBC_bitmap->line[y_screen_pos])+x_screen_pos;
 
 		teletext_DEW();
-	};
+	}
 }
 
 // called when the 6845 changes the Display Enabled
@@ -600,7 +599,7 @@ void BBC_Set_CR(int offset, int data)
 		// set the pallet to the cursor pallet
 		videoULA_select_pallet();
 		teletext_select_pallet();
-	};
+	}
 }
 
 // If the cursor is on there is a counter in the VideoULA to control the length of the Cursor
@@ -687,7 +686,7 @@ void bbc_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		// Clock the 6845
 		crtc6845_clock();
 		c++;
-	};
+	}
 
 
 	// loop until the Vertical Sync pulse goes high
