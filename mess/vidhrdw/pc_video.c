@@ -1,9 +1,41 @@
+/*********************************************************************
+
+	pc_video.c
+
+	PC Video code
+
+*********************************************************************/
+
 #include "includes/pc_video.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
+
+
+
+/***************************************************************************
+
+	Local variables
+
+***************************************************************************/
 
 static pc_video_update_proc (*pc_choosevideomode)(int *width, int *height, struct crtc6845 *crtc);
 static struct crtc6845 *pc_crtc;
 static int pc_anythingdirty;
+static int pc_current_height;
+static int pc_current_width;
+
+
+
+/**************************************************************************/
+
+static void pc_video_postload(void)
+{
+	pc_anythingdirty = 1;
+	pc_current_height = -1;
+	pc_current_width = -1;
+}
+
+
 
 struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 	pc_video_update_proc (*choosevideomode)(int *width, int *height, struct crtc6845 *crtc),
@@ -12,6 +44,9 @@ struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 	pc_choosevideomode = choosevideomode;
 	pc_crtc = NULL;
 	pc_anythingdirty = 1;
+	pc_current_height = -1;
+	pc_current_width = -1;
+
 	videoram_size = vramsize;
 
 	if (config)
@@ -27,12 +62,12 @@ struct crtc6845 *pc_video_start(const struct crtc6845_config *config,
 			return NULL;
 	}
 
+	state_save_register_func_postload(pc_video_postload);
 	return pc_crtc;
 }
 
 VIDEO_UPDATE( pc_video )
 {
-	static int width=0, height=0;
 	int w = 0, h = 0;
 	pc_video_update_proc video_update;
 
@@ -46,21 +81,20 @@ VIDEO_UPDATE( pc_video )
 
 	if (video_update)
 	{
-		if ((width != w) || (height != h)) 
+		if ((pc_current_width != w) || (pc_current_height != h)) 
 		{
-			width = w;
-			height = h;
+			pc_current_width = w;
+			pc_current_height = h;
 			pc_anythingdirty = 1;
 
-			if (width > Machine->scrbitmap->width)
-				width = Machine->scrbitmap->width;
-			if (height > Machine->scrbitmap->height)
-				height = Machine->scrbitmap->height;
+			if (pc_current_width > Machine->scrbitmap->width)
+				pc_current_width = Machine->scrbitmap->width;
+			if (pc_current_height > Machine->scrbitmap->height)
+				pc_current_height = Machine->scrbitmap->height;
 
-			if ((width > 100) && (height > 100))
-				set_visible_area(0,width-1,0, height-1);
-			else
-				logerror("video %d %d\n",width, height);
+			if ((pc_current_width > 100) && (pc_current_height > 100))
+				set_visible_area(0, pc_current_width-1, 0, pc_current_height-1);
+
 			fillbitmap(bitmap, 0, cliprect);
 		}
 

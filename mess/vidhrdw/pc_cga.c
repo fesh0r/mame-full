@@ -46,8 +46,10 @@
 	(source John Elliott http://www.seasip.info/AmstradXT/pc1512disp.html)
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 #include "includes/crtc6845.h"
 #include "includes/pc_cga.h"
@@ -269,10 +271,10 @@ PALETTE_INIT( pc_cga )
 
 static struct
 { 
-	UINT8 mode_control,  // wo 0x3d8
-		color_select, //wo 0x3d9
-		status,       // ro 0x3da
-		plantronics;  // wo 0x3dd, ATI chipset only
+	UINT8 mode_control;	/* wo 0x3d8 */
+	UINT8 color_select;	/* wo 0x3d9 */
+	UINT8 status;		/* ro 0x3da */
+	UINT8 plantronics;	/* wo 0x3dd, ATI chipset only */
 	
 	int pc_blink;
 	int pc_framecnt;
@@ -289,7 +291,14 @@ static struct crtc6845_config config= { 14318180 /*?*/, pc_cga_cursor };
 
 VIDEO_START( pc_cga )
 {
-	return pc_video_start(&config, pc_cga_choosevideomode, 0x8000) ? INIT_PASS : INIT_FAIL;
+	if (!pc_video_start(&config, pc_cga_choosevideomode, 0x8000))
+		return 1;
+
+	state_save_register_UINT8("pccga", 0, "mode_control",	&cga.mode_control, 1);
+	state_save_register_UINT8("pccga", 0, "color_select",	&cga.color_select, 1);
+	state_save_register_UINT8("pccga", 0, "status",			&cga.status, 1);
+	state_save_register_UINT8("pccga", 0, "plantronics",	&cga.plantronics, 1);
+	return 0;
 }
 
 static void pc_cga_check_palette(void)

@@ -296,9 +296,9 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 	
 };
 
-void at_keyboard_init(void)
+void at_keyboard_init(AT_KEYBOARD_TYPE type)
 {
-	keyboard.type = AT_KEYBOARD_TYPE_AT;
+	keyboard.type = type;
 	keyboard.input_port_base = 4;
 	keyboard.on = 1;
 	keyboard.delay = 60;
@@ -317,7 +317,7 @@ void at_keyboard_init(void)
 
 static void at_keyboard_queue_insert(UINT8 data);
 
-void pc_keyboard_init(void)
+void at_keyboard_reset(void)
 {
 	keyboard.head = keyboard.tail = 0;
 	keyboard.input_state = 0;
@@ -342,12 +342,6 @@ void at_keyboard_set_input_port_base(int base)
 {
 	keyboard.input_port_base = base;
 }
-
-void at_keyboard_set_type(AT_KEYBOARD_TYPE type)
-{
-	keyboard.type = (AT_KEYBOARD_TYPE)type;
-}
-
 
 /* insert a code into the buffer */
 static void at_keyboard_queue_insert(UINT8 data)

@@ -8,6 +8,7 @@
 #include <windows.h>
 #include <commdlg.h>
 #include <winuser.h>
+#include <ctype.h>
 
 // MAME/MESS headers
 #include "mame.h"
@@ -288,6 +289,8 @@ static void loadsave(int type)
 	OPENFILENAME ofn;
 	char *dir;
 	int result = 0;
+	char *src;
+	char *dst;
 
 	if (filename[0])
 	{
@@ -297,6 +300,15 @@ static void loadsave(int type)
 	{
 		snprintf(filename, sizeof(filename) / sizeof(filename[0]), "%s State.sta", Machine->gamedrv->description);
 		dir = NULL;
+
+		src = filename;
+		dst = filename;
+		do
+		{
+			if ((*src == '\0') || isalnum(*src) || isspace(*src) || strchr("(),.", *src))
+				*(dst++) = *src;
+		}
+		while(*(src++));
 	}
 
 	memset(&ofn, 0, sizeof(ofn));

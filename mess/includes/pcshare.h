@@ -1,14 +1,14 @@
 #include "driver.h"
 
-struct _PC_SETUP;
+/* flags for init_pc_common */
+#define PCCOMMON_KEYBOARD_PC	0
+#define PCCOMMON_KEYBOARD_AT	1
+#define PCCOMMON_DMA8237_PC		0
+#define PCCOMMON_DMA8237_AT		2
 
-extern struct _PC_SETUP *pc_setup, *pc_setup_pc1512, *pc_setup_pc1640, 
-	*pc_setup_europc, *pc_setup_t1000hx;
-extern struct _PC_SETUP *pc_setup_at;
+void init_pc_common(UINT32 flags);
 
-void pc_init_setup(struct _PC_SETUP *setup);
 
-void init_pc_common(void);
 void pc_cga_init(void);
 void pc_mda_init(void);
 void pc_vga_init(void);

@@ -292,9 +292,11 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 	logerror("  command  = %08X\n", COMMAND);
 #endif
 
+#if LOG_UNHANDLED_BLITS
 	/* check for unhandled command bits */
-	if (COMMAND & 0x64003000)
-		logerror("Blitter unhandled: these command bits: %08X\n", COMMAND & 0x64003000);
+	if (COMMAND & 0x24003000)
+		logerror("Blitter unhandled: these command bits: %08X\n", COMMAND & 0x24003000);
+#endif /* LOG_UNHANDLED_BLITS */
 
 	/* top of the outer loop */
 	outer = outer_count;
@@ -401,6 +403,18 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 						writedata |= srcdata & ~dstdata;
 					if (COMMAND & 0x01000000)
 						writedata |= srcdata & dstdata;
+				}
+
+				/* handle source shading */
+				if (COMMAND & 0x40000000)
+				{
+					int intensity = srcdata & 0x00ff;
+					intensity += (INT8) (blitter_regs[B_Z3] >> 16);
+					if (intensity < 0)
+						intensity = 0;
+					else if (intensity > 0xff)
+						intensity = 0xff;
+					writedata = (srcdata & 0xff00) | intensity;
 				}
 			}
 			else

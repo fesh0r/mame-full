@@ -15,10 +15,10 @@
 #include "includes/pckeybrd.h"
 #include "includes/sblaster.h"
 
-static DMA8237_CONFIG dma= { DMA8237_AT };
 static SOUNDBLASTER_CONFIG soundblaster = { 1,5, {1,0} };
 
-static PIT8253_CONFIG at_pit8253_config={
+static PIT8253_CONFIG at_pit8253_config=
+{
 	TYPE8254,
 	{
 		{
@@ -42,18 +42,12 @@ void init_atcga(void)
 	AT8042_CONFIG at8042={
 		AT8042_STANDARD, i286_set_address_mask
 	};
-	pc_init_setup(pc_setup_at);
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_config(dma8237+1,&dma);
+
+	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
+
 	pit8253_config(0,&at_pit8253_config);
 	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
-	/* initialise keyboard */
-	at_keyboard_init();
-	at_keyboard_set_scan_code_set(1);
-	at_keyboard_set_input_port_base(4);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
 
 	soundblaster_config(&soundblaster);
 	at_8042_init(&at8042);
@@ -75,19 +69,13 @@ void init_at_vga(void)
 	AT8042_CONFIG at8042={
 		AT8042_STANDARD, i286_set_address_mask
 	};
-	pc_init_setup(pc_setup_at);
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_config(dma8237+1,&dma);
+
+	init_pc_common(PCCOMMON_KEYBOARD_AT | PCCOMMON_DMA8237_AT);
+
 	pit8253_config(0,&at_pit8253_config);
 
 	pc_vga_init();
 	mc146818_init(MC146818_STANDARD);
-	/* initialise keyboard */
-	at_keyboard_init();
-	at_keyboard_set_scan_code_set(1);
-	at_keyboard_set_input_port_base(4);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
 
 	vga_init(input_port_0_r);
 	soundblaster_config(&soundblaster);

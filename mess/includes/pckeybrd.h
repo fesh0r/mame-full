@@ -14,11 +14,10 @@ typedef enum
 void at_keyboard_polling(void);
 int at_keyboard_read(void);
 void at_keyboard_write(UINT8 data);
-void at_keyboard_init(void);
-void pc_keyboard_init(void);
+void at_keyboard_init(AT_KEYBOARD_TYPE type);
+void at_keyboard_reset(void);
 void at_keyboard_set_scan_code_set(int set);
 void at_keyboard_set_input_port_base(int base);
-void at_keyboard_set_type(AT_KEYBOARD_TYPE type);
 
 QUEUE_CHARS( at_keyboard );
 ACCEPT_CHAR( at_keyboard );

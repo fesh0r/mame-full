@@ -43,43 +43,29 @@
 #include "includes/pc.h"
 #include "mscommon.h"
 
-static DMA8237_CONFIG dma= { DMA8237_PC };
-
-void init_pccga(void)
+DRIVER_INIT( pccga )
 {
 	pc_cga_init();
-	init_pc_common();
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	pc_rtc_init();
 }
 
-void init_bondwell(void)
+DRIVER_INIT( bondwell )
 {
-	pc_init_setup(pc_setup);
 	pc_cga_init();
-	init_pc_common();
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
-//	at_keyboard_set_type(AT_KEYBOARD_TYPE_MF2);
 }
 
-void init_pcmda(void)
+DRIVER_INIT( pcmda )
 {
-	pc_init_setup(pc_setup);
 	pc_mda_init();
-	init_pc_common();
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 }
 
-void init_europc(void)
+DRIVER_INIT( europc ) 
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	UINT8 *rom = &memory_region(REGION_CPU1)[0];
@@ -100,36 +86,27 @@ void init_europc(void)
 		rom[0xfffff]=256-a;
 	}
 
-	pc_init_setup(pc_setup_europc);
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	europc_rtc_init();
 //	europc_rtc_set_time();
 }
 
-void init_t1000hx(void)
+DRIVER_INIT( t1000hx )
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
 	int i;
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
-	pc_init_setup(pc_setup_t1000hx);
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 }
 
-void init_pc200(void)
+DRIVER_INIT( pc200 )
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
 
-//	pc_init_setup(pc_setup_pc1512);
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
@@ -148,18 +125,14 @@ void init_pc200(void)
 
 	install_port_read_handler(0, 0x278, 0x27b, pc200_port378_r );
 
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC); //?
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 }
 
-void init_pc1512(void)
+DRIVER_INIT( pc1512 )
 {
 	UINT8 *gfx = &memory_region(REGION_GFX1)[0x8000];
 	int i;
 
-	pc_init_setup(pc_setup_pc1512);
     /* just a plain bit pattern for graphics data generation */
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
@@ -173,16 +146,12 @@ void init_pc1512(void)
 	install_port_read_handler(0, 0x278, 0x27b, pc_parallelport2_r );
 
 
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
 
-extern void init_pc1640(void)
+DRIVER_INIT( pc1640 )
 {
-	pc_init_setup(pc_setup_pc1640);
 	vga_init(input_port_0_r);
 	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA_BANK1 );
 	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA_BANK2 );
@@ -203,22 +172,15 @@ extern void init_pc1640(void)
 	install_port_read_handler(0, 0x278, 0x27b, pc1640_port278_r );
 	install_port_read_handler(0, 0x4278, 0x427b, pc1640_port4278_r );
 
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
 
-void init_pc_vga(void)
+DRIVER_INIT( pc_vga )
 {
-	pc_init_setup(pc_setup);
-	init_pc_common();
+	init_pc_common(PCCOMMON_KEYBOARD_PC | PCCOMMON_DMA8237_PC);
 	ppi8255_init(&pc_ppi8255_interface);
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 
 	vga_init(input_port_0_r);
 	pc_vga_init();
@@ -226,33 +188,28 @@ void init_pc_vga(void)
 
 MACHINE_INIT( pc_mda )
 {
-//	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
 MACHINE_INIT( pc_cga )
 {
-//	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
 MACHINE_INIT( pc_t1t )
 {
-//	pc_keyboard_init();
 	pc_t1t_reset();
 	dma8237_reset(dma8237);
 }
 
 MACHINE_INIT( pc_aga )
 {
-//	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
 MACHINE_INIT( pc_vga )
 {
 	vga_reset();
-//	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 

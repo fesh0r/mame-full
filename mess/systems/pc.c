@@ -68,7 +68,7 @@
  */
 #define ADLIB	/* YM3812/OPL2 Chip */
 /*
-  creativ labs game blaster (CMS creativ music system)
+  creative labs game blaster (CMS creative music system)
   2 x saa1099 chips
   also on sound blaster 1.0
   option on sound blaster 1.5
@@ -83,8 +83,7 @@
 static READ_HANDLER( return_0xff ) { return 0xff; }
 
 static MEMORY_READ_START( pc_readmem )
-	{ 0x00000, 0x7ffff, MRA_RAM },
-	{ 0x80000, 0x9ffff, MRA_RAM },
+	{ 0x00000, 0x9ffff, MRA_BANK10 },
 	{ 0xa0000, 0xbffff, MRA_NOP },
 	{ 0xc0000, 0xc7fff, MRA_NOP },
 	{ 0xc8000, 0xcffff, MRA_ROM },
@@ -93,8 +92,7 @@ static MEMORY_READ_START( pc_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( pc_writemem )
-	{ 0x00000, 0x7ffff, MWA_RAM },
-	{ 0x80000, 0x9ffff, MWA_RAM },
+	{ 0x00000, 0x9ffff, MWA_BANK10 },
 	{ 0xa0000, 0xbffff, MWA_NOP },
 	{ 0xc0000, 0xc7fff, MWA_NOP },
 	{ 0xc8000, 0xcffff, MWA_ROM },
@@ -166,8 +164,7 @@ static PORT_WRITE_START( pc_writeport )
 PORT_END
 
 static MEMORY_READ_START( europc_readmem )
-	{ 0x00000, 0x7ffff, MRA_RAM },
-	{ 0x80000, 0x9ffff, MRA_RAM },
+	{ 0x00000, 0x9ffff, MRA_BANK10 },
 	{ 0xa0000, 0xaffff, MRA_NOP },
 	{ 0xb0000, 0xbffff, pc_aga_videoram_r },
 	{ 0xc0000, 0xc7fff, MRA_NOP },
@@ -177,8 +174,7 @@ static MEMORY_READ_START( europc_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( europc_writemem )
-	{ 0x00000, 0x7ffff, MWA_RAM },
-	{ 0x80000, 0x9ffff, MWA_RAM },
+	{ 0x00000, 0x9ffff, MWA_BANK10 },
 	{ 0xa0000, 0xaffff, MWA_NOP },
 	{ 0xb0000, 0xbffff, pc_aga_videoram_w, &videoram, &videoram_size },
 	{ 0xc0000, 0xc7fff, MWA_NOP },
@@ -244,8 +240,7 @@ static PORT_WRITE_START( europc_writeport )
 PORT_END
 
 static MEMORY_READ_START(t1t_readmem)
-	{ 0x00000, 0x7ffff, MRA_RAM },
-	{ 0x80000, 0x9ffff, MRA_RAM },
+	{ 0x00000, 0x9ffff, MRA_BANK10 },
 	{ 0xa0000, 0xaffff, MRA_RAM },
 	{ 0xb0000, 0xb7fff, MRA_NOP },
 	{ 0xb8000, 0xbffff, pc_t1t_videoram_r },
@@ -257,8 +252,7 @@ static MEMORY_READ_START(t1t_readmem)
 PORT_END
 
 static MEMORY_WRITE_START( t1t_writemem )
-	{ 0x00000, 0x7ffff, MWA_RAM },
-	{ 0x80000, 0x9ffff, MWA_RAM },
+	{ 0x00000, 0x9ffff, MWA_BANK10 },
 	{ 0xa0000, 0xaffff, MWA_RAM },
     { 0xb0000, 0xb7fff, MWA_NOP },
 	{ 0xb8000, 0xbffff, pc_video_videoram_w },
@@ -348,8 +342,7 @@ static PORT_WRITE_START( pc200_writeport )
 PORT_END
 
 static MEMORY_READ_START( pc1640_readmem )
-	{ 0x00000, 0x7ffff, MRA_RAM },
-	{ 0x80000, 0x9ffff, MRA_RAM },
+	{ 0x00000, 0x9ffff, MRA_BANK10 },
 	{ 0xa0000, 0xbffff, MRA_NOP },
 	{ 0xc0000, 0xc7fff, MRA_ROM },
     { 0xc8000, 0xcffff, MRA_ROM },
@@ -358,8 +351,7 @@ static MEMORY_READ_START( pc1640_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( pc1640_writemem )
-	{ 0x00000, 0x7ffff, MWA_RAM },
-	{ 0x80000, 0x9ffff, MWA_RAM },
+	{ 0x00000, 0x9ffff, MWA_BANK10 },
 	{ 0xa0000, 0xbffff, MWA_NOP },
 	{ 0xc0000, 0xc7fff, MWA_ROM },
 	{ 0xc8000, 0xcffff, MWA_ROM },
@@ -1737,6 +1729,7 @@ ROM_START( pc1640 )
 ROM_END
 
 SYSTEM_CONFIG_START(ibmpc)
+	CONFIG_RAM_DEFAULT( 640 * 1024 )
 	CONFIG_DEVICE_PRINTER(3)
 	CONFIG_DEVICE_PC_FLOPPY(2)
 	CONFIG_DEVICE_PC_HARDDISK(4)

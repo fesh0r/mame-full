@@ -1458,10 +1458,9 @@ static MACHINE_INIT( pcw16 )
 	pc_mouse_initialise();
 
 	/* initialise keyboard */
-	at_keyboard_init();
+	at_keyboard_init(AT_KEYBOARD_TYPE_AT);
 	at_keyboard_set_scan_code_set(3);
 	at_keyboard_set_input_port_base(4);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_AT);
 
 	pcw16_reset();
 

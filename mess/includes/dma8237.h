@@ -24,11 +24,11 @@ extern READ_HANDLER ( pc_page_r );
 extern READ_HANDLER ( at_page_r );
 
 
-	typedef enum { DMA8237_PC, DMA8237_AT } DMA8237_TYPE;
+typedef enum { DMA8237_PC, DMA8237_AT } DMA8237_TYPE;
 
-	typedef struct {
-		DMA8237_TYPE type;
-	} DMA8237_CONFIG;
+typedef struct {
+	DMA8237_TYPE type;
+} DMA8237_CONFIG;
 
 
 typedef struct {

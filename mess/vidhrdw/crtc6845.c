@@ -34,6 +34,7 @@
 #include "snprintf.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "state.h"
 
 #include "mscommon.h"
 #include "includes/crtc6845.h"
@@ -121,6 +122,13 @@ static UINT8 pc1512_defaults[] =
 
 ***************************************************************************/
 
+static void crtc6845_state_postload(void)
+{
+	schedule_full_refresh();
+	if (dirtybuffer && videoram_size)
+		memset(dirtybuffer, 1, videoram_size);
+}
+
 struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 {
 	struct crtc6845 *crtc;
@@ -144,6 +152,9 @@ struct crtc6845 *crtc6845_init(const struct crtc6845_config *config)
 		}
 	}
 
+	state_save_register_UINT8("crtc6845", 0, "REGS",	crtc->reg, sizeof(crtc->reg) / sizeof(crtc->reg[0]));
+	state_save_register_UINT8("crtc6845", 0, "IDX",		&crtc->idx, 1);
+	state_save_register_func_postload(crtc6845_state_postload);
 	return crtc;
 }
 
