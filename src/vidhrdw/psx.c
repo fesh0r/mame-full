@@ -55,7 +55,7 @@ static int m_n_screenwidth;
 static int m_n_screenheight;
 
 #define MAX_LEVEL ( 32 )
-#define MID_LEVEL ( ( ( MAX_LEVEL - 1 ) / 2 ) << 8 )
+#define MID_LEVEL ( ( MAX_LEVEL / 2 ) << 8 )
 #define MAX_SHADE ( 0x100 )
 #define MID_SHADE ( 0x80 )
 
@@ -2262,6 +2262,7 @@ READ32_HANDLER( psxgpu_r )
 
 INTERRUPT_GEN( psx )
 {
+	m_n_gpustatus ^= ( 1L << 31 );
 	psxirq_set( 0x0001 );
 }
 
