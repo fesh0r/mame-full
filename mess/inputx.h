@@ -11,9 +11,6 @@
 
 #include "mame.h"
 
-typedef UINT16 utf16_char_t;
-typedef UINT32 unicode_char_t;
-
 /* these are called by the core; they should not be called from FEs */
 void inputx_init(void);
 void inputx_update(unsigned short *ports);

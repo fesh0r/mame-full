@@ -45,6 +45,9 @@ Source Changes:
 
 - Devices are now referenced by a mess_image pointer, rather than a type/id
   pair. [Nate Woods]
+  
+- Enhanced MESS's natural keyboard facility, so that drivers can specify
+  handlers to bypass keypress simulation.  [Nate Woods]
 
 - Changed device load and unload so that all devices are loaded before machine
   init, but not necessarily driver init, in response to a bug (bug #366).

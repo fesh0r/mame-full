@@ -132,7 +132,7 @@ static unicode_char_t unicode_tolower(unicode_char_t c)
 	return (c < 128) ? tolower((char) c) : c;
 }
 
-#define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer))
+#define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES)
 
 static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes, int map_lowercase)
 {
@@ -371,45 +371,82 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 ***************************************************************************/
 
 static struct InputCode *codes;
+static struct KeyBuffer *keybuffer;
 static void *inputx_timer;
+static int (*queue_chars)(const unicode_char_t *text, size_t text_len);
+static int (*accept_char)(unicode_char_t ch);
 
 static void inputx_timerproc(int dummy);
 
 void inputx_init(void)
 {
+	struct SystemConfigurationParamBlock params;
+
 	codes = NULL;
 	inputx_timer = NULL;
+	queue_chars = NULL;
+	accept_char = NULL;
 
+	/* posting keys directly only makes sense for a computer */
 	if (Machine->gamedrv->flags & GAME_COMPUTER)
 	{
-		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
-		if (!codes)
-			return;
-		if (!build_codes(Machine->gamedrv, codes, TRUE))
+		/* check driver for QUEUE_CHARS and/or ACCEPT_CHAR callbacks */
+		memset(&params, 0, sizeof(params));
+		if (Machine->gamedrv->sysconfig_ctor)
+			Machine->gamedrv->sysconfig_ctor(&params);
+		queue_chars = params.queue_chars;
+		accept_char = params.accept_char;
+
+		keybuffer = auto_malloc(sizeof(struct KeyBuffer));
+		if (!keybuffer)
+			goto error;
+
+		if (!queue_chars)
 		{
-			codes = NULL;
-			return;
+			/* only need to compute codes if QUEUE_CHARS not present */
+			codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
+			if (!codes)
+				goto error;
+			if (!build_codes(Machine->gamedrv, codes, TRUE))
+				goto error;
 		}
 
 		inputx_timer = timer_alloc(inputx_timerproc);
 	}
+	return;
+
+error:
+	codes = NULL;
+	keybuffer = NULL;
+	queue_chars = NULL;
+	accept_char = NULL;
 }
 
 int inputx_can_post(void)
 {
-	return codes != NULL;
+	return queue_chars || codes;
 }
 
 static struct KeyBuffer *get_buffer(void)
 {
-	assert(codes);
-	return (struct KeyBuffer *) (codes + NUM_CODES);
+	assert(inputx_can_post());
+	return (struct KeyBuffer *) keybuffer;
 }
 
 static int can_post_key_directly(unicode_char_t ch)
 {
-	assert(codes);
-	return ((ch < NUM_CODES) && codes[ch].ipt[0] != NULL);
+	int rc;
+
+	if (queue_chars)
+	{
+		rc = accept_char ? accept_char(ch) : TRUE;
+	}
+	else
+	{
+		assert(codes);
+		rc = ((ch < NUM_CODES) && codes[ch].ipt[0] != NULL);
+	}
+	return rc;
 }
 
 static int can_post_key_alternate(unicode_char_t ch)
@@ -431,6 +468,7 @@ static int can_post_key_alternate(unicode_char_t ch)
 
 int inputx_can_post_key(unicode_char_t ch)
 {
+	
 	return inputx_can_post() && (can_post_key_directly(ch) || can_post_key_alternate(ch));
 }
 
@@ -438,14 +476,22 @@ static double choose_delay(unicode_char_t ch)
 {
 	double delay;
 
-	switch(ch) {
-	case '\r':
-		delay = TIME_IN_SEC(0.2);
-		break;
+	if (queue_chars)
+	{
+		/* systems with queue_chars can afford a much smaller delay */
+		delay = TIME_IN_SEC(0.01);
+	}
+	else
+	{
+		switch(ch) {
+		case '\r':
+			delay = TIME_IN_SEC(0.2);
+			break;
 
-	default:
-		delay = TIME_IN_SEC(0.05);
-		break;
+		default:
+			delay = TIME_IN_SEC(0.05);
+			break;
+		}
 	}
 	return delay;
 }
@@ -523,17 +569,32 @@ static void inputx_timerproc(int dummy)
 	double delay;
 
 	keybuf = get_buffer();
-	if (keybuf->status & STATUS_KEYDOWN)
+
+	if (queue_chars)
 	{
-		keybuf->status &= ~STATUS_KEYDOWN;
-		keybuf->begin_pos++;
-		keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+		/* the driver has a queue_chars handler */
+		while(queue_chars(&keybuf->buffer[keybuf->begin_pos], 1))
+		{
+			keybuf->begin_pos++;
+			keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+		}
 	}
 	else
 	{
-		keybuf->status |= STATUS_KEYDOWN;
+		/* the driver does not have a queue_chars handler */
+		if (keybuf->status & STATUS_KEYDOWN)
+		{
+			keybuf->status &= ~STATUS_KEYDOWN;
+			keybuf->begin_pos++;
+			keybuf->begin_pos %= sizeof(keybuf->buffer) / sizeof(keybuf->buffer[0]);
+		}
+		else
+		{
+			keybuf->status |= STATUS_KEYDOWN;
+		}
 	}
 
+	/* need to make sure timerproc is called again if buffer not empty */
 	if (keybuf->begin_pos != keybuf->end_pos)
 	{
 		delay = choose_delay(keybuf->buffer[keybuf->begin_pos]);

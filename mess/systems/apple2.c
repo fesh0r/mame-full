@@ -187,6 +187,7 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 #include "includes/apple2.h"
 #include "inputx.h"
 #include "snprintf.h"
+#include "machine/ay3600.h"
 
 static MEMORY_READ_START( readmem_apple2 )
 	{ 0x0000, 0x01ff, MRA_BANK4 },
@@ -659,6 +660,8 @@ SYSTEM_CONFIG_START(apple2)
 	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0do\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, apple2_floppy_init, NULL, apple2_floppy_load, NULL, NULL)
 	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 	CONFIG_RAM_DEFAULT			(128 * 1024)
+	CONFIG_QUEUE_CHARS			( AY3600 )
+	CONFIG_ACCEPT_CHAR			( AY3600 )
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
