@@ -31,7 +31,6 @@ Imgtool Subcommands
 ===================
 
 create         Creates an image
-extract        Extracts all files contained within an image
 dir            Lists the contents of an image
 get            Gets a single file from an image
 put            Puts a single file on an image
@@ -45,3 +44,55 @@ good           CRC checks a set of images and for matching images, copy into a
 listformats    Lists all image file formats supported by imgtool
 
 
+lnx Commodore 64 Lynx Archiv
+----------------------------
+only for early revisions of lynx archivs
+only extraction supported
+not heavily tested
+
+Lynx archivs could and should be handled in a c64 emulation 
+with the native lynx tool
+
+
+t64 Commodore 64/C64S Archiv for Tapes
+--------------------------------------
+not heavily tested
+further creation/use of these archivs discouraged
+
+
+c64crt/crt Commodore 64 Cartridge
+---------------------------------
+for professional use only (cartridge dumper)
+not heavily tested
+
+
+d64 Commodore SX64/VC1541/1551/2031 Diskette
+x64 VICE variant of the above
+d71 Commodore 128D/1571 Diskette
+d81 Commodore 65/1565/1581 Diskette
+-----------------------------------
+not heavily tested
+
+
+msdos/fat Microsoft DOS Diskette
+--------------------------------
+directories not finished
+not heavily tested
+
+
+msdoshd/fat Microsoft DOS Harddisk/PC Partition Table
+-----------------------------------------------------
+not finished and not working
+(see also unter msdos/fat)
+
+
+fs Filesystem Direct Access
+---------------------------
+internal usage in future MESS
+
+
+zip ZIP Archiv Access
+---------------------
+internal usage in future MESS
+only extraction supported
+(must be adapted for the MAME/MESS search path)

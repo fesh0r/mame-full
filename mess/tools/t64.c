@@ -117,12 +117,13 @@ static int t64_image_create(STREAM *f, const geometry_options *options);
 
 IMAGEMODULE(
 	t64,
-	"Commodore C64 Tape",	/* human readable name */
+	"Commodore 64 Archiv for Tapes",	/* human readable name */
 	"t64",								/* file extension */
 	IMAGE_USES_LABEL|IMAGE_USES_ENTRIES,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,
 	t64_image_init,				/* init function */
 	t64_image_exit,				/* exit function */
 	t64_image_info,		/* info function */
@@ -134,6 +135,8 @@ IMAGEMODULE(
 	t64_image_writefile,			/* write file */
 	t64_image_deletefile,			/* delete file */
 	t64_image_create,				/* create image */
+	NULL,
+	NULL,
 	NULL
 )
 

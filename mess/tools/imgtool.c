@@ -30,12 +30,24 @@ CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
 extern struct ImageModule imgmod_rsdos;	/* CoCo RS-DOS disks */
 extern struct ImageModule imgmod_pchd;	/* PC HD images */
-extern struct ImageModule imgmod_t64;	/* c64 tapes */
+extern struct ImageModule imgmod_msdos;	/* FAT/MSDOS diskett images */
+extern struct ImageModule imgmod_msdoshd;	/* FAT/MSDOS harddisk images */
+extern struct ImageModule imgmod_lynx;	/* c64 archiv */
+extern struct ImageModule imgmod_t64;	/* c64 archiv */
+extern struct ImageModule imgmod_d64;	/* commodore sx64/vc1541/2031/1551 disketts */
+extern struct ImageModule imgmod_x64;	/* commodore vc1541 disketts */
+extern struct ImageModule imgmod_d71;	/* commodore 128d/1571 disketts */
+extern struct ImageModule imgmod_d81;	/* commodore 65/1565/1581 disketts */
 extern struct ImageModule imgmod_c64crt;	/* c64 cartridge */
+
+extern struct ImageModule imgmod_zip;
+extern struct ImageModule imgmod_fs;
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
 	&imgmod_pchd,
+	&imgmod_msdos,
+	&imgmod_msdoshd,
 	&imgmod_nes,
 	&imgmod_a5200,
 	&imgmod_a7800,
@@ -44,6 +56,11 @@ static const struct ImageModule *images[] = {
 	&imgmod_c16,
 	&imgmod_c64crt,
 	&imgmod_t64,
+	&imgmod_lynx,
+	&imgmod_d64,
+	&imgmod_x64,
+	&imgmod_d71,
+	&imgmod_d81,
 	&imgmod_coleco,
 	&imgmod_gameboy,
 	&imgmod_gamegear,
@@ -57,6 +74,10 @@ static const struct ImageModule *images[] = {
 	&imgmod_vc20,
 	&imgmod_vectrex,
 	&imgmod_vic20
+#if 1 // these are only here for testing of these two
+	,&imgmod_fs,
+	&imgmod_zip
+#endif
 };
 
 /* ----------------------------------------------------------------------- */
@@ -124,17 +145,24 @@ int img_open(const struct ImageModule *module, const char *fname, int read_or_wr
 
 	*outimg = NULL;
 
-	if (!module->init)
+	if (!module->init && !module->init_by_name)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	f = stream_open(fname, read_or_write);
-	if (!f)
-		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
-
-	err = module->init(f, outimg);
-	if (err) {
-		stream_close(f);
-		return markerrorsource(err);
+	if (module->init_by_name) {
+		err = module->init_by_name(fname, outimg);
+		if (err) {
+			return markerrorsource(err);
+		}
+	} else {
+		f = stream_open(fname, read_or_write);
+		if (!f)
+			return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
+		
+		err = module->init(f, outimg);
+		if (err) {
+			stream_close(f);
+			return markerrorsource(err);
+		}
 	}
 	return 0;
 }

@@ -371,7 +371,7 @@ static int crt_image_create(STREAM *f, const geometry_options *options);
 
 IMAGEMODULE(
 	c64crt,
-	"Commodore C64 Cartridge",	/* human readable name */
+	"Commodore 64 Cartridge",	/* human readable name */
 	"crt",								/* file extension */
 	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
 	|IMAGE_USES_HARDWARE_TYPE|IMAGE_USES_GAME_LINE
@@ -379,6 +379,7 @@ IMAGEMODULE(
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
 	NULL,								/* geometry ranges */
+	NULL,
 	crt_image_init,				/* init function */
 	crt_image_exit,				/* exit function */
 	crt_image_info, /* info function */
@@ -390,7 +391,9 @@ IMAGEMODULE(
 	crt_image_writefile,			/* write file */
 	crt_image_deletefile,			/* delete file */
 	crt_image_create,				/* create image */
-	NULL /* extract function */
+	NULL, /* extract function */
+	NULL,
+	NULL
 )
 
 static int crt_image_init(STREAM *f, IMAGE **outimg)

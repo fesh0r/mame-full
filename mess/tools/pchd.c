@@ -15,6 +15,7 @@ IMAGEMODULE(pchd,
 	NULL,										/* crcfile */
 	NULL,										/* crc system name */
 	&pchd_geometry,								/* geometry ranges */
+	NULL,
 	NULL,										/* init function */
 	NULL,										/* exit function */
 	NULL,										/* info function */
@@ -26,7 +27,9 @@ IMAGEMODULE(pchd,
 	NULL,										/* write file */
 	NULL,										/* delete file */
 	pchd_create,								/* create image */
-	NULL										/* extract function */
+	NULL,										/* extract function */
+	NULL,
+	NULL
 )
 
 #define SECTORS     17

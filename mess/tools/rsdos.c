@@ -52,6 +52,7 @@ IMAGEMODULE(
 	NULL,									/* crcfile */
 	NULL,									/* crc system name */
 	NULL,									/* geometry ranges */
+	NULL,									/* init by name function */
 	rsdos_diskimage_init,					/* init function */
 	rsdos_diskimage_exit,					/* exit function */
 	NULL,									/* info function */
@@ -63,7 +64,9 @@ IMAGEMODULE(
 	rsdos_diskimage_writefile,				/* write file */
 	rsdos_diskimage_deletefile,				/* delete file */
 	rsdos_diskimage_create,					/* create image */
-	NULL									/* extract function */
+	NULL,									/* extract function */
+	NULL,
+	NULL
 )
 
 static void rtrim(char *buf)

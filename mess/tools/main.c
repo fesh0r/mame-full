@@ -202,6 +202,7 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	static const char *options[] = { "ftype", "ascii", "addr", "bank" };
 
 	memset(&opts, 0, sizeof(opts));
+
 	optionvals[0] = &opts.ftype;
 	optionvals[1] = &opts.fascii;
 	optionvals[2] = &opts.faddr;
@@ -409,20 +410,23 @@ static int cmd_create(struct command *c, int argc, char *argv[])
 {
 	int err;
 	geometry_options opts;
-	int *optionvals[6];
+	int *optionvals[8];
 	static const char *options[] = { 
-		"cylinders", "heads" ,
+		"cylinders", "heads" , "sectors", "sectorsize",
 		"htype", "exrom", "game",
 		"entries"
 	};
 
 	memset(&opts, 0, sizeof(opts));
+
 	optionvals[0] = &opts.cylinders;
 	optionvals[1] = &opts.heads;
-	optionvals[2] = &opts.hardware_type;
-	optionvals[3] = &opts.exrom_line;
-	optionvals[4] = &opts.game_line;
-	optionvals[5] = &opts.entries;
+	optionvals[2] = &opts.sectors;
+	optionvals[3] = &opts.sector_size;
+	optionvals[4] = &opts.hardware_type;
+	optionvals[5] = &opts.exrom_line;
+	optionvals[6] = &opts.game_line;
+	optionvals[7] = &opts.entries;	
 
 	if ((argv[2]==0)||(memcmp(argv[2],"--",2)==0)) {
 		opts.label=NULL;
@@ -489,6 +493,7 @@ static int cmd_listformats(struct command *c, int argc, char *argv[])
 static struct command cmds[] = {
 	{ "create", "<format> <imagename> [<internalname>] "
 	  "[--heads=HEADS] [--cylinders=CYLINDERS] "
+	  "[--sectors=SECTORS] [--sectorsize=SIZE] "
 	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]", 
 	  cmd_create, 2, 8, 0},
 	{ "extract", "<format> <imagename> <filename>", cmd_extract, 3, 3, 0 },
