@@ -12,7 +12,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "../machine/coupe.h"
+#include "includes/coupe.h"
 
 unsigned char *sam_screen;
 

@@ -120,6 +120,9 @@ struct MachineSound
 #if (HAS_WAVE)
 #include "sound/wave.h"
 #endif
+#if (HAS_SAA1099)
+#include "sound/saa1099.h"
+#endif
 
 
 enum
@@ -250,6 +253,9 @@ enum
 #endif
 #if (HAS_WAVE)
 	SOUND_WAVE,
+#endif
+#if (HAS_SAA1099)
+	SOUND_SAA1099,
 #endif
     SOUND_COUNT
 };

@@ -802,3 +802,10 @@ SOUNDDEFS += -DHAS_WAVE=1
 SOUNDOBJS += $(OBJ)/sound/wave.o
 endif
 
+SOUND=$(strip $(findstring SAA1099@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_SAA1099=1
+SOUNDOBJS += $(OBJ)/sound/saa1099.o
+endif
+
+

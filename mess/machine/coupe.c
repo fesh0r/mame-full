@@ -10,7 +10,7 @@
 #include <stdarg.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "coupe.h"
+#include "includes/coupe.h"
 
 #define COUPE_256
 

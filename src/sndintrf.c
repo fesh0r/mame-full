@@ -284,6 +284,9 @@ int speaker_num(const struct MachineSound *msound) { return ((struct Speaker_int
 #if (HAS_WAVE)
 int wave_num(const struct MachineSound *msound) { return ((struct Wave_interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_SAA1099)
+int saa1099_num(const struct MachineSound *msound) { return ((struct saa1099_interface*)msound->sound_interface)->numchips; }
+#endif
 
 struct snd_interface sndintf[] =
 {
@@ -785,6 +788,18 @@ struct snd_interface sndintf[] =
 		wave_sh_start,
 		wave_sh_stop,
 		wave_sh_update,
+		0
+	},
+#endif
+#if (HAS_SAA1099)
+	{
+		SOUND_SAA1099,
+		"SAA1099",
+		saa1099_num,
+		0,
+		saa1099_sh_start,
+		saa1099_sh_stop,
+		0,
 		0
 	},
 #endif

@@ -60,6 +60,7 @@ SOUNDS+=OKIM6295@
 SOUNDS+=QSOUND@
 SOUNDS+=SPEAKER@
 SOUNDS+=WAVE@
+SOUNDS+=SAA1099@
 
 # Archive definitions
 DRVLIBS = $(OBJ)/advision.a \
@@ -683,7 +684,7 @@ mess.obj/mess/systems/coupe.o: src/sound/mixer.h src/sound/streams.h
 mess.obj/mess/systems/coupe.o: src/usrintrf.h src/cheat.h src/tilemap.h
 mess.obj/mess/systems/coupe.o: src/sprite.h src/gfxobj.h src/profiler.h
 mess.obj/mess/systems/coupe.o: src/cpu/z80/z80.h src/vidhrdw/generic.h
-mess.obj/mess/systems/coupe.o: mess/machine/coupe.h
+mess.obj/mess/systems/coupe.o: mess/includes/coupe.h
 mess.obj/mess/systems/cpschngr.o: src/driver.h src/memory.h src/osdepend.h
 mess.obj/mess/systems/cpschngr.o: src/inptport.h src/input.h src/mame.h
 mess.obj/mess/systems/cpschngr.o: src/drawgfx.h src/common.h src/palette.h
@@ -1370,7 +1371,7 @@ mess.obj/mess/machine/coupe.o: src/cpuintrf.h src/timer.h src/sndintrf.h
 mess.obj/mess/machine/coupe.o: src/sound/mixer.h src/sound/streams.h
 mess.obj/mess/machine/coupe.o: src/usrintrf.h src/cheat.h src/tilemap.h
 mess.obj/mess/machine/coupe.o: src/sprite.h src/gfxobj.h src/profiler.h
-mess.obj/mess/machine/coupe.o: src/cpu/z80/z80.h mess/machine/coupe.h
+mess.obj/mess/machine/coupe.o: src/cpu/z80/z80.h mess/includes/coupe.h
 mess.obj/mess/machine/cpm_bios.o: src/driver.h src/memory.h src/osdepend.h
 mess.obj/mess/machine/cpm_bios.o: src/inptport.h src/input.h src/mame.h
 mess.obj/mess/machine/cpm_bios.o: src/drawgfx.h src/common.h src/palette.h
@@ -2087,7 +2088,7 @@ mess.obj/mess/vidhrdw/coupe.o: src/cpuintrf.h src/timer.h src/sndintrf.h
 mess.obj/mess/vidhrdw/coupe.o: src/sound/mixer.h src/sound/streams.h
 mess.obj/mess/vidhrdw/coupe.o: src/usrintrf.h src/cheat.h src/tilemap.h
 mess.obj/mess/vidhrdw/coupe.o: src/sprite.h src/gfxobj.h src/profiler.h
-mess.obj/mess/vidhrdw/coupe.o: src/vidhrdw/generic.h mess/machine/coupe.h
+mess.obj/mess/vidhrdw/coupe.o: src/vidhrdw/generic.h mess/includes/coupe.h
 mess.obj/mess/vidhrdw/crtc6845.o: src/driver.h src/memory.h src/osdepend.h
 mess.obj/mess/vidhrdw/crtc6845.o: src/inptport.h src/input.h src/mame.h
 mess.obj/mess/vidhrdw/crtc6845.o: src/drawgfx.h src/common.h src/palette.h

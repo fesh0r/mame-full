@@ -26,7 +26,7 @@ Changes:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "../machine/coupe.h"
+#include "includes/coupe.h"
 
 void coupe_init_machine(void);
 void coupe_shutdown_machine(void);
