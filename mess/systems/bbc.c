@@ -40,19 +40,19 @@ SHEILA
 ******************************************************************************/
 
 /* for the model A just address the 4 on board rom sockets */
-WRITE_HANDLER ( page_selecta_w )
+static WRITE_HANDLER ( page_selecta_w )
 {
 	cpu_setbank(2,memory_region(REGION_CPU1)+0x10000+((data&0x03)<<14));
 }
 
 /* for the model B address all 16 of the rom sockets */
-WRITE_HANDLER ( page_selectb_w )
+static WRITE_HANDLER ( page_selectb_w )
 {
 	cpu_setbank(2,memory_region(REGION_CPU1)+0x10000+((data&0x0f)<<14));
 }
 
 
-WRITE_HANDLER ( memory_w )
+static WRITE_HANDLER ( memory_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 
@@ -60,17 +60,17 @@ WRITE_HANDLER ( memory_w )
 	vidmem[offset]=1;
 }
 
-READ_HANDLER ( BBC_NOP_00_r )
+static READ_HANDLER ( BBC_NOP_00_r )
 {
 	return 0x00;
 }
 
-READ_HANDLER ( BBC_NOP_FE_r )
+static READ_HANDLER ( BBC_NOP_FE_r )
 {
 	return 0xFE;
 }
 
-READ_HANDLER ( BBC_NOP_FF_r )
+static READ_HANDLER ( BBC_NOP_FF_r )
 {
 	return 0xFF;
 }
