@@ -64,6 +64,9 @@ struct RunningMachine
 };
 
 #ifdef MESS
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
 #define MAX_IMAGES	32
 /*
  * This is a filename and it's associated peripheral type
