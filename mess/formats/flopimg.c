@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "formats/flopimg.h"
 #include "pool.h"
@@ -99,34 +100,37 @@ static floppy_image *floppy_init(void *fp, const struct io_procs *procs, int fla
 
 
 
+/* main code for identifying and maybe opening a disk image; not exposed
+ * directly because this function is big and hideous */
 static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, const char *extension,
-	const struct FloppyFormat *floppy_options, size_t max_options, int flags, floppy_image **outfloppy)
+	const struct FloppyFormat *floppy_options, int max_options, int flags, floppy_image **outfloppy,
+	int *outoption)
 {
 	floperr_t err;
 	floppy_image *floppy;
-	const struct FloppyFormat *best_option;
-	int best_vote, vote;
+	int best_option = -1;
+	int best_vote = 0;
+	int vote;
+	size_t i;
 
 	floppy = floppy_init(fp, procs, flags);
 	if (!floppy)
 	{
 		err = FLOPPY_ERROR_OUTOFMEMORY;
-		goto error;
+		goto done;
 	}
 
 	/* vote on the best format */
-	best_option = NULL;
-	best_vote = 0;
-	while(floppy_options->construct && max_options--)
+	for (i = 0; (i < max_options) && floppy_options[i].construct; i++)
 	{
-		if (!extension || !floppy_options->extensions || findextension(floppy_options->extensions, extension))
+		if (!extension || !floppy_options[i].extensions || findextension(floppy_options[i].extensions, extension))
 		{
-			if (floppy_options->identify)
+			if (floppy_options[i].identify)
 			{
 				vote = 0;
-				err = floppy_options->identify(floppy, floppy_options, &vote);
+				err = floppy_options[i].identify(floppy, &floppy_options[i], &vote);
 				if (err)
-					goto error;
+					goto done;
 			}
 			else
 			{
@@ -137,47 +141,67 @@ static floperr_t floppy_open_internal(void *fp, const struct io_procs *procs, co
 			if (vote > best_vote)
 			{
 				best_vote = vote;
-				best_option = floppy_options;
+				best_option = i;
 			}
 		}
-		floppy_options++;
 	}
 
 	/* did we find a format? */
-	if (!best_option)
+	if (best_option == -1)
 	{
 		err = FLOPPY_ERROR_INVALIDIMAGE;
-		goto error;
+		goto done;
 	}
 
-	/* call the format constructor */
-	err = best_option->construct(floppy, best_option, NULL);
-	if (err)
-		goto error;
+	if (outfloppy)
+	{
+		/* call the format constructor */
+		err = floppy_options[best_option].construct(floppy, &floppy_options[best_option], NULL);
+		if (err)
+			goto done;
 
-	floppy->floppy_option = best_option;
-	*outfloppy = floppy;
-	return FLOPPY_ERROR_SUCCESS;
+		floppy->floppy_option = &floppy_options[best_option];
+	}
 
-error:
-	if (floppy)
+	err = FLOPPY_ERROR_SUCCESS;
+
+done:
+	/* if we have a floppy disk and we either errored or are not keeping it, close it */
+	if (floppy && (!outfloppy || err))
+	{
 		floppy_close_internal(floppy, FALSE);
-	*outfloppy = NULL;
+		floppy = NULL;
+	}
+
+	if (outoption)
+		*outoption = err ? -1 : best_option;
+	if (outfloppy)
+		*outfloppy = floppy;
 	return err;
 }
 
 
 
-floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *format, int flags, floppy_image **outfloppy)
+floperr_t floppy_identify(void *fp, const struct io_procs *procs, const char *extension,
+	const struct FloppyFormat *formats, int *identified_format)
 {
-	return floppy_open_internal(fp, procs, extension, format, 1, flags, outfloppy);
+	return floppy_open_internal(fp, procs, extension, formats, INT_MAX, FLOPPY_FLAGS_READONLY, NULL, identified_format);
 }
 
 
 
-floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension, const struct FloppyFormat *formats, int flags, floppy_image **outfloppy)
+floperr_t floppy_open(void *fp, const struct io_procs *procs, const char *extension,
+	const struct FloppyFormat *format, int flags, floppy_image **outfloppy)
 {
-	return floppy_open_internal(fp, procs, extension, formats, (size_t) -1, flags, outfloppy);
+	return floppy_open_internal(fp, procs, extension, format, 1, flags, outfloppy, NULL);
+}
+
+
+
+floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char *extension,
+	const struct FloppyFormat *formats, int flags, floppy_image **outfloppy)
+{
+	return floppy_open_internal(fp, procs, extension, formats, INT_MAX, flags, outfloppy, NULL);
 }
 
 

@@ -91,7 +91,7 @@ static casserr_t wavfile_process(cassette_image *cassette, struct CassetteOption
 		if (!memcmp(tag_header, format_tag_id, 4))
 		{
 			/* format tag */
-			if (format_specified || (tag_size != sizeof(format_tag)))
+			if (format_specified || (tag_size < sizeof(format_tag)))
 				return CASSETTE_ERROR_INVALIDIMAGE;
 			format_specified = TRUE;
 

@@ -47,6 +47,11 @@ Source Changes:
 
 - Fixed a bug in which low resolution systems (specifically the Channel F and
   Gameboy) would not properly save screenshots.  (bug #521) [Nate Woods]
+  
+- WAV file code can now handle files where the format header is longer than 16
+  bytes.  [Nate Woods]
+
+- Added a floppy_identify() function to the floppy format code.  [Nate Woods]
 
 
 

@@ -124,6 +124,10 @@ floperr_t floppy_open_choices(void *fp, const struct io_procs *procs, const char
 floperr_t floppy_create(void *fp, const struct io_procs *procs, const struct FloppyFormat *format, option_resolution *parameters, floppy_image **outfloppy);
 void floppy_close(floppy_image *floppy);
 
+/* useful for identifying a floppy image */
+floperr_t floppy_identify(void *fp, const struct io_procs *procs, const char *extension,
+	const struct FloppyFormat *formats, int *identified_format);
+
 /* functions useful within format constructors */
 void *floppy_tag(floppy_image *floppy, const char *tagname);
 void *floppy_create_tag(floppy_image *floppy, const char *tagname, size_t tagsize);
