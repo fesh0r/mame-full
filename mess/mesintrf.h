@@ -12,7 +12,7 @@
 #include "osdepend.h"
 #include "usrintrf.h"
 
-int mess_ui_active();
+int mess_ui_active(void);
 int handle_mess_user_interface(struct mame_bitmap *bitmap);
 int displayimageinfo(struct mame_bitmap *bitmap, int selected);
 
