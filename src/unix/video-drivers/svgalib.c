@@ -163,16 +163,6 @@ int sysdep_display_driver_open(int reopen)
               video_modeinfo.bytesperpixel*8;
 	sysdep_display_properties.vector_renderer = NULL;
 
-	/* get a blit func */
-	blit_func = sysdep_display_get_blitfunc_dfb();
-	if (blit_func == NULL)
-	{
-		fprintf(stderr, "Error: unsupported depth/bpp: %d/%dbpp\n",
-		  sysdep_display_properties.palette_info.depth,
-		  sysdep_display_properties.palette_info.bpp);
-		return 1;
-	}
-
 	if(best_mode != video_mode)
 	{
 	  vga_setmode(best_mode);
@@ -190,6 +180,7 @@ int sysdep_display_driver_open(int reopen)
           video_mem += startx * video_modeinfo.bytesperpixel;
           video_mem += starty * video_modeinfo.linewidth;
           video_update_type=0;
+          sysdep_display_properties.mode_info[0] |= SYSDEP_DISPLAY_DIRECT_FB;
           fprintf(stderr, "SVGAlib: Info: Using a linear framebuffer to speed up\n");
 	}
 	else /* use gl funcs todo the updating */
@@ -210,6 +201,8 @@ int sysdep_display_driver_open(int reopen)
           }
 	  else
 	    video_update_type=1;
+	    
+          sysdep_display_properties.mode_info[0] &= ~SYSDEP_DISPLAY_DIRECT_FB;
 	}
 
 	/* clear the unused area of the screen */
@@ -261,7 +254,8 @@ int sysdep_display_driver_open(int reopen)
 	    return 1;
         }
 
-	return sysdep_display_effect_open();
+        /* get a blit function */
+        return !(blit_func=sysdep_display_effect_open());
 }
 
 /* shut up the display */
@@ -307,8 +301,8 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
       gl_putboxpart(
         startx + vis_in_dest_out->min_x,
         starty + vis_in_dest_out->min_y,
-        (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
-        (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y,
+        vis_in_dest_out->max_x - vis_in_dest_out->min_x,
+        vis_in_dest_out->max_y - vis_in_dest_out->min_y,
         ((unsigned char *)bitmap->line[1] - (unsigned char *)bitmap->line[0]) / 
           video_modeinfo.bytesperpixel,
         bitmap->height, bitmap->line[0], dirty_area->min_x, dirty_area->min_y);
@@ -319,8 +313,8 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
       gl_putboxpart(
         startx + vis_in_dest_out->min_x,
         starty + vis_in_dest_out->min_y,
-        (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
-        (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y,
+        vis_in_dest_out->max_x - vis_in_dest_out->min_x,
+        vis_in_dest_out->max_y - vis_in_dest_out->min_y,
         scaled_width, scaled_height, doublebuffer_buffer,
         dirty_area->min_x, dirty_area->min_y);
       break;

@@ -21,10 +21,12 @@
 #define __SYSDEP_DISPLAY_PRIV_H
 
 #include "mode.h"
-#include "effect.h"
-#include "video-drivers/blit_funcs.h"
 #include "sysdep/sysdep_display.h"
 #include "begin_code.h"
+
+typedef void (*blit_func_p)(struct mame_bitmap *bitmap,
+  struct rectangle *vis_in_dest_out, struct rectangle *dirty_area,
+  struct sysdep_palette_struct *palette, unsigned char *dest, int dest_width);
 
 /* from sysdep_display.c */
 extern struct sysdep_display_open_params sysdep_display_params;
@@ -36,6 +38,23 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
 int  sysdep_display_driver_open(int reopen);
 int  sysdep_display_driver_update_keyboard(void);
 void sysdep_display_driver_clear_buffer(void);
+
+/* find out of blitting from sysdep_display_params.depth to
+   dest_depth including scaling, rotation and effects will result in
+   exactly the same bitmap, in this case the blitting can be skipped under
+   certain circumstances. */
+int sysdep_display_blit_dest_bitmap_equals_src_bitmap(void);
+
+/* from effect.c
+ *
+ * called from sysdep_display_open;
+ * initializes function pointers to correct depths
+ * and allocates buffer for doublebuffering.
+ *
+ * The caller should call sysdep_display_effect_close() on failure and when
+ * done, to free (partly) allocated buffers */
+blit_func_p sysdep_display_effect_open(void);
+void sysdep_display_effect_close(void);
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_DISPLAY_PRIV_H */

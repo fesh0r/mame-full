@@ -68,14 +68,14 @@ int xf86_dga_init(void)
 	return 1;
 }
 
-int  xf86_dga_open_display(int reopen)
+int xf86_dga_open_display(int reopen)
 {
-	return (*p_xf86_dga_open_display)(reopen);
+  return p_xf86_dga_open_display(reopen);
 }
 
 void xf86_dga_close_display(void)
 {
-	(*p_xf86_dga_close_display)();
+  p_xf86_dga_close_display();
 }
 
 const char *xf86_dga_update_display(struct mame_bitmap *bitmap,

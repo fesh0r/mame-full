@@ -82,9 +82,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
     params->fullscreen = 0;
   
   /* let the effect code do its magic */
-  sysdep_display_check_effect_params(params);
-  
-  return 0;
+  return sysdep_display_check_effect_params(params);
 }  
 
 static void sysdep_display_set_params(const struct sysdep_display_open_params *params)
@@ -288,6 +286,10 @@ int sysdep_display_update_keyboard(void)
 void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int height)
 {
         int temp;
+
+	/* we want max coordinates to point one past the last pixel */        
+        bounds->max_x += 1;
+        bounds->max_y += 1;
         
 	/* apply X/Y swap first */
 	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY)
@@ -308,16 +310,16 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 	/* apply X flip */
 	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX)
 	{
-		temp = width - bounds->min_x - 1;
-		bounds->min_x = width - bounds->max_x - 1;
+		temp = width - bounds->min_x;
+		bounds->min_x = width - bounds->max_x;
 		bounds->max_x = temp;
 	}
 
 	/* apply Y flip */
 	if (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY)
 	{
-		temp = height - bounds->min_y - 1;
-		bounds->min_y = height - bounds->max_y - 1;
+		temp = height - bounds->min_y;
+		bounds->min_y = height - bounds->max_y;
 		bounds->max_y = temp;
 	}
 }
@@ -349,11 +351,9 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
 	old_bound = vis_in_dest_out->min_x;
 	vis_in_dest_out->min_x &= ~x_align;
         dirty_area->min_x -= old_bound - vis_in_dest_out->min_x;
-
 	old_bound = vis_in_dest_out->max_x;
-	vis_in_dest_out->max_x += 1 + x_align;
+	vis_in_dest_out->max_x += x_align;
 	vis_in_dest_out->max_x &= ~x_align;
-	vis_in_dest_out->max_x -= 1;
         dirty_area->max_x -= old_bound - vis_in_dest_out->max_x;
 
 	/* fprintf(stderr, "aligned dest_area: (%d,%d) x (%d,%d)\n",
@@ -362,7 +362,7 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
 	
         /* apply scaling to dest_bounds */
 	vis_in_dest_out->min_x *= sysdep_display_params.widthscale;
-	vis_in_dest_out->max_x *= sysdep_display_params.widthscale;	
+	vis_in_dest_out->max_x *= sysdep_display_params.widthscale;
 	if (sysdep_display_params.yarbsize)
 	{
           vis_in_dest_out->min_y = (vis_in_dest_out->min_y * sysdep_display_params.yarbsize) /
@@ -375,4 +375,36 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
           vis_in_dest_out->min_y *= sysdep_display_params.heightscale;
           vis_in_dest_out->max_y *= sysdep_display_params.heightscale;
         }
+}
+
+/* Find out of blitting from sysdep_display_params.depth to
+   dest_depth including scaling, rotation and effects will result in
+   exactly the same bitmap, in this case the blitting can be skipped under
+   certain circumstances. */
+int sysdep_display_blit_dest_bitmap_equals_src_bitmap(void)
+{
+  if((sysdep_display_params.depth != 16) &&         /* no palette lookup */
+     (((sysdep_display_params.depth+7) & ~7) ==     /* bpp matches */
+      sysdep_display_properties.palette_info.bpp) &&
+     (!sysdep_display_params.orientation) &&        /* no rotation */
+     (!sysdep_display_params.effect) &&             /* no effect */
+     (sysdep_display_params.widthscale == 1) &&     /* no widthscale */
+     (sysdep_display_params.heightscale == 1) &&    /* no heightscale */
+     (!sysdep_display_params.yarbsize))             /* no yarbsize */
+  {
+    switch(sysdep_display_params.depth)             /* check colormasks */
+    {
+      case 15:
+        if ((sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
+            (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
+            (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
+          return 1;
+      case 32:
+        if ((sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
+            (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
+            (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
+          return 1;
+    }
+  }
+  return 0;
 }

@@ -22,8 +22,12 @@
 
 #include "begin_code.h"
 
-/* This struct is used to describe the displays palette */
+#define FOURCC_YUY2 0x32595559
+#define FOURCC_YV12 0x32315659
+#define FOURCC_I420 0x30323449
+#define FOURCC_UYVY 0x59565955
 
+/* This struct is used to describe the displays palette */
 struct sysdep_palette_info
 {
    int fourcc_format;   /* 0 for normal RGB, other wise fourcc format code

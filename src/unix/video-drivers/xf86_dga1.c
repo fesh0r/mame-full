@@ -200,15 +200,6 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo)
 		return 1;
 	}
 
-	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
-	if (xf86ctx.update_display_func == NULL)
-	{
-		fprintf(stderr, "unsupported bpp: %dbpp\n", sysdep_display_properties.palette_info.bpp);
-		return 1;
-	}
-	
-	fprintf(stderr, "XF86-DGA1 running at: %dbpp\n", sysdep_display_properties.palette_info.bpp);
-
         startx = ((modeinfo->hdisplay - scaled_width) / 2) & ~3;
         starty = (modeinfo->vdisplay - scaled_height) / 2;
 	xf86ctx.addr  = (unsigned char *)xf86ctx.base_addr;
@@ -363,7 +354,8 @@ static int xf86_dga1_set_mode(void)
 	if(xf86_dga_setup_graphics(bestmode))
 		return 1;
 
-	return sysdep_display_effect_open();
+        /* get a blit function */
+        return !(xf86ctx.update_display_func=sysdep_display_effect_open());
 }
 
 const char *xf86_dga1_update_display(struct mame_bitmap *bitmap,

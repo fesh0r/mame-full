@@ -13,7 +13,6 @@
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_mixer.h"
 #include "sysdep/misc.h"
-#include "effect.h"
 
 /* be sure that device names are nullified */
 extern void XInput_trackballs_reset();

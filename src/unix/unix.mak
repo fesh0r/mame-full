@@ -158,11 +158,12 @@ SYSDEP_DIR = $(UNIX_OBJDIR)/sysdep
 DSP_DIR = $(UNIX_OBJDIR)/sysdep/dsp-drivers
 MIXER_DIR = $(UNIX_OBJDIR)/sysdep/mixer-drivers
 VID_DIR = $(UNIX_OBJDIR)/video-drivers
+BLIT_DIR = $(UNIX_OBJDIR)/blit
 JOY_DIR = $(UNIX_OBJDIR)/joystick-drivers
 FRAMESKIP_DIR = $(UNIX_OBJDIR)/frameskip-drivers
 
 OBJDIRS += $(UNIX_OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
-	$(JOY_DIR) $(FRAMESKIP_DIR)
+	$(JOY_DIR) $(FRAMESKIP_DIR) $(BLIT_DIR)
 
 IMGTOOL_LIBS = -lz
 
@@ -291,8 +292,13 @@ COMMON_OBJS  =  \
 	$(OBJDIR)/video.o $(OBJDIR)/mode.o $(OBJDIR)/fileio.o \
 	$(OBJDIR)/dirio.o $(OBJDIR)/config.o $(OBJDIR)/fronthlp.o \
 	$(OBJDIR)/ident.o $(OBJDIR)/network.o $(OBJDIR)/snprintf.o \
-	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/effect_funcs.o \
-	$(OBJDIR)/ticker.o $(OBJDIR)/parallel.o $(VID_DIR)/blit_funcs.o
+	$(OBJDIR)/nec765_dummy.o $(OBJDIR)/effect.o $(OBJDIR)/ticker.o \
+	$(OBJDIR)/parallel.o $(BLIT_DIR)/blit_15_15.o \
+	$(BLIT_DIR)/blit_16_15.o $(BLIT_DIR)/blit_16_16.o \
+	$(BLIT_DIR)/blit_16_24.o $(BLIT_DIR)/blit_16_32.o \
+	$(BLIT_DIR)/blit_32_15.o $(BLIT_DIR)/blit_32_16.o \
+	$(BLIT_DIR)/blit_32_24.o $(BLIT_DIR)/blit_32_32.o \
+	$(BLIT_DIR)/blit_16_yuy2.o $(BLIT_DIR)/blit_32_yuy2.o
 
 ifdef MESS
 COMMON_OBJS += $(OBJDIR)/xmess.o

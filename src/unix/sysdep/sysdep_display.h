@@ -54,29 +54,35 @@
 /* effect type */
 #define SYSDEP_DISPLAY_EFFECT_NONE      0
 #define SYSDEP_DISPLAY_EFFECT_SCALE2X   1
-#define SYSDEP_DISPLAY_EFFECT_SCAN2     2
-#define SYSDEP_DISPLAY_EFFECT_RGBSTRIPE 3
-#define SYSDEP_DISPLAY_EFFECT_RGBSCAN   4
-#define SYSDEP_DISPLAY_EFFECT_SCAN3     5
-#define SYSDEP_DISPLAY_EFFECT_LQ2X      6
-#define SYSDEP_DISPLAY_EFFECT_HQ2X      7
-#define SYSDEP_DISPLAY_EFFECT_6TAP2X    8
-#define SYSDEP_DISPLAY_EFFECT_FAKESCAN  9
-#define SYSDEP_DISPLAY_EFFECT_LAST      SYSDEP_DISPLAY_EFFECT_FAKESCAN
+#define SYSDEP_DISPLAY_EFFECT_SCAN2_H   2
+#define SYSDEP_DISPLAY_EFFECT_RGBSCAN_H 3
+#define SYSDEP_DISPLAY_EFFECT_SCAN3_H   4
+#define SYSDEP_DISPLAY_EFFECT_SCAN2_V   5
+#define SYSDEP_DISPLAY_EFFECT_RGBSCAN_V 6
+#define SYSDEP_DISPLAY_EFFECT_SCAN3_V   7
+
+#define SYSDEP_DISPLAY_EFFECT_SCAN_H    SYSDEP_DISPLAY_EFFECT_SCAN2_H
+#define SYSDEP_DISPLAY_EFFECT_SCAN_V    SYSDEP_DISPLAY_EFFECT_SCAN2_V
+#define SYSDEP_DISPLAY_EFFECT_LAST      SYSDEP_DISPLAY_EFFECT_SCAN3_V
+
+/* garbage */
+#define SYSDEP_DISPLAY_EFFECT_LQ2X      8
+#define SYSDEP_DISPLAY_EFFECT_HQ2X      9
+#define SYSDEP_DISPLAY_EFFECT_6TAP2X    10
+#define SYSDEP_DISPLAY_EFFECT_FAKESCAN  11
 
 /* display properties mode flags */
 #define SYSDEP_DISPLAY_WINDOWED		0x01
 #define SYSDEP_DISPLAY_FULLSCREEN	0x02
 #define SYSDEP_DISPLAY_HWSCALE 		0x04
 #define SYSDEP_DISPLAY_EFFECTS		0x08
+#define SYSDEP_DISPLAY_DIRECT_FB        0x10
 /* number of modes */
 #define SYSDEP_DISPLAY_VIDEO_MODES	5
 
 /* effect properties flags */
 #define SYSDEP_DISPLAY_X_SCALE_LOCKED        0x01
 #define SYSDEP_DISPLAY_Y_SCALE_LOCKED        0x02
-#define SYSDEP_DISPLAY_X_AND_Y_SCALE_LOCKED  0x03
-#define SYSDEP_DISPLAY_Y_SCALE_LOCKED_TO_X   0x04
 
 /* flags for the return value of sysdep_display_change_params */
 #define SYSDEP_DISPLAY_PROPERTIES_CHANGED         0x01
@@ -188,7 +194,8 @@ struct sysdep_display_open_params {
 };
 
 struct sysdep_display_properties_struct {
-  /* per mode info availabe after sysdep_display_init */
+  /* Per mode info availabe after sysdep_display_init. Except for the
+     DIRECT_FB flag which is only valid after a successfull open */
   int mode_info[SYSDEP_DISPLAY_VIDEO_MODES];
   const char *mode_name[SYSDEP_DISPLAY_VIDEO_MODES];
   /* info available after sysdep_display_open */
@@ -242,9 +249,10 @@ int  sysdep_display_update_keyboard(void);
 void sysdep_display_update_mouse(void);
 
 /* misc */
-/* check if widthscale, heightscale and yarbsize are compatible with
-   the choisen effect, if not update them so that they are. */
-void sysdep_display_check_effect_params(struct sysdep_display_open_params *params);
+/* Check if widthscale, heightscale and yarbsize are compatible with
+   the choisen effect, if not update them so that they are. Always returns 0,
+   except if params->effect is an invalid value. */
+int sysdep_display_check_effect_params(struct sysdep_display_open_params *params);
 
 /* variables */
 extern struct sysdep_display_mousedata sysdep_display_mouse_data[SYSDEP_DISPLAY_MOUSE_MAX];

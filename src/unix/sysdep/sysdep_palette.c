@@ -26,7 +26,7 @@ Version 0.1, November 1999
 #include <driver.h>
 #include <math.h>
 #include "sysdep_palette.h"
-#include "video-drivers/pixel_convert.h"
+#include "blit/pixel_defs.h"
 
 static unsigned int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
    *info, unsigned char red, unsigned char green, unsigned char blue)
@@ -131,6 +131,9 @@ void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
 {
    if (!palette->lookup)
       return;
+      
+   /* printf("pen:%4d r:%3d g:%3d b:%3d\n", pen, (int)red, (int)green,
+     (int)blue); */
    
    if (palette->display_palette->fourcc_format == 0)
       palette->lookup[pen] = sysdep_palette_make_pen_from_info(
@@ -144,9 +147,9 @@ void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
         /* Storing this data in YUYV order simplifies using the data for
            YUY2, both with and without smoothing... */
 #ifdef LSB_FIRST
-        palette->lookup[pen]=(y<<0) | (u<<8) | (y<<16) | (v<<24);
+        palette->lookup[pen]=(y    ) | (u<< 8) | (y<<16) | (v<<24);
 #else
-        palette->lookup[pen]=(y<<24) | (u<<16) | (y<<8) | (v<<0);
+        palette->lookup[pen]=(y<<24) | (u<<16) | (y<< 8) | (v    );
 #endif
    }
 }

@@ -313,19 +313,11 @@ int sysdep_display_driver_open(int reopen)
   sysdep_display_properties.palette_info.bpp        =
     video_surface->format->BytesPerPixel * 8;
   sysdep_display_properties.vector_renderer         = NULL;
-  
-  /* get a blit func */
+
   if (video_surface->flags & SDL_HWSURFACE)
-    blit_func = sysdep_display_get_blitfunc_dfb();
+    sysdep_display_properties.mode_info[0] |=  SYSDEP_DISPLAY_DIRECT_FB;
   else
-    blit_func = sysdep_display_get_blitfunc();
-  if (blit_func == NULL)
-  {
-          fprintf(stderr, "Error: unsupported dept/bpp: %d/%dbpp\n",
-            sysdep_display_properties.palette_info.depth,
-            sysdep_display_properties.palette_info.bpp);
-          return 1;
-  }
+    sysdep_display_properties.mode_info[0] &= ~SYSDEP_DISPLAY_DIRECT_FB;
   
   /* calculate start of screen */
   startx = (video_surface->w - scaled_width ) / 2;
@@ -391,7 +383,8 @@ int sysdep_display_driver_open(int reopen)
      an (re)open */
   first_update = 1;
 
-  return sysdep_display_effect_open();
+  /* get a blit function */
+  return !(blit_func=sysdep_display_effect_open());
 }
 
 /*
@@ -446,8 +439,8 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
     SDL_Rect drect;
     drect.x = startx + vis_in_dest_out->min_x;
     drect.y = starty + vis_in_dest_out->min_y;
-    drect.w = (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x;
-    drect.h = (vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y;
+    drect.w = vis_in_dest_out->max_x - vis_in_dest_out->min_x;
+    drect.h = vis_in_dest_out->max_y - vis_in_dest_out->min_y;
     SDL_UpdateRects(video_surface,1, &drect);
   }
   

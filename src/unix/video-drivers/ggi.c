@@ -360,18 +360,11 @@ int sysdep_display_driver_open(int reopen)
   }
 
   /* get a blit func, GRRR no way to detect if we have a hardware surface,
-     so always assume one when using a LFB. */
+     so assume one when using a LFB. */
   if (video_update_type == 0)
-    blit_func = sysdep_display_get_blitfunc_dfb();
+    sysdep_display_properties.mode_info[0] |=  SYSDEP_DISPLAY_DIRECT_FB;
   else
-    blit_func = sysdep_display_get_blitfunc();
-  if (blit_func == NULL)
-  {
-          fprintf(stderr, "Error: unsupported depth/bpp: %d/%dbpp\n",
-                          sysdep_display_properties.palette_info.depth,
-                          sysdep_display_properties.palette_info.bpp);
-          return 0;
-  }
+    sysdep_display_properties.mode_info[0] &= ~SYSDEP_DISPLAY_DIRECT_FB;
   
   /* clear the unused area of the screen */
   switch(video_update_type)
@@ -412,7 +405,8 @@ int sysdep_display_driver_open(int reopen)
       break;
   }
 
-  return sysdep_display_effect_open();
+  /* get a blit function */
+  return !(blit_func=sysdep_display_effect_open());
 }
 
 
@@ -460,11 +454,11 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
       break;
     case 1: /* non linear bitmap equals framebuffer */
       sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area, 3);
-      for (y=0; y <= (vis_in_dest_out->max_y-vis_in_dest_out->min_y); y++)
+      for (y=0; y < (vis_in_dest_out->max_y-vis_in_dest_out->min_y); y++)
       {
         ggiPutHLine(vis, startx + vis_in_dest_out->min_x, starty +
           vis_in_dest_out->min_y + y,
-          (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
+          vis_in_dest_out->max_x - vis_in_dest_out->min_x,
           ((unsigned char *)(bitmap->line[y+dirty_area->min_y])) +
           dirty_area->min_x * GT_SIZE(mode.graphtype) / 8);
       }
@@ -472,10 +466,10 @@ const char *sysdep_display_update(struct mame_bitmap *bitmap,
     case 2: /* non linear bitmap needs conversion before it can be blitted */
       blit_func(bitmap, vis_in_dest_out, dirty_area, palette,
         doublebuffer_buffer, scaled_width);
-      for (y = vis_in_dest_out->min_y; y <= vis_in_dest_out->max_y; y++)
+      for (y = vis_in_dest_out->min_y; y < vis_in_dest_out->max_y; y++)
       {
         ggiPutHLine(vis, startx + vis_in_dest_out->min_x, y + starty,
-          (vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x,
+          vis_in_dest_out->max_x - vis_in_dest_out->min_x,
           doublebuffer_buffer + (y * scaled_width + vis_in_dest_out->min_x) *
           GT_SIZE(mode.graphtype) / 8);
       }

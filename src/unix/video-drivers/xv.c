@@ -13,7 +13,8 @@
 #include <X11/extensions/XShm.h>
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>
-#include "pixel_convert.h"
+#include "effect.h"
+#include "blit/pixel_defs.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
@@ -162,8 +163,15 @@ static int FindRGBXvFormat(void)
 static void ClearYUY2()
 {
   int i,j;
-  char *yuv=(xvimage->data+xvimage->offsets[0]);
+  char *yuv;
+
+  /* since we call sysdep_display_effect_open before creating the xvimage,
+     we might get called without an image ! */
+  if (!xvimage)
+    return;
+  
   fprintf(stderr,"Clearing YUY2\n");
+  yuv=(xvimage->data+xvimage->offsets[0]);
   for (i = 0; i < xvimage->height; i++)
   {
     for (j = 0; j < xvimage->width; j++)
@@ -178,10 +186,17 @@ static void ClearYUY2()
 static void ClearYV12()
 {
   int i,j;
-  char *y=(xvimage->data+xvimage->offsets[0]);
-  char *u=(xvimage->data+xvimage->offsets[1]);
-  char *v=(xvimage->data+xvimage->offsets[2]);
+  char *y, *u, *v;
+
+  /* since we call sysdep_display_effect_open before creating the xvimage,
+     we might get called without an image ! */
+  if (!xvimage)
+    return;
+  
   fprintf(stderr,"Clearing YV12\n");
+  y=(xvimage->data+xvimage->offsets[0]);
+  u=(xvimage->data+xvimage->offsets[1]);
+  v=(xvimage->data+xvimage->offsets[2]);
   for (i = 0; i < xvimage->height; i++) {
     for (j = 0; j < xvimage->width; j++) {
       int offset=(xvimage->width*i+j);
@@ -284,87 +299,119 @@ int xv_open_display(int reopen)
           x11_resize_resizable_window(&window_width, &window_height);
         }
         
-        if (sysdep_display_effect_open())
-          return 1;
+        /* Now we have created the window we no longer need yarbsize,
+           yarbsize may cause a warning in sysdep_display_effect_open,
+           so clear it now! */
+        sysdep_display_params.yarbsize = 0;
         
-        /* determine width and height for the image creation, these defaults
-           are used when the blitting is done by the effect code (all effects
-           except none and fakescan) */
-        width  = sysdep_display_params.max_width *
-          sysdep_display_params.widthscale;
-        height = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.max_height * sysdep_display_params.heightscale;
-        switch(sysdep_display_properties.palette_info.fourcc_format)
+        /* handle special YV12 case */
+        if(xv_format == FOURCC_YV12)
         {
-          case FOURCC_YV12:
-            /* YV12 always does normal scaling, no effects!.
-               Setup the image size and scaling params for YV12:
-               -align width and x-coordinates to 8, I don't know
-                why, this is needed, but it is.
-               -align height and y-coodinates to 2.
-               Note these alignment demands are always met for
-               perfect blit. */
-            if (hwscale_perfect_yuv)
-            {
-              width  = 2*sysdep_display_params.max_width;
-              height = 2*sysdep_display_params.max_height;
-              sysdep_display_params.widthscale  = 2;
-              sysdep_display_params.heightscale = 2;
-              sysdep_display_params.yarbsize    = 0;
-            }
-            else
-            {
-              width  = (sysdep_display_params.max_width+7)&~7;
-              height = (sysdep_display_params.max_height+1)&~1;
-              sysdep_display_params.widthscale  = 1;
-              sysdep_display_params.heightscale = 1;
-              sysdep_display_params.yarbsize    = 0;
-            }
-            break;
-          case FOURCC_YUY2:
-            if (hwscale_perfect_yuv)
-            {
-              switch(sysdep_display_params.effect)
-              {
-                case SYSDEP_DISPLAY_EFFECT_NONE:
-                  /* Xv does scaling for us */
-                  height = 1 * sysdep_display_params.max_height;
-                  width  = 2 * sysdep_display_params.max_width;
-                  sysdep_display_params.widthscale  = 2;
-                  sysdep_display_params.heightscale = 1;
-                  sysdep_display_params.yarbsize    = 0;
-                  break;
-                case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
-                  /* Xv does scaling for us */
-                  height = 2 * sysdep_display_params.max_height;
-                  width  = 2 * sysdep_display_params.max_width;
-                  sysdep_display_params.widthscale  = 2;
-                  sysdep_display_params.heightscale = 2;
-                  sysdep_display_params.yarbsize    = 0;
-              }
+          /* no effects */
+          if (sysdep_display_params.effect)
+          {
+            fprintf(stderr,
+              "Warning effect %s is not supported with color format YV12, disabling effects\n",
+              sysdep_display_effect_properties[sysdep_display_params.effect].name);
+            sysdep_display_params.effect = 0;
+          }
+          if (sysdep_display_params.depth == 32)
+          {
+              if (hwscale_perfect_yuv)
+                      xv_update_display_func
+                              = xv_update_32_to_YV12_direct_perfect;
+              else
+                      xv_update_display_func
+                              = xv_update_32_to_YV12_direct;
+          }
+          else
+          {
+              if (hwscale_perfect_yuv)
+                      xv_update_display_func
+                              = xv_update_16_to_YV12_perfect;
+              else
+                      xv_update_display_func
+                              = xv_update_16_to_YV12;
+          }
+          /* YV12 always does normal scaling, no effects!.
+             Setup the image size and scaling params for YV12:
+             -align width and x-coordinates to 8, I don't know
+              why, this is needed, but it is.
+             -align height and y-coodinates to 2.
+             Note these alignment demands are always met for
+             perfect blit. */
+          if (hwscale_perfect_yuv)
+          {
+            width  = 2*sysdep_display_params.max_width;
+            height = 2*sysdep_display_params.max_height;
+            sysdep_display_params.widthscale  = 2;
+            sysdep_display_params.heightscale = 2;
+          }
+          else
+          {
+            width  = (sysdep_display_params.max_width+7)&~7;
+            height = (sysdep_display_params.max_height+1)&~1;
+            sysdep_display_params.widthscale  = 1;
+            sysdep_display_params.heightscale = 1;
+          }
+        }
+        else
+        {
+          int min_widthscale = (xv_format == FOURCC_YUY2)? 2:1;
+          
+          /* Get a blit function, do this first because this can change the
+             effect settings und thus influence the size of the image we need
+             to create */
+          if (!(xv_update_display_func = sysdep_display_effect_open()))
+            return 1;
+
+          /* Set lowest widthscale / heightscale for the choisen effect. We
+             deviate from the width- and heightscale settings choisen by the
+             user because we can do some of the scaling in hardware */
+          switch(sysdep_display_params.effect)
+          {
+            case SYSDEP_DISPLAY_EFFECT_NONE:
+            case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+              if (hwscale_perfect_yuv)
+                sysdep_display_params.widthscale = min_widthscale;
+              else
+                sysdep_display_params.widthscale = 1;
+              sysdep_display_params.heightscale =
+                sysdep_display_effect_properties[sysdep_display_params.effect].
+                  min_heightscale;
               break;
-            }
-            /* fall through: non perfect blit case is identical to RGB */
-          case 0: /* RGB */
-            switch(sysdep_display_params.effect)
-            {
-              case SYSDEP_DISPLAY_EFFECT_NONE:
-                /* Xv does scaling for us */
-                height = sysdep_display_params.max_height;
-                width  = sysdep_display_params.max_width;
-                sysdep_display_params.widthscale  = 1;
-                sysdep_display_params.heightscale = 1;
-                sysdep_display_params.yarbsize    = 0;
-                break;
-              case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
-                /* Xv does scaling for us */
-                height = 2 * sysdep_display_params.max_height;
-                width  = 1 * sysdep_display_params.max_width;
-                sysdep_display_params.widthscale  = 1;
-                sysdep_display_params.heightscale = 2;
-                sysdep_display_params.yarbsize    = 0;
-            }
+            case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+              sysdep_display_params.heightscale =
+                sysdep_display_params.widthscale;
+              break;
+            case SYSDEP_DISPLAY_EFFECT_SCAN2_H:
+            case SYSDEP_DISPLAY_EFFECT_SCAN3_H:
+            case SYSDEP_DISPLAY_EFFECT_RGBSCAN_H:
+              if (sysdep_display_effect_properties[
+                    sysdep_display_params.effect].min_widthscale >
+                  min_widthscale)
+                sysdep_display_params.widthscale =
+                  sysdep_display_effect_properties[
+                    sysdep_display_params.effect].min_widthscale;
+              else
+                sysdep_display_params.widthscale = min_widthscale;
+              break;
+            case SYSDEP_DISPLAY_EFFECT_SCAN2_V:
+            case SYSDEP_DISPLAY_EFFECT_SCAN3_V:
+            case SYSDEP_DISPLAY_EFFECT_RGBSCAN_V:
+              sysdep_display_params.heightscale = 1;
+              break;
+            default:
+              fprintf(stderr,
+                "Error unknown effect (%d) in xv.c, this should not happen.\n"
+                "Please file a bug report\n", sysdep_display_params.effect);
+              return 1;
+          }
+          /* Determine width and height for the image creation. */
+          width  = sysdep_display_params.max_width *
+            sysdep_display_params.widthscale;
+          height = sysdep_display_params.max_height *
+            sysdep_display_params.heightscale;
         }
 
         if (xvimage &&
@@ -394,8 +441,10 @@ int xv_open_display(int reopen)
           if ((xvimage->width  < width) ||
               (xvimage->height < height))
           {
-              fprintf (stderr, "Error: XVimage is smaller then the requested size.\n");
-              return 1;
+            fprintf (stderr,
+              "Error: XVimage is smaller then the requested size. (requested: %dx%d, got %dx%d)\n",
+              width, height, xvimage->width, xvimage->height);
+            return 1;
           }
 
           shm_info.readOnly = False;
@@ -480,38 +529,6 @@ int xv_open_display(int reopen)
           fprintf (stderr, "Using Xv & Shared Memory Features to speed up\n");
         }
  
-	/* get a blit function */
-        if(sysdep_display_properties.palette_info.fourcc_format == FOURCC_YV12)
-        {
-          if (sysdep_display_params.depth == 32)
-          {
-              if (hwscale_perfect_yuv)
-                      xv_update_display_func
-                              = xv_update_32_to_YV12_direct_perfect;
-              else
-                      xv_update_display_func
-                              = xv_update_32_to_YV12_direct;
-          }
-          else
-          {
-              if (hwscale_perfect_yuv)
-                      xv_update_display_func
-                              = xv_update_16_to_YV12_perfect;
-              else
-                      xv_update_display_func
-                              = xv_update_16_to_YV12;
-          }
-        }
-        else
-          xv_update_display_func = sysdep_display_get_blitfunc();
-
-	if (xv_update_display_func == NULL)
-	{
-		fprintf(stderr, "Error: bitmap depth %d is not supported on %dbpp displays\n",
-		  sysdep_display_params.depth, sysdep_display_properties.palette_info.bpp);
-		return 1;
-	}
-
 	return 0;
 }
 
@@ -603,10 +620,8 @@ const char *xv_update_display(struct mame_bitmap *bitmap,
     ph = window_height;
   }
   XvShmPutImage (display, xv_port, window, gc, xvimage, 0, 0,
-    ((vis_area.max_x+1)-vis_area.min_x) *
-     sysdep_display_params.widthscale,
-    ((vis_area.max_y+1)-vis_area.min_y) *
-     sysdep_display_params.heightscale,
+    (vis_area.max_x-vis_area.min_x) * sysdep_display_params.widthscale,
+    (vis_area.max_y-vis_area.min_y) * sysdep_display_params.heightscale,
     (window_width-pw)/2, (window_height-ph)/2, pw, ph, True);
 
   /* some games "flickers" with XFlush, so command line option is provided */
@@ -736,7 +751,7 @@ static void xv_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
 
    sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area, 7);
 
-   for(_y=dirty_area->min_y;_y<=dirty_area->max_y;_y++)
+   for(_y=dirty_area->min_y;_y<dirty_area->max_y;_y++)
    {
       if (sysdep_display_params.orientation)
       {
@@ -752,7 +767,7 @@ static void xv_update_16_to_YV12_perfect(struct mame_bitmap *bitmap,
       dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x;
       dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
       dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
-      for(_x=dirty_area->min_x;_x<=dirty_area->max_x;_x++)
+      for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x++)
       {
             v1 = palette->lookup[*src++];
             y1 = (v1)  & 0xff;
@@ -861,7 +876,7 @@ static void xv_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
 
    sysdep_display_check_bounds(bitmap, vis_in_dest_out, dirty_area, 7);
 
-   for(_y=dirty_area->min_y;_y<=dirty_area->max_y;_y++)
+   for(_y=dirty_area->min_y;_y<dirty_area->max_y;_y++)
    {
       if (sysdep_display_params.orientation)
       {
@@ -877,7 +892,7 @@ static void xv_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
       dest_y=(xvimage->data+xvimage->offsets[0])+2*xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x;
       dest_u=(xvimage->data+xvimage->offsets[2])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
       dest_v=(xvimage->data+xvimage->offsets[1])+ (xvimage->width*((_y-dirty_area->min_y)+(vis_in_dest_out->min_y/2))+vis_in_dest_out->min_x)/2;
-      for(_x=dirty_area->min_x;_x<=dirty_area->max_x;_x++)
+      for(_x=dirty_area->min_x;_x<dirty_area->max_x;_x++)
       {
          b = *src++;
          r = (b>>16) & 0xFF;
@@ -894,4 +909,3 @@ static void xv_update_32_to_YV12_direct_perfect(struct mame_bitmap *bitmap,
       }
    }
 }
-

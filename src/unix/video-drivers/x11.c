@@ -246,25 +246,27 @@ void sysdep_display_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_display_driver_open(int reopen)
 {
-        int mode = sysdep_display_params.video_mode;
-        
-        if ((sysdep_display_params.video_mode == X11_WINDOW) &&
-            sysdep_display_params.fullscreen)
-        {
-          mode = X11_DGA;
-          sysdep_display_properties.mode_name[X11_WINDOW] = "DGA";
-        }
-        
-        if (!display)
-        {
-		fprintf (stderr, "Error: could not open display\n");
-		return 1;
-        }
-        
-        /* force a full update the next update */
-        x11_exposed = 1;
+  int mode = sysdep_display_params.video_mode;
+  
+  if (!display)
+  {
+    fprintf (stderr, "Error: could not open display\n");
+    return 1;
+  }
+  
+  if ((sysdep_display_params.video_mode == X11_WINDOW) &&
+      sysdep_display_params.fullscreen)
+  {
+    mode = X11_DGA;
+    sysdep_display_properties.mode_name[X11_WINDOW]  = "DGA";
+    sysdep_display_properties.mode_info[X11_WINDOW] |=
+      SYSDEP_DISPLAY_DIRECT_FB;
+  }
+  
+  /* force a full update the next update */
+  x11_exposed = 1;
 
-	return x_func[mode].open_display(reopen);
+  return x_func[mode].open_display(reopen);
 }
 
 void sysdep_display_close(void)
@@ -276,9 +278,11 @@ void sysdep_display_close(void)
   if (display)
     (*x_func[mode].close_display)();
     
-  /* restore default mode name for X11_WINDOW mode */
+  /* restore default mode settings for X11_WINDOW mode */
   sysdep_display_properties.mode_name[X11_WINDOW] = 
     x11_mode_name[X11_WINDOW];
+  sysdep_display_properties.mode_info[X11_WINDOW] &=
+    ~SYSDEP_DISPLAY_DIRECT_FB;
 }
 
 const char *sysdep_display_update(struct mame_bitmap *bitmap,

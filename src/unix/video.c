@@ -44,6 +44,8 @@ static int video_autoror;
 static int video_autorol;
 static int user_widthscale;
 static int user_heightscale;
+static int user_yarbsize;
+static int user_effect;
 
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
@@ -79,6 +81,7 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_mode(struct rc_option *option, const char *arg,
 		int priority);
+static void update_effect(void);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -91,7 +94,7 @@ struct rc_option video_opts[] = {
    { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
      "0",           	0,       		0,		NULL,
      "Select fullscreen mode (left-alt + page-down)" },
-   { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
+   { "arbheight",	"ah",			rc_int,		&user_yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable), this overrides the heightscale and scale options" },
    { "widthscale",	"ws",			rc_int,		&user_widthscale,
@@ -103,9 +106,10 @@ struct rc_option video_opts[] = {
    { "scale",		"s",			rc_use_function, NULL,
      NULL,		0,			0,		video_handle_scale,
      "Set X- and Y-Scale to the same factor (increase: left-shift + page-up, decrease: left-shift + page-down)" },
-   { "effect",		"ef",			rc_int,		&normal_params.effect,
-     "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_LAST,	NULL,
+   { "effect",		"ef",			rc_int,		&user_effect,
+     "0",		SYSDEP_DISPLAY_EFFECT_NONE, SYSDEP_DISPLAY_EFFECT_SCAN_V-1,	NULL,
      "Video effect:\n"
+             "FIXME, not valid anymore\n"
 	     "0 = none (default)\n"
 	     "1 = scale2x (2x smooth scaling effect)\n"
 	     "2 = scan2 (2x light scanlines)\n"
@@ -371,9 +375,9 @@ int osd_create_display(const struct osd_create_params *params,
 	normal_params.width            = params->width;
 	normal_params.height           = params->height;
 	normal_params.depth            = params->depth;
-	normal_params.title            = title;
 	normal_params.max_width        = params->width;
 	normal_params.max_height       = params->height;
+	normal_params.title            = title;
 	normal_params.aspect_ratio     = (double)params->aspect_x/params->aspect_y;
 	normal_params.keyboard_handler = xmame_keyboard_register_event;
 	normal_params.vec_src_bounds   = NULL;
@@ -443,8 +447,16 @@ int osd_create_display(const struct osd_create_params *params,
 	   normal_params.orientation |= SYSDEP_DISPLAY_FLIPY;
 	if (orientation & ORIENTATION_SWAP_XY)
 	   normal_params.orientation |= SYSDEP_DISPLAY_SWAPXY;
-	
-	if (use_auto_double)
+	   
+        /* Setup width- and height-scale */
+        if (user_yarbsize)
+        {
+          if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
+            user_heightscale = (double)user_yarbsize/params->width + 0.5;
+          else
+            user_heightscale = (double)user_yarbsize/params->height + 0.5;
+        }
+        else if (use_auto_double && (user_widthscale == user_heightscale))
 	{
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
@@ -464,8 +476,12 @@ int osd_create_display(const struct osd_create_params *params,
 				user_widthscale *= 2;
 		}
 	}
-	normal_params.widthscale  = user_widthscale;
-	normal_params.heightscale = user_heightscale;
+	/* Verify current usersettings versus effect and try to keep aspect. */
+	update_effect();
+	/* Update usersettings with definitive results. */
+	user_widthscale  = normal_params.widthscale;
+	user_heightscale = normal_params.heightscale;
+	user_yarbsize    = normal_params.yarbsize;
 
 	switch (use_hw_vectors)
 	{
@@ -547,10 +563,11 @@ void osd_close_display(void)
 	}
 }
 
-#define SCALING_CHANGED      	   0x01
-#define EFFECT_CHANGED             0x02
-#define VIDMODE_FULLSCREEN_CHANGED 0x04
-#define VISIBLE_AREA_CHANGED       0x08
+#define X_SCALING_CHANGED      	   0x01
+#define Y_SCALING_CHANGED      	   0x02
+#define EFFECT_CHANGED             0x04
+#define VIDMODE_FULLSCREEN_CHANGED 0x08
+#define VISIBLE_AREA_CHANGED       0x10
 
 static void update_params(void)
 {
@@ -593,18 +610,20 @@ static void update_params(void)
 	}
   }
 
-  /* If we've tried to change the scaling and we've (partially) succeeded
-     update the user scale settings */
-  if ((normal_params_changed & SCALING_CHANGED) &&
-      ((requested_widthscale  == normal_params.widthscale) ||
-       (requested_heightscale == normal_params.heightscale)))
+  /* If we've tried to change the scaling and we've succeeded update the user
+     scale settings */
+  if ( ((normal_params_changed & X_SCALING_CHANGED) &&
+        (requested_widthscale == normal_params.widthscale)) ||
+       ((normal_params_changed & Y_SCALING_CHANGED) &&
+        (requested_heightscale == normal_params.heightscale)) )
   {
     user_widthscale  = normal_params.widthscale;
     user_heightscale = normal_params.heightscale;
+    user_yarbsize    = normal_params.yarbsize;
   }
 
-  if ((normal_params_changed & SCALING_CHANGED) ||
-      (normal_params_changed & EFFECT_CHANGED) ||
+  if ((normal_params_changed & (X_SCALING_CHANGED |
+        Y_SCALING_CHANGED | EFFECT_CHANGED)) ||
       (retval & SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED))
   {
     show_effect_or_scale = 2.0 * video_fps;
@@ -686,6 +705,48 @@ static void update_debug_display(struct mame_display *display)
 	}
 	sysdep_display_update(display->debug_bitmap, &debug_bounds,
 	   &debug_bounds, debug_palette, 0, 0);
+}
+
+static void update_effect(void)
+{
+  /* Try to get the user set scale factors */
+  normal_params.widthscale  = user_widthscale;
+  normal_params.heightscale = user_heightscale;
+  normal_params.yarbsize    = user_yarbsize;
+  if ( (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY) &&
+       (user_effect >= SYSDEP_DISPLAY_EFFECT_SCAN_H) )
+    normal_params.effect = user_effect + SYSDEP_DISPLAY_EFFECT_SCAN_V -
+      SYSDEP_DISPLAY_EFFECT_SCAN_H;
+  else
+    normal_params.effect = user_effect;
+
+  sysdep_display_check_effect_params(&normal_params);
+  
+  /* if we didn't get the requested widthscale, clear yarbsize
+     (and thus try to keep the aspect the next step */
+  if (user_widthscale != normal_params.widthscale)
+    normal_params.yarbsize = 0;
+  
+  /* attempt to keep the same aspect */
+  if ( (normal_params.yarbsize == 0) &&
+       ((double)normal_params.widthscale/normal_params.heightscale) !=
+       ((double)user_widthscale/user_heightscale) )
+  {
+    if ((sysdep_display_effect_properties[normal_params.effect].flags &
+         SYSDEP_DISPLAY_X_SCALE_LOCKED) ||
+        (!(sysdep_display_effect_properties[normal_params.effect].flags &
+           SYSDEP_DISPLAY_Y_SCALE_LOCKED) && 
+         (normal_params.widthscale != user_widthscale)))
+    {
+      normal_params.heightscale = normal_params.widthscale
+        / ((double)user_widthscale/user_heightscale) + 0.5;
+    }
+    else
+    {
+      normal_params.widthscale = normal_params.heightscale
+        * ((double)user_widthscale/user_heightscale) + 0.5;
+    }
+  }
 }
 
 static int skip_next_frame = 0;
@@ -865,41 +926,13 @@ void osd_update_video_and_audio(struct mame_display *display)
                     if (!(i&1)) /* 1st try, 3rd try, etc: next effect */
                     {
                       /* next effect */
-                      normal_params.effect += effect_mod;
-                      if (normal_params.effect < 0)
-                        normal_params.effect = SYSDEP_DISPLAY_EFFECT_LAST;
-                      if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
-                        normal_params.effect = 0;
-                        
-                      /* try with the user set scale factors */
-                      normal_params.widthscale  = user_widthscale;
-                      normal_params.heightscale = user_heightscale;
-                      normal_params.yarbsize    = 0;
-
-                      sysdep_display_check_effect_params(&normal_params);
+                      user_effect += effect_mod;
+                      if (user_effect < 0)
+                        user_effect = SYSDEP_DISPLAY_EFFECT_SCAN_V-1;
+                      if (user_effect >= SYSDEP_DISPLAY_EFFECT_SCAN_V)
+                        user_effect = 0;
                       
-                      /* attempt to keep the same aspect */
-                      if (((double)normal_params.widthscale/
-                           normal_params.heightscale) !=
-                          ((double)user_widthscale/user_heightscale))
-                      {
-                        if ((sysdep_display_effect_properties[
-                             normal_params.effect].flags &
-                             SYSDEP_DISPLAY_X_SCALE_LOCKED) ||
-                            (!(sysdep_display_effect_properties[
-                               normal_params.effect].flags &
-                               SYSDEP_DISPLAY_Y_SCALE_LOCKED) && 
-                             (normal_params.widthscale != user_widthscale)))
-                        {
-                          normal_params.heightscale = normal_params.widthscale
-                            / ((double)user_widthscale/user_heightscale) + 0.5;
-                        }
-                        else
-                        {
-                          normal_params.widthscale = normal_params.heightscale
-                            * ((double)user_widthscale/user_heightscale) + 0.5;
-                        }
-                      }
+                      update_effect();
                     }
                     else /* 2nd try, 4th try... same effect... */
                     {
@@ -908,9 +941,8 @@ void osd_update_video_and_audio(struct mame_display *display)
                       normal_params.yarbsize    = 0;
                     }
                     
-                    sysdep_display_check_effect_params(&normal_params);
-
                     /* is this going to fit? */
+                    sysdep_display_check_effect_params(&normal_params);
                     if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
                     {
                       scaled_width  = normal_params.height * normal_params.widthscale;
@@ -954,31 +986,18 @@ void osd_update_video_and_audio(struct mame_display *display)
                         widthscale_mod  = -1;
                         heightscale_mod = -1;
                 }
-                if (widthscale_mod || heightscale_mod)
+                if (widthscale_mod)
                 {
-                        if (sysdep_display_effect_properties[
-                              normal_params.effect].flags &
-                              SYSDEP_DISPLAY_Y_SCALE_LOCKED_TO_X)
-                        {
-                                if (widthscale_mod)
-                                        heightscale_mod = widthscale_mod;
-                                else
-                                        widthscale_mod = heightscale_mod;
-                        }
-                        normal_params.widthscale  += widthscale_mod;
-                        normal_params.heightscale += heightscale_mod;
-                        normal_params.yarbsize = 0;
-			/* clamp scale between 1 and 8 */
-                        if (normal_params.widthscale < 1)
-                          normal_params.widthscale = 1;
-                        else if (normal_params.widthscale > 8)
-                          normal_params.widthscale = 8;
-                        if (normal_params.heightscale < 1)
-                          normal_params.heightscale = 1;
-                        else if (normal_params.heightscale > 8)
-                          normal_params.heightscale = 8;
-
-                        normal_params_changed |= SCALING_CHANGED;
+                  normal_params.widthscale += widthscale_mod;
+                  normal_params_changed |= X_SCALING_CHANGED;
+                  sysdep_display_check_effect_params(&normal_params);
+                }
+                if (heightscale_mod)
+                {
+                  normal_params.heightscale += heightscale_mod;
+                  normal_params.yarbsize = 0;
+                  normal_params_changed |= Y_SCALING_CHANGED;
+                  sysdep_display_check_effect_params(&normal_params);
                 }
             }
 

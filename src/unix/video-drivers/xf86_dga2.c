@@ -207,15 +207,6 @@ static int xf86_dga_setup_graphics(XDGAMode modeinfo)
         int scaled_width = ((sysdep_display_params.width+3)&~3) * 
                 sysdep_display_params.widthscale;
 	
-	xf86ctx.update_display_func = sysdep_display_get_blitfunc_dfb();
-	if (xf86ctx.update_display_func == NULL)
-	{
-		fprintf(stderr, "\nError: bitmap depth %d is not supported on %dbpp displays\n", sysdep_display_params.depth, modeinfo.bitsPerPixel);
-		return 1;
-	}
-	
-	fprintf(stderr, "XF86-DGA2 color depth: %d, %dbpp\n", modeinfo.depth, modeinfo.bitsPerPixel);
-
         startx = ((modeinfo.viewportWidth - scaled_width) / 2) & ~3;
         starty = (modeinfo.viewportHeight - scaled_height) / 2;
 	xf86ctx.addr  = xf86ctx.device->data;
@@ -386,7 +377,8 @@ static int xf86_dga2_set_mode(void)
         if(xf86_dga_setup_graphics(xf86ctx.device->mode))
           return 1;
 
-        return sysdep_display_effect_open();
+        /* get a blit function */
+        return !(xf86ctx.update_display_func=sysdep_display_effect_open());
 }
 
 const char *xf86_dga2_update_display(struct mame_bitmap *bitmap,

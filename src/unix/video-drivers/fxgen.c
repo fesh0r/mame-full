@@ -21,7 +21,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "fxcompat.h"
-#include "pixel_convert.h"
+#include "blit/pixel_defs.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "fxgen.h"
 
@@ -551,9 +551,9 @@ int InitVScreen(int reopen)
   {
     struct rectangle vec_bounds = *(sysdep_display_params.vec_dest_bounds);
     sysdep_display_orient_bounds(&vec_bounds, orig_width, orig_height);
-    vecvscrnwidth  = ((vec_bounds.max_x+1)-vec_bounds.min_x) *
+    vecvscrnwidth  = (vec_bounds.max_x-vec_bounds.min_x) *
       ((double)vscrnwidth/sysdep_display_params.width);
-    vecvscrnheight = ((vec_bounds.max_y+1)-vec_bounds.min_y) *
+    vecvscrnheight = (vec_bounds.max_y-vec_bounds.min_y) *
       ((double)vscrnheight/sysdep_display_params.height);
     vecvscrntlx = vscrntlx + ((double)vscrnwidth/sysdep_display_params.width)
       * vec_bounds.min_x;

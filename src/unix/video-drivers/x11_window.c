@@ -285,14 +285,7 @@ int x11_window_open_display(int reopen)
         }
 
         /* get a blit function */
-        x11_window_update_display_func = sysdep_display_get_blitfunc();
-        if (x11_window_update_display_func == NULL)
-        {
-                fprintf(stderr, "\nError: bitmap depth %d is not supported on %dbpp displays\n", sysdep_display_params.depth, image->bits_per_pixel);
-                return 1;
-        }
-
-        return sysdep_display_effect_open();
+        return !(x11_window_update_display_func=sysdep_display_effect_open());
 }
 
 /*
@@ -355,14 +348,19 @@ const char *x11_window_update_display(struct mame_bitmap *bitmap,
    {
       case X11_MITSHM:
 #ifdef USE_MITSHM
-         XShmPutImage (display, window, gc, image, vis_in_dest_out->min_x, vis_in_dest_out->min_y,
-            startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y, ((vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x) , ((vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y),
-            False);
+         XShmPutImage (display, window, gc, image,
+           vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+           startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y,
+           vis_in_dest_out->max_x - vis_in_dest_out->min_x,
+           vis_in_dest_out->max_y - vis_in_dest_out->min_y, False);
 #endif
          break;
       case X11_NORMAL:
-         XPutImage (display, window, gc, image, vis_in_dest_out->min_x, vis_in_dest_out->min_y,
-            startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y, ((vis_in_dest_out->max_x + 1) - vis_in_dest_out->min_x) , ((vis_in_dest_out->max_y + 1) - vis_in_dest_out->min_y));
+         XPutImage (display, window, gc, image,
+           vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+           startx+vis_in_dest_out->min_x, starty+vis_in_dest_out->min_y,
+           vis_in_dest_out->max_x - vis_in_dest_out->min_x,
+           vis_in_dest_out->max_y - vis_in_dest_out->min_y);
          break;
    }
 

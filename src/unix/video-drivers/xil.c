@@ -132,14 +132,8 @@ int xil_open_display(int reopen)
         }
         
         /* get a blit function, XIL uses 16 bit visuals and does any conversion it self */
-        xil_update_display_func = sysdep_display_get_blitfunc();
-        if (x11_window_update_display_func == NULL)
-        {
-                fprintf(stderr, "Error: bitmap depth %d isnot supported on XIL displays\n", sysdep_display_params.depth);
-                return 1;
-        }
-
-        return sysdep_display_effect_open();;
+        /* get a blit function */
+        return !(xil_update_display_func=sysdep_display_effect_open());
 }
 
 static void xil_destroy_images(void)
@@ -191,7 +185,7 @@ const char *xil_update_display(struct mame_bitmap *bitmap,
   unsigned int _duint, w, h;
   XilMemoryStorage storage_info;
 
-  x11_window_update_display_func(bitmap, vis_in_dest_out, dirty_area,
+  xil_update_display_func(bitmap, vis_in_dest_out, dirty_area,
     palette, scaled_buffer_ptr, draw_image_width);
 
   xil_import( draw_image, TRUE );

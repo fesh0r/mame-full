@@ -79,7 +79,7 @@ static void *alsa_mixer_create(const void *flags)
    int err;
    struct alsa_mixer_priv_data *priv = NULL;
    struct sysdep_mixer_struct *mixer = NULL;
-   const struct sysdep_mixer_create_params *params = flags;
+/*   const struct sysdep_mixer_create_params *params = flags; */
    char *card = "default";
    
    /* allocate the mixer struct */
