@@ -60,7 +60,8 @@ const struct GameDriver *drivers[] =
 #undef DRIVER
 #undef TESTDRIVER
 #define DRIVER(NAME) &driver_##NAME,
-#ifdef DEBUG
+#if 0
+//#ifdef DEBUG
 #define TESTDRIVER(NAME) &driver_##NAME,
 #else
 #define TESTDRIVER(NAME)
@@ -178,11 +179,11 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced						  */
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum						  */
 
-//!!	DRIVER( lisa2 ) 	/*												  */
+	DRIVER( lisa2 ) 	/*												  */
 
 /*	DRIVER( mac512k )*/	/* 1984 Apple Macintosh 512k					  */
-//!!    DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
-//!!	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
+    DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
+	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
 /*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
 
 	/* ATARI */
