@@ -20,7 +20,7 @@
 			Nlksnes
 			Esnes
 			and the others....
-		The original SNEeSe team members (other than myself ;-)) - 
+		The original SNEeSe team members (other than myself ;-)) -
 			Charles Bilyue - Your continued work on SNEeSe is fantastic!
 			Santeri Saarimaa - Who'd have thought I'd come back to emulation ;-)
 
@@ -105,8 +105,8 @@ int snes_line_interrupt(void)
 		port42xx[0x10]|=0x80;			// set nmi occurred
 		port21xx[0x3E]&=0x3F;			// Clear Time Over and Range Over bits - done every nmi (presumably because no sprites drawn here)
 
-		cpu_writemem24_8bit(0x002102,OAMADDRESS_L);			// Reset oam address at vblank
-		cpu_writemem24_8bit(0x002103,OAMADDRESS_H);
+		cpu_writemem24(0x002102,OAMADDRESS_L);			// Reset oam address at vblank
+		cpu_writemem24(0x002103,OAMADDRESS_H);
 	}
 
 	if (CURLINE < maxLines)
@@ -345,9 +345,9 @@ void doGDMA(unsigned char bits)
 					while (LEN)
 					{
 						if (direc)		// PPU->CPU
-							cpu_writemem24_8bit(BUSA,cpu_readmem24_8bit(BUSB));
+							cpu_writemem24(BUSA,cpu_readmem24(BUSB));
 						else
-							cpu_writemem24_8bit(BUSB,cpu_readmem24_8bit(BUSA));
+							cpu_writemem24(BUSB,cpu_readmem24(BUSA));
 						BUSA+=increment;
 						LEN--;
 					}
@@ -356,17 +356,17 @@ void doGDMA(unsigned char bits)
 					while (LEN)
 					{
 						if (direc)		// PPU->CPU
-							cpu_writemem24_8bit(BUSA,cpu_readmem24_8bit(BUSB));
+							cpu_writemem24(BUSA,cpu_readmem24(BUSB));
 						else
-							cpu_writemem24_8bit(BUSB,cpu_readmem24_8bit(BUSA));
+							cpu_writemem24(BUSB,cpu_readmem24(BUSA));
 						BUSA+=increment;
 						LEN--;
 						if (!LEN)
 							break;
 						if (direc)		// PPU->CPU
-							cpu_writemem24_8bit(BUSA,cpu_readmem24_8bit(BUSB+1));
+							cpu_writemem24(BUSA,cpu_readmem24(BUSB+1));
 						else
-							cpu_writemem24_8bit(BUSB+1,cpu_readmem24_8bit(BUSA));
+							cpu_writemem24(BUSB+1,cpu_readmem24(BUSA));
 						BUSA+=increment;
 						LEN--;
 					}
@@ -375,17 +375,17 @@ void doGDMA(unsigned char bits)
 					while (LEN)
 					{
 						if (direc)		// PPU->CPU
-							cpu_writemem24_8bit(BUSA,cpu_readmem24_8bit(BUSB));
+							cpu_writemem24(BUSA,cpu_readmem24(BUSB));
 						else
-							cpu_writemem24_8bit(BUSB,cpu_readmem24_8bit(BUSA));
+							cpu_writemem24(BUSB,cpu_readmem24(BUSA));
 						BUSA+=increment;
 						LEN--;
 						if (!LEN)
 							break;
 						if (direc)		// PPU->CPU
-							cpu_writemem24_8bit(BUSA,cpu_readmem24_8bit(BUSB));
+							cpu_writemem24(BUSA,cpu_readmem24(BUSB));
 						else
-							cpu_writemem24_8bit(BUSB,cpu_readmem24_8bit(BUSA));
+							cpu_writemem24(BUSB,cpu_readmem24(BUSA));
 						BUSA+=increment;
 						LEN--;
 					}
@@ -961,7 +961,7 @@ void snes_init_palette(unsigned char *palette, unsigned short *colortable,const 
 {
 	int i;
 
-	for ( i = 0; i < 65536; i++ ) 
+	for ( i = 0; i < 65536; i++ )
 	{
 		int r, g, b;
 

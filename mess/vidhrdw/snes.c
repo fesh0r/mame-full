@@ -19,7 +19,7 @@
 			Snemul
 			Nlksnes
 			and the others....
-		The original SNEeSe team members (other than myself ;-)) - 
+		The original SNEeSe team members (other than myself ;-)) -
 			Charles Bilyue - Your continued work on SNEeSe is fantastic!
 			Santeri Saarimaa - Who'd have thought I'd come back to emulation ;-)
 
@@ -42,7 +42,7 @@ unsigned char *zBuffer;
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
-int snes_vh_start(void) 
+int snes_vh_start(void)
 {
 	zBuffer=malloc((256+32)*(256+32));
 	if (!zBuffer)
@@ -52,7 +52,7 @@ int snes_vh_start(void)
 	return 0;
 }
 
-void snes_vh_stop(void) 
+void snes_vh_stop(void)
 {
 	generic_vh_stop();
 	free(zBuffer);
@@ -63,7 +63,7 @@ void snes_vh_stop(void)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void snes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh) 
+void snes_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 }
 
@@ -947,13 +947,13 @@ unsigned char setupHDMA(unsigned char bits)
 
 			port43xx[dmaBase + 0x08]=port43xx[dmaBase + 0x02];
 			port43xx[dmaBase + 0x09]=port43xx[dmaBase + 0x03];
-			
+
 			if ((port21xx[0x05] & 0x07)==7)
 			{
 				SRC=TABLEA2(dmaBase);
 /*				for (a=0;a<256*3;a++)
 				{
-					logerror("%02x ",cpu_readmem24_8bit(SRC));
+					logerror("%02x ",cpu_readmem24(SRC));
 					SRC++;
 					if ((a&15)==15)
 						logerror("\n");
@@ -986,7 +986,7 @@ unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if 
 			{
 				// Out of data need to read in a new line - taken from table a2 address with a1's bank address
 				SRC = TABLEA2(dmaBase);
-				port43xx[dmaBase+0x0A]=cpu_readmem24_8bit(SRC);
+				port43xx[dmaBase+0x0A]=cpu_readmem24(SRC);
 /*				if (port43xx[dmaBase + 0x00] & 0x40)
 					logerror("Indirect HDMA - Table A2 Address %06X\n",SRC);
 				if (port43xx[dmaBase + 0x00] & 0x40)
@@ -1006,8 +1006,8 @@ unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if 
 				if (port43xx[dmaBase + 0x00] & 0x40)				// Indirect hdma requested
 				{
 					// Update Indirect address pointer
-					port43xx[dmaBase+0x05]=cpu_readmem24_8bit(SRC++);
-					port43xx[dmaBase+0x06]=cpu_readmem24_8bit(SRC++);
+					port43xx[dmaBase+0x05]=cpu_readmem24(SRC++);
+					port43xx[dmaBase+0x06]=cpu_readmem24(SRC++);
 //					if (port43xx[dmaBase + 0x00] & 0x40)
 //						logerror("Indirect HDMA - Indirect Address %02X%02X\n",port43xx[dmaBase+0x06],port43xx[dmaBase+0x05]);
 
@@ -1034,21 +1034,21 @@ unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if 
 			switch (port43xx[dmaBase + 0x00] & 0x07)
 			{
 				case 0x00:									// Write once L (1 src bytes)
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
 					break;
 				case 0x01:									// Write once L,H (2 src bytes)
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
-					cpu_writemem24_8bit(DST+1,cpu_readmem24_8bit(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
+					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
 					break;
 				case 0x02:									// Write twice L,L (2 src bytes)
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
 					break;
 				case 0x03:									// Write twice L,L H,H (4 src bytes)
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
-					cpu_writemem24_8bit(DST,cpu_readmem24_8bit(SRC++));
-					cpu_writemem24_8bit(DST+1,cpu_readmem24_8bit(SRC++));
-					cpu_writemem24_8bit(DST+1,cpu_readmem24_8bit(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
+					cpu_writemem24(DST,cpu_readmem24(SRC++));
+					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
+					cpu_writemem24(DST+1,cpu_readmem24(SRC++));
 					break;
 				default:
 					logerror("HDMA Error : Unsupported HDMA Operation [%d]\n",port43xx[dmaBase + 0x00] & 0x07);
@@ -1128,7 +1128,7 @@ void RenderSNESScreenLine(struct osd_bitmap *bitmap,int curLine)
 		}
 
 		if (SCR_TM&0x10)									// Render sprites
-			RenderSprites(dst,zCur,curLine);   
+			RenderSprites(dst,zCur,curLine);
 
 		switch(port21xx[0x05]&0x07)				  			// Determine background mode
 		{
