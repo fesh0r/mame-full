@@ -415,7 +415,7 @@ static void DebugMeshEnd( void )
 
 static int DebugMeshDisplay( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	if( keyboard_pressed_memory( KEYCODE_M ) )
+	if( code_pressed_memory( KEYCODE_M ) )
 	{
 		m_b_debugmesh = !m_b_debugmesh;
 	}
@@ -432,13 +432,13 @@ static int DebugTextureDisplay( struct mame_bitmap *bitmap )
 {
 	UINT32 n_y;
 
-	if( keyboard_pressed_memory( KEYCODE_V ) )
+	if( code_pressed_memory( KEYCODE_V ) )
 	{
 		m_b_debugtexture = !m_b_debugtexture;
 	}
 	if( m_b_debugtexture )
 	{
-		if( keyboard_pressed_memory( KEYCODE_I ) )
+		if( code_pressed_memory( KEYCODE_I ) )
 		{
 			m_n_debuginterleave++;
 			if( m_n_debuginterleave == 2 )
@@ -689,7 +689,7 @@ VIDEO_UPDATE( psx )
 		return;
 	}
 #if 0
-	if( keyboard_pressed_memory( KEYCODE_I ) )
+	if( code_pressed_memory( KEYCODE_I ) )
 	{
 		m_n_debugskip++;
 		if( m_n_debugskip > 15 )
@@ -698,7 +698,7 @@ VIDEO_UPDATE( psx )
 		}
 		usrintf_showmessage_secs( 1, "debug skip %d", m_n_debugskip );
 	}
-	if( keyboard_pressed_memory( KEYCODE_D ) )
+	if( code_pressed_memory( KEYCODE_D ) )
 	{
 		FILE *f;
 		int n_x;
@@ -712,7 +712,7 @@ VIDEO_UPDATE( psx )
 		}
 		fclose( f );
 	}
-	if( keyboard_pressed_memory( KEYCODE_S ) )
+	if( code_pressed_memory( KEYCODE_S ) )
 	{
 		FILE *f;
 		usrintf_showmessage_secs( 1, "saving..." );
@@ -723,7 +723,7 @@ VIDEO_UPDATE( psx )
 		}
 		fclose( f );
 	}
-	if( keyboard_pressed_memory( KEYCODE_L ) )
+	if( code_pressed_memory( KEYCODE_L ) )
 	{
 		FILE *f;
 		usrintf_showmessage_secs( 1, "loading..." );

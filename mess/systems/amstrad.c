@@ -24,7 +24,6 @@ Some bugs left :
     - CRTC all type support (0,1,2,3,4) ?
     - Gate Array and CRTC aren't synchronised. (The Gate Array can change the color every microseconds?) So the multi-rasters in one line aren't supported (see yao demo p007's part)!
     - Implement full Asic for CPC+ emulation
-    - Keyboard arrows and copy send incorrect key on the screen ?! Maybe a problem with readinputport ?
  ******************************************************************************/
 #include "driver.h"
 
@@ -98,8 +97,6 @@ static int amstrad_GateArray_ModeAndRomConfiguration = 0;
 static int amstrad_GateArray_RamConfiguration = 0;
 /* The gate array counts CRTC HSYNC pulses. (It has a internal 6-bit counter). */
 extern int amstrad_CRTC_HS_Counter;
-/* cycle count of last write */
-int amstrad_cycles_last_write = 0;
 /*-------------
   - MULTIFACE -
   -------------*/
@@ -153,7 +150,7 @@ static void update_psg(void)
 }
 
 /* Read/Write 8255 PPI port A (connected to AY-3-8912 databus) */
-static  READ8_HANDLER ( amstrad_ppi_porta_r )
+static READ8_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
   return ppi_port_inputs[amstrad_ppi_PortA];
@@ -190,7 +187,7 @@ Note:
   On the CPC this can be used by a expansion device to report it's presence. "1" = device connected, "0" = device not connected. This is not always used by all expansion devices. 
 */
 
-static  READ8_HANDLER (amstrad_ppi_portb_r)
+static READ8_HANDLER (amstrad_ppi_portb_r)
 {
 	int data = 0;
 /* Set b7 with cassette tape input */
@@ -581,7 +578,7 @@ Expansion Peripherals Read/Write -   -   -   -   -   0   -   -   -   -   -   -  
 
 */
 
-static  READ8_HANDLER ( AmstradCPC_ReadPortHandler )
+static READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0xFF;
 	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
@@ -753,7 +750,6 @@ The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which
 
 			switch (b8b0) {
 			case 0x00:
-			case 0x01:
         /* FDC Motor Control - Bit 0 defines the state of the FDD motor: 
          * "1" the FDD motor will be active. 
          * "0" the FDD motor will be in-active.*/
@@ -762,7 +758,7 @@ The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which
 				floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1,1);
 				floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
 		  break;
-			case 0x02:
+
       case 0x03: /* Write Data register of FDC */
 				nec765_data_w(0,data);
 			break;
@@ -1061,26 +1057,6 @@ static int 	amstrad_cpu_acknowledge_int(int cpu)
 	amstrad_CRTC_HS_Counter &= 0x1F;
 	return 0xFF;
 }
-/* every 64us let's the crtc do the job !*/
-static void amstrad_update_video(int dummy)
-{
-	int current_time;
-	int time_delta;
-
-	// current cycles
-	current_time = TIME_TO_CYCLES(0,cpu_getscanline()*cpu_getscanlineperiod());
-	
-	// time between last write and this write
-  time_delta = current_time - amstrad_cycles_last_write;
-  time_delta = time_delta>>2;
-
-	 // set new previous write
-	amstrad_cycles_last_write = current_time;
-	 
-	 if (time_delta != 0) {
-    amstrad_vh_execute_crtc_cycles(time_delta);
-  }
-}
 
 static VIDEO_EOF( amstrad )
 {
@@ -1237,8 +1213,7 @@ static void amstrad_update_video_1(int dummy)
 static void amstrad_common_init(void)
 {
 	amstrad_GateArray_ModeAndRomConfiguration = 0;
-	amstrad_CRTC_HS_Counter = 0;
-	amstrad_cycles_last_write = 0;
+	amstrad_CRTC_HS_Counter = 2;
 	previous_amstrad_UpperRom_data = 0xff;
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x1fff, 0, 0, MRA8_BANK1);
@@ -1259,6 +1234,7 @@ static void amstrad_common_init(void)
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xdfff, 0, 0, MWA8_BANK15);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xffff, 0, 0, MWA8_BANK16);
 
+	cpuint_reset_cpu(0);
 	cpu_irq_line_vector_w(0, 0,0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
@@ -1267,10 +1243,13 @@ static void amstrad_common_init(void)
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0),  FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 1),  FLOPPY_DRIVE_SS_40);
 
-	timer_pulse(TIME_IN_USEC(2), 0, amstrad_update_video_1); 
+/* Every microsecond: 
 
-	/* Juergen is a cool dude! */
-	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
+The CRTC generates a memory address using it's MA and RA signal outputs 
+The Gate-Array fetches two bytes for each address*/
+
+//	timer_pulse(TIME_IN_USEC(AMSTRAD_US_PER_SCANLINE), 0, amstrad_vh_execute_crtc_cycles);
+	timer_pulse(TIME_IN_USEC(1), 0, amstrad_vh_execute_crtc_cycles);
 
 	/* The opcode timing in the Amstrad is different to the opcode
 	timing in the core for the Z80 CPU.
@@ -1289,6 +1268,8 @@ static void amstrad_common_init(void)
 	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_xycb, amstrad_cycle_table_xycb);
 	cpunum_set_info_ptr(0,CPUINFO_PTR_Z80_CYCLE_TABLE+Z80_TABLE_ex, amstrad_cycle_table_ex);
 
+	/* Juergen is a cool dude! */
+	cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
 }
 
 static MACHINE_INIT( amstrad )
@@ -1373,7 +1354,7 @@ When port B is defined as input (bit 7 of register 7 is set to "0"), a read of t
 */
 
 /* read PSG port A */
-static  READ8_HANDLER ( amstrad_psg_porta_read )
+static READ8_HANDLER ( amstrad_psg_porta_read )
 {	
 /* Read CPC Keyboard
    If keyboard matrix line 11-14 are selected, the byte is always &ff.
@@ -1399,7 +1380,6 @@ static  READ8_HANDLER ( amstrad_psg_porta_read )
 	PORT_KEY1(0x20, IP_ACTIVE_LOW, "Keypad 3", KEYCODE_3_PAD, IP_JOY_NONE, UCHAR_MAMEKEY(3_PAD) ) \
 	PORT_KEY1(0x40, IP_ACTIVE_LOW, "Keypad Enter", KEYCODE_ENTER_PAD, IP_JOY_NONE, UCHAR_MAMEKEY(ENTER_PAD) ) \
 	PORT_KEY1(0x80, IP_ACTIVE_LOW, "Keypad .", KEYCODE_DEL_PAD, IP_JOY_NONE, UCHAR_MAMEKEY(DEL_PAD) ) \
-\
 \
 	/* keyboard line 1 */ \
 	PORT_START \
@@ -1532,7 +1512,8 @@ b3 b2 b1 Manufacturer Name (CPC and CPC+ only):
 1  0  0  Awa 
 1  0  1  Schneider 
 1  1  0  Orion 
-1  1  1  Amstrad*/	PORT_START
+1  1  1  Amstrad*/
+PORT_START
 	PORT_DIPNAME( 0x07, 0x07, "Manufacturer Name" )
 	PORT_DIPSETTING(    0x00, "Isp" )
 	PORT_DIPSETTING(    0x01, "Triumph" )
