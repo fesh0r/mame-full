@@ -54,7 +54,7 @@ int register_device (const int type, const char *arg)
 	extern struct GameOptions options;
 
 	/* Check the the device type is valid, otherwise this lookup will be bad*/
-	if (type && type >= IO_COUNT)
+	if (type <= IO_END || type >= IO_COUNT || !type)
 	{
 		logerror("register_device() failed! - device type [%d] is not valid\n",type);
 		return -1;
@@ -63,12 +63,12 @@ int register_device (const int type, const char *arg)
 	/* Next, check that we havent loaded too many images					*/
 	if (options.image_count >= MAX_IMAGES)
 	{
-		printf("Too many image names specified!\n");
+		logerror("Too many image names specified!\n");
 		return -1;
 	}
 
-	/* All se to add eevice and argument to options{} struct				*/
-	logerror("register_device() - User specified %s for %s\n", device_typename(type), arg);
+	/* All seems ok to add device and argument to options{} struct			*/
+	logerror("register_device() - User specified %s for %s\n", arg, device_typename(type));
 	/* the user specified a device type */
 	options.image_files[options.image_count].type = type;
 	options.image_files[options.image_count].name = strdup(arg);
