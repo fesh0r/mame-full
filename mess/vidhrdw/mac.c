@@ -1,7 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#include "systems/mac.h"
+#include "includes/mac.h"
 
 static UINT16 *old_display;
 
