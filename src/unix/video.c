@@ -29,6 +29,7 @@ static int frameskipper = 0;
 static int brightness = 100;
 float brightness_paused_adjust = 1.0;
 static int bitmap_depth;
+static int using_15bpp_rgb_direct;
 static struct mame_bitmap *scrbitmap = NULL;
 static int debugger_has_focus = 0;
 static struct rectangle normal_visual;
@@ -235,9 +236,9 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_components)
 {
    int r, g, b;
-   struct mame_display dummy_display;
 
-   bitmap_depth = (params->depth != 15) ? params->depth : 16;
+   bitmap_depth = (params->depth == 15) ? 16 : params->depth;
+   using_15bpp_rgb_direct = (params->depth == 15);
 
    current_palette = normal_palette = NULL;
    debug_visual.min_x = 0;
@@ -298,13 +299,29 @@ int osd_create_display(const struct osd_create_params *params, UINT32 *rgb_compo
       brightness * brightness_paused_adjust);
 
    /* initialize the palette to a fixed 5-5-5 mapping */
-   for (r = 0; r < 32; r++)
-      for (g = 0; g < 32; g++)
-         for (b = 0; b < 32; b++)
-         {
-            int idx = (r << 10) | (g << 5) | b;
-            sysdep_palette_set_pen(normal_palette, idx, r, g, b);
-         }
+   if (using_15bpp_rgb_direct)
+   {
+      for (r = 0; r < 32; r++)
+         for (g = 0; g < 32; g++)
+            for (b = 0; b < 32; b++)
+            {
+               int idx = (r << 10) | (g << 5) | b;
+               sysdep_palette_set_pen(normal_palette, idx, 
+                  (r << 3) | (r >> 2),
+                  (g << 3) | (g >> 2),
+                  (b << 3) | (b >> 2));
+            }
+   }
+   else
+   {
+      for (r = 0; r < 32; r++)
+         for (g = 0; g < 32; g++)
+            for (b = 0; b < 32; b++)
+            {
+               int idx = (r << 10) | (g << 5) | b;
+               sysdep_palette_set_pen(normal_palette, idx, r, g, b);
+            }
+   }
 
    current_palette = normal_palette;
 
