@@ -41,5 +41,5 @@ Source Changes:
   option will get written out when launched from the GUI, so that per system
   directories can be recorded (bug #345). [Nate Woods]
 
-
-
+- [Windows GUI] Fixed a bug whereby extra software paths with spaces in them
+  would not be properly persisted (bug #369). [Nate Woods]
