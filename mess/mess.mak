@@ -231,7 +231,6 @@ DRVLIBS = \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
-	$(OBJ)/sony.a     \
 
 
 
@@ -730,9 +729,6 @@ $(OBJ)/sord.a:     \
 
 $(OBJ)/tatung.a:     \
 	$(OBJ)/mess/systems/einstein.o
-
-$(OBJ)/sony.a:     \
-	$(OBJ)/mess/systems/psx.o
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
