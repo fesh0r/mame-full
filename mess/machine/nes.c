@@ -20,7 +20,6 @@
 #define BATTERY_SIZE 0x2000
 UINT8 battery_data[BATTERY_SIZE];
 
-static int famicom_image_registered = 0;
 struct ppu_struct ppu;
 struct nes_struct nes;
 struct fds_struct nes_fds;
@@ -1256,7 +1255,6 @@ DEVICE_LOAD(nes_cart)
 	if (nes.battery)
 		image_battery_load(image, battery_data, BATTERY_SIZE);
 
-	famicom_image_registered = 1;
 	return INIT_PASS;
 
 bad:
@@ -1321,7 +1319,6 @@ DEVICE_LOAD(nes_disk)
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 
-	famicom_image_registered = 1;
 	return INIT_PASS;
 
 //bad:

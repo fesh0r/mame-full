@@ -278,8 +278,6 @@ static struct {
 	/* oak vga */
 	struct { UINT8 reg; } oak;
 
-	int full_refresh;
-
 	int log;
 } vga;
 
