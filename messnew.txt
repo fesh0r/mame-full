@@ -5,7 +5,7 @@ Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-- 
+- Amstrad NC100 [Kev Thacker]
 
 
 System Driver Changes:
