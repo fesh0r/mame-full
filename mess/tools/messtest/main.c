@@ -13,6 +13,7 @@
 #include "../imgtool/imgtool.h"
 
 #ifdef WIN32
+#include <windows.h>
 #include "windows/rc.h"
 #include "windows/glob.h"
 #include "windows/parallel.h"
@@ -93,6 +94,13 @@ int main(int argc, char *argv[])
 	extern int mess_ghost_images;
 
 	mess_ghost_images = 1;
+
+#if defined(_MSC_VER) && (_MSC_VER >= 1300)
+	if (IsDebuggerPresent())
+	{
+		_set_error_mode(_OUT_TO_MSGBOX);
+	}
+#endif
 
 #ifdef WIN32
 	/* expand wildcards so '*' can be used; this is not UNIX */

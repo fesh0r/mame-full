@@ -24,12 +24,16 @@
   ------  ------  -----------
        0       1  Active byte (0x80=active 0x00=inactive)
 	   1       1  Starting head
-	   2       2  Starting track and sector (track bits 15-6; sector bits 5-0)
+	   2       1  Starting sector (bits 5-0) and high bits of starting track (bits 6-5)
+	   3       1  Low bits of starting track
 	   4       1  Partition type:
 				       0x00		Unused
 					   0x?1		FAT12	(0-15 MB)
+					   0x?2		XENIX
 					   0x?4		FAT16	(16-32 MB)
 					   0x?6		FAT16`	(32 MB-2 GB)
+					   0x?7		HPFS or NTFS
+					   0x?A		Boot Manager
 					   0x?B		FAT32	(512 MB-2 TB)
 					   0x?C		FAT32	(512 MB-2 TB LBA)
 					   0x1?		OS/2 Boot manager/Win95 hidden
@@ -37,8 +41,9 @@
 					   0xD?		Multiuser DOS secured partition
 					   0xE?		SpeedStor extended partition
 	   5       1  Ending head
-	   6       2  Ending track and sector (track bits 15-6; sector bits 5-0)
-	   8       4  Starting LBA
+	   6       1  Ending sector (bits 5-0) and high bits of ending track (bits 6-5)
+	   7       1  Low bits of ending track
+	   8       4  Sector index of beginning of partition
 	  12       4  Total sectors in partition
 
 
@@ -136,8 +141,9 @@
 #include "unicode.h"
 #include "imghd.h"
 
-#define FAT_DIRENT_SIZE	32
-#define FAT_SECLEN		512
+#define FAT_DIRENT_SIZE			32
+#define FAT_SECLEN				512
+
 #define LOG(x)
 
 struct fat_diskinfo
@@ -153,7 +159,29 @@ struct fat_diskinfo
 	UINT32 heads;
 	UINT64 total_sectors;
 	UINT32 total_clusters;
-	struct hard_disk_file *harddisk;
+	struct mess_hard_disk_file harddisk;
+};
+
+struct fat_partitiontableinfo
+{
+	UINT32 heads;
+	UINT32 sectors;
+
+	struct
+	{
+		unsigned int active : 1;
+		unsigned int is_fat : 1;
+		unsigned int corrupt : 1;
+		UINT32 fat_bits;
+		UINT32 starting_track;
+		UINT32 starting_head;
+		UINT32 starting_sector;
+		UINT32 ending_track;
+		UINT32 ending_head;
+		UINT32 ending_sector;
+		UINT32 sector_index;
+		UINT32 total_sectors;
+	} partitions[4];
 };
 
 struct fat_file
@@ -353,7 +381,7 @@ static imgtoolerr_t fat_read_sector(imgtool_image *image, UINT32 sector_index,
 	{
 		while(buffer_len > 0)
 		{
-			imghd_read(fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
+			imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, data);
 
 			len = MIN(buffer_len, sizeof(data) - offset);
 			memcpy(buffer, data + offset, len);
@@ -392,7 +420,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 
 			if ((offset != 0) || (buffer_len < sizeof(data)))
 			{
-				imghd_read(fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
+				imghd_read(&fat_get_diskinfo(image)->harddisk, sector_index, 1, data);
 				memcpy(data + offset, buffer, len);
 				write_data = data;
 			}
@@ -401,7 +429,7 @@ static imgtoolerr_t fat_write_sector(imgtool_image *image, UINT32 sector_index,
 				write_data = buffer;
 			}
 
-			imghd_write(fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
+			imghd_write(&fat_get_diskinfo(image)->harddisk, sector_index++, 1, write_data);
 
 			buffer = ((const UINT8 *) buffer) + len;
 			buffer_len -= len;
@@ -429,30 +457,155 @@ static imgtoolerr_t fat_clear_sector(imgtool_image *image, UINT32 sector_index, 
 
 
 
+static imgtoolerr_t fat_get_partition_info(const UINT8 *boot_sector, struct fat_partitiontableinfo *pi)
+{
+	int i = 0;
+	const UINT8 *partition_info;
+	UINT32 heads, sectors;
+	UINT32 expected_sector_index;
+	UINT32 ending_sector_index;
+	UINT32 expected_ending_track;
+	UINT32 expected_ending_head;
+	UINT32 expected_ending_sector;
+	
+	memset(pi, '\0', sizeof(*pi));
+
+	/* magic bytes present? */
+	if ((boot_sector[510] != 0x55) || (boot_sector[511] != 0xAA))
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	for (i = 0; i < sizeof(pi->partitions) / sizeof(pi->partitions[0]); i++)
+	{
+		partition_info = &boot_sector[446 + i * 16];
+
+		pi->partitions[i].active			= (partition_info[0] & 0x80) ? 1 : 0;
+		pi->partitions[i].starting_head		= partition_info[1];
+		pi->partitions[i].starting_track	= ((partition_info[2] << 2) & 0xFF00) | partition_info[3];
+		pi->partitions[i].starting_sector	= partition_info[2] & 0x3F;
+		pi->partitions[i].ending_head		= partition_info[5];
+		pi->partitions[i].ending_track		= ((partition_info[6] << 2) & 0xFF00) | partition_info[7];
+		pi->partitions[i].ending_sector		= partition_info[6] & 0x3F;
+
+		pi->partitions[i].sector_index		= pick_integer(partition_info,  8, 4);
+		pi->partitions[i].total_sectors		= pick_integer(partition_info, 12, 4);
+
+		switch(partition_info[4] & 0x0F)
+		{
+			case 1:
+				pi->partitions[i].is_fat = 1;
+				pi->partitions[i].fat_bits = 12;
+				break;
+			case 4:
+			case 6:
+				pi->partitions[i].is_fat = 1;
+				pi->partitions[i].fat_bits = 16;
+				break;
+			case 11:
+			case 12:
+				pi->partitions[i].is_fat = 1;
+				pi->partitions[i].fat_bits = 32;
+				break;
+		}
+		if (pi->partitions[i].starting_track > pi->partitions[i].ending_track)
+			return IMGTOOLERR_CORRUPTIMAGE;
+	}
+
+	/* based on this info, try to deduce the dimensions of this disk */
+	for (sectors = 63; sectors >= 1; sectors--)
+	{
+		for (heads = 9; heads >= 1; heads--)
+		{
+			for (i = 0; i < sizeof(pi->partitions) / sizeof(pi->partitions[0]); i++)
+			{
+				expected_sector_index = (pi->partitions[i].starting_track * heads * sectors)
+					+ (pi->partitions[i].starting_head * sectors)
+					+ (pi->partitions[i].starting_sector - 1);
+				if (pi->partitions[i].total_sectors == 0)
+					continue;
+				if (expected_sector_index != pi->partitions[i].sector_index)
+					break;
+
+				ending_sector_index = pi->partitions[i].total_sectors + pi->partitions[i].sector_index - 1;
+				expected_ending_track = ending_sector_index / sectors / heads;
+				expected_ending_head = (ending_sector_index / sectors) % heads;
+				expected_ending_sector = (ending_sector_index % sectors) + 1;
+
+				if (expected_ending_track != pi->partitions[i].ending_track)
+					break;
+				if (expected_ending_head != pi->partitions[i].ending_head)
+					break;
+				if (expected_ending_sector != pi->partitions[i].ending_sector)
+					break;
+			}
+			if (i == sizeof(pi->partitions) / sizeof(pi->partitions[0]))
+			{
+				/* we have established the dimensions */
+				pi->sectors = sectors;
+				pi->heads = heads;
+				return IMGTOOLERR_SUCCESS;
+			}
+		}
+	}
+	return IMGTOOLERR_CORRUPTIMAGE;
+}
+
+
+
 static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 {
-	UINT8 header[62];
+	UINT8 header[FAT_SECLEN];
+	struct fat_partitiontableinfo pi;
 	imgtoolerr_t err;
 	struct fat_diskinfo *info;
 	UINT32 fat_bits, total_sectors_l, total_sectors_h, sector_size;
+	int i;
+
+	info = fat_get_diskinfo(image);
 
 	err = fat_read_sector(image, 0, 0, header, sizeof(header));
 	if (err)
 		return err;
 
-	/* figure out which FAT type this is */
-	if (!memcmp(&header[54], "FAT     ", 8))
-		fat_bits = 8;
-	else if (!memcmp(&header[54], "FAT12   ", 8))
-		fat_bits = 12;
-	else if (!memcmp(&header[54], "FAT16   ", 8))
-		fat_bits = 16;
-	else if (!memcmp(&header[54], "FAT32   ", 8))
-		fat_bits = 32;
-	else
+	/* magic bytes present? */
+	if ((header[510] != 0x55) || (header[511] != 0xAA))
 		return IMGTOOLERR_CORRUPTIMAGE;
+
+	/* is this a partitioned image? */
+	err = fat_get_partition_info(header, &pi);
+	if (err == IMGTOOLERR_SUCCESS)
+	{
+		for (i = 0; i < sizeof(pi.partitions) / sizeof(pi.partitions[0]); i++)
+		{
+			if (pi.partitions[i].active && pi.partitions[i].is_fat)
+				break;
+		}
+		if (i >= sizeof(pi.partitions) / sizeof(pi.partitions[0]))
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		info->heads = pi.heads;
+		info->sectors_per_track = pi.sectors;
+		fat_bits = pi.partitions[i].fat_bits;
+		
+		err = fat_read_sector(image, pi.partitions[i].sector_index, 0, header, sizeof(header));
+		if (err)
+			return err;
+	}
+	else
+	{
+		/* this disk is not partitioned; first step is to figure out which
+		 * FAT type this is */
+		if (!memcmp(&header[54], "FAT     ", 8))
+			fat_bits = 8;
+		else if (!memcmp(&header[54], "FAT12   ", 8))
+			fat_bits = 12;
+		else if (!memcmp(&header[54], "FAT16   ", 8))
+			fat_bits = 16;
+		else if (!memcmp(&header[54], "FAT32   ", 8))
+			fat_bits = 32;
+		else
+			return IMGTOOLERR_CORRUPTIMAGE;
+	}
 	
-	info = fat_get_diskinfo(image);
 	info->fat_bits				= fat_bits;
 	sector_size					= pick_integer(header, 11, 2);
 	info->sectors_per_cluster	= pick_integer(header, 13, 1);
@@ -2093,11 +2246,8 @@ static imgtoolerr_t fat_chd_diskimage_open(imgtool_image *image, imgtool_stream 
 		goto done;
 
 done:
-	if (err && disk_info->harddisk)
-	{
-		imghd_close(disk_info->harddisk);
-		disk_info->harddisk = NULL;
-	}
+	if (err)
+		imghd_close(&disk_info->harddisk);
 	return err;
 }
 
@@ -2133,11 +2283,8 @@ static imgtoolerr_t fat_chd_diskimage_create(imgtool_image *image, imgtool_strea
 		goto done;
 
 done:
-	if (err && disk_info->harddisk)
-	{
-		imghd_close(disk_info->harddisk);
-		disk_info->harddisk = NULL;
-	}
+	if (err)
+		imghd_close(&disk_info->harddisk);
 	return err;
 }
 
@@ -2147,7 +2294,7 @@ static void fat_chd_diskimage_close(imgtool_image *image)
 {
 	struct fat_diskinfo *disk_info;
 	disk_info = fat_get_diskinfo(image);
-	imghd_close(disk_info->harddisk);
+	imghd_close(&disk_info->harddisk);
 }
 
 

@@ -284,35 +284,37 @@ done:
 
 	Open stream as a MAME HD image
 */
-imgtoolerr_t imghd_open(imgtool_stream *stream, struct hard_disk_file **hard_disk)
+imgtoolerr_t imghd_open(imgtool_stream *stream, struct mess_hard_disk_file *hard_disk)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
-	struct chd_file *chd;
 	char encoded_image_ref[encoded_image_ref_max_len];
 	struct chd_interface interface_save;
 
-	*hard_disk = NULL;
+	hard_disk->hard_disk = NULL;
+	hard_disk->chd = NULL;
 	encode_image_ref(stream, encoded_image_ref);
 
 	/* use our CHD interface */
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
 
-	chd = chd_open(encoded_image_ref, !stream_isreadonly(stream), NULL);
-	if (!chd)
+	hard_disk->chd = chd_open(encoded_image_ref, !stream_isreadonly(stream), NULL);
+	if (!hard_disk->chd)
 	{
 		err = imghd_chd_getlasterror();
 		goto done;
 	}
 
-	*hard_disk = hard_disk_open(chd);
-	if (!*hard_disk)
+	hard_disk->hard_disk = hard_disk_open(hard_disk->chd);
+	if (!hard_disk->hard_disk)
 	{
 		err = IMGTOOLERR_UNEXPECTED;
 		goto done;
 	}
 
 done:
+	if (err)
+		imghd_close(hard_disk);
 	chd_set_interface(&interface_save);
 	return err;
 }
@@ -324,13 +326,24 @@ done:
 
 	Close MAME HD image
 */
-void imghd_close(struct hard_disk_file *disk)
+void imghd_close(struct mess_hard_disk_file *disk)
 {
 	struct chd_interface interface_save;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
-	hard_disk_close(disk);
+
+	if (disk->hard_disk)
+	{
+		hard_disk_close(disk->hard_disk);
+		disk->hard_disk = NULL;
+	}
+	if (disk->chd)
+	{
+		chd_close(disk->chd);
+		disk->chd = NULL;
+	}
+
 	chd_set_interface(&interface_save);
 }
 
@@ -341,14 +354,14 @@ void imghd_close(struct hard_disk_file *disk)
 
 	Read sector(s) from MAME HD image
 */
-UINT32 imghd_read(struct hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, void *buffer)
+UINT32 imghd_read(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, void *buffer)
 {
 	struct chd_interface interface_save;
 	UINT32 reply;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
-	reply = hard_disk_read(disk, lbasector, numsectors, buffer);
+	reply = hard_disk_read(disk->hard_disk, lbasector, numsectors, buffer);
 	chd_set_interface(&interface_save);
 
 	return reply;
@@ -361,14 +374,14 @@ UINT32 imghd_read(struct hard_disk_file *disk, UINT32 lbasector, UINT32 numsecto
 
 	Write sector(s) from MAME HD image
 */
-UINT32 imghd_write(struct hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer)
+UINT32 imghd_write(struct mess_hard_disk_file *disk, UINT32 lbasector, UINT32 numsectors, const void *buffer)
 {
 	struct chd_interface interface_save;
 	UINT32 reply;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
-	reply = hard_disk_write(disk, lbasector, numsectors, buffer);
+	reply = hard_disk_write(disk->hard_disk, lbasector, numsectors, buffer);
 	chd_set_interface(&interface_save);
 
 	return reply;
@@ -381,14 +394,14 @@ UINT32 imghd_write(struct hard_disk_file *disk, UINT32 lbasector, UINT32 numsect
 
 	Return pointer to the header of MAME HD image
 */
-const struct hard_disk_info *imghd_get_header(struct hard_disk_file *disk)
+const struct hard_disk_info *imghd_get_header(struct mess_hard_disk_file *disk)
 {
 	struct chd_interface interface_save;
 	const struct hard_disk_info *reply;
 
 	chd_save_interface(&interface_save);
 	chd_set_interface(&imgtool_chd_interface);
-	reply = hard_disk_get_info(disk);
+	reply = hard_disk_get_info(disk->hard_disk);
 	chd_set_interface(&interface_save);
 
 	return reply;

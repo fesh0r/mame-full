@@ -737,11 +737,13 @@ WRITE8_HANDLER ( BBC_6845_w )
 
 VIDEO_UPDATE( bbc )
 {
+	long c;
+	int full_refresh;
 
 logerror ("Box %d by %d \n",cliprect->min_y,cliprect->max_y);
 
-	long c=0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
-	int full_refresh = 1;
+	c = 0; // this is used to time out the screen redraw, in the case that the 6845 is in some way out state.
+	full_refresh = 1;
 
 	BBC_bitmap=bitmap;
 

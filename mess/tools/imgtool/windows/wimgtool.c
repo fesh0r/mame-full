@@ -128,9 +128,33 @@ done:
 
 
 
-static void report_error(HWND window, imgtoolerr_t err)
+void wimgtool_report_error(HWND window, imgtoolerr_t err, const char *imagename, const char *filename)
 {
-	MessageBox(window, imgtool_error(err), wimgtool_producttext, MB_OK);
+	const char *error_text;
+	const char *source;
+	char buffer[512];
+	const char *message = buffer;
+
+	error_text = imgtool_error(err);
+
+	switch(ERRORSOURCE(err))
+	{
+		case IMGTOOLERR_SRC_IMAGEFILE:
+			source = osd_basename((char *) imagename);
+			break;
+		case IMGTOOLERR_SRC_FILEONIMAGE:
+			source = filename;
+			break;
+		default:
+			source = NULL;
+			break;
+	}
+
+	if (source)
+		snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s: %s", source, error_text);
+	else
+		message = error_text;
+	MessageBox(window, message, wimgtool_producttext, MB_OK);
 }
 
 
@@ -674,7 +698,7 @@ static void menu_new(HWND window)
 	memory_pool pool;
 	OPENFILENAME ofn;
 	const struct ImageModule *module;
-	const char *filename;
+	const char *filename = NULL;
 	option_resolution *resolution = NULL;
 
 	pool_init(&pool);
@@ -704,7 +728,7 @@ static void menu_new(HWND window)
 
 done:
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, filename, NULL);
 	if (resolution)
 		option_resolution_close(resolution);
 	pool_exit(&pool);
@@ -718,7 +742,7 @@ static void menu_open(HWND window)
 	memory_pool pool;
 	OPENFILENAME ofn;
 	const struct ImageModule *module;
-	const char *filename;
+	const char *filename = NULL;
 	struct wimgtool_info *info;
 	int read_or_write;
 
@@ -748,7 +772,7 @@ static void menu_open(HWND window)
 
 done:
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, filename, NULL);
 	pool_exit(&pool);
 }
 
@@ -757,7 +781,7 @@ done:
 static void menu_insert(HWND window)
 {
 	imgtoolerr_t err;
-	const char *image_filename;
+	const char *image_filename = NULL;
 	TCHAR host_filename[MAX_PATH] = { 0 };
 	const TCHAR *s1;
 	char *s2;
@@ -812,7 +836,7 @@ done:
 	if (opts)
 		option_resolution_close(opts);
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, image_filename, ofn.lpstrFile);
 }
 
 
@@ -824,7 +848,7 @@ static void menu_extract(HWND window)
 	TCHAR host_filename[MAX_PATH];
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
-	const char *filename;
+	const char *filename = NULL;
 	const char *image_basename;
 	int i;
 
@@ -859,7 +883,7 @@ static void menu_extract(HWND window)
 
 done:
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, filename, ofn.lpstrFile);
 }
 
 
@@ -922,7 +946,7 @@ static void menu_createdir(HWND window)
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct createdir_dialog_info cdi;
 	struct wimgtool_info *info;
-	char *dirname;
+	char *dirname = NULL;
 	char *s;
 
 	info = get_wimgtool_info(window);
@@ -953,7 +977,7 @@ static void menu_createdir(HWND window)
 
 done:
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, NULL, dirname);
 }
 
 
@@ -984,7 +1008,7 @@ static void menu_delete(HWND window)
 
 done:
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, NULL, entry.filename);
 }
 
 
@@ -1091,7 +1115,7 @@ static void drop_files(HWND window, HDROP drop)
 done:
 	refresh_image(window);
 	if (err)
-		report_error(window, err);
+		wimgtool_report_error(window, err, NULL, NULL);
 }
 
 

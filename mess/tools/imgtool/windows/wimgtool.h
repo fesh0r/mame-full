@@ -19,5 +19,7 @@ BOOL wimgtool_registerclass(void);
 
 imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	const char *filename, int read_or_write);
+void wimgtool_report_error(HWND window, imgtoolerr_t err, const char *imagename, const char *filename);
+
 
 #endif // WIMGTOOL_H

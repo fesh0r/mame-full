@@ -42,20 +42,8 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 	if (!window)
 		goto done;
 
-	if (command_line && command_line[0])
-	{
-		s = (TCHAR *) alloca((_tcslen(command_line) + 1) * sizeof(TCHAR));
-		_tcscpy(s, command_line);
-		if ((s[0] == '\"') && (s[_tcslen(s)-1] == '\"'))
-		{
-			s[_tcslen(s)-1] = '\0';
-			command_line = s + 1;
-		}
-		
-		wimgtool_open_image(window, NULL, command_line, OSD_FOPEN_RW);
-	}
-
 #ifdef MAME_DEBUG
+	// run validity checks and if appropriate, warn the user
 	if (imgtool_validitychecks())
 	{
 		MessageBox(window,
@@ -63,6 +51,24 @@ int WINAPI WinMain(HINSTANCE instance, HINSTANCE prev_instance,
 			wimgtool_producttext, MB_OK);
 	}
 #endif
+
+	// load image specified at the command line
+	if (command_line && command_line[0])
+	{
+		s = (TCHAR *) alloca((_tcslen(command_line) + 1) * sizeof(TCHAR));
+		_tcscpy(s, command_line);
+		rtrim(s);
+
+		if ((s[0] == '\"') && (s[_tcslen(s)-1] == '\"'))
+		{
+			s[_tcslen(s)-1] = '\0';
+			command_line = s + 1;
+		}
+		
+		err = wimgtool_open_image(window, NULL, command_line, OSD_FOPEN_RW);
+		if (err)
+			wimgtool_report_error(window, err, command_line, NULL);
+	}
 
 	accel = LoadAccelerators(NULL, MAKEINTRESOURCE(IDA_WIMGTOOL_MENU));
 

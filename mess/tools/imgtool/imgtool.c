@@ -164,7 +164,7 @@ imgtoolerr_t img_identify(imgtool_library *library, const char *fname,
 	}
 
 	if (!modules[0])
-		err = IMGTOOLERR_MODULENOTFOUND;
+		err = IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
 
 done:
 	if (values)

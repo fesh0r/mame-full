@@ -546,7 +546,7 @@ typedef struct ti99_lvl1_imgref
 {
 	ti99_img_format img_format;	/* tells the image format */
 	imgtool_stream *file_handle;		/* imgtool file handle */
-	struct hard_disk_file *harddisk_handle;		/* MAME harddisk handle (harddisk format) */
+	struct mess_hard_disk_file harddisk_handle;		/* MAME harddisk handle (harddisk format) */
 	ti99_geometry geometry;		/* geometry */
 	unsigned pc99_track_len;		/* unformatted track lenght (pc99 format) */
 	UINT32 *pc99_data_offset_array;	/* offset for each sector (pc99 format) */
@@ -980,14 +980,13 @@ static imgtoolerr_t open_image_lvl1(imgtool_stream *file_handle, ti99_img_format
 		if (err)
 			return err;
 
-		info = imghd_get_header(l1_img->harddisk_handle);
+		info = imghd_get_header(&l1_img->harddisk_handle);
 		l1_img->geometry.cylinders = info->cylinders;
 		l1_img->geometry.heads = info->heads;
 		l1_img->geometry.secspertrack = info->sectors;
 		if (info->sectorbytes != 256)
 		{
-			imghd_close(l1_img->harddisk_handle);
-			l1_img->harddisk_handle = NULL;
+			imghd_close(&l1_img->harddisk_handle);
 			return IMGTOOLERR_CORRUPTIMAGE;	/* TODO: support 512-byte sectors */
 		}
 
@@ -1057,7 +1056,9 @@ static imgtoolerr_t open_image_lvl1(imgtool_stream *file_handle, ti99_img_format
 static void close_image_lvl1(ti99_lvl1_imgref *l1_img)
 {
 	if (l1_img->img_format == if_harddisk)
-		imghd_close(l1_img->harddisk_handle);
+	{
+		imghd_close(&l1_img->harddisk_handle);
+	}
 
 	stream_close(l1_img->file_handle);
 
@@ -1321,7 +1322,7 @@ static int read_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, vo
 
 		return read_sector(l1_img, & address, dest);*/
 
-		return imghd_read(l1_img->harddisk_handle, aphysrec, 1, dest) != 1;
+		return imghd_read(&l1_img->harddisk_handle, aphysrec, 1, dest) != 1;
 	}
 	else
 	{
@@ -1351,7 +1352,7 @@ static int write_absolute_physrec(ti99_lvl1_imgref *l1_img, unsigned aphysrec, c
 
 		return write_sector(l1_img, & address, dest);*/
 
-		return imghd_write(l1_img->harddisk_handle, aphysrec, 1, src) != 1;
+		return imghd_write(&l1_img->harddisk_handle, aphysrec, 1, src) != 1;
 	}
 	else
 	{
