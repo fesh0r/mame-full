@@ -476,7 +476,9 @@ $(OBJ)/ti99.a:	   \
 	$(OBJ)/mess/machine/99_ide.o	\
 	$(OBJ)/mess/machine/99_peb.o	\
 	$(OBJ)/mess/machine/99_hsgpl.o	\
+	$(OBJ)/mess/machine/99_usbsm.o	\
 	$(OBJ)/mess/machine/smc92x4.o	\
+	$(OBJ)/mess/machine/strata.o	\
 	$(OBJ)/mess/machine/rtc65271.o	\
 	$(OBJ)/mess/machine/geneve.o	\
 	$(OBJ)/mess/machine/990_dk.o	\
@@ -864,6 +866,7 @@ COREOBJS +=							\
 	$(OBJ)/mess/devices/idedrive.o	\
 	$(OBJ)/mess/devices/dsk.o		\
 	$(OBJ)/mess/machine/6551.o		\
+	$(OBJ)/mess/machine/smartmed.o	\
 	$(OBJ)/mess/vidhrdw/m6847.o		\
 	$(OBJ)/mess/vidhrdw/m6845.o		\
 	$(OBJ)/mess/machine/msm8251.o  \
