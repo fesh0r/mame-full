@@ -2,7 +2,7 @@
 #include "vidhrdw/generic.h"
 
 #ifndef VERBOSE
-#define VERBOSE 0
+#define VERBOSE 1
 #endif
 
 #if VERBOSE
@@ -73,19 +73,67 @@ void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     }
 }
 
+static UINT8 latch[4];
 static int pal[64];
 static int val = 0;
 static int row = 0;
 static int col = 0;
 
-READ_HANDLER( channelf_read_ff )
+READ_HANDLER( channelf_port_0_r )
 {
-	return 0xff;
+	data_t data = readinputport(0);
+	data = (data ^ 0xff) | latch[0];
+    LOG(("port_0_r: $%02x\n",data));
+	return data;
+}
+
+READ_HANDLER( channelf_port_1_r )
+{
+	data_t data = readinputport(1);
+	data = (data ^ 0xff) | latch[1];
+    LOG(("port_1_r: $%02x\n",data));
+	return data;
+}
+
+READ_HANDLER( channelf_port_4_r )
+{
+	data_t data = readinputport(2);
+	data = (data ^ 0xff) | latch[2];
+    LOG(("port_4_r: $%02x\n",data));
+	return data;
+}
+
+READ_HANDLER( channelf_port_5_r )
+{
+	data_t data = 0xff;
+	data = (data ^ 0xff) | latch[3];
+    LOG(("port_5_r: $%02x\n",data));
+	return data;
+}
+
+static void plot_4_pixel(int x, int y, int pen)
+{
+	if (x < Machine->visible_area.min_x ||
+		x + 1 >= Machine->visible_area.max_x ||
+		y < Machine->visible_area.min_y ||
+		y + 1 >= Machine->visible_area.max_y)
+		return;
+
+	if (pen >= 16)
+		return;
+
+    pen = Machine->pens[pen];
+
+    plot_pixel(Machine->scrbitmap, x, y, pen);
+	plot_pixel(Machine->scrbitmap, x+1, y, pen);
+	plot_pixel(Machine->scrbitmap, x, y+1, pen);
+	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
 }
 
 WRITE_HANDLER( channelf_port_0_w )
 {
 
+	LOG(("port_0_w: $%02x\n",data));
 /*
 	if (data & 0x40)
 		controller_enable = 1;
@@ -95,24 +143,19 @@ WRITE_HANDLER( channelf_port_0_w )
 
     if (data & 0x20)
 	{
-		int sx, sy, pen;
-
         if (col == 125)
 			pal[row % 64] = (pal[row % 64] & 2) | ((data >> 1) & 1);
 		if (col == 126)
 			pal[row % 64] = (pal[row % 64] & 1) | (data & 2);
-		sx = row * 2;
-		sy = col * 2;
-		pen = Machine->pens[pal[row % 64] + val];
-		plot_pixel(Machine->scrbitmap, sx, sy, pen);
-		plot_pixel(Machine->scrbitmap, sx+1, sy, pen);
-		plot_pixel(Machine->scrbitmap, sx, sy+1, pen);
-		plot_pixel(Machine->scrbitmap, sx+1, sy+1, pen);
+		plot_4_pixel(col * 2, row * 2, pal[row % 64] * 4 + val);
     }
+	latch[0] = data;
 }
 
 WRITE_HANDLER( channelf_port_1_w )
 {
+	LOG(("port_1_w: $%02x\n",data));
+
     val = ((data ^ 0xff) >> 6) & 0x03;
 
 #if 0   /* I just can't understand that in channelf emu memory.c :-) */
@@ -136,16 +179,23 @@ WRITE_HANDLER( channelf_port_1_w )
 		color = 4 + value;
 	}
 #endif
+	latch[1] = data;
 }
 
 WRITE_HANDLER( channelf_port_4_w )
 {
-	col = data ^ 0xff;
+	LOG(("port_4_w: $%02x\n",data));
+
+    col = data ^ 0xff;
+
+    latch[2] = data;
 }
 
 WRITE_HANDLER( channelf_port_5_w )
 {
-	switch (data & 0xc0)
+	LOG(("port_5_w: $%02x\n",data));
+
+    switch (data & 0xc0)
 	{
 	case 0x00:	/* sound off */
 		break;
@@ -157,6 +207,8 @@ WRITE_HANDLER( channelf_port_5_w )
 		break;
     }
     row = (data | 0xc0) ^ 0xff;
+
+    latch[3] = data;
 }
 
 static struct MemoryReadAddress readmem[] =
@@ -175,11 +227,10 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x00,	input_port_0_r },
-	{ 0x01, 0x01,	input_port_1_r },
-	{ 0x04, 0x04,	input_port_4_r },
-	{ 0x05, 0x05,	input_port_5_r },
-	{ 0x40, 0x40,	channelf_read_ff },
+	{ 0x00, 0x00,	channelf_port_0_r },
+	{ 0x01, 0x01,	channelf_port_1_r },
+	{ 0x04, 0x04,	channelf_port_4_r },
+	{ 0x05, 0x05,	channelf_port_5_r },
     {-1}
 };
 
@@ -295,7 +346,7 @@ static struct MachineDriver machine_driver_channelf =
 	NULL,					/* stop machine */
 
 	/* video hardware - include overscan */
-	5*8*4, 112*2,	{ 0, 5*8*4-1, 0, 112*2 - 1},
+	122*2, 112*2, { 0, 122*2-1, 0, 112*2 - 1},
 	NULL,
 	8, 16*2,
 	init_palette,			/* convert color prom */
@@ -321,7 +372,7 @@ static const struct IODevice io_channelf[] = {
 	{
 		IO_CARTSLOT,		/* type */
 		1,					/* count */
-		"rom\0",            /* file extensions */
+		"bin\0",            /* file extensions */
 		NULL,               /* private */
 		channelf_id_rom,	/* id */
 		channelf_load_rom,	/* init */

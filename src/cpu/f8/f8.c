@@ -130,8 +130,7 @@ static void ROMC_01(void)
      * on the data bus as signed binary number to PC0.
      */
 	f8.dbus = cpu_readop_arg(f8.pc0);
-    f8.pc0 += 1;
-    f8.pc0 += (INT16)(INT8)f8.dbus;
+	f8.pc0 += (INT8)f8.dbus;
     f8_icount -= cL;
 }
 
@@ -226,7 +225,7 @@ static void ROMC_0A(void)
      * All devices add the 8-bit value on the data bus, treated as
      * signed binary number, to the data counter.
      */
-    f8.dc0 += (INT16)(INT8)f8.dbus;
+	f8.dc0 += (INT8)f8.dbus;
     f8_icount -= cL;
 }
 
@@ -286,6 +285,7 @@ static void ROMC_0F(void)
      * byte of PC0.
      */
     f8.dbus = f8.irq_vector & 0x00ff;
+    f8.pc1 = f8.pc0;
     f8.pc0 = (f8.pc0 & 0xff00) | f8.dbus;
     f8_icount -= cL;
 }
@@ -308,7 +308,7 @@ static void ROMC_11(void)
      * data bus to the upper byte of DC0.
      */
     f8.dbus = cpu_readmem16(f8.pc0);
-    f8.dc0 = (f8.dc0 & 0xff) | (f8.dbus << 8);
+	f8.dc0 = (f8.dc0 & 0x00ff) | (f8.dbus << 8);
     f8_icount -= cL;
 }
 
@@ -459,7 +459,7 @@ static void ROMC_1F(void)
      * The devices whose address space includes the contents of PC0
      * must place the high order byte of PC0 onto the data bus.
      */
-    f8.dbus = f8.pc0 >> 8;
+	f8.dbus = (f8.pc0 >> 8) & 0xff;
     f8_icount -= cL;
 }
 
@@ -1189,9 +1189,9 @@ static void f8_bt(int e)
 {
 	ROMC_1C();
     if (f8.w & e)
-		ROMC_01();
+		ROMC_01();	   /* take the relative branch */
 	else
-		ROMC_03();
+		ROMC_03();	   /* just read the argument on the data bus */
     ROMC_00();
 }
 
@@ -1317,9 +1317,9 @@ static void f8_bf(int t)
 {
 	ROMC_1C();
     if (f8.w & t)
-		ROMC_01();		/* take the relative branch */
+        ROMC_03();      /* just read the argument on the data bus */
 	else
-		ROMC_03();		/* just read the argument on the data bus */
+        ROMC_01();      /* take the relative branch */
 	ROMC_00();
 }
 
@@ -1440,7 +1440,7 @@ void f8_reset(void *param)
 	memset(&f8, 0, sizeof(F8));
 
     /* fetch the first opcode */
-	ROMC_00();
+	ROMC_08();
 }
 
 /* Shut down CPU core */
