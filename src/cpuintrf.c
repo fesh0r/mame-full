@@ -1518,7 +1518,7 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 	void m68000_set_reset_callback(void (*callback)(void));
 	void m68020_set_reset_callback(void (*callback)(void));
 
-	if ( cpu[cpunum].cputype != CPU_M68000 && cpu[cpunum].cputype != CPU_M68010 && cpu[cpunum].cputype != CPU_M68020 && cpu[cpunum].cputype != CPU_M68EC020 )
+	if ( cpu[cpunum].cputype != CPU_M68000 && cpu[cpunum].cputype != CPU_M68008 && cpu[cpunum].cputype != CPU_M68010 && cpu[cpunum].cputype != CPU_M68020 && cpu[cpunum].cputype != CPU_M68EC020 )
 	{
 		logerror("Trying to set m68k reset vector on non-68k cpu\n");
 		exit(1);
@@ -1526,7 +1526,7 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void))
 
 	cpuintrf_push_context(cpunum);
 
-	if ( cpu[cpunum].cputype == CPU_M68000 || cpu[cpunum].cputype == CPU_M68010 )
+	if ( cpu[cpunum].cputype == CPU_M68000 || cpu[cpunum].cputype == CPU_M68008 || cpu[cpunum].cputype == CPU_M68010 )
 	{
 #ifdef A68K0
 		m68000_set_reset_callback(resetfn);

@@ -7,26 +7,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <dirent.h>
 #include <unzip.h>
+#include <zlib.h>
 
-#ifdef MESS
-#ifdef _MSC_VER
-#include "ui/dirent.h"
 #ifndef S_ISDIR
 #define S_ISDIR(mode) ((mode) & _S_IFDIR)
-#endif
-#else
-#include <dirent.h>
-#endif
-#else
-#include <dirent.h>
 #endif
 
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
-		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, 
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC,
 		LIST_WRONGMERGE, LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
 		LIST_CPU, LIST_CPUCLASS, LIST_NOSOUND, LIST_SOUND, LIST_NVRAM, LIST_SOURCEFILE,
 		LIST_GAMESPERSOURCEFILE };
@@ -334,7 +327,7 @@ void identify_file(const char* name)
 		hash_compute(hash, data, length, HASH_CRC);
 	else
 		hash_compute(hash, data, length, HASH_CRC|HASH_SHA1);
-	
+
 	/* Try to identify the ROM */
 	identify_rom(name, hash, length);
 
@@ -359,7 +352,7 @@ void identify_zip(const char* zipname)
 //			sprintf(buf,"%s/%s",zipname,ent->name);
 			sprintf(buf,"%-12s",ent->name);
 
-			/* Decompress the ROM from the ZIP, and compute all the needed 
+			/* Decompress the ROM from the ZIP, and compute all the needed
 			   checksums. Since MAME for now carries informations only for CRC and
 			   SHA1, we compute only these (actually, CRC is extracted from the
 			   ZIP header) */
@@ -372,7 +365,7 @@ void identify_zip(const char* zipname)
 				hash_compute(hash, data, ent->uncompressed_size, HASH_SHA1);
 				free(data);
 			}
-			
+
 			crcs[0] = (UINT8)(ent->crc32 >> 24);
 			crcs[1] = (UINT8)(ent->crc32 >> 16);
 			crcs[2] = (UINT8)(ent->crc32 >> 8);
@@ -522,21 +515,21 @@ int frontend_help (const char *gamename)
         #ifdef MESS
 		case LIST_MESSTEXT: /* all mess specific calls here */
 		{
-					/* send the gamename and arg to mess.c */
+			/* send the gamename and arg to mess.c */
 			list_mess_info(gamename, "-listtext", listclones);
 			return 0;
 			break;
 		}
 		case LIST_MESSDEVICES:
-			{
-					/* send the gamename and arg to mess.c */
+		{
+			/* send the gamename and arg to mess.c */
 			list_mess_info(gamename, "-listdevices", listclones);
 			return 0;
 			break;
 		}
 		case LIST_MESSCREATEDIR:
-			 	{
-					/* send the gamename and arg to mess.c */
+		{
+			/* send the gamename and arg to mess.c */
 			list_mess_info(gamename, "-createdir", listclones);
 			return 0;
 			break;
@@ -582,7 +575,7 @@ int frontend_help (const char *gamename)
 					printf("%-10s",drivers[i]->name);
 
 					namecopy(name,drivers[i]->description);
-						printf("\"%s",name);
+					printf("\"%s",name);
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -944,7 +937,7 @@ int frontend_help (const char *gamename)
 					printf("%-5s%-36s ",drivers[i]->year,drivers[i]->manufacturer);
 
 					namecopy(name,drivers[i]->description);
-						printf("%s",name);
+					printf("%s",name);
 
 					/* print the additional description only if we are listing clones */
 					if (listclones)
@@ -1173,7 +1166,7 @@ int frontend_help (const char *gamename)
 												char buf[512];
 
 												first_match = 0;
-				
+
 												hash_data_print(ROM_GETHASHDATA(rom), 0, buf);
 												printf("%s\n", buf);
 												printf("    %-12s %-8s\n", ROM_GETNAME(rom),drivers[i]->name);
@@ -1225,12 +1218,12 @@ int frontend_help (const char *gamename)
 													char temp[512];
 
 													/* Print only the checksums available for both the roms */
-													unsigned int functions = 
+													unsigned int functions =
 														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
 														hash_data_used_functions(ROM_GETHASHDATA(rom1));
 
 													printf("%s:\n", ROM_GETNAME(rom));
-													
+
 													hash_data_print(ROM_GETHASHDATA(rom), functions, temp);
 													printf("  %-8s: %s\n", drivers[i]->name, temp);
 
@@ -1249,13 +1242,13 @@ int frontend_help (const char *gamename)
 										{
 											for (rom1 = rom_first_file(region1); rom1; rom1 = rom_next_file(rom1))
 											{
-												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) && 
+												if (strcmp(ROM_GETNAME(rom), ROM_GETNAME(rom1)) &&
 													hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(rom1), 0))
 												{
 													char temp[512];
 
 													/* Print only the checksums available for both the roms */
-													unsigned int functions = 
+													unsigned int functions =
 														hash_data_used_functions(ROM_GETHASHDATA(rom)) &
 														hash_data_used_functions(ROM_GETHASHDATA(rom1));
 
@@ -1384,7 +1377,7 @@ int frontend_help (const char *gamename)
 					printf("%d\t%d\n",i+1,numcount[i]);
 
 				#undef MAXCOUNT
-				}
+			}
 			return 0;
 			break;
 
@@ -1483,7 +1476,7 @@ j = 0;	// count only the main cpu
 										case 16: count_buswidth[1]++; break;
 										case 32: count_buswidth[2]++; break;
 									}
-									}
+								}
 							}
 						}
 

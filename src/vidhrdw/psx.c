@@ -35,7 +35,14 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		va_start( v, s_fmt );
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
-		logerror( "%08x: %s", activecpu_get_pc(), buf );
+		if( cpu_getactivecpu() != -1 )
+		{
+			logerror( "%08x: %s", activecpu_get_pc(), buf );
+		}
+		else
+		{
+			logerror( "(timer) : %s", buf );
+		}
 	}
 }
 
@@ -685,7 +692,7 @@ VIDEO_UPDATE( psx )
 	if( keyboard_pressed_memory( KEYCODE_I ) )
 	{
 		m_n_debugskip++;
-		if( m_n_debugskip > 14 )
+		if( m_n_debugskip > 15 )
 		{
 			m_n_debugskip = 0;
 		}
@@ -2606,7 +2613,7 @@ static void FlatRectangle16x16( void )
 	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 9 )
+	if( m_n_debugskip == 10 )
 	{
 		return;
 	}
@@ -2684,7 +2691,7 @@ static void FlatTexturedRectangle( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 10 )
+	if( m_n_debugskip == 11 )
 	{
 		return;
 	}
@@ -2779,7 +2786,7 @@ static void Sprite8x8( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 11 )
+	if( m_n_debugskip == 12 )
 	{
 		return;
 	}
@@ -2797,9 +2804,19 @@ static void Sprite8x8( void )
 
 	TEXTURESETUP( m_n_drawmode )
 
-	n_r.w.h = BGR_R( m_packet.Sprite8x8.n_bgr ); n_r.w.l = 0;
-	n_g.w.h = BGR_G( m_packet.Sprite8x8.n_bgr ); n_g.w.l = 0;
-	n_b.w.h = BGR_B( m_packet.Sprite8x8.n_bgr ); n_b.w.l = 0;
+	switch( n_cmd & 0x01 )
+	{
+	case 0:
+		n_r.w.h = BGR_R( m_packet.Sprite8x8.n_bgr ); n_r.w.l = 0;
+		n_g.w.h = BGR_G( m_packet.Sprite8x8.n_bgr ); n_g.w.l = 0;
+		n_b.w.h = BGR_B( m_packet.Sprite8x8.n_bgr ); n_b.w.l = 0;
+		break;
+	case 1:
+		n_r.w.h = 0x80; n_r.w.l = 0;
+		n_g.w.h = 0x80; n_g.w.l = 0;
+		n_b.w.h = 0x80; n_b.w.l = 0;
+		break;
+	}
 
 	n_v = TEXTURE_V( m_packet.Sprite8x8.n_texture );
 	n_y = COORD_Y( m_packet.Sprite8x8.n_coord ) + m_n_drawoffset_y;
@@ -2864,7 +2881,7 @@ static void Sprite16x16( void )
 	UINT16 n_bgr;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 12 )
+	if( m_n_debugskip == 13 )
 	{
 		return;
 	}
@@ -2882,9 +2899,19 @@ static void Sprite16x16( void )
 
 	TEXTURESETUP( m_n_drawmode )
 
-	n_r.w.h = BGR_R( m_packet.Sprite16x16.n_bgr ); n_r.w.l = 0;
-	n_g.w.h = BGR_G( m_packet.Sprite16x16.n_bgr ); n_g.w.l = 0;
-	n_b.w.h = BGR_B( m_packet.Sprite16x16.n_bgr ); n_b.w.l = 0;
+	switch( n_cmd & 0x01 )
+	{
+	case 0:
+		n_r.w.h = BGR_R( m_packet.Sprite16x16.n_bgr ); n_r.w.l = 0;
+		n_g.w.h = BGR_G( m_packet.Sprite16x16.n_bgr ); n_g.w.l = 0;
+		n_b.w.h = BGR_B( m_packet.Sprite16x16.n_bgr ); n_b.w.l = 0;
+		break;
+	case 1:
+		n_r.w.h = 0x80; n_r.w.l = 0;
+		n_g.w.h = 0x80; n_g.w.l = 0;
+		n_b.w.h = 0x80; n_b.w.l = 0;
+		break;
+	}
 
 	n_v = TEXTURE_V( m_packet.Sprite16x16.n_texture );
 	n_y = COORD_Y( m_packet.Sprite16x16.n_coord ) + m_n_drawoffset_y;
@@ -2922,7 +2949,7 @@ static void Dot( void )
 	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 13 )
+	if( m_n_debugskip == 14 )
 	{
 		return;
 	}
@@ -2958,7 +2985,7 @@ static void MoveImage( void )
 	INT16 n_dstx;
 
 #if defined( MAME_DEBUG )
-	if( m_n_debugskip == 14 )
+	if( m_n_debugskip == 15 )
 	{
 		return;
 	}

@@ -1297,8 +1297,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( qbertjp )	/* GV-103 (c) 1982 Gottlieb + Konami license */
 	DRIVER( myqbert )	/* GV-103?(c) 1982 Gottlieb */
 	DRIVER( qberttst )	/* GV-103 (c) 1982 Gottlieb */
+	DRIVER( qbtrktst )	/* GV-103 (c) 1982 Gottlieb */
 	DRIVER( insector )	/* GV-??? (c) 1982 Gottlieb - never released */
 	DRIVER( tylz )		/* GV-??? (c) 1982 Gottlieb - never released */
+	DRIVER( argusg )	/* GV-??? (c) 1982 Gottlieb - never released */
 	DRIVER( krull )		/* GV-105 (c) 1983 Gottlieb */
 	DRIVER( sqbert )	/* GV-??? (c) 1983 Mylstar - never released */
 	DRIVER( mach3 )		/* GV-109 (c) 1983 Mylstar */
@@ -1307,6 +1309,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( qbertqub )	/* GV-119 (c) 1983 Mylstar */
 	DRIVER( screwloo )	/* GV-123 (c) 1983 Mylstar - never released */
 	DRIVER( curvebal )	/* GV-134 (c) 1984 Mylstar */
+	DRIVER( vidvince )	/* GV-??? (c) 1984 Mylstar - never released  */
+	DRIVER( wizwarz )	/* GV-??? (c) 1984 Mylstar - never released */
 
 	/* Taito "Qix hardware" games */
 	DRIVER( qix )		/* LK  (c) 1981 Taito America Corporation */
@@ -2356,7 +2360,7 @@ V-V                           TP-027
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
 	DRIVER( techromn )	/* Tech Romancer (USA 980914) */
 	DRIVER( kikaioh )	/* Kikaioh (JAPAN 980914) */
-	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (USA 990611) */
+	DRIVER( sfex2p )	/* Street Fighter EX 2 Plus (ASIA 990611) */
 	DRIVER( sfex2pj )	/* Street Fighter EX 2 Plus (JAPAN 990611) */
 	DRIVER( strider2 )	/* Strider 2 (ASIA 991213) */
 	DRIVER( shiryu2 )	/* Strider Hiryu 2 (JAPAN 991213) */
@@ -2370,6 +2374,9 @@ V-V                           TP-027
 	DRIVER( cbaj )		/* Cool Boaders Arcade Jam */
 	DRIVER( shngmtkb )  /* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
+
+	/* Atlus ZN1 */
+	DRIVER( hvnsgate )
 
 	/* PS Arcade 95 */
 	DRIVER( beastrzr )	/* Beastorizer (USA) */
@@ -2389,11 +2396,11 @@ V-V                           TP-027
 	DRIVER( sncwgltd )	/* Sonic Wings Limited (JAPAN) */
 
 	/* Taito FX1a */
-	DRIVER( psyforce )	/* Psychic Force (WORLD) */
-	DRIVER( psyforcj )	/* Psychic Force (JAPAN) */
+	DRIVER( psyforce )	/* Psychic Force (WORLD Ver 2.4O) */
+	DRIVER( psyforcj )	/* Psychic Force (JAPAN Ver 2.4J) */
 	DRIVER( sfchamp )	/* Super Football Champ (JAPAN) */
-	DRIVER( mgcldate )	/* Magical Date (JAPAN) */
-	DRIVER( mgcldtea )	/* Magical Date (JAPAN) */
+	DRIVER( mgcldate )	/* Magical Date (JAPAN Ver 2.02J) */
+	DRIVER( mgcldtex )	/* Magical Date EX (JAPAN Ver 2.01J) */
 
 	/* Taito FX1b */
 	DRIVER( raystorm )	/* Ray Storm (JAPAN) */
@@ -3304,6 +3311,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tumblepb )	/* bootleg */
 	DRIVER( tumblep2 )	/* bootleg */
 	DRIVER( jumpkids )	/* (c) 1993 Comad */
+	DRIVER( jumppop )	/* (c) 2001 ESD */
 	DRIVER( fncywld )	/* (c) 1996 Unico */
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
@@ -5590,6 +5598,7 @@ Other Sun games
 	DRIVER( yujan )		/* (C) 1999 Yubis */
 	DRIVER( onetwo )	/* (c) 1997 Barko */
 	DRIVER( 1945kiii )	/* (c) 2000 Oriental */
+	DRIVER( pbchmp95 )	/* (c) 1995 Veltmeijer Automaten */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

@@ -512,7 +512,9 @@ static void i386_set_irq_line(int irqline, int state)
 {
 	if ( irqline == IRQ_LINE_NMI )
 	{
-		/* NMI not yet supported */
+		/* NMI (I do not think that this is 100% right) */
+		if ( state )
+			i386_trap(0x20);
 	}
 	else
 	{
