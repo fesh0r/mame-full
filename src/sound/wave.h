@@ -95,5 +95,8 @@ struct wave_args {
 #define CODE_HEADER 	((UINT8*)-1)
 #define CODE_TRAILER	((UINT8*)-2)
 
+#define WAVE_STATUS_MOTOR_ENABLE	1
+#define WAVE_STATUS_MUTED			2
+#define WAVE_STATUS_MOTOR_INHIBIT	4
 #endif
 

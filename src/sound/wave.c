@@ -8,9 +8,6 @@
 ****************************************************************************/
 #include "driver.h"
 
-/* from mame.c */
-extern int bitmap_dirty;
-
 /* Our private wave file structure */
 struct wave_file {
 	int channel;			/* channel for playback */
@@ -429,7 +426,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 	int count = w->counter;
 	INT16 sample = w->play_sample;
 
-    if( !w->timer || (w->status & 2) )
+	if( !w->timer || (w->status & WAVE_STATUS_MUTED) )
 	{
 		while( length-- > 0 )
 			*buffer++ = sample;
@@ -573,10 +570,10 @@ int wave_status(int id, int newstatus)
 	{
 		w->status = newstatus;
 
-		if (newstatus & 4)
+		if (newstatus & WAVE_STATUS_MOTOR_INHIBIT)
 			newstatus = 0;
 		else
-			newstatus &= 1;
+			newstatus &= WAVE_STATUS_MOTOR_ENABLE;
 
 		if( newstatus && !w->timer )
 		{
@@ -589,10 +586,11 @@ int wave_status(int id, int newstatus)
 				w->offset += (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
 			timer_remove(w->timer);
 			w->timer = NULL;
-			bitmap_dirty = 1;
+			schedule_full_refresh();
 		}
 	}
-	return (w->timer ? 1 : 0) | (w->status & 4 ? w->status : w->status & ~1);
+	return (w->timer ? WAVE_STATUS_MOTOR_ENABLE : 0) |
+		(w->status & WAVE_STATUS_MOTOR_INHIBIT ? w->status : w->status & ~WAVE_STATUS_MOTOR_ENABLE);
 }
 
 int wave_open(int id, int mode, void *args)
