@@ -1527,7 +1527,7 @@ const char *spc700_info(void *context, int regnum)
 	spc700i_cpu_struct* r = context;
 	uint p;
 
-	which = ++which % 16;
+	which = (which+1) % 16;
 	buffer[which][0] = '\0';
 	if(!context)
 		r = &spc700i_cpu;
