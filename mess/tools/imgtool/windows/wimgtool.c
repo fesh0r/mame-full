@@ -374,6 +374,7 @@ static void menu_open(HWND window)
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 		"%s: %s", osd_basename((char *) filename), module->description);
 	SetWindowText(info->statusbar, buf);
+	DragAcceptFiles(window, TRUE);
 
 done:
 	if (err)
@@ -557,15 +558,27 @@ static LRESULT wimgtool_create(HWND window, CREATESTRUCT *pcs)
 
 static void drop_files(HWND window, HDROP drop)
 {
+	struct wimgtool_info *info;
 	UINT count, i;
 	TCHAR buffer[MAX_PATH];
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+
+	info = get_wimgtool_info(window);
 
 	count = DragQueryFile(drop, 0xFFFFFFFF, NULL, 0);
 	for (i = 0; i < count; i++)
 	{
 		DragQueryFile(drop, i, buffer, sizeof(buffer) / sizeof(buffer[0]));
-		MessageBox(window, buffer, NULL, MB_OK);
+
+		err = img_putfile(info->image, NULL, buffer, NULL, NULL);
+		if (err)
+			goto done;
 	}
+
+done:
+	refresh_image(window);
+	if (err)
+		report_error(window, err);
 }
 
 
