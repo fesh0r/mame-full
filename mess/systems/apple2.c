@@ -198,7 +198,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 #define JOYSTICK_DELTA			80
-#define JOYSTICK_SENSITIVITY	100
+#define JOYSTICK_SENSITIVITY	50
 
 static INPUT_PORTS_START( apple2_joystick )
 	PORT_START_TAG("joystick_1_x")		/* Joystick 1 X Axis */
