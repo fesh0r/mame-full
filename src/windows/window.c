@@ -606,7 +606,17 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 void win_destroy_window(void)
 {
 	// kill directdraw
-	win_ddraw_kill();
+	if (win_use_directx)
+	{
+		if (win_use_directx == USE_D3D)
+		{
+			win_d3d_kill();
+		}
+		else
+		{
+			win_ddraw_kill();
+		}
+	}
 
 	// kill the window if it still exists
 	if (win_video_window)
@@ -796,7 +806,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 			InvalidateRect(win_video_window, NULL, FALSE);
 			if ((wparam & 0xfff0) == SC_MAXIMIZE)
 			{
-				win_toggle_maximize();
+				win_toggle_maximize(0);
 				break;
 			}
 			else if (wparam == MENU_FULLSCREEN)
@@ -809,7 +819,17 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 		// destroy: close down the app
 		case WM_DESTROY:
-			win_ddraw_kill();
+			if (win_use_directx)
+			{
+				if (win_use_directx == USE_D3D)
+				{
+					win_d3d_kill();
+				}
+				else
+				{
+					win_ddraw_kill();
+				}
+			}
 			win_trying_to_quit = 1;
 			win_video_window = 0;
 			break;
@@ -1054,7 +1074,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 			// if maximizing, toggle it
 			if (win_start_maximized)
-				win_toggle_maximize();
+				win_toggle_maximize(0);
 
 			// otherwise, just enforce the bounds
 			else
@@ -1092,7 +1112,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 //	win_toggle_maximize
 //============================================================
 
-void win_toggle_maximize(void)
+void win_toggle_maximize(int force_maximize)
 {
 	RECT current, constrained, maximum;
 	int xoffset, yoffset;
@@ -1111,14 +1131,19 @@ void win_toggle_maximize(void)
 		win_constrain_to_aspect_ratio(&constrained, WMSZ_BOTTOMRIGHT, win_default_constraints);
 	}
 
-	if (win_default_constraints)
+if (force_maximize)
+	{
+		current = constrained;
+		center_window = 1;
+	}
+	else if (win_default_constraints)
 	{
 		// toggle between maximised, contrained, and normal sizes
-	if ((current.right - current.left) >= (maximum.right - maximum.left) ||
-		(current.bottom - current.top) >= (maximum.bottom - maximum.top))
-	{
-		current = non_maximized_bounds;
-	}
+		if ((current.right - current.left) >= (maximum.right - maximum.left) ||
+			(current.bottom - current.top) >= (maximum.bottom - maximum.top))
+		{
+			current = non_maximized_bounds;
+		}
 		else if ((current.right - current.left) == (constrained.right - constrained.left) &&
 				 (current.bottom - current.top) == (constrained.bottom - constrained.top))
 		{
@@ -1138,8 +1163,8 @@ void win_toggle_maximize(void)
 			win_constrain_to_aspect_ratio(&current, WMSZ_BOTTOMRIGHT, 0);
 			center_window = 1;
 		}
-	else
-	{
+		else
+		{
 			// save the current location
 			non_maximized_bounds = current;
 
@@ -1157,10 +1182,10 @@ void win_toggle_maximize(void)
 		}
 		else
 		{
-		// save the current location
-		non_maximized_bounds = current;
+			// save the current location
+			non_maximized_bounds = current;
 
-		current = maximum;
+			current = maximum;
 			center_window = 1;
 		}
 
@@ -1245,7 +1270,7 @@ void win_toggle_full_screen(void)
 		else
 		{
 			set_aligned_window_pos(win_video_window, HWND_TOP, 0, 0, win_visible_width + 2, win_visible_height + 2, SWP_NOZORDER);
-			win_toggle_maximize();
+			win_toggle_maximize(1);
 		}
 	}
 	else

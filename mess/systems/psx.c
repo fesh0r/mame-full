@@ -151,6 +151,16 @@ static QUICKLOAD_LOAD( psxexe_load )
 	return INIT_PASS;
 }
 
+static MACHINE_INIT( psx )
+{
+	psx_machine_init();
+}
+
+static DRIVER_INIT( psx )
+{
+	psx_driver_init();
+}
+
 static MEMORY_WRITE32_START( psx_writemem )
 	{ 0x00000000, 0x001fffff, MWA32_RAM },	/* ram */
 	{ 0x1f800000, 0x1f8003ff, MWA32_BANK1 },	/* scratchpad */
@@ -254,7 +264,7 @@ static MACHINE_DRIVER_START( psx )
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_PALETTE_INIT(psx)
-	MDRV_VIDEO_START(psx_1024x512)
+	MDRV_VIDEO_START(psx_type2_1024x512)
 	MDRV_VIDEO_UPDATE(psx)
 	MDRV_VIDEO_STOP(psx)
 

@@ -189,6 +189,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( gteikokb )	/* bootleg */
 	DRIVER( gteikob2 )	/* bootleg */
 	DRIVER( spacbatt )	/* bootleg */
+	DRIVER( skyraidr )	/* bootleg */
 	DRIVER( batman2 )	/* bootleg */
 	DRIVER( warofbug )	/* (c) 1981 Armenia */
 	DRIVER( redufo )	/* bootleg - original should be (c) Artic */
@@ -599,6 +600,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( rthunder )	/* (c) 1986 new version */
 	DRIVER( rthundro )	/* (c) 1986 old version */
 	DRIVER( wndrmomo )	/* (c) 1987 */
+
+	/* Thunder Ceptor HW */
+	DRIVER( tceptor2 )
 
 	/* Namco System 1 games */
 	DRIVER( shadowld )	/* (c) 1987 */
@@ -1030,6 +1034,9 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( yosakdon )
 	DRIVER( spceking )
 	DRIVER( spcewars )
+	DRIVER( cosmo )		/* TDS+Mints */
+
+	DRIVER( sspeedr )	/* 1979 Midway */
 
 	/* Similar but with a M6800 instead of an 8080 */
 	DRIVER( sflush ) /* (c)1979 Taito */
@@ -1262,6 +1269,7 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( kaiteids )	/* (c) 1993 Irem (Japan) */
 	DRIVER( nbbatman )	/* (c) 1993 Irem America (US) */
 	DRIVER( leaguemn )	/* (c) 1993 Irem (Japan) */
+	DRIVER( ssoldier )	/* (c) 1993 Irem America (US) */
 	DRIVER( psoldier )	/* (c) 1993 Irem (Japan) */
 	DRIVER( dsccr94j )	/* (c) 1994 Irem (Japan) */
 	DRIVER( gunforc2 )	/* (c) 1994 Irem */
@@ -2342,8 +2350,8 @@ V-V                           TP-027
 	DRIVER( souledgb )	/* Soul Edge (SO1/VER.A) */
 	DRIVER( dunkmnia )	/* Dunk Mania (DM1/VER.C) */
 	DRIVER( xevi3dg )	/* Xevious 3D/G (XV31/VER.A) */
-	DRIVER( danceyes )	/* Dancing Eyes (DC1/VER.A) */
 	DRIVER( primglex )	/* Prime Goal EX (PG1/VER.A) */
+	DRIVER( danceyes )	/* Dancing Eyes (DC1/VER.A) */
 	DRIVER( starswep )	/* Star Sweep (STP1/VER.A) */
 	DRIVER( myangel3 )	/* Kosodate Quiz My Angel 3 (KQT1/VER.A) */
 
@@ -2813,6 +2821,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( puyosun )
 	DRIVER( rsgun )
 	DRIVER( sandor )
+	DRIVER( thunt )
 	DRIVER( sassisu )
 	DRIVER( seabass )
 	DRIVER( shanhigw )
@@ -3558,6 +3567,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rushhero )	/* GX605 */
 
 	/* DJ Main */
+	DRIVER( bm1stmix )
 	DRIVER( bmcompmx )
 	DRIVER( hmcompmx )
 	DRIVER( bm4thmix )
@@ -3662,6 +3672,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( asteroid )	/* 035127-035145	(c) 1979 */
 	DRIVER( asteroi1 )	/* 035127-035145	no copyright notice */
 	DRIVER( asteroib )	/* (bootleg) */
+	DRIVER( asterock )	/* Sidam bootleg	(c) 1979 */
 	DRIVER( astdelux )	/* 0351xx			(c) 1980 */
 	DRIVER( astdelu1 )	/* 0351xx			(c) 1980 */
 	DRIVER( bzone )		/* 0364xx			(c) 1980 */
@@ -3726,39 +3737,131 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Atari System 1 games */
 	DRIVER( peterpak )	/* 136028			(c) 1984 */
+	/* Marble Madness */
 	DRIVER( marble )	/* 136033			(c) 1984 */
 	DRIVER( marble2 )	/* 136033			(c) 1984 */
 	DRIVER( marble3 )	/* 136033			(c) 1984 */
 	DRIVER( marble4 )	/* 136033			(c) 1984 */
+	/* Indiana Jones and the Temple of Doom */
 	DRIVER( indytemp )	/* 136036			(c) 1985 */
 	DRIVER( indytem2 )	/* 136036			(c) 1985 */
 	DRIVER( indytem3 )	/* 136036			(c) 1985 */
 	DRIVER( indytem4 )	/* 136036			(c) 1985 */
 	DRIVER( indytemd )	/* 136036           (c) 1985 */
+	/* Road Runner */
 	DRIVER( roadrunn )	/* 136040			(c) 1985 */
+	DRIVER( roadrun2 )	/* 136040			(c) 1985 */
+	DRIVER( roadrun1 )	/* 136040			(c) 1985 */
+	/* Road Blasters */
 	DRIVER( roadblst )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblsg )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadbls3 )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblg2 )	/* 136048			(c) 1986, 1987 */
 	DRIVER( roadbls2 )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblg1 )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadbls1 )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblsc )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblcg )	/* 136048			(c) 1986, 1987 */
+	DRIVER( roadblc1 )	/* 136048			(c) 1986, 1987 */
 
 	/* Atari System 2 games */
+	/* Paperboy */
 	DRIVER( paperboy )	/* 136034			(c) 1984 */
+	DRIVER( paperbr2 )	/* 136034			(c) 1984 */
+	DRIVER( paperbr1 )	/* 136034			(c) 1984 */
+	/* Super Sprint */
 	DRIVER( ssprint )	/* 136042			(c) 1986 */
+	DRIVER( ssprint3 )	/* 136042			(c) 1986 */
+	DRIVER( ssprint1 )	/* 136042			(c) 1986 */
+	DRIVER( ssprintg )	/* 136042			(c) 1986 */
+	DRIVER( sspring1 )	/* 136042			(c) 1986 */
+	DRIVER( ssprintf )	/* 136042			(c) 1986 */
+	DRIVER( ssprints )	/* 136042			(c) 1986 */
+	/* Championship Sprint */
 	DRIVER( csprint )	/* 136045			(c) 1986 */
+	DRIVER( csprint2 )	/* 136045			(c) 1986 */
+	DRIVER( csprint1 )	/* 136045			(c) 1986 */
+	DRIVER( csprintg )	/* 136045			(c) 1986 */
+	DRIVER( cspring1 )	/* 136045			(c) 1986 */
+	DRIVER( csprintf )	/* 136045			(c) 1986 */
+	DRIVER( csprints )	/* 136045			(c) 1986 */
+	DRIVER( csprins1 )	/* 136045			(c) 1986 */
+	/* 720 Degrees */
 	DRIVER( 720 )		/* 136047			(c) 1986 */
-	DRIVER( 720b )		/* 136047			(c) 1986 */
+	DRIVER( 720r3 )		/* 136047			(c) 1986 */
+	DRIVER( 720r2 )		/* 136047			(c) 1986 */
+	DRIVER( 720r1 )		/* 136047			(c) 1986 */
+	DRIVER( 720g )		/* 136047			(c) 1986 */
+	DRIVER( 720gr1 )		/* 136047			(c) 1986 */
+	/* APB. */
 	DRIVER( apb )		/* 136051			(c) 1987 */
+	DRIVER( apb6 )		/* 136051			(c) 1987 */
+	DRIVER( apb5 )		/* 136051			(c) 1987 */
+	DRIVER( apb4 )		/* 136051			(c) 1987 */
+	DRIVER( apb3 )		/* 136051			(c) 1987 */
 	DRIVER( apb2 )		/* 136051			(c) 1987 */
+	DRIVER( apb1 )		/* 136051			(c) 1987 */
+	DRIVER( apbg )		/* 136051			(c) 1987 */
+	DRIVER( apbf )		/* 136051			(c) 1987 */
 
 	/* Atari polygon games */
 	DRIVER( irobot )	/* 136029			(c) 1983 */
+	/* Hard Drivin' */
 	DRIVER( harddriv )	/* 136052			(c) 1988 */
+	DRIVER( harddrvb )	/* 136052			(c) 1988 */
+	DRIVER( harddrvg )	/* 136052			(c) 1988 */
+	DRIVER( harddrvj )	/* 136052			(c) 1988 */
+	DRIVER( harddrb6 )	/* 136052			(c) 1988 */
+	DRIVER( harddrj6 )	/* 136052			(c) 1988 */
+	DRIVER( harddrb5 )	/* 136052			(c) 1988 */
+	DRIVER( harddrg4 )	/* 136052			(c) 1988 */
+	DRIVER( harddrv3 )	/* 136052			(c) 1988 */
+	DRIVER( harddrv2 )	/* 136052			(c) 1988 */
+	DRIVER( harddrv1 )	/* 136052			(c) 1988 */
+	/* Hard Drivin' Compact */
 	DRIVER( harddrvc )	/* 136068			(c) 1990 */
+	DRIVER( harddrcg )	/* 136068			(c) 1990 */
+	DRIVER( harddrcb )	/* 136068			(c) 1990 */
+	DRIVER( harddrc1 )	/* 136068			(c) 1990 */
+	/* Stun Runner */
 	DRIVER( stunrun )	/* 136070			(c) 1989 */
-	DRIVER( stunrnp )	/* (proto)			(c) 1989 */
+	DRIVER( stunrunj )	/* 136070			(c) 1989 */
+	DRIVER( stunrun5 )	/* 136070			(c) 1989 */
+	DRIVER( stunrune )	/* 136070			(c) 1989 */
+	DRIVER( stunrun4 )	/* 136070			(c) 1989 */
+	DRIVER( stunrun3 )	/* 136070			(c) 1989 */
+	DRIVER( stunrn3e )	/* 136070			(c) 1989 */
+	DRIVER( stunrun2 )	/* 136070			(c) 1989 */
+	DRIVER( stunrn2e )	/* 136070			(c) 1989 */
+	DRIVER( stunrun0 )	/* 136070			(c) 1989 */
+	DRIVER( stunrunp )	/* (proto)			(c) 1989 */
+	/* Race Drivin' */
 	DRIVER( racedriv )	/* 136077			(c) 1990 */
+	DRIVER( racedrvb )	/* 136077			(c) 1990 */
+	DRIVER( racedrvg )	/* 136077			(c) 1990 */
+	DRIVER( racedrv4 )	/* 136077			(c) 1990 */
+	DRIVER( racedrb4 )	/* 136077			(c) 1990 */
+	DRIVER( racedrg4 )	/* 136077			(c) 1990 */
 	DRIVER( racedrv3 )	/* 136077			(c) 1990 */
+	DRIVER( racedrv2 )	/* 136077			(c) 1990 */
+	DRIVER( racedrv1 )	/* 136077			(c) 1990 */
+	DRIVER( racedrb1 )	/* 136077			(c) 1990 */
+	DRIVER( racedrg1 )	/* 136077			(c) 1990 */
+	/* Race Drivin' Compact */
 	DRIVER( racedrvc )	/* 136077			(c) 1990 */
+	DRIVER( racedrcb )	/* 136077			(c) 1990 */
+	DRIVER( racedrcg )	/* 136077			(c) 1990 */
+	DRIVER( racedrc4 )	/* 136077			(c) 1990 */
+	DRIVER( racedcb4 )	/* 136077			(c) 1990 */
+	DRIVER( racedcg4 )	/* 136077			(c) 1990 */
+	DRIVER( racedrc2 )	/* 136077			(c) 1990 */
+	DRIVER( racedrc1 )	/* 136077			(c) 1990 */
+	/* Steel Talons */
 	DRIVER( steeltal )	/* 136087			(c) 1990 */
+	DRIVER( steeltag )	/* 136087			(c) 1990 */
+	DRIVER( steelta1 )	/* 136087			(c) 1990 */
 	DRIVER( steeltap )	/* 136087			(c) 1990 */
+	/* Hard Drivin' Airbourne */
 	DRIVER( hdrivair )	/* (proto) */
 	DRIVER( hdrivaip )	/* (proto) */
 
@@ -3800,27 +3903,58 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( vindc2r1 )	/*     ??			(c) 1988 */
 
 	/* Other Hardware */
+
+	/* Xybots */
 	DRIVER( xybots )	/* 136054			(c) 1987 */
+	DRIVER( xybotsg )	/* 136054			(c) 1987 */
+	DRIVER( xybotsf )	/* 136054			(c) 1987 */
+	DRIVER( xybots1 )	/* 136054			(c) 1987 */
+	DRIVER( xybots0 )	/* 136054			(c) 1987 */
+	/* Blasteroids */
 	DRIVER( blstroid )	/* 136057			(c) 1987 */
+	DRIVER( blstroi3 )	/* 136057			(c) 1987 */
 	DRIVER( blstroi2 )	/* 136057			(c) 1987 */
+	DRIVER( blstroig )	/* 136057			(c) 1987 */
 	DRIVER( blsthead )	/* (proto)			(c) 1987 */
+	/* Vindicators */
 	DRIVER( vindictr )	/* 136059			(c) 1988 */
-	DRIVER( vindicta )	/* 136059			(c) 1988 */
+	DRIVER( vindicte )	/* 136059			(c) 1988 */
+	DRIVER( vindictg )	/* 136059			(c) 1988 */
+	DRIVER( vindice4 )	/* 136059			(c) 1988 */
+	DRIVER( vindict4 )	/* 136059			(c) 1988 */
+	DRIVER( vindice3 )	/* 136059			(c) 1988 */
+	DRIVER( vindict2 )	/* 136059			(c) 1988 */
+	DRIVER( vindict1 )	/* 136059			(c) 1988 */
+	/* Toobin */
 	DRIVER( toobin )	/* 136061			(c) 1988 */
+	DRIVER( toobine )	/* 136061			(c) 1988 */
+	DRIVER( toobing )	/* 136061			(c) 1988 */
 	DRIVER( toobin2 )	/* 136061			(c) 1988 */
-	DRIVER( toobinp )	/* (proto)			(c) 1988 */
+	DRIVER( toobin2e )	/* 136061			(c) 1988 */
+	DRIVER( toobin1 )	/* 136061			(c) 1988 */
+	/* Cyberball */
 	DRIVER( cyberbal )	/* 136064			(c) 1989 */
 	DRIVER( cyberba2 )	/* 136064			(c) 1989 */
+	DRIVER( cyberbap )	/* 136064			(c) 1989 */
+	/* Atari Tetris */
 	DRIVER( atetcktl )	/* 136066			(c) 1989 */
 	DRIVER( atetckt2 )	/* 136066			(c) 1989 */
 	DRIVER( atetris )	/* 136066			(c) 1988 */
 	DRIVER( atetrisa )	/* 136066			(c) 1988 */
 	DRIVER( atetrisb )	/* (bootleg) */
+	/* Escape from the Planet of Robot Monsters */
 	DRIVER( eprom )		/* 136069			(c) 1989 */
 	DRIVER( eprom2 )	/* 136069			(c) 1989 */
+	/* Skull and Crossbones */
 	DRIVER( skullxbo )	/* 136072			(c) 1989 */
+	DRIVER( skullxb4 )	/* 136072			(c) 1989 */
+	DRIVER( skullxb3 )	/* 136072			(c) 1989 */
 	DRIVER( skullxb2 )	/* 136072			(c) 1989 */
+	DRIVER( skullxb1 )	/* 136072			(c) 1989 */
+	/* Cyberball Tournament */
 	DRIVER( cyberbt )	/* 136073			(c) 1989 */
+	DRIVER( cyberbt1 )	/* 136073			(c) 1989 */
+
 	DRIVER( badlands )	/* 136074			(c) 1989 */
 	DRIVER( klax )		/* 136075			(c) 1989 */
 	DRIVER( klax2 )		/* 136075			(c) 1989 */
@@ -3830,7 +3964,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( klaxp1 )	/* prototype */
 	DRIVER( klaxp2 )	/* prototype */
 	DRIVER( thunderj )	/* 136076			(c) 1990 */
+
+	/* Cyberball 2 Player */
 	DRIVER( cyberb2p )	/*     ??			(c) 1989 */
+	DRIVER( cyberb23 )	/*     ??			(c) 1989 */
+	DRIVER( cyberb22 )	/*     ??			(c) 1989 */
+	DRIVER( cyberb21 )	/*     ??			(c) 1989 */
+
 	DRIVER( hydra )		/* 136079			(c) 1990 */
 	DRIVER( hydrap )	/* (proto)			(c) 1990 */
 	DRIVER( hydrap2 )	/* (proto)			(c) 1990 */

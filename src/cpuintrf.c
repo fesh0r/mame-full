@@ -123,7 +123,7 @@
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_PSXCPU)
-#include "cpu/mips/mips.h"
+#include "cpu/mips/psx.h"
 #endif
 #if (HAS_ASAP)
 #include "cpu/asap/asap.h"

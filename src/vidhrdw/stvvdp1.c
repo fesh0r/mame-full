@@ -16,7 +16,7 @@ the vdp1 draws to the FRAMEBUFFER which is mapped in memory
 data32_t *stv_vdp1_vram;
 data32_t *stv_vdp1_regs;
 extern data32_t *stv_scu;
-
+char shienryu_sprite_kludge;
 /*
 Registers:
 00
@@ -74,6 +74,10 @@ int stv_vdp1_start ( void )
 	memset(stv_vdp1_regs, 0, 0x040000);
 	memset(stv_vdp1_vram, 0, 0x100000);
 
+	/* our colour calculation is broken .. must fix it */
+	shienryu_sprite_kludge = 0;
+	if (!strcmp(Machine->gamedrv->name,"shienryu"))	shienryu_sprite_kludge = 1;
+
 	return 0;
 }
 
@@ -93,6 +97,11 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 	data8_t *vdp1 = memory_region(REGION_GFX2);
 
 	COMBINE_DATA (&stv_vdp1_vram[offset]);
+
+	if (((offset * 4) > 0xdf) && ((offset * 4) < 0x140))
+	{
+		logerror("cpu #%d (PC=%08X): VRAM dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), offset*4, data, mem_mask ^ 0xffffffff);
+	}
 
 	data = stv_vdp1_vram[offset];
 	/* put in gfx region for easy decoding */
@@ -190,7 +199,7 @@ why they would want to */
 
 extern data32_t* stv_vdp2_cram;
 
-void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_type)
 {
 	UINT16 *destline;
 
@@ -201,12 +210,12 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	int patterndata;
 	data8_t* gfxdata = memory_region(REGION_GFX2);
 
-	x = (stv2_current_sprite.CMDXA & 0x03ff);
-	y = (stv2_current_sprite.CMDYA & 0x03ff);
+	x = (stv2_current_sprite.CMDXA & 0x07ff);
+	y = (stv2_current_sprite.CMDYA & 0x07ff);
 
 	/* sign extend */
-	if (x & 0x200) x-=0x400;
-	if (y & 0x200) y-=0x400;
+	if (x & 0x400) x-=0x800;
+	if (y & 0x400) y-=0x800;
 
 	/* shift a bit ..*/
 	x+= stvvdp1_local_x;
@@ -222,50 +231,53 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 	zoompoint = (stv2_current_sprite.CMDCTRL & 0x0f00)>>8;
 
 	/* NOTE we should only process zoompoint for SCALED sprites, remove this later or make the function recognise which are scaled and which are normal .. */
-	switch (zoompoint)
+	if (sprite_type == 1)
 	{
-		case 0x0: // specified co-ordinates
-			break;
-		case 0x5: // up left
-			break;
-		case 0x6: // up center
-			x -= xsize/2;
-			break;
-		case 0x7: // up right
-			x -= xsize;
-			break;
+		switch (zoompoint)
+		{
+			case 0x0: // specified co-ordinates
+				break;
+			case 0x5: // up left
+				break;
+			case 0x6: // up center
+				x -= xsize/2 -1;
+				break;
+			case 0x7: // up right
+				x -= xsize;
+				break;
 
-		case 0x9: // center left
-			y -= ysize/2;
-			break;
-		case 0xa: // center center
-			y -= ysize/2;
-			x -= xsize/2;
+			case 0x9: // center left
+				y -= ysize/2 -1;
+				break;
+			case 0xa: // center center
+				y -= ysize/2 -1;
+				x -= xsize/2 -1;
 
-			break;
-		case 0xb: // center right
-			y -= ysize/2;
-			x -= xsize;
-			break;
+				break;
+			case 0xb: // center right
+				y -= ysize/2 -1;
+				x -= xsize;
+				break;
 
-		case 0xd: // center left
-			y -= ysize;
-			break;
-		case 0xe: // center center
-			y -= ysize;
-			x -= xsize/2;
-			break;
-		case 0xf: // center right
-			y -= ysize;
-			x -= xsize;
-			break;
+			case 0xd: // center left
+				y -= ysize;
+				break;
+			case 0xe: // center center
+				y -= ysize;
+				x -= xsize/2 -1;
+				break;
+			case 0xf: // center right
+				y -= ysize;
+				x -= xsize;
+				break;
 
-		default: // illegal
-			break;
+			default: // illegal
+				break;
+		}
 	}
 
-	patterndata = (stv2_current_sprite.CMDSRCA >> 2) & 0x3fff;
-	patterndata = patterndata * 0x20;
+	patterndata = (stv2_current_sprite.CMDSRCA) & 0xffff;
+	patterndata = patterndata * 0x8;
 
 	if (vdp1_sprite_log) logerror ("Drawing Normal Sprite x %04x y %04x xsize %04x ysize %04x patterndata %06x\n",x,y,xsize,ysize,patterndata);
 
@@ -303,17 +315,43 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 				switch (stv2_current_sprite.CMDPMOD&0x0038)
 				{
 					case 0x0000: // mode 0 16 colour bank mode (4bits) (hanagumi blocks)
+						// most of the shienryu sprites use this mode
 						pix = gfxdata[patterndata+offsetcnt/2];
 						pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
-						pix = pix+(stv2_current_sprite.CMDCOLR&0x0ff0);
+						pix = pix+((stv2_current_sprite.CMDCOLR&0xff0));
 						mode = 0;
 						transmask = 0xf;
+
+						if (shienryu_sprite_kludge)
+						{
+							pix += 0x400;
+							pix &= 0x7ff;
+						}
+
 						break;
 					case 0x0008: // mode 1 16 colour lookup table mode (4bits)
+						// shienryu explosisons (and some enemies) use this mode
 						pix = gfxdata[patterndata+offsetcnt/2];
 						pix = offsetcnt&1 ?  (pix & 0x0f):((pix & 0xf0)>>4);
+						pix = pix&1 ?
+						((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix&0xfffe)/2)])) & 0x0000ffff) >> 0):
+						((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix&0xfffe)/2)])) & 0xffff0000) >> 16);
 						mode = 1;
-						transmask = 0x0f;
+						transmask = 0xf;
+
+						if (pix & 0x8000)
+						{
+							mode = 5;
+							transmask = 0x7fff;
+						}
+
+						if (shienryu_sprite_kludge)
+						{
+							pix &= 0x1ff;
+							pix += 0x400;
+							pix &= 0x7ff;
+						}
+
 						break;
 					case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
 						pix = gfxdata[patterndata+offsetcnt];
@@ -350,11 +388,12 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 				{
 					if (mode != 5) // mode 0-4 are 'normal'
 					{
+
 						if (pix & transmask)
 						{
 							/* there is probably a better way to do this .. it will probably have to change anyway because we'll be writing to the framebufferi instead */
 							int col;
-							col = (pix&1)? ((stv_vdp2_cram[(pix&0x0ffe)/2] & 0x00007fff) >>0): ((stv_vdp2_cram[(pix&0x0ffe)/2] & 0x7fff0000) >>16);
+							col = (pix&1)? ((stv_vdp2_cram[(pix&0xfffe)/2] & 0x00007fff) >>0): ((stv_vdp2_cram[(pix&0xfffe)/2] & 0x7fff0000) >>16);
 							col = ((col & 0x001f)*0x400) + (col & 0x03e0) + ((col & 0x7c00)/0x400);
 							destline[drawxpos] = col;
 						}
@@ -362,9 +401,12 @@ void stv_vpd1_draw_normal_sprite(struct mame_bitmap *bitmap, const struct rectan
 					else // mode 5 is rgb mode
 					{
 						int col;
-						col = pix;
-						col = ((col & 0x001f)*0x400) + (col & 0x03e0) + ((col & 0x7c00)/0x400);
-						destline[drawxpos] = col & 0x7fff;
+						if (pix & 0x8000)
+						{
+							col = pix;
+							col = ((col & 0x001f)*0x400) + (col & 0x03e0) + ((col & 0x7c00)/0x400);
+							destline[drawxpos] = col & 0x7fff;
+						}
 					}
 
 				} // drawxpos
@@ -517,17 +559,17 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 			{
 				case 0x0000:
 					if (vdp1_sprite_log) logerror ("Sprite List Normal Sprite\n");
-					stv_vpd1_draw_normal_sprite(bitmap,cliprect);
+					stv_vpd1_draw_normal_sprite(bitmap,cliprect, 0);
 					break;
 
 				case 0x0001:
 					if (vdp1_sprite_log) logerror ("Sprite List Scaled Sprite\n");
-					stv_vpd1_draw_normal_sprite(bitmap,cliprect);
+					stv_vpd1_draw_normal_sprite(bitmap,cliprect, 1);
 					break;
 
 				case 0x0002:
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
-					stv_vpd1_draw_normal_sprite(bitmap,cliprect);
+					stv_vpd1_draw_normal_sprite(bitmap,cliprect, 2);
 					break;
 
 				case 0x0004:

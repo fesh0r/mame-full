@@ -150,6 +150,7 @@ SOUNDS+=X1_010@
 SOUNDS+=MULTIPCM@
 SOUNDS+=C6280@
 SOUNDS+=SP0250@
+SOUNDS+=SCSP@
 
 
 DRVLIBS = \
@@ -236,6 +237,7 @@ $(OBJ)/namco.a: \
 	$(OBJ)/vidhrdw/skykid.o $(OBJ)/drivers/skykid.o \
 	$(OBJ)/vidhrdw/baraduke.o $(OBJ)/drivers/baraduke.o \
 	$(OBJ)/vidhrdw/namcos86.o $(OBJ)/drivers/namcos86.o \
+	$(OBJ)/vidhrdw/tceptor.o $(OBJ)/drivers/tceptor.o \
 	$(OBJ)/machine/namcos1.o $(OBJ)/vidhrdw/namcos1.o $(OBJ)/drivers/namcos1.o \
 	$(OBJ)/machine/namcos2.o $(OBJ)/vidhrdw/namcos2.o $(OBJ)/drivers/namcos2.o \
 	$(OBJ)/drivers/namcoic.o \
@@ -270,6 +272,7 @@ $(OBJ)/nintendo.a: \
 $(OBJ)/midw8080.a: \
 	$(OBJ)/machine/8080bw.o \
 	$(OBJ)/vidhrdw/8080bw.o $(OBJ)/sndhrdw/8080bw.o $(OBJ)/drivers/8080bw.o \
+	$(OBJ)/vidhrdw/sspeedr.o $(OBJ)/drivers/sspeedr.o \
 	$(OBJ)/vidhrdw/m79amb.o $(OBJ)/drivers/m79amb.o $(OBJ)/drivers/rotaryf.o \
 
 $(OBJ)/meadows.a: \
@@ -431,7 +434,6 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segar.o $(OBJ)/sndhrdw/segar.o $(OBJ)/machine/segar.o $(OBJ)/drivers/segar.o \
 	$(OBJ)/vidhrdw/tms9928a.o $(OBJ)/drivers/sg1000a.o \
 	$(OBJ)/vidhrdw/zaxxon.o $(OBJ)/sndhrdw/zaxxon.o $(OBJ)/drivers/zaxxon.o \
-	$(OBJ)/drivers/congo.o \
 	$(OBJ)/machine/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/drivers/turbo.o \
 	$(OBJ)/drivers/kopunch.o \
 	$(OBJ)/vidhrdw/suprloco.o $(OBJ)/drivers/suprloco.o \
@@ -463,6 +465,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/brkthru.o $(OBJ)/drivers/brkthru.o \
 	$(OBJ)/vidhrdw/metlclsh.o $(OBJ)/drivers/metlclsh.o \
 	$(OBJ)/drivers/compgolf.o \
+	$(OBJ)/drivers/tryout.o \
 	$(OBJ)/vidhrdw/shootout.o $(OBJ)/drivers/shootout.o \
 	$(OBJ)/vidhrdw/sidepckt.o $(OBJ)/drivers/sidepckt.o \
 	$(OBJ)/vidhrdw/exprraid.o $(OBJ)/drivers/exprraid.o \
@@ -577,6 +580,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/vidhrdw/mystwarr.o $(OBJ)/drivers/mystwarr.o \
 	$(OBJ)/vidhrdw/rungun.o $(OBJ)/drivers/rungun.o \
 	$(OBJ)/vidhrdw/dbz2.o $(OBJ)/drivers/dbz2.o \
+	$(OBJ)/vidhrdw/bishi.o $(OBJ)/drivers/bishi.o \
 	$(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o $(OBJ)/drivers/konamigx.o \
 	$(OBJ)/vidhrdw/djmain.o $(OBJ)/drivers/djmain.o \
 	$(OBJ)/vidhrdw/plygonet.o $(OBJ)/drivers/plygonet.o \
