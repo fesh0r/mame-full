@@ -47,7 +47,7 @@ VIDEO_START( snes )
 	zBuffer = auto_malloc((256+32)*(256+32));
 	if (!zBuffer)
 		return 1;
-	if( generic_bitmapped_vh_start() )
+	if( video_start_generic_bitmapped() )
 		return 1;
 	return 0;
 }
@@ -84,7 +84,7 @@ unsigned long Tile_Offset_Table_16_8_Y[16]={16*8*8+14,16*8*8+12,16*8*8+10,16*8*8
 unsigned long Tile_Offset_Table_32_4[32]={0,2,4,6,8,10,12,14,16*8*4,16*8*4+2,16*8*4+4,16*8*4+6,16*8*4+8,16*8*4+10,16*8*4+12,16*8*4+14,16*8*4*2,16*8*4*2+2,16*8*4*2+4,16*8*4*2+6,16*8*4*2+8,16*8*4*2+10,16*8*4*2+12,16*8*4*2+14};
 unsigned long Tile_Offset_Table_32_4_Y[32]={16*8*4*2+14,16*8*4*2+12,16*8*4*2+10,16*8*4*2+8,16*8*4*2+6,16*8*4*2+4,16*8*4*2+2,16*8*4*2,16*8*4+14,16*8*4+12,16*8*4+10,16*8*4+8,16*8*4+6,16*8*4+4,16*8*4+2,16*8*4,14,12,10,8,6,4,2,0};
 
-void PLOT_8x8_2BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_2BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -119,7 +119,7 @@ void PLOT_8x8_2BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zC
 	}
 }
 
-void PLOT_8x8_2BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_2BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -154,7 +154,7 @@ void PLOT_8x8_2BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *z
 	}
 }
 
-void PLOT_8x8_4BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_4BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -198,7 +198,7 @@ void PLOT_8x8_4BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zC
 	}
 }
 
-void PLOT_8x8_4BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_4BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -242,7 +242,7 @@ void PLOT_8x8_4BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *z
 	}
 }
 
-void PLOT_8x8_8BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_8BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -304,7 +304,7 @@ void PLOT_8x8_8BplTile(unsigned char *Tile,unsigned short *dst,unsigned char *zC
 	}
 }
 
-void PLOT_8x8_8BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void PLOT_8x8_8BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned char DestPixel;
 	int count;
@@ -366,7 +366,7 @@ void PLOT_8x8_8BplTileX(unsigned char *Tile,unsigned short *dst,unsigned char *z
 	}
 }
 
-int SPLOT_4BplTile(unsigned short xPos,short tileCode,unsigned short *dst,unsigned char *zCur,int width)
+static int SPLOT_4BplTile(unsigned short xPos,short tileCode,unsigned short *dst,unsigned char *zCur,int width)
 {
 	unsigned char *TileAddressSpr;
 	unsigned char Temp;
@@ -425,7 +425,7 @@ int SPLOT_4BplTile(unsigned short xPos,short tileCode,unsigned short *dst,unsign
 	return cnt;
 }
 
-void RENDER_LINE_8x8_C2(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void RENDER_LINE_8x8_C2(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned short TileInfo;
 	unsigned long TileNum;
@@ -472,7 +472,7 @@ void RENDER_LINE_8x8_C2(unsigned char PalOffset,unsigned char *Screen,unsigned l
 	}
 }
 
-void RENDER_LINE_8x8_C4(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void RENDER_LINE_8x8_C4(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned short TileInfo;
 	unsigned long TileNum;
@@ -523,7 +523,7 @@ void RENDER_LINE_8x8_C4(unsigned char PalOffset,unsigned char *Screen,unsigned l
 	}
 }
 
-void RENDER_LINE_8x8_C8(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
+static void RENDER_LINE_8x8_C8(unsigned char PalOffset,unsigned char *Screen,unsigned long Count,unsigned short *dst,unsigned char *zCur,unsigned char depth)
 {
 	unsigned short TileInfo;
 	unsigned long TileNum;
@@ -565,7 +565,7 @@ void RENDER_LINE_8x8_C8(unsigned char PalOffset,unsigned char *Screen,unsigned l
 
 // This function sets up some pointers to allow rendering the snes screens to be a little easier
 
-void SORT_LAYOUT_8x8(int curLine,unsigned short Planenum)
+static void SORT_LAYOUT_8x8(int curLine,unsigned short Planenum)
 {
 	unsigned long VScroll;
 	unsigned long VShift;
@@ -637,7 +637,7 @@ void SORT_LAYOUT_8x8(int curLine,unsigned short Planenum)
 	}
 }
 
-void RENDER_LINE(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char Planenum,void (*RENDER_FUNCTION)(unsigned char,unsigned char *,unsigned long,unsigned short *,unsigned char *,unsigned char),unsigned char Bitmask,unsigned char depth,unsigned char palOffset)
+static void RENDER_LINE(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char Planenum,void (*RENDER_FUNCTION)(unsigned char,unsigned char *,unsigned long,unsigned short *,unsigned char *,unsigned char),unsigned char Bitmask,unsigned char depth,unsigned char palOffset)
 {
 	unsigned char HScroll=wport21xx[0][(0x0D+Planenum*2)];
 	int Temp,Temp2;
@@ -697,7 +697,7 @@ void RENDER_LINE(unsigned short *dst,unsigned char *zCur,int curLine,unsigned ch
 
 */
 
-void RENDER_LINE_MODE7(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char depth)
+static void RENDER_LINE_MODE7(unsigned short *dst,unsigned char *zCur,int curLine,unsigned char depth)
 {
 	unsigned short tileNum;
 	unsigned char *tileGFX;
@@ -827,7 +827,7 @@ void RENDER_LINE_MODE7(unsigned short *dst,unsigned char *zCur,int curLine,unsig
 
 // This also attempts to fill in the time over and range over bits of STAT77
 
-void RenderSprites(unsigned short *dst,unsigned char *zCur,int curLine)						// dst is pointer to start of current line
+static void RenderSprites(unsigned short *dst,unsigned char *zCur,int curLine)						// dst is pointer to start of current line
 {
 	int a,b,size,cnt=0,TOver=0,ROver=0;
 	unsigned char *oamPtr=&SNES_ORAM[0x1FF];
@@ -925,7 +925,7 @@ void RenderSprites(unsigned short *dst,unsigned char *zCur,int curLine)						// 
 #define INDIRECT(a) (port43xx[a+0x07]<<16) + (port43xx[a+0x06]<<8) + port43xx[a+0x05]
 #define BBUS(a) 0x00002100 + port43xx[a+1]
 
-unsigned char setupHDMA(unsigned char bits)
+static unsigned char setupHDMA(unsigned char bits)
 {
 	unsigned char bMask=0x01;
 	int dmaBase=0x00;
@@ -964,7 +964,7 @@ unsigned char setupHDMA(unsigned char bits)
 	return bits;
 }
 
-unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if hdma has finished then next line wont do it!)
+static unsigned char updateHDMA(unsigned char bits)		// Returns hdma enable values (if hdma has finished then next line wont do it!)
 {
 	unsigned char bMask=0x01;
 	int dmaBase;
