@@ -83,20 +83,6 @@ extern void arm_set_irq_callback(int (*callback)(int irqline));
 extern const char *arm_info(void *context, int regnum);
 extern unsigned arm_dasm(char *buffer, unsigned pc);
 
-#define MASK	0x03fffffcL
-
-/****************************************************************************
- * Read a byte from given memory location
- ****************************************************************************/
-#define ARM_RDMEM(A) ((unsigned)cpu_readmem26lew(A&MASK))
-#define ARM_RDMEM_32(A) ((unsigned)cpu_readmem26lew_dword(A&MASK))
-
-/****************************************************************************
- * Write a byte to given memory location
- ****************************************************************************/
-#define ARM_WRMEM(A,V) (cpu_writemem26lew(A&MASK,V))
-#define ARM_WRMEM_32(A,V) (cpu_writemem26lew_dword(A&MASK,V))
-
 #ifdef MAME_DEBUG
 extern unsigned DasmARM(char *buffer, unsigned pc);
 #endif

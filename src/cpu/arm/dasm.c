@@ -32,54 +32,55 @@ static char *RN(UINT32 op)
 static char *RS(UINT32 op)
 {
 	static char buff[32];
-    UINT32 m = (op >> 4) & 7;
+	UINT32 m = op & 0x70;
     UINT32 s = (op >> 7) & 31;
-	UINT32 sr = s >> 1;
+	UINT32 r = s >> 1;
 	UINT32 rs = op & 15;
 
 	buff[0] = '\0';
 
     switch( m )
 	{
-	case 0:
+	case 0x00:
 		/* LSL (aka ASL) #0 .. 31 */
 		if (s > 0)
 			sprintf(buff, "R%d LSL #%d", rs, s);
 		else
 			sprintf(buff, "R%d", rs);
 		break;
-	case 1:
+	case 0x10:
 		/* LSL (aka ASL) R0 .. R15 */
-		sprintf(buff, "R%d LSL R%d", rs, sr);
+		sprintf(buff, "R%d LSL R%d", rs, r);
 		break;
-	case 2:
+	case 0x20:
         /* LSR #1 .. 32 */
 		if (s == 0) s = 32;
 		sprintf(buff, "R%d LSR #%d", rs, s);
         break;
-	case 3:
+	case 0x30:
 		/* LSR R0 .. R15 */
-		sprintf(buff, "R%d LSR R%d", rs, sr);
+		sprintf(buff, "R%d LSR R%d", rs, r);
 		break;
-	case 4:
+	case 0x40:
         /* ASR #1 .. 32 */
 		if (s == 0) s = 32;
 		sprintf(buff, "R%d ASR #%d", rs, s);
         break;
-    case 5:
+	case 0x50:
 		/* ASR R0 .. R15 */
-		sprintf(buff, "R%d ASR R%d", rs, sr);
+		sprintf(buff, "R%d ASR R%d", rs, r);
 		break;
-	case 6:
+	case 0x60:
 		/* ASR #1 .. 32 */
         if (s == 0)
 			sprintf(buff, "R%d RRX", rs);
         else
 			sprintf(buff, "R%d ROR #%d", rs, s);
         break;
-	case 7:
+	case 0x70:
+	default:
 		/* ROR R0 .. R15  */
-		sprintf(buff, "R%d ROR R%d", rs, sr);
+		sprintf(buff, "R%d ROR R%d", rs, r);
         break;
     }
 	return buff;
