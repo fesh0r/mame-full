@@ -34,9 +34,47 @@
   For more information:
 	http://support.microsoft.com/kb/q140418/
 
+
+  Directory Entry Format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       8  DOS File Name (padded with spaces)
+	   8       3  DOS File Extension (padded with spaces)
+	  11       1  File Attributes
+	  12       2  Unknown
+	  14       4  Time of Creation
+	  18       2  Last Access Time
+	  20       2  EA-Index (OS/2 stuff)
+	  22       4  Last Modified Time
+	  26       2  First Cluster
+	  28       4  File Size
+
+
+  LFN Entry Format:
+
+  Offset  Length  Description
+  ------  ------  -----------
+       0       1  Sequence Number (bit 6 is set on highest sequence)
+	   1      10  Name characters (five UTF-16LE chars)
+	  11       1  Attributes (always 0x0F)
+	  12       1  Reserved (always 0x00)
+	  13       1  Checksum of short filename entry
+	  14      12  Name characters (six UTF-16LE chars)
+	  26       2  Entry Cluster (always 0x00)
+	  28       4  Name characters (two UTF-16LE chars)
+  
+  Valid characters in DOS file names:
+	- Upper case letters A-Z
+	- Numbers 0-9
+	- Space (though there is no way to identify a trailing space)
+	- ! # $ % & ( ) - @ ^ _ ` { } ~ 
+	- Characters 128-255 (though the code page is indeterminate)
+
 ****************************************************************************/
 
 #include <time.h>
+#include <ctype.h>
 
 #include "imgtool.h"
 #include "formats/pc_dsk.h"
@@ -86,6 +124,13 @@ struct fat_mediatype
 	UINT8 tracks;
 	UINT8 sectors;
 };
+
+typedef enum
+{
+	CREATE_NONE,
+	CREATE_FILE,
+	CREATE_DIR,
+} creation_policy_t;
 
 
 
@@ -187,6 +232,14 @@ static int is_special_cluster(UINT32 fat_bits, UINT32 cluster)
 		mask &= (1 << fat_bits) - 1;
 
 	return (cluster & mask) == mask;
+}
+
+
+
+static char cannonicalize_sfn_char(char ch)
+{
+	/* return the display version of this short file name character */
+	return tolower(ch);
 }
 
 
@@ -333,14 +386,27 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	memcpy(&header[43], "           ", 11);
 	memcpy(&header[54], fat_bits_string, 8);
 
-	/* store boot sector */
+	/* store boot code */
 	boot_sector_offset = sizeof(header) - sizeof(boot_sector_code);
-	assert(boot_sector_offset >= 62);
-	assert(boot_sector_offset <= 129);
+	if (boot_sector_offset < 62)
+		return IMGTOOLERR_UNEXPECTED;	/* sanity check */
+	if (boot_sector_offset > 510)
+		return IMGTOOLERR_UNEXPECTED;	/* sanity check */
 	memcpy(&header[boot_sector_offset], boot_sector_code, sizeof(boot_sector_code));
-	header[0] = 0xEB;								/* JMP imm8 */
-	header[1] = (UINT8) (boot_sector_offset - 2);	/* (offset) */
-	header[2] = 0x90;								/* NOP */
+
+	/* specify jump instruction */
+	if (boot_sector_offset <= 129)
+	{
+		header[0] = 0xEB;									 /* JMP rel8 */
+		header[1] = (UINT8) (boot_sector_offset - 2);		 /* (offset) */
+		header[2] = 0x90;									 /* NOP */
+	}
+	else
+	{
+		header[0] = 0xE9;									 /* JMP rel16 */
+		header[1] = (UINT8) ((boot_sector_offset - 2) >> 0); /* (offset) */
+		header[2] = (UINT8) ((boot_sector_offset - 2) >> 8); /* (offset) */
+	}
 
 	ferr = floppy_write_sector(imgtool_floppy(image), 0, 0, first_sector_id,
 		0, header, sizeof(header));
@@ -450,6 +516,22 @@ static imgtoolerr_t fat_read_file(imgtool_image *image, struct fat_file *file,
 
 
 
+static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
+	const void *buffer, size_t buffer_len, size_t *bytes_read)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
+static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *file,
+	UINT32 new_size)
+{
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
 static void prepend_lfn_bytes(utf16_char_t *lfn_buf, size_t lfn_buflen, size_t *lfn_len,
 	const UINT8 *entry, int offset, int chars)
 {
@@ -546,7 +628,7 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 		rtrim(ent->short_filename);
 	}
 	for (i = 0; ent->short_filename[i]; i++)
-		ent->short_filename[i] = tolower(ent->short_filename[i]);
+		ent->short_filename[i] = cannonicalize_sfn_char(ent->short_filename[i]);
 
 	/* and the long filename */
 	if (lfn_lastentry == 1)
@@ -584,11 +666,181 @@ static imgtoolerr_t fat_read_dirent(imgtool_image *image, struct fat_file *file,
 
 
 
-static imgtoolerr_t fat_lookup_file(imgtool_image *image, const char *path, struct fat_file *file)
+static imgtoolerr_t fat_construct_dirent(const char *filename, creation_policy_t create,
+	UINT8 **entry, size_t *entry_len)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	UINT8 *created_entry = NULL;
+	UINT8 *new_created_entry;
+	size_t created_entry_len = FAT_DIRENT_SIZE;
+	size_t created_entry_pos = 0;
+	unicode_char_t ch;
+	char last_short_char = ' ';
+	char short_char = '\0';
+	utf16_char_t buf[UTF16_CHAR_MAX];
+	int i, len;
+	int sfn_pos = 0;
+	int sfn_sufficient = 1;
+	int sfn_in_extension = 0;
+
+	/* sanity check */
+	if (*filename == '\0')
+	{
+		err = IMGTOOLERR_BADFILENAME;
+		goto done;
+	}
+
+	/* construct intial entry */
+	created_entry = (UINT8 *) malloc(FAT_DIRENT_SIZE);
+	if (!created_entry)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(created_entry +  0, ' ', 11);
+	memset(created_entry + 12, '\0', FAT_DIRENT_SIZE - 12);
+	created_entry[11] = (create == CREATE_DIR) ? 0x10 : 0x00;
+
+	while(*filename)
+	{
+		filename += uchar_from_utf8(&ch, filename, UTF8_CHAR_MAX);
+
+		/* append to short filename, if possible */
+		if ((ch < 32) || (ch > 128))
+			short_char = '\0';
+		else if (isalnum((char) ch))
+			short_char = toupper((char) ch);
+		else if (strchr(". !#$%^()-@^_`{}~", (char) ch))
+			short_char = (char) ch;
+		else
+			short_char = '\0';
+		if (!short_char || (short_char != cannonicalize_sfn_char((char) ch)))
+			sfn_sufficient = 0;
+
+		/* append the short filename char */
+		if (short_char == '.')
+		{
+			/* multiple extensions or trailing spaces? */
+			if (sfn_in_extension || (last_short_char == ' '))
+				sfn_sufficient = 0;
+
+			sfn_in_extension = 1;
+			sfn_pos = 8;
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + 8] = ' ';
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + 9] = ' ';
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + 10] = ' ';
+		}
+		else if (sfn_pos == (sfn_in_extension ? 11 : 8))
+		{
+			/* ran out of characters for short filename */
+			sfn_sufficient = 0;
+		}
+		else
+		{
+			created_entry[created_entry_len - FAT_DIRENT_SIZE + sfn_pos++] = ch;
+		}
+		last_short_char = short_char;
+
+
+		/* convert to UTF-16 and add a long filename entry */
+		len = utf16le_from_uchar(buf, UTF16_CHAR_MAX, ch);
+		for (i = 0; i < len; i++)
+		{
+			switch(created_entry_pos)
+			{
+				case 0:
+				case 32:
+					/* need to grow */
+					new_created_entry = (UINT8 *) realloc(created_entry, created_entry_len + FAT_DIRENT_SIZE);
+					if (!new_created_entry)
+					{
+						err = IMGTOOLERR_OUTOFMEMORY;
+						goto done;
+					}
+					created_entry = new_created_entry;
+
+					/* move existing entries forward */
+					memmove(created_entry + 32, created_entry, created_entry_len);
+					created_entry_len += 32;
+
+					/* set up this LFN */
+					memset(created_entry, '\0', 32);
+					memset(&created_entry[1], '\xFF', 10);
+					memset(&created_entry[14], '\xFF', 12);
+					memset(&created_entry[28], '\xFF', 4);
+					created_entry[11] = 0x0F;
+
+					/* specify entry index */
+					created_entry[0] = (created_entry_len / 32) - 1;
+					if (created_entry[0] >= 0x40)
+					{
+						err = IMGTOOLERR_BADFILENAME;
+						goto done;
+					}
+					created_entry_pos = 1;
+					break;
+
+				case 11:
+					created_entry_pos = 14;
+					break;
+
+				case 26:
+					created_entry_pos = 28;
+					break;
+			}
+
+			memcpy(&created_entry[created_entry_pos], &buf[i], 2); 
+			created_entry_pos += 2;
+		}
+	}
+
+	/* trailing spaces? */
+	if (short_char == ' ')
+		sfn_sufficient = 0;
+
+	if (sfn_sufficient)
+	{
+		/* the short filename suffices; remove the LFN stuff */
+		memcpy(created_entry, created_entry + created_entry_len - FAT_DIRENT_SIZE, FAT_DIRENT_SIZE);
+		created_entry_len = FAT_DIRENT_SIZE;
+
+		new_created_entry = (UINT8 *) realloc(created_entry, created_entry_len);
+		if (!new_created_entry)
+		{
+			err = IMGTOOLERR_OUTOFMEMORY;
+			goto done;
+		}
+		created_entry = new_created_entry;
+	}
+	else
+	{
+		/* need to do finishing touches on the LFN */
+		created_entry[0] |= 0x40;
+	}
+
+done:
+	if (err && created_entry)
+	{
+		free(created_entry);
+		created_entry = NULL;
+	}
+	*entry = created_entry;
+	*entry_len = created_entry_len;
+	return err;
+}
+
+
+
+static imgtoolerr_t fat_lookup_path(imgtool_image *image, const char *path,
+	creation_policy_t create, struct fat_file *file)
 {
 	imgtoolerr_t err;
 	const struct fat_diskinfo *disk_info;
 	struct fat_dirent ent;
+	const char *next_path_part;
+	UINT8 *created_entry = NULL;
+	size_t created_entry_len = 0;
+	UINT32 pos;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -600,27 +852,68 @@ static imgtoolerr_t fat_lookup_file(imgtool_image *image, const char *path, stru
 	while(*path)
 	{
 		if (!file->directory)
-			return IMGTOOLERR_PATHNOTFOUND;
+		{
+			err = IMGTOOLERR_PATHNOTFOUND;
+			goto done;
+		}
+
+		next_path_part = path + strlen(path) + 1;
+		if (create && (*next_path_part == '\0'))
+		{
+			/* this is the last entry, and we are creating a file */
+			err = fat_construct_dirent(path, create, &created_entry, &created_entry_len);
+			if (err)
+				goto done;
+		}
 
 		do
 		{
 			err = fat_read_dirent(image, file, &ent);
 			if (err)
-				return err;
-			if (ent.eof)
-				return IMGTOOLERR_FILENOTFOUND;
+				goto done;
 		}
-		while(stricmp(path, ent.short_filename) && stricmp(path, ent.long_filename));
+		while(!ent.eof && stricmp(path, ent.short_filename) && stricmp(path, ent.long_filename));
 
-		path += strlen(path) + 1;
+		if (ent.eof)
+		{
+			if (!created_entry)
+			{
+				err = IMGTOOLERR_FILENOTFOUND;
+				goto done;
+			}
+			else
+			{
+				pos = file->filesize;
 
-		/* update the current file */
-		memset(file, 0, sizeof(*file));
-		file->directory = ent.directory;
-		file->filesize = ent.filesize;
-		file->cluster = ent.first_cluster;
+				err = fat_set_file_size(image, file, pos + created_entry_len);
+				if (err)
+					goto done;
+
+				err = fat_write_file(image, file, created_entry, created_entry_len, NULL);
+				if (err)
+					goto done;
+
+				memset(file, 0, sizeof(*file));
+				file->directory = (created_entry[created_entry_len - FAT_DIRENT_SIZE + 11] & 0x10) ? 1 : 0;
+			}
+		}
+		else
+		{
+			/* update the current file */
+			memset(file, 0, sizeof(*file));
+			file->directory = ent.directory;
+			file->filesize = ent.filesize;
+			file->cluster = ent.first_cluster;
+		}
+		path = next_path_part;
 	}
-	return IMGTOOLERR_SUCCESS;
+
+	err = IMGTOOLERR_SUCCESS;
+
+done:
+	if (created_entry)
+		free(created_entry);
+	return err;
 }
 
 
@@ -632,7 +925,7 @@ static imgtoolerr_t fat_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 
 	file = (struct fat_file *) img_enum_extrabytes(enumeration);
 
-	err = fat_lookup_file(img_enum_image(enumeration), path, file);
+	err = fat_lookup_path(img_enum_image(enumeration), path, CREATE_NONE, file);
 	if (err)
 		return err;
 	if (!file->directory)
@@ -670,7 +963,7 @@ static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *fil
 	size_t bytes_read;
 	char buffer[1024];
 
-	err = fat_lookup_file(image, filename, &file);
+	err = fat_lookup_path(image, filename, CREATE_NONE, &file);
 	if (err)
 		return err;
 
@@ -686,6 +979,27 @@ static imgtoolerr_t fat_diskimage_readfile(imgtool_image *image, const char *fil
 		stream_write(destf, buffer, bytes_read);
 	}
 	while(bytes_read > 0);
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *filename, imgtool_stream *sourcef, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	struct fat_file file;
+
+	err = fat_lookup_path(image, filename, CREATE_FILE, &file);
+	if (err)
+		return err;
+
+	if (file.directory)
+		return IMGTOOLERR_FILENOTFOUND;
+
+	err = fat_set_file_size(image, &file, (UINT32) stream_size(sourcef));
+	if (err)
+		return err;
+
 	return IMGTOOLERR_SUCCESS;
 }
 
@@ -709,6 +1023,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->begin_enum					= fat_diskimage_beginenum;
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
+	/*module->write_file					= fat_diskimage_writefile;*/
 	return IMGTOOLERR_SUCCESS;
 }
 

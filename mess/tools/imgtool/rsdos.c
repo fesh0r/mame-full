@@ -257,7 +257,7 @@ static imgtoolerr_t prepare_dirent(struct rsdos_dirent *ent, const char *fname)
 	/* For now, all files are type 2 binary files */
 	ent->ftype = 2;
 	ent->asciiflag = 0;
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
 
 

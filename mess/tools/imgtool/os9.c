@@ -939,27 +939,15 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *pa
 {
 	imgtoolerr_t err;
 	struct os9_fileinfo file_info;
-	UINT64 sz;
-	UINT64 free_space;
 	size_t write_size;
 	void *buf = NULL;
 	int i = -1;
 	UINT32 lsn = 0;
 	UINT32 count = 0;
+	UINT32 sz;
 	const struct os9_diskinfo *disk_info;
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
-
-	err = os9_diskimage_freespace(image, &free_space);
-	if (err)
-		goto done;
-
-	sz = stream_size(sourcef);
-	if (sz > free_space)
-	{
-		err = IMGTOOLERR_NOSPACE;
-		goto done;
-	}
 
 	buf = malloc(disk_info->sector_size);
 	if (!buf)
@@ -972,7 +960,9 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *pa
 	if (err)
 		goto done;
 
-	err = os9_set_file_size(image, &file_info, (UINT32) sz);
+	sz = (UINT32) stream_size(sourcef);
+
+	err = os9_set_file_size(image, &file_info, sz);
 	if (err)
 		goto done;
 

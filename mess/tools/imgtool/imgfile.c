@@ -502,6 +502,8 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	imgtool_stream *newstream = NULL;
 	option_resolution *alloc_resolution = NULL;
 	char *alloc_path = NULL;
+	UINT64 free_space;
+	UINT64 file_size;
 
 	if (!img->module->write_file)
 	{
@@ -550,6 +552,25 @@ imgtoolerr_t img_writefile(imgtool_image *img, const char *fname, imgtool_stream
 	}
 	if (opts)
 		option_resolution_finish(opts);
+
+	/* if free_space is implemented; do a quick check to see if space is available */
+	if (img->module->free_space)
+	{
+		err = img->module->free_space(img, &free_space);
+		if (err)
+		{
+			err = markerrorsource(err);
+			goto done;
+		}
+
+		file_size = stream_size(sourcef);
+
+		if (file_size > free_space)
+		{
+			err = markerrorsource(IMGTOOLERR_NOSPACE);
+			goto done;
+		}
+	}
 
 	/* actually invoke the write file handler */
 	err = img->module->write_file(img, fname, sourcef, opts);

@@ -7,6 +7,7 @@
 *********************************************************************/
 
 #include "unicode.h"
+#include "utils.h"
 
 int uchar_isvalid(unicode_char_t uchar)
 {
@@ -133,6 +134,18 @@ int uchar_from_utf16(unicode_char_t *uchar, const utf16_char_t *utf16char, size_
 
 
 
+int uchar_from_utf16f(unicode_char_t *uchar, const utf16_char_t *utf16char, size_t count)
+{
+	utf16_char_t buf[2];
+	if (count > 0)
+		buf[0] = FLIPENDIAN_INT16(utf16char[0]);
+	if (count > 1)
+		buf[1] = FLIPENDIAN_INT16(utf16char[0]);
+	return uchar_from_utf16f(uchar, buf, count);
+}
+
+
+
 int utf8_from_uchar(char *utf8string, size_t count, unicode_char_t uchar)
 {
 	int rc = 0;
@@ -218,6 +231,23 @@ int utf16_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uch
 		return -1;
 	return rc;
 }
+
+
+
+int utf16f_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uchar)
+{
+	int rc;
+	utf16_char_t buf[2] = { 0, 0 };
+
+	rc = utf16_from_uchar(buf, count, uchar);
+
+	if (rc >= 1)
+		utf16string[0] = FLIPENDIAN_INT16(buf[0]);
+	if (rc >= 2)
+		utf16string[1] = FLIPENDIAN_INT16(buf[1]);
+	return rc;
+}
+
 
 
 

@@ -36,10 +36,24 @@ int uchar_isvalid(unicode_char_t uchar);
 /* converting strings to 32-bit Unicode chars */
 int uchar_from_utf8(unicode_char_t *uchar, const char *utf8char, size_t count);
 int uchar_from_utf16(unicode_char_t *uchar, const utf16_char_t *utf16char, size_t count);
+int uchar_from_utf16f(unicode_char_t *uchar, const utf16_char_t *utf16char, size_t count);
 
 /* converting 32-bit Unicode chars to strings */
 int utf8_from_uchar(char *utf8string, size_t count, unicode_char_t uchar);
 int utf16_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uchar);
+int utf16f_from_uchar(utf16_char_t *utf16string, size_t count, unicode_char_t uchar);
+
+#ifdef LSB_FIRST
+#define uchar_from_utf16be	uchar_from_utf16f
+#define uchar_from_utf16le	uchar_from_utf16
+#define utf16be_from_uchar	utf16f_from_uchar
+#define utf16le_from_uchar	utf16_from_uchar
+#else
+#define uchar_from_utf16be	uchar_from_utf16
+#define uchar_from_utf16le	uchar_from_utf16f
+#define utf16be_from_uchar	utf16_from_uchar
+#define utf16le_from_uchar	utf16f_from_uchar
+#endif
 
 #endif /* UNICODE_H */
 

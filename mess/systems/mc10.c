@@ -18,9 +18,6 @@
 
 
 static ADDRESS_MAP_START( mc10_mem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x001f) AM_READWRITE(m6803_internal_registers_r, m6803_internal_registers_w)
-	AM_RANGE(0x0020, 0x007f) AM_NOP		/* unused */
-	AM_RANGE(0x0080, 0x00ff) AM_RAM		/* 6803 internal RAM */
 	AM_RANGE(0x0100, 0x3fff) AM_NOP		/* unused */
 	AM_RANGE(0x4000, 0x4fff) AM_READWRITE(MRA8_RAM, mc10_ram_w)
 //	AM_RANGE(0x5000, 0xbffe) AM_RAM		/* expansion RAM */
