@@ -171,7 +171,7 @@ static int transfer_granule(IMAGE *img, UINT8 granule, int length, STREAM *f, in
 	if (track >= 17)
 		track++;
 
-	sector = (granule % 2) ? 9 : 0;
+	sector = (granule % 2) ? 10 : 1;
 
 	return proc(img, 0, track, sector, 0, length, f);
 }
