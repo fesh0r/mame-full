@@ -11,7 +11,7 @@ imgtool_stream *stream_open_mem(void *buf, size_t sz);
 void stream_close(imgtool_stream *f);
 size_t stream_read(imgtool_stream *f, void *buf, size_t sz);
 size_t stream_write(imgtool_stream *f, const void *buf, size_t sz);
-size_t stream_size(imgtool_stream *f);
+UINT64 stream_size(imgtool_stream *f);
 int stream_seek(imgtool_stream *f, size_t pos, int where);
 size_t stream_tell(imgtool_stream *s);
 /* works currently only for IMG_FILE

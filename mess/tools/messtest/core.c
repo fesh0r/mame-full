@@ -466,12 +466,42 @@ void report_message(messtest_messagetype_t msgtype, const char *fmt, ...)
 {
 	char buf[1024];
 	va_list va;
+	const char *prefix1;
+	const char *prefix2;
+	int width = 64;
+	int last_space, base, i;
 
 	va_start(va, fmt);
 	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), fmt, va);
 	va_end(va);
 
-	printf("%-12s %s %s\n", state->current_testcase_name, (msgtype ? "***" : "..."), buf);
+	prefix1 = state->current_testcase_name;
+	prefix2 = msgtype ? "***" : "...";
+
+	base = 0;
+	last_space = -1;
+	i = 0;
+	do
+	{
+		if ((buf[i] == '\0') || (i - base > width))
+		{
+			if (buf[i] && (last_space > 0))
+				buf[last_space] = '\0';
+			else
+				last_space = i;
+			printf("%-12s %-3s %s\n", prefix1, prefix2, &buf[base]);
+
+			base = last_space + 1;
+			last_space = -1;
+			prefix1 = "";
+			prefix2 = "";
+		}
+		else if (isspace(buf[i]))
+		{
+			last_space = i;
+		}
+	}
+	while(buf[i++]);
 
 	/* did we abort? */
 /*	if ((msgtype == MSG_FAILURE) && (state != STATE_ABORTED))

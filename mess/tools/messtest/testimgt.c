@@ -140,13 +140,26 @@ static void checkdirectory_entry_handler(const char **attributes)
 
 
 
+static void append_to_list(char *buf, size_t buflen, const char *entry)
+{
+	size_t pos;
+	pos = strlen(buf);
+	snprintf(buf + pos, buflen - pos,
+		(pos > 0) ? ", %s" : "%s", entry);
+}
+
+
+
 static void checkdirectory_end_handler(const void *buffer, size_t size)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	imgtool_imageenum *imageenum;
 	imgtool_dirent ent;
 	char filename_buffer[1024];
-	int i;
+	char expected_listing[128];
+	char actual_listing[128];
+	int i, actual_count;
+	int mismatch;
 
 	if (!image)
 	{
@@ -154,6 +167,20 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 		report_message(MSG_FAILURE, "Image not loaded");
 		return;
 	}
+
+	/* build expected listing string */
+	expected_listing[0] = '\0';
+	for (i = 0; i < entry_count; i++)
+	{
+		append_to_list(expected_listing,
+			sizeof(expected_listing) / sizeof(expected_listing[0]),
+			entries[i].filename);
+	}
+
+	/* now enumerate though listing */
+	actual_count = 0;
+	actual_listing[0] = '\0';
+	mismatch = FALSE;
 
 	memset(&ent, 0, sizeof(ent));
 	ent.filename = filename_buffer;
@@ -163,27 +190,34 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 	if (err)
 		goto done;
 
-	for (i = 0; i < entry_count; i++)
+	i = 0;
+	do
 	{
 		err = img_nextenum(imageenum, &ent);
 		if (err)
-			goto done; 
-
-		if (ent.eof || strcmp(ent.filename, entries[i].filename))
-		{
-			failed = TRUE;
-			report_message(MSG_FAILURE, "Attempt to verify directory listing failed");
 			goto done;
+
+		if (!ent.eof)
+		{
+			append_to_list(actual_listing,
+				sizeof(actual_listing) / sizeof(actual_listing[0]),
+				ent.filename);
+
+			if (i < entry_count && (strcmp(ent.filename, entries[i].filename)))
+				mismatch = TRUE;
+			i++;
 		}
 	}
+	while(!ent.eof);
 
-	err = img_nextenum(imageenum, &ent);
-	if (err)
-		goto done;
-	if (!ent.eof)
+	if (i != entry_count)
+		mismatch = TRUE;
+
+	if (mismatch)
 	{
 		failed = TRUE;
-		report_message(MSG_FAILURE, "Extra file entries");
+		report_message(MSG_FAILURE, "File listing mismatch: {%s} expected {%s}",
+			actual_listing, expected_listing);
 		goto done;
 	}
 

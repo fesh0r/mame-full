@@ -300,8 +300,8 @@ static int os9_interpret_dirent(void *entry, char **filename, UINT32 *lsn, int *
 
 
 
-static imgtoolerr_t os9_lookup_path(imgtool_image *img,
-	const char *path, UINT32 *lsn, struct os9_fileinfo *file_info)
+static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
+	UINT32 *lsn, int create, struct os9_fileinfo *file_info)
 {
 	imgtoolerr_t err;
 	struct os9_fileinfo dir_info;
@@ -506,7 +506,7 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 	if (err)
 		goto done;
 
-	err = os9_lookup_path(image, path, NULL, &os9enum->dir_info);
+	err = os9_lookup_path(image, path, NULL, FALSE, &os9enum->dir_info);
 	if (err)
 		goto done;
 
@@ -600,7 +600,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 	if (err)
 		return err;
 
-	err = os9_lookup_path(img, filename, NULL, &file_info);
+	err = os9_lookup_path(img, filename, NULL, FALSE, &file_info);
 	if (err)
 		return err;
 	if (file_info.directory)
@@ -625,6 +625,26 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 
 
 
+static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *path, imgtool_stream *sourcef, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	struct os9_fileinfo file_info;
+	UINT64 sz;
+
+	err = os9_lookup_path(image, path, NULL, TRUE, &file_info);
+	if (err)
+		return err;
+
+	sz = stream_size(sourcef);
+	while(sz > 0)
+	{
+	}
+
+	return IMGTOOLERR_UNIMPLEMENTED;
+}
+
+
+
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
@@ -637,6 +657,7 @@ static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct Im
 	module->begin_enum				= os9_diskimage_beginenum;
 	module->next_enum				= os9_diskimage_nextenum;
 	module->read_file				= os9_diskimage_readfile;
+//	module->write_file				= os9_diskimage_writefile;
 	return IMGTOOLERR_SUCCESS;
 }
 

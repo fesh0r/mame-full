@@ -153,6 +153,7 @@ static floperr_t put_granule_map(imgtool_image *img, const UINT8 *granule_map, U
 
 static imgtoolerr_t transfer_granule(imgtool_image *img, UINT8 granule, int length, imgtool_stream *f, imgtoolerr_t (*proc)(imgtool_image *, int, int, int, int, size_t, imgtool_stream *))
 {
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	UINT8 track, sector;
 
 	track = granule / 2;
@@ -161,7 +162,9 @@ static imgtoolerr_t transfer_granule(imgtool_image *img, UINT8 granule, int leng
 
 	sector = (granule % 2) ? 10 : 1;
 
-	return proc(img, 0, track, sector, 0, length, f);
+	if (length > 0)
+		err = proc(img, 0, track, sector, 0, length, f);
+	return err;
 }
 
 
@@ -285,7 +288,8 @@ static imgtoolerr_t rsdos_diskimage_nextenum(imgtool_imageenum *enumeration, img
 	while(rsent.fname[0] == '\0');
 
 	/* Now are we at the eof point? */
-	if (rsent.fname[0] == -1) {
+	if (rsent.fname[0] == -1)
+	{
 		rsenum->eof = 1;
 eof:
 		ent->filesize = 0;
@@ -347,6 +351,43 @@ static imgtoolerr_t rsdos_diskimage_freespace(imgtool_image *img, UINT64 *size)
 	return FLOPPY_ERROR_SUCCESS;
 }
 
+
+
+static imgtoolerr_t delete_entry(imgtool_image *img, struct rsdos_dirent *ent, int pos)
+{
+	floperr_t ferr;
+	unsigned char g, i;
+	UINT8 granule_count;
+	UINT8 granule_map[MAX_GRANULEMAP_SIZE];
+
+	/* Write a NUL in the filename, marking it deleted */
+	ent->fname[0] = 0;
+	ferr = put_rsdos_dirent(img, pos, ent);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	ferr = get_granule_map(img, granule_map, &granule_count);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	/* Now free up the granules */
+	g = ent->first_granule;
+	while (g < granule_count)
+	{
+		i = granule_map[g];
+		granule_map[g] = 0xff;
+		g = i;
+	}
+
+	ferr = put_granule_map(img, granule_map, granule_count);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fname, imgtool_stream *destf)
 {
 	imgtoolerr_t err;
@@ -367,12 +408,15 @@ static imgtoolerr_t rsdos_diskimage_readfile(imgtool_image *img, const char *fna
 	return 0;
 }
 
+
+
 static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *writeoptions)
 {
 	floperr_t ferr;
 	imgtoolerr_t err;
 	struct rsdos_dirent ent, ent2;
-	size_t sz, i;
+	size_t i;
+	UINT64 sz;
 	UINT64 freespace;
 	unsigned char g;
 	unsigned char *gptr;
@@ -446,58 +490,41 @@ static imgtoolerr_t rsdos_diskimage_writefile(imgtool_image *img, const char *fn
 		if (ferr)
 			return imgtool_floppy_error(ferr);
 	}
-	while((ent2.fname[0] != '\0') && (ent2.fname[0] != -1));
+	while((ent2.fname[0] != '\0') && strcmp(ent.fname, ent2.fname) && (ent2.fname[0] != -1));
+
+	/* delete file if it already exists */
+	if (ent2.fname[0] && (ent2.fname[0] != -1))
+	{
+		err = delete_entry(img, &ent2, i);
+		if (err)
+			return err;
+	}
 
 	ferr = put_rsdos_dirent(img, i, &ent);
 	if (ferr)
 		return imgtool_floppy_error(ferr);
 
-	/* Write the granule map back out */
+	/* write the granule map back out */
 	ferr = put_granule_map(img, granule_map, granule_count);
 	if (ferr)
 		return imgtool_floppy_error(ferr);
 
-	return 0;
+	return IMGTOOLERR_SUCCESS;
 }
+
+
 
 static imgtoolerr_t rsdos_diskimage_deletefile(imgtool_image *img, const char *fname)
 {
 	imgtoolerr_t err;
-	floperr_t ferr;
 	int pos;
-	unsigned char g, i;
-	UINT8 granule_count;
-	UINT8 granule_map[MAX_GRANULEMAP_SIZE];
 	struct rsdos_dirent ent;
 
 	err = lookup_rsdos_file(img, fname, &ent, &pos);
 	if (err)
 		return err;
 
-	/* Write a NUL in the filename, marking it deleted */
-	ent.fname[0] = 0;
-	ferr = put_rsdos_dirent(img, pos, &ent);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
-
-	ferr = get_granule_map(img, granule_map, &granule_count);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
-
-	/* Now free up the granules */
-	g = ent.first_granule;
-	while (g < granule_count)
-	{
-		i = granule_map[g];
-		granule_map[g] = 0xff;
-		g = i;
-	}
-
-	ferr = put_granule_map(img, granule_map, granule_count);
-	if (ferr)
-		return imgtool_floppy_error(ferr);
-
-	return 0;
+	return delete_entry(img, &ent, pos);
 }
 
 

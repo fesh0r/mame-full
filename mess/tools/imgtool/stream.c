@@ -1,3 +1,11 @@
+/***************************************************************************
+
+	stream.c
+
+	Code for implementing Imgtool streams
+
+***************************************************************************/
+
 #include <stdio.h>
 #include <string.h>
 #include <zlib.h>
@@ -14,7 +22,7 @@ enum
 	IMG_FILTER
 };
 
-struct stream_internal
+struct _imgtool_stream
 {
 	int imgtype;
 	int write_protect;
@@ -48,7 +56,7 @@ static size_t fsize(FILE *f)
 
 static imgtool_stream *stream_open_zip(const char *zipname, const char *subname, int read_or_write)
 {
-	struct stream_internal *imgfile = NULL;
+	imgtool_stream *imgfile = NULL;
 	ZIP *z = NULL;
 	struct zipent *zipent;
 	FILE *f;
@@ -62,7 +70,7 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 		goto error;
 	fclose(f);
 
-	imgfile = malloc(sizeof(struct stream_internal));
+	imgfile = malloc(sizeof(struct _imgtool_stream));
 	if (!imgfile)
 		goto error;
 
@@ -92,7 +100,7 @@ static imgtool_stream *stream_open_zip(const char *zipname, const char *subname,
 		goto error;
 
 	closezip(z);
-	return (imgtool_stream *) imgfile;
+	return imgfile;
 
 error:
 	if (z)
@@ -109,7 +117,7 @@ error:
 imgtool_stream *stream_open(const char *fname, int read_or_write)
 {
 	const char *ext;
-	struct stream_internal *imgfile = NULL;
+	imgtool_stream *imgfile = NULL;
 	static const char *write_modes[] = {"rb", "wb", "r+b", "w+b"};
 	FILE *f = NULL;
 	char *buf = NULL;
@@ -156,7 +164,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 		goto error;
 	}
 
-	imgfile = malloc(sizeof(struct stream_internal));
+	imgfile = malloc(sizeof(struct _imgtool_stream));
 	if (!imgfile)
 		goto error;
 
@@ -166,7 +174,7 @@ imgtool_stream *stream_open(const char *fname, int read_or_write)
 	imgfile->write_protect = read_or_write ? 0 : 1;
 	imgfile->u.f = f;
 	imgfile->name = fname;
-	return (imgtool_stream *) imgfile;
+	return imgfile;
 
 error:
 	if (imgfile)
@@ -178,11 +186,13 @@ error:
 	return (imgtool_stream *) NULL;
 }
 
+
+
 imgtool_stream *stream_open_write_stream(int size)
 {
-	struct stream_internal *imgfile;
+	imgtool_stream *imgfile;
 
-	imgfile = malloc(sizeof(struct stream_internal));
+	imgfile = malloc(sizeof(struct _imgtool_stream));
 	if (!imgfile)
 		return NULL;
 
@@ -193,18 +203,22 @@ imgtool_stream *stream_open_write_stream(int size)
 	imgfile->u.m.bufsz = size;
 	imgfile->u.m.buf = malloc(size);
 
-	if (!imgfile->u.m.buf) {
+	if (!imgfile->u.m.buf)
+	{
 		free(imgfile);
 		return NULL;
 	}
-	return (imgtool_stream *) imgfile;
+
+	return imgfile;
 }
+
+
 
 imgtool_stream *stream_open_mem(void *buf, size_t sz)
 {
-	struct stream_internal *imgfile;
+	imgtool_stream *imgfile;
 
-	imgfile = malloc(sizeof(struct stream_internal));
+	imgfile = malloc(sizeof(struct _imgtool_stream));
 	if (!imgfile)
 		return NULL;
 
@@ -214,14 +228,16 @@ imgtool_stream *stream_open_mem(void *buf, size_t sz)
 
 	imgfile->u.m.bufsz = sz;
 	imgfile->u.m.buf = buf;
-	return (imgtool_stream *) imgfile;
+	return imgfile;
 }
+
+
 
 imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f)
 {
-	struct stream_internal *imgfile;
+	imgtool_stream *imgfile;
 
-	imgfile = malloc(sizeof(struct stream_internal));
+	imgfile = malloc(sizeof(struct _imgtool_stream));
 	if (!imgfile)
 		return NULL;
 
@@ -229,180 +245,197 @@ imgtool_stream *stream_open_filter(imgtool_stream *s, imgtool_filter *f)
 	imgfile->u.filt.s = s;
 	imgfile->u.filt.f = f;
 	imgfile->u.filt.totalread = 0;
-	return (imgtool_stream *) imgfile;
+	return imgfile;
 }
+
+
 
 void stream_close(imgtool_stream *s)
 {
-	struct stream_internal *si = (struct stream_internal *) s;
-
 	assert(s);
 
-	switch(si->imgtype)
+	switch(s->imgtype)
 	{
 		case IMG_FILE:
-			fclose(si->u.f);
+			fclose(s->u.f);
 			break;
 
 		case IMG_MEM:
-			free(si->u.m.buf);
+			free(s->u.m.buf);
 			break;
 
 		case IMG_FILTER:
-			filter_term(si->u.filt.f);
+			filter_term(s->u.filt.f);
 			break;
 
 		default:
 			assert(0);
 			break;
 	}
-	free((void *) si);
+	free((void *) s);
 }
+
+
 
 size_t stream_read(imgtool_stream *s, void *buf, size_t sz)
 {
 	size_t result = 0;
-	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		result = fread(buf, 1, sz, si->u.f);
-		break;
+	switch(s->imgtype)
+	{
+		case IMG_FILE:
+			result = fread(buf, 1, sz, s->u.f);
+			break;
 
-	case IMG_MEM:
-		if ((si->u.m.pos + sz) > si->u.m.bufsz)
-			result = si->u.m.bufsz - si->u.m.pos;
-		else
-			result = sz;
-		memcpy(buf, si->u.m.buf + si->u.m.pos, result);
-		si->u.m.pos += result;
-		break;
+		case IMG_MEM:
+			if ((s->u.m.pos + sz) > s->u.m.bufsz)
+				result = s->u.m.bufsz - s->u.m.pos;
+			else
+				result = sz;
+			memcpy(buf, s->u.m.buf + s->u.m.pos, result);
+			s->u.m.pos += result;
+			break;
 
-	case IMG_FILTER:
-		result = filter_readfromstream(si->u.filt.f, si->u.filt.s, buf, sz);
-		si->u.filt.totalread += result;
-		break;
+		case IMG_FILTER:
+			result = filter_readfromstream(s->u.filt.f, s->u.filt.s, buf, sz);
+			s->u.filt.totalread += result;
+			break;
 
-	default:
-		assert(0);
-		break;
+		default:
+			assert(0);
+			break;
 	}
 	return result;
 }
+
+
 
 size_t stream_write(imgtool_stream *s, const void *buf, size_t sz)
 {
 	size_t result = 0;
-	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_MEM:
-		if (!si->write_protect) {
-			if (si->u.m.bufsz<si->u.m.pos+sz) {
-				si->u.m.buf=realloc(si->u.m.buf,si->u.m.pos+sz);
-				si->u.m.bufsz=si->u.m.pos+sz;
+	switch(s->imgtype)
+	{
+		case IMG_MEM:
+			if (!s->write_protect)
+			{
+				if (s->u.m.bufsz < s->u.m.pos + sz)
+				{
+					s->u.m.buf = realloc(s->u.m.buf, s->u.m.pos + sz);
+					s->u.m.bufsz = s->u.m.pos+sz;
+				}
+				memcpy(s->u.m.buf + s->u.m.pos, buf, sz);
+				s->u.m.pos += sz;
+				result = sz;
 			}
-			memcpy(si->u.m.buf+si->u.m.pos, buf, sz);
-			si->u.m.pos+=sz;
-			result=sz;
-		}
-		break;
+			break;
 
-	case IMG_FILE:
-		result = fwrite(buf, 1, sz, si->u.f);
-		break;
+		case IMG_FILE:
+			result = fwrite(buf, 1, sz, s->u.f);
+			break;
 
-	case IMG_FILTER:
-		result = filter_writetostream(si->u.filt.f, si->u.filt.s, buf, sz);
-		break;
+		case IMG_FILTER:
+			result = filter_writetostream(s->u.filt.f, s->u.filt.s, buf, sz);
+			break;
 
-	default:
-		assert(0);
-		break;
+		default:
+			assert(0);
+			break;
 	}
 	return result;
 }
 
-size_t stream_size(imgtool_stream *s)
+
+
+UINT64 stream_size(imgtool_stream *s)
 {
-	size_t result = 0;
-	struct stream_internal *si = (struct stream_internal *) s;
+	UINT64 result = 0;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		result = fsize(si->u.f);
-		break;
+	switch(s->imgtype)
+	{
+		case IMG_FILE:
+			result = fsize(s->u.f);
+			break;
 
-	case IMG_MEM:
-		result = si->u.m.bufsz;
-		break;
+		case IMG_MEM:
+			result = s->u.m.bufsz;
+			break;
 
-	case IMG_FILTER:
-		si->u.filt.totalread += filter_readintobuffer(si->u.filt.f, si->u.filt.s);
-		result = si->u.filt.totalread;
-		break;
+		case IMG_FILTER:
+			s->u.filt.totalread += filter_readintobuffer(s->u.filt.f, s->u.filt.s);
+			result = s->u.filt.totalread;
+			break;
 
-	default:
-		assert(0);
-		break;
+		default:
+			assert(0);
+			break;
 	}
 	return result;
 }
+
+
 
 int stream_seek(imgtool_stream *s, size_t pos, int where)
 {
 	int result = 0;
-	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		result = fseek(si->u.f, pos, where);
-		break;
-
-	case IMG_MEM:
-		switch(where) {
-		case SEEK_CUR:
-			pos += si->u.m.pos;
+	switch(s->imgtype)
+	{
+		case IMG_FILE:
+			result = fseek(s->u.f, pos, where);
 			break;
-		case SEEK_END:
-			pos += si->u.m.bufsz;
-			break;
-		}
-		if ((pos > si->u.m.bufsz) || (pos < 0)) {
-			result = -1;
-		}
-		else {
-			si->u.m.pos = pos;
-		}
-		break;
 
-	default:
-		assert(0);
-		break;
+		case IMG_MEM:
+			switch(where)
+			{
+				case SEEK_CUR:
+					pos += s->u.m.pos;
+					break;
+				case SEEK_END:
+					pos += s->u.m.bufsz;
+					break;
+			}
+			if ((pos > s->u.m.bufsz) || (pos < 0))
+			{
+				result = -1;
+			}
+			else
+			{
+				s->u.m.pos = pos;
+			}
+			break;
+
+		default:
+			assert(0);
+			break;
 	}
 	return result;
 }
+
+
 
 size_t stream_tell(imgtool_stream *s)
 {
 	int result = 0;
-	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		result = ftell(si->u.f);
-		break;
+	switch(s->imgtype)
+	{
+		case IMG_FILE:
+			result = ftell(s->u.f);
+			break;
 
-	case IMG_MEM:
-		result = si->u.m.pos;
-		break;
+		case IMG_MEM:
+			result = s->u.m.pos;
+			break;
 
-	default:
-		assert(0);
-		break;
+		default:
+			assert(0);
+			break;
 	}
 	return result;
 }
+
+
 
 size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
 {
@@ -410,7 +443,8 @@ size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
 	size_t readsz;
 	char buf[1024];
 
-	while(sz && (readsz = stream_read(source, buf, MIN(sz, sizeof(buf))))) {
+	while(sz && (readsz = stream_read(source, buf, MIN(sz, sizeof(buf)))))
+	{
 		stream_write(dest, buf, readsz);
 		sz -= readsz;
 		result += readsz;
@@ -418,36 +452,42 @@ size_t stream_transfer(imgtool_stream *dest, imgtool_stream *source, size_t sz)
 	return result;
 }
 
+
+
 size_t stream_transfer_all(imgtool_stream *dest, imgtool_stream *source)
 {
 	return stream_transfer(dest, source, stream_size(source));
 }
 
+
+
 int stream_crc(imgtool_stream *s, unsigned long *result)
 {
 	size_t sz;
 	void *ptr;
-	struct stream_internal *si = (struct stream_internal *) s;
 
-	switch(si->imgtype) {
-	case IMG_MEM:
-		*result = crc32(0, (unsigned char*)si->u.m.buf, si->u.m.bufsz);
-		break;
+	switch(s->imgtype)
+	{
+		case IMG_MEM:
+			*result = crc32(0, (unsigned char *) s->u.m.buf, s->u.m.bufsz);
+			break;
 
-	default:
-		sz = stream_size(s);
-		ptr = malloc(sz);
-		if (!ptr)
-			return IMGTOOLERR_OUTOFMEMORY;
-		stream_seek(s, 0, SEEK_SET);
-		if (stream_read(s, ptr, sz) != sz)
-			return IMGTOOLERR_READERROR;
-		*result = crc32(0, ptr, sz);
-		free(ptr);
-		break;
+		default:
+			sz = stream_size(s);
+			ptr = malloc(sz);
+			if (!ptr)
+				return IMGTOOLERR_OUTOFMEMORY;
+			stream_seek(s, 0, SEEK_SET);
+			if (stream_read(s, ptr, sz) != sz)
+				return IMGTOOLERR_READERROR;
+			*result = crc32(0, ptr, sz);
+			free(ptr);
+			break;
 	}
 	return 0;
 }
+
+
 
 int file_crc(const char *fname,  unsigned long *result)
 {
@@ -480,29 +520,29 @@ size_t stream_fill(imgtool_stream *f, unsigned char b, size_t sz)
 
 void stream_clear(imgtool_stream *s)
 {
-	struct stream_internal *si = (struct stream_internal *) s;
+	switch(s->imgtype)
+	{
+		case IMG_FILE:
+			if (!s->write_protect)
+			{
+				fclose(s->u.f);
+				s->u.f = fopen(s->name, "wb+");
+				fclose(s->u.f);
+				s->u.f = fopen(s->name, "wb");
+			}
+			break;
 
-	switch(si->imgtype) {
-	case IMG_FILE:
-		if (!si->write_protect) {
-			fclose(si->u.f);
-			si->u.f=fopen(si->name,"wb+");
-			if (si->u.f==NULL) ;
-			fclose(si->u.f);
-			si->u.f=fopen(si->name,"wb");
-		}
-		break;
-
-	default:
-		/* Need to implement */
-		assert(0);
-		break;
+		default:
+			/* Need to implement */
+			assert(0);
+			break;
 	}
 }
 
+
+
 int stream_isreadonly(imgtool_stream *s)
 {
-	struct stream_internal *si = (struct stream_internal *) s;
-	return si->write_protect;
+	return s->write_protect;
 }
 
