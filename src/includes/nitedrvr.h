@@ -8,9 +8,6 @@
 
 extern unsigned char *nitedrvr_ram;
 
-extern int nitedrvr_gear;
-extern int nitedrvr_track;
-
 READ8_HANDLER( nitedrvr_in0_r );
 READ8_HANDLER( nitedrvr_in1_r );
 READ8_HANDLER( nitedrvr_ram_r );
