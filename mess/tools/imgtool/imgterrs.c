@@ -32,8 +32,11 @@ static const char *msgs[] =
 	"Cannot specify path",
 	"Invalid path",
 	"Path not found",
-	"Directory not empty"
+	"Directory not empty",
+	"Seek error"
 };
+
+
 
 const char *imgtool_error(imgtoolerr_t err)
 {

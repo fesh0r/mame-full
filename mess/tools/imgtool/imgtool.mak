@@ -8,12 +8,14 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\
+	$(OBJ)/mess/unicode.o					\
 	$(OBJ)/mess/formats/ioprocs.o			\
 	$(OBJ)/mess/formats/flopimg.o			\
 	$(OBJ)/mess/formats/cassimg.o			\
 	$(OBJ)/mess/formats/basicdsk.o			\
 	$(OBJ)/mess/formats/coco_dsk.o			\
 	$(OBJ)/mess/formats/coco_cas.o			\
+	$(OBJ)/mess/formats/pc_dsk.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
 	$(OBJ)/mess/tools/imgtool/stream.o		\
 	$(OBJ)/mess/tools/imgtool/library.o		\
@@ -33,6 +35,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/ti99.o		\
 	$(OBJ)/mess/tools/imgtool/ti990hd.o		\
 	$(OBJ)/mess/tools/imgtool/concept.o		\
+	$(OBJ)/mess/tools/imgtool/fat.o			\
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \
@@ -50,7 +53,6 @@ IMGTOOL_LIB_OBJS =							\
 #	  $(OBJ)/mess/tools/imgtool/lynx.o     \
 #	  $(OBJ)/mess/tools/imgtool/crt.o      \
 #	  $(OBJ)/mess/tools/imgtool/d64.o      \
-#	  $(OBJ)/mess/tools/imgtool/fat.o      \
 #	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 #	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 #	  $(OBJ)/mess/tools/imgtool/ti85.o     \

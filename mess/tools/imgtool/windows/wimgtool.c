@@ -201,7 +201,7 @@ static imgtoolerr_t append_dirent(HWND window, int index, const imgtool_dirent *
 	}
 	else
 	{
-		extension = strchr(entry->filename, '.');
+		extension = strrchr(entry->filename, '.');
 		if (!extension)
 			extension = ".bin";
 
@@ -758,7 +758,6 @@ static void menu_extract(HWND window)
 	TCHAR host_filename[MAX_PATH];
 	OPENFILENAME ofn;
 	struct wimgtool_info *info;
-	char *s;
 	const char *filename;
 	const char *image_basename;
 	int i;
@@ -789,14 +788,6 @@ static void menu_extract(HWND window)
 	ofn.nMaxFile = sizeof(host_filename) / sizeof(host_filename[0]);
 	if (!GetSaveFileName(&ofn))
 		goto done;
-
-	if (info->current_directory)
-	{
-		s = alloca(strlen(info->current_directory) + strlen(entry.filename) + 1);
-		strcpy(s, info->current_directory);
-		strcat(s, entry.filename);
-		filename = s;
-	}
 
 	err = img_getfile(info->image, filename, ofn.lpstrFile, NULL);
 	if (err)

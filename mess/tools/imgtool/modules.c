@@ -68,5 +68,6 @@ MODULE(rsdos)
 MODULE(os9)
 MODULE(ti99)
 MODULE(ti990)
+MODULE(fat)
 
 #endif /* MODULES_RECURSIVE */

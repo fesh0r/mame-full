@@ -21,18 +21,22 @@ struct ImgtoolFloppyExtra
 
 imgtoolerr_t imgtool_floppy_error(floperr_t err)
 {
-	switch(err) {
-	case FLOPPY_ERROR_SUCCESS:
-		return IMGTOOLERR_SUCCESS;
+	switch(err)
+	{
+		case FLOPPY_ERROR_SUCCESS:
+			return IMGTOOLERR_SUCCESS;
 
-	case FLOPPY_ERROR_OUTOFMEMORY:
-		return IMGTOOLERR_OUTOFMEMORY;
+		case FLOPPY_ERROR_OUTOFMEMORY:
+			return IMGTOOLERR_OUTOFMEMORY;
 
-	case FLOPPY_ERROR_INVALIDIMAGE:
-		return IMGTOOLERR_CORRUPTIMAGE;
-		
-	default:
-		return IMGTOOLERR_UNEXPECTED;
+		case FLOPPY_ERROR_INVALIDIMAGE:
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		case FLOPPY_ERROR_SEEKERROR:
+			return IMGTOOLERR_SEEKERROR;
+			
+		default:
+			return IMGTOOLERR_UNEXPECTED;
 	}
 }
 

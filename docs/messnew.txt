@@ -25,6 +25,8 @@ User Interface Changes:
 
 Imgtool Changes:
 ----------------
+- [FAT] Rewrote the FAT driver; currently only read only.  [Nate Woods]
+
 - [OS9] The Imgtool OS-9 driver now supports writing files.  [Nate Woods]
 
 

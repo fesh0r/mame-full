@@ -103,6 +103,36 @@ int uchar_from_utf8(unicode_char_t *uchar, const char *utf8char, size_t count)
 
 
 
+int uchar_from_utf16(unicode_char_t *uchar, const utf16_char_t *utf16char, size_t count)
+{
+	int rc;
+
+	if ((utf16char[0] > 0xd800) && (utf16char[0] < 0xdbff))
+	{
+		if ((utf16char[1] > 0xdc00) && (utf16char[1] < 0xdfff))
+		{
+			*uchar = 0x10000 + (utf16char[0] & 0x3ff) + ((utf16char[1] & 0x3ff) * 0x400);
+			rc = 2;
+		}
+		else
+		{
+			rc = -1;
+		}
+	}
+	else if ((utf16char[0] > 0xdc00) && (utf16char[0] < 0xdfff))
+	{
+		rc = -1;
+	}
+	else
+	{
+		*uchar = utf16char[0];
+		rc = 1;
+	}
+	return rc;
+}
+
+
+
 int utf8_from_uchar(char *utf8string, size_t count, unicode_char_t uchar)
 {
 	int rc = 0;
