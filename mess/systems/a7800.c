@@ -88,7 +88,7 @@ INPUT_PORTS_START( a7800 )
 
 INPUT_PORTS_END
 
-static UINT8 palette[256*3] =
+static UINT8 a7800_palette[256*3] =
 {
     /* Grey */
     0x00,0x00,0x00, 0x1c,0x1c,0x1c, 0x39,0x39,0x39, 0x59,0x59,0x59,
@@ -172,7 +172,7 @@ static UINT8 palette[256*3] =
     0xff,0xc1,0x60, 0xff,0xc6,0x71, 0xff,0xcb,0x83, 0xff,0xcb,0x83
 };
 
-static unsigned short colortable[] =
+static unsigned short a7800_colortable[] =
 {
     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0a,0x0b,0x0c,0x0d,0x0e,0x0f,
     0x10,0x11,0x12,0x13,0x14,0x15,0x16,0x17,0x18,0x19,0x1a,0x1b,0x1c,0x1d,0x1e,0x1f,
@@ -194,10 +194,10 @@ static unsigned short colortable[] =
 
 
 /* Initialise the palette */
-static void a7800_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( a7800 )
 {
-    memcpy(sys_palette,palette,sizeof(palette));
-    memcpy(sys_colortable,colortable,sizeof(colortable));
+	palette_set_colors(0, a7800_palette, sizeof(a7800_palette) / 3);
+    memcpy(colortable,a7800_colortable,sizeof(a7800_colortable));
 }
 
 
@@ -219,51 +219,33 @@ static struct POKEYinterface pokey_interface = {
     { 100 },
 };
 
+static MACHINE_DRIVER_START( a7800 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M6502, 1790000)	/* 1.79Mhz (note: The clock switches to 1.19Mhz
+												 * when the TIA or RIOT are accessed) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(a7800_interrupt,262)
 
-static struct MachineDriver machine_driver_a7800 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_M6502,
-            1790000,        /* 1.79Mhz (note: The clock switches to 1.19Mhz */
-                            /* when the TIA or RIOT are accessed) */
-            readmem,writemem,0,0,
-            a7800_interrupt,262
-        }
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-    1,
-    a7800_init_machine, /* init_machine */
-    a7800_stop_machine, /* stop_machine */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-    /* video hardware */
-    640,263, {0,319,35,35+204}, // 35+199
-    gfxdecodeinfo,
-    sizeof(palette) / sizeof(palette[0]) / 3,
-    sizeof(colortable) / sizeof(colortable[0]),
-    a7800_init_palette,
+	MDRV_MACHINE_INIT( a7800 )
 
-    VIDEO_TYPE_RASTER,
-    0,
-    a7800_vh_start,
-    a7800_vh_stop,
-    a7800_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(640,263)
+	MDRV_VISIBLE_AREA(0,319,35,35+204)
+	MDRV_PALETTE_LENGTH(sizeof(a7800_palette) / sizeof(a7800_palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(sizeof(a7800_colortable) / sizeof(a7800_colortable[0]))
+	MDRV_PALETTE_INIT(a7800)
 
-    /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_TIA,
-            &tia_interface
-        },
-        {
-            SOUND_POKEY,
-            &pokey_interface
-        }
-    }
+	MDRV_VIDEO_START(a7800)
+	MDRV_VIDEO_UPDATE(a7800)
 
-};
+	/* sound hardware */
+	MDRV_SOUND_ADD(TIA, tia_interface)
+	MDRV_SOUND_ADD(POKEY, pokey_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -305,13 +287,3 @@ static const struct IODevice io_a7800[] = {
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 CONS( 1986, a7800,    0,        a7800,    a7800,    0,        "Atari",  "Atari 7800" )
-
-#ifdef RUNTIME_LOADER
-extern void a7800_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"a7800")==0) drivers[i]=&driver_a7800;
-	}
-}
-#endif

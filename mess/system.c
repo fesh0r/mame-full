@@ -87,7 +87,7 @@ const struct GameDriver *drivers[] =
 	/* ATARI */
 ////	DRIVER( a2600 ) 	/* Atari 2600						*/
 	DRIVER( a5200 ) 	/* Atari 5200						*/
-////	DRIVER( a7800 ) 	/* Atari 7800						*/
+	DRIVER( a7800 ) 	/* Atari 7800						*/
 ////	DRIVER( lynx )		/* Atari Lynx Handheld					*/
 ////	DRIVER( lynxa )		/* Atari Lynx Handheld alternate rom save		*/
 ////	DRIVER( lynx2 )		/* Atari Lynx II Handheld redesigned, no additions      */

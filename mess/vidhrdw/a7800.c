@@ -52,11 +52,11 @@ extern int maria_flag;
   Start the video hardware emulation.
 
 ***************************************************************************/
-int a7800_vh_start(void)
+VIDEO_START( a7800 )
 {
     int i;
 
-    if ((maria_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+    if ((maria_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
     for(i=0; i<8; i++) {
@@ -76,24 +76,19 @@ int a7800_vh_start(void)
     return 0;
 }
 
-void a7800_vh_stop(void)
-{
-    bitmap_free(maria_bitmap);
-}
-
 /***************************************************************************
 
   Stop the video hardware emulation.
 
 ***************************************************************************/
 
-void maria_draw_scanline(void) {
-unsigned int graph_adr,data_addr;
-int width,hpos,pal,mode,ind;
-//unsigned int data_dat,dl;
-unsigned int dl;
-int x,d,c;
-int ind_bytes;
+void maria_draw_scanline(void)
+{
+	unsigned int graph_adr,data_addr;
+	int width,hpos,pal,mode,ind;
+	unsigned int dl;
+	int x,d,c;
+	int ind_bytes;
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
     /* Process this DLL entry */
@@ -443,7 +438,7 @@ int ind_bytes;
 }
 
 
-int a7800_interrupt(void)
+void a7800_interrupt(void)
 {
     int frame_scanline;
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -484,17 +479,14 @@ int a7800_interrupt(void)
 	     maria_offset--;
 	  }
        }
-    if (frame_scanline == 258) {
+    if (frame_scanline == 258)
        maria_vblank = 0x80;
-    }
 
-    if (maria_dli) {
-	maria_dli = 0;
-	return M6502_INT_NMI;
-    }
-    else {
-	return ignore_interrupt();
-    }
+	if (maria_dli)
+	{
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		maria_dli = 0;
+	}
 }
 
 /***************************************************************************
@@ -503,7 +495,7 @@ int a7800_interrupt(void)
 
 ***************************************************************************/
 /* This routine is called at the start of vblank to refresh the screen */
-void a7800_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( a7800 )
 {
     maria_scanline=0;
     copybitmap(bitmap,maria_bitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

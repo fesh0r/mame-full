@@ -816,7 +816,6 @@ static struct DACinterface dac_interface =
 static MACHINE_DRIVER_START( atari_common_nodac )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6510, FREQ_17_EXACT)
-	MDRV_VBLANK_DURATION(0)
 	MDRV_VBLANK_DURATION(1)
 
 	/* video hardware */

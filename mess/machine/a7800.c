@@ -28,17 +28,14 @@ unsigned char a7800_cart_type;
 unsigned char a7800_stick_type;
 static UINT8 *ROM;
 
-void a7800_init_machine(void) {
+MACHINE_INIT( a7800 )
+{
     a7800_ctrl_lock = 0;
     a7800_ctrl_reg = 0;
     maria_flag=0;
     if (a7800_cart_type & 0x01){
         install_mem_write_handler(0,0x4000,0x7FFF,pokey1_w);
     }
-}
-
-void a7800_stop_machine(void)
-{
 }
 
 /*    Header format
