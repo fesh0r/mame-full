@@ -10,7 +10,7 @@
 
 #include "includes/mc146818.h"
 #include "bcd.h"
-#include "julian.h"
+#include "gregoria.h"
 
 #if 0
 #define DBG_LOG(level, text, print) \
@@ -75,7 +75,7 @@ static void mc146818_timer(int param)
 					if (mc146818.type!=MC146818_IGNORE_CENTURY) year+=bcd_2_dec(CENTURY)*100;
 					else year+=2000; // save for julian_days_in_month calculation
 					DAY=bcd_adjust(DAY+1);
-					if (DAY>julian_days_in_month(MONTH, year)) {
+					if (DAY>gregorian_days_in_month(MONTH, year)) {
 						DAY=1;
 						MONTH=bcd_adjust(MONTH+1);
 						if (MONTH>0x12) {
@@ -106,7 +106,7 @@ static void mc146818_timer(int param)
 					year=YEAR;
 					if (mc146818.type!=MC146818_IGNORE_CENTURY) year+=CENTURY*100;
 					else year+=2000; // save for julian_days_in_month calculation
-					if (++DAY>julian_days_in_month(MONTH, year)) {
+					if (++DAY>gregorian_days_in_month(MONTH, year)) {
 						DAY=1;
 						if (++MONTH>12) {
 							MONTH=1;

@@ -5,7 +5,7 @@
 #include "includes/pit8253.h"
 #include "includes/pc_aga.h"
 #include "bcd.h"
-#include "julian.h"
+#include "gregoria.h"
 
 /*
 
@@ -265,7 +265,7 @@ static void europc_rtc_timer(int param)
 				europc_rtc.data[3]=bcd_adjust(europc_rtc.data[3]+1);
 				month=bcd_2_dec(europc_rtc.data[4]);
 				year=bcd_2_dec(europc_rtc.data[5])+2000; // save for julian_days_in_month_calculation
-				if (europc_rtc.data[3]> julian_days_in_month(month, year)) {
+				if (europc_rtc.data[3]> gregorian_days_in_month(month, year)) {
 					europc_rtc.data[3]=1;
 					europc_rtc.data[4]=bcd_adjust(europc_rtc.data[4]+1);
 					if (europc_rtc.data[4]>0x12) {

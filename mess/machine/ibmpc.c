@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "julian.h"
+#include "gregoria.h"
 #include "includes/pc.h"
 #include "includes/ibmpc.h"
 
@@ -218,7 +218,7 @@ static void pc_rtc_timer(int param)
 				pc_rtc.data[4]=0;
 				pc_rtc.data[5]=(pc_rtc.data[5]%7)+1;
 				year=pc_rtc.data[9]+2000;
-				if (++pc_rtc.data[6]>=julian_days_in_month(pc_rtc.data[7], year)) {
+				if (++pc_rtc.data[6]>=gregorian_days_in_month(pc_rtc.data[7], year)) {
 					pc_rtc.data[6]=1;
 					if (++pc_rtc.data[7]>12) {
 						pc_rtc.data[7]=1;
