@@ -26,8 +26,8 @@ static int use_dirty = 0;
 
 int LoadCabinet (const char *fname);
 void SwapBuffers (void);
-VIDEO_UPDATE(vector);
-void vector_clear_list (void);
+void glvec_init(void);
+void glvec_exit(void);
 
 GLdouble CompareVec (GLdouble i, GLdouble j, GLdouble k,
 	    GLdouble x, GLdouble y, GLdouble z);
@@ -75,8 +75,7 @@ void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
 	   GLdouble * ax, GLdouble * ay, GLdouble * az);
 void UpdateCabDisplay (struct mame_bitmap *bitmap);
 void UpdateFlatDisplay (struct mame_bitmap *bitmap);
-void UpdateGLDisplayBegin (struct mame_bitmap *bitmap);
-void UpdateGLDisplayEnd   (struct mame_bitmap *bitmap);
+void UpdateGLDisplay (struct mame_bitmap *bitmap);
 
 int cabspecified;
 
@@ -269,7 +268,6 @@ int panframe = 0;
 int vecgame = 0;
 
 extern GLuint veclist;
-extern int inlist;
 
 int gl_is_initialized;
 
@@ -338,7 +336,6 @@ void gl_bootstrap_resources()
   
   vecgame = 0;
   veclist=0;
-  inlist=0;
 
   gl_is_initialized = 0;
 #ifdef NOGLEXT78
@@ -412,7 +409,6 @@ void gl_reset_resources()
   
   vecgame = 0;
   veclist=0;
-  inlist=0;
 
   if(cabname!=NULL && strlen(cabname)>0)
   	cabspecified = 1;
@@ -693,6 +689,7 @@ int sysdep_display_16bpp_capable (void)
 void InitVScreen (int depth)
 {
   const unsigned char * glVersion;
+  const unsigned char * gluVersion;
   double game_aspect ;
   double cabn_aspect ;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
@@ -725,9 +722,15 @@ void InitVScreen (int depth)
 	disp__glGetString(GL_RENDERER),
 	glVersion);
 
-  printf("GLINFO: GLU Driver Information:\n");
-  printf("\tversion %s\n", 
-	disp__gluGetString(GLU_VERSION));
+  /* HDG: on my system this segfaults! */
+#if 0
+  gluVersion = disp__gluGetString(GLU_VERSION);
+  if (gluVersion)
+  {
+  	printf("GLINFO: GLU Driver Information:\n");
+	printf("\tversion %s\n", gluVersion);
+  }
+#endif
 
   if(glVersion[0]>'1' ||
      (glVersion[0]=='1' && glVersion[2]>='2') )
@@ -964,7 +967,10 @@ void InitVScreen (int depth)
 #endif
 
   if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+  {
+    glvec_init();
     vecgame = 1;
+  }
   else
     vecgame = 0;
 
@@ -1098,13 +1104,16 @@ void CloseVScreen (void)
     printf("GLINFO: CloseVScreen (gl_is_initialized=%d)\n", gl_is_initialized);
   #endif
 
+  if (vecgame)
+    glvec_exit();
+
   if(colorBlittedMemory!=NULL)
   	free(colorBlittedMemory);
-
-  if (gl_is_initialized == 0)
-    return;
-
-  CHECK_GL_BEGINEND();
+  	
+  if (gl_is_initialized != 0)
+  {
+    CHECK_GL_BEGINEND();
+  }
 
   gl_reset_resources();
 }
@@ -2610,27 +2619,12 @@ UpdateFlatDisplay (struct mame_bitmap *bitmap)
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
+void UpdateGLDisplay (struct mame_bitmap *bitmap)
 {
   if ( ! texture_init ) InitTextures (bitmap);
 
   if (gl_is_initialized == 0)
     return;
-
-  if (vecgame)
-  {
-#ifdef MESS
-    video_update_vector (NULL, NULL, NULL);
-#else
-    video_update_vector (NULL, NULL);
-#endif
-    CHECK_GL_BEGINEND();
-
-    /**
-     * after this vh_update, everything from vector
-     * (begin/end, list) should be closed ..)
-     */
-  }
 
   if (do_xgl_resize)
 	xgl_resize(winwidth, winheight, 1);
@@ -2644,25 +2638,8 @@ void UpdateGLDisplayBegin (struct mame_bitmap *bitmap)
   else
     UpdateFlatDisplay (bitmap);
 
-
   CHECK_GL_BEGINEND();
   CHECK_GL_ERROR ();
-}
-
-/**
- * the given bitmap MUST be the original mame core bitmap !!!
- *    - no swapxy, flipx or flipy and no resize !
- *    - shall be Machine->scrbitmap
- */
-void UpdateGLDisplayEnd (struct mame_bitmap *bitmap)
-{
-  if (vecgame)
-  {
-    vector_clear_list ();
-    /* be aware: a GL_BEGIN was called at last .. */
-  }
-
-  /* screendirty = 0; */
 }
 
 /* used when expose events received */
@@ -2671,8 +2648,7 @@ void
 osd_refresh_screen (void)
 {
   /* Just re-draw the whole screen */
-  UpdateGLDisplayBegin (NULL);
-  UpdateGLDisplayEnd (NULL);
+  UpdateGLDisplay(NULL);
 }
 
 /* invoked by main tree code to update bitmap into screen */
@@ -2685,7 +2661,7 @@ osd_refresh_screen (void)
 void
 sysdep_update_display (struct mame_bitmap *bitmap)
 {
-  UpdateGLDisplayBegin (bitmap);
+  UpdateGLDisplay (bitmap);
 
   frame++;
 
@@ -2736,8 +2712,6 @@ sysdep_update_display (struct mame_bitmap *bitmap)
 	set_gl_beam(get_gl_beam()-0.5);
     }
   }
-
-  UpdateGLDisplayEnd (bitmap);
 }
 
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap,

@@ -226,8 +226,9 @@ int sysdep_create_display(int depth)
   /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
      We have to do this after glXMakeCurrent(), or else the voodoo driver
      will give us the wrong resolution */
+  /* HDG: this breaks openGL on my voodoo2, so disable this for now
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f') )
-  	fullscreen=1;
+  	fullscreen=1; */
 
   if(gl_res!=NULL)
   {
@@ -240,6 +241,8 @@ int sysdep_create_display(int depth)
 	orig_height = fullscreen_height;
      }
   }
+
+
   if(!fullscreen) 
 	  resizeEvtMask = StructureNotifyMask ;
 
