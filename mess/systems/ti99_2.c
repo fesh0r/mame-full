@@ -531,13 +531,13 @@ MACHINE_DRIVER_END
 ROM_START(ti99_224)
 	/*CPU memory space*/
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("992rom.bin", 0x0000, 0x6000,CRC( 0x00000000))      /* system ROMs */
+	ROM_LOAD("992rom.bin", 0x0000, 0x6000, CRC(00000000))      /* system ROMs */
 ROM_END
 
 ROM_START(ti99_232)
 	/*64kb CPU memory space + 8kb to read the extra ROM page*/
 	ROM_REGION(0x12000,REGION_CPU1,0)
-	ROM_LOAD("992rom32.bin", 0x0000, 0x6000,CRC( 0x00000000))    /* system ROM - 32kb */
+	ROM_LOAD("992rom32.bin", 0x0000, 0x6000, CRC(00000000))    /* system ROM - 32kb */
 	ROM_CONTINUE(0x10000,0x2000)
 ROM_END
 
@@ -548,6 +548,6 @@ SYSTEM_CONFIG_START(ti99_2)
 	/* None of these is supported (tape should be easy to emulate) */
 SYSTEM_CONFIG_END
 
-/*		YEAR	NAME		PARENT		MACHINE		INPUT	INIT		CONFIG		COMPANY					FULLNAME */
-COMP(	1983,	ti99_224,	0,			ti99_2,		ti99_2,	ti99_2_24,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (24kb ROMs)" )
-COMP(	1983,	ti99_232,	ti99_224,	ti99_2,		ti99_2,	ti99_2_32,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (32kb ROMs)" )
+/*		YEAR	NAME		PARENT		COMPAT	MACHINE		INPUT	INIT		CONFIG		COMPANY					FULLNAME */
+COMP(	1983,	ti99_224,	0,			0,		ti99_2,		ti99_2,	ti99_2_24,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (24kb ROMs)" )
+COMP(	1983,	ti99_232,	ti99_224,	0,		ti99_2,		ti99_2,	ti99_2_32,	ti99_2,		"Texas Instruments",	"TI-99/2 BASIC Computer (32kb ROMs)" )
