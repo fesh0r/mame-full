@@ -1,0 +1,27 @@
+Emerson Arcadia 2001
+--------------------
+
+Console
+
+Hanimex mpt-03 (first variant?) with large cartridge slot
+
+sold from several firms with different names
+
+
+
+Features
+--------
+128x208 in 8 colors
+4 8x8 single color sprites
+single channel sound
+2 controller with analog joystick and keypad
+
+
+Emulator
+--------
+r2001 for DOS by Paul Robson at http://users.aol.com/mk14emu/arcadia.htm
+
+
+Mess emulation state
+--------------------
+based on info by Paul Robson
