@@ -254,6 +254,15 @@ $(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
 endif
 
+ifndef DEBUG
+# Workaround for VC6 optimization bug
+$(OBJ)/input.o: src/input.c
+	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Ob1 -Gs -G5 -Gr -Fo$@ -c $<
+
+$(OBJ)/cpu/g65816/g65816o0.o: src/cpu/g65816/g65816o0.c
+	$(CC) $(CDEFS) -W3 -nologo -MT $(INCLUDES) -Oi -Ot -Oy -Gs -G5 -Gr -Fo$@ -c $<
+endif
+
 $(OBJ)/%.o: src/%.asm
 	$(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
 
