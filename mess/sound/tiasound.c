@@ -136,8 +136,8 @@ static UINT8 Div_n_max[2];              /* Divide by n maximum, one for each cha
 /* For better accuracy, the Samp_n_cnt has a fixed binary decimal point */
 /* which has 8 binary digits to the right of the decimal point. */
 
-static UINT32 Samp_n_max;               /* Sample max, multiplied by 256 */
-static UINT32 Samp_n_cnt;               /* Sample cnt. */
+static UINT16 Samp_n_max;               /* Sample max, multiplied by 256 */
+static UINT16 Samp_n_cnt;               /* Sample cnt. */
 
 
 /*****************************************************************************/
@@ -482,8 +482,8 @@ void tia_sound_init(int clock, int sample_rate, int gain)
     poly_init(Bit9, 9, 2, 7, 0x00080);
 
     /* calculate the sample 'divide by N' value based on the playback freq. */
-    Samp_n_max = ((UINT32)clock << 8) / sample_rate;
-    Samp_n_cnt = 0;                     /* initialize all bits of the sample counter */
+    Samp_n_max = ((UINT16)(UINT32)clock << 8) / sample_rate;
+    Samp_n_cnt = Samp_n_max;                     /* initialize all bits of the sample counter */
 
     /* initialize the local globals */
     for (chan = CHAN1; chan <= CHAN2; chan++)
