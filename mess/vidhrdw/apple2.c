@@ -33,15 +33,19 @@ static UINT8 *lores_tiledata;
   helpers
 ***************************************************************************/
 
-static void apple2_draw_tilemap(struct mame_bitmap *bitmap, int beginrow, int endrow,
-	struct tilemap *tm, int raw_videobase, int *tm_videobase)
+static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect,
+	int beginrow, int endrow, struct tilemap *tm, int raw_videobase, int *tm_videobase)
 {
-	struct rectangle cliprect;
+	struct rectangle new_cliprect;
 
-	cliprect.min_x = 0;
-	cliprect.max_x = 280*2-1;
-	cliprect.min_y = beginrow;
-	cliprect.max_y = endrow;
+	new_cliprect = *cliprect;
+
+	if (new_cliprect.min_y < beginrow)
+		new_cliprect.min_y = beginrow;
+	if (new_cliprect.max_y > endrow)
+		new_cliprect.max_y = endrow;
+	if (new_cliprect.min_y > new_cliprect.max_y)
+		return;
 
 	if (a2.RAMRD)
 		raw_videobase += 0x10000;
@@ -51,7 +55,7 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, int beginrow, int en
 		*tm_videobase = raw_videobase;
 		tilemap_mark_all_tiles_dirty(tm);
 	}
-	tilemap_draw(bitmap, &cliprect, tm, 0, 0);
+	tilemap_draw(bitmap, &new_cliprect, tm, 0, 0);
 }
 
 /***************************************************************************
@@ -87,12 +91,12 @@ static UINT32 apple2_dbltext_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_
 	return apple2_text_getmemoryoffset(col / 2, row, num_cols / 2, num_rows) + ((col % 2) ? 0x800 : 0x400);
 }
 
-static void apple2_text_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
+static void apple2_text_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
 {
 	if (a2.COL80)
-		apple2_draw_tilemap(bitmap, beginrow, endrow, dbltext_tilemap, 0, &dbltext_videobase);
+		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, dbltext_tilemap, 0, &dbltext_videobase);
 	else
-		apple2_draw_tilemap(bitmap, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
+		apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
 }
 
 /***************************************************************************
@@ -115,9 +119,9 @@ static void apple2_lores_gettileinfo(int memory_offset)
 	pal_data[1] = (ch >> 4) & 0x0f;
 }
 
-static void apple2_lores_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
+static void apple2_lores_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
 {
-	apple2_draw_tilemap(bitmap, beginrow, endrow, lores_tilemap, page ? 0x800 : 0x400, &lores_videobase);
+	apple2_draw_tilemap(bitmap, cliprect, beginrow, endrow, lores_tilemap, page ? 0x800 : 0x400, &lores_videobase);
 }
 
 /***************************************************************************
@@ -157,8 +161,8 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 
 	bitmap = dtparams->bitmap;
 	vram = dtparams->vram;
-	beginrow = dtparams->beginrow + (dtparams->rowcount / task_count) * task_num;
-	endrow = beginrow + (dtparams->rowcount / task_count) - 1;
+	beginrow	= dtparams->beginrow + (dtparams->rowcount * task_num     / task_count);
+	endrow		= dtparams->beginrow + (dtparams->rowcount * (task_num+1) / task_count) - 1;
 
 	vram_row[0] = 0;
 	vram_row[41] = 0;
@@ -191,9 +195,16 @@ static void apple2_hires_draw_task(void *param, int task_num, int task_count)
 	}
 }
 
-static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
+static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int page, int beginrow, int endrow)
 {
 	struct drawtask_params dtparams;
+
+	if (beginrow < cliprect->min_y)
+		beginrow = cliprect->min_y;
+	if (endrow > cliprect->max_y)
+		endrow = cliprect->max_y;
+	if (endrow < beginrow)
+		return;
 
 	dtparams.vram = mess_ram + (page ? 0x4000 : 0x2000);
 	if (a2.RAMRD)
@@ -305,25 +316,25 @@ VIDEO_UPDATE( apple2 )
 
 	if (a2.TEXT)
 	{
-		apple2_text_draw(bitmap, page, 0, 191);
+		apple2_text_draw(bitmap, cliprect, page, 0, 191);
 	}
 	else if ((a2.HIRES) && (a2.MIXED))
 	{
-		apple2_hires_draw(bitmap, page, 0, 159);
-		apple2_text_draw(bitmap, page, 160, 191);
+		apple2_hires_draw(bitmap, cliprect, page, 0, 159);
+		apple2_text_draw(bitmap, cliprect, page, 160, 191);
 	}
 	else if (a2.HIRES)
 	{
-		apple2_hires_draw(bitmap, page, 0, 191);
+		apple2_hires_draw(bitmap, cliprect, page, 0, 191);
 	}
 	else if (a2.MIXED)
 	{
-		apple2_lores_draw(bitmap, page, 0, 159);
-		apple2_text_draw(bitmap, page, 160, 191);
+		apple2_lores_draw(bitmap, cliprect, page, 0, 159);
+		apple2_text_draw(bitmap, cliprect, page, 160, 191);
 	}
 	else
 	{
-		apple2_lores_draw(bitmap, page, 0, 191);
+		apple2_lores_draw(bitmap, cliprect, page, 0, 191);
 	}
 }
 

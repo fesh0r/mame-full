@@ -278,7 +278,7 @@ static MACHINE_DRIVER_START( standard )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 1022727)        /* 1.023 Mhz */
 	MDRV_CPU_MEMORY(readmem_apple2, writemem_apple2)
-	MDRV_CPU_VBLANK_INT(apple2_interrupt, 1)
+	MDRV_CPU_VBLANK_INT(apple2_interrupt, 192/8)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)

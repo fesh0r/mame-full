@@ -98,22 +98,27 @@ MACHINE_INIT( apple2e )
 void apple2_interrupt(void)
 {
 	int irq_freq = 1;
+	int scanline;
 
 	profiler_mark(PROFILER_A2INT);
 
-	irq_freq --;
-	if (irq_freq < 0)
-		irq_freq = 1;
+	scanline = cpu_getscanline();
 
-	/* We poll the keyboard periodically to scan the keys.  This is
-	   actually consistent with how the AY-3600 keyboard controller works. */
-	AY3600_interrupt();
+	if (scanline == 192)
+	{
+		irq_freq --;
+		if (irq_freq < 0)
+			irq_freq = 1;
 
-	/* control-reset mapped to control-delete */
-	if (osd_is_key_pressed (KEYCODE_LCONTROL) && osd_is_key_pressed (KEYCODE_BACKSPACE))
-		cpu_set_reset_line (0,PULSE_LINE);
-	else if (irq_freq)
-		cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
+		/* We poll the keyboard periodically to scan the keys.  This is
+		actually consistent with how the AY-3600 keyboard controller works. */
+		AY3600_interrupt();
+
+		if (irq_freq)
+			cpu_set_irq_line(0, M6502_IRQ_LINE, PULSE_LINE);
+	}
+
+	force_partial_update(scanline);
 
 	profiler_mark(PROFILER_END);
 }
