@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1988-1991
 		------------------------------------
 		MAME Driver by: Darren Olafson
-		Technical info: Carl-Henrik Skårstedt  &  Magnus Danielsson
+		Technical info: Carl-Henrik Skarstedt  &  Magnus Danielsson
 		Driver updates: Quench
 		Video updates : SUZ
 
