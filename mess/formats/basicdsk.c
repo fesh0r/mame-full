@@ -83,21 +83,22 @@ static floperr_t get_offset(floppy_image *floppy, int head, int track, int secto
 		sector = geom->translate_sector(floppy, sector);
 	sector -= geom->first_sector_id;
 
-	/* translate the track, if appropriate */
-	if (geom->translate_track)
-		track = geom->translate_track(floppy, track);
-
 	/* check to see if we are out of range */
 	if ((head < 0) || (head >= geom->heads) || (track < 0) || (track >= geom->tracks)
 			|| (sector < 0) || (sector >= geom->sectors))
 		return FLOPPY_ERROR_SEEKERROR;
 
-	offs = 0;
-	offs += track;
-	offs *= geom->heads;
-	offs += head;
-	offs *= geom->sectors;
-	offs += sector;
+	if (geom->translate_offset)
+		offs = geom->translate_offset(floppy, geom, track, head, sector);
+	else
+	{
+		offs = 0;
+		offs += track;
+		offs *= geom->heads;
+		offs += head;
+		offs *= geom->sectors;
+		offs += sector;
+	}
 	offs *= geom->sector_length;
 	offs += geom->offset;
 	

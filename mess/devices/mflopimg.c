@@ -11,7 +11,7 @@ struct mess_flopimg
 	floppy_image *floppy;
 	int track;
 	void (*unload_proc)(mess_image *image);
-	int (*tracktranslate_proc)(mess_image *image, floppy_image *floppy);
+	int (*tracktranslate_proc)(mess_image *image, floppy_image *floppy, int physical_track);
 };
 
 
@@ -32,7 +32,7 @@ static void flopimg_seek_callback(mess_image *image, int physical_track)
 
 	/* translate the track number if necessary */
 	if (flopimg->tracktranslate_proc)
-		physical_track = flopimg->tracktranslate_proc(image, flopimg->floppy);
+		physical_track = flopimg->tracktranslate_proc(image, flopimg->floppy, physical_track);
 
 	flopimg->track = physical_track;
 }
@@ -333,7 +333,7 @@ void floppy_install_unload_proc(mess_image *image, void (*proc)(mess_image *imag
 
 
 
-void floppy_install_tracktranslate_proc(mess_image *image, int (*proc)(mess_image *image, floppy_image *floppy))
+void floppy_install_tracktranslate_proc(mess_image *image, int (*proc)(mess_image *image, floppy_image *floppy, int physical_track))
 {
 	struct mess_flopimg *flopimg;
 	flopimg = image_lookuptag(image, FLOPPY_TAG);

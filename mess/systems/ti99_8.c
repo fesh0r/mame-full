@@ -24,8 +24,7 @@ General:
 	    utilities (no dump, but 90% of source code is available and has been
 	    compiled)
 	  - 18kb system GROMs, with monitor and TI-extended basic II (no dump,
-	    source code is available but has NOT been compiled, 99/4a GROMs can
-	    sort of work instead)
+	    but source code is available and has been compiled)
 	  - 4(???)kb DSR ROM for hexbus (no dump)
 	  - 32(?)kb speech ROM: contents are slightly different from the 99/4(a)
 	    speech ROMs, due to the use of a tms5220 speech synthesizer instead of
@@ -158,7 +157,7 @@ Keyboard interface:
 #include "machine/994x_ser.h"
 #include "machine/99_dsk.h"
 #include "cpu/tms9900/tms9900.h"
-#include "devices/basicdsk.h"
+#include "devices/mflopimg.h"
 #include "devices/cassette.h"
 
 /*
@@ -500,7 +499,7 @@ SYSTEM_CONFIG_START(ti99_8)
 	CONFIG_DEVICE_CASSETTE			(1, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
 #if 1
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
+	CONFIG_DEVICE_FLOPPY			(4,	ti99)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)

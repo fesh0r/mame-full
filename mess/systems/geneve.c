@@ -209,8 +209,7 @@
 #include "machine/994x_ser.h"
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
-#include "devices/cartslot.h"
-#include "devices/basicdsk.h"
+#include "devices/mflopimg.h"
 
 /*
 	memory map
@@ -534,7 +533,7 @@ ROM_START(genmod)
 ROM_END
 
 SYSTEM_CONFIG_START(geneve)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
+	CONFIG_DEVICE_FLOPPY			(4,	ti99)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	/*4*/3, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)

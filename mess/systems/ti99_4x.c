@@ -31,7 +31,7 @@ Historical notes: TI made several last minute design changes.
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
 #include "machine/99_hsgpl.h"
-#include "devices/basicdsk.h"
+#include "devices/mflopimg.h"
 #include "devices/harddriv.h"
 #include "devices/cassette.h"
 
@@ -804,7 +804,7 @@ ROM_END
 SYSTEM_CONFIG_START(ti99_4)
 	CONFIG_DEVICE_CASSETTE			(2, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_CARTSLOT,	3,	"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_READ,	NULL,	NULL,	device_load_ti99_cart,	device_unload_ti99_cart,	NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
+	CONFIG_DEVICE_FLOPPY			(4,	ti99)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)

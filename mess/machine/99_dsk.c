@@ -20,54 +20,74 @@
 	port was the recommended way to attach a floppy drive to the TI-99/8,
 	but I think this computer supported the TI-99/4(a) disk controllers, too.
 
-	Raphael Nabet, 1999-2003.
+	Raphael Nabet, 1999-2004.
 */
 
-#include "devices/basicdsk.h"
 #include "includes/wd179x.h"
 #include "smc92x4.h"
 #include "ti99_4x.h"
 #include "99_peb.h"
 #include "99_dsk.h"
 #include "mm58274c.h"
+#include "formats/basicdsk.h"
+#include "devices/mflopimg.h"
 
 #define MAX_FLOPPIES 4
 
 static int use_80_track_drives;
 
-static struct
+typedef struct ti99_geometry
 {
 	UINT8 sides;
 	UINT8 tracksperside;
 	UINT8 secspertrack;
 	UINT8 density;
-	/*mess_image *img;*/
-} floppy[MAX_FLOPPIES];
+} ti99_geometry;
+
+
+#define TI99DSK_TAG	"ti99dsktag"
 
 /*
-	Convert physical sector address to offset in disk image
+	Convert physical sector address to sector offset in disk image
 */
-static unsigned long ti99_calcoffset(UINT8 t, UINT8 h, UINT8 s,
-										UINT8 tracks, UINT8 heads, UINT8 sec_per_track, UINT16 sector_length, UINT8 first_sector_id, UINT16 offset_track_zero)
+static UINT64 ti99_translate_offset(floppy_image *floppy, const struct basicdsk_geometry *geom, int track, int head, int sector)
 {
-	unsigned long reply;
+	UINT64 reply;
 
 #if 0
 	/* old MESS format */
-	reply = ((((unsigned long) t*heads) + h)*sec_per_track + s)*sector_length;
+	reply = ((track*geom->heads) + head)*geom->sectors + sector;
 #else
 	/* V9T9 format */
-	if (h & 1)
+	if (head & 1)
 		/* on side 1, tracks are stored in the reverse order */
-		reply = (((h*tracks) + (tracks-1 - t))*sec_per_track + s)*sector_length;
+		reply = ((head*geom->tracks) + (geom->tracks-1 - track))*geom->sectors + sector;
 	else
-		reply = (((h*tracks) + t)*sec_per_track + s)*sector_length;
+		reply = ((head*geom->tracks) + track)*geom->sectors + sector;
 #endif
 
 	return reply;
 }
 
-DEVICE_LOAD( ti99_floppy )
+/*
+	support for 48TPI disks in 96TPI drives
+*/
+static int ti99_tracktranslate(mess_image *image, floppy_image *floppy, int physical_track)
+{
+	struct ti99_geometry *geometry;
+
+	geometry = floppy_tag(floppy, TI99DSK_TAG);
+
+	if (use_80_track_drives && (geometry->tracksperside <= 40))
+		return physical_track/2;
+	else
+		return physical_track;
+}
+
+/*
+	Sniff the geometry of a v9t9 format disk image
+*/
+static void ti99_guess_geometry(floppy_image *floppy, ti99_geometry *geometry, int *vote, int *success)
 {
 	typedef struct ti99_vib
 	{
@@ -84,146 +104,195 @@ DEVICE_LOAD( ti99_floppy )
 		UINT8	abm[200];			/* allocation bitmap: a 1 for each sector in use (sector 0 is LSBit of byte 0, sector 7 is MSBit of byte 0, sector 8 is LSBit of byte 1, etc.) */
 	} ti99_vib;
 
-	int id = image_index_in_device(image);
 	ti99_vib vib;
 	int totsecs;
-	int done;
 
-
-	done = FALSE;
 
 	/* Read sector 0 to identify format */
-	if ((! mame_fseek(file, 0, SEEK_SET)) && (mame_fread(file, & vib, sizeof(vib)) == sizeof(vib)))
+	/*if (floppy_image_read(floppy, & vib, 0, sizeof(vib)))*/
+	floppy_image_read(floppy, & vib, 0, sizeof(vib));
 	{
 		/* If we have read the sector successfully, let us parse it */
 		totsecs = (vib.totsecsMSB << 8) | vib.totsecsLSB;
-		floppy[id].secspertrack = vib.secspertrack;
-		if (floppy[id].secspertrack == 0)
+		geometry->secspertrack = vib.secspertrack;
+		if (geometry->secspertrack == 0)
 			/* Some images might be like this, because the original SSSD TI
 			controller always assumes 9. */
-			floppy[id].secspertrack = 9;
-		floppy[id].tracksperside = vib.tracksperside;
-		if (floppy[id].tracksperside == 0)
+			geometry->secspertrack = 9;
+		geometry->tracksperside = vib.tracksperside;
+		if (geometry->tracksperside == 0)
 			/* Some images are like this, because the original SSSD TI
 			controller always assumes 40. */
-			floppy[id].tracksperside = 40;
-		floppy[id].sides = vib.sides;
-		if (floppy[id].sides == 0)
+			geometry->tracksperside = 40;
+		geometry->sides = vib.sides;
+		if (geometry->sides == 0)
 			/* Some images are like this, because the original SSSD TI
 			controller always assumes that tracks beyond 40 are on side 2. */
-			floppy[id].sides = totsecs / (floppy[id].secspertrack * floppy[id].tracksperside);
-		floppy[id].density = vib.density;
-		if (floppy[id].density == 0)
-			floppy[id].density = 1;
+			geometry->sides = totsecs / (geometry->secspertrack * geometry->tracksperside);
+		geometry->density = vib.density;
+		if (geometry->density == 0)
+			geometry->density = 1;
 		/* check that the format makes sense */
-		if (((floppy[id].secspertrack * floppy[id].tracksperside * floppy[id].sides) == totsecs)
-			&& (floppy[id].density <= 3) && (totsecs >= 2) && (! memcmp(vib.id, "DSK", 3))
-			&& (image_length(image) == totsecs*256))
+		if (((geometry->secspertrack * geometry->tracksperside * geometry->sides) == totsecs)
+			&& (geometry->density <= 3) && (totsecs >= 2) && (! memcmp(vib.id, "DSK", 3))
+			&& (floppy_image_size(floppy) == totsecs*256))
 		{
 			/* validate geometry */
-			done = TRUE;
+			if (vote)
+				*vote = 100;
+			if (success)
+				*success = TRUE;
+			return;
 		}
 	}
 
 	/* If we have been unable to parse the format, let us guess according to
 	file lenght */
-	if (! done)
+	switch (floppy_image_size(floppy))
 	{
-		switch (image_length(image))
-		{
-		case 1*40*9*256:	/* 90kbytes: SSSD */
-		case 0:
-		/*default:*/
-			floppy[id].sides = 1;
-			floppy[id].tracksperside = 40;
-			floppy[id].secspertrack = 9;
-			floppy[id].density = 1;
-			done = TRUE;
-			break;
+	case 1*40*9*256:	/* 90kbytes: SSSD */
+	case 0:
+	/*default:*/
+		geometry->sides = 1;
+		geometry->tracksperside = 40;
+		geometry->secspertrack = 9;
+		geometry->density = 1;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
-							SSDD.  We assume DSSD since DSSD is more common
-							and is supported by the original TI SD disk
-							controller. */
-			floppy[id].sides = 2;
-			floppy[id].tracksperside = 40;
-			floppy[id].secspertrack = 9;
-			floppy[id].density = 1;
-			done = TRUE;
-			break;
+	case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
+						SSDD.  We assume DSSD since DSSD is more common
+						and is supported by the original TI SD disk
+						controller. */
+		geometry->sides = 2;
+		geometry->tracksperside = 40;
+		geometry->secspertrack = 9;
+		geometry->density = 1;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
-							format for TI DD disk controller prototype, and
-							the TI hexbus disk controller???) */
-			floppy[id].sides = 1;
-			floppy[id].tracksperside = 40;
-			floppy[id].secspertrack = 16;
-			floppy[id].density = 2;
-			done = TRUE;
-			break;
+	case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
+						format for TI DD disk controller prototype, and
+						the TI hexbus disk controller???) */
+		geometry->sides = 1;
+		geometry->tracksperside = 40;
+		geometry->secspertrack = 16;
+		geometry->density = 2;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
-							format for TI DD disk controller prototype, and
-							TI hexbus disk controller???) */
-			floppy[id].sides = 2;
-			floppy[id].tracksperside = 40;
-			floppy[id].secspertrack = 16;
-			floppy[id].density = 2;
-			done = TRUE;
-			break;
+	case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
+						format for TI DD disk controller prototype, and
+						TI hexbus disk controller???) */
+		geometry->sides = 2;
+		geometry->tracksperside = 40;
+		geometry->secspertrack = 16;
+		geometry->density = 2;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
-							format for most third-party DD disk controllers,
-							but reportedly not supported by the original TI
-							DD disk controller) */
-			floppy[id].sides = 2;
-			floppy[id].tracksperside = 40;
-			floppy[id].secspertrack = 18;
-			floppy[id].density = 2;
-			done = TRUE;
-			break;
+	case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
+						format for most third-party DD disk controllers,
+						but reportedly not supported by the original TI
+						DD disk controller) */
+		geometry->sides = 2;
+		geometry->tracksperside = 40;
+		geometry->secspertrack = 18;
+		geometry->density = 2;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 2*80*18*256:	/* 720kbytes: 18-sector-per-track 80-track DSDD
-							(Myarc only) */
-			//if (use_80_track_drives)
-			{
-				floppy[id].sides = 2;
-				floppy[id].tracksperside = 80;
-				floppy[id].secspertrack = 18;
-				floppy[id].density = 2;
-				done = TRUE;
-			}
-			break;
+	case 2*80*18*256:	/* 720kbytes: 18-sector-per-track 80-track DSDD
+						(Myarc only) */
+		geometry->sides = 2;
+		geometry->tracksperside = 80;
+		geometry->secspertrack = 18;
+		geometry->density = 2;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
-			//if (use_80_track_drives)
-			{
-				floppy[id].sides = 2;
-				floppy[id].tracksperside = 80;
-				floppy[id].secspertrack = 36;
-				floppy[id].density = 3;
-				done = TRUE;
-			}
-			break;
+	case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
+		geometry->sides = 2;
+		geometry->tracksperside = 80;
+		geometry->secspertrack = 36;
+		geometry->density = 3;
+		if (vote)
+			*vote = 50;
+		if (success)
+			*success = TRUE;
+		return;
 
-		default:
-			logerror("%s:%d: unrecognized disk image geometry\n", __FILE__, __LINE__);
-			break;
-		}
+	default:
+		logerror("%s:%d: unrecognized disk image geometry\n", __FILE__, __LINE__);
+		break;
 	}
-
-	if (done && (device_load_basicdsk_floppy(image, file) == INIT_PASS))
-	{
-		basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].tracksperside <= 40));
-		basicdsk_set_calcoffset(image, ti99_calcoffset);
-
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
+	if (vote)
+		*vote = 0;
+	if (success)
+		*success = FALSE;
 }
 
-static void ti99_floppy_reset_geometries(void)
+static FLOPPY_IDENTIFY(ti99_floppy_identify)
+{
+	ti99_geometry dummy_geom;
+
+	ti99_guess_geometry(floppy, &dummy_geom, vote, NULL);
+
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+static FLOPPY_CONSTRUCT(ti99_floppy_construct)
+{
+	struct ti99_geometry *geometry1;
+	struct basicdsk_geometry geometry2;
+	int success;
+	floperr_t err;
+
+	geometry1 = floppy_create_tag(floppy, TI99DSK_TAG, sizeof(*geometry1));
+
+	ti99_guess_geometry(floppy, geometry1, NULL, &success);
+	if (! success)
+		return FLOPPY_ERROR_INVALIDIMAGE;
+
+	memset(&geometry2, 0, sizeof(geometry2));
+	geometry2.heads = geometry1->sides;
+	geometry2.tracks = geometry1->tracksperside;
+	geometry2.sectors = geometry1->secspertrack;
+	geometry2.sector_length = 256;
+	geometry2.translate_sector = NULL;
+	geometry2.translate_offset = ti99_translate_offset;
+
+	err = basicdsk_construct(floppy, &geometry2);
+	if (err)
+		return err;
+
+	return FLOPPY_ERROR_SUCCESS;
+}
+
+FLOPPY_OPTIONS_START( ti99 )
+	FLOPPY_OPTION( ti99, "dsk\0",	"TI99 disk image",	ti99_floppy_identify,	ti99_floppy_construct,
+		)
+FLOPPY_OPTIONS_END
+
+static void ti99_install_tracktranslate_procs(void)
 {
 	int id;
 	mess_image *image;
@@ -231,8 +300,7 @@ static void ti99_floppy_reset_geometries(void)
 	for (id=0; id<MAX_FLOPPIES; id++)
 	{
 		image = image_from_devtype_and_index(IO_FLOPPY, id);
-		if (image_exists(image))
-			basicdsk_set_geometry(image, floppy[id].tracksperside, floppy[id].sides, floppy[id].secspertrack, 256, 0, 0, use_80_track_drives && (floppy[id].tracksperside <= 40));
+		floppy_install_tracktranslate_proc(image, ti99_tracktranslate);
 	}
 }
 
@@ -311,7 +379,7 @@ void ti99_fdc_init(void)
 
 	use_80_track_drives = FALSE;
 
-	ti99_floppy_reset_geometries();
+	ti99_install_tracktranslate_procs();
 }
 
 
@@ -591,7 +659,7 @@ void ti99_bwg_init(void)
 
 	use_80_track_drives = FALSE;
 
-	ti99_floppy_reset_geometries();
+	ti99_install_tracktranslate_procs();
 }
 
 
@@ -835,8 +903,7 @@ static WRITE_HANDLER(bwg_mem_w)
 	* DMA support (I think the DMA controller can only access the on-board RAM)
 
 	This card includes a MM58274C RTC and a 9234 HFDC with its various support
-	chips.  I have failed to find information about the 9234 or its cousin the
-	9224.
+	chips.
 
 	Reference:
 	* hfdc manual
@@ -985,7 +1052,7 @@ void ti99_hfdc_init(void)
 
 	use_80_track_drives = TRUE;
 
-	ti99_floppy_reset_geometries();
+	ti99_install_tracktranslate_procs();
 }
 
 
