@@ -61,7 +61,6 @@ enum {
 extern void osd_screen_update(void);
 extern void osd_put_screen_char(int ch, int attr, int x, int y);
 extern void osd_set_screen_curpos(int x, int y);
-extern int  osd_debug_readkey(void);	/* JB 980103 */
 
 /***************************************************************************
  * set_screen_size should set any mode that is available

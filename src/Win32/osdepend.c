@@ -339,6 +339,22 @@ int osd_create_display(int width, int height, int depth, int fps, int attributes
 
 int osd_set_display(int width, int height, int depth, int attributes, int orientation)
 {
+
+#if defined(MAME_DEBUG)
+    /*
+       osd_set_display is usually called when breaking out of
+       debug mode.
+       The keyboard is replaced by DebugKeyboard when debugging,
+       so restore the original keyboard object here.
+    */
+
+    options_type *options = GetPlayingGameOptions();
+    if (options->di_keyboard)
+        MAME32App.m_pKeyboard = &DIKeyboard;
+    else
+        MAME32App.m_pKeyboard = &Keyboard;
+#endif
+
     return MAME32App.m_pDisplay->set_display(width, height, depth, attributes, orientation);
 }
 

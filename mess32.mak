@@ -109,8 +109,7 @@ CFLAGSGLOBAL = -Gr -I. -Isrc -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/Win32 -I
                $(MAME_DEBUG) $(RELEASE_CANDIDATE) $(BETA_VERSION) $(VERSION) \
                $(MAME_NET) $(MAME_MMX) $(HAS_CPUS) $(HAS_SOUND) $(M68KDEF) \
                -DMESS -DNEOFREE -DMAME32NAME="\"MESS32\"" -DMAMENAME="\"MESS\"" \
-               -DM_PI=3.14159265 -DMESS_CBM -DMESS_AMSTRAD -DMESS_IBMPC \
-               -DMESS_SINCLAIR -DMESS_SHARP
+               -DM_PI=3.14159265
 
 CFLAGSDEBUG = -Zi -Od
 
@@ -169,7 +168,7 @@ WIN32_OBJS = \
          $(AUDIOOBJS) $(OBJ)/Win32/DirectSound.o $(OBJ)/Win32/NullSound.o \
          $(OBJ)/Win32/Keyboard.o $(OBJ)/Win32/Joystick.o $(OBJ)/Win32/Trak.o \
          $(OBJ)/Win32/file.o $(OBJ)/Win32/Directories.o $(OBJ)/Win32/mzip.o \
-         $(OBJ)/Win32/debug.o \
+         $(OBJ)/Win32/debug.o $(OBJ)/Win32/DebugKeyboard.o \
          $(OBJ)/Win32/fmsynth.o $(OBJ)/Win32/NTFMSynth.o \
          $(OBJ)/Win32/audit32.o \
          $(OBJ)/mess/Win32/mess32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
@@ -208,7 +207,13 @@ CPUOBJS = \
           $(OBJ)/cpu/m6502/m4510.o \
           $(OBJ)/cpu/i86/i286.o \
           $(OBJ)/cpu/tms9900/tms9995.o \
-          $(OBJ)/cpu/arm/arm.o
+          $(OBJ)/cpu/arm/arm.o \
+          $(OBJ)/cpu/g65816/g65816.o \
+          $(OBJ)/cpu/g65816/g65816o0.o \
+          $(OBJ)/cpu/g65816/g65816o1.o \
+          $(OBJ)/cpu/g65816/g65816o2.o \
+          $(OBJ)/cpu/g65816/g65816o3.o \
+          $(OBJ)/cpu/g65816/g65816o4.o
 
 DBGOBJS = \
           $(OBJ)/cpu/z80/z80dasm.o \
@@ -233,7 +238,8 @@ DBGOBJS = \
           $(OBJ)/cpu/adsp2100/2100dasm.o \
           $(OBJ)/cpu/pdp1/pdp1dasm.o \
           $(OBJ)/cpu/sc61860/disasm.o \
-          $(OBJ)/cpu/arm/dasm.o
+          $(OBJ)/cpu/arm/dasm.o \
+          $(OBJ)/cpu/g65816/g65816ds.o
 
 SNDOBJS = \
          $(OBJ)/sound/samples.o \
@@ -263,7 +269,8 @@ SNDOBJS = \
          $(OBJ)/sound/tiasound.o \
          $(OBJ)/sound/tiaintf.o \
          $(OBJ)/sound/wave.o \
-         $(OBJ)/sound/speaker.o
+         $(OBJ)/sound/speaker.o \
+		 $(OBJ)/sound/beep.o
 
 COREOBJS = \
          $(OBJ)/version.o $(OBJ)/mame.o \
@@ -295,7 +302,6 @@ COREOBJS = \
           $(OBJ)/mess/machine/nec765.o   \
           $(OBJ)/mess/machine/dsk.o      \
           $(OBJ)/mess/machine/wd179x.o	\
-          $(OBJ)/mess/sndhrdw/beep.o	\
 		  $(OBJ)/mess/Win32/fileio.o	\
 		  $(OBJ)/mess/Win32/dirio.o		\
 		  $(OBJ)/mess/Win32/fdc.o
@@ -332,7 +338,11 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/nes.o      \
           $(OBJ)/mess/vidhrdw/gb.o       \
           $(OBJ)/mess/machine/gb.o       \
-          $(OBJ)/mess/systems/gb.o	\
+          $(OBJ)/mess/systems/gb.o       \
+          $(OBJ)/mess/sndhrdw/snes.o     \
+          $(OBJ)/mess/vidhrdw/snes.o     \
+          $(OBJ)/mess/machine/snes.o     \
+          $(OBJ)/mess/systems/snes.o	\
           $(OBJ)/mess/vidhrdw/amiga.o    \
           $(OBJ)/mess/machine/amiga.o    \
           $(OBJ)/mess/systems/amiga.o    \
@@ -461,6 +471,10 @@ DRV_OBJS = \
           $(OBJ)/mess/systems/amstrad.o  \
           $(OBJ)/mess/vidhrdw/pcw.o      \
           $(OBJ)/mess/systems/pcw.o      \
+          $(OBJ)/mess/vidhrdw/nc.o       \
+          $(OBJ)/mess/systems/nc.o       \
+          $(OBJ)/mess/machine/nc.o       \
+          $(OBJ)/mess/machine/tc8521.o   \
           $(OBJ)/mess/systems/pcw16.o    \
           $(OBJ)/mess/vidhrdw/pcw16.o	\
           $(OBJ)/mess/vidhrdw/vdc.o      \
@@ -515,7 +529,9 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/atom.o     \
           $(OBJ)/mess/vidhrdw/atom.o     \
 	  $(OBJ)/mess/systems/atom.o	 \
-	  $(OBJ)/mess/systems/a310.o	\
+          $(OBJ)/mess/systems/a310.o     \
+          $(OBJ)/mess/systems/z88.o      \
+          $(OBJ)/mess/vidhrdw/z88.o      \
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o	\
@@ -687,6 +703,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {src/cpu/arm}.c{$(OBJ)/cpu/arm}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/g65816}.c{$(OBJ)/cpu/g65816}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/vidhrdw}.c{$(OBJ)/vidhrdw}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -814,6 +833,7 @@ maketree:
 	md $(OBJ)\cpu\mips
 	md $(OBJ)\cpu\sc61860
 	md $(OBJ)\cpu\arm
+	md $(OBJ)\cpu\g65816
 	md $(OBJ)\sound
 	md $(OBJ)\drivers
 	md $(OBJ)\machine
@@ -868,6 +888,7 @@ clean:
 	del $(OBJ)\cpu\mips\*.o
 	del $(OBJ)\cpu\sc61860\*.o
 	del $(OBJ)\cpu\arm\*.o
+	del $(OBJ)\cpu\g65816\*.o
 	del $(OBJ)\sound\*.o
 	del $(OBJ)\drivers\*.o
 	del $(OBJ)\machine\*.o
@@ -926,6 +947,7 @@ cleandebug:
 	del $(OBJ)\cpu\pdp1\*.o
 	del $(OBJ)\cpu\sc61860\*.o
 	del $(OBJ)\cpu\arm\*.o
+	del $(OBJ)\cpu\g65816\*.o
 	del $(EXENAME)
 
 cleantiny:

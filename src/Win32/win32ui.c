@@ -203,7 +203,7 @@ static char *           GetRomList(int iGame);
     External variables
  ***************************************************************************/
 
-int win32_debug;
+int win32_debug = 0;
 
 /***************************************************************************
     Internal structures
@@ -461,7 +461,8 @@ static char last_directory[MAX_PATH];
 
 /* system-wide window message sent out with an ATOM of the current game name
    each time it changes */
-UINT mame32_message;
+static UINT mame32_message;
+static BOOL bDoBroadcast;
 
 /***************************************************************************
     Global variables  
@@ -811,10 +812,13 @@ HICON LoadIconFromFile(char *iconname)
         {
             sprintf(tmpStr, "icons/icons.zip");
             sprintf(tmpIcoName, "%s.ico", iconname);
-            if (load_zipped_file(tmpStr, tmpIcoName, &bufferPtr, &bufferLen) == 0)
+            if (stat(tmpStr, &file_stat) == 0)
             {
-                hIcon = FormatICOInMemoryToHICON(bufferPtr, bufferLen);
-                free(bufferPtr);
+                if (load_zipped_file(tmpStr, tmpIcoName, &bufferPtr, &bufferLen) == 0)
+                {
+                    hIcon = FormatICOInMemoryToHICON(bufferPtr, bufferLen);
+                    free(bufferPtr);
+                }
             }
         }
     }
@@ -1089,6 +1093,15 @@ char *ModifyThe(const char *str)
     Internal functions
  ***************************************************************************/
 
+static BOOL WINAPI HandlerRoutine( DWORD dwCtrlType )
+{
+    if (MAME32App.m_bIsInitialized)
+    {
+        MAME32App.Quit();
+    }
+    return TRUE;
+}
+
 static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 {
     WNDCLASS    wndclass;
@@ -1098,6 +1111,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     int j, found, neogeo_clone, neogeo;
 
     mame32_message = RegisterWindowMessage("MAME32");
+    bDoBroadcast = FALSE;
 
     srand((unsigned)time(NULL));
 
@@ -1359,6 +1373,9 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
         FILE*   pFILE;
         
         AllocConsole();
+
+        SetConsoleCtrlHandler(HandlerRoutine,1);
+        SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),0);
 
         cFile = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
         pFILE = _fdopen(cFile, "w");
@@ -2579,10 +2596,11 @@ static BOOL MamePickerNotify(NMHDR *nm)
             }
 
             /* printf("entering %s\n",drivers[pnmv->lParam]->name); */
+            if (bDoBroadcast == TRUE)
             {
-            ATOM a = GlobalAddAtom(drivers[pnmv->lParam]->description);
-            SendMessage(HWND_BROADCAST,mame32_message,a,a);
-            GlobalDeleteAtom(a);
+                ATOM a = GlobalAddAtom(drivers[pnmv->lParam]->description);
+                SendMessage(HWND_BROADCAST, mame32_message, a, a);
+                GlobalDeleteAtom(a);
             }
 
             EnableSelection(pnmv->lParam);
@@ -4243,6 +4261,12 @@ static BOOL ParseCommandLine(char *command_line)
             continue;
         }
 
+        if (stricmp(argv[i], "-debug") == 0)
+        {
+            win32_debug = 1;
+            continue;
+        }
+
         if (stricmp(argv[i], "-log") == 0)
         {
             o->error_log = TRUE;
@@ -4358,21 +4382,21 @@ static BOOL ParseCommandLine(char *command_line)
              continue;
         }
 
-        if (stricmp(argv[i], "-debug") == 0)
-        {
-            win32_debug = 1;
-            continue;
-        }
-
-        if (stricmp(argv[i], "-debug2") == 0)
-        {
-            win32_debug = 2;
-            continue;
-        }
-
         if (stricmp(argv[i], "-nocpudetect") == 0)
         {
             cpu_detect = FALSE;
+            continue;
+        }
+
+        if (stricmp(argv[i], "-broadcast") == 0)
+        {
+            bDoBroadcast = TRUE;
+            continue;
+        }
+
+        if (stricmp(argv[i], "-nobroadcast") == 0)
+        {
+            bDoBroadcast = FALSE;
             continue;
         }
 
@@ -4893,11 +4917,7 @@ static void MamePlayGameWithOptions()
             options.language_file = osd_fopen(0, pLangFile, OSD_FILETYPE_LANGUAGE, 0);
     }
 
-#ifdef MAME_DEBUG
-    options.mame_debug = 1;
-#else
-    options.mame_debug = 0;
-#endif
+    options.mame_debug = win32_debug;
     options.cheat       = playing_game_options.cheat;
     options.gui_host    = 1;
 

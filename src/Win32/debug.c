@@ -24,13 +24,13 @@
 #include <windows.h>
 #include "MAME32.h"
 #include "M32Util.h"
+#include "DebugKeyboard.h"
 #include "osd_dbg.h"
 
 /***************************************************************************
     function prototypes
  ***************************************************************************/
 
-static int  MAMEDebug_Keypressed(void);
 static void MAMEDebug_SetForeground(void);
 
 /***************************************************************************
@@ -78,42 +78,24 @@ void osd_set_screen_curpos(int x, int y)
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), coord);
 }
 
-int osd_debug_readkey(void)
-{
-    INPUT_RECORD ir;
-    int read;
-
-    while (1)
-    {
-        MAME32App.ProcessMessages();
-        
-        if (MAMEDebug_Keypressed())
-        {
-            if (!ReadConsoleInput(GetStdHandle(STD_INPUT_HANDLE), &ir, 1, &read))
-                break;
-            
-            if (ir.EventType != KEY_EVENT)
-                continue;
-            
-            if (!ir.Event.KeyEvent.bKeyDown)
-                continue;
-            
-            return (ir.Event.KeyEvent.wVirtualScanCode);
-        }
-        
-    }
-    return 0;
-}
-
 void osd_set_screen_size(unsigned width, unsigned height)
 {
     BOOL    bSuccess;
     COORD   coordScreen;
+    SMALL_RECT rectWindow;
 
     coordScreen.X = width;
     coordScreen.Y = height;
+
+    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coordScreen);
+    rectWindow.Left   = 0;
+    rectWindow.Top    = 0;
+    rectWindow.Right  = width  - 1;
+    rectWindow.Bottom = height - 1;
+    SetConsoleWindowInfo(GetStdHandle(STD_OUTPUT_HANDLE), 1, &rectWindow);
+
     bSuccess = SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coordScreen);
-   
+
     if (!bSuccess)
     {
         ErrorMsg("osd_set_screen_size: Unable to set screen size %dx%d\n", width, height);
@@ -152,19 +134,6 @@ void osd_get_screen_size(unsigned *width, unsigned *height)
     Internal functions  
  ***************************************************************************/
 
-static int MAMEDebug_Keypressed(void)
-{
-    int count;
-    
-    MAME32App.ProcessMessages();
-    
-    count = 0;
-    if (!GetNumberOfConsoleInputEvents(GetStdHandle(STD_INPUT_HANDLE), &count))
-        return 0;
-    
-    return count >= 1;
-}
-
 static void MAMEDebug_SetForeground(void)
 {
     static HWND m_hWndDebug = NULL;
@@ -177,6 +146,9 @@ static void MAMEDebug_SetForeground(void)
     }
 
     SetForegroundWindow(m_hWndDebug);
+
+    DebugKeyboard.init(NULL);
+    MAME32App.m_pKeyboard = &DebugKeyboard;
 }
 
 #endif

@@ -171,6 +171,7 @@ typedef union {
 #define HAS_MIPS        0
 #define HAS_SC61860     1
 #define HAS_ARM         1
+#define HAS_G65816      1
 #else
 #define HAS_Z80         1
 #define HAS_Z80GB       0
@@ -239,6 +240,7 @@ typedef union {
 #define HAS_MIPS        1
 #define HAS_SC61860     0
 #define ARM             0
+#define HAS_G65816      0
 #endif
 
 #endif  /* !NEOMAME */
@@ -297,6 +299,7 @@ typedef union {
 #define HAS_QSOUND      1
 #define HAS_SPEAKER     1
 #define HAS_WAVE        1
+#define HAS_BEEP        1
 #else
 #define HAS_CUSTOM      1
 #define HAS_SAMPLES     1
@@ -341,6 +344,7 @@ typedef union {
 #define HAS_QSOUND      1
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
+#define HAS_BEEP        0
 #endif
 
 #endif  /* !NEOMAME */

@@ -337,7 +337,10 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         
         /* only for reading */
         if (write)
+		{
+			logerror("osd_fopen: type %02x write not supported\n", filetype);
             break;
+		}
 
         if (filetype == OSD_FILETYPE_ROM)
             pDirPaths = &RomDirPath;
@@ -352,11 +355,14 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             if (!found)
             {
                 sprintf(name, "%s/%s.zip", dirname, gamename);
-                if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
+                if (stat(name, &stat_buffer) == 0)
                 {
-                    mf->access_type = ACCESS_ZIP;
-                    mf->crc = crc32(0L, mf->file_data, mf->file_length);
-                    found = 1;
+                    if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
+                    {
+                        mf->access_type = ACCESS_ZIP;
+                        mf->crc = crc32(0L, mf->file_data, mf->file_length);
+                        found = 1;
+                    }
                 }
             }
 
@@ -493,10 +499,13 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                 else
                     sprintf(name, "%s/snap.zip", dirname);
 
-                if (load_zipped_file(name, imagename, &mf->file_data, &mf->file_length) == 0)
+                if (stat(name, &stat_buffer) == 0)
                 {
-                    found = 1;
-                    break;
+                    if (load_zipped_file(name, imagename, &mf->file_data, &mf->file_length) == 0)
+                    {
+                        found = 1;
+                        break;
+                    }
                 }
             }
 
@@ -631,8 +640,11 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                 mf->access_type = ACCESS_ZIP;
                 sprintf(name, "%s.%s", gamename, typestr);
                 sprintf(subdir, "%s.zip", typestr);
-                if (load_zipped_file(subdir, name, &mf->file_data, &mf->file_length) == 0)
-                    found = 1;
+                if (stat(subdir, &stat_buffer) == 0)
+                {
+                    if (load_zipped_file(subdir, name, &mf->file_data, &mf->file_length) == 0)
+                        found = 1;
+                }
             }
         }
 
@@ -666,13 +678,16 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                 if (write == 0)
                 {
                     sprintf(name, "%s.inp", fname);
-                    if (load_zipped_file(gamename,
-                                         name,
-                                         &mf->file_data,
-                                         &mf->file_length) == 0)
+                    if (stat(gamename, &stat_buffer) == 0)
                     {
-                        mf->access_type = ACCESS_ZIP;
-                        found = 1;
+                        if (load_zipped_file(gamename,
+                                             name,
+                                             &mf->file_data,
+                                             &mf->file_length) == 0)
+                        {
+                            mf->access_type = ACCESS_ZIP;
+                            found = 1;
+                        }
                     }
                 }
             }
@@ -729,8 +744,11 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             /* try .zip file */
             sprintf(name, "%s/artwork.zip", GetArtDir());
             mf->access_type = ACCESS_ZIP;
-            if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
-                found = 1;
+            if (stat(name, &stat_buffer) == 0)
+            {
+                if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
+                    found = 1;
+            }
         }
         else
             found = mf->fptr != 0;
