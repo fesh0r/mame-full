@@ -641,25 +641,25 @@ Apple 1
 
 History and Trivia:
 
-Steve Wozniak, who worked for Hewlett-Packard at the time, wanted to build his own computer. 
-He couldn't afford the Intel 8080 CPU (this CPU was very popular then, as it was used in the 
-Altair 8800 & IMSAI 8080, but was pretty expensive), he would use the Motorola 6800 but it 
-was also much too expensive. Finally he decided to build his computer around the MOS 6502 
-(which was pretty compatible with the Motorola 6800). The computer was easier to use than 
-the Altair: unlike the Altair, the computer has a keyboard and can display characters on a 
-TV (the Altair uses LEDs for its display). The display was very slow, only 60 characters (!) 
+Steve Wozniak, who worked for Hewlett-Packard at the time, wanted to build his own computer.
+He couldn't afford the Intel 8080 CPU (this CPU was very popular then, as it was used in the
+Altair 8800 & IMSAI 8080, but was pretty expensive), he would use the Motorola 6800 but it
+was also much too expensive. Finally he decided to build his computer around the MOS 6502
+(which was pretty compatible with the Motorola 6800). The computer was easier to use than
+the Altair: unlike the Altair, the computer has a keyboard and can display characters on a
+TV (the Altair uses LEDs for its display). The display was very slow, only 60 characters (!)
 were displayed each second.
 
 
-Steve Jobs, who made the game "Breakout" for Atari, with a little help from "the Woz", was 
-interested in this computer. Together they created the Apple Computer Company and they tried 
-to sell the computer. Paul Terrell, the owner of a computer shop, was interested in this 
-computer, but fully assembled (the Apple 1 was sold "naked", no monitor, power supply, 
-keyboard, tape drive, etc.) and with a cassette interface, which Wozniak designed. He sold 
-it with the Basic he wrote soon after. They sold about two hundred of these units. This 
-machine was so popular that Jack Tramiel of Commodore (!) offered to buy Apple, because 
-Apple was, at the time, a major purchaser of MOS 6502 processors (Commodore owned Mos 
-Technologies). Wozniak wanted $15,000 more than Tramiel offered, needless to say, the deal 
+Steve Jobs, who made the game "Breakout" for Atari, with a little help from "the Woz", was
+interested in this computer. Together they created the Apple Computer Company and they tried
+to sell the computer. Paul Terrell, the owner of a computer shop, was interested in this
+computer, but fully assembled (the Apple 1 was sold "naked", no monitor, power supply,
+keyboard, tape drive, etc.) and with a cassette interface, which Wozniak designed. He sold
+it with the Basic he wrote soon after. They sold about two hundred of these units. This
+machine was so popular that Jack Tramiel of Commodore (!) offered to buy Apple, because
+Apple was, at the time, a major purchaser of MOS 6502 processors (Commodore owned Mos
+Technologies). Wozniak wanted $15,000 more than Tramiel offered, needless to say, the deal
 fell through. It was followed the next year by the Apple ][.
 
 
@@ -674,43 +674,77 @@ Apple //c Series
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
 
 History and Trivia:
 
-The Apple IIc is the compact (the "c" means compact) version of the Apple IIe. It has the 
-same characteristics but lot of features which are optional on the IIe are provided on the 
-IIc (floppy disk drive, 80 columns display, color display, 128 KB RAM), but unlike the 
-Apple 2e, it has no expansion slots, so it is hard to add features to this computer. It 
-runs either with DOS 3.3 either with ProDos and has the first version of QuickDraw in ROM. 
-The Apple IIc was originally designed to be a portable version of the Apple II, but it 
-wasn't a stand alone system, it has no batteries and no LCD screen (Apple would soon 
-release the items), it could also be used with a small 9" monochrome green screen which 
-plugged into the unit. The Apple IIc was mainly used as a desktop computer. The Apple IIc 
+Apple "][", Apple "II", Apple "//" - Which is correct?
+
+"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+computer, although, practically speaking, there are a few usages which may provoke a
+correction.
+
+"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
+Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
+associated with old Apple II's. The "//" usage is generally associated with the "c" and
+newer "e" models.
+
+The generally preferred machine designations are:
+
+Apple ][   or  Apple II for pre-][+ models
+Apple ][+  or  Apple II+
+Apple IIe  for non-enhanced IIe computers
+Apple //e  for 128k-enhanced IIe computers
+Apple //c
+Apple IIc+
+Apple IIgs or  GS  or best (if you have the fonts)  ||GS
+
+The Apple //c is the compact (the "c" means compact) version of the Apple IIe. It has the
+same characteristics but lot of features which are optional on the IIe are provided on the
+//c (floppy disk drive, 80 columns display, color display, 128 KB RAM), but unlike the
+Apple IIe, it has no expansion slots, so it is hard to add features to this computer. It
+runs either with DOS 3.3 either with ProDos and has the first version of QuickDraw in ROM.
+The Apple //c was originally designed to be a portable version of the Apple II, but it
+wasn't a stand alone system, it has no batteries and no LCD screen (Apple would soon
+release the items), it could also be used with a small 9" monochrome green screen which
+plugged into the unit. The Apple //c was mainly used as a desktop computer and
 was replaced with the Apple IIc+ in 1988.
 
 
-The Apple IIc Plus unit was a direct response to the Laser 128EX/2.  Apple retrofitted the 
-IIc design to try to compete with Video Technology's high speed Apple II clone. The 
-retrofitting is evident in the design of the motherboard.  The motherboard runs at 1Mhz, 
-unlike the Laser 128EX/2.  In order to run its programs faster, Apple used a 4Mhz 65C02 
-with 8k of high speed SRAM cache and licensed the accelerator design from Zip 
-Technologies (makers of the ZipChip accelerator for the IIe and IIc).  They built an 
+The Apple IIc+ unit was a direct response to the Laser 128EX/2.  Apple retrofitted the
+//c design to try to compete with Video Technology's high speed Apple II clone. The
+retrofitting is evident in the design of the motherboard.  The motherboard runs at 1Mhz,
+unlike the Laser 128EX/2.  In order to run its programs faster, Apple used a 4Mhz 65C02
+with 8k of high speed SRAM cache and licensed the accelerator design from Zip
+Technologies (makers of the ZipChip accelerator for the IIe and //c).  They built an
 accelerator into a 1Mhz motherboard rather than design a faster motherboard from scratch.
 
 
-The designers of the Apple IIc Plus originally wanted to make a portable IIGS. Apple's 
-management, bent on promoting the Mac, balked at the idea. At the same time, the 
-Laser 128EX/2 made a quick design cycle mandatory. The result is an updated IIc.
+The designers of the Apple IIc+ originally wanted to make a portable ||GS. Apple's
+management, bent on promoting the Mac, balked at the idea. At the same time, the
+Laser 128EX/2 made a quick design cycle mandatory. The result is an updated //c.
 
+Apple //c went under several revisions: you can discover which machine you are using issuing
+the command PRINT PEEK(64447).
 
-The Apple IIc Plus was the finest Apple 8-bit computer ever built, but lack of marketing, 
-the apparent de-evolution in technology compared to the 16-bit Apple IIGS, and the 
-aggressive sale of the Laser 128EX/2 made the IIc Plus the most short lived of the 
+If 255 is displayed, you have the first, original model. This model is known to have problems
+producing accurate baud rates for serial communications.
+
+If 0 is displayed, you can use 3.5" drives, but you don't have the memory expansion connector.
+
+If 3 is displayed, you have the memory exapnsion connector and you can plug in extra memory.
+
+If 4 is displayed, you have the latest model with memory expansion connector and extra upgrades.
+
+If 5 is displayed, you have an Apple IIc+.
+
+The Apple IIc+ was the finest Apple 8-bit computer ever built, but lack of marketing,
+the apparent de-evolution in technology compared to the 16-bit Apple ||GS, and the
+aggressive sale of the Laser 128EX/2 made the IIc+ the most short lived of the
 Apple II models.
 
 
@@ -720,26 +754,48 @@ $end
 
 $info=apple2e
 $bio
-Apple //e series
+Apple IIe series
 
 
 Known Issues:
 
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
-default. Whilst in full keyboard emulation mode, some key associated functionality may be 
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
 scroll_lock key.
 
 
 
 History and Trivia:
 
-The Apple IIe is the successor of the Apple II+. It was a very great success and was widely 
-used in schools (and it's still used today in some places !). It works under DOS 3.3 
-(the Apple II operating system) and uses 143 KB floppy disks.
+Apple "][", Apple "II", Apple "//" - Which is correct?
+
+"][", "II", and "//" tend to be used pretty much interchangably for any model of Apple II
+computer, although, practically speaking, there are a few usages which may provoke a
+correction.
+
+"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
+Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
+associated with old Apple II's. The "//" usage is generally associated with the "c" and
+newer "e" models.
+
+The generally preferred machine designations are:
+
+Apple ][   or  Apple II for pre-][+ models
+Apple ][+  or  Apple II+
+Apple IIe  for non-enhanced IIe computers
+Apple //e  for 128k-enhanced IIe computers
+Apple //c
+Apple IIc+
+Apple IIgs or  GS  or best (if you have the fonts)  ||GS
 
 
-The Apple IIe was replaced with the Apple IIe+, which had an enhanced keyboard, a 4 MHz 
+The Apple IIe (the "e" means enhanced) is the successor of the Apple ][+. It was a very
+great success and was widely used in schools (and it's still used today in some places!)
+It works under DOS 3.3 (the Apple II operating system) and uses 143 KB floppy disks.
+
+
+The Apple IIe was replaced with the Apple //e, which had an enhanced keyboard, a 4 MHz
 65C02 CPU and a 3.5" floppy disk unit.
 
 
@@ -754,7 +810,7 @@ Mattel Aquarius
 
 Usage Notes:
 
-From within the emulation, there are several BASIC command keyboard shortcuts available by 
+From within the emulation, there are several BASIC command keyboard shortcuts available by
 pressing control and another key.
 
 
