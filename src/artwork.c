@@ -1127,10 +1127,11 @@ void overlay_remap(void)
 
 	/* Calculate brightness of all colors */
 
-	for (i = 0; i < Machine->drv->total_colors; i++)
+	i = (Machine->scrbitmap->depth == 8) ? 256 : 32768;
+	while (--i >= 0)
 	{
-		osd_get_pen (i, &r, &g, &b);
-		artwork_overlay->brightness[i]=(222*r+707*g+71*b)/1000;
+		osd_get_pen (Machine->pens[i], &r, &g, &b);
+		artwork_overlay->brightness[Machine->pens[i]]=(222*r+707*g+71*b)/1000;
 	}
 
 	/* Erase vector bitmap same way as in vector.c */
@@ -1457,7 +1458,9 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 	(*a)->num_pens_trans = p.num_trans;
 	(*a)->orig_palette = p.palette;
 	(*a)->transparency = p.trans;
-
+	(*a)->x_offset = p.x_offset;
+	(*a)->y_offset = p.y_offset;
+	
 	/* Make sure we don't have too many colors */
 	if ((*a)->num_pens_used > max_pens)
 	{
@@ -1491,9 +1494,10 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 	}
 
 	/* If the game uses dynamic colors, we assume that it's safe
-	   to init the palette and remap the colors now */
+	   to init the palette and remap the colors now. Should be removed */
 	if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 		backdrop_set_palette(*a,(*a)->orig_palette);
+
 }
 
 static void artwork_load_common(const char *filename, unsigned int start_pen, unsigned int max_pens, struct artwork_ **a)
@@ -1507,6 +1511,10 @@ void overlay_load(const char *filename, unsigned int start_pen, unsigned int max
 
 	/* replace the real display with a fake one, this way drivers can access Machine->scrbitmap
 	   the same way as before */
+
+	if (artwork_overlay)
+		overlay_free();
+	artwork_overlay = 0;
 
 	width = Machine->scrbitmap->width;
 	height = Machine->scrbitmap->height;
