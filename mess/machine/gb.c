@@ -106,8 +106,6 @@ void gb_shutdown_machine(void)
 	   the machine.  We need to have a separate name for each game.
 	   We'll put "gb_" in front to signify it's a Gameboy NVRAM file. */
 
-	/* FIXME: I don't think this handles MBC2 RAM at all */
-
 	/* Build the filename */
 	strncpy(cartname, (char *)&gb_ram[0x0134], 16);
 	cartname[16] = '\0';
@@ -145,12 +143,30 @@ WRITE_HANDLER ( gb_rom_bank_select )
 		case MBC1:
 		case MBC2:
 		case MBC3:
-		case MBC5:
 		{
 			if( ROMMask && (data != ROMBank) )
 			{
 				ROMBank = data;
 				cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x4000);
+				if (Verbose & 0x08)
+					printf ("ROM: Bank %d selected\n", data);
+			}
+		}
+		case MBC5:
+		{
+			if( ROMMask && (data != ROMBank) )
+			{
+				if( offset < 0x1000 )
+				{
+					ROMBank = data;
+					cpu_setbank (1, ROMMap[data] ? ROMMap[data] : gb_ram + 0x0000);
+				}
+				else
+				{
+					UINT16 edata = (INT16)((data & 0x1) << 8) | ROMBank;
+					cpu_setbank (1, ROMMap[edata] ? ROMMap[edata] : gb_ram + 0x4000);
+				}
+
 				if (Verbose & 0x08)
 					printf ("ROM: Bank %d selected\n", data);
 			}
@@ -169,6 +185,12 @@ WRITE_HANDLER ( gb_ram_bank_select )
 			printf ("RAM: Bank %d selected\n", data);
 	}
 }
+
+/*
+WRITE_HANDLER ( gb_w_ie )
+{
+	gb_ram[0xFFFF] = data & 0x1F;
+}*/
 
 WRITE_HANDLER ( gb_w_io )
 {
@@ -276,29 +298,38 @@ WRITE_HANDLER ( gb_w_io )
 				JOYPAD &= readinputport (0) | 0xF0;
 		}
 		return;
-	case 0xFF01:
+	case 0xFF01:						/* SB - Serial transfer data */
 		break;
-	case 0xFF02:
+	case 0xFF02:						/* SC - SIO control */
 		if ((data & 0x81) == 0x81)	   /* internal clock && enable */
 			SIOCount = 8;
 		else						   /* external clock || disable */
 			SIOCount = 0;
 		data |= 0x7E;
 		break;
-	case 0xFF04:
+	case 0xFF04:						/* DIV - Divider register */
 		gb_divcount = 0;
 		return;
-	case 0xFF05:
+	case 0xFF05:						/* TIMA - Timer counter */
 		gb_timer_count = data << gb_timer_shift;
-	case 0xFF07:
+	case 0xFF07:						/* TAC - Timer control */
 		gb_timer_shift = timer_shifts[data & 0x03];
 		data |= 0xF8;
 		break;
-	case 0xFF0F:
+	case 0xFF0F:						/* IF - Interrupt flag */
 		data &= 0x1F;
 		break;
-	case 0xFFFF:
-		data &= 0x1F;
+	case 0xFF40:
+		gb_chrgen = gb_ram + ((data & 0x10) ? 0x8000 : 0x8800);
+		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
+		gb_bgdtab = gb_ram + ((data & 0x08) ? 0x9C00 : 0x9800);
+		gb_wndtab = gb_ram + ((data & 0x40) ? 0x9C00 : 0x9800);
+		break;
+	case 0xFF41:
+		data = (data & 0xF8) | (LCDSTAT & 0x07);
+		break;
+	case 0xFF44:
+		data = 0;
 		break;
 	case 0xFF46:
 		P = gb_ram + 0xFE00;
@@ -306,19 +337,6 @@ WRITE_HANDLER ( gb_w_io )
 		for (data = 0; data < 0xA0; data++)
 			*P++ = cpu_readmem16 (offset++);
 		return;
-	case 0xFF41:
-		data = (data & 0xF8) | (LCDSTAT & 0x07);
-		break;
-	case 0xFF40:
-		gb_chrgen = gb_ram + ((data & 0x10) ? 0x8000 : 0x8800);
-		gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
-		gb_bgdtab = gb_ram + ((data & 0x08) ? 0x9C00 : 0x9800);
-		gb_wndtab = gb_ram + ((data & 0x40) ? 0x9C00 : 0x9800);
-
-		break;
-	case 0xFF44:
-		data = 0;
-		break;
 	case 0xFF47:
 		gb_bpal[0] = Machine->pens[(data & 0x03)];
 		gb_bpal[1] = Machine->pens[(data & 0x0C) >> 2];
@@ -353,6 +371,9 @@ WRITE_HANDLER ( gb_w_io )
 		gb_spal1[3] = Machine->pens[((data & 0xC0) >> 6) ];
 		break;
 #endif
+	case 0xFFFF:
+		data &= 0x1F;
+		break;
 	default:
 
 		/* Sound Registers */
@@ -549,8 +570,7 @@ int gb_load_rom (int id)
 	int Checksum, I, J;
 	char *P, S[50];
 	void *F;
-	int rambanks[4] =
-	{0, 1, 1, 4};
+	int rambanks[5] = {0, 1, 1, 4, 16};
 
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
@@ -733,6 +753,12 @@ int gb_load_rom (int id)
 
 	if (Verbose)
 		logerror("Loading %dx16kB ROM banks:.", ROMBanks);
+	/* Fill in ROMBank 0 with data from 0x0000-0x3fff */
+/*	if( (ROMMap[0] = malloc(0x4000)) )
+	{
+		printf( "Allocating ROM Bank 0\n" );
+		memcpy( ROMMap[0], gb_ram, 0x4000 );
+	}*/
 	for (I = 1; I < ROMBanks; I++)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
@@ -767,6 +793,10 @@ int gb_load_rom (int id)
 		return 1;
 	}
 
+	/* MBC2 has 512 * 4bits (8kb) internal RAM */
+	if( MBCType == MBC2 )
+		RAMBanks = 1;
+
 	if (RAMBanks && MBCType)
 	{
 		for (I = 0; I < RAMBanks; I++)
@@ -782,7 +812,6 @@ int gb_load_rom (int id)
 	}
 
 	/* Load the saved RAM if this cart has a battery */
-	/* FIXME: I don't think this handles MBC2 RAM at all */
 	if( CartType & BATTERY )
 	{
 		void * f;
@@ -859,7 +888,8 @@ int gb_scanline_interrupt (void)
 				cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
 		}
 		else
-			LCDSTAT &= 0xFB;
+//			LCDSTAT = 0xFB;
+			LCDSTAT &= ~0x04;
 
 		CURLINE = (CURLINE + 1) % 154;
 

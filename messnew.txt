@@ -6,14 +6,16 @@ Dragon 64 [Nate Woods]
 
 System Driver Changes:
 ----------------------
-- [GAMEBOY] Preliminary Sound Emulation.  Added support for MBC3 and MBC5.
-  A lot more games work now, including the pokemon series (except pokemon 
-  pinball) and Zelda DX, and most GBC games now show a "this game only 
-  works on GBC" screen.  MBC3 still needs the RTC emulated and MBC5 
-  doesn't handle high memory addressing yet.  Added support for battery 
-  backed ram, so Zelda can be played now :)  Several bug fixes.
-  [Anthony Kruize]
-
+- [GAMEBOY] Sound Emulation - Mode 1 is 99%, sweep code needs more work, 
+  Mode 2 is 100%, no Mode 3. and Mode 4 sounds good.  Added NVRAM support 
+  for MBC2 MBC3 and MBC5 carts.  A lot more games work now, including the 
+  pokemon series (except pokemon pinball) and Zelda DX, and most GBC games 
+  now show a "this game only works on GBC" screen.  MBC3 still needs the 
+  RTC emulated and MBC5 doesn't handle high memory addressing yet.  Added 
+  support for battery backed ram, so Zelda can be played now :), and sprites 
+  no longer have inverted colours in some games (like zelda, warioland etc).
+  Several bugzilla fixes.   [Anthony Kruize]
+  
 - [CGENIE] Floppy initialisation fixed for when no floppy attached 
   (Bug #95) [Ben Bruscella]
 

@@ -6,6 +6,7 @@
 
   Original code                               Carsten Sorensen   1998
   Mess modifications, bug fixes and speedups  Hans de Goede      1998
+  Bug fixes                                   Anthony Kruize     2002
 
 ***************************************************************************/
 #include "driver.h"
@@ -44,8 +45,7 @@ INLINE void gb_update_sprites (void)
 			UINT8 bit;
 			int xindex;
 
-//			spal = (oam[3] & 0x10) ? gb_spal1 : gb_spal0;
-			spal = gb_bpal;
+			spal = (oam[3] & 0x10) ? gb_spal1 : gb_spal0;
 			xindex = oam[1] - 8;
 			if (oam[3] & 0x40)		   /* flip y ? */
 			{

@@ -1,6 +1,5 @@
 /**************************************************************************************
-* Gameboy sound emulation (c) Ben Bruscella (ben@mame.net) <--- what shit!
-*                           + Anthony Kruize (trandor@labyrinth.net.au)
+* Gameboy sound emulation (c) Anthony Kruize (trandor@labyrinth.net.au)
 *
 * Anyways, sound on the gameboy consists of 4 separate 'channels'
 *   Sound1 = Quadrangular waves with SWEEP and ENVELOPE functions  (NR10,11,12,13,14)
@@ -18,6 +17,7 @@
 *
 ***************************************************************************************/
 
+#include <math.h>
 #include "driver.h"
 #include "includes/gb.h"
 
@@ -44,18 +44,33 @@
 #define NR52 0xFF26
 
 #define GB_TO_HZ(x) (131072 / (2048 - x))
+#define GBMODE3_TO_HZ(x) (65536 / (2048 - x))
 
 static int channel = 1;
 static int rate;
+
+/* Table of wave dutyie.
+   Represents wave duties of 12.5%, 25%, 50% and 75% */
+static float wave_duty_table[4] = { 8, 4, 2, 1.333 };
+
+/* Table of envelope lengths.
+   Calculated with the formula: n * (1/64) and shifted to the left by 16 bits.
+   Where n = 0-7 */
+static INT32 env_length_table[8] = { 0, 1024, 2048, 3072, 4096, 5120, 6144, 7168 };
+
+/* Table of sweep lengths.
+   Calculated with the formula: n / 128hz
+   Where n = 0-7 */
+static INT32 swp_time_table[8] = { 0, 512, 1024, 1536, 2048, 2560, 3072, 3584 };
 
 struct SOUND1
 {
 	UINT8 on;
 	INT32 length;
 	INT32 pos;
-	INT32 frequency;
+	UINT32 frequency;
 	INT32 count;
-	INT16 signal;
+	INT8 signal;
 	INT8 mode;
 	INT8 duty;
 	INT32 env_value;
@@ -65,6 +80,7 @@ struct SOUND1
 	INT32 swp_shift;
 	INT32 swp_direction;
 	INT32 swp_time;
+	INT32 swp_count;
 };
 
 struct SOUND2
@@ -72,9 +88,9 @@ struct SOUND2
 	UINT8 on;
 	INT32 length;
 	INT32 pos;
-	INT32 frequency;
+	UINT32 frequency;
 	INT32 count;
-	INT16 signal;
+	INT8 signal;
 	INT8 mode;
 	INT8 duty;
 	INT32 env_value;
@@ -88,9 +104,10 @@ struct SOUND3
 	UINT8 on;
 	INT32 length;
 	INT32 pos;
-	INT32 frequency;
+	UINT32 frequency;
 	INT32 count;
-	INT16 signal;
+	INT8 signal;
+	INT8 duty;
 	INT8 mode;
 	INT8 level;
 };
@@ -99,7 +116,6 @@ struct SOUND4
 {
 	UINT8 on;
 	INT32 length;
-	INT32 pos;
 	INT32 frequency;
 	INT32 count;
 	INT16 signal;
@@ -125,7 +141,8 @@ void gameboy_init_1(void)
 	snd_1.on = 1;
 	snd_1.count = 0;
 	snd_1.env_count = 0;
-	snd_1.signal = 0xff;
+	snd_1.swp_count = 0;
+	snd_1.signal = 0x1;
 }
 
 void gameboy_init_2(void)
@@ -135,10 +152,10 @@ void gameboy_init_2(void)
 	snd_2.on = 1;
 	snd_2.count = 0;
 	snd_2.env_count = 0;
-	snd_2.signal = 0xff;
+	snd_2.signal = 0x1;
 }
 
-void snd_3_init(void)
+void gameboy_3_init(void)
 {
 	if( !snd_3.on )
 		snd_3.pos = 0;
@@ -147,7 +164,7 @@ void snd_3_init(void)
 	snd_3.signal = 0;
 }
 
-void snd_4_init(void)
+void gameboy_4_init(void)
 {
 	snd_4.on = 1;
 	snd_4.count = 0;
@@ -168,17 +185,17 @@ void gameboy_sound_w(int offset, int data)
 		snd_1.swp_shift = data & 0x7;
 		snd_1.swp_direction = (data & 0x8) >> 3;
 		snd_1.swp_direction |= snd_1.swp_direction - 1;
-		snd_1.swp_time = (data & 0x70) >> 4;
+		snd_1.swp_time = ( swp_time_table[ (data & 0x70) >> 4 ] * rate ) >> 15;
 		break;
 	case NR11: /* Sound length/Wave pattern duty (R/W) */
 		snd_1.duty = (data & 0xc0) >> 6;
-		snd_1.length = (data & 0x3f) << 15;
+		snd_1.length = ((64 - (data & 0x3f)) * ((1<<16)/256) * rate) >> 16;
 		break;
 	case NR12: /* Envelope (R/W) */
 		snd_1.env_value = data >> 4;
 		snd_1.env_direction = (data & 0x8) >> 3;
 		snd_1.env_direction |= snd_1.env_direction - 1;
-		snd_1.env_length = (data & 0x7) << 15;
+		snd_1.env_length = ( env_length_table[data & 0x7] * rate ) >> 16;
 		break;
 	case NR13: /* Frequency lo (R/W) */
 		snd_1.frequency = GB_TO_HZ((((gb_ram[NR14]&7)<<8) | gb_ram[NR13]));
@@ -192,13 +209,13 @@ void gameboy_sound_w(int offset, int data)
 	/*MODE 2 */
 	case NR21: /* Sound length/Wave pattern duty (R/W) */
 		snd_2.duty = (data & 0xc0) >> 6;
-		snd_2.length = (data & 0x3f) << 15;
+		snd_2.length = ((64 - (data & 0x3f)) * ((1<<16)/256) * rate) >> 16;
 		break;
 	case NR22: /* Envelope (R/W) */
 		snd_2.env_value = data >> 4;
 		snd_2.env_direction = (data & 0x8 ) >> 3;
 		snd_2.env_direction |= snd_2.env_direction - 1;
-		snd_2.env_length = (data & 0x7) << 15;
+		snd_2.env_length = ( env_length_table[data & 0x7] * rate ) >> 16;
 		break;
 	case NR23: /* Frequency lo (R/W) */
 		snd_2.frequency = GB_TO_HZ((((gb_ram[NR24]&7)<<8) | gb_ram[NR23]));
@@ -215,29 +232,30 @@ void gameboy_sound_w(int offset, int data)
 		snd_3.on = (data & 0x80) >> 7;
 		break;
 	case NR31: /* Sound Length (R/W) */
-		snd_3.length = data;
+		snd_3.length = ((256 - data) * ((1<<16)/2) * rate) >> 16;
 		break;
 	case NR32: /* Select Output Level */
 		snd_3.level = (data & 0x60) >> 5;
 		break;
 	case NR33: /* Frequency lo (W) */
-		snd_3.frequency = GB_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
+		snd_3.frequency = GBMODE3_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
 		break;
 	case NR34: /* Frequency hi / Initialize (W) */
-		snd_3.frequency = GB_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
+		snd_3.mode = (data & 0x40) >> 6;
+		snd_3.frequency = GBMODE3_TO_HZ(((gb_ram[NR34]&7)<<8) + gb_ram[NR33]);
 		if( data & 0x80 )
-			snd_3_init();
+			gameboy_3_init();
 		break;
 
 	/*MODE 4 */
 	case NR41: /* Sound Length (R/W) */
-		snd_4.length = (data & 0x3f) << 2;
+		snd_4.length = ((64 - (data & 0x3f)) * ((1<<16)/256) * rate) >> 16;
 		break;
 	case NR42: /* Envelope (R/W) */
 		snd_4.env_value = data >> 4;
 		snd_4.env_direction = (data & 0x8 ) >> 3;
 		snd_4.env_direction |= snd_4.env_direction - 1;
-		snd_4.env_length = (data & 0x7) << 15;
+		snd_4.env_length = ( env_length_table[data & 0x7] * rate ) >> 16;
 		break;
 	case NR43: /* Polynomial Counter/Frequency */
 		/* NEED TO SET POLYNOMIAL STUFF HERE */
@@ -245,7 +263,7 @@ void gameboy_sound_w(int offset, int data)
 	case NR44: /* Counter/Consecutive / Initialize (R/W)  */
 		snd_4.mode = (data & 0x40) >> 6;
 		if( data & 0x80 )
-			snd_4_init();
+			gameboy_4_init();
 		break;
 
 	/*GENERAL */
@@ -268,7 +286,7 @@ void gameboy_sound_w(int offset, int data)
 void gameboy_update(int param, INT16 **buffer, int length)
 {
 	INT16 sample, left, right;
-	INT32 clock;
+	UINT32 /*clock,*/ period;
 
 	while( length-- > 0 )
 	{
@@ -277,17 +295,20 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 1 - Wave with Envelope and Sweep */
 		if( snd_1.on )
 		{
-			/* TODO: Handle wave duty, counter/consecutive mode and sweep mode */
-			clock = snd_1.frequency;
+			period = (1 << 16) / (snd_1.frequency) * rate;
 			sample = snd_1.signal & snd_1.env_value;
-			snd_1.pos -= clock;
-			while( snd_1.pos < 0 )
+			snd_1.pos++;
+			if( snd_1.pos == (UINT32)(period / wave_duty_table[snd_1.duty]) >> 16)
 			{
-				snd_1.pos += rate;
+				snd_1.signal = -snd_1.signal;
+			}
+			else if( snd_1.pos > (period >> 16) )
+			{
+				snd_1.pos = 0;
 				snd_1.signal = -snd_1.signal;
 			}
 
-			if( snd_1.length )
+			if( snd_1.length && snd_1.mode )
 			{
 				snd_1.count++;
 				if( snd_1.count >= snd_1.length )
@@ -301,11 +322,31 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				snd_1.env_count++;
 				if( snd_1.env_count >= snd_1.env_length )
 				{
+					snd_1.env_count = 0;
 					snd_1.env_value += snd_1.env_direction;
 					if( snd_1.env_value < 0 )
 						snd_1.env_value = 0;
 					if( snd_1.env_value > 15 )
 						snd_1.env_value = 15;
+				}
+			}
+
+			/* Is this correct? */
+			if( snd_1.swp_time && snd_1.swp_shift )
+			{
+				snd_1.swp_count++;
+				if( snd_1.swp_count >= snd_1.swp_time )
+				{
+					snd_1.swp_count = 0;
+					if( snd_1.swp_direction > 0 )
+					{
+						snd_1.frequency = snd_1.frequency - snd_1.frequency / (pow( 2.0, (double)snd_1.swp_shift));
+						if( snd_1.frequency <= 0 )
+							snd_1.on = 0;
+					}
+					else
+						snd_1.frequency = snd_1.frequency + snd_1.frequency / (pow( 2.0, (double)snd_1.swp_shift));
+
 				}
 			}
 
@@ -318,17 +359,20 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 2 - Wave with Envelope */
 		if( snd_2.on )
 		{
-			/* TODO: Handle wave duty, counter/consecutive mode */
-			clock = snd_2.frequency;
+			period = (1 << 16) / (snd_2.frequency) * rate;
 			sample = snd_2.signal & snd_2.env_value;
-			snd_2.pos -= clock;
-			while( snd_2.pos < 0 )
+			snd_2.pos++;
+			if( snd_2.pos == (UINT32)(period / wave_duty_table[snd_2.duty]) >> 16)
 			{
-				snd_2.pos += rate;
+				snd_2.signal = -snd_2.signal;
+			}
+			else if( snd_2.pos > (period >> 16) )
+			{
+				snd_2.pos = 0;
 				snd_2.signal = -snd_2.signal;
 			}
 
-			if( snd_2.length )
+			if( snd_2.length && snd_2.mode )
 			{
 				snd_2.count++;
 				if( snd_2.count >= snd_2.length )
@@ -340,8 +384,9 @@ void gameboy_update(int param, INT16 **buffer, int length)
 			if( snd_2.env_length )
 			{
 				snd_2.env_count++;
-				if( snd_2.env_count >= snd_2.env_length )
+				if( snd_2.env_count > snd_2.env_length )
 				{
+					snd_2.env_count = 0;
 					snd_2.env_value += snd_2.env_direction;
 					if( snd_2.env_value < 0 )
 						snd_2.env_value = 0;
@@ -360,17 +405,34 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		if( snd_3.on )
 		{
 			/* TODO: Figure out how to use wave ram samples */
-			clock = snd_3.frequency;
-/*			sample = gb_ram[0xFF30 + snd_3.signal] & 0xF;*/
-			sample = 0;
-			snd_3.pos -= clock;
-			while( snd_3.pos < 0 )
+
+/*			period = (1 << 16) / (snd_3.frequency) * (rate / 5);
+			sample = gb_ram[0xFF30 + snd_3.signal];
+			if( snd_3.duty & 0x1 )
 			{
-				/* This _SO_ doesn't work */
-				snd_3.pos += rate / 6;
-				snd_3.signal++;
-				if( snd_3.signal >= 15 )
-					snd_3.signal = 0;
+				sample &= 0xf;
+			}
+			else
+			{
+				sample >> 4;
+			}
+
+			sample &= 0xf;
+			sample -= 8;
+
+			sample >>= snd_3.level - 1;
+
+			snd_3.pos++;
+			snd_3.duty != snd_3.duty;
+			if( snd_3.pos > (UINT32)(period >> 16) )
+			{
+				snd_3.pos = 0;
+				if( !snd_3.duty )
+				{
+					snd_3.signal++;
+					if( snd_3.signal > 15 )
+						snd_3.signal = 0;
+				}
 			}
 
 			if( !snd_3.level )
@@ -378,14 +440,17 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample = 0;
 			}
 
-			if( snd_3.length )
+			if( snd_3.length && snd_3.mode )
 			{
 				snd_3.count++;
 				if( snd_3.count >= snd_3.length )
 				{
 					snd_3.on = 0;
 				}
-			}
+			}*/
+
+			/* output nothing for now */
+			sample = 0;
 
 			if( gb_ram[NR51] & 0x4 )
 				right += sample;
@@ -396,12 +461,11 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 4 - Noise with Envelope */
 		if( snd_4.on )
 		{
-			/* TODO: Figure out how to do noise samples */
-
-			/* Hack city, but it kinda sounds ok....for extreme cases of ok */
+			/* Below is a hack, a big hack, but it will do until we figure out
+			   a proper polynomial white noise generator. */
 			sample = rand() & snd_4.env_value;
 
-			if( snd_4.length )
+			if( snd_4.length && snd_4.mode )
 			{
 				snd_4.count++;
 				if( snd_4.count >= snd_4.length )
@@ -415,6 +479,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				snd_4.env_count++;
 				if( snd_4.env_count >= snd_4.env_length )
 				{
+					snd_4.env_count = 0;
 					snd_4.env_value += snd_4.env_direction;
 					if( snd_4.env_value < 0 )
 						snd_4.env_value = 0;
@@ -433,8 +498,8 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		left *= (gb_ram[NR50] & 0x7);
 		right *= ((gb_ram[NR50] & 0x70)>>4);
 
-		left <<= 6;
-		right <<= 6;
+		left <<= 4;
+		right <<= 4;
 
 		/* Update the buffers */
 		*(buffer[0]++) = left;
@@ -456,7 +521,7 @@ int gameboy_sh_start(const struct MachineSound* driver)
 
 	channel = stream_init_multi(2, names, volume, Machine->sample_rate, 0, gameboy_update);
 
-	rate = Machine->sample_rate / 2;
+	rate = Machine->sample_rate;
 
 	return 0;
 }
