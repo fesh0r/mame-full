@@ -93,17 +93,6 @@ struct deviceentry
 	const char *dlgname;
 };
 
-// The Device View is not fully implemented, so for the time being, the tab
-// view will be there, but just hidden
-#define HIDE_TABVIEW
-
-#ifdef HIDE_TABVIEW
-static BOOL AlwaysFalse(void)
-{
-	return FALSE;
-}
-#endif
-
 
 
 static const struct PickerCallbacks s_softwareListCallbacks =
@@ -139,15 +128,9 @@ static const struct PickerCallbacks s_softwareListCallbacks =
 
 static const struct TabViewCallbacks s_softwareTabViewCallbacks =
 {
-#ifdef HIDE_TABVIEW
-	AlwaysFalse,						// pfnGetShowTabCtrl
-	NULL,								// pfnSetCurrentTab
-	NULL,								// pfnGetCurrentTab
-#else
 	NULL,								// pfnGetShowTabCtrl
 	SetCurrentSoftwareTab,				// pfnSetCurrentTab
 	GetCurrentSoftwareTab,				// pfnGetCurrentTab
-#endif
 	NULL,								// pfnSetShowTab 
 	NULL,								// pfnGetShowTab 
 

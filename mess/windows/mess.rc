@@ -57,7 +57,7 @@ BEGIN
         MENUITEM "&Configuration...",           ID_OPTIONS_CONFIGURATION
         MENUITEM "&DIP Switches...",            ID_OPTIONS_DIPSWITCHES
         MENUITEM "&Miscellaneous Inputs...",    ID_OPTIONS_MISCINPUT
-//        MENUITEM "&Analog Controls...",         ID_OPTIONS_ANALOGCONTROLS
+        MENUITEM "&Analog Controls...",         ID_OPTIONS_ANALOGCONTROLS
         MENUITEM SEPARATOR
         POPUP "&Frameskip"
         BEGIN

@@ -1,3 +1,38 @@
+0.85.1
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+(none)
+
+
+
+System Driver Changes:
+----------------------
+(none)
+
+
+
+User Interface Changes:
+-----------------------
+- [Windows] Added an "Analog Controls" dialog to the new UI.  [Nate Woods]
+
+- [Windows GUI] Added a tab view that provides an alternate way to load and
+  unload software images.  [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+(none)
+
+
+
 0.85
 
 New System Drivers Supported (in no particular order):
