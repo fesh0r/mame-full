@@ -153,6 +153,7 @@ typedef union {
 #define HAS_M68020      0
 #define HAS_T11         0
 #define HAS_S2650       0
+#define HAS_F8			1
 #define HAS_TMS34010    0
 #define HAS_TMS9900     1
 #define HAS_TMS9940     0
@@ -222,6 +223,7 @@ typedef union {
 #define HAS_M68020      1
 #define HAS_T11         1
 #define HAS_S2650       1
+#define HAS_F8			0
 #define HAS_TMS34010    1
 #define HAS_TMS9900     0
 #define HAS_TMS9940     0

@@ -192,6 +192,7 @@ CPUOBJS = \
           $(M68KOBJS) \
           $(OBJ)/cpu/t11/t11.o \
           $(OBJ)/cpu/s2650/s2650.o \
+	  $(OBJ)/cpu/f8/f8.o \
           $(OBJ)/cpu/tms34010/tms34010.o $(OBJ)/cpu/tms34010/34010fld.o \
           $(OBJ)/cpu/tms9900/tms9980a.o \
           $(OBJ)/cpu/z8000/z8000.o \
@@ -230,6 +231,7 @@ DBGOBJS = \
           $(OBJ)/cpu/m68000/m68kdasm.o \
           $(OBJ)/cpu/t11/t11dasm.o \
           $(OBJ)/cpu/s2650/2650dasm.o \
+	  $(OBJ)/cpu/f8/f8dasm.o \
           $(OBJ)/cpu/tms34010/34010dsm.o \
           $(OBJ)/cpu/tms9900/9900dasm.o \
           $(OBJ)/cpu/z8000/8000dasm.o \
@@ -311,6 +313,7 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/coleco.o   \
           $(OBJ)/mess/vidhrdw/coleco.o   \
           $(OBJ)/mess/systems/coleco.o	\
+	  $(OBJ)/mess/systems/channelf.o  \
           $(OBJ)/mess/vidhrdw/smsvdp.o   \
           $(OBJ)/mess/machine/sms.o      \
           $(OBJ)/mess/systems/sms.o      \
@@ -479,7 +482,6 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/nc.o       \
           $(OBJ)/mess/machine/tc8521.o   \
           $(OBJ)/mess/systems/pcw16.o    \
-          $(OBJ)/mess/machine/28f008sa.o \
           $(OBJ)/mess/vidhrdw/pcw16.o	\
           $(OBJ)/mess/vidhrdw/vdc.o      \
           $(OBJ)/mess/machine/pce.o      \
@@ -669,6 +671,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
 {src/cpu/s2650}.c{$(OBJ)/cpu/s2650}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
+{src/cpu/f8}.c{$(OBJ)/cpu/f8}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
 {src/cpu/T11}.c{$(OBJ)/cpu/T11}.o:
