@@ -58,7 +58,7 @@ Sub EndFolder(ByVal objTextStream)
 	objTextStream.WriteLine("	</UL>")
 End Sub
 
-strObjDir = "obj\mess\mess\windowsui\help\"
+strObjDir = "obj\mess\mess\ui\help\"
 strSysInfoFile = "sysinfo.dat"
 strHHC = """C:\Program Files\HTML Help Workshop\hhc.exe"""
 
@@ -155,18 +155,18 @@ objTextStream.WriteLine("</OBJECT>")
 objTextStream.WriteLine("<UL>")
 
 'Help files
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_overview.htm",			"Overview"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_overview.htm",			"Overview"
 AddTopic	objTextStream,	".",					"messnew.txt",						"Whats new"
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_compile.htm",			"Compiling"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_compile.htm",			"Compiling"
 BeginFolder	objTextStream,																"Installation"
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_systemreq.htm",			"System Requirements"
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_download.htm",			"Download Location"
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_installprocedures.htm",	"Installation Procedures"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_systemreq.htm",			"System Requirements"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_download.htm",			"Download Location"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_installprocedures.htm",	"Installation Procedures"
 EndFolder	objTextStream
-AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_faq.htm",				"FAQ"
+AddTopic	objTextStream,	"mess\ui\help",	"html\mess_faq.htm",				"FAQ"
 AddTopic	objTextStream,	"docs",					"imgtool.txt",						"Imgtool"
-AddFile		objTextStream,	"mess\windowsui\help",	"images\messlogo.gif"
-AddFile		objTextStream,	"mess\windowsui\help",	"html\style.css"
+AddFile		objTextStream,	"mess\ui\help",	"images\messlogo.gif"
+AddFile		objTextStream,	"mess\ui\help",	"html\style.css"
 
 
 ' Emulated systems
