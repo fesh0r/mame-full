@@ -169,5 +169,5 @@ static const struct IODevice io_gameboy[] = {
 #define rom_gameboy NULL
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-CONSX( 1990, gameboy,  0,		 gameboy,  gameboy,  0,		   "Nintendo", "GameBoy", GAME_NOT_WORKING | GAME_NO_SOUND )
+CONSX( 1990, gameboy,  0,		 gameboy,  gameboy,  0,		   "Nintendo", "GameBoy", GAME_NO_SOUND )
 
