@@ -63,7 +63,6 @@ typedef struct
 
 static int vmsx_tap_image_init(STREAM *f, IMAGE **outimg);
 static void vmsx_tap_image_exit(IMAGE *img);
-//static void vmsx_tap_image_info(IMAGE *img, char *string, const int len);
 static int vmsx_tap_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int vmsx_tap_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void vmsx_tap_image_closeenum(IMAGEENUM *enumeration);
@@ -71,7 +70,7 @@ static int vmsx_tap_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 IMAGEMODULE(
 	vmsx_tap,
-	"Virtual MSX Cassette archive",		/* human readable name */
+	"Virtual MSX Tape archive",		/* human readable name */
 	"tap",								/* file extension */
 	0,	/* flags */
 	NULL,								/* crcfile */
@@ -107,7 +106,7 @@ static const unsigned char CasHeader[8] = { 0x1F,0xA6,0xDE,0xBA,0xCC,0x13,0x7D,0
 static int vmsx_tap_read_image (TAP_IMAGE *image)
 	{
 	unsigned char *p, *pmem;
-    int pos, i, size;
+    unsigned int pos, i, size;
 	UINT32 offset;
 
 	pmem = image->data;
@@ -128,38 +127,36 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 		p = pmem + pos;
 		/* intregity check */
 		if ( (offset + pos) > size)
-			return IMGTOOLERR_READERROR;
+			return IMGTOOLERR_CORRUPTIMAGE;
 		if (p[0] != 0 || p[1] != 1)
-			return IMGTOOLERR_READERROR;
+			return IMGTOOLERR_CORRUPTIMAGE;
 
         image->count = p[2] + p[3] * 256;
 		p += 4;
 		if (offset < (image->count * (32 + 10 + 4) + 4) )
-			return IMGTOOLERR_READERROR;
+			return IMGTOOLERR_CORRUPTIMAGE;
 
 		image->entries = (TAP_ENTRY*)malloc (
 			sizeof (TAP_ENTRY) * image->count);
 		if (!image->entries)
 			return IMGTOOLERR_OUTOFMEMORY;
-		else
+
+		for (i=0;i<image->count;i++)
 			{
-			for (i=0;i<image->count;i++)
-				{
-				strncpy (image->entries[i].title, (char*)p, 32); p += 32;
-				strncpy (image->entries[i].type, (char*)p, 10); p += 10;
-				memcpy (image->entries[i].chunk, (char*)p, 4); p += 4;
-				}
+			strncpy (image->entries[i].title, (char*)p, 32); p += 32;
+			strncpy (image->entries[i].type, (char*)p, 10); p += 10;
+			memcpy (image->entries[i].chunk, (char*)p, 4); p += 4;
 			}
 
 		return 0;
 		}	
 
-	return IMGTOOLERR_READERROR;
+	return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned char **pcas, int *psize)
 	{
-	int caspos, pos = 0, found = 0, offset, tapblock, size, tappos;
+	unsigned int caspos, pos = 0, found = 0, offset, tapblock, size, tappos;
 	unsigned char *p, *pmem;
 
 	size = image->size;
@@ -174,25 +171,23 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 			pos += offset + 8;
 			continue;
 			}
-		else
-			{
-			if (memcmp (pmem + pos + 8, "TAPE", 4) )
-				return IMGTOOLERR_READERROR;
 
-			pos += 12;
-			offset -= 8;
-			if ( (pos + offset) > size)
-				return IMGTOOLERR_READERROR;
+		if (memcmp (pmem + pos + 8, "TAPE", 4) )
+			return IMGTOOLERR_CORRUPTIMAGE;
 
-			pmem += pos;
-			size = offset;
-			found = 1;
-			break;
-			}
+		pos += 12;
+		offset -= 8;
+		if ( (pos + offset) > size)
+			return IMGTOOLERR_CORRUPTIMAGE;
+
+		pmem += pos;
+		size = offset;
+		found = 1;
+		break;
 		}
 
     if (!found)
-		return IMGTOOLERR_READERROR;
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* OK we've got the right data chunk. Now we can start looking for
 		the blocks */
@@ -234,7 +229,7 @@ static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned cha
 		return 0;
 		}
 
-	return IMGTOOLERR_READERROR;
+	return IMGTOOLERR_CORRUPTIMAGE;
 	}
 
 static int vmsx_tap_image_init(STREAM *f, IMAGE **outimg)
@@ -324,7 +319,7 @@ static int vmsx_tap_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 
 static void vmsx_tap_image_closeenum(IMAGEENUM *enumeration)
 	{
-	free(enumeration);
+	free (enumeration);
 	}
 
 static TAP_ENTRY* vmsx_tap_image_findfile(TAP_IMAGE *image, const char *fname)
@@ -360,6 +355,8 @@ static int vmsx_tap_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 			return IMGTOOLERR_WRITEERROR;
 			}
 		}
+
+    free (p);
 
 	return rc;
 	}
