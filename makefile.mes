@@ -185,6 +185,11 @@ $(OBJ)/%.o: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
 
+# Small hack due to mingw compiler 
+$(OBJ)/mess/tools/messroms/%.o: mess/tools/messroms/%.c
+	@echo [$(NAME)] Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+
 $(OBJ)/mess/%.o: mess/%.c
 	@echo [$(NAME)] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGSPEDANTIC) -c $< -o $@
