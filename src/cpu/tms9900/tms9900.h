@@ -23,13 +23,12 @@
                           /* and tms9981 with an extra clock and simplified power supply */
 #define TMS9985_ID      6 /* 9940 with 8kb ROM, 256b RAM, and a 8-bit external bus, c. 1978 (never released) */
 #define TMS9989_ID      7 /* improved 9980, used in bombs, missiles, and other *nice* hardware */
-/*#define SM68689_ID      8*//* improved 9989, built as an ASIC as 9989 was running scarce */
-#define TMS9995_ID      9 /* tms9985-like, with many improvements */
+/*#define SBP68689_ID     8*//* improved 9989, built as an ASIC as 9989 was running scarce */
+#define TMS9995_ID      9 /* tms9985-like, with many improvements (but no ROM) */
 #define TMS99000_ID     10/* improved mono-chip implementation, meant to replace 990/10, 1981 */
                           /* This chip is available in several variants (tms99105, tms99110...), */
                           /* which are similar but emulate additional instructions thanks */
                           /* to the so-called macrostore feature. */
-                          /* tms99105 includes BLSK, TMB, TCMB, TSMC */
 
 /* NPW 25-May-2002 - Added these to get it to compile under windows */
 #define TI9940_ID		11
