@@ -82,8 +82,12 @@ static void load_current_track(mess_image *image, struct apple2_drive *disk)
 static void save_current_track(mess_image *image, struct apple2_drive *disk)
 {
 	int len = sizeof(disk->track_data);
-	floppy_drive_write_track_data_info_buffer(image, 0, disk->track_data, &len);
-	disk->transient_state &= ~TRSTATE_DIRTY;
+
+	if (disk->transient_state & TRSTATE_DIRTY)
+	{
+		floppy_drive_write_track_data_info_buffer(image, 0, disk->track_data, &len);
+		disk->transient_state &= ~TRSTATE_DIRTY;
+	}
 }
 
 
