@@ -9,36 +9,35 @@
 	</checkdirectory>
 	<checkfile name="EMPTY.TXT"/>
 	
-	<putfile name="SEEDLING.TXT">'test!' * 10 </putfile>
+	<putfile name="SEEDLING.TXT">'seed!' * 10 </putfile>
 	<checkdirectory>
 		<entry name="EMPTY.TXT" size="0"/>
 		<entry name="SEEDLING.TXT" size="50"/>
 	</checkdirectory>
 	<checkfile name="EMPTY.TXT"/>
-	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
+	<checkfile name="SEEDLING.TXT">'seed!' * 10 </checkfile>
 
-	<putfile name="SAPLING.TXT">'test!' * 500 </putfile>
+	<putfile name="SAPLING.TXT">'splng' * 500 </putfile>
 	<checkdirectory>
 		<entry name="EMPTY.TXT" size="0"/>
 		<entry name="SEEDLING.TXT" size="50"/>
 		<entry name="SAPLING.TXT" size="2500"/>
 	</checkdirectory>
 	<checkfile name="EMPTY.TXT"/>
-<!--
-	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
-	<checkfile name="SAPLING.TXT">'test!' * 500 </checkfile>
-	
-	<putfile name="TREE.TXT">'test!' * 30000 </putfile>
+	<checkfile name="SEEDLING.TXT">'seed!' * 10 </checkfile>
+	<checkfile name="SAPLING.TXT">'splng' * 500 </checkfile>
+<!--	
+	<putfile name="TREE.TXT">'tree!' * 27000 </putfile>
 	<checkdirectory>
 		<entry name="EMPTY.TXT" size="0"/>
 		<entry name="SEEDLING.TXT" size="50"/>
 		<entry name="SAPLING.TXT" size="2500"/>
-		<entry name="TREE.TXT" size="150000"/>
+		<entry name="TREE.TXT" size="135000"/>
 	</checkdirectory>
 	<checkfile name="EMPTY.TXT"/>
-	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
-	<checkfile name="SAPLING.TXT">'test!' * 500 </checkfile>
-	<checkfile name="TREE.TXT">'test!' * 30000 </checkfile>
+	<checkfile name="SEEDLING.TXT">'seed!' * 10 </checkfile>
+	<checkfile name="SAPLING.TXT">'splng' * 500 </checkfile>
+	<checkfile name="TREE.TXT">'tree!' * 27000 </checkfile>
 -->
 </imgtooltest>
 
