@@ -401,6 +401,16 @@ static void fs_rise(int dummy)
 #endif
 }
 
+int internal_m6847_vblank(int hsyncs, double trailingedgerow)
+{
+	timer_set(CLK * 0                       + DHS_F,	hsyncs-1,	hs_fall);
+	timer_set(CLK * 16.5                    + DHS_R,	hsyncs-1,	hs_rise);
+	timer_set(CLK * 0                       + DFS_R,	0,			fs_rise);
+	timer_set(CLK * 227.5 * trailingedgerow + DFS_F,	0,			fs_fall);
+
+	return ignore_interrupt();
+}
+
 int m6847_vblank(void)
 {
 	double adjustment;
@@ -426,12 +436,7 @@ int m6847_vblank(void)
 		break;
 	}
 
-	timer_set(CLK * 0                         + DHS_F,	hsyncs-1,	hs_fall);
-	timer_set(CLK * 16.5                      + DHS_R,	hsyncs-1,	hs_rise);
-	timer_set(CLK * 0                         + DFS_F,	0,			fs_fall);
-	timer_set(CLK * 227.5* (230.0+adjustment) + DFS_R,	0,			fs_rise);
-
-	return ignore_interrupt();
+	return internal_m6847_vblank(hsyncs, 230.0 + adjustment);
 }
 
 /* --------------------------------------------------

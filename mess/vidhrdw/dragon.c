@@ -48,6 +48,7 @@ static int coco3_gimevhreg[8];
 static int coco3_borderred, coco3_bordergreen, coco3_borderblue;
 static int sam_videomode;
 static int coco3_blinkstatus;
+static int coco3_vidbase;
 
 #define MAX_HIRES_VRAM	57600
 
@@ -102,6 +103,8 @@ static void coco2b_charproc(UINT8 c)
 
 static WRITE_HANDLER( coco_m6847_hs_w )
 {
+	if (data == 0)
+		rastertrack_hblank();
 	pia_0_ca1_w(0, data);
 }
 
@@ -211,6 +214,8 @@ int coco3_vh_start(void)
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
 	p.charproc = coco2b_charproc;
+	p.hs_func = coco3_m6847_hs_w;
+	p.fs_func = coco3_m6847_fs_w;
 
 	if (internal_m6847_vh_start(&p, MAX_HIRES_VRAM)) {
 		paletteram = NULL;
@@ -404,6 +409,25 @@ void coco3_vh_blink(void)
 	coco3_blinkstatus = !coco3_blinkstatus;
 }
 
+int coco3_vblank(void)
+{
+	int newvidbase;
+	int top, rows;
+
+	/* Latch in new values for $FF9D:$FF9E */
+	newvidbase = (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
+	if (coco3_vidbase != newvidbase) {
+		schedule_full_refresh();
+		coco3_vidbase = newvidbase;
+	}
+
+	rastertrack_vblank();
+
+	rows = coco3_calculate_rows(&top, NULL);
+
+	return internal_m6847_vblank(263, ((double) (top + rows - 15)));
+}
+
 WRITE_HANDLER(coco3_palette_w)
 {
 	paletteram[offset] = data;
@@ -451,7 +475,30 @@ int coco3_calculate_rows(int *bordertop, int *borderbottom)
 	int t = 0;
 	int b = 0;
 
-	switch((coco3_gimevhreg[1] & 0x60) >>5) {
+	/* The bordertop and borderbottom return values are used for calculating
+	 * field sync timing.  Unfortunately, I cannot seem to find an agreement
+	 * about how exactly field sync works..
+	 *
+	 * What I do know is that FS goes high at the top of the screen, and goes
+	 * low (forcing an VBORD interrupt) at the bottom of the visual area.
+	 *
+	 * Unfortunately, I cannot get a straight answer about how many rows each
+	 * of the three regions (leading edge --> visible top; visible top -->
+	 * visible bottom/trailing edge; visible bottom/trailing edge --> leading
+	 * edge) takes up.  Adding the fact that each of the different LPR
+	 * settings most likely has a different set of values.  Here is a summary
+	 * of what I know from different sources:
+	 *
+	 * SockMaster:       43/192/28, 41/199/23, 132/0/131, 26/225/12
+	 * m6847 reference:  38/192/32
+	 *
+	 * In the January 1987 issue of Rainbow Magazine, there is a program called
+	 * COLOR3 that uses midframe palette rotation to show all 64 colors on the
+	 * screen at once.  The firxt box is at line 40, but it waits for 70 HSYNC
+	 * transitions before changing
+	 */
+
+	switch((coco3_gimevhreg[1] & 0x60) >> 5) {
 	case 0:
 		rows = 192;
 		t = 43;
@@ -508,14 +555,6 @@ static int coco3_hires_linesperrow(void)
 	return (indexx == 7) ? coco3_calculate_rows(NULL, NULL) : hires_linesperrow[indexx];
 }
 
-static int coco3_hires_vidbase(void)
-{
-	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)));
-
-}
-
-#define coco3_lores_vidbase	coco3_hires_vidbase
-
 #if LOG_VIDEO
 static void log_video(void)
 {
@@ -552,7 +591,7 @@ static void log_video(void)
 		rows = coco3_calculate_rows(NULL, NULL) / coco3_hires_linesperrow();
 		logerror(" @ %dx%d\n", cols, rows);
 
-		vidbase = coco3_hires_vidbase();
+		vidbase = coco3_vidbase;
 		bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
 		logerror("CoCo3 HiRes Video: Occupies memory %05x-%05x\n", vidbase, (vidbase + (rows * bytesperrow) - 1) & 0x7ffff);
 		break;
@@ -599,12 +638,12 @@ static UINT8 *coco3_textmapper_attr(UINT8 *mem, int param, int *fg, int *bg, int
 }
 
 /*
- * All models of the CoCo has 262 scan lines.  However, we pretend that it has
+ * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
  */
 void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	rastertrack_sync();
+//	rastertrack_sync();
 	rastertrack_refresh(bitmap, full_refresh);
 }
 
@@ -664,7 +703,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 
 		rs->videoram = RAM;
 		rs->size = 0x80000;
-		rs->position = coco3_hires_vidbase();
+		rs->position = coco3_vidbase;
 		rs->db = full_refresh ? NULL : dirtybuffer;
 		rvm->height = (rows + linesperrow - 1) / linesperrow;
 		rvm->pens = NULL;
@@ -788,7 +827,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_pens,
-			&RAM[coco3_lores_vidbase()],
+			&RAM[coco3_vidbase],
 			1, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
@@ -804,7 +843,7 @@ static void coco3_ram_w(int offset, int data, int block)
 
 	if (RAM[offset] != data) {
 		if (coco3_hires) {
-			vidbase = coco3_hires_vidbase();
+			vidbase = coco3_vidbase;
 			vidbasediff = (unsigned int) (offset - vidbase) & 0x7ffff;
 			if (vidbasediff < MAX_HIRES_VRAM) {
 				dirtybuffer[vidbasediff] = 1;
@@ -814,7 +853,7 @@ static void coco3_ram_w(int offset, int data, int block)
 			/* Apparently, lores video
 			 */
 
-			vidbase = coco3_lores_vidbase();
+			vidbase = coco3_vidbase;
 
 			if (offset >= vidbase)
 				m6847_touch_vram(offset - vidbase);
@@ -931,7 +970,6 @@ WRITE_HANDLER(coco3_gimevh_w)
 
 	case 5:
 	case 6:
-	case 7:
 		/*	$FF9D,$FF9E Vertical Offset Registers
 		 *
 		 *	$FF9F Horizontal Offset Register
@@ -940,13 +978,22 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *
 		 *	According to JK, if an odd value is placed in $FF9E on the 1986
 		 *	GIME, the GIME crashes
+		 *
+		 *  Also, $FF9D and $FF9E are latched at the top of each screen, so
+		 *  we don't have to do anything here
 		 */
-		if (xorval) {
+		break;
+
+	case 7:
+		/*
+		 *	$FF9F Horizontal Offset Register
+		 *		  Bit 7 HVEN Horizontal Virtual Enable
+		 *		  Bits 0-6 X0-X6 Horizontal Offset Address
+		 *
+		 *  Unline $FF9D-E, this value can be modified mid frame
+		 */
+		if (xorval)
 			rastertrack_touchvideomode();
-#if LOG_GIME
-			logerror("CoCo3 GIME: HiRes Video at $%05x\n", coco3_hires_vidbase());
-#endif
-		}
 		break;
 	}
 }

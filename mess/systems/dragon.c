@@ -611,8 +611,7 @@ static struct MachineDriver machine_driver_coco3 =
 			894886,	/* 0,894886 Mhz */
 			coco3_readmem,coco3_writemem,
 			0, 0,
-			coco3_hblank, 263,
-//			m6847_vblank, 1,
+			coco3_vblank, 1,
 			0, 0,
 		},
 	},
@@ -659,8 +658,7 @@ static struct MachineDriver machine_driver_coco3h =
 			894886,	/* 0,894886 Mhz */
 			coco3_readmem,coco3_writemem,
 			0, 0,
-			coco3_hblank, 263,
-//			m6847_vblank, 1,
+			coco3_vblank, 1,
 			0, 0,
 		},
 	},

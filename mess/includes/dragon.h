@@ -11,6 +11,7 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyram
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	UINT16 *pens, UINT8 *vrambase, int skew_up, int border_color, int wf, artifactproc artifact);
+int internal_m6847_vblank(int hsyncs, double trailingedgerow);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
@@ -38,6 +39,7 @@ extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
 extern WRITE_HANDLER ( coco3_palette_w );
 extern void coco3_vh_blink(void);
+extern int coco3_vblank(void);
 
 /* ----------------------------------------------------------------------- *
  * from machine/dragon.c                                                   *
@@ -72,8 +74,10 @@ extern READ_HANDLER ( coco3_cartridge_r);
 extern WRITE_HANDLER ( coco3_cartridge_w );
 extern int coco_floppy_init(int id);
 extern void coco_floppy_exit(int id);
-extern int coco3_hblank(void);
-/*extern int coco3_vblank(void);*/
+extern WRITE_HANDLER( coco_m6847_hs_w );
+extern WRITE_HANDLER( coco_m6847_fs_w );
+extern WRITE_HANDLER( coco3_m6847_hs_w );
+extern WRITE_HANDLER( coco3_m6847_fs_w );
 extern int coco3_mmu_translate(int block, int offset);
 extern int dragon_floppy_init(int id);
 extern int coco_bitbanger_init (int id);

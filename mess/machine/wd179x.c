@@ -19,7 +19,7 @@
 #include "includes/wd179x.h"
 #include "includes/flopdrv.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 /* structure describing a double density track */
 #define TRKSIZE_DD		6144
@@ -790,7 +790,9 @@ READ_HANDLER ( wd179x_data_r )
 //#if VERBOSE
 //	else
 	{
+#if VERBOSE
 		logerror("wd179x_data_r: $%02X (data_count 0)\n", w->data);
+#endif
 	}
 //#endif
 	return w->data;

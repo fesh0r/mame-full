@@ -56,6 +56,7 @@
 ***************************************************************************/
 
 #include <math.h>
+#include <assert.h>
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
@@ -66,7 +67,6 @@
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
 #include "includes/basicdsk.h"
-#include "machine/counter.h"
 #include "includes/rstrtrck.h"
 
 static UINT8 *coco_rom;
@@ -117,6 +117,8 @@ static void coco_cartridge_enablesound(int enable);
 #define LOG_VBORD		0
 #define LOG_OS9         0
 #define LOG_FLOPPY		0
+#define LOG_TIMER       0
+#define LOG_DEC_TIMER	0
 
 #define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
 
@@ -124,7 +126,7 @@ static void coco_cartridge_enablesound(int enable);
 #define COCO_TIMER_VSYNC		(COCO_CPU_SPEED * 14934.0)
 #define COCO_TIMER_CMPCARRIER	(COCO_CPU_SPEED * 0.25)
 
-static void coco3_timer_reset(void);
+static void coco3_timer_hblank(void);
 
 static struct pia6821_interface dragon_pia_intf[] =
 {
@@ -592,6 +594,32 @@ static void coco3_raise_interrupt(int mask, int state)
 	}
 }
 
+WRITE_HANDLER( coco_m6847_hs_w )
+{
+	pia_0_ca1_w(0, data);
+}
+
+WRITE_HANDLER( coco_m6847_fs_w )
+{
+	pia_0_cb1_w(0, data);
+}
+
+WRITE_HANDLER( coco3_m6847_hs_w )
+{
+	if (data == 0)
+		rastertrack_hblank();
+	else
+		coco3_timer_hblank();
+	pia_0_ca1_w(0, data);
+	coco3_raise_interrupt(COCO3_INT_HBORD, !data);
+}
+
+WRITE_HANDLER( coco3_m6847_fs_w )
+{
+	pia_0_cb1_w(0, data);
+	coco3_raise_interrupt(COCO3_INT_VBORD, !data);
+}
+
 /***************************************************************************
   Joystick Abstractions
 ***************************************************************************/
@@ -674,7 +702,7 @@ static int coco_hiresjoy_ry(void)
   The sound MUX has 4 possible settings, depend on SELA and SELB inputs:
 
   00	- DAC (digital - analog converter)
-  01	- CSN (???; NYI)
+  01	- CSN (cassette)
   10	- SND input from cartridge (NYI because we only support the FDC)
   11	- Grounded (0)
 
@@ -1055,11 +1083,19 @@ WRITE_HANDLER(dragon_sam_memory_size)
   I am deducing that the timer interrupt line was asserted if the timer was
   zero and unasserted if the timer was non-zero.  Since we never truly track
   the timer, we just use timer callback (coco3_timer_callback() asserts the
-  lin)
+  line)
+
+  Most CoCo 3 docs, including the specs that Tandy released, say that the
+  high speed timer is 70ns (half of the speed of the main clock crystal).
+  However, it seems that this is in error, and the GIME timer is really a
+  280ns timer (one eighth the speed of the main clock crystal.  Gault's
+  FAQ agrees with this
 ***************************************************************************/
 
+static double coco3_timer_counterbase;
 static void *coco3_timer_counter;
 static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
+static int coco3_timer_value;
 static int coco3_timer_base;
 
 static void coco3_timer_init(void)
@@ -1067,35 +1103,10 @@ static void coco3_timer_init(void)
 	coco3_timer_counter = NULL;
 	coco3_timer_interval = 0;
 	coco3_timer_base = 0;
+	coco3_timer_value = 0;
 }
 
-static void coco3_timer_callback(int dummy)
-{
-#if LOG_INT_TMR
-	logerror("CoCo3 GIME: Triggering TMR interrupt\n");
-#endif
-	coco3_timer_counter = NULL;
-	coco3_raise_interrupt(COCO3_INT_TMR, 1);
-
-	/* HACKHACK - This should not happen until the next timer tick */
-	coco3_raise_interrupt(COCO3_INT_TMR, 0);
-
-	coco3_timer_reset();
-	coco3_vh_blink();
-}
-
-static double coco3_timer_interval_time(void)
-{
-	/* Most CoCo 3 docs, including the specs that Tandy released, say that the
-	 * high speed timer is 70ns (half of the speed of the main clock crystal).
-	 * However, it seems that this is in error, and the GIME timer is really a
-	 * 280ns timer (one eighth the speed of the main clock crystal.  Gault's
-	 * FAQ agrees with this
-	 */
-	return coco3_timer_interval ? COCO_TIMER_CMPCARRIER : COCO_TIMER_HSYNC;
-}
-
-static void coco3_timer_reset(void)
+static int coco3_timer_actualvalue(int specified)
 {
 	/* This resets the timer back to the original value
 	 *
@@ -1106,30 +1117,106 @@ static void coco3_timer_reset(void)
 	 *
 	 * For now, we are emulating the 1986 GIME
 	 */
-
-	if (coco3_timer_counter)
-		counter_remove(coco3_timer_counter);
-
-	if (coco3_timer_base)
-		coco3_timer_counter = counter_set(coco3_timer_base + 2, coco3_timer_interval_time(), 0, coco3_timer_callback);
-	else
-		coco3_timer_counter = NULL;
+	return specified ? specified + 2 : 0;
 }
 
-static int coco3_timer_r(void)
+static void coco3_timer_newvalue(void)
 {
-	int result = 0;
+	if (coco3_timer_value == 0) {
+#if LOG_INT_TMR
+		logerror("CoCo3 GIME: Triggering TMR interrupt\n");
+#endif
+		coco3_raise_interrupt(COCO3_INT_TMR, 1);
 
-	if (coco3_timer_counter) {
-		result = counter_get_value(coco3_timer_counter);
+		/* HACKHACK - This should not happen until the next timer tick */
+		coco3_raise_interrupt(COCO3_INT_TMR, 0);
 
-		/* TODO - Verify that this applies.  This could happen because of the
-		 * +1/+2 reset adjustments
+		/* Every time the timer hit zero, the video hardware would do a blink */
+		coco3_vh_blink();
+
+		/* This resets the timer back to the original value
+		 *
+		 * JK tells me that when the timer resets, it gets reset to a value that
+		 * is 2 (with the 1986 GIME) above or 1 (with the 1987 GIME) above the
+		 * value written into the timer.  coco3_timer_base keeps track of the value
+		 * placed into the variable, so we increment that here
+		 *
+		 * For now, we are emulating the 1986 GIME
 		 */
-		if (result > 4095)
-			result = 4095;
+		coco3_timer_value = coco3_timer_actualvalue(coco3_timer_base);
 	}
-	return result;	/* result = 0..4095 */
+}
+
+static void coco3_timer_cannonicalize(int newvalue)
+{
+	int elapsed;
+	double current_time;
+	double duration;
+
+	current_time = timer_get_time();
+
+#if LOG_TIMER
+	logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
+#endif
+
+	/* This part resolves timer issues with the CMP Carrier */
+	if (coco3_timer_counter) {
+		assert(coco3_timer_value > 0);
+
+		/* Calculate how many transitions elapsed */
+		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);		
+		assert(elapsed >= 0);
+
+#if LOG_TIMER
+		logerror("coco3_timer_cannonicalize(): Recalculating; current_time=%g base=%g elapsed=%i\n", current_time, coco3_timer_counterbase, elapsed);
+#endif
+
+		/* Remove the timer.  Note that we might be called as part of a timer
+		 * proc resolving.  In this case; we must _not_ call timer_remove() on
+		 * ourself, due to the way the MAME core works
+		 */
+		if (newvalue != -1)
+			timer_remove(coco3_timer_counter);
+		coco3_timer_counter = NULL;
+
+		if (elapsed) {
+			coco3_timer_value -= elapsed;
+			
+			/* HACK HACK - I don't know why I have to do this */
+			if (coco3_timer_value < 0)
+				coco3_timer_value = 0;
+
+			coco3_timer_newvalue();
+		}
+	}
+
+	if (newvalue >= 0) {
+#if LOG_TIMER
+		logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
+#endif
+		coco3_timer_value = newvalue;
+	}
+
+	if (coco3_timer_interval && coco3_timer_value) {
+		coco3_timer_counterbase = current_time; //floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
+		duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
+		coco3_timer_counter = timer_set(duration, -1, coco3_timer_cannonicalize);
+
+#if LOG_TIMER
+		logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
+#endif
+	}
+}
+
+static void coco3_timer_hblank(void)
+{
+	if (!coco3_timer_interval && (coco3_timer_value > 0)) {
+#if LOG_DEC_TIMER
+		logerror("coco3_timer_hblank(): Decrementing timer (%i ==> %i)\n", coco3_timer_value, coco3_timer_value - 1);
+#endif
+		coco3_timer_value--;
+		coco3_timer_newvalue();
+	}
 }
 
 /* Write into MSB of timer ($FF94); this causes a reset (source: Sockmaster) */
@@ -1137,7 +1224,7 @@ static void coco3_timer_msb_w(int data)
 {
 	coco3_timer_base &= 0x00ff;
 	coco3_timer_base |= (data & 0x0f) << 8;
-	coco3_timer_reset();
+	coco3_timer_cannonicalize(coco3_timer_actualvalue(coco3_timer_base));
 }
 
 /* Write into LSB of timer ($FF95); this does not cause a reset (source: Sockmaster) */
@@ -1149,9 +1236,18 @@ static void coco3_timer_lsb_w(int data)
 
 static void coco3_timer_set_interval(int interval)
 {
-	coco3_timer_interval = interval;
-	if (coco3_timer_counter)
-		counter_set_period(coco3_timer_counter, coco3_timer_interval_time());
+	/* interval==0 is 63.5us interval==1 if 280ns */
+	if (interval)
+		interval = 1;
+
+#if LOG_TIMER
+	logerror("coco3_timer_set_interval(): Interval is %s\n", interval ? "280ns" : "63.5us");
+#endif
+
+	if (coco3_timer_interval != interval) {
+		coco3_timer_interval = interval;
+		coco3_timer_cannonicalize(-1);
+	}
 }
 
 /***************************************************************************
@@ -1435,7 +1531,7 @@ WRITE_HANDLER(coco3_gime_w)
 		/*	$FF91 Initialization register 1
 		 *		  Bit 7 Unused
 		 *		  Bit 6 Unused
-		 *		  Bit 5 TINS Timer input select; 1 = 70 nsec, 0 = 63.5 usec
+		 *		  Bit 5 TINS Timer input select; 1 = 280 nsec, 0 = 63.5 usec
 		 *		  Bit 4 Unused
 		 *		  Bit 3 Unused
 		 *		  Bit 2 Unused
@@ -1443,7 +1539,7 @@ WRITE_HANDLER(coco3_gime_w)
 		 *		  Bit 0 TR Task register select
 		 */
 		coco3_mmu_update(0, 8);
-		coco3_timer_set_interval(data & 0x20 ? 1 : 0);
+		coco3_timer_set_interval(data & 0x20);
 		break;
 
 	case 2:
@@ -2025,45 +2121,6 @@ void coco_bitbanger_output (int id, int data)
 /***************************************************************************
   Machine Initialization
 ***************************************************************************/
-
-int coco3_hblank(void)
-{
-	int scanline;
-	int bordertop;
-	int borderbottom;
-	int rows;
-	int inborder;
-
-	rows = coco3_calculate_rows(&bordertop, &borderbottom);
-
-	pia_0_ca1_w(0, 0);
-	pia_0_ca1_w(0, 1);
-	coco3_raise_interrupt(COCO3_INT_HBORD, 1);
-	coco3_raise_interrupt(COCO3_INT_HBORD, 0);
-
-	scanline = rastertrack_hblank();
-	if (scanline == 263) {
-		pia_0_cb1_w(0, 0);
-		pia_0_cb1_w(0, 1);
-		rastertrack_vblank();
-		scanline = 0;
-	}
-
-	/* HACK HACK of the 1st degree; this makes the SockMaster Moon demo look much better */
-	scanline += 8;
-
-	inborder = (scanline < bordertop) || (scanline >= (bordertop + rows));
-
-#if LOG_VBORD
-	if (scanline == (bordertop + rows)) {
-		logerror("coco3_hblank(): raising VBORD at absolute scanline #%i\n", bordertop + rows);
-	}
-#endif
-
-	coco3_raise_interrupt(COCO3_INT_VBORD, inborder);
-
-	return ignore_interrupt();
-}
 
 static void coco_setcartline(int data)
 {
