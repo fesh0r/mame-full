@@ -18,10 +18,10 @@
                           /* (144 instructions, with up to 16 additional custom instructions simulteanously) */
                           /* 1979 (or before) */
 #define TMS9900_ID      3 /* mono-chip implementation, 1976 */
-#define TMS9940_ID      4 /* embedded version, 1979 */
+#define TMS9940_ID      4 /* microcontroller with 2kb ROM, 128b RAM, decrementer, CRU bus, 1979 */
 #define TMS9980_ID      5 /* 8-bit variant of tms9900.  Two distinct chips actually : tms9980a, */
                           /* and tms9981 with an extra clock and simplified power supply */
-#define TMS9985_ID      6 /* 9980 with on-chip 16-bit RAM and decrementer, c. 1978 (never released) */
+#define TMS9985_ID      6 /* 9940 with 8kb ROM, 256b RAM, and a 8-bit external bus, c. 1978 (never released) */
 #define TMS9989_ID      7 /* improved 9980, used in bombs, missiles, and other *nice* hardware */
 /*#define SM68689_ID      8*//* improved 9989, built as an ASIC as 9989 was running scarce */
 #define TMS9995_ID      9 /* tms9985-like, with many improvements */
