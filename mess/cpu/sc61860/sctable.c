@@ -49,8 +49,8 @@ static void sc61860_instruction(void)
 		case 41: sc61860_jump_rel_minus(!sc61860.zero);sc61860_icount-=4;break;
 		case 42: sc61860_jump_rel_plus(!sc61860.carry);sc61860_icount-=4;break;
 		case 43: sc61860_jump_rel_minus(!sc61860.carry);sc61860_icount-=4;break;
-		case 44: sc61860_jump_rel_plus(1);sc61860_icount-=4;break;
-		case 45: sc61860_jump_rel_minus(1);sc61860_icount-=4;break;
+		case 44: sc61860_jump_rel_plus(true);sc61860_icount-=4;break;
+		case 45: sc61860_jump_rel_minus(true);sc61860_icount-=4;break;
 		case 47: sc61860_loop();sc61860_icount-=7;break;
 		case 48: sc61860_load_imm_p(sc61860.ram[A]);sc61860_icount-=2;break;
 		case 49: sc61860_load_imm_q(sc61860.ram[A]);sc61860_icount-=2;break;
@@ -77,11 +77,14 @@ static void sc61860_instruction(void)
 		case 76: sc61860_in_a();sc61860_icount-=2;break;
 		case 77: /*nopw*/;sc61860_icount-=2;break;
 		case 78: sc61860_wait();sc61860_icount-=6;break;
+		case 79: sc61860_wait_x(false);sc61860_icount-=1;break;
 		case 80: sc61860_inc_p();sc61860_icount-=2;break;
 		case 81: sc61860_dec_p();sc61860_icount-=2;break;
 		case 82: sc61860_store_ext(A);sc61860_icount-=2;break;
 		case 83: sc61860_store_ext(sc61860.p);sc61860_icount-=2;break;
+		case 84: sc61860_load_imm(sc61860.p, READ_OP());sc61860_icount-=3/*?*/;break; // undocumented
 		case 85: sc61860_load_ext(sc61860.p);sc61860_icount-=3;break;
+		case 86: sc61860_load_imm(sc61860.p, READ_OP());sc61860_icount-=3/*?*/;break; // undocumented
 		case 87: sc61860_load_ext(A);sc61860_icount-=3;break;
 		case 88: sc61860_swap();sc61860_icount-=2;break;
 		case 89: sc61860_load();sc61860_icount-=2;break;
@@ -99,6 +102,7 @@ static void sc61860_instruction(void)
 		case 103: sc61860_cmp(A,READ_OP());sc61860_icount-=4;break;
 		case 105: sc61860_execute_table_call();sc61860_icount-=3;break;
 		case 107: sc61860_test_special();sc61860_icount-=4;break;
+		case 111: sc61860_wait_x(true);sc61860_icount-=1;break;
 		case 112: sc61860_add(sc61860.p,READ_OP());sc61860_icount-=4;break;
 		case 113: sc61860_sub(sc61860.p,READ_OP());sc61860_icount-=4;break;
 		case 116: sc61860_add(A,READ_OP());sc61860_icount-=4;break;
@@ -129,11 +133,12 @@ static void sc61860_instruction(void)
 		case 212: sc61860_and_ext();sc61860_icount-=6;break;
 		case 213: sc61860_or_ext();sc61860_icount-=6;break;
 		case 214: sc61860_test_ext();sc61860_icount-=6;break;
-		case 216: sc61860_leave();sc61860_icount-=4/*?*/;break;
+		case 216: sc61860_leave();sc61860_icount-=2;break;
 		case 218: sc61860_exam(A, B);sc61860_icount-=3;break;
 		case 219: sc61860_exam(A, sc61860.p);sc61860_icount-=3;break;
 		case 221: sc61860_out_b();sc61860_icount-=2;break;
 		case 223: sc61860_out_c();sc61860_icount-=2;break;
+		default: logerror("sc61860 illegal opcode at %.4x %.2x\n",sc61860.pc-1, oper);
 		}
 	}
 }
