@@ -1057,7 +1057,7 @@ static struct MachineDriver machine_driver_bermudat =
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4.0 Mhz (?) */
+			5000000,	/* 4.0 Mhz (?) */
 			readmem_cpuB,writemem_cpuB,0,0,
 			interrupt,1
 		},
@@ -1069,7 +1069,7 @@ static struct MachineDriver machine_driver_bermudat =
 		},
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
+	1, /* CPU slices per frame */
 	0, /* init machine */
 
 	/* video hardware */
