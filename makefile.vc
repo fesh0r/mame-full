@@ -30,9 +30,6 @@ MAMEOS = windows
 # if MAME_NET is defined, network support will be compiled in
 # MAME_NET = -DMAME_NET
 
-# use fast (register) calling convention
-USE_FASTCALL = -DFASTCALL
-
 # uncomment next line to generate help files
 # HELP = 1
 
@@ -102,22 +99,22 @@ EMULATORGUI = $(GUINAME)$(EXE)
 #
 
 DEFS = \
-        -D_WINDOWS \
-        -DM_PI=3.1415926534 \
-        -DPI=3.1415926534 \
-        -DINLINE='static __inline' \
-        -Dinline=__inline \
-        -D__inline__=__inline \
-        -Dalloca=_alloca \
-        -DPNG_SAVE_SUPPORT \
-        -DMAME_AVI \
-        -DHAS_CPUS \
-        -DHAS_SOUND \
-        -DLSB_FIRST=1 \
-        -DZLIB_DLL \
-        $(MAME_VERSION) \
-        $(MAME_NET) \
-        $(USE_FASTCALL)
+	-DWIN32 \
+	-D_WINDOWS \
+	-DM_PI=3.1415926534 \
+	-DPI=3.1415926534 \
+	-DINLINE='static __inline' \
+	-Dinline=__inline \
+	-D__inline__=__inline \
+	-Dalloca=_alloca \
+	-DPNG_SAVE_SUPPORT \
+	-DMAME_AVI \
+	-DHAS_CPUS \
+	-DHAS_SOUND \
+	-DLSB_FIRST=1 \
+	-DZLIB_DLL \
+	$(MAME_VERSION) \
+	$(MAME_NET) \
 
 ifndef DEBUG
 DEFS += -DNDEBUG
@@ -154,11 +151,7 @@ endif
 # C Compiler flags
 #
 
-CFLAGS = -W3 -nologo -MT $(INCLUDES)
-
-ifdef USE_FASTCALL
-CFLAGS += -Gr
-endif
+CFLAGS = -nologo -MT $(INCLUDES)
 
 ifdef DEBUG
 CFLAGS += -Zi -Od
