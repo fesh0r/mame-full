@@ -690,7 +690,7 @@ static void prepare_menus(void)
 			append_menu(sub_menu, flags_for_exists,	new_item + DEVOPTION_UNMOUNT,	UI_unmount);
 
 #if HAS_WAVE
-			if (dev->type == IO_CASSETTE)
+			if ((dev->type == IO_CASSETTE) && !strcmp(dev->file_extensions, "wav"))
 			{
 				cassette_state state;
 				state = image_exists(img) ? (cassette_get_state(img) & CASSETTE_MASK_UISTATE) : CASSETTE_STOPPED;
