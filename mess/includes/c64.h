@@ -159,7 +159,7 @@
 #define DATASSETTE_RECORD	(input_port_8_r(0)&0x800)
 #define DATASSETTE_STOP		(input_port_8_r(0)&0x400)
 
-#define SID8580		(input_port_8_r(0)&0x80)
+#define SID8580		((input_port_8_r(0)&0x80) ? MOS8580 : MOS6581)
 
 #define AUTO_MODULE ((input_port_8_r(0)&0x1c)==0)
 #define ULTIMAX_MODULE ((input_port_8_r(0)&0x1c)==4)

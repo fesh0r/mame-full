@@ -116,7 +116,7 @@
 #define SERIAL9ON ((input_port_8_r(0)&7)==3)
 
 #define SIDCARD ((input_port_9_r(0)&0x80))
-#define SIDCARD_8580 ((input_port_9_r(0)&0x40))
+#define SIDCARD_8580 ((input_port_9_r(0)&0x40) ? MOS8580 : MOS6581)
 
 #define C16_PAL ((input_port_9_r(0)&0x10)==0)
 
