@@ -220,6 +220,17 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		}
 		break;
 
+	case WM_SYSCOMMAND:
+		if (wparam == SC_CLOSE)
+		{
+			EndDialog(dlgwnd, 0);
+		}
+		else
+		{
+			handled = FALSE;
+		}
+		break;
+
 	default:
 		handled = FALSE;
 		break;
