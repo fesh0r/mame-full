@@ -24,14 +24,14 @@ Release 0.87.1
 	    artwork enabled.
 	  * The xgl and xfx drivers are now built into the X11 target, 
 	    alongside Xv and DGA.   OpenGL can be selected at runtime with 
-	    "-x11-mode (-x11) 2", and GLIDE can be selected with "-x11-mode 
+	    "-x11-mode (-x11) 2", and Glide can be selected with "-x11-mode 
 	    (-x11) 2".
 	  * Reworked the hotkeys for switching between X11 video modes and 
 	    fullscreen and windowed modes: left-alt +
 	    insert:    normal or DGA rendering
 	    home:      Xv rendering
 	    page up:   OpenGL rendering
-	    delete:    GLIDE rendering
+	    delete:    Glide rendering
 	    page down: toggle between windowed and fullscreen
 	  * Changed the hotkeys for grabbing keyboard and mouse from left-alt + 
 	    page up/page down to left-control + page up/page down.
@@ -48,14 +48,14 @@ Release 0.87.1
 	    also the window size when the window is resizable (xgl and Xv).  
 	    The requested size gets clipped to the largest constrained size 
 	    with the correct aspect ratio.
-	  * Removed the "-fxres" option.  GLIDE now honors the window size 
+	  * Removed the "-fxres" option.  Glide now honors the window size 
 	    passed with "-geometry (-geo)".
-	  * Really fixed artwork with vector games in the GLIDE targets.
+	  * Really fixed artwork with vector games in the Glide targets.
 	  * Added a "-hwvec <int>" option:
-	    0: Never use GLIDE/OpenGL vectors.
+	    0: Never use Glide/OpenGL vectors.
 	    1: Auto (don't use when there is an artwork overlay).
-	    2: Always use GLIDE/OpenGL vectors.
-	  * Fixed rotation with artwork-enabled vector games in GLIDE targets.
+	    2: Always use Glide/OpenGL vectors.
+	  * Fixed rotation with artwork-enabled vector games in Glide targets.
 	  * Force a full screen update so that artwork bezels get shown when 
 	    DGA mode is enabled via hotkey.
 	  * Prefer 16bpp deep modes over 15bpp deep modes when we must 
@@ -84,9 +84,9 @@ Release 0.87.1
 	    always libglut.so.
 	  * Removed TDFX_DGA_WORKAROUND from the makefile; this is now always 
 	    enabled, since it shouldn't hurt cards which don't have the bug.
-	  * Added a "-fxresolution (-fxres)" option for GLIDE: Now "-geometry 
+	  * Added a "-fxresolution (-fxres)" option for Glide: Now "-geometry 
 	    (-geo)" can be used for hardware-scaled windows (Xv, OpenGL) 
-	    without causing GLIDE to complain about an invalid resolution.
+	    without causing Glide to complain about an invalid resolution.
 	  * Completely rewrote the handling of visual area changes in order to 
 	    catch a few corner cases: In non-hardware scaling display targets, 
 	    the display is no longer destroyed and recreated when the visual 
@@ -95,10 +95,47 @@ Release 0.87.1
 	    (-x11) 4" or left-alt + end.
 	  * Fixed a rounding error which caused vector games to get a slightly 
 	    different resolution than requested.
+	  * Shuffled options somewhat so that the output of "-help" and 
+	    "-showconfig (-sc)" is more logically ordered.
+	  * Disabled the use of scanlines with yarbsize.
+	  * Fixed a bug with double-buffered blitting which caused each line to 
+	    be blitted twice.  This is a huge speedup for DGA.
+	  * Config files are now parsed after checking for "-help", "-version", 
+	    and "-manhelp".
+	  * An error about being unable to open the display is no longer 
+	    reported when "-help" or front-end options are used without X.
+	  * For 2x and 3x width scales, pixels are now written in memory order, 
+	    which speeds up scaling directly to the framebuffer a lot, since 
+	    this makes use of write combining.
+	  * Double buffering is no longer used for directly writing to hardware 
+	    surfaces.
+	  * When the source and destination pixels are the same and the width 
+	    scale is 1, the rotation code now writes directly to the 
+	    destination instead of to an intermediate buffer.
+	  * Cleaned up the mode handling in the DGA 2.0 driver.
+	  * Added hotkey switching for effects: Use left-ctrl + page-up or 
+	    page-down. Mouse and keyboard grabbing are now toggled with 
+	    left-ctrl + del and left-ctrl + end, respectively.
+	  * Scanlines are now an effect (number 9) instead of being controlled 
+	    by a separate option ("-scanlines").
+	  * A brief message is now displayed when effects and other options are 
+	    changed via hotkeys.
+	  * Fixed a vector clipping bug in the Glide target.
+	  * Added hotkeys for changing options for Open GL: left-ctrl + 
+	    left-alt + :
+	    insert:    toggle bilinear filtering
+	    home:      toggle cabview
+	    end:       toggle antialiasing
+	    page up:   increase vector beam size
+	    page down: decrease vector beam size
+	    Left-ctrl + left-alt + insert also works for toggling bilinear 
+	    filtering in Glide.
 	- Added an ALSA mixer plugin, which can be enabled with 
 	  "-sound-mixer-plugin (-smp) alsa".  The new "-alsa-mixer (-amixer)" 
 	  option accepts the name of a "simple mixer control", which you can 
 	  find by executing "amixer".  (Shyouzou Sugitani)
+	- MAME validity checks are now enabled for debug builds.  (Christopher 
+	  Stone)
 
 Release 0.87, 3 October 2004
 	- Everything from MAME 0.87 (http://x.mame.net/changes-mame.html) and
@@ -136,7 +173,7 @@ Release 0.87, 3 October 2004
 	  * The mouse can be grabbed when it is requested by the user or when 
 	    fullscreen mode is used.
 	  * The keyboard can now be grabbed.
-	  * The mouse and keyboard are always grabbed when OpenGL on GLIDE is 
+	  * The mouse and keyboard are always grabbed when OpenGL on Glide is 
 	    used.
 	- Made changes to the X11 targets (Hans de Goede):
 	  * Restored widthscale == 2 yuy2 code for perfect yuy2 blitting. 
@@ -201,7 +238,7 @@ Release 0.87, 3 October 2004
 	    sound, specify a bogus device with "-audiodevice".
 	- Cleaned up some of the rc-parsing code.  (Hans de Goede)
 	- Removed the "-[no]mouse" option.  (Hans de Goede)
-	- Fixed problems with building when GLIDE2 is enabled in the makefile.
+	- Fixed problems with building when Glide2 is enabled in the makefile.
 	  (Mark Nipper)
 	- When fullscreen mode is enabled, the event queue is first emptied.  
 	  (Hans de Goede)
@@ -281,7 +318,7 @@ Release 0.86, 25 August 2004
 	  * Fixed a crash when 16bbpp palettized modes are used.
 	  * Added support for rotated/flipped games.
 	  * Corrected the paused emulation test.
-	  * Added support for compiling and linking against GLIDE3.
+	  * Added support for compiling and linking against Glide3.
 	  * Fixed and cleaned up vector support.
 	  * Added support for vector clipping, which fixes mhavoc.
 	  * Fixed 32bpp game support.
