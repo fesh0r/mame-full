@@ -1897,7 +1897,6 @@ static int alloc_fdr_sector(ti99_lvl2_imgref *l2_img, int *fdr_physrec)
 	UINT8 *abm;
 	int i;
 
-
 	switch (l2_img->type)
 	{
 	case L2I_DSK:
@@ -1907,16 +1906,23 @@ static int alloc_fdr_sector(ti99_lvl2_imgref *l2_img, int *fdr_physrec)
 	case L2I_WIN:
 		abm = l2_img->u.win.abm;
 		break;
+
+	default:
+		abm = NULL;
+		break;
 	}
 
-	for (i=0; i<totAUs; i++)
+	if (abm)
 	{
-		if (! (abm[i >> 3] & (1 << (i & 7))))
+		for (i=0; i<totAUs; i++)
 		{
-			*fdr_physrec = i * l2_img->AUformat.physrecsperAU;
-			abm[i >> 3] |= 1 << (i & 7);
+			if (! (abm[i >> 3] & (1 << (i & 7))))
+			{
+				*fdr_physrec = i * l2_img->AUformat.physrecsperAU;
+				abm[i >> 3] |= 1 << (i & 7);
 
-			return 0;
+				return 0;
+			}
 		}
 	}
 
@@ -2797,7 +2803,7 @@ static int set_win_fdr_field(ti99_lvl2_fileref *l2_file, size_t offset, size_t s
 
 static UINT8 get_file_flags(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -2837,7 +2843,7 @@ static void set_file_flags(ti99_lvl2_fileref *l2_file, UINT8 data)
 
 static UINT8 get_file_recspersec(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -2877,7 +2883,7 @@ static void set_file_recspersec(ti99_lvl2_fileref *l2_file, UINT8 data)
 
 static unsigned get_file_secsused(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -2924,7 +2930,7 @@ static int set_file_secsused(ti99_lvl2_fileref *l2_file, unsigned data)
 
 static UINT8 get_file_eof(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -2964,7 +2970,7 @@ static void set_file_eof(ti99_lvl2_fileref *l2_file, UINT8 data)
 
 static UINT16 get_file_reclen(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -3030,7 +3036,7 @@ static int set_file_reclen(ti99_lvl2_fileref *l2_file, UINT16 data)
 
 static unsigned get_file_fixrecs(ti99_lvl2_fileref *l2_file)
 {
-	int reply;
+	int reply = 0;
 
 	switch (l2_file->type)
 	{
@@ -4045,13 +4051,20 @@ static size_t ti99_image_freespace(IMAGE *img)
 	case L2I_WIN:
 		abm = image->u.win.abm;
 		break;
+
+	default:
+		abm = NULL;
+		break;
 	}
 
 	freeAUs = 0;
-	for (i=0; i<image->AUformat.totAUs; i++)
+	if (abm)
 	{
-		if (! (abm[i >> 3] & (1 << (i & 7))))
-			freeAUs++;
+		for (i=0; i<image->AUformat.totAUs; i++)
+		{
+			if (! (abm[i >> 3] & (1 << (i & 7))))
+				freeAUs++;
+		}
 	}
 
 	return freeAUs;
@@ -4087,6 +4100,10 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 	case L2I_WIN:
 		errorcode = open_file_lvl2_win(image, fname, &src_file);
+		break;
+
+	default:
+		errorcode = -1;
 		break;
 	}
 	if (errorcode)

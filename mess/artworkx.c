@@ -47,18 +47,19 @@ void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 		if (ext)
 			len = ext - fname;
 	}
-	else
-	{
-		fname = defaultartfile;
-	}
-	if (len == -1)
-		len = strlen(fname);
 
-	override_artfile = malloc(len + 1);
+	override_artfile = malloc((fname ? len + 1 : 0) + strlen(defaultartfile) + 1 + 1);
 	if (!override_artfile)
 		return;
-	memcpy(override_artfile, fname, len);
-	override_artfile[len] = 0;
+
+	if (fname)
+	{
+		memcpy(override_artfile, fname, len);
+		override_artfile[len] = 0;
+	}
+
+	strcpy(&override_artfile[len + 1], defaultartfile);
+	override_artfile[len + 1 + strlen(defaultartfile) + 1] = '\0';
 }
 
 static int mess_activate_artwork(struct osd_create_params *params)
@@ -75,23 +76,21 @@ static mame_file *mess_load_artwork_file(const struct GameDriver *driver)
 {
 	char filename[2048];
 	mame_file *artfile = NULL;
+	const char *s;
 
 	while (driver)
 	{
 		if (driver->name)
 		{
-			if (override_artfile)
+			s = override_artfile;
+			do
 			{
-				sprintf(filename, "%s.art", override_artfile);
-				free(override_artfile);
-				override_artfile = NULL;
+				sprintf(filename, "%s.art", *s ? s : driver->name);
+				if (*s)
+					s += strlen(s) + 1;
+				artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
 			}
-			else
-			{
-				/* else do it the MAME way... */
-				sprintf(filename, "%s.art", driver->name);
-			}
-			artfile = mame_fopen(driver->name, filename, FILETYPE_ARTWORK, 0);
+			while(!artfile && *s);
 			if (artfile)
 				break;
 		}

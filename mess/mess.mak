@@ -847,6 +847,8 @@ tools/messroms$(EXE): $(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
 tools/imgtool$(EXE):	                   \
 	  $(PLATFORM_IMGTOOL_OBJS)	           \
 	  $(OBJ)/unzip.o	                   \
+	  $(OBJ)/harddisk.o	                   \
+	  $(OBJ)/md5.o	                   \
 	  $(OBJ)/mess/config.o	               \
 	  $(OBJ)/mess/utils.o	               \
 	  $(OBJ)/mess/formats.o                \
@@ -857,6 +859,7 @@ tools/imgtool$(EXE):	                   \
 	  $(OBJ)/mess/formats/ti85_ser.o       \
 	  $(OBJ)/mess/tools/imgtool/stubs.o    \
 	  $(OBJ)/mess/tools/imgtool/main.o     \
+	  $(OBJ)/mess/tools/imgtool/imghd.o    \
 	  $(OBJ)/mess/tools/imgtool/imgtool.o  \
 	  $(OBJ)/mess/tools/imgtool/imgwave.o  \
 	  $(OBJ)/mess/tools/imgtool/imgtfmts.o \
