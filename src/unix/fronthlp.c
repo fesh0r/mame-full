@@ -16,6 +16,7 @@ static int verbose    = 1;
 static int correct    = 0;
 static int incorrect  = 0;
 static int not_found  = 0;
+static int sortby     = 0;
 
 enum {
    /* standard list commands */
@@ -27,7 +28,7 @@ enum {
    LIST_MISSINGROMS, LIST_DUPCRC, LIST_WRONGORIENTATION, LIST_WRONGMERGE,
    LIST_WRONGFPS,
    /* standard listcommands which require special handling */
-   LIST_CLONES, LIST_INFO, LIST_CPU, LIST_GAMELISTHEADER
+   LIST_CLONES, LIST_INFO, LIST_CPU
 };
    
 /* Mame frontend interface & commandline */
@@ -52,7 +53,7 @@ struct rc_option frontend_list_opts[] = {
      "Like -list, with detailed info" },
    { "listgamelist",	"lgl",			rc_set_int,	&list,
      NULL,		LIST_GAMELIST,		0,		NULL,
-     "Like -list, with specialy formatted extra info for generating gamelist.mame, also see -listgamelistheader" },
+     "Like -list, with specialy formatted extra info for generating gamelist.mame" },
    { "listsourcefile",	"lsf",			rc_set_int,	&list,
      NULL,		LIST_SOURCEFILE,	0,		NULL,
      "Like -list, with driver sourcefile" },
@@ -107,9 +108,6 @@ struct rc_option frontend_list_opts[] = {
    { "listcpu",		"lc",			rc_set_int,	&list,
      NULL,		LIST_CPU,		0,		NULL,
      "List cpu usage statics per year" },
-   { "listgamelistheader", "lgh",		rc_set_int,	&list,
-     NULL,		LIST_GAMELISTHEADER,	0,		NULL,
-     "Print header for generating gamelist.mame, also see -listgamelist" },
    { "Internal verification list commands (only for developers)", NULL, rc_seperator, NULL,
      NULL,		0,			0,		NULL,
      NULL },
@@ -128,10 +126,30 @@ struct rc_option frontend_list_opts[] = {
    { "listwrongfps",	"lwf",			rc_set_int,	&list,
      NULL,		LIST_WRONGFPS,		0,		NULL,
      "Like -list, but lists any games which use the FPS field wrongly" },
+   { "sortname",	"srtn",			rc_set_int,	&sortby,
+     NULL,		1,			0,		NULL,
+     "Sort roms by name" },
+   { "sortdriver",	"srtd",			rc_set_int,	&sortby,
+     NULL,		2,			0,		NULL,
+     "Sort roms by driver name" },
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
      NULL }
 };
+
+int CLIB_DECL compare_names(const void *elem1, const void *elem2)
+{
+   struct GameDriver *drv1 = *(struct GameDriver **)elem1;
+   struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+   return strcmp(drv1->description, drv2->description);
+}
+
+int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
+{
+   struct GameDriver *drv1 = *(struct GameDriver **)elem1;
+   struct GameDriver *drv2 = *(struct GameDriver **)elem2;
+   return strcmp(drv1->name, drv2->name);
+}
 
 /* compare string[8] using standard(?) wildchars ('?' & '*')          */
 /* for this to work correctly, the shells internal wildcard expansion */
@@ -334,6 +352,21 @@ int frontend_list(char *gamename)
    
    if (!gamename)
       gamename = "";
+
+   /* sort the list if requested */
+   if (sortby)
+   {
+      int count = 0;
+
+      /* first count the drivers */
+      while (drivers[count]) count++;
+
+      /* qsort as appropriate */
+      if (sortby == 1)
+         qsort(drivers, count, sizeof(drivers[0]), compare_names);
+      else if (sortby == 2)
+         qsort(drivers, count, sizeof(drivers[0]), compare_driver_names);
+   }
       
    /* listcommands which require special handling */
    switch(list)
@@ -351,10 +384,11 @@ int frontend_list(char *gamename)
          return OSD_OK;
       case LIST_CPU:
          return frontend_list_cpu();
-      case LIST_GAMELISTHEADER:
-         return frontend_list_gamelistheader();
       case LIST_CRC: /* list all crc-32 */
          return frontend_list_crcs();
+      case LIST_GAMELIST: /* list all of the games */
+         frontend_list_gamelistheader(); /* display the header */
+         break;
    }
    
    fprintf(stdout_file, header[list-1]);
