@@ -186,7 +186,19 @@ enum
 
 struct
 {
-	unsigned int has_fast_timers : 1;	/* I/O board VIAs are clocked at .625 MHz instead of .5 MHz (Lisa 2/10, Mac XL) */
+	unsigned int has_fast_timers : 1;	/* I/O board VIAs are clocked at 1.25 MHz (?) instead of .5 MHz (?) (Lisa 2/10, Mac XL) */
+										/* Note that the beep routine in boot ROMs implies that
+										VIA clock is 1.25 times faster with fast timers than with
+										slow timers.  I read the schematics again and again, and
+										I simply don't understand : in one case the VIA is
+										connected to the 68k E clock, which is CPUCK/10, and in
+										another case, to a generated PH2 clock which is CPUCK/4,
+										with additionnal logic to keep it in phase with the 68k
+										memory cycle.  After hearing the beep when MacWorks XL
+										boots, I bet the correct values are .625 MHz and .5 MHz.
+										Maybe the schematics are wrong, and PH2 is CPUCK/8.
+										Maybe the board uses a 6522 variant with different
+										timings. */
 	enum
 	{
 		twiggy,			/* twiggy drives (Lisa 1) */
@@ -850,9 +862,9 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	UINT8	*v;
 	int		fg, bg, x, y;
 
-	/* resolution is 720/364 on lisa, vs 608/431 on mac XL */
-	int resx = (lisa_features.has_mac_xl_video) ? 38 : 45;
-	int resy = (lisa_features.has_mac_xl_video) ? 431 : 364;
+	/* resolution is 720*364 on lisa, vs 608*431 on mac XL */
+	int resx = (lisa_features.has_mac_xl_video) ? 38 : 45;		/* width/16 */
+	int resy = (lisa_features.has_mac_xl_video) ? 431 : 364;	/* height */
 
 	v = videoram_ptr;
 	bg = Machine->pens[0];
@@ -890,13 +902,12 @@ void lisa_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 static OPBASE_HANDLER (lisa_OPbaseoverride)
 {
-	offs_t answer;
-
 	/* upper 7 bits -> segment # */
 	int segment = (address >> 17) & 0x7f;
 
 	int the_seg = seg;
 
+	address &= 0xffffff;
 	/*logerror("logical address%lX\n", address);*/
 
 
@@ -910,7 +921,7 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 		{
 			if (address & 0x008000)
 			{	/* MMU register : BUS error ??? */
-				answer = 0;
+				logerror("illegal opbase address%lX\n", address);
 			}
 			else
 			{	/* system ROMs */
@@ -935,10 +946,10 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 
 		case RAM_r:
 		case RAM_rw:
-			if (mapped_address > mmu_regs[the_seg][segment].slim)
+			if (seg_offset > mmu_regs[the_seg][segment].slim)
 			{
 				/* out of segment limits : bus error */
-
+				logerror("illegal opbase address%lX\n", address);
 			}
 			OP_ROM = OP_RAM = lisa_ram_ptr + mapped_address - address;
 			/*logerror("RAM\n");*/
@@ -949,7 +960,7 @@ static OPBASE_HANDLER (lisa_OPbaseoverride)
 		case IO:			/* I/O : bus error ??? */
 		case invalid:		/* unmapped segment */
 			/* bus error */
-
+			logerror("illegal opbase address%lX\n", address);
 			break;
 
 		case special_IO:
@@ -1079,11 +1090,11 @@ void lisa_init_machine(void)
 	/* reset COPS keyboard/mouse controller */
 	init_COPS();
 
-	/* configure via */
+	/* configure vias */
 	via_config(0, & lisa_via6522_intf[0]);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
+	via_set_clock(0, lisa_features.has_fast_timers ? 1250000 : 500000);	/* one of these values must be wrong : see note after description of the has_fast_timers field */
 	via_config(1, & lisa_via6522_intf[1]);
-	via_set_clock(1, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
+	via_set_clock(1, lisa_features.has_fast_timers ? 1250000 : 500000);	/* one of these values must be wrong : see note after description of the has_fast_timers field */
 
 	via_reset();
 	COPS_via_out_ca2(0, 0);	/* VIA core forgets to do so */
@@ -1821,7 +1832,8 @@ static READ16_HANDLER ( lisa_IO_r )
 		{
 			if (! (offset & 0x400))
 			{
-				answer = fdc_ram[offset & 0x03ff] & 0xff;	/* right ??? */
+				/*if (ACCESSING_LSB)*/	/* Geez, who cares ? */
+					answer = fdc_ram[offset & 0x03ff] & 0xff;	/* right ??? */
 			}
 		}
 		else
@@ -1837,12 +1849,14 @@ static READ16_HANDLER ( lisa_IO_r )
 
 			case 2:	/* parallel port */
 				/* 1 VIA located at 0xD901 */
-				return via_read(1, (offset >> 2) & 0xf);
+				if (ACCESSING_LSB)
+					return via_read(1, (offset >> 2) & 0xf);
 				break;
 
 			case 3:	/* keyboard/mouse cops via */
 				/* 1 VIA located at 0xDD81 */
-				return via_read(0, offset & 0xf);
+				if (ACCESSING_LSB)
+					return via_read(0, offset & 0xf);
 				break;
 			}
 		}
