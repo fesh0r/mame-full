@@ -11,6 +11,7 @@
 #include "cpu/m6502/m6502.h"
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
+#include <zlib.h>
 
 unsigned char *a7800_cart_f000;
 unsigned char *a7800_bios_f000;
@@ -72,7 +73,7 @@ Versions:
                Changed 53 bit 2, added bit 3
 
 */
-extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+// extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
 UINT32 a7800_partialcrc(const unsigned char *buf,unsigned int size)
 {
