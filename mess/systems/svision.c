@@ -4,6 +4,7 @@
  peter.trauner@jk.uni-linz.ac.at in december 2000
 ******************************************************************************/
 
+#include <assert.h>
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
@@ -100,37 +101,92 @@ a14 16
 */
 
 static UINT8 *svision_reg;
+/*
+  0x2000 0xa0 something to do with video dma?
+  0x2001 0xa0 something to do with video dma?
+  0x2010,11,12 audio channel
+   offset 0,1 frequency; offset 1 always zero?
+   offset 2:
+    0, 0x60-0x6f
+    bit 0..3: volume??
+    bit 5: on left??
+    bit 6: on right??
+  0x2014,15,16 audio channel
+  0x2020 buttons and pad
+  0x2022 0x0f ?
+  0x2023 timer?
+   next interrupt at 256*value?
+   writing sets timer and clear interrupt request?
+   fast irq in crystball needed for timing
+   slower irq in deltahero with music?
+  0x2026 bank switching
+  0x2027
+   bit 0: 0x2023 timer interrupt occured
+
+  0x2041-0x2053
+  0x3041-
+ */
+
+struct {
+    void *timer1;
+    int timer1_shot;
+} svision;
+
+static void svision_timer(int param)
+{
+    svision.timer1_shot=true;
+    svision.timer1=NULL;
+    cpu_set_irq_line(0, M65C02_INT_IRQ, ASSERT_LINE);
+}
 
 static READ_HANDLER(svision_r)
 {
-	int data=svision_reg[offset];
-	switch (offset) {
-	case 0x20:
-		data=readinputport(0);
-		break;
-	case 0x27:
-		data|=1; //crystball irq routine
-		break;
-	default:
-		logerror("svision read %04x %02x\n",offset,data);
-	}
-
-	return data;
+    int data=svision_reg[offset];
+    switch (offset) {
+    case 0x20:
+	data=readinputport(0);
+	break;
+    case 0x27:
+	if (svision.timer1_shot) data|=1; //crystball irq routine
+	break;
+    case 0x24: case 0x25://deltahero irq routine read
+	break;
+    default:
+	logerror("%.6f svision read %04x %02x\n",timer_get_time(),offset,data);
+	break;
+    }
+    
+    return data;
 }
 
 static WRITE_HANDLER(svision_w)
 {
-	svision_reg[offset]=data;
+    svision_reg[offset]=data;
+    switch (offset) {
+    case 0x26: // bits 5,6 memory management for a000?
+	cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
+	break;
+    case 0x23: //delta hero irq routine write
+	cpu_set_irq_line(0, M65C02_INT_IRQ, CLEAR_LINE);
+	svision.timer1_shot=false;
+	if (svision.timer1)
+	    timer_reset(svision.timer1, TIME_IN_CYCLES(data*256, 0));
+	else
+	    svision.timer1=timer_set(TIME_IN_CYCLES(data*256, 0),0,svision_timer);
+	break;
+    case 0x10: case 0x11: case 0x12:
+	svision_soundport_w(svision_channel+0, offset&3, data);
+	break;
+    case 0x14: case 0x15: case 0x16:
+	svision_soundport_w(svision_channel+1, offset&3, data);
+	break;
+    default:
 	logerror("%.6f svision write %04x %02x\n",timer_get_time(),offset,data);
-	switch (offset) {
-	case 0x26: // bits 5,6 memory management for a000?
-		cpu_setbank(1,memory_region(REGION_CPU1)+0x10000+((data&0x60)<<9) );
-		break;
-	}
+    }
 }
 
 static MEMORY_READ_START( readmem )
-	{ 0x0000, 0x1fff, MRA_RAM },
+    { 0x0000, 0x1fff, MRA_RAM },
     { 0x2000, 0x3fff, svision_r },
     { 0x4000, 0x5fff, MRA_RAM }, //?
 	{ 0x6000, 0x7fff, MRA_ROM },
@@ -224,15 +280,9 @@ static void svision_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 
 static int svision_frame_int(void)
 {
-//	cpu_set_irq_line(0, M65C02_INT_NMI, PULSE_LINE);
+	cpu_set_nmi_line(0, PULSE_LINE);
 	return 0;
 }
-
-static void svision_timer(int param)
-{
-	cpu_set_irq_line(0, M65C02_INT_IRQ, PULSE_LINE);
-}
-
 
 static void init_svision(void)
 {
@@ -240,9 +290,20 @@ static void init_svision(void)
 	int i;
 
 	for (i=0; i<256;i++) gfx[i]=i;
-
-	timer_pulse(1/2000.0,0,svision_timer);
 }
+
+static void svision_reset(void)
+{
+    svision.timer1=NULL;
+    svision.timer1_shot=false;
+}
+
+struct CustomSound_interface svision_sound_interface =
+{
+	svision_custom_start,
+	svision_custom_stop,
+	svision_custom_update
+};
 
 static struct MachineDriver machine_driver_svision =
 {
@@ -257,9 +318,9 @@ static struct MachineDriver machine_driver_svision =
         }
 	},
 	/* frames per second, VBL duration */
-	30, DEFAULT_60HZ_VBLANK_DURATION,
+	60, DEFAULT_60HZ_VBLANK_DURATION, // based on crystball sound speed!
 	1, /* single CPU */
-	0,//stub_machine_init,
+	svision_reset,//stub_machine_init,
 	0,//stub_machine_stop,
 	160, 160, /* width and height of screen and allocated sizes */
 	{ 0, 160 - 1, 0, 160 - 1}, /* left, right, top, bottom of visible area */
@@ -277,14 +338,13 @@ static struct MachineDriver machine_driver_svision =
 	/* sound hardware */
 	0,0,0,0,
 	{
+		{SOUND_CUSTOM, &svision_sound_interface},
 		{ 0 }
     }
 };
 
 ROM_START(svision)
 	ROM_REGION(0x20000,REGION_CPU1, 0)
-//	ROM_LOAD("crystb.bin", 0x10000, 0x10000, 0x10dcc110)
-//	ROM_LOAD("deltah.bin", 0x10000, 0x10000, 0x62f39f8b) // bad dump, but working
 	ROM_REGION(0x100,REGION_GFX1, 0)
 ROM_END
 
@@ -365,7 +425,7 @@ static const struct IODevice io_svision[] = {
 
 /*    YEAR      NAME            PARENT  MACHINE   INPUT     INIT                
 	  COMPANY                 FULLNAME */
-CONSX( 1992, svision,       0,          svision,  svision,    svision,   "Watara", "Super Vision", GAME_NOT_WORKING)
+CONSX( 1992, svision,       0,          svision,  svision,    svision,   "Watara", "Super Vision", GAME_IMPERFECT_SOUND)
 // marketed under a ton of firms and names
 
 #ifdef RUNTIME_LOADER
