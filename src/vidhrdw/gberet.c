@@ -90,8 +90,11 @@ void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 static void get_tile_info(int tile_index)
 {
 	unsigned char attr = gberet_colorram[tile_index];
-	SET_TILE_INFO(0,gberet_videoram[tile_index] + ((attr & 0x40) << 2),attr & 0x0f)
-	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x80) >> 7);
+	SET_TILE_INFO(
+			0,
+			gberet_videoram[tile_index] + ((attr & 0x40) << 2),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x80) >> 7))
 }
 
 
@@ -109,8 +112,8 @@ int gberet_vh_start(void)
 	if (!bg_tilemap)
 		return 0;
 
-	tilemap_set_transmask(bg_tilemap,0,0x0001); /* split type 0 has pen 1 transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0xffff); /* split type 1 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0x0001,0xfffe); /* split type 0 has pen 1 transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0xffff,0x0000); /* split type 1 is totally transparent in front half */
 	tilemap_set_scroll_rows(bg_tilemap,32);
 
 	return 0;
@@ -286,8 +289,6 @@ static void draw_sprites1(struct osd_bitmap *bitmap)
 
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	if (sprites_type == 0) draw_sprites0(bitmap);	/* original */
 	else draw_sprites1(bitmap);	/* bootleg */

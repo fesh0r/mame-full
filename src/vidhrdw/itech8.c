@@ -118,9 +118,6 @@ int itech8_vh_start(void)
 	/* get the TMS34061 display state */
 	tms34061_get_display_state(&tms_state);
 
-	/* reset palette usage */
-	memset(palette_used_colors, PALETTE_COLOR_USED, 256);
-
 	/* reset statics */
 	palette_addr = 0;
 	palette_index = 0;
@@ -175,7 +172,7 @@ WRITE_HANDLER( itech8_palette_data_w )
 	palette_data[palette_index++] = data;
 	if (palette_index == 3)
 	{
-		palette_change_color(palette_addr++, palette_data[0] << 2, palette_data[1] << 2, palette_data[2] << 2);
+		palette_set_color(palette_addr++, palette_data[0] << 2, palette_data[1] << 2, palette_data[2] << 2);
 		palette_index = 0;
 	}
 }
@@ -787,12 +784,9 @@ void itech8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* if we're blanked, just fill with black */
 	if (tms_state.blanked)
 	{
-		fillbitmap(bitmap, palette_transparent_pen, &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 		return;
 	}
-
-	/* recalc the palette */
-	palette_recalc();
 
 	/* perform one of two types of blitting; I'm not sure if bit 40 in */
 	/* the blitter mode register really controls this type of behavior, but */

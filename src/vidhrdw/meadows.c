@@ -56,7 +56,7 @@ int deadeye_vh_start(void)
 {
 	if( generic_vh_start() ) return 1;
 
-	overlay_create(deadeye_artwork, 2, Machine->drv->total_colors - 2);
+	overlay_create(deadeye_artwork, 2);
 
     return 0;
 }
@@ -65,7 +65,7 @@ int gypsyjug_vh_start(void)
 {
 	if( generic_vh_start() ) return 1;
 
-	overlay_create(gypsyjug_artwork, 2, Machine->drv->total_colors - 2);
+	overlay_create(gypsyjug_artwork, 2);
 
     return 0;
 }
@@ -119,10 +119,8 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int 	i;
 
-	if (palette_recalc() || full_refresh)
-	{
+	if (full_refresh)
 		memset(dirtybuffer,1,SCR_VERT * SCR_HORZ);
-	}
 
     /* the first two rows are invisible */
 	for (i = 0; i < SCR_VERT * SCR_HORZ; i++)

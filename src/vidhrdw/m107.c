@@ -42,6 +42,7 @@ static int m107_control[0x20];
 static unsigned char *m107_spriteram;
 unsigned char *m107_vram_data;
 int m107_raster_irq_position,m107_sprite_list;
+int m107_spritesystem;
 
 static int pf1_vram_ptr,pf2_vram_ptr,pf3_vram_ptr,pf4_vram_ptr;
 static int pf1_enable,pf2_enable,pf3_enable,pf4_enable;
@@ -58,11 +59,14 @@ static void get_pf1_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 
 	/* Priority 1 = tile appears above sprites */
 	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
 static void get_pf2_tile_info(int tile_index)
@@ -74,10 +78,13 @@ static void get_pf2_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 
 	tile_info.priority = ((m107_vram_data[tile_index+3]&2)>>1);
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
 }
 
 static void get_pf3_tile_info(int tile_index)
@@ -89,8 +96,11 @@ static void get_pf3_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 }
 
 static void get_pf4_tile_info(int tile_index)
@@ -102,8 +112,11 @@ static void get_pf4_tile_info(int tile_index)
 	if (m107_vram_data[tile_index+3] & 0x10) tile+=0x10000;
 	color=m107_vram_data[tile_index+2];
 
-	SET_TILE_INFO(0,tile,color&0x7f)
-	tile_info.flags = TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2);
+	SET_TILE_INFO(
+			0,
+			tile,
+			color&0x7f,
+			TILE_FLIPYX((m107_vram_data[tile_index+3] & 0xc)>>2))
 }
 
 /*****************************************************************************/
@@ -206,14 +219,14 @@ int m107_vh_start(void)
 {
 	pf1_layer = tilemap_create(
 		get_pf1_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
+		TILEMAP_TRANSPARENT,
 		8,8,
 		64,64
 	);
 
 	pf2_layer = tilemap_create(
 		get_pf2_tile_info,tilemap_scan_rows,
-		TILEMAP_TRANSPARENT,// | TILEMAP_SPLIT,
+		TILEMAP_TRANSPARENT,
 		8,8,
 		64,64
 	);
@@ -238,12 +251,6 @@ int m107_vh_start(void)
 	tilemap_set_transparent_pen(pf1_layer,0);
 	tilemap_set_transparent_pen(pf2_layer,0);
 	tilemap_set_transparent_pen(pf3_layer,0);
-//	tilemap_set_transmask(pf1_layer,0,0x00ff);
-//	tilemap_set_transmask(pf1_layer,1,0xff00);
-//	tilemap_set_transmask(pf2_layer,0,0x00ff);
-//	tilemap_set_transmask(pf2_layer,1,0xff00);
-//	tilemap_set_transmask(pf3_layer,0,0x00ff);
-//	tilemap_set_transmask(pf3_layer,1,0xff00);
 
 	pf1_vram_ptr=pf2_vram_ptr=pf3_vram_ptr=pf4_vram_ptr=0;
 	pf1_enable=pf2_enable=pf3_enable=pf4_enable=0;
@@ -264,45 +271,12 @@ void m107_vh_stop(void)
 
 /*****************************************************************************/
 
-static void mark_sprite_colours(void)
-{
-	int offs,color,i,pal_base,colmask[128];
-    unsigned int *pen_usage; /* Save some struct derefs */
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	pen_usage=Machine->gfx[1]->pen_usage;
-	for (color = 0;color < 128;color++) colmask[color] = 0;
-
-	for (offs = 0x1000-8;offs >= 0;offs -= 8)
-	{
-		int sprite,x_multi,multi;
-
-	    sprite=m107_spriteram[offs+2] | (m107_spriteram[offs+3]<<8);
-		color=m107_spriteram[offs+4]&0x7f;
-		x_multi=(m107_spriteram[offs+1]>>3)&0x3;
-		x_multi=1 << x_multi; /* 1, 2, 4 or 8 */
-		multi=8*x_multi;
-
-		for (i=0; i<multi; i++)
-			colmask[color] |= pen_usage[(sprite + i)&0x7fff];
-	}
-
-	for (color = 0;color < 128;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *clip, int pri)
 {
 	int offs;
 
 	for (offs = 0x1000-8;offs >= 0;offs -= 8) {
-		int x,y,sprite,colour,fx,fy,x_multi,y_multi,i,j,s_ptr;
+		int x,y,sprite,colour,fx,fy,y_multi,i,s_ptr;
 
 		if (((m107_spriteram[offs+4]&0x80)==0x80) && pri==0) continue;
 		if (((m107_spriteram[offs+4]&0x80)==0x00) && pri==1) continue;
@@ -323,16 +297,12 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 		fx=m107_spriteram[offs+5]&1;
 		fy=m107_spriteram[offs+5]&2;
 		y_multi=(m107_spriteram[offs+1]>>3)&0x3;
-		x_multi=(m107_spriteram[offs+1]>>3)&0x3;
 
-		/* This game doesn't seem to use X-multi */
-		y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
-		x_multi=1;// << x_multi; /* 1, 2, 4 or 8 */
-
-		if (fx && x_multi>1) x+=16;
-		for (j=0; j<x_multi; j++)
+		if (m107_spritesystem == 0)
 		{
-			s_ptr=8 * j;
+			y_multi=1 << y_multi; /* 1, 2, 4 or 8 */
+
+			s_ptr = 0;
 			if (!fy) s_ptr+=y_multi-1;
 
 			for (i=0; i<y_multi; i++)
@@ -345,7 +315,40 @@ static void m107_drawsprites(struct osd_bitmap *bitmap, const struct rectangle *
 						clip,TRANSPARENCY_PEN,0);
 				if (fy) s_ptr++; else s_ptr--;
 			}
-			if (fx) x-=16; else x+=16;
+		}
+		else
+		{
+			UINT8 *rom = memory_region(REGION_USER1);
+			int rom_offs = sprite*8;
+
+			if (rom[rom_offs+1] || rom[rom_offs+3] || rom[rom_offs+5] || rom[rom_offs+7])
+			{
+				while (rom_offs < 0x40000)	/* safety check */
+				{
+					int xdisp = rom[rom_offs+6]+256*rom[rom_offs+7];
+					int ydisp = rom[rom_offs+2]+256*rom[rom_offs+3];
+					int ffx=fx^(rom[rom_offs+1]&1);
+					int ffy=fy^(rom[rom_offs+1]&2);
+					sprite=rom[rom_offs+4]+256*rom[rom_offs+5];
+					y_multi=1<<((rom[rom_offs+3]>>1)&0x3);
+					if (fx) xdisp = -xdisp;
+					if (fy) ydisp = -ydisp - (16*y_multi-1);
+					if (!ffy) sprite+=y_multi-1;
+					for (i=0; i<y_multi; i++)
+					{
+						drawgfx(bitmap,Machine->gfx[1],
+								sprite+(ffy?i:-i),
+								colour,
+								ffx,ffy,
+								(x+xdisp)&0x1ff,(y-ydisp-16*i)&0x1ff,
+								clip,TRANSPARENCY_PEN,0);
+					}
+
+					if (rom[rom_offs+1]&0x80) break;	/* end of block */
+
+ 					rom_offs += 8;
+				}
+			}
 		}
 	}
 }
@@ -417,16 +420,10 @@ static void m107_update_scroll_positions(void)
 
 void m107_screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colours();
-	palette_recalc();
-
 	if (pf4_enable)
 		tilemap_draw(bitmap,pf4_layer,0,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,clip);
+		fillbitmap(bitmap,Machine->pens[0],clip);
 
 	tilemap_draw(bitmap,pf3_layer,0,0);
 	tilemap_draw(bitmap,pf2_layer,0,0);

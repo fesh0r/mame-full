@@ -7,38 +7,36 @@ static struct tilemap *tilemap[2];
 
 
 
-void hexion_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void hexion_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -53,7 +51,11 @@ void hexion_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 INLINE void get_tile_info(int tile_index,data8_t *ram)
 {
 	tile_index *= 4;
-	SET_TILE_INFO(0,ram[tile_index] + ((ram[tile_index+1] & 0x3f) << 8),ram[tile_index+2] & 0x0f)
+	SET_TILE_INFO(
+			0,
+			ram[tile_index] + ((ram[tile_index+1] & 0x3f) << 8),
+			ram[tile_index+2] & 0x0f,
+			0)
 }
 
 static void get_tile_info0(int tile_index)
@@ -191,8 +193,6 @@ WRITE_HANDLER( hexion_gfxrom_select_w )
 
 void hexion_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,tilemap[1],0,0);
 	tilemap_draw(bitmap,tilemap[0],0,0);
 }

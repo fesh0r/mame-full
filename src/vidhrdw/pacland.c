@@ -84,13 +84,6 @@ void pacland_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	{
 		COLOR(1,i) = *(color_prom++);
 	}
-
-	/* Intialize transparency */
-	if (palette_used_colors)
-	{
-		memset (palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof (unsigned char));
-		palette_used_colors[0xff] = PALETTE_COLOR_TRANSPARENT;
-	}
 }
 
 
@@ -192,10 +185,10 @@ WRITE_HANDLER( pacland_bankswitch_w )
 
 			color_prom++;
 
-			palette_change_color(i,r,g,b);
+			palette_set_color(i,r,g,b);
 		}
 	}
-	palette_change_color(0x7f,8,8,8);	/* make color 0x7f unique so we can use it for transparency */
+	palette_set_color(0x7f,8,8,8);	/* make color 0x7f unique so we can use it for transparency */
 }
 
 
@@ -283,11 +276,6 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 	int sx,sy, code, flipx, flipy, color;
-
-
-	/* recalc the palette if necessary */
-	if (palette_recalc ())
-		memset (dirtybuffer, 1, videoram_size);
 
 
 	/* for every character in the Video RAM, check if it has been modified */

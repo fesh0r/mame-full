@@ -537,14 +537,14 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 		}
 
 #ifndef TRANSPARENT_SHADOWS
-		palette_change_color( offset,
+		palette_set_color( offset,
 				(r << 3) | (r >> 2), /* 5 bits red */
 				(g << 2) | (g >> 4), /* 6 bits green */
 				(b << 3) | (b >> 2) /* 5 bits blue */
 			);
 #else
 		if (Machine->scrbitmap->depth == 8){ /* 8 bit shadows */
-			palette_change_color( offset,
+			palette_set_color( offset,
 					(r << 3) | (r >> 3), /* 5 bits red */
 					(g << 2) | (g >> 4), /* 6 bits green */
 					(b << 3) | (b >> 3) /* 5 bits blue */
@@ -555,14 +555,14 @@ WRITE16_HANDLER( sys16_paletteram_w ){
 			g=(g << 2) | (g >> 4); /* 6 bits green */
 			b=(b << 3) | (b >> 2); /* 5 bits blue */
 
-			palette_change_color( offset,r,g,b);
+			palette_set_color( offset,r,g,b);
 
 			/* shadow color */
 			r= r * 160 / 256;
 			g= g * 160 / 256;
 			b= b * 160 / 256;
 
-			palette_change_color( offset+Machine->drv->total_colors/2,r,g,b);
+			palette_set_color( offset+Machine->drv->total_colors/2,r,g,b);
 		}
 #endif
 	}
@@ -627,13 +627,25 @@ static void get_bg_tile_info( int offset ){
 	int tile_number = (data&0xfff) + 0x1000*((data&sys16_tilebank_switch)?sys16_tile_bank1:sys16_tile_bank0);
 
 	if( sys16_textmode==2 ){ /* afterburner: ?---CCCT TTTTTTTT */
-		SET_TILE_INFO( 0, tile_number, 512+384+((data>>6)&0x7f) );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				512+384+((data>>6)&0x7f),
+				0)
 	}
 	else if(sys16_textmode==0){
-		SET_TILE_INFO( 0, tile_number, (data>>6)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
 	}
 	else{
-		SET_TILE_INFO( 0, tile_number, (data>>5)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>5)&0x7f,
+				0)
 	}
 
 	switch(sys16_bg_priority_mode) {
@@ -660,13 +672,25 @@ static void get_fg_tile_info( int offset ){
 	int tile_number = (data&0xfff) + 0x1000*((data&sys16_tilebank_switch)?sys16_tile_bank1:sys16_tile_bank0);
 
 	if( sys16_textmode==2 ){ /* afterburner: ?---CCCT TTTTTTTT */
-		SET_TILE_INFO( 0, tile_number, 512+384+((data>>6)&0x7f) );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				512+384+((data>>6)&0x7f),
+				0)
 	}
 	else if(sys16_textmode==0){
-		SET_TILE_INFO( 0, tile_number, (data>>6)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
 	}
 	else{
-		SET_TILE_INFO( 0, tile_number, (data>>5)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>5)&0x7f,
+				0)
 	}
 	switch(sys16_fg_priority_mode){
 	case 1: // alien syndrome
@@ -691,13 +715,25 @@ static void get_bg2_tile_info( int offset ){
 	int tile_number = (data&0xfff) + 0x1000*((data&0x1000)?sys16_tile_bank1:sys16_tile_bank0);
 
 	if( sys16_textmode==2 ){ /* afterburner: ?---CCCT TTTTTTTT */
-		SET_TILE_INFO( 0, tile_number, 512+384+((data>>6)&0x7f) );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				512+384+((data>>6)&0x7f),
+				0)
 	}
 	else if(sys16_textmode==0){
-		SET_TILE_INFO( 0, tile_number, (data>>6)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
 	}
 	else{
-		SET_TILE_INFO( 0, tile_number, (data>>5)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>5)&0x7f,
+				0)
 	}
 	tile_info.priority = 0;
 }
@@ -708,13 +744,25 @@ static void get_fg2_tile_info( int offset ){
 	int tile_number = (data&0xfff) + 0x1000*((data&0x1000)?sys16_tile_bank1:sys16_tile_bank0);
 
 	if( sys16_textmode==2 ){ /* afterburner: ?---CCCT TTTTTTTT */
-		SET_TILE_INFO( 0, tile_number, 512+384+((data>>6)&0x7f) );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				512+384+((data>>6)&0x7f),
+				0)
 	}
 	else if(sys16_textmode==0){
-		SET_TILE_INFO( 0, tile_number, (data>>6)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>6)&0x7f,
+				0)
 	}
 	else{
-		SET_TILE_INFO( 0, tile_number, (data>>5)&0x7f );
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				(data>>5)&0x7f,
+				0)
 	}
 	if((data&0xff00) >= sys16_fg_priority_value) tile_info.priority = 1;
 	else tile_info.priority = 0;
@@ -759,14 +807,24 @@ static void get_text_tile_info( int offset ){
 	int pri = tile_number >> 8;
 	if( sys16_textmode==2 ){ /* afterburner: ?---CCCT TTTTTTTT */
 		SET_TILE_INFO(
-			0, (tile_number&0x1ff) + sys16_tile_bank0 * 0x1000,
-			512+384+((tile_number>>9)&0x7) );
+				0,
+				(tile_number&0x1ff) + sys16_tile_bank0 * 0x1000,
+				512+384+((tile_number>>9)&0x7),
+				0)
 	}
 	else if(sys16_textmode==0){
-		SET_TILE_INFO( 0, (tile_number&0x1ff) + sys16_tile_bank0 * 0x1000, (tile_number>>9)%8 );
+		SET_TILE_INFO(
+				0,
+				(tile_number&0x1ff) + sys16_tile_bank0 * 0x1000,
+				(tile_number>>9)%8,
+				0)
 	}
 	else{
-		SET_TILE_INFO( 0, (tile_number&0xff)  + sys16_tile_bank0 * 0x1000, (tile_number>>8)%8 );
+		SET_TILE_INFO(
+				0,
+				(tile_number&0xff)  + sys16_tile_bank0 * 0x1000,
+				(tile_number>>8)%8,
+				0)
 	}
 	if(pri>=sys16_textlayer_lo_min && pri<=sys16_textlayer_lo_max)
 		tile_info.priority = 1;
@@ -859,10 +917,9 @@ int sys16_vh_start( void ){
 		/* initialize all entries to black - needed for Golden Axe*/
 		int i;
 		for( i=0; i<Machine->drv->total_colors; i++ ){
-			palette_change_color( i, 0,0,0 );
+			palette_set_color( i, 0,0,0 );
 		}
 #ifdef TRANSPARENT_SHADOWS
-		memset(&palette_used_colors[0], PALETTE_COLOR_UNUSED, Machine->drv->total_colors);
 		if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
 		{
 			int j,color;
@@ -870,7 +927,7 @@ int sys16_vh_start( void ){
 			{
 				color=j * 160 / (sys16_MaxShadowColors-1);
 				color=color | 0x04;
-				palette_change_color(i, color, color, color);
+				palette_set_color(i, color, color, color);
 			}
 		}
 		if(sys16_MaxShadowColors==32)
@@ -1008,53 +1065,6 @@ int sys18_vh_start( void ){
 }
 
 /***************************************************************************/
-
-static void mark_sprite_colors( void ){
-	const data16_t *source = sys16_spriteram;
-	char used[0x2000/16];
-	memset( used, 0x00, sizeof(used) );
-
-	{
-		struct sys16_sprite_attributes sprite;
-		int i;
-		memset( &sprite, 0x00, sizeof(sprite) );
-		for( i=0; i<num_sprites; i++ ){
-			sprite.flags = 0;
-			if( sys16_spritesystem( &sprite, source,1 ) ) break; /* end-of-spritelist */
-			if( sprite.flags & SYS16_SPR_VISIBLE ){
-				used[sprite.color] = 1;
-			}
-			source += 8;
-		}
-	}
-
-	{
-		unsigned char *pal = palette_used_colors;
-		int i;
-		for( i=0; i<sizeof(used); i++ ){
-			if( used[i] ){
-//				pal[0] = PALETTE_COLOR_UNUSED;
-				memset( &pal[1],PALETTE_COLOR_USED,14 );
-//				pal[15] = PALETTE_COLOR_UNUSED;
-			}
-			else {
-//				memset( pal, PALETTE_COLOR_UNUSED, 16 );
-			}
-			pal += 16;
-		}
-	}
-#ifdef TRANSPARENT_SHADOWS
-	if (Machine->scrbitmap->depth == 8) /* 8 bit shadows */
-	{
-		memset(&palette_used_colors[Machine->drv->total_colors/2], PALETTE_COLOR_USED, sys16_MaxShadowColors);
-	}
-	else if(sys16_MaxShadowColors != 0) /* 16 bit shadows */
-	{
-		/* Mark the shadowed versions of the used pens */
-		memcpy(&palette_used_colors[Machine->drv->total_colors/2], &palette_used_colors[0], Machine->drv->total_colors/2);
-	}
-#endif
-}
 
 #ifdef TRANSPARENT_SHADOWS
 static void build_shadow_table(void)
@@ -1262,11 +1272,6 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	update_page();
 	sys16_vh_refresh_helper(); /* set scroll registers */
 
-	tilemap_update(  ALL_TILEMAPS  );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
 	fillbitmap(priority_bitmap,0,NULL);
 
 	build_shadow_table();
@@ -1293,18 +1298,12 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	update_page();
 	sys18_vh_screenrefresh_helper(); /* set scroll registers */
 
-	tilemap_update(  ALL_TILEMAPS  );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_recalc();
-
 	build_shadow_table();
 
 	if(sys18_bg2_active)
 		tilemap_draw( bitmap, background2, 0, 0 );
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY, 0 );
 	tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1, 0 );	//??
@@ -1328,26 +1327,6 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap, 0 );
 }
 
-
-static void gr_colors( void ){
-	const UINT16 *source = sys16_gr_ver;
-	int i;
-	for(i=0;i<224;i++){
-		UINT16 ver_data = *source++;
-		palette_used_colors[(sys16_gr_pal[ver_data&0xff]&0xff) + sys16_gr_palette] = PALETTE_COLOR_USED;
-		if( !( (ver_data & 0x500) == 0x100 ||
-			   (ver_data & 0x300) == 0x200) )
-		{
-			int colorflip;
-			ver_data &= 0xff;
-			colorflip = (sys16_gr_flip[ver_data]>>3) & 1;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][0] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][1] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][2] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][3] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-		}
-	}
-}
 
 static void render_gr(struct osd_bitmap *bitmap,int priority){
 	/* the road is a 4 color bitmap */
@@ -1552,7 +1531,7 @@ if( keyboard_pressed( KEYCODE_S ) ){
 						// fill line
 						for(j=0;j<320;j++)
 						{
-							bitmap->line[j][ypos]=colors[0];
+							((UINT8 *)bitmap->line[j])[ypos]=colors[0];
 						}
 					}
 					else
@@ -1583,7 +1562,7 @@ if( keyboard_pressed( KEYCODE_S ) ){
 
 						for(j=0;j<320;j++)
 						{
-							bitmap->line[xoff+j*dx][ypos] = colors[*source++];
+							((UINT8 *)bitmap->line[xoff+j*dx])[ypos] = colors[*source++];
 						}
 					}
 				}
@@ -1622,7 +1601,7 @@ if( keyboard_pressed( KEYCODE_S ) ){
 					else
 					{
 						// copy line
-						line = bitmap->line[ypos]+xoff;
+						line = ((UINT8 *)bitmap->line[ypos])+xoff;
 						ver_data=ver_data & 0x00ff;
 						colorflip = (sys16_gr_flip[ver_data] >> 3) & 1;
 
@@ -1670,12 +1649,6 @@ void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 	tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
 
-	tilemap_update(  ALL_TILEMAPS  );
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	gr_colors();
-	palette_recalc();
 	fillbitmap(priority_bitmap,0,NULL);
 
 	build_shadow_table();
@@ -1687,32 +1660,6 @@ void sys16_hangon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	tilemap_draw( bitmap, text_layer, 0, 0xf );
 
 	draw_sprites( bitmap, 0 );
-}
-
-static void grv2_colors( void ){
-	int i;
-	UINT16 ver_data;
-	int colorflip,colorflip_info;
-	UINT16 *data_ver=sys16_gr_ver;
-	for( i=0;i<224;i++ ){
-		ver_data= *data_ver;
-		if(!(ver_data & 0x800)){
-			ver_data=ver_data & 0x01ff;
-			colorflip_info = sys16_gr_flip[ver_data];
-
-			palette_used_colors[ (((colorflip_info >> 8) & 0x1f) + 0x20) + sys16_gr_palette_default] = PALETTE_COLOR_USED;
-
-			colorflip = (colorflip_info >> 3) & 1;
-
-			palette_used_colors[ sys16_gr_colorflip[colorflip][0] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][1] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-			palette_used_colors[ sys16_gr_colorflip[colorflip][2] + sys16_gr_palette_default ] = PALETTE_COLOR_USED;
-		}
-		else {
-			palette_used_colors[(ver_data&0x3f) + sys16_gr_palette] = PALETTE_COLOR_USED;
-		}
-		data_ver++;
-	}
 }
 
 static void render_grv2(struct osd_bitmap *bitmap,int priority)
@@ -1902,7 +1849,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						// fill line
 						for(j=0;j<320;j++)
 						{
-							bitmap->line[j][ypos]=colors[0];
+							((UINT8 *)bitmap->line[j])[ypos]=colors[0];
 						}
 					}
 					else
@@ -1943,9 +1890,9 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 						for(j=0;j<320;j++)
 						{
 							if(*source2 <= *source)
-								bitmap->line[xoff+j*dx][ypos] = colors[*source];
+								((UINT8 *)bitmap->line[xoff+j*dx])[ypos] = colors[*source];
 							else
-								bitmap->line[xoff+j*dx][ypos] = colors[*source2];
+								((UINT8 *)bitmap->line[xoff+j*dx])[ypos] = colors[*source2];
 							source++;
 							source2++;
 						}
@@ -1986,7 +1933,7 @@ static void render_grv2(struct osd_bitmap *bitmap,int priority)
 					else
 					{
 						// copy line
-						line = bitmap->line[ypos]+xoff;
+						line = ((UINT8 *)bitmap->line[ypos])+xoff;
 						ver_data=ver_data & 0x01ff;		//???
 						colorflip_info = sys16_gr_flip[ver_data];
 
@@ -2065,13 +2012,6 @@ void sys16_outrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 
 		tilemap_set_scrolly( background, 0, -256+sys16_bg_scrolly );
 		tilemap_set_scrolly( foreground, 0, -256+sys16_fg_scrolly );
-
-		tilemap_update(  ALL_TILEMAPS  );
-
-		palette_init_used_colors();
-		mark_sprite_colors();
-		grv2_colors();
-		palette_recalc();
 
 		build_shadow_table();
 
@@ -2381,12 +2321,7 @@ static void sys16_aburner_vh_screenrefresh_helper( void ){
 void sys16_aburner_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 	sys16_aburner_vh_screenrefresh_helper();
 	update_page();
-	tilemap_update(  ALL_TILEMAPS  );
 
-	palette_init_used_colors();
-	mark_sprite_colors();
-//	mark_road_colors();
-	palette_recalc();
 	fillbitmap(priority_bitmap,0,NULL);
 
 	aburner_draw_road( bitmap );

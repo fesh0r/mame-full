@@ -92,7 +92,7 @@ int geebee_vh_start(void)
 
 	if( (readinputport(2) & 0x01) == 0 )
 	{
-		overlay_create(geebee_overlay, 3, Machine->drv->total_colors-3);
+		overlay_create(geebee_overlay, 3);
 	}
 
 	return 0;
@@ -186,7 +186,7 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     }
 #endif
 
-	if (palette_recalc() || full_refresh )
+	if (full_refresh)
         memset(dirtybuffer, 1, videoram_size);
 
 	for( offs = 0; offs < videoram_size; offs++ )

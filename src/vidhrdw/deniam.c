@@ -60,20 +60,32 @@ static void get_bg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
 	UINT16 attr = deniam_videoram[bg_page[page] * 0x0800 + (tile_index & 0x7ff)];
-	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
+	SET_TILE_INFO(
+			0,
+			attr,
+			(attr & 0x1fc0) >> 6,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	int page = tile_index >> 11;
 	UINT16 attr = deniam_videoram[fg_page[page] * 0x0800 + (tile_index & 0x7ff)];
-	SET_TILE_INFO(0,attr,(attr & 0x1fc0) >> 6)
+	SET_TILE_INFO(
+			0,
+			attr,
+			(attr & 0x1fc0) >> 6,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	UINT16 attr = deniam_textram[tile_index];
-	SET_TILE_INFO(0,attr & 0xf1ff,(attr & 0x0e00) >> 9)
+	SET_TILE_INFO(
+			0,
+			attr & 0xf1ff,
+			(attr & 0x0e00) >> 9,
+			0)
 }
 
 
@@ -150,7 +162,7 @@ WRITE16_HANDLER( deniam_palette_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -262,9 +274,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						{
 							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
 							{
-								if ((priority_bitmap->line[y][sx+x] & primask) == 0)
+								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
-								priority_bitmap->line[y][sx+x] = 8;
+								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
 							}
 						}
 						x++;
@@ -281,9 +293,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						{
 							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
 							{
-								if ((priority_bitmap->line[y][sx+x] & primask) == 0)
+								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
-								priority_bitmap->line[y][sx+x] = 8;
+								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
 							}
 						}
 						x++;
@@ -304,9 +316,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						{
 							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
 							{
-								if ((priority_bitmap->line[y][sx+x] & primask) == 0)
+								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]>>4)]);
-								priority_bitmap->line[y][sx+x] = 8;
+								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
 							}
 						}
 						x++;
@@ -323,9 +335,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						{
 							if (sx+x >= 0 && sx+x < 512 && y >= 0 && y < 256)
 							{
-								if ((priority_bitmap->line[y][sx+x] & primask) == 0)
+								if ((((UINT8 *)priority_bitmap->line[y])[sx+x] & primask) == 0)
 									plot_pixel(bitmap,sx+x,y,Machine->pens[color*16+(rom[i]&0x0f)]);
-								priority_bitmap->line[y][sx+x] = 8;
+								((UINT8 *)priority_bitmap->line[y])[sx+x] = 8;
 							}
 						}
 						x++;
@@ -337,37 +349,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		}
 	}
 }
-
-static void mark_sprite_colors(void)
-{
-	int i;
-	unsigned short palette_map[0x80];
-	int pal_base;
-
-	memset(palette_map,0,sizeof(palette_map));
-
-	for (i = 0;i < spriteram_size/2;i += 8)
-	{
-		int color;
-
-		color = 0x40 + (spriteram16[i+4] & 0x3f);
-		palette_map[color] |= 0xffff;
-	}
-
-	/* now build the final table */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (i = 0;i < sizeof(palette_map)/sizeof(palette_map[0]);i++)
-	{
-		int usage = palette_map[i],j;
-		if (usage)
-		{
-			for (j = 1; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[pal_base + i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 
 static void set_bg_page(int page,int value)
 {
@@ -421,13 +402,6 @@ void deniam_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(bg_tilemap,0,bg_scrolly & 0x0ff);
 	tilemap_set_scrollx(fg_tilemap,0,fg_scrollx & 0x1ff);
 	tilemap_set_scrolly(fg_tilemap,0,fg_scrolly & 0x0ff);
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-
-	palette_recalc();
 
 	fillbitmap(priority_bitmap,0,NULL);
 

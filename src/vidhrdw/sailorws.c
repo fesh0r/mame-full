@@ -80,7 +80,7 @@ WRITE_HANDLER( sailorws_palette_w )
 		g = (g | (g >> 4));
 		b = (b | (b >> 4));
 
-		palette_change_color((offset >> 1), r, g, b);
+		palette_set_color((offset >> 1), r, g, b);
 	}
 }
 
@@ -103,7 +103,7 @@ WRITE_HANDLER( mscoutm_palette_w )
 	g = mscoutm_palette[(0x100 + (offs_h * 0x300) + offs_l)];
 	b = mscoutm_palette[(0x200 + (offs_h * 0x300) + offs_l)];
 
-	palette_change_color(((offs_h * 0x100) + offs_l), r, g, b);
+	palette_set_color(((offs_h * 0x100) + offs_l), r, g, b);
 }
 
 /******************************************************************************
@@ -793,7 +793,7 @@ void sailorws_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	unsigned short color;
 
-	if (palette_recalc() || full_refresh || sailorws_screen_refresh)
+	if (full_refresh || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)
@@ -874,7 +874,7 @@ void mscoutm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	unsigned short color;
 
-	if (palette_recalc() || full_refresh || sailorws_screen_refresh)
+	if (full_refresh || sailorws_screen_refresh)
 	{
 		sailorws_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

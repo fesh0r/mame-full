@@ -85,9 +85,9 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void mjsikaku_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void seiha_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-void crystal2_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
+void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
 void mjsikaku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 int mjsikaku_vh_start(void);
 int secolove_vh_start(void);
@@ -1611,7 +1611,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			20000000/4,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1621,7 +1621,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1642,7 +1642,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV2( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1653,7 +1653,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			10000000/2,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1663,7 +1663,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1684,7 +1684,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV3( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1695,7 +1695,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			5000000/1,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1705,10 +1705,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	65536, 65536, \
+	65536, 0, \
 	seiha_init_palette, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
 	0, \
 	bijokkoy_vh_start, \
 	mjsikaku_vh_stop, \
@@ -1726,7 +1726,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV4( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1737,7 +1737,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			5000000/1,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1747,10 +1747,10 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	65536, 65536, \
+	65536, 0, \
 	seiha_init_palette, \
 \
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
 	0, \
 	seiha_vh_start, \
 	mjsikaku_vh_stop, \
@@ -1768,7 +1768,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV5( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1779,7 +1779,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			5000000/1,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1789,7 +1789,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	256, 256, \
+	256, 0, \
 	crystal2_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1810,7 +1810,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV6( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1821,7 +1821,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			CPU_Z80 | CPU_16BIT_PORT, \
 			10000000/2,		/* 5.00 MHz ? */ \
 			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, ##_intcnt_ \
+			nb1413m3_interrupt, _intcnt_ \
 		} \
 	}, \
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
@@ -1831,7 +1831,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -1852,7 +1852,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 			&dac_interface \
 		} \
 	}, \
-	##_nvram_ \
+	_nvram_ \
 };
 
 #define NBMJDRV7( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
@@ -1873,7 +1873,7 @@ static struct MachineDriver machine_driver_##_name_ = \
 	/* video hardware */ \
 	512, 256, { 0, 512-1, 15, 239-1 }, \
 	0, \
-	4096, 4096, \
+	4096, 0, \
 	mjsikaku_init_palette, \
 \
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
@@ -2272,20 +2272,20 @@ ROM_END
 
 
 //     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1988, mjsikaku,        0, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku (Japan set 1)", 0 )
-GAMEX( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0_16BIT, "Nichibutsu", "Mahjong Sikaku (Japan set 2)", 0 )
-GAMEX( 1988,  otonano,        0,  otonano,  otonano,  otonano, ROT0_16BIT, "Apple", "Otona no Mahjong (Japan)", 0 )
-GAMEX( 1988, mjcamera,        0, mjcamera, mjcamera, mjcamera, ROT0_16BIT, "MIKI SYOUJI", "Mahjong Camera Kozou (Japan)", 0 )
-GAMEX( 1986, secolove,        0, secolove, secolove, secolove, ROT0_16BIT, "Nichibutsu", "Second Love (Japan)", 0 )
-GAMEX( 1986, citylove,        0, citylove, citylove, citylove, ROT0_16BIT, "Nichibutsu", "City Love (Japan)", 0 )
-GAMEX( 1987,    seiha,        0,    seiha,    seiha,    seiha, ROT0_16BIT, "Nichibutsu", "Seiha (Japan)", 0 )
-GAMEX( 1987,   seiham,    seiha,   seiham,   seiham,   seiham, ROT0_16BIT, "Nichibutsu", "Seiha [BET] (Japan)", 0 )
-GAMEX( 1987,   iemoto,        0,   iemoto,   iemoto,   iemoto, ROT0_16BIT, "Nichibutsu", "Iemoto (Japan)", 0 )
-GAMEX( 1987,  ojousan,        0,  ojousan,  ojousan,  ojousan, ROT0_16BIT, "Nichibutsu", "Ojousan (Japan)", 0 )
-GAMEX( 1987, bijokkoy,        0, bijokkoy, bijokkoy, bijokkoy, ROT0_16BIT, "Nichibutsu", "Bijokko Yume Monogatari (Japan)", 0 )
-GAMEX( 1988, bijokkog,        0, bijokkog, bijokkog, bijokkog, ROT0_16BIT, "Nichibutsu", "Bijokko Gakuen (Japan)", 0 )
-GAMEX( 1987, housemnq,        0, housemnq, housemnq, housemnq, ROT0_16BIT, "Nichibutsu", "House Mannequin (Japan)", GAME_NOT_WORKING )
-GAMEX( 1987, housemn2,        0, housemn2, housemn2, housemn2, ROT0_16BIT, "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NOT_WORKING )
-GAMEX( 1988,   kaguya,        0,   kaguya,   kaguya,   kaguya, ROT0_16BIT, "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan)", 0 )
-GAMEX( 1986, crystal2,        0, crystal2, crystal2, crystal2,       ROT0, "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NOT_WORKING )
-GAMEX( 1986,  apparel,        0,  apparel,  apparel,  apparel,       ROT0, "Central Denshi", "Apparel Night (Japan)", 0 )
+GAME( 1988, mjsikaku, 0,        mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 1)" )
+GAME( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 2)" )
+GAME( 1988,  otonano, 0,         otonano,  otonano,  otonano, ROT0, "Apple", "Otona no Mahjong (Japan)" )
+GAME( 1988, mjcamera, 0,        mjcamera, mjcamera, mjcamera, ROT0, "MIKI SYOUJI", "Mahjong Camera Kozou (Japan)" )
+GAME( 1986, secolove, 0,        secolove, secolove, secolove, ROT0, "Nichibutsu", "Second Love (Japan)" )
+GAME( 1986, citylove, 0,        citylove, citylove, citylove, ROT0, "Nichibutsu", "City Love (Japan)" )
+GAME( 1987,    seiha, 0,           seiha,    seiha,    seiha, ROT0, "Nichibutsu", "Seiha (Japan)" )
+GAME( 1987,   seiham, seiha,      seiham,   seiham,   seiham, ROT0, "Nichibutsu", "Seiha [BET] (Japan)" )
+GAME( 1987,   iemoto, 0,          iemoto,   iemoto,   iemoto, ROT0, "Nichibutsu", "Iemoto (Japan)" )
+GAME( 1987,  ojousan, 0,         ojousan,  ojousan,  ojousan, ROT0, "Nichibutsu", "Ojousan (Japan)" )
+GAME( 1987, bijokkoy, 0,        bijokkoy, bijokkoy, bijokkoy, ROT0, "Nichibutsu", "Bijokko Yume Monogatari (Japan)" )
+GAME( 1988, bijokkog, 0,        bijokkog, bijokkog, bijokkog, ROT0, "Nichibutsu", "Bijokko Gakuen (Japan)" )
+GAMEX(1987, housemnq, 0,        housemnq, housemnq, housemnq, ROT0, "Nichibutsu", "House Mannequin (Japan)", GAME_NOT_WORKING )
+GAMEX(1987, housemn2, 0,        housemn2, housemn2, housemn2, ROT0, "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NOT_WORKING )
+GAME( 1988,   kaguya, 0,          kaguya,   kaguya,   kaguya, ROT0, "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan)" )
+GAMEX(1986, crystal2, 0,        crystal2, crystal2, crystal2, ROT0, "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NOT_WORKING )
+GAME( 1986,  apparel, 0,         apparel,  apparel,  apparel, ROT0, "Central Denshi", "Apparel Night (Japan)" )

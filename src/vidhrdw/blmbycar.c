@@ -54,7 +54,7 @@ WRITE16_HANDLER( blmbycar_palette_w )
 	g = (data >> 0) & 0xF;
 	r = (data >> 4) & 0xF;
 	b = (data >> 8) & 0xF;
-	palette_change_color( offset, r * 0x11, g * 0x11, b * 0x11 );
+	palette_set_color( offset, r * 0x11, g * 0x11, b * 0x11 );
 }
 
 
@@ -84,18 +84,26 @@ static void get_tile_info_0( int tile_index )
 {
 	data16_t code = blmbycar_vram_0[ tile_index * 2 + 0 ];
 	data16_t attr = blmbycar_vram_0[ tile_index * 2 + 1 ];
-	SET_TILE_INFO( 0 , code, attr & 0x1f );
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x1f,
+			TILE_FLIPYX((attr >> 6) & 3))
+
 	tile_info.priority = (attr >> 5) & 1;
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 );
 }
 
 static void get_tile_info_1( int tile_index )
 {
 	data16_t code = blmbycar_vram_1[ tile_index * 2 + 0 ];
 	data16_t attr = blmbycar_vram_1[ tile_index * 2 + 1 ];
-	SET_TILE_INFO( 0 , code, attr & 0x1f );
+	SET_TILE_INFO(
+			0,
+			code,
+			attr & 0x1f,
+			TILE_FLIPYX((attr >> 6) & 3))
+
 	tile_info.priority = (attr >> 5) & 1;
-	tile_info.flags = TILE_FLIPYX( (attr >> 6) & 3 );
 }
 
 
@@ -217,58 +225,6 @@ static void blmbycar_draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void blmbycar_mark_sprites_colors(void)
-{
-	int count = 0;
-	int i,col,colmask[0x10];
-
-	unsigned int *pen_usage	=	Machine->gfx[0]->pen_usage;
-	int total_elements		=	Machine->gfx[0]->total_elements;
-
-	int xmin = Machine->visible_area.min_x;
-	int xmax = Machine->visible_area.max_x;
-	int ymin = Machine->visible_area.min_y;
-	int ymax = Machine->visible_area.max_y;
-
-	data16_t *source, *finish;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	source = spriteram16 + 0x6/2;				// !
-	finish = spriteram16 + spriteram_size/2;
-
-	for ( ; source < finish; source += 8/2 )
-	{
-		int	y			=	source[0];
-		int	code		=	source[1] % total_elements;
-		int	color		=	source[2] & 0xf;
-		int	x			=	source[3];
-
-		if (y & 0x8000)	break;
-		if (x & 0x4000)	continue;	// ? To get rid of the "shadow" blocks
-
-		x	=	(x & 0x1ff) - 0x10;
-		y	=	0xf0 - ((y & 0xff)  - (y & 0x100));
-
-		if (((x+15) >= xmin) && (x <= xmax) &&
-			((y+15) >= ymin) && (y <= ymax))
-			colmask[color] |= pen_usage[code];
-	}
-
-	for (col = 0; col < 0x10; col++)
-	 for (i = 1; i < 16; i++)	// pen 0 is transparent
-	  if (colmask[col] & (1 << i))
-	  {	palette_used_colors[16 * col + i + 0x20 * 0x10] = PALETTE_COLOR_USED;
-		count++;	}
-
-#if 0
-{	char buf[80];
-	sprintf(buf,"%d",count);
-	usrintf_showmessage(buf);	}
-#endif
-}
-
-
 /***************************************************************************
 
 
@@ -300,20 +256,12 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	blmbycar_mark_sprites_colors();
-
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	if (layers_ctrl&1)
 		for (i = 0; i <= 1; i++)
 			tilemap_draw(bitmap, tilemap_0, i, i);
-	else	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl&2)
 		for (i = 0; i <= 1; i++)

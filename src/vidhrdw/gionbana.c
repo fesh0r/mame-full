@@ -61,7 +61,7 @@ WRITE_HANDLER( gionbana_palette_w )
 	g = (g | (g >> 4));
 	b = (b | (b >> 4));
 
-	palette_change_color((offset >> 1), r, g, b);
+	palette_set_color((offset >> 1), r, g, b);
 }
 
 READ_HANDLER( maiko_palette_r )
@@ -87,7 +87,7 @@ WRITE_HANDLER( maiko_palette_w )
 	g = (g | (g >> 4));
 	b = (b | (b >> 4));
 
-	palette_change_color((offset & 0x0ff), r, g, b);
+	palette_set_color((offset & 0x0ff), r, g, b);
 }
 
 /******************************************************************************
@@ -454,7 +454,7 @@ void gionbana_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	unsigned char color;
 
-	if (palette_recalc() || full_refresh || gionbana_screen_refresh)
+	if (full_refresh || gionbana_screen_refresh)
 	{
 		gionbana_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

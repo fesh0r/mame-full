@@ -110,7 +110,7 @@ WRITE_HANDLER( irobot_paletteram_w )
     g = 12 * bits * intensity;
     bits = (color >> 7) & 0x03;
     r = 12 * bits * intensity;
-    palette_change_color((offset >> 1) & 0x3F,r,g,b);
+    palette_set_color((offset >> 1) & 0x3F,r,g,b);
 }
 
 
@@ -394,10 +394,6 @@ void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	UINT8 *bitmap_base = irobot_bufsel ? polybitmap1 : polybitmap2;
 	int x, y, offs;
-
-	logerror("Screen Refresh\n");
-
-	palette_recalc();
 
 	/* copy the polygon bitmap */
 	for (y = Machine->visible_area.min_y; y < Machine->visible_area.max_y; y++)

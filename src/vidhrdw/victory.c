@@ -230,7 +230,7 @@ WRITE_HANDLER( victory_paletteram_w )
 	blue  = (blue << 5)  | (blue << 2)  | (blue >> 1);
 
 	/* set the color */
-	palette_change_color(offset & 0x3f, red, green, blue);
+	palette_set_color(offset & 0x3f, red, green, blue);
 }
 
 
@@ -1271,9 +1271,6 @@ void victory_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int bgcollmask = (video_control & 4) ? 4 : 7;
 	int count = 0;
 	int x, y;
-
-	/* recalc the palette */
-	palette_recalc();
 
 	/* update the foreground & background */
 	update_foreground();

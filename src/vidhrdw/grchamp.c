@@ -101,19 +101,31 @@ WRITE_HANDLER( grchamp_videoram_w )
 static void get_bg0_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset];
-	SET_TILE_INFO(1,tile_number,palette_bank)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			palette_bank,
+			0)
 }
 
 static void get_bg1_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset+0x800]+256;
-	SET_TILE_INFO(1,tile_number,palette_bank)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			palette_bank,
+			0)
 }
 
 static void get_bg2_tile_info( int offset )
 {
 	int tile_number = grchamp_videoram[offset+0x800*2]+256*2;
-	SET_TILE_INFO(1,tile_number,0)
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			0,
+			0)
 }
 
 static UINT32 get_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
@@ -202,9 +214,6 @@ static void draw_background( struct osd_bitmap *bitmap )
 	tilemap_set_scrolly( tilemap[1], 0, dy - grchamp_vreg1[0x7] );
 	tilemap_set_scrollx( tilemap[2], 0, dx-(grchamp_vreg1[0x9]+ ((attributes&0x20)?256:(grchamp_vreg1[0xa]*256))));
 	tilemap_set_scrolly( tilemap[2], 0, dy - grchamp_vreg1[0xb] );
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,tilemap[0],0,0);
 	tilemap_draw(bitmap,tilemap[1],0,0);

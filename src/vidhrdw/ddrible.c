@@ -86,8 +86,11 @@ static void get_fg_tile_info(int tile_index)
 	unsigned char attr = ddrible_fg_videoram[tile_index];
 	int num = ddrible_fg_videoram[tile_index + 0x400] +
 			((attr & 0xc0) << 2) + ((attr & 0x20) << 5) + ((charbank[0] & 2) << 10);
-	SET_TILE_INFO(0,num,0);
-	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
+	SET_TILE_INFO(
+			0,
+			num,
+			0,
+			TILE_FLIPYX((attr & 0x30) >> 4))
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -95,8 +98,11 @@ static void get_bg_tile_info(int tile_index)
 	unsigned char attr = ddrible_bg_videoram[tile_index];
 	int num = ddrible_bg_videoram[tile_index + 0x400] +
 			((attr & 0xc0) << 2) + ((attr & 0x20) << 5) + (charbank[1] << 11);
-	SET_TILE_INFO(1,num,0);
-	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4);
+	SET_TILE_INFO(
+			1,
+			num,
+			0,
+			TILE_FLIPYX((attr & 0x30) >> 4))
 }
 
 /***************************************************************************
@@ -244,10 +250,6 @@ void ddrible_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	tilemap_set_scrollx(bg_tilemap,0,ddribble_vregs[1][1] | ((ddribble_vregs[1][2] & 0x01) << 8));
 	tilemap_set_scrolly(fg_tilemap,0,ddribble_vregs[0][0]);
 	tilemap_set_scrolly(bg_tilemap,0,ddribble_vregs[1][0]);
-
-	tilemap_update( ALL_TILEMAPS );
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	ddribble_draw_sprites(bitmap,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);

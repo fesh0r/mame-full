@@ -82,7 +82,11 @@ static void get_tile_info_bg(int tile_index)
 	unsigned char code = skykid_videoram[tile_index];
 	unsigned char attr = skykid_videoram[tile_index+0x800];
 
-	SET_TILE_INFO(1, code + 256*(attr & 0x01),((attr & 0x7e) >> 1) | ((attr & 0x01) << 6));
+	SET_TILE_INFO(
+			1,
+			code + 256*(attr & 0x01),
+			((attr & 0x7e) >> 1) | ((attr & 0x01) << 6),
+			0)
 }
 
 /***************************************************************************
@@ -215,10 +219,6 @@ static void skykid_draw_sprites(struct osd_bitmap *bitmap)
 void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,background,0,0);
 	if ((priority & 0xf0) != 0x50)

@@ -4010,11 +4010,6 @@ static void take_interrupt(void)
 					/* JP $xxxx + 2 cycles */
 					Z80.extra_cycles += cc[Z80_TABLE_op][0xc3] + cc[Z80_TABLE_ex][0xff];
 					break;
-				case 0x000000:        /* NOP */
-				    /* pc 8801 disk emulation */
-					/* NOP + 2 cycles */
-					Z80.extra_cycles += cc[Z80_TABLE_op][0] + cc[Z80_TABLE_ex][0xff];
-					break;
 				default:		/* rst (or other opcodes?) */
 					PUSH( PC );
 					_PCD = irq_vector & 0x0038;

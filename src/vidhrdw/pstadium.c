@@ -61,7 +61,7 @@ WRITE_HANDLER( pstadium_palette_w )
 	g = (g | (g >> 4));
 	b = (b | (b >> 4));
 
-	palette_change_color((offset >> 1), r, g, b);
+	palette_set_color((offset >> 1), r, g, b);
 }
 
 WRITE_HANDLER( galkoku_palette_w )
@@ -82,7 +82,7 @@ WRITE_HANDLER( galkoku_palette_w )
 	g = (g | (g >> 4));
 	b = (b | (b >> 4));
 
-	palette_change_color((offset >> 1), r, g, b);
+	palette_set_color((offset >> 1), r, g, b);
 }
 
 WRITE_HANDLER( galkaika_palette_w )
@@ -103,7 +103,7 @@ WRITE_HANDLER( galkaika_palette_w )
 	g = ((g << 3) | (g >> 2));
 	b = ((b << 3) | (b >> 2));
 
-	palette_change_color((offset / 2), r, g, b);
+	palette_set_color((offset / 2), r, g, b);
 }
 
 /******************************************************************************
@@ -394,7 +394,7 @@ void pstadium_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	int color;
 
-	if (palette_recalc() || full_refresh || pstadium_screen_refresh)
+	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)
@@ -425,7 +425,7 @@ void galkoku_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int x, y;
 	int color;
 
-	if (palette_recalc() || full_refresh || pstadium_screen_refresh)
+	if (full_refresh || pstadium_screen_refresh)
 	{
 		pstadium_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

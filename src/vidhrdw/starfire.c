@@ -113,7 +113,7 @@ WRITE_HANDLER( starfire_colorram_w )
 		r = (r << 5) | (r << 2) | (r >> 1);
 		b = (b << 5) | (b << 2) | (b >> 1);
 		g = (g << 5) | (g << 2) | (g >> 1);
-		palette_change_color(palette_index, r, g, b);
+		palette_set_color(palette_index, r, g, b);
 	}
 
 	/* handle writes to the rest of color RAM */
@@ -302,9 +302,6 @@ void starfire_video_update(int scanline, int count)
 
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* update the palette */
-	palette_recalc();
-
 	/* copy the bitmap, remapping the colors */
 	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }

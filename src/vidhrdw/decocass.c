@@ -96,21 +96,32 @@ static UINT32 bgvideoram_scan_cols( UINT32 col, UINT32 row, UINT32 num_cols, UIN
 static void get_bg_l_tile_info(int tile_index)
 {
 	int color = (color_center_bot >> 7) & 1;
-	SET_TILE_INFO(2, (0x80 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4, color)
+	SET_TILE_INFO(
+			2,
+			(0x80 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4,
+			color,
+			0)
 }
 
 static void get_bg_r_tile_info(int tile_index)
 {
 	int color = (color_center_bot >> 7) & 1;
-	SET_TILE_INFO(2, (0x00 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4, color)
-	tile_info.flags = TILE_FLIPY;
+	SET_TILE_INFO(
+			2,
+			(0x00 == (tile_index & 0x80)) ? 16 : decocass_bgvideoram[tile_index] >> 4,
+			color,
+			TILE_FLIPY)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char code = decocass_fgvideoram[tile_index];
 	unsigned char attr = decocass_colorram[tile_index];
-	SET_TILE_INFO(0, 256 * (attr & 3) + code, color_center_bot & 1)
+	SET_TILE_INFO(
+			0,
+			256 * (attr & 3) + code,
+			color_center_bot & 1,
+			0)
 }
 
 /********************************************
@@ -642,21 +653,6 @@ void decocass_vh_stop (void)
 	sprite_dirty = NULL;
 }
 
-static void setup_palette(int full_refresh)
-{
-#if 0
-	int color;
-
-	palette_init_used_colors();
-	palette_used_colors[0] = PALETTE_COLOR_TRANSPARENT;
-	for (color = 1; color < 32; color++)
-		palette_used_colors[color] = PALETTE_COLOR_USED;
-#endif
-
-	if (palette_recalc() || full_refresh)
-		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
-}
-
 void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int scrollx, scrolly_l, scrolly_r;
@@ -685,7 +681,7 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			(tape_dir > 0 && tape_speed) ? '>' : ' ');
 	}
 #endif
-#if MAME_DEBUG
+#ifdef MAME_DEBUG
 	{
 		static int showmsg;
 		if (code_pressed_memory(KEYCODE_I))
@@ -704,7 +700,6 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				center_v_shift);
 	}
 #endif
-	setup_palette( full_refresh );
 
 	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
 
@@ -733,8 +728,6 @@ void decocass_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_scrollx( bg_tilemap_r, 0, scrollx );
 	tilemap_set_scrolly( bg_tilemap_r, 0, scrolly_r );
-
-	tilemap_update( ALL_TILEMAPS );
 
 	if (mode_set & 0x20)
 	{

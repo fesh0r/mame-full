@@ -91,7 +91,11 @@ static void get_fg_tile_info(int tile_index)
 
 	code = vulgus_fgvideoram[tile_index];
 	color = vulgus_fgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f);
+	SET_TILE_INFO(
+			0,
+			code + ((color & 0x80) << 1),
+			color & 0x3f,
+			0)
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -100,8 +104,11 @@ static void get_bg_tile_info(int tile_index)
 
 	code = vulgus_bgvideoram[tile_index];
 	color = vulgus_bgvideoram[tile_index + 0x400];
-	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * vulgus_palette_bank));
-	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
+	SET_TILE_INFO(
+			1,
+			code + ((color & 0x80) << 1),
+			(color & 0x1f) + (0x20 * vulgus_palette_bank),
+			TILE_FLIPYX((color & 0x60) >> 5))
 }
 
 
@@ -221,8 +228,6 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	tilemap_set_scrollx(bg_tilemap, 0, vulgus_scroll_low[1] + 256 * vulgus_scroll_high[1]);
 	tilemap_set_scrolly(bg_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
-
-	tilemap_update(ALL_TILEMAPS);
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

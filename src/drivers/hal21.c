@@ -49,36 +49,35 @@ void aso_vh_stop( void ){
 }
 
 
-void aso_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
+void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+{
 	int i;
 	int num_colors = 1024;
 /* palette format is RRRG GGBB B??? the three unknown bits are used but */
 /* I'm not sure how, I'm currently using them as least significant bit but */
 /* that's most likely wrong. */
 	for( i=0; i<num_colors; i++ ){
-		int bit0=0,bit1,bit2,bit3;
+		int bit0=0,bit1,bit2,bit3,r,g,b;
 
-		colortable[i] = i;
+		bit0 = (color_prom[i + 2*num_colors] >> 2) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[2*num_colors] >> 2) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*num_colors] >> 1) & 0x01;
+		bit1 = (color_prom[i + num_colors] >> 2) & 0x01;
+		bit2 = (color_prom[i + num_colors] >> 3) & 0x01;
+		bit3 = (color_prom[i] >> 0) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[2*num_colors] >> 1) & 0x01;
-		bit1 = (color_prom[num_colors] >> 2) & 0x01;
-		bit2 = (color_prom[num_colors] >> 3) & 0x01;
-		bit3 = (color_prom[0] >> 0) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*num_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*num_colors] >> 3) & 0x01;
+		bit2 = (color_prom[i + num_colors] >> 0) & 0x01;
+		bit3 = (color_prom[i + num_colors] >> 1) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[2*num_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*num_colors] >> 3) & 0x01;
-		bit2 = (color_prom[num_colors] >> 0) & 0x01;
-		bit3 = (color_prom[num_colors] >> 1) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -666,7 +665,7 @@ static const struct MachineDriver machine_driver_aso =
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 
 	aso_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -713,7 +712,7 @@ static const struct MachineDriver machine_driver_hal21 = {
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
 	aso_gfxdecodeinfo,
-	1024,1024,
+	1024, 0,
 	aso_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -840,6 +839,6 @@ ROM_END
 
 
 
-GAMEX( 1985, aso,    0,     aso,   aso,   0, ROT270_16BIT, "SNK", "ASO - Armored Scrum Object", GAME_IMPERFECT_SOUND )
-GAMEX( 1985, hal21,  0,     hal21, hal21, 0, ROT270_16BIT, "SNK", "HAL21", GAME_NO_SOUND | GAME_WRONG_COLORS )
-GAMEX( 1985, hal21j, hal21, hal21, hal21, 0, ROT270_16BIT, "SNK", "HAL21 (Japan)", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1985, aso,    0,     aso,   aso,   0, ROT270, "SNK", "ASO - Armored Scrum Object", GAME_IMPERFECT_SOUND )
+GAMEX( 1985, hal21,  0,     hal21, hal21, 0, ROT270, "SNK", "HAL21", GAME_NO_SOUND | GAME_WRONG_COLORS )
+GAMEX( 1985, hal21j, hal21, hal21, hal21, 0, ROT270, "SNK", "HAL21 (Japan)", GAME_NO_SOUND | GAME_WRONG_COLORS )

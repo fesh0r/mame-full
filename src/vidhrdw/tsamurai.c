@@ -81,7 +81,11 @@ static void get_bg_tile_info(int tile_index)
 	int tile_number = tsamurai_videoram[2*tile_index];
 	tile_number += (( attributes & 0xc0 ) >> 6 ) * 256;	 /* legacy */
 	tile_number += (( attributes & 0x20 ) >> 5 ) * 1024; /* Mission 660 add-on*/
-	SET_TILE_INFO(0,tile_number,attributes & 0x1f)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			attributes & 0x1f,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
@@ -89,7 +93,11 @@ static void get_fg_tile_info(int tile_index)
 	int tile_number = videoram[tile_index];
 	if (textbank1 & 0x01) tile_number += 256; /* legacy */
 	if (textbank2 & 0x01) tile_number += 512; /* Mission 660 add-on */
-	SET_TILE_INFO(1,tile_number,colorram[((tile_index&0x1f)*2)+1] & 0x1f )
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			colorram[((tile_index&0x1f)*2)+1] & 0x1f,
+			0)
 }
 
 
@@ -247,8 +255,6 @@ void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	}
 /* end of column scroll code */
 
-	tilemap_update( ALL_TILEMAPS );
-
 	/*
 		This following isn't particularly efficient.  We'd be better off to
 		dynamically change every 8th palette to the background color, so we
@@ -285,7 +291,11 @@ static void get_vsgongf_tile_info(int tile_index)
 	int tile_number = videoram[tile_index];
 	int color = vsgongf_color&0x1f;
 	if( textbank1 ) tile_number += 0x100;
-	SET_TILE_INFO(1,tile_number,color )
+	SET_TILE_INFO(
+			1,
+			tile_number,
+			color,
+			0)
 }
 
 int vsgongf_vh_start(void)
@@ -305,7 +315,6 @@ void vsgongf_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 		tilemap_mark_all_tiles_dirty( foreground );
 	}
 
-	tilemap_update( ALL_TILEMAPS );
 	tilemap_draw(bitmap,foreground,0,0);
 	draw_sprites(bitmap);
 }

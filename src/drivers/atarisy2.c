@@ -126,6 +126,7 @@
 #include "driver.h"
 #include "cpu/t11/t11.h"
 #include "machine/atarigen.h"
+#include "slapstic.h"
 
 
 
@@ -1201,10 +1202,10 @@ static const struct MachineDriver machine_driver_paperboy =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,
@@ -1256,10 +1257,10 @@ static const struct MachineDriver machine_driver_a720 =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,
@@ -1311,10 +1312,10 @@ static const struct MachineDriver machine_driver_sprint =
 	/* video hardware */
 	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
 	gfxdecodeinfo,
-	256,256,
+	256, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarisys2_vh_start,
 	atarisys2_vh_stop,

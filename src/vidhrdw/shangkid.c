@@ -8,42 +8,33 @@ static struct tilemap *background;
 UINT8 *shangkid_videoreg;
 int shangkid_gfx_type;
 
-void shangkid_vh_convert_color_prom( unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom )
+void shangkid_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
-	int bit0,bit1,bit2,bit3;
-	int bit4,bit5,bit6;
 
 	for( i = 0; i<256; i++ )
 	{
-		colortable[i] = i;
-		bit4 = (color_prom[0x300+i]>>2)&0x01;
-		bit5 = (color_prom[0x300+i]>>1)&0x01;
-		bit6 = (color_prom[0x300+i]>>0)&0x01;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		bit0 = (color_prom[0x000+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x000+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x000+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x000+i] >> 3) & 0x01;
-		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
-			bit4*0x08+bit5+0x04+bit6*0x02;
-//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[0x100+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x100+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x100+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x100+i] >> 3) & 0x01;
-		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
-			bit4*0x08+bit5+0x04+bit6*0x02;
-//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[0x200+i] >> 0) & 0x01;
 		bit1 = (color_prom[0x200+i] >> 1) & 0x01;
 		bit2 = (color_prom[0x200+i] >> 2) & 0x01;
 		bit3 = (color_prom[0x200+i] >> 3) & 0x01;
-		*palette++ = bit3*0x80+bit2*0x40+bit1*0x20+bit0*0x10+
-			bit4*0x08+bit5+0x04+bit6*0x02;
-//		*(palette++) = (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3)*intensity/7;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -61,8 +52,11 @@ static void get_bg_tile_info(int tile_index){
 		*/
 		color = attributes>>3;
 		color = (color&0x03)|((color&0x1c)<<1);
-		SET_TILE_INFO(0,tile_number,color )
-		tile_info.flags = (attributes&0x04)?TILE_FLIPX:0;
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				color,
+				(attributes&0x04)?TILE_FLIPX:0)
 	}
 	else
 	{
@@ -72,8 +66,11 @@ static void get_bg_tile_info(int tile_index){
 			x-------	flipx?
 		*/
 		color = (attributes>>2)&0x1f;
-		SET_TILE_INFO(0,tile_number,color )
-		tile_info.flags = (attributes&0x80)?TILE_FLIPX:0;
+		SET_TILE_INFO(
+				0,
+				tile_number,
+				color,
+				(attributes&0x80)?TILE_FLIPX:0)
 	}
 
 	tile_info.priority =
@@ -210,8 +207,7 @@ void shangkid_screenrefresh( struct osd_bitmap *bitmap, int fullfresh )
 	tilemap_set_flip( background, flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
 	tilemap_set_scrollx( background,0,shangkid_videoreg[0]-40 );
 	tilemap_set_scrolly( background,0,shangkid_videoreg[2]+0x10 );
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
+
 	tilemap_draw( bitmap,background,0,0 );
 	draw_sprites( bitmap );
 	tilemap_draw( bitmap,background,1,0 ); /* high priority tiles */

@@ -126,6 +126,11 @@ int run_game (int game);
 int updatescreen(void);
 void draw_screen(void);
 
+/* automatically-freeing memory */
+void *auto_malloc(size_t size);
+void auto_malloc_start(void);
+void auto_malloc_stop(void);
+
 /* next time vh_screenrefresh is called, full_refresh will be true,
    thus requesting a redraw of the entire screen */
 void schedule_full_refresh(void);

@@ -53,7 +53,7 @@ static SEGAR_VID_STRUCT sv;
   that can be filled with bytes of the form BBGGGRRR.  We'll still build up
   an initial palette, and set our colortable to point to a different color
   for each entry in the colortable, which we'll adjust later using
-  palette_change_color.
+  palette_set_color.
 
 ***************************************************************************/
 
@@ -152,7 +152,7 @@ WRITE_HANDLER( segar_colortable_w )
 		g = grn[(data & 0x38) >> 3];
 		r = red[(data & 0x07)];
 
-		palette_change_color(offset+1,r,g,b);
+		palette_set_color(offset+1,r,g,b);
 
 		if (data == 0)
 			Machine->gfx[0]->colortable[offset] = Machine->pens[0];
@@ -193,7 +193,7 @@ WRITE_HANDLER( segar_bcolortable_w )
 		g = grn[(data & 0x38) >> 3];
 		r = red[(data & 0x07)];
 
-		palette_change_color(offset+0x40+1,r,g,b);
+		palette_set_color(offset+0x40+1,r,g,b);
 	}
 
 	// Needed to pass the self-tests
@@ -287,7 +287,7 @@ static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_tra
 ***************************************************************************/
 void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_NONE);
@@ -434,7 +434,7 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	// scenes 0,1 are horiz.  scenes 2,3 are vert.
@@ -595,7 +595,7 @@ void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;
@@ -771,7 +771,7 @@ void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;

@@ -231,7 +231,7 @@ void ttmahjng_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	if (palette_recalc() || full_refresh || video_remap_1 || video_remap_2)
+	if (full_refresh || video_remap_1 || video_remap_2)
 	{
 		int offs;
 
@@ -264,5 +264,5 @@ static void modify_pen(int pen, int colorindex)
 	g = ((color & 2) ? 0xff : 0x00);
 	r = ((color & 4) ? 0xff : 0x00);
 
-	palette_change_color(pen,r,g,b);
+	palette_set_color(pen,r,g,b);
 }

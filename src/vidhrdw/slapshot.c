@@ -1,9 +1,13 @@
 #include "driver.h"
+#include "state.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
 #define TC0480SCP_GFX_NUM 1
 #define TC0100SCN_GFX_NUM 1
+
+extern UINT8 TC0360PRI_regs[16];
+void slapshot_vh_stop(void);
 
 struct tempsprite
 {
@@ -16,20 +20,16 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-static int taito_hide_pixels;
-
-extern UINT8 TC0360PRI_regs[16];
-extern int TC0480SCP_pri_reg;
-
-static int spritebank[8];
-
 static int sprites_disabled,sprites_active_area,sprites_master_scrollx,sprites_master_scrolly;
 static int sprites_flipscreen = 0;
 static data16_t *spriteram_buffered,*spriteram_delayed;
 
+int taito_sprite_type = 0;
 data16_t *taito_sprite_ext;
 size_t taito_spriteext_size;
-UINT8 taito_sprite_type = 0;
+static UINT16 spritebank[8];
+
+static int taito_hide_pixels;
 
 /**********************************************************/
 
@@ -60,6 +60,8 @@ static int has_TC0480SCP(void)
 
 int slapshot_core_vh_start (void)
 {
+	int i;
+
 	spriteram_delayed = malloc(spriteram_size);
 	spriteram_buffered = malloc(spriteram_size);
 	spritelist = malloc(0x400 * sizeof(*spritelist));
@@ -70,23 +72,35 @@ int slapshot_core_vh_start (void)
 	if (has_TC0480SCP())	/* it's a tc0480scp game */
 	{
 		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,30,9,-1,1,0,2,256))
+		{
+			slapshot_vh_stop();
 			return 1;
+		}
 	}
 	else	/* it's a tc0100scn game */
 	{
-		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+		{
+			slapshot_vh_stop();
 			return 1;
+		}
 	}
 
-	{
-		int i;
+	TC0360PRI_vh_start();	/* Purely for save-state purposes */
 
-		for (i = 0; i < 8; i ++)
-			spritebank[i] = 0x400 * i;
-	}
+	for (i = 0; i < 8; i ++)
+		spritebank[i] = 0x400 * i;
 
 	sprites_disabled = 1;
 	sprites_active_area = 0;
+
+	state_save_register_int   ("main1", 0, "control", &taito_hide_pixels);
+	state_save_register_int   ("main2", 0, "control", &taito_sprite_type);
+	state_save_register_UINT16("main3", 0, "control", spritebank, 8);
+	state_save_register_int   ("main5", 0, "control", &sprites_disabled);
+	state_save_register_int   ("main6", 0, "control", &sprites_active_area);
+	state_save_register_UINT16("main7", 0, "memory", spriteram_delayed, spriteram_size/2);
+	state_save_register_UINT16("main8", 0, "memory", spriteram_buffered, spriteram_size/2);
 
 	return 0;
 }
@@ -114,132 +128,6 @@ void slapshot_vh_stop (void)
 	else
 	{
 		TC0100SCN_vh_stop();
-	}
-}
-
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-// none //
-
-
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-void slapshot_update_palette (void)
-{
-	int i, area;
-	int off,extoffs,code,color;
-	int spritecont,big_sprite=0,last_continuation_tile=0;
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	unsigned short palette_map[256];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	color = 0;
-	area = sprites_active_area;
-
-	/* Sprites */
-	for (off = 0;off < 0x4000;off += 16)
-	{
-		/* sprites_active_area may change during processing */
-		int offs = off + area;
-
-		if (spriteram_buffered[(offs+6)/2] & 0x8000)
-		{
-			area = 0x8000 * (spriteram_buffered[(offs+10)/2] & 0x0001);
-			continue;
-		}
-
-		spritecont = (spriteram_buffered[(offs+8)/2] & 0xff00) >> 8;
-
-		if (spritecont & 0x8)
-		{
-			big_sprite = 1;
-		}
-		else if (big_sprite)
-		{
-			last_continuation_tile = 1;
-		}
-
-		code = 0;
-		extoffs = offs;
-		if (extoffs >= 0x8000) extoffs -= 0x4000;   /* spriteram[0x4000-7fff] has no corresponding extension area */
-
-		if (taito_sprite_type == 0)
-		{
-			code = spriteram_buffered[offs/2] & 0x1fff;
-			{
-				int bank;
-
-				bank = (code & 0x1c00) >> 10;
-				code = spritebank[bank] + (code & 0x3ff);
-			}
-		}
-
-		if (taito_sprite_type == 1)   /* Yuyugogo */
-		{
-			code = spriteram_buffered[offs/2] & 0x3ff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0x3f ) << 10;
-			code = (i | code);
-		}
-
-		if (taito_sprite_type == 2)   /* Pulirula, Slapshot */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0xff00 );
-			code = (i | code);
-		}
-
-		if (taito_sprite_type == 3)   /* Dinorex and a few F2 quizzes */
-		{
-			code = spriteram_buffered[offs/2] & 0xff;
-			i = (taito_sprite_ext[(extoffs >> 4)] & 0xff ) << 8;
-			code = (i | code);
-		}
-
-		if ((spritecont & 0x04) == 0)
-			color = spriteram_buffered[(offs+8)/2] & 0x00ff;
-
-		if (last_continuation_tile)
-		{
-			big_sprite=0;
-			last_continuation_tile=0;
-		}
-
-		if (!code) continue;   /* tilenum is 0, so ignore it */
-
-		if (Machine->gfx[0]->color_granularity == 64)	/* Final Blow, Slapshot are 6bpp */
-		{
-			color &= ~3;
-			palette_map[color+0] |= 0xffff;
-			palette_map[color+1] |= 0xffff;
-			palette_map[color+2] |= 0xffff;
-			palette_map[color+3] |= 0xffff;
-		}
-		else
-		{
-			code &= tile_mask;
-			palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-		}
-	}
-
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-		int j;
-
-		if (usage)
-		{
-			for (j = 0; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
 	}
 }
 
@@ -739,19 +627,6 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	palette_init_used_colors();
-	slapshot_update_palette();
-
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	{
-		int i;
-
-		/* fix TC0480SCP transparency, but this could compromise the background color */
-		for (i = 0;i < Machine->drv->total_colors;i += 16)
-			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
-	}
-	palette_recalc();
-
 	priority = TC0480SCP_get_bg_priority();
 
 	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
@@ -821,12 +696,5 @@ void slapshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (dislayer[layer[4]]==0)
 #endif
 	TC0480SCP_tilemap_draw(bitmap,layer[4],0,0);
-
-#if 0
-	/* show priority ctrl reg */
-	sprintf (buf, "%04x", TC0480SCP_pri_reg );
-	ui_text (Machine->scrbitmap, buf, 0, 0);
-#endif
 }
-
 

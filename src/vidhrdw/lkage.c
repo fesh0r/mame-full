@@ -54,17 +54,29 @@ WRITE_HANDLER( lkage_videoram_w )
 
 static void get_bg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(0,videoram[tile_index + 0x800] + 256 * (bg_tile_bank?5:1),0);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index + 0x800] + 256 * (bg_tile_bank?5:1),
+			0,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
-	SET_TILE_INFO(0,videoram[tile_index + 0x400] + 256 * (fg_tile_bank?1:0),1);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index + 0x400] + 256 * (fg_tile_bank?1:0),
+			1,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
-	SET_TILE_INFO(0,videoram[tile_index],2);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index],
+			2,
+			0)
 }
 
 int lkage_vh_start(void)
@@ -158,7 +170,7 @@ void lkage_set_palette_row( int virtual_row, int logical_row, int len )
 	{
 		unsigned char greenblue = *source++;
 		unsigned char red = *source++;
-		palette_change_color( indx++,
+		palette_set_color( indx++,
 			(red&0xf)*0x11,
 			(greenblue>>4)*0x11,
 			(greenblue&0xf)*0x11
@@ -196,9 +208,6 @@ void lkage_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_set_scrolly(fg_tilemap,0,lkage_scroll[3]);
 	tilemap_set_scrollx(bg_tilemap,0,lkage_scroll[4]);
 	tilemap_set_scrolly(bg_tilemap,0,lkage_scroll[5]);
-
-	tilemap_update( ALL_TILEMAPS );
-	palette_recalc();
 
 	if ((lkage_vreg[2] & 0xf0) == 0xf0)
 	{

@@ -22,7 +22,7 @@ void ddragon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( ddragon_bgvideoram_w );
 WRITE_HANDLER( ddragon_fgvideoram_w );
 extern unsigned char *ddragon_spriteram;
-extern int dd2_video;
+extern int technos_video_hw;
 /* end of extern code & data */
 
 /* private globals */
@@ -36,7 +36,7 @@ static void ddragon_init_machine( void )
 	sprite_irq = HD63701_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
 	ym_irq = M6809_FIRQ_LINE;
-	dd2_video = 0;
+	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
@@ -46,7 +46,7 @@ static void ddragonb_init_machine( void )
 	sprite_irq = M6809_INT_NMI;
 	sound_irq = M6809_INT_IRQ;
 	ym_irq = M6809_FIRQ_LINE;
-	dd2_video = 0;
+	technos_video_hw = 0;
 	dd_sub_cpu_busy = 0x10;
 	adpcm_idle[0] = adpcm_idle[1] = 1;
 }
@@ -56,7 +56,7 @@ static void ddragon2_init_machine( void )
 	sprite_irq = Z80_NMI_INT;
 	sound_irq = Z80_NMI_INT;
 	ym_irq = 0;
-	dd2_video = 1;
+	technos_video_hw = 2;
 	dd_sub_cpu_busy = 0x10;
 }
 
@@ -331,9 +331,9 @@ MEMORY_END
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) ) \
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) ) \
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) ) \
-	PORT_DIPNAME( 0x40, 0x40, "Screen Orientation?" ) \
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) ) \
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) ) \
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) ) \
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) ) \
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -342,57 +342,57 @@ MEMORY_END
 INPUT_PORTS_START( ddragon )
 	COMMON_INPUT_PORTS
 
-    PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x02, "Easy")
-    PORT_DIPSETTING(    0x03, "Normal")
-    PORT_DIPSETTING(    0x01, "Hard")
-    PORT_DIPSETTING(    0x00, "Very Hard")
-    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-    PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
-    PORT_DIPSETTING(    0x10, "20k")
-    PORT_DIPSETTING(    0x00, "40k" )
-    PORT_DIPSETTING(    0x30, "30k and every 60k")
-    PORT_DIPSETTING(    0x20, "40k and every 80k" )
-    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-    PORT_DIPSETTING(    0xc0, "2")
-    PORT_DIPSETTING(    0x80, "3" )
-    PORT_DIPSETTING(    0x40, "4")
-    PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "20k" )
+	PORT_DIPSETTING(    0x00, "40k" )
+	PORT_DIPSETTING(    0x30, "30k and every 60k" )
+	PORT_DIPSETTING(    0x20, "40k and every 80k" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0xc0, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 
-    COMMON_PORT4
+	COMMON_PORT4
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ddragon2 )
 	COMMON_INPUT_PORTS
 
 	PORT_START      /* DSW1 */
-    PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
-    PORT_DIPSETTING(    0x02, "Easy")
-    PORT_DIPSETTING(    0x03, "Normal")
-    PORT_DIPSETTING(    0x01, "Medium")
-    PORT_DIPSETTING(    0x00, "Hard")
-    PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
-    PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-    PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-    PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick" )
-    PORT_DIPSETTING(    0x00, "Easy" )
-    PORT_DIPSETTING(    0x08, "Normal" )
-    PORT_DIPNAME( 0x30, 0x30, "Timer" )
-    PORT_DIPSETTING(    0x00, "60" )
-    PORT_DIPSETTING(    0x10, "65" )
-    PORT_DIPSETTING(    0x30, "70" )
-    PORT_DIPSETTING(    0x20, "80" )
-    PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-    PORT_DIPSETTING(    0xc0, "1" )
-    PORT_DIPSETTING(    0x80, "2" )
-    PORT_DIPSETTING(    0x40, "3" )
-    PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Hurricane Kick" )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Normal" )
+	PORT_DIPNAME( 0x30, 0x30, "Timer" )
+	PORT_DIPSETTING(    0x00, "60" )
+	PORT_DIPSETTING(    0x10, "65" )
+	PORT_DIPSETTING(    0x30, "70" )
+	PORT_DIPSETTING(    0x20, "80" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0xc0, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
 
 	COMMON_PORT4
 INPUT_PORTS_END
@@ -454,7 +454,7 @@ static struct MSM5205interface msm5205_interface =
 	2,					/* 2 chips             */
 	384000,				/* 384KHz             */
 	{ dd_adpcm_int, dd_adpcm_int },/* interrupt function */
-	{ MSM5205_S48_4B, MSM5205_S64_4B },	/* 8kHz and 6kHz      */
+	{ MSM5205_S48_4B, MSM5205_S48_4B },	/* 8kHz */
 	{ 40, 40 }				/* volume */
 };
 
@@ -470,7 +470,7 @@ static int ddragon_interrupt(void)
 {
     cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
     cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
-    return M6809_INT_NONE;
+    return ignore_interrupt();
 }
 
 
@@ -505,9 +505,9 @@ static const struct MachineDriver machine_driver_ddragon =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,
@@ -557,9 +557,9 @@ static const struct MachineDriver machine_driver_ddragonb =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,
@@ -609,10 +609,10 @@ static const struct MachineDriver machine_driver_ddragon2 =
 	/* video hardware */
 	32*8, 32*8,{ 1*8, 31*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	384, 384,
+	384, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ddragon_vh_start,
 	0,

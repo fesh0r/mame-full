@@ -191,14 +191,14 @@ static void namcos1_palette_refresh(int start,int offset,int num)
 		r = namcos1_paletteram[offset];
 		g = namcos1_paletteram[offset + 0x0800];
 		b = namcos1_paletteram[offset + 0x1000];
-		palette_change_color(color,r,g,b);
+		palette_set_color(color,r,g,b);
 
 		if (offset >= 0x2000)
 		{
 			r = namcos1_paletteram[offset + 0x2000];
 			g = namcos1_paletteram[offset + 0x2800];
 			b = namcos1_paletteram[offset + 0x3000];
-			palette_change_color(color+TILECOLORS,r,g,b);
+			palette_set_color(color+TILECOLORS,r,g,b);
 		}
 		offset++;
 	}
@@ -284,22 +284,36 @@ WRITE_HANDLER( namcos1_videocontrol_w )
 }
 
 /* tilemap callback */
-static unsigned char *info_vram;
-static int info_color;
-
-static void background_get_info(int tile_index)
+INLINE void background_get_info(int tile_index,int info_color,data8_t *info_vram)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(1,code,info_color);
+	SET_TILE_INFO(
+			1,
+			code,
+			info_color,
+			0)
 	tile_info.mask_data = mask_ptr[code];
 }
 
-static void foreground_get_info(int tile_index)
+INLINE void foreground_get_info(int tile_index,int info_color,data8_t *info_vram)
 {
 	int code = info_vram[2*tile_index+1]+((info_vram[2*tile_index]&0x3f)<<8);
-	SET_TILE_INFO(1,code,info_color);
+	SET_TILE_INFO(
+			1,
+			code,
+			info_color,
+			0)
 	tile_info.mask_data = mask_ptr[code];
 }
+
+static void background_get_info0(int tile_index) { background_get_info(tile_index,0,&namcos1_videoram[0x0000]); }
+static void background_get_info1(int tile_index) { background_get_info(tile_index,1,&namcos1_videoram[0x2000]); }
+static void background_get_info2(int tile_index) { background_get_info(tile_index,2,&namcos1_videoram[0x4000]); }
+static void background_get_info3(int tile_index) { background_get_info(tile_index,3,&namcos1_videoram[0x6000]); }
+static void foreground_get_info4(int tile_index) { foreground_get_info(tile_index,4,&namcos1_videoram[FG_OFFSET+0x010]); }
+static void foreground_get_info5(int tile_index) { foreground_get_info(tile_index,5,&namcos1_videoram[FG_OFFSET+0x810]); }
+
+
 
 static void update_playfield( int layer )
 {
@@ -316,14 +330,7 @@ static void update_playfield( int layer )
 		/* set scroll */
 		tilemap_set_scrollx(tilemap[layer],0,scrollx);
 		tilemap_set_scrolly(tilemap[layer],0,scrolly);
-
-		info_vram = &namcos1_videoram[layer<<13];
 	}
-	else
-		info_vram = &namcos1_videoram[FG_OFFSET+0x10+( ( layer - 4 ) * 0x800 )];
-
-	info_color = layer;
-	tilemap_update(tilemap[layer]);
 }
 
 
@@ -344,12 +351,12 @@ int namcos1_vh_start( void )
 	namcos1_videoram = malloc(0x8000);
 
 	/* initialize playfields */
-	tilemap[0] = tilemap_create(background_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[1] = tilemap_create(background_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[2] = tilemap_create(background_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
-	tilemap[3] = tilemap_create(background_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,32);
-	tilemap[4] = tilemap_create(foreground_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
-	tilemap[5] = tilemap_create(foreground_get_info,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+	tilemap[0] = tilemap_create(background_get_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[1] = tilemap_create(background_get_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[2] = tilemap_create(background_get_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[3] = tilemap_create(background_get_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,32);
+	tilemap[4] = tilemap_create(foreground_get_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+	tilemap[5] = tilemap_create(foreground_get_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !tilemap[3] || !tilemap[4] || !tilemap[5]
 			|| !namcos1_videoram)
@@ -402,14 +409,6 @@ int namcos1_vh_start( void )
 				}
 			}
 			mask_ptr[c] = src_mask;
-			if(mask->pen_usage)
-			{
-				switch(mask->pen_usage[c])
-				{
-				case 0x01: mask_ptr[c] = TILEMAP_BITMASK_TRANSPARENT; break; /* blank */
-				case 0x02: mask_ptr[c] = TILEMAP_BITMASK_OPAQUE; break; /* full */
-				}
-			}
 		}
 	}
 
@@ -457,11 +456,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 		code = (namcos1_spriteram[offs + 4]&7)*256 + namcos1_spriteram[offs + 5];
 		color = namcos1_spriteram[offs + 6]>>1;
 
-#if 1
-		if (color == 0x7f && !(Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
-			usrintf_showmessage("This driver requires GAME_REQUIRES_16BIT flag");
-#endif
-
 		/* sx */
 		sx = (namcos1_spriteram[offs + 6]&1)*256 + namcos1_spriteram[offs + 7];
 		sx += sprite_fixed_sx;
@@ -500,37 +494,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-static void mark_sprites_colors(void)
-{
-	int offs,i;
-	data8_t *namcos1_spriteram = &namcos1_controlram[0x0800];
-
-	unsigned short palette_map[128];
-
-	memset (palette_map, 0, sizeof (palette_map));
-
-	/* the last 0x10 bytes are control registers, not a sprite */
-	for (offs = 0;offs < 0x800-0x10;offs += 0x10)
-	{
-		int color;
-
-		color = namcos1_spriteram[offs + 6]>>1;
-		palette_map[color] |= 0xffff;
-	}
-
-	/* now build the final table */
-	for (i = 0; i < 128; i++)
-	{
-		int usage = palette_map[i], j;
-		if (usage)
-		{
-			for (j = 0; j < 15; j++)
-				if (usage & (1 << j))
-					palette_used_colors[i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i,priority;
@@ -558,16 +521,6 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-
-	/* palette resource marking */
-	palette_init_used_colors();
-
-	mark_sprites_colors();
-
-	/* background color */
-	palette_used_colors[BACKGROUNDCOLOR] |= PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
 
 	/* background color */
 	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->visible_area);

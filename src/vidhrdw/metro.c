@@ -2,15 +2,15 @@
 
 							  -= Metro Games =-
 
-				driver by	Luca Elia (l.elia@tin.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
 
-		Q		shows the background
-		W		shows the middleground
-		E		shows the foreground
-		A		shows the sprites
+				Q		Shows Layer 0
+				W		Shows Layer 1
+				E		Shows Layer 2
+				A		Shows Sprites
 
 		Keys can be used together!
 
@@ -21,10 +21,8 @@ Note:	if MAME_DEBUG is defined, pressing Z with:
 		is a smaller window (of fixed size) carved from anywhere
 		inside that layer.
 
-		Tile Size:				  8 x 8 x 4  (later games can switch to
-											  8 x 8 x 8 at run time)
-											(later games can switch to
-											  16 x 16 x 4/8 at run time)
+		Tile Size:				  	8 x 8 x 4
+		(later games can switch to  8 x 8 x 8, 16 x 16 x 4/8 at run time)
 
 		Big Layer Size:			2048 x 2048 (8x8 tiles) or 4096 x 4096 (16x16 tiles)
 
@@ -80,7 +78,11 @@ static void metro_K053936_get_tile_info(int tile_index)
 {
 	int code = metro_K053936_ram[tile_index];
 
-	SET_TILE_INFO(1,code & 0x7fff,0x1e);
+	SET_TILE_INFO(
+			2,
+			code & 0x7fff,
+			0x1e,
+			0)
 }
 
 
@@ -96,14 +98,13 @@ void K053936_zoom_draw(struct osd_bitmap *bitmap)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
-	struct osd_bitmap *srcbitmap = tilemap_get_pixmap(metro_K053936_tilemap);
 
 	startx = 256 * (INT16)(metro_K053936_ctrl[0x00]);
-	incxx  =       (INT16)(metro_K053936_ctrl[0x03]);
-	incyx  =       (INT16)(metro_K053936_ctrl[0x02]);
 	starty = 256 * (INT16)(metro_K053936_ctrl[0x01]);
-	incxy  =       (INT16)(metro_K053936_ctrl[0x05]);
+	incyx  =       (INT16)(metro_K053936_ctrl[0x02]);
+	incxx  =       (INT16)(metro_K053936_ctrl[0x03]);
 	incyy  =       (INT16)(metro_K053936_ctrl[0x04]);
+	incxy  =       (INT16)(metro_K053936_ctrl[0x05]);
 
 	startx += 21 * incyx;
 	starty += 21 * incyy;
@@ -111,9 +112,11 @@ void K053936_zoom_draw(struct osd_bitmap *bitmap)
 	startx += 69 * incxx;
 	starty += 69 * incxy;
 
-	copyrozbitmap(bitmap,srcbitmap,startx << 5,starty << 5,
-			incxx << 5,incxy << 5,incyx << 5,incyy << 5,0,
-			&Machine->visible_area,TRANSPARENCY_NONE,0,0);
+	tilemap_draw_roz(bitmap,metro_K053936_tilemap,startx << 5,starty << 5,
+			incxx << 5,incxy << 5,incyx << 5,incyy << 5,
+			0,	/* no wraparound */
+			0,0);
+
 #if 0
 	usrintf_showmessage("%04x%04x%04x%04x %04x%04x%04x%04x\n%04x%04x%04x%04x %04x%04x%04x%04x",
 			metro_K053936_ctrl[0x00],
@@ -140,7 +143,7 @@ void K053936_zoom_draw(struct osd_bitmap *bitmap)
 /***************************************************************************
 
 
-								Palette
+							Palette GGGGGRRRRRBBBBBx
 
 
 ***************************************************************************/
@@ -155,7 +158,8 @@ WRITE16_HANDLER( metro_paletteram_w )
 	r = (data >>  6) & 0x1f;
 	g = (data >> 11) & 0x1f;
 
-	palette_change_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	/* We need the ^0xff because we had to invert the pens in the gfx */
+	palette_set_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
 }
 
 
@@ -205,6 +209,7 @@ static UINT8 *empty_tiles;
 //#define WIN_NY		(0x20+1)
 
 
+/* 8x8x4 tiles only */
 INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
 {
 	data16_t code;
@@ -223,55 +228,27 @@ INLINE void get_tile_info(int tile_index,int layer,data16_t *vram)
 	tile			=	(metro_tiletable[table_index + 0] << 16 ) +
 						 metro_tiletable[table_index + 1];
 
-	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */
+	if (code & 0x8000) /* Special: draw a tile of a single color (i.e. not from the gfx ROMs) */
 	{
 		int _code = code & 0x000f;
 		tile_info.tile_number = _code;
 		tile_info.pen_data = empty_tiles + _code*16*16;
 		tile_info.pal_data = &Machine->remapped_colortable[(((code & 0x0ff0) ^ 0x0f0) + 0x1000)];
 		tile_info.pen_usage = 0;
+		tile_info.flags = 0;
 	}
 	else
-		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), (((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100 )
-	tile_info.flags = TILE_FLIPXY((code & 0x6000) >> 13);
+		SET_TILE_INFO(
+				0,
+				(tile & 0xfffff) + (code & 0xf),
+				(((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100,
+				TILE_FLIPXY((code & 0x6000) >> 13))
 }
 
+
+/* 8x8x4 or 8x8x8 tiles. It's the tile's color that decides: if its low 4
+   bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
 INLINE void get_tile_info_8bit(int tile_index,int layer,data16_t *vram)
-{
-	data16_t code;
-	int      table_index;
-	UINT32   tile;
-
-	tile_index	=	((tile_index / WIN_NX + metro_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX +
-					((tile_index % WIN_NX + metro_window[layer * 2 + 1] / 8) % BIG_NX);
-
-	code			=	vram[ tile_index ];
-	table_index		=	( (code & 0x1ff0) >> 4 ) * 2;
-	tile			=	(metro_tiletable[table_index + 0] << 16 ) +
-						 metro_tiletable[table_index + 1];
-
-	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */
-	{
-		int _code = code & 0x000f;
-		tile_info.tile_number = _code;
-		tile_info.pen_data = empty_tiles + _code*16*16;
-		tile_info.pal_data = &Machine->remapped_colortable[(((code & 0x0ff0) ^ 0x0f0) + 0x1000)];
-		tile_info.pen_usage = 0;
-	}
-	else if ((tile & 0x00f00000)==0x00f00000)
-	{
-		int _code = (tile & 0xfffff) + 2*(code & 0xf);
-		tile_info.tile_number = _code;
-		tile_info.pen_data = memory_region(REGION_GFX1) + _code*32;
-		tile_info.pal_data = &Machine->remapped_colortable[256 * (((tile & 0x0f000000) >> 24) + 0x10)];
-		tile_info.pen_usage = 0;
-	}
-	else
-		SET_TILE_INFO( 0, (tile & 0xfffff) + (code & 0xf), (((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100 )
-	tile_info.flags = TILE_FLIPXY((code & 0x6000) >> 13);
-}
-
-INLINE void get_tile_info_16x16(int tile_index,int layer,data16_t *vram)
 {
 	data16_t code;
 	int      table_index;
@@ -289,24 +266,72 @@ INLINE void get_tile_info_16x16(int tile_index,int layer,data16_t *vram)
 	tile			=	(metro_tiletable[table_index + 0] << 16 ) +
 						 metro_tiletable[table_index + 1];
 
-	if (code & 0x8000) /* Special: draw a tile of a single color (e.g. not from the gfx ROMs) */
+	if (code & 0x8000) /* Special: draw a tile of a single color (i.e. not from the gfx ROMs) */
 	{
 		int _code = code & 0x000f;
 		tile_info.tile_number = _code;
 		tile_info.pen_data = empty_tiles + _code*16*16;
 		tile_info.pal_data = &Machine->remapped_colortable[(((code & 0x0ff0) ^ 0x0f0) + 0x1000)];
 		tile_info.pen_usage = 0;
+		tile_info.flags = 0;
 	}
+	else if ((tile & 0x00f00000)==0x00f00000)	/* draw tile as 8bpp */
+		SET_TILE_INFO(
+				1,
+				(tile & 0xfffff) + 2*(code & 0xf),
+				((tile & 0x0f000000) >> 24) + 0x10,
+				TILE_FLIPXY((code & 0x6000) >> 13))
 	else
-	{
-		int _code = (tile & 0xfffff) + 4*(code & 0xf);
-		tile_info.tile_number = _code;
-		tile_info.pen_data = Machine->gfx[0]->gfxdata + _code*64;
-		tile_info.pal_data = &Machine->remapped_colortable[16 * ((((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100)];
-		tile_info.pen_usage = 0;
-	}
-	tile_info.flags = TILE_FLIPXY((code & 0x6000) >> 13);
+		SET_TILE_INFO(
+				0,
+				(tile & 0xfffff) + (code & 0xf),
+				(((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100,
+				TILE_FLIPXY((code & 0x6000) >> 13))
 }
+
+/* 16x16x4 or 16x16x8 tiles. It's the tile's color that decides: if its low 4
+   bits are high ($f,$1f,$2f etc) the tile is 8bpp, otherwise it's 4bpp */
+INLINE void get_tile_info_16x16_8bit(int tile_index,int layer,data16_t *vram)
+{
+	data16_t code;
+	int      table_index;
+	UINT32   tile;
+
+	/* The actual tile index depends on the window */
+	tile_index	=	((tile_index / WIN_NX + metro_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX +
+					((tile_index % WIN_NX + metro_window[layer * 2 + 1] / 8) % BIG_NX);
+
+	/* Fetch the code */
+	code			=	vram[ tile_index ];
+
+	/* Use it as an index into the tiles set table */
+	table_index		=	( (code & 0x1ff0) >> 4 ) * 2;
+	tile			=	(metro_tiletable[table_index + 0] << 16 ) +
+						 metro_tiletable[table_index + 1];
+
+	if (code & 0x8000) /* Special: draw a tile of a single color (i.e. not from the gfx ROMs) */
+	{
+		int _code = code & 0x000f;
+		tile_info.tile_number = _code;
+		tile_info.pen_data = empty_tiles + _code*16*16;
+		tile_info.pal_data = &Machine->remapped_colortable[(((code & 0x0ff0) ^ 0x0f0) + 0x1000)];
+		tile_info.pen_usage = 0;
+		tile_info.flags = 0;
+	}
+	else if ((tile & 0x00f00000)==0x00f00000)	/* draw tile as 8bpp */
+		SET_TILE_INFO(
+				3,
+				(tile & 0xfffff) + 8*(code & 0xf),
+				((tile & 0x0f000000) >> 24) + 0x10,
+				TILE_FLIPXY((code & 0x6000) >> 13))
+	else
+		SET_TILE_INFO(
+				2,
+				(tile & 0xfffff) + 4*(code & 0xf),
+				(((tile & 0x0ff00000) >> 20) ^ 0x0f) + 0x100,
+				TILE_FLIPXY((code & 0x6000) >> 13))
+}
+
 
 INLINE void metro_vram_w(offs_t offset,data16_t data,data16_t mem_mask,int layer,data16_t *vram)
 {
@@ -339,9 +364,9 @@ static void get_tile_info_0_8bit(int tile_index) { get_tile_info_8bit(tile_index
 static void get_tile_info_1_8bit(int tile_index) { get_tile_info_8bit(tile_index,1,metro_vram_1); }
 static void get_tile_info_2_8bit(int tile_index) { get_tile_info_8bit(tile_index,2,metro_vram_2); }
 
-static void get_tile_info_0_16x16(int tile_index) { get_tile_info_16x16(tile_index,0,metro_vram_0); }
-static void get_tile_info_1_16x16(int tile_index) { get_tile_info_16x16(tile_index,1,metro_vram_1); }
-static void get_tile_info_2_16x16(int tile_index) { get_tile_info_16x16(tile_index,2,metro_vram_2); }
+static void get_tile_info_0_16x16_8bit(int tile_index) { get_tile_info_16x16_8bit(tile_index,0,metro_vram_0); }
+static void get_tile_info_1_16x16_8bit(int tile_index) { get_tile_info_16x16_8bit(tile_index,1,metro_vram_1); }
+static void get_tile_info_2_16x16_8bit(int tile_index) { get_tile_info_16x16_8bit(tile_index,2,metro_vram_2); }
 
 WRITE16_HANDLER( metro_vram_0_w ) { metro_vram_w(offset,data,mem_mask,0,metro_vram_0); }
 WRITE16_HANDLER( metro_vram_1_w ) { metro_vram_w(offset,data,mem_mask,1,metro_vram_1); }
@@ -378,55 +403,13 @@ WRITE16_HANDLER( metro_window_w )
  We can't do it at startup because drawgfx requires the tiles to be
  pre-rotated to support vertical games, and that, in turn, requires
  the tile's sizes to be known at startup - which we don't!
-
- The following variables are needed to support just that..
- for the sake of efficiency we use an hash table, where each entry
- holds the sprite dimensions ("word" field) and a pointer to its
- decoded graphics ("gfx" field).
-
- When drawing a sprite, we use the low bits of its tile code as an
- index into the hash table, to see if we already decoded its graphics
- (and with the same size).
-
- If not, we do the (computationally expensive) decoding step.
 */
-
-typedef struct { data16_t word;	struct GfxElement *gfx; }	sprite_t;
-static sprite_t *sprite;
 
 int metro_sprite_xoffs, metro_sprite_yoffs;
-
-/*
- This layout is used to decode the sprites' graphics. Some fields have
- to be filled at runtime
-*/
-
-static struct GfxLayout sprite_layout =
-{
-	0,0,	// filled in later
-	1,
-	4,
-	{ STEP4(0,1) },
-	{ 1*4,0*4,3*4,2*4,5*4,4*4,7*4,6*4, 9*4,8*4,11*4,10*4,13*4,12*4,15*4,14*4,
-	  17*4,16*4,19*4,18*4,21*4,20*4,23*4,22*4, 25*4,24*4,27*4,26*4,29*4,28*4,31*4,30*4,
-	  33*4,32*4,35*4,34*4,37*4,36*4,39*4,38*4, 41*4,40*4,43*4,42*4,45*4,44*4,47*4,46*4,
-	  49*4,48*4,51*4,50*4,53*4,52*4,55*4,54*4, 57*4,56*4,59*4,58*4,61*4,60*4,63*4,62*4 },
-	{ 0 },	// filled in later
-	0		// unused
-};
 
 
 void metro_vh_stop(void)
 {
-	if (sprite)
-	{
-		int i;
-		for (i = 0; i < 0x10000; i++)
-			freegfx(sprite[i].gfx);
-		free(sprite);
-	}
-	sprite = NULL;
-
 	free(empty_tiles);
 	empty_tiles = NULL;
 
@@ -463,9 +446,7 @@ int metro_vh_start_14100(void)
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
-
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !sprite || !empty_tiles || !metro_tiletable_old)
+	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
 	{
 		metro_vh_stop();
 		return 1;
@@ -474,8 +455,6 @@ int metro_vh_start_14100(void)
 	tilemap_set_transparent_pen(tilemap[0],0);
 	tilemap_set_transparent_pen(tilemap[1],0);
 	tilemap_set_transparent_pen(tilemap[2],0);
-
-	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
 
 	return 0;
 }
@@ -497,9 +476,7 @@ int metro_vh_start_14220(void)
 	tilemap_16x16[1] = NULL;
 	tilemap_16x16[2] = NULL;
 
-	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
-
-	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !sprite || !empty_tiles || !metro_tiletable_old)
+	if (!tilemap[0] || !tilemap[1] || !tilemap[2] || !empty_tiles || !metro_tiletable_old)
 	{
 		metro_vh_stop();
 		return 1;
@@ -512,8 +489,6 @@ int metro_vh_start_14220(void)
 	tilemap_set_scrolldx(tilemap[0], -2, 2);
 	tilemap_set_scrolldx(tilemap[1], -2, 2);
 	tilemap_set_scrolldx(tilemap[2], -2, 2);
-
-	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
 
 	return 0;
 }
@@ -531,15 +506,13 @@ int metro_vh_start_14300(void)
 	tilemap[1] = tilemap_create(get_tile_info_1_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 	tilemap[2] = tilemap_create(get_tile_info_2_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,WIN_NX,WIN_NY);
 
-	tilemap_16x16[0] = tilemap_create(get_tile_info_0_16x16,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
-	tilemap_16x16[1] = tilemap_create(get_tile_info_1_16x16,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
-	tilemap_16x16[2] = tilemap_create(get_tile_info_2_16x16,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
-
-	sprite = (sprite_t *) malloc(sizeof(sprite_t) * 0x10000);
+	tilemap_16x16[0] = tilemap_create(get_tile_info_0_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
+	tilemap_16x16[1] = tilemap_create(get_tile_info_1_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
+	tilemap_16x16[2] = tilemap_create(get_tile_info_2_16x16_8bit,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,WIN_NX,WIN_NY);
 
 	if (!tilemap[0] || !tilemap[1] || !tilemap[2]
 			|| !tilemap_16x16[0] || !tilemap_16x16[1] || !tilemap_16x16[2]
-			|| !sprite || !empty_tiles || !metro_tiletable_old)
+			|| !empty_tiles || !metro_tiletable_old)
 	{
 		metro_vh_stop();
 		return 1;
@@ -551,8 +524,6 @@ int metro_vh_start_14300(void)
 	tilemap_set_transparent_pen(tilemap_16x16[0],0);
 	tilemap_set_transparent_pen(tilemap_16x16[1],0);
 	tilemap_set_transparent_pen(tilemap_16x16[2],0);
-
-	memset(sprite, 0, sizeof(sprite_t) * 0x10000);
 
 	return 0;
 }
@@ -583,20 +554,24 @@ int  blzntrnd_vh_start(void)
 								Video Registers
 
 
-			Offset:				Value:
+		Offset:		Bits:					Value:
 
-			0.w					Number Of Sprites To Draw
-			2.w					? $8100, $913 (bit 8 = priority)
-			4.w					Sprites Y Offset
-			6.w					Sprites X Offset
-			8.w					Sprites Color Codes Start
-			-
-			10.w				Layers order (usually $24 -> 2,1,0)
-								76-- ----
-								--54 ---- Background
-								---- 32-- Middleground
-								---- --10 Foreground
-			12.w				? $fff,$ffe,$e0f
+		0.w									Number Of Sprites To Draw
+		2.w			fedc ba-- ---- ----		?
+					---- --98 ---- ----		Sprites Priority
+					---- ---- 7654 3210		?
+		4.w									Sprites Y Offset
+		6.w									Sprites X Offset
+		8.w									Sprites Color Codes Start
+
+		-
+
+		10.w		fedc ba98 76-- ----
+					---- ---- --54 ----		Layer 2 Priority (3 backmost, 0 frontmost)
+					---- ---- ---- 32--		Layer 1 Priority
+					---- ---- ---- --10		Layer 0 Priority
+
+		12.w								Backround Color
 
 
 ***************************************************************************/
@@ -655,7 +630,7 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 
 	for ( ; src >= end; src -= 8/2 )
 	{
-		int x,y, attr,code,color,flipx,flipy, zoom, curr_pri;
+		int x,y, attr,code,color,flipx,flipy, zoom, curr_pri,width,height;
 		unsigned char *gfxdata;
 
 		/* Exponential zoom table extracted from daitoride */
@@ -685,38 +660,38 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 		x					=	(x & 0x07ff) - metro_sprite_xoffs;
 		y					=	(y & 0x03ff) - metro_sprite_yoffs;
 
-		sprite_layout.width  = (( (attr >> 11) & 0x7 ) + 1 ) * 8;
-		sprite_layout.height = (( (attr >>  8) & 0x7 ) + 1 ) * 8;
+		width				= (( (attr >> 11) & 0x7 ) + 1 ) * 8;
+		height				= (( (attr >>  8) & 0x7 ) + 1 ) * 8;
 
 		gfxdata		=	base_gfx + (8*8*4/8) * (((attr & 0x000f) << 16) + code);
 
-		/* Bound checking */
-		if ( (gfxdata + sprite_layout.width * sprite_layout.height - 1) >= gfx_max )
-			continue;
-
 		if (flip_screen)
 		{
-			flipx = !flipx;		x = max_x - x - sprite_layout.width;
-			flipy = !flipy;		y = max_y - y - sprite_layout.height;
+			flipx = !flipx;		x = max_x - x - width;
+			flipy = !flipy;		y = max_y - y - height;
 		}
 
 		if (support_8bpp && color == 0xf)	/* 8bpp */
 		{
 			/* prepare GfxElement on the fly */
 			struct GfxElement gfx;
-			gfx.width = sprite_layout.width;
-			gfx.height = sprite_layout.height;
+			gfx.width = width;
+			gfx.height = height;
 			gfx.total_elements = 1;
 			gfx.color_granularity = 256;
 			gfx.colortable = Machine->remapped_colortable;
 			gfx.total_colors = 0x20;
 			gfx.pen_usage = NULL;
 			gfx.gfxdata = gfxdata;
-			gfx.line_modulo = sprite_layout.width;
+			gfx.line_modulo = width;
 			gfx.char_modulo = 0;	/* doesn't matter */
 			gfx.flags = 0;
 			if (Machine->orientation & ORIENTATION_SWAP_XY)
 				gfx.flags |= GFX_SWAPXY;
+
+			/* Bounds checking */
+			if ( (gfxdata + width * height - 1) >= gfx_max )
+				continue;
 
 			drawgfxzoom(	bitmap,&gfx,
 							0,
@@ -728,45 +703,31 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 		}
 		else
 		{
-#if 0
-//crashes on balcube title screen, because
-//drawgfxzoom doesn't support packed gfx yet.
 			/* prepare GfxElement on the fly */
 			struct GfxElement gfx;
-			gfx.width = sprite_layout.width;
-			gfx.height = sprite_layout.height;
+			gfx.width = width;
+			gfx.height = height;
 			gfx.total_elements = 1;
 			gfx.color_granularity = 16;
 			gfx.colortable = Machine->remapped_colortable;
 			gfx.total_colors = 0x200;
 			gfx.pen_usage = NULL;
 			gfx.gfxdata = gfxdata;
-			gfx.line_modulo = sprite_layout.width/2;
+			gfx.line_modulo = width/2;
 			gfx.char_modulo = 0;	/* doesn't matter */
 			gfx.flags = GFX_PACKED;
 			if (Machine->orientation & ORIENTATION_SWAP_XY)
-				gfx.flags |= GFX_SWAPXY;
-
-			drawgfxzoom(	bitmap,&gfx,
-#else
-			/* Decode the sprite's graphics when needed */
-			if ( (sprite[code].gfx == 0) || ((sprite[code].word ^ attr) & 0x3f0f) )
 			{
-				int i,yoffs;
-
-				sprite[code].word	=	attr;
-				freegfx(sprite[code].gfx);
-
-				for (i=0,yoffs=0; i<sprite_layout.height; i++,yoffs+=sprite_layout.width*4)
-					sprite_layout.yoffset[i] = yoffs;
-				sprite[code].gfx	=	decodegfx(gfxdata,&sprite_layout);
-				sprite[code].gfx->total_colors = 0x200;
-
-				sprite[code].gfx->colortable   = Machine->remapped_colortable;
+				gfx.flags |= GFX_SWAPXY;
+				gfx.width = height;
+				gfx.height = width;
 			}
 
-			drawgfxzoom(	bitmap,sprite[code].gfx,
-#endif
+			/* Bounds checking */
+			if ( (gfxdata + width/2 * height - 1) >= gfx_max )
+				continue;
+
+			drawgfxzoom(	bitmap,&gfx,
 							0,
 							(color ^ 0x0f) + color_start,
 							flipx, flipy,
@@ -786,63 +747,6 @@ void metro_draw_sprites(struct osd_bitmap *bitmap, int pri)
 	}
 }
 
-
-void metro_mark_sprites_colors(void)
-{
-	int count = 0;
-	int pen,col,colmask[16];
-
-	unsigned int *pen_usage	=	Machine->gfx[0]->pen_usage;
-	int total_elements		=	Machine->gfx[0]->total_elements;
-
-	int max_x				=	Machine->visible_area.max_x;
-	int max_y				=	Machine->visible_area.max_y;
-
-	int max_sprites			=	spriteram_size / 8;
-	int sprites				=	metro_videoregs[0x0/2] % max_sprites;
-
-	data16_t *src			=	spriteram16 + (sprites - 1) * (8/2);
-	data16_t *end			=	spriteram16;
-
-	int color_start			=	((metro_videoregs[0x8/2] & 0xf) << 4 ) + 0x100;
-
-	memset(colmask, 0, sizeof(colmask));
-
-	for ( ; src >= end; src -= 8/2 )
-	{
-		int x				=	src[ 0 ];
-		int y				=	src[ 1 ];
-		int attr			=	src[ 2 ];
-		int code			=	src[ 3 ];
-
-		int n				=	( ( (attr >> 11) & 0x7 ) + 1 ) *
-								( ( (attr >>  8) & 0x7 ) + 1 );
-
-		int color			=	( (attr & 0xf0) >> 4 ) ^ 0x0f;
-
-		if ((x & 0xf800) == 0xf800)		continue;
-
-		code				+=	(attr & 0x000f) << 16;
-
-		x					=	(x & 0x07ff) - metro_sprite_xoffs;
-		y					=	(y & 0x03ff) - metro_sprite_yoffs;
-
-		if ((x > max_x) || (y > max_y))	continue;
-
-		while (n--)
-			colmask[color] |= pen_usage[(code++) % total_elements];
-	}
-
-	for (col = 0; col < 16; col++)
-	 for (pen = 1; pen < 16; pen++)	// pen 0 is transparent
-	  if (colmask[col] & (1 << pen))
-	  {	palette_used_colors[16 * (col + color_start) + pen] = PALETTE_COLOR_USED;
-		count++;	}
-
-#if 0
-{	char buf[8];	sprintf(buf,"%d",count);	usrintf_showmessage(buf);	}
-#endif
-}
 
 
 /***************************************************************************
@@ -909,42 +813,31 @@ void metro_tilemap_draw	(struct osd_bitmap *bitmap, struct tilemap *tmap, UINT32
 		tilemap_draw(bitmap,tmap, flags, priority);
 	}
 #endif
-
 }
 
 
-static void drawlayer(struct osd_bitmap *bitmap,int layer)
+/* Draw all the layers that match the given priority */
+static void draw_layers(struct osd_bitmap *bitmap, int pri, int layers_ctrl)
 {
-	/* Scrolling */
-	int sy0		=	metro_scroll[0x0/2];
-	int sx0		=	metro_scroll[0x2/2];
-	int sy1		=	metro_scroll[0x4/2];
-	int sx1		=	metro_scroll[0x6/2];
-	int sy2		=	metro_scroll[0x8/2];
-	int sx2		=	metro_scroll[0xa/2];
+	data16_t layers_pri = metro_videoregs[0x10/2];
+	int layer;
 
-	int wy0		=	metro_window[0x0/2];
-	int wx0		=	metro_window[0x2/2];
-	int wy1		=	metro_window[0x4/2];
-	int wx1		=	metro_window[0x6/2];
-	int wy2		=	metro_window[0x8/2];
-	int wx2		=	metro_window[0xa/2];
-
-
-	switch (layer)
+	/* Draw all the layers with priority == pri */
+	for (layer = 2; layer >= 0; layer--)	// tilemap[2] below?
 	{
-		case 0:
-			metro_tilemap_draw(bitmap,tilemap[0], 0, 0, sx0, sy0, wx0, wy0);
-			if (tilemap_16x16[0]) metro_tilemap_draw(bitmap,tilemap_16x16[0], 0, 0, sx0, sy0, wx0, wy0);
-			break;
-		case 1:
-			metro_tilemap_draw(bitmap,tilemap[1], 0, 0, sx1, sy1, wx1, wy1);
-			if (tilemap_16x16[1]) metro_tilemap_draw(bitmap,tilemap_16x16[1], 0, 0, sx1, sy1, wx1, wy1);
-			break;
-		case 2:
-			metro_tilemap_draw(bitmap,tilemap[2], 0, 0, sx2, sy2, wx2, wy2);
-			if (tilemap_16x16[2]) metro_tilemap_draw(bitmap,tilemap_16x16[2], 0, 0, sx2, sy2, wx2, wy2);
-			break;
+		if ( pri == ((layers_pri >> (layer*2)) & 3) )
+		{
+			/* Scroll and Window values */
+			data16_t sy = metro_scroll[layer * 2 + 0];	data16_t sx = metro_scroll[layer * 2 + 1];
+			data16_t wy = metro_window[layer * 2 + 0];	data16_t wx = metro_window[layer * 2 + 1];
+
+			if (layers_ctrl & (1<<layer))	// for debug
+			{
+				/* Only *one* of tilemap_16x16 & tilemap is enabled at any given time! */
+				metro_tilemap_draw(bitmap,tilemap[layer], 0, 0, sx, sy, wx, wy);
+				if (tilemap_16x16[layer]) metro_tilemap_draw(bitmap,tilemap_16x16[layer], 0, 0, sx, sy, wx, wy);
+			}
+		}
 	}
 }
 
@@ -960,7 +853,7 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 		for (col = 0;col < WIN_NX;col++)
 		{
 			int offset = (col + metro_window[layer * 2 + 1] / 8) % BIG_NX +
-					((row + metro_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX;
+						((row + metro_window[layer * 2 + 0] / 8) % BIG_NY) * BIG_NX;
 			data16_t code = vram[offset];
 
 			if (!(code & 0x8000) && dirtyindex[(code & 0x1ff0) >> 4])
@@ -976,10 +869,9 @@ static void dirty_tiles(int layer,data16_t *vram,data8_t *dirtyindex)
 
 void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int i,layers_ctrl = -1;
+	int i,pri,sprites_pri,layers_ctrl = -1;
 	data8_t *dirtyindex;
 	data16_t screenctrl = *metro_screenctrl;
-
 
 	dirtyindex = malloc(metro_tiletable_size/4);
 	if (dirtyindex)
@@ -1012,23 +904,26 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	metro_sprite_xoffs	=	metro_videoregs[0x06/2] - Machine->drv->screen_width  / 2;
 	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen_height / 2;
 
-	/* Black background color ? */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
-
+	/* The background color is selected by a register */
+	fillbitmap(bitmap,Machine->pens[((metro_videoregs[0x12/2] & 0x0fff) ^ 0x0ff) + 0x1000],&Machine->visible_area);
 
 	/*	Screen Control Register:
 
 		f--- ---- ---- ----		?
-		-edc ---- ---- ----		? Layer 0,1,2 Enable
-		---- ba98 7654 32--
+		-edc b--- ---- ----
+		---- -a98 ---- ----		? Leds
+		---- ---- 7--- ----		16x16 Tiles (Layer 2)
+		---- ---- -6-- ----		16x16 Tiles (Layer 1)
+		---- ---- --5- ----		16x16 Tiles (Layer 0)
+		---- ---- ---4 32--
 		---- ---- ---- --1-		? Blank Screen
 		---- ---- ---- ---0		Flip  Screen	*/
 	if (screenctrl & 2)	return;
-//	tilemap_set_enable(tilemap[0], screenctrl & 0x0400);
-//	tilemap_set_enable(tilemap[1], screenctrl & 0x0200);
-//	tilemap_set_enable(tilemap[2], screenctrl & 0x0100);
 	flip_screen_set(screenctrl & 1);
 
+	/* If the game supports 16x16 tiles, make sure that the
+	   16x16 and 8x8 tilemaps of a given layer are not simultaneously
+	   enabled! */
 	if (support_16x16)
 	{
 		int layer;
@@ -1043,44 +938,34 @@ void metro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-#ifdef MAME_DEBUG
+#if 0
 if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
+{	int msk = 0;
 	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
 	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
 	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
 	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
-	if (msk != 0) layers_ctrl &= msk;
+	if (msk != 0)
+	{	fillbitmap(bitmap,0,&Machine->visible_area);
+		layers_ctrl &= msk;	}
 
-	usrintf_showmessage("r %04x %04x %04x",
+	usrintf_showmessage("l %x-%x-%x r %04x %04x %04x",
+				(metro_videoregs[0x10/2]&0x30)>>4,(metro_videoregs[0x10/2]&0xc)>>2,metro_videoregs[0x10/2]&3,
 				metro_videoregs[0x02/2], metro_videoregs[0x12/2],
-				*metro_screenctrl);
-}
+				*metro_screenctrl);					}
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	metro_mark_sprites_colors();
-
-	palette_recalc();
 
 	if (has_zoom) K053936_zoom_draw(bitmap);
 
-	if (layers_ctrl & 1)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x30)>>4);
-	if (layers_ctrl & 2)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x0c)>>2);
-	if (metro_videoregs[0x02/2] & 0x0100)	// tilemap 0 over sprites
+	/* Sprites priority wrt layers: 3..0 (low..high) */
+	sprites_pri	=	(metro_videoregs[0x02/2] & 0x0300) >> 8;
+
+	for (pri = 3; pri >=0; pri--)
 	{
-		if (layers_ctrl & 8)
-			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
-		if (layers_ctrl & 4)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x03));
-	}
-	else
-	{
-		if (layers_ctrl & 4)	drawlayer(bitmap,(metro_videoregs[0x10/2] & 0x03));
-		if (layers_ctrl & 8)
-			for (i = 0; i < 0x20; i++)	metro_draw_sprites(bitmap, i);
+		draw_layers(bitmap,pri,layers_ctrl);
+
+		if ((layers_ctrl & 8) && (sprites_pri == pri))
+			for (i = 0; i < 0x20; i++)
+				metro_draw_sprites(bitmap, i);
 	}
 }

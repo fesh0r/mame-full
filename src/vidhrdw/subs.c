@@ -13,13 +13,13 @@ WRITE_HANDLER( subs_invert1_w )
 {
 	if ((offset & 0x01) == 1)
 	{
-		palette_change_color(0, 0x00, 0x00, 0x00);
-		palette_change_color(1, 0xFF, 0xFF, 0xFF);
+		palette_set_color(0, 0x00, 0x00, 0x00);
+		palette_set_color(1, 0xFF, 0xFF, 0xFF);
 	}
 	else
 	{
-		palette_change_color(1, 0x00, 0x00, 0x00);
-		palette_change_color(0, 0xFF, 0xFF, 0xFF);
+		palette_set_color(1, 0x00, 0x00, 0x00);
+		palette_set_color(0, 0xFF, 0xFF, 0xFF);
 	}
 }
 
@@ -27,13 +27,13 @@ WRITE_HANDLER( subs_invert2_w )
 {
 	if ((offset & 0x01) == 1)
 	{
-		palette_change_color(2, 0x00, 0x00, 0x00);
-		palette_change_color(3, 0xFF, 0xFF, 0xFF);
+		palette_set_color(2, 0x00, 0x00, 0x00);
+		palette_set_color(3, 0xFF, 0xFF, 0xFF);
 	}
 	else
 	{
-		palette_change_color(3, 0x00, 0x00, 0x00);
-		palette_change_color(2, 0xFF, 0xFF, 0xFF);
+		palette_set_color(3, 0x00, 0x00, 0x00);
+		palette_set_color(2, 0xFF, 0xFF, 0xFF);
 	}
 }
 
@@ -48,9 +48,6 @@ WRITE_HANDLER( subs_invert2_w )
 void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

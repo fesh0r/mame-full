@@ -9,18 +9,58 @@
 static struct tilemap *background, *foreground;
 extern unsigned char *shootout_textram;
 
+
+void shootout_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
+	}
+}
+
+
+
 static void get_bg_tile_info(int tile_index){
 	int attributes = videoram[tile_index+0x400]; /* CCCC -TTT */
 	int tile_number = videoram[tile_index] + 256*(attributes&7);
 	int color = attributes>>4;
-	SET_TILE_INFO(2,tile_number,color )
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index){
 	int attributes = shootout_textram[tile_index+0x400]; /* CCCC --TT */
 	int tile_number = shootout_textram[tile_index] + 256*(attributes&0x3);
 	int color = attributes>>4;
-	SET_TILE_INFO(0,tile_number,color )
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 }
 
 WRITE_HANDLER( shootout_videoram_w ){
@@ -102,14 +142,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank_bits ){
 	}
 }
 
-static void draw_sprites2( struct osd_bitmap *bitmap ){
-}
-
-void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-//	mark_sprite_colors();
-	palette_recalc();
+void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,background,0,0);
@@ -117,11 +151,8 @@ void shootout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	draw_sprites( bitmap,3/*bank bits */ );
 }
 
-void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-//	mark_sprite_colors();
-	palette_recalc();
+void shootouj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	fillbitmap(priority_bitmap,0,NULL);
 
 	tilemap_draw(bitmap,background,0,1);

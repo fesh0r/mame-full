@@ -54,7 +54,11 @@ static void get_bg_tile_info(int tile_index)
 {
 	int tile_number = videoram[tile_index];
 	int attributes = videoram[tile_index+0x400];
-	SET_TILE_INFO(gfxbank,tile_number,attributes&0xf)
+	SET_TILE_INFO(
+			gfxbank,
+			tile_number,
+			attributes&0xf,
+			0)
 }
 
 
@@ -125,7 +129,7 @@ WRITE_HANDLER( lasso_backcolor_w )
 	b = 0x4f * bit0 + 0xa8 * bit1;
 
 	for( i=0; i<0x40; i+=4 ) /* stuff into color#0 of each palette */
-		palette_change_color( i,r,g,b );
+		palette_set_color( i,r,g,b );
 }
 
 
@@ -207,8 +211,6 @@ static void draw_lasso( struct osd_bitmap *bitmap )
 
 void lasso_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 {
-	tilemap_update(ALL_TILEMAPS);
-	palette_recalc();
 	tilemap_draw(bitmap,background,0,0);
 	draw_lasso(bitmap);
 	draw_sprites(bitmap);

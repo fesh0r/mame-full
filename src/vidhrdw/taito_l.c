@@ -29,7 +29,11 @@ static void get_bg18_tile_info(int tile_index)
 			| ((bankc[(attr & 0xc) >> 2]) << 10)
 			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
+	SET_TILE_INFO(
+			0,
+			code,
+			(attr & 0xf0) >> 4,
+			0)
 }
 
 static void get_bg19_tile_info(int tile_index)
@@ -40,7 +44,11 @@ static void get_bg19_tile_info(int tile_index)
 			| ((bankc[(attr & 0xc) >> 2]) << 10)
 			| (horshoes_gfxbank << 12);
 
-	SET_TILE_INFO(0,code,(attr & 0xf0) >> 4);
+	SET_TILE_INFO(
+			0,
+			code,
+			(attr & 0xf0) >> 4,
+			0)
 }
 
 static void get_ch1a_tile_info(int tile_index)
@@ -48,7 +56,11 @@ static void get_ch1a_tile_info(int tile_index)
 	int attr = taitol_rambanks[2*tile_index+0x6000+1];
 	int code = taitol_rambanks[2*tile_index+0x6000]|((attr&0x01)<<8)|((attr&0x04)<<7);
 
-	SET_TILE_INFO(2,code,(attr & 0xf0) >> 4);
+	SET_TILE_INFO(
+			2,
+			code,
+			(attr & 0xf0) >> 4,
+			0)
 }
 
 
@@ -78,7 +90,7 @@ int taitol_vh_start(void)
 	tilemap_set_transparent_pen(ch1a_tilemap,0);
 
 	for (i=0;i<256;i++)
-		palette_change_color(i, 0, 0, 0);
+		palette_set_color(i, 0, 0, 0);
 
 	tilemap_set_scrolldx(ch1a_tilemap,-8,-8);
 	tilemap_set_scrolldx(bg18_tilemap,28,-11);
@@ -301,9 +313,6 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int dx,dy;
 
 
-	/* tilemap bug? If I do this just in vh_start(), it won't work */
-	tilemap_set_scrollx(ch1a_tilemap,0,0);	/* won't change at run time */
-
 	dx = taitol_rambanks[0x73f4]|(taitol_rambanks[0x73f5]<<8);
 	if (flipscreen)
 		dx = ((dx & 0xfffc) | ((dx - 3) & 0x0003)) ^ 0xf;
@@ -318,10 +327,6 @@ void taitol_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrollx(bg19_tilemap,0,-dx);
 	tilemap_set_scrolly(bg19_tilemap,0,-dy);
 
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
 
 	if (cur_ctrl & 0x20)	/* display enable */
 	{

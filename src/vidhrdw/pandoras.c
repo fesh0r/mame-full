@@ -74,8 +74,11 @@ void pandoras_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 static void get_tile_info0(int tile_index)
 {
 	unsigned char attr = colorram[tile_index];
-	SET_TILE_INFO(0,videoram[tile_index] + ((attr & 0x10) << 4),attr & 0x0f);
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
+	SET_TILE_INFO(
+			0,
+			videoram[tile_index] + ((attr & 0x10) << 4),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0xc0) >> 6))
 	tile_info.priority = (attr & 0x20) >> 5;
 }
 
@@ -168,8 +171,6 @@ static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr)
 
 void pandoras_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update( ALL_TILEMAPS );
-
 	tilemap_draw( bitmap, layer0, 1 ,0);
 	draw_sprites( bitmap, &pandoras_sharedram[0x800] );
 	tilemap_draw( bitmap, layer0, 0 ,0);

@@ -13,6 +13,10 @@
 
 void scramble_sh_init(void);
 WRITE_HANDLER( scramble_sh_irqtrigger_w );
+WRITE_HANDLER( scramble_background_enable_w );
+WRITE_HANDLER( scramble_background_red_w );
+WRITE_HANDLER( scramble_background_green_w );
+WRITE_HANDLER( scramble_background_blue_w );
 WRITE_HANDLER( darkplnt_bullet_color_w );
 
 
@@ -26,17 +30,6 @@ void scramble_init_machine(void)
 	{
 		scramble_sh_init();
 	}
-}
-
-
-WRITE_HANDLER( scramble_flip_screen_x_w )
-{
-	flip_screen_x_set(data);
-}
-
-WRITE_HANDLER( scramble_flip_screen_y_w )
-{
-	flip_screen_y_set(data);
 }
 
 
@@ -65,18 +58,39 @@ static READ_HANDLER( ckongs_input_port_2_r )
 	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
 }
 
+
+static int moonwar_port_select;
+
+static WRITE_HANDLER( moonwar_port_select_w )
+{
+	moonwar_port_select = data & 0x10;
+}
+
 static READ_HANDLER( moonwar_input_port_0_r )
 {
 	int sign;
 	int delta;
 
-	delta = readinputport(3);
+	delta = (moonwar_port_select ? readinputport(3) : readinputport(4));
 
 	sign = (delta & 0x80) >> 3;
 	delta &= 0x0f;
 
 	return ((readinputport(0) & 0xe0) | delta | sign );
 }
+
+
+/* the coinage DIPs are spread accross two input ports */
+static READ_HANDLER( stratgyx_input_port_2_r )
+{
+	return (readinputport(2) & ~0x06) | ((readinputport(4) << 1) & 0x06);
+}
+
+static READ_HANDLER( stratgyx_input_port_3_r )
+{
+	return (readinputport(3) & ~0x03) | ((readinputport(4) >> 2) & 0x03);
+}
+
 
 static READ_HANDLER( darkplnt_input_port_1_r )
 {
@@ -151,6 +165,12 @@ READ_HANDLER( scramblb_protection_2_r )
 }
 
 
+static WRITE_HANDLER( theend_coin_counter_w )
+{
+	coin_counter_w(0, data & 0x80);
+}
+
+
 static READ_HANDLER( mariner_protection_1_r )
 {
 	return 7;
@@ -164,7 +184,7 @@ static READ_HANDLER( mariner_protection_2_r )
 
 READ_HANDLER( triplep_pip_r )
 {
-	logerror("PC %04x: read port 2\n",cpu_get_pc());
+	logerror("PC %04x: triplep read port 2\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015a) return 0xff;
 	else if (cpu_get_pc() == 0x0886) return 0x05;
 	else return 0;
@@ -172,7 +192,7 @@ READ_HANDLER( triplep_pip_r )
 
 READ_HANDLER( triplep_pap_r )
 {
-	logerror("PC %04x: read port 3\n",cpu_get_pc());
+	logerror("PC %04x: triplep read port 3\n",cpu_get_pc());
 	if (cpu_get_pc() == 0x015d) return 0x04;
 	else return 0;
 }
@@ -208,8 +228,8 @@ static READ_HANDLER( cavelon_banksw_r )
 		return ppi8255_0_r(offset - 0x0100);
 	else if ((offset >= 0x0200) && (offset <= 0x0203))
 		return ppi8255_1_r(offset - 0x0200);
-	else
-		return 0;
+
+	return 0xff;
 }
 
 static WRITE_HANDLER( cavelon_banksw_w )
@@ -220,6 +240,27 @@ static WRITE_HANDLER( cavelon_banksw_w )
 		ppi8255_0_w(offset - 0x0100, data);
 	else if ((offset >= 0x0200) && (offset <= 0x0203))
 		ppi8255_1_w(offset - 0x0200, data);
+}
+
+
+READ_HANDLER(frogger_ppi8255_0_r)
+{
+	return ppi8255_0_r(offset >> 1);
+}
+
+READ_HANDLER(frogger_ppi8255_1_r)
+{
+	return ppi8255_1_r(offset >> 1);
+}
+
+WRITE_HANDLER(frogger_ppi8255_0_w)
+{
+	ppi8255_0_w(offset >> 1, data);
+}
+
+WRITE_HANDLER(frogger_ppi8255_1_w)
+{
+	ppi8255_1_w(offset >> 1, data);
 }
 
 
@@ -319,14 +360,28 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
-void init_scobra(void)
+void init_scramble_ppi(void)
 {
 	ppi8255_init(&ppi8255_intf);
 }
 
+void init_scobra(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0xa803, 0xa803, scramble_background_enable_w);
+}
+
+void init_atlantis(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0x6803, 0x6803, scramble_background_enable_w);
+}
+
 void init_scramble(void)
 {
-	init_scobra();
+	init_atlantis();
 
 	ppi8255_set_portCread (1, scramble_protection_r);
 	ppi8255_set_portCwrite(1, scramble_protection_w);
@@ -334,16 +389,42 @@ void init_scramble(void)
 
 void init_scrambls(void)
 {
-	init_scobra();
+	init_atlantis();
 
 	ppi8255_set_portCread(0, scrambls_input_port_2_r);
 	ppi8255_set_portCread(1, scrambls_protection_r);
 	ppi8255_set_portCwrite(1, scramble_protection_w);
 }
 
+void init_theend(void)
+{
+	init_scramble_ppi();
+
+	ppi8255_set_portCwrite(0, theend_coin_counter_w);
+}
+
+void init_stratgyx(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0xb000, 0xb000, scramble_background_green_w);
+	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_blue_w);
+	install_mem_write_handler(0, 0xb00a, 0xb00a, scramble_background_red_w);
+
+	ppi8255_set_portCread(0, stratgyx_input_port_2_r);
+	ppi8255_set_portCread(1, stratgyx_input_port_3_r);
+}
+
+void init_tazmani2(void)
+{
+	init_scramble_ppi();
+
+	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_enable_w);
+}
+
 void init_amidar(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* Amidar has a the DIP switches connected to port C of the 2nd 8255 */
 	ppi8255_set_portCread(1, input_port_3_r);
@@ -351,7 +432,7 @@ void init_amidar(void)
 
 void init_ckongs(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	ppi8255_set_portBread(0, ckongs_input_port_1_r);
 	ppi8255_set_portCread(0, ckongs_input_port_2_r);
@@ -359,30 +440,51 @@ void init_ckongs(void)
 
 void init_mariner(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* extra ROM */
-	install_mem_read_handler(0, 0x5800, 0x67ff, MRA_ROM);
+	install_mem_read_handler (0, 0x5800, 0x67ff, MRA_ROM);
+	install_mem_write_handler(0, 0x5800, 0x67ff, MWA_ROM);
 
 	install_mem_read_handler(0, 0x9008, 0x9008, mariner_protection_2_r);
 	install_mem_read_handler(0, 0xb401, 0xb401, mariner_protection_1_r);
 
 	/* ??? (it's NOT a background enable) */
-	install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);
+	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA_NOP);*/
+}
+
+void init_frogger(void)
+{
+	int A;
+	unsigned char *rom;
+
+
+	init_scramble_ppi();
+
+
+	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
+	rom = memory_region(REGION_CPU2);
+	for (A = 0;A < 0x0800;A++)
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
+
+	/* likewise, the 2nd gfx ROM has data lines D0 and D1 swapped. Decode it. */
+	rom = memory_region(REGION_GFX1);
+	for (A = 0x0800;A < 0x1000;A++)
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
 void init_froggers(void)
 {
 	int A;
-	unsigned char *RAM;
+	unsigned char *rom;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
-	RAM = memory_region(REGION_CPU2);
+	rom = memory_region(REGION_CPU2);
 	for (A = 0;A < 0x0800;A++)
-		RAM[A] = (RAM[A] & 0xfc) | ((RAM[A] & 1) << 1) | ((RAM[A] & 2) >> 1);
+		rom[A] = BITSWAP8(rom[A],7,6,5,4,3,2,0,1);
 }
 
 void init_mars(void)
@@ -391,7 +493,11 @@ void init_mars(void)
 	unsigned char *RAM;
 
 
-	init_scobra();
+	init_scramble_ppi();
+
+
+	ppi8255_set_portCread(1, input_port_3_r);
+
 
 	/* Address lines are scrambled on the main CPU:
 
@@ -424,7 +530,7 @@ void init_hotshock(void)
 
 void init_cavelon(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* banked ROM */
 	install_mem_read_handler(0, 0x0000, 0x3fff, MRA_BANK1);
@@ -440,15 +546,16 @@ void init_cavelon(void)
 
 void init_moonwar(void)
 {
-	init_scobra();
+	init_scramble_ppi();
 
 	/* special handler for the spinner */
-	ppi8255_set_portAread(0, moonwar_input_port_0_r);
+	ppi8255_set_portAread (0, moonwar_input_port_0_r);
+	ppi8255_set_portCwrite(0, moonwar_port_select_w);
 }
 
 void init_darkplnt(void)
 {
-	ppi8255_init(&ppi8255_intf);
+	init_scramble_ppi();
 
 	/* special handler for the spinner */
 	ppi8255_set_portBread(0, darkplnt_input_port_1_r);
@@ -465,8 +572,9 @@ static int bit(int i,int n)
 
 void init_anteater(void)
 {
-	int i,j;
+	int i;
 	unsigned char *RAM;
+	unsigned char *scratch;
 
 
 	init_scobra();
@@ -476,24 +584,36 @@ void init_anteater(void)
 	*   Optimizations done by Fabio Buffoni
 	*/
 
-	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
-	/* we write them at 0x0000. */
 	RAM = memory_region(REGION_GFX1);
 
-	for (i = 0;i < 0x1000;i++)
+	scratch = malloc(memory_region_length(REGION_GFX1));
+
+	if (scratch)
 	{
-		j = i & 0x9bf;
-		j |= ( bit(i,4) ^ bit(i,9) ^ ( bit(i,2) & bit(i,10) ) ) << 6;
-		j |= ( bit(i,2) ^ bit(i,10) ) << 9;
-		j |= ( bit(i,0) ^ bit(i,6) ^ 1 ) << 10;
-		RAM[i] = RAM[j + 0x1000];
+		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
+
+		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		{
+			int j;
+
+
+			j = i & 0x9bf;
+			j |= ( bit(i,4) ^ bit(i,9) ^ ( bit(i,2) & bit(i,10) ) ) << 6;
+			j |= ( bit(i,2) ^ bit(i,10) ) << 9;
+			j |= ( bit(i,0) ^ bit(i,6) ^ 1 ) << 10;
+
+			RAM[i] = scratch[j];
+		}
+
+		free(scratch);
 	}
 }
 
 void init_rescue(void)
 {
-	int i,j;
+	int i;
 	unsigned char *RAM;
+	unsigned char *scratch;
 
 
 	init_scobra();
@@ -503,24 +623,36 @@ void init_rescue(void)
 	*   Optimizations done by Fabio Buffoni
 	*/
 
-	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
-	/* we write them at 0x0000. */
 	RAM = memory_region(REGION_GFX1);
 
-	for (i = 0;i < 0x1000;i++)
+	scratch = malloc(memory_region_length(REGION_GFX1));
+
+	if (scratch)
 	{
-		j = i & 0xa7f;
-		j |= ( bit(i,3) ^ bit(i,10) ) << 7;
-		j |= ( bit(i,1) ^ bit(i,7) ) << 8;
-		j |= ( bit(i,0) ^ bit(i,8) ) << 10;
-		RAM[i] = RAM[j + 0x1000];
+		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
+
+		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		{
+			int j;
+
+
+			j = i & 0xa7f;
+			j |= ( bit(i,3) ^ bit(i,10) ) << 7;
+			j |= ( bit(i,1) ^ bit(i,7) ) << 8;
+			j |= ( bit(i,0) ^ bit(i,8) ) << 10;
+
+			RAM[i] = scratch[j];
+		}
+
+		free(scratch);
 	}
 }
 
 void init_minefld(void)
 {
-	int i,j;
+	int i;
 	unsigned char *RAM;
+	unsigned char *scratch;
 
 
 	init_scobra();
@@ -529,45 +661,68 @@ void init_minefld(void)
 	*   Code To Decode Minefield by Mike Balfour and Nicola Salmoria
 	*/
 
-	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
-	/* we write them at 0x0000. */
 	RAM = memory_region(REGION_GFX1);
 
-	for (i = 0;i < 0x1000;i++)
+	scratch = malloc(memory_region_length(REGION_GFX1));
+
+	if (scratch)
 	{
-		j = i & 0xd5f;
-		j |= ( bit(i,3) ^ bit(i,7) ) << 5;
-		j |= ( bit(i,2) ^ bit(i,9) ^ ( bit(i,0) & bit(i,5) ) ^
-				( bit(i,3) & bit(i,7) & ( bit(i,0) ^ bit(i,5) ))) << 7;
-		j |= ( bit(i,0) ^ bit(i,5) ^ ( bit(i,3) & bit(i,7) ) ) << 9;
-		RAM[i] = RAM[j + 0x1000];
+		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
+
+		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		{
+			int j;
+
+
+			j  = i & 0xd5f;
+			j |= ( bit(i,3) ^ bit(i,7) ) << 5;
+			j |= ( bit(i,2) ^ bit(i,9) ^ ( bit(i,0) & bit(i,5) ) ^
+				 ( bit(i,3) & bit(i,7) & ( bit(i,0) ^ bit(i,5) ))) << 7;
+			j |= ( bit(i,0) ^ bit(i,5) ^ ( bit(i,3) & bit(i,7) ) ) << 9;
+
+			RAM[i] = scratch[j];
+		}
+
+		free(scratch);
 	}
 }
 
 void init_losttomb(void)
 {
-	int i,j;
+	int i;
 	unsigned char *RAM;
+	unsigned char *scratch;
 
 
-	init_scobra();
+	init_scramble();
 
 	/*
 	*   Code To Decode Lost Tomb by Mirko Buffoni
 	*   Optimizations done by Fabio Buffoni
 	*/
 
-	/* The gfx ROMs are scrambled. Decode them. They have been loaded at 0x1000, */
-	/* we write them at 0x0000. */
 	RAM = memory_region(REGION_GFX1);
 
-	for (i = 0;i < 0x1000;i++)
+	scratch = malloc(memory_region_length(REGION_GFX1));
+
+	if (scratch)
 	{
-		j = i & 0xa7f;
-		j |= ( (bit(i,1) & bit(i,8)) | ((1 ^ bit(i,1)) & (bit(i,10)))) << 7;
-		j |= ( bit(i,7) ^ (bit(i,1) & ( bit(i,7) ^ bit(i,10) ))) << 8;
-		j |= ( (bit(i,1) & bit(i,7)) | ((1 ^ bit(i,1)) & (bit(i,8)))) << 10;
-		RAM[i] = RAM[j + 0x1000];
+		memcpy(scratch, RAM, memory_region_length(REGION_GFX1));
+
+		for (i = 0; i < memory_region_length(REGION_GFX1); i++)
+		{
+			int j;
+
+
+			j = i & 0xa7f;
+			j |= ( (bit(i,1) & bit(i,8)) | ((1 ^ bit(i,1)) & (bit(i,10)))) << 7;
+			j |= ( bit(i,7) ^ (bit(i,1) & ( bit(i,7) ^ bit(i,10) ))) << 8;
+			j |= ( (bit(i,1) & bit(i,7)) | ((1 ^ bit(i,1)) & (bit(i,8)))) << 10;
+
+			RAM[i] = scratch[j];
+		}
+
+		free(scratch);
 	}
 }
 
@@ -577,7 +732,7 @@ void init_superbon(void)
 	unsigned char *RAM;
 
 
-	init_scobra();
+	init_scramble();
 
 	/*
 	*   Code rom deryption worked out by hand by Chris Hardy.
@@ -588,18 +743,18 @@ void init_superbon(void)
 	for (i = 0;i < 0x1000;i++)
 	{
 		/* Code is encrypted depending on bit 7 and 9 of the address */
-		switch (i & 0x280)
+		switch (i & 0x0280)
 		{
-		case 0x000:
+		case 0x0000:
 			RAM[i] ^= 0x92;
 			break;
-		case 0x080:
+		case 0x0080:
 			RAM[i] ^= 0x82;
 			break;
-		case 0x200:
+		case 0x0200:
 			RAM[i] ^= 0x12;
 			break;
-		case 0x280:
+		case 0x0280:
 			RAM[i] ^= 0x10;
 			break;
 		}
@@ -612,7 +767,7 @@ void init_hustler(void)
 	int A;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	for (A = 0;A < 0x4000;A++)
@@ -654,7 +809,7 @@ void init_billiard(void)
 	int A;
 
 
-	init_scobra();
+	init_scramble_ppi();
 
 
 	for (A = 0;A < 0x4000;A++)

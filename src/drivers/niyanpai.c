@@ -555,10 +555,10 @@ static struct MachineDriver machine_driver_niyanpai =
 	/* video hardware */
 	1024, 512, { 0, 640-1, 0, 240-1 },
 	0,
-	768, 768,
+	768, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_PIXEL_ASPECT_RATIO_1_2,
+	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,
 	0,
 	niyanpai_vh_start,
 	niyanpai_vh_stop,
@@ -600,5 +600,4 @@ ROM_START( niyanpai )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAMEX( 1996, niyanpai,        0, niyanpai, niyanpai, niyanpai, ROT0_16BIT, "Nichibutsu", "Niyanpai (Japan)", 0 )
+GAME( 1996, niyanpai, 0, niyanpai, niyanpai, niyanpai, ROT0, "Nichibutsu", "Niyanpai (Japan)" )

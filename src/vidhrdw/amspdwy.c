@@ -50,7 +50,11 @@ static void get_tile_info( int tile_index )
 {
 	data8_t code	=	videoram[ tile_index ];
 	data8_t color	=	colorram[ tile_index ];
-	SET_TILE_INFO(0, code + ((color & 0x18)<<5), color & 0x07 );
+	SET_TILE_INFO(
+			0,
+			code + ((color & 0x18)<<5),
+			color & 0x07,
+			0)
 }
 
 WRITE_HANDLER( amspdwy_videoram_w )
@@ -150,13 +154,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void amspdwy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	/* 32 colors Only */
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-	palette_recalc();
-
-	tilemap_draw(bitmap,tilemap,0,0);	// Opaque
+	tilemap_draw(bitmap,tilemap,0,0);
 	draw_sprites(bitmap);
 }

@@ -68,7 +68,7 @@ static void modify_palette(void)
 
 		col_index++;
 
-		palette_change_color(i,r,g,b);
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -246,7 +246,7 @@ void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		do_modify_palette = 0;
 	}
 
-	if (palette_recalc() || full_refresh)
+	if (full_refresh)
 	{
 		int offs;
 

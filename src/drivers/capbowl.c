@@ -368,10 +368,10 @@ static const struct MachineDriver machine_driver_##NAME =	\
 	/* video hardware */									\
 	360, 256, { 0, 359, 0, VISIBLE_Y },						\
 	0,														\
-	16*256,16*256,											\
+	4096, 0,												\
 	0,														\
 															\
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,				\
+	VIDEO_TYPE_RASTER,				\
 	0,														\
 	capbowl_vh_start,										\
 	capbowl_vh_stop,										\
@@ -461,7 +461,7 @@ ROM_END
  *
  *************************************/
 
-GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 1)" )
-GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Capcom Bowling (set 2)" )
-GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, 0, ROT270_16BIT, "Incredible Technologies", "Coors Light Bowling" )
-GAME( 1991, bowlrama, 0,       bowlrama, capbowl, 0, ROT270_16BIT, "P & P Marketing", "Bowl-O-Rama" )
+GAME( 1988, capbowl,  0,       capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 1)" )
+GAME( 1988, capbowl2, capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Capcom Bowling (set 2)" )
+GAME( 1989, clbowl,   capbowl, capbowl,  capbowl, 0, ROT270, "Incredible Technologies", "Coors Light Bowling" )
+GAME( 1991, bowlrama, 0,       bowlrama, capbowl, 0, ROT270, "P & P Marketing", "Bowl-O-Rama" )

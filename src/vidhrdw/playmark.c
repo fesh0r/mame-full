@@ -23,14 +23,22 @@ static void bigtwin_get_tx_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram1[2*tile_index];
 	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
-	SET_TILE_INFO(2,code,color)
+	SET_TILE_INFO(
+			2,
+			code,
+			color,
+			0)
 }
 
 static void bigtwin_get_fg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram2[2*tile_index];
 	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
-	SET_TILE_INFO(1,code,color)
+	SET_TILE_INFO(
+			1,
+			code,
+			color,
+			0)
 }
 
 
@@ -38,23 +46,33 @@ static void wbeachvl_get_tx_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram1[2*tile_index];
 	UINT16 color = wbeachvl_videoram1[2*tile_index+1];
-	SET_TILE_INFO(2,code,color / 4)
+	SET_TILE_INFO(
+			2,
+			code,
+			color / 4,
+			0)
 }
 
 static void wbeachvl_get_fg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram2[2*tile_index];
 	UINT16 color = wbeachvl_videoram2[2*tile_index+1];
-	SET_TILE_INFO(1,code & 0x7fff,color / 4 + 8)
-	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			code & 0x7fff,
+			color / 4 + 8,
+			(code & 0x8000) ? TILE_FLIPX : 0)
 }
 
 static void wbeachvl_get_bg_tile_info(int tile_index)
 {
 	UINT16 code = wbeachvl_videoram3[2*tile_index];
 	UINT16 color = wbeachvl_videoram3[2*tile_index+1];
-	SET_TILE_INFO(1,code & 0x7fff,color / 4)
-	tile_info.flags = (code & 0x8000) ? TILE_FLIPX : 0;
+	SET_TILE_INFO(
+			1,
+			code & 0x7fff,
+			color / 4,
+			(code & 0x8000) ? TILE_FLIPX : 0)
 }
 
 
@@ -159,7 +177,7 @@ WRITE16_HANDLER( bigtwin_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 WRITE16_HANDLER( bigtwin_bgvideoram_w )
@@ -253,16 +271,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int codeshift)
 
 void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_used_colors[256] = PALETTE_COLOR_TRANSPARENT;	/* keep the background black */
-	if (palette_recalc())
-	{
-		int offs;
-
-		for (offs = 0;offs < bigtwin_bgvideoram_size/2;offs++)
-			bigtwin_bgvideoram_w(offs,bigtwin_bgvideoram[offs],0);
-	}
+	palette_set_color(256,0,0,0);	/* keep the background black */
 
 	copyscrollbitmap(bitmap,bgbitmap,1,&bgscrollx,1,&bgscrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
@@ -272,10 +281,6 @@ void bigtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void wbeachvl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 	draw_sprites(bitmap,0);

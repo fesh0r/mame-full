@@ -59,7 +59,7 @@ WRITE16_HANDLER( galpanic_paletteram_w )
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(offset,r,g,b);
+	palette_set_color(offset,r,g,b);
 }
 
 
@@ -156,11 +156,7 @@ static void draw_fgbitmap(struct osd_bitmap *bitmap)
 
 void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
 	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_fgbitmap(bitmap);
@@ -170,11 +166,7 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void comad_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
 	/* copy the temporary bitmap to the screen */
-	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
-	/* returns true */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	draw_fgbitmap(bitmap);

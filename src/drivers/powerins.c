@@ -290,9 +290,10 @@ static const struct MachineDriver machine_driver_powerins =
 	/* video hardware */
 	320, 256, { 0, 320-1, 0+16, 256-16-1 },
 	powerins_gfxdecodeinfo,
-	0x800, 0x800,
+	2048, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	powerins_vh_start,
 	0,
@@ -376,5 +377,4 @@ ROM_START( powerins )
 ROM_END
 
 
-
-GAME( 1993, powerins, 0, powerins, powerins, 0, ROT0_16BIT, "Atlus", "Power Instinct (USA) [bootleg]" )
+GAME( 1993, powerins, 0, powerins, powerins, 0, ROT0, "Atlus", "Power Instinct (USA bootleg)" )

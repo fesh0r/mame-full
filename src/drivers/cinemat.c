@@ -91,7 +91,7 @@ PORT_END
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy, samples, sample_interface) 	\
-static const struct MachineDriver machine_driver_##driver = 								\
+static const struct MachineDriver machine_driver_##driver = 						\
 { 																					\
 	/* basic machine hardware */ 													\
 	{ 																				\
@@ -110,7 +110,7 @@ static const struct MachineDriver machine_driver_##driver = 								\
 	400, 300, { minx, maxx, miny, maxy }, 											\
 	0, 																				\
 	256 + 32768, 256, 																\
- 	cinemat_init_colors, 															\
+	cinemat_init_colors, 															\
 																					\
 	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY,										\
 	0, 																				\
@@ -1218,7 +1218,7 @@ CINEMA_MACHINE (wotw, 0, 0, 1024, 768, 0, 0)
 INPUT_PORTS_START( boxingb )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
-	PORT_SERVICE( SW7,	   SW7ON )
+	PORT_SERVICE( SW7,	   SW7OFF )
 	PORT_DIPNAME( SW6,	   SW6OFF,		  DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(	   SW6OFF,		  DEF_STR( Off ) )
 	PORT_DIPSETTING(	   SW6ON,		  DEF_STR( On ) )
@@ -1248,9 +1248,9 @@ INPUT_PORTS_START( boxingb )
 	PORT_BIT ( 0x0020, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT ( 0x0010, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT ( 0x0008, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT ( 0x0008, IP_ACTIVE_LOW,  IPT_START2 )
+	PORT_BIT ( 0x0008, IP_ACTIVE_LOW,  IPT_START1 )
 	PORT_BIT ( 0x0004, IP_ACTIVE_LOW,  IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT ( 0x0004, IP_ACTIVE_LOW,  IPT_START1 )
+	PORT_BIT ( 0x0004, IP_ACTIVE_LOW,  IPT_START2 )
 	PORT_BIT ( 0x0002, IP_ACTIVE_LOW,  IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT ( 0x0001, IP_ACTIVE_LOW,  IPT_BUTTON1 | IPF_PLAYER2 )
 

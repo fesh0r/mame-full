@@ -67,7 +67,7 @@ WRITE16_HANDLER( tetrisp2_palette_w )
 		int r = (data >>  1) & 0x1f;
 		int g = (data >>  6) & 0x1f;
 		int b = (data >> 11) & 0x1f;
-		palette_change_color(offset/2,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+		palette_set_color(offset/2,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
 	}
 }
 
@@ -113,7 +113,11 @@ static void get_tile_info_0(int tile_index)
 {
 	data16_t code_hi = tetrisp2_vram_0[ 2 * tile_index + 0];
 	data16_t code_lo = tetrisp2_vram_0[ 2 * tile_index + 1];
-	SET_TILE_INFO( 1, code_hi, code_lo & 0xf);
+	SET_TILE_INFO(
+			1,
+			code_hi,
+			code_lo & 0xf,
+			0)
 }
 
 WRITE16_HANDLER( tetrisp2_vram_0_w )
@@ -132,7 +136,11 @@ static void get_tile_info_1(int tile_index)
 {
 	data16_t code_hi = tetrisp2_vram_1[ 2 * tile_index + 0];
 	data16_t code_lo = tetrisp2_vram_1[ 2 * tile_index + 1];
-	SET_TILE_INFO( 2, code_hi, code_lo & 0xf);
+	SET_TILE_INFO(
+			2,
+			code_hi,
+			code_lo & 0xf,
+			0)
 }
 
 WRITE16_HANDLER( tetrisp2_vram_1_w )
@@ -329,7 +337,7 @@ void tetrisp2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i,layers_ctrl = -1;
 
 	/* Black background color ? */
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	tilemap_set_flip(tilemap_0, (tetrisp2_vregs[0] & 1) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0 );
 	tilemap_set_flip(tilemap_1, (tetrisp2_vregs[0] & 1) ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0 );
@@ -371,14 +379,6 @@ if (keyboard_pressed(KEYCODE_Z))
 #endif
 }
 #endif
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
-
-	palette_recalc();
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,tilemap_0, 0, 0);
 	if (layers_ctrl & 8)	for (i=0xf;i>=0;i--)	tetrisp2_draw_sprites(bitmap,i);

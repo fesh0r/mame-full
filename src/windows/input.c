@@ -40,8 +40,9 @@ extern int verbose;
 #define MAX_KEYS			256
 
 #define MAX_JOY				256
-#define MAX_AXES			3
+#define MAX_AXES			8
 #define MAX_BUTTONS			32
+#define MAX_POV				4
 
 
 
@@ -59,7 +60,7 @@ extern int verbose;
 //	GLOBAL VARIABLES
 //============================================================
 
-UINT8						trying_to_quit;
+UINT8						win_trying_to_quit;
 
 
 
@@ -80,6 +81,7 @@ static int					hotrod;
 static int					hotrodse;
 static int					use_mouse;
 static int					use_joystick;
+static int					steadykey;
 
 // keyboard states
 static int					keyboard_count;
@@ -123,6 +125,7 @@ struct rc_option input_opts[] =
 	{ "hotrodse", NULL, rc_bool, &hotrodse, "0", 0, 0, NULL, "preconfigure for hotrod se" },
 	{ "mouse", NULL, rc_bool, &use_mouse, "0", 0, 0, NULL, "enable mouse input" },
 	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
+	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -287,8 +290,12 @@ static struct JoystickInfo joylist[MAX_JOY];
 // joystick types
 #define JOYTYPE_AXIS_NEG			0
 #define JOYTYPE_AXIS_POS			1
-#define JOYTYPE_BUTTON				2
-#define JOYTYPE_MOUSEBUTTON			3
+#define JOYTYPE_POV_UP				2
+#define JOYTYPE_POV_DOWN			3
+#define JOYTYPE_POV_LEFT			4
+#define JOYTYPE_POV_RIGHT			5
+#define JOYTYPE_BUTTON				6
+#define JOYTYPE_MOUSEBUTTON			7
 
 // master translation table
 static int joy_trans_table[][2] =
@@ -375,7 +382,7 @@ static BOOL CALLBACK enum_keyboard_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 		goto cant_set_format;
 
 	// set the cooperative level
-	result = IDirectInputDevice_SetCooperativeLevel(keyboard_device[keyboard_count], video_window,
+	result = IDirectInputDevice_SetCooperativeLevel(keyboard_device[keyboard_count], win_video_window,
 					DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
@@ -440,7 +447,7 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 		goto cant_set_format;
 
 	// set the cooperative level
-	result = IDirectInputDevice_SetCooperativeLevel(mouse_device[mouse_count], video_window,
+	result = IDirectInputDevice_SetCooperativeLevel(mouse_device[mouse_count], win_video_window,
 					DISCL_FOREGROUND | DISCL_EXCLUSIVE);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
@@ -506,7 +513,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 		goto cant_set_format;
 
 	// set the cooperative level
-	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], video_window,
+	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window,
 					DISCL_FOREGROUND | DISCL_EXCLUSIVE);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
@@ -528,10 +535,10 @@ out_of_joysticks:
 
 
 //============================================================
-//	win32_init_input
+//	win_init_input
 //============================================================
 
-int win32_init_input(void)
+int win_init_input(void)
 {
 	HRESULT result;
 
@@ -595,10 +602,10 @@ cant_create_dinput:
 
 
 //============================================================
-//	win32_shutdown_input
+//	win_shutdown_input
 //============================================================
 
-void win32_shutdown_input(void)
+void win_shutdown_input(void)
 {
 	int i;
 
@@ -623,10 +630,10 @@ void win32_shutdown_input(void)
 
 
 //============================================================
-//	win32_pause_input
+//	win_pause_input
 //============================================================
 
-void win32_pause_input(int paused)
+void win_pause_input(int paused)
 {
 	int i;
 
@@ -636,10 +643,6 @@ void win32_pause_input(int paused)
 		// unacquire all keyboards
 		for (i = 0; i < keyboard_count; i++)
 			IDirectInputDevice_Unacquire(keyboard_device[i]);
-
-		// unacquire all joysticks
-		for (i = 0; i < joystick_count; i++)
-			IDirectInputDevice_Unacquire(joystick_device[i]);
 
 		// unacquire all our mice
 		for (i = 0; i < mouse_count; i++)
@@ -653,10 +656,6 @@ void win32_pause_input(int paused)
 		for (i = 0; i < keyboard_count; i++)
 			IDirectInputDevice_Acquire(keyboard_device[i]);
 
-		// acquire all joysticks
-		for (i = 0; i < joystick_count; i++)
-			IDirectInputDevice_Acquire(joystick_device[i]);
-
 		// acquire all our mice if active
 		if (mouse_active)
 			for (i = 0; i < mouse_count; i++)
@@ -665,16 +664,16 @@ void win32_pause_input(int paused)
 
 	// set the paused state
 	input_paused = paused;
-	update_cursor_state();
+	win_update_cursor_state();
 }
 
 
 
 //============================================================
-//	win32_poll_input
+//	win_poll_input
 //============================================================
 
-void win32_poll_input(void)
+void win_poll_input(void)
 {
 	HWND focus = GetFocus();
 	HRESULT result = 1;
@@ -684,7 +683,7 @@ void win32_poll_input(void)
 	last_poll = ticker();
 
 	// periodically process events, in case they're not coming through
-	process_events_periodic();
+	win_process_events_periodic();
 
 	// if we don't have focus, turn off all keys
 	if (!focus)
@@ -734,7 +733,7 @@ void win32_poll_input(void)
 	updatekeyboard();
 
 	// if the debugger is up and visible, don't bother with the rest
-	if (debug_window != NULL && IsWindowVisible(debug_window))
+	if (win_debug_window != NULL && IsWindowVisible(win_debug_window))
 		return;
 
 	// poll all joysticks
@@ -748,7 +747,7 @@ void win32_poll_input(void)
 		result = IDirectInputDevice_GetDeviceState(joystick_device[i], sizeof(joystick_state[i]), &joystick_state[i]);
 
 		// handle lost inputs here
-		if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
+		if (result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED)
 		{
 			result = IDirectInputDevice_Acquire(joystick_device[i]);
 			if (result == DI_OK)
@@ -783,7 +782,7 @@ void win32_poll_input(void)
 //	is_mouse_captured
 //============================================================
 
-int is_mouse_captured(void)
+int win_is_mouse_captured(void)
 {
 	return (!input_paused && mouse_active && mouse_count > 0);
 }
@@ -844,17 +843,17 @@ int osd_is_key_pressed(int keycode)
 
 	// make sure we've polled recently
 	if (ticker() > last_poll + TICKS_PER_SEC/4)
-		win32_poll_input();
+		win_poll_input();
 
 	// special case: if we're trying to quit, fake up/down/up/down
-	if (dik == DIK_ESCAPE && trying_to_quit)
+	if (dik == DIK_ESCAPE && win_trying_to_quit)
 	{
 		static int dummy_state = 1;
 		return dummy_state ^= 1;
 	}
 
 	// if the video window isn't visible, we have to get our events from the console
-	if (!video_window || !IsWindowVisible(video_window))
+	if (!win_video_window || !IsWindowVisible(win_video_window))
 	{
 		// warning: this code relies on the assumption that when you're polling for
 		// keyboard events before the system is initialized, they are all of the
@@ -866,7 +865,10 @@ int osd_is_key_pressed(int keycode)
 	}
 
 	// otherwise, just return the current keystate
-	return currkey[dik];
+	if (steadykey)
+		return currkey[dik];
+	else
+		return keyboard_state[0][dik];
 }
 
 
@@ -947,12 +949,42 @@ static void init_keylist(void)
 
 
 //============================================================
+//	add_joylist_entry
+//============================================================
+
+static void add_joylist_entry(const char *name, int code, int *joycount)
+{
+	// copy the name
+	char *namecopy = malloc(strlen(name) + 1);
+	if (namecopy)
+	{
+		int entry;
+
+		// find the table entry, if there is one
+		for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
+			if (joy_trans_table[entry][0] == code)
+				break;
+
+		// fill in the joy description
+		joylist[*joycount].name = strcpy(namecopy, name);
+		joylist[*joycount].code = code;
+		joylist[*joycount].standardcode = JOYCODE_OTHER;
+		if (entry < ELEMENTS(joy_trans_table))
+			joylist[*joycount].standardcode = joy_trans_table[entry][1];
+		*joycount += 1;
+	}
+}
+
+
+
+//============================================================
 //	init_joylist
 //============================================================
 
 static void init_joylist(void)
 {
-	int mouse, stick, axis, button;
+	int mouse, stick, axis, button, pov;
+	char tempname[MAX_PATH];
 	int joycount = 0;
 
 	// first of all, map mouse buttons
@@ -967,33 +999,12 @@ static void init_joylist(void)
 			result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
 			if (result == DI_OK)
 			{
-				char *namecopy;
-				char tempname[MAX_PATH];
-
 				// add mouse number to the name
 				if (mouse_count > 1)
 					sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
 				else
 					sprintf(tempname, "Mouse %s", instance.tszName);
-				namecopy = malloc(strlen(tempname) + 1);
-				if (namecopy)
-				{
-					int code = JOYCODE(mouse, JOYTYPE_MOUSEBUTTON, button);
-					int entry;
-
-					// find the table entry, if there is one
-					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
-						if (joy_trans_table[entry][0] == code)
-							break;
-
-					// fill in the joy description
-					joylist[joycount].name = strcpy(namecopy, tempname);
-					joylist[joycount].code = code;
-					joylist[joycount].standardcode = JOYCODE_OTHER;
-					if (entry < ELEMENTS(joy_trans_table))
-						joylist[joycount].standardcode = joy_trans_table[entry][1];
-					joycount++;
-				}
+				add_joylist_entry(tempname, JOYCODE(mouse, JOYTYPE_MOUSEBUTTON, button), &joycount);
 			}
 		}
 
@@ -1001,7 +1012,7 @@ static void init_joylist(void)
 	for (stick = 0; stick < joystick_count; stick++)
 	{
 		// loop over all axes
-		for (axis = 0; axis < 3; axis++)
+		for (axis = 0; axis < MAX_AXES; axis++)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
 			HRESULT result;
@@ -1011,54 +1022,13 @@ static void init_joylist(void)
 			result = IDirectInputDevice_GetObjectInfo(joystick_device[stick], &instance, offsetof(DIJOYSTATE, lX) + axis * sizeof(LONG), DIPH_BYOFFSET);
 			if (result == DI_OK)
 			{
-				char *namecopy;
-				char tempname[MAX_PATH];
-
 				// add negative value
-				// make the name for this item
 				sprintf(tempname, "J%d %s -", stick + 1, instance.tszName);
-				namecopy = malloc(strlen(tempname) + 1);
-				if (namecopy)
-				{
-					int code = JOYCODE(stick, JOYTYPE_AXIS_NEG, axis);
-					int entry;
-
-					// find the table entry, if there is one
-					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
-						if (joy_trans_table[entry][0] == code)
-							break;
-
-					// fill in the joy description
-					joylist[joycount].name = strcpy(namecopy, tempname);
-					joylist[joycount].code = code;
-					joylist[joycount].standardcode = JOYCODE_OTHER;
-					if (entry < ELEMENTS(joy_trans_table))
-						joylist[joycount].standardcode = joy_trans_table[entry][1];
-					joycount++;
-				}
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_AXIS_NEG, axis), &joycount);
 
 				// add positive value
-				// make the name for this item
 				sprintf(tempname, "J%d %s +", stick + 1, instance.tszName);
-				namecopy = malloc(strlen(tempname) + 1);
-				if (namecopy)
-				{
-					int code = JOYCODE(stick, JOYTYPE_AXIS_POS, axis);
-					int entry;
-
-					// find the table entry, if there is one
-					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
-						if (joy_trans_table[entry][0] == code)
-							break;
-
-					// fill in the joy description
-					joylist[joycount].name = strcpy(namecopy, tempname);
-					joylist[joycount].code = code;
-					joylist[joycount].standardcode = JOYCODE_OTHER;
-					if (entry < ELEMENTS(joy_trans_table))
-						joylist[joycount].standardcode = joy_trans_table[entry][1];
-					joycount++;
-				}
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_AXIS_POS, axis), &joycount);
 
 				// get the axis range while we're here
 				joystick_range[stick][axis].diph.dwSize = sizeof(DIPROPRANGE);
@@ -1070,7 +1040,7 @@ static void init_joylist(void)
 		}
 
 		// loop over all buttons
-		for (button = 0; button < joystick_caps[stick].dwButtons; button++)
+		for (button = 0; button < MAX_BUTTONS; button++)
 		{
 			DIDEVICEOBJECTINSTANCE instance = { 0 };
 			HRESULT result;
@@ -1080,30 +1050,38 @@ static void init_joylist(void)
 			result = IDirectInputDevice_GetObjectInfo(joystick_device[stick], &instance, offsetof(DIJOYSTATE, rgbButtons[button]), DIPH_BYOFFSET);
 			if (result == DI_OK)
 			{
-				char *namecopy;
-				char tempname[MAX_PATH];
-
 				// make the name for this item
 				sprintf(tempname, "J%d %s", stick + 1, instance.tszName);
-				namecopy = malloc(strlen(tempname) + 1);
-				if (namecopy)
-				{
-					int code = JOYCODE(stick, JOYTYPE_BUTTON, button);
-					int entry;
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_BUTTON, button), &joycount);
+			}
+		}
 
-					// find the table entry, if there is one
-					for (entry = 0; entry < ELEMENTS(joy_trans_table); entry++)
-						if (joy_trans_table[entry][0] == code)
-							break;
+		// check POV hats
+		for (pov = 0; pov < MAX_POV; pov++)
+		{
+			DIDEVICEOBJECTINSTANCE instance = { 0 };
+			HRESULT result;
 
-					// fill in the joy description
-					joylist[joycount].name = strcpy(namecopy, tempname);
-					joylist[joycount].code = code;
-					joylist[joycount].standardcode = JOYCODE_OTHER;
-					if (entry < ELEMENTS(joy_trans_table))
-						joylist[joycount].standardcode = joy_trans_table[entry][1];
-					joycount++;
-				}
+			// attempt to get the object info
+			instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
+			result = IDirectInputDevice_GetObjectInfo(joystick_device[stick], &instance, offsetof(DIJOYSTATE, rgdwPOV[pov]), DIPH_BYOFFSET);
+			if (result == DI_OK)
+			{
+				// add up direction
+				sprintf(tempname, "J%d %s U", stick + 1, instance.tszName);
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_UP, pov), &joycount);
+
+				// add down direction
+				sprintf(tempname, "J%d %s D", stick + 1, instance.tszName);
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_DOWN, pov), &joycount);
+
+				// add left direction
+				sprintf(tempname, "J%d %s L", stick + 1, instance.tszName);
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_LEFT, pov), &joycount);
+
+				// add right direction
+				sprintf(tempname, "J%d %s R", stick + 1, instance.tszName);
+				add_joylist_entry(tempname, JOYCODE(stick, JOYTYPE_POV_RIGHT, pov), &joycount);
 			}
 		}
 	}
@@ -1134,6 +1112,7 @@ int osd_is_joy_pressed(int joycode)
 	int joyindex = JOYINDEX(joycode);
 	int joytype = JOYTYPE(joycode);
 	int joynum = JOYNUM(joycode);
+	DWORD pov;
 
 	// switch off the type
 	switch (joytype)
@@ -1158,6 +1137,27 @@ int osd_is_joy_pressed(int joycode)
 			else
 				return (val < middle - (middle - bottom) / 4);
 		}
+
+		// anywhere from 0-45 (315) deg to 0+45 (45) deg
+		case JOYTYPE_POV_UP:
+			pov = joystick_state[joynum].rgdwPOV[joyindex];
+			return ((pov & 0xffff) != 0xffff && (pov >= 31500 || pov <= 4500));
+
+		// anywhere from 90-45 (45) deg to 90+45 (135) deg
+		case JOYTYPE_POV_RIGHT:
+			pov = joystick_state[joynum].rgdwPOV[joyindex];
+			return ((pov & 0xffff) != 0xffff && (pov >= 4500 && pov <= 13500));
+
+		// anywhere from 180-45 (135) deg to 180+45 (225) deg
+		case JOYTYPE_POV_DOWN:
+			pov = joystick_state[joynum].rgdwPOV[joyindex];
+			return ((pov & 0xffff) != 0xffff && (pov >= 13500 && pov <= 22500));
+
+		// anywhere from 270-45 (225) deg to 270+45 (315) deg
+		case JOYTYPE_POV_LEFT:
+			pov = joystick_state[joynum].rgdwPOV[joyindex];
+			return ((pov & 0xffff) != 0xffff && (pov >= 22500 && pov <= 31500));
+
 	}
 
 	// keep the compiler happy
@@ -1178,7 +1178,7 @@ void osd_analogjoy_read(int player, int *analog_x, int *analog_y)
 	if (!mouse_active)
 	{
 		mouse_active = 1;
-		win32_pause_input(0);
+		win_pause_input(0);
 	}
 
 	// if out of range, skip it
@@ -1217,7 +1217,7 @@ void osd_trak_read(int player, int *deltax, int *deltay)
 	if (!mouse_active)
 	{
 		mouse_active = 1;
-		win32_pause_input(0);
+		win_pause_input(0);
 	}
 
 	// return the latest mouse info

@@ -14,26 +14,23 @@ static int video_off;
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;
 
-static int irq1,irq2;
+static int irqbase;
 
 void m72_init_machine(void)
 {
-	irq1 = 0x20;
-	irq2 = 0x22;
+	irqbase = 0x20;
 	m72_init_sound();
 }
 
 void xmultipl_init_machine(void)
 {
-	irq1 = 0x08;
-	irq2 = 0x0a;
+	irqbase = 0x08;
 	m72_init_sound();
 }
 
-void poundfor_init_machine(void)
+void kengo_init_machine(void)
 {
-	irq1 = 0x18;
-	irq2 = 0x1a;
+	irqbase = 0x18;
 	m72_init_sound();
 }
 
@@ -44,8 +41,7 @@ int m72_interrupt(void)
 	if (line == 255)	/* vblank */
 	{
 		rastersplit = 0;
-		interrupt_vector_w(0,irq1);
-		return interrupt();
+		return irqbase+0;
 	}
 	else
 	{
@@ -60,8 +56,7 @@ int m72_interrupt(void)
 		   multiple times, by changing the interrupt line register in the
 		   interrupt handler).
 		 */
-		interrupt_vector_w(0,irq2);
-		return interrupt();
+		return irqbase+2;
 	}
 }
 
@@ -82,14 +77,17 @@ INLINE void m72_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
 	code  = videoram[tile_index];
 	attr  = videoram[tile_index+1];
 	color = videoram[tile_index+2];
-	SET_TILE_INFO(gfxnum,code + ((attr & 0x3f) << 8),color & 0x0f)
 
 	if (color & 0x80) pri = 2;
 	else if (color & 0x40) pri = 1;
 	else pri = 0;
 /* color & 0x10 is used in bchopper and hharry, more priority? */
 
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6) | TILE_SPLIT(pri);
+	SET_TILE_INFO(
+			gfxnum,
+			code + ((attr & 0x3f) << 8),
+			color & 0x0f,
+			TILE_FLIPYX((attr & 0xc0) >> 6) | TILE_SPLIT(pri))
 }
 
 INLINE void rtype2_get_tile_info(int tile_index,unsigned char *videoram,int gfxnum)
@@ -101,16 +99,19 @@ INLINE void rtype2_get_tile_info(int tile_index,unsigned char *videoram,int gfxn
 	code  = videoram[tile_index] + (videoram[tile_index+1] << 8);
 	color = videoram[tile_index+2];
 	attr  = videoram[tile_index+3];
-	SET_TILE_INFO(gfxnum,code,color & 0x0f)
 
 	if (attr & 0x01) pri = 2;
 	else if (color & 0x80) pri = 1;
 	else pri = 0;
 
-	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5) | TILE_SPLIT(pri);
-
 /* (videoram[tile_index+2] & 0x10) is used by majtitle on the green, but it's not clear for what */
 /* (videoram[tile_index+3] & 0xfe) are used as well */
+
+	SET_TILE_INFO(
+			gfxnum,
+			code,
+			color & 0x0f,
+			TILE_FLIPYX((color & 0x60) >> 5) | TILE_SPLIT(pri))
 }
 
 
@@ -160,22 +161,21 @@ static UINT32 majtitle_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT3
 
 int m72_vh_start(void)
 {
-	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
-	fg_tilemap = tilemap_create(m72_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
+	bg_tilemap = tilemap_create(m72_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(m72_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
-	tilemap_set_transmask(fg_tilemap,0,0xffff);
-	tilemap_set_transmask(fg_tilemap,1,0x00ff);
-	tilemap_set_transmask(fg_tilemap,2,0x0001);
+	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
+	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
 
-	tilemap_set_transmask(bg_tilemap,0,0xffff);
-	tilemap_set_transmask(bg_tilemap,1,0x00ff);
-	tilemap_set_transmask(bg_tilemap,2,0x0001);
+	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff,0xff00);
+	tilemap_set_transmask(bg_tilemap,2,0x0001,0xfffe);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -186,22 +186,21 @@ int m72_vh_start(void)
 
 int rtype2_vh_start(void)
 {
-	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
-	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
+	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
-	tilemap_set_transmask(fg_tilemap,0,0xffff);
-	tilemap_set_transmask(fg_tilemap,1,0x00ff);
-	tilemap_set_transmask(fg_tilemap,2,0x0001);
+	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
+	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
 
-	tilemap_set_transmask(bg_tilemap,0,0xffff);
-	tilemap_set_transmask(bg_tilemap,1,0x00ff);
-	tilemap_set_transmask(bg_tilemap,2,0x0001);
+	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff,0xff00);
+	tilemap_set_transmask(bg_tilemap,2,0x0001,0xfffe);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -210,28 +209,37 @@ int rtype2_vh_start(void)
 	return 0;
 }
 
+int poundfor_vh_start(void)
+{
+	int res = rtype2_vh_start();
+
+	xadjust = -6;
+
+	return res;
+}
+
+
 /* Major Title has a larger background RAM, and rowscroll */
 int majtitle_vh_start(void)
 {
 // The tilemap can be 256x64, but seems to be used at 128x64 (scroll wraparound).
 // The layout ramains 256x64, the right half is just not displayed.
-//	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,256,64);
-	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,majtitle_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,128,64);
-	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
+//	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,256,64);
+	bg_tilemap = tilemap_create(rtype2_get_bg_tile_info,majtitle_scan_rows,TILEMAP_SPLIT,8,8,128,64);
+	fg_tilemap = tilemap_create(rtype2_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
-	tilemap_set_transmask(fg_tilemap,0,0xffff);
-	tilemap_set_transmask(fg_tilemap,1,0x00ff);
-	tilemap_set_transmask(fg_tilemap,2,0x0001);
+	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
+	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
 
-	tilemap_set_transmask(bg_tilemap,0,0xffff);
-	tilemap_set_transmask(bg_tilemap,1,0x00ff);
-	tilemap_set_transmask(bg_tilemap,2,0x0001);
+	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff,0xff00);
+	tilemap_set_transmask(bg_tilemap,2,0x0001,0xfffe);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -242,22 +250,21 @@ int majtitle_vh_start(void)
 
 int hharry_vh_start(void)
 {
-	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE | TILEMAP_SPLIT,8,8,64,64);
-	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT | TILEMAP_SPLIT,8,8,64,64);
+	bg_tilemap = tilemap_create(hharry_get_bg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
+	fg_tilemap = tilemap_create(hharry_get_fg_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,8,8,64,64);
 
 	m72_spriteram = malloc(spriteram_size);
 
 	if (!fg_tilemap || !bg_tilemap || !m72_spriteram)
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap,0);
-	tilemap_set_transmask(fg_tilemap,0,0xffff);
-	tilemap_set_transmask(fg_tilemap,1,0x00ff);
-	tilemap_set_transmask(fg_tilemap,2,0x0001);
+	tilemap_set_transmask(fg_tilemap,0,0xffff,0x0001);
+	tilemap_set_transmask(fg_tilemap,1,0x00ff,0xff01);
+	tilemap_set_transmask(fg_tilemap,2,0x0001,0xffff);
 
-	tilemap_set_transmask(bg_tilemap,0,0xffff);
-	tilemap_set_transmask(bg_tilemap,1,0x00ff);
-	tilemap_set_transmask(bg_tilemap,2,0x0001);
+	tilemap_set_transmask(bg_tilemap,0,0xffff,0x0000);
+	tilemap_set_transmask(bg_tilemap,1,0x00ff,0xff00);
+	tilemap_set_transmask(bg_tilemap,2,0x0001,0xfffe);
 
 	memset(m72_spriteram,0,spriteram_size);
 
@@ -282,12 +289,24 @@ void m72_vh_stop(void)
 
 READ_HANDLER( m72_palette1_r )
 {
-	return paletteram[offset];
+	/* only D0-D4 are connected */
+	if (offset & 1) return 0xff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	return paletteram[offset] | 0xe0;	/* only D0-D4 are connected */
 }
 
 READ_HANDLER( m72_palette2_r )
 {
-	return paletteram_2[offset];
+	/* only D0-D4 are connected */
+	if (offset & 1) return 0xff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	return paletteram_2[offset] | 0xe0;	/* only D0-D4 are connected */
 }
 
 INLINE void changecolor(int color,int r,int g,int b)
@@ -296,14 +315,19 @@ INLINE void changecolor(int color,int r,int g,int b)
 	g = (g << 3) | (g >> 2);
 	b = (b << 3) | (b >> 2);
 
-	palette_change_color(color,r,g,b);
+	palette_set_color(color,r,g,b);
 }
 
 WRITE_HANDLER( m72_palette1_w )
 {
-	paletteram[offset] = data;
+	/* only D0-D4 are connected */
 	if (offset & 1) return;
-	offset &= 0x3ff;
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	paletteram[offset] = data;
+	offset &= 0x1ff;
 	changecolor(offset / 2,
 			paletteram[offset + 0x000],
 			paletteram[offset + 0x400],
@@ -312,10 +336,15 @@ WRITE_HANDLER( m72_palette1_w )
 
 WRITE_HANDLER( m72_palette2_w )
 {
-	paletteram_2[offset] = data;
+	/* only D0-D4 are connected */
 	if (offset & 1) return;
-	offset &= 0x3ff;
-	changecolor(offset / 2 + 512,
+
+	/* A9 isn't connected, so 0x200-0x3ff mirrors 0x000-0x1ff etc. */
+	offset &= ~0x200;
+
+	paletteram_2[offset] = data;
+	offset &= 0x1ff;
+	changecolor(offset / 2 + 256,
 			paletteram_2[offset + 0x000],
 			paletteram_2[offset + 0x400],
 			paletteram_2[offset + 0x800]);
@@ -399,38 +428,11 @@ WRITE_HANDLER( m72_scrolly2_w )
 		scrolly2[i] = scrolly2[rastersplit];
 }
 
-WRITE_HANDLER( m72_spritectrl_w )
+WRITE_HANDLER( m72_dmaon_w )
 {
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
-	/* TODO: this is ok for R-Type, but might be wrong for others */
-	if (offset == 1)
-	{
-		memcpy(m72_spriteram,spriteram,spriteram_size);
-		if (data & 0x40) memset(spriteram,0,spriteram_size);
-		/* bit 7 is used by bchopper, nspirit, imgfight, loht, gallop - meaning unknown */
-		/* rtype2 uses bits 4,5,6 and 7 - of course it could be a different chip */
-	}
-}
-
-WRITE_HANDLER( hharry_spritectrl_w )
-{
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
 	if (offset == 0)
 	{
 		memcpy(m72_spriteram,spriteram,spriteram_size);
-		memset(spriteram,0,spriteram_size);
-	}
-}
-
-WRITE_HANDLER( hharryu_spritectrl_w )
-{
-//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
-	if (offset == 1)
-	{
-		memcpy(m72_spriteram,spriteram,spriteram_size);
-		if (data & 0x80) memset(spriteram,0,spriteram_size);
-		/* hharryu uses bits 2,3,4,5,6 and 7 - of course it could be a different chip */
-		/* majtitle uses bits 2,3,5,6 and 7 - of course it could be a different chip */
 	}
 }
 
@@ -460,7 +462,7 @@ WRITE_HANDLER( m72_port02_w )
 	else
 		cpu_set_reset_line(1,ASSERT_LINE);
 
-	/* other bits unknown */
+	/* bit 5 = "bank"? */
 }
 
 WRITE_HANDLER( rtype2_port02_w )
@@ -470,7 +472,7 @@ WRITE_HANDLER( rtype2_port02_w )
 		if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-	if (data & 0xf0) logerror("write %02x to port 02\n",data);
+	if (data & 0xe0) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -509,7 +511,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	int offs;
 
-	for (offs = 0;offs < spriteram_size;offs += 8)
+	offs = 0;
+	while (offs < spriteram_size)
 	{
 		int code,color,sx,sy,flipx,flipy,w,h,x,y;
 
@@ -552,6 +555,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
+
+		offs += w*8;
 	}
 }
 
@@ -605,33 +610,6 @@ static void majtitle_draw_sprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void mark_sprite_colors(unsigned char *ram)
-{
-	int offs,color,i;
-	int colmask[32];
-	int pal_base;
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (color = 0;color < 32;color++) colmask[color] = 0;
-
-	for (offs = 0;offs < spriteram_size;offs += 8)
-	{
-		color = ram[offs+4] & 0x0f;
-		colmask[color] |= 0xffff;
-	}
-
-	for (color = 0;color < 32;color++)
-	{
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
 static void draw_layer(struct osd_bitmap *bitmap,
 		struct tilemap *tilemap,int *scrollx,int *scrolly,int priority)
 {
@@ -675,19 +653,9 @@ void m72_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (video_off)
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;
 	}
-
-	tilemap_set_clip(fg_tilemap,NULL);
-	tilemap_set_clip(bg_tilemap,NULL);
-
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	mark_sprite_colors(m72_spriteram);
-	palette_recalc();
 
 	draw_bg(bitmap,TILEMAP_BACK);
 	draw_fg(bitmap,TILEMAP_BACK);
@@ -703,11 +671,9 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (video_off)
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 		return;
 	}
-
-	tilemap_set_clip(fg_tilemap,NULL);
 
 	if (majtitle_rowscroll)
 	{
@@ -722,13 +688,6 @@ void majtitle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrollx(bg_tilemap,0,256 + scrollx2[0] + xadjust);
 	}
 	tilemap_set_scrolly(bg_tilemap,0,scrolly2[0]);
-	tilemap_update(bg_tilemap);
-	tilemap_update(fg_tilemap);
-
-	palette_init_used_colors();
-	mark_sprite_colors(m72_spriteram);
-	mark_sprite_colors(spriteram_2);
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 	draw_fg(bitmap,TILEMAP_BACK);

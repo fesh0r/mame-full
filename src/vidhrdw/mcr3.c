@@ -17,9 +17,9 @@
 #endif
 
 /* These are used to align Discs of Tron with the backdrop */
-#define DOTRON_X_START 144
-#define DOTRON_Y_START 40
-#define DOTRON_HORIZON 138
+#define DOTRON_X_START 90
+#define DOTRON_Y_START 118
+static struct artwork_info *backdrop[2];
 
 
 
@@ -50,10 +50,6 @@ size_t spyhunt_alpharam_size;
 /* Spy Hunter-specific scrolling background */
 static struct osd_bitmap *spyhunt_backbitmap;
 
-/* Discs of Tron artwork globals */
-static struct artwork_info *dotron_strobe[3];
-static UINT8 light_status;
-
 static UINT8 last_cocktail_flip;
 
 
@@ -81,7 +77,7 @@ WRITE_HANDLER( mcr3_paletteram_w )
 	g = (g << 5) | (g << 2) | (g >> 1);
 	b = (b << 5) | (b << 2) | (b >> 1);
 
-	palette_change_color(offset / 2, r, g, b);
+	palette_set_color(offset / 2, r, g, b);
 }
 
 
@@ -211,7 +207,7 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* mark everything dirty on a cocktail flip change */
-	if (palette_recalc() || last_cocktail_flip != mcr_cocktail_flip)
+	if (last_cocktail_flip != mcr_cocktail_flip)
 		memset(dirtybuffer, 1, videoram_size);
 	last_cocktail_flip = mcr_cocktail_flip;
 
@@ -235,9 +231,6 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
-
 	/* redraw the background */
 	mcr3_update_background(tmpbitmap, 3);
 
@@ -259,24 +252,18 @@ void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 void spyhunt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	/* add some colors for the alpha RAM */
-	palette[(8*16)*3+0] = 0;
-	palette[(8*16)*3+1] = 0;
-	palette[(8*16)*3+2] = 0;
-	palette[(8*16+1)*3+0] = 0;
-	palette[(8*16+1)*3+1] = 255;
-	palette[(8*16+1)*3+2] = 0;
-	palette[(8*16+2)*3+0] = 0;
-	palette[(8*16+2)*3+1] = 0;
-	palette[(8*16+2)*3+2] = 255;
-	palette[(8*16+3)*3+0] = 255;
-	palette[(8*16+3)*3+1] = 255;
-	palette[(8*16+3)*3+2] = 255;
-
-	/* put them into the color table */
-	colortable[8*16+0] = 8*16;
-	colortable[8*16+1] = 8*16+1;
-	colortable[8*16+2] = 8*16+2;
-	colortable[8*16+3] = 8*16+3;
+	palette[(4*16)*3+0] = 0;
+	palette[(4*16)*3+1] = 0;
+	palette[(4*16)*3+2] = 0;
+	palette[(4*16+1)*3+0] = 0;
+	palette[(4*16+1)*3+1] = 255;
+	palette[(4*16+1)*3+2] = 0;
+	palette[(4*16+2)*3+0] = 0;
+	palette[(4*16+2)*3+1] = 0;
+	palette[(4*16+2)*3+2] = 255;
+	palette[(4*16+3)*3+0] = 255;
+	palette[(4*16+3)*3+1] = 255;
+	palette[(4*16+3)*3+2] = 255;
 }
 
 
@@ -335,9 +322,6 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	static const struct rectangle clip = { 0, 30*16-1, 0, 30*16-1 };
 	int offs, scrollx, scrolly;
-
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -406,69 +390,21 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 static int dotron_artwork_start(void)
 {
-	int i, x, y;
-
-	backdrop_load("dotron.png", 64, Machine->drv->total_colors-64);
-	dotron_strobe[0] = artwork_backdrop;
-	artwork_load (&dotron_strobe[1], "dotron.png", 64, Machine->drv->total_colors-64);
-	artwork_load (&dotron_strobe[2], "dotron.png", 64, Machine->drv->total_colors-64);
-
-	/* The following stuff isn't needed once we have real artwork for the lit states */
-	if (artwork_backdrop && dotron_strobe[1] && dotron_strobe[2])
+	backdrop_load("dotron1.png", 64);
+	if (artwork_backdrop)
 	{
-		if (Machine->color_depth == 8)
-		{
-			/* increase size of palette */
-			for (i=0 ; i<3; i++)
-			{
-				UINT8 *pal = dotron_strobe[i]->orig_palette;
-				dotron_strobe[i]->orig_palette = malloc(256*3);
-				if (dotron_strobe[i]->orig_palette == 0)
-					return 1;
-				memcpy (dotron_strobe[i]->orig_palette, pal, dotron_strobe[i]->num_pens_used*3);
-				free (pal);
-			}
+		backdrop[0] = artwork_backdrop;
+		artwork_load (&backdrop[1], "dotron2.png", 64);
+	}
+	else backdrop[0] = backdrop[1] = NULL;
 
-			/* from the horizon upwards, use the second palette */
-			for (y = 0; y < DOTRON_HORIZON; y++)
-				for (x = 0; x < artwork_backdrop->artwork->width; x++)
-				{
-					int newpixel = read_pixel(artwork_backdrop->orig_artwork, x, y) + 95;
-					plot_pixel(dotron_strobe[1]->orig_artwork, x, y, newpixel);
-					plot_pixel(dotron_strobe[2]->orig_artwork, x, y, newpixel);
-				}
+	/* need to clear the border outside the game display */
+	fillbitmap(tmpbitmap,Machine->pens[64],&Machine->visible_area);	/* artwork's black */
 
-			for (i = 0; i < artwork_backdrop->num_pens_used; i++)
-			{
-				/* only boost red and blue */
-				dotron_strobe[1]->orig_palette[i*3+0+95*3] = MIN(artwork_backdrop->orig_palette[i*3]*2, 255);
-				dotron_strobe[1]->orig_palette[i*3+1+95*3] = artwork_backdrop->orig_palette[i*3+1];
-				dotron_strobe[1]->orig_palette[i*3+2+95*3] = MIN(artwork_backdrop->orig_palette[i*3+2]*2, 255);
-				dotron_strobe[2]->orig_palette[i*3+0+95*3] = MIN(artwork_backdrop->orig_palette[i*3]*3, 255);
-				dotron_strobe[2]->orig_palette[i*3+1+95*3] = artwork_backdrop->orig_palette[i*3+1];
-				dotron_strobe[2]->orig_palette[i*3+2+95*3] = MIN(artwork_backdrop->orig_palette[i*3+2]*3, 255);
-			}
-			dotron_strobe[1]->num_pens_used += artwork_backdrop->num_pens_used;
-			dotron_strobe[2]->num_pens_used += artwork_backdrop->num_pens_used;
-		}
-		else
-		{
-			/* from the horizon upwards, simulate blacklight */
-			for (y = 0; y < DOTRON_HORIZON; y++)
-				for (x = 0; x < artwork_backdrop->artwork->width; x++)
-				{
-					int p, p1, p2, r, g, b;
-					p = read_pixel(artwork_backdrop->orig_artwork, x, y);
-					r = p >> 10;
-					g = (p >> 5) & 0x1f;
-					b = p & 0x1f;
-					p1 = (MIN (r*2, 0x1f) << 10)|(g<<5)|(MIN (b*2, 0x1f));
-					p2 = (MIN (r*3, 0x1f) << 10)|(g<<5)|(MIN (b*3, 0x1f));
-					plot_pixel(dotron_strobe[1]->orig_artwork, x, y, p1);
-					plot_pixel(dotron_strobe[2]->orig_artwork, x, y, p2);
-				}
-		}
-		logerror("Backdrop loaded.\n");
+	if (!artwork_backdrop)
+	{
+		/* if no artwork available, reduce visible area to the game display */
+		set_visible_area(DOTRON_X_START,DOTRON_X_START + 32*16-1,DOTRON_Y_START,DOTRON_Y_START + 30*16-1);
 	}
 
 	return 0;
@@ -497,31 +433,11 @@ int dotron_vh_start(void)
 
 void dotron_change_light(int light)
 {
-	light_status = light;
-}
+	set_led_status(0,light & 1);	/* background light */
+	set_led_status(1,light & 2);	/* strobe */
 
-static void dotron_change_palette(int which)
-{
-	static int oldlight;
-	UINT8 *new_palette;
-	int i, offset;
-
-	if (which != oldlight)
-	{
-		if (Machine->color_depth == 8)
-		{
-			/* get the palette indices */
-			offset = artwork_backdrop->start_pen;
-			new_palette = dotron_strobe[which]->orig_palette;
-
-			/* update the palette entries */
-			for (i = 0; i < dotron_strobe[which]->num_pens_used; i++)
-				palette_change_color(i + offset, new_palette[i * 3], new_palette[i * 3 + 1], new_palette[i * 3 + 2]);
-		}
-		artwork_backdrop = dotron_strobe[which];
-		artwork_remap();
-	}
-	oldlight = which;
+	if (backdrop[light & 1])
+		artwork_backdrop = backdrop[light & 1];
 }
 
 /*************************************
@@ -535,22 +451,14 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	struct rectangle sclip;
 	int offs;
 
-	/* handle background lights */
-	if (artwork_backdrop != NULL)
-	{
-		int light = light_status & 1;
-		if ((light_status & 2) && (cpu_getcurrentframe() & 1)) light++;	/* strobe */
-		dotron_change_palette(light);
-	}
-
-	if (full_refresh || palette_recalc())
+	if (full_refresh)
 		memset(dirtybuffer, 1 ,videoram_size);
 
 	/* Screen clip, because our backdrop is a different resolution than the game */
-	sclip.min_x = DOTRON_X_START + 0;
-	sclip.max_x = DOTRON_X_START + 32*16 - 1;
-	sclip.min_y = DOTRON_Y_START + 0;
-	sclip.max_y = DOTRON_Y_START + 30*16 - 1;
+	sclip.min_x = DOTRON_X_START;
+	sclip.max_x = DOTRON_X_START + 32*16-1;
+	sclip.min_y = DOTRON_Y_START;
+	sclip.max_y = DOTRON_Y_START + 30*16-1;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -576,7 +484,7 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	/* copy the resulting bitmap to the screen */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, 0, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, DOTRON_X_START, DOTRON_Y_START);
@@ -590,7 +498,10 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 void dotron_vh_stop(void)
 {
-	/* 0 is freeed by the core */
-	artwork_free(&dotron_strobe[1]);
-	artwork_free(&dotron_strobe[2]);
+	if (artwork_backdrop != NULL)
+	{
+		/* 0 is freeed by the core */
+		artwork_backdrop = backdrop[0];
+		artwork_free(&backdrop[1]);
+	}
 }

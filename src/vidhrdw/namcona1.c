@@ -20,18 +20,22 @@ static data16_t *cgram;
 static struct tilemap *tilemap[NAMCO_MAX_TILEMAPS];
 static int tilemap_palette_bank[NAMCO_MAX_TILEMAPS];
 
-static const data16_t *tilemap_videoram;
-static int tilemap_color;
 
-static void tilemap_get_info( int tile_index )
+static void tilemap_get_info(int tile_index,const data16_t *tilemap_videoram,int tilemap_color)
 {
+#ifdef LSB_FIRST
 	data16_t *source;
+#endif
 	static UINT8 mask_data[8];
 
 	int data = tilemap_videoram[tile_index];
 	int tile = data&0xfff;
 
-	SET_TILE_INFO( 0,tile,tilemap_color );
+	SET_TILE_INFO(
+			0,
+			tile,
+			tilemap_color,
+			0)
 
 #ifdef LSB_FIRST
 /* hack for tilemap manager */
@@ -49,6 +53,12 @@ static void tilemap_get_info( int tile_index )
 	tile_info.mask_data = (UINT8 *)(shaperam+4*tile);
 #endif
 }
+
+static void tilemap_get_info0(int tile_index) { tilemap_get_info(tile_index,0*0x1000+videoram16,tilemap_palette_bank[0]); }
+static void tilemap_get_info1(int tile_index) { tilemap_get_info(tile_index,1*0x1000+videoram16,tilemap_palette_bank[1]); }
+static void tilemap_get_info2(int tile_index) { tilemap_get_info(tile_index,2*0x1000+videoram16,tilemap_palette_bank[2]); }
+static void tilemap_get_info3(int tile_index) { tilemap_get_info(tile_index,3*0x1000+videoram16,tilemap_palette_bank[3]); }
+
 
 /*************************************************************************/
 
@@ -83,10 +93,10 @@ WRITE16_HANDLER( namcona1_paletteram_w )
 	g = (g<<3)|(g>>2);
 	b = (b<<3)|(b>>2);
 
-	palette_change_color( offset, r,g,b );
+	palette_set_color( offset, r,g,b );
 
 	/* shadow */
-	palette_change_color( offset+0x1000, r/2,g/2,b/2 );
+	palette_set_color( offset+0x1000, r/2,g/2,b/2 );
 }
 
 /*************************************************************************/
@@ -199,10 +209,13 @@ static void update_gfx( void )
 int namcona1_vh_start( void )
 {
 	int i;
+	static void (*get_info[4])(int tile_index) =
+	{ tilemap_get_info0, tilemap_get_info1, tilemap_get_info2, tilemap_get_info3 };
+
 	for( i=0; i<NAMCO_MAX_TILEMAPS; i++ )
 	{
 		tilemap[i] = tilemap_create(
-			tilemap_get_info,
+			get_info[i],
 			tilemap_scan_rows,
 			TILEMAP_BITMASK,8,8,64,64 );
 
@@ -222,11 +235,11 @@ int namcona1_vh_start( void )
 		if( gfx0 && gfx1 )
 		{
 			gfx0->colortable = Machine->remapped_colortable;
-			gfx0->total_colors = Machine->drv->color_table_len/256;
+			gfx0->total_colors = Machine->drv->total_colors/256;
 			Machine->gfx[0] = gfx0;
 
 			gfx1->colortable = Machine->remapped_colortable;
-			gfx1->total_colors = Machine->drv->color_table_len/2;
+			gfx1->total_colors = Machine->drv->total_colors/2;
 			Machine->gfx[1] = gfx1;
 
 			return 0;
@@ -523,11 +536,11 @@ void namcona1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 */
 	update_gfx();
-	palette_init_used_colors();
 
 	for( which=0; which<NAMCO_MAX_TILEMAPS; which++ )
 	{
-		tilemap_videoram = which*0x1000+(data16_t *)videoram16;
+		static int tilemap_color;
+
 		tilemap_color = namcona1_vreg[0x58+(which&3)]&0xf;
 
 		if( tilemap_color!=tilemap_palette_bank[which] )
@@ -535,10 +548,7 @@ void namcona1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			tilemap_mark_all_tiles_dirty( tilemap[which] );
 			tilemap_palette_bank[which] = tilemap_color;
 		}
-		tilemap_update( tilemap[which] );
 	}
-
-	palette_recalc();
 
 	fillbitmap( priority_bitmap,0,NULL );
 	fillbitmap( bitmap,Machine->pens[0],&Machine->visible_area ); /* ? */

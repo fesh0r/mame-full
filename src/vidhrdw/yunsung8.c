@@ -2,7 +2,7 @@
 
 						  -= Yun Sung 8 Bit Games =-
 
-					driver by	Luca Elia (eliavit@unina.it)
+					driver by	Luca Elia (l.elia@tin.it)
 
 
 Note:	if MAME_DEBUG is defined, pressing Z with:
@@ -87,7 +87,7 @@ WRITE_HANDLER( yunsung8_videoram_w )
 		g = (color >>  5) & 0x1f;
 		b = (color >> 10) & 0x1f;
 
-		palette_change_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
+		palette_set_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
 	}
 	else
 	{
@@ -134,7 +134,11 @@ static void get_tile_info_0( int tile_index )
 {
 	int code  =  yunsung8_videoram_0[0x1000+tile_index * 2 + 0] + yunsung8_videoram_0[0x1000+tile_index * 2 + 1] * 256;
 	int color =  yunsung8_videoram_0[0x0800+ tile_index] & 0x07;
-	SET_TILE_INFO( 0, code, color );
+	SET_TILE_INFO(
+			0,
+			code,
+			color,
+			0)
 }
 
 /* Text Plane */
@@ -146,7 +150,11 @@ static void get_tile_info_1( int tile_index )
 {
 	int code  =  yunsung8_videoram_1[0x1000+ tile_index * 2 + 0] + yunsung8_videoram_1[0x1000+tile_index * 2 + 1] * 256;
 	int color =  yunsung8_videoram_1[0x0800+ tile_index] & 0x3f;
-	SET_TILE_INFO( 1, code, color );
+	SET_TILE_INFO(
+			1,
+			code,
+			color,
+			0)
 }
 
 
@@ -200,16 +208,8 @@ if (keyboard_pressed(KEYCODE_Z))
 }
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-
-	/* No Sprites ... */
-
-	palette_recalc();
-
 	if (layers_ctrl&1)	tilemap_draw(bitmap, tilemap_0, 0,0);
-	else				fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
+	else				fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	if (layers_ctrl&2)	tilemap_draw(bitmap, tilemap_1, 0,0);
 }

@@ -18,11 +18,6 @@
 #include "vidhrdw/generic.h"
 
 
-static struct rectangle topvisiblearea =
-{
-	16*8, 48*8-1,
-	0*8, 6*8-1
-};
 static struct rectangle bottomvisiblearea =
 {
 	16*8, 48*8-1,
@@ -129,7 +124,7 @@ WRITE_HANDLER( vigilant_paletteram_w )
 	g = (paletteram[bank + offset + 0x100] << 3) & 0xFF;
 	b = (paletteram[bank + offset + 0x200] << 3) & 0xFF;
 
-	palette_change_color((bank >> 2) + offset,r,g,b);
+	palette_set_color((bank >> 2) + offset,r,g,b);
 }
 
 
@@ -210,39 +205,27 @@ static void draw_foreground( struct osd_bitmap *bitmap, int priority, int opaque
 				{
 					sx = (sx + scroll) & 0x1ff;
 
-					if (sx > 16*8-8 && sx < 48*8)
-					{
-						drawgfx(bitmap,Machine->gfx[0],
-								tile_number,
-								color,
-								0,0,
-								sx,sy,
-								&bottomvisiblearea,TRANSPARENCY_PENS,0x00ff);
-					}
+					drawgfx(bitmap,Machine->gfx[0],
+							tile_number,
+							color,
+							0,0,
+							sx,sy,
+							&bottomvisiblearea,TRANSPARENCY_PENS,0x00ff);
 				}
 			}
 		}
 		else	 /* background */
 		{
-			if (dirtybuffer[offs] || dirtybuffer[offs+1])
-			{
-				dirtybuffer[offs] = dirtybuffer[offs+1] = 0;
+			if (sy >= 48)
+				sx = (sx + scroll) & 0x1ff;
 
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						tile_number,
-						color,
-						0,0,
-						sx,sy,
-						0,TRANSPARENCY_NONE,0);
-			}
+			drawgfx(bitmap,Machine->gfx[0],
+					tile_number,
+					color,
+					0,0,
+					sx,sy,
+					&Machine->visible_area,(opaque || color >= 8) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
-	}
-
-	if (priority == 0)
-	{
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&topvisiblearea,TRANSPARENCY_NONE,0);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&bottomvisiblearea,
-				opaque ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 }
 
@@ -314,18 +297,6 @@ void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i;
 
 
-	if (rear_disable)	 /* opaque foreground */
-	{
-		for (i = 0;i < 8;i++)
-			palette_used_colors[256 + 16*i] = PALETTE_COLOR_USED;
-	}
-	else
-	{
-		for (i = 0;i < 8;i++)
-			palette_used_colors[256 + 16*i] = PALETTE_COLOR_TRANSPARENT;
-	}
-
-
 	/* copy the background palette */
 	for (i = 0;i < 16;i++)
 	{
@@ -336,26 +307,20 @@ void vigilant_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		g = (paletteram[0x500 + 16 * rear_color + i] << 3) & 0xFF;
 		b = (paletteram[0x600 + 16 * rear_color + i] << 3) & 0xFF;
 
-		palette_change_color(512 + i,r,g,b);
+		palette_set_color(512 + i,r,g,b);
 
 		r = (paletteram[0x400 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 		g = (paletteram[0x500 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 		b = (paletteram[0x600 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 
-		palette_change_color(512 + 16 + i,r,g,b);
-	}
-
-	if (palette_recalc())
-	{
-		memset(dirtybuffer,1,videoram_size);
-		rear_refresh = 1;
+		palette_set_color(512 + 16 + i,r,g,b);
 	}
 
 	if (rear_disable)	 /* opaque foreground */
 	{
 		draw_foreground(bitmap,0,1);
 		draw_sprites(bitmap,&bottomvisiblearea);
-		draw_foreground(bitmap,1,1);
+		draw_foreground(bitmap,1,0);
 	}
 	else
 	{
@@ -370,9 +335,6 @@ void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-
-	if (palette_recalc())
-		memset(dirtybuffer,1,videoram_size);
 
 	for (offs = 0; offs<videoram_size; offs+=2 )
 	{

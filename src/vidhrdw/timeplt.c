@@ -41,7 +41,7 @@ static int scanline;
   bit 0 -- not connected
 
 ***************************************************************************/
-void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void timeplt_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -50,32 +50,32 @@ void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3,bit4;
+		int bit0,bit1,bit2,bit3,bit4,r,g,b;
 
 
-		bit0 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 4) & 0x01;
-		bit4 = (color_prom[Machine->drv->total_colors] >> 5) & 0x01;
-		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 6) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 7) & 0x01;
-		bit2 = (color_prom[0] >> 0) & 0x01;
-		bit3 = (color_prom[0] >> 1) & 0x01;
-		bit4 = (color_prom[0] >> 2) & 0x01;
-		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
-		bit0 = (color_prom[0] >> 3) & 0x01;
-		bit1 = (color_prom[0] >> 4) & 0x01;
-		bit2 = (color_prom[0] >> 5) & 0x01;
-		bit3 = (color_prom[0] >> 6) & 0x01;
-		bit4 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 4) & 0x01;
+		bit4 = (color_prom[i + Machine->drv->total_colors] >> 5) & 0x01;
+		r = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 6) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 7) & 0x01;
+		bit2 = (color_prom[i] >> 0) & 0x01;
+		bit3 = (color_prom[i] >> 1) & 0x01;
+		bit4 = (color_prom[i] >> 2) & 0x01;
+		g = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		bit3 = (color_prom[i] >> 6) & 0x01;
+		bit4 = (color_prom[i] >> 7) & 0x01;
+		b = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
 
-		color_prom++;
+		palette_set_color(i,r,g,b);
 	}
 
-	color_prom += Machine->drv->total_colors;
+	color_prom += 2*Machine->drv->total_colors;
 	/* color_prom now points to the beginning of the lookup table */
 
 
@@ -99,9 +99,12 @@ void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 static void get_tile_info(int tile_index)
 {
 	unsigned char attr = timeplt_colorram[tile_index];
-	SET_TILE_INFO(0,timeplt_videoram[tile_index] + ((attr & 0x20) << 3),attr & 0x1f)
-	tile_info.flags = TILE_FLIPYX((attr & 0xc0) >> 6);
 	tile_info.priority = (attr & 0x10) >> 4;
+	SET_TILE_INFO(
+			0,
+			timeplt_videoram[tile_index] + ((attr & 0x20) << 3),
+			attr & 0x1f,
+			TILE_FLIPYX((attr & 0xc0) >> 6))
 }
 
 
@@ -116,8 +119,8 @@ void timeplt_vh_stop(void)
 {
 	free(sprite_mux_buffer);
 	free(sprite_mux_buffer_2);
-	sprite_mux_buffer = 0;
-	sprite_mux_buffer_2 = 0;
+	sprite_mux_buffer = NULL;
+	sprite_mux_buffer_2 = NULL;
 }
 
 int timeplt_vh_start(void)
@@ -227,8 +230,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,bg_tilemap,1,0);

@@ -76,7 +76,7 @@ WRITE_HANDLER( thief_color_map_w ){
 	int r = intensity[(data & 0x03) >> 0];
     int g = intensity[(data & 0x0C) >> 2];
     int b = intensity[(data & 0x30) >> 4];
-	palette_change_color( offset,r,g,b );
+	palette_set_color( offset,r,g,b );
 }
 
 /***************************************************************************/
@@ -165,8 +165,6 @@ void thief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 	else {
 		page = thief_page0;
 	}
-
-	palette_recalc();
 
 	for( offs=0; offs<0x2000; offs++ ){
 		if( dirty[offs] ){

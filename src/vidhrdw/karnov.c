@@ -200,7 +200,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
 	draw_background(bitmap);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,fix_tilemap,0,0);
@@ -211,7 +210,11 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 static void get_fix_tile_info(int tile_index)
 {
 	int tile=videoram16[tile_index];
-	SET_TILE_INFO(0,tile&0xfff,tile>>14)
+	SET_TILE_INFO(
+			0,
+			tile&0xfff,
+			tile>>14,
+			0)
 }
 
 WRITE16_HANDLER( karnov_videoram_w )

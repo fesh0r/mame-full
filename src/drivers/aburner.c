@@ -895,9 +895,10 @@ static const struct MachineDriver machine_driver_aburner =
 	aburner_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	0x2010,0x2010,
+	0x2010, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_aburner_vh_start,
 	sys16_aburner_vh_stop,
@@ -916,8 +917,8 @@ static const struct MachineDriver machine_driver_aburner =
 };
 
 /*          rom       parent    machine   inp       init */
-GAME( 1987, aburner,  aburner2, aburner,  aburner,  aburner,  ROT0_16BIT,   "Sega", "After Burner (Japan)" )
-GAME( 1987, aburner2, 0,        aburner,  aburner2, aburner2, ROT0_16BIT,   "Sega", "After Burner II" )
-GAMEX(19??, loffire,  0,        aburner,  aburner,  aburner,  ROT0,         "Sega", "Line of Fire", GAME_NOT_WORKING )
-GAMEX(19??, thndrbld, 0,        aburner,  thndrbld, aburner,  ROT0,         "Sega", "Thunder Blade", GAME_NOT_WORKING )
-GAME( 19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0_16BIT,   "Sega", "Thunder Blade (Japan)" )
+GAME( 1987, aburner,  aburner2, aburner,  aburner,  aburner,  ROT0, "Sega", "After Burner (Japan)" )
+GAME( 1987, aburner2, 0,        aburner,  aburner2, aburner2, ROT0, "Sega", "After Burner II" )
+GAMEX(19??, loffire,  0,        aburner,  aburner,  aburner,  ROT0, "Sega", "Line of Fire", GAME_NOT_WORKING )
+GAMEX(19??, thndrbld, 0,        aburner,  thndrbld, aburner,  ROT0, "Sega", "Thunder Blade", GAME_NOT_WORKING )
+GAME( 19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0, "Sega", "Thunder Blade (Japan)" )

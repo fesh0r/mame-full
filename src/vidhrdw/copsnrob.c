@@ -28,7 +28,7 @@ unsigned char *copsnrob_truckram;
 
 int copsnrob_vh_start(void)
 {
-	overlay_create(copsnrob_overlay, 2, Machine->drv->total_colors - 2);
+	overlay_create(copsnrob_overlay, 2);
 
     return 0;
 }
@@ -44,9 +44,6 @@ int copsnrob_vh_start(void)
 void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs, x, y;
-
-
-	palette_recalc();
 
 
     /* redrawing the entire display is faster in this case */

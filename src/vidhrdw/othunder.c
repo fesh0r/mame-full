@@ -5,7 +5,7 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-
+void othunder_vh_stop(void);
 data16_t *othunder_ram;
 
 struct tempsprite
@@ -57,12 +57,18 @@ static int othunder_core_vh_start (void)
 	if (!spritelist)
 		return 1;
 
-	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
+	{
+		othunder_vh_stop();
 		return 1;
+	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			othunder_vh_stop();
 			return 1;
+		}
 
 	return 0;
 }
@@ -86,70 +92,6 @@ void othunder_vh_stop (void)
 	if (has_TC0110PCR())
 		TC0110PCR_vh_stop();
 }
-
-
-/********************************************************
-          SPRITE READ AND WRITE HANDLERS
-********************************************************/
-
-// None //
-
-
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-static void othunder_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color;
-	unsigned short palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+2];
-		color = (data &0xff00) >> 8;
-
-		data = spriteram16[offs+3];
-		tilenum = data &0x1fff;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 5;
-
-			for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
-			{
-				i = sprite_chunk % 4;   /* 4 chunks across */
-				j = sprite_chunk / 4;   /* 8 chunks down */
-
-				code = spritemap[map_offset + i + (j<<2)] &tile_mask;
-
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-
 
 
 /************************************************************
@@ -344,18 +286,14 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	othunder_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
 
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
@@ -369,7 +307,7 @@ void othunder_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0,0) & 0x1)	/* Fake DSW */
+	if (input_port_9_word_r(0,0) & 0x1)	/* Fake DSW */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 

@@ -674,7 +674,7 @@ void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
 				{
 					for (x = 0;x < copy->width;x++)
 					{
-						copy->line[y][x] = bitmap->line[sy+(y/scaley)][sx +(x/scalex)];
+						((UINT8 *)copy->line[y])[x] = ((UINT8 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
 					}
 				}
 				break;
@@ -886,19 +886,11 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 		/* display either an error message or a warning message */
 		if (romdata->errors)
 		{
-			#ifndef MESS
 			strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
-			#else
-			strcat(romdata->errorbuf, "ERROR: required files are missing, the system cannot be started.\n");
-			#endif
 			bailing = 1;
 		}
 		else
-			#ifndef MESS
 			strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
-			#else
-			strcat(romdata->errorbuf, "WARNING: the system might not operate correctly.\n");
-			#endif
 
 		/* display the result */
 		printf("%s", romdata->errorbuf);
@@ -953,8 +945,8 @@ static void region_post_process(struct rom_load_data *romdata, const struct RomM
 		int cputype = Machine->drv->cpu[type - REGION_CPU1].cpu_type & ~CPU_FLAGS_MASK;
 		if (cputype != 0)
 		{
-			datawidth = cpuintf[cputype].databus_width / 8;
-			littleendian = (cpuintf[cputype].endianess == CPU_IS_LE);
+			datawidth = cputype_databus_width(cputype) / 8;
+			littleendian = (cputype_endianess(cputype) == CPU_IS_LE);
 			debugload("+ CPU region #%d: datawidth=%d little=%d\n", type - REGION_CPU1, datawidth, littleendian);
 		}
 	}

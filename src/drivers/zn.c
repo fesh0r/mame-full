@@ -239,11 +239,10 @@ static const struct MachineDriver machine_driver_znqs =
 	/* video hardware */
 	0x30*8+32*2, 0x1c*8+32*3, { 32, 32+0x30*8-1, 32+16, 32+16+0x1c*8-1 },
 	znqs_gfxdecodeinfo,
-	4096,
-	4096,
+	4096, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	znqs_vh_start,
 	znqs_vh_stop,
@@ -599,20 +598,9 @@ void zn_init_palette(unsigned char *palette, unsigned short *colortable,const un
 		n_g = ( n_colour >> 5 ) & 0x1f;
 		n_b = ( n_colour >> 10 ) & 0x1f;
 
-		if( Machine->scrbitmap->depth == 16 )
-		{
-			*( palette++ ) = ( n_r * 0xff ) / 0x1f;
-			*( palette++ ) = ( n_g * 0xff ) / 0x1f;
-			*( palette++ ) = ( n_b * 0xff ) / 0x1f;
-		}
-		else
-		{
-			*( palette++ ) = ( ( n_r & 0x1c ) << 3 ) | ( n_r & 0x1c ) | ( ( n_r & 0x1c ) >> 3 );
-			*( palette++ ) = ( ( n_g & 0x1c ) << 3 ) | ( n_g & 0x1c ) | ( ( n_g & 0x1c ) >> 3 );
-			*( palette++ ) = ( ( n_b & 0x18 ) << 3 ) | ( ( n_b & 0x18 ) << 1 ) | ( ( n_b & 0x18 ) >> 1 ) | ( ( n_b & 0x18 ) >> 3 );
-		}
-
-		colortable[ n_colour ] = n_colour;
+		*( palette++ ) = ( n_r * 0xff ) / 0x1f;
+		*( palette++ ) = ( n_g * 0xff ) / 0x1f;
+		*( palette++ ) = ( n_b * 0xff ) / 0x1f;
 	}
 }
 
@@ -622,7 +610,7 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 	UINT16 n_y;
 	UINT32 *pens = Machine->pens;
 
-	if( palette_recalc() || full_refresh )
+	if( full_refresh )
 	{
 		if( bitmap->depth == 16 )
 		{
@@ -869,7 +857,7 @@ static const struct MachineDriver machine_driver_zn =
 	/* video hardware */
 	256, 240, { 0, 255, 0, 239 },
 	0,
-	65536,65536,
+	65536, 0,
 	zn_init_palette,
 
 	VIDEO_TYPE_RASTER,
@@ -954,6 +942,6 @@ GAME( 1998, kikaioh,  0,		znqs, zn, 0, ROT0, "Capcom", "Kikaioh (JAPAN 980914)" 
 GAME( 1999, sfex2p,   0,		znqs, zn, 0, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)" )
 GAME( 1999, shiryu2,  0,		znqs, zn, 0, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)" )
 
-GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0_16BIT, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
-GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Gallop Racer 2 (JAPAN)" )
-GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0_16BIT, "Tecmo", "Dead Or Alive ++ (JAPAN)" )
+GAME( 1996, sncwgltd,	0,	  zn, zn, 0, ROT0, "Video System Co.", "Sonic Wings Limited (JAPAN)" )
+GAME( 1997, glpracr2,	0,	  zn, zn, 0, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)" )
+GAME( 1998, doapp,		0,	  zn, zn, 0, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)" )

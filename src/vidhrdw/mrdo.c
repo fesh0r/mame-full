@@ -60,7 +60,7 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	const int pull = 200;
 	float pot[16];
 	int weight[16];
-	const float potadjust = 0.2;	/* hack to reduce brightness */
+	const float potadjust = 0.2;	/* diode voltage drop */
 
 	for (i = 15;i >= 0;i--)
 	{
@@ -126,15 +126,21 @@ void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = mrdo_bgvideoram[tile_index];
-	SET_TILE_INFO(1,mrdo_bgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),attr & 0x3f)
-	tile_info.flags = (attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0;
+	SET_TILE_INFO(
+			1,
+			mrdo_bgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),
+			attr & 0x3f,
+			(attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = mrdo_fgvideoram[tile_index];
-	SET_TILE_INFO(0,mrdo_fgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),attr & 0x3f)
-	tile_info.flags = (attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0;
+	SET_TILE_INFO(
+			0,
+			mrdo_fgvideoram[tile_index+0x400] + ((attr & 0x80) << 1),
+			attr & 0x3f,
+			(attr & 0x40) ? TILE_IGNORE_TRANSPARENCY : 0)
 }
 
 
@@ -234,8 +240,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);

@@ -50,7 +50,11 @@ static void get_back_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(1,tile,color)
+	SET_TILE_INFO(
+			1,
+			tile,
+			color,
+			0)
 }
 
 static void get_fore_tile_info(int tile_index)
@@ -60,7 +64,11 @@ static void get_fore_tile_info(int tile_index)
 
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(2,tile,color)
+	SET_TILE_INFO(
+			2,
+			tile,
+			color,
+			0)
 }
 
 static void get_text_tile_info(int tile_index)
@@ -68,7 +76,11 @@ static void get_text_tile_info(int tile_index)
 	int tile=videoram[2*tile_index]+((videoram[2*tile_index+1]&0xc0)<<2);
 	int color=videoram[2*tile_index+1]&0xf;
 
-	SET_TILE_INFO(0,tile,color)
+	SET_TILE_INFO(
+			0,
+			tile,
+			color,
+			0)
 }
 
 int raiden_vh_start(void)
@@ -152,9 +164,6 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 
 void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int color,offs,sprite;
-	int colmask[16],i,pal_base;
-
 	/* Setup the tilemaps, alternate version has different scroll positions */
 	if (!ALTERNATE) {
 		tilemap_set_scrollx( bg_layer,0, ((raiden_scroll_ram[1]<<8)+raiden_scroll_ram[0]) );
@@ -168,32 +177,6 @@ void raiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_set_scrolly( fg_layer,0, ((raiden_scroll_ram[0x22]&0x30)<<4)+((raiden_scroll_ram[0x24]&0x7f)<<1)+((raiden_scroll_ram[0x24]&0x80)>>7) );
 		tilemap_set_scrollx( fg_layer,0, ((raiden_scroll_ram[0x32]&0x30)<<4)+((raiden_scroll_ram[0x34]&0x7f)<<1)+((raiden_scroll_ram[0x34]&0x80)>>7) );
 	}
-
-	tilemap_update(ALL_TILEMAPS);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	/* Sprites */
-	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0;offs <0x1000;offs += 8)
-	{
-		color = buffered_spriteram[offs+1]&0xf;
-		sprite = buffered_spriteram[offs+2]+(buffered_spriteram[offs+3]<<8);
-		sprite &= 0x0fff;
-		colmask[color] |= Machine->gfx[3]->pen_usage[sprite];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_layer,0,0);
 

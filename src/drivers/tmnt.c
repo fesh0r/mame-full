@@ -9,14 +9,13 @@ driver by Nicola Salmoria
 
 TODO:
 
+- 053936 support in glfgreat and premsocr.
 - detatwin: sprites are left on screen during attract mode
-- sprite priorities in ssriders (protection)
+- a garbage sprite is STILL sticking on screen from time to time in ssriders.
 - sprite colors / zoomed placement in tmnt2 (protection)
+- I don't think I'm handling the palette dim control in tmnt2/ssriders correctly.
+  TMNT2 stays dimmed most of the time.
 - is IPT_VBLANK really vblank or something else? Investigate.
-- shadows: they should not be drawn as opaque sprites, instead they should
-  make the background darker
-- wrong sprites in ssriders at the end of the saloon level. They have the
-  "shadow" bit on, but should actually highlight.
 - sprite lag, quite evident in lgtnfght and mia but also in the others. Also
   see the left corner of the wall in punkshot DownTown level
 - some slowdowns in lgtnfght when there are many sprites on screen - vblank issue?
@@ -38,6 +37,7 @@ WRITE16_HANDLER( lgtnfght_0a0018_w );
 WRITE16_HANDLER( detatwin_700300_w );
 WRITE16_HANDLER( glfgreat_122000_w );
 WRITE16_HANDLER( ssriders_1c0300_w );
+WRITE16_HANDLER( prmrsocr_122000_w );
 WRITE16_HANDLER( tmnt_priority_w );
 int mia_vh_start(void);
 int tmnt_vh_start(void);
@@ -51,12 +51,14 @@ int glfgreat_vh_start(void);
 void glfgreat_vh_stop(void);
 int thndrx2_vh_start(void);
 void thndrx2_vh_stop(void);
+int prmrsocr_vh_start(void);
+void prmrsocr_vh_stop(void);
 void mia_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tmnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void punkshot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void lgtnfght_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void glfgreat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void ssriders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void tmnt2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void thndrx2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static int tmnt_soundlatch;
 
@@ -196,6 +198,43 @@ static WRITE16_HANDLER( glfgreat_sound_w )
 		cpu_cause_interrupt(1,0xff);
 }
 
+static READ16_HANDLER( prmrsocr_sound_r )
+{
+	return soundlatch3_r(0);
+}
+
+static WRITE16_HANDLER( prmrsocr_sound_cmd_w )
+{
+	if (ACCESSING_LSB)
+	{
+		data &= 0xff;
+		if (offset == 0) soundlatch_w(0,data);
+		else soundlatch2_w(0,data);
+
+		/* If the sound CPU is not running, make the tests pass anyway */
+		if (offset == 0 && !Machine->sample_rate)
+		{
+			if (data == 0xfe)	/* ROM & RAM test */
+				soundlatch3_w(0,0x0f);
+			if (data == 0xfc)	/* sample ROM test */
+				soundlatch3_w(0,0x10);
+		}
+	}
+}
+
+static WRITE16_HANDLER( prmrsocr_sound_irq_w )
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
+static WRITE_HANDLER( prmrsocr_s_bankswitch_w )
+{
+	data8_t *rom = memory_region(REGION_CPU2) + 0x10000;
+
+	cpu_setbank(1,rom + (data & 7) * 0x4000);
+}
+
+
 static READ16_HANDLER( tmnt2_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
@@ -276,6 +315,7 @@ static int tmnt_decode_sample(const struct MachineSound *msound)
 	return 0;
 }
 
+
 static int sound_nmi_enabled;
 
 static void sound_nmi_callback( int param )
@@ -310,23 +350,73 @@ static READ16_HANDLER( punkshot_kludge_r )
 	return rand();
 }
 
-static READ16_HANDLER( ssriders_kludge_r )
+
+/* protection simulation derived from a bootleg */
+static READ16_HANDLER( ssriders_protection_r )
 {
     int data = cpu_readmem24bew_word(0x105a0a);
+    int cmd = cpu_readmem24bew_word(0x1058fc);
 
-    logerror("%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
-
-    if (data == 0x075c) data = 0x0064;
-
-    if ( cpu_readmem24bew_word(cpu_get_pc()) == 0x45f9 )
+	switch (cmd)
 	{
-        data = -( ( cpu_get_reg(M68K_D7) & 0xff ) + 32 );
-        data = ( ( data / 8 ) & 0x1f ) * 0x40;
-        data += ( ( ( cpu_get_reg(M68K_D6) & 0xffff ) + ( K052109_r(0x1a01) * 256 )
-				+ K052109_r(0x1a00) + 96 ) / 8 ) & 0x3f;
-    }
+		case 0x100b:
+			/* read twice in a row, first result discarded? */
+			/* data is always == 0x75c */
+			return 0x0064;
 
-    return data;
+		case 0x6003:
+			/* start of level */
+			return data & 0x000f;
+
+		case 0x6004:
+			return data & 0x001f;
+
+		case 0x6000:
+			return data & 0x0001;
+
+		case 0x0000:
+			return data & 0x00ff;
+
+		case 0x6007:
+			return data & 0x00ff;
+
+		case 0x8abc:
+			/* collision table */
+			data = -cpu_readmem24bew_word(0x105818);
+			data = ((data / 8 - 4) & 0x1f) * 0x40;
+			data += ((cpu_readmem24bew_word(0x105cb0) +
+						256*K052109_r(0x1a01) + K052109_r(0x1a00)) / 8 + 12) & 0x3f;
+			return data;
+
+		default:
+			usrintf_showmessage("%06x: unknown protection read",cpu_get_pc());
+			logerror("%06x: read 1c0800 (D7=%02x 1058fc=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),cmd,data);
+			return 0xffff;
+    }
+}
+
+static WRITE16_HANDLER( ssriders_protection_w )
+{
+	if (offset == 1)
+	{
+		int logical_pri,hardware_pri;
+
+		/* create sprite priority attributes */
+		hardware_pri = 1;
+		for (logical_pri = 1;logical_pri < 0x100;logical_pri <<= 1)
+		{
+			int i;
+
+			for (i = 0;i < 128;i++)
+			{
+				if ((cpu_readmem24bew_word(0x180006 + 128*i) >> 8) == logical_pri)
+				{
+					K053245_word_w(8*i,hardware_pri,0xff00);
+					hardware_pri++;
+				}
+			}
+		}
+	}
 }
 
 
@@ -415,20 +505,20 @@ static READ16_HANDLER( ssriders_eeprom_r )
 	return res ^ toggle;
 }
 
-static WRITE16_HANDLER( ssriders_eeprom_w )
+static WRITE16_HANDLER( detatwin_eeprom_w )
 {
-	if (ACCESSING_LSB) {
+	if (ACCESSING_LSB)
+	{
 		/* bit 0 is data */
 		/* bit 1 is cs (active low) */
 		/* bit 2 is clock (active high) */
 		EEPROM_write_bit(data & 0x01);
 		EEPROM_set_cs_line((data & 0x02) ? CLEAR_LINE : ASSERT_LINE);
 		EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
-
-		/* bit 5 selects sprite ROM for testing in TMNT2 */
-		K053244_bankselect(((data & 0x20) >> 5) << 2);
 	}
 }
+
+WRITE16_HANDLER( ssriders_eeprom_w );	/* in vidhrdw/tmnt.c */
 
 
 static struct EEPROM_interface thndrx2_eeprom_interface =
@@ -507,6 +597,46 @@ static WRITE16_HANDLER( thndrx2_eeprom_w )
 
 		/* bit 6 = enable char ROM reading through the video RAM */
 		K052109_set_RMRD_line((data & 0x40) ? ASSERT_LINE : CLEAR_LINE);
+	}
+}
+
+
+static READ16_HANDLER( prmrsocr_IN0_r )
+{
+	/* bit 9 is service button */
+	int res;
+
+	res = input_port_0_word_r(0,0);
+	if (init_eeprom_count)
+	{
+		init_eeprom_count--;
+		res &= 0xfdff;
+	}
+	return res;
+}
+
+static READ16_HANDLER( prmrsocr_eeprom_r )
+{
+	/* bit 8 is EEPROM data */
+	/* bit 9 is EEPROM ready */
+	return (EEPROM_read_bit() << 8) | input_port_1_word_r(0,0);
+}
+
+static WRITE16_HANDLER( prmrsocr_eeprom_w )
+{
+	if (ACCESSING_LSB)
+	{
+		prmrsocr_122000_w(offset,data,mem_mask);
+	}
+
+	if (ACCESSING_MSB)
+	{
+		/* bit 8 is data */
+		/* bit 9 is cs (active low) */
+		/* bit 10 is clock (active high) */
+		EEPROM_write_bit(data & 0x0100);
+		EEPROM_set_cs_line((data & 0x0200) ? CLEAR_LINE : ASSERT_LINE);
+		EEPROM_set_clock_line((data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
@@ -663,7 +793,7 @@ static MEMORY_WRITE16_START( detatwin_writemem )
 	{ 0x500000, 0x50003f, K054000_lsb_w },
 	{ 0x400000, 0x400fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x680000, 0x68001f, K053244_word_noA1_w },
-	{ 0x700200, 0x700201, ssriders_eeprom_w },
+	{ 0x700200, 0x700201, detatwin_eeprom_w },
 	{ 0x700400, 0x700401, watchdog_reset16_w },
 	{ 0x700300, 0x700301, detatwin_700300_w },
 	{ 0x780600, 0x780601, K053260_0_lsb_w },
@@ -723,7 +853,7 @@ static MEMORY_READ16_START( tmnt2_readmem )
 	{ 0x1c0102, 0x1c0103, ssriders_eeprom_r },
 	{ 0x1c0400, 0x1c0401, watchdog_reset16_r },
 	{ 0x1c0500, 0x1c057f, MRA16_RAM },	/* TMNT2 only (1J) unknown */
-//	{ 0x1c0800, 0x1c0801, ssriders_kludge_r },	/* protection device */
+//	{ 0x1c0800, 0x1c0801, ssriders_protection_r },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_r },
 	{ 0x5c0600, 0x5c0603, tmnt2_sound_r },	/* K053260 */
 	{ 0x600000, 0x603fff, K052109_word_r },
@@ -822,7 +952,7 @@ static MEMORY_WRITE16_START( tmnt2_writemem )
 	{ 0x104000, 0x107fff, MWA16_RAM, &sunset_104000 },	/* main RAM */
 	{ 0x140000, 0x140fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x180000, 0x183fff, K053245_scattered_word_w, &spriteram16 },
-	{ 0x1c0200, 0x1c0201, ssriders_eeprom_w },
+	{ 0x1c0200, 0x1c0201, ssriders_eeprom_w },	/* EEPROM and gfx control */
 	{ 0x1c0300, 0x1c0301, ssriders_1c0300_w },
 	{ 0x1c0400, 0x1c0401, watchdog_reset16_w },
 	{ 0x1c0500, 0x1c057f, MWA16_RAM },	/* unknown: TMNT2 only (1J) */
@@ -848,7 +978,7 @@ static MEMORY_READ16_START( ssriders_readmem )
 	{ 0x1c0102, 0x1c0103, ssriders_eeprom_r },
 	{ 0x1c0400, 0x1c0401, watchdog_reset16_r },
 	{ 0x1c0500, 0x1c057f, MRA16_RAM },	/* TMNT2 only (1J) unknown */
-	{ 0x1c0800, 0x1c0801, ssriders_kludge_r },	/* protection device */
+	{ 0x1c0800, 0x1c0801, ssriders_protection_r },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_r },
 	{ 0x5c0600, 0x5c0603, punkshot_sound_r },	/* K053260 */
 	{ 0x600000, 0x603fff, K052109_word_r },
@@ -859,11 +989,11 @@ static MEMORY_WRITE16_START( ssriders_writemem )
 	{ 0x104000, 0x107fff, MWA16_RAM },	/* main RAM */
 	{ 0x140000, 0x140fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x180000, 0x183fff, K053245_scattered_word_w, &spriteram16 },
-	{ 0x1c0200, 0x1c0201, ssriders_eeprom_w },
+	{ 0x1c0200, 0x1c0201, ssriders_eeprom_w },	/* EEPROM and gfx control */
 	{ 0x1c0300, 0x1c0301, ssriders_1c0300_w },
 	{ 0x1c0400, 0x1c0401, watchdog_reset16_w },
 	{ 0x1c0500, 0x1c057f, MWA16_RAM },	/* TMNT2 only (1J) unknown */
-//	{ 0x1c0800, 0x1c081f,  },	/* protection device */
+	{ 0x1c0800, 0x1c0803, ssriders_protection_w },	/* protection device */
 	{ 0x5a0000, 0x5a001f, K053244_word_noA1_w },
 	{ 0x5c0600, 0x5c0601, K053260_0_lsb_w },
 	{ 0x5c0604, 0x5c0605, ssriders_soundkludge_w },
@@ -897,6 +1027,37 @@ static MEMORY_WRITE16_START( thndrx2_writemem )
 	{ 0x600000, 0x607fff, K052109_word_noA12_w },
 	{ 0x700000, 0x700007, K051937_word_w },
 	{ 0x700400, 0x7007ff, K051960_word_w },
+MEMORY_END
+
+
+static MEMORY_READ16_START( prmrsocr_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_r },
+	{ 0x108000, 0x108fff, MRA16_RAM },
+	{ 0x10c000, 0x10cfff, MRA16_RAM },	/* 053936? */
+	{ 0x114000, 0x11401f, K053244_lsb_r },
+	{ 0x120000, 0x120001, prmrsocr_IN0_r },
+	{ 0x120002, 0x120003, prmrsocr_eeprom_r },
+	{ 0x121014, 0x121015, prmrsocr_sound_r },
+	{ 0x200000, 0x207fff, K052109_word_noA12_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( prmrsocr_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },	/* main RAM */
+	{ 0x104000, 0x107fff, K053245_scattered_word_w, &spriteram16 },
+	{ 0x108000, 0x108fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x10c000, 0x10cfff, MWA16_RAM },	/* 053936 3D rotation control? */
+	{ 0x110000, 0x11001f, K053244_word_noA1_w },	/* duplicate! */
+	{ 0x114000, 0x11401f, K053244_lsb_w },		/* duplicate! */
+	{ 0x118000, 0x11801f, MWA16_NOP },	/* 053936 control */
+	{ 0x11c000, 0x11c01f, K053251_msb_w },
+	{ 0x122000, 0x122001, prmrsocr_eeprom_w },	/* EEPROM + video control */
+	{ 0x12100c, 0x12100f, prmrsocr_sound_cmd_w },
+	{ 0x123000, 0x123001, prmrsocr_sound_irq_w },
+	{ 0x200000, 0x207fff, K052109_word_noA12_w },
+	{ 0x280000, 0x280001, watchdog_reset16_w },
 MEMORY_END
 
 
@@ -1013,6 +1174,34 @@ static MEMORY_WRITE_START( thndrx2_s_writemem )
 	{ 0xf811, 0xf811, YM2151_data_port_0_w },	/* mirror */
 	{ 0xfa00, 0xfa00, sound_arm_nmi_w },
 	{ 0xfc00, 0xfc2f, K053260_0_w },
+MEMORY_END
+
+static READ_HANDLER( K054539_0_ctrl_r )
+{
+	return K054539_0_r(0x200+offset);
+}
+static WRITE_HANDLER( K054539_0_ctrl_w )
+{
+	K054539_0_w(0x200+offset,data);
+}
+
+static MEMORY_READ_START( prmrsocr_s_readmem )
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe0ff, K054539_0_r },
+	{ 0xe100, 0xe12f, K054539_0_ctrl_r },
+	{ 0xf002, 0xf002, soundlatch_r },
+	{ 0xf003, 0xf003, soundlatch2_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( prmrsocr_s_writemem )
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe0ff, K054539_0_w },
+	{ 0xe100, 0xe12f, K054539_0_ctrl_w },
+	{ 0xf000, 0xf000, soundlatch3_w },
+	{ 0xf800, 0xf800, prmrsocr_s_bankswitch_w },
 MEMORY_END
 
 
@@ -1836,7 +2025,7 @@ INPUT_PORTS_START( ssridr4p )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )	/* some versions use it, some don't */
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
@@ -1846,7 +2035,7 @@ INPUT_PORTS_START( ssridr4p )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )	/* some versions use it, some don't */
 
 	PORT_START	/* COIN */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -1875,7 +2064,7 @@ INPUT_PORTS_START( ssridr4p )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )	/* some versions use it, some don't */
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
@@ -1885,7 +2074,7 @@ INPUT_PORTS_START( ssridr4p )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )	/* some versions use it, some don't */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ssriders )
@@ -2069,6 +2258,52 @@ INPUT_PORTS_START( thndrx2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( prmrsocr )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x1000, 0x0000, "Sound" )
+	PORT_DIPSETTING(      0x1000, "Mono" )
+	PORT_DIPSETTING(      0x0000, "Stereo" )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM status? - always 1 */
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
 
 
 static struct YM2151interface ym2151_interface =
@@ -2168,10 +2403,10 @@ static const struct MachineDriver machine_driver_mia =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	mia_vh_start,
 	punkshot_vh_stop,
@@ -2213,12 +2448,12 @@ static const struct MachineDriver machine_driver_tmnt =
 	0,
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
+	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	tmnt_vh_start,
 	punkshot_vh_stop,
@@ -2276,10 +2511,10 @@ static const struct MachineDriver machine_driver_punkshot =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	punkshot_vh_start,
 	punkshot_vh_stop,
@@ -2323,10 +2558,10 @@ static const struct MachineDriver machine_driver_lgtnfght =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
@@ -2371,10 +2606,10 @@ static const struct MachineDriver machine_driver_detatwin =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	detatwin_vh_start,
 	detatwin_vh_stop,
@@ -2439,10 +2674,10 @@ static const struct MachineDriver machine_driver_glfgreat =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	glfgreat_gfxdecodeinfo,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	glfgreat_vh_start,
 	glfgreat_vh_stop,
@@ -2487,14 +2722,14 @@ static const struct MachineDriver machine_driver_tmnt2 =
 	/* video hardware */
 	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
-	lgtnfght_vh_screenrefresh,
+	tmnt2_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -2530,21 +2765,21 @@ static const struct MachineDriver machine_driver_ssriders =
 								/* NMIs are generated by the 053260 */
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	lgtnfght_vh_start,
 	lgtnfght_vh_stop,
-	ssriders_vh_screenrefresh,
+	tmnt2_vh_screenrefresh,
 
 	/* sound hardware */
 	SOUND_SUPPORTS_STEREO,0,0,0,
@@ -2587,10 +2822,10 @@ static const struct MachineDriver machine_driver_thndrx2 =
 	/* video hardware */
 	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
 	0,	/* gfx decoded by konamiic.c */
-	2048, 2048,
+	2048, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
 	0,
 	thndrx2_vh_start,
 	thndrx2_vh_stop,
@@ -2606,6 +2841,68 @@ static const struct MachineDriver machine_driver_thndrx2 =
 		{
 			SOUND_K053260,
 			&k053260_interface_nmi
+		}
+	},
+
+	thndrx2_nvram_handler
+};
+
+
+static void sound_nmi(void)
+{
+	cpu_set_nmi_line(1, PULSE_LINE);
+}
+
+static struct K054539interface k054539_interface =
+{
+	1,			/* 1 chip */
+	48000,
+	{ REGION_SOUND1 },
+	{ { 100, 100 } },
+	{ 0 },
+	{ sound_nmi }
+};
+
+static const struct MachineDriver machine_driver_prmrsocr =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,	/* ? */
+			prmrsocr_readmem,prmrsocr_writemem,0,0,
+			lgtnfght_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			8000000,	/* ? */
+			prmrsocr_s_readmem,prmrsocr_s_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+								/* NMIs are generated by the 054539 */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
+	glfgreat_gfxdecodeinfo,	/* gfx decoded by konamiic.c */
+	2048, 0,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
+	0,
+	prmrsocr_vh_start,
+	prmrsocr_vh_stop,
+	glfgreat_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_K054539,
+			&k054539_interface
 		}
 	},
 
@@ -3414,6 +3711,34 @@ ROM_START( thndrx2 )
 	ROM_LOAD( "073-b04.2d",   0x0000, 0x80000, 0x05287a0b )
 ROM_END
 
+ROM_START( prmrsocr )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "101jab08.1h", 0x000000, 0x40000, 0xc22b528c )
+	ROM_LOAD16_BYTE( "101jab07.4h", 0x000001, 0x40000, 0x06e7acaf )
+
+	ROM_REGION( 0x30000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "101_c05.5e",   0x00000, 0x20000, 0x02c3679f )
+	ROM_RELOAD(               0x10000, 0x20000 )
+
+    ROM_REGION( 0x080000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "101a12.12l",   0x000000, 0x040000, 0x33530d7f )	/* tiles */
+	ROM_LOAD( "101a11.12k",   0x040000, 0x040000, 0x7f773271 )
+
+	ROM_REGION( 0x400000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "101a09.3l",    0x000000, 0x200000, 0xb6a1b424 )	/* sprites */
+	ROM_LOAD( "101a10.8l",    0x200000, 0x200000, 0xbbd58adc )
+
+	ROM_REGION( 0x080000, REGION_GFX3, 0 )	/* 053936 tiles */
+	ROM_LOAD( "101a03.18f",   0x000000, 0x080000, 0x59a1a91c )
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* unknown (further data for the 053936?) */
+	ROM_LOAD( "101a01.18d",   0x000000, 0x020000, 0x716f910f )
+	ROM_LOAD( "101a02.16d",   0x020000, 0x020000, 0x222869c7 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* samples for the 054539 */
+	ROM_LOAD( "101a06.1d",    0x0000, 0x200000, 0x4f48e043 )
+ROM_END
+
 
 
 static void init_gfx(void)
@@ -3685,15 +4010,18 @@ GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "
 GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 4 Players)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 2 Players)", GAME_UNEMULATED_PROTECTION )
 GAMEX(1991, tmnt2a,   tmnt2,    tmnt2,    tmnt2a,   gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (Asia 4 Players)", GAME_UNEMULATED_PROTECTION )
+
 GAME( 1993, qgakumon, 0,        tmnt2,    qgakumon, gfx,      ROT0,  "Konami", "Quiz Gakumon no Susume (Japan)" )
 
-GAMEX(1991, ssriders, 0,        ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (World 4 Players ver. EAC)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdrebd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBD)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdrebc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBC)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdruda, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UDA)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdruac, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UAC)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1991, ssriders, 0,        ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (World 4 Players ver. EAC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrebd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrebc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (World 2 Players ver. EBC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdruda, ssriders, ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UDA)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdruac, ssriders, ssriders, ssridr4p, gfx,      ROT0,  "Konami", "Sunset Riders (US 4 Players ver. UAC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrubc, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (US 2 Players ver. UBC)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrabd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Asia 2 Players ver. ABD)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, ssrdrjbd, ssriders, ssriders, ssriders, gfx,      ROT0,  "Konami", "Sunset Riders (Japan 2 Players ver. JBD)", GAME_IMPERFECT_GRAPHICS )
 
 GAME( 1991, thndrx2,  0,        thndrx2,  thndrx2,  gfx,      ROT0,  "Konami", "Thunder Cross II (Japan)" )
+
+GAMEX(1993, prmrsocr, 0,        prmrsocr, prmrsocr, glfgreat, ROT0,  "Konami", "Premier Soccer (Japan)", GAME_IMPERFECT_GRAPHICS )

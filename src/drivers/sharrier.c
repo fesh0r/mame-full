@@ -342,9 +342,9 @@ static const struct MachineDriver machine_driver_hangon =
 	hangon_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
+	2048*ShadowColorsMultiplier, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_hangon_vh_start,
 	sys16_vh_stop,
@@ -544,9 +544,9 @@ static const struct MachineDriver machine_driver_sharrier =
 	harrier_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
+	2048*ShadowColorsMultiplier, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_hangon_vh_start,
 	sys16_vh_stop,
@@ -870,9 +870,9 @@ static const struct MachineDriver machine_driver_enduror =
 	enduror_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
+	2048*ShadowColorsMultiplier, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_hangon_vh_start,
 	sys16_vh_stop,
@@ -917,9 +917,9 @@ static const struct MachineDriver machine_driver_endurob2 =
 	enduror_init_machine,
 	40*8, 28*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
 	sys16_gfxdecodeinfo,
-	2048*ShadowColorsMultiplier,2048*ShadowColorsMultiplier,
+	2048*ShadowColorsMultiplier, 0,
 	0,
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	sys16_hangon_vh_start,
 	sys16_vh_stop,
@@ -1362,8 +1362,8 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0,         "Sega",    "Hang-On" )
-GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0_16BIT,   "Sega",    "Space Harrier" )
-GAMEX(1985, enduror,  0,        enduror,  enduror,  enduror,  ROT0,         "Sega",    "Enduro Racer", GAME_NOT_WORKING )
-GAME( 1985, endurobl, enduror,  enduror,  enduror,  endurobl, ROT0,         "bootleg", "Enduro Racer (bootleg set 1)" )
-GAME( 1985, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0,         "bootleg", "Enduro Racer (bootleg set 2)" )
+GAME( 1985, hangon,   0,        hangon,   hangon,   hangon,   ROT0, "Sega",    "Hang-On" )
+GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier" )
+GAMEX(1985, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer", GAME_NOT_WORKING )
+GAME( 1985, endurobl, enduror,  enduror,  enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
+GAME( 1985, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)" )

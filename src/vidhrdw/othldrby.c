@@ -26,7 +26,11 @@ INLINE void get_tile_info(int tile_index,int plane)
 
 	tile_index = 2*tile_index + 0x800*plane;
 	attr = vram[tile_index];
-	SET_TILE_INFO(1,vram[tile_index+1],attr & 0x7f)
+	SET_TILE_INFO(
+			1,
+			vram[tile_index+1],
+			attr & 0x7f,
+			0)
 	tile_info.priority = (attr & 0x0600) >> 9;
 }
 
@@ -194,10 +198,6 @@ void othldrby_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int layer;
 
 
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
 	flip_screen_set(vreg[0x0f] & 0x80);
 
 	for (layer = 0;layer < 3;layer++)
@@ -234,7 +234,7 @@ void othldrby_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void othldrby_eof_callback(void)
 {
-	/* sprites need to be felayed two frames */
+	/* sprites need to be delayed two frames */
     memcpy(buf_spriteram,buf_spriteram2,SPRITERAM_SIZE*sizeof(buf_spriteram[0]));
     memcpy(buf_spriteram2,&vram[SPRITERAM_START],SPRITERAM_SIZE*sizeof(buf_spriteram[0]));
 }

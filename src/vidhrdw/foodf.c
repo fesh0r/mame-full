@@ -79,7 +79,7 @@ WRITE16_HANDLER( foodf_paletteram_w )
 	bit2 = (newword >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_change_color(offset, r, g, b);
+	palette_set_color(offset, r, g, b);
 }
 
 
@@ -93,10 +93,6 @@ WRITE16_HANDLER( foodf_paletteram_w )
 void foodf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
-
-	/* recalc the palette if necessary */
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size / 2);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

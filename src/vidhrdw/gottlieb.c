@@ -81,7 +81,7 @@ WRITE_HANDLER( gottlieb_paletteram_w )
 	bit3 = (val >> 3) & 0x01;
 	b = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
-	palette_change_color(offset / 2,r,g,b);
+	palette_set_color(offset / 2,r,g,b);
 }
 
 
@@ -183,10 +183,6 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
     int offs;
 
-
-	/* update palette */
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
 
     /* recompute character graphics */
     for (offs = 0;offs < Machine->drv->gfxdecodeinfo[0].gfxlayout->total;offs++)

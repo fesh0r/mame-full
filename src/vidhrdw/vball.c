@@ -59,7 +59,7 @@ void vb_bgprombank_w( int bank )
 
 	for (i=0;i<128;i++, color_prom++)
 	{
-		palette_change_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
+		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
 				       (color_prom[0x800] & 0x0f) << 4);
 //		logerror("\t%d: r:%d g:%d b:%d\n",i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
 //				       (color_prom[0x800] & 0x0f) << 4);
@@ -84,7 +84,7 @@ void vb_spprombank_w( int bank )
 
 	for (i=128;i<256;i++,color_prom++)
 	{
-		palette_change_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
+		palette_set_color(i,(color_prom[0] & 0x0f) << 4,(color_prom[0] & 0xf0) >> 0,
 				       (color_prom[0x800] & 0x0f) << 4);
 	}
 
@@ -278,9 +278,6 @@ void vb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	vb_spprombank_w(i/15);
 */
-	if (palette_recalc())
-		memset(dirtybuffer,1, 0x800);
-
 	vb_draw_background( bitmap );
 	draw_sprites( bitmap );
 //	vb_draw_foreground( bitmap ); /* So far just hides half the game screen... */

@@ -236,7 +236,7 @@ logerror("%06X:Palette lo W=%04X\n", cpu_getpreviouspc(), data);
 		g = newword & 0xff;
 		b = READ_WORD(&paletteram_2[offset]) & 0xff;
 
-		palette_change_color(offset / 2, r, g, b);
+		palette_set_color(offset / 2, r, g, b);
 	}
 }
 
@@ -255,7 +255,7 @@ logerror("%06X:Palette hi W=%04X\n", cpu_getpreviouspc(), data);
 		g = READ_WORD(&paletteram[offset]) & 0xff;
 		b = newword & 0xff;
 
-		palette_change_color(offset / 2, r, g, b);
+		palette_set_color(offset / 2, r, g, b);
 	}
 }
 */
@@ -477,10 +477,10 @@ static struct MachineDriver machine_driver_atarigt =
 	/* video hardware */
 	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	8192,8192,
+	8192, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	atarigt_vh_start,
 	atarig42_vh_stop,
@@ -733,7 +733,7 @@ ROM_END
  *
  *************************************/
 
-GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0_16BIT, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0_16BIT, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrage, 0,        atarigt,  tmek,     primrage, ROT0_16BIT, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, primrag2, primrage, atarigt,  tmek,     primrage, ROT0_16BIT, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, tmek,     0,        atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, tmekprot, tmek,     atarigt,  tmek,     tmek,     ROT0, "Atari Games", "T-MEK (prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrage, 0,        atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.3)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, primrag2, primrage, atarigt,  tmek,     primrage, ROT0, "Atari Games", "Primal Rage (version 2.0)", GAME_UNEMULATED_PROTECTION )

@@ -286,7 +286,7 @@ int YM2612_num(const struct MachineSound *msound) { return ((struct YM2612interf
 int POKEY_clock(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->baseclock; }
 int POKEY_num(const struct MachineSound *msound) { return ((struct POKEYinterface*)msound->sound_interface)->num; }
 #endif
-#if (HAS_YM3812)
+#if (HAS_YM3812 || HAS_YM3526 || HAS_Y8950)
 int YM3812_clock(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->baseclock; }
 int YM3812_num(const struct MachineSound *msound) { return ((struct YM3812interface*)msound->sound_interface)->num; }
 #endif
@@ -446,7 +446,7 @@ struct snd_interface sndintf[] =
 		AY8910_sh_start,
 		0,
 		0,
-		0
+		AY8910_sh_reset
 	},
 #endif
 #if (HAS_YM2203)

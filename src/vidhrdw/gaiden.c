@@ -22,21 +22,33 @@ static void get_bg_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram3[0x0800];
 	UINT16 *videoram2 = gaiden_videoram3;
-	SET_TILE_INFO(1,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			1,
+			videoram1[tile_index] & 0xfff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram2[0x0800];
 	UINT16 *videoram2 = gaiden_videoram2;
-	SET_TILE_INFO(2,videoram1[tile_index] & 0xfff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			2,
+			videoram1[tile_index] & 0xfff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	UINT16 *videoram1 = &gaiden_videoram[0x0400];
 	UINT16 *videoram2 = gaiden_videoram;
-	SET_TILE_INFO(0,videoram1[tile_index] & 0x7ff,(videoram2[tile_index] & 0xf0) >> 4)
+	SET_TILE_INFO(
+			0,
+			videoram1[tile_index] & 0x7ff,
+			(videoram2[tile_index] & 0xf0) >> 4,
+			0)
 }
 
 
@@ -172,31 +184,6 @@ WRITE16_HANDLER( gaiden_videoram_w )
 
 #define NUM_SPRITES 128
 
-static void mark_sprite_colors(void)
-{
-	const UINT16 *source = spriteram16;
-	const struct GfxElement *gfx = Machine->gfx[3];
-	int i;
-	for (i = 0;i < NUM_SPRITES;i++)
-	{
-		UINT32 attributes = source[0];
-		if (attributes & 0x04)	/* visible */
-		{
-			UINT32 pen_usage = 0xfffe;
-			UINT32 color = (source[2] >> 4) & 0xf;
-			const UINT32 *pal_data = &gfx->colortable[gfx->color_granularity * color];
-			int indx = pal_data - Machine->remapped_colortable;
-			while (pen_usage)
-			{
-				if (pen_usage & 1) palette_used_colors[indx] = PALETTE_COLOR_USED;
-				pen_usage >>= 1;
-				indx++;
-			}
-		}
-		source += 8;
-	}
-}
-
 static void draw_sprites( struct osd_bitmap *bitmap )
 {
 	const UINT8 layout[8][8] =
@@ -270,14 +257,6 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_used_colors[0x200] = PALETTE_COLOR_USED;
-
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x200],&Machine->visible_area);
 	tilemap_draw(bitmap,background,0,1);

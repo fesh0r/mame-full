@@ -18,30 +18,31 @@ static struct tilemap *bg_tilemap;
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void holeland_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void holeland_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
-		bit0 = (color_prom[0] >> 0) & 0x01;
-		bit1 = (color_prom[0] >> 1) & 0x01;
-		bit2 = (color_prom[0] >> 2) & 0x01;
-		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		color_prom++;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -56,8 +57,11 @@ static void get_bg_tile_info(int tile_index)
 	int attr = colorram[tile_index];
 	int tile_number = videoram[tile_index] | ((attr & 0x03) << 8);
 
-	SET_TILE_INFO(0, tile_number, palette_offset + ((attr >> 4) & 0x0f));
-	tile_info.flags = TILE_FLIPYX((attr >> 2) & 0x03) | TILE_SPLIT((attr >> 4) & 1);
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			palette_offset + ((attr >> 4) & 0x0f),
+			TILE_FLIPYX((attr >> 2) & 0x03) | TILE_SPLIT((attr >> 4) & 1))
 }
 
 /***************************************************************************
@@ -73,8 +77,8 @@ int holeland_vh_start( void )
 	if (!bg_tilemap)
 		return 1;
 
-	tilemap_set_transmask(bg_tilemap,0,0xff); /* split type 0 is totally transparent in front half */
-	tilemap_set_transmask(bg_tilemap,1,0x01); /* split type 1 has pen 0? transparent in front half */
+	tilemap_set_transmask(bg_tilemap,0,0xff,0x00); /* split type 0 is totally transparent in front half */
+	tilemap_set_transmask(bg_tilemap,1,0x01,0xfe); /* split type 1 has pen 0? transparent in front half */
 	return 0;
 }
 
@@ -125,7 +129,6 @@ void holeland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,code,sx,sy,color,flipx, flipy;
 
-	tilemap_update(ALL_TILEMAPS);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK,0);
 
 	/* Draw the sprites. */

@@ -27,6 +27,7 @@ void ohmygod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static int adpcm_bank_shift;
 static int sndbank;
+static int nosound_kludge_step;
 
 static void ohmygod_init_machine(void)
 {
@@ -38,6 +39,8 @@ static void ohmygod_init_machine(void)
 
 	sndbank = 0;
 	memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
+
+	nosound_kludge_step = 0;
 }
 
 WRITE16_HANDLER( ohmygod_ctrl_w )
@@ -60,7 +63,31 @@ WRITE16_HANDLER( ohmygod_ctrl_w )
 	}
 }
 
+READ16_HANDLER( ohmygod_sound_status_r )
+{
+	if(Machine->sample_rate == 0)
+	{
+		/* strobe 'sample playing' flags of the OKIM6295 to make it start up */
 
+		int	data = 0x00F0;
+
+		if(nosound_kludge_step < 4)
+		{
+			data |= 1 << nosound_kludge_step;
+		}
+
+		nosound_kludge_step++;
+
+		if(nosound_kludge_step >= 5)
+		{
+			nosound_kludge_step = 0;
+		}
+
+		return data;
+	}
+
+	return OKIM6295_status_0_lsb_r(offset, mem_mask);
+}
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM },
@@ -74,7 +101,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x800002, 0x800003, input_port_1_word_r },
 	{ 0xa00000, 0xa00001, input_port_2_word_r },
 	{ 0xa00002, 0xa00003, input_port_3_word_r },
-	{ 0xb00000, 0xb00001, OKIM6295_status_0_lsb_r },
+	{ 0xb00000, 0xb00001, ohmygod_sound_status_r },
 	{ 0xc00000, 0xc00001, watchdog_reset16_r },
 MEMORY_END
 
@@ -189,8 +216,8 @@ INPUT_PORTS_START( ohmygod )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x4000, 0x4000, "Balls Have Eyes" )
-	PORT_DIPSETTING(      0x4000, DEF_STR( No ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Yes ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x8000, 0x8000, "Test Mode" )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -359,10 +386,10 @@ static const struct MachineDriver machine_driver_ohmygod =
 	/* video hardware */
 	64*8, 32*8, { 12*8, (64-12)*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
-	1024, 1024,
+	1024, 0,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	ohmygod_vh_start,
 	0,

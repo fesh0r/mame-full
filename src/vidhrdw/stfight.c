@@ -103,7 +103,11 @@ static void get_fg_tile_info(int tile_index)
 	attr = fgMap[0x8000+tile_index];
 	tile_base = ((attr & 0x80) << 2) | ((attr & 0x20) << 3);
 
-	SET_TILE_INFO(1,tile_base + fgMap[tile_index],attr & 0x07);
+	SET_TILE_INFO(
+			1,
+			tile_base + fgMap[tile_index],
+			attr & 0x07,
+			0)
 }
 
 static UINT32 bg_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -123,15 +127,22 @@ static void get_bg_tile_info(int tile_index)
 	tile_bank = (attr & 0x20) >> 5;
 	tile_base = (attr & 0x80) << 1;
 
-	SET_TILE_INFO(2+tile_bank,tile_base + bgMap[tile_index],attr & 0x07);
+	SET_TILE_INFO(
+			2+tile_bank,
+			tile_base + bgMap[tile_index],
+			attr & 0x07,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	unsigned char attr = stfight_text_attr_ram[tile_index];
 
-	SET_TILE_INFO(0,stfight_text_char_ram[tile_index] + ((attr & 0x80) << 1),attr & 0x0f);
-	tile_info.flags = TILE_FLIPYX((attr & 0x60) >> 5);
+	SET_TILE_INFO(
+			0,
+			stfight_text_char_ram[tile_index] + ((attr & 0x80) << 1),
+			attr & 0x0f,
+			TILE_FLIPYX((attr & 0x60) >> 5))
 }
 
 
@@ -287,11 +298,6 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 
 void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_recalc();
-
-
 	fillbitmap(priority_bitmap,0,NULL);
 
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* in case bg_tilemap is disabled */

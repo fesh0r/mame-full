@@ -15,7 +15,6 @@
 #include "mamedbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
-#include "state.h"
 
 #ifdef MAME_DEBUG
 extern int debug_key_pressed;
@@ -173,8 +172,6 @@ static struct tms34010_config default_config =
 };
 
 static void check_interrupt(void);
-static void tms34010_state_presave(void);
-static void tms34010_state_postload(void);
 
 
 
@@ -317,7 +314,13 @@ static data32_t (*rfield_functions_s[32])(offs_t offset) =
 **#################################################################################################*/
 
 /* context finder */
-#define FINDCONTEXT(_cpu) (cpu_is_saving_context(_cpu) ? cpu_getcontext(_cpu) : &state)
+INLINE tms34010_regs *FINDCONTEXT(int cpu)
+{
+	tms34010_regs *context = cpunum_get_context_ptr(cpu);
+	if (!context)
+		context = &state;
+	return context;
+}
 
 /* register definitions and shortcuts */
 #define PC				(state.pc)
@@ -835,52 +838,18 @@ static void check_interrupt(void)
 
 void tms34010_init(void)
 {
-	int cpunum = cpu_getactivecpu();
-
-	/* allocate the shiftreg */
-	state.shiftreg = malloc(SHIFTREG_SIZE);
-
-	state_save_register_UINT32("tms34010", cpunum, "OP",		&state.op, 1);
-	state_save_register_UINT32("tms34010", cpunum, "PC",		&state.pc, 1);
-	state_save_register_UINT32("tms34010", cpunum, "ST",		&state.st, 1);
-	state_save_register_UINT32("tms34010", cpunum, "AREGS",		state.flat_aregs, 16);
-	state_save_register_UINT32("tms34010", cpunum, "BREGS",		state.flat_bregs, 15);
-	state_save_register_UINT32("tms34010", cpunum, "NFLAG",		&state.nflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "CFLAG",		&state.cflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "NOTZFLAG",	&state.notzflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "VFLAG",		&state.vflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "PFLAG",		&state.pflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "IEFLAG",	&state.ieflag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "FE0FLAG",	&state.fe0flag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "FE1FLAG",	&state.fe1flag, 1);
-	state_save_register_UINT32("tms34010", cpunum, "FW",		state.fw, sizeof(state.fw) / sizeof(state.fw[0]));
-	state_save_register_UINT32("tms34010", cpunum, "FW_INC",	state.fw_inc, sizeof(state.fw_inc) / sizeof(state.fw_inc[0]));
-	state_save_register_UINT32("tms34010", cpunum, "RESET_DEF",	&state.reset_deferred, 1);
-	state_save_register_UINT16("tms34010", cpunum, "SHIFTREG",	state.shiftreg, SHIFTREG_SIZE / sizeof(UINT16));
-	state_save_register_UINT16("tms34010", cpunum, "IORegs",	state.IOregs, 16);
-	state_save_register_UINT32("tms34010", cpunum, "TRANSPAR",	&state.transparency, 1);
-	state_save_register_UINT32("tms34010", cpunum, "WINCHK",	&state.window_checking, 1);
-	state_save_register_UINT32("tms34010", cpunum, "CONVSP",	&state.convsp, 1);
-	state_save_register_UINT32("tms34010", cpunum, "CONVDP",	&state.convdp, 1);
-	state_save_register_UINT32("tms34010", cpunum, "CONVMP",	&state.convmp, 1);
-	state_save_register_UINT32("tms34010", cpunum, "PIXELSHFT",	&state.pixelshift, 1);
-	state_save_register_int("tms34010",	cpunum,	"gfxcycles",		&state.gfxcycles);
-	state_save_register_int("tms34010",	cpunum,	"luvcount",		&state.last_update_vcount);
-	state_save_register_int("tms34010",	cpunum,	"ICount",		&tms34010_ICount);
-	state_save_register_func_presave(tms34010_state_presave);
-	state_save_register_func_postload(tms34010_state_postload);
 }
 
 void tms34010_reset(void *param)
 {
-	UINT16 *shiftreg_save;
 	struct tms34010_config *config = param ? param : &default_config;
 
 	/* zap the state and copy in the config pointer */
-	shiftreg_save = state.shiftreg;
 	memset(&state, 0, sizeof(state));
-	state.shiftreg = shiftreg_save;
 	state.config = config;
+
+	/* allocate the shiftreg */
+	state.shiftreg = malloc(SHIFTREG_SIZE);
 
 	/* fetch the initial PC and reset the state */
 	PC = RLONG(0xffffffe0);
@@ -1260,16 +1229,20 @@ void tms34020_set_irq_callback(int (*callback)(int irqline))
 **	Generate internal interrupt
 *#################################################################################################*/
 
-void tms34010_internal_interrupt(int type)
+static void internal_interrupt_callback(int param)
 {
-	LOG(("TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
-	IOREG(REG_INTPEND) |= type;
-	check_interrupt();
-}
+	int cpunum = param & 0xff;
+	int type = param >> 8;
 
-void tms34020_internal_interrupt(int type)
-{
-	tms34010_internal_interrupt(type);
+	/* call through to the CPU to generate the int */
+	cpuintrf_push_context(cpunum);
+	IOREG(REG_INTPEND) |= type;
+	LOG(("TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
+	check_interrupt();
+	cpuintrf_pop_context();
+	
+	/* generate triggers so that spin loops can key off them */
+	cpu_triggerint(cpunum);
 }
 
 
@@ -1621,7 +1594,7 @@ static void dpyint_callback(int cpunum)
 	tms34010_regs *context = FINDCONTEXT(cpunum);
 	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
 	dpyint_timer[cpunum] = timer_set(interval, cpunum, dpyint_callback);
-	cpu_generate_internal_interrupt(cpunum, TMS34010_DI);
+	timer_set(TIME_NOW, cpunum | (TMS34010_DI << 8), internal_interrupt_callback);
 
 	/* allow a callback so we can update before they are likely to do nasty things */
 	if (context->config->display_int_callback)
@@ -1746,7 +1719,7 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 
 			/* NMI issued? */
 			if (data & 0x0100)
-				cpu_generate_internal_interrupt(cpunum, TMS34010_NMI);
+				timer_set(TIME_NOW, cpunum | (TMS34010_NMI << 8), internal_interrupt_callback);
 			break;
 
 		case REG_HSTCTLL:
@@ -1781,7 +1754,7 @@ static void common_io_register_w(int cpunum, tms34010_regs *context, int reg, in
 
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
-				cpu_generate_internal_interrupt(cpunum, TMS34010_HI);
+				timer_set(TIME_NOW, cpunum | (TMS34010_HI << 8), internal_interrupt_callback);
 			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
 				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
 			break;
@@ -2050,28 +2023,7 @@ void tms34010_state_load(int cpunum, void *f)
 	osd_fread(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
-static void tms34010_state_presave(void)
-{
-	int i;
-	for (i = 0; i < 16; i++)
-		state.flat_aregs[i] = AREG(i);
-	for (i = 0; i < 15; i++)
-		state.flat_bregs[i] = BREG(BINDEX(i));
-}
 
-static void tms34010_state_postload(void)
-{
-	int i;
-	for (i = 0; i < 16; i++)
-		AREG(i) = state.flat_aregs[i];
-	for (i = 0; i < 15; i++)
-		BREG(BINDEX(i)) = state.flat_bregs[i];
-
-	SET_FW();
-	tms34010_io_register_w(REG_DPYINT,IOREG(REG_DPYINT),0);
-	set_raster_op(&state);
-	set_pixel_function(&state);
-}
 
 /*###################################################################################################
 **	HOST INTERFACE WRITES
@@ -2080,9 +2032,7 @@ static void tms34010_state_postload(void)
 void tms34010_host_w(int cpunum, int reg, int data)
 {
 	tms34010_regs *context = FINDCONTEXT(cpunum);
-	const struct cpu_interface *interface;
 	unsigned int addr;
-	int oldcpu;
 
 	switch (reg)
 	{
@@ -2100,8 +2050,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 		case TMS34010_HOST_DATA:
 
 			/* swap to the target cpu */
-			oldcpu = cpu_getactivecpu();
-			memory_set_context(cpunum);
+			cpuintrf_push_context(cpunum);
 
 			/* write to the address */
 			host_interface_cpu = cpunum;
@@ -2119,9 +2068,8 @@ void tms34010_host_w(int cpunum, int reg, int data)
 			}
 
 			/* swap back */
-			memory_set_context(oldcpu);
-			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
-			(*interface->set_op_base)((*interface->get_pc)());
+			cpuintrf_pop_context();
+			activecpu_reset_banking();
 			break;
 
 		/* control register */
@@ -2146,9 +2094,8 @@ void tms34010_host_w(int cpunum, int reg, int data)
 int tms34010_host_r(int cpunum, int reg)
 {
 	tms34010_regs *context = FINDCONTEXT(cpunum);
-	const struct cpu_interface *interface;
 	unsigned int addr;
-	int oldcpu, result;
+	int result;
 
 	switch (reg)
 	{
@@ -2164,8 +2111,7 @@ int tms34010_host_r(int cpunum, int reg)
 		case TMS34010_HOST_DATA:
 
 			/* swap to the target cpu */
-			oldcpu = cpu_getactivecpu();
-			memory_set_context(cpunum);
+			cpuintrf_push_context(cpunum);
 
 			/* read from the address */
 			host_interface_cpu = cpunum;
@@ -2184,9 +2130,8 @@ int tms34010_host_r(int cpunum, int reg)
 			}
 
 			/* swap back */
-			memory_set_context(oldcpu);
-			interface = &cpuintf[Machine->drv->cpu[oldcpu].cpu_type & ~CPU_FLAGS_MASK];
-			(*interface->set_op_base)((*interface->get_pc)());
+			cpuintrf_pop_context();
+			activecpu_reset_banking();
 			return result;
 
 		/* control register */

@@ -26,13 +26,7 @@ enum {
 #endif
 };
 
-//#define LAZY_FLAGS  1
-
-#define H6280_INT_NONE	0
-#define H6280_INT_NMI	1
-#define H6280_INT_TIMER	2
-#define H6280_INT_IRQ1	3
-#define H6280_INT_IRQ2	4
+#define LAZY_FLAGS  0
 
 #define H6280_RESET_VEC	0xfffe
 #define H6280_NMI_VEC	0xfffc

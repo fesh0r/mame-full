@@ -63,7 +63,11 @@ static void get_bg_tile_info(int tile_index)
 {
 	unsigned char code = spdodgeb_videoram[tile_index];
 	unsigned char attr = spdodgeb_videoram[tile_index + 0x800];
-	SET_TILE_INFO(0,code + ((attr & 0x1f) << 8),((attr & 0xe0) >> 5) + 8 * tile_palbank)
+	SET_TILE_INFO(
+			0,
+			code + ((attr & 0x1f) << 8),
+			((attr & 0xe0) >> 5) + 8 * tile_palbank,
+			0)
 }
 
 
@@ -226,15 +230,6 @@ void spdodgeb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (i = 0;i < 30;i++)
 			tilemap_set_scrollx(bg_tilemap,i+1,scrollx[i]+5);
 	}
-
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	/* mark sprites colors */
-	for (i = 0;i < 128;i++)
-		palette_used_colors[sprite_palbank*0x80 + i + 0x200] |= PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
 
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	draw_sprites(bitmap);

@@ -15,15 +15,13 @@ enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLE
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE };
 #else
-
-#include "messwin.h"
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
 		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_DUPCRC, LIST_WRONGMERGE,
-		LIST_ROMSIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSTEXT, LIST_MESSDEVICES, LIST_MESSCREATEDIR };
+		LIST_ROMSIZE, LIST_PALETTESIZE, LIST_CPU, LIST_SOURCEFILE, LIST_MESSINFO };
 #endif
 
 #define VERIFY_ROMS		0x00000001
@@ -63,6 +61,7 @@ struct rc_option frontend_opts[] = {
 	{ "listdupcrc", NULL, rc_set_int, &list, NULL, LIST_DUPCRC, 0, NULL, "duplicate crc's" },
 	{ "listwrongmerge", "lwm", rc_set_int, &list, NULL, LIST_WRONGMERGE, 0, NULL, "wrong merge attempts" },
 	{ "listromsize", "lrs", rc_set_int, &list, NULL, LIST_ROMSIZE, 0, NULL, "rom size" },
+	{ "listpalettesize", "lps", rc_set_int, &list, NULL, LIST_PALETTESIZE, 0, NULL, "palette size" },
 	{ "listcpu", NULL, rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "cpu's used" },
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 	{ "lmr", NULL, rc_set_int, &list, NULL, LIST_LMR, 0, NULL, "missing roms" },
@@ -71,9 +70,9 @@ struct rc_option frontend_opts[] = {
 	{ "wrongfps", NULL, rc_set_int, &list, NULL, LIST_WRONGFPS, 0, NULL, "wrong fps" },
 	{ "clones", NULL, rc_bool, &listclones, "1", 0, 0, NULL, "enable/disable clones" },
 #ifdef MESS
-	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSDEVICES, 0, NULL, NULL },
-	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSTEXT, 0, NULL, NULL },
-	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSCREATEDIR, 0, NULL, NULL },
+	{ "listdevices", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
+	{ "listtext", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
+	{ "createdir", NULL, rc_set_int, &list, NULL, LIST_MESSINFO, 0, NULL, NULL },
 #endif
 	{ "listroms", NULL, rc_set_int, &list, NULL, LIST_ROMS, 0, NULL, NULL },
 	{ "listsamples", NULL, rc_set_int, &list, NULL, LIST_SAMPLES, 0, NULL, NULL },
@@ -484,29 +483,25 @@ int frontend_help (char *gamename)
 	{
 
         #ifdef MESS
-		//#if 0
-		case LIST_MESSTEXT: /* all mess specific calls here */
+		case LIST_MESSINFO: /* all mess specific calls here */
 		{
+			for (i=1;i<argc;i++)
+			{
+				/* list all mess info options here */
+				if (
+					!stricmp(argv[i],"-listdevices") |
+					!stricmp(argv[i],"-listtext")    |
+					!stricmp(argv[i],"-createdir")
+				   )
+			 	{
 					/* send the gamename and arg to mess.c */
-			list_mess_info(gamename, "-listtext", listclones);
+					list_mess_info(gamename, argv[i], listclones);
+				}
+			}
 			return 0;
 			break;
 		}
-		case LIST_MESSDEVICES:
-		{
-					/* send the gamename and arg to mess.c */
-			list_mess_info(gamename, "-listdevices", listclones);
-			return 0;
-			break;
-		}
-		case LIST_MESSCREATEDIR:
-		{
-					/* send the gamename and arg to mess.c */
-			list_mess_info(gamename, "-createdir", listclones);
-			return 0;
-			break;
-		}
-	#endif
+		#endif
 
 		case LIST_SHORT: /* simple games list */
 			#ifndef MESS
@@ -1173,6 +1168,15 @@ int frontend_help (char *gamename)
 								j += ROM_GETLENGTH(chunk);
 
 					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,j);
+				}
+			return 0;
+			break;
+
+		case LIST_PALETTESIZE: /* I used this for statistical analysis */
+			for (i = 0; drivers[i]; i++)
+				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
+				{
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drivers[i]->drv->total_colors);
 				}
 			return 0;
 			break;

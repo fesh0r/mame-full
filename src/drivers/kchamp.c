@@ -389,7 +389,7 @@ static int kc_interrupt( void ) {
 	if ( nmi_enable )
 		return Z80_NMI_INT;
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static void msmint( int data ) {
@@ -439,7 +439,7 @@ static int sound_int( void ) {
 	if ( sound_nmi_enable )
 		return Z80_NMI_INT;
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }
 
 static struct DACinterface dac_interface =
@@ -763,7 +763,7 @@ static void init_kchampvs( void )
 
 
 
-GAMEX( 1984, kchamp,   0,      kchamp, kchamp,     0,        ROT90, "Data East USA", "Karate Champ (US)", GAME_NO_COCKTAIL )
-GAMEX( 1984, karatedo, kchamp, kchamp, kchamp,     0,        ROT90, "Data East Corporation", "Karate Dou (Japan)", GAME_NO_COCKTAIL )
+GAMEX( 1984, kchamp,   0,      kchamp,   kchamp,   0,        ROT90, "Data East USA", "Karate Champ (US)", GAME_NO_COCKTAIL )
+GAMEX( 1984, karatedo, kchamp, kchamp,   kchamp,   0,        ROT90, "Data East Corporation", "Karate Dou (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1984, kchampvs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East USA", "Karate Champ (US VS version)", GAME_NO_COCKTAIL )
 GAMEX( 1984, karatevs, kchamp, kchampvs, kchampvs, kchampvs, ROT90, "Data East Corporation", "Taisen Karate Dou (Japan VS version)", GAME_NO_COCKTAIL )

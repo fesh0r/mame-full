@@ -235,7 +235,11 @@ static void get_top0_tile_info(int tile_index)
 	attrib = topvideoram16[0][2*tile_index];
 	tile_number = topvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -246,7 +250,11 @@ static void get_fg0_tile_info(int tile_index)
 	attrib = fgvideoram16[0][2*tile_index];
 	tile_number = fgvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -257,7 +265,11 @@ static void get_bg0_tile_info(int tile_index)
 	attrib = bgvideoram16[0][2*tile_index];
 	tile_number = bgvideoram16[0][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 ///	if ((attrib & 0x0f00) == 0) tile_info.flags |= TILE_IGNORE_TRANSPARENCY;
 }
@@ -269,7 +281,11 @@ static void get_top1_tile_info(int tile_index)
 	attrib = topvideoram16[1][2*tile_index];
 	tile_number = topvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -280,7 +296,11 @@ static void get_fg1_tile_info(int tile_index)
 	attrib = fgvideoram16[1][2*tile_index];
 	tile_number = fgvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -291,7 +311,11 @@ static void get_bg1_tile_info(int tile_index)
 	attrib = bgvideoram16[1][2*tile_index];
 	tile_number = bgvideoram16[1][2*tile_index+1];
 	color = attrib & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -303,7 +327,11 @@ static void batrider_get_top0_tile_info(int tile_index)
 	tile = topvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -315,7 +343,11 @@ static void batrider_get_fg0_tile_info(int tile_index)
 	tile = fgvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -327,7 +359,11 @@ static void batrider_get_bg0_tile_info(int tile_index)
 	tile = bgvideoram16[0][2*tile_index+1];
 	tile_number = ( batrider_object_bank[(tile >> 13) & 7] << 13 ) | ( tile & 0x1fff );
 	color = attrib & 0x7f;
-	SET_TILE_INFO(0,tile_number,color)
+	SET_TILE_INFO(
+			0,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = (attrib & 0x0f00) >> 8;
 }
 
@@ -338,7 +374,11 @@ static void get_text_tile_info(int tile_index)
 	attrib = toaplan2_txvideoram16[tile_index];
 	tile_number = attrib & 0x3ff;
 	color = ((attrib >> 10) | 0x40) & 0x7f;
-	SET_TILE_INFO(2,tile_number,color)
+	SET_TILE_INFO(
+			2,
+			tile_number,
+			color,
+			0)
 	tile_info.priority = 0;
 }
 
@@ -1322,66 +1362,18 @@ void toaplan2_log_vram(void)
 	Sprite Handlers
 ***************************************************************************/
 
-static void mark_sprite_colors(int controller)
-{
-	int offs, attrib, sprite, color, i, pal_base;
-	int sprite_sizex, sprite_sizey, dim_x, dim_y;
-	int colmask[64];
-
-	data16_t *source = (data16_t *)(spriteram16_now[controller]);
-
-	pal_base = Machine->drv->gfxdecodeinfo[ ((controller*2)+1) ].color_codes_start;
-
-	for(i=0; i < 64; i++) colmask[i] = 0;
-
-	for (offs = 0; offs < (TOAPLAN2_SPRITERAM_SIZE/2); offs += 4)
-	{
-		attrib = source[offs];
-		sprite = source[offs + 1] | ((attrib & 3) << 16);
-		sprite %= Machine->gfx[ ((controller*2)+1) ]->total_elements;
-		if (attrib & 0x8000)
-		{
-			/* While we're here, mark all priorities used */
-			sprite_priority[controller][((attrib & 0x0f00) >> 8)] = display_sp[controller];
-
-			color = (attrib >> 2) & 0x3f;
-			sprite_sizex = (source[offs + 2] & 0x0f) + 1;
-			sprite_sizey = (source[offs + 3] & 0x0f) + 1;
-
-			for (dim_y = 0; dim_y < sprite_sizey; dim_y++)
-			{
-				for (dim_x = 0; dim_x < sprite_sizex; dim_x++)
-				{
-					colmask[color] |= Machine->gfx[ ((controller*2)+1) ]->pen_usage[sprite];
-					sprite++ ;
-				}
-			}
-		}
-	}
-
-	for (color = 0;color < 64;color++)
-	{
-		if ((color == 0) && (colmask[0] & 1))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1; i < 16; i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-}
-
-
-
 static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priority_to_display, int bank_sel )
 {
 	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
 	const struct rectangle *clip = &Machine->visible_area;
 
+	int offs;
+
 	data16_t *source = (data16_t *)(spriteram16_now[controller]);
 
-	int offs;
+
+	priority_to_display <<= 8;
+
 	for (offs = 0; offs < (TOAPLAN2_SPRITERAM_SIZE/2); offs += 4)
 	{
 		int attrib, sprite, color, priority, flipx, flipy, sx, sy;
@@ -1389,7 +1381,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 		int bank, sprite_num;
 
 		attrib = source[offs];
-		priority = (attrib & 0x0f00) >> 8;
+		priority = (attrib & 0x0f00);
 
 		if ((priority == priority_to_display) && (attrib & 0x8000))
 		{
@@ -1410,8 +1402,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 			sprite_sizey = ((source[offs + 3] & 0x0f) + 1) * 8;
 
 			/***** find position to display sprite *****/
-            sx_base = ((source[offs + 2] >> 7) - sprite_scrollx[controller]) & 0x1ff;
-            sy_base = ((source[offs + 3] >> 7) - sprite_scrolly[controller]) & 0x1ff;
+			sx_base = ((source[offs + 2] >> 7) - sprite_scrollx[controller]) & 0x1ff;
+			sy_base = ((source[offs + 3] >> 7) - sprite_scrolly[controller]) & 0x1ff;
 
 			flipx = attrib & TOAPLAN2_SPRITE_FLIPX;
 			flipy = attrib & TOAPLAN2_SPRITE_FLIPY;
@@ -1473,6 +1465,27 @@ static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priorit
 	}
 }
 
+
+/***************************************************************************
+	Mark the sprite priority used list.
+***************************************************************************/
+static void mark_sprite_priority(int controller)
+{
+	int priority, offs;
+
+	data16_t *source = (data16_t *)(spriteram16_now[controller]);
+
+
+	for (priority = 0; priority < 16; priority++)
+		sprite_priority[controller][priority] = 0;		/* Clear priorities used list */
+
+	for (offs = 0; offs < (TOAPLAN2_SPRITERAM_SIZE/2); offs += 4)
+	{
+		priority = (source[offs] & 0x0f00) >> 8;
+		sprite_priority[controller][priority] = display_sp[controller];
+	}
+}
+
 /***************************************************************************
 	Draw the game screen in the given osd_bitmap.
 ***************************************************************************/
@@ -1481,17 +1494,13 @@ void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
-	for (priority = 0; priority < 16; priority++)
-		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	mark_sprite_colors(0);		/* Also mark priorities used */
-	palette_recalc();
+	mark_sprite_priority(0);
+
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
@@ -1508,21 +1517,14 @@ void dogyuun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
-	for (priority = 0; priority < 16; priority++)
-	{
-		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
-		sprite_priority[1][priority] = 0;		/* Clear priorities used list */
-	}
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	mark_sprite_colors(0);		/* Also mark priorities used */
-	mark_sprite_colors(1);		/* Also mark priorities used */
-	palette_recalc();
+	mark_sprite_priority(0);
+	mark_sprite_priority(1);
+
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
@@ -1547,21 +1549,14 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
-	for (priority = 0; priority < 16; priority++)
-	{
-		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
-		sprite_priority[1][priority] = 0;		/* Clear priorities used list */
-	}
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();
 #endif
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	mark_sprite_colors(0);		/* Also mark priorities used */
-	mark_sprite_colors(1);		/* Also mark priorities used */
-	palette_recalc();
+	mark_sprite_priority(0);
+	mark_sprite_priority(1);
+
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
@@ -1592,12 +1587,12 @@ void batrider_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int priority;
 
-	for (priority = 0; priority < 16; priority++)
-		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
 
 #ifdef MAME_DEBUG
 	toaplan2_log_vram();
 #endif
+
+	mark_sprite_priority(0);
 
 	/* If object bank is changed, all tile must be redrawn to blow off glitches. */
 	/* This causes serious slow down. Is there better algorithm ?                */
@@ -1608,10 +1603,6 @@ void batrider_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		objectbank_dirty = 0;
 	}
 
-	tilemap_update(ALL_TILEMAPS);
-	palette_init_used_colors();
-	mark_sprite_colors(0);		/* Also mark priorities used */
-	palette_recalc();
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)

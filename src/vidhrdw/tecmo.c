@@ -27,31 +27,51 @@ static struct tilemap *tx_tilemap,*fg_tilemap,*bg_tilemap;
 static void get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = tecmo_bgvideoram[tile_index+0x200];
-	SET_TILE_INFO(3,tecmo_bgvideoram[tile_index] + ((attr & 0x07) << 8),attr >> 4)
+	SET_TILE_INFO(
+			3,
+			tecmo_bgvideoram[tile_index] + ((attr & 0x07) << 8),
+			attr >> 4,
+			0)
 }
 
 static void get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = tecmo_fgvideoram[tile_index+0x200];
-	SET_TILE_INFO(2,tecmo_fgvideoram[tile_index] + ((attr & 0x07) << 8),attr >> 4)
+	SET_TILE_INFO(
+			2,
+			tecmo_fgvideoram[tile_index] + ((attr & 0x07) << 8),
+			attr >> 4,
+			0)
 }
 
 static void gemini_get_bg_tile_info(int tile_index)
 {
 	unsigned char attr = tecmo_bgvideoram[tile_index+0x200];
-	SET_TILE_INFO(3,tecmo_bgvideoram[tile_index] + ((attr & 0x70) << 4),attr & 0x0f)
+	SET_TILE_INFO(
+			3,
+			tecmo_bgvideoram[tile_index] + ((attr & 0x70) << 4),
+			attr & 0x0f,
+			0)
 }
 
 static void gemini_get_fg_tile_info(int tile_index)
 {
 	unsigned char attr = tecmo_fgvideoram[tile_index+0x200];
-	SET_TILE_INFO(2,tecmo_fgvideoram[tile_index] + ((attr & 0x70) << 4),attr & 0x0f)
+	SET_TILE_INFO(
+			2,
+			tecmo_fgvideoram[tile_index] + ((attr & 0x70) << 4),
+			attr & 0x0f,
+			0)
 }
 
 static void get_tx_tile_info(int tile_index)
 {
 	unsigned char attr = tecmo_txvideoram[tile_index+0x400];
-	SET_TILE_INFO(0,tecmo_txvideoram[tile_index] + ((attr & 0x03) << 8),attr >> 4)
+	SET_TILE_INFO(
+			0,
+			tecmo_txvideoram[tile_index] + ((attr & 0x03) << 8),
+			attr >> 4,
+			0)
 }
 
 
@@ -234,47 +254,8 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 }
 
 
-static void mark_sprite_colors(void)
-{
-	int i;
-	unsigned short palette_map[16];
-	int pal_base;
-
-	memset(palette_map,0,sizeof(palette_map));
-
-	for (i = 0;i < spriteram_size;i += 8)
-	{
-		int color;
-
-		color = spriteram[i+3] & 0x0f;
-		palette_map[color] |= 0xffff;
-	}
-
-	/* now build the final table */
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (i = 0;i < 16;i++)
-	{
-		int usage = palette_map[i],j;
-		if (usage)
-		{
-			for (j = 1; j < 16; j++)
-				if (usage & (1 << j))
-					palette_used_colors[pal_base + i * 16 + j] |= PALETTE_COLOR_VISIBLE;
-		}
-	}
-}
-
-
 void tecmo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
-	palette_init_used_colors();
-	mark_sprite_colors();
-	palette_used_colors[0x100] = PALETTE_COLOR_VISIBLE;
-
-	palette_recalc();
-
 	fillbitmap(priority_bitmap,0,NULL);
 	fillbitmap(bitmap,Machine->pens[0x100],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,0,1);

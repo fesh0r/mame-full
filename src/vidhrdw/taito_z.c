@@ -6,6 +6,8 @@
 #define TC0100SCN_GFX_NUM 1
 #define TC0480SCP_GFX_NUM 1
 
+void taitoz_vh_stop(void);
+
 struct tempsprite
 {
 	int gfx;
@@ -17,7 +19,6 @@ struct tempsprite
 };
 static struct tempsprite *spritelist;
 
-static int taito_hide_pixels;
 static int sci_spriteframe;
 extern data16_t *taitoz_sharedram;
 
@@ -217,7 +218,7 @@ static int has_TC0110PCR(void)
 	return 0;
 }
 
-static int taitoz_core_vh_start (void)
+static int taitoz_core_vh_start (int x_offs)
 {
 	/* Up to $2000/8 big sprites, requires 0x400 * sizeof(*spritelist)
 	   Multiply this by 32 to give room for the number of small sprites,
@@ -229,36 +230,46 @@ static int taitoz_core_vh_start (void)
 
 	if (has_TC0480SCP())	/* it's Dblaxle, a tc0480scp game */
 	{
-		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,taito_hide_pixels,0x21,0x08,4,0,0,0,0))
+		if (TC0480SCP_vh_start(TC0480SCP_GFX_NUM,x_offs,0x21,0x08,4,0,0,0,0))
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 	}
 	else	/* it's a tc0100scn game */
 	{
-		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels))
+		if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,x_offs,0,0,0,0,0,0))
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 	}
 
 	if (has_TC0150ROD())
 		if (TC0150ROD_vh_start())
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
+		{
+			taitoz_vh_stop();
 			return 1;
+		}
 
 	return 0;
 }
 
 int taitoz_vh_start (void)
 {
-	taito_hide_pixels = 0;
-	return (taitoz_core_vh_start());
+	return (taitoz_core_vh_start(0));
 }
 
 int spacegun_vh_start (void)
 {
-	taito_hide_pixels = 4;
-	return (taitoz_core_vh_start());
+	return (taitoz_core_vh_start(4));
 }
 
 void taitoz_vh_stop (void)
@@ -297,288 +308,6 @@ WRITE16_HANDLER( sci_spriteframe_w )
 {
 	sci_spriteframe = (data >> 8) &0xff;
 }
-
-
-/*********************************************************
-				PALETTE
-*********************************************************/
-
-static void contcirc_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+1];
-		tilenum = data &0x7ff;
-
-		data = spriteram16[offs+3];
-		color = (data &0xff00) >> 8;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 7;
-
-			for (sprite_chunk=0;sprite_chunk<128;sprite_chunk++)
-			{
-				i = sprite_chunk % 8;   // 8 sprite chunks across
-				j = sprite_chunk / 8;   // 16 sprite chunks down
-
-				code = spritemap[map_offset + i + (j<<3)] &tile_mask;
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void chasehq_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask   = (Machine->gfx[0]->total_elements) - 1;
-	UINT16 tile_mask_2 = (Machine->gfx[2]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color,zoomx;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = 0;offs < spriteram_size/2;offs += 4)
-	{
-		data = spriteram16[offs+1];
-		color = (data & 0x7f80) >> 7;
-		zoomx = (data & 0x7f);
-
-		data = spriteram16[offs+3];
-		tilenum = data & 0x1fff;	// not sure this is right, Raine has 0x7ff
-
-		if (tilenum)
-		{
-			if (zoomx & 0x40)	// 128x128 sprites, $0-$3ffff in spritemap rom, OBJA
-			{
-				map_offset = tilenum << 6;
-
-				for (sprite_chunk=0;sprite_chunk<64;sprite_chunk++)
-				{
-					i = sprite_chunk % 8;   // 8 sprite chunks per row
-					j = sprite_chunk / 8;   // 8 rows
-
-					code = spritemap[map_offset + i + (j<<3)] &tile_mask;
-					palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-				}
-			}
-			else if (zoomx & 0x20)	// 64x128 sprites, $40000-$5ffff in spritemap rom, OBJB
-			{
-				map_offset = (tilenum << 5) + 0x20000;
-
-				for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
-				{
-					i = sprite_chunk % 4;   // 4 sprite chunks per row
-					j = sprite_chunk / 4;   // 8 rows
-
-					code = spritemap[map_offset + i + (j<<2)] &tile_mask_2;
-					palette_map[color] |= Machine->gfx[2]->pen_usage[code];
-				}
-			}
-			else if ((zoomx & 0x60)==0)	// 32x128 sprites, $60000-$7ffff in spritemap rom, OBJB
-			{
-				map_offset = (tilenum << 4) + 0x30000;
-
-				for (sprite_chunk=0;sprite_chunk<16;sprite_chunk++)
-				{
-					i = sprite_chunk % 2;   // 2 sprite chunks per row
-					j = sprite_chunk / 2;   // 8 rows
-
-					code = spritemap[map_offset + i + (j<<1)] &tile_mask_2;
-					palette_map[color] |= Machine->gfx[2]->pen_usage[code];
-				}
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void bshark_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = 0;offs < spriteram_size/2;offs += 4)
-	{
-		data = spriteram16[offs+1];
-		color = (data &0x7f80) >> 7;
-
-		data = spriteram16[offs+3];
-		tilenum = data &0x1fff;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 5;
-
-			for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
-			{
-				i = sprite_chunk % 4;   // 4 sprite chunks across
-				j = sprite_chunk / 4;   // 8 sprite chunks down
-
-				code = spritemap[map_offset + i + (j<<2)] &tile_mask;
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void aquajack_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+2];
-		color = (data &0xff00) >> 8;
-
-		data = spriteram16[offs+3];
-		tilenum = data &0x1fff;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 5;
-
-			for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
-			{
-				i = sprite_chunk % 4;   // 4 sprite chunks across
-				j = sprite_chunk / 4;   // 8 sprite chunks down
-
-				code = spritemap[map_offset + i + (j<<2)] &tile_mask;
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
-static void spacegun_update_palette (void)
-{
-	int i,j;
-	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
-	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
-	int map_offset,sprite_chunk,code;
-	int offs,data,tilenum,color;
-	UINT16 palette_map[256];
-	memset (palette_map, 0, sizeof (palette_map));
-
-	for (offs = (spriteram_size/2)-4;offs >=0;offs -= 4)
-	{
-		data = spriteram16[offs+2];
-		color = (data &0xff00) >> 8;
-
-		data = spriteram16[offs+3];
-		tilenum = data &0x1fff;
-
-		if (tilenum)
-		{
-			map_offset = tilenum << 5;
-
-			for (sprite_chunk=0;sprite_chunk<32;sprite_chunk++)
-			{
-				i = sprite_chunk % 4;   // 4 sprite chunks across
-				j = sprite_chunk / 4;   // 8 sprite chunks down
-
-				code = spritemap[map_offset + i + (j<<2)] &tile_mask;
-				palette_map[color] |= Machine->gfx[0]->pen_usage[code];
-			}
-		}
-	}
-
-	/* Tell MAME about the color usage */
-	for (i = 0;i < 256;i++)
-	{
-		int usage = palette_map[i];
-
-		if (usage)
-		{
-			if (palette_map[i] & (1 << 0))
-				palette_used_colors[i * 16 + 0] = PALETTE_COLOR_USED;
-			for (j = 1; j < 16; j++)
-				if (palette_map[i] & (1 << j))
-					palette_used_colors[i * 16 + j] = PALETTE_COLOR_USED;
-		}
-	}
-}
-
 
 
 /************************************************************
@@ -1511,17 +1240,14 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	contcirc_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1530,7 +1256,7 @@ void contcirc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	contcirc_draw_sprites_16x8(bitmap,0,3);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1542,17 +1268,14 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	chasehq_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1561,7 +1284,7 @@ void chasehq_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	chasehq_draw_sprites_16x16(bitmap,0,0);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1571,17 +1294,14 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	bshark_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1590,7 +1310,7 @@ void bshark_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	bshark_draw_sprites_16x8(bitmap,0,8);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1600,17 +1320,14 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	bshark_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1619,7 +1336,7 @@ void sci_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	sci_draw_sprites_16x8(bitmap,0,6);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1629,17 +1346,14 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	aquajack_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,0);
@@ -1648,7 +1362,7 @@ void aquajack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	TC0150ROD_draw(bitmap,0);
 	aquajack_draw_sprites_16x8(bitmap,0,3);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);	// text layer
+	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,0);
 }
 
 
@@ -1658,17 +1372,14 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0100SCN_tilemap_update();
 
-	palette_init_used_colors();
-	spacegun_update_palette();
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	palette_recalc();
-
 	layer[0] = TC0100SCN_bottomlayer(0);
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
 	fillbitmap(priority_bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);	/* wrong color? */
+
+	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
 	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
@@ -1682,7 +1393,7 @@ void spacegun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* See if we should draw artificial gun targets */
 
-	if (input_port_4_word_r(0,0) &0x1)	/* Fake DSW */
+	if (input_port_9_word_r(0,0) &0x1)	/* Fake DSW */
 	{
 		int rawx, rawy, centrex, centrey, screenx, screeny;
 
@@ -1796,20 +1507,6 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	TC0480SCP_tilemap_update();
 
-	palette_init_used_colors();
-	bshark_update_palette();
-
-	/* This needs replacing with Bryan's superior method ! */
-	palette_used_colors[0] |= PALETTE_COLOR_VISIBLE;
-	{
-		int i;
-
-		/* fix TC0480SCP transparency, but this could compromise the background color */
-		for (i = 0;i < Machine->drv->total_colors;i += 16)
-			palette_used_colors[i] = PALETTE_COLOR_TRANSPARENT;
-	}
-	palette_recalc();
-
 	priority = TC0480SCP_get_bg_priority();
 
 	layer[0] = (priority &0xf000) >> 12;	/* tells us which bg layer is bottom */
@@ -1819,8 +1516,9 @@ void dblaxle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	layer[4] = 4;   /* text layer always over bg layers */
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,0,NULL);
-//	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	/* Ensure screen blanked - this shouldn't be necessary! */
+	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
 
 	TC0480SCP_tilemap_draw(bitmap,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0480SCP_tilemap_draw(bitmap,layer[1],0,0);

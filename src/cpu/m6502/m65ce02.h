@@ -50,7 +50,6 @@ enum {
 
 extern int m65ce02_ICount;				/* cycle count */
 
-extern void m65ce02_init(void);
 extern void m65ce02_reset(void *param);
 extern void m65ce02_exit(void);
 extern int	m65ce02_execute(int cycles);

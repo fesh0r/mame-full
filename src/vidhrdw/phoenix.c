@@ -133,8 +133,11 @@ static void get_fg_tile_info(int tile_index)
 	int code;
 
 	code = current_videoram_pg[tile_index];
-	SET_TILE_INFO(1, code, (code >> 5) | (palette_bank << 3));
-	tile_info.flags = (tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY;	/* first row (column) is opaque */
+	SET_TILE_INFO(
+			1,
+			code,
+			(code >> 5) | (palette_bank << 3),
+			(tile_index & 0x1f) ? 0 : TILE_IGNORE_TRANSPARENCY)	/* first row (column) is opaque */
 }
 
 static void get_bg_tile_info(int tile_index)
@@ -142,7 +145,11 @@ static void get_bg_tile_info(int tile_index)
 	int code;
 
 	code = current_videoram_pg[tile_index + 0x800];
-	SET_TILE_INFO(0, code, (code >> 5) | (palette_bank << 3));
+	SET_TILE_INFO(
+			0,
+			code,
+			(code >> 5) | (palette_bank << 3),
+			0)
 }
 
 
@@ -347,8 +354,6 @@ READ_HANDLER( survival_protection_r )
 
 void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	tilemap_update(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg_tilemap,0,0);
 	tilemap_draw(bitmap,fg_tilemap,0,0);
 }
