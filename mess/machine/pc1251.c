@@ -112,12 +112,12 @@ int pc1251_inb(void)
 	return data;
 }
 
-int pc1251_brk(void)
+bool pc1251_brk(void)
 {
 	return PC1251_KEY_BRK;
 }
 
-int pc1251_reset(void)
+bool pc1251_reset(void)
 {
 	return PC1251_KEY_RESET;
 }

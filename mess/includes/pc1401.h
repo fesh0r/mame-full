@@ -1,6 +1,6 @@
-
-int pc1401_reset(void);
-int pc1401_brk(void);
+extern UINT8 pc1401_portc;
+bool pc1401_reset(void);
+bool pc1401_brk(void);
 void pc1401_outa(int data);
 void pc1401_outb(int data);
 void pc1401_outc(int data);
