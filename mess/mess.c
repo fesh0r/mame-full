@@ -9,6 +9,7 @@ This file is a set of function calls and defs required for MESS.
 #include "config.h"
 #include "includes/flopdrv.h"
 #include "utils.h"
+#include "ui_text.h"
 #include "state.h"
 #include "image.h"
 #include "inputx.h"
@@ -80,7 +81,7 @@ const char *device_typename_id(int type, int id)
 	{
 		which = (which + 1) % 40;
 		/* for the average user counting starts at #1 ;-) */
-		sprintf(typename_id[which], "%s #%d", devices[type].name, id+1);
+		sprintf(typename_id[which], "%s #%d", ui_getstring(UI_filespecification+type), id+1);
 		return typename_id[which];
 	}
 	return "UNKNOWN";
@@ -422,7 +423,8 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 	{
 		/* startup info, print MAME version and ask for any key */
 
-		strcat(buf,"\n\tPress any key to Begin");
+		strcat(buf,"\n\t");
+		strcat(buf,ui_getstring(UI_anykey));
 		ui_drawbox(bitmap,0,0,Machine->uiwidth,Machine->uiheight);
 		ui_displaymessagewindow(bitmap, buf);
 
@@ -435,7 +437,12 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 	else
 	{
 		/* menu system, use the normal menu keys */
-		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
+		strcat(buf,"\n\t");
+		strcat(buf,ui_getstring(UI_lefthilight));
+		strcat(buf," ");
+		strcat(buf,ui_getstring(UI_returntomain));
+		strcat(buf," ");
+		strcat(buf,ui_getstring(UI_righthilight));
 
 		ui_displaymessagewindow(bitmap,buf);
 
