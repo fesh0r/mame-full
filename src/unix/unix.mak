@@ -333,7 +333,7 @@ VID_OBJS.photon2 = $(VID_DIR)/photon2_input.o \
 VID_OBJS = $(VID_DIR)/$(DISPLAY_METHOD).o $(VID_OBJS.$(DISPLAY_METHOD))
 
 # sound driver objs per arch
-SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o $(DSP_DIR)/alsa.o $(MIXER_DIR)/alsa.o
+SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
 #SOUND_OBJS.openbsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
@@ -352,6 +352,10 @@ SOUND_OBJS = $(SOUND_OBJS.$(ARCH))
 
 ifdef SOUND_ESOUND
 SOUND_OBJS += $(DSP_DIR)/esound.o
+endif
+
+ifdef SOUND_ALSA
+SOUND_OBJS += $(DSP_DIR)/alsa.o $(MIXER_DIR)/alsa.o
 endif
 
 ifdef SOUND_ARTS_TEIRA
