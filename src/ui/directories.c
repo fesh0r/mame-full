@@ -547,7 +547,7 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
 			if (MAX_DIRS <= DirInfo_NumDir(g_pDirInfo, nType))
 				return TRUE; /* don't edit */
 
-			hEdit = (HWND)(LRESULT)(int)SendMessage(GetDlgItem(hDlg, IDC_DIR_LIST), LVM_GETEDITCONTROL, 0, 0);
+			hEdit = (HWND)(LRESULT)(int)SendDlgItemMessage(hDlg, IDC_DIR_LIST, LVM_GETEDITCONTROL, 0, 0);
 			Edit_SetText(hEdit, "");
 		}
 	}

@@ -2517,8 +2517,7 @@ static void KeySeqDecodeString(const char *str, void* data)
 	ks->seq_string = strdup(str);
 
 	//get the new input sequence
-	// NPW 27-Jul-2004 - Temporarily disabling
-	//seq_set_string (is, str);
+	string_to_seq(str,is);
 	//dprintf("seq=%s,,,%04i %04i %04i %04i \n",str,(*is)[0],(*is)[1],(*is)[2],(*is)[3]);
 }
 

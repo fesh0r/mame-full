@@ -63,6 +63,7 @@ static void DisableFilterControls(HWND hWnd, LPFOLDERDATA lpFilterRecord,
 								  LPFILTER_ITEM lpFilterItem, DWORD dwFlags);
 static void EnableFilterExclusions(HWND hWnd, DWORD dwCtrlID);
 static DWORD ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags);
+static void OnHScroll(HWND hWnd, HWND hwndCtl, UINT code, int pos);
 
 /***************************************************************************/
 
@@ -142,15 +143,15 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 
 INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
-	char pcscreenshot[100];
-	char pcscreenshotborder[100];
 	CHOOSECOLOR cc;
 	COLORREF choice_colors[16];
+	char tmp[4];
 	int i;
 	BOOL bRedrawList = FALSE;
 	int nCurSelection = 0;
 	int nHistoryTab = 0;
 	int nCount = 0;
+	int value;
 
 	switch (Msg)
 	{
@@ -167,20 +168,14 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 		
 		Button_SetCheck(GetDlgItem(hDlg,IDC_HIDE_MOUSE),GetHideMouseOnStartup());
 
-		itoa( GetCycleScreenshot(), pcscreenshot, 10);
-		Edit_SetText(GetDlgItem(hDlg, IDC_CYCLETIMESEC), pcscreenshot);
-		if( GetCycleScreenshot() <= 0 )
-		{
-			Button_SetCheck(GetDlgItem(hDlg,IDC_CYCLE_SCREENSHOT),FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIME), FALSE);
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIMESEC), FALSE);
-		}
-		else
-		{
-			Button_SetCheck(GetDlgItem(hDlg,IDC_CYCLE_SCREENSHOT),TRUE);
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIME), TRUE);
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIMESEC), TRUE);
-		}
+		// Get the current value of the control
+		SendDlgItemMessage(hDlg, IDC_CYCLETIMESEC, TBM_SETRANGE,
+					(WPARAM)FALSE,
+					(LPARAM)MAKELONG(0, 60)); /* [0, 60] */
+		value = GetCycleScreenshot();
+		SendDlgItemMessage(hDlg,IDC_CYCLETIMESEC, TBM_SETPOS, TRUE, value);
+		itoa(value,tmp,10);
+		SendDlgItemMessage(hDlg,IDC_CYCLETIMESECTXT,WM_SETTEXT,0, (WPARAM)tmp);
 
 		Button_SetCheck(GetDlgItem(hDlg,IDC_STRETCH_SCREENSHOT_LARGER),
 						GetStretchScreenShotLarger());
@@ -209,9 +204,13 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 		else
 			ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_HISTORY_TAB), GetHistoryTab()-TAB_SUBTRACT);
 
-		itoa( GetScreenshotBorderSize(), pcscreenshotborder, 10);
-		Edit_SetText(GetDlgItem(hDlg, IDC_SCREENSHOT_BORDERSIZE), pcscreenshotborder);
-
+		SendDlgItemMessage(hDlg, IDC_SCREENSHOT_BORDERSIZE, TBM_SETRANGE,
+					(WPARAM)FALSE,
+					(LPARAM)MAKELONG(0, 100)); /* [0, 100] */
+		value = GetScreenshotBorderSize();
+		SendDlgItemMessage(hDlg,IDC_SCREENSHOT_BORDERSIZE, TBM_SETPOS, TRUE, value);
+		itoa(value,tmp,10);
+		SendDlgItemMessage(hDlg,IDC_SCREENSHOT_BORDERSIZETXT,WM_SETTEXT,0, (WPARAM)tmp);
 		//return TRUE;
 		break;
 
@@ -223,14 +222,16 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 	case WM_CONTEXTMENU:
 		HelpFunction((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
-
+	case WM_HSCROLL:
+		HANDLE_WM_HSCROLL(hDlg, wParam, lParam, OnHScroll);
+		break;
 	case WM_COMMAND :
 		switch (GET_WM_COMMAND_ID(wParam, lParam))
 		{
 		case IDC_SCREENSHOT_BORDERCOLOR:
 		{
 			for (i=0;i<16;i++)
-				choice_colors[i] = RGB(0,0,0);
+		 		choice_colors[i] = GetCustomColor(i);
 
 			cc.lStructSize = sizeof(CHOOSECOLOR);
 			cc.hwndOwner   = hDlg;
@@ -239,15 +240,10 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 			cc.Flags       = CC_ANYCOLOR | CC_RGBINIT | CC_SOLIDCOLOR;
 			if (!ChooseColor(&cc))
 				return TRUE;
+ 			for (i=0;i<16;i++)
+ 				SetCustomColor(i,choice_colors[i]);
 			SetScreenshotBorderColor(cc.rgbResult);
 			UpdateScreenShot();
-			return TRUE;
-		}
-		case IDC_CYCLE_SCREENSHOT:
-		{
-			BOOL bCheck = Button_GetCheck(GetDlgItem(hDlg, IDC_CYCLE_SCREENSHOT));
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIME), bCheck);
-			EnableWindow(GetDlgItem(hDlg, IDC_CYCLETIMESEC), bCheck);
 			return TRUE;
 		}
 		case IDOK :
@@ -276,32 +272,17 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 				ResetPlayTime( -1 );
 				bRedrawList = TRUE;
 			}
-			if (Button_GetCheck(GetDlgItem(hDlg,IDC_CYCLE_SCREENSHOT)))
+			value = SendDlgItemMessage(hDlg,IDC_CYCLETIMESEC, TBM_GETPOS, 0, 0);
+			if( GetCycleScreenshot() != value )
 			{
-				Edit_GetText(GetDlgItem(hDlg, IDC_CYCLETIMESEC),pcscreenshot,sizeof(pcscreenshot));
-				if( atoi(pcscreenshot) < 0)
-					SetCycleScreenshot(0);
-				else
-					SetCycleScreenshot(atoi(pcscreenshot));
+				SetCycleScreenshot(value);
 			}
-			else
+			value = SendDlgItemMessage(hDlg,IDC_SCREENSHOT_BORDERSIZE, TBM_GETPOS, 0, 0);
+			if( GetScreenshotBorderSize() != value )
 			{
-				SetCycleScreenshot(0);
-			}
-			Edit_GetText(GetDlgItem(hDlg, IDC_SCREENSHOT_BORDERSIZE),pcscreenshotborder,sizeof(pcscreenshotborder));
-			if( GetScreenshotBorderSize() != atoi(pcscreenshotborder) )
-			{
-				checked = TRUE;
-			}
-			//Make sure no negative values can be entered
-			if( atoi(pcscreenshotborder)< 0 )
-				SetScreenshotBorderSize(0);
-			else if(atoi(pcscreenshotborder)> 100 )
-				SetScreenshotBorderSize(100);
-			else
-				SetScreenshotBorderSize(atoi(pcscreenshotborder));
-			if( checked )
+				SetScreenshotBorderSize(value);
 				UpdateScreenShot();
+			}
 			checked = Button_GetCheck(GetDlgItem(hDlg,IDC_STRETCH_SCREENSHOT_LARGER));
 			if (checked != GetStretchScreenShotLarger())
 			{
@@ -313,14 +294,14 @@ INT_PTR CALLBACK InterfaceDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM 
 			{
 				SetFilterInherit(checked);
 				// LineUpIcons does just a ResetListView(), which is what we want here
-				PostMessage(GetMainWindow(),WM_COMMAND, (WPARAM)ID_VIEW_LINEUPICONS,(LPARAM)NULL);
+				PostMessage(GetMainWindow(),WM_COMMAND, MAKEWPARAM(ID_VIEW_LINEUPICONS, FALSE),(LPARAM)NULL);
  			}
 			checked = Button_GetCheck(GetDlgItem(hDlg,IDC_NOOFFSET_CLONES));
 			if (checked != GetOffsetClones())
 			{
 				SetOffsetClones(checked);
 				// LineUpIcons does just a ResetListView(), which is what we want here
-				PostMessage(GetMainWindow(),WM_COMMAND, (WPARAM)ID_VIEW_LINEUPICONS,(LPARAM)NULL);
+				PostMessage(GetMainWindow(),WM_COMMAND, MAKEWPARAM(ID_VIEW_LINEUPICONS, FALSE),(LPARAM)NULL);
  			}
 			nCurSelection = ComboBox_GetCurSel(GetDlgItem(hDlg,IDC_HISTORY_TAB));
 			if (nCurSelection != CB_ERR)
@@ -545,7 +526,7 @@ INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 			hBmp = (HBITMAP)LoadImage(GetModuleHandle(NULL),
 									  MAKEINTRESOURCE(IDB_ABOUT),
 									  IMAGE_BITMAP, 0, 0, LR_SHARED);
-			SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE,
+			SendDlgItemMessage(hDlg, IDC_ABOUT, STM_SETIMAGE,
 						(WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
 			Static_SetText(GetDlgItem(hDlg, IDC_VERSION), GetVersionString());
 		}
@@ -792,3 +773,21 @@ static DWORD ValidateFilters(LPFOLDERDATA lpFilterRecord, DWORD dwFlags)
 	return dwFlags;
 }
 
+static void OnHScroll(HWND hwnd, HWND hwndCtl, UINT code, int pos)
+{
+	int value;
+	char tmp[4];
+	if (hwndCtl == GetDlgItem(hwnd, IDC_CYCLETIMESEC))
+	{
+		value = SendDlgItemMessage(hwnd,IDC_CYCLETIMESEC, TBM_GETPOS, 0, 0);
+		itoa(value,tmp,10);
+		SendDlgItemMessage(hwnd,IDC_CYCLETIMESECTXT,WM_SETTEXT,0, (WPARAM)tmp);
+	}
+	else
+	if (hwndCtl == GetDlgItem(hwnd, IDC_SCREENSHOT_BORDERSIZE))
+	{
+		value = SendDlgItemMessage(hwnd,IDC_SCREENSHOT_BORDERSIZE, TBM_GETPOS, 0, 0);
+		itoa(value,tmp,10);
+		SendDlgItemMessage(hwnd,IDC_SCREENSHOT_BORDERSIZETXT,WM_SETTEXT,0, (WPARAM)tmp);
+	}
+}

@@ -284,7 +284,6 @@ static DWORD dwHelpIDs[] =
 	IDC_BIOS,               HIDC_BIOS,
 	IDC_CLEAN_STRETCH,      HIDC_CLEAN_STRETCH,
 	IDC_D3D_ROTATE_EFFECTS, HIDC_D3D_ROTATE_EFFECTS,
-	IDC_CYCLE_SCREENSHOT,   HIDC_CYCLE_SCREENSHOT,
 	IDC_STRETCH_SCREENSHOT_LARGER, HIDC_STRETCH_SCREENSHOT_LARGER,
 	IDC_LEDMODE,			HIDC_LEDMODE,
 	0,                      0
@@ -944,7 +943,7 @@ HWND hWnd;
 	{
 	case WM_INITDIALOG:
 		if (g_hIcon)
-			SendMessage(GetDlgItem(hDlg, IDC_GAME_ICON), STM_SETICON, (WPARAM) g_hIcon, 0);
+			SendDlgItemMessage(hDlg, IDC_GAME_ICON, STM_SETICON, (WPARAM) g_hIcon, 0);
 #if defined(USE_SINGLELINE_TABCONTROL)
 		{
 			HWND hWnd = PropSheet_GetTabControl(GetParent(hDlg));
@@ -2495,51 +2494,51 @@ static void InitializeMisc(HWND hDlg)
 {
 	Button_Enable(GetDlgItem(hDlg, IDC_JOYSTICK), DIJoystick.Available());
 
-	SendMessage(GetDlgItem(hDlg, IDC_GAMMA), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_GAMMA, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 30)); /* [0.50, 2.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_BRIGHTCORRECT), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_BRIGHTCORRECT, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 30)); /* [0.50, 2.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_PAUSEBRIGHT), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_PAUSEBRIGHT, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 30)); /* [0.50, 2.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_BRIGHTNESS), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_BRIGHTNESS, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 38)); /* [0.10, 2.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_INTENSITY), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_INTENSITY, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 50)); /* [0.50, 3.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_A2D), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_A2D, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 20)); /* [0.00, 1.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_FLICKER), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_FLICKER, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 100)); /* [0.0, 100.0] in 1.0 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_BEAM), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_BEAM, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 300)); /* [1.00, 16.00] in .05 increments */
 
-	SendMessage(GetDlgItem(hDlg, IDC_VOLUME), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_VOLUME, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 32)); /* [-32, 0] */
-	SendMessage(GetDlgItem(hDlg, IDC_AUDIO_LATENCY), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_AUDIO_LATENCY, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(1, 5)); // [1, 5]
-	SendMessage(GetDlgItem(hDlg, IDC_D3D_SCANLINES), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_D3D_SCANLINES, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 100)); // [0, 100]
-	SendMessage(GetDlgItem(hDlg, IDC_D3D_FEEDBACK), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_D3D_FEEDBACK, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(0, 100)); // [0, 100]
-	SendMessage(GetDlgItem(hDlg, IDC_ZOOM), TBM_SETRANGE,
+	SendDlgItemMessage(hDlg, IDC_ZOOM, TBM_SETRANGE,
 				(WPARAM)FALSE,
 				(LPARAM)MAKELONG(1, 8)); // [1, 8]
 }
@@ -2625,7 +2624,7 @@ static void BeamSelectionChange(HWND hwnd)
 	double dBeam;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_BEAM), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_BEAM, TBM_GETPOS, 0, 0);
 
 	dBeam = nValue / 20.0 + 1.0;
 
@@ -2641,7 +2640,7 @@ static void FlickerSelectionChange(HWND hwnd)
 	UINT   nValue;
 	double dFlicker;
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_FLICKER), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_FLICKER, TBM_GETPOS, 0, 0);
 
 	dFlicker = nValue;
 
@@ -2658,7 +2657,7 @@ static void GammaSelectionChange(HWND hwnd)
 	double dGamma;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_GAMMA), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_GAMMA, TBM_GETPOS, 0, 0);
 
 	dGamma = nValue / 20.0 + 0.5;
 
@@ -2675,7 +2674,7 @@ static void BrightCorrectSelectionChange(HWND hwnd)
 	double dValue;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_BRIGHTCORRECT), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_BRIGHTCORRECT, TBM_GETPOS, 0, 0);
 
 	dValue = nValue / 20.0 + 0.5;
 
@@ -2692,7 +2691,7 @@ static void PauseBrightSelectionChange(HWND hwnd)
 	double dValue;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_PAUSEBRIGHT), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_PAUSEBRIGHT, TBM_GETPOS, 0, 0);
 
 	dValue = nValue / 20.0 + 0.5;
 
@@ -2709,7 +2708,7 @@ static void BrightnessSelectionChange(HWND hwnd)
 	double dBrightness;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_BRIGHTNESS), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_BRIGHTNESS, TBM_GETPOS, 0, 0);
 
 	dBrightness = nValue / 20.0 + 0.1;
 
@@ -2726,7 +2725,7 @@ static void IntensitySelectionChange(HWND hwnd)
 	double dIntensity;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_INTENSITY), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_INTENSITY, TBM_GETPOS, 0, 0);
 
 	dIntensity = nValue / 20.0 + 0.5;
 
@@ -2743,7 +2742,7 @@ static void A2DSelectionChange(HWND hwnd)
 	double dA2D;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_A2D), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_A2D, TBM_GETPOS, 0, 0);
 
 	dA2D = nValue / 20.0;
 
@@ -2811,7 +2810,7 @@ static void VolumeSelectionChange(HWND hwnd)
 	int  nValue;
 
 	/* Get the current value of the control */
-	nValue = SendMessage(GetDlgItem(hwnd, IDC_VOLUME), TBM_GETPOS, 0, 0);
+	nValue = SendDlgItemMessage(hwnd, IDC_VOLUME, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
 	snprintf(buf,sizeof(buf), "%ddB", nValue - 32);
@@ -2824,7 +2823,7 @@ static void AudioLatencySelectionChange(HWND hwnd)
 	int value;
 
 	// Get the current value of the control
-	value = SendMessage(GetDlgItem(hwnd,IDC_AUDIO_LATENCY), TBM_GETPOS, 0, 0);
+	value = SendDlgItemMessage(hwnd,IDC_AUDIO_LATENCY, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
 	snprintf(buffer,sizeof(buffer),"%i/5",value);
@@ -2838,7 +2837,7 @@ static void D3DScanlinesSelectionChange(HWND hwnd)
 	int value;
 
 	// Get the current value of the control
-	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_SCANLINES), TBM_GETPOS, 0, 0);
+	value = SendDlgItemMessage(hwnd,IDC_D3D_SCANLINES, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
 	snprintf(buffer,sizeof(buffer),"%i",value);
@@ -2852,7 +2851,7 @@ static void D3DFeedbackSelectionChange(HWND hwnd)
 	int value;
 
 	// Get the current value of the control
-	value = SendMessage(GetDlgItem(hwnd,IDC_D3D_FEEDBACK), TBM_GETPOS, 0, 0);
+	value = SendDlgItemMessage(hwnd,IDC_D3D_FEEDBACK, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
 	snprintf(buffer,sizeof(buffer),"%i",value);
@@ -2866,7 +2865,7 @@ static void ZoomSelectionChange(HWND hwnd)
 	int value;
 
 	// Get the current value of the control
-	value = SendMessage(GetDlgItem(hwnd,IDC_ZOOM), TBM_GETPOS, 0, 0);
+	value = SendDlgItemMessage(hwnd,IDC_ZOOM, TBM_GETPOS, 0, 0);
 
 	/* Set the static display to the new value */
 	snprintf(buffer,sizeof(buffer),"%i",value);
@@ -3221,7 +3220,7 @@ static void InitializeBIOSUI(HWND hwnd)
 		const struct GameDriver *gamedrv = drivers[g_nGame];
 		const struct SystemBios *thisbios;
 
-		if (g_nGame == -1)
+		if (g_nGame == GLOBAL_OPTIONS)
 		{
 /*			ComboBox_AddString(hCtrl,"0");
 			ComboBox_AddString(hCtrl,"1");
@@ -3234,7 +3233,7 @@ static void InitializeBIOSUI(HWND hwnd)
 
 			return;
 		}
-		if (g_nGame == -2) //Folder Options
+		if (g_nGame == FOLDER_OPTIONS) //Folder Options
 		{
 			LPTREEFOLDER lpFolder;
 			gamedrv = drivers[g_nFolderGame];
