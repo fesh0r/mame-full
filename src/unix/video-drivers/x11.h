@@ -2,6 +2,7 @@
 #define __X11_H_
 
 #include <X11/Xlib.h>
+#include "effect.h"
 
 #ifdef __X11_C_
 #define EXTERN

@@ -304,8 +304,12 @@ static int xf86_dga_setup_graphics(XF86VidModeModeInfo *modeinfo, int bitmap_dep
 	xf86ctx.addr  = (unsigned char*)xf86ctx.base_addr;
 	xf86ctx.addr += (((modeinfo->hdisplay - visual_width*widthscale) / 2) & ~7)
 						* sizeof_pixel;
-	xf86ctx.addr += ((modeinfo->vdisplay - visual_height*heightscale) / 2)
-				* xf86ctx.width * sizeof_pixel;
+	if (yarbsize)
+	  xf86ctx.addr += ((modeinfo->vdisplay - yarbsize) / 2)
+	    * xf86ctx.width * sizeof_pixel;
+	else
+	  xf86ctx.addr += ((modeinfo->vdisplay - visual_height*heightscale) / 2)
+	    * xf86ctx.width * sizeof_pixel;
 
 	return OSD_OK;
 }
@@ -357,7 +361,8 @@ int xf86_dga1_create_display(int bitmap_depth)
 	if (x11_init_palette_info() != OSD_OK)
 	    return OSD_NOT_OK;
         
-        if (widthscale != 1 || heightscale != 1)
+        if (widthscale != 1 || heightscale != 1 ||
+	    yarbsize > visual_height)
         {
 	   doublebuffer_buffer = malloc (visual_width * widthscale * depth / 8);
 	   if (doublebuffer_buffer == NULL)
@@ -441,6 +446,8 @@ int xf86_dga1_create_display(int bitmap_depth)
 	}
 
 	memset(xf86ctx.base_addr,0,xf86ctx.bank_size);
+
+	effect_init2(bitmap_depth, depth, xf86ctx.width);
 	
 	return OSD_OK;
 }

@@ -10,6 +10,7 @@
 #include <vgagl.h>
 #include "xmame.h"
 #include "svgainput.h"
+#include "effect.h"
 
 static int startx, starty;
 static int scaled_visual_width, scaled_visual_height;
@@ -185,7 +186,7 @@ int sysdep_set_video_mode (void)
          video_mem += startx * video_modeinfo.bytesperpixel;
          video_mem += starty * video_modeinfo.width *
             video_modeinfo.bytesperpixel;
-         if ((widthscale > 1 || heightscale > 1) &&
+         if ((widthscale > 1 || heightscale > 1 || yarbsize) &&
              doublebuffer_buffer == NULL)
          {
             doublebuffer_buffer = malloc(scaled_visual_width * 
@@ -202,13 +203,14 @@ int sysdep_set_video_mode (void)
       else
 #endif
       {
-         if((widthscale == 1) && (heightscale == 1))
+         if((widthscale == 1) && (heightscale == 1) && (yarbsize == 0))
             update_function=2;
          else
             update_function=3;
          /* we might need the doublebuffer_buffer for 1x1 in 16bpp, since it
             could be paletised */
-         if( ((widthscale > 1) || (heightscale > 1) || (video_modeinfo.bytesperpixel == 2))
+         if( ((widthscale > 1) || (heightscale > 1) || (yarbsize) ||
+	      (video_modeinfo.bytesperpixel == 2))
              && !doublebuffer_buffer)
          {
             doublebuffer_buffer = malloc(scaled_visual_width*scaled_visual_height*
@@ -252,7 +254,7 @@ int sysdep_create_display(int depth)
    doublebuffer_buffer = NULL;
    
    scaled_visual_width  = visual_width  * widthscale;
-   scaled_visual_height = visual_height * heightscale;
+   scaled_visual_height = yarbsize ? yarbsize : visual_height * heightscale;
    
    for (i=1; (my_modeinfo=vga_getmodeinfo(i)); i++)
    {
@@ -267,7 +269,7 @@ int sysdep_create_display(int depth)
          if(my_modeinfo->colors != 256)
             continue;
          if((my_modeinfo->flags & IS_MODEX) &&
-            (!use_planar || widthscale != 1 || heightscale != 1))
+            (!use_planar || widthscale != 1 || heightscale != 1 || yarbsize))
             continue;
       }
       if (!vga_hasmode(i))
@@ -298,7 +300,7 @@ int sysdep_create_display(int depth)
          if (mode_disabled(tweaked_modes[i].width, tweaked_modes[i].height, depth))
             continue;
          if((tweaked_modes[i].planar) &&
-            (!use_planar || widthscale != 1 || heightscale != 1))
+            (!use_planar || widthscale != 1 || heightscale != 1 || yarbsize))
             continue;
          if (tweaked_modes[i].horizontal_squashed)
             display_aspect_ratio = display_aspect_ratio * 9.0 / 16.0;
@@ -369,6 +371,9 @@ int sysdep_create_display(int depth)
          display_palette_info.green_mask = 0x07E0;
          display_palette_info.blue_mask  = 0x001F;
       }
+
+
+   effect_init2(depth, display_palette_info.depth, scaled_visual_width);
 
    /* init input */
 #ifdef __CPU_i386

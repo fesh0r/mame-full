@@ -18,7 +18,6 @@
 #include "xmame.h"
 #include "x11.h"
 
-static int  (*p_xf86_dga_init)(void);
 static int  (*p_xf86_dga_create_display)(int);
 static void (*p_xf86_dga_close_display)(void);
 static int  (*p_xf86_dga_modify_pen)(int, unsigned char, unsigned char, unsigned char);

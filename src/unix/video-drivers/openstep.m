@@ -19,6 +19,7 @@
 #import "driver.h"
 #import "keyboard.h"
 #import "devices.h"
+#import "effect.h"
 
 /*
  * There are two flavours of OpenStep - the original Display PostScript

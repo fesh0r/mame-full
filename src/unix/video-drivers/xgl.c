@@ -393,6 +393,8 @@ int sysdep_create_display(int depth)
   printf("GLINFO: xgl display created !\n");
 #endif
 
+  effect_init2(depth, depth, visual_width*widthscale);
+
   return OSD_OK;
 }
 

@@ -19,6 +19,7 @@
 #include "driver.h"
 #include "glmame.h"
 #include <math.h>
+#include "effect.h"
 
 int LoadCabinet (const char *fname);
 void SwapBuffers (void);

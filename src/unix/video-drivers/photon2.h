@@ -17,6 +17,7 @@
 
 #include <Ph.h>
 #include <Pt.h>
+#include "effect.h"
 
 /* Commented... */
 enum { PH_WINDOW, PH_OVR };

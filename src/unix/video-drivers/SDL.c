@@ -43,6 +43,7 @@
 #ifdef DIRECT_HERMES 
 #include <Hermes/Hermes.h>
 #endif /* DIRECT_HERMES */
+#include "effect.h"
 
 static int Vid_width;
 static int Vid_height;
@@ -349,6 +350,8 @@ int sysdep_create_display(int depth)
 
    /* Set window title */
    SDL_WM_SetCaption(title, NULL);
+
+   effect_init2(depth, Vid_depth, Vid_width);
 
    return OSD_OK;
 }

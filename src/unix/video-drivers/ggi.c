@@ -29,6 +29,7 @@
 #include "driver.h"
 #include "devices.h"
 #include "keyboard.h"
+#include "effect.h"
 
 static int video_width,video_height;
 static int scaled_visual_width,scaled_visual_height;
@@ -480,6 +481,8 @@ int sysdep_create_display(int depth)
 #ifdef GGI_DEBUG
     fprintf(stderr_file,"16bit game: %s\n",(bitmap->depth == 16) ? "yes" : "no");
 #endif
+
+   effect_init2(depth, display_palette_info.depth, video_width);
 
     return OSD_OK;
 }

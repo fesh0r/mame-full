@@ -70,17 +70,17 @@ struct rc_option x11_window_opts[] = {
    { "X11-window Related", NULL,		rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "cursor",		"cu",			rc_bool,       &show_cursor,
+   { "cursor",		"cu",			rc_bool,	&show_cursor,
      "1",		0,			0,		NULL,
-     "Show/ don't show the cursor" },
+     "Show/don't show the cursor" },
 #ifdef USE_MITSHM
    { "mitshm",		"ms",			rc_bool,	&use_mit_shm,
      "1",		0,			0,		NULL,
-     "Use / don't use MIT Shared Mem (if available and compiled in)" },
+     "Use/don't use MIT Shared Mem (if available and compiled in)" },
 #endif
    { "xsync",		"xs",			rc_bool,	&use_xsync,
      "1",		0,			0,		NULL,
-     "Use / don't use XSync instead of XFlush as screen refresh method" },
+     "Use/don't use XSync instead of XFlush as screen refresh method" },
    { "privatecmap",	"p",			rc_bool,	&use_private_cmap,
      "0",		0,			0,		NULL,
      "Enable/disable use of private color map" },
@@ -239,9 +239,9 @@ int x11_window_create_display (int bitmap_depth)
    pseudo_color_warn_low_on_colors = TRUE;
 
    window_width     = widthscale  * visual_width;
-   window_height    = heightscale * visual_height;
+   window_height    = yarbsize ? yarbsize : (heightscale * visual_height);
    image_width      = widthscale  * visual_width;
-   image_height     = heightscale * visual_height;
+   image_height     = yarbsize ? yarbsize : (heightscale * visual_height);
    orig_widthscale  = widthscale;
    orig_heightscale = heightscale;
    screen           = DefaultScreenOfDisplay (display);
@@ -618,6 +618,8 @@ int x11_window_create_display (int bitmap_depth)
       else
          XDefineCursor (display, window, normal_cursor);
    }
+
+   effect_init2(bitmap_depth, depth, window_width);
 
    return OSD_OK;
 }
