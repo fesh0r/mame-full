@@ -28,18 +28,19 @@
 #define LOG_INTERRUPT	0
 #endif /* MAME_DEBUG */
 
-struct m6847_state {
+struct m6847_state
+{
 	struct m6847_init_params initparams;
 	int modebits;
 	int videooffset;
 	int latched_videooffset;
 	int rowheight;
 	int fs, hs;
-	void *hs_timer1;
-	void *hs_timer2;
-	void *hs_timer_actual;
-	void *fs_timer;
-	void *fs_timer_actual;
+	mame_timer *hs_timer1;
+	mame_timer *hs_timer2;
+	mame_timer *hs_timer_actual;
+	mame_timer *fs_timer;
+	mame_timer *fs_timer_actual;
 };
 
 static struct m6847_state the_state;
