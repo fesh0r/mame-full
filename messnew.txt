@@ -98,6 +98,10 @@ Other Changes:
 
 - new function osd_select_file() added [Brad Oliver]
 
+- IMGTOOL: Fixed a bug that caused saving a file into an image to error if that
+  file was in a different directory.  Also fixed a bug that would cause crashes
+  when reporting certain types of errors [Nate Woods]
+
 - CRC and sysinfo updates will now be appearing at the official MESS homepage:
   http://mess.emuverse.com
   Please send all CRC/sysinfo file contributions to Chris Henry. 

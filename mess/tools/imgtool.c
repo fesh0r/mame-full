@@ -1,10 +1,11 @@
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 #include "osdepend.h"
 #include "imgtool.h"
 #include "osd_cpu.h"
 #include "config.h"
-
+#include "osdtools.h"
 
 /* ----------------------------------------------------------------------- */
 
@@ -108,14 +109,20 @@ static const char *msgs[] = {
 	"File not found",
 	"Unrecognized format",
 	"Not implemented",
-	"Incorrect or missing parameters",
+	"Parameter too small",
+	"Parameter too large",
+	"Missing parameter not found",
+	"Inappropriate parameter",
 	"Bad file name",
 	"Out of space on image"
 };
 
 const char *imageerror(int err)
 {
-	return msgs[(err & ~IMGTOOLERR_SRC_MASK) - 1];
+	err = (err & ~IMGTOOLERR_SRC_MASK) - 1;
+	assert(err >= 0);
+	assert(err < (sizeof(msgs) / sizeof(msgs[0])));
+	return msgs[err];
 }
 
 static int markerrorsource(int err)
@@ -128,6 +135,7 @@ static int markerrorsource(int err)
 		break;
 
 	case IMGTOOLERR_FILENOTFOUND:
+	case IMGTOOLERR_BADFILENAME:
 		err |= IMGTOOLERR_SRC_FILEONIMAGE;
 		break;
 
@@ -304,7 +312,7 @@ int img_putfile(IMAGE *img, const char *fname, const char *source, const file_op
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, fname, f, options);
+	err = img_writefile(img, basename(fname), f, options);
 	stream_close(f);
 	return err;
 }
