@@ -50,9 +50,10 @@ New (000531) :
 */
 
 #include "driver.h"
-#include "wd179x.h"
+#include "includes/wd179x.h"
 #include "tms9901.h"
 #include "vidhrdw/tms9928a.h"
+#include "includes/basicdsk.h"
 #include <math.h>
 
 #include "ti99_4x.h"
@@ -184,7 +185,6 @@ In short :
 	Only disk DSR is supported for now.
 */
 
-extern WD179X *wd[];
 extern int tms9900_ICount;
 
 
@@ -201,19 +201,19 @@ static unsigned char *current_page_ptr;
 typedef enum slot_type_t { SLOT_EMPTY = -1, SLOT_GROM = 0, SLOT_CROM = 1, SLOT_DROM = 2, SLOT_MINIMEM = 3 } slot_type_t;
 static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
-static int flop_specified[3];
 
 int ti99_floppy_init(int id)
 {
-	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
-	return INIT_OK;
-}
+    if (basicdsk_floppy_init(id)==INIT_OK)
+    {
+        basicdsk_set_geometry(id, 40, 1, 9, 256, 0,0,0);
 
-void ti99_floppy_cleanup(int id)
-{
-	flop_specified[id] = 0;
-}
+        return INIT_OK;
+    }
 
+    return INIT_FAILED;
+}
+                
 int ti99_cassette_init(int id)
 {
 	void *file;
@@ -429,10 +429,10 @@ static void tms9901_set_int2(int state)
 	tms9901_set_single_int(2, state);
 }
 
+static void ti99_fdc_callback(int);
+
 void ti99_init_machine(void)
 {
-	int i;
-
 	GPL_data = memory_region(REGION_USER1);
 
 	/* callback for the TMS9901 to be notified of changes to the
@@ -440,13 +440,9 @@ void ti99_init_machine(void)
 	 */
 	TMS9928A_int_callback(tms9901_set_int2);
 
-	wd179x_init(1);				/* initialize the floppy disk controller */
-	/* we set the thing to single density by hand */
-	for (i = 0; i < 3; i++)
-	{
-		wd179x_set_geometry(i, 40, 1, 9, 256, 0, 0, 0);
-		wd[i]->density = DEN_FM_LO;
-	}
+    floppy_drives_init();
+	wd179x_init(ti99_fdc_callback);				/* initialize the floppy disk controller */
+        wd179x_set_density(DEN_FM_LO);
 
 	tms9901_init(& tms9901reset_param_ti99);
 
@@ -1138,9 +1134,10 @@ WRITE_HANDLER ( ti99_DSKsel )
 		if (drive != DSKnum)			/* turn on drive... already on ? */
 		{
 			DSKnum = drive;
-			if (flop_specified[DSKnum])
-				wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, device_filename(IO_FLOPPY,DSKnum));
-		}
+			
+			wd179x_set_drive(DSKnum);
+			wd179x_set_side(DSKside);
+                }
 	}
 	else
 	{
@@ -1157,8 +1154,7 @@ WRITE_HANDLER ( ti99_DSKsel )
 WRITE_HANDLER ( ti99_DSKside )
 {
 	DSKside = data & 1;
-	if (flop_specified[DSKnum])
-		wd179x_select_drive(DSKnum, DSKside, ti99_fdc_callback, device_filename(IO_FLOPPY,DSKnum));
+	wd179x_set_side(DSKside);
 }
 
 
