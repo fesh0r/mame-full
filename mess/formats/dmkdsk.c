@@ -107,13 +107,7 @@ static unsigned short CALC_CRC1a(unsigned short crc, unsigned char byte)
 UINT16 dmkdsk_GetTrackLength( dmkHeader_p header )
 {
 	UINT16	value;
-
-#ifdef LSB_FIRST
-	value = (header->trackLength_low << 8) + header->trackLength_high;
-#else
 	value = (header->trackLength_high << 8) + header->trackLength_low;
-#endif
-
 	return value;
 }
 

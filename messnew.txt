@@ -31,6 +31,9 @@ System Driver Changes:
 - [COCO] Converted CoCo drivers to use configurable RAM sizes, and the CoCo 3
   driver now supports the 2 MB upgrade (if I knew the specs, it would be very
   trivial for me to support the 8 MB upgrade). [Nate Woods]
+  
+- [COCO] Fixed a bug in DMK disk image on little endian machines. (Bug #179)
+  [Nate Woods]
 
 - [PC] Fixed a bug that caused the keyboard buffer to get flooded and the
   emulated system to get paralyzed in beeping under certain situations (bug
