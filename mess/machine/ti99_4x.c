@@ -55,6 +55,7 @@ New (001004) :
 #include "includes/wd179x.h"
 #include "tms9901.h"
 #include "vidhrdw/tms9928a.h"
+#include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
 #include <math.h>
 
@@ -271,7 +272,7 @@ int ti99_load_rom(int id)
 	int slot_empty = ! (name && name[0]);
 
 	cartidge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+0x06000);
-	cartidge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+0x10000);
+	cartidge_pages[1] = (UINT16 *) (memory_region(REGION_USER2));
 
 	if (slot_empty)
 		slot_type[id] = SLOT_EMPTY;
@@ -434,6 +435,10 @@ static void ti99_fdc_callback(int);
 
 void ti99_init_machine(void)
 {
+	spchroms_interface speech_intf = { REGION_SOUND1 };
+
+	spchroms_config(& speech_intf);
+
 	GPL_data = memory_region(REGION_USER1);
 
 	/* callback for the TMS9901 to be notified of changes to the
@@ -1031,7 +1036,7 @@ static void ti99_CS_output(int offset, int data)
 	bit 6 : always 1
 	bit 7 : selected side
 */
-READ_HANDLER ( ti99_DSKget )
+READ16_HANDLER ( ti99_DSKget )
 {
 	return (0x40);
 }
@@ -1039,7 +1044,7 @@ READ_HANDLER ( ti99_DSKget )
 /*
 	WRITE to DISK DSR ROM bit (bit 0)
 */
-WRITE_HANDLER ( ti99_DSKROM )
+WRITE16_HANDLER ( ti99_DSKROM )
 {
 	if (data & 1)
 	{
@@ -1099,7 +1104,7 @@ static void ti99_fdc_callback(int event)
 	    4.23s after write to revelant CRU bit, this is not emulated and could cause the TI99
 	    to lock...)
 */
-WRITE_HANDLER ( ti99_DSKhold )
+WRITE16_HANDLER ( ti99_DSKhold )
 {
 	DSKhold = data & 1;
 
@@ -1110,7 +1115,7 @@ WRITE_HANDLER ( ti99_DSKhold )
 /*
 	Load disk heads (HLT pin) (bit 3)
 */
-WRITE_HANDLER ( ti99_DSKheads )
+WRITE16_HANDLER ( ti99_DSKheads )
 {
 }
 
@@ -1123,7 +1128,7 @@ static int DSKside = 0;
 /*
 	Select drive X (bits 4-6)
 */
-WRITE_HANDLER ( ti99_DSKsel )
+WRITE16_HANDLER ( ti99_DSKsel )
 {
 	int drive = offset;					/* drive # (0-2) */
 
@@ -1149,7 +1154,7 @@ WRITE_HANDLER ( ti99_DSKsel )
 /*
 	Select side of disk (bit 7)
 */
-WRITE_HANDLER ( ti99_DSKside )
+WRITE16_HANDLER ( ti99_DSKside )
 {
 	DSKside = data & 1;
 	wd179x_set_side(DSKside);

@@ -4,17 +4,22 @@
 
 	see machine/ti99_4x.c for some details and references
 
-	NOTE!!!!!!!!!!  Until the new TMS5220 drivers are added, you should uncomment two lines
+	NOTE!!!!!!!!!!  Until the new TMS5220 drivers are added, you should uncomment three lines
 	in tms5220interface like this :
 
 	static struct TMS5220interface tms5220interface =
 	{
-		640000L,		// 640kHz -> 8kHz output
-		10000,			// Volume.  I don't know the best value.
-		NULL,			// no IRQ callback
-		//REGION_SOUND1,	// memory region where the speech ROM is.  -1 means no speech ROM
-		//0				// memory size of speech rom (0 -> take memory region length)
-		//tms5220_ready_callback
+		680000L,					// 640kHz -> 8kHz output
+		50,							// Volume.  I don't know the best value.
+		NULL,						// no IRQ callback
+	#if 1
+		//spchroms_read,				// speech ROM read handler
+		//spchroms_load_address,		// speech ROM load address handler
+		//spchroms_read_and_branch,	// speech ROM read and branch handler
+	#endif
+	#if 0
+		tms5220_ready_callback
+	#endif
 	};
 */
 
@@ -40,6 +45,7 @@ Historical notes : TI made several last minute design changes.
 
 #include "machine/ti99_4x.h"
 #include "machine/tms9901.h"
+#include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
 
 /*
@@ -89,7 +95,7 @@ MEMORY_END
 	CRU map
 */
 
-static PORT_WRITE_START(writeport)
+static PORT_WRITE16_START(writeport)
 
 	{0x0000, 0x07ff, tms9901_CRU_write},
 
@@ -102,7 +108,7 @@ static PORT_WRITE_START(writeport)
 
 PORT_END
 
-static PORT_READ_START(readport)
+static PORT_READ16_START(readport)
 
 	{0x0000, 0x00ff, tms9901_CRU_read},
 
@@ -304,12 +310,15 @@ static void tms5220_ready_callback(int state)
 
 static struct TMS5220interface tms5220interface =
 {
-	680000L,		/* 640kHz -> 8kHz output */
-	50,				/* Volume.  I don't know the best value. */
-	NULL/*,*/			/* no IRQ callback */
+	680000L,					/* 640kHz -> 8kHz output */
+	50,							/* Volume.  I don't know the best value. */
+	NULL,						/* no IRQ callback */
 #if 0
-	REGION_SOUND1,	/* memory region where the speech ROM is.  -1 means no speech ROM */
-	0,				/* memory size of speech rom (0 -> take memory region length) */
+	spchroms_read,				/* speech ROM read handler */
+	spchroms_load_address,		/* speech ROM load address handler */
+	spchroms_read_and_branch/*,*/	/* speech ROM read and branch handler */
+#endif
+#if 0
 	tms5220_ready_callback
 #endif
 };
@@ -587,20 +596,28 @@ static struct MachineDriver machine_driver_ti99_4a_50hz =
 /*
 	ROM loading
 
-	Note that we actually use the same ROMset for 50Hz and 60Hz version, but the MAME core
-	stupidly regards 2 drivers sharing the same ROMset as a mistake.
+	Note that we use the same ROMset for 50Hz and 60Hz version.
 */
 
 ROM_START(ti99_4)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
+#if 1
+	ROM_REGION16_BE(0x10000,REGION_CPU1,0)
+	ROM_LOAD16_WORD("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
+	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+#else
 	ROM_REGION(0x14000,REGION_CPU1,0)
 	ROM_LOAD16_WORD("994rom.bin", 0x0000, 0x2000, 0x00000000) /* system ROMs */
 	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+#endif
 
 	/*GPL memory space*/
 	ROM_REGION(0x10000,REGION_USER1,0)
 	ROM_LOAD("994grom.bin",     0x0000, 0x8000, 0x00000000) /* system GROMs */
+
+	/* Used to load carts */
+	ROM_REGION(0x2000,REGION_USER2, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000,REGION_SOUND1,0)
@@ -610,13 +627,22 @@ ROM_END
 ROM_START(ti99_4a)
 	/*CPU memory space*/
 	/* 0x4000 extra RAM for paged cartidges */
+#if 1
+	ROM_REGION16_BE(0x14000,REGION_CPU1,0)
+	ROM_LOAD16_WORD("994arom.bin",0x0000, 0x2000, 0xdb8f33e5) /* system ROMs */
+	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+#else
 	ROM_REGION(0x14000,REGION_CPU1,0)
 	ROM_LOAD16_WORD("994arom.bin",0x0000, 0x2000, 0xdb8f33e5) /* system ROMs */
 	ROM_LOAD16_WORD("disk.bin",   0x4000, 0x2000, 0x8f7df93f) /* disk DSR ROM */
+#endif
 
 	/*GPL memory space*/
 	ROM_REGION(0x10000,REGION_USER1,0)
 	ROM_LOAD("994agrom.bin",    0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
+
+	/* Used to load carts */
+	ROM_REGION(0x2000,REGION_USER2, 0)
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000,REGION_SOUND1,0)
