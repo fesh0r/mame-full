@@ -391,6 +391,12 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    /* writable images are only supported as normal files */
 		    if (write)
 		    {
+			char *p = strrchr(filename, '.');
+			if (p && (strcasecmp(p + 1, "zip") == 0 ||
+			    strcasecmp(p + 1, "gz") == 0))
+			{
+			    break;
+			}
 			/* try filename.ext */
 			snprintf(name, MAXPATHL, "%s", filename);
 			if (open_normal_file(f, name, write))
