@@ -46,12 +46,9 @@ IMAGEMODULE(
 	vmsx_gm2,
 	"Virtual MSX Game Master 2 SRAM",		/* human readable name */
 	"ram",								/* file extension */
-	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	vmsx_gm2_image_init,				/* init function */
 	vmsx_gm2_image_exit,				/* exit function */
 	NULL,								/* info function */
@@ -63,9 +60,10 @@ IMAGEMODULE(
 	NULL,/* write file */
 	NULL,/* delete file */
 	NULL,/* create image */
-	NULL,
-	NULL,
-	NULL
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	NULL,					/* file options */
+	NULL					/* create options */
 )
 
 static int vmsx_gm2_image_init(STREAM *f, IMAGE **outimg)

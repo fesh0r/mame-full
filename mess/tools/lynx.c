@@ -59,12 +59,9 @@ IMAGEMODULE(
 	lynx,
 	"Commodore 64 Archive",	/* human readable name */
 	"lnx",								/* file extension */
-	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	lynx_image_init,				/* init function */
 	lynx_image_exit,				/* exit function */
 	NULL,//lynx_image_info,		/* info function */
@@ -76,9 +73,10 @@ IMAGEMODULE(
 	NULL,/* write file */
 	NULL,/* delete file */
 	NULL,/* create image */
-	NULL,
-	NULL,
-	NULL
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	NULL,								/* file options */
+	NULL								/* create options */
 )
 
 static int lynx_read_line(lynx_image *image, int pos)

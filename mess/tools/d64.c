@@ -497,35 +497,40 @@ static int d64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void d64_image_closeenum(IMAGEENUM *enumeration);
 static size_t d64_image_freespace(IMAGE *img);
 static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 static int d64_image_deletefile(IMAGE *img, const char *fname);
-static int d64_image_create(STREAM *f, const geometry_options *options);
+static int d64_image_create(STREAM *f, const ResolvedOption *options);
 
 static int x64_image_init(STREAM *f, IMAGE **outimg);
-static int x64_image_create(STREAM *f, const geometry_options *options);
+static int x64_image_create(STREAM *f, const ResolvedOption *options);
 
 static int d71_image_init(STREAM *f, IMAGE **outimg);
 static size_t d71_image_freespace(IMAGE *img);
-static int d71_image_create(STREAM *f, const geometry_options *options);
+static int d71_image_create(STREAM *f, const ResolvedOption *options);
 
 static int d81_image_init(STREAM *f, IMAGE **outimg);
 static void d81_image_info(IMAGE *img, char *string, const int len);
 static size_t d81_image_freespace(IMAGE *img);
-static int d81_image_create(STREAM *f, const geometry_options *options);
+static int d81_image_create(STREAM *f, const ResolvedOption *options);
 
 static int d64_read_sector(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
 static int d64_write_sector(IMAGE *img, int head, int track, int sector, char *buffer, int size);
+
+static struct OptionTemplate d64_createopts[] =
+{
+	{ "label",			IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
+	{ NULL, 0, 0, 0, 0 }
+};
+
+#define D64_CREATEOPTION_LABEL			0
 
 IMAGEMODULE(
 	d64,
 	"Commodore SX64/VC1541/2031/1551 Diskette",	/* human readable name */
 	"d64",								/* file extension */
-	IMAGE_USES_LABEL,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	EOLN_CR,							/* eoln */
-	NULL,
 	d64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -537,21 +542,19 @@ IMAGEMODULE(
 	d64_image_writefile,			/* write file */
 	d64_image_deletefile,			/* delete file */
 	d64_image_create,				/* create image */
-	NULL,
 	d64_read_sector,
-	d64_write_sector
+	d64_write_sector,
+	NULL,								/* file options */
+	d64_createopts						/* create options */
 )
 
 IMAGEMODULE(
 	x64,
 	"Commodore VC1541 Diskette",	/* human readable name */
 	"x64",								/* file extension */
-	IMAGE_USES_LABEL,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	EOLN_CR,							/* eoln */
-	NULL,
 	x64_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -563,21 +566,19 @@ IMAGEMODULE(
 	d64_image_writefile,			/* write file */
 	d64_image_deletefile,			/* delete file */
 	x64_image_create,				/* create image */
-	NULL,
 	d64_read_sector,
-	d64_write_sector
+	d64_write_sector,
+	NULL,								/* file options */
+	d64_createopts						/* create options */
 )
 
 IMAGEMODULE(
 	d71,
 	"Commodore 128D/1571 Diskette",	/* human readable name */
 	"d71",								/* file extension */
-	IMAGE_USES_LABEL,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	EOLN_CR,							/* eoln */
-	NULL,
 	d71_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d64_image_info,		/* info function */
@@ -589,21 +590,19 @@ IMAGEMODULE(
 	d64_image_writefile,			/* write file */
 	d64_image_deletefile,			/* delete file */
 	d71_image_create,				/* create image */
-	NULL,
 	d64_read_sector,
-	d64_write_sector
+	d64_write_sector,
+	NULL,								/* file options */
+	d64_createopts						/* create options */
 )
 
 IMAGEMODULE(
 	d81,
 	"Commodore 65/1565/1581 Diskette",	/* human readable name */
 	"d81",								/* file extension */
-	IMAGE_USES_LABEL,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	EOLN_CR,							/* eoln */
-	NULL,
 	d81_image_init,				/* init function */
 	d64_image_exit,				/* exit function */
 	d81_image_info,		/* info function */
@@ -615,9 +614,10 @@ IMAGEMODULE(
 	d64_image_writefile,			/* write file */
 	d64_image_deletefile,			/* delete file */
 	d81_image_create,				/* create image */
-	NULL,
 	d64_read_sector,
-	d64_write_sector
+	d64_write_sector,
+	NULL,								/* file options */
+	d64_createopts						/* create options */
 )
 
 static int d64_image_init(STREAM *f, IMAGE **outimg)
@@ -965,7 +965,7 @@ static int d64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
+static int d64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
 {
 	d64_image *image=(d64_image*)img;
 	int fsize, pos, i, b;
@@ -1082,7 +1082,7 @@ static int d64_write_sector(IMAGE *img, int head, int track, int sector,
 	return 0;
 }
 
-static int d64_image_create(STREAM *f, const geometry_options *options)
+static int d64_image_create(STREAM *f, const ResolvedOption *options)
 {
 	unsigned char sector[0x100]={0};
 	int tracks=35;
@@ -1127,7 +1127,7 @@ static int d64_image_create(STREAM *f, const geometry_options *options)
 	return 0;
 }
 
-static int x64_image_create(STREAM *f, const geometry_options *options)
+static int x64_image_create(STREAM *f, const ResolvedOption *options)
 {
 	struct { 
 		unsigned char data[0x40];
@@ -1144,7 +1144,7 @@ static int x64_image_create(STREAM *f, const geometry_options *options)
 	return 0;
 }
 
-static int d71_image_create(STREAM *f, const geometry_options *options)
+static int d71_image_create(STREAM *f, const ResolvedOption *options)
 {
 	D71_HEADER d71_header= { { 0 } };
 	unsigned char sector[0x100]={0};
@@ -1208,7 +1208,7 @@ static int d71_image_create(STREAM *f, const geometry_options *options)
 	return 0;
 }
 
-static int d81_image_create(STREAM *f, const geometry_options *options)
+static int d81_image_create(STREAM *f, const ResolvedOption *options)
 {
 	unsigned char sector[0x100]={0};
 	unsigned char id[2]={'1','2'};

@@ -54,12 +54,9 @@ IMAGEMODULE(
 	fmsx_cas,
 	"fMSX style .cas file",				/* human readable name */
 	"cas",								/* file extension */
-	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	fmsx_cas_image_init,				/* init function */
 	fmsx_cas_image_exit,				/* exit function */
 	NULL,								/* info function */
@@ -71,9 +68,10 @@ IMAGEMODULE(
 	NULL,/* write file */
 	NULL,/* delete file */
 	NULL,/* create image */
-	NULL,
-	NULL,
-	NULL
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	NULL,					/* file options */
+	NULL					/* create options */
 )
 
 static int fmsx_cas_image_init(STREAM *f, IMAGE **outimg)

@@ -49,12 +49,9 @@ IMAGEMODULE(
 	msx_dsk,
 	"Various bogus MSX disk images (xsa/img/ddi/msx)",		/* human readable name */
 	"xsa\0img\0ddi\0msx\0",								/* file extension */
-	0,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	msx_dsk_image_init,					/* init function */
 	msx_dsk_image_exit,					/* exit function */
 	NULL,								/* info function */
@@ -66,9 +63,10 @@ IMAGEMODULE(
 	NULL,/* write file */
 	NULL,/* delete file */
 	NULL,/* create image */
-	NULL,
-	NULL,
-	NULL
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	NULL,					/* file options */
+	NULL					/* create options */
 )
 
 static int msx_dsk_image_init(STREAM *f, IMAGE **outimg)

@@ -740,10 +740,7 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/crt.o     \
 	  $(OBJ)/mess/tools/d64.o     \
 	  $(OBJ)/mess/tools/fat.o     \
-	  $(OBJ)/mess/tools/pchd.o    \
-	  $(OBJ)/mess/tools/rom16.o     \
-	  $(OBJ)/mess/tools/zip.o     \
-	  $(OBJ)/mess/tools/fs.o
+	  $(OBJ)/mess/tools/rom16.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) -o $@
 

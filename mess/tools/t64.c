@@ -111,34 +111,42 @@ static int t64_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void t64_image_closeenum(IMAGEENUM *enumeration);
 //static size_t t64_image_freespace(IMAGE *img);
 static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 static int t64_image_deletefile(IMAGE *img, const char *fname);
-static int t64_image_create(STREAM *f, const geometry_options *options);
+static int t64_image_create(STREAM *f, const ResolvedOption *options);
+
+static struct OptionTemplate t64_createopts[] =
+{
+	{ "entries", IMGOPTION_FLAG_TYPE_INTEGER,							0,		3,		NULL	},	/* [0] */
+	{ "label", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [1] */
+	{ NULL, 0, 0, 0, 0 }
+};
+
+#define T64_OPTION_ENTRIES	0
+#define T64_OPTION_LABEL	1
 
 IMAGEMODULE(
 	t64,
 	"Commodore 64 Archive for Tapes",	/* human readable name */
 	"t64",								/* file extension */
-	IMAGE_USES_LABEL|IMAGE_USES_ENTRIES,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
-	EOLN_CR,								/* eoln */
-	NULL,
-	t64_image_init,				/* init function */
-	t64_image_exit,				/* exit function */
-	t64_image_info,		/* info function */
-	t64_image_beginenum,			/* begin enumeration */
-	t64_image_nextenum,			/* enumerate next */
-	t64_image_closeenum,			/* close enumeration */
-	NULL, //t64_image_freespace,			/* free space on image */
-	t64_image_readfile,			/* read file */
-	t64_image_writefile,			/* write file */
-	t64_image_deletefile,			/* delete file */
-	t64_image_create,				/* create image */
-	NULL,
-	NULL,
-	NULL
+	EOLN_CR,							/* eoln */
+	t64_image_init,						/* init function */
+	t64_image_exit,						/* exit function */
+	t64_image_info,						/* info function */
+	t64_image_beginenum,				/* begin enumeration */
+	t64_image_nextenum,					/* enumerate next */
+	t64_image_closeenum,				/* close enumeration */
+	NULL, //t64_image_freespace,		/* free space on image */
+	t64_image_readfile,					/* read file */
+	t64_image_writefile,				/* write file */
+	t64_image_deletefile,				/* delete file */
+	t64_image_create,					/* create image */
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	NULL,								/* file options */
+	t64_createopts						/* create options */
 )
 
 static int t64_image_init(STREAM *f, IMAGE **outimg)
@@ -278,7 +286,7 @@ static int t64_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
+static int t64_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
 {
 	t64_image *image=(t64_image*)img;
 	int size, fsize;
@@ -372,17 +380,18 @@ static int t64_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int t64_image_create(STREAM *f, const geometry_options *options)
+static int t64_image_create(STREAM *f, const ResolvedOption *options)
 {
-	int entries=options->entries;
+	int entries;
 	t64_header header={ "T64 Tape archiv created by MESS\x1a" };
 	t64_entry entry= { 0 };
 	int i;
 
+	entries = options[T64_OPTION_ENTRIES].i;
 	if (entries==0) entries=10;
 	SET_UWORD(header.version, 0x0101);
-	SET_UWORD(header.max_entries, options->entries);
-	if (options->label) strcpy(header.description, options->label);
+	SET_UWORD(header.max_entries, entries);
+	if (options[T64_OPTION_LABEL].s) strcpy(header.description, options[T64_OPTION_LABEL].s);
 	if (stream_write(f, &header, sizeof(t64_header)) != sizeof(t64_header)) 
 		return  IMGTOOLERR_WRITEERROR;
 	for (i=0; i<entries; i++) {

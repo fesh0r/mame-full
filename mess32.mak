@@ -632,10 +632,7 @@ IMGTOOL_OBJS= \
 	  $(OBJ)/mess/tools/crt.o     \
 	  $(OBJ)/mess/tools/d64.o     \
 	  $(OBJ)/mess/tools/fat.o     \
-	  $(OBJ)/mess/tools/pchd.o    \
 	  $(OBJ)/mess/tools/rom16.o     \
-	  $(OBJ)/mess/tools/zip.o     \
-	  $(OBJ)/mess/tools/fs.o	\
           $(OBJ)/mess/Win32/dirio.o zlib\zlib.lib
 
 !ifdef TINY_COMPILE

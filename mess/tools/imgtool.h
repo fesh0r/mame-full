@@ -27,6 +27,7 @@ enum {
 	IMGTOOLERR_PARAMTOOLARGE,
 	IMGTOOLERR_PARAMNEEDED,
 	IMGTOOLERR_PARAMNOTNEEDED,
+	IMGTOOLERR_PARAMCORRUPT,
 	IMGTOOLERR_BADFILENAME,
 	IMGTOOLERR_NOSPACE,
 	IMGTOOLERR_INPUTPASTEND
@@ -42,12 +43,15 @@ enum {
 #define	IMGTOOLERR_SRC_IMAGEFILE		0x3000
 #define	IMGTOOLERR_SRC_FILEONIMAGE		0x4000
 #define	IMGTOOLERR_SRC_NATIVEFILE		0x5000
-#define	IMGTOOLERR_SRC_PARAM_CYLINDERS	0x6000
-#define	IMGTOOLERR_SRC_PARAM_HEADS		0x7000
+#define	IMGTOOLERR_SRC_PARAM_USER		0x6000
+#define	IMGTOOLERR_SRC_PARAM_FILE		0x7000
+#define	IMGTOOLERR_SRC_PARAM_CREATE		0x8000
 
-#define	IMGTOOLERR_SRC_MASK				0xf000
+#define ERRORCODE(err)		((err) & 0x0fff)
+#define ERRORSOURCE(err)	((err) & 0xf000)
+#define ERRORPARAM(err)		(((err) & 0xf0000) / 0x10000)
 
-#define ERRORSOURCE(err)	((err) & IMGTOOLERR_SRC_MASK)
+#define PARAM_TO_ERROR(errcode, param)	((errcode) | ((param) * 0x10000))
 
 typedef struct {
 	char *fname;
@@ -115,79 +119,45 @@ typedef struct {
 	const struct ImageModule *module;
 } IMAGEENUM;
 
-/* Flags for ImageModule */
-enum {
-	IMAGE_USES_LABEL			= 0x001,
-
-	/* floppy disk */
-	IMAGE_USES_SECTOR_SIZE		= 0x002,
-	IMAGE_USES_SECTORS			= 0x004, // in track
-
-	/* harddisk */
-	IMAGE_USES_CYLINDERS		= 0x008,
-	IMAGE_USES_HEADS			= 0x010,
-
-	/* c64 tape */
-	IMAGE_USES_ENTRIES			= 0x020,
-
-	/* c64 cartridge */
-	IMAGE_USES_HARDWARE_TYPE	= 0x040,
-	IMAGE_USES_GAME_LINE		= 0x080,
-	IMAGE_USES_EXROM_LINE		= 0x100,
-
-	/* rsdos */
-	IMAGE_USES_FTYPE			= 0x200,
-	IMAGE_USES_FASCII			= 0x400,
-	/* c64 cartridge */
-	IMAGE_USES_FADDR			= 0x800,
-	IMAGE_USES_FBANK			= 0x1000
-};
-
-typedef struct {
-	/* floppy disk */
-	int sector_size;
-	int sectors;
-	/* pc harddisks */
-	int cylinders;
-	int heads;
-	/* c64 cartridges */
-	int hardware_type;
-	int game_line;
-	int exrom_line;
-	/* c64 tape */
-	int entries;
-
-	char *label;
-} geometry_options;
-
-typedef struct {
-	/* rsdos */
-	int ftype;
-	int fascii;
-	/* c64 cartridges */
-	int faddr;
-	int fbank;
-} file_options;
-
-typedef struct {
-	geometry_options minimum;
-	geometry_options maximum;
-} geometry_ranges;
-
 #define EOLN_CR		"\x0d"
 #define EOLN_LF		"\x0a"
 #define EOLN_CRLF	"\x0d\x0a"
+
+enum {
+	IMGOPTION_FLAG_TYPE_INTEGER	= 0x0000,
+	IMGOPTION_FLAG_TYPE_CHAR	= 0x0001,	/* case insensitive; upper case forced */
+	IMGOPTION_FLAG_TYPE_STRING	= 0x0002,
+	IMGOPTION_FLAG_TYPE_MASK	= 0x000f,
+
+	IMGOPTION_FLAG_HASDEFAULT	= 0x0010
+};
+
+struct OptionTemplate {
+	const char *name;
+	int flags;
+	int min;
+	int max;
+	const char *defaultvalue;
+};
+
+struct NamedOption {
+	const char *name;
+	const char *value;
+};
+
+typedef union {
+	int i;			/* integer or char */
+	const char *s;	/* string */
+} ResolvedOption;
 
 struct ImageModule {
 	const char *name;
 	const char *humanname;
 	const char *fileextension;
-	int flags;
 	const char *crcfile;
 	const char *crcsysname;
-	const geometry_ranges *ranges;
 	const char *eoln;
-	int (*init_by_name)(const char *name, IMAGE **outimg); /* used for directory and archiver access */
+
 	int (*init)(STREAM *f, IMAGE **outimg);
 	void (*exit)(IMAGE *img);
 	void (*info)(IMAGE *img, char *string, const int len);
@@ -196,47 +166,50 @@ struct ImageModule {
 	void (*closeenum)(IMAGEENUM *enumeration);
 	size_t (*freespace)(IMAGE *img);
 	int (*readfile)(IMAGE *img, const char *fname, STREAM *destf);
-	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *_options);
+	int (*writefile)(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *writeoptions);
 	int (*deletefile)(IMAGE *img, const char *fname);
-	int (*create)(STREAM *f, const geometry_options *_options);
-	int (*extract)(IMAGE *img, STREAM *f);
+	int (*create)(STREAM *f, const ResolvedOption *createoptions);
+
 	/* size must be set with the size of the buffer,
 	   if the buffer is too small it will be relocated with realloc */
 	int (*read_sector)(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
 	int (*write_sector)(IMAGE *img, int head, int track, int sector, char *buffer, int size);
+
+	const struct OptionTemplate *fileoptions_template;
+	const struct OptionTemplate *createoptions_template;
+
 	void *extra;
 };
 
 /* ----------------------------------------------------------------------- */
 
 /* Use IMAGEMODULE for (potentially) full featured images */
-#define IMAGEMODULE(name,humanname,ext,flags,crcfile,crcsysname,ranges,eoln,\
-		initbyname, init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile,deletefile,create,extract,read_sector, write_sector)	\
+#define IMAGEMODULE(name,humanname,ext,crcfile,crcsysname,eoln,\
+		init,exit,info,beginenum,nextenum,closeenum,freespace,readfile,writefile, \
+		deletefile,create,read_sector,write_sector,fileoptions_template,createoptions_template)	\
 struct ImageModule imgmod_##name = \
-{					\
-	#name,			\
-	(humanname),	\
-	(ext),			\
-	(flags),		\
-	(crcfile),		\
-	(crcsysname),	\
-	(ranges),		\
-	(eoln),			\
-	(initbyname),	\
-	(init),			\
-	(exit),			\
-	(info),			\
-	(beginenum),	\
-	(nextenum),		\
-	(closeenum),	\
-	(freespace),	\
-	(readfile),		\
-	(writefile),	\
-	(deletefile),	\
-	(create),		\
-	(extract),		\
-	(read_sector),	\
-	(write_sector),	\
+{								\
+	#name,						\
+	(humanname),				\
+	(ext),						\
+	(crcfile),					\
+	(crcsysname),				\
+	(eoln),						\
+	(init),						\
+	(exit),						\
+	(info),						\
+	(beginenum),				\
+	(nextenum),					\
+	(closeenum),				\
+	(freespace),				\
+	(readfile),					\
+	(writefile),				\
+	(deletefile),				\
+	(create),					\
+	(read_sector),				\
+	(write_sector),				\
+	(fileoptions_template),		\
+	(createoptions_template),	\
 	NULL			\
 };
 
@@ -247,10 +220,8 @@ struct ImageModule imgmod_##name = \
 	#name,			\
 	(humanname),	\
 	(ext),			\
-	0,				\
 	(#name ".crc"),	\
 	#name,			\
-	NULL,			\
 	NULL,			\
 	NULL,			\
 	NULL,			\
@@ -346,17 +317,6 @@ int img_open_byname(const char *modulename, const char *fname, int read_or_write
  */
 void img_close(IMAGE *img);
 
-/* img_extract
- *
- * Description:
- *		???
- *
- * Parameters:
- *		img:				The image to extract
- *		fname:				???
- */
-int img_extract(IMAGE *img, const char *fname);
-
 /* img_info
  *
  * Description:
@@ -435,7 +395,7 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf);
  *		destf:				Place to receive the stream
  *		options:			Options to specify on the new file
  */
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *_options);
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *_options);
 
 /* img_getfile
  *
@@ -461,7 +421,7 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest);
  *		source:				Native filename for source
  *		options:			Options to specify on the new file
  */
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *_options);
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *_options);
 
 /* img_deletefile
  *
@@ -486,8 +446,8 @@ int img_deletefile(IMAGE *img, const char *fname);
  *		options:			Options that control how the image is created
  *							(tracks, sectors, etc)
  */
-int img_create(const struct ImageModule *module, const char *fname, const geometry_options *_options);
-int img_create_byname(const char *modulename, const char *fname, const geometry_options *_options);
+int img_create(const struct ImageModule *module, const char *fname, const struct NamedOption *_options);
+int img_create_byname(const char *modulename, const char *fname, const struct NamedOption *_options);
 
 typedef struct {
 	unsigned long crc;
@@ -573,12 +533,9 @@ struct ImageModule imgmod_##name = \
 	#name,				\
 	(humanname),		\
 	(ext),				\
-	0,					\
-	NULL,				\
 	NULL,				\
 	NULL,				\
 	(eoln),				\
-	NULL,				\
 	imgmodinit_##name,	\
 	imgwave_exit,		\
 	NULL,				\
@@ -587,6 +544,7 @@ struct ImageModule imgmod_##name = \
 	imgwave_closeenum,	\
 	NULL,				\
 	imgwave_readfile,	\
+	NULL,				\
 	NULL,				\
 	NULL,				\
 	NULL,				\

@@ -7,6 +7,9 @@
 #include "config.h"
 #include "utils.h"
 
+/* Arbitrary */
+#define MAX_OPTIONS	32
+
 /* ----------------------------------------------------------------------- */
 
 CARTMODULE(a5200,    "Atari 5200 Cartridge",			"bin")
@@ -31,7 +34,6 @@ CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
 extern struct ImageModule imgmod_rsdos;	/* CoCo RS-DOS disks */
 extern struct ImageModule imgmod_cococas;	/* CoCo cassettes */
-extern struct ImageModule imgmod_pchd;	/* PC HD images */
 extern struct ImageModule imgmod_msdos;	/* FAT/MSDOS diskett images */
 extern struct ImageModule imgmod_msdoshd;	/* FAT/MSDOS harddisk images */
 extern struct ImageModule imgmod_lynx;	/* c64 archiv */
@@ -45,15 +47,11 @@ extern struct ImageModule imgmod_vmsx_tap;	/* vMSX .tap archiv */
 extern struct ImageModule imgmod_vmsx_gm2;	/* vMSX gmaster2.ram file */
 extern struct ImageModule imgmod_fmsx_cas;	/* fMSX style .cas file */
 extern struct ImageModule imgmod_msx_dsk;	/* bogus MSX images */
-
 extern struct ImageModule imgmod_rom16;
-extern struct ImageModule imgmod_zip;
-extern struct ImageModule imgmod_fs;
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
 	&imgmod_cococas,
-	&imgmod_pchd,
 	&imgmod_msdos,
 	&imgmod_msdoshd,
 	&imgmod_nes,
@@ -85,12 +83,8 @@ static const struct ImageModule *images[] = {
 	&imgmod_vmsx_tap,
 	&imgmod_vmsx_gm2,
 	&imgmod_fmsx_cas,
-	&imgmod_msx_dsk
-#if 1 /* these are only here for testing of these two */
-	,&imgmod_rom16
-	,&imgmod_fs,
-	&imgmod_zip
-#endif
+	&imgmod_msx_dsk,
+	&imgmod_rom16
 };
 
 /* ----------------------------------------------------------------------- */
@@ -125,6 +119,7 @@ static const char *msgs[] = {
 	"Parameter too large",
 	"Missing parameter not found",
 	"Inappropriate parameter",
+	"Invalid parameter",
 	"Bad file name",
 	"Out of space on image",
 	"Input past end of file"
@@ -132,7 +127,7 @@ static const char *msgs[] = {
 
 const char *imageerror(int err)
 {
-	err = (err & ~IMGTOOLERR_SRC_MASK) - 1;
+	err = ERRORCODE(err) - 1;
 	assert(err >= 0);
 	assert(err < (sizeof(msgs) / sizeof(msgs[0])));
 	return msgs[err];
@@ -166,24 +161,17 @@ int img_open(const struct ImageModule *module, const char *fname, int read_or_wr
 
 	*outimg = NULL;
 
-	if (!module->init && !module->init_by_name)
+	if (!module->init)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	if (module->init_by_name) {
-		err = module->init_by_name(fname, outimg);
-		if (err) {
-			return markerrorsource(err);
-		}
-	} else {
-		f = stream_open(fname, read_or_write);
-		if (!f)
-			return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
-		
-		err = module->init(f, outimg);
-		if (err) {
-			stream_close(f);
-			return markerrorsource(err);
-		}
+	f = stream_open(fname, read_or_write);
+	if (!f)
+		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_IMAGEFILE;
+	
+	err = module->init(f, outimg);
+	if (err) {
+		stream_close(f);
+		return markerrorsource(err);
 	}
 	return 0;
 }
@@ -267,14 +255,94 @@ int img_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
+static const struct NamedOption *findnamedoption(const struct NamedOption *nopts, const char *name)
+{
+	if (nopts) {
+		while(nopts->name) {
+			if (!strcmp(nopts->name, name))
+				return nopts;
+			nopts++;
+		}
+	}
+	return NULL;
+}
+
+static int check_minmax(const struct OptionTemplate *o, int optnum, const ResolvedOption *ropts, int i)
+{
+	if (ropts[optnum].i < o->min)
+		return PARAM_TO_ERROR(IMGTOOLERR_PARAMTOOSMALL, optnum);
+	if (ropts[optnum].i > o->max)
+		return PARAM_TO_ERROR(IMGTOOLERR_PARAMTOOLARGE, optnum);
+	return 0;
+}
+
+static int resolve_options(const struct OptionTemplate *opttemplate, const struct NamedOption *nopts, ResolvedOption *ropts, int roptslen)
+{
+	int i = 0;
+	int optnum, err;
+	const char *val;
+	const struct NamedOption *n;
+	const struct OptionTemplate *o;
+
+	if (opttemplate) {
+		for (optnum = 0; opttemplate[optnum].name; optnum++) {
+			o = &opttemplate[optnum];
+
+			n = findnamedoption(nopts, o->name);
+			if (!n) {
+				/* Parameter wasn't specified */
+				if ((o->flags & IMGOPTION_FLAG_HASDEFAULT) == 0)
+					return PARAM_TO_ERROR(IMGTOOLERR_PARAMNEEDED, optnum);
+				val = o->defaultvalue;
+			}
+			else {
+				/* Parameter was specified */
+				val = n->value;
+			}
+
+			assert(optnum < roptslen);
+			switch(o->flags & IMGOPTION_FLAG_TYPE_MASK) {
+			case IMGOPTION_FLAG_TYPE_INTEGER:
+				ropts[optnum].i = atoi(val);
+				
+				err = check_minmax(o, optnum, ropts, i);
+				if (err)
+					return err;
+				break;
+			case IMGOPTION_FLAG_TYPE_CHAR:
+				if (strlen(val) != 1)
+					return PARAM_TO_ERROR(IMGTOOLERR_PARAMCORRUPT, optnum);
+				ropts[optnum].i = toupper(val[0]);
+
+				err = check_minmax(o, optnum, ropts, i);
+				if (err)
+					return err;
+				break;
+			case IMGOPTION_FLAG_TYPE_STRING:
+				ropts[optnum].s = val;
+				break;
+			default:
+				assert(0);
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+int img_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const struct NamedOption *nopts)
 {
 	int err;
+	ResolvedOption ropts[MAX_OPTIONS];
 
 	if (!img->module->writefile)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	err = img->module->writefile(img, fname, sourcef, options);
+	err = resolve_options(img->module->fileoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
+	if (err)
+		return err | IMGTOOLERR_SRC_PARAM_FILE;
+
+	err = img->module->writefile(img, fname, sourcef, ropts);
 	if (err)
 		return markerrorsource(err);
 
@@ -298,24 +366,7 @@ int img_getfile(IMAGE *img, const char *fname, const char *dest)
 	return err;
 }
 
-int img_extract(IMAGE *img, const char *fname)
-{
-	int err;
-	STREAM *f;
-
-	if (!img->module->extract)
-		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
-
-	f = stream_open(fname, OSD_FOPEN_READ);
-	if (!f)
-		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
-
-	err = img->module->extract(img, f);
-	stream_close(f);
-	return err;
-}
-
-int img_putfile(IMAGE *img, const char *newfname, const char *source, const file_options *options)
+int img_putfile(IMAGE *img, const char *newfname, const char *source, const struct NamedOption *nopts)
 {
 	int err;
 	STREAM *f;
@@ -327,7 +378,7 @@ int img_putfile(IMAGE *img, const char *newfname, const char *source, const file
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = img_writefile(img, newfname, f, options);
+	err = img_writefile(img, newfname, f, nopts);
 	stream_close(f);
 	return err;
 }
@@ -346,48 +397,24 @@ int img_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-int img_create(const struct ImageModule *module, const char *fname, const geometry_options *options)
+int img_create(const struct ImageModule *module, const char *fname, const struct NamedOption *nopts)
 {
 	int err;
 	STREAM *f;
-	const geometry_ranges *ranges;
-	static const geometry_options emptyopts = { 0, 0 };
-	static const geometry_ranges emptyrange = { {0,0}, {0,0} };
+	ResolvedOption ropts[MAX_OPTIONS];
 
 	if (!module->create)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	if (!options)
-		options = &emptyopts;
-	ranges = module->ranges ? module->ranges : &emptyrange;
-
-	if (module->flags & IMAGE_USES_CYLINDERS) {
-		if (!options->cylinders)
-			return IMGTOOLERR_PARAMNEEDED | IMGTOOLERR_SRC_PARAM_CYLINDERS;
-		if (options->cylinders < ranges->minimum.cylinders)
-			return IMGTOOLERR_PARAMTOOSMALL | IMGTOOLERR_SRC_PARAM_CYLINDERS;
-		if (options->cylinders > ranges->maximum.cylinders)
-			return IMGTOOLERR_PARAMTOOLARGE | IMGTOOLERR_SRC_PARAM_CYLINDERS;
-	}
-	else {
-		if (options->cylinders)
-			return IMGTOOLERR_PARAMNOTNEEDED | IMGTOOLERR_SRC_PARAM_CYLINDERS;
-	}
-
-	if (module->flags & IMAGE_USES_HEADS) {
-		if (!options->heads)
-			return IMGTOOLERR_PARAMNEEDED | IMGTOOLERR_SRC_PARAM_HEADS;
-		if (options->heads < ranges->minimum.heads)
-			return IMGTOOLERR_PARAMTOOSMALL | IMGTOOLERR_SRC_PARAM_HEADS;
-		if (options->heads > ranges->maximum.heads)
-			return IMGTOOLERR_PARAMTOOLARGE | IMGTOOLERR_SRC_PARAM_HEADS;
-	}
+	err = resolve_options(module->createoptions_template, nopts, ropts, sizeof(ropts) / sizeof(ropts[0]));
+	if (err)
+		return err | IMGTOOLERR_SRC_PARAM_FILE;
 
 	f = stream_open(fname, OSD_FOPEN_WRITE);
 	if (!f)
 		return IMGTOOLERR_FILENOTFOUND | IMGTOOLERR_SRC_NATIVEFILE;
 
-	err = module->create(f, options);
+	err = module->create(f, ropts);
 	stream_close(f);
 	if (err)
 		return markerrorsource(err);
@@ -395,7 +422,7 @@ int img_create(const struct ImageModule *module, const char *fname, const geomet
 	return 0;
 }
 
-int img_create_byname(const char *modulename, const char *fname, const geometry_options *options)
+int img_create_byname(const char *modulename, const char *fname, const struct NamedOption *nopts)
 {
 	const struct ImageModule *module;
 
@@ -403,7 +430,7 @@ int img_create_byname(const char *modulename, const char *fname, const geometry_
 	if (!module)
 		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 
-	return img_create(module, fname, options);
+	return img_create(module, fname, nopts);
 }
 
 static char *nextentry(char **s)

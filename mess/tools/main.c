@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <time.h>
+#include <assert.h>
 #include "imgtool.h"
 #include "utils.h"
 
@@ -26,24 +27,38 @@ static void writeusage(FILE *f, int write_word_usage, struct command *c, char *a
 
 /* ----------------------------------------------------------------------- */
 
-static int parse_options(int argc, char *argv[], const char *options[], int **optionvals)
+static int parse_options(int argc, char *argv[], int minunnamed, int maxunnamed, struct NamedOption *opts, int optcount)
 {
-	int i, j;
+	int i;
+	int optpos = 0;
+	int lastunnamed;
+	char *s;
+
+	memset(opts, 0, sizeof(struct NamedOption) * optcount);
 
 	for (i = 0; i < argc; i++) {
-		/* Make sure that the options are preceeded with '--' */
-		if ((argv[i][0] != '-') || (argv[i][1] != '-'))
-			goto error;
-
-		for (j = 0; options[j]; j++) {
-			if (!memcmp(options[j], &argv[i][2], strlen(options[j])))
-				break;
+		/* Named or unamed arg */
+		if ((argv[i][0] != '-') || (argv[i][1] != '-')) {
+			/* Unnamed */
+			if (i >= maxunnamed)
+				goto error;	/* Too many unnamed */
+			lastunnamed = i;
 		}
+		else {
+			if (i < minunnamed)
+				goto error; /* Too few unnamed */
+			if (optpos >= optcount)
+				goto error; /* Too many */
 
-		if (!options[j])
-			goto error;
-
-		*(optionvals[j]) = atoi(argv[i] + strlen(options[j]) + 3);
+			/* Named */
+			opts[optpos].name = argv[i] + 2;
+			s = strchr(opts[optpos].name, '=');
+			if (!s)
+				goto error;
+			*(s++) = 0;
+			opts[optpos].value = s;
+			optpos++;
+		}
 	}
 	return 0;
 
@@ -53,12 +68,11 @@ error:
 }
 
 static void reporterror(int err, struct command *c, const char *format, const char *imagename,
-	const char *filename, const char *newname, const geometry_options *geoopts)
+	const char *filename, const char *newname, const struct NamedOption *namedoptions)
 {
-	const char *src;
-	const char *err_name;
-	const struct ImageModule *module;
 	char buf[256];
+	const char *src = "imgtool";
+	const char *err_name;
 
 	err_name = imageerror(err);
 
@@ -78,30 +92,47 @@ static void reporterror(int err, struct command *c, const char *format, const ch
 	case IMGTOOLERR_SRC_NATIVEFILE:
 		src = newname ? newname : filename;
 		break;
-	default:
-		switch(ERRORSOURCE(err)) {
-		case IMGTOOLERR_SRC_PARAM_CYLINDERS:
-			if (!geoopts->cylinders) {
-				sprintf(buf, "Need to specify --cylinders");
-			}
-			else {
-				module = findimagemodule(format);
-				sprintf(buf, "--cylinders should be between %i and %i", module->ranges->minimum.cylinders, module->ranges->maximum.cylinders);
+	case IMGTOOLERR_SRC_PARAM_USER:
+		sprintf(buf, "%s is not a valid option for this command", namedoptions[ERRORPARAM(err)].name);
+		err_name = buf;
+		break;
+	case IMGTOOLERR_SRC_PARAM_FILE:
+	case IMGTOOLERR_SRC_PARAM_CREATE:
+		{
+			int paramnum;
+			const struct ImageModule *module;
+			const struct OptionTemplate *optiontemplate = NULL;
+
+			module = findimagemodule(format);
+			paramnum = ERRORPARAM(err);
+
+			switch(ERRORSOURCE(err)) {
+			case IMGTOOLERR_SRC_PARAM_FILE:
+				optiontemplate = module->fileoptions_template;
+				break;
+			case IMGTOOLERR_SRC_PARAM_CREATE:
+				optiontemplate = module->createoptions_template;
+				break;
+			default:
+				assert(FALSE);
+				break;
+			};
+
+			optiontemplate += ERRORPARAM(err);
+
+			switch(optiontemplate->flags & IMGOPTION_FLAG_TYPE_MASK) {
+			case IMGOPTION_FLAG_TYPE_INTEGER:
+				sprintf(buf, "--%s should be between %i and %i", optiontemplate->name, optiontemplate->min, optiontemplate->max);
+				break;
+			case IMGOPTION_FLAG_TYPE_CHAR:
+				sprintf(buf, "--%s should be between '%c' and '%c'", optiontemplate->name, optiontemplate->min, optiontemplate->max);
+				break;
+			default:
+				sprintf(buf, "--%s: %s", err_name);
+				break;
 			}
 			err_name = buf;
-			break;
-		case IMGTOOLERR_SRC_PARAM_HEADS:
-			if (!geoopts->cylinders) {
-				sprintf(buf, "Need to specify --heads");
-			}
-			else {
-				module = findimagemodule(format);
-				sprintf(buf, "--heads should be between %i and %i", module->ranges->minimum.heads, module->ranges->maximum.heads);
-			}
-			err_name = buf;
-			break;
 		}
-		src = "imgtool";
 		break;
 	}
 	fflush(stdout);
@@ -199,28 +230,21 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	int err;
 	IMAGE *img;
 	char *newfname;
-	file_options opts;
-	int *optionvals[4];
-	static const char *options[] = { "ftype", "ascii", "addr", "bank" };
-
-	memset(&opts, 0, sizeof(opts));
-
-	optionvals[0] = &opts.ftype;
-	optionvals[1] = &opts.fascii;
-	optionvals[2] = &opts.faddr;
-	optionvals[3] = &opts.fbank;
+	int unnamedargs;
+	struct NamedOption nopts[32];
 
 	newfname = (argc >= 4) && (argv[3][0] != '-') ? argv[3] : NULL;
 
-	if (parse_options(argc - (newfname ? 4 : 3), argv + (newfname ? 4 : 3), options, optionvals))
+	unnamedargs = parse_options(argc, argv, 3, 4, nopts, sizeof(nopts) / sizeof(nopts[0]));
+	if (unnamedargs < 0)
 		return -1;
+	newfname = (unnamedargs == 4) ? argv[3] : NULL;
 
 	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_RW, &img);
 	if (err)
 		goto error;
 
-
-	err = img_putfile(img, newfname, argv[2], &opts);
+	err = img_putfile(img, newfname, argv[2], nopts);
 	img_close(img);
 	if (err)
 		goto error;
@@ -228,7 +252,7 @@ static int cmd_put(struct command *c, int argc, char *argv[])
 	return 0;
 
 error:
-	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
+	reporterror(err, c, argv[0], argv[1], argv[2], newfname, nopts);
 	return -1;
 }
 
@@ -414,66 +438,25 @@ error:
 static int cmd_create(struct command *c, int argc, char *argv[])
 {
 	int err;
-	geometry_options opts;
-	int *optionvals[8];
-	static const char *options[] = { 
-		"cylinders", "heads" , "sectors", "sectorsize",
-		"htype", "exrom", "game",
-		"entries"
-	};
+	int unnamedargs;
+	char *label;
+	struct NamedOption nopts[32];
 
-	memset(&opts, 0, sizeof(opts));
+	unnamedargs = parse_options(argc, argv, 2, 3, nopts, sizeof(nopts) / sizeof(nopts[0]));
+	if (unnamedargs < 0)
+		return -1;
 
-	optionvals[0] = &opts.cylinders;
-	optionvals[1] = &opts.heads;
-	optionvals[2] = &opts.sectors;
-	optionvals[3] = &opts.sector_size;
-	optionvals[4] = &opts.hardware_type;
-	optionvals[5] = &opts.exrom_line;
-	optionvals[6] = &opts.game_line;
-	optionvals[7] = &opts.entries;	
+	/* HACK - Need to do something with this! */
+	label = (unnamedargs >= 3) ? argv[2] : NULL;
 
-	if ((argv[2]==0)||(memcmp(argv[2],"--",2)==0)) {
-		opts.label=NULL;
-		if (parse_options(argc - 2, argv + 2, options, optionvals) )
-			return -1;
-		err = img_create_byname(argv[0], argv[1], &opts);
-	} else {
-		opts.label=argv[2];	
-		if (parse_options(argc - 3, argv + 3, options, optionvals) )
-			return -1;
-		err = img_create_byname(argv[0], argv[1], &opts);
-	}
-
+	err = img_create_byname(argv[0], argv[1], nopts);
 	if (err)
 		goto error;
 
 	return 0;
 
 error:
-	reporterror(err, c, argv[0], argv[1], NULL, NULL, &opts);
-	return -1;
-}
-
-static int cmd_extract(struct command *c, int argc, char *argv[])
-{
-	int err;
-	IMAGE *img;
-
-	err = img_open_byname(argv[0], argv[1], OSD_FOPEN_READ, &img);
-	if (err)
-		goto error;
-
-	err = img_extract(img, argv[2]);
-	img_close(img);
-
-	if (err)
-		goto error;
-
-	return 0;
-
-error:
-	reporterror(err, c, argv[0], argv[1], NULL, NULL, NULL);
+	reporterror(err, c, argv[0], argv[1], NULL, NULL, nopts);
 	return -1;
 }
 
@@ -501,7 +484,6 @@ static struct command cmds[] = {
 	  "[--sectors=SECTORS] [--sectorsize=SIZE] "
 	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]", 
 	  cmd_create, 2, 8, 0},
-	{ "extract", "<format> <imagename> <filename>", cmd_extract, 3, 3, 0 },
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
 	{ "get", "<format> <imagename> <filename> [newname]", cmd_get, 3, 4, 0 },
 	{ "put", "<format> <imagename> <filename> [newname] [--ftype=FILETYPE] [--ascii=0|1] [--addr=ADDR] [--bank=BANK]", cmd_put, 3, 8, 0 },

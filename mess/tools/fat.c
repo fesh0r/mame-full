@@ -314,57 +314,70 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void fat_image_closeenum(IMAGEENUM *enumeration);
 static size_t fat_image_freespace(IMAGE *img);
 static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 static int fat_image_deletefile(IMAGE *img, const char *fname);
-static int fat_image_create(STREAM *f, const geometry_options *options);
+static int fat_image_create(STREAM *f, const ResolvedOption *options);
 
 static int fat_read_sector(IMAGE *img, int head, int track, int sector, char **buffer, int *size);
 static int fat_write_sector(IMAGE *img, int head, int track, int sector, char *buffer, int size);
 
-static geometry_ranges fat_geometry = { {0x80,1,1,1}, {0x400,255,255,2} };
+static struct OptionTemplate fat_createopts[] =
+{
+	{ "cylinders",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [0] */
+	{ "sectors",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		255,		NULL	},	/* [1] */
+	{ "heads",		IMGOPTION_FLAG_TYPE_INTEGER,	1,		2,			NULL	},	/* [2] */
+	{ NULL, 0, 0, 0, 0 }
+};
 
+#define FAT_CREATEOPTIONS_CYLINDERS		0
+#define FAT_CREATEOPTIONS_SECTORS		1
+#define FAT_CREATEOPTIONS_HEADS			2
+
+/* IMAGE_USES_LABEL, /* flags */
 IMAGEMODULE(
 	msdos,
-	"MSDOS/PCDOS Diskette",	/* human readable name */
-	"dsk",								/* file extension */
-	IMAGE_USES_LABEL, /* flags */
-	NULL,								/* crcfile */
-	NULL,								/* crc system name */
-	&fat_geometry,								/* geometry ranges */
-	EOLN_CRLF,								/* eoln */
-	NULL,
-	fat_image_init,				/* init function */
-	fat_image_exit,				/* exit function */
-	fat_image_info,		/* info function */
+	"MSDOS/PCDOS Diskette",			/* human readable name */
+	"dsk",							/* file extension */
+	NULL,							/* crcfile */
+	NULL,							/* crc system name */
+	EOLN_CRLF,						/* eoln */
+	fat_image_init,					/* init function */
+	fat_image_exit,					/* exit function */
+	fat_image_info,					/* info function */
 	fat_image_beginenum,			/* begin enumeration */
-	fat_image_nextenum,			/* enumerate next */
+	fat_image_nextenum,				/* enumerate next */
 	fat_image_closeenum,			/* close enumeration */
-	fat_image_freespace,			 /*  free space on image    */
-	fat_image_readfile,			/* read file */
+	fat_image_freespace,			/*  free space on image    */
+	fat_image_readfile,				/* read file */
 	fat_image_writefile,			/* write file */
 	fat_image_deletefile,			/* delete file */
 	fat_image_create,				/* create image */
-	NULL,
 	fat_read_sector,
-	fat_write_sector
+	fat_write_sector,
+	NULL,							/* file options */
+	fat_createopts					/* create options */
 )
 
 static int fathd_image_init(STREAM *f, IMAGE **outimg);
-static int fathd_image_create(STREAM *f, const geometry_options *options);
+static int fathd_image_create(STREAM *f, const ResolvedOption *options);
 
-static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,1024,16} };
+/*static geometry_ranges fathd_geometry = { {0x200,1,1,1}, {0x200,63,1024,16} };*/
+
+static struct OptionTemplate fathd_createopts[] =
+{
+	{ "cylinders",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		63,		NULL	},	/* [0] */
+	{ "sectors",	IMGOPTION_FLAG_TYPE_INTEGER,	1,		1024,	NULL	},	/* [1] */
+	{ "heads",		IMGOPTION_FLAG_TYPE_INTEGER,	1,		16,		NULL	},	/* [2] */
+	{ NULL, 0, 0, 0, 0 }
+};
 
 IMAGEMODULE(
 	msdoshd,
 	"MSDOS/PCDOS Harddisk",	/* human readable name */
 	"img",								/* file extension */
-	IMAGE_USES_LABEL|IMAGE_USES_SECTORS|
-	IMAGE_USES_CYLINDERS | IMAGE_USES_HEADS,	/* flags */
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	&fathd_geometry,								/* geometry ranges */
 	EOLN_CRLF,								/* eoln */
-	NULL,
 	fathd_image_init,				/* init function */
 	fat_image_exit,				/* exit function */
 	fat_image_info,		/* info function */
@@ -376,9 +389,10 @@ IMAGEMODULE(
 	fat_image_writefile,			/* write file */
 	fat_image_deletefile,			/* delete file */
 	fathd_image_create,				/* create image */
-	NULL,
 	fat_read_sector,
-	fat_write_sector
+	fat_write_sector,
+	NULL,							/* file options */
+	fathd_createopts				/* create options */
 )
 
 static int fat_image_init(STREAM *f, IMAGE **outimg)
@@ -684,7 +698,7 @@ static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	return 0;
 }
 
-static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options)
+static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options)
 {
 	fat_image *image=(fat_image*)img;
     FAT_DIRECTORY *entry;
@@ -823,7 +837,7 @@ static FAT_FORMAT fat_formats[]={
 	/* use of larger and mixed sector sizes, more tracks */
 };
 
-static int fat_image_create(STREAM *f, const geometry_options *options)
+static int fat_image_create(STREAM *f, const ResolvedOption *options)
 {
 	FAT_FORMAT *format=fat_formats+3;
 	unsigned short fat_fat16[0x100]={ 0xfffd, 0xffff };
@@ -873,7 +887,7 @@ static int fat_image_create(STREAM *f, const geometry_options *options)
 	return 0;
 }
 
-static int fathd_image_create(STREAM *f, const geometry_options *options)
+static int fathd_image_create(STREAM *f, const ResolvedOption *options)
 {
 	unsigned char sector[0x200]={ 0 };
 	int s, h;
@@ -886,16 +900,16 @@ static int fathd_image_create(STREAM *f, const geometry_options *options)
 	table->partition[0].begin.head=1;
 
 	SET_UWORD(table->partition[0].begin.sector_cylinder,
-			  PACK_SECTOR_CYLINDER(options->sectors,options->cylinders));
-	table->partition[0].end.head=options->heads;
+			  PACK_SECTOR_CYLINDER(options[FAT_CREATEOPTIONS_SECTORS].i,options[FAT_CREATEOPTIONS_CYLINDERS].i));
+	table->partition[0].end.head=options[FAT_CREATEOPTIONS_HEADS].i;
 
-	SET_ULONG(table->partition[0].start_sector,options->sectors);
+	SET_ULONG(table->partition[0].start_sector,options[FAT_CREATEOPTIONS_SECTORS].i);
 	SET_ULONG(table->partition[0].sectors,
-			  options->sectors*options->heads*options->cylinders
+			  options[FAT_CREATEOPTIONS_SECTORS].i*options[FAT_CREATEOPTIONS_HEADS].i*options[FAT_CREATEOPTIONS_CYLINDERS].i
 			  -GET_ULONG(table->partition[0].start_sector));
 
 	h=0;
-	for (s=0; s<options->sectors; s++) {
+	for (s=0; s<options[FAT_CREATEOPTIONS_SECTORS].i; s++) {
 		if ((s==0)&&(h==0)) {
 			if (stream_write(f, &table, sizeof(table)) != sizeof(table))
 				return IMGTOOLERR_WRITEERROR;

@@ -365,22 +365,49 @@ static int crt_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void crt_image_closeenum(IMAGEENUM *enumeration);
 //static size_t crt_image_freespace(IMAGE *img);
 static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 static int crt_image_deletefile(IMAGE *img, const char *fname);
-static int crt_image_create(STREAM *f, const geometry_options *options);
+static int crt_image_create(STREAM *f, const ResolvedOption *options);
+
+/*
+	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
+	|IMAGE_USES_HARDWARE_TYPE|IMAGE_USES_GAME_LINE
+	|IMAGE_USES_EXROM_LINE|IMAGE_USES_LABEL, //flags
+*/
+
+static struct OptionTemplate c64crt_fileeopts[] =
+{
+	{ "ftype",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [0] */
+	{ "faddr",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [1] */
+	{ "fbank",	IMGOPTION_FLAG_TYPE_INTEGER,	0,		0xffff,	NULL	},	/* [2] */
+	{ NULL, 0, 0, 0, 0 }
+};
+
+#define C64CRT_FILEOPTION_FTYPE		0
+#define C64CRT_FILEOPTION_FADDR		1
+#define C64CRT_FILEOPTION_FBANK		2
+
+static struct OptionTemplate c64crt_createopts[] =
+{
+	{ "hardwaretype",	IMGOPTION_FLAG_TYPE_INTEGER,							0,		0xffff,	NULL	},	/* [0] */
+	{ "gameline",		IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [1] */
+	{ "exromline",		IMGOPTION_FLAG_TYPE_INTEGER,							0,		0x00ff,	NULL	},	/* [2] */
+	{ "label",			IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,		0,		NULL	},	/* [3] */
+	{ NULL, 0, 0, 0, 0 }
+};
+
+#define C64CRT_CREATEOPTION_HARDWARETYPE	0
+#define C64CRT_CREATEOPTION_GAMELINE		1
+#define C64CRT_CREATEOPTION_EXROMLINE		2
+#define C64CRT_CREATEOPTION_LABEL			3
 
 IMAGEMODULE(
 	c64crt,
 	"Commodore 64 Cartridge",	/* human readable name */
 	"crt",								/* file extension */
-	IMAGE_USES_FTYPE|IMAGE_USES_FADDR|IMAGE_USES_FBANK
-	|IMAGE_USES_HARDWARE_TYPE|IMAGE_USES_GAME_LINE
-	|IMAGE_USES_EXROM_LINE|IMAGE_USES_LABEL, //flags
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	crt_image_init,				/* init function */
 	crt_image_exit,				/* exit function */
 	crt_image_info, /* info function */
@@ -392,9 +419,10 @@ IMAGEMODULE(
 	crt_image_writefile,			/* write file */
 	crt_image_deletefile,			/* delete file */
 	crt_image_create,				/* create image */
-	NULL, /* extract function */
-	NULL,
-	NULL
+	NULL,								/* read sector */
+	NULL,								/* write sector */
+	c64crt_fileeopts,					/* file options */
+	c64crt_createopts					/* create options */
 )
 
 static int crt_image_init(STREAM *f, IMAGE **outimg)
@@ -534,7 +562,7 @@ static int crt_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
-							   const file_options *options)
+							   const ResolvedOption *options)
 {
 	crt_image *image=(crt_image*)img;
 	int size;
@@ -564,9 +592,9 @@ static int crt_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 	memset(image->data+pos, 0, sizeof(crt_packet));
 	memcpy(PACKET(image,pos)->id,"CHIP",4);
 	SET_ULONG( PACKET(image, pos)->packet_length, size+sizeof(crt_packet));
-	SET_UWORD(PACKET(image, pos)->chip_type, options->ftype);
-	SET_UWORD( PACKET(image, pos)->address, options->faddr);
-	SET_UWORD( PACKET(image, pos)->bank, options->fbank);
+	SET_UWORD(PACKET(image, pos)->chip_type, options[C64CRT_FILEOPTION_FTYPE].i);
+	SET_UWORD( PACKET(image, pos)->address, options[C64CRT_FILEOPTION_FADDR].i);
+	SET_UWORD( PACKET(image, pos)->bank, options[C64CRT_FILEOPTION_FBANK].i);
 	SET_UWORD( PACKET(image, pos)->length, size);
 
 	image->modified=1;
@@ -592,15 +620,15 @@ static int crt_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int crt_image_create(STREAM *f, const geometry_options *options)
+static int crt_image_create(STREAM *f, const ResolvedOption *options)
 {
 	crt_header header={ "C64 CARTRIDGE   " };
 	SET_ULONG(header.length, sizeof(header));
 	SET_UWORD(header.version, 0x100);
-	SET_UWORD(header.hardware_type, options->hardware_type);
-	header.game_line=options->game_line;
-	header.exrom_line=options->exrom_line;
-	if (options->label) strcpy(header.name, options->label);
+	SET_UWORD(header.hardware_type, options[C64CRT_CREATEOPTION_HARDWARETYPE].i);
+	header.game_line=options[C64CRT_CREATEOPTION_GAMELINE].i;
+	header.exrom_line=options[C64CRT_CREATEOPTION_EXROMLINE].i;
+	if (options[C64CRT_CREATEOPTION_LABEL].s) strcpy(header.name, options[C64CRT_CREATEOPTION_LABEL].s);
 	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header)) 
 		? 0 : IMGTOOLERR_WRITEERROR;
 }

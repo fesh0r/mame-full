@@ -25,19 +25,16 @@ static int rom16_image_beginenum(IMAGE *img, IMAGEENUM **outenum);
 static int rom16_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent);
 static void rom16_image_closeenum(IMAGEENUM *enumeration);
 static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf);
-static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const file_options *options);
+static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *options);
 //static int rom16_image_create(STREAM *f, const geometry_options *options);
 
 IMAGEMODULE(
 	rom16,
 	"16 bit wide Romimage",	/* human readable name */
 	"rom",								/* file extension */
-	0, //flags
 	NULL,								/* crcfile */
 	NULL,								/* crc system name */
-	NULL,								/* geometry ranges */
 	NULL,								/* eoln */
-	NULL,
 	rom16_image_init,				/* init function */
 	rom16_image_exit,				/* exit function */
 	NULL, /* info function */
@@ -49,9 +46,10 @@ IMAGEMODULE(
 	rom16_image_writefile,			/* write file */
 	NULL,			/* delete file */
 	NULL,//	rom16_image_create,				/* create image */
-	NULL, /* extract function */
 	NULL,
-	NULL
+	NULL,
+	NULL,							/* file options */
+	NULL							/* create options */
 )
 
 static int rom16_image_init(STREAM *f, IMAGE **outimg)
@@ -170,7 +168,7 @@ static int rom16_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, 
-							   const file_options *options)
+							   const ResolvedOption *options)
 {
 	rom16_image *image=(rom16_image*)img;
 	int size;
@@ -197,7 +195,7 @@ static int rom16_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 }
 
 #if 0
-static int rom16_image_create(STREAM *f, const geometry_options *options)
+static int rom16_image_create(STREAM *f, const ResolvedOption *options)
 {
 //	if (options->label) strcpy(header.name, options->label);
 	return (stream_write(f, &header, sizeof(crt_header)) == sizeof(crt_header)) 
