@@ -6,6 +6,8 @@
 
 ****************************************************************************/
 
+#include <time.h>
+
 #include "imgtool.h"
 #include "formats/coco_dsk.h"
 #include "iflopimg.h"
@@ -101,6 +103,39 @@ static void pick_string(const void *ptr, size_t offset, size_t length, char *des
 
 
 
+static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
+{
+	while(length > 0)
+	{
+		((UINT8 *) ptr)[offset + --length] = (UINT8) value;
+		value >>= 8;
+	}
+}
+
+
+
+static void place_string(void *ptr, size_t offset, size_t length, const char *s)
+{
+	size_t i;
+	UINT8 b;
+	UINT8 *bptr;
+
+	bptr = (UINT8 *) ptr;
+	bptr += offset;
+
+	bptr[0] = 0x80;
+
+	for (i = 0; s[i] && (i < length); i++)
+	{
+		b = ((UINT8) s[i]) & 0x7F;
+		if (s[i+1] == '\0')
+			b |= 0x80;
+		bptr[i] = b;
+	}
+}
+
+
+
 static imgtoolerr_t os9_decode_disk_header(imgtool_image *image, struct os9_diskinfo *info)
 {
 	UINT32 track_size_in_sectors, attributes;
@@ -137,6 +172,8 @@ static imgtoolerr_t os9_decode_disk_header(imgtool_image *image, struct os9_disk
 		info->sector_size = 256;
 
 	if (info->sectors_per_track != track_size_in_sectors)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (info->sectors_per_track == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->total_sectors % info->sectors_per_track)
 		return IMGTOOLERR_CORRUPTIMAGE;
@@ -175,7 +212,7 @@ static int os9_decode_file_header(imgtool_image *image,
 	info->user_read			= (attributes & 0x01) ? 1 : 0;
 
 	if (info->directory && (info->file_size % 32 != 0))
-		return -1;
+		return IMGTOOLERR_CORRUPTIMAGE;
 
 	/* read all sector map entries */
 	max_entries = (diskinfo->sector_size - 16) / 5;
@@ -316,6 +353,128 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const struct os9_diskinf
 			return err;
 	}
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t os9_diskimage_create(imgtool_image *img, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	UINT8 *header;
+	UINT32 heads, tracks, sectors, sector_bytes, first_sector_id;
+	UINT32 cluster_size, owner_id;
+	UINT32 allocation_bitmap_bits, allocation_bitmap_lsns;
+	UINT32 attributes, format_flags, disk_id;
+	UINT32 i;
+	const char *title;
+	time_t t;
+	struct tm *ltime;
+
+	time(&t);
+	ltime = localtime(&t);
+
+	heads = option_resolution_lookup_int(opts, 'H');
+	tracks = option_resolution_lookup_int(opts, 'T');
+	sectors = option_resolution_lookup_int(opts, 'S');
+	sector_bytes = option_resolution_lookup_int(opts, 'L');
+	first_sector_id = option_resolution_lookup_int(opts, 'F');
+	title = "";
+
+	header = malloc(sector_bytes);
+	if (!header)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+
+	if (sector_bytes > 256)
+		sector_bytes = 256;
+	cluster_size = 1;
+	owner_id = 1;
+	disk_id = 1;
+	attributes = 0;
+	allocation_bitmap_bits = heads * tracks * sectors / cluster_size;
+	allocation_bitmap_lsns = (allocation_bitmap_bits / 8 + sector_bytes - 1) / sector_bytes;
+	format_flags = ((heads > 1) ? 0x01 : 0x00) | ((tracks > 40) ? 0x02 : 0x00);
+
+	memset(header, 0, sector_bytes);
+	place_integer(header,   0,  3, heads * tracks * sectors);
+	place_integer(header,   3,  1, sectors);
+	place_integer(header,   4,  2, (allocation_bitmap_bits + 7) / 8);
+	place_integer(header,   6,  2, cluster_size);
+	place_integer(header,   8,  3, allocation_bitmap_lsns);
+	place_integer(header,  11,  2, owner_id);
+	place_integer(header,  13,  1, attributes);
+	place_integer(header,  14,  2, disk_id);
+	place_integer(header,  16,  1, format_flags);
+	place_integer(header,  17,  2, sectors);
+	place_string(header,   31, 32, title);
+	place_integer(header, 100,  4, 1);
+	place_integer(header, 104,  4, (sector_bytes == 256) ? 0 : sector_bytes);
+
+	err = floppy_write_sector(imgtool_floppy(img), 0, 0, first_sector_id, 0, header, sector_bytes);
+	if (err)
+		goto done;
+
+	memset(header, 0, sector_bytes);
+	for (i = 0; i < allocation_bitmap_lsns; i++)
+	{
+		if (i == 0)
+		{
+			header[0] = 0xFF;
+			header[1] = 0xC0;
+		}
+		else if (i == 1)
+		{
+			header[0] = 0x00;
+			header[1] = 0x00;
+		}
+
+		err = floppy_write_sector(imgtool_floppy(img), 0, 0, first_sector_id + 1 + i, 0, header, sector_bytes);
+		if (err)
+			goto done;
+	}
+
+	memset(header, 0, sector_bytes);
+	header[0x00] = 0xBF;
+	header[0x01] = 0x00;
+	header[0x02] = 0x00;
+	header[0x03] = (UINT8) ltime->tm_year;
+	header[0x04] = (UINT8) ltime->tm_mon + 1;
+	header[0x05] = (UINT8) ltime->tm_mday;
+	header[0x06] = (UINT8) ltime->tm_hour;
+	header[0x07] = (UINT8) ltime->tm_min;
+	header[0x08] = 0x02;
+	header[0x09] = 0x00;
+	header[0x0A] = 0x00;
+	header[0x0B] = 0x00;
+	header[0x0C] = 0x40;
+	header[0x0D] = (UINT8) (ltime->tm_year % 100);
+	header[0x0E] = (UINT8) ltime->tm_mon;
+	header[0x0F] = (UINT8) ltime->tm_mday;
+	header[0x10] = 0x00;
+	header[0x11] = 0x00;
+	header[0x12] = 0x03;
+	header[0x13] = 0x00;
+	header[0x14] = 0x07;
+	err = floppy_write_sector(imgtool_floppy(img), 0, 0, first_sector_id + 1 + allocation_bitmap_lsns, 0, header, sector_bytes);
+	if (err)
+		goto done;
+
+	memset(header, 0, sector_bytes);
+	header[0x00] = 0x2E;
+	header[0x01] = 0xAE;
+	header[0x1F] = 1 + allocation_bitmap_lsns;
+	header[0x20] = 0xAE;
+	header[0x3F] = 1 + allocation_bitmap_lsns;
+	err = floppy_write_sector(imgtool_floppy(img), 0, 0, first_sector_id + 2 + allocation_bitmap_lsns, 0, header, sector_bytes);
+	if (err)
+		goto done;
+
+done:
+	if (header)
+		free(header);
+	return err;
 }
 
 
@@ -477,11 +636,12 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 
 
 
-static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImageModule *module)
+static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
 	module->eoln					= EOLN_CR;
 	module->path_separator			= '/';
+	module->create					= os9_diskimage_create;
 	module->begin_enum				= os9_diskimage_beginenum;
 	module->next_enum				= os9_diskimage_nextenum;
 	module->close_enum				= os9_diskimage_closeenum;

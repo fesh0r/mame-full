@@ -320,6 +320,10 @@ static floperr_t coco_os9_readheader(floppy_image *floppy, struct basicdsk_geome
 	geometry->sector_length = 256;
 	geometry->sectors = (header[0x11] << 8) + header[0x12];
 	geometry->heads = (header[0x10] & 0x01) ? 2 : 1;
+
+	if (!geometry->sectors)
+		return FLOPPY_ERROR_INVALIDIMAGE;
+
 	geometry->tracks = total_sectors / geometry->sectors / geometry->heads;
 
 	if (total_sectors != geometry->tracks * geometry->sectors * geometry->heads)

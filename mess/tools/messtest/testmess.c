@@ -168,7 +168,7 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	/* cannot find driver? */
 	if (!drivers[driver_num])
 	{
-		report_message(MSG_PREFAILURE, "Cannot find driver '%s'", current_testcase.driver);
+		report_message(MSG_FAILURE, "Cannot find driver '%s'", current_testcase.driver);
 		return MESSTEST_RESULT_STARTFAILURE;
 	}
 
@@ -308,6 +308,7 @@ static void command_input(void)
 	{
 		if (!inputx_can_post())
 		{
+			state = STATE_ABORTED;
 			report_message(MSG_FAILURE, "Natural keyboard input not supported for this driver");
 			return;
 		}
@@ -401,12 +402,14 @@ static void command_switch(void)
 
 	if (!switch_name)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Cannot find switch named '%s'", current_command->u.switch_args.name);
 		return;
 	}
 
 	if (!switch_setting)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Cannot find setting '%s' on switch '%s'",
 			current_command->u.switch_args.value, current_command->u.switch_args.name);
 		return;
@@ -418,6 +421,7 @@ static void command_switch(void)
 
 static void command_image_preload(void)
 {
+	state = STATE_ABORTED;
 	report_message(MSG_FAILURE, "Image preloads must be at the beginning");
 }
 
@@ -441,6 +445,7 @@ static void command_image_loadcreate(void)
 	image = image_from_devtype_and_index(device_type, device_slot);
 	if (!image)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Image slot '%s %i' does not exist",
 			device_typename(device_type), device_slot);
 		return;
@@ -454,12 +459,14 @@ static void command_image_loadcreate(void)
 	{
 		if (current_command->command_type != MESSTEST_COMMAND_IMAGE_CREATE)
 		{
+			state = STATE_ABORTED;
 			report_message(MSG_FAILURE, "Cannot specify format unless creating");
 			return;
 		}
 
 		if (!dev->createimage_options)
 		{
+			state = STATE_ABORTED;
 			report_message(MSG_FAILURE, "Cannot specify format for device");
 			return;
 		}
@@ -471,6 +478,7 @@ static void command_image_loadcreate(void)
 		}
 		if (!dev->createimage_options[i].name)
 		{
+			state = STATE_ABORTED;
 			report_message(MSG_FAILURE, "Unknown device '%s'", format);
 			return;
 		}
@@ -494,6 +502,7 @@ static void command_image_loadcreate(void)
 		case MESSTEST_COMMAND_IMAGE_CREATE:
 			if (image_create(image, filename, format_index, NULL))
 			{
+				state = STATE_ABORTED;
 				report_message(MSG_FAILURE, "Failed to create image '%s': %s", filename, image_error(image));
 				return;
 			}
@@ -502,6 +511,7 @@ static void command_image_loadcreate(void)
 		case MESSTEST_COMMAND_IMAGE_LOAD:
 			if (image_load(image, filename))
 			{
+				state = STATE_ABORTED;
 				report_message(MSG_FAILURE, "Failed to load image '%s': %s", filename, image_error(image));
 				return;
 			}
@@ -547,16 +557,19 @@ static void command_image_verify_memory(void)
 	/* sanity check the ranges */
 	if (!verify_data || (verify_data_size <= 0))
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Invalid memory region during verify");
 		return;
 	}
 	if (offset_start > offset_end)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Invalid verify offset range (0x%x-0x%x)", offset_start, offset_end);
 		return;
 	}
 	if (offset_end >= target_data_size)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Verify memory range out of bounds");
 		return;
 	}
@@ -565,6 +578,7 @@ static void command_image_verify_memory(void)
 	{
 		if (verify_data[i] != target_data[offset])
 		{
+			state = STATE_ABORTED;
 			report_message(MSG_FAILURE, "Failed verification step (REGION_%s; 0x%x-0x%x)",
 				memory_region_to_string(region), offset_start, offset_end);
 			break;
@@ -630,6 +644,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		: TIME_IN_SEC(600);
 	if (current_time > time_limit)
 	{
+		state = STATE_ABORTED;
 		report_message(MSG_FAILURE, "Time limit of %.2f seconds exceeded", time_limit);
 		return;
 	}

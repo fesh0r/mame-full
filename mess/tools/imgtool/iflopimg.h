@@ -14,6 +14,30 @@
 #include "library.h"
 
 
+struct ImgtoolFloppyCallbacks
+{
+	const char *eoln;
+	char path_separator;
+	
+	/* flags */
+	unsigned int prefer_ucase : 1;
+	unsigned int initial_path_separator : 1;
+
+	imgtoolerr_t	(*create)		(struct tagIMAGE *img, option_resolution *opts);
+	imgtoolerr_t	(*begin_enum)	(struct tagIMAGE *img, const char *path, struct tagIMAGEENUM **outenum);
+	imgtoolerr_t	(*next_enum)	(struct tagIMAGEENUM *enumeration, imgtool_dirent *ent);
+	void			(*close_enum)	(struct tagIMAGEENUM *enumeration);
+	imgtoolerr_t	(*free_space)	(struct tagIMAGE *img, UINT64 *size);
+	imgtoolerr_t	(*read_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *destf);
+	imgtoolerr_t	(*write_file)	(struct tagIMAGE *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
+	imgtoolerr_t	(*delete_file)	(struct tagIMAGE *img, const char *fname);
+
+	const struct OptionGuide *writefile_optguide;
+	const char *writefile_optspec;
+};
+
+
+
 /***************************************************************************
 
 	Prototypes
@@ -29,7 +53,7 @@ imgtoolerr_t imgtool_floppy_write_sector_from_stream(imgtool_image *img, int hea
 
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,
 	const char *description, const struct FloppyFormat *format,
-	imgtoolerr_t (*populate)(imgtool_library *library, struct ImageModule *module));
+	imgtoolerr_t (*populate)(imgtool_library *library, struct ImgtoolFloppyCallbacks *module));
 
 
 #define FLOPPYMODULE(name, description, format, populate)			\

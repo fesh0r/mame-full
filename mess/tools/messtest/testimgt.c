@@ -10,8 +10,6 @@
 #include "../imgtool/imgtool.h"
 #include "../imgtool/modules.h"
 
-#define TEMPFILE	"tempfile.tmp"
-
 struct expected_dirent
 {
 	char filename[256];
@@ -23,14 +21,26 @@ static imgtool_image *image;
 static struct expected_dirent entries[256];
 static char filename_buffer[256];
 static int entry_count;
+static int failed;
 
 
 
-static void error_imgtoolerr(imgtoolerr_t err)
+static const char *tempfile_name(void)
+{
+	static char buffer[256];
+	strcpy(buffer, "imgtool.tmp");
+	make_filename_temporary(buffer, sizeof(buffer));
+	return buffer;
+}
+
+
+
+static void report_imgtoolerr(imgtoolerr_t err)
 {
 	const char *msg;
+	failed = TRUE;
 	msg = imgtool_error(err);
-	error_report(msg);
+	report_message(MSG_FAILURE, msg);
 }
 
 
@@ -39,6 +49,7 @@ static void createimage_handler(const char **attributes)
 {
 	imgtoolerr_t err;
 	const char *driver;
+	const char *filename;
 
 	driver = find_attribute(attributes, "driver");
 	if (!driver)
@@ -49,17 +60,19 @@ static void createimage_handler(const char **attributes)
 
 	report_message(MSG_INFO, "Creating image (module '%s')", driver);
 
-	err = img_create_byname(library, driver, TEMPFILE, NULL);
+	filename = tempfile_name();
+
+	err = img_create_byname(library, driver, filename, NULL);
 	if (err)
 	{
-		error_imgtoolerr(err);
+		report_imgtoolerr(err);
 		return;
 	}
 
-	err = img_open_byname(library, driver, TEMPFILE, OSD_FOPEN_RW, &image);
+	err = img_open_byname(library, driver, filename, OSD_FOPEN_RW, &image);
 	if (err)
 	{
-		error_imgtoolerr(err);
+		report_imgtoolerr(err);
 		return;
 	}
 }
@@ -86,7 +99,7 @@ static void putfile_end_handler(const void *buffer, size_t size)
 {
 	imgtoolerr_t err;
 	imgtool_stream *stream;
-	
+
 	stream = stream_open_mem((void *) buffer, size);
 	if (!stream)
 	{
@@ -97,7 +110,7 @@ static void putfile_end_handler(const void *buffer, size_t size)
 	err = img_writefile(image, filename_buffer, stream, NULL, NULL);
 	if (err)
 	{
-		error_imgtoolerr(err);
+		report_imgtoolerr(err);
 		return;
 	}
 }
@@ -120,7 +133,8 @@ static void checkdirectory_entry_handler(const char **attributes)
 
 	if (entry_count >= sizeof(entries) / sizeof(entries[0]))
 	{
-		error_report("Too many directory entries");
+		failed = TRUE;
+		report_message(MSG_FAILURE, "Too many directory entries");
 		return;
 	}
 
@@ -146,7 +160,8 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 
 	if (!image)
 	{
-		error_report("Image not loaded");
+		failed = TRUE;
+		report_message(MSG_FAILURE, "Image not loaded");
 		return;
 	}
 
@@ -166,7 +181,8 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 
 		if (ent.eof || strcmp(ent.filename, entries[i].filename))
 		{
-			error_report("Attempt to verify directory listing failed");
+			failed = TRUE;
+			report_message(MSG_FAILURE, "Attempt to verify directory listing failed");
 			goto done;
 		}
 	}
@@ -176,7 +192,8 @@ static void checkdirectory_end_handler(const void *buffer, size_t size)
 		goto done;
 	if (!ent.eof)
 	{
-		error_report("Extra file entries");
+		failed = TRUE;
+		report_message(MSG_FAILURE, "Extra file entries");
 		goto done;
 	}
 
@@ -184,7 +201,7 @@ done:
 	if (imageenum)
 		img_closeenum(imageenum);
 	if (err)
-		error_imgtoolerr(err);
+		report_imgtoolerr(err);
 }
 
 
@@ -192,13 +209,15 @@ done:
 void testimgtool_start_handler(const char **attributes)
 {
 	imgtoolerr_t err;
-	
+
+	failed = FALSE;
+
 	if (!library)
 	{
 		err = imgtool_create_cannonical_library(&library);
 		if (err)
 		{
-			error_imgtoolerr(err);
+			report_imgtoolerr(err);
 			return;
 		}
 	}
@@ -210,7 +229,7 @@ void testimgtool_start_handler(const char **attributes)
 
 void testimgtool_end_handler(const void *buffer, size_t size)
 {
-	report_message(MSG_INFO, "Test succeeded");
+	report_testcase_ran(failed);
 
 	if (image)
 	{

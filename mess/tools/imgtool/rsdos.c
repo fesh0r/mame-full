@@ -68,7 +68,7 @@ OPTION_GUIDE_END
 
 
 
-static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImageModule *module)
+static imgtoolerr_t coco_rsdos_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->prefer_ucase		= 1;
 	module->eoln				= EOLN_CR;
