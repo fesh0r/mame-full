@@ -20,6 +20,9 @@ User Interface Changes:
 - Fixed a bug that caused the image info screen to not work properly with
   multiple images of the same device type.  (bug #677) [Nate Woods]
 
+- [Windows GUI] Fixed a bug that could caused file filters to contain garbled
+  text.  (bug #680) [Nick Westgate, Nate Woods]
+
 
 
 Imgtool Changes:
