@@ -66,14 +66,14 @@ extern unsigned interp_highnot_mask;
 #endif
 
 #define INTERP_16_GEN2(a, b) \
-static inline interp_uint16 interp_16_##a##b(interp_uint16 p1, interp_uint16 p2) \
+INLINE interp_uint16 interp_16_##a##b(interp_uint16 p1, interp_uint16 p2) \
 { \
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*a + INTERP_16_MASK_1(p2)*b) / 16) \
 		| INTERP_16_UNMASK_2((INTERP_16_MASK_2(p1)*a + INTERP_16_MASK_2(p2)*b) / 16); \
 }
 
 #define INTERP_16_GEN3(a, b, c) \
-static inline interp_uint16 interp_16_##a##b##c(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3) \
+INLINE interp_uint16 interp_16_##a##b##c(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3) \
 { \
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*a + INTERP_16_MASK_1(p2)*b + INTERP_16_MASK_1(p3)*c) / 16) \
 		| INTERP_16_UNMASK_2((INTERP_16_MASK_2(p1)*a + INTERP_16_MASK_2(p2)*b + INTERP_16_MASK_2(p3)*c) / 16); \
@@ -88,21 +88,21 @@ static inline interp_uint16 interp_16_##a##b##c(interp_uint16 p1, interp_uint16 
 #define INTERP_32_HNMASK (~0x808080U)
 
 #define INTERP_32_GEN2(a, b) \
-static inline interp_uint32 interp_32_##a##b(interp_uint32 p1, interp_uint32 p2) \
+INLINE interp_uint32 interp_32_##a##b(interp_uint32 p1, interp_uint32 p2) \
 { \
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*a + INTERP_32_MASK_1(p2)*b) / 16) \
 		| INTERP_32_UNMASK_2((INTERP_32_MASK_2(p1)*a + INTERP_32_MASK_2(p2)*b) / 16); \
 }
 
 #define INTERP_32_GEN3(a, b, c) \
-static inline interp_uint32 interp_32_##a##b##c(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3) \
+INLINE interp_uint32 interp_32_##a##b##c(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3) \
 { \
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*a + INTERP_32_MASK_1(p2)*b + INTERP_32_MASK_1(p3)*c) / 16) \
 		| INTERP_32_UNMASK_2((INTERP_32_MASK_2(p1)*a + INTERP_32_MASK_2(p2)*b + INTERP_32_MASK_2(p3)*c) / 16); \
 }
 #endif
 
-static inline interp_uint16 interp_16_11(interp_uint16 p1, interp_uint16 p2)
+INLINE interp_uint16 interp_16_11(interp_uint16 p1, interp_uint16 p2)
 {
 #ifdef USE_INTERP_MASK_1
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1) + INTERP_16_MASK_1(p2)) / 2)
@@ -119,7 +119,7 @@ static inline interp_uint16 interp_16_11(interp_uint16 p1, interp_uint16 p2)
 #endif
 }
 
-static inline interp_uint16 interp_16_211(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
+INLINE interp_uint16 interp_16_211(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
 {
 #ifdef USE_INTERP_MASK_2
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*2 + INTERP_16_MASK_1(p2) + INTERP_16_MASK_1(p3)) / 4)
@@ -129,7 +129,7 @@ static inline interp_uint16 interp_16_211(interp_uint16 p1, interp_uint16 p2, in
 #endif
 }
 
-static inline interp_uint16 interp_16_31(interp_uint16 p1, interp_uint16 p2)
+INLINE interp_uint16 interp_16_31(interp_uint16 p1, interp_uint16 p2)
 {
 #ifdef USE_INTERP_MASK_2
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*3 + INTERP_16_MASK_1(p2)) / 4)
@@ -139,7 +139,7 @@ static inline interp_uint16 interp_16_31(interp_uint16 p1, interp_uint16 p2)
 #endif
 }
 
-static inline interp_uint16 interp_16_521(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
+INLINE interp_uint16 interp_16_521(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*5 + INTERP_16_MASK_1(p2)*2 + INTERP_16_MASK_1(p3)) / 8)
@@ -149,7 +149,7 @@ static inline interp_uint16 interp_16_521(interp_uint16 p1, interp_uint16 p2, in
 #endif
 }
 
-static inline interp_uint16 interp_16_431(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
+INLINE interp_uint16 interp_16_431(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*4 + INTERP_16_MASK_1(p2)*3 + INTERP_16_MASK_1(p3)) / 8)
@@ -159,7 +159,7 @@ static inline interp_uint16 interp_16_431(interp_uint16 p1, interp_uint16 p2, in
 #endif
 }
 
-static inline interp_uint16 interp_16_53(interp_uint16 p1, interp_uint16 p2)
+INLINE interp_uint16 interp_16_53(interp_uint16 p1, interp_uint16 p2)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*5 + INTERP_16_MASK_1(p2)*3) / 8)
@@ -169,7 +169,7 @@ static inline interp_uint16 interp_16_53(interp_uint16 p1, interp_uint16 p2)
 #endif
 }
 
-static inline interp_uint16 interp_16_332(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
+INLINE interp_uint16 interp_16_332(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*3 + INTERP_16_MASK_1(p2)*3 + INTERP_16_MASK_1(p3)*2) / 8)
@@ -180,7 +180,7 @@ static inline interp_uint16 interp_16_332(interp_uint16 p1, interp_uint16 p2, in
 #endif
 }
 
-static inline interp_uint16 interp_16_611(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
+INLINE interp_uint16 interp_16_611(interp_uint16 p1, interp_uint16 p2, interp_uint16 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*6 + INTERP_16_MASK_1(p2) + INTERP_16_MASK_1(p3)) / 8)
@@ -190,7 +190,7 @@ static inline interp_uint16 interp_16_611(interp_uint16 p1, interp_uint16 p2, in
 #endif
 }
 
-static inline interp_uint16 interp_16_71(interp_uint16 p1, interp_uint16 p2)
+INLINE interp_uint16 interp_16_71(interp_uint16 p1, interp_uint16 p2)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_16_UNMASK_1((INTERP_16_MASK_1(p1)*7 + INTERP_16_MASK_1(p2)) / 8)
@@ -219,7 +219,7 @@ INTERP_16_GEN2(9, 7)
 
 #if 0 /* HDG we always use the 16 bits version which we've generalised through
          some defines */
-static inline interp_uint32 interp_32_11(interp_uint32 p1, interp_uint32 p2)
+INLINE interp_uint32 interp_32_11(interp_uint32 p1, interp_uint32 p2)
 {
 #ifdef USE_INTERP_MASK_1
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1) + INTERP_32_MASK_1(p2)) / 2)
@@ -236,7 +236,7 @@ static inline interp_uint32 interp_32_11(interp_uint32 p1, interp_uint32 p2)
 #endif
 }
 
-static inline interp_uint32 interp_32_211(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
+INLINE interp_uint32 interp_32_211(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
 {
 #ifdef USE_INTERP_MASK_2
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*2 + INTERP_32_MASK_1(p2) + INTERP_32_MASK_1(p3)) / 4)
@@ -246,7 +246,7 @@ static inline interp_uint32 interp_32_211(interp_uint32 p1, interp_uint32 p2, in
 #endif
 }
 
-static inline interp_uint32 interp_32_31(interp_uint32 p1, interp_uint32 p2)
+INLINE interp_uint32 interp_32_31(interp_uint32 p1, interp_uint32 p2)
 {
 #ifdef USE_INTERP_MASK_2
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*3 + INTERP_32_MASK_1(p2)) / 4)
@@ -256,7 +256,7 @@ static inline interp_uint32 interp_32_31(interp_uint32 p1, interp_uint32 p2)
 #endif
 }
 
-static inline interp_uint32 interp_32_521(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
+INLINE interp_uint32 interp_32_521(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*5 + INTERP_32_MASK_1(p2)*2 + INTERP_32_MASK_1(p3)) / 8)
@@ -266,7 +266,7 @@ static inline interp_uint32 interp_32_521(interp_uint32 p1, interp_uint32 p2, in
 #endif
 }
 
-static inline interp_uint32 interp_32_431(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
+INLINE interp_uint32 interp_32_431(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*4 + INTERP_32_MASK_1(p2)*3 + INTERP_32_MASK_1(p3)) / 8)
@@ -276,7 +276,7 @@ static inline interp_uint32 interp_32_431(interp_uint32 p1, interp_uint32 p2, in
 #endif
 }
 
-static inline interp_uint32 interp_32_53(interp_uint32 p1, interp_uint32 p2)
+INLINE interp_uint32 interp_32_53(interp_uint32 p1, interp_uint32 p2)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*5 + INTERP_32_MASK_1(p2)*3) / 8)
@@ -286,7 +286,7 @@ static inline interp_uint32 interp_32_53(interp_uint32 p1, interp_uint32 p2)
 #endif
 }
 
-static inline interp_uint32 interp_32_332(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
+INLINE interp_uint32 interp_32_332(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*3 + INTERP_32_MASK_1(p2)*3 + INTERP_32_MASK_1(p3)*2) / 8)
@@ -297,7 +297,7 @@ static inline interp_uint32 interp_32_332(interp_uint32 p1, interp_uint32 p2, in
 #endif
 }
 
-static inline interp_uint32 interp_32_611(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
+INLINE interp_uint32 interp_32_611(interp_uint32 p1, interp_uint32 p2, interp_uint32 p3)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*6 + INTERP_32_MASK_1(p2) + INTERP_32_MASK_1(p3)) / 8)
@@ -307,7 +307,7 @@ static inline interp_uint32 interp_32_611(interp_uint32 p1, interp_uint32 p2, in
 #endif
 }
 
-static inline interp_uint32 interp_32_71(interp_uint32 p1, interp_uint32 p2)
+INLINE interp_uint32 interp_32_71(interp_uint32 p1, interp_uint32 p2)
 {
 #ifdef USE_INTERP_MASK_3
 	return INTERP_32_UNMASK_1((INTERP_32_MASK_1(p1)*7 + INTERP_32_MASK_1(p2)) / 8)
