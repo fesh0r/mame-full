@@ -1,7 +1,11 @@
 #include <assert.h>
+#include <tchar.h>
 #include "SmartListView.h"
 #include "resource.h"
+
+#if HAS_COLUMNEDIT
 #include "ColumnEdit.h"
+#endif
 
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
 static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
@@ -9,8 +13,8 @@ static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem);
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
 {
-    static const CHAR szThreeDots[]="...";
-    static CHAR szShort[MAX_PATH];
+    static const TCHAR szThreeDots[] = TEXT("...");
+    static TCHAR szShort[MAX_PATH];
     int nStringLen=lstrlen(lpszLong);
     int nAddLen;
     SIZE size;
@@ -21,7 +25,7 @@ static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nO
         return lpszLong;
 
     lstrcpy(szShort,lpszLong);
-    GetTextExtentPoint32(hDC,szThreeDots,sizeof(szThreeDots),&size);
+    GetTextExtentPoint32(hDC, szThreeDots, sizeof(szThreeDots) / sizeof(szThreeDots), &size);
     nAddLen=size.cx;
 
     for( i = nStringLen-1; i > 0; i--)
@@ -36,7 +40,7 @@ static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nO
 
     return szShort;
 }
-
+	
 static BOOL PickerHitTest(HWND hWnd)
 {
 	RECT            rect;
@@ -45,7 +49,7 @@ static BOOL PickerHitTest(HWND hWnd)
 	LVHITTESTINFO   htInfo;
 
 	memset(&htInfo,'\0', sizeof(LVHITTESTINFO));
-	p = MAKEPOINTS(res);
+	p = *((POINTS *) &res);
 	GetWindowRect(hWnd, &rect);
 	htInfo.pt.x = p.x - rect.left;
 	htInfo.pt.y = p.y - rect.top;
@@ -104,7 +108,9 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	pListView->nIDDlgItem = pOptions->nIDDlgItem;
 	pListView->hBackground = pOptions->hBackground;
 	pListView->hPALbg = pOptions->hPALbg;
+#if HAS_MYBITMAPINFO
 	pListView->bmDesc = pOptions->bmDesc;
+#endif
 	pListView->bOldControl = pOptions->bOldControl;
 	pListView->rgbListFontColor = pOptions->rgbListFontColor;
 	pListView->nSortCondition = 0;
@@ -169,7 +175,7 @@ static int SmartListView_VisualColumnToLogical(struct SmartListView *pListView, 
 static const char *SmartListView_GetText(struct SmartListView *pListView, int nLogicalRow, int nVisualColumn)
 {
 	int nLogicalColumn;
-	const char *s = NULL;
+	LPCTSTR s = NULL;
 
 	if (pListView->pClass->pfnGetText) {
 		nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, nVisualColumn);
@@ -216,6 +222,7 @@ static int SmartListView_WhichIcon(struct SmartListView *pListView, int nLogical
 /* ------------------------------------------------------------------------ *
  * ColumnEdit Dialog                                                        *
  * ------------------------------------------------------------------------ */
+#if HAS_COLUMNEDIT
 
 static struct SmartListView *MyColumnDialogProc_pListView;
 static int *MyColumnDialogProc_order;
@@ -256,6 +263,7 @@ static BOOL RunColumnDialog(struct SmartListView *pListView)
 	return bResult;
 }
 
+#endif /* HAS_COLUMNEDIT */
 /* ------------------------------------------------------------------------ *
  * Event Handling                                                           *
  * ------------------------------------------------------------------------ */
@@ -277,14 +285,17 @@ BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT w
 		bIsEvent = lpDis->CtlID == (UINT)pListView->nIDDlgItem;
 		break;
 
+#if HAS_CONTEXTMENU
 	case WM_CONTEXTMENU:
 		bIsEvent = (HWND)wParam == pListView->hwndListView;
 		break;
+#endif /* HAS_CONTEXTMENU */
 	}
 
 	return bIsEvent;
 }
 
+#if HAS_CONTEXTMENU
 static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POINT ptScreen)
 {
 	HWND hwndHeader;
@@ -334,6 +345,7 @@ static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POI
 		}
 	}
 }
+#endif
 
 static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR lpNmHdr)
 {
@@ -368,7 +380,9 @@ static BOOL SmartListView_HandleNotify(struct SmartListView *pListView, LPNMHDR 
 			pLvDispinfo->item.state = 0;
 
 		if (pLvDispinfo->item.mask & LVIF_TEXT) {
-			pLvDispinfo->item.pszText = (char *) SmartListView_GetText(pListView, nItem, pLvDispinfo->item.iSubItem);
+			char *pszText;
+			pszText = (char *) SmartListView_GetText(pListView, nItem, pLvDispinfo->item.iSubItem);
+			pLvDispinfo->item.pszText = pszText;
 		}
 		bReturn = TRUE;
 		break;
@@ -397,7 +411,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     int         nVisualItem = lpDrawItemStruct->itemID;
     COLORREF    clrTextSave, clrBkSave;
     COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
-    static CHAR szBuff[MAX_PATH];
+    static TCHAR szBuff[MAX_PATH];
     BOOL        bFocus = (GetFocus() == pListView->hwndListView);
     LPCTSTR     pszText;
     UINT        nStateImageMask;
@@ -409,7 +423,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     RECT        rcIcon;
     int         offset;
     SIZE        size;
-    int         i, j;
+    int         i;
     int         nColumn;
     int         nColumnMax = 0;
     int         nResults = 0;
@@ -442,7 +456,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
     // Labels are offset by a certain amount  
     // This offset is related to the width of a space character
-    GetTextExtentPoint32(hDC, " ", 1 , &size);
+    GetTextExtentPoint32(hDC, TEXT(" "), 1 , &size);
     offset = size.cx * 2;
 
     lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_STATE;
@@ -454,7 +468,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     ListView_GetItem(pListView->hwndListView, &lvi);
 
     // This makes NO sense, but doesn't work without it?
-    strcpy(szBuff, lvi.pszText);
+    _tcscpy(szBuff, lvi.pszText);
 
     bSelected = ((bFocus) || (GetWindowLong(pListView->hwndListView, GWL_STYLE) & LVS_SHOWSELALWAYS))
         && SmartListView_IsItemSelected(pListView, nVisualItem);
@@ -472,10 +486,13 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         RECT        rcClient;
         HRGN        rgnBitmap;
         RECT        rcTmpBmp = rcItem;
-        RECT        rcFirstItem;
-        HPALETTE    hPAL;
         HDC         htempDC;
         HBITMAP     oldBitmap;
+#if HAS_MYBITMAPINFO
+        HPALETTE hPAL;
+        RECT rcFirstItem;
+		int j;
+#endif
 
         htempDC = CreateCompatibleDC(hDC);
 
@@ -492,6 +509,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         SelectClipRgn(hDC, rgnBitmap);
         DeleteObject(rgnBitmap);
 
+#if HAS_MYBITMAPINFO
         hPAL = (!pListView->hPALbg) ? CreateHalftonePalette(hDC) : pListView->hPALbg;
 
         if(GetDeviceCaps(htempDC, RASTERCAPS) & RC_PALETTE && hPAL != NULL )
@@ -501,7 +519,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         }
         
         ListView_GetItemRect(pListView->hwndListView, 0, &rcFirstItem, LVIR_BOUNDS);
-        
+       
         for( i = rcFirstItem.left; i < rcClient.right; i += pListView->bmDesc.bmWidth )
             for( j = rcFirstItem.top; j < rcClient.bottom; j += pListView->bmDesc.bmHeight )
                 BitBlt(hDC, i, j, pListView->bmDesc.bmWidth, pListView->bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY );
@@ -514,6 +532,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
             DeleteObject(hPAL);
             hPAL = 0;
         }
+#endif /* HAS_MYBITMAPINFO */
     }
 
     SetTextColor(hDC, pListView->rgbListFontColor);
@@ -626,12 +645,12 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
             continue;
 
         /* This shouldn't oughtta be, but it's needed!!! */
-        strcpy(szBuff, lvi.pszText);
+        _tcscpy(szBuff, lvi.pszText);
 
         rcItem.left = rcItem.right;
         rcItem.right += lvc.cx;
 
-        nRetLen = strlen(szBuff);
+        nRetLen = _tcslen(szBuff);
         if(nRetLen == 0)
             continue;
 
@@ -676,7 +695,9 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 	BOOL bReturn = FALSE;
 	LPNMHDR lpNmHdr;
 	LPDRAWITEMSTRUCT lpDis;
+#if HAS_CONTEXTMENU
 	POINT pt;
+#endif
 
 	assert(SmartListView_IsEvent(pListView, message, wParam, lParam));
 
@@ -692,6 +713,7 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 		bReturn = TRUE;
 		break;
 
+#if HAS_CONTEXTMENU
 	case WM_CONTEXTMENU:
 		assert((HWND)wParam == pListView->hwndListView);
 		pt.x = LOWORD(lParam);
@@ -699,6 +721,7 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 		SmartListView_HandleContextMenu(pListView, pt);
 		bReturn = TRUE;
 		break;
+#endif /* HAS_CONTEXTMENU */
 	}
 	return bReturn;
 }
@@ -776,7 +799,7 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 		if (shown[order[i]]) {
 			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
 			lvc.fmt = LVCFMT_LEFT; 
-			lvc.pszText = (char *) pListView->pClass->ppColumnNames[order[i]];
+			lvc.pszText = (TCHAR *) pListView->pClass->ppColumnNames[order[i]];
 			lvc.iSubItem = nColumn;
 			lvc.cx = widths[order[i]]; 
 			ListView_InsertColumn(pListView->hwndListView, nColumn, &lvc);
@@ -1015,13 +1038,13 @@ void SmartListView_AssociateImageLists(struct SmartListView *pListView, HIMAGELI
 
 int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn)
 {
-	const char *s1;
-	const char *s2;
+	LPCTSTR s1;
+	LPCTSTR s2;
 	s1 = pListView->pClass->pfnGetText(pListView, nRow1, nColumn);
 	s2 = pListView->pClass->pfnGetText(pListView, nRow2, nColumn);
 	s1 = s1 ? s1 : "";
 	s2 = s2 ? s2 : "";
-	return strcoll(s1, s2);
+	return _tcscoll(s1, s2);
 }
 
 /* ------------------------------------------------------------------------ *

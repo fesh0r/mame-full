@@ -1,6 +1,16 @@
 #include <windows.h>
 #include <commctrl.h>
+
+#ifdef UNDER_CE
+#define HAS_MYBITMAPINFO	0
+#define HAS_COLUMNEDIT		0
+#define HAS_CONTEXTMENU		0
+#else
+#define HAS_MYBITMAPINFO	1
+#define HAS_COLUMNEDIT		1
+#define HAS_CONTEXTMENU		1
 #include "Screenshot.h"
+#endif
 
 struct SmartListView;
 
@@ -8,7 +18,7 @@ struct SmartListViewClass {
 	void (*pfnRun)(struct SmartListView *pListView);
 	BOOL (*pfnItemChanged)(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 	int (*pfnWhichIcon)(struct SmartListView *pListView, int nItem);
-	LPCSTR (*pfnGetText)(struct SmartListView *pListView, int nRow, int nColumn);
+	LPCTSTR (*pfnGetText)(struct SmartListView *pListView, int nRow, int nColumn);
 	void (*pfnGetColumnInfo)(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 	void (*pfnSetColumnInfo)(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 	BOOL (*pfnIsItemSelected)(struct SmartListView *pListView, int nItem);
@@ -16,7 +26,7 @@ struct SmartListViewClass {
 	BOOL (*pfnCanIdle)(struct SmartListView *pListView);
 	void (*pfnIdle)(struct SmartListView *pListView);
 	int nNumColumns;
-	const char **ppColumnNames;
+	const TCHAR **ppColumnNames;
 };
 
 struct SmartListViewOptions {
@@ -25,7 +35,9 @@ struct SmartListViewOptions {
 	int nIDDlgItem;
 	HBITMAP hBackground;
 	HPALETTE hPALbg;
+#if HAS_MYBITMAPINFO
 	MYBITMAPINFO bmDesc;
+#endif /* HAS_MYBITMAPINFO */
 	COLORREF rgbListFontColor;
 	HIMAGELIST hSmall;
 	HIMAGELIST hLarge;
@@ -49,7 +61,9 @@ struct SmartListView {
 	int nIDDlgItem;
 	HBITMAP hBackground;
 	HPALETTE hPALbg;
+#if HAS_MYBITMAPINFO
 	MYBITMAPINFO bmDesc;
+#endif /* HAS_MYBITMAPINFO */
 	COLORREF rgbListFontColor;
 	BOOL bOldControl;
 
