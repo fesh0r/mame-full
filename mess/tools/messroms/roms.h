@@ -854,8 +854,8 @@ static struct {
 	{ 0xbf44ec3f , 0x4000 , "Timex TS-2068 (main)" },
 	{ 0xae16233a , 0x2000 , "Timex TS-2068 (shadow)" },
 
-	{ 0x5ddc0ca2 , 0x4000 , "Unipolbrit UK-2068 (main)" },
-	{ 0xae16233a , 0x2000 , "Unipolbrit UK-2068 (shadow)" },
+	{ 0x5ddc0ca2 , 0x4000 , "Unipolbrit UK-2086 (main)" },
+	{ 0xae16233a , 0x2000 , "Unipolbrit UK-2086 (shadow)" },
 
 	{ 0x2ee3a992 , 0x4000 , "Didaktik Gama" },
 	{ 0x5e3f1f66 , 0x4000 , "Didaktik Gama Polak" },
