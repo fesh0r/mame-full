@@ -189,7 +189,7 @@ static MACHINE_DRIVER_START( snes )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", G65816, 2680000)	/* 2.68Mhz, also 3.58Mhz */
 	MDRV_CPU_MEMORY(snes_readmem, snes_writemem)
-	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, 262)
+	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_NTSC)
 
 	MDRV_CPU_ADD_TAG("sound", SPC700, 2048000)	/* 2.048 Mhz */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
@@ -197,7 +197,7 @@ static MACHINE_DRIVER_START( snes )
 	MDRV_CPU_VBLANK_INT(NULL, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( snes )
@@ -220,7 +220,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( snespal )
 	MDRV_IMPORT_FROM(snes)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, 312)
+	MDRV_CPU_VBLANK_INT(snes_scanline_interrupt, SNES_MAX_LINES_PAL)
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_MACHINE_INIT( snespal )
 MACHINE_DRIVER_END
@@ -254,5 +254,5 @@ ROM_START(snespal)
 ROM_END
 
 /*     YEAR  NAME     PARENT  MACHINE  INPUT  INIT  CONFIG  COMPANY     FULLNAME                                      FLAGS */
-CONSX( 1989, snes,    0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING )
-CONSX( 1991, snespal, snes,   snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING )
+CONSX( 1989, snes,    0,      snes,    snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (NTSC)", GAME_NOT_WORKING | GAME_NO_SOUND )
+CONSX( 1991, snespal, snes,   snespal, snes,  0,    snes,   "Nintendo", "Super Nintendo Entertainment System (PAL)",  GAME_NOT_WORKING | GAME_NO_SOUND )
