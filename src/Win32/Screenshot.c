@@ -59,8 +59,8 @@ static BOOL     AllocatePNG(struct png_info *p, HGLOBAL *phDIB, HPALETTE* pPal);
     Static global variables
 ***************************************************************************/
 
-static HGLOBAL   hDIB = 0;
-static HPALETTE  hPal = 0;
+static HGLOBAL   m_hDIB = 0;
+static HPALETTE  m_hPal = 0;
 static int       nLastGame = -1;
 
 #define WIDTHBYTES(width) ((width) / 8)
@@ -78,7 +78,7 @@ static int   effWidth;
 
 BOOL ScreenShotLoaded(void)
 {
-    return hDIB != NULL;
+    return m_hDIB != NULL;
 }
 
 /* This function will work with both "old" (BITMAPCOREHEADER)
@@ -349,10 +349,10 @@ BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict)
     int x, y;
     int rWidth, rHeight;
     double scale;
-    LPBITMAPINFO bmInfo = (LPBITMAPINFO)hDIB;
+    LPBITMAPINFO bmInfo = (LPBITMAPINFO)m_hDIB;
     BOOL bReduce = FALSE;
 
-    if (hDIB == 0)
+    if (m_hDIB == 0)
         return FALSE;
     
     GetClientRect(hWnd, &rect);
@@ -433,7 +433,7 @@ BOOL LoadScreenShot(int nGame, int nType)
     BOOL loaded = FALSE;
 
     /* No need to reload the same one again */
-    if (nGame == nLastGame && hDIB != 0 && use_flyer == nType)
+    if (nGame == nLastGame && m_hDIB != 0 && use_flyer == nType)
     {
         return TRUE;
     }
@@ -442,16 +442,16 @@ BOOL LoadScreenShot(int nGame, int nType)
     FreeScreenShot();
 
     /* Load the DIB */
-    loaded = LoadDIB(drivers[nGame]->name, &hDIB, &hPal, nType);
+    loaded = LoadDIB(drivers[nGame]->name, &m_hDIB, &m_hPal, nType);
 
     /* If not loaded, see if there is a clone and try that */
     if (!loaded
     &&   (drivers[nGame]->clone_of != NULL)
     &&  !(drivers[nGame]->clone_of->flags & NOT_A_DRIVER))
     {
-        loaded = LoadDIB(drivers[nGame]->clone_of->name, &hDIB, &hPal, nType);
+        loaded = LoadDIB(drivers[nGame]->clone_of->name, &m_hDIB, &m_hPal, nType);
         if (!loaded && drivers[nGame]->clone_of->clone_of)
-            loaded = LoadDIB(drivers[nGame]->clone_of->clone_of->name, &hDIB, &hPal, nType);
+            loaded = LoadDIB(drivers[nGame]->clone_of->clone_of->name, &m_hDIB, &m_hPal, nType);
     }
 
     nLastGame = nGame;
@@ -468,10 +468,10 @@ BOOL DrawScreenShot(HWND hWnd)
     HDC     hDC;
     BOOL    bSuccess = FALSE;
     
-    if (hDIB != 0)
+    if (m_hDIB != 0)
     {
         hDC = GetWindowDC(hWnd);
-        bSuccess = DrawDIB(hWnd, hDC, hDIB, hPal);
+        bSuccess = DrawDIB(hWnd, hDC, m_hDIB, m_hPal);
         ReleaseDC(hWnd, hDC);
     }
     return bSuccess;
@@ -480,13 +480,13 @@ BOOL DrawScreenShot(HWND hWnd)
 /* Delete the HPALETTE and Free the HDIB memory */
 void FreeScreenShot(void)
 {
-    if (hDIB != 0)
-        GlobalFree(hDIB);
-    hDIB = 0;
+    if (m_hDIB != 0)
+        GlobalFree(m_hDIB);
+    m_hDIB = 0;
 
-    if (hPal)
-        DeleteObject(hPal);
-    hPal = 0;
+    if (m_hPal)
+        DeleteObject(m_hPal);
+    m_hPal = 0;
 }
 
 BOOL LoadDIB(LPCTSTR filename, HGLOBAL *phDIB, HPALETTE *pPal, BOOL flyer)

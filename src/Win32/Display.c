@@ -39,7 +39,7 @@
     function prototypes
  ***************************************************************************/
 
-static int                Display_init(options_type *options);
+static int                Display_init(options_type* pOptions);
 static void               Display_exit(void);
 static struct osd_bitmap* Display_alloc_bitmap(int width,int height,int depth);
 static void               Display_free_bitmap(struct osd_bitmap* bitmap);
@@ -147,18 +147,18 @@ static const int                    safety = 16;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int Display_init(options_type *options)
+static int Display_init(options_type* pOptions)
 {
     /* Reset the Snapshot number */
     snapno = 0;
 
-    This.m_dGamma            = max(0, options->gamma);
-    This.m_nBrightness       = max(0, options->brightness);
+    This.m_dGamma            = max(0, pOptions->gamma);
+    This.m_nBrightness       = max(0, pOptions->brightness);
     This.m_bShowFPS          = FALSE;
     This.m_nShowFPSTemp      = 0;
     This.m_bThrottled        = TRUE;
-    This.m_bAutoFrameskip    = options->auto_frame_skip;
-    This.m_nFrameSkip        = options->frame_skip;
+    This.m_bAutoFrameskip    = pOptions->auto_frame_skip;
+    This.m_nFrameSkip        = pOptions->frame_skip;
     This.m_nFrameskipCounter = 0;
     This.m_nFrameskipAdjust  = 0;
     This.m_nSpeed            = 100;
@@ -283,7 +283,7 @@ static void Display_free_bitmap(struct osd_bitmap* pBitmap)
     }
 }
 
-static Display_skip_this_frame(void)
+static int Display_skip_this_frame(void)
 {
     static const int skiptable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
     {

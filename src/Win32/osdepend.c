@@ -93,37 +93,37 @@ int osd_init()
     BOOL    bNetworkInitialized  = FALSE;
 #endif /* MAME_NET */
 
-    options_type *options = GetPlayingGameOptions();
+    options_type *pOptions = GetPlayingGameOptions();
 
-    if (options->error_log)
+    if (pOptions->error_log)
         g_pErrorLog = fopen("error.log", "wa");
     else
         g_pErrorLog = NULL;
 
-    if (options->is_window)
+    if (pOptions->is_window)
         bUseWindow = TRUE;
 
-    if (options->is_window && !options->window_ddraw)
+    if (pOptions->is_window && !pOptions->window_ddraw)
         bUseDirectDraw = FALSE;
 
-    if (options->sound == SOUND_NONE)
+    if (pOptions->sound == SOUND_NONE)
         bNoSound = TRUE;
 
 #if defined(MIDAS)
-    if (options->sound == SOUND_MIDAS)
+    if (pOptions->sound == SOUND_MIDAS)
         bUseMIDASSound = TRUE;
 #endif
 
-    if (options->sound == SOUND_DIRECT)
+    if (pOptions->sound == SOUND_DIRECT)
         bUseDirectSound = TRUE;
 
-    if (options->use_ai_mouse)
+    if (pOptions->use_ai_mouse)
         bUseAIMouse = TRUE;
 
-    if (options->di_keyboard)
+    if (pOptions->di_keyboard)
         bUseDIKeyboard = TRUE;
 
-    if (options->di_joystick)
+    if (pOptions->di_joystick)
         bUseDIJoystick = TRUE;
 
 #ifdef MAME_NET
@@ -135,7 +135,7 @@ int osd_init()
     /*
         Set up.
     */
-    MAME32App_init(options);
+    MAME32App_init(pOptions);
 
     if (bUseDirectDraw == FALSE)
         MAME32App.m_pDisplay = &GDIDisplay;
@@ -167,7 +167,7 @@ int osd_init()
     else
         MAME32App.m_pJoystick = &Joystick;
 
-    if (options->fm_ym3812)
+    if (pOptions->fm_ym3812)
     {
         if (OnNT())
             MAME32App.m_pFMSynth = &NTFMSynth;
@@ -218,7 +218,7 @@ int osd_init()
     uclock_init();
     if (MAME32App.m_pDisplay != NULL)
     {        
-        if (MAME32App.m_pDisplay->init(options) != 0)
+        if (MAME32App.m_pDisplay->init(pOptions) != 0)
             goto error;
         else
             bDisplayInitialized = TRUE;
@@ -226,7 +226,7 @@ int osd_init()
 
     if (MAME32App.m_pSound != NULL)
     {
-        if (MAME32App.m_pSound->init(options) != 0)
+        if (MAME32App.m_pSound->init(pOptions) != 0)
             goto error;
         else
             bSoundInitialized = TRUE;        
@@ -234,7 +234,7 @@ int osd_init()
 
     if (MAME32App.m_pKeyboard != NULL)
     {
-        if (MAME32App.m_pKeyboard->init(options) != 0)
+        if (MAME32App.m_pKeyboard->init(pOptions) != 0)
             goto error;
         else
             bKeyboardInitialized = TRUE;        
@@ -242,7 +242,7 @@ int osd_init()
 
     if (MAME32App.m_pJoystick != NULL)
     {
-        if (MAME32App.m_pJoystick->init(options) != 0)
+        if (MAME32App.m_pJoystick->init(pOptions) != 0)
             goto error;
         else
             bJoystickInitialized = TRUE;
@@ -250,7 +250,7 @@ int osd_init()
 
     if (MAME32App.m_pTrak != NULL)
     {
-        if (MAME32App.m_pTrak->init(options) != 0)
+        if (MAME32App.m_pTrak->init(pOptions) != 0)
             goto error;
         else
             bTrakInitialized = TRUE;
@@ -258,13 +258,13 @@ int osd_init()
 
     if (MAME32App.m_pFMSynth != NULL)
     {
-        if (MAME32App.m_pFMSynth->init(options) != 0)
+        if (MAME32App.m_pFMSynth->init(pOptions) != 0)
             goto error;
         else
             bFMSynthInitialized = TRUE;
     }
 
-    osd_set_mastervolume(- options->volume);
+    osd_set_mastervolume(- pOptions->volume);
     return 0;
 
 error:

@@ -30,7 +30,7 @@
     function prototypes
  ***************************************************************************/
 
-static int          DIKeyboard_init(options_type *options);
+static int          DIKeyboard_init(options_type* pOptions);
 static void         DIKeyboard_exit(void);
 
 static const struct KeyboardInfo * DIKeyboard_get_key_list(void);
@@ -87,13 +87,13 @@ static struct tKeyboard_private This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DIKeyboard_init(options_type *options)
+static int DIKeyboard_init(options_type* pOptions)
 {
     HRESULT hr;
     int i;
 
     This.m_didKeyboard  = NULL;
-    This.m_DefaultInput = options->default_input;
+    This.m_DefaultInput = pOptions->default_input;
     This.m_chPressed    = 0;
 
     for (i = 0; i < 256; i++)

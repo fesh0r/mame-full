@@ -72,6 +72,17 @@
 #include "Net32.h"
 #endif /* MAME_NET */
 
+#if defined(__GNUC__)
+
+/* fix warning: cast does not match function type */
+#undef TreeView_GetNextItem
+#define TreeView_GetNextItem(w,i,c) (HTREEITEM)(LRESULT)SendMessage((w),TVM_GETNEXTITEM,c,(LPARAM)(HTREEITEM)(i))
+
+#undef ListView_GetImageList
+#define ListView_GetImageList(w,i) (HIMAGELIST)(LRESULT)SendMessage((w),LVM_GETIMAGELIST,(i),0)
+
+#endif /* defined(__GNUC__) */
+
 /* Uncomment this to use internal background bitmaps */
 /* #define INTERNAL_BKBITMAP */
 
@@ -131,7 +142,7 @@ static int              GetSelectedPick(void);
 static int              GetSelectedPickItem(void);
 static void             SetSelectedPick(int new_index);
 static void             SetSelectedPickItem(int val);
-static void             SetRandomPickItem();
+static void             SetRandomPickItem(void);
 
 static BOOL             ParseCommandLine(char *command_line);
 static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -145,7 +156,9 @@ static void             MamePlayBackGame(void);
 static BOOL             CommonFileDialog(common_file_dialog_proc cfd,char *filename, BOOL bZip);
 static void             MamePlayRecordAVI(void);
 static BOOL             CommonFileDialogAVI(common_file_dialog_proc cfd,char *filename);
+#ifdef MAME_NET
 static void             MamePlayNetGame(void);
+#endif /* MAME_NET */
 static void             MamePlayGame(void);
 static void             MamePlayGameWithOptions(void);
 static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
@@ -158,8 +171,8 @@ static void             EnablePlayOptions(int nIndex, options_type *o);
 
 /* for header */
 static LRESULT CALLBACK HeaderWndProc(HWND, UINT, WPARAM, LPARAM);
-static void             Header_SetSortInfo(HWND hwndList, int nCol, BOOL bAsc);
-static void             Header_Initialize(HWND hwndList);
+static void             Header_SetSortInfo(HWND hWndList, int nCol, BOOL bAsc);
+static void             Header_Initialize(HWND hWndList);
 static BOOL             ListCtrlOnErase(HWND hWnd, HDC hDC);
 static BOOL             ListCtrlOnPaint(HWND hWnd, UINT uMsg);
 
@@ -170,7 +183,7 @@ static int              WhichIcon(int nItem);
 static void             AddIcon(int index);
 
 /* Context Menu handlers */
-static void             UpdateMenu(HWND hwndList, HMENU hMenu);
+static void             UpdateMenu(HWND hWnd, HMENU hMenu);
 static BOOL             HandleContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam);
 static BOOL             HandleTreeContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam);
@@ -316,7 +329,6 @@ static HINSTANCE hInst;
 
 static HFONT hFont;     /* Font for list view */
 
-static int              page_index;
 static game_data_type*  game_data; 
 static int              game_count;
 
@@ -350,7 +362,9 @@ static BOOL bListReady = FALSE;
 static struct OSDJoystick *joygui;
 
 /* Intellimouse available? (0 = no) */
+#if defined(INTELLIMOUSE)
 static UINT uiMsh_MsgMouseWheel;
+#endif
 
 /* sort columns in reverse order */
 static BOOL reverse_sort = FALSE;
@@ -402,24 +416,26 @@ static char *icon_names[] = {
 
 #define NUM_ICONS           (sizeof(icon_names) / sizeof(icon_names[0]))
 
-static TBBUTTON tbb[] = {
-    {0, ID_VIEW_FOLDERS,    TBSTATE_ENABLED, TBSTYLE_CHECK,      0, 0},
-    {1, ID_VIEW_SCREEN_SHOT,TBSTATE_ENABLED, TBSTYLE_CHECK,      0, 1},
-    {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        0, 0},
-    {2, ID_VIEW_ICON,       TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 2},
-    {3, ID_VIEW_SMALL_ICON, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 3},
-    {4, ID_VIEW_LIST_MENU,  TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 4},
-    {5, ID_VIEW_DETAIL,     TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, 0, 5},
-    {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        0, 0},
-    {6, ID_HELP_ABOUT,      TBSTATE_ENABLED, TBSTYLE_BUTTON,     0, 6},
-    {7, ID_HELP_CONTENTS,   TBSTATE_ENABLED, TBSTYLE_BUTTON,     0, 7}
+static TBBUTTON tbb[] =
+{
+    {0, ID_VIEW_FOLDERS,    TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 0},
+    {1, ID_VIEW_SCREEN_SHOT,TBSTATE_ENABLED, TBSTYLE_CHECK,      {0, 0}, 0, 1},
+    {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        {0, 0}, 0, 0},
+    {2, ID_VIEW_ICON,       TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 2},
+    {3, ID_VIEW_SMALL_ICON, TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 3},
+    {4, ID_VIEW_LIST_MENU,  TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 4},
+    {5, ID_VIEW_DETAIL,     TBSTATE_ENABLED, TBSTYLE_CHECKGROUP, {0, 0}, 0, 5},
+    {0, 0,                  TBSTATE_ENABLED, TBSTYLE_SEP,        {0, 0}, 0, 0},
+    {6, ID_HELP_ABOUT,      TBSTATE_ENABLED, TBSTYLE_BUTTON,     {0, 0}, 0, 6},
+    {7, ID_HELP_CONTENTS,   TBSTATE_ENABLED, TBSTYLE_BUTTON,     {0, 0}, 0, 7}
 };
 
 #define NUM_TOOLBUTTONS (sizeof(tbb) / sizeof(tbb[0]))
 
 #define NUM_TOOLTIPS 7
 
-static char szTbStrings[NUM_TOOLTIPS + 1][30] = {
+static char szTbStrings[NUM_TOOLTIPS + 1][30] =
+{
     "Toggle Folder List",
     "Toggle Screen Shot",
     "Large Icons",
@@ -430,7 +446,8 @@ static char szTbStrings[NUM_TOOLTIPS + 1][30] = {
     "Help"
 };
 
-static int CommandToString[] = {
+static int CommandToString[] =
+{
     ID_VIEW_FOLDERS,
     ID_VIEW_SCREEN_SHOT,
     ID_VIEW_ICON,
@@ -443,23 +460,20 @@ static int CommandToString[] = {
 };
 
 /* How to resize main window */
-static ResizeItem main_resize_items[] = {
-    { RA_HWND, 0,            RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
-    { RA_HWND, 0,            RA_LEFT  | RA_RIGHT  | RA_BOTTOM,  NULL },
-    { RA_ID,   IDC_DIVIDER,  RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
-    { RA_ID,   IDC_TREE,     RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_LIST,     RA_ALL,                            NULL },
-    { RA_ID,   IDC_SPLITTER, RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_SPLITTER2,RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_SSFRAME,  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_SSPICTURE,RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_HISTORY,  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_SSDEFPIC, RA_RIGHT | RA_TOP,                 NULL },
-#ifdef MESS
-    { RA_ID,   IDC_LIST2,    RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-    { RA_ID,   IDC_SPLITTER3,RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
-#endif
-    { RA_END,  0,            0,                                 NULL }
+static ResizeItem main_resize_items[] =
+{
+    { RA_HWND, { 0 },            RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
+    { RA_HWND, { 0 },            RA_LEFT  | RA_RIGHT  | RA_BOTTOM,  NULL },
+    { RA_ID,   { IDC_DIVIDER },  RA_LEFT  | RA_RIGHT  | RA_TOP,     NULL },
+    { RA_ID,   { IDC_TREE },     RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_LIST },     RA_ALL,                            NULL },
+    { RA_ID,   { IDC_SPLITTER }, RA_LEFT  | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_SPLITTER2 },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_SSFRAME },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_SSPICTURE },RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_HISTORY },  RA_RIGHT | RA_BOTTOM | RA_TOP,     NULL },
+    { RA_ID,   { IDC_SSDEFPIC }, RA_RIGHT | RA_TOP,                 NULL },
+    { RA_END,  { 0 },            0,                                 NULL }
 };
 
 static Resize main_resize = { {0, 0, 0, 0}, main_resize_items };
@@ -1210,7 +1224,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     SendMessage(GetDlgItem(hMain, IDC_SSDEFPIC),
                 STM_SETIMAGE,
                 (WPARAM)IMAGE_BITMAP,
-                (LPARAM)LoadImage(GetModuleHandle(NULL),
+                (LPARAM)(void*)LoadImage(GetModuleHandle(NULL),
                                   MAKEINTRESOURCE(IDB_ABOUT),
                                   IMAGE_BITMAP, 0, 0, LR_SHARED));
 
@@ -1394,15 +1408,15 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
         SetConsoleCtrlHandler(HandlerRoutine,1);
         SetConsoleMode(GetStdHandle(STD_INPUT_HANDLE),0);
 
-        cFile = _open_osfhandle((long)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
+        cFile = _open_osfhandle((long)(void*)GetStdHandle(STD_OUTPUT_HANDLE), _O_TEXT);
         pFILE = _fdopen(cFile, "w");
         *stdout = *pFILE;
 
-        cFile = _open_osfhandle((long)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
+        cFile = _open_osfhandle((long)(void*)GetStdHandle(STD_ERROR_HANDLE), _O_TEXT);
         pFILE = _fdopen(cFile, "w");
         *stderr = *pFILE;
 #if 0
-        cFile = _open_osfhandle((long)GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
+        cFile = _open_osfhandle((long)(void*)GetStdHandle(STD_INPUT_HANDLE), _O_TEXT);
         pFILE = _fdopen(cFile, "r");
         *stdin = *pFILE;
 #endif
@@ -1485,7 +1499,6 @@ static void Win32UI_exit()
 
 static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam)
 {
-    static int  nTab;
     MINMAXINFO  *mminfo;
     int         i;
 
@@ -1790,7 +1803,7 @@ static BOOL PumpAndReturnMessage(MSG *pmsg)
     return TRUE;
 }
 
-static void EmptyQueue()
+static void EmptyQueue(void)
 {
     MSG msg;
 
@@ -1853,7 +1866,6 @@ static BOOL IsGameRomless(int iGame)
 
 static BOOL GameCheck(void)
 {
-
     LV_FINDINFO lvfi;
     int         i;
     BOOL        success;
@@ -1898,7 +1910,8 @@ static BOOL GameCheck(void)
     lvfi.flags = LVFI_PARAM;
     lvfi.lParam = game_index;
 
-    if (changed && (i = ListView_FindItem(hwndList, -1, &lvfi)) != -1);
+    i = ListView_FindItem(hwndList, -1, &lvfi);
+    if (changed && i != -1);
         ListView_RedrawItems(hwndList, i, i);
     if ((game_index % progBarStep) == 0)
         ProgressBarStep();
@@ -1911,6 +1924,7 @@ static void OnIdle()
 {
     LV_FINDINFO lvfi;
     int         i;
+    char*       pDescription;
     static int  bFirstTime = TRUE;
     static int  bResetList = TRUE;
 
@@ -1931,7 +1945,8 @@ static void OnIdle()
             
     SetSelectedPick((i != -1) ? i : 0);
     i = GetSelectedPickItem();
-    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) 0, (LPARAM) ModifyThe(drivers[i]->description));
+    pDescription = ModifyThe(drivers[i]->description);
+    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pDescription);
     if (bResetList || (GetViewMode() == VIEW_LARGE_ICONS))
     {
         InitGames(game_count);
@@ -1941,7 +1956,6 @@ static void OnIdle()
     UpdateStatusBar();
     bFirstTime = TRUE;
 }
-
 
 static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
 {
@@ -2244,7 +2258,8 @@ static void UpdateStatusBar()
             if (!GameFiltered(i, lpFolder->m_dwFlags))
                 games_shown++;
         }
-    } while (i != -1);
+    }
+    while (i != -1);
 
     /* Show number of games in the current 'View' in the status bar */
     sprintf(game_text, "%d games", games_shown);
@@ -2255,7 +2270,11 @@ static void UpdateStatusBar()
     if (games_shown == 0)
         DisableSelection();
     else
-        SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) 1, (LPARAM) GameInfoStatus(i));
+    {
+        char* pStatus = GameInfoStatus(i);
+        SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)1, (LPARAM)pStatus);
+    }
+
     if (MAME32App.m_bMMXDetected) 
    {
        options_type *o = GetGameOptions(i);
@@ -2317,6 +2336,7 @@ static void DisableSelection()
 static void EnableSelection(int nGame)
 {
     char            buf[200];
+    char*           pText;
     MENUITEMINFO    mmi;
     HMENU           hMenu = GetMenu(hMain);
     options_type    *o = GetGameOptions(nGame);
@@ -2333,9 +2353,11 @@ static void EnableSelection(int nGame)
     mmi.cch = strlen(mmi.dwTypeData);
     SetMenuItemInfo(hMenu,ID_FILE_PLAY,FALSE,&mmi);
 
-    SendMessage(hStatusBar, SB_SETTEXT, 0, (LPARAM)ModifyThe(drivers[nGame]->description));
+    pText = ModifyThe(drivers[nGame]->description);
+    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)0, (LPARAM)pText);
     /* Add this game's status to the status bar */
-    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) 1, (LPARAM) GameInfoStatus(nGame));
+    pText = GameInfoStatus(nGame);
+    SendMessage(hStatusBar, SB_SETTEXT, (WPARAM)1, (LPARAM)pText);
     if (MAME32App.m_bMMXDetected && o->disable_mmx == FALSE)          
         SendMessage(hStatusBar, SB_SETTEXT, (WPARAM) 3, (LPARAM) "MMX");
     else
@@ -2503,62 +2525,62 @@ static BOOL MamePickerNotify(NMHDR *nm)
 
     case LVN_GETDISPINFO:
         {
-            LV_DISPINFO* pnmv = (LV_DISPINFO*)nm;
-            int nItem = pnmv->item.lParam;
+            LV_DISPINFO* pDispInfo = (LV_DISPINFO*)nm;
+            int nItem = pDispInfo->item.lParam;
 
-            if (pnmv->item.mask & LVIF_IMAGE)
+            if (pDispInfo->item.mask & LVIF_IMAGE)
             {
-               pnmv->item.iImage = WhichIcon(nItem);
+               pDispInfo->item.iImage = WhichIcon(nItem);
             }
 
-            if (pnmv->item.mask & LVIF_STATE)
-                pnmv->item.state = 0;
+            if (pDispInfo->item.mask & LVIF_STATE)
+                pDispInfo->item.state = 0;
 
-            if (pnmv->item.mask & LVIF_TEXT)
+            if (pDispInfo->item.mask & LVIF_TEXT)
             {
-                switch (realColumn[pnmv->item.iSubItem])
+                switch (realColumn[pDispInfo->item.iSubItem])
                 {
                 case COLUMN_GAMES:
                     /* Driver description */
-                    pnmv->item.pszText = (char *)ModifyThe(drivers[nItem]->description);
+                    pDispInfo->item.pszText = (char *)ModifyThe(drivers[nItem]->description);
                     break;
 
                 case COLUMN_ROMS:
                     /* Has Roms */
-                    pnmv->item.pszText = TriStateToText(GetHasRoms(nItem));
+                    pDispInfo->item.pszText = TriStateToText(GetHasRoms(nItem));
                     break;
 
                 case COLUMN_SAMPLES:
                     /* Samples */
                     if (GameUsesSamples(nItem))
                     {
-                        pnmv->item.pszText = TriStateToText(GetHasSamples(nItem));
+                        pDispInfo->item.pszText = TriStateToText(GetHasSamples(nItem));
                     }
                     else
                     {
-                        pnmv->item.pszText = "";
+                        pDispInfo->item.pszText = "";
                     }
                     break;
 
                 case COLUMN_DIRECTORY:
                     /* Driver name (directory) */
-                    pnmv->item.pszText = (char*)drivers[nItem]->name;
+                    pDispInfo->item.pszText = (char*)drivers[nItem]->name;
                     break;
 
                 case COLUMN_TYPE:
                     /* Vector/Raster */
                     if (drivers[nItem]->drv->video_attributes & VIDEO_TYPE_VECTOR)
-                        pnmv->item.pszText = "Vector";
+                        pDispInfo->item.pszText = "Vector";
                     else
-                        pnmv->item.pszText = "Raster";
+                        pDispInfo->item.pszText = "Raster";
                     break;
 
                 case COLUMN_TRACKBALL:
                     /* Trackball */
                     if (GameUsesTrackball(nItem))
-                        pnmv->item.pszText = "Yes";
+                        pDispInfo->item.pszText = "Yes";
                     else
-                        pnmv->item.pszText = "No";
+                        pDispInfo->item.pszText = "No";
                     break;
 
                 case COLUMN_PLAYED:
@@ -2566,22 +2588,22 @@ static BOOL MamePickerNotify(NMHDR *nm)
                     {
                         static char buf[100];
                         sprintf(buf,"%i",GetPlayCount(nItem));
-                        pnmv->item.pszText = buf;
+                        pDispInfo->item.pszText = buf;
                     }
                     break;
 
                 case COLUMN_MANUFACTURER:
                     /* Manufacturer */
-                    pnmv->item.pszText = (char *)drivers[nItem]->manufacturer;
+                    pDispInfo->item.pszText = (char *)drivers[nItem]->manufacturer;
                     break;
 
                 case COLUMN_YEAR:
                     /* Year */
-                    pnmv->item.pszText = (char *)drivers[nItem]->year;
+                    pDispInfo->item.pszText = (char *)drivers[nItem]->year;
                     break;
 
                 case COLUMN_CLONE:
-                    pnmv->item.pszText = (char *)GetCloneParent(nItem);
+                    pDispInfo->item.pszText = (char *)GetCloneParent(nItem);
                     break;
 
                 }
@@ -2652,7 +2674,6 @@ static BOOL MamePickerNotify(NMHDR *nm)
     }
     return FALSE;
 }
-
 
 static BOOL TreeViewNotify(LPNMHDR nm)
 {
@@ -2813,11 +2834,6 @@ static void PollGUIJoystick()
         SetFocus(hwndList);
         PressKey(hwndList,VK_HOME);
     }    
-    if (joygui->is_joy_pressed(JOYCODE(1,JOYCODE_STICK_BTN,1,JOYCODE_DIR_BTN)))
-    {
-        SetFocus(hwndList);
-        MamePlayGame();
-    }
 }
 
 static void PressKey(HWND hwnd,UINT vk)
@@ -3439,7 +3455,6 @@ static void ResetColumnDisplay(BOOL firstime)
     int         widths[COLUMN_MAX];
     int         order[COLUMN_MAX];
     int         shown[COLUMN_MAX];
-    int         nGame = GetSelectedPickItem();
 
     GetColumnWidths(widths);
     GetColumnOrder(order);
@@ -3540,10 +3555,12 @@ static void AddIcon(int index)
 
 static void ReloadIcons(HWND hWnd)
 {
-    if ((hSmall = ListView_GetImageList(hWnd, LVSIL_SMALL)) != NULL)
+    hSmall = ListView_GetImageList(hWnd, LVSIL_SMALL);
+    if (hSmall != NULL)
         ImageList_Destroy(hSmall);
     
-    if ((hLarge = ListView_GetImageList(hWnd, LVSIL_NORMAL)) != NULL)
+    hLarge = ListView_GetImageList(hWnd, LVSIL_NORMAL);
+    if (hLarge != NULL)
         ImageList_Destroy(hLarge);
 
     hSmall = 0;
@@ -4567,11 +4584,11 @@ static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
     {
     case WM_INITDIALOG:
         {
-            HBITMAP hBitmap;
-            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+            HBITMAP hBmp;
+            hBmp = (HBITMAP)LoadImage(GetModuleHandle(NULL),
                                          MAKEINTRESOURCE(IDB_ABOUT),
                                          IMAGE_BITMAP, 0, 0, LR_SHARED);
-            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
         Static_SetText(GetDlgItem(hDlg,IDC_VERSION), GetVersionString());
         }
         return 1;
@@ -5091,11 +5108,11 @@ static void MamePlayGameWithOptions()
     if (options.beam > 0x00100000)    /* set max to 16 pixels */
         options.beam = 0x00100000;
 
-    options.flicker   = (int)(playing_game_options.flicker * 2.55);
-    if (options.flicker < 0)
-        options.flicker = 0;
-    if (options.flicker > 255)
-        options.flicker = 255;
+    options.vector_flicker = playing_game_options.flicker;
+    if (options.vector_flicker < 0.0)
+        options.vector_flicker = 0.0;
+    if (options.vector_flicker > 100.0)
+        options.vector_flicker = 100.0;
 
     options.translucency   = playing_game_options.translucency;
     options.antialias      = playing_game_options.antialias;
@@ -5285,7 +5302,7 @@ static INT_PTR CALLBACK LoadProgressDialogProc(HWND hDlg, UINT Msg, WPARAM wPara
 
 #ifdef MAME_NET
 
-static void MamePlayNetGame()
+static void MamePlayNetGame(void)
 {
     MAME32App.m_bUseNetwork = TRUE;
 
@@ -5630,7 +5647,7 @@ static BOOL HandleContextMenu( HWND hWnd, WPARAM wParam, LPARAM lParam)
     return TRUE;
 }
 
-static void UpdateMenu(HWND hwndList, HMENU hMenu)
+static void UpdateMenu(HWND hWnd, HMENU hMenu)
 {
     char            buf[200];
     MENUITEMINFO    mItem;
@@ -5716,7 +5733,8 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     UINT        uiFlags = ILD_TRANSPARENT;
     HIMAGELIST  hImageList;
     int         nItem = lpDrawItemStruct->itemID;
-    COLORREF    clrTextSave, clrBkSave;
+    COLORREF    clrTextSave = 0;
+    COLORREF    clrBkSave = 0;
     COLORREF    clrImage = GetSysColor(COLOR_WINDOW);
     static CHAR szBuff[MAX_PATH];
     BOOL        bFocus = (GetFocus() == hwndList);
@@ -5730,10 +5748,9 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     RECT        rcIcon;
     int         offset;
     SIZE        size;
-    int         i;
+    int         i, j;
     int         nColumn;
     int         nColumnMax = 0;
-    int         nResults = 0;
     int         order[COLUMN_MAX];
 
 
@@ -5793,7 +5810,6 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
         HRGN        rgnBitmap;
         RECT        rcTmpBmp = rcItem;
         RECT        rcFirstItem;
-        int         i, j;
         HPALETTE    hPAL;
         HDC         htempDC;
         HBITMAP     oldBitmap;
@@ -5924,22 +5940,22 @@ static void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
     {
         int nRetLen;
         UINT nJustify;
-        LV_ITEM lvi;
+        LV_ITEM lvItem;
         
         lvc.mask = LVCF_FMT | LVCF_WIDTH;
         ListView_GetColumn(hwndList, order[nColumn] , &lvc);
 
-        lvi.mask = LVIF_TEXT;
-        lvi.iItem = nItem; 
-        lvi.iSubItem = order[nColumn];
-        lvi.pszText = szBuff;
-        lvi.cchTextMax = sizeof(szBuff);
+        lvItem.mask       = LVIF_TEXT;
+        lvItem.iItem      = nItem;
+        lvItem.iSubItem   = order[nColumn];
+        lvItem.pszText    = szBuff;
+        lvItem.cchTextMax = sizeof(szBuff);
 
-        if (ListView_GetItem(hwndList, &lvi) == FALSE)
+        if (ListView_GetItem(hwndList, &lvItem) == FALSE)
             continue;
 
         /* This shouldn't oughtta be, but it's needed!!! */
-        strcpy(szBuff, lvi.pszText);
+        strcpy(szBuff, lvItem.pszText);
 
         rcItem.left = rcItem.right;
         rcItem.right += lvc.cx;
@@ -6161,17 +6177,19 @@ static LRESULT CALLBACK HeaderWndProc( HWND hwnd,  UINT uMsg,  WPARAM wParam,  L
 }
 
 /* Subclass the Listview Header */
-static void Header_Initialize(HWND hwndList)
+static void Header_Initialize(HWND hWndList)
 {
-    /* this will subclass the listview (where WM_DRAWITEM gets sent for
-       the header control) */
-    g_lpHeaderWndProc = (WNDPROC)GetWindowLong(hwndList, GWL_WNDPROC);
-    SetWindowLong(hwndList, GWL_WNDPROC, (LONG)HeaderWndProc);
+    /*
+        this will subclass the listview (where WM_DRAWITEM gets sent for
+        the header control) 
+    */
+    g_lpHeaderWndProc = (WNDPROC)(LONG)GetWindowLong(hWndList, GWL_WNDPROC);
+    SetWindowLong(hWndList, GWL_WNDPROC, (LONG)HeaderWndProc);
 }
 
 
 /* Set Sort information needed by Header */
-static void Header_SetSortInfo(HWND hwndList, int nCol, BOOL bAsc)
+static void Header_SetSortInfo(HWND hWndList, int nCol, BOOL bAsc)
 {
     HWND hwndHeader;
     HD_ITEM hdi;
@@ -6179,7 +6197,7 @@ static void Header_SetSortInfo(HWND hwndList, int nCol, BOOL bAsc)
     m_uHeaderSortCol = nCol;
     m_fHeaderSortAsc = bAsc;
 
-    hwndHeader = GetDlgItem(hwndList, 0);
+    hwndHeader = GetDlgItem(hWndList, 0);
 
     /* change this item to owner draw */
     hdi.mask = HDI_FORMAT;

@@ -43,11 +43,6 @@ static void RenderDoubleBitmapPalette16(struct osd_bitmap* pSrcBitmap, UINT nSrc
 static void RenderDoubleHScanlinesBitmapPalette16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 static void RenderDoubleVScanlinesBitmapPalette16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 
-static void RenderDirtyBitmap16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
-static void RenderDirtyDoubleBitmap16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
-static void RenderDirtyDoubleHScanlinesBitmap16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
-static void RenderDirtyDoubleVScanlinesBitmap16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
-
 static void RenderVDoubleBitmap(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 static void RenderVDoubleHScanlinesBitmap(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 static void RenderVDoubleDirtyBitmap(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
@@ -70,18 +65,18 @@ static void RenderHDoubleVScanlinesBitmap16(struct osd_bitmap* pSrcBitmap, UINT 
 static void RenderHDoubleBitmapPalette16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 static void RenderHDoubleVScanlinesBitmapPalette16(struct osd_bitmap* pSrcBitmap, UINT nSrcStartLine, UINT nSrcStartColumn, UINT nNumLines, UINT nNumColumns, BYTE* pDst, UINT nDstWidth);
 
-static __inline void    DoubleLine(BYTE* pSrc, UINT nSrcQuarterWidth, BYTE* pDst);
-static __inline void    DoubleDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst);
-static __inline void    ExpandLine(BYTE* pSrc, UINT nSrcHalfWidth, BYTE* pDst, BYTE bg);
-static __inline void    ExpandDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, BYTE bg);
-static __inline void    DoubleDirty2Lines(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, UINT nDstWidth);
+INLINE void DoubleLine(BYTE* pSrc, UINT nSrcQuarterWidth, BYTE* pDst);
+INLINE void DoubleDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst);
+INLINE void ExpandLine(BYTE* pSrc, UINT nSrcHalfWidth, BYTE* pDst, BYTE bg);
+INLINE void ExpandDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, BYTE bg);
+INLINE void DoubleDirty2Lines(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, UINT nDstWidth);
 
-static __inline void    DoubleLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst);
-static __inline void    ExpandLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst, WORD bg);
+INLINE void DoubleLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst);
+INLINE void ExpandLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst, WORD bg);
 
-static __inline void    LinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst);
-static __inline void    DoubleLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst);
-static __inline void    ExpandLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst, WORD bg);
+INLINE void LinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst);
+INLINE void DoubleLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst);
+INLINE void ExpandLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst, WORD bg);
 
 #define RenderDirtyBitmap16                     RenderBitmap16
 #define RenderDirtyDoubleBitmap16               RenderDoubleBitmap16
@@ -964,7 +959,7 @@ static void RenderHDoubleVScanlinesBitmapPalette16(struct osd_bitmap* pSrcBitmap
     inlines
  ***************************************************************************/
 
-static __inline void DoubleLine(BYTE* pSrc, UINT nQuarterWidth, BYTE* pDst)
+INLINE void DoubleLine(BYTE* pSrc, UINT nQuarterWidth, BYTE* pDst)
 {
 #if defined(_M_IX86) && defined(_MSC_VER)
     __asm
@@ -995,6 +990,8 @@ static __inline void DoubleLine(BYTE* pSrc, UINT nQuarterWidth, BYTE* pDst)
     BYTE    pixel1;
     BYTE    pixel2;
 
+    nQuarterWidth *= 2;
+
     while (nQuarterWidth--)
     {
         pixel1 = *pSrc++;
@@ -1005,7 +1002,7 @@ static __inline void DoubleLine(BYTE* pSrc, UINT nQuarterWidth, BYTE* pDst)
 #endif
 }
 
-static __inline void DoubleLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst)
+INLINE void DoubleLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst)
 {
     while (nSrcWidth--)
     {
@@ -1013,7 +1010,7 @@ static __inline void DoubleLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst)
     }
 }
 
-static __inline void DoubleDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst)
+INLINE void DoubleDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst)
 {
     BYTE    pixel1;
     BYTE    pixel2;
@@ -1043,7 +1040,7 @@ static __inline void DoubleDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, 
     }
 }
 
-static __inline void ExpandLine(BYTE* pSrc, UINT nSrcHalfWidth, BYTE* pDst, BYTE bg)
+INLINE void ExpandLine(BYTE* pSrc, UINT nSrcHalfWidth, BYTE* pDst, BYTE bg)
 {
     BYTE    pixel1;
 
@@ -1055,7 +1052,7 @@ static __inline void ExpandLine(BYTE* pSrc, UINT nSrcHalfWidth, BYTE* pDst, BYTE
     }
 }
 
-static __inline void ExpandLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst, WORD bg)
+INLINE void ExpandLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst, WORD bg)
 {
     while (nSrcWidth--)
     {
@@ -1063,7 +1060,7 @@ static __inline void ExpandLine16(WORD* pSrc, UINT nSrcWidth, BYTE* pDst, WORD b
     }
 }
 
-static __inline void ExpandDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, BYTE bg)
+INLINE void ExpandDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, BYTE* pDst, BYTE bg)
 {   
     while (x < nSrcXMax)
     {
@@ -1087,7 +1084,7 @@ static __inline void ExpandDirtyLine(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax, 
     }
 }
 
-static __inline void DoubleDirty2Lines(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax,
+INLINE void DoubleDirty2Lines(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax,
                                        BYTE* pDst, UINT nDstWidth)
 {
     BYTE    pixel1;
@@ -1116,7 +1113,7 @@ static __inline void DoubleDirty2Lines(BYTE* pSrc, UINT x, UINT y, UINT nSrcXMax
     }
 }
 
-static __inline void LinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst)
+INLINE void LinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst)
 {
     while (nSrcWidth--)
     {
@@ -1128,13 +1125,13 @@ static __inline void LinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst)
     }
 }
 
-static __inline void DoubleLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst)
+INLINE void DoubleLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst)
 {
     while (nSrcWidth--)
         *pDst++ = m_p16BitLookup[*(pSrc++)];
 }
 
-static __inline void ExpandLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst, WORD bg)
+INLINE void ExpandLinePalette16(WORD* pSrc, UINT nSrcWidth, DWORD* pDst, WORD bg)
 {
     while (nSrcWidth--)
         *pDst++ = (m_p16BitLookup[*(pSrc++)] & 0xFFFF0000) | bg;

@@ -1,24 +1,24 @@
 /*******************************************************************************
-*																			   *
-*	Define size independent data types and operations.						   *
-*																			   *
-*   The following types must be supported by all platforms:					   *
-*																			   *
-*	UINT8  - Unsigned 8-bit Integer		INT8  - Signed 8-bit integer           *
-*	UINT16 - Unsigned 16-bit Integer	INT16 - Signed 16-bit integer          *
-*	UINT32 - Unsigned 32-bit Integer	INT32 - Signed 32-bit integer          *
-*	UINT64 - Unsigned 64-bit Integer	INT64 - Signed 64-bit integer          *
-*																			   *
-*																			   *
+*                                                                              *
+*   Define size independent data types and operations.                         *
+*                                                                              *
+*   The following types must be supported by all platforms:                    *
+*                                                                              *
+*   UINT8  - Unsigned 8-bit Integer     INT8  - Signed 8-bit integer           *
+*   UINT16 - Unsigned 16-bit Integer    INT16 - Signed 16-bit integer          *
+*   UINT32 - Unsigned 32-bit Integer    INT32 - Signed 32-bit integer          *
+*   UINT64 - Unsigned 64-bit Integer    INT64 - Signed 64-bit integer          *
+*                                                                              *
+*                                                                              *
 *   The macro names for the artithmatic operations are composed as follows:    *
-*																			   *
-*   XXX_R_A_B, where XXX - 3 letter operation code (ADD, SUB, etc.)			   *
-*					 R   - The type	of the result							   *
-*					 A   - The type of operand 1							   *
-*			         B   - The type of operand 2 (if binary operation)		   *
-*																			   *
-*				     Each type is one of: U8,8,U16,16,U32,32,U64,64			   *
-*																			   *
+*                                                                              *
+*   XXX_R_A_B, where XXX - 3 letter operation code (ADD, SUB, etc.)            *
+*                    R   - The type of the result                              *
+*                    A   - The type of operand 1                               *
+*                    B   - The type of operand 2 (if binary operation)         *
+*                                                                              *
+*                    Each type is one of: U8,8,U16,16,U32,32,U64,64            *
+*                                                                              *
 *******************************************************************************/
 
 #ifndef OSD_CPU_H
@@ -28,19 +28,19 @@
 
 #if defined(__GNUC__)
 #include <basetsd.h> /* from w32api */
-typedef unsigned char		UINT8;
-typedef unsigned short		UINT16;
+typedef unsigned char       UINT8;
+typedef unsigned short      UINT16;
 typedef signed char         INT8;
 typedef signed short        INT16;
 #else
 typedef unsigned char       UINT8;
 typedef unsigned short      UINT16;
-typedef unsigned int		UINT32;
-typedef unsigned __int64	UINT64;
-typedef signed char 		INT8;
-typedef signed short		INT16;
-typedef signed int			INT32;
-typedef signed __int64	    INT64;
+typedef unsigned int        UINT32;
+typedef unsigned __int64    UINT64;
+typedef signed char         INT8;
+typedef signed short        INT16;
+typedef signed int          INT32;
+typedef signed __int64      INT64;
 #endif
 
 /* Combine to 32-bit integers into a 64-bit integer */
@@ -48,20 +48,20 @@ typedef signed __int64	    INT64;
 #define COMBINE_U64_U32_U32(A,B)  COMBINE_64_32_32(A,B)
 
 /* Return upper 32 bits of a 64-bit integer */
-#define HI32_32_64(A)		  (((UINT64)(A)) >> 32)
-#define HI32_U32_U64(A)		  HI32_32_64(A)
+#define HI32_32_64(A)         (((UINT64)(A)) >> 32)
+#define HI32_U32_U64(A)       HI32_32_64(A)
 
 /* Return lower 32 bits of a 64-bit integer */
-#define LO32_32_64(A)		  ((A) & 0xffffffff)
-#define LO32_U32_U64(A)		  LO32_32_64(A)
+#define LO32_32_64(A)         ((A) & 0xffffffff)
+#define LO32_U32_U64(A)       LO32_32_64(A)
 
-#define DIV_64_64_32(A,B)	  ((A)/(B))
+#define DIV_64_64_32(A,B)     ((A)/(B))
 #define DIV_U64_U64_U32(A,B)  ((A)/(UINT32)(B))
 
-#define MOD_32_64_32(A,B)	  ((A)%(B))
+#define MOD_32_64_32(A,B)     ((A)%(B))
 #define MOD_U32_U64_U32(A,B)  ((A)%(UINT32)(B))
 
-#define MUL_64_32_32(A,B)	  ((A)*(INT64)(B))
+#define MUL_64_32_32(A,B)     ((A)*(INT64)(B))
 #define MUL_U64_U32_U32(A,B)  ((A)*(UINT64)(UINT32)(B))
 
 /***************************** Common types ***********************************/
@@ -75,15 +75,16 @@ typedef signed __int64	    INT64;
  ******************************************************************************/
 typedef union {
 #ifdef LSB_FIRST
-	struct { UINT8 l,h,h2,h3; } b;
-	struct { UINT16 l,h; } w;
+    struct { UINT8 l,h,h2,h3; } b;
+    struct { UINT16 l,h; } w;
 #else
-	struct { UINT8 h3,h2,h,l; } b;
-	struct { UINT16 h,l; } w;
+    struct { UINT8 h3,h2,h,l; } b;
+    struct { UINT16 h,l; } w;
 #endif
-	UINT32 d;
-}	PAIR;
+    UINT32 d;
+}   PAIR;
 
+#if defined(_MSC_VER)
 /* Turn off type mismatch warnings */
 #pragma warning (disable:4244)
 #pragma warning (disable:4761)
@@ -95,7 +96,7 @@ typedef union {
 
 /* Unused variables */
 /* #pragma warning (disable:4101) */
-
+#endif
 
 #ifndef HAS_CPUS
 #define HAS_CPUS
@@ -111,7 +112,7 @@ typedef union {
 #ifdef MESS
 #define HAS_Z80         1
 #define HAS_Z80GB       1
-#define HAS_CDP1802 	1
+#define HAS_CDP1802     1
 #define HAS_8080        0
 #define HAS_8085A       0
 #define HAS_M6502       1
@@ -159,8 +160,8 @@ typedef union {
 #define HAS_M68020      0
 #define HAS_T11         0
 #define HAS_S2650       0
-#define HAS_F8			1
-#define HAS_CP1600		1
+#define HAS_F8          1
+#define HAS_CP1600      1
 #define HAS_TMS34010    0
 #define HAS_TMS9900     1
 #define HAS_TMS9940     0
@@ -189,8 +190,6 @@ typedef union {
 #else
 #define HAS_Z80         1
 #define HAS_SH2         0
-#define HAS_Z80GB       0
-#define HAS_CDP1802 	0
 #define HAS_8080        1
 #define HAS_8085A       1
 #define HAS_M6502       1
@@ -236,8 +235,6 @@ typedef union {
 #define HAS_M68020      1
 #define HAS_T11         1
 #define HAS_S2650       1
-#define HAS_F8          0
-#define HAS_CP1600      0
 #define HAS_TMS34010    1
 #define HAS_TMS34020    0
 #define HAS_TMS9900     0
@@ -251,20 +248,11 @@ typedef union {
 #define HAS_Z8000       1
 #define HAS_TMS320C10   1
 #define HAS_CCPU        1
-#define HAS_PDP1        0
 #define HAS_ADSP2100    1
 #define HAS_ADSP2105    1
 #define HAS_PSXCPU      1
-#define HAS_SC61860     0
-#define HAS_ARM         0
-#define HAS_G65816      0
-#define HAS_SPC700      0
 #define HAS_ASAP        1
-#define HAS_SH2         0
 #define HAS_I8X41       1
-#define HAS_LH5801      0
-#define HAS_SATURN      0
-#define HAS_APEXC       0
 #define HAS_UPD7810     1
 #endif
 
@@ -349,7 +337,6 @@ typedef union {
 #define HAS_SN76477     1
 #define HAS_SN76496     1
 #define HAS_POKEY       1
-#define HAS_TIA         0
 #define HAS_NES         1
 #define HAS_ASTROCADE   1
 #define HAS_NAMCO       1
@@ -376,12 +363,9 @@ typedef union {
 #define HAS_IREMGA20    1
 #define HAS_ES5505      1
 #define HAS_ES5506      1
-#define HAS_SPEAKER     0
-#define HAS_WAVE        0
-#define HAS_BEEP        0
 #endif
 
 #endif  /* !NEOMAME */
 #endif  /* !HAS_SOUND */
 
-#endif	/* defined OSD_CPU_H */
+#endif  /* defined OSD_CPU_H */

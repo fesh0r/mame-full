@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
 ***************************************************************************/
  
@@ -180,7 +180,6 @@ INT_PTR CALLBACK ColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
             {
             case LVN_KEYDOWN:
                 {
-                    LV_KEYDOWN *pnkd = (LV_KEYDOWN *)nm;
                 }
                 break;
                 
@@ -269,7 +268,6 @@ INT_PTR CALLBACK ColumnDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
        {
             WORD wID         = GET_WM_COMMAND_ID(wParam, lParam);
             HWND hWndCtrl    = GET_WM_COMMAND_HWND(wParam, lParam);
-            WORD wNotifyCode = GET_WM_COMMAND_CMD(wParam, lParam);
             int  nPos = 0;
 
             switch (wID)

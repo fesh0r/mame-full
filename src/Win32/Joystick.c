@@ -48,7 +48,7 @@
     function prototypes
  ***************************************************************************/
 
-static int              Joystick_init(options_type *options);
+static int              Joystick_init(options_type* pOptions);
 static void             Joystick_exit(void);
 static void             Joystick_poll_joysticks(void);
 static const struct JoystickInfo *Joystick_get_joy_list(void);
@@ -150,7 +150,7 @@ static const UINT g_nJoyID[NUM_JOYSTICKS] =
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int Joystick_init(options_type *options)
+static int Joystick_init(options_type* pOptions)
 {
     int         i;
     MMRESULT    mmResult;
@@ -165,7 +165,7 @@ static int Joystick_init(options_type *options)
     }
 
     /* User turned off joy option or a joy driver is not installed. */
-    if (!options->use_joystick
+    if (!pOptions->use_joystick
     ||  joyGetNumDevs() == 0)
     {
        This.m_Joy[0].m_bUseJoystick = FALSE;

@@ -142,7 +142,7 @@ int FindBit(LPBITS lpBits, int nStartPos, BOOL bSet)
 	for (i = nStartPos; i < end; i++)
 	{
         res = (TestBit(lpBits, i)) ? TRUE : FALSE;
-        if (res && bSet || !res && !bSet)
+        if ((res && bSet) || (!res && !bSet))
 			return i;
 	}
 

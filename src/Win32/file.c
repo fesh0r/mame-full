@@ -35,7 +35,14 @@
 
 #define MAX_FILES 500
 
-#define LOG_FILES	0
+/* Verbose outputs to error.log ? */
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x)  logerror x
+#else
+#define LOG(x)  /* x */
+#endif
 
 #ifdef MESS
 int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksum_file)(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc));
@@ -61,7 +68,7 @@ typedef struct
 static int          File_init(void);
 static void         File_exit(void);
 static int          File_faccess(const char *filename, int filetype);
-static void*        File_fopen(const char *gamename,const char *filename,int filetype,int write);
+static void*        File_fopen(const char *gamename,const char *filename,int filetype,int read_or_write);
 static int          File_fread(void *file,void *buffer,int length);
 static int          File_fwrite(void *file,const void *buffer,int length);
 static int          File_fseek(void *file,int offset,int whence);
@@ -194,7 +201,7 @@ int File_faccess(const char *newfilename, int filetype)
     char        name[FILENAME_MAX];
     struct stat file_stat;
     const char* dirname;
-    tDirPaths*  pDirPaths;
+    tDirPaths*  pDirPaths = NULL;
 
     /* if newfilename == NULL, continue the search */
     if (newfilename == NULL)
@@ -279,7 +286,7 @@ int File_faccess(const char *newfilename, int filetype)
 /* gamename holds the driver name, filename is only used for ROMs and samples. */
 /* if 'write' is not 0, the file is opened for write. Otherwise it is opened */
 /* for read. */
-static void *File_fopen(const char *gamename,const char *filename,int filetype,int write)
+static void *File_fopen(const char *gamename, const char *filename, int filetype, int read_or_write)
 {
     char        name[FILENAME_MAX];
     char        subdir[25];
@@ -289,12 +296,12 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
     int         use_flyers = FALSE;
     struct stat stat_buffer;
     mame_file   *mf = NULL;
-    const char* dirname;
-    tDirPaths*  pDirPaths;
+    const char* dirname = NULL;
+    tDirPaths*  pDirPaths = NULL;
 	int			imgType = PICT_SCREENSHOT;
 
     /* Writing to samples and roms are not allowed */
-    if (write && 
+    if (read_or_write && 
 #ifdef MESS
         (OSD_FILETYPE_ROM == filetype || OSD_FILETYPE_SAMPLE == filetype || filetype==OSD_FILETYPE_IMAGE_R))
 #else
@@ -321,38 +328,49 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
 
     mf->access_type = ACCESS_FILE;
 
-#if LOG_FILES
-	logerror("File_fopen: gamename='%s' filename='%s' filetype=%i write=%i index=%i\n",
-		gamename, filename, filetype, write, i);
-#endif
-
     switch (filetype)
     {
 #ifdef MESS
 	case OSD_FILETYPE_IMAGE_R:
-		if (write)
+		if (read_or_write)
 			break;
 		/* Fall through */
 
 	case OSD_FILETYPE_IMAGE_RW:
-		found = MessImageFopen(filename, mf, write, checksum_file);
+		found = MessImageFopen(filename, mf, read_or_write, checksum_file);
 		break;
 #endif
 
     case OSD_FILETYPE_ROM:
     case OSD_FILETYPE_SAMPLE:
+
+        if (filetype == OSD_FILETYPE_ROM)
+        {
+            LOG(("osd_fopen: attempting to %s rom '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+        }
+        else
+        {
+            LOG(("osd_fopen: attempting to %s sample '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+        }
         
         /* only for reading */
-        if (write)
+        if (read_or_write)
 		{
 			logerror("osd_fopen: type %02x write not supported\n", filetype);
             break;
 		}
 
         if (filetype == OSD_FILETYPE_ROM)
+        {
+            LOG(("osd_fopen: using rompath\n"));
             pDirPaths = &RomDirPath;
+        }
+
         if (filetype == OSD_FILETYPE_SAMPLE)
+        {
+            LOG(("osd_fopen: using samplepath\n"));
             pDirPaths = &SampleDirPath;
+        }
 
         for (i = 0; i < pDirPaths->m_NumPaths && !found; i++)
         {
@@ -362,6 +380,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             if (!found)
             {
                 sprintf(name, "%s/%s.zip", dirname, gamename);
+                LOG(("Trying %s\n", name));
                 if (stat(name, &stat_buffer) == 0)
                 {
                     if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
@@ -377,6 +396,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             if (!found)
             {
                 sprintf(name, "%s/%s", dirname, gamename);
+                LOG(("Trying %s file\n", name));
                 if (stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
                 {
                     sprintf(name, "%s/%s/%s", dirname, gamename, filename);
@@ -402,6 +422,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             if (!found)
             {
                 sprintf(name, "%s/%s.zip", dirname, gamename);
+                LOG(("Trying %s directory\n", name));
                 if (stat(name, &stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR))
                 {
                     sprintf(name, "%s/%s.zip/%s",dirname,gamename,filename);
@@ -427,13 +448,229 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         }
         break;
 
+    case OSD_FILETYPE_NVRAM:
+    case OSD_FILETYPE_HIGHSCORE:
+    case OSD_FILETYPE_CONFIG:
+
+        if (filetype == OSD_FILETYPE_NVRAM)
+        {
+            LOG(("osd_fopen: attempting to %s nvram '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+            strcpy(typestr, "nv");
+            dirname = GetNvramDir();
+        }
+        else
+        if (filetype == OSD_FILETYPE_HIGHSCORE)
+        {
+            LOG(("osd_fopen: attempting to %s highscore file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+            if (!mame_highscore_enabled())
+                break;
+
+            strcpy(typestr, "hi");
+            dirname = GetHiDir();
+        }
+        else
+        if (filetype == OSD_FILETYPE_CONFIG)
+        {
+            LOG(("osd_fopen: attempting to %s configuration file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+            strcpy(typestr, "cfg");
+            dirname = GetCfgDir();
+        }
+
+        if (!found)
+        {
+            struct stat s;
+
+            if (stat(dirname, &s) != 0)
+                mkdir(dirname);
+
+#ifdef MESS
+			/* In MESS, gamename can be a full pathname in certain situations
+			 * (such as in the NES driver when a battery is being saved.  Hense
+			 * this code
+			 */
+			if (filetype == OSD_FILETYPE_NVRAM) {
+				const char *s = strrchr(gamename, '\\');
+				if (s)
+					gamename = s + 1;
+			}
+#endif
+
+            /* Try Normal file */
+            sprintf(name, "%s/%s.%s", dirname, gamename, typestr);
+            if ((mf->fptr = fopen(name, read_or_write ? "wb" : "rb")) != NULL)
+            {
+                if (read_or_write == 1)
+                {
+                    if (OSD_FILETYPE_HIGHSCORE == filetype)
+                    {
+                        strcpy(hifname,name);
+                        wrote_hi = TRUE;
+                    }
+                    else
+                    if (OSD_FILETYPE_CONFIG == filetype)
+                    {
+                        strcpy(cfgfname,name);
+                        wrote_cfg = TRUE;
+                    }
+                    else
+                    if (OSD_FILETYPE_NVRAM == filetype)
+                    {
+                        strcpy(nvramfname, name);
+                        wrote_nvram = TRUE;
+                    }
+                }
+                mf->access_type = ACCESS_FILE;
+                found = 1;
+            }
+            else
+            if (read_or_write == 0)
+            {
+                /* then zip file. */
+                mf->access_type = ACCESS_ZIP;
+                sprintf(name, "%s.%s", gamename, typestr);
+                sprintf(subdir, "%s.zip", typestr);
+                if (stat(subdir, &stat_buffer) == 0)
+                {
+                    if (load_zipped_file(subdir, name, &mf->file_data, &mf->file_length) == 0)
+                        found = 1;
+                }
+            }
+        }
+
+        /* Try ZipMagic */
+        if (!found)
+        {
+            sprintf(name, "%s.zip/%s.%s", dirname, gamename, typestr);
+            mf->fptr = fopen(name, read_or_write ? "wb" : "rb");
+            mf->access_type = ACCESS_FILE;
+            found = mf->fptr != 0;
+        }
+        
+        break;
+
+    case OSD_FILETYPE_INPUTLOG:
+        {
+            char fname[_MAX_FNAME];
+            char ext[_MAX_EXT];
+
+            LOG(("osd_fopen: attempting to %s input log '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
+            _splitpath(gamename, NULL, NULL, fname, ext);
+
+            if (!strcmp(ext, ".inp"))
+            {
+                mf->access_type = ACCESS_FILE;
+                mf->fptr = fopen(gamename, read_or_write ? "wb" : "rb");
+                found = mf->fptr != 0;
+            }
+            else
+            if (!strcmp(ext, ".zip"))
+            {
+                if (read_or_write == 0)
+                {
+                    sprintf(name, "%s.inp", fname);
+                    if (stat(gamename, &stat_buffer) == 0)
+                    {
+                        if (load_zipped_file(gamename,
+                                             name,
+                                             &mf->file_data,
+                                             &mf->file_length) == 0)
+                        {
+                            mf->access_type = ACCESS_ZIP;
+                            found = 1;
+                        }
+                    }
+                }
+            }
+        }
+        break;
+
+    case OSD_FILETYPE_STATE:
+
+        LOG(("osd_fopen: attempting to %s state save file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
+        sprintf(name, "%s/%s.sta", GetStateDir(), gamename);
+        mf->access_type = ACCESS_FILE;
+        mf->fptr = fopen(name, read_or_write ? "wb" : "rb");
+        if (mf->fptr == 0)
+        {
+            /* try with a .zip directory (if ZipMagic is installed) */
+            sprintf(name, "%s.zip/%s.sta", GetStateDir(), gamename);
+            mf->fptr = fopen(name, read_or_write ? "wb" : "rb");
+            mf->access_type = ACCESS_FILE;
+        }
+
+        found = mf->fptr != 0;
+        break;
+
+    case OSD_FILETYPE_ARTWORK:
+
+        LOG(("osd_fopen: attempting to %s artwork '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
+        /* only for reading */
+        if (read_or_write)
+            break;
+
+#ifdef MESS
+		{
+			/* This code is necessary because image files are often absolute
+			 * pathnames
+			 */
+			const char *s;
+			s = strrchr(filename, '\\');
+			if (s)
+				filename = s + 1;
+		}
+#endif
+
+        sprintf(name, "%s/%s", GetArtDir(), filename);
+        mf->access_type = ACCESS_FILE;
+        mf->fptr = fopen(name, "rb");
+        if (mf->fptr == 0)
+        {
+            /* try with a .zip directory (if ZipMagic is installed) */
+            sprintf(name, "%s/artwork.zip/%s", GetArtDir(), gamename);
+            mf->fptr = fopen(name, "rb");
+            mf->access_type = ACCESS_FILE;
+        }
+        
+        found = mf->fptr != 0;
+
+        if (!found)
+        {
+            /* try .zip file */
+            sprintf(name, "%s/artwork.zip", GetArtDir());
+            mf->access_type = ACCESS_ZIP;
+            if (stat(name, &stat_buffer) == 0)
+            {
+                if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
+                    found = 1;
+            }
+        }
+        else
+            found = mf->fptr != 0;
+        break;
+
+	case OSD_FILETYPE_MEMCARD:
+
+        LOG(("osd_fopen: attempting to %s memory card '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
+		sprintf(name, "%s/%s", GetMemcardDir(), filename);
+		mf->access_type = ACCESS_FILE;
+        mf->fptr = fopen(name, read_or_write ? "wb" : "rb");
+		found = mf->fptr != 0;
+		break;
+
     case OSD_FILETYPE_FLYER:
         use_flyers = TRUE;
 		imgType = GetShowPictType();
+        /* Fallthrough to OSD_FILETYPE_SCREENSHOT */
 
     case OSD_FILETYPE_SCREENSHOT:
+        
+        LOG(("osd_fopen: attempting to %s screenshot '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
 		
-		if (write && imgType != PICT_SCREENSHOT)
+        if (read_or_write && imgType != PICT_SCREENSHOT)
 			return 0;
 
 		switch (imgType)
@@ -453,7 +690,7 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                 mkdir(dirname);
         }
 
-        if (write && filetype == OSD_FILETYPE_SCREENSHOT)
+        if (read_or_write && filetype == OSD_FILETYPE_SCREENSHOT)
         {
             /* Write mode for snapshots only */
             sprintf(name, "%s/%s.png", dirname, gamename);
@@ -462,10 +699,8 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
             break;
         }
         else
-        if (! write)
+        if (! read_or_write)
         {
-            int i;
-
             for (i = 0; i < FORMAT_MAX; i++)
             {
                 /* Try Normal file */
@@ -538,12 +773,38 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
                     break;
             }
         }
-        
-                    break;
+        break;
+
+    case OSD_FILETYPE_HIGHSCORE_DB:
+    case OSD_FILETYPE_LANGUAGE:
+
+        if (filetype == OSD_FILETYPE_HIGHSCORE_DB)
+        {
+            LOG(("osd_fopen: attempting to %s highscore database '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+        }
+        else
+        {
+            LOG(("osd_fopen: attempting to %s language file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+        }
+
+        /* only for reading */
+        if (read_or_write)
+        {
+            logerror("osd_fopen: type %02x write not supported\n", filetype);
+            break;
+        }
+        mf->access_type = ACCESS_FILE;
+        /* open as ASCII files, not binary like the others */
+        mf->fptr = fopen(filename, "r");
+        found = mf->fptr != 0;
+        break;  
 
     case OSD_FILETYPE_HISTORY:
+
+        LOG(("osd_fopen: attempting to %s history file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
         /* only for reading */
-        if (write)
+        if (read_or_write)
         {
             logerror("osd_fopen: type %02x write not supported\n", filetype);
             break;
@@ -554,225 +815,17 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
         break;
 
     case OSD_FILETYPE_CHEAT:
+        
+        LOG(("osd_fopen: attempting to %s cheat file '%s' with name '%s'\n", read_or_write ? "write" : "read", filename, gamename));
+
         mf->access_type = ACCESS_FILE;
         /* open as ASCII files, not binary like the others */
-        mf->fptr = fopen(filename, write ? "a" : "r");
+        mf->fptr = fopen(filename, read_or_write ? "a" : "r");
         found = mf->fptr != 0;
         break;
 
-    case OSD_FILETYPE_HIGHSCORE_DB:
-    case OSD_FILETYPE_LANGUAGE:
-        /* only for reading */
-        if (write)
-        {
-            logerror("osd_fopen: type %02x write not supported\n", filetype);
-            break;
-        }
-        mf->access_type = ACCESS_FILE;
-        /* open as ASCII files, not binary like the others */
-        mf->fptr = fopen(filename, "r");
-        found = mf->fptr != 0;
-        break;
-        
-    case OSD_FILETYPE_HIGHSCORE:
-    case OSD_FILETYPE_NVRAM:
-    case OSD_FILETYPE_CONFIG:
-
-        if (filetype == OSD_FILETYPE_CONFIG)
-        {
-            strcpy(typestr, "cfg");
-            dirname = GetCfgDir();
-        }
-        else
-        if (filetype == OSD_FILETYPE_HIGHSCORE)
-        {
-            if (!mame_highscore_enabled())
-                break;
-
-            strcpy(typestr, "hi");
-            dirname = GetHiDir();
-        }
-        else
-        if (filetype == OSD_FILETYPE_NVRAM)
-        {
-            strcpy(typestr, "nv");
-            dirname = GetNvramDir();
-        }
-
-
-        if (!found)
-        {
-            struct stat s;
-
-            if (stat(dirname, &s) != 0)
-                mkdir(dirname);
-
-#ifdef MESS
-			/* In MESS, gamename can be a full pathname in certain situations
-			 * (such as in the NES driver when a battery is being saved.  Hense
-			 * this code
-			 */
-			if (filetype == OSD_FILETYPE_NVRAM) {
-				const char *s = strrchr(gamename, '\\');
-				if (s)
-					gamename = s + 1;
-			}
-#endif
-
-            /* Try Normal file */
-            sprintf(name, "%s/%s.%s", dirname, gamename, typestr);
-            if ((mf->fptr = fopen(name, write ? "wb" : "rb")) != NULL)
-            {
-                if (write == 1)
-                {
-                    if (OSD_FILETYPE_HIGHSCORE == filetype)
-                    {
-                        strcpy(hifname,name);
-                        wrote_hi = TRUE;
-                    }
-                    else
-                    if (OSD_FILETYPE_CONFIG == filetype)
-                    {
-                        strcpy(cfgfname,name);
-                        wrote_cfg = TRUE;
-                    }
-                    else
-                    if (OSD_FILETYPE_NVRAM == filetype)
-                    {
-                        strcpy(nvramfname, name);
-                        wrote_nvram = TRUE;
-                    }
-                }
-                mf->access_type = ACCESS_FILE;
-                found = 1;
-            }
-            else
-            if (write == 0)
-            {
-                /* then zip file. */
-                mf->access_type = ACCESS_ZIP;
-                sprintf(name, "%s.%s", gamename, typestr);
-                sprintf(subdir, "%s.zip", typestr);
-                if (stat(subdir, &stat_buffer) == 0)
-                {
-                    if (load_zipped_file(subdir, name, &mf->file_data, &mf->file_length) == 0)
-                        found = 1;
-                }
-            }
-        }
-
-        /* Try ZipMagic */
-        if (!found)
-        {
-            sprintf(name, "%s.zip/%s.%s", dirname, gamename, typestr);
-            mf->fptr = fopen(name, write ? "wb" : "rb");
-            mf->access_type = ACCESS_FILE;
-            found = mf->fptr != 0;
-        }
-        
-        break;
-
-    case OSD_FILETYPE_INPUTLOG:
-        {
-            char fname[_MAX_FNAME];
-            char ext[_MAX_EXT];
-
-            _splitpath(gamename, NULL, NULL, fname, ext);
-
-            if (!strcmp(ext, ".inp"))
-            {
-                mf->access_type = ACCESS_FILE;
-                mf->fptr = fopen(gamename, write ? "wb" : "rb");
-                found = mf->fptr != 0;
-            }
-            else
-            if (!strcmp(ext, ".zip"))
-            {
-                if (write == 0)
-                {
-                    sprintf(name, "%s.inp", fname);
-                    if (stat(gamename, &stat_buffer) == 0)
-                    {
-                        if (load_zipped_file(gamename,
-                                             name,
-                                             &mf->file_data,
-                                             &mf->file_length) == 0)
-                        {
-                            mf->access_type = ACCESS_ZIP;
-                            found = 1;
-                        }
-                    }
-                }
-            }
-        }
-        break;
-
-    case OSD_FILETYPE_STATE:
-        sprintf(name, "%s/%s.sta", GetStateDir(), gamename);
-        mf->access_type = ACCESS_FILE;
-        mf->fptr = fopen(name, write ? "wb" : "rb");
-        if (mf->fptr == 0)
-        {
-            /* try with a .zip directory (if ZipMagic is installed) */
-            sprintf(name, "%s.zip/%s.sta", GetStateDir(), gamename);
-            mf->fptr = fopen(name, write ? "wb" : "rb");
-            mf->access_type = ACCESS_FILE;
-        }
-
-        found = mf->fptr != 0;
-        break;
-
-    case OSD_FILETYPE_ARTWORK:
-        /* only for reading */
-        if (write)
-            break;
-
-#ifdef MESS
-		{
-			/* This code is necessary because image files are often absolute
-			 * pathnames
-			 */
-			const char *s;
-			s = strrchr(filename, '\\');
-			if (s)
-				filename = s + 1;
-		}
-#endif
-
-        sprintf(name, "%s/%s", GetArtDir(), filename);
-        mf->access_type = ACCESS_FILE;
-        mf->fptr = fopen(name, "rb");
-        if (mf->fptr == 0)
-        {
-            /* try with a .zip directory (if ZipMagic is installed) */
-            sprintf(name, "%s/artwork.zip/%s", GetStateDir(), gamename);
-            mf->fptr = fopen(name, "rb");
-            mf->access_type = ACCESS_FILE;
-        }
-        
-        found = mf->fptr != 0;
-
-        if (!found)
-        {
-            /* try .zip file */
-            sprintf(name, "%s/artwork.zip", GetArtDir());
-            mf->access_type = ACCESS_ZIP;
-            if (stat(name, &stat_buffer) == 0)
-            {
-                if (load_zipped_file(name, filename, &mf->file_data, &mf->file_length) == 0)
-                    found = 1;
-            }
-        }
-        else
-            found = mf->fptr != 0;
-        break;
-
-	case OSD_FILETYPE_MEMCARD:
-		sprintf(name, "%s/%s", GetMemcardDir(), filename);
-		mf->access_type = ACCESS_FILE;
-        mf->fptr =  fopen(name,write ? "wb" : "rb");
-		found = mf->fptr != 0;
-		break;
+    default:
+        logerror("osd_fopen(): unknown filetype %02x\n", filetype);
     }
 
     if (!found)
@@ -784,7 +837,6 @@ static void *File_fopen(const char *gamename,const char *filename,int filetype,i
 
     return mf;
 }
-
 
 static int File_fread(void *file, void *buffer, int length)
 {
@@ -1007,7 +1059,7 @@ int File_fchecksum(const char *gamename, const char *filename, unsigned int *len
             {
                 if (checksum_zipped_file(name, filename, length, sum) == 0)
                 {
-                    logerror("Using (osd_fchecksum) zip file for %s\n", filename);
+                    LOG(("Using (osd_fchecksum) zip file for %s\n", filename));
                     found = 1;
                 }
             }
@@ -1198,9 +1250,9 @@ BOOL File_ExistZip(const char *gamename, int filetype)
 {
     char        name[FILENAME_MAX];
     struct stat file_stat;
-    tDirPaths*  pDirPaths;
+    tDirPaths*  pDirPaths = NULL;
     int         index;
-    const char* dirname;
+    const char* dirname = NULL;
 
     switch (filetype)
     {

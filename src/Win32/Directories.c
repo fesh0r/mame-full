@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -551,7 +551,7 @@ static void Directories_OnBrowse(HWND hDlg)
 
     if (BrowseForDirectory(hDlg, inbuf, outbuf) == TRUE)
     {
-        int nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
+        nType = ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_DIR_COMBO));
         DirInfo_SetDir(pDirInfo, nType, nItem, outbuf);
         UpdateDirectoryList(hDlg);
     }
@@ -617,10 +617,13 @@ static BOOL Directories_OnBeginLabelEdit(HWND hDlg, NMHDR* pNMHDR)
         /* Last item is placeholder for append */
         if (pItem->iItem == ListView_GetItemCount(GetDlgItem(hDlg, IDC_DIR_LIST)) - 1)
         {
+            HWND hEdit;
+
             if (MAX_DIRS <= DirInfo_NumDir(pDirInfo, nType))
                 return TRUE; /* don't edit */
 
-            Edit_SetText(ListView_GetEditControl(GetDlgItem(hDlg, IDC_DIR_LIST)), "");
+            hEdit = (HWND)(LRESULT)SendMessage(GetDlgItem(hDlg, IDC_DIR_LIST), LVM_GETEDITCONTROL, 0, 0);
+            Edit_SetText(hEdit, "");
         }
     }
 

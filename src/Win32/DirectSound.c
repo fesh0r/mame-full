@@ -39,7 +39,7 @@
     function prototypes
  ***************************************************************************/
 
-static int      DirectSound_init(options_type *options);
+static int      DirectSound_init(options_type* pOptions);
 static void     DirectSound_exit(void);
 static int      DirectSound_start_audio_stream(int stereo);
 static int      DirectSound_update_audio_stream(INT16* buffer);
@@ -110,7 +110,7 @@ typedef HRESULT (WINAPI *dsc_proc)(GUID FAR *lpGUID,
                                    LPDIRECTSOUND FAR *lplpDS,
                                    IUnknown FAR *pUnkOuter);
 
-static int DirectSound_init(options_type *options)
+static int DirectSound_init(options_type* pOptions)
 {
     HRESULT hr;
     UINT error_mode;
@@ -248,6 +248,11 @@ static int DirectSound_start_audio_stream(int stereo)
         dsb = NULL;
         return 0;
     }
+
+    /* set volume now buffer is created. - Bart Puype */
+    hr = IDirectSoundBuffer_SetVolume(dsb, 100 * attenuation);
+    if (FAILED(hr))
+        ErrorMsg("Unable to set volume %s", DirectXDecodeError(hr));
 
     /* clear it out, because we start playing it instantly */
     hr = IDirectSoundBuffer_Lock(dsb, 0, buffer_length, &area1, &len_area1, &area2, &len_area2, 0);

@@ -138,7 +138,7 @@ static void             OnDrawItem(HWND hwnd, const DRAWITEMSTRUCT *lpDrawItem);
 static void             OnLButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
 
 static void ReleaseDDrawObjects(void);
-static int                DDrawWindow_init(options_type *options);
+static int                DDrawWindow_init(options_type* pOptions);
 static void               DDrawWindow_exit(void);
 static struct osd_bitmap* DDrawWindow_alloc_bitmap(int width, int height, int depth);
 static void               DDrawWindow_free_bitmap(struct osd_bitmap* bitmap);
@@ -149,7 +149,7 @@ static void               DDrawWindow_set_debugger_focus(int debugger_has_focus)
 static int                DDrawWindow_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
 static void               DDrawWindow_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2);
+static void               DDrawWindow_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_);
 static void               DDrawWindow_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDrawWindow_led_w(int leds_status);
 static void               DDrawWindow_set_gamma(float gamma);
@@ -201,7 +201,7 @@ extern int win32_debug;
 
 static struct osd_bitmap*  pMAMEBitmap;
 
-static Surface surface; /* keeps track of current surface data while locked */
+static Surface g_surface; /* keeps track of current surface data while locked */
 
 static int scanlines;
 
@@ -266,9 +266,9 @@ static BOOL nAviShowMessage;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DDrawWindow_init(options_type *options)
+static int DDrawWindow_init(options_type* pOptions)
 {
-    OSDDisplay.init(options);
+    OSDDisplay.init(pOptions);
 
     vector_double   = 0;
     vdouble         = FALSE;
@@ -288,10 +288,10 @@ static int DDrawWindow_init(options_type *options)
     use_dirty       = FALSE;
     ui_pen_shared   = FALSE;
 
-    vector_double = options->double_vector;
-    scanlines = options->hscan_lines;
-    scale = options->scale;
-    use_dirty = options->use_dirty;
+    vector_double = pOptions->double_vector;
+    scanlines = pOptions->hscan_lines;
+    scale = pOptions->scale;
+    use_dirty = pOptions->use_dirty;
 
     memset(&infoRed, 0, sizeof(PIXELINFO));
     memset(&infoGrn, 0, sizeof(PIXELINFO));
@@ -410,7 +410,7 @@ static int DDrawWindow_create_display(int width, int height, int depth, int fps,
     /*
         Modify the main window to suit our needs.
     */
-    SetWindowLong(MAME32App.m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME | WS_BORDER);
+    SetWindowLong(MAME32App.m_hWnd, GWL_STYLE, (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME) | WS_BORDER);
 
     sprintf(TitleBuf, "%s - %s", Machine->gamedrv->description, MAME32App.m_Name);
     SetWindowText(MAME32App.m_hWnd, TitleBuf);
@@ -494,13 +494,13 @@ static int DDrawWindow_create_display(int width, int height, int depth, int fps,
     {
         /* in 256 color case, have the game code write into our direct draw back buffer,
         so we just blit/flip it each frame */
-        if (!DirectDrawLock(FALSE,&surface))
+        if (!DirectDrawLock(FALSE,&g_surface))
         {
             ErrorMsg("Error locking\n");
             return 0;
         }
         for (i = 0; i < pMAMEBitmap->height; i++) 
-            pMAMEBitmap->line[i] = surface.bits + i * surface.pitch;
+            pMAMEBitmap->line[i] = g_surface.bits + i * g_surface.pitch;
     }
 
     if (!DirectDrawClipToWindow())
@@ -773,12 +773,12 @@ static void DDrawWindow_get_pen(int pen, unsigned char* pRed, unsigned char* pGr
     }
 }
 
-static void DDrawWindow_mark_dirty(int x1, int y1, int x2, int y2)
+static void DDrawWindow_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_)
 {
-   /*printf("%3i,%3i to %3i,%3i\n",x1,y1,x2,y2); */
+   /*printf("%3i,%3i to %3i,%3i\n",_x1_,_y1_,_x2_,_y2_); */
 
     if (!fast_8bit)
-        MarkDirty(x1,y1,x2,y2);
+        MarkDirty(_x1_,_y1_,_x2_,_y2_);
 }
 
 /*
@@ -898,17 +898,17 @@ static void DrawGame()
       
         if (in_paint)
         {
-            DirectDrawUnlock(FALSE,&surface); /* can fail depending on when called; that's ok */
+            DirectDrawUnlock(FALSE,&g_surface); /* can fail depending on when called; that's ok */
             DirectDrawUpdateScreen();
-            if (DirectDrawLock(FALSE,&surface)) /* can fail depending on when called; that's ok */
+            if (DirectDrawLock(FALSE,&g_surface)) /* can fail depending on when called; that's ok */
             {
                 for (i = 0;i < pMAMEBitmap->height; i++) 
-                    pMAMEBitmap->line[i] = surface.bits + i * surface.pitch;
+                    pMAMEBitmap->line[i] = g_surface.bits + i * g_surface.pitch;
             }
         }
         else
         {
-            if (!DirectDrawUnlock(FALSE,&surface))
+            if (!DirectDrawUnlock(FALSE,&g_surface))
             {
                 ErrorMsg("error unlocking\n");
                 return;
@@ -916,10 +916,10 @@ static void DrawGame()
      
             DirectDrawUpdateScreen();
      
-            if (DirectDrawLock(FALSE,&surface))
+            if (DirectDrawLock(FALSE,&g_surface))
             {
                 for (i = 0; i < pMAMEBitmap->height; i++) 
-                    pMAMEBitmap->line[i] = surface.bits + i * surface.pitch;
+                    pMAMEBitmap->line[i] = g_surface.bits + i * g_surface.pitch;
             }
             MAME32App.ProcessMessages();
      
@@ -934,7 +934,7 @@ static void DrawGame()
     draw_foreground = (!in_paint) && !IsWindowObscured() && ((scale == 1) || scanlines || vdouble);
     
     /* lock our back buffersurface */
-    if (!DirectDrawLock(draw_foreground,&surface))
+    if (!DirectDrawLock(draw_foreground,&g_surface))
         return;
     
     if (draw_foreground)
@@ -994,41 +994,41 @@ static void DrawGame()
         if (scanlines == FALSE)
         {
             if (vdouble)
-                Render8DepthVDouble(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+                Render8DepthVDouble(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
             else
-                Render8Depth(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+                Render8Depth(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
         }
         else
-            Render8DepthDouble(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+            Render8DepthDouble(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
  
         break;
       
     case 2: 
         if (pMAMEBitmap->depth == 16)
         {
-            Render16to16Depth(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+            Render16to16Depth(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
             break;
         }
         if (fast_16bit)
         {
             if (vdouble)
-                Render16DepthVDouble(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+                Render16DepthVDouble(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
             else
-                Render16Depth(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+                Render16Depth(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
             break;
         }
 
         /* if not fast_16bit, fall through to generic... */
     default:
         if (vdouble)
-            RenderGenericDepthVDouble(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+            RenderGenericDepthVDouble(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
         else
-            RenderGenericDepth(surface,start_x,start_y,length_x,length_y,dirty_this_frame);
+            RenderGenericDepth(g_surface,start_x,start_y,length_x,length_y,dirty_this_frame);
         break;
     }
 
     /* Unlock surface */
-    if (!DirectDrawUnlock(draw_foreground,&surface))
+    if (!DirectDrawUnlock(draw_foreground,&g_surface))
     {
         ErrorMsg("Failed to unlock surface!\n");
         return;
@@ -1702,7 +1702,7 @@ static BOOL DirectDrawSetupDrawing()
 
 /* for non-8 bit color depth, return the layout of video memory */
 
-static void DirectDrawCalcDepth(int *bytes_per_pixel, PIXELINFO *r,
+static void DirectDrawCalcDepth(int *bpp, PIXELINFO *r,
                                 PIXELINFO *g, PIXELINFO *b)
 {
     DDSURFACEDESC format;
@@ -1719,7 +1719,7 @@ static void DirectDrawCalcDepth(int *bytes_per_pixel, PIXELINFO *r,
                 DDERR_INVALIDOBJECT,
                 DDERR_INVALIDPARAMS,
                 DDERR_UNSUPPORTEDMODE);
-        *bytes_per_pixel = 1;
+        *bpp = 1;
         return;
     }
 
@@ -1729,7 +1729,7 @@ static void DirectDrawCalcDepth(int *bytes_per_pixel, PIXELINFO *r,
          format.ddpfPixelFormat.dwBBitMask == 0))
     {
         /* ErrorMsg("8 bit color depth ok\n"); */
-        *bytes_per_pixel = 1;
+        *bpp = 1;
     }
     else
     {
@@ -1761,7 +1761,7 @@ static void DirectDrawCalcDepth(int *bytes_per_pixel, PIXELINFO *r,
         for (s = 0; (b->m_dwMask >> b->m_nShift) & (1 << s) ; s++);
         b->m_nSize = s;
 
-        *bytes_per_pixel = format.ddpfPixelFormat.dwRGBBitCount / 8;
+        *bpp = format.ddpfPixelFormat.dwRGBBitCount / 8;
 
         /*
         ErrorMsg("Red   Mask 0x%08x - Shift(%i), Bits(%i)\n", r->m_dwMask, r->m_nShift, r->m_nSize);

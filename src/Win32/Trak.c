@@ -66,7 +66,7 @@ static void OnMButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
 static void OnXButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, WORD wKeyState, WORD wXButton);
 static void OnXButtonUp(HWND hWnd, int x, int y, WORD wKeyState, WORD wXButton);
 
-static int  Trak_init(options_type *options);
+static int  Trak_init(options_type* pOptions);
 static void Trak_exit(void);
 static void Trak_read(int player, int *deltax, int *deltay);
 static int  Trak_pressed(enum ETrakCode eTrakCode);
@@ -120,11 +120,11 @@ static struct tTrak_private This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int Trak_init(options_type *options)
+static int Trak_init(options_type* pOptions)
 {
     POINT pt;
 
-    This.m_bUseAxis     = options->use_ai_mouse;
+    This.m_bUseAxis     = pOptions->use_ai_mouse;
     This.m_bLButton     = FALSE;
     This.m_bMButton     = FALSE;
     This.m_bRButton     = FALSE;

@@ -21,7 +21,7 @@
 
 #if defined(MAME_DEBUG)
 
-extern int  MAME32Debug_init(options_type *options);
+extern int  MAME32Debug_init(options_type* pOptions);
 extern void MAME32Debug_exit(void);
 extern void MAME32Debug_close_display(void);
 extern void MAME32Debug_update_display(struct osd_bitmap *debug_bitmap);
@@ -31,7 +31,7 @@ extern void MAME32Debug_set_debugger_focus(int debugger_has_focus);
 
 #else
 
-#define MAME32Debug_init(options) 0
+#define MAME32Debug_init(pOptions) 0
 #define MAME32Debug_exit()
 #define MAME32Debug_close_display()
 #define MAME32Debug_update_display(debug_bitmap)

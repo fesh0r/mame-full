@@ -33,7 +33,7 @@ typedef struct
 
 struct OSDDisplay
 {
-    int                 (*init)(options_type *options);
+    int                 (*init)(options_type* pOptions);
     void                (*exit)(void);
     struct osd_bitmap*  (*alloc_bitmap)(int width, int height, int depth);
     void                (*free_bitmap)(struct osd_bitmap* bitmap);
@@ -44,7 +44,7 @@ struct OSDDisplay
     int                 (*allocate_colors)(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
     void                (*modify_pen)(int pen, unsigned char red, unsigned char green, unsigned char blue);
     void                (*get_pen)(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-    void                (*mark_dirty)(int x1, int y1, int x2, int y2);
+    void                (*mark_dirty)(int _x1_, int _y1_, int _x2_, int _y2_);
     int                 (*skip_this_frame)(void);
     void                (*update_display)(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
     void                (*led_w)(int leds_status);

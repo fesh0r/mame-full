@@ -57,7 +57,7 @@ static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 static void             AdjustVisibleRect(int xmin, int ymin, int xmax, int ymax);
 static void             AdjustPalette(void);
 
-static int                GDI_init(options_type *options);
+static int                GDI_init(options_type* pOptions);
 static void               GDI_exit(void);
 static struct osd_bitmap* GDI_alloc_bitmap(int width, int height,int depth);
 static void               GDI_free_bitmap(struct osd_bitmap* bitmap);
@@ -68,7 +68,7 @@ static void               GDI_set_debugger_focus(int debugger_has_focus);
 static int                GDI_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
 static void               GDI_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               GDI_mark_dirty(int x1, int y1, int x2, int y2);
+static void               GDI_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_);
 static void               GDI_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               GDI_led_w(int leds_status);
 static void               GDI_set_gamma(float gamma);
@@ -152,6 +152,8 @@ struct tDisplay_private
     UINT32*             m_p16BitLookup;
     UINT32              m_nTotalColors;
 
+    int                 m_nVideoAttributes;
+
     HWND                m_hWndAbout;
 };
 
@@ -169,9 +171,11 @@ static struct tDisplay_private      This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int GDI_init(options_type *options)
+static int GDI_init(options_type* pOptions)
 {
-    OSDDisplay.init(options);
+    int nResult = 0;
+
+    OSDDisplay.init(pOptions);
 
     This.m_pBitmap          = NULL;
     This.m_pTempBitmap      = NULL;
@@ -183,10 +187,10 @@ static int GDI_init(options_type *options)
     This.m_nWindowWidth     = 0;
     This.m_nWindowHeight    = 0;
 
-    This.m_bScanlines       = options->hscan_lines;
-    This.m_bDouble          = (options->scale == 2);
-    This.m_bVectorDouble    = options->double_vector;
-    This.m_bUseDirty        = FALSE; /* options->use_dirty; */
+    This.m_bScanlines       = pOptions->hscan_lines;
+    This.m_bDouble          = (pOptions->scale == 2);
+    This.m_bVectorDouble    = pOptions->double_vector;
+    This.m_bUseDirty        = FALSE; /* pOptions->use_dirty; */
     This.m_nDepth           = Machine->color_depth;
 
     This.m_bAviCapture      = GetAviCapture();
@@ -203,6 +207,8 @@ static int GDI_init(options_type *options)
     This.m_p16BitLookup     = NULL;
     This.m_nTotalColors     = 0;
 
+    This.m_nVideoAttributes = 0;
+
     /* Scanlines don't work. */
     This.m_bScanlines = FALSE;
 
@@ -213,9 +219,9 @@ static int GDI_init(options_type *options)
         This.m_bScanlines = FALSE;
     }
 
-    MAME32Debug_init(options);
+    nResult = MAME32Debug_init(pOptions);
 
-    return 0;
+    return nResult;
 }
 
 /*
@@ -249,6 +255,7 @@ static void GDI_free_bitmap(struct osd_bitmap* pBitmap)
 */
 static int GDI_create_display(int width, int height, int depth, int fps, int attributes, int orientation)
 {
+    int             nResult = 0;
     unsigned int    i;
     RECT            Rect;
     HMENU           hMenu;
@@ -257,7 +264,10 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     int             bmwidth;
     int             bmheight;
 
+    This.m_nVideoAttributes = attributes;
+
     This.m_nDepth = depth;
+    /* Both 15 and 16 bit are 555 */
     if (This.m_nDepth == 15)
         This.m_nDepth = 16;
 
@@ -308,7 +318,7 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
         Crap. The scrbitmap is no longer created before osd_create_display() is called.
         The following code is to figure out how big the actual scrbitmap will be.
     */
-    if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+    if (attributes & VIDEO_TYPE_VECTOR)
     {
         bmwidth  = width;
         bmheight = height;
@@ -370,7 +380,7 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     hMenu = LoadMenu(GetModuleHandle(NULL), MAKEINTRESOURCE(IDR_MAIN_MENU));
     SetMenu(MAME32App.m_hWnd, hMenu);
 
-    SetWindowLong(MAME32App.m_hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME | WS_BORDER);
+    SetWindowLong(MAME32App.m_hWnd, GWL_STYLE, (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME) | WS_BORDER);
 
     sprintf(TitleBuf, "%s - %s", Machine->gamedrv->description, MAME32App.m_Name);
     SetWindowText(MAME32App.m_hWnd, TitleBuf);
@@ -387,7 +397,7 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     Rect.top    = This.m_ClientRect.top;
     Rect.right  = This.m_ClientRect.right;
     Rect.bottom = This.m_ClientRect.bottom + GetStatusHeight();
-    AdjustWindowRect(&Rect, WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME | WS_BORDER, hMenu != NULL);
+    AdjustWindowRect(&Rect, (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME) | WS_BORDER, hMenu != NULL);
 
     This.m_nWindowWidth  = RECT_WIDTH(Rect);
     This.m_nWindowHeight = RECT_HEIGHT(Rect);
@@ -408,11 +418,11 @@ static int GDI_create_display(int width, int height, int depth, int fps, int att
     SetForegroundWindow(MAME32App.m_hWnd);
 
 
-    MAME32Debug_create_display(options.debug_width,
+    nResult = MAME32Debug_create_display(options.debug_width,
                                options.debug_height,
                                depth, fps, attributes, orientation);
 
-    return 0;
+    return nResult;
 }
 
 /*
@@ -498,9 +508,46 @@ static int GDI_allocate_colors(unsigned int totalcolors,
                                const UINT8* debug_palette,
                                UINT32*      debug_pens)
 {
+    int          nResult = 0;
     unsigned int i;
 
     This.m_bModifiablePalette = modifiable ? TRUE : FALSE;
+
+    if (This.m_nVideoAttributes & VIDEO_RGB_DIRECT)
+    {
+        if (This.m_nDepth == 15 || This.m_nDepth == 16) /* 555 */
+        {
+            pens[0] = 0x00007c00;
+            pens[1] = 0x000003e0;
+            pens[2] = 0x0000001f;
+
+            Machine->uifont->colortable[0] = 0;
+            Machine->uifont->colortable[1] = 0x00007fff;
+            Machine->uifont->colortable[2] = 0x00007fff;
+            Machine->uifont->colortable[3] = 0;
+        }
+        else
+        if (This.m_nDepth == 32) /* 0888 */
+        {
+            pens[0] = 0x00ff0000;
+            pens[1] = 0x0000ff00;
+            pens[2] = 0x000000ff;
+
+            Machine->uifont->colortable[0] = 0;
+            Machine->uifont->colortable[1] = 0x00ffffff;
+            Machine->uifont->colortable[2] = 0x00ffffff;
+            Machine->uifont->colortable[3] = 0;
+        }
+        else
+        {
+            ErrorMsg("VIDEO_RGB_DIRECT requires 15 bit or 32 bit color depth.");
+            return 1;
+        }
+
+        nResult = MAME32Debug_allocate_colors(modifiable, debug_palette, debug_pens);
+
+        return nResult;
+    }
 
     This.m_nTotalColors = totalcolors;
     if (This.m_nDepth != 8)
@@ -614,9 +661,9 @@ static int GDI_allocate_colors(unsigned int totalcolors,
         SetPaletteColors();
     }
 
-    MAME32Debug_allocate_colors(modifiable, debug_palette, debug_pens);
+    nResult = MAME32Debug_allocate_colors(modifiable, debug_palette, debug_pens);
 
-    return 0;
+    return nResult;
 }
 
 /*
@@ -662,7 +709,7 @@ static void GDI_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, uns
     }
 }
 
-static void GDI_mark_dirty(int x1, int y1, int x2, int y2)
+static void GDI_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_)
 {
 }
 
@@ -922,6 +969,7 @@ static void OnPaint(HWND hWnd)
             SelectPalette(ps.hdc, hOldPalette, FALSE);
     }
     else
+    if (This.m_nDepth == 16)
     {
         if (This.m_bModifiablePalette)
         {
@@ -974,6 +1022,22 @@ static void OnPaint(HWND hWnd)
                           SRCCOPY);
         }
     }
+    else
+    if (This.m_nDepth == 32)
+    {
+        StretchDIBits(ps.hdc,
+                      0, 0,
+                      This.m_nClientWidth,
+                      This.m_nClientHeight,
+                      0,
+                      0,
+                      This.m_VisibleRect.m_Width,
+                      This.m_VisibleRect.m_Height,
+                      This.m_pBitmap->line[This.m_VisibleRect.m_Top] + (This.m_VisibleRect.m_Left * 4),
+                      This.m_pInfo,
+                      DIB_RGB_COLORS,
+                      SRCCOPY);
+    }
 
     EndPaint(hWnd, &ps); 
 }
@@ -1025,11 +1089,11 @@ static INT_PTR CALLBACK AboutDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
     {
         case WM_INITDIALOG:
         {
-            HBITMAP hBitmap;
-            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+            HBITMAP hBmp;
+            hBmp = (HBITMAP)LoadImage(GetModuleHandle(NULL),
                                          MAKEINTRESOURCE(IDB_ABOUT),
                                          IMAGE_BITMAP, 0, 0, LR_SHARED);
-            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+            SendMessage(GetDlgItem(hDlg, IDC_ABOUT), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
             Static_SetText(GetDlgItem(hDlg, IDC_VERSION), GetVersionString());
             return 1;
         }

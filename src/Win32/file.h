@@ -1,7 +1,7 @@
 /***************************************************************************
 
     M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
     This file is part of MAME32, and may only be used, modified and
     distributed under the terms of the MAME license, in "readme.txt".
@@ -18,7 +18,7 @@ struct OSDFile
     int          (*init)(void);
     void         (*exit)(void);
     int          (*faccess)(const char *filename, int filetype);
-    void*        (*fopen)(const char *gamename, const char *filename, int filetype, int write);
+    void*        (*fopen)(const char *gamename, const char *filename, int filetype, int read_or_write);
     int          (*fread)(void *file, void *buffer, int length);
     int          (*fwrite)(void *file, const void *buffer, int length);
     int          (*fseek)(void *file, int offset, int whence);

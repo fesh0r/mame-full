@@ -82,12 +82,11 @@
     function prototypes
  ***************************************************************************/
 
-static int              DIJoystick_init(options_type *options);
+static int              DIJoystick_init(options_type* pOptions);
 static void             DIJoystick_exit(void);
 static void             DIJoystick_poll_joysticks(void);
 static const struct JoystickInfo *DIJoystick_get_joy_list(void);
 static int              DIJoystick_is_joy_pressed(int joycode);
-static const char*      DIJoystick_joy_name(int joycode);
 static void             DIJoystick_analogjoy_read(int player, int *analog_x, int *analog_y);
 static int              DIJoystick_standard_analog_read(int player, int axis);
 static BOOL             DIJoystick_Available(void);
@@ -189,7 +188,7 @@ static struct JoystickInfo joylist[256] =
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DIJoystick_init(options_type* options)
+static int DIJoystick_init(options_type* pOptions)
 {
     DWORD   i;
     HRESULT hr;
@@ -198,7 +197,7 @@ static int DIJoystick_init(options_type* options)
 
     This.num_joysticks = 0;
 
-    if (!options->use_joystick)
+    if (!pOptions->use_joystick)
        return 0;
 
     if (di == NULL)
@@ -223,7 +222,7 @@ static int DIJoystick_init(options_type* options)
     {
         InitJoystick(&This.joysticks[i]);
         /* User turned off joy option or a joy driver is not installed. */
-        if (!options->use_joystick)
+        if (!pOptions->use_joystick)
             This.joysticks[i].use_joystick = FALSE;
     }
 

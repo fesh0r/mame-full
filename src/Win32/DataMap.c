@@ -44,6 +44,7 @@ void DataMapAdd(DWORD dwCtrlId, DataMapType dmType, CtrlType cType, void *var, i
         if (ctrlNum == -1)
             numCtrls++;
         break;
+
     case DM_INT:
         lpDmap->nValue = *(int *)var;
         lpDmap->nMin = min;
@@ -51,6 +52,9 @@ void DataMapAdd(DWORD dwCtrlId, DataMapType dmType, CtrlType cType, void *var, i
         lpDmap->nVar = (int *)var;
         if (ctrlNum == -1)
             numCtrls++;
+        break;
+
+    case DM_NONE:
         break;
     }
 }
@@ -72,11 +76,16 @@ void PopulateControls(HWND hWnd)
         case CT_BUTTON:
             Button_SetCheck(hCtrl, lpDmap->bValue);
             break;
+
         case CT_COMBOBOX:
             ComboBox_SetCurSel(hCtrl, lpDmap->nValue);
             break;
+
         case CT_SLIDER:
             SendMessage(hCtrl, TBM_SETPOS, (WPARAM)TRUE, (LPARAM)lpDmap->nValue);
+            break;
+
+        case CT_NONE:
             break;
         }
     }
@@ -111,6 +120,9 @@ void ReadControls(HWND hWnd)
             lpDmap->nValue = SendMessage(hCtrl, TBM_GETPOS, 0, 0);
             validate(hCtrl, lpDmap);
             break;
+
+        case CT_NONE:
+            break;
         }
     }
 }
@@ -123,7 +135,6 @@ BOOL ReadControl(HWND hWnd, DWORD dwCtrlId)
     int         i;
     HWND        hCtrl;
     DATA_MAP *  lpDmap = 0;
-    BOOL        changed = FALSE;
 
     for (i = 0; i < numCtrls; i++)
     {
@@ -148,6 +159,9 @@ BOOL ReadControl(HWND hWnd, DWORD dwCtrlId)
         case CT_SLIDER:
             lpDmap->nValue = SendMessage(hCtrl, TBM_GETPOS, 0, 0);
             return validate(hCtrl, lpDmap);
+
+        case CT_NONE:
+            break;
         }
     }
     return FALSE;
@@ -174,8 +188,13 @@ BOOL validate(HWND hCtrl, DATA_MAP *lpDmap)
                 case CT_COMBOBOX:
                     ComboBox_SetCurSel(hCtrl, lpDmap->nValue);
                     break;
+
                 case CT_SLIDER:
                     SendMessage(hCtrl, TBM_GETPOS, (WPARAM)TRUE, (LPARAM)lpDmap->nValue);
+                    break;
+
+                case CT_BUTTON: /* ? */
+                case CT_NONE:
                     break;
                 }
                 return FALSE;
@@ -187,6 +206,9 @@ BOOL validate(HWND hCtrl, DATA_MAP *lpDmap)
         if (lpDmap->func)
             lpDmap->func(hCtrl);
         return TRUE;
+
+    case DM_NONE:
+        break;
     }
     return FALSE;
 }

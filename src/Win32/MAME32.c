@@ -109,25 +109,25 @@ static BOOL auto_pause;
     External functions  
  ***************************************************************************/
 
-void MAME32App_init(options_type *options)
+void MAME32App_init(options_type* pOptions)
 {
     MAME32App.m_hWnd = NULL;
 
     MAME32App.m_bIsInitialized = FALSE;
     MAME32App.m_bIsActive      = FALSE;
     MAME32App.m_bAutoPaused    = FALSE;
-    MAME32App.m_pDisplay    = NULL;
-    MAME32App.m_pSound      = NULL;
-    MAME32App.m_pKeyboard   = NULL;
-    MAME32App.m_pJoystick   = NULL;
-    MAME32App.m_pTrak       = NULL;
-    MAME32App.m_pFMSynth    = NULL;
-    MAME32App.m_bDone       = FALSE;
+    MAME32App.m_pDisplay       = NULL;
+    MAME32App.m_pSound         = NULL;
+    MAME32App.m_pKeyboard      = NULL;
+    MAME32App.m_pJoystick      = NULL;
+    MAME32App.m_pTrak          = NULL;
+    MAME32App.m_pFMSynth       = NULL;
+    MAME32App.m_bDone          = FALSE;
 
 #if defined(MAME_DEBUG)
     auto_pause = FALSE;
 #else
-    auto_pause = options->auto_pause;
+    auto_pause = pOptions->auto_pause;
 #endif
 
 }
@@ -164,7 +164,7 @@ static HWND MAME32_CreateWindow(void)
     return CreateWindowEx(0,
                           "classMAME32",
                           MAME32App.m_Name,
-                          WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME | WS_BORDER,
+                          (WS_OVERLAPPEDWINDOW & ~WS_THICKFRAME) | WS_BORDER,
                           CW_USEDEFAULT,
                           CW_USEDEFAULT,
                           0, 0,

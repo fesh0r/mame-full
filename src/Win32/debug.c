@@ -24,9 +24,13 @@
 #include <windows.h>
 #include <windowsx.h>
 #include "MAME32.h"
-#include "Debug.h"
+#include "debug.h"
 #include "resource.h"
 #include "M32Util.h"
+
+#define MAKECOL(r, g, b) ((((r & 0x000000F8) << 7)) | \
+                          (((g & 0x000000F8) << 2)) | \
+                          (((b & 0x000000F8) >> 3)))
 
 /***************************************************************************
     function prototypes
@@ -34,11 +38,13 @@
 
 static LRESULT CALLBACK MAME32Debug_MessageProc(HWND, UINT, WPARAM, LPARAM);
 
+static HWND MAME32Debug_CreateWindow(HWND hWndParent);
 static void OnPaint(HWND hWnd);
 static void OnPaletteChanged(HWND hWnd, HWND hWndPaletteChange);
 static BOOL OnQueryNewPalette(HWND hWnd);
 static void OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo);
 static void OnClose(HWND hWnd);
+static void OnSysCommand(HWND hWnd, UINT cmd, int x, int y);
 
 /***************************************************************************
     External variables
@@ -78,7 +84,7 @@ static const int               safety = 16;
     External functions  
  ***************************************************************************/
 
-int MAME32Debug_init(options_type *options)
+int MAME32Debug_init(options_type* pOptions)
 {
     memset(&This, 0, sizeof(struct tDisplay_private));
 
@@ -87,72 +93,44 @@ int MAME32Debug_init(options_type *options)
 
 void MAME32Debug_exit(void)
 {
-    
-}
 
-HWND MAME32Debug_CreateWindow(HWND hWndParent)
-{
-    static BOOL     bRegistered = FALSE;
-    HINSTANCE       hInstance = GetModuleHandle(NULL);
-
-    if (bRegistered == FALSE)
-    {
-        WNDCLASS WndClass;
-
-        WndClass.style          = CS_SAVEBITS | CS_BYTEALIGNCLIENT | CS_OWNDC;
-        WndClass.lpfnWndProc    = MAME32Debug_MessageProc;
-        WndClass.cbClsExtra     = 0;
-        WndClass.cbWndExtra     = 0;
-        WndClass.hInstance      = hInstance;
-        WndClass.hIcon          = LoadIcon(hInstance, MAKEINTATOM(IDI_MAME32_ICON));
-        WndClass.hCursor        = LoadCursor(NULL, IDC_ARROW);
-        WndClass.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
-        WndClass.lpszMenuName   = NULL;
-        WndClass.lpszClassName  = (LPCSTR)"classDebugger";
-        
-        if (RegisterClass(&WndClass) == 0)
-            return NULL;
-        bRegistered = TRUE;
-    }
-
-    This.m_hWnd = CreateWindowEx(0,
-                                 "classDebugger",
-                                 MAME32NAME " Debugger",
-                                 WS_OVERLAPPEDWINDOW | WS_BORDER,
-                                 CW_USEDEFAULT,
-                                 CW_USEDEFAULT,
-                                 0, 0,
-                                 hWndParent,
-                                 NULL,
-                                 hInstance,
-                                 NULL);
-
-    return This.m_hWnd;
 }
 
 int MAME32Debug_create_display(int width, int height, int depth, int fps, int attributes, int orientation)
 {
     int     i;
     RECT    Rect;
+    struct osd_bitmap* pBmp;
+
+    if (!mame_debug)
+        return 0;
 
     This.m_nClientWidth  = width;
     This.m_nClientHeight = height;
-    This.m_nDepth        = depth;
+
+    This.m_nDepth = depth;
+    /* Both 15 and 16 bit are 555 */
+    if (This.m_nDepth == 15)
+        This.m_nDepth = 16;
+
+    pBmp = osd_alloc_bitmap(width, height, This.m_nDepth);
 
     /* Create BitmapInfo */
     This.m_pInfo = (BITMAPINFO*)malloc(sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * 256);
 
     This.m_pInfo->bmiHeader.biSize          = sizeof(BITMAPINFOHEADER); 
-    This.m_pInfo->bmiHeader.biWidth         =  (This.m_nClientWidth + (2 * safety)) / (This.m_nDepth / 8);
+    This.m_pInfo->bmiHeader.biWidth         =  (pBmp->line[1] - pBmp->line[0]) / (This.m_nDepth / 8);
     This.m_pInfo->bmiHeader.biHeight        = -(int)(This.m_nClientHeight); /* Negative means "top down" */
     This.m_pInfo->bmiHeader.biPlanes        = 1;
-    This.m_pInfo->bmiHeader.biBitCount      = 8;
+    This.m_pInfo->bmiHeader.biBitCount      = This.m_nDepth;
     This.m_pInfo->bmiHeader.biCompression   = BI_RGB;
     This.m_pInfo->bmiHeader.biSizeImage     = 0;
     This.m_pInfo->bmiHeader.biXPelsPerMeter = 0;
     This.m_pInfo->bmiHeader.biYPelsPerMeter = 0;
     This.m_pInfo->bmiHeader.biClrUsed       = 0;
     This.m_pInfo->bmiHeader.biClrImportant  = 0;
+
+    osd_free_bitmap(pBmp);
 
     /* Palette */
     if (This.m_nDepth == 8)
@@ -202,6 +180,9 @@ int MAME32Debug_create_display(int width, int height, int depth, int fps, int at
 
 void MAME32Debug_close_display(void)
 { 
+    if (!mame_debug)
+        return;
+
     if (This.m_nDepth == 8)
     {
         if (This.m_hPalette != NULL)
@@ -220,6 +201,9 @@ void MAME32Debug_close_display(void)
 
 void MAME32Debug_update_display(struct osd_bitmap *debug_bitmap)
 {
+    if (!mame_debug)
+        return;
+
     This.m_pBitmap = debug_bitmap;
 
     InvalidateRect(This.m_hWnd, &This.m_ClientRect, FALSE);
@@ -232,6 +216,9 @@ int MAME32Debug_allocate_colors(int          modifiable,
                                 UINT32*      debug_pens)
 {
     int i;
+
+    if (!mame_debug)
+        return 0;
 
     if (!debug_pens)
         return 1;
@@ -257,16 +244,29 @@ int MAME32Debug_allocate_colors(int          modifiable,
     }
     else
     {
-        for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+        if (This.m_nDepth == 8)
         {
-            debug_pens[i] = i;
-            This.m_PalEntries[i].peRed    = debug_palette[3 * i + 0];
-            This.m_PalEntries[i].peGreen  = debug_palette[3 * i + 1];
-            This.m_PalEntries[i].peBlue   = debug_palette[3 * i + 2];
-            This.m_PalEntries[i].peFlags  = PC_NOCOLLAPSE;
-        }
+            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+            {
+                *debug_pens++ = i;
+                This.m_PalEntries[i].peRed    = debug_palette[3 * i + 0];
+                This.m_PalEntries[i].peGreen  = debug_palette[3 * i + 1];
+                This.m_PalEntries[i].peBlue   = debug_palette[3 * i + 2];
+                This.m_PalEntries[i].peFlags  = PC_NOCOLLAPSE;
+            }
 
-        SetPaletteEntries(This.m_hPalette, 0, DEBUGGER_TOTAL_COLORS, This.m_PalEntries);
+            SetPaletteEntries(This.m_hPalette, 0, DEBUGGER_TOTAL_COLORS, This.m_PalEntries);
+        }
+        else
+        if (This.m_nDepth == 16)
+        {
+            for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+            {
+                *debug_pens++ = MAKECOL(debug_palette[3 * i + 0],
+                                        debug_palette[3 * i + 1],
+                                        debug_palette[3 * i + 2]);
+            }
+        }
     }
 
     return 0;
@@ -274,6 +274,9 @@ int MAME32Debug_allocate_colors(int          modifiable,
 
 void MAME32Debug_set_debugger_focus(int debugger_has_focus)
 {
+    if (!mame_debug)
+        return;
+
     if (debugger_has_focus)
     {
         SetForegroundWindow(This.m_hWnd);
@@ -284,6 +287,46 @@ void MAME32Debug_set_debugger_focus(int debugger_has_focus)
     Internal functions  
  ***************************************************************************/
 
+static HWND MAME32Debug_CreateWindow(HWND hWndParent)
+{
+    static BOOL     bRegistered = FALSE;
+    HINSTANCE       hInstance = GetModuleHandle(NULL);
+
+    if (bRegistered == FALSE)
+    {
+        WNDCLASS WndClass;
+
+        WndClass.style          = CS_SAVEBITS | CS_BYTEALIGNCLIENT | CS_OWNDC;
+        WndClass.lpfnWndProc    = MAME32Debug_MessageProc;
+        WndClass.cbClsExtra     = 0;
+        WndClass.cbWndExtra     = 0;
+        WndClass.hInstance      = hInstance;
+        WndClass.hIcon          = LoadIcon(hInstance, MAKEINTATOM(IDI_MAME32_ICON));
+        WndClass.hCursor        = LoadCursor(NULL, IDC_ARROW);
+        WndClass.hbrBackground  = (HBRUSH)GetStockObject(BLACK_BRUSH);
+        WndClass.lpszMenuName   = NULL;
+        WndClass.lpszClassName  = (LPCSTR)"classDebugger";
+        
+        if (RegisterClass(&WndClass) == 0)
+            return NULL;
+        bRegistered = TRUE;
+    }
+
+    This.m_hWnd = CreateWindowEx(0,
+                                 "classDebugger",
+                                 MAME32NAME " Debugger",
+                                 WS_OVERLAPPEDWINDOW | WS_BORDER,
+                                 CW_USEDEFAULT,
+                                 CW_USEDEFAULT,
+                                 0, 0,
+                                 hWndParent,
+                                 NULL,
+                                 hInstance,
+                                 NULL);
+
+    return This.m_hWnd;
+}
+
 static LRESULT CALLBACK MAME32Debug_MessageProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam)
 {
     switch (Msg)
@@ -293,6 +336,7 @@ static LRESULT CALLBACK MAME32Debug_MessageProc(HWND hWnd, UINT Msg, WPARAM wPar
         HANDLE_MSG(hWnd, WM_QUERYNEWPALETTE,    OnQueryNewPalette);
         HANDLE_MSG(hWnd, WM_GETMINMAXINFO,      OnGetMinMaxInfo);
         HANDLE_MSG(hWnd, WM_CLOSE,              OnClose);
+        HANDLE_MSG(hWnd, WM_SYSCOMMAND,         OnSysCommand);
     }
 
     return DefWindowProc(hWnd, Msg, wParam, lParam);
@@ -335,7 +379,7 @@ static void OnPaint(HWND hWnd)
             SelectPalette(ps.hdc, hOldPalette, FALSE);
     }
     else
-    if (This.m_nDepth == 16 || This.m_nDepth == 32)
+    if (This.m_nDepth == 16)
     {
         StretchDIBits(ps.hdc,
                       0, 0,
@@ -382,6 +426,12 @@ static void OnGetMinMaxInfo(HWND hWnd, MINMAXINFO* pMinMaxInfo)
 static void OnClose(HWND hWnd)
 {
     SendMessage(MAME32App.m_hWnd, WM_CLOSE, 0, 0);
+}
+
+static void OnSysCommand(HWND hWnd, UINT cmd, int x, int y)
+{
+    if (cmd != SC_KEYMENU)
+        FORWARD_WM_SYSCOMMAND(hWnd, cmd, x, y, DefWindowProc);
 }
 
 #endif

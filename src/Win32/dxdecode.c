@@ -198,6 +198,6 @@ const char * DirectXDecodeError(HRESULT errorval)
             return g_ErrorCode[i].szError;
         }
     }
-    sprintf(tmp, "UNKNOWN: 0x%x", errorval);
+    sprintf(tmp, "UNKNOWN: 0x%x", (unsigned int)errorval);
     return tmp;
 }

@@ -160,7 +160,7 @@ static BOOL     OnSetCursor(HWND hWnd, HWND hWndCursor, UINT codeHitTest, UINT m
 static BOOL     OnPaint(HWND hWnd);
 #endif
 
-static int                DDraw_init(options_type *options);
+static int                DDraw_init(options_type* pOptions);
 static void               DDraw_exit(void);
 static struct osd_bitmap* DDraw_alloc_bitmap(int width, int height, int depth);
 static void               DDraw_free_bitmap(struct osd_bitmap* bitmap);
@@ -171,7 +171,7 @@ static void               DDraw_set_debugger_focus(int debugger_has_focus);
 static int                DDraw_allocate_colors(unsigned int totalcolors, const UINT8 *palette, UINT32 *pens, int modifiable, const UINT8 *debug_palette, UINT32 *debug_pens);
 static void               DDraw_modify_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 static void               DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, unsigned char* pBlue);
-static void               DDraw_mark_dirty(int x1, int y1, int x2, int y2);
+static void               DDraw_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_);
 static void               DDraw_update_display(struct osd_bitmap *game_bitmap, struct osd_bitmap *debug_bitmap);
 static void               DDraw_led_w(int leds_status);
 static void               DDraw_set_gamma(float gamma);
@@ -235,9 +235,9 @@ static struct tDisplay_private This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int DDraw_init(options_type *options)
+static int DDraw_init(options_type* pOptions)
 {
-    OSDDisplay.init(options);
+    OSDDisplay.init(pOptions);
 
     This.m_pBitmap           = NULL;
     This.m_GameRect.m_Top    = 0;
@@ -256,20 +256,20 @@ static int DDraw_init(options_type *options)
     This.m_bHDouble          = FALSE;
     This.m_eDirtyMode        = NO_DIRTY;
 
-    This.m_nDisplayIndex     = options->display_monitor;
-    This.m_bBestFit          = options->display_best_fit;
-    This.m_nScreenWidth      = options->width;
-    This.m_nScreenHeight     = options->height;
-    This.m_nSkipColumns      = max(0, options->skip_columns);
-    This.m_nSkipLines        = max(0, options->skip_lines);
-    This.m_bHScanLines       = options->hscan_lines;
-    This.m_bVScanLines       = options->vscan_lines;
-    This.m_bDouble           = (options->scale == 2);
+    This.m_nDisplayIndex     = pOptions->display_monitor;
+    This.m_bBestFit          = pOptions->display_best_fit;
+    This.m_nScreenWidth      = pOptions->width;
+    This.m_nScreenHeight     = pOptions->height;
+    This.m_nSkipColumns      = max(0, pOptions->skip_columns);
+    This.m_nSkipLines        = max(0, pOptions->skip_lines);
+    This.m_bHScanLines       = pOptions->hscan_lines;
+    This.m_bVScanLines       = pOptions->vscan_lines;
+    This.m_bDouble           = (pOptions->scale == 2);
     This.m_bStretchX         = FALSE;
     This.m_bStretchY         = FALSE;
-    This.m_bUseDirty         = options->use_dirty;
-    This.m_bBltDouble        = options->use_blit;
-    This.m_bDisableMMX       = options->disable_mmx;
+    This.m_bUseDirty         = pOptions->use_dirty;
+    This.m_bBltDouble        = pOptions->use_blit;
+    This.m_bDisableMMX       = pOptions->disable_mmx;
 
     This.m_bAviCapture       = GetAviCapture();
     This.m_bAviRun           = FALSE;
@@ -318,7 +318,7 @@ static int DDraw_init(options_type *options)
         This.m_bUseBackBuffer = TRUE;
     }
 
-    This.m_triple_buffer = options->triple_buffer;
+    This.m_triple_buffer = pOptions->triple_buffer;
 
     if (This.m_triple_buffer == TRUE)
     {
@@ -530,7 +530,6 @@ static int DDraw_create_display(int width, int height, int depth, int fps, int a
     {
         ErrorMsg("IDirectDraw.SetCooperativeLevel failed: %s", DirectXDecodeError(hResult));
         goto error;
-
     }
 
     {
@@ -1070,9 +1069,9 @@ static void DDraw_get_pen(int pen, unsigned char* pRed, unsigned char* pGreen, u
     }   
 }
 
-static void DDraw_mark_dirty(int x1, int y1, int x2, int y2)
+static void DDraw_mark_dirty(int _x1_, int _y1_, int _x2_, int _y2_)
 {
-    MarkDirty(x1, y1, x2, y2);
+    MarkDirty(_x1_, _y1_, _x2_, _y2_);
 }
 
 /*

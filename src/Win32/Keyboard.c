@@ -33,7 +33,7 @@
     function prototypes
  ***************************************************************************/
 
-static int          Keyboard_init(options_type *options);
+static int          Keyboard_init(options_type* pOptions);
 static void         Keyboard_exit(void);
 
 static const struct KeyboardInfo * Keyboard_get_key_list(void);
@@ -89,14 +89,14 @@ static struct tKeyboard_private This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int Keyboard_init(options_type *options)
+static int Keyboard_init(options_type* pOptions)
 {
     int     i;
     BYTE    KeyState[NUMKEYSTATES];
 
     memset(&This, 0, sizeof(struct tKeyboard_private));
 
-    This.m_DefaultInput = options->default_input;
+    This.m_DefaultInput = pOptions->default_input;
 
     /* Clear keyboard state. */
     GetKeyboardState(KeyState);

@@ -17,7 +17,7 @@
 
 struct OSDJoystick
 {
-    int         (*init)(options_type *options);
+    int         (*init)(options_type* pOptions);
     void        (*exit)(void);
     const struct JoystickInfo* (*get_joy_list)(void);
     int         (*is_joy_pressed)(int joycode);

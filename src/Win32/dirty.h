@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -20,15 +20,15 @@ enum DirtyMode { NO_DIRTY = 0, USE_DIRTYRECT };
 extern void InitDirty(int width, int height, enum DirtyMode);
 extern void ExitDirty(void);
 
-extern void MarkDirty(int x1, int y1, int x2, int y2);
+extern void MarkDirty(int _x1_, int _y1_, int _x2_, int _y2_);
 extern void MarkDirtyPixel(int x, int y);
 extern void MarkAllDirty(void);
 extern void ClearDirty(void);
 
-extern int dirty_width;
-extern int dirty_height;
-extern int *dirty_buffer;
-extern int *dirty_line;
+extern int  dirty_width;
+extern int  dirty_height;
+extern int* dirty_buffer;
+extern int* dirty_line;
 
 #define DIRTYDWORD(x, y)    (    (y) * dirty_width + ((x) / 32))
 #define DIRTYBYTE(x, y)     (4 * (y) * dirty_width + ((x) / 8))

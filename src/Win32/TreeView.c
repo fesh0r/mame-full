@@ -1,7 +1,7 @@
 /***************************************************************************
 
    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-   Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
     
    This file is part of MAME32, and may only be used, modified and
    distributed under the terms of the MAME license, in "readme.txt".
@@ -43,6 +43,23 @@
 /* TVINSERTSTRUCT*/
 #define item  DUMMYUNIONNAME.item
 #endif
+
+
+#if defined(__GNUC__)
+/* fix warning: cast does not match function type */
+#undef  TreeView_InsertItem
+#define TreeView_InsertItem(w,i) (HTREEITEM)(LRESULT)SendMessage((w),TVM_INSERTITEM,0,(LPARAM)(LPTV_INSERTSTRUCT)(i))
+
+#undef  TreeView_SetImageList
+#define TreeView_SetImageList(w,h,i) (HIMAGELIST)(LRESULT)SendMessage((w),TVM_SETIMAGELIST,i,(LPARAM)(HIMAGELIST)(h))
+
+#undef  TreeView_GetNextItem
+#define TreeView_GetNextItem(w,i,c) (HTREEITEM)(LRESULT)SendMessage((w),TVM_GETNEXTITEM,c,(LPARAM)(HTREEITEM)(i))
+
+/* fix wrong return type */
+#undef  TreeView_Select
+#define TreeView_Select(w,i,c) (BOOL)SendMessage((w),TVM_SELECTITEM,c,(LPARAM)(HTREEITEM)(i))
+#endif /* defined(__GNUC__) */
 
 #define FILTERTEXT_LEN 256
 
@@ -167,7 +184,6 @@ static LRESULT CALLBACK TreeWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM 
 void FreeFolders(void)
 {
     int             i = 0;
-    LPFOLDERDATA    fData = 0;
 
     if (treeFolders != 0)
     {
@@ -187,7 +203,6 @@ void FreeFolders(void)
 void ResetFilters(void)
 {
     int             i = 0;
-    LPFOLDERDATA    fData = 0;
 
     if (treeFolders != 0)
     {
@@ -614,7 +629,7 @@ void Tree_Initialize(HWND hWnd)
 {
     /* this will subclass the listview (where WM_DRAWITEM gets sent for
        the header control) */
-    g_lpTreeWndProc = (WNDPROC)GetWindowLong(hWnd, GWL_WNDPROC);
+    g_lpTreeWndProc = (WNDPROC)(LONG)GetWindowLong(hWnd, GWL_WNDPROC);
     SetWindowLong(hWnd, GWL_WNDPROC, (LONG)TreeWndProc);
 }
 
@@ -1009,7 +1024,7 @@ static char * FixString(char *s)
         while(*ptr)
         {
             if ((*ptr == ' ') &&
-                (ptr[1] == '(' || ptr[1] == '/') || (ptr[1] == '+'))
+                (ptr[1] == '(' || ptr[1] == '/' || ptr[1] == '+'))
                 break;
             
             if (*ptr == '[')
@@ -1384,7 +1399,6 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
     case WM_COMMAND :
         {
             WORD wID         = GET_WM_COMMAND_ID(wParam, lParam);
-            HWND hWndCtrl    = GET_WM_COMMAND_HWND(wParam, lParam);
             WORD wNotifyCode = GET_WM_COMMAND_CMD(wParam, lParam);
             
             switch (wID)

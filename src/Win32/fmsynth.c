@@ -23,6 +23,10 @@
 #include "portio.h"
 #endif
 
+#if defined(__GNUC__)
+#include "portio.h"
+#endif
+
 #include "mame.h"
 #include "mame32.h"
 #include "m32util.h"
@@ -33,7 +37,7 @@
     function prototypes
  ***************************************************************************/
 
-static int      FMSynth_init(options_type *options);
+static int      FMSynth_init(options_type* pOptions);
 static void     FMSynth_exit(void);
 static void     FMSynth_opl_control(int chip, int reg);
 static void     FMSynth_opl_write(int chip, int data);
@@ -59,23 +63,23 @@ struct OSDFMSynth FMSynth =
  ***************************************************************************/
 
 static BOOL enabled;
-static int num_used_opl;
+static int  num_used_opl;
 
 /***************************************************************************
     External OSD functions  
  ***************************************************************************/
 
-static int FMSynth_init(options_type *options)
+static int FMSynth_init(options_type* pOptions)
 {
-    enabled = options->fm_ym3812 && (Machine->sample_rate != 0);
+    enabled = pOptions->fm_ym3812 && (Machine->sample_rate != 0);
     num_used_opl = 0;
     return 0;
 }
 
 static void FMSynth_exit(void)
 {
-   if (enabled)
-      SilenceOpl();
+    if (enabled)
+        SilenceOpl();
 }
 
 static void FMSynth_opl_control(int chip, int reg)

@@ -34,7 +34,7 @@
     function prototypes
  ***************************************************************************/
 
-static int      MidasSound_init(options_type *options);
+static int      MidasSound_init(options_type* pOptions);
 static void     MidasSound_exit(void);
 static int      MidasSound_start_audio_stream(int stereo);
 static int      MidasSound_update_audio_stream(INT16* buffer);
@@ -89,7 +89,7 @@ static struct tSound_private    This;
     put here anything you need to do when the program is started. Return 0 if 
     initialization was successful, nonzero otherwise.
 */
-static int MidasSound_init(options_type *options)
+static int MidasSound_init(options_type* pOptions)
 {
     BOOL    bResult;
     DWORD   dwOutputMode;
@@ -119,7 +119,7 @@ static int MidasSound_init(options_type *options)
         Using mono output instead of stereo, however, can decrease
         CPU usage by up to 50%."
     */
-    if (options->stereo == TRUE
+    if (pOptions->stereo == TRUE
     && (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO))
         dwOutputMode = MIDAS_MODE_16BIT_STEREO;
     else

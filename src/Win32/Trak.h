@@ -30,7 +30,7 @@ enum ETrakCode
 
 struct OSDTrak
 {
-    int     (*init)(options_type *options);
+    int     (*init)(options_type* pOptions);
     void    (*exit)(void);
     void    (*trak_read)(int player, int *deltax, int *deltay);
 

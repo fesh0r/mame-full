@@ -1,6 +1,6 @@
 /***************************************************************************
 
-   M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
   Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
 
   This file is part of MAME32, and may only be used, modified and
@@ -25,7 +25,7 @@
     function prototypes
  ***************************************************************************/
 
-static int      NullSound_init(options_type *options);
+static int      NullSound_init(options_type* pOptions);
 static void     NullSound_exit(void);
 static int      NullSound_start_audio_stream(int stereo);
 static int      NullSound_update_audio_stream(INT16* buffer);
@@ -66,7 +66,7 @@ static unsigned int m_nAttenuation;
     External OSD functions  
  ***************************************************************************/
 
-static int NullSound_init(options_type *options)
+static int NullSound_init(options_type* pOptions)
 {
     /* update the Machine structure to show that sound is disabled */
     Machine->sample_rate = 0;

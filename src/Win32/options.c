@@ -245,6 +245,7 @@ REG_OPTIONS regGameOpts[] = {
     {"ErrorLog",            RO_BOOL,    &gOpts.error_log,       0, 0},
     {"Stereo",              RO_BOOL,    &gOpts.stereo,          0, 0},
     {"FMYM3812",            RO_BOOL,    &gOpts.fm_ym3812,       0, 0},
+    {"ResampleFilter",      RO_BOOL,    &gOpts.use_filter,      0, 0},
     {"AutoFrameSkip",       RO_BOOL,    &gOpts.auto_frame_skip, 0, 0},
 
     {"FrameSkip",           RO_INT,     &gOpts.frame_skip,      0, 0},
@@ -1235,20 +1236,20 @@ static void FontDecodeString(const char* str, void* data)
     LOGFONT* f = (LOGFONT*)data;
     char*    ptr;
     
-    sscanf(str, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i",
+    sscanf(str, "%li,%li,%li,%li,%li,%i,%i,%i,%i,%i,%i,%i,%i",
            &f->lfHeight,
            &f->lfWidth,
            &f->lfEscapement,
            &f->lfOrientation,
            &f->lfWeight,
-           &f->lfItalic,
-           &f->lfUnderline,
-           &f->lfStrikeOut,
-           &f->lfCharSet,
-           &f->lfOutPrecision,
-           &f->lfClipPrecision,
-           &f->lfQuality,
-           &f->lfPitchAndFamily);
+           (int*)&f->lfItalic,
+           (int*)&f->lfUnderline,
+           (int*)&f->lfStrikeOut,
+           (int*)&f->lfCharSet,
+           (int*)&f->lfOutPrecision,
+           (int*)&f->lfClipPrecision,
+           (int*)&f->lfQuality,
+           (int*)&f->lfPitchAndFamily);
     ptr = strrchr(str, ',');
     if (ptr != NULL)
         strcpy(f->lfFaceName, ptr + 1);
@@ -1259,7 +1260,7 @@ static void FontEncodeString(void* data, char *str)
 {
     LOGFONT* f = (LOGFONT*)data;
 
-    sprintf(str, "%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%i,%s",
+    sprintf(str, "%li,%li,%li,%li,%li,%i,%i,%i,%i,%i,%i,%i,%i,%s",
             f->lfHeight,
             f->lfWidth,
             f->lfEscapement,
@@ -1296,7 +1297,6 @@ static void LoadOptions(void)
     {
         BOOL bReset = FALSE;
         char tmp[80];
-        int  i;
 
         strcpy(tmp, GetVersionString());
 

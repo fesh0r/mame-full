@@ -123,7 +123,6 @@ static BOOL bFullScreen = 0;
 static int  nSampleRate = 0;
 static int  nVolume = 0;
 static BOOL bDouble = 0;
-static int  nScreenSize = 0;
 static int  nDepth = 0;
 static int  nGamma = 0;
 static int  nBeam  = 0;
@@ -327,7 +326,6 @@ BOOL FindSampleSet(int game)
     const char* sharedname;
     BOOL bStatus;
     int  skipfirst;
-    int  count = 0;
     int  j, i;
     
     if (GameUsesSamples(game) == FALSE)
@@ -455,7 +453,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
     {
         char temp[100];
         DWORD dwError = GetLastError();
-        sprintf(temp,"Propery Sheet Error %d %X", dwError, dwError);
+        sprintf(temp, "Propery Sheet Error %d %X", (int)dwError, (int)dwError);
         MessageBox(0, temp, "Error", IDOK);
     }
 }
@@ -535,7 +533,7 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num,int start_p
     {
         char temp[100];
         DWORD dwError = GetLastError();
-        sprintf(temp,"Propery Sheet Error %d %X", dwError, dwError);
+        sprintf(temp, "Propery Sheet Error %d %X", (int)dwError, (int)dwError);
         MessageBox(0, temp, "Error", IDOK);
     }
 }
@@ -1047,12 +1045,12 @@ static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wPara
     {
     case WM_INITDIALOG:        
         {
-            HBITMAP hBitmap;
-            hBitmap = (HBITMAP)LoadImage(GetModuleHandle(NULL),
+            HBITMAP hBmp;
+            hBmp = (HBITMAP)LoadImage(GetModuleHandle(NULL),
                                          MAKEINTRESOURCE(IDB_PROP_DISPLAY),
                                          IMAGE_BITMAP, 0, 0,
                                          LR_SHARED | LR_LOADTRANSPARENT | LR_LOADMAP3DCOLORS);
-            SendMessage(GetDlgItem(hDlg, IDC_PROP_DISPLAY), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBitmap);
+            SendMessage(GetDlgItem(hDlg, IDC_PROP_DISPLAY), STM_SETIMAGE, (WPARAM)IMAGE_BITMAP, (LPARAM)hBmp);
         }
     }
 
@@ -1079,7 +1077,7 @@ void PropToOptions(HWND hWnd, options_type *o)
         
         if (! o->display_best_fit)
         {
-            DWORD   w, h;
+            int w, h;
             
             ComboBox_GetText(hCtrl, buf, 100);
             if (sscanf(buf, "%d x %d", &w, &h) == 2)
@@ -1597,7 +1595,7 @@ static void InitializeMisc(HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_SKIP_LINES_SPIN, UDM_SETPOS, 0,
                         (LPARAM)MAKELONG(0, 0));
     SendDlgItemMessage(hDlg, IDC_SKIP_LINES_SPIN, UDM_SETBUDDY,
-                        (WPARAM)GetDlgItem(hDlg, IDC_SKIP_LINES), 0);
+                       (WPARAM)(HWND)GetDlgItem(hDlg, IDC_SKIP_LINES), 0);
 
     Edit_LimitText(GetDlgItem(hDlg, IDC_SKIP_COLUMNS), 4);
     SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETRANGE, 0,
@@ -1605,7 +1603,7 @@ static void InitializeMisc(HWND hDlg)
     SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETPOS, 0,
                         (LPARAM)MAKELONG(0, 0));
     SendDlgItemMessage(hDlg, IDC_SKIP_COLUMNS_SPIN, UDM_SETBUDDY,
-                        (WPARAM)GetDlgItem(hDlg, IDC_SKIP_COLUMNS), 0);
+                       (WPARAM)(HWND)GetDlgItem(hDlg, IDC_SKIP_COLUMNS), 0);
 
     SendMessage(GetDlgItem(hDlg, IDC_GAMMA), TBM_SETRANGE,
                 (WPARAM)FALSE,
@@ -1728,11 +1726,11 @@ static void DepthSelectionChange(HWND hWnd, HWND hWndCtrl)
     nCurSelection = ComboBox_GetCurSel(hWndCtrl);
     if (nCurSelection != CB_ERR)
     {
-        int     nDepth;
+        int nClrDepth;
 
-        nDepth = ComboBox_GetCurSel(hWndCtrl);
-        nDepth *= 8;
-        UpdateDisplayModeUI(hWnd, nDepth);
+        nClrDepth = ComboBox_GetCurSel(hWndCtrl);
+        nClrDepth *= 8;
+        UpdateDisplayModeUI(hWnd, nClrDepth);
     }
 }
 
@@ -1785,7 +1783,7 @@ static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth)
     if (nPick != 0 && nPick != CB_ERR)
     {
         ComboBox_GetText(GetDlgItem(hwnd, IDC_SIZES), buf, 100);
-        if (sscanf(buf, "%d x %d", &w, &h) != 2)
+        if (sscanf(buf, "%d x %d", (int*)&w, (int*)&h) != 2)
         {
             w = 0;
             h = 0;
@@ -1820,8 +1818,8 @@ static void UpdateDisplayModeUI(HWND hwnd, DWORD dwDepth)
         if (pDisplayModes->m_Modes[i].m_dwBPP == dwDepth)
         {
             nCount++;
-            sprintf(buf, "%i x %i", pDisplayModes->m_Modes[i].m_dwWidth,
-                                    pDisplayModes->m_Modes[i].m_dwHeight);
+            sprintf(buf, "%i x %i", (int)pDisplayModes->m_Modes[i].m_dwWidth,
+                                    (int)pDisplayModes->m_Modes[i].m_dwHeight);
             ComboBox_AddString(hCtrl, buf);
 
             if (w == pDisplayModes->m_Modes[i].m_dwWidth
