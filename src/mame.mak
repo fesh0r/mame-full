@@ -678,7 +678,7 @@ makedep/makedep$(EXE):
 	make -Cmakedep
 
 depend $(TARGET).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Y. -- $(INCLUDE_PATH) -- \
+	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- \
 	src/*.c src/cpu/*/*.c src/sound/*.c src/drivers/*.c src/machine/*.c \
 	src/vidhrdw/*.c src/sndhrdw/*.c >$(TARGET).dep
 

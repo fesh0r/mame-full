@@ -520,7 +520,7 @@ makedep/makedep$(EXE):
 	make -Cmakedep
 
 depend $(TARGET).dep: makedep/makedep$(EXE)
-	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -Y. -- $(INCLUDE_PATH) -- src/*.c \
+	makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c >$(TARGET).dep
 
