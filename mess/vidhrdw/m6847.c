@@ -454,6 +454,7 @@ void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 				rvm->u.text.mapper_param |= 0x08;
 		}
 		rvm->u.text.fontheight = 12;
+		rvm->u.text.underlinepos = -1;
 	}
 }
 

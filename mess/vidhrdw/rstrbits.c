@@ -438,6 +438,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 	UINT8 *remappedchar;
 	int fg, bg, fgc, bgc, attr;
 	int additionalrowbytes;
+	int underlinepos;
 	int c[16];
 
 #if COUNTDIRTYCHARS
@@ -445,6 +446,7 @@ static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src
 #endif
 
 	assert((mode->depth == 8) || (mode->depth == 16));
+	assert(scalex >= 8);
 
 	if (mode->u.text.fontheight != scaley) {
 		/* If the scale and the font height don't match, we may have to remap */
@@ -514,8 +516,14 @@ drawchar:
 							thechar = remappedchar;
 						}
 
+						/* Calculate what line gets underlined, if appropriate */
+						if (attr & RASTERBITS_CHARATTR_UNDERLINE)
+							underlinepos = mode->u.text.underlinepos + basey + y * scaley;
+						else
+							underlinepos = -1;
+
 						for (yi = chartop; yi <= charbottom; yi++) {
-							if ((attr & RASTERBITS_CHARATTR_UNDERLINE) && (yi == charbottom))
+							if (yi == underlinepos)
 								b = 0xff;
 							else
 								b = thechar[yi - (basey + y * scaley)];

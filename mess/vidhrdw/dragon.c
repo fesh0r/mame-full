@@ -656,6 +656,25 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 			}
 			rvm->u.text.mapper_param = (int) RAM;
 			rvm->u.text.fontheight = 8;
+
+			/* To quote SockMaster:
+			 *
+			 * The underline attribute will light up the bottom scan line of the character
+			 * if the lines are set to 8 or 9.  Not appear at all when less, or appear on
+			 * the 2nd to bottom scan line if set higher than 9.  Further exception being
+			 * the $x7 setting where the whole screen is filled with only one line of data
+			 * - but it's glitched - the line repeats over and over again every 16 scan
+			 * lines..  Nobody will use this mode, but that's what happens if you want to
+			 * make things really authentic :)
+			 *
+			 * NPW Note: The '$x7' mode is not yet implemented
+			 */
+			if (linesperrow < 8)
+				rvm->u.text.underlinepos = -1;
+			else if (linesperrow < 10)
+				rvm->u.text.underlinepos = linesperrow - 1;
+			else
+				rvm->u.text.underlinepos = linesperrow - 2;
 		}
 
 		if (coco3_gimevhreg[1] & 0x04)

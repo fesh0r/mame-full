@@ -44,6 +44,7 @@ struct rasterbits_videomode {
 			UINT8 *(*mapper)(UINT8 *mem, int param, int *fg, int *bg, int *attr);
 			int mapper_param;
 			int fontheight;			/* height of all characters in the mapper font */
+			int underlinepos;		/* underline position on each character (-1=NA) */
 		} text;
 	} u;
 
