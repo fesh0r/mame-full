@@ -157,7 +157,7 @@ static unsigned char kc85_disc_hw_input_gate;
 
 DEVICE_LOAD( kc85_floppy )
 {
-	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
 	{
 		basicdsk_set_geometry(image, 80, 2, 9, 512, 1, 0, FALSE);
 		return INIT_PASS;

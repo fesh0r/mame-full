@@ -900,7 +900,7 @@ void c16_tape_open (void)
 	prg.c16 = 1;
 }
 
-int vc20_tape_attach_image (mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(vc20_tape)
 {
 	const char *cp;
 
@@ -912,23 +912,23 @@ int vc20_tape_attach_image (mess_image *img, mame_file *fp, int open_mode)
 	tape.motor = 0;
 	tape.data = 0;
 
-	if (!fp)
+	if (!file)
 		return INIT_PASS;
 
-	cp = image_filetype(img);
+	cp = image_filetype(image);
 	if (!cp)
 		return INIT_FAIL;
 
 	if (stricmp (cp, "wav") == 0)
-		vc20_wav_open(img, fp);
+		vc20_wav_open(image, file);
 	else if (stricmp (cp, "prg") == 0)
-		vc20_prg_open(img, fp);
+		vc20_prg_open(image, file);
 	else
 		return INIT_FAIL;
 	return INIT_PASS;
 }
 
-void vc20_tape_detach_image (mess_image *img)
+DEVICE_UNLOAD(vc20_tape)
 {
 	vc20_tape_close();
 }

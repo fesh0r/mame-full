@@ -358,7 +358,7 @@ static DEVICE_LOAD( sord_cartslot )
 
 static DEVICE_LOAD( sord_floppy )
 {
-	if (basicdsk_floppy_load(image, file, open_mode)==INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode)==INIT_PASS)
 	{
 		/* 40 tracks, single sided, 256 bytes per sector, 18 sectors */
 		basicdsk_set_geometry(image, 40, 1, 18, 256, 1, 0, FALSE);

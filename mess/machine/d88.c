@@ -26,18 +26,18 @@ static floppy_interface d88image_floppy_interface=
 	NULL
 };
 
-d88image *get_d88image(mess_image *img)
+static d88image *get_d88image(mess_image *img)
 {
 	return &d88image_drives[image_index_in_device(img)];
 }
 
-int d88image_floppy_init(mess_image *img)
+DEVICE_INIT(d88image_floppy)
 {
-	return floppy_drive_init(img, &d88image_floppy_interface);
+	return floppy_drive_init(image, &d88image_floppy_interface);
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(d88image_floppy)
 {
 	UINT8 tmp8;
 	UINT16 tmp16;
@@ -45,13 +45,13 @@ int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	int i,j,k;
 	unsigned long toffset;
 	d88image *w;
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 
 	assert(id < d88image_MAX_DRIVES);
 
 	w = &d88image_drives[id];
 
-	w->image_file = fp;
+	w->image_file = file;
 	w->mode = (w->image_file) && is_effective_mode_writable(open_mode);
 
 	/* the following line is unsafe, but floppy_drives_init assumes we start on track 0,
@@ -77,7 +77,7 @@ int d88image_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 			mame_fseek(w->image_file, toffset + 4, SEEK_SET);
 			mame_fread_lsbfirst(w->image_file, &tmp16, 2);
 			w->num_sects[i] = tmp16;
-			w->sects[i] = image_malloc(img, sizeof(d88sect)*w->num_sects[i]);
+			w->sects[i] = image_malloc(image, sizeof(d88sect)*w->num_sects[i]);
 			mame_fseek(w->image_file, toffset, SEEK_SET);
 
 			for(j=0;j<w->num_sects[i];j++)

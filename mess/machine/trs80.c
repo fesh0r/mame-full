@@ -250,7 +250,7 @@ DEVICE_LOAD( trs80_floppy )
 	int dir_length; /* length of directory in sectors (aka DDGA) */
 	int id = image_index_in_device(image);
 
-    if (basicdsk_floppy_load(image, file, open_mode) != INIT_PASS)
+    if (device_load_basicdsk_floppy(image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
     if (image_index_in_device(image) == 0)        /* first floppy? */

@@ -7,10 +7,10 @@
 extern "C" {
 #endif
 
-int pc_floppy_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD(pc_floppy);
 
 #define CONFIG_DEVICE_PC_FLOPPY(count)	\
-	CONFIG_DEVICE_FLOPPY_BASICDSK(count, "dsk\0", pc_floppy_load)
+	CONFIG_DEVICE_FLOPPY_BASICDSK(count, "dsk\0", device_load_pc_floppy)
 
 #ifdef __cplusplus
 }

@@ -98,18 +98,18 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 
 
 /* load floppy */
-int dsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(dsk_floppy)
 {
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 	dsk_drive *thedrive = &drives[id];
 
 	/* load disk image */
-	if (dsk_load(fp, img, &thedrive->data))
+	if (dsk_load(file, image, &thedrive->data))
 	{
 		if (thedrive->data)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
-			floppy_drive_set_disk_image_interface(img, &dsk_floppy_interface);
+			floppy_drive_set_disk_image_interface(image, &dsk_floppy_interface);
 			if(dsk_floppy_verify(thedrive->data) == IMAGE_VERIFY_PASS)
             	return INIT_PASS;
 			else
@@ -150,13 +150,13 @@ static int dsk_save(mess_image *img, unsigned char **ptr)
 }
 
 
-void dsk_floppy_unload(mess_image *img)
+DEVICE_UNLOAD(dsk_floppy)
 {
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 	dsk_drive *thedrive = &drives[id];
 
 	if (thedrive->data)
-		dsk_save(img, &thedrive->data);
+		dsk_save(image, &thedrive->data);
 	thedrive->data = NULL;
 }
 

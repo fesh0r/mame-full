@@ -20,22 +20,22 @@ static int common_length_spt_heads[][3] = {
     {36*2*80*512, 36, 2}};  /* 3 1/2 inch enhanced density */
 
 
-int pc_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(pc_floppy)
 {
-	if (basicdsk_floppy_load(img, fp, open_mode) == INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode) == INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
 
 		/* find the sectors/track and bytes/sector values in the boot sector */
-		if (fp)
+		if (file)
 		{
 			int length;
 
 			/* tracks pre sector recognition with image size
 			works only 512 byte sectors! and 40 or 80 tracks*/
 			scl = heads = 2;
-			length = mame_fsize(fp);
+			length = mame_fsize(file);
 			if (length==0) { // new image created
 #if 0
 			    logerror("image with heads per track:%d, heads:%d, tracks:%d created\n", 9, 2, 40);
@@ -66,12 +66,12 @@ int pc_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 				 * get info from boot sector.
 				 * not correct on all disks
 				 */
-				mame_fseek(fp, 0x0c, SEEK_SET);
-				mame_fread(fp, &scl, 1);
-				mame_fseek(fp, 0x018, SEEK_SET);
-				mame_fread(fp, &spt, 1);
-				mame_fseek(fp, 0x01a, SEEK_SET);
-				mame_fread(fp, &heads, 1);
+				mame_fseek(file, 0x0c, SEEK_SET);
+				mame_fread(file, &scl, 1);
+				mame_fseek(file, 0x018, SEEK_SET);
+				mame_fread(file, &spt, 1);
+				mame_fseek(file, 0x01a, SEEK_SET);
+				mame_fread(file, &heads, 1);
 				
 				if (scl*spt*heads*0x200!=length) { // seems neccessary for plain disk images
 				    logerror("image doesn't match boot sector param. length %d, sectors:%d, heads:%d, tracks:%d\n",
@@ -80,7 +80,7 @@ int pc_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 				}
 			}
 
-			basicdsk_set_geometry(img, 80, heads, spt, 512, 01, 0, FALSE);
+			basicdsk_set_geometry(image, 80, heads, spt, 512, 01, 0, FALSE);
 
 			return INIT_PASS;
 		}

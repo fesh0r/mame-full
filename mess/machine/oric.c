@@ -1227,7 +1227,7 @@ DEVICE_LOAD( oric_floppy )
 		return INIT_PASS;
 	}
 
-	if (basicdsk_floppy_load(image, file, open_mode) == INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode) == INIT_PASS)
 	{
 		/* I don't know what the geometry of the disc image should be, so the
 		default is 80 tracks, 2 sides, 9 sectors per track */

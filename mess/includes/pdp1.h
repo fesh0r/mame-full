@@ -128,7 +128,7 @@ void iot_rrb(int op2, int nac, int mb, int *io, int ac);
 void iot_ppa(int op2, int nac, int mb, int *io, int ac);
 void iot_ppb(int op2, int nac, int mb, int *io, int ac);
 
-int pdp1_typewriter_load(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD(pdp1_typewriter);
 void iot_tyo(int op2, int nac, int mb, int *io, int ac);
 void iot_tyi(int op2, int nac, int mb, int *io, int ac);
 

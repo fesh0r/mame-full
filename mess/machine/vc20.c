@@ -636,26 +636,26 @@ static int vc20_rom_id(mess_image *img, mame_file *romfile)
 	return retval;
 }
 
-int vc20_rom_init(mess_image *img)
+DEVICE_INIT(vc20_rom)
 {
 	vc20_memory_init();
 	return INIT_PASS;
 }
 
-int vc20_rom_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(vc20_rom)
 {
 	UINT8 *mem = memory_region (REGION_CPU1);
 	int size, read_;
 	const char *cp;
 	int addr = 0;
 
-	if (!vc20_rom_id(img, fp))
+	if (!vc20_rom_id(image, file))
 		return 1;
-	mame_fseek (fp, 0, SEEK_SET);
+	mame_fseek (file, 0, SEEK_SET);
 
-	size = mame_fsize (fp);
+	size = mame_fsize (file);
 
-	cp = image_filetype(img);
+	cp = image_filetype(image);
 	if (cp)
 	{
 		if ((cp[0] != 0) && (cp[1] == '0') && (cp[2] == 0))
@@ -682,7 +682,7 @@ int vc20_rom_load(mess_image *img, mame_file *fp, int open_mode)
 			{
 				unsigned short in;
 
-				mame_fread_lsbfirst (fp, &in, 2);
+				mame_fread_lsbfirst (file, &in, 2);
 				logerror("rom prg %.4x\n", in);
 				addr = in;
 				size -= 2;
@@ -701,8 +701,8 @@ int vc20_rom_load(mess_image *img, mame_file *fp, int open_mode)
 		}
 	}
 
-	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(img), addr, size);
-	read_ = mame_fread (fp, mem + addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(image), addr, size);
+	read_ = mame_fread (file, mem + addr, size);
 	if (read_ != size)
 		return 1;
 	return 0;

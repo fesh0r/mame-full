@@ -728,16 +728,16 @@ static int c16_rom_id(mess_image *img, mame_file *romfile)
 	return retval;
 }
 
-int c16_rom_init(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(c16_rom)
 {
-	int id = image_index_in_device(img);
-	rom_fp[id] = fp;
-	return (rom_fp[id] && !c16_rom_id(img, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
+	int id = image_index_in_device(image);
+	rom_fp[id] = file;
+	return (rom_fp[id] && !c16_rom_id(image, rom_fp[id])) ? INIT_FAIL : INIT_PASS;
 }
 
-void c16_rom_exit(mess_image *img)
+DEVICE_UNLOAD(c16_rom)
 {
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 	rom_fp[id] = NULL;
 }
 

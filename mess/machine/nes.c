@@ -1086,7 +1086,7 @@ end:
 	PPU_address += PPU_add;
 }
 
-int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
+DEVICE_LOAD(nes_cart)
 {
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
@@ -1097,14 +1097,14 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 	int i;
 
 	/* Verify the file is in iNES format */
-	mame_fread (romfile, magic, 4);
+	mame_fread (file, magic, 4);
 
 	if ((magic[0] != 'N') ||
 		(magic[1] != 'E') ||
 		(magic[2] != 'S'))
 		goto bad;
 
-	mapinfo = image_extrainfo(img);
+	mapinfo = image_extrainfo(image);
 	if (mapinfo)
 	{
 		if (4 == sscanf(mapinfo,"%d %d %d %d",&mapint1,&mapint2,&mapint3,&mapint4))
@@ -1125,10 +1125,10 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 	}
 	if (!goodcrcinfo)
 	{
-		mame_fread (romfile, &nes.prg_chunks, 1);
-		mame_fread (romfile, &nes.chr_chunks, 1);
+		mame_fread (file, &nes.prg_chunks, 1);
+		mame_fread (file, &nes.chr_chunks, 1);
 		/* Read the first ROM option byte (offset 6) */
-		mame_fread (romfile, &m, 1);
+		mame_fread (file, &m, 1);
 
 		/* Interpret the iNES header flags */
 		nes.mapper = (m & 0xf0) >> 4;
@@ -1136,10 +1136,10 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 
 
 		/* Read the second ROM option byte (offset 7) */
-		mame_fread (romfile, &m, 1);
+		mame_fread (file, &m, 1);
 
 		/* Check for skanky headers */
-		mame_fread (romfile, &skank, 8);
+		mame_fread (file, &skank, 8);
 
 		/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
 		/* We only check the first 4 unused bytes for now */
@@ -1184,23 +1184,23 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 	nes.wram = memory_region(REGION_USER1);
 
 	/* Position past the header */
-	mame_fseek (romfile, 16, SEEK_SET);
+	mame_fseek (file, 16, SEEK_SET);
 
 	/* Load the 0x200 byte trainer at 0x7000 if it exists */
 	if (nes.trainer)
 	{
-		mame_fread (romfile, &nes.wram[0x1000], 0x200);
+		mame_fread (file, &nes.wram[0x1000], 0x200);
 	}
 
 	/* Read in the program chunks */
 	if (nes.prg_chunks == 1)
 	{
-		mame_fread (romfile, &nes.rom[0x14000], 0x4000);
+		mame_fread (file, &nes.rom[0x14000], 0x4000);
 		/* Mirror this bank into $8000 */
 		memcpy (&nes.rom[0x10000], &nes.rom [0x14000], 0x4000);
 	}
 	else
-		mame_fread (romfile, &nes.rom[0x10000], 0x4000 * nes.prg_chunks);
+		mame_fread (file, &nes.rom[0x10000], 0x4000 * nes.prg_chunks);
 
 #ifdef SPLIT_PRG
 {
@@ -1227,7 +1227,7 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 	/* Read in any chr chunks */
 	if (nes.chr_chunks > 0)
 	{
-		mame_fread (romfile, nes.vrom, 0x2000*nes.chr_chunks);
+		mame_fread (file, nes.vrom, 0x2000*nes.chr_chunks);
 
 		/* Mark each char as not existing in VRAM */
 		for (i = 0; i < 512; i ++)
@@ -1254,7 +1254,7 @@ int nes_cart_load(mess_image *img, mame_file *romfile, int open_mode)
 	/* Attempt to load a battery file for this ROM. If successful, we */
 	/* must wait until later to move it to the system memory. */
 	if (nes.battery)
-		image_battery_load(img, battery_data, BATTERY_SIZE);
+		image_battery_load(image, battery_data, BATTERY_SIZE);
 
 	famicom_image_registered = 1;
 	return INIT_PASS;
@@ -1276,22 +1276,22 @@ UINT32 nes_partialcrc(const unsigned char *buf, size_t size)
 	return crc;
 }
 
-int nes_disk_load(mess_image *img, mame_file *diskfile, int open_mode)
+DEVICE_LOAD(nes_disk)
 {
 	unsigned char magic[4];
 
 	/* See if it has a fucking redundant header on it */
-	mame_fread (diskfile, magic, 4);
+	mame_fread (file, magic, 4);
 	if ((magic[0] == 'F') &&
 		(magic[1] == 'D') &&
 		(magic[2] == 'S'))
 	{
 		/* Skip past the fucking redundant header */
-		mame_fseek (diskfile, 0x10, SEEK_SET);
+		mame_fseek (file, 0x10, SEEK_SET);
 	}
 	else
 		/* otherwise, point to the start of the image */
-		mame_fseek (diskfile, 0, SEEK_SET);
+		mame_fseek (file, 0, SEEK_SET);
 
 	/* clear some of the cart variables we don't use */
 	nes.trainer = 0;
@@ -1306,18 +1306,18 @@ int nes_disk_load(mess_image *img, mame_file *diskfile, int open_mode)
 	nes_fds.data = NULL;
 
 	/* read in all the sides */
-	while (!mame_feof (diskfile))
+	while (!mame_feof (file))
 	{
 		nes_fds.sides ++;
-		nes_fds.data = image_realloc(img, nes_fds.data, nes_fds.sides * 65500);
+		nes_fds.data = image_realloc(image, nes_fds.data, nes_fds.sides * 65500);
 		if (!nes_fds.data)
 			return INIT_FAIL;
-		mame_fread (diskfile, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
+		mame_fread (file, nes_fds.data + ((nes_fds.sides-1) * 65500), 65500);
 	}
 
 	/* adjust for eof */
 	nes_fds.sides --;
-	nes_fds.data = image_realloc(img, nes_fds.data, nes_fds.sides * 65500);
+	nes_fds.data = image_realloc(image, nes_fds.data, nes_fds.sides * 65500);
 
 	logerror ("Number of sides: %d\n", nes_fds.sides);
 
@@ -1329,7 +1329,7 @@ int nes_disk_load(mess_image *img, mame_file *diskfile, int open_mode)
 	return 1;
 }
 
-void nes_disk_unload(mess_image *img)
+DEVICE_UNLOAD(nes_disk)
 {
 	/* TODO: should write out changes here as well */
 	nes_fds.data = NULL;

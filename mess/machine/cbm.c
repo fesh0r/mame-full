@@ -154,9 +154,9 @@ INT8 cbm_c64_game;
 INT8 cbm_c64_exrom;
 CBM_ROM cbm_rom[0x20]= { {0} };
 
-void cbm_rom_unload(mess_image *img)
+DEVICE_UNLOAD(cbm_rom)
 {
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 	cbm_rom[id].size = 0;
 	cbm_rom[id].chip = 0;
 }
@@ -166,9 +166,9 @@ static const struct IODevice *cbm_rom_find_device(void)
 	return device_find(Machine->gamedrv, IO_CARTSLOT);
 }
 
-int cbm_rom_init(mess_image *img)
+DEVICE_INIT(cbm_rom)
 {
-	int id = image_index_in_device(img);
+	int id = image_index_in_device(image);
 	if (id == 0)
 	{
 		cbm_c64_game = -1;
@@ -177,7 +177,7 @@ int cbm_rom_init(mess_image *img)
 	return INIT_PASS;
 }
 
-int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(cbm_rom)
 {
 	int i;
 	int size, j, read_;
@@ -190,71 +190,71 @@ int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode)
 	if (i >= sizeof(cbm_rom) / sizeof(cbm_rom[0]))
 		return INIT_FAIL;
 
-	if (!fp)
+	if (!file)
 	{
 		return INIT_PASS;
 	}
 
 	dev = cbm_rom_find_device();
 
-	size = mame_fsize (fp);
+	size = mame_fsize (file);
 
-	filetype = image_filetype(img);
+	filetype = image_filetype(image);
 	if (filetype && !stricmp(filetype, "prg"))
 	{
 		unsigned short in;
 
-		mame_fread_lsbfirst (fp, &in, 2);
+		mame_fread_lsbfirst (file, &in, 2);
 		logerror("rom prg %.4x\n", in);
 		size -= 2;
 
-		logerror("loading rom %s at %.4x size:%.4x\n", image_filename(img), in, size);
+		logerror("loading rom %s at %.4x size:%.4x\n", image_filename(image), in, size);
 
-		cbm_rom[i].chip = (UINT8 *) image_malloc(img, size);
+		cbm_rom[i].chip = (UINT8 *) image_malloc(image, size);
 		if (!cbm_rom[i].chip)
 			return INIT_FAIL;
 
 		cbm_rom[i].addr=in;
 		cbm_rom[i].size=size;
-		read_ = mame_fread (fp, cbm_rom[i].chip, size);
+		read_ = mame_fread (file, cbm_rom[i].chip, size);
 		if (read_ != size)
 			return INIT_FAIL;
 	}
 	else if (filetype && !stricmp (filetype, "crt"))
 	{
 		unsigned short in;
-		mame_fseek (fp, 0x18, SEEK_SET);
-		mame_fread( fp, &cbm_c64_exrom, 1);
-		mame_fread( fp, &cbm_c64_game, 1);
-		mame_fseek (fp, 64, SEEK_SET);
+		mame_fseek (file, 0x18, SEEK_SET);
+		mame_fread( file, &cbm_c64_exrom, 1);
+		mame_fread( file, &cbm_c64_game, 1);
+		mame_fseek (file, 64, SEEK_SET);
 		j = 64;
 
-		logerror("loading rom %s size:%.4x\n", image_filename(img), size);
+		logerror("loading rom %s size:%.4x\n", image_filename(image), size);
 
 		while (j < size)
 		{
 			unsigned short segsize;
 			unsigned char buffer[10], number;
 
-			mame_fread (fp, buffer, 6);
-			mame_fread_msbfirst (fp, &segsize, 2);
-			mame_fread (fp, buffer + 6, 3);
-			mame_fread (fp, &number, 1);
-			mame_fread_msbfirst (fp, &adr, 2);
-			mame_fread_msbfirst (fp, &in, 2);
+			mame_fread (file, buffer, 6);
+			mame_fread_msbfirst (file, &segsize, 2);
+			mame_fread (file, buffer + 6, 3);
+			mame_fread (file, &number, 1);
+			mame_fread_msbfirst (file, &adr, 2);
+			mame_fread_msbfirst (file, &in, 2);
 			logerror("%.4s %.2x %.2x %.4x %.2x %.2x %.2x %.2x %.4x:%.4x\n",
 				buffer, buffer[4], buffer[5], segsize,
 				buffer[6], buffer[7], buffer[8], number,
 				adr, in);
 			logerror("loading chip at %.4x size:%.4x\n", adr, in);
 
-			cbm_rom[i].chip = (UINT8*) image_malloc(img, size);
+			cbm_rom[i].chip = (UINT8*) image_malloc(image, size);
 			if (!cbm_rom[i].chip)
 				return INIT_FAIL;
 
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=in;
-			read_ = mame_fread (fp, cbm_rom[i].chip, in);
+			read_ = mame_fread (file, cbm_rom[i].chip, in);
 			i++;
 			if (read_ != in)
 				return INIT_FAIL;
@@ -298,15 +298,15 @@ int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode)
 			adr = CBM_ROM_ADDR_UNKNOWN;
 
 		logerror("loading %s rom at %.4x size:%.4x\n",
-				image_filename(img), adr, size);
+				image_filename(image), adr, size);
 
-		cbm_rom[i].chip = (UINT8*) image_malloc(img, size);
+		cbm_rom[i].chip = (UINT8*) image_malloc(image, size);
 		if (!cbm_rom[i].chip)
 			return INIT_FAIL;
 
 		cbm_rom[i].addr=adr;
 		cbm_rom[i].size=size;
-		read_ = mame_fread (fp, cbm_rom[i].chip, size);
+		read_ = mame_fread (file, cbm_rom[i].chip, size);
 
 		if (read_ != size)
 			return INIT_FAIL;

@@ -370,7 +370,7 @@ ROM_END
 SYSTEM_CONFIG_START(mbee)
 	CONFIG_DEVICE_CASSETTE			(1, "",			device_load_mbee_cassette)
 	CONFIG_DEVICE_CARTSLOT_OPT		(1, "rom\0",	NULL, NULL, device_load_mbee_cart, NULL, NULL, NULL)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	basicdsk_floppy_load)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",	device_load_basicdsk_floppy)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT	COMPAT	MACHINE   INPUT     INIT      CONFIG	COMPANY   FULLNAME */

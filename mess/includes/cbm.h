@@ -76,9 +76,9 @@ QUICKLOAD_LOAD( cbm_c65 );
 
 /* use to functions to parse, load the rom images into memory
    and then use the cbm_rom var */
-int cbm_rom_init(mess_image *img);
-int cbm_rom_load(mess_image *img, mame_file *fp, int open_mode);
-void cbm_rom_unload(mess_image *img);
+DEVICE_INIT(cbm_rom);
+DEVICE_LOAD(cbm_rom);
+DEVICE_UNLOAD(cbm_rom);
 
 typedef struct {
 #define CBM_ROM_ADDR_UNKNOWN 0
@@ -94,10 +94,10 @@ extern INT8 cbm_c64_exrom;
 extern CBM_ROM cbm_rom[0x20];
 
 #define CONFIG_DEVICE_CBM_CARTSLOT(file_extensions) \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, (file_extensions), cbm_rom_init, NULL, cbm_rom_load, cbm_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(2, (file_extensions), device_init_cbm_rom, NULL, device_load_cbm_rom, device_unload_cbm_rom, NULL, NULL)
 
 #define CONFIG_DEVICE_CBM_CARTSLOT_REQ(file_extensions) \
-	CONFIG_DEVICE_CARTSLOT_REQ(2, (file_extensions), cbm_rom_init, NULL, cbm_rom_load, cbm_rom_unload, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(2, (file_extensions), device_init_cbm_rom, NULL, device_load_cbm_rom, device_unload_cbm_rom, NULL, NULL)
 
 /* prg file format
  * sfx file format

@@ -1090,7 +1090,7 @@ static int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset )
 	return valid;
 }
 
-int snes_cart_load(mess_image *img, mame_file *file, int open_mode)
+DEVICE_LOAD(snes_cart)
 {
 	int i;
 	UINT16 totalblocks, readblocks;
@@ -1164,7 +1164,7 @@ int snes_cart_load(mess_image *img, mame_file *file, int open_mode)
 		 * actual rom size, we probably have a header */
 		logerror( "Found header(size) - Skipped\n" );
 	}
-	else if( (image_length(img) % 0x8000) == 512 )
+	else if( (image_length(image) % 0x8000) == 512 )
 	{
 		/* As a last check we'll see if there's exactly 512 bytes extra to this
 		 * image. */

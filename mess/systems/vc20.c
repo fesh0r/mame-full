@@ -840,7 +840,7 @@ MACHINE_DRIVER_END
 #define init_vic20i 	vic20ieee_driver_init
 
 #define CONFIG_DEVICE_CBMVC20 \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "a0\00020\00040\00060\0rom\0bin\0", vc20_rom_init, NULL, vc20_rom_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(2, "a0\00020\00040\00060\0rom\0bin\0", device_init_vc20_rom, NULL, device_load_vc20_rom, NULL, NULL, NULL)
 
 SYSTEM_CONFIG_START(vc20)
 	CONFIG_DEVICE_CBMVC20

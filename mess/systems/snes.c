@@ -232,7 +232,7 @@ static MACHINE_DRIVER_START( snespal )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(snes)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "smc\0sfc\0fig\0swc\0", NULL, NULL, snes_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "smc\0sfc\0fig\0swc\0", NULL, NULL, device_load_snes_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

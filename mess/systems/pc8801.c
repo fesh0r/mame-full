@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.20 2003/05/16 15:40:09 rnabet Exp $
+  $Id: pc8801.c,v 1.21 2003/05/20 22:18:59 rnabet Exp $
 
 ***************************************************************************/
 
@@ -641,7 +641,7 @@ static MACHINE_DRIVER_START( pc88srh )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(pc88)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, d88image_floppy_init, NULL, d88image_floppy_load, NULL, floppy_status)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d88\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_CREATE_OR_READ, device_init_d88image_floppy, NULL, device_load_d88image_floppy, NULL, floppy_status)
 SYSTEM_CONFIG_END
 
 

@@ -183,7 +183,7 @@ extern void c16_driver_shutdown (void);
 extern MACHINE_INIT( c16 );
 extern INTERRUPT_GEN( c16_frame_interrupt );
 
-extern int c16_rom_init (mess_image *img, mame_file *fp, int open_mode);
-extern void c16_rom_exit (mess_image *img);
+extern DEVICE_LOAD(c16_rom);
+extern DEVICE_UNLOAD(c16_rom);
 
 #endif

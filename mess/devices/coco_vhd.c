@@ -49,13 +49,13 @@ static mess_image *vhd_image(void)
 	return image_from_devtype_and_index(IO_VHD, 0);
 }
 
-int coco_vhd_init(mess_image *img)
+DEVICE_INIT(coco_vhd)
 {
 	vhdStatus = 2;	/* No VHD attached */
 	return INIT_PASS;
 }
 
-int coco_vhd_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(coco_vhd)
 {
 	vhdStatus = 0xff; /* -1, Power on state */
 	logicalRecordNumber = 0;

@@ -132,9 +132,9 @@ static int d64_open (mess_image *img, mame_file *in)
 }
 
 /* open an d64 image */
-int cbm_drive_attach_image (mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(cbm_drive)
 {
-	return d64_open(img, fp);
+	return d64_open(image, file);
 }
 
 

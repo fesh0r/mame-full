@@ -6,8 +6,8 @@
 extern VIDEO_START( lisa );
 extern VIDEO_UPDATE( lisa );
 
-int lisa_floppy_load(mess_image *img, mame_file *fp, int open_mode);
-void lisa_floppy_unload(mess_image *img);
+extern DEVICE_LOAD(lisa_floppy);
+extern DEVICE_UNLOAD(lisa_floppy);
 extern NVRAM_HANDLER(lisa);
 
 void init_lisa2(void);

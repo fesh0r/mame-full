@@ -88,13 +88,13 @@ MACHINE_STOP( coco );
 
 INTERRUPT_GEN( coco3_vh_interrupt );
 
-int coco_cassette_init(mess_image *img, mame_file *fp, int open_mode);
-int coco3_cassette_init(mess_image *img);
+DEVICE_LOAD(coco_cassette);
+/*int coco3_cassette_init(mess_image *img);*/
 
-int coco_rom_load(mess_image *img, mame_file *fp, int open_mode);
-int coco3_rom_load(mess_image *img, mame_file *fp, int open_mode);
-void coco_rom_unload(mess_image *img);
-void coco3_rom_unload(mess_image *img);
+DEVICE_LOAD(coco_rom);
+DEVICE_LOAD(coco3_rom);
+DEVICE_UNLOAD(coco_rom);
+DEVICE_UNLOAD(coco3_rom);
 
 SNAPSHOT_LOAD ( coco_pak );
 SNAPSHOT_LOAD ( coco3_pak );

@@ -337,7 +337,7 @@ extern WRITE_HANDLER( snes_w_bank1 );
 extern WRITE_HANDLER( snes_w_bank2 );
 extern WRITE_HANDLER( snes_w_bank4 );
 extern WRITE_HANDLER( snes_w_io );
-extern int snes_cart_load(mess_image *img, mame_file *fp, int open_mode);
+extern DEVICE_LOAD(snes_cart);
 extern INTERRUPT_GEN(snes_scanline_interrupt);
 extern void snes_gdma( UINT8 channels );
 extern void snes_hdma_init(void);

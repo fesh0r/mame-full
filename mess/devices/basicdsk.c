@@ -83,17 +83,17 @@ static basicdsk *get_basicdsk(mess_image *img)
 	return &basicdsk_drives[drive];
 }
 
-int basicdsk_floppy_init(mess_image *img)
+DEVICE_INIT(basicdsk_floppy)
 {
-	return floppy_drive_init(img, &basicdsk_floppy_interface);
+	return floppy_drive_init(image, &basicdsk_floppy_interface);
 }
 
 /* attempt to insert a disk into the drive specified with id */
-int basicdsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD(basicdsk_floppy)
 {
-	basicdsk *w = get_basicdsk(img);
+	basicdsk *w = get_basicdsk(image);
 
-	w->image_file = fp;
+	w->image_file = file;
 	w->mode = is_effective_mode_writable(open_mode);
 
 	/* this will be setup in the set_geometry function */
@@ -103,14 +103,14 @@ int basicdsk_floppy_load(mess_image *img, mame_file *fp, int open_mode)
 	so we need to reflect this */
 	w->track = 0;
 
-	floppy_drive_set_disk_image_interface(img, &basicdsk_floppy_interface);
+	floppy_drive_set_disk_image_interface(image, &basicdsk_floppy_interface);
 
 	return INIT_PASS;
 }
 
-void basicdsk_floppy_unload(mess_image *img)
+DEVICE_UNLOAD(basicdsk_floppy)
 {
-	basicdsk *w = get_basicdsk(img);
+	basicdsk *w = get_basicdsk(image);
 	w->image_file = NULL;
 	w->mode = 0;
 }

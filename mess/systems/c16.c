@@ -859,7 +859,7 @@ MACHINE_DRIVER_END
 #define init_c364		c16_driver_init
 
 #define CONFIG_DEVICE_C16CART \
-	CONFIG_DEVICE_CARTSLOT_OPT(2, "bin\0rom\0", NULL, NULL, c16_rom_init, c16_rom_exit, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(2, "bin\0rom\0", NULL, NULL, device_load_c16_rom, device_unload_c16_rom, NULL, NULL)
 
 SYSTEM_CONFIG_START(c16)
 	CONFIG_DEVICE_C16CART

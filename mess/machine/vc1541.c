@@ -623,24 +623,24 @@ static struct via6522_interface via2 =
 	vc1541_via1_irq
 };
 
-int vc1541_init (mess_image *img, mame_file *in, int open_mode)
+DEVICE_LOAD(vc1541)
 {
 	int size;
 
-	size = mame_fsize (in);
-	if (!(vc1541->d64.data = (UINT8*) image_malloc(img, size)))
+	size = mame_fsize (file);
+	if (!(vc1541->d64.data = (UINT8*) image_malloc(image, size)))
 		return INIT_FAIL;
 
-	if (size != mame_fread (in, vc1541->d64.data, size))
+	if (size != mame_fread (file, vc1541->d64.data, size))
 		return INIT_FAIL;
 
-	logerror("floppy image %s loaded\n", image_filename(img));
+	logerror("floppy image %s loaded\n", image_filename(image));
 
 	vc1541->timer = timer_alloc(vc1541_timer);
 	return INIT_PASS;
 }
 
-void vc1541_exit(mess_image *img)
+DEVICE_UNLOAD(vc1541)
 {
 	/* writeback of image data */
 	vc1541->d64.data = NULL;

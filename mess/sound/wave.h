@@ -29,7 +29,7 @@ extern void wave_sh_update(void);
 void cassette_exit(mess_image *img);
 
 void wave_specify(struct IODevice *iodev, int count, char *actualext, const char *fileext,
-	int (*loadproc)(mess_image *img, mame_file *fp, int open_mode), void (*unloadproc)(mess_image *img));
+	device_load_handler loadproc, device_unload_handler unloadproc);
 
 #define CONFIG_DEVICE_CASSETTEX(count, fileext, loadproc, unloadproc)		\
 	if (cfg->device_num-- == 0)												\

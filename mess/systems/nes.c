@@ -376,12 +376,12 @@ static MACHINE_DRIVER_START( nespal)
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(nes)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "nes\0", NULL, NULL, nes_cart_load, NULL, NULL, nes_partialcrc)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "nes\0", NULL, NULL, device_load_nes_cart, NULL, NULL, nes_partialcrc)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(famicom)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "nes\0", NULL, NULL, nes_cart_load, NULL, NULL, nes_partialcrc)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, nes_disk_load, nes_disk_unload, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "nes\0", NULL, NULL, device_load_nes_cart, NULL, NULL, nes_partialcrc)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 1, "dsk\0fds\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_nes_disk, device_unload_nes_disk, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

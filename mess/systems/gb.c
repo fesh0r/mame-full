@@ -297,7 +297,7 @@ static MACHINE_DRIVER_START( gbcolor )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(gameboy)
-	CONFIG_DEVICE_CARTSLOT_REQ( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", NULL, NULL, gb_cart_load, NULL, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", NULL, NULL, device_load_gb_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

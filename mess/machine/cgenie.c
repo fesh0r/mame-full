@@ -357,7 +357,7 @@ DEVICE_LOAD( cgenie_floppy )
 	short dir_length = 0;
 
 	/* A Floppy Isnt manditory, so return if none */
-	if (basicdsk_floppy_load(image, file, open_mode) != INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	/* determine image geometry */

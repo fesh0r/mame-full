@@ -388,7 +388,7 @@ DEVICE_LOAD( svi318_floppy )
 	else
 		return INIT_FAIL;
 
-	if (basicdsk_floppy_init (image) != INIT_PASS)
+	if (device_load_basicdsk_floppy(image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry(image, 40, svi318_dsk_heads[id], 17, 256, 1, 0, 0);

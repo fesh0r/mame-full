@@ -8,7 +8,7 @@ void cbm_drive_open (void);
 void cbm_drive_close (void);
 
 #define CONFIG_DEVICE_FLOPPY_CBM \
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d64\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, cbm_drive_attach_image, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "d64\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_cbm_drive, NULL, NULL)
 
 #define IEC 1
 #define SERIAL 2
@@ -17,7 +17,7 @@ void cbm_drive_0_config (int interface, int serialnr);
 void cbm_drive_1_config (int interface, int serialnr);
 
 /* open an d64 image */
-int cbm_drive_attach_image(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD(cbm_drive);
 
 /* delivers status for displaying */
 extern void cbm_drive_0_status (char *text, int size);

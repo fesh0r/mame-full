@@ -941,7 +941,7 @@ DEVICE_LOAD( msx_floppy )
 	else
 		return INIT_FAIL;
 
-	if (basicdsk_floppy_load (image, file, open_mode) != INIT_PASS)
+	if (device_load_basicdsk_floppy (image, file, open_mode) != INIT_PASS)
 		return INIT_FAIL;
 
 	basicdsk_set_geometry (image, 80, heads, 9, 512, 1, 0, FALSE);

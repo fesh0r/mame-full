@@ -1105,7 +1105,7 @@ READ_HANDLER ( gb_io_r )
 	}
 }
 
-int gb_cart_load(mess_image *img, mame_file *F, int open_mode)
+DEVICE_LOAD(gb_cart)
 {
 	static const char *CartTypes[] =
 	{
@@ -1248,17 +1248,17 @@ int gb_cart_load(mess_image *img, mame_file *F, int open_mode)
 	gb_ram = memory_region(REGION_CPU1);
 	memset (gb_ram, 0, 0x10000);
 
-	J = image_length(img) % 0x4000;
+	J = image_length(image) % 0x4000;
 
 	if (J == 512)
 	{
 		logerror("ROM-header found skipping\n");
-		mame_fread (F, gb_ram, 512);
+		mame_fread (file, gb_ram, 512);
 	}
 
-	if (mame_fread (F, gb_ram, 0x4000) != 0x4000)
+	if (mame_fread (file, gb_ram, 0x4000) != 0x4000)
 	{
-		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(img));
+		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
 		return INIT_FAIL;
 	}
 
@@ -1402,14 +1402,14 @@ int gb_cart_load(mess_image *img, mame_file *F, int open_mode)
 	{
 		if ((ROMMap[I] = malloc (0x4000)))
 		{
-			if (mame_fread (F, ROMMap[I], 0x4000) == 0x4000)
+			if (mame_fread (file, ROMMap[I], 0x4000) == 0x4000)
 			{
 				for (J = 0; J < 0x4000; J++)
 					Checksum -= ROMMap[I][J];
 			}
 			else
 			{
-				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(img));
+				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
 				break;
 			}
 		}
@@ -1454,7 +1454,7 @@ int gb_cart_load(mess_image *img, mame_file *F, int open_mode)
 		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
 		if( battery_ram )
 		{
-			image_battery_load( img, battery_ram, RAMBanks * 0x2000 );
+			image_battery_load( image, battery_ram, RAMBanks * 0x2000 );
 			ptr = battery_ram;
 			for( I = 0; I < RAMBanks; I++ )
 			{

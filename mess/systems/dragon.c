@@ -752,7 +752,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_BITBANGER (1, &coco_bitbanger_config )
 
 	/* cassette */
-	CONFIG_DEVICE_CASSETTE	(1, "cas\0", coco_cassette_init)
+	CONFIG_DEVICE_CASSETTE	(1, "cas\0", device_load_coco_cassette)
 
 	/* floppy */
 	CONFIG_DEVICE_FLOPPY	(4, coco, coco_jvc )
@@ -763,7 +763,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )
 	CONFIG_IMPORT_FROM			( generic_coco )
-	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, coco_rom_load, coco_rom_unload, NULL, NULL )
+	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, device_load_coco_rom, device_unload_coco_rom, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco_pak )
 SYSTEM_CONFIG_END
 
@@ -785,7 +785,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
 	CONFIG_IMPORT_FROM			( generic_coco )
-	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, coco3_rom_load, coco3_rom_unload, NULL, NULL )
+	CONFIG_DEVICE_CARTSLOT_OPT	( 1, "ccc\0rom\0", NULL, NULL, device_load_coco3_rom, device_unload_coco3_rom, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT		(    "pak\0", coco3_pak )
 	CONFIG_DEVICE_COCOVHD
 	CONFIG_RAM					(128 * 1024)
