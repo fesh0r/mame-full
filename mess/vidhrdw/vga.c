@@ -96,6 +96,62 @@ unsigned char ega_palette[0x40][3] = {
 { 0xfc, 0xfc, 0xfc }
 };
 
+struct GfxLayout vga_charlayout =
+{
+	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
+	256,					/* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },	/* pixel 7 repeated only for char code 176 to 223 */
+	/* y offsets */
+	{
+		2*8, 6*8, 10*8, 14*8, 18*8, 22*8, 26*8, 30*8,
+		34*8, 38*8, 42*8, 46*8, 50*8, 54*8, 58*8, 62*8,
+		66*8, 70*8, 74*8, 78*8, 82*8, 86*8, 90*8, 94*8,
+		98*8, 102*8, 106*8, 110*8, 114*8, 118*8, 122*8, 126*8
+	},
+	128*8
+};
+
+struct GfxDecodeInfo vga_gfxdecodeinfo[] =
+{
+	{ 0, 0x0000, &vga_charlayout,			  0, 256 },   /* single width */
+    { -1 } /* end of array */
+};
+
+unsigned short vga_colortable[] = {
+     0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
+     1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
+     2, 0, 2, 1, 2, 2, 2, 3, 2, 4, 2, 5, 2, 6, 2, 7, 2, 8, 2, 9, 2,10, 2,11, 2,12, 2,13, 2,14, 2,15,
+     3, 0, 3, 1, 3, 2, 3, 3, 3, 4, 3, 5, 3, 6, 3, 7, 3, 8, 3, 9, 3,10, 3,11, 3,12, 3,13, 3,14, 3,15,
+     4, 0, 4, 1, 4, 2, 4, 3, 4, 4, 4, 5, 4, 6, 4, 7, 4, 8, 4, 9, 4,10, 4,11, 4,12, 4,13, 4,14, 4,15,
+     5, 0, 5, 1, 5, 2, 5, 3, 5, 4, 5, 5, 5, 6, 5, 7, 5, 8, 5, 9, 5,10, 5,11, 5,12, 5,13, 5,14, 5,15,
+     6, 0, 6, 1, 6, 2, 6, 3, 6, 4, 6, 5, 6, 6, 6, 7, 6, 8, 6, 9, 6,10, 6,11, 6,12, 6,13, 6,14, 6,15,
+     7, 0, 7, 1, 7, 2, 7, 3, 7, 4, 7, 5, 7, 6, 7, 7, 7, 8, 7, 9, 7,10, 7,11, 7,12, 7,13, 7,14, 7,15,
+/* flashing is done by dirtying the videoram buffer positions with attr bit #7 set */
+     8, 0, 8, 1, 8, 2, 8, 3, 8, 4, 8, 5, 8, 6, 8, 7, 8, 8, 8, 9, 8,10, 8,11, 8,12, 8,13, 8,14, 8,15,
+     9, 0, 9, 1, 9, 2, 9, 3, 9, 4, 9, 5, 9, 6, 9, 7, 9, 8, 9, 9, 9,10, 9,11, 9,12, 9,13, 9,14, 9,15,
+    10, 0,10, 1,10, 2,10, 3,10, 4,10, 5,10, 6,10, 7,10, 8,10, 9,10,10,10,11,10,12,10,13,10,14,10,15,
+    11, 0,11, 1,11, 2,11, 3,11, 4,11, 5,11, 6,11, 7,11, 8,11, 9,11,10,11,11,11,12,11,13,11,14,11,15,
+    12, 0,12, 1,12, 2,12, 3,12, 4,12, 5,12, 6,12, 7,12, 8,12, 9,12,10,12,11,12,12,12,13,12,14,12,15,
+    13, 0,13, 1,13, 2,13, 3,13, 4,13, 5,13, 6,13, 7,13, 8,13, 9,13,10,13,11,13,12,13,13,13,14,13,15,
+    14, 0,14, 1,14, 2,14, 3,14, 4,14, 5,14, 6,14, 7,14, 8,14, 9,14,10,14,11,14,12,14,13,14,14,14,15,
+    15, 0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15
+};
+
+void ega_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,ega_palette,sizeof(ega_palette));
+	memcpy(sys_colortable,vga_colortable,0x200);
+}
+
+void vga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+	memcpy(sys_palette,vga_palette,sizeof(vga_palette));
+	memcpy(sys_colortable,vga_colortable,0x200);
+}
+
 static UINT8 rotate_right[8][256];
 static UINT8 color_bitplane_to_packed[4/*plane*/][8/*pixel*/][256];
 
@@ -499,7 +555,7 @@ static READ_HANDLER(vga_crtc_r)
 			diff=diff/lines;
 			if (diff%columns<vga.monitor.get_sync_columns()) data|=1;
 		}
-#elif 0
+#elif 1
 		if (vga.monitor.retrace) {
 			data|=9;
 			if (timer_get_time()-vga.monitor.start_time>300e-6) vga.monitor.retrace=0;
@@ -508,6 +564,7 @@ static READ_HANDLER(vga_crtc_r)
 			vga.monitor.start_time=timer_get_time();
 		}
 #else
+		// not working with ps2m30
 		if (vga.monitor.retrace) data|=9;
 		vga.monitor.retrace=0;
 #endif

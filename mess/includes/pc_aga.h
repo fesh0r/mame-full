@@ -6,9 +6,26 @@
 
   some support additional modes like
   commodore pc10 320x200 in 16 colors
+
+
+	// aga
+	// 256 8x8 thick chars
+	// 256 8x8 thin chars
+	// 256 9x14 in 8x16 chars, line 3 is connected to a10
+    ROM_LOAD("aga.chr",     0x00000, 0x02000, 0xaca81498)
+	// hercules font of above
+    ROM_LOAD("hercules.chr", 0x00000, 0x1000, 0x7e8c9d76)
+
 */
 
 #include "driver.h"
+
+extern struct GfxLayout europc_cga_charlayout;
+extern struct GfxLayout europc_mda_charlayout;
+extern struct GfxDecodeInfo europc_gfxdecodeinfo[];
+extern struct GfxDecodeInfo aga_gfxdecodeinfo[];
+void pc_aga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
+
 
 typedef enum AGA_MODE { AGA_OFF, AGA_COLOR, AGA_MONO } AGA_MODE;
 void pc_aga_set_mode(AGA_MODE mode);

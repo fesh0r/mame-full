@@ -1,21 +1,11 @@
 #include "driver.h"
 #include "gregoria.h"
-#include "includes/pc.h"
+#include "includes/pcshare.h"
 #include "includes/ibmpc.h"
-
-#define VERBOSE_JOY 0		/* JOY (joystick port) */
 
 #define VERBOSE_PIO 0		/* PIO (keyboard controller) */
 
 #define VERBOSE_DBG 0       /* general debug messages */
-
-#if VERBOSE_JOY
-#define LOG(LEVEL,N,M,A)  \
-#define JOY_LOG(N,M,A) \
-	if(VERBOSE_JOY>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
-#else
-#define JOY_LOG(n,m,a)
-#endif
 
 #if VERBOSE_DBG
 #define DBG_LOG(N,M,A) \
@@ -31,6 +21,61 @@
 #define PIO_LOG(n,m,a)
 #endif
 
+/*
+ibm xt bios
+-----------
+
+fe0ac
+fe10c
+fe12b: hangs after reset
+fe15e
+fe19c
+fe2c6
+ graphics adapter sync signals
+fe332
+ search roms
+fe35d
+ pic test
+fe38f
+fe3c6
+fe3e6
+ 301 written
+ expect 0xaa after reset, send when lines activated in short time
+ (keyboard polling in frame interrupt is not quick enough now)
+fe424
+fe448
+ i/o expansion test
+fe49c
+ memory test
+fe500
+ harddisk bios used
+fe55c
+ disk booting
+
+ f0bef
+  f0b85
+   f096d
+    disk related
+    feca0
+     prueft kanal 0 adress register (memory refresh!?)
+
+ibm pc bios
+-----------
+fe104
+fe165
+fe1b4
+fe205
+fe23f
+fe256
+fe363
+fe382 expansion test
+fe3c4
+ memory test
+fe43b
+fe443 call fe643 keyboard test
+fe4a1 call ff979 tape!!! test
+*/
+
 
 /*************************************************************************
  *
@@ -45,7 +90,6 @@ static void pc_ppi_porta_w(int chip, int data );
 static void pc_ppi_portb_w( int chip, int data );
 static void pc_ppi_portc_w(int chip, int data );
 
-
 /* PC-XT has a 8255 which is connected to keyboard and other
 status information */
 ppi8255_interface pc_ppi8255_interface =
@@ -58,7 +102,6 @@ ppi8255_interface pc_ppi8255_interface =
 	pc_ppi_portb_w,
 	pc_ppi_portc_w
 };
-
 
 static struct {
 	int portc_switch_high;
@@ -128,77 +171,6 @@ void pc_ppi_portc_w(int chip, int data )
 	/* KB controller port C */
 	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
 }
-
-/*************************************************************************
- *
- *		JOY
- *		joystick port
- *
- *************************************************************************/
-
-static double JOY_time = 0.0;
-
-WRITE_HANDLER ( pc_JOY_w )
-{
-	JOY_time = timer_get_time();
-}
-
-#if 0
-#define JOY_VALUE_TO_TIME(v) (24.2e-6+11e-9*(100000.0/256)*v)
-READ_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-#if 0
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-#endif
-	{
-		delta=new_time-JOY_time;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_16_r(0)) ) data &= ~0x01;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_17_r(0)) ) data &= ~0x02;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_18_r(0)) ) data &= ~0x04;
-		if ( delta>JOY_VALUE_TO_TIME(input_port_19_r(0)) ) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input_port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#else
-READ_HANDLER ( pc_JOY_r )
-{
-	int data, delta;
-	double new_time = timer_get_time();
-
-	data=input_port_15_r(0)^0xf0;
-    /* timer overflow? */
-	if (new_time - JOY_time > 0.01)
-	{
-		//data &= ~0x0f;
-		JOY_LOG(2,"JOY_r",("$%02x, time > 0.01s\n", data));
-	}
-	else
-	{
-		delta = (int)( 256 * 1000 * (new_time - JOY_time) );
-		if (input_port_16_r(0) < delta) data &= ~0x01;
-		if (input_port_17_r(0) < delta) data &= ~0x02;
-		if (input_port_18_r(0) < delta) data &= ~0x04;
-		if (input_port_19_r(0) < delta) data &= ~0x08;
-		JOY_LOG(1,"JOY_r",("$%02x: X:%d, Y:%d, time %8.5f, delta %d\n", data, input
-						   _port_16_r(0), input_port_17_r(0), new_time - JOY_time, delta));
-	}
-
-	return data;
-}
-#endif
-
 
 // damned old checkit doesn't test at standard adresses
 // will do more when I have a program supporting it

@@ -1,7 +1,7 @@
 #include <time.h>
 #include "driver.h"
 #include "includes/europc.h"
-#include "includes/pc.h"
+#include "includes/pcshare.h"
 #include "includes/pit8253.h"
 #include "includes/pc_aga.h"
 #include "bcd.h"

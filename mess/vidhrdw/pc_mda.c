@@ -7,6 +7,7 @@
 #include "includes/crtc6845.h"
 
 #include "includes/pc_mda.h"
+#include "includes/pc_cga.h" //for the cga palette hack
 #include "includes/state.h"
 
 #define VERBOSE_MDA 0		/* MDA (Monochrome Display Adapter) */
@@ -25,6 +26,76 @@ unsigned char mda_palette[4][3] = {
 	{ 0x00,0xff,0x00 }
 };
 
+struct GfxLayout pc_mda_charlayout =
+{
+	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
+	256,					/* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },	/* pixel 7 repeated only for char code 176 to 223 */
+	/* y offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16384+0*8, 16384+1*8, 16384+2*8, 16384+3*8,
+	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8,
+	  0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+	  16384+0*8, 16384+1*8, 16384+2*8, 16384+3*8,
+	  16384+4*8, 16384+5*8, 16384+6*8, 16384+7*8 },
+	8*8 					/* every char takes 8 bytes (upper half) */
+};
+
+struct GfxLayout pc_mda_gfxlayout_1bpp =
+{
+	8,1,					/* 8 x 32 graphics */
+	256,					/* 256 codes */
+	1,						/* 1 bit per pixel */
+	{ 0 },					/* no bit planes */
+    /* x offsets */
+	{ 0,1,2,3,4,5,6,7 },
+	/* y offsets (we only use one byte to build the block) */
+	{ 0 },
+	8						/* every code takes 1 byte */
+};
+
+struct GfxDecodeInfo pc_mda_gfxdecodeinfo[] =
+{
+	{ 1, 0x0000, &pc_mda_charlayout,		0, 256 },
+	{ 1, 0x1000, &pc_mda_gfxlayout_1bpp,256*2,	 1 },	/* 640x400x1 gfx */
+    { -1 } /* end of array */
+};
+
+/* to be done:
+   only 2 digital color lines to mda/hercules monitor
+   (maximal 4 colors) */
+unsigned short mda_colortable[] = {
+     0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 2, 0, 0,10,10,10,10,10,10,10,10,10,10,10,10, 0,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+     2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 0, 2, 2,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,
+/* flashing is done by dirtying the videoram buffer positions with attr bit #7 set */
+     0, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2, 0,10, 0, 0,10,10,10,10,10,10,10,10,10,10,10,10, 0,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 2,10, 2,10, 2,10, 2,10, 2,10, 2,10,10,10, 0,10,10,10,10,10,10,10,10,10,10,10,10,10,10,
+    10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10, 0,10,10,
+/* the two colors for HGC graphics */
+     0, 10
+};
+
+/* Initialise the mda palette */
+void pc_mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+{
+//    memcpy(sys_palette,mda_palette,sizeof(mda_palette));
+    memcpy(sys_palette,cga_palette,sizeof(cga_palette));
+    memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
+}
 
 static struct { 
 	struct _CRTC6845 *crtc;

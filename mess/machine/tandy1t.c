@@ -2,33 +2,11 @@
 
 #include "includes/pckeybrd.h"
 
-#include "includes/pc.h"
+#include "includes/pcshare.h"
 #include "includes/tandy1t.h"
-#include "includes/pc_t1t.h"
-#include "includes/dma8237.h"
+//#include "includes/pc_t1t.h"
+//#include "includes/dma8237.h"
 
-static DMA8237_CONFIG dma= { DMA8237_PC };
-
-extern void init_t1000hx(void)
-{
-	UINT8 *gfx = &memory_region(REGION_GFX1)[0x1000];
-	int i;
-    /* just a plain bit pattern for graphics data generation */
-    for (i = 0; i < 256; i++)
-		gfx[i] = i;
-	pc_init_setup(pc_setup_t1000hx);
-	init_pc_common();
-	dma8237_config(dma8237,&dma);
-	dma8237_reset(dma8237);
-	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
-}
-
-void pc_t1t_init_machine(void)
-{
-//	pc_keyboard_init();
-	pc_t1t_reset();
-	dma8237_reset(dma8237);
-}
 
 /* tandy 1000 eeprom
   hx and later
@@ -237,22 +215,3 @@ READ_HANDLER(tandy1000_pio_r)
 	return data;
 }
 
-int tandy1000_frame_interrupt (void)
-{
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2)) {
-		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
-		else
-			timer_set_overclock(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-
-	pc_t1t_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
-
-    return ignore_interrupt ();
-}

@@ -11,7 +11,7 @@
 ****************************************************************************/
 #include "osd_cpu.h"
 #include "sound/streams.h"
-#include "includes/pc.h"
+#include "includes/pcshare.h"
 
 #include "includes/pit8253.h"
 
@@ -22,6 +22,13 @@
 #else
 #define SND_LOG(n,m,a)
 #endif
+
+
+struct CustomSound_interface pc_sound_interface = {
+	pc_sh_custom_start,
+	pc_sh_stop,
+	pc_sh_custom_update
+};
 
 #define BASECLOCK	1193180
 

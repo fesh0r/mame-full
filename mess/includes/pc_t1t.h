@@ -1,3 +1,7 @@
+extern unsigned short pcjr_colortable[256*2+16*2+2*4+1*16];
+extern struct GfxDecodeInfo t1t_gfxdecodeinfo[];
+void pcjr_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
+
 
 extern void pc_t1t_timer(void);
 extern int	pc_t1t_vh_start(void);

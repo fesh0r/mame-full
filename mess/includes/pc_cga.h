@@ -1,7 +1,23 @@
 #include "driver.h"
 #include "includes/crtc6845.h"
 
+#if 0
+	// cutted from some aga char rom
+	// 256 8x8 thick chars
+	// 256 8x8 thin chars
+    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+	// first font of above
+    ROM_LOAD("cga2.chr", 0x00000, 0x800, 0xa362ffe6)
+#endif
+
+
 extern unsigned char cga_palette[16][3];
+extern unsigned short cga_colortable[256*2+16*2+2*4];
+extern struct GfxLayout CGA_charlayout;
+extern struct GfxLayout CGA_gfxlayout_1bpp;
+extern struct GfxLayout CGA_gfxlayout_2bpp;
+extern struct GfxDecodeInfo CGA_gfxdecodeinfo[];
+void pc_cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
 
 extern void pc_cga_init_video(struct _CRTC6845 *crtc);
 

@@ -9,6 +9,4 @@ void pc_rtc_init(void);
 extern WRITE_HANDLER ( pc_EXP_w );
 extern READ_HANDLER ( pc_EXP_r );
 
-extern WRITE_HANDLER ( pc_JOY_w );
-extern READ_HANDLER ( pc_JOY_r );
 
