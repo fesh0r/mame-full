@@ -38,8 +38,8 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/cdp1802
 CPUDEFS += -DHAS_CDP1802=1
 CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
-DBGOBJS += $(OBJ)/cpu/cdp1802/disasm.o
-$(OBJ)/cpu/cdp1802/cdp1802.o: table.c
+DBGOBJS += $(OBJ)/cpu/cdp1802/1802dasm.o
+$(OBJ)/cpu/cdp1802/cdp1802.o: 1802tbl.c
 else
 CPUDEFS += -DHAS_CDP1802=0
 endif
