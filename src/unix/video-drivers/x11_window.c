@@ -73,9 +73,11 @@ struct rc_option x11_window_opts[] = {
    { "cursor",		"cu",			rc_bool,       &show_cursor,
      "1",		0,			0,		NULL,
      "Show/ don't show the cursor" },
+#ifdef USE_MITSHM
    { "mitshm",		"ms",			rc_bool,	&use_mit_shm,
      "1",		0,			0,		NULL,
-     "Use / don't use MIT Shared Mem (if avaiable and compiled in)" },
+     "Use / don't use MIT Shared Mem (if available and compiled in)" },
+#endif
    { "xsync",		"xs",			rc_bool,	&use_xsync,
      "1",		0,			0,		NULL,
      "Use / don't use XSync instead of XFlush as screen refresh method" },
