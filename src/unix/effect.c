@@ -51,14 +51,14 @@
 
 const struct sysdep_display_effect_properties_struct sysdep_display_effect_properties[] = {
   { 1, 8, 1, 8, 0, "no effect" },            /* no effect */
-  { 2, 2, 2, 2, 1, "smooth scaling" },       /* scale2x */
-  { 2, 2, 2, 2, 1, "light scanlines" },      /* scan2 */
+  { 2, 2, 2, 2, 0, "smooth scaling" },       /* scale2x */
+  { 2, 2, 2, 2, 0, "light scanlines" },      /* scan2 */
   { 3, 3, 2, 2, 0, "rgb vertical stripes" }, /* rgbstripe */
   { 2, 2, 3, 3, 0, "rgb scanlines" },        /* rgbscan */
-  { 3, 3, 3, 3, 1, "deluxe scanlines" },     /* scan3 */
-  { 2, 2, 2, 2, 1, "low quality filter" },   /* lq2x */
-  { 2, 2, 2, 2, 1, "high quality filter" },  /* hq2x */
-  { 2, 2, 2, 2, 1, "6-tap filter & scanlines" }, /* 6tap2x */
+  { 3, 3, 3, 3, 0, "deluxe scanlines" },     /* scan3 */
+  { 2, 2, 2, 2, 0, "low quality filter" },   /* lq2x */
+  { 2, 2, 2, 2, 0, "high quality filter" },  /* hq2x */
+  { 2, 2, 2, 2, 0, "6-tap filter & scanlines" }, /* 6tap2x */
   { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
 };
  
@@ -167,8 +167,13 @@ void sysdep_display_check_effect_params(
       sysdep_display_effect_properties[params->effect].max_widthscale;
   }
   
+  /* check if we need to lock heightscale to widthscale*/
+  if (sysdep_display_effect_properties[params->effect].flags &
+      SYSDEP_DISPLAY_Y_SCALE_LOCKED_TO_X)
+    params->heightscale = params->widthscale;
+
   /* Adjust heightscale */ 
-  if (params->heightscale <
+  else if (params->heightscale <
       sysdep_display_effect_properties[params->effect].min_heightscale)
   {
     params->heightscale =
@@ -181,10 +186,6 @@ void sysdep_display_check_effect_params(
       sysdep_display_effect_properties[params->effect].max_heightscale;
   }
   
-  /* check if we need to lock widthscale and heightscale */
-  if (sysdep_display_effect_properties[params->effect].lock_scale)
-    params->heightscale = params->widthscale;
-
   if (params->effect && params->yarbsize)
   {
     if (firsttime)

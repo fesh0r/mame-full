@@ -23,6 +23,7 @@ static int debugger_has_focus = 0;
 static int show_effect_or_scale = 0;
 static int show_status = 0;
 static const char *status_msg = NULL;
+static int normal_params_changed = 0;
 
 /* options these are initialised through the rc_option struct */
 static float f_beam;
@@ -41,6 +42,8 @@ static int video_ror;
 static int video_rol;
 static int video_autoror;
 static int video_autorol;
+static int user_widthscale;
+static int user_heightscale;
 
 static struct sysdep_palette_struct *normal_palette = NULL;
 static struct sysdep_palette_struct *debug_palette  = NULL;
@@ -77,8 +80,6 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 static int video_verify_mode(struct rc_option *option, const char *arg,
 		int priority);
 
-static void osd_free_colors(void);
-
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
    { "Video Related",	NULL,			rc_seperator,	NULL,
@@ -93,10 +94,10 @@ struct rc_option video_opts[] = {
    { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable), this overrides the heightscale and scale options" },
-   { "widthscale",	"ws",			rc_int,		&normal_params.widthscale,
+   { "widthscale",	"ws",			rc_int,		&user_widthscale,
      "1",		1,			8,		NULL,
      "Set X-Scale factor (increase: left-shift + insert, decrease: left-shift + delete)" },
-   { "heightscale",	"hs",			rc_int,		&normal_params.heightscale,
+   { "heightscale",	"hs",			rc_int,		&user_heightscale,
      "1",		1,			8,		NULL,
      "Set Y-Scale factor (increase: left-shift + home, decrease: left-shift + end)" },
    { "scale",		"s",			rc_use_function, NULL,
@@ -449,20 +450,22 @@ int osd_create_display(const struct osd_create_params *params,
 				== VIDEO_PIXEL_ASPECT_RATIO_1_2)
 		{
 			if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-				normal_params.widthscale *= 2;
+				user_widthscale *= 2;
 			else
-				normal_params.heightscale *= 2;
+				user_heightscale *= 2;
 		}
 
 		if ((params->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK)
 				== VIDEO_PIXEL_ASPECT_RATIO_2_1)
 		{
 			if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
-				normal_params.heightscale *= 2;
+				user_heightscale *= 2;
 			else
-				normal_params.widthscale *= 2;
+				user_widthscale *= 2;
 		}
 	}
+	normal_params.widthscale  = user_widthscale;
+	normal_params.heightscale = user_heightscale;
 
 	switch (use_hw_vectors)
 	{
@@ -484,7 +487,7 @@ int osd_create_display(const struct osd_create_params *params,
 
 	if (normal_params.vec_src_bounds)
 	      vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
-
+	      
 	if (!(normal_palette = sysdep_palette_create(&sysdep_display_properties.palette_info, normal_params.depth)))
 		return -1;
 	
@@ -523,7 +526,17 @@ int osd_create_display(const struct osd_create_params *params,
 
 void osd_close_display(void)
 {
-	osd_free_colors();
+	if (normal_palette)
+	{
+		sysdep_palette_destroy(normal_palette);
+		normal_palette = NULL;
+	}
+
+	if (debug_palette)
+	{
+		sysdep_palette_destroy(debug_palette);
+		debug_palette = NULL;
+	}
 	sysdep_display_close();
 
 	/* print a final result to the stdout */
@@ -534,36 +547,42 @@ void osd_close_display(void)
 	}
 }
 
-#define NORMAL_PARAMS_CHANGED      0x01
-#define VIDMODE_FULLSCREEN_CHANGED 0x02
-#define VISIBLE_AREA_CHANGED       0x04
-#define EVERYTHING_CHANGED         0xFF
+#define SCALING_CHANGED      	   0x01
+#define EFFECT_CHANGED             0x02
+#define VIDMODE_FULLSCREEN_CHANGED 0x04
+#define VISIBLE_AREA_CHANGED       0x08
 
-static void change_display_settings(struct sysdep_display_open_params *new_params, int flags)
+static void update_params(void)
 {
   int retval;
+  int requested_widthscale  = normal_params.widthscale;
+  int requested_heightscale = normal_params.heightscale;
 #ifdef x11
   int sound_disabled = 0;
   
   /* Close sound, DGA (fork) makes the filehandle open twice,
      so closing it here and re-openeing after the transition
      fixes that.	   -- Steve bpk@hoopajoo.net */
-  if ((flags & VIDMODE_FULLSCREEN_CHANGED) &&
-      (new_params->video_mode == 0) &&
-      (new_params->fullscreen == 1))
+  if ((normal_params_changed & VIDMODE_FULLSCREEN_CHANGED) &&
+      (normal_params.video_mode == 0) &&
+      (normal_params.fullscreen == 1))
   {
     osd_sound_enable( 0 );
     sound_disabled = 1;
   }
 #endif
 
-  retval = sysdep_display_change_params(new_params);
+  retval = sysdep_display_change_params(&normal_params);
   
   if (retval & SYSDEP_DISPLAY_PROPERTIES_CHANGED)
   {
-	osd_free_colors();
+	if (normal_palette)
+	{
+		sysdep_palette_destroy(normal_palette);
+		normal_palette = NULL;
+	}
 
-	if (new_params->vec_src_bounds)
+	if (normal_params.vec_src_bounds)
 	{
 		/* we could have switched between hw and sw drawn vectors,
 		   so clear Machine->scrbitmap and don't use vector_dirty_pixels
@@ -573,18 +592,29 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
 		vector_register_aux_renderer(sysdep_display_properties.vector_renderer);
 	}
   }
-    
-  if ((flags  & NORMAL_PARAMS_CHANGED) ||
+
+  /* If we've tried to change the scaling and we've (partially) succeeded
+     update the user scale settings */
+  if ((normal_params_changed & SCALING_CHANGED) &&
+      ((requested_widthscale  == normal_params.widthscale) ||
+       (requested_heightscale == normal_params.heightscale)))
+  {
+    user_widthscale  = normal_params.widthscale;
+    user_heightscale = normal_params.heightscale;
+  }
+
+  if ((normal_params_changed & SCALING_CHANGED) ||
+      (normal_params_changed & EFFECT_CHANGED) ||
       (retval & SYSDEP_DISPLAY_SCALING_EFFECT_CHANGED))
   {
     show_effect_or_scale = 2.0 * video_fps;
     ui_show_fps_temp(2.0);
   }
   
-  if ((flags  & VIDMODE_FULLSCREEN_CHANGED) ||
+  if ((normal_params_changed & VIDMODE_FULLSCREEN_CHANGED) ||
       (retval & SYSDEP_DISPLAY_VIDMODE_FULLSCREEN_CHANGED))
   {
-    status_msg  = sysdep_display_properties.mode_name[new_params->video_mode];
+    status_msg  = sysdep_display_properties.mode_name[normal_params.video_mode];
     show_status = 2.0 * video_fps;
     ui_show_fps_temp(2.0);
   }
@@ -594,6 +624,8 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
   if (sound_disabled)
     osd_sound_enable( 1 );
 #endif
+
+  normal_params_changed = 0;
 }
 
 static void update_palette(struct mame_display *display, int force_dirty)
@@ -656,21 +688,6 @@ static void update_debug_display(struct mame_display *display)
 	   &debug_bounds, debug_palette, 0, 0);
 }
 
-static void osd_free_colors(void)
-{
-	if (normal_palette)
-	{
-		sysdep_palette_destroy(normal_palette);
-		normal_palette = NULL;
-	}
-
-	if (debug_palette)
-	{
-		sysdep_palette_destroy(debug_palette);
-		debug_palette = NULL;
-	}
-}
-
 static int skip_next_frame = 0;
 
 typedef int (*skip_next_frame_func)(void);
@@ -703,9 +720,18 @@ void change_debugger_focus(int new_debugger_focus)
 	{
 		debugger_has_focus = new_debugger_focus;
 		if (new_debugger_focus)
-			change_display_settings(&debug_params,  EVERYTHING_CHANGED);
+		{
+		        if((sysdep_display_change_params(&debug_params) &
+		            SYSDEP_DISPLAY_PROPERTIES_CHANGED) &&
+                           normal_palette)
+                        {
+                                sysdep_palette_destroy(normal_palette);
+                                normal_palette = NULL;
+                        }
+                }
 		else
-			change_display_settings(&normal_params, EVERYTHING_CHANGED);
+		        normal_params_changed |= VIDMODE_FULLSCREEN_CHANGED;
+                  
 	}
 }
 
@@ -716,7 +742,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 	const char *msg = NULL;
 	static int flags = 0;
 	static int palette_changed = 0;
-	static int normal_params_changed = 0;
 	
 	/*** STEP 1 update sound,fps,vis_area,palette and leds ***/
 	if (sound_stream)
@@ -832,8 +857,6 @@ void osd_update_video_and_audio(struct mame_display *display)
                 if (effect_mod)
                 {
                   int i=0, scaled_width, scaled_height;
-                  int orig_widthscale  = normal_params.widthscale;
-                  int orig_heightscale = normal_params.heightscale;
 
                   /* check if the effect fits the screen */
                   do
@@ -847,9 +870,9 @@ void osd_update_video_and_audio(struct mame_display *display)
                       if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
                         normal_params.effect = 0;
                         
-                      /* try with the original scale factors */
-                      normal_params.widthscale  = orig_widthscale;
-                      normal_params.heightscale = orig_heightscale;
+                      /* try with the user set scale factors */
+                      normal_params.widthscale  = user_widthscale;
+                      normal_params.heightscale = user_heightscale;
                       normal_params.yarbsize    = 0;
 
                       sysdep_display_check_effect_params(&normal_params);
@@ -857,17 +880,23 @@ void osd_update_video_and_audio(struct mame_display *display)
                       /* attempt to keep the same aspect */
                       if (((double)normal_params.widthscale/
                            normal_params.heightscale) !=
-                          ((double)orig_widthscale/orig_heightscale))
+                          ((double)user_widthscale/user_heightscale))
                       {
-                        if (normal_params.widthscale != orig_widthscale)
+                        if ((sysdep_display_effect_properties[
+                             normal_params.effect].flags &
+                             SYSDEP_DISPLAY_X_SCALE_LOCKED) ||
+                            (!(sysdep_display_effect_properties[
+                               normal_params.effect].flags &
+                               SYSDEP_DISPLAY_Y_SCALE_LOCKED) && 
+                             (normal_params.widthscale != user_widthscale)))
                         {
                           normal_params.heightscale = normal_params.widthscale
-                            / ((double)orig_widthscale/orig_heightscale) + 0.5;
+                            / ((double)user_widthscale/user_heightscale) + 0.5;
                         }
                         else
                         {
                           normal_params.widthscale = normal_params.heightscale
-                            * ((double)orig_widthscale/orig_heightscale) + 0.5;
+                            * ((double)user_widthscale/user_heightscale) + 0.5;
                         }
                       }
                     }
@@ -898,7 +927,7 @@ void osd_update_video_and_audio(struct mame_display *display)
                            ((scaled_width  > sysdep_display_properties.max_width ) ||
                             (scaled_height > sysdep_display_properties.max_height)));
 
-                  normal_params_changed |= NORMAL_PARAMS_CHANGED;
+                  normal_params_changed |= EFFECT_CHANGED;
                 }
             }
             else if (code_pressed(KEYCODE_LSHIFT))
@@ -927,7 +956,8 @@ void osd_update_video_and_audio(struct mame_display *display)
                 if (widthscale_mod || heightscale_mod)
                 {
                         if (sysdep_display_effect_properties[
-                              normal_params.effect].lock_scale)
+                              normal_params.effect].flags &
+                              SYSDEP_DISPLAY_Y_SCALE_LOCKED_TO_X)
                         {
                                 if (widthscale_mod)
                                         heightscale_mod = widthscale_mod;
@@ -947,7 +977,7 @@ void osd_update_video_and_audio(struct mame_display *display)
                         else if (normal_params.heightscale > 8)
                           normal_params.heightscale = 8;
 
-                        normal_params_changed |= NORMAL_PARAMS_CHANGED;
+                        normal_params_changed |= SCALING_CHANGED;
                 }
             }
 
@@ -990,11 +1020,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		}
 		
 		if (normal_params_changed)
-		{
-		        change_display_settings(&normal_params,
-		          normal_params_changed);
-                        normal_params_changed = 0;
-		}
+		        update_params();
 		
 		if (!normal_palette)
 		{

@@ -64,13 +64,19 @@
 #define SYSDEP_DISPLAY_EFFECT_FAKESCAN  9
 #define SYSDEP_DISPLAY_EFFECT_LAST      SYSDEP_DISPLAY_EFFECT_FAKESCAN
 
-/* mode flags */
+/* display properties mode flags */
 #define SYSDEP_DISPLAY_WINDOWED		0x01
 #define SYSDEP_DISPLAY_FULLSCREEN	0x02
 #define SYSDEP_DISPLAY_HWSCALE 		0x04
 #define SYSDEP_DISPLAY_EFFECTS		0x08
 /* number of modes */
 #define SYSDEP_DISPLAY_VIDEO_MODES	5
+
+/* effect properties flags */
+#define SYSDEP_DISPLAY_X_SCALE_LOCKED        0x01
+#define SYSDEP_DISPLAY_Y_SCALE_LOCKED        0x02
+#define SYSDEP_DISPLAY_X_AND_Y_SCALE_LOCKED  0x03
+#define SYSDEP_DISPLAY_Y_SCALE_LOCKED_TO_X   0x04
 
 /* flags for the return value of sysdep_display_change_params */
 #define SYSDEP_DISPLAY_PROPERTIES_CHANGED         0x01
@@ -192,7 +198,7 @@ struct sysdep_display_effect_properties_struct {
   int max_widthscale;
   int min_heightscale;
   int max_heightscale;
-  int lock_scale;
+  int flags;
   const char *name;
 };
 
