@@ -3,6 +3,7 @@
 #include "machine/z80fmly.h"
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
+#include "image.h"
 
 #define KC_DEBUG
 
@@ -128,7 +129,7 @@ int kc_quickload_load(int id)
 {
 	unsigned char *data;
 
-	if (image_is_slot_empty(IO_QUICKLOAD, id))
+	if (!image_exists(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 	if (kc_load(IO_QUICKLOAD,id,&data))
@@ -173,7 +174,7 @@ static unsigned char kc85_disc_hw_input_gate;
 
 int kc85_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)
@@ -445,7 +446,7 @@ int kc_cassette_device_init(int id)
 {
 	void *file;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);

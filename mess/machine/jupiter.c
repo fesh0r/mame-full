@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/jupiter.h"
+#include "image.h"
 
 #define	JUPITER_NONE	0
 #define	JUPITER_ACE	1
@@ -166,7 +167,7 @@ int jupiter_load_ace(int id)
 	int done, jupiter_index;
 
 	/* A cartridge isn't strictly mandatory, so warn */
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		logerror("Jupiter - warning: no cartridge specified!\n");
 		return INIT_PASS;
@@ -183,7 +184,7 @@ int jupiter_load_ace(int id)
 	{
 		if ((jupiter_data = malloc(0x6000)))
 		{
-			logerror("Loading file %s.\r\n", device_filename(IO_CARTSLOT,id));
+			logerror("Loading file %s.\r\n", image_filename(IO_CARTSLOT,id));
 			while (!done && (jupiter_index < 0x6001))
 			{
 				osd_fread(file, &jupiter_byte, 1);
@@ -250,7 +251,7 @@ int jupiter_load_tap(int id)
 	UINT16 hdr_len;
 
 	/* Remember, a cassette isn't strictly mandatory, so warn only! */
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 	{
 		logerror("Jupiter - warning: no cassette specified!\n");
 		return INIT_PASS;
@@ -262,7 +263,7 @@ int jupiter_load_tap(int id)
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, 0);
 	if (file)
 	{
-		logerror("Loading file %s.\r\n", device_filename(IO_CASSETTE,id));
+		logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));
 
         osd_fread(file, &inpbyt, 1);
 		hdr_len = inpbyt;

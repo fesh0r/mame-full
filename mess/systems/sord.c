@@ -41,6 +41,7 @@
 /* PI-5 interface is required. mode 2 of the 8255 is used to communicate with the FD-5 */
 
 #include "includes/nec765.h"
+#include "image.h"
 
 static MACHINE_INIT( sord_m5 );
 
@@ -335,11 +336,11 @@ static ppi8255_interface sord_ppi8255_interface =
 
 static char cart_data[0x06fff-0x02000];
 
-static int		sord_cartslot_init(int id)
+static int sord_cartslot_init(int id)
 {
 	void *file;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_FAIL;
 
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
@@ -370,7 +371,7 @@ static void	sord_cartslot_exit(int id)
 
 static int sord_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

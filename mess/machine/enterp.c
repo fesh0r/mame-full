@@ -14,6 +14,7 @@
 #include "includes/basicdsk.h"
 #include "includes/wd179x.h"
 #include "sndhrdw/dave.h"
+#include "image.h"
 
 void Enterprise_SetupPalette(void);
 
@@ -25,7 +26,7 @@ MACHINE_INIT( enterprise )
 
 int enterprise_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

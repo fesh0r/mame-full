@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "includes/snes.h"
 #include "cpu/g65816/g65816.h"
+#include "image.h"
 
 UINT8  *snes_ram;		/* 65816 ram */
 UINT8  *spc_ram;		/* spc700 ram */
@@ -61,7 +62,7 @@ MACHINE_INIT( snes )
 MACHINE_STOP( snes )
 {
 	/* Save RAM */
-	battery_save( device_filename(IO_CARTSLOT,0), &snes_ram[0x700000], sram_size );
+	battery_save( image_filename(IO_CARTSLOT,0), &snes_ram[0x700000], sram_size );
 
 #ifdef MAME_DEBUG
 	battery_save( "snesvram", snes_vram, 0x20000 );
@@ -793,7 +794,7 @@ int snes_load_rom(int id)
 	};
 #endif	/* V_GENERAL */
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		printf("Cartridge name required!\n");
 		return INIT_FAIL;
@@ -866,7 +867,7 @@ int snes_load_rom(int id)
 	}
 
 	/* Load the save RAM */
-	battery_load( device_filename(IO_CARTSLOT,id), &snes_ram[0x700000], sram_size );
+	battery_load( image_filename(IO_CARTSLOT,id), &snes_ram[0x700000], sram_size );
 
 	/* All done */
 	return INIT_PASS;

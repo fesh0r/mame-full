@@ -69,11 +69,11 @@
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
-
+#include "image.h"
 
 static int exidy_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

@@ -10,6 +10,7 @@ ernesto@imagina.com
 
 #include "driver.h"
 #include "includes/amiga.h"
+#include "image.h"
 
 #define LOG_CUSTOM				0
 #define LOG_CIA					0
@@ -656,7 +657,7 @@ int amiga_fdc_init( int id ) {
 	fdc_status[id].disk_changed = 1;
 	fdc_status[id].f = image_fopen_new(IO_FLOPPY, id, NULL);
 	if ( fdc_status[id].f == NULL ) {
-		logerror("Could not open image %s\n", device_filename(IO_FLOPPY,id) );
+		logerror("Could not open image %s\n", image_filename(IO_FLOPPY,id) );
 		return INIT_FAIL;
 	}
 	fdc_status[id].disk_changed = 0;

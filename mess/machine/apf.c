@@ -12,6 +12,7 @@
 #include "cassette.h"
 #include "formats/apfapt.h"
 #include "includes/basicdsk.h"
+#include "image.h"
 
 #if 0
 int apf_cassette_init(int id)
@@ -28,7 +29,7 @@ int apf_cassette_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 
@@ -124,7 +125,7 @@ void apf_cassette_exit(int id)
 /* 256 bytes per sector, single sided, single density, 40 track  */
 int apfimag_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

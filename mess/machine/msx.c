@@ -26,6 +26,7 @@
 #include "formats/fmsx_cas.h"
 #include "printer.h"
 #include "utils.h"
+#include "image.h"
 
 static MSX msx1;
 static void msx_set_all_mem_banks (void);
@@ -100,7 +101,9 @@ int msx_load_rom (int id)
     void *F;
     UINT8 *pmem,*m;
     int size,size_aligned,n,p,type,i;
-    char *pext, buf[PAC_HEADER_LEN + 2];
+    const char *pext;
+	char *pext2;
+	char buf[PAC_HEADER_LEN + 2];
     static char *mapper_types[] = { "none", "MSX-DOS 2", "konami5 with SCC",
         "konami4 without SCC", "ASCII/8kB", "ASCII//16kB",
         "Konami Game Master 2", "ASCII/8kB with 8kB SRAM",
@@ -109,7 +112,7 @@ int msx_load_rom (int id)
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_PASS;
 
     /* try to load it */
@@ -119,12 +122,12 @@ int msx_load_rom (int id)
     if (size < 0x2000)
     {
         logerror("%s: file to small\n",
-            device_filename (IO_CARTSLOT, id));
+            image_filename (IO_CARTSLOT, id));
         osd_fclose (F);
         return 1;
     }
     /* get mapper type */
-    pext = (char *)device_extrainfo (IO_CARTSLOT, id);
+    pext = image_extrainfo (IO_CARTSLOT, id);
 	if (!pext || (1 != sscanf (pext, "%d", &type) ) )
    		{
        	logerror("Cart #%d No extra info found in crc file\n", id);
@@ -155,7 +158,7 @@ int msx_load_rom (int id)
     if (osd_fread (F, pmem, size) != size)
     {
         logerror("%s: can't read file\n",
-            device_filename (IO_CARTSLOT, id));
+            image_filename (IO_CARTSLOT, id));
         osd_fclose (F);
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
@@ -169,7 +172,7 @@ int msx_load_rom (int id)
 
         if ( !( (pmem[0] == 'A') && (pmem[1] == 'B') ) )
         {
-            logerror("%s: May not be a valid ROM file\n",device_filename (IO_CARTSLOT, id) );
+            logerror("%s: May not be a valid ROM file\n",image_filename (IO_CARTSLOT, id) );
         }
 
         logerror("Probed cartridge mapper %s\n", mapper_types[type]);
@@ -197,7 +200,7 @@ int msx_load_rom (int id)
     for (i=0;i<4;i++) msx1.cart[id].banks[i] = (i & msx1.cart[id].bank_mask);
     logerror("Cart #%d size %d, mask %d, type: %s\n",id, size, msx1.cart[id].bank_mask, mapper_types[type]);
     /* set filename for sram (memcard) */
-    msx1.cart[id].sramfile = malloc (strlen (device_filename
+    msx1.cart[id].sramfile = malloc (strlen (image_filename
         (IO_CARTSLOT, id)) + 1);
     if (!msx1.cart[id].sramfile)
     {
@@ -205,10 +208,15 @@ int msx_load_rom (int id)
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-    strcpy (msx1.cart[id].sramfile, osd_basename_const(device_filename (IO_CARTSLOT, id) ) );
-    pext = strrchr (msx1.cart[id].sramfile, '.');
-    if (pext) *pext = 0;
-    /* do some stuff for some types :)) */
+	/* the cast to (char*) is there to make sure the argument for 
+	   osd_basename is OK. Note that IMHO osd_basename should take
+	   and return const */
+    strcpy (msx1.cart[id].sramfile, osd_basename ((char*)image_filename (IO_CARTSLOT, id) ) );
+    pext2 = strrchr (msx1.cart[id].sramfile, '.');
+    if (pext2)
+		*pext2 = 0;
+
+	/* do some stuff for some types :)) */
     switch (type) {
     case 0:
         /*
@@ -917,7 +925,7 @@ int msx_floppy_init (int id)
 	void *f;
 	int size, heads = 2;
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
@@ -1574,7 +1582,7 @@ int msx_cassette_init(int id)
     void *file;
 	int ret;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);

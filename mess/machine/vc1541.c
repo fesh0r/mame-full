@@ -102,6 +102,7 @@ FF00-FFFF       Jump table, vectors
 #include "snprintf.h"
 
 #include "driver.h"
+#include "image.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
 
@@ -662,7 +663,7 @@ int vc1541_init (int id)
 	}
 	osd_fclose (in);
 
-	logerror("floppy image %s loaded\n", device_filename(IO_FLOPPY, id));
+	logerror("floppy image %s loaded\n", image_filename(IO_FLOPPY, id));
 
 	vc1541->timer = timer_alloc(vc1541_timer);
 

@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/odyssey2.h"
+#include "image.h"
 
 static UINT8 ram[0x100];
 
@@ -30,25 +31,21 @@ int odyssey2_load_rom (int id)
     void *cartfile;
 
     logerror("ODYSSEY2 - Load_rom()\n");
-    if (image_is_slot_empty(IO_CARTSLOT, id))
-    {
-	logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
-	return INIT_FAIL;
+	if (!image_exists(IO_CARTSLOT, id))
+	{
+		logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
+		return INIT_FAIL;
     }
 
-//    ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
     logerror("ODYSSEY2 - Loading Image\n");
     if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
     {
-	logerror("ODYSSEY2 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
-	return 1;
+		logerror("ODYSSEY2 - Unable to locate cartridge: %s\n", image_filename(IO_CARTSLOT,id) );
+		return 1;
     }
-    else
-    {
 	logerror("ODYSSEY2 - Found cartridge\n");
 
-    }
     logerror("ODYSSEY2 - Done\n");
 
     size=osd_fsize(cartfile);
@@ -56,11 +53,11 @@ int odyssey2_load_rom (int id)
     osd_fclose (cartfile);
 
     if (size<=0x800)
-	memcpy(memory_region(REGION_USER1)+0x800, memory_region(REGION_USER1), 0x800);
+		memcpy(memory_region(REGION_USER1)+0x800, memory_region(REGION_USER1), 0x800);
     if (size<=0x1000)
-	memcpy(memory_region(REGION_USER1)+0x1000, memory_region(REGION_USER1), 0x1000);
+		memcpy(memory_region(REGION_USER1)+0x1000, memory_region(REGION_USER1), 0x1000);
 
-    return 0;
+	return 0;
 }
 
 

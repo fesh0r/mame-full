@@ -66,6 +66,7 @@ New (020327):
 	* better GROM and speech timings
 */
 
+#include <math.h>
 #include "driver.h"
 #include "includes/wd179x.h"
 #include "tms9901.h"
@@ -73,9 +74,8 @@ New (020327):
 #include "vidhrdw/v9938.h"
 #include "sndhrdw/spchroms.h"
 #include "includes/basicdsk.h"
-#include <math.h>
 #include "cassette.h"
-
+#include "image.h"
 #include "ti99_4x.h"
 
 
@@ -335,7 +335,7 @@ int ti99_floppy_init(int id)
 {
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
-		switch (device_length(IO_FLOPPY, id))
+		switch (image_length(IO_FLOPPY, id))
 		{
 		case 1*40*9*256:	/* 90kbytes: SSSD */
 		default:
@@ -373,7 +373,7 @@ void ti99_cassette_exit(int id)
 */
 int ti99_load_rom(int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
+	const char *name = image_filename(IO_CARTSLOT,id);
 	void *cartfile = NULL;
 
 
@@ -389,7 +389,7 @@ int ti99_load_rom(int id)
 	}
 
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		slot_type[id] = SLOT_EMPTY;
 	else
 	{

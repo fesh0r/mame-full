@@ -1,5 +1,5 @@
 #include "driver.h"
-
+#include "image.h"
 
 int tapecontrol(struct mame_bitmap *bitmap, int selected)
 {
@@ -15,13 +15,14 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
     int arrowize;
 	int status;
 
-	if (device_count(IO_CASSETTE)==0) return 0;
+	if (!device_find(Machine->gamedrv, IO_CASSETTE))
+		return 0;
 
     total = 0;
     sel = selected - 1;
 
     menu_item[total] = device_typename_id(IO_CASSETTE,id);
-	menu_subitem[total] = device_filename(IO_CASSETTE,id) ? device_filename(IO_CASSETTE,id) : "---";
+	menu_subitem[total] = image_filename(IO_CASSETTE,id) ? image_filename(IO_CASSETTE,id) : "---";
 	flag[total] = 0;
 	total++;
 
@@ -106,7 +107,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		{
 		case 0:
 			id--;
-			if (id < 0) id = device_count(IO_CASSETTE)-1;
+			if (id < 0) id = image_count(IO_CASSETTE)-1;
 			break;
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -119,7 +120,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 		{
 		case 0:
 			id++;
-			if (id > device_count(IO_CASSETTE)-1) id = 0;
+			if (id > image_count(IO_CASSETTE)-1) id = 0;
 			break;
 		}
 		/* tell updatescreen() to clean after us (in case the window changes size) */
@@ -136,7 +137,7 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
 			switch (sel)
 			{
 			case 0:
-                id = (id + 1) % device_count(IO_CASSETTE);
+                id = (id + 1) % image_count(IO_CASSETTE);
 				break;
 			case 2:
 				/* Pause/stop */

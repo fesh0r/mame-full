@@ -19,6 +19,7 @@
 #include "machine/8255ppi.h"
 #include "vidhrdw/tms9928a.h"
 #include "printer.h"
+#include "image.h"
 
 static SVI_318 svi;
 static UINT8 *pcart;
@@ -47,7 +48,7 @@ int svi318_load_rom (int id)
 	int size;
 
 	/* A cartridge isn't strictly mandatory */
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		logerror("SVI318 - warning: no cartridge specified!\n");
 		return INIT_PASS;
@@ -67,7 +68,7 @@ int svi318_load_rom (int id)
 		size = osd_fsize (f);
 		if (osd_fread (f, p, size) != size)
 		{
-			logerror ("can't read file %s\n", device_filename (IO_CASSETTE, id) );
+			logerror ("can't read file %s\n", image_filename (IO_CASSETTE, id) );
 			osd_fclose (f);
 			free (p);
 			return INIT_FAIL;
@@ -604,8 +605,8 @@ int svi318_cassette_init(int id)
     void *file;
 	int ret;
 
-   	/* A cassette isn't mandatory */
-	if (image_is_slot_empty(IO_CASSETTE, id))
+   	/* A cartridge isn't strictly mandatory for the coleco */
+	if (!image_exists(IO_CASSETTE, id))
 	{
 		logerror("SVI318 - warning: no cassette specified!\n");
 		return INIT_PASS;
@@ -657,7 +658,7 @@ void svi318_cassette_exit(int id)
 	}
 
 int svi318_cassette_present (int id)
-	{
-	return ! image_is_slot_empty(IO_CASSETTE, id);
-	}
+{
+	return image_exists(IO_CASSETTE, id);
+}
 

@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <string.h>
 #include "driver.h"
+#include "image.h"
 
 #define VERBOSE_DBG 0				   /* general debug messages */
 #include "includes/cbm.h"
@@ -126,7 +127,7 @@ static int d64_open (int id)
 	cbm_drive[id].d.d64.image_id = id;
 	if (!(in = image_fopen_new(IO_FLOPPY, id, NULL)))
 	{
-		logerror(" image %s not found\n", device_filename(IO_FLOPPY,id));
+		logerror(" image %s not found\n", image_filename(IO_FLOPPY,id));
 		return 1;
 	}
 	size = osd_fsize (in);
@@ -144,7 +145,7 @@ static int d64_open (int id)
 	osd_fclose (in);
 
 	logerror("floppy image %s loaded\n",
-				 device_filename(IO_FLOPPY,id));
+				 image_filename(IO_FLOPPY,id));
 
 	cbm_drive[id].drive = D64_IMAGE;
 	return 0;
@@ -154,7 +155,7 @@ static int d64_open (int id)
 int cbm_drive_attach_image (int id)
 {
 #if 1
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return cbm_drive_attach_fs (id);
 #else
     CBM_Drive *drive = cbm_drive + id;

@@ -8,7 +8,7 @@
 #include "includes/nc.h"
 #include "includes/serial.h"
 #include "includes/msm8251.h"
-
+#include "image.h"
 
 /*************************************************************************************************/
 /* PCMCIA Ram Card management */
@@ -124,7 +124,7 @@ int nc_pcmcia_card_load(int id)
 {
 	/* a pcmcia card is not required for this machine,
 	so if no image is specified, initialisation has succeeded */
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		/* card not present */
 		nc_set_card_present_state(0);
@@ -180,7 +180,7 @@ int	nc_serial_init(int id)
 {
 	/* serial device is not require for this machine, so if no image
 	is specified, initialisation has succeeded */
-	if (image_is_slot_empty(IO_SERIAL, id))
+	if (!image_exists(IO_SERIAL, id))
 		return INIT_PASS;
 
 	/* filename specified */

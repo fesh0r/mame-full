@@ -10,6 +10,7 @@
 #include "cpu/m6502/m6502.h"
 
 #include "includes/svision.h"
+#include "image.h"
 
 /*
 supervision
@@ -385,7 +386,7 @@ static int svision_load_rom(int id)
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
@@ -393,17 +394,17 @@ static int svision_load_rom(int id)
 
 	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 	size=osd_fsize(cartfile);
 	if (size>0x10000) {
-	    logerror("%s: size %d not yet supported\n",device_filename(IO_CARTSLOT,id), size);
+	    logerror("%s: size %d not yet supported\n",image_filename(IO_CARTSLOT,id), size);
 	    return 1;
 	}
 
 	if (osd_fread(cartfile, rom+0x20000-size, size)!=size) {
-		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
 	}

@@ -24,6 +24,7 @@
 #include "sound/tiasound.h"
 #include "cpuintrf.h"
 #include "zlib.h"
+#include "image.h"
 
 #include "includes/a7800.h"
 
@@ -174,7 +175,7 @@ static int a7800_init_cart_cmn(int id)
 	cpu_setbank( 4, ROM + 0xC000 );
 
 	/* A cartridge is mandatory, since it doesnt do much without one */
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		if( !a7800_ispal )
 		{
@@ -186,7 +187,7 @@ static int a7800_init_cart_cmn(int id)
 	{
 		if(!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 		{
-			logerror("A7800 - Unable to locate cartridge: %s\n", device_filename(IO_CARTSLOT,id));
+			logerror("A7800 - Unable to locate cartridge: %s\n", image_filename(IO_CARTSLOT,id));
 			return INIT_FAIL;
 		}
 	}

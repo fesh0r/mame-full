@@ -10,6 +10,7 @@
 
 #include <ctype.h>
 #include "driver.h"
+#include "image.h"
 #include "cpu/m6502/m6502.h"
 
 #define VERBOSE_DBG 1
@@ -700,7 +701,7 @@ static int c16_rom_id (int id)
 	/* if at offset 6 stands 1 it will immediatly jumped to offset 0 (0x8000) */
 	int retval = 0;
 	char magic[] = {0x43, 0x42, 0x4d}, buffer[sizeof (magic)];
-	const char *name = device_filename(IO_CARTSLOT,id);
+	const char *name = image_filename(IO_CARTSLOT,id);
 	void *romfile;
 	char *cp;
 
@@ -737,21 +738,21 @@ static int c16_rom_id (int id)
 
 int c16_rom_init (int id)
 {
-	rom_specified[id] = ! image_is_slot_empty(IO_CARTSLOT, id);
-	return (rom_specified[id] && !c16_rom_id(id)) ? INIT_FAIL: INIT_PASS;
+	rom_specified[id] = image_exists(IO_CARTSLOT, id);
+	return (rom_specified[id] && !c16_rom_id(id)) ? INIT_FAIL : INIT_PASS;
 }
 
 
 int c16_rom_load (int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
+	const char *name = image_filename(IO_CARTSLOT,id);
     UINT8 *mem = memory_region (REGION_CPU1);
 	void *fp;
 	int size, read;
 	char *cp;
 	static unsigned int addr = 0;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_FAIL;
 	if (!c16_rom_id (id))
 		return 1;

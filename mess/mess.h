@@ -170,21 +170,10 @@ extern void exit_devices(void);
 extern int system_supports_cassette_device (void);
 
 /* access mess.c internal fields for a device type (instance id) */
-extern int          device_count(int type);
 extern const char  *device_typename(int type);
 extern const char  *device_brieftypename(int type);
 extern const char  *device_typename_id(int type, int id);
-extern const char  *device_filename(int type, int id);
-extern unsigned int device_length(int type, int id);
-extern unsigned int device_crc(int type, int id);
-extern void         device_set_crc(int type, int id, UINT32 new_crc);
-extern const char  *device_longname(int type, int id);
-extern const char  *device_manufacturer(int type, int id);
-extern const char  *device_year(int type, int id);
-extern const char  *device_playable(int type, int id);
-extern const char  *device_extrainfo(int type, int id);
 extern const char  *device_file_extension(int type, int extnum);
-extern int          device_filename_change(int type, int id, const char *name);
 
 /* access functions from the struct IODevice arrays of a driver */
 extern const void *device_info(int type, int id);

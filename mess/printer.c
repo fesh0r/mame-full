@@ -5,6 +5,7 @@
 
 #include "driver.h"
 #include "printer.h"
+#include "image.h"
 
 static void *prn_ports[MAX_PRINTER]= { 0 };
 
@@ -12,7 +13,7 @@ int printer_init (int id)
 {
 	void *f;
 
-	if (image_is_slot_empty(IO_PRINTER, id))
+	if (!image_exists(IO_PRINTER, id))
 		return 0;
 
 	f = image_fopen_new(IO_PRINTER, id, NULL);

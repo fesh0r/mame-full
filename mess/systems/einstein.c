@@ -88,6 +88,7 @@
 #include "includes/dsk.h"
 #include "includes/centroni.h"
 #include "printer.h"
+#include "image.h"
 
 #define EINSTEIN_SYSTEM_CLOCK 4000000
 
@@ -370,9 +371,8 @@ static void	einstein_keyboard_timer_callback(int dummy)
 
 static int einstein_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
-
 	return dsk_floppy_load(id);
 }
 

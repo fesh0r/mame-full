@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "dmkdsk.h"
+#include "image.h"
 
 #define dmkdsk_MAX_DRIVES 4
 static dmkdsk     dmkdsk_drives[dmkdsk_MAX_DRIVES];
@@ -147,7 +148,7 @@ UINT32 dmkdsk_GetRealDiskCode( dmkHeader_p header )
 /* attempt to insert a disk into the drive specified with id */
 int dmkdsk_floppy_init(int id)
 {
-	const char *name = device_filename(IO_FLOPPY, id);
+	const char *name = image_filename(IO_FLOPPY, id);
 	int			result = 0;
 	dmkdsk 		*w = &dmkdsk_drives[id];
 

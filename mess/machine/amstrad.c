@@ -27,15 +27,14 @@ rom/ram selection
 #include "includes/nec765.h"
 #include "includes/dsk.h"
 #include "cassette.h"
-
-
+#include "image.h"
 
 static unsigned char *snapshot = NULL;
 static int snapshot_loaded = 0;
 
 int amstrad_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	return dsk_floppy_load(id);
@@ -281,7 +280,7 @@ int amstrad_snapshot_load(int id)
 {
 	/* machine can be started without a snapshot */
 	/* if filename not specified, then init is ok */
-	if (image_is_slot_empty(IO_SNAPSHOT, id))
+	if (!image_exists(IO_SNAPSHOT, id))
 		return INIT_PASS;
 
 	/* filename specified */
@@ -311,7 +310,7 @@ void amstrad_snapshot_exit(int id)
 int	amstrad_plus_cartridge_init(int id)
 {
 	/* cpc+ requires a cartridge to be inserted to run */
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_FAIL;
 
 	return INIT_PASS;
@@ -319,8 +318,5 @@ int	amstrad_plus_cartridge_init(int id)
 
 void amstrad_plus_cartridge_exit(int id)
 {
-
-
-
 }
 

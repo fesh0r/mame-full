@@ -164,7 +164,7 @@ int trs80_cas_init(int id)
 			osd_fclose(file);
 			if (cas_buff[1] == 0x55)
 			{
-				LOG(("trs80_cas_init: loading %s size %d\n", device_filename(IO_CASSETTE,id), cas_size));
+				LOG(("trs80_cas_init: loading %s size %d\n", image_filename(IO_CASSETTE,id), cas_size));
 			}
 			else
 			{
@@ -259,7 +259,7 @@ int trs80_cmd_init(int id)
 		cmd_buff = malloc(cmd_size);
 		if (cmd_buff)
 		{
-			LOG(("trs80_cmd_init: loading %s size %d\n", device_filename(IO_QUICKLOAD,id), cmd_size));
+			LOG(("trs80_cmd_init: loading %s size %d\n", image_filename(IO_QUICKLOAD,id), cmd_size));
 			osd_fread(file, cmd_buff, cmd_size);
 			osd_fclose(file);
 		}

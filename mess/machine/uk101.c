@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
+#include "image.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/mc6850.h"
 #include "includes/uk101.h"
@@ -80,12 +81,12 @@ int	uk101_init_cassette(int id)
 {
 	void	*file;
 
-        /* a cassette for the uk101 isnt needed */
-        if (image_is_slot_empty(IO_CASSETTE, id))
-        {
-                logerror("UK101/Superboard - warning: no cassette specified!\n");
-                return INIT_PASS;
-        }                                                                                                                                     
+	/* a cassette for the uk101 isnt needed */
+	if (!image_exists(IO_CASSETTE,id))
+	{
+			logerror("UK101/Superboard - warning: no cassette specified!\n");
+			return INIT_PASS;
+	}                                                                                                                                     
 
 	file = image_fopen_new(IO_CASSETTE, id, NULL);
 	if (file)

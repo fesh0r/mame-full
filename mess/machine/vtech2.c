@@ -15,7 +15,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "image.h"
 #include "includes/vtech2.h"
 
 /* public */
@@ -355,7 +355,7 @@ int laser_rom_init(int id)
 	int size = 0;
     void *file;
 
-	if (image_is_slot_empty(IO_CARTSLOT,id))
+	if (!image_exists(IO_CARTSLOT,id))
 		return INIT_PASS;
 
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
@@ -520,7 +520,7 @@ int laser_cassette_init(int id)
 {
 	void *file;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen_new(IO_CASSETTE, id, NULL);
@@ -566,7 +566,7 @@ int laser_floppy_init(int id)
 	void *file;
 	UINT8 buff[32];
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 	{
 		flop_specified[id] = 0;
 		return INIT_PASS;

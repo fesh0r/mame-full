@@ -31,6 +31,7 @@
 #include "driver.h"
 
 #include "990_tap.h"
+#include "image.h"
 
 static void update_interrupt(void);
 
@@ -120,7 +121,7 @@ int ti990_tape_init(int id)
 	t = &tpc.t[id];
 	memset(t, 0, sizeof(*t));
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	/* open file */

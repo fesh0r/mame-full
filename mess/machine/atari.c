@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
+#include "image.h"
 
 #define VERBOSE_POKEY	0
 #define VERBOSE_SERIAL	0
@@ -119,7 +120,7 @@ MACHINE_INIT( a800 )
 
 int a800_floppy_init(int id)
 {
-	if (! image_is_slot_empty(IO_FLOPPY, id))
+	if (image_exists(IO_FLOPPY, id))
 		open_floppy(id);
 	return INIT_PASS;
 }
@@ -153,7 +154,7 @@ int a800_rom_init(int id)
 	}
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if (! image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
@@ -163,7 +164,7 @@ int a800_rom_init(int id)
 				size = osd_fread(file, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = (size == 0x2000);
 				osd_fclose(file);
-				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
+				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 			}
 			else
 			{
@@ -172,14 +173,14 @@ int a800_rom_init(int id)
 				size = osd_fread(file, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = size > 0x2000;
 				osd_fclose(file);
-				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
+				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 			}
 			if( a800_cart_loaded )
 				a800_setbank(1);
 		}
 		else
 		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
+			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_PASS;
@@ -233,7 +234,7 @@ int a800xl_load_rom(int id)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if (! image_is_slot_empty(IO_CARTSLOT,id))
+	if (image_exists(IO_CARTSLOT,id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
@@ -244,11 +245,11 @@ int a800xl_load_rom(int id)
 			a800_cart_is_16k = size / 0x2000;
 			osd_fclose(file);
 			logerror("%s loaded cartridge '%s' size %s\n",
-					Machine->gamedrv->name, device_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
+					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
 		}
 		else
 		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id));
+			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id));
 		}
 	}
 
@@ -278,7 +279,7 @@ int a5200_rom_init(int id)
 	int size;
 
 	/* load an optional (dual) cartidge */
-	if (! image_is_slot_empty(IO_CARTSLOT, id))
+	if (image_exists(IO_CARTSLOT, id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (file)
@@ -293,18 +294,18 @@ int a5200_rom_init(int id)
 			{
 			    const char *info;
 			    memcpy(&mem[0x4000], &mem[0x8000], 0x4000);
-			    info=device_extrainfo(IO_CARTSLOT, id);
+			    info = image_extrainfo(IO_CARTSLOT, id);
 			    if (info!=NULL && strcmp(info, "A13MIRRORING")==0) {
 				memcpy(&mem[0x8000], &mem[0xa000], 0x2000);
 				memcpy(&mem[0x6000], &mem[0x4000], 0x2000);
 			    }
 			}
 			logerror("%s loaded cartridge '%s' size %dK\n",
-				Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) , size/1024);
+				Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , size/1024);
 		}
 		else
 		{
-			logerror("%s %s not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
+			logerror("%s %s not found\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_PASS;
@@ -397,11 +398,11 @@ static void open_floppy(int id)
 	void *file;
 	int size, i;
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return;
 	if (!drv[id].image)
 	{
-		char *ext;
+		const char *ext;
 		int effective_mode;
 
 		drv[id].image = malloc(MAXSIZE);
@@ -435,7 +436,7 @@ static void open_floppy(int id)
 		/* re allocate the buffer; we don't want to be too lazy ;) */
         drv[id].image = realloc(drv[id].image, size);
 
-		ext = strrchr(device_filename(IO_FLOPPY,id), '.');
+		ext = image_filetype(IO_FLOPPY, id);
         /* no extension: assume XFD format (no header) */
         if (!ext)
         {
@@ -444,21 +445,21 @@ static void open_floppy(int id)
         }
         else
         /* XFD extension */
-        if( toupper(ext[1])=='X' && toupper(ext[2])=='F' && toupper(ext[3])=='D' )
+        if( toupper(ext[0])=='X' && toupper(ext[1])=='F' && toupper(ext[2])=='D' )
         {
             drv[id].type = FORMAT_XFD;
             drv[id].header_skip = 0;
         }
         else
         /* ATR extension */
-        if( toupper(ext[1])=='A' && toupper(ext[2])=='T' && toupper(ext[3])=='R' )
+        if( toupper(ext[0])=='A' && toupper(ext[1])=='T' && toupper(ext[2])=='R' )
         {
             drv[id].type = FORMAT_ATR;
             drv[id].header_skip = 16;
         }
         else
         /* DSK extension */
-        if( toupper(ext[1])=='D' && toupper(ext[2])=='S' && toupper(ext[3])=='K' )
+        if( toupper(ext[0])=='D' && toupper(ext[1])=='S' && toupper(ext[2])=='K' )
         {
             drv[id].type = FORMAT_DSK;
             drv[id].header_skip = sizeof(dsk_format);
@@ -575,7 +576,7 @@ static void open_floppy(int id)
 			break;
 		}
 		logerror("atari opened floppy #%d '%s', %d sectors (%d %s%s) %d bytes/sector\n",
-				id+1, device_filename(IO_FLOPPY,id),
+				id+1, image_filename(IO_FLOPPY,id),
 				drv[id].sectors,
 				drv[id].tracks,
 				(drv[id].heads == 1) ? "SS" : "DS",

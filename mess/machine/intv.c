@@ -2,6 +2,7 @@
 #include "vidhrdw/stic.h"
 #include "includes/intv.h"
 #include "cpu/cp1600/cp1600.h"
+#include "image.h"
 
 UINT8 intv_gramdirty;
 UINT8 intv_gram[512];
@@ -335,7 +336,6 @@ WRITE16_HANDLER( intv_ram16_w )
 
 static int intv_load_rom_file(int id, int required)
 {
-    FILE *romfile;
     int i;
 
 	UINT8 temp;
@@ -350,8 +350,9 @@ static int intv_load_rom_file(int id, int required)
 	UINT8 low_byte;
 
 	UINT8 *memory = memory_region(REGION_CPU1);
+	void *romfile;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		if (required)
 		{
@@ -526,11 +527,11 @@ int intvkbd_load_rom (int id)
 
 	if (id == 1) /* Keyboard component cartridge slot */
 	{
-    	FILE *romfile;
+    	void *romfile;
 
 		UINT8 *memory = memory_region(REGION_CPU2);
 
-		if(image_is_slot_empty(IO_CARTSLOT, id))
+		if(!image_exists(IO_CARTSLOT, id))
 		{
 			printf("intvkbd cartridge slot empty - ok\n");
 			return INIT_PASS;

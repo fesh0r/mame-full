@@ -15,6 +15,7 @@
 #include "cpu/m6502/m6502.h"
 #include "inptport.h"
 #include "includes/apple1.h"
+#include "image.h"
 
 
 /*****************************************************************************
@@ -79,15 +80,6 @@ MACHINE_INIT( apple1 )
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 }
 
-
-/*****************************************************************************
-**	apple1_stop_machine
-*****************************************************************************/
-/*void apple1_stop_machine(void)
-{
-}*/
-
-
 /*****************************************************************************
 **	apple1_verify_header
 *****************************************************************************/
@@ -129,7 +121,7 @@ int apple1_load_snap (int id)
 	UINT16 starting_offset = 0x0000;
 
 	/* A snapshot isn't mandatory for the apple1 */
-	if (image_is_slot_empty(IO_SNAPSHOT, id))
+	if (!image_exists(IO_SNAPSHOT, id))
 	{
 		logerror("Apple1 - warning: no snapshot specified - OK\n");
 		return INIT_PASS;
@@ -138,7 +130,7 @@ int apple1_load_snap (int id)
 	/* Load the specified Snapshot */
 	if (!(snapfile = image_fopen_new(IO_SNAPSHOT, id, NULL)))
 	{
-		logerror("Apple1 - Unable to locate snapshot: %s\n",device_filename(IO_SNAPSHOT,id) );
+		logerror("Apple1 - Unable to locate snapshot: %s\n",image_filename(IO_SNAPSHOT,id) );
 		return INIT_FAIL;
 	}
 

@@ -65,6 +65,7 @@
 #include "cassette.h"
 #include "bitbngr.h"
 #include "printer.h"
+#include "image.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
@@ -496,7 +497,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 		   from a CoCo2. Thus we need to skip ahead in the ROM file. On
 		   the CoCo3 the entire 32K ROM is accessable. */
 
-		if ( device_crc(IO_CARTSLOT, 0) == 0x25C3AA70 )     /* Test for Arkanoid  */
+		if (image_crc(IO_CARTSLOT, 0) == 0x25C3AA70)     /* Test for Arkanoid  */
 		{
 			if ( destlength == 0x4000 )						/* Test if CoCo2      */
 			{
@@ -2076,7 +2077,7 @@ static int count_bank(void)
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
 
-	crc = device_crc(IO_CARTSLOT, 0);
+	crc = image_crc(IO_CARTSLOT, 0);
 
 	switch( crc )
 	{
@@ -2103,7 +2104,7 @@ static int is_Orch90(void)
 	unsigned int	crc;
 	/* This function, and all calls of it, are hacks for bankswitched games */
 
-	crc = device_crc(IO_CARTSLOT, 0);
+	crc = image_crc(IO_CARTSLOT, 0);
 
 	return crc == 0x15FB39AF;
 }

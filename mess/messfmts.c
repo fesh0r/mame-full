@@ -2,6 +2,7 @@
 #include "osdepend.h"
 #include "mess.h"
 #include "includes/flopdrv.h"
+#include "image.h"
 
 struct mess_bdf
 {
@@ -126,7 +127,7 @@ static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_format
 	assert(id < (sizeof(bdfs) / sizeof(bdfs[0])));
 	memset(&bdfs[id], 0, sizeof(bdfs[id]));
 
-	name = device_filename(device_type, id);
+	name = image_filename(device_type, id);
 	if (name)
 	{
 		mode = OSD_FOPEN_RW;
@@ -145,7 +146,7 @@ static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_format
 		}
 
 		/* its lame that I have to do this */
-		name = device_filename(device_type, id);
+		name = image_filename(device_type, id);
 
 		if (mode == OSD_FOPEN_RW_CREATE)
 		{

@@ -35,6 +35,7 @@
 #include "driver.h"
 #include "machine/gb.h"
 #include "includes/gb.h"
+#include "image.h"
 
 static UINT8 MBCType;				   /* MBC type: 0 for none                        */
 static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
@@ -236,7 +237,7 @@ MACHINE_STOP( gb )
 			memcpy( ptr, RAMMap[I], 0x2000 );
 			ptr += 0x2000;
 		}
-		battery_save( device_filename(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
+		battery_save( image_filename(IO_CARTSLOT, 0), battery_ram, RAMBanks * 0x2000 );
 
 		free( battery_ram );
 	}
@@ -1360,7 +1361,7 @@ int gb_load_rom (int id)
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		printf("Cartridge name required!\n");
 		return INIT_FAIL;
@@ -1405,7 +1406,7 @@ int gb_load_rom (int id)
 
 	osd_fseek(F, 0, SEEK_SET);
 #else
-	J = device_length(IO_CARTSLOT, id) % 0x4000;
+	J = image_length(IO_CARTSLOT, id) % 0x4000;
 #endif
 
 	if (J == 512)
@@ -1416,7 +1417,7 @@ int gb_load_rom (int id)
 
 	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		logerror("Error while reading from file: %s\n", device_filename(IO_CARTSLOT,id));
+		logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
 		osd_fclose (F);
 		return INIT_FAIL;
 	}
@@ -1570,7 +1571,7 @@ int gb_load_rom (int id)
 			}
 			else
 			{
-				logerror("Error while reading from file: %s\n", device_filename(IO_CARTSLOT,id));
+				logerror("Error while reading from file: %s\n", image_filename(IO_CARTSLOT,id));
 				break;
 			}
 		}
@@ -1616,7 +1617,7 @@ int gb_load_rom (int id)
 		battery_ram = (UINT8 *)malloc( RAMBanks * 0x2000 );
 		if( battery_ram )
 		{
-			battery_load( device_filename(IO_CARTSLOT,id), battery_ram, RAMBanks * 0x2000 );
+			battery_load( image_filename(IO_CARTSLOT,id), battery_ram, RAMBanks * 0x2000 );
 			ptr = battery_ram;
 			for( I = 0; I < RAMBanks; I++ )
 			{

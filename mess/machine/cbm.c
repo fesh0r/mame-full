@@ -2,7 +2,7 @@
 #include <stdarg.h>
 
 #include "driver.h"
-
+#include "image.h"
 #include "includes/cbm.h"
 
 static struct
@@ -22,7 +22,7 @@ int cbm_quick_init (int id)
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (image_is_slot_empty(IO_QUICKLOAD, id))
+	if (!image_exists(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 	quick.specified = 1;
@@ -33,7 +33,7 @@ int cbm_quick_init (int id)
 
 	quick.length = osd_fsize (fp);
 
-	if ((cp = strrchr (device_filename(IO_QUICKLOAD, id), '.')) != NULL)
+	if ((cp = strrchr (image_filename(IO_QUICKLOAD, id), '.')) != NULL)
 	{
 		if (stricmp (cp, ".prg") == 0)
 		{
@@ -87,7 +87,7 @@ int cbm_quick_open (int id, int mode, void *arg)
 	memory[0x31] = memory[0x2f] = memory[0x2d] = addr & 0xff;
 	memory[0x32] = memory[0x30] = memory[0x2e] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -105,7 +105,7 @@ int cbm_pet_quick_open (int id, int mode, void *arg)
 	memory[0x2e] = memory[0x2c] = memory[0x2a] = addr & 0xff;
 	memory[0x2f] = memory[0x2d] = memory[0x2b] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -123,7 +123,7 @@ int cbm_pet1_quick_open (int id, int mode, void *arg)
 	memory[0x80] = memory[0x7e] = memory[0x7c] = addr & 0xff;
 	memory[0x81] = memory[0x7f] = memory[0x7d] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -141,7 +141,7 @@ int cbmb_quick_open (int id, int mode, void *arg)
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -159,7 +159,7 @@ int cbm500_quick_open (int id, int mode, void *arg)
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -178,7 +178,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg)
 	memory[0x83] = addr >> 8;
 
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
+				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -217,7 +217,7 @@ int cbm_rom_init(int id)
 	    cbm_c64_exrom=-1;
 	}
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_PASS;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)
@@ -229,13 +229,13 @@ int cbm_rom_init(int id)
 	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!fp)
 	{
-		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
+		logerror("%s file not found\n", image_filename(IO_CARTSLOT,id));
 		return INIT_FAIL;
 	}
 
 	size = osd_fsize (fp);
 
-	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
+	if ((cp = strrchr (image_filename(IO_CARTSLOT,id), '.')) != NULL)
 	{
 		if (stricmp (cp, ".prg") == 0)
 		{
@@ -245,7 +245,7 @@ int cbm_rom_init(int id)
 			logerror("rom prg %.4x\n", in);
 			size -= 2;
 			logerror("loading rom %s at %.4x size:%.4x\n",
-						 device_filename(IO_CARTSLOT,id), in, size);
+						 image_filename(IO_CARTSLOT,id), in, size);
 			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAIL;
@@ -266,7 +266,7 @@ int cbm_rom_init(int id)
 			osd_fseek (fp, 64, SEEK_SET);
 			j = 64;
 			logerror("loading rom %s size:%.4x\n",
-						 device_filename(IO_CARTSLOT,id), size);
+						 image_filename(IO_CARTSLOT,id), size);
 			while (j < size)
 			{
 				unsigned short segsize;
@@ -336,7 +336,7 @@ int cbm_rom_init(int id)
 				adr = 0xf000;
 			else adr = CBM_ROM_ADDR_UNKNOWN;
 			logerror("loading %s rom at %.4x size:%.4x\n",
-						 device_filename(IO_CARTSLOT,id), adr, size);
+						 image_filename(IO_CARTSLOT,id), adr, size);
 			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAIL;

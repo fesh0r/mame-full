@@ -689,8 +689,9 @@ $(OBJ)/tatung.a:     \
 
 # MESS specific core $(OBJ)s
 COREOBJS += \
-	$(OBJ)/cheat.o  	       \
-	$(OBJ)/mess/mess.o	       \
+	$(OBJ)/cheat.o  			   \
+	$(OBJ)/mess/mess.o			   \
+	$(OBJ)/mess/image.o		       \
 	$(OBJ)/mess/system.o	       \
 	$(OBJ)/mess/device.o	       \
 	$(OBJ)/mess/config.o	       \

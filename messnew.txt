@@ -23,12 +23,24 @@ Source Changes:
   Added new functions for iterating through devices, in order to better
   abstract the internal representation of devices:
   
-		device_first()
-		device_next()
-		device_find()
+	device_first()
+	device_next()
+	device_find()
 		
   Also renamed GameDriver dev field to dev_ in order to break any source
   dependencies on the dev field. [Nate Woods]
+  
+- Overhaul of code that maintained the list of loaded images; moved to
+  mess/image.[c|h], and changed the prefix of them from device_ to image_ (as
+  opposed to the device_* calls that are used to access the IODevice
+  structure).  Also, implemented these new calls for drivers to use:
+  
+	image_malloc()    (similar to auto_malloc(), but for the lifetime of devices)
+	image_strdup()    (uses image_malloc() to allocate strings)
+	image_exists()    (tests for the existance of a loaded image)
+	image_filetype()  (accessor for file extension)
+	
+  [Nate Woods]
   
 - Removed IO_RESET_ALL, as it was broken and an ugly hack to begin with (bug
   #239) [Nate Woods]

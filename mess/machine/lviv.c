@@ -16,6 +16,7 @@
 #include "includes/lviv.h"
 #include "machine/8255ppi.h"
 #include "formats/lviv_lvt.h"
+#include "image.h"
 
 unsigned char * lviv_video_ram;
 
@@ -238,7 +239,7 @@ int lviv_tape_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);

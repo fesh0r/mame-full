@@ -3,6 +3,7 @@
 #include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
 #include "includes/pce.h"
+#include "image.h"
 
 /* the largest possible cartridge image, excluding special games */
 #define PCE_ROM_MAXSIZE  (0x2000 * 256 + 512)
@@ -24,7 +25,7 @@ int pce_load_rom(int id)
 	int size;
     void *fp = NULL;
 	unsigned char *ROM;
-	logerror("*** pce_load_rom : %s\n", device_filename(IO_CARTSLOT,id));
+	logerror("*** pce_load_rom : %s\n", image_filename(IO_CARTSLOT,id));
 
     /* open file to get size */
 	fp = image_fopen_new(IO_CARTSLOT, id, NULL);

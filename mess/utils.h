@@ -11,6 +11,8 @@
 
 #include "osdutils.h"
 
+char *stripspace(const char *src);
+
 /* -----------------------------------------------------------------------
  * strncpyz
  * strncatz

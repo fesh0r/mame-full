@@ -8,6 +8,7 @@
 #include "cpu/cdp1802/cdp1802.h"
 
 #include "includes/studio2.h"
+#include "image.h"
 
 static MEMORY_READ_START( studio2_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },
@@ -276,21 +277,21 @@ static int studio2_load_rom(int id)
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
-/* A cartridge isn't strictly mandatory, but it's recommended */
+		/* A cartridge isn't strictly mandatory, but it's recommended */
 		return 0;
 	}
 
 	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom+0x400, size)!=size) {
-		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
 	}

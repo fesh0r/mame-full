@@ -4,6 +4,7 @@
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
 #include "zlib.h"
+#include "image.h"
 
 #define M6502_INT_NONE	0
 
@@ -187,7 +188,7 @@ MACHINE_STOP( nes )
 {
 	/* Write out the battery file if necessary */
 	if (nes.battery)
-		battery_save(device_filename(IO_CARTSLOT, 0), battery_ram, BATTERY_SIZE);
+		battery_save(image_filename(IO_CARTSLOT, 0), battery_ram, BATTERY_SIZE);
 }
 
 static void ppu_reset (struct ppu_struct *_ppu)
@@ -1094,7 +1095,7 @@ int nes_init_cart (int id)
 	const char *sysname;
 	sysname = Machine->gamedrv->name;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id) && (id == 0))
+	if (!image_exists(IO_CARTSLOT, id) && (id == 0))
 	{
 		if(!strcmp(sysname, "famicom")) /* If its a famicom, then pass! */
 			return INIT_PASS;
@@ -1116,7 +1117,7 @@ int nes_init_cart (int id)
 		(magic[2] != 'S'))
 		goto bad;
 
-	mapinfo = device_extrainfo(IO_CARTSLOT,id);
+	mapinfo = image_extrainfo(IO_CARTSLOT,id);
 	if (mapinfo)
 	{
 		if (4 == sscanf(mapinfo,"%d %d %d %d",&mapint1,&mapint2,&mapint3,&mapint4))
@@ -1266,7 +1267,7 @@ int nes_init_cart (int id)
 	/* Attempt to load a battery file for this ROM. If successful, we */
 	/* must wait until later to move it to the system memory. */
 	if (nes.battery)
-		battery_load(device_filename(IO_CARTSLOT,id), battery_data, BATTERY_SIZE);
+		battery_load(image_filename(IO_CARTSLOT,id), battery_data, BATTERY_SIZE);
 
 	osd_fclose (romfile);
 	famicom_image_registered = 1;
@@ -1294,7 +1295,7 @@ int nes_load_disk (int id)
  	void *diskfile;
 	unsigned char magic[4];
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 	{
 		/* The cart has passed, so this must fail if no image inserted */
 		if(!famicom_image_registered)
@@ -1308,7 +1309,7 @@ int nes_load_disk (int id)
 
 	if (!(diskfile = image_fopen_new(IO_FLOPPY, id, NULL)))
 	{
-		logerror("image_fopen failed in nes_load_disk for [%s].\n",device_filename(IO_FLOPPY,id));
+		logerror("image_fopen failed in nes_load_disk for [%s].\n",image_filename(IO_FLOPPY,id));
 			return INIT_FAIL;
 	}
 

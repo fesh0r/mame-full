@@ -557,11 +557,11 @@ int pet_rom_id (int id)
 	FILE *romfile;
 	char *cp;
 
-	logerror("c64_rom_id %s\n", device_filename(IO_CARTSLOT,id));
+	logerror("c64_rom_id %s\n", image_filename(IO_CARTSLOT,id));
 	retval = 0;
 	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
+		logerror("rom %s not found\n", image_filename(IO_CARTSLOT,id));
 		return 0;
 	}
 

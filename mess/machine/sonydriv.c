@@ -36,6 +36,7 @@
 #include "mame.h"
 #include "timer.h"
 #include "cpuintrf.h"
+#include "image.h"
 
 #ifdef MAME_DEBUG
 #define LOG_SONY		1
@@ -1326,7 +1327,7 @@ int sony_floppy_init(int id, int allowablesizes)
 	f->ext_speed_control = (allowablesizes & SONY_FLOPPY_EXT_SPEED_CONTROL) ? 1 : 0;
 	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	/* open file */
@@ -1413,7 +1414,7 @@ int sony_floppy_init(int id, int allowablesizes)
 
 #if LOG_SONY
 	logerror("macplus_floppy_init(): Loaded %s-sided floppy; id=%i name='%s' wp=%i\n",
-		(f->disk_sides ? "double" : "single"), (int) id, device_filename(IO_FLOPPY,id), (int) f->wp);
+		(f->disk_sides ? "double" : "single"), (int) id, image_filename(IO_FLOPPY,id), (int) f->wp);
 #endif
 
 	return INIT_PASS;

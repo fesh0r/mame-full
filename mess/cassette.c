@@ -1,13 +1,13 @@
 /* */
 #include "cassette.h"
+#include "image.h"
 
 int cassette_init(int id, const struct cassette_args *args)
 {
 	void *file;
 	struct wave_args wa;
 
-
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 	{	/* no cassette */
 		memset(&wa, 0, sizeof(&wa));
 
@@ -20,7 +20,8 @@ int cassette_init(int id, const struct cassette_args *args)
 
 	/* Try to open existing file */
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-	if (file) {
+	if (file)
+	{
 		memset(&wa, 0, sizeof(&wa));
 
 		if (args->calc_chunk_info) {

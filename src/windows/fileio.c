@@ -9,6 +9,9 @@
 #include "driver.h"
 #include "unzip.h"
 #include "rc.h"
+#ifdef MESS
+#include "image.h"
+#endif
 
 //============================================================
 //	EXTERNALS
@@ -1799,6 +1802,6 @@ void build_crc_database_filename(int game_index)
 
 void osd_device_eject(int type, int id)
 {
-	device_filename_change(type, id, NULL);
+	image_unload(type, id);
 }
 #endif

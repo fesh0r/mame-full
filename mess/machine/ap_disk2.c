@@ -20,6 +20,7 @@
 
 #include "driver.h"
 #include "includes/apple2.h"
+#include "image.h"
 
 #define TOTAL_TRACKS		35 /* total number of tracks we support, can be 40 */
 #define NIBBLE_SIZE			374
@@ -90,7 +91,7 @@ int apple2_floppy_init(int id)
 	int volume;
 	int i;
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);

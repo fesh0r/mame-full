@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/channelf.h"
+#include "image.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1
@@ -39,7 +40,7 @@ static int channelf_load_rom(int id)
     void *file;
 	int size;
 
-    if (image_is_slot_empty(IO_CARTSLOT, id))
+    if (!image_exists(IO_CARTSLOT, id))
 		return INIT_PASS;
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!file)

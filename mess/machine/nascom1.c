@@ -1,6 +1,6 @@
 /**********************************************************************
 
-  machine.c
+  mess/machine/nascom1.c
 
   Functions to emulate general aspects of the machine (RAM, ROM, interrups,
   I/O ports)
@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/nascom1.h"
+#include "image.h"
 
 static	int		nascom1_tape_size = 0;
 static	UINT8	*nascom1_tape_image = NULL;
@@ -120,7 +121,7 @@ int	nascom1_init_cassette(int id)
 	void	*file;
 
 	/* a cassette for the nascom1 isnt needed */
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 	{
 		logerror("Namcom - warning: no cassette specified!\n");
 		return INIT_PASS;

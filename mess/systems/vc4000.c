@@ -8,6 +8,7 @@
 #include "cpu/s2650/s2650.h"
 
 #include "includes/vc4000.h"
+#include "image.h"
 
 static READ_HANDLER(vc4000_key_r)
 {
@@ -226,7 +227,7 @@ static int vc4000_load_rom(int id)
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
@@ -234,13 +235,13 @@ static int vc4000_load_rom(int id)
 
 	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
-		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
 	}

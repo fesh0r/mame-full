@@ -28,6 +28,7 @@
 #include "includes/centroni.h"
 #include "printer.h"
 #include "formats/orictap.h"
+#include "image.h"
 
 static int enable_logging = 0;
 /* static int save_done = 0; */
@@ -1213,7 +1214,7 @@ int oric_floppy_init(int id)
 {
 	int result;
 
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	/* attempt to open mfm disk */
@@ -1458,9 +1459,8 @@ int oric_cassette_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (image_is_slot_empty(IO_CASSETTE, id))
+	if (!image_exists(IO_CASSETTE, id))
 		return INIT_PASS;
-
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if( file )

@@ -30,6 +30,7 @@
 #include "eventlst.h"
 #include "vidhrdw/border.h"
 #include "cassette.h"
+#include "image.h"
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
@@ -136,7 +137,7 @@ int spectrum_snap_load(int id)
 				osd_fread(file, data, datasize);
 				osd_fclose(file);
 
-				if (!stricmp(device_filename(IO_SNAPSHOT, id) + strlen(device_filename(IO_SNAPSHOT, id) ) - 4, ".sna"))
+				if (!strcmpi(image_filetype(IO_SNAPSHOT, id), "sna"))
 				{
 					if ((SnapshotDataSize != 49179) && (SnapshotDataSize != 131103) && (SnapshotDataSize != 14787))
 					{
@@ -147,7 +148,7 @@ int spectrum_snap_load(int id)
 				}
 				else
 				{
-					if (!stricmp(device_filename(IO_SNAPSHOT, id) + strlen(device_filename(IO_SNAPSHOT, id) ) - 3, ".sp"))
+					if (!strcmpi(image_filetype(IO_SNAPSHOT, id), "sp"))
 					{
 						if (data[0]!='S' && data[1]!='P')
 						{
@@ -1172,8 +1173,8 @@ int spectrum_cassette_init(int id)
 	void *file;
 	struct cassette_args args;
 
-	if ((! image_is_slot_empty(IO_CASSETTE, id)) &&
-		!stricmp(device_filename(IO_CASSETTE, id) + strlen(device_filename(IO_CASSETTE, id) ) - 4, ".tap"))
+	if ((image_exists(IO_CASSETTE, id)) &&
+		!stricmp(image_filetype(IO_CASSETTE, id), "tap"))
 	{
 		int datasize;
 		unsigned char *data;
@@ -1237,7 +1238,7 @@ int spec_quick_init(int id)
 
 	memset(&quick, 0, sizeof (quick));
 
-	if (image_is_slot_empty(IO_QUICKLOAD, id))
+	if (!image_exists(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 /*	quick.name = name; */
@@ -1277,7 +1278,7 @@ int spec_quick_open(int id, int mode, void *arg)
 		cpu_writemem16(i + quick.addr, quick.data[i]);
 	}
 	logerror("quick loading %s at %.4x size:%.4x\n",
-			 device_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
+			 image_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -1325,10 +1326,8 @@ int timex_cart_load(int id)
 
 	int i;
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
-	{
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_PASS;
-	}
 
 	logerror ("Trying to load cart\n");
 

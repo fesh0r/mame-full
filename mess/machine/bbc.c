@@ -17,7 +17,7 @@
 #include "includes/upd7002.h"
 #include "includes/i8271.h"
 #include "includes/basicdsk.h"
-
+#include "image.h"
 
 int startbank;
 
@@ -1077,15 +1077,14 @@ int bbcb_load_rom(int id)
 	int size, read;
 	int addr = 0;
 
-
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 		return INIT_PASS;
 
 	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 
 	if (!fp)
 	{
-		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
+		logerror("%s file not found\n", image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 
@@ -1094,7 +1093,7 @@ int bbcb_load_rom(int id)
     addr= 0x8000+(0x4000*id);
 
 
-	logerror("loading rom %s at %.4x size:%.4x\n",device_filename(IO_CARTSLOT,id), addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",image_filename(IO_CARTSLOT,id), addr, size);
 
 
 	switch (size)

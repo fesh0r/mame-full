@@ -1,6 +1,7 @@
 #include <assert.h>
 #include "cocovdk.h"
 #include "includes/basicdsk.h"
+#include "image.h"
 
 #ifdef MAME_DEBUG
 #define LOG_VDK 1
@@ -119,7 +120,7 @@ int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_trac
 /* attempt to insert a disk into the drive specified with id */
 int cocovdk_floppy_init(int id)
 {
-	const char			*name = device_filename(IO_FLOPPY, id);
+	const char			*name = image_filename(IO_FLOPPY, id);
 	int					result = INIT_FAIL, read = 0;
 	void				*image_file;
 	struct vdk_header	hdr;

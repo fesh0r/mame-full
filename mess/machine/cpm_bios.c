@@ -14,6 +14,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
 #include "cpm_bios.h"
+#include "image.h"
 
 #define VERBOSE 		1
 #define VERBOSE_FDD 	1
@@ -110,7 +111,7 @@ static void cpm_jumptable(void)
 
 int cpm_floppy_init(int id)
 {
-	ff[id] = ! image_is_slot_empty(IO_FLOPPY, id);
+	ff[id] = image_exists(IO_FLOPPY, id);
 	return 0;
 }
 

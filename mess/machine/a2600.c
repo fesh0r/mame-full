@@ -21,6 +21,7 @@
 #include "drawgfx.h"
 #include "zlib.h"
 #include "vidhrdw/generic.h"
+#include "image.h"
 
 #include "includes/a2600.h"
 
@@ -1327,7 +1328,7 @@ int a2600_load_rom(int id)
 	void *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
+	if (!image_exists(IO_CARTSLOT, id))
 	{
 		printf("a2600 Requires Cartridge!\n");
 		return INIT_FAIL;

@@ -942,11 +942,11 @@ int c64_rom_id (int id)
 	void *romfile;
 	char *cp;
 
-	logerror("c64_rom_id %s\n", device_filename(IO_CARTSLOT,id));
+	logerror("c64_rom_id %s\n", image_filename(IO_CARTSLOT,id));
 	retval = 0;
 	if (!(romfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
+		logerror("rom %s not found\n", image_filename(IO_CARTSLOT,id));
 		return 0;
 	}
 
@@ -959,7 +959,7 @@ int c64_rom_id (int id)
 		/* cartridgetype=CartridgeC64; */
 		retval = 1;
 	}
-	else if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
+	else if ((cp = strrchr (image_filename(IO_CARTSLOT,id), '.')) != NULL)
 	{
 		if ((stricmp (cp + 1, "prg") == 0)
 			|| (stricmp (cp + 1, "crt") == 0)
@@ -974,9 +974,9 @@ int c64_rom_id (int id)
 	}
 
 	if (retval)
-		logerror("rom %s recognized\n", device_filename(IO_CARTSLOT,id) );
+		logerror("rom %s recognized\n", image_filename(IO_CARTSLOT,id) );
 	else
-		logerror("rom %s not recognized\n", device_filename(IO_CARTSLOT,id));
+		logerror("rom %s not recognized\n", image_filename(IO_CARTSLOT,id));
 	return retval;
 }
 #endif

@@ -2,6 +2,7 @@
 #include "vidhrdw/vector.h"
 #include "machine/6522via.h"
 #include "cpu/m6809/m6809.h"
+#include "image.h"
 
 #include "includes/vectrex.h"
 
@@ -88,7 +89,7 @@ int vectrex_init_cart (int id)
 	}
 	else
 	{
-		if (! image_is_slot_empty(IO_CARTSLOT, id))
+		if (image_exists(IO_CARTSLOT, id))
 		{
 			logerror("Vectrex - Cart specified but not found!\n");
 			return INIT_FAIL;

@@ -99,6 +99,7 @@
 // pcw video hardware
 #include "includes/pcw.h"
 // pcw/pcw16 beeper
+#include "image.h"
 
 // uncomment for debug log output
 //#define VERBOSE
@@ -1227,7 +1228,7 @@ ROM_PCW(pcw10)
 
 static int pcw_floppy_init(int id)
 {
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	return dsk_floppy_load(id);

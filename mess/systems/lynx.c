@@ -10,6 +10,7 @@
 #include "cpu/m6502/m6502.h"
 
 #include "includes/lynx.h"
+#include "image.h"
 #include <zlib.h>
 
 static int rotate=0;
@@ -276,11 +277,11 @@ static int lynx_verify_cart (char *header)
 static void lynx_crc_keyword(int io_device, int id)
 {
     const char *info;
-    info=device_extrainfo(io_device, id);
+    info=image_extrainfo(io_device, id);
     rotate=0;
     if (info!=NULL) {
-	if (strcmp(info, "ROTATE90DEGREE")==0) rotate=1;
-	else if (strcmp(info, "ROTATE270DEGREE")==0) rotate=2;
+		if (strcmp(info, "ROTATE90DEGREE")==0) rotate=1;
+		else if (strcmp(info, "ROTATE270DEGREE")==0) rotate=2;
     }
 }
 
@@ -299,19 +300,17 @@ static int lynx_init_cart(int id)
    22 chars manufacturer
 */
 
-	if (image_is_slot_empty(IO_CARTSLOT, id))
-	{
+	if (!image_exists(IO_CARTSLOT, id))
 		return 0;
-	}
 
 	if (!(cartfile = image_fopen_new(IO_CARTSLOT, id, NULL)))
 	{
-		logerror("%s not found\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s not found\n",image_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 	size=osd_fsize(cartfile);
 	if (osd_fread(cartfile, header, 0x40)!=0x40) {
-		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
 	}
@@ -330,7 +329,7 @@ static int lynx_init_cart(int id)
 			  header+10,size/1024,lynx_granularity, header+42);
 
 	if (osd_fread(cartfile, rom, size)!=size) {
-		logerror("%s load error\n",device_filename(IO_CARTSLOT,id));
+		logerror("%s load error\n",image_filename(IO_CARTSLOT,id));
 		osd_fclose(cartfile);
 		return 1;
 	}
@@ -350,20 +349,18 @@ static int lynx_quickload(int id)
 	// maybe the first 2 bytes must be used to identify the endianess of the file
 	UINT16 start;
 
-	if (image_is_slot_empty(IO_QUICKLOAD, id))
-	{
+	if (!image_exists(IO_QUICKLOAD, id))
 		return 0;
-	}
 
 	if (!(cartfile = image_fopen_new(IO_QUICKLOAD, id, NULL)))
 	{
-		logerror("%s not found\n",device_filename(IO_QUICKLOAD,id));
+		logerror("%s not found\n",image_filename(IO_QUICKLOAD,id));
 		return 1;
 	}
 	size=osd_fsize(cartfile);
 
 	if (osd_fread(cartfile, header, sizeof(header))!=sizeof(header)) {
-		logerror("%s load error\n",device_filename(IO_QUICKLOAD,id));
+		logerror("%s load error\n",image_filename(IO_QUICKLOAD,id));
 		osd_fclose(cartfile);
 		return 1;
 	}
@@ -371,7 +368,7 @@ static int lynx_quickload(int id)
 	start=header[3]|(header[2]<<8); //! big endian format in file format for little endian cpu
 
 	if (osd_fread(cartfile, rom+start, size)!=size) {
-		logerror("%s load error\n",device_filename(IO_QUICKLOAD,id));
+		logerror("%s load error\n",image_filename(IO_QUICKLOAD,id));
 		osd_fclose(cartfile);
 		return 1;
 	}

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "driver.h"
+#include "image.h"
 #include "includes/sms.h"
 
 UINT8 smsRomPageCount;
@@ -12,7 +13,6 @@ int systemType;
 UINT8 biosPort;
 
 UINT8 smsNVRam[NVRAM_SIZE];
-char *smsNVRamName;
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
 
@@ -542,7 +542,7 @@ int sms_init_cart(int id) {
 	}
 
 	/* Ensure filename was specified */
-	if (image_is_slot_empty(IO_CARTSLOT, id)) {
+	if (!image_exists(IO_CARTSLOT, id)) {
 		switch (systemType) {
 			case CONSOLE_SMS_U_V13:
 			case CONSOLE_SMS_E_V13:
@@ -580,9 +580,6 @@ int sms_init_cart(int id) {
 			logerror("Cannot open cartridge for read operation!\n");
 			return (INIT_FAIL);
 		}
-
-		/* Strip off file extension if it exists */
-		smsNVRamName = osd_strip_extension(device_filename(IO_CARTSLOT, id));
 
 		/* Get file size */
 		size = osd_fsize(handle);
@@ -630,10 +627,8 @@ int sms_init_cart(int id) {
 	return (INIT_PASS);
 }
 
-void sms_exit_cart(int id) {
-	if (smsNVRamName != NULL) {
-		free(smsNVRamName);
-	}
+void sms_exit_cart(int id)
+{
 }
 
 MACHINE_INIT(sms) {

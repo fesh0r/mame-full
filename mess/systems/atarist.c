@@ -2308,7 +2308,7 @@ int atarist_floppy_init(int id)
 {
 	const char *name;
 
-	name = device_filename(IO_FLOPPY,id);
+	name = image_filename(IO_FLOPPY,id);
 	if (!name)
 		return INIT_PASS; /* Emulation can continue even with no floppy */
 

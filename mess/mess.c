@@ -10,66 +10,15 @@ This file is a set of function calls and defs required for MESS.
 #include "includes/flopdrv.h"
 #include "utils.h"
 #include "state.h"
+#include "image.h"
 
 extern struct GameOptions options;
 extern const struct Devices devices[];
 
-/* CRC database file for this driver, supplied by the OS specific code */
-extern const char *crcfile;
-extern const char *pcrcfile;
-
 /* Globals */
 const char *mess_path;
-char *renamed_image;
 UINT32 mess_ram_size;
 UINT8 *mess_ram;
-
-struct image_info
-{
-	char *name;
-	UINT32 crc;
-	UINT32 length;
-	char *longname;
-	char *manufacturer;
-	char *year;
-	char *playable;
-	char *extrainfo;
-};
-
-#define MAX_INSTANCES 5
-static struct image_info images[IO_COUNT][MAX_INSTANCES];
-static int count[IO_COUNT];
-
-
-static char* dupe(const char *src)
-{
-	if( src )
-	{
-		char *dst = malloc(strlen(src) + 1);
-		if( dst )
-			strcpy(dst,src);
-		return dst;
-	}
-	return NULL;
-}
-
-
-static char* stripspace(const char *src)
-{
-	static char buff[512];
-	if( src )
-	{
-		char *dst;
-		while( *src && isspace(*src) )
-			src++;
-		strcpy(buff, src);
-		dst = buff + strlen(buff);
-		while( dst >= buff && isspace(*--dst) )
-			*dst = '\0';
-		return buff;
-	}
-	return NULL;
-}
 
 int DECL_SPEC mess_printf(char *fmt, ...)
 {
@@ -87,257 +36,6 @@ int DECL_SPEC mess_printf(char *fmt, ...)
 
 	return length;
 }
-
-static int read_crc_config (const char *file, struct image_info *img, const char* sysname)
-{
-	int retval;
-	void *config = config_open (file);
-
-	retval = 1;
-	if( config )
-	{
-		char line[1024];
-		char crc[9+1];
-
-		sprintf(crc, "%08x", img->crc);
-		config_load_string(config,sysname,0,crc,line,sizeof(line));
-		if( line[0] )
-		{
-			logerror("found CRC %s= %s\n", crc, line);
-			img->longname = dupe(stripspace(strtok(line, "|")));
-			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
-			img->year = dupe(stripspace(strtok(NULL, "|")));
-			img->playable = dupe(stripspace(strtok(NULL, "|")));
-			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
-			retval = 0;
-		}
-		config_close(config);
-	}
-	return retval;
-}
-
-
-void *image_fopen(int type, int id, int filetype, int read_or_write)
-{
-	struct image_info *img = &images[type][id];
-	const char *sysname;
-	void *file;
-
-	if( type >= IO_COUNT )
-	{
-		logerror("image_fopen: type out of range (%d)\n", type);
-		return NULL;
-	}
-
-	if( id >= count[type] )
-	{
-		logerror("image_fopen: id out of range (%d)\n", id);
-		return NULL;
-	}
-
-	if( img->name == NULL )
-		return NULL;
-
-	sysname = Machine->gamedrv->name;
-	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
-	file = osd_fopen(sysname, img->name, filetype, read_or_write);
-
-	if (file)
-	{
-		void *config;
-		const struct IODevice *pc_dev = device_first(Machine->gamedrv);
-
-		/* did osd_fopen() rename the image? (yes, I know this is a hack) */
-		if (renamed_image)
-		{
-			free(img->name);
-			img->name = renamed_image;
-			renamed_image = NULL;
-		}
-
-		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
-		img->length = osd_fsize(file);
-/* Cowering, partial crcs for NES/A7800/others */
-		img->crc = 0;
-		while( pc_dev && pc_dev->count && !img->crc)
-		{
-			logerror("partialcrc() -> %08lx\n",pc_dev->partialcrc);
-			if( type == pc_dev->type && pc_dev->partialcrc )
-			{
-				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
-				if( pc_buf )
-				{
-					osd_fseek(file,0,SEEK_SET);
-					osd_fread(file,pc_buf,img->length);
-					osd_fseek(file,0,SEEK_SET);
-					logerror("Calling partialcrc()\n");
-					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
-					free(pc_buf);
-				}
-				else
-				{
-					logerror("failed to malloc(%d)\n", img->length);
-				}
-			}
-			pc_dev = device_next(Machine->gamedrv, pc_dev);
-		}
-
-		if (!img->crc) img->crc = osd_fcrc(file);
-		if( img->crc == 0 && img->length < 0x100000 )
-		{
-			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
-			osd_fchecksum(sysname, img->name, &img->length, &img->crc);
-			logerror("image_fopen: CRC is %08x\n", img->crc);
-		}
-
-		if (read_crc_config (crcfile, img, sysname) && Machine->gamedrv->clone_of->name)
-			read_crc_config (pcrcfile, img, Machine->gamedrv->clone_of->name);
-
-		config = config_open(crcfile);
-	}
-
-	return file;
-}
-
-
-void *image_fopen_new(int type, int id, int *effective_mode)
-{
-	void *fref;
-	int requested_mode;
-	int effective_mode_local;
-
-	if( type >= IO_COUNT )
-	{
-		logerror("image_fopen: type out of range (%d)\n", type);
-		return NULL;
-	}
-
-	if( id >= count[type] )
-	{
-		logerror("image_fopen: id out of range (%d)\n", id);
-		return NULL;
-	}
-
-	{	/* look for open_mode */
-		const struct IODevice *dev;
-
-		dev = device_find(Machine->gamedrv, type);
-
-		if (dev)
-			requested_mode = dev->open_mode;
-		else
-			requested_mode = OSD_FOPEN_DUMMY;
-	}
-
-	switch (requested_mode)
-	{
-	case OSD_FOPEN_DUMMY:
-	default:
-		/* unsupported modes */
-		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
-		fref = NULL;
-		effective_mode_local = OSD_FOPEN_DUMMY;
-		break;
-
-	case OSD_FOPEN_READ:
-	case OSD_FOPEN_WRITE:
-	case OSD_FOPEN_RW:
-	case OSD_FOPEN_RW_CREATE:
-		/* supported modes */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, requested_mode);
-		effective_mode_local = requested_mode;
-		break;
-
-	case OSD_FOPEN_RW_OR_READ:
-		/* R/W or read-only: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-			effective_mode_local = OSD_FOPEN_READ;
-		}
-		break;
-
-	case OSD_FOPEN_RW_CREATE_OR_READ:
-		/* R/W, read-only, or create new R/W image: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
-		else
-		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-			if (fref)
-				effective_mode_local = OSD_FOPEN_READ;
-			else
-			{
-				fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				effective_mode_local = OSD_FOPEN_RW_CREATE;
-			}
-		}
-		break;
-
-	case OSD_FOPEN_READ_OR_WRITE:
-		/* read or write: emulated mode */
-		fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (fref)
-			effective_mode_local = OSD_FOPEN_READ;
-		else
-		{
-			fref = image_fopen(type, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_WRITE);
-			effective_mode_local = OSD_FOPEN_WRITE;
-		}
-		break;
-	}
-
-	if (effective_mode)
-		*effective_mode = effective_mode_local;
-
-	return fref;
-}
-
-
-int image_is_slot_empty(int type, int id)
-{
-	struct image_info *img = &images[type][id];
-
-	if( type >= IO_COUNT )
-	{
-		logerror("image_is_slot_empty: type out of range (%d)\n", type);
-		return NULL;
-	}
-
-	if( id >= count[type] )
-	{
-		logerror("image_is_slot_empty: id out of range (%d)\n", id);
-		return NULL;
-	}
-
-	return ((img->name == NULL) || (img->name[0] == '\0'));
-}
-
-
-/* common init for all IO_FLOPPY devices */
-static void	floppy_device_common_init(int id)
-{
-	logerror("floppy device common init: id: %02x\n",id);
-	/* disk inserted */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 1);
-	/* drive connected */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 1);
-}
-
-/* common exit for all IO_FLOPPY devices */
-static void floppy_device_common_exit(int id)
-{
-	logerror("floppy device common exit: id: %02x\n",id);
-	/* disk removed */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_DISK_INSERTED, 0);
-	/* drive disconnected */
-	floppy_drive_set_flag_state(id, FLOPPY_DRIVE_CONNECTED, 0);
-}
-
 
 /*
  * Does the system support cassette (for tapecontrol)
@@ -381,29 +79,6 @@ const char *device_typename_id(int type, int id)
 }
 
 /*
- * Return the number of filenames for a device of type 'type'.
- */
-int device_count(int type)
-{
-	if (type >= IO_COUNT)
-		return 0;
-	return count[type];
-}
-
-/*
- * Return the 'id'th filename for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_filename(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].name;
-	return NULL;
-}
-
-/*
  * Return the 'num'th file extension for a device of type 'type',
  * NULL if no file extensions of that type are available.
  */
@@ -427,118 +102,13 @@ const char *device_file_extension(int type, int extnum)
 	return NULL;
 }
 
-/*
- * Return the 'id'th crc for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-unsigned int device_crc(int type, int id)
+#define MAX_INSTANCES 5
+
+struct distributed_images
 {
-	if (type >= IO_COUNT)
-		return 0;
-	if (id < count[type])
-		return images[type][id].crc;
-	return 0;
-}
-
-/*
- * Set the 'id'th crc for a device of type 'type',
- * this is to be used if only a 'partial crc' shall be used.
- */
-void device_set_crc(int type, int id, UINT32 new_crc)
-{
-	if (type >= IO_COUNT)
-	{
-		logerror("device_set_crc: type out of bounds (%d)\n", type);
-		return;
-	}
-	if (id < count[type])
-	{
-		images[type][id].crc = new_crc;
-		logerror("device_set_crc: new_crc %08x\n", new_crc);
-	}
-	else
-		logerror("device_set_crc: id out of bounds (%d)\n", id);
-}
-
-/*
- * Return the 'id'th length for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-unsigned int device_length(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return 0;
-	if (id < count[type])
-		return images[type][id].length;
-	return 0;
-}
-
-/*
- * Return the 'id'th long name for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_longname(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].longname;
-	return NULL;
-}
-
-/*
- * Return the 'id'th manufacturer name for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_manufacturer(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].manufacturer;
-	return NULL;
-}
-
-/*
- * Return the 'id'th release year for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_year(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].year;
-	return NULL;
-}
-
-/*
- * Return the 'id'th playable info for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_playable(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].playable;
-	return NULL;
-}
-
-
-/*
- * Return the 'id'th extrainfo info for a device of type 'type',
- * NULL if not enough image names of that type are available.
- */
-const char *device_extrainfo(int type, int id)
-{
-	if (type >= IO_COUNT)
-		return NULL;
-	if (id < count[type])
-		return images[type][id].extrainfo;
-	return NULL;
-}
-
+	const char *names[IO_COUNT][MAX_INSTANCES];
+	int count[IO_COUNT];
+};
 
 /*****************************************************************************
  *  --Distribute images to their respective Devices--
@@ -547,15 +117,12 @@ const char *device_extrainfo(int type, int id)
  *  of each image.  Multiple instances of the same device are allowed
  *  RETURNS 0 on success, 1 if failed
  ****************************************************************************/
-static int distribute_images(void)
+static int distribute_images(struct distributed_images *images)
 {
-	int i,j;
+	int i;
 
 	logerror("Distributing Images to Devices...\n");
 	/* Set names to NULL */
-	for (i=0;i<IO_COUNT;i++)
-		for (j=0;j<MAX_INSTANCES;j++)
-			images[i][j].name = NULL;
 
 	for( i = 0; i < options.image_count; i++ )
 	{
@@ -564,23 +131,16 @@ static int distribute_images(void)
 		if (type < IO_COUNT)
 		{
 			/* Do we have too many devices? */
-			if( count[type] >= MAX_INSTANCES )
+			if (images->count[type] >= MAX_INSTANCES)
 			{
 				mess_printf(" Too many devices of type %d\n", type);
 				return 1;
 			}
 
 			/* Add a filename to the arrays of names */
-			if( options.image_files[i].name )
-			{
-				images[type][count[type]].name = dupe(options.image_files[i].name);
-				if( !images[type][count[type]].name )
-				{
-					mess_printf(" ERROR - dupe() failed\n");
-					return 1;
-				}
-			}
-			count[type]++;
+			if (options.image_files[i].name)
+				images->names[type][images->count[type]] = options.image_files[i].name;
+			images->count[type]++;
 		}
 		else
 		{
@@ -699,6 +259,7 @@ int init_devices(const struct GameDriver *gamedrv)
 {
 	const struct IODevice *dev;
 	int i,id;
+	struct distributed_images images;
 
 	/* convienient place to call this */
 	{
@@ -726,7 +287,8 @@ int init_devices(const struct GameDriver *gamedrv)
 	}
 
 	/* Ok! All devices are supported.  Now distribute them to the appropriate device..... */
-	if (distribute_images() == 1)
+	memset(&images, 0, sizeof(images));
+	if (distribute_images(&images) == 1)
 		return 1;
 
 	/* Initialise all floppy drives here if the device is Setting can be overriden by the drivers and UI */
@@ -742,41 +304,26 @@ int init_devices(const struct GameDriver *gamedrv)
 		/* all instances */
 		for( id = 0; id < dev->count; id++ )
 		{
+			int result;
 			mess_printf("Initialising %s device #%d\n",device_typename(dev->type), id + 1);
+
 			/********************************************************************
 			 * CALL INITIALISE DEVICE
 			 ********************************************************************/
-			/* if this device supports initialize (it should!) */
-			if( dev->init )
+			result = image_load(dev->type, id, images.names[dev->type][id]);
+
+			if (result != INIT_PASS)
 			{
-				int result;
-
-				/* initialize */
-				result = (*dev->init)(id);
-
-				if( result != INIT_PASS)
-				{
-					mess_printf("Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
-					mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
-					mess_printf("Also remember that some systems cannot boot without a valid image!\n");
-					return 1;
-				}
-
-				/* init succeeded */
-				/* if floppy, perform common init */
-				if ((dev->type == IO_FLOPPY) && (device_filename(dev->type, id)))
-				{
-					floppy_device_common_init(id);
-				}
-			}
-			else
-			{
-				mess_printf(" %s does not support init!\n", device_typename(dev->type));
+				mess_printf("Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
+				mess_printf("Ensure image is valid and exists and (if needed) can be created\n");
+				mess_printf("Also remember that some systems cannot boot without a valid image!\n");
+				return 1;
 			}
 		}
 	}
 
 	mess_printf("Device Initialision Complete!\n");
+	images_is_running = 1;
 	return 0;
 }
 
@@ -786,145 +333,16 @@ int init_devices(const struct GameDriver *gamedrv)
  */
 void exit_devices(void)
 {
-	const struct IODevice *dev;
-	int id;
-	int type;
-
 	/* shutdown all devices */
-	for(dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
-	{
-		/* all instances */
-		if( dev->exit)
-		{
-			/* shutdown */
-			for( id = 0; id < device_count(dev->type); id++ )
-				(*dev->exit)(id);
-
-		}
-		else
-		{
-			logerror("%s does not support exit!\n", device_typename(dev->type));
-		}
-
-		/* The following is always executed for a IO_FLOPPY exit */
-		/* KT: if a image is removed:
-			1. Disconnect drive
-			2. Remove disk from drive */
-		/* This is done here, so if a device doesn't support exit, the status
-		will still be correct */
-		if (dev->type == IO_FLOPPY)
-		{
-			for (id = 0; id< device_count(dev->type); id++)
-			{
-				floppy_device_common_exit(id);
-			}
-		}
-
-		dev++;
-	}
-
-	for( type = 0; type < IO_COUNT; type++ )
-	{
-		if( images[type] )
-		{
-			for( id = 0; id < device_count(type); id++ )
-			{
-				if( images[type][id].name )
-					free(images[type][id].name);
-				if( images[type][id].longname )
-					free(images[type][id].longname);
-				if( images[type][id].manufacturer )
-					free(images[type][id].manufacturer);
-				if( images[type][id].year )
-					free(images[type][id].year);
-				if( images[type][id].playable )
-					free(images[type][id].playable);
-				if( images[type][id].extrainfo )
-					free(images[type][id].extrainfo);
-			}
-		}
-		count[type] = 0;
-	}
+	image_unload_all();
 
 	/* KT: clean up */
 	floppy_drives_exit();
 
-#ifdef MAME_DEBUG
-	for( type = 0; type < IO_COUNT; type++ )
-	{
-		if (count[type])
-			mess_printf("OOPS!!!  Appears not all images free!\n");
-
-	}
-#endif
-
+	images_is_running = 0;
 }
 
-/*
- * Change the associated image filename for a device.
- * Returns 0 if successful.
- */
-int device_filename_change(int type, int id, const char *name)
-{
-	const struct IODevice *dev;
-	struct image_info *img = &images[type][id];
 
-	if( type >= IO_COUNT )
-		return 1;
-
-	for(dev = device_first(Machine->gamedrv); dev && (dev->type != type); dev = device_next(Machine->gamedrv, dev))
-		;
-
-	if (!dev || (id >= dev->count))
-		return 1;
-
-	if (dev->exit)
-		dev->exit(id);
-
-	/* if floppy, perform common exit */
-	if (dev->type == IO_FLOPPY)
-	{
-		floppy_device_common_exit(id);
-	}
-
-	if( dev->init )
-	{
-		int result;
-		/*
-		 * set the new filename and reset all addition info, it will
-		 * be inserted by osd_fopen() and the crc handling
-		 */
-		img->name = NULL;
-		img->length = 0;
-		img->crc = 0;
-		if( name )
-		{
-			img->name = dupe(name);
-			/* Check the name */
-			if( !img->name )
-				return 1;
-			/* check the count - if it equals id, add new! */
-			if (device_count(type) == id)
-				count[type]++;
-		}
-
-		if (dev->reset_depth >= IO_RESET_CPU)
-			machine_reset();
-
-		result = (*dev->init)(id);
-		if( result != INIT_PASS)
-			return 1;
-
-		/* init succeeded */
-		/* if floppy, perform common init */
-		if (dev->type == IO_FLOPPY)
-		{
-			floppy_device_common_init(id);
-		}
-
-	}
-	return 0;
-}
 
 int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 {
@@ -941,9 +359,9 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 
 	for (type = 0; type < IO_COUNT; type++)
 	{
-		for( id = 0; id < device_count(type); id++ )
+		for( id = 0; id < image_count(type); id++ )
 		{
-			const char *name = device_filename(type,id);
+			const char *name = image_filename(type,id);
 			if( name )
 			{
 				const char *filename;
@@ -951,7 +369,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 				const char *info;
 				char *base_filename_noextension;
 
-				filename = device_filename(type, id);
+				filename = image_filename(type, id);
 				base_filename = osd_basename((char *) filename);
 				base_filename_noextension = osd_strip_extension(base_filename);
 
@@ -959,23 +377,23 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 				dst += sprintf(dst,"%s: %s\n", device_typename_id(type,id), base_filename);
 
 				/* display long filename, if present and doesn't correspond to name */
-				info = device_longname(type,id);
+				info = image_longname(type,id);
 				if (info && (!base_filename_noextension || strcmpi(info, base_filename_noextension)))
 					dst += sprintf(dst,"%s\n", info);
 
 				/* display manufacturer, if available */
-				info = device_manufacturer(type,id);
+				info = image_manufacturer(type,id);
 				if (info)
 				{
 					dst += sprintf(dst,"%s", info);
-					info = stripspace(device_year(type,id));
+					info = stripspace(image_year(type,id));
 					if (info && *info)
 						dst += sprintf(dst,", %s", info);
 					dst += sprintf(dst,"\n");
 				}
 
 				/* display playable information, if available */
-				info = device_playable(type,id);
+				info = image_playable(type,id);
 				if (info)
 					dst += sprintf(dst,"%s\n", info);
 

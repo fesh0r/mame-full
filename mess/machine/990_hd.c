@@ -19,6 +19,7 @@
 #include "driver.h"
 
 #include "990_hd.h"
+#include "image.h"
 
 static void update_interrupt(void);
 
@@ -158,7 +159,7 @@ int ti990_hd_init(int id)
 	d = &hdc.d[id];
 	memset(d, 0, sizeof(*d));
 
-	if (image_is_slot_empty(IO_HARDDISK, id))
+	if (!image_exists(IO_HARDDISK, id))
 		return INIT_PASS;
 
 	/* open file */

@@ -81,3 +81,20 @@ void *memset16 (void *dest, int value, size_t size)
 }
 #endif
 
+char *stripspace(const char *src)
+{
+	static char buff[512];
+	if( src )
+	{
+		char *dst;
+		while( *src && isspace(*src) )
+			src++;
+		strcpy(buff, src);
+		dst = buff + strlen(buff);
+		while( dst >= buff && isspace(*--dst) )
+			*dst = '\0';
+		return buff;
+	}
+	return NULL;
+}
+

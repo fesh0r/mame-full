@@ -14,6 +14,7 @@
 
 #include "includes/microtan.h"
 #include "cassette.h"
+#include "image.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -481,7 +482,7 @@ int microtan_snapshot_init(int id)
     void *file;
 
 	/* If no image specified, I guess we should start! */
-	if (image_is_slot_empty(IO_SNAPSHOT, id))
+	if (!image_exists(IO_SNAPSHOT, id))
 	{
 		logerror("warning: no sanpshot specified!\n");
 		return INIT_PASS;
@@ -685,7 +686,7 @@ int microtan_hexfile_init(int id)
     void *file;
 
 	/* If no image specified, I guess we should start! */
-	if (image_is_slot_empty(IO_QUICKLOAD, id))
+	if (!image_exists(IO_QUICKLOAD, id))
 	{
 		logerror("warning: no quikload specified!\n");
 		return INIT_PASS;

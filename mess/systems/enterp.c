@@ -24,6 +24,7 @@
 #include "includes/basicdsk.h"
 /* for CPCEMU style disk images */
 #include "includes/dsk.h"
+#include "image.h"
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -555,14 +556,10 @@ INPUT_PORTS_END
 
 static int	enterprise_dsk_floppy_init(int id)
 {
-	 if (image_is_slot_empty(IO_FLOPPY, id))
+	 if (!image_exists(IO_FLOPPY, id))
 		 return INIT_PASS;
-
-
 	 return dsk_floppy_load(id);
- }
-
-
+}
 
 static struct CustomSound_interface dave_custom_sound=
 {

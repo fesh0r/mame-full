@@ -3,6 +3,7 @@
 #include "driver.h"
 #include "includes/d88.h"
 #include "includes/flopdrv.h"
+#include "image.h"
 
 #define d88image_MAX_DRIVES 4
 #define VERBOSE 1
@@ -35,7 +36,7 @@ int d88image_floppy_init(int id)
 	unsigned long toffset;
 
 	/* do we have an image name ? */
-	if (image_is_slot_empty(IO_FLOPPY, id))
+	if (!image_exists(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (id < d88image_MAX_DRIVES)

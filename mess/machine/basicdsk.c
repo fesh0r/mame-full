@@ -7,6 +7,7 @@ the data will be accessed correctly */
 #include "driver.h"
 #include "includes/basicdsk.h"
 #include "includes/flopdrv.h"
+#include "image.h"
 
 #define basicdsk_MAX_DRIVES 4
 #define VERBOSE 1
@@ -34,13 +35,12 @@ int basicdsk_floppy_init(int id)
 {
 	int effective_mode;
 
-
 	if (id < basicdsk_MAX_DRIVES)
 	{
 		basicdsk *w = &basicdsk_drives[id];
 
 		/* do we have an image name ? */
-		if (image_is_slot_empty(IO_FLOPPY, id))
+		if (!image_exists(IO_FLOPPY, id))
 			return INIT_PASS;
 
 		w->image_file = image_fopen_new(IO_FLOPPY, id, & effective_mode);
