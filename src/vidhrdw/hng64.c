@@ -1407,7 +1407,8 @@ static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, stru
 
 static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap)
 {
-	for (int j = 0; j < p->n; j++)
+	int j;
+	for (j = 0; j < p->n; j++)
 	{
 		// printf("now drawing : %f %f %f, %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[j].clipCoords[2], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[2]) ;
 		// printf("%f %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1]) ;
@@ -1440,7 +1441,8 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 {
 	// The perspective-correct texture divide...
 	// !!! There is a very good chance the HNG64 hardware does not do perspective-correct texture-mapping !!!
-	for (int j = 0; j < p->n; j++)
+	int j;
+	for (j = 0; j < p->n; j++)
 	{
 		p->vert[j].clipCoords[3] = 1.0f / p->vert[j].clipCoords[3] ;
 		p->vert[j].light[0]      = p->vert[j].light[0]     * p->vert[j].clipCoords[3] ;
@@ -1450,7 +1452,7 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 		p->vert[j].texCoords[1]  = p->vert[j].texCoords[1] * p->vert[j].clipCoords[3] ;
 	}
 
-	for (int j = 1; j < p->n-1; j++)
+	for (j = 1; j < p->n-1; j++)
 	{
 		RasterizeTriangle_SMOOTH_TEX_PC(bitmap,
 										p->vert[0].clipCoords, p->vert[j].clipCoords, p->vert[j+1].clipCoords,
