@@ -5,21 +5,29 @@ New System Drivers Supported (in no particular order):
 Unipolbrit Komputer 2086 [Krzysztof Strzecha]
 ZX Spectrum 48k Psycho (ROM modification) [Krzysztof Strzecha]
 
+
 System Driver Changes:
 ----------------------
 - [TI81] ON/OFF fixed. ROM bank switching added (port 5). NVRAM support added.
   [Krzysztof Strzecha]
+
 - [TI85/TI86] Snapshot loading corrected. [Krzysztof Strzecha]
+
 - [TC2048/TS2068] Aspect ratio corrected. [Krzysztof Strzecha]
+
 - [TS2068] Support for DOCK cartridges added. Support for Z80 snapshots added.
   AY sound added. [Krzysztof Strzecha]
 
-Source:
--------
+Source Changes:
+---------------
 
 - The core is based on MAME 0.54.  This incorporates all features of the 
   update to this core.  [MAME team] 
 
+- [Windows] GUI and CONSOLE version built to one executable.
+  [Ben Bruscella, Nate Woods, with a Huge thanks to MAME32 team, especially:
+   Michael Soderstrom, Mike Haaland, Chris Kirmse]
+  
 - MESSRoms now recognizes more ROMs. [Krzysztof Strzecha]
 
 - Switch -a for MESSRoms, which allow to scan files of all sizes.
