@@ -1632,7 +1632,11 @@ TESTDRIVER( kopunch )	/* 834-0103 (c) 1981 Sega */
 	DRIVER( tetrisa )	/* (c) 1988 (protected) */
 	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
 
-TESTDRIVER( aceattac )	/* (protected) */
+	DRIVER( logicpro )	/* (c) 1996 Deniam */
+	DRIVER( karianx )	/* (c) 1996 Deniam */
+	DRIVER( logicpr2 )	/* (c) 1997 Deniam */
+
+TESTDRIVER( aceattac )  /* (protected) */
 TESTDRIVER( aburner )	/* */
 TESTDRIVER( aburner2 )  /* */
 TESTDRIVER( afighter )	/* (protected) */
