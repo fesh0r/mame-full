@@ -451,7 +451,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 			logerror("Error trying to open ro image %s in write mode\n", filename);
 			break;
 		    }
-		    for(i=0; i < rompathc; i++)
+		    for(i = 0; i < rompathc; i++)
 		    {
 		        /* try <rompath>/filename.ext */
 			snprintf(name, MAXPATHL, "%s/%s", rompathv[i], filename);
@@ -603,18 +603,18 @@ int osd_fread(void *file,void *buffer,int length)
 {
 	FakeFileHandle *f = (FakeFileHandle *)file;
 
+	/* switch off the file type */
 	switch (f->type)
 	{
 		case kPlainFile:
-			return fread(buffer,1,length,f->file);
-			break;
+			return fread(buffer, 1, length, f->file);
+
 		case kRamFile:
-			/* reading from the uncompressed image of a zipped file */
 			if (f->data)
 			{
-				if (length + f->offset > f->length)
+				if (f->offset + length > f->length)
 					length = f->length - f->offset;
-				memcpy(buffer, f->offset + f->data, length);
+				memcpy(buffer, f->data + f->offset, length);
 				f->offset += length;
 				return length;
 			}
@@ -626,69 +626,23 @@ int osd_fread(void *file,void *buffer,int length)
 
 int osd_fread_swap(void *file,void *buffer,int length)
 {
-	int i;
 	unsigned char *buf;
 	unsigned char temp;
-	int res;
+	int res, i;
 
-	res = osd_fread(file,buffer,length);
+	/* standard read first */
+	res = osd_fread(file, buffer, length);
 
+	/* swap the result */
 	buf = buffer;
-	for (i = 0;i < length;i+=2)
+	for (i = 0; i < res; i += 2)
 	{
 		temp = buf[i];
-		buf[i] = buf[i+1];
-		buf[i+1] = temp;
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
 	}
 
 	return res;
-}
-
-int osd_fread_scatter(void *file,void *buffer,int length,int increment)
-{
-	unsigned char *buf = buffer;
-	FakeFileHandle *f = (FakeFileHandle *)file;
-	unsigned char tempbuf[4096];
-	int totread,r,i;
-
-	switch (f->type)
-	{
-		case kPlainFile:
-			totread = 0;
-			while (length)
-			{
-				r = length;
-				if (r > 4096) r = 4096;
-				r = fread(tempbuf,1,r,f->file);
-				if (r == 0) return totread;	/* error */
-				for (i = 0;i < r;i++)
-				{
-					*buf = tempbuf[i];
-					buf += increment;
-				}
-				totread += r;
-				length -= r;
-			}
-			return totread;
-			break;
-		case kRamFile:
-			/* reading from the RAM image of a file */
-			if (f->data)
-			{
-				if (length + f->offset > f->length)
-					length = f->length - f->offset;
-				for (i = 0;i < length;i++)
-				{
-					*buf = f->data[f->offset + i];
-					buf += increment;
-				}
-				f->offset += length;
-				return length;
-			}
-			break;
-	}
-
-	return 0;
 }
 
 int osd_fwrite(void *file,const void *buffer,int length)
@@ -698,7 +652,7 @@ int osd_fwrite(void *file,const void *buffer,int length)
 	switch (f->type)
 	{
 		case kPlainFile:
-			return fwrite(buffer,1,length,f->file);
+			return fwrite(buffer, 1, length, f->file);
 		default:
 			return -1; /* note dos returns 0, but this is incorrect */
 	}
@@ -706,26 +660,28 @@ int osd_fwrite(void *file,const void *buffer,int length)
 
 int osd_fwrite_swap(void *file,const void *buffer,int length)
 {
-	int i;
 	unsigned char *buf;
 	unsigned char temp;
-	int res;
+	int res, i;
 
+	/* swap the data first */
 	buf = (unsigned char *)buffer;
-	for (i = 0;i < length;i+=2)
+	for (i = 0; i < length; i += 2)
 	{
 		temp = buf[i];
-		buf[i] = buf[i+1];
-		buf[i+1] = temp;
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
 	}
 
-	res = osd_fwrite(file,buffer,length);
+	/* do the write */
+	res = osd_fwrite(file, buffer, length);
 
-	for (i = 0;i < length;i+=2)
+	/* swap the data back */
+	for (i = 0; i < length; i += 2)
 	{
 		temp = buf[i];
-		buf[i] = buf[i+1];
-		buf[i+1] = temp;
+		buf[i] = buf[i + 1];
+		buf[i + 1] = temp;
 	}
 
 	return res;
@@ -735,27 +691,24 @@ int osd_fseek(void *file,int offset,int whence)
 {
 	FakeFileHandle *f = (FakeFileHandle *)file;
 
+	/* switch off the file type */
 	switch (f->type)
 	{
 		case kPlainFile:
-			return fseek(((FakeFileHandle *)file)->file,offset,whence);
-			break;
+			return fseek(f->file, offset, whence);
+
 		case kRamFile:
-			/* seeking within the uncompressed image of a zipped file */
 			switch (whence)
 			{
 				case SEEK_SET:
 					f->offset = offset;
 					return 0;
-					break;
 				case SEEK_CUR:
 					f->offset += offset;
 					return 0;
-					break;
 				case SEEK_END:
 					f->offset = f->length + offset;
 					return 0;
-					break;
 			}
 			break;
 	}
@@ -767,86 +720,159 @@ int osd_fgetc(void *file)
 {
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
-	if (f->type == kPlainFile && f->file)
-		return fgetc(f->file);
-	else
-		return EOF;
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case kPlainFile:
+			return fgetc(f->file);
+
+		case kRamFile:
+			if (f->offset < f->length)
+				return f->data[f->offset++];
+			return EOF;
+	}
+	return EOF;
 }
 
 int osd_ungetc(int c, void *file)
 {
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
-	if (f->type == kPlainFile && f->file)
-		return ungetc(c,f->file);
-	else
-		return EOF;
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case kPlainFile:
+			return ungetc(c, f->file);
+
+		case kRamFile:
+			if (f->offset > 0)
+			{
+				f->offset--;
+				return c;
+			}
+			return EOF;
+	}
+	return EOF;
 }
 
 char *osd_fgets(char *s, int n, void *file)
 {
-	FakeFileHandle *f = (FakeFileHandle *) file;
+	char *cur = s;
 
-	if (f->type == kPlainFile && f->file)
-		return fgets(s,n,f->file);
-	else
+	/* loop while we have characters */
+	while (n > 0)
+	{
+		int c = osd_fgetc(file);
+		if (c == EOF)
+			break;
+
+		/* if there's a CR, look for an LF afterwards */
+		if (c == 0x0d)
+		{
+			int c2 = osd_fgetc(file);
+			if (c2 != 0x0a)
+				osd_ungetc(c2, file);
+			*cur++ = 0x0d;
+			n--;
+			break;
+		}
+
+		/* if there's an LF, reinterp as a CR for consistency */
+		else if (c == 0x0a)
+		{
+			*cur++ = 0x0d;
+			n--;
+			break;
+		}
+
+		/* otherwise, pop the character in and continue */
+		*cur++ = c;
+		n--;
+	}
+
+	/* if we put nothing in, return NULL */
+	if (cur == s)
 		return NULL;
+
+	/* otherwise, terminate */
+	if (n > 0)
+		*cur++ = 0;
+	return s;
 }
 
 int osd_feof(void *file)
 {
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
-	if (f->type == kPlainFile && f->file)
-		return feof(f->file);
-	else
-		return 1;
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case kPlainFile:
+			return feof(f->file);
+
+		case kRamFile:
+			return (f->offset >= f->length);
+	}
+
+	return 1;
 }
 
 int osd_ftell(void *file)
 {
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
-	if (f->type == kPlainFile && f->file)
-		return ftell(f->file);
-	else
-		return -1L;
+	/* switch off the file type */
+	switch (f->type)
+	{
+		case kPlainFile:
+			return ftell(f->file);
+
+		case kRamFile:
+			return f->offset;
+	}
+
+	return -1L;
 }
 
 void osd_fclose(void *file)
 {
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
+	/* switch off the file type */
 	switch(f->type)
 	{
 		case kPlainFile:
 			fclose(f->file);
 			break;
+
 		case kRamFile:
-			if (f->data)
-				free(f->data);
+			free(f->data);
 			break;
 	}
+
+	/* free the file data */
 	free(f);
 }
 
 int osd_fsize(void *file)
 {
-	int position, end;
 	FakeFileHandle *f = (FakeFileHandle *) file;
 
+	/* switch off the file type */
 	switch(f->type)
 	{
 		case kPlainFile:
-			position = ftell(f->file);
+		{
+			int size, offs;
+			offs = ftell(f->file);
 			fseek(f->file, 0, SEEK_END);
-			end = ftell(f->file);
-			fseek(f->file, position, SEEK_SET);
-			return end;
-			break;
+			size = ftell(f->file);
+			fseek(f->file, offs, SEEK_SET);
+			return size;
+		}
+
 		case kRamFile:
 			return f->length;
-			break;
 	}
 	
 	return 0;
