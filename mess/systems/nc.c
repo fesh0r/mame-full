@@ -21,6 +21,13 @@
                 - serial/parallel connection
                 - Amstrad custom ASIC chip
 
+
+
+        nc200
+
+        Hardware:
+                - nec765 compatible floppy disc controller
+
         TODO:
            - find out what the unused key bits are for
            - serial, parallel and loads more!!!
@@ -31,9 +38,16 @@
 #include "driver.h"
 #include "includes/nc.h"
 #include "includes/tc8521.h"
+
+/* for NC200 disk drive interface */
+#include "includes/nec765.h"
+/* for PC disk images */
+#include "includes/pc_flopp.h"
+
 //#include "sound/beep.h"
 
 static unsigned long nc_memory_size;
+UINT8 nc_type;
 
 static char nc_memory_config[4];
 unsigned long nc_display_memory_start;
@@ -91,7 +105,10 @@ extern unsigned char    *nc_card_ram;
 
 
 /*
-bits 7-4: Not used
+NC100:
+bits 7: not used
+bits 5: NC100: not used. NC200: FDC interrupt
+bits 4: Not used
 Bit 3: Key scan interrupt (10ms)
 Bit 2: ACK from parallel interface
 Bit 1: Tx Ready
@@ -105,7 +122,7 @@ static void nc_update_interrupts(void)
 {
         /* any ints set and they are not masked? */
         if (
-                (((nc_irq_status & nc_irq_mask) & 0x0f)!=0) 
+                (((nc_irq_status & nc_irq_mask) & 0x3f)!=0) 
                 )
         {
                 /* set int */
@@ -249,6 +266,20 @@ static void nc_refresh_memory_config(void)
         nc_refresh_memory_bank_config(3);
 }
 
+#if 0
+static void nc_tc8521_interrupt(int state)
+{
+        if (state)
+        {
+                cpu_set_nmi_line(0,HOLD_LINE);
+        }
+        else
+        {
+                cpu_set_nmi_line(0,CLEAR_LINE);
+        }
+}
+#endif
+
 static struct tc8521_interface nc100_tc8521_interface=
 {
   NULL,
@@ -310,6 +341,8 @@ void nc_common_init_machine(void)
 
 void nc100_init_machine(void)
 {
+        nc_type = NC_TYPE_1xx;
+
         nc_memory_size = 64*1024;
 
         nc_memory = (unsigned char *)malloc(nc_memory_size);
@@ -330,17 +363,44 @@ void nc150_init_machine(void)
 
         nc_common_init_machine();
 }
+#endif
+
+static void nc200_fdc_interrupt(int state)
+{
+        nc_irq_status &=~(1<<5);
+
+        if (state)
+        {
+                nc_irq_status |=(1<<5);
+        }
+
+        nc_update_interrupts();
+}
+
+static struct nec765_interface nc200_nec765_interface=
+{
+        nc200_fdc_interrupt,
+        NULL,
+};
 
 void nc200_init_machine(void)
 {
+        nc_type = NC_TYPE_200;
+
         nc_memory = (unsigned char *)malloc(128*1024);
         nc_membank_internal_ram_mask = 7;
 
         nc_membank_card_ram_mask = 0x03f;
 
         nc_common_init_machine();
+
+        floppy_drives_init();
+        nec765_init(&nc200_nec765_interface, NEC765A);
+        floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_motor_state(0,1);
+        floppy_drive_set_ready_state(0,1,0);
+
 }
-#endif
 
 void nc_shutdown_machine(void)
 {
@@ -595,6 +655,51 @@ static struct IOWritePort writeport_nc[] =
         
 };
 
+static UINT8 nc200_rtc_register_index;
+
+static WRITE_HANDLER(nc200_rtc_register_index_w)
+{
+        nc200_rtc_register_index = data;
+}
+
+static READ_HANDLER(nc200_rtc_register_r)
+{
+        return tc8521_r(nc200_rtc_register_index);
+}
+
+static WRITE_HANDLER(nc200_rtc_register_w)
+{
+        tc8521_w(nc200_rtc_register_index, data);
+}
+
+static struct IOReadPort readport_nc200[] =
+{
+        {0x010, 0x013, nc_memory_management_r},
+//        {0x0a0, 0x0a0, nc_card_battery_status_r},
+        {0x0b0, 0x0b9, nc_key_data_in_r},
+        {0x090, 0x090, nc_irq_status_r},
+        {0x0d0, 0x0d0, nc200_rtc_register_r},
+        {0x0e0, 0x0e0, nec765_status_r},
+        {0x0e1, 0x0e1, nec765_data_r},
+        {-1}							   /* end of table */
+};
+
+static struct IOWritePort writeport_nc200[] =
+{
+        {0x000, 0x000, nc_display_memory_start_w},
+        {0x010, 0x013, nc_memory_management_w},
+        {0x060, 0x060, nc_irq_mask_w},
+  //      {0x070, 0x070, nc_poweroff_control_w},
+        {0x090, 0x090, nc_irq_status_w},
+        {0x0d0, 0x0d0, nc200_rtc_register_index_w},
+        {0x0d1, 0x0d1, nc200_rtc_register_w},
+        {0x050, 0x053, nc_sound_w},
+        {0x0e1, 0x0e1, nec765_data_w},
+        {-1}                                                       /* end of table */
+        
+};
+
+
 INPUT_PORTS_START(nc100)
         /* 0 */
         PORT_START
@@ -700,6 +805,112 @@ INPUT_PORTS_START(nc100)
 
 INPUT_PORTS_END
 
+INPUT_PORTS_START(nc200)
+        /* 0 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RIGHT SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
+        PORT_BIT (0x004, 0x00, IPT_UNUSED)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LEFT/RED", KEYCODE_LEFT, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RETURN", KEYCODE_ENTER, IP_JOY_NONE)
+        PORT_BIT (0x020, 0x00, IPT_UNUSED)
+        PORT_BIT (0x040, 0x00, IPT_UNUSED)
+        PORT_BIT (0x080, 0x00, IPT_UNUSED)
+        /* 1 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "YELLOW/FUNCTION", KEYCODE_INSERT, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CONTROL", KEYCODE_LCONTROL, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ESCAPE", KEYCODE_ESC, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
+        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BIT (0x020, 0x00, IPT_UNUSED)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5 %", KEYCODE_5, IP_JOY_NONE)
+        PORT_BIT (0x080, 0x00, IPT_UNUSED)
+        /* 2 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_LALT, IP_JOY_NONE)
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ALT", KEYCODE_RALT, IP_JOY_NONE)
+        PORT_BIT (0x002, 0x00, IPT_UNUSED)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "TAB", KEYCODE_TAB, IP_JOY_NONE)
+        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BIT (0x020, 0x00, IPT_UNUSED)
+        PORT_BIT (0x040, 0x00, IPT_UNUSED)
+        PORT_BIT (0x080, 0x00, IPT_UNUSED)
+        /* 3 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3", KEYCODE_3, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2 \" ", KEYCODE_2, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
+        PORT_BIT (0x020, 0x00, IPT_UNUSED)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
+        /* 4 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_8, IP_JOY_NONE)
+        PORT_BIT (0x002, 0x00, IPT_UNUSED)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
+        PORT_BIT (0x020, 0x00, IPT_UNUSED)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
+        /* 5 */
+        PORT_START
+        PORT_BIT (0x001, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_4, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
+        PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
+        /* 6 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6 ^", KEYCODE_6, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DOWN/BLUE", KEYCODE_DOWN, IP_JOY_NONE)
+        PORT_BIT (0x004, 0x00, IPT_UNUSED)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RIGHT/GREEN", KEYCODE_RIGHT, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "#", KEYCODE_TILDE, IP_JOY_NONE)
+        PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "?", KEYCODE_SLASH, IP_JOY_NONE)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
+        /* 7 */
+        PORT_START
+        PORT_BIT (0x001, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "+ = ", KEYCODE_EQUALS, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/ |", KEYCODE_BACKSLASH, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "UP", KEYCODE_UP, IP_JOY_NONE)
+        PORT_BIT (0x010, 0x00, IPT_UNUSED)
+        PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "U", KEYCODE_U, IP_JOY_NONE)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M", KEYCODE_M, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
+        /* 8 */
+        PORT_START
+        PORT_BITX(0x001, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 *", KEYCODE_8, IP_JOY_NONE)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "- _", KEYCODE_MINUS, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "} ]", KEYCODE_CLOSEBRACE, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "{ [", KEYCODE_OPENBRACE, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "@", KEYCODE_QUOTE, IP_JOY_NONE)
+        PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ",", KEYCODE_COMMA, IP_JOY_NONE)
+        /* 9 */
+        PORT_START
+        PORT_BIT (0x001, 0x00, IPT_UNUSED)
+        PORT_BITX(0x002, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0 )", KEYCODE_0, IP_JOY_NONE)
+        PORT_BITX(0x004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_BACKSPACE, IP_JOY_NONE)
+        PORT_BITX(0x008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
+        PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, ": ;", KEYCODE_COLON, IP_JOY_NONE)
+        PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
+        PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
+        PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP,IP_JOY_NONE)
+
+INPUT_PORTS_END
+
+
 static struct beep_interface nc100_beep_interface =
 {
         2
@@ -759,6 +970,58 @@ static struct MachineDriver machine_driver_nc100 =
 
 
 
+static struct MachineDriver machine_driver_nc200 =
+{
+	/* basic machine hardware */
+	{
+		/* MachineCPU */
+		{
+                        CPU_Z80 ,  /* type */
+                        4000000, /* clock: See Note Above */
+                        readmem_nc,                   /* MemoryReadAddress */
+                        writemem_nc,                  /* MemoryWriteAddress */
+                        readport_nc200,                  /* IOReadPort */
+                        writeport_nc200,                 /* IOWritePort */
+			0,						   /*amstrad_frame_interrupt, *//* VBlank
+										* Interrupt */
+			0 /*1 */ ,				   /* vblanks per frame */
+                        0, 0,   /* every scanline */
+		},
+	},
+        50,                                                     /* frames per second */
+	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
+	1,								   /* cpu slices per frame */
+        nc200_init_machine,                      /* init machine */
+        nc_shutdown_machine,
+	/* video hardware */
+        NC200_SCREEN_WIDTH, /* screen width */
+        NC200_SCREEN_HEIGHT,  /* screen height */
+        {0, (NC200_SCREEN_WIDTH - 1), 0, (NC200_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
+	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
+										* decode info */
+        NC200_NUM_COLOURS,                                                        /* total colours */
+        NC200_NUM_COLOURS,                                                        /* color table len */
+        nc_init_palette,                      /* init palette */
+
+        VIDEO_TYPE_RASTER,                                  /* video attributes */
+        0,                                                                 /* MachineLayer */
+        nc_vh_start,
+        nc_vh_stop,
+        nc_vh_screenrefresh,
+
+		/* sound hardware */
+	0,								   /* sh init */
+	0,								   /* sh start */
+	0,								   /* sh stop */
+	0,								   /* sh update */
+        {
+                {
+                   SOUND_BEEP,
+                   &nc100_beep_interface
+                }
+        }
+};
+
 
 /***************************************************************************
 
@@ -770,6 +1033,17 @@ ROM_START(nc100)
         ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1)
         ROM_LOAD("nc100.rom", 0x010000, 0x040000, 0x0849884f9)
 ROM_END
+
+ROM_START(nc100a)
+        ROM_REGION(((64*1024)+(256*1024)), REGION_CPU1)
+        ROM_LOAD("nc100a.rom", 0x010000, 0x040000, 0x0a699eca3)
+ROM_END
+
+ROM_START(nc200)
+        ROM_REGION(((64*1024)+(512*1024)), REGION_CPU1)
+        ROM_LOAD("nc200.rom", 0x010000, 0x080000, 0x0bb8180e7)
+ROM_END
+
 
 static const struct IODevice io_nc100[] =
 {
@@ -795,7 +1069,54 @@ static const struct IODevice io_nc100[] =
 	{IO_END}
 };
 
+static const struct IODevice io_nc200[] =
+{
+        {
+                IO_CARTSLOT,           /* type */
+                1,                     /* count */
+                "crd\0card\0",               /* file extensions */
+				IO_RESET_NONE,			/* reset if file changed */
+                nc_pcmcia_card_id,   /* id */
+                nc_pcmcia_card_load, /* load */
+                nc_pcmcia_card_exit, /* exit */
+                NULL,                   /* info */
+                NULL,                   /* open */
+                NULL,                   /* close */
+                NULL,                   /* status */
+                NULL,                   /* seek */
+                NULL,                   /* tell */
+                NULL,                   /* input */
+                NULL,                   /* output */
+                NULL,                   /* input chunk */
+                NULL,                   /* output chunk */
+        },
+        {
+                IO_FLOPPY,
+                1,
+                "dsk\0",
+                IO_RESET_NONE,
+                NULL,
+                pc_floppy_init,
+                pc_floppy_exit,
+                NULL,                   /* info */
+                NULL,                   /* open */
+                NULL,                   /* close */
+                floppy_status,                   /* status */
+                NULL,                   /* seek */
+                NULL,                   /* tell */
+                NULL,                   /* input */
+                NULL,                   /* output */
+                NULL,                   /* input chunk */
+                NULL,                   /* output chunk */
+        },
 
-/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
-COMP( 19??, nc100,	  0,		nc100,	  nc100,	0,	 "Amstrad plc", "NC100")
+	{IO_END}
+};
 
+
+#define io_nc100a io_nc100
+
+/*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
+COMP( 1992, nc100,   0,                nc100,  nc100,      0,       "Amstrad plc", "NC100 Rom version v1.09")
+COMP( 1992, nc100a,  0,                nc100, nc100,      0,   "Amstrad plc","NC100 Rom version v1.00") 
+COMP( 1993, nc200,   0,                nc200, nc200,      0,   "Amstrad plc", "NC200")
