@@ -67,7 +67,11 @@ void z88_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
         {
                 int by;
                 /* 64 bytes per line */
+#if 0
                 char *line_ptr = z88_memory + z88_display_memory_start + (y<<6);
+#else
+				char *line_ptr = NULL;	/* DOH! :-) */
+#endif
 
                 x = 0;
                 for (by=0; by<Z88_SCREEN_WIDTH>>3; by++)
