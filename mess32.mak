@@ -274,6 +274,7 @@ SNDOBJS = \
          $(OBJ)/sound/msm5205.o \
          $(OBJ)/sound/ymdeltat.o \
          $(OBJ)/sound/upd7759.o \
+         $(OBJ)/sound/k051649.o \
          $(OBJ)/sound/qsound.o \
          $(OBJ)/sound/tiasound.o \
          $(OBJ)/sound/tiaintf.o \
@@ -523,7 +524,6 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/enterp.o   \
           $(OBJ)/mess/machine/enterp.o   \
           $(OBJ)/mess/systems/enterp.o	\
-	  $(OBJ)/mess/sndhrdw/scc.o	 	 \
 	  $(OBJ)/mess/machine/msx.o	 	 \
 	  $(OBJ)/mess/machine/msx_dsk.o	 	 \
 	  $(OBJ)/mess/formats/fmsx_cas.o \

@@ -299,7 +299,7 @@ typedef union {
 #define HAS_HC55516     0
 #define HAS_K005289     0
 #define HAS_K007232     0
-#define HAS_K051649     0
+#define HAS_K051649     1
 #define HAS_K053260     0
 #define HAS_SEGAPCM     0
 #define HAS_RF5C68      0
