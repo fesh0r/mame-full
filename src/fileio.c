@@ -6,7 +6,7 @@
 
 #include "driver.h"
 #include "unzip.h"
-#include "rc.h"
+//#include "rc.h"
 
 #ifdef MESS
 #include "image.h"
@@ -57,6 +57,7 @@ struct _mame_file
 	UINT8 *data;
 	UINT64 offset;
 	UINT64 length;
+	UINT8 eof;
 	UINT8 type;
 	UINT32 crc;
 };
@@ -312,7 +313,10 @@ UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
 			if (file->data)
 			{
 				if (file->offset + length > file->length)
+				{
 					length = file->length - file->offset;
+					file->eof = 1;
+				}
 				memcpy(buffer, file->data + file->offset, length);
 				file->offset += length;
 				return length;
@@ -371,6 +375,7 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 					file->offset = file->length + offset;
 					break;
 			}
+			file->eof = 0;
 			break;
 	}
 
@@ -463,6 +468,8 @@ int mame_fgetc(mame_file *file)
 		case ZIPPED_FILE:
 			if (file->offset < file->length)
 				return file->data[file->offset++];
+			else
+				file->eof = 1;
 			return EOF;
 	}
 	return EOF;
@@ -480,13 +487,23 @@ int mame_ungetc(int c, mame_file *file)
 	switch (file->type)
 	{
 		case PLAIN_FILE:
-			if (osd_fseek(file->file, -1, SEEK_CUR))
-				return c;
+			if (osd_feof(file->file))
+			{
+				if (osd_fseek(file->file, 0, SEEK_CUR))
+					return c;
+			}
+			else
+			{
+				if (osd_fseek(file->file, -1, SEEK_CUR))
+					return c;
+			}
 			return EOF;
 
 		case RAM_FILE:
 		case ZIPPED_FILE:
-			if (file->offset > 0)
+			if (file->eof)
+				file->eof = 0;
+			else if (file->offset > 0)
 			{
 				file->offset--;
 				return c;
@@ -563,7 +580,7 @@ int mame_feof(mame_file *file)
 
 		case RAM_FILE:
 		case ZIPPED_FILE:
-			return (file->offset >= file->length);
+			return (file->eof);
 	}
 
 	return 1;
