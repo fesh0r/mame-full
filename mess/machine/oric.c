@@ -103,7 +103,7 @@ static char oric_keyboard_mask;
 
 static unsigned char oric_via_port_a_data;
 
-#define ORIC_DUMP_RAM
+//#define ORIC_DUMP_RAM
 
 #ifdef ORIC_DUMP_RAM
 /* load image */

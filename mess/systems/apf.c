@@ -42,35 +42,35 @@ READ_HANDLER(apf_m1000_pia_in_a_func)
 READ_HANDLER(apf_m1000_pia_in_b_func)
 {
 	
-	//logerror("pia 0 b r: %04x\n",offset);
+	logerror("pia 0 b r: %04x\n",offset);
 
 	return 0x0ff;
 }
 
 READ_HANDLER(apf_m1000_pia_in_ca1_func)
 {
-	//logerror("pia 0 ca1 r: %04x\n",offset);
+	logerror("pia 0 ca1 r: %04x\n",offset);
 
 	return 0;
 }
 
 READ_HANDLER(apf_m1000_pia_in_cb1_func)
 {
-	//logerror("pia 0 cb1 r: %04x\n",offset);
+	logerror("pia 0 cb1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
 READ_HANDLER(apf_m1000_pia_in_ca2_func)
 {
-	//logerror("pia 0 ca2 r: %04x\n",offset);
+	logerror("pia 0 ca2 r: %04x\n",offset);
 
 	return 0;
 }
 
 READ_HANDLER(apf_m1000_pia_in_cb2_func)
 {
-	//logerror("pia 0 cb2 r: %04x\n",offset);
+	logerror("pia 0 cb2 r: %04x\n",offset);
 
 	return 0x00;
 }
@@ -78,7 +78,7 @@ READ_HANDLER(apf_m1000_pia_in_cb2_func)
 
 WRITE_HANDLER(apf_m1000_pia_out_a_func)
 {
-	//logerror("pia 0 a w: %04x %02x\n",offset,data);
+	logerror("pia 0 a w: %04x %02x\n",offset,data);
 }
 
 unsigned char previous_mode;
@@ -102,26 +102,26 @@ WRITE_HANDLER(apf_m1000_pia_out_b_func)
 	if (((previous_mode^data) & 0x0f0)!=0)
 	{
 		/* not sure if this is correct - need to check */
-		m6847_gm2_w(0,	data & 0x80);
-		m6847_gm1_w(0,	data & 0x40);
-		m6847_gm0_w(0,	data & 0x20);
-		m6847_ag_w(0,	(data & 0x10)^0x010);
+		m6847_ag_w(0,	data & 0x80);
+		m6847_gm2_w(0,	data & 0x40);
+		m6847_gm1_w(0,	data & 0x20);
+		m6847_gm0_w(0,	data & 0x10);
 		m6847_set_cannonical_row_height();
 		previous_mode = data;
 	}
 	//	schedule_full_refresh();
 
-	//logerror("pia 0 b w: %04x %02x\n",offset,data);
+	logerror("pia 0 b w: %04x %02x\n",offset,data);
 }
 
 WRITE_HANDLER(apf_m1000_pia_out_ca2_func)
 {
-	//logerror("pia 0 ca2 w: %04x %02x\n",offset,data);
+	logerror("pia 0 ca2 w: %04x %02x\n",offset,data);
 }
 
 WRITE_HANDLER(apf_m1000_pia_out_cb2_func)
 {
-	//logerror("pia 0 cb2 w: %04x %02x\n",offset,data);
+	speaker_level_w(0, data);
 }
 
 static unsigned char apf_ints;
@@ -144,11 +144,11 @@ void	apf_m1000_irq_a_func(int state)
 
 	if (state)
 	{
-		apf_ints&=~1;
+		apf_ints|=1;
 	}
 	else
 	{
-		apf_ints|=1;
+		apf_ints&=~1;
 	}
 
 	apf_update_ints();
@@ -161,11 +161,11 @@ void	apf_m1000_irq_b_func(int state)
 
 	if (state)
 	{
-		apf_ints&=~2;
+		apf_ints|=2;
 	}
 	else
 	{
-		apf_ints|=2;
+		apf_ints&=~2;
 	}
 
 	apf_update_ints();
@@ -268,11 +268,11 @@ void	apf_imagination_irq_a_func(int state)
 	//logerror("pia 1 irq a %d\n",state);
 	if (state)
 	{
-		apf_ints&=~4;
+		apf_ints|=4;
 	}
 	else
 	{
-		apf_ints|=4;
+		apf_ints&=~4;
 	}
 
 	apf_update_ints();
@@ -285,11 +285,11 @@ void	apf_imagination_irq_b_func(int state)
 
 	if (state)
 	{
-		apf_ints&=~8;
+		apf_ints|=8;
 	}
 	else
 	{
-		apf_ints|=8;
+		apf_ints&=~8;
 	}
 
 	apf_update_ints();
@@ -773,4 +773,4 @@ static const struct IODevice io_apfimag[] =
 
 /*     YEAR  NAME       PARENT  MACHINE    INPUT     INIT     COMPANY               FULLNAME */
 COMPX(  1977, apfimag,      0,		apf_imagination,      apf_imagination,     0,		  "APF Electronics Inc",  "APF Imagination Machine" ,GAME_NOT_WORKING)
-COMPX(  1978, apfm1000,      0,		apf_m1000,      apf_imagination,     0,		  "APF Electronics inc",  "APF M-1000" ,GAME_NOT_WORKING)
+COMPX(  1978, apfm1000,      0,		apf_m1000,      apf_m1000,     0,		  "APF Electronics inc",  "APF M-1000" ,GAME_NOT_WORKING)
