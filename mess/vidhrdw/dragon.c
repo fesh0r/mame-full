@@ -1,40 +1,34 @@
-/* Video hardware for CoCo/Dragon family
- *
- * See src/mess/machine/dragon.c for references
- *
- * TODO:
- *		- Implement "burst phase invert" (it switches the artifact colors)
- *		- Figure out what Bit 3 of $FF98 is and implement it
- *		- Support mid-frame video register modification, and maybe get a
- *		  SockMaster demo working...
- *		- Learn more about the "mystery" CoCo 3 video modes
- *		- Support the VSC register
- *
- * My future plan to support mid-frame video register modification is to keep
- * a queue that shows the status of the video registers in relation between
- * different scanlines.  Thus if no modifications are made, there is only a
- * one entry queue, and perfomance is minimally affected.  The big innacuracy
- * is that it doesn't save the status of memory, but JK informs me that this
- * will have a minimal effect on software though.
- *
- * Also, JK informed me of what GIME registers would need to be saved in the
- * queue.  I quote his email to me:
- *
- *		Here are the things that get changed mid-frame:
- *			-palette registers ($ffb0-$ffbf)
- *			-horizontal resolution (switches between 256 and 320 pixels, $ff99)
- *			-horizontal scroll position (bits 0-6 $ff9f)
- *			-horizontal virtual screen (bit 7 $ff9f)
- *			-pixel height (bits 0-2 $ff98)
- *			-border color ($ff9a)
- *		On the positive side, you don't have to worry about registers
- *		$ff9d/ff9e being changed mid-frame.  Even if they are changed
- *		mid-frame, they have no effect on the displayed image.  The video
- *		address only gets latched at the top of the frame.
- *
- * Also, take note that the CoCo family have 262 scan lines.  In these drivers
- * we only display 240 of them.
- */
+/***************************************************************************
+
+	Video hardware for CoCo/Dragon family
+
+	driver by Nathan Woods
+
+	See mess/machine/dragon.c for references
+
+	TODO:
+		- Implement "burst phase invert" (it switches the artifact colors)
+		- Figure out what Bit 3 of $FF98 is and implement it
+		- Learn more about the "mystery" CoCo 3 video modes
+		- Support the VSC register
+
+
+	Mid frame raster effects (source John Kowalski)
+		Here are the things that get changed mid-frame:
+ 			-palette registers ($ffb0-$ffbf)
+ 			-horizontal resolution (switches between 256 and 320 pixels, $ff99)
+			-horizontal scroll position (bits 0-6 $ff9f)
+			-horizontal virtual screen (bit 7 $ff9f)
+			-pixel height (bits 0-2 $ff98)
+			-border color ($ff9a)
+		On the positive side, you don't have to worry about registers
+		$ff9d/ff9e being changed mid-frame.  Even if they are changed
+		mid-frame, they have no effect on the displayed image.  The video
+		address only gets latched at the top of the frame.
+	
+***************************************************************************/
+
+
 #include <assert.h>
 #include <math.h>
 
@@ -44,11 +38,36 @@
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
 
+
+
+/*************************************
+ *
+ *	Global variables
+ *
+ *************************************/
+
+int coco3_gimevhreg[8];
+
+
+
+/*************************************
+ *
+ *	Local variables
+ *
+ *************************************/
+
 static int coco3_hires;
 static int sam_videomode;
 static int coco3_blinkstatus;
 static int coco3_vidbase;
-static int coco3_gimevhreg[8];
+
+
+
+/*************************************
+ *
+ *	Parameters
+ *
+ *************************************/
 
 #define MAX_HIRES_VRAM	57600
 
@@ -156,7 +175,7 @@ WRITE_HANDLER(coco_ram_w)
 static void coco3_calc_vidbase(int ff9d_mask, int ff9e_mask)
 {
 	coco3_vidbase = (
-		((coco3_gimevhreg[3] & 0x03)		* 0x80000) +
+		((coco3_gimevhreg[3] & 0x0f)		* 0x80000) +
 		((coco3_gimevhreg[5] & ff9d_mask)	* 0x800) +
 		((coco3_gimevhreg[6] & ff9e_mask)	* 8)
 		) % mess_ram_size;

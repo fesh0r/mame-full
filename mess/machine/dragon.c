@@ -69,7 +69,7 @@
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;
-static int coco3_mmu[16];
+static UINT32 coco3_mmu[16];
 static int coco3_gimereg[8];
 static int coco3_interupt_line;
 static int pia0_irq_a, pia0_irq_b;
@@ -1759,10 +1759,11 @@ READ_HANDLER(coco3_mmu_r)
 
 WRITE_HANDLER(coco3_mmu_w)
 {
-	coco3_mmu[offset] = data;
+	coco3_mmu[offset] = data | (((coco3_gimevhreg[3] >> 4) & 0x03) << 8);
 
 	/* Did we modify the live MMU bank? */
-	if ((offset >> 3) == (coco3_gimereg[1] & 1)) {
+	if ((offset >> 3) == (coco3_gimereg[1] & 1))
+	{
 		offset &= 7;
 		coco3_mmu_update(offset, (offset == 7) ? 8 : offset);
 	}

@@ -8,6 +8,8 @@ System Driver Changes:
 ----------------------
 - [COCO] CoCo joystick buttons can now be mapped to the mouse buttons (bug
   #317).  [Nate Woods]
+  
+- [COCO3] Now supports option for 8MB of RAM. [Nate Woods]
 
 - [SNES] Improved sprite to sprite priority. [Anthony Kruize]
 
