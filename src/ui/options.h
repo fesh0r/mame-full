@@ -184,8 +184,8 @@ typedef struct
 
 #ifdef MESS
 	BOOL   use_new_ui;
-	char   extra_software_paths[MAX_PATH * 10];
-	char   printer[MAX_PATH];
+	char   *extra_software_paths;
+	char   *printer;
 	UINT32 ram_size;
 #endif
 } options_type;

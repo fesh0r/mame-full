@@ -545,7 +545,8 @@ void OptionsInit()
 	global.old_timing        = TRUE;
 	global.leds				 = FALSE;
 #ifdef MESS
-	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
+	global.extra_software_paths = strdup("");
+	global.printer = strdup("");
 	global.use_new_ui = TRUE;
 #endif
 

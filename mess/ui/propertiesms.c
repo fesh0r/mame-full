@@ -245,12 +245,12 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 	LVCOLUMN    LVCol;
 	int nItem;
 	int nLen;
-	char buf[MAX_PATH];
+	char buf[2048];
 	LPCSTR s;
 	LPCSTR lpList;
+	LPSTR lpBuf;
     LV_ITEM Item;
 	int iCount, i;
-	LPSTR lpBuf;
 	int iBufLen;
 	options_type *o = params->o;
 
@@ -291,8 +291,8 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 		break;
 
 	case CMSG_PROPTOOPTIONS:
-		lpBuf = o->extra_software_paths;
-		iBufLen = sizeof(o->extra_software_paths) / sizeof(o->extra_software_paths[0]);
+		lpBuf = buf;
+		iBufLen = sizeof(buf) / sizeof(buf[0]);
 		memset(lpBuf, '\0', iBufLen);
 
 		iCount = ListView_GetItemCount(hList);
@@ -304,7 +304,8 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 
 		*lpBuf = '\0';
 
-		for (i = 0; i < iCount; i++) {
+		for (i = 0; i < iCount; i++)
+		{
 			if (i > 0)
 				strncatz(lpBuf, ";", iBufLen);
 
@@ -313,6 +314,8 @@ static BOOL SoftwareDirectories_ComponentProc(enum component_msg msg, HWND hWnd,
 			Item.cchTextMax = iBufLen - strlen(lpBuf);
 			ListView_GetItem(hList, &Item);
 		}
+		FreeIfAllocated(&o->extra_software_paths);
+		o->extra_software_paths = strdup(buf);
 		break;
 
 	case CMSG_COMMAND:
