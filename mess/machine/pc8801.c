@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.18 2004/02/06 22:51:10 npwoods Exp $
+  $Id: pc8801.c,v 1.19 2004/06/07 23:19:17 npwoods Exp $
 
 ***************************************************************************/
 
@@ -796,7 +796,10 @@ void pc8801_init_5fd(void)
 {
 	use_5FD = (input_port_18_r(0)&0x80)!=0x00;
 	ppi8255_init(&pc8801_8255_config);
-	timer_suspendcpu(1, !use_5FD, SUSPEND_REASON_DISABLE);
+	if (!use_5FD)
+		cpunum_suspend(1, SUSPEND_REASON_DISABLE, 1);
+	else
+		cpunum_resume(1, SUSPEND_REASON_DISABLE);
 	nec765_init(&pc8801_fdc_interface,NEC765A);
 	cpu_irq_line_vector_w(1,0,0);
 	floppy_drive_set_motor_state(image_from_devtype_and_index(IO_FLOPPY, 0), 1);

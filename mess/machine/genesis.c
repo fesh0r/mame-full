@@ -1075,7 +1075,7 @@ VIDEO_UPDATE(genesis)
 	}
 
 
-	if ( keyboard_pressed_memory(KEYCODE_K) )
+	if ( code_pressed_memory(KEYCODE_K) )
 	{
 		{
 			FILE *fp;

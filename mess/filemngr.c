@@ -114,11 +114,11 @@ static char code_to_ascii(InputCode code)
 	{
 		if (code_to_char_table[i * 4] == code)
 		{
-			if (keyboard_pressed(KEYCODE_LCONTROL) ||
-				keyboard_pressed(KEYCODE_RCONTROL))
+			if (code_pressed(KEYCODE_LCONTROL) ||
+				code_pressed(KEYCODE_RCONTROL))
 				return code_to_char_table[i * 4 + 3];
-			if (keyboard_pressed(KEYCODE_LSHIFT) ||
-				keyboard_pressed(KEYCODE_RSHIFT))
+			if (code_pressed(KEYCODE_LSHIFT) ||
+				code_pressed(KEYCODE_RSHIFT))
 				return code_to_char_table[i * 4 + 2];
 			return code_to_char_table[i * 4 + 1];
 		}
@@ -133,7 +133,7 @@ static char *update_entered_string(void)
 	int ascii_char;
 
 	/* get key */
-	code = keyboard_read_async();
+	code = code_read_async();
 
 	/* key was pressed? */
 	if (code == CODE_NONE)
@@ -467,8 +467,8 @@ static void fs_generate_filelist(void)
 	free(tmp_types);
 }
 
-#define UI_SHIFT_PRESSED		(keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT))
-#define UI_CONTROL_PRESSED		(keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
+#define UI_SHIFT_PRESSED		(code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
+#define UI_CONTROL_PRESSED		(code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
 /* and mask to get bits */
 #define SEL_BITS_MASK			(~SEL_MASK)
 
@@ -621,8 +621,9 @@ static int fileselect(struct mame_bitmap *bitmap, int selected, const char *defa
 				case FILESELECT_FILESPEC:
 					start_enter_string(current_filespecification, 32, 0);
 
-	                                /* flush keyboard buffer */
-        	                        do {} while (keyboard_read_async() != CODE_NONE);
+					/* flush keyboard buffer */
+					while (code_read_async() != CODE_NONE)
+						;
 
 					sel |= 1 << SEL_BITS; /* we'll ask for a key */
 					schedule_full_refresh();
@@ -841,7 +842,8 @@ int filemanager(struct mame_bitmap *bitmap, int selected)
 				start_enter_string(entered_filename, (sizeof(entered_filename) / sizeof(entered_filename[0])) - 1, 1);
 
 				/* flush keyboard buffer */
-				do {} while (keyboard_read_async() != CODE_NONE);
+				while (code_read_async() != CODE_NONE)
+					;
 
 				sel |= 1 << SEL_BITS;	/* we'll ask for a key */
 

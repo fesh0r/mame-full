@@ -353,9 +353,9 @@ INTERRUPT_GEN(sms) {
 			if ((currentLine >= Machine->visible_area.min_y) && (currentLine <= Machine->visible_area.max_y)) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
-				if (keyboard_pressed(KEYCODE_T)) {
+				if (code_pressed(KEYCODE_T)) {
 					sms_show_tile_line(tmpbitmap, currentLine, 0);
-				} else if (keyboard_pressed(KEYCODE_Y)) {
+				} else if (code_pressed(KEYCODE_Y)) {
 					sms_show_tile_line(tmpbitmap, currentLine, 1);
 				} else {
 #endif
@@ -370,9 +370,9 @@ INTERRUPT_GEN(sms) {
 			if (currentLine < maxLine) {
 				sms_update_palette();
 #ifdef MAME_DEBUG
-				if (keyboard_pressed(KEYCODE_T)) {
+				if (code_pressed(KEYCODE_T)) {
 					sms_show_tile_line(tmpbitmap, currentLine, 0);
-				} else if (keyboard_pressed(KEYCODE_Y)) {
+				} else if (code_pressed(KEYCODE_Y)) {
 					sms_show_tile_line(tmpbitmap, currentLine, 1);
 				} else {
 #endif

@@ -178,8 +178,7 @@ int displaykeyboard(int select)
 
         k++;
     }
-	if (keyboard_read_async() == KEYCODE_NONE &&
-		joystick_read_async() == JOYCODE_NONE)
+	if (code_read_async() == CODE_NONE)
 		return 1;
 	return 0;
 }

@@ -1390,19 +1390,19 @@ b3 b2 b1 Manufacturer Name (CPC and CPC+ only):
 1  0  1  Schneider 
 1  1  0  Orion 
 1  1  1  Amstrad*/	PORT_START
-	PORT_CONFNAME( 0x07, 0x07, "Manufacturer Name" )
-	PORT_CONFSETTING(    0x00, "Isp" )
-	PORT_CONFSETTING(    0x01, "Triumph" )
-	PORT_CONFSETTING(    0x02, "Saisho" )
-	PORT_CONFSETTING(    0x03, "Solavox" )
-	PORT_CONFSETTING(    0x04, "Awa" )
-	PORT_CONFSETTING(    0x05, "Schneider" )
-	PORT_CONFSETTING(    0x06, "Orion" )
-	PORT_CONFSETTING(    0x07, "Amstrad" )
+	PORT_DIPNAME( 0x07, 0x07, "Manufacturer Name" )
+	PORT_DIPSETTING(    0x00, "Isp" )
+	PORT_DIPSETTING(    0x01, "Triumph" )
+	PORT_DIPSETTING(    0x02, "Saisho" )
+	PORT_DIPSETTING(    0x03, "Solavox" )
+	PORT_DIPSETTING(    0x04, "Awa" )
+	PORT_DIPSETTING(    0x05, "Schneider" )
+	PORT_DIPSETTING(    0x06, "Orion" )
+	PORT_DIPSETTING(    0x07, "Amstrad" )
 
-	PORT_CONFNAME(    0x10, 0x10, "TV Refresh Rate" )
-	PORT_CONFSETTING(    0x00, "60 Hz" )
-	PORT_CONFSETTING(    0x10, "50 Hz" )
+	PORT_DIPNAME(    0x10, 0x10, "TV Refresh Rate" )
+	PORT_DIPSETTING(    0x00, "60 Hz" )
+	PORT_DIPSETTING(    0x10, "50 Hz" )
 
 /* Part number Manufacturer Type number
    UM6845      UMC          0 
@@ -1414,7 +1414,7 @@ b3 b2 b1 Manufacturer Name (CPC and CPC+ only):
 As far as I know, the KC compact used HD6845S only. 
 */
 	PORT_START
-	PORT_DIPNAME( CRTC_TYPE, 0x02, "CRTC Type" )
+	PORT_DIPNAME( CRTC_TYPE, 0x20, "CRTC Type" )
 	PORT_DIPSETTING(0x00, "Type 0 - UM6845" )
 	PORT_DIPSETTING(0x00, "Type 0 - HD6845S" )
 	PORT_DIPSETTING(0x20, "Type 1 - UM6845R" )

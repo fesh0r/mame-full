@@ -1262,7 +1262,7 @@ have to test.
 static void v9938_interrupt_start_vblank (void)
 	{
 #if 0
-	if (keyboard_pressed (KEYCODE_D) )
+	if (code_pressed (KEYCODE_D) )
 		{
 		FILE *fp;
 		int i;

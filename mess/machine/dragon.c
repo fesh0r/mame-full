@@ -652,9 +652,14 @@ enum {
 	COCO3_INT_ALL	= 0x3f
 };
 
+static int is_cpu_suspended(void)
+{
+	return !cpunum_is_suspended(0, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE);
+}
+
 static void d_recalc_irq(void)
 {
-	if (((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE)) && cpu_getstatus(0))
+	if (((pia0_irq_a == ASSERT_LINE) || (pia0_irq_b == ASSERT_LINE)) && is_cpu_suspended())
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
@@ -662,7 +667,7 @@ static void d_recalc_irq(void)
 
 static void d_recalc_firq(void)
 {
-	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE)) && cpu_getstatus(0))
+	if (((pia1_firq_a == ASSERT_LINE) || (pia1_firq_b == ASSERT_LINE)) && is_cpu_suspended())
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
@@ -675,7 +680,7 @@ static void coco3_recalc_irq(void)
 		gime_irq, pia0_irq_a, pia0_irq_b, coco3_gimereg[0] & 0x20 ? "enabled" : "disabled");
 #endif
 
-	if ((coco3_gimereg[0] & 0x20) && gime_irq && cpu_getstatus(0))
+	if ((coco3_gimereg[0] & 0x20) && gime_irq && is_cpu_suspended())
 		cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_irq();
@@ -683,7 +688,7 @@ static void coco3_recalc_irq(void)
 
 static void coco3_recalc_firq(void)
 {
-	if ((coco3_gimereg[0] & 0x10) && gime_firq && cpu_getstatus(0))
+	if ((coco3_gimereg[0] & 0x10) && gime_firq && is_cpu_suspended())
 		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
 		d_recalc_firq();
