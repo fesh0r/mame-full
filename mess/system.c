@@ -309,7 +309,7 @@ XL/XE 16kB OS roms
 	DRIVER( a800pal )	/* 1979 Atari 800 PAL							  */
 	DRIVER( a800xl )	/* 1983 Atari 800 XL							  */
 
-//!!TESTDRIVER( atarist )	/* Atari ST 								  */
+//TESTDRIVER( atarist )	/* Atari ST 								  */
 
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975					  */
@@ -397,7 +397,6 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 
 	/* xt */
 	DRIVER( ibmxt )		/* 1986	IBM XT									  */
-/*//	DRIVER( ibm8530 )*/	/* 1987 IBM PS2 Model 30 (MCGA)						*/
 	DRIVER( pc200 )     /* 1988 Sinclair PC200                            */
 	DRIVER( pc20 )      /* 1988 Amstrad PC20                              */
 	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
@@ -408,21 +407,12 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 	/* at */
 TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
-//TESTDRIVER( t2500xl )	/* 19?? Tandy 2500XL (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
-
-/*//	DRIVER( ibm8535 )*/	/* 1991 IBM PS2 Model 35 (80386sx)					*/
 /*//	DRIVER( at386)*/	/*												  */
 
-	/* microchannel */
-/*//	DRIVER( ibm8550 )*/	/* 1987 IBM PS2 Model 50 (80286)					*/
-
-/*//	DRIVER( ibm8580 )*/	/* 1987 IBM PS2 Model 80 (80386)					*/
-
 	/* SINCLAIR */
-
 	DRIVER( zx80 )		/* Sinclair ZX-80								  */
 	DRIVER( zx81 )		/* Sinclair ZX-81								  */
 	DRIVER( zx81a )
@@ -520,38 +510,8 @@ TESTDRIVER( ti86v15 )	/*TI 86 rom ver. 1.5 */
 	DRIVER( ti86grom )	/*TI 86 homebrew rom by Daniel Foesch */
 
 	/* NEC */
-	/* TK80 series i8080 based */
-	/* PC-100 series i8086 based */
-	/* PC-2001 series micro PD7907 based */
-	/* PC-6001 series Z80 based */
-	/* PC-8001 series Z80 based */
-	/* PC-8201 series micro 80C85 based */
-
-	/* PC-8801 series Z80 based */
-	/* DRIVER( pc8801 ) */	/* PC-8801 */
-	/* DRIVER( pc88mk2 ) */	/* PC-8801mkII */
 	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
 	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
-	/* DRIVER( pc8801tr ) */	/* PC-8801mkIITR */
-	/* DRIVER( pc8801fr ) */	/* PC-8801mkIIFR */
-	/* DRIVER( pc8801mr ) */	/* PC-8801mkIIMR */
-	/* DRIVER( pc8801fh ) */	/* PC-8801FH */
-	/* DRIVER( pc8801mh ) */	/* PC-8801MH */
-	/* DRIVER( pc8801fa ) */	/* PC-8801FA */
-	/* DRIVER( pc8801ma ) */	/* PC-8801MA */
-	/* DRIVER( pc8801fe ) */	/* PC-8801FE */
-	/* DRIVER( pc8801ma2 ) */	/* PC-8801MA2 */
-	/* DRIVER( pc8801fe2 ) */	/* PC-8801FE2 */
-	/* DRIVER( pc8801mc ) */	/* PC-8801MC */
-	/* DRIVER( pc98do88 ) */	/* PC-98DO(88mode) */
-	/* DRIVER( pc98dop8 ) */	/* PC-98DO+(88mode) */
-
-	/* PC-88VA series micro PD9002(special version of V30 with Z80 compatible mode) based */
-	/* DRIVER( pc88va ) */	/* PC-88VA */
-	/* DRIVER( pc88va2 ) */	/* PC-88VA2 */
-	/* DRIVER( pc88va3 ) */	/* PC-88VA3 */
-
-	/* PC-9801 series i8086 based (V30, i386, ..) */
 
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
@@ -676,7 +636,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coupe ) 	/* 1989 Sam Coupe								  */
 
 	/* MOTOROLA */
-//TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
+TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
 	/* DEC */
 	DRIVER( pdp1 )      /* 1961 DEC PDP1                                  */
@@ -728,7 +688,7 @@ TESTDRIVER( comquest )	/* Comquest Plus German							*/
 	/* Quelle International */
 	DRIVER( mk2 )		/* Chess Champion MK II							  */
 	/* NOVAG Industries Ltd. */
-//TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
+TESTDRIVER( ssystem3 )	/* Chess Champion Super System III / MK III		  */
 
 	/* tchibo */
 	/* single chip with ram, rom, io without label, how to dump? */

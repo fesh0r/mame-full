@@ -169,45 +169,31 @@ static struct DACinterface dac_interface =
 	{ 100 } 	/* volume */
 };
 
-static struct MachineDriver machine_driver_mekd2 =
-{
+
+static MACHINE_DRIVER_START( mekd2 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6800,
-			614400, /* 614.4 kHz */
-			readmem,writemem,0,0,
-			mekd2_interrupt, 1
-		}
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,				/* single CPU */
-	mekd2_init_machine,
-	NULL,			/* stop machine */
+	MDRV_CPU_ADD(M6800, 614400)        /* 614.4 kHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware (well, actually there was no video ;) */
-	600, 768, { 0, 600 - 1, 0, 768 - 1},
-	gfxdecodeinfo,
-	21 + 32768,
-	256,
-	mekd2_init_colors,		 /* convert color prom */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(600, 768)
+	MDRV_VISIBLE_AREA(0, 600-1, 0, 768-1)
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(21 + 32768)
+	MDRV_COLORTABLE_LENGTH(256)
+	MDRV_PALETTE_INIT( mekd2 )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	mekd2_vh_start,
-	mekd2_vh_stop,
-	mekd2_vh_screenrefresh,
+	MDRV_VIDEO_START( mekd2 )
+	MDRV_VIDEO_UPDATE( mekd2 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
 
 ROM_START(mekd2)
 	ROM_REGION(0x10000,REGION_CPU1,0)
@@ -245,13 +231,3 @@ static const struct IODevice io_mekd2[] = {
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	  FULLNAME */
 CONS( 1977, mekd2,	   0,		mekd2,	  mekd2,	mekd2,	  "Motorola", "MEK6800D2" )
-
-#ifdef RUNTIME_LOADER
-extern void mekd2_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"mekd2")==0) drivers[i]=&driver_mekd2;
-	}
-}
-#endif

@@ -197,9 +197,9 @@ DRVLIBS = \
 	$(OBJ)/aim65.a    \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/avigo.a    \
+	$(OBJ)/motorola.a \
+	$(OBJ)/ssystem3.a \
 #	$(OBJ)/gce.a	  \
-#	$(OBJ)/motorola.a \
-#	$(OBJ)/ssystem3.a \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/hp48.a     \
 
@@ -235,7 +235,7 @@ $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
 	  $(OBJ)/mess/machine/a2600.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
-#         $(OBJ)/mess/systems/atarist.o
+#	  $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
 	  $(OBJ)/mess/vidhrdw/vectrex.o  \

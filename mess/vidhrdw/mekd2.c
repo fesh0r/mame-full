@@ -23,65 +23,54 @@
 #define LOG(x)	/* x */
 #endif
 
-void mekd2_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( mekd2 )
 {
-    int i;
+	int i;
 
 	/* initialize 16 colors with shades of red (orange) */
-    for (i = 0; i < 16; i++)
-    {
-		palette[3 * i + 0] = 24 + (i + 1) * (i + 1) - 1;
-        palette[3 * i + 1] = (i + 1) * (i + 1) / 4;
-        palette[3 * i + 2] = 0;
+	for (i = 0; i < 16; i++)
+	{
+		palette_set_color(i,
+			24 + (i + 1) * (i + 1) - 1,
+			(i + 1) * (i + 1) / 4,
+			0);
 
-        colortable[2 * i + 0] = 1;
-        colortable[2 * i + 1] = i;
-    }
+		colortable[2 * i + 0] = 1;
+		colortable[2 * i + 1] = i;
+	}
 
-    palette[3 * 16 + 0] = 0;
-    palette[3 * 16 + 1] = 0;
-    palette[3 * 16 + 2] = 0;
+	palette_set_color(16, 0, 0, 0);
+	palette_set_color(17, 30, 30, 30);
+	palette_set_color(18, 90, 90, 90);
+	palette_set_color(19, 50, 50, 50);
+	palette_set_color(20, 255, 255, 255);
 
-    palette[3 * 17 + 0] = 30;
-    palette[3 * 17 + 1] = 30;
-    palette[3 * 17 + 2] = 30;
+	colortable[2 * 16 + 0 * 4 + 0] = 17;
+	colortable[2 * 16 + 0 * 4 + 1] = 18;
+	colortable[2 * 16 + 0 * 4 + 2] = 19;
+	colortable[2 * 16 + 0 * 4 + 3] = 20;
 
-    palette[3 * 18 + 0] = 90;
-    palette[3 * 18 + 1] = 90;
-    palette[3 * 18 + 2] = 90;
-
-    palette[3 * 19 + 0] = 50;
-    palette[3 * 19 + 1] = 50;
-    palette[3 * 19 + 2] = 50;
-
-    palette[3 * 20 + 0] = 255;
-    palette[3 * 20 + 1] = 255;
-    palette[3 * 20 + 2] = 255;
-
-    colortable[2 * 16 + 0 * 4 + 0] = 17;
-    colortable[2 * 16 + 0 * 4 + 1] = 18;
-    colortable[2 * 16 + 0 * 4 + 2] = 19;
-    colortable[2 * 16 + 0 * 4 + 3] = 20;
-
-    colortable[2 * 16 + 1 * 4 + 0] = 17;
-    colortable[2 * 16 + 1 * 4 + 1] = 17;
-    colortable[2 * 16 + 1 * 4 + 2] = 19;
-    colortable[2 * 16 + 1 * 4 + 3] = 15;
+	colortable[2 * 16 + 1 * 4 + 0] = 17;
+	colortable[2 * 16 + 1 * 4 + 1] = 17;
+	colortable[2 * 16 + 1 * 4 + 2] = 19;
+	colortable[2 * 16 + 1 * 4 + 3] = 15;
 }
 
-int mekd2_vh_start (void)
+VIDEO_START( mekd2 )
 {
     videoram_size = 6 * 2 + 24;
     videoram = (UINT8*)auto_malloc (videoram_size);
 	if (!videoram)
         return 1;
 
+#if 0
 	{
 		char backdrop_name[200];
 	    /* try to load a backdrop for the machine */
 		sprintf(backdrop_name, "%s.png", Machine->gamedrv->name);
 		backdrop_load(backdrop_name, 2);
 	}
+#endif
 
 	if (video_start_generic () != 0)
         return 1;
@@ -89,12 +78,7 @@ int mekd2_vh_start (void)
     return 0;
 }
 
-void mekd2_vh_stop (void)
-{
-    videoram = NULL;
-}
-
-void mekd2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mekd2 )
 {
     int x, y;
 

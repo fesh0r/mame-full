@@ -23,7 +23,7 @@
 #define LOG(x)						   /* x */
 #endif
 
-void init_mekd2(void)
+DRIVER_INIT( mekd2 )
 {
 	UINT8 *dst;
 	int x, y, i;
@@ -567,10 +567,6 @@ void init_mekd2(void)
 	}
 }
 
-void mekd2_init_machine(void)
-{
-}
-
 int mekd2_rom_load(int id)
 {
 	const char magic[] = "MEK6800D2";
@@ -603,9 +599,3 @@ int mekd2_rom_load(int id)
 
 	return 0;
 }
-
-int mekd2_interrupt(void)
-{
-	return ignore_interrupt();
-}
-

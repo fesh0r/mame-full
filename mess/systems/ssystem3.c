@@ -28,8 +28,51 @@ internal expansion/cartridge port
 #include "machine/6522via.h"
 #include "cpu/m6502/m6502.h"
 
-static int ssystem3_frame_int(void);
-static void ssystem3_machine_init(void);
+
+
+/*
+  port b
+   bit 0: ??
+
+    hi speed serial 1 
+   bit 1: output data
+   bit 2: output clock (hi data is taken)
+
+	bit 6: input clocks!?
+
+ */
+
+struct via6522_interface config=
+{
+	0,//mem_read_handler in_a_func;
+	0,//mem_read_handler in_b_func;
+	0,//mem_read_handler in_ca1_func;
+	0,//mem_read_handler in_cb1_func;
+	0,//mem_read_handler in_ca2_func;
+	0,//mem_read_handler in_cb2_func;
+	0,//mem_write_handler out_a_func;
+	0,//mem_write_handler out_b_func;
+	0,//mem_write_handler out_ca2_func;
+	0,//mem_write_handler out_cb2_func;
+	0,//void (*irq_func)(int state);
+};
+
+static DRIVER_INIT( ssystem3 )
+{
+	via_config(0,&config);
+}
+
+static INTERRUPT_GEN( ssystem3_frame_int )
+{
+	static int toggle=0;
+	via_set_input_b(0,toggle?0x40:0);
+	toggle^=0;
+}
+
+static MACHINE_INIT( ssystem3 )
+{
+	via_reset();
+}
 
 static MEMORY_READ_START( ssystem3_readmem )
 	{ 0x0000, 0x03ff, MRA_RAM },
@@ -85,41 +128,33 @@ INPUT_PORTS_END
 
 static struct DACinterface ssystem3_dac={ 1, {80}}; // silence is golden
 
-static struct MachineDriver machine_driver_ssystem3 =
-{
+
+static MACHINE_DRIVER_START( ssystem3 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1000000,
-			ssystem3_readmem, ssystem3_writemem,0,0,
-			ssystem3_frame_int, 1,
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION, // lcd!
-	1,				/* single CPU */
-	ssystem3_machine_init,
-	0,//pc1401_machine_stop,
+	MDRV_CPU_ADD(M6502, 1000000)
+	MDRV_CPU_MEMORY(ssystem3_readmem, ssystem3_writemem)
+	MDRV_CPU_VBLANK_INT(ssystem3_frame_int, 1)
+	MDRV_FRAMES_PER_SECOND(LCD_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	728, 437, { 0, 728 - 1, 0, 437 - 1},
-	0, 			   /* graphics decode info */
-	sizeof (ssystem3_palette) / sizeof (ssystem3_palette[0]) + 32768,
-	sizeof (ssystem3_colortable) / sizeof(ssystem3_colortable[0][0]),
-	ssystem3_init_colors,		/* convert color prom */
+	MDRV_MACHINE_INIT( ssystem3 )
 
-	VIDEO_TYPE_RASTER,	/* video flags */
-	0,						/* obsolete */
-    ssystem3_vh_start,
-	ssystem3_vh_stop,
-	ssystem3_vh_screenrefresh,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(728, 437)
+	MDRV_VISIBLE_AREA(0, 728-1, 0, 437-1)
+	MDRV_PALETTE_LENGTH(242 + 32768)
+	MDRV_COLORTABLE_LENGTH(2)
+	MDRV_PALETTE_INIT( ssystem3 )
+
+	MDRV_VIDEO_START( ssystem3 )
+	MDRV_VIDEO_UPDATE( ssystem3 )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_DAC, &ssystem3_dac }
-    }
-};
+	MDRV_SOUND_ADD(DAC, ssystem3_dac)
+MACHINE_DRIVER_END
+
 
 ROM_START(ssystem3)
 	ROM_REGION(0x10000,REGION_CPU1,0)
@@ -137,62 +172,5 @@ static const struct IODevice io_ssystem3[] = {
     { IO_END }
 };
 
-
-/*
-  port b
-   bit 0: ??
-
-    hi speed serial 1 
-   bit 1: output data
-   bit 2: output clock (hi data is taken)
-
-	bit 6: input clocks!?
-
- */
-
-struct via6522_interface config=
-{
-	0,//mem_read_handler in_a_func;
-		0,//mem_read_handler in_b_func;
-		0,//mem_read_handler in_ca1_func;
-		0,//mem_read_handler in_cb1_func;
-		0,//mem_read_handler in_ca2_func;
-		0,//mem_read_handler in_cb2_func;
-		0,//mem_write_handler out_a_func;
-		0,//mem_write_handler out_b_func;
-		0,//mem_write_handler out_ca2_func;
-		0,//mem_write_handler out_cb2_func;
-		0,//void (*irq_func)(int state);
-};
-
-void init_ssystem3(void)
-{
-	via_config(0,&config);
-}
-
-static int ssystem3_frame_int(void)
-{
-	static int toggle=0;
-	via_set_input_b(0,toggle?0x40:0);
-	toggle^=0;
-	return ignore_interrupt();
-}
-
-static void ssystem3_machine_init(void)
-{
-	via_reset();
-}
-
-
 CONS( 1979,	ssystem3,	0, 		ssystem3,	ssystem3,	ssystem3,	  "NOVAG Industries Ltd.",  "Chess Champion Super System III") 
 //chess champion MK III in germany
-
-#ifdef RUNTIME_LOADER
-extern void ssystem3_runtime_loader_init(void)
-{
-	int i;
-	for (i=0; drivers[i]; i++) {
-		if ( strcmp(drivers[i]->name,"ssystem3")==0) drivers[i]=&driver_ssystem3;
-	}
-}
-#endif

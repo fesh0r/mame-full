@@ -108,19 +108,12 @@ static void mfp_init(void)
 	mfp.timer_c_cycles=0;
 }
 
-int atarist_vh_start(void)
+static VIDEO_START( atarist )
 {
 	int i;
-
 	for (i=0; i<512; i++)
 		palette_set_color(i,((i>>6)&7)*0x24,((i>>3)&7)*0x24,(i&7)*0x24);
-
 	return 0;
-}
-
-void atarist_vh_stop(void)
-{
-
 }
 
 void atarist_drawborder(int line)
@@ -270,7 +263,7 @@ void atarist_pixel_update(void)
 //	}
 }
 
-void atarist_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+static VIDEO_UPDATE( atarist )
 {
 }
 
@@ -1945,7 +1938,7 @@ int atarist_load(int type, int id, unsigned char **ptr)
 
 /***************************************************************************/
 
-static void atarist_eof_callback(void)
+static VIDEO_EOF( atarist )
 {
 	static int last_mem=-1;
 	int mid,new_mem=readinputport(0)&6;
@@ -1970,7 +1963,7 @@ static void atarist_eof_callback(void)
 	}
 }
 
-static void atarist_init_machine(void)
+static MACHINE_INIT( atarist )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
 	unsigned char *RAM2 = memory_region(REGION_CPU1);
@@ -1992,12 +1985,7 @@ static void atarist_init_machine(void)
 	atarist_current_drive=-1;
 }
 
-static void atarist_stop_machine(void)
-{
-}
-
-
-static int atarist_interrupt(void)
+static INTERRUPT_GEN( atarist_interrupt )
 {
 	static int keyboard_line;
 	current_line = 311 - cpu_getiloops();
@@ -2096,48 +2084,36 @@ static struct AY8910interface ay8910_interface =
 
 /***************************************************************************/
 
-static struct MachineDriver machine_driver_atarist =
-{
+static MACHINE_DRIVER_START( ataris )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			MASTER_CLOCK, /* 8 MHz */
-			atarist_readmem,atarist_writemem,0,0,
-			atarist_interrupt,312
-		}
-	},
-	50, 0,
-	1,
-	atarist_init_machine,	/* init machine */
-	atarist_stop_machine,
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK)        /* 8 MHz */
+	MDRV_CPU_MEMORY(atarist_readmem,atarist_writemem)
+	MDRV_CPU_VBLANK_INT(atarist_interrupt,312)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( atarist )
 
 	/* video hardware, doubled to allow mode changes */
-  	512*2, 313*1, /* 50Hz values (Note, 60Hz is 508 by 315) */
-// 	{ 0, 639, 0+63, 239+63 },
-//	{ 0, 639, 0+(63*2), (239+63)*2 },
- 	{ 96*2, (320+96)*2-1, 0+63, 239+63 },
-// 	{ 0, 639, 0, 239+63 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(512*2, 313*1)	/* 50Hz values (Note, 60Hz is 508 by 315) */
+	/*MDRV_VISIBLE_AREA(0, 639, 0+63, 239+63)*/
+	/*MDRV_VISIBLE_AREA(0, 639, 0+(63*2), (239+63)*2)*/
+	MDRV_VISIBLE_AREA(96*2, (320+96)*2-1, 0+63, 239+63)
+	/*MDRV_VISIBLE_AREA(0, 639, 0, 239+63)*/
+	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(512)
 
-	gfxdecodeinfo,
-	512,512,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	atarist_eof_callback,
-	atarist_vh_start,
-	atarist_vh_stop,
-	atarist_vh_screenrefresh,
+	MDRV_VIDEO_EOF( atarist )
+	MDRV_VIDEO_START( atarist )
+	MDRV_VIDEO_UPDATE( atarist )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
 
 #if 0
 static struct MachineDriver machine_driver_stmono =
