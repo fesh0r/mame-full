@@ -102,11 +102,6 @@ WRITE16_HANDLER( tms34020_io_register_w );
 READ16_HANDLER( tms34020_io_register_r );
 
 
-/* PUBLIC GLOBALS */
-extern int tms34010_ICount;
-#define tms34020_ICount tms34010_ICount
-
-
 /* Use this macro in the memory definitions to specify bit-based addresses */
 #define TOBYTE(bitaddr) ((offs_t)(bitaddr) >> 3)
 #define TOWORD(bitaddr) ((offs_t)(bitaddr) >> 4)

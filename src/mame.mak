@@ -1050,6 +1050,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/mugsmash.o $(OBJ)/drivers/mugsmash.o \
 	$(OBJ)/vidhrdw/stlforce.o $(OBJ)/drivers/stlforce.o \
 	$(OBJ)/vidhrdw/gcpinbal.o $(OBJ)/drivers/gcpinbal.o \
+	$(OBJ)/drivers/vmetal.o \
 	$(OBJ)/vidhrdw/aquarium.o $(OBJ)/drivers/aquarium.o \
 	$(OBJ)/vidhrdw/policetr.o $(OBJ)/drivers/policetr.o \
 	$(OBJ)/vidhrdw/pass.o $(OBJ)/drivers/pass.o \

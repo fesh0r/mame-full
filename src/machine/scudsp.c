@@ -672,7 +672,7 @@ static void dsp_end( void )
 		if(EXF) stv_scu[32]^=0x00100000;
 	}
 
-};
+}
 
 static void dsp_loop( void )
 {
@@ -1211,5 +1211,5 @@ void dsp_dasm_opcode( UINT32 op, char *buffer )
 		}
 		break;
 	}
-};
+}
 

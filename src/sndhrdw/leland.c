@@ -608,10 +608,6 @@ static void leland_i186_reset(void)
 
 void leland_i186_sound_init(void)
 {
-	/* RAM is multiply mapped in the first 128k of address space */
-	cpu_setbank(6, ram_base);
-	cpu_setbank(7, ram_base);
-
 	/* reset the I86 registers */
 	leland_i186_reset();
 
@@ -1458,7 +1454,7 @@ static WRITE_HANDLER( i186_internal_port_w )
 			/* we need to do this at a time when the I86 context is swapped in */
 			/* this register is generally set once at startup and never again, so it's a good */
 			/* time to set it up */
-			activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, int_callback);
+			activecpu_set_info_ptr(CPUINFO_PTR_IRQ_CALLBACK, (void *)int_callback);
 			break;
 
 		case 0xc0:
@@ -2195,43 +2191,28 @@ WRITE_HANDLER( ataxx_i86_control_w )
  *
  *************************************/
 
-ADDRESS_MAP_START( leland_i86_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x0c000, 0x0ffff) AM_READ(MRA8_BANK6)	/* used by Ataxx */
-	AM_RANGE(0x1c000, 0x1ffff) AM_READ(MRA8_BANK7)	/* used by Super Offroad */
-	AM_RANGE(0x20000, 0xfffff) AM_READ(MRA8_ROM)
+ADDRESS_MAP_START( leland_i86_map_program, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_MIRROR(0x1c000) AM_RAM AM_BASE(&ram_base)
+	AM_RANGE(0x20000, 0xfffff) AM_ROM
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( leland_i86_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_RAM) AM_BASE(&ram_base)
-	AM_RANGE(0x0c000, 0x0ffff) AM_WRITE(MWA8_BANK6)
-	AM_RANGE(0x1c000, 0x1ffff) AM_WRITE(MWA8_BANK7)
-	AM_RANGE(0x20000, 0xfffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_START( ataxx_i86_map_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(i186_internal_port_r, i186_internal_port_w)
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( leland_i86_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xff00, 0xffff) AM_READ(i186_internal_port_r)
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( redline_i86_writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_START( redline_i86_map_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(redline_dac_w)
-	AM_RANGE(0xff00, 0xffff) AM_WRITE(i186_internal_port_w)
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(i186_internal_port_r, i186_internal_port_w)
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( leland_i86_writeport, ADDRESS_SPACE_IO, 8 )
+ADDRESS_MAP_START( leland_i86_map_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0x000b) AM_WRITE(dac_w)
 	AM_RANGE(0x0080, 0x008b) AM_WRITE(dac_w)
 	AM_RANGE(0x00c0, 0x00cb) AM_WRITE(dac_w)
-	AM_RANGE(0xff00, 0xffff) AM_WRITE(i186_internal_port_w)
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( ataxx_i86_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0xff00, 0xffff) AM_WRITE(i186_internal_port_w)
+	AM_RANGE(0xff00, 0xffff) AM_READWRITE(i186_internal_port_r, i186_internal_port_w)
 ADDRESS_MAP_END
 
 

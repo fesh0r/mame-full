@@ -403,8 +403,7 @@ int dst_ramp_init(struct node_description *node)
 /************************************************************************/
 int dst_oneshot_step(struct node_description *node)
 {
-	struct dst_oneshot_context *context;
-	context=(struct dst_oneshot_context*)node->context;
+	struct dst_oneshot_context *context=(struct dst_oneshot_context*)node->context;
 	int trigger = node->input[1] && node->input[1];
 
 	/* If the state is triggered we will need to countdown later */

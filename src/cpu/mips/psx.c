@@ -1670,7 +1670,7 @@ static void set_irq_line( int irqline, int state )
 
 static offs_t mips_dasm( char *buffer, offs_t pc )
 {
-	unsigned ret;
+	offs_t ret;
 	change_pc( pc );
 #ifdef MAME_DEBUG
 	ret = DasmMIPS( buffer, pc );

@@ -177,23 +177,23 @@ static int cycles_stolen;
  *
  *************************************/
 
-static void *vblank_timer;
+static mame_timer *vblank_timer;
 static int vblank_countdown;
 static int vblank_multiplier;
 static double vblank_period;
 
-static void *refresh_timer;
+static mame_timer *refresh_timer;
 static double refresh_period;
 static double refresh_period_inv;
 
-static void *timeslice_timer;
+static mame_timer *timeslice_timer;
 static double timeslice_period;
 
 static double scanline_period;
 static double scanline_period_inv;
 
-static void *interleave_boost_timer;
-static void *interleave_boost_timer_end;
+static mame_timer *interleave_boost_timer;
+static mame_timer *interleave_boost_timer_end;
 static double perfect_interleave;
 
 

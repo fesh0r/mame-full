@@ -310,7 +310,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 
 	/* if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing */
 	frames_to_display = ftr;
-	if (frames_to_display < 60*60*5)
+	if (frames_to_display > 0 && frames_to_display < 60*60*5)
 		options.skip_warnings = 1;
 
 	option->priority = priority;

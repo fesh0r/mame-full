@@ -64,7 +64,6 @@ static UINT8 m6805_win_layout[] = {
 typedef struct
 {
 	int 	subtype;		/* Which sub-type is being emulated */
-	UINT32	amask;			/* Address bus width */
 	UINT32	sp_mask;		/* Stack pointer address mask */
 	UINT32	sp_low; 		/* Stack pointer low water mark (or floor) */
     PAIR    pc;             /* Program counter */
@@ -83,7 +82,6 @@ typedef struct
 static m6805_Regs m6805;
 
 #define SUBTYPE	m6805.subtype	/* CPU Type */
-#define AMASK	m6805.amask 	/* address mask */
 #define SP_MASK m6805.sp_mask	/* stack pointer mask */
 #define SP_LOW	m6805.sp_low	/* stack pointer low water mark */
 #define pPC 	m6805.pc		/* program counter PAIR */
@@ -101,8 +99,8 @@ static PAIR ea; 		/* effective address */
 int m6805_ICount=50000;
 
 /* DS -- THESE ARE RE-DEFINED IN m6805.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
-#define RM(Addr)			M6805_RDMEM((Addr) & AMASK)
-#define WM(Addr,Value)		M6805_WRMEM((Addr) & AMASK,Value)
+#define RM(Addr)			M6805_RDMEM(Addr)
+#define WM(Addr,Value)		M6805_WRMEM(Addr,Value)
 #define M_RDOP(Addr)        M6805_RDOP(Addr)
 #define M_RDOP_ARG(Addr)	M6805_RDOP_ARG(Addr)
 
@@ -277,14 +275,16 @@ INLINE void RM16( UINT32 Addr, PAIR *p )
 {
 	CLEAR_PAIR(p);
     p->b.h = RM(Addr);
-	if( ++Addr > AMASK ) Addr = 0;
+    ++Addr;
+//	if( ++Addr > AMASK ) Addr = 0;
 	p->b.l = RM(Addr);
 }
 
 INLINE void WM16( UINT32 Addr, PAIR *p )
 {
 	WM( Addr, p->b.h );
-	if( ++Addr > AMASK ) Addr = 0;
+    ++Addr;
+//	if( ++Addr > AMASK ) Addr = 0;
 	WM( Addr, p->b.l );
 }
 
@@ -321,10 +321,10 @@ static void Interrupt(void)
 #endif
 	{
         /* standard IRQ */
-#if (HAS_HD63705)
-		if(SUBTYPE!=SUBTYPE_HD63705)
-#endif
-			PC |= ~AMASK;
+//#if (HAS_HD63705)
+//		if(SUBTYPE!=SUBTYPE_HD63705)
+//#endif
+//			PC |= ~AMASK;
 		PUSHWORD(m6805.pc);
 		PUSHBYTE(m6805.x);
 		PUSHBYTE(m6805.a);
@@ -385,7 +385,7 @@ static void Interrupt(void)
 		else
 #endif
 		{
-			RM16( AMASK - 5, &pPC );
+			RM16( 0xffff - 5, &pPC );
 		}
 
 		}	// CC & IFLAG
@@ -417,14 +417,13 @@ static void m6805_reset(void *param)
 	memset(&m6805, 0, sizeof(m6805));
 	/* Force CPU sub-type and relevant masks */
 	m6805.subtype	= SUBTYPE_M6805;
-	AMASK	= 0x7ff;
 	SP_MASK = 0x07f;
 	SP_LOW	= 0x060;
 	/* Initial stack pointer */
 	S = SP_MASK;
 	/* IRQ disabled */
     SEI;
-	RM16( AMASK - 1 , &pPC );
+	RM16( 0xfffe , &pPC );
 }
 
 static void m6805_exit(void)
@@ -774,15 +773,10 @@ void m68705_init(void)
 
 void m68705_reset(void *param)
 {
-	UINT32 *p_amask = param;
 	m6805_reset(param);
 	/* Overide default 6805 type */
 	m6805.subtype = SUBTYPE_M68705;
-	if (p_amask)
-		AMASK = *p_amask;
-	else
-		AMASK = 0x7ff; /* default if no AMASK is specified */
-	RM16( AMASK-1, &m6805.pc );
+	RM16( 0xfffe, &m6805.pc );
 }
 #endif
 
@@ -810,7 +804,6 @@ void hd63705_reset(void *param)
 
 	/* Overide default 6805 types */
 	m6805.subtype	= SUBTYPE_HD63705;
-	AMASK	= 0xffff;
 	SP_MASK = 0x17f;
 	SP_LOW	= 0x100;
 	RM16( 0x1ffe, &m6805.pc );
@@ -851,7 +844,7 @@ static void m6805_set_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_REGISTER + M6805_A:			A = info->i;							break;
 		case CPUINFO_INT_PC:
-		case CPUINFO_INT_REGISTER + M6805_PC:			PC = info->i & AMASK;					break;
+		case CPUINFO_INT_REGISTER + M6805_PC:			PC = info->i;							break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + M6805_S:			S = SP_ADJUST(info->i);					break;
 		case CPUINFO_INT_REGISTER + M6805_X:			X = info->i;							break;
@@ -884,7 +877,7 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 10;							break;
 		
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 11;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 12;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
@@ -898,7 +891,7 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
 		case CPUINFO_INT_REGISTER + M6805_A:			info->i = A;							break;
-		case CPUINFO_INT_PC:							info->i = PC & AMASK;					break;
+		case CPUINFO_INT_PC:							info->i = PC;							break;
 		case CPUINFO_INT_REGISTER + M6805_PC:			info->i = PC;							break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + M6805_S:			info->i = SP_ADJUST(S);					break;

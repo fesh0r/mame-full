@@ -115,14 +115,10 @@ WRITE_HANDLER( leland_i86_command_lo_w );
 WRITE_HANDLER( leland_i86_command_hi_w );
 WRITE_HANDLER( ataxx_i86_control_w );
 
-ADDRESS_MAP_EXTERN(leland_i86_readmem);
-ADDRESS_MAP_EXTERN(leland_i86_writemem);
-
-ADDRESS_MAP_EXTERN(leland_i86_readport);
-
-ADDRESS_MAP_EXTERN(redline_i86_writeport);
-ADDRESS_MAP_EXTERN(leland_i86_writeport);
-ADDRESS_MAP_EXTERN(ataxx_i86_writeport);
+ADDRESS_MAP_EXTERN(leland_i86_map_program);
+ADDRESS_MAP_EXTERN(leland_i86_map_io);
+ADDRESS_MAP_EXTERN(redline_i86_map_io);
+ADDRESS_MAP_EXTERN(ataxx_i86_map_io);
 
 
 /*----------- defined in vidhrdw/leland.c -----------*/

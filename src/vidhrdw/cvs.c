@@ -114,6 +114,10 @@ PALETTE_INIT( cvs )
     }
 
     /* Initialise Dirty Character Array */
+	dirty_character = auto_malloc(0x100);
+	character_1_ram = auto_malloc(0x2000);
+	character_2_ram = character_1_ram + 0x800;
+	character_3_ram = character_2_ram + 0x800;
 
 	memset(dirty_character, 0, 256);
     memset(character_1_ram, 0, 1024);
@@ -367,6 +371,9 @@ VIDEO_START( cvs )
 {
 	int generator = 0;
     int x,y;
+
+	colorram = auto_malloc(0x400);
+	paletteram = auto_malloc(0x100);
 
 	video_start_generic();
 

@@ -1882,8 +1882,8 @@ static void adsp2101_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + ADSP2101_SPORT0_TX:set_irq_line(ADSP2101_SPORT0_TX, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = info->p;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = info->p;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = (RX_CALLBACK)info->p;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = (TX_CALLBACK)info->p;	break;
 
 		default:
 			adsp21xx_set_info(state, info);
@@ -1908,8 +1908,8 @@ void adsp2101_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = adsp2101_reset;			break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2101_set_context; break;
 		
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = adsp2100.sport_rx_callback;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = adsp2100.sport_tx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = (void *)adsp2100.sport_rx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = (void *)adsp2100.sport_tx_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ADSP2101"); break;
@@ -1970,8 +1970,8 @@ static void adsp2104_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + ADSP2104_SPORT0_TX:set_irq_line(ADSP2104_SPORT0_TX, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = info->p;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = info->p;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = (RX_CALLBACK)info->p;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = (TX_CALLBACK)info->p;	break;
 
 		default:
 			adsp21xx_set_info(state, info);
@@ -1996,8 +1996,8 @@ void adsp2104_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = adsp2104_reset;			break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2104_set_context; break;
 
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = adsp2100.sport_rx_callback;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = adsp2100.sport_tx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = (void *)adsp2100.sport_rx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = (void *)adsp2100.sport_tx_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ADSP2104"); break;
@@ -2049,8 +2049,8 @@ static void adsp2105_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + ADSP2105_IRQ2:		set_irq_line(ADSP2105_IRQ2, info->i);	break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = info->p;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = info->p;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = (RX_CALLBACK)info->p;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = (TX_CALLBACK)info->p;	break;
 
 		default:
 			adsp21xx_set_info(state, info);
@@ -2073,8 +2073,8 @@ void adsp2105_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = adsp2105_reset;			break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2105_set_context; break;
 
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = adsp2100.sport_rx_callback;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = adsp2100.sport_tx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = (void *)adsp2100.sport_rx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = (void *)adsp2100.sport_tx_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ADSP2105"); break;
@@ -2128,8 +2128,8 @@ static void adsp2115_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_IRQ_STATE + ADSP2115_SPORT0_TX:set_irq_line(ADSP2115_SPORT0_TX, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = info->p;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = info->p;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			adsp2100.sport_rx_callback = (RX_CALLBACK)info->p;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			adsp2100.sport_tx_callback = (TX_CALLBACK)info->p;	break;
 
 		default:
 			adsp21xx_set_info(state, info);
@@ -2154,8 +2154,8 @@ void adsp2115_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = adsp2115_reset;			break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = adsp2115_set_context; break;
 
-		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = adsp2100.sport_rx_callback;	break;
-		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = adsp2100.sport_tx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_RX_HANDLER:			info->p = (void *)adsp2100.sport_rx_callback;	break;
+		case CPUINFO_PTR_ADSP2100_TX_HANDLER:			info->p = (void *)adsp2100.sport_tx_callback;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ADSP2115"); break;

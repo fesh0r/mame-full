@@ -7895,7 +7895,7 @@ static void RestoreRegionBackup(SearchRegion * region)
 
 static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 {
-	void *				handler = region->writeHandler->write.handler;
+	write8_handler		handler = region->writeHandler->write.handler8;
 	UINT32				handlerAddress = (UINT32)handler;
 
 	switch(info->searchSpeed)
@@ -7914,7 +7914,7 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			}
 #endif
 
-			if(	(handler == (void *) MWA8_RAM) &&
+			if(	(handler == MWA8_RAM) &&
 				(!region->writeHandler->base))
 				return 1;
 
@@ -7962,14 +7962,14 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 				(handlerAddress <= ((UINT32)MWA8_BANK24)))
 				return 1;
 
-			if(handler == (void *) MWA8_RAM)
+			if(handler == MWA8_RAM)
 				return 1;
 
 			return 0;
 
 		case kSearchSpeed_Slow:
-			if(	(handler == (void *) MWA8_NOP) ||
-				(handler == (void *) MWA8_ROM))
+			if(	(handler == MWA8_NOP) ||
+				(handler == MWA8_ROM))
 				return 0;
 
 			if(	(handlerAddress > STATIC_COUNT) &&
@@ -7979,8 +7979,8 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 			return 1;
 
 		case kSearchSpeed_VerySlow:
-			if(	(handler == (void *) MWA8_NOP) ||
-				(handler == (void *) MWA8_ROM))
+			if(	(handler == MWA8_NOP) ||
+				(handler == MWA8_ROM))
 				return 0;
 
 			return 1;

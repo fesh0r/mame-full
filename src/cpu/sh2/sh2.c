@@ -2485,35 +2485,21 @@ static void sh2_recalc_irq(void)
 	}
 
 	// DMA irqs
-	// Unroll
-/*	for(i=0; i<2; i++)
-	{
-		if((sh2.m[0x63+4*i] & 6) == 6) {
-			level = (sh2.m[0x38] >> 8) & 15;
-			if(level > irq) {
-				irq = level;
-				vector = (sh2.m[0x68+2*i] >> 24) & 0x7f;
-			}
-		}
-	}
-*/
-	if((sh2.m[0x63+4] & 6) == 6) {
+	if((sh2.m[0x63] & 6) == 6) {
 		level = (sh2.m[0x38] >> 8) & 15;
 		if(level > irq) {
 			irq = level;
-			vector = (sh2.m[0x68+2] >> 24) & 0x7f;
+			vector = (sh2.m[0x68] >> 24) & 0x7f;
 		}
 	}
 
-	if((sh2.m[0x63+8] & 6) == 6) {
+	if((sh2.m[0x67] & 6) == 6) {
 		level = (sh2.m[0x38] >> 8) & 15;
 		if(level > irq) {
 			irq = level;
-			vector = (sh2.m[0x68+2] >> 24) & 0x7f;
+			vector = (sh2.m[0x6a] >> 24) & 0x7f;
 		}
 	}
-
-
 
 
 	sh2.internal_irq_level = irq;

@@ -1270,14 +1270,13 @@ DRIVER_INIT( vstennis )
 	install_mem_write_handler( 0, 0x4016, 0x4016, vstennis_vrom_banking );
 	install_mem_write_handler( 1, 0x4016, 0x4016, vstennis_vrom_banking );
 
-	cpu_setbank(1, &memory_region(REGION_CPU1)[0x6000]);
-
 	/* shared ram at $6000 */
 	install_mem_read_handler( 0, 0x6000, 0x7fff, MRA8_BANK1 );
 	install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_BANK1 );
 	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_BANK1 );
 	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_BANK1 );
 
+	cpu_setbank(1, &memory_region(REGION_CPU1)[0x6000]);
 }
 
 /**********************************************************************/

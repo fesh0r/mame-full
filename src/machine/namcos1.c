@@ -922,7 +922,7 @@ WRITE_HANDLER( namcos1_mcu_patch_w )
 	//logerror("mcu C000 write pc=%04x data=%02x\n",activecpu_get_pc(),data);
 	if(mcu_patch_data == 0xa6) return;
 	mcu_patch_data = data;
-	cpu_bankbase[19][offset] = data;
+	namco_wavedata[0x1000+offset] = data;
 }
 
 /*******************************************************************************

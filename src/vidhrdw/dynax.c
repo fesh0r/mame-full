@@ -297,6 +297,8 @@ WRITE_HANDLER( dynax_flipscreen_w )
 /* Plot a pixel (in the pixmaps specified by dynax_blit_dest) */
 INLINE void blitter_plot_pixel(int layer,int mask, int x, int y, int pen, int wrap, int flags)
 {
+	int addr;
+
 	if ( (y > 0xff) && (!(wrap & 2)) ) return;	// fixes mjdialq2 & mjangels title screens
 	if ( (x > 0xff) && (!(wrap & 1)) ) return;
 
@@ -313,7 +315,7 @@ INLINE void blitter_plot_pixel(int layer,int mask, int x, int y, int pen, int wr
 	/* Rotate: rotation = SWAPXY + FLIPY */
 	if (flags & 0x08)	{ int t = x; x = y; y = t;	}
 
-	int addr = x + (y<<8);
+	addr = x + (y<<8);
 
 	switch (layer_layout)
 	{
@@ -1107,6 +1109,7 @@ VIDEO_UPDATE( hnoridur )
 {
 	int layers_ctrl = ~BITSWAP8(hanamai_priority, 7,6,5,4, 0,1,2,3);
 	int lay[4];
+	int pri;
 
 	if (debug_viewer(bitmap,cliprect))	return;
 	layers_ctrl &= debug_mask();
@@ -1116,7 +1119,7 @@ VIDEO_UPDATE( hnoridur )
 		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 0x0f) * 256],
 		cliprect);
 
-	int pri = hanamai_priority >> 4;
+	pri = hanamai_priority >> 4;
 
 	if (pri > 7)
 	{

@@ -25,19 +25,19 @@
 	- Evaluate min/max opcode ranges and do we include a check in cpu_readop?
 
 ****************************************************************************
-	
+
 	Address map fields and restrictions:
-	
+
 	AM_RANGE(start, end)
 		Specifies a range of consecutive addresses beginning with 'start' and
 		ending with 'end' inclusive. An address hits in this bucket if the
 		'address' >= 'start' and 'address' <= 'end'.
-	
+
 	AM_SPACE(match, mask)
 		Specifies at the bit level (closer to real hardware) how to determine
-		if an address matches a given bit pattern. An address hits in this 
+		if an address matches a given bit pattern. An address hits in this
 		bucket if 'address' & 'mask' == 'match'
-	
+
 	AM_MASK(mask)
 		Specifies a mask for the addresses in the current bucket. This mask
 		is applied after a positive hit in the bucket specified by AM_RANGE
@@ -47,41 +47,41 @@
 		the AM_SPACE macro. If you use AM_MIRROR, below, the mask is ANDed
 		implicitly with the logical NOT of the mirror. The mask specified
 		by this macro is ANDed against any implicit masks.
-		
+
 	AM_MIRROR(mirror)
 		Specifies mirror addresses for the given bucket. The current bucket
 		is mapped repeatedly according to the mirror mask, once where each
 		mirror bit is 0, and once where it is 1. For example, a 'mirror'
 		value of 0x14000 would map the bucket at 0x00000, 0x04000, 0x10000,
 		and 0x14000.
-	
+
 	AM_READ(read)
 		Specifies the read handler for this bucket. All reads will pass
 		through the given callback handler. Special static values representing
 		RAM, ROM, or BANKs are also allowed here.
-	
+
 	AM_WRITE(write)
 		Specifies the write handler for this bucket. All writes will pass
 		through the given callback handler. Special static values representing
 		RAM, ROM, or BANKs are also allowed here.
-	
+
 	AM_REGION(region, offs)
 		Only useful if AM_READ/WRITE point to RAM, ROM, or BANK memory. By
 		default, memory is allocated to back each bucket. By specifying
 		AM_REGION, you can tell the memory system to point the base of the
 		memory backing this bucket to a given memory 'region' at the
 		specified 'offs'.
-	
+
 	AM_SHARE(index)
 		Similar to AM_REGION, this specifies that the memory backing the
 		current bucket is shared with other buckets. The first bucket to
 		specify the share 'index' will use its memory as backing for all
 		future buckets that specify AM_SHARE with the same 'index'.
-	
+
 	AM_BASE(base)
 		Specifies a pointer to a pointer to the base of the memory backing
 		the current bucket.
-	
+
 	AM_SIZE(size)
 		Specifies a pointer to a size_t variable which will be filled in
 		with the size, in bytes, of the current bucket.
@@ -117,7 +117,7 @@
 	Next, the address is broken into two halves, an upper half and a
 	lower half. The number of bits in each half can be controlled via
 	macros in memory.h, but they default to the upper 18 bits and the
-	lower 14 bits. The upper half is then used as an index into the 
+	lower 14 bits. The upper half is then used as an index into the
 	base_lookup table.
 
 	If the value pulled from the table is within the range 192-255, then
@@ -194,6 +194,7 @@ struct handler_data_t
 
 struct subtable_data_t
 {
+	UINT8					checksum_valid;			/* is the checksum valid */
 	UINT32					checksum;				/* checksum over all the bytes */
 	UINT32					usecount;				/* number of times this has been used */
 };
@@ -254,7 +255,7 @@ UINT8		 				opcode_entry;					/* opcode readmem entry */
 
 struct address_space_t		address_space[ADDRESS_SPACES];	/* address space data */
 
-UINT8 *						cpu_bankbase[STATIC_COUNT];		/* array of bank bases */
+static UINT8 *				bank_ptr[STATIC_COUNT];			/* array of bank pointers */
 static void *				shared_ptr[MAX_SHARED_POINTERS];/* array of shared pointers */
 
 static struct memory_block_t memory_block[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
@@ -288,7 +289,7 @@ static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 			{ program_read_byte_64be, program_read_word_64be, program_read_dword_64be, program_read_qword_64be, program_write_byte_64be, program_write_word_64be, program_write_dword_64be, program_write_qword_64be }
 		}
 	},
-	
+
 	/* data accessors */
 	{
 		{
@@ -308,7 +309,7 @@ static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 			{ data_read_byte_64be, data_read_word_64be, data_read_dword_64be, data_read_qword_64be, data_write_byte_64be, data_write_word_64be, data_write_dword_64be, data_write_qword_64be }
 		}
 	},
-	
+
 	/* I/O accessors */
 	{
 		{
@@ -347,6 +348,7 @@ static UINT8 get_handler_index(struct handler_data_t *table, void *handler, offs
 static void populate_table_range(struct addrspace_data_t *space, int iswrite, offs_t start, offs_t stop, UINT8 handler);
 static void populate_table_match(struct addrspace_data_t *space, int iswrite, offs_t matchval, offs_t matchmask, UINT8 handler);
 static UINT8 allocate_subtable(struct table_data_t *tabledata);
+static int merge_subtables(struct table_data_t *tabledata);
 static void release_subtable(struct table_data_t *tabledata, UINT8 subentry);
 static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index);
 static void close_subtable(struct table_data_t *tabledata, offs_t l1index);
@@ -377,7 +379,7 @@ int memory_init(void)
 
 	/* reset the shared pointers and bank pointers */
 	memset(shared_ptr, 0, sizeof(shared_ptr));
-	memset(cpu_bankbase, 0, sizeof(cpu_bankbase));
+	memset(bank_ptr, 0, sizeof(bank_ptr));
 
 	/* reset our hardcoded and allocated pointer tracking */
 	memset(memory_block, 0, sizeof(memory_block));
@@ -456,7 +458,7 @@ void memory_set_context(int activecpu)
 	}
 	cur_context = activecpu;
 
-	cpu_bankbase[STATIC_RAM] = cpudata[activecpu].rambase;
+	bank_ptr[STATIC_RAM] = cpudata[activecpu].rambase;
 	opcode_arg_base = cpudata[activecpu].op_ram;
 	opcode_base = cpudata[activecpu].op_rom;
 	opcode_mask = cpudata[activecpu].op_mask;
@@ -542,24 +544,26 @@ void memory_set_opbase(offs_t pc)
 	}
 
 	/* perform the lookup */
+//	VPRINTF(("memory_set_opbase(%X) -> ", pc));
 	pc &= address_space[ADDRESS_SPACE_PROGRAM].addrmask;
 	entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL1_INDEX(pc)];
 	if (entry >= SUBTABLE_BASE)
 		entry = address_space[ADDRESS_SPACE_PROGRAM].readlookup[LEVEL2_INDEX(entry,pc)];
+//	VPRINTF(("%X (%02X) -> ", pc, entry));
 	opcode_entry = entry;
 
 	/* RAM/ROM/RAMROM */
 	if (entry >= STATIC_RAM && entry <= STATIC_RAMROM)
-		base = cpu_bankbase[STATIC_RAM];
+		base = bank_ptr[STATIC_RAM];
 
 	/* banked memory */
 	else if (entry >= STATIC_BANK1 && entry <= STATIC_RAM)
-		base = cpu_bankbase[entry];
+		base = bank_ptr[entry];
 
 	/* other memory -- could be very slow! */
 	else
 	{
-		logerror("cpu #%d (PC=%08X): warning - op-code execute on mapped I/On",
+		logerror("cpu #%d (PC=%08X): warning - op-code execute on mapped I/O\n",
 					cpu_getactivecpu(), activecpu_get_pc());
 		return;
 	}
@@ -572,6 +576,7 @@ void memory_set_opbase(offs_t pc)
 	opcode_memory_max = (entry >= STATIC_RAM && entry <= STATIC_RAMROM)
 		? cpudata[cpu_getactivecpu()].ramlength - 1
 		: address_space[ADDRESS_SPACE_PROGRAM].readhandlers[entry].top;
+//	VPRINTF(("msk=%X base=%08X arg=%08X\n", opcode_mask, (UINT32)opcode_base, (UINT32)opcode_arg_base));
 }
 
 
@@ -618,7 +623,7 @@ void *memory_get_read_ptr(int cpunum, int spacenum, offs_t offset)
 	if (entry > STATIC_RAM)
 		return NULL;
 	offset = (offset - space->read.handlers[entry].offset) & space->read.handlers[entry].mask;
-	return &cpu_bankbase[entry][offset];
+	return &bank_ptr[entry][offset];
 }
 
 
@@ -643,7 +648,31 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 	if (entry > STATIC_RAM)
 		return NULL;
 	offset = (offset - space->write.handlers[entry].offset) & space->write.handlers[entry].mask;
-	return &cpu_bankbase[entry][offset];
+	return &bank_ptr[entry][offset];
+}
+
+
+/*-------------------------------------------------
+	memory_set_bankptr - set the base of a bank
+-------------------------------------------------*/
+
+void memory_set_bankptr(int banknum, void *base)
+{
+	/* validation checks */
+	if (banknum < STATIC_BANK1 || banknum > STATIC_BANKMAX || !bankdata[banknum].used)
+		fatalerror("memory_set_bankptr called with invalid bank %d\n", banknum);
+	if (bankdata[banknum].dynamic)
+		fatalerror("memory_set_bankptr called with dynamic bank %d\n", banknum);
+
+	/* set the base */
+	bank_ptr[banknum] = base;
+
+	/* if we're executing out of this bank, adjust the opbase pointer */
+	if (opcode_entry == banknum && cpu_getactivecpu() >= 0)
+	{
+		opcode_entry = 0xff;
+		memory_set_opbase(activecpu_get_pc_byte());
+	}
 }
 
 
@@ -780,7 +809,7 @@ static int init_cpudata(void)
 			if (!init_addrspace(cpunum, spacenum))
 				return 0;
 		cpudata[cpunum].op_mask = cpudata[cpunum].space[ADDRESS_SPACE_PROGRAM].mask;
-		
+
 		/* Z80 port mask kludge */
 		if (cputype == CPU_Z80 || cputype == CPU_Z180)
 			if (!(Machine->drv->cpu[cpunum].cpu_flags & CPU_16BIT_PORT))
@@ -808,6 +837,7 @@ INLINE void adjust_addresses(struct addrspace_data_t *space, int ismatchmask, of
 	*mask = SPACE_SHIFT(space, *mask);
 	*start = SPACE_SHIFT(space, *start);
 	*end = ismatchmask ? SPACE_SHIFT(space, *end) : SPACE_SHIFT_END(space, *end);
+	*mirror = SPACE_SHIFT(space, *mirror);
 }
 
 
@@ -836,12 +866,12 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	space->accessors = &memory_accessors[spacenum][accessorindex][cputype_endianness(cputype) == CPU_IS_LE ? 0 : 1];
 	space->map = NULL;
 	space->adjmap = NULL;
-	
+
 	/* if there's nothing here, just punt */
 	if (space->abits == 0)
 		return 1;
 	cpudata[cpunum].spacemask |= 1 << spacenum;
-	
+
 	/* construct the combined memory map */
 	if (Machine->drv->cpu[cpunum].construct_map[spacenum][0] || Machine->drv->cpu[cpunum].construct_map[spacenum][1])
 	{
@@ -850,11 +880,11 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 		if (!map)
 			return fatalerror("cpu #%d couldn't allocate memory map\n", cpunum);
 		memset(map, 0, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
-		
+
 		/* make pointers to the standard and adjusted maps */
 		space->map = map;
 		space->adjmap = &map[MAX_ADDRESS_MAP_SIZE * 2];
-		
+
 		/* construct the standard map */
 		if (Machine->drv->cpu[cpunum].construct_map[spacenum][0])
 			map = (*Machine->drv->cpu[cpunum].construct_map[spacenum][0])(map);
@@ -901,7 +931,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 
 static int preflight_memory(void)
 {
-	int cpunum, spacenum;
+	int cpunum, spacenum, entrynum;
 
 	/* zap the bank data */
 	memset(&bankdata, 0, sizeof(bankdata));
@@ -923,13 +953,15 @@ static int preflight_memory(void)
 						UINT32 flags = AM_EXTENDED_FLAGS(map);
 						UINT32 val;
 
+						/* if we specify an address space, make sure it matches the current space */
 						if (flags & AMEF_SPECIFIES_SPACE)
 						{
 							val = (flags & AMEF_SPACE_MASK) >> AMEF_SPACE_SHIFT;
 							if (val != spacenum)
 								return fatalerror("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
 						}
-						
+
+						/* if we specify an databus width, make sure it matches the current address space's */
 						if (flags & AMEF_SPECIFIES_DBITS)
 						{
 							val = (flags & AMEF_DBITS_MASK) >> AMEF_DBITS_SHIFT;
@@ -937,19 +969,30 @@ static int preflight_memory(void)
 							if (val != space->dbits)
 								return fatalerror("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
 						}
+
+						/* if we specify an addressbus width, adjust the mask */
+						if (flags & AMEF_SPECIFIES_ABITS)
+						{
+							space->rawmask = 0xffffffffUL >> (32 - ((flags & AMEF_ABITS_MASK) >> AMEF_ABITS_SHIFT));
+							space->mask = SPACE_SHIFT_END(space, space->rawmask);
+						}
+
+						/* if we specify an unmap value, set it */
+						if (flags & AMEF_SPECIFIES_UNMAP)
+							space->unmap = ((flags & AMEF_UNMAP_MASK) == 0) ? (data64_t)0 : (data64_t)-1;
 					}
-					
+
 					/* otherwise, just track banks and hardcoded memory pointers */
 					else
 					{
 						int bank = -1;
-						
+
 						/* look for a bank handler in eithe read or write */
 						if (HANDLER_IS_BANK(map->read.handler))
 							bank = HANDLER_TO_BANK(map->read.handler);
 						else if (HANDLER_IS_BANK(map->write.handler))
 							bank = HANDLER_TO_BANK(map->write.handler);
-						
+
 						/* if we got one, add the data */
 						if (bank != -1)
 						{
@@ -961,6 +1004,13 @@ static int preflight_memory(void)
 							bdata->base = map->start;
 						}
 					}
+				}
+
+				/* now loop over all the handlers and enforce the address mask (which may have changed) */
+				for (entrynum = 0; entrynum < ENTRY_COUNT; entrynum++)
+				{
+					space->read.handlers[entrynum].mask &= space->mask;
+					space->write.handlers[entrynum].mask &= space->mask;
 				}
 			}
 	return 1;
@@ -983,20 +1033,12 @@ static int populate_memory(void)
 			{
 				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 				const struct address_map_t *map;
-				
+
 				/* install the handlers, using the original, unadjusted memory map */
 				if (space->map)
 				{
-					/* first find the end and check for special values */
-					for (map = space->map; !IS_AMENTRY_END(map); map++)
-						if (IS_AMENTRY_EXTENDED(map))
-						{
-							UINT32 flags = AM_EXTENDED_FLAGS(map);
-							if (flags & AMEF_SPECIFIES_ABITS)
-								space->mask = 0xffffffffUL >> (32 - ((flags & AMEF_ABITS_MASK) >> AMEF_ABITS_SHIFT));
-							if (flags & AMEF_SPECIFIES_UNMAP)
-								space->unmap = ((flags & AMEF_UNMAP_MASK) == 0) ? (data64_t)0 : (data64_t)-1;
-						}
+					/* first find the end */
+					for (map = space->map; !IS_AMENTRY_END(map); map++) ;
 
 					/* then work backwards, populating the address map */
 					for (map--; map >= space->map; map--)
@@ -1034,27 +1076,51 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 		exit(1);
 	}
 
+	/* if we're installing a new bank, make sure we mark it */
+	if (HANDLER_IS_BANK(handler) && !bankdata[HANDLER_TO_BANK(handler)].used)
+	{
+		struct bank_data_t *bdata = &bankdata[HANDLER_TO_BANK(handler)];
+		bdata->used = 1;
+		bdata->dynamic = 0;
+		bdata->cpunum = space->cpunum;
+		bdata->spacenum = space->spacenum;
+		bdata->base = start;
+	}
+
 	/* adjust the incoming addresses */
 	adjust_addresses(space, ismatchmask, &start, &end, &mask, &mirror);
-	
+
 	/* translate ROM and RAMROM to RAM here for read cases */
 	if (!iswrite)
+	{
 		if (HANDLER_IS_ROM(handler) || HANDLER_IS_RAMROM(handler))
 			handler = (void *)MRA8_RAM;
+	}
 
-	/* assign banks for sparse memory spaces */
-	if ((space->spacenum != ADDRESS_SPACE_PROGRAM || IS_SPARSE(space->abits)) && (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler)))
+	/* also translate ROM to UNMAP for write cases */
+	else
+	{
+		if (HANDLER_IS_ROM(handler))
+			handler = (void *)STATIC_UNMAP;
+	}
+
+	/* assign banks for RAM/ROM areas */
+	if (HANDLER_IS_RAM(handler) || HANDLER_IS_ROM(handler))
+	{
 		handler = (void *)assign_dynamic_bank(space->cpunum, space->spacenum, start, mirror);
-	
+		if (!bank_ptr[HANDLER_TO_BANK(handler)])
+			bank_ptr[HANDLER_TO_BANK(handler)] = memory_find_base(space->cpunum, space->spacenum, iswrite, start);
+	}
+
 	/* determine the mirror bits */
 	mirrorbits = 0;
 	for (i = 0; i < 32; i++)
 		if (mirror & (1 << i))
 			mirrorbit[mirrorbits++] = 1 << i;
-	
+
 	/* get the final handler index */
 	idx = get_handler_index(tabledata->handlers, handler, start, end, mask);
-	
+
 	/* loop over mirrors */
 	for (mirrorcount = 0; mirrorcount < (1 << mirrorbits); mirrorcount++)
 	{
@@ -1063,7 +1129,7 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 		for (i = 0; i < mirrorbits; i++)
 			if (mirrorcount & (1 << i))
 				mirrorbase |= mirrorbit[i];
-				
+
 		/* populate the tables */
 		if (!ismatchmask)
 			populate_table_range(space, iswrite, start + mirrorbase, end + mirrorbase, idx);
@@ -1096,7 +1162,7 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 	}
 
 	/* loop over banks, searching for an exact match or an empty */
-	for (bank = 1; bank <= MAX_BANKS; bank++)
+	for (bank = MAX_BANKS; bank >= 1; bank--)
 		if (!bankdata[bank].used || (bankdata[bank].dynamic && bankdata[bank].cpunum == cpunum && bankdata[bank].spacenum == spacenum && bankdata[bank].base == start))
 		{
 			bankdata[bank].used = 1;
@@ -1109,7 +1175,7 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 		}
 
 	/* if we got here, we failed */
-	fatalerror("cpu #%d: ran out of banks for sparse memory regions!\n", cpunum);
+	fatalerror("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
 	return NULL;
 }
 
@@ -1234,15 +1300,15 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
 
 	/* clear out any ignored bits in the matchval */
 	matchval &= matchmask;
-	
+
 	/* compute the lower half of the match/mask pair */
 	lowermask = matchmask & ((1<<LEVEL2_BITS)-1);
 	lowermatch = matchval & ((1<<LEVEL2_BITS)-1);
-	
+
 	/* compute the upper half of the match/mask pair */
 	uppermask = matchmask >> LEVEL2_BITS;
 	uppermatch = matchval >> LEVEL2_BITS;
-	
+
 	/* if the lower bits of the mask are all 0, we can work exclusively at the top level */
 	if (lowermask == 0)
 	{
@@ -1256,7 +1322,7 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
 				tabledata->table[l1index] = handler;
 			}
 	}
-	
+
 	/* okay, we need to work at both levels */
 	else
 	{
@@ -1265,7 +1331,7 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
 			if ((l1index & uppermatch) == uppermask)
 			{
 				UINT8 *subtable = open_subtable(tabledata, l1index);
-				
+
 				/* now loop over lower level matches */
 				for (l2index = 0; l2index < (1 << LEVEL2_BITS); l2index++)
 					if ((l2index & lowermask) == lowermatch)
@@ -1283,29 +1349,95 @@ static void populate_table_match(struct addrspace_data_t *space, int iswrite, of
 
 static UINT8 allocate_subtable(struct table_data_t *tabledata)
 {
-	UINT8 subindex;
-	
-	/* find a subtable with a usecount of 0 */
-	for (subindex = 0; subindex < SUBTABLE_COUNT; subindex++)
-		if (tabledata->subtable[subindex].usecount == 0)
-		{
-			/* if this is past our allocation budget, allocate some more */
-			if (subindex >= tabledata->subtable_alloc)
+	/* loop */
+	while (1)
+	{
+		UINT8 subindex;
+
+		/* find a subtable with a usecount of 0 */
+		for (subindex = 0; subindex < SUBTABLE_COUNT; subindex++)
+			if (tabledata->subtable[subindex].usecount == 0)
 			{
-				tabledata->subtable_alloc += SUBTABLE_ALLOC;
-				tabledata->table = realloc(tabledata->table, (1 << LEVEL1_BITS) + (tabledata->subtable_alloc << LEVEL2_BITS));
-				if (!tabledata->table)
-					fatalerror("error: ran out of memory allocating memory subtable\n");
+				/* if this is past our allocation budget, allocate some more */
+				if (subindex >= tabledata->subtable_alloc)
+				{
+					tabledata->subtable_alloc += SUBTABLE_ALLOC;
+					tabledata->table = realloc(tabledata->table, (1 << LEVEL1_BITS) + (tabledata->subtable_alloc << LEVEL2_BITS));
+					if (!tabledata->table)
+						fatalerror("error: ran out of memory allocating memory subtable\n");
+				}
+
+				/* bump the usecount and return */
+				tabledata->subtable[subindex].usecount++;
+				return subindex + SUBTABLE_BASE;
 			}
-			
-			/* bump the usecount and return */
-			tabledata->subtable[subindex].usecount++;
-			return subindex + SUBTABLE_BASE;
-		}
-	
+
+		/* merge any subtables we can */
+		if (!merge_subtables(tabledata))
+			fatalerror("Ran out of subtables!\n");
+	}
+
 	/* hopefully this never happens */
-	fatalerror("Ran out of subtables!\n");
 	return 0;
+}
+
+
+/*-------------------------------------------------
+	merge_subtables - merge any duplicate
+	subtables
+-------------------------------------------------*/
+
+static int merge_subtables(struct table_data_t *tabledata)
+{
+	int merged = 0;
+	UINT8 subindex;
+
+	VPRINTF(("Merging subtables....\n"));
+
+	/* okay, we failed; update all the checksums and merge tables */
+	for (subindex = 0; subindex < SUBTABLE_COUNT; subindex++)
+		if (!tabledata->subtable[subindex].checksum_valid)
+		{
+			UINT32 *subtable = (UINT32 *)SUBTABLE_PTR(tabledata, subindex + SUBTABLE_BASE);
+			UINT32 checksum = 0;
+			int l2index;
+
+			/* update the checksum */
+			for (l2index = 0; l2index < (1 << LEVEL2_BITS)/4; l2index++)
+				checksum += subtable[l2index];
+			tabledata->subtable[subindex].checksum = checksum;
+			tabledata->subtable[subindex].checksum_valid = 1;
+		}
+
+	/* see if there's a matching checksum */
+	for (subindex = 0; subindex < SUBTABLE_COUNT; subindex++)
+	{
+		UINT8 *subtable = SUBTABLE_PTR(tabledata, subindex + SUBTABLE_BASE);
+		UINT32 checksum = tabledata->subtable[subindex].checksum;
+		UINT8 sumindex;
+
+		for (sumindex = subindex + 1; sumindex < SUBTABLE_COUNT; sumindex++)
+			if (tabledata->subtable[sumindex].checksum == checksum &&
+				!memcmp(subtable, SUBTABLE_PTR(tabledata, sumindex + SUBTABLE_BASE), 1 << LEVEL2_BITS))
+			{
+				int l1index;
+
+				VPRINTF(("Merging subtable %d and %d....\n", subindex, sumindex));
+
+				/* got a match -- merge the tables */
+				tabledata->subtable[sumindex].usecount++;
+				release_subtable(tabledata, subindex + SUBTABLE_BASE);
+				merged++;
+
+				/* find all the entries in the L1 tables that pointed to the old one, and point them to the merged table */
+				for (l1index = 0; l1index <= (0xffffffffUL >> LEVEL2_BITS); l1index++)
+					if (tabledata->table[l1index] == subindex + SUBTABLE_BASE)
+						tabledata->table[l1index] = sumindex + SUBTABLE_BASE;
+				break;
+			}
+	}
+
+	return merged;
 }
 
 
@@ -1317,7 +1449,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
 {
 	UINT8 subindex = subentry - SUBTABLE_BASE;
-	
+
 	/* sanity check */
 	if (tabledata->subtable[subindex].usecount <= 0)
 		fatalerror("Called release_subtable on a table with a usecount of 0\n");
@@ -1347,7 +1479,7 @@ static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
 		tabledata->subtable[newentry - SUBTABLE_BASE].checksum = (subentry + (subentry << 8) + (subentry << 16) + (subentry << 24)) * ((1 << LEVEL2_BITS)/4);
 		subentry = newentry;
 	}
-	
+
 	/* if we're sharing this subtable, we also need to allocate a fresh copy */
 	else if (tabledata->subtable[subentry - SUBTABLE_BASE].usecount > 1)
 	{
@@ -1359,49 +1491,70 @@ static UINT8 *open_subtable(struct table_data_t *tabledata, offs_t l1index)
 		subentry = newentry;
 	}
 
+	/* mark the table dirty */
+	tabledata->subtable[subentry - SUBTABLE_BASE].checksum_valid = 0;
+
 	/* return the pointer to the subtable */
 	return SUBTABLE_PTR(tabledata, subentry);
 }
 
 
 /*-------------------------------------------------
-	close_subtable - stop access to a subtable and
-	coalesce with any exact matches
+	close_subtable - stop access to a subtable
 -------------------------------------------------*/
 
 static void close_subtable(struct table_data_t *tabledata, offs_t l1index)
 {
-	UINT8 subentry = tabledata->table[l1index];
-	UINT32 *subtable = (UINT32 *)SUBTABLE_PTR(tabledata, subentry);
-	UINT32 checksum = 0;
-	UINT8 sumindex;
-	int l2index;
+	/* defer any merging until we run out of tables */
+}
 
-	/* update the checksum */
-	for (l2index = 0; l2index < (1 << LEVEL2_BITS)/4; l2index++)
-		checksum += subtable[l2index];
-	tabledata->subtable[subentry - SUBTABLE_BASE].checksum = checksum;
-	
-	/* see if there's a matching checksum */
-	for (sumindex = 0; sumindex < SUBTABLE_COUNT; sumindex++)
-		if ((sumindex + SUBTABLE_BASE) != subentry &&
-			tabledata->subtable[sumindex].checksum == checksum && 
-			!memcmp(subtable, SUBTABLE_PTR(tabledata, sumindex + SUBTABLE_BASE), 1 << LEVEL2_BITS))
-		{
-			/* got a match -- coalesce the tables */
-			tabledata->subtable[sumindex].usecount++;
-			tabledata->table[l1index] = sumindex + SUBTABLE_BASE;
-			release_subtable(tabledata, subentry);
-			break;
-		}
-	
-	/* if no match, leave it allocated */
+
+/*-------------------------------------------------
+	Return whether a given memory map entry implies
+	the need of allocating and registering memory
+-------------------------------------------------*/
+
+static int amentry_needs_backing_store(int cpunum, int spacenum, const struct address_map_t *map)
+{
+	int handler;
+
+	if (IS_AMENTRY_EXTENDED(map))
+		return 0;
+	if (map->base)
+		return 1;
+
+	handler = (int)map->write.handler;
+	if (handler >= 0 && handler < STATIC_COUNT)
+	{
+		if (handler != STATIC_INVALID &&
+			handler != STATIC_ROM &&
+			handler != STATIC_NOP &&
+			handler != STATIC_UNUSED1 &&
+			handler != STATIC_UNUSED2 &&
+			handler != STATIC_UNMAP)
+			return 1;
+	}
+
+	handler = (int)map->read.handler;
+	if (handler >= 0 && handler < STATIC_COUNT)
+	{
+		if (handler != STATIC_INVALID &&
+			(handler < STATIC_BANK1 || handler > STATIC_BANK24) &&
+			(handler != STATIC_ROM || spacenum != ADDRESS_SPACE_PROGRAM || map->start >= memory_region_length(REGION_CPU1 + cpunum)) &&
+			handler != STATIC_NOP &&
+			handler != STATIC_UNUSED1 &&
+			handler != STATIC_UNUSED2 &&
+			handler != STATIC_UNMAP)
+			return 1;
+	}
+
+	return 0;
 }
 
 
 /*-------------------------------------------------
 	allocate_memory - allocate memory for
-	sparse CPU address spaces
+	CPU address spaces
 -------------------------------------------------*/
 
 static int allocate_memory(void)
@@ -1421,7 +1574,7 @@ static int allocate_memory(void)
 				struct address_map_t *map, *unassigned = NULL;
 				int start_count = memory_block_count;
 				int i;
-					
+
 				/* make a first pass over the memory map and track blocks with hardcoded pointers */
 				/* we do this to make sure they are found by memory_find_base first */
 				for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
@@ -1440,7 +1593,7 @@ static int allocate_memory(void)
 				/* loop over all blocks just allocated and assign pointers from them */
 				for (i = start_count; i < memory_block_count; i++)
 					unassigned = assign_intersecting_blocks(space, memory_block[i].start, memory_block[i].end, memory_block[i].data);
-				
+
 				/* if we don't have an unassigned pointer yet, try to find one */
 				if (!unassigned)
 					unassigned = assign_intersecting_blocks(space, ~0, 0, NULL);
@@ -1458,25 +1611,25 @@ static int allocate_memory(void)
 						curend = unassigned->end / MEMORY_BLOCK_SIZE;
 					else
 						curend = (unassigned->start + unassigned->mask) / MEMORY_BLOCK_SIZE;
-					
+
 					/* loop while we keep finding unassigned blocks in neighboring MEMORY_BLOCK_SIZE chunks */
 					do
 					{
 						changed = 0;
-						
+
 						/* scan for unmapped blocks in the adjusted map */
 						for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
-							if (!IS_AMENTRY_EXTENDED(map) && !map->memory && map != unassigned)
+							if (!IS_AMENTRY_EXTENDED(map) && !map->memory && map != unassigned && amentry_needs_backing_store(cpunum, spacenum, map))
 							{
 								offs_t blockstart, blockend;
-								
+
 								/* get block start/end blocks for this block */
 								blockstart = map->start / MEMORY_BLOCK_SIZE;
 								if (!IS_AMENTRY_MATCH_MASK(map))
 									blockend = map->end / MEMORY_BLOCK_SIZE;
 								else
 									blockend = (map->start + map->mask) / MEMORY_BLOCK_SIZE;
-								
+
 								/* if we intersect or are adjacent, adjust the start/end */
 								if (blockstart <= curend + 1 && blockend >= curstart - 1)
 								{
@@ -1487,7 +1640,7 @@ static int allocate_memory(void)
 								}
 							}
 					} while (changed);
-					
+
 					/* we now have a block to allocate; do it */
 					curstart = curstart * MEMORY_BLOCK_SIZE;
 					curend = curend * MEMORY_BLOCK_SIZE + (MEMORY_BLOCK_SIZE - 1);
@@ -1513,7 +1666,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 	int allocatemem = (memory == NULL);
 
 	VPRINTF(("allocate_memory_block(%d,%d,%08X,%08X,%08X)\n", cpunum, spacenum, start, end, (UINT32)memory));
-	
+
 	/* if we weren't passed a memory block, allocate one and clear it to zero */
 	if (allocatemem)
 	{
@@ -1525,7 +1678,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 		}
 		memset(memory, 0, end - start + 1);
 	}
-	
+
 	/* register for saving */
 	register_for_save(cpunum, spacenum, start, memory, end - start + 1);
 
@@ -1549,8 +1702,8 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 static void register_for_save(int cpunum, int spacenum, offs_t start, void *base, size_t numbytes)
 {
 	char name[256];
-	
-	sprintf(name, "%d.%08x-%08x", spacenum, start, start + numbytes - 1);
+
+	sprintf(name, "%d.%08x-%08x", spacenum, start, (int)(start + numbytes - 1));
 	switch (cpudata[cpunum].space[spacenum].dbits)
 	{
 		case 8:
@@ -1577,7 +1730,7 @@ static void register_for_save(int cpunum, int spacenum, offs_t start, void *base
 static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t *space, offs_t start, offs_t end, UINT8 *base)
 {
 	struct address_map_t *map, *unassigned = NULL;
-	
+
 	/* loop over the adjusted map and assign memory to any blocks we can */
 	for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
 		if (!IS_AMENTRY_EXTENDED(map))
@@ -1589,9 +1742,9 @@ static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t 
 				if (map->share && shared_ptr[map->share])
 				{
 					map->memory = shared_ptr[map->share];
-	 				VPRINTF(("memory range %08X-%08X -> shared_ptr[%d]\n", map->start, map->end, map->share));
+	 				VPRINTF(("memory range %08X-%08X -> shared_ptr[%d] [%08X]\n", map->start, map->end, map->share, (UINT32)map->memory));
 	 			}
-				
+
 				/* otherwise, look for a match in this block */
 				else
 				{
@@ -1600,7 +1753,7 @@ static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t 
 						if (map->start >= start && map->end <= end)
 						{
 							map->memory = base + (map->start - start);
-	 						VPRINTF(("memory range %08X-%08X -> found in block from %08X-%08X\n", map->start, map->end, start, end));
+	 						VPRINTF(("memory range %08X-%08X -> found in block from %08X-%08X [%08X]\n", map->start, map->end, start, end, (UINT32)map->memory));
 	 					}
 					}
 					else
@@ -1608,7 +1761,7 @@ static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t 
 						if (map->start >= start && map->start + map->mask <= end)
 						{
 							map->memory = base + (map->start - start);
-	 						VPRINTF(("memory range %08X-%08X -> found in block from %08X-%08X\n", map->start, map->end, start, end));
+	 						VPRINTF(("memory range %08X-%08X -> found in block from %08X-%08X [%08X]\n", map->start, map->end, start, end, (UINT32)map->memory));
 	 					}
 					}
 				}
@@ -1619,10 +1772,10 @@ static struct address_map_t *assign_intersecting_blocks(struct addrspace_data_t 
 				shared_ptr[map->share] = map->memory;
 
 			/* keep track of the first unassigned entry */
-			if (!map->memory && !unassigned)
+			if (!map->memory && !unassigned && amentry_needs_backing_store(space->cpunum, space->spacenum, map))
 				unassigned = map;
 		}
-	
+
 	return unassigned;
 }
 
@@ -1643,7 +1796,7 @@ static int find_memory(void)
 			{
 				struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 				const struct address_map_t *map;
-				
+
 				/* fill in base/size entries, and handle shared memory */
 				for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
 					if (!IS_AMENTRY_EXTENDED(map))
@@ -1668,8 +1821,8 @@ static int find_memory(void)
 			for (map = cpudata[bankdata[banknum].cpunum].space[bankdata[banknum].spacenum].adjmap; map && !IS_AMENTRY_END(map); map++)
 				if (!IS_AMENTRY_EXTENDED(map) && map->start == bankdata[banknum].base)
 				{
-					cpu_bankbase[banknum] = map->memory;
-	 				VPRINTF(("assigned bank %d pointer to memory from range %08X-%08X\n", banknum, map->start, map->end));
+					bank_ptr[banknum] = map->memory;
+	 				VPRINTF(("assigned bank %d pointer to memory from range %08X-%08X [%08X]\n", banknum, map->start, map->end, (UINT32)map->memory));
 					break;
 				}
 		}
@@ -1688,9 +1841,11 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	struct address_map_t *map;
+	struct memory_block_t *block;
+	int blocknum;
 
 	VPRINTF(("memory_find_base(%d,%d,%d,%08X) -> ", cpunum, spacenum, readwrite, offset));
-	
+
 	/* look in the adjusted map */
 	for (map = space->adjmap; map && !IS_AMENTRY_END(map); map++)
 		if (!IS_AMENTRY_EXTENDED(map))
@@ -1700,7 +1855,7 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 			{
 				if (maskoffs >= map->start && maskoffs <= map->end)
 				{
-					VPRINTF(("found in entry %08X-%08X\n", map->start, map->end));
+					VPRINTF(("found in entry %08X-%08X [%08X]\n", map->start, map->end, (UINT32)map->memory + (maskoffs - map->start)));
 					return (UINT8 *)map->memory + (maskoffs - map->start);
 				}
 			}
@@ -1708,57 +1863,22 @@ static void *memory_find_base(int cpunum, int spacenum, int readwrite, offs_t of
 			{
 				if ((maskoffs & map->end) == map->start)
 				{
-					VPRINTF(("found in entry %08X-%08X\n", map->start, map->end));
+					VPRINTF(("found in entry %08X-%08X [%08X]\n", map->start, map->end, (UINT32)map->memory + (maskoffs - map->start)));
 					return (UINT8 *)map->memory + (maskoffs - map->start);
 				}
 			}
 		}
-	
+
+	/* if not found there, look in the allocated blocks */
+	for (blocknum = 0, block = memory_block; blocknum < memory_block_count; blocknum++, block++)
+		if (block->cpunum == cpunum && block->spacenum == spacenum && block->start <= offset && block->end > offset)
+		{
+			VPRINTF(("found in allocated memory block %08X-%08X [%08X]\n", block->start, block->end, (UINT32)block->data + (offset - block->start)));
+			return block->data + offset - block->start;
+		}
+
 	VPRINTF(("did not find\n"));
 	return NULL;
-				
-
-#if 0
-	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
-	struct table_data_t *tabledata = readwrite ? &space->write : &space->read;
-	struct memory_block_t *block;
-	offs_t entryoffs, origoffs = offset;
-	UINT8 *base;
-	int blocknum;
-	UINT8 entry;
-
-	/* do a lookup on the given offset */
-	offset &= space->mask;
-	entry = tabledata->table[LEVEL1_INDEX(offset)];
-	if (entry >= SUBTABLE_BASE)
-		entry = tabledata->table[LEVEL2_INDEX(entry,offset)];
-	
-	/* if we're unmapped, the answer is NULL */
-	if (entry == STATIC_UNMAP)
-		return NULL;
-	
-	/* otherwise, adjust for the masking and stuff */
-	offset = ((offset - tabledata->handlers[entry].offset) & tabledata->handlers[entry].mask) + tabledata->handlers[entry].offset;
-	
-	/* if we're a bank, use that first */
-	if (entry >= STATIC_BANK1 && entry < STATIC_BANK1 + MAX_BANKS)
-		base = cpu_bankbase[entry];
-	
-	/* look in memory blocks first */
-	for (blocknum = 0, block = memory_block; blocknum < memory_block_count && !base; blocknum++, block++)
-		if (block->cpunum == cpunum && block->spacenum == spacenum)
-		{
-			if (entryoffs >= block->start && entryoffs <= block->end)
-				base = ((UINT8 *)block->data + (entryoffs - block->start));
-		}
-		
-	/* are we an utter failure? */
-	if (!base)
-		return NULL;
-
-printf("%08X\n", (UINT32)base + offset);
-	return base + offset;
-#endif
 }
 
 
@@ -1788,7 +1908,7 @@ data8_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(cpu_bankbase[entry][address]);										\
+		MEMREADEND(bank_ptr[entry][address]);											\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1806,7 +1926,7 @@ data8_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(cpu_bankbase[entry][xormacro(address)]);								\
+		MEMREADEND(bank_ptr[entry][xormacro(address)]);									\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1840,7 +1960,7 @@ data16_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data16_t *)&cpu_bankbase[entry][address]);							\
+		MEMREADEND(*(data16_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1858,7 +1978,7 @@ data16_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data16_t *)&cpu_bankbase[entry][xormacro(address)]);				\
+		MEMREADEND(*(data16_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1890,7 +2010,7 @@ data32_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data32_t *)&cpu_bankbase[entry][address]);							\
+		MEMREADEND(*(data32_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1908,7 +2028,7 @@ data32_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data32_t *)&cpu_bankbase[entry][xormacro(address)]);				\
+		MEMREADEND(*(data32_t *)&bank_ptr[entry][xormacro(address)]);					\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1938,7 +2058,7 @@ data64_t name(offs_t address)															\
 	/* handle banks inline */															\
 	address = (address - space.readhandlers[entry].offset) & space.readhandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMREADEND(*(data64_t *)&cpu_bankbase[entry][address]);							\
+		MEMREADEND(*(data64_t *)&bank_ptr[entry][address]);								\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1961,7 +2081,7 @@ void name(offs_t address, data8_t data)													\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(cpu_bankbase[entry][address] = data);								\
+		MEMWRITEEND(bank_ptr[entry][address] = data);									\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -1978,7 +2098,7 @@ void name(offs_t address, data8_t data)													\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(cpu_bankbase[entry][xormacro(address)] = data);						\
+		MEMWRITEEND(bank_ptr[entry][xormacro(address)] = data);							\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2011,7 +2131,7 @@ void name(offs_t address, data16_t data)												\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data16_t *)&cpu_bankbase[entry][address] = data);					\
+		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2028,7 +2148,7 @@ void name(offs_t address, data16_t data)												\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data16_t *)&cpu_bankbase[entry][xormacro(address)] = data);		\
+		MEMWRITEEND(*(data16_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2059,7 +2179,7 @@ void name(offs_t address, data32_t data)												\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data32_t *)&cpu_bankbase[entry][address] = data);					\
+		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2076,7 +2196,7 @@ void name(offs_t address, data32_t data)												\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data32_t *)&cpu_bankbase[entry][xormacro(address)] = data);		\
+		MEMWRITEEND(*(data32_t *)&bank_ptr[entry][xormacro(address)] = data);			\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2105,7 +2225,7 @@ void name(offs_t address, data64_t data)												\
 	/* handle banks inline */															\
 	address = (address - space.writehandlers[entry].offset) & space.writehandlers[entry].mask;\
 	if (entry <= STATIC_RAM)															\
-		MEMWRITEEND(*(data64_t *)&cpu_bankbase[entry][address] = data);					\
+		MEMWRITEEND(*(data64_t *)&bank_ptr[entry][address] = data);						\
 																						\
 	/* fall back to the handler */														\
 	else																				\
@@ -2124,7 +2244,7 @@ void name(offs_t address, data64_t data)												\
     READWORD16(program_read_word_16be,   address_space[ADDRESS_SPACE_PROGRAM])
  WRITEBYTE16BE(program_write_byte_16be,  address_space[ADDRESS_SPACE_PROGRAM])
    WRITEWORD16(program_write_word_16be,  address_space[ADDRESS_SPACE_PROGRAM])
-   
+
   READBYTE16LE(program_read_byte_16le,   address_space[ADDRESS_SPACE_PROGRAM])
     READWORD16(program_read_word_16le,   address_space[ADDRESS_SPACE_PROGRAM])
  WRITEBYTE16LE(program_write_byte_16le,  address_space[ADDRESS_SPACE_PROGRAM])
@@ -2136,14 +2256,14 @@ void name(offs_t address, data64_t data)												\
  WRITEBYTE32BE(program_write_byte_32be,  address_space[ADDRESS_SPACE_PROGRAM])
  WRITEWORD32BE(program_write_word_32be,  address_space[ADDRESS_SPACE_PROGRAM])
   WRITEDWORD32(program_write_dword_32be, address_space[ADDRESS_SPACE_PROGRAM])
-   
+
   READBYTE32LE(program_read_byte_32le,   address_space[ADDRESS_SPACE_PROGRAM])
   READWORD32LE(program_read_word_32le,   address_space[ADDRESS_SPACE_PROGRAM])
    READDWORD32(program_read_dword_32le,  address_space[ADDRESS_SPACE_PROGRAM])
  WRITEBYTE32LE(program_write_byte_32le,  address_space[ADDRESS_SPACE_PROGRAM])
  WRITEWORD32LE(program_write_word_32le,  address_space[ADDRESS_SPACE_PROGRAM])
   WRITEDWORD32(program_write_dword_32le, address_space[ADDRESS_SPACE_PROGRAM])
-   
+
   READBYTE64BE(program_read_byte_64be,   address_space[ADDRESS_SPACE_PROGRAM])
   READWORD64BE(program_read_word_64be,   address_space[ADDRESS_SPACE_PROGRAM])
  READDWORD64BE(program_read_dword_64be,  address_space[ADDRESS_SPACE_PROGRAM])
@@ -2152,7 +2272,7 @@ void name(offs_t address, data64_t data)												\
  WRITEWORD64BE(program_write_word_64be,  address_space[ADDRESS_SPACE_PROGRAM])
 WRITEDWORD64BE(program_write_dword_64be, address_space[ADDRESS_SPACE_PROGRAM])
   WRITEQWORD64(program_write_qword_64be, address_space[ADDRESS_SPACE_PROGRAM])
-   
+
   READBYTE64LE(program_read_byte_64le,   address_space[ADDRESS_SPACE_PROGRAM])
   READWORD64LE(program_read_word_64le,   address_space[ADDRESS_SPACE_PROGRAM])
  READDWORD64LE(program_read_dword_64le,  address_space[ADDRESS_SPACE_PROGRAM])
@@ -2174,7 +2294,7 @@ WRITEDWORD64LE(program_write_dword_64le, address_space[ADDRESS_SPACE_PROGRAM])
     READWORD16(data_read_word_16be,   address_space[ADDRESS_SPACE_DATA])
  WRITEBYTE16BE(data_write_byte_16be,  address_space[ADDRESS_SPACE_DATA])
    WRITEWORD16(data_write_word_16be,  address_space[ADDRESS_SPACE_DATA])
-   
+
   READBYTE16LE(data_read_byte_16le,   address_space[ADDRESS_SPACE_DATA])
     READWORD16(data_read_word_16le,   address_space[ADDRESS_SPACE_DATA])
  WRITEBYTE16LE(data_write_byte_16le,  address_space[ADDRESS_SPACE_DATA])
@@ -2186,14 +2306,14 @@ WRITEDWORD64LE(program_write_dword_64le, address_space[ADDRESS_SPACE_PROGRAM])
  WRITEBYTE32BE(data_write_byte_32be,  address_space[ADDRESS_SPACE_DATA])
  WRITEWORD32BE(data_write_word_32be,  address_space[ADDRESS_SPACE_DATA])
   WRITEDWORD32(data_write_dword_32be, address_space[ADDRESS_SPACE_DATA])
-   
+
   READBYTE32LE(data_read_byte_32le,   address_space[ADDRESS_SPACE_DATA])
   READWORD32LE(data_read_word_32le,   address_space[ADDRESS_SPACE_DATA])
    READDWORD32(data_read_dword_32le,  address_space[ADDRESS_SPACE_DATA])
  WRITEBYTE32LE(data_write_byte_32le,  address_space[ADDRESS_SPACE_DATA])
  WRITEWORD32LE(data_write_word_32le,  address_space[ADDRESS_SPACE_DATA])
   WRITEDWORD32(data_write_dword_32le, address_space[ADDRESS_SPACE_DATA])
-   
+
   READBYTE64BE(data_read_byte_64be,   address_space[ADDRESS_SPACE_DATA])
   READWORD64BE(data_read_word_64be,   address_space[ADDRESS_SPACE_DATA])
  READDWORD64BE(data_read_dword_64be,  address_space[ADDRESS_SPACE_DATA])
@@ -2202,7 +2322,7 @@ WRITEDWORD64LE(program_write_dword_64le, address_space[ADDRESS_SPACE_PROGRAM])
  WRITEWORD64BE(data_write_word_64be,  address_space[ADDRESS_SPACE_DATA])
 WRITEDWORD64BE(data_write_dword_64be, address_space[ADDRESS_SPACE_DATA])
   WRITEQWORD64(data_write_qword_64be, address_space[ADDRESS_SPACE_DATA])
-   
+
   READBYTE64LE(data_read_byte_64le,   address_space[ADDRESS_SPACE_DATA])
   READWORD64LE(data_read_word_64le,   address_space[ADDRESS_SPACE_DATA])
  READDWORD64LE(data_read_dword_64le,  address_space[ADDRESS_SPACE_DATA])
@@ -2224,7 +2344,7 @@ WRITEDWORD64LE(data_write_dword_64le, address_space[ADDRESS_SPACE_DATA])
     READWORD16(io_read_word_16be,   address_space[ADDRESS_SPACE_IO])
  WRITEBYTE16BE(io_write_byte_16be,  address_space[ADDRESS_SPACE_IO])
    WRITEWORD16(io_write_word_16be,  address_space[ADDRESS_SPACE_IO])
-   
+
   READBYTE16LE(io_read_byte_16le,   address_space[ADDRESS_SPACE_IO])
     READWORD16(io_read_word_16le,   address_space[ADDRESS_SPACE_IO])
  WRITEBYTE16LE(io_write_byte_16le,  address_space[ADDRESS_SPACE_IO])
@@ -2236,14 +2356,14 @@ WRITEDWORD64LE(data_write_dword_64le, address_space[ADDRESS_SPACE_DATA])
  WRITEBYTE32BE(io_write_byte_32be,  address_space[ADDRESS_SPACE_IO])
  WRITEWORD32BE(io_write_word_32be,  address_space[ADDRESS_SPACE_IO])
   WRITEDWORD32(io_write_dword_32be, address_space[ADDRESS_SPACE_IO])
-   
+
   READBYTE32LE(io_read_byte_32le,   address_space[ADDRESS_SPACE_IO])
   READWORD32LE(io_read_word_32le,   address_space[ADDRESS_SPACE_IO])
    READDWORD32(io_read_dword_32le,  address_space[ADDRESS_SPACE_IO])
  WRITEBYTE32LE(io_write_byte_32le,  address_space[ADDRESS_SPACE_IO])
  WRITEWORD32LE(io_write_word_32le,  address_space[ADDRESS_SPACE_IO])
   WRITEDWORD32(io_write_dword_32le, address_space[ADDRESS_SPACE_IO])
-   
+
   READBYTE64BE(io_read_byte_64be,   address_space[ADDRESS_SPACE_IO])
   READWORD64BE(io_read_word_64be,   address_space[ADDRESS_SPACE_IO])
  READDWORD64BE(io_read_dword_64be,  address_space[ADDRESS_SPACE_IO])
@@ -2252,7 +2372,7 @@ WRITEDWORD64LE(data_write_dword_64le, address_space[ADDRESS_SPACE_DATA])
  WRITEWORD64BE(io_write_word_64be,  address_space[ADDRESS_SPACE_IO])
 WRITEDWORD64BE(io_write_dword_64be, address_space[ADDRESS_SPACE_IO])
   WRITEQWORD64(io_write_qword_64be, address_space[ADDRESS_SPACE_IO])
-   
+
   READBYTE64LE(io_read_byte_64le,   address_space[ADDRESS_SPACE_IO])
   READWORD64LE(io_read_word_64le,   address_space[ADDRESS_SPACE_IO])
  READDWORD64LE(io_read_dword_64le,  address_space[ADDRESS_SPACE_IO])
@@ -2464,15 +2584,10 @@ static WRITE64_HANDLER( mwh64_nop )        {  }
 	other static handlers
 -------------------------------------------------*/
 
-static WRITE_HANDLER( mwh8_rom )       { logerror("cpu #%d (PC=%08X): byte write to ROM %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset), data); }
-static WRITE16_HANDLER( mwh16_rom )    { logerror("cpu #%d (PC=%08X): word write to %08X = %04X & %04X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*2), data, mem_mask ^ 0xffff); }
-static WRITE32_HANDLER( mwh32_rom )    { logerror("cpu #%d (PC=%08X): dword write to %08X = %08X & %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*4), data, mem_mask ^ 0xffffffff); }
-static WRITE64_HANDLER( mwh64_rom )    { logerror("cpu #%d (PC=%08X): qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff); }
-
-static WRITE_HANDLER( mwh8_ramrom )    { cpu_bankbase[STATIC_RAM][offset] = cpu_bankbase[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
-static WRITE16_HANDLER( mwh16_ramrom ) { COMBINE_DATA(&cpu_bankbase[STATIC_RAM][offset*2]); COMBINE_DATA(&cpu_bankbase[0][offset*2 + (opcode_base - opcode_arg_base)]); }
-static WRITE32_HANDLER( mwh32_ramrom ) { COMBINE_DATA(&cpu_bankbase[STATIC_RAM][offset*4]); COMBINE_DATA(&cpu_bankbase[0][offset*4 + (opcode_base - opcode_arg_base)]); }
-static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&cpu_bankbase[STATIC_RAM][offset*8]); COMBINE_DATA(&cpu_bankbase[0][offset*8 + (opcode_base - opcode_arg_base)]); }
+static WRITE_HANDLER( mwh8_ramrom )    { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
+static WRITE16_HANDLER( mwh16_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*2]); COMBINE_DATA(&bank_ptr[0][offset*2 + (opcode_base - opcode_arg_base)]); }
+static WRITE32_HANDLER( mwh32_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*4]); COMBINE_DATA(&bank_ptr[0][offset*4 + (opcode_base - opcode_arg_base)]); }
+static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*8]); COMBINE_DATA(&bank_ptr[0][offset*8 + (opcode_base - opcode_arg_base)]); }
 
 
 /*-------------------------------------------------
@@ -2497,43 +2612,39 @@ static void *get_static_handler(int databits, int readorwrite, int spacenum, int
 		{  8, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh8_nop_program,   (void *)mwh8_nop },
 		{  8, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh8_nop_data,      (void *)mwh8_nop },
 		{  8, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh8_nop_io,        (void *)mwh8_nop },
-		{  8, STATIC_ROM,    0xff,                  NULL,                       (void *)mwh8_rom },
 		{  8, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh8_ramrom },
-		
+
 		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh16_unmap_program,(void *)mwh16_unmap_program },
 		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh16_unmap_data,   (void *)mwh16_unmap_data },
 		{ 16, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh16_unmap_io,     (void *)mwh16_unmap_io },
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh16_nop_program,  (void *)mwh16_nop },
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh16_nop_data,     (void *)mwh16_nop },
 		{ 16, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh16_nop_io,       (void *)mwh16_nop },
-		{ 16, STATIC_ROM,    0xff,                  NULL,                       (void *)mwh16_rom },
 		{ 16, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh16_ramrom },
-		
+
 		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh32_unmap_program,(void *)mwh32_unmap_program },
 		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh32_unmap_data,   (void *)mwh32_unmap_data },
 		{ 32, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh32_unmap_io,     (void *)mwh32_unmap_io },
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh32_nop_program,  (void *)mwh32_nop },
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh32_nop_data,     (void *)mwh32_nop },
 		{ 32, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh32_nop_io,       (void *)mwh32_nop },
-		{ 32, STATIC_ROM,    0xff,                  NULL,                       (void *)mwh32_rom },
 		{ 32, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh32_ramrom },
-		
+
 		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_PROGRAM, (void *)mrh64_unmap_program,(void *)mwh64_unmap_program },
 		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_DATA,    (void *)mrh64_unmap_data,   (void *)mwh64_unmap_data },
 		{ 64, STATIC_UNMAP,  ADDRESS_SPACE_IO,      (void *)mrh64_unmap_io,     (void *)mwh64_unmap_io },
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_PROGRAM, (void *)mrh64_nop_program,  (void *)mwh64_nop },
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_DATA,    (void *)mrh64_nop_data,     (void *)mwh64_nop },
 		{ 64, STATIC_NOP,    ADDRESS_SPACE_IO,      (void *)mrh64_nop_io,       (void *)mwh64_nop },
-		{ 64, STATIC_ROM,    0xff,                  NULL,                       (void *)mwh64_rom },
 		{ 64, STATIC_RAMROM, 0xff,                  NULL,                       (void *)mwh64_ramrom }
 	};
 	int tablenum;
-	
+
 	for (tablenum = 0; tablenum < sizeof(static_handler_list) / sizeof(static_handler_list[0]); tablenum++)
 		if (static_handler_list[tablenum].databits == databits && static_handler_list[tablenum].handlernum == which)
 			if (static_handler_list[tablenum].spacenum == 0xff || static_handler_list[tablenum].spacenum == spacenum)
 				return readorwrite ? static_handler_list[tablenum].write : static_handler_list[tablenum].read;
-	
+
 	return NULL;
 }
 

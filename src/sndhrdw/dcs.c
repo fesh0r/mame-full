@@ -380,7 +380,7 @@ static void dcs_reset(void)
 	dcs.current_sample = 0;
 
 	/* initialize the ADSP Tx callback */
-	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, sound_tx_callback);
+	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
 
 	/* clear all interrupts */
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ0, CLEAR_LINE);

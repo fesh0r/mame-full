@@ -563,14 +563,16 @@ typedef struct address_map_t *(*construct_map_t)(struct address_map_t *map);
 
 /* use this to declare external references to a machine driver */
 #define ADDRESS_MAP_EXTERN(_name)										\
-struct address_map_t *construct_map_##_name(struct address_map_t *map);	\
+struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /* ----- macros for starting, ending, and setting map flags ----- */
 #define ADDRESS_MAP_START(_name,_space,_bits)							\
 struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 {																		\
-	read##_bits##_handler read;											\
-	write##_bits##_handler write;										\
+	typedef read##_bits##_handler _rh_t;								\
+	typedef write##_bits##_handler _wh_t;								\
+	_rh_t read;															\
+	_wh_t write;														\
 	data##_bits##_t **base;												\
 																		\
 	(void)read; (void)write; (void)base;								\
@@ -609,10 +611,10 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 	map->mirror = (_mirror);											\
 
 #define AM_READ(_handler)												\
-	map->read.handler = (void *) (read = _handler);						\
+	map->read.handler = (void *)(read = _handler);						\
 
 #define AM_WRITE(_handler)												\
-	map->write.handler = (void *) (write = _handler);					\
+	map->write.handler = (void *)(write = _handler);					\
 
 #define AM_REGION(_region, _offs)										\
 	map->memory = memory_region(_region) + _offs;						\
@@ -628,13 +630,13 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 
 /* ----- common shortcuts ----- */
 #define AM_READWRITE(_read,_write)			AM_READ(_read) AM_WRITE(_write)
-#define AM_ROM								AM_READ((read8_handler)STATIC_ROM)
-#define AM_RAM								AM_READWRITE((read8_handler)STATIC_RAM, (write8_handler)STATIC_RAM)
-#define AM_ROMBANK(_bank)					AM_READ((void *)(STATIC_BANK1 + (_bank) - 1))
-#define AM_RAMBANK(_bank)					AM_READWRITE((void *)(STATIC_BANK1 + (_bank) - 1), (void *)(STATIC_BANK1 + (_bank) - 1))
-#define AM_NOP								AM_READWRITE((read8_handler)STATIC_NOP, (write8_handler)STATIC_NOP)
-#define AM_READNOP							AM_READ((void *)STATIC_NOP)
-#define AM_WRITENOP							AM_WRITE((void *)STATIC_NOP)
+#define AM_ROM								AM_READ((_rh_t)STATIC_ROM)
+#define AM_RAM								AM_READWRITE((_rh_t)STATIC_RAM, (_wh_t)STATIC_RAM)
+#define AM_ROMBANK(_bank)					AM_READ((_rh_t)(STATIC_BANK1 + (_bank) - 1))
+#define AM_RAMBANK(_bank)					AM_READWRITE((_rh_t)(STATIC_BANK1 + (_bank) - 1), (_wh_t)(STATIC_BANK1 + (_bank) - 1))
+#define AM_NOP								AM_READWRITE((_rh_t)STATIC_NOP, (_wh_t)STATIC_NOP)
+#define AM_READNOP							AM_READ((_rh_t)STATIC_NOP)
+#define AM_WRITENOP							AM_WRITE((_wh_t)STATIC_NOP)
 
 
 
@@ -697,9 +699,6 @@ struct address_map_t *construct_map_##_name(struct address_map_t *map)	\
 /* ----- table lookup helpers ----- */
 #define LEVEL1_INDEX(a)			((a) >> LEVEL2_BITS)
 #define LEVEL2_INDEX(e,a)		((1 << LEVEL1_BITS) + (((e) - SUBTABLE_BASE) << LEVEL2_BITS) + ((a) & ((1 << LEVEL2_BITS) - 1)))
-
-/* ----- sparse address space detection ----- */
-#define IS_SPARSE(a)			((a) > SPARSE_THRESH)
 
 
 
@@ -874,6 +873,9 @@ void		memory_set_opcode_base(int cpunum, void *base);
 void *		memory_get_read_ptr(int cpunum, int spacenum, offs_t offset);
 void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
 
+/* ----- memory banking */
+void		memory_set_bankptr(int banknum, void *base);
+
 /* ----- dynamic address space mapping ----- */
 data8_t *	memory_install_read8_handler  (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler);
 data16_t *	memory_install_read16_handler (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler);
@@ -898,7 +900,6 @@ extern UINT8 *			opcode_arg_base;			/* opcode RAM base */
 extern offs_t			opcode_mask;				/* mask to apply to the opcode address */
 extern offs_t			opcode_memory_min;			/* opcode memory minimum */
 extern offs_t			opcode_memory_max;			/* opcode memory maximum */
-extern UINT8 *			cpu_bankbase[];				/* array of bank bases */
 extern struct address_space_t address_space[];		/* address spaces */
 extern struct address_map_t *construct_map_0(struct address_map_t *map);
 
@@ -1010,18 +1011,7 @@ do {																					\
 #define catch_nextBranch()			(opcode_entry = 0xff)
 
 /* ----- bank switching macro ----- */
-#define cpu_setbank(bank, base) 														\
-do {																					\
-	if (bank >= STATIC_BANK1 && bank <= STATIC_BANKMAX)									\
-	{																					\
-		cpu_bankbase[bank] = (UINT8 *)(base);											\
-		if (opcode_entry == bank && cpu_getactivecpu() >= 0)							\
-		{																				\
-			opcode_entry = 0xff;														\
-			memory_set_opbase(activecpu_get_pc_byte());									\
-		}																				\
-	}																					\
-} while (0)
+#define cpu_setbank(bank, base) memory_set_bankptr(bank, base)
 
 
 

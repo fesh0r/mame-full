@@ -1039,6 +1039,7 @@ DRIVER_INIT( cavelon )
 
 	/* banked ROM */
 	install_mem_read_handler(0, 0x0000, 0x3fff, MRA8_BANK1);
+	cavelon_banksw();
 
 	/* A15 switches memory banks */
 	install_mem_read_handler (0, 0x8000, 0xffff, cavelon_banksw_r);
