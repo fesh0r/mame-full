@@ -64,6 +64,7 @@ CPUS+=TMS9900@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
 CPUS+=TMS9995@
+CPUS+=TMS99010@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=Z8000@
@@ -401,7 +402,10 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/systems/ti99_4x.o  \
 	  $(OBJ)/mess/systems/ti99_2.o	 \
 	  $(OBJ)/mess/systems/ti990_4.o  \
-	  $(OBJ)/mess/sndhrdw/spchroms.o
+	  $(OBJ)/mess/systems/ti990_10.c \
+	  $(OBJ)/mess/machine/990_hd.c	 \
+	  $(OBJ)/mess/machine/990_tap.c	 \
+	  $(OBJ)/mess/vidhrdw/911_vdt.c
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \

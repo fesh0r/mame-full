@@ -7,6 +7,7 @@ New System Drivers Supported (in no particular order):
 - Microbee 32 PC [Stefano Priore]
 - ZX Spectrum +3e (Spain) [Stefano Priore]
 - TI-99/4P (preliminary) [Raphael Nabet]
+- TI-990/10 (preliminary) [Raphael Nabet]
 
 System Driver Changes:
 ----------------------
