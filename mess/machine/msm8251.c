@@ -4,7 +4,7 @@
 #include "includes/serial.h"
 
 /* uncomment to enable verbose comments */
-//#define VERBOSE
+#define VERBOSE
 
 #ifdef VERBOSE
 #define LOG(x)	logerror("MSM8251: "x)
@@ -14,36 +14,24 @@
 
 static struct msm8251 uart;
 static void msm8251_receive_character(UINT8 ch);
+static void msm8251_in_callback(int id, unsigned long state);
+static void msm8251_update_tx_empty(void);
+static void msm8251_update_tx_ready(void);
 
-static UINT8 msm8251_parity_table[256];
+static void msm8251_in_callback(int id, unsigned long state)
+{
+	uart.connection.input_state = state;
+
+	msm8251_update_tx_ready();
+
+}
 
 
 /* init */
 void	msm8251_init(struct msm8251_interface *iface)
 {
-	int i;
+	serial_helper_setup();
 
-	/* if sum of all bits in the byte is even, then the data
-	has even parity, otherwise it has odd parity */
-	for (i=0; i<256; i++)
-	{
-		int data;
-		int sum;
-		int b;
-
-		sum = 0;
-		data = i;
-
-		for (b=0; b<8; b++)
-		{
-			sum+=data & 0x01;
-
-			data = data>>1;
-		}
-
-		msm8251_parity_table[i] = sum & 0x01;
-	}
-	
 	/* copy interface */
 	if (iface!=NULL)
 	{
@@ -53,6 +41,12 @@ void	msm8251_init(struct msm8251_interface *iface)
 	uart.baud_rate = -1;
 	/* reset chip */
 	msm8251_reset();
+
+	/* setup this side of the serial connection */
+	serial_connection_init(&uart.connection);
+	serial_connection_set_in_callback(&uart.connection, msm8251_in_callback);
+	transmit_register_reset(&uart.transmit_reg);
+	receive_register_reset(&uart.receive_reg);
 }
 
 /* stop */
@@ -82,113 +76,41 @@ static void msm8251_update_rx_ready(void)
 	
 }
 
-static void	msm8251_receive_bit(int bit)
+static void uart_timer_callback(int id)
 {
-
-	int previous_bit;
-#ifdef VERBOSE
-	logerror("msm8251 receive bit: %1x\n",bit);
-#endif
-	previous_bit = uart.receive_char & 1;
-
-	/* shift previous bit 7 out */
-	uart.receive_char = uart.receive_char<<1;
-	/* shift new bit in */
-	uart.receive_char = (uart.receive_char & 0x0fe) | bit;
-	/* update bit count received */
-	uart.bit_count_received++;
-
-
-	/* asyncrhonouse mode */
-	if (uart.receive_flags & MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT)
+	/* get bit received from other side and update receive register */
+	receive_register_update_bit(&uart.receive_reg, get_in_data_bit(uart.connection.input_state));
+	
+	if (uart.receive_reg.flags & RECEIVE_REGISTER_FULL)
 	{
-		/* the previous bit is stored in uart.receive char bit 0 */
-		/* has the bit state changed? */
-		if (((previous_bit ^ bit) & 0x01)!=0)
-		{
-			/* yes */
-			if (bit==0)
-			{
-				/* seen start bit! */
-				/* not waiting for start bit now! */
-				uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
-				uart.receive_flags |=MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
-				/* reset bit count received */
-				uart.bit_count_received = 0;
-			}
-		}		
+		receive_register_extract(&uart.receive_reg, &uart.data_form);
+		msm8251_receive_character(uart.receive_reg.byte_received);
 	}
-	else
-	/* asynchronous */
-	if (uart.receive_flags & MSM8251_TRANSFER_RECEIVE_SYNCHRONISED)
+
+	/* transmit register full? */
+	if ((uart.status & MSM8251_STATUS_TX_EMPTY)==0)
 	{
-		/* received all bits? */
-		if (uart.bit_count_received==uart.receive_char_length)
+		/* if transmit reg is empty */
+		if (uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)
 		{
-			unsigned long data_shift;
-			UINT8 data;
-
-			uart.bit_count_received = 0;
-			uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
-			uart.receive_flags |= MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
-
-			data_shift = 0;
-
-			/* if parity check is enabled there should be a parity bit in the data stream */
-			if (uart.mode_byte & (1<<4))
-			{
-				data_shift++;
-			}
-
-			/* currently hardwired for 1 stop bit! */
-			data_shift++;
-
-			/* strip off stop bits and parity */
-			data = uart.receive_char>>data_shift;
-
-			/* mask off other bits so data byte has 0's in unused bits */
-			data = data & (0x0ff
-				<<
-				(8-(((uart.mode_byte>>2) & 0x03)+5)));
-
-			/* parity enable? */
-			if (uart.mode_byte & (1<<4))
-			{
-				if (msm8251_parity_table[data]!=(uart.receive_char & 0x01))
-				{
-					uart.status |= MSM8251_STATUS_PARITY_ERROR;
-				}
-			}
-			
-			/* signal character received */
-			msm8251_receive_character(data);		
+			/* set it up */
+			transmit_register_setup(&uart.transmit_reg, &uart.data_form, uart.data);
+			/* msm8251 transmit reg now empty */
+			uart.status |=MSM8251_STATUS_TX_EMPTY;
+			uart.flags |=MSM8251_TX_READY;
+			uart.status |=MSM8251_STATUS_TX_READY;
+			msm8251_update_tx_empty();
+			msm8251_update_tx_ready();
 		}
 	}
-}
-
-static int	msm8251_transmit_bit(void)
-{
-
-	/* top bit is data */
-	int bit;
-
 	
-	bit = (uart.data & 0x080)>>7;
-	/* shift for next time */
-	uart.data = uart.data<<1;
-	/* update transmitted bit count */
-	uart.bit_count_transmitted++;
+	/* if transmit is not empty... transmit data */
+	if ((uart.transmit_reg.flags & TRANSMIT_REGISTER_EMPTY)==0)
+	{
+//		logerror("MSM8251\n");
+		transmit_register_send_bit(&uart.transmit_reg, &uart.connection);
+	}
 
-	return bit;
-}
-
-static void uart_timer_callback(int dummy)
-{
-	unsigned long State = serial_device_get_state(0);
-
-	/* shift bit in */
-	msm8251_receive_bit(get_out_data_bit(State));
-	
 	/* hunt mode? */
 	/* after each bit has been shifted in, it is compared against the current sync byte */
 	if (uart.command & (1<<7))
@@ -219,18 +141,41 @@ static void uart_timer_callback(int dummy)
 static void msm8251_update_tx_ready(void)
 {
 	UINT8 state;
+	unsigned long previous_flags;
 
-	state = uart.flags & MSM8251_TX_READY;
+	previous_flags = uart.flags;
 
-	/* masked? */
-	if ((uart.command & (1<<0))==0)
+	/* clear tx ready state */
+	uart.flags &=~MSM8251_TX_READY;
+	
+	/* tx ready output is set if:
+		DB Buffer Empty &
+		CTS is set &
+		Transmit enable is 1 
+	*/
+
+	/* transmit enable? */
+	if ((uart.command & (1<<0))!=0)
 	{
-		state = 0;
-
+		/* other side has rts set (comes in as CTS at this side) */
+		if (uart.connection.input_state & SERIAL_STATE_CTS)
+		{
+			if (uart.status & MSM8251_STATUS_TX_EMPTY)
+			{
+				/* enable transfer */
+				uart.flags |=MSM8251_TX_READY;
+			}
+		}
 	}
 
-	if (uart.interface.tx_ready_callback)
-		uart.interface.tx_ready_callback((state!=0));
+	/* did state change? */
+	if (((uart.flags^previous_flags) & MSM8251_TX_READY)!=0)
+	{
+		state = uart.flags & MSM8251_TX_READY;
+
+		if (uart.interface.tx_ready_callback)
+			uart.interface.tx_ready_callback((state!=0));
+	}
 }
 
 static void msm8251_update_tx_empty(void)
@@ -261,10 +206,12 @@ void	msm8251_reset(void)
 {
 	LOG("MSM8251 Reset\n");
 
+	/* what is the default setup when the 8251 has been reset??? */
+
 	uart.flags |= MSM8251_EXPECTING_MODE;
 	uart.flags &= ~MSM8251_EXPECTING_SYNC_BYTE;
-	uart.status |= MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_RX_READY;
-	uart.flags |= MSM8251_TX_READY;
+	uart.status |= MSM8251_STATUS_TX_EMPTY | MSM8251_STATUS_TX_READY;
+	
 	msm8251_update_tx_empty();
 	msm8251_update_rx_ready();
 	msm8251_update_tx_ready();
@@ -337,6 +284,10 @@ WRITE_HANDLER(msm8251_control_w)
 				{
 					logerror("enable parity checking\n");
 				}
+				else
+				{
+					logerror("parity check disabled\n");
+				}
 
 				if (data & (1<<5))
 				{
@@ -385,7 +336,14 @@ WRITE_HANDLER(msm8251_control_w)
 					}
 				}
 #endif
-	
+
+				uart.data_form.word_length = ((data>>2) & 0x03)+5;
+				uart.data_form.parity = SERIAL_PARITY_NONE;
+				uart.data_form.stop_bit_count = 1;
+				receive_register_setup(&uart.receive_reg, &uart.data_form);
+			
+
+#if 0
 				/* data bits */
 				uart.receive_char_length = (((data>>2) & 0x03)+5);
 				
@@ -400,7 +358,7 @@ WRITE_HANDLER(msm8251_control_w)
 
 				uart.receive_flags &=~MSM8251_TRANSFER_RECEIVE_SYNCHRONISED;
 				uart.receive_flags |= MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT;
-
+#endif
 				/* not expecting mode byte now */
 				uart.flags &= ~MSM8251_EXPECTING_MODE;
 			}
@@ -458,11 +416,11 @@ WRITE_HANDLER(msm8251_control_w)
 
 		if (data & (1<<5))
 		{
-			logerror("/rts set to 1\n");
+			logerror("/rts set to 0\n");
 		}
 		else
 		{
-			logerror("/rts set to 0\n");
+			logerror("/rts set to 1\n");
 		}
 
 		if (data & (1<<2))
@@ -522,6 +480,21 @@ WRITE_HANDLER(msm8251_control_w)
 				1 = transmit enable 
 		*/
 	
+		uart.connection.State &=~SERIAL_STATE_RTS;
+		if (data & (1<<5))
+		{
+			/* rts set to 0 */
+			uart.connection.State |= SERIAL_STATE_RTS;
+		}
+
+		uart.connection.State &=~SERIAL_STATE_DTR;
+		if (data & (1<<1))
+		{
+			uart.connection.State |= SERIAL_STATE_DTR;
+		}
+
+		/* refresh outputs */
+		serial_connection_out(&uart.connection);
 
 		if (data & (1<<4))
 		{
@@ -533,13 +506,17 @@ WRITE_HANDLER(msm8251_control_w)
 			msm8251_reset();
 		}
 
+		msm8251_update_tx_ready();
+
 	}
 }
 
 /* read status */
 READ_HANDLER(msm8251_status_r)
 {
-	uart.status &= ~((1<<2) | (1<<1));
+#ifdef VERBOSE
+	logerror("status: %02x\n", uart.status);
+#endif
 
 	return uart.status;
 }
@@ -549,8 +526,10 @@ WRITE_HANDLER(msm8251_data_w)
 {
 	uart.data = data;
 
+	logerror("write data: %02x\n",data);
+
 	/* writing clears */
-	uart.flags &= ~MSM8251_TX_READY;
+	uart.status &=~MSM8251_STATUS_TX_READY;
 	/* writing sets - it's not empty */
 	uart.status &= ~MSM8251_STATUS_TX_EMPTY;
 
@@ -585,26 +564,9 @@ READ_HANDLER(msm8251_data_r)
 	return uart.data;
 }
 
-/* SERIAL DEVICE! */
-
-static unsigned long msm_state;
-
-void	msm8251_serial_device_updated_callback(int id, unsigned long State)
-{
-	/* syncronous */
-
-
-	/* serial device has updated it's state */
-
-	if (uart.msm8251_updated_callback)
-		uart.msm8251_updated_callback(id, msm_state);
-}
-
-
-
 /* initialise transfer using serial device - set the callback which will
 be called when serial device has updated it's state */
-void	msm8251_init_serial_transfer(int id)
+void	msm8251_connect_to_serial_device(int id)
 {
-	serial_device_set_callback(id,msm8251_serial_device_updated_callback);
+	serial_device_connect(id,&uart.connection);
 }

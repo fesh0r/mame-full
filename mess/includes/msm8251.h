@@ -2,6 +2,7 @@
 #define __MSM8251_HEADER_INCLUDED__
 
 #include "driver.h"
+#include "serial.h"
 
 #define MSM8251_EXPECTING_MODE 0x01
 #define MSM8251_EXPECTING_SYNC_BYTE 0x02
@@ -14,6 +15,7 @@
 #define MSM8251_STATUS_PARITY_ERROR 0x08
 #define MSM8251_STATUS_TX_EMPTY		0x04
 #define MSM8251_STATUS_RX_READY	0x02
+#define MSM8251_STATUS_TX_READY	0x01
 
 #define MSM8251_TRANSFER_RECEIVE_WAITING_FOR_START_BIT	0x0001
 #define MSM8251_TRANSFER_RECEIVE_SYNCHRONISED			0x0002
@@ -48,23 +50,26 @@ struct msm8251
 	/* data being received */
 	UINT8 data;	
 
-	int bit_count_received;
-	int bit_count_transmitted;
+	/* receive reg */
+	struct serial_receive_register receive_reg;
+	/* transmit reg */
+	struct serial_transmit_register transmit_reg;
 
-	unsigned long State;
+	struct data_form data_form;
 
+	/* current baud rate */
 	unsigned long baud_rate;
 
-	unsigned long receive_flags;
-	/* this data byte includes start, stop and parity bits */
-	unsigned long receive_char;
-	unsigned long receive_char_length;
-
+	/* baud rate timer */
 	void *timer;
 
-	void (*msm8251_updated_callback)(int id, unsigned long State);
-
+	/* contains callback for txrdy, rxrdy and tx empty which connect
+	to host system */
 	struct msm8251_interface interface;
+
+	/* the serial connection that data is transfered over */
+	/* this is usually connected to the serial device */
+	struct serial_connection connection;
 };
 
 /* reading and writing data register share the same address,
@@ -91,5 +96,5 @@ void msm8251_stop(void);
 void msm8251_set_baud_rate(unsigned long);
 
 
-void	msm8251_init_serial_transfer(int id);
+void	msm8251_connect_to_serial_device(int id);
 #endif
