@@ -71,6 +71,12 @@
  *   0D9h                               -  RET
  *   0DDh, 0EDh, 0FDh                   -  CALL
  *   Thanks for the info go to Anton V. Ignatichev.
+ *
+ * 08-12-2002 Krzysztof Strzecha
+ *
+ * - ADC r instructions should affect parity flag.
+ *   Fixed only for non x86 asm version (#define i8080_EXACT 1).
+ *   There are probably more opcodes which should affect this flag, but don't.
  * 
  *****************************************************************************/
 
