@@ -1,6 +1,7 @@
-	Multiplayer Network XMame N0.4 (Rewrite by Steve Freeland, caucasatron@yahoo.ca)
+	Multiplayer Network XMame N0.5
+	(Rewrite by Steve Freeland, caucasatron@yahoo.ca)
 	------------------------------
-	mame version 0.58.1
+	mame version 0.60.1
 
 Usage (for an n-player game):
 -----
@@ -10,11 +11,16 @@ Start n - 1 slaves:
     xmame.<display method> -slave <master hostname> <other options> <game name>
 Currently there can only be one slave per machine, although a slave
 can share a machine with the master.
-The slave can also use the -netmapkey option, which for true
-multiplayer games (eg Gauntlet) should let you use player 1
-controls (which you're likely to have configured to something convenient)
-to control player <i> (whichever player number the slave is assigned
-by the master).
+Optional, uh, options:
+-netmapkey:  When the slave is invoked with this switch, it will remap
+control so that regardless of whatever player number the slave is
+assigned, the controls used are those configured for player 1
+(which you're likely to have configured to something convenient).
+-parallelsync:  This option (given to the master) improves overall
+performance at the price of responsiveness:  Your input will be
+processed with a delay of roughly 16 milliseconds.  If your reflexes
+are fast enough to make that a noticeable problem, may I suggest a
+career in professional table tennis?
 
 Message format
 --------------
@@ -34,8 +40,10 @@ join.  The slave id string is currently only used for logging.
 
 ACCEPT:  This is the master's reply to the slave if the protocol
 versions and game name match.  The body contains is the player number
-assigned to the slave (usually 2 to 4; the master is always player 1)
-and the id strings and IP addresses for all the other slaves.
+assigned to the slave (usually 2 to 4; the master is always player 1),
+the id strings and IP addresses for all the other slaves, and any
+extra information required about the protocol (currently: whether
+parallelsync is enabled)
 
 REFUSE:  This is the master's reply to the slave if the protocol
 versions and/or game name do not match.  There is no body.
@@ -121,6 +129,21 @@ reach its destination in time.
 	                       | SYNCED |              
 			       +--------+
 
+    "Parallel sync" mode works by using the input state from the frame
+before the current one.  The local input state collected by the MAME
+core is backed up temporarily at the beginning of frame n and
+the previously stored state (from frame n - 1) is retrieved and mixed
+with the peers' input states for frame n - 1.  That's where the slight
+loss of responsiveness comes from.  The advantage of this is that
+because the remote input states used for a given frame were send out
+on the network during *previous* frame, they have had a full frame
+(16 ms for most games) to cross the network.  In non-parallel sync
+mode, the time available for network latency is 16 ms minus however
+much time it takes to emulate the game for that frame, which on slower
+machines could leave almost nothing.  The tradeoff should be
+advantageous on all but very fast machines (relative to the game
+being emulated) on very fast networks.
+
 TODO
 ----
 . Adjust for high latency -- coarser sync frequency?	
@@ -131,129 +154,10 @@ TODO
 . More flexible network port config?
 . Talk to the core team about integrating the protocol-level stuff
   into the platform-independant network.c
-. _inbound_sync() is getting a bit unmaintainable -- try to break it
-  up as much as possible
 
-Old readme:
------------
-	Multiplayer Network XMame 0.02
-	------------------------------
-	mame version 0.34b5
+This version of netmame is based on Eric Totel's old version (also
+specific to xmame), which is no longer maintained, and most especially
+on a lot of network code from the core which also seems to have been
+abandoned, and for which I can't seem to find the appropriate
+attribution.
 
-Contact: Eric Totel (totel@laas.fr)
-
-Description
------------
-This adds/modifies some files to support network mame games.
-!!!! Only X11 related files have been patched !!!!!
-If someone wants to make the keys communication for svgalib, ggi ... he
-is welcome ;-)
-
-Disclaimer
-----------
-I have no special knowledge about xmame sources. This version was builded
-quickly (one day), and just for fun. Make what you want with it !!!
-This is probably the last update of this particular patch. This work will
-probably merge with the netmame project.
-
-New to version 0.02
--------------------
-KEY MAPPING:
-- key mapping from player 1 keys to player n keys (each time player n uses
-  a player 1 key, this key is mapped to correct key for player n).
-  Consequently, all players can use the player 1 keys to act upon the game.
-  BEWARE this is not always a good thing. That is why it is only an option.
-  Comments:
-  - key mapping activation is of interest for *real* multiplayer games (such
-    as gauntlet for example)
-  - key mapping won't work with games where each player plays at his turn and
-    where the same keys are used by all players.
-
-Installation
-------------
-In this archive, you will find the patch for the xmame 0.33rc1.1 source tree.
-Thus, you need the xmame archive, and must compile the whole thing.
-
-1. Extract the xmame archive
-2. Extract the xnetmame in the xmame directory
-3. Compile as usual.
-
-How to use it ?
----------------
-1. launch 'xmame -master <number of players> ...'
-2. launch 'xmame -slave <master host name> ...' on the machines needed
-   to play the game.
-3. Enjoy !
-
-Examples:
-1. on machine gandalf: xmame -master 2 gaunt2p
-2. on machine bilbo:   xmame -netmapkey -slave gandalf gaunt2p
-
-Was tested on
--------------
-- Linux on a stand-alone machine
-- Solaris (Sparstations 4/5/20, Ultra) on an intranet
-
-Test results
-------------
-The time overheads induced by the communications are acceptable on an ethernet
-network. It proved to worked on ISDN lines too.
-I've not tried any modem game, and I probably won't ;-) But if someone obtains
-results in this particular case, i'd like to have some infos.
-
-To add
-------
-- I cannot test joystick support, so it probably does not work currently
-  (only keycodes are sent via the network)
-- mouse network support
-- this little thing will probably merge with the netmame project
-
-Technical comments
-------------------
-The goal is to synchronise many xmames running independantly on a
-network. This is performed by message exchange between the programs.
-The communications are based on udp communications. It will
-probably move to tcp to enhance the reliability of communications.
-It is necessary to ensure that no message is lost, so that the replica
-can be considered to be consistant.
-
-The synchronisation occurs at display update:
-- all slaves send their current key table to master
-- the master builds a common key table and builds the input ports values
-- the master sends the input ports values to all slaves, so that all
-  emulated games use the same entries.
-  (same input => same output) <=> same behaviour
-
-No deviation of behaviour was stated during the few tests. All replicas
-seem to behave exactly the same.
-
-Source comments
----------------
-All modifications are inserted in #ifdef MAME_NET ... #endif /* MAME_NET */
-sections.
-
-The following OS-dependant functions were defined:
-
---- src/unix/keyboard.c
-void osd_update_keys(char keys[OSD_MAX_KEY+1]);
-  update key table using another process key table
-
-void osd_build_global_keys(void);
-  key tables exchange between replica
-
---- src/unix/network.c
-int osd_send_msg(void *msg, int size);
-  master : sends message to all slaves
-  slave  : sends message to master
-
-int osd_receive_msg(void *msg, int size);
-  read a message received on reception socket
-
-void osd_network_synchronise(void);
-  synchronise the replicas by message exchange
-
-void osd_cleanup_network(void);
-  clean up network structures
-
-void osd_net_init(void);      
-  init network game

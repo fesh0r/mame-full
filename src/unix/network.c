@@ -11,13 +11,13 @@
 
 #define PROTOCOL_DEBUG 2
 
-enum _net_role {
+enum net_role {
     NONE,
     MASTER,
     SLAVE
 };
 
-static enum _net_role _current_net_role = NONE;
+static enum net_role _current_net_role = NONE;
 
 #define NET_MAX_PLAYERS 4
 #define MASTER_INPUT_PORT 9000
@@ -33,9 +33,11 @@ enum net_msg_type {
     QUIT
 };
 
+/* Bitmap indices for the master's ACCEPT Message */
+#define CONFIG_BITMAP_PARALLELSYNC 0
 
 #define MSG_MAGIC_HEADER "XNM"
-#define PROTOCOL_VERSION "N0.4"
+#define PROTOCOL_VERSION "N0.5"
 static char _truncated_build_version[10];
 
 struct msg_info_t {
@@ -45,8 +47,23 @@ struct msg_info_t {
     unsigned char *data_start;
     int data_len;
 } _scratch_msg_info, _outbound_state_msg_info[2];
+#define _current_outbound_state_msg_info \
+        _outbound_state_msg_info[_current_frame_sequence % 2]
+#define _previous_outbound_state_msg_info \
+        _outbound_state_msg_info[(_current_frame_sequence - 1) % 2]
+
+static unsigned short _saved_input_port_values_1[MAX_INPUT_PORTS];
+static unsigned short _saved_input_port_values_2[MAX_INPUT_PORTS];
+static unsigned short *_saved_input_port_values[2] = {
+    _saved_input_port_values_1,
+    _saved_input_port_values_2 };
+#define _current_saved_input_port_values \
+        _saved_input_port_values[_current_frame_sequence % 2]
+#define _previous_saved_input_port_values \
+        _saved_input_port_values[(_current_frame_sequence - 1) % 2]
 
 static int _input_remap = 0;
+static int _parallel_sync = 0;
 
 #if PROTOCOL_DEBUG >= 1
 unsigned _repeated_outbound_state_count = 0;
@@ -60,7 +77,7 @@ struct peer_info_t {
     struct sockaddr_in addr;
     int ack_expected;
     int state_expected;
-    unsigned last_resend_time;
+    unsigned time_since_resend;
     struct msg_info_t last_outbound_ackable;
     struct msg_info_t early_inbound_msg_info;
 } _peer_info[NET_MAX_PLAYERS];
@@ -102,6 +119,9 @@ struct rc_option network_opts[] = {
    { "netmapkey",	NULL,			rc_bool,	&_input_remap,
      "0",		0,			0,		NULL,
      "When enabled all players use the player 1 keys. For use with *real* multiplayer games" },
+   { "parallelsync",    NULL,			rc_bool,	&_parallel_sync,
+     "0",		0,			0,		NULL,
+     "Perform network input sync in advance:  Causes ~ 16 ms input delay but more suitable for relatively slow machines" },
 #endif
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
@@ -131,7 +151,9 @@ unsigned _min_sync_time = 0;
 unsigned _max_sync_time = 0;
 unsigned _total_sync_time = 0;
 
-void _inbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS]);
+static void
+_inbound_sync(unsigned short input_port_deviations[MAX_INPUT_PORTS],
+	      unsigned sync_sequence);
 
 static void record_sync_start()
 {
@@ -200,7 +222,7 @@ static int rcv_msg(int fd,
 		   unsigned *timeout)
 {
     int failure = 0;
-    int socklen = 0;
+    unsigned socklen = 0;
     fd_set scratch_fds;
     struct timeval rcv_start_tv, rcv_end_tv, timeout_tv;
     struct timeval *timeout_tv_p = NULL;
@@ -344,7 +366,7 @@ static int _register_to_master(void)
     unsigned timeout;
     unsigned peer_index, peer_player_number;
     unsigned msg_data_left;
-    char *msg_read_pointer;
+    unsigned char *msg_read_pointer;
 
     fprintf(stderr_file, "Slave Mode; Registering to Master %s\n", _master_hostname);
         
@@ -401,12 +423,14 @@ static int _register_to_master(void)
     }
 
     _player_number = _scratch_msg_info.data_start[0];
+    _parallel_sync =
+	(_scratch_msg_info.data_start[1] & (1 << CONFIG_BITMAP_PARALLELSYNC));
 
     _current_player_count = 2;
     peer_index = 1;
     peer_player_number = 1;
-    msg_read_pointer = _scratch_msg_info.data_start + 1;
-    msg_data_left = _scratch_msg_info.data_len - 1;
+    msg_read_pointer = _scratch_msg_info.data_start + 2;
+    msg_data_left = _scratch_msg_info.data_len - 2;
     while (msg_data_left > 0) {
 	peer_player_number += 1;
 	if (peer_player_number == _player_number) {
@@ -452,7 +476,12 @@ static int _register_to_master(void)
     _prime_msg(&_scratch_msg_info);
     _send_msg(_output_socket, &_scratch_msg_info, &(_master_info.addr));
 
-    fprintf(stderr_file, "Registration as player %d confirmed\n", (unsigned)_player_number);
+    fprintf(stderr_file,
+	    "Registration as player %d confirmed\n",
+	    (unsigned)_player_number);
+    fprintf(stderr_file,
+	    "Protocol config: parallelsync %s\n",
+	    (_parallel_sync ? "enabled" : "disabled"));
 #if PROTOCOL_DEBUG >= 1
     gettimeofday(&_start_time, NULL);
 #endif
@@ -610,9 +639,10 @@ static int _await_slave_registrations(void)
 	_peer_info[slave_index].last_outbound_ackable.sequence = 0;
 	_prime_msg(&(_peer_info[slave_index].last_outbound_ackable));
 	scratch_msg_data[0] = slave_index + 2;
+	scratch_msg_data[1] = (_parallel_sync << CONFIG_BITMAP_PARALLELSYNC);
 	_write_to_msg(&(_peer_info[slave_index].last_outbound_ackable),
 		      scratch_msg_data,
-		      1);
+		      2);
 	for (i = 0; i < _current_player_count - 1; i++) {
 	    /* The accept message sent out to each slave includes the IP
 	       address for every *other* slave */
@@ -642,7 +672,7 @@ static int _await_slave_registrations(void)
 		    strerror(errno));
 	} else {
 	    fprintf(stderr_file,
-		    "%s registeration accepted as player %d.\n",
+		    "%s registration accepted as player %d.\n",
 		    _peer_info[slave_index].name,
 		    slave_index + 2);
 	    _peer_info[slave_index].active = 1;
@@ -651,7 +681,7 @@ static int _await_slave_registrations(void)
 	_peer_info[slave_index].ack_expected = 1;
 	_peer_info[slave_index].state_expected = 0;
     }
-    _inbound_sync(NULL);
+    _inbound_sync(NULL, 0);
 #if PROTOCOL_DEBUG >= 1
     gettimeofday(&_start_time, NULL);
 #endif
@@ -662,9 +692,9 @@ static struct input_map_reference_t {
     UINT32 playermask;
     UINT32 start;
     UINT32 coin;
-} input_map_reference[3] = { { IPF_PLAYER2, IPT_START2, IPT_COIN2 },
-			     { IPF_PLAYER3, IPT_START3, IPT_COIN3 },
-			     { IPF_PLAYER4, IPT_START4, IPT_COIN4 } };
+} input_map_reference[] = { { IPF_PLAYER2, IPT_START2, IPT_COIN2 },
+			    { IPF_PLAYER3, IPT_START3, IPT_COIN3 },
+			    { IPF_PLAYER4, IPT_START4, IPT_COIN4 } };
 
 static int _map_input_port(unsigned unmapped_bit_index,
 			  struct input_bit_id *mapped_bit_id)
@@ -790,23 +820,19 @@ void _remap_input_state(unsigned short input_state[MAX_INPUT_PORTS])
     }
 }
 
-void _outbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
+void _outbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
+		    unsigned sync_sequence)
 {
     unsigned i;
     unsigned peer_index;
 
-#if PROTOCOL_DEBUG >= 1
-    record_sync_start();
-#endif
-    _outbound_state_msg_info[_current_frame_sequence % 2].msg_type =
-	LOCAL_STATE;
-    _outbound_state_msg_info[_current_frame_sequence % 2].sequence =
-	_current_frame_sequence;
-    _prime_msg(&(_outbound_state_msg_info[_current_frame_sequence % 2]));
+    _current_outbound_state_msg_info.msg_type = LOCAL_STATE;
+    _current_outbound_state_msg_info.sequence =	sync_sequence;
+    _prime_msg(&(_current_outbound_state_msg_info));
 
     for (i = 0; i < MAX_INPUT_PORTS; i++) {
 	unsigned short scratch = htons(input_port_values[i]);
-	_write_to_msg(&_outbound_state_msg_info[_current_frame_sequence % 2],
+	_write_to_msg(&(_current_outbound_state_msg_info),
 		      &scratch,
 		      sizeof(scratch));
     }
@@ -814,7 +840,7 @@ void _outbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
 #if PROTOCOL_DEBUG >= 3
     fprintf(stderr_file,
 	    "Sending state %d to peers\n",
-	    _outbound_state_msg_info[_current_frame_sequence % 2].sequence);
+	    _current_outbound_state_msg_info.sequence);
 #endif
     for (peer_index = 0;
 	 peer_index < _original_player_count - 1;
@@ -822,7 +848,7 @@ void _outbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
     {
 	if (_peer_info[peer_index].active) {
 	    _send_msg(_output_socket,
-		      &(_outbound_state_msg_info[_current_frame_sequence % 2]),
+		      &(_current_outbound_state_msg_info),
 		      &(_peer_info[peer_index].addr));
 	}
 	_peer_info[peer_index].state_expected = 1;
@@ -832,285 +858,308 @@ void _outbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
 #define GIVEUP_TIMEOUT (15 * 1000)
 #define RETRY_TIMEOUT 50
 
-static void _handle_early_message(unsigned peer_index,
-				  struct msg_info_t *early_msg_info)
-{
-    /* A peer is already at the next frame and sending its
-       state:  Copy it into a temporary space (unless this has already
-       been done) and process it when ready */
-    if (_peer_info[peer_index].early_inbound_msg_info.sequence != early_msg_info->sequence)
-    {
-	_copy_msg(early_msg_info,
-		  &(_peer_info[peer_index].early_inbound_msg_info));
-    }
-}
-
-static void _handle_duplicate_message(unsigned peer_index,
-				      struct msg_info_t *duplicate_msg_info,
-				      unsigned time_before_giveup)
+static void _handle_duplicate_message(struct msg_info_t *duplicate_msg_info,
+				      struct peer_info_t *source_peer)
+				      
 {
     /* Peer seems to have have missed previous state */
-    if (_peer_info[peer_index].last_resend_time == 0 ||
-	_peer_info[peer_index].last_resend_time > time_before_giveup + RETRY_TIMEOUT)
-    {
+#if PROTOCOL_DEBUG >= 2
+    fprintf(stderr_file,
+	    "Received dupe message type %d sequence %d from peer \"%s\"\n",
+	    duplicate_msg_info->msg_type,
+	    duplicate_msg_info->sequence,
+	    source_peer->name);
+#endif
+    if (source_peer->time_since_resend >= RETRY_TIMEOUT) {
 #if PROTOCOL_DEBUG >= 2
 	fprintf(stderr_file,
-		"Received message type %d sequence %d from peer \"%s\"; "
-		"re-sending state sequence %d\n",
-		duplicate_msg_info->msg_type,
-		duplicate_msg_info->sequence,
-		_peer_info[peer_index].name,
-		_current_frame_sequence - 1);
+		"... re-sending state sequence %d\n",
+		_previous_outbound_state_msg_info.sequence);
 #endif
 	_send_msg(_output_socket,
-		  &(_outbound_state_msg_info[(_current_frame_sequence - 1) % 2]),
-		  &(_peer_info[peer_index].addr));
-	_peer_info[peer_index].last_resend_time = time_before_giveup;
+		  &(_previous_outbound_state_msg_info),
+		  &(source_peer->addr));
+	source_peer->time_since_resend = 0;
 #if PROTOCOL_DEBUG >= 1
 	_repeated_outbound_state_count += 1;
 #endif
     }
 }
 
+static void _handle_early_message(struct msg_info_t *early_msg_info,
+				  struct peer_info_t *source_peer)
+{
+    /* A peer is already at the next frame and sending its
+       state:  Copy it into a temporary space (unless this has already
+       been done) and process it when ready */
+    if (source_peer->early_inbound_msg_info.sequence != early_msg_info->sequence)
+    {
+	_copy_msg(early_msg_info,
+		  &(source_peer->early_inbound_msg_info));
+    }
+}
+
+/* Returns 1 if the message brings the peer completely up to date for
+   the current sync sequence -- ie, neither ACKable nor state expected
+   any longer */
+static int
+_process_inbound_message(struct msg_info_t *msg_to_process,
+			 struct peer_info_t *source_peer,
+			 unsigned sync_sequence,
+			 unsigned short input_port_deviations[MAX_INPUT_PORTS])
+{
+    int result = 0;
+    if (source_peer->state_expected) {
+	/* All ACKables handled here */
+	if (msg_to_process->msg_type == QUIT) {
+	    /* ACKables with a sequence number in the future could be
+	       stored and used later to save a message here and there.
+	       This may or may not be worth the extra complexity in the
+	       code; I'm not implementing it for now. */
+	    if (msg_to_process->sequence == sync_sequence) {
+		if (source_peer->active) {
+		    fprintf(stderr_file,
+			    "Peer \"%s\" quit\n",
+			    source_peer->name);
+		    source_peer->active = 0;
+		    _current_player_count -= 1;
+		    result = 1;
+		}
+		_scratch_msg_info.msg_type = ACK;
+		_scratch_msg_info.sequence = sync_sequence;
+		_prime_msg(&_scratch_msg_info);
+		_send_msg(_output_socket,
+			  &_scratch_msg_info,
+			  &(source_peer->addr));
+		if (_current_player_count == 1) {
+		    osd_net_close();
+		}
+	    }
+	}
+	else if (msg_to_process->msg_type == LOCAL_STATE) {
+#if PROTOCOL_DEBUG >= 3
+	    fprintf(stderr_file,
+		    "Received state %d from slave \"%s\" (expecting %d)\n",
+		    msg_to_process->sequence,
+		    source_peer->name,
+		    sync_sequence);
+#endif
+	    if (msg_to_process->sequence == sync_sequence) {
+		unsigned i;
+		memcpy(_scratch_input_state,
+		       _scratch_msg_info.data_start,
+		       _scratch_msg_info.data_len);
+		for (i = 0; i < MAX_INPUT_PORTS; i++) {
+		    /* mask in the default deviations from each peer */
+		    input_port_deviations[i] |= ntohs(_scratch_input_state[i]);
+		}
+		source_peer->state_expected = 0;
+		if (! source_peer->ack_expected) {
+		    result = 1;
+		}
+	    }
+	    else if (msg_to_process->sequence == sync_sequence - 1) {
+		_handle_duplicate_message(msg_to_process,
+					  source_peer);
+	    }
+	    else if (msg_to_process->sequence == sync_sequence + 1) {
+		_handle_early_message(msg_to_process, source_peer);
+	    } else {
+		/* This must be an old, late-delivered packet, or else
+		   there's something wrong with the protocol
+		   implementation.   TODO:  Add sanity check? */
+	    }
+	} /* end else if (msg_to_process->msg_type == LOCAL_STATE) */
+    } /* end if (source_peer->state_expected) */
+    else if (source_peer->ack_expected) {
+	if (msg_to_process->msg_type == ACK &&
+	    msg_to_process->sequence == sync_sequence)
+	{
+	    source_peer->ack_expected = 0;
+	    if (_state_exchange_active > 0) {
+		/* Now that the peer in question has supplied the requisite
+		   ACK, it can be sent its copy of the local state. */
+		_send_msg(_output_socket,
+			  &(_current_outbound_state_msg_info),
+			  &(source_peer->addr));
+	    }
+	    if (! source_peer->state_expected) {
+		result = 1;
+	    }
+	}
+    } else {
+	/* Neither ACK nor STATE expected, therefore it is assumed
+	       that this peer has sent whatever it needed to and only
+	       other peers are holding up _inbound_sync(). */
+	if (msg_to_process->sequence == _current_frame_sequence + 1 &&
+	    (msg_to_process->msg_type == LOCAL_STATE ||
+	     msg_to_process->msg_type == QUIT))
+	{
+	    _handle_early_message(msg_to_process, source_peer);
+		
+	}
+	else if (msg_to_process->msg_type == LOCAL_STATE &&
+		 msg_to_process->sequence == _current_frame_sequence)
+	{
+	    _handle_duplicate_message(msg_to_process, source_peer);
+	} else {
+	    /* Assume late or out-of-order message */
+	}
+    }
+    return result;
+}
+
 /* This function listens to the network and waits for LOCAL_STATE and ACK
    messages.  It exits when all of the peers have satisfactorily reported,
    or a timeout elapses.
 */
-void _inbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
+static void
+_inbound_sync(unsigned short input_port_deviations[MAX_INPUT_PORTS],
+	      unsigned sync_sequence)
 {
     unsigned i;
     unsigned peers_awaited = 0;
-    unsigned early_messages_pending = 0;
-    unsigned char peer_index = 0;
     /* This function has this amount of time to complete.  Any peers that
        haven't synced up when the time is up are dropped permanently. */
+    unsigned rcv_result;
+    unsigned time_used;
     unsigned time_before_retry = RETRY_TIMEOUT;
     unsigned time_before_giveup = GIVEUP_TIMEOUT;
-    struct msg_info_t *msg_to_process = NULL;
 
     struct sockaddr_in source_addr;
 
+    /* 1. Initialize time_since_resend for each peer, process early
+       messages and count peers without early messages */
     for (i = 0; i < _original_player_count - 1; i++) {
 	if (_peer_info[i].active &&
 	    (_peer_info[i].ack_expected || _peer_info[i].state_expected))
 	{
-	    if (_peer_info[i].early_inbound_msg_info.sequence == _current_frame_sequence)
+	    if (_peer_info[i].early_inbound_msg_info.sequence != sync_sequence ||
+		! _process_inbound_message(
+		      &(_peer_info[i].early_inbound_msg_info),
+		      &(_peer_info[i]),
+		      sync_sequence,
+		      input_port_deviations))
 	    {
-		early_messages_pending += 1;
+		peers_awaited += 1;
+		_peer_info[i].time_since_resend = 0;
 	    }
-	    peers_awaited += 1;
-	    _peer_info[i].last_resend_time = time_before_giveup;
 	}
     }
 
+    /* 2. For peers without early messages, process new messages from
+       network */
     while (peers_awaited > 0 && time_before_giveup > 0) {
-	if (early_messages_pending > 0) {
-	    for (i = 0; i < _original_player_count - 1; i++) {
-		if (_peer_info[i].active &&
-		    (_peer_info[i].ack_expected || _peer_info[i].state_expected) &&
-		    _peer_info[i].early_inbound_msg_info.sequence == _current_frame_sequence)
-		{
-		    msg_to_process = &(_peer_info[i].early_inbound_msg_info);
-		    peer_index = i;
-		    early_messages_pending -= 1;
-		    break;
-		}
+	time_used = time_before_retry;
+	rcv_result = rcv_msg(_input_socket,
+			     &_scratch_msg_info,
+			     &source_addr,
+			     &time_before_retry);
+	time_used -= time_before_retry;
+	
+	/* I'd like to find an alternative to this loop, which seems
+	   wasteful.  Previously I had a last_resend_time instead of
+	   time_since_resend, which didn't need to be updated after each
+	   call to rcv_msg, but after some (quite necessary) breaking up
+	   of this function, the member (huh huh uh huh) needs to be
+	   reset two frames down, in _handle_duplicate_message(), and I
+	   don't want to add a "current time" paramter to both
+	   functions so I can go back to that setup. */
+	for (i = 0; i < _original_player_count - 1; i++) {
+	    if (_peer_info[i].active) {
+		_peer_info[i].time_since_resend += time_used;
 	    }
-	} else {
-	    if (rcv_msg(_input_socket,
-			&_scratch_msg_info,
-			&source_addr,
-			&time_before_retry) != OSD_OK)
-	    {
-		if (time_before_retry == 0) {
-		    /* Resend messages to whichever peers are dawdling */
-		    for (i = 0; i < _original_player_count - 1; i++) {
-			if (_peer_info[i].active && 
-			    (_peer_info[peer_index].last_resend_time > time_before_giveup + RETRY_TIMEOUT))
-			{
-			    if (_peer_info[i].ack_expected) {
+	}
+
+	if (rcv_result != OSD_OK) {
+	    if (time_before_retry == 0) {
+		/* Resend messages to whichever peers are dawdling */
+		for (i = 0; i < _original_player_count - 1; i++) {
+		    if (_peer_info[i].active && 
+			(_peer_info[i].time_since_resend >= RETRY_TIMEOUT))
+		    {
+			if (_peer_info[i].ack_expected) {
 #if PROTOCOL_DEBUG >= 2
-				fprintf(stderr_file,
-					"Peer \"%s\" timed out; "
-					"re-sending ACKable type %d, seq %d\n",
-					_peer_info[i].name,
-					_peer_info[peer_index].last_outbound_ackable.msg_type,
-					_current_frame_sequence);
+			    fprintf(stderr_file,
+				    "Peer \"%s\" timed out; "
+				    "re-sending ACKable type %d, seq %d\n",
+				    _peer_info[i].name,
+				    _peer_info[i].last_outbound_ackable.msg_type,
+				    _peer_info[i].last_outbound_ackable.sequence);
 #endif
-				_send_msg(_output_socket,
-					  &(_peer_info[peer_index].last_outbound_ackable),
-					  &(_peer_info[peer_index].addr));
-				_peer_info[peer_index].last_resend_time =
-				    time_before_giveup;
-			    }
-			    else if (_peer_info[i].state_expected) {
+			    _send_msg(_output_socket,
+				      &(_peer_info[i].last_outbound_ackable),
+				      &(_peer_info[i].addr));
+			    _peer_info[i].time_since_resend = 0;
+			}
+			else if (_peer_info[i].state_expected) {
 #if PROTOCOL_DEBUG >= 2
-				fprintf(stderr_file,
-					"Peer \"%s\" timed out; "
-					"re-sending state sequence %d\n",
-					_peer_info[i].name,
-					_current_frame_sequence);
+			    fprintf(stderr_file,
+				    "Peer \"%s\" timed out; "
+				    "re-sending state sequence %d\n",
+				    _peer_info[i].name,
+				    _current_outbound_state_msg_info.sequence);
 #endif
-				_send_msg(_output_socket,
-					  &(_outbound_state_msg_info[(_current_frame_sequence) % 2]),
-					  &(_peer_info[peer_index].addr));
-				_peer_info[peer_index].last_resend_time =
-				    time_before_giveup;
+			    _send_msg(_output_socket,
+				      &(_current_outbound_state_msg_info),
+				      &(_peer_info[i].addr));
+			    _peer_info[i].time_since_resend = 0;
 #if PROTOCOL_DEBUG >= 1
-				_repeated_outbound_state_count += 1;
+			    _repeated_outbound_state_count += 1;
 #endif
-			    }
 			}
 		    }
 		}
-		if (time_before_giveup > RETRY_TIMEOUT) {
-		    time_before_giveup -= RETRY_TIMEOUT;
-		    time_before_retry = RETRY_TIMEOUT;
-		} else {
-		    time_before_giveup = 0;
-		}
-		continue;
-	    } else {
-		msg_to_process = &_scratch_msg_info;
-		peer_index = _peer_index_for_addr(&source_addr.sin_addr);
-		if (peer_index == (unsigned char)-1) {
-		    fprintf(stderr_file,
-			    "Error : Received packet from unknown peer\n");
-		    continue;
-		}
-	    }
-	}
+		time_before_retry = RETRY_TIMEOUT;
+	    } /* end if (time_before_retry == 0) */
+	} else /* Successfully received message before timeout; process it */ {
+	    unsigned char peer_index =
+		_peer_index_for_addr(&source_addr.sin_addr);
 
-	/* QUIT messages from inactive peers are ok, but no others */
-	if (_scratch_msg_info.msg_type != QUIT &&
-	    ! _peer_info[peer_index].active)
-	{
-	    fprintf(stderr_file,
-		    "Error: Received message (type %d)"
-		    " from inactive peer \"%s\\n",
-		    _scratch_msg_info.msg_type,
-		    _peer_info[peer_index].name);
-	}
-
-	if (_peer_info[peer_index].state_expected) {
-	    /* All ACKables handled here */
-	    if (msg_to_process->msg_type == QUIT) {
-		/* ACKables with a sequence number in the future could be
-		   stored and used later to save a message here and there.
-		   This may or may not be worth the extra complexity in the
-		   code; I'm not implementing it for now. */
-		if (msg_to_process->sequence == _current_frame_sequence) {
-		    if (_peer_info[peer_index].active) {
-			fprintf(stderr_file,
-				"Peer \"%s\" quit\n",
-				_peer_info[peer_index].name);
-			_peer_info[peer_index].active = 0;
-			_current_player_count -= 1;
-			peers_awaited -= 1;
-		    }
-		    _scratch_msg_info.msg_type = ACK;
-		    _scratch_msg_info.sequence = _current_frame_sequence;
-		    _prime_msg(&_scratch_msg_info);
-		    _send_msg(_output_socket,
-			      &_scratch_msg_info,
-			      &(_peer_info[peer_index].addr));
-		    if (_current_player_count == 1) {
-			osd_net_close();
-			break;
-		    }
-		}
-	    }
-	    else if (msg_to_process->msg_type == LOCAL_STATE) {
-#if PROTOCOL_DEBUG >= 3
+	    if (peer_index == (unsigned char)-1) {
 		fprintf(stderr_file,
-			"Received state %d from slave \"%s\" (expecting %d)\n",
-			msg_to_process->sequence,
-			_peer_info[peer_index].name,
-			_current_frame_sequence);
-#endif
-		if (msg_to_process->sequence == _current_frame_sequence) {
-		    memcpy(_scratch_input_state,
-			   _scratch_msg_info.data_start,
-			   _scratch_msg_info.data_len);
-		    for (i = 0; i < MAX_INPUT_PORTS; i++) {
-			/* mask in the default deviations from each peer */
-			input_port_values[i] |= ntohs(_scratch_input_state[i]);
-		    }
-		    _peer_info[peer_index].state_expected = 0;
-		    if (! _peer_info[peer_index].ack_expected) {
-			peers_awaited -= 1;
-		    }
-		}
-		else if (msg_to_process->sequence == _current_frame_sequence - 1)
-		{
-		    _handle_duplicate_message(peer_index,
-					      msg_to_process,
-					      time_before_giveup);
-		}
-		else if (msg_to_process->sequence == _current_frame_sequence + 1)
-		{
-		    _handle_early_message(peer_index, msg_to_process);
-		} else {
-		    /* This must be an old, late-delivered packet, or else
-		       there's something wrong with the protocol
-		       implementation.   TODO:  Add sanity check? */
-		}
+			"Error : Received packet from unknown peer\n");
 	    }
-	}
-	else if (_peer_info[peer_index].ack_expected) {
-	    if (msg_to_process->msg_type == ACK &&
-		msg_to_process->sequence == _current_frame_sequence)
+	    else if (! _peer_info[peer_index].active &&
+		     _scratch_msg_info.msg_type != QUIT)
 	    {
-		_peer_info[peer_index].ack_expected = 0;
-		if (_state_exchange_active > 0) {
-		    /* Now that the peer in question has supplied the requisite
-		       ACK, it can be sent its copy of the local state. */
-		    _send_msg(_output_socket,
-			      &(_outbound_state_msg_info[(_current_frame_sequence) % 2]),
-			      &(_peer_info[peer_index].addr));
-		}
-		if (! _peer_info[peer_index].state_expected) {
+		/* QUIT messages from inactive peers are ok,
+		   but not other messages */
+		fprintf(stderr_file,
+			"Error: Received message (type %d)"
+			" from inactive peer \"%s\\n",
+			_scratch_msg_info.msg_type,
+			_peer_info[peer_index].name);
+	    } else {
+		if (_process_inbound_message(&_scratch_msg_info,
+					     &(_peer_info[peer_index]),
+					     sync_sequence,
+					     input_port_deviations))
+		{
 		    peers_awaited -= 1;
 		}
 	    }
+	}
+	if (time_before_giveup > time_used) {
+	    time_before_giveup -= time_used;
 	} else {
-	    /* Neither ACK nor STATE expected, therefore it is assumed
-	       that this peer has sent whatever it needed to and only
-	       other peers are holding up _inbound_sync(). */
-	    if (msg_to_process->sequence == _current_frame_sequence + 1 &&
-		(msg_to_process->msg_type == LOCAL_STATE ||
-		 msg_to_process->msg_type == QUIT))
-	    {
-		_handle_early_message(peer_index, msg_to_process);
-		
-	    }
-	    else if (msg_to_process->msg_type == LOCAL_STATE &&
-		     msg_to_process->sequence == _current_frame_sequence)
-	    {
-		_handle_duplicate_message(peer_index,
-					  msg_to_process,
-					  time_before_giveup);
-	    } else {
-		/* Assume late or out-of-order message */
-	    }
+	    time_before_giveup = 0;
 	}
     }
 
-    /* At this point all slaves have reported their states,
+    /* 3. At this point all slaves have reported their states,
        or have timed out */
     /* TODO:  Dropping peers is susceptible to desync -- fix */
     if (peers_awaited > 0) {
-	for (peer_index = 0;
-	     peer_index < _original_player_count - 1;
-	     peer_index++)
+	for (i = 0; i < _original_player_count - 1; i++)
 	{
-	    if (_peer_info[peer_index].active &&
-		(_peer_info[peer_index].ack_expected || _peer_info[peer_index].state_expected))
+	    if (_peer_info[i].active &&
+		(_peer_info[i].ack_expected || _peer_info[i].state_expected))
 	    {
 		fprintf(stderr_file,
 			"No messages from peer \"%s\" in too long; disconnecting it\n",
-			_peer_info[peer_index].name);
-		_peer_info[peer_index].active = 0;
+			_peer_info[i].name);
+		_peer_info[i].active = 0;
 		_current_player_count -= 1;
 		if (_current_player_count == 1) {
 		    osd_net_close();
@@ -1119,6 +1168,20 @@ void _inbound_sync(unsigned short input_port_values[MAX_INPUT_PORTS])
 	}
     }
 }
+
+#if PROTOCOL_DEBUG >= 3
+static void
+_log_port_array(unsigned short *port_values, unsigned port_count)
+{
+    unsigned i;
+    for (i = 0; i < port_count; i++) {
+	fprintf(stderr_file,
+		"%x%s",
+		port_values[i],
+		(i < port_count - 1) ? " " : "\n");
+    }
+}
+#endif
 
 void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
                   unsigned short input_port_defaults[MAX_INPUT_PORTS])
@@ -1129,22 +1192,57 @@ void osd_net_sync(unsigned short input_port_values[MAX_INPUT_PORTS],
 #if PROTOCOL_DEBUG >= 1
 	record_sync_start();
 #endif
-	/* Change the values into deviations from default values */
 	if (_input_remap) {
 	    _remap_input_state(input_port_values);
 	    _remap_input_state(input_port_defaults);
 	}
+	/* Change the values into deviations from default values */
 	for (i = 0; i < MAX_INPUT_PORTS; i++) {
 	    input_port_values[i] ^= input_port_defaults[i];
 	}
-	_outbound_sync(input_port_values);
-	_inbound_sync(input_port_values);
-	/* Change deviations from default values back into actual values */
+	_outbound_sync(input_port_values, _current_frame_sequence);
+#if PROTOCOL_DEBUG >= 3
+	fprintf(stderr_file,
+		"Sync %d outbound/saved deviations: ",
+		_current_frame_sequence);
+	_log_port_array(input_port_values, MAX_INPUT_PORTS);
+#endif
+	if (_parallel_sync) {
+	    memcpy(_current_saved_input_port_values,
+		   input_port_values,
+		   MAX_INPUT_PORTS * sizeof(input_port_values[0]));
+	    if (_current_frame_sequence > 1) {
+		memcpy(input_port_values,
+		       _previous_saved_input_port_values,
+		       MAX_INPUT_PORTS * sizeof(input_port_values[0]));
+#if PROTOCOL_DEBUG >= 3
+	fprintf(stderr_file,
+		"Sync %d retrieved deviations: ",
+		_current_frame_sequence - 1);
+	_log_port_array(input_port_values, MAX_INPUT_PORTS);
+#endif
+		_inbound_sync(input_port_values, _current_frame_sequence - 1);
+	    } else {
+		/* Just in case */
+		memcpy(input_port_values,
+		       input_port_defaults,
+		       MAX_INPUT_PORTS * sizeof(input_port_values[0]));
+	    }
+	} else {
+	    _inbound_sync(input_port_values, _current_frame_sequence);
+	}
+	/* Change deviations from default deviations back into actual values */
 	for (i = 0; i < MAX_INPUT_PORTS; i++) {
 	    input_port_values[i] ^= input_port_defaults[i];
 	}
 #if PROTOCOL_DEBUG >= 1
 	record_sync_end();
+#if PROTOCOL_DEBUG >= 3
+	fprintf(stderr_file,
+		"Frame %d final values: ",
+		_current_frame_sequence);
+	_log_port_array(input_port_values, MAX_INPUT_PORTS);
+#endif
 #endif
     } /* else this shouldn't even be called */
 }
@@ -1206,6 +1304,10 @@ int osd_net_active(void)
     return (_current_net_role != NONE);
 }
 
+#define MILLISECONDS_PART(ms) (ms % 1000)
+#define SECONDS_PART(ms) ((ms / 1000) - (ms / (60 * 1000) * 60))
+#define MINUTES_PART(ms) (ms / (60 * 1000))
+
 /*
  * Close all opened sockets
  */
@@ -1232,7 +1334,7 @@ void osd_net_close(void)
 		    _peer_info[peer_index].ack_expected = 1;
 		}
 	    }
-	    _inbound_sync(NULL);
+	    _inbound_sync(NULL, _current_frame_sequence);
 	}
 	close(_input_socket);
 	close(_output_socket);
@@ -1253,13 +1355,13 @@ void osd_net_close(void)
 
 	fprintf(stderr_file,
 		"Total sync time:  %02dm%02d.%ds (%02dm%02d.%ds real time elapsed)\n",
-		_total_sync_time / (60 * 1000),
-		(_total_sync_time / 1000) - (_total_sync_time / (60 * 1000) * 60),
-		_total_sync_time % 1000,
-		total_time / (60 * 1000),
-		(total_time / 1000) - (total_time / (60 * 1000) * 60),
-		total_time % 1000);
-		    
+		MINUTES_PART(_total_sync_time),
+		SECONDS_PART(_total_sync_time),
+		MILLISECONDS_PART(_total_sync_time),
+		MINUTES_PART(total_time),
+		SECONDS_PART(total_time),
+		MILLISECONDS_PART(total_time));
+
 	fprintf(stderr_file,
 		"Average sync time:  %d ms\n",
 		_total_sync_time / _current_frame_sequence);
