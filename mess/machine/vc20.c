@@ -32,7 +32,7 @@
 static UINT8 keyboard[8] =
 {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-static int via1_portb, via0_ca2;
+static int via1_portb, via1_porta, via0_ca2;
 static int serial_atn = 1, serial_clock = 1, serial_data = 1;
 
 static int ieee=0; /* ieee cartridge (interface and rom)*/
@@ -168,6 +168,103 @@ static READ_HANDLER( vc20_via1_read_portb )
 {
 	UINT8 value = 0xff;
 
+    if (!(via1_porta&0x80)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x80)) t&=~0x80;
+	if (!(keyboard[6]&0x80)) t&=~0x40;
+	if (!(keyboard[5]&0x80)) t&=~0x20;
+	if (!(keyboard[4]&0x80)) t&=~0x10;
+	if (!(keyboard[3]&0x80)) t&=~0x08;
+	if (!(keyboard[2]&0x80)) t&=~0x04;
+	if (!(keyboard[1]&0x80)) t&=~0x02;
+	if (!(keyboard[0]&0x80)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x40)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x40)) t&=~0x80;
+	if (!(keyboard[6]&0x40)) t&=~0x40;
+	if (!(keyboard[5]&0x40)) t&=~0x20;
+	if (!(keyboard[4]&0x40)) t&=~0x10;
+	if (!(keyboard[3]&0x40)) t&=~0x08;
+	if (!(keyboard[2]&0x40)) t&=~0x04;
+	if (!(keyboard[1]&0x40)) t&=~0x02;
+	if (!(keyboard[0]&0x40)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x20)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x20)) t&=~0x80;
+	if (!(keyboard[6]&0x20)) t&=~0x40;
+	if (!(keyboard[5]&0x20)) t&=~0x20;
+	if (!(keyboard[4]&0x20)) t&=~0x10;
+	if (!(keyboard[3]&0x20)) t&=~0x08;
+	if (!(keyboard[2]&0x20)) t&=~0x04;
+	if (!(keyboard[1]&0x20)) t&=~0x02;
+	if (!(keyboard[0]&0x20)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x10)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x10)) t&=~0x80;
+	if (!(keyboard[6]&0x10)) t&=~0x40;
+	if (!(keyboard[5]&0x10)) t&=~0x20;
+	if (!(keyboard[4]&0x10)) t&=~0x10;
+	if (!(keyboard[3]&0x10)) t&=~0x08;
+	if (!(keyboard[2]&0x10)) t&=~0x04;
+	if (!(keyboard[1]&0x10)) t&=~0x02;
+	if (!(keyboard[0]&0x10)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x08)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x08)) t&=~0x80;
+	if (!(keyboard[6]&0x08)) t&=~0x40;
+	if (!(keyboard[5]&0x08)) t&=~0x20;
+	if (!(keyboard[4]&0x08)) t&=~0x10;
+	if (!(keyboard[3]&0x08)) t&=~0x08;
+	if (!(keyboard[2]&0x08)) t&=~0x04;
+	if (!(keyboard[1]&0x08)) t&=~0x02;
+	if (!(keyboard[0]&0x08)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x04)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x04)) t&=~0x80;
+	if (!(keyboard[6]&0x04)) t&=~0x40;
+	if (!(keyboard[5]&0x04)) t&=~0x20;
+	if (!(keyboard[4]&0x04)) t&=~0x10;
+	if (!(keyboard[3]&0x04)) t&=~0x08;
+	if (!(keyboard[2]&0x04)) t&=~0x04;
+	if (!(keyboard[1]&0x04)) t&=~0x02;
+	if (!(keyboard[0]&0x04)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x02)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x02)) t&=~0x80;
+	if (!(keyboard[6]&0x02)) t&=~0x40;
+	if (!(keyboard[5]&0x02)) t&=~0x20;
+	if (!(keyboard[4]&0x02)) t&=~0x10;
+	if (!(keyboard[3]&0x02)) t&=~0x08;
+	if (!(keyboard[2]&0x02)) t&=~0x04;
+	if (!(keyboard[1]&0x02)) t&=~0x02;
+	if (!(keyboard[0]&0x02)) t&=~0x01;
+	value &=t;
+    }
+    if (!(via1_porta&0x01)) {
+	UINT8 t=0xff;
+	if (!(keyboard[7]&0x01)) t&=~0x80;
+	if (!(keyboard[6]&0x01)) t&=~0x40;
+	if (!(keyboard[5]&0x01)) t&=~0x20;
+	if (!(keyboard[4]&0x01)) t&=~0x10;
+	if (!(keyboard[3]&0x01)) t&=~0x08;
+	if (!(keyboard[2]&0x01)) t&=~0x04;
+	if (!(keyboard[1]&0x01)) t&=~0x02;
+	if (!(keyboard[0]&0x01)) t&=~0x01;
+	value &=t;
+    }
+
 	if (JOYSTICK) {
 		if (JOYSTICK_RIGHT) value&=~0x80;
 	}
@@ -177,6 +274,12 @@ static READ_HANDLER( vc20_via1_read_portb )
 
 	return value;
 }
+
+static WRITE_HANDLER( vc20_via1_write_porta )
+{
+	via1_porta = data;
+}
+
 
 static WRITE_HANDLER( vc20_via1_write_portb )
 {
@@ -278,7 +381,7 @@ static struct via6522_interface via0 =
 	vc20_via1_read_cb1,
 	0,								   /*via1_read_ca2, */
 	0,								   /*via1_read_cb2, */
-	0,								   /*via1_write_porta, */
+	vc20_via1_write_porta,								   /*via1_write_porta, */
 	vc20_via1_write_portb,
 	vc20_via1_write_ca2,
 	vc20_via1_write_cb2,
@@ -333,22 +436,36 @@ int vic6560_dma_read (int offset)
 static void vc20_memory_init(void)
 {
 	static int inited=0;
-	int i;
 	UINT8 *memory = memory_region (REGION_CPU1);
 
 	if (inited) return;
+	/* power up values are random (more likely bit set)
+	   measured in cost reduced german vc20
+	   6116? 2kbx8 ram in main area
+	   2114 1kbx4 ram at non used color ram area 0x9400 */
 
-/* memory[0x288]=0xff;// makes ae's graphics look correctly */
-/* memory[0xd]=0xff; // for moneywars */
+	memset(memory, 0, 0x400);
+	memset(memory+0x1000, 0, 0x1000);
+
+	memory[0x288]=0xff;// makes ae's graphics look correctly
+	memory[0xd]=0xff; // for moneywars
+	memory[0x1046]=0xff; // for jelly monsters, cosmic cruncher;
+
+#if 0
 	/* 2114 poweron ? 64 x 0xff, 64x 0, and so on */
 	for (i = 0; i < 0x400; i += 0x40)
 	{
 		memset (memory + i, i & 0x40 ? 0 : 0xff, 0x40);
 		memset (memory+0x9400 + i, 0xf0 | (i & 0x40 ? 0 : 0xf), 0x40);
 	}
-/* for (i=0x1000;i<0x2000;i+=0x40) memset(memory+i,i&0x40?0:0xff,0x40); */
+	// this would be the straight forward memory init for
+	// non cost reduced vic20 (2114 rams)
+	for (i=0x1000;i<0x2000;i+=0x40) memset(memory+i,i&0x40?0:0xff,0x40);
+#endif
 
 	/* i think roms look like 0xff */
+	// german cost reduced vc20 reads back highbyte of address
+	// when empty!
 	memset (memory + 0x400, 0xff, 0x1000 - 0x400);
 	memset (memory + 0x2000, 0xff, 0x6000);
 	memset (memory + 0xa000, 0xff, 0x1000);
