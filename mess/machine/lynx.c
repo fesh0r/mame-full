@@ -643,7 +643,7 @@ static void lynx_divide(void)
 	    res=left/right;
 	    mod=left%right;
 	}
-//	logerror("coprocessor %8x / %8x = %4x\n", left, right, res);
+	logerror("coprocessor %8x / %8x = %4x\n", left, right, res);
 	suzy.u.s.D=res&0xff;
 	suzy.u.s.C=res>>8;
 	suzy.u.s.B=res>>16;
@@ -745,7 +745,7 @@ WRITE_HANDLER(suzy_write)
 {
 	suzy.u.data[offset]=data;
 	switch(offset) {
-	case 0x52: case 0x54:
+	case 0x52: case 0x54: case 0x56:
 	case 0x60: case 0x62:
 	case 0x6e:
 	    suzy.u.data[offset+1]=0;
