@@ -204,20 +204,20 @@ static INPUT_PORTS_START( apple2_joystick )
 	PORT_START_TAG("joystick_1_x")		/* Joystick 1 X Axis */
 	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_X) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
 	PORT_CODE_DEC(KEYCODE_4_PAD)	PORT_CODE_INC(KEYCODE_6_PAD)
-	PORT_CODE_DEC(JOYCODE_1_LEFT)	PORT_CODE_INC(JOYCODE_1_RIGHT) 
+	PORT_CODE_DEC(JOYCODE_1_LEFT)	PORT_CODE_INC(JOYCODE_1_RIGHT)
 
 	PORT_START_TAG("joystick_1_y")		/* Joystick 1 Y Axis */
 	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_Y) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(1) PORT_RESET
 	PORT_CODE_DEC(KEYCODE_8_PAD)	PORT_CODE_INC(KEYCODE_2_PAD)
-	PORT_CODE_DEC(JOYCODE_1_UP)		PORT_CODE_INC(JOYCODE_1_DOWN) 
+	PORT_CODE_DEC(JOYCODE_1_UP)		PORT_CODE_INC(JOYCODE_1_DOWN)
 
 	PORT_START_TAG("joystick_2_x")		/* Joystick 2 X Axis */
 	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_X) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
-	PORT_CODE_DEC(JOYCODE_2_LEFT)	PORT_CODE_INC(JOYCODE_2_RIGHT) 
+	PORT_CODE_DEC(JOYCODE_2_LEFT)	PORT_CODE_INC(JOYCODE_2_RIGHT)
 
 	PORT_START_TAG("joystick_2_y")		/* Joystick 2 Y Axis */
 	PORT_BIT( 0xff, 0x80,  IPT_AD_STICK_Y) PORT_SENSITIVITY(JOYSTICK_SENSITIVITY) PORT_KEYDELTA(JOYSTICK_DELTA) PORT_MINMAX(0,0xff) PORT_PLAYER(2) PORT_RESET
-	PORT_CODE_DEC(JOYCODE_2_UP)		PORT_CODE_INC(JOYCODE_2_DOWN) 
+	PORT_CODE_DEC(JOYCODE_2_UP)		PORT_CODE_INC(JOYCODE_2_DOWN)
 INPUT_PORTS_END
 
 
@@ -399,37 +399,37 @@ static struct GfxDecodeInfo apple2e_gfxdecodeinfo[] =
 
 static const unsigned short apple2_colortable[] =
 {
-	0,	0,	0,	1,	0,	2,	0,	3,	0,	4,	0,	5,	0,	6,	0,	7,	
-	0,	8,	0,	9,	0,	10,	0,	11,	0,	12,	0,	13,	0,	14,	0,	15,	
-	1,	0,	1,	1,	1,	2,	1,	3,	1,	4,	1,	5,	1,	6,	1,	7,	
-	1,	8,	1,	9,	1,	10,	1,	11,	1,	12,	1,	13,	1,	14,	1,	15,	
-	2,	0,	2,	1,	2,	2,	2,	3,	2,	4,	2,	5,	2,	6,	2,	7,	
-	2,	8,	2,	9,	2,	10,	2,	11,	2,	12,	2,	13,	2,	14,	2,	15,	
-	3,	0,	3,	1,	3,	2,	3,	3,	3,	4,	3,	5,	3,	6,	3,	7,	
-	3,	8,	3,	9,	3,	10,	3,	11,	3,	12,	3,	13,	3,	14,	3,	15,	
-	4,	0,	4,	1,	4,	2,	4,	3,	4,	4,	4,	5,	4,	6,	4,	7,	
-	4,	8,	4,	9,	4,	10,	4,	11,	4,	12,	4,	13,	4,	14,	4,	15,	
-	5,	0,	5,	1,	5,	2,	5,	3,	5,	4,	5,	5,	5,	6,	5,	7,	
-	5,	8,	5,	9,	5,	10,	5,	11,	5,	12,	5,	13,	5,	14,	5,	15,	
-	6,	0,	6,	1,	6,	2,	6,	3,	6,	4,	6,	5,	6,	6,	6,	7,	
-	6,	8,	6,	9,	6,	10,	6,	11,	6,	12,	6,	13,	6,	14,	6,	15,	
-	7,	0,	7,	1,	7,	2,	7,	3,	7,	4,	7,	5,	7,	6,	7,	7,	
-	7,	8,	7,	9,	7,	10,	7,	11,	7,	12,	7,	13,	7,	14,	7,	15,	
-	8,	0,	8,	1,	8,	2,	8,	3,	8,	4,	8,	5,	8,	6,	8,	7,	
-	8,	8,	8,	9,	8,	10,	8,	11,	8,	12,	8,	13,	8,	14,	8,	15,	
-	9,	0,	9,	1,	9,	2,	9,	3,	9,	4,	9,	5,	9,	6,	9,	7,	
-	9,	8,	9,	9,	9,	10,	9,	11,	9,	12,	9,	13,	9,	14,	9,	15,	
-	10,	0,	10,	1,	10,	2,	10,	3,	10,	4,	10,	5,	10,	6,	10,	7,	
-	10,	8,	10,	9,	10,	10,	10,	11,	10,	12,	10,	13,	10,	14,	10,	15,	
-	11,	0,	11,	1,	11,	2,	11,	3,	11,	4,	11,	5,	11,	6,	11,	7,	
-	11,	8,	11,	9,	11,	10,	11,	11,	11,	12,	11,	13,	11,	14,	11,	15,	
-	12,	0,	12,	1,	12,	2,	12,	3,	12,	4,	12,	5,	12,	6,	12,	7,	
-	12,	8,	12,	9,	12,	10,	12,	11,	12,	12,	12,	13,	12,	14,	12,	15,	
-	13,	0,	13,	1,	13,	2,	13,	3,	13,	4,	13,	5,	13,	6,	13,	7,	
-	13,	8,	13,	9,	13,	10,	13,	11,	13,	12,	13,	13,	13,	14,	13,	15,	
-	14,	0,	14,	1,	14,	2,	14,	3,	14,	4,	14,	5,	14,	6,	14,	7,	
-	14,	8,	14,	9,	14,	10,	14,	11,	14,	12,	14,	13,	14,	14,	14,	15,	
-	15,	0,	15,	1,	15,	2,	15,	3,	15,	4,	15,	5,	15,	6,	15,	7,	
+	0,	0,	0,	1,	0,	2,	0,	3,	0,	4,	0,	5,	0,	6,	0,	7,
+	0,	8,	0,	9,	0,	10,	0,	11,	0,	12,	0,	13,	0,	14,	0,	15,
+	1,	0,	1,	1,	1,	2,	1,	3,	1,	4,	1,	5,	1,	6,	1,	7,
+	1,	8,	1,	9,	1,	10,	1,	11,	1,	12,	1,	13,	1,	14,	1,	15,
+	2,	0,	2,	1,	2,	2,	2,	3,	2,	4,	2,	5,	2,	6,	2,	7,
+	2,	8,	2,	9,	2,	10,	2,	11,	2,	12,	2,	13,	2,	14,	2,	15,
+	3,	0,	3,	1,	3,	2,	3,	3,	3,	4,	3,	5,	3,	6,	3,	7,
+	3,	8,	3,	9,	3,	10,	3,	11,	3,	12,	3,	13,	3,	14,	3,	15,
+	4,	0,	4,	1,	4,	2,	4,	3,	4,	4,	4,	5,	4,	6,	4,	7,
+	4,	8,	4,	9,	4,	10,	4,	11,	4,	12,	4,	13,	4,	14,	4,	15,
+	5,	0,	5,	1,	5,	2,	5,	3,	5,	4,	5,	5,	5,	6,	5,	7,
+	5,	8,	5,	9,	5,	10,	5,	11,	5,	12,	5,	13,	5,	14,	5,	15,
+	6,	0,	6,	1,	6,	2,	6,	3,	6,	4,	6,	5,	6,	6,	6,	7,
+	6,	8,	6,	9,	6,	10,	6,	11,	6,	12,	6,	13,	6,	14,	6,	15,
+	7,	0,	7,	1,	7,	2,	7,	3,	7,	4,	7,	5,	7,	6,	7,	7,
+	7,	8,	7,	9,	7,	10,	7,	11,	7,	12,	7,	13,	7,	14,	7,	15,
+	8,	0,	8,	1,	8,	2,	8,	3,	8,	4,	8,	5,	8,	6,	8,	7,
+	8,	8,	8,	9,	8,	10,	8,	11,	8,	12,	8,	13,	8,	14,	8,	15,
+	9,	0,	9,	1,	9,	2,	9,	3,	9,	4,	9,	5,	9,	6,	9,	7,
+	9,	8,	9,	9,	9,	10,	9,	11,	9,	12,	9,	13,	9,	14,	9,	15,
+	10,	0,	10,	1,	10,	2,	10,	3,	10,	4,	10,	5,	10,	6,	10,	7,
+	10,	8,	10,	9,	10,	10,	10,	11,	10,	12,	10,	13,	10,	14,	10,	15,
+	11,	0,	11,	1,	11,	2,	11,	3,	11,	4,	11,	5,	11,	6,	11,	7,
+	11,	8,	11,	9,	11,	10,	11,	11,	11,	12,	11,	13,	11,	14,	11,	15,
+	12,	0,	12,	1,	12,	2,	12,	3,	12,	4,	12,	5,	12,	6,	12,	7,
+	12,	8,	12,	9,	12,	10,	12,	11,	12,	12,	12,	13,	12,	14,	12,	15,
+	13,	0,	13,	1,	13,	2,	13,	3,	13,	4,	13,	5,	13,	6,	13,	7,
+	13,	8,	13,	9,	13,	10,	13,	11,	13,	12,	13,	13,	13,	14,	13,	15,
+	14,	0,	14,	1,	14,	2,	14,	3,	14,	4,	14,	5,	14,	6,	14,	7,
+	14,	8,	14,	9,	14,	10,	14,	11,	14,	12,	14,	13,	14,	14,	14,	15,
+	15,	0,	15,	1,	15,	2,	15,	3,	15,	4,	15,	5,	15,	6,	15,	7,
 	15,	8,	15,	9,	15,	10,	15,	11,	15,	12,	15,	13,	15,	14,	15,	15
 };
 
@@ -501,6 +501,12 @@ static MACHINE_DRIVER_START( apple2p )
 	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( f_ace100 )
+	MDRV_IMPORT_FROM( apple2_common )
+	MDRV_VIDEO_START(apple2p)
+	MDRV_GFXDECODE(apple2_gfxdecodeinfo)
+MACHINE_DRIVER_END
+
 MACHINE_DRIVER_START( apple2e )
 	MDRV_IMPORT_FROM( apple2_common )
 	MDRV_VIDEO_START(apple2e)
@@ -552,6 +558,15 @@ ROM_START(apple2p)
 	ROM_LOAD ( "a2p.e8", 0x2800, 0x0800, CRC(5719871a) SHA1(37501be96d36d041667c15d63e0c1eff2f7dd4e9))
 	ROM_LOAD ( "a2p.f0", 0x3000, 0x0800, CRC(9a04eecf) SHA1(e6bf91ed28464f42b807f798fc6422e5948bf581))
 	ROM_LOAD ( "a2p.f8", 0x3800, 0x0800, CRC(ecffd453) SHA1(07a3bdce3e34bbed5246fe09a9938d8f334a8225))
+	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6) SHA1(d4181c9f046aafc3fb326b381baac809d9e38d16)) /* Disk II ROM - DOS 3.3 version */
+ROM_END
+
+ROM_START(f_ace100)
+	ROM_REGION(0x0800,REGION_GFX1,0)
+	ROM_LOAD ( "a2.chr", 0x0000, 0x0800, CRC(64f415c6) SHA1(f9d312f128c9557d9d6ac03bfad6c3ddf83e5659))
+
+	ROM_REGION(0x4700,REGION_CPU1,0)
+	ROM_LOAD ( "ace100.rom", 0x1000, 0x3000, CRC(9d5ec94f) SHA1(8f2b3f2561788bebc7a805f620ec9e7ade973460))
 	ROM_LOAD ( "disk2_33.rom", 0x4500, 0x0100, CRC(ce7144f6) SHA1(d4181c9f046aafc3fb326b381baac809d9e38d16)) /* Disk II ROM - DOS 3.3 version */
 ROM_END
 
@@ -668,6 +683,7 @@ SYSTEM_CONFIG_END
 /*     YEAR  NAME      PARENT    COMPAT		MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */
 COMP ( 1977, apple2,   0,        0,			apple2,   apple2,   apple2,   apple2,	"Apple Computer", "Apple ][" )
 COMP ( 1979, apple2p,  apple2,   0,			apple2p,  apple2,   apple2,   apple2p,	"Apple Computer", "Apple ][+" )
+COMP ( 1979, f_ace100, apple2,   0,			apple2p,  apple2,   apple2,   apple2p,	"Franklin", "Ace 100" )
 COMP ( 1983, apple2e,  0,        apple2,	apple2e,  apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e" )
 COMP ( 1985, apple2ee, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (enhanced)" )
 COMP ( 1987, apple2ep, apple2e,  0,			apple2ee, apple2,   apple2,   apple2e,	"Apple Computer", "Apple //e (Platinum)" )

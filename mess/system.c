@@ -262,6 +262,7 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
 	DRIVER( apple2e )	/* 1983 Apple //e									*/
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced							*/
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum							*/
+	DRIVER( f_ace100 )  /* 1982 Apple ][ clone								*/
 /*
  * Lisa 				 January			 1983
  * Lisa 2 				 January			 1984
