@@ -59,9 +59,9 @@ WRITE_HANDLER(pc1401_lcd_write)
 
 typedef char *FIGURE[];
 static const FIGURE
-line={ "111","111e" },/* simple line */
+line={ "111","111e" };/* simple line */
 
-	busy={ "11  1 1  11 1 1",
+static const FIGURE	busy={ "11  1 1  11 1 1",
 		   "1 1 1 1 1   1 1",
 		   "11  1 1  1  1 1",
 		   "1 1 1 1   1  1",
