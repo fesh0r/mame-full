@@ -623,10 +623,12 @@ int artwork_create_display(struct osd_create_params *params, UINT32 *rgb_compone
 		{
 			options.artwork_res = 2;
 		}
-	}
 		else
 #endif
 		return osd_create_display(params, rgb_components);
+#ifdef MESS
+	}
+#endif
 
 	/* determine the game bitmap scale factor */
 	gamescale = options.artwork_res;

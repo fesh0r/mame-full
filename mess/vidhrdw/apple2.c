@@ -291,12 +291,13 @@ VIDEO_UPDATE( apple2 )
 
 	page = (a2.PAGE2>>7);
 
-	if ((a2.TEXT != old_a2.TEXT) || (a2.MIXED != old_a2.MIXED) || (a2.HIRES != old_a2.HIRES) || (a2.COL80 != old_a2.COL80))
+	if ((a2.TEXT != old_a2.TEXT) || (a2.MIXED != old_a2.MIXED) || (a2.HIRES != old_a2.HIRES) || (a2.COL80 != old_a2.COL80) || (a2.PAGE2 != old_a2.PAGE2))
 	{
 		old_a2.TEXT = a2.TEXT;
 		old_a2.MIXED = a2.MIXED;
 		old_a2.HIRES = a2.HIRES;
 		old_a2.COL80 = a2.COL80;
+		old_a2.PAGE2 = a2.PAGE2;
 		tilemap_mark_all_tiles_dirty(text_tilemap);
 		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
 		tilemap_mark_all_tiles_dirty(lores_tilemap);
