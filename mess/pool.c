@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #ifdef DEBUG
+#include "osd_cpu.h"
 #define GUARD_BYTES
 #endif
 
