@@ -11,6 +11,8 @@
 #include "vidhrdw/generic.h"
 #include "includes/kim1.h"
 
+static struct artwork_info *kim1_backdrop;
+
 void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
 {
 	char backdrop_name[200];
@@ -62,11 +64,11 @@ void kim1_init_colors (unsigned char *palette, unsigned short *colortable, const
 
     nextfree = 21;
 
-    backdrop_load (backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
-	if (artwork_backdrop)
+    artwork_load (&kim1_backdrop, backdrop_name, nextfree, Machine->drv->total_colors - nextfree);
+	if (kim1_backdrop)
     {
         logerror("backdrop %s successfully loaded\n", backdrop_name);
-        memcpy (&palette[nextfree * 3], artwork_backdrop->orig_palette, artwork_backdrop->num_pens_used * 3 * sizeof (unsigned char));
+        memcpy (&palette[nextfree * 3], kim1_backdrop->orig_palette, kim1_backdrop->num_pens_used * 3 * sizeof (unsigned char));
     }
     else
     {
@@ -80,6 +82,8 @@ int kim1_vh_start (void)
     videoram = malloc (videoram_size);
 	if (!videoram)
         return 1;
+    if (kim1_backdrop)
+        backdrop_refresh (kim1_backdrop);
     if (generic_vh_start () != 0)
         return 1;
 
@@ -88,6 +92,9 @@ int kim1_vh_start (void)
 
 void kim1_vh_stop (void)
 {
+    if (kim1_backdrop)
+        artwork_free (&kim1_backdrop);
+    kim1_backdrop = NULL;
     if (videoram)
         free (videoram);
     videoram = NULL;
@@ -103,7 +110,9 @@ void kim1_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
         osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
         memset (videoram, 0x0f, videoram_size);
     }
-    if (artwork_backdrop == NULL)
+    if (kim1_backdrop)
+        copybitmap (bitmap, kim1_backdrop->artwork, 0, 0, 0, 0, NULL, TRANSPARENCY_NONE, 0);
+	else
 		fillbitmap (bitmap, Machine->pens[0], &Machine->visible_area);
 
     for (x = 0; x < 6; x++)
