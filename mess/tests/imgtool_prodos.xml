@@ -1,21 +1,50 @@
 <tests>
 
+<imgtooltest name="prodos_001">
+	<createimage driver="apple2_do_prodos_525"/>
+	
+	<putfile name="EMPTY.TXT"/>
+	<checkdirectory>
+		<entry name="EMPTY.TXT" size="0"/>
+	</checkdirectory>
+	<checkfile name="EMPTY.TXT"/>
+	
+	<putfile name="SEEDLING.TXT">'test!' * 10 </putfile>
+	<checkdirectory>
+		<entry name="EMPTY.TXT" size="0"/>
+		<entry name="SEEDLING.TXT" size="50"/>
+	</checkdirectory>
+	<checkfile name="EMPTY.TXT"/>
+	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
+
+	<putfile name="SAPLING.TXT">'test!' * 500 </putfile>
+	<checkdirectory>
+		<entry name="EMPTY.TXT" size="0"/>
+		<entry name="SEEDLING.TXT" size="50"/>
+		<entry name="SAPLING.TXT" size="2500"/>
+	</checkdirectory>
+	<checkfile name="EMPTY.TXT"/>
+<!--
+	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
+	<checkfile name="SAPLING.TXT">'test!' * 500 </checkfile>
+	
+	<putfile name="TREE.TXT">'test!' * 30000 </putfile>
+	<checkdirectory>
+		<entry name="EMPTY.TXT" size="0"/>
+		<entry name="SEEDLING.TXT" size="50"/>
+		<entry name="SAPLING.TXT" size="2500"/>
+		<entry name="TREE.TXT" size="150000"/>
+	</checkdirectory>
+	<checkfile name="EMPTY.TXT"/>
+	<checkfile name="SEEDLING.TXT">'test!' * 10 </checkfile>
+	<checkfile name="SAPLING.TXT">'test!' * 500 </checkfile>
+	<checkfile name="TREE.TXT">'test!' * 30000 </checkfile>
+-->
+</imgtooltest>
+
 <imgtooltest name="prodos_525_do">
 	<createimage driver="apple2_do_prodos_525"/>
 	<checkdirectory/>
-	
-	<putfile name="FOO.TXT"/>
-	<checkdirectory>
-		<entry name="FOO.TXT" size="0"/>
-	</checkdirectory>
-	<checkfile name="FOO.TXT"/>
-	
-	<putfile name="BAR.TXT">'test'</putfile>
-	<checkdirectory>
-		<entry name="FOO.TXT" size="0"/>
-		<entry name="BAR.TXT" size="4"/>
-	</checkdirectory>
-	<checkfile name="BAR.TXT">'test'</checkfile>
 </imgtooltest>
 
 <imgtooltest name="prodos_525_po">

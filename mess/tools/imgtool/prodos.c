@@ -842,9 +842,12 @@ static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
 	UINT16 key_block, int depth, UINT32 blockcount, UINT32 block_index)
 {
 	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
 	int dirty = FALSE;
 	UINT16 i, sub_block, new_sub_block;
 	UINT8 buffer[BLOCK_SIZE];
+
+	di = get_prodos_info(image);
 
 	err = prodos_load_block(image, key_block, buffer);
 	if (err)
@@ -874,7 +877,8 @@ static imgtoolerr_t prodos_fill_file(imgtool_image *image, UINT8 *bitmap,
 		else if ((block_index >= blockcount) && (sub_block != 0))
 		{
 			new_sub_block = 0;
-			prodos_set_volume_bitmap_bit(bitmap, sub_block, 0);
+			if (sub_block < di->total_blocks)
+				prodos_set_volume_bitmap_bit(bitmap, sub_block, 0);
 		}
 
 		if (new_sub_block != sub_block)
