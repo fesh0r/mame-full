@@ -38,14 +38,38 @@
 	multiple physical records.
 
 	Sector 0: Volume Information Block (VIB): see below
-	Sector 1: File Descriptor Index Record (FDIR): array of 0 through 128
+	Sector 1: root File Descriptor Index Record (FDIR): array of 0 through 128
 		words, sector (physical record?) address of the fdr record for each
 		file.  Sorted by ascending file name.  Note that, while we should be
-		prepared to read images images with 128 entries, we should write write
-		no more than 127 for compatibility with existing FDRs.
-	Remaining physical records are used for fdr and data.  Each file has one
-	FDR (File Descriptor Record) descriptor which provides the file information
-	(name, format, lenght, pointers to data sectors/AUs, etc).
+		prepared to read images images with 128 entries, we should write no
+		more than 127 for compatibility with existing FDRs.
+	Remaining AUs are used for fdr and data (and subdirectory fdir in the case
+	of hfdc).  There is one FDIR record per directory; the FDIR points to the
+	FDR for each file in the directory.  The FDR (File Descriptor Record)
+	contains the file information (name, format, lenght, pointers to data
+	sectors/AUs, etc).
+*/
+
+/*
+	WIN disk structure:
+
+	The disk sector size is 256 bytes on HFDC, 512 bytes on SCSI.  512-byte
+	sectors are split in 256-byte physical records.
+
+	The disk is allocated in allocation units (AUs).  Each AU represents one
+	or several sectors.  AUs usually represent one sector each, but since we
+	cannot have more than 65535 AUs, we need to have several physical records
+	per AU in disks larger than 16 (HFDC) or 32 (SCSI) Mbytes.
+
+	Sector 0: Volume Information Block (VIB): see below
+	Sector 1-n: Volume bitmap
+	Remaining physical records are used for ddr, fdir, fdr and data.  Each
+	directory (except the root directory, which uses the VIB as a DDR) has a
+	DDR, that points to an FDIR.  The FDIR points to the FDR for each file in
+	the directory, and to the parent DDR as well.  Each file has one FDR (File
+	Descriptor Record) descriptor which provides the file information (name,
+	format, lenght, pointers to data sectors/AUs, etc).  When a file has more
+	than 76 fragments, we create offspring FDRs that hold additional fragments.
 */
 
 /* Since string length is encoded with a byte, the maximum length of a string
@@ -257,6 +281,15 @@ typedef struct ti99_sector_address
 } ti99_sector_address;
 
 /*
+	Time stamp (used in fdr)
+*/
+typedef struct ti99_date_time
+{
+	UINT8 time_MSB, time_LSB;/* 0-4: hour, 5-10: minutes, 11-15: seconds/2 */
+	UINT8 date_MSB, date_LSB;/* 0-6: year, 7-10: month, 11-15: day */
+} ti99_date_time;
+
+/*
 	Subdirectory descriptor (HFDC only)
 
 	The HFDC supports up to 3 subdirectories.
@@ -287,7 +320,7 @@ typedef struct ti99_vib
 	UINT8 protection;		/* 'P' if disk is protected, ' ' otherwise. */
 	UINT8 tracksperside;	/* tracks per side (usually 40) */
 	UINT8 sides;			/* sides (1 or 2) */
-	UINT8 density;			/* density: 1 (FM SD), 2 (MFM DD), or 3 (MFM 80-track DD, and HD) */
+	UINT8 density;			/* density: 1 (FM SD), 2 (MFM DD), or 3 (MFM HD) */
 	ti99_subdir subdir[3];	/* descriptor for up to 3 subdirectories (HFDC only) */
 								/* reserved by TI */
 	UINT8 abm[200];			/* allocation bitmap: there is one bit per AU. */
@@ -300,6 +333,45 @@ typedef struct ti99_vib
 								/* AU 7 to MSBit of byte 0, AU 8 to LSBit */
 								/* of byte 1, etc.) */
 } ti99_vib;
+
+#if 0
+
+typedef struct win_vib
+{
+	char name[10];			/* disk volume name (10 characters, pad with spaces) */
+	UINT16BE totAUs;		/* total number of AUs */
+	UINT8 secspertrack;		/* HFDC: sectors per track (typically 32) */
+							/* SCSI: reserved */
+	union
+	{
+		UINT8 v1[3];		/* V1: 'WIN' */
+
+		struct
+		{
+			UINT8 res_AUs;	/* # AUs reserved for vib, bitmap, ddr, fdir and fdr, divided by 64*/
+			UINT8 step_spd;	/* HFDC: step speed (0-7) */
+							/* SCSI: reserved */
+			UINT8 red_w_cur;/* HFDC: reduced write current cylinder, divided by 8 */
+							/* SCSI: reserved */
+		} v2;
+	} u;
+	UINT16BE params;		/* bits 0-3: sectors/AU - 1 */
+							/* HFDC: */
+								/* bits 4-7: # heads - 1 */
+								/* bit 8: V1: buffered head stepping flag */
+								/*        V2: reserved */
+								/* bit 9-15: write precompensation track, divided by 16 */
+							/* for SCSI: */
+								/* bits 4-15: reserved */
+	ti99_date_time creation;/* date and time of creation */
+	UINT8 num_files;		/* number of files in directory */
+	UINT8 num_subdirs;		/* number of subdirectories in directory */
+	UINT16BE fdir_AU;		/* points to root directory fdir */
+	UINT16BE dsk1_AU;		/* points to dsk1 emulation image for hfdc; reserved otherwise */
+	UINT16BE subdir_AU[114];/* points to all subdirectory DDRs */
+} win_vib;
+
+#endif
 
 typedef enum
 {
@@ -935,15 +1007,6 @@ enum
 	fdr99_f_wp		= 0x08,	/* set if file is write-protected */
 	fdr99_f_var		= 0x80	/* set if file uses variable-length records*/
 };
-
-/*
-	Time stamp (used in fdr)
-*/
-typedef struct ti99_date_time
-{
-	UINT8 time_MSB, time_LSB;/* 0-4: hour, 5-10: minutes, 11-15: seconds/2 */
-	UINT8 date_MSB, date_LSB;/* 0-6: year, 7-10: month, 11-15: day */
-} ti99_date_time;
 
 /*
 	FDR record
@@ -1798,13 +1861,9 @@ typedef struct ti99_iterator
 {
 	IMAGEENUM base;
 	ti99_image *image;
-#if 1
 	int level;
 	int listing_subdirs;	/* true if we are listing subdirectories at level 0 */
 	int index[2];			/* current index in the disk catalog */
-#else
-	int index;			/* current index in the disk catalog */
-#endif
 } ti99_iterator;
 
 
@@ -1834,7 +1893,7 @@ static struct OptionTemplate ti99_createopts[] =
 	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	80,	"40" },
 	{ "sectors",	"1->9 for SD, 1->18 for DD, 1->36 for HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	36,	"18" },
 	{ "protection",	"0 for normal, 1 for protected", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	1,	"0" },
-	{ "density",	"0 for auto-detect, 1 for SD, 2 for 40-track DD, 3 for 80-track DD and HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	3,	"0" },
+	{ "density",	"0 for auto-detect, 1 for SD, 2 for DD, 3 for HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	3,	"0" },
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
@@ -1854,7 +1913,7 @@ IMAGEMODULE(
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
-	/*EOLN_CR*/0,					/* eoln */
+	EOLN_CR,						/* eoln */
 	0,								/* flags */
 	ti99_image_init_mess,			/* init function */
 	ti99_image_exit,				/* exit function */
@@ -1879,7 +1938,7 @@ IMAGEMODULE(
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
-	/*EOLN_CR*/0,					/* eoln */
+	EOLN_CR,						/* eoln */
 	0,								/* flags */
 	ti99_image_init_v9t9,			/* init function */
 	ti99_image_exit,				/* exit function */
@@ -1904,7 +1963,7 @@ IMAGEMODULE(
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
-	/*EOLN_CR*/0,					/* eoln */
+	EOLN_CR,						/* eoln */
 	0,								/* flags */
 	ti99_image_init_pc99_fm,		/* init function */
 	ti99_image_exit,				/* exit function */
@@ -1929,7 +1988,7 @@ IMAGEMODULE(
 	"dsk",							/* file extension */
 	NULL,							/* crcfile */
 	NULL,							/* crc system name */
-	/*EOLN_CR*/0,					/* eoln */
+	EOLN_CR,						/* eoln */
 	0,								/* flags */
 	ti99_image_init_pc99_mfm,		/* init function */
 	ti99_image_exit,				/* exit function */
@@ -2318,7 +2377,7 @@ static int ti99_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	{
 		ti99_file_pos file_pos;
 		int reclen;
-		char lineend = '\n';
+		char lineend = '\r';
 
 		initialize_file_pos(& file_pos);
 		while (! is_eof(& fdr, & file_pos))
@@ -2603,9 +2662,9 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	/* auto-density */
 	if (density == 0)
 	{
-		if ((lvl1_ref.geometry.tracksperside <= 40) && (lvl1_ref.geometry.secspertrack <= 9))
+		if (lvl1_ref.geometry.secspertrack <= 9)
 			density = 1;
-		else if ((lvl1_ref.geometry.tracksperside <= 40) && (lvl1_ref.geometry.secspertrack <= 18))
+		else if (lvl1_ref.geometry.secspertrack <= 18)
 			density = 2;
 		else
 			density = 3;
@@ -2614,10 +2673,6 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 	/* check volume name */
 	if (strchr(volname, '.') || strchr(volname, ' ') || (strlen(volname) > 10))
 		return /*IMGTOOLERR_BADFILENAME*/IMGTOOLERR_PARAMCORRUPT;
-
-	/* check number of tracks if 40-track image */
-	if ((density < 3) && (lvl1_ref.geometry.tracksperside > 40))
-		return IMGTOOLERR_PARAMTOOLARGE;
 
 	/* FM disks can hold fewer sector per track than MFM disks */
 	if ((density == 1) && (lvl1_ref.geometry.secspertrack > 9))
