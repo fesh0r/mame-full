@@ -1301,7 +1301,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	/* if a custom controller has been selected */
 	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
 	{
-		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
+		const struct InputPort* input = Machine->input_ports;
 		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
 
 		/* process the controller-specific default file */
@@ -1312,5 +1312,72 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 
 		/* process the game-specific files for this controller */
 		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
+
+		while ((input->type & ~IPF_MASK) != IPT_END)
+		{
+			switch (input->type & ~IPF_MASK)
+			{
+				case IPT_PADDLE:
+				case IPT_PADDLE_V:
+					if (!paddle)
+					{
+						if ((paddle_ini != NULL) && (*paddle_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
+						paddle = 1;
+					}
+					break;
+
+				case IPT_DIAL:
+				case IPT_DIAL_V:
+					if (!dial)
+					{
+						if ((dial_ini != NULL) && (*dial_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, dial_ini);
+						dial = 1;
+					}
+					break;
+
+				case IPT_TRACKBALL_X:
+				case IPT_TRACKBALL_Y:
+					if (!trackball)
+					{
+						if ((trackball_ini != NULL) && (*trackball_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
+						trackball = 1;
+					}
+					break;
+
+				case IPT_AD_STICK_X:
+				case IPT_AD_STICK_Y:
+					if (!adstick)
+					{
+						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
+						adstick = 1;
+					}
+					break;
+
+				case IPT_LIGHTGUN_X:
+				case IPT_LIGHTGUN_Y:
+					if (!lightgun)
+					{
+						if ((lightgun_ini != NULL) && (*lightgun_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, lightgun_ini);
+						lightgun = 1;
+					}
+					break;
+
+				case IPT_PEDAL:
+					if (!pedal)
+					{
+						if ((pedal_ini != NULL) && (*pedal_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
+						pedal = 1;
+					}
+					break;
+
+			}
+			++input;
+		}
 	}
 }

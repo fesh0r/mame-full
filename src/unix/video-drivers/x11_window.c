@@ -1338,8 +1338,8 @@ void x11_window_update_display (struct mame_bitmap *bitmap)
 #endif
 
    if (use_mouse &&
-       keyboard_pressed (KEYCODE_LALT) &&
-       keyboard_pressed_memory (KEYCODE_PGDN))
+       code_pressed (KEYCODE_LALT) &&
+       code_pressed_memory (KEYCODE_PGDN))
    {
       if (x11_grab_mouse)
       {
@@ -1361,8 +1361,8 @@ void x11_window_update_display (struct mame_bitmap *bitmap)
    }
 
    /* toggle keyboard grabbing */
-   if (keyboard_pressed (KEYCODE_LALT) &&
-       keyboard_pressed_memory (KEYCODE_PGUP))
+   if (code_pressed (KEYCODE_LALT) &&
+       code_pressed_memory (KEYCODE_PGUP))
    {
      if (x11_grab_keyboard)
      {

@@ -582,8 +582,8 @@ void osd_refresh_screen(void)
 
 void sysdep_update_display(struct mame_bitmap *bitmap)
 {
-  if(keyboard_pressed(KEYCODE_RCONTROL)) {
-	if(keyboard_pressed_memory(KEYCODE_B)) {
+  if(code_pressed(KEYCODE_RCONTROL)) {
+	if(code_pressed_memory(KEYCODE_B)) {
 	  bilinear=1-bilinear;
 
 	  if(bilinear)

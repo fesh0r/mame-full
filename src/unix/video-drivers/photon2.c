@@ -192,12 +192,12 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
    
    int bitmap_depth = bitmap->depth;
 
-   if (keyboard_pressed (KEYCODE_LALT))
+   if (code_pressed (KEYCODE_LALT))
    { 
-      if (keyboard_pressed_memory (KEYCODE_INSERT))
+      if (code_pressed_memory (KEYCODE_INSERT))
          new_video_mode = PH_WINDOW;
          /*
-      if (keyboard_pressed_memory (KEYCODE_HOME))
+      if (code_pressed_memory (KEYCODE_HOME))
          new_video_mode = PH_OVR;
          */
    }

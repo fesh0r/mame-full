@@ -1831,11 +1831,11 @@ _map_input_port(unsigned unmapped_bit_index,
 				{ IPF_PLAYER4, IPT_START4, IPT_COIN4 } };
 
     unsigned candidate_port_index, candidate_bit_index;
-    UINT32 unmapped_type = Machine->gamedrv->input_ports[unmapped_bit_index].type;
+    UINT32 unmapped_type = Machine->input_ports[unmapped_bit_index].type;
     UINT32 target_type = IPT_UNKNOWN;
     int result = FALSE;
 
-    if (Machine->gamedrv->input_ports[0].type != IPT_PORT) {
+    if (Machine->input_ports[0].type != IPT_PORT) {
 	_CHATTY_LOG("Unable to build key map:  "
 		    "Port definitions do not begin with IPT_PORT");        
     }
@@ -1860,7 +1860,7 @@ _map_input_port(unsigned unmapped_bit_index,
 	    candidate_bit_index = 1;
 	    candidate_port_index = 0;
 	    while (candidate_port_index < MAX_INPUT_PORTS &&
-		   (candidate_type = Machine->gamedrv->input_ports[candidate_bit_index].type,
+		   (candidate_type = Machine->input_ports[candidate_bit_index].type,
 		    candidate_type != IPT_END) &&
 		   ! result)
 	    {
@@ -1869,7 +1869,7 @@ _map_input_port(unsigned unmapped_bit_index,
 		}
 		else if (candidate_type == target_type) {
 		    mapped_bit_id->port_index = candidate_port_index;
-		    mapped_bit_id->mask = Machine->gamedrv->input_ports[candidate_bit_index].mask;
+		    mapped_bit_id->mask = Machine->input_ports[candidate_bit_index].mask;
 		    result = TRUE;
 		}
 		candidate_bit_index += 1;
@@ -1886,7 +1886,7 @@ _build_net_keymap(void)
 
     _input_mapping_count = 0;
 
-    if (Machine->gamedrv->input_ports[0].type != IPT_PORT) {
+    if (Machine->input_ports[0].type != IPT_PORT) {
 	_CHATTY_LOG("Unable to build key map:  "
 		    "Port definitions do not begin with IPT_PORT");        
     } else {
@@ -1894,7 +1894,7 @@ _build_net_keymap(void)
 	unsigned unmapped_bit_index = 1, unmapped_port_index = 0;
 
 	while (unmapped_port_index < MAX_INPUT_PORTS &&
-	       (current_type = Machine->gamedrv->input_ports[unmapped_bit_index].type,
+	       (current_type = Machine->input_ports[unmapped_bit_index].type,
 		current_type != IPT_END))
 	{
 	    unsigned previous_mapping_index;
@@ -1913,7 +1913,7 @@ _build_net_keymap(void)
 		unsigned short previously_mapped_mask =
 		    _input_map[previous_mapping_index].source.mask;
 		if (unmapped_port_index == previously_mapped_port_index &&
-		    Machine->gamedrv->input_ports[unmapped_bit_index].mask == previously_mapped_mask)
+		    Machine->input_ports[unmapped_bit_index].mask == previously_mapped_mask)
 		{
 		    duplicate_found = 1;
 		}
@@ -1924,7 +1924,7 @@ _build_net_keymap(void)
 	    {
 		_input_map[_input_mapping_count].source.port_index = unmapped_port_index;
 		_input_map[_input_mapping_count].source.mask =
-		    Machine->gamedrv->input_ports[unmapped_bit_index].mask;
+		    Machine->input_ports[unmapped_bit_index].mask;
 		_input_mapping_count += 1;
 	    }
 	    unmapped_bit_index += 1;

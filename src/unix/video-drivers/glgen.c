@@ -2688,9 +2688,9 @@ sysdep_update_display (struct mame_bitmap *bitmap)
 
   frame++;
 
-  if (keyboard_pressed (KEYCODE_RALT))
+  if (code_pressed (KEYCODE_RALT))
   {
-    if (keyboard_pressed_memory (KEYCODE_A))
+    if (code_pressed_memory (KEYCODE_A))
     {
     	  if(vecgame)
 	  {
@@ -2701,36 +2701,36 @@ sysdep_update_display (struct mame_bitmap *bitmap)
 		  printf("GLINFO: switched antialias := %d\n", antialias);
 	  }
     }
-    else if (keyboard_pressed_memory (KEYCODE_B))
+    else if (code_pressed_memory (KEYCODE_B))
     {
       gl_set_bilinear (1 - bilinear);
       printf("GLINFO: switched bilinear := %d\n", bilinear);
     }
-    else if (keyboard_pressed_memory (KEYCODE_C) && dodepth)
+    else if (code_pressed_memory (KEYCODE_C) && dodepth)
     {
       gl_set_cabview (1-cabview);
       printf("GLINFO: switched cabinet := %d\n", cabview);
     }
-    else if (keyboard_pressed_memory (KEYCODE_F) && dodepth)
+    else if (code_pressed_memory (KEYCODE_F) && dodepth)
     {
 	toggleFullscreen();
     }
-    else if (keyboard_pressed_memory (KEYCODE_O))
+    else if (code_pressed_memory (KEYCODE_O))
     {
       drawbitmap = 1 - drawbitmap;
       printf("GLINFO: switched drawbitmap := %d\n", drawbitmap);
     }
-    else if (keyboard_pressed_memory (KEYCODE_T))
+    else if (code_pressed_memory (KEYCODE_T))
     {
       dopersist = 1 - dopersist;
       drawbitmap = 1 - dopersist;
       printf("GLINFO: switched dopersist := %d (drawbitmap:=%d) \n", dopersist, drawbitmap);
     }
-    else if (keyboard_pressed_memory (KEYCODE_PLUS_PAD))
+    else if (code_pressed_memory (KEYCODE_PLUS_PAD))
     {
 	set_gl_beam(get_gl_beam()+0.5);
     }
-    else if (keyboard_pressed_memory (KEYCODE_MINUS_PAD))
+    else if (code_pressed_memory (KEYCODE_MINUS_PAD))
     {
 	set_gl_beam(get_gl_beam()-0.5);
     }

@@ -917,8 +917,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 	if (input_ui_pressed(IPT_UI_THROTTLE))
 	{
-		if (!keyboard_pressed(KEYCODE_LSHIFT)
-				&& !keyboard_pressed(KEYCODE_RSHIFT))
+		if (!code_pressed(KEYCODE_LSHIFT)
+				&& !code_pressed(KEYCODE_RSHIFT))
 		{
 			throttle ^= 1;
 
@@ -928,38 +928,38 @@ void osd_update_video_and_audio(struct mame_display *display)
 			 */
 			frames_displayed = 0;
 		}
-		else if (keyboard_pressed(KEYCODE_RSHIFT)
-				|| keyboard_pressed(KEYCODE_LSHIFT))
+		else if (code_pressed(KEYCODE_RSHIFT)
+				|| code_pressed(KEYCODE_LSHIFT))
 			sleep_idle ^= 1;
 	}
 
-	if (keyboard_pressed(KEYCODE_LCONTROL))
+	if (code_pressed(KEYCODE_LCONTROL))
 	{ 
-		if (keyboard_pressed_memory(KEYCODE_INSERT))
+		if (code_pressed_memory(KEYCODE_INSERT))
 			frameskipper = 0;
-		if (keyboard_pressed_memory(KEYCODE_HOME))
+		if (code_pressed_memory(KEYCODE_HOME))
 			frameskipper = 1;
 	}
 
-	if (keyboard_pressed(KEYCODE_LSHIFT))
+	if (code_pressed(KEYCODE_LSHIFT))
 	{
 		int widthscale_mod  = 0;
 		int heightscale_mod = 0;
 
-		if (keyboard_pressed_memory(KEYCODE_INSERT))
+		if (code_pressed_memory(KEYCODE_INSERT))
 			widthscale_mod = 1;
-		if (keyboard_pressed_memory(KEYCODE_DEL))
+		if (code_pressed_memory(KEYCODE_DEL))
 			widthscale_mod = -1;
-		if (keyboard_pressed_memory(KEYCODE_HOME))
+		if (code_pressed_memory(KEYCODE_HOME))
 			heightscale_mod = 1;
-		if (keyboard_pressed_memory(KEYCODE_END))
+		if (code_pressed_memory(KEYCODE_END))
 			heightscale_mod = -1;
-		if (keyboard_pressed_memory(KEYCODE_PGUP))
+		if (code_pressed_memory(KEYCODE_PGUP))
 		{
 			widthscale_mod  = 1;
 			heightscale_mod = 1;
 		}
-		if (keyboard_pressed_memory (KEYCODE_PGDN))
+		if (code_pressed_memory (KEYCODE_PGDN))
 		{
 			widthscale_mod  = -1;
 			heightscale_mod = -1;

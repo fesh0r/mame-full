@@ -216,18 +216,18 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 		bitmap_depth = 16;
 	}
 
-	if (keyboard_pressed (KEYCODE_LALT))
+	if (code_pressed(KEYCODE_LALT))
 	{
-		if (keyboard_pressed_memory(KEYCODE_INSERT))
+		if (code_pressed_memory(KEYCODE_INSERT))
 			new_video_mode = X11_WINDOW;
 
-		if (keyboard_pressed_memory(KEYCODE_HOME))
+		if (code_pressed_memory(KEYCODE_HOME))
 			new_video_mode = X11_DGA;
 
-		if (keyboard_pressed_memory(KEYCODE_DEL))
+		if (code_pressed_memory(KEYCODE_DEL))
 			new_video_mode = X11_XV_WINDOW;
 
-		if (keyboard_pressed_memory(KEYCODE_END))
+		if (code_pressed_memory(KEYCODE_END))
 			new_video_mode = X11_XV_FULLSCREEN;
 	}
 
