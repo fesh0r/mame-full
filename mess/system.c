@@ -217,6 +217,7 @@ TESTDRIVER( z88 )		/*												  */
 	DRIVER( pcw16 )     /* 1995 PCW16                                     */
 
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
+	DRIVER( nc100a ) 	/* 19?? NC100									  */
 	DRIVER( nc200 )     /* 19?? NC200									  */
 #endif
 
