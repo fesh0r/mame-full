@@ -11,6 +11,7 @@ struct mess_flopimg
 	floppy_image *floppy;
 	int track;
 	void (*unload_proc)(mess_image *image);
+	int (*tracktranslate_proc)(mess_image *image, floppy_image *floppy);
 };
 
 
@@ -28,6 +29,10 @@ static void flopimg_seek_callback(mess_image *image, int physical_track)
 	flopimg = get_flopimg(image);
 	if (!flopimg || !flopimg->floppy)
 		return;
+
+	/* translate the track number if necessary */
+	if (flopimg->tracktranslate_proc)
+		physical_track = flopimg->tracktranslate_proc(image, flopimg->floppy);
 
 	flopimg->track = physical_track;
 }
@@ -313,6 +318,12 @@ void specify_extension(char *extbuf, size_t extbuflen, const char *extension)
 
 
 
+/*************************************
+ *
+ *	Hacks for specific systems
+ *
+ *************************************/
+
 void floppy_install_unload_proc(mess_image *image, void (*proc)(mess_image *image))
 {
 	struct mess_flopimg *flopimg;
@@ -321,6 +332,21 @@ void floppy_install_unload_proc(mess_image *image, void (*proc)(mess_image *imag
 }
 
 
+
+void floppy_install_tracktranslate_proc(mess_image *image, int (*proc)(mess_image *image, floppy_image *floppy))
+{
+	struct mess_flopimg *flopimg;
+	flopimg = image_lookuptag(image, FLOPPY_TAG);
+	flopimg->tracktranslate_proc = proc;
+}
+
+
+
+/*************************************
+ *
+ *	Device specification function
+ *
+ *************************************/
 
 const struct IODevice *floppy_device_specify(struct IODevice *iodev, char *extbuf, size_t extbuflen,
 	int count, const struct FloppyFormat *floppy_options)
