@@ -510,6 +510,7 @@ void OptionsInit()
 
 #ifdef MESS
 	memset(global.extra_software_paths, '\0', sizeof(global.extra_software_paths));
+	global.use_new_ui = TRUE;
 #endif
 
 	/* This allocation should be checked */

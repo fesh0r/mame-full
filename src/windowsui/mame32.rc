@@ -2,6 +2,10 @@
 //
 #include "resource.h"
 
+#ifdef MESS
+#include "MessResource.h"
+#endif
+
 // Generated Help ID header file
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "resource.hm"
@@ -117,10 +121,17 @@ BEGIN
     END
     POPUP "&Options"
     BEGIN
+#ifdef MESS
+        MENUITEM "System List &Font...",          ID_OPTIONS_FONT
+        MENUITEM "System List &Clone Color...",   ID_OPTIONS_CLONE_COLOR
+        MENUITEM "&Directories...",             ID_OPTIONS_DIR
+        MENUITEM "Default System &Options...",    ID_OPTIONS_DEFAULTS
+#else
         MENUITEM "Game List &Font...",          ID_OPTIONS_FONT
         MENUITEM "Game List &Clone Color...",   ID_OPTIONS_CLONE_COLOR
         MENUITEM "&Directories...",             ID_OPTIONS_DIR
         MENUITEM "Default Game &Options...",    ID_OPTIONS_DEFAULTS
+#endif
         MENUITEM "&Reset to Default...",        ID_OPTIONS_RESET_DEFAULTS
         MENUITEM "&Interface Options...",       ID_OPTIONS_INTERFACE
         MENUITEM "&Background Image...",        ID_OPTIONS_BG
@@ -155,7 +166,11 @@ BEGIN
         MENUITEM "R&emove From This Folder",    ID_CONTEXT_REMOVE_CUSTOM
         MENUITEM "&Custom Filters...",          ID_CONTEXT_FILTERS
         MENUITEM SEPARATOR
+#ifdef MESS
+        MENUITEM "&Select Random System",         ID_CONTEXT_SELECT_RANDOM
+#else
         MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
+#endif
         MENUITEM SEPARATOR
         MENUITEM "Pr&operties",                 ID_GAME_PROPERTIES
     END
@@ -328,6 +343,15 @@ IDI_DISPLAY             ICON    DISCARDABLE     "Res\\display.ico"
 IDI_CHECKMARK           ICON    DISCARDABLE     "Res\\checkmark.ico"
 IDI_HEADER_UP           ICON    DISCARDABLE     "res\\header_up.ico"
 IDI_HEADER_DOWN         ICON    DISCARDABLE     "res\\header_down.ico"
+
+#ifdef MESS
+IDI_WIN_FLOP            ICON    DISCARDABLE     "res/win_flop.ico"
+IDI_WIN_CASS            ICON    DISCARDABLE     "res/win_cass.ico"
+IDI_WIN_SERL            ICON    DISCARDABLE     "res/win_serl.ico"
+IDI_WIN_SNAP            ICON    DISCARDABLE     "res/win_snap.ico"
+IDI_WIN_PRIN            ICON    DISCARDABLE     "res/win_prin.ico"
+IDI_WIN_HARD            ICON    DISCARDABLE     "res/win_hard.ico"
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -626,9 +650,15 @@ BEGIN
     CONTROL         "Triple buffering",IDC_TRIPLE_BUFFER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,53,93,9,0,
                     HIDC_TRIPLE_BUFFER
+#ifdef MESS
+    CONTROL         "Match system refresh rate",IDC_MATCHREFRESH,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,16,65,93,9,0,
+                    HIDC_MATCHREFRESH
+#else
     CONTROL         "Match game refresh rate",IDC_MATCHREFRESH,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,65,93,9,0,
                     HIDC_MATCHREFRESH
+#endif
     CONTROL         "Sync to monitor refresh",IDC_SYNCREFRESH,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,77,93,9,0,
                     HIDC_SYNCREFRESH
@@ -717,8 +747,13 @@ BEGIN
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
     GROUPBOX        "",IDC_STATIC,7,43,206,30
+#ifdef MESS
+    CONTROL         "Use additional system artwork",IDC_ARTWORK,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,43,105,10,0,HIDC_ARTWORK
+#else
     CONTROL         "Use additional game artwork",IDC_ARTWORK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,43,105,10,0,HIDC_ARTWORK
+#endif
     CONTROL         "Backdrops",IDC_BACKDROPS,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,25,56,60,10,0,HIDC_BACKDROPS
     CONTROL         "Bezels",IDC_BEZELS,"Button",BS_AUTOCHECKBOX | 
@@ -732,17 +767,31 @@ BEGIN
     CONTROL         "Crop artwork",IDC_ARTWORK_CROP,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,129,91,75,10,0,HIDC_ARTWORK_CROP
     GROUPBOX        "Other Options",IDC_STATIC,7,113,206,65
+#ifdef MESS
+    CONTROL         "Use keyboard LEDs as system indicators",IDC_LEDS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,125,153,10,0,HIDC_LEDS
+    CONTROL         "Enable system cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,15,135,150,10,0,HIDC_CHEAT
+#else
     CONTROL         "Use keyboard LEDs as game indicators",IDC_LEDS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,125,153,10,0,HIDC_LEDS
     CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,15,135,150,10,0,HIDC_CHEAT
+#endif
     CONTROL         "Use less CPU time when possible",IDC_SLEEP,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,145,150,10,0,HIDC_SLEEP
     CONTROL         "Use pre-0.63 timing sytem",IDC_OLD_TIMING,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,155,155,10,0,
                     HIDC_OLD_TIMING
+#ifdef MESS
+    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,15,165,70,10,0,HIDC_LOG
+    CONTROL         "Use New UI",IDC_USE_NEW_UI,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,100,165,70,10,0,HIDC_LOG
+#else
     CONTROL         "Error log (for developers)",IDC_LOG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,15,165,150,10,0,HIDC_LOG
+#endif
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,0x809e0447
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,0x809e0401
@@ -828,12 +877,22 @@ END
 IDD_FILTERS DIALOGEX 0, 0, 205, 185
 STYLE DS_MODALFRAME | DS_3DLOOK | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_CONTEXTHELP
+#ifdef MESS
+CAPTION "System Filters"
+#else
 CAPTION "Game Filters"
+#endif
 FONT 8, "MS Sans Serif"
 BEGIN
+#ifdef MESS
+    CTEXT           "System filters allow customizing the systems that are displayed in each folder by hiding games that match the filters applied.",
+                    IDC_STATIC,23,7,159,27
+    GROUPBOX        "System filters",IDC_STATIC,13,36,179,84
+#else
     CTEXT           "Game filters allow customizing the games that are displayed in each folder by hiding games that match the filters applied.",
                     IDC_STATIC,23,7,159,27
     GROUPBOX        "Game filters",IDC_STATIC,13,36,179,84
+#endif
     CONTROL         "&Vector Graphics",IDC_FILTER_VECTOR,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,49,76,10,0,
                     HIDC_FILTER_VECTOR
@@ -876,12 +935,21 @@ BEGIN
     CONTROL         "&User Interface (Fonts, Colors, Sizes)",IDC_RESET_UI,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,20,146,10,0,
                     HIDC_RESET_UI
+#ifdef MESS
+    CONTROL         "&Default system options",IDC_RESET_DEFAULT,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,18,34,146,10,0,
+                    HIDC_RESET_DEFAULT
+    CONTROL         "&All systems to use default options",IDC_RESET_GAMES,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,48,146,10,0,
+                    HIDC_RESET_GAMES
+#else
     CONTROL         "&Default game options",IDC_RESET_DEFAULT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,34,146,10,0,
                     HIDC_RESET_DEFAULT
     CONTROL         "&All games to use default options",IDC_RESET_GAMES,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,18,48,146,10,0,
                     HIDC_RESET_GAMES
+#endif
     CONTROL         "&Folder 'filters'",IDC_RESET_FILTERS,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,18,62,146,10,0,
                     HIDC_RESET_FILTERS
@@ -919,28 +987,52 @@ CAPTION "Interface Options"
 FONT 8, "MS Sans Serif", 0, 0, 0x1
 BEGIN
     GROUPBOX        "Application Start",IDC_STATIC,9,7,190,90
+#ifdef MESS
+    CONTROL         "&Search for new systems",IDC_START_GAME_CHECK,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
+                    HIDC_START_GAME_CHECK
+#else
     CONTROL         "&Search for new games",IDC_START_GAME_CHECK,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,17,85,10,0,
                     HIDC_START_GAME_CHECK
+#endif
     CONTROL         "&Enable version mismatch warning",
                     IDC_START_VERSION_WARN,"Button",BS_AUTOCHECKBOX | 
                     WS_TABSTOP,14,33,132,10,0,HIDC_START_VERSION_WARN
+#ifdef MESS
+    CONTROL         "&Allow system selection by a joystick (requires restart)",
+                    IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
+                    173,10,0,HIDC_JOY_GUI
+#else
     CONTROL         "&Allow game selection by a joystick (requires restart)",
                     IDC_JOY_GUI,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,49,
                     173,10,0,HIDC_JOY_GUI
+#endif
     CONTROL         "Select &random background image",IDC_RANDOM_BG,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,65,120,10,0,
                     HIDC_RANDOM_BG
+#ifdef MESS
+    CONTROL         "&Broadcast selected system to all windows",IDC_BROADCAST,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
+                    HIDC_BROADCAST
+#else
     CONTROL         "&Broadcast selected game to all windows",IDC_BROADCAST,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,14,81,143,10,0,
                     HIDC_BROADCAST
+#endif
     GROUPBOX        "Emulation Start",IDC_STATIC,9,102,190,40
     CONTROL         "Show &disclaimer",IDC_SHOW_DISCLAIMER,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,112,67,10,0,
                     HIDC_SHOW_DISCLAIMER
+#ifdef MESS
+    CONTROL         "Show &system info",IDC_SHOW_GAME_INFO,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,127,65,10,0,
+                    HIDC_SHOW_GAME_INFO
+#else
     CONTROL         "Show &game info",IDC_SHOW_GAME_INFO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,14,127,65,10,0,
                     HIDC_SHOW_GAME_INFO
+#endif
     DEFPUSHBUTTON   "&OK",IDOK,52,147,50,14
     PUSHBUTTON      "&Cancel",IDCANCEL,107,147,50,14
 END
@@ -963,7 +1055,11 @@ END
 
 IDD_CUSTOM_FILE DIALOG DISCARDABLE  0, 0, 186, 135
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+#ifdef MESS
+CAPTION "Add System To Custom Folder"
+#else
 CAPTION "Add Game To Custom Folder"
+#endif
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "CustomTree",IDC_CUSTOM_TREE,"SysTreeView32",
@@ -1226,22 +1322,37 @@ BEGIN
     IDS_UI_SPACER2          "Spacer"
     IDS_UI_ARRANGE          "Contains commands for sorting by various columns"
     IDS_UI_LINEUPICONS      "Arranges icons in a grid"
+#ifdef MESS
+    IDS_UI_REFRESH          "Refresh system list"
+    IDS_UI_CUSTOMIZE        "Customize which columns are used in the system list"
+#else
     IDS_UI_REFRESH          "Refresh game list"
     IDS_UI_CUSTOMIZE        "Customize which columns are used in the game list"
+#endif
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
     ID_FILE_EXIT            "Exit the application"
+#ifdef MESS
+    ID_FILE_PLAY            "Play currently selected system"
+#else
     ID_FILE_PLAY            "Play currently selected game"
+#endif
     ID_HELP_ABOUT           "Displays program and copyright information"
     ID_VIEW_LARGE_ICON      "Display items by using large icons."
     ID_VIEW_SMALL_ICON      "Display items by using small icons."
     ID_VIEW_LIST_MENU       "Displays items in a list."
     ID_VIEW_DETAIL          "Displays detailed information about each item in the window."
+#ifdef MESS
+    ID_OPTIONS_FONT         "Set system list and folder list font"
+    ID_OPTIONS_DIR          "Set directory configuration"
+    ID_OPTIONS_DEFAULTS     "Set default system options"
+#else
     ID_OPTIONS_FONT         "Set game list and folder list font"
     ID_OPTIONS_DIR          "Set directory configuration"
     ID_OPTIONS_DEFAULTS     "Set default game options"
+#endif
 END
 
 STRINGTABLE DISCARDABLE
@@ -1249,8 +1360,13 @@ BEGIN
     ID_OPTIONS_RESET_DEFAULTS "Allow restoring options to 'sane' values."
     ID_OPTIONS_INTERFACE    "Customize interface options."
     ID_FILE_AUDIT           "Audit ROM and samples sets"
+#ifdef MESS
+    ID_FILE_PLAY_RECORD     "Record a system for later playback"
+    ID_FILE_PLAY_BACK       "Playback a recorded system"
+#else
     ID_FILE_PLAY_RECORD     "Record a game for later playback"
     ID_FILE_PLAY_BACK       "Playback a recorded game"
+#endif
     ID_VIEW_SCREEN_SHOT     "Show or hide the screen shot"
     ID_HELP_CONTENTS        "Display help contents"
 #ifdef MESS
@@ -1266,25 +1382,42 @@ END
 
 STRINGTABLE DISCARDABLE
 BEGIN
+#ifdef MESS
+    ID_CUSTOMIZE_FIELDS     "Customize which columns are used in the system list"
+#else
     ID_CUSTOMIZE_FIELDS     "Customize which columns are used in the game list"
+#endif
     ID_GAME_PROPERTIES      "Display the properties of the selected items"
     ID_VIEW_FOLDERS         "Show or hide the folder list"
     ID_VIEW_TOOLBARS        "Show or hide the toolbar"
     ID_VIEW_STATUS          "Show or hide the status bar"
+#ifdef MESS
+    ID_CONTEXT_FILTERS      "Allows filtering out systems from a folder"
+    ID_CONTEXT_SELECT_RANDOM "Randomly select a system."
+#else
     ID_CONTEXT_FILTERS      "Allows filtering out games from a folder"
     ID_CONTEXT_SELECT_RANDOM "Randomly select a game."
+#endif
 END
 
 STRINGTABLE DISCARDABLE
 BEGIN
+#ifdef MESS
+    ID_VIEW_BYGAME          "Sort items by system"
+#else
     ID_VIEW_BYGAME          "Sort items by game"
+#endif
     ID_VIEW_BYDIRECTORY     "Sort items by directories"
     ID_VIEW_BYMANUFACTURER  "Sort items by manufacturer"
     ID_VIEW_BYYEAR          "Sort items by year"
     ID_VIEW_BYTYPE          "Sort items by type"
     ID_VIEW_BYTIMESPLAYED   "Sort by number of plays"
     ID_VIEW_LINEUPICONS     "Arranges icons in a grid"
+#ifdef MESS
+    ID_UPDATE_GAMELIST      "Refresh system list"
+#else
     ID_UPDATE_GAMELIST      "Refresh game list"
+#endif
     ID_SORT_ASCENDING       "Sort column in ascending (A-Z) order"
     ID_SORT_DESCENDING      "Sort column in descending (Z-A) order"
 END

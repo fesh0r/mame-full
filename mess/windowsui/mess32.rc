@@ -5,18 +5,6 @@
 
 /////////////////////////////////////////////////////////////////////////////
 //
-// Icon
-//
-
-IDI_WIN_FLOP            ICON    DISCARDABLE     "res/win_flop.ico"
-IDI_WIN_CASS            ICON    DISCARDABLE     "res/win_cass.ico"
-IDI_WIN_SERL            ICON    DISCARDABLE     "res/win_serl.ico"
-IDI_WIN_SNAP            ICON    DISCARDABLE     "res/win_snap.ico"
-IDI_WIN_PRIN            ICON    DISCARDABLE     "res/win_prin.ico"
-IDI_WIN_HARD            ICON    DISCARDABLE     "res/win_hard.ico"
-
-/////////////////////////////////////////////////////////////////////////////
-//
 // Dialog
 //
 
@@ -69,6 +57,3 @@ BEGIN
 END
 
 /////////////////////////////////////////////////////////////////////////////
-
-#include "mame32.rc"
-
