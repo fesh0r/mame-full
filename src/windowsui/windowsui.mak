@@ -94,7 +94,7 @@ LIBS += -lkernel32 \
         -lhtmlhelp
 
 # use -mconsole for romcmp
-LDFLAGS += -mwindows
+LDFLAGS += -mwindows -mconsole
 
 #####################################################################
 
