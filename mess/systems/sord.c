@@ -458,7 +458,7 @@ static struct MachineDriver machine_driver_sord_m5 =
 	0,								
 	TMS9928A_PALETTE_SIZE, TMS9928A_COLORTABLE_SIZE,
 	tms9928A_init_palette,
-	VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
+	VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_TYPE_RASTER,
 	0,								   /* MachineLayer */
 	sord_m5_vh_init,
 	TMS9928A_stop,

@@ -1565,9 +1565,9 @@ static struct MachineDriver machine_driver_xtvga =
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 #ifdef RESIZING_WORKING
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 #endif
 	0,
 	vga_vh_start,
@@ -1616,9 +1616,9 @@ static struct MachineDriver machine_driver_t1000hx =
 	pcjr_init_palette,							/* init palette */
 
 #ifdef RESIZING_WORKING
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 #else
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 #endif
 	0,
 	pc_t1t_vh_start,

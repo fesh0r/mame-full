@@ -5,10 +5,17 @@
 #include "unzip.h"
 #include "osdepend.h"
 #include "utils.h"
+#include "messwin.h"
 
 #ifdef UNDER_CE
 #include "mamece.h"
 #endif
+
+const char *crcdir = NULL;
+static char crcfilename[256] = "";
+const char *crcfile = crcfilename;
+static char pcrcfilename[256] = "";
+const char *pcrcfile = pcrcfilename;
 
 /* ************************************************************************ */
 /* Directories                                                              */

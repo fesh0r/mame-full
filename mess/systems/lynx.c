@@ -157,8 +157,6 @@ void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
     int j;
 
-    if( palette_recalc() ) full_refresh = 1;
-
     lynx_audio_debug(bitmap);
 
     for (j=0; j<debug_pos; j++) {
@@ -505,9 +503,9 @@ void init_lynx(void)
 #define io_lynx2 io_lynx
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_REQUIRES_16BIT|GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_REQUIRES_16BIT|GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
-CONSX( 1991, lynx2,	  lynx, 	lynx2,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_REQUIRES_16BIT|GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
+CONSX( 1991, lynx2,	  lynx, 	lynx2,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND)
 
 #ifdef RUNTIME_LOADER
 extern void lynx_runtime_loader_init(void)

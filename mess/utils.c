@@ -70,27 +70,3 @@ int strncmpi(const char *dst, const char *src, size_t n)
 }
 #endif /* strncmpi */
 
-/* -----------------------------------------------------------------------
- * osd_basename
- *
- * Like the GNU C version of basename
- * ----------------------------------------------------------------------- */
-
-#ifndef osd_basename
-char *osd_basename(char *name)
-{
-	int len;
-
-	len = strlen (name);
-
-	while (len-- > 0)
-	{
-		/* Presumably, if PATH_SEPARATOR == '/', then the resulting weirdness
-		 * would optimize out
-		 */
-		if ((name[len] == '\\') || (name[len] == PATH_SEPARATOR))
-			return (char *) (name + len + 1);
-	}
-	return (char *) name;
-}
-#endif /* osd_basename */

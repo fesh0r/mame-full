@@ -143,7 +143,7 @@ static const struct IODevice io_amiga[] = {
 };
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
+COMPX( 1984, amiga,    0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga 500 (NTSC)", GAME_NOT_WORKING )
 
 ROM_START( cdtv )
     ROM_REGION(0x200000,REGION_CPU1,ROMREGION_16BIT) /* for ram, etc */
@@ -174,4 +174,4 @@ static const struct IODevice io_cdtv[] = {
 };
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMPX( 1990, cdtv,     0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING | GAME_REQUIRES_16BIT )
+COMPX( 1990, cdtv,     0,        ntsc,     amiga,    0,        "Commodore Business Machines Co.",  "Amiga CDTV (NTSC)", GAME_NOT_WORKING )

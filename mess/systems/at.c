@@ -493,7 +493,7 @@ static struct MachineDriver machine_driver_ps2m30286 =
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	vga_vh_start,
 	vga_vh_stop,
@@ -542,7 +542,7 @@ static struct MachineDriver machine_driver_atvga =
 	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	vga_vh_start,
 	vga_vh_stop,

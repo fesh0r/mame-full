@@ -8,6 +8,7 @@ BETA_VERSION = -DBETA_VERSION=15
 TARGET = mess
 # TARGET = neomame
 # TARGET = tiny
+# TARGET=tinyms
 
 # uncomment next line to make a debug version
 # DEBUG = 1
@@ -44,6 +45,7 @@ MIDAS = 1
 
 # set this the operating system you're building for
 OS = win32
+# OS = wince
 # OS = windows
 
 # extension for executables
@@ -62,6 +64,13 @@ ASMFLAGS = -f win32
 RM = rm
 RMDIR = rd /S /Q
 MD = -mkdir
+
+ifeq "$(TARGET)" "mess"
+MESS = 1
+endif
+ifeq "$(TARGET)" "tinyms"
+MESS = 1
+endif
 
 WINDOWS_PROGRAM = -subsystem:windows
 CONSOLE_PROGRAM = -subsystem:console
@@ -118,7 +127,7 @@ ifndef DEBUG
 DEFS += -DNDEBUG
 endif
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
 endif
 
@@ -181,7 +190,7 @@ RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
 RCFLAGS = -l 0x409 -I./Win32 $(MAME_DEBUG)
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32
 endif
 
@@ -221,6 +230,10 @@ ifdef ZLIB_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(ZLIB_LIBPATH))
 endif
 
+ifdef GX_PATH
+LDFLAGS += -LIBPATH:$(subst \,\\,$(GX_PATH))\\$(WCEPLAT)
+endif
+
 LDFLAGS += -machine:x86 -nologo
 
 ifdef DEBUG
@@ -236,7 +249,7 @@ endif
 #####################################################################
 
 OBJDIRS = \
-		obj \
+        obj \
         $(OBJ) \
         $(OBJ)/cpu \
         $(OBJ)/sound \
@@ -245,10 +258,11 @@ OBJDIRS = \
         $(OBJ)/vidhrdw \
         $(OBJ)/sndhrdw \
         $(OBJ)/windows \
+        $(OBJ)/wince \
         $(OBJ)/Win32 \
         $(OBJ)/Win32/hlp \
 
-ifeq "$(TARGET)" "mess"
+ifdef MESS
 # MESS object directories
 OBJDIRS += \
         $(OBJ)/mess \
@@ -341,11 +355,18 @@ $(OBJ)/%.o: src/%.asm
 $(OBJ)/%.o: src/%.c
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
+$(OBJ)/wince/%.o: src/wince/%.cpp
+	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
+
 $(OBJ)/mess/%.o: mess/%.c
 	@echo [MESS] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
 $(OBJ)/Win32/%.res: src/Win32/%.rc
+	@echo Compiling resources $<...
+	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
+
+$(OBJ)/wince/%.res: src/wince/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

@@ -428,7 +428,7 @@ static struct MachineDriver machine_driver_c65 =
 	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,
@@ -469,7 +469,7 @@ static struct MachineDriver machine_driver_c65pal =
 	sizeof (vic3_palette) / sizeof (vic3_palette[0]) / 3,
 	0,
 	c65_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER,
 	0,
 	vic2_vh_start,
 	vic2_vh_stop,

@@ -48,12 +48,14 @@ USE_FASTCALL = -DFASTCALL
 OS = wince
 # OS = windows
 
-ifeq "$(TARGET)" "mess"
-MESS = 1
-endif
-ifeq "$(TARGET)" "tinyms"
-MESS = 1
-endif
+# extension for executables
+EXE = .exe
+
+# CPU core include paths
+VPATH=src $(wildcard src/cpu/*)
+
+# Windows CE version
+WINCE_VERSION		= wce300
 
 # Windows CE platform (x86em | arm | mips | sh3)
 ifeq "$(TARGETCPU)" "ARM"
@@ -68,14 +70,6 @@ endif
 ifndef WCEPLAT
 WCEPLAT = x86em
 endif
-
-# extension for executables
-EXE = .exe
-
-# CPU core include paths
-VPATH=src $(wildcard src/cpu/*)
-
-WINCE_VERSION		= wce300
 
 # compiler, linker and utilities
 AR = lib
@@ -316,6 +310,7 @@ endif
 #####################################################################
 
 OBJDIRS = \
+        obj \
         $(OBJ) \
         $(OBJ)/cpu \
         $(OBJ)/sound \
@@ -324,7 +319,7 @@ OBJDIRS = \
         $(OBJ)/vidhrdw \
         $(OBJ)/sndhrdw \
         $(OBJ)/windows \
-		$(OBJ)/wince \
+        $(OBJ)/wince \
         $(OBJ)/Win32 \
         $(OBJ)/Win32/hlp \
 	$(OBJ)/zlib

@@ -1,6 +1,7 @@
 //#include "mamalleg.h"
 #include "driver.h"
 #include "unzip.h"
+#include "rc.h"
 #include <unistd.h>
 #include <signal.h>
 
@@ -28,12 +29,42 @@ char *samples = NULL;
 char **samplepathv = NULL;
 int samplepathc = 0;
 
-const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
-const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
+static const char *rompath;
+static const char *samplepath;
+static const char *cfgdir, *nvdir, *hidir, *inpdir, *stadir;
+static const char *memcarddir, *artworkdir, *screenshotdir, *cheatdir;
+/* from datafile.c */
+extern const char *history_filename;
+extern const char *mameinfo_filename;
+/* from cheat.c */
+extern char *cheatfile;
 
-char *soft = NULL;
-char **softpathv = NULL;
-int softpathc = 0;
+/* MESS specifc */
+static char *soft = NULL;
+static char **softpathv = NULL;
+static int softpathc = 0;
+
+struct rc_option fileio_opts[] =
+{
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, request_decompose_rompath, "path to romsets" },
+	{ "samplepath", "sp", rc_string, &samplepath, "samples", 0, 0, request_decompose_samplepath, "path to samplesets" },
+	{ "cfg_directory", NULL, rc_string, &cfgdir, "cfg", 0, 0, NULL, "directory to save configurations" },
+	{ "nvram_directory", NULL, rc_string, &nvdir, "nvram", 0, 0, NULL, "directory to save nvram contents" },
+	{ "memcard_directory", NULL, rc_string, &memcarddir, "memcard", 0, 0, NULL, "directory to save memory card contents" },
+	{ "input_directory", NULL, rc_string, &inpdir, "inp", 0, 0, NULL, "directory to save input device logs" },
+	{ "hiscore_directory", NULL, rc_string, &hidir, "hi", 0, 0, NULL, "directory to save hiscores" },
+	{ "state_directory", NULL, rc_string, &stadir, "sta", 0, 0, NULL, "directory to save states" },
+	{ "artwork_directory", NULL, rc_string, &artworkdir, "artwork", 0, 0, NULL, "directory for Artwork (Overlays etc.)" },
+	{ "snapshot_directory", NULL, rc_string, &screenshotdir, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
+	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
+	{ "history_file", NULL, rc_string, &history_filename, "history.dat", 0, 0, NULL, NULL },
+	{ "mameinfo_file", NULL, rc_string, &mameinfo_filename, "mameinfo.dat", 0, 0, NULL, NULL },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
+
+
 char *alternate_name;				   /* for "-romdir" */
 
 typedef enum
@@ -1298,6 +1329,8 @@ int osd_fchecksum (const char *game, const char *filename, unsigned int *length,
 	int found = 0;
 	const char *gamename = game;
 
+	decompose_paths_if_needed();
+
 	/* Support "-romdir" yuck. */
 	if( alternate_name )
 		gamename = alternate_name;
@@ -1436,6 +1469,90 @@ int osd_ftell(void *file)
 		return ftell(f->file);
 	else
 		return -1L;
+}
+
+char *osd_basename (char *filename)
+{
+	char *c;
+
+	if (!filename)
+		return NULL;
+
+	c = filename + strlen(filename);
+
+	while (c != filename)
+	{
+		c--;
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return (c+1);
+	}
+
+	return filename;
+}
+
+char *osd_dirname (char *filename)
+{
+	char *dirname;
+	char *c;
+	int found = 0;
+
+	if (!filename)
+		return NULL;
+
+	if ( !( dirname = malloc(strlen(filename)+1) ) )
+	{
+		fprintf(stderr, "error: malloc failed in osd_dirname\n");
+		return 0;
+	}
+
+	strcpy (dirname, filename);
+
+	c = dirname + strlen(dirname);
+	while (c != dirname)
+	{
+		--c;
+		if (*c == '\\' || *c == '/' || *c == ':')
+		{
+			*(c+1)=0;
+			found = 1;
+			break;
+		}
+	}
+
+	/* did we find a path seperator? */
+	if (!found)
+		dirname[0]=0;
+
+	return dirname;
+}
+
+char *osd_strip_extension (char *filename)
+{
+	char *newname;
+	char *c;
+
+	if (!filename)
+		return NULL;
+
+	if ( !( newname = malloc(strlen(filename)+1) ) )
+	{
+		fprintf(stderr, "error: malloc failed in osd_newname\n");
+		return 0;
+	}
+
+	strcpy (newname, filename);
+
+	c = newname + strlen(newname);
+	while (c != newname)
+	{
+		--c;
+		if (*c == '.')
+			*c = 0;
+		if (*c == '\\' || *c == '/' || *c == ':')
+			break;
+	}
+
+	return newname;
 }
 
 
