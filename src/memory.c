@@ -584,7 +584,9 @@ int memory_init(void)
 	for( i = 0 ; i < MH_HARDMAX ; i++ ){
 		memoryreadoffset[i] = 0;
 		memorywriteoffset[i] = 0;
-	}
+		memoryreadhandler[i] = NULL;
+		memorywritehandler[i] = NULL;
+    }
 	/* bank memory */
 	for (i = 1; i <= MAX_BANKS; i++)
 	{
