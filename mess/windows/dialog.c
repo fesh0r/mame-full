@@ -19,6 +19,15 @@
 #include "invokegx.h"
 #endif
 
+
+//============================================================
+//	PARAMETERS
+//============================================================
+
+#define LOG_WINMSGS		0
+
+
+
 //============================================================
 //	These defines are necessary because the MinGW headers do
 //	not have the latest definitions
@@ -172,6 +181,11 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 	TCHAR buf[32];
 	const char *str;
 	WORD command;
+
+#if LOG_WINMSGS
+	logerror("dialog_proc(): dlgwnd=0x%08x msg=0x%08x wparam=0x%08x lparam=0x%08x\n",
+		(unsigned int) dlgwnd, (unsigned int) msg, (unsigned int) wparam, (unsigned int) lparam);
+#endif
 
 	switch(msg) {
 	case WM_INITDIALOG:

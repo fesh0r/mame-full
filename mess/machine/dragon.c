@@ -1631,26 +1631,33 @@ int coco3_mmu_translate(int bank, int offset)
 	int result;
 
 	/* Bank 8 is the 0xfe00 block; and it is treated differently */
-	if (bank == 8) {
-		if (coco3_gimereg[0] & 8) {
+	if (bank == 8)
+	{
+		if (coco3_gimereg[0] & 8)
+		{
+			/* this GIME register fixes logical addresses $FExx to physical
+			 * addresses $7FExx ($1FExx if 128k */
 			assert(offset < 0x200);
-			return mess_ram_size - 0x200 + offset;
+			return ((mess_ram_size - 0x200) & 0x7ffff) + offset;
 		}
 		bank = 7;
 		offset += 0x1e00;
 		forceram = 1;
 	}
-	else {
+	else
+	{
 		forceram = 0;
 	}
 
 	/* Perform the MMU lookup */
-	if (coco3_gimereg[0] & 0x40) {
+	if (coco3_gimereg[0] & 0x40)
+	{
 		if (coco3_gimereg[1] & 1)
 			bank += 8;
 		block = coco3_mmu[bank];
 	}
-	else {
+	else
+	{
 		block = bank + 56;
 	}
 
@@ -1666,8 +1673,10 @@ int coco3_mmu_translate(int bank, int offset)
 	 *
 	 * This is the level where ROM is mapped, according to Tepolt (p21)
 	 */
-	if (((block & 0x3f) >= 0x3c) && !coco3_enable_64k && !forceram) {
-		static const int rommap[4][4] = {
+	if (((block & 0x3f) >= 0x3c) && !coco3_enable_64k && !forceram)
+	{
+		static const UINT8 rommap[4][4] =
+		{
 			{ 0, 1, 6, 7 },
 			{ 0, 1, 6, 7 },
 			{ 0, 1, 2, 3 },
