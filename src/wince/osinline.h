@@ -1,6 +1,6 @@
 //============================================================
 //
-//	osinline.c - Win32 inline functions
+//	osinline.h - Win32 inline functions
 //
 //============================================================
 
@@ -8,69 +8,47 @@
 #define __OSINLINE__
 
 #include "osd_cpu.h"
-#include "video.h"
 
 //============================================================
-//	MACROS
+//	INLINE FUNCTIONS
 //============================================================
 
-#define osd_mark_vector_dirty MARK_DIRTY
+#ifdef _M_IX86
+#ifdef _MSC_VER
 
-#if defined(_M_IX86) && defined(_MSC_VER)
 #define vec_mult _vec_mult
-inline int _vec_mult(int x, int y)
+INLINE int _vec_mult(int x, int y)
 {
     int result;
-    __asm
-    {
-        mov eax , x
+
+    __asm {
+        mov eax, x
         imul y
-        mov result , edx
-    }
-    return result;
-}
-
-#if _MSC_VER < 0x0400
-INLINE unsigned int osd_cycles(void)
-{
-    int result;
-
-#define ASM_RDTSC __asm _emit 0x0f __asm _emit 0x31
-
-    __asm
-    {
-        xor eax, eax        /* touch eax so compiler will not use it. */
-        ASM_RDTSC           /* load clock cycle counter in eax and edx */
-        mov result, eax     /* the result has to go in eax (low 32 bits) */
+        mov result, edx
     }
 
     return result;
 }
+
 #else
-INLINE unsigned int osd_cycles(void)
+
+#define vec_mult _vec_mult
+INLINE int _vec_mult(int x, int y)
 {
-    int result;
-
-    __asm
-    {
-        rdtsc               /* load clock cycle counter in eax and edx */
-        mov result, eax     /* the result has to go in eax (low 32 bits) */
-    }
-
-    return result;
+	int result;
+	__asm__ (
+			"movl  %1    , %0    ; "
+			"imull %2            ; "    /* do the multiply */
+			"movl  %%edx , %%eax ; "
+			:  "=&a" (result)           /* the result has to go in eax */
+			:  "mr" (x),                /* x and y can be regs or mem */
+			   "mr" (y)
+			:  "%edx", "%cc"            /* clobbers edx and flags */
+		);
+	return result;
 }
 
 #endif /* _MSC_VER */
-
-#else
-
-#include "uclock.h"
-
-INLINE unsigned int osd_cycles(void)
-{
-    return uclock();
-}
-
-#endif
+#endif /* _M_IX86 */
 
 #endif /* __OSINLINE__ */

@@ -4,8 +4,8 @@
 #include "resource.h"
 #include "driver.h"
 #include "mamece.h"
-#include "../Win32/SmartListView.h"
-#include "../Win32/SoftwareList.h"
+#include "../windowsui/SmartListView.h"
+#include "../windowsui/SoftwareList.h"
 
 struct status_of_data
 {
@@ -710,6 +710,17 @@ static void mamece3_init()
 		ptGame_Data[i].lpDescription = _tcsdup(A2T(drivers[i]->description));
 	}
 	
+}
+
+void osd_parallelize(void (*task)(void *param, int task_num, int
+	task_count), void *param, int max_tasks)
+{
+	task(param, 0, 1);
+}
+
+int osd_keyboard_disabled(void)
+{
+	return 0;
 }
 
 

@@ -389,3 +389,13 @@ int is_mouse_captured(void)
 {
 	return 0;
 }
+
+void osd_lightgun_read(int player, int *deltax, int *deltay)
+{
+}
+
+int osd_is_joystick_axis_code(int joycode)
+{
+	return 0;
+}
+

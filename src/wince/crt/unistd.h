@@ -1,6 +1,8 @@
 #ifndef UNISTD_H
 #define UNISTD_H
 
+#include <stdlib.h>
+
 #define S_IFDIR		0x01
 #define _S_IFDIR	0x01
 

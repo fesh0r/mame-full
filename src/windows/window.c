@@ -396,7 +396,7 @@ INLINE void get_work_area(RECT *maximum)
 int win_init_window(void)
 {
 	static int classes_created = 0;
-	char title[256];
+	TCHAR title[256];
 	HMENU menu = NULL;
 
 	// disable win_old_scanlines if a win_blit_effect is active
@@ -409,7 +409,7 @@ int win_init_window(void)
 		WNDCLASS wc = { 0 };
 
 		// initialize the description of the window class
-		wc.lpszClassName 	= "MAME";
+		wc.lpszClassName 	= TEXT("MAME");
 		wc.hInstance 		= GetModuleHandle(NULL);
 		wc.lpfnWndProc		= video_window_proc;
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
@@ -427,7 +427,7 @@ int win_init_window(void)
 		// possibly register the debug window class
 		if (options.mame_debug)
 		{
-			wc.lpszClassName 	= "MAMEDebug";
+			wc.lpszClassName 	= TEXT("MAMEDebug");
 			wc.lpfnWndProc		= debug_window_proc;
 
 			// register the class; fail if we can't
@@ -448,7 +448,7 @@ int win_init_window(void)
 
 	// create the window, but don't show it yet
 	win_video_window = CreateWindowEx(win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX,
-			"MAME", title, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE,
+			TEXT("MAME"), title, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE,
 			20, 20, 100, 100, NULL, menu, GetModuleHandle(NULL), NULL);
 	if (!win_video_window)
 		return 1;
@@ -1414,7 +1414,7 @@ static int create_debug_window(void)
 {
 #ifdef MAME_DEBUG
 	RECT bounds, work_bounds;
-	char title[256];
+	TCHAR title[256];
 
 	sprintf(title, "Debug: %s [%s]", Machine->gamedrv->description, Machine->gamedrv->name);
 
@@ -1428,7 +1428,7 @@ static int create_debug_window(void)
 	SystemParametersInfo(SPI_GETWORKAREA, 0, &work_bounds, 0);
 
 	// create the window
-	win_debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, "MAMEDebug", title, DEBUG_WINDOW_STYLE,
+	win_debug_window = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, TEXT("MAMEDebug"), title, DEBUG_WINDOW_STYLE,
 			work_bounds.right - (bounds.right - bounds.left),
 			work_bounds.bottom - (bounds.bottom - bounds.top),
 			bounds.right - bounds.left, bounds.bottom - bounds.top,

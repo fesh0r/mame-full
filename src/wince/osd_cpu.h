@@ -40,23 +40,26 @@ int index;	/* avoid a common "shadows global declaration" warning in the DOS bui
 
 
 #ifdef _MSC_VER
-#define strnicmp _strnicmp
-#define __extension__
-#else
-#define __int64	long long
+//#undef INLINE
+//#define INLINE static inline
+#define strcasecmp stricmp
 #endif
 
 typedef unsigned char						UINT8;
+typedef signed char 						INT8;
 typedef unsigned short						UINT16;
+typedef signed short						INT16;
+
 #ifndef _WINDOWS_H
 typedef unsigned int						UINT32;
-__extension__ typedef unsigned __int64	UINT64;
-#endif
-typedef signed char 						INT8;
-typedef signed short						INT16;
-#ifndef _WINDOWS_H
 typedef signed int							INT32;
-__extension__ typedef signed __int64		INT64;
+#ifdef _MSC_VER
+typedef signed __int64						INT64;
+typedef unsigned __int64					UINT64;
+#else
+__extension__ typedef unsigned long long	UINT64;
+__extension__ typedef signed long long		INT64;
+#endif
 #endif
 
 /* Combine two 32-bit integers into a 64-bit integer */

@@ -31,6 +31,8 @@ void inputx_postc(unicode_char_t ch);
 void inputx_postn(const unicode_char_t *text, size_t text_len);
 void inputx_post_utf16(const utf16_char_t *text);
 void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
+void inputx_post_utf8(const char *text);
+void inputx_postn_utf8(const char *text, size_t text_len);
 
 /* given an InputPort; figure out if it and the adjacent ports refer to the
  * same control, and arrange them in arranged_ports (left/right/up/down).

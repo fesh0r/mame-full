@@ -1,7 +1,3 @@
-#####################################################################
-
-MAME_VERSION = -DMAME_VERSION=54
-
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
 TARGET = mess
@@ -24,18 +20,15 @@ BSCMAKE = @-bscmake.exe
 # uncomment next line to use Assembler 68020 engine
 # X86_ASM_68020 = 1
 
+# set this the operating system you're building for
+# MAMEOS = windows
+MAMEOS = wince
+
 # if MAME_NET is defined, network support will be compiled in
 # MAME_NET = -DMAME_NET
 
-# use fast (register) calling convention
-USE_FASTCALL = -DFASTCALL
-
 # uncomment next line to generate help files
 # HELP = 1
-
-# set this the operating system you're building for
-# OS = windows
-OS = wince
 
 # extension for executables
 EXE = .exe
@@ -79,7 +72,7 @@ ifeq "$(TARGET)" "tinyms"
 MESS = 1
 endif
 
-ifeq "$(OS)" "wince"
+ifeq "$(MAMEOS)" "wince"
 ifeq "$(WCEPLAT)" "x86em"
 WINDOWS_PROGRAM = -subsystem:windows -windowsce:emulation
 else
@@ -115,17 +108,12 @@ EMULATOR = $(NAME)$(EXE)
 DEFS = \
         -DWIN32 \
         -D_WINDOWS \
-	-DSUPPRESS_UI_WARNING \
-        -DDIRECTSOUND_VERSION=0x0300 \
-        -DDIRECTDRAW_VERSION=0x0300 \
-        -DDIRECTINPUT_VERSION=0x0500 \
         -DM_PI=3.1415926534 \
         -DPI=3.1415926534 \
         -DINLINE='static __inline' \
         -Dinline=__inline \
         -D__inline__=__inline \
-        -DCLIB_DECL=__cdecl \
-        -DDECL_SPEC=__cdecl \
+	-Dalloca=_alloca \
         -DPNG_SAVE_SUPPORT \
         -DMAME_AVI \
         -DHAS_CPUS \
@@ -133,16 +121,14 @@ DEFS = \
         -DLSB_FIRST=1 \
         $(MAME_VERSION) \
         $(MAME_NET) \
-        $(USE_FASTCALL)
 
-ifeq "$(OS)" "wince"
+ifeq "$(MAMEOS)" "wince"
 DEFS += \
 	-DUNICODE \
 	-D_UNICODE \
 	-DUNDER_CE=300 \
 	-D_WIN32_WCE=0300 \
 	-DSTRICT \
-	-Dstrcasecmp=_stricmp \
 	-Dstricmp=_stricmp
 
 ifeq "$(WCEPLAT)" "x86em"
@@ -164,15 +150,16 @@ DEFS += -DNDEBUG
 endif
 
 ifdef MESS
-DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
+DEFS += -DMESS=1 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 endif
 
 INCLUDES = \
-	-I. \
 	-Isrc \
-	-Isrc/wince \
 	-Isrc/wince/crt \
+	-Isrc/wince \
+        -Isrc/includes \
 	-Isrc/windows \
+	-Isrc/windowsui \
 	-Isrc/cpu/m68000 \
 	-I$(OBJ)/cpu/m68000
 
@@ -181,7 +168,7 @@ INCLUDES += \
         -Imess \
         -Imess/includes \
         -Imess/wince \
-		-Imess/windows
+	-Imess/windows
 endif
 
 ifdef DX_INCPATH
@@ -202,14 +189,8 @@ endif
 
 CFLAGS = -W1 -nologo $(INCLUDES)
 
-ifdef USE_FASTCALL
-ifneq "$(OS)" "wince"
-CFLAGS += -Gr
-endif
-endif
-
-ifeq "$(OS)" "wince"
-CFLAGS += -Gz
+ifeq "$(MAMEOS)" "wince"
+CFLAGS += -Gd
 endif
 
 ifdef DEBUG
@@ -217,8 +198,6 @@ CFLAGS += -Zi -Od
 else
 CFLAGS += -Ox -Ob2
 endif
-
-MAMEOS = $(OS)
 
 #####################################################################
 # Resources
@@ -254,7 +233,7 @@ ifdef GX_PATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(GX_PATH))\\$(WCEPLAT)
 endif
 
-ifeq "$(OS)" "wince"
+ifeq "$(MAMEOS)" "wince"
 LDFLAGS += -nodefaultlib
 ifeq "$(WCEPLAT)" "x86em"
 LDFLAGS += -machine:ix86 
@@ -323,13 +302,16 @@ all: maketree $(EMULATOR)
 
 # include the various .mak files
 include src/core.mak
+ifdef MESS
 include mess/$(TARGET).mak
+else
+include src/$(TARGET).mak
+endif
 include src/rules.mak
+include src/$(MAMEOS)/$(MAMEOS).mak
 ifdef MESS
 include mess/rules_ms.mak
-else
 endif
-include src/$(MAMEOS)/$(MAMEOS).mak
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG
