@@ -1,3 +1,5 @@
+#include "sysdep/sysdep_cpu.h"
+
 /**********************************
  * scan2: light 2x2 scanlines
  **********************************/
@@ -34,6 +36,22 @@ BLIT_SCAN2_H_LINE_X(blit_scan2_h_line_3, *(mydst+2) = *(mydst+1) = *mydst,
 BLIT_SCAN2_H_LINE_X(blit_scan2_h_line_4, *(mydst+3) = *(mydst+2) = *(mydst+1) =
   *mydst, mydst+=4)
 
+#ifdef EFFECT_MMX_ASM
+/* old scan2 mmx code to new effect/blit code glue function */
+INLINE void FUNC_NAME(blit_scan2_h_line_2_mmx)(SRC_PIXEL *src,
+  SRC_PIXEL *end, RENDER_PIXEL *dst, int dest_width,
+  unsigned int *lookup)
+{
+#if RENDER_DEPTH != 32
+  FUNC_NAME(blit_scan2_h_mmx)(dst, dst+dest_width, src, end-src, lookup);
+#elif SRC_DEPTH == 16
+  blit_scan2_h_mmx_16_32(dst, dst+dest_width, src, end-src, lookup);
+#else
+  blit_scan2_h_mmx_32_32_direct(dst, dst+dest_width, src, end-src, lookup);
+#endif
+}
+#endif
+
 BLIT_BEGIN(blit_scan2_h)
   switch(sysdep_display_params.widthscale)
   {
@@ -41,7 +59,12 @@ BLIT_BEGIN(blit_scan2_h)
       BLIT_LOOP(blit_scan2_h_line_1, 2)
       break;
     case 2:
-      BLIT_LOOP(blit_scan2_h_line_2, 2)
+#ifdef EFFECT_MMX_ASM
+      if (sysdep_cpu_caps & SYSDEP_CPU_MMX)
+        BLIT_LOOP(blit_scan2_h_line_2_mmx, 2)
+      else
+#endif
+        BLIT_LOOP(blit_scan2_h_line_2, 2)
       break;
     case 3:
       BLIT_LOOP(blit_scan2_h_line_3, 2)

@@ -1,5 +1,6 @@
 /* normal blitting routines */
 
+#if SRC_DEPTH != DEST_DEPTH || SRC_DEPTH == 16
 INLINE void FUNC_NAME(blit_normal_line_1)(SRC_PIXEL *src,
   SRC_PIXEL *end, RENDER_PIXEL *dst, unsigned int *lookup)
 {
@@ -11,6 +12,7 @@ INLINE void FUNC_NAME(blit_normal_line_1)(SRC_PIXEL *src,
       *(dst+3) = GETPIXEL(*(src+3));
    }
 }
+#endif
 
 INLINE void FUNC_NAME(blit_normal_line_2)(SRC_PIXEL *src,
   SRC_PIXEL *end, RENDER_PIXEL *dst, unsigned int *lookup)
@@ -61,7 +63,53 @@ BLIT_BEGIN(blit_normal)
   switch(sysdep_display_params.widthscale)
   {
     case 1:
+#if SRC_DEPTH != DEST_DEPTH || SRC_DEPTH == 16
       BLIT_LOOP_YARBSIZE(blit_normal_line_1)
+#else /* Speedup hack in case we just have to memcpy */
+      if (sysdep_display_params.orientation) {
+        if (sysdep_display_properties.mode_info[
+             sysdep_display_params.video_mode] &
+             SYSDEP_DISPLAY_DIRECT_FB)
+        { 
+          for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+            int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
+              (y*yarbsize)/sysdep_display_params.height;
+            while (reps) {
+              rotate_func(line_dest, bitmap, y, dirty_area);
+              line_dest += DEST_WIDTH;
+              reps--;
+            }
+          }
+        } else {
+          for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+            int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
+              (y*yarbsize)/sysdep_display_params.height;
+            if (reps) {
+              rotate_func(line_dest, bitmap, y, dirty_area);
+              while (--reps) {
+                memcpy(line_dest+DEST_WIDTH, line_dest,
+                  (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*
+                  DEST_PIXEL_SIZE);
+                line_dest += DEST_WIDTH;
+              }
+              line_dest += DEST_WIDTH;
+            }
+          }
+        }
+      } else {
+        for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+          int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
+            (y*yarbsize)/sysdep_display_params.height;
+          while (reps) {
+            memcpy(line_dest,
+              ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x,
+              (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*DEST_PIXEL_SIZE);
+            line_dest += DEST_WIDTH;
+            reps--;
+          }
+        }
+      }
+#endif
       break;
     case 2:
       BLIT_LOOP_YARBSIZE(blit_normal_line_2)
@@ -78,7 +126,50 @@ BLIT_BEGIN(blit_fakescan_h)
   switch(sysdep_display_params.widthscale)
   {
     case 1:
+#if SRC_DEPTH != DEST_DEPTH || SRC_DEPTH == 16
       BLIT_LOOP_FAKESCAN(blit_normal_line_1)
+#else /* Speedup hack in case we just have to memcpy */
+      if (sysdep_display_params.orientation) {
+        if (sysdep_display_properties.mode_info[
+             sysdep_display_params.video_mode] &
+             SYSDEP_DISPLAY_DIRECT_FB)
+        { 
+          for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+            int reps = sysdep_display_params.heightscale-1;
+            while (reps) {
+              rotate_func(line_dest, bitmap, y, dirty_area);
+              line_dest += DEST_WIDTH;
+              reps--;
+            }
+            line_dest += DEST_WIDTH;
+          }
+        } else {
+          for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+            int reps = sysdep_display_params.heightscale-1;
+            rotate_func(line_dest, bitmap, y, dirty_area);
+            while (--reps) {
+              memcpy(line_dest+DEST_WIDTH, line_dest,
+                (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*
+                DEST_PIXEL_SIZE);
+              line_dest += DEST_WIDTH;
+            }
+            line_dest += 2*DEST_WIDTH;
+          }
+        }
+      } else {
+        for (y = dirty_area->min_y; y < dirty_area->max_y; y++) {
+          int reps = sysdep_display_params.heightscale-1;
+          while(reps) {
+            memcpy(line_dest,
+              ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x,
+              (vis_in_dest_out->max_x-vis_in_dest_out->min_x)*DEST_PIXEL_SIZE);
+            line_dest += DEST_WIDTH;
+            reps--;
+          }
+          line_dest += DEST_WIDTH;
+        }
+      }
+#endif
       break;
     case 2:
       BLIT_LOOP_FAKESCAN(blit_normal_line_2)
@@ -90,91 +181,3 @@ BLIT_BEGIN(blit_fakescan_h)
       BLIT_LOOP_FAKESCAN(blit_normal_line_x)
   }
 BLIT_END
-
-/* some left overs of the old blit code which we might need when re-implementing
-   black scanlines */
-
-/* Normal, speedup hack in case we just have to memcpy */
-#if 0 /* #ifdef SCANLINES */
-if (sysdep_display_params.orientation) {
-  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] &
-      SYSDEP_DISPLAY_DIRECT_FB)
-  { 
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-      int reps = sysdep_display_params.heightscale-1;
-      while (reps) {
-        rotate_func(line_dest, bitmap, y, dirty_area);
-        line_dest += DEST_WIDTH;
-        reps--;
-      }
-      line_dest += DEST_WIDTH;
-    }
-  } else {
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-      int reps = sysdep_display_params.heightscale-1;
-      rotate_func(line_dest, bitmap, y, dirty_area);
-      while (--reps) {
-        memcpy(line_dest+DEST_WIDTH, line_dest,
-          bounds_width*DEST_PIXEL_SIZE*sysdep_display_params.widthscale);
-        line_dest += DEST_WIDTH;
-      }
-      line_dest += 2*DEST_WIDTH;
-    }
-  }
-} else {
-  for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-    int reps = sysdep_display_params.heightscale-1;
-    while(reps) {
-      memcpy(line_dest, ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x,
-        bounds_width*DEST_PIXEL_SIZE);
-      line_dest += DEST_WIDTH;
-      reps--;
-    }
-    line_dest += DEST_WIDTH;
-  }
-}
-#endif /* SCANLINES? */
-
-#if 0 /* non scanlines speedup hack */
-if (sysdep_display_params.orientation) {
-  if (sysdep_display_properties.mode_info[sysdep_display_params.video_mode] &
-      SYSDEP_DISPLAY_DIRECT_FB)
-  { 
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-      int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
-        (y*yarbsize)/sysdep_display_params.height;
-      while (reps) {
-        rotate_func(line_dest, bitmap, y, dirty_area);
-        line_dest += DEST_WIDTH;
-        reps--;
-      }
-    }
-  } else {
-    for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-      int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
-        (y*yarbsize)/sysdep_display_params.height;
-      if (reps) {
-        rotate_func(line_dest, bitmap, y, dirty_area);
-        while (--reps) {
-          memcpy(line_dest+DEST_WIDTH, line_dest,
-            bounds_width*DEST_PIXEL_SIZE);
-          line_dest += DEST_WIDTH;
-        }
-        line_dest += DEST_WIDTH;
-      }
-    }
-  }
-} else {
-  for (y = dirty_area->min_y; y <= dirty_area->max_y; y++) {
-    int reps = ((y+1)*yarbsize)/sysdep_display_params.height -
-      (y*yarbsize)/sysdep_display_params.height;
-    while (reps) {
-      memcpy(line_dest, ((SRC_PIXEL *)(bitmap->line[y])) + dirty_area->min_x,
-        bounds_width*DEST_PIXEL_SIZE);
-      line_dest += DEST_WIDTH;
-      reps--;
-    }
-  }
-}
-#endif
-

@@ -37,11 +37,11 @@ global blit_6tap_mmx_addline_32
 global blit_6tap_mmx_render_line_15
 global blit_6tap_mmx_render_line_16
 global blit_6tap_mmx_render_line_32
-global effect_scan2_15_15_direct
-global effect_scan2_16_15
-global effect_scan2_16_16
-global effect_scan2_16_32
-global effect_scan2_32_32_direct
+global blit_scan2_h_mmx_15_15_direct
+global blit_scan2_h_mmx_16_15
+global blit_scan2_h_mmx_16_16
+global blit_scan2_h_mmx_16_32
+global blit_scan2_h_mmx_32_32_direct
 global blit_line_32_16_1
 global blit_line_32_15_1
 global blit_line_32_16_2
@@ -664,9 +664,9 @@ VFilter_6tap_loop1:
 ;**************************************************************************
 
 ;--------------------------------------------------------
-;void effect_scan2_15_15_direct(void *dst0, void *dst1, const void *src,
+;void blit_scan2_h_mmx_15_15_direct(void *dst0, void *dst1, const void *src,
 ;                               unsigned count, unsigned int *u32lookup);
-effect_scan2_15_15_direct:
+blit_scan2_h_mmx_15_15_direct:
   push ebp
   mov ebp, esp
   pushad
@@ -726,9 +726,9 @@ scan2_15_direct_shade_loop:
   ret
 
 ;--------------------------------------------------------
-;void effect_scan2_16_15 (void *dst0, void *dst1, const void *src,
+;void blit_scan2_h_mmx_16_15 (void *dst0, void *dst1, const void *src,
 ;                         unsigned count, unsigned int *u32lookup);
-effect_scan2_16_15:
+blit_scan2_h_mmx_16_15:
   push ebp
   mov ebp, esp
   pushad
@@ -815,9 +815,9 @@ scan2_15_shade_loop:
   ret
 
 ;--------------------------------------------------------
-;void effect_scan2_16_16 (void *dst0, void *dst1, const void *src, 
+;void blit_scan2_h_mmx_16_16 (void *dst0, void *dst1, const void *src, 
 ;                         unsigned count, unsigned int *u32lookup);
-effect_scan2_16_16:
+blit_scan2_h_mmx_16_16:
   push ebp
   mov ebp, esp
   pushad
@@ -904,10 +904,10 @@ scan2_16_shade_loop:
   ret
 
 ;--------------------------------------------------------
-;void effect_scan2_16_32 (void *dst0, void *dst1, const void *src,
+;void blit_scan2_h_mmx_16_32 (void *dst0, void *dst1, const void *src,
 ;                         unsigned count, unsigned int *u32lookup);
 ;
-effect_scan2_16_32:
+blit_scan2_h_mmx_16_32:
   push ebp
   mov ebp, esp
   pushad
@@ -994,10 +994,10 @@ scan2_shade_loop:
   ret
 
 ;--------------------------------------------------------
-;void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src,
+;void blit_scan2_h_mmx_32_32_direct(void *dst0, void *dst1, const void *src,
 ;                               unsigned count, unsigned int *u32lookup);
 ;
-effect_scan2_32_32_direct:
+blit_scan2_h_mmx_32_32_direct:
   push ebp
   mov ebp, esp
   pushad

@@ -599,6 +599,23 @@ void blit_fakescan_v_32_YUY2_direct(struct mame_bitmap *bitmap,
 #ifdef EFFECT_MMX_ASM
 /****************************************************************************/
 
+void blit_scan2_h_mmx_15_15_direct(void *dst0, void *dst1, const void *src,
+  unsigned count, unsigned int *u32lookup);
+
+void blit_scan2_h_mmx_16_15(void *dst0, void *dst1, const void *src,
+  unsigned count, unsigned int *u32lookup);
+
+void blit_scan2_h_mmx_16_16(void *dst0, void *dst1, const void *src,
+  unsigned count, unsigned int *u32lookup);
+
+void blit_scan2_h_mmx_16_32(void *dst0, void *dst1, const void *src,
+  unsigned count, unsigned int *u32lookup);
+
+void blit_scan2_h_mmx_32_32_direct(void *dst0, void *dst1, const void *src,
+  unsigned count, unsigned int *u32lookup);
+
+/****************************************************************************/
+
 void blit_6tap_mmx_addline_15(unsigned short *src, unsigned int count,
   unsigned int *lookup);
 

@@ -312,7 +312,8 @@ endif
 SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
    $(SYSDEP_DIR)/plugin_manager.o $(SYSDEP_DIR)/sound_stream.o \
    $(SYSDEP_DIR)/sysdep_palette.o $(SYSDEP_DIR)/sysdep_dsp.o \
-   $(SYSDEP_DIR)/sysdep_mixer.o $(SYSDEP_DIR)/sysdep_display.o
+   $(SYSDEP_DIR)/sysdep_mixer.o $(SYSDEP_DIR)/sysdep_display.o \
+   $(SYSDEP_DIR)/sysdep_cpu.o
 
 # video driver objs per display method
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/x11_window.o

@@ -8,6 +8,7 @@
 #include "blit/blit.h"
 #include "blit/pixel_defs.h"
 #include "blit/advance/xq2x_yuv.h"
+#include "sysdep/sysdep_cpu.h"
 #include "sysdep/sysdep_display_priv.h"
 #include "effect.h"
 
@@ -392,10 +393,17 @@ blit_func_p sysdep_display_effect_open(void)
   };
   int effect_index = EFFECT_UNKNOWN;
   int need_yuv_lookup = 0;
-  
 #ifdef EFFECT_MMX_ASM
+  static int first_time = 1;
+  
+  if (first_time)
+  {
+    sysdep_cpu_init();
+    first_time = 0;
+  }
+  
   /* patch mmx asm blit functions into the table */
-  if (1)
+  if (sysdep_cpu_caps & SYSDEP_CPU_MMX)
   {
     effect_funcs[SYSDEP_DISPLAY_EFFECT_MODES*SYSDEP_DISPLAY_EFFECT_6TAP2X+0] =
       blit_6tap_mmx_15_15_direct;
