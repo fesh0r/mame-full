@@ -1,6 +1,7 @@
 /*
 	header file for /machine/ti99_4x.c
 */
+#include "driver.h"
 
 
 /* defines */

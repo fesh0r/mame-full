@@ -366,7 +366,7 @@ static void initiate_transmit(int which)
 */
 int tms9902_CRU_read(int which, int offset)
 {
-	int answer;
+	int answer = 0;
 
 	offset &= 0x003;
 

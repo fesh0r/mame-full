@@ -23,7 +23,7 @@
 
 #include "ti99_4x.h"
 #include "tms9902.h"
-#include "99_4x_ser.h"
+#include "994x_ser.h"
 
 /* prototypes */
 static void int_callback(int which, int INT);

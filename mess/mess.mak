@@ -407,15 +407,18 @@ $(OBJ)/fairch.a: \
 
 $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/tms9901.o  \
+	  $(OBJ)/mess/machine/tms9902.o \
 	  $(OBJ)/mess/sndhrdw/spchroms.o \
 	  $(OBJ)/mess/machine/ti99_4x.o  \
 	  $(OBJ)/mess/systems/ti99_4x.o  \
+	  $(OBJ)/mess/systems/ti99_4p.o  \
 	  $(OBJ)/mess/machine/990_hd.o	 \
 	  $(OBJ)/mess/machine/990_tap.o	 \
 	  $(OBJ)/mess/vidhrdw/911_vdt.o  \
 	  $(OBJ)/mess/systems/ti990_10.o \
 	  $(OBJ)/mess/machine/ti990.o \
 	  $(OBJ)/mess/machine/mm58274c.o \
+	  $(OBJ)/mess/machine/994x_ser.o \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 

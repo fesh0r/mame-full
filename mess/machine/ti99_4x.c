@@ -57,7 +57,7 @@ TODO:
 #include "image.h"
 #include "mscommon.h"
 #include "ti99_4x.h"
-#include "99_4x_ser.h"
+#include "994x_ser.h"
 
 
 /* prototypes */
