@@ -14,12 +14,15 @@ Notes:
 
 
 
+extern unsigned char *exedexes_fgvideoram;
+
+WRITE_HANDLER( exedexes_fgvideoram_w );
+WRITE_HANDLER( exedexes_bg1_scrollx_w );
+WRITE_HANDLER( exedexes_bg2_scrollx_w );
+WRITE_HANDLER( exedexes_bg2_scrolly_w );
 WRITE_HANDLER( exedexes_c804_w );
 WRITE_HANDLER( exedexes_gfxctrl_w );
-
-extern unsigned char *exedexes_bg_scroll;
-extern unsigned char *exedexes_nbg_yscroll;
-extern unsigned char *exedexes_nbg_xscroll;
+int exedexes_vh_start(void);
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void exedexes_eof_callback(void);
@@ -43,8 +46,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc003, 0xc003, input_port_3_r },
 	{ 0xc004, 0xc004, input_port_4_r },
 	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xe000, 0xefff, MRA_RAM }, /* Work RAM */
-	{ 0xf000, 0xffff, MRA_RAM }, /* Sprite RAM */
+	{ 0xe000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -53,12 +55,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, exedexes_c804_w },	/* coin counters + text layer enable */
-	{ 0xc806, 0xc806, MWA_NOP }, /* Watchdog ?? */
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xd801, MWA_RAM, &exedexes_nbg_yscroll },
-	{ 0xd802, 0xd803, MWA_RAM, &exedexes_nbg_xscroll },
-	{ 0xd804, 0xd805, MWA_RAM, &exedexes_bg_scroll },
+	{ 0xc806, 0xc806, MWA_NOP }, 			/* watchdog ?? */
+	{ 0xd000, 0xd7ff, exedexes_fgvideoram_w, &exedexes_fgvideoram },
+	{ 0xd800, 0xd801, exedexes_bg2_scrollx_w },
+	{ 0xd802, 0xd803, exedexes_bg2_scrolly_w },
+	{ 0xd804, 0xd805, exedexes_bg1_scrollx_w },
 	{ 0xd807, 0xd807, exedexes_gfxctrl_w },	/* layer enables */
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ 0xf000, 0xffff, MWA_RAM, &spriteram, &spriteram_size },
@@ -272,8 +273,8 @@ static struct MachineDriver machine_driver_exedexes =
 
 	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
 	exedexes_eof_callback,
-	generic_vh_start,
-	generic_vh_stop,
+	exedexes_vh_start,
+	0,
 	exedexes_vh_screenrefresh,
 
 	/* sound hardware */

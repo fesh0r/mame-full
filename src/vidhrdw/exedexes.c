@@ -10,16 +10,11 @@
 #include "vidhrdw/generic.h"
 
 
+unsigned char *exedexes_fgvideoram;
 
-unsigned char *exedexes_bg_scroll;
+static struct tilemap *fg_tilemap, *bg1_tilemap, *bg2_tilemap;
+static int bg1_on, sprites_on;
 
-unsigned char *exedexes_nbg_yscroll;
-unsigned char *exedexes_nbg_xscroll;
-
-static int chon,objon,sc1on,sc2on;
-
-#define TileMap(offs) (memory_region(REGION_GFX5)[offs])
-#define BackTileMap(offs) (memory_region(REGION_GFX5)[offs+0x4000])
 
 
 /***************************************************************************
@@ -38,6 +33,7 @@ static int chon,objon,sc1on,sc2on;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
+
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -93,6 +89,107 @@ void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static UINT32 get_bg1_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	return (col & 0x07) | (row << 3) | ((col & 0x1f8) << 4);
+}
+
+static UINT32 get_bg2_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	return (col & 0x0f) | ((row & 0x0f) << 4) | ((col & 0x70) << 4) | ((row & 0x70) << 7);
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = exedexes_fgvideoram[tile_index];
+	color = exedexes_fgvideoram[tile_index + 0x400];
+	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f);
+}
+
+static void get_bg1_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = memory_region(REGION_GFX5)[tile_index + 0x4000];
+	color = memory_region(REGION_GFX5)[tile_index + 0x4000 + 0x40];
+	SET_TILE_INFO(1, code & 0x3f, color);
+	tile_info.flags = TILE_FLIPYX((code & 0xc0) >> 6);
+}
+
+static void get_bg2_tile_info(int tile_index)
+{
+	SET_TILE_INFO(2, memory_region(REGION_GFX5)[tile_index], 0);
+}
+
+
+/***************************************************************************
+
+  Start the video hardware emulation.
+
+***************************************************************************/
+
+int exedexes_vh_start(void)
+{
+	fg_tilemap  = tilemap_create(get_fg_tile_info, tilemap_scan_rows,    TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
+	bg1_tilemap = tilemap_create(get_bg1_tile_info,get_bg1_memory_offset,TILEMAP_OPAQUE,           32,32,512,  8);
+	bg2_tilemap = tilemap_create(get_bg2_tile_info,get_bg2_memory_offset,TILEMAP_TRANSPARENT,      16,16,128,128);
+
+	if (!fg_tilemap || !bg1_tilemap || !bg2_tilemap)
+		return 1;
+
+	fg_tilemap->transparent_pen = 207;
+	bg2_tilemap->transparent_pen = 0;
+
+	return 0;
+}
+
+
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
+WRITE_HANDLER( exedexes_fgvideoram_w )
+{
+	exedexes_fgvideoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
+}
+
+
+WRITE_HANDLER( exedexes_bg1_scrollx_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg1_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
+
+WRITE_HANDLER( exedexes_bg2_scrollx_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrollx(bg2_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
+
+WRITE_HANDLER( exedexes_bg2_scrolly_w )
+{
+	static unsigned char scroll[2];
+
+	scroll[offset] = data;
+	tilemap_set_scrolly(bg2_tilemap,0,scroll[0] | (scroll[1] << 8));
+}
+
+
 WRITE_HANDLER( exedexes_c804_w )
 {
 	/* bits 0 and 1 are coin counters */
@@ -100,32 +197,41 @@ WRITE_HANDLER( exedexes_c804_w )
 	coin_counter_w(1,data & 0x02);
 
 	/* bit 7 is text enable */
-	chon = data & 0x80;
+	tilemap_set_enable(fg_tilemap, data & 0x80);
 
 	/* other bits seem to be unused */
 }
+
 
 WRITE_HANDLER( exedexes_gfxctrl_w )
 {
-	/* bit 4 is bg enable */
-	sc2on = data & 0x10;
+	/* bit 4 is far background enable */
+	bg1_on = data & 0x10;
+	tilemap_set_enable(bg1_tilemap, bg1_on);
 
-	/* bit 5 is fg enable */
-	sc1on = data & 0x20;
+	/* bit 5 is near background enable */
+	tilemap_set_enable(bg2_tilemap, data & 0x20);
 
 	/* bit 6 is sprite enable */
-	objon = data & 0x40;
+	sprites_on = data & 0x40;
 
 	/* other bits seem to be unused */
 }
 
 
+/***************************************************************************
 
+  Display refresh
+
+***************************************************************************/
 
 static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 {
 	int offs;
 
+
+	if (!sprites_on)
+		return;
 
 	priority = priority ? 0x40 : 0x00;
 
@@ -152,97 +258,22 @@ static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 	}
 }
 
-
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs,sx,sy;
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-
-	if (sc2on)
-	{
-/* TODO: this is very slow, have to optimize it using a temporary bitmap */
-		/* draw the background graphics */
-		/* back layer */
-		for(sy = 0;sy <= 8;sy++)
-		{
-			for(sx = 0;sx < 8;sx++)
-			{
-				int xo,yo,tile;
-
-
-				xo = sx*32;
-				yo = ((exedexes_bg_scroll[1])<<8)+exedexes_bg_scroll[0] + sy*32;
-
-				tile = ((yo & 0xe0) >> 5) + ((xo & 0xe0) >> 2) + ((yo & 0x3f00) >> 1);
-
-				drawgfx(bitmap,Machine->gfx[1],
-						BackTileMap(tile) & 0x3f,
-						BackTileMap(tile+8*8),
-						BackTileMap(tile) & 0x40,BackTileMap(tile) & 0x80,
-						sy*32-(yo&0x1F),sx*32,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
-
-
-	if (objon)
-		draw_sprites(bitmap,1);
-
-
-	if (sc1on)
-	{
-		/* front layer */
-		for(sy = 0;sy <= 16;sy++)
-		{
-			for(sx = 0;sx < 16;sx++)
-			{
-				int xo,yo,tile;
-
-
-				xo = ((exedexes_nbg_xscroll[1])<<8)+exedexes_nbg_xscroll[0] + sx*16;
-				yo = ((exedexes_nbg_yscroll[1])<<8)+exedexes_nbg_yscroll[0] + sy*16;
-
-				tile = ((yo & 0xf0) >> 4) + (xo & 0xF0) + (yo & 0x700) + ((xo & 0x700) << 3);
-
-				drawgfx(bitmap,Machine->gfx[2],
-					TileMap(tile),
-					0,
-					0,0,
-					sy*16-(yo&0xF),sx*16-(xo&0xF),
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
-			}
-		}
-	}
-
-
-	if (objon)
-		draw_sprites(bitmap,0);
-
-
-	if (chon)
-	{
-		/* draw the frontmost playfield. They are characters, but draw them as sprites */
-		for (offs = videoram_size - 1;offs >= 0;offs--)
-		{
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x3f,
-					0,0,
-					8*sx,8*sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,207);
-		}
-	}
+	if (bg1_on)
+		tilemap_draw(bitmap,bg1_tilemap,0);
+	else
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	draw_sprites(bitmap, 1);
+	tilemap_draw(bitmap,bg2_tilemap,0);
+	draw_sprites(bitmap, 0);
+	tilemap_draw(bitmap,fg_tilemap,0);
 }
 
 void exedexes_eof_callback(void)
 {
-	/* Mish: Spriteram is always 1 frame ahead, suggesting buffering.  I can't
-		find a register to control this so I assume it happens automatically
-		every frame at the end of vblank */
 	buffer_spriteram_w(0,0);
 }
