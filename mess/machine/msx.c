@@ -28,17 +28,17 @@
 
 static MSX msx1;
 static void msx_set_all_mem_banks (void);
-static void msx_ppi_port_a_w (int chip, int data);
-static void msx_ppi_port_c_w (int chip, int data);
-static int msx_ppi_port_b_r (int chip);
+static WRITE_HANDLER ( msx_ppi_port_a_w );
+static WRITE_HANDLER ( msx_ppi_port_c_w );
+static READ_HANDLER (msx_ppi_port_b_r );
 static ppi8255_interface msx_ppi8255_interface = {
     1,
-    NULL,
-    msx_ppi_port_b_r,
-    NULL,
-    msx_ppi_port_a_w,
-    NULL,
-    msx_ppi_port_c_w
+    {NULL},
+    {msx_ppi_port_b_r},
+    {NULL},
+    {msx_ppi_port_a_w},
+    {NULL},
+    {msx_ppi_port_c_w}
 };
 
 static char PAC_HEADER[] = "PAC2 BACKUP DATA";
@@ -545,7 +545,7 @@ static void msx_ch_reset_core (void) {
         msx1.empty = (UINT8*)malloc (0x4000);
         msx1.ram = (UINT8*)malloc (0x20000);
 		for (i=0;i<4;i++) msx1.ramp[i] = 3 - i;
-	
+
         if (!msx1.ram || !msx1.empty)
         {
             logerror("malloc () in msx_ch_reset () failed!\n");
@@ -752,7 +752,7 @@ WRITE_HANDLER ( msx_psg_port_a_w )
 WRITE_HANDLER ( msx_psg_port_b_w )
 {
     /* Arabic or kana mode led */
-	if ( (data ^ msx1.psg_b) & 0x80) 
+	if ( (data ^ msx1.psg_b) & 0x80)
 		set_led_status (2, !(data & 0x80) );
 
     if ( (msx1.psg_b ^ data) & 0x10)
@@ -863,10 +863,10 @@ hardware registers
 
 adress
 
-7FFCH r/w  bit 0 side select 
+7FFCH r/w  bit 0 side select
 7FFDH r/w  b7>M-on , b6>in-use , b1>ds1 , b0>ds0  (all neg. logic)
 7FFEH         not used
-7FFFH read b7>drq , b6>intrq 
+7FFFH read b7>drq , b6>intrq
 
 set on 7FFDH bit 2 always to 0 (some use it as disk change reset)
 
@@ -887,10 +887,10 @@ READ_HANDLER (msx_disk_p1_r)
 	{
 	switch (offset)
 		{
-		case 0x1ff8: return wd179x_status_r (0); 
-		case 0x1ff9: return wd179x_track_r (0); 
-		case 0x1ffa: return wd179x_sector_r (0); 
-		case 0x1ffb: return wd179x_data_r (0); 
+		case 0x1ff8: return wd179x_status_r (0);
+		case 0x1ff9: return wd179x_track_r (0);
+		case 0x1ffa: return wd179x_sector_r (0);
+		case 0x1ffb: return wd179x_data_r (0);
 		case 0x1fff: return msx1.dsk_stat;
 		default: return msx1.disk[offset];
 		}
@@ -902,10 +902,10 @@ READ_HANDLER (msx_disk_p2_r)
 		{
 		switch (offset)
 			{
-			case 0x1ff8: return wd179x_status_r (0); 
-			case 0x1ff9: return wd179x_track_r (0); 
-			case 0x1ffa: return wd179x_sector_r (0); 
-			case 0x1ffb: return wd179x_data_r (0); 
+			case 0x1ff8: return wd179x_status_r (0);
+			case 0x1ff9: return wd179x_track_r (0);
+			case 0x1ffa: return wd179x_sector_r (0);
+			case 0x1ffb: return wd179x_data_r (0);
 			case 0x1fff: return msx1.dsk_stat;
 			default: return msx1.disk[offset];
 			}
@@ -918,19 +918,19 @@ WRITE_HANDLER (msx_disk_w)
 	{
 	switch (offset)
 		{
-		case 0x1ff8: 
-			wd179x_command_w (0, data); 
+		case 0x1ff8:
+			wd179x_command_w (0, data);
 			break;
-		case 0x1ff9: 
-			wd179x_track_w (0, data); 
+		case 0x1ff9:
+			wd179x_track_w (0, data);
 			break;
-		case 0x1ffa: 
-			wd179x_sector_w (0, data); 
+		case 0x1ffa:
+			wd179x_sector_w (0, data);
 			break;
-		case 0x1ffb: 
-			wd179x_data_w (0, data); 
+		case 0x1ffb:
+			wd179x_data_w (0, data);
 			break;
-		case 0x1ffc: 
+		case 0x1ffc:
 			wd179x_set_side (data & 1);
 			msx1.disk[0x1ffc] = data | 0xfe;
 			break;
@@ -959,12 +959,12 @@ int msx_floppy_id (int id)
 			case 360*1024:
 			case 720*1024:
 				return INIT_OK;
-			}	
+			}
 		}
-	
+
 	return INIT_FAILED;
 	}
-	
+
 int msx_floppy_init (int id)
 	{
 	void *f;
@@ -984,7 +984,7 @@ int msx_floppy_init (int id)
 				break;
 			default:
 				return INIT_FAILED;
-			}	
+			}
 		}
 	else
 		return INIT_FAILED;
@@ -1001,12 +1001,12 @@ int msx_floppy_init (int id)
 ** The PPI functions
 */
 
-static void msx_ppi_port_a_w (int chip, int data)
+static WRITE_HANDLER ( msx_ppi_port_a_w )
 	{
     msx_set_all_mem_banks ();
 	}
 
-static void msx_ppi_port_c_w (int chip, int data)
+static WRITE_HANDLER ( msx_ppi_port_c_w )
 	{
     static int old_val = 0xff;
 
@@ -1026,7 +1026,7 @@ static void msx_ppi_port_c_w (int chip, int data)
     old_val = data;
 	}
 
-static int msx_ppi_port_b_r (int chip)
+static READ_HANDLER( msx_ppi_port_b_r )
 	{
     int row, data;
 
@@ -1148,7 +1148,7 @@ static void msx_set_all_mem_banks (void)
 
 	memory_set_bankhandler_r (4, 0, MRA_BANK4);
 	memory_set_bankhandler_r (6, 0, MRA_BANK6);
-		
+
     for (i=0;i<4;i++)
         msx_set_slot[(ppi8255_0_r(0)>>(i*2))&3](i);
 }
@@ -1159,18 +1159,18 @@ WRITE_HANDLER ( msx_writemem0 )
 	{
 	if (!offset)
 		{
-		/* 
+		/*
          * Super Load Runner ignores the CS, it responds to any
          * write to address 0x0000 (!).
 		 */
-		
+
 		if (msx1.cart[0].type == 12)
 			msx_cart_write (0, -1, data);
 
 		if (msx1.cart[1].type == 12)
 			msx_cart_write (1, -1, data);
 		}
-	
+
     if ( (ppi8255_0_r(0) & 0x03) == 0x03 )
         msx1.ram[(7 - msx1.ramp[0]) * 0x4000 + offset] = data;
 	}
