@@ -65,6 +65,15 @@ Source Changes:
 - [Windows] Fixed a very subtle bug in Win32 file handling that caused a very
   serious disk corruption bug in the CoCo driver (bug #500) [Nate Woods and
   Tim Lindner]
+  
+- CDP1802 CPU improvements:  [Curt Coder]
+	- Fixed "Subtract with Borrow" opcode
+	- Fixed reset
+	- Fixed mnemonic IMP -> INP
+	- Added registers N and I
+	- Cleaned up 1802tbl.c with macros
+	- Clock divider -> 8
+	- Added interrupt handling 
 
 
 

@@ -21,25 +21,32 @@
 #ifndef _CDP1802_H
 #define _CDP1802_H
 
-/* missing mark */
-
-/* processor takes 8 external clocks to do something
-   so specify /8 in mame's  machine structure */
 #include "cpuintrf.h"
 #include "osd_cpu.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+
+#define CDP1802_INT_NONE	0
+#define CDP1802_IRQ			1
+
+// CDP1802 I/O Flags
 
 enum {
-	CDP1802_P=1,
-	CDP1802_X,
-	CDP1802_D,
-	CDP1802_B,
-	CDP1802_T,
+	EF1 = 1,
+	EF2	= 2,
+	EF3	= 4,
+	EF4 = 8
+};
 
-	CDP1802_R0,
+// CDP1802 Registers
+
+enum {
+	CDP1802_P = 1,	// Designates which register is Program Counter
+	CDP1802_X,		// Designates which register is Data Pointer
+	CDP1802_D,		// Data Register (Accumulator)
+	CDP1802_B,		// Auxiliary Holding Register
+	CDP1802_T,		// Holds old X, P after Interrupt (X is high nibble)
+
+	CDP1802_R0,		// 1 of 16 Scratchpad Registers
 	CDP1802_R1,
 	CDP1802_R2,
 	CDP1802_R3,
@@ -56,11 +63,15 @@ enum {
 	CDP1802_Re,
 	CDP1802_Rf,
 
-	CDP1802_DF,
-	CDP1802_IE,
-	CDP1802_Q,
+	CDP1802_DF,		// Data Flag (ALU Carry)
+	CDP1802_IE,		// Interrupt Enable
+	CDP1802_Q,		// Output Flip-Flop
+	CDP1802_N,		// Holds Low-Order Instruction Digit
+	CDP1802_I,		// Holds High-Order Instruction Digit
 	CDP1802_IRQ_STATE
 };
+
+// CDP1802 Configuration
 
 typedef struct {
 	/* called after execution of an instruction with cycles,
@@ -70,20 +81,14 @@ typedef struct {
 	int (*in_ef)(void);
 } CDP1802_CONFIG;
 
+
 void cdp1802_dma_write(UINT8 data);
 int cdp1802_dma_read(void);
 
-#define CDP1802_INT_NONE 0
-#define CDP1802_IRQ 1
-
-extern int cdp1802_icount;				/* cycle count */
+extern int cdp1802_icount;				// cycle count
 
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
 
 unsigned DasmCdp1802(char *dst, unsigned oldpc);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif

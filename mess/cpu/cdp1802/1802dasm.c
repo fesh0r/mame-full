@@ -59,7 +59,7 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 	{ 0 }, { 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 }, { 0 },
 
 	{ "IRX",	Imp } ,{ "OUT",	Imp3},{ 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 },
-	{ 0 } ,{ "IMP",	Imp3},{ 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 },
+	{ 0 } ,{ "INP",	Imp3},{ 0 }, { 0 }, { 0 },  { 0 }, { 0 }, { 0 },
 
 	{ "RET",	Imp	}, { "DIS",		Imp }, { "LDXA",	Imp	}, { "STXD",	Imp },
 	{ "ADC",	Imp	}, { "SDB",		Imp }, { "SHRC",	Imp	}, { "SMB",		Imp },
