@@ -84,8 +84,6 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
 static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory_offset)
 {
 	int character;
-	int current_fgcolor = fgcolor;
-	int current_bgcolor = bgcolor;
 	int i;
 	
 	character = mess_ram[videobase + memory_offset];

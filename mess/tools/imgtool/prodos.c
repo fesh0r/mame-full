@@ -401,7 +401,6 @@ static imgtoolerr_t prodos_diskimage_nextenum(imgtool_imageenum *enumeration, im
 	imgtool_image *image;
 	struct prodos_direnum *appleenum;
 	struct prodos_dirent pd_ent;
-	UINT8 storage_type;
 	UINT32 max_filesize;
 
 	image = img_enum_image(enumeration);
@@ -485,7 +484,6 @@ static imgtoolerr_t prodos_diskimage_readfile(imgtool_image *image, const char *
 {
 	imgtoolerr_t err;
 	struct prodos_dirent ent;
-	UINT8 buffer[BLOCK_SIZE];
 
 	err = prodos_lookup_path(image, filename, &ent);
 	if (err)

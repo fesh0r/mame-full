@@ -181,18 +181,11 @@ static void apple2_install_slot_memory(int slot, void *memory)
 	read8_handler rh;
 	write8_handler wh;
 
-	switch(slot)
-	{
-		case 1:	start = 0xc100; end = 0xc2ff; bank = A2BANK_C100; rh = MRA8_A2BANK_C100; wh = MWA8_A2BANK_C100; break;
-		case 2:	start = 0xc200; end = 0xc2ff; bank = A2BANK_C200; rh = MRA8_A2BANK_C300; wh = MWA8_A2BANK_C200; break;
-		case 3:	start = 0xc300; end = 0xc3ff; bank = A2BANK_C300; rh = MRA8_A2BANK_C300; wh = MWA8_A2BANK_C300; break;
-		case 4:	start = 0xc400; end = 0xc4ff; bank = A2BANK_C400; rh = MRA8_A2BANK_C400; wh = MWA8_A2BANK_C400; break;
-		case 5:	start = 0xc500; end = 0xc5ff; bank = A2BANK_C500; rh = MRA8_A2BANK_C500; wh = MWA8_A2BANK_C500; break;
-		case 6:	start = 0xc600; end = 0xc6ff; bank = A2BANK_C600; rh = MRA8_A2BANK_C600; wh = MWA8_A2BANK_C600; break;
-		case 7:	start = 0xc700; end = 0xc7ff; bank = A2BANK_C700; rh = MRA8_A2BANK_C700; wh = MWA8_A2BANK_C700; break;
-		default:
-			return;
-	}
+	start = 0xc000 + (slot * 0x0100);
+	end = start + 0x00ff;
+	bank = A2BANK_C100 + slot - 1;
+	rh = ((read8_handler) (STATIC_BANK1 - 1 + bank));
+	wh = ((write8_handler) (STATIC_BANK1 - 1 + bank));
 
 	if (!memory)
 	{
@@ -538,7 +531,6 @@ MACHINE_INIT( apple2 )
 	joystick_x2_time = joystick_y2_time = 0;
 
 	/* seek middle sector */
-#if 0
 	for (i = 0; i < device_count(IO_FLOPPY); i++)
 	{
 		image = image_from_devtype_and_index(IO_FLOPPY, i);
@@ -548,7 +540,6 @@ MACHINE_INIT( apple2 )
 			floppy_drive_seek(image, +35/2);
 		}
 	}
-#endif
 }
 
 /***************************************************************************

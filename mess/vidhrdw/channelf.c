@@ -37,7 +37,6 @@ static UINT16 colormap[] = {
 PALETTE_INIT( channelf )
 {
 	palette_set_colors(0, channelf_palette, sizeof(channelf_palette) / 3);
-	memcpy(colortable,colormap,0);
 }
 
 VIDEO_START( channelf )

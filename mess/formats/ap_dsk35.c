@@ -446,7 +446,6 @@ static floperr_t apple35_read_sector(floppy_image *floppy, int head, int track, 
 static floperr_t apple35_write_sector(floppy_image *floppy, int head, int track, int sector, const void *buffer, size_t buflen)
 {
 	UINT32 data_offset;
-	UINT8 tag_buffer[12];
 
 	data_offset = apple35_get_offset(floppy, head, track, sector, NULL);
 	if (data_offset == ~0)
@@ -554,7 +553,6 @@ static floperr_t apple35_read_track(floppy_image *floppy, int head, int track, U
 	UINT8 sector_data[524];
 	UINT8 nibble_data[699];
 	UINT8 checksum[4];
-	UINT32 tag_offset;
 
 	tag = get_apple35_tag(floppy);
 
