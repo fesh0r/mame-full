@@ -704,7 +704,8 @@ static struct MachineDriver machine_driver_coco3h =
 
 ROM_START(dragon32)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("d32.rom",    0x8000,  0x4000, 0xe3879310)
+	ROM_LOAD(           "d32.rom",      0x8000,  0x4000, 0xe3879310)
+	ROM_LOAD_OPTIONAL(  "ddos10.bin",   0xc000,  0x2000, 0xb44536f6)
 ROM_END
 
 ROM_START(coco)
