@@ -13,7 +13,7 @@
 
 #define IRQ_COUNT	8
 
-#define VERBOSE	0
+#define VERBOSE		0
 
 #if VERBOSE
 #define LOG(msg)	logerror msg
@@ -280,7 +280,6 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 						{
 							LOG(("pic8259_write(): PIC #%d clearing IRQ %d\n", which, n));
                             this->in_service &= ~mask;
-							this->pending &= ~mask;
                             break;
                         }
                     }
@@ -293,7 +292,6 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 					if( this->in_service & mask )
                     {
 						this->in_service &= ~mask;
-						this->pending &= ~mask;
 					}
                     break;
                 case 0x80:
@@ -307,7 +305,6 @@ static void pic8259_write(int which, offs_t offset, data8_t data )
 						if( this->in_service & mask )
 						{
                             this->in_service &= ~mask;
-							this->pending &= ~mask;
 							this->prio = ++this->prio & 7;
                             break;
                         }

@@ -573,19 +573,21 @@ void at_keyboard_polling(void)
 int at_keyboard_read(void)
 {
 	int data;
-	if (keyboard.tail==keyboard.head) return -1;
+	if (keyboard.tail == keyboard.head)
+		return -1;
 
-	data=keyboard.queue[keyboard.tail];
+	data = keyboard.queue[keyboard.tail];
 #if LOG_KEYBOARD
-	logerror("keyboard read %.2x\n",data);
+	logerror("at_keyboard_read(): Keyboard Read 0x%02x\n",data);
 #endif
-	keyboard.tail = ++keyboard.tail%256;
+	keyboard.tail++;
+	keyboard.tail %= sizeof(keyboard.queue) / sizeof(keyboard.queue[0]);
 	return data;
 }
 
 static void at_clear_buffer_and_acknowledge(void)
 {
-	// clear output buffer and respond with acknowledge
+	/* clear output buffer and respond with acknowledge */
 	keyboard.head = keyboard.tail = 0;
 	at_keyboard_queue_insert(0x0fa);
 }
@@ -1005,7 +1007,7 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LCONTROL) PORT_CHAR(UCHAR_MAMEKEY(LCONTROL))      /* Left Ctrl                   1D  9D */
 	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_A) PORT_CHAR('A') /* A                           1E  9E */
 	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_S) PORT_CHAR('S') /* S                           1F  9F */
-		\
+		
 	PORT_START	/* IN6 */
 	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_D) PORT_CHAR('D') /* D                           20  A0 */
 	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F) PORT_CHAR('F') /* F                           21  A1 */
@@ -1032,22 +1034,22 @@ INPUT_PORTS_START( pc_keyboard )
 	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_STOP) PORT_CHAR('.') PORT_CHAR('>') /* .                           34  B4 */
 	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_SLASH) PORT_CHAR('/') PORT_CHAR('?') /* /                           35  B5 */
 	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_RSHIFT) PORT_CHAR(UCHAR_MAMEKEY(RSHIFT)) /* Right Shift                 36  B6 */
-	PC_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK,   CODE_NONE ) /* Keypad *  (PrtSc)           37  B7 */
-	PC_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT,       CODE_NONE ) /* Left Alt                    38  B8 */
-	PC_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE,      CODE_NONE ) /* Space                       39  B9 */
-	PC_KEYB_HELPER( 0x0400, "Caps",         KEYCODE_CAPSLOCK,   CODE_NONE ) /* Caps Lock                   3A  BA */
-	PC_KEYB_HELPER( 0x0800, "F1",           KEYCODE_F1,         CODE_NONE ) /* F1                          3B  BB */
-	PC_KEYB_HELPER( 0x1000, "F2",           KEYCODE_F2,         CODE_NONE ) /* F2                          3C  BC */
-	PC_KEYB_HELPER( 0x2000, "F3",           KEYCODE_F3,         CODE_NONE ) /* F3                          3D  BD */
-	PC_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4,         CODE_NONE ) /* F4                          3E  BE */
-	PC_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5,         CODE_NONE ) /* F5                          3F  BF */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_NAME("KP * (PrtScr)") PORT_CODE(KEYCODE_ASTERISK)		/* Keypad *  (PrtSc)           37  B7 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_NAME("Alt") PORT_CODE(KEYCODE_LALT)					/* Left Alt                    38  B8 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_NAME("Space") PORT_CODE(KEYCODE_SPACE) PORT_CHAR(' ')	/* Space                       39  B9 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_NAME("Caps") PORT_CODE(KEYCODE_CAPSLOCK) PORT_TOGGLE	/* Caps Lock                   3A  BA */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F1) PORT_CHAR(UCHAR_MAMEKEY(F1))			/* F1                          3B  BB */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F2) PORT_CHAR(UCHAR_MAMEKEY(F2))			/* F2                          3C  BC */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F3) PORT_CHAR(UCHAR_MAMEKEY(F3))			/* F3                          3D  BD */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F4) PORT_CHAR(UCHAR_MAMEKEY(F4))			/* F4                          3E  BE */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F5) PORT_CHAR(UCHAR_MAMEKEY(F5))			/* F5                          3F  BF */
 		
 	PORT_START	/* IN8 */
-	PC_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6,         CODE_NONE )     /* F6                          40  C0 */
-	PC_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7,         CODE_NONE )     /* F7                          41  C1 */
-	PC_KEYB_HELPER( 0x0004, "F8",           KEYCODE_F8,         CODE_NONE )     /* F8                          42  C2 */
-	PC_KEYB_HELPER( 0x0008, "F9",           KEYCODE_F9,         CODE_NONE )     /* F9                          43  C3 */
-	PC_KEYB_HELPER( 0x0010, "F10",          KEYCODE_F10,        CODE_NONE )     /* F10                         44  C4 */
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F6) PORT_CHAR(UCHAR_MAMEKEY(F6))			 /* F6                          40  C0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F7) PORT_CHAR(UCHAR_MAMEKEY(F7))			 /* F7                          41  C1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F8) PORT_CHAR(UCHAR_MAMEKEY(F8))			 /* F8                          42  C2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F9) PORT_CHAR(UCHAR_MAMEKEY(F9))		     /* F9                          43  C3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F10) PORT_CHAR(UCHAR_MAMEKEY(F10))	     /* F10                         44  C4 */
 	PC_KEYB_HELPER( 0x0020, "NumLock",      KEYCODE_NUMLOCK,    CODE_NONE )     /* Num Lock                    45  C5 */
 	PC_KEYB_HELPER( 0x0040, "ScrLock",      KEYCODE_SCRLOCK,    CODE_NONE )     /* Scroll Lock                 46  C6 */
 	PC_KEYB_HELPER( 0x0080, "KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )  /* Keypad 7  (Home)            47  C7 */

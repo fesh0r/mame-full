@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AT] Marked driver as compatible with IBM-PC.  [Nate Woods]
+
 - [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
   and split mode support.  [Gordon Jefferyes]
   
@@ -19,6 +21,9 @@ System Driver Changes:
 
 - [PC] Implemented CGA color composite artifact colors.  (bug #431) [John
   Elliott]
+
+- [PC] Fixed a problem in the PIC8254 interrupt controller, and enhanced
+  natural keyboard support.  [Nate Woods]
 
 
 

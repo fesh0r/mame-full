@@ -188,19 +188,11 @@
 
 ***************************************************************************/
 
-#define PS2_MOUSE_ON 1
-#define KEYBOARD_ON 1
+#define PS2_MOUSE_ON	1
+#define KEYBOARD_ON		1
 
-#undef DBG_LOG
-#if 1
-#define DBG_LOG(level, text, print) \
-		if (level>0) { \
-				logerror("%s\t", text); \
-				logerror print; \
-		}
-#else
-#define DBG_LOG(level, text, print)
-#endif
+#define LOG_KEYBOARD	0
+#define LOG_ACCESSES	0
 
 
 
@@ -271,9 +263,12 @@ void at_8042_init(AT8042_CONFIG *config)
 
 static void at_8042_receive(UINT8 data)
 {
-	logerror("at8042 %.2x received\n",data);
+#if LOG_KEYBOARD
+	logerror("at_8042_receive Received 0x%02x\n", data);
+#endif
+
 	at_8042.data=data;
-	at_8042.keyboard.received=1;
+	at_8042.keyboard.received = 1;
 	if( !pic8259_0_irq_pending(1)) { // this forgets some interrupts
 		pic8259_0_issue_irq(1);
 	}
@@ -298,6 +293,19 @@ static void at_8042_check_keyboard(void)
 void at_8042_time(void)
 {
 	at_8042_check_keyboard();
+}
+
+
+
+static void at_8042_clear_keyboard_received(void)
+{
+#if LOG_KEYBOARD
+	if (at_8042.keyboard.received)
+		logerror("at_8042_8_r(): Clearing at_8042.keyboard.received\n");
+#endif
+
+	at_8042.keyboard.received = 0;
+	at_8042.mouse.received = 0;
 }
 
 
@@ -327,8 +335,8 @@ void at_8042_time(void)
 
 READ8_HANDLER(at_8042_8_r)
 {
-	static int poll_delay=10;
-	data8_t data=0;
+	static int poll_delay = 10;
+	data8_t data = 0;
 
 	switch (offset) {
 	case 0:
@@ -336,8 +344,7 @@ READ8_HANDLER(at_8042_8_r)
 		if (at_8042.type != AT8042_AT386 || (data != 0x55))
 		{
 			/* at386 self test doesn't like this */
-			at_8042.keyboard.received = 0;
-			at_8042.mouse.received = 0;
+			at_8042_clear_keyboard_received();
 		}
 		at_8042_check_keyboard();
 		break;
@@ -347,8 +354,7 @@ READ8_HANDLER(at_8042_8_r)
 		data &= ~0xc0; /* AT BIOS don't likes this being set */
 
 		/* needed for AMI BIOS, maybe only some keyboard controller revisions! */
-		at_8042.keyboard.received = 0;
-		at_8042.mouse.received = 0;
+		at_8042_clear_keyboard_received();
 
 		/* polled for changes in ibmat bios */
 		if (--poll_delay < 0)
@@ -359,7 +365,7 @@ READ8_HANDLER(at_8042_8_r)
 				poll_delay = 8; /* ibm ps2m30 */
 			at_8042.offset1 ^= 0x10;
 		}
-		data=(data&~0x10)|at_8042.offset1;
+		data = (data & ~0x10) | at_8042.offset1;
 
 		if (at_8042.speaker & 1)
 			data |= 0x20;
@@ -402,6 +408,10 @@ READ8_HANDLER(at_8042_8_r)
 		}
 		break;
 	}
+
+#if LOG_ACCESSES
+	logerror("at_8042_8_r(): offset=%d data=0x%02x\n", offset, (unsigned) data);
+#endif
 	return data;
 }
 
