@@ -193,10 +193,7 @@
 #define IDC_FILTER_UNAVAILABLE          1176
 #define IDC_FILTER_NONWORKING           1177
 #define IDC_FILTER_CLONES               1178
-#ifdef MESS
-#define IDC_FILTER_COMPUTER             1179
-#define IDC_FILTER_CONSOLE              1180
-#else
+#ifndef NEOFREE
 #define IDC_FILTER_NEOGEO               1179
 #endif
 #define IDC_RESET_GAMES                 1181
@@ -295,12 +292,15 @@
 #ifdef MESS
 #define IDC_SPLITTER3				    2000
 #define IDC_LIST2                       2001
-#define IDI_WIN_FLOP                    2002
-#define IDI_WIN_CASS                    2003
-#define IDI_WIN_SERL                    2004
-#define IDI_WIN_SNAP                    2005
-#define IDI_WIN_PRIN                    2006
-#define IDI_WIN_HARD                    2007
+#define IDC_FILTER_COMPUTER             2002
+#define IDC_FILTER_CONSOLE              2003
+#define IDC_FILTER_MODIFIED             2004
+#define IDI_WIN_FLOP                    2100
+#define IDI_WIN_CASS                    2101
+#define IDI_WIN_SERL                    2102
+#define IDI_WIN_SNAP                    2103
+#define IDI_WIN_PRIN                    2104
+#define IDI_WIN_HARD                    2105
 #define ID_MESS_OPEN_SOFTWARE           50000
 #endif
 

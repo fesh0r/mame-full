@@ -110,6 +110,7 @@ FOLDERDATA folderData[] =
 #ifdef MESS
     {"Console",     IS_ROOT,  FOLDER_CONSOLE,     FOLDER_NONE,  0,        ICON_FOLDER},
     {"Computer",    IS_ROOT,  FOLDER_COMPUTER,    FOLDER_NONE,  0,        ICON_FOLDER},
+    {"Modified/Hacked",IS_ROOT,FOLDER_MODIFIED,   FOLDER_NONE,  0,        ICON_FOLDER},
 #endif
     {"Manufacturer",IS_ROOT,  FOLDER_MANUFACTURER,FOLDER_NONE,  0,        ICON_FOLDER_MANUFACTURER},
     {"Year",        IS_ROOT,  FOLDER_YEAR,        FOLDER_NONE,  0,        ICON_FOLDER_YEAR},
@@ -564,6 +565,15 @@ void InitGames(UINT nGames)
                     AddGame(lpFolder, jj);
             }
             break;
+
+		case FOLDER_MODIFIED:
+            SetAllBits( lpFolder->m_lpGameBits, FALSE);
+            for (jj = 0; jj < nGames; jj++)
+            {
+                if (drivers[jj]->flags & GAME_COMPUTER_MODIFIED)
+                    AddGame(lpFolder, jj);
+            }
+            break;
 #endif
 
         case FOLDER_PLAYED:
@@ -639,6 +649,10 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 
     /* Filter console games */
     if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
+        return TRUE;
+
+    /* Filter modified games */
+    if (dwMask & F_MODIFIED && !(drivers[nGame]->flags & GAME_COMPUTER_MODIFIED))
         return TRUE;
 #endif
 
@@ -1289,6 +1303,7 @@ FILTER_ITEM filterList[F_NUM_FILTERS] = {
 #ifdef MESS
     {F_COMPUTER,     IDC_FILTER_COMPUTER},
     {F_CONSOLE,      IDC_FILTER_CONSOLE},
+	{F_MODIFIED,     IDC_FILTER_MODIFIED},
 #endif
 #ifndef NEOFREE
     {F_NEOGEO,       IDC_FILTER_NEOGEO},

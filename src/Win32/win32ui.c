@@ -271,12 +271,6 @@ static void             ResizeWindow(HWND hParent, Resize *r);
 #define ICONMAP_WIDTH       GetSystemMetrics(SM_CXSMICON)
 #define ICONMAP_HEIGHT      GetSystemMetrics(SM_CYSMICON)
 
-#ifdef MESS
-#define NUM_ICONS           10
-#else
-#define NUM_ICONS           4
-#endif
-
 typedef struct tagPOPUPSTRING
 {
     HMENU hMenu;
@@ -388,6 +382,8 @@ static char *icon_names[] = {
 	"hard"
 #endif
 };
+
+#define NUM_ICONS           (sizeof(icon_names) / sizeof(icon_names[0]))
 
 #define NUM_TOOLBUTTONS 11
 
