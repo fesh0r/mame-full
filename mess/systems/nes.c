@@ -112,7 +112,7 @@ INPUT_PORTS_START( nes )
 	PORT_CATEGORY_CLASS( 0x0f00, 0x0000, "P3 Controller")
 	PORT_CATEGORY_ITEM(  0x0000, "Unconnected",		0 )
 	PORT_CATEGORY_ITEM(  0x0100, "Gamepad",			3 )
-	PORT_CATEGORY_CLASS( 0xf000, 0x0000, "P3 Controller")
+	PORT_CATEGORY_CLASS( 0xf000, 0x0000, "P4 Controller")
 	PORT_CATEGORY_ITEM(  0x0000, "Unconnected",		0 )
 	PORT_CATEGORY_ITEM(  0x1000, "Gamepad",			4 )
 

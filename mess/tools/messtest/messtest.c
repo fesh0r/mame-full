@@ -537,6 +537,13 @@ outofmemory:
 
 
 
+/* this external entity handler allows us to do things like this:
+ *
+ *	<!DOCTYPE tests
+ *	[
+ *		<!ENTITY mamekey_esc SYSTEM "http://www.mess.org/messtest/">
+ *	]>
+ */
 static int external_entity_handler(XML_Parser parser,
 	const XML_Char *context,
 	const XML_Char *base,
@@ -545,7 +552,7 @@ static int external_entity_handler(XML_Parser parser,
 {
 	XML_Parser extparser = NULL;
 	int rc = 0, i;
-	char buf[32];
+	char buf[256];
 	char charbuf[UTF8_CHAR_MAX + 1];
 	static const char *mamekey_prefix = "mamekey_";
 	unicode_char_t c;
@@ -556,7 +563,7 @@ static int external_entity_handler(XML_Parser parser,
 	if (strcmp(systemId, "http://www.mess.org/messtest/"))
 		goto done;
 
-	extparser = XML_ExternalEntityParserCreate(parser, context, "utf8");
+	extparser = XML_ExternalEntityParserCreate(parser, context, "UTF-8");
 	if (!extparser)
 		goto done;
 
@@ -570,6 +577,8 @@ static int external_entity_handler(XML_Parser parser,
 		/* this is interim until we can come up with a real solution */
 		if (!strcmp(context, "esc"))
 			c = UCHAR_MAMEKEY(ESC);
+		else if (!strcmp(context, "up"))
+			c = UCHAR_MAMEKEY(UP);
 
 		if (c)
 		{
@@ -583,10 +592,13 @@ static int external_entity_handler(XML_Parser parser,
 				charbuf,
 				mamekey_prefix, context);
 
-			if (XML_Parse(extparser, buf, strlen(buf), 1) == XML_STATUS_ERROR)
+			if (XML_Parse(extparser, buf, strlen(buf), 0) == XML_STATUS_ERROR)
 				goto done;
 		}
 	}
+
+	if (XML_Parse(extparser, NULL, 0, 1) == XML_STATUS_ERROR)
+		goto done;
 
 	rc = 1;
 done:
