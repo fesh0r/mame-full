@@ -9,8 +9,6 @@
 #include "videomap.h"
 #include "includes/mac.h"
 
-extern int mac_ram_size;
-
 int screen_buffer;
 
 void mac_set_screen_buffer(int buffer)
@@ -57,27 +55,9 @@ VIDEO_START( mac )
 	return videomap_init(&cfg);
 }
 
+#if 0
 VIDEO_UPDATE( mac )
 {
 	videomap_update(bitmap, cliprect);
-
-/*	UINT16 scanline_data[32*16];
-	UINT16 data;
-	int x, y, b, fg, bg;
-
-	bg = Machine->pens[0];
-	fg = Machine->pens[1];
-
-	for (y = 0; y < 342; y++)
-	{
-		for ( x = 0; x < 32; x++ )
-		{
-			data = mac_screen_buf_ptr[y*32+x];
-			for (b = 0; b < 16; b++)
-				scanline_data[x*16+b] = (data & (1 << (15-b))) ? fg : bg;
-		}
-		draw_scanline16(bitmap, 0, y, 32*16, scanline_data, NULL, -1);
-	}
-*/
 }
-
+#endif

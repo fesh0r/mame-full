@@ -39,6 +39,7 @@
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
 #include "includes/mac.h"
+#include "videomap.h"
 
 
 static MEMORY_READ16_START (mac512ke_readmem)
@@ -120,6 +121,8 @@ static struct CustomSound_interface custom_interface =
 	mac_sh_stop,
 	mac_sh_update
 };
+
+#define video_update_mac videomap_update
 
 static MACHINE_DRIVER_START( mac512ke )
 	/* basic machine hardware */
