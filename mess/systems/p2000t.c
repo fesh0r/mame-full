@@ -292,5 +292,5 @@ ROM_END
 
 /*		YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG  COMPANY		FULLNAME */
 COMP (	1980,	p2000t,		0,		0,		p2000t,		p2000t,		0,		NULL,	"Philips",	"Philips P2000T" )
-COMPX(	1980,	p2000m,		p2000t,	0,		p2000m,		p2000t,		0,		NULL,	"Philips",	"Philips P2000M", GAME_ALIAS )
+COMP (	1980,	p2000m,		p2000t,	0,		p2000m,		p2000t,		0,		NULL,	"Philips",	"Philips P2000M" )
 

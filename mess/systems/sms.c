@@ -819,9 +819,9 @@ CONS(	1988,	smseh34,	sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Master System
 CONS(	1985,	smspal,		sms,		0,			smspal,		sms,	0,		sms,		"Sega",			"Master System - (PAL)" )
 CONS(	1985,	smsj21,		sms,		0,			smsj21,		sms,	0,		sms,		"Sega",			"Master System - (PAL) Japanese SMS BIOS v2.1" )
 CONS(	1984,	smsm3,		sms,		0,			smsm3,		sms,	0,		smso,		"Sega",			"Mark III - (PAL) Japanese SMS BIOS v2.1" )
-CONSX(	198?,	smsss,		sms,		0,			smsj21,		sms,	0,		smso,		"Samsung",		"Gamboy - (PAL) Japanese SMS BIOS v2.1", GAME_ALIAS )
+CONS(	198?,	smsss,		sms,		0,			smsj21,		sms,	0,		smso,		"Samsung",		"Gamboy - (PAL) Japanese SMS BIOS v2.1" )
 CONS(	1990,	gamegear,	0,			sms,		gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - European/American" )
-CONSX(	1990,	gamegj,		gamegear,	0,			gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - Japanese", GAME_ALIAS )
+CONS(	1990,	gamegj,		gamegear,	0,			gamegear,	sms,	0,		gamegear,	"Sega",			"Game Gear - Japanese" )
 CONS(	1990,	gamg,		gamegear,	0,			gamegear,	sms,	0,		gamegearo,	"Majesco",		"Game Gear - European/American Majesco Game Gear BIOS" )
-CONSX(	1990,	gamgj,		gamegear,	0,			gamegear,	sms,	0,		gamegearo,	"Majesco",		"Game Gear - Japanese Majesco Game Gear BIOS", GAME_ALIAS )
+CONS(	1990,	gamgj,		gamegear,	0,			gamegear,	sms,	0,		gamegearo,	"Majesco",		"Game Gear - Japanese Majesco Game Gear BIOS" )
 
