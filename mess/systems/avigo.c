@@ -15,7 +15,7 @@
         MEMORY MAP:
                 0x0000-0x03fff: flash 0 block 0
                 0x4000-0x07fff: flash x block y
-
+				0x8000-0x0bfff: ram block x, screen buffer, or flash x block y
                 0xc000-0x0ffff: ram block 0
 
 		Hardware:
@@ -29,6 +29,11 @@
                 Dissassemble the rom a bit and find out exactly
                 how memory paging works!
 
+			I don't have any documentation on the hardware, so a lot of this
+			driver has been written using educated guesswork and a lot of help
+			from an existing emulation written by Hans Pufal. Hans's emulator
+			is also written from educated guesswork.
+
         Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -38,17 +43,31 @@
 #include "includes/tc8521.h"
 #include "includes/uart8250.h"
 
+
+/* dummy timer used to read keys and pen stylus and generate an interrupt */
+static void *avigo_dummy_timer;
+
 static UINT8 avigo_key_line;
-/*
+/* 
 	bit 7:						?? high priority. When it occurs, clear this bit.
-	bit 6: pen int				pen or power
-	bit 5:						port 1d,1f
-	bit 4: timer 2 int
-	bit 3: uart int				port 35,30
-	bit 2: keyboard int			;; check bit 5 of port 1,
-	bit 1: timer 1 int			(cleared in nmi, and then set again)
+	bit 6: pen int				
+	 An interrupt when pen is pressed against screen.
+
+	bit 5: real time clock
+		
+
+	bit 4: 
+	
+	  
+	bit 3: uart int				
+	
+	  
+	bit 2: synchronisation link interrupt???keyboard int			;; check bit 5 of port 1,
+	
+	bit 1: ???		(cleared in nmi, and then set again)
 
 */
+
 static UINT8 avigo_irq;
 /* 128k ram */
 unsigned char *avigo_memory;
@@ -81,6 +100,9 @@ static READ_HANDLER(avigo_flash_0x4000_read_handler)
 
         int flash_offset = (avigo_rom_bank_l<<14) | offset;
 
+		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
+
+
         return flash_bank_handler_r(avigo_flash_at_0x4000, flash_offset);
 }
 
@@ -99,6 +121,8 @@ static WRITE_HANDLER(avigo_flash_0x4000_write_handler)
 
         int flash_offset = (avigo_rom_bank_l<<14) | offset;
 
+		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
+
         flash_bank_handler_w(avigo_flash_at_0x4000, flash_offset, data);
 }
 
@@ -108,6 +132,8 @@ static READ_HANDLER(avigo_flash_0x8000_read_handler)
 
         int flash_offset = (avigo_ram_bank_l<<14) | offset;
 
+		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
+
         return flash_bank_handler_r(avigo_flash_at_0x8000, flash_offset);
 }
 
@@ -116,6 +142,8 @@ static WRITE_HANDLER(avigo_flash_0x8000_write_handler)
 {
 
         int flash_offset = (avigo_ram_bank_l<<14) | offset;
+
+		logerror("flash offset: %04x offset: %04x\n",flash_offset, offset);
 
         flash_bank_handler_w(avigo_flash_at_0x8000, flash_offset, data);
 }
@@ -144,32 +172,85 @@ static void avigo_refresh_ints(void)
 	}
 }
 
+
+/* previous input port data */
+static int previous_input_port_data[4];
+
+/* this is not a real interrupt. This timer will check the state of the buttons and pen,
+if the state has changed an appropiate interrupt will be generated! */
+static void avigo_dummy_timer_callback(int dummy)
+{
+	int i;
+	int current_input_port_data[4];
+	int changed;
+
+	for (i=0; i<4; i++)
+	{
+		current_input_port_data[i] = readinputport(i);
+	}
+
+	changed = current_input_port_data[3]^previous_input_port_data[3];
+
+	if ((changed & 0x01)!=0)
+	{
+		if ((current_input_port_data[3] & 0x01)!=0)
+		{
+			/* pen pressed to screen */
+			
+			/* set pen interrupt */
+			avigo_irq |= (1<<6);
+		}
+	}
+
+	if ((changed & 0x02)!=0)
+	{
+		if ((current_input_port_data[3] & 0x02)!=0)
+		{
+			/* ????? causes a NMI */
+			cpu_set_nmi_line(0, PULSE_LINE);
+		}
+	}
 #if 0
-static void avigo_1hz_int(int state)
-{
-        logerror("1hz int\r\n");
+	/* not sure if keyboard generates an interrupt, or if something
+	is plugged in for synchronisation! */
+	/* not sure if this is correct! */
+	for (i=0; i<2; i++)
+	{
+		int changed;
+		int current;
+		current = ~current_input_port_data[i];
 
-        avigo_irq |=(1<<1);
+		changed = ((current^(~previous_input_port_data[i])) & 0x07);
 
-        avigo_refresh_ints();
-
-
-}
-
-static void avigo_16hz_int(int state)
-{
-        logerror("16hz int\r\n");
-
-        avigo_irq |=(1<<4);
-
-        avigo_refresh_ints();
-
-}
+		if (changed!=0)
+		{
+			/* if there are 1 bits remaining, it means there is a bit
+			that has changed, the old state was off and new state is on */
+			if (current & changed)
+			{
+				avigo_irq |= (1<<2);
+				break;
+			}
+		}
+	}
 #endif
+	/* copy current to previous */
+	memcpy(previous_input_port_data, current_input_port_data, sizeof(int)*4);
+
+	/* refresh status of interrupts */
+	avigo_refresh_ints();
+}
+
+/* does not do anything yet */
+static void avigo_tc8521_alarm_int(int state)
+{
+	
+}
+
 
 static struct tc8521_interface avigo_tc8521_interface =
 {
-	NULL,	//avigo_alarm_int
+	avigo_tc8521_alarm_int
 };
 
 static void avigo_refresh_memory(void)
@@ -178,12 +259,14 @@ static void avigo_refresh_memory(void)
 
         switch (avigo_rom_bank_h)
         {
+			/* 011 */
 		  case 0x03:
           {
               avigo_flash_at_0x4000 = 1;
           }
           break;
 
+			/* 101 */
           case 0x05:
           {
               avigo_flash_at_0x4000 = 2;
@@ -205,6 +288,7 @@ static void avigo_refresh_memory(void)
 
         switch (avigo_ram_bank_h)
         {
+				/* %101 */
                 /* screen */
                 case 0x06:
                 {
@@ -213,6 +297,7 @@ static void avigo_refresh_memory(void)
                 }
                 break;
 
+				/* %001 */
                 /* ram */
                 case 0x01:
                 {
@@ -226,6 +311,7 @@ static void avigo_refresh_memory(void)
                 }
                 break;
 
+				/* %111 */
                 case 0x03:
                 {
                         avigo_flash_at_0x8000 = 1;
@@ -237,7 +323,8 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(7, addr);
 
                         memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
-                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
+						memory_set_bankhandler_w(7,0, MWA_NOP);
+						//   memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
 
 
 
@@ -255,8 +342,8 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(7, addr);
 
                         memory_set_bankhandler_r(3, 0, avigo_flash_0x8000_read_handler);
-                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
-
+//                        memory_set_bankhandler_w(7, 0, avigo_flash_0x8000_write_handler);
+						memory_set_bankhandler_w(7, 0, MWA_NOP);
 
                 }
                 break;
@@ -299,71 +386,121 @@ static uart8250_interface avigo_com_interface[1]=
 
 void avigo_init_machine(void)
 {
-        unsigned char *addr;
+		int i;
+	unsigned char *addr;
 
 	/* initialise flash memory */
 	flash_init(0);
+
+	flash_init(1);
+	
+	flash_init(2);
+
+    /* install os into flash from rom image data */
+	{
+		/* get base of rom data */
+		char *rom = (char *)memory_region(REGION_CPU1)+0x010000;
+		char *flash;
+
+		if (rom!=NULL)
+		{
+			/* copy first 1mb into first flash */
+			flash = (char *)flash_get_base(0);
+
+			if (flash!=NULL)
+			{
+				memcpy(flash, rom, 0x0100000);
+			}
+
+			/* copy second 1mb into second flash */
+			flash = (char *)flash_get_base(1);
+
+			if (flash!=NULL)
+			{
+				memcpy(flash, rom+0x0100000, 0x0150000-0x0100000);
+			}
+		}
+	}
+
+
+    /* if these files exist, they will overwrite the os installed
+	from the rom in the code above.
+	
+	This is ok. These files will be created by this driver and they will
+    contain the OS data in them! Since these files are in the flash
+	memory they can be written to. */
+
+	
 	flash_restore(0, "avigof1.nv");
 	flash_reset(0);
 
-        flash_init(1);
-        flash_restore(1, "avigof2.nv");
-        flash_reset(1);
+    flash_restore(1, "avigof2.nv");
+    flash_reset(1);
 
-        flash_init(2);
-        flash_restore(2, "avigof3.nv");
-        flash_reset(2);
+    flash_restore(2, "avigof3.nv");
+    flash_reset(2);
 
-        memory_set_bankhandler_r(1, 0, MRA_BANK1);
-        memory_set_bankhandler_r(2, 0, MRA_BANK2);
-        memory_set_bankhandler_r(3, 0, MRA_BANK3);
-        memory_set_bankhandler_r(4, 0, MRA_BANK4);
+	/* initialise settings for port data */
+	for (i=0; i<4; i++)
+	{
+		previous_input_port_data[i] = readinputport(i);
+	}
 
-        memory_set_bankhandler_w(5, 0, MWA_BANK5);
-        memory_set_bankhandler_w(6, 0, MWA_BANK6);
-        memory_set_bankhandler_w(7, 0, MWA_BANK7);
-        memory_set_bankhandler_w(8, 0, MWA_BANK8);
+	/* a timer used to check status of pen */
+	/* an interrupt is generated when the pen is pressed to the screen */
+	avigo_dummy_timer = timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
 
-        avigo_irq = 0;
-        avigo_rom_bank_l = 0;
-        avigo_rom_bank_h = 0;
-        avigo_ram_bank_l = 0;
-        avigo_ram_bank_h = 0;
-        avigo_flash_at_0x4000 = 0;
-        avigo_flash_at_0x8000 = 0;
+    memory_set_bankhandler_r(1, 0, MRA_BANK1);
+    memory_set_bankhandler_r(2, 0, MRA_BANK2);
+    memory_set_bankhandler_r(3, 0, MRA_BANK3);
+    memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-        tc8521_init(&avigo_tc8521_interface);
+    memory_set_bankhandler_w(5, 0, MWA_BANK5);
+    memory_set_bankhandler_w(6, 0, MWA_BANK6);
+    memory_set_bankhandler_w(7, 0, MWA_BANK7);
+    memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
-        uart8250_init(0, avigo_com_interface);
-        uart8250_reset(0);
+	avigo_irq = 0;
+	avigo_rom_bank_l = 0;
+	avigo_rom_bank_h = 0;
+	avigo_ram_bank_l = 0;
+	avigo_ram_bank_h = 0;
+	avigo_flash_at_0x4000 = 0;
+	avigo_flash_at_0x8000 = 0;
+
+	/* real time clock */
+	tc8521_init(&avigo_tc8521_interface);
+
+	/* serial/uart */
+	uart8250_init(0, avigo_com_interface);
+	uart8250_reset(0);
 
 	/* allocate memory */
 	avigo_memory = (unsigned char *)malloc(128*1024);
 
-        if (avigo_memory!=NULL)
-        {
-                memset(avigo_memory, 0, 128*1024);
-        }
+	if (avigo_memory!=NULL)
+	{
+		memset(avigo_memory, 0, 128*1024);
+	}
 
-        addr = (unsigned char *)flash_get_base(0);
-        cpu_setbank(1, addr);
-        cpu_setbank(5, addr);
+	addr = (unsigned char *)flash_get_base(0);
+	cpu_setbank(1, addr);
+	cpu_setbank(5, addr);
 
         /* initialise fixed settings */
 	memory_set_bankhandler_r(1, 0, avigo_flash_0x0000_read_handler);
 	memory_set_bankhandler_w(5, 0, avigo_flash_0x0000_write_handler);
 
-        addr = avigo_memory;
-        cpu_setbank(4, addr);
-        cpu_setbank(8, addr);
+	addr = avigo_memory;
+	cpu_setbank(4, addr);
+	cpu_setbank(8, addr);
 
 	memory_set_bankhandler_r(4, 0, avigo_ram_0xc000_read_handler);
-        memory_set_bankhandler_w(8, 0, avigo_ram_0xc000_write_handler);
+	memory_set_bankhandler_w(8, 0, avigo_ram_0xc000_write_handler);
 
 
 	/* 0x08000 is specially banked! */
-
-        avigo_refresh_memory();
+	avigo_refresh_memory();
 }
 
 void avigo_shutdown_machine(void)
@@ -372,20 +509,28 @@ void avigo_shutdown_machine(void)
 	flash_store(0, "avigof1.nv");
 	flash_finish(0);
 
-        flash_store(1, "avigof2.nv");
-        flash_finish(1);
+    flash_store(1, "avigof2.nv");
+    flash_finish(1);
 
-        flash_store(2, "avigof3.nv");
-        flash_finish(2);
+    flash_store(2, "avigof3.nv");
+    flash_finish(2);
 
-        tc8521_stop();
+    tc8521_stop();
 
 	/* free memory */
 	if (avigo_memory!=NULL)
     {
-            free(avigo_memory);
-            avigo_memory = NULL;
+		free(avigo_memory);
+		avigo_memory = NULL;
     }
+
+	/* free timer */
+	if (avigo_dummy_timer!=NULL)
+	{
+		timer_remove(avigo_dummy_timer);
+		avigo_dummy_timer = NULL;
+	}
+
 
 }
 
@@ -404,12 +549,6 @@ MEMORY_WRITE_START( writemem_avigo )
         {0x08000, 0x0bfff, MWA_BANK7},
         {0x0c000, 0x0ffff, MWA_BANK8},
 MEMORY_END
-
-
-
-
-
-
 
 READ_HANDLER(avigo_key_data_read_r)
 {
@@ -433,8 +572,9 @@ READ_HANDLER(avigo_key_data_read_r)
 
 	}
 
+	/* if bit 5 is clear shows synchronisation logo! */
 	/* bit 3 must be set, otherwise there is an infinite loop in startup */
-	data |= (1<<3);
+	data |= (1<<3) | (1<<5);
 
 	return data;
 }
@@ -484,7 +624,7 @@ READ_HANDLER(avigo_ram_bank_h_r)
 
 WRITE_HANDLER(avigo_rom_bank_l_w)
 {
-	logerror("rom bank l w: %04x\r\n", data);
+	logerror("rom bank l w: %04x\n", data);
 
         avigo_rom_bank_l = data & 0x03f;
 
@@ -493,7 +633,7 @@ WRITE_HANDLER(avigo_rom_bank_l_w)
 
 WRITE_HANDLER(avigo_rom_bank_h_w)
 {
-	logerror("rom bank h w: %04x\r\n", data);
+	logerror("rom bank h w: %04x\n", data);
 
 
         /* 000 = flash 0
@@ -513,7 +653,7 @@ WRITE_HANDLER(avigo_rom_bank_h_w)
 
 WRITE_HANDLER(avigo_ram_bank_l_w)
 {
-	logerror("ram bank l w: %04x\r\n", data);
+	logerror("ram bank l w: %04x\n", data);
 
         avigo_ram_bank_l = data & 0x03f;
 
@@ -522,7 +662,7 @@ WRITE_HANDLER(avigo_ram_bank_l_w)
 
 WRITE_HANDLER(avigo_ram_bank_h_w)
 {
-	logerror("ram bank h w: %04x\r\n", data);
+	logerror("ram bank h w: %04x\n", data);
 
 	avigo_ram_bank_h = data;
 
@@ -595,8 +735,10 @@ READ_HANDLER(avigo_unmapped_r)
 	port 0x02e */
 READ_HANDLER(avigo_04_r)
 {
-	return 0x07f;
+	/* must be both 0 for it to boot! */
+	return 0x0ff^((1<<7) | (1<<5));
 }
+
 
 
 PORT_READ_START( readport_avigo )
@@ -635,20 +777,24 @@ PORT_END
 
 INPUT_PORTS_START(avigo)
 	PORT_START
-        PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "PAGE UP", KEYCODE_PGUP, IP_JOY_NONE)
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "PAGE DOWN", KEYCODE_PGDN, IP_JOY_NONE)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "LIGHT", KEYCODE_L, IP_JOY_NONE)
-        PORT_BIT (0x0f7, 0xf7, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "PAGE UP", KEYCODE_PGUP, IP_JOY_NONE)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "PAGE DOWN", KEYCODE_PGDN, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "LIGHT", KEYCODE_L, IP_JOY_NONE)
+	PORT_BIT (0x0f7, 0xf7, IPT_UNUSED)
 
 	PORT_START
-        PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "TO DO", KEYCODE_T, IP_JOY_NONE)
-        PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "ADDRESS", KEYCODE_A, IP_JOY_NONE)
-        PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "SCHEDULE", KEYCODE_S, IP_JOY_NONE)
-        PORT_BIT (0x0f7, 0xf7, IPT_UNUSED)
+	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "TO DO", KEYCODE_T, IP_JOY_NONE)
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_KEYBOARD, "ADDRESS", KEYCODE_A, IP_JOY_NONE)
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_KEYBOARD, "SCHEDULE", KEYCODE_S, IP_JOY_NONE)
+	PORT_BIT (0x0f7, 0xf7, IPT_UNUSED)
 
 	PORT_START
-        PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "MEMO", KEYCODE_M, IP_JOY_NONE)
-        PORT_BIT (0x0fe, 0xfe, IPT_UNUSED)
+    PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "MEMO", KEYCODE_M, IP_JOY_NONE)
+    PORT_BIT (0x0fe, 0xfe, IPT_UNUSED)
+
+	PORT_START	
+	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Pen/Stylus pressed", KEYCODE_Q, JOYCODE_1_BUTTON1) 
+    PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "?? Causes a NMI", KEYCODE_W, JOYCODE_1_BUTTON2) 		
 INPUT_PORTS_END
 
 static struct Speaker_interface avigo_speaker_interface=
@@ -663,12 +809,12 @@ static struct MachineDriver machine_driver_avigo =
 	{
 		/* MachineCPU */
 		{
-                        CPU_Z80 ,  /* type */
-                        4000000, /* clock: See Note Above */
-                        readmem_avigo,                   /* MemoryReadAddress */
-                        writemem_avigo,                  /* MemoryWriteAddress */
-                        readport_avigo,                  /* IOReadPort */
-                        writeport_avigo,                 /* IOWritePort */
+            CPU_Z80 ,  /* type */
+            4000000, 
+            readmem_avigo,                   /* MemoryReadAddress */
+            writemem_avigo,                  /* MemoryWriteAddress */
+            readport_avigo,                  /* IOReadPort */
+            writeport_avigo,                 /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
 										* Interrupt */
 			0 /*1 */ ,				   /* vblanks per frame */
@@ -681,13 +827,13 @@ static struct MachineDriver machine_driver_avigo =
         avigo_init_machine,                      /* init machine */
         avigo_shutdown_machine,
 	/* video hardware */
-        AVIGO_SCREEN_WIDTH, /* screen width */
-        AVIGO_SCREEN_HEIGHT,  /* screen height */
-        {0, (AVIGO_SCREEN_WIDTH - 1), 0, (AVIGO_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
+        640, /* screen width */
+        480,  /* screen height */
+        {0, (640 - 1), 0, (480 - 1)},        /* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
-        AVIGO_NUM_COLOURS,                                                        /* total colours */
-        AVIGO_NUM_COLOURS,                                                        /* color table len */
+        256,                                                        /* total colours */
+        256,                                                        /* color table len */
         avigo_init_palette,                      /* init palette */
 
         VIDEO_TYPE_RASTER,                                  /* video attributes */
@@ -718,11 +864,12 @@ static struct MachineDriver machine_driver_avigo =
 
 ***************************************************************************/
 
+
 ROM_START(avigo)
-/*        ROM_REGION(((64*1024)+(1024*1024)+), REGION_CPU1)
-        ROM_LOAD("avigo.rom", 0x010000, 0x020000, 0x0000)
-*/
+        ROM_REGION((64*1024)+0x0150000, REGION_CPU1,0)
+        ROM_LOAD("avigo.rom", 0x010000, 0x0150000, 0x0000)
 ROM_END
+
 
 static const struct IODevice io_avigo[] =
 {
