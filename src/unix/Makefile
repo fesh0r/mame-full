@@ -59,7 +59,8 @@ SOUND_OBJS.irix_al = $(DSP_DIR)/irix_al.o
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
-SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o
+SOUND_OBJS = $(SOUND_OBJS.$(ARCH)) $(DSP_DIR)/esound.o $(DSP_DIR)/artssound.o \
+    $(DSP_DIR)/arts.o
 
 # joystick objs
 JOY_DIR  = $(OBJDIR)/joystick-drivers
