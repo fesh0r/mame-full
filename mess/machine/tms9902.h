@@ -1,0 +1,25 @@
+typedef struct tms9902reset_param
+{
+	double clock_rate;					/* clock rate (2MHz-3.3MHz, with 4MHz overclocking) */
+	void (*int_callback)(int INT);		/* called when interrupt pin state changes */
+	void (*rts_callback)(int RTS);		/* called when Request To Send pin state changes */
+	void (*brk_callback)(int BRK);		/* called when BReaK state changes */	
+	void (*xmit_callback)(int data);	/* called when a character is transmitted */
+} tms9902reset_param;
+
+
+void tms9902_init(int which, const tms9902reset_param *param);
+void tms9902_cleanup(int which);
+
+void tms9902_set_cts(int which, int state);
+void tms9902_set_dsr(int which, int state);
+
+void tms9902_push_data(int which, int data);
+
+int tms9902_CRU_read(int which, int offset);
+void tms9902_CRU_write(int which, int offset, int data);
+
+/*********************** Standard 16-bit CPU interfaces *********************/
+
+READ16_HANDLER ( tms9902_0_CRU_read16 );
+WRITE16_HANDLER ( tms9902_0_CRU_write16 );
