@@ -71,6 +71,7 @@ static unsigned int rotation_speed;		/* drive rotation speed - ignored if ext_sp
 */
 typedef struct
 {
+	mess_image *img;
 	mame_file *fd;
 	enum { bare, apple_diskcopy } image_format;
 	union
@@ -1297,11 +1298,10 @@ static void sony_doaction(void)
 			#if LOG_SONY
 				logerror("sony_doaction(): ejecting disk pc=0x%08x\n", (int) activecpu_get_pc());
 			#endif
-			/*if (f->fd) {
-				memset(f, 0, sizeof(*f));
-			}*/
-			/* somewhat hackish, but better method (?) */
-			image_unload(image_from_devtype_and_index(IO_FLOPPY, sony_floppy_select));
+			/* tell the core to unload the image: note this should result into
+			calling sony_floppy_unload() */
+			if (f->img)
+				image_unload(f->img);
 			break;
 		default:
 			#if LOG_SONY
@@ -1333,7 +1333,8 @@ int sony_floppy_load(mess_image *img, mame_file *fp, int allowablesizes)
 	if (fp == NULL)
 		return INIT_PASS;
 
-	/* open file */
+	/* set image and file references */
+	f->img = img;
 	f->fd = fp;
 	/* tell whether the image is writable */
 	f->wp = ! image_is_writable(img);
