@@ -1007,7 +1007,7 @@ void cmd0(int comm, unsigned short *fb)
 
   vram = &mem[SATURN_VDP1_RAM_BASE/4];
 
-  color_mode = (vram[comm*8 + 1] >> 19) & 0x7; /* Pull out paramter infomation */
+  color_mode = (vram[comm*8 + 1] >> 19) & 0x7; /* Pull out parameter infomation */
   color_bank = (vram[comm*8 + 1] & 0xFFFF);
   char_addr  = (vram[comm*8 + 2] >> 16) * 8;
   width      = ((vram[comm*8 + 2] & 0xFFFF) >> 8) * 8;
@@ -1326,14 +1326,21 @@ void draw_1s8(UINT32 *vram_base,unsigned char *display,UINT32 pitch)
   unsigned int loop;
   UINT32 vrtmp;
 
-  for(loop = 0;loop < 16;loop++)
+  for(loop = 0;loop < 16;loop+=2)
     {
-	  vrtmp = vram_base[loop];
+	  vrtmp = *vram_base++;
       *display++ = (vrtmp >> 24); //& 0xFF;
       *display++ = (vrtmp >> 16); //& 0xFF;
       *display++ = (vrtmp >> 8); //& 0xFF;
       *display++ = (vrtmp); //& 0xFF;
-      if (loop & 0x1) display += (pitch-8);
+
+	  vrtmp = *vram_base++;
+      *display++ = (vrtmp >> 24); //& 0xFF;
+      *display++ = (vrtmp >> 16); //& 0xFF;
+      *display++ = (vrtmp >> 8); //& 0xFF;
+      *display++ = (vrtmp); //& 0xFF;
+
+      display += (pitch-8);
     }
 }
 
@@ -1343,6 +1350,10 @@ void render_plane(unsigned char *buffer,int pal,int trans)
   struct osd_bitmap *bitmap = saturn_bitmap[video_w];
   int loopx,loopy;
   int col;
+  UINT32 *memt;
+
+  pal = ((pal * 0x200) / 4);
+  memt = &mem[SATURN_COLOR_RAM_BASE/4 + pal];
 
   if(!trans)
     {
@@ -1351,14 +1362,11 @@ void render_plane(unsigned char *buffer,int pal,int trans)
 	  for(loopx = 0;loopx < 512;loopx++)
 	    {
 	      col = *buffer++;
-	      if(col & 1)
-		{
-		  col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] & 0x7FFF;
-		}
-	      else
-		{
-		  col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] >> 16) & 0x7FFF;
-		}
+	      if(col & 1) {
+			  col =  memt[col/2] & 0x7FFF;
+		  } else {
+			  col = (memt[col/2] >> 16) & 0x7FFF;
+		  }
 	      plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
 	    }
 	}
@@ -1374,11 +1382,11 @@ void render_plane(unsigned char *buffer,int pal,int trans)
 		{
 		  if(col & 1)
 		    {
-		      col = mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] & 0x7FFF;
+		      col = memt[col/2] & 0x7FFF;
 		    }
 		  else
 		    {
-		      col = (mem[(SATURN_COLOR_RAM_BASE/4) + (col/2) + ((pal*0x200)/4)] >> 16) & 0x7FFF;
+		      col = (memt[col/2] >> 16) & 0x7FFF;
 		    }
 		  plot_pixel(bitmap,loopx,loopy,Machine->pens[col]);
 		}
