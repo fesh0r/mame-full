@@ -227,4 +227,4 @@ SYSTEM_CONFIG_END
 
 
 /*     YEAR  NAME	PARENT  COMPAT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
-COMP( 1989, dai,	0,      0,		dai,	dai,	0,		dai,	"",		"DAI")
+COMP( 1978, dai,	0,      0,		dai,	dai,	0,		dai,	"Data Applications International",	"DAI Personal Computer")
