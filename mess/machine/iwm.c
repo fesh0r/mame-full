@@ -73,7 +73,7 @@ static int iwm_mode;		/* 0-31 */
 
 static void *motor_off_timer;
 
-iwm_interface iwm_intf;
+static iwm_interface iwm_intf;
 
 static void iwm_turnmotoroff(int dummy);
 
