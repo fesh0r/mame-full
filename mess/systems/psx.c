@@ -155,10 +155,10 @@ static MEMORY_WRITE32_START( psx_writemem )
 	{ 0x00000000, 0x001fffff, MWA32_RAM },	/* ram */
 	{ 0x1f800000, 0x1f8003ff, MWA32_BANK1 },	/* scratchpad */
 	{ 0x1f801040, 0x1f80104f, psx_serial_w },
-	{ 0x1f801070, 0x1f801077, psxirq_w },
-	{ 0x1f801080, 0x1f8010ff, psxdma_w },
+	{ 0x1f801070, 0x1f801077, psx_irq_w },
+	{ 0x1f801080, 0x1f8010ff, psx_dma_w },
 	{ 0x1f801800, 0x1f801803, psx_cd_w },
-	{ 0x1f801810, 0x1f801817, psxgpu_w },
+	{ 0x1f801810, 0x1f801817, psx_gpu_w },
 	{ 0x80000000, 0x801fffff, MWA32_BANK2 },	/* ram mirror */
 	{ 0x80600000, 0x807fffff, MWA32_BANK3 },	/* ram mirror */
 	{ 0xa0000000, 0xa01fffff, MWA32_BANK4 },	/* ram mirror */
@@ -169,18 +169,19 @@ static MEMORY_READ32_START( psx_readmem )
 	{ 0x00000000, 0x001fffff, MRA32_RAM },		/* ram */
 	{ 0x1f800000, 0x1f8003ff, MRA32_BANK1 },	/* scratchpad */
 	{ 0x1f801040, 0x1f80104f, psx_serial_r },
-	{ 0x1f801070, 0x1f801077, psxirq_r },
-	{ 0x1f801080, 0x1f8010ff, psxdma_r },
+	{ 0x1f801070, 0x1f801077, psx_irq_r },
+	{ 0x1f801080, 0x1f8010ff, psx_dma_r },
 	{ 0x1f801800, 0x1f801803, psx_cd_r },
-	{ 0x1f801810, 0x1f801817, psxgpu_r },
+	{ 0x1f801810, 0x1f801817, psx_gpu_r },
 	{ 0x80000000, 0x801fffff, MRA32_BANK2 },	/* ram mirror */
 	{ 0x80600000, 0x807fffff, MRA32_BANK3 },	/* ram mirror */
 	{ 0xa0000000, 0xa01fffff, MRA32_BANK4 },	/* ram mirror */
 	{ 0xbfc00000, 0xbfc7ffff, MRA32_BANK5 },	/* bios */
 MEMORY_END
 
-static DRIVER_INIT( psx )
+static DRIVER_INIT( psx_mess )
 {
+	init_psx();
 	cpu_setbank( 1, memory_region( REGION_USER1 ) );
 	cpu_setbank( 2, memory_region( REGION_CPU1 ) );
 	cpu_setbank( 3, memory_region( REGION_CPU1 ) );
@@ -239,7 +240,7 @@ static MACHINE_DRIVER_START( psx )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(PSXCPU, 33868800) /* 33MHz ?? */
 	MDRV_CPU_MEMORY(psx_readmem,psx_writemem)
-	MDRV_CPU_VBLANK_INT(psx,1)
+	MDRV_CPU_VBLANK_INT(psx_vblank, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -252,10 +253,10 @@ static MACHINE_DRIVER_START( psx )
 	MDRV_VISIBLE_AREA(0, 639, 0, 479)
 	MDRV_PALETTE_LENGTH(65536)
 
-	MDRV_PALETTE_INIT(psxgpu)
-	MDRV_VIDEO_START(psxgpu1024x512)
-	MDRV_VIDEO_UPDATE(psxgpu)
-	MDRV_VIDEO_STOP(psxgpu)
+	MDRV_PALETTE_INIT(psx)
+	MDRV_VIDEO_START(psx_1024x512)
+	MDRV_VIDEO_UPDATE(psx)
+	MDRV_VIDEO_STOP(psx)
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
@@ -351,14 +352,14 @@ There is also a BCD encoded date at offset 0x100, but this is set to 041211995 i
 from scph1000 & scph7000 ( where it is 22091994 & 29051997 respectively ).
 */
 
-/*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT	CONFIG  COMPANY 	FULLNAME */
-CONSX( 1994,	psx,	0,		0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph1000)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1995,	psxj22,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph5000 J v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1995,	psxa22,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1995,	psxe22,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1996,	psxj30,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph5500 J v3.0 09/09/96)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1996,	psxa30,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph7003 A v3.0 11/18/96)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1997,	psxe30,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph5502 E v3.0 01/06/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1997,	psxj40,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph7000 J v4.0 08/18/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1997,	psxa41,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph7001 A v4.1 12/16/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
-CONSX( 1997,	psxe41,	psx,	0,		psx,	psx,	psx,	psx,	"Sony",		"Sony PSX (scph7502 E v4.1 12/16/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
+/*		YEAR	NAME	PARENT	COMPAT	MACHINE INPUT	INIT		CONFIG  COMPANY 	FULLNAME */
+CONSX( 1994,	psx,	0,		0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph1000)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1995,	psxj22,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph5000 J v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1995,	psxa22,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph1001/dtlh3000 A v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1995,	psxe22,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph1002/dtlh3002 E v2.2 12/04/95)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1996,	psxj30,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph5500 J v3.0 09/09/96)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1996,	psxa30,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph7003 A v3.0 11/18/96)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1997,	psxe30,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph5502 E v3.0 01/06/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1997,	psxj40,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph7000 J v4.0 08/18/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1997,	psxa41,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph7001 A v4.1 12/16/97)", GAME_NO_SOUND | GAME_NOT_WORKING )
+CONSX( 1997,	psxe41,	psx,	0,		psx,	psx,	psx_mess,	psx,	"Sony",		"Sony PSX (scph7502 E v4.1 12/16/97)", GAME_NO_SOUND | GAME_NOT_WORKING )

@@ -135,11 +135,10 @@ int main(int argc, char **argv)
 		FILE* fp;
 
   #ifndef MESS
-   #define APPLICATION "M.A.M.E."
-		sprintf(message_text, APPLICATION " v%s - Multiple Arcade Machine Emulator\n"
+		sprintf(message_text, APPLONGNAME " v%s - Multiple Arcade Machine Emulator\n"
 							  "Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
 							  "\n"
-							  APPLICATION " is a console application, you should launch it from a command prompt.\n"
+							  APPLONGNAME " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
 							  "Usage:\tMAME gamename [options]\n"
 							  "\n"
@@ -154,8 +153,7 @@ int main(int argc, char **argv)
 							  "Would you like to open the documentation now?"
 							  , build_version);
   #else
-   #define APPLICATION "M.E.S.S."
-		sprintf(message_text, APPLICATION " is a console application, you should launch it from a command prompt.\n"
+		sprintf(message_text, APPLONGNAME " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
 							  "Please consult the documentation for more information.\n"
 							  "\n"
@@ -163,7 +161,7 @@ int main(int argc, char **argv)
   #endif
 
 		// pop up a messagebox with some information
-		button = MessageBox(NULL, message_text, APPLICATION " usage information...", MB_YESNO | MB_ICONASTERISK);
+		button = MessageBox(NULL, message_text, APPLONGNAME " usage information...", MB_YESNO | MB_ICONASTERISK);
 
 		if (button == IDYES)
 		{
@@ -183,7 +181,6 @@ int main(int argc, char **argv)
 		}
 		return 1;
 	}
-  #undef APPLICATION
  #endif
 #endif
 

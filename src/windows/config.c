@@ -461,11 +461,7 @@ int cli_frontend_init (int argc, char **argv)
 
 	if (showusage)
 	{
-		#ifndef MESS
 		fprintf(stdout, "Usage: %s [game] [options]\n" "Options:\n", cmd_name);
-		#else
-		fprintf(stdout, "Usage: %s [system] [device] [software] [options]\n" "Options:\n", cmd_name);
-		#endif
 
 		/* actual help message */
 		rc_print_help(rc, stdout);
