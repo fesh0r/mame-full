@@ -622,6 +622,7 @@ $(OBJ)/lynx.a:     \
 	  $(OBJ)/mess/machine/lynx.o
 
 $(OBJ)/mk1.a:      \
+	  $(OBJ)/mess/cpu/f8/f3853.o	 \
 	  $(OBJ)/mess/vidhrdw/mk1.o      \
 	  $(OBJ)/mess/systems/mk1.o
 
