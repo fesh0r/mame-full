@@ -10,14 +10,6 @@
   This code may be used and distributed under the terms of the
   Mame license
 
-ChangeLog:
-
-16 August 2004 (Hans de Goede):
--revived and modified to use: vector_register_aux_renderer,
- now we no longer need any core modifcations, and
- the code is somewhat cleaner.
--added support for vector clipping, this fixes mhavoc
-
 *****************************************************************/
 
 #if defined xfx || defined svgafx

@@ -22,6 +22,17 @@ ChangeLog:
 -revived fxvec.c and modified it to use: vector_register_aux_renderer,
  now we no longer need any core modifcations, and
  the code is somewhat cleaner.
+-added support for vector clipping, this fixes mhavoc
+
+17 August 2004 (Hans de Goede):
+-cleaned up vector handling, removed dummy_renderer hack
+-fixed vector rotation
+
+18 August 2004 (Hans de Goede):
+-use video_real_depth, this fixes 32 bpp game support, and makes
+ 15 bpp direct RGB games not go through the lookup table for a small speedup
+-modifed 15 bpp direct RGB support to use memcpy for a small speedup
+
 
 Todo:
 -use FX HW palette (take a look at fxgen.c from 0.37b7.1 for example code)
@@ -62,7 +73,6 @@ float vscrntly;
 float vscrnwidth;
 float vscrnheight;
 
-static int fxdepth;
 static int black;
 static int white;
 static GrScreenResolution_t Gr_resolution = GR_RESOLUTION_640x480;
@@ -444,8 +454,6 @@ int InitVScreen(void)
 	vecgame=1;
   }
 
-  fxdepth = Machine->color_depth;
-
   fprintf(stderr_file, "info: using Glide version %s\n", version);
   
   grSstSelect(0);
@@ -502,7 +510,7 @@ int InitVScreen(void)
   
   /* fill the display_palette_info struct */
   memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
-  switch(fxdepth) {
+  switch(video_real_depth) {
     case 15:
     case 16:
       display_palette_info.depth = 16;
@@ -564,7 +572,7 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 	if(visual_width<=texsize) width=visual_width;
 	else width=texsize;
 
-	switch (fxdepth) {
+	switch (video_real_depth) {
 
 
 	case 15:
@@ -582,10 +590,10 @@ void UpdateTexture(struct mame_bitmap *bitmap)
 				
 				square=texgrid+(ysquare*texnumx)+xsquare;
 
-				if (!emulation_paused) {	
-					for(i = 0;i < width;i++) {	
-						square->texture[texline*texsize+i] = ((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i];
-					}
+				if (!emulation_paused) {
+                                        memcpy(square->texture+texline*texsize,
+                                          (UINT16*)(bitmap->line[y])+visual.min_x+ofs,
+                                          width*2);
 				} else {
                                        	for(i = 0;i < width;i++) {
                                                	square->texture[texline*texsize+i] = PAUSEDCOLOR((((UINT16*)(bitmap->line[y]))[visual.min_x+ofs+i]));
