@@ -19,7 +19,7 @@ TARGET = mess
 BSCMAKE = -bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
-UPX = upx.exe -6 --compress-icons=0
+# UPX = upx.exe -9 --compress-icons=0
 
 # uncomment next line to use Assembler 68000 engine
 # X86_ASM_68000 = 1
@@ -54,7 +54,7 @@ AR = @lib
 CC = @cl
 LD = @link
 RC = @rc
-ASM = nasmw
+ASM = @nasmw
 ASMFLAGS = -f win32
 RM = rm
 RMDIR = rd /S /Q
@@ -85,7 +85,6 @@ endif
 NAME = $(TARGET)$(VCSUFFIX)
 OBJ = obj/$(NAME)
 EMULATOR = $(TARGET)$(VCSUFFIX)$(EXE)
-GUIEMULATOR = $(TARGET)gui$(VCSUFFIX)$(EXE)
 
 #####################################################################
 # compiler
@@ -95,18 +94,12 @@ GUIEMULATOR = $(TARGET)gui$(VCSUFFIX)$(EXE)
 #
 
 DEFS = \
-        -DWIN32 \
         -D_WINDOWS \
-        -DDIRECTSOUND_VERSION=0x0300 \
-        -DDIRECTDRAW_VERSION=0x0300 \
-        -DDIRECTINPUT_VERSION=0x0500 \
         -DM_PI=3.1415926534 \
         -DPI=3.1415926534 \
         -DINLINE='static __inline' \
         -Dinline=__inline \
         -D__inline__=__inline \
-        -DCLIB_DECL=__cdecl \
-        -DDECL_SPEC=__cdecl \
         -DPNG_SAVE_SUPPORT \
         -DMAME_AVI \
         -DHAS_CPUS \
@@ -198,10 +191,6 @@ LIBS = \
 		ddraw.lib \
         zlib.lib
 
-ifdef MAME_NET
-LIBS += wsock32.lib
-endif
-
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))
 endif
@@ -264,7 +253,7 @@ endif
 
 #####################################################################
 
-all: maketree $(EMULATOR) $(GUIEMULATOR) extra
+all: maketree $(EMULATOR) extra
 
 # include the various .mak files
 include src/core.mak
@@ -290,24 +279,13 @@ extra:	romcmp$(EXE) $(TOOLS) $(HELPFILES)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCDEFS)
 
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(CMDOSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fr$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(CMDOSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
+	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$@ $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DIRENTOBJS) $(DRVLIBS) $(RES)
 ifdef BSCMAKE
-	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(CMDOSOBJS:%.o=%.sbr)
-endif
-ifndef DEBUG
-ifdef UPX
-	$(UPX) $@
-endif
-endif
-
-$(GUIEMULATOR):	$(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(GUIRES) $(DRVLIBS)
-	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$@ $(LIBS) $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(DIRENTOBJS) $(DRVLIBS) $(GUIRES)
-ifdef BSCMAKE
-	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(GUIOBJS:%.o=%.sbr)
+	$(BSCMAKE) -nologo -o$(@:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr)
 endif
 ifndef DEBUG
 ifdef UPX
@@ -356,11 +334,11 @@ $(OBJ)/wince/%.o: src/wince/%.cpp
 $(OBJ)/mess/%.o: mess/%.c
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
-$(OBJ)/windowsui/%.res: src/windowsui/%.rc
+$(OBJ)/wince/%.res: src/wince/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
-$(OBJ)/wince/%.res: src/wince/%.rc
+$(OBJ)/windowsui/%.res: windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

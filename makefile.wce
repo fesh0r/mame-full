@@ -19,7 +19,7 @@ MAME_DEBUG = -DMAME_DEBUG
 BSCMAKE = bscmake.exe
 
 # command to invoke UPX (Ultimate Packer for eXecutables)
-UPX = upx.exe -6 --compress-icons=0
+# UPX = upx.exe -9 --compress-icons=0
 
 # uncomment next line to use Assembler 68000 engine
 # X86_ASM_68000 = 1
@@ -35,9 +35,6 @@ MAME_MMX = -DMAME_MMX
 
 # use fast (register) calling convention
 USE_FASTCALL = -DFASTCALL
-
-# Define this to enable MIDAS sound
-# MIDAS = 1
 
 # uncomment next line to generate help files
 # HELP = 1
@@ -71,12 +68,12 @@ WCEPLAT = x86em
 endif
 
 # compiler, linker and utilities
-AR = lib
+AR = @lib
 #CC =
 CCL = gcc
-LD = link
-RC = rc
-ASM = nasmw
+LD = @link
+RC = @rc
+ASM = @nasmw
 ASMFLAGS = -f win32
 RM = rm
 RMDIR = rd /S /Q
@@ -178,10 +175,6 @@ ifdef MESS
 DEFS += -DMESS=1 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
 endif
 
-ifdef MIDAS
-DEFS += -DMIDAS
-endif
-
 INCLUDES = \
 	-I. \
 	-Isrc \
@@ -205,12 +198,6 @@ endif
 
 ifdef ZLIB_INCPATH
 INCLUDES += -I$(subst \,\\,$(ZLIB_INCPATH)) 
-endif
-
-ifdef MIDAS
-ifdef MIDAS_INCPATH
-INCLUDES += -I$(subst \,\\,$(MIDAS_INCPATH))
-endif
 endif
 
 ifdef GX_PATH
@@ -261,17 +248,6 @@ LIBS = \
 	aygshell.lib \
 	uuid.lib \
 	gx.lib
-
-ifdef MAME_NET
-LIBS += wsock32.lib
-endif
-
-ifdef MIDAS
-LIBS    += MIDASDLL.lib
-ifdef MIDAS_LIBPATH
-LDFLAGS += -LIBPATH:$(subst \,\\,$(MIDAS_LIBPATH))
-endif
-endif
 
 ifdef DX_LIBPATH
 LDFLAGS += -LIBPATH:$(subst \,\\,$(DX_LIBPATH))
@@ -354,10 +330,10 @@ all: maketree $(EMULATOR)
 
 # include the various .mak files
 include src/core.mak
-include src/$(TARGET).mak
+include mess/$(TARGET).mak
 include src/rules.mak
 ifdef MESS
-include src/rules_ms.mak
+include mess/rules_ms.mak
 else
 endif
 include src/$(MAMEOS)/$(MAMEOS).mak
@@ -381,6 +357,11 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 ifdef BSCMAKE
 	$(BSCMAKE) -nologo -o$(EMULATOR:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
+endif
+ifndef DEBUG
+ifdef UPX
+	$(UPX) $@
+endif
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
@@ -410,11 +391,11 @@ $(OBJ)/mess/%.o: mess/%.c
 	@echo [MESS] Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$@ -c $<
 
-$(OBJ)/windowsui/%.res: src/windowsui/%.rc
+$(OBJ)/wince/%.res: src/wince/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 
-$(OBJ)/wince/%.res: src/wince/%.rc
+$(OBJ)/windowsui/%.res: windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -Fo$@ $<
 

@@ -354,7 +354,7 @@ static int checksum_file (const char *file, unsigned char **p, unsigned int *siz
 		return -1;
 	}
 
-	if( fread (data, sizeof (unsigned char), length, f) != length )
+	if( fread (data, sizeof (unsigned char), length, f) != (size_t)length )
 	{
 		free (data);
 		fclose (f);
@@ -852,6 +852,10 @@ void SoftwareList_Idle(struct SmartListView *pListView)
 
 #ifdef MAME_DEBUG
 
+#ifndef T2A
+#define T2A(str)	str
+#endif
+
 void MessTestsFlex(struct SmartListView *pListView)
 {
 	/* We get called here when we are done idling */
@@ -868,7 +872,7 @@ void MessTestsFlex(struct SmartListView *pListView)
 	for (i = 0; i < nItemsToAdd; i++) {
 		nItem = i * nItemsToAddSkip;
 		if ((nItem < mess_images_count) && (mess_images_index[nItem]->type != IO_COUNT)) {
-			MessIntroduceItem(pListView, mess_images_index[nItem]->fullname, imagetypes);
+			MessIntroduceItem(pListView, T2A(mess_images_index[nItem]->fullname), imagetypes);
 		}
 	}
 

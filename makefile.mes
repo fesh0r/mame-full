@@ -1,8 +1,8 @@
 # set this to mame, mess or the destination you want to build
- TARGET = mess
+# TARGET = mess
 # example for a tiny compile
 # TARGET = tinyms
-ifeq ($(TARGET),)
+ifndef TARGET
 TARGET = mess
 endif
 
@@ -17,6 +17,9 @@ USE_DRMINGW = 1
 
 # uncomment next line to generate a link map for exception handling in windows
 MAP = 1
+
+# command to invoke UPX (Ultimate Packer for eXecutables)
+UPX = upx.exe -9 --compress-icons=0
 
 # uncomment next line to use Assembler 68000 engine
 X86_ASM_68000 = 1
@@ -69,7 +72,6 @@ endif
 OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
-GUIEMULATOR = $(NAME)gui$(EXE)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS32"' -DMAMENAME='"MESS"'
 
@@ -158,17 +160,7 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(CMDOSOBJS) $(DRVLIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(CMDOSOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
 ifndef DEBUG
-	upx -9 $@
-endif
-
-# gui target
-$(GUIEMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(DRVLIBS)
-# always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
-ifndef DEBUG
-	upx -9 $@
+	$(UPX) $@
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o

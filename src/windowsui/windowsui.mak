@@ -4,6 +4,7 @@
 # don't create gamelist.txt
 TEXTS=
 
+ifndef MSVC
 # remove pedantic
 $(OBJ)/windowsui/%.o: src/windowsui/%.c
 	@echo Compiling $<...
@@ -13,6 +14,7 @@ $(OBJ)/windowsui/%.o: src/windowsui/%.c
 $(OBJ)/mess/windowsui/%.o: mess/windowsui/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+endif
 
 OBJDIRS += $(OBJ)/windowsui
 
@@ -65,12 +67,13 @@ DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DWIN32 \
         -UWINNT \
         -DCLIB_DECL=__cdecl \
-        -DDECL_SPEC= \
+        -DDECL_SPEC=__cdecl \
         -DZEXTERN=extern \
 
 #####################################################################
 # Resources
 
+ifndef MSVC
 RC = windres
 
 RCDEFS = -DMESS -DNDEBUG -D_WIN32_IE=0x0400
@@ -80,12 +83,12 @@ RCFLAGS = -O coff --include-dir mess/windowsui --include-dir src/windowsui
 $(OBJ)/mess/windowsui/%.res: mess/windowsui/%.rc
 	@echo Compiling resources $<...
 	$(RC) $(RCDEFS) $(RCFLAGS) -o $@ -i $<
-
-
+endif
 
 #####################################################################
 # Linker
 
+ifndef MSVC
 LIBS += -lkernel32 \
         -lshell32 \
         -lcomctl32 \
@@ -95,6 +98,7 @@ LIBS += -lkernel32 \
 
 # use -mconsole for romcmp
 LDFLAGS += -mwindows -mconsole
+endif
 
 #####################################################################
 

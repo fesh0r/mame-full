@@ -1,5 +1,9 @@
 #define WIN32_LEAN_AND_MEAN
+
+#ifndef _MSC_VER
 #define NONAMELESSUNION 1
+#endif
+
 #include <windows.h>
 #include <string.h>
 
