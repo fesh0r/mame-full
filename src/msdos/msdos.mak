@@ -26,6 +26,9 @@ OSOBJS = $(OBJ)/msdos/msdos.o $(OBJ)/msdos/video.o $(OBJ)/msdos/blit.o $(OBJ)/ms
 	$(OBJ)/msdos/ticker.o $(OBJ)/msdos/config.o $(OBJ)/msdos/fronthlp.o \
 	$(OBJ)/msdos/fileio.o $(OBJ)/msdos/snprintf.o $(OBJ)/msdos/zvgintrf.o
 
+# math libs for floorf/sqrtf
+DRVLIBS += -lm
+
 # video blitting functions
 $(OBJ)/msdos/asmblit.o: src/msdos/asmblit.asm
 	@echo Assembling $<...
