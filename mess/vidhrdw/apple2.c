@@ -14,6 +14,7 @@ static struct tilemap *text_tilemap;
 static struct tilemap *lores_tilemap;
 static int text_videobase;
 static int lores_videobase;
+static UINT16 *artifact_map;
 
 #define	BLACK	0
 #define PURPLE	3
@@ -99,24 +100,35 @@ static UINT32 apple2_hires_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_co
 	return apple2_text_getmemoryoffset(col, row / 8, num_cols, num_rows) | ((row & 7) << 10);
 }
 
-static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
+struct drawtask_params
 {
+	struct mame_bitmap *bitmap;
+	UINT8 *vram;
+	int beginrow;
+	int rowcount;
+};
+
+static void apple2_hires_draw_task(void *param, int task_num, int task_count)
+{
+	struct drawtask_params *dtparams;
+	struct mame_bitmap *bitmap;
+	UINT8 *vram;
+	int beginrow;
+	int endrow;
 	int row, col, b;
 	int offset;
-	UINT8 *vram;
 	UINT8 vram_row[42];
 	UINT16 v;
 	UINT16 *p;
+	UINT32 w;
+	UINT16 *artifact_map_ptr;
 
-	static int artifact_color_table[] =
-	{
-		BLACK,	PURPLE,	GREEN,	WHITE,
-		BLACK,	BLUE,	ORANGE,	WHITE
-	};
+	dtparams = (struct drawtask_params *) param;
 
-	vram = mess_ram + (page ? 0x4000 : 0x2000);
-	if (a2.RAMRD)
-		vram += 0x10000;
+	bitmap = dtparams->bitmap;
+	vram = dtparams->vram;
+	beginrow = dtparams->beginrow + (dtparams->rowcount / task_count) * task_num;
+	endrow = dtparams->beginrow + (dtparams->rowcount / task_count) - 1;
 
 	vram_row[0] = 0;
 	vram_row[41] = 0;
@@ -133,32 +145,35 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow
 
 		for (col = 0; col < 40; col++)
 		{
+			w =		(((UINT32) vram_row[col+0] & 0x7f) <<  0)
+				|	(((UINT32) vram_row[col+1] & 0x7f) <<  7)
+				|	(((UINT32) vram_row[col+2] & 0x7f) << 14);
+
+			artifact_map_ptr = &artifact_map[((vram_row[col+1] & 0x80) >> 7) * 16];
+			
 			for (b = 0; b < 7; b++)
 			{
-				int current = (vram_row[col+1] & (1 << b));
-				int before = (b == 6) ? (vram_row[col+2] & 1) : (vram_row[col+1] & (1 << (b+1)));
-				int after = (b == 0) ? (vram_row[col+0] & 0x40) : (vram_row[col+1] & (1 << (b-1)));
-
-				if (current)
-					if (before || after)
-						v = 3;
-					else
-						v = ((col ^ b) & 1) ? 2 : 1;
-				else
-					if (before && after)
-						v = ((col ^ b) & 1) ? 1 : 2;
-					else
-						v = 0;
-
-				if (vram_row[col+1] & 0x80)
-					v += 4;
-
-				v = artifact_color_table[v];
+				v = artifact_map_ptr[((w >> (b + 7-1)) & 0x07) | (((b ^ col) & 0x01) << 3)];
 				*(p++) = v;
 				*(p++) = v;
 			}
 		}
 	}
+}
+
+static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
+{
+	struct drawtask_params dtparams;
+
+	dtparams.vram = mess_ram + (page ? 0x4000 : 0x2000);
+	if (a2.RAMRD)
+		dtparams.vram += 0x10000;
+
+	dtparams.bitmap = bitmap;
+	dtparams.beginrow = beginrow;
+	dtparams.rowcount = (endrow + 1) - beginrow;
+
+	osd_parallelize(apple2_hires_draw_task, &dtparams, dtparams.rowcount);
 }
 
 /***************************************************************************
@@ -167,6 +182,16 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, int page, int beginrow
 
 VIDEO_START( apple2 )
 {
+	int i;
+	int j;
+	UINT16 c;
+
+	static UINT16 artifact_color_table[] =
+	{
+		BLACK,	PURPLE,	GREEN,	WHITE,
+		BLACK,	BLUE,	ORANGE,	WHITE
+	};
+
 	text_tilemap = tilemap_create(
 		apple2_text_gettileinfo,
 		apple2_text_getmemoryoffset,
@@ -181,8 +206,34 @@ VIDEO_START( apple2 )
 		14, 8,
 		40, 24);
 
-	if (!text_tilemap || !lores_tilemap)
+	/* 2^3 dependent pixels * 2 color sets * 2 offsets */
+	artifact_map = auto_malloc(sizeof(UINT16) * 8 * 2 * 2);
+
+	if (!text_tilemap || !lores_tilemap || !artifact_map)
 		return 1;
+
+	for (i = 0; i < 8; i++)
+	{
+		for (j = 0; j < 2; j++)
+		{
+			if (i & 0x02)
+			{
+				if ((i & 0x05) != 0)
+					c = 3;
+				else
+					c = j ? 2 : 1;
+			}
+			else
+			{
+				if ((i & 0x05) == 0x05)
+					c = j ? 1 : 2;
+				else
+					c = 0;
+			}
+			artifact_map[ 0 + j*8 + i] = artifact_color_table[c];
+			artifact_map[16 + j*8 + i] = artifact_color_table[c+4];
+		}
+	}
 
 	text_videobase = lores_videobase = 0;
 	return 0;

@@ -1371,7 +1371,6 @@ MACHINE_STOP( oric )
 #endif
 
 	oric_ram_0x0c000 = NULL;
-	apple2_slot6_stop();
 }
 
 

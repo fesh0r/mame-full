@@ -10,6 +10,7 @@ This family of computers bank-switches everything up the wazoo.
 #include "vidhrdw/generic.h"
 #include "includes/apple2.h"
 #include "inputx.h"
+#include "snprintf.h"
 
 static MEMORY_READ_START( readmem_apple2 )
     { 0x0000, 0x01ff, MRA_BANK4 },
@@ -302,6 +303,17 @@ static PALETTE_INIT( apple2 )
     memcpy(colortable,apple2_colortable,sizeof(apple2_colortable));
 }
 
+GET_CUSTOM_DEVICENAME( apple2 )
+{
+	const char *name = NULL;
+	switch(type) {
+	case IO_FLOPPY:
+		snprintf(buf, bufsize, "Slot 6 Disk #%d", id + 1);
+		name = buf;
+		break;
+	}
+	return name;
+}
 
 static struct DACinterface apple2_DAC_interface =
 {
@@ -421,7 +433,10 @@ ROM_START(apple2cp)
 ROM_END
 
 SYSTEM_CONFIG_START(apple2)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", IO_RESET_NONE, OSD_FOPEN_READ, apple2_floppy_init, apple2_floppy_exit, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0bin\0", IO_RESET_NONE, OSD_FOPEN_READ, apple2_floppy_init, NULL, NULL)
+
+	/* custom devicename */
+	CONFIG_GET_CUSTOM_DEVICENAME( apple2 )
 SYSTEM_CONFIG_END
 
 /*     YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG	COMPANY            FULLNAME */

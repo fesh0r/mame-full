@@ -77,16 +77,6 @@ void apple2_slot6_init(void)
 	runbyte6[0]   = runbyte6[1]   = 0;
 	disk6byte     = 0;
 	read_state    = 1;
-
-	return;
-}
-
-void apple2_floppy_exit(int id);
-
-void apple2_slot6_stop (void)
-{
-	apple2_floppy_exit(0);
-	apple2_floppy_exit(1);
 }
 
 int apple2_floppy_init(int id, void *f, int open_mode)
@@ -99,8 +89,9 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 	if (f == NULL)
 		return INIT_PASS;
 
-    a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
-	if (!a2_drives[id].data) return INIT_FAIL;
+    a2_drives[id].data = image_malloc(IO_FLOPPY, id, NIBBLE_SIZE*16*TOTAL_TRACKS);
+	if (!a2_drives[id].data)
+		return INIT_FAIL;
 
 	/* Default everything to sync byte 0xFF */
 	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
@@ -215,15 +206,6 @@ int apple2_floppy_init(int id, void *f, int open_mode)
 	return INIT_PASS;
 }
 
-void	apple2_floppy_exit(int id)
-{
-	if (a2_drives[id].data)
-	{
-		free (a2_drives[id].data);
-		a2_drives[id].data = NULL;
-	}
-}
-
 
 /* For now, make disks read-only!!! */
 static void WriteByte(int drive, int theByte)
@@ -236,7 +218,7 @@ static int ReadByte(int drive)
 	int value;
 
 	/* no image initialized for that drive ? */
-	if (!a2_drives[drive].data)
+	if (!image_exists(IO_FLOPPY, drive))
 		return 0xFF;
 
 	/* Our drives are always turned on baby, yeah!

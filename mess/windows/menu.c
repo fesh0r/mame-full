@@ -180,6 +180,24 @@ done:
 }
 
 //============================================================
+//	hasdipswitches
+//============================================================
+
+static int hasdipswitches(void)
+{
+	struct InputPort *in;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		switch(in->type & ~IPF_MASK) {
+		case IPT_DIPSWITCH_NAME:
+		case IPT_DIPSWITCH_SETTING:
+			return 1;
+		}
+	}
+	return 0;
+}
+
+//============================================================
 //	setdipswitches
 //============================================================
 
@@ -542,6 +560,7 @@ static void prepare_menus(void)
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,	hasdipswitches()			? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
 #endif
