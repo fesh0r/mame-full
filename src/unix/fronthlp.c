@@ -114,9 +114,11 @@ struct rc_option frontend_list_opts[] = {
    { "Internal verification list commands (only for developers)", NULL, rc_seperator, NULL,
      NULL,		0,			0,		NULL,
      NULL },
+#ifdef MAME_DEBUG /* do not put this into a public release! */
    { "listmissingroms",	"lmr",			rc_set_int,	&list,
      NULL,		LIST_MISSINGROMS,		0,		NULL,
      "Like -list, but lists ROMS missing" },
+#endif
    { "listdupcrc",	"ldc",			rc_set_int,	&list,
      NULL,		LIST_DUPCRC,		0,		NULL,
      "Like -list, but lists ROMS with identical crc" },
