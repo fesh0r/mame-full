@@ -328,9 +328,9 @@ romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	$(CC_COMMENT) @echo Linking $@...
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
-hdcomp: $(OBJ)/hdcomp.o $(OBJ)/harddisk.o $(OBJ)/md5.o
+chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
 	$(CC_COMMENT) @echo Linking $@...
-	$(CC_COMMENT) $(LD) $(LDFLAGS) -o $@ $^ -lz
+	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
 osdepend:
 	$(CC_COMMENT) @echo 'Compiling in the unix directory...'
