@@ -36,7 +36,7 @@ static struct _VR0Chip
 
 //Correct table thanks to Evoga
 //they left a ulaw<->linear conversion tool inside the roms
-static const signed short ULawTo16[]=
+static const signed int ULawTo16[]=
 {
 	0x8000,0x8400,0x8800,0x8C00,0x9000,0x9400,0x9800,0x9C00,
 	0xA000,0xA400,0xA800,0xAC00,0xB000,0xB400,0xB800,0xBC00,

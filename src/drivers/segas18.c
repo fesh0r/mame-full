@@ -361,7 +361,10 @@ static WRITE16_HANDLER( misc_io_w )
 			break;
 	}
 	if (custom_io_w)
-		return custom_io_w(offset, data, mem_mask);
+	{
+		custom_io_w(offset, data, mem_mask);
+		return;
+	}
 	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
 }
 

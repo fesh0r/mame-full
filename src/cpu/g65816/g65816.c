@@ -300,12 +300,6 @@ static void g65816_set_reg(int regnum, unsigned value)
 	FTABLE_SET_REG(regnum, value);
 }
 
-/* Set the non-maskable interrupt line */
-static void g65816_set_nmi_line(int state)
-{
-	FTABLE_SET_LINE(G65816_LINE_NMI, state);
-}
-
 /* Set an interrupt line */
 static void g65816_set_irq_line(int line, int state)
 {

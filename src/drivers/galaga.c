@@ -1804,7 +1804,13 @@ static struct namco_52xx_interface namco_52xx_interface =
 static struct namco_54xx_interface namco_54xx_interface =
 {
 	18432000/12,		/* 1.536 MHz */
-	{ 100, 100, 100 }	/* volume of the three outputs */
+	{ RES_K(100),	RES_K(47),		RES_K(150) },	/* R24, R33, R42 */
+	{ RES_K(22),	RES_K(10),		RES_K(22) },	/* R23, R34, R41 */
+	{ RES_K(220),	RES_K(150),		RES_K(470) },	/* R22, R35, R40 */
+	{ RES_K(33),	RES_K(33),		RES_K(10)},		/* R21, R36, R37 */
+	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C31, C29, C27 */
+	{ CAP_U(.001),	CAP_U(.01),		CAP_U(.01) },	/* C30, C28, C26 */
+	-17000		/* final gain adjust */
 };
 
 static const char *bosco_sample_names[] =

@@ -279,7 +279,10 @@ static WRITE16_HANDLER( misc_io_w )
 			return;
 	}
 	if (custom_io_w)
-		return custom_io_w(offset, data, mem_mask);
+	{
+		custom_io_w(offset, data, mem_mask);
+		return;
+	}
 	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
 }
 
@@ -2016,7 +2019,7 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Sukeban Jansi Ryuko, Sega System 16A
-	CPU: FD1094 (317-5021)
+	CPU: FD1089B (317-5021)
 
 	 (JPN Ver.)
 	(c)1988 White Board
@@ -2031,13 +2034,10 @@ ROM_END
 
 ROM_START( sjryukoa )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr12252.42",  0x000000, 0x08000, CRC(7ae309d6) SHA1(399c2a4d8b64df03e02b95cc635ee041254b7683) )
+	ROM_LOAD16_BYTE( "epr12251.43",  0x000000, 0x08000, CRC(1af3cd0b) SHA1(a14907bf8da8010bacaf35893037310f1bb8d375) )
 	ROM_LOAD16_BYTE( "epr12249.26",  0x000001, 0x08000, CRC(743d467d) SHA1(0eaccd3fd5c64513a86d23928a1469557c972f57) )
-	ROM_LOAD16_BYTE( "epr12251.43",  0x020000, 0x08000, CRC(1af3cd0b) SHA1(a14907bf8da8010bacaf35893037310f1bb8d375) )
-	ROM_LOAD16_BYTE( "epr12250.25",  0x020001, 0x08000, CRC(52c40f19) SHA1(0606943248b2433b70a7e4ad3408d4d3957756c9) )
-
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-//	ROM_LOAD( "317-5021.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
+	ROM_LOAD16_BYTE( "epr12252.42",  0x010000, 0x08000, CRC(7ae309d6) SHA1(399c2a4d8b64df03e02b95cc635ee041254b7683) )
+	ROM_LOAD16_BYTE( "epr12250.25",  0x010001, 0x08000, CRC(52c40f19) SHA1(0606943248b2433b70a7e4ad3408d4d3957756c9) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "12224-95.b9",  0x00000, 0x08000, CRC(eac17ba1) SHA1(6dfea3383b7c9c47bc0943a8d86fc89efcb85ae2) )
@@ -2060,7 +2060,7 @@ ROM_START( sjryukoa )
 	ROM_LOAD( "epr12227.12", 0x0000, 0x8000, CRC(5b12409d) SHA1(b25d6fa004461426f6358ab70fd071239c78e949) )
 
 	ROM_REGION( 0x1000, REGION_CPU3, 0 )      /* 4k for 7751 onboard ROM */
-//	ROM_LOAD( "7751.bin",     0x0000, 0x0400, CRC(6a9534fc) SHA1(67ad94674db5c2aab75785668f610f6f4eccd158) ) /* 7751 - U34 */
+	ROM_LOAD( "7751.bin",     0x0000, 0x0400, CRC(6a9534fc) SHA1(67ad94674db5c2aab75785668f610f6f4eccd158) ) /* 7751 - U34 */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* 7751 sound data */
 	ROM_LOAD( "epr12228.1", 0x0000, 0x8000, CRC(6b2e6aef) SHA1(64ae6ec327c32cdb877a493ebfe11af15e2388ac) )
@@ -2349,6 +2349,14 @@ static DRIVER_INIT( sdioj )
 }
 
 
+static DRIVER_INIT( sjryukoa )
+{
+	void fd1089_decrypt_5021(void);
+	system16a_generic_init();
+	fd1089_decrypt_5021();
+}
+
+
 static DRIVER_INIT( timescna )
 {
 	void fd1089_decrypt_0024(void);
@@ -2384,7 +2392,7 @@ GAME( 1986, fantzono, fantzone, system16a_no7751, fantzone, generic_16a, ROT0,  
 GAME( 1987, sdioj,    sdi,      system16a_no7751, sdi,      sdioj,       ROT0,   "Sega",           "SDI - Strategic Defense Initiative (Europe, System 16A, FD1089A 317-0027)" )
 GAME( 1987, shinobia, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 2, System 16A, FD1094 317-0050)" )
 GAME( 1987, shinobaa, shinobi,  system16a,        shinobi,  generic_16a, ROT0,   "Sega",           "Shinobi (set 3, System 16A, unprotected)" )
-GAMEX(1987, sjryukoa, sjryuko,  system16a,        shinobi,  generic_16a, ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1089 317-5021)", GAME_NOT_WORKING )
+GAMEX(1987, sjryukoa, sjryuko,  system16a,        shinobi,  sjryukoa,    ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16A, FD1089B 317-5021)", GAME_NOT_WORKING )
 GAME( 1988, tetris,   0,        system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093)" )
 GAME( 1988, tetrisaa, tetris,   system16a_no7751, tetris,   generic_16a, ROT0,   "Sega",           "Tetris (Japan, System 16A, FD1094 317-0093a)" )
 GAME( 1987, timescna, timescn,  system16a,        shinobi,  timescna,    ROT270, "Sega",           "Time Scanner (System 16A, FD1089B 317-0024)" )

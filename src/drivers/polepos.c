@@ -839,7 +839,13 @@ static struct namco_52xx_interface namco_52xx_interface =
 static struct namco_54xx_interface namco_54xx_interface =
 {
 	24576000/16,		/* 1.536 MHz */
-	{ 100, 100, 100 }	/* volume of the three outputs */
+	{ RES_K(22),	RES_K(15),		RES_K(22) },	/* R121, R133, R139 */
+	{ RES_K(12),	RES_K(15),		RES_K(22) },	/* R125, R137, R143 */
+	{ RES_K(120),	RES_K(120),		RES_K(180) },	/* R122, R134, R140 */
+	{ 470,			470,			470 },			/* R123, R135, R141 */
+	{ CAP_U(.0022),	CAP_U(.022),	CAP_U(.047) },	/* C27,  C29,  C33  */
+	{ CAP_U(.0022),	CAP_U(.022),	CAP_U(.047) },	/* C28,  C30,  C34  */
+	-12000		/* final gain adjust */
 };
 
 static struct CustomSound_interface custom_interface =

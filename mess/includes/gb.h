@@ -34,6 +34,9 @@ void gameboy_sound_w(int offset, int data);
 #define HUC3		0x007	/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
 #define MEGADUCK	0x100	/* MEGADUCK style banking, using 0x100 to not    */
                             /* interfere with possible GBx banking methods   */
+#ifdef TIMER
+#undef TIMER
+#endif
 
 /* Cartridge types */
 #define RAM			0x01	/* Cartridge has RAM                             */

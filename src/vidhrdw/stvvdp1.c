@@ -195,6 +195,11 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 
 READ32_HANDLER ( stv_vdp1_vram_r )
 {
+	/*Note: Only byte and word accesses can be done from the main CPU,Steep Slope Sliders
+	tries to access this with a MOV.L */
+	//usrintf_showmessage("%08x",mem_mask);
+	if ((mem_mask & 0xffffffff) == 0) return 0;//unsure if this is ACTIVE_HIGH or ACTIVE_LOW
+
 	return stv_vdp1_vram[offset];
 }
 
@@ -913,7 +918,7 @@ static int y2s(int v)
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
-void stv_vpd1_draw_distorded_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
+void stv_vpd1_draw_distorted_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1330,13 +1335,13 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 				case 0x0002:
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0004:
 					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vpd1_draw_distorded_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
 					break;
 
 				case 0x0005:
@@ -1410,7 +1415,7 @@ void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		case 0:/*Idle Mode*/
 			break;
 		case 1:/*Draw by request*/
-			SET_PTM_FROM_1_TO_0;
+			//SET_PTM_FROM_1_TO_0;//kiwames doesn't like this ATM...
 		case 2:/*Automatic Draw*/
 			stv_vdp1_process_list(bitmap,cliprect);
 			break;

@@ -8,7 +8,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: deflate.h,v 1.1 2004/07/28 02:50:04 npwoods Exp $ */
+/* @(#) $Id: deflate.h,v 1.2 2005/01/13 12:14:30 npwoods Exp $ */
 
 #ifndef DEFLATE_H
 #define DEFLATE_H
@@ -95,7 +95,6 @@ typedef struct internal_state {
     Bytef *pending_out;  /* next pending byte to output to the stream */
     int   pending;       /* nb of bytes in the pending buffer */
     int   wrap;          /* bit 0 true for zlib, bit 1 true for gzip */
-    Byte  data_type;     /* UNKNOWN, BINARY or ASCII */
     Byte  method;        /* STORED (for zip only) or DEFLATED */
     int   last_flush;    /* value of flush param for previous deflate call */
 

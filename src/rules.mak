@@ -998,6 +998,17 @@ else
 CPUDEFS += -DHAS_ARM=0
 endif
 
+CPU=$(strip $(findstring ARM7@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/arm7
+CPUDEFS += -DHAS_ARM7=1
+CPUOBJS += $(OBJ)/cpu/arm7/arm7.o
+DBGOBJS += $(OBJ)/cpu/arm7/arm7dasm.o
+$(OBJ)/cpu/arm7/arm7.o: arm7.c arm7.h
+else
+CPUDEFS += -DHAS_ARM7=0
+endif
+
 CPU=$(strip $(findstring JAGUAR@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/jaguar

@@ -10,7 +10,7 @@
 		* timescn DIPs have not really been verified
 		* atomicp garbage
 		* screen flip not implemented
-	
+
 	To do for each game:
 		* verify memory test
 		* verify inputs
@@ -993,7 +993,7 @@ static void system16b_generic_init(int _rom_board)
 	workram              = auto_malloc(0x04000);
 	if (!segaic16_spriteram_0 || !paletteram16 || !segaic16_tileram_0 || !segaic16_textram_0 || !workram)
 		osd_die("Out of memory allocating RAM space\n");
-	
+
 	/* init the memory mapper */
 	segaic16_memory_mapper_init(0, region_info_list[rom_board], sound_w, NULL);
 
@@ -1114,7 +1114,10 @@ static WRITE16_HANDLER( misc_io_w )
 			return;
 	}
 	if (custom_io_w)
-		return custom_io_w(offset, data, mem_mask);
+	{
+		custom_io_w(offset, data, mem_mask);
+		return;
+	}
 	logerror("%06X:misc_io_w - unknown write access to address %04X = %04X & %04X\n", activecpu_get_pc(), offset * 2, data, mem_mask ^ 0xffff);
 }
 
@@ -1299,7 +1302,7 @@ static void goldnaxe_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-	
+
 	/* they periodically clear the data at 2cd8,2cda,2cdc,2cde and expect the MCU to fill it in */
 	if (workram[0x2cd8/2] == 0 && workram[0x2cda/2] == 0 && workram[0x2cdc/2] == 0 && workram[0x2cde/2] == 0)
 	{
@@ -1308,7 +1311,7 @@ static void goldnaxe_i8751_sim(void)
 		workram[0x2cdc/2] = 0x26ae;
 		workram[0x2cde/2] = 0x37bf;
 	}
-	
+
 	/* process any new sound data */
 	temp = workram[0x2cfc/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -1329,7 +1332,7 @@ static void tturf_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-	
+
 	/* process any new sound data */
 	temp = workram[0x01d0/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -1351,7 +1354,7 @@ static void wb3b_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-	
+
 	/* process any new sound data */
 	temp = workram[0x0008/2];
 	if ((temp & 0x00ff) != 0x0000)
@@ -1368,7 +1371,7 @@ static void wrestwar_i8751_sim(void)
 
 	/* signal a VBLANK to the main CPU */
 	cpunum_set_input_line(0, 4, HOLD_LINE);
-	
+
 	/* process any new sound data */
 	temp = workram[0x208e/2];
 	if ((temp & 0xff00) != 0x0000)
@@ -4514,7 +4517,7 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Sukeban Jansi Ryuko (JPN Ver.)
-	CPU: 317-5021 (16A/16B)
+	CPU: FD1089B 317-5021 (16A/16B)
 	ROM Board: 171-???
 
 	(c)1988 White Board
@@ -4525,14 +4528,11 @@ ROM_END
 	IC69:	315-5150 (16A)
 */
 ROM_START( sjryuko )
-	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12256.a4",  0x000000, 0x08000, CRC(5987ee1b) SHA1(70a4e8603491d60a687c10980db02e60f4239779) )
 	ROM_LOAD16_BYTE( "epr12253.a1",  0x000001, 0x08000, CRC(26a822df) SHA1(2ec21246f7bc1d4a25ec308853a6543805036df3) )
-	ROM_LOAD16_BYTE( "epr12257.a5",  0x020000, 0x08000, CRC(3a2acc3f) SHA1(8776c37b8092bece6928e68a86ed8f6cfbd0d5cf) )
-	ROM_LOAD16_BYTE( "epr12254.a2",  0x020001, 0x08000, CRC(7e908217) SHA1(509962c45dda7423ad081acdcac9ffa10807840a) )
-
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-//	ROM_LOAD( "317-5021.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
+	ROM_LOAD16_BYTE( "epr12257.a5",  0x010000, 0x08000, CRC(3a2acc3f) SHA1(8776c37b8092bece6928e68a86ed8f6cfbd0d5cf) )
+	ROM_LOAD16_BYTE( "epr12254.a2",  0x010001, 0x08000, CRC(7e908217) SHA1(509962c45dda7423ad081acdcac9ffa10807840a) )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "12224-95.b9",  0x00000, 0x08000, CRC(eac17ba1) SHA1(6dfea3383b7c9c47bc0943a8d86fc89efcb85ae2) )
@@ -5203,6 +5203,14 @@ static DRIVER_INIT( sdi )
 }
 
 
+static DRIVER_INIT( sjryuko )
+{
+	void fd1089_decrypt_5021(void);
+	init_generic_5358();
+	fd1089_decrypt_5021();
+}
+
+
 static DRIVER_INIT( tturf_5704 )
 {
 	init_generic_5704();
@@ -5299,7 +5307,7 @@ GAME( 1987, shinobi,  0,        system16b,      shinobi,  generic_5358,  ROT0,  
 GAME( 1987, shinobib, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, FD1094 317-0049)" )
 GAME( 1987, shinobic, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)" )
 GAME( 1987, sonicbom, 0,        system16b,      sonicbom, generic_5358,  ROT270, "Sega",           "Sonic Boom (FD1094 317-0053)" )
-GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, generic_5358,  ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089 317-5021)",GAME_NOT_WORKING )
+GAMEX(198?, sjryuko,  0,        system16b,      sonicbom, sjryuko,       ROT0,   "White Board",    "Sukeban Jansi Ryuko (System 16B, FD1089B 317-5021)",GAME_NOT_WORKING )
 GAMEX(19??, suprleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Super League (FD1094 317-0045?)", GAME_NOT_WORKING )
 GAME( 1988, tetrisb,  tetris,   system16b,      tetris,   generic_5704,  ROT0,   "Sega",           "Tetris (Japan, set 1, System 16B, FD1094 317-0092)" )
 GAME( 1988, tetrisba, tetris,   system16b,      tetris,   generic_5358,  ROT0,   "Sega",           "Tetris (Japan, set 2, System 16B, FD1094 317-0091)" )

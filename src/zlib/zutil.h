@@ -8,7 +8,7 @@
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zutil.h,v 1.1 2004/07/28 02:50:09 npwoods Exp $ */
+/* @(#) $Id: zutil.h,v 1.2 2005/01/13 12:14:34 npwoods Exp $ */
 
 #ifndef ZUTIL_H
 #define ZUTIL_H
@@ -189,9 +189,14 @@ extern const char * const z_errmsg[10]; /* indexed by 2-zlib_error */
 #    define NO_vsnprintf
 #  endif
 #endif
+#ifdef VMS
+#  define NO_vsnprintf
+#endif
 
 #ifdef HAVE_STRERROR
-   extern char *strerror OF((int));
+#  ifndef VMS
+     extern char *strerror OF((int));
+#  endif
 #  define zstrerror(errnum) strerror(errnum)
 #else
 #  define zstrerror(errnum) ""

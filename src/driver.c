@@ -2437,6 +2437,7 @@ V-V                           TP-027
 	DRIVER( progear )	/* 17/01/2001 (c) 2001 Cave (US) */
 	DRIVER( progearj )	/* 17/01/2001 (c) 2001 Cave (Japan) */
 	DRIVER( progeara )	/* 17/01/2001 (c) 2001 Cave (Asia) */
+	DRIVER( puzloop2 )	/* 05/02/2001 (c) 2001 Mitchell (Japan) */
 
 	/* Capcom CPS3 games */
 	DRIVER( warzard )	/* 10/1996 Warzard */
@@ -4039,7 +4040,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sexyparo )	/* GX533 (c) 1996 (Japan) */
 	DRIVER( daiskiss )	/* GX535 (c) 1996 (Japan) */
 	DRIVER( tokkae )	/* GX615 (c) 1996 (Japan) */
-	DRIVER( winspike )	/* GX705 */
+	DRIVER( winspike )	/* GX705 EAA */
+	DRIVER( winspikj )	/* GX705 JAA */
 
 	/* GX Type 3 */
 	DRIVER( soccerss )	/* GX427 */
@@ -5793,6 +5795,7 @@ Other Sun games
 	DRIVER( olds )		/* (c) 1999 */
 	DRIVER( olds100 )	/* (c) 1999 */
 	DRIVER( olds100a )	/* (c) 1999 */
+	DRIVER( ddp2 )		/* (c) 2001 */
 
 	/* RamTek games */
 	DRIVER( hitme )		/* [1976 Ramtek] */

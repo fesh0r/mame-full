@@ -441,7 +441,10 @@ static WRITE16_HANDLER( segas32_io_w )
 	}
 
 	if (custom_io_w)
-		return custom_io_w(offset, data, mem_mask);
+	{
+		custom_io_w(offset, data, mem_mask);
+		return;
+	}
 
 	S32_LOG("unmapped segas32_io_w %02x, %04x, %04x\n",offset*2,data, mem_mask);
 }
