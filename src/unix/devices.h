@@ -140,13 +140,13 @@ void joy_SDL_init(void);
  * JOY macros copied from windows mame source code
  * Sebastien Devaux <sebastien.devaux@laposte.net> 02/2003
  */ 
-// macros for building/mapping keycodes
+/* macros for building/mapping keycodes */
 #define JOYCODE(joy, type, index)	((index) | ((type) << 8) | ((joy) << 12))
 #define JOYINDEX(joycode)			((joycode) & 0xff)
 #define JOYTYPE(joycode)			(((joycode) >> 8) & 0xf)
 #define JOYNUM(joycode)				(((joycode) >> 12) & 0xf)
 
-// joystick types
+/* joystick types */
 #define JOYTYPE_AXIS_NEG			0
 #define JOYTYPE_AXIS_POS			1
 #define JOYTYPE_POV_UP				2

@@ -70,7 +70,7 @@
 EXTERN struct rectangle updatebounds;
 
 /* Orientation */
-EXTERN int		blit_hardware_rotation; // e.g. by the xgl driver
+EXTERN int		blit_hardware_rotation; /* e.g. by the xgl driver */
 EXTERN int		blit_flipx;
 EXTERN int		blit_flipy;
 EXTERN int		blit_swapxy;
