@@ -363,6 +363,7 @@ static void AY3600_poll(int dummy)
 		{
 			switch (keyboard_type) {
 			case AP2_KEYBOARD_2:
+			case AP2_KEYBOARD_2P:
 				curkey = ay3600_key_remap_2[port*8+bit][switchkey];
 				curkey_unmodified = ay3600_key_remap_2[port*8+bit][0];
 				break;
