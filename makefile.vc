@@ -125,10 +125,6 @@ DEFS += -DMESS=1 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 endif
 
 INCLUDES = \
-	-Isrc \
-	-Isrc/includes \
-	-Isrc/windows \
-	-Isrc/ui \
 	-Isrc/cpu/m68000 \
 	-I$(OBJ)/cpu/m68000
 
@@ -138,6 +134,12 @@ INCLUDES += \
 	-Imess/includes \
 	-Imess/windows
 endif
+
+INCLUDES += \
+	-Isrc \
+	-Isrc/includes \
+	-Isrc/windows \
+	-Isrc/ui \
 
 ifdef DX_INCPATH
 INCLUDES += -I$(DX_INCPATH)

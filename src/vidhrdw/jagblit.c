@@ -142,6 +142,8 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 	INT32 a1_y = (blitter_regs[A1_PIXEL] & 0xffff0000) | (blitter_regs[A1_FPIXEL] >> 16);
 	INT32 a1_xstep = 0;
 	INT32 a1_ystep = 0;
+	UINT32 a1_xmask = 0xffffffff;
+	UINT32 a1_ymask = 0xffffffff;
 
 	UINT32 a2_base = blitter_regs[A2_BASE];
 	INT32 a2_pitch = (A2FIXED & 3) ^ ((A2FIXED & 2) >> 1);
@@ -165,6 +167,31 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 
 	void *a1_base_mem = get_jaguar_memory(a1_base);
 	void *a2_base_mem = get_jaguar_memory(a2_base);
+
+	void *asrc_base_mem =	(COMMAND & 0x00000800) ? a1_base_mem : a2_base_mem;
+	UINT32 asrcflags =		(COMMAND & 0x00000800) ? A1FIXED : A2FIXED;
+	INT32 asrc_x =			(COMMAND & 0x00000800) ? a1_x : a2_x;
+	INT32 asrc_y =			(COMMAND & 0x00000800) ? a1_y : a2_y;
+	INT32 asrc_width =		(COMMAND & 0x00000800) ? a1_width : a2_width;
+	INT32 asrc_pitch =		(COMMAND & 0x00000800) ? a1_pitch : a2_pitch;
+	INT32 asrc_zoffs =		(COMMAND & 0x00000800) ? a1_zoffs : a2_zoffs;
+	UINT8 asrc_phrase_mode;
+	INT32 asrc_xadd, asrc_xstep, asrc_yadd, asrc_ystep;
+	UINT32 asrc_xmask, asrc_ymask;
+
+	void *adest_base_mem =	(COMMAND & 0x00000800) ? a2_base_mem : a1_base_mem;
+	UINT32 adestflags =		(COMMAND & 0x00000800) ? A2FIXED : A1FIXED;
+	INT32 adest_x =			(COMMAND & 0x00000800) ? a2_x : a1_x;
+	INT32 adest_y =			(COMMAND & 0x00000800) ? a2_y : a1_y;
+	INT32 adest_width =		(COMMAND & 0x00000800) ? a2_width : a1_width;
+	INT32 adest_pitch =		(COMMAND & 0x00000800) ? a2_pitch : a1_pitch;
+	INT32 adest_zoffs =		(COMMAND & 0x00000800) ? a2_zoffs : a1_zoffs;
+	UINT8 adest_phrase_mode;
+	INT32 adest_xadd, adest_xstep, adest_yadd, adest_ystep;
+	UINT32 adest_xmask, adest_ymask;
+
+	if (!a1_base_mem || !a2_base_mem)
+		return;
 
 	/* determine actual xadd/yadd for A1 */
 	a1_yadd <<= 16;
@@ -221,6 +248,22 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 		a2_ystep = blitter_regs[A2_STEP] & 0xffff0000;
 	}
 
+	asrc_phrase_mode	= (COMMAND & 0x00000800) ? a1_phrase_mode : a2_phrase_mode;
+	asrc_xstep			= (COMMAND & 0x00000800) ? a1_xstep : a2_xstep;
+	asrc_ystep			= (COMMAND & 0x00000800) ? a1_ystep : a2_ystep;
+	asrc_xadd			= (COMMAND & 0x00000800) ? a1_xadd : a2_xadd;
+	asrc_yadd			= (COMMAND & 0x00000800) ? a1_yadd : a2_yadd;
+	asrc_xmask			= (COMMAND & 0x00000800) ? a1_xmask : a2_xmask;
+	asrc_ymask			= (COMMAND & 0x00000800) ? a1_ymask : a2_ymask;
+	
+	adest_phrase_mode	= (COMMAND & 0x00000800) ? a2_phrase_mode : a1_phrase_mode;
+	adest_xstep			= (COMMAND & 0x00000800) ? a2_xstep : a1_xstep;
+	adest_ystep			= (COMMAND & 0x00000800) ? a2_ystep : a1_ystep;
+	adest_xadd			= (COMMAND & 0x00000800) ? a2_xadd : a1_xadd;
+	adest_yadd			= (COMMAND & 0x00000800) ? a2_yadd : a1_yadd;
+	adest_xmask			= (COMMAND & 0x00000800) ? a2_xmask : a1_xmask;
+	adest_ymask			= (COMMAND & 0x00000800) ? a2_ymask : a1_ymask;
+
 #if LOG_BLITS
 	logerror("%08X:Blit!\n", activecpu_get_previouspc());
 	logerror("  a1_base  = %08X\n", a1_base);
@@ -268,152 +311,147 @@ static void FUNCNAME(UINT32 command, UINT32 a1flags, UINT32 a2flags)
 			UINT32 writedata = 0;
 			int inhibit = 0;
 
-			/* non-swapped case */
-			if (!(COMMAND & 0x00000800))
+			/* load src data and Z */
+			if (COMMAND & 0x00000001)
 			{
-				/* load src data and Z */
-				if (COMMAND & 0x00000001)
-				{
-					srcdata = READ_PIXEL(a2, A2FIXED);
-					if (COMMAND & 0x00000002)
-						srczdata = READ_ZDATA(a2, A2FIXED);
-					else if (COMMAND & 0x001c020)
-						srczdata = READ_RDATA(B_SRCZ1_H, a2, A2FIXED, a2_phrase_mode);
-				}
-				else
-				{
-					srcdata = READ_RDATA(B_SRCD_H, a2, A2FIXED, a2_phrase_mode);
-					if (COMMAND & 0x001c020)
-						srczdata = READ_RDATA(B_SRCZ1_H, a2, A2FIXED, a2_phrase_mode);
-				}
-
-				/* load dst data and Z */
-				if (COMMAND & 0x00000008)
-				{
-					dstdata = READ_PIXEL(a1, A1FIXED);
-					if (COMMAND & 0x00000010)
-						dstzdata = READ_ZDATA(a1, A1FIXED);
-					else
-						dstzdata = READ_RDATA(B_DSTZ_H, a1, A1FIXED, a1_phrase_mode);
-				}
-				else
-				{
-					dstdata = READ_RDATA(B_DSTD_H, a1, A1FIXED, a1_phrase_mode);
-					if (COMMAND & 0x00000010)
-						dstzdata = READ_RDATA(B_DSTZ_H, a1, A1FIXED, a1_phrase_mode);
-				}
-
-				/* handle clipping */
-				if (COMMAND & 0x00000040)
-				{
-					if (a1_x < 0 || a1_y < 0 ||
-						(a1_x >> 16) >= (blitter_regs[A1_CLIP] & 0x7fff) ||
-						(a1_y >> 16) >= ((blitter_regs[A1_CLIP] >> 16) & 0x7fff))
-						inhibit = 1;
-				}
-
-				/* apply Z comparator */
-				if (COMMAND & 0x00040000)
-					if (srczdata < dstzdata) inhibit = 1;
-				if (COMMAND & 0x00080000)
-					if (srczdata == dstzdata) inhibit = 1;
-				if (COMMAND & 0x00100000)
-					if (srczdata > dstzdata) inhibit = 1;
-
-				/* apply data comparator */
-				if (COMMAND & 0x08000000)
-				{
-					if (!(COMMAND & 0x02000000))
-					{
-						if (srcdata == READ_RDATA(B_PATD_H, a2, A2FIXED, a2_phrase_mode))
-							inhibit = 1;
-					}
-					else
-					{
-						if (dstdata == READ_RDATA(B_PATD_H, a1, A1FIXED, a1_phrase_mode))
-							inhibit = 1;
-					}
-				}
-
-				/* compute the write data and store */
-				if (!inhibit)
-				{
-					/* handle patterns/additive/LFU */
-					if (COMMAND & 0x00010000)
-						writedata = READ_RDATA(B_PATD_H, a1, A1FIXED, a1_phrase_mode);
-					else if (COMMAND & 0x00020000)
-					{
-						writedata = (srcdata & 0xff) + (dstdata & 0xff);
-						if (!(COMMAND & 0x00004000) && writedata > 0xff)
-							writedata = 0xff;
-						writedata |= (srcdata & 0xf00) + (dstdata & 0xf00);
-						if (!(COMMAND & 0x00008000) && writedata > 0xfff)
-							writedata = 0xfff;
-						writedata |= (srcdata & 0xf000) + (dstdata & 0xf000);
-					}
-					else
-					{
-						if (COMMAND & 0x00200000)
-							writedata |= ~srcdata & ~dstdata;
-						if (COMMAND & 0x00400000)
-							writedata |= ~srcdata & dstdata;
-						if (COMMAND & 0x00800000)
-							writedata |= srcdata & ~dstdata;
-						if (COMMAND & 0x01000000)
-							writedata |= srcdata & dstdata;
-					}
-				}
-				else
-					writedata = dstdata;
-
-				if (a1_phrase_mode || (command & 0x10000000) || !inhibit)
-				{
-					/* write to the destination */
-					WRITE_PIXEL(a1, A1FIXED, writedata);
-					if (COMMAND & 0x00000020)
-						WRITE_ZDATA(a1, A1FIXED, srczdata);
-				}
-
-				/* update X/Y */
-				a1_x += a1_xadd;
-				a1_y += a1_yadd;
-				a2_x = (a2_x + a2_xadd) & a2_xmask;
-				a2_y = (a2_y + a2_yadd) & a2_ymask;
+				srcdata = READ_PIXEL(asrc, asrcflags);
+				if (COMMAND & 0x00000002)
+					srczdata = READ_ZDATA(asrc, asrcflags);
+				else if (COMMAND & 0x001c020)
+					srczdata = READ_RDATA(B_SRCZ1_H, asrc, asrcflags, asrc_phrase_mode);
 			}
-
-			/* swapped case */
 			else
 			{
-				logerror("Blitter unhandled: swapped A1/A2\n");
+				srcdata = READ_RDATA(B_SRCD_H, asrc, asrcflags, asrc_phrase_mode);
+				if (COMMAND & 0x001c020)
+					srczdata = READ_RDATA(B_SRCZ1_H, asrc, asrcflags, asrc_phrase_mode);
 			}
+
+			/* load dst data and Z */
+			if (COMMAND & 0x00000008)
+			{
+				dstdata = READ_PIXEL(adest, adestflags);
+				if (COMMAND & 0x00000010)
+					dstzdata = READ_ZDATA(adest, adestflags);
+				else
+					dstzdata = READ_RDATA(B_DSTZ_H, adest, adestflags, adest_phrase_mode);
+			}
+			else
+			{
+				dstdata = READ_RDATA(B_DSTD_H, adest, adestflags, adest_phrase_mode);
+				if (COMMAND & 0x00000010)
+					dstzdata = READ_RDATA(B_DSTZ_H, adest, adestflags, adest_phrase_mode);
+			}
+
+			/* handle clipping */
+			if (COMMAND & 0x00000040)
+			{
+				if (adest_x < 0 || adest_y < 0 ||
+					(adest_x >> 16) >= (blitter_regs[A1_CLIP] & 0x7fff) ||
+					(adest_y >> 16) >= ((blitter_regs[A1_CLIP] >> 16) & 0x7fff))
+					inhibit = 1;
+			}
+
+			/* apply Z comparator */
+			if (COMMAND & 0x00040000)
+				if (srczdata < dstzdata) inhibit = 1;
+			if (COMMAND & 0x00080000)
+				if (srczdata == dstzdata) inhibit = 1;
+			if (COMMAND & 0x00100000)
+				if (srczdata > dstzdata) inhibit = 1;
+
+			/* apply data comparator */
+			if (COMMAND & 0x08000000)
+			{
+				if (!(COMMAND & 0x02000000))
+				{
+					if (srcdata == READ_RDATA(B_PATD_H, asrc, asrcflags, asrc_phrase_mode))
+						inhibit = 1;
+				}
+				else
+				{
+					if (dstdata == READ_RDATA(B_PATD_H, adest, adestflags, adest_phrase_mode))
+						inhibit = 1;
+				}
+			}
+
+			/* compute the write data and store */
+			if (!inhibit)
+			{
+				/* handle patterns/additive/LFU */
+				if (COMMAND & 0x00010000)
+					writedata = READ_RDATA(B_PATD_H, adest, adestflags, adest_phrase_mode);
+				else if (COMMAND & 0x00020000)
+				{
+					writedata = (srcdata & 0xff) + (dstdata & 0xff);
+					if (!(COMMAND & 0x00004000) && writedata > 0xff)
+						writedata = 0xff;
+					writedata |= (srcdata & 0xf00) + (dstdata & 0xf00);
+					if (!(COMMAND & 0x00008000) && writedata > 0xfff)
+						writedata = 0xfff;
+					writedata |= (srcdata & 0xf000) + (dstdata & 0xf000);
+				}
+				else
+				{
+					if (COMMAND & 0x00200000)
+						writedata |= ~srcdata & ~dstdata;
+					if (COMMAND & 0x00400000)
+						writedata |= ~srcdata & dstdata;
+					if (COMMAND & 0x00800000)
+						writedata |= srcdata & ~dstdata;
+					if (COMMAND & 0x01000000)
+						writedata |= srcdata & dstdata;
+				}
+			}
+			else
+				writedata = dstdata;
+
+			if (adest_phrase_mode || (command & 0x10000000) || !inhibit)
+			{
+				/* write to the destination */
+				WRITE_PIXEL(adest, adestflags, writedata);
+				if (COMMAND & 0x00000020)
+					WRITE_ZDATA(adest, adestflags, srczdata);
+			}
+
+			/* update X/Y */
+			asrc_x = (asrc_x + asrc_xadd) & asrc_xmask;
+			asrc_y = (asrc_y + asrc_yadd) & asrc_ymask;
+			adest_x = (adest_x + adest_xadd) & adest_xmask;
+			adest_y = (adest_y + adest_yadd) & adest_ymask;
 		}
 
 		/* adjust for phrase mode */
-		if (a1_phrase_mode)
+		if (asrc_phrase_mode)
 		{
-			if (a1_xadd > 0)
-				a1_x += 3 << 16;
+			if (asrc_xadd > 0)
+				asrc_x += 3 << 16;
 			else
-				a1_x -= 3 << 16;
-			a1_x &= ~(3 << 16);
+				asrc_x -= 3 << 16;
+			asrc_x &= ~(3 << 16);
 		}
-		if (a2_phrase_mode)
+		if (adest_phrase_mode)
 		{
-			if (a2_xadd > 0)
-				a2_x += 3 << 16;
+			if (adest_xadd > 0)
+				adest_x += 3 << 16;
 			else
-				a2_x -= 3 << 16;
-			a2_x &= ~(3 << 16);
+				adest_x -= 3 << 16;
+			adest_x &= ~(3 << 16);
 		}
 
 		/* update for outer loop */
-		a1_x += a1_xstep;
-		a1_y += a1_ystep;
-		a2_x += a2_xstep;
-		a2_y += a2_ystep;
+		asrc_x += asrc_xstep;
+		asrc_y += asrc_ystep;
+		adest_x += adest_xstep;
+		adest_y += adest_ystep;
 	}
 
 	/* write values back to registers */
+	a1_x =	(COMMAND & 0x00000800) ? asrc_x : adest_x;
+	a1_y =	(COMMAND & 0x00000800) ? asrc_y : adest_y;
+	a2_x =	(COMMAND & 0x00000800) ? adest_x : asrc_x;
+	a2_y =	(COMMAND & 0x00000800) ? adest_y : asrc_y;
+
 	blitter_regs[A1_PIXEL] = (a1_y & 0xffff0000) | ((a1_x >> 16) & 0xffff);
 	blitter_regs[A1_FPIXEL] = (a1_y << 16) | (a1_x & 0xffff);
 	blitter_regs[A2_PIXEL] = (a2_y & 0xffff0000) | ((a2_x >> 16) & 0xffff);
