@@ -8,6 +8,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
+#ifdef _MSC_VER
+#include <zmouse.h>
+#endif
 
 // MAME headers
 #include "driver.h"

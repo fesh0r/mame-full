@@ -491,7 +491,7 @@ UINT32 jrpacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_r
 
 static void jrpacman_get_tile_info(int tile_index)
 {
-	int color_index;
+	int color_index, code, attr;
 	if( tile_index < 1792 )
 	{
 		color_index = tile_index & 0x1f;
@@ -501,8 +501,8 @@ static void jrpacman_get_tile_info(int tile_index)
 		color_index = tile_index + 0x80;
 	}
 
-	int code = videoram[tile_index] | (charbank << 8);
-	int attr = (videoram[color_index] & 0x1f) | (colortablebank << 5) | (palettebank << 6 );
+	code = videoram[tile_index] | (charbank << 8);
+	attr = (videoram[color_index] & 0x1f) | (colortablebank << 5) | (palettebank << 6 );
 
 	SET_TILE_INFO(0,code,attr,0)
 }

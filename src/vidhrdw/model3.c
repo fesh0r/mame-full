@@ -21,6 +21,13 @@ typedef struct {
 	float x,y,z,d;
 } PLANE;
 
+#ifdef max
+#undef max
+#endif
+#ifdef min
+#undef min
+#endif
+
 #define RADIAN_TO_DEGREE(x)		((x) * 180.0 / PI)
 #define max(x,y)		(((int)(x) > (int)(y)) ? (x) : (y))
 #define min(x,y)		(((int)(x) < (int)(y)) ? (x) : (y))
@@ -643,6 +650,8 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 	if((dst & 0xff) == 0) {
 
 		UINT32 address, header;
+		UINT32 *rom;
+
 		if (byteswap) {
 			address = BYTE_REVERSE32(program_read_dword_64le((src+0)^4));
 			header = BYTE_REVERSE32(program_read_dword_64le((src+4)^4));
@@ -650,7 +659,7 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 			address = program_read_dword_64le((src+0)^4);
 			header = program_read_dword_64le((src+4)^4);
 		}
-		UINT32 *rom = (UINT32*)memory_region(REGION_USER2);
+		rom = (UINT32*)memory_region(REGION_USER2);
 		real3d_upload_texture(header, (UINT32*)&rom[address]);
 	}
 }
@@ -868,7 +877,7 @@ static void draw_triangle_tex1555(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-					UINT16 pix;
+					//UINT16 pix;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
@@ -984,8 +993,8 @@ static void draw_triangle_tex4444(VERTEX v1, VERTEX v2, VERTEX v3)
 
 			if(x1 < clip3d.max_x && x2 > clip3d.min_x) {
 				for(x = x1; x <= x2; x++) {
-					UINT16 pix;
-					UINT16 r,g,b;
+					//UINT16 pix;
+					//UINT16 r,g,b;
 					int iu, iv;
 
 					UINT32 iz = z >> 16;
@@ -1138,6 +1147,7 @@ static void draw_model(UINT32 *model)
 	int polynum = 0;
 	MATRIX transform_matrix;
 	int texture_format;
+	float center_x, center_y;
 
 	if(model3_step < 0x15) {	/* position coordinates are 17.15 fixed-point in Step 1.0 */
 		fixed_point_fraction = 32768.0f;
@@ -1148,8 +1158,8 @@ static void draw_model(UINT32 *model)
 	get_top_matrix(&transform_matrix);
 
 	/* current viewport center coordinates on screen */
-	float center_x = (float)(viewport_region_x + (viewport_region_width / 2));
-	float center_y = (float)(viewport_region_y + (viewport_region_height / 2));
+	center_x = (float)(viewport_region_x + (viewport_region_width / 2));
+	center_y = (float)(viewport_region_y + (viewport_region_height / 2));
 
 	while(!last_polygon)
 	{

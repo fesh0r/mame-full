@@ -120,6 +120,7 @@ static UINT8 hc11_regs_r(UINT32 address)
 	}
 
 	osd_die("HC11: regs_r %02X\n", reg);
+	return 0; // Dummy
 }
 
 static void hc11_regs_w(UINT32 address, UINT8 value)
@@ -341,10 +342,12 @@ static int hc11_execute(int cycles)
 
 	while(hc11.icount > 0)
 	{
+		UINT8 op;
+
 		hc11.ppc = hc11.pc;
 		CALL_MAME_DEBUG;
 
-		UINT8 op = FETCH();
+		op = FETCH();
 		hc11_optable[op]();
 	}
 

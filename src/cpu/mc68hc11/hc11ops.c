@@ -1002,8 +1002,8 @@ static void HC11OP(cmpb_indy)(void)
 static void HC11OP(cpd_imm)(void)
 {
 	UINT16 i = FETCH16();
-	CLEAR_NZVC();
 	UINT32 r = hc11.d - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.d);
@@ -1016,8 +1016,8 @@ static void HC11OP(cpd_dir)(void)
 {
 	UINT8 d = FETCH();
 	UINT16 i = READ16(d);
-	CLEAR_NZVC();
 	UINT32 r = hc11.d - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.d);
@@ -1030,8 +1030,8 @@ static void HC11OP(cpd_ext)(void)
 {
 	UINT16 adr = FETCH16();
 	UINT16 i = READ16(adr);
-	CLEAR_NZVC();
 	UINT32 r = hc11.d - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.d);
@@ -1044,8 +1044,8 @@ static void HC11OP(cpd_indx)(void)
 {
 	UINT8 offset = FETCH();
 	UINT16 i = READ16(hc11.ix + offset);
-	CLEAR_NZVC();
 	UINT32 r = hc11.d - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.d);
@@ -1058,8 +1058,8 @@ static void HC11OP(cpd_indy)(void)
 {
 	UINT8 offset = FETCH();
 	UINT16 i = READ16(hc11.iy + offset);
-	CLEAR_NZVC();
 	UINT32 r = hc11.d - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.d);
@@ -1072,8 +1072,8 @@ static void HC11OP(cpd_indy)(void)
 static void HC11OP(cpx_imm)(void)
 {
 	UINT16 i = FETCH16();
-	CLEAR_NZVC();
 	UINT32 r = hc11.ix - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.ix);
@@ -1086,8 +1086,8 @@ static void HC11OP(cpx_dir)(void)
 {
 	UINT8 d = FETCH();
 	UINT16 i = READ16(d);
-	CLEAR_NZVC();
 	UINT32 r = hc11.ix - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.ix);
@@ -1100,8 +1100,8 @@ static void HC11OP(cpx_ext)(void)
 {
 	UINT16 adr = FETCH16();
 	UINT16 i = READ16(adr);
-	CLEAR_NZVC();
 	UINT32 r = hc11.ix - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.ix);
@@ -1114,8 +1114,8 @@ static void HC11OP(cpx_indx)(void)
 {
 	UINT8 offset = FETCH();
 	UINT16 i = READ16(hc11.ix + offset);
-	CLEAR_NZVC();
 	UINT32 r = hc11.ix - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.ix);
@@ -1128,8 +1128,8 @@ static void HC11OP(cpx_indy)(void)
 {
 	UINT8 offset = FETCH();
 	UINT16 i = READ16(hc11.iy + offset);
-	CLEAR_NZVC();
 	UINT32 r = hc11.ix - i;
+	CLEAR_NZVC();
 	SET_N16(r);
 	SET_Z16(r);
 	SET_V_SUB16(r, i, hc11.ix);
@@ -1364,8 +1364,8 @@ static void HC11OP(ldaa_imm)(void)
 /* LDAA DIR			0x96 */
 static void HC11OP(ldaa_dir)(void)
 {
-	CLEAR_NZV();
 	UINT8 d = FETCH();
+	CLEAR_NZV();
 	hc11.a = READ8(d);
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
@@ -1375,8 +1375,8 @@ static void HC11OP(ldaa_dir)(void)
 /* LDAA EXT			0xB6 */
 static void HC11OP(ldaa_ext)(void)
 {
-	CLEAR_NZV();
 	UINT16 adr = FETCH16();
+	CLEAR_NZV();
 	hc11.a = READ8(adr);
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
@@ -1386,8 +1386,8 @@ static void HC11OP(ldaa_ext)(void)
 /* LDAA IND, X		0xA6 */
 static void HC11OP(ldaa_indx)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.a = READ8(hc11.ix + offset);
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
@@ -1397,8 +1397,8 @@ static void HC11OP(ldaa_indx)(void)
 /* LDAA IND, Y		0x18, 0xA6 */
 static void HC11OP(ldaa_indy)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.a = READ8(hc11.iy + offset);
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
@@ -1418,8 +1418,8 @@ static void HC11OP(ldab_imm)(void)
 /* LDAB DIR			0xD6 */
 static void HC11OP(ldab_dir)(void)
 {
-	CLEAR_NZV();
 	UINT8 d = FETCH();
+	CLEAR_NZV();
 	hc11.b = READ8(d);
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
@@ -1429,8 +1429,8 @@ static void HC11OP(ldab_dir)(void)
 /* LDAB EXT			0xF6 */
 static void HC11OP(ldab_ext)(void)
 {
-	CLEAR_NZV();
 	UINT16 adr = FETCH16();
+	CLEAR_NZV();
 	hc11.b = READ8(adr);
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
@@ -1440,8 +1440,8 @@ static void HC11OP(ldab_ext)(void)
 /* LDAB IND, X		0xE6 */
 static void HC11OP(ldab_indx)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.b = READ8(hc11.ix + offset);
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
@@ -1451,8 +1451,8 @@ static void HC11OP(ldab_indx)(void)
 /* LDAB IND, Y		0x18, 0xE6 */
 static void HC11OP(ldab_indy)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.b = READ8(hc11.iy + offset);
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
@@ -1528,8 +1528,8 @@ static void HC11OP(lds_imm)(void)
 /* LDS DIR			0x9E */
 static void HC11OP(lds_dir)(void)
 {
-	CLEAR_NZV();
 	UINT8 i = FETCH();
+	CLEAR_NZV();
 	hc11.sp = READ16(i);
 	SET_N16(hc11.sp);
 	SET_Z16(hc11.sp);
@@ -1539,8 +1539,8 @@ static void HC11OP(lds_dir)(void)
 /* LDS EXT			0xBE */
 static void HC11OP(lds_ext)(void)
 {
-	CLEAR_NZV();
 	UINT16 adr = FETCH16();
+	CLEAR_NZV();
 	hc11.sp = READ16(adr);
 	SET_N16(hc11.sp);
 	SET_Z16(hc11.sp);
@@ -1550,8 +1550,8 @@ static void HC11OP(lds_ext)(void)
 /* LDS IND, X		0xAE */
 static void HC11OP(lds_indx)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.sp = READ16(hc11.ix + offset);
 	SET_N16(hc11.sp);
 	SET_Z16(hc11.sp);
@@ -1561,8 +1561,8 @@ static void HC11OP(lds_indx)(void)
 /* LDS IND, Y		0x18, 0xAE */
 static void HC11OP(lds_indy)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.sp = READ16(hc11.iy + offset);
 	SET_N16(hc11.sp);
 	SET_Z16(hc11.sp);
@@ -1583,8 +1583,8 @@ static void HC11OP(ldx_imm)(void)
 /* LDX DIR			0xDE */
 static void HC11OP(ldx_dir)(void)
 {
-	CLEAR_NZV();
 	UINT8 d = FETCH();
+	CLEAR_NZV();
 	hc11.ix = READ16(d);
 	SET_N16(hc11.ix);
 	SET_Z16(hc11.ix);
@@ -1594,8 +1594,8 @@ static void HC11OP(ldx_dir)(void)
 /* LDX EXT			0xFE */
 static void HC11OP(ldx_ext)(void)
 {
-	CLEAR_NZV();
 	UINT16 adr = FETCH16();
+	CLEAR_NZV();
 	hc11.ix = READ16(adr);
 	SET_N16(hc11.ix);
 	SET_Z16(hc11.ix);
@@ -1605,8 +1605,8 @@ static void HC11OP(ldx_ext)(void)
 /* LDX IND, X		0xEE */
 static void HC11OP(ldx_indx)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.ix = READ16(hc11.ix + offset);
 	SET_N16(hc11.ix);
 	SET_Z16(hc11.ix);
@@ -1616,8 +1616,8 @@ static void HC11OP(ldx_indx)(void)
 /* LDX IND, Y		0xCD, 0xEE */
 static void HC11OP(ldx_indy)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.ix = READ16(hc11.iy + offset);
 	SET_N16(hc11.ix);
 	SET_Z16(hc11.ix);
@@ -1638,8 +1638,8 @@ static void HC11OP(ldy_imm)(void)
 /* LDY DIR			0x18, 0xDE */
 static void HC11OP(ldy_dir)(void)
 {
-	CLEAR_NZV();
 	UINT8 d = FETCH();
+	CLEAR_NZV();
 	hc11.iy = READ16(d);
 	SET_N16(hc11.iy);
 	SET_Z16(hc11.iy);
@@ -1649,8 +1649,8 @@ static void HC11OP(ldy_dir)(void)
 /* LDY EXT			0x18, 0xFE */
 static void HC11OP(ldy_ext)(void)
 {
-	CLEAR_NZV();
 	UINT16 adr = FETCH16();
+	CLEAR_NZV();
 	hc11.iy = READ16(adr);
 	SET_N16(hc11.iy);
 	SET_Z16(hc11.iy);
@@ -1660,8 +1660,8 @@ static void HC11OP(ldy_ext)(void)
 /* LDY IND, X		0x1A, 0xEE */
 static void HC11OP(ldy_indx)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.iy = READ16(hc11.ix + offset);
 	SET_N16(hc11.iy);
 	SET_Z16(hc11.iy);
@@ -1671,8 +1671,8 @@ static void HC11OP(ldy_indx)(void)
 /* LDY IND, Y		0x18, 0xEE */
 static void HC11OP(ldy_indy)(void)
 {
-	CLEAR_NZV();
 	UINT8 offset = FETCH();
+	CLEAR_NZV();
 	hc11.iy = READ16(hc11.iy + offset);
 	SET_N16(hc11.iy);
 	SET_Z16(hc11.iy);
@@ -1868,10 +1868,10 @@ static void HC11OP(sei)(void)
 /* STAA DIR			0x97 */
 static void HC11OP(staa_dir)(void)
 {
+	UINT8 d = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
-	UINT8 d = FETCH();
 	WRITE8(d, hc11.a);
 	CYCLES(3);
 }
@@ -1879,10 +1879,10 @@ static void HC11OP(staa_dir)(void)
 /* STAA EXT			0xB7 */
 static void HC11OP(staa_ext)(void)
 {
+	UINT16 adr = FETCH16();
 	CLEAR_NZV();
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
-	UINT16 adr = FETCH16();
 	WRITE8(adr, hc11.a);
 	CYCLES(4);
 }
@@ -1890,10 +1890,10 @@ static void HC11OP(staa_ext)(void)
 /* STAA IND, X		0xA7 */
 static void HC11OP(staa_indx)(void)
 {
+	UINT8 offset = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
-	UINT8 offset = FETCH();
 	WRITE8(hc11.ix + offset, hc11.a);
 	CYCLES(4);
 }
@@ -1901,10 +1901,10 @@ static void HC11OP(staa_indx)(void)
 /* STAA IND, Y		0x18, 0xA7 */
 static void HC11OP(staa_indy)(void)
 {
+	UINT8 offset = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.a);
 	SET_Z8(hc11.a);
-	UINT8 offset = FETCH();
 	WRITE8(hc11.iy + offset, hc11.a);
 	CYCLES(5);
 }
@@ -1912,10 +1912,10 @@ static void HC11OP(staa_indy)(void)
 /* STAB DIR			0xD7 */
 static void HC11OP(stab_dir)(void)
 {
+	UINT8 d = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
-	UINT8 d = FETCH();
 	WRITE8(d, hc11.b);
 	CYCLES(3);
 }
@@ -1923,10 +1923,10 @@ static void HC11OP(stab_dir)(void)
 /* STAB EXT			0xF7 */
 static void HC11OP(stab_ext)(void)
 {
+	UINT16 adr = FETCH16();
 	CLEAR_NZV();
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
-	UINT16 adr = FETCH16();
 	WRITE8(adr, hc11.b);
 	CYCLES(4);
 }
@@ -1934,10 +1934,10 @@ static void HC11OP(stab_ext)(void)
 /* STAB IND, X		0xE7 */
 static void HC11OP(stab_indx)(void)
 {
+	UINT8 offset = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
-	UINT8 offset = FETCH();
 	WRITE8(hc11.ix + offset, hc11.b);
 	CYCLES(4);
 }
@@ -1945,10 +1945,10 @@ static void HC11OP(stab_indx)(void)
 /* STAB IND, Y		0x18, 0xE7 */
 static void HC11OP(stab_indy)(void)
 {
+	UINT8 offset = FETCH();
 	CLEAR_NZV();
 	SET_N8(hc11.b);
 	SET_Z8(hc11.b);
-	UINT8 offset = FETCH();
 	WRITE8(hc11.iy + offset, hc11.b);
 	CYCLES(5);
 }
