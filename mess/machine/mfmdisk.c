@@ -96,7 +96,7 @@ static struct mfm_disk_info	mfm_disks[MAX_MFM_DISK];
   This code also assumes that the N value in the ID field defines the size of the
   data block following. If the data block is a different size, it could miss sectors,
   or jump into the middle of a sector and then get confused about a id mark/data mark/
-  deleted data mark and data in the sector field! 
+  deleted data mark and data in the sector field!
 */
 
 /* TODO: Error checking if a id is found at very end of track, or a sector which
@@ -129,7 +129,7 @@ static void mfm_info_cache_sector_info(int id,unsigned char *pTrackPtr, unsigned
 					/* store pointer to id mark */
 					mfm_disk->sectors[SectorCount].id_ptr = pTrackPtr;
 					SectorCount++;
-		
+
 					/* grab N value - used to skip data in data field */
 					N = pTrackPtr[4];
 
@@ -187,7 +187,7 @@ static unsigned long mfm_disk_get_track_size(int id)
 	{
 		case MFM_DISK_DENSITY_MFM_LO:
 			return TrackSizeMFMLo;
-		
+
 		default:
 			break;
 	}
@@ -336,7 +336,7 @@ static int mfm_disk_load(int type, int id, unsigned char **ptr)
 int mfm_disk_floppy_init(int id)
 {
 	if ((id<0) || (id>=MAX_MFM_DISK))
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	/* load data */
 	if (mfm_disk_load(IO_FLOPPY, id, &mfm_disks[id].pData))
@@ -352,11 +352,11 @@ int mfm_disk_floppy_init(int id)
 
 		logerror("mfm disk inserted!\n");
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 
@@ -386,7 +386,7 @@ static void mfm_disk_cache_data(int drive, int Track, int Side)
 		unsigned long TrackSize = mfm_disk_get_track_size(drive);
 
 		mfm_info_cache_sector_info(drive, pTrackPtr, TrackSize);
-		
+
 		mfm_disk->CachedTrack = Track;
 		mfm_disk->CachedSide = Side;
 	}

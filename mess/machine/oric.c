@@ -1156,11 +1156,11 @@ int oric_floppy_init(int id)
 	/* attempt to open mfm disk */
 	result = mfm_disk_floppy_init(id);
 
-	if (result==INIT_OK)
+	if (result==INIT_PASS)
 	{
 		oric_floppy_type[id] = ORIC_FLOPPY_MFM_DISK;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	if (basicdsk_floppy_init(id))
@@ -1171,10 +1171,10 @@ int oric_floppy_init(int id)
 
 		oric_floppy_type[id] = ORIC_FLOPPY_BASIC_DISK;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void	oric_floppy_exit(int id)
@@ -1468,12 +1468,12 @@ int oric_cassette_init(int id)
 				wa.trailer_samples = 0;
 				wa.display = 1;
 				if( device_open(IO_CASSETTE,id,0,&wa) )
-					return INIT_FAILED;
+					return INIT_FAIL;
 
-				return INIT_OK;
+				return INIT_PASS;
 			}
 
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 	}
 
@@ -1485,14 +1485,14 @@ int oric_cassette_init(int id)
 		wa.display = 1;
 		wa.smpfreq = 19200;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAILED;
+            return INIT_FAIL;
 
 		/* immediately inhibit/mute/play the output */
      /*   device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT); */
-		return INIT_OK;
+		return INIT_PASS;
     }
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 #if 0
 
@@ -1508,9 +1508,9 @@ int oric_cassette_init(int id)
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
@@ -1523,11 +1523,11 @@ int oric_cassette_init(int id)
 		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
         if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAILED;
-		return INIT_OK;
+            return INIT_FAIL;
+		return INIT_PASS;
     }
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 #endif
 

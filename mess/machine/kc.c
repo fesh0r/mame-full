@@ -44,7 +44,7 @@ void kc_dump_ram(void)
 	void *file;
 
 	file = osd_fopen(Machine->gamedrv->name, "kcram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
- 
+
 	if (file)
 	{
 		int i;
@@ -53,7 +53,7 @@ void kc_dump_ram(void)
 			char data;
 
 			data = kc85_ram[i];
-		
+
 			osd_fwrite(file, &data, 1);
 
 		}
@@ -129,7 +129,7 @@ int kc_quickload_load(int id)
 	unsigned char *data;
 
 	if (kc_load(IO_QUICKLOAD,id,&data))
-	{	
+	{
 		struct kcc_header *header = (struct kcc_header *)data;
 		int addr;
 		int datasize;
@@ -143,11 +143,11 @@ int kc_quickload_load(int id)
 		{
 			kc85_ram[(addr+i) & 0x0ffff] = data[i+128];
 		}
-			
-		return INIT_OK;
+
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 
@@ -158,7 +158,7 @@ int kc_quickload_load(int id)
 /* floppy disc interface has:
 - Z80 at 4Mhz
 - Z80 CTC
-- 1k ram 
+- 1k ram
 - NEC765 floppy disc controller
 */
 
@@ -170,13 +170,13 @@ static unsigned char kc85_disc_hw_input_gate;
 
 int kc85_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 static void kc85_disc_hw_ctc_interrupt(int state)
@@ -307,7 +307,7 @@ void	kc_disc_interface_exit(void)
 	fb				M026				Forth
 	fb				M027				Development
 	e3				M029				DAU1
-*/ 
+*/
 
 
 static unsigned char *kc85_module_rom;
@@ -339,7 +339,7 @@ static struct kc85_module kc85_disk_interface_device=
 };
 
 static struct kc85_module	*modules[256>>2];
-/*	
+/*
 
 	port xx80
 
@@ -385,7 +385,7 @@ WRITE_HANDLER(kc85_module_w)
 {
 	logerror("kc85 module w: %04x %02x\n",offset,data);
 }
- 
+
 
 static void kc85_module_system_init(void)
 {
@@ -410,7 +410,7 @@ static void kc85_module_system_exit(void)
 /* CASSETTE EMULATION */
 /**********************/
 /* used by KC85/4 and KC85/3 */
-/* 
+/*
 	The cassette motor is controlled by bit 6 of PIO port A.
 	The cassette read data is connected to /ASTB input of the PIO.
 	A edge from the cassette therefore will trigger a interrupt
@@ -437,9 +437,9 @@ int kc_cassette_device_init(int id)
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
@@ -452,11 +452,11 @@ int kc_cassette_device_init(int id)
 		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
         if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAILED;
-		return INIT_OK;
+            return INIT_FAIL;
+		return INIT_PASS;
     }
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void kc_cassette_device_exit(int id)
@@ -538,7 +538,7 @@ static void	kc_cassette_set_motor(int motor_state)
 
 
 
-/* 
+/*
 
   pin 2 = gnd
   pin 3 = read
@@ -663,14 +663,14 @@ The impulses trigger the pio interrupt line for channel B that
 triggers the time measurement by the CTC channel 3." */
 
 
-/* 
+/*
 
 	The CTC timer 3 count is initialised at 0x08f and counts down.
-  
+
 	The pulses are connected into PIO /BSTB and generate a interrupt
 	on a positive edge. A pulse will not get through if BRDY from PIO is
 	not true!
-	
+
 	Then the interrupt occurs, the CTC count is read. The time between
 	pulses is therefore measured by the CTC.
 
@@ -684,7 +684,7 @@ triggers the time measurement by the CTC channel 3." */
 	count<0x014			-> ignore
 	count>=0x078		-> ignore
 	0x014<=count<0x042	-> signal end of code	"very long pulse"
-	
+
 	codes are sent bit 0, bit 1, bit 2...bit 7. bit 0 is the state
 	of the shift key.
 
@@ -699,21 +699,21 @@ triggers the time measurement by the CTC channel 3." */
 0346  db8f      in      a,(#8f)			; get CTC timer 3 count
 0348  f5        push    af
 0349  3ea7      ld      a,#a7			; channel 3, enable int, select counter mode, control word
-										; write, software reset, time constant follows	
+										; write, software reset, time constant follows
 034b  d38f      out     (#8f),a
 034d  3e8f      ld      a,#8f			; time constant
 034f  d38f      out     (#8f),a
 0351  f1        pop     af
 
-0352  fb        ei      
+0352  fb        ei
 0353  b7        or      a				; count is over
-0354  284d      jr      z,#03a3         ; 
+0354  284d      jr      z,#03a3         ;
 
 	;; check count is in range
 0356  fe14      cp      #14
-0358  3849      jr      c,#03a3         ; 
+0358  3849      jr      c,#03a3         ;
 035a  fe78      cp      #78
-035c  3045      jr      nc,#03a3        ; 
+035c  3045      jr      nc,#03a3        ;
 
 	;; at this point, time must be between #14 and #77 to be valid
 
@@ -737,7 +737,7 @@ triggers the time measurement by the CTC channel 3." */
 0367  d5        push    de
 	;; convert hardware scan-code into os code
 0368  dd7e0c    ld      a,(ix+#0c)
-036b  1f        rra     
+036b  1f        rra
 036c  ee01      xor     #01
 036e  dd6e0e    ld      l,(ix+#0e)
 0371  dd660f    ld      h,(ix+#0f)
@@ -750,30 +750,30 @@ triggers the time measurement by the CTC channel 3." */
 
 	;; shift lock pressed?
 037b  ddcb087e  bit     7,(ix+#08)
-037f  200a      jr      nz,#038b        
+037f  200a      jr      nz,#038b
 	;; no.
 
 	;; alpha char?
 0381  fe40      cp      #40
-0383  3806      jr      c,#038b         
+0383  3806      jr      c,#038b
 0385  fe80      cp      #80
-0387  3002      jr      nc,#038b        
+0387  3002      jr      nc,#038b
 	;; yes, it is a alpha char
 	;; force to lower case
 0389  ee20      xor     #20
 
 038b  ddbe0d    cp      (ix+#0d)		;; same as stored?
-038e  201d      jr      nz,#03ad		
-	
+038e  201d      jr      nz,#03ad
+
 	 ;; yes - must be held for a certain time before it can repeat?
 0390  f5        push    af
 0391  3ae0b7    ld      a,(#b7e0)
 0394  ddbe0a    cp      (ix+#0a)
-0397  3811      jr      c,#03aa        
+0397  3811      jr      c,#03aa
 0399  f1        pop     af
 
 039a  dd340a    inc     (ix+#0a)		;; incremenent repeat count?
-039d  1804      jr      #03a3 
+039d  1804      jr      #03a3
 
 	;; update scan-code received so far
 
@@ -782,22 +782,22 @@ triggers the time measurement by the CTC channel 3." */
 03a3  db89      in      a,(#89)			; used to clear brdy
 03a5  d389      out     (#89),a
 03a7  f1        pop     af
-03a8  ed4d      reti    
+03a8  ed4d      reti
 
 03aa  f1        pop     af
-03ab  1808      jr      #03b5           
+03ab  1808      jr      #03b5
 
 ;; clear count
 03ad  dd360a00  ld      (ix+#0a),#00
 
 ;; shift lock?
 03b1  fe16      cp      #16
-03b3  2809      jr      z,#03be         
+03b3  2809      jr      z,#03be
 
 ;; store char
 03b5  dd770d    ld      (ix+#0d),a
 03b8  ddcb08c6  set     0,(ix+#08)
-03bc  18e5      jr      #03a3           
+03bc  18e5      jr      #03a3
 
 ;; toggle shift lock on/off
 03be  dd7e08    ld      a,(ix+#08)
@@ -805,25 +805,25 @@ triggers the time measurement by the CTC channel 3." */
 03c3  dd7708    ld      (ix+#08),a
 ;; shift/lock was last key pressed
 03c6  3e16      ld      a,#16
-03c8  18eb      jr      #03b5           
+03c8  18eb      jr      #03b5
 
 03ca  b7        or      a
 03cb  ddcb0846  bit     0,(ix+#08)
 03cf  c8        ret     z
 03d0  dd7e0d    ld      a,(ix+#0d)
-03d3  37        scf     
-03d4  c9        ret     
+03d3  37        scf
+03d4  c9        ret
 03d5  cdcae3    call    #e3ca
 03d8  d0        ret     nc
 03d9  ddcb0886  res     0,(ix+#08)
-03dd  c9        ret     
+03dd  c9        ret
 03de  cdcae3    call    #e3ca
 03e1  d0        ret     nc
 03e2  fe03      cp      #03
-03e4  37        scf     
+03e4  37        scf
 03e5  c8        ret     z
 03e6  a7        and     a
-03e7  c9        ret     
+03e7  c9        ret
 
 
   Keyboard reading procedure extracted from KC85/3 rom:
@@ -841,22 +841,22 @@ triggers the time measurement by the CTC channel 3." */
 01ab  ddcb089e  res     3,(ix+#08)
 01af  2055      jr      nz,#0206        ; (85)
 
-01b1  fe65      cp      #65				
-01b3  3054      jr      nc,#0209        
+01b1  fe65      cp      #65
+01b3  3054      jr      nc,#0209
 
 
 	;; count>=#65 = 0 bit
-	;; #44<=count<#65 = 1 bit 
+	;; #44<=count<#65 = 1 bit
 	;; count<#44 = end of code
 
 01b5  fe44      cp      #44
-01b7  3053      jr      nc,#020c       
+01b7  3053      jr      nc,#020c
 01b9  e5        push    hl
 01ba  d5        push    de
 01bb  ddcb0c3e  srl     (ix+#0c)
 01bf  dd7e08    ld      a,(ix+#08)
 01c2  e680      and     #80
-01c4  07        rlca    
+01c4  07        rlca
 01c5  ddae0c    xor     (ix+#0c)
 01c8  2600      ld      h,#00
 01ca  dd5e0e    ld      e,(ix+#0e)
@@ -883,10 +883,10 @@ triggers the time measurement by the CTC channel 3." */
 0200  ddcb0a4e  bit     1,(ix+#0a)
 0204  20db      jr      nz,#01e1        ; (-37)
 0206  f1        pop     af
-0207  ed4d      reti    
+0207  ed4d      reti
 0209  b7        or      a
 020a  1801      jr      #020d           ; (1)
-020c  37        scf     
+020c  37        scf
 020d  ddcb0c1e  rr      (ix+#0c)
 0211  18f3      jr      #0206           ; (-13)
 
@@ -935,7 +935,7 @@ static int kc_previous_keyboard[KC_KEYBOARD_NUM_LINES-1];
 /* brdy output from pio */
 static unsigned char kc_brdy;
 
-/* 
+/*
 	The kc keyboard is seperate from the kc base unit.
 
 	The keyboard emulation uses 2 timers:
@@ -1019,7 +1019,7 @@ static void kc_keyboard_init(void)
 	/* setup transmit parameters */
 	keyboard_data.transmit_pulse_count_remaining = 0;
 	keyboard_data.transmit_pulse_count = 0;
-	
+
 	/* set initial state */
 	z80pio_bstb_w(0,0);
 
@@ -1102,7 +1102,7 @@ static void kc_keyboard_begin_transmit(int scan_code)
 
 	/* state of shift key */
 	kc_keyboard_add_bit(((readinputport(8) & 0x01)^0x01));
-	
+
 	for (i=0; i<6; i++)
 	{
 		/* each bit in turn */
@@ -1405,8 +1405,8 @@ static void kc85_4_update_0x00000(void)
 //		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000);
 		/* ram is disabled */
 		memory_set_bankhandler_r(1, 0, MRA_NOP);
-		
-		
+
+
 		memory_set_bankhandler_w(7, 0, MWA_NOP);
 	}
 }
@@ -1566,7 +1566,7 @@ WRITE_HANDLER ( kc85_4_pio_data_w )
 			kc85_4_update_0x08000();
 			kc85_4_update_0x00000();
 
-			kc_cassette_set_motor((data>>6) & 0x01);   
+			kc_cassette_set_motor((data>>6) & 0x01);
 		}
 		break;
 
@@ -1730,7 +1730,7 @@ static void kc85_3_update_0x08000(void)
         logerror("IRM enabled\n");
 #endif
 		ram_page = kc85_ram+0x08000;
-		
+
 		cpu_setbank(2, ram_page);
 		cpu_setbank(6, ram_page);
 
@@ -1815,7 +1815,7 @@ WRITE_HANDLER ( kc85_3_pio_data_w )
 			kc85_3_update_0x0e000();
 			kc85_3_update_0x00000();
 
-			kc_cassette_set_motor((data>>6) & 0x01);   
+			kc_cassette_set_motor((data>>6) & 0x01);
 		}
 		break;
 

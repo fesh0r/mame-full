@@ -114,7 +114,7 @@ int apple2e_load_rom (int id)
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 /***************************************************************************
@@ -125,7 +125,7 @@ int apple2ee_load_rom (int id)
 	/* Initialize second half of graphics memory to 0xFF for sneaky decoding purposes */
 	memset(memory_region(REGION_GFX1) + 0x1000, 0xFF, 0x1000);
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 /***************************************************************************

@@ -565,16 +565,16 @@ BBC_uPD7002= {
 
 int bbc_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
 		basicdsk_set_geometry(id,80,1,10,256,0);
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 /**************************************

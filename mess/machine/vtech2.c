@@ -542,8 +542,8 @@ int laser_cassette_init(int id)
 		wa.chunk_size = 1;
 		wa.chunk_samples = BYTESAMPLES;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAILED;
-		return INIT_OK;
+			return INIT_FAIL;
+		return INIT_PASS;
     }
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 	if( file )
@@ -554,10 +554,10 @@ int laser_cassette_init(int id)
 		wa.fill_wave = fill_wave;
 		wa.smpfreq = 600*BITSAMPLES;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
-			return INIT_FAILED;
-        return INIT_OK;
+			return INIT_FAIL;
+        return INIT_PASS;
     }
-    return INIT_FAILED;
+    return INIT_FAIL;
 }
 
 void laser_cassette_exit(int id)
@@ -586,7 +586,7 @@ int laser_floppy_id(int id)
 int laser_floppy_init(int id)
 {
 	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void laser_floppy_exit(int id)

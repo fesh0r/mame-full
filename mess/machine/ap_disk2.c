@@ -93,10 +93,10 @@ int apple2_floppy_init(int id)
 	int i;
 
 	if (device_filename(IO_FLOPPY,id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);
-	if (!a2_drives[id].data) return INIT_FAILED;
+	if (!a2_drives[id].data) return INIT_FAIL;
 
 	/* Default everything to sync byte 0xFF */
 	memset(a2_drives[id].data, 0xff, NIBBLE_SIZE*16*TOTAL_TRACKS);
@@ -113,7 +113,7 @@ int apple2_floppy_init(int id)
 	if (f==NULL)
 	{
 		logerror("Couldn't open image.\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	for (t = 0; t < TOTAL_TRACKS; t ++)
@@ -121,7 +121,7 @@ int apple2_floppy_init(int id)
 		if (osd_fseek(f,256*16*t,SEEK_CUR)!=0)
 		{
 			logerror("Couldn't find track %d.\n", t);
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 
 		for (s = 0; s < 16; s ++)
@@ -136,13 +136,13 @@ int apple2_floppy_init(int id)
 			if (osd_fseek(f,sec_pos,SEEK_SET)!=0)
 			{
 				logerror("Couldn't find sector %d.\n", s);
-				return INIT_FAILED;
+				return INIT_FAIL;
 			}
 
 			if (osd_fread(f,data,256)<256)
 			{
 				logerror("Couldn't read track %d sector %d (pos: %d).\n", t, s, sec_pos);
-				return INIT_FAILED;
+				return INIT_FAIL;
 			}
 
 
@@ -217,7 +217,7 @@ int apple2_floppy_init(int id)
 	}
 #endif
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void	apple2_floppy_exit(int id)

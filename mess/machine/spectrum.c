@@ -956,11 +956,11 @@ int spectrum_cassette_init(int id)
 				memory_set_opbase_handler(0, spectrum_tape_opbaseoverride);
 				spectrum_snapshot_type = SPECTRUM_TAPEFILE_TAP;
 				logerror(".TAP file successfully loaded\n");
-				return INIT_OK;
+				return INIT_PASS;
 			}
 		}
 		osd_fclose(file);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
@@ -973,9 +973,9 @@ int spectrum_cassette_init(int id)
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
@@ -990,11 +990,11 @@ int spectrum_cassette_init(int id)
 		wa.smpfreq = 22050;				/* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
 		if (device_open(IO_CASSETTE, id, 1, &wa))
-			return INIT_FAILED;
-		return INIT_OK;
+			return INIT_FAIL;
+		return INIT_PASS;
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void spectrum_cassette_exit(int id)
@@ -1022,13 +1022,13 @@ int spec_quick_init(int id)
 	memset(&quick, 0, sizeof (quick));
 
 	if (device_filename(IO_QUICKLOAD, id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 
 /*	quick.name = name; */
 
 	fp = image_fopen(IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	quick.length = osd_fsize(fp);
 	quick.addr = 0x4000;
@@ -1036,7 +1036,7 @@ int spec_quick_init(int id)
 	if ((quick.data = malloc(quick.length)) == NULL)
 	{
 		osd_fclose(fp);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	read = osd_fread(fp, quick.data, quick.length);
 	osd_fclose(fp);

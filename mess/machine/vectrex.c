@@ -80,7 +80,7 @@ int vectrex_load_rom (int id)
 	if (Machine->scrbitmap)
 		vectrex_set_palette ();
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int vectrex_id_rom (int id)

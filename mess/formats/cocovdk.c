@@ -47,13 +47,13 @@ static int validate_header(struct vdk_header *hdr)
 	/* Check magic bytes */
 	if ((hdr->magic1 != VDK_MAGIC1) || (hdr->magic2 != VDK_MAGIC2)) {
 		logerror_vdk("validate_header(): Invalid vdk header magic bytes\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	/* Check compatibility version */
 	if (hdr->ver_compat != VDK_VERSION) {
 		logerror_vdk("validate_header(): Virtual disk version not supported!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	/* The VDK format has provisions for compression; this feature has never
@@ -61,16 +61,16 @@ static int validate_header(struct vdk_header *hdr)
 	 */
 	if (hdr->compression & VDK_COMPMASK) {
 		logerror_vdk("validate_header(): Compressed vdk not supported!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	/* Invalid number of sides */
 	if ((hdr->sides < 1) || (hdr->sides > 2)) {
 		logerror_vdk("validate_header(): Compressed vdk not supported!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int cocovdk_decode_header(void *h, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_track, UINT16 *sector_length, size_t *offset)
@@ -83,7 +83,7 @@ int cocovdk_decode_header(void *h, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_t
 	hdr = (struct vdk_header *) h;
 
 	err = validate_header(hdr);
-	if (err != INIT_OK)
+	if (err != INIT_PASS)
 		return err;
 
 	*offset = LITTLE_ENDIANIZE_INT16(hdr->header_len);
@@ -91,7 +91,7 @@ int cocovdk_decode_header(void *h, UINT8 *tracks, UINT8 *sides, UINT8 *sec_per_t
 	*sides = hdr->sides;
 	*sec_per_track = 18;
 	*sector_length = 256;
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_track, UINT16 sector_length)
@@ -101,7 +101,7 @@ int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_trac
 	assert(sizeof(struct vdk_header) == VDK_HEADER_LEN);
 
 	if ((sec_per_track != 18) || (sector_length != 256) || (sides < 1) || (sides > 2))
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	hdr = (struct vdk_header *) h;
 	memset(hdr, 0, sizeof(struct vdk_header));
@@ -112,6 +112,6 @@ int cocovdk_encode_header(void *h, UINT8 tracks, UINT8 sides, UINT8 sec_per_trac
 	hdr->ver_compat = VDK_VERSION;
 	hdr->tracks = tracks;
 	hdr->sides = sides;
-	return INIT_OK;
+	return INIT_PASS;
 }
 

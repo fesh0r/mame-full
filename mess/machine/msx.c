@@ -958,11 +958,11 @@ int msx_floppy_id (int id)
 			{
 			case 360*1024:
 			case 720*1024:
-				return INIT_OK;
+				return INIT_PASS;
 			}
 		}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 	}
 
 int msx_floppy_init (int id)
@@ -983,18 +983,18 @@ int msx_floppy_init (int id)
 			case 720*1024:
 				break;
 			default:
-				return INIT_FAILED;
+				return INIT_FAIL;
 			}
 		}
 	else
-		return INIT_FAILED;
+		return INIT_FAIL;
 
-	if (basicdsk_floppy_init (id) != INIT_OK)
-		return INIT_FAILED;
+	if (basicdsk_floppy_init (id) != INIT_PASS)
+		return INIT_FAIL;
 
 	basicdsk_set_geometry (id, 80, heads, 9, 512, 1);
 
-	return INIT_OK;
+	return INIT_PASS;
 	}
 
 /*
@@ -1647,7 +1647,7 @@ int msx_cassette_init(int id)
 		cas_samples = NULL;
 		cas_len = -1;
 
-		return (ret ? INIT_FAILED : INIT_OK);
+		return (ret ? INIT_FAIL : INIT_PASS);
     }
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW,
         OSD_FOPEN_RW_CREATE);
@@ -1658,10 +1658,10 @@ int msx_cassette_init(int id)
         wa.display = 1;
         wa.smpfreq = 44100;
         if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAILED;
-        return INIT_OK;
+            return INIT_FAIL;
+        return INIT_PASS;
     }
-    return INIT_FAILED;
+    return INIT_FAIL;
 }
 
 void msx_cassette_exit(int id)

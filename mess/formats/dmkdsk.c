@@ -3,7 +3,7 @@
 	dmkdsk.c
 
 	David M. Keil disk format.
-	
+
 	tim lindner, 2001
 	tlindner@ix.netcom.com
 
@@ -37,7 +37,7 @@ floppy_interface dmkdsk_floppy_interface=
 	dmkdsk_get_sectors_per_track,
 	dmkdsk_get_id_callback,
 	dmkdsk_read_sector_data_into_buffer,
-	NULL, 
+	NULL,
 	NULL
 };
 
@@ -106,7 +106,7 @@ int dmkdsk_floppy_init(int id)
 {
 	const char *name = device_filename(IO_FLOPPY, id);
 	int			result;
-	
+
 	if (id < dmkdsk_MAX_DRIVES)
 	{
 		dmkdsk *w = &dmkdsk_drives[id];
@@ -114,7 +114,7 @@ int dmkdsk_floppy_init(int id)
 		/* do we have an image name ? */
 		if (!name || !name[0])
 		{
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 		w->mode = 1;
 		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
@@ -128,52 +128,52 @@ int dmkdsk_floppy_init(int id)
 				w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 			}
 		}
-		
+
 		w->image_size = osd_fsize( w->image_file );
 		floppy_drive_set_disk_image_interface(id,&dmkdsk_floppy_interface);
-		
+
 		result = DMKHeuristicVerify( w );
-		
+
 		/* Adjust writeprotect */
 		if ( w->mode == 0 )
 			w->header.writeProtect = 0xff;
-			
+
 		return result;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 static int DMKHeuristicVerify( dmkdsk *w )
 {
 	int 			read = 0;
 	dmkHeader_p		header = &(w->header);
-	int				result = INIT_FAILED;
+	int				result = INIT_FAIL;
 	unsigned long	calc_size;
-	
+
 	osd_fseek(w->image_file, 0, SEEK_SET);
 	read = osd_fread(w->image_file, header, sizeof( dmkHeader ) );
-	
+
 	if ( read != 0 )
 	{
 		/* Adjust endian */
-		
+
 		header->trackLength = LITTLE_ENDIANIZE_INT16( header->trackLength );
 		header->realDiskCode = LITTLE_ENDIANIZE_INT32( header->realDiskCode );
-		
+
 		/* If this expression is true then we are virtuality guaranteed that this is a real DMK image */
-		
+
 		calc_size = header->trackLength * header->trackCount * (DMKSIDECOUNT( (*header) )) + sizeof( dmkHeader );
 
 		if (  calc_size == w->image_size )
 		{
 			if ( header->realDiskCode != 0x12345678 )  /* real disk files unsupported */
-				result = INIT_OK;
+				result = INIT_PASS;
 			else
-				result = INIT_FAILED;
+				result = INIT_FAIL;
 		}
 	}
-	
+
 	return result;
 }
 
@@ -181,7 +181,7 @@ static int DMKHeuristicVerify( dmkdsk *w )
 void dmkdsk_floppy_exit(int id)
 {
 	dmkdsk *pDisk;
-	
+
 	/* sanity check */
 	if ((id<0) || (id>=dmkdsk_MAX_DRIVES))
 		return;
@@ -201,7 +201,7 @@ static void dmkdsk_seek_callback(int drive, int physical_track)
 	dmkdsk *w = &dmkdsk_drives[drive];
 
 	w->track = physical_track;
-	
+
 	#ifdef VERBOSE
 	logerror("dmkdsk seek to track: %d\n", w->track );
 	#endif
@@ -221,12 +221,12 @@ static int dmkdsk_get_sectors_per_track(int drive, int side)
 		/* Interate thru track header looking for end of IDAM list */
 		/* Track header is always sorted from first IDAM to last. With */
 		/* any unused entries set to zero */
-		
+
 		for( i=0; i<80; i++ )
 		{
 			disp = LITTLE_ENDIANIZE_INT16(track->idamOffset[i]);
 			disp &= 0x3fff;
-			
+
 			if( disp == 0 )
 			{
 				break;
@@ -238,7 +238,7 @@ static int dmkdsk_get_sectors_per_track(int drive, int side)
 	#ifdef VERBOSE
 	logerror("dmkdsk count sectors (track %d on side %d) result: %d\n", w->track, side, i);
 	#endif
-	
+
 	return i;
 }
 
@@ -246,13 +246,13 @@ static void dmkdsk_get_id_callback(int drive, chrn_id *id, int id_index, int sid
 {
 	packedIDData_P	pSector;
 	dmkdsk			*w = &dmkdsk_drives[drive];
-	
+
 	#ifdef VERBOSE
 	logerror("dmkdsk Get_ID: Sector index %d on Track %d on Side %d\n", id_index, w->track, side);
 	#endif
-	
+
 	pSector = GetPackedSector( drive, w->track, id_index, side );
-	
+
 	if( pSector != NULL )
 	{
 		/* construct the id value */
@@ -261,10 +261,10 @@ static void dmkdsk_get_id_callback(int drive, chrn_id *id, int id_index, int sid
 		id->H = pSector->sideNumber;
 		id->R = pSector->sectorNumber;
 	    id->N = pSector->lengthCode;
-	    
+
 		id->data_id = id_index;
 		id->flags = 0;
-		
+
 		logerror("dmkdsk return Get_ID: Sector %d on Track %d on Side %d\n", id->R, id->C, id->H);
 
 		if ( CheckIDCRC( pSector ) )
@@ -272,13 +272,13 @@ static void dmkdsk_get_id_callback(int drive, chrn_id *id, int id_index, int sid
 			id->flags |= ID_FLAG_CRC_ERROR_IN_ID_FIELD;
 			logerror("dmkdsk return Get_ID: IDAM crc error\n");
 		}
-		
+
 		if( CheckDataCRC( pSector ) )
 		{
 			id->flags |= ID_FLAG_CRC_ERROR_IN_DATA_FIELD;
 			logerror("dmkdsk return Get_ID: Data crc error\n");
 		}
-			
+
 		free( pSector );
 	}
 }
@@ -288,14 +288,14 @@ static void dmkdsk_read_sector_data_into_buffer(int drive, int side, int index1,
 	dmkdsk 			*w = &dmkdsk_drives[drive];
 	packedIDData_P	pSector;
 	int				size;
-	
+
 	pSector = GetPackedSector( drive, w->track, index1, side );
-	
+
 	if( pSector != NULL )
 	{
 		size = 128 << pSector->lengthCode;
 		logerror("dmkdsk read sector: (requested length %d, sector length on disk %d)\n", length, size);
-	
+
 		memcpy( ptr, pSector->data, length );
 		free( pSector );
 	}
@@ -318,9 +318,9 @@ static dmkTrack_p GetEntireTrack( int drive, int track, int side )
 		logerror("dmkdsk requesting head %d > %d\n", side, DMKSIDECOUNT( w->header ));
 		return 0;
 	}
-	
+
 	/* Adjust for single sided disks */
-	
+
 	if ( (w->header.diskOptions & 0x10) == 0 )
 		offset = sizeof( dmkHeader) + w->header.trackLength * track;
 	else
@@ -332,7 +332,7 @@ static dmkTrack_p GetEntireTrack( int drive, int track, int side )
 		osd_fseek(w->image_file, offset, SEEK_SET);
 		osd_fread(w->image_file, result, w->header.trackLength );
 	}
-	
+
 	return result;
 }
 
@@ -342,14 +342,14 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 	int				i, size;
 	packedIDData_P	result = NULL;
 	UINT16			disp;
-	
+
 	track_data = GetEntireTrack( drive, track, side );
-	
+
 	if( track_data != NULL )
 	{
 		disp = LITTLE_ENDIANIZE_INT16(track_data->idamOffset[id_index]);
 		disp &= 0x3fff;
-		
+
 		/* Check if sector index is out of bounds */
 		if( disp == NULL )
 		{
@@ -357,13 +357,13 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 			free( track_data );
 			return NULL;
 		}
-			
+
 		if( track_data->trackData[ disp ] == 0xfe )
 		{
 			size = 128 << track_data->trackData[ disp+ 4 ];
-			
+
 			result = malloc( sizeof( packedIDData ) + size + 2 );
-		
+
 			if( result != NULL )
 			{
 				memset( result, 0x00, sizeof( packedIDData ) + size + 2 );
@@ -372,20 +372,20 @@ static packedIDData_P GetPackedSector( int drive, int track, int id_index, int s
 
 				/* Sector IDAM found; now find start of data */
 				/* Should be within 40 bytes after IDAM */
-				
+
 				for( i=7; i<80; i++ )
 				{
-					if( memcmp( &(track_data->trackData[ disp + i ]), "\241\241\373", 3 ) == 0 ) 
+					if( memcmp( &(track_data->trackData[ disp + i ]), "\241\241\373", 3 ) == 0 )
 					{
 						memcpy( &(result->DM), &(track_data->trackData[ disp + i + 2 ]), size + 3 );
 						break;
 					}
 				}
-				
+
 				if( i == 40 )
 				{
 					logerror("dmkdsk data not found after IDAM (sector index %d on track %d on side %d)\n", id_index, track, side);
-				}	
+				}
 			}
 		}
 
@@ -412,7 +412,7 @@ static int CheckIDCRC( packedIDData_P pSector )
 	crc = 0xcdb4;	/* Seed crc with proper value */
 
 	calc_crc_buffer( &crc, (unsigned char *)pSector, 5 );
-	
+
 	if( crc == BIG_ENDIANIZE_INT16( pSector->idCRC ) )
 		return 0;
 	else
@@ -423,7 +423,7 @@ static int CheckDataCRC( packedIDData_P pSector )
 {
 	UINT16	crc, *crcOnDisk;
 	int		size;
-	
+
 	size = 128 << pSector->lengthCode;
 /*
 	crc = 0xffff;
@@ -432,9 +432,9 @@ static int CheckDataCRC( packedIDData_P pSector )
 	crc = calc_crc1( crc, 0xa1 );
 */
 	crc = 0xcdb4;	/* Seed crc with proper value */
-	
+
 	calc_crc_buffer( &crc, &(pSector->DM), size+1 );
-	
+
 	crcOnDisk = (UINT16 *)(&(pSector->data[ size ]));
 	if( crc == BIG_ENDIANIZE_INT16( *crcOnDisk ) )
 		return 0;
@@ -445,7 +445,7 @@ static int CheckDataCRC( packedIDData_P pSector )
 static void calc_crc_buffer( UINT16 *crc, UINT8 *buffer, int size )
 {
 	int	i;
-	
+
 	for( i=0; i<size; i++ )
 		*crc = calc_crc1( *crc, buffer[i] );
 }

@@ -207,14 +207,14 @@ static slot_type_t slot_type[3] = { SLOT_EMPTY, SLOT_EMPTY, SLOT_EMPTY};
 
 int ti99_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 40, 1, 9, 256,0);
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 int ti99_cassette_init(int id)
@@ -230,9 +230,9 @@ int ti99_cassette_init(int id)
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 #endif
 
@@ -246,11 +246,11 @@ int ti99_cassette_init(int id)
 		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
 		if (device_open(IO_CASSETTE, id, 1, &wa))
-			return INIT_FAILED;
-		return INIT_OK;
+			return INIT_FAIL;
+		return INIT_PASS;
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void ti99_cassette_exit(int id)
@@ -283,7 +283,7 @@ int ti99_load_rom(int id)
 		if (cartfile == NULL)
 		{
 			logerror("TI99 - Unable to locate cartridge: %s\n", name);
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 
 		/* Trick - we identify file types according to their extension */
@@ -351,7 +351,7 @@ int ti99_load_rom(int id)
 		osd_fclose(cartfile);
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void ti99_rom_cleanup(int id)

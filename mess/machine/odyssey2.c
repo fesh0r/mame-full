@@ -28,14 +28,14 @@ int odyssey2_load_rom (int id)
 {
     int size;
     FILE *cartfile;
-    
+
     logerror("ODYSSEY2 - Load_rom()\n");
     if(device_filename(IO_CARTSLOT,id) == NULL)
     {
 	logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
-	return INIT_FAILED;
+	return INIT_FAIL;
     }
-    
+
 //    ROM = memory_region(REGION_CPU1);
     cartfile = NULL;
     logerror("ODYSSEY2 - Loading Image\n");
@@ -47,17 +47,17 @@ int odyssey2_load_rom (int id)
     else
     {
 	logerror("ODYSSEY2 - Found cartridge\n");
-	
+
     }
     logerror("ODYSSEY2 - Done\n");
-    
+
     size=osd_fsize(cartfile);
     osd_fread (cartfile, memory_region(REGION_USER1), size);	 /* non banked carts */
     osd_fclose (cartfile);
 
-    if (size<=0x800) 
+    if (size<=0x800)
 	memcpy(memory_region(REGION_USER1)+0x800, memory_region(REGION_USER1), 0x800);
-    if (size<=0x1000) 
+    if (size<=0x1000)
 	memcpy(memory_region(REGION_USER1)+0x1000, memory_region(REGION_USER1), 0x1000);
 
     return 0;
@@ -97,7 +97,7 @@ WRITE_HANDLER ( odyssey2_putp1 )
     cpu_setbank(1, memory_region(REGION_USER1)+(((data&3)^3)<<11));
 /* 2kbyte eprom are connected a0..a9 to a0..a9
    but a10 of the eprom is connected to a11 of the cpu
-   
+
    the first 0x400 bytes are internal rom, than comes 0x400 bytes of the eprom
    and the 2nd 0x400 bytes are mapped 2 times
 */
@@ -112,7 +112,7 @@ READ_HANDLER ( odyssey2_getp2 )
     int i, j;
     if (!(p1&4)) {
 	if ((p2&7)<=5) h&=readinputport(p2&7);
-	
+
 	for (i=0x80, j=0; i>0; i>>=1, j++) {
 	    if (!(h&i)) {
 		data&=~0x10;

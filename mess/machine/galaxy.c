@@ -42,7 +42,7 @@ void galaxy_init_machine(void)
 		memory_set_opbase_handler(0, galaxy_opbaseoverride);
 	}
 	cpu_set_irq_callback(0, galaxy_irq_callback);
-	
+
 }
 
 void galaxy_stop_machine(void)
@@ -74,9 +74,9 @@ int galaxy_init_wav(int id)
 		wa.file = file;
 		wa.display = 1;
 
-		if (device_open(IO_CASSETTE, id, 0, &wa)) return INIT_FAILED;
+		if (device_open(IO_CASSETTE, id, 0, &wa)) return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_WRITE);
@@ -88,12 +88,12 @@ int galaxy_init_wav(int id)
 		wa.display = 1;
 		wa.smpfreq = 11025;
 
-		if (device_open(IO_CASSETTE, id, 1, &wa)) return INIT_FAILED;
+		if (device_open(IO_CASSETTE, id, 1, &wa)) return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void galaxy_exit_wav(int id)
@@ -123,7 +123,7 @@ int galaxy_load_snap(int id)
 				osd_fclose(file);
 
 				galaxy_data_type = galaxy_GAL;
-			
+
 				logerror("data_size %d\n", galaxy_data_size);
 
 				logerror("File loaded!\n");
@@ -168,7 +168,7 @@ static void galaxy_setup_gal(unsigned char *data, unsigned long data_size)
 {
 	int i;
 	unsigned char lo,hi;
-	
+
 	/* Set registers */
 	lo = data[0] & 0x0ff;
 	hi = data[1] & 0x0ff;

@@ -629,7 +629,7 @@ int init_devices(const void *game)
 				/* initialize */
 				result = (*dev->init)(id);
 
-				if( result != INIT_OK)
+				if( result != INIT_PASS)
 				{
 					mess_printf(" Driver Reports Initialisation [for %s device] failed\n",device_typename(dev->type));
 					return 1;
@@ -757,7 +757,7 @@ int device_filename_change(int type, int id, const char *name)
 		}
 
 		result = (*dev->init)(id);
-		if( result != INIT_OK && name )
+		if( result != INIT_PASS && name )
 			return 1;
 
 		/* init succeeded */

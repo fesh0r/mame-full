@@ -1136,10 +1136,10 @@ int vc20_tape_attach_image (int id)
 	tape.data = 0;
 
 	if (device_filename(IO_CASSETTE,id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 
 	if ((cp = strrchr (device_filename(IO_CASSETTE,id), '.')) == NULL)
-		return INIT_FAILED;
+		return INIT_FAIL;
 	if (stricmp (cp, ".wav") == 0)
 	{
 		vc20_wav_open (IO_CASSETTE,id);
@@ -1153,8 +1153,8 @@ int vc20_tape_attach_image (int id)
 		vc20_zip_open (IO_CASSETTE,id);
 	}
 	else
-		return INIT_FAILED;
-	return INIT_OK;
+		return INIT_FAIL;
+	return INIT_PASS;
 }
 
 void vc20_tape_detach_image (int id)

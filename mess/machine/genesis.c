@@ -67,7 +67,7 @@ int genesis_load_rom(int id)
 	if (new_memory_region(REGION_CPU1, 0x405000,0))
 	{
 		logerror("new_memory_region failed!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	rawROM = memory_region(REGION_CPU1);
     ROM = rawROM /*+ 512 */;
@@ -83,7 +83,7 @@ int genesis_load_rom(int id)
 	if (!romfile)
     {
         printf("Genesis Requires Cartridge!\n");
-        return INIT_FAILED;
+        return INIT_FAIL;
     }
 
     length = osd_fread(romfile, rawROM + 0x2000, 0x400200);
@@ -160,12 +160,12 @@ int genesis_load_rom(int id)
 
 
 	osd_fclose(romfile);
-	return INIT_OK;
+	return INIT_PASS;
 
 bad:
 	if (romfile)
 		osd_fclose(romfile);
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 /* code taken directly from GoodGEN by Cowering */

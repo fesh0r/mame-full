@@ -550,7 +550,7 @@ int wave_init(int id, const char *name)
 {
 	void *file;
 	if( !name || strlen(name) == 0 )
-		return INIT_OK;
+		return INIT_PASS;
 	file = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if( file )
 	{
@@ -558,10 +558,10 @@ int wave_init(int id, const char *name)
 		wa.file = file;
 		wa.display = 1;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAILED;
-		return INIT_OK;
+			return INIT_FAIL;
+		return INIT_PASS;
     }
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void wave_exit(int id)
@@ -644,7 +644,7 @@ int wave_open(int id, int mode, void *args)
 			return WAVE_ERR;
 		}
 		memset (w->data, 0, w->length);
-		return INIT_OK;
+		return INIT_PASS;
     }
 	else
 	{
@@ -654,7 +654,7 @@ int wave_open(int id, int mode, void *args)
 			/* return sample frequency in the user supplied structure */
 			wa->smpfreq = w->smpfreq;
 			w->offset = 0;
-			return INIT_OK;
+			return INIT_PASS;
 		}
 
 		if( result == WAVE_FMT )
@@ -793,7 +793,7 @@ int wave_open(int id, int mode, void *args)
 			}
 			logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
 			/* hooray! :-) */
-			return INIT_OK;
+			return INIT_PASS;
 		}
 	}
 	return WAVE_ERR;

@@ -2,7 +2,6 @@
 #define MESS_H
 
 #include "osdepend.h"
-/* Damn I hate doing this, but.... */
 #include "device.h"
 
 #define ARRAY_LENGTH(x) (sizeof(x)/sizeof(x[0]))
@@ -76,7 +75,7 @@ void *image_fopen(int type, int id, int filetype, int read_or_write);
 
 /* IODevice Initialisation return values.  Use these to determine if */
 /* the emulation can continue if IODevice initialisation fails */
-enum { INIT_OK, INIT_FAILED, INIT_UNKNOWN };
+enum { INIT_PASS, INIT_FAIL };
 
 
 /* IODevice ID return values.  Use these to determine if */

@@ -42,7 +42,7 @@ int d88image_floppy_init(int id)
 		/* do we have an image name ? */
 		if (!name || !name[0])
 		{
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 		w->mode = 1;
 		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
@@ -80,7 +80,7 @@ int d88image_floppy_init(int id)
 		    w->num_sects[i] = tmp16;
 		    w->sects[i]=malloc(sizeof(d88sect)*w->num_sects[i]);
 		    osd_fseek(w->image_file, toffset, SEEK_SET);
-		    
+
 		    for(j=0;j<w->num_sects[i];j++) {
 		      osd_fread(w->image_file, &(w->sects[i][j].C), 1);
 		      osd_fread(w->image_file, &(w->sects[i][j].H), 1);
@@ -115,10 +115,10 @@ int d88image_floppy_init(int id)
 
                 floppy_drive_set_disk_image_interface(id,&d88image_floppy_interface);
 
-		return  INIT_OK;
+		return  INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 /* remove a disk from the drive specified by id */
@@ -126,7 +126,7 @@ void d88image_floppy_exit(int id)
 {
 	d88image *w;
 	int i;
-	
+
 	/* sanity check */
 	if ((id<0) || (id>=d88image_MAX_DRIVES))
 		return;
@@ -174,7 +174,7 @@ unsigned long offset;
 
 	offset = w->sects[t*2+h][s].offset;
 
-             
+
 #if VERBOSE
     logerror("d88image seek track:%d head:%d sector:%d-> offset #0x%08lX\n",
              t, h, s, offset);

@@ -40,7 +40,7 @@ int advision_load_rom (int id)
 	if(device_filename(IO_CARTSLOT,id) == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
-		return INIT_FAILED;
+		return INIT_FAIL;
     }
 
     ROM = memory_region(REGION_CPU1);

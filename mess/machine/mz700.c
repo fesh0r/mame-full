@@ -810,9 +810,9 @@ int mz700_cassette_init(int id)
 		wa.chunk_size = 1;
 		wa.chunk_samples = 2 * BYTE_SAMPLES;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-        return INIT_OK;
+        return INIT_PASS;
 	}
 
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
@@ -824,11 +824,11 @@ int mz700_cassette_init(int id)
 		wa.fill_wave = NULL;
 		wa.smpfreq = Machine->sample_rate;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-        return INIT_OK;
+        return INIT_PASS;
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void mz700_cassette_exit(int id)

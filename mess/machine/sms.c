@@ -152,7 +152,7 @@ int sms_load_rom(int id)
     if(device_filename(IO_CARTSLOT,id) == NULL)
     {
         printf("Cartridge Name Required!\n");
-        return (INIT_FAILED);
+        return (INIT_FAIL);
 	}
 
     /* Ensure filename was specified */
@@ -160,7 +160,7 @@ int sms_load_rom(int id)
     if(handle == NULL)
     {
 		printf("Cartridge Name Required!\n");
-        return (INIT_FAILED);
+        return (INIT_FAIL);
 	}
 
     /* Get file size */
@@ -180,7 +180,7 @@ int sms_load_rom(int id)
     if(ret)
     {
         printf("Error allocating %d bytes.\n", size);
-        return INIT_FAILED;
+        return INIT_FAIL;
     }
 
     /* Get base of CPU1 memory region */
@@ -200,7 +200,7 @@ int sms_load_rom(int id)
     memcpy(&RAM[0x4000], &RAM[0x14000], 0x4000);
     memcpy(&RAM[0x8000], &RAM[0x10000], 0x4000);
 
-    return (INIT_OK);
+    return (INIT_PASS);
 }
 
 void sms_init_machine (void)

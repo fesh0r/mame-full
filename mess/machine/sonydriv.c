@@ -1298,7 +1298,7 @@ int sony_floppy_init(int id, int allowablesizes)
 	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
 	if (!device_filename(IO_FLOPPY,id))
-		return INIT_OK;
+		return INIT_PASS;
 
 	f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
 	if (!f->fd)
@@ -1401,12 +1401,12 @@ int sony_floppy_init(int id, int allowablesizes)
 		(f->disk_sides ? "double" : "single"), (int) id, device_filename(IO_FLOPPY,id), (int) f->wp);
 #endif
 
-	return INIT_OK;
+	return INIT_PASS;
 
 error:
 	if (f->fd)
 		osd_fclose(f->fd);
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void sony_floppy_exit(int id)

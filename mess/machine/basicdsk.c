@@ -40,7 +40,7 @@ int basicdsk_floppy_init(int id)
 		/* do we have an image name ? */
 		if (!name || !name[0])
 		{
-			return INIT_OK;
+			return INIT_PASS;
 		}
 		w->mode = 1;
 		w->image_file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
@@ -64,17 +64,17 @@ int basicdsk_floppy_init(int id)
 
 		floppy_drive_set_disk_image_interface(id,&basicdsk_floppy_interface);
 
-		return  INIT_OK;
+		return  INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 /* remove a disk from the drive specified by id */
 void basicdsk_floppy_exit(int id)
 {
 	basicdsk *pDisk;
-	
+
 	/* sanity check */
 	if ((id<0) || (id>=basicdsk_MAX_DRIVES))
 		return;
@@ -115,7 +115,7 @@ void	basicdsk_set_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side, UINT
 	logerror("basicdsk_set_ddam: #%d T:$%02x H:%d S:$%02x = %d\n",id, physical_track, physical_side, sector_id,ddam);
 
     /* calculate bit-offset into map */
-	ddam_bit_offset = (((physical_track * pDisk->heads) + physical_side)*pDisk->sec_per_track) + 
+	ddam_bit_offset = (((physical_track * pDisk->heads) + physical_side)*pDisk->sec_per_track) +
 					sector_id - pDisk->first_sector_id;
 
 	/* if offset exceeds the number of bits that are stored in the ddam map return 0 */
@@ -154,7 +154,7 @@ static int basicdsk_get_ddam(UINT8 id, UINT8 physical_track, UINT8 physical_side
 		return 0;
 
 	/* calculate bit-offset into map */
-	ddam_bit_offset = (((physical_track * pDisk->heads) + physical_side)*pDisk->sec_per_track) + 
+	ddam_bit_offset = (((physical_track * pDisk->heads) + physical_side)*pDisk->sec_per_track) +
 					sector_id - pDisk->first_sector_id;
 
 	/* if offset exceeds the number of bits that are stored in the ddam map return 0 */
@@ -273,7 +273,7 @@ unsigned long offset;
 	offset += (s-w->first_sector_id);
 	offset *= w->sector_length;
 
-             
+
 #if VERBOSE
     logerror("basicdsk seek track:%d head:%d sector:%d-> offset #0x%08lX\n",
              t, h, s, offset);
@@ -353,7 +353,7 @@ unsigned long offset;
 
 #endif
 
-	
+
 
 void    basicdsk_step_callback(basicdsk *w, int drive, int direction)
 {
@@ -494,9 +494,9 @@ int cnt;
 				/* read normal or deleted data address mark ? */
 				w->status |= deleted_dam(w);
 			}
-#endif		
+#endif
 
-			
+
 #if 0
 
 	if ((data | 1) == 0xff)	   /* change single/double density ? */

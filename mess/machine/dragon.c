@@ -113,7 +113,7 @@ static void coco3_setcartline(int data);
  * with logging enabled after doing some debugging work
  *
  * Logging options marked as "Sparse" are logging options that happen rarely,
- * and should not get in the way.  As such, these options are always on 
+ * and should not get in the way.  As such, these options are always on
  * (assuming MAME_DEBUG is on).  "Frequent" options are options that happen
  * enough that they might get in the way.
  */
@@ -416,7 +416,7 @@ static int generic_pak_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 		}
 		osd_fclose(fp);
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int dragon32_pak_load(int id)
@@ -475,7 +475,7 @@ static int generic_rom_load(int id, UINT8 *dest, UINT16 destlength)
 			destlength -= romsize;
 		}
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int dragon32_rom_load(int id)
@@ -1239,7 +1239,7 @@ static void coco3_timer_cannonicalize(int newvalue)
 		assert(coco3_timer_value > 0);
 
 		/* Calculate how many transitions elapsed */
-		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);		
+		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);
 		assert(elapsed >= 0);
 
 #if LOG_TIMER
@@ -1256,7 +1256,7 @@ static void coco3_timer_cannonicalize(int newvalue)
 
 		if (elapsed) {
 			coco3_timer_value -= elapsed;
-			
+
 			/* HACKHACK - I don't know why I have to do this */
 			if (coco3_timer_value < 0)
 				coco3_timer_value = 0;
@@ -1666,11 +1666,11 @@ int coco_cassette_init(int id)
 		wa.trailer_samples = COCO_WAVESAMPLES_TRAILER;
 		wa.display = 1;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAILED;
+			return INIT_FAIL;
 
 		/* immediately inhibit/mute/play the output */
         device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
@@ -1681,13 +1681,13 @@ int coco_cassette_init(int id)
 		wa.display = 1;
 		wa.smpfreq = 19200;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAILED;
+            return INIT_FAIL;
 
 		/* immediately inhibit/mute/play the output */
         device_status(IO_CASSETTE,id, WAVE_STATUS_MOTOR_ENABLE|WAVE_STATUS_MUTED|WAVE_STATUS_MOTOR_INHIBIT);
-		return INIT_OK;
+		return INIT_PASS;
     }
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void coco_cassette_exit(int id)
@@ -1767,7 +1767,7 @@ int coco_bitbanger_init (int id)
 	bitbanger_word = 0;
 	bitbanger_line = 0;
 	bitbanger_file = image_fopen (IO_BITBANGER, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void coco_bitbanger_exit (int id)

@@ -49,17 +49,17 @@ int channelf_load_rom(int id)
 	int size;
 
     if (device_filename(IO_CARTSLOT,id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!file)
-		return INIT_FAILED;
+		return INIT_FAIL;
 	size = osd_fread(file, &mem[0x0800], 0x0800);
 	osd_fclose(file);
 
     if (size == 0x800)
-		return INIT_OK;
+		return INIT_PASS;
 
-    return INIT_FAILED;
+    return INIT_FAIL;
 }
 
 READ_HANDLER( channelf_port_0_r )

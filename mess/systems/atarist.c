@@ -1841,7 +1841,7 @@ static int atarist_basic_floppy_init(int id)
 {
 	void *file;
 
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		/* Figure out correct disk format, try standard formats first */
 		file=image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
@@ -1891,12 +1891,12 @@ static int atarist_basic_floppy_init(int id)
 			osd_fclose(file);
 
 			atari_st_image_type[id] = ATARI_ST_IMAGE_TYPE_RAW;
-			return INIT_OK;
+			return INIT_PASS;
 		}
 		else logerror("Disk open failed\n");
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 
@@ -2312,10 +2312,10 @@ int atarist_msa_floppy_init(int id)
 		/* tell floppy drive code to use these functions for accessing disk image in this drive */
 		floppy_drive_set_disk_image_interface(id,&msa_floppy_interface);
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void atarist_msa_floppy_exit(int id)
@@ -2336,7 +2336,7 @@ int atarist_floppy_init(int id)
 
 	name = device_filename(IO_FLOPPY,id);
 	if (!name)
-		return INIT_OK; /* Emulation can continue even with no floppy */
+		return INIT_PASS; /* Emulation can continue even with no floppy */
 
 	/* msa file? */
 	if (!strcmp(".msa",name+strlen(name)-4))

@@ -281,8 +281,8 @@ int vtech1_cassette_init(int id)
 		wa.chunk_size = 1;
 		wa.chunk_samples = BYTESAMPLES;
 		if( device_open(IO_CASSETTE,id,0,&wa) )
-			return INIT_FAILED;
-		return INIT_OK;
+			return INIT_FAIL;
+		return INIT_PASS;
     }
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 	if( file )
@@ -293,10 +293,10 @@ int vtech1_cassette_init(int id)
 		wa.fill_wave = fill_wave;
 		wa.smpfreq = 600*BITSAMPLES;
 		if( device_open(IO_CASSETTE,id,1,&wa) )
-			return INIT_FAILED;
-        return INIT_OK;
+			return INIT_FAIL;
+        return INIT_PASS;
     }
-    return INIT_OK;
+    return INIT_PASS;
 }
 
 void vtech1_cassette_exit(int id)
@@ -392,11 +392,11 @@ int vtech1_snapshot_init(int id)
 			osd_fclose(file);
 			/* 1/2 second delay after the READY message */
 			vtech1_snapshot_count = (int)Machine->drv->frames_per_second / 2;
-            return INIT_OK;
+            return INIT_PASS;
 		}
 		osd_fclose(file);
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void vtech1_snapshot_exit(int id)
@@ -443,7 +443,7 @@ int vtech1_floppy_init(int id)
 		vtech1_fdc_wrprot[id] = 0x00;
 		vtech1_fdc_file[id] = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void vtech1_floppy_exit(int id)
@@ -760,7 +760,7 @@ WRITE_HANDLER( vtech1_latch_w )
 			logerror("vtech1_latch_w: change background %d\n", (data>>4)&1);
 		if( (vtech1_latch ^ data) & 0x08 )
 			logerror("vtech1_latch_w: change mode to %s\n", (data&0x08)?"gfx":"text");
-    
+
 	}
 
     vtech1_latch = data;

@@ -1090,7 +1090,7 @@ int nes_load_rom (int id)
 	if ((!device_filename(IO_CARTSLOT,id)) && (id == 0))
 	{
 //		printf("NES requires cartridge!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	else
 	{
@@ -1332,7 +1332,7 @@ int nes_load_disk (int id)
  	FILE *diskfile;
 	unsigned char magic[4];
 
-	if (!device_filename(IO_FLOPPY,id)) return INIT_FAILED;
+	if (!device_filename(IO_FLOPPY,id)) return INIT_FAIL;
 
 	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{

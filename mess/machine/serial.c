@@ -7,7 +7,7 @@ setup serial interface software in driver and let the transfer begin */
 
 
 
-/* 
+/*
 
 	the output starts at 1 level. It changes to 0 when the start bit has been transmitted.
 	This therefore signals that data is following.
@@ -70,7 +70,7 @@ void serial_helper_setup(void)
 
 		serial_parity_table[i] = sum & 0x01;
 	}
-}	
+}
 
 unsigned char serial_helper_get_parity(unsigned char data)
 {
@@ -191,7 +191,7 @@ void	serial_device_set_transmit_state(int id, int state)
 		return;
 
 	previous_state = serial_devices[id].transmit_state;
-	
+
 	serial_devices[id].transmit_state = state;
 
 	if ((state^previous_state)!=0)
@@ -235,7 +235,7 @@ static int	data_stream_get_data_bit_from_data_byte(struct data_stream *stream)
 		/* over end of buffer, so return 0 */
 		data_byte= 0;
 	}
-	
+
 	/* get bit from data */
 	data_bit = (data_byte>>(7-stream->BitCount)) & 0x01;
 
@@ -351,7 +351,7 @@ void	receive_register_update_bit(struct serial_receive_register *receive, int bi
 				/* reset bit count received */
 				receive->bit_count_received = 0;
 			}
-		}		
+		}
 	}
 	else
 	if (receive->flags & RECEIVE_REGISTER_SYNCHRONISED)
@@ -400,7 +400,7 @@ void	receive_register_extract(struct serial_receive_register *receive_reg, struc
 	data = data & (0x0ff
 		>>
 		(8-(data_form->word_length)));
-	
+
 	receive_reg->byte_received  = data;
 
 	/* parity enable? */
@@ -418,7 +418,7 @@ void	receive_register_extract(struct serial_receive_register *receive_reg, struc
 
 			/* get state of parity bit received */
 			parity_received = (receive_reg->register_data>>data_form->stop_bit_count) & 0x01;
-			
+
 			/* compute parity for received bits */
 			computed_parity = serial_helper_get_parity(data);
 
@@ -468,10 +468,10 @@ void transmit_register_setup(struct serial_transmit_register *transmit_reg, stru
 	transmit_reg->bit_count_transmitted = 0;
 	transmit_reg->bit_count = 0;
 	transmit_reg->flags &=~TRANSMIT_REGISTER_EMPTY;
-	
+
 	/* start bit */
 	transmit_register_add_bit(transmit_reg,0);
-	
+
 	/* data bits */
 	transmit_data = data_byte;
 	for (i=0; i<data_form->word_length; i++)
@@ -495,7 +495,7 @@ void transmit_register_setup(struct serial_transmit_register *transmit_reg, stru
 		/* if parity = 0, data has even parity - i.e. there is an even number of one bits in the data */
 		/* if parity = 1, data has odd parity - i.e. there is an odd number of one bits in the data */
 		parity = serial_helper_get_parity(data_byte);
-		
+
 		transmit_register_add_bit(transmit_reg, parity);
 	}
 
@@ -511,7 +511,7 @@ int transmit_register_get_data_bit(struct serial_transmit_register *transmit_reg
 	int bit;
 
 	bit = (transmit_reg->register_data>>
-		(transmit_reg->bit_count - 1 - 
+		(transmit_reg->bit_count - 1 -
 		transmit_reg->bit_count_transmitted)) & 0x01;
 
 	transmit_reg->bit_count_transmitted++;
@@ -683,16 +683,16 @@ int		serial_device_init(int id)
 
 	/* check id is valid */
 	if ((id<0) || (id>=MAX_SERIAL_DEVICES))
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	/* load file and setup transmit data */
 	if (serial_device_load(IO_SERIAL, id, &data,&data_length))
 	{
 		data_stream_init(&serial_devices[id].transmit, data, data_length);
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 
@@ -772,7 +772,7 @@ static void xmodem_setup_packet(int id)
 	count = 0;
 
 
-	/* 
+	/*
 	packet:
 
 	1 byte			SOH
@@ -881,7 +881,7 @@ static void serial_protocol_xmodem_sent_char(int id)
 		case XMODEM_STATE_SENDING_PACKET:
 		{
 			unsigned char data_byte;
-			
+
 			if (xmodem_transfer.offset_in_packet==xmodem_transfer.packet_size)
 			{
 				xmodem_set_new_state(XMODEM_STATE_WAITING_FOR_CONFIRM);
@@ -916,14 +916,14 @@ static void serial_protocol_xmodem_sent_char(int id)
 		RTS at this end becomes CTS at other end.
 		TX at this end becomes RX at other end.
 		RX at this end becomes TX at other end.
-		etc 
+		etc
 
 		The same thing is done inside the serial null-terminal lead */
 
 static unsigned long serial_connection_spin_bits(unsigned long input_status)
 {
 
-	return 
+	return
 		/* cts -> rts */
 		(((input_status & 0x01)<<1) |
 		/* rts -> cts */

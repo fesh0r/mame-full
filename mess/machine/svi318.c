@@ -65,7 +65,7 @@ int svi318_load_rom (int id)
 			{
 			logerror ("malloc () failed!\n");
 			osd_fclose (f);
-			return INIT_FAILED;
+			return INIT_FAIL;
 			}
 		memset (p, 0xff, 0x8000);
 		size = osd_fsize (f);
@@ -74,16 +74,16 @@ int svi318_load_rom (int id)
 			logerror ("can't read file %s\n", device_filename (IO_CASSETTE, id) );
 			osd_fclose (f);
 			free (p);
-			return INIT_FAILED;
+			return INIT_FAIL;
 			}
 		osd_fclose (f);
 		pcart = p;
 		svi.banks[0][1] = p;
 
-		return INIT_OK;
+		return INIT_PASS;
 		}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 	}
 
 void svi318_exit_rom (int id)
@@ -636,7 +636,7 @@ int svi318_cassette_init(int id)
 		cas_samples = NULL;
 		cas_len = -1;
 
-		return (ret ? INIT_FAILED : INIT_OK);
+		return (ret ? INIT_FAIL : INIT_PASS);
     	}
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW,
         OSD_FOPEN_RW_CREATE);
@@ -647,10 +647,10 @@ int svi318_cassette_init(int id)
         wa.display = 1;
         wa.smpfreq = 44100;
         if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAILED;
-        return INIT_OK;
+            return INIT_FAIL;
+        return INIT_PASS;
     	}
-    return INIT_FAILED;
+    return INIT_FAIL;
 	}
 
 void svi318_cassette_exit(int id)

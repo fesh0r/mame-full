@@ -645,19 +645,19 @@ int vc1541_init (int id)
 	/*memset (&(drive->d64), 0, sizeof (drive->d64)); */
 	in = (FILE*)image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!in)
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	size = osd_fsize (in);
 	if (!(vc1541->d64.data = (UINT8*)malloc (size)))
 	{
 		osd_fclose (in);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	if (size != osd_fread (in, vc1541->d64.data, size))
 	{
 		free (vc1541->d64.data);
 		osd_fclose (in);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	osd_fclose (in);
 
@@ -666,7 +666,7 @@ int vc1541_init (int id)
 	/*vc1541->drive = ; */
 	vc1541->d64.image_type = IO_FLOPPY;
 	vc1541->d64.image_id = id;
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void vc1541_exit(int id)

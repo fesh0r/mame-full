@@ -653,7 +653,7 @@ int amiga_fdc_init( int id ) {
 	fdc_status[id].f = image_fopen(IO_FLOPPY,id,OSD_FILETYPE_IMAGE_RW,0);
 	if ( fdc_status[id].f == NULL ) {
 		logerror("Could not open image %s\n", device_filename(IO_FLOPPY,id) );
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	fdc_status[id].disk_changed = 0;
 
@@ -663,7 +663,7 @@ int amiga_fdc_init( int id ) {
 	fdc_step = 1;
 	fdc_rdy = 1;
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 static int fdc_get_curpos( int drive ) {

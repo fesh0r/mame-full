@@ -360,12 +360,12 @@ int intv_load_rom(int id)
 	if(!rom_name)
 	{
 		printf("intv requires cartridge!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	memory = memory_region(REGION_CPU1);
@@ -373,7 +373,7 @@ int intv_load_rom(int id)
 	osd_fread(romfile,&temp,1);			/* header */
 	if (temp != 0xa8)
 	{
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	osd_fread(romfile,&num_segments,1);
@@ -381,7 +381,7 @@ int intv_load_rom(int id)
 	osd_fread(romfile,&temp,1);
 	if (temp != (num_segments ^ 0xff))
 	{
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	logerror("Reading %d segment(s)\n",num_segments);
@@ -418,7 +418,7 @@ int intv_load_rom(int id)
 
 	osd_fclose(romfile);
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 /* Set Reset and INTR/INTRM Vector */
@@ -467,5 +467,5 @@ int intvkbd_load_rom (int id)
 	if (id == 0) /* Normal Intellivision Cartridges */
 		return intv_load_rom(id);
 
-	return INIT_OK;
+	return INIT_PASS;
 }

@@ -45,7 +45,7 @@ static void	nc_card_save(int id)
 
 		/* close file */
 		osd_fclose(file);
-	
+
 		logerror("write succeeded!\r\n");
 	}
 }
@@ -131,7 +131,7 @@ int nc_pcmcia_card_load(int id)
 			{
 				nc_set_card_present_state(1);
 			}
-			return INIT_OK;
+			return INIT_PASS;
 		}
 	}
 
@@ -146,7 +146,7 @@ int nc_pcmcia_card_load(int id)
 	/* card ram NULL */
 	nc_card_ram = NULL;
 	nc_card_size = 0;
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 /* check if pcmcia card is valid  */
@@ -161,7 +161,7 @@ void nc_pcmcia_card_exit(int id)
 {
 	/* save card data if there is any */
 	nc_card_save(id);
-	
+
 	/* free ram allocated to card */
 	if (nc_card_ram!=NULL)
 	{
@@ -180,7 +180,7 @@ void nc_pcmcia_card_exit(int id)
 
 int	nc_serial_init(int id)
 {
-	if (serial_device_init(id)==INIT_OK)
+	if (serial_device_init(id)==INIT_PASS)
 	{
 		/* setup transmit parameters */
 		serial_device_setup(id, 9600, 8, 1,SERIAL_PARITY_NONE);
@@ -193,9 +193,9 @@ int	nc_serial_init(int id)
 
 		/* and start transmit */
 		serial_device_set_transmit_state(id,1);
-		
-		return INIT_OK;
+
+		return INIT_PASS;
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }

@@ -42,13 +42,13 @@ int cbm_quick_init (int id)
 	memset (&quick, 0, sizeof (quick));
 
 	if (device_filename(IO_QUICKLOAD, id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 
 	quick.specified = 1;
 
 	fp = (FILE*)image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
-		return INIT_FAILED;
+		return INIT_FAIL;
 
 	quick.length = osd_fsize (fp);
 
@@ -75,12 +75,12 @@ int cbm_quick_init (int id)
 	if (quick.addr == 0)
 	{
 		osd_fclose (fp);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	if ((quick.data = (UINT8*)malloc (quick.length)) == NULL)
 	{
 		osd_fclose (fp);
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	read = osd_fread (fp, quick.data, quick.length);
 	osd_fclose (fp);
@@ -241,20 +241,20 @@ int cbm_rom_init(int id)
 	}
 
 	if (device_filename(IO_CARTSLOT,id) == NULL)
-		return INIT_OK;
+		return INIT_PASS;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)
 		;
-	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAILED;
+	if (i>=sizeof(cbm_rom)/sizeof(cbm_rom[0])) return INIT_FAIL;
 
 	dev=cbm_rom_find_device();
-	if ( (dev->verify_image!=NULL) && !dev->verify_image(id) ) return INIT_FAILED;
+	if ( (dev->verify_image!=NULL) && !dev->verify_image(id) ) return INIT_FAIL;
 
 	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	size = osd_fsize (fp);
@@ -272,14 +272,14 @@ int cbm_rom_init(int id)
 						 device_filename(IO_CARTSLOT,id), in, size);
 			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
-				return INIT_FAILED;
+				return INIT_FAIL;
 			}
 			cbm_rom[i].addr=in;
 			cbm_rom[i].size=size;
 			read = osd_fread (fp, cbm_rom[i].chip, size);
 			osd_fclose (fp);
 			if (read != size)
-				return INIT_FAILED;
+				return INIT_FAIL;
 		}
 		else if (stricmp (cp, ".crt") == 0)
 		{
@@ -311,7 +311,7 @@ int cbm_rom_init(int id)
 
 				if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 					osd_fclose(fp);
-					return INIT_FAILED;
+					return INIT_FAIL;
 				}
 				cbm_rom[i].addr=adr;
 				cbm_rom[i].size=in;
@@ -320,7 +320,7 @@ int cbm_rom_init(int id)
 				if (read != in)
 				{
 					osd_fclose (fp);
-					return INIT_FAILED;
+					return INIT_FAIL;
 				}
 				j += 16 + in;
 			}
@@ -363,7 +363,7 @@ int cbm_rom_init(int id)
 						 device_filename(IO_CARTSLOT,id), adr, size);
 			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
 				osd_fclose(fp);
-				return INIT_FAILED;
+				return INIT_FAIL;
 			}
 			cbm_rom[i].addr=adr;
 			cbm_rom[i].size=size;
@@ -371,9 +371,9 @@ int cbm_rom_init(int id)
 
 			osd_fclose (fp);
 			if (read != size)
-				return INIT_FAILED;
+				return INIT_FAIL;
 		}
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 

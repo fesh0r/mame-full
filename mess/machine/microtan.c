@@ -456,8 +456,8 @@ int microtan_cassette_init(int id)
         wa.chunk_size = 1;
         wa.chunk_samples = 8;
         if( device_open(IO_CASSETTE,id,0,&wa) )
-            return INIT_FAILED;
-        return INIT_OK;
+            return INIT_FAIL;
+        return INIT_PASS;
     }
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW_CREATE);
     if( file )
@@ -468,10 +468,10 @@ int microtan_cassette_init(int id)
         wa.fill_wave = NULL;
         wa.smpfreq = Machine->sample_rate;
         if( device_open(IO_CASSETTE,id,1,&wa) )
-            return INIT_FAILED;
-        return INIT_OK;
+            return INIT_FAIL;
+        return INIT_PASS;
     }
-    return INIT_OK;
+    return INIT_PASS;
 }
 
 void microtan_cassette_exit(int id)
@@ -496,14 +496,14 @@ int microtan_snapshot_init(int id)
         if (!snapshot_buff)
         {
             LOG(("microtan_snapshot_load: could not allocate %d bytes of buffer\n", snapshot_size));
-            return INIT_FAILED;
+            return INIT_FAIL;
         }
         osd_fread(file, snapshot_buff, snapshot_size);
         osd_fclose(file);
 
-        return INIT_OK;
+        return INIT_PASS;
     }
-    return INIT_FAILED;
+    return INIT_FAIL;
 }
 
 void microtan_snapshot_exit(int id)
@@ -622,7 +622,7 @@ int parse_intel_hex(char *src)
         LOG(("parse_intel_hex: registers (?) at %04X\n", last_addr));
         memcpy(&snapshot_buff[8192+64], &snapshot_buff[last_addr], last_size);
     }
-    return INIT_OK;
+    return INIT_PASS;
 }
 
 int parse_zillion_hex(char *src)
@@ -705,7 +705,7 @@ int parse_zillion_hex(char *src)
         }
         src++;
     }
-    return INIT_OK;
+    return INIT_PASS;
 }
 
 int microtan_hexfile_init(int id)
@@ -723,7 +723,7 @@ int microtan_hexfile_init(int id)
         if (!snapshot_buff)
         {
             LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", snapshot_size));
-            return INIT_FAILED;
+            return INIT_FAIL;
         }
         memset(snapshot_buff, 0, snapshot_size);
 
@@ -731,7 +731,7 @@ int microtan_hexfile_init(int id)
         if (!buff)
         {
             LOG(("microtan_hexfile_load: could not allocate %d bytes of buffer\n", size));
-            return INIT_FAILED;
+            return INIT_FAIL;
         }
         osd_fread(file, buff, size);
         osd_fclose(file);
@@ -742,7 +742,7 @@ int microtan_hexfile_init(int id)
             return parse_intel_hex(buff);
         return parse_zillion_hex(buff);
     }
-    return INIT_FAILED;
+    return INIT_FAIL;
 }
 
 void microtan_hexfile_exit(int id)

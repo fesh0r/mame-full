@@ -1,6 +1,6 @@
 /***************************************************************************
   TI-85 driver by Krzysztof Strzecha
-  
+
   Functions to emulate general aspects of the machine (RAM, ROM, interrupts,
   I/O ports)
 
@@ -113,7 +113,7 @@ static void ti85_timer_callback (int param)
 			cpu_set_irq_line(0,0, HOLD_LINE);
 			ti85_ON_interrupt_status = 1;
 			if (!ti85_timer_interrupt_mask) ti85_timer_interrupt_mask = 1;
-		}       
+		}
 		ti85_ON_pressed = 1;
 		return;
 	}
@@ -181,7 +181,7 @@ void ti85_init_machine(void)
 
 	if (ti85_load_nvram())
 		cpu_set_reg(Z80_PC,0x0b5f);
-}                          
+}
 
 void ti85_stop_machine(void)
 {
@@ -219,15 +219,15 @@ void ti86_init_machine(void)
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);
-                
+
 		cpu_setbank(1,memory_region(REGION_CPU1) + 0x010000);
 		cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
 
-		cpu_setbank(4, ti86_ram); 
+		cpu_setbank(4, ti86_ram);
 		cpu_setbank(8, ti86_ram);
 
 		ti85_timer = timer_pulse(TIME_IN_HZ(200), 0, ti85_timer_callback);
-	
+
 		if (ti85_snap_data)
 		{
 			memory_set_opbase_handler(0, ti85_opbaseoverride);
@@ -317,7 +317,7 @@ READ_HANDLER ( ti85_port_0006_r )
 READ_HANDLER ( ti85_port_0007_r )
 {
 	ti85_update_serial();
-        return  (ti85_white_out<<3) | 
+        return  (ti85_white_out<<3) |
 		(ti85_red_out<<2)|
                 ((ti85_white_in&(1-ti85_white_out))<<1)|
                 (ti85_red_in&(1-ti85_red_out))|
@@ -401,7 +401,7 @@ static int ti85_load_nvram(void)
 {
 	FILE *file;
 
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
 		return 0;
 
@@ -413,7 +413,7 @@ static int ti85_load_nvram(void)
 static void ti85_save_nvram(void)
 {
 	FILE *file;
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 	osd_fwrite(file, memory_region(REGION_CPU1)+0x8000, sizeof(unsigned char)*0x8000);
@@ -424,7 +424,7 @@ static int ti86_load_nvram(void)
 {
 	FILE *file;
 
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
 		return 0;
 
@@ -436,7 +436,7 @@ static int ti86_load_nvram(void)
 static void ti86_save_nvram(void)
 {
 	FILE *file;
-	if ( (file=osd_fopen(Machine->gamedrv->name, 
+	if ( (file=osd_fopen(Machine->gamedrv->name,
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 	osd_fwrite(file, ti86_ram, sizeof(unsigned char)*128*1024);
@@ -469,7 +469,7 @@ int ti85_load_snap(int id)
 					ti85_snap_data_type = TI85_SAV;
 				if ( !strncmp((char *)ti85_snap_data+8, "TI-86", 5))
 					ti85_snap_data_type = TI86_SAV;
-			
+
 				return 0;
 			}
 			osd_fclose(file);
@@ -512,7 +512,7 @@ static void ti85_setup_sav(unsigned char *data, unsigned long data_size)
 	unsigned char lo,hi;
 	unsigned char * reg = data + 0x40;
 	unsigned char * hdw = data + 0x8000 + 0x94;
-	
+
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
@@ -595,7 +595,7 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 	unsigned char lo,hi;
 	unsigned char * reg = data + 0x40;
 	unsigned char * hdw = data + 0x20000 + 0x94;
-	
+
 	/* Set registers */
 	lo = reg[0x00] & 0x0ff;
 	hi = reg[0x01] & 0x0ff;
@@ -655,7 +655,7 @@ static void ti86_setup_sav(unsigned char *data, unsigned long data_size)
 
 	ti86_memory_page_0x8000 = hdw[0x0c]&0xff ? 0x40 : 0x00;
 	ti86_memory_page_0x8000 |= hdw[0x10]&0x0f;
-	
+
 	update_ti85_memory ();
 
 	lo = hdw[0x2c] & 0x0ff;
@@ -683,7 +683,7 @@ int ti85_serial_init (int id)
 	UINT8* file_data;
 	unsigned long file_size;
 
-	if (ti85_serial_status != TI85_SEND_STOP) return INIT_FAILED;
+	if (ti85_serial_status != TI85_SEND_STOP) return INIT_FAIL;
 
 	ti85_free_serial_data_memory();
 	ti85_receive_serial (NULL,0);
@@ -707,19 +707,19 @@ int ti85_serial_init (int id)
 				{
 					ti85_free_serial_stream (&ti85_serial_stream);
 					free (file_data);
-					return INIT_FAILED;
+					return INIT_FAIL;
 				}
 
 				free (file_data);
 
 				ti85_serial_status = TI85_SEND_HEADER;
 
-				return INIT_OK;
+				return INIT_PASS;
 			}
 		}
 		osd_fclose(file);
 	}
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void ti85_serial_exit (int id)
@@ -747,7 +747,7 @@ static int ti85_alloc_serial_data_memory (UINT32 size)
 			ti85_receive_buffer = NULL;
 			return 0;
 	        }
-	}                       	
+	}
 	return 1;
 }
 
@@ -827,7 +827,7 @@ static int ti85_send_serial(UINT8* serial_data, UINT32 serial_data_size)
 		return 1;
 	}
 	return 1;
-} 
+}
 
 void ti85_update_serial (void)
 {
@@ -861,7 +861,7 @@ void ti85_update_serial (void)
 		}
 	}
 
-	switch (ti85_serial_transfer_type) 
+	switch (ti85_serial_transfer_type)
 	{
 		case TI85_SEND_VARIABLES:
 			ti85_send_variables();
@@ -878,7 +878,7 @@ void ti85_update_serial (void)
 		case TI85_RECEIVE_SCREEN:
 			ti85_receive_screen();
 			break;
-	}			
+	}
 }
 
 static void ti85_reset_serial (void)
@@ -901,11 +901,11 @@ static void ti85_reset_serial (void)
 static void ti85_send_variables (void)
 {
 	static UINT16 variable_number = 0;
-	
+
 	if (!ti85_alloc_serial_data_memory(7))
 		ti85_serial_status = TI85_SEND_STOP;
 
-	switch (ti85_serial_status) 
+	switch (ti85_serial_status)
 	{
 		case TI85_SEND_HEADER:
 			if(!ti85_send_serial(ti85_serial_stream.variables[variable_number].header,ti85_serial_stream.variables[variable_number].header_size))
@@ -1012,7 +1012,7 @@ static void ti85_send_variables (void)
 		case TI85_SEND_RESET:
 			variable_number = 0;
 			break;
-	}			
+	}
 }
 
 static void ti85_send_backup (void)
@@ -1022,7 +1022,7 @@ static void ti85_send_backup (void)
 	if (!ti85_alloc_serial_data_memory(7))
 		ti85_serial_status = TI85_SEND_STOP;
 
-	switch (ti85_serial_status) 
+	switch (ti85_serial_status)
 	{
 		case TI85_SEND_HEADER:
 			if(!ti85_send_serial(ti85_serial_stream.variables[variable_number].header,ti85_serial_stream.variables[variable_number].header_size))
@@ -1086,7 +1086,7 @@ static void ti85_send_backup (void)
 		case TI85_SEND_RESET:
 			variable_number = 0;
 			break;
-	}			
+	}
 }
 
 static void ti85_receive_variables (void)
@@ -1241,7 +1241,7 @@ static void ti85_receive_variables (void)
 				free (var_data);
 				var_data = NULL;
 				variable_number ++;
-				
+
 				ti85_convert_stream_to_data (ti85_receive_buffer, 4*8, ti85_receive_data);
 				if (ti85_receive_data[1] == 0x06)
 					ti85_serial_status = TI85_RECEIVE_HEADER_1;
@@ -1451,7 +1451,7 @@ static void ti85_receive_screen (void)
 	void * image_file;
 	UINT8 * image_file_data;
 
-	switch (ti85_serial_status) 
+	switch (ti85_serial_status)
 	{
 		case TI85_PREPARE_SCREEN_REQUEST:
 			if(!ti85_alloc_serial_data_memory (4))
@@ -1543,5 +1543,5 @@ static void ti85_receive_screen (void)
 				ti85_serial_status = TI85_SEND_STOP;
 			}
 			break;
-	}			
+	}
 }

@@ -478,7 +478,7 @@ int gb_load_rom (int id)
 	if(device_filename(IO_CARTSLOT,id)==NULL)
 	{
 		printf("Cartridge name not specified!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 	if( new_memory_region(REGION_CPU1, 0x10000,0) )
 	{

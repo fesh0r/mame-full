@@ -96,7 +96,7 @@ static struct via6522_interface via0={
 	void (*out_ca2_func)(int offset, int val);
 	void (*out_cb2_func)(int offset, int val);
 	void (*irq_func)(int state);
-	
+
     /* kludges for the Vectrex */
 	void (*out_shift_func)(int val);
 	void (*t2_callback)(double time);
@@ -113,8 +113,8 @@ static struct via6522_interface via0={
 	0,
 	0,
 	sym1_irq
-}, 
-via1 = { 0 }, 
+},
+via1 = { 0 },
 via2 = { 0 };
 
 void init_sym1(void)
@@ -148,7 +148,7 @@ int kim1_cassette_init(int id)
 		if (memcmp(buff, magic, sizeof (buff)))
 		{
 			logerror("kim1_rom_load: magic '%s' not found\n", magic);
-			return INIT_FAILED;
+			return INIT_FAIL;
 		}
 		osd_fread_lsbfirst(file, &addr, 2);
 		osd_fread_lsbfirst(file, &size, 2);
@@ -158,7 +158,7 @@ int kim1_cassette_init(int id)
 			osd_fread(file, &RAM[addr++], 1);
 		osd_fclose(file);
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void kim1_cassette_exit(int id)

@@ -21,7 +21,7 @@ static int common_length_spt_heads[][3] = {
 
 int pc_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		int i;
 		int scl, spt,heads;
@@ -64,10 +64,10 @@ int pc_floppy_init(int id)
 
 			basicdsk_set_geometry(id, 80, heads, spt, 512, 01);
 
-			return INIT_OK;
+			return INIT_PASS;
 		}
 	}
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 void pc_floppy_exit(int id)

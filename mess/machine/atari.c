@@ -126,7 +126,7 @@ int a800_floppy_init(int id)
 {
 	if( device_filename(IO_FLOPPY,id) )
 		open_floppy(id);
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void a800_floppy_exit(int id)
@@ -187,7 +187,7 @@ int a800_rom_init(int id)
 			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
 		}
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void a800_rom_exit(int id)
@@ -267,7 +267,7 @@ int a800xl_load_rom(int id)
 		}
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 int a800xl_id_rom(int id)
@@ -325,7 +325,7 @@ int a5200_rom_init(int id)
 			logerror("%s %s not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
 		}
 	}
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void a5200_rom_exit(int id)

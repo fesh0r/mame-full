@@ -355,27 +355,27 @@ int atom_init_atm (int id)
 			/* free the data */
 			free(quickload_data);
 
-			return INIT_OK;
+			return INIT_PASS;
 		}
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 
 /* load floppy */
 int atom_floppy_init(int id)
 {
-	if (basicdsk_floppy_init(id)==INIT_OK)
+	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		/* sector id's 0-9 */
 		/* drive, tracks, heads, sectors per track, sector length, dir_sector, dir_length, first sector id */
 		basicdsk_set_geometry(id,80,1,10,256,0);
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 
@@ -515,9 +515,9 @@ int atom_cassette_init(int id)
 		wa.display = 1;
 
 		if (device_open(IO_CASSETTE, id, 0, &wa))
-			return INIT_FAILED;
+			return INIT_FAIL;
 
-		return INIT_OK;
+		return INIT_PASS;
 	}
 
 	/* HJB 02/18: no file, create a new file instead */
@@ -530,11 +530,11 @@ int atom_cassette_init(int id)
 		wa.smpfreq = 22050; /* maybe 11025 Hz would be sufficient? */
 		/* open in write mode */
         if (device_open(IO_CASSETTE, id, 1, &wa))
-            return INIT_FAILED;
-		return INIT_OK;
+            return INIT_FAIL;
+		return INIT_PASS;
     }
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 void atom_cassette_exit(int id)

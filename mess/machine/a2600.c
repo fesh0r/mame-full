@@ -1013,7 +1013,7 @@ int a2600_load_rom(int id)
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
 		printf("a2600 Requires Cartridge!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */

@@ -305,8 +305,8 @@ int trs80_floppy_init(int id)
 	int dir_length; /* length of directory in sectors (aka DDGA) */
     void *file;
 
-    if (basicdsk_floppy_init(id) != INIT_OK)
-		return INIT_FAILED;
+    if (basicdsk_floppy_init(id) != INIT_PASS)
+		return INIT_FAIL;
 
     if (id == 0)        /* first floppy? */
 	{
@@ -364,7 +364,7 @@ int trs80_floppy_init(int id)
 		/* set deleted data address mark for sector specified */
 		basicdsk_set_ddam(id, track, side, sector_id, 1);
 	}
-    return INIT_OK;
+    return INIT_PASS;
 }
 
 static void trs80_fdc_callback(int);

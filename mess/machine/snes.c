@@ -202,12 +202,12 @@ int snes_load_rom (int id)
 	if(!rom_name)
 	{
 		printf("SNES requires cartridge!\n");
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		return INIT_FAILED;
+		return INIT_FAIL;
 	}
 
     /* Allocate memory and set up memory regions */
@@ -316,7 +316,7 @@ int snes_id_rom (int id)
 		retval=1;
 	osd_fread (romfile, magic, 4);
 	osd_fclose (romfile);
-	return retval; 
+	return retval;
 }
 
 

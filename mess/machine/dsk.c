@@ -99,11 +99,11 @@ int dsk_floppy_load(int id)
 		{
 			dsk_disk_image_init(thedrive); /* initialise dsk */
             floppy_drive_set_disk_image_interface(id,&dsk_floppy_interface);
-			return INIT_OK;
+			return INIT_PASS;
 		}
 	}
 
-	return INIT_FAILED;
+	return INIT_FAIL;
 }
 
 int dsk_save(int type, int id, unsigned char **ptr)
@@ -547,9 +547,9 @@ char * dsk_get_sector_ptr_callback(int drive, int sector_index, int side)
 void dsk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length, int ddam)
 {
 	char * pSectorData;
-	
+
 	pSectorData = dsk_get_sector_ptr_callback(drive, index1, side);
-	
+
 	if (pSectorData!=NULL)
 	{
 		memcpy(pSectorData, ptr, length);

@@ -60,7 +60,7 @@ static int apexc_cylinder_init(int id)
 
 	if (apexc_cylinder.fd)
 	{	/* load RAM contents */
-		
+
 		osd_fread(apexc_cylinder.fd, memory_region(REGION_CPU1), 0x8000);
 #ifdef LSB_FIRST
 		{	/* fix endianness */
@@ -75,7 +75,7 @@ static int apexc_cylinder_init(int id)
 #endif
 	}
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 /*
@@ -172,7 +172,7 @@ static int apexc_tape_init(int id)
 	t->fd = image_fopen(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE_RW,
 							(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
-	return INIT_OK;
+	return INIT_PASS;
 }
 
 /*
@@ -598,7 +598,7 @@ static void apexc_teletyper_putchar(int character)
 			/*'#'*/'\203'/*pi*/,')',				'(',				'\0'/*Letters*/
 		},
 		{
-			' '/*???*/,			'T',				'B',				'O',	
+			' '/*???*/,			'T',				'B',				'O',
 			'E',				'H',				'N',				'M',
 			'A',				'L',				'R',				'G',
 			'I',				'P',				'C',				'V',
