@@ -1054,7 +1054,7 @@ static struct CustomSound_interface custom_interface =
 	pulsar_sh_update
 };
 
-#define MACHINEDRIVER(NAME, MEM, PORT)				\
+#define MACHINEDRIVER(NAME, MEM, PORT, SND, snd)	\
 static struct MachineDriver machine_driver_##NAME = \
 {													\
 	/* basic machine hardware */					\
@@ -1086,20 +1086,17 @@ static struct MachineDriver machine_driver_##NAME = \
 	0,0,0,0,										\
 	{												\
 		{											\
-			SOUND_SAMPLES,							\
-			&samples_interface						\
-		},											\
-		{											\
-			SOUND_CUSTOM,							\
-			&custom_interface						\
+			SOUND_##SND,							\
+			&snd##_interface						\
 		}											\
 	}												\
 };
 
-MACHINEDRIVER( 2ports, vicdual, 2ports )
-MACHINEDRIVER( 3ports, vicdual, 3ports )
-MACHINEDRIVER( 4ports, vicdual, 4ports )
-MACHINEDRIVER( safari, safari,	safari )
+MACHINEDRIVER( 2ports, vicdual, 2ports, SAMPLES, samples )
+MACHINEDRIVER( 3ports, vicdual, 3ports, SAMPLES, samples )
+MACHINEDRIVER( 4ports, vicdual, 4ports, SAMPLES, samples )
+MACHINEDRIVER( safari, safari,	safari, SAMPLES, samples )
+MACHINEDRIVER( pulsar, vicdual, 4ports, CUSTOM,  custom  )
 
 
 static struct AY8910interface carnival_ay8910_interface =
@@ -1686,8 +1683,6 @@ static void init_pulsar(void)
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
 
-/*	samples_interface.samplenames = pulsar_sample_names; */
-
 	vicdual_decode();
 }
 
@@ -1711,6 +1706,6 @@ GAMEX(1980, sptrekct, spacetrk, 4ports,   sptrekct, nosamples, ROT270, "Sega", "
 GAME( 1980, carnival, 0,		carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)" )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (cocktail)" )
 GAMEX(1980, digger,   0,		3ports,   digger,	nosamples, ROT270, "Sega", "Digger", GAME_NO_SOUND )
-GAME( 1981, pulsar,   0,		4ports,   pulsar,	pulsar,    ROT270, "Sega", "Pulsar" )
+GAME( 1981, pulsar,   0,		pulsar,   pulsar,	pulsar,    ROT270, "Sega", "Pulsar" )
 GAMEX(1979, heiankyo, 0,		4ports,   heiankyo, nosamples, ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )
 

@@ -25,7 +25,7 @@
 #define SIZZLE		 0x01
 #define GATE		 0x02
 #define BIRTH		 0x04
-#define HBEAT		 0x08
+#define HEART_BEAT	 0x08
 #define MOVING_MAZE  0x10
 
 static int sample_rate = 0;
@@ -281,8 +281,8 @@ INLINE int bonus(void)
 	{
 		amp = 32767;
 	}
-	else
-	if (amp > 0)
+
+    if (amp > 0)
 	{
 		/* R = 1M, C = 0.1uF */
 		counter_freq -= (int)(32768 / 0.0693);
@@ -329,6 +329,7 @@ INLINE int bonus(void)
 	return output_555 ? amp : 0;
 }
 
+/* resistor values at the outputs of a counter/1-of-10 demux 4017 */
 static int birth_4017[10] = {
 	 22000, 100000,  33000,  68000,  10000,
 	150000,  47000, 220000,  82000,  33000
@@ -463,6 +464,84 @@ INLINE int birth(void)
 	return output ? decay[amp] : 0;
 }
 
+/* resistor values at 5 outputs of a counter/1-of-10 demux 4017 (reset at count 5) */
+static int heart_beat_4017_1[10] = {
+	100000,  62000,  47000,  33000,  22000,
+};
+
+INLINE int heart_beat(void)
+{
+	static int counter_4017_1;
+	static int index_4017_1;
+	static int counter_555;
+	static int output_555;
+	static int index_4017_2;
+	static int counter_filter_1;
+	static int counter_filter_2;
+	static int sample;
+
+	if (sound_latch_2 & HEART_BEAT)
+		return 0;
+
+	/* R = 100k, C = 0.05uF -> 0.005 ~= 200Hz
+	 * with HBEAT_RATE there's another 1M resistor, so probably(?)
+	 * R = 90.9k, C = 0.05uF -> 0.004545 ~= 220Hz ?
+	 */
+	counter_4017_1 -= (sound_latch_1 & HBEAT_RATE) ? 220 : 200;
+	while (counter_4017_1 < 0)
+	{
+		counter_4017_1 += sample_rate;
+		index_4017_1 = ++index_4017_1 % 5;
+	}
+	/*
+	 * Ra is 10k, Rb is 470k, C is 0.1uF
+	 * charge time t1 = 0.693 * (Ra + Rb) * C -> 0.033264 ~= 30Hz
+	 * discharge time t2 = 0.693 * Rb * C -> 0.032571 ~= 31 Hz
+	 */
+	if (output_555)
+	{
+		counter_555 -= 31 * heart_beat_4017_1[index_4017_1] / 100000;
+		while (counter_555 < 0)
+		{
+			counter_555 += sample_rate;
+			/* count the second 4017 in the heart beat section */
+			index_4017_2 = ++index_4017_2 % 10;
+			output_555 = 0;
+        }
+	}
+	else
+	{
+		counter_555 -= 30 * heart_beat_4017_1[index_4017_1] / 100000;
+		while (counter_555 < 0)
+		{
+			counter_555 += sample_rate;
+			output_555 = 1;
+        }
+	}
+
+    /* R = 100k, C = 0.033uF -> ~= 440Hz */
+	counter_filter_1 -= 440;
+	while (counter_filter_1 < 0)
+	{
+		counter_filter_1 += sample_rate;
+		/* for counter values 0 and 4 the upper filter is enabled. */
+		if (index_4017_2 == 0 || index_4017_2 == 4)
+			sample = noise[noise_count];
+	}
+
+	/* R = 470k, C = 0.01uF -> ~= 307Hz */
+	counter_filter_2 -= 307;
+	while (counter_filter_2 < 0)
+	{
+		counter_filter_2 += sample_rate;
+		/* for counter value 1 the lower filter is enabled. */
+		if (index_4017_2 == 1)
+			sample = noise[noise_count];
+	}
+
+	return sample;
+}
+
 INLINE int moving_maze(void)
 {
 	static int counter_1;
@@ -530,30 +609,59 @@ WRITE_HANDLER( pulsar_sh_port2_w )
 		return;
 	stream_update(channel,0);
 	sound_latch_2 = data;
-
 }
 
-static void pulsar_sound_update(int param, INT16 *buffer, int length)
+static void pulsar_update(int param, INT16 **buffer, int length)
 {
-	while (length--)
+	int offs;
+
+	for(offs = 0; offs < length; offs++)
 	{
-		int sum = (
-			clang() +
-			key() +
-			alien_hit() +
-			player_hit() +
-			alien_shoot() +
-			player_shoot() +
-			bonus() +
-			sizzle() +
-			gate() +
-			birth() +
-			moving_maze()
-		) / 4;
-		noise_count = ++noise_count & 32767;
-		*buffer++ = sum < 32767 ? sum : 32767;
+        noise_count = ++noise_count & 32767;
+		buffer[ 0][offs] = clang();
+		buffer[ 1][offs] = key();
+		buffer[ 2][offs] = alien_hit();
+		buffer[ 3][offs] = player_hit();
+		buffer[ 4][offs] = alien_shoot();
+		buffer[ 5][offs] = player_shoot();
+		buffer[ 6][offs] = bonus();
+		buffer[ 7][offs] = sizzle();
+		buffer[ 8][offs] = gate();
+		buffer[ 9][offs] = birth();
+		buffer[10][offs] = heart_beat();
+        buffer[11][offs] = moving_maze();
 	}
 }
+
+static const char *channel_names[] = {
+	"CLANG",
+	"KEY",
+	"ALIEN HIT",
+	"PLAYER HIT",
+	"ALIEN SHOOT",
+	"PLAYER SHOOT",
+	"BONUS",
+	"SIZZLE",
+	"GATE",
+	"BIRTH",
+	"HEART BEAT",
+	"MOVING MAZE"
+};
+
+static int channel_mixing_levels[] = {
+	25, /* CLANG		*/
+	25, /* KEY			*/
+	25, /* ALIEN HIT	*/
+	25, /* PLAYER HIT	*/
+	25, /* ALIEN SHOOT	*/
+	25, /* PLAYER SHOOT */
+	25, /* BONUS		*/
+	25, /* SIZZLE		*/
+	25, /* GATE 		*/
+	25, /* BIRTH		*/
+	25, /* HEART-BEAT	*/
+	25	/* MOVING MAZE	*/
+};
 
 int pulsar_sh_start(const struct MachineSound *msound)
 {
@@ -575,7 +683,8 @@ int pulsar_sh_start(const struct MachineSound *msound)
 
 	sample_rate = Machine->sample_rate;
 
-	channel = stream_init("Pulsar", 100, sample_rate, 0, pulsar_sound_update);
+	channel = stream_init_multi(12,
+		channel_names, channel_mixing_levels, sample_rate, 0, pulsar_update);
 
 	return 0;
 }
