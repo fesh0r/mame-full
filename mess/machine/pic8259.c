@@ -112,6 +112,7 @@ static void pic8259_timerproc(int which)
 			return;
 		}
 	}
+	cpu_set_irq_line(0, 0, CLEAR_LINE);
 }
 
 

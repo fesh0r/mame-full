@@ -98,12 +98,19 @@ int inputx_is_posting(void);
 
 /* various posting functions; can be called from FEs */
 void inputx_post(const unicode_char_t *text);
+void inputx_post_rate(const unicode_char_t *text, mame_time rate);
 void inputx_postc(unicode_char_t ch);
+void inputx_postc_rate(unicode_char_t ch, mame_time rate);
 void inputx_postn(const unicode_char_t *text, size_t text_len);
+void inputx_postn_rate(const unicode_char_t *text, size_t text_len, mame_time rate);
 void inputx_post_utf16(const utf16_char_t *text);
+void inputx_post_utf16_rate(const utf16_char_t *text, mame_time rate);
 void inputx_postn_utf16(const utf16_char_t *text, size_t text_len);
+void inputx_postn_utf16_rate(const utf16_char_t *text, size_t text_len, mame_time rate);
 void inputx_post_utf8(const char *text);
+void inputx_post_utf8_rate(const char *text, mame_time rate);
 void inputx_postn_utf8(const char *text, size_t text_len);
+void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate);
 
 /* miscellaneous functions */
 int input_categorize_port(const struct InputPort *in);

@@ -940,13 +940,13 @@ QUEUE_CHARS( at_keyboard )
 		if (b)
 		{
 			if (b & 0x80)
-				at_keyboard_queue_insert(0x36);
+				at_keyboard_standard_scancode_insert(0x36, 1);
 
-			at_keyboard_queue_insert(b & 0x7f);
-			at_keyboard_queue_insert(b | 0x80);
+			at_keyboard_standard_scancode_insert(b & 0x7f, 1);
+			at_keyboard_standard_scancode_insert(b & 0x7f, 0);
 
 			if (b & 0x80)
-				at_keyboard_queue_insert(0xb6);
+				at_keyboard_standard_scancode_insert(0x36, 0);
 		}
 	}
 	return i;

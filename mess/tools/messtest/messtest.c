@@ -104,6 +104,14 @@ static void parse_offset(const char *s, offs_t *result)
 
 
 
+static mame_time parse_time(const char *s)
+{
+	double d = atof(s);
+	return double_to_mame_time(d);
+}
+
+
+
 static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
@@ -116,6 +124,7 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 	int region;
 	int device_type;
 	int preload;
+	mame_time rate;
 
 	switch(state->phase) {
 	case STATE_ROOT:
@@ -170,12 +179,16 @@ static void start_handler(void *data, const XML_Char *tagname, const XML_Char **
 				goto missing_attribute;
 
 			state->current_command.command_type = MESSTEST_COMMAND_WAIT;
-			state->current_command.u.wait_time = atof(s);
+			state->current_command.u.wait_time = mame_time_to_double(parse_time(s));
 		}
 		else if (!strcmp(tagname, "input"))
 		{
 			/* <input> - inputs natural keyboard data into a system */
 			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
+
+			s = find_attribute(attributes, "rate");
+			rate = s ? parse_time(s) : make_mame_time(0, 0);
+			state->current_command.u.input_args.rate = rate;
 		}
 		else if (!strcmp(tagname, "rawinput"))
 		{
@@ -490,13 +503,13 @@ static void data_handler(void *data, const XML_Char *s, int len)
 		switch(command->command_type) {
 		case MESSTEST_COMMAND_INPUT:
 		case MESSTEST_COMMAND_RAWINPUT:
-			str = (char *) command->u.input_chars;
+			str = (char *) command->u.input_args.input_chars;
 			old_len = str ? strlen(str) : 0;
 			str = pool_realloc(&state->pool, str, old_len + len + 1);
 			if (!str)
 				goto outofmemory;
 			strncpyz(str + old_len, s, len + 1);
-			command->u.input_chars = str;
+			command->u.input_args.input_chars = str;
 			break;
 
 		case MESSTEST_COMMAND_VERIFY_MEMORY:

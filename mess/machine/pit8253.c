@@ -491,14 +491,14 @@ static void pit8253_update(int param)
 				break;
 
 			case 1:
-				output				= 1;
+				output				= 0;
 				counter_adjustment	= 1;
 				phase				= 2;
 				wake				= WAKE_BYCOUNTER;
 				break;
 
 			case 2:
-				output				= counter ? 1 : 0;
+				output				= counter ? 0 : 1;
 				counter_adjustment	= counter ? 1 : 0;
 				wake				= counter ? WAKE_BYCOUNTER : WAKE_IDLE;
 				break;
@@ -739,7 +739,7 @@ static data8_t pit8253_read(int which, offs_t offset)
 	case 0:
 	case 1:
 	case 2:
-		counter = pit8253_get_counter(which, timer, timer_get_time());
+		counter = p->timer[timer].latch;
 
 		switch(CTRL_ACCESS(p->timer[timer].control)) {
 		case 0:
@@ -791,6 +791,7 @@ static void pit8253_write(int which, offs_t offset, int data)
 	int clock_val;
 	int clock_mask;
 	counter_write_t counter_write;
+	UINT64 current_time;
 
 	offset %= 4;
 
@@ -860,6 +861,10 @@ static void pit8253_write(int which, offs_t offset, int data)
 
 		if (timer < MAX_TIMER)
 		{
+			/* pc1512 seems to expect the timer to relatch itself */
+			current_time = get_timer_time(which, timer);
+			p->timer[timer].latch = pit8253_get_counter(which, timer, current_time);
+
 			/* prepare an update */
 			p->timer[timer].control = data & 0x3F;
 			p->timer[timer].phase = 0;

@@ -40,7 +40,11 @@ struct messtest_command
 	union
 	{
 		double wait_time;
-		const char *input_chars;
+		struct
+		{
+			const char *input_chars;
+			mame_time rate;
+		} input_args;
 		struct
 		{
 			int mem_region;
