@@ -75,7 +75,7 @@ INLINE int _vec_mult(int x, int y)
 
 #include "uclock.h"
 
-unsigned int osd_cycles(void)
+INLINE unsigned int osd_cycles(void)
 {
     return uclock();
 }

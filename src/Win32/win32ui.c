@@ -36,7 +36,9 @@
 #include <commdlg.h>
 #include <strings.h>
 #include <sys/stat.h>
+#if defined(INTELLIMOUSE)
 #include <zmouse.h>         /* Intellimouse */
+#endif
 #include <wingdi.h>
 #include <tchar.h>
 #include <time.h>
@@ -492,7 +494,8 @@ char *column_names[COLUMN_MAX] = {
     "Clone Of"
 };
 
-#ifdef NEOFREE
+/* a tiny compile is without Neogeo games */
+#if (defined(NEOFREE) || defined(TINY_COMPILE)) && !defined(NEOMAME)
 struct GameDriver driver_neogeo =
 {
 	__FILE__,
@@ -505,9 +508,23 @@ struct GameDriver driver_neogeo =
 	0,
 	0,
 	0,
-#ifdef MESS
-	0,
+	NOT_A_DRIVER,
+};
 #endif
+
+#if defined(TINY_COMPILE) || defined(NEOMAME)
+struct GameDriver driver_playch10 =
+{
+	__FILE__,
+	0,
+	"playch10 Fake driver",
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	NOT_A_DRIVER,
 };
 #endif
@@ -1341,6 +1358,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
     SetFocus(hwndList);
 
     // Init Intellimouse
+#if defined(INTELLIMOUSE)
     {
         UINT uiMsh_Msg3DSupport;
         UINT uiMsh_MsgScrollLines;
@@ -1352,6 +1370,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
             &uiMsh_MsgMouseWheel, &uiMsh_Msg3DSupport,
             &uiMsh_MsgScrollLines, &f3DSupport, &iScrollLines);
     }
+#endif
 
     // Init DirectInput
     if (!DirectInputInitialize())
@@ -1717,6 +1736,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
         PostQuitMessage(0);
         return 0;
 
+#if defined(INTELLIMOUSE)
     case WM_MOUSEWHEEL:
         {
             // WM_MOUSEWHEEL will be in Win98
@@ -1729,8 +1749,11 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
             return 0;
         }
         break;
+#endif
 
     default:
+
+#if defined(INTELLIMOUSE)
         if (message == uiMsh_MsgMouseWheel)
         {
             int zDelta = (int)wParam; /* wheel rotation */
@@ -1743,6 +1766,7 @@ static long WINAPI MameWindowProc(HWND hWnd,UINT message,UINT wParam,LONG lParam
                 SetSelectedPick(GetSelectedPick() - 1);
             return 0;
         }
+#endif
         break;
     }
 
@@ -3585,10 +3609,10 @@ static BOOL CreateIcons(HWND hWnd)
     ListView_SetImageList (hWnd, hLarge, LVSIL_NORMAL);
  
 #ifdef MESS
-	return CreateMessIcons();
-#else
-    return TRUE;
+    if (!CreateMessIcons())
+        return FALSE;
 #endif
+    return TRUE;
 }
 
 
@@ -4659,7 +4683,8 @@ static void MamePlayRecordGame()
         }      
 
         strcpy(inpHeader.name,drivers[GetSelectedPickItem()]->name);
-        inpHeader.version[1] = VERSION;
+
+        inpHeader.version[1] = MAME_VERSION;
 #ifdef BETA_VERSION
         inpHeader.version[2] = BETA_VERSION;
 #endif

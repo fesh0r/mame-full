@@ -184,15 +184,15 @@ typedef union {
 #define HAS_8085A       1
 #define HAS_M6502       1
 #define HAS_M65C02      1
-#define HAS_M65S02      0
+#define HAS_M65SC02     0
 #define HAS_M65CE02     0
 #define HAS_M6509       0
 #define HAS_M6510       1
 #define HAS_M6510T      0
 #define HAS_M7501       0
 #define HAS_M8502       0
-#define HAS_M4510       0
 #define HAS_N2A03       1
+#define HAS_M4510       0
 #define HAS_H6280       1
 #define HAS_I86         1
 #define HAS_I88         0
@@ -211,14 +211,13 @@ typedef union {
 #define HAS_M6801       1
 #define HAS_M6802       1
 #define HAS_M6803       1
-#define HAS_M6805       1
 #define HAS_M6808       1
 #define HAS_HD63701     1
 #define HAS_NSC8105     1
+#define HAS_M6805       1
 #define HAS_M68705      1
 #define HAS_HD63705     1
 #define HAS_HD6309      1
-#define HAS_M6309       1
 #define HAS_M6809       1
 #define HAS_KONAMI      1
 #define HAS_M68000      1
@@ -230,6 +229,7 @@ typedef union {
 #define HAS_F8          0
 #define HAS_CP1600      0
 #define HAS_TMS34010    1
+#define HAS_TMS34020    0
 #define HAS_TMS9900     0
 #define HAS_TMS9940     0
 #define HAS_TMS9980     1
@@ -241,15 +241,15 @@ typedef union {
 #define HAS_Z8000       1
 #define HAS_TMS320C10   1
 #define HAS_CCPU        1
+#define HAS_PDP1        0
 #define HAS_ADSP2100    1
 #define HAS_ADSP2105    1
-#define HAS_PDP1        0
 #define HAS_PSXCPU      1
 #define HAS_SC61860     0
-#define ARM             0
+#define HAS_ARM         0
 #define HAS_G65816      0
 #define HAS_SPC700      0
-#define HAS_SH2         0
+#define HAS_ASAP        1
 #endif
 
 #endif  /* !NEOMAME */
@@ -326,8 +326,8 @@ typedef union {
 #define HAS_YM3438      1
 #define HAS_YM2413      1
 #define HAS_YM3812      1
-#define HAS_YMZ280B     1
 #define HAS_YM3526      1
+#define HAS_YMZ280B     1
 #define HAS_Y8950       1
 #define HAS_SN76477     1
 #define HAS_SN76496     1

@@ -1853,11 +1853,11 @@ char * GetVersionString(void)
     static char tmp[120];
 
 #if defined(RELEASE_CANDIDATE)
-    sprintf(tmp,"0.%d RC%d - %s", VERSION, RELEASE_CANDIDATE, __DATE__);
+    sprintf(tmp,"0.%d RC%d - %s", MAME_VERSION, RELEASE_CANDIDATE, __DATE__);
 #elif defined(BETA_VERSION)
-    sprintf(tmp,"0.%d BETA %d - %s", VERSION, BETA_VERSION, __DATE__);
+    sprintf(tmp,"0.%d BETA %d - %s", MAME_VERSION, BETA_VERSION, __DATE__);
 #else
-    sprintf(tmp,"0.%d - %s", VERSION, __DATE__);
+    sprintf(tmp,"0.%d - %s", MAME_VERSION, __DATE__);
 #endif
     return tmp;
 }
