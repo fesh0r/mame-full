@@ -28,6 +28,10 @@
 #include "utils.h"
 #include "image.h"
 
+#ifndef MAX
+#define MAX(x, y) ((x) < (y) ? (y) : (x) )
+#endif
+
 static MSX msx1;
 static void msx_set_all_mem_banks (void);
 static WRITE_HANDLER ( msx_ppi_port_a_w );
