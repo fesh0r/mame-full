@@ -81,6 +81,9 @@
 #if (HAS_S2650)
 #include "cpu/s2650/s2650.h"
 #endif
+#if (HAS_F8)
+#include "cpu/f8/f8.h"
+#endif
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
@@ -489,6 +492,10 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_S2650)
 	CPU0(S2650,    s2650,	 2,  0,1.00,S2650_INT_NONE,    -1,			   -1,			   16,	  0,15,LE,1, 3,16	),
+#endif
+#if (HAS_F8)
+#define f8_ICount f8_icount
+    CPU0(F8,       f8,       1,  0,1.00,F8_INT_NONE,       F8_INT_INTR,    -1,             16,    0,16,LE,1, 3,16   ),
 #endif
 #if (HAS_TMS34010)
 	CPU2(TMS34010, tms34010, 2,  0,1.00,TMS34010_INT_NONE, TMS34010_INT1,  -1,			   29,	  3,29,LE,2,10,29	),
@@ -1892,6 +1899,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_S2650)
 			case CPU_S2650: 			irq_line = 0; LOG(("S2650 IRQ\n")); break;
+#endif
+#if (HAS_F8)
+			case CPU_F8:				irq_line = 0; LOG(("F8 INTR\n")); break;
 #endif
 #if (HAS_TMS34010)
 			case CPU_TMS34010:

@@ -186,6 +186,9 @@ enum
 #if (HAS_S2650)
 	CPU_S2650,
 #endif
+#if (HAS_F8)
+	CPU_F8,
+#endif
 #if (HAS_TMS34010)
 	CPU_TMS34010,
 #endif

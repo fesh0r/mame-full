@@ -407,6 +407,14 @@ DBGOBJS += $(OBJ)/cpu/s2650/2650dasm.o
 $(OBJ)/cpu/s2650/s2650.o: s2650.c s2650.h s2650cpu.h
 endif
 
+CPU=$(strip $(findstring F8@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_F8=1
+CPUOBJS += $(OBJ)/cpu/f8/f8.o
+DBGOBJS += $(OBJ)/cpu/f8/f8dasm.o
+$(OBJ)/cpu/f8/f8.o: f8.c f8.h
+endif
+
 CPU=$(strip $(findstring TMS34010@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_TMS34010=1

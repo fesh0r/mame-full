@@ -46,6 +46,7 @@ CPUS+=M68EC020@
 CPUS+=M68020@
 CPUS+=T11@
 CPUS+=S2650@
+#CPUS+=F8@
 CPUS+=TMS34010@
 #CPUS+=TMS9900@
 #CPUS+=TMS9940@
@@ -64,6 +65,7 @@ CPUS+=ADSP2105@
 CPUS+=MIPS@
 #CPUS+=SC61860@
 #CPUS+=ARM@
+#CPUS+=SPC700@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
