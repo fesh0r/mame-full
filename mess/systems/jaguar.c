@@ -46,7 +46,7 @@
 #include "state.h"
 #include "cpu/mips/r3000.h"
 #include "cpu/jaguar/jaguar.h"
-#include "jaguar.h"
+#include "includes/jaguar.h"
 #include "devices/cartslot.h"
 
 
