@@ -29,9 +29,9 @@ enum
 	offset_rom6_4p = 0x6000,
 	offset_rom6b_4p= 0xe000,
 	offset_sram_4p = 0x10000,		/* scratch RAM (1kbyte) */
-	offset_cart_4p = 0x10400,		/* cartridge ROM/RAM (2*8 kbytes) */
-	offset_xram_4p = 0x12400,		/* extended RAM (1Mb with super AMS compatible mapper) */
-	region_cpu1_len_4p = 0x112400	/* total len */
+	offset_dram_4p = 0x10400,		/* extra ram for debugger (768 bytes) */
+	offset_xram_4p = 0x10700,		/* extended RAM (1Mb with super AMS compatible mapper) */
+	region_cpu1_len_4p = 0x110700	/* total len */
 };
 
 

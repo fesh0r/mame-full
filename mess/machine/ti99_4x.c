@@ -93,11 +93,8 @@ static void ti99_myarcxram_init(void);
 static void ti99_evpc_init(void);
 
 /*
-	pointers to RAM areas
+	pointer to extended RAM area
 */
-/* pointer to scratch RAM */
-static UINT16 *sRAM_ptr;
-/* pointer to extended RAM */
 static UINT16 *xRAM_ptr;
 
 /*
@@ -320,8 +317,7 @@ void init_ti99_4(void)
 	ti99_model = model_99_4;
 	has_evpc = FALSE;
 
-	/* set up RAM pointers */
-	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
 	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
 	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
@@ -341,8 +337,7 @@ void init_ti99_4a(void)
 	ti99_model = model_99_4a;
 	has_evpc = FALSE;
 
-	/* set up RAM pointers */
-	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
 	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
 	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
@@ -354,8 +349,7 @@ void init_ti99_4ev(void)
 	ti99_model = model_99_4a;
 	has_evpc = TRUE;
 
-	/* set up RAM pointers */
-	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram);
 	cartridge_pages[0] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart);
 	cartridge_pages[1] = (UINT16 *) (memory_region(REGION_CPU1)+offset_cart + 0x2000);
@@ -367,8 +361,7 @@ void init_ti99_4p(void)
 	ti99_model = model_99_4p;
 	has_evpc = TRUE;
 
-	/* set up RAM pointers */
-	sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram_4p);
+	/* set up memory pointers */
 	xRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_xram_4p);
 	/*console_GROMs.data_ptr = memory_region(region_grom);*/
 }
@@ -580,12 +573,15 @@ void machine_init_ti99(void)
 	if (ti99_model == model_99_4p)
 	{
 		/* set up system ROM and scratch pad pointers */
-		cpu_setbank(1, memory_region(REGION_CPU1) + offset_rom0_4p);
-		cpu_setbank(2, sRAM_ptr);
+		cpu_setbank(1, memory_region(REGION_CPU1) + offset_rom0_4p);	/* system ROM */
+		cpu_setbank(2, memory_region(REGION_CPU1) + offset_sram_4p);	/* scratch pad */
+		cpu_setbank(11, memory_region(REGION_CPU1) + offset_dram_4p);	/* extra RAM for debugger */
 	}
 	else
 	{
 		/* set up 4 mirrors of scratch pad to the same address */
+		UINT16 *sRAM_ptr = (UINT16 *) (memory_region(REGION_CPU1) + offset_sram);
+
 		cpu_setbank(1, sRAM_ptr);
 		cpu_setbank(2, sRAM_ptr);
 		cpu_setbank(3, sRAM_ptr);

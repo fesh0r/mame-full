@@ -1,14 +1,16 @@
 /*
 	SNUG SGCPU (a.k.a. 99/4p) system (preliminary)
 
-	SNUG 99/4p ("peripheral box", since the system is a card to be inserted in
-	the peripheral box, instead of a self contained console), a.k.a. SGCPU
-	("Second Generation CPU", which was originally the name used in TI
-	documentation to refer to either (or both) TI99/5 and TI99/8 projects),
-	is a reimplementation of the old ti99/4a console.
+	This system is a reimplementation of the old ti99/4a console.  It is known
+	both as the 99/4p ("peripheral box", since the system is a card to be
+	inserted in the peripheral box, instead of a self contained console), and
+	as the SGCPU ("Second Generation CPU", which was originally the name used
+	in TI documentation to refer to either (or both) TI99/5 and TI99/8
+	projects).
 
-	It was designed by Michael Becker for the hardware part and Harald Glaab
-	for the software part.  It has no relationship with TI.
+	The SGCPU was designed and built by the SNUG (System 99 Users Group),
+	namely by Michael Becker for the hardware part and Harald Glaab for the
+	software part.  It has no relationship with TI.
 
 	The card is architectured around a 16-bit bus (vs. an 8-bit bus in every
 	other TI99 system).  It includes 64kb of ROM, including a GPL interpreter,
@@ -20,7 +22,8 @@
 	do the job.
 
 	TODO:
-	* Test the system?
+	* Test the system? Call Debug, Call XB16.
+	* Implement MEM8 timings.
 */
 
 #include "driver.h"
@@ -49,7 +52,8 @@ static MEMORY_READ16_START (readmem)
 	{ 0x8C00, 0x8fff, ti99_rw_null8bits },	/*vdp write*/
 	{ 0x9000, 0x93ff, ti99_rw_null8bits },	/*speech read - installed dynamically*/
 	{ 0x9400, 0x97ff, ti99_rw_null8bits },	/*speech write*/
-	{ 0x9800, 0x9bff, ti99_4p_rw_rgpl },	/*GPL read*/
+	{ 0x9800, 0x98ff, ti99_4p_rw_rgpl },	/*GPL read*/
+	{ 0x9900, 0x9bff, MRA16_BANK11 },		/*extra RAM for debugger*/
 	{ 0x9c00, 0x9fff, ti99_rw_null8bits },	/*GPL write*/
 	{ 0xa000, 0xafff, MRA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
 	{ 0xb000, 0xbfff, MRA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
@@ -73,7 +77,8 @@ static MEMORY_WRITE16_START (writemem)
 	{ 0x8C00, 0x8fff, ti99_ww_wv38 },		/*vdp write*/
 	{ 0x9000, 0x93ff, ti99_ww_null8bits },	/*speech read*/
 	{ 0x9400, 0x97ff, ti99_ww_null8bits },	/*speech write - installed dynamically*/
-	{ 0x9800, 0x9bff, ti99_ww_null8bits },	/*GPL read*/
+	{ 0x9800, 0x98ff, ti99_ww_null8bits },	/*GPL read*/
+	{ 0x9900, 0x9bff, MWA16_BANK11 },		/*extra RAM for debugger*/
 	{ 0x9c00, 0x9fff, ti99_4p_ww_wgpl },	/*GPL write*/
 	{ 0xa000, 0xafff, MWA16_BANK5 },		/*upper 24kb of RAM extension: AMS bank 10*/
 	{ 0xb000, 0xbfff, MWA16_BANK6 },		/*upper 24kb of RAM extension: AMS bank 11*/
@@ -340,4 +345,4 @@ SYSTEM_CONFIG_START(ti99_4p)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   COMPAT	MACHINE		ÊINPUT	  INIT	   CONFIG	COMPANY		FULLNAME */
-COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,"snug",		"SNUG SGCPU (a.k.a. 99/4P)" )
+COMP( 1996, ti99_4p,  0,	   0,		ti99_4p_60hz, ti99_4p, ti99_4p, ti99_4p,"snug",		"SGCPU (a.k.a. 99/4P)" )
