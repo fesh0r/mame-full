@@ -140,18 +140,18 @@ void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
    free(palette);
 }
 
-/* for pseudo color modes */   
+/* for pseudo color modes */
 int sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
    unsigned char red, unsigned char green, unsigned char blue)
 {
    palette->lookup[pen] = sysdep_palette_make_pen_from_info(
                              &display_palette_info, red, green, blue);
-   
+
    return 0;
 }
 
 
-/* for true color modes */   
+/* for true color modes */
 int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
    unsigned char red, unsigned char green, unsigned char blue)
 {
@@ -199,6 +199,7 @@ int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
    
    sysdep_palette_destroy(*palette);
    *palette = new_palette;
+
    return 0;
 }
 
@@ -236,4 +237,17 @@ int sysdep_palette_set_gamma(struct sysdep_palette_struct *palette,
 float sysdep_palette_get_gamma(struct sysdep_palette_struct *palette)
 {
    return palette->gamma;
+}
+
+/* Added by AMR for the Xv Patch, which needs to be informed
+   when the palette lookup table has changed, so it can create
+   a matching YUV table */
+void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette)
+{
+   palette->dirty = 1;
+}
+
+void sysdep_palette_clear_dirty(struct sysdep_palette_struct *palette)
+{
+   palette->dirty = 0;
 }

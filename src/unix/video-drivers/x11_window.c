@@ -19,12 +19,23 @@
 #include <sys/shm.h>
 #include <X11/extensions/XShm.h>
 #endif
+#ifdef USE_XV
+#include <X11/extensions/Xv.h>
+#include <X11/extensions/Xvlib.h>
+#endif
 #include "xmame.h"
 #include "x11.h"
 #include "driver.h"
 /* for xscreensaver support */
 #include "vroot.h"
 
+#ifdef USE_XV
+static void x11_window_update_16_to_YUY2 (struct mame_bitmap *bitmap);
+static void x11_window_update_16_to_YV12 (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_YUY2_direct (struct mame_bitmap *bitmap);
+static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap);
+static void x11_window_make_yuv_lookup();
+#endif
 static void x11_window_update_8_to_8bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_8_to_16bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_8_to_24bpp (struct mame_bitmap *bitmap);
@@ -36,7 +47,7 @@ static void x11_window_update_16_to_32bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_32bpp_direct (struct mame_bitmap *bitmap);
 static void (*x11_window_update_display_func) (struct mame_bitmap *bitmap) = NULL;
 
-/* hmm we need these to do the clean up correctly, or we could just 
+/* hmm we need these to do the clean up correctly, or we could just
    trust unix & X to clean up after us but lett's keep things clean */
 #ifdef USE_MITSHM
 static int mit_shm_attached = 0;
@@ -44,11 +55,34 @@ static XShmSegmentInfo shm_info;
 static int use_mit_shm = 1;  /* use mitshm if available */
 #endif
 static int private_cmap_allocated = 0;
+#ifdef USE_XV
+static XvImage *xvimage = NULL;
+int xv_fullscreen = 0;
+static int xv_port=-1;
+static int xv_bpp=0;
+static long xv_format=0;
+static long xv_yuv=0;
+static int *xv_yuvlookup=NULL;
+#define XV_YUY2 0x32595559
+#define XV_YV12 0x32315659
+#define XV_I420 0x30323449
+#define XV_UYVY 0x59565955
+
+/* HACK - HACK - HACK for fullscreen */
+#define MWM_HINTS_DECORATIONS   2
+typedef struct {
+  long flags;
+  long functions;
+  long decorations;
+  long input_mode;
+} MotifWmHints;
+
+#endif
 static XImage *image = NULL;
 static GC gc;
 static int orig_widthscale, orig_heightscale;
 static int image_width;
-enum { X11_NORMAL, X11_MITSHM, X11_XIL };
+enum { X11_NORMAL, X11_MITSHM, X11_XV, X11_XIL };
 static int x11_window_update_method = X11_NORMAL;
 static int startx = 0;
 static int starty = 0;
@@ -78,7 +112,18 @@ struct rc_option x11_window_opts[] = {
      "1",		0,			0,		NULL,
      "Use/don't use MIT Shared Mem (if available and compiled in)" },
 #endif
-   { "xsync",		"xs",			rc_bool,	&use_xsync,
+#ifdef USE_XV
+   { "xvext",		"xv",			rc_bool,	&use_xv,
+     "1",		0,			0,		NULL,
+     "Use/don't use Xv extension for hardware scaling (if available and compiled in))" },
+   { "fullscreen",		NULL,			rc_bool,	&xv_fullscreen,
+     "0",		0,			0,		NULL,
+     "Start in fullscreen mode" },
+   { "yuv",		NULL,			rc_bool,	&xv_yuv,
+     "0",		0,			0,		NULL,
+     "Force YUV mode (for video cards with broken RGB overlays)" },
+#endif
+	 { "xsync",		"xs",			rc_bool,	&use_xsync,
      "1",		0,			0,		NULL,
      "Use/don't use XSync instead of XFlush as screen refresh method" },
    { "privatecmap",	"p",			rc_bool,	&use_private_cmap,
@@ -138,6 +183,135 @@ int test_mit_shm (Display * display, XErrorEvent * error)
 }
 #endif
 
+#if USE_XV
+int FindXvPort(Display *dpy, long format, int *port)
+{
+   int i,j,p,ret,num_adaptors,num_formats;
+   XvAdaptorInfo *ai;
+   XvImageFormatValues *fo;
+
+   ret = XvQueryAdaptors(dpy, DefaultRootWindow(dpy),
+      &num_adaptors, &ai);
+
+   if (ret != Success) {
+      fprintf(stderr,"XV: QueryAdaptors failed\n");
+      return(0);
+   }
+
+   for (i = 0; i < num_adaptors; i++)
+   {
+      int firstport=ai[i].base_id;
+      int portcount=ai[i].num_ports;
+
+      for (p = firstport; p < ai[i].base_id+portcount; p++)
+      {
+         fo = XvListImageFormats(dpy, p, &num_formats);
+         for (j = 0; j < num_formats; j++)
+         {
+            if((fo[j].id==format))
+            {
+               if(XvGrabPort(dpy,p,CurrentTime)==Success)
+               {
+                  *port=p;
+                  XFree(fo);
+                  return(1);
+               }
+            }
+         }
+         XFree(fo);
+      }
+   }
+   XvFreeAdaptorInfo(ai);
+   return(0);
+}
+
+int FindRGBXvFormat(Display *dpy, int *port,long *format,int *bpp)
+{
+   int i,j,p,ret,num_adaptors,num_formats;
+   XvAdaptorInfo *ai;
+   XvImageFormatValues *fo;
+
+   ret = XvQueryAdaptors(dpy, DefaultRootWindow(dpy),
+      &num_adaptors, &ai);
+
+   if (ret != Success) {
+      fprintf(stderr,"XV: QueryAdaptors failed\n");
+      return(0);
+   }
+
+   for (i = 0; i < num_adaptors; i++)
+   {
+      int firstport=ai[i].base_id;
+      int portcount=ai[i].num_ports;
+
+      for (p = firstport; p < ai[i].base_id+portcount; p++)
+      {
+         fo = XvListImageFormats(dpy, p, &num_formats);
+         for (j = 0; j < num_formats; j++)
+         {
+            if((fo[j].type==XvRGB) && (fo[j].format==XvPacked))
+            {
+               if(XvGrabPort(dpy,p,CurrentTime)==Success)
+               {
+                  *bpp=fo[j].bits_per_pixel;
+                  *port=p;
+                  *format=fo[j].id;
+                  xv_redmask=fo[j].red_mask;
+                  xv_greenmask=fo[j].green_mask;
+                  xv_bluemask=fo[j].blue_mask;
+                  XFree(fo);
+                  return(1);
+               }
+            }
+         }
+         XFree(fo);
+      }
+   }
+   XvFreeAdaptorInfo(ai);
+   return(0);
+}
+
+/* Since with YUV formats a field of zeros is generally
+   loud green, rather than black, it makes sense
+   to clear the image before use (since scanline algorithms
+   leave alternate lines "black") */
+void ClearYUY2(XvImage *img)
+{
+  int i,j;
+  char *yuv=img->data+img->offsets[0];
+  for (i = 0; i < img->height; i++)
+  {
+    for (j = 0; j < img->width; j++)
+    {
+      int offset=(img->width*i+j)*2;
+      yuv[offset] = 0;
+      yuv[offset+1]=128;
+    }
+  }
+}
+
+void ClearYV12(XvImage *img)
+{
+  int i,j;
+  char *y=img->data+img->offsets[0];
+  char *u=img->data+img->offsets[1];
+  char *v=img->data+img->offsets[2];
+  for (i = 0; i < img->height; i++) {
+    for (j = 0; j < img->width; j++) {
+      int offset=(img->width*i+j);
+      y[offset] = 0;
+      if((i&1) && (j&1))
+      {
+        offset = (img->width/2)*(i/2) + (j/2);
+        u[offset] = 128;
+        v[offset] = 128;
+      }
+    }
+  }
+}
+
+#endif
+
 /*
  * This function creates an invisible cursor.
  *
@@ -181,30 +355,33 @@ static int x11_find_best_visual(int bitmap_depth)
 {
    XVisualInfo visualinfo;
    int screen_no = DefaultScreen (display);
-   
-   if(bitmap_depth == 8 &&
-      XMatchVisualInfo (display, screen_no, 8, PseudoColor, &visualinfo))
+
+   if (XMatchVisualInfo (display, screen_no, 24, TrueColor, &visualinfo))
    {
       xvisual = visualinfo.visual;
-      depth   = 8;
+      depth   = 24;
       return 0;
    }
-   if(XMatchVisualInfo (display, screen_no, 15, TrueColor, &visualinfo))
-   {
-      xvisual = visualinfo.visual;
-      depth   = 15;
-      return 0;
-   }
-   if(XMatchVisualInfo (display, screen_no, 16, TrueColor, &visualinfo))
+
+   if (XMatchVisualInfo (display, screen_no, 16, TrueColor, &visualinfo))
    {
       xvisual = visualinfo.visual;
       depth   = 16;
       return 0;
    }
-   if(XMatchVisualInfo (display, screen_no, 24, TrueColor, &visualinfo))
+
+   if (XMatchVisualInfo (display, screen_no, 15, TrueColor, &visualinfo))
    {
       xvisual = visualinfo.visual;
-      depth   = 24;
+      depth   = 15;
+      return 0;
+   }
+
+   if (bitmap_depth == 8 &&
+      XMatchVisualInfo (display, screen_no, 8, PseudoColor, &visualinfo))
+   {
+      xvisual = visualinfo.visual;
+      depth   = 8;
       return 0;
    }
    return -1;
@@ -226,15 +403,19 @@ int x11_window_create_display (int bitmap_depth)
    XEvent event;
    XSizeHints hints;
    XWMHints wm_hints;
+   unsigned int geom_width, geom_height;
    int image_height;
    int i;
    int event_mask;
    int window_width, window_height;
    int my_use_private_cmap = use_private_cmap;
-   
+
    /* set all the default values */
    window = 0;
    image  = NULL;
+#ifdef USE_XV
+   xvimage = NULL;
+#endif
 #ifdef USE_MITSHM
    mit_shm_attached = 0;
 #endif
@@ -253,7 +434,7 @@ int x11_window_create_display (int bitmap_depth)
    orig_heightscale = heightscale;
    screen           = DefaultScreenOfDisplay (display);
    screen_no        = DefaultScreen (display);
-   
+
    if(run_in_root_window)
    {
       xvisual = DefaultVisual(display, screen_no);
@@ -273,9 +454,9 @@ int x11_window_create_display (int bitmap_depth)
          my_use_private_cmap = TRUE;
       }
    }
-      
+
    fprintf(stderr_file, "Using a Visual with a depth of %dbpp.\n", depth);
-   
+
    /* check the available extensions if compiled in */
 #ifdef USE_XIL
    if (use_xil)
@@ -313,7 +494,22 @@ int x11_window_create_display (int bitmap_depth)
       }
    }
 #endif
-
+#ifdef USE_XV
+   if (use_xv)             /* look for available Xv extensions */
+   {
+      int p_version,p_release,p_request_base,p_event_base,p_error_base;
+      if(XvQueryExtension(display, &p_version, &p_release, &p_request_base,
+        &p_event_base, &p_error_base)==Success)
+      {
+        x11_window_update_method = X11_XV;
+      }
+      else
+      {
+         fprintf (stderr_file, "X-Server Doesn't support Xv extension\n");
+         use_xv = 0;
+      }
+   }
+#endif
    /* create / asign a colormap */
    if (my_use_private_cmap)
    {
@@ -339,7 +535,7 @@ int x11_window_create_display (int bitmap_depth)
             width, height, window_width, window_height);
          return OSD_NOT_OK;
       }
-      
+
       startx        = ((width  - window_width)  / 2) & ~0x07;
       starty        = ((height - window_height) / 2) & ~0x07;
       window        = RootWindowOfScreen (screen);
@@ -365,18 +561,41 @@ int x11_window_create_display (int bitmap_depth)
 #endif
          hints.flags = PSize | PMinSize | PMaxSize;
 
+#ifdef USE_XV
+      if(use_xv)
+      {
+         hints.flags = PSize;
+         if(xv_fullscreen)
+         {
+            hints.flags=PMinSize|PMaxSize;
+            hints.flags|=USPosition|USSize;
+            window_width  = DisplayWidth(display, screen_no);
+            window_height = DisplayHeight(display, screen_no);
+         }
+      }
+#endif
       hints.min_width  = hints.max_width  = hints.base_width  = window_width;
       hints.min_height = hints.max_height = hints.base_height = window_height;
       hints.x = hints.y = 0;
       hints.win_gravity = NorthWestGravity;
-      
+
       i = XWMGeometry(display, screen_no, geometry, NULL, 0, &hints, &hints.x,
-         &hints.y, &i, &i, &hints.win_gravity);
+         &hints.y, &geom_width, &geom_height, &hints.win_gravity);
       if ((i&XValue) && (i&YValue))
          hints.flags |= PPosition | PWinGravity;
-      
+
+#ifdef USE_XV
+      if (use_xv)
+      {
+         if (i&WidthValue)
+            window_width = geom_width;
+         if (i&HeightValue)
+            window_height = geom_height;
+      }
+#endif
+
       /* Create and setup the window. No buttons, no fancy stuff. */
-      
+
       winattr.background_pixel  = black_pen;
       winattr.border_pixel      = WhitePixelOfScreen (screen);
       winattr.bit_gravity       = ForgetGravity;
@@ -388,6 +607,9 @@ int x11_window_create_display (int bitmap_depth)
       winattr.do_not_propagate_mask = 0;
       winattr.colormap          = colormap;
       winattr.cursor            = None;
+#ifdef USE_XV
+/*      winattr.override_redirect = True; */
+#endif
       if (root_window_id == 0)
       {
          root_window_id = RootWindowOfScreen (screen);
@@ -412,6 +634,20 @@ int x11_window_create_display (int bitmap_depth)
 
       XSetWMHints (display, window, &wm_hints);
       XSetWMNormalHints (display, window, &hints);
+#ifdef USE_XV
+      /* Hack to get rid of window title bar */
+      if(use_xv && xv_fullscreen)
+      {
+         Atom mwmatom;
+         MotifWmHints mwmhints;
+         mwmhints.flags=MWM_HINTS_DECORATIONS;
+         mwmhints.decorations=0;
+         mwmatom=XInternAtom(display,"_MOTIF_WM_HINTS",0);
+
+         XChangeProperty(display,window,mwmatom,mwmatom,32,
+         PropModeReplace,(unsigned char *)&mwmhints,4);
+      }
+#endif
 
 #if defined(__sgi)
       /* Force first resource class char to be uppercase */
@@ -428,7 +664,7 @@ int x11_window_create_display (int bitmap_depth)
       XStoreName (display, window, title);
 
       /* Select event mask */
-      
+
       event_mask = FocusChangeMask | ExposureMask |
          EnterWindowMask | LeaveWindowMask |
          KeyPressMask | KeyReleaseMask;
@@ -448,7 +684,7 @@ int x11_window_create_display (int bitmap_depth)
       XClearWindow (display, window);
       XWindowEvent (display, window, ExposureMask, &event);
    }
-   
+
    /* create and setup the image */
    switch (x11_window_update_method)
    {
@@ -510,12 +746,12 @@ int x11_window_create_display (int bitmap_depth)
             sleep (2);          /* enought time to notify error if any */
             XSetErrorHandler (None);  /* Restore error handler to default */
             /* Mark segment as deletable after we attach.  When all processes
-               detach from the segment (progam exits), it will be deleted. 
+               detach from the segment (progam exits), it will be deleted.
                This way it won't be left in memory if we crash or something.
                Grr, have todo this after X attaches too since slowlaris doesn't
                like it otherwise */
             shmctl(shm_info.shmid, IPC_RMID, NULL);
-            
+
             /* if use_mit_shm is still set we've succeeded */
             if (use_mit_shm)
             {
@@ -528,6 +764,110 @@ int x11_window_create_display (int bitmap_depth)
             scaled_buffer_ptr = NULL;
             XDestroyImage (image);
             image = NULL;
+         }
+         fprintf (stderr_file, "Failed\nReverting to normal XPutImage() mode\n");
+         x11_window_update_method = X11_NORMAL;
+#endif
+      case X11_XV:
+#ifdef USE_XV
+         /* Create an XV MITSHM image. */
+         {
+            fprintf (stderr_file, "MIT-SHM & XV Extensions Available. trying to use... ");
+            XSetErrorHandler (test_mit_shm);
+            if(xv_yuv==0)
+            {
+               if(!(FindRGBXvFormat(display, &xv_port,&xv_format,&xv_bpp)))
+               {
+                  xv_yuv=1;
+                  fprintf(stderr,"\nCan't find a suitable RGB format - trying YUY2 instead... ");
+               }
+            }
+            if(xv_yuv)
+            {
+               xv_redmask=0xff0000;
+               xv_greenmask=0xff00;
+               xv_bluemask=0xff;
+               xv_bpp=32;
+               xv_format=XV_YUY2;
+               if(!(FindXvPort(display, xv_format, &xv_port)))
+               {
+                  fprintf(stderr,"\nYUY2 not available - trying YV12... ");
+                  xv_format=XV_YV12;
+                  if(!(FindXvPort(display, xv_format, &xv_port)))
+                  {
+                     fprintf(stderr,"\nError: Couldn't initialise Xv port - ");
+                     fprintf(stderr,"\n  Either all ports are in use, or the video card");
+                     fprintf(stderr,"\n  doesn't provide a suitable format.\n");
+                     return OSD_NOT_OK;
+                  }
+                  else
+                     fprintf(stderr,"\nWarning: YV12 support is incomplete... ");
+
+               }
+            }
+
+            xvimage = XvShmCreateImage (display,
+                                      xv_port,
+                                      xv_format,
+                                      0,
+                                      image_width,
+                                      image_height,
+                                      &shm_info);
+            if (xvimage)
+            {
+                shm_info.shmid = shmget (IPC_PRIVATE,
+                                        xvimage->data_size,
+                                        (IPC_CREAT | 0777));
+                if (shm_info.shmid < 0)
+                {
+                  fprintf (stderr_file, "\nError: failed to create MITSHM block.\n");
+                  return OSD_NOT_OK;
+                }
+
+                /* And allocate the bitmap buffer. */
+                /* new pen color code force double buffering in every cases */
+                xvimage->data = shm_info.shmaddr =
+                  (char *) shmat (shm_info.shmid, 0, 0);
+
+                scaled_buffer_ptr = (unsigned char *) xvimage->data;
+                if (!scaled_buffer_ptr)
+                {
+                  fprintf (stderr_file, "\nError: failed to allocate MITSHM bitmap buffer.\n");
+                  return OSD_NOT_OK;
+                }
+
+                shm_info.readOnly = FALSE;
+
+                /* Attach the MITSHM block. this will cause an exception if */
+                /* MIT-SHM is not available. so trap it and process         */
+                if (!XShmAttach (display, &shm_info))
+                {
+                  fprintf (stderr_file, "\nError: failed to attach MITSHM block.\n");
+                  return OSD_NOT_OK;
+                }
+                XSync (display, False);  /* be sure to get request processed */
+                sleep (2);          /* enought time to notify error if any */
+                XSetErrorHandler (None);  /* Restore error handler to default */
+                /* Mark segment as deletable after we attach.  When all processes
+                  detach from the segment (progam exits), it will be deleted.
+                  This way it won't be left in memory if we crash or something.
+                  Grr, have todo this after X attaches too since slowlaris doesn't
+                  like it otherwise */
+                shmctl(shm_info.shmid, IPC_RMID, NULL);
+
+                /* if use_mit_shm is still set we've succeeded */
+                if (use_mit_shm)
+                {
+                  fprintf (stderr_file, "Success.\nUsing Xv & Shared Memory Features to speed up\n");
+                  mit_shm_attached = 1;
+                  break;
+                }
+                /* else we have failed clean up before retrying without MITSHM */
+                shmdt ((char *) scaled_buffer_ptr);
+                scaled_buffer_ptr = NULL;
+                XDestroyImage (image);
+                image = NULL;
+            }
          }
          fprintf (stderr_file, "Failed\nReverting to normal XPutImage() mode\n");
          x11_window_update_method = X11_NORMAL;
@@ -559,8 +899,13 @@ int x11_window_create_display (int bitmap_depth)
          fprintf (stderr_file, "Error unknown X11 update method, this shouldn't happen\n");
          return OSD_NOT_OK;
    }
-   
+
    /* verify the number of bits per pixel and choose the correct update method */
+#ifdef USE_XV
+   if (use_xv)
+      depth = xv_bpp;
+   else
+#endif
 #ifdef USE_XIL
    if (use_xil)
       /* XIL uses 16 bit visuals and does any conversion it self */
@@ -568,7 +913,7 @@ int x11_window_create_display (int bitmap_depth)
    else
 #endif
       depth = image->bits_per_pixel;
-   
+
    /* setup the palette_info struct now we have the depth */
    if (x11_init_palette_info() != OSD_OK)
       return OSD_NOT_OK;
@@ -576,11 +921,45 @@ int x11_window_create_display (int bitmap_depth)
    fprintf(stderr_file, "Actual bits per pixel = %d... ", depth);
    if (bitmap_depth == 32)
    {
+#ifdef USE_XV
+      if(use_xv && xv_yuv)
+      {
+         switch(xv_format)
+         {
+            case XV_YUY2:
+               ClearYUY2(xvimage);
+               x11_window_update_display_func = x11_window_update_32_to_YUY2_direct;
+               break;
+            case XV_YV12:
+               ClearYV12(xvimage);
+               x11_window_update_display_func = x11_window_update_32_to_YV12_direct;
+               break;
+         }
+      }
+      else
+#endif
       if (depth == 32)
          x11_window_update_display_func = x11_window_update_32_to_32bpp_direct;
    }
    else if (bitmap_depth == 16)
    {
+#ifdef USE_XV
+      if(use_xv && xv_yuv)
+      {
+         switch(xv_format)
+         {
+            case XV_YUY2:
+               ClearYUY2(xvimage);
+               x11_window_update_display_func = x11_window_update_16_to_YUY2;
+               break;
+            case XV_YV12:
+               ClearYV12(xvimage);
+               x11_window_update_display_func = x11_window_update_16_to_YV12;
+               break;
+         }
+      }
+      else
+#endif
       switch (depth)
       {
          case 16:
@@ -612,21 +991,24 @@ int x11_window_create_display (int bitmap_depth)
             break;
       }
    }
-   
+
    if (x11_window_update_display_func == NULL)
    {
       fprintf(stderr_file, "Error: Unsupported bitmap depth = %dbpp, video depth = %dbpp\n", bitmap_depth, depth);
       return OSD_NOT_OK;
    }
    fprintf(stderr_file, "Ok\n");
-   
+
    /* create gc */
    gc = XCreateGC (display, window, 0, &xgcv);
-   
+
    /* mouse pointer stuff */
    if (!use_mouse || (x11_grab_mouse &&  XGrabPointer (display, window, True,
       0, GrabModeAsync, GrabModeAsync, window, None, CurrentTime)))
       x11_grab_mouse = FALSE;
+
+   if (x11_grab_keyboard && XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+     fprintf(stderr_file, "Warning: keyboard grab failed\n");
 
    if (!run_in_root_window)
    {
@@ -639,7 +1021,13 @@ int x11_window_create_display (int bitmap_depth)
          XDefineCursor (display, window, normal_cursor);
    }
 
-   effect_init2(bitmap_depth, depth, window_width);
+#ifdef USE_XV
+   if(use_xv && xv_yuv)
+     effect_init2(bitmap_depth, xv_format, window_width);
+     /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
+   else
+#endif
+     effect_init2(bitmap_depth, depth, window_width);
 
    return OSD_OK;
 }
@@ -675,13 +1063,16 @@ void x11_window_close_display (void)
       }
       free(pseudo_color_lookup);
    }
-   
+
    /* This is only allocated/done if we succeeded to get a window */
    if (window)
    {
       if (x11_grab_mouse)
          XUngrabPointer (display, CurrentTime);
-         
+ 
+      if (x11_grab_keyboard)
+         XUngrabKeyboard (display, CurrentTime);
+
 #ifdef USE_MITSHM
       if (use_mit_shm)
       {
@@ -697,9 +1088,22 @@ void x11_window_close_display (void)
          XDestroyImage (image);
          scaled_buffer_ptr = NULL;
       }
+#ifdef USE_XV
+      if(use_xv && xv_port>-1)
+      {
+        XvUngrabPort(display,xv_port,CurrentTime);
+        xv_port=-1;
+      }
+      if(xvimage)
+      {
+         XFree(xvimage);
+         scaled_buffer_ptr = NULL;
+         xvimage=NULL;
+      }
+#endif
       if (scaled_buffer_ptr)
          free (scaled_buffer_ptr);
-   
+
       XDestroyWindow (display, window);
    }
 
@@ -716,17 +1120,17 @@ void x11_window_close_display (void)
 int x11_window_alloc_palette (int writable_colors)
 {
    int i;
-   
+
    /* this is only relevant for 8bpp displays */
    if (depth != 8)
       return 0;
-   
+
    if(!(pseudo_color_lookup = malloc(writable_colors * sizeof(unsigned long))))
    {
       fprintf(stderr_file, "X11-window: Error: Malloc failed for pseudo color lookup table\n");
       return -1;
    }
-   
+
    /* set the palette to black */
    for (i = 0; i < writable_colors; i++)
       pseudo_color_lookup[i] = black_pen;
@@ -758,7 +1162,7 @@ int x11_window_alloc_palette (int writable_colors)
          return -1;
       }
    }
-   
+
    display_palette_info.writable_colors = writable_colors;
    return 0;
 }
@@ -805,15 +1209,15 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
          int my_blue  = (int)blue << 8;
          int best_pixel = black_pen;
          float best_diff = FLT_MAX;
-         
+
          for(i=0;i<256;i++)
             colors[i].pixel = i;
-         
+
          XQueryColors(display, colormap, colors, 256);
          for(i=0;i<256;i++)
          {
             #define SQRT(x) ((float)(x)*(x))
-            float diff = SQRT(my_red - colors[i].red) + 
+            float diff = SQRT(my_red - colors[i].red) +
                SQRT(my_green - colors[i].green) +
                SQRT(my_blue - colors[i].blue);
             if (diff < best_diff)
@@ -822,9 +1226,9 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
                best_diff  = diff;
             }
          }
-         
+
          color = colors[best_pixel];
-         
+
          if (XAllocColor (display, colormap, &color))
          {
             if (pseudo_color_lookup[pen] != color.pixel)
@@ -842,7 +1246,7 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
                   "Couldn't allocate all colors, some parts of the emulation may be black\n"
                   "Try running xmame with the -privatecmap option\n");
             }
-            
+
             /* If color allocation failed, use black to ensure the
                pen is not left set to an invalid color */
             pseudo_color_lookup[pen] = black_pen;
@@ -856,7 +1260,17 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
 /* invoked by main tree code to update bitmap into screen */
 void x11_window_update_display (struct mame_bitmap *bitmap)
 {
+#ifdef USE_XV
+   if(use_xv && xv_yuv)
+     x11_window_make_yuv_lookup();
+#endif
+
    (*x11_window_update_display_func) (bitmap);
+
+#ifdef USE_XV
+   if (use_xv)
+      x11_window_refresh_screen();
+#endif
 
 #ifdef USE_XIL
    if (use_xil)
@@ -886,6 +1300,24 @@ void x11_window_update_display (struct mame_bitmap *bitmap)
       }
    }
 
+   /* toggle keyboard grabbing */
+   if (keyboard_pressed (KEYCODE_LALT) &&
+       keyboard_pressed_memory (KEYCODE_PGUP))
+   {
+     if (x11_grab_keyboard)
+     {
+       XUngrabKeyboard (display, CurrentTime);
+       x11_grab_keyboard = FALSE;
+     }
+     else
+     {
+       if (!XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
+	 x11_grab_keyboard = TRUE;
+       else
+	 fprintf(stderr_file, "Warning: keyboard grab failed\n");
+     }
+   }
+
    /* some games "flickers" with XFlush, so command line option is provided */
    if (use_xsync)
       XSync (display, False);   /* be sure to get request processed */
@@ -908,6 +1340,27 @@ void x11_window_refresh_screen (void)
                        image->height, FALSE);
 #endif
          break;
+      case X11_XV:
+#ifdef USE_XV
+         {
+            Window _dw;
+            int _d,_w,_h;
+            long pw,ph;
+            XGetGeometry(display, window, &_dw, &_d, &_d, &_w, &_h, &_d, &_d);
+            pw=(xvimage->width*_h)/xvimage->height;
+            if(pw>_w)
+            {
+               pw=_w;
+               ph=(xvimage->height*_w)/xvimage->width;
+            }
+            else
+               ph=_h;
+            XvShmPutImage (display, xv_port, window, gc, xvimage,
+            0, 0, xvimage->width, xvimage->height,
+            (_w-pw)/2, (_h-ph)/2, pw, ph, True);
+         }
+#endif
+         break;
       case X11_NORMAL:
          XPutImage (display, window, gc, image, 0, 0, 0, 0, image->width,
                     image->height);
@@ -919,6 +1372,8 @@ INLINE void x11_window_put_image (int x, int y, int width, int height)
 {
    switch (x11_window_update_method)
    {
+      case X11_XV:
+         break;
       case X11_XIL:
          /* xil doesn't need a put_image */
          break;
@@ -933,6 +1388,115 @@ INLINE void x11_window_put_image (int x, int y, int width, int height)
          break;
    }
 }
+
+#ifdef USE_XV
+#define RMASK 0xff0000
+#define GMASK 0x00ff00
+#define BMASK 0x0000ff
+static void x11_window_make_yuv_lookup()
+{
+   int i,r,g,b,y,u,v,n;
+   n=current_palette->emulated.writable_colors;
+
+   if(!xv_yuvlookup)
+   {
+      fprintf(stderr,"Making YUV lookup\n");
+      xv_yuvlookup=malloc(sizeof(int)*n);
+   }
+
+   if(current_palette->dirty)
+   {
+      for(i=0;i<n;++i)
+      {
+        r=g=b=current_palette->lookup[i];
+        r=(r&RMASK)>>16;
+        g=(g&GMASK)>>8;
+        b=(b&BMASK);
+
+        y = (( 9897*r + 19235*g + 3736*b ) >> 15) & 255;
+        u = ((( -5537*r - 10878*g + 16384*b ) >> 15) + 128) & 255;
+        v = ((( 16384*r - 13730*g -2664*b ) >> 15 ) + 128) & 255;
+
+        /* Storing this data in YUYV order simplifies using the data for
+           YUY2, both with and without smoothing... */
+        xv_yuvlookup[i]=(y<<24) | (u<<16) | (y<<8) | v;
+      }
+   }
+}
+
+/* Hacked into place, until I integrate YV12 support into the blit core... */
+static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
+{
+   int _x,_y,r,g,b;
+   unsigned char *dest_y;
+   unsigned char *dest_u;
+   unsigned char *dest_v;
+   unsigned short *src;
+   int *indirect=current_palette->lookup;
+
+   for(_y=visual.min_y;_y<=visual.max_y;++_y)
+   {
+      src=bitmap->line[_y];
+      src+=visual.min_x;
+      dest_y=xvimage->data+xvimage->offsets[0]+(xvimage->width*(_y-visual.min_y));
+      dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*((_y-visual.min_y)/2));
+      dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*((_y-visual.min_y)/2));
+      for(_x=visual.min_x;_x<=visual.max_x;++_x)
+      {
+         r=g=b=*src++;
+         if(indirect)
+           r=g=b=indirect[r];
+
+         r&=RMASK;  r>>=16; /*   red is << 8 */
+         g&=GMASK;  g>>=8; /* green is << 3 */
+         b&=BMASK;  b>>=0; /*  blue is >> 3 */
+
+         *dest_y++ = (( 9897*r + 19235*g + 3736*b ) >> 15);
+         if(((_x&1)==1) && ((_y&1)==1))
+         {
+            *dest_u++ = (( -5537*r - 10878*g + 16384*b ) >> 15) + 128;
+            *dest_v++ = (( 16384*r - 13730*g -2664*b ) >> 15 ) + 128;
+         }
+      }
+   }
+}
+
+static void x11_window_update_32_to_YV12_direct(struct mame_bitmap *bitmap)
+{
+   int _x,_y,r,g,b;
+   unsigned char *dest_y;
+   unsigned char *dest_u;
+   unsigned char *dest_v;
+   unsigned int *src;
+
+   for(_y=visual.min_y;_y<=visual.max_y;++_y)
+   {
+      src=bitmap->line[_y];
+      src+=visual.min_x;
+      dest_y=xvimage->data+xvimage->offsets[0]+(xvimage->width*(_y-visual.min_y));
+      dest_v=xvimage->data+xvimage->offsets[1]+((xvimage->width/2)*((_y-visual.min_y)/2));
+      dest_u=xvimage->data+xvimage->offsets[2]+((xvimage->width/2)*((_y-visual.min_y)/2));
+      for(_x=visual.min_x;_x<=visual.max_x;++_x)
+      {
+         r=g=b=*src++;
+
+         r&=RMASK;  r>>=16;
+         g&=GMASK;  g>>=8;
+         b&=BMASK;  b>>=0;
+
+         *dest_y++ = (( 9897*r + 19235*g + 3736*b ) >> 15);
+         if(((_x&1)==1) && ((_y&1)==1))
+         {
+            *dest_u++ = (( -5537*r - 10878*g + 16384*b ) >> 15) + 128;
+            *dest_v++ = (( 16384*r - 13730*g -2664*b ) >> 15 ) + 128;
+         }
+      }
+   }
+}
+#undef RMASK
+#undef GMASK
+#undef BMASK
+#endif
 
 #define DEST_WIDTH image_width
 #define DEST scaled_buffer_ptr
@@ -985,6 +1549,33 @@ static void x11_window_update_8_to_32bpp (struct mame_bitmap *bitmap)
 #undef  SRC_PIXEL
 #define SRC_PIXEL unsigned short
 
+#ifdef USE_XV
+static void x11_window_update_16_to_YUY2(struct mame_bitmap *bitmap)
+{
+#define RMASK 0xff0000;
+#define GMASK 0x00ff00;
+#define BMASK 0x0000ff;
+#define DEST_PIXEL unsigned short
+#define BLIT_XV_YUY2
+#undef INDIRECT
+#define INDIRECT xv_yuvlookup
+   if (INDIRECT)
+   {
+#include "blit.h"
+   }
+   else
+   {
+#undef INDIRECT
+#include "blit.h"
+#define INDIRECT current_palette->lookup
+   }
+#undef BLIT_XV_YUY2
+#undef RMASK
+#undef GMASK
+#undef BMASK
+}
+#endif
+
 static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap)
 {
 #define DEST_PIXEL unsigned short
@@ -1025,6 +1616,24 @@ static void x11_window_update_32_to_32bpp_direct(struct mame_bitmap *bitmap)
 {
 #include "blit.h"
 }
+
+#ifdef USE_XV
+static void x11_window_update_32_to_YUY2_direct(struct mame_bitmap *bitmap)
+{
+#define RMASK 0xff0000;
+#define GMASK 0x00ff00;
+#define BMASK 0x0000ff;
+#undef DEST_PIXEL
+#define DEST_PIXEL unsigned short
+#define BLIT_XV_YUY2
+#undef INDIRECT
+#include "blit.h"
+#undef BLIT_XV_YUY2
+#undef RMASK
+#undef GMASK
+#undef BMASK
+}
+#endif
 
 #undef DEST_PIXEL
 #undef SRC_PIXEL

@@ -57,7 +57,7 @@ struct sysdep_palette_info
 struct sysdep_palette_struct
 {
    struct sysdep_palette_info emulated;
-   int dirty;
+   int dirty;             /* Used by the Xv patch for updating YUV lookup */
    int *lookup;           /* lookup table to be used for blitters to convert
                              the emulated palette to the physical palette */
    float gamma;
@@ -107,6 +107,11 @@ int sysdep_palette_set_gamma(struct sysdep_palette_struct *palette,
    float gamma);
 
 float sysdep_palette_get_gamma(struct sysdep_palette_struct *palette);
+
+/* Added by AMR for Xv patch - used for updating YUV palette */
+void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette);
+
+void sysdep_palette_clear_dirty(struct sysdep_palette_struct *palette);
 
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_PALETTE_H */
