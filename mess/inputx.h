@@ -44,39 +44,8 @@ enum
 #define UCHAR_SHIFT_BEGIN	(UCHAR_SHIFT_1)
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
-/* crappy legacy macro that I wish to phase out */
-#define PORT_CODELEGACY(code1,code2)								\
-	{ if ((code1) != CODE_NONE)	PORT_CODE(code1); }					\
-	{ if ((code2) != CODE_NONE)	PORT_CODE(code2); }					\
-	
 #define PORT_CHAR(ch)												\
-	port->keyboard.chars[key++] = (ch);							\
-
-#define PORT_KEY0(mask,default,name,key1,key2)						\
-	PORT_BIT(mask, default, IPT_KEYBOARD)							\
-	PORT_NAME(name)													\
-	PORT_CODELEGACY(key1,key2)										\
-
-#define PORT_KEY1(mask,default,name,key1,key2,uchar)				\
-	PORT_BIT(mask, default, IPT_KEYBOARD)							\
-	PORT_NAME(name)													\
-	PORT_CODELEGACY(key1,key2)										\
-	PORT_CHAR(uchar)												\
-
-#define PORT_KEY2(mask,default,name,key1,key2,uchar1,uchar2)		\
-	PORT_BIT(mask, default, IPT_KEYBOARD)							\
-	PORT_NAME(name)													\
-	PORT_CODELEGACY(key1,key2)										\
-	PORT_CHAR(uchar1)												\
-	PORT_CHAR(uchar2)												\
-
-#define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
-	PORT_BIT(mask, default, IPT_KEYBOARD)							\
-	PORT_NAME(name)													\
-	PORT_CODELEGACY(key1,key2)										\
-	PORT_CHAR(uchar1)												\
-	PORT_CHAR(uchar2)												\
-	PORT_CHAR(uchar3)												\
+	port->keyboard.chars[key++] = (ch);								\
 
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \
