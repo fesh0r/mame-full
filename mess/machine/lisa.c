@@ -1309,6 +1309,7 @@ int lisa_interrupt(void)
 				clock_regs.tenths = 0;
 
 				if (clock_regs.clock_mode != timer_disable)
+				{
 					if (clock_regs.alarm == 0)
 					{
 						/* generate reset (should cause a VIA interrupt...) */
@@ -1325,6 +1326,7 @@ int lisa_interrupt(void)
 					{
 						clock_regs.alarm--;
 					}
+				}
 
 				if ((++clock_regs.seconds2) == 10)
 				{
