@@ -15,6 +15,7 @@
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "includes/6883sam.h"
+#include "includes/rstrtrck.h"
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
 #include "printer.h"

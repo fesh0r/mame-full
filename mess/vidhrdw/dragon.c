@@ -37,11 +37,11 @@
  */
 #include "driver.h"
 #include "machine/6821pia.h"
+#include "includes/rstrtrck.h"
 #include "vidhrdw/m6847.h"
 #include "vidhrdw/generic.h"
 #include "includes/dragon.h"
 #include "includes/rstrbits.h"
-#include "includes/rstrtrck.h"
 
 static int coco3_hires;
 static int coco3_gimevhreg[8];
@@ -70,8 +70,10 @@ static int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
 /* -------------------------------------------------- */
 
+#if 0
 static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf);
+#endif
 
 /* --------------------------------------------------
  * CoCo 1/2 Stuff

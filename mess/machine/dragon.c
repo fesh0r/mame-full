@@ -55,12 +55,12 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6821pia.h"
+#include "includes/rstrtrck.h"
 #include "vidhrdw/m6847.h"
 #include "includes/dragon.h"
 #include "formats/cocopak.h"
 #include "formats/cococas.h"
 #include "includes/6883sam.h"
-#include "includes/rstrtrck.h"
 #include "includes/cococart.h"
 
 static UINT8 *coco_rom;
