@@ -23,26 +23,25 @@
 	>00->3f: 512kbytes of CPU RAM (pages >36 and >37 are used to emulate
 	  cartridge CPU ROMs in ti99 mode, and pages >38 through >3f are used to
 	  emulate console and cartridge GROMs in ti99 mode)
-	>40->7f: reserved for expansion to 1Mbyte of RAM???
-	>80->b7: PE-bus space using spare address lines (AMA-AMC)???  Used for
-	  extra 512kbytes of RAM???
+	>40->7f: optional Memex RAM
+	>80->b7: PE-bus space using spare address lines (AMA-AMC)???  Used by
+	  RAM extension (Memex or PE-Bus 512k card).
 	>b8->bf: PE-bus space (most useful pages are >ba: DSR space and >bc: speech
-	  synthesizer page)
+	  synthesizer page; other pages are used by RAM extension)
 	>e8->ef: 64kbytes of 0-wait-state RAM (with 32kbytes of SRAM installed,
 	  only even pages (>e8, >ea, >ec and >ee) are available)
 	>f0->f1: boot ROM
-	>f2->ff: reserved?
+	>f2->ff: Memex RAM
 
 	Pages (genmod console):
-	>00->3f: switch-selectable: 512kbytes of onboard RAM (1-wait-state DRAM) or
-	  first 512kbytes of the Memex Memory board (0-wait-state SRAM).  The
+	>00->3f: switch-selectable(?): 512kbytes of onboard RAM (1-wait-state DRAM)
+	  or first 512kbytes of the Memex Memory board (0-wait-state SRAM).  The
 	  latter setting is incompatible with TI mode.
-	>40->b7: next 448kbytes of the Memex RAM
-	>b8->bf: PE-bus space???
-	>c0->ef: next 384kbytes of the Memex RAM (it is unknown whether >e8->ef is
-	  on the Memex board or the Geneve Console)
+	>40->b9, >bb, >bd->ef, f2->ff: Memex RAM (it is unknown if >e8->ef is on
+	  the Memex board or the Geneve motherboard)
+	>ba: DSR space
+	>bc: speech synthesizer space
 	>f0->f1: boot ROM
-	>f2->ff: reserved?
 
 	Unpaged locations (ti99 mode):
 	>8000->8007: memory page registers (>8000 for page 0, >8001 for page 1,
@@ -428,7 +427,7 @@ MACHINE_DRIVER_END
 
 ROM_START(geneve)
 	/*CPU memory space*/
-	ROM_REGION(region_cpu1_len, REGION_CPU1, 0)
+	ROM_REGION(region_cpu1_len_geneve, REGION_CPU1, 0)
 	ROM_LOAD("genbt100.bin", offset_rom_geneve, 0x4000, 0x8001e386) /* CPU ROMs */
 
 	/*DSR ROM space*/
@@ -445,7 +444,7 @@ ROM_END
 
 ROM_START(genmod)
 	/*CPU memory space*/
-	ROM_REGION(region_cpu1_len, REGION_CPU1, 0)
+	ROM_REGION(region_cpu1_len_geneve, REGION_CPU1, 0)
 	ROM_LOAD("gnmbt100.bin", offset_rom_geneve, 0x4000, 0x19b89479) /* CPU ROMs */
 
 	/*DSR ROM space*/
@@ -461,7 +460,7 @@ ROM_START(genmod)
 ROM_END
 
 SYSTEM_CONFIG_START(geneve)
-	CONFIG_DEVICE_FLOPPY_BASICDSK	(3,	"dsk\0",										device_load_ti99_floppy)
+	CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",										device_load_ti99_floppy)
 	/*CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	1, "hd\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_RW_OR_READ, NULL, NULL, ti99_ide_load, ti99_ide_unload, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_pio_load,	ti99_4_pio_unload,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	ti99_4_rs232_load,	ti99_4_rs232_unload,	NULL)*/
@@ -469,4 +468,4 @@ SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT   MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */
 COMP( 1987?,geneve,   0,	   geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640" )
-COMP( 199??,genmod,   geneve,  geneve_60hz,  geneve,  geneve,	geneve,	"Myarc",	"Geneve 9640 (with Genmod)" )
+COMP( 199??,genmod,   geneve,  geneve_60hz,  geneve,  genmod,	geneve,	"Myarc",	"Geneve 9640 (with Genmod modification)" )

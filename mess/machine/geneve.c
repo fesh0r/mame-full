@@ -62,6 +62,8 @@ static fdc_kind_t fdc_kind;
 static char has_ide;
 /* TRUE if rs232 card present */
 static char has_rs232;
+/* TRUE if genmod extension present */
+/*static char has_genmod;*/
 
 
 /* tms9901 setup */
@@ -174,15 +176,17 @@ extern int tms9995_ICount;
 
 void init_geneve(void)
 {
-	//ti99_model = model_geneve;
-	//has_evpc = TRUE;
+	/*has_genmod = FALSE;*/
+}
+
+void init_genmod(void)
+{
+	/*has_genmod = TRUE;*/
 }
 
 
 void machine_init_geneve(void)
 {
-	//int i;
-
 	mode_flags = /*0*/mf_mapmode;
 	/* initialize page lookup */
 	memset(page_lookup, 0, sizeof(page_lookup));
@@ -226,14 +230,6 @@ void machine_init_geneve(void)
 		spchroms_interface speech_intf = { region_speech_rom };
 
 		spchroms_config(& speech_intf);
-
-		/*install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rw_rspeech);
-		install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_ww_wspeech);*/
-	}
-	else
-	{
-		/*install_mem_read16_handler(0, 0x9000, 0x93ff, ti99_rw_null8bits);
-		install_mem_write16_handler(0, 0x9400, 0x97ff, ti99_ww_null8bits);*/
 	}
 
 	switch (fdc_kind)
@@ -539,37 +535,43 @@ READ_HANDLER ( geneve_r )
 
 	offset &= 0x1fff;
 
-	if (page < 0x40)
+	switch (page)
 	{
-		/* DRAM */
-		return DRAM_ptr[page*0x2000 + offset];
-	}
-	else if ((page >= 0xb8) && (page < 0xc0))
-	{
-		/* PE-bus */
-		switch (page)
-		{
-		case 0xba:
-			return geneve_peb_r(offset);
+	case 0xf0:
+	case 0xf1:
+		/* Boot ROM */
+		return ROM_ptr[(page-0xf0)*0x2000 + offset];
 
-		case 0xbc:
-			if ((offset > 0x1000) && (offset < 0x1400) && (! (offset & 1)) && has_speech)
-			{
+	case 0xe8:
+	case 0xe9:
+	case 0xea:
+	case 0xeb:
+	case 0xec:
+	case 0xed:
+	case 0xee:
+	case 0xef:
+		/* SRAM */
+		return SRAM_ptr[(page-0xe8)*0x2000 + offset];
+
+	case 0x7a:	/* mirror of 0xba??? */
+		return 0;
+	case 0xba:
+		/* DSR space */
+		return geneve_peb_r(offset);
+
+	case 0xbc:
+		/* speech space */
+		if (has_speech)
+		{
+			if ((offset > 0x1000) && (offset < 0x1400) && (! (offset & 1)))
 				return geneve_speech_r(0);
-			}
 			else
 				return 0;
 		}
-	}
-	else if ((page >= 0xe8) && (page < 0xf0))
-	{
-		/* SRAM */
-		return SRAM_ptr[(page-0xe8)*0x2000 + offset];
-	}
-	else if ((page >= 0xf0) && (page < 0xf2))
-	{
-		/* Boot ROM */
-		return ROM_ptr[(page-0xf0)*0x2000 + offset];
+
+	default:
+		/* DRAM */
+		return DRAM_ptr[page*0x2000 + offset];
 	}
 
 	logerror("unmapped read page=%d offs=%d\n", (int) page, (int) offset);
@@ -781,38 +783,44 @@ WRITE_HANDLER ( geneve_w )
 
 	offset &= 0x1fff;
 
-	if (page < 0x40)
+	switch (page)
 	{
-		/* DRAM */
-		DRAM_ptr[page*0x2000 + offset] = data;
+	case 0xf0:
+	case 0xf1:
+		/* Boot ROM */
 		return;
-	}
-	else if ((page >= 0xb8) && (page < 0xc0))
-	{
-		/* PE-bus */
-		switch (page)
-		{
-		case 0xba:
-			geneve_peb_w(offset, data);
-			return;
 
-		case 0xbc:
-			if ((offset > 0x1400) && (offset < 0x1800) && (! (offset & 1)) && has_speech)
-			{
-				geneve_speech_w(0, data);
-			}
-			return;
-		}
-	}
-	else if ((page >= 0xe8) && (page < 0xf0))
-	{
+	case 0xe8:
+	case 0xe9:
+	case 0xea:
+	case 0xeb:
+	case 0xec:
+	case 0xed:
+	case 0xee:
+	case 0xef:
 		/* SRAM */
 		SRAM_ptr[(page-0xe8)*0x2000 + offset] = data;
 		return;
-	}
-	else if ((page >= 0xf0) && (page < 0xf2))
-	{
-		/* Boot ROM */
+
+	case 0x7a:	/* mirror of 0xba??? */
+		return;
+	case 0xba:
+		/* DSR space */
+		geneve_peb_w(offset, data);
+		return;
+
+	case 0xbc:
+		/* speech space */
+		if (has_speech)
+		{
+			if ((offset > 0x1400) && (offset < 0x1800) && (! (offset & 1)))
+				geneve_speech_w(0, data);
+			return;
+		}
+
+	default:
+		/* DRAM */
+		DRAM_ptr[page*0x2000 + offset] = data;
 		return;
 	}
 
