@@ -14,8 +14,7 @@ static void vc1541_reset_write (CBM_Drive * vc1541, int level);
 
 CBM_Drive cbm_drive[2];
 
-CBM_Serial cbm_serial =
-{0};
+CBM_Serial cbm_serial = {0};
 
 /* must be called before other functions */
 void cbm_drive_open (void)
@@ -122,7 +121,8 @@ static int d64_open (int id)
 
 	memset (&(cbm_drive[id].d.d64), 0, sizeof (cbm_drive[id].d.d64));
 
-	cbm_drive[id].d.d64.imagename= device_filename(IO_FLOPPY, id);
+	cbm_drive[id].d.d64.image_type = IO_FLOPPY;
+	cbm_drive[id].d.d64.image_id = id;
 	if (!(in = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror(" image %s not found\n", device_filename(IO_FLOPPY,id));
@@ -143,7 +143,7 @@ static int d64_open (int id)
 	osd_fclose (in);
 
 	logerror("floppy image %s loaded\n",
-				 cbm_drive[id].d.d64.imagename);
+				 device_filename(IO_FLOPPY,id));
 
 	cbm_drive[id].drive = D64_IMAGE;
 	return 0;
@@ -420,19 +420,16 @@ static void cbm_drive_status (CBM_Drive * c1551, char *text, int size)
 		switch (c1551->state)
 		{
 		case OPEN:
-			snprintf (text, size, "Image %s File %s open",
-					  c1551->d.d64.imagename,
+			snprintf (text, size, "Image File %s open",
 					  c1551->d.d64.filename);
 			break;
 		case READING:
-			snprintf (text, size, "Image %s File %s loading %d",
-					  c1551->d.d64.imagename,
+			snprintf (text, size, "Image File %s loading %d",
 					  c1551->d.d64.filename,
 					  c1551->size - c1551->pos - 1);
 			break;
 		case WRITING:
-			snprintf (text, size, "Image %s File %s saving %d",
-					  c1551->d.d64.imagename,
+			snprintf (text, size, "Image File %s saving %d",
 					  c1551->d.d64.filename, c1551->pos);
 			break;
 		}

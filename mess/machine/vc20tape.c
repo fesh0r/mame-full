@@ -46,11 +46,11 @@ struct
 {
 	int state;
 	void *timer;
-	const char *imagename;
+	int image_type;
+    int image_id;
 	int pos;
 	struct GameSample *sample;
-}
-wav;
+} wav;
 
 /* these are the values for prg files */
 struct
@@ -59,7 +59,8 @@ struct
 
 	/* these values are shared with the zip driver */
 	void *timer;
-	const char *imagename;
+	int image_type;
+    int image_id;
 	int pos;
 
 #define VC20_SHORT		(176e-6)
@@ -79,18 +80,17 @@ struct
 	char name[16];					   /*name for cbm */
 	UINT8 chksum;
 	double lasttime;
-}
-prg;
+} prg;
 
 /* these are values for zip files */
 struct
 {
-	const char *imagename;
+	int image_type;
+    int image_id;
 	int state;
 	ZIP *zip;
 	struct zipent *zipentry;
-}
-zip;
+} zip;
 
 /* from sound/samples.c no changes (static declared) */
 /* readsamples not useable (loads files only from sample or game directory) */
@@ -290,26 +290,27 @@ static void vc20_wav_state (void)
 	}
 }
 
-static void vc20_wav_open (const char *name)
+static void vc20_wav_open (int image_type, int image_id)
 {
 	FILE *fp;
 
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		logerror("tape %s file not found\n", name);
+		logerror("tape %s file not found\n", device_filename(image_type,image_id));
 		return;
 	}
 	if ((wav.sample = vc20_read_wav_sample (fp)) == NULL)
 	{
-		logerror("tape %s could not be loaded\n", name);
+		logerror("tape %s could not be loaded\n", device_filename(image_type,image_id));
 		osd_fclose (fp);
 		return;
 	}
-	logerror("tape %s loaded\n", name);
+	logerror("tape %s loaded\n", device_filename(image_type,image_id));
 	osd_fclose (fp);
 
-	wav.imagename = name;
+	wav.image_type = image_type;
+    wav.image_id = image_id;
 	tape.type = TAPE_WAV;
 	wav.pos = 0;
 	tape.on = 1;
@@ -425,34 +426,37 @@ static void vc20_prg_state (void)
 	}
 }
 
-static void vc20_prg_open (const char *name)
+static void vc20_prg_open (int image_type, int image_id)
 {
-	FILE *fp;
+	const char *name;
+    FILE *fp;
 	int i;
 
-	fp = osd_fopen (Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE_R, 0);
+	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		logerror("tape %s file not found\n", name);
+		logerror("tape %s file not found\n", device_filename(image_type,image_id));
 		return;
 	}
 	prg.length = osd_fsize (fp);
 	if ((prg.prg = (UINT8 *) malloc (prg.length)) == NULL)
 	{
-		logerror("tape %s could not be loaded\n", name);
+		logerror("tape %s could not be loaded\n", device_filename(image_type,image_id));
 		osd_fclose (fp);
 		return;
 	}
 	osd_fread (fp, prg.prg, prg.length);
-	logerror("tape %s loaded\n", name);
+	logerror("tape %s loaded\n", device_filename(image_type,image_id));
 	osd_fclose (fp);
 
-	for (i = 0; name[i] != 0; i++)
+	name = device_filename(image_type,image_id);
+    for (i = 0; name[i] != 0; i++)
 		prg.name[i] = toupper (name[i]);
 	for (; i < 16; i++)
 		prg.name[i] = ' ';
 
-	prg.imagename=name;
+	prg.image_type = image_type;
+    prg.image_id = image_id;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
 	prg.statebyte = 0;
@@ -1030,19 +1034,20 @@ static void vc20_zip_readfile (void)
 	readuncompresszip (zip.zip, zip.zipentry, (char *) prg.prg);
 }
 
-static void vc20_zip_open (const char *name)
+static void vc20_zip_open (int image_type, int image_id)
 {
-	if (!(zip.zip = openzip (name)))
+	if (!(zip.zip = openzip (device_filename(image_type,image_id))))
 	{
-		logerror("tape %s not found\n", name);
+		logerror("tape %s not found\n", device_filename(image_type,image_id));
 		return;
 	}
 
-	logerror("tape %s linked\n", name);
+	logerror("tape %s linked\n", device_filename(image_type,image_id));
 
 	tape.type = TAPE_ZIP;
 	tape.on = 1;
-	zip.imagename=name;
+	zip.image_type = image_type;
+    zip.image_id = image_id;
 	zip.state = 2;
 	prg.stateblock = 0;
 	prg.stateheader = 0;
@@ -1118,7 +1123,6 @@ void c16_tape_open (void)
 
 int vc20_tape_attach_image (int id)
 {
-	const char *name = device_filename(IO_CASSETTE,id);
     char *cp;
 
 	tape.type = 0;
@@ -1129,22 +1133,22 @@ int vc20_tape_attach_image (int id)
 	tape.motor = 0;
 	tape.data = 0;
 
-	if (name == NULL)
+	if (device_filename(IO_CASSETTE,id) == NULL)
 		return INIT_OK;
 
-    if ((cp = strrchr (name, '.')) == NULL)
+	if ((cp = strrchr (device_filename(IO_CASSETTE,id), '.')) == NULL)
 		return INIT_FAILED;
 	if (stricmp (cp, ".wav") == 0)
 	{
-		vc20_wav_open (name);
+		vc20_wav_open (IO_CASSETTE,id);
 	}
 	else if (stricmp (cp, ".prg") == 0)
 	{
-		vc20_prg_open (name);
+		vc20_prg_open (IO_CASSETTE,id);
 	}
 	else if (stricmp (cp, ".zip") == 0)
 	{
-		vc20_zip_open (name);
+		vc20_zip_open (IO_CASSETTE,id);
 	}
 	else
 		return INIT_FAILED;
@@ -1304,7 +1308,8 @@ void vc20_tape_status (char *text, int size)
 			break;
 		case 3:
 			snprintf (text, size, "Tape (%s) loading %d/%dsec",
-					  wav.imagename, wav.pos / wav.sample->smpfreq,
+					  device_filename(wav.image_type, wav.image_id),
+					  wav.pos / wav.sample->smpfreq,
 					  wav.sample->length / wav.sample->smpfreq);
 			break;
 		}
@@ -1316,7 +1321,8 @@ void vc20_tape_status (char *text, int size)
 			snprintf (text, size, "Tape saving");
 			break;
 		case 3:
-			snprintf (text, size, "Tape (%s) loading %d", prg.imagename, prg.pos);
+			snprintf (text, size, "Tape (%s) loading %d",
+				device_filename(prg.image_type, prg.image_id), prg.pos);
 			break;
 		}
 		break;
@@ -1327,7 +1333,8 @@ void vc20_tape_status (char *text, int size)
 			snprintf (text, size, "Tape saving");
 			break;
 		case 3:
-			snprintf (text, size, "Tape (%s) File %s loading %d", zip.imagename, zip.zipentry->name, prg.pos);
+			snprintf (text, size, "Tape (%s) File %s loading %d",
+				device_filename(zip.image_type,zip.image_id), zip.zipentry->name, prg.pos);
 			break;
 		}
 		break;

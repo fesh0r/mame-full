@@ -295,7 +295,6 @@ READ_HANDLER ( gb_r_timer_cnt )
 
 int gb_load_rom (int id)
 {
-	const char *rom_name = device_filename(IO_CARTSLOT,id);
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	static char *CartTypes[] =
 	{
@@ -403,7 +402,7 @@ int gb_load_rom (int id)
 	for (I = 0; I < 256; I++)
 		RAMMap[I] = ROMMap[I] = NULL;
 
-	if(rom_name==NULL)
+	if(device_filename(IO_CARTSLOT,id)==NULL)
 	{
 		printf("Cartridge name not specified!\n");
 		return INIT_FAILED;
@@ -449,7 +448,7 @@ int gb_load_rom (int id)
 
 	if (osd_fread (F, gb_ram, 0x4000) != 0x4000)
 	{
-		logerror("Error while reading from file: %s\n", rom_name);
+		logerror("Error while reading from file: %s\n", device_filename(IO_CARTSLOT,id));
 		osd_fclose (F);
 		return 1;
 	}
@@ -511,7 +510,7 @@ int gb_load_rom (int id)
 			}
 			else
 			{
-				logerror("Error while reading from file: %s\n", rom_name);
+				logerror("Error while reading from file: %s\n", device_filename(IO_CARTSLOT,id));
 				break;
 			}
 		}

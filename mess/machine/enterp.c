@@ -16,7 +16,7 @@ extern unsigned char *Enterprise_RAM;
 
 void Enterprise_SetupPalette(void);
 
-const char *ep128_floppy_name[4] = {NULL,NULL,NULL,NULL};
+int ep128_flop_specified[4] = {0,0,0,0};
 
 void enterprise_init_machine(void)
 {
@@ -45,7 +45,7 @@ void enterprise_shutdown_machine(void)
 
 int enterprise_floppy_init(int id)
 {
-	ep128_floppy_name[id] = device_filename(IO_FLOPPY,id);
+	ep128_flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 
     return 0;
 }

@@ -132,9 +132,6 @@ B7 - Operates the SHIFT lock LED (Pin 16 keyboard connector)
 #include "vidhrdw/bbc.h"
 #include "i8271.h"
 
-const char *bbc_floppy_name[4] = {NULL,NULL,NULL,NULL};
-
-
 static int b0_sound;
 static int b1_speech_read;
 static int b2_speech_write;
@@ -467,7 +464,7 @@ static short motor_count = 0;
 static UINT8 head[4]={0,};
 
 
-static const char *floppy_name[4]={0,};
+static int flop_specified[4] = {0,};
 
 
 void	bbc_i8271_interrupt(int state)
@@ -520,7 +517,7 @@ void init_machine_bbcb(void)
 	via_reset();
 	bbcb_IC32_initialise();
 
-	if( floppy_name[0] )
+	if( flop_specified[0] )
 		wd179x_init(1);
 	else
 		wd179x_init(0);
@@ -541,7 +538,7 @@ void stop_machine_bbcb(void)
 int bbc_floppy_init(int id)
 {
 	/* load disk image */
-    floppy_name[id]=device_filename(IO_FLOPPY,id);
+    flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
     return 0;
 }
 
@@ -549,7 +546,7 @@ int bbc_floppy_init(int id)
 void bbc_floppy_exit(int id)
 {
 	wd179x_stop_drive();
-	floppy_name[id]=NULL;
+	flop_specified[id] = 0;
 	first_fdc_access=1;
 }
 
@@ -566,13 +563,13 @@ void bbc_wd179x_status_w(int offset,int data)
 
 	drive = 0;
 	head[drive]=0;
-	if (!floppy_name[drive])
+	if (!flop_specified[drive])
 		return;
 
 	motor_drive=drive;
 	motor_count=5*60;
 
-	file0=wd179x_select_drive(drive,head[drive],bbc_fdc_callback,floppy_name[drive]);
+	file0=wd179x_select_drive(drive,head[drive],bbc_fdc_callback,device_filename(IO_FLOPPY,drive));
 
 	if (!file0)
 		return;
@@ -584,7 +581,7 @@ void bbc_wd179x_status_w(int offset,int data)
 
 	wd179x_set_geometry(drive,80,1,10,256,0,2,0);
 
-	wd179x_select_drive(drive,head[drive],bbc_fdc_callback,floppy_name[drive]);
+	wd179x_select_drive(drive,head[drive],bbc_fdc_callback,device_filename(IO_FLOPPY,drive));
 }
 
 READ_HANDLER ( bbc_wd1770_read)

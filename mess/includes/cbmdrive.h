@@ -75,7 +75,8 @@ typedef struct
 			/*    int sectorbuffer[256]; */
 
 			/* for visualization */
-			const char *imagename;
+			int image_type;
+            int image_id;
 			char filename[20];
 		}
 		d64;

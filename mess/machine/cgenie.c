@@ -376,12 +376,12 @@ int cgenie_rom_load(int id)
 	int result = 0;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	void *rom;
-	char filename[200];
+	const char *filename;
 
 	/* Initialize memory */
 	memset(&ROM[0x4000], 0xff, 0xc000);
 
-	strcpy(filename, "newe000.rom");
+	filename = "newe000.rom";
 	rom = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R, 0);
 	if( rom )
 	{

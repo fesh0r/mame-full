@@ -38,7 +38,7 @@ static UINT8 *cassette_image = NULL;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static const char *floppy_name[2] = {NULL, NULL};
+static int flop_specified[2] = {0, 0};
 static void *laser_fdc_file[2] = {NULL, NULL};
 static UINT8 laser_track_x2[2] = {80, 80};
 static UINT8 laser_fdc_wrprot[2] = {0x80, 0x80};
@@ -591,7 +591,7 @@ int laser_floppy_id(int id)
 
 int laser_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return INIT_OK;
 }
 
@@ -600,7 +600,7 @@ void laser_floppy_exit(int id)
     if( laser_fdc_file[id] )
         osd_fclose(laser_fdc_file[id]);
     laser_fdc_file[id] = NULL;
-    floppy_name[id] = NULL;
+	flop_specified[id] = 0;
 }
 
 static void laser_get_track(void)
