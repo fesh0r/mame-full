@@ -85,8 +85,10 @@ static int osd_selected;
 static int jukebox_selected;
 static int single_step;
 
-int showfps;
-int showfpstemp;
+static int showfps;
+static int showfpstemp;
+
+static int show_profiler;
 
 UINT8 ui_dirty;
 
@@ -3880,6 +3882,44 @@ void ui_show_fps_temp(double seconds)
 		showfpstemp = (int)(seconds * Machine->drv->frames_per_second);
 }
 
+void ui_show_fps_set(int show)
+{
+	if (show)
+	{
+		showfps = 1;
+	}
+	else
+	{
+		showfps = 0;
+		showfpstemp = 0;
+		schedule_full_refresh();
+	}
+}
+
+int ui_show_fps_get(void)
+{
+	return showfps || showfpstemp;
+}
+
+void ui_show_profiler_set(int show)
+{
+	if (show)
+	{
+		show_profiler = 1;
+		profiler_start();
+	}
+	else
+	{
+		show_profiler = 0;
+		profiler_stop();
+		schedule_full_refresh();
+	}
+}
+
+int ui_show_profiler_get(void)
+{
+	return show_profiler;
+}
 
 void display_fps(struct mame_bitmap *bitmap)
 {
@@ -3927,7 +3967,6 @@ void display_fps(struct mame_bitmap *bitmap)
 }
 
 
-int show_profiler;
 
 int handle_user_interface(struct mame_bitmap *bitmap)
 {
@@ -4149,14 +4188,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 
 	if (input_ui_pressed(IPT_UI_SHOW_PROFILER))
 	{
-		show_profiler ^= 1;
-		if (show_profiler)
-			profiler_start();
-		else
-		{
-			profiler_stop();
-			schedule_full_refresh();
-		}
+		ui_show_profiler_set(!ui_show_profiler_get());
 	}
 
 	if (show_profiler) profiler_show(bitmap);
@@ -4165,20 +4197,8 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	/* show FPS display? */
 	if (input_ui_pressed(IPT_UI_SHOW_FPS))
 	{
-		/* if we're temporarily on, turn it off immediately */
-		if (showfpstemp)
-		{
-			showfpstemp = 0;
-			schedule_full_refresh();
-		}
-
-		/* otherwise, just toggle; force a refresh if going off */
-		else
-		{
-			showfps ^= 1;
-			if (!showfps)
-				schedule_full_refresh();
-		}
+		/* toggle fps */
+		ui_show_fps_set(!ui_show_fps_get());
 	}
 
 

@@ -5,7 +5,6 @@
 
 extern void display_fps(struct mame_bitmap *bitmap);
 
-extern int show_profiler;
 int mess_pause_for_ui = 0;
 
 int handle_mess_user_interface(struct mame_bitmap *bitmap)
@@ -23,7 +22,7 @@ int handle_mess_user_interface(struct mame_bitmap *bitmap)
 	{
 		if (options.disable_normal_ui)
 		{
-			if (show_profiler)
+			if (ui_show_profiler_get())
 				profiler_show(bitmap);
 			display_fps(bitmap);
 		}

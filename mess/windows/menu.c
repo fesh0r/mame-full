@@ -37,10 +37,6 @@
 // from input.c
 extern UINT8 win_trying_to_quit;
 
-// from usrintrf.c
-extern int showfps;
-extern int showfpstemp;
-
 // from mamedbg.c
 extern int debug_key_pressed;
 
@@ -103,10 +99,6 @@ enum
 //============================================================
 
 int win_use_natural_keyboard;
-
-#if HAS_PROFILER
-extern int show_profiler;
-#endif
 
 
 //============================================================
@@ -600,9 +592,9 @@ static void prepare_menus(void)
 #if HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
 #endif
-	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,	(showfps || showfpstemp)	? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,	ui_show_fps_get()			? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
-	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	show_profiler				? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	ui_show_profiler_get()		? MFS_CHECKED : MFS_ENABLED);
 #endif
 
 	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
@@ -687,28 +679,6 @@ void win_toggle_menubar(void)
 }
 #endif // HAS_TOGGLEMENUBAR
 
-
-//============================================================
-//	toggle_fps
-//============================================================
-
-static void toggle_fps(void)
-{
-	/* if we're temporarily on, turn it off immediately */
-	if (showfpstemp)
-	{
-		showfpstemp = 0;
-		schedule_full_refresh();
-	}
-
-	/* otherwise, just toggle; force a refresh if going off */
-	else
-	{
-		showfps ^= 1;
-		if (!showfps)
-			schedule_full_refresh();
-	}
-}
 
 //============================================================
 //	device_command
@@ -889,14 +859,7 @@ static int invoke_command(UINT command)
 
 #if HAS_PROFILER
 	case ID_OPTIONS_PROFILER:
-		show_profiler ^= 1;
-		if (show_profiler)
-			profiler_start();
-		else
-		{
-			profiler_stop();
-			schedule_full_refresh();
-		}
+		ui_show_profiler_set(!ui_show_profiler_get());
 		break;
 #endif
 
@@ -917,7 +880,7 @@ static int invoke_command(UINT command)
 #endif
 
 	case ID_OPTIONS_TOGGLEFPS:
-		toggle_fps();
+		ui_show_fps_set(!ui_show_fps_get());
 		break;
 
 #if HAS_TOGGLEMENUBAR
@@ -1016,7 +979,7 @@ int win_setup_menus(HMENU menu_bar)
 
 	// remove the profiler menu item if it doesn't exist
 #if HAS_PROFILER
-	show_profiler = 0;
+	ui_show_profiler_set(0);
 #else
 	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
 #endif
