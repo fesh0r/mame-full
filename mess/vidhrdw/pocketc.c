@@ -242,8 +242,8 @@ static void pc1401_draw_special(struct osd_bitmap *bitmap,
 	}
 }
 
-#define DOWN 36
-#define RIGHT 112
+#define DOWN 57
+#define RIGHT 114
 void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
@@ -261,45 +261,45 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	for (x=RIGHT,y=DOWN,i=0; i<0x28;x+=2) {
 		for (j=0; j<5;j++,i++,x+=2)
 			drawgfx(bitmap, Machine->gfx[CONTRAST], pc1401_lcd.reg[i],
-					0,
-					x,y,x+2,y+21,
+					0,0,0,
+					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
 	for (i=0x67; i>=0x40;x+=2) {
 		for (j=0; j<5;j++,i--,x+=2)
-			drawgfx(bitmap, Machine->gfx[CONTRAST], pc1401_lcd.reg[i],0,
-					x,y,x+2,y+21,
+			drawgfx(bitmap, Machine->gfx[CONTRAST], pc1401_lcd.reg[i],0,0,0,
+					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
-	pc1401_draw_special(bitmap,RIGHT+151,DOWN+45,line,
+	pc1401_draw_special(bitmap,RIGHT+149,DOWN+24,line,
 						pc1401_lcd.reg[0x3c]&8?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+2,DOWN+11,busy,
+	pc1401_draw_special(bitmap,RIGHT,DOWN-10,busy,
 						pc1401_lcd.reg[0x3d]&1?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+20,DOWN+11,def,
+	pc1401_draw_special(bitmap,RIGHT+18,DOWN-10,def,
 						pc1401_lcd.reg[0x3d]&2?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+45,DOWN+11,shift,
+	pc1401_draw_special(bitmap,RIGHT+43,DOWN-10,shift,
 						pc1401_lcd.reg[0x3d]&4?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+65,DOWN+11,hyp,
+	pc1401_draw_special(bitmap,RIGHT+63,DOWN-10,hyp,
 						pc1401_lcd.reg[0x3d]&8?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+40,DOWN+45,line,
+	pc1401_draw_special(bitmap,RIGHT+38,DOWN+24,line,
 						pc1401_lcd.reg[0x3d]&0x10?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+25,DOWN+45,line,
+	pc1401_draw_special(bitmap,RIGHT+23,DOWN+24,line,
 						pc1401_lcd.reg[0x3d]&0x20?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+10,DOWN+45,line,
+	pc1401_draw_special(bitmap,RIGHT+8,DOWN+24,line,
 						pc1401_lcd.reg[0x3d]&0x40?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+185,DOWN+11,e,
+	pc1401_draw_special(bitmap,RIGHT+183,DOWN-10,e,
 						pc1401_lcd.reg[0x7c]&1?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+178,DOWN+11,m,
+	pc1401_draw_special(bitmap,RIGHT+176,DOWN-10,m,
 						pc1401_lcd.reg[0x7c]&2?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+170,DOWN+11,braces,
+	pc1401_draw_special(bitmap,RIGHT+168,DOWN-10,braces,
 						pc1401_lcd.reg[0x7c]&4?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+140,DOWN+11,rad,
+	pc1401_draw_special(bitmap,RIGHT+138,DOWN-10,rad,
 						pc1401_lcd.reg[0x7c]&8?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+136,DOWN+11,g,
+	pc1401_draw_special(bitmap,RIGHT+134,DOWN-10,g,
 						pc1401_lcd.reg[0x7c]&0x10?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+128,DOWN+11,de,
+	pc1401_draw_special(bitmap,RIGHT+126,DOWN-10,de,
 						pc1401_lcd.reg[0x7c]&0x20?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+167,DOWN+45,line,
+	pc1401_draw_special(bitmap,RIGHT+165,DOWN+24,line,
 						pc1401_lcd.reg[0x7c]&0x40?color[1]:color[0]);
 
 /*
@@ -328,9 +328,9 @@ WRITE_HANDLER(pc1251_lcd_write)
 }
 
 #undef DOWN
-#define DOWN 41
+#define DOWN 62
 #undef RIGHT
-#define RIGHT 65
+#define RIGHT 68
 void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
@@ -348,32 +348,32 @@ void pc1251_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 	for (x=RIGHT,y=DOWN,i=0; i<60;x+=3) {
 		for (j=0; j<5;j++,i++,x+=3)
 			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
-					0,
-					x,y,x+3,y+21,
+					0,0,0,
+					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
 	for (i=0x7b; i>=0x40;x+=3) {
 		for (j=0; j<5;j++,i--,x+=3)
 			drawgfx(bitmap, Machine->gfx[PC1251_CONTRAST], pc1251_lcd.reg[i],
-					0,
-					x,y,x+3,y+21,
+					0,0,0,
+					x,y,
 					0, TRANSPARENCY_NONE,0);
 	}
-	pc1401_draw_special(bitmap,RIGHT+136,DOWN+10,de,
+	pc1401_draw_special(bitmap,RIGHT+134,DOWN-10,de,
 						pc1251_lcd.reg[0x3c]&8?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+144,DOWN+10,g,
+	pc1401_draw_special(bitmap,RIGHT+142,DOWN-10,g,
 						pc1251_lcd.reg[0x3c]&4?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+148,DOWN+10,rad,
+	pc1401_draw_special(bitmap,RIGHT+146,DOWN-10,rad,
 						pc1251_lcd.reg[0x3d]&4?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+20,DOWN+10,def,
+	pc1401_draw_special(bitmap,RIGHT+18,DOWN-10,def,
 						pc1251_lcd.reg[0x3c]&1?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT,DOWN+10,shift,
+	pc1401_draw_special(bitmap,RIGHT,DOWN-10,shift,
 						pc1251_lcd.reg[0x3d]&2?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+40,DOWN+10,pro,
+	pc1401_draw_special(bitmap,RIGHT+38,DOWN-10,pro,
 						pc1251_lcd.reg[0x3e]&1?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+55,DOWN+10,run,
+	pc1401_draw_special(bitmap,RIGHT+53,DOWN-10,run,
 						pc1251_lcd.reg[0x3e]&2?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT+70,DOWN+10,rsv,
+	pc1401_draw_special(bitmap,RIGHT+68,DOWN-10,rsv,
 						pc1251_lcd.reg[0x3e]&4?color[1]:color[0]);
 
 	/* 0x3c 1 def?, 4 g, 8 de
@@ -414,9 +414,9 @@ int pc1350_keyboard_line_r(void)
 static int pc1350_addr[4]={ 0, 0x40, 0x1e, 0x5e };
 
 #undef DOWN
-#define DOWN 30
+#define DOWN 45
 #undef RIGHT
-#define RIGHT 75
+#define RIGHT 76
 void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j, k;
@@ -436,24 +436,24 @@ void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 			for (j=0; j<=0x1d; j++, x+=2) {
 				drawgfx(bitmap, Machine->gfx[PC1350_CONTRAST], 
 						pc1350_lcd.reg[j+i],
-						0,
-						x,y,x+2,y+16,
+						0,0,0,
+						x,y,
 						0, TRANSPARENCY_NONE,0);
 			}
 		}
 	}
 	/* 783c: 0 SHIFT 1 DEF 4 RUN 5 PRO 6 JAPAN 7 SML */
 	/* I don't know how they really look like in the lcd */
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+60,shift,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+45,shift,
 						pc1350_lcd.reg[0x83c]&1?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+70,def,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+55,def,
 						pc1350_lcd.reg[0x83c]&2?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+20,run,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+5,run,
 						pc1350_lcd.reg[0x83c]&0x10?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+30,pro,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+15,pro,
 						pc1350_lcd.reg[0x83c]&0x20?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+40,japan,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+25,japan,
 						pc1350_lcd.reg[0x83c]&0x40?color[1]:color[0]);
-	pc1401_draw_special(bitmap,RIGHT-30,DOWN+50,sml,
+	pc1401_draw_special(bitmap,RIGHT-30,DOWN+35,sml,
 						pc1350_lcd.reg[0x83c]&0x80?color[1]:color[0]);
 }
