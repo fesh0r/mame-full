@@ -115,14 +115,13 @@ static void get_background_tile_info(int tile_index)
 ***************************************************************************/
 int vulgus_vh_start(void)
 {
-	foreground_tilemap = tilemap_create(get_foreground_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
-	background_tilemap = tilemap_create(get_background_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE     ,16,16,32,32);
+	foreground_tilemap = tilemap_create(get_foreground_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR, 8, 8,32,32);
+	background_tilemap = tilemap_create(get_background_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE           ,16,16,32,32);
 
 	if (!foreground_tilemap || !background_tilemap)
 		return 1;
 
-	/* this is wrong. It should be TRANSPARENCY_COLOR 47 */
-	foreground_tilemap->transparent_pen = 0;
+	foreground_tilemap->transparent_pen = 47;
 
 	return 0;
 }
@@ -172,7 +171,10 @@ WRITE_HANDLER( vulgus_c804_w )
 
 WRITE_HANDLER( vulgus_palette_bank_w )
 {
-	set_vh_global_attribute( &vulgus_palette_bank, data );
+	if (vulgus_palette_bank != data)
+		tilemap_mark_all_tiles_dirty(background_tilemap);
+
+	vulgus_palette_bank = data;
 }
 
 

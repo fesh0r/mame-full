@@ -162,7 +162,10 @@ WRITE_HANDLER( c1942_background_videoram_w )
 
 WRITE_HANDLER( c1942_palette_bank_w )
 {
-	set_vh_global_attribute( &c1942_palette_bank, data );
+	if (c1942_palette_bank != data)
+		tilemap_mark_all_tiles_dirty(background_tilemap);
+
+	c1942_palette_bank = data;
 }
 
 
