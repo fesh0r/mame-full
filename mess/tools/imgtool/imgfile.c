@@ -274,13 +274,7 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	/* This makes it so that drivers don't have to take care of clearing
 	 * the attributes if they don't apply
 	 */
-	ent->filename[0] = '\0';
-	ent->attr[0] = '\0';
-	ent->creation_time = 0;
-	ent->lastmodified_time = 0;
-	ent->eof = 0;
-	ent->corrupt = 0;
-	ent->filesize = 0;
+	memset(ent, 0, sizeof(*ent));
 
 	err = module->next_enum(enumeration, ent);
 	if (err)
@@ -290,6 +284,8 @@ imgtoolerr_t img_nextenum(imgtool_imageenum *enumeration, imgtool_dirent *ent)
 	if (!module->supports_creation_time && (ent->creation_time != 0))
 		return IMGTOOLERR_UNEXPECTED;
 	if (!module->supports_lastmodified_time && (ent->lastmodified_time != 0))
+		return IMGTOOLERR_UNEXPECTED;
+	if (!module->path_separator && ent->directory)
 		return IMGTOOLERR_UNEXPECTED;
 
 	return IMGTOOLERR_SUCCESS;
