@@ -16,10 +16,6 @@
 #ifndef _GLMAME_H
 #define _GLMAME_H
 
-#ifndef GLDEBUG
-	#define NDEBUG
-#endif
-
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -37,6 +33,7 @@
 #endif
 
 #include "gltool.h"
+#include "gldirty.h"
 
 /* Camera panning stuff */
 
@@ -63,7 +60,6 @@ extern int winheight;
 extern int doublebuffer;
 extern int bilinear;
 extern int alphablending;
-extern int bitmap_lod; /* level of bitmap-texture detail */
 extern int fullscreen;
 
 /* glvec.c */
@@ -72,38 +68,36 @@ extern float gl_translucency;
 
 /* glgen.c */
 extern int totalcolors;
-extern int palette_dirty;
+extern int use_mod_ctable;
 extern GLubyte *ctable;
-extern unsigned char *ctable_orig;	/* for original return 2 game values */
 extern GLushort *rcolmap, *gcolmap, *bcolmap, *acolmap;
 extern int ctable_size; /* the true color table size */
+extern GLint  gl_internal_format;
 extern GLenum gl_bitmap_format;
+extern GLenum gl_bitmap_type;
 extern unsigned char gl_alpha_value; /* customize it :-) */
 extern double scrnaspect, vscrnaspect;
 extern GLsizei text_width;
 extern GLsizei text_height;
 extern int force_text_width_height;
-extern int screendirty;
 extern int dodepth;
 extern int cabview;
 extern int cabload_err;
 extern int drawbitmap;
 extern int dopersist;
-extern GLboolean useGlEXT;
+extern GLboolean useGLEXT78; /* paletted texture */
+extern GLboolean useColorIndex; 
+extern GLboolean isGL12;
+extern int use_blitter;
 
 extern char *cabname; /* 512 bytes reserved ... */
 extern int cabspecified;
 extern int gl_is_initialized;
 extern GLuint cablist;
-#ifdef WIN32
-	extern PFNGLCOLORTABLEEXTPROC _glColorTableEXT;
-#else
-	extern void (*_glColorTableEXT)(GLenum, GLenum, GLsizei, GLenum, GLenum, const GLvoid *);
-#endif
 extern int gl_is_initialized;
 
 /* xgl.c */
-void switch2Fullscreen();
+void toggleFullscreen();
 
 /* glvec.c */
 extern void set_gl_beam(float new_value);
@@ -112,17 +106,40 @@ extern float get_gl_beam();
 /* glcab.c */
 void InitCabGlobals();
 
-/* glgen.c */
+/* glgen.c
+ * 
+ * the calling order is the listed order:
+ * 
+ * first the start sequence, then the quit sequence ..
+ */
+
+/* start sequence */
 void gl_bootstrap_resources();
+int sysdep_display_16bpp_capable (void);
+void InitVScreen (int depth);
 void gl_reset_resources();
-GLboolean glHasEXT(void);
-void glSetUseEXT(GLboolean val);
-GLboolean glGetUseEXT(void);
+int sysdep_display_alloc_palette (int writable_colors);
+void InitTextures (void);
+
+/* quit sequence */
+void CloseVScreen (void);
+void gl_reset_resources();
+
+/* misc sequence */
 void  gl_set_bilinear(int new_value);
+void gl_init_cabview ();
 void  gl_set_cabview(int new_value);
 void  gl_set_antialias(int new_value);
 void  gl_set_alphablending(int new_value);
 void  xgl_fixaspectratio(int *w, int *h);
-void  xgl_resize(int w, int h);
+void xgl_resize(int w, int h, int now);
+extern GLboolean glHasEXT78 (void);
+extern void glSetUseEXT78 (GLboolean val);
+extern GLboolean glGetUseEXT78 (void);
+
+/* glexport */
+void gl_save_screen_snapshot();
+int gl_png_write_bitmap(void *fp);
+void ppm_save_snapshot (void *fp);
 
 #endif /* _GLMAME_H */

@@ -18,6 +18,7 @@ int inpan=0;
 static int inscreen=0;
 static int scrvert;
 static int inlist=0;
+static int ingeom=0;
 
 static int inbegin=0;
 
@@ -166,14 +167,15 @@ void ParseLine(char *buf)
   if(!*buf||*buf=='#'||*buf=='\n') return;
 
   if(!strncasecmp(buf,"startgeom",9)) {
-	if(inlist) printf("GLError (cab): second call to startgeom\n");
-	else {
-	  __glNewList(cablist,GL_COMPILE);
-	  inlist=1;
-	}
+        CHECK_GL_BEGINEND();
+
+	if(ingeom) printf("GLError (cab): second call to startgeom\n");
+	ingeom=1;
   }
   else if(!strncasecmp(buf,"numtex",6)) {
-	if(inlist)
+        CHECK_GL_BEGINEND();
+
+	if(ingeom)
 	  printf("GLError (cab):numtex must be called before beginning model geometry\n");
 	else {
 	  numtex=atoi(buf+7);
@@ -185,7 +187,9 @@ void ParseLine(char *buf)
 	}
   }
   else if(!strncasecmp(buf,"loadtex",7)) {
-	if(inlist)
+        CHECK_GL_BEGINEND();
+
+	if(ingeom)
 	  printf("GLError (cab):loadtex calls cannot come after beginning model geometry\n");
 	else {
 	  if(!cabtex)
@@ -255,12 +259,21 @@ void ParseLine(char *buf)
 	else ParsePan(buf+6,pan_moveto);
   }
   else if(!strncasecmp(buf,"end",3)) {
-	inscreen=0;
-	inpan=0;
-	inbegin=0;
-	__glEnd();
+	if(inbegin==1)
+	{
+		GL_END();
+		inbegin=0;
+	} 
+	else if(inpan==1)
+		inpan=0;
+	else if(inscreen==1)
+		inscreen=0;
+	else
+	{
+	          printf("GLError (cab): end command without begin, screen or camerapan\n");
+	}
   } else {
-	if(!inlist) 
+	if(!ingeom) 
 	{
 		printf("GLError (cab): A startgeom call is needed before specifying any geometry\n");
         } else if(!strncasecmp(buf,"pointsize",9)) 
@@ -274,19 +287,26 @@ void ParseLine(char *buf)
 	      }
         } else if(!strncasecmp(buf,"begin",5)) 
 	{
-	  inbegin=1;
-
+	  if(inbegin!=0)
+	  {
+		printf("GLError (cab): begin is called within begin/end !\n");
+	  }
 	  if(!strncasecmp(buf+6,"points",6)) {
-		__glBegin(GL_POINTS);
+		CHECK_GL_BEGINEND();
+		GL_BEGIN(GL_POINTS); 
+		inbegin=1;
 	  }
 	  else if(!strncasecmp(buf+6,"polygon",7)) {
-		__glBegin(GL_POLYGON);
+		GL_BEGIN(GL_POLYGON);
+		inbegin=1;
 	  }
 	  else if(!strncasecmp(buf+6,"quads",5)) {
-		__glBegin(GL_QUADS);
+		GL_BEGIN(GL_QUADS);
+		inbegin=1;
 	  }
 	  else if(!strncasecmp(buf+6,"quad_strip",10)) {
-	  __glBegin(GL_QUAD_STRIP);
+		GL_BEGIN(GL_QUAD_STRIP);
+		inbegin=1;
 	  }
 	  else if(!strncasecmp(buf+6,"screen",6)) {
 		inscreen=1;
@@ -395,12 +415,12 @@ void InitCabGlobals()
 
   numtex=0;
   inlist=0;
+  ingeom=0;
   numpans=0;
   pannum=0;
   inpan=0;
   inscreen=0;
   scrvert=0;
-  inlist=0;
 }
 
 /* Load the cabinet */
@@ -423,6 +443,9 @@ int LoadCabinet(char *cabname)
 
   cablist=__glGenLists(1);
 
+  __glNewList(cablist,GL_COMPILE);
+  inlist=1;
+
   if(!fgets(buf,256,cfp)) {
 	printf("GLError (cab): File is empty\n");
 	return 0;
@@ -441,6 +464,7 @@ int LoadCabinet(char *cabname)
   }
 
   __glEndList();
+  inlist=0;
 
   fclose(cfp);
 

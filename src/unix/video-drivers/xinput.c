@@ -124,12 +124,9 @@ void sysdep_update_keyboard (void)
 
 		xgl_fixaspectratio(&winwidth, &winheight);
 
-		fprintf(stderr, "X11INFO: xinput resize to %dx%d\n", 
-				winwidth, winheight);
-
 		XResizeWindow(display,window,winwidth, winheight);
 
-		xgl_resize(winwidth, winheight);
+		xgl_resize(winwidth, winheight, 0);
 	   } else {
 		xgl_aspect_resize_action = 0;
 	   }

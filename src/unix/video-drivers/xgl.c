@@ -34,9 +34,6 @@
 #include "driver.h"
 #include "xmame.h"
 
-void InitVScreen(void);
-void CloseVScreen(void);
-
 static Cursor        cursor;
 static XVisualInfo   *myvisual;
 
@@ -52,10 +49,12 @@ int winwidth = 0;
 int winheight = 0;
 int fullscreen_width = 0;
 int fullscreen_height = 0;
+int orig_width = 0;
+int orig_height = 0;
+static int is_fullscreen=0;
 int doublebuffer = 1;
 int bilinear=1; /* Do binlinear filtering? */
-int alphablending=1; /* alphablending */
-int bitmap_lod=0; /* level of bitmap-texture detail */
+int alphablending=0; /* alphablending */
 
 int fullscreen = 0;
 int antialias=0;
@@ -71,7 +70,7 @@ const GLCapabilities glCapsDef = { BUFFER_DOUBLE, COLOR_RGBA, STEREO_OFF,
 GLCapabilities glCaps;
 
 static const char * xgl_version_str = 
-	"\nGLmame v0.74, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.84, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -80,31 +79,37 @@ struct rc_option display_opts[] = {
      NULL },
    { "fullscreen",   NULL,    rc_bool,       &fullscreen,
       "0",           0,       0,             NULL,
-      "Start fullscreen" },
+      "Start at fullscreen (default: false)" },
    { "gldblbuffer",	NULL,			rc_bool,	&doublebuffer,
      "1",		0,			0,		NULL,
-     "Enable/disable double buffering" },
+     "Enable/disable double buffering (default: true)" },
    { "gltexture_size",	NULL,			rc_int,	&force_text_width_height,
      "0",		0,			0,		NULL,
      "Force the max width and height of one texture segment (default: autosize)" },
-   { "glext",	NULL,			rc_bool,	&useGlEXT,
+   { "glforceblitmode", "glblit",		rc_bool,	&use_blitter,
+     "0",		0,			0,		NULL,
+     "Force blitter for true color modes 15/32bpp (default: true)" },
+   { "glext78",	        "glext",		rc_bool,	&useGLEXT78,
      "1",		0,			0,		NULL,
-     "Force the usage of gl extensions (default: auto)" },
+     "Force the usage of the gl extension #78, if avaiable (paletted texture, default: true)" },
    { "glbilinear",	"glbilin",		rc_bool,	&bilinear,
      "1",		0,			0,		NULL,
-     "Enable/disable bilinear filtering" },
+     "Enable/disable bilinear filtering (default: true)" },
+   { "gldrawbitmap",	"glbitmap",		rc_bool,	&drawbitmap,
+     "1",		0,			0,		NULL,
+     "Enable/Disable the drawing of the bitmap - e.g. disable it within vector games for a speedup (default: true)" },
+   { "glcolormod",	"glcmod",		rc_bool,	&use_mod_ctable,
+     "1",		0,			0,		NULL,
+     "Enable/Disable color modulation (intensity,gamma) (default: true)" },
    { "glbeam",		NULL,			rc_float,	&gl_beam,
      "1.0",		1.0,			16.0,		NULL,
-     "Set the beam size for vector games" },
+     "Set the beam size for vector games (default: 1.0)" },
    { "glalphablending",	"glalpha",		rc_bool,	&alphablending,
      "1",		0,			0,		NULL,
-     "Enable/disable alphablending (default: try alphablending)" },
+     "Enable/disable alphablending if avaiable (default: true)" },
    { "glantialias",	"glaa",			rc_bool,	&antialias,
      "1",		0,			0,		NULL,
-     "Enable/disable antialiasing" },
-   { "gllod",	NULL,			rc_int,	&bitmap_lod,
-     "0",		0,			0,		NULL,
-     "level of bitmap-texture detail" },
+     "Enable/disable antialiasing (default: true)" },
    { "gllibname",	"gllib",		rc_string,	&libGLName,
      "libGL.so",	0,			0,		NULL,
      "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
@@ -113,10 +118,10 @@ struct rc_option display_opts[] = {
      "Choose the dynamically loaded GLU Library (default libGLU.so)" },
    { "cabview",		NULL,			rc_bool,	&cabview,
      "0",		0,			0,		NULL,
-     "Start/ don't start in cabinet view mode" },
+     "Start/Don't start in cabinet view mode (default: false)" },
    { "cabinet",		NULL,			rc_string,	&cabname,
      "glmamejau",	0,			0,		NULL,
-     "Specify which cabinet model to use" },
+     "Specify which cabinet model to use (default: glmamejau)" },
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -127,8 +132,6 @@ struct rc_option display_opts[] = {
 
 int sysdep_init(void)
 {
-   fprintf(stderr, xgl_version_str);
-
    /* Open the display. */
    display=XOpenDisplay(NULL);
 
@@ -139,12 +142,22 @@ int sysdep_init(void)
   
    gl_bootstrap_resources();
 
+#ifndef NDEBUG
+   printf("GLINFO: xgl init !\n");
+#endif
+
    return OSD_OK;
 }
 
 void sysdep_close(void)
 {
    XCloseDisplay(display);
+
+   fprintf(stdout, xgl_version_str);
+  
+#ifndef NDEBUG
+   printf("GLINFO: xgl closed !\n");
+#endif
 }
 
 
@@ -184,13 +197,18 @@ int sysdep_create_display(int depth)
   fullscreen_width = screen->width;
   fullscreen_height = screen->height;
 
+  orig_width = visual_width*widthscale;
+  orig_height = visual_height*heightscale;
+
   if(fullscreen)
   {
-	winwidth = screen->width;
-	winheight = screen->height;
+	winwidth = fullscreen_width;
+	winheight = fullscreen_height;
+	is_fullscreen=1;
   } else {
-	winwidth = visual_width*widthscale;
-	winheight = visual_height*heightscale;
+	winwidth = orig_width;
+	winheight = orig_height;
+	is_fullscreen=0;
   }
 
   winattr.background_pixel=0;
@@ -224,7 +242,12 @@ int sysdep_create_display(int depth)
   vgc = findVisualGlX( display, window,
                        &window, winwidth, winheight, &glCaps, 
 		       &ownwin, &winattr, winmask,
-		       NULL, 0, NULL, 1);
+		       NULL, 0, NULL, 
+#ifndef NDEBUG
+		       1);
+#else
+		       0);
+#endif
 
   if(vgc.success==0)
   {
@@ -253,6 +276,7 @@ int sysdep_create_display(int depth)
 
   alphablending= (glCaps.alphaBits>0)?1:0;
   doublebuffer = (glCaps.buffer==BUFFER_DOUBLE)?1:0;
+  useColorIndex= (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)==0;
 
   /*  Placement hints etc. */
   
@@ -333,8 +357,6 @@ int sysdep_create_display(int depth)
   
   XResizeWindow(display,window,winwidth,winheight);
 
-  fprintf(stdout, "using window size(%dx%d)\n", winwidth, winheight);
-
   if(fullscreen) {
 	hints.min_width	= hints.max_width = hints.base_width = screen->width;
 	hints.min_height= hints.max_height = hints.base_height = screen->height;
@@ -342,8 +364,12 @@ int sysdep_create_display(int depth)
 	XSetWMNormalHints(display,window,&hints);
   }
 
-  InitVScreen();
-  
+  InitVScreen(depth);
+
+#ifndef NDEBUG
+  printf("GLINFO: xgl display created !\n");
+#endif
+
   return OSD_OK;
 }
 
@@ -373,6 +399,10 @@ void sysdep_display_close (void)
    }
 
    XSync(display,False); /* send all events to sync; */
+
+#ifndef NDEBUG
+   printf("GLINFO: xgl display closed !\n");
+#endif
 }
 
 /* Swap GL video buffers */
@@ -382,8 +412,16 @@ void SwapBuffers(void)
   __glXSwapBuffers(display,window);
 }
 
-void switch2Fullscreen()
+void toggleFullscreen()
 {
+   if(is_fullscreen)
+   {
+	XMoveResizeWindow(display, window, 
+			  (fullscreen_width-orig_width)/2, 
+			  (fullscreen_height-orig_height)/2,
+			  orig_width, orig_height);
+        XSync(display,False); /* send all events to sync; */
+   } else {
 	Window rootwin, childwin;
 	int rx, ry, x, y, dx, dy;
 	int w, h;
@@ -405,16 +443,16 @@ void switch2Fullscreen()
 	h = fullscreen_height;
 	xgl_fixaspectratio(&w, &h);
 
-	/*
-	printf("GLINFO: query-ptr ok=%d / rx=%d ry=%d / x=%d y=%d / dx=%d dy=%d\n",
-		ok, rx, ry, x, y, dx, dy);
-	*/
-
 	/* the new coords .. */
 	x = ( fullscreen_width  - w  ) / 2 - dx;
 	y = ( fullscreen_height - h ) / 2 - dy;
 
+#ifndef NDEBUG
 	printf("GLINFO: switching to max aspect %d/%d, %dx%d\n", x, y, w, h);
+#endif
 
 	XMoveResizeWindow(display, window, x, y, w, h);
+        XSync(display,False); /* send all events to sync; */
+    }
+    is_fullscreen = !is_fullscreen;
 }

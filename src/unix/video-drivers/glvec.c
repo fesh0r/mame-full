@@ -32,11 +32,11 @@ extern int winwidth,winheight;
 unsigned char *vectorram;
 int vectorram_size;
 
-GLuint veclist;
+GLuint veclist=0;
 
+int listcreated=0;
 int inlist=0;
-int incommand=0;
-static int listalloced=0;
+int inbegin=0;
 
 static int vec_min_x;
 static int vec_min_y;
@@ -48,7 +48,7 @@ static int vecwidth;
 static int vecheight;
 static int vecshift;
 
-static float intensity_correction = 3.0;
+static float intensity_correction = 2.0;
 static GLfloat vecoldx,vecoldy;
 
 float gl_beam=1.0;
@@ -125,6 +125,7 @@ int vector_vh_start (void)
 		vec_cent_x, vec_cent_y, vecwidth, vecheight);
 
         veclist=__glGenLists(1);
+	listcreated=1;
 
 	set_gl_beam(gl_beam);
   return 0;
@@ -136,6 +137,25 @@ int vector_vh_start (void)
 
 void vector_vh_stop (void)
 {
+	if(inlist && inbegin)
+	{
+		GL_END();
+		inbegin=0;
+	}
+
+	CHECK_GL_BEGINEND();
+	CHECK_GL_ERROR ();
+
+	if(inlist) {
+		__glEndList();
+		inlist=0;
+	}
+
+	if(listcreated)
+	{
+		__glDeleteLists(veclist, 1);
+		listcreated=0;
+	}
 }
 
 /*
@@ -208,6 +228,19 @@ int PointConvert(int x,int y,GLfloat *sx,GLfloat *sy,GLfloat *sz)
   return 0;
 }
 
+static void vector_begin_list(void)
+{
+  __glNewList(veclist,GL_COMPILE);
+  inlist=1;
+
+  CHECK_GL_ERROR ();
+
+  __glColor4f(1.0,1.0,1.0,1.0);
+
+  GL_BEGIN(GL_LINE_STRIP);
+  inbegin=1;
+}
+
 /*
  * Adds a line end point to the vertices list. The vector processor emulation
  * needs to call this.
@@ -215,52 +248,38 @@ int PointConvert(int x,int y,GLfloat *sx,GLfloat *sy,GLfloat *sz)
 
 void vector_add_point (int x, int y, int color, int intensity)
 {
+  unsigned char r1,g1,b1;
+  float red, green, blue, gamma_correction;
   GLfloat sx,sy,sz;
-  int col;
   int ok;
 
-  intensity *= intensity_correction/3.0;
+  if(!inlist)
+	vector_begin_list();
+
+  intensity *= intensity_correction/2.0;
 
   ok = PointConvert(x,y,&sx,&sy,&sz);
 
   if(intensity==0) {
-	__glEnd();
-	__glBegin(GL_LINE_STRIP);
+  	if(inbegin) {
+		GL_END();
+		inbegin=0;
+	}
+	GL_BEGIN(GL_LINE_STRIP);
+	inbegin=1;
   }
 
-  col=Machine->pens[color];
-
-  if(glGetUseEXT())
+  osd_get_pen(Machine->pens[color],&r1,&g1,&b1);
+  if(use_mod_ctable)
   {
-    /* Usage of intensity AND translucency ... ? NOPE ! 
-  	__glColor4f((GLfloat)ctable_orig[col*3]/255.0,
-			(GLfloat)ctable_orig[col*3+1]/255.0,
-			(GLfloat)ctable_orig[col*3+2]/255.0,
-			  (GLfloat)intensity/(gl_translucency?450.0:149.0));
-    */
-    if(alphablending)
-    {
-		__glColor4ub(ctable[col*4],
-				  ctable[col*4+1],
-				  ctable[col*4+2],
-				  intensity);
-	} else {
-		__glColor3ub(ctable[col*3],
-				  ctable[col*3+1],
-				  ctable[col*3+2]);
-	}
+	  gamma_correction = osd_get_gamma();
+	  
+	  red   = (float)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
+	  green = (float)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
+	  blue  = (float)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
+	  __glColor3f(red, green, blue);
   } else {
-    if(alphablending)
-    {
-		__glColor4us(rcolmap[col],
-		    gcolmap[col],
-			bcolmap[col],
-				  acolmap[col]);
-	} else {
-		__glColor3us(rcolmap[col],
-				  gcolmap[col],
-				  bcolmap[col]);
-	}
+	  __glColor3ub(r1, g1, b1);
   }
 
   /**
@@ -270,15 +289,23 @@ void vector_add_point (int x, int y, int color, int intensity)
    * so we do try to continue the line strip :-)
    */
   if(sx==vecoldx&&sy==vecoldy) {
-	__glEnd();
-	__glBegin(GL_POINTS);
+  	if(inbegin) {
+		GL_END();
+		inbegin=0;
+	}
+	GL_BEGIN(GL_POINTS);
+	inbegin=1;
 
 	if(cabview)
 	  __glVertex3d(sx,sy,sz);
 	else __glVertex2d(sx,sy);
 
-	__glEnd();
-	__glBegin(GL_LINE_STRIP);
+  	if(inbegin) {
+		GL_END();
+		inbegin=0;
+	}
+	GL_BEGIN(GL_LINE_STRIP);
+	inbegin=1;
   }
 
   if(cabview)
@@ -302,14 +329,29 @@ void vector_add_clip (int x1, int yy1, int x2, int y2)
 
 void vector_clear_list(void)
 {
-  __glNewList(veclist,GL_COMPILE);
-  __glColor4f(1.0,1.0,1.0,1.0);
+  if(inbegin) {
+	GL_END();
+	inbegin=0;
+  }
 
-  __glBegin(GL_LINE_STRIP);
+  CHECK_GL_BEGINEND();
+  CHECK_GL_ERROR ();
 
-  inlist=1;
-  listalloced=1;
-  incommand=1;
+  if(!listcreated)
+  {
+	  CHECK_GL_BEGINEND();
+	  veclist=__glGenLists(1);
+	  listcreated=1;
+  }
+
+  CHECK_GL_ERROR ();
+
+  if(inlist) {
+	__glEndList();
+	inlist=0;
+  }
+
+  CHECK_GL_ERROR ();
 }
 
 /* Called when the frame is complete */
@@ -322,9 +364,10 @@ void vector_vh_update (struct osd_bitmap *bitmap, int full_refresh)
   }
 
 
-  if(incommand) {
-	__glEnd();
-	incommand=0;
+  if(inlist && inbegin)
+  {
+	GL_END();
+	inbegin=0;
   }
 
   if(inlist) {
@@ -359,17 +402,6 @@ void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, stru
 }
 */
 
-void vector_set_gamma(float _gamma)
-{
-	gamma_correction = _gamma;
-	palette_dirty = 1;
-}
-
-float vector_get_gamma(void)
-{
-	return gamma_correction;
-}
-
 void vector_set_intensity(float _intensity)
 {
 	intensity_correction = _intensity;
@@ -379,6 +411,5 @@ float vector_get_intensity(void)
 {
 	return intensity_correction;
 }
-
 
 #endif /* ifdef xgl */
