@@ -633,8 +633,6 @@ ROM_END
 #define io_ep128a io_ep128
 
 static const struct IODevice io_ep128[] = {
-
-#if 0
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -654,7 +652,7 @@ static const struct IODevice io_ep128[] = {
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-#endif
+#if 0
 	{
 		IO_FLOPPY,					/* type */
 		4,							/* count */
@@ -674,7 +672,8 @@ static const struct IODevice io_ep128[] = {
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
 	},
-	{ IO_END }
+#endif
+		{ IO_END }
 };
 
 /***************************************************************************

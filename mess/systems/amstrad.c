@@ -2890,46 +2890,94 @@ ROM_START(kccomp)
 ROM_END
 
 
+/* this system must have a cartridge installed to run */
 ROM_START(cpc6128p)
 ROM_END
 
 
+/* this system must have a cartridge installed to run */
 ROM_START(cpc464p)
 ROM_END
 
+#define AMSTRAD_IO_SNAPSHOT \
+	{ \
+		IO_SNAPSHOT,				/* type */ \
+		1,							/* count */ \
+		"sna\0",                    /* file extensions */ \
+		IO_RESET_ALL,				/* reset if file changed */ \
+		0, \
+		amstrad_snapshot_load,		/* init */ \
+		amstrad_snapshot_exit,		/* exit */ \
+		NULL,						/* info */ \
+		NULL,						/* open */ \
+		NULL,						/* close */ \
+		NULL,						/* status */ \
+		NULL,						/* seek */ \
+		NULL,						/* tell */ \
+		NULL,						/* input */ \
+		NULL,						/* output */ \
+		NULL,						/* input_chunk */ \
+		NULL						/* output_chunk */ \
+	}
+
+#define AMSTRAD_IO_DISK \
+	{ \
+		IO_FLOPPY,					/* type */ \
+		2,							/* count */ \
+		"dsk\0",                    /* file extensions */ \
+		IO_RESET_NONE,				/* reset if file changed */ \
+		0, \
+		amstrad_floppy_init,			/* init */ \
+		dsk_floppy_exit,			/* exit */ \
+		NULL,						/* info */ \
+		NULL,						/* open */ \
+		NULL,						/* close */ \
+		floppy_status,              /* status */ \
+		NULL,                       /* seek */ \
+		NULL,						/* tell */ \
+		NULL,						/* input */ \
+		NULL,						/* output */ \
+		NULL,						/* input_chunk */ \
+		NULL						/* output_chunk */ \
+	}
+
+#define AMSTRAD_IO_CASSETTE \
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit)
+
+#define AMSTRAD_IO_PRINTER \
+	IO_PRINTER_PORT(1,"prn\0")
+
 static const struct IODevice io_cpc6128[] =
 {
+	AMSTRAD_IO_SNAPSHOT,
+	AMSTRAD_IO_DISK,
+	AMSTRAD_IO_CASSETTE,
+	AMSTRAD_IO_PRINTER,
+	{IO_END}
+};
+
+#define io_kccomp io_cpc6128
+#define io_cpc464 io_cpc6128
+#define io_cpc664 io_cpc6128
+
+static const struct IODevice io_cpcplus[] =
+{
+	AMSTRAD_IO_SNAPSHOT,
+	AMSTRAD_IO_DISK,
+	AMSTRAD_IO_CASSETTE,
+	AMSTRAD_IO_PRINTER,
 	{
 		IO_CARTSLOT,				/* type */
 		1,							/* count */
-		"sna\0",                    /* file extensions */
-		IO_RESET_ALL,				/* reset if file changed */
-		0,
-		amstrad_snapshot_load,		/* init */
-		amstrad_snapshot_exit,		/* exit */
-		NULL,						/* info */
-		NULL,						/* open */
-		NULL,						/* close */
-		NULL,						/* status */
-		NULL,						/* seek */
-		NULL,						/* tell */
-		NULL,						/* input */
-		NULL,						/* output */
-		NULL,						/* input_chunk */
-		NULL						/* output_chunk */
-	},
-	{
-		IO_FLOPPY,					/* type */
-		2,							/* count */
-		"dsk\0",                    /* file extensions */
+		"cpr\0",                    /* file extensions */
 		IO_RESET_NONE,				/* reset if file changed */
 		0,
-		dsk_floppy_load,			/* init */
-		dsk_floppy_exit,			/* exit */
+		amstrad_plus_cartridge_init,	/* init */
+		amstrad_plus_cartridge_exit,	/* exit */
 		NULL,						/* info */
 		NULL,						/* open */
 		NULL,						/* close */
-		floppy_status,                                           /* status */
+		NULL,                                           /* status */
 		NULL,                                           /* seek */
 		NULL,						/* tell */
 		NULL,						/* input */
@@ -2937,16 +2985,11 @@ static const struct IODevice io_cpc6128[] =
 		NULL,						/* input_chunk */
 		NULL						/* output_chunk */
 	},
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit),
-	IO_PRINTER_PORT(1,"prn\0"),
-	{IO_END}
 };
 
-#define io_kccomp io_cpc6128
-#define io_cpc464 io_cpc6128
-#define io_cpc664 io_cpc6128
-#define io_cpc6128p io_cpc6128
-#define io_cpc464p io_cpc6128
+#define io_cpc6128p io_cpcplus
+#define io_cpc464p io_cpcplus
+
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY   FULLNAME */
 COMP( 1984, cpc464,   0,		amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC464")
@@ -2954,5 +2997,5 @@ COMP( 1985, cpc664,   cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Sch
 COMP( 1985, cpc6128,  cpc464,	amstrad,  amstrad,	0,	 "Amstrad plc", "Amstrad/Schneider CPC6128")
 COMP( 1990, cpc464p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 464plus")
 COMP( 1990, cpc6128p,  0,		cpcplus,  amstrad,	0,	 "Amstrad plc", "Amstrad 6128plus")
-COMP( 19??, kccomp,   cpc464,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
+COMP( 1989, kccomp,   cpc464,	kccomp,   kccomp,	0,	 "VEB Mikroelektronik", "KC Compact")
 

@@ -128,6 +128,9 @@ int kc_quickload_load(int id)
 {
 	unsigned char *data;
 
+	if (device_filename(IO_QUICKLOAD,id)==NULL)
+		return INIT_PASS;
+
 	if (kc_load(IO_QUICKLOAD,id,&data))
 	{
 		struct kcc_header *header = (struct kcc_header *)data;
@@ -170,6 +173,9 @@ static unsigned char kc85_disc_hw_input_gate;
 
 int kc85_floppy_init(int id)
 {
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
@@ -428,6 +434,9 @@ static void kc85_module_system_exit(void)
 int kc_cassette_device_init(int id)
 {
 	void *file;
+
+	if (device_filename(IO_CASSETTE, id)==NULL)
+		return INIT_PASS;
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)

@@ -13,6 +13,9 @@ int exidy_cassette_init(int id)
 {
 	void *file;
 
+	if (device_filename(IO_CASSETTE,id)==NULL)
+		return INIT_PASS;
+
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 	if (file)
 	{

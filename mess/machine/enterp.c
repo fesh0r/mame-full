@@ -50,6 +50,9 @@ void enterprise_shutdown_machine(void)
 
 int enterprise_floppy_init(int id)
 {
+	if (device_filename(IO_FLOPPY, id)==NULL)
+		return INIT_PASS;
+
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
