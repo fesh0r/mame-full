@@ -25,7 +25,7 @@
 ** nes_apu.c
 **
 ** NES APU emulation
-** $Id: nes_apu2.c,v 1.2 2004/06/13 22:01:26 npwoods Exp $
+** $Id: nes_apu2.c,v 1.3 2005/03/04 14:24:17 npwoods Exp $
 */
 
 #include <string.h>
@@ -814,64 +814,56 @@ void apu_getpcmdata(void **data, int *num_samples, int *sample_bits)
 
 void apu_process(void *buffer, int num_samples)
 {
-   static int32 prev_sample = 0;
-   int32 next_sample, accum;
-   int16 *buf16;
-   uint8 *buf8;
+	static int32 prev_sample = 0;
+	int32 next_sample, accum;
+	stream_sample_t *buf;
 
-   ASSERT(apu);
+	ASSERT(apu);
 
-   buf16 = (int16 *) buffer;
-   buf8 = (uint8 *) buffer;
+	buf = (stream_sample_t *) buffer;
 
-   if (NULL != buffer)
-   {
-      /* bleh */
-      apu->buffer = buffer;
+	/* bleh */
+	apu->buffer = buffer;
 
-      while (num_samples--)
-      {
-         accum = 0;
-         if (apu->mix_enable[0]) accum += apu_rectangle(&apu->rectangle[0]);
-         if (apu->mix_enable[1]) accum += apu_rectangle(&apu->rectangle[1]);
-         if (apu->mix_enable[2]) accum += apu_triangle(&apu->triangle);
-         if (apu->mix_enable[3]) accum += apu_noise(&apu->noise);
-         if (apu->mix_enable[4]) accum += apu_dmc(&apu->dmc);
+	while (num_samples--)
+	{
+		accum = 0;
+		if (apu->mix_enable[0]) accum += apu_rectangle(&apu->rectangle[0]);
+		if (apu->mix_enable[1]) accum += apu_rectangle(&apu->rectangle[1]);
+		if (apu->mix_enable[2]) accum += apu_triangle(&apu->triangle);
+		if (apu->mix_enable[3]) accum += apu_noise(&apu->noise);
+		if (apu->mix_enable[4]) accum += apu_dmc(&apu->dmc);
 
-         if (apu->ext && apu->mix_enable[5]) accum += apu->ext->process();
+		if (apu->ext && apu->mix_enable[5]) accum += apu->ext->process();
 
-         /* do any filtering */
-         if (APU_FILTER_NONE != apu->filter_type)
-         {
-            next_sample = accum;
+		/* do any filtering */
+		if (APU_FILTER_NONE != apu->filter_type)
+		{
+			next_sample = accum;
 
-            if (APU_FILTER_LOWPASS == apu->filter_type)
-            {
-               accum += prev_sample;
-               accum >>= 1;
-            }
-            else
-               accum = (accum + accum + accum + prev_sample) >> 2;
+			if (APU_FILTER_LOWPASS == apu->filter_type)
+			{
+				accum += prev_sample;
+				accum >>= 1;
+			}
+			else
+				accum = (accum + accum + accum + prev_sample) >> 2;
 
-            prev_sample = next_sample;
-         }
+			prev_sample = next_sample;
+		}
 
-         /* little extra kick for the kids */
-         accum <<= 1;
+		/* little extra kick for the kids */
+		accum <<= 1;
 
-         /* prevent clipping */
-         if (accum > 0x7FFF)
-            accum = 0x7FFF;
-         else if (accum < -0x8000)
-            accum = -0x8000;
+		/* prevent clipping */
+		if (accum > 0x7FFF)
+		accum = 0x7FFF;
+		else if (accum < -0x8000)
+		accum = -0x8000;
 
-         /* signed 16-bit output, unsigned 8-bit */
-         if (16 == apu->sample_bits)
-            *buf16++ = (int16) accum;
-         else
-            *buf8++ = (accum >> 8) ^ 0x80;
-      }
-   }
+		/* signed 16-bit output, unsigned 8-bit */
+		*buf++ = accum;
+	}
 }
 
 /* set the filter type */
@@ -1006,6 +998,11 @@ void apu_setext(apu_t *src_apu, apuext_t *ext)
 
 /*
 ** $Log: nes_apu2.c,v $
+** Revision 1.3  2005/03/04 14:24:17  npwoods
+**
+**
+** [NES] Fixed 0.93 core regression in NES sound
+**
 ** Revision 1.2  2004/06/13 22:01:26  npwoods
 **
 **
