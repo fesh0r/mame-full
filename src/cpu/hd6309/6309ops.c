@@ -1454,9 +1454,10 @@ INLINE void swi( void )
 #define decodePB_src(n) 	(((n) >> 3) & 0x07)
 #define decodePB_dst(n) 	(((n) >> 0) & 0x07)
 
-static unsigned char *	regTable[4] = { &(CC), &(A), &(B), &(E) };
+static UINT8 dummy_byte;
+static unsigned char *regTable[4] = { &(CC), &(A), &(B), &dummy_byte };
 
-static UINT8	bitTable[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+static const UINT8 bitTable[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 
 INLINE void band( void )
 {

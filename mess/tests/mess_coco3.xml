@@ -29,7 +29,6 @@
 	<input>RUN&#13;</input>
 	<wait time="2"/>
 	<memverify start="0x77034" end="0x77034">0x80</memverify>
-	<screenshot/>
 </test>
 
 </tests>
