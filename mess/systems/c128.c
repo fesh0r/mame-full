@@ -1477,11 +1477,11 @@ static const struct IODevice io_c128d[] =
 #define io_c128nor io_c128
 
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		COMPANY   FULLNAME */
-COMPX (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128 NTSC",      GAME_IMPERFECT_SOUND)
-COMPX (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore 128 German (PAL)",GAME_IMPERFECT_SOUND)
-COMPX (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	"Commodore Business Machines Co.","Commodore 128 French (PAL)",GAME_IMPERFECT_SOUND)
-COMPX (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)",GAME_IMPERFECT_SOUND)
-COMPX (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)", GAME_IMPERFECT_SOUND)
+COMP (1985, c128,		0,		c128,		c128,		c128,		"Commodore Business Machines Co.","Commodore 128 NTSC")
+COMP (1985, c128ger,	c128,	c128pal,	c128ger,	c128pal,	"Commodore Business Machines Co.","Commodore 128 German (PAL)")
+COMP (1985, c128fra,	c128,	c128pal,	c128fra,	c128pal,	"Commodore Business Machines Co.","Commodore 128 French (PAL)")
+COMP (1985, c128ita,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Italian (PAL)")
+COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Swedish (PAL)")
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
 COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
