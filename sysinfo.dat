@@ -3583,7 +3583,7 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=genesis
+$info=gen_usa
 $bio
 Sega Megadrive/Genesis (1988)
 
@@ -6690,7 +6690,7 @@ $bio
 Tesla PMD-85 (1985)
 
 
-homecomputer for TV connection in Czechoslovakia.
+Home computer for TV connection in Czechoslovakia.
 
 
 Features:
@@ -7268,7 +7268,7 @@ $end
 
 $info=psx
 $bio
-Sony Playstation
+Sony PlayStation
 
 
 MESS Emulation State:
@@ -7315,8 +7315,8 @@ $bio
 Sega Saturn (1994)
 
 
-In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony Playstation.
-The Playstation was much easier to develop for and quickly overtook the Saturn in sales.  While 
+In 1994 Sega launched its new 32-bit console, just a few weeks ahead of its rival Sony PlayStation.
+The PlayStation was much easier to develop for and quickly overtook the Saturn in sales.  While 
 the Saturn was much more successful in Japan than it was in the US or Europe the lack of good 
 software and strong competition from the PlayStation doomed the Sega Saturn to a fate similar 
 to that of the Master System.  The CDROM based system did have some great arcade conversions such
@@ -9917,7 +9917,7 @@ $end
 
 $info=z88
 $bio
-Acorn Z88
+Cambridge Computers Z88 (1988)
 
 
 The Z88 is a portable system with a LCD screen display and good sized keyboard.
