@@ -484,7 +484,6 @@ int frontend_help (char *gamename)
 	{
 
         #ifdef MESS
-		//#if 0
 		case LIST_MESSTEXT: /* all mess specific calls here */
 		{
 					/* send the gamename and arg to mess.c */
