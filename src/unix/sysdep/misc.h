@@ -22,6 +22,13 @@
 #include <stdio.h>
 #include "begin_code.h"
 
+#ifdef __BEOS__
+#include <OS.h>
+// BeOS doesn't have the "usleep()" function. It has the "snooze()"
+// one which sleeps in microseconds, not milliseconds.
+#define usleep(x) snooze((x)/1000)
+#endif
+
 /* clock stuff */
 typedef long uclock_t;
 uclock_t uclock(void);

@@ -31,6 +31,7 @@ LIBS.next	   = -framework SoundKit
 LIBS.macosx	   = -framework CoreAudio
 #LIBS.openbsd       = -lossaudio
 LIBS.nto	   = -lsocket -lasound
+LIBS.beos          = `sdl-config --libs`
 
 ##############################################################################
 # **** Display dependent settings.
@@ -50,7 +51,7 @@ LIBS.xgl        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext $(GLLIBS) -ljpeg
 LIBS.xfx        = $(X11LIB) $(JOY_X11_LIBS) -lX11 -lXext -lglide2x
 LIBS.svgafx     = $(X11LIB) -lvga -lvgagl -lglide2x
 LIBS.openstep	= -framework AppKit
-LIBS.SDL	= -ldl -lSDL -lpthread -D_REENTRANT
+LIBS.SDL	= `sdl-config --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
 CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS)

@@ -55,6 +55,7 @@ SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
 SOUND_OBJS.nto     = $(DSP_DIR)/io-audio.o
 SOUND_OBJS.irix    = $(DSP_DIR)/irix.o
 SOUND_OBJS.irix_al = $(DSP_DIR)/irix_al.o
+SOUND_OBJS.beos    =
 SOUND_OBJS.generic =
 #these need to be converted to plugins first
 #SOUND_OBJS.aix     = $(DSP_DIR)/aix.o
@@ -95,6 +96,7 @@ CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
 CFLAGS.nto        = -DSYSDEP_DSP_ALSA -DSYSDEP_MIXER_ALSA
 CFLAGS.irix       = -DSYSDEP_DSP_IRIX
 CFLAGS.irix_al    = -DSYSDEP_DSP_IRIX
+CFLAGS.beos       = `sdl-config --cflags`
 CFLAGS.generic    =
 #these need to be converted to plugins first
 #CFLAGS.aix        = -DSYSDEP_DSP_AIX -I/usr/include/UMS -I/usr/lpp/som/include
