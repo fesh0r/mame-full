@@ -293,6 +293,10 @@ static DEVICE_LOAD(cassette)
 	/* set to default state, but only change the UI state */
 	cassette_change_state(image, get_default_state(dev), CASSETTE_MASK_UISTATE);
 
+	/* reset the position */
+	tag->position = 0.0;
+	tag->position_time = timer_get_time();
+
 	return INIT_PASS;
 
 error:
