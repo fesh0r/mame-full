@@ -20,7 +20,7 @@ but it is almost certainly something like
 
 Clock Freq / (2^Something) / (Byte Data + 1)
 
-It is more or less right on the release version, so a bit of 
+It is more or less right on the release version, so a bit of
 experimenting should come up with the right code.
 
 I also believe (and this isn't clear from the tech I think) that
@@ -318,7 +318,7 @@ frame.
 pet additions:
 Golf has a 4kbyte block at 0x0000 and a 2kbyte block at 0x4000.
 
-19f9 bit 6 
+19f9 bit 6
 switches between the axes of the analog stick
 of both? players
 (must not affect ad converter immediately)
@@ -337,7 +337,7 @@ character color ((ch&0xc0)>>5) | ((mem[0x19f9]&8)>>3)
 19f8 bit 6
  off 13 charlines
  on  26 charlines
-19f9 
+19f9
  bit 7
   off doublescan
   on no doublescan
@@ -359,7 +359,7 @@ sprite 0 0x19fb bit 7
 sprite 1 0x19fb bit 6
 sprite 2 0x19fa bit 7
 sprite 3 0x19fa bit 6
- 
+
 18fc crtc vertical position register
 in PAL palladium
  0xff 16*16+6 visible
@@ -373,7 +373,7 @@ in PAL palladium
   (2 backgrounds, 2 foreground colors)
 
 color2x2
- character bit 7 -> background select 
+ character bit 7 -> background select
   0 19f8 bits 2..0
   1 19f9 bits 2..0
  character bit 6 -> foreground select
@@ -384,13 +384,13 @@ normal mode:
  character bit 7..6 foreground colors bits 2..1
  19f9 bits 0..2 ->background color
  19f9 bit3 foreground color bit 0
- 
+
 19f8, 19f9 readback alway 0xff
 1900 readback 0x5y
 17bf readback 0x54
 1b00 holds value for a moment, gets 0x50
 
-sprite y position 
+sprite y position
  basically the same as crtc vertical psoition register, but 1 line later
 
 sprite x position
@@ -495,7 +495,7 @@ static struct {
 	    UINT8 chars[8][8];
 	    UINT8 unknown[0x38];
 	    UINT8 pal[4];
-	    UINT8 collision_bg, 
+	    UINT8 collision_bg,
 		collision_sprite;
 	    UINT8 ad[2];
 	    // 0x1a00
@@ -589,11 +589,11 @@ WRITE_HANDLER(arcadia_video_w)
     char str[40];
 #endif
     switch (offset) {
-    case 0xfc: 
+    case 0xfc:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_video.ypos=255-data+YPOS;
 	break;
-    case 0xfd: 
+    case 0xfd:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_soundport_w(offset&3, data);
 	arcadia_video.multicolor=data&0x80;
@@ -649,7 +649,7 @@ WRITE_HANDLER(arcadia_video_w)
     }
 }
 
-INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color, 
+INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
 			      int y, int x)
 {
     int k,b;
@@ -712,7 +712,7 @@ INLINE void arcadia_vh_draw_line(struct osd_bitmap *bitmap,
 	    switch (ch) {
 		case 0xc0: graphics=true;break;
 		case 0x40: graphics=false;break;
-//		case 0x80: 
+//		case 0x80:
 //			alien invaders shields are empty 0x80
 //		    usrintf_showmessage_secs(5, "graphics code 0x80 used");
 	    }
@@ -741,7 +741,7 @@ bool arcadia_sprite_collision(int n1, int n2)
     }
     return FALSE;
 }
-    
+
 static void arcadia_draw_sprites(struct osd_bitmap *bitmap)
 {
     int i, k, x, y;
@@ -750,7 +750,7 @@ static void arcadia_draw_sprites(struct osd_bitmap *bitmap)
     arcadia_video.reg.d.collision_bg|=0xf;
     arcadia_video.reg.d.collision_sprite|=0x3f;
     for (i=0; i<4; i++) {
-	bool doublescan;
+	bool doublescan = false;
 	if (arcadia_video.pos[i].y<=-YPOS) continue;
 	if (arcadia_video.pos[i].y>=bitmap->height-YPOS-8) continue;
 	if (arcadia_video.pos[i].x<=-XPOS) continue;
@@ -817,9 +817,9 @@ int arcadia_video_line(void)
 #if DEBUG
     if (arcadia_video.line==0) _y=0;
 #endif
-    // unbelievable, reflects only charline, but alien invaders uses it for 
+    // unbelievable, reflects only charline, but alien invaders uses it for
     // alien scrolling
-    
+
     Machine->gfx[0]->colortable[0]=Machine->pens[arcadia_video.reg.d.pal[1]&7];
 
     if (arcadia_video.line<arcadia_video.ypos) {
@@ -829,7 +829,7 @@ int arcadia_video_line(void)
 	int h=arcadia_video.doublescan?16:8;
 
 	arcadia_video.charline=(arcadia_video.line-arcadia_video.ypos)/h;
-	
+
 	if (arcadia_video.charline<13) {
 	    if (((arcadia_video.line-arcadia_video.ypos)&(h-1))==0) {
 		arcadia_vh_draw_line(Machine->scrbitmap, arcadia_video.charline*h+arcadia_video.ypos,
@@ -866,7 +866,7 @@ void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 //	     input_port_7_r(0), input_port_8_r(0),
 //	     input_port_9_r(0), input_port_10_r(0));
 
-//    snprintf(str, sizeof(str), "%.2x %.2x %.2x", 
+//    snprintf(str, sizeof(str), "%.2x %.2x %.2x",
 //	     arcadia_video.reg.d.control, arcadia_video.reg.d.sound1, arcadia_video.reg.d.sound2);
     snprintf(str, sizeof(str), "%.2x:%.2x %.2x:%.2x %.2x:%.2x %.2x:%.2x",
 	     arcadia_video.reg.d.pos[0].x,
