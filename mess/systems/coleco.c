@@ -201,8 +201,7 @@ ROM_END
 
 //ROM_START (colecofb_rom)
 //  ROM_REGIONX(0x10000,REGION_CPU1, 0)
-//  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, 0x640cf85b) /* no pause after tit
-le screen */
+//  ROM_LOAD ("colecofb.rom", 0x0000, 0x2000, 0x640cf85b) /* no pause after title screen */
 //ROM_END
 
 //ROM_START (coleconb_rom)
