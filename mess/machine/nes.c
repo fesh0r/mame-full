@@ -1082,7 +1082,7 @@ extern struct GfxLayout nes_charlayout;
 int nes_load_rom (int id)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
-	const char *mapinfo = device_extrainfo(IO_CARTSLOT,id);
+	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
 	FILE *romfile;
 	char magic[4];
@@ -1128,6 +1128,7 @@ int nes_load_rom (int id)
 		(magic[2] != 'S'))
 		goto bad;
 
+	mapinfo = device_extrainfo(IO_CARTSLOT,id);
 	if (mapinfo)
 	{
 		if (4 == sscanf(mapinfo,"%d %d %d %d",&mapint1,&mapint2,&mapint3,&mapint4))
@@ -1138,6 +1139,9 @@ int nes_load_rom (int id)
 			nes.chr_chunks = mapint4;
 			logerror("NES.CRC info: %d %d %d %d\n",mapint1,mapint2,mapint3,mapint4);
 			goodcrcinfo = 1;
+		} else 
+		{
+			logerror("NES: [%s], Invalid mapinfo found\n",mapinfo);
 		}
 	} else
 	{
