@@ -144,15 +144,15 @@ const struct GameDriver *test_drivers[] =
 TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
-//	DRIVER( astrocde )	/* Bally Astrocade									*/
-//	DRIVER( astrocdw )	/* Bally Astrocade (white case)						*/
+	DRIVER( astrocde )	/* Bally Astrocade									*/
+	DRIVER( astrocdw )	/* Bally Astrocade (white case)						*/
 
 	/* RCA */
 //TESTDRIVER( vip )		/* Cosmac VIP										*/
 //TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
-//	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
+	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
 //	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
@@ -538,12 +538,12 @@ TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 //	DRIVER( mbee56 )	/* Microbee 56K (CP/M)								*/
 
 	/* TANDY RADIO SHACK */
-//	DRIVER( trs80 )		/* TRS-80 Model I	- Radio Shack Level I BASIC		*/
-//	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC	*/
-//	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC					*/
-//	DRIVER( sys80 ) 	/* EACA System 80									*/
-//	DRIVER( lnw80 ) 	/* LNW Research LNW-80								*/
-//TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
+	DRIVER( trs80 )		/* TRS-80 Model I	- Radio Shack Level I BASIC		*/
+	DRIVER( trs80l2 ) 	/* TRS-80 Model I	- Radio Shack Level II BASIC	*/
+	DRIVER( trs80l2a )	/* TRS-80 Model I	- R/S L2 BASIC					*/
+	DRIVER( sys80 ) 	/* EACA System 80									*/
+	DRIVER( lnw80 ) 	/* LNW Research LNW-80								*/
+TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 
 	DRIVER( coco )		/* Color Computer									*/
 	DRIVER( cocoe )		/* Color Computer (Extended BASIC 1.0)				*/

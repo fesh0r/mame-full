@@ -104,7 +104,7 @@ CPUS+=Z80GB@
 #CPUS+=SC61860@
 #CPUS+=SATURN@
 CPUS+=APEXC@
-#CPUS+=F8@
+CPUS+=F8@
 #CPUS+=CP1610@
 #CPUS+=TMS99010@
 CPUS+=PDP1@
@@ -193,11 +193,13 @@ DRVLIBS = \
 	$(OBJ)/sega.a     \
 	$(OBJ)/acorn.a    \
 	$(OBJ)/atari.a    \
+	$(OBJ)/trs80.a	  \
+	$(OBJ)/fairch.a   \
+	$(OBJ)/bally.a	  \
 #	$(OBJ)/advision.a \
 #	$(OBJ)/mbee.a	  \
 #	$(OBJ)/vtech.a	  \
 #	$(OBJ)/jupiter.a  \
-#	$(OBJ)/trs80.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/kaypro.a   \
@@ -214,7 +216,6 @@ DRVLIBS = \
 #	$(OBJ)/veb.a	  \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
-#	$(OBJ)/fairch.a   \
 #	$(OBJ)/ascii.a	  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/magnavox.a \
@@ -232,7 +233,6 @@ DRVLIBS = \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/apf.a      \
-#	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \
