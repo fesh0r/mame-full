@@ -20,6 +20,11 @@ System Driver Changes:
 - [COCO] Fixed a OKI M6242B clock emulation problem and a problem with Disto
   Real Time Clock emulation. [tim lindner]
 
+- [COCO3] Fixed a bug in the GIME video emulation that caused all parts of
+  the $FF9B/D/E video registers to be used in lo-res mode; where in reality
+  the low 16 bits are dropped.  This caused a bug in CoCoTracker that caused
+  the screen to be garbled after the MOD files are played. [Nate Woods]
+
 - [SPECPL3E] Updated BIOS to the 1.11 version romset
   (http://www.z88forever.org.uk/zxplus3e/) [Stefano Priore]
 

@@ -124,17 +124,17 @@ static int internal_video_start_coco(int m6847_version, void (*charproc)(UINT8))
 	return 0;
 }
 
-int video_start_dragon(void)
+VIDEO_START( dragon )
 {
 	return internal_video_start_coco(M6847_VERSION_ORIGINAL_PAL, dragon_charproc );
 }
 
-int video_start_coco(void)
+VIDEO_START( coco )
 {
 	return internal_video_start_coco(M6847_VERSION_ORIGINAL_NTSC, dragon_charproc );
 }
 
-int video_start_coco2b(void)
+VIDEO_START( coco2b )
 {
 	return internal_video_start_coco(M6847_VERSION_M6847T1_NTSC, coco2b_charproc);
 }
@@ -197,6 +197,13 @@ static void coco3_frame_callback(struct videomap_framecallback_info *info)
 	else
 	{
 		/* legacy CoCo 1/2 video modes */
+
+		/* the low 16 bits of the GIME video start is ignored; CoCoTracker
+		 * demonstrates this problem
+		 */
+		coco3_vidbase &= ~0xffff;
+
+		/* call back door into m6847 emulation */
 		internal_m6847_frame_callback(info, coco3_vidbase, border_top, rows);
 	}
 }
@@ -411,7 +418,7 @@ static struct videomap_interface coco3_videomap_interface =
 	coco3_get_border_color_callback
 };
 
-int video_start_coco3(void)
+VIDEO_START( coco3 )
 {
     int i;
 	struct m6847_init_params p;
