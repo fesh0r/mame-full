@@ -50,7 +50,7 @@ typedef struct
 int basicdsk_floppy_init(int id);
 int     basicdsk_floppy_load(int id, mame_file *fp, int open_mode);
 /* exit and free up data */
-void basicdsk_floppy_unload(int id);
+/*void basicdsk_floppy_unload(int id);*/
 
 /* set the disk image geometry for the specified drive */
 /* this is required to read the disc image correct */
