@@ -318,13 +318,13 @@ WRITE18_HANDLER(pdp1_write_mem)
 
 	unit 0 is reader (read-only), unit 1 is puncher (write-only)
 */
-int pdp1_tape_init(int id)
+int pdp1_tape_init(int id, void *fp, int open_mode  )
 {
 	void **fd = (id==0) ? & tape_reader.fd : & tape_puncher.fd;
 
 	/* open file */
 	*fd = image_fopen_custom(IO_PUNCHTAPE, id, OSD_FILETYPE_IMAGE,
-							(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
+								(id==0) ? OSD_FOPEN_READ : OSD_FOPEN_WRITE);
 
 	if (id == 0)
 	{	/* reader unit */
@@ -491,10 +491,10 @@ void pdp1_tape_read_binary(void)
 /*
 	Open a file for typewriter output
 */
-int pdp1_typewriter_init(int id)
+int pdp1_typewriter_init(int id, void *fp, int open_mode)
 {
 	/* open file */
-	typewriter.fd = image_fopen_new(IO_PRINTER, id, NULL);
+	typewriter.fd = fp;
 
 	io_status |= io_st_tyo;
 

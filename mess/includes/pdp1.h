@@ -101,12 +101,12 @@ MACHINE_INIT( pdp1 );
 READ18_HANDLER ( pdp1_read_mem );
 WRITE18_HANDLER ( pdp1_write_mem );
 
-int pdp1_tape_init(int id);
+int pdp1_tape_init(int id, void *fp, int open_mode);
 void pdp1_tape_exit(int id);
 
 void pdp1_tape_read_binary(void);
 
-int pdp1_typewriter_init(int id);
+int pdp1_typewriter_init(int id, void *fp, int open_mode);
 void pdp1_typewriter_exit(int id);
 
 void pdp1_io_sc_callback(void);

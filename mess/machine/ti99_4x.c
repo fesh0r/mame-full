@@ -331,9 +331,9 @@ void init_ti99_4p(void)
 	has_evpc = TRUE;
 }
 
-int ti99_floppy_init(int id)
+int ti99_floppy_init(int id, void *fp, int open_mode)
 {
-	if (basicdsk_floppy_init(id)==INIT_PASS)
+	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
 		switch (image_length(IO_FLOPPY, id))
 		{
@@ -352,12 +352,12 @@ int ti99_floppy_init(int id)
 	return INIT_FAIL;
 }
 
-int ti99_cassette_init(int id)
+int ti99_cassette_init(int id, void *fp, int open_mode)
 {
 	struct cassette_args args;
 	memset(&args, 0, sizeof(args));
 	args.create_smpfreq = 22050;	/* maybe 11025 Hz would be sufficient? */
-	return cassette_init(id, &args);
+	return cassette_init(id, fp, open_mode, &args);
 }
 
 /*
@@ -366,10 +366,9 @@ int ti99_cassette_init(int id)
 	2nd ROM: CPU ROM (8kb)
 	3rd ROM: CPU ROM, 2nd page (8kb)
 */
-int ti99_load_rom(int id)
+int ti99_load_rom(int id, void *cartfile, int open_mode)
 {
 	const char *name = image_filename(IO_CARTSLOT,id);
-	void *cartfile = NULL;
 
 
 	if (ti99_model == model_99_4p)
@@ -384,17 +383,10 @@ int ti99_load_rom(int id)
 	}
 
 
-	if (!image_exists(IO_CARTSLOT, id))
+	if (cartfile == NULL)
 		slot_type[id] = SLOT_EMPTY;
 	else
 	{
-		cartfile = image_fopen_new(IO_CARTSLOT, id, NULL);
-		if (cartfile == NULL)
-		{
-			logerror("TI99 - Unable to locate cartridge: %s\n", name);
-			return INIT_FAIL;
-		}
-
 		/* Trick - we identify file types according to their extension */
 		/* Note that if we do not recognize the extension, we revert to the slot location <-> type
 		scheme.  I do this because the extension concept is quite unfamiliar to mac people
