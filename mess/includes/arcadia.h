@@ -24,8 +24,8 @@ WRITE_HANDLER(arcadia_video_w);
 
 // space vultures sprites above
 // combat below and invisible
-#define YPOS 8
-#define YBOTTOM_SIZE 24
+#define YPOS 0
+//#define YBOTTOM_SIZE 24
 // grand slam sprites left and right
 // space vultures left
 // space attack left
