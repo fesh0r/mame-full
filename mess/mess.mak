@@ -439,6 +439,8 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/99_peb.o   \
 	  $(OBJ)/mess/machine/smc92x4.o  \
 	  $(OBJ)/mess/machine/rtc65271.o \
+	  $(OBJ)/mess/systems/geneve.o   \
+	  $(OBJ)/mess/machine/geneve.o   \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
 

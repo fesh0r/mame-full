@@ -10,7 +10,7 @@
 #include "vidhrdw/v9938.h"
 #include "sndhrdw/spchroms.h"
 #include "ti99_4x.h"
-#include "geneve.h"
+#include "includes/geneve.h"
 #include "99_peb.h"
 #include "994x_ser.h"
 #include "99_dsk.h"
@@ -264,7 +264,7 @@ int video_start_geneve(void)
 */
 void geneve_hblank_interrupt(void)
 {
-	static line_count;
+	static int line_count;
 	v9938_interrupt();
 	if (++line_count == 262)
 	{
