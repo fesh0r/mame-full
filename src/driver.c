@@ -3026,6 +3026,56 @@ TESTDRIVER( dlair )
 	DRIVER( magix ) 	/* (c) 1995 Yun Sung */
 	DRIVER( royalmah )	/* (c) 1982 Falcon */
 
+	/* Nichibutsu Mahjong games */
+	DRIVER( hanamomo )	/* (c) 1988 Nichibutsu */
+	DRIVER( msjiken )	/* (c) 1988 Nichibutsu */
+	DRIVER( telmahjn )	/* (c) 1988 Nichibutsu */
+	DRIVER( gionbana )	/* (c) 1989 Nichibutsu */
+	DRIVER( mgmen89 )	/* (c) 1989 Nichibutsu */
+	DRIVER( mjfocus )	/* (c) 1989 Nichibutsu */
+	DRIVER( mjfocusm )	/* (c) 1989 Nichibutsu */
+	DRIVER( peepshow )	/* (c) 1989 AC */
+	DRIVER( scandal )	/* (c) 1989 Nichibutsu */
+	DRIVER( scandalm )	/* (c) 1989 Nichibutsu */
+	DRIVER( mjnanpas )	/* (c) 1989 BROOKS */
+	DRIVER( bananadr )	/* (c) 1989 DIGITAL SOFT */
+	DRIVER( club90s )	/* (c) 1990 Nichibutsu */
+	DRIVER( mladyhtr )	/* (c) 1990 Nichibutsu */
+	DRIVER( chinmoku )	/* (c) 1990 Nichibutsu */
+	DRIVER( maiko ) 	/* (c) 1990 Nichibutsu */
+	DRIVER( hanaoji )	/* (c) 1991 Nichibutsu */
+	DRIVER( pstadium )	/* (c) 1990 Nichibutsu */
+	DRIVER( triplew1 )	/* (c) 1989 Nichibutsu */
+	DRIVER( triplew2 )	/* (c) 1990 Nichibutsu */
+	DRIVER( ntopstar )	/* (c) 1990 Nichibutsu */
+	DRIVER( mjlstory )	/* (c) 1991 Nichibutsu */
+	DRIVER( vanilla )	/* (c) 1991 Nichibutsu */
+	DRIVER( qmhayaku )	/* (c) 1991 Nichibutsu */
+	DRIVER( galkoku )	/* (c) 1989 Nichibutsu */
+	DRIVER( galkaika )	/* (c) 1989 Nichibutsu */
+	DRIVER( tokyogal )	/* (c) 1989 Nichibutsu */
+	DRIVER( tokimbsj )	/* (c) 1989 Nichibutsu */
+	DRIVER( mcontest )	/* (c) 1989 Nichibutsu */
+	DRIVER( av2mj1 )	/* (c) 1991 Nichibutsu */
+	DRIVER( hyhoo ) 	/* (c) 1987 Nichibutsu */
+	DRIVER( hyhoo2 )	/* (c) 1987 Nichibutsu */
+	DRIVER( mjsikaku )	/* (c) 1988 Nichibutsu */
+	DRIVER( mjsikakb )	/* (c) 1988 Nichibutsu */
+	DRIVER( otonano )	/* (c) 1988 Apple */
+	DRIVER( mjcamera )	/* (c) 1988 MIKI SHOJI */
+	DRIVER( secolove )	/* (c) 1986 Nichibutsu */
+	DRIVER( citylove )	/* (c) 1986 Nichibutsu */
+	DRIVER( seiha ) 	/* (c) 1987 Nichibutsu */
+	DRIVER( seiham )	/* (c) 1987 Nichibutsu */
+	DRIVER( iemoto )	/* (c) 1987 Nichibutsu */
+	DRIVER( ojousan )	/* (c) 1987 Nichibutsu */
+	DRIVER( bijokkoy )	/* (c) 1987 Nichibutsu */
+	DRIVER( bijokkog )	/* (c) 1988 Nichibutsu */
+	DRIVER( housemnq )	/* (c) 1987 Nichibutsu */
+	DRIVER( housemn2 )	/* (c) 1987 Nichibutsu */
+	DRIVER( kaguya )	/* (c) 1988 MIKI SHOJI */
+	DRIVER( crystal2 )	/* (c) 1986 Nichibutsu */
+	DRIVER( apparel )	/* (c) 1988 Central Denshi */
 
 #endif /* NEOMAME */
 
