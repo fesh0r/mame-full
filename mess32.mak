@@ -370,6 +370,7 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/m6847.o    \
           $(OBJ)/mess/machine/mc10.o     \
           $(OBJ)/mess/systems/mc10.o     \
+          $(OBJ)/mess/formats/cocopak.o  \
           $(OBJ)/mess/vidhrdw/dragon.o   \
           $(OBJ)/mess/machine/dragon.o   \
           $(OBJ)/mess/systems/dragon.o	\
