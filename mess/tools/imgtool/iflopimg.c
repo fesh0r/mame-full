@@ -244,6 +244,7 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			module->path_separator			= floppy_callbacks.path_separator;
 			module->prefer_ucase			= floppy_callbacks.prefer_ucase;
 			module->initial_path_separator	= floppy_callbacks.initial_path_separator;
+			module->alternate_path_separator	= floppy_callbacks.alternate_path_separator;
 			module->begin_enum				= floppy_callbacks.begin_enum;
 			module->next_enum				= floppy_callbacks.next_enum;
 			module->close_enum				= floppy_callbacks.close_enum;
@@ -251,6 +252,8 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 			module->read_file				= floppy_callbacks.read_file;
 			module->write_file				= floppy_callbacks.write_file;
 			module->delete_file				= floppy_callbacks.delete_file;
+			module->create_dir					= floppy_callbacks.create_dir;
+			module->delete_dir					= floppy_callbacks.delete_dir;
 			module->writefile_optguide		= floppy_callbacks.writefile_optguide;
 			module->writefile_optspec		= floppy_callbacks.writefile_optspec;
 			module->image_extra_bytes		= floppy_callbacks.image_extra_bytes;

@@ -374,7 +374,53 @@ static int cmd_del(const struct command *c, int argc, char *argv[])
 	return 0;
 
 error:
-	reporterror(err, c, argv[0], argv[1], argv[2], argv[3], NULL);
+	reporterror(err, c, argv[0], argv[1], argv[2], NULL, NULL);
+	return -1;
+}
+
+
+
+static int cmd_mkdir(const struct command *c, int argc, char *argv[])
+{
+	imgtoolerr_t err;
+	imgtool_image *img;
+
+	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	if (err)
+		goto error;
+
+	err = img_createdir(img, argv[2]);
+	img_close(img);
+	if (err)
+		goto error;
+
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], argv[1], argv[2], NULL, NULL);
+	return -1;
+}
+
+
+
+static int cmd_rmdir(const struct command *c, int argc, char *argv[])
+{
+	imgtoolerr_t err;
+	imgtool_image *img;
+
+	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_RW, &img);
+	if (err)
+		goto error;
+
+	err = img_deletedir(img, argv[2]);
+	img_close(img);
+	if (err)
+		goto error;
+
+	return 0;
+
+error:
+	reporterror(err, c, argv[0], argv[1], argv[2], NULL, NULL);
 	return -1;
 }
 
@@ -647,6 +693,8 @@ static struct command cmds[] =
 	{ "put",				cmd_put,				"<format> <imagename> <filename>...[--(fileoption)==value] [--filter=filter]", 3, 0xffff, 0 },
 	{ "getall",				cmd_getall,				"<format> <imagename> [path] [--filter=filter]", 2, 3, 0 },
 	{ "del",				cmd_del,				"<format> <imagename> <filename>...", 3, 3, 1 },
+	{ "mkdir",				cmd_mkdir,				"<format> <imagename> <dirname>", 3, 3, 0 },
+	{ "rmdir",				cmd_rmdir,				"<format> <imagename> <dirname>...", 3, 3, 1 },
 	{ "identify",			cmd_identify,			"<imagename>", 1, 1 },
 	{ "listformats",		cmd_listformats,		NULL, 0, 0, 0 },
 	{ "listfilters",		cmd_listfilters,		NULL, 0, 0, 0 },

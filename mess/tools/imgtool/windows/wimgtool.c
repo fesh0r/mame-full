@@ -518,7 +518,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 	if (read_or_write != OSD_FOPEN_READ)
 	{
 		features = img_get_module_features(module);
-		if (!features.supports_writing && !features.supports_deleting)
+		if (!features.supports_writing && !features.supports_createdir && !features.supports_deletefile && !features.supports_deletedir)
 			read_or_write = OSD_FOPEN_READ;
 	}
 
@@ -1077,7 +1077,7 @@ static LRESULT CALLBACK wimgtool_wndproc(HWND window, UINT message, WPARAM wpara
 			EnableMenuItem(menu, ID_IMAGE_EXTRACT,
 				MF_BYCOMMAND | (features.supports_reading ? MF_ENABLED : MF_GRAYED));
 			EnableMenuItem(menu, ID_IMAGE_DELETE,
-				MF_BYCOMMAND | (features.supports_deleting ? MF_ENABLED : MF_GRAYED));
+				MF_BYCOMMAND | (features.supports_deletefile ? MF_ENABLED : MF_GRAYED));
 			break;
 
 		case WM_DROPFILES:

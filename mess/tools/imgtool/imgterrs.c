@@ -1,3 +1,11 @@
+/***************************************************************************
+
+	imgterrs.c
+
+	Imgtool errors
+
+***************************************************************************/
+
 #include <assert.h>
 #include "imgterrs.h"
 
@@ -23,7 +31,8 @@ static const char *msgs[] =
 	"Input past end of file",
 	"Cannot specify path",
 	"Invalid path",
-	"Path not found"
+	"Path not found",
+	"Directory not empty"
 };
 
 const char *imgtool_error(imgtoolerr_t err)

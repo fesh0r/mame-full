@@ -17,10 +17,12 @@
 struct ImgtoolFloppyCallbacks
 {
 	const char *eoln;
-	char path_separator;
 	
 	int image_extra_bytes;
 	int imageenum_extra_bytes;
+	
+	char path_separator;
+	char alternate_path_separator;
 	
 	/* flags */
 	unsigned int prefer_ucase : 1;
@@ -35,6 +37,8 @@ struct ImgtoolFloppyCallbacks
 	imgtoolerr_t	(*read_file)	(imgtool_image *img, const char *fname, imgtool_stream *destf);
 	imgtoolerr_t	(*write_file)	(imgtool_image *img, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
 	imgtoolerr_t	(*delete_file)	(imgtool_image *img, const char *fname);
+	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 
 	const struct OptionGuide *writefile_optguide;
 	const char *writefile_optspec;

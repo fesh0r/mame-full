@@ -32,11 +32,15 @@ struct imgtool_module_features img_get_module_features(const struct ImageModule 
 	if (module->write_file)
 		features.supports_writing = 1;
 	if (module->delete_file)
-		features.supports_deleting = 1;
+		features.supports_deletefile = 1;
 	if (module->path_separator)
 		features.supports_directories = 1;
 	if (module->free_space)
 		features.supports_freespace = 1;
+	if (module->create_dir)
+		features.supports_createdir = 1;
+	if (module->delete_dir)
+		features.supports_deletedir = 1;
 	return features;
 }
 
@@ -207,6 +211,31 @@ int imgtool_validitychecks(void)
 		{
 			printf("imgtool module %s has null 'extensions'\n", module->extensions);
 			error = 1;
+		}
+
+		/* sanity checks on modules that do not support directories */
+		if (!module->path_separator)
+		{
+			if (module->alternate_path_separator)
+			{
+				printf("imgtool module %s specified alternate_path_separator but not path_separator\n", module->name);
+				error = 1;
+			}
+			if (module->initial_path_separator)
+			{
+				printf("imgtool module %s specified initial_path_separator without directory support\n", module->name);
+				error = 1;
+			}
+			if (module->create_dir)
+			{
+				printf("imgtool module %s implements create_dir without directory support\n", module->name);
+				error = 1;
+			}
+			if (module->delete_dir)
+			{
+				printf("imgtool module %s implements delete_dir without directory support\n", module->name);
+				error = 1;
+			}
 		}
 
 		/* sanity checks on creation options */

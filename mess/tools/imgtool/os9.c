@@ -470,7 +470,8 @@ static imgtoolerr_t os9_set_file_size(imgtool_image *image,
 
 
 static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
-	creation_policy_t create, struct os9_fileinfo *file_info, UINT32 *dirent_lsn, UINT32 *dirent_index)
+	creation_policy_t create, struct os9_fileinfo *file_info,
+	UINT32 *parent_lsn, UINT32 *dirent_lsn, UINT32 *dirent_index)
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	struct os9_fileinfo dir_info;
@@ -486,8 +487,14 @@ static imgtoolerr_t os9_lookup_path(imgtool_image *img, const char *path,
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
 	current_lsn = disk_info->root_dir_lsn;
 
+	if (parent_lsn)
+		*parent_lsn = 0;
+
 	while(*path)
 	{
+		if (parent_lsn)
+			*parent_lsn = current_lsn;
+
 		err = os9_decode_file_header(img, current_lsn, &dir_info);
 		if (err)
 			goto done;
@@ -796,7 +803,7 @@ static imgtoolerr_t os9_diskimage_beginenum(imgtool_imageenum *enumeration, cons
 	image = img_enum_image(enumeration);
 	os9enum = (struct os9_direnum *) img_enum_extrabytes(enumeration);
 
-	err = os9_lookup_path(image, path, CREATE_NONE, &os9enum->dir_info, NULL, NULL);
+	err = os9_lookup_path(image, path, CREATE_NONE, &os9enum->dir_info, NULL, NULL, NULL);
 	if (err)
 		goto done;
 
@@ -907,7 +914,7 @@ static imgtoolerr_t os9_diskimage_readfile(imgtool_image *img, const char *filen
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(img);
 
-	err = os9_lookup_path(img, filename, CREATE_NONE, &file_info, NULL, NULL);
+	err = os9_lookup_path(img, filename, CREATE_NONE, &file_info, NULL, NULL, NULL);
 	if (err)
 		return err;
 	if (file_info.directory)
@@ -965,7 +972,7 @@ static imgtoolerr_t os9_diskimage_writefile(imgtool_image *image, const char *pa
 		goto done;
 	}
 
-	err = os9_lookup_path(image, path, CREATE_FILE, &file_info, NULL, NULL);
+	err = os9_lookup_path(image, path, CREATE_FILE, &file_info, NULL, NULL, NULL);
 	if (err)
 		goto done;
 
@@ -1003,7 +1010,8 @@ done:
 
 
 
-static imgtoolerr_t os9_diskimage_deletefile(imgtool_image *image, const char *path)
+static imgtoolerr_t os9_diskimage_delete(imgtool_image *image, const char *path,
+	unsigned int delete_directory)
 {
 	imgtoolerr_t err;
 	const struct os9_diskinfo *disk_info;
@@ -1014,11 +1022,15 @@ static imgtoolerr_t os9_diskimage_deletefile(imgtool_image *image, const char *p
 
 	disk_info = (const struct os9_diskinfo *) imgtool_floppy_extrabytes(image);
 
-	err = os9_lookup_path(image, path, CREATE_NONE, &file_info, &dirent_lsn, &dirent_index);
+	err = os9_lookup_path(image, path, CREATE_NONE, &file_info, NULL, &dirent_lsn, &dirent_index);
 	if (err)
 		return err;
-	if (file_info.directory)
+	if (file_info.directory != delete_directory)
 		return IMGTOOLERR_FILENOTFOUND;
+
+	/* make sure that if we are deleting a directory, it is empty */
+	if (delete_directory && file_info.file_size > 64)
+		return IMGTOOLERR_DIRNOTEMPTY;
 
 	/* zero out the file entry */
 	b = '\0';
@@ -1064,6 +1076,51 @@ static imgtoolerr_t os9_diskimage_deletefile(imgtool_image *image, const char *p
 
 
 
+static imgtoolerr_t os9_diskimage_deletefile(imgtool_image *image, const char *path)
+{
+	return os9_diskimage_delete(image, path, 0);
+}
+
+
+
+static imgtoolerr_t os9_diskimage_createdir(imgtool_image *image, const char *path)
+{
+	imgtoolerr_t err;
+	struct os9_fileinfo file_info;
+	UINT8 dir_data[64];
+	UINT32 parent_lsn;
+
+	err = os9_lookup_path(image, path, CREATE_DIR, &file_info, &parent_lsn, NULL, NULL);
+	if (err)
+		goto done;
+
+	err = os9_set_file_size(image, &file_info, 64);
+	if (err)
+		goto done;
+
+	memset(dir_data, 0, sizeof(dir_data));
+	place_string(dir_data,   0, 32, ".");
+	place_integer(dir_data, 29,  3, file_info.lsn);
+	place_string(dir_data,  32, 32, "..");
+	place_integer(dir_data, 29,  3, parent_lsn);
+
+	err = os9_write_lsn(image, file_info.sector_map[0].lsn, 0, dir_data, sizeof(dir_data));
+	if (err)
+		goto done;
+
+done:
+	return err;
+}
+
+
+
+static imgtoolerr_t os9_diskimage_deletedir(imgtool_image *image, const char *path)
+{
+	return os9_diskimage_delete(image, path, 1);
+}
+
+
+
 static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct ImgtoolFloppyCallbacks *module)
 {
 	module->initial_path_separator	= 1;
@@ -1079,6 +1136,8 @@ static imgtoolerr_t coco_os9_module_populate(imgtool_library *library, struct Im
 	module->read_file				= os9_diskimage_readfile;
 	module->write_file				= os9_diskimage_writefile;
 	module->delete_file				= os9_diskimage_deletefile;
+	module->create_dir				= os9_diskimage_createdir;
+	module->delete_dir				= os9_diskimage_deletedir;
 	return IMGTOOLERR_SUCCESS;
 }
 

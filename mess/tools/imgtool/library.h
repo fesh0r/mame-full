@@ -18,6 +18,7 @@
 #include "osd_cpu.h"
 #include "opresolv.h"
 #include "stream.h"
+#include "unicode.h"
 
 
 typedef struct _imgtool_image imgtool_image;
@@ -60,6 +61,7 @@ struct ImageModule
 	size_t imageenum_extra_bytes;
 
 	char path_separator;
+	char alternate_path_separator;
 	
 	/* flags */
 	unsigned int prefer_ucase : 1;
@@ -75,7 +77,10 @@ struct ImageModule
 	imgtoolerr_t	(*read_file)	(imgtool_image *image, const char *fname, imgtool_stream *destf);
 	imgtoolerr_t	(*write_file)	(imgtool_image *image, const char *fname, imgtool_stream *sourcef, option_resolution *opts);
 	imgtoolerr_t	(*delete_file)	(imgtool_image *image, const char *fname);
+	imgtoolerr_t	(*create_dir)	(imgtool_image *image, const char *path);
+	imgtoolerr_t	(*delete_dir)	(imgtool_image *image, const char *path);
 	imgtoolerr_t	(*create)		(imgtool_image *image, imgtool_stream *f, option_resolution *opts);
+	int				(*approve_filename_char)(unicode_char_t ch);
 
 	const struct OptionGuide *createimage_optguide;
 	const char *createimage_optspec;

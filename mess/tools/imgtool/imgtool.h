@@ -284,6 +284,28 @@ imgtoolerr_t img_putfile(imgtool_image *img, const char *newfname, const char *s
  */
 imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname);
 
+/* img_createdir
+ *
+ * Description:
+ *		Delete a directory on an image
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		path:				The path to the directory to delete
+ */
+imgtoolerr_t img_createdir(imgtool_image *img, const char *path);
+
+/* img_deletedir
+ *
+ * Description:
+ *		Delete a directory on an image
+ *
+ * Parameters:
+ *		img:				The image to read from
+ *		path:				The path to the directory to delete
+ */
+imgtoolerr_t img_deletedir(imgtool_image *img, const char *path);
+
 /* img_create
  * img_create_byname
  *
@@ -338,9 +360,11 @@ struct imgtool_module_features
 	unsigned int supports_open : 1;
 	unsigned int supports_reading : 1;
 	unsigned int supports_writing : 1;
-	unsigned int supports_deleting : 1;
+	unsigned int supports_deletefile : 1;
 	unsigned int supports_directories : 1;
 	unsigned int supports_freespace : 1;
+	unsigned int supports_createdir : 1;
+	unsigned int supports_deletedir : 1;
 };
 
 struct imgtool_module_features img_get_module_features(const struct ImageModule *module);

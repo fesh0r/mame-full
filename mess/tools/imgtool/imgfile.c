@@ -153,11 +153,12 @@ static imgtoolerr_t cannonicalize_path(imgtool_image *image, int mandate_dir_pat
 {
 	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	char *new_path = NULL;
-	char path_separator;
+	char path_separator, alt_path_separator;
 	const char *s;
 	int in_path_separator, i, j;
 	
 	path_separator = image->module->path_separator;
+	alt_path_separator = image->module->alternate_path_separator;
 
 	if (path_separator == '\0')
 	{
@@ -186,7 +187,7 @@ static imgtoolerr_t cannonicalize_path(imgtool_image *image, int mandate_dir_pat
 		i = j = 0;
 		do
 		{
-			if ((s[i] != '\0') && (s[i] != path_separator))
+			if ((s[i] != '\0') && (s[i] != path_separator) && (s[i] != alt_path_separator))
 			{
 				new_path[j++] = s[i];
 				in_path_separator = FALSE;
@@ -643,6 +644,64 @@ imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 		err = markerrorsource(err);
 		goto done;
 	}
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
+imgtoolerr_t img_createdir(imgtool_image *img, const char *path)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	/* implemented? */
+	if (!img->module->create_dir)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	err = cannonicalize_path(img, TRUE, &path, &alloc_path);
+	if (err)
+		goto done;
+
+	err = img->module->create_dir(img, path);
+	if (err)
+		goto done;
+
+done:
+	if (alloc_path)
+		free(alloc_path);
+	return err;
+}
+
+
+
+imgtoolerr_t img_deletedir(imgtool_image *img, const char *path)
+{
+	imgtoolerr_t err;
+	char *alloc_path = NULL;
+
+	/* implemented? */
+	if (!img->module->delete_dir)
+	{
+		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
+		goto done;
+	}
+
+	/* cannonicalize path */
+	err = cannonicalize_path(img, TRUE, &path, &alloc_path);
+	if (err)
+		goto done;
+
+	err = img->module->delete_dir(img, path);
+	if (err)
+		goto done;
 
 done:
 	if (alloc_path)
