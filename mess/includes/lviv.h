@@ -1,5 +1,7 @@
 /* machine/lviv.c */
 extern unsigned char * lviv_video_ram;
+READ_HANDLER ( lviv_io_r );
+WRITE_HANDLER ( lviv_io_w );
 extern MACHINE_INIT( lviv );
 extern int lviv_tape_init(int);
 extern void lviv_tape_exit(int);
