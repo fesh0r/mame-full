@@ -7,11 +7,16 @@ extern WRITE_HANDLER ( a7800_MARIA_w );
 
 
 /* machine/a7800.c */
+extern int a7800_lines;
+extern int a7800_ispal;
+
 extern unsigned char *a7800_ram;
 extern unsigned char *a7800_cartridge_rom;
 extern MACHINE_INIT( a7800 );
+extern MACHINE_INIT( a7800p );
 extern UINT32 a7800_partialcrc(const unsigned char *,unsigned int);
 extern int a7800_init_cart (int id);
+extern int a7800p_init_cart (int id);
 extern void a7800_exit_rom (int id);
 extern READ_HANDLER  ( a7800_TIA_r );
 extern WRITE_HANDLER ( a7800_TIA_w );
@@ -24,11 +29,3 @@ extern WRITE_HANDLER ( a7800_RAM0_w );
 extern READ_HANDLER  ( a7800_RAM1_r );
 extern WRITE_HANDLER ( a7800_RAM1_w );
 extern WRITE_HANDLER ( a7800_cart_w );
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void a7800_runtime_loader_init(void);
-# else
-	extern void a7800_runtime_loader_init(void);
-# endif
-#endif
