@@ -1,8 +1,8 @@
 #ifndef _PDP1_H
 #define _PDP1_H
 
-#include "memory.h"
 #include "osd_cpu.h"
+#include "driver.h"
 
 
 /* register ids for pdp1_get_reg/pdp1_set_reg */
