@@ -8,6 +8,9 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.  The
+  apple2 driver no longer requires a CTRL key to reset.  [Christopher Stone]
+
 - [CBM FAMILY] Fixed SID regressions introduced in 0.93.  SID chips now
   packaged as actual MAME/MESS sound cores.  (bug #658) [Nate Woods]
 
@@ -15,10 +18,6 @@ System Driver Changes:
 
 - [VIC20] Fixed regression introduced in 0.93.  (bug #659) [Nate Woods]
 
-- [APPLE2] Reset key fixes.  The default Apple RESET key is now F12.
-  Pressing F3 from MESS UI mode now does a hard reset.
-  The apple2 driver no longer requires a CTRL key to reset.
-  [Christopher Stone]
 
 
 User Interface Changes:
