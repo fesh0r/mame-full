@@ -59,7 +59,7 @@ void init_atcga(void)
 void init_at386(void)
 {
 	AT8042_CONFIG at8042={
-		AT8042_AT386, i386_set_address_mask
+		AT8042_AT386, NULL /*i386_set_address_mask*/
 	};
 	init_atcga();
 	at_8042_init(&at8042);

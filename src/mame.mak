@@ -91,6 +91,7 @@ CPUS+=PIC16C57@
 CPUS+=G65816@
 CPUS+=SPC700@
 CPUS+=E132XS@
+CPUS+=I386@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
@@ -162,7 +163,7 @@ SOUNDS+=SP0250@
 SOUNDS+=SCSP@
 SOUNDS+=YMF271@
 SOUNDS+=PSXSPU@
-
+SOUNDS+=CDDA@
 
 DRVLIBS = \
 	$(OBJ)/pacman.a $(OBJ)/epos.a $(OBJ)/nichibut.a \
