@@ -1430,10 +1430,13 @@ int osd_select_file(int sel, char *filename)
 		ShowCursor(FALSE);
 
 		result = -1;
-		if ((s_lSelectedItem > -1) && MessSetImage(nSelectedItem, sel))
+		if (s_lSelectedItem > -1) {
+			strcpy(filename, mess_images_index[s_lSelectedItem]->fullname);
 			result = 1;
-		else
+		}
+		else {
 			result = -1;
+		}
 	}
 	else {
 		result = 0;

@@ -44,8 +44,8 @@ CAPTION "File Manager"
 FONT 8, "MS Sans Serif"
 BEGIN
     CONTROL         "List2",IDC_LIST2,"SysListView32",LVS_REPORT | LVS_SINGLESEL |
-                    LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED | WS_BORDER |
-					WS_TABSTOP,10,10,280,180
+                    LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED | LVS_SHAREIMAGELISTS |
+					WS_BORDER |	WS_TABSTOP,10,10,280,180
 END
 
 /////////////////////////////////////////////////////////////////////////////
