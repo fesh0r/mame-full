@@ -846,3 +846,9 @@ void logerror(const char *text, ...)
 	}
 }
 
+#ifdef MESS
+int osd_select_file(int sel, char *filename)
+{
+	return 0;
+}
+#endif
