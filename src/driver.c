@@ -2478,6 +2478,8 @@ TESTDRIVER( goldmedb )	/* Alpha-68K96II bootleg */
 	DRIVER( gangwarb )	/* Alpha-68K96V bootleg */
 	DRIVER( sbasebal )	/* Alpha-68K96V 	  (c) 1989 SNK of America licensed from Alpha */
 
+	DRIVER( pushman )	/* (c) 1990 American Sammy Corporation / Comad */
+
 	/* Alpha Denshi games */
 	DRIVER( champbas )	/* (c) 1983 Sega */
 	DRIVER( champbbj )	/* (c) 1983 Alpha Denshi Co. */
