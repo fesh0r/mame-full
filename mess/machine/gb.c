@@ -435,12 +435,12 @@ WRITE_HANDLER( gb_mem_mode_select_mbc3 )
 
 /*READ_HANDLER( gb_echoram_r )
 {
-	return cpu_readmem16( 0xc000 + offset );
+	return program_read_byte_8( 0xc000 + offset );
 }
 
 WRITE_HANDLER( gb_echoram_w )
 {
-	cpu_writemem16( 0xc000 + offset, data );
+	program_write_byte_8( 0xc000 + offset, data );
 }*/
 
 WRITE_HANDLER ( gb_io_w )
