@@ -316,7 +316,7 @@ INPUT_PORTS_START(ti99_4)
 		PORT_KEY2(0x80, IP_ACTIVE_LOW, "3 #", KEYCODE_3, IP_JOY_NONE,			'3',	'#')
 		PORT_KEY1(0x40, IP_ACTIVE_LOW, "E UP", KEYCODE_E, IP_JOY_NONE,			'E')
 		PORT_KEY1(0x20, IP_ACTIVE_LOW, "S LEFT", KEYCODE_S, IP_JOY_NONE,		'S')
-		PORT_KEY1(0x80, IP_ACTIVE_LOW, "X DOWN", KEYCODE_X, IP_JOY_NONE,		'X')
+		PORT_KEY1(0x10, IP_ACTIVE_LOW, "X DOWN", KEYCODE_X, IP_JOY_NONE,		'X')
 		PORT_KEY2(0x08, IP_ACTIVE_LOW, "8 *", KEYCODE_8, IP_JOY_NONE,			'8',	'*')
 		PORT_KEY2(0x04, IP_ACTIVE_LOW, "I -", KEYCODE_I, IP_JOY_NONE,			'I',	'-')
 		PORT_KEY2(0x02, IP_ACTIVE_LOW, "J ^", KEYCODE_J, IP_JOY_NONE,			'J',	'^')
@@ -610,19 +610,22 @@ MACHINE_DRIVER_END
 /*
 	ROM loading
 
-	Note that we use the same ROMset for 50Hz and 60Hz version.
+	Note that we use the same ROMset for 50Hz and 60Hz versions.
 */
 
 ROM_START(ti99_4)
 	/*CPU memory space*/
 	ROM_REGION16_BE(region_cpu1_len, REGION_CPU1, 0)
-	ROM_LOAD16_WORD("994rom.bin", 0x0000, 0x2000, 0x9ee9761e) /* system ROMs */
+	ROM_LOAD16_BYTE("u610.bin", 0x0000, 0x1000, 0x6fcf4b15) /* CPU ROMs high */
+	ROM_LOAD16_BYTE("u611.bin", 0x0001, 0x1000, 0x491c21d1) /* CPU ROMs low */
 
 	/*GROM memory space*/
 	ROM_REGION(0x10000, region_grom, 0)
-	ROM_LOAD("994grom.bin", 0x0000, 0x6000, 0x00000000) /* system GROMs */
+	ROM_LOAD("u500.bin", 0x0000, 0x1800, 0xaa757e13) /* system GROM 0 */
+	ROM_LOAD("u501.bin", 0x2000, 0x1800, 0xc863e460) /* system GROM 1 */
+	ROM_LOAD("u502.bin", 0x4000, 0x1800, 0xb0eda548) /* system GROM 1 */
 
-	/* Used for disk DSR */
+	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
@@ -642,7 +645,7 @@ ROM_START(ti99_4a)
 	ROM_REGION(0x10000, region_grom, 0)
 	ROM_LOAD("994agrom.bin", 0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
 
-	/* Used for disk DSR */
+	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
@@ -662,7 +665,7 @@ ROM_START(ti99_4ev)
 	ROM_REGION(0x10000, region_grom, 0)
 	ROM_LOAD("994agrom.bin", 0x0000, 0x6000, 0xaf5c2449) /* system GROMs */
 
-	/* Used for disk DSR */
+	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
 	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
 	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */

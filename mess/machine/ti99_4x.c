@@ -296,8 +296,19 @@ extern int tms9900_ICount;
 
 void init_ti99_4(void)
 {
+	int i, j;
+	UINT8 *GROM;
+
+
 	ti99_model = model_99_4;
 	has_evpc = FALSE;
+
+	GROM = memory_region(region_grom);
+	for (i=0; i<2; i++)
+		for (j=0; j<0x800; j++)
+		{
+			GROM[0x2000*i+0x1800+j] = GROM[0x2000*i+0x0800+j] | GROM[0x2000*i+0x1000+j];
+		}
 }
 
 void init_ti99_4a(void)
@@ -415,10 +426,12 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 	const char *ch, *ch2;
 	slot_type_t type = (slot_type_t) id;
 
-	/* There is a circuitry in the TI99/4a that resets the tms9900 when a
+	/* There is a circuitry in TI99/4(a) that resets the console when a
 	cartridge is inserted or removed.  We emulate this instead of resetting the
 	emulator (which is the default in MESS). */
 	cpu_set_reset_line(0, PULSE_LINE);
+	tms9901_reset(0);
+	TMS9928A_reset();
 
 	ch = strrchr(name, '.');
 	ch2 = (ch-1 >= name) ? ch-1 : "";
@@ -477,10 +490,12 @@ int ti99_rom_load(int id, mame_file *cartfile, int open_mode)
 
 void ti99_rom_unload(int id)
 {
-	/* There is a circuitry in the TI99/4a that resets the tms9900 when a
+	/* There is a circuitry in TI99/4(a) that resets the console when a
 	cartridge is inserted or removed.  We emulate this instead of resetting the
 	emulator (which is the default in MESS). */
 	cpu_set_reset_line(0, PULSE_LINE);
+	tms9901_reset(0);
+	TMS9928A_reset();
 
 	switch (slot_type[id])
 	{
