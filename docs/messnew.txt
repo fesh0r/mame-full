@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [AMIGA] Fixed the Amiga's BIOS length.  (bug #649) [Nate Woods]
+
 - [APPLE2] Recalibrated Joysticks. (bug #648) [Nate Woods]
 
 
