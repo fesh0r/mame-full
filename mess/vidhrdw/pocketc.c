@@ -240,10 +240,10 @@ static void pc1401_draw_special(struct osd_bitmap *bitmap,
 void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j;
-	int color[2]={
-		Machine->pens[pc1401_colortable[CONTRAST][0]],
-		Machine->pens[pc1401_colortable[CONTRAST][1]]
-	};
+	int color[2];
+	/* HJB: we cannot initialize array with values from other arrays, thus... */
+    color[0] = Machine->pens[pc1401_colortable[CONTRAST][0]];
+	color[1] = Machine->pens[pc1401_colortable[CONTRAST][1]];
 
     if (backdrop)
         copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
@@ -341,10 +341,10 @@ static int pc1350_addr[4]={ 0, 0x40, 0x1e, 0x5e };
 void pc1350_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
 	int x, y, i, j, k;
-	int color[2]={
-		Machine->pens[pc1401_colortable[PC1350_CONTRAST][0]],
-		Machine->pens[pc1401_colortable[PC1350_CONTRAST][1]]
-	};
+	int color[2];
+	/* HJB: we cannot initialize array with values from other arrays, thus... */
+    color[0] = Machine->pens[pc1401_colortable[PC1350_CONTRAST][0]];
+	color[1] = Machine->pens[pc1401_colortable[PC1350_CONTRAST][1]];
 
     if (backdrop)
         copybitmap (bitmap, backdrop->artwork, 0, 0, 0, 0, NULL, 
