@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- Amiga (readded; based on MAME Arcadia work) [Nate Woods, Mariusz Wojcieszek]
 
 
 

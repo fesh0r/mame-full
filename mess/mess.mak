@@ -333,8 +333,9 @@ $(OBJ)/nintendo.a:					\
 	$(OBJ)/mess/systems/snes.o	 
 
 $(OBJ)/amiga.a: \
-	$(OBJ)/mess/vidhrdw/amiga.o	 \
-	$(OBJ)/mess/machine/amiga.o	 \
+	$(OBJ)/vidhrdw/amiga.o			\
+	$(OBJ)/machine/amiga.o			\
+	$(OBJ)/mess/machine/amigafdc.o	\
 	$(OBJ)/mess/systems/amiga.o
 
 $(OBJ)/cbmshare.a: \

@@ -59,7 +59,7 @@ somehow? At least boot vectors can be read from roms.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/arcadia.h"
+#include "includes/amiga.h"
 
 /**************************************************************************
 
@@ -85,8 +85,8 @@ static void autoconfig_init( UINT32 rom_boot_vector )
 
 	data8_t *autoconf, *expansion;
 
-	autoconf = (data8_t*)arcadia_autoconfig_mem;
-	expansion = (data8_t*)arcadia_expansion_ram;
+	autoconf = (data8_t*)amiga_autoconfig_mem;
+	expansion = (data8_t*)amiga_expansion_ram;
 
 	/* setup a dummy autoconfig device */
 	memset( autoconf, 0xff, 0x2000 );
@@ -128,24 +128,24 @@ static void autoconfig_init( UINT32 rom_boot_vector )
 
 static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK3 ) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x201fff) AM_READ( MRA16_RAM ) AM_BASE(&arcadia_expansion_ram)
+	AM_RANGE( 0x200000, 0x201fff) AM_READ( MRA16_RAM ) AM_BASE(&amiga_expansion_ram)
 	AM_RANGE( 0x800000, 0x9fbfff) AM_READ( MRA16_BANK2 ) /* Game cartridge */
 	AM_RANGE( 0x9fc000, 0x9fffff) AM_READ( MRA16_RAM ) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-    AM_RANGE( 0xbfd000, 0xbfefff) AM_READ( arcadia_cia_r )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xe80000, 0xe8ffff) AM_READ( MRA16_RAM ) AM_BASE(&arcadia_autoconfig_mem)
-    AM_RANGE( 0xdbf000, 0xdfffff) AM_READ( arcadia_custom_r )     /* Custom Chips */
+    AM_RANGE( 0xbfd000, 0xbfefff) AM_READ( amiga_cia_r )        /* 8510's CIA A and CIA B */
+	AM_RANGE( 0xe80000, 0xe8ffff) AM_READ( MRA16_RAM ) AM_BASE(&amiga_autoconfig_mem)
+    AM_RANGE( 0xdbf000, 0xdfffff) AM_READ( amiga_custom_r )     /* Custom Chips */
 	AM_RANGE( 0xf00000, 0xf7ffff) AM_NOP	/* what is here ? */
 	AM_RANGE( 0xf80000, 0xffffff) AM_READ( MRA16_BANK1 )          /* System ROM - mirror */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START(writemem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE( 0x000000, 0x07ffff) AM_WRITE( MWA16_ROM ) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x201fff) AM_WRITE( MWA16_RAM ) AM_BASE(&arcadia_expansion_ram)
+	AM_RANGE( 0x200000, 0x201fff) AM_WRITE( MWA16_RAM ) AM_BASE(&amiga_expansion_ram)
 	AM_RANGE( 0x800000, 0x9fbfff) AM_WRITE( MWA16_ROM )	/* Game cartridge */
 	AM_RANGE( 0x9fc000, 0x9fffff) AM_WRITE( MWA16_RAM ) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-    AM_RANGE( 0xbfd000, 0xbfefff) AM_WRITE( arcadia_cia_w )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xe80000, 0xe8ffff) AM_WRITE( MWA16_RAM ) AM_BASE(&arcadia_autoconfig_mem)
-    AM_RANGE( 0xdbf000, 0xdfffff) AM_WRITE( arcadia_custom_w )     /* Custom Chips */
+    AM_RANGE( 0xbfd000, 0xbfefff) AM_WRITE( amiga_cia_w )        /* 8510's CIA A and CIA B */
+	AM_RANGE( 0xe80000, 0xe8ffff) AM_WRITE( MWA16_RAM ) AM_BASE(&amiga_autoconfig_mem)
+    AM_RANGE( 0xdbf000, 0xdfffff) AM_WRITE( amiga_custom_w )     /* Custom Chips */
 	AM_RANGE( 0xf80000, 0xffffff) AM_WRITE( MWA16_ROM )            /* System ROM */
 ADDRESS_MAP_END
 
@@ -192,12 +192,12 @@ static MACHINE_DRIVER_START( arcadia )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(arcadia_vblank_irq,1)
+	MDRV_CPU_VBLANK_INT(amiga_vblank_irq,1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( arcadia )
+	MDRV_MACHINE_INIT( amiga )
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 
@@ -208,10 +208,10 @@ static MACHINE_DRIVER_START( arcadia )
 	MDRV_GFXDECODE( gfxdecodeinfo )
 	MDRV_PALETTE_LENGTH(4096)
 	MDRV_COLORTABLE_LENGTH(4096)
-	MDRV_PALETTE_INIT( arcadia )
+	MDRV_PALETTE_INIT( amiga )
 
-	MDRV_VIDEO_START( arcadia )
-	MDRV_VIDEO_UPDATE( arcadia )
+	MDRV_VIDEO_START( amiga )
+	MDRV_VIDEO_UPDATE( amiga )
 MACHINE_DRIVER_END
 
 

@@ -1,5 +1,5 @@
 /***************************************************************************
-Arcadia System - (c) 1988, Arcadia Systems.
+Amiga Computer / Arcadia System - (c) 1988, Arcadia Systems.
 
 Driver by:
 
@@ -9,7 +9,7 @@ Ernesto Corvi and Mariusz Wojcieszek
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/arcadia.h"
+#include "includes/amiga.h"
 
 extern custom_regs_def custom_regs;
 #define DT_COLOR_WHITE 0;
@@ -144,7 +144,7 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 			if ( inst >= min )	/* If not invalid, go at it */
 				/* KT - I've no idea what the memory mask should be so
 				added -1 for now! */
-			    arcadia_custom_w( inst>>1, param , 0 /*???*/);
+			    amiga_custom_w( inst>>1, param , 0 /*???*/);
 			else {
 				/* stop the copper until the next frame */
 				copper.waiting = 1;
@@ -225,7 +225,7 @@ INLINE int copper_update( int x_pos, int y_pos, int *end_x ) {
 
 ***************************************************************************/
 
-void arcadia_sprite_set_pos( int spritenum, unsigned short data ) {
+void amiga_sprite_set_pos( int spritenum, unsigned short data ) {
 	
 	update_regs.sprite_v_start[spritenum] &= 0x100;
 	update_regs.sprite_v_start[spritenum] |= data >> 8;
@@ -235,7 +235,7 @@ void arcadia_sprite_set_pos( int spritenum, unsigned short data ) {
 
 }
 
-void arcadia_sprite_set_ctrl( int spritenum, unsigned short data ) {
+void amiga_sprite_set_ctrl( int spritenum, unsigned short data ) {
 	int i;
 	
 	update_regs.sprite_h_start[spritenum] &= 0x1fe;
@@ -262,18 +262,18 @@ void arcadia_sprite_set_ctrl( int spritenum, unsigned short data ) {
 	}			
 }	
 
-void arcadia_reload_sprite_info( int spritenum ) {
+void amiga_reload_sprite_info( int spritenum ) {
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	
-	arcadia_sprite_set_pos( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
+	amiga_sprite_set_pos( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum]] ) );
 
-	arcadia_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
+	amiga_sprite_set_ctrl( spritenum, *((data16_t *) &RAM[custom_regs.SPRxPT[spritenum] + 2] ) );
 
 	custom_regs.SPRxPT[spritenum] += 4;
 }
 
-INLINE void arcadia_render_sprite( int num, int x, int y, unsigned short *dst ) {
+INLINE void amiga_render_sprite( int num, int x, int y, unsigned short *dst ) {
 	int bit;
 
 	if ( update_regs.sprite_dma_enabled ) {
@@ -285,7 +285,7 @@ INLINE void arcadia_render_sprite( int num, int x, int y, unsigned short *dst ) 
 			return;
 
 		if ( y >= update_regs.sprite_v_stop[num] ) {
-			arcadia_reload_sprite_info( num );
+			amiga_reload_sprite_info( num );
 			return;
 		}
 
@@ -337,7 +337,7 @@ INLINE void arcadia_render_sprite( int num, int x, int y, unsigned short *dst ) 
 
 ***************************************************************************/
 
-INLINE void arcadia_display_msg (struct mame_bitmap *bitmap, const char *str ) {
+INLINE void amiga_display_msg (struct mame_bitmap *bitmap, const char *str ) {
 	static struct DisplayText dt[2];
 	
 	if ( update_regs.once_per_frame == 0 ) {
@@ -450,7 +450,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 		dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 		if ( x < update_regs.h_stop ) { \
 			for ( i = 0; i < 8; i++ ) \
-				arcadia_render_sprite( i, x, y, dst ); \
+				amiga_render_sprite( i, x, y, dst ); \
 		} \
 		return; \
 	} else { \
@@ -461,7 +461,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 				dst[x] = update_regs.back_color; /* fill the pixel with color 0 */ \
 				if ( x < update_regs.h_stop ) { \
 					for ( i = 0; i < 8; i++ ) \
-						arcadia_render_sprite( i, x, y, dst ); \
+						amiga_render_sprite( i, x, y, dst ); \
 				} \
 				return; \
 			} \
@@ -491,7 +491,7 @@ static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, in
 
 #define UNIMPLEMENTED( name ) \
 	static void name(struct mame_bitmap *bitmap, unsigned short *dst, int planes, int x, int y, int min_x ) { \
-		arcadia_display_msg(bitmap,  "Unimplemented screen mode: ##name## " ); \
+		amiga_display_msg(bitmap,  "Unimplemented screen mode: ##name## " ); \
 	}
 
 
@@ -524,7 +524,7 @@ BEGIN_UPDATE_WITH_SPRITES( render_pixel_lores_sprites ) {
 	dst[x] = Machine->pens[custom_regs.COLOR[color]];
 
 	for ( i = 0; i < 8; i++ )
-		arcadia_render_sprite( i, x, y, dst );
+		amiga_render_sprite( i, x, y, dst );
 } END_UPDATE( 1 )
 
 UNIMPLEMENTED( render_pixel_lores_lace )
@@ -559,7 +559,7 @@ BEGIN_UPDATE_WITH_SPRITES( render_pixel_hires_sprites ) {
 	dst[x] = Machine->pens[custom_regs.COLOR[color]];
 
 	for ( i = 0; i < 8; i++ )
-		arcadia_render_sprite( i, x, y, dst );
+		amiga_render_sprite( i, x, y, dst );
 } END_UPDATE( 2 )
 
 UNIMPLEMENTED( render_pixel_hires_lace )
@@ -684,7 +684,7 @@ INLINE int get_mode( void ) {
 	return ret;
 }
 
-VIDEO_UPDATE(arcadia)
+VIDEO_UPDATE(amiga)
 {
 	int planes = 0, sw = Machine->drv->screen_width;
 	int min_x = Machine->visible_area.min_x;
@@ -761,7 +761,7 @@ VIDEO_UPDATE(arcadia)
 	}
 }
 
-PALETTE_INIT( arcadia )
+PALETTE_INIT( amiga )
 {
 	int i;
 
@@ -781,7 +781,7 @@ PALETTE_INIT( arcadia )
 	}
 }
 
-VIDEO_START(arcadia)
+VIDEO_START(amiga)
 {
 	/* init cached data */
 	update_regs.old_COLOR0 = -1;
@@ -797,8 +797,4 @@ VIDEO_START(arcadia)
 	memset( update_regs.sprite_in_scanline, 0, Machine->drv->screen_height * sizeof( int ) );
 
 	return 0;
-}
-
-VIDEO_STOP(arcadia)
-{
 }

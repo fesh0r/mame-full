@@ -1,5 +1,14 @@
-#ifndef __ARCADIA_H__
-#define __ARCADIA_H__
+/***************************************************************************
+Amiga Computer / Arcadia Game System
+
+Driver by:
+
+Ernesto Corvi & Mariusz Wojcieszek
+
+***************************************************************************/
+
+#ifndef __AMIGA_H__
+#define __AMIGA_H__
 
 #define MAX_PLANES 6 /* 0 to 6, inclusive ( but we count from 0 to 5 ) */
 
@@ -80,22 +89,22 @@ typedef struct {
 /* prototypes */
 /* machine */
 extern void copper_setpc( unsigned long pc );
-extern WRITE16_HANDLER(arcadia_custom_w);
-extern void arcadia_reload_sprite_info( int spritenum );
-extern READ16_HANDLER(arcadia_cia_r);
-extern WRITE16_HANDLER(arcadia_cia_w);
-extern READ16_HANDLER(arcadia_custom_r);
-extern WRITE16_HANDLER(arcadia_custom_w);
-extern MACHINE_INIT(arcadia);
+extern WRITE16_HANDLER(amiga_custom_w);
+extern void amiga_reload_sprite_info( int spritenum );
+extern READ16_HANDLER(amiga_cia_r);
+extern WRITE16_HANDLER(amiga_cia_w);
+extern READ16_HANDLER(amiga_custom_r);
+extern WRITE16_HANDLER(amiga_custom_w);
+extern MACHINE_INIT(amiga);
+extern void amiga_cia_issue_index( void );
 
-extern data16_t *arcadia_expansion_ram;
-extern data16_t *arcadia_autoconfig_mem;
+extern data16_t *amiga_expansion_ram;
+extern data16_t *amiga_autoconfig_mem;
 
 /* vidhrdw */
-extern INTERRUPT_GEN(arcadia_vblank_irq);
-extern VIDEO_UPDATE(arcadia);
-extern VIDEO_START(arcadia);
-extern VIDEO_STOP(arcadia);
-extern PALETTE_INIT(arcadia);
+extern INTERRUPT_GEN(amiga_vblank_irq);
+extern VIDEO_UPDATE(amiga);
+extern VIDEO_START(amiga);
+extern PALETTE_INIT(amiga);
 
-#endif /* __ARCADIA_H__ */
+#endif /* __AMIGA_H__ */

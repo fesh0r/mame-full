@@ -1161,7 +1161,7 @@ $(OBJ)/nix.a: \
 	$(OBJ)/vidhrdw/fitfight.o $(OBJ)/drivers/fitfight.o \
 
 $(OBJ)/arcadia.a: \
-	$(OBJ)/vidhrdw/arcadia.o $(OBJ)/machine/arcadia.o $(OBJ)/drivers/arcadia.o \
+	$(OBJ)/vidhrdw/amiga.o $(OBJ)/machine/amiga.o $(OBJ)/drivers/arcadia.o \
 
 $(OBJ)/othertrv.a: \
 	$(OBJ)/drivers/findout.o \

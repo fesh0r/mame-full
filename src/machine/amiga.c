@@ -1,5 +1,5 @@
 /***************************************************************************
-Arcadia Game System
+Amiga Computer / Arcadia Game System
 
 Driver by:
 
@@ -8,14 +8,18 @@ Ernesto Corvi & Mariusz Wojcieszek
 ***************************************************************************/
 
 #include "driver.h"
-#include "includes/arcadia.h"
+#include "includes/amiga.h"
 #include "cpu/m68000/m68000.h"
 
 #define LOG_CUSTOM	1
 #define LOG_CIA		0
 
+#ifdef MESS
+#include "machine/amigafdc.h"
+#else
 /* coin counters */
 static unsigned char coin_counter[2];
+#endif
 
 /* from vidhrdw */
 extern void copper_setpc( unsigned long pc );
@@ -28,12 +32,12 @@ extern void copper_enable( void );
 ***************************************************************************/
 
 /* required prototype */
-WRITE16_HANDLER(arcadia_custom_w);
+WRITE16_HANDLER(amiga_custom_w);
 
 custom_regs_def custom_regs;
 
-data16_t *arcadia_expansion_ram;
-data16_t *arcadia_autoconfig_mem;
+data16_t *amiga_expansion_ram;
+data16_t *amiga_autoconfig_mem;
 
 static int translate_ints( void ) {
 
@@ -533,7 +537,7 @@ static void blitter_proc( int param ) {
 		custom_regs.DMACON ^= 0x2000;
 
 
-	arcadia_custom_w( 0x009c>>1, 0x8040, 0);
+	amiga_custom_w( 0x009c>>1, 0x8040, 0);
 }
 
 static void blitter_setup( void ) {
@@ -633,9 +637,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					arcadia_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					arcadia_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -644,9 +648,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					arcadia_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					arcadia_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -657,9 +661,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					arcadia_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					arcadia_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -668,9 +672,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					arcadia_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w( 0x009c>>1, 0x8008, 0);
 				} else {
-					arcadia_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w( 0x009c>>1, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -730,7 +734,7 @@ static void cia_vblank_update( void ) {
 		if ( cia_8520[0].tod == cia_8520[0].alarm ) {
 			cia_8520[0].ics |= 0x84;
 			if ( cia_8520[0].icr & 0x04 ) {
-				arcadia_custom_w( 0x009c>>1, 0x8008, 0);
+				amiga_custom_w( 0x009c>>1, 0x8008, 0);
 			}
 		}
 	}
@@ -746,7 +750,7 @@ static void cia_hblank_update( int param ) {
 			if ( cia_8520[1].tod == cia_8520[1].alarm ) {
 				cia_8520[1].ics |= 0x84;
 				if ( cia_8520[1].icr & 0x04 ) {
-				    arcadia_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff */);
+				    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff */);
 				}
 			}
 		}
@@ -756,17 +760,21 @@ static void cia_hblank_update( int param ) {
 }
 
 /* Issue a index pulse when a disk revolution completes */
-static void cia_issue_index( void ) {
+void amiga_cia_issue_index( void ) {
 	cia_8520[1].ics |= 0x90;
 	if ( cia_8520[1].icr & 0x10 ) {
-	    arcadia_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff*/);
+	    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff*/);
 	}
 }
 
 static int cia_0_portA_r( void ) {
 	int ret = readinputport( 0 ) & 0xc0;
 
+#ifdef MESS
+	ret |= amiga_fdc_status_r();
+#else
 	ret |= 0x3f;
+#endif
 	
 	return ret; /* Gameport 1 and 0 buttons */
 }
@@ -774,12 +782,16 @@ static int cia_0_portA_r( void ) {
 static int cia_0_portB_r( void ) {
 
 	/* parallel port */
-	int ret = readinputport( 1 ) & 0x0f;
+	int ret = 0;
+
+#ifndef MESS
+	ret = readinputport( 1 ) & 0x0f;
 
 	ret |= ( coin_counter[0] & 3 ) << 4;
 	ret |= ( coin_counter[1] & 3 ) << 6;
 
 	logerror( "Coin counter read at PC=%06x\n", activecpu_get_pc() );
+#endif
 	return ret;
 }
 
@@ -818,6 +830,9 @@ static void cia_1_portA_w( int data ) {
 }
 
 static void cia_1_portB_w( int data ) {
+#ifdef MESS
+	amiga_fdc_control_w( data );
+#endif
 }
 
 static void cia_init( void ) {
@@ -864,7 +879,7 @@ static void cia_init( void ) {
 	}
 }
 
-READ16_HANDLER ( arcadia_cia_r ) {
+READ16_HANDLER ( amiga_cia_r ) {
 	int cia_sel = 1, mask, data;
 
 	offset<<=1; //PeT offset with new memory system now in word counts!
@@ -959,7 +974,7 @@ READ16_HANDLER ( arcadia_cia_r ) {
 	return 0;
 }
 
-WRITE16_HANDLER ( arcadia_cia_w ) {
+WRITE16_HANDLER ( amiga_cia_w ) {
 	int cia_sel = 1, mask;
 
 	offset<<=1;
@@ -1106,12 +1121,12 @@ WRITE16_HANDLER ( arcadia_cia_w ) {
 
 ***************************************************************************/
 
-static void arcadia_custom_init( void ) {
+static void amiga_custom_init( void ) {
 	custom_regs.DDFSTRT = 0x18;
 	custom_regs.DDFSTOP = 0xd8;
 }
 
-READ16_HANDLER ( arcadia_custom_r ) 
+READ16_HANDLER ( amiga_custom_r ) 
 {
 
     offset<<=1;
@@ -1138,6 +1153,28 @@ READ16_HANDLER ( arcadia_custom_r )
 		break;
 		
 		case 0x000a: /* JOY0DAT */
+#ifdef MESS
+			if ( readinputport( 0 ) & 0x20 ) {
+				int input = ( readinputport( 1 ) >> 4 );
+				int	top,bot,lft,rgt;
+
+				top = ( input >> 3 ) & 1;
+				bot = ( input >> 2 ) & 1;
+				lft = ( input >> 1 ) & 1;
+				rgt = input & 1;
+
+				if ( lft ) top ^= 1;
+				if ( rgt ) bot ^= 1;
+
+				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+			} else {
+				int input = ( readinputport( 2 ) & 0xff );
+
+				input |= ( readinputport( 3 ) & 0xff ) << 8;
+
+				return input;
+			}
+#else
 			{
 				int input = ( readinputport( 2 ) >> 4 );
 				int	top,bot,lft,rgt;
@@ -1152,9 +1189,32 @@ READ16_HANDLER ( arcadia_custom_r )
 
 				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
 			}
+#endif
 		break;
 
 		case 0x000c: /* JOY1DAT */
+#ifdef MESS
+			if ( readinputport( 0 ) & 0x10 ) {
+				int input = ( readinputport( 1 ) & 0x0f );
+				int	top,bot,lft,rgt;
+
+				top = ( input >> 3 ) & 1;
+				bot = ( input >> 2 ) & 1;
+				lft = ( input >> 1 ) & 1;
+				rgt = input & 1;
+
+				if ( lft ) top ^= 1;
+				if ( rgt ) bot ^= 1;
+
+				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
+			} else {
+				int input = ( readinputport( 4 ) & 0xff );
+
+				input |= ( readinputport( 5 ) & 0xff ) << 8;
+
+				return input;
+			}
+#else
 			{
 				int input = ( readinputport( 2 ) & 0x0f );
 				int	top,bot,lft,rgt;
@@ -1169,6 +1229,7 @@ READ16_HANDLER ( arcadia_custom_r )
 				
 				return ( bot | ( rgt << 1 ) | ( top << 8 ) | ( lft << 9 ) );
 			}
+#endif
 		break;
 
 		case 0x0010: /* ADKCONR */
@@ -1183,7 +1244,11 @@ READ16_HANDLER ( arcadia_custom_r )
 		break;
 
 		case 0x001a: /* DSKBYTR */
+#ifdef MESS
+			return amiga_fdc_get_byte();
+#else
 			return 0x00;
+#endif
 		break;
 
 				
@@ -1219,7 +1284,7 @@ READ16_HANDLER ( arcadia_custom_r )
 	else \
 		reg &= ~( data & 0x7fff ); }
 
-WRITE16_HANDLER ( arcadia_custom_w ) 
+WRITE16_HANDLER ( amiga_custom_w ) 
 {
     offset<<=1;
 	offset &= 0xfff;
@@ -1234,6 +1299,12 @@ WRITE16_HANDLER ( arcadia_custom_w )
 		break;
 						
 		case 0x0024: /* DSKLEN */
+#ifdef MESS
+			if ( data & 0x8000 ) {
+				if ( custom_regs.DSKLEN & 0x8000 )
+					amiga_fdc_setup_dma();
+			}
+#endif
 			custom_regs.DSKLEN = data;
 		break;
 		
@@ -1461,7 +1532,7 @@ WRITE16_HANDLER ( arcadia_custom_w )
 				if ( lo ) {
 					custom_regs.SPRxPT[num] &= 0x001f0000;
 					custom_regs.SPRxPT[num] |= ( data & 0xfffe );
-					arcadia_reload_sprite_info( num );
+					amiga_reload_sprite_info( num );
 				} else {
 					custom_regs.SPRxPT[num] &= 0x0000ffff;
 					custom_regs.SPRxPT[num] |= ( data & 0x1f ) << 16;
@@ -1522,7 +1593,7 @@ WRITE16_HANDLER ( arcadia_custom_w )
 
 ***************************************************************************/
 
-INTERRUPT_GEN(arcadia_vblank_irq)
+INTERRUPT_GEN(amiga_vblank_irq)
 {
 
 	/* Update TOD on CIA A */
@@ -1534,8 +1605,9 @@ INTERRUPT_GEN(arcadia_vblank_irq)
 		cia_hblank_timer_set = 1;
 	}
 
-	arcadia_custom_w( 0x009c>>1, 0x8020, 0);
+	amiga_custom_w( 0x009c>>1, 0x8020, 0);
 	
+#ifndef MESS
 	/* update coin counters */
 
 	/* check for a 0 -> 1 transition */
@@ -1557,7 +1629,7 @@ INTERRUPT_GEN(arcadia_vblank_irq)
 		}
 	} else
 		coin_counter[1] = 0;
-
+#endif
 }
 
 /***************************************************************************
@@ -1566,28 +1638,30 @@ INTERRUPT_GEN(arcadia_vblank_irq)
 
 ***************************************************************************/
 
-void arcadia_m68k_reset( void )
+void amiga_m68k_reset( void )
 {
 	logerror( "Executed RESET at PC=%06x\n", activecpu_get_pc() );
-	arcadia_cia_w( 0x1001/2, 1, 0 );	/* enable overlay */
+	amiga_cia_w( 0x1001/2, 1, 0 );	/* enable overlay */
 	memory_set_opbase(0);
 }
 
-MACHINE_INIT(arcadia)
+MACHINE_INIT(amiga)
 {	
 	/* set m68k reset  function */
-	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)arcadia_m68k_reset);
+	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);
 
 	/* Initialize the CIA's */
 	cia_init();
 
 	/* Initialize the Custom chips */
-	arcadia_custom_init();
+	amiga_custom_init();
 
 	/* set the overlay bit */
-	arcadia_cia_w( 0x1001/2, 1, 0 );
+	amiga_cia_w( 0x1001/2, 1, 0 );
 
+#ifndef MESS
 	/* reset coin counters */
 	coin_counter[0] = coin_counter[1] = 0;
+#endif
 }
 
