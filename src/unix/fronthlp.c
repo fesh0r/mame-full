@@ -28,7 +28,7 @@ enum {
 	LIST_MISSINGROMS, LIST_DUPCRC, LIST_WRONGORIENTATION, LIST_WRONGMERGE,
 	LIST_WRONGFPS,
 	/* standard listcommands which require special handling */
-	LIST_CLONES, LIST_INFO, LIST_XML, LIST_CPU
+	LIST_CLONES, LIST_XML, LIST_CPU
 };
    
 /* Mame frontend interface & commandline */
@@ -65,7 +65,6 @@ struct rc_option frontend_list_opts[] = {
 #endif
 	{ "clones", "cl", rc_bool, &showclones, "1", 0, 0, NULL, "Show / don't show bootlegs/clones in the above list commands" },
 	{ "listclones", "lcl", rc_set_int, &list, NULL, LIST_CLONES, 0, NULL, "Like -list, but lists the clones of the specified game" },
-	{ "listinfo", "li", rc_set_int, &list, NULL, LIST_INFO, 0, NULL, "List all available info on drivers" },
 	{ "listxml", "lx", rc_set_int, &list, NULL, LIST_XML, 0, NULL, "List all available info on drivers in XML format" },
 	{ "listcpu", "lc", rc_set_int, &list, NULL, LIST_CPU, 0, NULL, "List cpu usage statics per year" },
 	{ "Internal verification list commands (only for developers)", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -333,10 +332,6 @@ int frontend_list(char *gamename)
 			/* also has to be done on clone_of. */
 		case LIST_CLONES:
 			return frontend_list_clones(gamename);
-			/* listinfo is handled by the core */
-		case LIST_INFO: /* list all info */
-			print_mame_info( stdout_file, drivers ); 
-			return OSD_OK;
 		case LIST_XML: /* list all info */
 			print_mame_xml( stdout_file, drivers );
 			return OSD_OK;

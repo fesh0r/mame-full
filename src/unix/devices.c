@@ -1130,7 +1130,7 @@ void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype,
 		process_ctrlr_file (iptrc, ctype, buffer);
 }
 
-static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, 
+static int ipdef_custom_rc_func(struct rc_option *option, const char *arg,
 		int priority)
 {
 	struct ik *pinput_keywords = (struct ik *)option->dest;
@@ -1151,24 +1151,30 @@ static int ipdef_custom_rc_func(struct rc_option *option, const char *arg,
 			/* was a sequence was assigned to a keycode? - not valid! */
 			if (is[1] != CODE_NONE)
 			{
-				fprintf(stderr_file, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
+				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
 			}
 
 			/* for all definitions */
 			while (idef->type != IPT_END)
 			{
-				int j;
-
-				/* reassign all matching keystrokes to the given argument */
-				for (j = 0; j < SEQ_MAX; j++)
+				int seq_count = (idef->type > IPT_ANALOG_START && idef->type < IPT_ANALOG_END) ? 2 : 1;
+				int j, k;
+				
+				/* loop over all sequences */
+				for (k = 0; k < seq_count; k++)
 				{
-					/* if the keystroke matches */
-					if (idef->seq[j] == pinput_keywords->val)
+					/* reassign all matching keystrokes to the given argument */
+					for (j = 0; j < SEQ_MAX; j++)
 					{
-						/* re-assign */
-						idef->seq[j] = is[0];
+						/* if the keystroke matches */
+						if (idef->seq[k][j] == pinput_keywords->val)
+						{
+							/* re-assign */
+							idef->seq[k][j] = is[0];
+						}
 					}
 				}
+				
 				/* move to the next definition */
 				idef++;
 			}
@@ -1182,11 +1188,12 @@ static int ipdef_custom_rc_func(struct rc_option *option, const char *arg,
 			while (idef->type != IPT_END)
 			{
 				/* if the definition matches */
-				if (idef->type == pinput_keywords->val)
+				if (idef->type == pinput_keywords->val && idef->player == pinput_keywords->player)
 				{
+					int seqnum = 0;
                     if (pinput_keywords->type == IKT_IPT_EXT)
-                        idef++;
-					seq_set_string(&idef->seq, arg);
+                        seqnum = 1;
+					seq_set_string(&idef->seq[seqnum], arg);
 					/* and abort (there shouldn't be duplicate definitions) */
 					break;
 				}
@@ -1201,9 +1208,9 @@ static int ipdef_custom_rc_func(struct rc_option *option, const char *arg,
 }
 
 
-/*============================================================ */
-/*	osd_customize_inputport_defaults */
-/*============================================================ */
+//============================================================
+//	osd_customize_inputport_defaults
+//============================================================
 
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
@@ -1225,8 +1232,19 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 				case IPT_OSD_1:
 					idef->type = next_reserved;
 					idef->name = "Toggle fullscreen";
-					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
+					seq_set_2 (&idef->seq[0], KEYCODE_LALT, KEYCODE_ENTER);
 				break;
+
+#ifdef MESS
+				case IPT_OSD_2:
+					if (options.disable_normal_ui)
+					{
+						idef->type = next_reserved;
+						idef->name = "Toggle menubar";
+						seq_set_1 (&idef->seq[0], KEYCODE_SCRLOCK);
+					}
+				break;
+#endif /* MESS */
 
 				default:
 				break;
@@ -1238,12 +1256,33 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 		/* (allows ALT-TAB to switch between windows apps) */
 		if (idef->type == IPT_UI_CONFIGURE)
 		{
-			seq_copy(&idef->seq, &no_alt_tab_seq);
+			seq_copy(&idef->seq[0], &no_alt_tab_seq);
 		}
+
+#ifdef MESS
+		if (idef->type == IPT_UI_THROTTLE)
+		{
+			static InputSeq empty_seq = SEQ_DEF_0;
+			seq_copy(&idef->seq[0], &empty_seq);
+		}
+#endif /* MESS */
 
 		/* find the next one */
 		idef++;
 	}
+
+#if 0
+	/* if a controller type hasn't been specified */
+	if (ctrlrtype == NULL || *ctrlrtype == 0 || (stricmp(ctrlrtype,"Standard") == 0))
+	{
+		/* default to the legacy controller types if selected */
+		if (hotrod)
+			ctrlrtype = "hotrod";
+
+		if (hotrodse)
+			ctrlrtype = "hotrodse";
+	}
+#endif
 
 	/* create a structure for the input port options */
 	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
@@ -1296,7 +1335,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	ipddef_ptr = defaults;
 
 	/* process the main platform-specific default file */
-	process_ctrlr_file (rc, NULL, "default");
+	process_ctrlr_file (rc, NULL, "windows");
 
 	/* if a custom controller has been selected */
 	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
@@ -1313,9 +1352,10 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 		/* process the game-specific files for this controller */
 		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
 
-		while ((input->type & ~IPF_MASK) != IPT_END)
+
+		while (input->type != IPT_END)
 		{
-			switch (input->type & ~IPF_MASK)
+			switch (input->type)
 			{
 				case IPT_PADDLE:
 				case IPT_PADDLE_V:
