@@ -280,7 +280,9 @@ static int xinput_mapkey(struct rc_option *option, const char *arg, int priority
 void sysdep_display_update_mouse(void)
 {
 	int i;
-	if(sysdep_display_params.video_mode == X11_DGA)
+	/* DGA? */
+	if ((sysdep_display_params.video_mode == X11_WINDOW) &&
+	    sysdep_display_params.fullscreen)
 	{
 		/* 2 should be MOUSE_AXES but we don't support more
 		   than 2 axes at the moment so this is faster */

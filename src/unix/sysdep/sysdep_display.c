@@ -41,7 +41,7 @@ static struct sysdep_display_open_params current_params;
    sysdep_display_open() */
 static int force_keyboard_dirty = 0;
 
-static int sysdep_display_set_params(struct sysdep_display_open_params *params)
+static int sysdep_display_check_params(struct sysdep_display_open_params *params)
 {
   /* these should never happen! */
   if ((params->width  > params->max_width) ||
@@ -91,7 +91,11 @@ static int sysdep_display_set_params(struct sysdep_display_open_params *params)
         SYSDEP_DISPLAY_FULLSCREEN))
     params->fullscreen = 0;
   
-  /* done verifying the params now save them */
+  return 0;
+}  
+
+static void sysdep_display_set_params(const struct sysdep_display_open_params *params)
+{
   sysdep_display_params = current_params = *params;
   
   /* and apply swapxy to the global copy */
@@ -118,14 +122,14 @@ static int sysdep_display_set_params(struct sysdep_display_open_params *params)
     needs to recalculate the aligned width themselves */
   sysdep_display_params.max_width += 3;
   sysdep_display_params.max_width &= ~3;
-  
-  return 0;
 }
 
 int sysdep_display_open (struct sysdep_display_open_params *params)
 {
-  if (sysdep_display_set_params(params))
+  if (sysdep_display_check_params(params))
     return 1;
+    
+  sysdep_display_set_params(params);
   
   if (sysdep_display_driver_open())
     return 1;
@@ -153,14 +157,14 @@ int sysdep_display_change_params(
   struct sysdep_display_open_params orig_params = current_params;
   
   /* If the changes aren't forced and the video mode is not available
-     use the original video mode */
+     use the current video mode */
   if (!force && (new_params->video_mode >= 0) &&
       (new_params->video_mode < SYSDEP_DISPLAY_VIDEO_MODES) &&
       !sysdep_display_properties.mode[new_params->video_mode])
-    new_params->video_mode = orig_params.video_mode;
+    new_params->video_mode = current_params.video_mode;
 
-  /* Set, check and adjust the new params */
-  if (sysdep_display_set_params(new_params))
+  /* Check and adjust the new params */
+  if (sysdep_display_check_params(new_params))
   {
     if (force)
       goto sysdep_display_change_params_error;
@@ -169,19 +173,19 @@ int sysdep_display_change_params(
   }
 
   /* if any of these change we have to recreate the display */    
-  if ((new_params->depth        != orig_params.depth)        ||
+  if ((new_params->depth        != current_params.depth)        ||
       ((new_params->orientation & SYSDEP_DISPLAY_SWAPXY) !=
-       (orig_params.orientation & SYSDEP_DISPLAY_SWAPXY))    ||
-      (new_params->max_width    != orig_params.max_width)    ||
-      (new_params->max_height   != orig_params.max_height)   ||
-      (new_params->title        != orig_params.title)        ||
-      (new_params->video_mode   != orig_params.video_mode)   ||
-      (new_params->widthscale   != orig_params.widthscale)   ||
-      (new_params->yarbsize     != orig_params.yarbsize)     ||
+       (current_params.orientation & SYSDEP_DISPLAY_SWAPXY))    ||
+      (new_params->max_width    != current_params.max_width)    ||
+      (new_params->max_height   != current_params.max_height)   ||
+      (new_params->title        != current_params.title)        ||
+      (new_params->video_mode   != current_params.video_mode)   ||
+      (new_params->widthscale   != current_params.widthscale)   ||
+      (new_params->yarbsize     != current_params.yarbsize)     ||
       (!new_params->yarbsize &&
-       (new_params->heightscale != orig_params.heightscale)) ||
-      (new_params->fullscreen   != orig_params.fullscreen)   ||
-      (new_params->aspect_ratio != orig_params.aspect_ratio) )
+       (new_params->heightscale != current_params.heightscale)) ||
+      (new_params->fullscreen   != current_params.fullscreen)   ||
+      (new_params->aspect_ratio != current_params.aspect_ratio) )
   {
     sysdep_display_close();
     if (sysdep_display_open(new_params))
@@ -202,6 +206,9 @@ int sysdep_display_change_params(
   }
   else
   {
+    /* apply the new params */
+    sysdep_display_set_params(new_params);
+    
     /* do we need to reinit the effect code? */
     if (new_params->effect != orig_params.effect)
     {

@@ -245,30 +245,36 @@ void sysdep_display_exit(void)
    mouse and keyboard can't be setup before the display has. */
 int sysdep_display_driver_open(void)
 {
+        int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
+          sysdep_display_params.fullscreen)? X11_DGA:
+           sysdep_display_params.video_mode;
+        
         if (!display)
         {
 		fprintf (stderr, "Error: could not open display\n");
 		return 1;
         }
 
-	if ((sysdep_display_params.video_mode == X11_WINDOW) && 
-	    (sysdep_display_properties.mode[X11_WINDOW] &
-	     SYSDEP_DISPLAY_FULLSCREEN) &&
-	    sysdep_display_params.fullscreen)
-	  sysdep_display_params.video_mode = X11_DGA;
-
-	return (*x_func[sysdep_display_params.video_mode].open_display)();
+	return (*x_func[mode].open_display)();
 }
 
 void sysdep_display_driver_close(void)
 {
+  int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
+    sysdep_display_params.fullscreen)? X11_DGA:
+    sysdep_display_params.video_mode;
+  
   if (display)
-    (*x_func[sysdep_display_params.video_mode].close_display)();
+    (*x_func[mode].close_display)();
 }
 
 int sysdep_display_driver_resize(void)
 {
-  return x_func[sysdep_display_params.video_mode].resize_display();
+  int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
+    sysdep_display_params.fullscreen)? X11_DGA:
+    sysdep_display_params.video_mode;
+  
+  return x_func[mode].resize_display();
 }
 
 void sysdep_display_update(struct mame_bitmap *bitmap,
@@ -276,6 +282,10 @@ void sysdep_display_update(struct mame_bitmap *bitmap,
   struct sysdep_palette_struct *palette, unsigned int flags,
   const char **status_msg)
 {
+        int mode = ((sysdep_display_params.video_mode == X11_WINDOW) &&
+          sysdep_display_params.fullscreen)? X11_DGA:
+          sysdep_display_params.video_mode;
+        
 	*status_msg = NULL;
 
 	/* do we need todo a full update? */
@@ -285,7 +295,7 @@ void sysdep_display_update(struct mame_bitmap *bitmap,
 	 	x11_exposed = 0;
 	}
    
-	(*x_func[sysdep_display_params.video_mode].update_display)
+	(*x_func[mode].update_display)
 	  (bitmap, vis_area, dirty_area, palette, flags, status_msg);
 	xinput_check_hotkeys(flags);
 }
