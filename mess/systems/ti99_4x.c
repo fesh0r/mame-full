@@ -684,7 +684,7 @@ static const struct IODevice io_ti99_4[] =
 		3,					/* count */
 		"bin\0c\0d\0g\0m\0crom\0drom\0grom\0mrom\0",	/* file extensions */
 		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_DUMMY,	/* open mode */
+		OSD_FOPEN_READ,	/* open mode */
 		0,
 		ti99_load_rom,		/* init */
 		ti99_rom_cleanup,	/* exit */

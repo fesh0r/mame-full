@@ -335,7 +335,16 @@ int ti99_floppy_init(int id)
 {
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
-		basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
+		switch (device_length(IO_FLOPPY, id))
+		{
+		case 1*40*9*256:	/* 90kbytes: SSSD */
+		default:
+			basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
+			break;
+		case 2*40*18*256:	/* 360kbytes: DSDD */
+			basicdsk_set_geometry(id, 80, 2, 18, 256, 0, 0);
+			break;
+		}
 
 		return INIT_PASS;
 	}
@@ -386,7 +395,7 @@ int ti99_load_rom(int id)
 
 	if (! slot_empty)
 	{
-		cartfile = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_IMAGE, 0);
+		cartfile = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (cartfile == NULL)
 		{
 			logerror("TI99 - Unable to locate cartridge: %s\n", name);
