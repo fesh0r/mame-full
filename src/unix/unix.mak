@@ -1,16 +1,16 @@
 ##############################################################################
-# None user configurable settings
+# Non-user-configurable settings
 ##############################################################################
 
-# *** Comment this line to get verbose make output, for debugging build
+# *** Comment out this line to get verbose make output, for debugging build
 # problems
 QUIET = 1
 
 
 ##############################################################################
-# **** CPU dependent settings.
+# CPU-dependent settings
 ##############################################################################
-#note : -D__CPU_$(MY_CPU) is added automaticly later on.
+#note : -D__CPU_$(MY_CPU) is added automatically later on.
 CFLAGS.i386       = -DLSB_FIRST -DX86_ASM
 CFLAGS.i386_noasm = -DLSB_FIRST
 CFLAGS.ia64       = -DLSB_FIRST -DALIGN_INTS -DALIGN_SHORTS -D__LP64__
@@ -22,7 +22,7 @@ CFLAGS.risc_lsb   = -DALIGN_INTS -DALIGN_SHORTS -DLSB_FIRST
 CFLAGS.mips       = -DALIGN_INTS -DALIGN_SHORTS -DSGI_FIX_MWA_NOP
 
 ##############################################################################
-# **** Architecture dependent settings.
+# Architecture-dependent settings
 ##############################################################################
 LIBS.solaris       = -lnsl -lsocket
 LIBS.irix          = -laudio
@@ -35,7 +35,7 @@ LIBS.nto	   = -lsocket -lasound
 LIBS.beos          = `$(SDL_CONFIG) --libs`
 
 ##############################################################################
-# **** Display dependent settings.
+# Display-dependent settings
 ##############################################################################
 #first calculate the X11 Joystick driver settings, this is done here since
 #they are only valid for X11 based display methods
@@ -144,16 +144,13 @@ endif
 # "Calculate" the final CFLAGS, unix CONFIG, LIBS and OBJS
 ##############################################################################
 ifdef ZLIB
-ZLIB    = src/unix/contrib/cutzlib-1.2.1/libz.a
+ZLIB = src/unix/contrib/cutzlib-1.2.1/libz.a
 endif
 
-#all: $(ZLIB) objdirs osdepend $(NAME).$(DISPLAY_METHOD)
-
-all: objdirs osdepend-objdirs
-	$(MAKE) $(MAKEFLAGS) $(NAME).$(DISPLAY_METHOD)
+all: objdirs osdepend-objdirs $(NAME).$(DISPLAY_METHOD)
 
 # CPU core include paths
-VPATH=src $(wildcard src/cpu/*)
+VPATH = src $(wildcard src/cpu/*)
 
 # Platform-dependent objects for imgtool
 PLATFORM_IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o \

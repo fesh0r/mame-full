@@ -2,7 +2,7 @@ OBJDIR = ../../$(OBJ)/unix.$(DISPLAY_METHOD)
 MY_TARGET = $(OBJDIR)/osdepend.a
 
 ##############################################################################
-# *** object listings
+# object listings
 ##############################################################################
 
 # common objs
@@ -81,7 +81,7 @@ OBJDIRS = $(OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
 
 
 ##############################################################################
-# *** cflags
+# CFLAGS
 ##############################################################################
 
 # per arch
@@ -106,9 +106,8 @@ MY_CFLAGS = -I. -I.. -I../.. -I../../mess $(CFLAGS) $(CFLAGS.$(ARCH))
 
 
 ##############################################################################
-# *** begin of the real makefile
+# start of the real makefile
 ##############################################################################
-#all:	$(OBJDIRS) $(MY_TARGET)
 
 all:
 	$(MAKE) $(MY_TARGET)
@@ -159,4 +158,3 @@ $(VID_DIR)/glxtool.o: video-drivers/gltool.h \
 $(VID_DIR)/xgl.o:     video-drivers/glmame.h video-drivers/gltool.h \
 	              video-drivers/glxtool.h
 $(VID_DIR)/gltool.h:  video-drivers/gl-disp-var.h video-drivers/glu-disp-var.h
-
