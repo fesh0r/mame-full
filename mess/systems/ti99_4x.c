@@ -1,27 +1,12 @@
 /*
 	MESS Driver for TI-99/4 and TI-99/4A Home Computers.
-	Raphael Nabet, 1999-2002.
+	Raphael Nabet, 1999-2003.
 
 	see machine/ti99_4x.c for some details and references
-
-	NOTE!!!!!!!!!!  Until the new TMS5220 core is added, you should uncomment three lines
-	in tms5220interface like this :
-
-	static struct TMS5220interface tms5220interface =
-	{
-		680000L,					// 640kHz -> 8kHz output
-		50,							// Volume.  I don't know the best value.
-		NULL,						// no IRQ callback
-	#if 0	// 1 with new tms5220 core
-		spchroms_read,				// speech ROM read handler
-		spchroms_load_address,		// speech ROM load address handler
-		spchroms_read_and_branch	// speech ROM read and branch handler
-	#endif
-	};
 */
 
 /*
-	TI99/4 preliminary infos:
+	TI99/4 info:
 
 Similar to TI99/4a, except for the following:
 	* tms9918/9928 has no bitmap mode
@@ -550,16 +535,17 @@ static struct SN76496interface tms9919interface =
 	{ 75 }			/* Volume.  I don't know the best value. */
 };
 
+/*
+	TMS0285 speech synthesizer
+*/
 static struct TMS5220interface tms5220interface =
 {
 	680000L,					/* 640kHz -> 8kHz output */
 	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
-#if 1
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
 	spchroms_read_and_branch	/* speech ROM read and branch handler */
-#endif
 };
 
 /*
