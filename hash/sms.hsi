@@ -2,159 +2,150 @@
 	<!-- This MESS CRC file was generated from Cowering's Good databases. -->
 	<!-- Version GoodSMS 0.999.5 -->
 	<!-- Please keep this notice intact if editing this file. -->
-	<!-- crc = Game Name | Year | Manufacturer | Emulation Status -->
 	<hash crc32="f0f35c22" name="20-em-1 (Brazil)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="4fcc473b" name="6 Button Controller Test by Charles MacDonald (PD)"/>
 	<hash crc32="a581402e" name="64 Color Palette Test (PD)"/>
 	<hash crc32="887d9f6b" name="Ace of Aces (UE)">
-		<year>U.S. Gold/Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>U.S. Gold/Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3658f3e0" name="Action Fighter (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="72420f38" name="Addams Family, The (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ecf491cf" name="Aerial Assault (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1c951f8e" name="After Burner (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="fc79b585" name="After Burner (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="8b43d21d" name="Air Rescue (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="8b4ca9e4" name="Air Rescue (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="7337abb7" name="Air Rescue (UE)[T-Port]">
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="60c19645" name="Akai Koudan Zillion (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c8718d40" name="Aladdin (UE)">
-		<year>Sega</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="d8c4165b" name="Aleste (JUE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c13896d5" name="Alex Kidd - The Lost Stars (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2210f389" name="Alex Kidd - The Lost Stars (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="f9dbb533" name="Alex Kidd BMX Trial (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="013c0a94" name="Alex Kidd in High Tech World (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7545d7c2" name="Alex Kidd in Miracle World (Brazil) [p1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9f10e7f8" name="Alex Kidd in Miracle World (Brazil) [p1">
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="31e00b51" name="Alex Kidd in Miracle World (Brazil) [p1][o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="08c9ec91" name="Alex Kidd in Miracle World (J)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="aed9aac4" name="Alex Kidd in Miracle World (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="84286131" name="Alex Kidd in Miracle World (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="8938b5c8" name="Alex Kidd in Miracle World (UE) [T-Port]"/>
 	<hash crc32="d2417ed7" name="Alex Kidd in Shinobi World (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2cd7dec7" name="Alex Kidd in Shinobi World (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="99b590d5" name="Alex Kidd in Shinobi World (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="82038ad4" name="ALF (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b618b144" name="Alien 3 (UE)">
-		<year>Acclaim</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Acclaim</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7f30f793" name="Alien Storm (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5cbfe997" name="Alien Syndrome (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bba2fe98" name="Altered Beast (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7b27202f" name="American Baseball (JE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3727d8b2" name="American Pro Football (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f499034d" name="Andre Agassi Tennis (UE)">
@@ -164,13 +155,13 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e4163163" name="Arcade Smash Hits (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ae705699" name="Ashura (J)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="861b6e79" name="Assault City - Light Phaser Version (U)">
@@ -180,146 +171,144 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="147e02fa" name="Asterix (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f9b7d26b" name="Asterix and the Great Rescue (UE)">
-		<year>Sega</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="def9b14e" name="Asterix and the Secret Mission (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="0e21e6cf" name="Astro Flash (SC-3000)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="69efd483" name="Astro Warrior &amp; Pit Pot (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6a9eaef7" name="Astro Warrior &amp; Pit Pot (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="d7c7ff54" name="Astro Warrior &amp; Pit Pot (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="299cbb74" name="Astro Warrior (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bbe02270" name="Astro Warrior (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="fe8e978b" name="Astro Warrior (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="ff614eb3" name="Aztec Adventure - The Golden Road to Paradise (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="884a18b9" name="Aztec Adventure - The Golden Road to Paradise (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="e5ff50d8" name="Back to the Future 2 (UE)">
-		<year>Mirrorsoft</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Mirrorsoft</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2d48c1d3" name="Back to the Future 3 (UE)">
-		<year>Probe Software</year>
-		<manufacturer>199?</manufacturer>
+		<manufacturer>Probe Software</manufacturer>
+		<year>199?</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="35d84dc2" name="Baku Baku Animals (UE)">
-		<year>Sega</year>
-		<manufacturer>1996</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1996</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b4dfb825" name="Bank Panic (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="655fb1f4" name="Bank Panic (UE) [a1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="d1cc08ee" name="Bart vs. the Space Mutants (UE)">
-		<year>Acclaim/Flying Edge</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Acclaim/Flying Edge</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f6b2370a" name="Bart vs. the World (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="0df8597f" name="Basket Ball Nightmare (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7163231c" name="Basket Ball Nightmare (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="b154ec38" name="Batman Returns (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1992</year>
 	</hash>
 	<hash crc32="c19430ce" name="Battle Out Run (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1cbb7bf1" name="Battlemaniacs (Brazil)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="da3a2f57" name="Black Belt (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9fa3b61a" name="Black Belt (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="fbf96c81" name="Blade Eagle 3D (Brazil)">
-		<year>Sega</year>
-		<manufacturer>1998</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1998</year>
 	</hash>
 	<hash crc32="8ecd201c" name="Blade Eagle 3D (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ea0f2691" name="Bomb Jack (SG-1000)"/>
 	<hash crc32="3084cf11" name="Bomber Raid (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="8a3ed944" name="Bomber Raid (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="caea8002" name="Bonanza Bros (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b3768a7a" name="Bonkers Wax Up! (UE)">
@@ -327,75 +316,69 @@
 	</hash>
 	<hash crc32="0b4bca74" name="Borderline (SG-1000)"/>
 	<hash crc32="e421e466" name="Borgman (JUE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1b10a951" name="Bram Stoker's Dracula (UE)">
-		<year>Sony Imagesoft</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sony Imagesoft</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e843ba7e" name="Bubble Bobble (UE)">
-		<year>Taito</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Taito</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b0fc4577" name="Buggy Run (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b3b5d047" name="California Games (Brazil)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 	</hash>
 	<hash crc32="ac6009a7" name="California Games (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c0e25d62" name="California Games 2 (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5f5d13af" name="California Games 2 (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="a4852757" name="Captain Silver (E)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="87bf8a47" name="Captain Silver (E)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="b81f6fa5" name="Captain Silver (U)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3cff6e80" name="Casino Games (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f964f356" name="Casino Games (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="e239ed95" name="Casino Games (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="31ffd7c3" name="Castelo Ra Tin Bum (Brazil)">
-		<year>TecToy</year>
-		<manufacturer>1997</manufacturer>
+		<manufacturer>TecToy</manufacturer>
+		<year>1997</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="dcd38617" name="Castelo Ra Tin Bum (Brazil)">
@@ -415,18 +398,18 @@
 	</hash>
 	<hash crc32="868419b5" name="Championship Golf (SG-1000)"/>
 	<hash crc32="7e5839a0" name="Championship Hockey (UE)">
-		<year>Electronic Arts/U.S. Gold</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Electronic Arts/U.S. Gold</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="492c7c6e" name="Chapolim x Dracula - Um Duelo Assustador (Brazil)">
-		<year>TecToy</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>TecToy</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="46340c41" name="Cheese Cat-astrophe (UE)">
-		<year>Sega</year>
-		<manufacturer>1995</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1995</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="4bf77ec9" name="Cheese Cat-astrophe (UE)">
@@ -437,23 +420,21 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="4a21c15f" name="Choplifter (UE)">
-		<year>Sega</year>
-		<manufacturer>1985</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1985</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="75eb037d" name="Choplifter (UE)">
-		<year>Sega</year>
-		<manufacturer>1985</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1985</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="debb2e3a" name="Choplifter (UE)">
-		<year>Sega</year>
-		<manufacturer>1985</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="8c02d693" name="Choplifter (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1985</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1985</year>
 	</hash>
 	<hash crc32="dd0e2927" name="Chuck Rock (U)">
 		<status>Good ROM</status>
@@ -468,173 +449,169 @@
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="e7f62e6d" name="Cloud Master (JUE)">
-		<year>Hot B. Co.</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Hot B. Co.</manufacturer>
+		<year>1989</year>
 	</hash>
 	<hash crc32="665fda92" name="Columns (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="dc4383cc" name="Congo Bongo (SC-3000)"/>
 	<hash crc32="13ac9023" name="Cool Spot (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="cc92058a" name="Cool Spot (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1993</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="29822980" name="Cosmic Spacehead (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1350e4f8" name="Cyber Shinobi (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="903aad36" name="Cyborg Hunter (Brazil)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 	</hash>
 	<hash crc32="908e7524" name="Cyborg Hunter (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="71abef27" name="Daffy Duck in Hollywood (UE)">
-		<year>Sega</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ae4a28d7" name="Danan the Jungle Fighter (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e2f7193e" name="Dead Angle (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5ef8dbda" name="Dead Angle (UE) [h1]">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 	</hash>
 	<hash crc32="42fc3a6e" name="Deep Duck Trouble (UE)">
-		<year>Sega</year>
-		<manufacturer>19??</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>19??</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b137007a" name="Desert Speedtrap (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6c1433f9" name="Desert Strike (UE)">
-		<year>1992</year>
-		<manufacturer>Domark/Electronic Arts</manufacturer>
+		<manufacturer>1992</manufacturer>
+		<year>Domark/Electronic Arts</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="df8c8f76" name="Desert Strike (UE)">
-		<year>1992</year>
-		<manufacturer>Domark/Electronic Arts</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="82efda3c" name="Desert Strike (UE)">
-		<year>1992</year>
-		<manufacturer>Domark/Electronic Arts</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="f6fab48d" name="Dick Tracy (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="a55d89f3" name="Double Dragon (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e730bb27" name="Double Dragon (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="3b79d63e" name="Double Dragon (UE) [h1]"/>
 	<hash crc32="8370f6cd" name="Double Hawk (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="52d9eaf1" name="Double Hawk (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="52b83072" name="Double Target (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6c696221" name="Dr. Robotnik's Mean Bean Machine (UE)">
-		<year>Sega/Compile</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega/Compile</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c88a5064" name="Dragon - The Bruce Lee Story (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9549fce4" name="Dragon Crystal (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="288940cb" name="Drol (SG-1000)"/>
 	<hash crc32="07306947" name="Dynamite Duke (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2bb5f2cd" name="Dynamite Duke (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="0e1cc1e0" name="Dynamite Dux (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6687fab9" name="Ecco the Dolphin (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 	</hash>
 	<hash crc32="5af8f69d" name="Elevator Action (SG-1000)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1fe4e74d" name="Enduro Racer (Brazil)">
-		<year>Sega</year>
-		<manufacturer>1998</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1998</year>
 	</hash>
 	<hash crc32="00e73541" name="Enduro Racer (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="dfa2ae07" name="Enduro Racer (UE)">
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="c4bb1676" name="E-SWAT - City Under Siege (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c10fce39" name="E-SWAT - City Under Siege (UE) [a1]">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="81c3476b" name="European SMS BIOS (Sonic the Hedgehog) (E)">
@@ -650,52 +627,52 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="eaebf323" name="F16 Fighting Falcon (UE)">
-		<year>Sega &amp; Nexa</year>
-		<manufacturer>1985</manufacturer>
+		<manufacturer>Sega &amp; Nexa</manufacturer>
+		<year>1985</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="65d7e4e0" name="Fantasy Zone (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="82a38ef8" name="Fantasy Zone (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="c722fb42" name="Fantasy Zone 2 - The Tears of Opa-Opa (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b8b141f9" name="Fantasy Zone 2 - The Tears of Opa-Opa (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="d29889ad" name="Fantasy Zone 3 - The Maze (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="483394f9" name="Fantasy Zone 3 - The Maze (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="ccb2cab4" name="Felipe em Acao (Brazil)"/>
 	<hash crc32="3ebb7457" name="Final Bubble Bobble (J)">
-		<year>Taito</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Taito</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f6ad7b1d" name="Fire &amp; Forget 2 (UE)">
-		<year>Titus</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Titus</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="be31d63f" name="Flash, The (UE)">
-		<year>Sega &amp; Probe</year>
-		<manufacturer>0</manufacturer>
+		<manufacturer>Sega &amp; Probe</manufacturer>
+		<year>0</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="d4c8c6d7" name="Flicky (SG-1000)">
@@ -703,14 +680,14 @@
 	</hash>
 	<hash crc32="bd24d27b" name="Flicky (SG-1000)"/>
 	<hash crc32="ca5c78a5" name="Flintstones, The (UE)">
-		<year>Grandslam</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Grandslam</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="8efc77bc" name="Flipper (SG-1000)"/>
 	<hash crc32="38c53916" name="Forgotten Worlds (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="dda01774" name="Fudebrowser - BrMSX (SG-1000) (PD)"/>
@@ -736,18 +713,16 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5fc74d2a" name="Gangster Town (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="d9190956" name="Gauntlet (UE)">
-		<year>U.S. Gold/Tengen</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>U.S. Gold/Tengen</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="af2abb95" name="Gauntlet (UE)">
-		<year>U.S. Gold/Tengen</year>
-		<manufacturer>1990</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="a64898ce" name="George Foreman's KO Boxing (UE)">
@@ -757,33 +732,31 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f1f8ff2d" name="Ghost House (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7c2e6c5a" name="Ghost House (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="eedd93fa" name="Ghost House (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="d3e6eaa6" name="Ghost House (UE) [o2]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="3a020f2b" name="Ghost House (UE) [o3]"/>
 	<hash crc32="9a1ecfec" name="Ghost House (UE) [T-Port]"/>
 	<hash crc32="1ddc3059" name="Ghostbusters (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7a92eba6" name="Ghouls 'n Ghosts (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1898f274" name="Girl's Garden (SG-1000)"/>
@@ -796,24 +769,22 @@
 	</hash>
 	<hash crc32="619fde2c" name="Global Gladiators (UE) [t1]"/>
 	<hash crc32="05cdc24e" name="G-Loc Air Battle (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c08132fb" name="Golden Axe (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1eec7abc" name="Golden Axe (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="f424ad15" name="Golden Axe Warrior (Brazil)"/>
 	<hash crc32="c7ded988" name="Golden Axe Warrior (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="21db20ae" name="Golden Axe Warrior (UE) [T-GermanV0.82_Taurus]"/>
@@ -847,27 +818,27 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2055825f" name="Great Football (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="08a1c711" name="Great Football (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="6586bd1f" name="Great Golf (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="98e4ae4a" name="Great Golf (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1d2165a4" name="Great Golf (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="9ac4b0ac" name="Great Golf (UE) [o2]"/>
 	<hash crc32="946b8c4a" name="Great Ice Hockey (UE)">
@@ -897,32 +868,32 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c5083000" name="Hang-On &amp; Safari Hunt (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="303ea475" name="Hang-On (Brazil)"/>
 	<hash crc32="5c01adf9" name="Hang-On (J)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="071b045e" name="Hang-On (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="cf1d7990" name="Hang-On (UE) [T-Port]"/>
 	<hash crc32="9be3c6bd" name="Hang-On 2 (SG-1000)"/>
 	<hash crc32="07c39ba4" name="Happy Looser by Zoop (PD)"/>
 	<hash crc32="fdab876a" name="Heavyweight Champ (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="cde13ffb" name="Heroes of the Lance (UE)">
-		<year>U.S. Gold/S.S.I.</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>U.S. Gold/S.S.I.</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9eb1aa4f" name="High School Kimengumi (J)">
@@ -939,8 +910,8 @@
 	</hash>
 	<hash crc32="95256919" name="Hook (Brazil)"/>
 	<hash crc32="9ced34a7" name="Hook (UE)">
-		<year>Sony</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sony</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="955a009e" name="Hoshi wo Sagasite (The Story of Mio) (J)">
@@ -953,8 +924,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="64d6af3b" name="Impossible Mission (UE)">
-		<year>U.S. Gold/Epyx</year>
-		<manufacturer>19??</manufacturer>
+		<manufacturer>U.S. Gold/Epyx</manufacturer>
+		<year>19??</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b4584dde" name="Incredible Crash Dummies, The (UE)">
@@ -964,8 +935,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="8aeb574b" name="Indiana Jones and the Last Crusade (UE)">
-		<year>U.S. Gold/Lucasarts</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>U.S. Gold/Lucasarts</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2b7f7447" name="James Bond 007 - The Duel (UE)">
@@ -975,13 +946,13 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="102d5fea" name="James Pond 2 - Codename Robocod (UE)">
-		<year>U.S. Gold</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>U.S. Gold</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="fef68275" name="James Pond 2 - Codename Robocod (UE)">
-		<year>U.S. Gold</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>U.S. Gold</manufacturer>
+		<year>1991</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="48d44a13" name="Japanese SMS BIOS v2.1 (J)">
@@ -991,8 +962,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="45c50294" name="Jogos de Verao 2 (Brazil)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bbc237c0" name="Jornada do Mymo (Psycho Fox Hack) [a1]"/>
@@ -1002,13 +973,13 @@
 	<hash crc32="5d6dec5e" name="Jornada do Mymo (Psycho Fox Hack)"/>
 	<hash crc32="16c217c9" name="Jornada do Mymo II (Psycho Fox Hack)"/>
 	<hash crc32="695a9a15" name="Jungle Book, The (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e959e820" name="Jungle Book, The (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1993</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="0667ed9f" name="Jurassic Park (UE)">
@@ -1023,8 +994,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f8d33bc4" name="King's Quest (UE)">
-		<year>Parker Brothers</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Parker Brothers</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2b435fd6" name="Klax (UE)">
@@ -1054,13 +1025,13 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f369b2d8" name="Lemmings (UE)">
-		<year>Sega/Psygnosis</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega/Psygnosis</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2c61ed88" name="Lemmings (UE) [a1]">
-		<year>Sega/Psygnosis</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega/Psygnosis</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="cb09f355" name="Line of Fire (UE)">
@@ -1077,13 +1048,13 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="aa7d6f45" name="Lord of the Sword (J)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e8511b08" name="Lord of the Sword (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="a1710f13" name="Lucky Dime Caper Starring Donald Duck, The (UE)">
@@ -1100,41 +1071,37 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bcfbfc67" name="Mahjong Sengoku Jidai (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3faf4e19" name="Mahjong Sengoku Jidai (J)">
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="1a9b396f" name="Mahjong Sengoku Jidai (J) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="ca860451" name="Makai Retsuden (J)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bf6f3e5f" name="Marble Madness (UE)">
-		<year>Tengen</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="94fee07b" name="Marble Madness (UE)">
-		<year>Tengen</year>
-		<manufacturer>1992</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="76bbd33e" name="Master Mario Bros (Teddy Boy Hack)"/>
 	<hash crc32="e15ba28b" name="Master Mega Man (Brazil) [o1]"/>
 	<hash crc32="d164fde7" name="Master Mega Man (WonderBoy in ML Hack)"/>
 	<hash crc32="96fb4d4b" name="Master of Darkness (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="49c5d8e2" name="Master of Darkness (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="1c04a0bc" name="Master Smash Brothers (v1.0) (Psycho Fox Hack)"/>
@@ -1156,25 +1123,23 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="56cc906b" name="Michael Jackson's Moonwalker (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9c4f03ac" name="Michael Jackson's Moonwalker (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="87475035" name="Mick &amp; Mack As The Global Gladiators (UE) [a1]"/>
 	<hash crc32="8dae576e" name="Mick &amp; Mack As The Global Gladiators (UE)"/>
 	<hash crc32="953f42e1" name="Mickey Mouse - Castle of Illusion (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="24e97200" name="Mickey Mouse - Land of Illusion (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6350e649" name="Mickey Mouse - Legend of Illusion (UE)">
@@ -1187,13 +1152,13 @@
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="0e333b6e" name="Miracle Warriors - Seal of the Dark Lord (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ebc2bfa1" name="Miracle Warriors - Seal of the Dark Lord (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="fbe5cfbb" name="Missile Defense 3D (UE)">
@@ -1211,31 +1176,29 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="82fda895" name="Montezuma's Revenge (UE)">
-		<year>Parker Brothers</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Parker Brothers</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="302dc686" name="Mortal Kombat (UE)">
-		<year>Acclaim</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Acclaim</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2663bf18" name="Mortal Kombat 2 (UE)">
-		<year>Acclaim</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Acclaim</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="9ed8341a" name="Mortal Kombat 2 (UE)">
-		<year>Acclaim</year>
-		<manufacturer>1994</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="395ae757" name="Mortal Kombat 3 (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3cd816c6" name="Ms. Pac-man (UE)">
-		<year>Tengen</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="f40fa5d6" name="Music Station V1.6 (SG-1000)">
@@ -1278,23 +1241,19 @@
 	<hash crc32="23283f37" name="Operation Wolf (U) [T-French]"/>
 	<hash crc32="f4f78b76" name="Orguss (SG-1000)"/>
 	<hash crc32="82ef2a7d" name="Ottifants, The (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5589d8d2" name="OutRun (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="1968757e" name="OutRun (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="d70bbd06" name="OutRun (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="d6f43dda" name="OutRun 3D (U)">
@@ -1312,34 +1271,34 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="294e0759" name="Paperboy (UE)">
-		<year>Tengen</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="327a0b4c" name="Paperboy (UE) [a1]">
-		<year>Tengen</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="36f04d14" name="Paperboy (UE) [a1][t1]">
-		<year>Tengen</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1990</year>
 	</hash>
 	<hash crc32="c0e1ebc4" name="Paperboy (UE) [t1]">
-		<year>Tengen</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Tengen</manufacturer>
+		<year>1990</year>
 	</hash>
 	<hash crc32="e030e66c" name="Parlour Games (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7abc70e9" name="Party Games (AKA Family Games) (JUE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2bcdb8fa" name="Penguin Land (J)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="346556b9" name="Penguin Land (SC-3000)"/>
@@ -1347,8 +1306,8 @@
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="f97e9875" name="Penguin Land (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ad0ff4f1" name="PFR Detect V1.00 by Eric R. Quinn (PD)"/>
@@ -1363,8 +1322,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6605d36a" name="Phantasy Star (J)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="747e83b5" name="Phantasy Star (Korean)">
@@ -1372,8 +1331,8 @@
 	</hash>
 	<hash crc32="3ca83c04" name="Phantasy Star (UE) (Lutz Hack)"/>
 	<hash crc32="00bef1d7" name="Phantasy Star (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="7f4f28c6" name="Phantasy Star (UE)">
@@ -1411,45 +1370,43 @@
 	</hash>
 	<hash crc32="514e7abe" name="Power Strike (UE) [o1]"/>
 	<hash crc32="a109a6fe" name="Power Strike 2 (UE)">
-		<year>Sega Compile</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega Compile</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="673c68b8" name="Power Strike 2 (UE)">
-		<year>Sega Compile</year>
-		<manufacturer>1993</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="0047b615" name="Predator 2 (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="ba6344fc" name="Prince of Persia (UE)">
-		<year>Br0derbund</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Br0derbund</manufacturer>
+		<year>1992</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="fbde42d3" name="Pro Wrestling (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="fd069aae" name="Pro Wrestling (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="09489195" name="Pro Wrestling (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 	</hash>
 	<hash crc32="5c0b1f0f" name="Psychic World (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="97993479" name="Psycho Fox (UE)">
-		<year>Sega</year>
-		<manufacturer>1989</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1989</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="357d4f78" name="Putt &amp; Putter (UE)">
@@ -1462,21 +1419,21 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="e0f34fa6" name="Quartet (UE)">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="001db6d7" name="Quartet (UE) [o1]">
-		<year>Sega</year>
-		<manufacturer>1987</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1987</year>
 	</hash>
 	<hash crc32="54316fea" name="R.C. Grand Prix (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c804943f" name="R.H.W. 2000 (Psycho Fox Hack)"/>
 	<hash crc32="c172a22c" name="Rainbow Islands (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="bbda65f0" name="Rambo - First Blood Part 2 (UE)">
@@ -1486,16 +1443,16 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="42fc47ee" name="Rampage (UE)">
-		<year>Sega</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="426e5c8a" name="Rampart (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="c547eb1b" name="Rastan (UE)">
-		<year>Taito</year>
-		<manufacturer>1988</manufacturer>
+		<manufacturer>Taito</manufacturer>
+		<year>1988</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="796c76b4" name="Rastan (UE)">
@@ -1590,8 +1547,8 @@
 	</hash>
 	<hash crc32="5d9f11ca" name="Sega BASIC Level 3 V1 (SC-3000)"/>
 	<hash crc32="a8061aef" name="Sega Chess (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="2ecfe5f2" name="Sega Chess (UE) [T-Spanish]"/>
@@ -1666,8 +1623,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="3e63768a" name="Smurfs, The (UE)">
-		<year>Infogrames</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Infogrames</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="304fe02b" name="Snail Music Demo (PD)"/>
@@ -1675,34 +1632,34 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="96b3f29e" name="Sonic Blast (UE)">
-		<year>Sega</year>
-		<manufacturer>1996</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1996</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="11637350" name="Sonic Boy 4 - Monster World (UE) (WonderBoy in MW Hack)"/>
 	<hash crc32="aedf3bdf" name="Sonic Chaos (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="fb14f1cf" name="Sonic Chaos (UE)">
-		<year>Sega</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1993</year>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="11c1bc8a" name="Sonic Spinball (UE)">
-		<year>Sega</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b519e833" name="Sonic the Hedgehog (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="5b3b922c" name="Sonic the Hedgehog 2 (UE)">
-		<year>Sega</year>
-		<manufacturer>1991</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1991</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="a6933e55" name="Sonic vs. os Mauniks (Psycho Fox Hack)"/>
@@ -1757,8 +1714,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="78d7faab" name="Spy vs. Spy (UE)">
-		<year>Sega</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b846b52a" name="Star Force (SG-1000)">
@@ -1771,8 +1728,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="d4b8f66d" name="Star Wars (UE)">
-		<year>U.S. Gold/Lucasarts</year>
-		<manufacturer>1993</manufacturer>
+		<manufacturer>U.S. Gold/Lucasarts</manufacturer>
+		<year>1993</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="0f8287ec" name="Street Fighter 2 (Brazil)"/>
@@ -1853,8 +1810,8 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6f9ac98f" name="Superman (UE)">
-		<year>Virgin Games</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Virgin Games</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6a96978d" name="Tanoshii Sansuu (SC-3000)">
@@ -1924,21 +1881,21 @@
 	<hash crc32="8cc9b324" name="Treinamento Do Guerreiro Lobo (WonderBoy in MW Hack)"/>
 	<hash crc32="e94784f2" name="Treinamento Do Mymo (Brazil)"/>
 	<hash crc32="e5374022" name="Trivial Pursuit (UE)">
-		<year>Domark</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Domark</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="22cca9bb" name="Turma da Monica em O Resgate (Brazil)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="b52d60c8" name="Ultima 4 - Quest of the Avatar (UE)">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="de9f8517" name="Ultima 4 - Quest of the Avatar (UE) [a1]">
-		<year>Sega</year>
-		<manufacturer>1990</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1990</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="19d64680" name="Ultima 4 - Quest of the Avatar (UE) [T-German]"/>
@@ -1961,13 +1918,11 @@
 	</hash>
 	<hash crc32="6d0f1673" name="V Counter Test by Charles MacDonald (PD)"/>
 	<hash crc32="20f40cae" name="Vampire (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
+		<manufacturer>Sega</manufacturer>
+		<year>1992</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="39540619" name="Vampire (UE)">
-		<year>Sega</year>
-		<manufacturer>1992</manufacturer>
 		<status>Known Bad Dump</status>
 	</hash>
 	<hash crc32="dfb0b161" name="Vigilante (UE)">
@@ -2031,16 +1986,16 @@
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="a6bf8f9e" name="World Cup '94 (UE)">
-		<year>.S. Gold</year>
-		<manufacturer>1994</manufacturer>
+		<manufacturer>.S. Gold</manufacturer>
+		<year>1994</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="6e1ad6fd" name="World Cup Italia '90 (UE)">
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="914d3fc4" name="World Games (UE)">
-		<year>Epyx</year>
-		<manufacturer>1986</manufacturer>
+		<manufacturer>Epyx</manufacturer>
+		<year>1986</year>
 		<status>Good ROM</status>
 	</hash>
 	<hash crc32="4aaad0d6" name="World Grand Prix (UE)">
