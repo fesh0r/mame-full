@@ -354,6 +354,7 @@ static	const	struct	IODevice	io_nascom1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+#ifdef CART
 	{
 		IO_CARTSLOT,			/* type */
 		1,						/* count */
@@ -373,6 +374,7 @@ static	const	struct	IODevice	io_nascom1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+#endif
 	{ IO_END }
 };
 
@@ -397,6 +399,7 @@ static	const	struct	IODevice	io_nascom2[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+#ifdef CART
 	{
 		IO_CARTSLOT,			/* type */
 		1,						/* count */
@@ -416,6 +419,7 @@ static	const	struct	IODevice	io_nascom2[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
+#endif
 	{ IO_END }
 };
 

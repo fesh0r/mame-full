@@ -123,6 +123,13 @@ int	nascom1_init_cassette(int id)
 {
 	void	*file;
 
+	/* a cassette for the nascom1 isnt needed */
+	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+	{
+		logerror("Namcom - warning: no cassette specified!\n");
+		return INIT_PASS;
+	}
+
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (file)
 	{
