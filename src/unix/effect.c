@@ -111,6 +111,9 @@ const  int trY32    = 0xC0;
 const  int trU32    = 0x1C;
 const  int trV32    = 0x18;
 
+/* save the original palette info to restore it on close
+   as we modify it for the 6tap 2x filter code */
+static struct sysdep_palette_info orig_palette_info;
 
 static void init_rgb2yuv(int display_mode)
 {
@@ -576,7 +579,9 @@ int sysdep_display_effect_open(void)
     {
        /* HACK: we need the palette lookup table to be 888 rgb, this means
           that the lookup table won't be usable for normal blitting anymore
-          but that is not a problem, since we're not doing normal blitting */
+          but that is not a problem, since we're not doing normal blitting,
+          we do need to restore it on close though! */
+       orig_palette_info = sysdep_display_properties.palette_info;
        sysdep_display_properties.palette_info.fourcc_format = 0;
        sysdep_display_properties.palette_info.red_mask   = 0x00FF0000;
        sysdep_display_properties.palette_info.green_mask = 0x0000FF00;
@@ -588,6 +593,10 @@ int sysdep_display_effect_open(void)
 
 void sysdep_display_effect_close(void)
 {
+  /* if we modifified it then restore palette_info */
+  if (_6tap2x_buf5 && (sysdep_display_params.depth == 16))
+    sysdep_display_properties.palette_info = orig_palette_info;
+  
   if (effect_dbbuf)
   {
     free(effect_dbbuf);

@@ -104,7 +104,7 @@ struct rc_option x11_input_opts[] = {
 /*
  * Parse keyboard (and other) events
  */
-int sysdep_display_update_keyboard (void)
+int sysdep_display_driver_update_keyboard (void)
 {
 	XEvent	E;
 	KeySym	keysym;

@@ -193,7 +193,7 @@ int sysdep_display_open(struct sysdep_display_open_params *params);
 void sysdep_display_close(void);
 
 /* update */
-int sysdep_display_change_settings(
+int sysdep_display_change_params(
   struct sysdep_display_open_params *new_params, int force);
 void sysdep_display_update(struct mame_bitmap *bitmap,
   struct rectangle *vis_area, struct rectangle *dirty_area,

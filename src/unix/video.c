@@ -503,7 +503,6 @@ void osd_close_display(void)
 
 static void display_settings_changed(void)
 {
-	xmame_keyboard_clear();
 	osd_free_colors();
 	sysdep_display_set_keybleds(led_state);
 
@@ -525,7 +524,7 @@ static void change_display_settings(struct sysdep_display_open_params *new_param
      fixes that.	   -- Steve bpk@hoopajoo.net */
   osd_sound_enable( 0 );
 
-  if (sysdep_display_change_settings(new_params, force))
+  if (sysdep_display_change_params(new_params, force))
     display_settings_changed();
 
   /* Re-enable sound */
@@ -935,7 +934,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		
 		if (vis_area_changed)
 		{
-			if (sysdep_display_change_settings(&normal_params, 1)
+			if (sysdep_display_change_params(&normal_params, 1)
 			    && normal_palette)
 			{
 				sysdep_palette_destroy(normal_palette);
