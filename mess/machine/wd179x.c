@@ -537,7 +537,7 @@ READ_HANDLER ( wd179x_status_r )
 
 	w->status &= ~STA_1_NOT_READY;
 
-    if (!floppy_drive_get_ready_state(drv))
+	if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
 		w->status |= STA_1_NOT_READY;
 
 	return result;
@@ -632,9 +632,9 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->read_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 
-            if (!floppy_drive_get_ready_state(drv))
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-                wd179x_complete_command();
+				wd179x_complete_command(w);
             }
             else
             {
@@ -652,9 +652,9 @@ WRITE_HANDLER ( wd179x_command_w )
 			w->write_cmd = data;
 			w->command = data & ~FDC_MASK_TYPE_II;
 
-            if (!floppy_drive_get_ready_state(drv))
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-                wd179x_complete_command();
+				wd179x_complete_command(w);
             }
             else
             {
@@ -707,9 +707,9 @@ WRITE_HANDLER ( wd179x_command_w )
 			logerror("wd179x_command_w $%02X WRITE_TRK\n", data);
 #endif
 
-            if (!floppy_drive_get_ready_state(drv))
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-                wd179x_complete_command();
+				wd179x_complete_command(w);
             }
             else
             {
@@ -742,9 +742,9 @@ WRITE_HANDLER ( wd179x_command_w )
 #if VERBOSE
 			logerror("wd179x_command_w $%02X READ_DAM\n", data);
 #endif
-            if (!floppy_drive_get_ready_state(drv))
+			if (!floppy_drive_get_flag_state(drv, FLOPPY_DRIVE_READY))
             {
-                wd179x_complete_command();
+				wd179x_complete_command(w);
             }
             else
             {
