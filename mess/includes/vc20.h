@@ -118,7 +118,7 @@
 
 
 #define DATASSETTE (readinputport(11)&0x8)
-#define DATASSETTE_TONE (readinputport(14)&4)
+#define DATASSETTE_TONE (readinputport(11)&4)
 
 #define SERIAL8ON (readinputport(11)&2)
 #define SERIAL9ON (readinputport(11)&1)
@@ -137,16 +137,16 @@
 #define EXP_32K 4
 #define EXP_CUSTOM 5
 #define RAMIN0X0400 ((EXPANSION==EXP_3K)\
-							||((EXPANSION==EXP_CUSTOM)&&(readinputport(13)&8)) )
+	||((EXPANSION==EXP_CUSTOM)&&(readinputport(10)&8)) )
 #define RAMIN0X2000 ((EXPANSION==EXP_8K)||(EXPANSION==EXP_16K)\
-							||(EXPANSION==EXP_32K)\
-							||((EXPANSION==EXP_CUSTOM)&&(readinputport(13)&0x10)) )
+	||(EXPANSION==EXP_32K)\
+	||((EXPANSION==EXP_CUSTOM)&&(readinputport(10)&0x10)) )
 #define RAMIN0X4000 ((EXPANSION==EXP_16K)||(EXPANSION==EXP_32K)\
-							||((EXPANSION==EXP_CUSTOM)&&(readinputport(13)&0x20)) )
+	||((EXPANSION==EXP_CUSTOM)&&(readinputport(10)&0x20)) )
 #define RAMIN0X6000 ((EXPANSION==EXP_32K)\
-							||((EXPANSION==EXP_CUSTOM)&&(readinputport(13)&0x40)) )
+	||((EXPANSION==EXP_CUSTOM)&&(readinputport(10)&0x40)) )
 #define RAMIN0XA000 ((EXPANSION==EXP_32K)\
-							||((EXPANSION==EXP_CUSTOM)&&(readinputport(13)&0x80)) )
+	||((EXPANSION==EXP_CUSTOM)&&(readinputport(10)&0x80)) )
 
 #define VC20ADDR2VIC6560ADDR(a) (((a)>0x8000)?((a)&0x1fff):((a)|0x2000))
 #define VIC6560ADDR2VC20ADDR(a) (((a)>0x2000)?((a)&0x1fff):((a)|0x8000))
