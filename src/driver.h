@@ -52,6 +52,9 @@ enum
 #if (HAS_Z80GB)
 	CPU_Z80GB,
 #endif
+#if (HAS_CDP1802)
+	CPU_CDP1802,
+#endif
 #if (HAS_8080)
 	CPU_8080,
 #endif
@@ -189,6 +192,9 @@ enum
 #endif
 #if (HAS_F8)
 	CPU_F8,
+#endif
+#if (HAS_CP1600)
+	CPU_CP1600,
 #endif
 #if (HAS_TMS34010)
 	CPU_TMS34010,
