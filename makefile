@@ -199,6 +199,7 @@ maketree:
 	@md $(OBJ)\cpu\m6800
 	@md $(OBJ)\cpu\m6805
 	@md $(OBJ)\cpu\m6809
+	@md $(OBJ)\cpu\hd6309
 	@md $(OBJ)\cpu\konami
 	@md $(OBJ)\cpu\m68000
 	@md $(OBJ)\cpu\s2650
@@ -250,6 +251,7 @@ cleandebug:
 	@del $(OBJ)\cpu\m6800\*.o
 	@del $(OBJ)\cpu\m6805\*.o
 	@del $(OBJ)\cpu\m6809\*.o
+	@del $(OBJ)\cpu\hd6309\*.o
 	@del $(OBJ)\cpu\konami\*.o
 	@del $(OBJ)\cpu\m68000\*.o
 	@del $(OBJ)\cpu\m68000\*.c
