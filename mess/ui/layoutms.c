@@ -27,8 +27,8 @@
 #include "ui/screenshot.h"
 #include "ui/win32ui.h"
 #include "ui/properties.h"
+#include "ui/options.h"
 
-#include "ui/optionsms.h"
 #include "ui/ms32util.h"
 #include "ui/propertiesms.h"
 
@@ -155,7 +155,6 @@ const ICONDATA g_iconData[] =
 	{ 0 }
 };
 
-const char g_szDefaultGame[] = "nes";
 const char g_szPlayGameString[] = "&Run %s";
 const char g_szGameCountString[] = "%d systems";
 const char g_szHistoryFileName[] = "sysinfo.dat";

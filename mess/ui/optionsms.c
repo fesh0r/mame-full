@@ -1,9 +1,5 @@
 #define WIN32_LEAN_AND_MEAN
 
-static int default_mess_column_width[] = { 186, 230, 88, 84, 84, 68 };
-static int default_mess_column_shown[] = {   1,   1,  1,  1,  1,  1 };
-static int default_mess_column_order[] = {   0,   1,  2,  3,  4,  5 };
-
 static void MessColumnEncodeString(void* data, char *str);
 static void MessColumnDecodeString(const char* str, void* data);
 static void MessColumnDecodeWidths(const char* str, void* data);
@@ -30,12 +26,8 @@ void SetMessColumnWidths(int width[])
 {
     int i;
 
-	assert((sizeof(default_mess_column_width) / sizeof(default_mess_column_width[0])) == MESS_COLUMN_MAX);
-	assert((sizeof(default_mess_column_shown) / sizeof(default_mess_column_shown[0])) == MESS_COLUMN_MAX);
-	assert((sizeof(default_mess_column_order) / sizeof(default_mess_column_order[0])) == MESS_COLUMN_MAX);
-
     for (i=0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_width[i] = width[i];
+        settings.mess.mess_column_width[i] = width[i];
 }
 
 void GetMessColumnWidths(int width[])
@@ -43,7 +35,7 @@ void GetMessColumnWidths(int width[])
     int i;
 
     for (i=0; i < MESS_COLUMN_MAX; i++)
-        width[i] = settings.mess_column_width[i];
+        width[i] = settings.mess.mess_column_width[i];
 }
 
 void SetMessColumnOrder(int order[])
@@ -51,7 +43,7 @@ void SetMessColumnOrder(int order[])
     int i;
 
     for (i = 0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_order[i] = order[i];
+        settings.mess.mess_column_order[i] = order[i];
 }
 
 void GetMessColumnOrder(int order[])
@@ -59,7 +51,7 @@ void GetMessColumnOrder(int order[])
     int i;
 
     for (i = 0; i < MESS_COLUMN_MAX; i++)
-        order[i] = settings.mess_column_order[i];
+        order[i] = settings.mess.mess_column_order[i];
 }
 
 void SetMessColumnShown(int shown[])
@@ -67,7 +59,7 @@ void SetMessColumnShown(int shown[])
     int i;
 
     for (i = 0; i < MESS_COLUMN_MAX; i++)
-        settings.mess_column_shown[i] = shown[i];
+        settings.mess.mess_column_shown[i] = shown[i];
 }
 
 void GetMessColumnShown(int shown[])
@@ -75,37 +67,37 @@ void GetMessColumnShown(int shown[])
     int i;
 
     for (i = 0; i < MESS_COLUMN_MAX; i++)
-        shown[i] = settings.mess_column_shown[i];
+        shown[i] = settings.mess.mess_column_shown[i];
 }
 
 const char* GetSoftwareDirs(void)
 {
-    return settings.softwaredirs;
+    return settings.mess.softwaredirs;
 }
 
 void SetSoftwareDirs(const char* paths)
 {
-	FreeIfAllocated(&settings.softwaredirs);
+	FreeIfAllocated(&settings.mess.softwaredirs);
     if (paths != NULL)
-        settings.softwaredirs = strdup(paths);
+        settings.mess.softwaredirs = strdup(paths);
 }
 
 const char *GetCrcDir(void)
 {
-	return settings.crcdir;
+	return settings.mess.crcdir;
 }
 
 void SetCrcDir(const char *crcdir)
 {
-	FreeIfAllocated(&settings.crcdir);
+	FreeIfAllocated(&settings.mess.crcdir);
     if (crcdir != NULL)
-        settings.crcdir = strdup(crcdir);
+        settings.mess.crcdir = strdup(crcdir);
 }
 
 BOOL GetUseNewUI(int driver_index)
 {
     assert(0 <= driver_index && driver_index < driver_index);
-    return GetGameOptions(driver_index, -1)->use_new_ui;
+    return GetGameOptions(driver_index, -1)->mess.use_new_ui;
 }
 
 void SetSelectedSoftware(int driver_index, int devtype, const char *software)
@@ -118,14 +110,14 @@ void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 		return;
 
 	o = GetGameOptions(driver_index, -1);
-	FreeIfAllocated(&o->software[devtype]);
-	o->software[devtype] = newsoftware;
+	FreeIfAllocated(&o->mess.software[devtype]);
+	o->mess.software[devtype] = newsoftware;
 }
 
 const char *GetSelectedSoftware(int driver_index, int devtype)
 {
 	const char *software;
-	software = GetGameOptions(driver_index, -1)->software[devtype];
+	software = GetGameOptions(driver_index, -1)->mess.software[devtype];
 	return software ? software : "";
 }
 
@@ -142,8 +134,8 @@ void SetExtraSoftwarePaths(int driver_index, const char *extra_paths)
 		if (!new_extra_paths)
 			return;
 	}
-	FreeIfAllocated(&game_variables[driver_index].extra_software_paths);
-	game_variables[driver_index].extra_software_paths = new_extra_paths;
+	FreeIfAllocated(&game_variables[driver_index].mess.extra_software_paths);
+	game_variables[driver_index].mess.extra_software_paths = new_extra_paths;
 }
 
 const char *GetExtraSoftwarePaths(int driver_index)
@@ -153,7 +145,7 @@ const char *GetExtraSoftwarePaths(int driver_index)
 	assert(driver_index >= 0);
 	assert(driver_index < num_games);
 
-	paths = game_variables[driver_index].extra_software_paths;
+	paths = game_variables[driver_index].mess.extra_software_paths;
 	return paths ? paths : "";
 }
 

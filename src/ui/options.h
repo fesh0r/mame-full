@@ -14,7 +14,7 @@
 #define OPTIONS_H
 
 #ifdef MESS
-#include "device.h"
+#include "ui/optionsms.h"
 #endif
 
 #include "osd_cpu.h"
@@ -38,17 +38,6 @@ enum
 	COLUMN_MAX
 };
 
-#ifdef MESS
-enum {
-	MESS_COLUMN_IMAGES,
-	MESS_COLUMN_GOODNAME,
-	MESS_COLUMN_MANUFACTURER,
-	MESS_COLUMN_YEAR,
-	MESS_COLUMN_PLAYABLE,
-	MESS_COLUMN_CRC,
-	MESS_COLUMN_MAX
-};
-#endif
 
 enum
 {
@@ -125,9 +114,10 @@ typedef struct
 	char ini_name[40]; // ini name
 	int  m_iType;                                 // key type
 	void *m_vpData;                               // key data
+	const char *m_pDefaultValue;                  // default value on startup
+	BOOL m_bOnlyOnGame;                           // use this option only on games
 	void (*encode)(void *data, char *str);        // encode function
 	void (*decode)(const char *str, void *data);  // decode function
-	BOOL m_bOnlyOnGame;                           // use this option only on games
 } REG_OPTION;
 
 typedef struct
@@ -241,10 +231,7 @@ typedef struct
 	int bios;
 
 #ifdef MESS
-	BOOL   use_new_ui;
-	UINT32 ram_size;
-	char   *software[IO_COUNT];
-	char   *softwaredirs[IO_COUNT];
+	struct mess_specific_options mess;
 #endif
 } options_type;
 
@@ -260,7 +247,7 @@ typedef struct
 	BOOL use_default; // whether or not we should just use default options
 
 #ifdef MESS
-	char *extra_software_paths;
+	struct mess_specific_game_variables mess;
 #endif
 } game_variables_type;
 
@@ -305,11 +292,6 @@ typedef struct
 	int      column_width[COLUMN_MAX];
 	int      column_order[COLUMN_MAX];
 	int      column_shown[COLUMN_MAX];
-#ifdef MESS
-	int      mess_column_width[MESS_COLUMN_MAX];
-	int      mess_column_order[MESS_COLUMN_MAX];
-	int      mess_column_shown[MESS_COLUMN_MAX];
-#endif
     int      sort_column;
     BOOL     sort_reverse;
     AREA     area;
@@ -387,10 +369,6 @@ typedef struct
 
     char*    romdirs;
     char*    sampledirs;
-#ifdef MESS
-	char*    softwaredirs;
-	char*    crcdir;	
-#endif
     char*    inidir;
     char*    cfgdir;
     char*    nvramdir;
@@ -408,6 +386,10 @@ typedef struct
     char*    mameinfo_filename;
     char*    ctrlrdir;
     char*    folderdir;
+
+#ifdef MESS
+	struct mess_specific_settings mess;
+#endif
 
 } settings_type; /* global settings for the UI only */
 

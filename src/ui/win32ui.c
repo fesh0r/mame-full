@@ -4570,6 +4570,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 					  MAKEINTRESOURCE(IDD_RESET), hMain, ResetDialogProc) == TRUE)
         {
 			// these may have been changed
+			// WTF?
 			SaveDefaultOptions();
             DestroyWindow( hwnd );
 			PostQuitMessage(0);

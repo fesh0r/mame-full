@@ -372,10 +372,11 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 				ComboBox_AddString(hRamComboBox, buf);
 				ComboBox_SetItemData(hRamComboBox, i, ramopt);
 
-				if (sel < 0) {
+				if (sel < 0)
+				{
 					if (default_ramopt == ramopt)
 						default_index = i;
-					else if (o->ram_size == ramopt)
+					else if (o->mess.ram_size == ramopt)
 						sel = i;
 				}
 			}
@@ -399,7 +400,7 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	case CMSG_PROPTOOPTIONS:
 		nIndex = ComboBox_GetCurSel(hRamComboBox);
 		if (nIndex != CB_ERR)
-			o->ram_size = ComboBox_GetItemData(hRamComboBox, nIndex);
+			o->mess.ram_size = ComboBox_GetItemData(hRamComboBox, nIndex);
 		break;
 
 	case CMSG_COMMAND:
@@ -437,7 +438,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 		if (!gamedrv || device_find(gamedrv, IO_PRINTER))
 		{
 			/* we have printer options */
-			SetWindowText(hPrinterText, o->software[IO_PRINTER]);
+			SetWindowText(hPrinterText, o->mess.software[IO_PRINTER]);
 		}
 		else
 		{
@@ -450,11 +451,11 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 
 	case CMSG_PROPTOOPTIONS:
 		GetWindowText(hPrinterText, buf, sizeof(buf) / sizeof(buf[0]));
-		s = o->software[IO_PRINTER] ? o->software[IO_PRINTER] : "";
+		s = o->mess.software[IO_PRINTER] ? o->mess.software[IO_PRINTER] : "";
 		if (strcmp(s, buf))
 		{
-			FreeIfAllocated(&o->software[IO_PRINTER]);
-			o->software[IO_PRINTER] = buf[0] ? strdup(buf) : NULL;
+			FreeIfAllocated(&o->mess.software[IO_PRINTER]);
+			o->mess.software[IO_PRINTER] = strdup(buf);
 			MarkChanged(hWnd);
 		}
 		break;
@@ -549,11 +550,11 @@ BOOL MessPropertiesCommand(int nGame, HWND hWnd, WORD wNotifyCode, WORD wID, BOO
 
 void MessSetPropEnabledControls(HWND hWnd, options_type *o)
 {
-	if (o->use_new_ui)
+	if (o->mess.use_new_ui)
 		o->use_d3d = FALSE;
 
-	ShowWindow(GetDlgItem(hWnd, IDC_D3D_NEWUI_WARNING),	o->use_new_ui ? SW_SHOW : SW_HIDE);
+	ShowWindow(GetDlgItem(hWnd, IDC_D3D_NEWUI_WARNING),	o->mess.use_new_ui ? SW_SHOW : SW_HIDE);
 	ShowWindow(GetDlgItem(hWnd, IDC_NEWUI_D3D_WARNING),	o->use_d3d ? SW_SHOW : SW_HIDE);
-	EnableWindow(GetDlgItem(hWnd, IDC_D3D),				!o->use_new_ui);
+	EnableWindow(GetDlgItem(hWnd, IDC_D3D),				!o->mess.use_new_ui);
 	EnableWindow(GetDlgItem(hWnd, IDC_USE_NEW_UI),		!o->use_d3d);
 }

@@ -11,6 +11,7 @@
 #include "ui/bitmask.h"
 #include "ui/mame32.h"
 #include "ui/resourcems.h"
+#include "ui/options.h"
 #include "mess.h"
 #include "configms.h"
 #include "SmartListView.h"
@@ -19,7 +20,6 @@
 #include "messwin.h"
 #include "rc.h"
 #include "utils.h"
-#include "optionsms.h"
 
 #ifdef _MSC_VER
 #define alloca _alloca
@@ -486,10 +486,10 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -%s \"%s\"", optname, software);
 	}
 
-	if ((pOpts->ram_size != 0) && ram_is_valid_option(gamedrv, pOpts->ram_size))
-		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->ram_size);
+	if ((pOpts->mess.ram_size != 0) && ram_is_valid_option(gamedrv, pOpts->mess.ram_size))
+		sprintf(&pCmdLine[strlen(pCmdLine)], " -ramsize %d", pOpts->mess.ram_size);
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->use_new_ui ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%snewui", pOpts->mess.use_new_ui ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -writeconfig");
 }
 
