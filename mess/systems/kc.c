@@ -290,7 +290,7 @@ static WRITE_HANDLER(kc85_3_port_w)
 
 		case 0x088:
 		case 0x089:
-			kc85_4_pio_data_w(port-0x088, data);
+			kc85_3_pio_data_w(port-0x088, data);
 			return;
 
 		case 0x08a:

@@ -6,7 +6,7 @@
 
 #define KC_DEBUG
 
-static int kc85_boot = 0;
+static void *kc85_reset_timer;
 
 static int kc85_pio_data[2];
 
@@ -275,8 +275,21 @@ static struct nec765_interface kc_fdc_interface=
 	kc85_fdc_dma_drq
 };
 
+static void *kc85_disk_reset_timer = NULL;
+
+static void kc85_disk_reset_timer_callback(int dummy)
+{
+	cpunum_set_pc(1,0x0f000);
+
+	cpunum_set_pc(0,0x0f000);
+
+	timer_reset(kc85_disk_reset_timer, TIME_NEVER);
+}
+
 void	kc_disc_interface_init(void)
 {
+	kc85_disk_reset_timer = timer_set(TIME_NOW, 0, kc85_disk_reset_timer_callback);
+
 	nec765_init(&kc_fdc_interface,NEC765A);
 
 	/* reset ctc */
@@ -289,6 +302,12 @@ void	kc_disc_interface_init(void)
 
 void	kc_disc_interface_exit(void)
 {
+	if (kc85_disk_reset_timer)
+	{
+		timer_remove(kc85_disk_reset_timer);
+		kc85_disk_reset_timer = NULL;
+	}
+
 	nec765_stop();
 }
 
@@ -1378,14 +1397,6 @@ static void kc85_4_update_0x08000(void)
 /* update status of memory area 0x0000-0x03fff */
 static void kc85_4_update_0x00000(void)
 {
-	if (kc85_boot)
-	{
-		cpu_setbank(1,memory_region(REGION_CPU1) + 0x013000+0x01000);
-		memory_set_bankhandler_r(1,0, MRA_BANK1);
-		memory_set_bankhandler_w(7,0, MWA_NOP);
-		kc85_boot = 0;
-	}
-	else
 	{
 		/* access ram? */
 		if (kc85_pio_data[0] & (1<<1))
@@ -1698,17 +1709,6 @@ static void kc85_3_update_0x0e000(void)
 for write operations */
 static void kc85_3_update_0x00000(void)
 {
-	if (kc85_boot)
-	{
-		/* the real hardware changes the first few opcode fetches */
-		/* I can't do that with MESS */
-		/* CAOS rom 0x0f000 to 0x0000 */
-		cpu_setbank(1, memory_region(REGION_CPU1)+0x012000+0x01000);
-		memory_set_bankhandler_r(1, 0,MRA_BANK1);
-		memory_set_bankhandler_w(6, 0,MWA_NOP);
-		kc85_boot = 0;
-	}
-	else
 	{
 		/* access ram? */
 		if (kc85_pio_data[0] & (1<<1))
@@ -1890,6 +1890,7 @@ READ_HANDLER ( kc85_unmapped_r )
 	return 0x0ff;
 }
 
+#if 0
 static OPBASE_HANDLER( kc85_3_opbaseoverride )
 {
 	memory_set_opbase_handler(0,0);
@@ -1908,7 +1909,15 @@ static OPBASE_HANDLER( kc85_4_opbaseoverride )
 
 	return (cpunum_get_pc(0) & 0x0ffff);
 }
+#endif
 
+
+static void kc85_reset_timer_callback(int dummy)
+{
+	cpunum_set_pc(0,0x0f000);
+
+	timer_reset(kc85_reset_timer, TIME_NEVER);
+}
 
 READ_HANDLER ( kc85_pio_data_r )
 {
@@ -2073,6 +2082,8 @@ static void	kc85_common_init(void)
 	kc85_15khz_count = 0;
 	kc85_15khz_timer = timer_pulse(TIME_IN_HZ(15625), 0, kc85_15khz_timer_callback);
 
+	kc85_reset_timer = timer_set(TIME_NOW, 0, kc85_reset_timer_callback);
+
 	kc85_module_system_init();
 }
 
@@ -2088,6 +2099,13 @@ static void	kc85_common_shutdown_machine(void)
 
 	kc_keyboard_exit();
 	kc_cassette_exit();
+
+	if (kc85_reset_timer)
+	{
+		timer_remove(kc85_reset_timer);
+		kc85_reset_timer = NULL;
+	}
+
 
 }
 
@@ -2112,16 +2130,17 @@ void kc85_4_init_machine(void)
 
 	kc85_common_init();
 
-	kc85_boot = 1;
 	kc85_4_update_0x00000();
 
+
+#if 0
 	/* this is temporary. Normally when a Z80 is reset, it will
 	execute address 0. It appears the KC85 series pages the rom
 	at address 0x0000-0x01000 which has a single jump in it,
 	can't see yet where it disables it later!!!! so for now
 	here will be a override */
 	memory_set_opbase_handler(0, kc85_4_opbaseoverride);
-
+#endif
 }
 
 void kc85_4_shutdown_machine(void)
@@ -2163,16 +2182,16 @@ void kc85_3_init_machine(void)
 
 	kc85_common_init();
 
-	kc85_boot = 1;
 	kc85_3_update_0x00000();
 
+#if 0
 	/* this is temporary. Normally when a Z80 is reset, it will
 	execute address 0. It appears the KC85 series pages the rom
 	at address 0x0000-0x01000 which has a single jump in it,
 	can't see yet where it disables it later!!!! so for now
 	here will be a override */
 	memory_set_opbase_handler(0, kc85_3_opbaseoverride);
-
+#endif
 }
 
 void kc85_3_shutdown_machine(void)
