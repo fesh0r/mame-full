@@ -2,9 +2,39 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.92, 23 February 2005
+	- Everything from MAME 0.92 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.92 (http://x.mame.net/changes-mess.html).
+	- Fixed the lq2x and hq2x 3x3 effects with Xv.  (Hans de Goede)
+	- Added double buffering to lq2x and hq2x when blitting directly to the 
+	  framebuffer.  (Hans de Goede)
+	- Added a hack for megatech games which by default hides the BIOS 
+	  screen.  You can toggle between the game and BIOS screens with 
+	  left-ctrl + left-shift + insert.  (Hans de Goede)
+	- Fixed an error in the comment about CRLF in the makefile.  (André 
+	  Majorel)
+	- The label for the enter key in the input setup is now "ENTER" instead 
+	  of "ENTE ".  (Dave Humphreys)
+	- Fixed several problems with the front-end "-list" commands: The MESS 
+	  commands could segfault, some commands' headers were misaligned, and 
+	  "-listpalettesize" was causing the ROM list to print.
+	- Worked around or fixed a double-free on exit in xmess.
+	- Fixed a segfault on startup that occurred when four or more joysticks 
+	  devices were found.
+	- The SDL joystick driver now works with multiple joysticks attached.
+	- Updated the MMX effects code.  (Richard Goedeken)
+	- BUILD_EXPAT is now off by default in the makefile.
+	- The OpenGL cabinets are once again installed in $XMAMEROOT/cab 
+	  instead of $XMAMEROOT/src/unix/cab.
+	- The MESS "Tape Control" menu item now only appears for machines which 
+	  have a cassette device.  Selecting this item when there is no tape 
+	  image specified now displays a message instead of causing a crash.  
+	  (Dave Humphreys)
+	- The SDL sound driver should produce much better output.  Also fixed a 
+	  potential deadlock.
+
 Release 0.90, 18 January 2005
-	- Everything from MAME 0.90 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.90 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.90 and MESS 0.90.
 	- The "-sleepidle (-si)" option is now enabled by default.  This keeps 
 	  the emulation from hogging the CPU when it's idle.
 	- Did a major rework of the effects code, which now borrows code from 
@@ -431,7 +461,7 @@ Release 0.87, 3 October 2004
 	  32bpp screen depth was accelerated.  (Richard Goedeken)
 	- Corrected some of the out-of-date information in the documentation.  
 	  Fixes Bugzilla bug 604.
-	- Light guns should work again. Also added support for the triggers on 
+	- Light guns should work again.  Also added support for the triggers on 
 	  an ACT LABS USB PC Monitor model that didn't work previously.
 
 Release 0.86, 25 August 2004
