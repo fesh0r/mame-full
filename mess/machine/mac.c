@@ -27,6 +27,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/iwm.h"
+#include "machine/sonydriv.h"
 #include "includes/mac.h"
 
 #include <time.h>
@@ -1538,15 +1539,15 @@ int mac_floppy_init(int id)
 #if 0
 	if ((mac_model == model_Mac128k512k) && (id == 0))
 		/* on Mac 128k/512k, internal floppy is single sided */
-		return iwm_floppy_init(id, IWM_FLOPPY_ALLOW400K);
+		return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K);
 	else
 #endif
-		return iwm_floppy_init(id, IWM_FLOPPY_ALLOW400K | IWM_FLOPPY_ALLOW800K);
+		return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K);
 }
 
 void mac_floppy_exit(int id)
 {
-	iwm_floppy_exit(id);
+	sony_floppy_exit(id);
 }
 
 /* *************************************************************************
@@ -1606,7 +1607,7 @@ static WRITE_HANDLER(mac_via_out_a)
 {
 	set_scc_waitrequest((data & 0x80) >> 7);
 	set_screen_buffer((data & 0x40) >> 6);
-	iwm_set_sel_line((data & 0x20) >> 5);
+	sony_set_sel_line((data & 0x20) >> 5);
 	if (((data & 0x10) >> 4) ^ mac_overlay)
 		set_memory_overlay((data & 0x10) >> 4);
 	mac_set_buffer((data >> 3) & 0x01);
@@ -1849,7 +1850,19 @@ void mac_init_machine(void)
 	scc_init();
 
 	/* initialize floppy */
-	iwm_init();
+	{
+		iwm_interface intf =
+		{
+			sony_set_lines,
+			sony_set_enable_lines,
+
+			sony_read_data,
+			sony_write_data,
+			sony_read_status
+		};
+
+		iwm_init(& intf);
+	}
 
 	/* setup the memory overlay */
 	set_memory_overlay(1);
