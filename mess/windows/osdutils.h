@@ -18,6 +18,7 @@
 #define read	read_
 #define write	write_
 #define access	access_
+#define tell	tell_
 
 #define PATH_SEPARATOR	'\\'
 
