@@ -1,4 +1,8 @@
 /*
+	MESS Driver for TI-99/8 Computer.
+	Raphael Nabet, 2003.
+*/
+/*
   TI-99/8 preliminary infos:
 
   name: Texas Instruments Computer TI-99/8 (no "Home")
@@ -8,19 +12,34 @@ References:
 	* TI99/8 user manual
 	* TI99/8 schematics
 	* TI99/8 ROM source code
-	* Message on TI99 group for CPU info
+	* Message on TI99 yahoo group for CPU info
 
 general:
 	* a few dozen units were built in 1983, never released
-	* CPU is a custom variant of tms9995: no 16-bit RAM, and presumably the
-	  on-chip decrementer is disabled as well
+	* CPU is a custom variant of tms9995 (part code MP9537): the 16-bit RAM and
+	  (presumably) the on-chip decrementer are disabled
 	* 220kb(?) of ROM, including monitor, GPL interpreter, TI-extended basic
-	  II, and a P-code interpreter with a few utilities.
-	* 64kb 8-bit RAM, 16kb vdp RAM
-	* tms9918a vdp (or clone with sslightly different bus interface and timings)
+	  II, and a P-code interpreter with a few utilities.  More specifically:
+	  - 32kb system ROM with GPL interpreter, TI-extended basic II and a few
+	    utilities (no dump, but 90% of source code is available and has been
+	    compiled)
+	  - 18kb of GROMs, with monitor and TI-extended basic II (no dump, source
+	    code is available but has NOT been compiled, 99/4a GROMs can sort of
+	    work instead)
+	  - 4(???)kb DSR ROM for hexbus (no dump)
+	  - 32(?)kb speech ROM: contents are slightly different from the 99/4(a)
+	    speech ROMs, due to the use of a tms5220 speech synthesizer instead of
+	    the older tms0285 (no dump, but 99/4(a) speech ROMs should work mostly
+	    OK)
+	  - 12(???)kb ROM with PCode interpreter (no dump)
+	  - 2(3???)*48kb of GROMs with PCode data files (no dump)
+	* 2kb SRAM (16 bytes of which are hidden), 64kb DRAM (expandable to almost
+	  16MBytes), 16kb vdp RAM
+	* tms9118 vdp (similar to tms9918a, slightly different bus interface and
+	  timings)
 	* I/O
 	  - 50-key keyboard, plus 2 optional joysticks
-	  - sound and speech (both ti99/4-like)
+	  - sound and speech (both ti99/4(a)-like)
 	  - Hex-Bus
 	  - Cassette
 	* cartridge port on the top
@@ -29,9 +48,9 @@ general:
 
 mapper:
 	Mapper has 4kb page size (-> 16 pages per map file), 32 bits per page
-	entry.  It can load any of 4 map files from RAM by DMA.  Total address
-	space is 16Mbyte(?).  Map file 0 is used by BIOS, file 1 by memory XOPs(?),
-	file 2 by P-code interpreter(???).
+	entry.  Virtual address space is 16Mbytes.  The mapper can load any of 4
+	map files from SRAM by DMA.  Map file 0 is used by BIOS, file 1 by memory
+	XOPs(?), file 2 by P-code interpreter(???).
 
 	Format of map table entry:
 	* bit 0: WTPROT: page is write protected if 1
@@ -39,7 +58,7 @@ mapper:
 	* bit 2: RDPROT: page is read protected if 1
 	* bit 3: reserved, value is ignored
 	* bits 4-7: reserved, always forced to 0
-	* bits 8-23: page base address in 24-bit address space
+	* bits 8-23: page base address in 24-bit virtual address space
 
 	Format of mapper control register:
 	* bit 0-4: unused???
@@ -48,8 +67,9 @@ mapper:
 
 	24-bit address space map:
 	* >000000->00ffff: console RAM
-	* >010000->feffff: expansion
-	* >ff0000->ff1fff(???): >0000 ROM
+	* >010000->feffff: expansion?
+	* >ff0000->ff0fff: empty???
+	* >ff1000->ff3fff: unused???
 	* >ff4000->ff5fff: DSR space
 	* >ff6000->ff7fff: cartridge space
 	* >ff8000->ff9fff(???): >4000 ROM (normally enabled with a write to CRU >2700)
@@ -57,25 +77,28 @@ mapper:
 	* >ffc000->ffdfff(?): >6000 ROM
 
 	CRU space:
-	* 0x0000-0x001f: tms9901
-	  P4: 1 -> MMD (Memory Mapped Devices?) at >8000, ROM enabled
-	  P5: 1 -> no P-CODE GROMs
-	* 0x1000-0x2fff (no, it is not a typo, tms9995 supports full 15-bit CRU
-		address, so internal DSRs are in the 0x2000-0x2fff range):
-		Peripheral CRU space
-	* 0x2700: Internal DSR select (basic(?), various routines)
-	* 0x2702: SBO -> hardware reset
+	Since the tms9995 supports full 15-bit CRU addresses, the 0x1000-0x17ff
+	(0x2000-0x2fff) range was assigned to support up to 16 extra expansion
+	slot.  The good thing with using 0x1000-0x17ff is the fact that older
+	expansion cards that only decode 12 address bits will think that addresses
+	0x1000-0x17ff refer to internal TI99 peripherals (0x000-0x7ff range), which
+	suppresses any risk of bus contention.
+	* 0x0000-0x001f (0x0000-0x003e): tms9901
+	  - P4: 1 -> MMD (Memory Mapped Devices?) at >8000, ROM enabled
+	  - P5: 1 -> no P-CODE GROMs
+	* 0x0800-0x17ff (0x1000-0x2ffe): Peripheral CRU space
+	* 0x1380-0x13ff (0x2700-0x27fe): Internal DSR, with two output bits:
+	  - 0x2700: Internal DSR select (basic(?), various routines)
+	  - 0x2702: SBO -> hardware reset
 
-memory map (TMS9901 P4 == 1?):
-	* 0x8000-0x80ff: RAM, reserved to load mapper registers.  
-	* 0x8100-0x82ff: RAM??? (4a mode only???)
-	* 0x8300-0x83ff: RAM (4a mode only???)
+memory map (TMS9901 P4 == 1):
+	* 0x8000-0x83ff: SRAM (0x8000-0x80ff is used by the mapper DMA controller
+	  to hold four map files) (r/w)
 	* 0x8400: sound port (w)
-	* 0x8401-0x840f: mirror of sound port??? (w)
-	* 0x8410-0x87ff: RAM???
+	* 0x8410-0x87ff: SRAM (r/w)
 	* 0x8800: VDP data read port (r)
 	* 0x8802: VDP status read port (r)
-	* 0x8810: memory mapper control register (read/write or write only?)
+	* 0x8810: memory mapper status and control registers (r/w)
 	* 0x8c00: VDP data write port (w)
 	* 0x8c02: VDP address and register write port (w)
 	* 0x9000: speech synthesizer read port (r)
@@ -85,18 +108,20 @@ memory map (TMS9901 P4 == 1?):
 	* 0x9c00 GPL data write port -- unused (w)
 	* 0x9c02 GPL address write port (w)
 
-memory map (TMS9901 P5 == 1?):
-	* 0xf840: data port for P-code grom library 0
-	* 0xf880: data port for P-code grom library 1
-	* 0xf8c0: data port for P-code grom library 2
-	* 0xf842: address port for P-code grom library 0
-	* 0xf882: address port for P-code grom library 1
-	* 0xf8c2: address port for P-code grom library 2
+memory map (TMS9901 P5 == 0):
+	* 0xf840: data port for P-code grom library 0 (r?)
+	* 0xf880: data port for P-code grom library 1 (r?)
+	* 0xf8c0: data port for P-code grom library 2 (r?)
+	* 0xf842: address port for P-code grom library 0 (r/w?)
+	* 0xf882: address port for P-code grom library 1 (r/w?)
+	* 0xf8c2: address port for P-code grom library 2 (r/w?)
 
 
-keyboard map:
-	P0-P3: column select
-	INT6*-INT11*: row inputs (int6* is only used for joystick fire)
+keyboard interface:
+	The keyboard interface uses the console tms9901 PSI, but the pin assignment
+	is different from both 99/4 and 99/4a.
+	- P0-P3: column select
+	- INT6*-INT11*: row inputs (int6* is only used for joystick fire)
 */
 
 #include "driver.h"
@@ -278,17 +303,17 @@ INPUT_PORTS_START(ti99_8)
 		PORT_BITX(0x07, IP_ACTIVE_LOW, IPT_UNUSED, DEF_STR( Unused ), IP_KEY_NONE, IP_JOY_NONE)
 
 	PORT_START    /* col 14: "wired handset 1" (= joystick 1) */
-		PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1/*, "(1UP)", IP_KEY_NONE, OSD_JOY_UP*/)
-		PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1/*, "(1DOWN)", IP_KEY_NONE, OSD_JOY_DOWN, 0*/)
-		PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1/*, "(1RIGHT)", IP_KEY_NONE, OSD_JOY_RIGHT, 0*/)
-		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1/*, "(1LEFT)", IP_KEY_NONE, OSD_JOY_LEFT, 0*/)
+		PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1/*, "(1DOWN)", IP_KEY_NONE, OSD_JOY_DOWN, 0*/)
+		PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1/*, "(1RIGHT)", IP_KEY_NONE, OSD_JOY_RIGHT, 0*/)
+		PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1/*, "(1LEFT)", IP_KEY_NONE, OSD_JOY_LEFT, 0*/)
+		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1/*, "(1UP)", IP_KEY_NONE, OSD_JOY_UP*/)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1/*, "(1FIRE)", IP_KEY_NONE, OSD_JOY_FIRE, 0*/)
 
 	PORT_START    /* col 15: "wired handset 2" (= joystick 2) */
-		PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
-		PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
-		PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
-		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2/*, "(2LEFT)", IP_KEY_NONE, OSD_JOY2_LEFT, 0*/)
+		PORT_BIT(0x0010, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2/*, "(2UP)", IP_KEY_NONE, OSD_JOY2_UP, 0*/)
+		PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2/*, "(2DOWN)", IP_KEY_NONE, OSD_JOY2_DOWN, 0*/)
+		PORT_BIT(0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2/*, "(2RIGHT)", IP_KEY_NONE, OSD_JOY2_RIGHT, 0*/)
+		PORT_BIT(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2/*, "(2LEFT)", IP_KEY_NONE, OSD_JOY2_LEFT, 0*/)
 		PORT_BIT(0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2/*, "(2FIRE)", IP_KEY_NONE, OSD_JOY2_FIRE, 0*/)
 
 INPUT_PORTS_END
@@ -303,6 +328,9 @@ static struct SN76496interface tms9919interface =
 	{ 75 }			/* Volume.  I don't know the best value. */
 };
 
+/*
+	TMS5220 speech synthesizer
+*/
 static struct TMS5220interface tms5220interface =
 {
 	680000L,					/* 640kHz -> 8kHz output */

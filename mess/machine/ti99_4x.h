@@ -36,11 +36,11 @@ enum
 
 enum
 {
-	offset_rom0_8 = 0x0000,			/*  system ROM (32kbytes???) */
-
-	offset_sram_8 = 0x8000,			/* scratch RAM (2kbytes) */
-	offset_xram_8 = 0x8800,			/* extended RAM (64kbytes, expandable to almost 16MBytes) */
-	region_cpu1_len_8 = 0x18800		/* total len */
+	offset_rom0_8 = 0x0000,			/*  system ROM (32kbytes, though hexbus DSR and pascal are missing) */
+	offset_cart_8 = 0x8000,			/* cartridge ROM/RAM (2*8 kbytes) */
+	offset_sram_8 = 0xc000,			/* scratch RAM (2kbytes) */
+	offset_xram_8 = 0xc800,			/* extended RAM (64kbytes, expandable to almost 16MBytes) */
+	region_cpu1_len_8 = 0x1c800		/* total len */
 };
 
 /* offsets for region_dsr */
