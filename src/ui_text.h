@@ -115,9 +115,9 @@ enum
 	UI_unmount,
 	UI_emptyslot,
 	UI_quitfileselector,
-	UI_filespecification,
-	UI_cartridge,
-	UI_floppydisk,
+	UI_filespecification,	/* IMPORTANT: be careful to ensure that the following */
+	UI_cartridge,		/* device list matches the order found in device.h    */
+	UI_floppydisk,		/* and is ALWAYS placed after UI_filespecification    */
 	UI_harddisk,
 	UI_cylinder,
 	UI_cassette,

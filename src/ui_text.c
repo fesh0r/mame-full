@@ -149,9 +149,9 @@ const char * default_text[] =
 	"Unmount",
 	"[empty slot]",
 	"Quit Fileselector",
-	"File Specification",
-	"Cartridge",
-	"Floppy Disk",
+	"File Specification",	/* IMPORTANT: be careful to ensure that the following */
+	"Cartridge",		/* device list matches the order found in device.h    */
+	"Floppy Disk",		/* and is ALWAYS placed after "File Specification"    */
 	"Hard Disk",
 	"Cylinder",
 	"Cassette",
