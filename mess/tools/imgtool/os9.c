@@ -630,11 +630,11 @@ static imgtoolerr_t os9_diskimage_open(imgtool_image *image)
 	info->bootstrap_size			= pick_integer(header,  24, 2);
 	info->sector_size				= pick_integer(header, 104, 2);
 
-	info->sides					= (attributes & 0x01) ? 2 : 1;
-	info->double_density		= (attributes & 0x02) ? 1 : 0;
-	info->double_track			= (attributes & 0x04) ? 1 : 0;
-	info->quad_track_density	= (attributes & 0x08) ? 1 : 0;
-	info->octal_track_density	= (attributes & 0x10) ? 1 : 0;
+	info->sides					= (info->format_flags & 0x01) ? 2 : 1;
+	info->double_density		= (info->format_flags & 0x02) ? 1 : 0;
+	info->double_track			= (info->format_flags & 0x04) ? 1 : 0;
+	info->quad_track_density	= (info->format_flags & 0x08) ? 1 : 0;
+	info->octal_track_density	= (info->format_flags & 0x10) ? 1 : 0;
 
 	pick_string(header, 31, 32, info->name);
 
