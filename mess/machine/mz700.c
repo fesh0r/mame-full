@@ -22,6 +22,8 @@
 #define LOG(N,M,A)
 #endif
 
+typedef UINT32 data_t;
+
 static void *ne556_timer[2] = {NULL,};	  /* NE556 timer */
 static UINT8 ne556_out[2] = {0,};		/* NE556 current output status */
 
@@ -40,6 +42,9 @@ static ppi8255_interface ppi8255 = {
 	pio_port_a_r, pio_port_b_r, pio_port_c_r,
 	pio_port_a_w, pio_port_b_w, pio_port_c_w
 };
+
+static int pio_port_a_output;
+static int pio_port_c_output;
 
 static void pit_clk_0(double clock);
 static void pit_clk_1(double clock);
@@ -124,7 +129,7 @@ static void pit_clk_1(double clockout)
 static void pit_irq_2(int which)
 {
 	/* INTMSK: interrupt enabled? */
-    if (ppi8255_peek(0,2) & 0x04)
+    if (pio_port_c_output & 0x04)
 		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
@@ -132,9 +137,9 @@ static void pit_irq_2(int which)
 
 static int pio_port_a_r (int chip)
 {
-    data8_t data = ppi8255_peek(0, 0);
+	data8_t data = pio_port_a_output;
 	LOG(2,"mz700_pio_port_a_r",("%02X\n", data));
-    return data;
+	return data;
 }
 
 /* read keyboard row - indexed by a demux LS145 which is connected to PA0-3 */
@@ -145,8 +150,8 @@ static int pio_port_b_r (int chip)
 	if( setup_active() || onscrd_active() )
 		return data;
 
-    demux_LS145 = ppi8255_peek(0, 0) & 15;
-    chip = readinputport(1 + demux_LS145);
+    demux_LS145 = pio_port_a_output & 15;
+    data = readinputport(1 + demux_LS145);
 	LOG(2,"mz700_pio_port_b_r",("%02X\n", data));
 
     return data;
@@ -154,7 +159,7 @@ static int pio_port_b_r (int chip)
 
 static int pio_port_c_r (int chip)
 {
-    data8_t data = ppi8255_peek(0, 2) & 0x0f;
+    data8_t data = pio_port_c_output & 0x0f;
 
     /*
      * bit 7 in     vertical blank
@@ -181,6 +186,7 @@ static int pio_port_c_r (int chip)
 static void pio_port_a_w (int chip, int data)
 {
 	LOG(2,"mz700_pio_port_a_w",("%02X\n", data));
+	pio_port_a_output = data;
 }
 
 static void pio_port_b_w (int chip, int data)
@@ -210,6 +216,7 @@ static void pio_port_c_w (int chip, int data)
      * bit 0 out    unused
      */
 	LOG(2,"mz700_pio_port_c_w",("%02X\n", data));
+	pio_port_c_output = data;
 
 	mz700_motor_ff = (data & 0x08) ? 1 : 0;
 	device_status(IO_CASSETTE, 0, mz700_motor_ff & mz700_motor_on);
