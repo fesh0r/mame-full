@@ -149,7 +149,7 @@ TESTDRIVER (vboy)		/* Nintendo Virtual Boy                           */
 TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k					  */
     DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
-TESTDRIVER( mac2 )		/* 1987 Apple Macintosh II
+TESTDRIVER( mac2 )		/* 1987 Apple Macintosh II						  */
 	DRIVER( lisa2 )
 
 	/* ATARI */
