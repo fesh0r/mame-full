@@ -18,13 +18,11 @@
 
 #include "driver.h"
 #include "sndhrdw/dave.h"
-#include "machine/enterp.h"
-#include "vidhrdw/enterp.h"
+#include "includes/enterp.h"
 #include "vidhrdw/epnick.h"
-#include "machine/wd179x.h"
+#include "includes/wd179x.h"
 #include "cpuintrf.h"
-
-extern const char *ep128_flop_specified[4];
+#include "includes/basicdsk.h"
 
 /* there are 64us per line, although in reality
    about 50 are visible. */
@@ -178,6 +176,7 @@ DAVE_INTERFACE	enterprise_dave_interface=
 };
 
 
+static void enterp_wd177x_callback(int);
 
 void Enterprise_Initialise()
 {
@@ -242,7 +241,13 @@ void Enterprise_Initialise()
 
         cpu_irq_line_vector_w(0,0,0x0ff);
 
-	wd179x_init(1);
+        floppy_drives_init();
+        wd179x_init(enterp_wd177x_callback);
+
+        floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+        floppy_drive_set_flag_state(0, FLOPPY_DRIVE_PRESENT,1);
+
+
 }
 
 
@@ -353,7 +358,7 @@ int EXDOS_GetDriveSelection(int data)
 
 static char EXDOS_CARD_R = 0;
 
-static void wd177x_callback(int State)
+static void enterp_wd177x_callback(int State)
 {
    if (State==WD179X_IRQ_CLR)
    {
@@ -385,11 +390,8 @@ static WRITE_HANDLER ( exdos_card_w )
 
 	int drive = EXDOS_GetDriveSelection(data);
 
-	if (ep128_flop_specified[drive])
-	{
-		wd179x_select_drive(drive, head, wd177x_callback,device_filename(IO_FLOPPY,drive));
-		wd179x_set_geometry(drive, 80, 2,9,512, 10,3, 1);
-	}
+	wd179x_set_drive(drive);
+	wd179x_set_side(head);
 }
 
 /* bit 0 - ??
@@ -673,14 +675,14 @@ static const struct IODevice io_ep128[] = {
 		IO_FLOPPY,			/* type */
 		4,					/* count */
 		"dsk\0",            /* file extensions */
-		IO_RESET_NONE,		/* reset if file changed */
-        NULL,               /* id */
-		enterprise_floppy_init,/* init */
-		NULL,				/* exit */
+		NULL,               /* private */
+                basicdsk_floppy_id,                         /* id */
+                enterprise_floppy_init,/* init */
+                basicdsk_floppy_exit,                               /* exit */
 		NULL,				/* info */
 		NULL,				/* open */
 		NULL,				/* close */
-		NULL,				/* status */
+                floppy_status,                           /* status */
 		NULL,				/* seek */
 		NULL,				/* tell */
         NULL,               /* input */

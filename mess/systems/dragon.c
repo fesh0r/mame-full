@@ -8,6 +8,7 @@
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "includes/dragon.h"
+#include "includes/basicdsk.h"
 
 static struct MemoryReadAddress dragon32_readmem[] =
 {
@@ -688,9 +689,9 @@ ROM_END
 		4,\
 		"dsk\0",\
 		IO_RESET_NONE,\
-        NULL,\
-		coco_floppy_init,\
-		coco_floppy_exit,\
+        basicdsk_floppy_id,\
+                dragon_floppy_init,\
+                basicdsk_floppy_exit,\
         NULL,\
         NULL,\
         NULL,\
