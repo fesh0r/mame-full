@@ -622,7 +622,7 @@ static void cia6526_write (CIA6526 *This, int offset, int data)
 		if (data & 0x80)
 		{
 			This->ier |= data;
-			cia_set_interrupt (This, data & 0x1f);
+			cia_set_interrupt (This, 0);
 		}
 		else
 		{

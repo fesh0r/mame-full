@@ -429,6 +429,7 @@ WRITE_HANDLER ( vic2_port_w )
 		break;
 	case 0x1a:						   /* irq mask */
 		vic2.reg[offset] = data;
+		vic2_set_interrupt(0); //beamrider needs this
 		break;
 	case 0x11:
 		if (vic2.reg[offset] != data)
