@@ -60,9 +60,6 @@ data32_t *jaguar_dsp_ram;
 data32_t *jaguar_wave_rom;
 UINT8 cojag_is_r3000 = FALSE;
 
-data32_t *jaguar_cart_base;
-size_t jaguar_cart_size;
-
 
 
 /*************************************
@@ -77,6 +74,9 @@ static UINT8 eeprom_enable;
 
 static data32_t *rom_base;
 static size_t rom_size;
+
+static data32_t *cart_base;
+static size_t cart_size;
 
 
 static int jaguar_irq_callback(int level)
@@ -110,8 +110,9 @@ static MACHINE_INIT( jaguar )
 	cpu_setbank(12, jaguar_gpu_ram);
 	cpu_setbank(13, jaguar_dsp_ram);
 	cpu_setbank(14, jaguar_shared_ram);
-	cpu_setbank(15, jaguar_cart_base);
+	cpu_setbank(15, cart_base);
 	cpu_setbank(16, rom_base);
+	cpu_setbank(17, jaguar_gpu_ram);
 
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
@@ -440,6 +441,7 @@ static MEMORY_READ32_START( jaguar_readmem )
 	{ 0xf02100, 0xf021ff, gpuctrl_r },
 	{ 0xf02200, 0xf022ff, jaguar_blitter_r },
 	{ 0xf03000, 0xf03fff, MRA32_RAM },
+	{ 0xf0b000, 0xf0bfff, MRA32_BANK3 },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_r },
 	{ 0xf14000, 0xf14003, joystick_r },
 	{ 0xf16000, 0xf1600b, cojag_gun_input_r },
@@ -452,7 +454,7 @@ MEMORY_END
 static MEMORY_WRITE32_START( jaguar_writemem )
 	{ 0x000000, 0x1fffff, MWA32_RAM, &jaguar_shared_ram },
 	{ 0x200000, 0x3fffff, MWA32_BANK4 },		/* mirror */
-	{ 0x800000, 0xdfffff, MWA32_ROM, &jaguar_cart_base, &jaguar_cart_size },
+	{ 0x800000, 0xdfffff, MWA32_ROM, &cart_base, &cart_size },
 	{ 0xe00000, 0xe1ffff, MWA32_ROM, &rom_base, &rom_size },
 	{ 0xf00000, 0xf003ff, jaguar_tom_regs32_w },
 	{ 0xf00400, 0xf007ff, MWA32_RAM, &jaguar_gpu_clut },
@@ -486,6 +488,7 @@ static MEMORY_READ32_START( gpu_readmem )
 	{ 0xf02100, 0xf021ff, gpuctrl_r },
 	{ 0xf02200, 0xf022ff, jaguar_blitter_r },
 	{ 0xf03000, 0xf03fff, MRA32_BANK12 },
+	{ 0xf0b000, 0xf0bfff, MRA32_BANK17 },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_r },
 MEMORY_END
 
@@ -500,6 +503,7 @@ static MEMORY_WRITE32_START( gpu_writemem )
 	{ 0xf02100, 0xf021ff, gpuctrl_w },
 	{ 0xf02200, 0xf022ff, jaguar_blitter_w },
 	{ 0xf03000, 0xf03fff, MWA32_BANK12 },
+	{ 0xf0b000, 0xf0bfff, MWA32_BANK17 },
 	{ 0xf10000, 0xf103ff, jaguar_jerry_regs32_w },
 MEMORY_END
 

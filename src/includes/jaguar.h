@@ -23,11 +23,6 @@ extern data32_t *jaguar_gpu_clut;
 extern data32_t *jaguar_dsp_ram;
 extern data32_t *jaguar_wave_rom;
 
-#ifdef MESS
-extern data32_t *jaguar_cart_base;
-extern size_t jaguar_cart_size;
-#endif
-
 
 /*----------- defined in sndhrdw/jaguar.c -----------*/
 
