@@ -495,7 +495,7 @@ void    basicdsk_get_id_callback(int drive, chrn_id *id, int id_index, int side)
 	basicdsk *w = &basicdsk_drives[drive];
 
 	/* construct a id value */
-	id->C = w->track / w->track_divider;
+	id->C = w->track;
 	id->H = side;
 	id->R = w->first_sector_id + id_index;
     id->N = w->N;
@@ -528,14 +528,14 @@ void    basicdsk_seek_callback(int drive, int physical_track)
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	w->track = physical_track;
+	w->track = physical_track / w->track_divider;
 }
 
 void basicdsk_write_sector_data_from_buffer(int drive, int side, int index1, char *ptr, int length, int ddam)
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	if (basicdsk_seek(w, w->track / w->track_divider, side, index1)&&w->mode)
+	if (basicdsk_seek(w, w->track, side, index1)&&w->mode)
 	{
 		mame_fwrite(w->image_file, ptr, length);
 	}
@@ -547,7 +547,7 @@ void basicdsk_read_sector_data_into_buffer(int drive, int side, int index1, char
 {
 	basicdsk *w = &basicdsk_drives[drive];
 
-	if (basicdsk_seek(w, w->track / w->track_divider, side, index1))
+	if (basicdsk_seek(w, w->track, side, index1))
 	{
 		mame_fread(w->image_file, ptr, length);
 	}
