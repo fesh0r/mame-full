@@ -3478,6 +3478,7 @@ void CLIB_DECL usrintf_showmessage_secs(int seconds, const char *text,...)
 int handle_user_interface(struct osd_bitmap *bitmap)
 {
 	static int show_profiler;
+	static int mess_pause_for_ui = 0;
 	int request_loadsave = LOADSAVE_NONE;
 #ifdef MAME_DEBUG
 	static int show_total_colors;
@@ -3683,7 +3684,10 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		}
 	}
 
-	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
+	if (setup_selected)
+		mess_pause_for_ui = 1;
+
+	if (single_step || input_ui_pressed(IPT_UI_PAUSE) || mess_pause_for_ui) /* pause the game */
 	{
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
@@ -3740,6 +3744,12 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			if (messagecounter > 0) displaymessage(bitmap, messagetext);
 
 			update_video_and_audio();
+
+			if (!setup_selected && mess_pause_for_ui)
+			{
+				mess_pause_for_ui = 0;
+				break;
+			}
 		}
 
 		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
