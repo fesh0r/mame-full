@@ -71,8 +71,7 @@ READ_HANDLER ( nes_bogus_r )
 	return val;
 }
 
-static struct MemoryReadAddress readmem[] =
-{
+MEMORY_READ_START( readmem )
 	{ 0x0000, 0x07ff, MRA_RAM },				/* RAM */
 	{ 0x0800, 0x1fff, nes_mirrorram_r },		/* mirrors of RAM */
 	{ 0x2000, 0x3fff, nes_ppu_r },				/* PPU registers */
@@ -85,11 +84,9 @@ static struct MemoryReadAddress readmem[] =
 //	{ 0xa000, 0xbfff, MRA_BANK2 },
 //	{ 0xc000, 0xdfff, MRA_BANK3 },
 //	{ 0xe000, 0xffff, MRA_BANK4 },
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress writemem[] =
-{
+MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x07ff, MWA_RAM, &main_ram },
 	{ 0x0800, 0x1fff, nes_mirrorram_w },		/* mirrors of RAM */
 	{ 0x2000, 0x3fff, nes_ppu_w },				/* PPU registers */
@@ -99,8 +96,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4100, 0x5fff, nes_low_mapper_w },		/* Perform unholy acts on the machine */
 //	{ 0x6000, 0x7fff, nes_mid_mapper_w },		/* RAM (sometimes battery-backed) */
 //	{ 0x8000, 0xffff, nes_mapper_w },			/* Perform unholy acts on the machine */
-	{ -1 }	/* end of table */
-};
+MEMORY_END
 
 
 INPUT_PORTS_START( nes )
@@ -289,8 +285,7 @@ static struct GfxDecodeInfo nes_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &nes_charlayout, 	   0, 8 },
 	{ REGION_GFX2, 0x0000, &nes_vram_charlayout,   0, 8 },
-	{ -1 } /* end of array */
-};
+MEMORY_END	 /* end of array */
 
 
 static struct NESinterface nes_interface =
