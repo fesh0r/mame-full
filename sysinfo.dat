@@ -3199,6 +3199,58 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=geneve
+$bio
+Myarc Geneve 9640
+
+
+Known Issues:
+
+Wait states are not emulated (except for the speech synthesizer), so the Geneve
+will always run at full speed.
+
+My-word will display garbage at start-up, but it will run fine afterwards.
+
+
+Usage:
+
+This driver emulates a Geneve with (almost) 2Mbytes of RAM, 4 floppy drives,
+and a mouse.  No Hard Disk is emulated yet.
+
+You need an MDOS disk image to boot the Geneve.  Insert the image and run the
+computer.
+
+Preliminary tests have shown that emulation seems to have a good level of
+compatibility.
+
+
+History and Trivia:
+
+Myarc is known as the builder of several fine extension cards for the TI99.
+They managed to remain in business for several years after TI abandonned its
+TI99 series of computers in 1983, and, in 1987, they even introduced their
+Geneve 9640 computer.  The computer is a single card to be inserted in the TI
+PEB as a replacement of the TI99 console.  The card has standard connectors to
+attach a PC-XT keyboard and a monitor, but no other I/O ports, as the Geneve
+relies on expansion cards in the PEB to provide disk and RS232 interfaces.  The
+Geneve features a TMS9995 at 12MHz, a V9938 VDP, an SN76496 sound generator
+(compatible with TMS9919), a MM58274 RTC, 512 kbytes of 1-wait-state CPU RAM
+(expandable to almost 2 Mbytes), 32 kbytes of 0-wait-state CPU RAM (expandable
+to 64 kbytes), and 128 kbytes of VRAM.  Thanks to the GenMod modification, the
+512 kbytes of on-board RAM can be disabled so that 0-wait-state RAM may be used
+instead, but this breaks the TI99 emulation mode.
+
+Although the Geneve is compatible with the TI99, it is a different machine.  It
+has a disk-based Operating System that looks like MS-DOS.  It has two operating
+modes: a native mode, and a TI99-compatible mode.  The TI99 mode is normally
+entered by running the GPL program: the Geneve can run most TI99 programs in
+this mode, which uses some special areas of CPU RAM to emulate GROMs and
+cartridge ROMs.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=hp48s
 $bio
 Hewlett Packard HP48S/SX/G/GX
@@ -7455,8 +7507,8 @@ enabled by default.  Whilst in full keyboard emulation mode, some key
 associated functionality may be disabled (like the ESC key for EXIT).
 The keyboard emulation mode is toggled using the scroll_lock key.
 
-A TI99/4 is not a TI99/4a.  Most programs are compatible with both /4 and /4a,
-but some programs require a /4a.
+A TI-99/4 is not a TI-99/4a.  Most programs are compatible with both /4 and
+/4a, but some programs require a /4a.
 
 The BwG disk controller has display bug which causes it to change the character
 definitions for no appearent reason, but, out of this, it seems to work fine.
@@ -7465,7 +7517,7 @@ If this is an issue, you may revert to the TI disk controller.
 
 Usage:
 
-See the sysinfo entry for the ti99/4a driver.
+See the sysinfo entry for the ti-99/4a driver.
 
 The only extra feature is the IR remote handsets.  This feature was abandoned
 by TI at the last minute, but the support was seemingly not deleted from the
@@ -7473,7 +7525,7 @@ ti99/4 ROMs until the release of the ti99/4a.  This feature is disabled by
 default because some programs are incompatible with it, but it can be enabled
 by setting the IR remote handsets dip-switch on and resetting the emulator
 (press F3 in so-called partial keyboard emulation mode to reset the emulator).
-A few programs can use the improved joystick (TI-Invaders seems to be one of
+A few programs can use the improved joysticks (TI-Invaders seems to be one of
 them).
 
 
@@ -7538,14 +7590,18 @@ The keyboard emulation mode is toggled using the scroll_lock key.
 Usage:
 
 
-This TI99/4a driver offers a high level of compatibility, and implements
+This TI-99/4a driver offers a high level of compatibility, and implements
 several optional extensions:
 
 
 * Image cartridges are in V9t9 format (see below for instructions).
 
 
-* Speech synthesis is emulated completely.
+* Speech synthesis is emulated completely.  The speech synthesizer occasionally
+generates some weird noises instead of the expected phonemes.  I think the
+actual reason for this issue is the original ti-99/4(a) speech synthesizer did
+not use the tms5220 chip that is used under emulation: I think I have read
+somewhere that TI 99/8, which did use a tms5220, was affected by similar bugs.
 
 
 * Three types of memory expansion cards are emulated: the original TI 32kbyte
@@ -7555,11 +7611,13 @@ card, and the Super AMS card, and the Foundation card.
 * Any of three different floppy disk controllers can be emulated: TI's original
 SD disk controller, SNUG's BwG disk controller, and Myarc's HFDC disk
 controller.  Note that neither the hard disk nor tape interface of the HFDC
-card are emulated.  These hard disks have different abilities: TI's controller
-only supports single density disks with 9 sectors per track 40 tracks per
-sides; the BwG controller supports double density, and it uses no VDP RAM at
-all; the HFDC controller supports 80-track disks as well (high density support
-is incomplete and non-functional).  Three floppy disk drives are emulated.
+card are emulated.  These disk controllers have different abilities: TI's
+controller only supports single density disks with 9 sectors per track and 40
+tracks per sides; the BwG controller supports double density, and it uses no
+VDP RAM at all; the HFDC controller supports 80-track disks as well (high
+density support is incomplete and non-functional because of TI99 bugs).  Four
+floppy disk drives are emulated, but the TI controller only supports three of
+them (the fourth disk drive will be ignored if the TI controller is selected).
 Floppy disk images are in a MESS-specific format that is compatible with
 single-sided V9T9 disk images (but not double-sided ones).
 
@@ -7583,9 +7641,23 @@ enables you to redirect PIO output to a file and save listings to this file by
 "printing" them to PIO.
 
 
+* SNUG's HSGPL support is incomplete, but you can already play with it if you
+want to.  You will need the HSGPL DSR (and probably the software manual, too)
+from the SNUG web site to do anything useful.  The FEEPROM is saved to a file
+called "hsgpl.mem", in the memcard folder.  Its format is relatively simple:
+byte 0 is always 0, and the rest of the file is made of four similar sections
+for each Flash EEPROM (DSR, GROM0, GROM1, and ROM6); the first byte of each
+section is 0, the second should be 1, and the next 512kbytes is the raw FEEPROM
+data.   The DSR and system GROM0 needs to be loaded into the FEEPROM: to do so,
+you can use a hex editor to create a hsgpl.mem file in correct format.
+Afterwards, you may write extra GROM using the HSGPL DSR.  Note that Supercart
+and MBX paging are not emulated correctly, and there must be other issues.
+
+
 * The tape interface is emulated.  The CS1 unit is read/write, whereas CS2 is
-read-only.   Tapes are stored as sampled wave files.  You may find that the emulated tape
-interface is a relatively simple way to exchnage files with real-world TI99s.
+write-only.   Tapes are stored as sampled wave files.  You may find that the
+emulated tape interface is a relatively simple way to exchange files with
+real-world TI99s.
 
 
 
@@ -7603,6 +7675,29 @@ file instead.  These files can be loaded in any order, as long as all necessary
 files are loaded.
 
 
+The following file name extensions are recognized for cartridges dumps:
+
+* "g.bin", ".grom" or ".g": GROM dump
+
+* "c.bin", ".crom" or ".c": CPU ROM dump
+
+* "d.bin", ".drom" or ".d": CPU ROM dump for second page (pages cartridges
+	only), to be loaded alongside a CPU ROM dump
+
+The following two types are supported as alternatives to the CPU ROM type
+(these extensions are only found in MESS, not V9T9):
+
+* "m.bin", ".mrom" or ".m": minimemory CPU ROM dump; similar to CPU ROM dump,
+	but the address range >7000->7fff is set up as RAM (paging is not
+	supporting); unfortunately, there is no way you can save the contents of
+	minimemory to disk
+
+* "b.bin", ".brom" or ".b": MBX CPU ROM dump; similar to CPU ROM dump, but the
+	address range >6c00->6ffd is set up as RAM, and the paging scheme is
+	different; unfortunately, I do not have any correct dump of a MBX cart to
+	test emulation with
+
+
 
 Setting up the system configuration:
 
@@ -7617,7 +7712,7 @@ into account.
 History and Trivia:
 
 
-The TI99/4a Home Computer was a TI99/4 with improved keyboard, revised
+The TI-99/4a Home Computer was a TI-99/4 with improved keyboard, revised
 ROMs, and an additional graphics mode.  It was officially introduced in
 June 1981, and was retired in late 1983.
 
@@ -7644,22 +7739,27 @@ See the TI99/4a driver for non-EVPC information.
 Known Issues:
 
 EVPC emulation is not complete.  The palette chip is not emulated.
-Also, TI BASIC will not run under this driver, though it might be normal
-(I know there are some bugs in the TI's system ROMs which prevent them
-from running with a v9938).
+The computer may crash on soft reset, though I have no idea why.
 
 
 History and Trivia:
 
 A common hack on the ti99/4a is replacing the old tms9918/9928/9929a with
-a higher-end, upward-compatible v9938. This enhanced vdp supports true 16-
+an improved, upward-compatible v9938.  This enhanced vdp supports true 16-
 and 256-color graphic modes, high-res 512*192 graphic and 80-column text
-modes, accelerated 2D graphics, etc. The only drawback is that some programs
-(including TI's system ROMs) will not run with the v9938.
+modes, accelerated 2D graphics, etc.  The only drawback is that some programs
+(including TI's own TI BASIC) will not run with the v9938.  Also, only
+specially designed programs can take advantage of the improved graphic modes.
 
 The EVPC card does just that: it includes a v9938 with 128kb of VRAM, 64kb of
 extended RAM, an additional palette chip to program the palette in 256-color
 mode, and a DSR ROM with various useful subroutines.
+
+Also, this driver uses a hacked TI BASIC GROM so that TI BASIC will work
+normally with the v9938.  Only two bytes were modified to derive file
+"994agr38.bin" from file "994agrom.bin": the bytes >F0 >0C >F8 at offset >216C
+of the file were changed to >00 >0C >00.  (This fix was contributed by Tony
+Knerr, but I have no idea who invented it first.)
 
 
 $end
