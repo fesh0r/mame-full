@@ -836,6 +836,7 @@ DRIVER_INIT ( mato )
 
 MACHINE_INIT( pmd85 )
 {
+	/* checking for Rom Module */
 	switch (pmd85_model)
 	{
 		case PMD85_1:
@@ -847,11 +848,23 @@ MACHINE_INIT( pmd85 )
 		case MATO:
 			break;
 	}
-	
-	memset(mess_ram, 0, sizeof(unsigned char)*0xffff);
+
+	/* memory initialization */
+	memset(mess_ram, 0, sizeof(unsigned char)*0x10000);
 	pmd85_startup_mem_map = 1;
 	pmd85_update_memory();
 
-	msm8251_reset();
-	pit8253_reset(0);
+	/* io devices initialization */
+	switch (pmd85_model)
+	{
+		case PMD85_1:
+		case PMD85_2A:
+		case PMD85_3:
+		case ALFA:
+			msm8251_reset();
+			pit8253_reset(0);
+			break;
+		case MATO:
+			break;
+	}
 }

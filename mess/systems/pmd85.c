@@ -5,6 +5,7 @@ PMD-85 driver by Krzysztof Strzecha
 What's new:
 -----------
 
+27.06.2004	Mato crash fixed.
 21.05.2004	V.24 / Tape switch added. V.24 is not emulated.
 25.04.2004	PMD-85.1 tape emulation with support for .pmd format files added.
 19.04.2004	Verified PMD-85.1 and PMD-85.2 monitor roms and replaced with
