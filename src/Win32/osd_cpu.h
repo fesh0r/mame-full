@@ -106,6 +106,7 @@ typedef union {
 #ifdef MESS
 #define HAS_Z80         1
 #define HAS_Z80GB       1
+#define HAS_CDP1802 	1
 #define HAS_8080        0
 #define HAS_8085A       0
 #define HAS_M6502       1
@@ -176,6 +177,7 @@ typedef union {
 #else
 #define HAS_Z80         1
 #define HAS_Z80GB       0
+#define HAS_CDP1802 	0
 #define HAS_8080        1
 #define HAS_8085A       1
 #define HAS_M6502       1
