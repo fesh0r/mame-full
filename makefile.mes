@@ -143,7 +143,7 @@ EMULATORALL = $(EMULATORCLI)
 
 endif
 
-CFLAGS_BASE = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
+CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/$(MAMEOS) \
 	-Isrc -Isrc/includes -Isrc/expat -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 -Isrc/xml2info
 
 ifdef SYMBOLS
@@ -155,7 +155,7 @@ CFLAGS += -DNDEBUG \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
-	-Wdisabled-optimization \
+	-Wdisabled-optimization -Wswitch \
 #	-Wredundant-decls
 #	-Wfloat-equal
 #	-Wunreachable-code -Wpadded
@@ -167,8 +167,6 @@ CFLAGS += -DNDEBUG \
 #	-Wmissing-prototypes \
 #	-Wmissing-declarations
 endif
-
-CFLAGS = $(CFLAGS_BASE) $(CFLAGS_WARNINGS)
 
 # the windows osd code at least cannot be compiled with -pedantic
 CFLAGSPEDANTIC = $(CFLAGS) -pedantic

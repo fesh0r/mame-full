@@ -632,6 +632,9 @@ int mess_validitychecks(void)
 						error = 1;
 					}
 					break;
+					
+				default:
+					break;
 			}
 		}
 

@@ -103,9 +103,8 @@ static void DevView_GetColumns(HWND hwndDevView, int *pnStaticPos, int *pnStatic
 static void DevView_SpecifyDevPaths(HWND hwndDevView)
 {
 	struct DevViewInfo *pDevViewInfo;
-	int i, j, nLength;
-	LPCTSTR pszSelection, s;
-	LPTSTR pszNewString;
+	int i;
+	LPCTSTR pszSelection;
 	TCHAR szBuffer[MAX_PATH];
 
 	pDevViewInfo = GetDevViewInfo(hwndDevView);
@@ -156,8 +155,10 @@ static LRESULT CALLBACK DevView_EditWndProc(HWND hwndEdit, UINT nMessage, WPARAM
 	struct DevViewEntry *pEnt;
 	LRESULT rc;
 	HWND hwndDevView;
+	LONG_PTR l;
 
-	pEnt = (struct DevViewEntry *) GetWindowLongPtr(hwndEdit, GWLP_USERDATA);
+	l = GetWindowLongPtr(hwndEdit, GWLP_USERDATA);
+	pEnt = (struct DevViewEntry *) l;
 	if (IsWindowUnicode(hwndEdit))
 		rc = CallWindowProcW(pEnt->pfnEditWndProc, hwndEdit, nMessage, wParam, lParam);
 	else
@@ -189,6 +190,7 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 	LPCTSTR s;
 	SIZE sz;
 	char buf[128];
+	LONG_PTR l;
 
 	pDevViewInfo = GetDevViewInfo(hwndDevView);
 
@@ -274,7 +276,9 @@ BOOL DevView_SetDriver(HWND hwndDevView, int nGame)
 				if (pEnt->hwndEdit)
 				{
 					SendMessage(pEnt->hwndEdit, WM_SETFONT, (WPARAM) pDevViewInfo->hFont, TRUE);
-					pEnt->pfnEditWndProc = (WNDPROC) SetWindowLongPtr(pEnt->hwndEdit, GWLP_WNDPROC, (LONG_PTR) DevView_EditWndProc);
+					l = (LONG_PTR) DevView_EditWndProc;
+					l = SetWindowLongPtr(pEnt->hwndEdit, GWLP_WNDPROC, l);
+					pEnt->pfnEditWndProc = (WNDPROC) l;
 					SetWindowLongPtr(pEnt->hwndEdit, GWLP_USERDATA, (LONG_PTR) pEnt);
 				}
 				if (pEnt->hwndBrowseButton)

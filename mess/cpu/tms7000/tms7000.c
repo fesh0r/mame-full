@@ -221,8 +221,6 @@ static void tms7000_init(void)
 
 static void tms7000_reset(void *param)
 {
-	int cpu = cpu_getactivecpu();
-
 //	tms7000.architecture = (int)param;
         
 	/*memory_install_read8_handler(cpu, ADDRESS_SPACE_PROGRAM, 0x0000, 0x007f, 0x0000, 0x0000, tms7000_internal_r);
@@ -591,9 +589,6 @@ void tms7000_A6EC1( void )
 
 static void tms7000_service_timer1( void )
 {
-	static int	tick;
-	static int	tick2;
-	
     if( --tms7000.t1_prescaler < 0 ) /* Decrement prescaler and check for underflow */
     {
         tms7000.t1_prescaler = tms7000.pf[3] & 0x1f; /* Reload prescaler (5 bit) */

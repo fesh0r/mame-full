@@ -156,8 +156,6 @@ int artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	char ipt_name[64];
 	char *p;
 	int x1, y1, x2, y2;
-	struct ik *pik;
-	const char *pik_name;
 	const char *png_filename;
 	const char *ini_filename;
 	int enabled = TRUE;

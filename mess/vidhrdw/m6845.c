@@ -258,7 +258,7 @@ void crtc6845_register_w(int offset, int data)
 
 int crtc6845_register_r(int offset)
 {
-	int retval=0;
+	int retval;
 
 	switch (crtc.address_register)
 	{
@@ -272,6 +272,10 @@ int crtc6845_register_r(int offset)
 					/* not sure about M6845_PERSONALITY_PREASIC */
 					retval=R12_screen_start_address_H;
 					break;
+					
+				default:
+					retval = 0;
+					break;
 			}
 			break;
 		case 13:
@@ -283,6 +287,10 @@ int crtc6845_register_r(int offset)
 				case M6845_PERSONALITY_PREASIC:
 					/* not sure about M6845_PERSONALITY_PREASIC */
 					retval=R13_screen_start_address_L;
+					break;
+					
+				default:
+					retval = 0;
 					break;
 			}
 			break;
@@ -299,6 +307,7 @@ int crtc6845_register_r(int offset)
 			retval=R17_light_pen_address_L;
 			break;
 		default:
+			retval = 0;
 			break;
 	}
 	return retval;

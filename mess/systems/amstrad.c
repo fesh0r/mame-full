@@ -601,6 +601,8 @@ static READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 			case M6845_PERSONALITY_PREASIC:
 				data = crtc6845_register_r(0);
 				break;
+			default:
+				break;
 			}
 			break;
 		case 0x03:

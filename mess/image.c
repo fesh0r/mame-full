@@ -119,8 +119,7 @@ static int image_load_internal(mess_image *img, const char *name, int is_create,
 	mame_file *file = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
-	int i, readable, writeable, creatable;
-	int open_mode;
+	int readable, writeable, creatable;
 
 	/* unload if we are loaded */
 	if (img->status & IMAGE_STATUS_ISLOADED)

@@ -8,13 +8,13 @@
 
 #include <time.h>
 
-#include "rc.h"
 #include "messtest.h"
 #include "hashfile.h"
 
 #ifdef WIN32
-#include "glob.h"
-#include "parallel.h"
+#include "windows/rc.h"
+#include "windows/glob.h"
+#include "windows/parallel.h"
 #endif /* WIN32 */
 
 extern struct rc_option fileio_opts[];

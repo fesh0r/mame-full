@@ -21,6 +21,8 @@ extern "C" {
  * c128
  * c65*/
 
+void cbmcartslot_device_getinfo(struct IODevice *dev);
+
 /**************************************************************************
  * Logging
  * call the XXX_LOG with XXX_LOG("info",(errorlog,"%fmt\n",args));

@@ -339,14 +339,7 @@ static BOOL AddSoftwarePickerDirs(HWND hwndPicker, LPCTSTR pszDirectories, LPCTS
 
 static void MyFillSoftwareList(int nGame, BOOL bForce)
 {
-	int i;
 	const struct GameDriver *drv;
-	const char *software_dirs;
-	const char *extra_path;
-	char *paths;
-	int software_dirs_length;
-	int path_count;
-	LPCSTR *pathsv;
 	HWND hwndSoftwarePicker;
 	HWND hwndSoftwareDevView;
 	
@@ -383,7 +376,6 @@ static void MessUpdateSoftwareList(void)
 
 static BOOL MessApproveImageList(HWND hParent, int nGame)
 {
-	int devtype;
 	int i;
 	int nCount;
 	const struct IODevice *pDevice;
@@ -479,7 +471,7 @@ static void MessSpecifyImage(int nGame, const struct IODevice *dev, int nID, LPC
 	LPCSTR pszSelection;
 	LPSTR pszSelectionCopy, pszNewSelection;
 	LPCSTR *ppszNewSelections;
-	LPSTR s, s2;
+	LPSTR s;
 	int i, nLength;
 	int nSelectionCount, nNewSelectionCount;
 
@@ -560,9 +552,10 @@ static void MessSpecifyImage(int nGame, const struct IODevice *dev, int nID, LPC
 static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFilename)
 {
 	LPCTSTR pszSelection;
-	int i, nLength;
+	int i;
 	LPTSTR s;
 	LPTSTR pszMySelection;
+	TCHAR szNull[1] = { '\0' };
 
 	assert(dev);
 	assert(pszFilename);
@@ -583,7 +576,7 @@ static void MessRemoveImage(int nGame, const struct IODevice *dev, LPCTSTR pszFi
 			MessSpecifyImage(nGame, dev, i, NULL);
 			break;
 		}
-		pszMySelection = s ? s + 1 : TEXT("");
+		pszMySelection = s ? s + 1 : szNull;
 	}
 }
 
@@ -705,15 +698,13 @@ static void InitMessPicker(void)
 
 static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const struct GameDriver *pDriver)
 {
-	int i, imgtype;
-	const char *optname;
-	const char *software;
 	const struct IODevice *pDevice;
 	int nGame;
 	LPCTSTR pszSoftware;
 	LPCTSTR pszOptionName;
 	LPTSTR pszMySoftware;
 	LPTSTR s;
+	TCHAR szNull[1] = { '\0' };
 
 	begin_resource_tracking();
 	nGame = Picker_GetSelectedItem(hwndList);
@@ -739,7 +730,7 @@ static void MessCreateCommandLine(char *pCmdLine, options_type *pOpts, const str
 				pszOptionName,
 				pszMySoftware);
 
-			pszMySoftware = s ? s + 1 : TEXT("");
+			pszMySoftware = s ? s + 1 : szNull;
 		}
 		pDevice++;
 	}
@@ -1086,9 +1077,8 @@ static void SoftwarePicker_EnteringItem(HWND hwndSoftwarePicker, int nItem)
 {
 	LPCTSTR pszFullName;
 	LPCTSTR pszName;
-	LPCTSTR pszSoftware;
 	LPTSTR s;
-	int nGame, i;
+	int nGame;
 	const struct IODevice *pDevice;
 
 	nGame = Picker_GetSelectedItem(hwndList);

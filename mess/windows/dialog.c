@@ -950,8 +950,10 @@ static INT_PTR CALLBACK adjuster_sb_wndproc(HWND sbwnd, UINT msg, WPARAM wparam,
 	TCHAR buf[64];
 	HWND dlgwnd, editwnd;
 	int value, id;
-
-	stuff = (struct adjuster_sb_stuff *) GetWindowLongPtr(sbwnd, GWLP_USERDATA);
+	LONG_PTR l;
+	
+	l = GetWindowLongPtr(sbwnd, GWLP_USERDATA);
+	stuff = (struct adjuster_sb_stuff *) l;
 
 	if (msg == WM_VSCROLL)
 	{
@@ -998,6 +1000,7 @@ static INT_PTR CALLBACK adjuster_sb_wndproc(HWND sbwnd, UINT msg, WPARAM wparam,
 static LRESULT adjuster_sb_setup(dialog_box *dialog, HWND sbwnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	struct adjuster_sb_stuff *stuff;
+	LONG_PTR l;
 
 	stuff = (struct adjuster_sb_stuff *) win_dialog_malloc(dialog, sizeof(struct adjuster_sb_stuff));
 	if (!stuff)
@@ -1005,8 +1008,11 @@ static LRESULT adjuster_sb_setup(dialog_box *dialog, HWND sbwnd, UINT message, W
 	stuff->min_value = (WORD) (lparam >> 0);
 	stuff->max_value = (WORD) (lparam >> 16);
 
-	SetWindowLongPtr(sbwnd, GWLP_USERDATA, (LONG_PTR) stuff);
-	stuff->oldwndproc = (WNDPROC) SetWindowLongPtr(sbwnd, GWLP_WNDPROC, (LONG_PTR) adjuster_sb_wndproc);
+	l = (LONG_PTR) stuff;
+	SetWindowLongPtr(sbwnd, GWLP_USERDATA, l);
+	l = (LONG_PTR) adjuster_sb_wndproc;
+	l = SetWindowLongPtr(sbwnd, GWLP_WNDPROC, l);
+	stuff->oldwndproc = (WNDPROC) l;
 	return 0;
 }
 
@@ -1149,11 +1155,7 @@ static void seqselect_settext(HWND editwnd)
 static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
 	struct seqselect_stuff *stuff;
-	INT_PTR result;
-	int dlgitem;
-	HWND dlgwnd;
-	HWND dlgitemwnd;
-	input_code_t code;
+	INT_PTR result = 0;
 	LONG_PTR lp;
 	BOOL call_baseclass = TRUE;
 	int ret;

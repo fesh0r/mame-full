@@ -74,7 +74,6 @@ static const TCHAR s_szSoftwarePickerProp[] = TEXT("SWPICKER");
 
 static ZIP *OpenZipFile(LPCTSTR pszFilename)
 {
-	LPCSTR s = T2A(pszFilename);
 	return openzip(FILETYPE_IMAGE, 0, pszFilename); 
 }
 
@@ -362,8 +361,6 @@ static BOOL SoftwarePicker_AddFileEntry(HWND hwndPicker, LPCTSTR pszFilename,
 	struct SoftwarePickerInfo *pPickerInfo;
 	struct FileInfo **ppNewIndex;
 	struct FileInfo *pInfo;
-	BOOL bSuccess = FALSE;
-	LVITEM lvi;
 	int nIndex, nSize;
 	LPCSTR pszExtension, s;
 	const struct IODevice *pDevice = NULL;
@@ -799,7 +796,8 @@ static LRESULT CALLBACK SoftwarePicker_WndProc(HWND hwndPicker, UINT nMessage,
 
 BOOL SetupSoftwarePicker(HWND hwndPicker, const struct PickerOptions *pOptions)
 {
-	struct SoftwarePickerInfo *pPickerInfo;
+	struct SoftwarePickerInfo *pPickerInfo = NULL;
+	LONG_PTR l;
 
 	if (!SetupPicker(hwndPicker, pOptions))
 		goto error;
@@ -812,8 +810,9 @@ BOOL SetupSoftwarePicker(HWND hwndPicker, const struct PickerOptions *pOptions)
 	if (!SetProp(hwndPicker, s_szSoftwarePickerProp, (HANDLE) pPickerInfo))
 		goto error;
 	
-	pPickerInfo->pfnOldWndProc = (WNDPROC) SetWindowLongPtr(hwndPicker,
-		GWLP_WNDPROC, (LONG_PTR) SoftwarePicker_WndProc);
+	l = (LONG_PTR) SoftwarePicker_WndProc;
+	l = SetWindowLongPtr(hwndPicker, GWLP_WNDPROC, l);
+	pPickerInfo->pfnOldWndProc = (WNDPROC) l;
 	return TRUE;
 
 error:

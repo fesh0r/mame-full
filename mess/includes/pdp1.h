@@ -242,5 +242,5 @@ enum
 	pen_lightpen_pressed = pen_green
 };
 
-int pdp1_get_open_mode(const struct IODevice *dev, int id,
+void pdp1_get_open_mode(const struct IODevice *dev, int id,
 	unsigned int *readable, unsigned int *writeable, unsigned int *creatable);
