@@ -1785,12 +1785,13 @@ static DRIVER_INIT( maya )
 		rom[4] = temp[2];	rom[5] = temp[6];	rom[6] = temp[3];	rom[7] = temp[7];
 	}
 
-	/* Address lines scrambling on the blitter data roms */
-	data8_t	*gfx = memory_region(REGION_GFX1);
-	rom = memory_region(REGION_USER1);
-	int i;
-	for (i = 0; i < 0xc0000; i++)
-		gfx[i] = rom[BITSWAP24(i,23,22,21,20,19,18,14,15, 16,17,13,12,11,10,9,8, 7,6,5,4,3,2,1,0)];
+	{	/* Address lines scrambling on the blitter data roms */
+		data8_t	*gfx = memory_region(REGION_GFX1);
+		int i;
+		rom = memory_region(REGION_USER1);
+		for (i = 0; i < 0xc0000; i++)
+			gfx[i] = rom[BITSWAP24(i,23,22,21,20,19,18,14,15, 16,17,13,12,11,10,9,8, 7,6,5,4,3,2,1,0)];
+	}
 }
 
 
