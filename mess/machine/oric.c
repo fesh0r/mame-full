@@ -18,6 +18,7 @@
 #include "includes/wd179x.h"
 #include "machine/6522via.h"
 #include "includes/mfmdisk.h"
+#include "includes/6551.h"
 
 /* timer used to refresh via cb input, which will trigger ints on pulses
 from tape */
@@ -40,6 +41,11 @@ enum
 /* called when ints are changed - cleared/set */
 static void oric_refresh_ints(void)
 {
+	/* if microdisc interface is disabled, do not allow interrupts from it */
+	if ((readinputport(9) & 0x01)==0)
+	{
+		oric_irqs &=~(1<<1);
+	}
 
 	/* any irq set? */
 	if ((oric_irqs & 0x07)!=0)
@@ -103,6 +109,34 @@ static char oric_keyboard_mask;
 
 static unsigned char oric_via_port_a_data;
 
+//#define ORIC_DUMP_RAM
+
+#ifdef ORIC_DUMP_RAM
+/* load image */
+void oric_dump_ram(void)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, "oricram.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
+ 
+	if (file)
+	{
+		int i;
+		for (i=0; i<65536; i++)
+		{
+			char data;
+
+			data = cpu_readmem16(i);
+
+			osd_fwrite(file, &data, 1);
+
+		}
+
+		/* close file */
+		osd_fclose(file);
+	}
+}
+#endif
 /* refresh keyboard sense */
 static void oric_keyboard_sense_refresh(void)
 {
@@ -139,6 +173,13 @@ static void oric_keyboard_sense_refresh(void)
 		/* set sense result */
 		oric_key_sense_bit = (1<<3);
 	}
+#ifdef ORIC_DUMP_RAM
+	if (readinputport(5) & 0x01)
+	{
+		logerror("do dump");
+		oric_dump_ram();
+	}
+#endif
 }
 
 
@@ -617,8 +658,8 @@ void	oric_microdisc_set_mem_0x0c000(void)
 			/* rom disabled enable ram */
 			memory_set_bankhandler_r(2, 0, MRA_BANK2);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
-			cpu_setbank(1, oric_ram_0x0c000+0x02000);
-			cpu_setbank(5, oric_ram_0x0c000+0x02000);
+			cpu_setbank(2, oric_ram_0x0c000+0x02000);
+			cpu_setbank(6, oric_ram_0x0c000+0x02000);
 		}
 	}
 }
@@ -719,9 +760,9 @@ void oric_common_init_machine(void)
 							strcpy (oric_rom_version, "1.1");
 #endif
 
+	via_reset();
 	via_config(0, &oric_6522_interface);
 	via_set_clock(0,1000000);
-	via_reset();
 
 
 	wd179x_init(oric_wd179x_callback);
@@ -736,9 +777,18 @@ void oric_init_machine (void)
 
 	oric_ram_0x0c000 = malloc(16384);
 
-	/* disable os rom, enable microdisc rom */
-	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
-    port_314_w = 0x0ff^((1<<7) | (1<<1));
+	if (readinputport(9) & 0x01)
+	{
+		/* disable os rom, enable microdisc rom */
+		/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
+		port_314_w = 0x0ff^((1<<7) | (1<<1));
+	}
+	else
+	{
+		/* disable microdisc rom, enable os rom */
+		port_314_w = 0x0ff;
+	}
+
 	oric_microdisc_set_mem_0x0c000();
 }
 
@@ -843,9 +893,12 @@ WRITE_HANDLER(oric_microdisc_w)
 
 READ_HANDLER ( oric_IO_r )
 {
-	if ((offset>=0x010) && (offset<=0x01f))
+	if (readinputport(9) & 0x01)
 	{
-		return oric_microdisc_r(offset);
+		if ((offset>=0x010) && (offset<=0x01f))
+		{
+			return oric_microdisc_r(offset);
+		}
 	}
 
 	/* it is repeated */
@@ -855,7 +908,7 @@ READ_HANDLER ( oric_IO_r )
 WRITE_HANDLER ( oric_IO_w )
 {
 	/* Trap Bogus write to IO to load Tape Image!! */
-
+#if 0
 	if ((offset & 0xff) == 0xfa)
 	{
 		unsigned char *RAM;
@@ -901,11 +954,14 @@ WRITE_HANDLER ( oric_IO_w )
 		}
 	}
 
-
-	if ((offset>=0x010) && (offset<=0x01f))
+#endif
+	if (readinputport(9) & 0x01)
 	{
-		oric_microdisc_w(offset, data);
-		return;
+		if ((offset>=0x010) && (offset<=0x01f))
+		{
+			oric_microdisc_w(offset, data);
+			return;
+		}
 	}
 
 	via_0_w(offset & 0x0f,data);
@@ -1289,13 +1345,13 @@ static READ_HANDLER(telestrat_via2_in_b_func)
 	/* left joystick selected? */
 	if (telestrat_via2_port_b_data & (1<<6))
 	{
-		data &= readinputport(8);
+		data &= readinputport(9);
 	}
 
 	/* right joystick selected? */
 	if (telestrat_via2_port_b_data & (1<<7))
 	{
-		data &= readinputport(9);
+		data &= readinputport(10);
 	}
 
 	data |= telestrat_via2_port_b_data & ((1<<7) | (1<<6) | (1<<5));
@@ -1352,14 +1408,17 @@ void telestrat_init_machine(void)
 	telestrat_blocks[0].MemType = TELESTRAT_MEM_BLOCK_RAM;
 	telestrat_blocks[0].ptr = (unsigned char *)malloc(16384);
 
-	telestrat_blocks[1].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
-	telestrat_blocks[2].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
+	telestrat_blocks[1].MemType = TELESTRAT_MEM_BLOCK_RAM;
+	telestrat_blocks[1].ptr = (unsigned char *)malloc(16384);
+	telestrat_blocks[2].MemType = TELESTRAT_MEM_BLOCK_RAM;
+	telestrat_blocks[2].ptr = (unsigned char *)malloc(16384);
 
 	/* initialise default cartridge */
 	telestrat_blocks[3].MemType = TELESTRAT_MEM_BLOCK_ROM;
 	telestrat_blocks[3].ptr = memory_region(REGION_CPU1)+0x010000;
 
-	telestrat_blocks[4].MemType = TELESTRAT_MEM_BLOCK_UNDEFINED;
+	telestrat_blocks[4].MemType = TELESTRAT_MEM_BLOCK_RAM;
+	telestrat_blocks[4].ptr = (unsigned char *)malloc(16384);
 
 	/* initialise default cartridge */
 	telestrat_blocks[5].MemType = TELESTRAT_MEM_BLOCK_ROM;
@@ -1379,7 +1438,6 @@ void telestrat_init_machine(void)
 
 	via_config(1, &telestrat_via2_interface);
 	via_set_clock(1,1000000);
-	via_reset();
 }
 
 void	telestrat_shutdown_machine(void)
@@ -1407,47 +1465,47 @@ void	telestrat_shutdown_machine(void)
 
 WRITE_HANDLER(telestrat_IO_w)
 {
-	if (offset<0x010)
-	{
-		/* it is repeated 16 times, but for now only use first few entries */
-		via_0_w(offset & 0x0f,data);
-		return;
-	}
-
 	if ((offset>=0x020) && (offset<=0x02f))
 	{
-		via_1_w(offset,data);
+		via_1_w(offset & 0x0f,data);
 		return;
 	}
 
-	if ((offset>=0x010) && (offset<=0x01f))
+	if ((offset>=0x010) && (offset<=0x01b))
 	{
 		oric_microdisc_w(offset, data);
 		return;
 	}
+
+	if ((offset>=0x01c) && (offset<0x020))
+	{
+		acia_6551_w(offset, data);
+		return;
+	}
+
+	/* it is repeated 16 times, but for now only use first few entries */
+	via_0_w(offset & 0x0f,data);
 }
 
 READ_HANDLER(telestrat_IO_r)
 {
-	unsigned char data = 0x0ff;
-
-	if (offset<0x010)
-	{
-		/* it is repeated 16 times, but for now only use first few entries */
-		return via_0_r(offset & 0x0f);
-	}
-
 	if ((offset>=0x020) && (offset<=0x02f))
 	{
-		return via_1_r(offset);
+		return via_1_r(offset & 0x0f);
 	}
 
-	if ((offset>=0x010) && (offset<=0x01f))
+	if ((offset>=0x010) && (offset<=0x01b))
 	{
 		return oric_microdisc_r(offset);
 	}
 
-	return data;
+	if ((offset>=0x01c) && (offset<=0x020))
+	{
+		return acia_6551_r(offset);
+	}
+
+	/* it is repeated 16 times, but for now only use first few entries */
+	return via_0_r(offset & 0x0f);
 }
 
 
