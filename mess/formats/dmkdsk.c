@@ -175,7 +175,6 @@ int dmkdsk_floppy_init(int id)
 			{
 				/* DMK creation not supported (this will be implemented in imgtool) */
 				logerror("DMK disk creation not supported");
-			 	osd_fclose( w->image_file );
 				return INIT_FAIL;
 			}
 		}
