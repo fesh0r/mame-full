@@ -153,7 +153,7 @@ MACHINE_STOP( nes );
 void init_nes (void);
 void init_nespal (void);
 void nes_interrupt (void);
-UINT32 nes_partialcrc(const unsigned char *,unsigned int);
+UINT32 nes_partialcrc(const unsigned char *, size_t);
 READ_HANDLER  ( nes_ppu_r );
 READ_HANDLER  ( nes_IN0_r );
 READ_HANDLER  ( nes_IN1_r );

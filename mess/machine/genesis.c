@@ -73,7 +73,7 @@ static int genesis_verify_cart(unsigned char *temp,unsigned int len)
 	return retval;
 }
 
-int genesis_init_cart (int id, mame_file *romfile, int open_mode)
+int genesis_load_cart (int id, mame_file *romfile, int open_mode)
 {
 	unsigned char *tmpROMnew, *tmpROM;
 	unsigned char *secondhalf;
@@ -389,7 +389,7 @@ static int genesis_md2bin(unsigned char *inbuf, unsigned int len)
 	}
 }
 
-UINT32 genesis_partialcrc(const unsigned char *buf, unsigned int len)
+UINT32 genesis_partialcrc(const unsigned char *buf, size_t len)
 {
 	UINT32 crc = 0;
 

@@ -1261,7 +1261,7 @@ bad:
 
 // extern unsigned int crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
 
-UINT32 nes_partialcrc(const unsigned char *buf,unsigned int size)
+UINT32 nes_partialcrc(const unsigned char *buf, size_t size)
 {
 	UINT32 crc;
 	if (size < 17)

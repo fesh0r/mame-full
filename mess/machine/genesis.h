@@ -4,7 +4,7 @@ extern unsigned char genesis_sharedram[];
 extern unsigned char * genesis_soundram;
 
 extern MACHINE_INIT( genesis );
-int genesis_init_cart (int id, mame_file *fp, int open_mode);
+int genesis_load_cart (int id, mame_file *fp, int open_mode);
 
 void genesis_interrupt (void);
 WRITE16_HANDLER ( genesis_io_w );
@@ -26,7 +26,7 @@ WRITE_HANDLER ( cartridge_ram_w );*/
 
 /* machine/genesis.c */
 void genesis_interrupt (void);
-UINT32 genesis_partialcrc(const unsigned char *,unsigned int);
+UINT32 genesis_partialcrc(const unsigned char *, size_t);
 
 void genesis_background_w(int offset,int data);
 void genesis_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
