@@ -18,7 +18,7 @@ Notes:
   TileMap system, so we have to tilemap_mark_all_tiles_dirty() to compensate
 
 TODO:
-- sound in the multiprocessor games
+- sound in champwr doesn't work, don't know why
 - American horseshoes doesn't  have the trackball hooked  up.  X and Y
   are 9bits values each splitted  in two bytes.   Probably easy to add
   too.
@@ -34,35 +34,6 @@ TODO:
   the beginning of the first level (I didn't play the game far).
 - Cachat's title    screen  has some  problems.   The middle tile layer
   is shifted 16 pixels to the left.
-
-
-Ok,  the pipe  is   what is   used to  communicate   between the  main
-processors and the sound  one.  It sits  on two adresses, the even one
-being the register number, the odd data, in a very ym2149 kind of way.
-
-Registers 0-3 are data,  register 4 is  flags.  They probably are only
-4bits wide.
-
-Each time  you read or   write to a   register the register  number is
-automatically increased.  I have no reason to think that this register
-number needs  to be separated for the  two processors  that access it,
-given the usage patterns.
-
-Flags of register 4 (it seems to be possible to directly write to it)
-bit 0 : set to 1 when register 1 is written, set to 0 when it is read
-bit 1 : set to 1 when register 3 is written, set to 0 when it is read
-bit 2-3 : unknown (there may be some kind of overrun detection...)
-
-Also, I think that  setting a bit in  the register 4  raises an irq on
-the sound CPU.    I tend to think  that  even setting it thru   direct
-writing does that.
-
-Here are the adresses of the pipe for the different games:
-
-game main cpu sound cpu
-fhawk 2nd, c800 e000
-raimais 1st, 8c00 e200
-champwr 2nd, e800 a000
 
 
 > Note: the multicpu games run very slow (w/ emulation speed at 100%). The
@@ -101,6 +72,16 @@ WRITE_HANDLER( taitol_bankg_w );
 READ_HANDLER( taitol_bankg_r );
 WRITE_HANDLER( taitol_bankc_w );
 READ_HANDLER( taitol_bankc_r );
+
+
+WRITE_HANDLER( rastan_sound_port_w );
+WRITE_HANDLER( rastan_sound_comm_w );
+READ_HANDLER( rastan_sound_comm_r );
+READ_HANDLER( rastan_a001_r );
+WRITE_HANDLER( rastan_a000_w );
+WRITE_HANDLER( rastan_a001_w );
+
+
 
 static void (*rambank_modify_notifiers[12])(int) = {
 	taitol_chardef14_m,	// 14
@@ -342,7 +323,7 @@ static WRITE_HANDLER( rombank2switch_w )
 //		logerror("robs2 %02x (%04x)\n", data, cpu_get_pc());
 
 		cur_rombank2 = data;
-		cpu_setbank(6, memory_region(REGION_CPU2)+0x10000+0x4000*cur_rombank2);
+		cpu_setbank(6, memory_region(REGION_CPU3)+0x10000+0x4000*cur_rombank2);
 	}
 }
 
@@ -705,7 +686,8 @@ static struct MemoryWriteAddress fhawk_writemem[] = {
 static struct MemoryReadAddress fhawk_2_readmem[] = {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK6 },
-	{ 0xc800, 0xc801, MRA_NOP }, // Pipe
+	{ 0xc800, 0xc800, MRA_NOP },
+	{ 0xc801, 0xc801, rastan_sound_comm_r },
 	{ 0xe000, 0xffff, shared_r },
 	{ 0xd000, 0xd000, input_port_0_r },
 	{ 0xd001, 0xd001, input_port_1_r },
@@ -718,7 +700,8 @@ static struct MemoryReadAddress fhawk_2_readmem[] = {
 static struct MemoryWriteAddress fhawk_2_writemem[] = {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xc000, rombank2switch_w },
-	{ 0xc800, 0xc801, MWA_NOP }, // Pipe
+	{ 0xc800, 0xc800, rastan_sound_port_w },
+	{ 0xc801, 0xc801, rastan_sound_comm_w },
 	{ 0xd000, 0xd000, MWA_NOP },	// Direct copy of input port 0
 	{ 0xd004, 0xd004, control2_w },
 	{ 0xd005, 0xd006, MWA_NOP },	// Always 0
@@ -729,7 +712,8 @@ static struct MemoryWriteAddress fhawk_2_writemem[] = {
 static struct MemoryReadAddress fhawk_3_readmem[] = {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_RAM },
-	{ 0xe000, 0xe001, MRA_NOP }, // Pipe
+	{ 0xe000, 0xe000, MRA_NOP },
+	{ 0xe001, 0xe001, rastan_a001_r },
 	{ 0xf000, 0xf000, YM2203_status_port_0_r },
 	{ -1 }
 };
@@ -737,7 +721,8 @@ static struct MemoryReadAddress fhawk_3_readmem[] = {
 static struct MemoryWriteAddress fhawk_3_writemem[] = {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_RAM },
-	{ 0xe000, 0xe001, MWA_NOP }, // Pipe
+	{ 0xe000, 0xe000, rastan_a000_w },
+	{ 0xe001, 0xe001, rastan_a001_w },
 	{ 0xf000, 0xf000, YM2203_control_port_0_w },
 	{ 0xf001, 0xf001, YM2203_write_port_0_w },
 	{ -1 }
@@ -748,7 +733,8 @@ static struct MemoryReadAddress raimais_readmem[] = {
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8800, 0x8800, mux_r },
 	{ 0x8801, 0x8801, MRA_NOP },	// Watchdog or interrupt ack (value ignored)
-	{ 0x8c00, 0x8c01, MRA_NOP }, // Pipe
+	{ 0x8c00, 0x8c00, MRA_NOP },
+	{ 0x8c01, 0x8c01, rastan_sound_comm_r },
 	{ 0xa000, 0xbfff, MRA_RAM },
 	{ -1 }
 };
@@ -757,7 +743,8 @@ static struct MemoryWriteAddress raimais_writemem[] = {
 	{ 0x8000, 0x87ff, MWA_RAM, &shared_ram },
 	{ 0x8800, 0x8800, mux_w },
 	{ 0x8801, 0x8801, mux_ctrl_w },
-	{ 0x8c00, 0x8c01, MWA_NOP }, // Pipe
+	{ 0x8c00, 0x8c00, rastan_sound_port_w },
+	{ 0x8c01, 0x8c01, rastan_sound_comm_w },
 	{ 0xa000, 0xbfff, MWA_RAM },
 	{ -1 }
 };
@@ -780,7 +767,8 @@ static struct MemoryReadAddress raimais_3_readmem[] = {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xe000, YM2203_status_port_0_r },
-	{ 0xe200, 0xe201, MRA_NOP }, // Pipe
+	{ 0xe200, 0xe200, MRA_NOP },
+	{ 0xe201, 0xe201, rastan_a001_r },
 	{ -1 }
 };
 
@@ -789,7 +777,8 @@ static struct MemoryWriteAddress raimais_3_writemem[] = {
 	{ 0xc000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe000, YM2203_control_port_0_w },
 	{ 0xe001, 0xe001, YM2203_write_port_0_w },
-	{ 0xe200, 0xe201, MWA_NOP }, // Pipe
+	{ 0xe200, 0xe200, rastan_a000_w },
+	{ 0xe201, 0xe201, rastan_a001_w },
 	{ -1 }
 };
 
@@ -819,6 +808,8 @@ static struct MemoryReadAddress champwr_2_readmem[] = {
 	{ 0xe003, 0xe003, input_port_3_r },
 	{ 0xe007, 0xe007, input_port_4_r },
 	{ 0xe008, 0xe00f, MRA_NOP },
+	{ 0xe800, 0xe800, MRA_NOP },
+	{ 0xe801, 0xe801, rastan_sound_comm_r },
 	{ 0xf000, 0xf000, rombank2switch_r },
 	{ -1 }
 };
@@ -828,6 +819,8 @@ static struct MemoryWriteAddress champwr_2_writemem[] = {
 	{ 0xc000, 0xdfff, shared_w },
 	{ 0xe000, 0xe000, MWA_NOP },	// Watchdog
 	{ 0xe004, 0xe004, control2_w },
+	{ 0xe800, 0xe800, rastan_sound_port_w },
+	{ 0xe801, 0xe801, rastan_sound_comm_w },
 	{ 0xf000, 0xf000, rombank2switch_w },
 	{ -1 }
 };
@@ -836,7 +829,8 @@ static struct MemoryReadAddress champwr_3_readmem[] = {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
-	{ 0xa000, 0xa001, MRA_NOP }, // Pipe
+	{ 0xa000, 0xa000, MRA_NOP },
+	{ 0xa001, 0xa001, rastan_a001_r },
 	{ -1 }
 };
 
@@ -845,7 +839,8 @@ static struct MemoryWriteAddress champwr_3_writemem[] = {
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa001, MWA_NOP }, // Pipe
+	{ 0xa000, 0xa000, rastan_a000_w },
+	{ 0xa001, 0xa001, rastan_a001_w },
 	{ -1 }
 };
 
@@ -1671,7 +1666,7 @@ static struct YM2203interface ym2203_interface_single =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static WRITE_HANDLER( portA_w )
@@ -1737,20 +1732,20 @@ static struct MachineDriver machine_driver_##name =		\
 			vbl_interrupt, 1								\
 		},													\
 		{													\
-			CPU_Z80,										\
-			3332640,	/* ? xtal is 13.33056 */			\
-			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
-			interrupt, 1									\
-		},													\
-		{													\
 			CPU_Z80 | CPU_AUDIO_CPU,						\
 			3332640,	/* ? xtal is 13.33056 */			\
 			name ## _3_readmem, name ## _3_writemem, 0, 0,	\
 			ignore_interrupt, 0								\
+		},													\
+		{													\
+			CPU_Z80,										\
+			3332640,	/* ? xtal is 13.33056 */			\
+			name ## _2_readmem, name ## _2_writemem, 0, 0,	\
+			interrupt, 1									\
 		}													\
 	},														\
 	60, DEFAULT_60HZ_VBLANK_DURATION,						\
-	1,														\
+	100,													\
 	name ## _init,											\
 															\
 	320, 256, { 0, 319, 16, 239 },							\
@@ -1773,35 +1768,17 @@ static struct MachineDriver machine_driver_##name =		\
 };
 
 
-MCH_DOUBLE(fhawk)
 MCH_DOUBLE(raimais)
+MCH_DOUBLE(fhawk)
 MCH_DOUBLE(champwr)
 
 MCH_SINGLE(puzznic)
 MCH_SINGLE(plotting)
-MCH_SINGLE(palamed)
 MCH_SINGLE(horshoes)
+MCH_SINGLE(palamed)
 MCH_SINGLE(cachat)
 
 
-
-ROM_START( fhawk )
-	ROM_REGION( 0xb0000, REGION_CPU1 )
-	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
-	ROM_RELOAD(             0x10000, 0x20000 )
-	ROM_LOAD( "b70-03.bin", 0x30000, 0x80000, 0x42d5a9b8 )
-
-	ROM_REGION( 0x30000, REGION_CPU2 )
-	ROM_LOAD( "b70-08.bin", 0x00000, 0x20000, 0x4d795f48 )
-	ROM_RELOAD(             0x10000, 0x20000 )
-
-	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
-
-	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
-	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
-ROM_END
 
 ROM_START( raimais )
 	ROM_REGION( 0xb0000, REGION_CPU1 )
@@ -1809,15 +1786,33 @@ ROM_START( raimais )
 	ROM_RELOAD(               0x10000, 0x20000 )
 	ROM_LOAD( "b36-03.bin",   0x30000, 0x80000, 0x96166516 )
 
-	ROM_REGION( 0x10000, REGION_CPU2 )
-	ROM_LOAD( "b36-07.bin",   0x00000, 0x10000, 0x4f3737e6 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* soound (sndhrdw/rastan.c wants it as #2 */
+	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "b36-06.bin",   0x00000, 0x10000, 0x29bbc4f8 )
+	ROM_LOAD( "b36-07.bin",   0x00000, 0x10000, 0x4f3737e6 )
 
 	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "b36-01.bin",   0x00000, 0x80000, 0x89355cb2 )
 	ROM_LOAD( "b36-02.bin",   0x80000, 0x80000, 0xe71da5db )
+ROM_END
+
+ROM_START( fhawk )
+	ROM_REGION( 0xb0000, REGION_CPU1 )
+	ROM_LOAD( "b70-07.bin", 0x00000, 0x20000, 0x939114af )
+	ROM_RELOAD(             0x10000, 0x20000 )
+	ROM_LOAD( "b70-03.bin", 0x30000, 0x80000, 0x42d5a9b8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* soound (sndhrdw/rastan.c wants it as #2 */
+	ROM_LOAD( "b70-09.bin", 0x00000, 0x10000, 0x85cccaa2 )
+
+	ROM_REGION( 0x30000, REGION_CPU3 )
+	ROM_LOAD( "b70-08.bin", 0x00000, 0x20000, 0x4d795f48 )
+	ROM_RELOAD(             0x10000, 0x20000 )
+
+	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "b70-01.bin", 0x00000, 0x80000, 0xfcdf67e2 )
+	ROM_LOAD( "b70-02.bin", 0x80000, 0x80000, 0x35f7172e )
 ROM_END
 
 ROM_START( champwr )
@@ -1827,12 +1822,12 @@ ROM_START( champwr )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
 	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* soound (sndhrdw/rastan.c wants it as #2 */
+	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x30000, REGION_CPU3 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
-
-	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
 
 	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
@@ -1843,16 +1838,16 @@ ROM_END
 ROM_START( champwru )
 	ROM_REGION( 0xf0000, REGION_CPU1 )
 	ROM_LOAD( "c01-12.rom", 0x00000, 0x20000, 0x09f345b3 )
-	ROM_RELOAD(              0x10000, 0x20000 )
-	ROM_LOAD( "c01-04.rom",  0x30000, 0x20000, 0x358bd076 )
-	ROM_LOAD( "c01-05.rom",  0x50000, 0x20000, 0x22efad4a )
+	ROM_RELOAD(             0x10000, 0x20000 )
+	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
+	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* soound (sndhrdw/rastan.c wants it as #2 */
+	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x30000, REGION_CPU3 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
-
-	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
 
 	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
@@ -1867,19 +1862,18 @@ ROM_START( champwrj )
 	ROM_LOAD( "c01-04.rom", 0x30000, 0x20000, 0x358bd076 )
 	ROM_LOAD( "c01-05.rom", 0x50000, 0x20000, 0x22efad4a )
 
-	ROM_REGION( 0x30000, REGION_CPU2 )
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* soound (sndhrdw/rastan.c wants it as #2 */
+	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
+
+	ROM_REGION( 0x30000, REGION_CPU3 )
 	ROM_LOAD( "c01-07.rom", 0x00000, 0x20000, 0x5117c98f )
 	ROM_RELOAD(             0x10000, 0x20000 )
-
-	ROM_REGION( 0x10000, REGION_CPU3 )
-	ROM_LOAD( "c01-08.rom", 0x00000, 0x10000, 0x810efff8 )
 
 	ROM_REGION( 0x180000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "c01-01.rom", 0x000000, 0x80000, 0xf302e6e9 )
 	ROM_LOAD( "c01-02.rom", 0x080000, 0x80000, 0x1e0476c4 )
 	ROM_LOAD( "c01-03.rom", 0x100000, 0x80000, 0x2a142dbc )
 ROM_END
-
 
 ROM_START( puzznic )
 	ROM_REGION( 0x30000, REGION_CPU1 )
@@ -1904,16 +1898,6 @@ ROM_START( plotting )
 	ROM_LOAD( "plot08.bin", 0x10000, 0x10000, 0xfb5f3ca4 )
 ROM_END
 
-ROM_START( palamed )
-	ROM_REGION( 0x30000, REGION_CPU1 )
-	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
-	ROM_RELOAD(         0x10000, 0x20000 )
-
-	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "c64.04", 0x00000, 0x20000, 0xc7bbe460 )
-	ROM_LOAD( "c63.03", 0x20000, 0x20000, 0xfcd86e44 )
-ROM_END
-
 ROM_START( horshoes )
 	ROM_REGION( 0x30000, REGION_CPU1 )
 	ROM_LOAD( "c47.03", 0x00000, 0x20000, 0x37e15b20 )
@@ -1928,6 +1912,16 @@ ROM_START( horshoes )
 	ROM_CONTINUE (      0x30000, 0x10000 )
 	ROM_LOAD( "c47.05", 0x50000, 0x10000, 0xb2a3dafe )
 	ROM_CONTINUE (      0x70000, 0x10000 )
+ROM_END
+
+ROM_START( palamed )
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "c63.02", 0x00000, 0x20000, 0x55a82bb2 )
+	ROM_RELOAD(         0x10000, 0x20000 )
+
+	ROM_REGION( 0x40000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "c63.04", 0x00000, 0x20000, 0xc7bbe460 )
+	ROM_LOAD( "c63.03", 0x20000, 0x20000, 0xfcd86e44 )
 ROM_END
 
 ROM_START( cachat )
@@ -1987,15 +1981,15 @@ static void init_plotting(void)
 
 
 
-GAMEX( 1988, fhawk,    0,       fhawk,    fhawk,    0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1988, raimais,  0,       raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, raimais,  0,       raimais,  raimais,  0,        ROT0,   "Taito Corporation", "Raimais (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1988, fhawk,    0,       fhawk,    fhawk,    0,        ROT270, "Taito Corporation", "Fighting Hawk (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1989, champwr,  0,       champwr,  champwr,  0,        ROT0,   "Taito Corporation Japan", "Champion Wrestler (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1989, champwru, champwr, champwr,  champwr,  0,        ROT0,   "Taito America Corporation", "Champion Wrestler (US)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1989, champwrj, champwr, champwr,  champwr,  0,        ROT0,   "Taito Corporation", "Champion Wrestler (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1989, puzznic,  0,       puzznic,  puzznic,  0,        ROT0,   "Taito Corporation", "Puzznic (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1989, plotting, 0,       plotting, plotting, plotting, ROT0,   "Taito Corporation Japan", "Plotting (World)", GAME_NO_COCKTAIL )
-GAMEX( 1990, palamed,  0,       palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1990, horshoes, 0,       horshoes, horshoes, 0,        ROT270, "Taito America Corporation", "American Horseshoes (US)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1990, palamed,  0,       palamed,  palamed,  0,        ROT0,   "Taito Corporation", "Palamedes (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1993, cachat,   0,       cachat,   cachat,   0,        ROT0,   "Taito Corporation", "Cachat (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1992, plgirls,  0,       cachat,   palamed,  0,        ROT270, "Hot-B.", "Play Girls", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1993, plgirls2, 0,       cachat,   palamed,  0,        ROT270, "Hot-B.", "Play Girls 2", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
