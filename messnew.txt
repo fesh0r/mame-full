@@ -18,6 +18,9 @@ System Driver Changes:
 - [COCO3] Fixed a performance bug that could slow things down in simple cases
   where not much screen IO is being made. [Nate Woods]
 
+- [TI99/4] Driver is now enabled. Some bugfixes and support for IR remote
+  handlers. [Raphael Nabet]
+
 Source Changes:
 ---------------
 - The core is based on MAME 0.66.  This incorporates all features of the 
