@@ -1,6 +1,10 @@
 #ifndef MAMECE_H
 #define MAMECE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <windows.h>
 
 // --------------------------------------------------------------------------
@@ -50,5 +54,49 @@ struct ui_options
 
 void setup_paths();
 int play_game(int game_index, struct ui_options *opts);
+
+
+// --------------------------------------------------------------------------
+// I don't understand why this is necessary when building for x86em, but for
+// some reason we have to redeclare the calls with WINAPI defined
+
+#define SHCreateMenuBar         dummy_SHCreateMenuBar   
+#define SHInitDialog            dummy_SHInitDialog   
+#define SHHandleWMSettingChange	dummy_SHHandleWMSettingChange
+#define SHFullScreen		dummy_SHFullScreen
+#include <aygshell.h>
+#undef SHCreateMenuBar   
+#undef SHInitDialog 
+#undef SHHandleWMSettingChange
+#undef SHFullScreen
+
+WINSHELLAPI BOOL WINAPI SHCreateMenuBar(SHMENUBARINFO *pmbi);   
+BOOL WINAPI SHInitDialog(PSHINITDLGINFO pshidi); 
+WINSHELLAPI BOOL WINAPI SHHandleWMSettingChange(HWND hwnd, WPARAM wParam, LPARAM lParam, SHACTIVATEINFO* psai);
+WINSHELLAPI BOOL WINAPI SHFullScreen(HWND hwndRequester, DWORD dwState );
+
+
+// --------------------------------------------------------------------------
+// GAPI stuff
+
+struct gx_keylist
+{
+	short vkUp;
+	short vkDown;
+	short vkLeft;
+	short vkRight;
+	short vkA;
+	short vkB;
+	short vkC;
+	short vkStart;
+};
+
+void gx_get_default_keys(struct gx_keylist *keylist);
+int gx_open_input(void);
+int gx_close_input(void);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif // MAMECE_H

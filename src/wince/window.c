@@ -31,6 +31,11 @@
 #include <ddraw.h>
 #endif
 
+#ifdef UNDER_CE
+#include "mamece.h"
+extern void press_char(char c);
+#endif
+
 #ifndef WMSZ_LEFT
 #define WMSZ_LEFT           1
 #define WMSZ_RIGHT          2
@@ -666,7 +671,20 @@ void update_cursor_state(void)
 
 static void update_system_menu(void)
 {
-#ifndef UNDER_CE
+#ifdef UNDER_CE
+	SHMENUBARINFO mbi;
+
+	memset(&mbi, 0, sizeof(SHMENUBARINFO));
+	mbi.cbSize     = sizeof(SHMENUBARINFO);
+	mbi.hwndParent = video_window;
+	mbi.dwFlags	   = SHCMBF_EMPTYBAR; //SHCMBF_HIDESIPBUTTON;
+	mbi.nToolBarId = 102;
+	mbi.hInstRes   = GetModuleHandle(NULL);
+	mbi.nBmpId     = 0;
+	mbi.cBmpImages = 0;
+
+	SHCreateMenuBar(&mbi);
+#else
 	HMENU menu;
 
 	// revert the system menu
@@ -1057,6 +1075,13 @@ void adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 		SetForegroundWindow(video_window);
 		update_video_window(NULL);
 
+#ifdef UNDER_CE
+		// set fullscreen
+		SHFullScreen(video_window, SHFS_HIDETASKBAR);
+		SHFullScreen(video_window, SHFS_HIDESIPBUTTON);
+		SHFullScreen(video_window, SHFS_HIDESTARTICON);
+#endif
+
 		// update the cursor state
 		update_cursor_state();
 
@@ -1310,9 +1335,14 @@ void process_events(void)
 			// ignore keyboard messages
 			case WM_SYSKEYUP:
 			case WM_SYSKEYDOWN:
-			case WM_KEYUP:
-			case WM_KEYDOWN:
 			case WM_CHAR:
+			case WM_KEYUP:
+				break;
+
+			case WM_KEYDOWN:
+#ifdef UNDER_CE
+				press_char((char) message.wParam);
+#endif
 				break;
 
 			// process everything else
@@ -1517,8 +1547,8 @@ static UINT32 *prepare_palette(struct blit_params *params)
 #ifdef UNDER_CE
 static void dib_draw_window(HDC dc, struct osd_bitmap *bitmap, int update)
 {
-	HDC hDcBitmap;
 	HBITMAP hBitmap;
+	HDC hDcBitmap;
 	UINT8 *pvBits;
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	int xmult, ymult;
