@@ -617,11 +617,11 @@ TESTDRIVER( survival )	/* (c) 1982 Rock-ola */
 	DRIVER( tankfrcj )	/* (c) 1991 (Japan) */
 
 	/* Namco System 2 games */
-TESTDRIVER( finallap )	/* 87.12 Final Lap */
-TESTDRIVER( finalapd )	/* 87.12 Final Lap */
-TESTDRIVER( finalapc )	/* 87.12 Final Lap */
-TESTDRIVER( finlapjc )	/* 87.12 Final Lap */
-TESTDRIVER( finlapjb )	/* 87.12 Final Lap */
+	DRIVER( finallap )	/* 87.12 Final Lap */
+	DRIVER( finalapd )	/* 87.12 Final Lap */
+	DRIVER( finalapc )	/* 87.12 Final Lap */
+	DRIVER( finlapjc )	/* 87.12 Final Lap */
+	DRIVER( finlapjb )	/* 87.12 Final Lap */
 	DRIVER( assault )	/* (c) 1988 */
 	DRIVER( assaultj )	/* (c) 1988 (Japan) */
 	DRIVER( assaultp )	/* (c) 1988 (Japan) */
@@ -630,7 +630,7 @@ TESTDRIVER( finlapjb )	/* 87.12 Final Lap */
 	DRIVER( mirninja )	/* (c) 1988 (Japan) */
 	DRIVER( phelios )	/* (c) 1988 (Japan) */
 	DRIVER( dirtfoxj )	/* (c) 1989 (Japan) */
-TESTDRIVER( fourtrax )	/* 89.11 */
+	DRIVER( fourtrax )	/* 89.11 */
 	DRIVER( valkyrie )	/* (c) 1989 (Japan) */
 	DRIVER( finehour )	/* (c) 1989 (Japan) */
 	DRIVER( burnforc )	/* (c) 1989 (Japan) */
@@ -640,9 +640,9 @@ TESTDRIVER( fourtrax )	/* 89.11 */
 	DRIVER( kyukaido )	/* (c) 1990 (Japan) */
 	DRIVER( dsaber )	/* (c) 1990 */
 	DRIVER( dsaberj )	/* (c) 1990 (Japan) */
-TESTDRIVER( finalap2 )	/* 90.8  Final Lap 2 */
-TESTDRIVER( finalp2j )	/* 90.8  Final Lap 2 (Japan) */
-DRIVER( gollygho )	/* 91.7  Golly Ghost */
+	DRIVER( finalap2 )	/* 90.8  Final Lap 2 */
+	DRIVER( finalp2j )	/* 90.8  Final Lap 2 (Japan) */
+	DRIVER( gollygho )	/* 91.7  Golly Ghost */
 	DRIVER( rthun2 )	/* (c) 1990 */
 	DRIVER( rthun2j )	/* (c) 1990 (Japan) */
 	DRIVER( sgunner )	/* (c) 1990 */
@@ -651,13 +651,15 @@ DRIVER( gollygho )	/* 91.7  Golly Ghost */
 	DRIVER( sgunnr2j )	/* (c) 1991 (Japan) */
 	DRIVER( cosmogng )	/* (c) 1991 (US) */
 	DRIVER( cosmognj )	/* (c) 1991 (Japan) */
-TESTDRIVER( finalap3 )	/* 92.9  Final Lap 3 */
+	DRIVER( finalap3 )	/* 92.9  Final Lap 3 */
+	DRIVER( finalp3j )	/* 92.9  Final Lap 3 */
+	DRIVER( finalp3a )	/* 92.9  Final Lap 3 */
 	DRIVER( luckywld )	/* (c) 1992 */
-TESTDRIVER( suzuka8h )
+	DRIVER( suzuka8h )
 	/* 92.8  Bubble Trouble */
 	DRIVER( sws92 )		/* (c) 1992 (Japan) */
 	DRIVER( sws92g )	/* (c) 1992 (Japan) */
-TESTDRIVER( suzuk8h2 )
+	DRIVER( suzuk8h2 )
 	DRIVER( sws93 )		/* (c) 1993 (Japan) */
 	/* 93.6  Super World Stadium '93 */
 
@@ -715,10 +717,15 @@ TESTDRIVER( cybsled )	/* (c) 1993 */
 	/* Namco System 22 games */
 TESTDRIVER( alpinerd )	/* (c) 1994 */
 TESTDRIVER( raveracw )	/* (c) 1995 */
-TESTDRIVER( rr1 )
-TESTDRIVER( rrs1 )
-TESTDRIVER( victlap )
+TESTDRIVER( ridgeraj )
+TESTDRIVER( ridger2j )
+TESTDRIVER( victlapw )
+TESTDRIVER( cybrcomm )
+TESTDRIVER( airco22b )
+TESTDRIVER( cybrcycc )
+TESTDRIVER( timecris )
 	DRIVER( propcycl )	/* (c) 1996 */
+
 
 	/* Universal games */
 	DRIVER( cosmicg )	/* 7907 (c) 1979 */
@@ -2059,7 +2066,8 @@ TESTDRIVER( defndjeu )	/* bootleg */
 	DRIVER( ddtoda )	/* 13/01/1994 (c) 1993 (Asia) */
 	DRIVER( ddtodh )	/* 25/01/1994 (c) 1993 (Hispanic) */
 	DRIVER( ssf2t )		/* 23/02/1994 (c) 1994 (World) */
-	DRIVER( ssf2tu )	/* 23/02/1994 (c) 1994 (US) */
+	DRIVER( ssf2tu )	/* 23/03/1994 (c) 1994 (US) */
+	DRIVER( ssf2tur1 )	/* 23/02/1994 (c) 1994 (US) */
 	DRIVER( ssf2ta )	/* 23/02/1994 (c) 1994 (Asia) */
 	DRIVER( ssf2xj )	/* 23/02/1994 (c) 1994 (Japan) */
 	DRIVER( avsp )		/* 20/05/1994 (c) 1994 (Euro) */
@@ -2133,6 +2141,7 @@ TESTDRIVER( rckmanj )	/* 22/09/1995 Rockman: The Power Battle (Japan) */
 	DRIVER( rckman2j )	/* 08/07/1996 (c) 1996 (Japan) */
 	DRIVER( sfz2aj )	/* 05/08/1996 (c) 1996 (Japan) */
 	DRIVER( sfz2ah )	/* 13/08/1996 (c) 1996 (Hispanic) */
+	DRIVER( sfz2ab )	/* 13/08/1996 (c) 1996 (Brazil) */
 	DRIVER( sfz2aa )	/* 26/08/1996 (c) 1996 (Asia) */
 	DRIVER( xmvsf )		/* 10/09/1996 (c) 1996 (Euro) */
 	DRIVER( xmvsfu )	/* 04/10/1996 (c) 1996 (US) */
@@ -2140,6 +2149,7 @@ TESTDRIVER( rckmanj )	/* 22/09/1995 Rockman: The Power Battle (Japan) */
 	DRIVER( xmvsfjr1 )	/* 09/09/1996 (c) 1996 (Japan) */
 	DRIVER( xmvsfa )	/* 23/10/1996 (c) 1996 (Asia) */
 	DRIVER( xmvsfh )	/* 04/10/1996 (c) 1996 (Hispanic) */
+	DRIVER( xmvsfb )	/* 23/10/1996 (c) 1996 (Brazil) */
 	DRIVER( batcir )	/* 19/03/1997 (c) 1997 (Euro) */
 	DRIVER( batcirj )	/* 19/03/1997 (c) 1997 (Japan) */
 	DRIVER( batcira )	/* 19/03/1997 (c) 1997 (Asia) */
@@ -2163,7 +2173,8 @@ TESTDRIVER( rckmanj )	/* 22/09/1995 Rockman: The Power Battle (Japan) */
 	DRIVER( pfghtj )	/* 04/09/1997 (c) 1997 (Japan) */
 	DRIVER( sgemfa )	/* 04/09/1997 (c) 1997 (Asia) */
 	DRIVER( sgemfh )	/* 04/09/1997 (c) 1997 (Hispanic) */
-	DRIVER( vhunt2 )	/* 13/09/1997 (c) 1997 (Japan) */
+	DRIVER( vhunt2r1 )	/* 13/09/1997 (c) 1997 (Japan) */
+	DRIVER( vhunt2 )	/* 29/09/1997 (c) 1997 (Japan) */
 	DRIVER( vsav2 )		/* 13/09/1997 (c) 1997 (Japan) */
 	DRIVER( mvsc )		/* 23/01/1998 (c) 1998 (US) */
 	DRIVER( mvscj )		/* 23/01/1998 (c) 1998 (Japan) */
@@ -2654,7 +2665,7 @@ TESTDRIVER( slipstrm )	/* Capcom */
 	DRIVER( orunners )	/* (c) 1992 (US) */
 	DRIVER( harddunk )	/* (c) 1994 (Japan) */
 TESTDRIVER( titlef )
-TESTDRIVER( scross )	/* (c) 1992 */
+	DRIVER( scross )	/* (c) 1992 */
 
 	/* Sega ST-V games */
 TESTDRIVER( astrass )
@@ -4625,6 +4636,7 @@ TESTDRIVER( hanakanz )	/* "507" 1996 Dynax */
 	DRIVER( nyny )		/* (c) 1980 Sigma Ent. Inc. */
 	DRIVER( nynyg )		/* (c) 1980 Sigma Ent. Inc. + Gottlieb */
 	DRIVER( arcadia )	/* (c) 1982 Sigma Ent. Inc. */
+	DRIVER( r2dtank )	/* (c) 1980 Sigma Ent. Inc. */
 	DRIVER( spiders )	/* (c) 1981 Sigma Ent. Inc. */
 	DRIVER( spiders2 )	/* (c) 1981 Sigma Ent. Inc. */
 
@@ -4691,6 +4703,7 @@ TESTDRIVER( kov2plus )	/* (c) 2001 */
 	DRIVER( freekick )
 	DRIVER( freekckb )	/* (c) 1987 Nihon System (+ optional Sega) */
 TESTDRIVER( countrun )
+TESTDRIVER( countrnb )
 
 	/* Alba games */
 	DRIVER( rmhaihai )	/* (c) 1985 Alba */

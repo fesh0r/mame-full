@@ -128,7 +128,7 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 #define K055673_LAYOUT_LE2 2
 #define K055673_LAYOUT_GX6 3
 
-int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy, 
+int K055673_vh_start(int gfx_memory_region, int alt_layout, int dx, int dy,
 		void (*callback)(int *code,int *color,int *priority));
 READ16_HANDLER( K055673_rom_word_r );
 READ16_HANDLER( K055673_GX6bpp_rom_word_r );
@@ -157,6 +157,7 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 int K053247_read_register(int regnum);
 void K053247_set_SpriteOffset(int offsx, int offsy);
 void K053247_wraparound_enable(int status);
+void K053247_set_z_rejection(int zcode);
 void K053247_export_config(data16_t **ram, struct GfxElement **gfx, void **callback, int *dx, int *dy);
 
 READ_HANDLER( K053246_r );
@@ -343,8 +344,8 @@ int K055555_get_palette_index(int idx);
 #define K55_SHAD1_PRI		37	// shadow/highlight 1 priority
 #define K55_SHAD2_PRI		38	// shadow/highlight 2 priority
 #define K55_SHAD3_PRI		39	// shadow/highlight 3 priority
-#define K55_SHD_ON			40	// shadow/highlight 
-#define K55_SHD_PRI_SEL		41	// shadow/highlight 
+#define K55_SHD_ON			40	// shadow/highlight
+#define K55_SHD_PRI_SEL		41	// shadow/highlight
 
 #define K55_VBRI			42	// VRAM layer brightness enable
 #define K55_OSBRI			43	// obj/sub brightness enable, part 1

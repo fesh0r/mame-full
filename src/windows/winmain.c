@@ -1,6 +1,6 @@
 //============================================================
 //
-//	win32.c - Win32 main program
+//	winmain.c - Win32 main program
 //
 //============================================================
 
@@ -76,6 +76,12 @@ static DWORD profiler_thread_id;
 static volatile UINT8 profiler_thread_exit;
 #endif
 
+#ifndef MESS
+static const char helpfile[] = "docs\\windows.txt";
+#else
+static const char helpfile[] = "mess.chm";
+#endif
+
 
 
 //============================================================
@@ -120,7 +126,9 @@ int main(int argc, char **argv)
 	GetStartupInfo(&startup_info);
 
 	// try to determine if MAME was simply double-clicked
-	if (startup_info.dwFlags && argc <= 1)
+	if (argc <= 1 &&
+		startup_info.dwFlags &&
+		!(startup_info.dwFlags & STARTF_USESTDHANDLES))
 	{
 		char message_text[1024] = "";
 		int button;
@@ -131,7 +139,7 @@ int main(int argc, char **argv)
 		sprintf(message_text, APPLICATION " v%s - Multiple Arcade Machine Emulator\n"
 							  "Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
 							  "\n"
-							  APPLICATION " is a console application, you need to launch it from a console window.\n"
+							  APPLICATION " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
 							  "Usage:\tMAME gamename [options]\n"
 							  "\n"
@@ -147,7 +155,7 @@ int main(int argc, char **argv)
 							  , build_version);
   #else
    #define APPLICATION "M.E.S.S."
-		sprintf(message_text, APPLICATION " is a console application, you need to launch it from a console window.\n"
+		sprintf(message_text, APPLICATION " is a console application, you should launch it from a command prompt.\n"
 							  "\n"
 							  "Please consult the documentation for more information.\n"
 							  "\n"
@@ -160,12 +168,12 @@ int main(int argc, char **argv)
 		if (button == IDYES)
 		{
 			// check if windows.txt exists
-			fp = fopen("docs\\windows.txt", "r");
+			fp = fopen(helpfile, "r");
 			if (fp) {
 				fclose(fp);
 
 				// if so, open it with the default application
-				ShellExecute(NULL, "open", "docs\\windows.txt", NULL, NULL, SW_SHOWNORMAL);
+				ShellExecute(NULL, "open", helpfile, NULL, NULL, SW_SHOWNORMAL);
 			}
 			else
 			{

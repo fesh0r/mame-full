@@ -39,6 +39,8 @@ static void get_fg_tile_info(int tile_index)
 			videoram1[tile_index] & 0xfff,
 			(videoram2[tile_index] & 0xf0) >> 4,
 			0)
+	/* bit 3 controls alpha blending */
+	tile_info.priority = (videoram2[tile_index] & 0x08) >> 3;
 }
 
 static void get_tx_tile_info(int tile_index)
@@ -193,7 +195,7 @@ WRITE16_HANDLER( gaiden_videoram_w )
 
 #define NUM_SPRITES 256
 
-static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int draw_priority )
 {
 	const UINT8 layout[8][8] =
 	{
@@ -218,7 +220,13 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 		if ( (attributes&0x04) && ((attributes&0x20)==0 || (cpu_getcurrentframe() & 1)) )
 		{
 			UINT32 priority = (attributes>>6)&3;
-			UINT32 number = (source[1]&0x7fff);
+
+			if (draw_priority)
+				if (((1<<priority) & draw_priority)==0)
+					goto skip_sprite;
+
+//			UINT32 number = (source[1]&0x7fff);
+			UINT32 number = (source[1]&0x7ffc); // raiga needs something like this, might not be perfect, see end sequence
 			UINT32 color = source[2];
 			UINT32 sizex = 1<<((color>>0)&0x3); // 1,2,4,8
 			UINT32 sizey = 1<<((color>>gaiden_sprite_sizey)&0x3); // 1,2,4,8
@@ -261,16 +269,30 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 				{
 					int sx = xpos + 8*(flipx?(sizex-1-col):col);
 					int sy = ypos + 8*(flipy?(sizey-1-row):row);
-					pdrawgfx(bitmap,gfx,
-						number + layout[row][col],
-						color,
-						flipx,flipy,
-						sx,sy,
-						cliprect,TRANSPARENCY_PEN,0,
-						priority_mask);
+
+					if (!draw_priority)
+					{
+						pdrawgfx(bitmap,gfx,
+							number + layout[row][col],
+							color,
+							flipx,flipy,
+							sx,sy,
+							cliprect,TRANSPARENCY_PEN,0,
+							priority_mask);
+					}
+					else
+					{
+						drawgfx(bitmap,gfx,
+							number + layout[row][col],
+							color,
+							flipx,flipy,
+							sx,sy,
+							cliprect,TRANSPARENCY_PEN,0);
+					}
 				}
 			}
 		}
+skip_sprite:
 		source -= 8;
 	}
 }
@@ -279,9 +301,33 @@ VIDEO_UPDATE( gaiden )
 {
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+
 	tilemap_draw(bitmap,cliprect,background,0,1);
+
 	tilemap_draw(bitmap,cliprect,foreground,0,2);
 	tilemap_draw(bitmap,cliprect,text_layer,0,4);
 
-	draw_sprites( bitmap,cliprect );
+	draw_sprites( bitmap,cliprect,0 );
+}
+
+VIDEO_UPDATE( raiga )
+{
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+
+	draw_sprites( bitmap,cliprect,8 );
+
+	tilemap_draw(bitmap,cliprect,background,0,1);
+
+	draw_sprites( bitmap,cliprect,4 );
+
+	tilemap_draw(bitmap,cliprect,foreground,0,2);
+	alpha_set_level(128);
+	tilemap_draw(bitmap,cliprect,foreground,TILEMAP_ALPHA | 1,2);
+
+	draw_sprites( bitmap,cliprect,2 );
+
+	tilemap_draw(bitmap,cliprect,text_layer,0,4);
+
+	draw_sprites( bitmap,cliprect,1 );
 }

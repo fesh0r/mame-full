@@ -1988,6 +1988,7 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K052109_gfxnum = gfx_index;
 	K052109_callback = callback;
 	K052109_RMRD_line = CLEAR_LINE;
+	K052109_irq_enabled = 0;
 
 	has_extra_video_ram = 0;
 
@@ -2093,12 +2094,12 @@ WRITE_HANDLER( K052109_w )
 		{	/* A x scroll */	}
 		else if (offset == 0x1c80)
 		{
-if (K052109_scrollctrl != data)
-{
+			if (K052109_scrollctrl != data)
+			{
 //usrintf_showmessage("scrollcontrol = %02x",data);
 //logerror("%04x: rowscrollcontrol = %02x\n",activecpu_get_pc(),data);
-			K052109_scrollctrl = data;
-}
+				K052109_scrollctrl = data;
+			}
 		}
 		else if (offset == 0x1d00)
 		{
@@ -3289,7 +3290,7 @@ if (keyboard_pressed(KEYCODE_D))
 /*                                                                         */
 /***************************************************************************/
 
-static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound;
+static int K053247_memory_region, K053247_dx, K053247_dy, K053247_wraparound, K053247_z_rejection;
 static data8_t  K053246_regs[8];
 static data16_t K053247_regs[16];
 static data16_t *K053247_ram=0;
@@ -3391,6 +3392,7 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	K053247_dx = dx;
 	K053247_dy = dy;
 	K053247_wraparound = 1;
+	K053247_z_rejection = -1;
 	K053247_memory_region = gfx_memory_region;
 	K053247_gfx = Machine->gfx[gfx_index];
 	K053247_callback = callback;
@@ -3476,7 +3478,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 		size4 *= 4*1024*1024;
 		/* set the # of tiles based on the 4bpp section */
 		spritelayout.total = size4 / 128;
-		K055673_rom = (data16_t *)auto_malloc(size4 * 5);
+		if (!(K055673_rom = (data16_t *)auto_malloc(size4 * 5))) return 1;
 		d = (data8_t *)K055673_rom;
 		// now combine the graphics together to form 5bpp
 		s1 = memory_region(gfx_memory_region); // 4bpp area
@@ -3617,7 +3619,7 @@ WRITE_HANDLER( K053247_w )
 {
 	int offs = offset >> 1;
 
-	if(offset & 1)
+	if (offset & 1)
 		K053247_ram[offs] = (K053247_ram[offs] & 0xff00) | data;
 	else
 		K053247_ram[offs] = (K053247_ram[offs] & 0x00ff) | (data<<8);
@@ -3776,8 +3778,23 @@ void K053246_set_OBJCHA_line(int state)
 
 int K053246_is_IRQ_enabled(void)
 {
-	//AT: This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
+	//* This bit enables obj DMA rather than obj IRQ even though the two functions usually coincide.
 	return K053246_regs[5] & 0x10;
+}
+
+/*
+	In a K053247+K055555 setup objects with Z-code 0x00 should be ignored when PRFLIP is cleared,
+	while objects with Z-code 0xff should be ignored when PRFLIP is set. These behaviors may also
+	apply to the K053246+K053251 combo - Bucky 'O Hare and The Simpsons rely heavily on their
+	subsequent implications to prepare and retire sprites. The issue was not apparent because
+	its nature was largely concealed by the old sort method.
+
+	Z-code rejection has been made configurable by K053247_set_z_rejection() at VIDEO_START().
+	Parameter: -1=accept all(default), 0x00-0xff=zcode to ignore
+*/
+void K053247_set_z_rejection(int zcode)
+{
+	K053247_z_rejection = zcode;
 }
 
 /*
@@ -3880,9 +3897,18 @@ void K053247_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 	*/
 
 	// Prebuild a sorted table by descending Z-order.
-	for (count=0, offs=0; offs<0x800; offs+=8)
+	zcode = K053247_z_rejection;
+	offs = count = 0;
+
+	if (zcode == -1)
 	{
-		if (K053247_ram[offs] & 0x8000) sortedlist[count++] = offs;
+		for (; offs<0x800; offs+=8)
+			if (K053247_ram[offs] & 0x8000) sortedlist[count++] = offs;
+	}
+	else
+	{
+		for (; offs<0x800; offs+=8)
+			if (K053247_ram[offs] & 0x8000 && (K053247_ram[offs] & 0xff) != zcode) sortedlist[count++] = offs;
 	}
 
 	w = count;

@@ -1968,7 +1968,6 @@ static int validitychecks(void)
 								break;
 						}
 
-
 						while (!IS_MEMPORT_END(pra))
 						{
 							if (!IS_MEMPORT_MARKER(pra))

@@ -39,9 +39,19 @@ Notes:
   if hardware is more powerful or the extra sprites were just not needed
   in the earlier games.
 
+  Raiga also has alpha blending, maybe the other games too, its used for
+  the pink goo on level 3, however alpha blending doesn't work well with
+  pdrawgfx so the priorities on some levels of raiga are broken, also the
+  alpha level is selectable and the gfx should fade out on the 3rd boss, this
+  appears to be related to the extra 'unused palette ram'  the hardware
+  probably also has some kind of real shadow sprite effect, the first boss
+  appears to fade between a shadow sprite and normal sprite on the videos
+  we have.
+
+
 todo:
 
-- finish raiga (need to trojanize the mcu).
+- make sure all of the protection accesses in raiga are handled correctly.
 
 ***************************************************************************/
 /***************************************************************************
@@ -119,7 +129,10 @@ Notes:
 extern data16_t *gaiden_videoram,*gaiden_videoram2,*gaiden_videoram3;
 extern int gaiden_sprite_sizey;
 
+VIDEO_START( gaiden );
+
 VIDEO_UPDATE( gaiden );
+VIDEO_UPDATE( raiga );
 
 WRITE16_HANDLER( gaiden_videoram_w );
 WRITE16_HANDLER( gaiden_videoram2_w );
@@ -134,9 +147,6 @@ WRITE16_HANDLER( gaiden_fgscrolly_w );
 WRITE16_HANDLER( gaiden_bgscrollx_w );
 WRITE16_HANDLER( gaiden_bgscrolly_w );
 WRITE16_HANDLER( gaiden_flip_w );
-
-VIDEO_START( gaiden );
-VIDEO_UPDATE( gaiden );
 
 
 
@@ -213,30 +223,87 @@ static READ16_HANDLER( wildfang_protection_r )
 
 
 
-/* raiga, incomplete. MCU read routine is at D9CE */
-/* on startup it reads 00/36/0e/11/33/34/2d, fetching some code copied to RAM,
-   and a value which is used as an offset to point to the code in RAM.
-   19/12/31/28 are read repeatedly, from the interrupt, and the returned value
-   changes.
-   Others polled: 2b (fbi/japan screen) 15 (first boss) 23 25 13 1e 1c
-  */
+/*
+
+Raiga Protection
+MCU read routine is at D9CE
+
+startup codes
+
+it reads 00/36/0e/11/33/34/2d, fetching some code copied to RAM,
+and a value which is used as an offset to point to the code in RAM.
+19/12/31/28 are read repeatedly, from the interrupt, and the returned
+value chanes, some kind of mode set command?
+
+level codes
+
+00 | score screen after level 1 (5457)
+01 | score screen after level 2 (494e)
+02 | score screen after level 3 (5f4b)
+03 | score screen after level 4 (4149)
+04 | score screen after level 5 (5345)
+05 | score screen after level 6 + first loop end sequence (525f)
+06 | score screen after second loop level 1 (4d49)
+07 | score screen after second loop level 2 (5941)
+08 | score screen after second loop level 3 (5241)
+09 | score screen after second loop level 4 (5349)
+0a | score screen after second loop level 5 (4d4f)
+0b | score screen after second loop level 6 + final end sequence (4a49)
+
+
+other game codes
+
+13 | Game over (594f)
+15 | at the start of second level attract mode (4e75)
+1c | start of level 4 attract mode (4e75)
+1e | after continue .. (5349)
+23 | after entering hi-score (4e75)
+25 | after attract level 1 (4849)
+2b | after japan / wdud screen, to get back to 'tecmo presents' (524f)
+
+also bonus life + when the boss appears but I think they use the
+same commands as some of the above
+
+*/
+
+/* these are used during startup */
+static int jumppoints_00[0x100] =
+{
+	0x6669,	   -1,    -1,    -1,    -1,    -1,    -1,    -1,
+	    -1,    -1,    -1,    -1,    -1,    -1,0x4a46,    -1,
+	    -1,0x6704,    -2,    -1,    -1,    -1,    -1,    -1,
+	    -1,    -2,    -1,    -1,    -1,    -1,    -1,    -1,
+	    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
+	    -2,    -1,    -1,    -1,    -1,0x4e75,    -1,    -1,
+	    -1,    -2,    -1,0x4e71,0x60fc,    -1,0x7288,    -1,
+	    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1
+};
+
+/* these are used the rest of the time */
+static int jumppoints_other[0x100] =
+{
+	0x5457,0x494e,0x5f4b,0x4149,0x5345,0x525f,0x4d49,0x5941,
+	0x5241,0x5349,0x4d4f,0x4a49,    -1,    -1,    -1,    -1,
+	    -1,    -1,    -2,0x594f,    -1,0x4e75,    -1,    -1,
+	    -1,    -2,    -1,    -1,0x4e75,    -1,0x5349,    -1,
+	    -1,    -1,    -1,0x4e75,    -1,0x4849,    -1,    -1,
+	    -2,    -1,    -1,0x524f,    -1,    -1,    -1,    -1,
+	    -1,    -2,    -1,    -1,    -1,    -1,    -1,    -1,
+	    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1
+};
+
+static int *raiga_jumppoints = jumppoints_00;
+
+static MACHINE_INIT ( raiga )
+{
+	raiga_jumppoints = jumppoints_00;
+}
 
 static WRITE16_HANDLER( raiga_protection_w )
 {
 	if (ACCESSING_MSB)
 	{
 		static int jumpcode;
-		static int jumppoints[] =
-		{
-			0x6669,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-			    -1,    -1,    -1,    -1,    -1,    -1,0x4a46,    -1,
-			    -1,0x6704,    -2,    -1,    -1,    -1,    -1,    -1,
-			    -1,    -2,    -1,    -1,    -1,    -1,    -1,    -1,
-			    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,
-			    -2,    -1,    -1,    -1,    -1,0x4e75,    -1,    -1,
-			    -1,    -2,    -1,0x4e71,0x60fc,    -1,0x7288,    -1,
-			    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1
-		};
 
 		data >>= 8;
 
@@ -255,26 +322,30 @@ static WRITE16_HANDLER( raiga_protection_w )
 				jumpcode |= data & 0x0f;
 				logerror("requested protection jumpcode %02x\n",jumpcode);
 //				jumpcode = 0;
-				if (jumpcode >= sizeof(jumppoints)/sizeof(jumppoints[0]) ||
-						jumppoints[jumpcode] == -1)
+				if (raiga_jumppoints[jumpcode] == -2)
+				{
+					raiga_jumppoints = jumppoints_other;
+				}
+
+				if (raiga_jumppoints[jumpcode] == -1)
 				{
 					logerror("unknown jumpcode %02x\n",jumpcode);
-					usrintf_showmessage("unknown jumpcode %02x",jumpcode);
+					usrintf_showmessage("unknown jumpcode %02x contact MAMEDEV with details",jumpcode);
 					jumpcode = 0;
 				}
 				prot = 0x20;
 				break;
 			case 0x30:	/* ask for bits 12-15 of function address */
-				prot = 0x40 | ((jumppoints[jumpcode] >> 12) & 0x0f);
+				prot = 0x40 | ((raiga_jumppoints[jumpcode] >> 12) & 0x0f);
 				break;
 			case 0x40:	/* ask for bits 8-11 of function address */
-				prot = 0x50 | ((jumppoints[jumpcode] >> 8) & 0x0f);
+				prot = 0x50 | ((raiga_jumppoints[jumpcode] >> 8) & 0x0f);
 				break;
 			case 0x50:	/* ask for bits 4-7 of function address */
-				prot = 0x60 | ((jumppoints[jumpcode] >> 4) & 0x0f);
+				prot = 0x60 | ((raiga_jumppoints[jumpcode] >> 4) & 0x0f);
 				break;
 			case 0x60:	/* ask for bits 0-3 of function address */
-				prot = 0x70 | ((jumppoints[jumpcode] >> 0) & 0x0f);
+				prot = 0x70 | ((raiga_jumppoints[jumpcode] >> 0) & 0x0f);
 				break;
 		}
 	}
@@ -763,6 +834,8 @@ static MACHINE_DRIVER_START( shadoww )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_INIT(raiga)
+
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
@@ -778,6 +851,11 @@ static MACHINE_DRIVER_START( shadoww )
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( raiga )
+	MDRV_IMPORT_FROM(shadoww)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_UPDATE(raiga)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1067,27 +1145,6 @@ static DRIVER_INIT( wildfang )
 
 static DRIVER_INIT( raiga )
 {
-#if 0
-data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
-int i;
-static data16_t tr[] =
-{
-	0x7000,0x7200,0x740F,0x47F9,0x0000,0x06B4,0x7E00,0x1E33,
-	0x1000,0x4EB9,0x0000,0xD9CE,0x3007,0xE848,0xE848,0xE848,
-	0x0240,0x000F,0x0600,0x0030,0x0C00,0x003A,0x6D04,0x0600,
-	0x0007,0x3340,0x0800,0x4259,0x3007,0xE848,0xE848,0x0240,
-	0x000F,0x0600,0x0030,0x0C00,0x003A,0x6D04,0x0600,0x0007,
-	0x3340,0x0800,0x4259,0x3007,0xE848,0x0240,0x000F,0x0600,
-	0x0030,0x0C00,0x003A,0x6D04,0x0600,0x0007,0x3340,0x0800,
-	0x4259,0x3007,0x0240,0x000F,0x0600,0x0030,0x0C00,0x003A,
-	0x6D04,0x0600,0x0007,0x3340,0x0800,0x4259,0xD0FC,0x0010,
-	0x2248,0x5201,0x51CA,0xFF76,0x60FE,
-	0x2828,0x282b,0x2815,0x281c,0x281e,0x2813,0x2823,0x2825
-};
-for (i = 0;i < sizeof(tr)/sizeof(tr[0]);i++)
-	rom[0x61a/2 + i] = tr[i];
-#endif
-
 	gaiden_sprite_sizey = 2;	// sprite size Y *independent* from sprite size X
 
 	install_mem_read16_handler (0, 0x07a006, 0x07a007, raiga_protection_r);
@@ -1102,5 +1159,5 @@ GAME( 1988, gaiden,   shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Nin
 GAME( 1989, ryukendn, shadoww,  shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
 GAME( 1989, wildfang, 0,        shadoww, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
 GAME( 1989, tknight,  wildfang, shadoww, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
-GAMEX(1991, stratof,  0,        shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_UNEMULATED_PROTECTION )
-GAMEX(1991, raiga,    stratof,  shadoww, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1991, stratof,  0,        raiga, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1991, raiga,    stratof,  raiga, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_IMPERFECT_GRAPHICS )

@@ -391,21 +391,20 @@ ROM_END
 
 ROM_START( cabaret )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code + 64K for extra RAM */
-	/* 0000-7fff missing??? */
-	ROM_LOAD( "cabaret.008",  0x8000, 0x8000, CRC(8ed8066c) )
+	ROM_LOAD( "cg-8v204.u97",  0x0000, 0x10000, CRC(44cebf77) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	ROM_LOAD( "cabaret.007",  0x0000, 0x8000, CRC(b93ae6f8) )	/* background maps, read by the CPU */
+	ROM_LOAD( "cg-7.u98",  0x0000, 0x8000, CRC(b93ae6f8) )	/* background maps, read by the CPU */
 
 	ROM_REGION( 0x60000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.004",  0x00000, 0x20000, CRC(e509f50a) )
-	ROM_LOAD( "cabaret.005",  0x20000, 0x20000, CRC(e2cbf489) )
-	ROM_LOAD( "cabaret.006",  0x40000, 0x20000, CRC(4f2fced7) )
+	ROM_LOAD( "cg-4.u43",  0x00000, 0x20000, CRC(e509f50a) )
+	ROM_LOAD( "cg-5.u44",  0x20000, 0x20000, CRC(e2cbf489) )
+	ROM_LOAD( "cg-6.u45",  0x40000, 0x20000, CRC(4f2fced7) )
 
 	ROM_REGION( 0xc000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "cabaret.001",  0x0000, 0x4000, CRC(7dee8b1f) )
-	ROM_LOAD( "cabaret.002",  0x4000, 0x4000, CRC(ce8dea39) )
-	ROM_LOAD( "cabaret.003",  0x8000, 0x4000, CRC(7e1f821f) )
+	ROM_LOAD( "cg-1.u40",  0x0000, 0x4000, CRC(7dee8b1f) )
+	ROM_LOAD( "cg-2.u41",  0x4000, 0x4000, CRC(ce8dea39) )
+	ROM_LOAD( "cg-3.u42",  0x8000, 0x4000, CRC(7e1f821f) )
 ROM_END
 
 

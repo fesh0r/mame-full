@@ -122,7 +122,7 @@ VIDEO_UPDATE( sauro )
 				flipx,flip_screen,
 				sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
-	};
+	}
 
 	/* Draw the sprites. The order is important for correct priorities */
 
@@ -233,6 +233,12 @@ VIDEO_UPDATE( trckydoc )
 	{
 		sy = spriteram[offs];
 
+		if(spriteram[offs+3] & 0x08)
+		{
+			/* needed by the elevator cable (2nd stage), balls bouncing (3rd stage) and maybe other things */
+			sy += 6;
+		}
+
 		code = spriteram[offs+1] + ((spriteram[offs+3] & 0x01) << 8);
 
 		sx = spriteram[offs+2]-2;
@@ -262,6 +268,7 @@ VIDEO_UPDATE( trckydoc )
 			sx = (235 - sx) & 0xff;  /* The &0xff is not 100% percent correct */
 			sy = 240 - sy;
 		}
+
 		drawgfx(bitmap, Machine->gfx[1],
 				code,
 				color,

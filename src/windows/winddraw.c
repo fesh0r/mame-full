@@ -129,6 +129,8 @@ void win_ddraw_fullscreen_margins(DWORD desc_width, DWORD desc_height, RECT *mar
 #endif /* WINDOW_HAS_MENU */
 }
 
+
+
 //============================================================
 //	erase_outer_rect
 //============================================================
