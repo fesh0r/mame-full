@@ -2668,8 +2668,8 @@ static void load_map_file(UINT16 src_addr, int src_map_file, int dst_file)
 
 	for (i=0; i<3; i++)
 	{
-		I.map_files[dst_file].L[i] = cpu_readmem24bew_word(I.mapper_address_latch) & 0xfff0;
-		I.map_files[dst_file].limit[i] = (I.map_files[dst_file].L[i] ^ 0xfff0) | 0x000f;
+		I.map_files[dst_file].L[i] = cpu_readmem24bew_word(I.mapper_address_latch) & 0xffe0;
+		I.map_files[dst_file].limit[i] = (I.map_files[dst_file].L[i] ^ 0xffe0) | 0x001f;
 		I.mapper_address_latch = (I.mapper_address_latch+2) & 0x1fffff;
 		I.map_files[dst_file].B[i] = cpu_readmem24bew_word(I.mapper_address_latch);
 		I.map_files[dst_file].bias[i] = ((unsigned int) I.map_files[dst_file].B[i]) << 5;
