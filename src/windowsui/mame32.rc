@@ -66,8 +66,8 @@ BEGIN
 #ifdef MESS
         MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
         MENUITEM SEPARATOR
-		MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
-		MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
+	MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
+	MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
 #ifdef MAME_DEBUG
         MENUITEM SEPARATOR
 		MENUITEM "Run Tests",					ID_MESS_RUN_TESTS
@@ -80,7 +80,11 @@ BEGIN
         MENUITEM "R&emove from 'Favorites'",    ID_CONTEXT_DEL_FAVORITE
         MENUITEM "Pr&operties",                 ID_GAME_PROPERTIES
         MENUITEM SEPARATOR
+#ifdef MESS
+        MENUITEM "&Audit all systems",          ID_FILE_AUDIT
+#else
         MENUITEM "&Audit all games",            ID_FILE_AUDIT
+#endif /* MESS */
         MENUITEM SEPARATOR
         MENUITEM "E&xit",                       ID_FILE_EXIT
     END
@@ -98,12 +102,12 @@ BEGIN
         MENUITEM SEPARATOR
         POPUP "Arrange &Icons"
         BEGIN
-            MENUITEM "by &Game",                    ID_VIEW_BYGAME
-            MENUITEM "by &Directory",               ID_VIEW_BYDIRECTORY
+            MENUITEM "by &Name",                    ID_VIEW_BYGAME
+            MENUITEM "by D&irectory",               ID_VIEW_BYDIRECTORY
             MENUITEM "by &Manufacturer",            ID_VIEW_BYMANUFACTURER
             MENUITEM "by Times &Played",            ID_VIEW_BYTIMESPLAYED
             MENUITEM "by &Type",                    ID_VIEW_BYTYPE
-            MENUITEM "by &Year",                    ID_VIEW_BYYEAR
+            MENUITEM "by &Date",                    ID_VIEW_BYYEAR
         END
         MENUITEM "Line &Up Icons",              ID_VIEW_LINEUPICONS
         MENUITEM SEPARATOR
@@ -129,8 +133,8 @@ BEGIN
         MENUITEM "&Contents\tF1",               ID_HELP_CONTENTS
         MENUITEM "&Troubleshooting",            ID_HELP_TROUBLE
         MENUITEM SEPARATOR
-        MENUITEM "Ne&w Mame Features",          ID_HELP_WHATS_NEW
         MENUITEM "&New Game Changes",           ID_HELP_WHATS_NEW32
+        MENUITEM "&Mame Release Notes",         ID_HELP_WHATS_NEW
 #endif
         MENUITEM SEPARATOR
         MENUITEM "&About",                      ID_HELP_ABOUT
@@ -215,8 +219,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 0,60,0,0
- PRODUCTVERSION 0,60,0,0
+ FILEVERSION 0,61,0,0
+ PRODUCTVERSION 0,61,0,0
  FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -241,7 +245,7 @@ BEGIN
             VALUE "Comments", "Multiple Arcade Machine Emulator for Win32\0"
             VALUE "CompanyName", "MAME Team\0"
             VALUE "FileDescription", "Multiple Arcade Machine Emulator for Win32\0"
-            VALUE "FileVersion", "0, 60, 0, 0\0"
+            VALUE "FileVersion", "0, 61, 0, 0\0"
             VALUE "InternalName", "MAME32\0"
             VALUE "LegalCopyright", "Copyright © 1997-2002 Nicola Salmoria and the MAME team\0"
 #endif
@@ -253,7 +257,7 @@ BEGIN
             VALUE "OriginalFilename", "MAME32.exe\0"
             VALUE "ProductName", "MAME32\0"
 #endif
-            VALUE "ProductVersion", "0, 60, 0, 0\0"
+            VALUE "ProductVersion", "0, 61, 0, 0\0"
         END
     END
     BLOCK "VarFileInfo"
@@ -509,7 +513,7 @@ STYLE WS_CHILD | WS_CAPTION
 CAPTION "Display"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDI_DISPLAY,IDC_STATIC,20,10,20,20
+    ICON            IDI_DISPLAY,IDC_STATIC,20,10,21,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
@@ -517,8 +521,6 @@ BEGIN
                     WS_TABSTOP,16,45,77,9,0,HIDC_WINDOWED
     CONTROL         "Start out maximized",IDC_MAXIMIZE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,57,77,9,0,HIDC_MAXIMIZE
-//    CONTROL         "Draw only changes",IDC_DIRTY,"Button",BS_AUTOCHECKBOX | 
-//                    WS_TABSTOP,16,69,77,9,0,HIDC_DIRTY
     CONTROL         "Enforce aspect ratio",IDC_KEEPASPECT,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,16,69,77,9,0,
                     HIDC_KEEPASPECT
@@ -539,7 +541,7 @@ BEGIN
                     WS_GROUP | WS_TABSTOP,123,56,77,9,0,HIDC_SCANLINES
     COMBOBOX        IDC_EFFECT,123,69,83,85,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP,0,HIDC_EFFECT
-    GROUPBOX        "Gamma correction",IDC_STATIC,113,105,100,36
+    GROUPBOX        "Gamma correction",IDC_STATIC,113,105,100,35
     CONTROL         "GammaSlider",IDC_GAMMA,"msctls_trackbar32",TBS_BOTH |
                     TBS_NOTICKS | WS_TABSTOP,123,118,82,11,0,HIDC_GAMMA
     LTEXT           "2.00",IDC_GAMMADISP,158,129,15,8,NOT WS_GROUP
@@ -656,20 +658,24 @@ BEGIN
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
     CONTROL         "Enable joystick input",IDC_JOYSTICK,"Button",
-                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,50,50,131,10,0,
+                    BS_AUTOCHECKBOX | WS_GROUP | WS_TABSTOP,50,46,120,10,0,
                     HIDC_JOYSTICK
     CONTROL         "Enable mouse input",IDC_USE_MOUSE,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,64,131,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,49,102,121,10,0,
                     HIDC_USE_MOUSE
     CONTROL         "Enable steadykey support",IDC_STEADYKEY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,78,131,10,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,49,117,121,10,0,
                     HIDC_STEADYKEY
-    LTEXT           "Default input layout:",IDC_STATIC,50,92,131,10
-    COMBOBOX        IDC_DEFAULT_INPUT,50,106,75,55,CBS_DROPDOWNLIST |
+    COMBOBOX        IDC_DEFAULT_INPUT,72,146,78,55,CBS_DROPDOWNLIST | 
                     WS_VSCROLL | WS_TABSTOP,0,HIDC_DEFAULT_INPUT
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,HIDC_USE_DEFAULT
+    CONTROL         "IntensitySlider",IDC_A2D,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,60,74,100,11,0,HIDC_A2D
+    CTEXT           "0.3",IDC_A2DDISP,100,84,19,9,NOT WS_GROUP
+    GROUPBOX        "Analog joystick deadzone",IDC_A2DTEXT,50,63,120,33
+    GROUPBOX        "Default input layout",IDC_STATIC,50,135,120,32
 END
 
 IDD_PROP_MISC DIALOGEX 0, 0, 220, 205
@@ -677,26 +683,42 @@ STYLE WS_CHILD | WS_CAPTION
 CAPTION "Miscellaneous"
 FONT 8, "MS Sans Serif"
 BEGIN
-    ICON            IDI_MAME32_ICON,IDC_STATIC,20,10,20,20
+    ICON            IDI_MAME32_ICON,IDC_STATIC,19,10,20,20
     LTEXT           "Title\nDirectory\nExtra",IDC_PROP_TITLE,52,9,161,25,
                     SS_NOPREFIX
     CONTROL         "",IDC_STATIC,"Static",SS_ETCHEDHORZ,20,38,178,1
+    GROUPBOX        "",IDC_STATIC,7,43,206,30
     CONTROL         "Use additional game artwork",IDC_ARTWORK,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,50,163,10,0,HIDC_ARTWORK
-    CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX |
-                    WS_TABSTOP,50,64,163,10,0,HIDC_CHEAT
-    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,79,163,10,0,HIDC_LOG
+                    BS_AUTOCHECKBOX | WS_TABSTOP,14,43,105,10,0,HIDC_ARTWORK
+    CONTROL         "Backdrops",IDC_BACKDROPS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,25,56,60,10,0,HIDC_BACKDROPS
+    CONTROL         "Bezels",IDC_BEZELS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,89,56,51,10,0,HIDC_BEZELS
+    CONTROL         "Overlays",IDC_OVERLAYS,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,146,56,58,10,0,HIDC_OVERLAYS
+    CONTROL         "Crop artwork",IDC_ARTWORK_CROP,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,129,91,75,10,0,HIDC_ARTWORK_CROP
+    GROUPBOX        "Other Options",IDC_STATIC,7,113,206,65
+    CONTROL         "Enable game cheats",IDC_CHEAT,"Button",BS_AUTOCHECKBOX | 
+                    WS_TABSTOP,25,138,150,10,0,HIDC_CHEAT
     CONTROL         "Use less CPU time when possible",IDC_SLEEP,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,94,163,10,0,HIDC_SLEEP
+                    BS_AUTOCHECKBOX | WS_TABSTOP,25,151,150,10,0,HIDC_SLEEP
+    CONTROL         "Error log (for developers)",IDC_LOG,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,25,164,150,10,0,HIDC_LOG
+    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
+    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
+                    0,0,HIDC_USE_DEFAULT
+    CONTROL         "Use keyboard LEDs as game indicators",IDC_LEDS,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,25,125,153,10,0,HIDC_LEDS
+    GROUPBOX        "Artwork Resolution",IDC_ARTRESTEXT,7,76,97,34
+    GROUPBOX        "Artwork Misc",IDC_STATIC,114,76,99,34
+    COMBOBOX        IDC_ARTRES,25,89,59,60,CBS_DROPDOWNLIST | WS_VSCROLL | 
+                    WS_TABSTOP,0,HIDC_ARTRES
 #ifdef MESS
     LTEXT           "RAM size",IDC_RAM_CAPTION,50,94,50,10
     COMBOBOX        IDC_RAM_COMBOBOX,100,94,80,76,CBS_DROPDOWNLIST | WS_VSCROLL |
                     WS_TABSTOP
 #endif
-    PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
-    PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
-                    0,0,HIDC_USE_DEFAULT
 END
 
 IDD_PROP_VECTOR DIALOGEX 0, 0, 220, 205
@@ -712,19 +734,24 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,50,50,114,8,0,
                     HIDC_ANTIALIAS
     CONTROL         "Draw translucent vectors",IDC_TRANSLUCENCY,"Button",
-                    BS_AUTOCHECKBOX | WS_TABSTOP,50,64,114,8,0,
+                    BS_AUTOCHECKBOX | WS_TABSTOP,50,62,114,8,0,
                     HIDC_TRANSLUCENCY
-    LTEXT           "Beam width:",IDC_BEAMTEXT,50,80,114,8
-    CONTROL         "BeamSlider",IDC_BEAM,"msctls_trackbar32",TBS_BOTH |
-                    TBS_NOTICKS | WS_TABSTOP,50,91,89,11,0,HIDC_BEAM
-    LTEXT           "16.00",IDC_BEAMDISP,142,91,29,9
-    LTEXT           "Flicker:",IDC_FLICKERTEXT,50,105,114,8
-    CONTROL         "FlickerSlider",IDC_FLICKER,"msctls_trackbar32",TBS_BOTH |
-                    TBS_NOTICKS | WS_TABSTOP,50,117,89,11,0,HIDC_FLICKER
-    LTEXT           "100.00",IDC_FLICKERDISP,142,118,29,9,NOT WS_GROUP
+    LTEXT           "Beam width:",IDC_BEAMTEXT,50,76,114,8
+    CONTROL         "BeamSlider",IDC_BEAM,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,50,89,89,11,0,HIDC_BEAM
+    LTEXT           "16.00",IDC_BEAMDISP,141,89,29,9
+    LTEXT           "Flicker:",IDC_FLICKERTEXT,50,103,114,8
+    CONTROL         "FlickerSlider",IDC_FLICKER,"msctls_trackbar32",TBS_BOTH | 
+                    TBS_NOTICKS | WS_TABSTOP,50,116,89,11,0,HIDC_FLICKER
+    LTEXT           "100.00",IDC_FLICKERDISP,142,116,29,9,NOT WS_GROUP
     PUSHBUTTON      "Reset",IDC_PROP_RESET,7,184,97,14,0,0,HIDC_PROP_RESET
     PUSHBUTTON      "Restore Default Settings",IDC_USE_DEFAULT,114,184,99,14,
                     0,0,HIDC_USE_DEFAULT
+    LTEXT           "Intensity:",IDC_INTENSITYTEXT,50,130,114,8
+    CONTROL         "IntensitySlider",IDC_INTENSITY,"msctls_trackbar32",
+                    TBS_BOTH | TBS_NOTICKS | WS_TABSTOP,50,143,89,11,0,
+                    HIDC_INTENSITY
+    LTEXT           "1.5",IDC_INTENSITYDISP,142,143,29,9,NOT WS_GROUP
 END
 
 #ifdef MESS
@@ -1029,6 +1056,7 @@ BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 213
         VERTGUIDE, 50
+        VERTGUIDE, 170
         BOTTOMMARGIN, 198
     END
 
@@ -1036,7 +1064,11 @@ BEGIN
     BEGIN
         LEFTMARGIN, 7
         RIGHTMARGIN, 213
-        VERTGUIDE, 50
+        VERTGUIDE, 25
+        VERTGUIDE, 40
+        VERTGUIDE, 104
+        VERTGUIDE, 114
+        VERTGUIDE, 204
         BOTTOMMARGIN, 198
     END
 
