@@ -49,6 +49,13 @@ typedef struct
 static point *list;			/* array of (crt_window_width*crt_window_height) point */
 static int list_head;		/* head of list in the array */
 
+static struct mame_bitmap *typewriter_bitmap;
+
+static const struct rectangle typewriter_window =
+{
+	typewriter_window_offset_x,	typewriter_window_offset_x+typewriter_window_width-1,	/* min_x, max_x */
+	typewriter_window_offset_y,	typewriter_window_offset_y+typewriter_window_height-1,	/* min_y, max_y */
+};
 
 /*
 	video init
@@ -63,12 +70,24 @@ int pdp1_vh_start(void)
 	if (! tmpbitmap)
 		return 1;
 
+	typewriter_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height/*typewriter_window_width, typewriter_window_height*/);
+	if (! typewriter_bitmap)
+	{
+		bitmap_free(tmpbitmap);
+		tmpbitmap = NULL;
+
+		return 1;
+	}
+
 	/* alloc the array */
 	list = malloc(crt_window_width * crt_window_height * sizeof(point));
 	if (! list)
 	{
 		bitmap_free(tmpbitmap);
 		tmpbitmap = NULL;
+
+		bitmap_free(typewriter_bitmap);
+		typewriter_bitmap = NULL;
 
 		return 1;
 	}
@@ -80,6 +99,8 @@ int pdp1_vh_start(void)
 	}
 
 	list_head = -1;
+
+	fillbitmap(tmpbitmap, Machine->pens[pen_typewriter_bg], &typewriter_window);
 
 	return 0;
 }
@@ -99,6 +120,11 @@ void pdp1_vh_stop(void)
 	{
 		bitmap_free(tmpbitmap);
 		tmpbitmap = NULL;
+	}
+	if (typewriter_bitmap)
+	{
+		bitmap_free(typewriter_bitmap);
+		typewriter_bitmap = NULL;
 	}
 
 	return;
@@ -508,4 +534,151 @@ static void pdp1_draw_panel(struct mame_bitmap *bitmap, int full_refresh)
 		pdp1_draw_string(bitmap, "instruction", x_panel_col3_offset, y, color_panel_caption);
 	y += 8;
 	pdp1_draw_multipleled(bitmap, x_panel_col3_offset, y, cpunum_get_reg(0, PDP1_IR), 5);
+}
+
+
+/*
+	Typewriter code
+*/
+
+
+static int pos;
+
+static int case_shift;
+
+static int color = color_typewriter_black;
+
+enum
+{
+	typewriter_line_height = 8,
+	typewriter_write_offset_y = typewriter_window_offset_y+typewriter_window_height-typewriter_line_height,
+	typewriter_scroll_step = typewriter_line_height
+};
+static const struct rectangle typewriter_scroll_clear_window =
+{
+	typewriter_window_offset_x,	typewriter_window_offset_x+typewriter_window_width-1,	/* min_x, max_x */
+	typewriter_window_offset_y+typewriter_window_height-typewriter_scroll_step,	typewriter_window_offset_y+typewriter_window_height-1,	/* min_y, max_y */
+};
+static const int var_typewriter_scroll_step = - typewriter_scroll_step;
+
+enum
+{
+	tab_step = 8
+};
+
+
+static void pdp1_teletyper_linefeed(void)
+{
+	copyscrollbitmap(typewriter_bitmap, tmpbitmap, 0, NULL, 1, &var_typewriter_scroll_step,
+						&Machine->visible_area, TRANSPARENCY_NONE, 0);
+
+	fillbitmap(typewriter_bitmap, Machine->pens[pen_typewriter_bg], &typewriter_scroll_clear_window);
+
+	copybitmap(tmpbitmap, typewriter_bitmap, 0, 0, 0, 0, &typewriter_window, TRANSPARENCY_NONE, 0);
+}
+
+void pdp1_teletyper_drawchar(int character)
+{
+	static const char ascii_table[2][64] =
+	{	/* n-s = non-spacing */
+		{	/* lower case */
+			' ',				'1',				'2',				'3',
+			'4',				'5',				'6',				'7',
+			'8',				'9',				'*',				'*',
+			'*',				'*',				'*',				'*',
+			'0',				'/',				's',				't',
+			'u',				'v',				'w',				'x',
+			'y',				'z',				'*',				',',
+			'*',/*black*/		'*',/*red*/			'*',/*Tab*/			'*',
+			'\200',/*n-s middle dot*/'j',			'k',				'l',
+			'm',				'n',				'o',				'p',
+			'q',				'r',				'*',				'*',
+			'-',				')',				'\201',/*n-s overstrike*/'(',
+			'*',				'a',				'b',				'c',
+			'd',				'e',				'f',				'g',
+			'h',				'i',				'*',/*Lower Case*/	'.',
+			'*',/*Upper Case*/	'*',/*Backspace*/	'*',				'*'/*Carriage Return*/
+		},
+		{	/* upper case */
+			' ',				'"',				'\'',				'~',
+			'\202',/*implies*/	'\203',/*or*/		'\204',/*and*/		'<',
+			'>',				'\205',/*up arrow*/	'*',				'*',
+			'*',				'*',				'*',				'*',
+			'\206',/*right arrow*/'?',				'S',				'T',
+			'U',				'V',				'W',				'X',
+			'Y',				'Z',				'*',				'=',
+			'*',/*black*/		'*',/*red*/			'*',/*Tab*/			'*',
+			'_',/*n-s???*/		'J',				'K',				'L',
+			'M',				'N',				'O',				'P',
+			'Q',				'R',				'*',				'*',
+			'+',				']',				'|',/*n-s???*/		'[',
+			'*',				'A',				'B',				'C',
+			'D',				'E',				'F',				'G',
+			'H',				'I',				'*',/*Lower Case*/	'\207',/*multiply*/
+			'*',/*Upper Case*/	'*',/*Backspace*/	'*',				'*'/*Carriage Return*/
+		}
+	};
+
+
+
+	character &= 0x3f;
+
+	switch (character)
+	{
+	case 034:
+		/* Black */
+		color = color_typewriter_black;
+		break;
+
+	case 035:
+		/* Red */
+		color = color_typewriter_red;
+		break;
+
+	case 036:
+		/* Tab */
+		pos = pos + tab_step - (pos % tab_step);
+		break;
+
+	case 072:
+		/* Lower case */
+		case_shift = 0;
+		break;
+
+	case 074:
+		/* Upper case */
+		case_shift = 1;
+		break;
+
+	case 075:
+		/* Backspace */
+		if (pos)
+			pos--;
+		break;
+
+	case 077:
+		/* Carriage Return */
+		pos = 0;
+		pdp1_teletyper_linefeed();
+		break;
+
+	default:
+		/* Any printable character... */
+
+		if (pos >= 80)
+		{	/* if past right border, wrap around. (Right???) */
+			pdp1_teletyper_linefeed();	/* next line */
+			pos = 0;					/* return to start of line */
+		}
+
+		/* print character (lookup ASCII equivalent in table) */
+		pdp1_draw_char(tmpbitmap, ascii_table[case_shift][character],
+						typewriter_window_offset_x+8*pos, typewriter_write_offset_y,
+						color);	/* print char */
+
+		if ((character!= 040) && (character!= 056))	/* 040 and 056 are non-spacing characters */
+			pos++;		/* step carriage forward */
+
+		break;
+	}
 }

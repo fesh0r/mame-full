@@ -65,6 +65,8 @@ enum
 #define ROTATE_RIGHT_PLAYER2      0x20
 #define THRUST_PLAYER2            0x40
 #define FIRE_PLAYER2              0x80
+#define HSPACE_PLAYER1            0x100
+#define HSPACE_PLAYER2            0x200
 
 /* defines for each field in input port pdp1_config */
 enum
@@ -119,6 +121,9 @@ int pdp1_vh_start(void);
 void pdp1_plot(int x, int y);
 void pdp1_screen_update(void);
 
+void pdp1_teletyper_drawchar(int character);
+
+
 enum
 {
 	/* size and position of crt view */
@@ -126,17 +131,22 @@ enum
 	crt_window_height = 512,
 	crt_window_offset_x = 0,
 	crt_window_offset_y = 0,
-	/* size and position of programmer panel view */
+	/* size and position of operator control panel view */
 	panel_window_width = 384,
 	panel_window_height = 128,
 	panel_window_offset_x = crt_window_width,
-	panel_window_offset_y = 0
+	panel_window_offset_y = 0,
+	/* size and position of typewriter view */
+	typewriter_window_width = 640,
+	typewriter_window_height = 160,
+	typewriter_window_offset_x = 0,
+	typewriter_window_offset_y = crt_window_height
 };
 
 enum
 {
 	total_width = crt_window_width + panel_window_width,
-	total_height = crt_window_height,
+	total_height = crt_window_height + typewriter_window_height,
 
 	/* respect 4:3 aspect ratio */
 	virtual_width_1 = ((total_width+3)/4)*4,
@@ -158,6 +168,7 @@ enum
 	pen_lt_gray = 12,
 	pen_green = 16,
 	pen_dk_green = 17,
+	pen_red = 18,
 
 	pen_panel_bg = pen_black,
 	pen_panel_caption = pen_white,
@@ -165,5 +176,9 @@ enum
 	pen_switch_nut = pen_lt_gray,
 	pen_switch_button = pen_white,
 	pen_lit_lamp = pen_green,
-	pen_unlit_lamp = pen_dk_green
+	pen_unlit_lamp = pen_dk_green,
+
+	pen_typewriter_bg = pen_white,
+	color_typewriter_black = 1,
+	color_typewriter_red = 2
 };

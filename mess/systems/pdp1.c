@@ -118,6 +118,10 @@ INPUT_PORTS_START( pdp1 )
 	PORT_BITX( ROTATE_RIGHT_PLAYER2, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT|IPF_PLAYER2, "Spin Right Player 2", KEYCODE_RIGHT, JOYCODE_2_RIGHT )
 	PORT_BITX( THRUST_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON1|IPF_PLAYER2, "Thrust Player 2", KEYCODE_UP, JOYCODE_2_BUTTON1 )
 	PORT_BITX( FIRE_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON2|IPF_PLAYER2, "Fire Player 2", KEYCODE_DOWN, JOYCODE_2_BUTTON2 )
+	PORT_BITX( HSPACE_PLAYER1, IP_ACTIVE_HIGH, IPT_BUTTON3, "Hyperspace Player 1", KEYCODE_Z, JOYCODE_1_BUTTON3 )
+	PORT_BITX( HSPACE_PLAYER2, IP_ACTIVE_HIGH, IPT_BUTTON3|IPF_PLAYER2, "Hyperspace Player 2", KEYCODE_SLASH, JOYCODE_2_BUTTON3 )
+
+
 
 	PORT_START		/* 1: various pdp1 operator control panel switches */
 	PORT_BITX(pdp1_control, IP_ACTIVE_HIGH, IPT_KEYBOARD, "control panel key", KEYCODE_LCONTROL, IP_JOY_NONE)
@@ -287,7 +291,7 @@ static struct GfxLayout fontlayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &fontlayout, 0, 1 },
+	{ REGION_GFX1, 0, &fontlayout, 0, 3 },
 	{ -1 }	/* end of array */
 };
 
@@ -313,12 +317,15 @@ static unsigned char palette[] =
 	204,204,204,
 	0xFF,0xFF,0xFF,  /* WHITE */
 	0x00,0xFF,0x00,  /* green */
-	0x00,0x40,0x00   /* dark green */
+	0x00,0x40,0x00,  /* dark green */
+	0xFF,0x00,0x00   /* red */
 };
 
 static unsigned short colortable[] =
 {
-	pen_panel_bg, pen_panel_caption
+	pen_panel_bg, pen_panel_caption,
+	pen_typewriter_bg, pen_black,
+	pen_typewriter_bg, pen_red
 };
 
 /* Initialise the palette */
