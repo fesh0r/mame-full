@@ -176,7 +176,7 @@ static struct GfxLayout apple2_text_layout =
     8*8        /* every char takes 8 bytes */
 };
 
-static struct GfxLayout apple2_dbl_text_layout =
+static struct GfxLayout apple2_dbltext_layout =
 {
     7,8,           /* 7*8 characters */
     256,           /* 256 characters */
@@ -187,72 +187,10 @@ static struct GfxLayout apple2_dbl_text_layout =
     8*8        /* every char takes 8 bytes */
 };
 
-static struct GfxLayout apple2_lores_layout =
-{
-    14,8,          /* 14*8 characters */
-    0x100,         /* 0x100 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7+16, 6+16, 5+16, 4+16, 3+16, 2+16, 1+16,
-      0+16, 7+16, 6+16, 5+16, 4+16, 3+16, 2+16 },   /* x offsets */
-    { 0, 0, 0, 0, 4*8, 4*8, 4*8, 4*8 },
-    8*8        /* every char takes 8 bytes */
-};
-
-static struct GfxLayout apple2_dbl_lores_layout =
-{
-    7,8,           /* 7*16 characters */
-    0x100,         /* 0x100 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7+16, 6+16, 5+16, 4+16, 3+16, 2+16, 1+16 },   /* x offsets */
-    { 0, 0, 0, 0, 4*8, 4*8, 4*8, 4*8 },
-    8*8        /* every char takes 8 bytes */
-};
-
-static struct GfxLayout apple2_hires_layout =
-{
-    14,1,          /* 14*1 characters */
-    0x80,          /* 0x80 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },   /* x offsets */
-    { 0 },
-    8*8        /* every char takes 1 byte */
-};
-
-static struct GfxLayout apple2_hires_shifted_layout =
-{
-    14,1,          /* 14*1 characters */
-    0x80,          /* 0x80 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 0, 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1 },   /* x offsets */
-    { 0 },
-    8*8        /* every char takes 1 byte */
-};
-
-static struct GfxLayout apple2_dbl_hires_layout =
-{
-    7,1,           /* 7*2 characters */
-    0x800,         /* 0x800 characters */
-    1,             /* 1 bits per pixel */
-    { 0 },         /* no bitplanes; 1 bit per pixel */
-    { 7, 6, 5, 4, 3, 2, 1 },    /* x offsets */
-    { 0 },
-    8*1        /* every char takes 1 byte */
-};
-
 static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
 {
     { 1, 0x0000, &apple2_text_layout, 0, 16 },
-    { 1, 0x0000, &apple2_dbl_text_layout, 0, 16 },
-    { 1, 0x0800, &apple2_lores_layout, 0, 16 },     /* Even characters */
-    { 1, 0x0801, &apple2_lores_layout, 0, 16 },     /* Odd characters */
-    { 1, 0x0800, &apple2_dbl_lores_layout, 0, 16 },
-    { 1, 0x0800, &apple2_hires_layout, 0, 16 },
-    { 1, 0x0C00, &apple2_hires_shifted_layout, 0, 16 },
-    { 1, 0x0800, &apple2_dbl_hires_layout, 0, 16 },
+    { 1, 0x0000, &apple2_dbltext_layout, 0, 16 },
 MEMORY_END   /* end of array */
 
 static unsigned char apple2_palette[] =

@@ -10,11 +10,15 @@
 
 /***************************************************************************/
 
+static APPLE2_STRUCT old_a2;
 static struct tilemap *text_tilemap;
+static struct tilemap *dbltext_tilemap;
 static struct tilemap *lores_tilemap;
 static int text_videobase;
+static int dbltext_videobase;
 static int lores_videobase;
 static UINT16 *artifact_map;
+static UINT8 *lores_tiledata;
 
 #define	BLACK	0
 #define PURPLE	3
@@ -63,15 +67,32 @@ static void apple2_text_gettileinfo(int memory_offset)
 		0)											/* flags */
 }
 
+static void apple2_dbltext_gettileinfo(int memory_offset)
+{
+	SET_TILE_INFO(
+		1,											/* gfx */
+		mess_ram[dbltext_videobase + memory_offset],/* character */
+		WHITE,										/* color */
+		0)											/* flags */
+}
+
 static UINT32 apple2_text_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
 {
 	/* Special Apple II addressing.  Gotta love it. */
 	return (((row & 0x07) << 7) | ((row & 0x18) * 5 + col));
 }
 
+static UINT32 apple2_dbltext_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	return apple2_text_getmemoryoffset(col / 2, row, num_cols / 2, num_rows) + ((col % 2) ? 0x800 : 0x400);
+}
+
 static void apple2_text_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
 {
-	apple2_draw_tilemap(bitmap, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
+	if (a2.COL80)
+		apple2_draw_tilemap(bitmap, beginrow, endrow, dbltext_tilemap, 0, &dbltext_videobase);
+	else
+		apple2_draw_tilemap(bitmap, beginrow, endrow, text_tilemap, page ? 0x800 : 0x400, &text_videobase);
 }
 
 /***************************************************************************
@@ -80,11 +101,18 @@ static void apple2_text_draw(struct mame_bitmap *bitmap, int page, int beginrow,
 
 static void apple2_lores_gettileinfo(int memory_offset)
 {
-	SET_TILE_INFO(
-		2 + (memory_offset & 0x01),							/* gfx */
-		mess_ram[lores_videobase + memory_offset] & 0x7f,	/* character */
-		WHITE,												/* color */
-		0)													/* flags */
+	static pen_t pal_data[2];
+	int ch;
+
+	tile_info.tile_number = 0;
+	tile_info.pen_data = lores_tiledata;
+	tile_info.pal_data = pal_data;
+	tile_info.pen_usage = 0;
+	tile_info.flags = 0;
+
+	ch = mess_ram[lores_videobase + memory_offset];
+	pal_data[0] = (ch >> 0) & 0x0f;
+	pal_data[1] = (ch >> 4) & 0x0f;
 }
 
 static void apple2_lores_draw(struct mame_bitmap *bitmap, int page, int beginrow, int endrow)
@@ -201,6 +229,13 @@ VIDEO_START( apple2 )
 		7*2, 8,
 		40, 24);
 
+	dbltext_tilemap = tilemap_create(
+		apple2_dbltext_gettileinfo,
+		apple2_dbltext_getmemoryoffset,
+		TILEMAP_OPAQUE,
+		7, 8,
+		80, 24);
+
 	lores_tilemap = tilemap_create(
 		apple2_lores_gettileinfo,
 		apple2_text_getmemoryoffset,
@@ -211,9 +246,17 @@ VIDEO_START( apple2 )
 	/* 2^3 dependent pixels * 2 color sets * 2 offsets */
 	artifact_map = auto_malloc(sizeof(UINT16) * 8 * 2 * 2);
 
+	/* 14x8 */
+	lores_tiledata = auto_malloc(sizeof(UINT8) * 14 * 8);
+
 	if (!text_tilemap || !lores_tilemap || !artifact_map)
 		return 1;
+	
+	/* build lores_tiledata */
+	memset(lores_tiledata + 0*14, 0, 4*14);
+	memset(lores_tiledata + 4*14, 1, 4*14);
 
+	/* build artifact map */
 	for (i = 0; i < 8; i++)
 	{
 		for (j = 0; j < 2; j++)
@@ -237,6 +280,7 @@ VIDEO_START( apple2 )
 		}
 	}
 
+	memset(&old_a2, 0, sizeof(old_a2));
 	text_videobase = lores_videobase = 0;
 	return 0;
 }
@@ -246,6 +290,17 @@ VIDEO_UPDATE( apple2 )
 	int page;
 
 	page = (a2.PAGE2>>7);
+
+	if ((a2.TEXT != old_a2.TEXT) || (a2.MIXED != old_a2.MIXED) || (a2.HIRES != old_a2.HIRES) || (a2.COL80 != old_a2.COL80))
+	{
+		old_a2.TEXT = a2.TEXT;
+		old_a2.MIXED = a2.MIXED;
+		old_a2.HIRES = a2.HIRES;
+		old_a2.COL80 = a2.COL80;
+		tilemap_mark_all_tiles_dirty(text_tilemap);
+		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
+		tilemap_mark_all_tiles_dirty(lores_tilemap);
+	}
 
 	if (a2.TEXT)
 	{
@@ -274,12 +329,11 @@ VIDEO_UPDATE( apple2 )
 void apple2_video_touch(offs_t offset)
 {
 	profiler_mark(PROFILER_VIDEOTOUCH);
-
 	if (offset >= text_videobase)
 		tilemap_mark_tile_dirty(text_tilemap, offset - text_videobase);
+	if (offset >= dbltext_videobase)
+		tilemap_mark_tile_dirty(dbltext_tilemap, offset - dbltext_videobase);
 	if (offset >= lores_videobase)
-		tilemap_mark_tile_dirty(lores_tilemap, offset - lores_videobase);
-
+		tilemap_mark_tile_dirty(lores_tilemap, offset - text_videobase);
 	profiler_mark(PROFILER_END);
 }
-

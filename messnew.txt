@@ -11,6 +11,8 @@ System Driver Changes:
 - [GAMEBOY] Fixed envelope generation in sound channels 1 and 2. (bug #289)
   [Anthony Kruize]
 
+- [APPLE2] Added support for lo-res color and 80 column text. [Nate Woods]
+
 Source Changes:
 ---------------
 - New generic code for emulating terminals, now in use by the Apple I and
