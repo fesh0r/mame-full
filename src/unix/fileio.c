@@ -184,7 +184,7 @@ struct rc_option fileio_opts[] =
 	{ "nvram_directory", NULL, rc_string, &nvdir, "$HOME/."NAME"/nvram", 0, 0, expand_directory, "Directory to save nvram contents" },
 	{ "memcard_directory", NULL, rc_string, &memcarddir, "$HOME/."NAME"/memcard", 0, 0, expand_directory, "Directory to save memory card contents" },
 	{ "input_directory", NULL, rc_string, &inpdir, "$HOME/."NAME"/inp", 0, 0, expand_directory, "Directory to save input device logs" },
-	{ "hiscore_directory", NULL, rc_string, &hidir, XMAMEROOT"/hi", 0, 0, expand_directory, "Directory to save hiscores" },
+	{ "hiscore_directory", NULL, rc_string, &hidir, "$HOME/."NAME"/hi", 0, 0, expand_directory, "Directory to save hiscores" },
 	{ "state_directory", NULL, rc_string, &stadir, "$HOME/."NAME"/sta", 0, 0, expand_directory, "Directory to save states" },
 	{ "artwork_directory", NULL, rc_string, &artworkdir, XMAMEROOT"/artwork", 0, 0, expand_directory, "Directory for Artwork (Overlays etc.)" },
 	{ "snapshot_directory", NULL, rc_string, &screenshotdir, XMAMEROOT"/snap", 0, 0, expand_directory, "Directory for screenshots (.png format)" },
