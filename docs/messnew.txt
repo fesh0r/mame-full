@@ -2,7 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-(none)
+- TX-0 (two variants) [Raphael Nabet]
 
 
 
