@@ -23,3 +23,4 @@ extern READ_HANDLER (	pc_HDC1_r );
 extern WRITE_HANDLER ( pc_HDC2_w );
 extern READ_HANDLER ( pc_HDC2_r );
 
+void pc_harddisk_state(void);
