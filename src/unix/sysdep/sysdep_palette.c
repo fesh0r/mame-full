@@ -65,6 +65,7 @@ static int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
 struct sysdep_palette_struct *sysdep_palette_create(int depth,
    int writable_colors)
 {
+   int r,g,b;
    struct sysdep_palette_struct *palette = NULL;
    int lookup_size = 0;
    
@@ -110,8 +111,7 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    }
       
    /* do we need to fill the lookup table? */
-   int r,g,b;
-   
+
    for(r=0; r<32; r++)
       for(g=0; g<32; g++)
          for(b=0; b<32; b++)
