@@ -183,10 +183,10 @@ DRVLIBS = \
 	$(OBJ)/tatung.a   \
 	$(OBJ)/sord.a     \
 	$(OBJ)/exidy.a    \
-#	$(OBJ)/necpc.a	  \
-#	$(OBJ)/nec.a	  \
-#	$(OBJ)/fairch.a   \
-#	$(OBJ)/ascii.a	  \
+	$(OBJ)/necpc.a	  \
+	$(OBJ)/nec.a	  \
+	$(OBJ)/fairch.a   \
+	$(OBJ)/ascii.a	  \
 #	$(OBJ)/nascom1.a  \
 #	$(OBJ)/samcoupe.a \
 #	$(OBJ)/magnavox.a \

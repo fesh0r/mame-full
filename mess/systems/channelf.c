@@ -35,19 +35,9 @@ static void init_channelf(void)
 		mem[i] = i;
 }
 
-static int channelf_load_rom(int id, mame_file *file, int open_mode)
+static int channelf_cart_load(int id, mame_file *file, int open_mode)
 {
-	UINT8 *mem = memory_region(REGION_CPU1);
-	int size;
-
-    if (file == NULL)
-		return INIT_PASS;
-	size = mame_fread(file, &mem[0x0800], 0x0800);
-
-    if (size == 0x800)
-		return INIT_PASS;
-
-    return INIT_FAIL;
+	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x800);
 }
 
 static READ_HANDLER( channelf_port_0_r )
@@ -227,7 +217,7 @@ ROM_START(channelf)
 ROM_END
 
 SYSTEM_CONFIG_START(channelf)
-	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", channelf_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_OPT( 1, "bin\0", NULL, NULL, channelf_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

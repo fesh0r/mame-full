@@ -195,8 +195,6 @@ static MACHINE_DRIVER_START( pce )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_INIT( pce )
-
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(45*8, 32*8)
@@ -212,7 +210,7 @@ static MACHINE_DRIVER_START( pce )
 MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(pce)
-	CONFIG_DEVICE_CARTSLOT_REQ(1, "pce\0", pce_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT_REQ(1, "pce\0", NULL, NULL, pce_cart_load, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

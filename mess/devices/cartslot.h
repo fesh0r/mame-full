@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include "messdrv.h"
 
+int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 minsize, UINT32 maxsize);
+
 const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	const char *file_extensions,
 	int (*initproc)(int id),

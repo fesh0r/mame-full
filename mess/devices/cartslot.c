@@ -25,3 +25,20 @@ const struct IODevice *cartslot_specify(struct IODevice *iodev, int count,
 	return iodev;
 }
 
+int cartslot_load_generic(mame_file *fp, int memregion, UINT32 offset, UINT32 minsize, UINT32 maxsize)
+{
+	UINT8 *mem;
+	UINT32 bytes_read;
+
+	mem = memory_region(memregion);
+
+	assert(mem);
+	assert((offset + maxsize) <= memory_region_length(memregion));
+	assert(minsize <= maxsize);
+
+	mem += offset;
+	memset(mem, 0, maxsize);
+
+	bytes_read = mame_fread(fp, mem, maxsize);
+	return ((bytes_read >= minsize) && (bytes_read <= maxsize)) ? INIT_PASS : INIT_FAIL;
+}

@@ -96,7 +96,7 @@ static int msx_probe_type (UINT8* pmem, int size)
         return (asc8 > asc16) ? 4 : 5;
 }
 
-int msx_load_rom (int id, mame_file *F, int open_mode)
+int msx_cart_load (int id, mame_file *F, int open_mode)
 {
     UINT8 *pmem,*m;
     int size,size_aligned,n,p,type,i;
@@ -110,9 +110,6 @@ int msx_load_rom (int id, mame_file *F, int open_mode)
         "Panasonic FM-PAC", "Super Load Runner",
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
-
-	if (F == NULL)
-		return INIT_PASS;
 
     /* try to load it */
     size = mame_fsize (F);
@@ -465,7 +462,7 @@ static int save_sram (int id, char *filename, UINT8* pmem, int size)
     return res;
 }
 
-void msx_exit_rom (int id)
+void msx_cart_unload (int id)
 {
     mame_file *F;
     int size,res;

@@ -151,14 +151,14 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 //TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
-//	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
+	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
 
 	/* COLECO */
 //	DRIVER( coleco )	/* ColecoVision (Original BIOS)						*/
 //	DRIVER( colecoa )	/* ColecoVision (Thick Characters)					*/
 
 	/* NEC */
-//	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993		*/
 
 	DRIVER( arcadia )	/* Emerson Arcadia 2001								*/
 TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
@@ -488,8 +488,8 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 //	DRIVER( ti86grom )	/* TI 86 homebrew rom by Daniel Foesch				*/
 
 	/* NEC */
-//	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
-//	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
+	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
+	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
 
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace										*/
@@ -585,17 +585,17 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( superbrd )	/* 1979 Superboard II								*/
 
 	/* ASCII & MICROSOFT */
-//	DRIVER( msx )		/* 1983 MSX 										*/
-//	DRIVER( msxj )		/* 1983 MSX Jap 									*/
-//	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
-//	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
-//	DRIVER( hotbit11 )	/* 198? ???											*/
-//	DRIVER( hotbit12 )	/* 198? ???											*/
-//	DRIVER( expert10 )	/* 198? ???											*/
-//	DRIVER( expert11 )	/* 198? ???											*/
-//	DRIVER( msx2 ) 		/* 1985 MSX2										*/
-//	DRIVER( msx2a )		/* 1985 MSX2										*/
-//	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
+	DRIVER( msx )		/* 1983 MSX 										*/
+	DRIVER( msxj )		/* 1983 MSX Jap 									*/
+	DRIVER( msxkr ) 	/* 1983 MSX Korean									*/
+	DRIVER( msxuk ) 	/* 1983 MSX UK										*/
+	DRIVER( hotbit11 )	/* 198? ???											*/
+	DRIVER( hotbit12 )	/* 198? ???											*/
+	DRIVER( expert10 )	/* 198? ???											*/
+	DRIVER( expert11 )	/* 198? ???											*/
+	DRIVER( msx2 ) 		/* 1985 MSX2										*/
+	DRIVER( msx2a )		/* 1985 MSX2										*/
+	DRIVER( msx2j ) 	/* 1983 MSX2 Jap									*/
 
 	/* NASCOM MICROCOMPUTERS */
 //	DRIVER( nascom1 )	/* 1978 Nascom 1									*/

@@ -41,8 +41,9 @@ extern MACHINE_STOP( msx );
 extern INTERRUPT_GEN( msx_interrupt );
 extern INTERRUPT_GEN( msx2_interrupt );
 extern NVRAM_HANDLER( msx2 );
-int msx_load_rom (int id, mame_file *fp, int open_mode);
-void msx_exit_rom (int id);\
+
+int msx_cart_load (int id, mame_file *fp, int open_mode);
+void msx_cart_unload (int id);
 void msx_vdp_interrupt (int);
 
 /* I/O functions */
