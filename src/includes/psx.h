@@ -21,8 +21,8 @@ READ32_HANDLER( psx_gpu_r );
 WRITE32_HANDLER( psx_gpu_w );
 
 /* machine */
-extern data32_t *psxram;
-extern size_t psxramsize;
+extern data32_t *g_p_n_psxram;
+extern size_t g_n_psxramsize;
 typedef void ( *psx_dma_read_handler )( UINT32, INT32 );
 typedef void ( *psx_dma_write_handler )( UINT32, INT32 );
 WRITE32_HANDLER( psx_irq_w );
