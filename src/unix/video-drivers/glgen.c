@@ -318,7 +318,6 @@ int gl_open_display (int reopen)
   struct TexSquare *tsq;
   GLenum err;
   GLint format=0;
-  GLint tidxsize=0;
   int format_ok=0;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
   static int firsttime = 1;
@@ -396,33 +395,36 @@ int gl_open_display (int reopen)
                 &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
       NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
 
-  #ifndef NDEBUG
-      /**
-       * assertions ...
-       */
-      CopyVec( &t1x, &t1y, &t1z,
-               vx_scr_nx, vy_scr_nx, vz_scr_nx);
-      ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
-                    &t1x, &t1y, &t1z);
-      t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+      #if 0
+      {
+        GLdouble t1, t1x, t1y, t1z;
+        
+        /**
+         * assertions ...
+         */
+        CopyVec( &t1x, &t1y, &t1z,
+                 vx_scr_nx, vy_scr_nx, vz_scr_nx);
+        ScaleThisVec (s__cscr_w,s__cscr_w,s__cscr_w,
+                      &t1x, &t1y, &t1z);
+        t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
 
-      fprintf(stderr, "GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
-      fprintf(stderr, "\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
-      fprintf(stderr, "\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
-      fprintf(stderr, "\t s__cscr_w  = %f \n", s__cscr_w);
+        fprintf(stderr, "GLINFO: test v__cscr_dw - ( v__scr_nx * s__cscr_w ) = %f\n", t1);
+        fprintf(stderr, "\t v__cscr_dw = %f / %f / %f\n", vx_cscr_dw,  vy_cscr_dw,  vz_cscr_dw);
+        fprintf(stderr, "\t v__scr_nx = %f / %f / %f\n", vx_scr_nx, vy_scr_nx, vz_scr_nx);
+        fprintf(stderr, "\t s__cscr_w  = %f \n", s__cscr_w);
 
-      CopyVec( &t1x, &t1y, &t1z,
-               vx_scr_ny, vy_scr_ny, vz_scr_ny);
-      ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
-                    &t1x, &t1y, &t1z);
-      t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+        CopyVec( &t1x, &t1y, &t1z,
+                 vx_scr_ny, vy_scr_ny, vz_scr_ny);
+        ScaleThisVec (s__cscr_h,s__cscr_h,s__cscr_h,
+                      &t1x, &t1y, &t1z);
+        t1 =  CompareVec (t1x, t1y, t1z, vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
 
-      fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
-      fprintf(stderr, "\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
-      fprintf(stderr, "\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
-      fprintf(stderr, "\t s__cscr_h   = %f \n", s__cscr_h);
-  #endif
-
+        fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
+        fprintf(stderr, "\t v__cscr_dh = %f / %f / %f\n", vx_cscr_dh,  vy_cscr_dh,  vz_cscr_dh);
+        fprintf(stderr, "\t v__scr_ny  = %f / %f / %f\n", vx_scr_ny, vy_scr_ny, vz_scr_ny);
+        fprintf(stderr, "\t s__cscr_h   = %f \n", s__cscr_h);
+      }
+      #endif
     }
     else if (cabview)
     {
@@ -522,19 +524,11 @@ int gl_open_display (int reopen)
                     GL_RGB,
                     text_width, text_height,
                     0, gl_bitmap_format, gl_bitmap_type, 0);
-      CHECK_GL_ERROR ();
+      RETURN_IF_GL_ERROR ();
 
       disp__glGetTexLevelParameteriv
         (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
-      CHECK_GL_ERROR ();
-
-  #ifndef NOTEXIDXSIZE
-      disp__glGetTexLevelParameteriv
-        (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INDEX_SIZE_EXT, &tidxsize);
-      CHECK_GL_ERROR ();
-  #else
-      tidxsize = -1;
-  #endif
+      RETURN_IF_GL_ERROR ();
       
       switch(sysdep_display_params.depth)
       {
@@ -551,8 +545,9 @@ int gl_open_display (int reopen)
 
       if (!format_ok)
       {
-        fprintf (stderr, "GLINFO: Needed texture [%dx%d] too big (format=0x%X,idxsize=%d), ",
-                  text_height, text_width, format, tidxsize);
+        fprintf (stderr,
+          "GLINFO: Needed texture [%dx%d] too big (format=0x%X), ",
+          text_height, text_width, format);
         if (text_width > text_height)
           text_width /= 2;
         else
@@ -860,7 +855,7 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
     DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p4, vy_gscr_p4, vz_gscr_p4,
               &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
 
-#ifndef NDEBUG
+#if 0
     fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
     fprintf(stderr, "GLINFO: cabinet vectors\n");
     fprintf(stderr, "\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
@@ -1452,50 +1447,31 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
       if (cabview)
       {
   	GL_BEGIN(GL_QUADS);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, 0);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x1, square->y1, square->z1);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, 0);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x2, square->y2, square->z2);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, square->ycov);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x3, square->y3, square->z3);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, square->ycov);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x4, square->y4, square->z4);
-        CHECK_GL_ERROR ();
 	GL_END();
       }
       else
       {
 	GL_BEGIN(GL_QUADS);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, 0);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx1, square->fy1, z_pos);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, 0);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx2, square->fy2, z_pos);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, square->ycov);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx3, square->fy3, z_pos);
-        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, square->ycov);
-        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx4, square->fy4, z_pos);
-        CHECK_GL_ERROR ();
 	GL_END();
       }
     } /* for all texnumx */
   } /* for all texnumy */
-  CHECK_GL_BEGINEND();
 
   disp__glDisable (GL_TEXTURE_2D);
   CHECK_GL_ERROR ();
@@ -1524,7 +1500,6 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
     CHECK_GL_ERROR ();
     disp__glCallList (veclist);
     CHECK_GL_BEGINEND();
-    CHECK_GL_ERROR ();
     disp__glDisable (GL_BLEND);
     CHECK_GL_ERROR ();
 
@@ -1606,13 +1581,13 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
     disp__gluLookAt (-5.0, 0.0, 5.0, 0.0, 0.0, -5.0, 0.0, 1.0, 0.0);
 
   CHECK_GL_ERROR ();
+
   disp__glEnable (GL_DEPTH_TEST);
   CHECK_GL_ERROR ();
 
   /* Draw the cabinet */
   disp__glCallList (cablist);
   CHECK_GL_BEGINEND();
-  CHECK_GL_ERROR ();
 
   /* Draw the game screen */
   cabinetTextureRotationTranslation ();

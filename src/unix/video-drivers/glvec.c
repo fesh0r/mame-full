@@ -239,12 +239,9 @@ int glvec_renderer(point *pt, int num_points)
       pt++;
       num_points--;
     }
-    CHECK_GL_ERROR ();
 
     if (state != NONE)
       GL_END();
-    CHECK_GL_BEGINEND();
-    CHECK_GL_ERROR ();
 
     disp__glEndList();
     CHECK_GL_ERROR ();
