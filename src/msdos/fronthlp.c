@@ -15,7 +15,7 @@
 enum { LIST_SHORT = 1, LIST_INFO, LIST_XML, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
 		LIST_GAMES, LIST_CLONES,
-		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC, 
+		LIST_WRONGORIENTATION, LIST_WRONGFPS, LIST_CRC, LIST_SHA1, LIST_MD5, LIST_DUPCRC,
 		LIST_WRONGMERGE, LIST_ROMSIZE, LIST_ROMDISTRIBUTION, LIST_ROMNUMBER, LIST_PALETTESIZE,
 		LIST_CPU, LIST_CPUCLASS, LIST_NOSOUND, LIST_SOUND, LIST_NVRAM, LIST_SOURCEFILE,
 		LIST_GAMESPERSOURCEFILE };
@@ -235,9 +235,6 @@ void identify_rom(const char* name, const char* hash, int length)
 
 	for (i = 0; drivers[i]; i++)
 		match_roms(drivers[i],hash,&found);
-
-	for (i = 0; test_drivers[i]; i++)
-		match_roms(test_drivers[i],hash,&found);
 
 	if (found == 0)
 	{
@@ -481,7 +478,9 @@ int frontend_help (const char *gamename)
 				"        MAME -showconfig   for a list of configuration options\n"
 				"        MAME -createconfig to create a mame.ini\n\n"
 #endif
-				"See readme.txt for a complete list of options.\n");
+				"For usage instructions, please consult the corresponding readme.\n\n"
+				"MS-DOS:   msdos.txt\n"
+				"Windows:  windows.txt\n");
 		#else
 		showmessinfo();
 		#endif
@@ -491,6 +490,9 @@ int frontend_help (const char *gamename)
 	/* HACK: some options REQUIRE gamename field to work: default to "*" */
 	if (!gamename || (strlen(gamename) == 0))
 		gamename = all_games;
+	
+	/* since the cpuintrf structure is filled dynamically now, we have to init first */
+	cpuintrf_init();
 
 	/* sort the list if requested */
 	if (sortby)
@@ -1468,7 +1470,7 @@ int frontend_help (const char *gamename)
 j = 0;	// count only the main cpu
 								{
 									count[x_cpu[j].cpu_type]++;
-									switch(cputype_databus_width(x_cpu[j].cpu_type))
+									switch(cputype_databus_width(x_cpu[j].cpu_type, ADDRESS_SPACE_PROGRAM))
 									{
 										case  8: count_buswidth[0]++; break;
 										case 16: count_buswidth[1]++; break;

@@ -31,7 +31,7 @@ extern int frameskip,autoframeskip,throttle;
 extern int vscanlines, hscanlines, use_tweaked, video_sync;
 extern int stretch, use_mmx;
 extern int vgafreq, always_synced, gfx_skiplines, gfx_skipcolumns;
-extern int gfx_mode, gfx_width, gfx_height, gfx_depth;
+extern int gfx_mode, gfx_depth;
 extern int monitor_type;
 extern int use_keyboard_leds;
 
@@ -99,6 +99,7 @@ static int ignorecfg;
 static const char *playbackname;
 static const char *recordname;
 static char *gamename;
+const char *g_s_resolution;
 
 /* from sound.c */
 int enable_sound;
@@ -486,28 +487,33 @@ static const char *get_string( const char *section, const char *option, const ch
 	return res;
 }
 
-static void extract_resolution( const char *_resolution )
+static void extract_resolution( const char *s_resolution )
 {
-	if( stricmp( _resolution, "auto" ) != 0 )
+	if( stricmp( s_resolution, "auto" ) != 0 )
 	{
+		int width;
+		int height;
 		char *tmp;
 		char tmpres[ 20 ];
-		strncpy( tmpres, _resolution, 20 );
+		strncpy( tmpres, s_resolution, 20 );
 		tmp = strtok( tmpres, "xX" );
-		gfx_width = atoi( tmp );
+		width = atoi( tmp );
 		tmp = strtok( 0, "xX" );
 		if( tmp != NULL )
 		{
-			gfx_height = atoi( tmp );
-			tmp = strtok( 0, "xX" );
-			if( tmp != NULL )
-			{
-				gfx_depth = atoi( tmp );
-			}
+			height = atoi( tmp );
+		}
+		else
+		{
+			height = 0;
 		}
 
-		options.vector_width = gfx_width;
-		options.vector_height = gfx_height;
+		options.debug_width = width;
+		options.debug_height = height;
+		options.vector_width = width;
+		options.vector_height = height;
+
+		g_s_resolution = s_resolution;
 	}
 }
 
@@ -742,14 +748,16 @@ static int video_set_intensity(struct rc_option *option, const char *arg, int pr
 
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority)
 {
+	int width;
+	int height;
 	if (!strcmp(arg, "auto"))
 	{
-		gfx_width = gfx_height = gfx_depth = 0;
+		width = height = 0;
 		options.vector_width = options.vector_height = 0;
 	}
-	else if (sscanf(arg, "%dx%dx%d", &gfx_width, &gfx_height, &gfx_depth) < 2)
+	else if( sscanf( arg, "%dx%d", &width, &height ) < 2 )
 	{
-		gfx_width = gfx_height = gfx_depth = 0;
+		width = height = 0;
 		options.vector_width = options.vector_height = 0;
 		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
 		return -1;
@@ -759,13 +767,13 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 		(gfx_depth != 24) &&
 		(gfx_depth != 32))
 	{
-		gfx_width = gfx_height = gfx_depth = 0;
+		width = height = 0;
 		options.vector_width = options.vector_height = 0;
 		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
 		return -1;
 	}
-	options.vector_width = gfx_width;
-	options.vector_height = gfx_height;
+	options.vector_width = width;
+	options.vector_height = height;
 
 	option->priority = priority;
 	return 0;
@@ -773,9 +781,11 @@ static int video_set_resolution(struct rc_option *option, const char *arg, int p
 
 static int video_set_debugres(struct rc_option *option, const char *arg, int priority)
 {
+	options.debug_depth = 8;
 	if (!strcmp(arg, "auto"))
 	{
-		options.debug_width = options.debug_height = 0;
+		options.debug_width = 640;
+		options.debug_height = 480;
 	}
 	else if(sscanf(arg, "%dx%d", &options.debug_width, &options.debug_height) != 2)
 	{
@@ -1247,35 +1257,23 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 		}
 	}
 
-	gfx_height = 0;
-	gfx_width = 0;
 	gfx_depth = atoi( s_depth );
-	options.vector_width = 0;
-	options.vector_height = 0;
 	if( options.mame_debug )
 	{
-		extract_resolution( debugres );
-		if( gfx_width == 0 )
-		{
-			gfx_width = 640;
-		}
-		if( gfx_height == 0 )
-		{
-			gfx_height = 480;
-		}
 		options.debug_depth = 8;
-		options.debug_width = gfx_width;
-		options.debug_height = gfx_height;
-		options.vector_width = gfx_width;
-		options.vector_height = gfx_height;
+		options.debug_width = 640;
+		options.debug_height = 480;
+		g_s_resolution = "640x480x0";
+		extract_resolution( debugres );
 		use_dirty = 0;
 	}
 	else
 	{
-		/* break up resolution into gfx_width and gfx_height */
+		g_s_resolution = "0x0x0";
+		/* break up resolution into width and height */
 		extract_resolution( resolution );
 
-		/* break up vector resolution into gfx_width and gfx_height */
+		/* break up vector resolution into width and height */
 		expand_machine_driver( drivers[ game ]->drv, &drv );
 		if( drv.video_attributes & VIDEO_TYPE_VECTOR )
 		{

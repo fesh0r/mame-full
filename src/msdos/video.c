@@ -75,6 +75,7 @@ int video_swapxy;
 static void bitblit_dummy( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy );
 void ( *bitblit )( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) = bitblit_dummy;
 
+extern const char *g_s_resolution;
 int gfx_depth;
 static int bitmap_depth;
 static int video_depth,video_attributes;
@@ -356,6 +357,59 @@ void unchain_vga(Register *pReg)
 //	compute_mode_score
 //============================================================
 
+static unsigned char match_resolution( int width, int height, int depth )
+{
+	int n_f;
+	int p_n_f[ 3 ];
+	const char *p_ch_s;
+
+	p_ch_s = g_s_resolution;
+
+	while( *( p_ch_s ) != 0 )
+	{
+		n_f = 0;
+		for( ;; )
+		{
+			if( n_f < 3 )
+			{
+				p_n_f[ n_f++ ] = atoi( p_ch_s );
+			}
+			while( *( p_ch_s ) != 0 &&
+				*( p_ch_s ) != 'x' &&
+				*( p_ch_s ) != 'X' &&
+				*( p_ch_s ) != ';' )
+			{
+				p_ch_s++;
+			}
+			if( *( p_ch_s ) == 0 )
+			{
+				break;
+			}
+			if( *( p_ch_s ) == ';' )
+			{
+				p_ch_s++;
+				break;
+			}
+			p_ch_s++;
+		}
+		while( n_f < 3 )
+		{
+			p_n_f[ n_f++ ] = 0;
+		}
+		if( ( p_n_f[ 0 ] == 0 || p_n_f[ 0 ] == width ) &&
+			( p_n_f[ 1 ] == 0 || p_n_f[ 1 ] == height ) &&
+			( p_n_f[ 2 ] == 0 || p_n_f[ 2 ] == depth ) )
+		{
+			return 1;
+		}
+	}
+	return 0;
+}
+
+//============================================================
+//	compute_mode_score
+//============================================================
+
 static unsigned int compute_mode_score( int width, int height, int depth )
 {
 	static const unsigned int depth_matrix[ 4 ][ 4 ] =
@@ -370,6 +424,13 @@ static unsigned int compute_mode_score( int width, int height, int depth )
 	unsigned int size_score, depth_score, stretch_score, final_score;
 	int target_width, target_height, target_depth;
 	int xm,ym;
+
+	/* modes that don't match requirements have a score of zero */
+	if( !match_resolution( width, height, depth ) ||
+		( gfx_depth && depth != gfx_depth ) )
+	{
+		return 0;
+	}
 
 	target_width = video_width;
 	target_height = video_height;
@@ -444,12 +505,6 @@ static unsigned int compute_mode_score( int width, int height, int depth )
 		target_depth = bitmap_depth;
 	}
 
-	// if we're looking for a particular mode, make sure it matches
-	if( gfx_width && gfx_height && ( width != gfx_width || height != gfx_height ) )
-	{
-		return 0;
-	}
-
 	// compute initial score based on difference between target and current
 	size_score = ( ( target_width * 100 ) / width ) + ( ( target_height * 100 ) / height );
 	if( target_width > width || target_height > height )
@@ -459,12 +514,6 @@ static unsigned int compute_mode_score( int width, int height, int depth )
 
 	// next compute depth score
 	depth_score = depth_matrix[ ( target_depth + 7 ) / 8 - 1 ][ ( depth + 7 ) / 8 - 1 ] - 1;
-
-	// if we're looking for a particular depth, make sure it matches
-	if( gfx_depth && depth != gfx_depth )
-	{
-		return 0;
-	}
 
 	// weight size highest, followed by depth and refresh
 	final_score = ( ( ( size_score * 2 ) + stretch_score ) * 4 ) + depth_score;
@@ -600,12 +649,8 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 		return 0;
 	}
 
-	if( ( gfx_height == 0 && gfx_width != 0 ) ||
-		( gfx_height != 0 && gfx_width == 0 ) )
-	{
-		printf("Please specify height AND width (e.g. -640x480)\n");
-		return 0;
-	}
+	gfx_width = 0;
+	gfx_height = 0;
 
 	if( gfx_depth > 8 || ( gfx_depth != 8 && ( colors > 256 || ( attributes & VIDEO_RGB_DIRECT ) != 0 ) ) )
 	{
@@ -669,7 +714,8 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 					(!arcade_tweaked[i].ntsc && monitor_type == MONITOR_TYPE_PAL)) &&  /* PAL ONLY */
 					width  <= arcade_tweaked[i].matchx &&
 					height <= arcade_tweaked[i].y &&
-					( arcade_tweaked[ i ].ydivide == 1 || !use_vesa ) )
+					( arcade_tweaked[ i ].ydivide == 1 || !use_vesa ) &&
+					match_resolution( width, height, 8 ) )
 				{
 					gfx_width  = arcade_tweaked[i].x;
 					gfx_height = arcade_tweaked[i].y;
@@ -686,67 +732,78 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 				{
 					case MONITOR_TYPE_NTSC:
 					case MONITOR_TYPE_ARCADE:
-						gfx_width = 640; gfx_height = 480;
+						if( match_resolution( 640, 480, 8 ) )
+						{
+							gfx_width = 640;
+							gfx_height = 480;
+						}
 						break;
 					case MONITOR_TYPE_PAL:
-						gfx_width = 640; gfx_height = 512;
+						if( match_resolution( 640, 512, 8 ) )
+						{
+							gfx_width = 640;
+							gfx_height = 512;
+						}
 						break;
 				}
 			}
 		}
 
-		/* pick the mode from our 15.75KHz tweaked modes */
-		for (i=0; ((arcade_tweaked[i].x != 0) && !found); i++)
+		if( gfx_width != 0 && gfx_height != 0 )
 		{
-			if (gfx_width  == arcade_tweaked[i].x &&
-				gfx_height == arcade_tweaked[i].y &&
-				( ( arcade_tweaked[ i ].vesa && use_vesa ) || ( !arcade_tweaked[ i ].vesa && use_tweaked ) ) &&
-				( arcade_tweaked[ i ].ydivide == 1 || !use_vesa ) )
+			/* pick the mode from our 15.75KHz tweaked modes */
+			for (i=0; ((arcade_tweaked[i].x != 0) && !found); i++)
 			{
-				/* check for a NTSC or PAL mode with no arcade flag */
-				if (monitor_type != MONITOR_TYPE_ARCADE)
+				if (gfx_width  == arcade_tweaked[i].x &&
+					gfx_height == arcade_tweaked[i].y &&
+					( ( arcade_tweaked[ i ].vesa && use_vesa ) || ( !arcade_tweaked[ i ].vesa && use_tweaked ) ) &&
+					( arcade_tweaked[ i ].ydivide == 1 || !use_vesa ) )
 				{
-					if (arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_NTSC)
+					/* check for a NTSC or PAL mode with no arcade flag */
+					if (monitor_type != MONITOR_TYPE_ARCADE)
 					{
-						printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'ntsc' \n", gfx_width, gfx_height);
-						return 0;
+						if (arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_NTSC)
+						{
+							printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'ntsc' \n", gfx_width, gfx_height);
+							return 0;
+						}
+						if (!arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_PAL)
+						{
+							printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'pal' \n", gfx_width, gfx_height);
+							return 0;
+						}
 					}
-					if (!arcade_tweaked[i].ntsc && monitor_type != MONITOR_TYPE_PAL)
-					{
-						printf("\n %dx%d 15.75KHz mode only available if -monitor set to 'arcade' or 'pal' \n", gfx_width, gfx_height);
-						return 0;
-					}
-				}
 
-				reg = arcade_tweaked[i].reg;
-				reglen = arcade_tweaked[i].reglen;
-				if( arcade_tweaked[i].vesa )
-				{
-					unchained = 0;
+					reg = arcade_tweaked[i].reg;
+					reglen = arcade_tweaked[i].reglen;
+					if( arcade_tweaked[i].vesa )
+					{
+						unchained = 0;
+					}
+					else
+					{
+						/* all 15.75KHz VGA modes are unchained */
+						unchained = 1;
+						gfx_mode = GFX_VGA;
+					}
+					xdivide = arcade_tweaked[ i ].xdivide;
+					ydivide = arcade_tweaked[ i ].ydivide;
+					logerror("15.75KHz mode (%dx%d) vesa:%d\n",
+						gfx_width, gfx_height, gfx_mode != GFX_VGA);
+					/* always use the freq from the structure */
+					videofreq = arcade_tweaked[i].syncvgafreq;
+					if( vga_tweaked[ i ].vertical_mode )
+					{
+						screen_aspect = 1 / screen_aspect;
+					}
+					found = 1;
 				}
-				else
-				{
-					/* all 15.75KHz VGA modes are unchained */
-					unchained = 1;
-					gfx_mode = GFX_VGA;
-				}
-				xdivide = arcade_tweaked[ i ].xdivide;
-				ydivide = arcade_tweaked[ i ].ydivide;
-				logerror("15.75KHz mode (%dx%d) vesa:%d\n",
-										gfx_width, gfx_height, gfx_mode != GFX_VGA);
-				/* always use the freq from the structure */
-				videofreq = arcade_tweaked[i].syncvgafreq;
-				if( vga_tweaked[ i ].vertical_mode )
-				{
-					screen_aspect = 1 / screen_aspect;
-				}
-				found = 1;
 			}
 		}
-		/* explicitly asked for an 15.75KHz mode which doesn't exist , so inform and exit */
+		/* no 15.75KHz matches */
 		if (!found)
 		{
-			printf ("\nNo %dx%d 15.75KHz mode available.\n", gfx_width, gfx_height);
+			printf ("\nNo %dx%d 15.75KHz mode available.\n", width, height);
 			return 0;
 		}
 	}
@@ -754,45 +811,46 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 	{
 		/* If using tweaked modes, check if there exists one to fit
 		the screen in, otherwise use VESA */
-		if (gfx_width == 0 && gfx_height == 0)
+		for (i=0; vga_tweaked[i].x != 0; i++)
 		{
-			for (i=0; vga_tweaked[i].x != 0; i++)
+			if (width <= vga_tweaked[i].x &&
+				height <= vga_tweaked[i].y)
 			{
-				if (width <= vga_tweaked[i].x &&
-					height <= vga_tweaked[i].y)
+				/*check for 57Hz modes which would fit into a 60Hz mode*/
+				if (width <= 256 && height <= 256 &&
+					video_sync && (int)video_fps == 57)
 				{
-					/*check for 57Hz modes which would fit into a 60Hz mode*/
-					if (width <= 256 && height <= 256 &&
-						video_sync && (int)video_fps == 57)
-					{
-						gfx_width = 256;
-						gfx_height = 256;
-						break;
-					}
+					gfx_width = 256;
+					gfx_height = 256;
+					break;
+				}
 
-					/* check for correct horizontal/vertical modes */
-					if( ( ( !vga_tweaked[ i ].vertical_mode && !video_swapxy ) ||
-						( vga_tweaked[ i ].vertical_mode && video_swapxy ) ) &&
-						( vga_tweaked[ i ].xdivide == 1 || !use_vesa ) )
-					{
-						/* leave the loop on match */
-						gfx_width  = vga_tweaked[i].x;
-						gfx_height = vga_tweaked[i].y;
-						break;
-					}
+				/* check for correct horizontal/vertical modes */
+				if( ( ( !vga_tweaked[ i ].vertical_mode && !video_swapxy ) ||
+					( vga_tweaked[ i ].vertical_mode && video_swapxy ) ) &&
+					( vga_tweaked[ i ].xdivide == 1 || !use_vesa ) &&
+					match_resolution( vga_tweaked[i].x, vga_tweaked[i].y, 8 ) )
+				{
+					/* leave the loop on match */
+					gfx_width  = vga_tweaked[i].x;
+					gfx_height = vga_tweaked[i].y;
+					break;
 				}
 			}
-			if (gfx_width == 0 && gfx_height == 0)
+		}
+		if (gfx_width == 0 && gfx_height == 0)
+		{
+			if( use_vesa )
 			{
-				if( use_vesa )
+				/* If we didn't find a tweaked VGA mode, use VESA */
+				logerror("Did not find a tweaked VGA mode. Trying VESA.\n");
+				use_tweaked = 0;
+			}
+			else
+			{
+				/* pick the largest possible tweaked mode. */
+				if( match_resolution( 640, 480, 8 ) )
 				{
-					/* If we didn't find a tweaked VGA mode, use VESA */
-					logerror("Did not find a tweaked VGA mode. Trying VESA.\n");
-					use_tweaked = 0;
-				}
-				else
-				{
-					/* pick the largest possible tweaked mode. */
 					gfx_width = 640;
 					gfx_height = 480;
 				}
@@ -1073,20 +1131,8 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 				set_gfx_mode (GFX_TEXT,0,0,0,0);
 			}
 
-			if( gfx_depth == 0 )
-			{
-				gfx_depth = depth;
-			}
-			if( gfx_width == 0 )
-			{
-				gfx_width = width;
-			}
-			if( gfx_height == 0 )
-			{
-				gfx_height = height;
-			}
 			printf( "\nNo %d-bit %dx%d VESA mode available.\n",
-					gfx_depth, gfx_width, gfx_height );
+					depth, width, height );
 			printf( "\nPossible causes:\n"
 					"1) Your video card does not support VESA modes at all. Almost all\n"
 					"   video cards support VESA modes natively these days, so you probably\n"
@@ -1116,12 +1162,12 @@ static int select_display_mode(int width,int height,int depth,int colors,int att
 			if( video_swapxy )
 			{
 				printf ("\nNo vertical %dx%d tweaked mode available.\n",
-						gfx_width,gfx_height);
+						width,height);
 			}
 			else
 			{
 				printf ("\nNo horizontal %dx%d tweaked mode available.\n",
-						gfx_width,gfx_height);
+						width,height);
 			}
 			return 0;
 		}
