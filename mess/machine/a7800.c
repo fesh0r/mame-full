@@ -109,7 +109,10 @@ MACHINE_INIT( a7800 )
 
 	/* pokey cartridge */
 	if (a7800_cart_type & 0x01)
+	{
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7FFF, 0, 0, pokey1_r);
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x7FFF, 0, 0, pokey1_w);
+	}
 }
 
 
