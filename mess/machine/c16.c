@@ -695,6 +695,28 @@ void c16_driver_shutdown (void)
 	cbm_drive_close ();
 }
 
+static WRITE_HANDLER(c16_sidcart_16k)
+{
+	c16_memory[0x1400+offset]=data;
+	c16_memory[0x5400+offset]=data;
+	c16_memory[0x9400+offset]=data;
+	c16_memory[0xd400+offset]=data;
+	sid6581_0_port_w(offset,data);
+}
+
+static WRITE_HANDLER(c16_sidcart_32k)
+{
+	c16_memory[0x5400+offset]=data;
+	c16_memory[0xd400+offset]=data;
+	sid6581_0_port_w(offset,data);
+}
+
+static WRITE_HANDLER(c16_sidcart_64k)
+{
+	c16_memory[0xd400+offset]=data;
+	sid6581_0_port_w(offset,data);
+}
+
 void c16_init_machine (void)
 {
 	int i;
@@ -734,6 +756,11 @@ void c16_init_machine (void)
 #endif
 			install_mem_write_handler (0, 0xff20, 0xff3d, c16_write_3f20);
 			install_mem_write_handler (0, 0xff40, 0xffff, c16_write_3f40);
+			if (SIDCARD) {
+				// lone07 works with sid at the c64 address???
+				// dizzy fantasy 3
+				install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_16k);
+			}
 			ted7360_set_dma (ted7360_dma_read_16k, ted7360_dma_read_rom);
 			break;
 		case MEMORY32K:
@@ -753,9 +780,19 @@ void c16_init_machine (void)
 			install_mem_write_handler (0, 0xff40, 0xffff, c16_write_7f40);
 #endif
 			ted7360_set_dma (ted7360_dma_read_32k, ted7360_dma_read_rom);
+			if (SIDCARD) {
+				// lone07 works with sid at the c64 address???
+				// dizzy fantasy 3
+				install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_32k);
+			}
 			break;
 		case MEMORY64K:
 			install_mem_write_handler (0, 0x4000, 0xfcff, MWA_RAM);
+			if (SIDCARD) {
+				// lone07 works with sid at the c64 address???
+				// dizzy fantasy 3
+				install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_64k);
+			}
 			install_mem_write_handler (0, 0xff20, 0xff3d, MWA_RAM);
 			install_mem_write_handler (0, 0xff40, 0xffff, MWA_RAM);
 			ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
@@ -840,7 +877,7 @@ int c16_rom_load (int id)
 	if (name==NULL) return 1;
 	if (!c16_rom_id (id))
 		return 1;
-	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	fp = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
 		logerror("%s file not found\n", name);
@@ -886,7 +923,7 @@ int c16_rom_id (int id)
 
 	logerror("c16_rom_id %s\n", name);
 	retval = 0;
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
 		logerror("rom %s not found\n", name);
 		return 0;
