@@ -31,6 +31,7 @@
 #include "vidhrdw/border.h"
 #include "cassette.h"
 #include "image.h"
+#include "utils.h"
 
 #ifndef MIN
 #define MIN(x,y) ((x)<(y)?(x):(y))
