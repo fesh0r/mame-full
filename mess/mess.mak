@@ -219,6 +219,7 @@ DRVLIBS = \
 	$(OBJ)/amiga.a    \
 	$(OBJ)/svi.a      \
 	$(OBJ)/ti99.a     \
+	$(OBJ)/tutor.a    \
 	$(OBJ)/apexc.a	  \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/sharp.a    \
@@ -445,6 +446,9 @@ $(OBJ)/ti99.a:	   \
 	  $(OBJ)/mess/machine/geneve.o   \
 #	  $(OBJ)/mess/systems/ti99_2.o	 \
 #	  $(OBJ)/mess/systems/ti990_4.o  \
+
+$(OBJ)/tutor.a:   \
+	  $(OBJ)/mess/systems/tutor.o
 
 $(OBJ)/bally.a:    \
 	  $(OBJ)/sound/astrocde.o	 \
