@@ -31,3 +31,8 @@ Source Changes:
 
 - Added infrastructure for automated tests. [Nate Woods]
 
+- Fixed a bug in tape handling that would cause rewind and fast forward to not
+  work if the system was stopping the tape (bug 168). [Nate Woods]
+
+- [Windows] Fixed a bug in the core that caused the MESS process to not die if
+  the close box was pressed, and the UI was disabled (bug 170). [Nate Woods]

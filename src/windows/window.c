@@ -719,7 +719,18 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		// destroy: close down the app
 		case WM_DESTROY:
 			win_ddraw_kill();
+#ifdef MESS
+			/* NPW 11-Jan-2002 - The MAME way of quiting the emulation doesn't work	in MESS,
+			 * because ScrLk can be used to block UI keys.  Therefore, we should use the
+			 * input_ui_post() function that I originally made for MESSCE.
+			 *
+			 * Personally, I think that input_ui_post() should be integrated into the MAME
+			 * core and thus the need for the 'win_trying_to_quit' hack would be eliminated
+			 */
+			input_ui_post(IPT_UI_CANCEL);
+#else
 			win_trying_to_quit = 1;
+#endif
 			win_video_window = 0;
 			break;
 

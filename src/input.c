@@ -846,3 +846,9 @@ void input_ui_post(int code)
 {
 	ui_posted_press = code;
 }
+
+int input_ui_posted(void)
+{
+	return ui_posted_press;
+}
+

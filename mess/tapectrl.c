@@ -134,17 +134,21 @@ int tapecontrol(struct mame_bitmap *bitmap, int selected)
                 id = (id + 1) % device_count(IO_CASSETTE);
 				break;
 			case 2:
+				/* Pause/stop */
 				if ((status & 1) == 0)
 					device_seek(IO_CASSETTE,id,0,SEEK_SET);
 				device_status(IO_CASSETTE,id,status & ~1);
 				break;
 			case 3:
+				/* Play */
 				device_status(IO_CASSETTE,id,status | 1);
                 break;
 			case 4:
+				/* Rewind */
 				device_seek(IO_CASSETTE,id,-11025,SEEK_CUR);
 				break;
 			case 5:
+				/* Fast forward */
 				device_seek(IO_CASSETTE,id,+11025,SEEK_CUR);
 				break;
             }

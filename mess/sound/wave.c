@@ -611,8 +611,7 @@ int wave_status(int id, int newstatus)
 		else
 		if( !newstatus && w->timer )
 		{
-			if( w->timer )
-				w->offset += (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
+			w->offset = wave_tell(id);
 			timer_remove(w->timer);
 			w->timer = NULL;
 			schedule_full_refresh();
@@ -860,20 +859,20 @@ int wave_seek(int id, int offset, int whence)
     switch( whence )
 	{
 	case SEEK_SET:
-		w->offset = offset;
+		pos = 0;
 		break;
 	case SEEK_END:
-		w->offset = w->samples - 1;
+		pos = w->samples - 1;
 		break;
 	case SEEK_CUR:
-		if( w->timer )
-			pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-		w->offset = pos + offset;
-		if( w->offset < 0 )
-			w->offset = 0;
-		if( w->offset >= w->length )
-			w->offset = w->length - 1;
+		pos = wave_tell(id);
+		break;
 	}
+	w->offset = pos + offset;
+	if( w->offset < 0 )
+		w->offset = 0;
+	if( w->offset >= w->length )
+		w->offset = w->length - 1;
 	w->play_pos = w->record_pos = w->offset;
 
     if( w->timer )
@@ -881,19 +880,23 @@ int wave_seek(int id, int offset, int whence)
 		timer_remove(w->timer);
 		w->timer = timer_set(TIME_NEVER, 0, NULL);
 	}
-
     return w->offset;
+}
+
+static int internal_wave_tell(int id, int allow_overflow)
+{
+	struct wave_file *w = &wave[id];
+    UINT32 pos = w->offset;
+	if (w->timer)
+		pos += (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
+	if (!allow_overflow && (pos >= w->samples))
+		pos = w->samples - 1;
+    return pos;
 }
 
 int wave_tell(int id)
 {
-	struct wave_file *w = &wave[id];
-    UINT32 pos = 0;
-	if( w->timer )
-		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-	if( pos >= w->samples )
-		pos = w->samples -1;
-    return pos;
+	return internal_wave_tell(id, 0);
 }
 
 int wave_input(int id)
@@ -910,9 +913,7 @@ int wave_input(int id)
 
     if( w->timer )
 	{
-		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-		if( pos >= w->samples )
-			pos = w->samples - 1;
+		pos = wave_tell(id);
 		if( pos >= 0 )
 		{
 			if( w->resolution == 16 )
@@ -945,7 +946,7 @@ void wave_output(int id, int data)
 
     if( w->timer )
     {
-		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
+		pos = internal_wave_tell(id, 1);
 		if( pos >= w->max_samples )
         {
 			/* add at least one second of data */
@@ -990,9 +991,7 @@ int wave_input_chunk(int id, void *dst, int count)
 
     if( w->timer )
 	{
-		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-		if( pos >= w->samples )
-			pos = w->samples - 1;
+		pos = wave_tell(id);
 	}
 
     if( pos + count >= w->samples )
@@ -1019,9 +1018,7 @@ int wave_output_chunk(int id, void *src, int count)
 
     if( w->timer )
 	{
-		pos = w->offset + (timer_timeelapsed(w->timer) * w->smpfreq + 0.5);
-		if( pos >= w->length )
-			pos = w->length - 1;
+		pos = wave_tell(id);
 	}
 
 	if( pos + count >= w->/*length*/max_samples )	/* R Nabet : "length" does not make much sense */
