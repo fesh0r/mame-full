@@ -4,6 +4,17 @@
 /* */
 /*============================================================ */
 
+/*
+ * Modified For OpenVMS By:  Robert Alan Byer.
+ *                           byer@mail.ourservers.net
+ *                           January 15, 2004
+ */
+#if defined(__DECC) && defined(VMS)
+#  define PATH_LEADER
+#else
+#  define PATH_LEADER "."
+#endif
+
 #include <stdarg.h>
 #include "xmame.h"
 #include "osdutils.h"
@@ -100,15 +111,15 @@ struct rc_option fileio_opts[] =
 #endif
 	{ "samplepath", "sp", rc_string, &pathlist[FILETYPE_SAMPLE].rawpath, XMAMEROOT"/samples", 0, 0, NULL, "Search path for sample files" },
 	{ "inipath", NULL, rc_string, &pathlist[FILETYPE_INI].rawpath, XMAMEROOT"/ini", 0, 0, NULL, "Search path for ini files" },
-	{ "cfg_directory", NULL, rc_string, &pathlist[FILETYPE_CONFIG].rawpath, "$HOME/."NAME"/cfg", 0, 0, NULL, "Directory to save configurations" },
-	{ "nvram_directory", NULL, rc_string, &pathlist[FILETYPE_NVRAM].rawpath, "$HOME/."NAME"/nvram", 0, 0, NULL, "Directory to save nvram contents" },
-	{ "memcard_directory", NULL, rc_string, &pathlist[FILETYPE_MEMCARD].rawpath, "$HOME/."NAME"/memcard", 0, 0, NULL, "Directory to save memory card contents" },
-	{ "input_directory", NULL, rc_string, &pathlist[FILETYPE_INPUTLOG].rawpath, "$HOME/."NAME"/inp", 0, 0, NULL, "Directory to save input device logs" },
-	{ "hiscore_directory", NULL, rc_string, &pathlist[FILETYPE_HIGHSCORE].rawpath, "$HOME/."NAME"/hi", 0, 0, NULL, "Directory to save hiscores" },
-	{ "state_directory", NULL, rc_string, &pathlist[FILETYPE_STATE].rawpath, "$HOME/."NAME"/sta", 0, 0, NULL, "Directory to save states" },
+	{ "cfg_directory", NULL, rc_string, &pathlist[FILETYPE_CONFIG].rawpath, "$HOME/"PATH_LEADER NAME"/cfg", 0, 0, NULL, "Directory to save configurations" },
+	{ "nvram_directory", NULL, rc_string, &pathlist[FILETYPE_NVRAM].rawpath, "$HOME/"PATH_LEADER NAME"/nvram", 0, 0, NULL, "Directory to save nvram contents" },
+	{ "memcard_directory", NULL, rc_string, &pathlist[FILETYPE_MEMCARD].rawpath, "$HOME/"PATH_LEADER NAME"/memcard", 0, 0, NULL, "Directory to save memory card contents" },
+	{ "input_directory", NULL, rc_string, &pathlist[FILETYPE_INPUTLOG].rawpath, "$HOME/"PATH_LEADER NAME"/inp", 0, 0, NULL, "Directory to save input device logs" },
+	{ "hiscore_directory", NULL, rc_string, &pathlist[FILETYPE_HIGHSCORE].rawpath, "$HOME/"PATH_LEADER NAME"/hi", 0, 0, NULL, "Directory to save hiscores" },
+	{ "state_directory", NULL, rc_string, &pathlist[FILETYPE_STATE].rawpath, "$HOME/"PATH_LEADER NAME"/sta", 0, 0, NULL, "Directory to save states" },
 	{ "artwork_directory", NULL, rc_string, &pathlist[FILETYPE_ARTWORK].rawpath, XMAMEROOT"/artwork", 0, 0, NULL, "Directory for Artwork (Overlays etc.)" },
 	{ "snapshot_directory", NULL, rc_string, &pathlist[FILETYPE_SCREENSHOT].rawpath, XMAMEROOT"/snap", 0, 0, NULL, "Directory for screenshots (.png format)" },
-	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "$HOME/."NAME"/diff", 0, 0, NULL, "Directory for hard drive image difference files" },
+	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "$HOME/"PATH_LEADER NAME"/diff", 0, 0, NULL, "Directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, XMAMEROOT"/ctrlr", 0, 0, NULL, "Directory to save controller definitions" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, XMAMEROOT"/cheat.dat", 0, 0, NULL, "Cheat filename" },
 	{ "hiscore_file", NULL, rc_string, &db_filename, XMAMEROOT"/hiscore.dat", 0, 0, NULL, NULL },
@@ -229,13 +240,27 @@ static char *copy_and_expand_variables(const char *path, int len)
 	char *dst, *result;
 	const char *src;
 	int length = 0;
+	int backslash;
 
 	/* first determine the length of the expanded string */
-	for (src = path; src < path + len; )
-		if (*src++ == '$')
+	backslash = 0;
+	for (src = path; src < path + len; src++)
+	{
+		if (!backslash && *src == '\\' && src + 1 < path + len)
+		{
+			backslash = 1;
+			continue;
+		}
+		if (!backslash && *src == '$')
+		{
+			src++;
 			length += strlen(parse_variable(&src, path + len));
+			src--;
+		}
 		else
 			length++;
+		backslash = 0;
+	}
 
 	/* allocate a string of the appropriate length */
 	result = malloc(length + 1);
@@ -243,13 +268,23 @@ static char *copy_and_expand_variables(const char *path, int len)
 		goto out_of_memory;
 
 	/* now actually generate the string */
-	for (src = path, dst = result; src < path + len; )
+	backslash = 0;
+	for (src = path, dst = result; src < path + len; src++)
 	{
-		char c = *src++;
-		if (c == '$')
+		if (!backslash && *src == '\\' && src + 1 < path + len)
+		{
+			backslash = 1;
+			continue;
+		}
+		if (!backslash && *src == '$')
+		{
+			src++;
 			dst += sprintf(dst, "%s", parse_variable(&src, path + len));
+			src--;
+		}
 		else
-			*dst++ = c;
+			*dst++ = *src;
+		backslash = 0;
 	}
 
 	/* NULL terminate and return */

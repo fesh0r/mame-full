@@ -36,6 +36,7 @@ static int use_fuzzycmp = 1;
 static int loadconfig = 1;
 static char *language = NULL;
 static char *gamename = NULL;
+static char *statename = NULL;
 char *rompath_extra = NULL;
 #ifndef MESS
 static char *defaultgamename;
@@ -54,6 +55,13 @@ void show_usage(void);
 #ifdef MESS
 static int add_device(struct rc_option *option, const char *arg, int priority);
 static int specify_ram(struct rc_option *option, const char *arg, int priority);
+#endif
+
+/* OpenVMS doesn't support paths with a leading '.' character. */
+#if defined(__DECC) && defined(VMS)
+#  define PATH_LEADER
+#else
+#  define PATH_LEADER "."
 #endif
 
 /* struct definitions */
@@ -91,6 +99,7 @@ static struct rc_option opts[] = {
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "Skip displaying the game info screen" },
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "Use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
+	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },
 #ifdef MAME_DEBUG
 	{ "debug", "d", rc_bool, &options.mame_debug, NULL, 0, 0, NULL, "Enable/disable debugger" },
 	{ "debug-size", "ds", rc_use_function, NULL, "640x480", 0, 0, config_handle_debug_size, "Specify the resolution/window size to use for the debugger (window) in the form of XRESxYRES (minimum size = 640x480)" },
@@ -275,39 +284,39 @@ int config_init (int argc, char *argv[])
 		return OSD_NOT_OK;
 
 	/* check that the required dirs exist, and create them if necessary */
-	snprintf(buffer, BUF_SIZE, "%s/.%s", home_dir, NAME);
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s", home_dir, NAME);
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "cfg");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "cfg");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "mem");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "mem");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "sta");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "sta");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "nvram");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "nvram");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "diff");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "diff");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "rc");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "rc");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "hi");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "hi");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
-	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "inp");
+	snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s", home_dir, NAME, "inp");
 	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
@@ -322,13 +331,13 @@ int config_init (int argc, char *argv[])
 		snprintf(buffer, BUF_SIZE, "%s/%src", XMAMEROOT, NAME);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
-		snprintf(buffer, BUF_SIZE, "%s/.%s/%src", home_dir, NAME, NAME);
+		snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%src", home_dir, NAME, NAME);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
 		snprintf(buffer, BUF_SIZE, "%s/%s-%src", XMAMEROOT, NAME, DISPLAY_METHOD);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
-		snprintf(buffer, BUF_SIZE, "%s/.%s/%s-%src", home_dir, NAME, NAME,
+		snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/%s-%src", home_dir, NAME, NAME,
 				DISPLAY_METHOD);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
@@ -536,7 +545,7 @@ int config_init (int argc, char *argv[])
 				drivers[game_index]->name);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
-		snprintf(buffer, BUF_SIZE, "%s/.%s/rc/%src", home_dir, NAME,
+		snprintf(buffer, BUF_SIZE, "%s/"PATH_LEADER"%s/rc/%src", home_dir, NAME,
 				drivers[game_index]->name);
 		if(rc_load(rc, buffer, 1, 1))
 			return OSD_NOT_OK;
@@ -623,6 +632,9 @@ int config_init (int argc, char *argv[])
 		mame_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
 	}
 
+	if (statename)
+		options.savegame = *statename;
+
 	if(language)
 		options.language_file = mame_fopen(0,language,FILETYPE_LANGUAGE,0);
 
@@ -687,10 +699,10 @@ void show_usage(void)
 	fprintf(stdout_file, "\n"
 #ifdef MESS
 			"M.E.S.S. - Multi-Emulator Super System\n"
-			"Copyright (C) 1998-2003 by the MESS team\n"
+			"Copyright (C) 1998-2004 by the MESS team\n"
 #else
 			"M.A.M.E. - Multiple Arcade Machine Emulator\n"
-			"Copyright (C) 1997-2003 by Nicola Salmoria and the MAME Team\n"
+			"Copyright (C) 1997-2004 by Nicola Salmoria and the MAME Team\n"
 #endif
 			"%s port maintained by Lawrence Gold\n", NAME);
 }
@@ -737,21 +749,49 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 #endif
 
 
-/*============================================================ */
-/*	logerror */
-/*============================================================ */
+/*============================================================*/
+/*	vlogerror */
+/*============================================================*/
 
 extern FILE *errorlog;
 
-void logerror(const char *text, ...)
+static void vlogerror(const char *text, va_list arg)
+{
+	if (errorlog)
+	{
+		vfprintf(errorlog, text, arg);
+		fflush(errorlog);
+	}
+}
+
+
+/*============================================================*/
+/*	logerror */
+/*============================================================*/
+
+void logerror(const char *text,...)
 {
 	va_list arg;
 
-	if (errorlog)
-	{
-		va_start(arg, text);
-		vfprintf(errorlog, text, arg);
-		va_end(arg);
-		fflush(errorlog);
-	}
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	vlogerror(text, arg);
+	va_end(arg);
+}
+
+
+/*============================================================*/
+/*	osd_die */
+/*============================================================*/
+
+void osd_die(const char *text,...)
+{
+	va_list arg;
+
+	/* standard vfprintf stuff here */
+	va_start(arg, text);
+	vlogerror(text, arg);
+	va_end(arg);
+
+	exit(-1);
 }

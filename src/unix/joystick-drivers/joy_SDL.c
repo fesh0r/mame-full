@@ -22,11 +22,13 @@ void joy_SDL_init (void)
    int i,j;
    int joy_n=0;    
 
-   if(SDL_Init(SDL_INIT_JOYSTICK ) < 0) printf ("SDL: JoyStick init Error!! ");
-   else printf("SDL: joystick interface initialization...\n");
+   if(SDL_Init(SDL_INIT_JOYSTICK ) < 0)
+	   printf ("SDL: JoyStick init Error!! ");
+   else 
+	   printf("SDL: joystick interface initialization...\n");
 
    joy_n= SDL_NumJoysticks();
-   printf("SDL: %d joysticks founds.\n", joy_n );
+   printf("SDL: %d joysticks found.\n", joy_n );
 
    for (i = 0; i < joy_n; i++)
    {
@@ -58,7 +60,23 @@ void joy_SDL_init (void)
 
 void joy_SDL_poll (void)
 {
-    /* this function is merged to SDL.c */
+#ifdef SDL_JOYSTICK
+   int i,j;
+
+   SDL_JoystickUpdate();
+
+   for (i = 0; i < JOY; i++)
+   {
+      for (j=0; j<joy_data[i].num_axis; j++)
+         joy_data[i].axis[j].val= SDL_JoystickGetAxis(joystick, j);
+
+      for (j=0; j<joy_data[i].num_buttons; j++)
+         joy_data[i].buttons[j] = SDL_JoystickGetButton(joystick, j);
+   }
+
+   joy_evaluate_moves ();
+
+#endif
 }
 
 #endif

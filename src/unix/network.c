@@ -2065,7 +2065,7 @@ _sync_skip_adjustment()
 
     if (_frame_count >= _minimum_frame_for_valid_sma) {
 	float ms_per_frame =
-	    (float)1000 / (float)Machine->drv->frames_per_second;
+	    (float)1000 / (float)Machine->refresh_rate;
 	float lower_boundary =
 	    (float)_sync_skip * ms_per_frame - (float)SYNC_SKIP_TOLERANCE;
 	float upper_boundary =

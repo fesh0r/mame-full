@@ -5,7 +5,7 @@
 		<link rel="StyleSheet" href="../style.css" type="text/css">
 	</head>
 	<body>
-        <h1>Compiling MESS</h1>
+		<h1>Compiling MESS</h1>
 		<p>
 			(This document is based on <a href="http://www.mame.net/compilewin.html">"How to 
 				compile MAME (Win32)"</a>. Since the procedure for compiling MAME and MESS 
@@ -19,7 +19,7 @@
 				GCC</a> and its libraries.
 		</p>
 		<p>
-			This particular how-to is written for MESS 0.73, but with a bit of luck you can 
+			This particular how-to is written for MESS 0.78, but with a bit of luck you can 
 			compile other versions with the help of this page. This how-to tells how to 
 			compile the Win32 version of MESS, which includes both the command line and GUI 
 			versions.
@@ -46,9 +46,9 @@
 			and command lines or other information that you need to type in are marked with 
 			the color
 			<span class="command">green</span>
-		.
+			.
 			<hr>
-        <h2>1. Get Unzip</h2>
+			<h2>1. Get Unzip</h2>
 		<p>
 			First of all, most files that are transferred over the Internet are compressed, 
 			to minimize download times and bandwidth costs. You might already have a 
@@ -120,36 +120,35 @@
 				<TR>
 					<td><span><A href="http://prdownloads.sf.net/mingw/gcc-3.2.2-20030208-1.tar.gz">gcc-3.2.2-20030208-1.tar.gz</A></span></td>
 					<td><span>7148 kB</span></td>
-					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.73. Uncompress this over the MinGW directory.</span></td>
+					<td><span><a href="http://gcc.gnu.org/">GCC</a> 3.2.2, required for MESS 0.78. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 				<TR>
 					<td><span><A href="http://www.mame.net/zips/dx70_mgw.zip">dx70_mgw.zip</A></span></td>
 					<td><span>240 kB</span></td>
-					<td><span>DirectX 7.0 headers, required for MESS 0.73. Uncompress this over the MinGW directory.</span></td>
+					<td><span>DirectX 7.0 headers, required for MESS 0.78. Uncompress this over the MinGW directory.</span></td>
 				</TR>
 			</Table>
 			<hr>
 			<h2>4. Uncompress MinGW</h2>
 		<p>
 			Next we will uncompress the MinGW files and set up some environment variables 
-			so that MinGW is functional. Open up a command prompt. You can find it either 
-			from under Start Menu - Programs, or you can simply select Run and type 
-			command.com into the dialog box. When you have it open, type
-			<span class="command">cd \download</span>
-		and hit enter to change to the correct directory. After that, type
+			so that MinGW is functional. First run the MinGW installer, which will install 
+			a fresh MinGW installation.&nbsp; Now you need to add a few associated files to 
+			the MiNGW installation.&nbsp; Open up a command prompt. You can find it either 
+			from under Start Menu&nbsp;--&gt; Programs, or you can simply select Run and 
+			type command.com into the dialog box. When you have it open, type
+			<span class="command">cd \Program Files\MinGW</span>
+		&nbsp;and hit enter to change to the correct directory. After that, type
 		<p>
 			<ul>
 				<li>
-					<span class="command">unzip mingw_for_mame.zip -d c:\</span>
-				<li>
-					<span class="command">cd c:\</span>
-				<li>
-					<span class="command">gunzip gcc-3.2.2-20030208-1.tar.gz</span>
+					<span class="command">gunzip 
+  c:\download\gcc-3.2.2-20030208-1.tar.gz</span>
 				<li>
 					<span class="command">tar -xvf gcc-3.2.2-20030208-1.tar</span>
 				<LI>
 					<SPAN class="command">
-						<SPAN class="command">unzip dx70_mgw.zip -d 
+						<SPAN class="command">unzip c:\download\dx70_mgw.zip -d 
   c:\</SPAN>
 					</SPAN></LI>
 			</ul>
@@ -201,7 +200,7 @@
 					SET PATH=%PATH%;c:\mingw\bin</span>
 			into it. You'll have to run this file (simply type
 			<span class="command">c:\mingw\mingw</span>
-		to run it) before being able to use MinGW.
+			to run it) before being able to use MinGW.
 			<hr>
 			<h2>6. Compile MESS</h2>
 		<p>
@@ -216,19 +215,27 @@
 					<td><span><b>Description</b></span></td>
 				</TR>
 				<TR>
-					<td><a href="http://www.retrogames.com/mess/mess073s.zip"><b>mess073s.zip</b></a><br>
+					<td><a href="http://mirrors.xmission.com/mame/main/mame078s.zip"><b>mame078s.zip</b></a>
+					</td>
+					<td>9208 kB</td>
+					<td>This is the source archive of MAME 0.78.</td>
+				</TR>
+				<TR>
+					<td><a href="http://www.retrogames.com/mess/mess078s.zip"><b>mess078s.zip</b></a>
 					</td>
 					<td>2717 kB</td>
-					<td>This is the source archive of MESS 0.73.</td>
+					<td>This is the source archive of MESS 0.78.</td>
 				</TR>
 			</Table>
 		<p>
 			Go to the download directory by typing
 			<span class="command">
 					cd \download</span>
-			and uncompress the MESS sources by typing
+			and uncompress the MAME and MESS sources by typing
 			<span class="command">
-					unzip mess073s.zip -d c:\mingw\mess\</span>
+					unzip mame078s.zip -d c:\mingw\mess\</span>
+			<span class="command">
+					unzip mess078s.zip -d c:\mingw\mess\</span>
 		.
 		<p>
 			Then you can compile MESS. Type
@@ -256,15 +263,15 @@
 	mess -cc</span>
 		(an abbreviation of -createconfig).
 		<p>
-		Congratulations, you did it!
+			Congratulations, you did it!
 			<hr>
 			<h2>7. A new MESS appeared</h2>
 		<p>
-		To successfully compile a new version of MESS, you should NOT uncompress a new 
-		set of sources over an old version of MESS. Instead, rename the MESS directory 
-		to another name or simply delete it totally (if you are sure that nothing 
-		important is there), and then uncompress the new set of sources to an empty 
-		directory.
+			To successfully compile a new version of MESS, you should NOT uncompress a new 
+			set of sources over an old version of MESS. Instead, rename the MESS directory 
+			to another name or simply delete it totally (if you are sure that nothing 
+			important is there), and then uncompress the new set of sources to an empty 
+			directory.
 			<hr>
 			<h2>8. Then what..</h2>
 		<p>
@@ -285,8 +292,8 @@
 		<p>
 			You might notice that the executables created by the build are much larger than 
 			the ones released by the MESS team.&nbsp; This is because the MESS releases are 
-			archived with <a href="http://upx.sourceforge.net/">UPX</a>
-		to make them smaller.
+			archived with <a href="http://upx.sourceforge.net/">UPX</a> to make them 
+			smaller.
 			<hr>
 			<h2>9. Debug modes</h2>
 		<p>
@@ -311,7 +318,8 @@
 			<span class="filename">
 					debug = no</span>. Change it to
 			<span class="filename">
-					debug = </span><span class="command">yes</span>
+					debug 
+					= yes </span>
 			and save the file. In MESS, hit tilde (&nbsp;<span>~</span>&nbsp;) or key to 
 			the left of the key &nbsp;<span>1</span>
 			&nbsp; to enter the debugger.</p>

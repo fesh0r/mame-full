@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "profiler.h"
 #include "input.h"
+#include "artwork.h"
 #include "keyboard.h"
 /* for uclock */
 #include "sysdep/misc.h"
@@ -76,6 +77,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
 		int priority);
+static int decode_ftr(struct rc_option *option, const char *arg, int priority);
 
 #ifndef xgl
 static void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
@@ -151,7 +153,7 @@ struct rc_option video_opts[] = {
      "1",		0,			0,		NULL,
      "Enable/disable throttle" },
    { "frames_to_run",	"ftr",			rc_int,		&frames_to_display,
-     "0",		0,			0,		NULL,
+     "0",		0,			0,		decode_ftr,
      "Sets the number of frames to run within the game" },
    { "sleepidle",	"si",			rc_bool,	&sleep_idle,
      "0",		0,			0,		NULL,
@@ -296,6 +298,33 @@ static int video_verify_vectorres(struct rc_option *option, const char *arg,
 
 	option->priority = priority;
 
+	return 0;
+}
+
+
+/*============================================================ */
+/*	decode_ftr */
+/*============================================================ */
+
+static int decode_ftr(struct rc_option *option, const char *arg, int priority)
+{
+	int ftr;
+
+	if (sscanf(arg, "%d", &ftr) != 1)
+	{
+		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
+		return -1;
+	}
+
+	/* 
+	 * if we're running < 5 minutes, allow us to skip warnings to 
+	 * facilitate benchmarking/validation testing
+	 */
+	frames_to_display = ftr;
+	if (frames_to_display > 0 && frames_to_display < 60*60*5)
+		options.skip_warnings = 1;
+
+	option->priority = priority;
 	return 0;
 }
 
@@ -588,9 +617,10 @@ void osd_close_display(void)
 	}
 }
 
-static void osd_change_display_settings(struct rectangle *new_visual,
+static void change_display_settings(struct rectangle *new_visual,
 		struct sysdep_palette_struct *new_palette, int new_widthscale,
-		int new_heightscale, int new_use_aspect_ratio)
+		int new_heightscale, int new_use_aspect_ratio,
+		int force_new_visual)
 {
 	int new_visual_width, new_visual_height;
 
@@ -604,12 +634,17 @@ static void osd_change_display_settings(struct rectangle *new_visual,
 	if (current_palette != new_palette)
 		current_palette = new_palette;
 
-	if (visual_width != new_visual_width
+	if (force_new_visual
+			|| visual_width != new_visual_width
 			|| visual_height != new_visual_height
 			|| widthscale != new_widthscale
 			|| heightscale != new_heightscale
 			|| use_aspect_ratio != new_use_aspect_ratio)
 	{
+		int new_depth = bitmap_depth;
+		if (current_palette == debug_palette)
+			new_depth = 16;
+
 		sysdep_display_close();
 
 		visual_width     = new_visual_width;
@@ -618,7 +653,7 @@ static void osd_change_display_settings(struct rectangle *new_visual,
 		heightscale      = new_heightscale;
 		use_aspect_ratio = new_use_aspect_ratio;
 
-		if (sysdep_create_display(bitmap_depth) != OSD_OK)
+		if (sysdep_create_display(new_depth) != OSD_OK)
 		{
 			/* oops this sorta sucks */
 			fprintf(stderr_file, "Argh, resizing the display failed in osd_set_visible_area, aborting\n");
@@ -692,9 +727,9 @@ static void update_visible_area(struct mame_display *display)
 	round_rectangle_to_8(&normal_visual);
 
 	if (!debugger_has_focus)
-		osd_change_display_settings(&normal_visual, normal_palette, 
+		change_display_settings(&normal_visual, normal_palette, 
 				normal_widthscale, normal_heightscale, 
-				normal_use_aspect_ratio);
+				normal_use_aspect_ratio, 0);
 
 	set_ui_visarea(display->game_visible_area.min_x,
 			display->game_visible_area.min_y,
@@ -808,11 +843,12 @@ void change_debugger_focus(int new_debugger_focus)
 			|| (debugger_has_focus && !new_debugger_focus))
 	{
 		if (new_debugger_focus)
-			osd_change_display_settings(&debug_visual, debug_palette,
-					1, 1, 0);
+			change_display_settings(&debug_visual, debug_palette,
+					1, 1, 0, 1);
 		else
-			osd_change_display_settings(&normal_visual, normal_palette,
-					normal_widthscale, normal_heightscale, normal_use_aspect_ratio);
+			change_display_settings(&normal_visual, normal_palette,
+					normal_widthscale, normal_heightscale,
+					normal_use_aspect_ratio, 1);
 
 		debugger_has_focus = new_debugger_focus;
 	}
@@ -944,11 +980,11 @@ void osd_update_video_and_audio(struct mame_display *display)
 				normal_heightscale = 1;
 
 			if (!debugger_has_focus)
-				osd_change_display_settings(&normal_visual,
+				change_display_settings(&normal_visual,
 						normal_palette,
 						normal_widthscale,
 						normal_heightscale,
-						normal_use_aspect_ratio);
+						normal_use_aspect_ratio, 0);
 		}
 	}
 
@@ -961,6 +997,12 @@ void osd_update_video_and_audio(struct mame_display *display)
 	/* if the visible area has changed, update it */
 	if (display->changed_flags & GAME_VISIBLE_AREA_CHANGED)
 		update_visible_area(display);
+
+	if (display->changed_flags & GAME_REFRESH_RATE_CHANGED)
+	{
+		video_fps = display->game_refresh_rate;
+		sound_update_refresh_rate(display->game_refresh_rate);
+	}
 
 	/* if the debugger focus changed, update it */
 	if (display->changed_flags & DEBUG_FOCUS_CHANGED)
@@ -1006,7 +1048,21 @@ void osd_update_video_and_audio(struct mame_display *display)
 		{
 			frames_displayed++;
 			if (frames_displayed + 1 == frames_to_display)
+			{
+				char name[20];
+				mame_file *fp;
+
+				/* make a filename with an underscore prefix */
+				sprintf(name, "_%.8s", Machine->gamedrv->name);
+
+				/* write out the screenshot */
+				if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
+				{
+					save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+					mame_fclose(fp);
+				}
 				trying_to_quit = 1;
+			}
 			end_time = curr;
 		}
 
@@ -1035,9 +1091,7 @@ void adjust_bitmap_and_update_display(struct mame_bitmap *srcbitmap,
 
 	sysdep_update_display(srcbitmap);
 }
-#endif
 
-#ifndef xgl
 struct mame_bitmap *osd_override_snapshot(struct mame_bitmap *bitmap, 
 		struct rectangle *bounds)
 {
@@ -1143,7 +1197,7 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 				autoframeskip ? "auto" : "fskp", frameskip, 
 				(int)(performance->game_speed_percent + 0.5), 
 				(int)(performance->frames_per_second + 0.5),
-				(int)(Machine->drv->frames_per_second + 0.5));
+				(int)(Machine->refresh_rate + 0.5));
 	}
 
 	/* for vector games, add the number of vector updates */

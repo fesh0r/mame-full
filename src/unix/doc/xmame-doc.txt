@@ -4,7 +4,7 @@ Juan Antonio Martinez [mailto:jantonio@dit.upm.es||jantonio@dit.upm.es] and Hans
 Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de] and Lawrence Gold (minor 
 editing) [mailto:gold@aros.net||gold@aros.net] and David Heremans (minor editing)
 
-v2.1.35, 17 November 2003
+v2.1.36, 13 January 2004
 
 Abstract
 
@@ -2687,7 +2687,7 @@ maintainer. --Lawrence Gold)
 
 * The xmame/xmess sources
 
-  [download/xmame-0.77.1.tar.bz2||xmame/xmess-0.77.1 sources]
+  [download/xmame-0.78.1.tar.bz2||xmame/xmess-0.78.1 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 
@@ -2761,6 +2761,8 @@ maintainer. --Lawrence Gold)
 
 * [http://gradbert.home.comcast.net/||xmame-fe], a TCL/TK front-end that dynamically builds the 
   configuration GUI
+
+* [http://xmess-gui.sourceforge.net/||xMess GUI], a KDE-based xmess front-end
 
 * [http://tkmame.retrogames.com/icons||Mamu_'s Icons for X]
 

@@ -51,6 +51,8 @@
  *       on SB128 soundcards.
  *   V 0.9 Mon, 13 Jan 2003    Shyouzou Sugitani <shy@debian.or.jp>
  *     - removed the 0.5 API support.
+ *   V 1.0 Wed, 21 Jan 2004    Shyouzou Sugitani <shy@debian.or.jp>
+ *     - Update to the ALSA 1.0 API.
  *
  */
 
@@ -59,8 +61,7 @@
 
 #ifdef SYSDEP_DSP_ALSA
 
-/* Eventually we should use the 1.0 API. */
-#define ALSA_PCM_OLD_HW_PARAMS_API 1
+#define ALSA_PCM_NEW_HW_PARAMS_API 1
 
 #include <sys/ioctl.h>       /* System and I/O control */
 #include <alsa/asoundlib.h>  /* ALSA sound library header */
@@ -100,6 +101,7 @@ static char *pcm_name = NULL;
 static snd_pcm_stream_t stream = SND_PCM_STREAM_PLAYBACK;
 static size_t bits_per_sample, bits_per_frame;
 static unsigned int buffer_time;
+static snd_pcm_uframes_t period_frames = 1;
 
 struct rc_option alsa_dsp_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -497,9 +499,10 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 	snd_pcm_hw_params_t *hw_params;
 	snd_pcm_sw_params_t *sw_params;
 
-	size_t buffer_size;
-	int chunk_size;
+	snd_pcm_uframes_t buffer_size;
+	snd_pcm_uframes_t chunk_size;
 	int err;
+	unsigned int rate;
 
 	snd_pcm_hw_params_alloca(&hw_params);
 	snd_pcm_sw_params_alloca(&sw_params);
@@ -532,17 +535,20 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 		return 0;
 	}
 
-	if (snd_pcm_hw_params_set_rate_near(priv->pcm_handle, hw_params, pcm_params.rate, 0) < 0) {
+	rate = pcm_params.rate;
+	if (snd_pcm_hw_params_set_rate_near(priv->pcm_handle, hw_params, &pcm_params.rate, 0) < 0) {
+		unsigned int min, max;
+
+		snd_pcm_hw_params_get_rate_min(hw_params, &min, 0);
+		snd_pcm_hw_params_get_rate_max(hw_params, &max, 0);
 		fprintf(stderr_file,
-			"Alsa error: unsupported rate %iHz (valid range is %iHz-%iHz)\n",
-			pcm_params.rate,
-			snd_pcm_hw_params_get_rate_min(hw_params, 0),
-			snd_pcm_hw_params_get_rate_max(hw_params, 0));
+			"Alsa error: unsupported rate %uHz (valid range is %uHz-%iHz)\n",
+			rate, min, max);
 		return 0;
 	}
 
-	snd_pcm_hw_params_set_buffer_time_near(priv->pcm_handle, hw_params, buffer_time, 0);
-	snd_pcm_hw_params_set_period_size_near(priv->pcm_handle, hw_params, 1, 0);
+	snd_pcm_hw_params_set_buffer_time_near(priv->pcm_handle, hw_params, &buffer_time, 0);
+	snd_pcm_hw_params_set_period_size_near(priv->pcm_handle, hw_params, &period_frames, 0);
 
 	err = snd_pcm_hw_params(priv->pcm_handle, hw_params);
 	if (err < 0) {
@@ -551,12 +557,12 @@ static int alsa_dsp_set_params(struct alsa_dsp_priv_data *priv)
 		return 0;
 	}
 
-	chunk_size = snd_pcm_hw_params_get_period_size(hw_params, 0);
-	buffer_size = snd_pcm_hw_params_get_buffer_size(hw_params);
+	snd_pcm_hw_params_get_period_size(hw_params, &chunk_size, 0);
+	snd_pcm_hw_params_get_buffer_size(hw_params, &buffer_size);
 	if (chunk_size == buffer_size) {
 		fprintf(stderr_file,
-			"Alsa error: cannot use period equal to buffer size (%u == %lu)\n",
-			chunk_size, (long)buffer_size);
+			"Alsa error: cannot use period equal to buffer size (%lu == %lu)\n",
+			chunk_size, buffer_size);
 		return 0;
 	}
 

@@ -30,7 +30,6 @@ if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.crc" -print` 2> /dev/null
   d2u `find . -name "*.vc" -print` 2> /dev/null
   d2u `find . -name "*.wce" -print` 2> /dev/null
-  d2u `find . -path './src/unix' -prune -o -name "*.[ch]" -print` 2> /dev/null
   d2u makefile.mes 2> /dev/null
   d2u makefile.vc 2> /dev/null
   d2u sysinfo.dat 2> /dev/null

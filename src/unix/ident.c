@@ -83,9 +83,6 @@ void identify_rom(const char* name, const char* hash, int length)
 	for (i = 0; drivers[i]; i++)
 		match_roms(drivers[i],hash,&found);
 
-	for (i = 0; test_drivers[i]; i++)
-		match_roms(test_drivers[i],hash,&found);
-
 	if (found == 0)
 	{
 		unsigned size = length;

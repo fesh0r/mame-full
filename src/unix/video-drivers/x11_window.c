@@ -1,4 +1,10 @@
 /*
+ * Modifications For OpenVMS By:  Robert Alan Byer
+ *                                byer@mail.ourservers.net
+ *                                Jan. 9, 2004
+ */
+
+/*
  * X-Mame video specifics code
  *
  */
@@ -14,11 +20,18 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
+
 #ifdef USE_MITSHM
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <X11/extensions/XShm.h>
+#  if defined(__DECC) && defined(VMS)
+#    include <X11/extensions/ipc.h>
+#    include <X11/extensions/shm.h>
+#  else
+#    include <sys/ipc.h>
+#    include <sys/shm.h>
+#  endif
+#  include <X11/extensions/XShm.h>
 #endif
+
 #ifdef USE_XV
 #include <X11/extensions/Xv.h>
 #include <X11/extensions/Xvlib.h>

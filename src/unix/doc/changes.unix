@@ -2,7 +2,25 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.77.2
+Release 0.79.1
+	- Everything from MAME 0.79 (http://x.mame.net/changes.mame).
+	- Added a missing osd_die() definition.  Without this, OpenVMS was 
+	  reporting a compile error.
+	- More changes to support OpenVMS.  (Robert Alan Byer)
+	- Updated the ALSA DSP module to use the ALSA 1.0 API.  (Shyouzou 
+	  Sugitani)
+	- Paths now allow a literal "$" if it's preceded by "\".  (André 
+	  Majorel)
+	- The JOY_SDL option should now actually work with non-SDL targets.  
+	  (Gorka Olaizola)
+	- Fixed a segfault that occurred when "-debug" was used with a rotated 
+	  game.
+	- The debugger window should no longer be blank for 32bpp games.
+	- Fixed a bug in fix-comments.c that was causing it to mangle 
+	  src/drivers/vendetta.c.
+
+Release 0.78.1, 13 January 2004
+	- Everything from MAME 0.78 and MESS 0.78.
 	- You can now "make tools" without first having to "make osdepend".  
 	  Fixed a couple of minor problems with src/unix/Makefile and 
 	  src/unix/unix.mak.  (Adam Di Carlo)
@@ -13,12 +31,16 @@ Release 0.77.2
 	- The ALSA module now builds against ALSA 1.0.  Fixes Bugzilla bug 501.
 	- Changed the abbreviation of "-pause_brightness" to "-pbrt" to prevent
 	  a conflict with "-playback".
-	- The SDL target now handles the "-modenumber" option correctly.  
-	  (Thomas Jarosch)
 	- Added double buffering, enabled via "-doublebuf", to the SDL target.  
 	  (Thomas Jarosch)
+	- Deprecated the SDL target's "-modenumber" in favor of "-vidmode_w" and 	  "-vidmode_h".  (Thomas Jarosch)
 	- Updated the included zlib library to 1.2.1, which should be faster 
 	  than 1.1.4.
+	- Fixed an infrequent spurious error reported by zlib 1.2.1.  (Mark 
+	  Adler)
+	- OpenVMS support should be close now.  (Robert Alan Byer)
+	- Changed the man path to $(PREFIX)/man/man6, which is more 
+	  FHS-compliant according to André Majorel.
 
 Release 0.77.1, 18 November 2003
 	- Everything from MAME 0.77 and MESS 0.77.
@@ -65,7 +87,7 @@ Release 0.72.1, 15 August 2003
 	  (Shyouzou Sugitani)
 	- The Xv target supports more effects.   (Shyouzou Sugitani)
 	- The rc parsing code displays more compact and readable error messages.
-	  (Andre Majorel)
+	  (André Majorel)
 	- Xv windowed mode is now enabled with "-x11-mode 2" or "-x11 2", and 
 	  Xv fullscreen mode is enabled with "-x11-mode 3" or "-x11 3".  The 
 	  "-[no]xv" and "-fullscreen" switches are no longer available for X11 
@@ -491,7 +513,7 @@ Release 0.56.1 (xmame only), 21 November 2001
 	- Everything from MAME 0.56.
 	- The svgafx driver is working again--it was broken by the removal of
 	  8bpp support from the core.  (Henri and Jason)
-	- Numeric keypad support is now much better.  (Andre Majorel)	
+	- Numeric keypad support is now much better.  (André Majorel)	
 	- Added arbitrary height scaling, available via the -arbheight option
 	  and started sanitizing the blit core.  This currently only works with
 	  the X11 (windows, DGA1, DGA2) and svgalib drivers.  (Adam Moss)

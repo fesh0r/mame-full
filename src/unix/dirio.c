@@ -1,3 +1,9 @@
+/*
+ * Modification For OpenVMS By:  Robert Alan Byer
+ *                               byer@mail.ourservers.net
+ *                               December 21, 2003
+ */
+
 #include "xmame.h"
 #include <stdarg.h>
 #include <unistd.h>
@@ -11,6 +17,12 @@
 #include <sys/types.h>
 #include <sys/dir.h>
 #define dirent direct
+#endif
+
+#if defined(__DECC) && defined(VMS)
+#include <unixlib.h>
+static char *vms_to_unix_buffer = NULL;
+static int convert_vms_to_unix(char *vms_dir_name);
 #endif
 
 /* #define FILEIO_DEBUG */
@@ -334,6 +346,37 @@ char *get_home_dir(void)
 		fprintf(stderr, "error: malloc faild for homedir string\n");
 		return NULL;
 	}
-	strcpy(s, pw->pw_dir);
-	return s;
+
+/*
+ * Convert The OpenVMS Formatted "$HOME" Directory Path Into Unix Format.
+ */
+#if defined(__DECC) && defined(VMS)
+	vms_to_unix_buffer = NULL;
+	decc$from_vms(pw->pw_dir, convert_vms_to_unix, 1);
+	return vms_to_unix_buffer;
 }
+
+/*
+ * Copy The Converted OpenVMS Directory Into Our "vms_to_unix_buffer" For Use.
+ *
+ */
+static int convert_vms_to_unix(char *vms_dir_name)
+{
+	if (vms_to_unix_buffer)
+	{
+		strcpy(vms_to_unix_buffer,vms_dir_name);
+	}
+	else
+	{
+		vms_to_unix_buffer = strdup(vms_dir_name);
+	}
+	return 0;
+}
+
+#else
+
+	strcpy(s, pw->pw_dir);
+   	return s;
+}
+
+#endif

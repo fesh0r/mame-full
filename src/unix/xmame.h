@@ -176,7 +176,7 @@ int dos_show_fps(char *buffer);
 int barath_skip_next_frame();
 int barath_show_fps(char *buffer);
 
-/* miscelaneous */
+/* miscellaneous */
 int config_init (int argc, char *argv[]);
 void config_exit(void);
 int frontend_list(char *gamename);
@@ -184,6 +184,7 @@ int frontend_ident(char *gamename);
 void init_search_paths(void);
 void init_rom_path(char *path);
 int should_sleep_idle();
+void sound_update_refresh_rate(float newrate);
 #ifndef HAVE_SNPRINTF
 int snprintf(char *s, size_t maxlen, const char *fmt, ...);
 #endif

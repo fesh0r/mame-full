@@ -20,7 +20,6 @@ if [ -x "`which d2u 2> /dev/null`" ]; then
   d2u `find . -name "*.mak" -print` 2> /dev/null
   d2u `find . -name "*.ini" -print` 2> /dev/null
   d2u `find . -name "*.pl" -print` 2> /dev/null
-  d2u `find . -name "*.[ch]" -print` 2> /dev/null
 else
   echo "Unable to run d2u.  This may cause build problems on some platforms."
 fi
@@ -52,6 +51,10 @@ if [ -f whatsold.txt ]; then
   mv whatsold.txt doc/mame/
 fi
 
+if [ -f changed.txt ]; then
+  mv changed.txt doc/mame/
+fi
+
 if [ -d docs ]; then
   mv docs/* doc/mame/
   rm -r docs
@@ -67,6 +70,9 @@ cp $1/makefile.unix .
 # Copy README and todo from the old xmame directory.
 cp $1/README .
 cp $1/todo .
+
+# So people can just type "make".
+ln -s makefile.unix Makefile
 
 # Clean up the files left over from d2u and fix-comments.
 rm -f `find . -name "*~" -print`

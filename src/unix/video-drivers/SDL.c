@@ -53,6 +53,8 @@ static SDL_Surface* Surface;
 static SDL_Surface* Offscreen_surface;
 static int hardware=1;
 static int mode_number=-1;
+static int vidmode_w = -1;
+static int vidmode_h = -1;
 static int start_fullscreen=0;
 static int doublebuf=0;
 SDL_Color *Colors=NULL;
@@ -87,9 +89,15 @@ struct rc_option display_opts[] = {
    { "listmodes",    NULL,    rc_use_function_no_arg,       NULL,
       NULL,           0,       0,             list_sdl_modes,
       "List all posible fullscreen modes" },
+   { "vidmode_w",   NULL,    rc_int,        &vidmode_w,
+      "-1",          0,       0,             NULL,
+      "Horizontal resolution to force a video mode (see the output of -listmodes)" },
+   { "vidmode_h",   NULL,    rc_int,        &vidmode_h,
+      "-1",          0,       0,             NULL,
+      "Vertical resolution to force a video mode (see the output of -listmodes)" },
    { "modenumber",   NULL,    rc_int,        &mode_number,
       "-1",          0,       0,             NULL,
-      "Try to use the fullscreen mode numbered 'n' (see the output of -listmodes)" },
+      "Modenumber is deprecated, use -vidmode_w and -vidmode_h" },
    { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
      NULL,		0,			0,		sdl_mapkey,
      "Set a specific key mapping, see xmamerc.dist" },
@@ -213,14 +221,33 @@ int sysdep_create_display(int depth)
 
       /* mode_number is a command line option */
       if( mode_number != -1) {
-         /* count all video modes */
-         for (i=0;vid_modes[i];i++);	 
-
-         if( mode_number >= i)
-            fprintf(stderr, "SDL: The mode number is invalid... ignoring\n");
-         else
-            vid_modes_i = mode_number;
+         fprintf (stderr, "SDL: -modenumber is deprecated. Use -vidmode_w and -vidmode_h\n");
+         SDL_Quit();
+         exit (OSD_NOT_OK);
       }
+
+      /* Users wants a specific video mode? */
+      if (vidmode_w != -1 && vidmode_h != -1) {
+         char mode_found = 0;
+         for (i=0;vid_modes[i];++i) {
+            if (vid_modes[i]->w == vidmode_w && vid_modes[i]->h == vidmode_h) {
+		vid_modes_i = i;
+		mode_found = 1;
+		break;
+	    }
+ 	 }
+	
+	 if (!mode_found) {
+            fprintf (stderr, "SDL: Sorry, mode %dx%d not found.\n", vidmode_w, vidmode_h);
+            SDL_Quit();
+            exit (OSD_NOT_OK);
+	 }
+      } else if (vidmode_w != -1 || vidmode_h != -1) {
+         fprintf (stderr, "SDL: You have to specify -vidmode_w and -vidmode_h\n");
+         SDL_Quit();
+         exit (OSD_NOT_OK);
+      }
+
       if( vid_modes_i<0 ) {
          fprintf(stderr, "SDL: None of the modes match :-(\n");
          Vid_height = visual_height*heightscale;

@@ -435,7 +435,8 @@ if (effect) {
 else /* no effect */
 {
 #ifdef DEST
-     if (!blit_hardware_rotation && (blit_flipx || blit_flipy || blit_swapxy)) {
+     if (!blit_hardware_rotation && current_palette != debug_palette 
+		     && (blit_flipx || blit_flipy || blit_swapxy)) {
        int y;
        SRC_PIXEL *line_src;
        SRC_PIXEL *line_end;

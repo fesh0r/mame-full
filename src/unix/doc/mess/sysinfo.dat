@@ -1,9 +1,8 @@
-# MESS System Information Data File
-# Maintained by Hobie Troxell &  Chris Henry
+# MESS System Information File
 
-# Send corrections/submissions to: 
-#   Hobie Troxell <ht1848@yahoo.com> 
-#   Chris Henry <battlepriest@hotmail.com>
+# All corrections/submissions are welcome. Please zip either a patch file or the entire 
+# modified file to:
+#	Hobie Troxell [ht1848@yahoo.com]
 
 # This file contains the basic documentation for most of the drivers presented in the MESS
 # distribution. Please read the readme.txt, mess.txt and messnew.txt prior to reading this
@@ -13,12 +12,11 @@
 # Driver entries are usually divided into sections such as: Usage, Features, Links, Known Issues,
 # History and Trivia, and MESS Emulation State.
 
-
 # History and Trivia - This section contains various background pieces for a system. Much of the 
 # information in these sections was kindly provided by Thierry Schembri and Olivier Boisseau of the 
 # "Old-computers.com Museum". Visit the excellent site at:  www.old-computers.com.
 
-# Features - Usualy a qucik list of important features of that system.
+# Features - Usually a quick list of important or unique features of that system.
 
 # Usage - This section lists any helpful commands for the computer or console in question, 
 # such as disk operating system and file loading BASIC commands. This information is not 
@@ -26,13 +24,12 @@
 # the most simple commands that can also be found on any of dozens of websites devoted to 
 # the system.
 
-# Known Issues - This section lists any known problematic spots for the driver. These will be
+# Known Issues - This section lists any known issues or bugs for the driver. These will be
 # fixed as time and knowledge permit. Please be patient. If you have information that may
 # help the MESS team resolve these issues go to www.mess.org.
 
 # MESS Emulation State: This section highlights the overall status of the MESS driver. Some system
 # drivers are TESTDRIVERS.
-
 
 #---------------------------------------------------------------------------------------------#
 
@@ -57,9 +54,7 @@ Features:
 
 Resolution: 160 x 260 (horz.) at 60.00 Hz
 
-CPU: 6507
-
-Cpu Clock: 1.19 MHz
+CPU: MOS 6507 1.19 MHz
 
 Graphics Clock: 1.19 MHz
 
@@ -235,15 +230,12 @@ default. Whilst in full keyboard emulation mode, some key associated functionali
 disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
 scroll_lock key.
 
-
 The Atari800 driver now has two ROM slots. It really had two slots, so the code was modified 
 to optionally read the second part of a 16K ROM from the second cartridge filename provided 
 (right slot). The previous version had a800_cartridge_32k flag which was wrong. Cartridges 
 are either 8K or 16K, so that was renamed to ..._16k too ;)
 
-
 Most disk and cartridge images should work, though some graphic issues may exist.
-
 
 The Atari 800XL driver (a800xl) is not currently working.
 
@@ -360,19 +352,19 @@ Commodore won). It was meant to be a competitor to the Atari 520 ST. The operati
 was done by Metacomco, a British company who specialized in the 68000 processor (they also 
 made languages for the Sinclair QL). It is a fully multitasking system which looks like 
 UNIX with a graphical user interface. It was the very first personal computer with great 
-graphics and sound capabilities with a GUI environment. The Amiga BASIC was written by 
+graphics and sound capabilities with a GUI environment. Amiga BASIC was written by 
 Microsoft (like most other versions of BASIC). The Amiga 1000 began to lose popularity one 
 year later with the creation of its two main successors: the Amiga 500 and the Amiga 2000.
 There were two versions of the Amiga 1000. The first one, just called "Amiga", was sold 
 only in USA, had a NTSC display, and didn't have the video modes EHB and HAM, later 
 versions would have this built in. The second one, called "Amiga 1000" (to avoid confusion 
-with its successor, the Amiga 2000) had a PAL display, the enhanced video modes 
+with its successor, the Amiga 2000) had a PAL display, enhanced video modes 
 (HAM & EHB) and was built in Germany.
 
 
 MESS Emulation State:
 
-This system is a TESTDRIVER.
+
 
 $end
 
@@ -696,7 +688,7 @@ $bio
 APF M-1000
 
 
-The APF M-1000 is a console. It has a built in game. The emulation is not exact and the
+The APF M-1000 is a console. It has a built-in game. The emulation is not exact and the
 built in game does not work.
 
 
@@ -714,30 +706,201 @@ $info=apple1
 $bio
 Apple 1
 
+Known issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+default. Whilst in full keyboard emulation mode, some key associated functionality may be 
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+scroll_lock key.
+
+The cassette interface is not yet supported (bug#477).
+
+
+Usage:
+
+Upon booting, a backslash is displayed.  You are at the system monitor
+prompt, form which you can examine or set memory values.
+
 
 History and Trivia:
 
-Steve Wozniak, who worked for Hewlett-Packard at the time, wanted to build his own computer.
-He couldn't afford the Intel 8080 CPU (this CPU was very popular then, as it was used in the
-Altair 8800 & IMSAI 8080, but was pretty expensive), he would use the Motorola 6800 but it
-was also much too expensive. Finally he decided to build his computer around the MOS 6502
-(which was pretty compatible with the Motorola 6800). The computer was easier to use than
-the Altair: unlike the Altair, the computer has a keyboard and can display characters on a
-TV (the Altair uses LEDs for its display). The display was very slow, only 60 characters (!)
-were displayed each second.
+The Apple 1 is a kit computer that was introduced and sold in small quantities in 1976.
+
+Steve Wozniak ("Woz"), who worked for Hewlett-Packard at the time, wanted to build his own
+computer.  He could afford neither the Motorola 6800 (his preferred chip), nor Intel 8080
+CPU. Therefore, he decided to build his computer around MOS Technology's 6502 chip, which was
+quite compatible with the Motorola 6800.  He proceeded to write a BASIC interpreter for the
+chip, and then turned to designing the computer that would run it, using an earlier paper
+design for the Motorola 6800.
+
+The resulting computer was easier to use and more affordable than many other kit computer
+of the time, sporting a keyboard and video terminal interface, all on a single circuit
+board.  To keep costs down, shift registers were used to send text to the monitor rather
+than RAM, with the downside being a slow display rate (60 characters per second).  This
+computer was developed, enhanced and touted for the Homebrew Computer Club in Palo Alto,
+California.
+
+Steve Jobs, who had worked with Woz on the game "Breakout" for Atari, convinced Woz to try
+to market and sell the computer. Together they formed the Apple Computer Company.  Paul
+Terrell, the owner of a local computer shop, was interested in this computer, but only if
+it was fully assembled and with a cassette interface, which Wozniak also designed.
+Normally, the Apple 1 kit was sold "naked", simply as a circuit board, without a monitor,
+power supply, keyboard, tape drive, etc.  They sold about two hundred of the assembled
+units.
 
 
-Steve Jobs, who made the game "Breakout" for Atari, with a little help from "the Woz", was
-interested in this computer. Together they created the Apple Computer Company and they tried
-to sell the computer. Paul Terrell, the owner of a computer shop, was interested in this
-computer, but fully assembled (the Apple 1 was sold "naked", no monitor, power supply,
-keyboard, tape drive, etc.) and with a cassette interface, which Wozniak designed. He sold
-it with the Basic he wrote soon after. They sold about two hundred of these units. This
-machine was so popular that Jack Tramiel of Commodore (!) offered to buy Apple, because
-Apple was, at the time, a major purchaser of MOS 6502 processors (Commodore owned Mos
-Technologies). Wozniak wanted $15,000 more than Tramiel offered, needless to say, the deal
-fell through. It was followed the next year by the Apple ][.
+Features:
 
+CPU: MOS 6502 1MHz
+
+Memory: RAM 4kB expandable to 8kB on board, or 65kB with expansion slot
+
+Screen: 40x24 characters
+
+
+Links:
+
+Apple History -- http://www.apple-history.com/
+
+Apple ][ History -- http://apple2history.org/history/ah02.html
+
+Apple 1 Manual -- http://emulation.net/apple1/manual/apple1manx.html
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=apple2
+$bio
+Apple ][
+
+Known issues:
+
+Optional cassette drive not yet supported; in fact, no peripherals are supported
+(bug #477)
+
+Colors are incorrect (bug #475).
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by 
+default. Whilst in full keyboard emulation mode, some key associated functionality may be 
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the 
+scroll_lock key.
+
+
+Usage:
+
+Upon booting, you'll get the ROM monitor prompt ('*'), from which you can
+examine/modify/run at different memory locations.  (Note: you would normally need to press
+RESET to get to the prompt, but this doesn't seem to be necessary in MESS.)
+
+From the Monitor, press control-B then ENTER to get to Integer BASIC, which uses the
+greater than prompt ('>').
+
+You can invoke the mini-assembler by entering 'F666G' at the Monitor.
+
+To backspace, use the left arrow key.  The "Backspace" key is mapped to the Apple ][
+"DEL".
+
+
+History and Trivia:
+
+The Apple ][ is an improved version of the Apple 1 kit computer first released in 1977.
+Along with the TRS-80 and the PET, it constituted one of the "second-generation" of
+computers, aimed at the general user rather than the specialized hobbyist.
+
+The Apple ][ featured a beige plastic case, color graphics, and seven (eight?) expansion
+slots.  It included a version of BASIC called "Integer BASIC" on the ROM which came with
+the machine.
+
+It was an excellent home gaming platform.  It shipped with two game paddles (various
+models were used) and supports up to four.  It also included a built-in speaker.
+
+The cassette interface required a cassette recording deck and was quite finicky.  The
+treble and bass on the cassette deck had to be fiddled with in just the right way.
+
+
+Features:
+
+CPU: MOS 6502 1MHz
+
+Memory: RAM 4kB expandable to 48kB, 12kB ROM
+
+Screen: 6 colors at 280x192, 4-bit color at 40x48
+
+Data path: 8-bit
+
+
+Links:
+
+Apple History -- http://www.apple-history.com/
+
+Apple ][ History -- http://apple2history.org/history/ah03.html
+
+$end
+
+
+#---------------------------------------------------------------------------------------------#
+
+$info=apple2p
+$bio
+Apple ][+
+
+
+Known issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
+scroll_lock key.
+
+Colors are incorrect (bug #475).
+
+
+Usage:
+
+Invoking the emulator with a floppy disk will boot from that disk.  If booting without a
+floppy, use the RESET key ("F3" in partial keyboard emulation) to get to APPLESOFT.
+
+You can identify the APPLESOFT prompt as "]".  Lines can be edited from APPLESOFT using the
+arrow keys or using Escape, then "I" for up, "J" for left, "K" for right, and "M" for down.
+
+
+History and Trivia:
+
+The Apple ][+ is an incrementally improved Apple ][ that was released in 1979.
+
+Most improvements centered around the ROM chip. It featured a floating point BASIC in ROM
+called APPLESOFT instead of Integer BASIC.  It also had an "autostart" capability which
+caused the machine to boot automatically from attached Disk ][ devices or other
+peripherals.  Bug fixes increased the number of hi-res color to 8 and eliminated the
+violet and green fringe around characters in text mode.
+
+The emulator for the Apple ][+ includes a disk drive controller in slot two with two Disk
+][ drives.  This revolutionary controller was probably the first commercial soft-sector
+5.25" floppy drive, and was the cheapest ever at the when it shipped at $595.
+
+Minor as these improvements may seem, it greatly increased the desirability of the Apple ][
+line and gave a huge boost in sales to the Apple line.
+
+
+Features:
+
+CPU: MOS 6502 1MHz
+
+Memory: RAM 48kB, 12kB ROM
+
+Screen: 8 colors at 280x192, 4-bit color at 40x48
+
+Data path: 8-bit
+
+
+Links:
+
+Apple ][ History -- http://apple2history.org/history/ah06.html
+
+DOS/ProDOS FAQ -- http://www.apple2.org/faq/FAQ.dos.prodos.html
+
+APPLESOFT FAQ -- http://www.apple2.org/faq/FAQ.applesoft02.html
 
 $end
 
@@ -758,28 +921,6 @@ scroll_lock key.
 
 History and Trivia:
 
-Apple "][", Apple "II", Apple "//" - Which is correct?
-
-"][", "II", and "//" tend to be used pretty much interchangeably for any model of Apple II
-computer, although, practically speaking, there are a few usages which may provoke a
-correction.
-
-"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
-Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
-associated with old Apple II's. The "//" usage is generally associated with the "c" and
-newer "e" models.
-
-
-The generally preferred machine designations are:
-
-Apple ][   or  Apple II for pre-][+ models
-Apple ][+  or  Apple II+
-Apple IIe  for non-enhanced IIe computers
-Apple //e  for 128k-enhanced IIe computers
-Apple //c
-Apple IIc+
-Apple IIgs or  GS  or best (if you have the fonts)  ||GS
-
 The Apple //c is the compact (the "c" means compact) version of the Apple IIe. It has the
 same characteristics but lot of features which are optional on the IIe are provided on the
 //c (floppy disk drive, 80 columns display, color display, 128 KB RAM), but unlike the
@@ -791,7 +932,6 @@ release the items), it could also be used with a small 9" monochrome green scree
 plugged into the unit. The Apple //c was mainly used as a desktop computer and
 was replaced with the Apple IIc+ in 1988.
 
-
 The Apple IIc+ unit was a direct response to the Laser 128EX/2.  Apple retrofitted the
 //c design to try to compete with Video Technology's high speed Apple II clone. The
 retrofitting is evident in the design of the motherboard.  The motherboard runs at 1Mhz,
@@ -799,7 +939,6 @@ unlike the Laser 128EX/2.  In order to run its programs faster, Apple used a 4Mh
 with 8k of high speed SRAM cache and licensed the accelerator design from Zip
 Technologies (makers of the ZipChip accelerator for the IIe and //c).  They built an
 accelerator into a 1Mhz motherboard rather than design a faster motherboard from scratch.
-
 
 The designers of the Apple IIc+ originally wanted to make a portable ||GS. Apple's
 management, bent on promoting the Mac, balked at the idea. At the same time, the
@@ -824,6 +963,37 @@ the apparent de-evolution in technology compared to the 16-bit Apple ||GS, and t
 aggressive sale of the Laser 128EX/2 made the IIc+ the most short lived of the
 Apple II models.
 
+Apple "][", Apple "II", Apple "//" -- which is correct?
+
+"][", "II", and "//" tend to be used pretty much interchangeably for any model of Apple II
+computer, although, practically speaking, there are a few usages which may provoke a
+correction.
+
+"][" is the original Apple II symbol. It appears on all early II's and II+'s as well as on the
+Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
+associated with old Apple II's. The "//" usage is generally associated with the "c" and
+newer "e" models.
+
+The generally preferred machine designations are:
+
+Apple ][   or  Apple II for pre-][+ models
+Apple ][+  or  Apple II+
+Apple IIe  for non-enhanced IIe computers
+Apple //e  for 128k-enhanced IIe computers
+Apple //c
+Apple IIc+
+Apple IIgs or  GS  or best (if you have the fonts)  ||GS
+
+Features:
+
+CPU: MOS 65C02 1.4MHz (4MHz on the IIc+)
+
+Memory: 128kB RAM expandable to 1mB, 32kB ROM
+
+Screen: 16 colors at 560x192 (double-hi-res); 4-bit color text mode at 40x48
+
+Data path: 8-bit
+
 
 $end
 
@@ -842,10 +1012,25 @@ disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled usi
 scroll_lock key.
 
 
-
 History and Trivia:
 
-Apple "][", Apple "II", Apple "//" - Which is correct?
+The Apple IIe is the successor of the Apple ][+.  It was developed after the Apple III failed
+to catch on with the public, and released in 1983. It was a very great success and was widely
+used in schools.  The Apple IIe features an optional 80-column text display, new keys on the
+keyboard, upper- and lower-case text, and bank-switching to increase the amount of addressable
+RAM.  The Apple IIe also supported the new ProDOS operating system released in 1984.
+
+Note the Apple IIe emulation includes the 80-column card and motherboard revision B, meaning
+that double-hi-resolution modes are available.
+
+The Enhanced Apple IIe, a.k.a. the Apple //e (MESS system name, "apple2ee") was released in
+1985.  It included ROM bugfixes, replace the 6502 processor with the 65C02, and added a
+character genrator ROM with new graphic characters called "Mouse Text".  This model was
+actually more compatable with the Apple ][ and ][+.
+
+The Platinum Apple //e adopted the ||GS keyboard and minor motherboard modifications.
+
+Apple "][", Apple "II", Apple "//" -- which is correct?
 
 "][", "II", and "//" tend to be used pretty much interchangeably for any model of Apple II
 computer, although, practically speaking, there are a few usages which may provoke a
@@ -855,7 +1040,6 @@ correction.
 Disk ][ drive. It is, easily, the most attractive and distinctive II symbol; but, it is also
 associated with old Apple II's. The "//" usage is generally associated with the "c" and
 newer "e" models.
-
 
 The generally preferred machine designations are:
 
@@ -868,14 +1052,15 @@ Apple IIc+
 Apple IIgs or  GS  or best (if you have the fonts)  ||GS
 
 
-The Apple IIe (the "e" means enhanced) is the successor of the Apple ][+. It was a very
-great success and was widely used in schools (and it's still used today in some places!)
-It works under DOS 3.3 (the Apple II operating system) and uses 143 KB floppy disks.
+Features:
 
+CPU: MOS 6502 1MHz (Apple IIe); MOS 65C02 1MHz
 
-The Apple IIe was replaced with the Apple //e, which had an enhanced keyboard, a 4 MHz
-65C02 CPU and a 3.5" floppy disk unit.
+Memory: 64kB RAM standard, 128kB RAM with extended 80-column card, 16kB ROM
 
+Screen: 16 colors at 560x192 (double-hi-res); 4-bit color text mode at 40x48
+
+Data path: 8-bit
 
 $end
 
@@ -2721,11 +2906,11 @@ There are a few excellent utilities for creating and maintaining
 disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
+
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
 Others can be found in the FAQ at http://genesis8.free.fr/
-
 
 
 Known Issues:
@@ -2813,11 +2998,11 @@ There are a few excellent utilities for creating and maintaining
 disk images for the Amstrad CPC emulators. Here are just a couple - 
 
 CPDRead   http://www.classicgaming.com/caprice/
+
 CPCfs     ftp://ftp.lip6.fr/pub/amstrad/emu-util/cpcfs085.zip
 
 
 Others can be found in the FAQ at http://genesis8.free.fr
-
 
 
 Known Issues:
@@ -3011,15 +3196,15 @@ Tapes are not supported.
 History and Trivia:
 
 The Enterprise 64 was a very long-awaited computer, two years between its announce and 
-its marketing ! It changed its name a lot of times : its first name was Elan 64, then 
-Flan, lastly Enterprise. It has great features, which wasn't found on all other home 
+its marketing! It changed its name many times. Its first name was Elan 64, then 
+Flan and finaly Enterprise. It has great features, which wasn't found on all other home 
 computers like its interfaces and its great graphics and sounds capacities provided by 
 two special custom chips called "Nick" and "Dave". The Basic is supplied on a ROM 
 cartridge and can be easily replaced with an other language. This basic is a very 
 powerful structured basic with great graphic commands and can store several programs 
 simultaneously in RAM. It has a small word processing in ROM and up to 32 computers can 
 be linked together. Despite its great characteristics and all its interfaces, the 
-Enterprise 64 had few success. Several months later, a new model was launched : the 
+Enterprise 64 had few successes. Several months later, a new model was launched - the 
 Enterprise 128 which is an Enterprise 64 with 128 KB RAM. 
 
 
@@ -4198,8 +4383,8 @@ Game cartridge slot
 
 Battery holder (six AA) ~4-5 hours
 
-
 Size: 9.25" x 4.25" x 2" (10.75" x 4.25" x 1.5" for original Lynx)
+
 Screen: 3.5" diagonal (3.25" x 1.88" approx.) 
 
 
@@ -6139,6 +6324,7 @@ Early Z80 based computer commonly used in Japan
 Features:
 
 Main Z80 CPU 4MHz(some models has 8MHz version)
+
 Sub Z80 CPU 4MHz(for 5'floppy disk drive)
 
 64KB RAM
@@ -6196,7 +6382,7 @@ BIOS images has same format as one of images for M88 emulator, but
 last 6KB of "disk.rom". M88 emulator and BIOS tools can be downloaded
 from this:
 
-	http://www.remus.dti.ne.jp/~cisc/m88/
+http://www.remus.dti.ne.jp/~cisc/m88/
 
 Currently PC-8801mkIISR ROM is only tested.
 
@@ -6217,7 +6403,7 @@ http://member.nifty.ne.jp/arearea/M882.html
 
 TODO:
 
-integrate "high-resolution" and "low-resolution" mode
+Integrate "high-resolution" and "low-resolution" mode
 
 optimization of CPU switching
 
@@ -6689,7 +6875,7 @@ implement them).
 
 Disk:
 
-The disk drive interface has a boot-rom which loads the DOS from the disc
+The disk drive interface has a boot-ROM which loads the DOS from the disc
 in the drive. 
 
 The driver supports 2 versions of the disc interface:
@@ -6842,7 +7028,6 @@ Sony Playstation
 
 MESS Emulation State:
 
-Driver is currently a TESTDRIVER.
 
 
 $end
@@ -6923,7 +7108,7 @@ CDROM: Max 2x speed - custom interface controlled by Hitachi SH1 processor. (512
 
 MESS Emulation State:
 
-See source code for more information. Driver is currently a TESTDRIVER.
+See source code for more information.
 
 Bios starts requesting pad data so maybe we are now in the time set area ????
 Need to emulate pad system, add more interrupts and get some grafix working so we can see exactly 
@@ -7113,7 +7298,7 @@ Add support for fullgraphic mode(partially done).
 
 Fix support for Mode 7. (In Progress)
 
-Handle interleaved roms (maybe even multi-part roms, but how?)
+Handle interleaved ROMs (maybe even multi-part ROMs, but how?)
 
 Add support for running at 3.58Mhz at the appropriate time.
 
@@ -9263,19 +9448,22 @@ $bio
 RCA Cosmac VIP (1977)
 
 
-very early home computer for TV connection
+Very early home computer for TV connection
 
 
 Features:
 
 Tape interface
+
 TV output
+
 Integrated speaker
 
 
 MESS Emulation State:
 
 display, keyboard working
+
 Stopped. For me it is much too cryptic to operate and therefore not interesting.
 (I did it because it is the same hardware as in the studio2)
 
@@ -9367,7 +9555,7 @@ Cartrige Capacity: ROM or FLASHROM max 512Mbit(LUXSOR2), RAM max 512Mbit(LUXSOR2
 
 MESS Emulation State:
 
-Very Preliminary Driver. Driver is currently a TESTDRIVER.
+Very Preliminary Driver.
 
 $end
 
