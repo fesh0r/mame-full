@@ -744,7 +744,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 
 	info = get_wimgtool_info(window);
 
-	/* if the module is not specified, auto detect the format */
+	// if the module is not specified, auto detect the format
 	if (!module)
 	{
 		err = img_identify(library, filename, &module, 1);
@@ -752,7 +752,7 @@ imgtoolerr_t wimgtool_open_image(HWND window, const struct ImageModule *module,
 			goto done;
 	}
 
-	/* check to see if this module actually supports writing */
+	// check to see if this module actually supports writing
 	if (read_or_write != OSD_FOPEN_READ)
 	{
 		features = img_get_module_features(module);

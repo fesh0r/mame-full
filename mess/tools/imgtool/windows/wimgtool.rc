@@ -66,7 +66,7 @@ BEGIN
         MENUITEM "&Extract...\tCtrl+E",         ID_IMAGE_EXTRACT
         MENUITEM "&New Directory...\tCtrl+Y",   ID_IMAGE_CREATEDIR
         MENUITEM "&Delete\tDel",                ID_IMAGE_DELETE
- //       MENUITEM "&View Sector Data...",        ID_IMAGE_SECTORVIEW
+//        MENUITEM "&View Sector Data...",        ID_IMAGE_SECTORVIEW
     END
     POPUP "&View"
     BEGIN
@@ -160,12 +160,18 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,329,105,50,14
     PUSHBUTTON      "Cancel",IDCANCEL,271,105,50,14
     LTEXT           "Track:",IDC_TRACKLABEL,7,108,23,11
-    EDITTEXT        IDC_TRACK,33,106,29,13,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_TRACKEDIT,33,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Side:",IDC_HEADLABEL,71,108,17,11
-    EDITTEXT        IDC_HEAD,93,106,29,13,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_HEADEDIT,93,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
     LTEXT           "Sector:",IDC_SECTORLABEL,129,108,23,11
-    EDITTEXT        IDC_SECTOR,155,106,29,13,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_SECTOREDIT,155,106,26,13,ES_AUTOHSCROLL | ES_NUMBER
     CONTROL         "",IDC_HEXVIEW,"hexview_class",0x0,7,6,372,96,0x200000L
+    CONTROL         "",IDC_TRACKSPIN,"msctls_updown32",UDS_ARROWKEYS,59,106,
+                    9,12
+    CONTROL         "",IDC_HEADSPIN,"msctls_updown32",UDS_ARROWKEYS,119,106,
+                    9,12
+    CONTROL         "",IDC_SECTORSPIN,"msctls_updown32",UDS_ARROWKEYS,181,
+                    106,9,12
 END
 
 

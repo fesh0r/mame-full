@@ -6,19 +6,48 @@
 
 #include <stdio.h>
 #include <tchar.h>
+#include <windows.h>
+#include <commctrl.h>
+
 #include "secview.h"
 #include "wimgres.h"
 #include "hexview.h"
+
+#define ANCHOR_LEFT		0x01
+#define ANCHOR_TOP		0x02
+#define ANCHOR_RIGHT	0x04
+#define ANCHOR_BOTTOM	0x08
+
+struct anchor_entry
+{
+	UINT16 control;
+	UINT8 anchor;
+};
 
 struct sectorview_info
 {
 	imgtool_image *image;
 	HFONT font;
-	HWND hexview;
-	HWND track_edit;
-	HWND head_edit;
-	HWND sector_edit;
-	LONG bottom_margin;
+	UINT32 track, head, sector;
+	LONG old_width;
+	LONG old_height;
+};
+
+static const struct anchor_entry sectorview_anchor[] =
+{
+	{ IDC_HEXVIEW,		ANCHOR_LEFT | ANCHOR_TOP | ANCHOR_RIGHT | ANCHOR_BOTTOM },
+	{ IDOK,				ANCHOR_RIGHT | ANCHOR_BOTTOM },
+	{ IDCANCEL,			ANCHOR_RIGHT | ANCHOR_BOTTOM },
+	{ IDC_TRACKEDIT,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_TRACKLABEL,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_TRACKSPIN,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_HEADEDIT,		ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_HEADLABEL,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_HEADSPIN,		ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_SECTOREDIT,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_SECTORLABEL,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ IDC_SECTORSPIN,	ANCHOR_LEFT | ANCHOR_BOTTOM },
+	{ 0 }
 };
 
 
@@ -48,12 +77,75 @@ static HFONT create_font(void)
 
 
 
+static void size_dialog(HWND dialog, const struct anchor_entry *anchor_entries,
+	LONG width_delta, LONG height_delta)
+{
+	int i;
+	HWND dlgitem;
+	RECT dialog_rect, adjusted_dialog_rect, dlgitem_rect;
+	LONG dialog_left, dialog_top;
+	LONG left, top, width, height;
+	UINT8 anchor;
+
+	// figure out the dialog client top/left coordinates
+	GetWindowRect(dialog, &dialog_rect);
+	adjusted_dialog_rect = dialog_rect;
+	AdjustWindowRectEx(&adjusted_dialog_rect,
+		GetWindowLong(dialog, GWL_STYLE),
+		GetMenu(dialog) ? TRUE : FALSE,
+		GetWindowLong(dialog, GWL_EXSTYLE));
+	dialog_left = dialog_rect.left + (dialog_rect.left - adjusted_dialog_rect.left);
+	dialog_top = dialog_rect.top + (dialog_rect.top - adjusted_dialog_rect.top);
+
+	for (i = 0; anchor_entries[i].control; i++)
+	{
+		dlgitem = GetDlgItem(dialog, anchor_entries[i].control);
+		if (dlgitem)
+		{
+			GetWindowRect(dlgitem, &dlgitem_rect);
+			anchor = anchor_entries[i].anchor;
+
+			left = dlgitem_rect.left - dialog_left;
+			top = dlgitem_rect.top - dialog_top;
+			width = dlgitem_rect.right - dlgitem_rect.left;
+			height = dlgitem_rect.bottom - dlgitem_rect.top;
+
+			switch(anchor & (ANCHOR_LEFT | ANCHOR_RIGHT))
+			{
+				case ANCHOR_RIGHT:
+					left += width_delta;
+					break;
+
+				case ANCHOR_LEFT | ANCHOR_RIGHT:
+					width += width_delta;
+					break;
+			}
+
+			switch(anchor & (ANCHOR_TOP | ANCHOR_BOTTOM))
+			{
+				case ANCHOR_BOTTOM:
+					top += height_delta;
+					break;
+
+				case ANCHOR_TOP | ANCHOR_BOTTOM:
+					height += height_delta;
+					break;
+			}
+
+			SetWindowPos(dlgitem, 0, left, top, width, height, SWP_NOZORDER);
+		}
+	}
+}
+
+
+
 static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UINT32 sector)
 {
 	imgtoolerr_t err;
 	struct sectorview_info *info;
 	UINT32 length;
 	void *data;
+	TCHAR buf[32];
 
 	info = get_sectorview_info(dialog);
 
@@ -66,10 +158,53 @@ static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UIN
 	if (err)
 		return err;
 
-	if (!hexview_setdata(info->hexview, data, length))
+	if (!hexview_setdata(GetDlgItem(dialog, IDC_HEXVIEW), data, length))
 		return IMGTOOLERR_OUTOFMEMORY;
 
+	info->track = track;
+	info->head = head;
+	info->sector = sector;
+
+	_sntprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) track);
+	SetWindowText(GetDlgItem(dialog, IDC_TRACKEDIT), buf);
+	_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) head);
+	SetWindowText(GetDlgItem(dialog, IDC_HEADEDIT), buf);
+	_snprintf(buf, sizeof(buf) / sizeof(buf[0]), TEXT("%u"), (unsigned int) sector);
+	SetWindowText(GetDlgItem(dialog, IDC_SECTOREDIT), buf);
+
 	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static void change_sector(HWND dialog)
+{
+	struct sectorview_info *info;
+	TCHAR buf[32];
+	UINT32 new_track, new_head, new_sector;
+
+	info = get_sectorview_info(dialog);
+
+	GetWindowText(GetDlgItem(dialog, IDC_TRACKEDIT), buf, sizeof(buf) / sizeof(buf[0]));
+	new_track = (UINT32) _ttoi(buf);
+	GetWindowText(GetDlgItem(dialog, IDC_HEADEDIT), buf, sizeof(buf) / sizeof(buf[0]));
+	new_head = (UINT32) _ttoi(buf);
+	GetWindowText(GetDlgItem(dialog, IDC_SECTOREDIT), buf, sizeof(buf) / sizeof(buf[0]));
+	new_sector = (UINT32) _ttoi(buf);
+
+	if ((info->track != new_track) || (info->head != new_head) || (info->sector != new_sector))
+		read_sector_data(dialog, new_track, new_head, new_sector);
+}
+
+
+
+static void setup_spin_control(HWND dialog, int spin_item, int edit_item)
+{
+	HWND spin_control, edit_control;
+	spin_control = GetDlgItem(dialog, spin_item);
+	edit_control = GetDlgItem(dialog, edit_item);
+	SendMessage(spin_control, UDM_SETBUDDY, (WPARAM) edit_control, 0);
+	SendMessage(spin_control, UDM_SETRANGE, 0, MAKELONG(32767, 0));
 }
 
 
@@ -77,37 +212,38 @@ static imgtoolerr_t read_sector_data(HWND dialog, UINT32 track, UINT32 head, UIN
 static INT_PTR CALLBACK win_sectorview_dialog_proc(HWND dialog, UINT message,
 	WPARAM wparam, LPARAM lparam)
 {
+	imgtoolerr_t err;
 	INT_PTR rc = 0;
-	LONG_PTR l;
 	struct sectorview_info *info;
 	RECT dialog_rect;
-	RECT hexedit_rect;
-	LONG xmargin, dialog_width, dialog_height;
 
 	switch(message)
 	{
 		case WM_INITDIALOG:
 			info = (struct sectorview_info *) lparam;
 			info->font = create_font();
-			info->hexview = GetDlgItem(dialog, IDC_HEXVIEW);
-			info->track_edit = GetDlgItem(dialog, IDC_TRACK);
-			info->head_edit = GetDlgItem(dialog, IDC_HEAD);
-			info->sector_edit = GetDlgItem(dialog, IDC_SECTOR);
 
 			GetWindowRect(dialog, &dialog_rect);
-			GetWindowRect(info->hexview, &hexedit_rect);
-			info->bottom_margin = (dialog_rect.bottom - dialog_rect.top)
-				- (hexedit_rect.bottom - hexedit_rect.top);
+			info->old_width = dialog_rect.right - dialog_rect.left;
+			info->old_height = dialog_rect.bottom - dialog_rect.top;
+			info->track = ~0;
+			info->head = ~0;
+			info->sector = ~0;
 
-			SendMessage(info->hexview, WM_SETFONT, (WPARAM) info->font, (LPARAM) TRUE);
+			SendMessage(GetDlgItem(dialog, IDC_HEXVIEW), WM_SETFONT, (WPARAM) info->font, (LPARAM) TRUE);
 			SetWindowLongPtr(dialog, GWLP_USERDATA, lparam);
 
-			read_sector_data(dialog, 0, 0, 1);
+			setup_spin_control(dialog, IDC_TRACKSPIN, IDC_TRACKEDIT);
+			setup_spin_control(dialog, IDC_HEADSPIN, IDC_HEADEDIT);
+			setup_spin_control(dialog, IDC_SECTORSPIN, IDC_SECTOREDIT);
+
+			err = read_sector_data(dialog, 0, 0, 0);
+			if (err == IMGTOOLERR_SEEKERROR)
+				err = read_sector_data(dialog, 0, 0, 1);
 			break;
 
 		case WM_DESTROY:
-			l = GetWindowLongPtr(dialog, GWLP_USERDATA);
-			info = (struct sectorview_info *) l;
+			info = get_sectorview_info(dialog);
 			if (info->font)
 			{
 				DeleteObject(info->font);
@@ -121,33 +257,35 @@ static INT_PTR CALLBACK win_sectorview_dialog_proc(HWND dialog, UINT message,
 			break;
 
 		case WM_COMMAND:
-			if (HIWORD(wparam) == BN_CLICKED)
+			switch(HIWORD(wparam))
 			{
-				switch(LOWORD(wparam))
-				{
-					case IDOK:
-					case IDCANCEL:
-						EndDialog(dialog, 0);
-						break;
-				}
+				case BN_CLICKED:
+					switch(LOWORD(wparam))
+					{
+						case IDOK:
+						case IDCANCEL:
+							EndDialog(dialog, 0);
+							break;
+					}
+					break;
+
+				case EN_CHANGE:
+					change_sector(dialog);
+					break;
 			}
 			break;
 
 		case WM_SIZE:
-			l = GetWindowLongPtr(dialog, GWLP_USERDATA);
-			info = (struct sectorview_info *) l;
+			info = get_sectorview_info(dialog);
 
 			GetWindowRect(dialog, &dialog_rect);
-			GetWindowRect(info->hexview, &hexedit_rect);
+			size_dialog(dialog, sectorview_anchor,
+				(dialog_rect.right - dialog_rect.left) - info->old_width,
+				(dialog_rect.bottom - dialog_rect.top) - info->old_height);
 
-			xmargin = hexedit_rect.left - dialog_rect.left;
-			dialog_width = dialog_rect.right - dialog_rect.left;
-			dialog_height = dialog_rect.bottom - dialog_rect.top;
-
-			SetWindowPos(info->hexview, 0, 0, 0, dialog_width - xmargin * 2,
-				dialog_height - info->bottom_margin, SWP_NOZORDER | SWP_NOMOVE);
+			info->old_width = dialog_rect.right - dialog_rect.left;
+			info->old_height = dialog_rect.bottom - dialog_rect.top;
 			break;
-
 	}
 
 	return rc;

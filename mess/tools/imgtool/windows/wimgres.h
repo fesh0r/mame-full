@@ -28,13 +28,16 @@
 #define IDI_DIRECTORY                   124
 #define IDC_MORE                        1000
 #define IDC_EDIT                        1001
-#define IDC_TRACK                       1002
+#define IDC_TRACKEDIT                   1002
 #define IDC_TRACKLABEL                  1003
-#define IDC_HEAD                        1004
-#define IDC_HEADLABEL                   1005
-#define IDC_SECTOR                      1006
-#define IDC_SECTORLABEL                 1007
-#define IDC_HEXVIEW                     1008
+#define IDC_TRACKSPIN                   1004
+#define IDC_HEADEDIT                    1005
+#define IDC_HEADLABEL                   1006
+#define IDC_HEADSPIN                    1007
+#define IDC_SECTOREDIT                  1008
+#define IDC_SECTORLABEL                 1009
+#define IDC_SECTORSPIN                  1010
+#define IDC_HEXVIEW                     1011
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -43,7 +46,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        125
 #define _APS_NEXT_COMMAND_VALUE         40002
-#define _APS_NEXT_CONTROL_VALUE         1009
+#define _APS_NEXT_CONTROL_VALUE         1012
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif
