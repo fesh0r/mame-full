@@ -400,33 +400,33 @@ static unsigned char apple2gs_palette[] =
 };
 #endif
 
-struct  GfxLayout       apple2_80col_charlayout =
+static struct GfxLayout apple2_text_layout =
 {
-                7, 8,
-                256,
-                1,
-                { 0 },
-                { 1, 2, 3, 4, 5, 6, 7 },
-                { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-                8 * 8
+	14,8,		/* 14*8 characters */
+	256,		/* 256 characters */
+	1,			/* 1 bits per pixel */
+	{ 0 },		/* no bitplanes; 1 bit per pixel */
+	{ 7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1 },   /* x offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8			/* every char takes 8 bytes */
 };
 
-struct  GfxLayout       apple2_40col_charlayout =
+static struct GfxLayout apple2_dbltext_layout =
 {
-	        14, 8,
-	        256,
-	        1,
-	        { 0 },
-	        { 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 },
-	        { 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	        8 * 8
+	7,8,		/* 7*8 characters */
+	256,		/* 256 characters */
+	1,			/* 1 bits per pixel */
+	{ 0 },		/* no bitplanes; 1 bit per pixel */
+	{ 7, 6, 5, 4, 3, 2, 1 },    /* x offsets */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8			/* every char takes 8 bytes */
 };
 
 static struct GfxDecodeInfo apple2_gfxdecodeinfo[] =
 {
-		{ REGION_GFX1, 0x0000, &apple2_40col_charlayout, 29, 1},
-	        { REGION_GFX1, 0x0000, &apple2_80col_charlayout, 29, 1},
-	        { -1 } /* end of array */
+	{ REGION_GFX1, 0x0000, &apple2_text_layout, 0, 2 },
+	{ REGION_GFX1, 0x0000, &apple2_dbltext_layout, 0, 2 },
+	{ -1 } /* end of array */
 };
 
 static unsigned short apple2_colortable[] =

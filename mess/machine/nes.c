@@ -1272,7 +1272,7 @@ UINT32 nes_partialcrc(const unsigned char *buf, size_t size)
 	if (size < 17)
 		return 0;
 	crc = (UINT32) crc32(0L, &buf[16], size-16);
-	logerror("NES Partial CRC: %08lx %d\n", (long) crc, size);
+	logerror("NES Partial CRC: %08lx %d\n", (long) crc, (int)size);
 	return crc;
 }
 

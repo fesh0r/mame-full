@@ -616,7 +616,7 @@ static void prepare_menus(void)
 		{
 			img = image_instance(dev->type, i);
 
-			new_item = ID_DEVICE_0 + ((dev->type * MAX_DEV_INSTANCES) + i) * DEVOPTION_MAX;
+			new_item = ID_DEVICE_0 + (image_absolute_index(img) * DEVOPTION_MAX);
 			flags_for_exists = MF_STRING;
 
 			if (!image_exists(img))
@@ -812,16 +812,15 @@ static void help_about_thissystem(void)
 
 static mess_image *decode_deviceoption(int command, int *devoption)
 {
-	int type, id;
+	int absolute_index;
 	
 	command -= ID_DEVICE_0;
-	type = command / MAX_DEV_INSTANCES / DEVOPTION_MAX;
-	id = (command / DEVOPTION_MAX) % MAX_DEV_INSTANCES;
+	absolute_index = command / DEVOPTION_MAX;
 
 	if (devoption)
 		*devoption = command % DEVOPTION_MAX;
 
-	return image_instance(type, id);
+	return image_from_absolute_index(absolute_index);
 }
 
 //============================================================

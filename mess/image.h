@@ -121,6 +121,15 @@ int image_battery_load(mess_image *img, void *buffer, int length);
 int image_battery_save(mess_image *img, const void *buffer, int length);
 
 /****************************************************************************
+  Indexing functions
+
+  These provide various ways of indexing images
+****************************************************************************/
+
+int image_absolute_index(mess_image *image);
+mess_image *image_from_absolute_index(int absolute_index);
+
+/****************************************************************************
   Deprecated functions
 
   The usage of these functions is to be phased out.  The first group because

@@ -129,7 +129,7 @@ UINT32 a7800_partialcrc(const unsigned char *buf, size_t size)
 
 	crc =(UINT32) crc32(0L,&buf[128],size-128);
 
-	logerror("A7800 Partial CRC: %08lx %d [%s]\n", (long) crc, size, &buf[1]);
+	logerror("A7800 Partial CRC: %08lx %d [%s]\n", (long) crc, (int)size, &buf[1]);
 
 	return crc;
 }

@@ -28,7 +28,11 @@ X86_ASM_68000 = 1
 # COMPILESYSTEM_CYGWIN	= 1
 
 # set this the operating system you're building for
+# MAMEOS = msdos
+# MAMEOS = windows
+ifeq ($(MAMEOS),)
 MAMEOS = windows
+endif
 
 # extension for executables
 EXE = .exe
@@ -52,21 +56,27 @@ CONSOLE_PROGRAM = -mconsole
 SUFFIX =
 WINUI = 1
 
+ifeq ($(MAMEOS),msdos)
+PREFIX = d
+else
+PREFIX =
+endif
+
 ifdef DEBUG
-NAME = $(TARGET)$(SUFFIX)d
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
 GUINAME = $(TARGET)gui$(SUFFIX)d
 else
 ifdef K6
-NAME = $(TARGET)$(SUFFIX)k6
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
 GUINAME = $(TARGET)gui$(SUFFIX)k6
 ARCH = -march=k6
 else
 ifdef I686
-NAME = $(TARGET)$(SUFFIX)pp
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
 GUINAME = $(TARGET)gui$(SUFFIX)pp
 ARCH = -march=pentiumpro
 else
-NAME = $(TARGET)$(SUFFIX)
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)
 GUINAME = $(TARGET)gui$(SUFFIX)
 ARCH = -march=pentium
 endif
@@ -77,16 +87,25 @@ endif
 # some structures and thus they can't be linked against each other.
 OBJ = obj/$(NAME)
 
-EMULATORDLL = $(NAME)lib.dll
 EMULATORCLI = $(NAME)$(EXE)
-EMULATORGUI = $(GUINAME)$(EXE)
-EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
 EMULATOR    = $(EMULATORCLI)
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
-DEFS += -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
 
-CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Imess/includes -Imess/$(MAMEOS) -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+ifeq ($(MAMEOS),windows)
+
+DEFS += -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400 -DMAME32NAME='"MESS"' -DMAMENAME='"MESS"'
+EMULATORDLL = $(NAME)lib.dll
+EMULATORGUI = $(GUINAME)$(EXE)
+EMULATORALL = $(EMULATORDLL) $(EMULATORCLI) $(EMULATORGUI)
+
+else
+
+EMULATORALL = $(EMULATORCLI)
+
+endif
+
+CFLAGS = -std=gnu99 -Dalloca=__builtin_alloca -Imess -Isrc/includes -Imess/$(MAMEOS) -Isrc -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Werror -Wno-unused -g
@@ -140,10 +159,14 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
 		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
 		$(OBJ)/ui $(OBJ)/mess/ui
 
+ifeq ($(MAMEOS),windows)
 PLATFORM_IMGTOOL_OBJS =				\
 	$(OBJ)/mess/windows/glob.o		\
 	$(OBJ)/mess/windows/dirutils.o	\
 	$(OBJ)/windows/fileio.o
+else
+PLATFORM_IMGTOOL_OBJS = $(OBJ)/$(MAMEOS)/fileio.o
+endif
 
 #MESS CPU's
 OBJDIRS += $(OBJ)/mess/cpu
@@ -174,6 +197,8 @@ extra:	$(TOOLS) $(TEXTS)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 
+ifeq ($(MAMEOS),windows)
+
 # primary target
 $(EMULATORDLL): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RESFILE)
 # always recompile the version string
@@ -190,6 +215,15 @@ $(EMULATORGUI):	$(EMULATORDLL) $(OBJ)/mess/ui/guimain.o $(GUIRESFILE)
 $(EMULATORCLI):	$(EMULATORDLL) $(OBJ)/mess/windows/climain.o
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -o $@
+
+else
+
+$(EMULATORCLI):	$(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(LIBS)
+	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ -o $@
+
+endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
 	@echo Linking $@...

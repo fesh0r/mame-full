@@ -20,8 +20,6 @@ static int lores_videobase;
 static UINT16 *hires_artifact_map;
 static UINT16 *dhires_artifact_map;
 static UINT8 *lores_tiledata;
-static UINT8 *text_tiledata;
-static UINT8 *dbltext_tiledata;
 
 #define	BLACK	0
 #define DKRED	1
@@ -72,25 +70,22 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
   text
 ***************************************************************************/
 
-static void apple2_generaltext_gettileinfo(int memory_offset, const UINT8 *tiledata, int videobase, int width)
-{
-	static pen_t pal_data[2] = { 0, 15 };
-	int code = mess_ram[memory_offset + videobase];
-	tile_info.tile_number = code;
-	tile_info.pen_data = tiledata + (code * width * 8);
-	tile_info.pal_data = pal_data;
-	tile_info.pen_usage = 0;
-	tile_info.flags = 0;
-}
-
 static void apple2_text_gettileinfo(int memory_offset)
 {
-	apple2_generaltext_gettileinfo(memory_offset, text_tiledata, text_videobase, 14);
+	SET_TILE_INFO(
+		0,											/* gfx */
+		mess_ram[text_videobase + memory_offset],	/* character */
+		WHITE,										/* color */
+		0);											/* flags */
 }
 
 static void apple2_dbltext_gettileinfo(int memory_offset)
 {
-	apple2_generaltext_gettileinfo(memory_offset, dbltext_tiledata, dbltext_videobase, 7);
+	SET_TILE_INFO(
+		1,											/* gfx */
+		mess_ram[dbltext_videobase + memory_offset],/* character */
+		WHITE,										/* color */
+		0);											/* flags */
 }
 
 static UINT32 apple2_text_getmemoryoffset(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
@@ -264,10 +259,8 @@ static void apple2_hires_draw(struct mame_bitmap *bitmap, const struct rectangle
 
 VIDEO_START( apple2 )
 {
-	int i, j, k;
+	int i, j;
 	UINT16 c;
-	UINT8 *fontchar;
-	UINT8 b, p;
 	UINT8 *apple2_font;
 
 	static UINT16 hires_artifact_color_table[] =
@@ -316,35 +309,12 @@ VIDEO_START( apple2 )
 	/* 14x8 */
 	lores_tiledata = auto_malloc(sizeof(UINT8) * 14 * 8);
 
-	/* 14x8x256 */
-	text_tiledata = auto_malloc(sizeof(UINT8) * 14 * 8 * 256);
-
-	/* 14x8x256 */
-	dbltext_tiledata = auto_malloc(sizeof(UINT8) * 7 * 8 * 256);
-
-	if (!text_tilemap || !lores_tilemap || !text_tiledata || !dbltext_tiledata || !hires_artifact_map || !dhires_artifact_map)
+	if (!text_tilemap || !lores_tilemap || !hires_artifact_map || !dhires_artifact_map)
 		return 1;
 	
 	/* build lores_tiledata */
 	memset(lores_tiledata + 0*14, 0, 4*14);
 	memset(lores_tiledata + 4*14, 1, 4*14);
-
-	/* build text_tiledata and dbltext_tiledata */
-	for (i = 0; i < 256; i++)
-	{
-		fontchar = apple2_font + (i * 8);
-		for (j = 0; j < 8; j++)
-		{
-			b = fontchar[j];
-			for (k = 0; k < 7; k++)
-			{
-				p = Machine->pens[(b & (1 << k)) ? 0 : 1];
-				text_tiledata[i*14*8 + j*14 + (k*2+0)] = p;
-				text_tiledata[i*14*8 + j*14 + (k*2+1)] = p;
-				dbltext_tiledata[i*7*8 + j*7 + k] = p;
-			}
-		}
-	}
 
 	/* build hires artifact map */
 	for (i = 0; i < 8; i++)
