@@ -169,12 +169,12 @@ int bbcb_keyscan(void)
 				via_0_ca2_w(0,1);
 			} else {
 				via_0_ca2_w(0,0);
-			};
+			}
 
 		} else {
 			via_0_ca2_w(0,0);
-		};
-	};
+		}
+	}
 	return 0;
 }
 
@@ -191,22 +191,22 @@ static int bbc_keyboard(int data)
 			res=readinputport(column);
 		} else {
 			res=0xff;
-		};
+		}
 
 		/* temp development fix to force start up into screen mode 0 */
 		//if ((row==0) && ((column==7) || (column==8) || (column==9)))
-		//	{ bit=1; };
+		//	{ bit=1; }
 
 		/* Normal keyboard result */
 		if ((res&(1<<row))==0)
-			{ bit=1; };
+			{ bit=1; }
 
 		if ((res|1)!=0xff)
 		{
 			via_0_ca2_w(0,1);
 		} else {
 			via_0_ca2_w(0,0);
-		};
+		}
 
 	return (data & 0x7f) | (bit<<7);
 }
@@ -230,19 +230,19 @@ static WRITE_HANDLER( bbcb_via0_write_porta )
 	if (b0_sound==0)
 	{
 		SN76496_0_w(0,via0_porta);
-	};
+	}
 	if (b1_speech_read==0)
 	{
 		// Call Speech
-	};
+	}
 	if (b2_speech_write==0)
 	{
 		// Call Speech
-	};
+	}
 	if (b3_keyboard==0)
 	{
 		via0_porta=bbc_keyboard(via0_porta);
-	};
+	}
 
 }
 
@@ -258,101 +258,101 @@ static WRITE_HANDLER( bbcb_via0_write_portb )
 		case 0:
 			if (b0_sound==0) {
 				b0_sound=1;
-			};
+			}
 			break;
 		case 1:
 			if (b1_speech_read==0) {
 				b1_speech_read=1;
-			};
+			}
 			break;
 		case 2:
 			if (b2_speech_write==0) {
 				b2_speech_write=1;
-			};
+			}
 			break;
 		case 3:
 			if (b3_keyboard==0) {
 				b3_keyboard=1;
-			};
+			}
 			break;
 		case 4:
 			if (b4_video0==0) {
 				b4_video0=1;
 				setscreenstart(b4_video0,b5_video1);
-			};
+			}
 			break;
 		case 5:
 			if (b5_video1==0) {
 				b5_video1=1;
 				setscreenstart(b4_video0,b5_video1);
-			};
+			}
 			break;
 		case 6:
 			if (b6_caps_lock_led==0) {
 				b6_caps_lock_led=1;
 				/* call caps lock led update */
-			};
+			}
 			break;
 		case 7:
 			if (b7_shift_lock_led==0) {
 				b7_shift_lock_led=1;
 				/* call shift lock led update */
-			};
+			}
 			break;
 
-	};
+	}
 	} else {
 		switch (bit) {
 		case 0:
 			if (b0_sound==1) {
 				b0_sound=0;
 				SN76496_0_w(0,via0_porta);
-			};
+			}
 			break;
 		case 1:
 			if (b1_speech_read==1) {
 				b1_speech_read=0;
 				via0_porta=0xff;
-			};
+			}
 			break;
 		case 2:
 			if (b2_speech_write==1) {
 				b2_speech_write=0;
-			};
+			}
 			break;
 		case 3:
 			if (b3_keyboard==1) {
 				b3_keyboard=0;
 				/* *** call keyboard enabled *** */
 				via0_porta=bbc_keyboard(via0_porta);
-			};
+			}
 			break;
 		case 4:
 			if (b4_video0==1) {
 				b4_video0=0;
 				setscreenstart(b4_video0,b5_video1);
-			};
+			}
 			break;
 		case 5:
 			if (b5_video1==1) {
 				b5_video1=0;
 				setscreenstart(b4_video0,b5_video1);
-			};
+			}
 			break;
 		case 6:
 			if (b6_caps_lock_led==1) {
 				b6_caps_lock_led=0;
 				/* call caps lock led update */
-			};
+			}
 			break;
 		case 7:
 			if (b7_shift_lock_led==1) {
 				b7_shift_lock_led=0;
 				/* call shift lock led update */
-			};
+			}
 			break;
-		};
-	};
+		}
+	}
 
 }
 
@@ -415,7 +415,7 @@ static int via1_irq=0;
 static void bbc_via0_irq(int level)
 {
   via0_irq=level;
-  //if (errorlog) { fprintf(errorlog, "SYSTEM via irq %d %d %d\n",via0_irq,via1_irq,level); };
+  //if (errorlog) { fprintf(errorlog, "SYSTEM via irq %d %d %d\n",via0_irq,via1_irq,level); }
   cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
 }
 
@@ -423,7 +423,7 @@ static void bbc_via0_irq(int level)
 static void bbc_via1_irq(int level)
 {
   via1_irq=level;
-  //if (errorlog) { fprintf(errorlog, "USER via irq %d %d %d\n",via0_irq,via1_irq,level); };
+  //if (errorlog) { fprintf(errorlog, "USER via irq %d %d %d\n",via0_irq,via1_irq,level); }
   cpu_set_irq_line(0, M6502_INT_IRQ, via0_irq|via1_irq);
 }
 
@@ -439,7 +439,7 @@ bbcb_system_via= {
   bbcb_via0_write_portb,
   bbcb_via0_write_ca2,
   bbcb_via0_write_cb2,
-  bbc_via0_irq,
+  bbc_via0_irq
 };
 
 
@@ -455,7 +455,7 @@ bbcb_user_via= {
   0,//via1_write_portb,
   0,//via1_write_ca2,
   0,//via1_write_cb2,
-  bbc_via1_irq,//via1_irq
+  bbc_via1_irq //via1_irq
 };
 
 /**************************************
