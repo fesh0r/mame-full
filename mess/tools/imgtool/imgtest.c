@@ -220,7 +220,7 @@ static imgtoolerr_t internal_test(const struct ImageModule *module)
 	}
 
 	/* Create the image */
-	err = img_create(module, testimage, NULL);
+	err = img_create(module, testimage, NULL, NULL);
 	if (err)
 		goto done;
 

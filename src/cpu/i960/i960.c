@@ -1187,7 +1187,7 @@ static int i960_execute(int cycles)
 			switch((opcode >> 7) & 0xf) {
 			case 0xc: // movl
 				i960_icount -= 2;
-				t2 = (opcode>>19) & 0x1c;
+				t2 = (opcode>>19) & 0x1e;
 				if(opcode & 0x00000800) { // litteral
 					t1 = opcode & 0x1f;
 					i960.r[t2] = i960.r[t2+1] = t1;
@@ -1429,7 +1429,7 @@ static int i960_execute(int cycles)
 				i960_icount -= 400;
 				t1f = get_1_rif(opcode);
 				t2f = get_2_rif(opcode);
-				set_rif(opcode, t1f*log2(t2f+1.0));
+				set_rif(opcode, t1f*log(t2f+1.0)/log(2.0));
 				break;
 
 			case 0x3: // remr

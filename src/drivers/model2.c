@@ -5,7 +5,7 @@
     (68000 + YM3834 + 2x MultiPCM) or (68000 + SCSP)
 
     Hardware and protection reverse-engineering and general assistance by ElSemi.
-    MAME driver by R. Belmont and Olivier Galibert
+    MAME driver by R. Belmont, Olivier Galibert, and ElSemi.
 
     OK (controls may be wrong/missing/incomplete)
     --
@@ -23,23 +23,20 @@
     von
     fvipers
     schamp
+    stcc
+    srallyc
+    skytargt
+    dynamcop
+    dynabb
+    lastbrnj/lastbrnx
+    pltkids/pltkidsa
 
     almost OK
     ---------
-    sgt24h: hangs on network test.  You can set it to standalone in test but it still hangs on the network test :/
-    stcc: shows legal screen, then a bunch of "NOT CGM DATA!" errors
+    sgt24h: hangs on network test.  You can set it to non-linked in test but it still hangs on the network test.
     vstriker: shows some attract mode, then hangs
-    srallyc: drops into test menu, does nothing useful when you exit
-    manxtt: drops into test menu, hangs when you exit
+    manxtt: no escape from "active motion slider" tutorial (needs analog inputs)
     doaa: shows parade of 'ANIME' errors
-    skytargt: coins up, won't start due to wacko coinage (eeprom?)
-    dynamcop: coins up, won't start due to wacko coinage (eeprom?)
-    dynabb: won't coin up properly (more wacko coinage/eeprom?)
-    lastbrnj/lastbrnx: can't coin up, colors wrong (due to interrupts disabled due to i960 core issues)
-
-    freezes / hangs
-    ---------------
-    pltkids/pltkidsa: hangs on black screen
 
 
     TODO
@@ -47,8 +44,7 @@
     Controls are pretty basic right now
     Sound doesn't work properly in all games
     System 24 tilemaps need more advanced linescroll support (see fvipers, daytona)
-    3D?
-    i960 core bugs?
+    DSP cores + hookups
 */
 
 #include "driver.h"
@@ -62,9 +58,12 @@
 UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *model2_backup2;
 static data32_t model2_intreq;
 static data32_t model2_intena;
-static data32_t model2_timers[4];
 static data32_t model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
 static data32_t copro_prog[24*1024], geo_prog[24*1024];
+static data32_t model2_timervals[4], model2_timerorig[4];
+static int      model2_timerrun[4];
+static void    *model2_timers[4];
+static int model2_ctrlmode;
 
 static NVRAM_HANDLER( model2 )
 {
@@ -85,6 +84,61 @@ static NVRAM_HANDLER( model2 )
 	}
 }
 
+/* Timers - these count down at 25 MHz and pull IRQ2 when they hit 0 */
+static READ32_HANDLER( timers_r )
+{
+	i960_noburst();
+
+	// if timer is running, calculate current value
+	if (model2_timerrun[offset])
+	{
+		double cur;
+
+		// get elapsed time
+		cur = timer_timeelapsed(model2_timers[offset]);
+
+		// convert to units of 25 MHz
+		cur /= (1.0 / 25000000.0);
+
+		// subtract units from starting value
+		model2_timervals[offset] = model2_timerorig[offset] - cur;
+	}
+
+	return model2_timervals[offset];
+}
+
+static WRITE32_HANDLER( timers_w )
+{
+	double time;
+
+	i960_noburst();
+	COMBINE_DATA(&model2_timervals[offset]);
+
+	model2_timerorig[offset] = model2_timervals[offset];
+	time = 25000000.0 / (double)model2_timerorig[offset];
+	timer_adjust(model2_timers[offset], TIME_IN_HZ(time), 0, 0);
+	model2_timerrun[offset] = 1;
+}
+
+static void model2_timer_exp(int tnum, int bit)
+{
+	timer_adjust(model2_timers[tnum], TIME_NEVER, 0, 0);
+
+	model2_intreq |= (1<<bit);
+	if (model2_intena & (1<<bit))
+	{
+		cpunum_set_input_line(0, I960_IRQ2, ASSERT_LINE);
+	}
+
+	model2_timervals[tnum] = 0;
+	model2_timerrun[tnum] = 0;
+}
+
+static void model2_timer_0_cb(int num) { model2_timer_exp(0, 2); }
+static void model2_timer_1_cb(int num) { model2_timer_exp(1, 3); }
+static void model2_timer_2_cb(int num) { model2_timer_exp(2, 4); }
+static void model2_timer_3_cb(int num) { model2_timer_exp(3, 5); }
+
 static MACHINE_INIT(model2o)
 {
 	model2_intreq = 0;
@@ -93,11 +147,24 @@ static MACHINE_INIT(model2o)
 	model2_coprocnt = 0;
 	model2_geoctl = 0;
 	model2_geocnt = 0;
+	model2_ctrlmode = 0;
 
-	model2_timers[0] = 0xfffff;
-	model2_timers[1] = 0xfffff;
-	model2_timers[2] = 0xfffff;
-	model2_timers[3] = 0xfffff;
+	model2_timervals[0] = 0xfffff;
+	model2_timervals[1] = 0xfffff;
+	model2_timervals[2] = 0xfffff;
+	model2_timervals[3] = 0xfffff;
+
+	model2_timerrun[0] = model2_timerrun[1] = model2_timerrun[2] = model2_timerrun[3] = 0;
+
+	model2_timers[0] = timer_alloc(model2_timer_0_cb);
+	model2_timers[1] = timer_alloc(model2_timer_1_cb);
+	model2_timers[2] = timer_alloc(model2_timer_2_cb);
+	model2_timers[3] = timer_alloc(model2_timer_3_cb);
+
+	timer_adjust(model2_timers[0], TIME_NEVER, 0, 0);
+	timer_adjust(model2_timers[1], TIME_NEVER, 0, 0);
+	timer_adjust(model2_timers[2], TIME_NEVER, 0, 0);
+	timer_adjust(model2_timers[3], TIME_NEVER, 0, 0);
 }
 
 static MACHINE_INIT(model2)
@@ -161,6 +228,7 @@ static WRITE32_HANDLER(pal32_w)
 static WRITE32_HANDLER(ctrl0_w)
 {
 	if(!(mem_mask & 0x000000ff)) {
+		model2_ctrlmode = data & 0x01;
 		EEPROM_write_bit(data & 0x20);
 		EEPROM_set_clock_line((data & 0x80) ? ASSERT_LINE : CLEAR_LINE);
 		EEPROM_set_cs_line((data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
@@ -169,11 +237,18 @@ static WRITE32_HANDLER(ctrl0_w)
 
 static READ32_HANDLER(ctrl0_r)
 {
-	data32_t ret = readinputport(0) & ~0x60;
+	data32_t ret = readinputport(0);
 	ret <<= 16;
-	return ret | 0x00400000 | (EEPROM_read_bit() << 21);
+	if(model2_ctrlmode==0)
+	{
+		return ret;
+	}
+	else
+	{
+		ret &= ~0x00300000;		
+		return ret | 0x00100000 | (EEPROM_read_bit() << 21);
+	}
 }
-
 static READ32_HANDLER(ctrl1_r)
 {
 	return readinputport(1) | readinputport(2)<<16;
@@ -611,25 +686,6 @@ static WRITE32_HANDLER( network_w )
 	}
 }
 
-/* Timers */
-
-static READ32_HANDLER( timers_r )
-{
-	// hack for HOTD: it has code that explicitly needs burst reads to work here.
-	// (how's it work in ElSemi's emu then?  beats me)
-	if (strcmp(Machine->gamedrv->name, "hotd" ) != 0)
-	{
-		i960_noburst();
-	}
-	return model2_timers[offset];
-}
-
-static WRITE32_HANDLER( timers_w )
-{
-	i960_noburst();
-	COMBINE_DATA(&model2_timers[offset]);
-}
-
 /* common map for all Model 2 versions */
 static ADDRESS_MAP_START( model2_base_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_WRITENOP
@@ -843,12 +899,6 @@ INPUT_PORTS_END
 
 static INTERRUPT_GEN(model2_interrupt)
 {
-	// temporary hack while I work out the (probable core bug) making lastbrnx go nuts
-	if ((strcmp(Machine->gamedrv->name, "lastbrnx" ) == 0) || (strcmp(Machine->gamedrv->name, "lastbrnj" ) == 0))
-	{
-		return;
-	}
-
 	switch (cpu_getiloops())
 	{
 		case 0:

@@ -102,6 +102,7 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		int xpos, ypos, tileno,chainx,chainy,xflip;
 		int xdrw,ydrw,pal,xinc,yinc,yflip;
 		UINT32 zoomx,zoomy;
+		float foomX, foomY;
 		source-=8;
 
 		ypos = (source[0]&0xffff0000)>>16;
@@ -130,8 +131,8 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 		if(!zoomx) zoomx=0x1000;
 		if(!zoomy) zoomy=0x1000;
 
-		float foomX = (float)(0x1000) / (float)zoomx ;
-		float foomY = (float)(0x1000) / (float)zoomy ;
+		foomX = (float)(0x1000) / (float)zoomx ;
+		foomY = (float)(0x1000) / (float)zoomy ;
 
 		zoomx = ((int)foomX) << 16 ;
 		zoomy = ((int)foomY) << 16 ;
@@ -368,15 +369,15 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 	int paletteState = 0x00 ;
 
+	UINT32 numPolys = 0 ;
+
+	struct polygon lastPoly ;
+
 	// Set some matrices to the identity...
 	SetIdentity(projectionMatrix) ;
 	SetIdentity(modelViewMatrix) ;
 	SetIdentity(cameraMatrix) ;
 	SetIdentity(objectMatrix) ;
-
-	UINT32 numPolys = 0 ;
-
-	struct polygon lastPoly ;
 
 	// Display list 2 comes after display list 1.  Go figure.
 	for (j = 1; j >= 0; j--)
@@ -385,6 +386,19 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 		for (i = 0; i < 0x80; i += 0x08)
 		{
+			float left, right, top, bottom, near, far ;
+			UINT8 *threeDRoms ;
+			UINT8 *threeDPointer ;
+			UINT32 threeDOffset ;
+			UINT32 size[4] ;
+			UINT32 address[4] ;
+			UINT32 megaOffset ;
+			float eyeCoords[4] ;			// objectCoords transformed by the modelViewMatrix
+			// float clipCoords[4] ;		// eyeCoords transformed by the projectionMatrix
+			float ndCoords[4] ;				// normalized device coordinates/clipCoordinates (x/w, y/w, z/w)
+			float windowCoords[4] ;			// mapped ndCoordinates to screen space
+			float cullRay[4] ;
+
 			// Debug...
 //			printf("Element %.2d (%d) : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n", i/0x08, j,
 //									   (UINT32)hng64_dls[j][i+0], (UINT32)hng64_dls[j][i+1], (UINT32)hng64_dls[j][i+2], (UINT32)hng64_dls[j][i+3],
@@ -402,12 +416,12 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				// ratio is different...
 
 				// Heisted from GLFrustum - 6 parameters...
-				float left   = uToF( workingList[i+5] & 0x0000ffff) ;
-				float right  = uToF((workingList[i+5] & 0xffff0000) >> 16) ;
-				float top    = uToF((workingList[i+6] & 0xffff0000) >> 16) ;
-				float bottom = uToF( workingList[i+6] & 0x0000ffff) ;
-				float near   = uToF((workingList[i+3] & 0xffff0000) >> 16) ;
-				float far    = uToF( workingList[i+3] & 0x0000ffff) ;
+				left   = uToF( workingList[i+5] & 0x0000ffff) ;
+				right  = uToF((workingList[i+5] & 0xffff0000) >> 16) ;
+				top    = uToF((workingList[i+6] & 0xffff0000) >> 16) ;
+				bottom = uToF( workingList[i+6] & 0x0000ffff) ;
+				near   = uToF((workingList[i+3] & 0xffff0000) >> 16) ;
+				far    = uToF( workingList[i+3] & 0x0000ffff) ;
 
 				// It's almost .always. these values in fatfurwa...
 				// 0.070313    0.000000 [0]		(scaled by 128)
@@ -501,10 +515,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				// GEOMETRY
 				;
 
-				UINT8 *threeDRoms = memory_region(REGION_GFX4) ;
-				UINT8 *threeDPointer ;
-				UINT32 threeDOffset ;
-
+				threeDRoms = memory_region(REGION_GFX4) ;
 
 				/////////////////////////
 				// GET THE HEADER INFO //
@@ -555,8 +566,6 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				//////////////////////////////////////////////////////////
 
 				// Okay, there are 4 hunks per address.  They all seem good too...
-				UINT32 size[4] ;
-				UINT32 address[4] ;
 
 				// First tell me how many 'chunks' are at each address...
 				size[0] = WORD_AT( threeDPointer, ( 6<<1) ) ;
@@ -564,7 +573,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				size[2] = WORD_AT( threeDPointer, ( 9<<1) ) ;
 				size[3] = WORD_AT( threeDPointer, (10<<1) ) ;
 
-				UINT32 megaOffset = ( WORD_AT(threeDRoms, (threeDOffset + 4)) ) << 16 ;
+				megaOffset = ( WORD_AT(threeDRoms, (threeDOffset + 4)) ) << 16 ;
 				address[0] = megaOffset | WORD_AT(threeDPointer, (0<<1)) ;
 				address[1] = megaOffset | WORD_AT(threeDPointer, (1<<1)) ;
 				address[2] = megaOffset | WORD_AT(threeDPointer, (3<<1)) ;
@@ -579,11 +588,6 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				////////////////////////////////////
 				// A FEW 'GLOBAL' TRANSFORMATIONS //
 				////////////////////////////////////
-
-				float eyeCoords[4] ;			// objectCoords transformed by the modelViewMatrix
-				// float clipCoords[4] ;		// eyeCoords transformed by the projectionMatrix
-				float ndCoords[4] ;				// normalized device coordinates/clipCoordinates (x/w, y/w, z/w)
-				float windowCoords[4] ;			// mapped ndCoordinates to screen space
 
 				// Now perform the world transformations...
 				// !! Can eliminate this step with a matrix stack (maybe necessary?) !!
@@ -819,7 +823,6 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 						////////////////////////////
 						// BEHIND-THE-CAMERA CULL //
 						////////////////////////////
-						float cullRay[4] ;
 						vecmatmul4(cullRay, modelViewMatrix, polys[numPolys].vert[0].worldCoords) ;
 
 						if (cullRay[2] > 0.0f)				// Camera is pointing down -Z
@@ -1061,7 +1064,7 @@ VIDEO_UPDATE( hng64 )
 	// printf("FRAME DONE %d\n", frameCount) ;
 	frameCount++ ;
 	flagFlag = 0 ;
-};
+}
 
 VIDEO_START( hng64 )
 {
@@ -1473,7 +1476,7 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 /**                                                                 **/
 /**     Output: none                                                **/
 /*********************************************************************/
-void inline FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color, 
+INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color, 
 					  int Wrapping, int Filtering, int Function,
 					  int x_start, int x_end, int y, float z_start, float z_delta,
 					  float w_start, float w_delta, float r_start, float r_delta, 
@@ -1485,11 +1488,11 @@ void inline FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 	const struct GfxElement *gfx = Machine->gfx[6] ;
 	const UINT8 *textureOffset ;
 	UINT8 paletteEntry ;
+	float t_coord, s_coord ;
 	
 	if (Function >= 0) textureOffset = &gfx->gfxdata[Function * 1024 * 1024] ;
 	else               textureOffset = 0x00 ;
 
-	float t_coord, s_coord ;
 
 	for ( ; x_start <= x_end; x_start++) 
 	{
@@ -1577,72 +1580,62 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	
 	// Perspectively correct color interpolation, interpolate r/w, g/w, b/w, then divide by 1/w at each pixel (A[3] = 1/w)
 	float ca[3], cb[3], cc[3];
-	ca[0] = Ca[0]; ca[1] = Ca[1]; ca[2] = Ca[2]; 
-	cb[0] = Cb[0]; cb[1] = Cb[1]; cb[2] = Cb[2]; 
-	cc[0] = Cc[0]; cc[1] = Cc[1]; cc[2] = Cc[2]; 
-	
-	// Perspectively correct tex interpolation, interpolate s/w, t/w, then divide by 1/w at each pixel (A[3] = 1/w)
 	float ta[2], tb[2], tc[2];
-	ta[0] = Ta[0]; ta[1] = Ta[1];
-	tb[0] = Tb[0]; tb[1] = Tb[1];
-	tc[0] = Tc[0]; tc[1] = Tc[1];
-	
-	// We must keep the colors straight with the point ordering
-	float *c_min = (p_min == A) ? ca : (p_min == B) ? cb : cc;
-	float *c_mid = (p_mid == A) ? ca : (p_mid == B) ? cb : cc;
-	float *c_max = (p_max == A) ? ca : (p_max == B) ? cb : cc;
+
+	float *c_min;
+	float *c_mid;
+	float *c_max;
 	
 	// We must keep the tex coords straight with the point ordering
-	float *t_min = (p_min == A) ? ta : (p_min == B) ? tb : tc;
-	float *t_mid = (p_mid == A) ? ta : (p_mid == B) ? tb : tc;
-	float *t_max = (p_max == A) ? ta : (p_max == B) ? tb : tc;
+	float *t_min;
+	float *t_mid;
+	float *t_max;
 	
 	// Find out control points for y, this divides the triangle into upper and lower
-	int   y_min  = (((int)p_min[1]) + 0.5 >= p_min[1]) ? p_min[1] : ((int)p_min[1]) + 1;
-	int   y_max  = (((int)p_max[1]) + 0.5 <  p_max[1]) ? p_max[1] : ((int)p_max[1]) - 1;
-	int   y_mid  = (((int)p_mid[1]) + 0.5 >= p_mid[1]) ? p_mid[1] : ((int)p_mid[1]) + 1;
+	int   y_min;
+	int   y_max;
+	int   y_mid;
 	
 	// Compute the slopes of each line, and color this is used to determine the interpolation
-	float x1_slope = (p_max[0] - p_min[0]) / (p_max[1] - p_min[1]);
-	float x2_slope = (p_mid[0] - p_min[0]) / (p_mid[1] - p_min[1]);
-	float z1_slope = (p_max[2] - p_min[2]) / (p_max[1] - p_min[1]);
-	float z2_slope = (p_mid[2] - p_min[2]) / (p_mid[1] - p_min[1]);
-	float w1_slope = (p_max[3] - p_min[3]) / (p_max[1] - p_min[1]);
-	float w2_slope = (p_mid[3] - p_min[3]) / (p_mid[1] - p_min[1]);
-	float r1_slope = (c_max[0] - c_min[0]) / (p_max[1] - p_min[1]);
-	float r2_slope = (c_mid[0] - c_min[0]) / (p_mid[1] - p_min[1]);
-	float g1_slope = (c_max[1] - c_min[1]) / (p_max[1] - p_min[1]);
-	float g2_slope = (c_mid[1] - c_min[1]) / (p_mid[1] - p_min[1]);
-	float b1_slope = (c_max[2] - c_min[2]) / (p_max[1] - p_min[1]);
-	float b2_slope = (c_mid[2] - c_min[2]) / (p_mid[1] - p_min[1]);
-	float s1_slope = (t_max[0] - t_min[0]) / (p_max[1] - p_min[1]);
-	float s2_slope = (t_mid[0] - t_min[0]) / (p_mid[1] - p_min[1]);
-	float t1_slope = (t_max[1] - t_min[1]) / (p_max[1] - p_min[1]);
-	float t2_slope = (t_mid[1] - t_min[1]) / (p_mid[1] - p_min[1]);
+	float x1_slope;
+	float x2_slope;
+	float z1_slope;
+	float z2_slope;
+	float w1_slope;
+	float w2_slope;
+	float r1_slope;
+	float r2_slope;
+	float g1_slope;
+	float g2_slope;
+	float b1_slope;
+	float b2_slope;
+	float s1_slope;
+	float s2_slope;
+	float t1_slope;
+	float t2_slope;
 	
 	// Compute the t values used in the equation Ax = Ax + (Bx - Ax)*t
 	// We only need one t, because it is only used to compute the start.
 	// Create storage for the interpolated x and z values for both lines
 	// also for the RGB interpolation
-	float t = (((float)y_min) + 0.5 - p_min[1]) / (p_max[1] - p_min[1]);
-	float x1_interp = p_min[0] + (p_max[0] - p_min[0]) * t;
-	float z1_interp = p_min[2] + (p_max[2] - p_min[2]) * t;
-	float w1_interp = p_min[3] + (p_max[3] - p_min[3]) * t;
-	float r1_interp = c_min[0] + (c_max[0] - c_min[0]) * t;
-	float g1_interp = c_min[1] + (c_max[1] - c_min[1]) * t;
-	float b1_interp = c_min[2] + (c_max[2] - c_min[2]) * t;
-	float s1_interp = t_min[0] + (t_max[0] - t_min[0]) * t;
-	float t1_interp = t_min[1] + (t_max[1] - t_min[1]) * t;
+	float t;
+	float x1_interp;
+	float z1_interp;
+	float w1_interp;
+	float r1_interp;
+	float g1_interp;
+	float b1_interp;
+	float s1_interp;
+	float t1_interp;
 	
-	t = (((float)y_min) + 0.5 - p_min[1]) / (p_mid[1] - p_min[1]);
-	float x2_interp = p_min[0] + (p_mid[0] - p_min[0]) * t;
-	float z2_interp = p_min[2] + (p_mid[2] - p_min[2]) * t;
-	float w2_interp = p_min[3] + (p_mid[3] - p_min[3]) * t;
-	float r2_interp = c_min[0] + (c_mid[0] - c_min[0]) * t;
-	float g2_interp = c_min[1] + (c_mid[1] - c_min[1]) * t;
-	float b2_interp = c_min[2] + (c_mid[2] - c_min[2]) * t;
-	float s2_interp = t_min[0] + (t_mid[0] - t_min[0]) * t;
-	float t2_interp = t_min[1] + (t_mid[1] - t_min[1]) * t;
+	float x2_interp;
+	float z2_interp;
+	float w2_interp;
+	float r2_interp;
+	float g2_interp;
+	float b2_interp;
+	float s2_interp;
+	float t2_interp;
 	
 	// Create storage for the horizontal interpolation of z and RGB color and its starting points
 	// This is used to fill the triangle horizontally
@@ -1654,6 +1647,72 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float b_interp_x,  b_delta_x;
 	float s_interp_x,  s_delta_x;
 	float t_interp_x,  t_delta_x;
+
+	ca[0] = Ca[0]; ca[1] = Ca[1]; ca[2] = Ca[2]; 
+	cb[0] = Cb[0]; cb[1] = Cb[1]; cb[2] = Cb[2]; 
+	cc[0] = Cc[0]; cc[1] = Cc[1]; cc[2] = Cc[2]; 
+	
+	// Perspectively correct tex interpolation, interpolate s/w, t/w, then divide by 1/w at each pixel (A[3] = 1/w)
+	ta[0] = Ta[0]; ta[1] = Ta[1];
+	tb[0] = Tb[0]; tb[1] = Tb[1];
+	tc[0] = Tc[0]; tc[1] = Tc[1];
+	
+	// We must keep the colors straight with the point ordering
+	c_min = (p_min == A) ? ca : (p_min == B) ? cb : cc;
+	c_mid = (p_mid == A) ? ca : (p_mid == B) ? cb : cc;
+	c_max = (p_max == A) ? ca : (p_max == B) ? cb : cc;
+	
+	// We must keep the tex coords straight with the point ordering
+	t_min = (p_min == A) ? ta : (p_min == B) ? tb : tc;
+	t_mid = (p_mid == A) ? ta : (p_mid == B) ? tb : tc;
+	t_max = (p_max == A) ? ta : (p_max == B) ? tb : tc;
+	
+	// Find out control points for y, this divides the triangle into upper and lower
+	y_min  = (((int)p_min[1]) + 0.5 >= p_min[1]) ? p_min[1] : ((int)p_min[1]) + 1;
+	y_max  = (((int)p_max[1]) + 0.5 <  p_max[1]) ? p_max[1] : ((int)p_max[1]) - 1;
+	y_mid  = (((int)p_mid[1]) + 0.5 >= p_mid[1]) ? p_mid[1] : ((int)p_mid[1]) + 1;
+	
+	// Compute the slopes of each line, and color this is used to determine the interpolation
+	x1_slope = (p_max[0] - p_min[0]) / (p_max[1] - p_min[1]);
+	x2_slope = (p_mid[0] - p_min[0]) / (p_mid[1] - p_min[1]);
+	z1_slope = (p_max[2] - p_min[2]) / (p_max[1] - p_min[1]);
+	z2_slope = (p_mid[2] - p_min[2]) / (p_mid[1] - p_min[1]);
+	w1_slope = (p_max[3] - p_min[3]) / (p_max[1] - p_min[1]);
+	w2_slope = (p_mid[3] - p_min[3]) / (p_mid[1] - p_min[1]);
+	r1_slope = (c_max[0] - c_min[0]) / (p_max[1] - p_min[1]);
+	r2_slope = (c_mid[0] - c_min[0]) / (p_mid[1] - p_min[1]);
+	g1_slope = (c_max[1] - c_min[1]) / (p_max[1] - p_min[1]);
+	g2_slope = (c_mid[1] - c_min[1]) / (p_mid[1] - p_min[1]);
+	b1_slope = (c_max[2] - c_min[2]) / (p_max[1] - p_min[1]);
+	b2_slope = (c_mid[2] - c_min[2]) / (p_mid[1] - p_min[1]);
+	s1_slope = (t_max[0] - t_min[0]) / (p_max[1] - p_min[1]);
+	s2_slope = (t_mid[0] - t_min[0]) / (p_mid[1] - p_min[1]);
+	t1_slope = (t_max[1] - t_min[1]) / (p_max[1] - p_min[1]);
+	t2_slope = (t_mid[1] - t_min[1]) / (p_mid[1] - p_min[1]);
+	
+	// Compute the t values used in the equation Ax = Ax + (Bx - Ax)*t
+	// We only need one t, because it is only used to compute the start.
+	// Create storage for the interpolated x and z values for both lines
+	// also for the RGB interpolation
+	t = (((float)y_min) + 0.5 - p_min[1]) / (p_max[1] - p_min[1]);
+	x1_interp = p_min[0] + (p_max[0] - p_min[0]) * t;
+	z1_interp = p_min[2] + (p_max[2] - p_min[2]) * t;
+	w1_interp = p_min[3] + (p_max[3] - p_min[3]) * t;
+	r1_interp = c_min[0] + (c_max[0] - c_min[0]) * t;
+	g1_interp = c_min[1] + (c_max[1] - c_min[1]) * t;
+	b1_interp = c_min[2] + (c_max[2] - c_min[2]) * t;
+	s1_interp = t_min[0] + (t_max[0] - t_min[0]) * t;
+	t1_interp = t_min[1] + (t_max[1] - t_min[1]) * t;
+	
+	t = (((float)y_min) + 0.5 - p_min[1]) / (p_mid[1] - p_min[1]);
+	x2_interp = p_min[0] + (p_mid[0] - p_min[0]) * t;
+	z2_interp = p_min[2] + (p_mid[2] - p_min[2]) * t;
+	w2_interp = p_min[3] + (p_mid[3] - p_min[3]) * t;
+	r2_interp = c_min[0] + (c_mid[0] - c_min[0]) * t;
+	g2_interp = c_min[1] + (c_mid[1] - c_min[1]) * t;
+	b2_interp = c_min[2] + (c_mid[2] - c_min[2]) * t;
+	s2_interp = t_min[0] + (t_mid[0] - t_min[0]) * t;
+	t2_interp = t_min[1] + (t_mid[1] - t_min[1]) * t;
 	
 	// First work on the bottom half of the triangle
 	// I'm using y_min as the incrementer because it saves space and we don't need it anymore

@@ -1395,6 +1395,7 @@ static INTERRUPT_GEN( irq_start )
 
 MACHINE_INIT(hyperneo)
 {
+	FILE *fp;
 	data8_t *RAM = (data8_t*)hng64_soundram;
 	cpu_setbank(1,&RAM[0x1e0000]);
 	cpu_setbank(2,&RAM[0x001000]); // where..
@@ -1407,7 +1408,7 @@ MACHINE_INIT(hyperneo)
 	// Aaaaaugh !!! AJG ugliness
 	activeBuffer = 0 ;
 
-	FILE *fp = fopen("dump.bin", "wb") ;
+	fp = fopen("dump.bin", "wb") ;
 
 	// fwrite(memory_region(REGION_GFX4), sizeof(UINT8), 0x400000*3, fp) ;
 

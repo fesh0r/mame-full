@@ -4023,21 +4023,11 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 	const char *text, *end;
 	char textbuf[256];
 	int done = 0;
-	int x, y = 0;
-	/* remember which area we cover so that we can
-	   schedule a full refresh if it gets smaller */
-	int min_x = 2048;
-	static int old_min_x = 0;
-	static int old_max_y = 2048;
+	int y = 0;
 
 	/* if we're not currently displaying, skip it */
 	if (!showfps && !showfpstemp)
-	{
-		/* reset covered area vars */
-		old_min_x = 0;
-		old_max_y = 2048;
 		return;
-	}
 
 	/* get the current FPS text */
 	text = osd_get_fps_text(mame_get_performance_info());
@@ -4060,19 +4050,9 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 		}
 
 		/* render */
-		x = uirotwidth - strlen(textbuf) * uirotcharwidth;
-		if (x<min_x)
-			min_x = x;
-		ui_text(bitmap, textbuf, x, y);
+		ui_text(bitmap, textbuf, uirotwidth - strlen(textbuf) * uirotcharwidth, y);
 		y += uirotcharheight;
 	}
-	
-	if ((min_x > old_min_x) ||
-	    (    y < old_max_y))
-		schedule_full_refresh();
-		
-	old_min_x = min_x;
-	old_max_y = y;
 
 	/* update the temporary FPS display state */
 	if (showfpstemp)

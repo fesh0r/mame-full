@@ -84,7 +84,7 @@ static WRITE16_HANDLER( gp_control_w )
 
 	if (control & 0x0100)
 	{
-		int vol = generic_nvram[0x20] & 0xff;
+		int vol = generic_nvram16[0x10] & 0xff;
 		if (vol)
 		{
 			int i;
@@ -113,7 +113,7 @@ static WRITE16_HANDLER( gp2_control_w )
 
 	if (control & 0x0100)
 	{
-		int vol = generic_nvram[0x10] & 0xff;
+		int vol = generic_nvram16[0x8] & 0xff;
 		if (vol)
 		{
 			int i;

@@ -127,10 +127,6 @@
 
 #define FRAMES_PER_FPS_UPDATE		12
 
-#ifndef MAME_VALIDITYCHECKS
-#define MAME_VALIDITYCHECKS			1
-#endif /* MAME_VALIDITYCHECKS */
-
 
 
 /***************************************************************************
@@ -280,11 +276,11 @@ int run_game(int game)
 
 	begin_resource_tracking();
 
-	/* validity checks -- perform these in all builds now due to the number of incorrect submissions */
-#if MAME_VALIDITYCHECKS
-	if (mame_validitychecks())
-		return 1;
-#endif /* MAME_VALIDITYCHECKS */
+	/* validity checks -- the default is to perform these in all builds now
+	 * due to the number of incorrect submissions */
+	if (!options.skip_validitychecks)
+		if (mame_validitychecks())
+			return 1;
 
 	/* first give the machine a good cleaning */
 	memset(Machine, 0, sizeof(Machine));
@@ -1098,11 +1094,6 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 	/* recompute scanline timing */
 	cpu_compute_scanline_timing();
-	
-	/* some vidhrdw only draw part of the visible are and expect the
-	   rest to be black for example PSX. This fixes the white bar to
-	   the left of the Raystorm logo during the teaser. */
-	schedule_full_refresh();
 }
 
 

@@ -192,32 +192,32 @@ static void dTdY_w(int chips, offs_t regnum, data32_t data)
 
 static void fvertexAx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_va.x = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_va.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexAy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_va.y = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_va.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexBx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vb.x = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_vb.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexBy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vb.y = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_vb.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexCx_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vc.x = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_vc.x = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fvertexCy_w(int chips, offs_t regnum, data32_t data)
 {
-	if (chips & 1) tri_vc.y = (INT16)(TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.));
+	if (chips & 1) tri_vc.y = (INT16)TRUNC_TO_INT(u2f(data) * 16. + 0.5) * (1. / 16.);
 }
 
 static void fstartR_w(int chips, offs_t regnum, data32_t data)

@@ -1738,8 +1738,8 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			voodoo_regs[sSetupMode] = ((command >> 10) & 0xfff) | ((command >> 6) & 0xf0000);
 			for (i = 0; i < count; i++)
 			{
-				setup_pending.x = (INT16)(TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.));
-				setup_pending.y = (INT16)(TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.));
+				setup_pending.x = (INT16)TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.);
+				setup_pending.y = (INT16)TRUNC_TO_INT(u2f(*src++) * 16. + 0.5) * (1. / 16.);
 
 				if (command & 0x10000000)
 				{

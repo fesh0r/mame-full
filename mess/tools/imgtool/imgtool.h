@@ -308,9 +308,12 @@ imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname);
  *		fname:				The native filename for the image
  *		options/ropts:		Options that control how the image is created
  *							(tracks, sectors, etc)
+ *		image:				Placeholder for resulting image.  Can be NULL
  */
-imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, option_resolution *opts);
-imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts);
+imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
+	option_resolution *opts, imgtool_image **image);
+imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
+	option_resolution *opts, imgtool_image **image);
 
 /* img_module
  *

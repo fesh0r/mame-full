@@ -591,7 +591,7 @@ static void menu_new(HWND window)
 
 	module = find_filter_module(ofn.nFilterIndex, TRUE);
 	
-	err = img_create(module, filename, resolution);
+	err = img_create(module, filename, resolution, NULL);
 	if (err)
 		goto done;
 

@@ -548,11 +548,17 @@ imgtoolerr_t img_deletefile(imgtool_image *img, const char *fname)
 	return IMGTOOLERR_SUCCESS;
 }
 
-imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, option_resolution *opts)
+
+
+imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
+	option_resolution *opts, imgtool_image **image)
 {
 	imgtoolerr_t err;
 	imgtool_stream *f;
 	option_resolution *alloc_resolution = NULL;
+
+	if (image)
+		*image = NULL;
 
 	if (!module->create)
 	{
@@ -589,6 +595,13 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname, opt
 		goto done;
 	}
 
+	if (image)
+	{
+		err = img_open(module, fname, OSD_FOPEN_RW, image);
+		if (err)
+			goto done;
+	}
+
 done:
 	if (alloc_resolution)
 		option_resolution_close(alloc_resolution);
@@ -597,7 +610,8 @@ done:
 
 
 
-imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname, option_resolution *opts)
+imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename, const char *fname,
+	option_resolution *opts, imgtool_image **image)
 {
 	const struct ImageModule *module;
 
@@ -605,7 +619,7 @@ imgtoolerr_t img_create_byname(imgtool_library *library, const char *modulename,
 	if (!module)
 		return IMGTOOLERR_MODULENOTFOUND | IMGTOOLERR_SRC_MODULE;
 
-	return img_create(module, fname, opts);
+	return img_create(module, fname, opts, image);
 }
 
 static char *nextentry(char **s)

@@ -184,7 +184,7 @@ VIDEO_START( exidy )
 INLINE void latch_condition(int collision)
 {
 	collision ^= exidy_collision_invert;
-	int_condition = (input_port_2_r(0) & ~0x1c) | (collision & exidy_collision_mask);
+	int_condition = (readinputportbytag("INTSOURCE") & ~0x1c) | (collision & exidy_collision_mask);
 }
 
 

@@ -2020,6 +2020,7 @@ static MACHINE_DRIVER_START( polaris )
 	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_REPLACE("main",8080,1996800)        /* 19.968MHz / 10 */
 	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
+	MDRV_WATCHDOG_VBLANK_INIT(255)
 
 	MDRV_CPU_IO_MAP(c8080bw_readport,writeport_0_3)
 	MDRV_CPU_VBLANK_INT(polaris_interrupt,2)

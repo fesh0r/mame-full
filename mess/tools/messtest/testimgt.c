@@ -49,7 +49,6 @@ static void createimage_handler(const char **attributes)
 {
 	imgtoolerr_t err;
 	const char *driver;
-	const char *filename;
 
 	driver = find_attribute(attributes, "driver");
 	if (!driver)
@@ -60,16 +59,7 @@ static void createimage_handler(const char **attributes)
 
 	report_message(MSG_INFO, "Creating image (module '%s')", driver);
 
-	filename = tempfile_name();
-
-	err = img_create_byname(library, driver, filename, NULL);
-	if (err)
-	{
-		report_imgtoolerr(err);
-		return;
-	}
-
-	err = img_open_byname(library, driver, filename, OSD_FOPEN_RW, &image);
+	err = img_create_byname(library, driver, tempfile_name(), NULL, &image);
 	if (err)
 	{
 		report_imgtoolerr(err);

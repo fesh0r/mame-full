@@ -2004,12 +2004,12 @@ static struct YM2203interface rranger_ym2203_interface =
 static MACHINE_DRIVER_START( rranger )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(rranger_readmem,rranger_writemem)
 	MDRV_CPU_IO_MAP(rranger_readport,rranger_writeport)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ & NMI ! */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(rranger_sound_readmem,rranger_sound_writemem)
 	MDRV_CPU_IO_MAP(rranger_sound_readport,rranger_sound_writeport)
@@ -2043,7 +2043,7 @@ MACHINE_DRIVER_END
 static struct AY8910interface brickzn_ay8910_interface =
 {
 	1,
-	4000000,	/* ? */
+	24000000 / 16,	/* ? */
 	{ 33 },
 	{ 0 },
 	{ 0 },
@@ -2151,7 +2151,7 @@ MACHINE_DRIVER_END
 static struct AY8910interface starfigh_ay8910_interface =
 {
 	1,
-	4000000,	/* ? */
+	24000000 / 16,	/* ? */
 	{ 50 },
 	{ 0 },
 	{ 0 },
@@ -2170,13 +2170,13 @@ static struct YM3812interface starfigh_ym3812_interface =
 static MACHINE_DRIVER_START( starfigh )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(starfigh_readmem,starfigh_writemem)
 	MDRV_CPU_IO_MAP(starfigh_readport,starfigh_writeport)
 	MDRV_CPU_VBLANK_INT(brickzn_interrupt,2)	/* IRQ & NMI */
 
 	/* The sound section is identical to that of hardhead */
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)
@@ -2219,11 +2219,11 @@ static INTERRUPT_GEN( sparkman_interrupt )
 static MACHINE_DRIVER_START( sparkman )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_ADD(Z80, 24000000 / 4)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(sparkman_readmem,sparkman_writemem)
 	MDRV_CPU_VBLANK_INT(sparkman_interrupt,2)	/* IRQ & NMI */
 
-	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 24000000 / 4)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
 	MDRV_CPU_PROGRAM_MAP(hardhead_sound_readmem,hardhead_sound_writemem)
 	MDRV_CPU_IO_MAP(hardhead_sound_readport,hardhead_sound_writeport)

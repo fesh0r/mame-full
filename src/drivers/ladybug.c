@@ -709,15 +709,15 @@ static WRITE8_HANDLER( sound_w )
 		case 0x2e:
 		case 0x2f:
 			sraider_wierd_value[offset&7] = data;
-/*			if(offset==0x2f)
+			if(offset==0x2f)
 			{
 				int i;
- 				for(i=0;i<8;i++)
+				for(i=0;i<8;i++)
 				{
 					//printf("%02X:",sraider_wierd_value[i]);
 				}
 				//printf("\n");
-			} */
+			}
 			break;
 		case 0x30:
 			//printf("%02X: %02X\n",offset,data);

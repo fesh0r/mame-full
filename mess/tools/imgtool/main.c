@@ -432,7 +432,7 @@ static int cmd_create(const struct command *c, int argc, char *argv[])
 	if (unnamedargs < 0)
 		return -1;
 
-	err = img_create(module, argv[1], resolution);
+	err = img_create(module, argv[1], resolution, NULL);
 	if (err)
 		goto error;
 

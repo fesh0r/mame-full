@@ -168,7 +168,7 @@ extern  size_t paletteram_size;
 #define CPU_2_NONE		0x00
 #define CPU_2_Z80		0x5a
 #define CPU_2_HD647180	0xa5
-#define CPU_2_Zx80		0xff
+#define CPU_2_V25		0xff
 
 
 static data16_t *bgvideoram16[2];
@@ -228,15 +228,15 @@ static int yoffset[4];
 
 void defaultOffsets(void)
 {
-		xoffset[0]=0;		
-		xoffset[1]=0;		
-		xoffset[2]=0;		
-		xoffset[3]=0;		
-		
-		yoffset[0]=0;		
-		yoffset[1]=0;		
-		yoffset[2]=0;		
-		yoffset[3]=0;		
+		xoffset[0]=0;
+		xoffset[1]=0;
+		xoffset[2]=0;
+		xoffset[3]=0;
+
+		yoffset[0]=0;
+		yoffset[1]=0;
+		yoffset[2]=0;
+		yoffset[3]=0;
 }
 
 /***************************************************************************
@@ -551,15 +551,15 @@ VIDEO_START( truxton2_0 )
 	}
 	if(!strcmp(Machine->gamedrv->name,"fixeighb"))
 	{
-		xoffset[0]=-26;		
-		xoffset[1]=-22;		
-		xoffset[2]=-18;		
-		xoffset[3]=8;		
-		
-		yoffset[0]=-15;		
-		yoffset[1]=-15;		
-		yoffset[2]=-15;		
-		yoffset[3]=8;		
+		xoffset[0]=-26;
+		xoffset[1]=-22;
+		xoffset[2]=-18;
+		xoffset[3]=8;
+
+		yoffset[0]=-15;
+		yoffset[1]=-15;
+		yoffset[2]=-15;
+		yoffset[3]=8;
 		tilemap_set_scrolldx(tx_tilemap, 0, 0);
 	}
 	else

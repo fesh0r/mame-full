@@ -183,6 +183,11 @@
 #define MDRV_INTERLEAVE(interleave)										\
 	machine->cpu_slices_per_frame = (interleave);						\
 
+#define MDRV_WATCHDOG_VBLANK_INIT(watch_count)							\
+	machine->watchdog_vblank_count = (watch_count);						\
+
+#define MDRV_WATCHDOG_TIME_INIT(time)									\
+	machine->watchdog_time = (time);									\
 
 /* core functions */
 #define MDRV_MACHINE_INIT(name)											\
@@ -294,6 +299,8 @@ struct InternalMachineDriver
 	float frames_per_second;
 	int vblank_duration;
 	UINT32 cpu_slices_per_frame;
+	INT32 watchdog_vblank_count;
+	double watchdog_time;
 
 	void (*machine_init)(void);
 	void (*machine_stop)(void);
@@ -392,6 +399,10 @@ struct InternalMachineDriver
 /* ----- flags for sound_attributes ----- */
 #define	SOUND_SUPPORTS_STEREO		0x0001
 
+
+/* -----    defaults for watchdog   ----- */
+#define DEFAULT_60HZ_3S_VBLANK_WATCHDOG	180
+#define DEFAULT_30HZ_3S_VBLANK_WATCHDOG	90
 
 
 /***************************************************************************

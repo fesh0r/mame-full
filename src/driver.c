@@ -201,6 +201,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( mshuttlj )	/* (c) 1980 Nichibutsu */
 	DRIVER( moonal2 )	/* Nichibutsu */
 	DRIVER( moonal2b )	/* Nichibutsu */
+	DRIVER( supergx )	/* ? */
 	DRIVER( eagle )		/* (c) Centuri */
 	DRIVER( eagle2 )	/* (c) Centuri */
 	DRIVER( eagle3 )	/* (c) Centuri */
@@ -258,7 +259,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( conquer )	/* (c) 1982 ???? */
 	DRIVER( hunchbks )	/* (c) 1983 Century */
 	DRIVER( cavelon )	/* (c) 1983 Jetsoft */
-	DRIVER( sfx )
+	DRIVER( sfx )		/* (c) 1983 Nichibutsu */
+	DRIVER( skelagon )	/* (c) 1983 Nichibutsu USA */
 	DRIVER( mimonscr )
 	DRIVER( mimonkey )
 	DRIVER( mimonsco )
@@ -2458,6 +2460,7 @@ V-V                           TP-027
 	DRIVER( cbaj )		/* Cool Boaders Arcade Jam */
 	DRIVER( shngmtkb )  /* Shanghai Matekibuyuu */
 	DRIVER( tondemo )	/* Tondemo Crisis (JAPAN) */
+	DRIVER( glpracr3 )	/* Gallop Racer 3 (JAPAN) */
 	DRIVER( mfjump )	/* Monster Farm Jump (JAPAN) */
 
 	/* Atlus ZN1 */
@@ -2715,6 +2718,7 @@ V-V                           TP-027
 	/* Sega G-80 raster games */
 	DRIVER( astrob )	/* (c) 1981 */
 	DRIVER( astrob2 )	/* (c) 1981 */
+	DRIVER( astrob2a )	/* (c) 1981 */
 	DRIVER( astrob1 )	/* (c) 1981 */
 	DRIVER( 005 )		/* (c) 1981 */
 	DRIVER( monsterb )	/* (c) 1982 */
@@ -2837,14 +2841,12 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aliensya )	/* (c) 1987 (protected) */
 	DRIVER( aliensyb )	/* (c) 1987 (protected) */
 	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
-	DRIVER( astorm )	/* (c) 1990 (protected) */
 	DRIVER( astorm2p )	/* (c) 1990 (protected 2 Players) */
 	DRIVER( auraila )	/* (c) 1990 Sega / Westone (protected) */
 	DRIVER( bayrouta )	/* (c) 1989 (protected) */
 	DRIVER( bayrtbl1 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( bayrtbl2 )	/* (c) 1989 (protected) (bootleg) */
 	DRIVER( enduror )	/* (c) 1985 (protected) */
-	DRIVER( eswat )		/* (c) 1989 (protected) */
 	DRIVER( fpoint )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxb )	/* (c) 1989 (protected) */
 	DRIVER( goldnaxc )	/* (c) 1989 (protected) */
@@ -2856,9 +2858,6 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( sdioj )		/* (c) 1987 (protected. Japan) */
 	DRIVER( shinobia )	/* (c) 1987 (protected) */
 	DRIVER( shinobib )	/* (c) 1987 (protected) */
-	DRIVER( tetris )	/* (c) 1988 (protected) */
-	DRIVER( tetrisa )	/* (c) 1988 (protected) */
-	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
 
 	DRIVER( aceattac )	/* (protected) */
 	DRIVER( afighter )	/* (protected) */
@@ -2866,7 +2865,6 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( cltchitr )	/* (protected) */
 	DRIVER( cotton )	/* (protected) */
 	DRIVER( cottona )	/* (protected) */
-	DRIVER( ddcrew )	/* (protected) */
 	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( exctleag )  /* (protected) */
 	DRIVER( lghost )	/* (protected) */
@@ -2879,6 +2877,23 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( toutrun )	/* (protected) */
 	DRIVER( toutruna )	/* (protected) */
 	DRIVER( wwally )	/* (protected) */
+	DRIVER( ddcrewa )	/* (protected) */
+	DRIVER( ddcrewb )	/* (protected) */
+	DRIVER( ddcrewc )	/* (protected) */
+	DRIVER( eswatu )	/* (protected) */
+
+	/* decrypted */
+	DRIVER( tetris )	/* (c) 1988 (protected) */
+	DRIVER( tetrisa )	/* (c) 1988 (protected) */
+	DRIVER( tetrisb )	/* (c) 1988 (protected) */
+	DRIVER( sonicbom )
+	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (protected) */
+	DRIVER( wb3b )		/* (c) 1988 Sega / Westone (protected) */
+	DRIVER( ddcrew )	/* (protected) */
+	DRIVER( astorm )	/* (c) 1990 (protected) */
+	DRIVER( eswat )		/* (c) 1989 (protected) */
+	DRIVER( ddux )		/* (c) 1989 */
+
 
 	// Working
 	DRIVER( aburner )	/* (c) 1987 */
@@ -3013,6 +3028,7 @@ Sep.1994 Quiz Ghost Hunter
 	/* Model 1 Games */
 	DRIVER( vf1 )
 	DRIVER( vr )
+	DRIVER( vformula )
 	DRIVER( swa )
 	DRIVER( wingwar )
 	DRIVER( wingwara )
@@ -3470,6 +3486,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fncywld )	/* (c) 1996 Unico */
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
+	DRIVER( bcstrya )	/* (c) 199? SemiCom */
 	DRIVER( lemmings )	/* prototype (c) 1991 Data East USA (US) */
 	/* MAQ ?? */
 	DRIVER( dragngun )	/* MAR (c) 1992 Data East Corporation (US) */
@@ -3973,7 +3990,11 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( showdown )	/* (c) 1988 */
 
 	/* Atari b/w games */
-	/* Tank 8 */  		/* ??????			1976/04 [6800] */
+	DRIVER( tank8 )		/* ??????			1976/04 [6800] */
+	DRIVER( tank8a )	/* ??????			1976/04 [6800] */
+	DRIVER( tank8b )	/* ??????			1976/04 [6800] */
+	DRIVER( tank8c )	/* ??????			1976/04 [6800] */
+	DRIVER( tank8d )	/* ??????			1976/04 [6800] */
 	DRIVER( cball )		/* ?????? prototype	1976/?? [6800] */
 	DRIVER( copsnrob )	/* 005625			1976/07 [6502] */
 	DRIVER( flyball )	/* 005629			1976/07 [6502] */
@@ -5787,9 +5808,11 @@ Other Sun games
 	DRIVER( gt103a )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103a1 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103a2 )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gt103a3 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103asx )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103asa )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
+	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c1 )	/* (c) 1985 Greyhound Electronics */
