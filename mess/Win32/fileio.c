@@ -53,7 +53,7 @@ static int MessImageFopenZip(const char *filename, const char *realname, mame_fi
 	lpSlashPos = strrchr(pZipEnt->name, '/');
 	strncpyz(buf2, lpSlashPos ? lpSlashPos + 1 : pZipEnt->name, sizeof(buf2) / sizeof(buf2[0]));
 
-	if (realname && strcmp(realname, buf2))
+	if (realname && stricmp(realname, buf2))
 		goto error;
 
 	if (load_zipped_file(filename, buf2, &mf->file_data, &mf->file_length))
