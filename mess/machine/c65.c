@@ -12,7 +12,7 @@
 #define VERBOSE_DBG 1
 #include "includes/cbm.h"
 #include "includes/cia6526.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/vc1541.h"
 #include "includes/vic6567.h"
 #include "includes/sid6581.h"

@@ -25,7 +25,7 @@
 #include "includes/vc1541.h"
 #include "machine/6522via.h"
 #include "includes/vc20tape.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/cbmieeeb.h"
 #include "includes/vic6560.h"
 

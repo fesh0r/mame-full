@@ -14,7 +14,7 @@
 #include "machine/6821pia.h"
 #include "machine/6522via.h"
 #include "includes/pet.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 #include "includes/cbmieeeb.h"
 
 /* keyboard lines */
