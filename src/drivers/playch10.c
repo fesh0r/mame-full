@@ -518,7 +518,7 @@ static struct MachineDriver machine_driver_##name =                     \
     nvram                                                               \
 };
 
-PC10_MACHINE_DRIVER( playch10, NULL)
+PC10_MACHINE_DRIVER( playch10, NULL )
 PC10_MACHINE_DRIVER( playchnv, nvram_handler )
 
 /***************************************************************************
