@@ -4,6 +4,15 @@
 
   Machine file to handle emulation of the Nintendo GameBoy.
 
+  Changes:
+
+	13/2/2002		AK - MBC2 and MBC3 support and added NVRAM support.
+	23/2/2002		AK - MBC5 support, and MBC2 RAM support.
+	13/3/2002		AK - Tidied up the MBC code, window layer now has it's
+						 own palette. Tidied init code.
+	15/3/2002		AK - More init code tidying with a slight hack to stop
+						 sound when the machine starts.
+
 ***************************************************************************/
 #define __MACHINE_GB_C
 
@@ -22,7 +31,6 @@ static UINT8 *RAMMap[256];			   /* Addresses of RAM banks                      *
 static UINT8 RAMBank;				   /* Number of RAM bank currently used           */
 static UINT8 RAMMask;				   /* Mask for the RAM bank number                */
 static int RAMBanks;				   /* Total number of RAM banks                   */
-static UINT32 TCount, TStep;		   /* Timer counter and increment            */
 static UINT32 SIOCount;				   /* Serial I/O counter                     */
 
 #define Verbose 0x00
@@ -35,8 +43,6 @@ UINT8 *gb_ram;
 
 void gb_init_machine (void)
 {
-	int I;
-
 	gb_ram = memory_region (REGION_CPU1);
 
 	ROMBank = 1;
@@ -44,42 +50,28 @@ void gb_init_machine (void)
 	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
 	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
 
-	TStep = 32768;
-	TCount = 0;
-
-	gb_chrgen = gb_ram + 0x8800;
-	gb_bgdtab = gb_wndtab = gb_ram + 0x9800;
-	LCDCONT = 0x81;
+	/* Initialise the registers */
 	LCDSTAT = 0x00;
-	SCROLLX = SCROLLY = 0x00;
-	WNDPOSX = WNDPOSY = 0x00;
-	CURLINE = 0x00;
-	CMPLINE = 0x00;
-	BGRDPAL = 0xFC;
-	SPR0PAL = SPR1PAL = 0xFF;
+	CURLINE = CMPLINE = 0x00;
 	IFLAGS = ISWITCH = 0x00;
-	TIMECNT = TIMEMOD = TIMEFRQ = 0x00;
 	SIODATA = 0x00;
 	SIOCONT = 0x7E;
-
-	for (I = 0; I < 4; I++)
-	{
-		gb_bpal[I] = gb_wpal[I] = I;
-		gb_spal0[I] = I + 4;
-		gb_spal1[I] = I + 8;
-	}
-
-	BGRDPAL = SPR0PAL = SPR1PAL = 0xE4;
-
-	/* Initialise the timer */
-	gb_w_io (0x07, gb_ram [0xFF07]);
+	SCROLLX = SCROLLY = 0x00;
+	WNDPOSX = WNDPOSY = 0x00;
+	gb_w_io( 0x05, 0x00 );	/* TIMECNT */
+	gb_w_io( 0x06, 0x00 );	/* TIMEMOD */
+	gb_w_io( 0x07, 0x00 );	/* TIMEFRQ */
+	gb_w_io( 0x40, 0x91 );	/* LCDCONT */
+	gb_w_io( 0x47, 0xFC );	/* BGRDPAL */
+	gb_w_io( 0x48, 0xFC );	/* SPR0PAL */
+	gb_w_io( 0x49, 0xFC );	/* SPR1PAL */
 
 	/* Initialise the Sound Registers */
 	gameboy_sound_w(0xFF26,0xF1); /*Gameboy, F0 for SGB*/ /* set this first */
 	gameboy_sound_w(0xFF10,0x80);
 	gameboy_sound_w(0xFF11,0xBF);
 	gameboy_sound_w(0xFF12,0xF3);
-	gameboy_sound_w(0xFF14,0xBF);
+	gameboy_sound_w(0xFF14,0x3F); /* Should be 0xBF but this causes a tone at the start */
 	gameboy_sound_w(0xFF16,0x3F);
 	gameboy_sound_w(0xFF17,0x00);
 	gameboy_sound_w(0xFF19,0xBF);
@@ -176,8 +168,8 @@ WRITE_HANDLER ( gb_rom_bank_select )
 
 WRITE_HANDLER ( gb_ram_bank_select )
 {
-	/* No need to bank switch if there is no controller */
-	if( !MBCType )
+	/* No need to bank switch if no controller or MBC2 */
+	if( !MBCType || MBCType == MBC2 )
 		return;
 
 	data &= RAMMask;
@@ -327,6 +319,7 @@ WRITE_HANDLER ( gb_w_io )
 		return;
 	case 0xFF05:						/* TIMA - Timer counter */
 		gb_timer_count = data << gb_timer_shift;
+		break;
 	case 0xFF07:						/* TAC - Timer control */
 		gb_timer_shift = timer_shifts[data & 0x03];
 		data |= 0xF8;
@@ -406,7 +399,6 @@ WRITE_HANDLER ( gb_w_io )
 		/* Sound Registers */
 		if ((offset >= 0xFF10) && (offset <= 0xFF26))
 		{
-			gb_ram [offset] = data;
 			gameboy_sound_w(offset, data);
 			return;
 		}
@@ -428,17 +420,17 @@ READ_HANDLER ( gb_ser_regs )
 	switch(offset)
 	{
 		case 0xFF00:
-						/*logerror("Location read 0xff00\n");*/
-						break;
+			/*logerror("Location read 0xff00\n");*/
+			break;
 		case 0xFF01:
-						/*logerror("Location read 0xff01\n");*/
-						break;
+			/*logerror("Location read 0xff01\n");*/
+			break;
 		case 0xFF02:
-						/*logerror("Location read 0xff02\n");*/
-						break;
+			/*logerror("Location read 0xff02\n");*/
+			break;
 		case 0xFF03:
-						/*logerror("Location read 0xff03\n");*/
-						break;
+			/*logerror("Location read 0xff03\n");*/
+			break;
 	}
 
 	return gb_ram[offset];
