@@ -39,7 +39,11 @@ in this Software without prior written authorization from the X Consortium.
 #define _POSIX_SOURCE		1
 #define USE_CHMOD			1
 
+#ifdef	__DJGPP__
 #define INCLUDEDIR	djgpp_include()
+#else
+#define	INCLUDEDIR	"/usr/include"
+#endif
 #define OBJSUFFIX   ".o"
 
 #define MAXDEFINES	4096

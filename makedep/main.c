@@ -122,7 +122,7 @@ catch(int sig)
 struct sigaction sig_act;
 
 #endif	   /* USGISH */
-
+#ifdef __DJGPP__
 char *djgpp_include(void)
 {
 	static char dir[256];
@@ -138,6 +138,7 @@ char *djgpp_include(void)
 		*p = '/';
 	return dir;
 }
+#endif
 
 int main(int argc, char **argv)
 {
