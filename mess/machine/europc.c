@@ -3,17 +3,18 @@
 #include "includes/pc.h"
 #include "includes/pit8253.h"
 #include "bcd.h"
+#include <time.h>
 
 /*
   europc
   fe107 bios checksum test
    memory test
-  fe145 
+  fe145
    irq vector init
   fe156
   fe169 fd774 // test of special europc registers 254 354
-  fe16c fe817 
-  fe16f 
+  fe16c fe817
+  fe16f
    fec08 // test of special europc registers 800a rtc time or date error, rtc corrected
     fef66 0xf
     fdb3e 0x8..0xc
@@ -21,7 +22,7 @@
   fe172 fecc5 // 801a video setup error
    copyright output
   fe1b7
-  fe1be di bits set mean output text!!!, 
+  fe1be di bits set mean output text!!!,
    (801a)
    0x8000 output
         1 rtc error
@@ -37,26 +38,26 @@
   fe1e2 fdc0c cpu speed is 4.77 mhz
   fe1e5 ff9c0 keyboard processor error
   fe1eb fc617 external lpt1 at 0x3bc
-  fe1ee fe8ee external coms at 
+  fe1ee fe8ee external coms at
 
   routines:
   fc92d output text at bp
   fdb3e rtc read reg cl
   fe8ee piep
   fe95e rtc write reg cl
-   polls until jim 0xa is zero, 
+   polls until jim 0xa is zero,
    output cl at jim 0xa
    write ah hinibble as lownibble into jim 0xa
    write ah lownibble into jim 0xa
   fef66 rtc read reg cl
-   polls until jim 0xa is zero, 
+   polls until jim 0xa is zero,
    output cl at jim 0xa
    read low 4 nibble at jim 0xa
    read low 4 nibble at jim 0xa
    return first nibble<<4|second nibble in ah
   ffe87 0 -> ds
 
-  469: 
+  469:
    bit 0: b0000 memory available
    bit 1: b8000 memory available
   46a: 00 jim 250 01 jim 350
@@ -113,7 +114,7 @@ WRITE_HANDLER( europc_pio_w )
 		pc_keyb_set_clock(data&0x40);
 		break;
 	}
-	
+
 	logerror("europc pio write %.2x %.2x\n",offset,data);
 }
 
@@ -129,7 +130,7 @@ READ_HANDLER( europc_pio_r )
 	case 1:
 		data=europc_pio.port61;
 		break;
-	case 2: 
+	case 2:
 		if (pit8253_get_output(0,2)) data|=0x20;
 		break;
 	}
@@ -138,7 +139,7 @@ READ_HANDLER( europc_pio_r )
 
 // realtime clock and nvram
 static struct {
-	/* 
+	/*
 	   reg 0: seconds
 	   reg 1: minutes
 	   reg 2: hours
@@ -158,7 +159,7 @@ static struct {
 	    bit 0,1: language/country
 	   reg d: xor checksum
 	   reg e:
-	   reg 0f: 01 status ok, when not 01 written 
+	   reg 0f: 01 status ok, when not 01 written
 	*/
 	UINT8 data[0x10];
 	int reg;
@@ -183,7 +184,7 @@ void europc_rtc_set_time(void)
 	europc_rtc.data[3]=dec_2_bcd(tmtime->tm_mday);
 	europc_rtc.data[4]=dec_2_bcd(tmtime->tm_mon+1);
 	europc_rtc.data[5]=dec_2_bcd(tmtime->tm_year%100);
-	
+
 	// freeing of gmtime??
 }
 
@@ -262,7 +263,7 @@ void europc_rtc_nvram_handler(void* file, int write)
 {
 	if (file==NULL) {
 //		europc_set_time();
-		// init only 
+		// init only
 	} else if (write) {
 		europc_rtc_save_stream(file);
 	} else {
