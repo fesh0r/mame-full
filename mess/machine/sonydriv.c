@@ -296,10 +296,14 @@ int sony_read_status(void)
 		case 0x06:	/* Disk is locked 0=locked 1=unlocked */
 			if (cur_image)
 				result = floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_DISK_WRITE_PROTECTED) ? 0 : 1;
+			else
+				result = 0;
 			break;
 		case 0x08:	/* Motor on 0=on 1=off */
 			if (cur_image)
-				result = floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_MOTOR_ON) ? 0 : 1;
+				result = floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_MOTOR_ON) ? 1 : 0;
+			else
+				result = 0;
 			break;
 		case 0x09:	/* Number of sides: 0=single sided, 1=double sided */
 			if (cur_image)
@@ -309,10 +313,11 @@ int sony_read_status(void)
 			logerror("sony_status(): reading Track 0 pc=0x%08x\n", (int) activecpu_get_pc());
 			if (cur_image)
 				result = floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_HEAD_AT_TRACK_0) ? 0 : 1;
+			else
+				result = 0;
 			break;
 		case 0x0b:	/* Disk ready: 0=ready, 1=not ready */
-			if (cur_image)
-				result = floppy_drive_get_flag_state(cur_image, FLOPPY_DRIVE_READY) ? 0 : 1;
+			result = 0;
 			break;
 		case 0x0c:	/* Disk switched */
 			result = f->disk_switched;
