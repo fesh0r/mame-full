@@ -178,6 +178,9 @@ imgtool getall fmsx_cas file.cas
 imgtool get fmsx_cas file.cas file.wav newfile.wav
 
 
+Various bogus MSX disk images (xsa/img/ddi/msx)
+-----------------------------------------------
+
 XelaSoft Archive (.xsa)
 ----------------------
 
@@ -223,4 +226,31 @@ rom16 16 bit wide rom image
 allows easy access to even and odd parts
 file even: even bytes
 file odd: odd bytes
+
+
+Amstrad NC100/NC150/NC200 PCMCIA Ram Card Images (crd/card)
+-----------------------------------------------------------
+
+The card filesystem is similar to FAT, but not identical.
+The maximum card size is 1mb, and maximum file size is 64k.
+(Files will be cut at 64k if they are larger - e.g. when putting a large file)
+
+As far as I know there is no directory system, however there is always a 
+system "NC100" directory which points to the root directory. (Like the DOS "."
+directory).
+
+Using imgtool, you can put, get and delete files.
+
+At this time only ascii file type is supported. These files can be loaded
+into the internal wordprocessor,or,if the file is a BASIC listing, it can
+be loaded into basic with "*EXEC <filename>" at the ">" prompt.
+
+From BASIC you can get a directory listing of the card filesystem with "*."
+at the ">" prompt.
+
+The file date information is not supported at this time.
+
+The card filesystem reading/writing in imgtool has not been heavily tested.
+
+
 
