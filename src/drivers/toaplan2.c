@@ -1312,6 +1312,7 @@ static struct MemoryReadAddress batrider_readmem[] =
 	{ 0x400000, 0x400001, input_port_0_r },
 	{ 0x400008, 0x40000b, toaplan2_0_videoram_r },
 //	{ 0x500000, 0x5000ff, batrider_shared_ram_r },
+	{ -1 }
 };
 
 static struct MemoryWriteAddress batrider_writemem[] =
@@ -1323,6 +1324,7 @@ static struct MemoryWriteAddress batrider_writemem[] =
 	{ 0x400008, 0x400009, toaplan2_0_videoram_w },
 	{ 0x40000c, 0x40000d, toaplan2_0_voffs_w },
 //	{ 0x500000, 0x5000ff, batrider_shared_ram_w },
+	{ -1 }
 };
 
 
@@ -3867,7 +3869,7 @@ ROM_START( batrider )
 	ROM_REGION( 0x40000, REGION_CPU2 )			/* Sound Z80 code */
 	ROM_LOAD( "snd.u77", 0x00000, 0x40000, 0x56682696 )
 	
-	ROM_REGION( 0x800000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x1000000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom-1.bin", 0x000000, 0x400000, 0x0df69ca2 )
 	ROM_LOAD( "rom-2.bin", 0x400000, 0x400000, 0x1bfea593 )
 	ROM_LOAD( "rom-3.bin", 0x800000, 0x400000, 0x60167d38 )
