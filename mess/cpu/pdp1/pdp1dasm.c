@@ -87,6 +87,12 @@ unsigned dasmpdp1 (char *buffer, unsigned _pc)
 		IN;
 		etime = 10;
 		break;
+	case DIP:
+		ea ();
+		sprintf (buffer, "DIP 0%06o  ", y);
+		IN;
+		etime = 10;
+		break;
 	case DIO:
 		ea ();
 		sprintf (buffer, "DIO 0%06o  ", y);
