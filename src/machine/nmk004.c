@@ -36,7 +36,8 @@ struct psg_control
 /* C223-C224 */	UINT16 note_length;
 /* C225      */	UINT8  volume_timer;
 /* C227-C228 */	UINT16 current;		// current position in control table
-/* C229-C22A */	UINT16 return_address;	// return address when control table calls a subtable
+/* C229-C22A */	UINT16 return_address[16];	// return address when control table calls a subtable
+				int return_address_depth;
 /* C22B-C22C */	UINT16 loop_start;	// first instruction of loop
 /* C22D      */	UINT8  loop_times;	// number of times to loop
 /* C22E      */	UINT8  volume_shape;
@@ -58,7 +59,8 @@ UINT8 note;
 /* C03E-C03F */	UINT16 current;	// current position in control table
 /* C040-C041 */	UINT16 loop_start;	// first instruction of loop
 /* C042      */	UINT8  loop_times;	// number of times to loop
-/* C043-C044 */	UINT16 return_address;	// return address when control table calls a subtable
+/* C043-C044 */	UINT16 return_address[16];	// return address when control table calls a subtable
+				int    return_address_depth;
 /* C045      */	UINT8  octave;
 /* C046-C047 */	UINT16 timer1;
 /* C048-C049 */	UINT16 timer2;
@@ -79,7 +81,8 @@ struct effects_control
 /* C1BE-C1BF */	UINT16 current;	// current position in control table
 /* C1C0-C1C1 */	UINT16 loop_start;	// first instruction of loop
 /* C1C2      */	UINT8  loop_times;	// number of times to loop
-/* C1C3-C1C4 */	UINT16 return_address;	// return address when control table calls a subtable
+/* C1C3-C1C4 */	UINT16 return_address[16];	// return address when control table calls a subtable
+				int    return_address_depth;
 /* C1C6-C1C7 */	UINT16 timer;
 /* C1CA-C1CB */	UINT16 timer_duration;
 };
@@ -238,7 +241,7 @@ static void effects_update(int channel)
 
 						case 0xf7:	// begin repeat loop
 							effects->loop_times = read8(effects->current++);
-							effects->loop_start = read8(effects->current);
+							effects->loop_start = effects->current;
 							break;
 
 						case 0xf8:	// end repeat loop
@@ -247,12 +250,12 @@ static void effects_update(int channel)
 							break;
 
 						case 0xf9:	// call subtable
-							effects->return_address = effects->current + 2;
+							effects->return_address[effects->return_address_depth++] = effects->current + 2;
 							effects->current = read16(effects->current);
 							break;
 
 						case 0xfa:	// return from subtable
-							effects->current = effects->return_address;
+							effects->current = effects->return_address[--effects->return_address_depth];
 							break;
 
 						case 0xfc:	// ??? (hachamf command 04)
@@ -392,7 +395,7 @@ static void fm_update(int channel)
 
 						case 0xf7:	// begin repeat loop
 							fm->loop_times = read8(fm->current++);
-							fm->loop_start = read8(fm->current);
+							fm->loop_start = fm->current;
 							break;
 
 						case 0xf8:	// end repeat loop
@@ -401,12 +404,12 @@ static void fm_update(int channel)
 							break;
 
 						case 0xf9:	// call subtable
-							fm->return_address = fm->current + 2;
+							fm->return_address[fm->return_address_depth++] = fm->current + 2;
 							fm->current = read16(fm->current);
 							break;
 
 						case 0xfa:	// return from subtable
-							fm->current = fm->return_address;
+							fm->current = fm->return_address[--fm->return_address_depth];
 							break;
 
 						case 0xfb:	// set octave
@@ -761,7 +764,7 @@ static void psg_update(int channel)
 
 						case 0xf7:	// begin repeat loop
 							psg->loop_times = read8(psg->current++);
-							psg->loop_start = read8(psg->current);
+							psg->loop_start = psg->current;
 							break;
 
 						case 0xf8:	// end repeat loop
@@ -770,12 +773,12 @@ static void psg_update(int channel)
 							break;
 
 						case 0xf9:	// call subtable
-							psg->return_address = psg->current + 2;
+							psg->return_address[psg->return_address_depth++] = psg->current + 2;
 							psg->current = read16(psg->current);
 							break;
 
 						case 0xfa:	// return from subtable
-							psg->current = psg->return_address;
+							psg->current = psg->return_address[--psg->return_address_depth];
 							break;
 
 						case 0xfb:	// set octave
@@ -949,6 +952,7 @@ static void get_command(void)
 				if (channel < FM_CHANNELS)
 				{
 					NMK004_state.fm_control[channel].current = table_start;
+					NMK004_state.fm_control[channel].return_address_depth = 0;
 					NMK004_state.fm_control[channel].flags |= FM_FLAG_NEED_INITIALIZATION;
 				}
 				else
@@ -957,6 +961,7 @@ static void get_command(void)
 					if (channel < PSG_CHANNELS)
 					{
 						NMK004_state.psg_control[channel].current = table_start;
+						NMK004_state.psg_control[channel].return_address_depth = 0;
 						NMK004_state.psg_control[channel].flags |= PSG_FLAG_NEED_INITIALIZATION;
 					}
 					else
@@ -968,6 +973,7 @@ static void get_command(void)
 							exit(0);
 						}
 						NMK004_state.effects_control[channel].current = table_start;
+						NMK004_state.effects_control[channel].return_address_depth = 0;
 						NMK004_state.effects_control[channel].flags |= EFFECTS_FLAG_NEED_INITIALIZATION;
 					}
 				}

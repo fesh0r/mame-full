@@ -1613,6 +1613,28 @@ static WRITE16_HANDLER( sjryuko_custom_io_w )
 	standard_io_w(offset, data, mem_mask);
 }
 
+/*************************************
+ *
+ *	Passing Shot custom I/O
+ *
+ *************************************/
+
+static READ16_HANDLER( passshtj_custom_io_r )
+{
+	switch (offset & (0x3000/2))
+	{
+		case 0x3000/2:
+			switch ((offset/2) & 3)
+			{
+				case 0:	return readinputportbytag("P1");
+				case 1:	return readinputportbytag("P2");
+				case 2:	return readinputportbytag("P3");
+				case 3:	return readinputportbytag("P4");
+			}
+			break;
+	}
+	return standard_io_r(offset, mem_mask);
+}
 
 
 /*************************************
@@ -2307,6 +2329,73 @@ static INPUT_PORTS_START( passsht )
 	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 INPUT_PORTS_END
+
+
+static INPUT_PORTS_START( passshtj )
+	PORT_INCLUDE( system16b_generic )
+
+	PORT_MODIFY("SERVICE")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
+
+	PORT_MODIFY("P1")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+
+	PORT_START_TAG("P3")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(3)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
+
+	PORT_START_TAG("P4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0e, 0x00, "Initial Point" )
+	PORT_DIPSETTING(    0x06, "2000" )
+	PORT_DIPSETTING(    0x0a, "3000" )
+	PORT_DIPSETTING(    0x0c, "4000" )
+	PORT_DIPSETTING(    0x0e, "5000" )
+	PORT_DIPSETTING(    0x08, "6000" )
+	PORT_DIPSETTING(    0x04, "7000" )
+	PORT_DIPSETTING(    0x02, "8000" )
+	PORT_DIPSETTING(    0x00, "9000" )
+	PORT_DIPNAME( 0x30, 0x30, "Point Table" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+INPUT_PORTS_END
+
 
 
 static INPUT_PORTS_START( riotcity )
@@ -3314,9 +3403,9 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Atomic Point, Sega System 16B
+	Atomic Point
 	CPU: 68000
-	ROM Board: 171-????
+	Custom Korean Board - NOT Sega
 */
 ROM_START( atomicp )
 	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
@@ -3327,6 +3416,26 @@ ROM_START( atomicp )
 	ROM_LOAD( "ap-t4.bin",  0x00000, 0x8000, CRC(332e58f4) SHA1(cf5aeb6c14018cbd8f222a0ecf85ccf467f294a8) )
 	ROM_LOAD( "ap-t3.bin",  0x08000, 0x8000, CRC(dddc122c) SHA1(3411eae360ccd615636fb85e9738affc33c2c0ad) )
 	ROM_LOAD( "ap-t5.bin",  0x10000, 0x8000, CRC(ef5ecd6b) SHA1(07edc8ea4c0a5ad421df7f97e7a62a5e12a8dbd0) )
+
+	ROM_REGION16_BE( 0x2, REGION_GFX2, 0 ) /* sprites */
+ROM_END
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+	Snapper
+	CPU: 68000
+	Custom Korean Board - NOT Sega
+*/
+ROM_START( snapper )
+	ROM_REGION( 0x020000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "snap2.r01", 0x000000, 0x10000, CRC(9a9e4ed3) SHA1(df3df13b70d4c0d1caaf42e78d355c0492fac96b) )
+	ROM_LOAD16_BYTE( "snap1.r02", 0x000001, 0x10000, CRC(cd468d6a) SHA1(28b5e1f533f5e3fd9ebffe63bda7e6d9ebe4ffaa) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "snap4.r03",  0x00000, 0x8000, CRC(0f848e1e) SHA1(79a63ff0e5775400716f7294eabda9a0b838d656) )
+	ROM_LOAD( "snap3.r04",  0x08000, 0x8000, CRC(c7f8cf0e) SHA1(08376f7941bc740ce85c6f32be7b54ced192599c) )
+	ROM_LOAD( "snap5.r05",  0x10000, 0x8000, CRC(378e08eb) SHA1(f2c10bd9e885c185ac2d0d51d907ceca1f21dd7a) )
 
 	ROM_REGION16_BE( 0x2, REGION_GFX2, 0 ) /* sprites */
 ROM_END
@@ -4440,6 +4549,49 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
+	Passing Shot (Japan, 4 Player), Sega System 16B
+	CPU: FD1094 No. 317-0070
+	ROM Board No. 171-5358
+
+	J1 - -
+	J2 ---
+	J3 512
+	J4 256
+	J5 512
+	J6 512
+*/
+ROM_START( passshtj )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr-11853.a4", 0x000000, 0x10000, CRC(fab337e7) SHA1(dc2d13f31b4f8c834e669262395d5d37958108b1) )
+	ROM_LOAD16_BYTE( "epr-11852.a1", 0x000001, 0x10000, CRC(892a81fc) SHA1(e2fbdd83143822458463514c7486c09eeecb3547) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0070.key", 0x0000, 0x2000,  CRC(5d0308aa) SHA1(263f5b1dfe9c35d78c0b84279aca544439d13a86) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "opr11854.b9",  0x00000, 0x10000, CRC(d31c0b6c) SHA1(610d04988da70c30300cc5614817eda9d2204f39) )
+	ROM_LOAD( "opr11855.b10", 0x10000, 0x10000, CRC(b78762b4) SHA1(d594ef846bd7fed8da91a89906b39c1a2867a1fe) )
+	ROM_LOAD( "opr11856.b11", 0x20000, 0x10000, CRC(ea49f666) SHA1(36ccd32cdcbb7fcc300628bb59c220ec3c324d82) )
+
+	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "opr11862.b1",  0x00001, 0x10000, CRC(b6e94727) SHA1(0838e034f1f10d9cd1312c8c94b5c57387c0c271) )
+	ROM_LOAD16_BYTE( "opr11865.b5",  0x00000, 0x10000, CRC(17e8d5d5) SHA1(ac1074b0a705be13c6e3391441e6cfec1d2b3f8a) )
+	ROM_LOAD16_BYTE( "opr11863.b2",  0x20001, 0x10000, CRC(3e670098) SHA1(2cfc83f4294be30cd868738886ac546bd8489962) )
+	ROM_LOAD16_BYTE( "opr11866.b6",  0x20000, 0x10000, CRC(50eb71cc) SHA1(463b4917ca19c7f4ad2c2845caa104d5e4a2dda3) )
+	ROM_LOAD16_BYTE( "opr11864.b3",  0x40001, 0x10000, CRC(05733ca8) SHA1(1dbc7c99450ebe6a9fd8c0244fd3cb38b74984ef) )
+	ROM_LOAD16_BYTE( "opr11867.b7",  0x40000, 0x10000, CRC(81e49697) SHA1(a70fa409e3555ad6c8f28930a7026fdf2deb8c65) )
+
+	ROM_REGION( 0x50000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr11857.a7",  0x00000, 0x08000, CRC(789edc06) SHA1(8c89c94e503513c287807d187de78a7fbd75a7cf) )
+	ROM_LOAD( "epr11858.a8",  0x10000, 0x08000, CRC(08ab0018) SHA1(0685f80a7d403208c9cfffea3f2035324f3924fe) )
+	ROM_LOAD( "epr11859.a9",  0x20000, 0x08000, CRC(8673e01b) SHA1(e79183ab30e683fdf61ced2e9dbe010567c324cb) )
+	ROM_LOAD( "epr11860.a10", 0x30000, 0x08000, CRC(10263746) SHA1(1f981fb185c6a9795208ecdcfba36cf892a99ed5) )
+	ROM_LOAD( "epr11861.a11", 0x40000, 0x08000, CRC(38b54a71) SHA1(68ec4ef5b115844214ff2213be1ce6678904fbd2) )
+ROM_END
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
 	Riot City, Sega System 16B
 	CPU: 68000
 	ROM Board: 171-5704
@@ -5092,6 +5244,39 @@ ROM_START( wb3 )
 	ROM_LOAD( "317-0098.bin", 0x00000, 0x1000, NO_DUMP )
 ROM_END
 
+
+/**************************************************************************************************************************
+	Wonder Boy III, Sega System 16B
+	CPU: FD1094 (317-0087)
+	ROM Board: 171-5704
+ */
+ROM_START( wb34 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr-12131.a7", 0x000000, 0x20000, CRC(b95ecf88) SHA1(a431f8ecfffc0090047a6dda23e1f3bf9a46124e) )
+	ROM_LOAD16_BYTE( "epr-12128.a5", 0x000001, 0x20000, CRC(b711372b) SHA1(f7367ab0ec4e6066148a7821aea6122bc840fd8b) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	ROM_LOAD( "317-0087.key", 0x0000, 0x2000, CRC(162cb531) SHA1(b94ae9df54edd228a462af35465d918b17da6d88) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr12124.a14", 0x00000, 0x10000, CRC(dacefb6f) SHA1(789a5a99ad9419aee9da5397bcea34452ea8b4b3) )
+	ROM_LOAD( "epr12125.a15", 0x10000, 0x10000, CRC(9fc36df7) SHA1(b39ccc687489e9781181197505fc78aa5cf7ea55) )
+	ROM_LOAD( "epr12126.a16", 0x20000, 0x10000, CRC(a693fd94) SHA1(38e5446f41b6793a8e4134fdd92b02b86e3589f7) )
+
+	ROM_REGION16_BE( 0x100000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr12090.b1", 0x00001, 0x010000, CRC(aeeecfca) SHA1(496124b170a725ad863c741d4e021ab947511e4c) )
+	ROM_LOAD16_BYTE( "epr12094.b5", 0x00000, 0x010000, CRC(615e4927) SHA1(d23f164973afa770714e284a77ddf10f18cc596b) )
+	ROM_LOAD16_BYTE( "epr12091.b2", 0x40001, 0x010000, CRC(8409a243) SHA1(bcbb9510a6499d8147543d6befa5a49f4ac055d9) )
+	ROM_LOAD16_BYTE( "epr12095.b6", 0x40000, 0x010000, CRC(e774ec2c) SHA1(a4aa15ec7be5539a740ad02ff720458018dbc536) )
+	ROM_LOAD16_BYTE( "epr12092.b3", 0x80001, 0x010000, CRC(5c2f0d90) SHA1(e0fbc0f841e4607ad232931368b16e81440a75c4) )
+	ROM_LOAD16_BYTE( "epr12096.b7", 0x80000, 0x010000, CRC(0cd59d6e) SHA1(caf754a461feffafcfe7bfc6e89da76c4db257c5) )
+	ROM_LOAD16_BYTE( "epr12093.b4", 0xc0001, 0x010000, CRC(4891e7bb) SHA1(1be04fcabe9bfa8cf746263a5bcca67902a021a0) )
+	ROM_LOAD16_BYTE( "epr12097.b8", 0xc0000, 0x010000, CRC(e645902c) SHA1(497cfcf6c25cc2e042e16dbcb1963d2223def15a) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr12127.a10", 0x0000, 0x8000, CRC(0bb901bb) SHA1(c81b198df8e3b0ec568032c76addf0d1a1711194) )
+ROM_END
+
 /**************************************************************************************************************************
 	Wonder Boy III, Sega System 16B
 	CPU: FD1094 (317-0089)
@@ -5469,6 +5654,12 @@ static DRIVER_INIT( sjryuko )
 }
 
 
+static DRIVER_INIT( passshtj )
+{
+	init_generic_5358();
+	custom_io_r = passshtj_custom_io_r;
+}
+
 static DRIVER_INIT( tturf_5704 )
 {
 	init_generic_5704();
@@ -5516,7 +5707,6 @@ GAMEX(1988, altbeas2, altbeast, system16b,      altbeast, generic_5521,  ROT0,  
 GAMEX(1988, altbeaj1, altbeast, system16b,      altbeast, generic_5521,  ROT0,   "Sega",           "Altered Beast (set 1, Japan, FD1094 317-0065)", GAME_NOT_WORKING )
 GAME( 1990, aurail,   0,        system16b,      aurail,   generic_5704,  ROT0,   "Sega / Westone", "Aurail (set 2, US, unprotected)" )
 GAME( 1990, aurail1,  aurail,   system16b,      aurail,   auraila,       ROT0,   "Sega / Westone", "Aurail (set 1, FD1089B 317-0168)" )
-GAME( 1990, atomicp,  0,        atomicp,        atomicp,  atomicp,       ROT0,   "Philko",         "Atomic Point (Korea)" ) // korean clone board..
 GAME( 1989, bayroute, 0,        system16b,      bayroute, generic_5704,  ROT0,   "Sunsoft / Sega", "Bay Route (set 3, World, FD1094 317-0116)" )
 GAME( 1989, bayroutj, bayroute, system16b,      bayroute, generic_5704,  ROT0,   "Sunsoft / Sega", "Bay Route (set 2, Japan, FD1094 317-0115)" )
 GAME( 1989, bayrout1, bayroute, system16b,      bayroute, generic_5358,  ROT0,   "Sunsoft / Sega", "Bay Route (set 1, World, unprotected)" )
@@ -5542,6 +5732,7 @@ GAME( 1987, hwchamp,  0,        system16b,      hwchamp,  hwchamp,       ROT0,  
 GAME( 1989, mvp,      0,        system16b,      mvp,      generic_5797,  ROT0,   "Sega",           "MVP (set 2, US, FD1094 317-0143)" )
 GAME( 1989, mvpj,     mvp,      system16b,      mvp,      generic_5704,  ROT0,   "Sega",           "MVP (set 1, Japan, FD1094 317-0142)" )
 GAME( 1988, passsht,  0,        system16b,      passsht,  generic_5358,  ROT270, "Sega",           "Passing Shot (2 Players, FD1094 317-0080)" )
+GAME( 1988, passshtj, passsht,  system16b,      passshtj, passshtj,      ROT270, "Sega",           "Passing Shot (Japan, 4 Players, FD1094 317-0070)" )
 GAME( 1991, riotcity, 0,        system16b,      riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)" )
 GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)" )
 GAME( 1987, sdib,     sdi,      system16b,      sdi,      sdi,           ROT0,   "bootleg",        "SDI - Strategic Defense Initiative (bootleg)" )
@@ -5558,9 +5749,14 @@ GAME( 1987, timescan, 0,        timescan,       timescan, generic_5358,  ROT270,
 GAME( 1994, toryumon, 0,        system16b,      toryumon, generic_5797,  ROT0,   "Sega",           "Toryumon" )
 GAME( 1989, tturf,    0,        system16b_8751, tturf,    tturf_5704,    ROT0,   "Sega / Sunsoft", "Tough Turf (set 2, Japan, 8751 317-0104)")
 GAME( 1989, tturfu,   tturf,    system16b_8751, tturf,    tturf_5358,    ROT0,   "Sega / Sunsoft", "Tough Turf (set 1, US, 8751 317-0099)")
-GAME( 1988, wb3,      0,        system16b_8751, wb3,      wb3,           ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 4, World, System 16B, 8751 317-0098)" ) //*
+GAME( 1988, wb3,      0,        system16b_8751, wb3,      wb3,           ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 5, World, System 16B, 8751 317-0098)" ) //*
+GAME( 1988, wb34,     wb3,      system16b,      wb3,      generic_5704,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 4, Japan, System 16B, FD1094 317-0087)" )
 GAME( 1988, wb33,     wb3,      system16b,      wb3,      generic_5704,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 3, World, System 16B, FD1094 317-0089)" )
 GAME( 1988, wb32,     wb3,      system16b,      wb3,      generic_5358,  ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 2, Japan, System 16B, FD1094 317-0085)" )
 GAME( 1989, wrestwar, 0,        system16b_8751, wrestwar, wrestwar_8751, ROT270, "Sega",           "Wrestle War (set 3, 8751 317-0103)" )
 GAME( 1989, wrestwa2, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (set 2, World, FD1094 317-0102)" )
 GAME( 1989, wrestwa1, wrestwar, system16b,      wrestwar, generic_5704,  ROT270, "Sega",           "Wrestle War (set 1, Japan, FD1094 317-0090)" )
+
+/* Custom Korean Board - these probably belong with the bootlegs... */
+GAME( 1990, atomicp,  0,        atomicp,        atomicp,  atomicp,       ROT0,   "Philko",         "Atomic Point (Korea)" ) // korean clone board..
+GAMEX(1990, snapper,  0,        atomicp,        atomicp,  atomicp,       ROT0,   "Philko",         "Snapper (Korea)",GAME_NOT_WORKING ) // korean clone board..

@@ -282,7 +282,7 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		sx = (spriteram16[offs+1] & 0x01ff) - 16-7;
 		sy = (256-8-height - sy) & 0xff;
 		code = spriteram16[offs+2] >> codeshift;
-		color = (spriteram16[offs+1] & 0x1e00) >> 9;
+		color = (spriteram16[offs+1] & 0x3e00) >> 9;
 		pri = (spriteram16[offs+1] & 0x8000) >> 15;
 
 		if (pri != priority)

@@ -43,7 +43,7 @@ VIDEO_START( vigilant )
 {
 	video_start_generic();
 
-	if ((bg_bitmap = auto_bitmap_alloc(512*3,256)) == 0)
+	if ((bg_bitmap = auto_bitmap_alloc(512*4,256)) == 0)
 		return 1;
 
 	return 0;
@@ -65,8 +65,8 @@ static void update_background( void )
 
 	charcode=0;
 
-	/* There are only three background ROMs */
-	for (page=0; page<3; page++)
+	/* There are only three background ROMs (4 on bunccaneers!) */
+	for (page=0; page<4; page++)
 	{
 		for( row=0; row<256; row++ )
 		{
