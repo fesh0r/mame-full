@@ -482,15 +482,20 @@ static struct Wave_interface wave_interface = {
 	{ 50 }
 };
 
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
 static INTERRUPT_GEN( vtech2_interrupt )
 {
 	int tape_control = readinputport(12);
 	if( tape_control & 0x80 )
-		device_status(IO_CASSETTE, 0, 1);
+		device_status(cassette_image(), 1);
 	if( tape_control & 0x40 )
-		device_status(IO_CASSETTE, 0, 0);
+		device_status(cassette_image(), 0);
 	if( tape_control & 0x20 )
-		device_seek(IO_CASSETTE, 0, 0, SEEK_SET);
+		device_seek(cassette_image(), 0, SEEK_SET);
 
 	cpu_set_irq_line(0, 0, PULSE_LINE);
 }
@@ -573,9 +578,9 @@ ROM_END
 ***************************************************************************/
 
 SYSTEM_CONFIG_START(laser)
-	CONFIG_DEVICE_CASSETTE(1, "cas\0", laser_cassette_init)
-	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, laser_cart_load, laser_cart_unload, NULL, NULL)
-	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, laser_floppy_load, NULL, NULL)
+	CONFIG_DEVICE_CASSETTE(1, "cas\0", device_load_laser_cassette)
+	CONFIG_DEVICE_CARTSLOT_OPT(1, "rom\0", NULL, NULL, device_load_laser_cart, device_unload_laser_cart, NULL, NULL)
+	CONFIG_DEVICE_LEGACY(IO_FLOPPY, 2, "dsk\0", DEVICE_LOAD_RESETS_NONE, OSD_FOPEN_READ, NULL, NULL, device_load_laser_floppy, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	 NAME	   PARENT	 MACHINE   INPUT	 INIT	   CONFIG	COMPANY	 FULLNAME */

@@ -121,13 +121,18 @@ MACHINE_INIT( laser310 )
 /***************************************************************************
  * CASSETTE HANDLING
  ***************************************************************************/
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
 /*
 int vtech1_cassette_id(int id)
 {
 	UINT8 buff[256];
     mame_file *file;
 
-	file = image_fopen(IO_CASSETTE, id, FILETYPE_IMAGE, OSD_FOPEN_READ);
+	file = image_fopen(cassette_image(), FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )
     {
 		int i;
@@ -240,11 +245,11 @@ static int fill_wave(INT16 *buffer, int length, UINT8 *code)
     return BYTESAMPLES;
 }
 
-int vtech1_cassette_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( vtech1_cassette )
 {
-	if( file )
+	if (file)
 	{
-		if (! is_effective_mode_create(open_mode))
+		if (!is_effective_mode_create(open_mode))
 		{
 			struct wave_args_legacy wa = {0,};
 			wa.file = file;
@@ -254,7 +259,7 @@ int vtech1_cassette_init(int id, mame_file *file, int open_mode)
 			wa.trailer_samples = SILENCE;
 			wa.chunk_size = 1;
 			wa.chunk_samples = BYTESAMPLES;
-			if( device_open(IO_CASSETTE,id,0,&wa) )
+			if (device_open(cassette_image(), 0, &wa) )
 				return INIT_FAIL;
 			return INIT_PASS;
 		}
@@ -264,7 +269,7 @@ int vtech1_cassette_init(int id, mame_file *file, int open_mode)
 			wa.file = file;
 			wa.fill_wave = fill_wave;
 			wa.smpfreq = 600*BITSAMPLES;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
+			if( device_open(cassette_image(), 1, &wa) )
 				return INIT_FAIL;
 	        return INIT_PASS;
 		}
@@ -357,6 +362,19 @@ SNAPSHOT_LOAD(vtech1)
 
 /***************************************************************************/
 
+static mame_file *vtech1_file(void)
+{
+	mess_image *img;
+	mame_file *file;
+
+	if (vtech1_drive < 0)
+		return NULL;
+
+	img = image_instance(IO_FLOPPY, vtech1_drive);
+	file = image_fp(img);
+	return file;
+}
+
 /*
 int vtech1_floppy_id(int id)
 {
@@ -375,8 +393,10 @@ int vtech1_floppy_id(int id)
 }
 */
 
-int vtech1_floppy_load(mess_image *img, mame_file *fp, int open_mode)
+DEVICE_LOAD( vtech1_floppy )
 {
+	int id = image_index(image);
+
 	if (is_effective_mode_writable(open_mode))
 		vtech1_fdc_wrprot[id] = 0x00;
 	else
@@ -391,13 +411,13 @@ static void vtech1_get_track(void)
     //sprintf(vtech1_frame_message, "#%d get track %02d", vtech1_drive, vtech1_track_x2[vtech1_drive]/2);
     //vtech1_frame_time = 30;
     /* drive selected or and image file ok? */
-	if( vtech1_drive >= 0 && image_fp(IO_FLOPPY, vtech1_drive) != NULL )
+	if( vtech1_drive >= 0 && vtech1_file() != NULL )
 	{
 		int size, offs;
 		size = TRKSIZE_VZ;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(image_fp(IO_FLOPPY, vtech1_drive), offs, SEEK_SET);
-		size = mame_fread(image_fp(IO_FLOPPY, vtech1_drive), vtech1_fdc_data, size);
+		mame_fseek(vtech1_file(), offs, SEEK_SET);
+		size = mame_fread(vtech1_file(), vtech1_fdc_data, size);
 		logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
 	vtech1_fdc_offs = 0;
@@ -407,12 +427,12 @@ static void vtech1_get_track(void)
 static void vtech1_put_track(void)
 {
     /* drive selected and image file ok? */
-	if( vtech1_drive >= 0 && image_fp(IO_FLOPPY, vtech1_drive) != NULL )
+	if( vtech1_drive >= 0 && vtech1_file() != NULL )
 	{
 		int size, offs;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(image_fp(IO_FLOPPY, vtech1_drive), offs + vtech1_fdc_start, SEEK_SET);
-		size = mame_fwrite(image_fp(IO_FLOPPY, vtech1_drive), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
+		mame_fseek(vtech1_file(), offs + vtech1_fdc_start, SEEK_SET);
+		size = mame_fwrite(vtech1_file(), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
 		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }
 }
@@ -641,7 +661,7 @@ READ_HANDLER( vtech1_keyboard_r )
         data &= ~0x80;
 
 	/* cassette input is bit 5 (0x40) */
-	level = device_input(IO_CASSETTE,0);
+	level = device_input(cassette_image());
 	if( level < -511 )
 		cassette_bit = 0x00;
 	if( level > +511 )
@@ -664,19 +684,19 @@ READ_HANDLER( vtech1_keyboard_r )
  ************************************************/
 WRITE_HANDLER( vtech1_latch_w )
 {
-    logerror("vtech1_latch_w $%02X\n", data);
+	logerror("vtech1_latch_w $%02X\n", data);
 	/* cassette data bits toggle? */
-    if( (vtech1_latch ^ data ) & 0x06 )
-    {
+	if( (vtech1_latch ^ data ) & 0x06 )
+	{
 		static int amp[4] = {32767,16383,-16384,-32768};
-        wave_output(0, amp[(data >> 1) & 3]);
-    }
+		device_output(cassette_image(), amp[(data >> 1) & 3]);
+	}
 
-    /* speaker data bits toggle? */
-    if( (vtech1_latch ^ data ) & 0x41 )
+	/* speaker data bits toggle? */
+	if( (vtech1_latch ^ data ) & 0x41 )
 		speaker_level_w(0, (data & 1) | ((data>>5) & 2));
 
-    /* mode or the background color are toggle? */
+	/* mode or the background color are toggle? */
 	if( (vtech1_latch ^ data) & 0x18 )
 	{
 		/* background */
@@ -693,7 +713,7 @@ WRITE_HANDLER( vtech1_latch_w )
 
 	}
 
-    vtech1_latch = data;
+	vtech1_latch = data;
 }
 
 INTERRUPT_GEN( vtech1_interrupt )

@@ -4,17 +4,16 @@
 /* from machine/laser350.c */
 extern int laser_latch;
 
-extern void init_laser(void);
-extern MACHINE_INIT( laser350 );
-extern MACHINE_INIT( laser500 );
-extern MACHINE_INIT( laser700 );
+void init_laser(void);
+MACHINE_INIT( laser350 );
+MACHINE_INIT( laser500 );
+MACHINE_INIT( laser700 );
 
-int laser_cart_load(mess_image *img, mame_file *fp, int open_mode);
-void laser_cart_unload(int id);
+DEVICE_LOAD( laser_cart );
+DEVICE_UNLOAD( laser_cart );
 
-int laser_floppy_load(int id, mame_file *file, int open_mode);
-
-extern int laser_cassette_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( laser_floppy );
+DEVICE_LOAD( laser_cassette );
 
 extern READ_HANDLER ( laser_fdc_r );
 extern WRITE_HANDLER ( laser_fdc_w );

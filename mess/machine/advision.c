@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
+#include "devices/cartslot.h"
 #include "image.h"
 
 unsigned char *advision_ram;
@@ -16,8 +17,6 @@ int advision_rambank;
 int advision_framestart;
 int advision_videoenable;
 int advision_videobank;
-
-static UINT8 *ROM;
 
 MACHINE_INIT( advision )
 {
@@ -28,11 +27,9 @@ MACHINE_INIT( advision )
     advision_videoenable = 0;
 }
 
-int advision_cart_load(int id, mame_file *cartfile, int open_mode)
+DEVICE_LOAD( advision_cart )
 {
-    ROM = memory_region(REGION_CPU1);
-	mame_fread (cartfile, &ROM[0x0000], 4096);
-	return INIT_PASS;
+	return cartslot_load_generic(file, REGION_CPU1, 0, 4096, 4096, 0);
 }
 
 
@@ -58,6 +55,8 @@ WRITE_HANDLER ( advision_MAINRAM_w )
 
 WRITE_HANDLER ( advision_putp1 )
 {
+	static UINT8 *ROM;
+	
 	ROM = memory_region(REGION_CPU1);
 	if (data & 0x04)
 		cpu_setbank(1,&ROM[0x0000]);

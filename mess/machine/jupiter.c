@@ -144,7 +144,7 @@ MACHINE_STOP( jupiter )
    <byt>		: <byt>
 */
 
-int jupiter_ace_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( jupiter_ace )
 {
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
@@ -157,7 +157,7 @@ int jupiter_ace_load(int id, mame_file *file, int open_mode)
 
 	if ((jupiter_data = malloc(0x6000)))
 	{
-		logerror("Loading file %s.\r\n", image_filename(IO_CARTSLOT,id));
+		logerror("Loading file %s.\r\n", image_filename(image));
 		while (!done && (jupiter_index < 0x6001))
 		{
 			mame_fread(file, &jupiter_byte, 1);
@@ -201,7 +201,7 @@ int jupiter_ace_load(int id, mame_file *file, int open_mode)
 	return (0);
 }
 
-int jupiter_tap_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( jupiter_tap )
 {
 	UINT8 inpbyt;
 	int loop;
@@ -210,7 +210,7 @@ int jupiter_tap_load(int id, mame_file *file, int open_mode)
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
 
-	logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));
+	logerror("Loading file %s.\r\n", image_filename(image));
 
     mame_fread(file, &inpbyt, 1);
 	hdr_len = inpbyt;
@@ -260,7 +260,7 @@ int jupiter_tap_load(int id, mame_file *file, int open_mode)
 
 }
 
-void jupiter_tap_unload(int id)
+DEVICE_UNLOAD( jupiter_tap )
 {
 	logerror("jupiter_tap_unload\n");
 	if (jupiter_data)

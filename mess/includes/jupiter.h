@@ -3,9 +3,11 @@
 OPBASE_HANDLER( jupiter_opbaseoverride );
 MACHINE_INIT( jupiter );
 MACHINE_STOP( jupiter );
-int jupiter_ace_load (mess_image *img, mame_file *fp, int open_mode);
-int jupiter_tap_load (mess_image *img, mame_file *fp, int open_mode);
-void jupiter_tap_unload (int id);
+
+DEVICE_LOAD( jupiter_ace );
+DEVICE_LOAD( jupiter_tap );
+DEVICE_UNLOAD( jupiter_tap );
+
 READ_HANDLER( jupiter_port_fefe_r);
 READ_HANDLER( jupiter_port_fdfe_r);
 READ_HANDLER( jupiter_port_fbfe_r);

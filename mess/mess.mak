@@ -175,13 +175,13 @@ DRVLIBS = \
 	$(OBJ)/sega.a     \
 	$(OBJ)/acorn.a    \
 	$(OBJ)/atari.a    \
+	$(OBJ)/advision.a \
+	$(OBJ)/mbee.a	  \
+	$(OBJ)/vtech.a	  \
+	$(OBJ)/jupiter.a  \
 #	$(OBJ)/ti99.a     \
 #	$(OBJ)/apexc.a	  \
 #	$(OBJ)/pdp1.a	  \
-#	$(OBJ)/advision.a \
-#	$(OBJ)/mbee.a	  \
-#	$(OBJ)/vtech.a	  \
-#	$(OBJ)/jupiter.a  \
 #	$(OBJ)/trs80.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/arcadia.a  \

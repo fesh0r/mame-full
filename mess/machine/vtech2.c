@@ -193,6 +193,11 @@ WRITE_HANDLER( laser_bank_select_w )
     }
 }
 
+static mess_image *cassette_image(void)
+{
+	return image_instance(IO_CASSETTE, 0);
+}
+
 /*************************************************
  * memory mapped I/O read
  * bit  function
@@ -269,7 +274,7 @@ static int mra_bank(int bank, int offs)
 	}
 
     /* what's bit 7 good for? tape input maybe? */
-	level = device_input(IO_CASSETTE, 0);
+	level = device_input(cassette_image());
 	if( level < level_old - 511 )
 		cassette_bit = 0x00;
 	if( level > level_old + 511 )
@@ -335,7 +340,7 @@ static void mwa_bank(int bank, int offs, int data)
     }
 }
 
-int laser_cart_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( laser_cart )
 {
 	int size = 0;
 
@@ -353,7 +358,7 @@ int laser_cart_load(int id, mame_file *file, int open_mode)
 	return size > 0 ? INIT_PASS : INIT_FAIL;
 }
 
-void laser_cart_unload(int id)
+DEVICE_UNLOAD( laser_cart )
 {
 	laser_bank_mask &= ~0xf000;
 	/* wipe out the memory contents to be 100% sure */
@@ -491,42 +496,35 @@ int laser_cassette_verify (UINT8 buff[])
 }
 */
 
-int laser_cassette_init(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( laser_cassette )
 {
-	if (file == NULL)
-		return INIT_PASS;
-
-	if( file )
+	if (! is_effective_mode_create(open_mode))
 	{
-		if (! is_effective_mode_create(open_mode))
-		{
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.fill_wave = fill_wave;
-			wa.smpfreq = 600*BITSAMPLES;
-			wa.header_samples = SILENCE;
-			wa.trailer_samples = SILENCE;
-			wa.chunk_size = 1;
-			wa.chunk_samples = BYTESAMPLES;
-			if( device_open(IO_CASSETTE,id,0,&wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
-		else
-	    {
-			struct wave_args_legacy wa = {0,};
-			wa.file = file;
-			wa.fill_wave = fill_wave;
-			wa.smpfreq = 600*BITSAMPLES;
-			if( device_open(IO_CASSETTE,id,1,&wa) )
-				return INIT_FAIL;
-			return INIT_PASS;
-		}
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		wa.header_samples = SILENCE;
+		wa.trailer_samples = SILENCE;
+		wa.chunk_size = 1;
+		wa.chunk_samples = BYTESAMPLES;
+		if (device_open(cassette_image(), 0, &wa))
+			return INIT_FAIL;
+		return INIT_PASS;
 	}
-    return INIT_FAIL;
+	else
+	{
+		struct wave_args_legacy wa = {0,};
+		wa.file = file;
+		wa.fill_wave = fill_wave;
+		wa.smpfreq = 600*BITSAMPLES;
+		if (device_open(cassette_image(), 1, &wa))
+			return INIT_FAIL;
+		return INIT_PASS;
+	}
 }
 
-int laser_floppy_load(int id, mame_file *file, int open_mode)
+DEVICE_LOAD( laser_floppy )
 {
 	UINT8 buff[32];
 
@@ -537,18 +535,28 @@ int laser_floppy_load(int id, mame_file *file, int open_mode)
 	return INIT_PASS;
 }
 
+static mame_file *laser_file(void)
+{
+	mess_image *image;
+	mame_file *file;
+
+	image = image_instance(IO_FLOPPY, laser_drive);
+	file = image_fp(image);
+	return file;
+}
+
 static void laser_get_track(void)
 {
     sprintf(laser_frame_message, "#%d get track %02d", laser_drive, laser_track_x2[laser_drive]/2);
     laser_frame_time = 30;
     /* drive selected or and image file ok? */
-    if( laser_drive >= 0 && image_fp(IO_FLOPPY, laser_drive) != NULL )
+    if( laser_drive >= 0 && laser_file() != NULL )
     {
         int size, offs;
         size = TRKSIZE_VZ;
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
-        mame_fseek(image_fp(IO_FLOPPY, laser_drive), offs, SEEK_SET);
-        size = mame_fread(image_fp(IO_FLOPPY, laser_drive), laser_fdc_data, size);
+        mame_fseek(laser_file(), offs, SEEK_SET);
+        size = mame_fread(laser_file(), laser_fdc_data, size);
         logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
     laser_fdc_offs = 0;
@@ -558,12 +566,12 @@ static void laser_get_track(void)
 static void laser_put_track(void)
 {
     /* drive selected and image file ok? */
-    if( laser_drive >= 0 && image_fp(IO_FLOPPY, laser_drive) != NULL )
+    if( laser_drive >= 0 && laser_file() != NULL )
     {
         int size, offs;
         offs = TRKSIZE_VZ * laser_track_x2[laser_drive]/2;
-        mame_fseek(image_fp(IO_FLOPPY, laser_drive), offs + laser_fdc_start, SEEK_SET);
-        size = mame_fwrite(image_fp(IO_FLOPPY, laser_drive), &laser_fdc_data[laser_fdc_start], laser_fdc_write);
+        mame_fseek(laser_file(), offs + laser_fdc_start, SEEK_SET);
+        size = mame_fwrite(laser_file(), &laser_fdc_data[laser_fdc_start], laser_fdc_write);
         logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, laser_fdc_start, size, laser_fdc_write);
     }
 }

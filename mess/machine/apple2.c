@@ -88,6 +88,14 @@ static UINT8 *apple2_slotrom(int slot)
 }
 
 /***************************************************************************
+  apple2_hasslots
+***************************************************************************/
+static int apple2_hasslots(void)
+{
+	return (memory_region_length(REGION_CPU1) % 0x1000) != 0;
+}
+
+/***************************************************************************
   apple2_setvar
   sets the 'a2' var, and adjusts banking accordingly
 ***************************************************************************/
@@ -105,7 +113,7 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 		val &= ~VAR_ROMSWITCH;
 
 	/* always internal ROM if no slots exist */
-	if ((memory_region_length(REGION_CPU1) % 0x1000) == 0)
+	if (!apple2_hasslots())
 		val = (val & ~VAR_SLOTC3ROM) | VAR_INTCXROM;
 
 	a2 &= ~mask;
@@ -365,9 +373,12 @@ MACHINE_INIT( apple2 )
 {
 	apple2_setvar(0, ~0);
 
-	/* Slot 3 is funky - it isn't mapped like the other slot ROMs */
-	cpu_setbank(3, &apple_rom[0x0100]);
-	memcpy (apple2_slotrom(3), &apple_rom[0x0300], 0x100);
+	if (apple2_hasslots())
+	{
+		/* Slot 3 is funky - it isn't mapped like the other slot ROMs */
+		cpu_setbank(3, &apple_rom[0x0100]);
+		memcpy (apple2_slotrom(3), &apple_rom[0x0300], 0x100);
+	}
 
 	/* Use built-in slot ROM ($c800) */
 	cpu_setbank(6, &apple_rom[0x0800]);
@@ -377,7 +388,9 @@ MACHINE_INIT( apple2 )
 	a2_speaker_state = 0;
 
 	/* TODO: add more initializers as we add more slots */
-	mockingboard_init(4);
+	if (apple2_hasslots())
+		mockingboard_init(4);
+
 	apple2_slot6_init();
 
 	joystick_x1_time = joystick_y1_time = 0;

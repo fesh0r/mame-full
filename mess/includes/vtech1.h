@@ -9,29 +9,28 @@ extern int vtech1_frame_time;
 
 extern int vtech1_latch;
 
-extern MACHINE_INIT( laser110 );
-extern MACHINE_INIT( laser210 );
-extern MACHINE_INIT( laser310 );
+MACHINE_INIT( laser110 );
+MACHINE_INIT( laser210 );
+MACHINE_INIT( laser310 );
 
-extern int vtech1_cassette_init(mess_image *img, mame_file *fp, int open_mode);
+DEVICE_LOAD( vtech1_cassette );
+DEVICE_LOAD( vtech1_floppy );
 
-extern SNAPSHOT_LOAD( vtech1 );
+SNAPSHOT_LOAD( vtech1 );
 
-int vtech1_floppy_load(mess_image *img, mame_file *fp, int open_mode);
+READ_HANDLER ( vtech1_fdc_r );
+WRITE_HANDLER ( vtech1_fdc_w );
 
-extern READ_HANDLER ( vtech1_fdc_r );
-extern WRITE_HANDLER ( vtech1_fdc_w );
+READ_HANDLER ( vtech1_joystick_r );
+READ_HANDLER ( vtech1_keyboard_r );
+WRITE_HANDLER ( vtech1_latch_w );
 
-extern READ_HANDLER ( vtech1_joystick_r );
-extern READ_HANDLER ( vtech1_keyboard_r );
-extern WRITE_HANDLER ( vtech1_latch_w );
-
-extern void vtech1_interrupt(void);
+void vtech1_interrupt(void);
 
 #ifdef OLD_VIDEO
 /* from vidhrdw/vtech1.c */
-extern VIDEO_UPDATE( vtech1 );
+VIDEO_UPDATE( vtech1 );
 #else
-extern VIDEO_START( vtech1 );
+VIDEO_START( vtech1 );
 #endif
 
