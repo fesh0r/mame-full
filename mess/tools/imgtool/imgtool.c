@@ -34,6 +34,7 @@ CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
 IMAGEMODULE_EXTERN(coco_rsdos);			/* CoCo RS-DOS disks */
 IMAGEMODULE_EXTERN(cococas);			/* CoCo cassettes */
+IMAGEMODULE_EXTERN(concept);			/* Concept Disks */
 IMAGEMODULE_EXTERN(msdos);				/* FAT/MSDOS diskett images */
 IMAGEMODULE_EXTERN(msdoshd);			/* FAT/MSDOS harddisk images */
 IMAGEMODULE_EXTERN(lynx);				/* c64 archive */
@@ -93,6 +94,7 @@ static const ImageModule_ctor module_ctors[] =
 {
 	IMAGEMODULE_DECL(coco_rsdos),
 	IMAGEMODULE_DECL(cococas),
+	IMAGEMODULE_DECL(concept),
 	IMAGEMODULE_DECL(msdos),
 	IMAGEMODULE_DECL(msdoshd),
 	IMAGEMODULE_DECL(nes),
