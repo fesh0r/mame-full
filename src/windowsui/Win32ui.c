@@ -5331,6 +5331,7 @@ int osd_display_loading_rom_message(const char* name, int current, int total)
 
 	if (use_gui_romloading)
 	{
+		options.gui_host = 1;
 		if (name != NULL)
 			retval = UpdateLoadProgress(name, current - 1, total);
 		else
