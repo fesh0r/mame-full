@@ -39,10 +39,14 @@
 	- Read/Write memory format correction (_bew to _bedw) (see also SH2
 		definition in cpuintrf.c and DasmSH2(..) in sh2dasm.c )
 	
-	20010623 James Forshaw (TyRaNiD)
+	20010623 James Forshaw (TyRaNiD@totalise.net)
  
         - Modified operation of sh2_exception. Done cause mame irq system is stupid, and 
           doesnt really seem designed for any more than 8 interrupt lines.
+	  
+        20010701 James Forshaw (TyRaNiD@totalise.net)
+
+        - Fixed DIV1 operation. Q bit now correctly generated
 
  *****************************************************************************/
 
@@ -740,26 +744,64 @@ INLINE void DIV1(UINT32 m, UINT32 n)
     sh2.sr |= Q;
   else
     sh2.sr &= ~Q;
+
   sh2.r[n] = (sh2.r[n] << 1) | (sh2.sr & T);
+
   if (old_q)
     {
       if (sh2.sr & M)
 	{
 	  tmp0 = sh2.r[n];
 	  sh2.r[n] -= sh2.r[m];
-	  if (sh2.r[n] > tmp0)
-	    sh2.sr &= ~Q;
+	  if(sh2.sr & Q)
+	    {
+	      if(sh2.r[n] > tmp0)
+		{
+		  sh2.sr |= Q;
+		}
+	      else
+		{
+		  sh2.sr &= ~Q;
+		}
+	    }
 	  else
-	    sh2.sr |= Q;
+	    {
+	      if(sh2.r[n] > tmp0)
+		{
+		  sh2.sr &= ~Q;
+		}
+	      else
+		{
+		  sh2.sr |= Q;
+		}
+	    }
 	}
       else
 	{
 	  tmp0 = sh2.r[n];
 	  sh2.r[n] += sh2.r[m];
-	  if (sh2.r[n] < tmp0)
-	    sh2.sr &= ~Q;
+	  if(sh2.sr & Q)
+	    {
+	      if(sh2.r[n] < tmp0)
+		{
+		  sh2.sr &= ~Q;
+		}
+	      else
+		{
+		  sh2.sr |= Q;
+		}
+	    }
 	  else
-	    sh2.sr |= Q;
+	    {
+	      if(sh2.r[n] < tmp0)
+		{
+		  sh2.sr |= Q;
+		}
+	      else
+		{
+		  sh2.sr &= ~Q;
+		}
+	    }
 	}
     }
   else
@@ -768,22 +810,63 @@ INLINE void DIV1(UINT32 m, UINT32 n)
 	{
 	  tmp0 = sh2.r[n];
 	  sh2.r[n] += sh2.r[m];
-	  if (sh2.r[n] < tmp0)
-	    sh2.sr &= ~Q;
+	  if(sh2.sr & Q)
+	    {
+	      if(sh2.r[n] < tmp0)
+		{
+		  sh2.sr |= Q;
+		}
+	      else
+		{
+		  sh2.sr &= ~Q;
+		}
+	    }
 	  else
-	    sh2.sr |= Q;
+	    {
+	      if(sh2.r[n] < tmp0)
+		{
+		  sh2.sr &= ~Q;
+		}
+	      else
+		{
+		  sh2.sr |= Q;
+		}
+	    }
 	}
       else
 	{
 	  tmp0 = sh2.r[n];
 	  sh2.r[n] -= sh2.r[m];
-	  if (sh2.r[n] > tmp0)
-	    sh2.sr &= ~Q;
+	  if(sh2.sr & Q)
+	    {
+	      if(sh2.r[n] > tmp0)
+		{
+		  sh2.sr &= ~Q;
+		}
+	      else
+		{
+		  sh2.sr |= Q;
+		}
+	    }
 	  else
-	    sh2.sr |= Q;
+	    {
+	      if(sh2.r[n] > tmp0)
+		{
+		  sh2.sr |= Q;
+		}
+	      else
+		{
+		  sh2.sr &= ~Q;
+		}
+	    }
 	}
     }
-  sh2.sr = (sh2.sr & ~T) | (((sh2.sr >> 8) ^ (sh2.sr >> 9) ^ T) & T);
+
+  tmp0 = (sh2.sr & (Q | M));
+  if((!tmp0) || (tmp0 == 0x300)) /* if Q == M set T else clear T */
+    sh2.sr |= T;
+  else
+    sh2.sr &= ~T;
 }
 
 /*	DMULS.L Rm,Rn */
