@@ -774,7 +774,6 @@ void logerror(const char *text,...)
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
 	vlogerror(text, arg);
-	vprintf(text, arg);
 	va_end(arg);
 }
 
@@ -790,6 +789,7 @@ void osd_die(const char *text,...)
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
 	vlogerror(text, arg);
+	vprintf(text, arg);
 	va_end(arg);
 
 	exit(-1);
