@@ -1,58 +1,30 @@
 /********************************************************************
 
-Bombjack Twin
+Macross                 Banpresto  68000 <unknown cpu> YM2203 2xOKIM6295
+Macross II              Banpresto  68000 Z80           YM2203 2xOKIM6295
+Bombjack Twin           NMK        68000               2xOKIM6295
+Nouryoku Koujou Iinkai  Tecmo      68000               2xOKIM6295
 
-driver by Mirko Buffoni, Richard Bush
+driver by Mirko Buffoni, Richard Bush, Nicola Salmoria
 
+The later games have an higher resolution (384x224 instead of 256x224)
+but the hardware is pretty much the same. It's obvious that the higher
+res is an afterthought, because the tilemap layout is weird (the left
+8 screen columns have to be taken from the rightmost 8 columns of the
+tilemap), and the games rely on mirror addresses to access the tilemap
+sequentially.
 
-Memory layout:
-
-000000-07FFFF	68k rom
-080000-08000F	Inputs, DSW
-080010-087FFF	command ram (Audio I/O)
-088000-0887FF	15 bit palette ram (RRRRGGGGBBBBRGBx)
-									4321^^^^^^^^0^^
-									    4321|||| 0|
-									    	4321  0
-
-094000			background image number
-09C000-09CFFF	Background ram	(8x8 tiles, 256x512)
-09D000-09DFFF	mirror for the above
-0F0000-0FFFFF	Work ram
-
-----
-
-084014			Flipscreen
-
-0F8000-0F8FFF	Spriteram
-
-This hardware can handle up to 256 sprites.
-Each sprite entry occupy 16 bytes, which meaning is:
-
-00-01:	!= 0 -> Sprite enabled
-02   :	Hi nibble = composed sprite height (in GFX units)
-		Lo nibble = composed sprite width (in GFX units)
-06-07:	Sprite number
-08-09:	Sprite x position	(lower 9 bits)
-0C-0D:	Sprite y position	(lower 9 bits)
-0E   :	Sprite color
-
-----
-
-Audio system:  2 x OKI M6295
-
-084000	(RW)	OKI 1 data read/write
-084010	(RW)	OKI 2 data read/write
-
-084020	\
-084022	|	Selects Bank address for voice 0-3	(OKI 1)
-084024	|
-084026	/
-
-084028	\
-08402a	|	Selects Bank address for voice 0-3	(OKI 2)
-08402c	|
-08402e	/
+TODO:
+- Sound in Macross is driven by an unknown CPU.
+- Cocktail mode is supported, but tilemap.c has problems with asymmetrical
+  visible areas.
+- Macross2 is overflowing the palette, but this might be just a problem
+  with tilemap.c.
+- Macross2 dip switches (the ones currently listed match macross)
+- Macross2 background is wrong in level 2 at the end of the vertical scroll.
+  The tilemap layout is probably different from the one I used, the dimensions
+  should be correct but the page order is likely different.
+- Music timing in nouryoku is a little off.
 
 ----
 
@@ -65,7 +37,7 @@ IRQ2 points to RTE (not used).
 
 ----
 
-Test mode:
+bjtwin test mode:
 
 1)  Press player 2 buttons 1+2 during reset.  "Ready?" will appear
 2)	Press player 1 buttons in this sequence:
@@ -81,43 +53,207 @@ remaps button 2 and 3 to button 1, so you can't enter the above sequence.
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *bjtwin_txvideoram;
-extern size_t bjtwin_txvideoram_size;
+extern unsigned char *nmk_bgvideoram,*nmk_txvideoram;
 
+READ_HANDLER( nmk_bgvideoram_r );
+WRITE_HANDLER( nmk_bgvideoram_w );
+READ_HANDLER( nmk_txvideoram_r );
+WRITE_HANDLER( nmk_txvideoram_w );
+WRITE_HANDLER( nmk_paletteram_w );
+WRITE_HANDLER( nmk_scroll_w );
+WRITE_HANDLER( nmk_flipscreen_w );
+WRITE_HANDLER( nmk_tilebank_w );
 
-READ_HANDLER( bjtwin_txvideoram_r );
-WRITE_HANDLER( bjtwin_txvideoram_w );
-WRITE_HANDLER( bjtwin_paletteram_w );
-WRITE_HANDLER( bjtwin_flipscreen_w );
-WRITE_HANDLER( bjtwin_videocontrol_w );
-
-int  bjtwin_vh_start(void);
-void bjtwin_vh_stop(void);
+int macross_vh_start(void);
+int macross2_vh_start(void);
+int bjtwin_vh_start(void);
+void nmk_vh_stop(void);
+void macross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void nmk_eof_callback(void);
 
 
+static unsigned char *ram;
 
-WRITE_HANDLER( bjtwin_oki6295_bankswitch_w )
+static WRITE_HANDLER( macross_mcu_w )
+{
+//logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+}
+
+static READ_HANDLER( macross_mcu_r )
+{
+	static int respcount = 0;
+	static int resp[] = {	0x82, 0xc7, 0x00,
+							0x2c, 0x6c, 0x00,
+							0x9f, 0xc7, 0x00,
+							0x29, 0x69, 0x00,
+							0x8b, 0xc7, 0x00 };
+	int res;
+
+	if (cpu_get_pc() == 0x0332) res = ram[0x0f6];
+	else
+	{
+		res = resp[respcount++];
+		if (respcount >= 15) respcount = 0;
+	}
+
+//logerror("%04x: mcu_r %02x\n",cpu_get_pc(),res);
+
+	return res;
+}
+
+static WRITE_HANDLER( macross2_sound_command_w )
 {
 	if ((data & 0x00ff0000) == 0)
-	{
-		switch (offset)
-		{
-			case 0x00:	OKIM6295_set_bank_base(0, 0, (data & 0x0f) * 0x10000);	break;
-			case 0x02:	OKIM6295_set_bank_base(0, 1, (data & 0x0f) * 0x10000);	break;
-			case 0x04:	OKIM6295_set_bank_base(0, 2, (data & 0x0f) * 0x10000);	break;
-			case 0x06:	OKIM6295_set_bank_base(0, 3, (data & 0x0f) * 0x10000);	break;
-			case 0x08:	OKIM6295_set_bank_base(1, 0, (data & 0x0f) * 0x10000);	break;
-			case 0x0a:	OKIM6295_set_bank_base(1, 1, (data & 0x0f) * 0x10000);	break;
-			case 0x0c:	OKIM6295_set_bank_base(1, 2, (data & 0x0f) * 0x10000);	break;
-			case 0x0e:	OKIM6295_set_bank_base(1, 3, (data & 0x0f) * 0x10000);	break;
-		}
-	}
+		soundlatch_w(0,data & 0xff);
+}
+
+static WRITE_HANDLER( macross2_sound_bank_w )
+{
+	const UINT8 *rom = memory_region(REGION_CPU2) + 0x10000;
+
+	cpu_setbank(9,rom + (data & 0x07) * 0x4000);
+}
+
+static WRITE_HANDLER( macross2_oki6295_bankswitch_w )
+{
+	/* The OKI6295 ROM space is divided in four banks, each one indepentently
+	   controlled. The sample table at the beginning of the addressing space is
+	   divided in four pages as well, banked together with the sample data. */
+	#define TABLESIZE 0x100
+	#define BANKSIZE 0x10000
+	int chip = (offset & 4) >> 2;
+	int banknum = offset & 3;
+	unsigned char *rom = memory_region(REGION_SOUND1 + chip);
+	int size = memory_region_length(REGION_SOUND1 + chip) - 0x40000;
+	int bankaddr = (data * BANKSIZE) & (size-1);
+
+	/* copy the samples */
+	memcpy(rom + banknum * BANKSIZE,rom + 0x40000 + bankaddr,BANKSIZE);
+
+	/* and also copy the samples address table */
+	rom += banknum * TABLESIZE;
+	memcpy(rom,rom + 0x40000 + bankaddr,TABLESIZE);
+}
+
+static WRITE_HANDLER( bjtwin_oki6295_bankswitch_w )
+{
+	if ((data & 0x00ff0000) == 0)
+		macross2_oki6295_bankswitch_w(offset/2,data & 0xff);
 }
 
 
 
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress macross_readmem[] =
+{
+	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x080000, 0x080001, input_port_0_r },
+	{ 0x080002, 0x080003, input_port_1_r },
+	{ 0x080008, 0x080009, input_port_2_r },
+	{ 0x08000a, 0x08000b, input_port_3_r },
+	{ 0x08000e, 0x08000f, macross_mcu_r },
+	{ 0x088000, 0x0887ff, paletteram_word_r },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_r },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_r },
+	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
+	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
+	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress macross_writemem[] =
+{
+	{ 0x000000, 0x07ffff, MWA_ROM },
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
+	{ 0x080016, 0x080017, MWA_NOP },	/* IRQ enable? */
+	{ 0x080018, 0x080019, nmk_tilebank_w },
+	{ 0x08001e, 0x08001f, macross_mcu_w },
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram },
+	{ 0x08c000, 0x08c007, nmk_scroll_w },
+	{ 0x090000, 0x093fff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09c000, 0x09c7ff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x0f9000, 0x0fffff, MWA_BANK3, &ram },	/* Work RAM again */
+	{ -1 }
+};
+
+static struct MemoryReadAddress macross2_readmem[] =
+{
+	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x100000, 0x100001, input_port_0_r },
+	{ 0x100002, 0x100003, input_port_1_r },
+	{ 0x100008, 0x100009, input_port_2_r },
+	{ 0x10000a, 0x10000b, input_port_3_r },
+	{ 0x10000e, 0x10000f, soundlatch2_r },	/* from Z80 */
+	{ 0x120000, 0x1207ff, paletteram_word_r },
+	{ 0x140000, 0x14ffff, nmk_bgvideoram_r },
+	{ 0x170000, 0x170fff, nmk_txvideoram_r },
+	{ 0x171000, 0x171fff, nmk_txvideoram_r },	/* mirror */
+	{ 0x1f0000, 0x1f7fff, MRA_BANK1 },
+	{ 0x1f8000, 0x1f8fff, MRA_BANK2 },
+	{ 0x1f9000, 0x1fffff, MRA_BANK3 },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress macross2_writemem[] =
+{
+	{ 0x000000, 0x07ffff, MWA_ROM },
+	{ 0x100014, 0x100015, nmk_flipscreen_w },
+	{ 0x100016, 0x100017, MWA_NOP },	/* IRQ eanble? */
+	{ 0x100018, 0x100019, nmk_tilebank_w },
+	{ 0x10001e, 0x10001f, macross2_sound_command_w },	/* to Z80 */
+	{ 0x120000, 0x1207ff, nmk_paletteram_w, &paletteram },
+	{ 0x130000, 0x130007, nmk_scroll_w },
+	{ 0x130008, 0x1307ff, MWA_NOP },	/* 0 only? */
+	{ 0x140000, 0x14ffff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x170000, 0x170fff, nmk_txvideoram_w, &nmk_txvideoram },
+	{ 0x171000, 0x171fff, nmk_txvideoram_w },	/* mirror */
+	{ 0x1f0000, 0x1f7fff, MWA_BANK1 },	/* Work RAM */
+	{ 0x1f8000, 0x1f8fff, MWA_BANK2, &spriteram, &spriteram_size },
+	{ 0x1f9000, 0x1fffff, MWA_BANK3, &ram },	/* Work RAM again */
+	{ -1 }
+};
+
+static struct MemoryReadAddress macross2_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK9 },
+	{ 0xa000, 0xa000, MRA_NOP },	/* IRQ ack? watchdog? */
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xf000, 0xf000, soundlatch_r },	/* from 68000 */
+	{ -1 }
+};
+
+static struct MemoryWriteAddress macross2_sound_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe001, 0xe001, macross2_sound_bank_w },
+	{ 0xf000, 0xf000, soundlatch2_w },	/* to 68000 */
+	{ -1 }
+};
+
+static struct IOReadPort macross2_sound_readport[] =
+{
+	{ 0x00, 0x00, YM2203_status_port_0_r },
+	{ 0x01, 0x01, YM2203_read_port_0_r },
+	{ 0x80, 0x80, OKIM6295_status_0_r },
+	{ 0x88, 0x88, OKIM6295_status_1_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort macross2_sound_writeport[] =
+{
+	{ 0x00, 0x00, YM2203_control_port_0_w },
+	{ 0x01, 0x01, YM2203_write_port_0_w },
+	{ 0x80, 0x80, OKIM6295_data_0_w },
+	{ 0x88, 0x88, OKIM6295_data_1_w },
+	{ 0x90, 0x97, macross2_oki6295_bankswitch_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress bjtwin_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x080001, input_port_0_r },
@@ -127,26 +263,26 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x084000, 0x084001, OKIM6295_status_0_r },
 	{ 0x084010, 0x084011, OKIM6295_status_1_r },
 	{ 0x088000, 0x0887ff, paletteram_word_r },
-	{ 0x09c000, 0x09cfff, bjtwin_txvideoram_r },
-	{ 0x09d000, 0x09dfff, bjtwin_txvideoram_r },	/* mirror */
+	{ 0x09c000, 0x09cfff, nmk_bgvideoram_r },
+	{ 0x09d000, 0x09dfff, nmk_bgvideoram_r },	/* mirror */
 	{ 0x0f0000, 0x0f7fff, MRA_BANK1 },
 	{ 0x0f8000, 0x0f8fff, MRA_BANK2 },
 	{ 0x0f9000, 0x0fffff, MRA_BANK3 },
 	{ -1 }
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress bjtwin_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080014, 0x080015, bjtwin_flipscreen_w },
+	{ 0x080014, 0x080015, nmk_flipscreen_w },
 	{ 0x084000, 0x084001, OKIM6295_data_0_w },
 	{ 0x084010, 0x084011, OKIM6295_data_1_w },
 	{ 0x084020, 0x08402f, bjtwin_oki6295_bankswitch_w },
-	{ 0x088000, 0x0887ff, bjtwin_paletteram_w, &paletteram },
-	{ 0x094000, 0x094001, bjtwin_videocontrol_w },
-	{ 0x094002, 0x094003, MWA_NOP },	/* IRQ ack? */
-	{ 0x09c000, 0x09cfff, bjtwin_txvideoram_w, &bjtwin_txvideoram, &bjtwin_txvideoram_size },
-	{ 0x09d000, 0x09dfff, bjtwin_txvideoram_w },	/* mirror */
+	{ 0x088000, 0x0887ff, nmk_paletteram_w, &paletteram },
+	{ 0x094000, 0x094001, nmk_tilebank_w },
+	{ 0x094002, 0x094003, MWA_NOP },	/* IRQ enable? */
+	{ 0x09c000, 0x09cfff, nmk_bgvideoram_w, &nmk_bgvideoram },
+	{ 0x09d000, 0x09dfff, nmk_bgvideoram_w },	/* mirror */
 	{ 0x0f0000, 0x0f7fff, MWA_BANK1 },	/* Work RAM */
 	{ 0x0f8000, 0x0f8fff, MWA_BANK2, &spriteram, &spriteram_size },
 	{ 0x0f9000, 0x0fffff, MWA_BANK3 },	/* Work RAM again */
@@ -154,6 +290,96 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
+
+INPUT_PORTS_START( macross )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* Maybe unused */
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW A */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Language" )
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x08, "Japanese" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW B */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( bjtwin )
 	PORT_START		/* IN0 */
@@ -326,7 +552,7 @@ static struct GfxLayout charlayout =
 	32*8
 };
 
-static struct GfxLayout spritelayout =
+static struct GfxLayout tilelayout =
 {
 	16,16,
 	RGN_FRAC(1,1),
@@ -339,11 +565,27 @@ static struct GfxLayout spritelayout =
 	32*32
 };
 
+static struct GfxDecodeInfo macross_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout, 0x200, 16 },	/* color 0x200-0x2ff */
+	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo macross2_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout, 0x300, 16 },	/* color 0x300-0x3ff */
+	{ REGION_GFX2, 0, &tilelayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x100, 32 },	/* color 0x100-0x2ff */
+	{ -1 } /* end of array */
+};
+
 static struct GfxDecodeInfo bjtwin_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,     0, 16 },	/* Chars */
-	{ REGION_GFX2, 0, &charlayout,     0, 16 },	/* Tiles */
-	{ REGION_GFX3, 0, &spritelayout, 256, 16 },	/* Sprites */
+	{ REGION_GFX1, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX2, 0, &charlayout, 0x000, 16 },	/* color 0x000-0x0ff */
+	{ REGION_GFX3, 0, &tilelayout, 0x100, 16 },	/* color 0x100-0x1ff */
 	{ -1 } /* end of array */
 };
 
@@ -357,7 +599,109 @@ static struct OKIM6295interface okim6295_interface =
 	{ 50, 50 }							/* volume */
 };
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
 
+static struct YM2203interface ym2203_interface =
+{
+	1,			/* 1 chip */
+	2000000,	/* 2 MHz ??? */
+	{ YM2203_VOL(25,25) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+
+
+
+static const struct MachineDriver machine_driver_macross =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			macross_readmem,macross_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	256, 256, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	macross_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		/* there's also a YM2203 */
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static const struct MachineDriver machine_driver_macross2 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000, /* 10 MHz ? */
+			macross2_readmem,macross2_writemem,0,0,
+			m68_level4_irq,1,
+			m68_level1_irq,112
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			4000000, /* 4 MHz ? */
+			macross2_sound_readmem,macross2_sound_writemem,macross2_sound_readport,macross2_sound_writeport,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,
+	0,
+
+	/* video hardware */
+	512, 256, { 0*8, 48*8-1, 2*8, 30*8-1 },
+	macross2_gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	nmk_eof_callback,
+	macross2_vh_start,
+	nmk_vh_stop,
+	macross_vh_screenrefresh,
+
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
 
 static const struct MachineDriver machine_driver_bjtwin =
 {
@@ -366,10 +710,10 @@ static const struct MachineDriver machine_driver_bjtwin =
 		{
 			CPU_M68000,
 			10000000, /* 10 MHz? It's a P12, but xtals are 10MHz and 16MHz */
-			readmem,writemem,0,0,
+			bjtwin_readmem,bjtwin_writemem,0,0,
 			m68_level4_irq,1,
 			m68_level1_irq,112	/* ?? drives music */
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,
@@ -382,9 +726,9 @@ static const struct MachineDriver machine_driver_bjtwin =
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
+	nmk_eof_callback,
 	bjtwin_vh_start,
-	bjtwin_vh_stop,
+	nmk_vh_stop,
 	bjtwin_vh_screenrefresh,
 
 	0,0,0,0,
@@ -397,6 +741,63 @@ static const struct MachineDriver machine_driver_bjtwin =
 };
 
 
+
+ROM_START( macross )
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "921a03",        0x00000, 0x80000, 0x33318d55 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* sound program (unknown CPU) */
+	ROM_LOAD( "921a02",      0x00000, 0x10000, 0x77c082c7 )
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "921a01",      0x000000, 0x020000, 0xbbd8242d )	/* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "921a04",      0x000000, 0x200000, 0x4002e4bb )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_SWAP( "921a07",      0x000000, 0x200000, 0x7d2bf112 )	/* Sprites */
+
+	ROM_REGION( 0x80000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "921a05",      0x000000, 0x080000, 0xd5a1eddd )
+
+	ROM_REGION( 0x80000, REGION_SOUND2 )	/* OKIM6295 samples */
+	ROM_LOAD( "921a06",      0x000000, 0x080000, 0x89461d0f )
+
+	ROM_REGION( 0x0220, REGION_PROMS )
+	ROM_LOAD( "921a08",      0x0000, 0x0100, 0xcfdbb86c )	/* unknown */
+	ROM_LOAD( "921a09",      0x0100, 0x0100, 0x633ab1c9 )	/* unknown */
+	ROM_LOAD( "921a10",      0x0200, 0x0020, 0x8371e42d )	/* unknown */
+ROM_END
+
+ROM_START( macross2 )
+	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "mcrs2j.3",      0x00000, 0x80000, 0x36a618fe )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )		/* Z80 code */
+	ROM_LOAD( "mcrs2j.2",    0x00000, 0x20000, 0xb4aa8ac7 )
+	ROM_RELOAD(              0x10000, 0x20000 )				/* banked */
+
+	ROM_REGION( 0x020000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mcrs2j.1",    0x000000, 0x020000, 0xc7417410 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bp932an.a04", 0x000000, 0x200000, 0xc4d77ff0 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x400000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD_GFX_SWAP( "bp932an.a07", 0x000000, 0x200000, 0xaa1b21b9 )	/* Sprites */
+	ROM_LOAD_GFX_SWAP( "bp932an.a08", 0x200000, 0x200000, 0x67eb2901 )
+
+	ROM_REGION( 0x240000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "bp932an.a06", 0x040000, 0x200000, 0xef0ffec0 )	/* all banked */
+
+	ROM_REGION( 0x140000, REGION_SOUND2 )	/* OKIM6295 samples */
+	ROM_LOAD( "bp932an.a05", 0x040000, 0x100000, 0xb5335abb )	/* all banked */
+
+	ROM_REGION( 0x0200, REGION_PROMS )
+	ROM_LOAD( "mcrs2bpr.9",  0x0000, 0x0100, 0x435653a2 )	/* unknown */
+	ROM_LOAD( "mcrs2bpr.10", 0x0100, 0x0100, 0xe6ead349 )	/* unknown */
+ROM_END
 
 ROM_START( bjtwin )
 	ROM_REGION( 0x80000, REGION_CPU1 )		/* 68000 code */
@@ -412,11 +813,11 @@ ROM_START( bjtwin )
 	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_GFX_SWAP( "bjt.100",	0x000000, 0x100000, 0xbb06245d )	/* Sprites */
 
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "bjt.130",    0x000000, 0x100000, 0x372d46dd )
+	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "bjt.130",    0x040000, 0x100000, 0x372d46dd )	/* all banked */
 
-	ROM_REGION( 0x100000, REGION_SOUND2 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "bjt.127",    0x000000, 0x100000, 0x8da67808 )
+	ROM_REGION( 0x140000, REGION_SOUND2 )	/* OKIM6295 samples */
+	ROM_LOAD( "bjt.127",    0x040000, 0x100000, 0x8da67808 )	/* all banked */
 ROM_END
 
 ROM_START( nouryoku )
@@ -433,11 +834,11 @@ ROM_START( nouryoku )
 	ROM_REGION( 0x200000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD_GFX_SWAP( "ic100.5",	0x000000, 0x200000, 0x24d3e24e )	/* Sprites */
 
-	ROM_REGION( 0x100000, REGION_SOUND1 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "ic30.6",     0x000000, 0x100000, 0xfeea34f4 )
+	ROM_REGION( 0x140000, REGION_SOUND1 )	/* OKIM6295 samples */
+	ROM_LOAD( "ic30.6",     0x040000, 0x100000, 0xfeea34f4 )	/* all banked */
 
-	ROM_REGION( 0x100000, REGION_SOUND2 )	/* 1Mb for ADPCM sounds - sound chip is OKIM6295 */
-	ROM_LOAD( "ic27.7",     0x000000, 0x100000, 0x8a69fded )
+	ROM_REGION( 0x140000, REGION_SOUND2 )	/* OKIM6295 samples */
+	ROM_LOAD( "ic27.7",     0x040000, 0x100000, 0x8a69fded )	/* all banked */
 ROM_END
 
 
@@ -453,7 +854,7 @@ static unsigned char decode_byte(unsigned char src, unsigned char *bitp)
 	return ret;
 }
 
-unsigned long bjtwin_address_map_bg0(unsigned long addr)
+static unsigned long bjtwin_address_map_bg0(unsigned long addr)
 {
    return ((addr&0x00004)>> 2) | ((addr&0x00800)>> 10) | ((addr&0x40000)>>16);
 }
@@ -471,16 +872,17 @@ static unsigned short decode_word(unsigned short src, unsigned char *bitp)
 }
 
 
-unsigned long bjtwin_address_map_sprites(unsigned long addr)
+static unsigned long bjtwin_address_map_sprites(unsigned long addr)
 {
    return ((addr&0x00010)>> 4) | ((addr&0x20000)>>16) | ((addr&0x100000)>>18);
 }
 
 
-void init_bjtwin(void)
+static void decode_gfx(void)
 {
 	/* GFX are scrambled.  We decode them here.  (BIG Thanks to Antiriad for descrambling info) */
 	unsigned char *rom;
+	int A;
 
 	static unsigned char decode_data_bg[8][8] =
 	{
@@ -508,9 +910,6 @@ void init_bjtwin(void)
 	};
 
 
-	int A,i;
-
-
 	/* background */
 	rom = memory_region(REGION_GFX2);
 	for (A = 0;A < memory_region_length(REGION_GFX2);A++)
@@ -526,33 +925,18 @@ void init_bjtwin(void)
 		rom[A+1] = tmp >> 8;
 		rom[A] = tmp & 0xff;
 	}
+}
 
 
-	/*	Bombjack Twin uses different banks for each voice of each OKI chip
-	 *	Each bank is 0x10000 bytes long, but 24 bit data stored in OKI rom header
-	 *	is invalid.  So we void the highest bits of address here.
-	 */
 
-	rom = memory_region(REGION_SOUND1);	/* Process OKI 1 ROM */
-	for (i=0; i < 0x10; i++)
-	{
-		for (A=0; A < 0x400; A += 8)
-		{
-			rom[i*0x10000+A] = 0;
-			rom[i*0x10000+A+3] = 0;
-		}
-	}
+static void init_nmk(void)
+{
+	decode_gfx();
+}
 
-	rom = memory_region(REGION_SOUND2);	/* Process OKI 2 ROM */
-	for (i=0; i < 0x10; i++)
-	{
-		for (A=0; A < 0x400; A += 8)
-		{
-			rom[i*0x10000+A] = 0;
-			rom[i*0x10000+A+3] = 0;
-		}
-	}
-
+static void init_bjtwin(void)
+{
+	init_nmk();
 
 	/* Patch rom to enable test mode */
 
@@ -577,5 +961,7 @@ void init_bjtwin(void)
 
 
 
-GAME( 1993, bjtwin,   0, bjtwin, bjtwin,   bjtwin, ROT270, "NMK", "Bombjack Twin" )
-GAMEX(1995, nouryoku, 0, bjtwin, nouryoku, bjtwin, ROT0, "Tecmo", "Nouryoku Koujou Iinkai", GAME_IMPERFECT_SOUND )
+GAMEX( 1992, macross,  0, macross,  macross,  nmk,      ROT270, "Banpresto", "Macross", GAME_NO_SOUND )
+GAMEX( 1993, macross2, 0, macross2, macross,  0,        ROT0,   "Banpresto", "Macross II", GAME_NO_COCKTAIL )
+GAMEX( 1993, bjtwin,   0, bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK", "Bombjack Twin", GAME_NO_COCKTAIL )
+GAMEX( 1995, nouryoku, 0, bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo", "Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )
