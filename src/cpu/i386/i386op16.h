@@ -130,7 +130,7 @@ static void (*i386_opcode_table1_16[256])(void) =
 	I386OP(jg_rel8),			/* 0x7f */
 	I386OP(group80_8),			/* 0x80 */
 	I386OP(group81_16),			/* 0x81 */
-	I386OP(unimplemented),		/* 0x82 */		/* TODO: Group 82, same as 0x80 ? */
+	I386OP(group80_8),			/* 0x82 */
 	I386OP(group83_16),			/* 0x83 */
 	I386OP(test_rm8_r8),		/* 0x84 */
 	I386OP(test_rm16_r16),		/* 0x85 */
