@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "vidhrdw/generic.h"
 #include "machine/6522via.h"
 
 #include "includes/vectrex.h"
@@ -37,8 +38,6 @@ static struct via6522_interface vectrex_via6522_interface =
 	vectrex_shift_reg_w, vectrex_screen_update
 };
 
-static struct mame_bitmap *tmpbitmap;
-
 static int x_center, y_center, x_max;
 static int x_int, y_int; /* X, Y integrators IC LF347*/
 
@@ -58,10 +57,8 @@ static double last_point_starttime;
 static float z_factor;
 
 static int T2_running; /* This turns zero if VIA timer 2 (the refresh timer) isn't running */
-static void *backup_timer = NULL;
-static int vectrex_full_refresh;
 
-void (*vector_add_point_function) (int, int, int, int) = vector_add_point;
+void (*vector_add_point_function) (int, int, rgb_t, int) = vector_add_point;
 
 /*********************************************************************
   Screen updating
@@ -74,7 +71,7 @@ static void vectrex_screen_update (double time_)
 	if (vectrex_refresh_with_T2)
 	{
 		T2_running = 3;
-		vector_vh_screenrefresh(tmpbitmap, vectrex_full_refresh);
+		video_update_vector(tmpbitmap, &Machine->visible_area);
 		vector_clear_list();
 	}
 }
@@ -86,17 +83,15 @@ static void vectrex_screen_update_backup (int param)
 			       * for a longer time. */
 	else
 	{
-		vector_vh_screenrefresh(tmpbitmap, vectrex_full_refresh);
+		video_update_vector(tmpbitmap, &Machine->visible_area);
 		vector_clear_list();
 	}
 }
 
-void vectrex_vh_update (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vectrex )
 {
-	vectrex_full_refresh = full_refresh;
-
 	vectrex_configuration();
-	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
+	video_update_generic_bitmapped(bitmap, cliprect);
 }
 
 /*********************************************************************
@@ -186,37 +181,11 @@ INLINE void vectrex_solid_line(double time_, int pattern)
 }
 
 /*********************************************************************
-  Color init.
- *********************************************************************/
-
-void vectrex_init_overlay (void)
-{
-	char overlay_name[1024];
-	const struct IODevice *dev = Machine->gamedrv->dev;
-
-	/* try to load an overlay for game.bin named game.png */
-	if (device_filename(dev->type,0))
-	{
-		sprintf(overlay_name,"%s", device_filename(dev->type,0));
-		sprintf(strchr(overlay_name,'.'),".png");
-	}
-	else
-		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
-
-	artwork_kill(); /* remove existing overlay */
-	overlay_load(overlay_name, 0);
-
-}
-
-
-/*********************************************************************
   Startup and stop
  *********************************************************************/
-int vectrex_start (void)
+VIDEO_START( vectrex )
 {
 	int width, height;
-
-	vectrex_init_overlay ();
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -229,7 +198,7 @@ int vectrex_start (void)
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = bitmap_alloc(width,height)))
+	if (!(tmpbitmap = auto_bitmap_alloc(width,height)))
 		return 1;
 
 	x_center=((Machine->visible_area.max_x
@@ -246,28 +215,18 @@ int vectrex_start (void)
 	 * without rearming T2 once it's expired - so the screen doesn't
 	 * get redrawn. This is why we have an additional pulsing timer
 	 * which does the refresh if T2 isn't running. */
-
-	if (!backup_timer)
-		backup_timer = timer_pulse (TIME_IN_CYCLES(30000, 0), 0, vectrex_screen_update_backup);
+	timer_pulse (TIME_IN_CYCLES(30000, 0), 0, vectrex_screen_update_backup);
 
 	via_config(0, &vectrex_via6522_interface);
 	via_reset();
 	z_factor =  translucency? 1.5: 2;
 
-	if (vector_vh_start())
+	if (video_start_vector())
 		return 1;
 
 	return 0;
 }
 
-void vectrex_stop(void)
-{
-	if (tmpbitmap) bitmap_free (tmpbitmap);
-	vector_clear_list();
-	vector_vh_stop();
-	if (backup_timer) timer_remove (backup_timer);
-	backup_timer=NULL;
-}
 
 /*********************************************************************
   VIA interface functions
@@ -396,6 +355,7 @@ static struct via6522_interface spectrum1_via6522_interface =
 static struct artwork_info *buttons, *led;
 static int transparent_pen;
 
+#if 0
 void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	vectrex_refresh_with_T2=1;
@@ -416,6 +376,7 @@ void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,co
 			artwork_load_size(&led, "led.png", 0, buttons->artwork->width / 8, buttons->artwork->height);
 	}
 }
+#endif
 
 WRITE_HANDLER( raaspec_led_w )
 {
@@ -457,11 +418,11 @@ WRITE_HANDLER( raaspec_led_w )
 	}
 }
 
-int raaspec_start (void)
+VIDEO_START( raaspec )
 {
 	int width, height;
 
-	if (vector_vh_start())
+	if (video_start_vector())
 		return 1;
 
 	x_center=((Machine->visible_area.max_x
@@ -487,7 +448,7 @@ int raaspec_start (void)
 		height = Machine->scrbitmap->height;
 	}
 
-	if (!(tmpbitmap = bitmap_alloc(width,height)))
+	if (!(tmpbitmap = auto_bitmap_alloc(width,height)))
 		return 1;
 
 	if (led && buttons)
@@ -496,7 +457,7 @@ int raaspec_start (void)
 	return 0;
 }
 
-void raaspec_vh_update (struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( raaspec )
 {
-	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
+	video_update_generic_bitmapped(bitmap, cliprect);
 }

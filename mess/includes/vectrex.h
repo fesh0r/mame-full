@@ -18,24 +18,14 @@ extern void v_via_irq (int level);
 
 
 /* From vidhrdw/vectrex.c */
-extern int vectrex_start(void);
-extern void vectrex_stop (void);
-extern void vectrex_vh_update (struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( vectrex );
+extern VIDEO_UPDATE( vectrex );
 
-extern int raaspec_start(void);
+extern VIDEO_START( raaspec );
+extern VIDEO_UPDATE( raaspec );
+
 extern WRITE_HANDLER  ( raaspec_led_w );
-extern void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void raaspec_vh_update (struct mame_bitmap *bitmap, int full_refresh);
 
 /* from vidhrdw/vectrex.c */
 extern void vector_add_point_stereo (int x, int y, int color, int intensity);
-extern void (*vector_add_point_function) (int, int, int, int);
-extern void vectrex_init_overlay (void);
-
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void vectrex_runtime_loader_init(void);
-# else
-	extern void vectrex_runtime_loader_init(void);
-# endif
-#endif
+extern void (*vector_add_point_function) (int, int, rgb_t, int);

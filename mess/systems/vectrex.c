@@ -101,49 +101,29 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static struct MachineDriver machine_driver_vectrex =
-{
+static MACHINE_DRIVER_START( vectrex )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1500000,	/* 1.5 Mhz */
-			vectrex_readmem, vectrex_writemem,0,0,
-			0, 0, /* no vblank interrupt */
-			0, 0 /* no interrupts */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
-	0,
+	MDRV_CPU_ADD_TAG("main", M6809, 1500000)        /* 1.5 Mhz */
+	MDRV_CPU_MEMORY(vectrex_readmem, vectrex_writemem)
 
-	/* video hardware */
-	380, 480, { 0, 500, 0, 600 },
-	0,
-	256 + 32768, 0,
-	0,
+	MDRV_FRAMES_PER_SECOND(40)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT,
-	0,
-	vectrex_start,
-	vectrex_stop,
-	vectrex_vh_update,
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(380, 342)
+	MDRV_VISIBLE_AREA(0, 500, 0, 600)
+	MDRV_PALETTE_LENGTH(256 + 32768)
+
+	MDRV_VIDEO_START( vectrex )
+	MDRV_VIDEO_UPDATE( vectrex )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
- 			&dac_interface
-		}
-	}
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
-};
 
 static const struct IODevice io_vectrex[] = {
 	{
@@ -226,6 +206,19 @@ INPUT_PORTS_START( raaspec )
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SELECT1 )
 
 INPUT_PORTS_END
+
+
+static MACHINE_DRIVER_START( raaspec )
+	MDRV_IMPORT_FROM( vectrex )
+	MDRV_CPU_MODIFY( "main" )
+	MDRV_CPU_MEMORY( raaspec_readmem, raaspec_writemem )
+
+	MDRV_PALETTE_LENGTH(254)
+
+	MDRV_VIDEO_START( raaspec )
+	MDRV_VIDEO_UPDATE( raaspec )
+MACHINE_DRIVER_END
+
 
 static struct MachineDriver machine_driver_raaspec =
 {
