@@ -1,3 +1,91 @@
+0.90
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Amiga (readded; based on MAME Arcadia work) [Nate Woods, Mariusz Wojcieszek]
+
+
+
+System Driver Changes:
+----------------------
+- [A7800] Changed driver to use MAME/MESS standard 6532 RIOT code.  [Ken
+  Siders]
+
+- [AT] Marked driver as compatible with IBM-PC.  [Nate Woods]
+
+- [BBC] BBCB1770 merged into BBCB.  Also modernized the driver, added tape
+  and split mode support.  [Gordon Jefferyes]
+  
+- [COCO] Fixed a bug in DMK image creation that caused MESS and Imgtool to
+  always zero count sectors when created.  (bug #630) [Nate Woods]
+
+- [COCO3] Fixed a regression that prevented cartridges from loading on startup.
+  [Nate Woods]
+  
+- [COCO3] Fixed a regression that prevented hires text blinking from updating
+  properly.  (bug #628) [Nate Woods]
+
+- [COCO3H] Fixed a bug in the 6309 LDBT/STBT instructions.  (bug #625) [Nate
+  Woods]
+
+- [JAGUAR] Fixed fatal regression introduced in 0.89.  (bug #626) [Nate Woods]
+
+- [PC] Implemented CGA color composite artifact colors.  (bug #431) [John
+  Elliott]
+
+- [PC] Fixed a problem in the PIC8254 interrupt controller, and enhanced
+  natural keyboard support.  [Nate Woods]
+
+- [PC] Fixed hard drive support to recognize CHD geometry information.  [Nate
+  Woods]
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+- Creation and last modified dates are now supported by the core.  [Nate Woods]
+
+- Added readsector and writesector commands to the Imgtool command line app.
+  [Nate Woods]
+
+- [FAT] CHD files are now supported.  [Nate Woods]
+
+- [FAT] "Tildized" short file names are not generated when file names are
+  short enough.  [Nate Woods]
+
+- [FAT] Fixed a bugs that could cause file truncations or deletions to leak
+  clusters.  [Nate Woods]
+
+- [RSDOS] Bytes #16-31 of a directory entry will now be cleared upon creation.
+  [Nate Woods]
+
+- [Windows Imgtool] Fixed a bug that prevented read only files from opening.
+  (bug #624)  [Nate Woods]
+
+- [Windows Imgtool] Now handles multiple selections better, as well as
+  cosmetic changes and fixups.  [Nate Woods]
+
+- [Windows Imgtool] Fixed problems with error reporting with CHD hard drive
+  files under certain conditions, and disabled certain functionity when read
+  only files are open.  [Nate Woods]
+
+- [Windows Imgtool] Added a new sector viewer feature.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.90.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.89
 
 New System Drivers Supported (in no particular order):

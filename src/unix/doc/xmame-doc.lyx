@@ -30,7 +30,7 @@
 XMAME/XMESS DOCUMENTATION
 \layout Date
 
-29 November 2004
+16 January 2005
 \layout SGML
 
 <authorgroup>
@@ -2582,9 +2582,17 @@ Xmame/xmess versions newer than 0.35 use zlib for some compression routines.
 \layout Standard
 
 Zlib is standard on most Unix versions.
- For those who don't ship with zlib or ship with a version that is too old,
- xmame/xmess now comes with a stripped-down version of zlib.
- Uncomment the appropriate line in the Makefile to use this.
+ For those whose platform doesn't ship with zlib or ships with a version
+ that is too old, you can use an included version of the library by uncommenting
+ 
+\begin_inset Quotes eld
+\end_inset 
+
+BUILD_ZLIB = 1
+\begin_inset Quotes erd
+\end_inset 
+
+ in the makefile.
 \layout Subsection
 
 When I run xmame.x11, nothing happens---no window pops up or anything.
@@ -4281,7 +4289,7 @@ Unix sources and docs
 \layout Itemize
 
 The xmame/xmess sources
-\begin_inset LatexCommand \url[xmame/xmess-0.89 sources]{download/xmame-0.89.tar.bz2}
+\begin_inset LatexCommand \url[xmame/xmess-0.90 sources]{download/xmame-0.90.tar.bz2}
 
 \end_inset 
 

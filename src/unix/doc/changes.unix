@@ -2,9 +2,61 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.90, 18 January 2005
+	- Everything from MAME 0.90 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.90 (http://x.mame.net/changes-mess.html).
+	- The "-sleepidle (-si)" option is now enabled by default.  This keeps 
+	  the emulation from hogging the CPU when it's idle.
+	- Did a major rework of the effects code, which now borrows code from 
+	  the AdvanceMAME project (Hans de Goede):
+	  * The code is much cleaner.
+	  * Effects are much faster on DGA.
+	  * The scaling is no longer fixed to a certain factor for each 
+	    effect: It supports normal (1x1 - 8x8), scale2x (2x2 - 3x6), scan2 
+	    (1x2 - 4x2), rgbscan (1x3 - 6x3), scan3 (1x3 - 6x3), hq2x (2x2),
+	    lq2x (2x2), 6tap2x (2x2).
+	  * All the scanline effects come in both horizontal and vertical 
+	    varieties, and vertical scanlines are automatically chosen for 
+	    rotated games.
+	- Made the 32bpp to yuy2 blitting code much faster and cleaner.  (Hans 
+	  de Goede)
+	- Made a small change to the OpenGL code that more than triples the 
+	  speed of 16bpp games.  (Enik)
+	- The install portion of the makefile no longer depends on the "cab" 
+	  and "doc" symlinks in the top-level directory.
+	- Enhanced LIRC support to compile and link against system-installed 
+	  liblirc_client files.  Added the "-lircrc" option.  (Mads Villadsen)
+	- Optimized some of the yuy2 blit functions.  (Hans de Goede)
+	- Added CPU capability detection for Linux on x86.  Currently this only 
+	  tests for MMX.  (Hans de Goede)
+	- Changed the effects code to use the C versions of effects when a CPU 
+	  isn't MMX-capable.  This means that binary distributions can be built 
+	  with EFFECT_MMX_ASM defined and still run on older CPUs.  This 
+	  presently only works for Linux on x86.  (Hans de Goede)
+	- Fixed "-geometry (-geo)" to properly adhere to given window 
+	  coordinates.  Added support for window coordinates to OpenGL.  (Hans 
+	  de Goede)
+	- By default, fullscreen mode now only spans screen 0.  To select 
+	  another screen, use "-xinerama-screen <nr>", or use -1 if you want 
+	  the old behavior where all screens are spanned.  (Joe Q. and Hans de 
+	  Goede)
+	- Removed Mesa on Glide on Voodoo 2 in fullscreen mode hack.  If you 
+	  need this, just use "-geometry 640x480 -grabkeyboard -grabmouse" 
+	  instead.  (Hans de Goede)
+	- Reverted to treating lightgun buttons as mouse buttons, so lightguns 
+	  will work independent of joystick devices or drivers.  It is now 
+	  also assumed that there are always 5 mice connected, so multiple 
+	  lightguns should work fine.
+	- The old-style debugger works again.  (Hans de Goede)
+	- Merged several of Nicola Salmoria's memory leak fixes from Windows 
+	  MAME.
+	- Fixed multiple port recording for the playback/record option.  (Chad 
+	  Hurwitz)
+	- The SVGAlib target now works for xmess: There was a clash with the PC 
+	  emulation function vga_init().  (Dave Humphreys)
+
 Release 0.89, 5 December 2004
-	- Everything from MAME 0.89 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.89 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.89 and MESS 0.89.
 	- Re-added a missing "Rapid Fire" entry from the setup menu that caused 
 	  the other entries to be off by one.  Fixes Bugzilla bug 621.
 	- Another batch from Hans de Goede:
