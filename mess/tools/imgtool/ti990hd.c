@@ -31,10 +31,13 @@ for TI990. */
 /* Max path len in chars: this value is 48 characters in DX10, but since the
 path includes at least a leading '.', our value is 47. */
 /* Since path generally include a volume name that can be up to 8 character
-long, we should dsiplay a warning message when the user wants to create a path
-that is more than 39 character long. */
+long, we should display a warning message when the user wants to create a path
+that is longer than 39 characters. */
 #define MAX_PATH_LEN 47
 #define MAX_SAFE_PATH_LEN 39
+
+#define MAX_DIR_LEVEL 25	/* We need to put a recursion limit to avoid endless recursion hazard */
+ 
 
 typedef struct UINT16BE
 {
@@ -376,8 +379,6 @@ typedef struct ti990_image
 /*
 	ti990 catalog iterator, used when imgtool reads the catalog
 */
-#define MAX_DIR_LEVEL 25	/* We need to put a recursion limit to avoid endless recursion hazard */
-
 typedef struct ti990_iterator
 {
 	IMAGEENUM base;
@@ -684,24 +685,28 @@ static int write_sector_logical(STREAM *file_handle, int secnum, const ti990_geo
 /*
 	Find the catalog entry and fdr record associated with a file name
 
-	image: ti99_image image record
+	image: ti990_image image record
 	fname: name of the file to search
 	fdr: pointer to buffer where the fdr record should be stored (may be NULL)
 	catalog_index: on output, index of file catalog entry (may be NULL)
+	out_fdr_secnum: on output, sector address of the fdr (may be NULL)
+	out_parent_fdr_secnum: on output, sector offset of the fdr for the parent
+		directory fdr (-1 if root) (may be NULL)
 */
-static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1]/*, ti990_fdr *fdr, int *catalog_index*/)
+static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1], int *catalog_index, int *out_fdr_secnum, int *out_parent_fdr_secnum)
 {
-	//int fdr_secnum;
+	int fdr_secnum = -1, parent_fdr_secnum;
 	int i;
 	const char *element_start, *element_end;
 	int element_len;
 	char element[8];
 	ti990_dor dor;
-	ti990_fdr fdr;
+	directory_entry xdr;
 	int hash_key;
 	int nrc;
 	unsigned base;
 	int reply;
+	int flag;
 
 
 	base = (unsigned) get_UINT16BE(image->sec0.vda) * get_UINT16BE(image->sec0.spa);
@@ -720,7 +725,7 @@ static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1]/*, ti99
 		element_end = strchr(element_start, '.');
 		element_len = element_end ? (element_end - element_start) : strlen(element_start);
 		if ((element_len > 8) || (element_len == 0))
-			return IMGTOOLERR_PARAMCORRUPT;
+			return IMGTOOLERR_BADFILENAME;
 		/* generate file name and hash key */
 		hash_key = 1;
 		for (i=0; i<element_len; i++)
@@ -739,12 +744,13 @@ static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1]/*, ti99
 		while (1)
 		{
 			reply = read_sector_logical_len(image->file_handle, base + i, & image->geometry,
-												& fdr, 0x86);
+												& xdr, 0x86);
 			if (reply)
 				return IMGTOOLERR_READERROR;
-			if (!memcmp(element, fdr.fnm, 8))
+			if (!memcmp(element, xdr.fdr.fnm, 8))
 			{	/* found match !!! */
-				/* ... */
+				parent_fdr_secnum = fdr_secnum;
+				fdr_secnum = base + i;
 				break;
 			}
 
@@ -765,16 +771,49 @@ static int find_fdr(ti990_image *image, const char fname[MAX_PATH_LEN+1]/*, ti99
 			element_start = element_end+1;
 			/* we need to check that this is a directory */
 			/* if it is an alias to a directory, we need to follow it, too. */
-			/* ... */
+
+			/* parse flags */
+			flag = get_UINT16BE(xdr.fdr.flg);
+
+			if (flag & fdr_flg_ali)
+			{
+				/* read original fdr */
+				reply = read_sector_logical_len(image->file_handle, base + get_UINT16BE(xdr.adr.raf),
+													& image->geometry, & xdr, 0x86);
+
+				flag = get_UINT16BE(xdr.fdr.flg);
+			}
+
+			if (flag & fdr_flg_cdr)
+				/* This is a channel, not a file */
+				return IMGTOOLERR_BADFILENAME;
+			else if (flag & fdr_flg_ali)
+				/* WTH??? */
+				return IMGTOOLERR_CORRUPTIMAGE;
+			else if (((flag >> fdr_flg_fu_shift) & 3) != 1)
+			{
+				/* This file is not a directory */
+				return IMGTOOLERR_BADFILENAME;
+			}
+
 			/* initialize base */
-			base = (unsigned) get_UINT16BE(fdr.paa) * get_UINT16BE(image->sec0.spa);
+			base = (unsigned) get_UINT16BE(xdr.fdr.paa) * get_UINT16BE(image->sec0.spa);
 		}
 		else
 			element_start = NULL;
 	}
 	while (element_start);
 
-	return IMGTOOLERR_FILENOTFOUND;
+	if (catalog_index)
+		*catalog_index = i;
+
+	if (out_fdr_secnum)
+		*out_fdr_secnum = fdr_secnum;
+
+	if (out_parent_fdr_secnum)
+		*out_parent_fdr_secnum = parent_fdr_secnum;
+
+	return 0;
 }
 
 #if 0
@@ -1424,10 +1463,23 @@ static size_t ti990_image_freespace(IMAGE *img)
 }
 
 /*
-	Extract a file from a ti990_image.  The file is saved in tifile format.
+	Extract a file from a ti990_image.
 */
 static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
+	ti990_image *image = (ti990_image*) img;
+	int catalog_index, fdr_secnum, parent_fdr_secnum;
+	int reply;
+
+
+	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	if (reply)
+		return reply;
+
+	/* ... */
+
+	return 0;
+
 #if 0
 	ti99_image *image = (ti99_image*) img;
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -1507,10 +1559,24 @@ static int ti990_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 }
 
 /*
-	Add a file to a ti990_image.  The file must be in tifile format.
+	Add a file to a ti990_image.
 */
 static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, const ResolvedOption *in_options)
 {
+	ti990_image *image = (ti990_image*) img;
+	int catalog_index, fdr_secnum, parent_fdr_secnum;
+	int reply;
+
+
+	/* check that file does not exist */
+	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	if ((reply) && (reply != IMGTOOLERR_FILENOTFOUND))
+		return reply;
+
+	/* ... */
+
+	return 0;
+
 #if 0
 	ti99_image *image = (ti99_image*) img;
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -1610,8 +1676,8 @@ static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 	/* update bitmap */
 	if (write_sector_logical(image->file_handle, 0, & image->geometry, &image->sec0))
 		return IMGTOOLERR_WRITEERROR;
-
 #endif
+
 	return 0;
 }
 
@@ -1620,6 +1686,19 @@ static int ti990_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef,
 */
 static int ti990_image_deletefile(IMAGE *img, const char *fname)
 {
+	ti990_image *image = (ti990_image*) img;
+	int catalog_index, fdr_secnum, parent_fdr_secnum;
+	int reply;
+
+
+	reply = find_fdr(image, fname, &catalog_index, &fdr_secnum, &parent_fdr_secnum);
+	if (reply)
+		return reply;
+
+	/* ... */
+
+	return 0;
+
 #if 0
 	ti99_image *image = (ti99_image*) img;
 	int totsecs = (image->sec0.totsecsMSB << 8) | image->sec0.totsecsLSB;
@@ -1685,8 +1764,8 @@ static int ti990_image_deletefile(IMAGE *img, const char *fname)
 	/* update bitmap */
 	if (write_sector_logical(image->file_handle, 0, & image->geometry, &image->sec0))
 		return IMGTOOLERR_WRITEERROR;
-
 #endif
+
 	return 0;
 }
 
