@@ -64,6 +64,7 @@ struct RunningMachine
 };
 
 #ifdef MESS
+#include <stdarg.h>
 #ifndef DECL_SPEC
 #define DECL_SPEC
 #endif
