@@ -14,12 +14,12 @@
   Offset  Length  Description
   ------  ------  -----------
        0       2  ???
-	   2       2  Next block (0 if end)
+       2       2  Next block (0 if end)
        4      39  Directory Entry
       43      39  Directory Entry
                   ...
      472      39  Directory Entry
-	 511       1  ???
+     511       1  ???
 
 
   ProDOS directory entry structure:
@@ -32,18 +32,18 @@
 					  30 - Tree File (257-32768 blocks)
 					  E0 - Subdirectory Header
 				      F0 - Volume Header
-	   1      15  File name (NUL padded)
-	  16       1  File type
-	  17       2  Key pointer
-	  19       2  Blocks used
-	  21       3  File size
-	  24       4  Creation date
-	  28       1  ProDOS version that created the file
-	  29       1  Minimum ProDOS version needed to read the file
-	  30       1  Access byte
-	  31       2  Auxilary file type
-	  33       4  Last modified date
-	  37       2  Header pointer
+       1      15  File name (NUL padded)
+      16       1  File type
+      17       2  Key pointer
+      19       2  Blocks used
+      21       3  File size
+      24       4  Creation date
+      28       1  ProDOS version that created the file
+      29       1  Minimum ProDOS version needed to read the file
+      30       1  Access byte
+      31       2  Auxilary file type
+      33       4  Last modified date
+      37       2  Header pointer
 
 
   In "seedling files", the key pointer points to a single block that is the
@@ -67,8 +67,8 @@
 
   Offset  Length  Description
   ------  ------  -----------
-      31       1  Length of the entry; expected to be 39
-	  32       1  Number of entries per block; expected to be 13
+      31       1  Length of the entry; generally is 39
+	  32       1  Number of entries per block; generally is 13
 	  33       2  Active entry count in directory
 	  35       2  Volume bitmap block number
 	  37       2  Total blocks on volume
@@ -80,13 +80,17 @@
 #include "formats/ap_dsk35.h"
 #include "iflopimg.h"
 
+#define	ROOTDIR_BLOCK			2
 #define BLOCK_SIZE				512
-#define PRODOS_DIRENT_SIZE		39
 
 struct prodos_diskinfo
 {
 	imgtoolerr_t (*load_block)(imgtool_image *image, int block, void *buffer);
 	imgtoolerr_t (*save_block)(imgtool_image *image, int block, const void *buffer);
+	UINT8 dirent_size;
+	UINT8 dirents_per_block;
+	UINT16 volume_bitmap_block;
+	UINT16 total_blocks;
 };
 
 struct prodos_direnum
@@ -130,6 +134,22 @@ static UINT32 pick_integer(const void *data, size_t offset, size_t length)
 	}
 	return result;
 }
+
+
+
+static void place_integer(void *ptr, size_t offset, size_t length, UINT32 value)
+{
+	UINT8 b;
+	size_t i = 0;
+
+	while(length--)
+	{
+		b = (UINT8) value;
+		value >>= 8;
+		((UINT8 *) ptr)[offset + i++] = b;
+	}
+}
+
 
 
 static time_t prodos_crack_time(UINT32 prodos_time)
@@ -249,13 +269,12 @@ static imgtoolerr_t prodos_save_block_525(imgtool_image *image,
 
 
 
-static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image)
+static void prodos_setprocs_525(imgtool_image *image)
 {
 	struct prodos_diskinfo *info;
 	info = get_prodos_info(image);
 	info->load_block = prodos_load_block_525;
 	info->save_block = prodos_save_block_525;
-	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -322,13 +341,12 @@ static imgtoolerr_t prodos_save_block_35(imgtool_image *image,
 
 
 
-static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
+static void prodos_setprocs_35(imgtool_image *image)
 {
 	struct prodos_diskinfo *info;
 	info = get_prodos_info(image);
 	info->load_block = prodos_load_block_35;
 	info->save_block = prodos_save_block_35;
-	return IMGTOOLERR_SUCCESS;
 }
 
 
@@ -355,6 +373,114 @@ static imgtoolerr_t prodos_save_block(imgtool_image *image,
 
 
 
+/* ----------------------------------------------------------------------- */
+
+static imgtoolerr_t prodos_diskimage_open(imgtool_image *image)
+{
+	imgtoolerr_t err;
+	UINT8 buffer[BLOCK_SIZE];
+	struct prodos_diskinfo *di;
+	const UINT8 *ent;
+
+	di = get_prodos_info(image);
+
+	/* specify defaults */
+	di->dirent_size = 39;
+	di->dirents_per_block = 13;
+
+	/* load the first block, hoping that the volume header is first */
+	err = prodos_load_block(image, ROOTDIR_BLOCK, buffer);
+	if (err)
+		return err;
+
+	ent = &buffer[4];
+
+	/* did we find the volume header? */
+	if ((ent[0] & 0xF0) == 0xF0)
+	{
+		di->dirent_size			= pick_integer(ent, 31, 1);
+		di->dirents_per_block	= pick_integer(ent, 32, 1);
+		di->volume_bitmap_block	= pick_integer(ent, 35, 2);
+		di->total_blocks		= pick_integer(ent, 37, 2);
+	}
+
+	/* sanity check these values */
+	if (di->dirent_size < 39)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (di->dirents_per_block * di->dirent_size >= BLOCK_SIZE)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (di->volume_bitmap_block >= di->total_blocks)
+		return IMGTOOLERR_CORRUPTIMAGE;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_open_525(imgtool_image *image)
+{
+	prodos_setprocs_525(image);
+	return prodos_diskimage_open(image);
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_open_35(imgtool_image *image)
+{
+	prodos_setprocs_35(image);
+	return prodos_diskimage_open(image);
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+
+static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolution *opts)
+{
+	imgtoolerr_t err;
+	UINT32 heads, tracks, sectors, sector_bytes;
+	UINT8 buffer[BLOCK_SIZE];
+
+	heads = option_resolution_lookup_int(opts, 'H');
+	tracks = option_resolution_lookup_int(opts, 'T');
+	sectors = option_resolution_lookup_int(opts, 'S');
+	sector_bytes = option_resolution_lookup_int(opts, 'L');
+
+	/* prepare initial dir block */
+	memset(buffer, 0, sizeof(buffer));
+	place_integer(buffer, 4 +  0, 1, 0xF0);
+	place_integer(buffer, 4 + 31, 1, 39);
+	place_integer(buffer, 4 + 32, 1, BLOCK_SIZE / 39);
+	place_integer(buffer, 4 + 35, 2, 6);
+	place_integer(buffer, 4 + 37, 2, tracks * heads * sectors * sector_bytes / BLOCK_SIZE);
+
+	err = prodos_save_block(image, ROOTDIR_BLOCK, buffer);
+	if (err)
+		return err;
+
+	return prodos_diskimage_open(image);
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_create_525(imgtool_image *image, option_resolution *opts)
+{
+	prodos_setprocs_525(image);
+	return prodos_diskimage_create(image, opts);
+}
+
+
+
+static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, option_resolution *opts)
+{
+	prodos_setprocs_35(image);
+	return prodos_diskimage_create(image, opts);
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+
 static imgtoolerr_t prodos_load_enum_block(imgtool_image *image,
 	struct prodos_direnum *appleenum, int block)
 {
@@ -373,68 +499,20 @@ static imgtoolerr_t prodos_load_enum_block(imgtool_image *image,
 
 
 
-#if 0
-static imgtoolerr_t prodos_load_volume_header(imgtool_image *image)
-{
-	imgtoolerr_t err;
-	UINT8 buffer[BLOCK_SIZE];
-
-	err = prodos_load_block(image, 2, buffer);
-	if (err)
-		return err;
-
-	if ((buffer[0] & 0xF0) == 0xF0)
-	{
-	}
-
-	return IMGTOOLERR_UNIMPLEMENTED;;
-}
-#endif
-
-
-
-static imgtoolerr_t prodos_diskimage_create(imgtool_image *image, option_resolution *opts)
-{
-	imgtoolerr_t err;
-	UINT8 buffer[BLOCK_SIZE];
-
-	memset(buffer, 0, sizeof(buffer));
-	err = prodos_save_block(image, 2, buffer);
-	if (err)
-		return err;
-
-	return IMGTOOLERR_SUCCESS;
-}
-
-
-
-static imgtoolerr_t prodos_diskimage_create_525(imgtool_image *image, option_resolution *opts)
-{
-	prodos_diskimage_open_525(image);
-	return prodos_diskimage_create(image, opts);
-}
-
-
-
-static imgtoolerr_t prodos_diskimage_create_35(imgtool_image *image, option_resolution *opts)
-{
-	prodos_diskimage_open_35(image);
-	return prodos_diskimage_create(image, opts);
-}
-
-
-
 static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 	struct prodos_direnum *appleenum, struct prodos_dirent *ent)
 {
 	imgtoolerr_t err;
+	struct prodos_diskinfo *di;
 	UINT32 next_block;
 	UINT32 offset;
+
+	di = get_prodos_info(image);
 
 	do
 	{
 		/* go to next image */
-		if (appleenum->index >= (BLOCK_SIZE / PRODOS_DIRENT_SIZE))
+		if (appleenum->index >= di->dirents_per_block)
 		{
 			if (appleenum->block == 0)
 				next_block = appleenum->first_block;
@@ -458,7 +536,7 @@ static imgtoolerr_t prodos_get_next_dirent(imgtool_image *image,
 			appleenum->index++;
 		}
 
-		offset = appleenum->index * PRODOS_DIRENT_SIZE + 4;
+		offset = appleenum->index * di->dirent_size + 4;
 		if (appleenum->block)
 			ent->storage_type = appleenum->block_data[offset + 0];
 		else
@@ -484,7 +562,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 {
 	imgtoolerr_t err;
 	struct prodos_direnum direnum;
-	UINT32 block = 2;
+	UINT32 block = ROOTDIR_BLOCK;
 
 	while(*path)
 	{
