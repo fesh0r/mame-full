@@ -458,10 +458,7 @@ static const int var_teletyper_scroll_step = - teletyper_scroll_step;
 
 static PALETTE_INIT( apexc )
 {
-	int i;
-
-	for (i=0; i<APEXC_PALETTE_SIZE; i++)
-		palette_set_color(i, apexc_palette[i*3], apexc_palette[i*3+1], apexc_palette[i*3+2]);
+	palette_set_colors(0, apexc_palette, APEXC_PALETTE_SIZE);
 
 	memcpy(colortable, & apexc_colortable, sizeof(apexc_colortable));
 }
