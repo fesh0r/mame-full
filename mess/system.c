@@ -119,6 +119,10 @@ const struct GameDriver *drivers[] =
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision								  */
 
+	/* Magnavox */
+	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
+
+
 	/* CAPCOM */
 	DRIVER( sfzch ) 	/* CPS Changer (Street Fighter ZERO)			  */
 
@@ -422,7 +426,6 @@ TESTDRIVER( a310 )		/* Acorn Archimedes 310 						  */
 	DRIVER( jaguar )	/* Atari Jaguar 								  */
 	DRIVER( lynx )		/* Atari Lynx Handheld							  */
 	DRIVER( odyssey )	/* Magnavox Odyssey - analogue (1972)			  */
-	DRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( trs80_m2 )	/* TRS-80 Model II -							  */
 	DRIVER( x68000 )	/* X68000										  */
 #endif
