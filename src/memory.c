@@ -255,8 +255,7 @@ UINT8		 				opcode_entry;					/* opcode readmem entry */
 
 struct address_space_t		address_space[ADDRESS_SPACES];	/* address space data */
 
-static UINT8 *				_bank_ptr[MAX_BANKS + 1];		/* array of bank pointers */
-static UINT8 **				bank_ptr = &_bank_ptr[0];
+static UINT8 *				bank_ptr[MAX_BANKS + 1];		/* array of bank pointers */
 static void *				shared_ptr[MAX_SHARED_POINTERS];/* array of shared pointers */
 
 static struct memory_block_t memory_block[MAX_MEMORY_BLOCKS];/* array of memory blocks we are tracking */
@@ -338,7 +337,6 @@ static struct data_accessors_t memory_accessors[ADDRESS_SPACES][4][2] =
 	PROTOTYPES
 -------------------------------------------------*/
 
-static int CLIB_DECL fatalerror(const char *string, ...);
 static int init_cpudata(void);
 static int init_addrspace(UINT8 cpunum, UINT8 spacenum);
 static int preflight_memory(void);
@@ -658,9 +656,9 @@ void memory_set_bankptr(int banknum, void *base)
 {
 	/* validation checks */
 	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
-		fatalerror("memory_set_bankptr called with invalid bank %d\n", banknum);
+		osd_die("memory_set_bankptr called with invalid bank %d\n", banknum);
 	if (bankdata[banknum].dynamic)
-		fatalerror("memory_set_bankptr called with dynamic bank %d\n", banknum);
+		osd_die("memory_set_bankptr called with dynamic bank %d\n", banknum);
 
 	/* set the base */
 	bank_ptr[banknum] = base;
@@ -762,22 +760,6 @@ struct address_map_t *construct_map_0(struct address_map_t *map)
 
 
 /*-------------------------------------------------
-	fatalerror - display an error message and
-	exit immediately
--------------------------------------------------*/
-
-static int CLIB_DECL fatalerror(const char *string, ...)
-{
-	va_list arg;
-	va_start(arg, string);
-	vprintf(string, arg);
-	va_end(arg);
-	exit(1);
-	return 0;
-}
-
-
-/*-------------------------------------------------
 	init_cpudata - initialize the cpudata
 	structure for each CPU
 -------------------------------------------------*/
@@ -851,7 +833,7 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	int abits = cputype_addrbus_width(cputype, spacenum);
 	int dbits = cputype_databus_width(cputype, spacenum);
 	int accessorindex = (dbits == 8) ? 0 : (dbits == 16) ? 1 : (dbits == 32) ? 2 : 3;
-	construct_map_t internal_map = (construct_map_t)cputype_get_info_ptr(cputype, CPUINFO_PTR_INTERNAL_MEMORY_MAP);
+	construct_map_t internal_map = (construct_map_t)cputype_get_info_ptr(cputype, CPUINFO_PTR_INTERNAL_MEMORY_MAP + spacenum);
 	int entrynum;
 
 	/* determine the address and data bits */
@@ -877,7 +859,10 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 		/* allocate and clear memory for 2 copies of the map */
 		struct address_map_t *map = malloc(sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 		if (!map)
-			return fatalerror("cpu #%d couldn't allocate memory map\n", cpunum);
+		{
+			osd_die("cpu #%d couldn't allocate memory map\n", cpunum);
+			return -1;
+		}
 		memset(map, 0, sizeof(space->map[0]) * MAX_ADDRESS_MAP_SIZE * 4);
 
 		/* make pointers to the standard and adjusted maps */
@@ -916,9 +901,15 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	space->read.table = malloc(1 << LEVEL1_BITS);
 	space->write.table = malloc(1 << LEVEL1_BITS);
 	if (!space->read.table)
-		return fatalerror("cpu #%d couldn't allocate read table\n", cpunum);
+	{
+		osd_die("cpu #%d couldn't allocate read table\n", cpunum);
+		return -1;
+	}
 	if (!space->write.table)
-		return fatalerror("cpu #%d couldn't allocate write table\n", cpunum);
+	{
+		osd_die("cpu #%d couldn't allocate write table\n", cpunum);
+		return -1;
+	}
 
 	/* initialize everything to unmapped */
 	memset(space->read.table, STATIC_UNMAP, 1 << LEVEL1_BITS);
@@ -961,7 +952,10 @@ static int preflight_memory(void)
 						{
 							val = (flags & AMEF_SPACE_MASK) >> AMEF_SPACE_SHIFT;
 							if (val != spacenum)
-								return fatalerror("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
+							{
+								osd_die("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
+								return -1;
+							}
 						}
 
 						/* if we specify an databus width, make sure it matches the current address space's */
@@ -970,7 +964,10 @@ static int preflight_memory(void)
 							val = (flags & AMEF_DBITS_MASK) >> AMEF_DBITS_SHIFT;
 							val = (val + 1) * 8;
 							if (val != space->dbits)
-								return fatalerror("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
+							{
+								osd_die("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
+								return -1;
+							}
 						}
 
 						/* if we specify an addressbus width, adjust the mask */
@@ -1180,7 +1177,7 @@ static void *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 		}
 
 	/* if we got here, we failed */
-	fatalerror("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
+	osd_die("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
 	return NULL;
 }
 
@@ -1369,7 +1366,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 					tabledata->subtable_alloc += SUBTABLE_ALLOC;
 					tabledata->table = realloc(tabledata->table, (1 << LEVEL1_BITS) + (tabledata->subtable_alloc << LEVEL2_BITS));
 					if (!tabledata->table)
-						fatalerror("error: ran out of memory allocating memory subtable\n");
+						osd_die("error: ran out of memory allocating memory subtable\n");
 				}
 
 				/* bump the usecount and return */
@@ -1379,7 +1376,7 @@ static UINT8 allocate_subtable(struct table_data_t *tabledata)
 
 		/* merge any subtables we can */
 		if (!merge_subtables(tabledata))
-			fatalerror("Ran out of subtables!\n");
+			osd_die("Ran out of subtables!\n");
 	}
 
 	/* hopefully this never happens */
@@ -1457,7 +1454,7 @@ static void release_subtable(struct table_data_t *tabledata, UINT8 subentry)
 
 	/* sanity check */
 	if (tabledata->subtable[subindex].usecount <= 0)
-		fatalerror("Called release_subtable on a table with a usecount of 0\n");
+		osd_die("Called release_subtable on a table with a usecount of 0\n");
 
 	/* decrement the usecount and clear the checksum if we're at 0 */
 	tabledata->subtable[subindex].usecount--;
@@ -1674,7 +1671,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 		memory = malloc(end - start + 1);
 		if (!memory)
 		{
-			fatalerror("Out of memory allocating %d bytes for CPU %d, space %d, range %X-%X\n", end - start + 1, cpunum, spacenum, start, end);
+			osd_die("Out of memory allocating %d bytes for CPU %d, space %d, range %X-%X\n", end - start + 1, cpunum, spacenum, start, end);
 			return NULL;
 		}
 		memset(memory, 0, end - start + 1);

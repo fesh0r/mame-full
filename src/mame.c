@@ -1895,6 +1895,7 @@ static int validitychecks(void)
 					}
 					else
 					{
+#ifdef MESS
 						/* check to make sure that this CPU core has the necessities filled out */
 						const struct cpu_interface *cpuintrf;
 						union cpuinfo info;
@@ -1940,6 +1941,7 @@ static int validitychecks(void)
 								info.s);
 							error = 1;
 						}
+#endif /* MESS */
 					}
 
 					for (space = 0;space < ADDRESS_SPACES;space++)

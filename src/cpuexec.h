@@ -21,17 +21,6 @@ extern "C" {
 
 /*************************************
  *
- *	CPU cycle timing arrays
- *
- *************************************/
-
-extern double cycles_to_sec[];
-extern double sec_to_cycles[];
-
-
-
-/*************************************
- *
  *	CPU description for drivers
  *
  *************************************/
@@ -177,8 +166,8 @@ int cpunum_is_suspended(int cpunum, int reason);
 /* Aborts the timeslice for the active CPU */
 void activecpu_abort_timeslice(void);
 
-/* Returns the current local time for a CPU, relative to the current timeslice */
-double cpunum_get_localtime(int cpunum);
+/* Returns the current local time for a CPU */
+mame_time cpunum_get_localtime(int cpunum);
 
 /* Returns the current scaling factor for a CPU's clock speed */
 double cpunum_get_clockscale(int cpunum);

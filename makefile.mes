@@ -42,6 +42,7 @@ X86_MIPS3_DRC = 1
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
+
 # set this the operating system you're building for
 # MAMEOS = msdos
 # MAMEOS = windows
@@ -143,7 +144,7 @@ CFLAGS_WARNINGS = -Wall -Werror -Wno-unused
 else
 CFLAGS_BASE += -DNDEBUG $(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing
 CFLAGS_WARNINGS = -Werror -Wall -Wno-sign-compare -Wunused \
-	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
+	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wshadow -Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \
 	-Wdisabled-optimization
@@ -151,6 +152,7 @@ endif
 
 CFLAGS = $(CFLAGS_BASE) $(CFLAGS_WARNINGS)
 
+# the windows osd code at least cannot be compiled with -pedantic
 CFLAGSPEDANTIC = $(CFLAGS) -pedantic
 
 ifdef SYMBOLS

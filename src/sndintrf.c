@@ -27,7 +27,7 @@ static void soundlatch_callback(int param)
 WRITE_HANDLER( soundlatch_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,data,soundlatch_callback);
+	mame_timer_set(time_zero,data,soundlatch_callback);
 }
 
 WRITE16_HANDLER( soundlatch_word_w )
@@ -36,7 +36,7 @@ WRITE16_HANDLER( soundlatch_word_w )
 	COMBINE_DATA(&word);
 
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,word,soundlatch_callback);
+	mame_timer_set(time_zero,word,soundlatch_callback);
 }
 
 READ_HANDLER( soundlatch_r )
@@ -70,7 +70,7 @@ static void soundlatch2_callback(int param)
 WRITE_HANDLER( soundlatch2_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,data,soundlatch2_callback);
+	mame_timer_set(time_zero,data,soundlatch2_callback);
 }
 
 WRITE16_HANDLER( soundlatch2_word_w )
@@ -79,7 +79,7 @@ WRITE16_HANDLER( soundlatch2_word_w )
 	COMBINE_DATA(&word);
 
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,word,soundlatch2_callback);
+	mame_timer_set(time_zero,word,soundlatch2_callback);
 }
 
 READ_HANDLER( soundlatch2_r )
@@ -113,7 +113,7 @@ static void soundlatch3_callback(int param)
 WRITE_HANDLER( soundlatch3_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,data,soundlatch3_callback);
+	mame_timer_set(time_zero,data,soundlatch3_callback);
 }
 
 WRITE16_HANDLER( soundlatch3_word_w )
@@ -122,7 +122,7 @@ WRITE16_HANDLER( soundlatch3_word_w )
 	COMBINE_DATA(&word);
 
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,word,soundlatch3_callback);
+	mame_timer_set(time_zero,word,soundlatch3_callback);
 }
 
 READ_HANDLER( soundlatch3_r )
@@ -156,7 +156,7 @@ static void soundlatch4_callback(int param)
 WRITE_HANDLER( soundlatch4_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,data,soundlatch4_callback);
+	mame_timer_set(time_zero,data,soundlatch4_callback);
 }
 
 WRITE16_HANDLER( soundlatch4_word_w )
@@ -165,7 +165,7 @@ WRITE16_HANDLER( soundlatch4_word_w )
 	COMBINE_DATA(&word);
 
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
-	timer_set(TIME_NOW,word,soundlatch4_callback);
+	mame_timer_set(time_zero,word,soundlatch4_callback);
 }
 
 READ_HANDLER( soundlatch4_r )
@@ -201,7 +201,7 @@ void soundlatch_setclearedvalue(int value)
 
 ***************************************************************************/
 
-static void *sound_update_timer;
+static mame_timer *sound_update_timer;
 
 
 struct snd_interface
@@ -1263,7 +1263,7 @@ logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sn
 	/* samples will be read later if needed */
 	Machine->samples = 0;
 
-	sound_update_timer = timer_alloc(NULL);
+	sound_update_timer = mame_timer_alloc(NULL);
 
 	if (mixer_sh_start() != 0)
 		return 1;
@@ -1329,7 +1329,7 @@ void sound_update(void)
 	streams_sh_update();
 	mixer_sh_update();
 
-	timer_adjust(sound_update_timer, TIME_NEVER, 0, 0);
+	mame_timer_adjust(sound_update_timer, time_never, 0, time_never);
 
 	profiler_mark(PROFILER_END);
 }
@@ -1383,7 +1383,8 @@ int sound_clock(const struct MachineSound *msound)
 
 int sound_scalebufferpos(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed(sound_update_timer) * Machine->refresh_rate);
+	mame_time elapsed = mame_timer_timeelapsed(sound_update_timer);
+	int result = (int)((double)value * mame_time_to_double(elapsed) * Machine->refresh_rate);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }
