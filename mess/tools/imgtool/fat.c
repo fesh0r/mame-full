@@ -297,7 +297,7 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 
 	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
 	info->total_clusters = info->total_sectors - info->reserved_sectors
-		- (info->sectors_per_fat - info->fat_count)
+		- (info->sectors_per_fat * info->fat_count)
 		- (info->root_entries * FAT_DIRENT_SIZE + info->sector_size - 1) / info->sector_size;
 	info->cluster_size = info->sector_size * info->sectors_per_cluster;
 
@@ -316,6 +316,8 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	if (info->heads == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->total_sectors < info->heads * info->sectors_per_track)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (info->total_clusters * info->fat_bits > info->sectors_per_fat * info->sector_size * 8)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
 	return IMGTOOLERR_SUCCESS;
@@ -386,7 +388,7 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 	/* calculated settings */
 	root_dir_sectors = (root_dir_count + sector_bytes - 1) / sector_bytes;
 	total_clusters = (total_sectors - reserved_sectors - hidden_sectors - root_dir_sectors)
-		/ sector_bytes;
+		/ sectors_per_cluster;
 	sectors_per_fat = (total_clusters * fat_bits + (sector_bytes * 8) - 1)
 		/ (sector_bytes * 8);
 
@@ -594,9 +596,11 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 	UINT64 entry;
 	UINT32 bit_index, i;
 	UINT32 last_entry = 0;
+	UINT32 bit_mask;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 	bit_index = fat_entry * disk_info->fat_bits;
+	bit_mask = 0xFFFFFFFF >> (32 - disk_info->fat_bits);
 
 	assert(fat_entry < disk_info->total_clusters);
 
@@ -609,13 +613,17 @@ static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UI
 		/* we've extracted the bytes; we now need to normalize it */
 		entry = LITTLE_ENDIANIZE_INT64(entry);
 		entry >>= bit_index % 8;
-		entry &= (0xFFFFFFFF >> (32 - disk_info->fat_bits));
+		entry &= bit_mask;
 
 		if (i == 0)
 			last_entry = (UINT32) entry;
 		else if (last_entry != (UINT32) entry)
 			return 1;	/* if the FATs disagree; mark this as reserved */
 	}
+	
+	/* normalize special clusters */
+	if (last_entry >= (0xFFFFFFF0 & bit_mask))
+		last_entry |= 0xFFFFFFF0;
 	return last_entry;
 }
 
@@ -829,7 +837,7 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 	const struct fat_diskinfo *disk_info;
 	UINT32 new_cluster_count;
 	UINT32 old_cluster_count;
-	UINT32 cluster, new_cluster;
+	UINT32 cluster, new_cluster, pos;
 	UINT8 *fat_table = NULL;
 	UINT8 dirent[32];
 
@@ -873,7 +881,7 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 
 		if (old_cluster_count < new_cluster_count)
 		{
-			/* grow the file */
+			/* grow the file (TODO: This only works if the size is zero) */
 			do
 			{
 				new_cluster = fat_allocate_cluster(image, fat_table);
@@ -884,9 +892,14 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 				}
 
 				if (cluster == 0)
+				{
 					place_integer(dirent, 26, 2, new_cluster);
+					file->first_cluster = new_cluster;
+				}
 				else
+				{
 					fat_set_fat_entry(image, fat_table, cluster, new_cluster);
+				}
 
 				cluster = new_cluster;
 				old_cluster_count++;
@@ -897,7 +910,6 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 		}
 		else if (old_cluster_count > new_cluster_count)
 		{
-			/* shrink the file */
 			err = IMGTOOLERR_UNIMPLEMENTED;
 			goto done;
 		}
@@ -917,6 +929,15 @@ static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *fil
 			if (err)
 				goto done;
 		}
+
+		pos = MIN(file->index, new_size);
+		file->filesize = new_size;
+		file->cluster = file->first_cluster;
+		file->index = 0;
+
+		err = fat_seek_file(image, file, pos);
+		if (err)
+			goto done;
 	}
 
 done:
@@ -1538,7 +1559,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->begin_enum					= fat_diskimage_beginenum;
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
-	/*module->write_file					= fat_diskimage_writefile;*/
+	module->write_file					= fat_diskimage_writefile;
 	module->free_space					= fat_diskimage_freespace;
 	return IMGTOOLERR_SUCCESS;
 }

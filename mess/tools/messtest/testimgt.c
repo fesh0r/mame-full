@@ -89,6 +89,9 @@ static void putfile_end_handler(const void *buffer, size_t size)
 {
 	imgtoolerr_t err;
 	imgtool_stream *stream;
+	
+	if (!image)
+		return;
 
 	stream = stream_open_mem((void *) buffer, size);
 	if (!stream)
