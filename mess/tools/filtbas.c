@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "imgtool.h"
-#include "../mess/msdos/osdutils.h"
+#include "osdutils.h"
 
 struct basictokens {
 	UINT16 baseaddress;
