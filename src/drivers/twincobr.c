@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1987
 		-------------------------------
 		Driver by: Quench
-		Flying Shark details: Carl-Henrik Skarstedt  &  Magnus Danielsson
+		Flying Shark details: Carl-Henrik Skårstedt  &  Magnus Danielsson
 		Flying Shark bootleg info: Ruben Panossian
 
 
@@ -123,9 +123,10 @@ out:
 20		  Coin counters / Coin lockouts
 
 TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
-0000-07ff ROM (words)
-0000-0090 Internal RAM (words).	Moved to 8000-8120 for MAME compatibility.
-								View this memory in the debugger at 4000h
+0000-07ff ROM 16-bit opcodes (word access only). Moved to $8000-8fff for
+				 MAME compatibility. View this ROM in the debugger at $8000h
+0000-0090 Internal RAM (words).
+
 
 in:
 01		  data read from addressed 68K address space (Main RAM/Sprite RAM)
@@ -315,15 +316,17 @@ static struct IOWritePort sound_writeport[] =
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x011f, MRA_RAM },	/* The real DSP has this at address 0 */
-	{ 0x8000, 0x8fff, MRA_ROM },	/* 0x800 words */
+	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
+	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
+									/* address 0 */
+									/* View it at 8000h in the debugger */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x811f, MWA_RAM },	/* The real DSP has this at address 0 */
-	{ 0x8000, 0x8fff, MWA_ROM },	/* 0x800 words */
+	{ 0x0000, 0x011f, MWA_RAM },
+	{ 0x8000, 0x8fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 

@@ -3,7 +3,7 @@
 		ToaPlan game hardware from 1988-1991
 		------------------------------------
 		MAME Driver by: Darren Olafson
-		Technical info: Carl-Henrik Skarstedt  &  Magnus Danielsson
+		Technical info: Carl-Henrik Skårstedt  &  Magnus Danielsson
 		Driver updates: Quench
 		Video updates : SUZ
 
@@ -532,17 +532,17 @@ static struct IOWritePort outzone_sound_writeport[] =
 
 static struct MemoryReadAddress DSP_readmem[] =
 {
-	{ 0x0000, 0x0fff, MRA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811f, MRA_RAM },	/* The real DSP has this at address 0 */
-									/* View this at 4000h in the debugger */
+	{ 0x0000, 0x011f, MRA_RAM },	/* 90h words internal RAM */
+	{ 0x8000, 0x8fff, MRA_ROM },	/* 800h words. The real DSPs ROM is at */
+									/* address 0 */
+									/* View it at 8000h in the debugger */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress DSP_writemem[] =
 {
-	{ 0x0000, 0x0fff, MWA_ROM },	/* 0x800 words */
-	{ 0x8000, 0x811f, MWA_RAM },	/* The real DSP has this at address 0 */
-									/* View this at 4000h in the debugger */
+	{ 0x0000, 0x011f, MWA_RAM },
+	{ 0x8000, 0x8fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -1869,8 +1869,8 @@ ROM_START( demonwld )
 	ROM_LOAD( "rom11",  0x0000, 0x8000, 0x397eca1b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* Co-Processor TMS320C10 MCU code */
-	ROM_LOAD_EVEN( "dsp_22.bin",  0x0000, 0x0800, 0x79389a71 )
-	ROM_LOAD_ODD ( "dsp_21.bin",  0x0000, 0x0800, 0x2d135376 )
+	ROM_LOAD_EVEN( "dsp_22.bin",  0x8000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",  0x8000, 0x0800, 0x2d135376 )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rom05",  0x00000, 0x20000, 0x6506c982 )
