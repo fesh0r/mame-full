@@ -1,19 +1,15 @@
 
-/****************************************/
-/*  Fairchild Channel F driver          */
-/*                                      */
-/*  Juergen Buchmueller &				*/
-/*  Frank Palazzolo						*/
-/*                                      */
-/*  TBD:                                */
-/*    	- Setup a videoram, redraw		*/
-/*			row on palette change		*/
-/*   	- Split BIOS ROM in two			*/
-/*   	- Sound							*/
-/*      - Verify visible area on HW     */
-/*      - f8dasm fixes					*/
-/*                              		*/
-/****************************************/
+/******************************************************************
+ *  Fairchild Channel F driver
+ *
+ *  Juergen Buchmueller & Frank Palazzolo
+ *
+ *  TBD:
+ *   	- Sound
+ *		- find BCD? bug in addition cart (#6)
+ *      - Misc. f8dasm fixes
+ *
+ ******************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -69,6 +65,7 @@ int channelf_load_rom(int id)
 int channelf_vh_start(void)
 {
 	videoram_size = 0x2000;
+	videoram = malloc(videoram_size);
 
     if (generic_vh_start())
         return 1;
@@ -78,21 +75,84 @@ int channelf_vh_start(void)
 
 void channelf_vh_stop(void)
 {
+	free(videoram);
 	generic_vh_stop();
+}
+
+#define BLACK	0
+#define WHITE   1
+#define RED     2
+#define GREEN   3
+#define BLUE    4
+#define LTGRAY  5
+#define LTGREEN 6
+#define LTBLUE	7
+
+static UINT16 colormap[] = {
+	BLACK,   WHITE, WHITE, WHITE,
+	LTBLUE,  BLUE,  RED,   GREEN,
+	LTGRAY,  BLUE,  RED,   GREEN,
+	LTGREEN, BLUE,  RED,   GREEN,
+};
+
+static void plot_4_pixel(int x, int y, int color)
+{
+	int pen;
+
+	if (x < Machine->visible_area.min_x ||
+		x + 1 >= Machine->visible_area.max_x ||
+		y < Machine->visible_area.min_y ||
+		y + 1 >= Machine->visible_area.max_y)
+		return;
+
+	if (color >= 16)
+		return;
+
+    pen = Machine->pens[colormap[color]];
+
+	plot_pixel(Machine->scrbitmap, x, y, pen);
+	plot_pixel(Machine->scrbitmap, x+1, y, pen);
+	plot_pixel(Machine->scrbitmap, x, y+1, pen);
+	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
+}
+
+int recalc_palette_offset(int reg1, int reg2)
+{
+	/* Note: This is based on the very strange decoding they    */
+	/*       used to determine which palette this line is using */
+
+	switch(reg1*4+reg2)
+	{
+		case 0:
+			return 0;
+		case 8:
+			return 4;
+		case 3:
+			return 8;
+		case 15:
+			return 12;
+		default:
+			return 0; /* This should be an error condition */
+	}
 }
 
 void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	if( full_refresh )
+	int x,y,offset, palette_offset;
+
+	for(y=0;y<64;y++)
 	{
-		copybitmap(Machine->scrbitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		memset(dirtybuffer, 1, videoram_size);
-    }
+		palette_offset = recalc_palette_offset(videoram[y*128+125]&3,videoram[y*128+126]&3);
+		for (x=0;x<128;x++)
+		{
+			offset = y*128+x;
+			if ( full_refresh || dirtybuffer[offset] )
+				plot_4_pixel(x*2, y*2, palette_offset+(videoram[offset]&3));
+		}
+	}
 }
 
 static UINT8 latch[4];
-static int palette_code[64];
-static int palette_offset[64];
 static int val;
 static int row;
 static int col;
@@ -140,67 +200,6 @@ static UINT8 palette[] = {
 	0xbf, 0xbf, 0xff	/* ltblue  */
 };
 
-#define BLACK	0
-#define WHITE   1
-#define RED     2
-#define GREEN   3
-#define BLUE    4
-#define LTGRAY  5
-#define LTGREEN 6
-#define LTBLUE	7
-
-static UINT16 colormap[] = {
-	BLACK,   WHITE, WHITE, WHITE,
-	LTBLUE,  BLUE,  RED,   GREEN,
-	LTGRAY,  BLUE,  RED,   GREEN,
-	LTGREEN, BLUE,  RED,   GREEN,
-};
-
-static void plot_4_pixel(int x, int y, int color)
-{
-	int pen;
-
-	if (x < Machine->visible_area.min_x ||
-		x + 1 >= Machine->visible_area.max_x ||
-		y < Machine->visible_area.min_y ||
-		y + 1 >= Machine->visible_area.max_y)
-		return;
-
-	if (color >= 16)
-		return;
-
-    pen = Machine->pens[colormap[color]];
-
-	plot_pixel(Machine->scrbitmap, x, y, pen);
-	plot_pixel(Machine->scrbitmap, x+1, y, pen);
-	plot_pixel(Machine->scrbitmap, x, y+1, pen);
-	plot_pixel(Machine->scrbitmap, x+1, y+1, pen);
-	plot_pixel(tmpbitmap, x, y, pen);
-	plot_pixel(tmpbitmap, x+1, y, pen);
-	plot_pixel(tmpbitmap, x, y+1, pen);
-	plot_pixel(tmpbitmap, x+1, y+1, pen);
-}
-
-int recalc_palette_offset(int code)
-{
-	/* Note: This is based on the very strange decoding they    */
-	/*       used to determine which palette this line is using */
-
-	switch(code)
-	{
-		case 0:
-			return 0;
-		case 8:
-			return 4;
-		case 3:
-			return 8;
-		case 15:
-			return 12;
-		default:
-			return 0; /* This is an error condition */
-	}
-}
-
 WRITE_HANDLER( channelf_port_0_w )
 {
 	LOG(("port_0_w: $%02x\n",data));
@@ -214,20 +213,21 @@ WRITE_HANDLER( channelf_port_0_w )
 
     if (data & 0x20)
 	{
-        if (col == 0x7d)
+		if (videoram[row*128+col] != val)
 		{
-			palette_code[row] &= 0x03;
-			palette_code[row] |= (val << 2);
-			palette_offset[row] = recalc_palette_offset(palette_code[row]);
+			videoram[row*128+col] = val;
+        	if (col == 0x7d)
+			{
+			}
+			else if (col == 0x7e)
+			{
+				osd_mark_dirty(0,row,127,row,0);
+			}
+			if (col < 0x76)
+			{
+				osd_mark_dirty(col,row,col,row,0);
+			}
 		}
-		else if (col == 0x7e)
-		{
-			palette_code[row] &= 0x0c;
-			palette_code[row] |= val;
-			palette_offset[row] = recalc_palette_offset(palette_code[row]);
-		}
-		if (col < 0x76)
-			plot_4_pixel(col * 2, row * 2, palette_offset[row]+val);
 	}
 	latch[0] = data;
 }
@@ -357,7 +357,7 @@ static struct MachineDriver machine_driver_channelf =
 	NULL,					/* stop machine */
 
 	/* video hardware */
-	118*2, 64*2, { 0, 118*2 - 1, 0, 64*2 - 1},
+	128*2, 64*2, { 1, 112*2 - 1, 0, 64*2 - 1},
 	NULL,
 	8, 0,
 	init_palette,			/* convert color prom */
@@ -374,7 +374,8 @@ static struct MachineDriver machine_driver_channelf =
 
 ROM_START(channelf)
 	ROM_REGION(0x10000,REGION_CPU1)
-		ROM_LOAD("fcbios.rom",  0x0000, 0x0800, 0x2882c02d)
+		ROM_LOAD("sl31253.rom",  0x0000, 0x0400, 0x04694ed9)
+		ROM_LOAD("sl31254.rom",  0x0400, 0x0400, 0x9c047ba3)
 	ROM_REGION(0x00100,REGION_GFX1)
 		/* bit pattern is stored here */
 ROM_END
