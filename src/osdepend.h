@@ -83,8 +83,8 @@ void osd_debugger_focus(int debugger_has_focus);
 void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 
 /*
-  osd_allocate_colors() is called after osd_create_display(), to create and initialize
-  the palette.
+  osd_allocate_colors() is called after osd_create_display(), to create and
+  initialize the palette.
   palette is an array of 'totalcolors' R,G,B triplets. The function returns
   in *pens the pen values corresponding to the requested colors.
   When modifiable is not 0, the palette will be modified later via calls to
@@ -92,9 +92,16 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
   and activate special optimizations (e.g. direct copy for a 16-bit display).
   The function must also initialize Machine->uifont->colortable[] to get proper
   white-on-black and black-on-white text.
+
+  The debug_* parameters are for the debugger window, and may be NULL if the
+  debugger is not enabled. The debugger always uses DEBUGGER_TOTAL_COLORS colors
+  and the palette is doesn't change at run time.
+
   Return 0 for success.
 */
-int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable);
+int osd_allocate_colors(unsigned int totalcolors,
+		const unsigned char *palette,unsigned short *pens,int modifiable,
+		const unsigned char *debug_palette,unsigned short *debug_pens);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */

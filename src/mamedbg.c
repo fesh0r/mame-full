@@ -864,7 +864,6 @@ void switch_true_orientation(void);
 struct GfxElement *build_debugger_font(void)
 {
 	struct GfxElement *font;
-	static unsigned short colortable[256*2];
 
 	switch_ui_orientation();
 
@@ -872,14 +871,8 @@ struct GfxElement *build_debugger_font(void)
 
 	if (font)
 	{
-		int i;
-		for (i = 0; i < 256; i++)
-		{
-			colortable[2*i+0] = i >> 4;
-			colortable[2*i+1] = i & 15;
-		}
-		font->colortable = colortable;
-		font->total_colors = 256;
+		font->colortable = Machine->debug_remapped_colortable;
+		font->total_colors = DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;
 	}
 
 	switch_true_orientation();
@@ -896,7 +889,19 @@ static void toggle_cursor(struct osd_bitmap *bitmap, struct GfxElement *font)
 	for (y = 0; y < font->height; y++)
 	{
 		for (x = 0; x < font->width; x++)
-			plot_pixel(bitmap, sx+x, sy+y, read_pixel(bitmap, sx+x, sy+y) ^ 15);
+		{
+			int i;
+			int pen = read_pixel(bitmap, sx+x, sy+y);
+			for (i = 0;i < DEBUGGER_TOTAL_COLORS;i++)
+			{
+				if (pen == Machine->debug_pens[i])
+				{
+					pen = Machine->debug_pens[DEBUGGER_TOTAL_COLORS-1 - i];
+					break;
+				}
+			}
+			plot_pixel(bitmap, sx+x, sy+y, pen);
+		}
 	}
 	switch_true_orientation();
 	cursor_on ^= 1;
@@ -986,20 +991,20 @@ static int readkey(void)
 		if (keyboard_pressed(KEYCODE_7_PAD)) k = KEYCODE_7_PAD;
 		if (keyboard_pressed(KEYCODE_8_PAD)) k = KEYCODE_8_PAD;
 		if (keyboard_pressed(KEYCODE_9_PAD)) k = KEYCODE_9_PAD;
-		if (keyboard_pressed(KEYCODE_F1)) k = KEYCODE_F1;
-		if (keyboard_pressed(KEYCODE_F2)) k = KEYCODE_F2;
-		if (keyboard_pressed(KEYCODE_F3)) k = KEYCODE_F3;
-		if (keyboard_pressed(KEYCODE_F4)) k = KEYCODE_F4;
-		if (keyboard_pressed(KEYCODE_F5)) k = KEYCODE_F5;
-		if (keyboard_pressed(KEYCODE_F6)) k = KEYCODE_F6;
-		if (keyboard_pressed(KEYCODE_F7)) k = KEYCODE_F7;
-		if (keyboard_pressed(KEYCODE_F8)) k = KEYCODE_F8;
-		if (keyboard_pressed(KEYCODE_F9)) k = KEYCODE_F9;
-		if (keyboard_pressed(KEYCODE_F10)) k = KEYCODE_F10;
-		if (keyboard_pressed(KEYCODE_F11)) k = KEYCODE_F11;
-		if (keyboard_pressed(KEYCODE_F12)) k = KEYCODE_F12;
-		if (keyboard_pressed(KEYCODE_ESC)) k = KEYCODE_ESC;
-		if (keyboard_pressed(KEYCODE_TILDE)) k = KEYCODE_TILDE;
+		if (keyboard_pressed_memory(KEYCODE_F1)) k = KEYCODE_F1;
+		if (keyboard_pressed_memory(KEYCODE_F2)) k = KEYCODE_F2;
+		if (keyboard_pressed_memory(KEYCODE_F3)) k = KEYCODE_F3;
+		if (keyboard_pressed_memory(KEYCODE_F4)) k = KEYCODE_F4;
+//		if (keyboard_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5;
+		if (keyboard_pressed_memory(KEYCODE_F6)) k = KEYCODE_F6;
+		if (keyboard_pressed_memory(KEYCODE_F7)) k = KEYCODE_F7;
+		if (keyboard_pressed_memory(KEYCODE_F8)) k = KEYCODE_F8;
+		if (keyboard_pressed_memory(KEYCODE_F9)) k = KEYCODE_F9;
+		if (keyboard_pressed_memory(KEYCODE_F10)) k = KEYCODE_F10;
+		if (keyboard_pressed_memory(KEYCODE_F11)) k = KEYCODE_F11;
+		if (keyboard_pressed_memory(KEYCODE_F12)) k = KEYCODE_F12;
+		if (keyboard_pressed_memory(KEYCODE_ESC)) k = KEYCODE_ESC;
+//		if (keyboard_pressed(KEYCODE_TILDE)) k = KEYCODE_TILDE;
 		if (keyboard_pressed(KEYCODE_MINUS)) k = KEYCODE_MINUS;
 		if (keyboard_pressed(KEYCODE_EQUALS)) k = KEYCODE_EQUALS;
 		if (keyboard_pressed(KEYCODE_BACKSPACE)) k = KEYCODE_BACKSPACE;

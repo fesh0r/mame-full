@@ -117,22 +117,22 @@ struct sWindow
 
 /* Standard color set for IBM character set. DO NOT ALTER! */
 
-#define WIN_BLACK			0
-#define WIN_BLUE			1
-#define WIN_GREEN			2
-#define WIN_CYAN			3
-#define WIN_RED 			4
-#define WIN_MAGENTA 		5
-#define WIN_BROWN			6
-#define WIN_WHITE			7
-#define WIN_GRAY			8
-#define WIN_LIGHT_BLUE		9
-#define WIN_LIGHT_GREEN 	10
-#define WIN_LIGHT_CYAN		11
-#define WIN_LIGHT_RED		12
-#define WIN_LIGHT_MAGENTA	13
-#define WIN_YELLOW			14
-#define WIN_BRIGHT_WHITE	15
+#define WIN_BLACK			DBG_BLACK
+#define WIN_BLUE			DBG_BLUE
+#define WIN_GREEN			DBG_GREEN
+#define WIN_CYAN			DBG_CYAN
+#define WIN_RED 			DBG_RED
+#define WIN_MAGENTA 		DBG_MAGENTA
+#define WIN_BROWN			DBG_BROWN
+#define WIN_WHITE			DBG_LIGHTGRAY
+#define WIN_GRAY			DBG_GRAY
+#define WIN_LIGHT_BLUE		DBG_LIGHTBLUE
+#define WIN_LIGHT_GREEN 	DBG_LIGHTGREEN
+#define WIN_LIGHT_CYAN		DBG_LIGHTCYAN
+#define WIN_LIGHT_RED		DBG_LIGHTRED
+#define WIN_LIGHT_MAGENTA	DBG_LIGHTMAGENTA
+#define WIN_YELLOW			DBG_YELLOW
+#define WIN_BRIGHT_WHITE	DBG_WHITE
 
 #define	WIN_BRIGHT	0x08
 

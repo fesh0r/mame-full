@@ -72,7 +72,7 @@
 #if (HAS_KONAMI)
 #include "cpu/konami/konami.h"
 #endif
-#if (HAS_M68000 || defined HAS_M68010 || HAS_M68020 || HAS_M68EC020)
+#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 #include "cpu/m68000/m68000.h"
 #endif
 #if (HAS_T11)
@@ -673,7 +673,6 @@ logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 
 		/* or if we're running with the debugger */
 		{
-			extern int mame_debug;
 			cpu[i].save_context |= mame_debug;
 		}
 
@@ -891,18 +890,23 @@ logerror("Machine reset\n");
   Use this function to initialize, and later maintain, the watchdog. For
   convenience, when the machine is reset, the watchdog is disabled. If you
   call this function, the watchdog is initialized, and from that point
-  onwards, if you don't call it at least once every 10 video frames, the
-  machine will be reset.
+  onwards, if you don't call it at least once every 2 seconds, the machine
+  will be reset.
+
+  The 2 seconds delay is targeted at dondokod, which during boot stays more
+  than 1 second without resetting the watchdog.
 
 ***************************************************************************/
 WRITE_HANDLER( watchdog_reset_w )
 {
-	watchdog_counter = Machine->drv->frames_per_second;
+	if (watchdog_counter == -1) logerror("watchdog armed\n");
+	watchdog_counter = 2*Machine->drv->frames_per_second;
 }
 
 READ_HANDLER( watchdog_reset_r )
 {
-	watchdog_counter = Machine->drv->frames_per_second;
+	if (watchdog_counter == -1) logerror("watchdog armed\n");
+	watchdog_counter = 2*Machine->drv->frames_per_second;
 	return 0;
 }
 
@@ -1035,7 +1039,7 @@ int cycles_left_to_run(void)
   Returns the number of CPU cycles since the last reset of the CPU
 
   IMPORTANT: this value wraps around in a relatively short time.
-  For example, for a 6Mhz CPU, it will wrap around in
+  For example, for a 6MHz CPU, it will wrap around in
   2^32/6000000 = 716 seconds = 12 minutes.
   Make sure you don't do comparisons between values returned by this
   function, but only use the difference (which will be correct regardless
@@ -1387,6 +1391,7 @@ int nmi_interrupt(void)
 
 
 
+#if (HAS_M68000 || HAS_M68010 || HAS_M68020 || HAS_M68EC020)
 int m68_level1_irq(void)
 {
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
@@ -1429,7 +1434,7 @@ int m68_level7_irq(void)
 	if (interrupt_enable[cpunum] == 0) return MC68000_INT_NONE;
 	return MC68000_IRQ_7;
 }
-
+#endif
 
 
 int ignore_interrupt(void)

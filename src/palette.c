@@ -60,6 +60,7 @@ int palette_start(void)
 		Machine->remapped_colortable = malloc(Machine->drv->color_table_len * sizeof(unsigned short));
 	}
 	else Machine->game_colortable = Machine->remapped_colortable = 0;
+	Machine->debug_remapped_colortable = malloc(2*DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS * sizeof(unsigned short));
 
 	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
 	{
@@ -91,6 +92,7 @@ int palette_start(void)
 	shrinked_palette = malloc(3 * total_shrinked_pens * sizeof(unsigned char));
 
 	Machine->pens = malloc(Machine->drv->total_colors * sizeof(short));
+	Machine->debug_pens = malloc(DEBUGGER_TOTAL_COLORS * sizeof(short));
 
 	if ((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE))
 	{
@@ -131,7 +133,8 @@ int palette_start(void)
 
 	if ((Machine->drv->color_table_len && (Machine->game_colortable == 0 || Machine->remapped_colortable == 0))
 			|| game_palette == 0 ||	palette_map == 0
-			|| shrinked_pens == 0 || shrinked_palette == 0 || Machine->pens == 0)
+			|| shrinked_pens == 0 || shrinked_palette == 0 || Machine->pens == 0
+			|| Machine->debug_pens == 0 || Machine->debug_remapped_colortable == 0)
 	{
 		palette_stop();
 		return 1;
@@ -154,12 +157,16 @@ void palette_stop(void)
 	Machine->game_colortable = 0;
 	free(Machine->remapped_colortable);
 	Machine->remapped_colortable = 0;
+	free(Machine->debug_remapped_colortable);
+	Machine->debug_remapped_colortable = 0;
 	free(shrinked_pens);
 	shrinked_pens = 0;
 	free(shrinked_palette);
 	shrinked_palette = 0;
 	free(Machine->pens);
 	Machine->pens = 0;
+	free(Machine->debug_pens);
+	Machine->debug_pens = 0;
 	free(palette_shadow_table);
 	palette_shadow_table = 0;
 }
@@ -169,7 +176,21 @@ void palette_stop(void)
 int palette_init(void)
 {
 	int i;
+	unsigned char *debug_palette;
+	unsigned short *debug_pens;
 
+#ifdef MAME_DEBUG
+	if (mame_debug)
+	{
+		debug_palette = debugger_palette;
+		debug_pens = Machine->debug_pens;
+	}
+	else
+#endif
+	{
+		debug_palette = NULL;
+		debug_pens = NULL;
+	}
 
 	/* We initialize the palette and colortable to some default values so that */
 	/* drivers which dynamically change the palette don't need a vh_init_palette() */
@@ -227,7 +248,7 @@ int palette_init(void)
 				for (i = 0;i < Machine->drv->total_colors;i++)
 					palette_map[i] = (i & 7) + 8;
 
-				if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,1))
+				if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,1,debug_palette,debug_pens))
 					return 1;
 			}
 			else
@@ -273,7 +294,7 @@ logerror("error: ran out of free pens to shrink the palette.\n");
 
 logerror("shrinked palette uses %d colors\n",used);
 
-				if (osd_allocate_colors(used,shrinked_palette,shrinked_pens,0))
+				if (osd_allocate_colors(used,shrinked_palette,shrinked_pens,0,debug_palette,debug_pens))
 					return 1;
 			}
 
@@ -305,7 +326,7 @@ logerror("shrinked palette uses %d colors\n",used);
 					}
 				}
 
-				if (osd_allocate_colors(32768,shrinked_palette,shrinked_pens,0))
+				if (osd_allocate_colors(32768,shrinked_palette,shrinked_pens,0,debug_palette,debug_pens))
 					return 1;
 			}
 			else
@@ -323,7 +344,7 @@ logerror("shrinked palette uses %d colors\n",used);
 					}
 				}
 
-				if (osd_allocate_colors(256,shrinked_palette,shrinked_pens,0))
+				if (osd_allocate_colors(256,shrinked_palette,shrinked_pens,0,debug_palette,debug_pens))
 					return 1;
 			}
 
@@ -356,7 +377,7 @@ logerror("shrinked palette uses %d colors\n",used);
 				shrinked_palette[3*(i+RESERVED_PENS) + 2] = game_palette[3*i + 2];
 			}
 
-			if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)))
+			if (osd_allocate_colors(total_shrinked_pens,shrinked_palette,shrinked_pens,(Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE),debug_palette,debug_pens))
 				return 1;
 
 			for (i = 0;i < Machine->drv->total_colors;i++)
@@ -377,6 +398,12 @@ logerror("shrinked palette uses %d colors\n",used);
 		else
 			usrintf_showmessage("colortable[%d] (=%d) out of range (total_colors = %d)",
 					i,color,Machine->drv->total_colors);
+	}
+
+	for (i = 0;i < DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;i++)
+	{
+		Machine->debug_remapped_colortable[2*i+0] = Machine->debug_pens[i / DEBUGGER_TOTAL_COLORS];
+		Machine->debug_remapped_colortable[2*i+1] = Machine->debug_pens[i % DEBUGGER_TOTAL_COLORS];
 	}
 
 	return 0;
