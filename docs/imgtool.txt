@@ -344,9 +344,9 @@ bytes per sector must be even
 	(sectors per track) < 255 if sectors are 512-byte long)
 
 (There are probably other restrictions, so you had better stick to values
-similar to the ones used by actual disk units...  According to the Spectra
-126-Plus manual, ADU size limitations prevent most operating systems from
-supporting units larger than 500Mb).
+similar to the ones used by actual disk units...  Also note that according to
+the Spectra 126-Plus manual, ADU size limitations prevent most operating
+systems from supporting units larger than 500MBytes.)
 
 
 Known drive geometries:
@@ -407,11 +407,11 @@ systems).
 
 FD1000 is a 8'' floppy disc unit.
 
-DS31/DS32 was the first hard disc unit for ti990.  The only difference between
+DS31/DS32 was the first hard disk unit for ti990.  The only difference between
 DS31 and DS32 is that DS32 does not require a screwdriver to change the disc
 cartridge.
 
-DS10 has one 5-mb fixed platter and one 5mb disc cartridge.
+DS10 has one 5-mb fixed platter and one 5mb disk cartridge.
 
 CD1400-32 and CD1400-96 have a one-platter 16-mb removable unit, and a fixed
 unit (16 mb for CD1400-32 and 80 mb for CD1400-96).
