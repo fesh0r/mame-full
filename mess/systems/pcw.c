@@ -496,7 +496,7 @@ READ_HANDLER(pcw_interrupt_counter_r)
 WRITE_HANDLER(pcw_bank_select_w)
 {
 #ifdef VERBOSE
-	logerror("BANK: %2x %x\r\n",offset, data);
+	logerror("BANK: %2x %x\n",offset, data);
 #endif
 	pcw_banks[offset] = data;
 
@@ -536,7 +536,7 @@ WRITE_HANDLER(pcw_vdu_video_control_register_w)
 WRITE_HANDLER(pcw_system_control_w)
 {
 #ifdef VERBOSE
-	logerror("SYSTEM CONTROL: %d\r\n",data);
+	logerror("SYSTEM CONTROL: %d\n",data);
 #endif
 
 	switch (data)
@@ -656,23 +656,20 @@ WRITE_HANDLER(pcw_system_control_w)
 		/* disc motor on */
 		case 9:
 		{
-                        floppy_drive_set_motor_state(0,1);
-                        floppy_drive_set_motor_state(1,1);
-                        floppy_drive_set_ready_state(0,1,1);
-                        floppy_drive_set_ready_state(1,1,1);
-
-                }
+			floppy_drive_set_motor_state(0,1);
+			floppy_drive_set_motor_state(1,1);
+			floppy_drive_set_ready_state(0,1,1);
+			floppy_drive_set_ready_state(1,1,1);
+		}
 		break;
 
 		/* disc motor off */
 		case 10:
 		{
-                        floppy_drive_set_motor_state(0,0);
-                        floppy_drive_set_motor_state(1,0);
-                        floppy_drive_set_ready_state(0,1,1);
-                        floppy_drive_set_ready_state(1,1,1);
-
-
+			floppy_drive_set_motor_state(0,0);
+			floppy_drive_set_motor_state(1,0);
+			floppy_drive_set_ready_state(0,1,1);
+			floppy_drive_set_ready_state(1,1,1);
 		}
 		break;
 
@@ -948,6 +945,8 @@ void	init_pcw10(void)
 
 void pcw_shutdown_machine(void)
 {
+	nec765_stop();
+
 	if (pcw_ram!=NULL)
 	{
 		free(pcw_ram);
