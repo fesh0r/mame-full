@@ -46,3 +46,5 @@ Source Changes:
      SHIFT+UP/DOWN as PgUp/PgDown and
      CTRL+UP/DOWN as Home/End. [Stefano Priore]
 
+- Fixed bug #218. Also, fixed a problem with Disto Real Time Clock under the coco
+  emulation. [tim lindner]
