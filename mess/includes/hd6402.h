@@ -78,7 +78,6 @@ struct hd6402
 void	hd6402_reset(void);
 
 void	hd6402_init(void);
-void	hd6402_exit(void);
 /* set callback which will be executed when output pins change state */
 void	hd6402_set_callback(void (*callback)(int,int));
 

@@ -28,11 +28,6 @@ void	hd6402_reset(void)
 	hd6402_set_input(HD6402_INPUT_MR, HD6402_INPUT_MR);
 	hd6402_set_input(HD6402_INPUT_MR, 0);
 }
-	
-
-void	hd6402_exit(void)
-{
-}
 
 void	hd6402_transmit_clock(void)
 {

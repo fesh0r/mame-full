@@ -669,7 +669,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( aquarius )	/* 1983 Aquarius								  */
 
 	/*EXIDY INC */
-//	DRIVER( exidy )  /* Sorcerer                                       */
+	DRIVER( exidy )  /* Sorcerer                                       */
 
 	/* GALAKSIJA */
 //	DRIVER( galaxy )

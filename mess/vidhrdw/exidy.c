@@ -8,20 +8,15 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "includes/exidy.h"
+#include "../includes/exidy.h"
 
 /***************************************************************************
   Start the video hardware emulation.
 ***************************************************************************/
 
-int exidy_vh_start(void)
+VIDEO_START( exidy )
 {
-
 	return 0;
-}
-
-void    exidy_vh_stop(void)
-{
 }
 
 /* two colours */
@@ -39,10 +34,10 @@ static unsigned char exidy_palette[EXIDY_NUM_COLOURS * 3] =
 
 
 /* Initialise the palette */
-void exidy_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
+PALETTE_INIT( exidy )
 {
-        memcpy(sys_palette, exidy_palette, sizeof (exidy_palette));
-        memcpy(sys_colortable, exidy_colour_table, sizeof (exidy_colour_table));
+	palette_set_colors(0, exidy_palette, sizeof(exidy_palette) / 3);
+	memcpy(colortable, exidy_colour_table, sizeof (exidy_colour_table));
 }
 
 /***************************************************************************
@@ -50,7 +45,7 @@ void exidy_init_palette(unsigned char *sys_palette, unsigned short *sys_colortab
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void exidy_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( exidy )
 {
 	int x,y;
 	int pens[2];

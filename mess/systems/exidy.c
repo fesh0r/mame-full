@@ -62,7 +62,7 @@
 
  ******************************************************************************/
 #include "driver.h"
-#include "includes/exidy.h"
+#include "../includes/exidy.h"
 #include "printer.h"
 #include "includes/centroni.h"
 #include "includes/hd6402.h"
@@ -103,7 +103,6 @@ static WRITE_HANDLER(exidy_fe_port_w);
 
 /* timer for exidy serial chip transmit and receive */
 static void *serial_timer;
-static void *exidy_reset_timer;
 
 static void exidy_serial_timer_callback(int dummy)
 {
@@ -214,9 +213,8 @@ static void exidy_hd6402_callback(int mask, int data)
 static void exidy_reset_timer_callback(int dummy)
 {
 	cpunum_set_pc(0,0x0e000);
-
-	timer_reset(exidy_reset_timer, TIME_NEVER);
 }
+
 #if 0
 static OPBASE_HANDLER( exidy_opbaseoverride )
 {
@@ -259,7 +257,7 @@ static void cassette_serial_in(int id, unsigned long state)
 //	device_output(IO_CASSETTE, 0, cassette_output);
 }
 
-void exidy_init_machine(void)
+static MACHINE_INIT( exidy )
 {
 	hd6402_init();
 	hd6402_set_callback(exidy_hd6402_callback);
@@ -269,16 +267,15 @@ void exidy_init_machine(void)
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
-	serial_timer = NULL;
-	cassette_timer = NULL;
+	serial_timer = timer_alloc(exidy_serial_timer_callback);
+	cassette_timer = timer_alloc(exidy_cassette_timer_callback);
 
 	serial_connection_init(&cassette_serial_connection);
 	serial_connection_set_in_callback(&cassette_serial_connection, cassette_serial_in);
 	
 	exidy_fe_port_w(0,0);
 
-
-	exidy_reset_timer = timer_set(TIME_NOW, 0, exidy_reset_timer_callback);
+	timer_set(TIME_NOW, 0, exidy_reset_timer_callback);
 	
 	wd179x_init(WD_TYPE_179X,NULL);
 
@@ -291,27 +288,6 @@ void exidy_init_machine(void)
 //	cpunum_write_byte(0,0,0x0c3);
 //	cpunum_write_byte(0,1,0x000);
 //	cpunum_write_byte(0,2,0x0e0);
-
-}
-
-void exidy_shutdown_machine(void)
-{
-	hd6402_exit();
-
-	if (cassette_timer)
-	{
-		timer_remove(cassette_timer);
-		cassette_timer = NULL;
-	}
-
-	if (serial_timer)
-	{
-		timer_remove(serial_timer);
-		serial_timer = NULL;
-	}
-
-	if (exidy_reset_timer)
-		timer_remove(exidy_reset_timer);
 
 }
 
@@ -481,11 +457,7 @@ static WRITE_HANDLER(exidy_fe_port_w)
 			/* both are now off */
 
 			/* stop timer */
-			if (cassette_timer)
-			{
-				timer_remove(cassette_timer);
-				cassette_timer = NULL;
-			}
+			timer_adjust(cassette_timer, 0, 0, 0);
 		}
 		else
 		{
@@ -496,7 +468,7 @@ static WRITE_HANDLER(exidy_fe_port_w)
 				cassette_clock_counter = 0;
 				cassette_clock_state = 0;
 				/* start timer */
-				cassette_timer = timer_pulse(TIME_IN_HZ(4800), 0, exidy_cassette_timer_callback);
+				timer_adjust(cassette_timer, 0, 0, TIME_IN_HZ(4800));
 			}
 		}
 	}
@@ -521,13 +493,7 @@ static WRITE_HANDLER(exidy_fe_port_w)
 			baud_rate = 1200;
 		}
 
-		if (serial_timer)
-		{
-			timer_remove(serial_timer);
-			serial_timer = NULL;
-		}
-
-		serial_timer = timer_pulse(TIME_IN_HZ(baud_rate), 0, exidy_serial_timer_callback);
+		timer_adjust(serial_timer, 0, 0, TIME_IN_HZ(baud_rate));
 	}
 
 	exidy_fe = data;
@@ -799,56 +765,32 @@ static struct Speaker_interface exidy_speaker_interface=
  {50},
 };
 
-static struct MachineDriver machine_driver_exidy =
-{
+	
+static MACHINE_DRIVER_START( exidy )
 	/* basic machine hardware */
-	{
-		/* MachineCPU */
-		{
-			CPU_Z80 ,  /* type */
-			2000000, /* clock - not correct */
-			readmem_exidy,                   /* MemoryReadAddress */
-			writemem_exidy,                  /* MemoryWriteAddress */
-			readport_exidy,                  /* IOReadPort */
-			writeport_exidy,                 /* IOWritePort */
-			0,						   /* VBlank Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,   /* every scanline */
-		},
-	},
-    50,                                                     /* frames per second */
-	200,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	exidy_init_machine,                      /* init machine */
-	exidy_shutdown_machine,
-	/* video hardware */
-	EXIDY_SCREEN_WIDTH, /* screen width */
-	EXIDY_SCREEN_HEIGHT,  /* screen height */
-	{0, (EXIDY_SCREEN_WIDTH - 1), 0, (EXIDY_SCREEN_HEIGHT - 1)},        /* rectangle: visible_area */
-	0,								   /* graphics
-										* decode info */
-	EXIDY_NUM_COLOURS,                                                        /* total colours */
-	EXIDY_NUM_COLOURS,                                                        /* color table len */
-	exidy_init_palette,                      /* init palette */
+	MDRV_CPU_ADD(Z80, 2000000)        /* clock - not correct */
+	MDRV_CPU_MEMORY(readmem_exidy,writemem_exidy)
+	MDRV_CPU_PORTS(readport_exidy,writeport_exidy)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(200)
+	MDRV_INTERLEAVE(1)
 
-	VIDEO_TYPE_RASTER,                                  /* video attributes */
-	0,                                                                 /* MachineLayer */
-	exidy_vh_start,
-	exidy_vh_stop,
-	exidy_vh_screenrefresh,
+	MDRV_MACHINE_INIT( exidy )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(EXIDY_SCREEN_WIDTH, EXIDY_SCREEN_HEIGHT)
+	MDRV_VISIBLE_AREA(0, EXIDY_SCREEN_WIDTH-1, 0, EXIDY_SCREEN_HEIGHT-1)
+	MDRV_PALETTE_LENGTH(EXIDY_NUM_COLOURS)
+	MDRV_COLORTABLE_LENGTH(EXIDY_NUM_COLOURS)
+	MDRV_PALETTE_INIT( exidy )
+
+	MDRV_VIDEO_START( exidy )
+	MDRV_VIDEO_UPDATE( exidy )
 
 	/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-	{
-		{
-				SOUND_SPEAKER,
-				&exidy_speaker_interface
-		},
-	}
-};
+	MDRV_SOUND_ADD(SPEAKER, exidy_speaker_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -858,24 +800,24 @@ static struct MachineDriver machine_driver_exidy =
 ***************************************************************************/
 
 ROM_START(exidy)
-		/* these are common to all because they are inside the machine */
-        ROM_REGION(64*1024+32, REGION_CPU1,0)
+	/* these are common to all because they are inside the machine */
+	ROM_REGION(64*1024+32, REGION_CPU1,0)
 
-		ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, 0)
+	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, 0)
 
-		/* char rom */
-		ROM_LOAD("exchr-1.dat",0x0f800, 1024, 0x4a7e1cdd)
+	/* char rom */
+	ROM_LOAD("exchr-1.dat",0x0f800, 1024, 0x4a7e1cdd)
 
-		/* video prom */
-        ROM_LOAD("bruce.dat", 0x010000, 32, 0xfae922cb)
+	/* video prom */
+	ROM_LOAD("bruce.dat", 0x010000, 32, 0xfae922cb)
 
-		ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, 0xac924f67)
-		ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, 0xead1d0f6)
+	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, 0xac924f67)
+	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, 0xead1d0f6)
 
-		ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, 0x1dd20d80)
-		ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, 0x1068a3f8)
-		ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, 0xe6332518)
-		ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
+	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, 0x1dd20d80)
+	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, 0x1068a3f8)
+	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, 0xe6332518)
+	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
 ROM_END
 
 static const struct IODevice io_exidy[] =
