@@ -429,10 +429,12 @@ static struct GfxLayout tilelayout32 =
 
 struct GfxDecodeInfo cps1_gfxdecodeinfo[] =
 {
+#if DECODE_GFX
 	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* sprites */
 	{ REGION_GFX1, 0, &tilelayout8,  0x000, 32*8 },	/* tiles 8x8 */
 	{ REGION_GFX1, 0, &tilelayout16, 0x000, 32*8 },	/* tiles 16x16 */
 	{ REGION_GFX1, 0, &tilelayout32, 0x000, 32*8 },	/* tiles 32x32 */
+#endif
 	{ -1 } /* end of array */
 };
 
