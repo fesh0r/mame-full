@@ -671,7 +671,7 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 	img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
 
-	if (file)
+	if ((file) && ! is_effective_mode_create(read_or_write))
 	{
 		/* is this file actually a zip file? */
 		if ((mame_fread(file, buffer, 4) == 4) && (buffer[0] == 0x50)
