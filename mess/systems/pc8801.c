@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.2 2001/05/14 22:53:17 JoJo Exp $
+  $Id: pc8801.c,v 1.3 2001/05/15 13:31:15 JoJo Exp $
 
 ***************************************************************************/
 
@@ -115,82 +115,82 @@ MEMORY_END       /* end of array */
 
 /* Macro for DIPSW-1 */
 #define DIPSW_1_1 \
-	PORT_DIPNAME( 0x01, 0x01, "terminal mode" ) \
+	PORT_DIPNAME( 0x01, 0x01, "Terminal mode" ) \
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_1_2 \
-	PORT_DIPNAME( 0x02, 0x00, "text widths" ) \
+	PORT_DIPNAME( 0x02, 0x00, "Text width" ) \
 	PORT_DIPSETTING(    0x02, "40 chars/line" ) \
 	PORT_DIPSETTING(    0x00, "80 chars/line" )
 #define DIPSW_1_3 \
-	PORT_DIPNAME( 0x04, 0x00, "text height" ) \
+	PORT_DIPNAME( 0x04, 0x00, "Text height" ) \
 	PORT_DIPSETTING(    0x04, "20 lines/screen" ) \
 	PORT_DIPSETTING(    0x00, "25 lines/screen" )
 #define DIPSW_1_4 \
-	PORT_DIPNAME( 0x08, 0x08, "enable S parameter" ) \
+	PORT_DIPNAME( 0x08, 0x08, "Enable S parameter" ) \
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_1_5 \
-	PORT_DIPNAME( 0x10, 0x00, "enable DEL code" ) \
+	PORT_DIPNAME( 0x10, 0x00, "Enable DEL code" ) \
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_1_6 \
-	PORT_DIPNAME( 0x20, 0x20, "momory wait" ) \
+	PORT_DIPNAME( 0x20, 0x20, "Memory wait" ) \
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_1_7 \
-	PORT_DIPNAME( 0x40, 0x40, "disable CMD SING" ) \
+	PORT_DIPNAME( 0x40, 0x40, "Disable CMD SING" ) \
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 /* Macro for DIPSW-2 */
 #define DIPSW_2_1 \
-	PORT_DIPNAME( 0x01, 0x01, "parity generate" ) \
+	PORT_DIPNAME( 0x01, 0x01, "Parity generate" ) \
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_2_2 \
-	PORT_DIPNAME( 0x02, 0x00, "parity type" ) \
-	PORT_DIPSETTING(    0x00, "EVEN" ) \
-	PORT_DIPSETTING(    0x02, "ODD" )
+	PORT_DIPNAME( 0x02, 0x00, "Parity type" ) \
+	PORT_DIPSETTING(    0x00, "Even" ) \
+	PORT_DIPSETTING(    0x02, "Odd" )
 #define DIPSW_2_3 \
-	PORT_DIPNAME( 0x04, 0x00, "serial charcter length" ) \
-	PORT_DIPSETTING(    0x04, "7bits/char" ) \
-	PORT_DIPSETTING(    0x00, "8bits/char" )
+	PORT_DIPNAME( 0x04, 0x00, "Serial character length" ) \
+	PORT_DIPSETTING(    0x04, "7 bits/char" ) \
+	PORT_DIPSETTING(    0x00, "8 bits/char" )
 #define DIPSW_2_4 \
-	PORT_DIPNAME( 0x08, 0x08, "stop bit length" ) \
+	PORT_DIPNAME( 0x08, 0x08, "Stop bit length" ) \
 	PORT_DIPSETTING(    0x08, "1" ) \
 	PORT_DIPSETTING(    0x00, "2" )
 #define DIPSW_2_5 \
-	PORT_DIPNAME( 0x10, 0x10, "enable X parameter" ) \
+	PORT_DIPNAME( 0x10, 0x10, "Enable X parameter" ) \
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_2_6 \
-	PORT_DIPNAME( 0x20, 0x20, "duplex mode" ) \
-	PORT_DIPSETTING(    0x20, "half-duplex" ) \
-	PORT_DIPSETTING(    0x00, "full-duplex" )
+	PORT_DIPNAME( 0x20, 0x20, "Duplex mode" ) \
+	PORT_DIPSETTING(    0x20, "half duplex" ) \
+	PORT_DIPSETTING(    0x00, "full duplex" )
 #define DIPSW_2_7 \
-	PORT_DIPNAME( 0x40, 0x00, "boot from internal FD" ) \
+	PORT_DIPNAME( 0x40, 0x00, "Boot from internal FD" ) \
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 #define DIPSW_2_8 \
-	PORT_DIPNAME( 0x80, 0x80, "disable internal FD" ) \
+	PORT_DIPNAME( 0x80, 0x80, "Disable internal FD" ) \
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 /* Macro for other switch */
 #define SW_V1V2N \
-	PORT_DIPNAME( 0x03, 0x01, "basic mode" ) \
+	PORT_DIPNAME( 0x03, 0x01, "Basic mode" ) \
 	PORT_DIPSETTING(    0x02, "N-BASIC" ) \
-	PORT_DIPSETTING(    0x03, "N88-BASIC(V1)" ) \
-	PORT_DIPSETTING(    0x01, "N88-BASIC(V2)" )
+	PORT_DIPSETTING(    0x03, "N88-BASIC (V1)" ) \
+	PORT_DIPSETTING(    0x01, "N88-BASIC (V2)" )
 
 #define SW_HS \
-	PORT_DIPNAME( 0x04, 0x04, "speed mode" ) \
+	PORT_DIPNAME( 0x04, 0x04, "Speed mode" ) \
 	PORT_DIPSETTING(    0x00, "slow" ) \
 	PORT_DIPSETTING(    0x04, "high" )
 
 #define SW_8MHZ \
-	PORT_DIPNAME( 0x08, 0x00, "main CPU clock" ) \
+	PORT_DIPNAME( 0x08, 0x00, "Main CPU clock" ) \
 	PORT_DIPSETTING(    0x00, "4MHz" ) \
 	PORT_DIPSETTING(    0x08, "8MHz" )
 
@@ -198,7 +198,7 @@ MEMORY_END       /* end of array */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 #define SW_SERIAL \
-	PORT_DIPNAME( 0xf0, 0x80, "serial speed" ) \
+	PORT_DIPNAME( 0xf0, 0x80, "Serial speed" ) \
 	PORT_DIPSETTING(    0x10, "75bps" ) \
 	PORT_DIPSETTING(    0x20, "150bps" ) \
 	PORT_DIPSETTING(    0x30, "300bps" ) \
@@ -210,21 +210,21 @@ MEMORY_END       /* end of array */
 	PORT_DIPSETTING(    0x90, "19200bps" )
 
 #define SW_EXTMEM \
-	PORT_DIPNAME( 0x1f, 0x00, "extension memory" ) \
+	PORT_DIPNAME( 0x1f, 0x00, "Extension memory" ) \
 	PORT_DIPSETTING(    0x00, "none" ) \
-	PORT_DIPSETTING(    0x01, "32KB(PC-8012-02 x 1)" ) \
-	PORT_DIPSETTING(    0x02, "64KB(PC-8012-02 x 2)" ) \
-	PORT_DIPSETTING(    0x03, "128KB(PC-8012-02 x 4)" ) \
-	PORT_DIPSETTING(    0x04, "128KB(PC-8801-02N x 1)" ) \
-	PORT_DIPSETTING(    0x05, "256KB(PC-8801-02N x 2)" ) \
-	PORT_DIPSETTING(    0x06, "512KB(PC-8801-02N x 4)" ) \
-	PORT_DIPSETTING(    0x07, "1M(PIO-8234H-1M x 1)" ) \
-	PORT_DIPSETTING(    0x08, "2M(PIO-8234H-2M x 1)" ) \
-	PORT_DIPSETTING(    0x09, "4M(PIO-8234H-2M x 2)" ) \
-	PORT_DIPSETTING(    0x0a, "8M(PIO-8234H-2M x 4)" ) \
-	PORT_DIPSETTING(    0x0b, "1.1M(PIO-8234H-1M x 1 + PC-8801-02N x 1)" ) \
-	PORT_DIPSETTING(    0x0c, "2.1M(PIO-8234H-2M x 1 + PC-8801-02N x 1)" ) \
-	PORT_DIPSETTING(    0x0d, "4.1M(PIO-8234H-2M x 2 + PC-8801-02N x 1)" )
+	PORT_DIPSETTING(    0x01, "32KB (PC-8012-02 x 1)" ) \
+	PORT_DIPSETTING(    0x02, "64KB (PC-8012-02 x 2)" ) \
+	PORT_DIPSETTING(    0x03, "128KB (PC-8012-02 x 4)" ) \
+	PORT_DIPSETTING(    0x04, "128KB (PC-8801-02N x 1)" ) \
+	PORT_DIPSETTING(    0x05, "256KB (PC-8801-02N x 2)" ) \
+	PORT_DIPSETTING(    0x06, "512KB (PC-8801-02N x 4)" ) \
+	PORT_DIPSETTING(    0x07, "1M (PIO-8234H-1M x 1)" ) \
+	PORT_DIPSETTING(    0x08, "2M (PIO-8234H-2M x 1)" ) \
+	PORT_DIPSETTING(    0x09, "4M (PIO-8234H-2M x 2)" ) \
+	PORT_DIPSETTING(    0x0a, "8M (PIO-8234H-2M x 4)" ) \
+	PORT_DIPSETTING(    0x0b, "1.1M (PIO-8234H-1M x 1 + PC-8801-02N x 1)" ) \
+	PORT_DIPSETTING(    0x0c, "2.1M (PIO-8234H-2M x 1 + PC-8801-02N x 1)" ) \
+	PORT_DIPSETTING(    0x0d, "4.1M (PIO-8234H-2M x 2 + PC-8801-02N x 1)" )
 
 #define DUMMY_ROW \
 	PORT_START \
@@ -714,5 +714,5 @@ static struct MachineDriver machine_driver_pc88srh =
 };
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT	  COMPANY	FULLNAME */
-COMPX( 1985, pc88srl, 0,		pc88srl, pc88sr, 0,		  "NEC",  "PC-8801mkIISR(Low resolution display, VSYNC 15KHz)", 0 )
-COMPX( 1985, pc88srh, pc88srl,		pc88srh, pc88sr, 0,		  "NEC",  "PC-8801mkIISR(High resolution display, VSYNC 24KHz)", 0 )
+COMPX( 1985, pc88srl, 0,		pc88srl, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Lores display, VSYNC 15KHz)", 0 )
+COMPX( 1985, pc88srh, pc88srl,		pc88srh, pc88sr, 0,		  "Nippon Electronic Company",  "PC-8801 MKIISR (Hires display, VSYNC 24KHz)", 0 )
