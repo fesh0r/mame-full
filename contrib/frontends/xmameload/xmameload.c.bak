@@ -1,0 +1,49 @@
+/* Form definition file generated with fdesign. */
+
+#include "forms.h"
+#include <stdlib.h>
+#include "xmameload.h"
+
+FD_xmame_main_form *create_form_xmame_main_form(void)
+{
+  FL_OBJECT *obj;
+  FD_xmame_main_form *fdui = (FD_xmame_main_form *) fl_calloc(1, sizeof(*fdui));
+
+  fdui->xmame_main_form = fl_bgn_form(FL_NO_BOX, 660, 300);
+  obj = fl_add_box(FL_UP_BOX,0,0,660,300,"");
+  fdui->file_menu = obj = fl_add_menu(FL_PULLDOWN_MENU,20,10,70,20,"File");
+    fl_set_object_boxtype(obj,FL_FRAME_BOX);
+  fdui->gamlist_browser = obj = fl_add_browser(FL_SELECT_BROWSER,20,60,160,220,"GameList");
+    fl_set_object_lalign(obj,FL_ALIGN_TOP_LEFT);
+  fdui->video_atributes = obj = fl_add_labelframe(FL_ENGRAVED_FRAME,190,110,160,170,"Video Options");
+  fdui->audio_options = obj = fl_add_labelframe(FL_ENGRAVED_FRAME,360,130,130,150,"Audio Options");
+  fdui->io_options = obj = fl_add_labelframe(FL_ENGRAVED_FRAME,500,130,140,150,"Input/Output");
+  fdui->mamedir_input = obj = fl_add_input(FL_NORMAL_INPUT,250,40,240,20,"ROMs Dir");
+  fdui->spooldir_input = obj = fl_add_input(FL_NORMAL_INPUT,250,70,240,20,"HIScores Dir");
+  fdui->dsiplayname_input = obj = fl_add_input(FL_NORMAL_INPUT,240,120,90,20,"Display");
+  fdui->xscale_input = obj = fl_add_counter(FL_SIMPLE_COUNTER,200,160,60,20,"X-Scale");
+  fdui->yscale_input = obj = fl_add_counter(FL_SIMPLE_COUNTER,200,200,60,20,"Y-Scale");
+  fdui->frameskip_input = obj = fl_add_counter(FL_SIMPLE_COUNTER,200,240,60,20,"Skip Frames");
+  fdui->use_xsync_input = obj = fl_add_round3dbutton(FL_PUSH_BUTTON,320,150,30,30,"DoXSync");
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+  fdui->use_mitshm_input = obj = fl_add_round3dbutton(FL_PUSH_BUTTON,320,180,30,30,"MitShmem");
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+  fdui->use_private_cmap_input = obj = fl_add_round3dbutton(FL_PUSH_BUTTON,320,210,30,30,"PrivCmap");
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+  fdui->use_truecolor_input = obj = fl_add_round3dbutton(FL_PUSH_BUTTON,320,240,30,30,"TrueColor");
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+  fdui->use_mouse_button = obj = fl_add_button(FL_PUSH_BUTTON,610,140,20,20,"mouse");
+    fl_set_object_boxtype(obj,FL_OVAL3D_DOWNBOX);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+  fdui->use_trakball_button = obj = fl_add_button(FL_PUSH_BUTTON,610,170,20,20,"trakball");
+    fl_set_object_boxtype(obj,FL_ROUNDED3D_DOWNBOX);
+    fl_set_object_lalign(obj,FL_ALIGN_LEFT);
+    fl_set_button(obj, 1);
+  fl_end_form();
+
+  fdui->xmame_main_form->fdui = fdui;
+
+  return fdui;
+}
+/*---------------------------------------*/
+

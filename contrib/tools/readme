@@ -1,0 +1,50 @@
+Contents of directory contrib/tools
+==========================================
+
+1)      Name:		mame_perl-1.1
+	Author:		Stefan Becker
+	Description:	MAME/Raine ROM sets manager Perl scripts 1.1
+	Notes:		see contrib/tool/mame_perl-1.1/README
+
+2)      Name:		modelines
+	Author:		William A. Barath
+	Description:	XFree 86 modelines defining special resolutions
+			for use with xmame and DGA
+
+3)	Name:		readme
+	Author:		Hans de Goede <hans@highrise.nl>
+	Description:	This file
+
+4)	Name:		romalizer
+	Author:		Christopher Stone <tkmame@ztnet.com>
+	Description:	a rom cleaner/sorting tcl script
+	Notes:		see the contents of the script, or run it with -help
+			for more info
+
+5)	Name:		romulan.pl
+	Author:		Nathan Hand <nathanh@chirp.com.au>
+	Description:	Perl script I've been working on to keep track of
+                        split romsets. Relies on xmame + unzip binaries being
+                        available, doesn't support merged sets, doesn't
+                        support unzipped sets, doesn't examine ~/.xmamerc,
+                        doesn't do a lot really. I use it personally though,
+                        and I find it useful.
+                        
+                        Has some neat routines (in perl) to get romset info
+                        out of xmame or the zipfile. Might be useful to other
+                        romset analyzer developers.
+
+6)	Name:		xlistdev.c
+	Author:		??
+	Description:	This program lists all X Input extension devices
+
+7)	Name:		xmame-screensaver
+	Author:		Hans de Goede <hans@highrise.nl>
+	Description:	A little script to run a random game in the root
+			window for 2 minutes and then run another random game
+			etc. Use this as the extern command for xscreensaver.
+	Usage:		- compile the x11 version of xmame
+			- install it somewhere in your path
+			- copy xmame-screensaver to /usr/games
+			- edit ~/.xscreensaver , and add a line:
+			  /usr/games/xmame-screensaver

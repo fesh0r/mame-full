@@ -1,0 +1,4 @@
+#!/usr/bin/perl -pi.bak
+
+# lowercase the input file, easy as cake ;)
+tr/[A-Z]/[a-z]/;
