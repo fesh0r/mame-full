@@ -114,11 +114,11 @@ INLINE void WRITE_NIBBLE(SaturnAdr adr, SaturnNib nib)
 #define BEGIN_W 0
 #define COUNT_W 16
 
-#define S64_READ_NIBBLE(r, x) ((x)&1 ? S64_BYTE(r, (x)>>1)>>4 : S64_BYTE(r, (x)>>1)&0xf )
+#define S64_READ_NIBBLE(r, x) (((x)&1) ? (S64_BYTE(r, ((x)>>1))>>4) : (S64_BYTE(r, ((x)>>1))&0xf) )
 #define S64_WRITE_NIBBLE(r, x, v) \
-		(S64_BYTE(r, (x)>>1) = (x)&1 \
-		 ?(S64_BYTE(r, (x)>>1)&0xf)|((v)<<4) \
-		 :(S64_BYTE(r, (x)>>1)&0xf0)|(v) )
+		(S64_BYTE(r, ((x)>>1)) = ((x)&1) \
+		 ?(S64_BYTE(r, ((x)>>1))&0xf)|((v)<<4) \
+		 :(S64_BYTE(r, ((x)>>1))&0xf0)|(v) )
 
 #define S64_READ_B(r) S64_BYTE(r,0)
 #define S64_WRITE_B(r,v) (S64_BYTE(r,0)=v)
