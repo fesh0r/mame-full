@@ -463,6 +463,8 @@ static char last_directory[MAX_PATH];
 static UINT mame32_message;
 static BOOL bDoBroadcast;
 
+static int mame_debug = 0;
+
 /***************************************************************************
     Global variables  
  ***************************************************************************/
@@ -1365,12 +1367,6 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 
     AdjustMetrics();
     UpdateScreenShot();
-    
-#ifdef MAME_DEBUG
-    {
-        win32_debug = TRUE;
-    }
-#endif
 
     if (win32_debug)
     {
@@ -1825,11 +1821,11 @@ static void ColumnSort(int column, BOOL bColumn)
     Header_SetSortInfo(hwndList, use_column, !reverse_sort);
 }
 
-static BOOL IsGameRomless(void)
+static BOOL IsGameRomless(int iGame)
 {
 	const struct RomModule  *romp;
 
-	romp = drivers[game_index]->rom;
+	romp = drivers[iGame]->rom;
 	if (romp)
 	{
 		while (romp->name || romp->offset || romp->length)
@@ -1866,7 +1862,7 @@ static BOOL GameCheck(void)
      
     if (GetHasRoms(game_index) == UNKNOWN)
     {
-        if (IsGameRomless())
+        if (IsGameRomless(game_index))
         {
             success = TRUE;
         }
@@ -3871,7 +3867,6 @@ static BOOL ParseCommandLine(char *command_line)
 		}
 #endif
         if (argv[i][0] != '-')
-
             continue;
 
 #ifdef MESS
