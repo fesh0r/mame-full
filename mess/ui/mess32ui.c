@@ -5,6 +5,7 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #include <wingdi.h>
+#include <winuser.h>
 
 #include "ui/mame32.h"
 #include "ui/resourcems.h"

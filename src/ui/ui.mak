@@ -61,7 +61,7 @@ GUIRESFILE = $(OBJ)/mess/ui/mess32.res
 DEFS += -DDIRECTSOUND_VERSION=0x0300 \
         -DDIRECTINPUT_VERSION=0x0500 \
         -DDIRECTDRAW_VERSION=0x0300 \
-        -DWINVER=0x0400 \
+        -DWINVER=0x0500 \
         -D_WIN32_IE=0x0500 \
         -D_WIN32_WINNT=0x0400 \
         -DWIN32 \

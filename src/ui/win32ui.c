@@ -651,7 +651,9 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -effect %s",                 pOpts->effect);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
 
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -cleanstretch %s",GetCleanStretchShortName(pOpts->clean_stretch));
+	//sprintf(&pCmdLine[strlen(pCmdLine)], " -cleanstretch %s",GetCleanStretchShortName(pOpts->clean_stretch));
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%scleanstretch",            pOpts->clean_stretch    ? "" : "no");
+
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -zoom %i", pOpts->zoom);
 
 	// d3d

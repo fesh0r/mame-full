@@ -894,10 +894,17 @@ static int create_surfaces(void)
 	{
 		primary_desc.dwFlags |= DDSD_BACKBUFFERCOUNT;
 		primary_desc.ddsCaps.dwCaps |= DDSCAPS_FLIP | DDSCAPS_COMPLEX | DDSCAPS_3DDEVICE;
+#ifdef _MSC_VER
+		if (win_triple_buffer)
+			primary_desc.DUMMYUNIONNAMEN(5).dwBackBufferCount = 2;
+		else
+			primary_desc.DUMMYUNIONNAMEN(5).dwBackBufferCount = 1;
+#else
 		if (win_triple_buffer)
 			primary_desc.dwBackBufferCount = 2;
 		else
 			primary_desc.dwBackBufferCount = 1;
+#endif
 	}
 
 	// then create the primary surface
