@@ -3,6 +3,10 @@
  * Nate Woods
  *
  * Originally based on src/mess/vidhrdw/dragon.c by Mathis Rosenhauer
+ *
+ * Sources:
+ *  M6847 data sheet (http://www.spies.com/arcade/schematics/DataSheets/6847.pdf)
+ *  M6847T1 info from Rainbow magazine (10/86-12/86)
  */
 
 #include "m6847.h"
@@ -289,7 +293,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 
 	/* HACKHACK - Need to know more about the M6847T1 to be accurate! */
 	if (the_state.initparams.version == M6847_VERSION_M6847T1) {
-		if (the_state.modebits & M6847_MODEBIT_INTEXT) {
+		if (the_state.modebits & M6847_MODEBIT_GM0) {
 			if (b < 0x80)
 				lowercase_hack = 1;
 		}
@@ -342,6 +346,10 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 			b &= 0x3f;
 		}
 
+		/* The following was verified in Rainbow */
+		if ((the_state.initparams.version == M6847_VERSION_M6847T1) && (the_state.modebits & M6847_MODEBIT_GM1))
+			fgc ^= 1;
+
 		if (b == 0x20) {
 			character = NULL;
 		}
@@ -372,7 +380,7 @@ static UINT8 *mapper_alphanumeric(UINT8 *mem, int param, int *fg, int *bg, int *
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
 	const int *metapalette, UINT8 *vrambase,
-	int has_lowercase, int skew_up, int border_color, int wf, artifactproc artifact)
+	int skew_up, int border_color, int wf, artifactproc artifact)
 {
 	static int rowheights[] = {
 		12,		12,		12,		12,		12,		12,		12,		12,
@@ -532,8 +540,7 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 
 	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
 		full_refresh, m6847_metapalette, the_state.initparams.ram,
-		(the_state.initparams.version == M6847_VERSION_M6847T1), 0,
-		(full_refresh ? m6847_bordercolor() : -1),
+		0, (full_refresh ? m6847_bordercolor() : -1),
 		1, artifacts[artifact_value & 3]);
 
 	raster_bits(bitmap, &rs, &rvm, &rf, NULL);

@@ -75,8 +75,6 @@ void dragon_charproc(UINT8 c)
 	int inv;
 
 	inv = (c & 0x40) ? 1 : 0;
-	if (m6847_gm1_r(0))
-		inv ^= 1;
 
 	m6847_as_w(0,	(c & 0x80) || (m6847_intext_r(0)));
 	m6847_inv_w(0,	inv);
@@ -741,7 +739,7 @@ static void coco3_getvideoinfo(int full_refresh, struct rasterbits_source *rs,
 		internal_m6847_vh_screenrefresh(rs, rvm, rf,
 			full_refresh, coco3_metapalette,
 			&RAM[coco3_lores_vidbase()],
-			TRUE, 1, (full_refresh ? 16 : -1), 2,
+			1, (full_refresh ? 16 : -1), 2,
 			artifacts[readinputport(12) & 3]);
 	}
 }

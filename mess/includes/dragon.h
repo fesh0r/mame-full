@@ -10,8 +10,7 @@
 int internal_m6847_vh_start(const struct m6847_init_params *params, int dirtyramsize);
 void internal_m6847_vh_screenrefresh(struct rasterbits_source *rs,
 	struct rasterbits_videomode *rvm, struct rasterbits_frame *rf, int full_refresh,
-	const int *metapalette, UINT8 *vrambase,
-	int has_lowercase, int skew_up, int border_color, int wf, artifactproc artifact);
+	const int *metapalette, UINT8 *vrambase, int skew_up, int border_color, int wf, artifactproc artifact);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
