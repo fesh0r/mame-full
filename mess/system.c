@@ -254,9 +254,9 @@ const struct GameDriver *test_drivers[] =
  * Lisa 2 				 January			 1984
  * Macintosh XL 		 January			 1985
  */
-//	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2								*/
-//	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10								*/
-//	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL							*/
+	DRIVER( lisa2 ) 	/* 1984 Apple Lisa 2								*/
+	DRIVER( lisa210 ) 	/* 1984 Apple Lisa 2/10								*/
+	DRIVER( macxl ) 	/* 1984 Apple Macintosh XL							*/
 /*
  * Macintosh 			 January			 1984
  * Macintosh 512k		 July?				 1984
@@ -266,8 +266,8 @@ const struct GameDriver *test_drivers[] =
  * Macintosh II 		 March				 1987
  */
 //TESTDRIVER( mac512k )	/* 1984 Apple Macintosh 512k						*/
-//	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
-//	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
+	DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke						*/
+	DRIVER( macplus )	/* 1986 Apple Macintosh Plus						*/
 
 	/* ATARI */
 /*
@@ -452,17 +452,17 @@ TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 //TESTDRIVER( mz800  )	/* 1982 Sharp MZ800 								*/
 
 	/* TEXAS INSTRUMENTS */
-//	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
+	DRIVER( ti990_10 )	/* 1975 TI 990/10									*/
 //TESTDRIVER( ti990_4 )	/* 1976 TI 990/4									*/
 //TESTDRIVER( tm990189 )	/* 1980? TM990/189									*/
 
 //TESTDRIVER( ti99_224 )	/* 1983 TI 99/2 (24kb ROMs) 						*/
 //TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 (32kb ROMs) 						*/
-//	DRIVER( ti99_4 )	/* 1979 TI 99/4 									*/
-//	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video						*/
-//	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
-//	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video					*/
-//	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
+	DRIVER( ti99_4 )	/* 1979 TI 99/4 									*/
+	DRIVER( ti99_4e )	/* 1980 TI 99/4 with 50Hz video						*/
+	DRIVER( ti99_4a )	/* 1981 TI 99/4A									*/
+	DRIVER( ti99_4ae )	/* 1981 TI 99/4A with 50Hz video					*/
+	DRIVER( ti99_4ev)	/* 1994 TI 99/4A with EVPC video card				*/
 //TESTDRIVER( ti99_4p )	/* 1996 SNUG 99/4P (a.k.a. SGCPU)					*/
 
 //	DRIVER( avigo )     /*												    */
@@ -613,7 +613,7 @@ TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 //TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit						*/
 
 	/* DEC */
-//	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
+	DRIVER( pdp1 )      /* 1961 DEC PDP1									*/
 
 	/* MEMOTECH */
 //	DRIVER( mtx512 )    /* 1983 Memotech MTX512								*/
@@ -651,7 +651,7 @@ TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	*/
 //	DRIVER( svi328a ) 	/* SVI-328	(BASIC 1.11)							*/
 
 	/* Booth (this is the builder, not a company) */
-//	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
+	DRIVER( apexc )		/* 1951(?) APEXC : All-Purpose Electronic X-ray Computer */
 
 /****************Games*******************************************************/
 	/* Computer Electronic */
