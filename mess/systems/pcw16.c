@@ -918,7 +918,7 @@ static void rtc_setup_max_days(void)
 	}
 	else
 	{
-		rtc_days_max = (unsigned char)rtc_days_in_each_month;
+		rtc_days_max = (unsigned char)rtc_days_in_each_month[rtc_months];
 	}
 }
 
