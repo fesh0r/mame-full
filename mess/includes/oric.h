@@ -28,3 +28,4 @@ void	telestrat_shutdown_machine(void);
 
 READ_HANDLER ( telestrat_IO_r );
 WRITE_HANDLER ( telestrat_IO_w );
+
