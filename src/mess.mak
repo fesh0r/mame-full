@@ -626,11 +626,11 @@ mess.txt: $(EMULATOR)
 	@$(EMULATOR) -listtext > mess.txt
 	@$(EMULATOR) -listdevices >> mess.txt
 
-mess/makedep/makedep$(EXE):
+mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
 
-src/$(TARGET).dep depend: mess/makedep/makedep$(EXE)
-	mess/makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -- $(INCLUDE_PATH) -- src/*.c \
+src/$(TARGET).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
+	mess/makedep/makedep$(EXE) -f - -p$(TARGET).obj/ -q -- $(INCLUDE_PATH) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c >src/$(TARGET).dep
 
