@@ -85,6 +85,8 @@ static int cocojvc_encode_header(void *buffer, UINT32 *header_size, const struct
 }
 
 BLOCKDEVICE_FORMATDRIVER_START( coco_jvc )
+	BDFD_NAME( "jvc" )
+	BDFD_HUMANNAME( "JVC disk image" )
 	BDFD_EXTENSION( "dsk" )
 	BDFD_TRACKS_OPTION( 35 )
 	BDFD_TRACKS_OPTION( 40 )
@@ -212,6 +214,8 @@ static int cocovdk_encode_header(void *h, UINT32 *header_size, const struct disk
 }
 
 BLOCKDEVICE_FORMATDRIVER_START( coco_vdk )
+	BDFD_NAME( "vdk" )
+	BDFD_HUMANNAME( "VDK disk image" )
 	BDFD_EXTENSION( "vdk" )
 	BDFD_HEADER_SIZE( 12 )
 	BDFD_HEADER_ENCODE( cocovdk_encode_header )
@@ -568,6 +572,8 @@ static int cocodmk_write_sector(void *bdf, const void *header, UINT8 track, UINT
 }
 
 BLOCKDEVICE_FORMATDRIVER_START( coco_dmk )
+	BDFD_NAME( "dmk" )
+	BDFD_HUMANNAME( "DMK disk image" )
 	BDFD_EXTENSION( "dsk" )
 	BDFD_TRACKS_OPTION( 35 )
 	BDFD_TRACKS_OPTION( 40 )

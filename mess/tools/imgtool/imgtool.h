@@ -230,8 +230,6 @@ struct ImageModule
 	void *extra;
 };
 
-typedef void (*ImageModule_ctor)(struct ImageModule *imgmod);
-
 typedef struct tagIMAGE {
 	const struct ImageModule *module;
 } IMAGE;

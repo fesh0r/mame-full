@@ -514,7 +514,7 @@ static int cmd_listformats(struct command *c, int argc, char *argv[])
 
 	mod = getmodules(&modcount);
 	while(modcount--) {
-		fprintf(stdout, "  %-10s%s\n", mod->name, mod->humanname);
+		fprintf(stdout, "  %-20s%s\n", mod->name, mod->humanname);
 		mod++;
 	}
 

@@ -1,4 +1,4 @@
-#include "imgtool.h"
+#include "imgtoolx.h"
 #include "formats.h"
 
 enum
@@ -200,15 +200,39 @@ int imgtool_bdf_is_readonly(IMAGE *img)
 	return bdf_is_readonly(get_bdf(img));
 }
 
-void imgtool_bdf_getcreateoptions(struct OptionTemplate *createoptions, size_t max_opts, formatdriver_ctor format)
+
+int imgtool_bdf_formatdrvctor(struct ImageModuleCtorParams *params, const formatdriver_ctor *formats)
 {
+	int format_count;
+	struct ImageModule *imgmod = params->imgmod;
+	struct OptionTemplate *createoptions;
+	size_t max_opts;
 	size_t i;
 	struct InternalBdFormatDriver drv;
 	int tracks_min = -1, tracks_max = 0;
 	int heads_min = -1, heads_max = 0;
 	int sectors_min = -1, sectors_max = 0;
+	char buf[256];
 
-	format(&drv);
+	/* count the number of possible formats */
+	for(format_count = 0; formats[format_count]; format_count++)
+		;
+
+	/* specify the format */
+	assert(params->index < format_count);
+	imgmod->extra = formats[params->index];
+
+	/* get the format driver info */
+	formats[params->index](&drv);
+
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s_%s", imgmod->name, drv.name);
+	imgmod->name = strdup(buf);
+	snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%s (%s)", imgmod->humanname, drv.humanname);
+	imgmod->humanname = strdup(buf);
+
+	memset(imgmod->createoptions_template, 0, sizeof(imgmod->createoptions_template));
+	createoptions = imgmod->createoptions_template;
+	max_opts = sizeof(imgmod->createoptions_template) / sizeof(imgmod->createoptions_template[0]);
 
 	for (i = 0; drv.tracks_options[i] && (i < sizeof(drv.tracks_options) / sizeof(drv.tracks_options[0])); i++)
 	{
@@ -252,5 +276,6 @@ void imgtool_bdf_getcreateoptions(struct OptionTemplate *createoptions, size_t m
 	createoptions[OPT_SECTORS].min = sectors_min;
 	createoptions[OPT_SECTORS].max = sectors_max;
 	createoptions[OPT_SECTORS].defaultvalue = NULL;
-}
 
+	return format_count;
+}

@@ -32,9 +32,7 @@ CARTMODULE(vc20,     "Vc20 Cartridge",					NULL)
 CARTMODULE(vectrex,  "Vectrex Cartridge",				"bin")
 CARTMODULE(vic20,    "Commodore Vic-20 Cartridge",		"a0")
 
-IMAGEMODULE_EXTERN(coco_rsdos_jvc);		/* CoCo RS-DOS disks */
-IMAGEMODULE_EXTERN(coco_rsdos_vdk);		/* CoCo RS-DOS disks */
-IMAGEMODULE_EXTERN(coco_rsdos_dmk);		/* CoCo RS-DOS disks */
+IMAGEMODULE_EXTERN(coco_rsdos);			/* CoCo RS-DOS disks */
 IMAGEMODULE_EXTERN(cococas);			/* CoCo cassettes */
 IMAGEMODULE_EXTERN(msdos);				/* FAT/MSDOS diskett images */
 IMAGEMODULE_EXTERN(msdoshd);			/* FAT/MSDOS harddisk images */
@@ -89,9 +87,7 @@ IMAGEMODULE_EXTERN(ti99);		/* TI99 floppy */
 
 static const ImageModule_ctor module_ctors[] =
 {
-	IMAGEMODULE_DECL(coco_rsdos_jvc),
-	IMAGEMODULE_DECL(coco_rsdos_vdk),
-	IMAGEMODULE_DECL(coco_rsdos_dmk),
+	IMAGEMODULE_DECL(coco_rsdos),
 	IMAGEMODULE_DECL(cococas),
 	IMAGEMODULE_DECL(msdos),
 	IMAGEMODULE_DECL(msdoshd),
@@ -180,18 +176,38 @@ void copy_option_template(struct OptionTemplate *dest, int destlen, const struct
 const struct ImageModule *getmodules(size_t *len)
 {
 	static struct ImageModule *modules = NULL;
-	size_t module_count;
-	int i;
+	static size_t module_count;
 
-	module_count = sizeof(module_ctors) / sizeof(module_ctors[0]);
+	struct ImageModuleCtorParams params;
+	size_t allocated_modules;
+	int i, index, count;
+
 	if (!modules)
 	{
-		modules = (struct ImageModule *) malloc(sizeof(struct ImageModule) * module_count);
+		allocated_modules = sizeof(module_ctors) / sizeof(module_ctors[0]);
+		modules = (struct ImageModule *) malloc(sizeof(struct ImageModule) * allocated_modules);
 		if (!modules)
 			goto outofmemory;
 
-		for (i = 0; i < module_count; i++)
-			module_ctors[i](&modules[i]);
+		for (i = 0; i < sizeof(module_ctors) / sizeof(module_ctors[0]); i++)
+		{
+			index = 0;
+			do
+			{
+				if (module_count >= allocated_modules)
+				{
+					allocated_modules += 10;
+					modules = (struct ImageModule *) realloc(modules, sizeof(struct ImageModule) * allocated_modules);
+					if (!modules)
+						goto outofmemory;
+				}
+
+				params.imgmod = &modules[module_count++];
+				params.index = index++;
+				count = module_ctors[i](&params);
+			}
+			while(index < count);
+		}
 	}
 
 	*len = module_count;

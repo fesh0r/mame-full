@@ -43,6 +43,8 @@ enum
 
 struct InternalBdFormatDriver
 {
+	const char *name;
+	const char *humanname;
 	const char *extension;
 	UINT8 tracks_options[8];
 	UINT8 heads_options[8];
@@ -86,6 +88,8 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 #define BLOCKDEVICE_FORMATDRIVER_EXTERN( format_name )												\
 	extern void construct_formatdriver_##format_name(struct InternalBdFormatDriver *drv)
 
+#define	BDFD_NAME(name_)							drv->name = name_;
+#define	BDFD_HUMANNAME(humanname_)					drv->humanname = humanname_;
 #define	BDFD_EXTENSION(ext)							drv->extension = ext;
 #define BDFD_TRACKS_OPTION(tracks_option)			drv->tracks_options[tracks_optnum++] = tracks_option;
 #define BDFD_HEADS_OPTION(heads_option)				drv->heads_options[heads_optnum++] = heads_option;
