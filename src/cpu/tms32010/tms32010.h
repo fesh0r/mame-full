@@ -18,7 +18,6 @@
 /* #define INLINE static */
 
 #include "osd_cpu.h"
-#include "osd_dbg.h"
 #include "cpuintrf.h"
 
 enum {
