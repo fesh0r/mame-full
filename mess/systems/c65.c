@@ -349,49 +349,41 @@ ROM_END
 static SID6581_interface ntsc_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	2,
 	{
-		{
-			MIXER(50, MIXER_PAN_RIGHT),
-			MOS8580,
-			985248,
-			c64_paddle_read
-		},
-		{
+		MOS8580,
+		985248,
+		c64_paddle_read
+	}
+/*		{
 			MIXER(50, MIXER_PAN_LEFT),
 			MOS8580,
 			985248,
 			NULL
 		}
 	}
+*/
 };
 
 static SID6581_interface pal_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	2,
 	{
-		{
-			MIXER(50, MIXER_PAN_RIGHT),
-			MOS8580,
-			1022727,
-			c64_paddle_read
-		},
-		{
+		MOS8580,
+		1022727,
+		c64_paddle_read
+	}
+/*		{
 			MIXER(50, MIXER_PAN_LEFT),
 			MOS8580,
 			1022727,
 			NULL
 		}
 	}
+*/
 };
 
 static MACHINE_DRIVER_START( c65 )
@@ -413,15 +405,19 @@ static MACHINE_DRIVER_START( c65 )
 	MDRV_PALETTE_INIT( c65 )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, ntsc_sound_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(ntsc_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( c65pal )
 	MDRV_IMPORT_FROM( c65 )
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
-	MDRV_SOUND_REPLACE("custom", CUSTOM, pal_sound_interface)
+	MDRV_SOUND_MODIFY("custom")
+	MDRV_SOUND_CONFIG(pal_sound_interface)
 MACHINE_DRIVER_END
 
 #define init_c65 c65_driver_init

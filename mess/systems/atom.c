@@ -212,14 +212,6 @@ INPUT_PORTS_END
 
 /* sound output */
 
-static	struct	Speaker_interface atom_sh_interface =
-{
-	1,
-	{ 100 },
-	{ 0 },
-	{ NULL }
-};
-
 /* machine definition */
 static MACHINE_DRIVER_START( atom )
 	/* basic machine hardware */
@@ -235,7 +227,9 @@ static MACHINE_DRIVER_START( atom )
 	MDRV_M6847_PAL( atom )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, atom_sh_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

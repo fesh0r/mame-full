@@ -9,17 +9,15 @@
 #include "driver.h"
 #include "includes/odyssey2.h"
 
-int odyssey2_sh_channel;
+sound_stream *odyssey2_sh_channel;
 
 struct CustomSound_interface odyssey2_sound_interface = 
 {
-	odyssey2_sh_start,
-	0,
-	0
+	odyssey2_sh_start
 };
 
-int odyssey2_sh_start(const struct MachineSound* driver)
+void *odyssey2_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	odyssey2_sh_channel = stream_init( "Odyssey2", 50, Machine->sample_rate, 0, odyssey2_sh_update );
-	return 0;
+	odyssey2_sh_channel = stream_create(0, 1, Machine->sample_rate, 0, odyssey2_sh_update );
+	return (void *) ~0;
 }

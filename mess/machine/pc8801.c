@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.22 2004/06/13 22:01:18 npwoods Exp $
+  $Id: pc8801.c,v 1.23 2005/03/01 05:23:48 npwoods Exp $
 
 ***************************************************************************/
 
@@ -11,6 +11,7 @@
 #include "includes/pc8801.h"
 #include "machine/8255ppi.h"
 #include "includes/nec765.h"
+#include "sound/beep.h"
 
 static int ROMmode,RAMmode,maptvram;
 static int no4throm,no4throm2,port71_save;

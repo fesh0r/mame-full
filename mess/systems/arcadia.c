@@ -256,7 +256,10 @@ static MACHINE_DRIVER_START( arcadia )
 	MDRV_VIDEO_UPDATE( arcadia )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, arcadia_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(arcadia_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

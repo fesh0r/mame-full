@@ -2,6 +2,7 @@
 #define LYNX_H
 
 #include "driver.h"
+#include "sound/custom.h"
 
 extern UINT32 lynx_palette[0x10];
 
@@ -38,8 +39,8 @@ void lynx_audio_reset(void);
 void lynx_audio_write(int offset, UINT8 data);
 UINT8 lynx_audio_read(int offset);
 void lynx_audio_count_down(int nr);
-int lynx_custom_start (const struct MachineSound *driver);
-int lynx2_custom_start (const struct MachineSound *driver);
+void *lynx_custom_start(int clock, const struct CustomSound_interface *config);
+void *lynx2_custom_start(int clock, const struct CustomSound_interface *config);
 void lynx_custom_update (void);
 
 #endif /* LYNX_H */

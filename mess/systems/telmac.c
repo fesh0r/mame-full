@@ -693,14 +693,6 @@ static CDP1802_CONFIG tmc600_config =
 	tmc600_in_ef
 };
 
-/* Sound Interfaces */
-
-static struct beep_interface cdp1864_sound_intf =
-{
-	1,
-	{ 25 }
-};
-
 /* Interrupt Generators */
 
 static INTERRUPT_GEN( telmac_frame_int )
@@ -760,7 +752,9 @@ static MACHINE_DRIVER_START( tmc2000 )
 	MDRV_VIDEO_UPDATE(cdp1864)
 
 	// sound hardware
-	MDRV_SOUND_ADD(BEEP, cdp1864_sound_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tmc2000t )
@@ -808,8 +802,10 @@ static MACHINE_DRIVER_START( tmc600 )
 	MDRV_VIDEO_UPDATE(cdp1869)
 
 	// sound hardware
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 //	MDRV_SOUND_ADD(CUSTOM, cdp1869_sound)
-	MDRV_SOUND_ADD(BEEP, cdp1864_sound_intf)	// HACK
 MACHINE_DRIVER_END
 
 /* ROMs */

@@ -28,6 +28,7 @@
 #include "devices/mfmdisk.h"
 #include "devices/printer.h"
 #include "devices/cassette.h"
+#include "sound/ay8910.h"
 #include "image.h"
 
 static int enable_logging = 0;

@@ -18,7 +18,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sound/3812intf.h"
 #include "machine/8255ppi.h"
 #include "vidhrdw/generic.h"
 
@@ -55,6 +54,8 @@
 #include "formats/pc_dsk.h"
 
 #include "machine/8237dma.h"
+#include "sound/sn76496.h"
+#include "sound/3812intf.h"
 
 #define ym3812_StdClock 3579545
 
@@ -1068,33 +1069,15 @@ INPUT_PORTS_END
 
 static unsigned i86_address_mask = 0x000fffff;
 
-#if defined(GAMEBLASTER)
-static struct SAA1099_interface cms_interface = {
-	2,
-	{
-		{ 50, 50 },
-		{ 50, 50 }
-	}
-};
-#endif
-
 #if defined(ADLIB)
 /* irq line not connected to pc on adlib cards (and compatibles) */
 static void pc_irqhandler(int linestate) {}
 
-static struct YM3812interface ym3812_interface = {
-	1,
-	ym3812_StdClock, /* I hope this is the clock used on the original Adlib Sound card */
-	{255}, /* volume adjustment in relation to speaker and tandy1000 sound neccessary */
-	{pc_irqhandler}
+static struct YM3812interface ym3812_interface =
+{
+	pc_irqhandler
 };
 #endif
-
-static struct SN76496interface t1t_sound_interface = {
-	1,
-	{2386360},
-	{255,}
-};
 
 #define MDRV_CPU_PC(mem, port, type, clock, vblankfunc)	\
 	MDRV_CPU_ADD_TAG("main", type, clock)				\
@@ -1125,12 +1108,20 @@ static MACHINE_DRIVER_START( pcmda )
 	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 MACHINE_DRIVER_END
 
@@ -1147,12 +1138,20 @@ static MACHINE_DRIVER_START( pccga )
 	MDRV_IMPORT_FROM( pcvideo_cga )
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 MACHINE_DRIVER_END
 
@@ -1178,9 +1177,14 @@ static MACHINE_DRIVER_START( europc )
 	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 
 	MDRV_NVRAM_HANDLER( europc_rtc )
@@ -1199,12 +1203,20 @@ static MACHINE_DRIVER_START( xtcga )
 	MDRV_IMPORT_FROM( pcvideo_cga )
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 MACHINE_DRIVER_END
 
@@ -1230,7 +1242,10 @@ static MACHINE_DRIVER_START( pc200 )
 	MDRV_VIDEO_UPDATE(pc_video)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
@@ -1246,7 +1261,10 @@ static MACHINE_DRIVER_START( pc1512 )
 	MDRV_IMPORT_FROM( pcvideo_pc1512 )
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END
@@ -1264,7 +1282,10 @@ static MACHINE_DRIVER_START( pc1640 )
 	MDRV_IMPORT_FROM(pcvideo_pc1640)
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END
@@ -1282,12 +1303,20 @@ static MACHINE_DRIVER_START( xtvga )
 	MDRV_IMPORT_FROM( pcvideo_vga )
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 MACHINE_DRIVER_END
 
@@ -1304,8 +1333,12 @@ static MACHINE_DRIVER_START( t1000hx )
 	MDRV_IMPORT_FROM( pcvideo_t1000hx )
 
     /* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
-	MDRV_SOUND_ADD(SN76496, t1t_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ADD(SN76496, 2386360)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER( tandy1000 )
 MACHINE_DRIVER_END

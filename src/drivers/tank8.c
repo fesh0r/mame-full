@@ -7,6 +7,7 @@ Atari Tank 8 driver
 #include "driver.h"
 #include "tank8.h"
 #include "time.h"
+#include "sound/discrete.h"
 
 extern VIDEO_EOF( tank8 );
 extern VIDEO_START( tank8 );
@@ -415,7 +416,11 @@ static MACHINE_DRIVER_START( tank8 )
 	MDRV_VIDEO_EOF(tank8)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, tank8_discrete_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
+	MDRV_SOUND_CONFIG(tank8_discrete_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

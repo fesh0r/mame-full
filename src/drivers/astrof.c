@@ -44,6 +44,7 @@ Also....
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/random.h"
+#include "sound/samples.h"
 
 extern unsigned char *astrof_color;
 extern unsigned char *tomahawk_protection;
@@ -322,7 +323,11 @@ static MACHINE_DRIVER_START( astrof )
 	MDRV_VIDEO_UPDATE(astrof)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("samples", SAMPLES, astrof_samples_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(astrof_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( abattle )
@@ -342,7 +347,9 @@ static MACHINE_DRIVER_START( tomahawk )
 	MDRV_PALETTE_LENGTH(32)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("samples", SAMPLES, tomahawk_samples_interface)
+	MDRV_SOUND_REPLACE("samples", SAMPLES, 0)
+	MDRV_SOUND_CONFIG(tomahawk_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 

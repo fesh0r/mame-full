@@ -73,6 +73,7 @@ Dumped by Uki
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
+#include "sound/3812intf.h"
 
 extern data8_t *sm_bgvram,*md_vram,*tx_vram,*fg_vram;
 static UINT8 sengokumj_mux_data;
@@ -200,7 +201,7 @@ ADDRESS_MAP_END
 
 /***************************************************************************************/
 
-SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
+SEIBU_SOUND_SYSTEM_YM3812_HARDWARE;
 
 /***************************************************************************************/
 
@@ -236,7 +237,7 @@ static MACHINE_DRIVER_START( sengokmj )
 	MDRV_VIDEO_UPDATE(sengokmj)
 
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM3812_INTERFACE(14318180/4,8000,1)
 MACHINE_DRIVER_END
 
 /***************************************************************************************/

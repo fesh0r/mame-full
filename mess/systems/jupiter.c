@@ -185,14 +185,6 @@ INPUT_PORTS_END
 
 /* Sound output */
 
-static struct Speaker_interface speaker_interface =
-{
-	1,			/* one speaker */
-	{ 100 },	/* mixing levels */
-	{ 0 },		/* optional: number of different levels */
-	{ NULL }	/* optional: level lookup table */
-};
-
 static INTERRUPT_GEN( jupiter_interrupt )
 {
 	cpunum_set_input_line(0, 0, PULSE_LINE);
@@ -226,7 +218,9 @@ static MACHINE_DRIVER_START( jupiter )
 	MDRV_VIDEO_UPDATE( jupiter )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START (jupiter)

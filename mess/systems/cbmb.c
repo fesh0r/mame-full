@@ -866,18 +866,12 @@ ROM_END
 static SID6581_interface sid_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
-			1000000,
-			NULL
-		}
+		MOS6581,
+		1000000,
+		NULL
 	}
 };
 
@@ -909,7 +903,10 @@ static MACHINE_DRIVER_START( cbm600 )
 	MDRV_VIDEO_UPDATE( cbmb )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, sid_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(sid_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
@@ -943,7 +940,9 @@ static MACHINE_DRIVER_START( cbm500 )
 	MDRV_IMPORT_FROM( vh_vic2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, sid_sound_interface)
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(sid_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 #define init_cbm500 cbm500_driver_init

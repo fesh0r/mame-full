@@ -1,9 +1,18 @@
+/***************************************************************************
+
+	cococart.c
+
+	Code for emulating CoCo cartridges, like the disk drive cartridge
+
+***************************************************************************/
+  
 #include "includes/cococart.h"
 #include "includes/wd179x.h"
 #include "devices/coco_vhd.h"
 #include "ds1315.h"
 #include "m6242b.h"
 #include "includes/dragon.h"
+#include "sound/dac.h"
 
 static const struct cartridge_callback *cartcallbacks;
 

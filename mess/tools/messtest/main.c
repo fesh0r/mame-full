@@ -123,8 +123,10 @@ int main(int argc, char *argv[])
 	test_count = 0;
 	failure_count = 0;
 
-	/* since the cpuintrf structure is filled dynamically now, we have to init first */
+	/* since the cpuintrf and sndintrf structures are filled dynamically now, we
+	 * have to init first */
 	cpuintrf_init();
+	sndintrf_init();
 	
 	/* run MAME's validity checks; if these fail cop out now */
 	if (mame_validitychecks())

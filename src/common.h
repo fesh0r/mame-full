@@ -50,15 +50,6 @@ struct RomModule
 };
 
 
-struct GameSample
-{
-	int length;
-	int smpfreq;
-	int resolution;
-	signed char data[1];	/* extendable */
-};
-
-
 struct SystemBios
 {
 	int value;			/* value of mask to apply to ROM_BIOSFLAGS is chosen */
@@ -82,13 +73,6 @@ struct rom_load_data
 
 	char errorbuf[4096];			/* accumulated errors */
 	UINT8 tempbuf[65536];			/* temporary buffer */
-};
-
-
-struct GameSamples
-{
-	int total;	/* total number of samples */
-	struct GameSample *sample[1];	/* extendable */
 };
 
 
@@ -394,10 +378,6 @@ extern unsigned int coinlockedout[COIN_COUNTERS];
 ***************************************************************************/
 
 void showdisclaimer(void);
-
-/* helper function that reads samples from disk - this can be used by other */
-/* drivers as well (e.g. a sound chip emulator needing drum samples) */
-struct GameSamples *readsamples(const char **samplenames,const char *name);
 
 /* return a pointer to the specified memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */

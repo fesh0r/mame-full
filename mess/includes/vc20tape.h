@@ -2,8 +2,6 @@
 #define __VC20_TAPE_H_
 
 /* put this into your gamedriver */
-extern struct DACinterface vc20tape_sound_interface;
-
 void vc20tape_device_getinfo(struct IODevice *dev);
 
 /* the function which should be called by change on readline */

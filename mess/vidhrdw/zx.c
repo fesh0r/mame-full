@@ -10,9 +10,10 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "includes/zx.h"
+#include "sound/dac.h"
 
-void *ula_nmi = NULL;
-void *ula_irq = NULL;
+mame_timer *ula_nmi = NULL;
+mame_timer *ula_irq = NULL;
 int ula_nmi_active, ula_irq_active;
 int ula_frame_vsync = 0;
 int ula_scancode_count = 0;

@@ -221,7 +221,9 @@ Custom: GX61A01
 #include "cpu/m6809/m6809.h"
 #include "cpu/upd7810/upd7810.h"
 #include "homedata.h"
-
+#include "sound/dac.h"
+#include "sound/2203intf.h"
+#include "sound/sn76496.h"
 
 
 /********************************************************************************/
@@ -1254,20 +1256,6 @@ static struct GfxDecodeInfo lemnangl_gfxdecodeinfo[] =
 
 
 
-static struct SN76496interface sn76496_interface =
-{
-	1,
-	{ 16000000/4 },	 /* 4MHz ? */
-	{ 50 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-
 static MACHINE_DRIVER_START( mrokumei )
 
 	/* basic machine hardware */
@@ -1297,8 +1285,13 @@ static MACHINE_DRIVER_START( mrokumei )
 	MDRV_VIDEO_EOF(homedata)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)	// SN76489 actually
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 16000000/4)	// SN76489 actually
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -1307,21 +1300,8 @@ MACHINE_DRIVER_END
 
 static struct YM2203interface ym2203_interface =
 {
-	1,
-	3000000,	/* ? */
-	{ YM2203_VOL(100,25) },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0	},
-	{ 0 },
-	{ NULL }
-};
-
-
-static struct DACinterface reikaids_dac_interface =
-{
-	1,
-	{ 40 }
+	input_port_3_r,
+	input_port_4_r
 };
 
 
@@ -1365,8 +1345,17 @@ static MACHINE_DRIVER_START( reikaids )
 	MDRV_VIDEO_EOF(homedata)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(DAC, reikaids_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -1406,8 +1395,13 @@ static MACHINE_DRIVER_START( pteacher )
 	MDRV_VIDEO_EOF(homedata)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)	// SN76489 actually
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 16000000/4)	// SN76489 actually
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( mjkinjas )

@@ -271,7 +271,6 @@ static MACHINE_DRIVER_START(ti990_4)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(ti990_4)
 
-	MDRV_SOUND_ATTRIBUTES(0)
 #if VIDEO_911
 	/* 911 VDT has a beep tone generator */
 	MDRV_SOUND_ADD(BEEP, vdt_911_beep_interface)

@@ -215,15 +215,7 @@ INPUT_PORTS_START (p2000t)
 	PORT_BIT (0x80, IP_ACTIVE_LOW, IPT_KEYBOARD) PORT_NAME("RShift") PORT_CODE(KEYCODE_RSHIFT)
 INPUT_PORTS_END
 
-/* Sound output */
 
-static struct Speaker_interface speaker_interface =
-{
-	1,			/* one speaker */
-	{ 100 },	/* mixing levels */
-	{ 0 },		/* optional: number of different levels */
-    { NULL }    /* optional: level lookup table */
-};
 
 static INTERRUPT_GEN( p2000_interrupt )
 {
@@ -242,7 +234,9 @@ static MACHINE_DRIVER_START( p2000t )
 	MDRV_IMPORT_FROM( vh_saa5050 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
@@ -270,7 +264,9 @@ static MACHINE_DRIVER_START( p2000m )
 	MDRV_VIDEO_UPDATE(p2000m)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

@@ -409,16 +409,7 @@ static PALETTE_INIT( ts1000 )
 	memcpy(colortable, zx_colortable, sizeof (zx_colortable));
 }
 
-static struct Wave_interface zx81_wave_interface = {
-	1,		/* 1 cassette recorder */
-	{50}		/* mixing levels in percent */
-};
 
-static struct DACinterface zx81_dac_interface =
-{
-	1,		/* number of DACs */
-	{50}		/* volume */
-};
 
 #define ZX81_CPU_CLOCK			3250000
 #define ZX81_CYCLES_PER_SCANLINE	207
@@ -458,8 +449,11 @@ static MACHINE_DRIVER_START( zx80 )
 	MDRV_VIDEO_UPDATE(zx)
 
 	// sound hardware
-	MDRV_SOUND_ADD(WAVE, zx81_wave_interface)
-	MDRV_SOUND_ADD(DAC, zx81_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( zx81 )

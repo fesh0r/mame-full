@@ -9,6 +9,9 @@
 #ifndef MESS_MAC_H
 #define MESS_MAC_H
 
+#include "mame.h"
+#include "sound/custom.h"
+
 /* from machine/mac.c */
 MACHINE_INIT( mac );
 
@@ -39,9 +42,7 @@ PALETTE_INIT( mac );
 void mac_set_screen_buffer( int buffer );
 
 /* from sndhrdw/mac.c */
-int mac_sh_start( const struct MachineSound *msound );
-void mac_sh_stop( void );
-void mac_sh_update( void );
+void *mac_sh_start(int clock, const struct CustomSound_interface *config);
 
 void mac_enable_sound( int on );
 void mac_set_sound_buffer( int buffer );

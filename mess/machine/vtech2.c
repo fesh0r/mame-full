@@ -18,6 +18,7 @@
 #include "image.h"
 #include "includes/vtech2.h"
 #include "devices/cassette.h"
+#include "sound/speaker.h"
 
 /* public */
 int laser_latch = -1;

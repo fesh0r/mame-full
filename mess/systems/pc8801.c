@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.35 2004/09/06 01:17:39 npwoods Exp $
+  $Id: pc8801.c,v 1.36 2005/03/01 05:24:16 npwoods Exp $
 
 ***************************************************************************/
 
@@ -13,6 +13,7 @@
 #include "machine/8255ppi.h"
 #include "includes/d88.h"
 #include "devices/basicdsk.h"
+#include "sound/2203intf.h"
 
 static struct GfxLayout char_layout_40L_h =
 {
@@ -554,24 +555,15 @@ ROM_START (pc88srh)
 	ROM_LOAD ("kanji2.rom", 0x20000, 0x20000, CRC(154803cc))
 ROM_END
 
-static struct beep_interface pc8801_beep_interface =
-{
-        1,
-        { 10 }
-};
-
 static  READ8_HANDLER(opn_dummy_input){return 0xff;}
 
 static struct YM2203interface ym2203_interface =
 {
-        1,
-        3993600, /* Should be accurate */
-        { YM2203_VOL(50,50) },
-        { opn_dummy_input },
-        { opn_dummy_input },
-        { 0 },
-        { 0 },
-	{ pc88sr_sound_interupt }
+	opn_dummy_input,
+	opn_dummy_input,
+	0,
+	0,
+	pc88sr_sound_interupt
 };
 
 
@@ -611,8 +603,12 @@ static MACHINE_DRIVER_START( pc88srl )
 	MDRV_VIDEO_UPDATE(pc8801)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(BEEP, pc8801_beep_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(YM2203, 3993600)
+	MDRV_SOUND_CONFIG(ym2203_interface)	/* Should be accurate */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 

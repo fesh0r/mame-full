@@ -2059,13 +2059,10 @@ static WRITE8_HANDLER( ym2149_port_b_w )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,
-	2000000, /* 2 MHz */
-	{ 100 },
-	{ ym2149_port_a_r },
-	{ ym2149_port_b_r },
-	{ ym2149_port_a_w },
-	{ ym2149_port_b_w }
+	ym2149_port_a_r,
+	ym2149_port_b_r,
+	ym2149_port_a_w,
+	ym2149_port_b_w
 };
 
 /***************************************************************************/
@@ -2097,7 +2094,10 @@ static MACHINE_DRIVER_START( ataris )
 	MDRV_VIDEO_UPDATE( atarist )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)	
 MACHINE_DRIVER_END
 
 

@@ -2,6 +2,7 @@
 #include "driver.h"
 #include "image.h"
 #include "includes/sms.h"
+#include "sound/2413intf.h"
 
 #ifndef MIN
 #define MIN(a, b)	(((a) < (b)) ? (a) : (b))

@@ -66,6 +66,8 @@ TODO:
 #include "99_usbsm.h"
 
 #include "sound/tms5220.h"	/* for tms5220_set_variant() */
+#include "sound/5220intf.h"
+#include "sound/sn76496.h"
 
 #include "devices/harddriv.h"	/* for device_init_mess_hd() */
 #include "smc92x4.h"	/* for smc92x4_hd_load()/smc92x4_hd_unload() */
@@ -783,7 +785,7 @@ void machine_init_ti99(void)
 			memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x93ff, 0, 0, ti99_rspeech_r);
 			memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9400, 0x97ff, 0, 0, ti99_wspeech_w);
 
-			tms5220_set_variant(variant_tms0285);
+			tms5220_set_variant(sndti_token(SOUND_TMS5220, 0), variant_tms0285);
 		}
 	}
 	else
@@ -878,7 +880,7 @@ void machine_init_ti99(void)
 void machine_stop_ti99(void)
 {
 	if (has_speech)
-		tms5220_set_variant(variant_tms5220);
+		tms5220_set_variant(sndti_token(SOUND_TMS5220, 0), variant_tms5220);
 
 	if (has_ide)
 		ti99_ide_save_memcard();

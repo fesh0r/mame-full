@@ -1,6 +1,8 @@
 #ifndef __DAVE_SOUND_CHIP_HEADER_INCLUDED__
 #define __DAVE_SOUND_CHIP_HEADER_INCLUDED__
 
+#include "sound/custom.h"
+
 /******************************
 DAVE SOUND CHIP
 *******************************/
@@ -16,7 +18,7 @@ typedef struct DAVE_INTERFACE
 {
 	void (*reg_r)(int);
 	void (*reg_w)(int,int);
-        void (*int_callback)(int);
+	void (*int_callback)(int);
 } DAVE_INTERFACE;
 
 #define DAVE_FIFTY_HZ_COUNTER_RELOAD 20
@@ -75,12 +77,10 @@ typedef struct DAVE
 	/* update step */
 	int UpdateStep;
 
-	int sound_stream;
+	sound_stream *sound_stream;
 } DAVE;
 
-extern int	Dave_sh_start(const struct MachineSound *msound);
-extern void	Dave_sh_stop(void);
-extern void	Dave_sh_update(void);
+extern void *Dave_sh_start(int clock, const struct CustomSound_interface *config);
 
 /* id's of external ints */
 enum

@@ -417,16 +417,7 @@ INPUT_PORTS_START (lviv)
 		PORT_BIT(0x80,	IP_ACTIVE_HIGH,	IPT_UNUSED)
 INPUT_PORTS_END
 
-static struct Speaker_interface lviv_speaker_interface=
-{
-	1,
-	{50},
-};
 
-static struct Wave_interface lviv_wave_interface = {
-	1,		/* 1 cassette recorder */
-	{ 50 }		/* mixing levels in percent */
-};
 
 /* machine definition */
 static MACHINE_DRIVER_START( lviv )
@@ -452,8 +443,11 @@ static MACHINE_DRIVER_START( lviv )
 	MDRV_VIDEO_UPDATE( lviv )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, lviv_speaker_interface)
-	MDRV_SOUND_ADD(WAVE, lviv_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START(lviv)

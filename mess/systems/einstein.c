@@ -83,11 +83,12 @@
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
 #include "includes/wd179x.h"
-#include "devices/basicdsk.h"
+#include "includes/centroni.h"
 #include "includes/msm8251.h"
 #include "devices/dsk.h"
-#include "includes/centroni.h"
+#include "devices/basicdsk.h"
 #include "devices/printer.h"
+#include "sound/ay8910.h"
 #include "image.h"
 
 #define EINSTEIN_SYSTEM_CLOCK 4000000
@@ -1559,13 +1560,10 @@ static  READ8_HANDLER(einstein_port_b_read)
 
 static struct AY8910interface einstein_ay_interface =
 {
-	1,								   /* 1 chips */
-	2000000,						   /* 2.0 MHz  */
-	{25, 25},
-	{NULL},
-	{einstein_port_b_read},
-	{einstein_port_a_write},
-	{NULL}
+	NULL,
+	einstein_port_b_read,
+	einstein_port_a_write,
+	NULL
 };
 
 /*
@@ -1700,7 +1698,10 @@ static MACHINE_DRIVER_START( einstein )
 	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, einstein_ay_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(einstein_ay_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)	
 MACHINE_DRIVER_END
 
 

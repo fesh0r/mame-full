@@ -16,6 +16,7 @@
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
 #include "devices/cartslot.h"
+#include "sound/nesintf.h"
 #include "inputx.h"
 
 unsigned char *battery_ram;
@@ -228,22 +229,16 @@ static WRITE8_HANDLER(nes_vh_sprite_dma_w)
 
 static struct NESinterface nes_interface =
 {
-    1,
-    N2A03_DEFAULTCLOCK ,
-    { 100 },
-    { 0 },
-    { nes_vh_sprite_dma_w },
-    { NULL }
+	0, 0,
+	nes_vh_sprite_dma_w,
+	NULL
 };
 
 static struct NESinterface nespal_interface =
 {
-    1,
-    26601712/15,
-    { 100 },
-    { 0 },
-    { nes_vh_sprite_dma_w },
-    { NULL }
+	0, 0,
+	nes_vh_sprite_dma_w,
+	NULL
 };
 
 ROM_START( nes )
@@ -294,7 +289,10 @@ static MACHINE_DRIVER_START( nes )
 	MDRV_COLORTABLE_LENGTH(4*8)
 
     /* sound hardware */
-	MDRV_SOUND_ADD_TAG("nessound", NES, nes_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("nessound", NES, N2A03_DEFAULTCLOCK)
+	MDRV_SOUND_CONFIG(nes_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( nespal )
@@ -306,7 +304,9 @@ static MACHINE_DRIVER_START( nespal )
 	MDRV_VBLANK_DURATION(114*(PAL_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
     /* sound hardware */
-	MDRV_SOUND_REPLACE("nessound", NES, nespal_interface)
+	MDRV_SOUND_REPLACE("nessound", NES, 26601712/15)
+	MDRV_SOUND_CONFIG(nespal_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 static void nes_cartslot_getinfo(struct IODevice *dev)

@@ -43,6 +43,9 @@ Memo:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "fromance.h"
+#include "sound/ay8910.h"
+#include "sound/2413intf.h"
+#include "sound/msm5205.h"
 
 
 /* Local variables */
@@ -1036,42 +1039,10 @@ static struct GfxDecodeInfo fromance_gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct YM2413interface ym2413_interface=
-{
-	1,						/* 1 chip */
-	3579545,				/* 3.579545 MHz ? */
-	{ YM2413_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
-};
-
-
-static struct AY8910interface ay8910_interface =
-{
-	1,						/* 1 chip */
-	12000000/6,				/* 1.5 MHz ? */
-	{ 15 },					/* volume */
-	{ 0 },					/* read port #0 */
-	{ 0 },					/* read port #1 */
-	{ 0 },					/* write port #0 */
-	{ 0 }					/* write port #1 */
-};
-
-
 static struct MSM5205interface msm5205_interface =
 {
-	1,						/* 1 chip */
-	384000,					/* 384 KHz */
-	{ fromance_adpcm_int },	/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8 KHz */
-	{ 80 }					/* volume */
-};
-
-static struct MSM5205interface fromance_msm5205_interface =
-{
-	1,						/* 1 chip */
-	384000,					/* 384 KHz */
-	{ fromance_adpcm_int },	/* IRQ handler */
-	{ MSM5205_S48_4B },		/* 8 KHz */
-	{ 10 }					/* volume */
+	fromance_adpcm_int,	/* IRQ handler */
+	MSM5205_S48_4B		/* 8 KHz */
 };
 
 
@@ -1108,8 +1079,14 @@ static MACHINE_DRIVER_START( nekkyoku )
 	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -1140,8 +1117,14 @@ static MACHINE_DRIVER_START( idolmj )
 	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 12000000/6)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -1172,8 +1155,14 @@ static MACHINE_DRIVER_START( fromance )
 	MDRV_VIDEO_UPDATE(fromance)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(MSM5205, fromance_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)
 MACHINE_DRIVER_END
 
 

@@ -1021,13 +1021,8 @@ INPUT_PORTS_END
 
 static struct YM2203interface sh_ym2203_interface =
 {
-	1,			/* 1 chip */
-	16000000/4,	/* ? */
-	{ YM2203_VOL(80,15) },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0 },
-	{ 0 }
+	input_port_3_r,
+	input_port_4_r
 };
 
 
@@ -1054,7 +1049,14 @@ static MACHINE_DRIVER_START( shanghai )
 	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, sh_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 16000000/4)
+	MDRV_SOUND_CONFIG(sh_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
 
@@ -1079,10 +1081,17 @@ static MACHINE_DRIVER_START( shangha2 )
 	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, sh_ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 16000000/4)
+	MDRV_SOUND_CONFIG(sh_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
 MACHINE_DRIVER_END
 
-SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(14318180/4)
+SEIBU_SOUND_SYSTEM_YM2203_HARDWARE
 
 SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
 
@@ -1112,7 +1121,7 @@ static MACHINE_DRIVER_START( kothello )
 	MDRV_VIDEO_UPDATE(shanghai)
 	
 	/* sound hardware */
-	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE
+	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE(14318180/4)
 	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
 MACHINE_DRIVER_END
 

@@ -10,6 +10,7 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
 #include "devices/cartslot.h"
+#include "sound/pokey.h"
 #include "inputx.h"
 
 /******************************************************************************
@@ -752,29 +753,24 @@ static PALETTE_INIT( atari )
 }
 
 
-static struct POKEYinterface pokey_interface = {
-	1,
-	FREQ_17_EXACT,
-    { 100 },
-	{ input_port_8_r, },
-	{ input_port_9_r, },
-	{ input_port_10_r, },
-	{ input_port_11_r, },
-	{ input_port_12_r, },
-	{ input_port_13_r, },
-	{ input_port_14_r, },
-	{ input_port_15_r, },
-	{ 0, },
-	{ atari_serin_r, },
-	{ atari_serout_w, },
-	{ atari_interrupt_cb, },
+static struct POKEYinterface pokey_interface =
+{
+	{
+		input_port_8_r,
+		input_port_9_r,
+		input_port_10_r,
+		input_port_11_r,
+		input_port_12_r,
+		input_port_13_r,
+		input_port_14_r,
+		input_port_15_r
+	},
+	0,
+	atari_serin_r,
+	atari_serout_w,
+	atari_interrupt_cb,
 };
 
-static struct DACinterface dac_interface =
-{
-	1,					/* number of DACs */
-	{ 50 }				/* volume */
-};
 
 
 static MACHINE_DRIVER_START( atari_common_nodac )
@@ -793,13 +789,17 @@ static MACHINE_DRIVER_START( atari_common_nodac )
 	MDRV_VIDEO_UPDATE(atari)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(POKEY, FREQ_17_EXACT)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( atari_common )
 	MDRV_IMPORT_FROM( atari_common_nodac )
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

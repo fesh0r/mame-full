@@ -3,7 +3,7 @@
 
 #include <math.h>
 
-static int channel;
+static sound_stream *channel;
 static int sound_mode;
 static int incr;
 static float decay_mult;
@@ -12,14 +12,12 @@ static UINT32 sample_counter = 0;
 
 const int max_amplitude = 0x7fff;
 
-void channelf_sh_update(int param, INT16 *buffer, int length);
-
 void channelf_sound_w(int mode)
 {
 	if (mode == sound_mode)
 		return;
 
-    stream_update(channel,0);
+    stream_update(channel, 0);
 	sound_mode = mode;
 
     switch(mode)
@@ -35,11 +33,52 @@ void channelf_sound_w(int mode)
 	}
 }
 
-static int channelf_sh_start(void)
+
+
+static void channelf_sh_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
+{
+	UINT32 mask = 0, target = 0;
+	stream_sample_t *buffer = _buffer[0];
+	stream_sample_t *sample = buffer;
+
+	switch( sound_mode )
+	{
+		case 0: /* sound off */
+			memset(buffer,0,sizeof(*buffer)*length);
+			return;
+
+		case 1: /* high tone (2V) - 1000Hz */
+			mask   = 0x00010000;
+			target = 0x00010000;
+			break;
+		case 2: /* medium tone (4V) - 500Hz */
+			mask   = 0x00020000;
+			target = 0x00020000;
+			break;
+		case 3: /* low (weird) tone (32V & 8V) */
+			mask   = 0x00140000;
+			target = 0x00140000;
+			break;
+	}
+
+	while (length-- > 0)
+	{
+		if ((sample_counter & mask) == target)
+			*sample++ = envelope;
+		else
+			*sample++ = 0;
+		sample_counter += incr;
+		envelope *= decay_mult;
+	}
+}
+
+
+
+void *channelf_sh_custom_start(int clock, const struct CustomSound_interface *config)
 {
 	int rate;
 
-	channel = stream_init("Digital out", 50, Machine->sample_rate, 0, channelf_sh_update);
+	channel = stream_create(0, 1, Machine->sample_rate, 0, channelf_sh_update);
 	rate = Machine->sample_rate;
 
 	/*
@@ -70,54 +109,5 @@ static int channelf_sh_start(void)
 	/* initial conditions */
 	envelope = 0;
 
-	return 0;
+	return (void *) ~0;
 }
-
-int channelf_sh_custom_start(const struct MachineSound* driver)
-{
-	return channelf_sh_start();
-}
-
-void channelf_sh_stop(void)
-{
-}
-
-void channelf_sh_custom_update(void) {}
-
-void channelf_sh_update(int param, INT16 *buffer, int length)
-{
-	UINT32 mask = 0, target = 0;
-
-	INT16 *sample = buffer;
-
-	switch( sound_mode )
-	{
-		case 0: /* sound off */
-			memset(buffer,0,sizeof(INT16)*length);
-			return;
-
-		case 1: /* high tone (2V) - 1000Hz */
-			mask   = 0x00010000;
-			target = 0x00010000;
-			break;
-		case 2: /* medium tone (4V) - 500Hz */
-			mask   = 0x00020000;
-			target = 0x00020000;
-			break;
-		case 3: /* low (wierd) tone (32V & 8V) */
-			mask   = 0x00140000;
-			target = 0x00140000;
-			break;
-	}
-
-	while (length-- > 0)
-	{
-		if ((sample_counter & mask) == target)
-			*sample++ = envelope;
-		else
-			*sample++ = 0;
-		sample_counter += incr;
-		envelope *= decay_mult;
-	}
-}
-

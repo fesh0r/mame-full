@@ -56,12 +56,13 @@
 #define NOISE_FREQUENCY (VIC656X_CLOCK/NOISE_VALUE)
 #define NOISE_FREQUENCY_MAX (VIC656X_CLOCK/32/1)
 
-static int channel, tone1pos = 0, tone2pos = 0, tone3pos = 0,
+static int tone1pos = 0, tone2pos = 0, tone3pos = 0,
 	tonesize, tone1samples = 1, tone2samples = 1, tone3samples = 1,
 	noisesize,		  /* number of samples */
 	noisepos = 0,         /* pos of tone */
 	noisesamples = 1;	  /* count of samples to give out per tone */
 
+static sound_stream *channel;
 static INT16 *tone;
 
 static INT8 *noise;
@@ -69,7 +70,7 @@ static INT8 *noise;
 void vic6560_soundport_w (int offset, int data)
 {
     int old = vic6560[offset];
-	stream_update(channel,0);
+	stream_update(channel, 0);
 
 	switch (offset)
 	{
@@ -134,10 +135,10 @@ void vic6560_soundport_w (int offset, int data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-static void vic6560_update (int param, INT16 *buffer, int length)
+static void vic6560_update (void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
 	int i, v;
-
+	stream_sample_t *buffer = _buffer[0];
 
 	for (i = 0; i < length; i++)
 	{
@@ -215,21 +216,18 @@ static void vic6560_update (int param, INT16 *buffer, int length)
 /************************************/
 /* Sound handler start          */
 /************************************/
-int vic6560_custom_start (const struct MachineSound *driver)
+
+void *vic6560_custom_start(int clock, const struct CustomSound_interface *config)
 {
 	int i;
 
-	if (!options.samplerate) return 0;
-
-	channel = stream_init ("VIC6560", 50, options.samplerate, 0, vic6560_update);
+	channel = stream_create(0, 1, options.samplerate, 0, vic6560_update);
 
 
 	/* buffer for fastest played sample for 5 second
 	 * so we have enough data for min 5 second */
 	noisesize = NOISE_FREQUENCY_MAX * NOISE_BUFFER_SIZE_SEC;
-	noise = (INT8*)malloc (noisesize * sizeof (noise[0]));
-	if (!noise)
-		return 1;
+	noise = (INT8*) auto_malloc (noisesize * sizeof (noise[0]));
 	{
 		int noiseshift = 0x7ffff8;
 		char data;
@@ -262,28 +260,11 @@ int vic6560_custom_start (const struct MachineSound *driver)
 	}
 	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
 
-	tone = (INT16*)malloc (tonesize * sizeof (tone[0]));
-	if (!tone)
-	{
-		free (noise);
-		return 1;
-	}
+	tone = (INT16*) auto_malloc (tonesize * sizeof (tone[0]));
+
 	for (i = 0; i < tonesize; i++)
 	{
 		tone[i] = (INT16)(sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
 	return 0;
-}
-
-/************************************/
-/* Sound handler stop           */
-/************************************/
-void vic6560_custom_stop (void)
-{
-	free (tone);
-	free (noise);
-}
-
-void vic6560_custom_update (void)
-{
 }

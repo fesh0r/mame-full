@@ -923,7 +923,7 @@ void dst_mixer_reset(struct node_description *node)
 		if (info->rNode[bit])
 		{
 			context->type = context->type | DISC_MIXER_HAS_R_NODE;
-			context->rNode[bit] = discrete_find_node(info->rNode[bit]);	// get node pointers
+			context->rNode[bit] = discrete_find_node(NULL, info->rNode[bit]);	// get node pointers
 		}
 		else
 			context->rNode[bit] = NULL;

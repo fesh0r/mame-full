@@ -643,36 +643,33 @@ static char *GameInfoCPU(UINT nIndex)
 /* Build Sound system info string */
 static char *GameInfoSound(UINT nIndex)
 {
-	int i;
-	static char buf[1024] = "";
+	int soundnum;
+	static char buf[1024];
     struct InternalMachineDriver drv;
     expand_machine_driver(drivers[nIndex]->drv,&drv);
 
-	ZeroMemory(buf, sizeof(buf));
-	i = 0;
-	while (i < MAX_SOUND && drv.sound[i].sound_type)
-	{
-		if (1 < sound_num(&drv.sound[i]))
-			sprintf(&buf[strlen(buf)], "%d x ", sound_num(&drv.sound[i]));
+	buf[0] = 0;
 
-		sprintf(&buf[strlen(buf)], "%s", sound_name(&drv.sound[i]));
-
-		if (sound_clock(&drv.sound[i]))
+	for (soundnum = 0; soundnum < MAX_SOUND; soundnum++)
+		if (drv.sound[soundnum].sound_type != 0)
 		{
-			if (sound_clock(&drv.sound[i]) >= 1000000)
-				sprintf(&buf[strlen(buf)], " %d.%06d MHz",
-						sound_clock(&drv.sound[i]) / 1000000,
-						sound_clock(&drv.sound[i]) % 1000000);
-			else
-				sprintf(&buf[strlen(buf)], " %d.%03d kHz",
-						sound_clock(&drv.sound[i]) / 1000,
-						sound_clock(&drv.sound[i]) % 1000);
+			sprintf(&buf[strlen(buf)], "%s", sndtype_name(drv.sound[soundnum].sound_type));
+
+			if (drv.sound[soundnum].clock)
+			{
+				if (drv.sound[soundnum].clock >= 1000000)
+					sprintf(&buf[strlen(buf)], " %d.%06d MHz",
+							drv.sound[soundnum].clock / 1000000,
+							drv.sound[soundnum].clock % 1000000);
+				else
+					sprintf(&buf[strlen(buf)], " %d.%03d kHz",
+							drv.sound[soundnum].clock / 1000,
+							drv.sound[soundnum].clock % 1000);
+			}
+			strcat(buf,"\n");
 		}
 
-		strcat(buf,"\n");
 
-		i++;
-	}
 	return buf;
 }
 
@@ -2383,14 +2380,22 @@ static void SetStereoEnabled(HWND hWnd, int nIndex)
 	BOOL enabled = FALSE;
 	HWND hCtrl;
     struct InternalMachineDriver drv;
+	int speakernum, num_speakers;
+
+	num_speakers = 0;
 
 	if ( nIndex > -1)
+	{
 		expand_machine_driver(drivers[nIndex]->drv,&drv);
+		for (speakernum = 0; speakernum < MAX_SPEAKER; speakernum++)
+			if (drv.speaker[speakernum].tag != NULL)
+				num_speakers++;
+	}
 
 	hCtrl = GetDlgItem(hWnd, IDC_STEREO);
 	if (hCtrl)
 	{
-		if (nIndex <= -1 || drv.sound_attributes & SOUND_SUPPORTS_STEREO)
+		if (nIndex <= -1 || num_speakers == 2)
 			enabled = TRUE;
 
 		EnableWindow(hCtrl, enabled);

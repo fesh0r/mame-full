@@ -6,9 +6,11 @@
   I/O ports)
 
 ***************************************************************************/
+
 #include "includes/trs80.h"
 #include "devices/basicdsk.h"
 #include "devices/flopdrv.h"
+#include "sound/speaker.h"
 
 #ifdef MAME_DEBUG
 #define VERBOSE 1

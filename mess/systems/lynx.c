@@ -195,16 +195,12 @@ static PALETTE_INIT( lynx )
 
 struct CustomSound_interface lynx_sound_interface =
 {
-	lynx_custom_start,
-	NULL,
-	lynx_custom_update
+	lynx_custom_start
 };
 
 struct CustomSound_interface lynx2_sound_interface =
 {
-	lynx2_custom_start,
-	NULL,
-	lynx_custom_update
+	lynx2_custom_start
 };
 
 
@@ -232,7 +228,10 @@ static MACHINE_DRIVER_START( lynx )
 	MDRV_VIDEO_UPDATE( lynx )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("main", CUSTOM, lynx_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(lynx_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -240,8 +239,11 @@ static MACHINE_DRIVER_START( lynx2 )
 	MDRV_IMPORT_FROM( lynx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_REPLACE("main", CUSTOM, lynx2_sound_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(lynx2_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -10,16 +10,11 @@
 
 #include "driver.h"
 #include "image.h"
+#include "sound/dac.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/vc20tape.h"
-
-struct DACinterface vc20tape_sound_interface =
-{
-	1,
-	{25}
-};
 
 #define TONE_ON_VALUE 0xff
 
@@ -85,6 +80,9 @@ struct
 /* and doesn't search the rompath */
 static struct GameSample *vc20_read_wav_sample (mame_file *f)
 {
+	/* NPW 28-Feb-2005 - this code sucks */
+	return NULL;
+#if 0
 	unsigned long offset = 0;
 	UINT32 length, rate, filesize, temp32;
 	UINT16 bits, temp16;
@@ -194,13 +192,15 @@ static struct GameSample *vc20_read_wav_sample (mame_file *f)
 		/* 16-bit data is fine as-is */
 		mame_fread_lsbfirst (f, result->data, length);
 	}
-
 	return result;
+#endif
 }
 
 static void vc20_wav_timer (int data);
 static void vc20_wav_state (void)
 {
+	/* NPW 28-Feb-2005 - this code sucks */
+#if 0
 	switch (wav.state)
 	{
 	case 0:
@@ -268,6 +268,7 @@ static void vc20_wav_state (void)
 		}
 		break;
 	}
+#endif
 }
 
 static void vc20_wav_open(mess_image *img, mame_file *fp)
@@ -294,6 +295,8 @@ static void vc20_wav_write (int data)
 
 static void vc20_wav_timer (int data)
 {
+	/* NPW 28-Feb-2005 - this code sucks */
+#if 0
 	if (wav.sample->resolution == 8)
 	{
 		tape.data = wav.sample->data[wav.pos] > 0x0;
@@ -319,6 +322,7 @@ static void vc20_wav_timer (int data)
 	if (tape.read_callback)
 		tape.read_callback (0, tape.data);
 	/*    vc20_wav_state(); // removing timer in timer puls itself hangs */
+#endif
 }
 
 static void vc20_prg_timer (int data);
@@ -1058,10 +1062,13 @@ void vc20_tape_status (char *text, int size)
 			snprintf (text, size, "Tape saving");
 			break;
 		case 3:
+			/* NPW 28-Feb-2005 - this code sucks */
+#if 0
 			snprintf (text, size, "Tape (%s) loading %d/%dsec",
 					  image_filename(wav.img),
 					  wav.pos / wav.sample->smpfreq,
 					  wav.sample->length / wav.sample->smpfreq);
+#endif
 			break;
 		}
 		break;

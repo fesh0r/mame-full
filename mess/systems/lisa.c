@@ -45,14 +45,7 @@ static PALETTE_INIT( lisa )
 	palette_set_color(1, 0x00, 0x00, 0x00);
 }
 
-/* sound output */
-static	struct	Speaker_interface lisa_sh_interface =
-{
-	1,
-	{ 100 },
-	{ 0 },
-	{ NULL }
-};
+
 
 /* Lisa1 and Lisa 2 machine */
 static MACHINE_DRIVER_START( lisa )
@@ -80,7 +73,9 @@ static MACHINE_DRIVER_START( lisa )
 	MDRV_VIDEO_UPDATE(lisa)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, lisa_sh_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER(lisa)
 MACHINE_DRIVER_END

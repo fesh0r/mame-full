@@ -172,7 +172,10 @@ static MACHINE_DRIVER_START( odyssey2 )
 	MDRV_VIDEO_UPDATE( odyssey2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, odyssey2_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(odyssey2_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START (odyssey2)

@@ -13,6 +13,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/channelf.h"
 #include "devices/cartslot.h"
+#include "sound/custom.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -245,10 +246,9 @@ INPUT_PORTS_START( channelf )
 
 INPUT_PORTS_END
 
-static struct CustomSound_interface channelf_sound_interface = {
-	channelf_sh_custom_start,
-	channelf_sh_stop,
-	channelf_sh_custom_update
+static struct CustomSound_interface channelf_sound_interface =
+{
+	channelf_sh_custom_start
 };
 
 
@@ -273,7 +273,10 @@ static MACHINE_DRIVER_START( channelf )
 	MDRV_VIDEO_UPDATE( channelf )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, channelf_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(channelf_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START(channelf)

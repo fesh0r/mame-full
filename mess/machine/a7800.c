@@ -28,6 +28,8 @@
 #include "zlib.h"
 #include "image.h"
 #include "machine/6532riot.h"
+#include "sound/pokey.h"
+#include "sound/tiaintf.h"
 
 #include "includes/a7800.h"
 

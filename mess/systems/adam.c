@@ -412,13 +412,6 @@ INPUT_PORTS_START( adam )
 	
 INPUT_PORTS_END
 
-static struct SN76496interface sn76496_interface =
-{
-    1,  		/* 1 chip 		*/
-    {3579545},  /* 3.579545 MHz */
-    { 100 }
-};
-
 /***************************************************************************
 
   The interrupts come from the vdp. The vdp (tms9928a) interrupt can go up
@@ -647,7 +640,9 @@ static MACHINE_DRIVER_START( adam )
 	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

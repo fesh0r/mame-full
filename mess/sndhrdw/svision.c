@@ -3,16 +3,16 @@
 
  PeT mess@utanet.at
 ***************************************************************************/
+
 #include <math.h>
 #include "osd_cpu.h"
 #include "sound/streams.h"
 #include "mame.h"
 #include "timer.h"
-#include "sound/mixer.h"
 
 #include "includes/svision.h"
 
-static int mixer_channel;
+static sound_stream *mixer_channel;
 
 SVISION_CHANNEL svision_channel[2];
 
@@ -35,12 +35,15 @@ void svision_soundport_w (SVISION_CHANNEL *channel, int offset, int data)
     
 }
 
+
+
 /************************************/
 /* Sound handler update             */
 /************************************/
-static void svision_update (int param, INT16 **buffer, int length)
+
+static void svision_update (void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-	INT16 *left=buffer[0], *right=buffer[1];
+	stream_sample_t *left=_buffer[0], *right=_buffer[1];
 	int i, j;
 	SVISION_CHANNEL *channel;
 
@@ -73,25 +76,10 @@ static void svision_update (int param, INT16 **buffer, int length)
 /************************************/
 /* Sound handler start              */
 /************************************/
-int svision_custom_start (const struct MachineSound *driver)
-{
-    const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
-    const char *names[2]= { "supervision", "supervision" };
-	
-    if (!options.samplerate) return 0;
 
-    mixer_channel = stream_init_multi(2, names, vol, options.samplerate, 0, svision_update);
-    
-    return 0;
+void *svision_custom_start(int clock, const struct CustomSound_interface *config)
+{
+	mixer_channel = stream_create(0, 2, options.samplerate, 0, svision_update);
+	return (void *) ~0;
 }
 
-/************************************/
-/* Sound handler stop               */
-/************************************/
-void svision_custom_stop (void)
-{
-}
-
-void svision_custom_update (void)
-{
-}

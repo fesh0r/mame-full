@@ -2548,6 +2548,7 @@ V-V                           TP-027
 	DRIVER( raystorj )	/* Ray Storm (Ver 2.05J) */
 	DRIVER( ftimpcta )	/* Fighters' Impact A (Ver 2.00J) */
 	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
+	DRIVER( gdariusb )	/* G-Darius (Ver 2.02A) */
 	DRIVER( gdarius2 )	/* G-Darius Ver.2 (Ver 2.03J) */
 
 	/* Taito GNET */
@@ -2891,6 +2892,7 @@ V-V                           TP-027
 	DRIVER( wbmlb )		/* bootleg? (S2) */
 	DRIVER( dakkochn )	/* 836-6483? (S2) */
 	DRIVER( ufosensi )	/* 834-6659 (S2) */
+	DRIVER( ufosensb )	/* bootleg */
 /*
 other System 1 / System 2 games:
 
@@ -2998,6 +3000,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( ryukyu )	/* (protected) */
 	DRIVER( sdib )		/* (c) 1987 */
+	DRIVER( defense )	/* (c) 1987 */
 	DRIVER( shinobi4 )	/* (c) 1987 */
 	DRIVER( shinobi3 )	/* (c) 1987 (protected) */
 	DRIVER( shinobi2 )	/* (c) 1987 */
@@ -3933,9 +3936,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( quarth )	/* GX973 (c) 1989 (Japan) */
 	DRIVER( aliens )	/* GX875 (c) 1990 (World) */
 	DRIVER( aliens2 )	/* GX875 (c) 1990 (World) */
+	DRIVER( aliens3 )	/* GX875 (c) 1990 (World) */
 	DRIVER( aliensu )	/* GX875 (c) 1990 (US) */
 	DRIVER( aliensj )	/* GX875 (c) 1990 (Japan) */
-	DRIVER( surpratk )	/* GX911 (c) 1990 (Japan) */
+	DRIVER( aliensj2 )	/* GX875 (c) 1990 (Japan) */
+	DRIVER( suratk )	/* GX911 (c) 1990 (World) */
+	DRIVER( suratkj )	/* GX911 (c) 1990 (Japan) */
 	DRIVER( parodius )	/* GX955 (c) 1990 (World) */
 	DRIVER( parodisj )	/* GX955 (c) 1990 (Japan) */
 	DRIVER( rollerg )	/* GX999 (c) 1991 (US) */
@@ -4649,6 +4655,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hal21 )		/*            (c) 1985 */
 	DRIVER( hal21j )	/*            (c) 1985 (Japan) */
 	DRIVER( aso )		/*            (c) 1985 */
+	DRIVER( alphamis )	/*            (c) 1985 */
 	DRIVER( tnk3 )		/* A5001      (c) 1985 */
 	DRIVER( tnk3j )		/* A5001      (c) 1985 */
 	DRIVER( athena )	/*       'UP' (c) 1986 */
@@ -5137,6 +5144,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( smashtv4 )	/* (c) 1990 Williams */
 	DRIVER( hiimpact )	/* (c) 1990 Williams */
 	DRIVER( hiimpac3 )	/* (c) 1990 Williams */
+	DRIVER( hiimpacp )	/* (c) 1990 Williams */
 	DRIVER( shimpact )	/* (c) 1991 Midway */
 	DRIVER( shimpacp )	/* (c) 1991 Midway */
 	DRIVER( strkforc )	/* (c) 1991 Midway */
@@ -5356,9 +5364,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ejanhs )
 	DRIVER( rdft )
 	DRIVER( rdftau )
-	DRIVER( rf2_us )
-	DRIVER( rf2_eur )
-	DRIVER( rf2_2k )
+	DRIVER( rdft2 )
+	DRIVER( rdft2us )
+	DRIVER( rdft22kc )
 	DRIVER( rfjet )
 	DRIVER( rfjetu )
 	DRIVER( rfjeta )
@@ -6241,6 +6249,9 @@ Other Sun games
 	DRIVER( ar_sprg )
 	DRIVER( ar_xeon )
 
+	/* Sente Super System */
+	DRIVER( mquake )
+
 	/* Crystal System */
 	DRIVER( crysking )	/* 2001 Brezzasoft. Crystal of the kings */
 	DRIVER( evosocc )	/* 2001 Evoga. Evolution Soccer */
@@ -6286,6 +6297,7 @@ Other Sun games
 	DRIVER( gfire2 )	/* (c) 1992 Topis Corp */
 	DRIVER( spdbuggy )
 	DRIVER( sprcros2 )	/* (c) 1986 GM Shoji */
+	DRIVER( sprcrs2a )	/* (c) 1986 GM Shoji */
 	DRIVER( gcpinbal )	/* (c) 1994 Excellent System */
 	DRIVER( vmetal )	/* (c) 1995 Excellent System? */
 	DRIVER( aquarium )	/* (c) 1996 Excellent System */
@@ -6356,6 +6368,8 @@ Other Sun games
 	DRIVER( supertr2 )	/* (c) 1986 Status Games */
 	DRIVER( supertr3 )	/* (c) 1986 Status Games */
 	DRIVER( tickee )	/* (c) 1994 Raster Elite */
+	DRIVER( ghoshunt )	/* (c) 1995? Hanaho Games */
+	DRIVER( tutstomb )	/* (c) 199?? Island Design */
 	DRIVER( crgolf )	/* (c) 1984 Nasco Japan */
 	DRIVER( crgolfa )	/* (c) 1984 Nasco Japan */
 	DRIVER( crgolfb )	/* (c) 1984 Nasco Japan */

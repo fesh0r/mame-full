@@ -43,6 +43,7 @@
 #include "machine/tms9902.h"
 #include "vidhrdw/tms9928a.h"
 #include "devices/cassette.h"
+#include "sound/speaker.h"
 
 static int load_state;
 static int ic_state;
@@ -746,27 +747,7 @@ static ADDRESS_MAP_START(tm990_189_readcru, ADDRESS_SPACE_IO, 8)
 
 ADDRESS_MAP_END
 
-/*
-	Simple 2-level speaker
-*/
-static struct Speaker_interface tm990_189_sound_interface =
-{
-	1,
-	{ 50 },
-	{ 0 },
-	{ NULL }
-};
 
-/*
-	1 tape unit
-*/
-static struct Wave_interface tape_input_intf =
-{
-	1,
-	{
-		50
-	}
-};
 
 static tms9980areset_param reset_params =
 {
@@ -817,12 +798,12 @@ static MACHINE_DRIVER_START(tm990_189)
 	MDRV_VIDEO_UPDATE(tm990_189)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
 	/* one two-level buzzer */
-	MDRV_SOUND_ADD(SPEAKER, tm990_189_sound_interface)
-	MDRV_SOUND_ADD(WAVE,	tape_input_intf)
-
-MACHINE_DRIVER_END
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(tm990_189_v)
 
@@ -856,10 +837,12 @@ static MACHINE_DRIVER_START(tm990_189_v)
 	machine->default_visible_area.max_y += 32;
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
 	/* one two-level buzzer */
-	MDRV_SOUND_ADD(SPEAKER,	tm990_189_sound_interface)
-	MDRV_SOUND_ADD(WAVE,	tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SPEAKER,	0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 MACHINE_DRIVER_END
 

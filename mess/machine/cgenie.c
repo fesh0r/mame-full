@@ -16,6 +16,8 @@
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 #include "image.h"
 
 #define AYWriteReg(chip,port,value) \

@@ -25,6 +25,7 @@
 #include "devices/cassette.h"
 #include "formats/ap2_dsk.h"
 #include "formats/oric_tap.h"
+#include "sound/ay8910.h"
 
 #include "includes/apple2.h"
 
@@ -415,7 +416,8 @@ static unsigned char oric_palette[8*3] =
 	0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
 };
 
-static unsigned short oric_colortable[8] = {
+static const unsigned short oric_colortable[8] =
+{
 	 0,1,2,3,4,5,6,7
 };
 
@@ -426,20 +428,14 @@ static PALETTE_INIT( oric )
 	memcpy(colortable, oric_colortable,sizeof(oric_colortable));
 }
 
-static struct Wave_interface wave_interface = {
-	1,		/* 1 cassette recorder */
-	{ 50 }	/* mixing levels in percent */
-};
+
 
 static struct AY8910interface oric_ay_interface =
 {
-	1,	/* 1 chips */
-	1000000,	/* 1.0 MHz  */
-	{ 25,25},
-	{ 0 },
-	{ 0 },
-	{ oric_psg_porta_write },
-	{ 0 }
+	0,
+	0,
+	oric_psg_porta_write,
+	0
 };
 
 
@@ -466,8 +462,12 @@ static MACHINE_DRIVER_START( oric )
 	MDRV_VIDEO_UPDATE( oric )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, oric_ay_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(oric_ay_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
 MACHINE_DRIVER_END
 
 

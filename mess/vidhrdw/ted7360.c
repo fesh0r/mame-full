@@ -357,6 +357,7 @@ Video part
 #include "osd_cpu.h"
 #include "driver.h"
 #include "utils.h"
+#include "sound/custom.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
@@ -472,9 +473,7 @@ unsigned char ted7360_palette[] =
 
 struct CustomSound_interface ted7360_sound_interface =
 {
-	ted7360_custom_start,
-	ted7360_custom_stop,
-	ted7360_custom_update
+	ted7360_custom_start
 };
 
 UINT8 ted7360[0x20] =
@@ -485,7 +484,7 @@ bool ted7360_rom;
 
 static int lines;
 static int timer1_active, timer2_active, timer3_active;
-static void *timer1, *timer2, *timer3;
+static mame_timer *timer1, *timer2, *timer3;
 static bool cursor1 = false;
 static read8_handler vic_dma_read;
 static read8_handler vic_dma_read_rom;

@@ -169,6 +169,7 @@ Notes:	pzlbowl PCB with extra parts:
 #include "vidhrdw/generic.h"
 #include "machine/tmp68301.h"
 #include "machine/eeprom.h"
+#include "sound/x1_010.h"
 #include "seta.h"
 
 /***************************************************************************
@@ -1373,10 +1374,8 @@ static INTERRUPT_GEN( seta2_interrupt )
 	}
 }
 
-static struct x1_010_interface x1_010_sound_intf_16MHz =
+static struct x1_010_interface x1_010_sound_intf =
 {
-	50000000/3,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
 	0x0000,		/* address */
 };
 
@@ -1405,8 +1404,12 @@ static MACHINE_DRIVER_START( mj4simai )
 	MDRV_VIDEO_EOF(seta2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, x1_010_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(X1_010, 50000000/3)
+	MDRV_SOUND_CONFIG(x1_010_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gundamex )

@@ -185,6 +185,8 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "machine/tait8741.h"
 #include "cpu/z80/z80.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 
 /*Video functions*/
@@ -654,35 +656,23 @@ static READ8_HANDLER(f1_r)
 
 static struct YM2203interface ppking_ym2203_interface =
 {
-	1,		/* 1 chip */
-	12000000/8,	/* 1.5 MHz */
-	{ YM2203_VOL(50,60) },
-	{ f1_r },
-	{ f1_r },         /* port B read */
-	{ 0 }, 						/* port A write */
-	{ 0 },
-	{ 0 }          		/* NMI request for 2nd cpu */
+	f1_r,
+	f1_r
 };
 
 static struct YM2203interface gladiatr_ym2203_interface =
 {
-	1,		/* 1 chip */
-	12000000/8,	/* 1.5 MHz */
-	{ YM2203_VOL(50,60) },
-	{ 0 },
-	{ gladiator_dsw3_r },         /* port B read */
-	{ gladiator_int_control_w }, /* port A write */
-	{ 0 },
-	{ gladiator_ym_irq }          /* NMI request for 2nd cpu */
+	0,
+	gladiator_dsw3_r,         /* port B read */
+	gladiator_int_control_w, /* port A write */
+	0,
+	gladiator_ym_irq          /* NMI request for 2nd cpu */
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	12000000/32,		/* 375kHz ?           */
-	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B},	/* vclk input mode    */
-	{ 60 }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* vclk input mode    */
 };
 
 
@@ -721,8 +711,18 @@ static MACHINE_DRIVER_START( ppking )
 	MDRV_VIDEO_UPDATE(ppking)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ppking_ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(ppking_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 12000000/32)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gladiatr )
@@ -759,8 +759,18 @@ static MACHINE_DRIVER_START( gladiatr )
 	MDRV_VIDEO_UPDATE(gladiatr)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, gladiatr_ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000/8)
+	MDRV_SOUND_CONFIG(gladiatr_ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.60)
+	MDRV_SOUND_ROUTE(1, "mono", 0.60)
+	MDRV_SOUND_ROUTE(2, "mono", 0.60)
+	MDRV_SOUND_ROUTE(3, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 12000000/32)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
 MACHINE_DRIVER_END
 
 /***************************************************************************

@@ -77,6 +77,7 @@ TODO :
 #include "vidhrdw/tms9928a.h"
 #include "devices/cartslot.h"
 #include "devices/cassette.h"
+#include "sound/sn76496.h"
 
 
 /* mapper state */
@@ -86,7 +87,7 @@ static char cartridge_enable;
 static void tape_interrupt_handler(int dummy);
 
 static char tape_interrupt_enable;
-static void *tape_interrupt_timer;
+static mame_timer *tape_interrupt_timer;
 
 /* parallel interface state */
 static mame_file *printer_fp;
@@ -552,26 +553,7 @@ static const TMS9928a_interface tms9929a_interface =
 	/*tms9901_set_int2*/NULL
 };
 
-/*
-	SN76489 or SN76496 sound chip(?)
-*/
-static struct SN76496interface tms9919interface =
-{
-	1,				/* one sound chip */
-	{ 3579545 },	/* clock speed. connected to the TMS9918A CPUCLK pin? */
-	{ 75 }			/* Volume.  I don't know the best value. */
-};
 
-/*
-	1 tape units
-*/
-static struct Wave_interface tape_input_intf =
-{
-	1,
-	{
-		20			/* Volume */
-	}
-};
 
 static MACHINE_DRIVER_START(tutor)
 
@@ -597,10 +579,11 @@ static MACHINE_DRIVER_START(tutor)
 	MDRV_TMS9928A( &tms9929a_interface )
 
 	/* sound */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
-
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 MACHINE_DRIVER_END
 
 

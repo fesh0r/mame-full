@@ -165,6 +165,7 @@ Games marked * need dumping / redumping
 /********** BITS & PIECES **********/
 
 #include "driver.h"
+#include "sound/ymf271.h"
 
 extern data32_t *ms32_fce00000;
 extern data32_t *ms32_roz_ctrl;
@@ -1584,10 +1585,7 @@ ADDRESS_MAP_END
 
 static struct YMF271interface ymf271_interface =
 {
-	1,
-	{ REGION_SOUND1, },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),},
-	{ 0 },
+	REGION_SOUND1
 };
 
 /********** MACHINE INIT **********/
@@ -1630,8 +1628,12 @@ static MACHINE_DRIVER_START( ms32 )
 	MDRV_VIDEO_UPDATE(ms32)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YMF271, ymf271_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF271, 0)
+	MDRV_SOUND_CONFIG(ymf271_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 

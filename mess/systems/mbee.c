@@ -242,17 +242,7 @@ Z80_DaisyChain mbee_daisy_chain[] =
     { 0, 0, 0, -1}      /* end mark */
 };
 
-static struct Speaker_interface speaker_interface =
-{
-    1,          /* number of speakers */
-    { 75 },     /* mixing levels */
-};
 
-static struct Wave_interface wave_interface =
-{
-    1,          /* number of waves */
-    { 25 }      /* mixing levels */
-};
 
 static MACHINE_DRIVER_START( mbee )
 	/* basic machine hardware */
@@ -279,8 +269,11 @@ static MACHINE_DRIVER_START( mbee )
 	MDRV_VIDEO_UPDATE(mbee)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

@@ -155,7 +155,7 @@ SOUNDS+=DAC@
 SOUNDS+=AY8910@
 SOUNDS+=YM2203@
 # enable only one of the following two
-#SOUNDS+=YM2151@
+SOUNDS+=YM2151@
 SOUNDS+=YM2151_ALT@
 SOUNDS+=YM2608@
 SOUNDS+=YM2610@
@@ -285,21 +285,21 @@ DRVLIBS = \
 	$(OBJ)/sharp.a    \
 	$(OBJ)/aim65.a    \
 	$(OBJ)/avigo.a    \
-	$(OBJ)/motorola.a \
-	$(OBJ)/ssystem3.a \
-	$(OBJ)/hp48.a     \
-	$(OBJ)/cbm.a      \
-	$(OBJ)/cbmshare.a \
-	$(OBJ)/kim1.a     \
-	$(OBJ)/sym1.a     \
-	$(OBJ)/dai.a      \
+	$(OBJ)/motorola.a	\
+	$(OBJ)/ssystem3.a	\
+	$(OBJ)/hp48.a		\
+	$(OBJ)/cbm.a		\
+	$(OBJ)/cbmshare.a	\
+	$(OBJ)/kim1.a		\
+	$(OBJ)/sym1.a		\
+	$(OBJ)/dai.a		\
 	$(OBJ)/bandai.a		\
 	$(OBJ)/compis.a		\
-	$(OBJ)/necpc.a	  \
-	$(OBJ)/ascii.a	  \
-	$(OBJ)/mtx.a	  \
-	$(OBJ)/intv.a     \
-	$(OBJ)/rca.a	  \
+	$(OBJ)/necpc.a		\
+	$(OBJ)/ascii.a		\
+	$(OBJ)/mtx.a		\
+	$(OBJ)/intv.a		\
+	$(OBJ)/rca.a		\
 	$(OBJ)/multitch.a	\
 	$(OBJ)/telmac.a		\
 	$(OBJ)/tx0.a		\

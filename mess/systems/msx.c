@@ -17,6 +17,7 @@
 #include "devices/cartslot.h"
 #include "devices/cassette.h"
 #include "formats/fmsx_cas.h"
+#include "sound/ay8910.h"
 
 static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x1fff) AM_READ( MRA8_BANK1 )
@@ -699,38 +700,10 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	1789773,	/* 1.7897725 MHz */
-	{ 10 },
-	{ msx_psg_port_a_r },
-	{ msx_psg_port_b_r },
-	{ msx_psg_port_a_w },
-	{ msx_psg_port_b_w }
-};
-
-static struct k051649_interface k051649_interface =
-{
-	1789773,  /* Clock */
-	25,			/* Volume */
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 10 }
-};
-
-static struct YM2413interface ym2413_interface=
-{
-	1,						/* 1 chip */
-	3579545,				/* 3.57Mhz.. ? */
-	{ YM2413_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) }
-						/* Volume */
-};
-
-static struct Wave_interface wave_interface = {
-	1,				/* number of waves */
-	{ 25 }			/* mixing levels */
+	msx_psg_port_a_r,
+	msx_psg_port_b_r,
+	msx_psg_port_a_w,
+	msx_psg_port_b_w
 };
 
 static VIDEO_START( msx2 )
@@ -763,11 +736,18 @@ static MACHINE_DRIVER_START( msx )
 	MDRV_VISIBLE_AREA(15 - 8, 15 + 256 + 8 - 1, 27 - 24, 27 + 192 + 24 - 1)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 1789773)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)	
+	MDRV_SOUND_ADD(K051649, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)	
 MACHINE_DRIVER_END
 
 
@@ -801,11 +781,18 @@ static MACHINE_DRIVER_START( msx2 )
 	MDRV_VIDEO_UPDATE( v9938 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(K051649, k051649_interface)
-	MDRV_SOUND_ADD(YM2413, ym2413_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 1789773)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.10)	
+	MDRV_SOUND_ADD(K051649, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)	
 
 	MDRV_NVRAM_HANDLER( msx2 )
 MACHINE_DRIVER_END

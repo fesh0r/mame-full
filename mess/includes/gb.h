@@ -1,6 +1,9 @@
 #ifndef __GB_H
 #define __GB_H
 
+#include "mame.h"
+#include "sound/custom.h"
+
 void gameboy_sound_w(int offset, int data);
 
 #ifdef __MACHINE_GB_C
@@ -114,7 +117,7 @@ void gb_refresh_scanline(void);
 EXTERN double lcd_time;
 /* Custom Sound Interface */
 extern WRITE8_HANDLER( gb_sound_w );
-int gameboy_sh_start(const struct MachineSound* driver);
+void *gameboy_sh_start(int clock, const struct CustomSound_interface *config);
 
 /* -- Super GameBoy specific -- */
 #define SGB_BORDER_PAL_OFFSET	64	/* Border colours stored from pal 4-7	*/

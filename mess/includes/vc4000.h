@@ -1,7 +1,5 @@
 #include "driver.h"
-
-// define this for debugging sessions
-//#define DEBUG
+#include "sound/custom.h"
 
 // define this to use digital inputs instead of the slow
 // autocentering analog mame joys
@@ -22,7 +20,5 @@ extern VIDEO_START( vc4000 );
 extern VIDEO_UPDATE( vc4000 );
 
 extern struct CustomSound_interface vc4000_sound_interface;
-extern int vc4000_custom_start (const struct MachineSound *driver);
-extern void vc4000_custom_stop (void);
-extern void vc4000_custom_update (void);
-extern void vc4000_soundport_w (int mode, int data);
+
+void vc4000_soundport_w (int mode, int data);

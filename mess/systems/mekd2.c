@@ -163,11 +163,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static struct DACinterface dac_interface =
-{
-	1,			/* number of DACs */
-	{ 100 } 	/* volume */
-};
 
 
 static MACHINE_DRIVER_START( mekd2 )
@@ -191,7 +186,10 @@ static MACHINE_DRIVER_START( mekd2 )
 	MDRV_VIDEO_UPDATE( mekd2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

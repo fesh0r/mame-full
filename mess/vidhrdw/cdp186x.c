@@ -2,6 +2,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/cdp1802/cdp1802.h"
 #include "vidhrdw/cdp186x.h"
+#include "sound/beep.h"
 
 /*
 
@@ -68,13 +69,13 @@ void cdp1864_audio_output_w(int value)
 	beep_set_state(0, value);
 }
 
- READ8_HANDLER( cdp1864_audio_enable_r )
+READ8_HANDLER( cdp1864_audio_enable_r )
 {
 	beep_set_state(0, 1);
 	return 0;
 }
 
- READ8_HANDLER( cdp1864_audio_disable_r )
+READ8_HANDLER( cdp1864_audio_disable_r )
 {
 	beep_set_state(0, 0);
 	return 0;

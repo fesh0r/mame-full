@@ -15,6 +15,8 @@
 #include "devices/cartslot.h"
 #include "devices/cassette.h"
 #include "formats/svi_cas.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
 
 
 static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
@@ -303,24 +305,10 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-    1,  /* 1 chip */
-    1789773,    /* 1.7897725 MHz */
-    { 75 },
-    { svi318_psg_port_a_r },
-    { NULL },
-    { NULL },
-    { svi318_psg_port_b_w }
-};
-
-static struct DACinterface dac_interface =
-{
-    1,
-    { 25 }
-};
-
-static struct Wave_interface wave_interface = {
-    1,              /* number of waves */
-    { 25 }           /* mixing levels */
+	svi318_psg_port_a_r,
+	NULL,
+	NULL,
+	svi318_psg_port_b_w
 };
 
 static const TMS9928a_interface tms9928a_interface =
@@ -347,9 +335,14 @@ static MACHINE_DRIVER_START( svi318 )
 	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 1789773)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)	
 MACHINE_DRIVER_END
 
 

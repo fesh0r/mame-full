@@ -23,7 +23,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "sound/sn76496.h"
+#include "sound/msm5205.h"
 
 extern data8_t *mjkjidai_videoram;
 
@@ -36,7 +37,7 @@ WRITE8_HANDLER( mjkjidai_ctrl_w );
 
 static WRITE8_HANDLER( adpcm_w )
 {
-	ADPCM_play(0,(data & 0x07) * 0x1000,0x1000*2);
+//	ADPCM_play(0,(data & 0x07) * 0x1000,0x1000*2);
 }
 
 
@@ -285,20 +286,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-
-static struct SN76496interface sn76496_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	2,	/* 2 chips */
-	{ 10000000/4, 10000000/4, 10000000/4 },	/* 2.5 MHz ??? */
-	{ 50, 50 }
-};
-
-static struct ADPCMinterface adpcm_interface =
-{
-	1,          	/* 1 channel */
-	6000,       	/* 6000Hz playback */
-	REGION_SOUND1,	/* memory region */
-	{ 100 }
+	NULL,			/* interrupt function */
+	MSM5205_S64_4B	/* 6KHz               */
 };
 
 
@@ -328,8 +319,17 @@ static MACHINE_DRIVER_START( mjkjidai )
 	MDRV_VIDEO_UPDATE(mjkjidai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
-	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SN76496, 10000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(SN76496, 10000000/4)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

@@ -341,11 +341,7 @@ static MACHINE_DRIVER_START( uk101 )
 	MDRV_VIDEO_UPDATE( uk101 )
 MACHINE_DRIVER_END
 
-static struct DACinterface superbrd_DAC_interface =
-{
-    1,          /* number of DACs */
-    { 100 }     /* volume */
-};
+
 
 static MACHINE_DRIVER_START( superbrd )
 	MDRV_IMPORT_FROM( uk101 )
@@ -356,8 +352,12 @@ static MACHINE_DRIVER_START( superbrd )
 	MDRV_VISIBLE_AREA(0, 32 * 8 - 1, 0, 32 * 8 - 1)
 	MDRV_VIDEO_UPDATE( superbrd )
 	MDRV_INTERLEAVE(0)
+
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, superbrd_DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START(uk101)

@@ -35,6 +35,7 @@ Historical notes: TI made several last minute design changes.
 #include "devices/harddriv.h"
 #include "devices/cassette.h"
 #include "machine/smartmed.h"
+#include "sound/5220intf.h"
 
 /*
 	memory map
@@ -489,39 +490,16 @@ INPUT_PORTS_START(ti99_4)
 INPUT_PORTS_END
 
 /*
-	TMS9919 (a.k.a. SN76489) sound chip parameters.
-*/
-static struct SN76496interface tms9919interface =
-{
-	1,				/* one sound chip */
-	{ 3579545 },	/* clock speed. connected to the TMS9918A CPUCLK pin... */
-	{ 75 }			/* Volume.  I don't know the best value. */
-};
-
-/*
 	TMS0285 speech synthesizer
 */
 static struct TMS5220interface tms5220interface =
 {
-	680000L,					/* 640kHz -> 8kHz output */
-	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
 	spchroms_read,				/* speech ROM read handler */
 	spchroms_load_address,		/* speech ROM load address handler */
 	spchroms_read_and_branch	/* speech ROM read and branch handler */
 };
 
-/*
-	2 tape units
-*/
-static struct Wave_interface tape_input_intf =
-{
-	2,
-	{
-		20,			/* Volume for CS1 */
-		20			/* Volume for CS2 */
-	}
-};
 
 
 static const TMS9928a_interface tms9918_interface =
@@ -576,11 +554,18 @@ static MACHINE_DRIVER_START(ti99_4_60hz)
 	MDRV_TMS9928A( &tms9918_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(ti99_4_50hz)
@@ -607,10 +592,14 @@ static MACHINE_DRIVER_START(ti99_4_50hz)
 	MDRV_TMS9928A( &tms9929_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 MACHINE_DRIVER_END
 
@@ -638,10 +627,14 @@ static MACHINE_DRIVER_START(ti99_4a_60hz)
 	MDRV_TMS9928A( &tms9918a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 MACHINE_DRIVER_END
 
@@ -669,10 +662,14 @@ static MACHINE_DRIVER_START(ti99_4a_50hz)
 	MDRV_TMS9928A( &tms9929a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 MACHINE_DRIVER_END
 
@@ -712,10 +709,14 @@ static MACHINE_DRIVER_START(ti99_4ev_60hz)
 	MDRV_VIDEO_UPDATE(v9938)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
 MACHINE_DRIVER_END
 

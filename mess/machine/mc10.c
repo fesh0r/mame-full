@@ -11,6 +11,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
 #include "devices/cassette.h"
+#include "sound/dac.h"
 
 static int mc10_keyboard_strobe;
 

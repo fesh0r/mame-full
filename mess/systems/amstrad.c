@@ -39,6 +39,7 @@ Some bugs left :
 #include "devices/printer.h"
 #include "devices/cassette.h"
 #include "inputx.h"
+#include "sound/ay8910.h"
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
 /* for event list */
@@ -1555,25 +1556,13 @@ INPUT_PORTS_END
    --------------------*/
 static struct AY8910interface ay8912_interface =
 {
-	1,		                       /* total number of 8910 in the machine */
-	1000000,                     /* base clock : 1.0 MHz */
-	{ 25 },                      /* mixing_level */
-	{amstrad_psg_porta_read},    /* portA read */
-	{amstrad_psg_porta_read},    /* portB read */
-	{ NULL },                    /* portA write */
-	{ NULL }                     /* portB write */
-                               /* IRQ handler for the YM2203 ??? */
+	amstrad_psg_porta_read,	/* portA read */
+	amstrad_psg_porta_read,	/* portB read */
+	NULL,					/* portA write */
+	NULL					/* portB write */
 };
 
 
-/* ------------------
-   - Wave_interface -
-   ------------------*/
-
-static struct Wave_interface wave_interface = {
-	1,		/* 1 cassette recorder */
-	{ 50 }	/* mixing levels in percent */
-};
 
 /* actual clock to CPU is 4Mhz, but it is slowed by memory
 accessess. A HALT is used for every memory access by the CPU.
@@ -1620,8 +1609,12 @@ static MACHINE_DRIVER_START( amstrad )
 	MDRV_VIDEO_EOF( amstrad )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8912_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
 MACHINE_DRIVER_END
 
 

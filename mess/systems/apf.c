@@ -10,6 +10,7 @@
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
 #include "formats/apf_apt.h"
+#include "sound/speaker.h"
 
  /*
 0000- 2000-2003 PIA of M1000. is itself repeated until 3fff. 
@@ -726,16 +727,6 @@ INPUT_PORTS_START( apf_imagination)
 INPUT_PORTS_END
 
 
-/* sound output */
-
-static	struct	Speaker_interface apf_sh_interface =
-{
-	1,
-	{ 100 },
-	{ 0 },
-	{ NULL }
-};
-
 
 static MACHINE_DRIVER_START( apf_imagination )
 	/* basic machine hardware */
@@ -752,7 +743,9 @@ static MACHINE_DRIVER_START( apf_imagination )
 	MDRV_M6847_NTSC( apf )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, apf_sh_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

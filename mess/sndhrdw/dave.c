@@ -177,9 +177,9 @@ void	Dave_Init(void)
 	}
 }
 
-static void dave_update_sound(int chip, INT16 **buffer, int length)
+static void dave_update_sound(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {		
-	INT16 *buffer1, *buffer2;
+	stream_sample_t *buffer1, *buffer2;
 	/* 0 = channel 0 left volume, 1 = channel 0 right volume,
 	2 = channel 1 left volume, 3 = channel 1 right volume,
 	4 = channel 2 left volume, 5 = channel 2 right volume 
@@ -190,8 +190,8 @@ static void dave_update_sound(int chip, INT16 **buffer, int length)
 
 	//logerror("sound update!\n");
 
-	buffer1 = buffer[0];
-	buffer2 = buffer[1];
+	buffer1 = _buffer[0];
+	buffer2 = _buffer[1];
 
 	while (length)
 	{
@@ -263,52 +263,14 @@ static void dave_update_sound(int chip, INT16 **buffer, int length)
 
 /* dave has 3 tone channels and 1 noise channel.
 the volumes are mixed internally and output as left and right volume */
-int Dave_sh_start(const struct MachineSound *msound)
+void *Dave_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	int i;
-	int volume;
-
-	/* holds names for each stream */
-	char stream_names_buffer[2][40];
-	/* holds volume for each stream */
-	int stream_volumes[2];
-	/* list of pointers to the name for each stream */
-	const char *stream_names[2];
-
-	volume = 50;
-
-	for (i=0; i<2; i++)
-	{
-		char ch;
-
-		stream_volumes[i] = volume;
-		stream_names[i] = stream_names_buffer[i];
-		
-		if ((i & 0x01)==0)
-		{
-			ch = 'L';
-		}
-		else
-		{
-			ch = 'R';
-		}
-
-		sprintf(stream_names_buffer[i], "DAVE %c", ch);
-	}
-
 	/* 3 tone channels + 1 noise channel */
-	dave.sound_stream = stream_init_multi(2, stream_names, stream_volumes, Machine->sample_rate, 0, dave_update_sound);
-
-	return 0;
+	dave.sound_stream = stream_create( 0, 2, Machine->sample_rate, NULL, dave_update_sound);
+	return (void *) ~0;
 }
 
-void	Dave_sh_stop(void)
-{
-}
 
-void	Dave_sh_update(void)
-{
-}
 
 /* used to update sound output based on data writes */
 static WRITE8_HANDLER(Dave_sound_w)
@@ -567,7 +529,7 @@ WRITE8_HANDLER ( Dave_setreg )
 	dave.Regs[offset & 0x01f] = data;
 }
 
- READ8_HANDLER (	Dave_reg_r )
+READ8_HANDLER (	Dave_reg_r )
 {
 	logerror("dave r: %04x\n",offset);
 

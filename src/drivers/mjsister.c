@@ -7,6 +7,8 @@ Mahjong Sisters (c) 1986 Toa Plan
 *****************************************************************************/
 
 #include "driver.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
 
 #define MCLK 12000000
 
@@ -294,19 +296,8 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,      /* 1 chip */
-	MCLK/8, /* 1.500 MHz */
-	{ 15 },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 100 }
+	input_port_0_r,
+	input_port_1_r
 };
 
 static MACHINE_DRIVER_START( mjsister )
@@ -332,9 +323,14 @@ static MACHINE_DRIVER_START( mjsister )
 	MDRV_VIDEO_UPDATE(mjsister)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, MCLK/8)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
 
+	MDRV_SOUND_ADD(DAC, 0)	
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 /***************************************************************************

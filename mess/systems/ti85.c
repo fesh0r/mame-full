@@ -373,11 +373,6 @@ INPUT_PORTS_START (ti85)
 INPUT_PORTS_END
 
 
-static struct Speaker_interface ti85_speaker_interface=
-{
-	1,
-	{50},
-};
 
 /* machine definition */
 static MACHINE_DRIVER_START( ti81 )
@@ -417,8 +412,11 @@ static MACHINE_DRIVER_START( ti85 )
 
 	MDRV_SCREEN_SIZE(128, 64)
 	MDRV_VISIBLE_AREA(0, 128-1, 0, 64-1)
+
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, ti85_speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_NVRAM_HANDLER( ti85 )
 MACHINE_DRIVER_END

@@ -361,19 +361,6 @@ MACHINE_DRIVER_START( cpu_kc_disc )
 MACHINE_DRIVER_END
 
 
-static struct Speaker_interface kc_speaker_interface=
-{
-	1,
-	{50},
-};
-
-static struct Wave_interface kc_wave_interface=
-{
-	1,	  /* number of cassette drives = number of waves to mix */
-	{25},	/* default mixing level */
-
-};
-
 
 static MACHINE_DRIVER_START( kc85_3 )
 	/* basic machine hardware */
@@ -400,8 +387,11 @@ static MACHINE_DRIVER_START( kc85_3 )
 	MDRV_VIDEO_UPDATE( kc85_3 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, kc_speaker_interface)
-	MDRV_SOUND_ADD(WAVE, kc_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

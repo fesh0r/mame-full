@@ -11,6 +11,7 @@
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/generic.h"
 #include "includes/kim1.h"
+#include "sound/dac.h"
 
 typedef struct
 {
@@ -23,7 +24,7 @@ typedef struct
 	UINT8 irqen;	/* IRQ enabled ? */
 	UINT8 state;	/* current timer state (bit 7) */
 	double clock;	/* 100000/1(,8,64,1024) */
-	void *timer;	/* timer callback */
+	mame_timer *timer;	/* timer callback */
 }
 M6530;
 

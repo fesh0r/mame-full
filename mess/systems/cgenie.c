@@ -31,6 +31,7 @@ NMI
 #include "includes/cgenie.h"
 #include "devices/basicdsk.h"
 #include "devices/cartslot.h"
+#include "sound/ay8910.h"
 
 static ADDRESS_MAP_START (readmem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x3fff) AM_READ( MRA8_ROM )
@@ -390,20 +391,13 @@ static PALETTE_INIT( cgenie )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,						/* 1 chip */
-	2000000,				/* 2 MHz */
-	{ 75 }, 				/* mixing level */
-	{ cgenie_psg_port_a_r },
-	{ cgenie_psg_port_b_r },
-	{ cgenie_psg_port_a_w },
-	{ cgenie_psg_port_b_w }
+	cgenie_psg_port_a_r,
+	cgenie_psg_port_b_r,
+	cgenie_psg_port_a_w,
+	cgenie_psg_port_b_w
 };
 
-static struct DACinterface DAC_interface =
-{
-	1,			/* number of DACs */
-	{ 25 }		/* volume */
-};
+
 
 static MACHINE_DRIVER_START( cgenie )
 	/* basic machine hardware */
@@ -432,8 +426,12 @@ static MACHINE_DRIVER_START( cgenie )
 	MDRV_VIDEO_UPDATE( cgenie )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, DAC_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)	
 MACHINE_DRIVER_END
 
 /***************************************************************************

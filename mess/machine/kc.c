@@ -4,6 +4,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/kc.h"
 #include "devices/cassette.h"
+#include "sound/speaker.h"
 #include "image.h"
 
 #define KC_DEBUG

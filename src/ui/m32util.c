@@ -311,6 +311,7 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 			const struct RomModule *region, *rom;
 			struct InternalMachineDriver drv;
 			const struct InputPort *input_ports;
+			int speakernum, num_speakers;
 			gameinfo->isClone = ((gamedrv->clone_of->flags & NOT_A_DRIVER) == 0);
 			gameinfo->isBroken = ((gamedrv->flags & GAME_NOT_WORKING) != 0);
 			gameinfo->isHarddisk = FALSE;
@@ -322,7 +323,13 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 				}
 			gameinfo->hasOptionalBIOS = (gamedrv->bios != NULL);
 			expand_machine_driver(gamedrv->drv, &drv);
-			gameinfo->isStereo = ((drv.sound_attributes & SOUND_SUPPORTS_STEREO) != 0);
+
+			num_speakers = 0;
+			for (speakernum = 0; speakernum < MAX_SPEAKER; speakernum++)
+				if (drv.speaker[speakernum].tag != NULL)
+					num_speakers++;
+
+			gameinfo->isStereo = (num_speakers > 1);
 			gameinfo->isMultiMon = ((drv.video_attributes & VIDEO_DUAL_MONITOR) != 0);
 			gameinfo->isVector = ((drv.video_attributes & VIDEO_TYPE_VECTOR) != 0);
 			gameinfo->usesRoms = FALSE;
@@ -338,9 +345,12 @@ static struct DriversInfo* GetDriversInfo(int driver_index)
 			{
 				const char **samplenames = NULL;
 #if (HAS_SAMPLES == 1)
+				/*
+				  // cmk 2005-02-27, not sure what to look for here
 				if (drv.sound[i].sound_type == SOUND_SAMPLES)
 					samplenames = ((struct Samplesinterface
 									*)drv.sound[i].sound_interface)->samplenames;
+									*/
 #endif
 				/*
 				  #if (HAS_VLM5030 == 1)

@@ -161,6 +161,7 @@ ToDo / Notes:
 #include "cpu/sh2/sh2.h"
 #include "machine/stvcd.h"
 #include "machine/scudsp.h"
+#include "sound/scsp.h"
 #include <time.h>
 
 extern data32_t* stv_vdp2_regs;
@@ -4177,11 +4178,9 @@ static void scsp_irq(int irq)
 
 static struct SCSPinterface scsp_interface =
 {
-	1,
-	{ REGION_CPU3, },
-	{ 0, },
-	{ YM3012_VOL(100, MIXER_PAN_LEFT, 100, MIXER_PAN_RIGHT) },
-	{ scsp_irq, },
+	REGION_CPU3,
+	0,
+	scsp_irq
 };
 
 static MACHINE_DRIVER_START( stv )
@@ -4215,8 +4214,12 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_VIDEO_START(stv_vdp2)
 	MDRV_VIDEO_UPDATE(stv_vdp2)
 
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(SCSP, scsp_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(SCSP, 0)
+	MDRV_SOUND_CONFIG(scsp_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 #define ROM_LOAD16_WORD_SWAP_BIOS(bios,name,offset,length,hash) \

@@ -10,15 +10,15 @@
 
 #include "driver.h"
 #include "sound/streams.h"
-#include "sound/mixer.h"
+#include "sound/custom.h"
 #include "machine/random.h"
 #include "includes/pit8253.h"
 #include "includes/dai.h"
 
-static int dai_sh_start(const struct MachineSound*);
-static void dai_sh_update(int, INT16 **, int);
+static void *dai_sh_start(int clock, const struct CustomSound_interface *config);
+static void dai_sh_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length);
 
-static int mixer_channel;
+static sound_stream *mixer_channel;
 
 static UINT16 dai_osc_volume_table[] = {   0,  500, 1000, 1500,
 					2000, 2500, 3000, 3500,
@@ -37,19 +37,16 @@ struct CustomSound_interface dai_sound_interface =
 	NULL
 };
 
-static int dai_sh_start(const struct MachineSound* driver)
+static void *dai_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
-	const char *names[2]= { "DAI left channel", "DAI right channel" };
-	
-	mixer_channel = stream_init_multi(2, names, vol, Machine->sample_rate, 0, dai_sh_update);
+	mixer_channel = stream_create(0, 2, Machine->sample_rate, 0, dai_sh_update);
 
 	logerror ("sample rate: %d\n", Machine->sample_rate);
 
-	return 0;
+	return (void *) ~0;
 }
 
-static void dai_sh_update(int param, INT16 **buffer, int length)
+static void dai_sh_update(void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {
 	INT16 channel_0_signal;
 	INT16 channel_1_signal;
@@ -63,8 +60,8 @@ static void dai_sh_update(int param, INT16 **buffer, int length)
 
 	int rate = Machine->sample_rate / 2;
 
-	INT16 *sample_left = buffer[0];
-	INT16 *sample_right = buffer[1];
+	stream_sample_t *sample_left = buffer[0];
+	stream_sample_t *sample_right = buffer[1];
 
 	channel_0_baseclock = pit8253_get_frequency(0, 0);
 	channel_1_baseclock = pit8253_get_frequency(0, 1);

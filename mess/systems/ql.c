@@ -334,14 +334,6 @@ INPUT_PORTS_START( ql )
 
 INPUT_PORTS_END
 
-/* Sound Interface */
-
-static struct beep_interface ql_sound_intf =
-{
-	1,
-	{ 25 }
-};
-
 /* Machine Drivers */
 
 static MACHINE_DRIVER_START( ql )
@@ -367,7 +359,9 @@ static MACHINE_DRIVER_START( ql )
 	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	// sound hardware
-	MDRV_SOUND_ADD(BEEP, ql_sound_intf)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ql_ntsc )

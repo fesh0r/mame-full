@@ -65,9 +65,7 @@ ADDRESS_MAP_END
 
 static struct CustomSound_interface custom_interface =
 {
-	mac_sh_start,
-	mac_sh_stop,
-	mac_sh_update
+	mac_sh_start
 };
 
 static MACHINE_DRIVER_START( mac512ke )
@@ -93,7 +91,10 @@ static MACHINE_DRIVER_START( mac512ke )
 	MDRV_VIDEO_UPDATE(videomap)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER(mac)
 MACHINE_DRIVER_END

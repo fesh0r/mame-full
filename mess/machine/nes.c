@@ -4,6 +4,7 @@
 #include "vidhrdw/ppu2c03b.h"
 #include "includes/nes.h"
 #include "machine/nes_mmc.h"
+#include "sound/nesintf.h"
 #include "zlib.h"
 #include "image.h"
 

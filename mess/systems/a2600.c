@@ -300,11 +300,6 @@ static struct R6532interface r6532_interface =
 };
 
 
-static struct TIAinterface tia_interface =
-{
-	31400, 255, TIA_DEFAULT_GAIN
-};
-
 
 static void install_banks(int count, unsigned init)
 {
@@ -665,7 +660,9 @@ static MACHINE_DRIVER_START( a2600 )
 	MDRV_VIDEO_UPDATE(tia)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(TIA, tia_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(TIA, 31400)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

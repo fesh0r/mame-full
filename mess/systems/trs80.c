@@ -22,8 +22,10 @@ Interrupts:
 IRQ mode 1
 NMI
 ***************************************************************************/
+
 #include "includes/trs80.h"
 #include "devices/basicdsk.h"
+#include "sound/speaker.h"
 
 #define FW	TRS80_FONT_W
 #define FH	TRS80_FONT_H
@@ -311,10 +313,8 @@ static INT16 speaker_levels[3] = {0.0*32767,0.46*32767,0.85*32767};
 
 static struct Speaker_interface speaker_interface =
 {
-	1,					/* one speaker */
-	{ 100 },			/* mixing levels */
-	{ 3 },				/* optional: number of different levels */
-	{ speaker_levels }	/* optional: level lookup table */
+	3,				/* optional: number of different levels */
+	speaker_levels	/* optional: level lookup table */
 };
 
 
@@ -345,7 +345,10 @@ static MACHINE_DRIVER_START( level1 )
 	MDRV_VIDEO_UPDATE( trs80 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_CONFIG(speaker_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

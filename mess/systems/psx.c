@@ -16,6 +16,7 @@
 #include "cpu/mips/psx.h"
 #include "devices/snapquik.h"
 #include "includes/psx.h"
+#include "sound/psx.h"
 
 extern void mips_stop( void );
 
@@ -764,7 +765,6 @@ INPUT_PORTS_END
 
 static struct PSXSPUinterface psxspu_interface =
 {
-	100,
 	&g_p_n_psxram,
 	psx_irq_set,
 	psx_dma_install_read_handler,
@@ -794,8 +794,11 @@ static MACHINE_DRIVER_START( psxntsc )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE( 0, "left", 1.00 )
+	MDRV_SOUND_ROUTE( 1, "right", 1.00 )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( psxpal )
@@ -821,8 +824,11 @@ static MACHINE_DRIVER_START( psxpal )
 	MDRV_VIDEO_STOP( psx )
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD( PSXSPU, 0 )
+	MDRV_SOUND_CONFIG( psxspu_interface )
+	MDRV_SOUND_ROUTE( 0, "left", 1.00 )
+	MDRV_SOUND_ROUTE( 1, "right", 1.00 )
 MACHINE_DRIVER_END
 
 ROM_START( psx )

@@ -13,6 +13,7 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/mc6850.h"
 #include "includes/uk101.h"
+#include "sound/dac.h"
 
 static	int		uk101_tape_size = 0;
 static	UINT8	*uk101_tape_image = 0;

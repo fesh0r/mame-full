@@ -565,20 +565,6 @@ static struct GfxDecodeInfo pc1350_gfxdecodeinfo[] = {
     { -1 } /* end of array */
 };
 
-#if 0
-static struct DACinterface dac_interface =
-{
-	1,			/* number of DACs */
-	{ 100 } 	/* volume */
-};
-#endif
-
-struct DACinterface pocketc_sound_interface =
-{
-        1,
-        {25}
-};
-
 static SC61860_CONFIG config={
     pc1401_reset, pc1401_brk, NULL,
     pc1401_ina, pc1401_outa,

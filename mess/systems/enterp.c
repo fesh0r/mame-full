@@ -532,11 +532,9 @@ INPUT_PORTS_START( ep128 )
 
 INPUT_PORTS_END
 
-static struct CustomSound_interface dave_custom_sound=
+static struct CustomSound_interface dave_custom_sound =
 {
-	Dave_sh_start,
-	Dave_sh_stop,
-	Dave_sh_update
+	Dave_sh_start
 };
 
 /* 4Mhz clock, although it can be changed to 8 Mhz! */
@@ -565,7 +563,10 @@ static MACHINE_DRIVER_START( ep128 )
 	MDRV_VIDEO_UPDATE( enterprise )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, dave_custom_sound)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(dave_custom_sound)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START( ep128 )

@@ -211,6 +211,7 @@
 #include "machine/99_ide.h"
 #include "devices/mflopimg.h"
 #include "machine/smartmed.h"
+#include "sound/5220intf.h"
 
 /*
 	memory map
@@ -434,20 +435,10 @@ INPUT_PORTS_START(geneve)
 INPUT_PORTS_END
 
 
-/*
-	SN76496 (compatible with tms9919/SN76489) sound chip parameters.
-*/
-static struct SN76496interface tms9919interface =
-{
-	1,				/* one sound chip */
-	{ 3579545 },	/* clock speed. */
-	{ 75 }			/* Volume.  I don't know the best value. */
-};
+
 
 static struct TMS5220interface tms5220interface =
 {
-	680000L,					/* 640kHz -> 8kHz output */
-	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
 #if 1
 	spchroms_read,				/* speech ROM read handler */
@@ -492,9 +483,12 @@ static MACHINE_DRIVER_START(geneve_60hz)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(v9938)
 
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 MACHINE_DRIVER_END
 

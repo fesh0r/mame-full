@@ -23,6 +23,8 @@ io bug? controls don't work in decap attack
 #include "driver.h"
 #include "machine/random.h"
 #include "includes/genesis.h"
+#include "sound/2612intf.h"
+#include "sound/sn76496.h"
 
 static int oldscreenmode;
 

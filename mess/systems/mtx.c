@@ -28,13 +28,6 @@ static unsigned char *mtx_commonram = NULL;
 
 #define MTX_SYSTEM_CLOCK		4000000
 
-static struct SN76496interface mtx_psg_interface =
-{
-	1,
-	{ MTX_SYSTEM_CLOCK },
-	{ 100 }
-};
-
 static  READ8_HANDLER ( mtx_psg_r )
 {
 	return 0xff;
@@ -853,7 +846,9 @@ static MACHINE_DRIVER_START( mtx512 )
 	MDRV_TMS9928A( &tms9928a_interface )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, mtx_psg_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, MTX_SYSTEM_CLOCK)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START (mtx512)

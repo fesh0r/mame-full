@@ -27,6 +27,7 @@
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
 #include "devices/coco_vhd.h"
+#include "sound/ay8910.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10
@@ -503,29 +504,13 @@ INPUT_PORTS_START( coco3 )
 	PORT_CONFSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static struct DACinterface d_dac_interface =
-{
-	1,
-	{ 100 }
-};
-
-static struct Wave_interface d_wave_interface =
-{
-	1,
-	{ 25 }		/* mixing levels */
-};
-
 /* AY-8912 for Dragon Alpha, the AY-8912 simply an AY-8910 with only one io port. */
 static struct AY8910interface ay8912_interface =
 {
-	1,		                    /* total number of 8910 in the machine */
-	1000000,                    /* base clock : 1.0 MHz */
-	{ 75 },                     /* mixing_level */
-	{dgnalpha_psg_porta_read},  /* portA read */
-	{NULL},    					/* portB read */
-	{dgnalpha_psg_porta_write},  /* portA write */
-	{ NULL }					/* portB write */
-								/* IRQ handler for the YM2203 ??? */
+	dgnalpha_psg_porta_read,	/* portA read */
+	NULL,    					/* portB read */
+	dgnalpha_psg_porta_write,	/* portA write */
+	NULL						/* portB write */
 };
 
 
@@ -544,8 +529,11 @@ static MACHINE_DRIVER_START( dragon32 )
 	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dragon64 )
@@ -563,8 +551,11 @@ static MACHINE_DRIVER_START( dragon64 )
 	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( dgnalpha )
@@ -582,9 +573,14 @@ static MACHINE_DRIVER_START( dgnalpha )
 	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
-	MDRV_SOUND_ADD(AY8910, ay8912_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8912_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco )
@@ -602,8 +598,11 @@ static MACHINE_DRIVER_START( coco )
 	MDRV_M6847_NTSC( dragon )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco2 )
@@ -621,8 +620,11 @@ static MACHINE_DRIVER_START( coco2 )
 	MDRV_M6847_PAL( dragon )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco2b )
@@ -640,8 +642,11 @@ static MACHINE_DRIVER_START( coco2b )
 	MDRV_M6847_NTSC( coco2b )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco3 )
@@ -668,8 +673,11 @@ static MACHINE_DRIVER_START( coco3 )
 	MDRV_VIDEO_UPDATE(coco3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, d_dac_interface)
-	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coco3h )

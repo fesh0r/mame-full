@@ -5,21 +5,16 @@
 
 #define MAX_NESPSG 2
 
-struct NESinterface {
-	int num;		/* total number of chips in the machine */
+struct NESinterface
+{
 	int basefreq;
-	int volume[MAX_NESPSG];
-	int cpunum[MAX_NESPSG];
-	write8_handler apu_callback_w[MAX_NESPSG];
-	read8_handler apu_callback_r[MAX_NESPSG];
+	int cpunum;
+	write8_handler apu_callback_w;
+	read8_handler apu_callback_r;
 };
 
-extern int NESPSG_sh_start(const struct MachineSound *msound);
-extern void NESPSG_sh_stop(void);
-extern void NESPSG_sh_update(void);
-
-extern  READ8_HANDLER(NESPSG_0_r);
-extern  READ8_HANDLER(NESPSG_1_r);
+extern READ8_HANDLER(NESPSG_0_r);
+extern READ8_HANDLER(NESPSG_1_r);
 extern WRITE8_HANDLER(NESPSG_0_w);
 extern WRITE8_HANDLER(NESPSG_1_w);
 

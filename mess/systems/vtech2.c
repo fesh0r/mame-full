@@ -456,17 +456,6 @@ static PALETTE_INIT( vtech2 )
 		colortable[2*256+i] = i;
 }
 
-static struct Speaker_interface speaker_interface =
-{
-	1,		/* number of speakers */
-	{ 75 }	/* volume */
-};
-
-static struct Wave_interface wave_interface = {
-	1,
-	{ 50 }
-};
-
 static INTERRUPT_GEN( vtech2_interrupt )
 {
 	cpunum_set_input_line(0, 0, PULSE_LINE);
@@ -497,8 +486,11 @@ static MACHINE_DRIVER_START( laser350 )
 	MDRV_VIDEO_UPDATE(laser)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

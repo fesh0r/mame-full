@@ -11,72 +11,44 @@ static INT16 default_levels[2] = {0,32767};
 
 struct speaker
 {
-	int channel;
+	sound_stream *channel;
 	INT16 *levels;
 	int num_levels;
 	int level;
 	int mixing_level;
 };
 
-static struct Speaker_interface *intf;
-static struct speaker speaker[MAX_SPEAKER];
+//static struct Speaker_interface *intf;
 
-void speaker_sh_init(int which, int speaker_num_levels, INT16 *speaker_levels)
+static void speaker_sound_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-	struct speaker *sp = &speaker[which];
-	sp->levels = speaker_levels;
-	sp->num_levels = speaker_num_levels;
-}
-
-static void speaker_sound_update(int param, INT16 *buffer, int length)
-{
-	struct speaker *sp = &speaker[param];
+	struct speaker *sp = (struct speaker *) param;
+	stream_sample_t *buffer = _buffer[0];
 	int volume = sp->levels[sp->level] * sp->mixing_level / 100;
 
     while( length-- > 0 )
 		*buffer++ = volume;
 }
 
-int speaker_sh_start(const struct MachineSound *msound)
+
+
+static void *speaker_start(int sndindex, int clock, const void *config)
 {
-	int i;
+	struct speaker *sp = auto_malloc(sizeof(*sp));
 
-    intf = msound->sound_interface;
-
-    for( i = 0; i < intf->num; i++ )
-	{
-        char buf[32];
-		struct speaker *sp = &speaker[i];
-        sp->mixing_level = intf->mixing_level[i];
-		if( intf->num > 1 )
-			sprintf(buf, "Speaker #%d", i+1);
-		else
-			strcpy(buf, "Speaker");
-		sp->channel = stream_init(buf, sp->mixing_level, Machine->sample_rate, 0, speaker_sound_update);
-		if( sp->channel == -1 )
-			return 1;
-		sp->num_levels = 2;
-		sp->levels = default_levels;
-		sp->level = 0;
-    }
-	return 0;
+//	sp->mixing_level = intf->mixing_level[i];
+	sp->channel = stream_create(0, 1, Machine->sample_rate, 0, speaker_sound_update);
+	sp->num_levels = 2;
+	sp->levels = default_levels;
+	sp->level = 0;
+	return sp;
 }
 
-void speaker_sh_stop(void)
-{
-	/* nothing */
-}
 
-void speaker_sh_update(void)
-{
-	int i;
-	for( i = 0; i < intf->num; i++ )
-		stream_update(speaker[i].channel, 0);
-}
 
 void speaker_level_w(int which, int new_level)
 {
-	struct speaker *sp = &speaker[which];
+	struct speaker *sp = sndti_token(SOUND_SPEAKER, which);
 
     if( new_level < 0 )
 		new_level = 0;
@@ -94,3 +66,37 @@ void speaker_level_w(int which, int new_level)
 }
 
 
+
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void speaker_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* no parameters to set */
+	}
+}
+
+
+void speaker_get_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = speaker_set_info;		break;
+		case SNDINFO_PTR_START:							info->start = speaker_start;			break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Speaker";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Speaker";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005, The MESS Team"; break;
+	}
+}

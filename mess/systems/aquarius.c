@@ -214,14 +214,6 @@ INPUT_PORTS_END
 
 /* Sound output */
 
-static struct Speaker_interface aquarius_speaker =
-{
-	1,			/* one speaker */
-	{ 100 },	/* mixing levels */
-	{ 0 },		/* optional: number of different levels */
-	{ NULL }	/* optional: level lookup table */
-};
-
 static INTERRUPT_GEN( aquarius_interrupt )
 {
 	cpunum_set_input_line(0, 0, PULSE_LINE);
@@ -253,7 +245,9 @@ static MACHINE_DRIVER_START( aquarius )
 	MDRV_VIDEO_UPDATE( aquarius )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, aquarius_speaker)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

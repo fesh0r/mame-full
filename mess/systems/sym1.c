@@ -84,11 +84,6 @@ INPUT_PORTS_START( sym1 )
 	PORT_DIPSETTING( 0x03, "4 KBYTE")
 INPUT_PORTS_END
 
-static struct DACinterface dac_interface =
-{
-	1,			/* number of DACs */
-	{ 100 } 	/* volume */
-};
 
 
 static MACHINE_DRIVER_START( sym1 )
@@ -115,7 +110,10 @@ static MACHINE_DRIVER_START( sym1 )
 	MDRV_VIDEO_UPDATE( sym1 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

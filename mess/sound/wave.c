@@ -16,13 +16,15 @@
 
 
 
-static void wave_sound_update(int num, INT16 *buffer, int length)
+static void wave_sound_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
 	mess_image *image;
 	cassette_image *cassette;
 	cassette_state state;
 	double time_index;
 	double duration;
+	int num = (int) param;
+	stream_sample_t *buffer = _buffer[0];
 
 	image = image_from_devtype_and_index(IO_CASSETTE, num);
 	state = cassette_get_state(image);
@@ -34,7 +36,7 @@ static void wave_sound_update(int num, INT16 *buffer, int length)
 		time_index = cassette_get_position(image);
 		duration = ((double) length) / Machine->sample_rate;
 
-		cassette_get_samples(cassette, 0, time_index, duration, length, 2, buffer, CASSETTE_WAVEFORM_16BIT);
+		cassette_get_samples(cassette, 0, time_index, duration, length, 2, buffer, CASSETTE_WAVEFORM_32BIT);
 	}
 	else
 	{
@@ -44,36 +46,44 @@ static void wave_sound_update(int num, INT16 *buffer, int length)
 
 
 
-int wave_sh_start(const struct MachineSound *msound)
+static void *wave_start(int sndindex, int clock, const void *config)
 {
-	int i;
-	int cassette_count;
-	char buf[32];
-	const struct Wave_interface *intf;
+	stream_create(0, 1, Machine->sample_rate, (void *) sndindex, wave_sound_update);
+    return (void *) sndindex;
+}
 
-    intf = msound->sound_interface;
 
-	cassette_count = device_count(IO_CASSETTE);
 
-    for (i = 0; i < cassette_count; i++ )
+/**************************************************************************
+ * Generic get_info
+ **************************************************************************/
+
+static void wave_set_info(void *token, UINT32 state, union sndinfo *info)
+{
+	switch (state)
 	{
-		if (cassette_count > 1)
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Cassette #%d", i+1);
-		else
-			strncpyz(buf, "Cassette", sizeof(buf) / sizeof(buf[0]));
-		stream_init(buf, intf ? intf->mixing_level[i] : 25, Machine->sample_rate, i, wave_sound_update);
+		/* no parameters to set */
 	}
-    return 0;
 }
 
 
-
-void wave_sh_stop(void)
+void wave_get_info(void *token, UINT32 state, union sndinfo *info)
 {
-}
+	switch (state)
+	{
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
 
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case SNDINFO_PTR_SET_INFO:						info->set_info = wave_set_info;			break;
+		case SNDINFO_PTR_START:							info->start = wave_start;				break;
+		case SNDINFO_PTR_STOP:							/* nothing */							break;
+		case SNDINFO_PTR_RESET:							/* nothing */							break;
 
-
-void wave_sh_update(void)
-{
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case SNDINFO_STR_NAME:							info->s = "Cassette";					break;
+		case SNDINFO_STR_CORE_FAMILY:					info->s = "Cassette";					break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "1.0";						break;
+		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005, The MESS Team"; break;
+	}
 }

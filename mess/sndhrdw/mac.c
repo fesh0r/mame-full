@@ -6,7 +6,7 @@
 
 #include "includes/mac.h"
 
-static int mac_stream;
+static sound_stream *mac_stream;
 static int sample_enable = 0;
 static UINT16 *mac_snd_buf_ptr;
 
@@ -30,14 +30,15 @@ static int snd_cache_tail;
 /* Stream updater                   */
 /************************************/
 
-static void mac_sound_update(int num, INT16 *buffer, int length)
+static void mac_sound_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
 	INT16 last_val = 0;
+	stream_sample_t *buffer = _buffer[0];
 
 	/* if we're not enabled, just fill with 0 */
 	if (Machine->sample_rate == 0)
 	{
-		memset(buffer, 0, length * sizeof(INT16));
+		memset(buffer, 0, length * sizeof(*buffer));
 		return;
 	}
 
@@ -63,38 +64,12 @@ static void mac_sound_update(int num, INT16 *buffer, int length)
 /* Sound handler start              */
 /************************************/
 
-int mac_sh_start(const struct MachineSound *msound)
+void *mac_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	snd_cache = auto_malloc(SND_CACHE_SIZE * sizeof(*snd_cache));
-	if (!snd_cache)
-		return 1;
-
-	mac_stream = stream_init("Mac Sound", 100, MAC_SAMPLE_RATE, 0, mac_sound_update);
-	if (mac_stream < 0)
-		return 1;
-
+	mac_stream = stream_create(0, 1, MAC_SAMPLE_RATE, 0, mac_sound_update);
 	snd_cache_head = snd_cache_len = snd_cache_tail = 0;
-	return 0;
-}
-
-
-
-/************************************/
-/* Sound handler stop               */
-/************************************/
-
-void mac_sh_stop(void)
-{
-}
-
-
-
-/************************************/
-/* Sound handler update 			*/
-/************************************/
-
-void mac_sh_update(void)
-{
+	return (void *) ~0;
 }
 
 
@@ -131,7 +106,7 @@ void mac_set_volume(int volume)
 
 	volume = (100 / 7) * volume;
 
-	mixer_set_volume(mac_stream, volume);
+	sndti_set_output_gain(SOUND_CUSTOM, 0, 0, volume / 100.0);
 }
 
 

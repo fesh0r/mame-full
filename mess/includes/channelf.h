@@ -1,3 +1,5 @@
+#include "mame.h"
+#include "sound/custom.h"
 
 /* in vidhrdw/channelf.c */
 extern int channelf_val_reg;
@@ -11,7 +13,5 @@ extern VIDEO_UPDATE( channelf );
 /* in sndhrdw/channelf.c */
 void channelf_sound_w(int);
 
-int channelf_sh_custom_start(const struct MachineSound *driver);
-void channelf_sh_stop(void);
-void channelf_sh_custom_update(void);
+void *channelf_sh_custom_start(int clock, const struct CustomSound_interface *config);
 

@@ -75,6 +75,7 @@ Stephh's notes (based on the games Z80 code and some tests) :
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
 
 
 static int palette_base;
@@ -1131,13 +1132,8 @@ INPUT_PORTS_END
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	18432000/12,	/* 1.5 MHz ? */
-	{ 33 },
-	{ royalmah_player_1_port_r },
-	{ royalmah_player_2_port_r },
-	{ 0 },
-	{ 0 }
+	royalmah_player_1_port_r,
+	royalmah_player_2_port_r
 };
 
 
@@ -1166,7 +1162,11 @@ static MACHINE_DRIVER_START( royalmah )
 	MDRV_VIDEO_UPDATE(royalmah)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 
@@ -1194,7 +1194,11 @@ static MACHINE_DRIVER_START( dondenmj )
 	MDRV_VIDEO_UPDATE(royalmah)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( suzume )

@@ -7,6 +7,7 @@
 #include "includes/mk2.h"
 #include "includes/rriot.h"
 #include "cpu/m6502/m6502.h"
+#include "sound/dac.h"
 
 #define M6504_MEMORY_LAYOUT
 
@@ -122,8 +123,6 @@ static MACHINE_INIT( mk2 )
 	rriot_reset(0);
 }
 
-static struct DACinterface mk2_dac={ 1, {80}}; // silence is golden
-
 static MACHINE_DRIVER_START( mk2 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6502, 1000000)        /* 6504 */
@@ -146,7 +145,10 @@ static MACHINE_DRIVER_START( mk2 )
 	MDRV_VIDEO_UPDATE( mk2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, mk2_dac)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

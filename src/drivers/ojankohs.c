@@ -33,6 +33,8 @@ Memo:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 
 VIDEO_UPDATE( ojankohs );
@@ -919,53 +921,26 @@ static struct GfxDecodeInfo ojankohs_gfxdecodeinfo[] =
 
 static struct AY8910interface ojankohs_ay8910_interface =
 {
-	1,							/* 1 chip */
-	12000000/6,					/* 2 MHz ? */
-	{ 15 },						/* volume */
-	{ ojankohs_ay8910_0_r },	/* read port #0 */
-	{ ojankohs_ay8910_1_r },	/* read port #1 */
-	{ 0 },						/* write port #0 */
-	{ 0 }						/* write port #1 */
+	ojankohs_ay8910_0_r,	/* read port #0 */
+	ojankohs_ay8910_1_r	/* read port #1 */
 };
 
 static struct AY8910interface ojankoy_ay8910_interface =
 {
-	1,							/* 1 chip */
-	12000000/8,					/* 1.5 MHz ? */
-	{ 15 },						/* volume */
-	{ ojankoy_ay8910_0_r },		/* read port #0 */
-	{ ojankoy_ay8910_1_r },		/* read port #1 */
-	{ 0 },						/* write port #0 */
-	{ 0 }						/* write port #1 */
+	ojankoy_ay8910_0_r,		/* read port #0 */
+	ojankoy_ay8910_1_r,		/* read port #1 */
 };
 
 static struct AY8910interface ojankoc_ay8910_interface =
 {
-	1,							/* 1 chip */
-	8000000/4,					/* 2.000 MHz */
-	{ 15 },						/* volume */
-	{ input_port_0_r },			/* read port #0 */
-	{ input_port_1_r },			/* read port #1 */
-	{ 0 },						/* write port #0 */
-	{ 0 } 						/* write port #1 */
+	input_port_0_r,			/* read port #0 */
+	input_port_1_r			/* read port #1 */
 };
 
-static struct MSM5205interface ojankohs_msm5205_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,							/* 1 chip */
-	384000,						/* 384 KHz */
-	{ ojankohs_adpcm_int },		/* IRQ handler */
-	{ MSM5205_S48_4B },			/* 8 KHz */
-	{ 50 }						/* volume */
-};
-
-static struct MSM5205interface ojankoc_msm5205_interface =
-{
-	1,							/* 1 chip */
-	8000000/22,					/* 364 KHz */
-	{ ojankohs_adpcm_int },		/* IRQ handler */
-	{ MSM5205_S48_4B },			/* 7.6 KHz */
-	{ 50 }						/* volume */
+	ojankohs_adpcm_int,		/* IRQ handler */
+	MSM5205_S48_4B			/* 8 KHz */
 };
 
 
@@ -994,8 +969,15 @@ static MACHINE_DRIVER_START( ojankohs )
 	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ojankohs_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/6)
+	MDRV_SOUND_CONFIG(ojankohs_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ojankoy )
@@ -1024,8 +1006,15 @@ static MACHINE_DRIVER_START( ojankoy )
 	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(ojankoy_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ccasino )
@@ -1053,8 +1042,15 @@ static MACHINE_DRIVER_START( ccasino )
 	MDRV_VIDEO_UPDATE(ojankohs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ojankoy_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, ojankohs_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 12000000/8)
+	MDRV_SOUND_CONFIG(ojankoy_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( ojankoc )
@@ -1081,8 +1077,15 @@ static MACHINE_DRIVER_START( ojankoc )
 	MDRV_VIDEO_UPDATE(ojankoc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ojankoc_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, ojankoc_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 8000000/4)
+	MDRV_SOUND_CONFIG(ojankoc_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.15)
+
+	MDRV_SOUND_ADD(MSM5205, 8000000/22)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

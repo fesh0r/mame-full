@@ -15,6 +15,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/wswan.h"
 #include "devices/cartslot.h"
+#include "sound/custom.h"
 
 static ADDRESS_MAP_START (wswan_readmem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x00000, 0x03fff) AM_READ( MRA8_RAM )		/* 16kb RAM + 16kb 4 colour tiles */
@@ -131,7 +132,9 @@ static PALETTE_INIT( wswan )
 }
 
 static struct CustomSound_interface wswan_sound_interface =
-{ wswan_sh_start, 0, 0 };
+{
+	wswan_sh_start
+};
 
 static MACHINE_DRIVER_START( wswan )
 	/* Basic machine hardware */
@@ -160,7 +163,11 @@ static MACHINE_DRIVER_START( wswan )
 	MDRV_PALETTE_INIT(wswan)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, wswan_sound_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(wswan_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( wscolor )

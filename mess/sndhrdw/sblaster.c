@@ -1,4 +1,13 @@
+/***************************************************************************
+
+    sndhrdw/sblaster.c
+
+	Soundblaster code
+
+****************************************************************************/
+
 #include "includes/sblaster.h"
+#include "sound/dac.h"
 
 /* operation modes
    0x10 output 8 bit direct

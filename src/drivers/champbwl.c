@@ -96,6 +96,7 @@ Notes:
 */
 
 #include "driver.h"
+#include "sound/x1_010.h"
 
 unsigned char *tnzs_objram, *tnzs_sharedram;
 unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
@@ -268,11 +269,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }	/* end of array */
 };
 
-static struct x1_010_interface champbwl_sound_intf_16MHz =
+static struct x1_010_interface champbwl_sound_intf =
 {
-	16000000,	/* clock */
-	YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),	/* volume */
-	0x0000,		/* address */
+	0x0000		/* address */
 };
 
 static MACHINE_DRIVER_START( champbwl )
@@ -299,8 +298,12 @@ static MACHINE_DRIVER_START( champbwl )
 	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(X1_010, champbwl_sound_intf_16MHz)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	
+	MDRV_SOUND_ADD(X1_010, 16000000)
+	MDRV_SOUND_CONFIG(champbwl_sound_intf)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
 ROM_START( champbwl )

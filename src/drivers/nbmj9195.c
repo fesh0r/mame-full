@@ -22,6 +22,8 @@ Notes:
 #include "driver.h"
 #include "machine/z80fmly.h"
 #include "vidhrdw/generic.h"
+#include "sound/3812intf.h"
+#include "sound/dac.h"
 
 
 #define SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -4101,20 +4103,6 @@ static Z80_DaisyChain daisy_chain_sound[] =
 };
 
 
-static struct YM3812interface ym3812_interface =
-{
-	1,					/* 1 chip */
-	4000000,			/* 4.00 MHz */
-	{ 70 }
-};
-
-static struct DACinterface dac_interface =
-{
-	2,					/* 2 channels */
-	{ 70, 100 },
-};
-
-
 static MACHINE_DRIVER_START( NBMJDRV1 )
 
 	/* basic machine hardware */
@@ -4145,8 +4133,16 @@ static MACHINE_DRIVER_START( NBMJDRV1 )
 	MDRV_VIDEO_UPDATE(nbmj9195)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM3812, 4000000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

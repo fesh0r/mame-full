@@ -11,10 +11,11 @@
 #include "sidvoice.h"
 
 /* private area */
-typedef struct _SID6581 {
+typedef struct _SID6581
+{
     int on;
 
-    int mixer_channel; // mame stream/ mixer channel
+    sound_stream *mixer_channel; // mame stream/ mixer channel
 
     int (*ad_read) (int which);
     SIDTYPE type;

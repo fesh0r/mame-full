@@ -412,22 +412,10 @@ INPUT_PORTS_END
 
 static struct YM2612interface ym3438_interface =
 {
-	1,			/* 1 chip */
-	7670000,	/* 8 MHz ?? */
-	{ YM3012_VOL(40,MIXER_PAN_CENTER,40,MIXER_PAN_CENTER) },	/* Volume */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-//	{ ym3438_interrupt }
+	NULL	/*	ym3438_interrupt */
 };
 
-static struct SN76496interface sn76489_intf =
-{
-	2,		/* Two chips, one in the Genesis VDP and one in the SMS VDP */
-	{ 3580000, 3580000 },			/* Clock: 3.58 MHz */
-	{ 50, 50 }							/* Volume */
-};
+
 
 static MACHINE_DRIVER_START( gen_ntsc )
 
@@ -457,9 +445,15 @@ static MACHINE_DRIVER_START( gen_ntsc )
 	MDRV_VIDEO_UPDATE(genesis)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2612, ym3438_interface)
-	MDRV_SOUND_ADD(SN76496, sn76489_intf)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(YM2612, 7670000)
+	MDRV_SOUND_CONFIG(ym3438_interface)		/* 8 MHz ?? */
+	MDRV_SOUND_ROUTE(0, "mono", 0.50)
+	MDRV_SOUND_ROUTE(1, "mono", 0.50)
+	MDRV_SOUND_ADD(SN76496, 3580000)	/* 3.58 MHz */
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ADD(SN76496, 3580000)	/* 3.58 MHz */
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 
 MACHINE_DRIVER_END
 

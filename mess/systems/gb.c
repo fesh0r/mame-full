@@ -293,8 +293,11 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_PALETTE_INIT(gb)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, gameboy_sound_interface)
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(gameboy_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( supergb )
@@ -369,8 +372,12 @@ static MACHINE_DRIVER_START( megaduck )
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(4)
 	MDRV_PALETTE_INIT(gb)
-	MDRV_SOUND_ADD(CUSTOM, gameboy_sound_interface)
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(gameboy_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 static void megaduck_cartslot_getinfo(struct IODevice *dev)

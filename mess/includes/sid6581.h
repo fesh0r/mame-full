@@ -2,6 +2,7 @@
 #define __SID_6581_H_
 
 #include "driver.h"
+#include "sound/custom.h"
 
 /* 
    c64 / c128 sound interface
@@ -17,20 +18,21 @@
 #define MAX_SID6581 2
 
 typedef enum { MOS6581, MOS8580 } SIDTYPE;
-typedef struct {
+
+typedef struct
+{
 	/* this is here, until this sound approximation is added to
 	   mame's sound devices */
 	struct CustomSound_interface custom;
 
-	int count;
-	struct {
+	struct
+	{
 		/* bypassed to mixer_allocate_channel, so use
 		   the macros defined in src/sound/mixer.h to load values*/
-		int default_mixer_level;
 		SIDTYPE type;
 		int clock;
 		int (*ad_read)(int channel);
-	} chips[MAX_SID6581];
+	} chip;
 } SID6581_interface;
 
 extern void sid6581_set_type(int number, SIDTYPE type);
@@ -44,8 +46,6 @@ extern WRITE8_HANDLER ( sid6581_1_port_w );
 extern  READ8_HANDLER  ( sid6581_0_port_r );
 extern  READ8_HANDLER  ( sid6581_1_port_r );
 
-int sid6581_custom_start (const struct MachineSound *driver);
-void sid6581_custom_stop(void);
-void sid6581_custom_update(void);
+void *sid6581_custom_start (int clock, const struct CustomSound_interface *config);
 
 #endif

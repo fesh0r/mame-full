@@ -27,6 +27,7 @@ rom/ram selection
 #include "includes/nec765.h"
 #include "devices/dsk.h"
 #include "devices/cassette.h"
+#include "sound/ay8910.h"
 #include "image.h"
 
 void amstrad_setup_machine(void)

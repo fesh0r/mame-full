@@ -759,54 +759,36 @@ ROM_END
 static SID6581_interface ultimax_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
-			1000000,
-			c64_paddle_read
-		}
+		MOS6581,
+		1000000,
+		c64_paddle_read
 	}
 };
 
 static SID6581_interface pal_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
-			VIC6569_CLOCK,
-			c64_paddle_read
-		}
+		MOS6581,
+		VIC6569_CLOCK,
+		c64_paddle_read
 	}
 };
 
 static SID6581_interface ntsc_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
-			VIC6567_CLOCK,
-			c64_paddle_read
-		}
+		MOS6581,
+		VIC6567_CLOCK,
+		c64_paddle_read
 	}
 };
 
@@ -826,8 +808,13 @@ static MACHINE_DRIVER_START( c64 )
 	MDRV_IMPORT_FROM( vh_vic2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("custom", CUSTOM, ntsc_sound_interface)
-	MDRV_SOUND_ADD_TAG("dac", DAC, vc20tape_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(ntsc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+
+	MDRV_SOUND_ADD_TAG("dac", DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -835,7 +822,10 @@ static MACHINE_DRIVER_START( ultimax )
 	MDRV_IMPORT_FROM( c64 )
 	MDRV_CPU_REPLACE( "main", M6510, 1000000)
 	MDRV_CPU_PROGRAM_MAP( ultimax_readmem, ultimax_writemem )
-	MDRV_SOUND_REPLACE( "custom", CUSTOM, ultimax_sound_interface)
+
+	MDRV_SOUND_REPLACE( "custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(ultimax_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
@@ -849,7 +839,10 @@ static MACHINE_DRIVER_START( c64pal )
 	MDRV_IMPORT_FROM( c64 )
 	MDRV_CPU_REPLACE( "main", M6510, VIC6569_CLOCK)
 	MDRV_FRAMES_PER_SECOND(VIC6569_VRETRACERATE)
-	MDRV_SOUND_REPLACE( "custom", CUSTOM, pal_sound_interface)
+
+	MDRV_SOUND_REPLACE( "custom", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pal_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

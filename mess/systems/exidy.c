@@ -72,6 +72,7 @@
 #include "devices/cassette.h"
 #include "devices/printer.h"
 #include "devices/z80bin.h"
+#include "sound/speaker.h"
 #include "image.h"
 
 static DEVICE_LOAD( exidy_floppy )
@@ -743,13 +744,8 @@ INPUT_PORTS_END
 
 /**********************************************************************************************************/
 
-static struct Speaker_interface exidy_speaker_interface=
-{
- 1,
- {50},
-};
 
-	
+
 static MACHINE_DRIVER_START( exidy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 2000000)        /* clock - not correct */
@@ -773,7 +769,9 @@ static MACHINE_DRIVER_START( exidy )
 	MDRV_VIDEO_UPDATE( exidy )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, exidy_speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

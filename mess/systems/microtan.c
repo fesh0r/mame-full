@@ -193,26 +193,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{-1}
 };   /* end of array */
 
-static struct Wave_interface wave_interface = {
-    1,
-    { 25 }
-};
-
-static struct DACinterface dac_interface =
-{
-    1,          /* number of DACs */
-    { 100 }     /* volume */
-};
-
 static struct AY8910interface ay8910_interface =
 {
-    2,  /* 2 chips */
-    1000000,    /* 1 MHz ?? */
-    { 50, 50 },
-    { 0 },
-    { 0 },
-    { 0 },
-    { 0 }
+	0,
+	0,
+	0,
+	0
 };
 
 static MACHINE_DRIVER_START( microtan )
@@ -238,9 +224,17 @@ static MACHINE_DRIVER_START( microtan )
 	MDRV_VIDEO_UPDATE(microtan)
 
 	// sound hardware
-	MDRV_SOUND_ADD(WAVE, wave_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)	
+	MDRV_SOUND_ADD(AY8910, 1000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)	
 MACHINE_DRIVER_END
 
 ROM_START( microtan )

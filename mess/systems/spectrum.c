@@ -147,6 +147,8 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "devices/snapquik.h"
 #include "devices/cartslot.h"
 #include "devices/cassette.h"
+#include "sound/ay8910.h"
+#include "sound/speaker.h"
 
 /* +3 hardware */
 #include "includes/nec765.h"
@@ -160,12 +162,7 @@ extern void spectrum_plus3_update_memory(void);
 
 static struct AY8910interface spectrum_ay_interface =
 {
-	1,
-	1773400,
-	{25,25},
-	{0},
-	{0},
-	{0}
+	NULL
 };
 
 
@@ -2012,18 +2009,6 @@ static INTERRUPT_GEN( spec_interrupt )
 	cpunum_set_input_line(0, 0, PULSE_LINE);
 }
 
-static struct Speaker_interface spectrum_speaker_interface=
-{
-	1,
-	{50},
-};
-
-static struct Wave_interface spectrum_wave_interface=
-{
-	1,	  /* number of cassette drives = number of waves to mix */
-	{25},	/* default mixing level */
-
-};
 
 
 static MACHINE_DRIVER_START( spectrum )
@@ -2053,8 +2038,11 @@ static MACHINE_DRIVER_START( spectrum )
 	MDRV_VIDEO_EOF( spectrum )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, spectrum_speaker_interface)	/* standard spectrum sound */
-	MDRV_SOUND_ADD(WAVE, spectrum_wave_interface)		/* cassette wave sound */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -2074,7 +2062,10 @@ static MACHINE_DRIVER_START( spectrum_128 )
 	MDRV_VIDEO_UPDATE( spectrum_128 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, spectrum_ay_interface)	/* Ay-3-8912 sound */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 1773400)
+	MDRV_SOUND_CONFIG(spectrum_ay_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)	
 MACHINE_DRIVER_END
 
 

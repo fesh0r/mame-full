@@ -20,6 +20,8 @@
 #include "machine/mc6850.h"
 #include "devices/basicdsk.h"
 #include "devices/cassette.h"
+#include "sound/sn76496.h"
+#include "sound/tms5220.h"
 
 #include "image.h"
 
@@ -2127,7 +2129,7 @@ MACHINE_INIT( bbcb )
 		break;
 	}
 
-	tms5220_reset();
+	tms5220_reset_chip(sndti_token(SOUND_TMS5220, 0));
 }
 
 

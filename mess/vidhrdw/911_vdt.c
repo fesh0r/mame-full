@@ -11,12 +11,10 @@ TODO:
 
 
 #include "driver.h"
-
 #include "911_vdt.h"
-
-
 #include "911_chr.h"
 #include "911_key.h"
+#include "sound/beep.h"
 
 
 #define MAX_VDT 1

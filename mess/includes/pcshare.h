@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "sound/custom.h"
 
 /* flags for init_pc_common */
 #define PCCOMMON_KEYBOARD_PC	0
@@ -38,10 +39,8 @@ WRITE32_HANDLER( pc32_COM4_w );
 
 /* from sndhrdw/pc.c */
 extern struct CustomSound_interface pc_sound_interface;
-extern int  pc_sh_custom_start(const struct MachineSound *driver);
-extern void pc_sh_custom_update(void);
-extern void pc_sh_update(int param, INT16 *buff, int length);
-extern void pc_sh_speaker(int mode);
+void pc_sh_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
+void pc_sh_speaker(int mode);
 
 void pc_sh_speaker_change_clock(double pc_clock);
 

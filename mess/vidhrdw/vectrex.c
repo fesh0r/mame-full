@@ -2,6 +2,8 @@
 #include "vidhrdw/vector.h"
 #include "vidhrdw/generic.h"
 #include "machine/6522via.h"
+#include "sound/ay8910.h"
+#include "sound/dac.h"
 #include "mscommon.h"
 
 #include "includes/vectrex.h"

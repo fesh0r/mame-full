@@ -42,6 +42,7 @@
 #include "includes/am29f080.h"
 #include "includes/tc8521.h"
 #include "includes/uart8250.h"
+#include "sound/speaker.h"
 
 static UINT8 avigo_key_line;
 /* 
@@ -926,11 +927,6 @@ INPUT_PORTS_START(avigo)
 	
 INPUT_PORTS_END
 
-static struct Speaker_interface avigo_speaker_interface=
-{
-	1,
-	{50},
-};
 
 
 static MACHINE_DRIVER_START( avigo )
@@ -957,7 +953,9 @@ static MACHINE_DRIVER_START( avigo )
 	MDRV_VIDEO_UPDATE( avigo )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, avigo_speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

@@ -151,13 +151,6 @@ INPUT_PORTS_START( hp48s )
 #endif
 INPUT_PORTS_END
 
-#if 0
-static struct DACinterface dac_interface =
-{
-	1,			/* number of DACs */
-	{ 100 } 	/* volume */
-};
-#endif
 
 static struct GfxLayout hp48_charlayout =
 {

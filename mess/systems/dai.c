@@ -185,11 +185,6 @@ INPUT_PORTS_START (dai)
 		PORT_BIT(0xcb, IP_ACTIVE_HIGH, IPT_UNUSED)
 INPUT_PORTS_END
 
-static struct Wave_interface dai_wave_interface = {
-	1,		/* 1 cassette recorder */
-	{ 50 }		/* mixing levels in percent */
-};
-
 static struct CassetteOptions dai_cassette_options = {
 	1,		/* channels */
 	16,		/* bits per sample */
@@ -220,8 +215,14 @@ static MACHINE_DRIVER_START( dai )
 	MDRV_VIDEO_UPDATE( dai )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(WAVE, dai_wave_interface)
-	MDRV_SOUND_ADD(CUSTOM, dai_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(dai_sound_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 MACHINE_DRIVER_END
 
 #define io_dai		io_NULL

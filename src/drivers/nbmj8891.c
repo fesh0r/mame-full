@@ -46,6 +46,9 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "nb1413m3.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
+#include "sound/3812intf.h"
 
 
 #define SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
@@ -3044,28 +3047,10 @@ INPUT_PORTS_END
 
 
 
-static struct YM3812interface ym3812_interface =
-{
-	1,						/* 1 chip */
-	2500000,				/* 4 MHz */
-	{ 50 }
-};
-
 static struct AY8910interface ay8910_interface =
 {
-	1,						/* 1 chip */
-	1250000,				/* 1.25 MHz ?? */
-	{ 35 },
-	{ input_port_0_r },		// DIPSW-A read
-	{ input_port_1_r },		// DIPSW-B read
-	{ 0 },
-	{ 0 }
-};
-
-static struct DACinterface dac_interface =
-{
-	1,						/* 1 channels */
-	{ 100 }
+	input_port_0_r,		// DIPSW-A read
+	input_port_1_r		// DIPSW-B read
 };
 
 
@@ -3095,8 +3080,13 @@ static MACHINE_DRIVER_START( gionbana )
 	MDRV_VIDEO_UPDATE(nbmj8891)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD_TAG("3812", YM3812, 2500000)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -3123,7 +3113,9 @@ static MACHINE_DRIVER_START( omotesnd )
 	MDRV_NVRAM_HANDLER(nb1413m3)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+	MDRV_SOUND_REPLACE("3812", AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 
@@ -3311,7 +3303,9 @@ static MACHINE_DRIVER_START( mjfocusm )
 	MDRV_VIDEO_START(nbmj8891_1layer)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+	MDRV_SOUND_REPLACE("3812", AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 
@@ -3331,7 +3325,9 @@ static MACHINE_DRIVER_START( taiwanmb )
 	MDRV_VIDEO_START(nbmj8891_1layer)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+	MDRV_SOUND_REPLACE("3812", AY8910, 1250000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.35)
 MACHINE_DRIVER_END
 
 

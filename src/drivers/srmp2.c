@@ -57,6 +57,8 @@ Note:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 
 /***************************************************************************
@@ -1034,62 +1036,15 @@ INPUT_PORTS_END
 
 static struct AY8910interface srmp2_ay8910_interface =
 {
-	1,
-	20000000/16,					/* 1.25 MHz */
-	{ 40 },
-	{ input_port_2_r },				/* Input A: DSW 2 */
-	{ input_port_1_r },				/* Input B: DSW 1 */
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface srmp3_ay8910_interface =
-{
-	1,
-	16000000/16,					/* 1.00 MHz */
-	{ 20 },
-	{ input_port_2_r },				/* Input A: DSW 2 */
-	{ input_port_1_r },				/* Input B: DSW 1 */
-	{ 0 },
-	{ 0 }
-};
-
-static struct AY8910interface mjyuugi_ay8910_interface =
-{
-	1,
-	16000000/16,					/* 1.00 MHz */
-	{ 20 },
-	{ input_port_2_r },				/* Input A: DSW 2 */
-	{ input_port_1_r },				/* Input B: DSW 1 */
-	{ 0 },
-	{ 0 }
+	input_port_2_r,				/* Input A: DSW 2 */
+	input_port_1_r,				/* Input B: DSW 1 */
 };
 
 
-struct MSM5205interface srmp2_msm5205_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,
-	384000,
-	{ srmp2_adpcm_int },			/* IRQ handler */
-	{ MSM5205_S48_4B },				/* 8 KHz, 4 Bits  */
-	{ 45 }
-};
-
-struct MSM5205interface srmp3_msm5205_interface =
-{
-#if 1
-	1,
-	384000,							/* 384 KHz */
-	{ srmp2_adpcm_int },			/* IRQ handler */
-	{ MSM5205_S48_4B },				/* 8 KHz, 4 Bits  */
-	{ 45 }
-#else
-	1,
-	455000,							/* 455 KHz */
-	{ srmp2_adpcm_int },			/* IRQ handler */
-	{ MSM5205_S64_4B },				/* 8 KHz, 4 Bits  */
-	{ 45 }
-#endif
+	srmp2_adpcm_int,			/* IRQ handler */
+	MSM5205_S48_4B				/* 8 KHz, 4 Bits  */
 };
 
 
@@ -1143,8 +1098,15 @@ static MACHINE_DRIVER_START( srmp2 )
 	MDRV_VIDEO_UPDATE(srmp2)		/* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, srmp2_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 20000000/16)
+	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -1175,8 +1137,15 @@ static MACHINE_DRIVER_START( srmp3 )
 	MDRV_VIDEO_UPDATE(srmp3)	/* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, srmp3_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, srmp3_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 16000000/16)
+	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -1203,8 +1172,15 @@ static MACHINE_DRIVER_START( mjyuugi )
 	MDRV_VIDEO_UPDATE(mjyuugi)			/* just draw the sprites */
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, mjyuugi_ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 16000000/16)
+	MDRV_SOUND_CONFIG(srmp2_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.45)
 MACHINE_DRIVER_END
 
 

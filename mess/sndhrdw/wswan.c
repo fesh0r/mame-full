@@ -7,9 +7,9 @@
 #include "driver.h"
 #include "includes/wswan.h"
 
-void wswan_sh_update(int param, INT16 **buffer, int length)
+static void wswan_sh_update(void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {
-	INT16 left, right;
+	stream_sample_t left, right;
 
 	while( length-- > 0 )
 	{
@@ -20,12 +20,9 @@ void wswan_sh_update(int param, INT16 **buffer, int length)
 	}
 }
 
-int wswan_sh_start(const struct MachineSound* driver)
+void *wswan_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	const char *names[2] = { "WSwan", "WSwan" };
-	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
+	stream_create(0, 2, Machine->sample_rate, 0, wswan_sh_update);
 
-	stream_init_multi(2, names, volume, Machine->sample_rate, 0, wswan_sh_update);
-
-	return 0;
+	return (void *) ~0;
 }

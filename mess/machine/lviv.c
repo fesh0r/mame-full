@@ -16,6 +16,7 @@
 #include "cpu/i8085/i8085.h"
 #include "includes/lviv.h"
 #include "machine/8255ppi.h"
+#include "sound/speaker.h"
 #include "image.h"
 
 #define LVIV_SNAPSHOT_SIZE	82219

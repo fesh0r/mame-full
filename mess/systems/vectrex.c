@@ -13,6 +13,7 @@ Bruce Tomlin (hardware info)
 #include "machine/6522via.h"
 #include "includes/vectrex.h"
 #include "devices/cartslot.h"
+#include "sound/ay8910.h"
 
 ADDRESS_MAP_START( vectrex_readmem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x7fff) AM_READ( MRA8_ROM )
@@ -76,22 +77,14 @@ INPUT_PORTS_START( vectrex )
 	PORT_DIPSETTING(0x80, "Color")
 INPUT_PORTS_END
 
-static struct DACinterface dac_interface =
-{
-	1,
-	{ 50 }
-};
+
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHz */
-	{ 20 },
-    /*AY8910_DEFAULT_GAIN,*/
-	{ input_port_0_r },
-	{ 0 },
-	{ vectrex_psg_port_w },
-	{ 0 }
+	input_port_0_r,
+	0,
+	vectrex_psg_port_w,
+	0
 };
 
 
@@ -112,8 +105,12 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_VIDEO_UPDATE( vectrex )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)	
 MACHINE_DRIVER_END
 
 static void vectrex_cartslot_getinfo(struct IODevice *dev)

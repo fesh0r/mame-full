@@ -7,8 +7,9 @@
 
 #include "driver.h"
 #include "includes/kaypro.h"
+#include "sound/custom.h"
 
-static	int channel;
+static	sound_stream  *channel;
 #define BELL_FREQ	1000
 static	INT32 bell_signal;
 static	INT32 bell_counter;
@@ -17,8 +18,10 @@ static	INT32 bell_counter;
 static	INT32 click_signal;
 static	INT32 click_counter;
 
-static void kaypro_sound_update(int param, INT16 *buffer, int length)
+static void kaypro_sound_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
+	stream_sample_t *buffer = _buffer[0];
+
 	while (length-- > 0)
 	{
 		if ((bell_counter -= BELL_FREQ) < 0)
@@ -35,32 +38,31 @@ static void kaypro_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-static int kaypro_sh_start(const struct MachineSound *msound)
+
+
+static int kaypro_sh_start(int clock, const struct CustomSound_interface *config)
 {
-	channel = stream_init("Beeper", 100, Machine->sample_rate, 0, kaypro_sound_update);
+	channel = stream_create(0, 1, Machine->sample_rate, 0, kaypro_sound_update);
 	return 0;
 }
 
-static void kaypro_sh_stop(void)
-{
-}
 
-static void kaypro_sh_update(void)
-{
-	stream_update(channel,0);
-}
 
 /******************************************************
  *	Ring my bell ;)
  ******************************************************/
+
 void kaypro_bell(void)
 {
 	bell_signal = 0x3000;
 }
 
+
+
 /******************************************************
  *	Clicking keys (for the Kaypro 2x)
  ******************************************************/
+
 void kaypro_click(void)
 {
 	click_signal = 0x3000;

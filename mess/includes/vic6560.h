@@ -128,10 +128,8 @@ extern  READ8_HANDLER ( vic6560_port_r );
 /* private area */
 
 /* from sndhrdw/pc.c */
-extern int vic6560_custom_start (const struct MachineSound *driver);
-extern void vic6560_custom_stop (void);
-extern void vic6560_custom_update (void);
-extern void vic6560_soundport_w (int mode, int data);
+void *vic6560_custom_start(int clock, const struct CustomSound_interface *config);
+void vic6560_soundport_w (int mode, int data);
 
 extern UINT8 vic6560[16];
 #ifdef __cplusplus

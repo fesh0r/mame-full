@@ -268,6 +268,7 @@ removal of hacks to change region / get info memory card manager
 #include "cpu/z80/z80.h"
 #include "neogeo.h"
 #include "state.h"
+#include "sound/2610intf.h"
 
 
 /* values probed by Razoola from the real board */
@@ -1412,17 +1413,9 @@ static void neogeo_sound_irq( int irq )
 
 struct YM2610interface neogeo_ym2610_interface =
 {
-	1,
-	8000000,
-	{ MIXERG(15,MIXER_GAIN_4x,MIXER_PAN_CENTER) },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ neogeo_sound_irq },
-	{ REGION_SOUND2 },
-	{ REGION_SOUND1 },
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	neogeo_sound_irq,
+	REGION_SOUND2,
+	REGION_SOUND1
 };
 
 /******************************************************************************/
@@ -1464,8 +1457,14 @@ static MACHINE_DRIVER_START( neogeo )
 	MDRV_VIDEO_UPDATE(neogeo)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, neogeo_ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 8000000)
+	MDRV_SOUND_CONFIG(neogeo_ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.60)
+	MDRV_SOUND_ROUTE(0, "right", 0.60)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 

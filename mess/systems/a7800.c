@@ -262,27 +262,7 @@ static PALETTE_INIT(a7800p)
 #define CLK_PAL 1773447
 #define CLK_NTSC 1789772
 
-static struct TIAinterface tia_interface =
-{
-    31400,
-    100,
-    TIA_DEFAULT_GAIN,
-};
 
-
-static struct POKEYinterface pokey_interfacen =
-{
-    1,
-    CLK_NTSC,
-    { 100 },
-};
-
-static struct POKEYinterface pokey_interfacep =
-{
-    1,
-    CLK_PAL,
-    { 100 },
-};
 
 static MACHINE_DRIVER_START( a7800_ntsc )
 	/* basic machine hardware */
@@ -308,8 +288,11 @@ static MACHINE_DRIVER_START( a7800_ntsc )
 	MDRV_VIDEO_UPDATE(a7800)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(TIA, tia_interface)
-	MDRV_SOUND_ADD_TAG("pokey", POKEY, pokey_interfacen)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(TIA, 31400)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ADD_TAG("pokey", POKEY, CLK_NTSC)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 
@@ -327,7 +310,8 @@ static MACHINE_DRIVER_START( a7800_pal )
 	MDRV_PALETTE_INIT( a7800p )
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, pokey_interfacep)
+	MDRV_SOUND_REPLACE("pokey", POKEY, CLK_PAL)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

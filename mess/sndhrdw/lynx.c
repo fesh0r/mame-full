@@ -1,13 +1,13 @@
 /******************************************************************************
  PeT mess@utanet.at 2000,2001
 ******************************************************************************/
+
 #include <assert.h>
 #include <math.h>
 #include "osd_cpu.h"
 #include "sound/streams.h"
 #include "mame.h"
 #include "timer.h"
-#include "sound/mixer.h"
 
 #include "includes/lynx.h"
 
@@ -83,7 +83,7 @@ AUD_B_RIGHT	EQU %00000010
 AUD_A_RIGHT	EQU %00000001
 
  */
-static int mixer_channel;
+static sound_stream *mixer_channel;
 static int usec_per_sample;
 static int *shift_mask;
 static int *shift_xor;
@@ -277,53 +277,58 @@ void lynx_audio_write(int offset, UINT8 data)
 /************************************/
 /* Sound handler update             */
 /************************************/
-static void lynx_update (int param, INT16 *buffer, int length)
+static void lynx_update (void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-    int i, j;
-    LYNX_AUDIO *channel;
-    int v;
-    
-    for (i = 0; i < length; i++, buffer++)
-    {
-	*buffer = 0;
-	for (channel=lynx_audio, j=0; j<ARRAY_LENGTH(lynx_audio); j++, channel++) {
-	    lynx_audio_execute(channel);
-	    v=channel->reg.n.output;
-	    *buffer+=v*15;
+	int i, j;
+	LYNX_AUDIO *channel;
+	int v;
+	stream_sample_t *buffer = _buffer[0];
+
+	for (i = 0; i < length; i++, buffer++)
+	{
+		*buffer = 0;
+		for (channel=lynx_audio, j=0; j<ARRAY_LENGTH(lynx_audio); j++, channel++)
+		{
+			lynx_audio_execute(channel);
+			v=channel->reg.n.output;
+			*buffer+=v*15;
+		}
 	}
-    }
 }
 
-static void lynx2_update (int param, INT16 **buffer, int length)
+static void lynx2_update (void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {
-    INT16 *left=buffer[0], *right=buffer[1];
-    int i, j;
-    LYNX_AUDIO *channel;
-    int v;
-    
-    for (i = 0; i < length; i++, left++, right++)
-    {
-	*left = 0;
-	*right= 0;
-	for (channel=lynx_audio, j=0; j<ARRAY_LENGTH(lynx_audio); j++, channel++) {
-	    lynx_audio_execute(channel);
-	    v=channel->reg.n.output;
-	    if (!(master_enable&(0x10<<j))) {		    
-		if (attenuation_enable&(0x10<<j)) {
-		    *left+=v*(channel->attenuation>>4);
-		} else {
-		    *left+=v*15;
+	stream_sample_t *left=buffer[0], *right=buffer[1];
+	int i, j;
+	LYNX_AUDIO *channel;
+	int v;
+
+	for (i = 0; i < length; i++, left++, right++)
+	{
+		*left = 0;
+		*right= 0;
+		for (channel=lynx_audio, j=0; j<ARRAY_LENGTH(lynx_audio); j++, channel++)
+		{
+			lynx_audio_execute(channel);
+			v=channel->reg.n.output;
+			if (!(master_enable&(0x10<<j)))
+			{		    
+				if (attenuation_enable&(0x10<<j)) {
+					*left+=v*(channel->attenuation>>4);
+				} else {
+					*left+=v*15;
+				}
+			}
+			if (!(master_enable&(1<<j)))
+			{
+				if (attenuation_enable&(1<<j)) {
+					*right+=v*(channel->attenuation&0xf);
+				} else {
+					*right+=v*15;
+				}
+			}
 		}
-	    }
-	    if (!(master_enable&(1<<j))) {
-		if (attenuation_enable&(1<<j)) {
-		    *right+=v*(channel->attenuation&0xf);
-		} else {
-		    *right+=v*15;
-		}
-	    }
 	}
-    }
 }
 
 static void lynx_audio_init(void)
@@ -362,43 +367,38 @@ static void lynx_audio_init(void)
 
 void lynx_audio_reset(void)
 {
-    int i;
-    for (i=0; i<ARRAY_LENGTH(lynx_audio); i++) {
-	lynx_audio_reset_channel(lynx_audio+i);
-    }
+	int i;
+	for (i=0; i<ARRAY_LENGTH(lynx_audio); i++)
+	{
+		lynx_audio_reset_channel(lynx_audio+i);
+	}
 }
+
+
 
 /************************************/
 /* Sound handler start              */
 /************************************/
-int lynx_custom_start (const struct MachineSound *driver)
+
+void *lynx_custom_start(int clock, const struct CustomSound_interface *config)
 {
-    if (!options.samplerate) return 0;
+	mixer_channel = stream_create(0, 1, options.samplerate, 0, lynx_update);
 
-    mixer_channel = stream_init("lynx", MIXER(50, MIXER_PAN_CENTER), 
-				options.samplerate, 0, lynx_update);
+	usec_per_sample = 1000000 / options.samplerate;
 
-    usec_per_sample=1000000/options.samplerate;
+	lynx_audio_init();
+	return (void *) ~0;
+}
+
+
+
+void *lynx2_custom_start(int clock, const struct CustomSound_interface *config)
+{
+    mixer_channel = stream_create(0, 2, options.samplerate, 0, lynx2_update);
+
+    usec_per_sample = 1000000 / options.samplerate;
     
     lynx_audio_init();
-    return 0;
+	return (void *) ~0;
 }
 
-int lynx2_custom_start (const struct MachineSound *driver)
-{
-    const int vol[2]={ MIXER(50, MIXER_PAN_LEFT), MIXER(50, MIXER_PAN_RIGHT) };
-    const char *names[2]= { "lynx", "lynx" };
-	
-    if (!options.samplerate) return 0;
-
-    mixer_channel = stream_init_multi(2, names, vol, options.samplerate, 0, lynx2_update);
-
-    usec_per_sample=1000000/options.samplerate;
-    
-    lynx_audio_init();
-    return 0;
-}
-
-void lynx_custom_update (void)
-{
-}

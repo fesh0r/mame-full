@@ -1,6 +1,8 @@
 #ifndef _discrete_h_
 #define _discrete_h_
 
+#include "sn76477.h"
+
 /***********************************************************************
  *
  *  MAME - Discrete sound system emulation library
@@ -2887,12 +2889,7 @@ enum
  *
  *************************************/
 
-struct node_description *discrete_find_node(int node);
-
-int discrete_sh_start(const struct MachineSound *msound);
-void discrete_sh_stop(void);
-void discrete_sh_reset(void);
-void discrete_sh_update(void);
+struct node_description *discrete_find_node(void *chip, int node);
 
 WRITE8_HANDLER(discrete_sound_w);
 READ8_HANDLER(discrete_sound_r);

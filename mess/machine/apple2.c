@@ -19,6 +19,8 @@
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
 #include "devices/flopdrv.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -1391,7 +1393,7 @@ static void mockingboard_w (int offset, int data)
 			switch (data)
 			{
 				case 0x00: /* reset */
-					AY8910_reset (0);
+					sndti_reset(SOUND_AY8910, 0);
 					break;
 				case 0x04: /* make inactive */
 					break;
@@ -1416,7 +1418,7 @@ static void mockingboard_w (int offset, int data)
 			switch (data)
 			{
 				case 0x00: /* reset */
-					AY8910_reset (1);
+					sndti_reset(SOUND_AY8910, 1);
 					break;
 				case 0x04: /* make inactive */
 					break;

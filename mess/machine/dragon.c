@@ -72,6 +72,8 @@ Dragon Alpha code added 21-Oct-2004,
 #include "devices/cassette.h"
 #include "image.h"
 #include "includes/wd179x.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
 
 static UINT8 *coco_rom;
 static int coco3_enable_64k;

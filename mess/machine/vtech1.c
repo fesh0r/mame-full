@@ -50,6 +50,7 @@ Todo:
 #include "devices/cassette.h"
 #include "devices/printer.h"
 #include "cpu/z80/z80.h"
+#include "sound/speaker.h"
 #include "image.h"
 
 int vtech1_latch = -1;

@@ -104,7 +104,7 @@
 // for pc serial mouse
 #include "includes/pc_mouse.h"
 // pcw/pcw16 beeper
-//#include "sound/beep.h"
+#include "sound/beep.h"
 
 #include "includes/28f008sa.h"
 
@@ -1409,11 +1409,7 @@ INPUT_PORTS_START(pcw16)
 	PORT_INCLUDE( at_keyboard )		/* IN4 - IN11 */
 INPUT_PORTS_END
 
-static struct beep_interface pcw16_beep_interface =
-{
-	1,
-	{100}
-};
+
 
 static MACHINE_DRIVER_START( pcw16 )
 	/* basic machine hardware */
@@ -1439,7 +1435,9 @@ static MACHINE_DRIVER_START( pcw16 )
 	MDRV_VIDEO_UPDATE( pcw16 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(BEEP, pcw16_beep_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

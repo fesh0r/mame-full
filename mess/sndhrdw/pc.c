@@ -9,47 +9,51 @@
 	It most probably is on port 0xc0, but I'm not sure...
 
 ****************************************************************************/
+
 #include "osd_cpu.h"
 #include "sound/streams.h"
 #include "includes/pcshare.h"
 
 #include "includes/pit8253.h"
 
-#define VERBOSE_SND 0		/* SND (sound / speaker) */
-#if VERBOSE_SND
-#define SND_LOG(n,m,a) \
-	if(VERBOSE_SND>=N){ if( M )logerror("%11.6f: %-24s",timer_get_time(),(char*)M ); logerror A; }
-#else
 #define SND_LOG(n,m,a)
-#endif
+#define BASECLOCK	1193180
 
+
+static void *pc_sh_custom_start(int clock, const struct CustomSound_interface *config);
 
 struct CustomSound_interface pc_sound_interface =
 {
-	pc_sh_custom_start,
-	NULL,
-	pc_sh_custom_update
+	pc_sh_custom_start
 };
 
-#define BASECLOCK	1193180
-
-static int channel = 0;
+static sound_stream *channel;
 static int speaker_gate = 0;
 
-/************************************/
-/* Sound handler start				*/
-/************************************/
+
+
+/*************************************
+ *
+ *	Sound handler start
+ *
+ *************************************/
+
 static int pc_sh_start(void)
 {
 	logerror("pc_sh_start\n");
-	channel = stream_init("PC speaker", 50, Machine->sample_rate, 0, pc_sh_update);
+	channel = stream_create(0, 1, Machine->sample_rate, 0, pc_sh_update);
     return 0;
 }
 
-int pc_sh_custom_start(const struct MachineSound* driver)
+
+
+static void *pc_sh_custom_start(int clock, const struct CustomSound_interface *config)
 {
-	return pc_sh_start();
+	pc_sh_start();
+	return (void *) ~0;
 }
+
+
 
 void pc_sh_speaker(int data)
 {
@@ -90,16 +94,20 @@ void pc_sh_speaker_change_clock(double pc_clock)
     stream_update(channel,0);
 }
 
-void pc_sh_custom_update(void) {}
 
-/************************************/
-/* Sound handler update 			*/
-/************************************/
-void pc_sh_update(int param, INT16 *buffer, int length)
+
+/*************************************
+ *
+ *	Sound handler update
+ *
+ *************************************/
+
+void pc_sh_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	static INT16 signal = 0x7fff;
-    static int incr = 0;
-	INT16 *sample = buffer;
+	stream_sample_t *buffer = outputs[0];
+	static int incr = 0;
+	stream_sample_t *sample = buffer;
 	int baseclock, rate = Machine->sample_rate / 2;
 
 	baseclock = pit8253_get_frequency(0, 2);
@@ -115,7 +123,7 @@ void pc_sh_update(int param, INT16 *buffer, int length)
 		/* speaker on */
 		while( length-- > 0 )
 			*sample++ = 0x7fff;
-        break;
+		break;
 
 	case 2:
 		/* speaker gate tone from PIT channel #2 */

@@ -9,6 +9,7 @@
 #include "osd_cpu.h"
 #include "driver.h"
 #include "utils.h"
+#include "sound/custom.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
@@ -38,9 +39,7 @@ unsigned char vic6560_palette[] =
 
 struct CustomSound_interface vic6560_sound_interface =
 {
-	vic6560_custom_start,
-	vic6560_custom_stop,
-	vic6560_custom_update
+	vic6560_custom_start
 };
 
 UINT8 vic6560[16];

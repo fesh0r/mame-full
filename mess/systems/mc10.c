@@ -123,11 +123,7 @@ INPUT_PORTS_START( mc10 )
 
 INPUT_PORTS_END
 
-static struct DACinterface mc10_dac_interface =
-{
-	1,
-	{ 100 }
-};
+
 
 static MACHINE_DRIVER_START( mc10 )
 	/* basic machine hardware */
@@ -142,7 +138,10 @@ static MACHINE_DRIVER_START( mc10 )
 	MDRV_M6847_NTSC( mc10 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, mc10_dac_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START(mc10)

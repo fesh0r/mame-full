@@ -24,6 +24,7 @@
 #include "vidhrdw/stic.h"
 #include "includes/intv.h"
 #include "devices/cartslot.h"
+#include "sound/ay8910.h"
 
 #ifndef VERBOSE
 #ifdef MAME_DEBUG
@@ -82,14 +83,10 @@ static PALETTE_INIT( intv )
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	3579545/2,	/* Colorburst/2 */
-	{ 100 },
-	{ intv_right_control_r },
-	{ intv_left_control_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
+	intv_right_control_r,
+	intv_left_control_r,
+	0,
+	0
 };
 
 /* graphics output */
@@ -404,7 +401,10 @@ static MACHINE_DRIVER_START( intv )
 	MDRV_VIDEO_UPDATE( intv )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 3579545/2)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)	
 MACHINE_DRIVER_END
 
 

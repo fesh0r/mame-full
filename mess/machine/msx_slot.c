@@ -21,6 +21,9 @@
 #include "includes/msx_slot.h"
 #include "includes/msx.h"
 #include "includes/wd179x.h"
+#include "sound/k051649.h"
+#include "sound/2413intf.h"
+#include "sound/dac.h"
 
 extern MSX msx1;
 

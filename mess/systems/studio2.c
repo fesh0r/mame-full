@@ -10,6 +10,7 @@
 #include "devices/cartslot.h"
 #include "includes/studio2.h"
 #include "inputx.h"
+#include "sound/beep.h"
 
 extern  READ8_HANDLER( cdp1861_video_enable_r );
 
@@ -227,14 +228,6 @@ static MACHINE_INIT( vip )
 	cpu_setbank(1,memory_region(REGION_CPU1)+0x8000);
 }
 
-/* Sound Interfaces */
-
-static struct beep_interface studio2_sound=
-{
-	1,
-	{100}
-};
-
 /* Machine Drivers */
 
 static MACHINE_DRIVER_START( studio2 )
@@ -263,7 +256,9 @@ static MACHINE_DRIVER_START( studio2 )
 	MDRV_VIDEO_UPDATE( studio2 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(BEEP, studio2_sound)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( vip )

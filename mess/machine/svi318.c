@@ -21,6 +21,8 @@
 #include "devices/basicdsk.h"
 #include "devices/printer.h"
 #include "devices/cassette.h"
+#include "sound/dac.h"
+#include "sound/ay8910.h"
 #include "image.h"
 
 static SVI_318 svi;

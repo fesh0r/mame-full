@@ -188,11 +188,6 @@ static ti990_10reset_param reset_params =
 	ti990_set_int2
 };
 
-static struct beep_interface vdt_911_beep_interface =
-{
-	1,
-	{ 50 }
-};
 
 
 static MACHINE_DRIVER_START(ti990_10)
@@ -231,9 +226,10 @@ static MACHINE_DRIVER_START(ti990_10)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(ti990_10)
 
-	MDRV_SOUND_ATTRIBUTES(0)
 	/* 911 VDT has a beep tone generator */
-	MDRV_SOUND_ADD(BEEP, vdt_911_beep_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 MACHINE_DRIVER_END
 

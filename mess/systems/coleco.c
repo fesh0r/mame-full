@@ -155,12 +155,7 @@ INPUT_PORTS_START( coleco )
     PORT_BIT( 0x0f, 0x00, IPT_TRACKBALL_Y ) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_MINMAX(0, 0) PORT_CODE_DEC(KEYCODE_I) PORT_CODE_INC(KEYCODE_K) PORT_RESET PORT_PLAYER(2)
 INPUT_PORTS_END
 
-static struct SN76496interface sn76496_interface =
-{
-    1,				// 1 chip
-    { 7159090/2 },	// 3.579545 MHz
-    { 100 }
-};
+
 
 /***************************************************************************
 
@@ -244,7 +239,9 @@ static MACHINE_DRIVER_START( coleco )
 	MDRV_TMS9928A(&tms9928a_interface)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 7159090/2)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START (coleco)

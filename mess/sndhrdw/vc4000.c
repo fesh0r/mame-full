@@ -11,72 +11,79 @@
 
 #include "includes/vc4000.h"
 
-static struct {
-    int channel;
+struct vc4000_sound
+{
+    sound_stream *stream;
     UINT8 reg[1];
     int size, pos;
     bool level;
-} vc4000_sound= { 0 };
+};
+
+
 
 void vc4000_soundport_w (int offset, int data)
 {
-	stream_update(vc4000_sound.channel,0);
-	vc4000_sound.reg[offset]=data;
+	struct vc4000_sound *info;
+
+	info = (struct vc4000_sound *) sndti_token(SOUND_CUSTOM, 0);
+	stream_update(info->stream, 0);
+	info->reg[offset] = data;
+
 	switch (offset)
 	{
-	case 0:
-	    vc4000_sound.pos=0;
-	    vc4000_sound.level=TRUE;
-	    // frequency 7874/(data+1)
-	    vc4000_sound.size=options.samplerate*(data+1)/7874;
-	    break;
+		case 0:
+			info->pos = 0;
+			info->level = TRUE;
+			// frequency 7874/(data+1)
+			info->size = options.samplerate*(data+1)/7874;
+			break;
 	}
 }
 
 /************************************/
 /* Sound handler update             */
 /************************************/
-static void vc4000_update (int param, INT16 *buffer, int length)
+static void vc4000_update (void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length)
 {
-    int i;
+	int i;
+	struct vc4000_sound *info;
+	stream_sample_t *buffer = _buffer[0];
 
-    for (i = 0; i < length; i++, buffer++)
-    {
-	*buffer = 0;
-	if (vc4000_sound.reg[0]!=0 && vc4000_sound.pos<=vc4000_sound.size/2) {
-	    *buffer = 0x7fff;
+	info = (struct vc4000_sound *) param;
+
+	for (i = 0; i < length; i++, buffer++)
+	{
+		*buffer = 0;
+		if ((info->reg[0] != 0) && (info->pos <= info->size / 2))
+		{
+			*buffer = 0x7fff;
+		}
+
+		if (info->pos <= info->size)
+			info->pos++;
+		if (info->pos > info->size)
+			info->pos = 0;
 	}
-	if (vc4000_sound.pos<=vc4000_sound.size) vc4000_sound.pos++;
-	if (vc4000_sound.pos>vc4000_sound.size) vc4000_sound.pos=0;
-    }
 }
 
 /************************************/
 /* Sound handler start              */
 /************************************/
-int vc4000_custom_start (const struct MachineSound *driver)
+
+static void *vc4000_custom_start(int clock, const struct CustomSound_interface *config)
 {
-    if (!options.samplerate) return 0;
+	struct vc4000_sound *info;
 
-    vc4000_sound.channel = stream_init ("VC4000", 50, options.samplerate, 0, vc4000_update);
+	info = (struct vc4000_sound *) auto_malloc(sizeof(*info));
+	memset(info, 0, sizeof(*info));
+	info->stream = stream_create(0, 1, options.samplerate, 0, vc4000_update);
 
-    return 0;
+    return (void *) info;
 }
 
-/************************************/
-/* Sound handler stop               */
-/************************************/
-void vc4000_custom_stop (void)
-{
-}
 
-void vc4000_custom_update (void)
-{
-}
 
 struct CustomSound_interface vc4000_sound_interface =
 {
-	vc4000_custom_start,
-	vc4000_custom_stop,
-	vc4000_custom_update
+	vc4000_custom_start
 };

@@ -31,6 +31,8 @@ Changes:
 #include "includes/coupe.h"
 #include "includes/wd179x.h"
 #include "devices/basicdsk.h"
+#include "sound/saa1099.h"
+#include "sound/speaker.h"
 
 ADDRESS_MAP_START( coupe_readmem , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE( 0x0000, 0x3FFF) AM_READ( MRA8_BANK1 )
@@ -412,17 +414,7 @@ static PALETTE_INIT( coupe )
 	memcpy(colortable,coupe_colortable,sizeof(coupe_colortable));
 }
 
-static struct Speaker_interface coupe_speaker_interface=
-{
-	1,
-	{50},
-};
 
-static struct SAA1099_interface coupe_saa1099_interface=
-{
-	1,
-	{{50,50}},
-};
 
 static MACHINE_DRIVER_START( coupe )
 	/* basic machine hardware */
@@ -450,8 +442,11 @@ static MACHINE_DRIVER_START( coupe )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, coupe_speaker_interface)
-	MDRV_SOUND_ADD(SAA1099, coupe_saa1099_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 /***************************************************************************

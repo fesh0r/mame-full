@@ -712,36 +712,24 @@ ROM_END
 static SID6581_interface sidc16_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS8580,
-			TED7360PAL_CLOCK/4,
-			NULL
-		}
+		MOS8580,
+		TED7360PAL_CLOCK/4,
+		NULL
 	}
 };
 
 static SID6581_interface sidplus4_sound_interface =
 {
 	{
-		sid6581_custom_start,
-		sid6581_custom_stop,
-		sid6581_custom_update
+		sid6581_custom_start
 	},
-	1,
 	{
-		{
-			MIXER(50, MIXER_PAN_CENTER),
-			MOS8580,
-			TED7360NTSC_CLOCK/4,
-			NULL
-		}
+		MOS8580,
+		TED7360NTSC_CLOCK/4,
+		NULL
 	}
 };
 
@@ -770,9 +758,13 @@ static MACHINE_DRIVER_START( c16 )
 	MDRV_VIDEO_UPDATE( ted7360 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD_TAG("ted7360", CUSTOM, ted7360_sound_interface)
-	MDRV_SOUND_ADD_TAG("sid", CUSTOM, sidc16_sound_interface)
-	MDRV_SOUND_ADD_TAG("dac", DAC, vc20tape_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD_TAG("ted7360", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(ted7360_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD_TAG("sid", CUSTOM, 0)
+	MDRV_SOUND_CONFIG(sidc16_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -803,7 +795,9 @@ static MACHINE_DRIVER_START( plus4 )
 	MDRV_CPU_REPLACE( "main", M7501, 1200000)
 	MDRV_CPU_PROGRAM_MAP( plus4_readmem, plus4_writemem )
 	MDRV_FRAMES_PER_SECOND(TED7360NTSC_VRETRACERATE)
-	MDRV_SOUND_REPLACE("sid", CUSTOM, sidplus4_sound_interface)
+
+	MDRV_SOUND_MODIFY("sid")
+	MDRV_SOUND_CONFIG(sidplus4_sound_interface)
 MACHINE_DRIVER_END
 
 

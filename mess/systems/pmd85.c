@@ -519,10 +519,6 @@ INPUT_PORTS_START (mato)
 		PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("RST") PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(UCHAR_MAMEKEY(BACKSPACE))
 INPUT_PORTS_END
 
-static struct Wave_interface pmd85_wave_interface = {
-	1,		/* 1 cassette recorder */
-	{ 50 }		/* mixing levels in percent */
-};
 
 
 /* machine definition */
@@ -549,7 +545,9 @@ static MACHINE_DRIVER_START( pmd85 )
 	MDRV_VIDEO_UPDATE( pmd85 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(WAVE, pmd85_wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( pmd852a )

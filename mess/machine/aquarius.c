@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/aquarius.h"
+#include "sound/speaker.h"
 
 static	int	aquarius_ramsize = 0;
 

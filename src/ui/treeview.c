@@ -866,11 +866,14 @@ void CreateSoundFolders(int parent_index)
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
 	LPTREEFOLDER map[SOUND_COUNT];
 
+	sndintrf_init();
+
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
 
 	for (i=1;i<SOUND_COUNT;i++)
 	{
+#if 0
 		// Defined in sndintrf.c
 		struct snd_interface
 		{
@@ -885,10 +888,8 @@ void CreateSoundFolders(int parent_index)
 		};
 		extern struct snd_interface sndintf[];
 
-		LPTREEFOLDER lpTemp;
-
 		for (jj = 1; jj < i; jj++)
-			if (!strcmp(soundtype_name(i), soundtype_name(jj)))
+			if (!strcmp(sndtype_name(i), sndtype_name(jj)))
 				break;
 
 		if (i != jj)
@@ -896,7 +897,11 @@ void CreateSoundFolders(int parent_index)
 			map[i] = map[jj];
 			continue;
 		}
-		lpTemp = NewFolder(sndintf[i].name, next_folder_id, parent_index, IDI_CPU,
+#endif
+		LPTREEFOLDER lpTemp;
+
+		//dprintf("%s\n",sndtype_name(i));
+		lpTemp = NewFolder(sndtype_name(i), next_folder_id, parent_index, IDI_CPU,
  						   GetFolderFlags(numFolders));
 		ExtraFolderData[next_folder_id] = malloc(sizeof(EXFOLDERDATA) );
 		memset(ExtraFolderData[next_folder_id], 0, sizeof(EXFOLDERDATA));
@@ -905,7 +910,7 @@ void CreateSoundFolders(int parent_index)
 		ExtraFolderData[next_folder_id]->m_nIconId = IDI_CPU;
 		ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
 		ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
-		strcpy( ExtraFolderData[next_folder_id]->m_szTitle, sndintf[i].name );
+		strcpy( ExtraFolderData[next_folder_id]->m_szTitle, sndtype_name(i) );
 		ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
 		AddFolder(lpTemp);
 		map[i] = treeFolders[nFolder++];

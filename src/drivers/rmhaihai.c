@@ -30,6 +30,8 @@ TODO:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/ay8910.h"
+#include "sound/msm5205.h"
 
 static int gfxbank;
 static struct tilemap *bg_tilemap;
@@ -509,22 +511,14 @@ static struct GfxDecodeInfo gfxdecodeinfo2[] =
 
 static struct AY8910interface ay8910_interface =
 {
-	1,	/* 1 chip */
-	20000000/16,	/* 1.25 MHz ??? */
-	{ 30 },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 }
+	input_port_0_r,
+	input_port_1_r
 };
 
 static struct MSM5205interface msm5205_interface =
 {
-	1,					/* 1 chip             */
-	500000,				/* 500KHz ?? (I don't know what I'm doing, really) */
-	{ 0 },				/* interrupt function */
-	{ MSM5205_SEX_4B },	/* vclk input mode    */
-	{ MIXERG(100,MIXER_GAIN_2x,MIXER_PAN_CENTER) }
+	0,				/* interrupt function */
+	MSM5205_SEX_4B	/* vclk input mode    */
 };
 
 
@@ -553,8 +547,15 @@ static MACHINE_DRIVER_START( rmhaihai )
 	MDRV_VIDEO_UPDATE(rmhaihai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	
+	MDRV_SOUND_ADD(AY8910, 20000000/16)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
+
+	MDRV_SOUND_ADD(MSM5205, 500000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rmhaisei )

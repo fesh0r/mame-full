@@ -306,17 +306,7 @@ static Z80_DaisyChain super80_daisy_chain[] =
 	{0,0,0,-1}
 };
 
-static struct Speaker_interface speaker_interface =
-{
-	1,			/* number of speakers */
-	{ 75 },		/* mixing levels */
-};
 
-static struct Wave_interface wave_interface =
-{
-	1,			/* number of waves */
-	{ 25 }		/* mixing levels */
-};
 
 static MACHINE_DRIVER_START( super80 )
 	/* basic machine hardware */
@@ -343,8 +333,11 @@ static MACHINE_DRIVER_START( super80 )
 	MDRV_VIDEO_UPDATE(super80)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, speaker_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 

@@ -76,6 +76,7 @@
 #include "devices/cassette.h"
 #include "devices/printer.h"
 #include "machine/z80fmly.h"
+#include "sound/sn76477.h"
 
 static struct tilemap *bg_tilemap;
 
@@ -830,24 +831,22 @@ static z80pio_interface abc80_pio_interface =
 
 static struct SN76477interface sn76477_interface =
 {
-	1,		// 1 chip
-	{ 25 },	// mixing level	pin description			component
-	{ RES_K(47)  },		//	4  noise_res			R26 47k
-	{ RES_K(330) },		//	5  filter_res			R24 330k
-	{ CAP_P(390) },		//	6  filter_cap			C52 390
-	{ RES_K(47)  },		//	7  decay_res			R23	47k
-	{ CAP_U(10)  },		//	8  attack_decay_cap		C50 10u/35V
-	{ RES_K(22)  },		// 10  attack_res			R21	22k
-	{ RES_K(33)  },		// 11  amplitude_res		R19 33k
-	{ RES_K(10)  },		// 12  feedback_res			R18 10k
-	{ 0 },				// 16  vco_voltage			0V or 2.5V
-	{ CAP_N(10)  },		// 17  vco_cap				C48 10n
-	{ RES_K(100) },		// 18  vco_res				R20 100k
-	{ 0 },				// 19  pitch_voltage		N/C
-	{ RES_K(220) },		// 20  slf_res				R22 220k
-	{ CAP_U(1)   },		// 21  slf_cap				C51 1u/35V
-	{ CAP_U(0.1) },		// 23  oneshot_cap			C53 0.1u
-	{ RES_K(330) }		// 24  oneshot_res			R25 330k
+	RES_K(47),		//	4  noise_res			R26 47k
+	RES_K(330),		//	5  filter_res			R24 330k
+	CAP_P(390),		//	6  filter_cap			C52 390
+	RES_K(47),		//	7  decay_res			R23	47k
+	CAP_U(10),		//	8  attack_decay_cap		C50 10u/35V
+	RES_K(22),		// 10  attack_res			R21	22k
+	RES_K(33),		// 11  amplitude_res		R19 33k
+	RES_K(10),		// 12  feedback_res			R18 10k
+	0,				// 16  vco_voltage			0V or 2.5V
+	CAP_N(10) ,		// 17  vco_cap				C48 10n
+	RES_K(100),		// 18  vco_res				R20 100k
+	0,				// 19  pitch_voltage		N/C
+	RES_K(220),		// 20  slf_res				R22 220k
+	CAP_U(1),		// 21  slf_cap				C51 1u/35V
+	CAP_U(0.1),		// 23  oneshot_cap			C53 0.1u
+	RES_K(330)		// 24  oneshot_res			R25 330k
 };
 
 /* Interrupt Generators */
@@ -899,7 +898,10 @@ static MACHINE_DRIVER_START( abc80 )
 	MDRV_VIDEO_UPDATE(abc80)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SN76477, sn76477_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( abc800m )

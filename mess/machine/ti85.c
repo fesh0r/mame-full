@@ -11,6 +11,7 @@
 #include "cpu/z80/z80.h"
 #include "includes/ti85.h"
 #include "formats/ti85_ser.h"
+#include "sound/speaker.h"
 
 #define TI85_SNAPSHOT_SIZE	 32976
 #define TI86_SNAPSHOT_SIZE	131284

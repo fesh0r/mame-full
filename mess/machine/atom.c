@@ -24,6 +24,7 @@
 #include "devices/flopdrv.h"
 #include "devices/cassette.h"
 #include "devices/printer.h"
+#include "sound/speaker.h"
 
 static UINT8	atom_8255_porta;
 static UINT8	atom_8255_portb;

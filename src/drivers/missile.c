@@ -152,7 +152,7 @@
 
 #include "driver.h"
 #include "missile.h"
-
+#include "sound/pokey.h"
 
 
 /*************************************
@@ -357,20 +357,8 @@ INPUT_PORTS_END
 
 static struct POKEYinterface pokey_interface =
 {
-	1,	/* 1 chip */
-	1250000,	/* 1.25 MHz??? */
-	{ 100 },
-	/* The 8 pot handlers */
 	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ input_port_3_r },
+	input_port_3_r
 };
 
 
@@ -403,7 +391,11 @@ static MACHINE_DRIVER_START( missile )
 	MDRV_VIDEO_UPDATE(missile)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(POKEY, pokey_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(POKEY, 1250000)
+	MDRV_SOUND_CONFIG(pokey_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 

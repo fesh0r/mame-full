@@ -293,18 +293,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{-1}
 };	 /* end of array */
 
-static struct beep_interface mz700_beep_interface =
-{
-	1,
-	{ 50 }
-};
 
 
-static struct Wave_interface wave_interface =
-{
-	1,
-	{ 50 }
-};
 static MACHINE_DRIVER_START(mz700)
 
 	/* basic machine hardware */
@@ -338,10 +328,11 @@ static MACHINE_DRIVER_START(mz700)
 	/*MDRV_VIDEO_EOF(mz700)*/
 	MDRV_VIDEO_UPDATE(mz700)
 
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(BEEP, mz700_beep_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
-
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(mz800)
@@ -370,10 +361,11 @@ static MACHINE_DRIVER_START(mz800)
 	MDRV_VIDEO_START(mz700)
 	MDRV_VIDEO_UPDATE(mz700)
 
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(BEEP, mz700_beep_interface)
-	MDRV_SOUND_ADD(WAVE, wave_interface)
-
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

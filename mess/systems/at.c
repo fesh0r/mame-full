@@ -363,29 +363,17 @@ INPUT_PORTS_END
 
 static unsigned i286_address_mask = 0x00ffffff;
 
-#if defined(GAMEBLASTER)
-static struct SAA1099_interface cms_interface = {
-	2, 
-	{
-		{ 50, 50 },
-		{ 50, 50 }
-	}
-};
-#endif
 
 #if defined(ADLIB)
 /* irq line not connected to pc on adlib cards (and compatibles) */
 static void irqhandler(int linestate) {}
 
-static struct YM3812interface ym3812_interface = {
-	1,
-	ym3812_StdClock, /* I hope this is the clock used on the original Adlib Sound card */
-	{255}, /* volume adjustment in relation to speaker and tandy1000 sound neccessary */
-	{irqhandler}
+static struct YM3812interface ym3812_interface =
+{
+	irqhandler
 };
 #endif
 
-static struct DACinterface dac_interface= { 1, { 50 }};
 
 
 #define MDRV_CPU_ATPC(mem, port, type, clock, vblankfunc)	\
@@ -407,12 +395,20 @@ static MACHINE_DRIVER_START( atcga )
 	MDRV_IMPORT_FROM( pcvideo_cga )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 
 	MDRV_NVRAM_HANDLER( mc146818 )
@@ -431,12 +427,20 @@ static MACHINE_DRIVER_START( ps2m30286 )
 	MDRV_IMPORT_FROM( pcvideo_vga )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
 
 	MDRV_NVRAM_HANDLER( mc146818 )
@@ -455,14 +459,23 @@ static MACHINE_DRIVER_START( atvga )
 	MDRV_IMPORT_FROM( pcvideo_vga )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END
@@ -481,14 +494,23 @@ static MACHINE_DRIVER_START( at386 )
 	MDRV_IMPORT_FROM( pcvideo_cga )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(CUSTOM, 0)
+	MDRV_SOUND_CONFIG(pc_sound_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #ifdef ADLIB
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_StdClock)
+	MDRV_SOUND_CONFIG(ym3812_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 #endif
 #ifdef GAMEBLASTER
-	MDRV_SOUND_ADD(SAA1099, cms_interface)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(SAA1099, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 #endif
-	MDRV_SOUND_ADD(DAC, dac_interface)
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END

@@ -171,12 +171,6 @@ INPUT_PORTS_START( astrocde )
 
 INPUT_PORTS_END
 
-static struct astrocade_interface astrocade_1chip_interface =
-{
-	1,			/* Number of chips */
-	1789773,	/* Clock speed */
-	{255}		/* Volume */
-};
 
 
 static MACHINE_DRIVER_START( astrocde )
@@ -202,7 +196,9 @@ static MACHINE_DRIVER_START( astrocde )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(ASTROCADE, astrocade_1chip_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(ASTROCADE, 1789773)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

@@ -69,7 +69,7 @@
 #define MAX_FREQUENCIES 2048
 #define FIXED_POINT 16
 
-static int channel = 1;
+static sound_stream *channel;
 static int rate;
 
 /* Represents wave duties of 12.5%, 25%, 50% and 75% */
@@ -136,7 +136,9 @@ static struct SOUND  snd_3;
 static struct SOUND  snd_4;
 static struct SOUNDC snd_control;
 
-void gameboy_update(int param, INT16 **buffer, int length);
+static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t **_buffer,int length);
+
+
 
 WRITE8_HANDLER( gb_sound_w )
 {
@@ -318,9 +320,11 @@ WRITE8_HANDLER( gb_sound_w )
 	}
 }
 
-void gameboy_update(int param, INT16 **buffer, int length)
+
+
+static void gameboy_update(void *param,stream_sample_t **inputs, stream_sample_t **buffer,int length)
 {
-	INT16 sample, left, right, mode4_mask;
+	stream_sample_t sample, left, right, mode4_mask;
 
 	while( length-- > 0 )
 	{
@@ -569,18 +573,18 @@ void gameboy_update(int param, INT16 **buffer, int length)
 	gb_ram[NR52] = (gb_ram[NR52]&0xf0) | snd_1.on | (snd_2.on << 1) | (snd_3.on << 2) | (snd_4.on << 3);
 }
 
-int gameboy_sh_start(const struct MachineSound* driver)
+
+
+void *gameboy_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	int I, J;
-	const char *names[2] = { "GameBoy", "GameBoy" };
-	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
 	memset(&snd_1, 0, sizeof(snd_1));
 	memset(&snd_2, 0, sizeof(snd_2));
 	memset(&snd_3, 0, sizeof(snd_3));
 	memset(&snd_4, 0, sizeof(snd_4));
 
-	channel = stream_init_multi(2, names, volume, Machine->sample_rate, 0, gameboy_update);
+	channel = stream_create(0, 2, Machine->sample_rate, 0, gameboy_update);
 	rate = Machine->sample_rate;
 
 	/* Calculate the envelope and sweep tables */

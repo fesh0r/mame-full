@@ -100,6 +100,7 @@
 #include "includes/pcw.h"
 // pcw/pcw16 beeper
 #include "image.h"
+#include "sound/beep.h"
 
 // uncomment for debug log output
 //#define VERBOSE
@@ -969,11 +970,7 @@ INPUT_PORTS_START(pcw)
 
 INPUT_PORTS_END
 
-static struct beep_interface pcw_beep_interface =
-{
-	1,
-	{100}
-};
+
 
 /* PCW8256, PCW8512, PCW9256 */
 static MACHINE_DRIVER_START( pcw )
@@ -997,7 +994,9 @@ static MACHINE_DRIVER_START( pcw )
 	MDRV_VIDEO_UPDATE( pcw )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(BEEP, pcw_beep_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 

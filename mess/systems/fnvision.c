@@ -207,12 +207,7 @@ INPUT_PORTS_START( fnvision )
 */
 INPUT_PORTS_END
 
-static struct SN76496interface sn76496_interface =
-{
-    1,  			// 1 chip
-    { 2000000 },	// ???
-    { 100 }
-};
+
 
 static INTERRUPT_GEN( fnvision_int )
 {
@@ -291,7 +286,9 @@ static MACHINE_DRIVER_START( fnvision )
 	MDRV_TMS9928A(&tms9928a_interface)
 
 	// sound hardware
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 2000000)	/* 2 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START( fnvision )

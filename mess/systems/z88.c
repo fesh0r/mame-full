@@ -14,6 +14,7 @@
  ******************************************************************************/
 #include "driver.h"
 #include "includes/z88.h"
+#include "sound/speaker.h"
 
 struct blink_hw blink;
 
@@ -605,11 +606,6 @@ static ADDRESS_MAP_START( z88_io, ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 
-static struct Speaker_interface z88_speaker_interface=
-{
-  1,
-  {50}
-};
 
 /*
 -------------------------------------------------------------------------
@@ -734,7 +730,9 @@ static MACHINE_DRIVER_START( z88 )
 	MDRV_VIDEO_UPDATE( z88 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SPEAKER, z88_speaker_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

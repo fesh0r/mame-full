@@ -33,6 +33,8 @@ TODO:
 ****************************************************************************/
 
 #include "driver.h"
+#include "sound/2203intf.h"
+#include "sound/msm5205.h"
 
 
 VIDEO_START( hnayayoi );
@@ -596,23 +598,17 @@ usrintf_showmessage("irq");
 
 static struct YM2203interface ym2203_interface =
 {
-	1,			/* 1 chip */
-	20000000/8,	/* 2.5 MHz???? */
-	{ YM2203_VOL(80,25) },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 },
-	{ irqhandler }
+	input_port_0_r,
+	input_port_1_r,
+	0,
+	0,
+	irqhandler
 };
 
-struct MSM5205interface msm5205_interface =
+static struct MSM5205interface msm5205_interface =
 {
-	1,
-	384000,					/* ???? */
-	{ 0 },					/* IRQ handler */
-	{ MSM5205_SEX_4B },
-	{ 100 }
+	0,					/* IRQ handler */
+	MSM5205_SEX_4B
 };
 
 
@@ -642,8 +638,18 @@ static MACHINE_DRIVER_START( hnayayoi )
 	MDRV_VIDEO_UPDATE(hnayayoi)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 20000000/8)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.25)
+	MDRV_SOUND_ROUTE(1, "mono", 0.25)
+	MDRV_SOUND_ROUTE(2, "mono", 0.25)
+	MDRV_SOUND_ROUTE(3, "mono", 0.80)
+
+	MDRV_SOUND_ADD(MSM5205, 384000)
+	MDRV_SOUND_CONFIG(msm5205_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( hnfubuki )

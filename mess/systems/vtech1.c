@@ -97,6 +97,7 @@ Todo:
 #include "devices/printer.h"
 #include "devices/z80bin.h"
 #include "formats/vt_cas.h"
+#include "sound/speaker.h"
 #include "inputx.h"
 
 
@@ -333,17 +334,10 @@ static INT16 speaker_levels[] = {-32768, 0, 32767, 0};
 
 static struct Speaker_interface speaker_interface =
 {
-    1,
-    { 75 },
-    { 4 },
-    { speaker_levels }
+	4,
+	speaker_levels
 };
 
-static struct Wave_interface wave_interface =
-{
-    1,
-    { 25 }
-};
 
 
 /******************************************************************************
@@ -367,8 +361,12 @@ static MACHINE_DRIVER_START(laser110)
     MDRV_PALETTE_INIT(monochrome)
 
     /* sound hardware */
-    MDRV_SOUND_ADD(SPEAKER, speaker_interface)
-    MDRV_SOUND_ADD(WAVE, wave_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_CONFIG(speaker_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START(laser200)

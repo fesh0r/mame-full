@@ -27,6 +27,9 @@
 #include "utils.h"
 #include "image.h"
 #include "osdepend.h"
+#include "sound/ay8910.h"
+#include "sound/2413intf.h"
+#include "sound/dac.h"
 
 #ifndef MAX
 #define MAX(x, y) ((x) < (y) ? (y) : (x) )

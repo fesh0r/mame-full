@@ -11,6 +11,7 @@
 
 #include "includes/mz700.h"
 #include "devices/cassette.h"
+#include "sound/beep.h"
 
 #ifndef VERBOSE
 #define VERBOSE 0
@@ -25,7 +26,7 @@
 
 typedef UINT32 data_t;
 
-static void *ne556_timer[2] = {NULL,};	  /* NE556 timer */
+static mame_timer *ne556_timer[2] = {NULL,};	  /* NE556 timer */
 static UINT8 ne556_out[2] = {0,};		/* NE556 current output status */
 
 static UINT8 mz700_motor_on = 0;	/* cassette motor key (play key) */

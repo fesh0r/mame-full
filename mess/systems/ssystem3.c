@@ -126,7 +126,6 @@ DIPS_HELPER( 0x001, "NEW GAME", KEYCODE_F3, CODE_NONE) // seams to be direct wir
 #endif
 INPUT_PORTS_END
 
-static struct DACinterface ssystem3_dac={ 1, {80}}; // silence is golden
 
 
 static MACHINE_DRIVER_START( ssystem3 )
@@ -152,7 +151,10 @@ static MACHINE_DRIVER_START( ssystem3 )
 	MDRV_VIDEO_UPDATE( ssystem3 )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, ssystem3_dac)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.80)
 MACHINE_DRIVER_END
 
 

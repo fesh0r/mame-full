@@ -266,6 +266,9 @@ Sound
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "taito_f2.h"
+#include "sound/2203intf.h"
+#include "sound/2610intf.h"
+#include "sound/okim6295.h"
 
 
 static int banknum = 0;
@@ -4701,17 +4704,9 @@ static void irq_handler(int irq)
 
 static struct YM2610interface ym2610_interface =
 {
-	1,	/* 1 chip */
-	16000000/2,	/* 8 MHz */
-	{ 25 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ irq_handler },
-	{ REGION_SOUND2 },	/* Delta-T */
-	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	irq_handler,
+	REGION_SOUND2,	/* Delta-T */
+	REGION_SOUND1	/* ADPCM */
 };
 
 
@@ -4722,23 +4717,11 @@ static WRITE8_HANDLER( camltrua_porta_w )
 
 static struct YM2203interface ym2203_interface =
 {
-	1,		/* 1 chip ??? */
-	3000000,	/* 3 MHz ??? (tempo much too fast @4) */
-	{ YM2203_VOL(60,20) },
-	{ 0 },	/* portA read */
-	{ 0 },
-	{ camltrua_porta_w },	/* portA write - not implemented */
-	{ 0 },	/* portB write */
-	{ irq_handler }
-};
-
-
-static struct OKIM6295interface okim6295_interface =
-{
-	1,
-	{ 8000 },			/* Hz ?? */
-	{ REGION_SOUND1 },	/* memory region */
-	{ 100 }			/* volume ?? */
+	0,	/* portA read */
+	0,
+	camltrua_porta_w,	/* portA write - not implemented */
+	0,	/* portB write */
+	irq_handler
 };
 
 
@@ -4778,8 +4761,14 @@ static MACHINE_DRIVER_START( taito_f2 )
 	MDRV_VIDEO_UPDATE(taitof2)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
-	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2610, 16000000/2)
+	MDRV_SOUND_CONFIG(ym2610_interface)
+	MDRV_SOUND_ROUTE(0, "left",  0.25)
+	MDRV_SOUND_ROUTE(0, "right", 0.25)
+	MDRV_SOUND_ROUTE(1, "left",  1.0)
+	MDRV_SOUND_ROUTE(2, "right", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -5223,7 +5212,14 @@ static MACHINE_DRIVER_START( camltrua )
 	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 3000000)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.20)
+	MDRV_SOUND_ROUTE(1, "mono", 0.20)
+	MDRV_SOUND_ROUTE(2, "mono", 0.20)
+	MDRV_SOUND_ROUTE(3, "mono", 0.60)
 MACHINE_DRIVER_END
 
 
@@ -5253,8 +5249,12 @@ static MACHINE_DRIVER_START( driveout )
 	MDRV_VIDEO_UPDATE(taitof2_pri_roz)
 
 	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)   /* does it ? */
-	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")   /* does it ? */
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 MACHINE_DRIVER_END
 
 

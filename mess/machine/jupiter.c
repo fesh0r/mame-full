@@ -11,6 +11,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/jupiter.h"
+#include "sound/speaker.h"
 #include "image.h"
 
 #define	JUPITER_NONE	0

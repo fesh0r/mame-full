@@ -7,15 +7,16 @@
 #include "driver.h"
 
 #include "includes/cgenie.h"
+#include "sound/ay8910.h"
 
 static int control_port;
 
- READ8_HANDLER( cgenie_sh_control_port_r )
+READ8_HANDLER( cgenie_sh_control_port_r )
 {
 	return control_port;
 }
 
- READ8_HANDLER( cgenie_sh_data_port_r )
+READ8_HANDLER( cgenie_sh_data_port_r )
 {
 	return AY8910_read_port_0_r(offset);
 }

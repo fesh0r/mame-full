@@ -102,6 +102,7 @@
 #include "formats/pc_dsk.h"		/* for NC200 disk image */
 #include "includes/serial.h"	/* for serial data transfers */
 #include "devices/cartslot.h"
+#include "sound/beep.h"
 
 /* uncomment for verbose debugging information */
 /* #define VERBOSE */
@@ -1678,11 +1679,6 @@ INPUT_PORTS_END
 
 /**********************************************************************************************************/
 
-static struct beep_interface nc_beep_interface =
-{
-	2,
-	{50,50}
-};
 
 
 static MACHINE_DRIVER_START( nc100 )
@@ -1709,7 +1705,11 @@ static MACHINE_DRIVER_START( nc100 )
 	MDRV_VIDEO_UPDATE( nc )
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(BEEP, nc_beep_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_SOUND_ADD(BEEP, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

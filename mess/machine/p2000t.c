@@ -10,6 +10,7 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "includes/p2000t.h"
+#include "sound/speaker.h"
 
 #define P2000M_101F_CASDAT	0x01
 #define P2000M_101F_CASCMD	0x02

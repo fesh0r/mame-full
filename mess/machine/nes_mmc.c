@@ -22,6 +22,7 @@
 
 #include "cpu/m6502/m6502.h"
 #include "vidhrdw/ppu2c03b.h"
+#include "sound/nesintf.h"
 #include "osdepend.h"
 #include "driver.h"
 #include "includes/nes.h"

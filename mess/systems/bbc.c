@@ -659,14 +659,6 @@ static INTERRUPT_GEN( bbcb_vsync )
 }
 
 
-static struct SN76496interface sn76496_interface =
-{
-	1,		/* 1 chip */
-	{ 4000000 },	/* 4Mhz */
-	{ 100 }
-};
-
-
 //static struct TMS5220interface tms5220_interface =
 //{
 //	680000L,
@@ -699,7 +691,9 @@ static MACHINE_DRIVER_START( bbca )
 	MDRV_VIDEO_UPDATE(bbc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 4000000)	/* 4 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 //	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
 MACHINE_DRIVER_END
 
@@ -756,7 +750,9 @@ static MACHINE_DRIVER_START( bbcm )
 	MDRV_VIDEO_UPDATE(bbc)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SN76496, sn76496_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(SN76496, 4000000)	/* 4 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
 	MDRV_NVRAM_HANDLER( mc146818 )
 MACHINE_DRIVER_END

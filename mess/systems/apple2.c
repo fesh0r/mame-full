@@ -189,6 +189,7 @@ Apple 3.5 and Apple 5.25 drives - up to three devices
 #include "machine/ay3600.h"
 #include "devices/mflopimg.h"
 #include "formats/ap2_dsk.h"
+#include "sound/ay8910.h"
 
 static ADDRESS_MAP_START( apple2_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
@@ -560,21 +561,9 @@ static const char *apple2_floppy_getname(const struct IODevice *dev, int id, cha
 	return buf;
 }
 
-static struct DACinterface apple2_DAC_interface =
-{
-    1,          /* number of DACs */
-    { 100 }     /* volume */
-};
-
 static struct AY8910interface ay8910_interface =
 {
-    2,  /* 2 chips */
-    1022727,    /* 1.023 MHz */
-    { 100, 100 },
-    { 0 },
-    { 0 },
-    { 0 },
-    { 0 }
+	NULL
 };
 
 static MACHINE_DRIVER_START( apple2_common )
@@ -599,8 +588,15 @@ static MACHINE_DRIVER_START( apple2_common )
 	MDRV_VIDEO_UPDATE(apple2)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(DAC, apple2_DAC_interface)
-	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
+	MDRV_SOUND_ADD(AY8910, 1022727)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)	
+	MDRV_SOUND_ADD(AY8910, 1022727)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)	
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( apple2 )

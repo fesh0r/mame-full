@@ -40,6 +40,7 @@
 #include "devices/mflopimg.h"
 #include "devices/cassette.h"
 #include "machine/smartmed.h"
+#include "sound/5220intf.h"
 
 static ADDRESS_MAP_START(memmap, ADDRESS_SPACE_PROGRAM, 16)
 
@@ -218,20 +219,8 @@ static const struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 }		/* end of array */
 };
 
-/*
-	SN76496(?) sound chip parameters.
-*/
-static struct SN76496interface tms9919interface =
-{
-	1,				/* one sound chip */
-	{ 3579545 },	/* clock speed. connected to the TMS9918A CPUCLK pin... */
-	{ 75 }			/* Volume.  I don't know the best value. */
-};
-
 static struct TMS5220interface tms5220interface =
 {
-	680000L,					/* 640kHz -> 8kHz output */
-	50,							/* Volume.  I don't know the best value. */
 	NULL,						/* no IRQ callback */
 #if 1
 	spchroms_read,				/* speech ROM read handler */
@@ -245,25 +234,6 @@ static struct TMS5220interface tms5220interface =
 	a) there was no DAC in an actual TI99
 	b) this is a 2-level output (whereas a DAC provides a 256-level output...)
 */
-static struct DACinterface aux_sound_intf =
-{
-	1,				/* total number of DACs */
-	{
-		20			/* volume for audio gate*/
-	}
-};
-
-/*
-	2 tape units
-*/
-static struct Wave_interface tape_input_intf =
-{
-	2,
-	{
-		20,			/* Volume for CS1 */
-		20			/* Volume for CS2 */
-	}
-};
 
 
 
@@ -305,12 +275,19 @@ static MACHINE_DRIVER_START(ti99_4p_60hz)
 	/*MDRV_VIDEO_EOF(name)*/
 	MDRV_VIDEO_UPDATE(v9938)
 
-	MDRV_SOUND_ATTRIBUTES(0)
-	MDRV_SOUND_ADD(SN76496, tms9919interface)
-	MDRV_SOUND_ADD(TMS5220, tms5220interface)
-	MDRV_SOUND_ADD(DAC, aux_sound_intf)
-	MDRV_SOUND_ADD(WAVE, tape_input_intf)
 
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	MDRV_SOUND_ADD(WAVE, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+	MDRV_SOUND_ADD(SN76496, 3579545)	/* 3.579545 MHz */
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+	MDRV_SOUND_ADD(TMS5220, 680000L)
+	MDRV_SOUND_CONFIG(tms5220interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 

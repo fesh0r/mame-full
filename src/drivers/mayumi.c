@@ -8,6 +8,7 @@ Kikiippatsu Mayumi-chan (c) 1988 Victory L.L.C.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "sound/2203intf.h"
 
 #define MCLK 10000000
 
@@ -263,13 +264,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static struct YM2203interface ym2203_interface =
 {
-	1,	 /* 1 chip */
-	MCLK/4, /* 2.5 MHz */
-	{ YM2203_VOL(40,15) },
-	{ input_port_0_r },
-	{ input_port_1_r },
-	{ 0 },
-	{ 0 },
+	input_port_0_r,
+	input_port_1_r
 };
 
 static MACHINE_DRIVER_START( mayumi )
@@ -296,7 +292,14 @@ static MACHINE_DRIVER_START( mayumi )
 	MDRV_VIDEO_UPDATE(mayumi)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, MCLK/4)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.15)
+	MDRV_SOUND_ROUTE(1, "mono", 0.15)
+	MDRV_SOUND_ROUTE(2, "mono", 0.15)
+	MDRV_SOUND_ROUTE(3, "mono", 0.40)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
