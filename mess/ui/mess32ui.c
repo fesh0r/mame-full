@@ -61,7 +61,7 @@ static struct SmartListView *s_pSoftwareListView;
 static int *mess_icon_index;
 
 static void InitMessPicker(void);
-static void MyFillSoftwareList(int nGame);
+static void MyFillSoftwareList(int nGame, BOOL bForce);
 static void MessUpdateSoftwareList(void);
 static void MessOpenOtherSoftware(int iDevice);
 static void MessCreateDevice(int iDevice);
@@ -216,7 +216,7 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     return nIconPos;
 }
 
-static void MyFillSoftwareList(int nGame)
+static void MyFillSoftwareList(int nGame, BOOL bForce)
 {
 	int i;
 	const struct GameDriver *drv;
@@ -227,7 +227,7 @@ static void MyFillSoftwareList(int nGame)
 	int path_count;
 	LPCSTR *pathsv;
 
-	if (nGame == s_nCurrentGame)
+	if (!bForce && (nGame == s_nCurrentGame))
 		return;
 	s_nCurrentGame = nGame;
 
@@ -263,7 +263,7 @@ static void MyFillSoftwareList(int nGame)
 
 static void MessUpdateSoftwareList(void)
 {
-	MyFillSoftwareList(GetSelectedPickItem());
+	MyFillSoftwareList(GetSelectedPickItem(), TRUE);
 }
 
 static void MessReadMountedSoftware(int nGame)

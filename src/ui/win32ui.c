@@ -2627,7 +2627,7 @@ static void EnableSelection(int nGame)
 	HMENU			hMenu = GetMenu(hMain);
 
 #ifdef MESS
-	MyFillSoftwareList(nGame);
+	MyFillSoftwareList(nGame, FALSE);
 #endif
 
 	sprintf(buf, "&Play %s", ConvertAmpersandString(ModifyThe(drivers[nGame]->description)));
