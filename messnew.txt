@@ -15,6 +15,9 @@ Intellivision & Intellivision Kbd Component (preliminary) [Frank Palazzolo]
 System Driver Changes:
 ----------------------
 
+- [ATARI7800] Fixed a bug in TIA emulation: now the driver doesn't lock anymore
+  with some ports.
+
 - [NC200] Keyboard reading and display memory address differences (compared to NC100) 
   implemented. [Kev Thacker and Russell Marks]
 
@@ -24,7 +27,7 @@ System Driver Changes:
   is supported. (DOS1->1.30 for low DOS and DOS 2.10 or better for high DOS)
   Disk images are ".DSK" and same as used by Apple2 driver. [Kev Thacker]
 
-- [KC Compact] colours generated from colour rom [Kev Thacker]
+- [KC COMPACT] colours generated from colour rom [Kev Thacker]
 
 - [TI85] Snapshot loading (VTI 2.0 save state files). Sound added (speaker
   connected to link port). Video engine totaly rewriten so grayscale works now.
@@ -140,7 +143,7 @@ Source:
   recognized. At the moment "-parallel" is not used by any driver, but has been
   reserved for future expansions. [JoJo]
 
-- Beginning of a huge rewriting of the device handling/image loading code. [Ben]
+- Huge rewriting/rationalization of the device handling/image loading code. [Ben]
 
 - Logging routines have been fixed. [Ben]
 
@@ -170,7 +173,7 @@ Source:
 
 - Fixed the DIV1 instruction Q bit generation for the SH2 CPU. [James Forshaw]
 
-- alias handling removed and wont be back.
+- Alias handling removed and wont be back. [Ben]
 
 
 -------------------------------------------------------------------------------  
