@@ -212,11 +212,8 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
 		logerror("image_fopen: found image %s for system %s\n", img->name, sysname);
         img->length = osd_fsize(file);
-		if (!img->crc) {
-			img->crc = osd_fcrc(file);
-		} else {
-			logerror("old CRC %ld\n",img->crc);
-		}
+		/* malloc(img->length); fread(wholefile); */
+		img->crc = img->partialcrc ? (*img->partialcrc)(0 /* a malloced buffer */,img->length) : osd_fcrc(file);
 		if( img->crc == 0 && img->length < 0x100000 )
 		{
 			logerror("image_fopen: calling osd_fchecksum() for %d bytes\n", img->length);
