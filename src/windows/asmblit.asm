@@ -667,20 +667,34 @@ SNIPPET_END
 
 SNIPPET_BEGIN asmblit16_16_to_32_x1_mmx
 	%assign iter 0
-	%rep 4
-		movzx	eax,word [esi+FIXUPPIXEL(0+4*iter)]
-		movzx	ebx,word [esi+FIXUPPIXEL(1+4*iter)]
+	%rep 2
+		movzx	eax,word [esi+FIXUPPIXEL(0+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(1+8*iter)]
+		movzx	edx,word [esi+FIXUPPIXEL(2+8*iter)]
 		movd	mm0,[ecx+eax*4]
 		movd	mm1,[ecx+ebx*4]
+		movd	mm2,[ecx+edx*4]
+		
+		movzx	eax,word [esi+FIXUPPIXEL(3+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(4+8*iter)]
+		movzx	edx,word [esi+FIXUPPIXEL(5+8*iter)]
+		movd	mm3,[ecx+eax*4]
+		movd	mm4,[ecx+ebx*4]
+		movd	mm5,[ecx+edx*4]
+
+		movzx	eax,word [esi+FIXUPPIXEL(6+8*iter)]
+		movzx	ebx,word [esi+FIXUPPIXEL(7+8*iter)]
+		movd	mm6,[ecx+eax*4]
+		movd	mm7,[ecx+ebx*4]
+
 		punpckldq mm0,mm1
+		punpckldq mm2,mm3
+		punpckldq mm4,mm5
+		punpckldq mm6,mm7
 
-		movzx	eax,word [esi+FIXUPPIXEL(2+4*iter)]
-		movzx	ebx,word [esi+FIXUPPIXEL(3+4*iter)]
-		movd	mm1,[ecx+eax*4]
-		movd	mm2,[ecx+ebx*4]
-		punpckldq mm1,mm2
+		store_multiple2 mm0,32*iter,mm2,32*iter+8
+		store_multiple2 mm4,32*iter+16,mm6,32*iter+24
 
-		store_multiple2 mm0,16*iter,mm1,16*iter+8
 		%assign iter iter+1
 	%endrep
 SNIPPET_END

@@ -1779,6 +1779,10 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		break;
 	}
 
+#ifdef MESS
+	MessGetPickerDefaults();
+#endif
+
 	return TRUE;
 }
 
