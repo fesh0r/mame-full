@@ -128,7 +128,7 @@ static void reporterror(int err, struct command *c, const char *format, const ch
 				sprintf(buf, "--%s should be between '%c' and '%c'", optiontemplate->name, optiontemplate->min, optiontemplate->max);
 				break;
 			default:
-				sprintf(buf, "--%s: %s", err_name);
+				sprintf(buf, "--%s: %s", err_name, err_name);
 				break;
 			}
 			err_name = buf;
@@ -480,7 +480,7 @@ static struct command cmds[] = {
 	{ "create", "<format> <imagename> [<internalname>] "
 	  "[--heads=HEADS] [--cylinders=CYLINDERS] "
 	  "[--sectors=SECTORS] [--sectorsize=SIZE] "
-	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]", 
+	  "[--htype=HARDWARETYPE] [--exrom=LEVEL] [--game=LEVEL]",
 	  cmd_create, 2, 8, 0},
 	{ "dir", "<format> <imagename>...", cmd_dir, 2, 2, 1 },
 	{ "get", "<format> <imagename> <filename> [newname]", cmd_get, 3, 4, 0 },
