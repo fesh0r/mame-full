@@ -11,9 +11,9 @@
 		if (level>0) { \
 				logerror("%s\t", text); \
 				logerror print; \
-		}
+		} 
 #else
-#define DBG_LOG(level, text, print)
+#define DBG_LOG(level, text, print) 
 #endif
 
 static struct {
@@ -53,11 +53,11 @@ static void mc146818_from_gmtime(struct tm *tmtime)
 			mc146818.data[4]=dec_2_bcd(tmtime->tm_hour);
 		else
 			mc146818.data[4]=dec_2_bcd(tmtime->tm_hour-12)|0x80;
-
+		
 		mc146818.data[7]=dec_2_bcd(tmtime->tm_mday);
 		mc146818.data[8]=dec_2_bcd(tmtime->tm_mon+1);
 		mc146818.data[9]=dec_2_bcd(tmtime->tm_year%100);
-
+		
 		if (mc146818.type!=MC146818_IGNORE_CENTURY)
 			mc146818.data[50]=dec_2_bcd((tmtime->tm_year+1900)/100);
 	} else {
@@ -67,7 +67,7 @@ static void mc146818_from_gmtime(struct tm *tmtime)
 			mc146818.data[4]=tmtime->tm_hour;
 		else
 			mc146818.data[4]=(tmtime->tm_hour-12)|0x80;
-
+		
 		mc146818.data[7]=tmtime->tm_mday;
 		mc146818.data[8]=tmtime->tm_mon+1;
 		mc146818.data[9]=tmtime->tm_year%100;
@@ -134,7 +134,7 @@ static void mc146818_timer(int param)
 		}
 	}
 #endif
-	mc146818.last_refresh=timer_get_time();
+	mc146818.last_refresh=timer_get_time();	
 }
 
 void mc146818_init(MC146818_TYPE type)
@@ -148,13 +148,11 @@ void mc146818_init(MC146818_TYPE type)
 	mc146818.last_refresh=timer_get_time();
 
 	mc146818.timer=timer_pulse(1.0,0,mc146818_timer);
-	if ( (file=osd_fopen(Machine->gamedrv->name,
+	if ( (file=osd_fopen(Machine->gamedrv->name, 
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 0))==NULL)
 		return;
 	osd_fread(file,mc146818.data, sizeof(mc146818.data));
-	osd_fclose(file);
-
-	mc146818.data[0xf]=0;
+	osd_fclose(file);	
 
 	t=time(NULL);
 	if (t==-1) return;
@@ -168,7 +166,7 @@ void mc146818_init(MC146818_TYPE type)
 void mc146818_close(void)
 {
 	FILE *file;
-	if ( (file=osd_fopen(Machine->gamedrv->name,
+	if ( (file=osd_fopen(Machine->gamedrv->name, 
 						 Machine->gamedrv->name, OSD_FILETYPE_NVRAM, 1))==NULL)
 		return;
 	osd_fwrite(file, mc146818.data, sizeof(mc146818.data));
@@ -193,7 +191,7 @@ READ_HANDLER(mc146818_port_r)
 			mc146818.data[mc146818.index&0x3f]^=0x80; /* 0x80 update in progress */
 #endif
 			break;
-		case 0xd:
+		case 0xd: 
 			data=mc146818.data[mc146818.index&0x3f]|0x80; /* batterie ok */
 			break;
 		default:

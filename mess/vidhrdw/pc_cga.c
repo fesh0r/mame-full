@@ -34,6 +34,8 @@
 #define CGA_LPENH   CGA_crtc[LPENH]
 #define CGA_LPENL   CGA_crtc[LPENL]
 
+static enum { TYPE_CGA, TYPE_PC1512 } type=TYPE_CGA;
+
 static int CGA_reg = 0;
 static int CGA_index = 0;
 static int CGA_crtc[18+1] = {0, };
@@ -858,6 +860,82 @@ static void cga_gfx_1bpp(struct osd_bitmap *bitmap)
     }
 }
 
+// amstrad pc1512 video hardware
+// mapping of the 4 planes into videoram
+// (text data should be readable at videoram+0)
+static const int videoram_offset[4]= { 0xc000, 0x8000, 0x4000, 0 };
+INLINE void pc1512_plot_unit(struct osd_bitmap *bitmap, 
+							 int x, int y, int offs)
+{
+	int color, values[4];
+	int i;
+
+	values[0]=videoram[offs|videoram_offset[0]]; // red
+	values[1]=videoram[offs|videoram_offset[1]]<<1; // green
+	values[2]=videoram[offs|videoram_offset[2]]<<2; // blue
+	values[3]=videoram[offs|videoram_offset[3]]<<3; // intensity
+
+	for (i=7; i>=0; i--) {
+		color=(values[0]&1)|(values[1]&2)|(values[2]&4)|(values[3]&8);
+		plot_pixel(bitmap, x+i, y, Machine->pens[color]);
+		plot_pixel(bitmap, x+i, y+1, Machine->pens[color]);
+		values[0]>>=1;
+		values[1]>>=1;
+		values[2]>>=1;
+		values[3]>>=1;
+	}
+}
+
+/***************************************************************************
+  Draw graphics mode with 640x200 pixels (default).
+  The cell size is 1x1 (1 scanline is the real default)
+  Even scanlines are from CGA_base + 0x0000, odd from CGA_base + 0x2000
+***************************************************************************/
+static void pc1512_gfx_4bpp(struct osd_bitmap *bitmap)
+{
+	int i, sx, sy, offs = CGA_base, size = CGA_size * 2;
+
+	/* for every code in the Video RAM, check if it been modified
+       since last time and update it accordingly. */
+	/* first draw the even scanlines */
+	for( i = 0, sx = 0, sy = 0; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
+            dirtybuffer[offs] = 0;
+
+
+			pc1512_plot_unit(bitmap, sx, sy, offs);
+		}
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
+    }
+
+	/* now draw the odd scanlines */
+	offs = (CGA_base + 0x2000) % videoram_size;
+	for( i = 0, sx = 0, sy = CGA_maxscan / 2; i < size; i++ )
+	{
+		if( dirtybuffer[offs] )
+		{
+            dirtybuffer[offs] = 0;
+
+			pc1512_plot_unit(bitmap, sx, sy, offs);
+		}
+		if( (sx += 8) == (2 * CGA_HDISP * 8) )
+		{
+			sx = 0;
+			sy += CGA_maxscan;
+		}
+		if( ++offs == videoram_size )
+			offs = 0;
+    }
+}
+
 /***************************************************************************
   Draw the game screen in the given osd_bitmap.
   Do NOT call osd_update_display() from this function,
@@ -904,7 +982,11 @@ void pc_cga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
 		case 0x38: case 0x39: case 0x3a: case 0x3b:
 			video_active = 10;
-			cga_gfx_1bpp(bitmap);
+			if (type==TYPE_PC1512) {
+				pc1512_gfx_4bpp(bitmap);
+			} else {
+				cga_gfx_1bpp(bitmap);
+			}
 			break;
 
         default:
@@ -934,7 +1016,6 @@ static struct {
 	UINT8 write, read;
 } pc1512;
 
-static const int videoram_offset[4]= { 0xc000, 0x8000, 0x4000, 0 };
 extern WRITE_HANDLER ( pc1512_w )
 {
 	switch (offset) {
@@ -967,6 +1048,7 @@ extern WRITE_HANDLER ( pc1512_videoram_w )
 
 extern int	pc1512_vh_start(void)
 {
+	type=TYPE_PC1512;
 	videoram=malloc(0x10000);
 	if (videoram==0) return 1;
 	videoram_size=0x4000; //! used in cga this way, size of plain memory in 1 bank
@@ -986,4 +1068,3 @@ extern void pc1512_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	pc_cga_vh_screenrefresh(bitmap, full_refresh);
 }
-

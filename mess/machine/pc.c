@@ -247,8 +247,14 @@ void init_pc_vga(void)
 	vga_init(input_port_0_r);
 }
 
+extern void pc1512_close_machine(void)
+{
+	mc146818_close();
+}
+
 extern void pc1640_close_machine(void)
 {
+	vga_reset();
 	mc146818_close();
 }
 

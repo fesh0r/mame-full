@@ -1,9 +1,9 @@
 /* PC-AT Keyboard emulation */
 
-/* Todo: (added by KT 22-Jun-2000
+/* Todo: (added by KT 22-Jun-2000 
 	1. Check scancodes I have added are the actual scancodes for set 2 or 3.
 	2. Check how codes are changed based on Shift/Control states for those sets
-	   that require it - info in Help PC!
+	   that require it - info in Help PC! 
 
 */
 
@@ -24,16 +24,16 @@
 	  description of the scan code sets (see the PS/2 Technical Reference
 	  manuals for more information on scan code sets 2 and 3):
 
-	-  set 1, each key has a base scan code.  Some keys generate
+	ù  set 1, each key has a base scan code.  Some keys generate
 	   extra scan codes to generate artificial shift states.  This
 	   is similar to the standard scan code set used on the PC and XT.
-	-  set 2, each key sends one make scan code and two break scan
+	ù  set 2, each key sends one make scan code and two break scan
 	   codes bytes (F0 followed by the make code).	This scan code
 	   set is available on the IBM AT also.
-	-  set 3, each key sends one make scan code and two break scan
+	ù  set 3, each key sends one make scan code and two break scan
 	   codes bytes (F0 followed by the make code) and no keys are
 	   altered by Shift/Alt/Ctrl keys.
-	-  typematic scan codes are the same as the make scan code
+	ù  typematic scan codes are the same as the make scan code
 
 */
 
@@ -158,7 +158,7 @@ static int at_keyboard_scancode_set_2_3[]=
 
 
 typedef struct at_keyboard
-{
+{	
 	AT_KEYBOARD_TYPE type;
 	int on;
 	UINT8 delay;   /* 240/60 -> 0,25s */
@@ -167,7 +167,8 @@ typedef struct at_keyboard
 	UINT8 queue[256];
 	UINT8 head;
 	UINT8 tail;
-	UINT8 make[128];
+	UINT8 make[128];	
+
 	int input_state;
 	int scan_code_set;
 	int last_code;
@@ -183,7 +184,7 @@ typedef struct extended_keyboard_code
 } extended_keyboard_code;
 
 
-static extended_keyboard_code keyboard_mf2_code[0x10][2/*numlock off, on*/]={
+static extended_keyboard_code keyboard_mf2_code[0x10][2/*numlock off, on*/]={ 
 	{	{ "\xe0\x12", "\xe0\x92" } },
 	{	{ "\xe0\x13", "\xe0\x93" } },
 	{	{ "\xe0\x35", "\xe0\xb5" } },
@@ -287,7 +288,7 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 		"\xe1\x14\x77\xe1\xf0\x14\xf0\x77",
 		0, /*?? I don't know the break sequence */
 	}
-
+	
 };
 
 void at_keyboard_init(void)
@@ -365,7 +366,7 @@ static void at_keyboard_standard_scancode_insert(int our_code, int pressed)
 			/* the original code was designed for this set, and there is
 			a 1:1 correspondance for the scancodes */
 			scancode = our_code;
-
+		
 			if (!pressed)
 			{
 				/* adjust code for break code */
@@ -457,8 +458,10 @@ void at_keyboard_polling(void)
 		update_input_ports();
 
 		/* add codes for keys that are set */
-		for( i = 0x01; i < 0x60; i++  )
+		for( i = 0x01; i < 0x80; i++  )
 		{
+			if (i==0x60) i+=0x10; // keys 0x60..0x6f need special handling
+
 			if( readinputport((i/16) + keyboard.input_port_base) & (1 << (i & 15)) )
 			{
 				if( keyboard.make[i] == 0 )
@@ -472,7 +475,7 @@ void at_keyboard_polling(void)
 				else
 				{
 					keyboard.make[i] += 1;
-
+					
 					if( keyboard.make[i] == keyboard.delay )
 					{
 						at_keyboard_standard_scancode_insert(i, 1);
@@ -522,7 +525,7 @@ void at_keyboard_polling(void)
 						if( keyboard.make[i] == keyboard.delay + keyboard.repeat )
 						{
 							keyboard.make[i]=keyboard.delay;
-
+							
 							at_keyboard_extended_scancode_insert(i, 1);
 						}
 					}
@@ -533,7 +536,7 @@ void at_keyboard_polling(void)
 				if( keyboard.make[i] )
 				{
 					keyboard.make[i] = 0;
-
+					
 					at_keyboard_extended_scancode_insert(i,0);
 				}
 			}
@@ -672,14 +675,14 @@ void at_keyboard_write(UINT8 data)
 			keyboard.on=1;
 			break;
 		case 0xfe: // resend
-			// should not happen, for now send 0
+			// should not happen, for now send 0 
 			at_keyboard_queue_insert(0);	//keyboard.last_code);
 			break;
 		case 0xff: // reset
 			/* it doesn't state this in the docs I have read, but I assume
 			that the keyboard input buffer is cleared. The PCW16 sends &ff,
 			and requires that 0x0fa is the first byte to be read */
-
+				
 			at_clear_buffer_and_acknowledge();
 
 //			/* acknowledge */
@@ -689,7 +692,7 @@ void at_keyboard_write(UINT8 data)
 			break;
 		}
 		break;
-	case 1:
+	case 1: 
 		/* code received */
 		keyboard.input_state=0;
 
@@ -703,10 +706,10 @@ void at_keyboard_write(UINT8 data)
 		{
 			/* send acknowledge */
 			at_keyboard_queue_insert(0x0fa);
-
+		
 			/* led  bits */
 			/* bits: 0 scroll lock, 1 num lock, 2 capslock */
-
+			
 			/* led's in same order as my keyboard leds. */
 			/* num lock, caps lock, scroll lock */
 			osd_led_w(2, (data & 0x01));
@@ -741,12 +744,12 @@ void at_keyboard_write(UINT8 data)
 				keyboard.scan_code_set = data;
 			}
 		}
-
+	
 		break;
 	case 3:
 		/* 6,5: 250ms, 500ms, 750ms, 1s */
 		/* 4..0: 30 26.7 .... 2 chars/s*/
-
+	
 		/* command? */
 		keyboard.input_state=0;
 		if (data & 0x080)

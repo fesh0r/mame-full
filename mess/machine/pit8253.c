@@ -67,7 +67,7 @@ void pit8253_reset(int which)
 		return;
     }
 
-    for (i = 0; i < 2; i++)
+    for (i = 0; i < 3; i++)
 	{
 		pit->timer[i].access = 0;
 		pit->timer[i].mode = 0;
@@ -200,7 +200,7 @@ static void pit8253_timer_pulse(int which, int timer)
 
 	this->timer[timer].timer = NULL;
 
-	if (this->config->timer[which].irq_callback == NULL)
+	if (this->config->timer[timer].irq_callback == NULL)
 		return;
 
     if( this->timer[timer].gate == 0 )

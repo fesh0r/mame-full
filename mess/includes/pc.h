@@ -114,6 +114,7 @@ extern void pc_mda_init_machine(void);
 extern void pc_cga_init_machine(void);
 extern void pc_vga_init_machine(void);
 extern void pc_shutdown_machine(void);
+extern void pc1512_close_machine(void);
 extern void pc1640_close_machine(void);
 
 extern WRITE_HANDLER( pc_ppi_portb_w );
