@@ -22,6 +22,8 @@ System Driver Changes:
 
 - [PC1512] Fixed a few more video modes. [John Elliott]
 
+- [TI99] Added support for Mechatronics mouse [Raphael Nabet]
+
 - [TRS80] Fixed a crash on startup. [Nate Woods]
 
 User Interface Changes:
