@@ -40,7 +40,7 @@ VIDEO_UPDATE( pmd85 )
 	int pen0, pen1;
 	UINT8 data;
 
-	UINT8* pmd85_video_ram = mess_ram + 0xc000;
+	UINT8* pmd85_video_ram = mess_ram + 0x8000;
 
 	for (y=0; y<256; y++)                  	
 		for (x=0; x<288; x+=6)

@@ -1,6 +1,8 @@
 /* machine/pmd85.c */
 READ_HANDLER ( pmd85_io_r );
 WRITE_HANDLER ( pmd85_io_w );
+READ_HANDLER ( pmd85_mem_r );
+WRITE_HANDLER ( pmd85_mem_w );
 extern MACHINE_INIT( pmd85 );
 extern int pmd85_tape_init(int);
 extern void pmd85_tape_exit(int);

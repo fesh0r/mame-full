@@ -2,14 +2,38 @@
 
 PMD-85 driver by Krzysztof Strzecha
 
-Based on PMD-85 hardware information written by Roman Dolejsi.
-
 What's new:
 -----------
+30.11.2002	Memory mapping improved.
 06.07.2002	Preliminary driver.
 
 Notes on emulation status and to do list:
 -----------------------------------------
+
+PMD-85 technical information
+==========================
+
+Memory map:
+-----------
+	start-up map (cleared by the first I/O write operation done by the CPU):
+	0000-0fff ROM mirror #1
+	1000-1fff not mapped
+	2000-2fff ROM mirror #2
+	3000-3fff not mapped
+	4000-7fff Video RAM mirror #1
+	8000-8fff ROM
+	9000-9fff not mapped
+	a000-afff ROM mirror #3
+	b000-bfff not mapped
+	c000-ffff Video RAM
+
+	normal map:
+	0000-7fff RAM
+	8000-8fff ROM
+	9000-9fff not mapped
+	a000-afff ROM mirror #1
+	b000-bfff not mapped
+	c000-ffff Video RAM
 
 *******************************************************************************/
 
@@ -31,19 +55,11 @@ PORT_END
 /* memory w/r functions */
 
 MEMORY_READ_START( pmd85_readmem )
-	{0x0000, 0x0fff, MRA_BANK1},
-	{0x1000, 0x7fff, MRA_BANK2},
-	{0x8000, 0x8fff, MRA_BANK3},
-	{0xa000, 0xafff, MRA_BANK4},
-	{0xc000, 0xffff, MRA_BANK5},
+	{ 0x0000, 0xffff, pmd85_mem_r },
 MEMORY_END
 
 MEMORY_WRITE_START( pmd85_writemem )
-	{0x0000, 0x0fff, MWA_BANK1},
-	{0x1000, 0x7fff, MWA_BANK2},
-	{0x8000, 0x8fff, MWA_BANK3},
-	{0xa000, 0xafff, MWA_BANK4},
-	{0xc000, 0xffff, MWA_BANK5},
+	{ 0x0000, 0xffff, pmd85_mem_w },
 MEMORY_END
 
 
@@ -225,7 +241,7 @@ ROM_START(pmd85)
 ROM_END
 
 SYSTEM_CONFIG_START(pmd85)
-	CONFIG_RAM_DEFAULT(64 * 1024)
+	CONFIG_RAM_DEFAULT(48 * 1024)
 SYSTEM_CONFIG_END
 
 

@@ -22,6 +22,164 @@ UINT8 pmd85_ppi_port_outputs[1][3];
 
 static UINT8 startup_mem_map = 0;
 
+OPBASE_HANDLER (pmd85_opbaseoverride)
+{
+	if ( startup_mem_map )
+	{
+		switch ( address & 0x4000 )
+		{
+			case 0x0000:
+				switch ( address & 0x1000 )
+				{
+					case 0x0000:
+						OP_ROM = OP_RAM =  memory_region(REGION_CPU1)+0x010000 - (address & 0xa000);
+						return -1;
+					case 0x1000:
+						logerror ("Illegal opcode address\n");
+						return -1;
+				}
+				break;
+			case 0x4000:
+				OP_ROM = OP_RAM = mess_ram + 0x8000 - (address & 0xc000);
+				return -1;
+		}
+	}
+	else
+	{
+		switch ( address & 0x8000 )
+		{
+			case 0x0000:
+				OP_ROM = OP_RAM = mess_ram;
+			        return -1;
+			case 0x8000:
+				switch ( address & 0x4000 )
+				{
+					case 0x0000:
+						switch ( address & 0x1000 )
+						{
+							case 0x0000:
+								OP_ROM = OP_RAM = memory_region(REGION_CPU1) + 0x010000 - (address & 0xa000);
+								return -1;
+							case 0x1000:
+								logerror ("Illegal opcode address\n");
+								return -1;
+						}
+						break;
+					case 0x4000:
+						OP_ROM = OP_RAM = mess_ram + 0x8000 - (address & 0xc000);
+						return -1;
+				}
+				break;
+		}
+	}
+	return address;
+}
+
+READ_HANDLER( pmd85_mem_r )
+{
+	if ( startup_mem_map )
+	{
+		switch ( offset & 0x4000 )
+		{
+			case 0x0000:
+				switch ( offset & 0x1000 )
+				{
+					case 0x0000:
+						return memory_region(REGION_CPU1)[0x010000 + (offset&0x0fff)];
+						break;
+					case 0x1000:
+						return 0xff;
+						break;
+				}
+				break;
+			case 0x4000:
+				return mess_ram[0x8000+(offset&0x3fff)];
+				break;
+		}
+	}
+	else
+	{
+		switch ( offset & 0x8000 )
+		{
+			case 0x0000:
+				return mess_ram[offset&0x7fff];
+			        break;
+			case 0x8000:
+				switch ( offset & 0x4000 )
+				{
+					case 0x0000:
+						switch ( offset & 0x1000 )
+						{
+							case 0x0000:
+								return memory_region(REGION_CPU1)[0x010000 + (offset&0x0fff)];
+								break;
+							case 0x1000:
+								return 0xff;
+								break;
+						}
+						break;
+					case 0x4000:
+						return mess_ram[0x8000+(offset&0x3fff)];
+						break;
+				}
+				break;
+		}
+	}
+	return 0xff;
+}
+
+WRITE_HANDLER( pmd85_mem_w )
+{
+	if ( startup_mem_map )
+	{
+		switch ( offset & 0x4000 )
+		{
+			case 0x0000:
+				switch ( offset & 0x1000 )
+				{
+					case 0x0000:
+						logerror ("Writing to ROM\n");
+						break;
+					case 0x1000:
+						logerror ("Writing to unampped memory\n");
+						break;
+				}
+				break;
+			case 0x4000:
+				mess_ram[0x8000+(offset&0x3fff)] = data;
+				break;
+		}
+	}
+	else
+	{
+		switch ( offset & 0x8000 )
+		{
+			case 0x0000:
+				mess_ram[offset&0x7fff] = data;
+			        break;
+			case 0x8000:
+				switch ( offset & 0x4000 )
+				{
+					case 0x0000:
+						switch ( offset & 0x1000 )
+						{
+							case 0x0000:
+								logerror ("Writing to ROM\n");
+								break;
+							case 0x1000:
+								logerror ("Writing to unampped memory\n");
+								break;
+						}
+						break;
+					case 0x4000:
+						mess_ram[0x8000+(offset&0x3fff)] = data;
+						break;
+				}
+			break;
+		}
+	}
+}
+
 static struct msm8251_interface pmd85_uart_interface=
 {
 	NULL,
@@ -88,14 +246,7 @@ READ_HANDLER ( pmd85_io_r )
 WRITE_HANDLER ( pmd85_io_w )
 {
 	if (startup_mem_map)
-	{
 		startup_mem_map = 0;
-
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_w(1, 0, MWA_BANK1);
-
-		cpu_setbank(1, mess_ram);
-	}
 
 	if ((offset & 0x80) && !(offset & 0x08))	/* 8255 */
 		ppi8255_0_w(offset & 0x03, data);
@@ -127,24 +278,8 @@ MACHINE_INIT( pmd85 )
 	ppi8255_init(&pmd85_ppi8255_interface);
 	msm8251_init(&pmd85_uart_interface);
 
+	memory_set_opbase_handler(0, pmd85_opbaseoverride);
+
 	startup_mem_map = 1;
-
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
-	memory_set_bankhandler_r(4, 0, MRA_BANK4);
-	memory_set_bankhandler_r(5, 0, MRA_BANK5);
-
-	memory_set_bankhandler_w(1, 0, MWA_ROM);
-	memory_set_bankhandler_w(2, 0, MWA_BANK2);
-	memory_set_bankhandler_w(3, 0, MWA_ROM);
-	memory_set_bankhandler_w(4, 0, MWA_ROM);
-	memory_set_bankhandler_w(5, 0, MWA_BANK5);
-	
-	cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(2, mess_ram + 0x1000);
-	cpu_setbank(3, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(4, memory_region(REGION_CPU1) + 0x010000);
-	cpu_setbank(5, mess_ram + 0xc000);
 }
 
