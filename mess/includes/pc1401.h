@@ -105,7 +105,7 @@ void pc1401_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 #define KEY_EQUALS input_port_9_r(0)&8
 #define KEY_RESET input_port_9_r(0)&4
 
-#define RAM4K (input_port_10_r(0)&0x80)==0x40
-#define RAM10K (input_port_10_r(0)&0x80)==0x80
+#define RAM4K (input_port_10_r(0)&0xc0)==0x40
+#define RAM10K (input_port_10_r(0)&0xc0)==0x80
 #define CONTRAST (input_port_10_r(0)&7)
 
