@@ -160,8 +160,6 @@ int x11_init_palette_info(void)
 {
 	memset(&display_palette_info, 0, sizeof(struct sysdep_palette_info));
 
-	display_palette_info.depth = depth;
-
 	if (depth == 8)
 	{
 		if (xvisual->class != PseudoColor)
@@ -169,7 +167,6 @@ int x11_init_palette_info(void)
 			fprintf(stderr_file, "X11: Error 8 bpp only supported on PseudoColor visuals\n");
 			return OSD_NOT_OK;
 		}
-		display_palette_info.writable_colors = 256;
 	}
 	else
 	{
@@ -257,12 +254,17 @@ void sysdep_update_display (struct mame_bitmap *bitmap)
 			else
 				x11_video_mode = old_video_mode;
 		}
-
-		if (sysdep_palette_change_display(&normal_palette))
-			goto barf;
-
-		if (debug_palette && sysdep_palette_change_display(&debug_palette))
-			goto barf;
+		
+		sysdep_palette_destroy(normal_palette);
+		if (!(normal_palette = sysdep_palette_create(&display_palette_info, video_real_depth)))
+		   goto barf;
+		   
+		if (debug_palette)
+		{
+ 			sysdep_palette_destroy(debug_palette);
+ 			if (!(debug_palette = sysdep_palette_create(&display_palette_info, 16)))
+ 			   goto barf;
+		}
 
 		if (current_palette_normal)
 			current_palette = normal_palette;

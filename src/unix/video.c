@@ -84,7 +84,7 @@ static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
 static void round_rectangle_to_8(struct rectangle *rect);
 static void update_visible_area(struct mame_display *display);
-static void update_palette(struct mame_display *display, int force_dirty);
+static void update_palette(struct mame_display *display);
 
 struct rc_option video_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -492,8 +492,6 @@ static void orient_rect(struct rectangle *rect)
 int osd_create_display(const struct osd_create_params *params,
 		UINT32 *rgb_components)
 {
-	int r, g, b;
-
 	bitmap_depth = (params->depth == 15) ? 16 : params->depth;
 	using_15bpp_rgb_direct = (params->depth == 15);
 
@@ -575,7 +573,7 @@ int osd_create_display(const struct osd_create_params *params,
 	if (bitmap_depth == 16)
 		fprintf(stderr_file,"Using 16bpp video mode\n");
 
-	if (!(normal_palette = sysdep_palette_create(bitmap_depth, 65536)))
+	if (!(normal_palette = sysdep_palette_create(&display_palette_info, params->depth)))
 		return 1;
 
 	/* alloc the total number of colors that can be used by the palette */
@@ -585,39 +583,7 @@ int osd_create_display(const struct osd_create_params *params,
 		return 1;
 	}
 
-	/* initialize the palette to a fixed 5-5-5 mapping */
-	if (using_15bpp_rgb_direct)
-	{
-		for (r = 0; r < 32; r++)
-			for (g = 0; g < 32; g++)
-				for (b = 0; b < 32; b++)
-				{
-					int idx = (r << 10) | (g << 5) | b;
-					sysdep_palette_set_pen(normal_palette,
-							idx,
-							(r << 3) | (r >> 2),
-							(g << 3) | (g >> 2),
-							(b << 3) | (b >> 2));
-				}
-	}
-	else
-	{
-		for (r = 0; r < 32; r++)
-			for (g = 0; g < 32; g++)
-				for (b = 0; b < 32; b++)
-				{
-					int idx = (r << 10) | (g << 5) | b;
-					sysdep_palette_set_pen(normal_palette,
-							idx, r, g, b);
-				}
-	}
-
 	current_palette = normal_palette;
-
-	/*
-	 * Mark the palette dirty for Xv when running certain NeoGeo games.
-	 */
-	sysdep_palette_mark_dirty(normal_palette);
 
 	/* fill in the resulting RGB components */
 	if (rgb_components)
@@ -779,22 +745,21 @@ static void update_visible_area(struct mame_display *display)
 			display->game_visible_area.max_y);
 }
 
-static void update_palette(struct mame_display *display, int force_dirty)
+static void update_palette(struct mame_display *display)
 {
 	int i, j;
 
-	sysdep_palette_clear_dirty(current_palette);
 	/* loop over dirty colors in batches of 32 */
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = display->game_palette_dirty[i / 32];
-		if (dirtyflags || force_dirty)
+		if (dirtyflags || force_dirty_palette)
 		{
 			display->game_palette_dirty[i / 32] = 0;
 
 			/* loop over all 32 bits and update dirty entries */
 			for (j = 0; (j < 32) && (i + j < display->game_palette_entries); j++, dirtyflags >>= 1)
-				if (((dirtyflags & 1) || force_dirty) && (i + j < display->game_palette_entries))
+				if (((dirtyflags & 1) || force_dirty_palette) && (i + j < display->game_palette_entries))
 				{
 					/* extract the RGB values */
 					rgb_t rgbvalue = display->game_palette[i + j];
@@ -804,7 +769,6 @@ static void update_palette(struct mame_display *display, int force_dirty)
 
 					sysdep_palette_set_pen(current_palette,
 							i + j, r, g, b);
-					sysdep_palette_mark_dirty(current_palette);
 				}
 		}
 	}
@@ -817,7 +781,7 @@ static void update_debug_display(struct mame_display *display)
 	if (!debug_palette)
 	{
 		int  i, r, g, b;
-		debug_palette = sysdep_palette_create(16, 65536);
+		debug_palette = sysdep_palette_create(&display_palette_info, 16);
 		/* Initialize the lookup table for the debug palette. */
 
 		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
@@ -1065,14 +1029,8 @@ void osd_update_video_and_audio(struct mame_display *display)
 			&& debugger_has_focus)
 		update_debug_display(display);
 
-	/* if the game palette has changed, update it */
-	if (force_dirty_palette)
-	{
-		update_palette(display, 1);
-		force_dirty_palette = 0;
-	}
-	else if (display->changed_flags & GAME_PALETTE_CHANGED)
-		update_palette(display, 0);
+	if ((display->changed_flags & GAME_PALETTE_CHANGED) || force_dirty_palette)
+		update_palette(display);
 
 	if (skip_this_frame == 0
 			&& (display->changed_flags & GAME_BITMAP_CHANGED)

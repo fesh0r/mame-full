@@ -58,7 +58,6 @@ static void x11_window_update_16_to_YV12_perfect (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YUY2_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YV12_direct (struct mame_bitmap *bitmap);
 static void x11_window_update_32_to_YV12_direct_perfect (struct mame_bitmap *bitmap);
-static void x11_window_make_yuv_lookup();
 #endif
 static void x11_window_update_16_to_16bpp (struct mame_bitmap *bitmap);
 static void x11_window_update_16_to_24bpp (struct mame_bitmap *bitmap);
@@ -81,7 +80,6 @@ static int hwscale_bpp=0;
 static long hwscale_format=0;
 static int hwscale_yuv=0;
 static int hwscale_yv12=0;
-static unsigned int *hwscale_yuvlookup=NULL;
 static char *hwscale_yv12_rotate_buf0=NULL;
 static char *hwscale_yv12_rotate_buf1=NULL;
 static int hwscale_perfect_yuv=1;
@@ -1072,6 +1070,7 @@ int x11_window_create_display (int bitmap_depth)
 		{
 		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
 		        effect_dest_depth = hwscale_format;
+			display_palette_info.fourcc_format = hwscale_format;
 			switch(hwscale_format)
 			{
 				case FOURCC_YUY2:
@@ -1134,6 +1133,7 @@ int x11_window_create_display (int bitmap_depth)
 		{
 		        /* HACK - HACK - HACK - sending FourCC code for YUV format in place of depth... */
 		        effect_dest_depth = hwscale_format;
+			display_palette_info.fourcc_format = hwscale_format;
 			switch(hwscale_format)
 			{
 				case FOURCC_YUY2:
@@ -1221,11 +1221,11 @@ void x11_window_close_display (void)
       if (pseudo_color_use_rw_palette)
       {
          XFreeColors (display, colormap, pseudo_color_lookup,
-            display_palette_info.writable_colors, 0);
+            256, 0);
       }
       else
       {
-         for (i = 0; i < display_palette_info.writable_colors; i++)
+         for (i = 0; i < 256; i++)
          {
             if (pseudo_color_allocated[i])
                XFreeColors (display, colormap, &pseudo_color_lookup[i], 1, 0);
@@ -1337,7 +1337,6 @@ int x11_window_alloc_palette (int writable_colors)
       }
    }
 
-   display_palette_info.writable_colors = writable_colors;
    return 0;
 }
 
@@ -1434,11 +1433,6 @@ int x11_window_modify_pen (int pen, unsigned char red, unsigned char green,
 /* invoked by main tree code to update bitmap into screen */
 void x11_window_update_display (struct mame_bitmap *bitmap)
 {
-#ifdef USE_HWSCALE
-   if(use_hwscale && hwscale_yuv)
-     x11_window_make_yuv_lookup();
-#endif
-
    (*x11_window_update_display_func) (bitmap);
 
    x11_window_refresh_screen();
@@ -1510,40 +1504,6 @@ void x11_window_refresh_screen (void)
     (u) = (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 15); \
     (v) = (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 15)
 
-static void x11_window_make_yuv_lookup()
-{
-   int i,r,g,b,y,u,v,n, first_time = 0;
-   n=current_palette->emulated.writable_colors;
-
-   if(!hwscale_yuvlookup)
-   {
-      fprintf(stderr,"Making YUV lookup\n");
-      hwscale_yuvlookup=malloc(sizeof(int)*n);
-      first_time = 1;
-   }
-
-   if(current_palette->dirty || first_time)
-   {
-      for(i=0;i<n;++i)
-      {
-        r=g=b=current_palette->lookup[i];
-        r=(r&RMASK)>>16;
-        g=(g&GMASK)>>8;
-        b=(b&BMASK);
-
-        RGB2YUV(r,g,b,y,u,v);
-
-        /* Storing this data in YUYV order simplifies using the data for
-           YUY2, both with and without smoothing... */
-#ifdef LSB_FIRST
-        hwscale_yuvlookup[i]=(y<<0) | (u<<8) | (y<<16) | (v<<24);
-#else
-        hwscale_yuvlookup[i]=(y<<24) | (u<<16) | (y<<8) | (v<<0);
-#endif
-      }
-   }
-}
-
 /* Hacked into place, until I integrate YV12 support into the blit core... */
 static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 {
@@ -1554,7 +1514,6 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
    unsigned short *src;
    unsigned short *src2;
    int u,v,y,u2,v2,y2,u3,v3,y3,u4,v4,y4;     /* 12 */
-   int *indirect=current_palette->lookup;    /* 34 */
    char rotate = 0;
 
    if (current_palette != debug_palette &&
@@ -1583,55 +1542,25 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
       dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)/2));
       for(_x=visual.min_x;_x<visual.max_x;_x+=2)
       {
-         if (indirect)
-         {
-            v = hwscale_yuvlookup[*src++];
+            v = current_palette->lookup[*src++];
             y = (v)  & 0xff;
             u = (v>>8) & 0xff;
             v = (v>>24)     & 0xff;
 
-            v2 = hwscale_yuvlookup[*src++];
+            v2 = current_palette->lookup[*src++];
             y2 = (v2)  & 0xff;
             u2 = (v2>>8) & 0xff;
             v2 = (v2>>24)     & 0xff;
 
-            v3 = hwscale_yuvlookup[*src2++];
+            v3 = current_palette->lookup[*src2++];
             y3 = (v3)  & 0xff;
             u3 = (v3>>8) & 0xff;
             v3 = (v3>>24)     & 0xff;
 
-            v4 = hwscale_yuvlookup[*src2++];
+            v4 = current_palette->lookup[*src2++];
             y4 = (v4)  & 0xff;
             u4 = (v4>>8) & 0xff;
             v4 = (v4>>24)     & 0xff;
-         }
-         else
-         { /* Can this really happen ? */
-            int r,g,b;
-            b = *src++;
-            r = (b>>16) & 0xFF;
-            g = (b>>8)  & 0xFF;
-            b = (b)     & 0xFF;
-            RGB2YUV(r,g,b,y,u,v);
-
-            b = *src++;
-            r = (b>>16) & 0xFF;
-            g = (b>>8)  & 0xFF;
-            b = (b)     & 0xFF;
-            RGB2YUV(r,g,b,y2,u2,v2);
-
-            b = *src2++;
-            r = (b>>16) & 0xFF;
-            g = (b>>8)  & 0xFF;
-            b = (b)     & 0xFF;
-            RGB2YUV(r,g,b,y3,u3,v3);
-
-            b = *src2++;
-            r = (b>>16) & 0xFF;
-            g = (b>>8)  & 0xFF;
-            b = (b)     & 0xFF;
-            RGB2YUV(r,g,b,y4,u4,v4);
-         }
 
          *dest_y = y;
          *(dest_y++ + HWSCALE_WIDTH) = y3;
@@ -1665,7 +1594,6 @@ static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
    unsigned short *src;
    unsigned short *src2;
    int u,v,y;
-   int *indirect=current_palette->lookup;
    char rotate = 0;
    char *tmp;
 
@@ -1700,22 +1628,10 @@ static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
       dest_u=HWSCALE_VPLANE+((HWSCALE_WIDTH/2)*((_y-visual.min_y)));
       for(_x=visual.min_x;_x<=visual.max_x;_x++)
       {
-         if (indirect)
-         {
-            v= hwscale_yuvlookup[*src++];
+            v= current_palette->lookup[*src++];
             y = (v)  & 0xff;
             u = (v>>8) & 0xff;
             v = (v>>24)     & 0xff;
-         }
-         else
-         { /* Can this really happen ? */
-            int r,g,b;
-            b = *src++;
-            r = (b) & 0xFF;
-            g = (b>>8)  & 0xFF;
-            b = (b>>24)     & 0xFF;
-            RGB2YUV(r,g,b,y,u,v);
-         }
 
          *(dest_y+HWSCALE_WIDTH)=y;
          *dest_y++=y;
@@ -1867,7 +1783,7 @@ static void x11_window_update_16_to_YUY2(struct mame_bitmap *bitmap)
 #define SRC_PIXEL unsigned short
 #define DEST_PIXEL unsigned short
 #define BLIT_HWSCALE_YUY2
-#define INDIRECT hwscale_yuvlookup
+#define INDIRECT current_palette->lookup
 #include "blit.h"
 #undef SRC_PIXEL
 #undef DEST_PIXEL
@@ -1961,8 +1877,7 @@ static void x11_window_update_32_to_16bpp_direct (struct mame_bitmap *bitmap)
 #define SRC_PIXEL unsigned int
 #define DEST_PIXEL unsigned short
 #define CONVERT_PIXEL(p) \
-   sysdep_palette_make_pen_from_info(&display_palette_info, \
-      p>>16, (p>>8) & 0xff, p & 0xff)
+   sysdep_palette_make_pen(current_palette, p)
 #include "blit.h"
 #undef CONVERT_PIXEL
 #undef SRC_PIXEL

@@ -134,7 +134,6 @@ void sysdep_close(void);
 int  sysdep_create_display(int depth);
 void sysdep_display_close(void);
 int  sysdep_display_alloc_palette(int writable_colors);
-int  sysdep_display_set_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 int  sysdep_display_16bpp_capable(void);
 void sysdep_update_display(struct mame_bitmap *bitmap);
 void sysdep_set_leds(int leds);

@@ -27,14 +27,7 @@ Version 0.1, November 1999
 #include <math.h>
 #include "sysdep_palette.h"
 
-/* from xmame.h, since in the future we want this to be entirely mame
-   independent */
-extern struct sysdep_palette_info display_palette_info;
-int  sysdep_display_alloc_palette(int writable_colors);
-int  sysdep_display_set_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
-extern int widthscale, heightscale;
-
-int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
+static unsigned int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
    *info, unsigned char red, unsigned char green, unsigned char blue)
 {
    int pen = 0;
@@ -61,36 +54,10 @@ int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
 
 
 /* public methods */
-struct sysdep_palette_struct *sysdep_palette_create(int depth,
-   int writable_colors)
+struct sysdep_palette_struct *sysdep_palette_create(struct sysdep_palette_info *display_palette, int src_depth)
 {
    int r,g,b;
    struct sysdep_palette_struct *palette = NULL;
-   int lookup_size = 0;
-   
-
-   /* verify if the display can handle the requested depth */
-/* HDG: we have downscaling now, so this should be verified by the display
-   driver now!
-   if ( display_palette_info.depth < depth )
-   {
-      fprintf(stderr,
-         "error in sysdep_palette_create: %d bpp requested on a %d bpp display\n",
-         depth, display_palette_info.depth);
-      return NULL;
-   } */
-   
-/* If the display gets recreated this must be done again, but the
-   palette can be kept, so now the creator of the display is responsible
-   for calling this. Also because there can be 2 palette's for one
-   display (the normal and debugger one in xmame for example) */
-#if 0
-   /* if the display is 8 bpp allocate the necessary pens for displays
-      with a shared palette like X */
-   if (display_palette_info.depth == 8)
-      if (sysdep_display_alloc_palette(writable_colors))
-         return NULL;
-#endif
    
    /* allocate the palette struct */
    if (!(palette = calloc(1, sizeof(struct sysdep_palette_struct))))
@@ -100,33 +67,50 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
       return NULL;
    }
    
-   lookup_size = writable_colors;
-   if (!(palette->lookup = calloc(lookup_size, sizeof(int))))
+   palette->display_palette = display_palette;
+   palette->src_depth       = src_depth;
+
+   /* allocate lookup if needed and verify that we've got a valid src_depth */
+   switch (src_depth)
    {
-      fprintf(stderr, "error malloc failed for color lookup table\n");
-      sysdep_palette_destroy(palette);
-      return NULL;
+      case 15:
+         if ((display_palette->fourcc_format == 0) &&
+             (display_palette->red_mask   == (0x1F << 10)) &&
+             (display_palette->green_mask == (0x1F <<  5)) &&
+             (display_palette->blue_mask  == (0x1F      )))
+            break;
+         /* we need to emulate or create a yuyv lookup so fall through */
+      case 16:
+         if (!(palette->lookup = calloc(65536, sizeof(unsigned int))))
+         {
+            fprintf(stderr, "error malloc failed for color lookup table\n");
+            sysdep_palette_destroy(palette);
+            return NULL;
+         }
+         break;
+      case 32:
+         break;
+      default:
+      	 fprintf(stderr, "error unknown src_depth: %d\n", src_depth);
+         sysdep_palette_destroy(palette);
+         return NULL;
    }
-      
-   /* do we need to fill the lookup table? */
-
-   for(r=0; r<32; r++)
-      for(g=0; g<32; g++)
-         for(b=0; b<32; b++)
-            palette->lookup[r*1024 + g*32 + b] =
-               sysdep_palette_make_pen_from_info(&display_palette_info,
-                  r*8, g*8, b*8);
    
-   /* build the emulated palette info */
-   palette->emulated.writable_colors = writable_colors;
-   palette->emulated.depth           = depth;
-   /* fill in the masks and shifts if necessary */
-
-   /* if we're emulating a truecolor palette and we use a lookup
-      table, we always emulate 555 rgb */
-   palette->emulated.red_mask    = 0x7C00;
-   palette->emulated.green_mask  = 0x03E0;
-   palette->emulated.blue_mask   = 0x001F;
+   /* do we need to fill the lookup table? */
+   if (src_depth == 15 && palette->lookup)
+   {
+   	for (r = 0; r < 32; r++)
+   		for (g = 0; g < 32; g++)
+   			for (b = 0; b < 32; b++)
+   			{
+   				int idx = (r << 10) | (g << 5) | b;
+   				sysdep_palette_set_pen(palette,
+   						idx,
+   						(r << 3) | (r >> 2),
+   						(g << 3) | (g >> 2),
+   						(b << 3) | (b >> 2));
+   			}
+   }
    
    return palette;
 }
@@ -134,79 +118,45 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
 /* destructor */
 void sysdep_palette_destroy(struct sysdep_palette_struct *palette)
 {
-   free(palette->lookup);
+   if (palette->lookup)
+      free(palette->lookup);
    free(palette);
 }
 
-/* for pseudo color modes */
-int sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
+#define RGB2YUV(r,g,b,y,u,v) \
+    (y) = ((  9836*(r) + 19310*(g) +  3750*(b)          ) >> 15); \
+    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) + 4194304) >> 15); \
+    (v) = (( 16448*(r) - 13783*(g) -  2665*(b) + 4194304) >> 15)
+
+/* set a pen for 16 bpp palettised mode */   
+void sysdep_palette_set_pen(struct sysdep_palette_struct *palette, int pen,
    unsigned char red, unsigned char green, unsigned char blue)
 {
-   palette->lookup[pen] = sysdep_palette_make_pen_from_info(
-                             &display_palette_info, red, green, blue);
-
-   return 0;
-}
-
-
-/* for true color modes */
-int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
-   unsigned char red, unsigned char green, unsigned char blue)
-{
-   return sysdep_palette_make_pen_from_info(&palette->emulated, red, green,
-      blue);
-}
-
-
-/* This is broken, and for now is no longer used, instead
-   sysdep_palette_marked dirty should be used,
-   and display_alloc_palette palette must be called every time a dispay is
-   created. So also on recreation! */
-int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
-{
-   struct sysdep_palette_struct *new_palette = NULL;
-   
-   if(!(new_palette=sysdep_palette_create((*palette)->emulated.depth,
-      (*palette)->emulated.writable_colors)))
-      return -1;
-   
-   /* check that the color masks of the new palette are the same as the old
-      colormasks, otherwise barf for now, we could emulate them later on
-      as follows:
-      - close new_palette
-      - recreate new_palette writable
-      - set all the pens of new_palette so that they match
-        the old masks.
-      - modify new_palette->emulated so that it becomes non-wrtiable,
-        with the masks of the old palette.
-      However if we're going this way, we might just as well
-      add the possibility to sysdep_palette_create to force specific 
-      colormasks, which we might want in the future anyway
-   */
-   if ( ((*palette)->emulated.red_mask   != new_palette->emulated.red_mask) ||
-        ((*palette)->emulated.green_mask != new_palette->emulated.green_mask) ||
-        ((*palette)->emulated.blue_mask  != new_palette->emulated.blue_mask))
+   if (palette->display_palette->fourcc_format == 0)
+      palette->lookup[pen] = sysdep_palette_make_pen_from_info(
+                             palette->display_palette, red, green, blue);
+   else
    {
-      fprintf(stderr, "error recreating palette, colormasks don't match!\n");
-      sysdep_palette_destroy(new_palette);
-      return -1;
+   	int y,u,v;
+   	
+        RGB2YUV(red,green,blue,y,u,v);
+
+        /* Storing this data in YUYV order simplifies using the data for
+           YUY2, both with and without smoothing... */
+#ifdef LSB_FIRST
+        palette->lookup[pen]=(y<<0) | (u<<8) | (y<<16) | (v<<24);
+#else
+        palette->lookup[pen]=(y<<24) | (u<<16) | (y<<8) | (v<<0);
+#endif
    }
-   
-   sysdep_palette_destroy(*palette);
-   *palette = new_palette;
-
-   return 0;
 }
 
-/* Added by AMR for the Xv Patch, which needs to be informed
-   when the palette lookup table has changed, so it can create
-   a matching YUV table */
-void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette)
+/* for downsampling 32 bits true color modes */   
+unsigned int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
+   unsigned int rgb)
 {
-   palette->dirty = 1;
-}
-
-void sysdep_palette_clear_dirty(struct sysdep_palette_struct *palette)
-{
-   palette->dirty = 0;
+   return sysdep_palette_make_pen_from_info(palette->display_palette,
+      (rgb & 0x00FF0000) >> 16,
+      (rgb & 0x0000FF00) >> 8,
+      (rgb & 0x000000FF));
 }
