@@ -47,6 +47,7 @@ static PORT_WRITE_START (writeport)
     { 0xa0, 0xa7, msx_psg_w },
     { 0xa8, 0xab, ppi8255_0_w },
     { 0x98, 0x99, msx_vdp_w },
+	{ 0xd0, 0xd0, msx_dsk_w },
 PORT_END
 
 /* start define for the special ports (DIPS, joystick, mouse) */
@@ -85,7 +86,32 @@ PORT_END
   PORT_DIPNAME( 0x20, 0x20, "Enforce 4 sprites/line")    \
    PORT_DIPSETTING( 0, DEF_STR( No ) )    \
    PORT_DIPSETTING( 0x20, DEF_STR( Yes ) )    \
-  PORT_BIT(0x1f, 0, IPT_UNUSED)    \
+ PORT_DIPNAME(0x000f, 0, "Multi disk A:")        \
+  PORT_DIPSETTING(0, "1")       \
+  PORT_DIPSETTING(1, "2")       \
+  PORT_DIPSETTING(2, "3")       \
+  PORT_DIPSETTING(3, "4")       \
+  PORT_DIPSETTING(4, "5")       \
+  PORT_DIPSETTING(5, "6")       \
+  PORT_DIPSETTING(6, "7")       \
+  PORT_DIPSETTING(7, "8")       \
+  PORT_DIPSETTING(8, "9")       \
+ PORT_DIPNAME( 0x10, 0, "Disk A: Write Protected")    \
+   PORT_DIPSETTING( 0x00, DEF_STR ( No ) )    \
+   PORT_DIPSETTING( 0x10, DEF_STR ( Yes ) )    \
+ PORT_DIPNAME(0x0f00, 0, "Multi disk B:")        \
+  PORT_DIPSETTING(0x0000, "1")  \
+  PORT_DIPSETTING(0x0100, "2")  \
+  PORT_DIPSETTING(0x0200, "3")  \
+  PORT_DIPSETTING(0x0400, "4")  \
+  PORT_DIPSETTING(0x0300, "5")  \
+  PORT_DIPSETTING(0x0500, "6")  \
+  PORT_DIPSETTING(0x0600, "7")  \
+  PORT_DIPSETTING(0x0700, "8")  \
+  PORT_DIPSETTING(0x0800, "9")  \
+ PORT_DIPNAME( 0x1000, 0, "Disk B: Write Protected")    \
+   PORT_DIPSETTING( 0x0000, DEF_STR ( No ) )    \
+   PORT_DIPSETTING( 0x1000, DEF_STR ( Yes ) )    \
     \
  PORT_START /* 12 */    \
   PORT_ANALOGX( 0xff00, 0x00, IPT_TRACKBALL_X | IPF_PLAYER1, 100, 0, 0, 0, KEYCODE_NONE, KEYCODE_NONE, JOYCODE_NONE, JOYCODE_NONE)    \
@@ -563,6 +589,12 @@ ROM_START (msxkr)
     ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
 ROM_END
 
+ROM_START (msxkra)
+    ROM_REGION (0x10000, REGION_CPU1)
+    ROM_LOAD ("msxkra.rom", 0x0000, 0x8000, 0xa781f7ca)
+    ROM_LOAD_OPTIONAL ("msxhan.rom", 0x8000, 0x4000, 0x97478efb)
+ROM_END
+
 static const struct IODevice io_msx[] = {
 {
     IO_CARTSLOT,                /* type */
@@ -583,6 +615,25 @@ static const struct IODevice io_msx[] = {
     NULL,                       /* input_chunk */
     NULL                        /* output_chunk */
 },
+{
+    IO_FLOPPY,                	/* type */
+    2,              		 	/* count */
+    "dsk\0",                    /* file extensions */
+    IO_RESET_NONE,              /* reset if file changed */ 
+    msx_dsk_id,                 /* id */
+	msx_dsk_init,               /* init */
+    msx_dsk_exit,               /* exit */
+    NULL,                       /* info */
+    NULL,                       /* open */
+    NULL,                       /* close */
+    msx_dsk_status,             /* status */
+    msx_dsk_seek,               /* seek */
+    msx_dsk_tell,               /* tell */
+    msx_dsk_input,              /* input */
+    msx_dsk_output,             /* output */
+    msx_dsk_input_chunk,        /* input_chunk */
+    msx_dsk_output_chunk		/* output_chunk */
+},
     IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, msx_cassette_init, msx_cassette_exit),
 	IO_PRINTER_PORT (1, "prn\0"),
     { IO_END }
@@ -590,10 +641,12 @@ static const struct IODevice io_msx[] = {
 
 #define io_msxj io_msx
 #define io_msxkr io_msx
+#define io_msxkra io_msx
 #define io_msxuk io_msx
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
 COMP( 1983, msx, 0, msx_pal, msx, msx, "ASCII & Microsoft", "MSX1" )
 COMP( 1983, msxj, msx, msx, msxj, msx, "ASCII & Microsoft", "MSX1 (Japan)" )
 COMP( 1983, msxkr, msx, msx, msxj, msx, "ASCII & Microsoft", "MSX1 (Korean)" )
+COMP( 1983, msxkra, msx, msx, msxj, msx, "ASCII & Microsoft", "MSX1 (Korean ALT)" )
 COMP( 1983, msxuk, msx, msx_pal, msxuk, msx, "ASCII & Microsoft", "MSX1 (UK)" )

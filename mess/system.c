@@ -508,6 +508,7 @@ TESTDRIVER( telestrat ) /* ??? Oric Telestrat/Stratos                       */
 	DRIVER( msx )		/* 1983 MSX 									  */
 	DRIVER( msxj )		/* 1983 MSX Jap 								  */
 	DRIVER( msxkr ) 	/* 1983 MSX Korean								  */
+	DRIVER( msxkra ) 	/* 1983 MSX Korean								  */
 	DRIVER( msxuk ) 	/* 1983 MSX UK									  */
 
 	/* NASCOM MICROCOMPUTERS */
