@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    machine/pc_hdc.c
+    devices/pc_hdc.c
 
 	Functions to emulate a WD1004A-WXI hard disk controller
 
@@ -92,11 +92,11 @@ static int sector_cnt[MAX_HARD] = {0,};         /* sector count */
 static int control[MAX_HARD] = {0,};            /* control */
 static int offset_[MAX_HARD] = {0,};             /* offset into image file */
 
-static int csb[MAX_BOARD] = {0,};				/* command status byte */
-static int status[MAX_BOARD] = {0,};			/* drive status */
-static int error[MAX_BOARD] = {0,}; 			/* error code */
-static int dip[MAX_BOARD] = {0xff,0xff,};		/* dip switches */
-static void *timer[MAX_BOARD] = {0,};
+static int csb[MAX_BOARD];				/* command status byte */
+static int status[MAX_BOARD];			/* drive status */
+static int error[MAX_BOARD]; 			/* error code */
+static int dip[MAX_BOARD];				/* dip switches */
+static void *timer[MAX_BOARD];
 
 
 static int data_cnt = 0;                /* data count */
@@ -105,6 +105,28 @@ static UINT8 *ptr = 0;					/* data pointer */
 
 
 static int display[4]= { 0 };
+
+static void pc_hdc_command(int n);
+
+DEVICE_INIT( pc_hdc )
+{
+	int i;
+	if (image_index_in_device(image) == 0)
+	{
+		/* init for all boards */
+		for (i = 0; i < MAX_BOARD; i++)
+		{
+			csb[i] = 0;
+			status[i] = 0;
+			error[i] = 0;
+			dip[i] = 0xff;
+			timer[i] = timer_alloc(pc_hdc_command);
+			if (!timer[i])
+				return INIT_FAIL;
+		}
+	}
+	return INIT_PASS;
+}
 
 static mame_file *pc_hdc_file(int id)
 {
@@ -380,7 +402,6 @@ static void pc_hdc_command(int n)
 {
 	UINT8 cmd;
 
-	timer[n] = 0;
 	csb[n] = 0x00;
 	error[n] = 0;
 
@@ -660,8 +681,7 @@ static void pc_hdc_data_w(int n, int data)
 			status[n] &= ~STA_READY;
 			status[n] |= STA_INPUT;
 			
-			if (!timer[n])
-				timer[n] = timer_alloc(pc_hdc_command);
+			assert(timer[n]);
 			timer_adjust(timer[n], 0.001, n, 0);
         }
 	}

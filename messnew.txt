@@ -25,7 +25,8 @@ System Driver Changes:
   Implemented extra VDP ports in ti99 mode.  Implemented third mouse button.
   [Raphael Nabet]
 
-- [PC] Added support for natural keyboard handling. [Nate Woods]
+- [PC] Added support for natural keyboard handling.  Also fixed a bug in hard
+  disk handling (bug #403). [Nate Woods]
 
 - [PC200] Fixed a bug causing corrupted characters (bug #398) and a bug
   affecting floppies at startup. [John Elliott]
