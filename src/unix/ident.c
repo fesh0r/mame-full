@@ -75,25 +75,25 @@ void identify_rom(const char* name, int checksum, int length)
 		   continue;
 
 #ifdef IDENT_DEBUG
-		fprintf(stderr_file, "in identify_rom, starting loop, driver = %d (%s), romp = %p, romp->name = %s, romp->offset = 0x%X, romp->lenght = 0x%X\n",
-			i, drivers[i]->name, romp, (romp->name==-1)? "-1":romp->name, romp->offset, romp->length);
+		fprintf(stderr_file, "in identify_rom, starting loop, driver = %d (%s), romp = %p, ROM_GETNAME (romp) = %s, ROM_GETOFFSET (romp) = 0x%X, romp->lenght = 0x%X\n",
+			i, drivers[i]->name, romp, (ROM_GETNAME (romp)==-1)? "-1":ROM_GETNAME (romp), ROM_GETOFFSET (romp), ROM_GETLENGTH (romp));
 #endif
-		while (romp->name || romp->offset || romp->length)
+		while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
 		{
-			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
+			if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && checksum == ROM_GETCRC (romp))
 			{
 				if (!silentident)
 				{
 					if (found != 0)
 						fprintf(stdout_file, "             ");
-					fprintf(stdout_file, "= %-12s  %s\n",romp->name,drivers[i]->description);
+					fprintf(stdout_file, "= %-12s  %s\n",ROM_GETNAME (romp),drivers[i]->description);
 				}
 				found++;
 			}
 			romp++;
 #ifdef IDENT_DEBUG
-			fprintf(stderr_file, "in identify_rom, in loop, romp = %p, romp->name = %s, romp->offset = 0x%X, romp->lenght = 0x%X\n",
-				romp, (romp->name==-1)? "-1":romp->name, romp->offset, romp->length);
+			fprintf(stderr_file, "in identify_rom, in loop, romp = %p, ROM_GETNAME (romp) = %s, ROM_GETOFFSET (romp) = 0x%X, romp->lenght = 0x%X\n",
+				romp, (ROM_GETNAME (romp)==-1)? "-1":ROM_GETNAME (romp), ROM_GETOFFSET (romp), ROM_GETLENGTH (romp));
 #endif
 		}
 	}
@@ -137,11 +137,11 @@ void identify_rom(const char* name, int checksum, int length)
 		if (!romp)
 		   continue;
 
-		while (romp->name || romp->offset || romp->length)
+		while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
 		{
-			if (romp->name && romp->name != (char *)-1 && checksum == romp->crc)
+			if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && checksum == ROM_GETCRC (romp))
 			{
-				fprintf(stdout_file, "\t%s/%s %s, %s, %s\n",drivers[i]->name,romp->name,
+				fprintf(stdout_file, "\t%s/%s %s, %s, %s\n",drivers[i]->name,ROM_GETNAME (romp),
 					drivers[i]->description,
 					drivers[i]->manufacturer,
 					drivers[i]->year);

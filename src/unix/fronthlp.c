@@ -237,9 +237,9 @@ static int frontend_uses_roms(int driver)
    const struct RomModule *romp = drivers[driver]->rom;
    int total_roms = 0;
    
-   while(romp && (romp->name || romp->offset || romp->length))
+   while(romp && (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp)))
    {
-      if (romp->name && romp->name != (char *)-1)
+      if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1)
          total_roms++;
       
       romp++;
@@ -563,9 +563,10 @@ int frontend_list(char *gamename)
                      
                      romp = drivers[i]->rom;
                      
-                     while (romp && (romp->name || romp->offset || romp->length))
+                     while (romp && (ROM_GETNAME (romp) || ROM_GETOFFSET(romp)
+						 || ROM_GETLENGTH (romp)))
                      {
-                        j += romp->length & ~ROMFLAG_MASK;
+                        j += ROM_GETLENGTH (romp);
                         romp++;
                      }
                      printf("%-8s  %-4s  %u\n", drivers[i]->name,
@@ -592,12 +593,12 @@ int frontend_list(char *gamename)
                         continue;
                      }
 
-                     while (romp->name || romp->offset || romp->length)
+                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
                      {
-                        if (romp->name && romp->name != (char *)-1)
+                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1)
                         {
-                           fprintf(stdout_file, "%08x  %-12s  %s\n", romp->crc,
-                              romp->name, get_description(i));
+                           fprintf(stdout_file, "%08x  %-12s  %s\n", ROM_GETCRC (romp),
+                              ROM_GETNAME (romp), get_description(i));
                         }
                         romp++;
                      }
@@ -707,23 +708,23 @@ int frontend_list(char *gamename)
                         continue;
                      }
                      
-                     while (romp->name || romp->offset || romp->length)
+                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
                      {
-                        if (romp->name && romp->name != (char *)-1 && romp->crc)
+                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && ROM_GETCRC (romp))
                         {
                            j = i+1;
                            while (drivers[j])
                            {
                               const struct RomModule *romp1 = drivers[j]->rom;
 
-                              while (romp1->name || romp1->offset || romp1->length)
+                              while (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1))
                               {
-                                 if (romp1->name && romp1->name != (char *)-1 &&
-                                    strcmp(romp->name,romp1->name) &&
-                                    romp1->crc == romp->crc)
+                                 if (ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
+                                    strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)) &&
+                                    ROM_GETCRC (romp1) == ROM_GETCRC (romp))
                                  {
-                                    fprintf(stdout_file, "%08x  %-12s %-8s <-> %-12s %-8s\n",romp->crc,
-                                       romp->name,drivers[i]->name, romp1->name,drivers[j]->name);
+                                    fprintf(stdout_file, "%08x  %-12s %-8s <-> %-12s %-8s\n",ROM_GETCRC (romp),
+                                       ROM_GETNAME (romp),drivers[i]->name, ROM_GETNAME (romp1),drivers[j]->name);
                                     found = 1;
                                  }
                                  romp1++;
@@ -816,9 +817,9 @@ int frontend_list(char *gamename)
                         continue;
                      }
                      
-                     while (romp->name || romp->offset || romp->length)
+                     while (ROM_GETNAME (romp) || ROM_GETOFFSET (romp) || ROM_GETLENGTH (romp))
                      {
-                        if (romp->name && romp->name != (char *)-1 && romp->crc)
+                        if (ROM_GETNAME (romp) && ROM_GETNAME (romp) != (char *)-1 && ROM_GETCRC (romp))
                         {
                            j = 0;
                            while (drivers[j])
@@ -833,10 +834,10 @@ int frontend_list(char *gamename)
                                  int match = 0;
                                  const struct RomModule *romp1 = drivers[j]->rom;
                                  
-                                 while (romp1 && (romp1->name || romp1->offset || romp1->length))
+                                 while (romp1 && (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1)))
                                  {
-                                    if(romp1->name && romp1->name != (char *)-1 &&
-                                       !strcmp(romp->name,romp1->name))
+                                    if(ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
+                                       !strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)))
                                     {
                                        match = 1;
                                        break;
@@ -847,17 +848,17 @@ int frontend_list(char *gamename)
                                  {
                                     romp1 = drivers[j]->rom;
                                     
-                                    while (romp1->name || romp1->offset || romp1->length)
+                                    while (ROM_GETNAME (romp1) || ROM_GETOFFSET (romp1) || ROM_GETLENGTH (romp1))
                                     {
-                                       if(romp1->name && romp1->name != (char *)-1 &&
-                                          strcmp(romp->name,romp1->name) &&
-                                          romp1->crc == romp->crc)
+                                       if(ROM_GETNAME (romp1) && ROM_GETNAME (romp1) != (char *)-1 &&
+                                          strcmp(ROM_GETNAME (romp),ROM_GETNAME (romp1)) &&
+                                          ROM_GETCRC (romp1) == ROM_GETCRC (romp))
                                        {
                                           fprintf(stdout_file,
                                              "%08x  %-12s %-8s <-> %-12s %-8s\n",
-                                             romp->crc, romp->name,
+                                             ROM_GETCRC (romp), ROM_GETNAME (romp),
                                              drivers[i]->name,
-                                             romp1->name,
+                                             ROM_GETNAME (romp1),
                                              drivers[j]->name);
                                           found = 1;
                                        }
