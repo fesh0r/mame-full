@@ -235,6 +235,18 @@ int imgtool_validitychecks(void)
 			}
 		}
 
+		/* sanity checks on sector operations */
+		if (module->read_sector && !module->get_sector_size)
+		{
+			printf("imgtool module %s implements read_sector without supporting get_sector_size\n", module->name);
+			error = 1;
+		}
+		if (module->write_sector && !module->get_sector_size)
+		{
+			printf("imgtool module %s implements write_sector without supporting get_sector_size\n", module->name);
+			error = 1;
+		}
+
 		/* sanity checks on creation options */
 		if (module->createimage_optguide || module->createimage_optspec)
 		{

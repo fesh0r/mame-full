@@ -486,6 +486,52 @@ error:
 
 
 
+static int cmd_readsector(const struct command *c, int argc, char *argv[])
+{
+	imgtoolerr_t err;
+	imgtool_image *img;
+	UINT32 size, track, head, sector;
+	void *buffer = NULL;
+
+	/* attempt to open image */
+	err = img_open_byname(library, argv[0], argv[1], OSD_FOPEN_READ, &img);
+	if (err)
+		goto error;
+
+	track = atoi(argv[2]);
+	head = atoi(argv[3]);
+	sector = atoi(argv[4]);
+
+	size = 0;
+//	err = img_getsectorsize(img, track, head, sector, &size);
+//	if (err)
+//		goto error;
+
+	buffer = malloc(size);
+	if (!buffer)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto error;
+	}
+
+	return 0;
+
+error:
+	if (buffer)
+		free(buffer);
+	reporterror(err, c, argv[0], argv[1], NULL, NULL, 0);
+	return -1;
+}
+
+
+
+static int cmd_writesector(const struct command *c, int argc, char *argv[])
+{
+	return -1;
+}
+
+
+
 static int cmd_listformats(const struct command *c, int argc, char *argv[])
 {
 	const struct ImageModule *mod;
@@ -676,7 +722,6 @@ static struct command cmds[] =
 {
 #ifdef MAME_DEBUG
 	{ "test",				cmd_test,				"<format>", 0, 1, 0 },
-//	{ "testsuite",			cmd_testsuite,			"<testsuitefile>", 1, 1, 0 },
 #endif
 	{ "create",				cmd_create,				"<format> <imagename>", 2, 8, 0},
 	{ "dir",				cmd_dir,				"<format> <imagename> [path]", 2, 3, 0 },
@@ -686,6 +731,8 @@ static struct command cmds[] =
 	{ "del",				cmd_del,				"<format> <imagename> <filename>...", 3, 3, 1 },
 	{ "mkdir",				cmd_mkdir,				"<format> <imagename> <dirname>", 3, 3, 0 },
 	{ "rmdir",				cmd_rmdir,				"<format> <imagename> <dirname>...", 3, 3, 1 },
+//	{ "readsector",			cmd_readsector,			"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
+//	{ "writesector",		cmd_writesector,		"<format> <imagename> <track> <head> <sector> <filename>", 6, 6, 0 },
 	{ "identify",			cmd_identify,			"<imagename>", 1, 1 },
 	{ "listformats",		cmd_listformats,		NULL, 0, 0, 0 },
 	{ "listfilters",		cmd_listfilters,		NULL, 0, 0, 0 },

@@ -204,6 +204,45 @@ static void imgtool_floppy_close(imgtool_image *img)
 
 
 
+imgtoolerr_t imgtool_floppy_get_sector_size(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, UINT32 *sector_size)
+{
+	floperr_t ferr;
+
+	ferr = floppy_get_sector_length(get_floppy(image), head, track, sector, sector_size);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+imgtoolerr_t imgtool_floppy_read_sector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, void *buffer, size_t len)
+{
+	floperr_t ferr;
+
+	ferr = floppy_read_sector(get_floppy(image), head, track, sector, 0, buffer, len);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
+imgtoolerr_t imgtool_floppy_write_sector(imgtool_image *image, UINT32 track, UINT32 head, UINT32 sector, const void *buffer, size_t len)
+{
+	floperr_t ferr;
+
+	ferr = floppy_write_sector(get_floppy(image), head, track, sector, 0, buffer, len);
+	if (ferr)
+		return imgtool_floppy_error(ferr);
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *format_name,
 	const char *description, const struct FloppyFormat *format,
 	imgtoolerr_t (*populate)(imgtool_library *library, struct ImgtoolFloppyCallbacks *module))
@@ -242,6 +281,9 @@ imgtoolerr_t imgtool_floppy_createmodule(imgtool_library *library, const char *f
 		module->extra					= extra;
 		module->createimage_optguide	= floppy_option_guide;
 		module->createimage_optspec		= format[format_index].param_guidelines;
+		module->get_sector_size			= imgtool_floppy_get_sector_size;
+		module->read_sector				= imgtool_floppy_read_sector;
+		module->write_sector			= imgtool_floppy_write_sector;
 
 		if (populate)
 		{
