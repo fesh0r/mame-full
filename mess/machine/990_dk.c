@@ -12,7 +12,10 @@
 
 #include "990_dk.h"
 #include "image.h"
-#include "devices/basicdsk.h"
+#include "formats/basicdsk.h"
+#include "devices/mflopimg.h"
+
+#define MAX_FLOPPIES 4
 
 static struct
 {
@@ -39,7 +42,7 @@ static struct
 		int phys_cylinder;
 		int log_cylinder[2];
 		int seclen;
-	} drv[4];
+	} drv[MAX_FLOPPIES];
 } fd800;
 
 /* status bits */
@@ -63,33 +66,25 @@ enum
 	status_unit_shift	= 13
 };
 
-DEVICE_INIT( fd800 )
-{
-	int unit = image_index_in_device(image);
-
-	fd800.drv[unit].img = image;
-	fd800.drv[unit].phys_cylinder = -1;
-	fd800.drv[unit].log_cylinder[0] = fd800.drv[unit].log_cylinder[1] = -1;
-	fd800.drv[unit].seclen = 64;
-
-	return /*INIT_PASS*/device_init_basicdsk_floppy(image);
-}
-
-DEVICE_LOAD( fd800 )
-{
-	int unit = image_index_in_device(image);
-
-	fd800.drv[unit].log_cylinder[0] = fd800.drv[unit].log_cylinder[1] = -1;
-
-	if (device_load_basicdsk_floppy(image, file) == INIT_PASS)
-	{
-		basicdsk_set_geometry(image, 77, 1, 26, 128, 1, 0, 0);
-
-		return INIT_PASS;
-	}
-
-	return INIT_FAIL;
-}
+FLOPPY_OPTIONS_START(fd800)
+#if 1
+	/* SSSD 8" */
+	FLOPPY_OPTION(fd800, "dsk\0", "TI990 8\" SSSD disk image", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([1])
+		TRACKS([77])
+		SECTORS([26])
+		SECTOR_LENGTH([128])
+		FIRST_SECTOR_ID([1]))
+#elif 0
+	/* DSSD 8" */
+	FLOPPY_OPTION(fd800, "dsk\0", "TI990 8\" DSSD disk image", basicdsk_identify_default, basicdsk_construct_default,
+		HEADS([2])
+		TRACKS([77])
+		SECTORS([26])
+		SECTOR_LENGTH([128])
+		FIRST_SECTOR_ID([1]))
+#endif
+FLOPPY_OPTIONS_END
 
 static void fd800_field_interrupt(void)
 {
@@ -97,8 +92,18 @@ static void fd800_field_interrupt(void)
 		(*fd800.interrupt_callback)((fd800.stat_reg & status_interrupt) && ! fd800.interrupt_f_f);
 }
 
+static void fd800_unload_proc(mess_image *image)
+{
+	int unit = image_index_in_device(image);
+
+	fd800.drv[unit].log_cylinder[0] = fd800.drv[unit].log_cylinder[1] = -1;
+}
+
 void fd800_machine_init(void (*interrupt_callback)(int state))
 {
+	int i;
+
+
 	fd800.interrupt_callback = interrupt_callback;
 
 	fd800.stat_reg = 0;
@@ -106,6 +111,15 @@ void fd800_machine_init(void (*interrupt_callback)(int state))
 
 	fd800.buf_pos = 0;
 	fd800.buf_mode = bm_off;
+
+	for (i=0; i<MAX_FLOPPIES; i++)
+	{
+		fd800.drv[i].img = image_from_devtype_and_index(IO_FLOPPY, i);
+		fd800.drv[i].phys_cylinder = -1;
+		fd800.drv[i].log_cylinder[0] = fd800.drv[i].log_cylinder[1] = -1;
+		fd800.drv[i].seclen = 64;
+		floppy_install_unload_proc(fd800.drv[i].img, fd800_unload_proc);
+	}
 
 	fd800_field_interrupt();
 }
@@ -221,7 +235,7 @@ static int fd800_do_seek(int unit, int cylinder, int head)
 		floppy_drive_seek(fd800.drv[unit].img, cylinder-fd800.drv[unit].log_cylinder[head]);
 		/* update physical track position */
 		if (fd800.drv[unit].phys_cylinder != -1)
-			fd800.drv[unit].phys_cylinder = cylinder-fd800.drv[unit].log_cylinder[head];
+			fd800.drv[unit].phys_cylinder += cylinder-fd800.drv[unit].log_cylinder[head];
 		/* read new track ID */
 		if (!fd800_read_id(unit, head, &fd800.drv[unit].log_cylinder[head], NULL))
 		{

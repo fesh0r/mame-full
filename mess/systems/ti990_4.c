@@ -44,7 +44,7 @@ TODO:
 #else
 #include "vidhrdw/733_asr.h"
 #endif
-#include "devices/basicdsk.h"
+#include "devices/mflopimg.h"
 
 static void machine_init_ti990_4(void)
 {
@@ -338,10 +338,7 @@ INPUT_PORTS_START(ti990_4)
 INPUT_PORTS_END
 
 SYSTEM_CONFIG_START(ti990_4)
-	/*CONFIG_DEVICE_FLOPPY_BASICDSK	(4,	"dsk\0",			device_load_fd800)*/
-	CONFIG_DEVICE_BASE(IO_FLOPPY, 4, "dsk\0", DEVICE_LOAD_RESETS_NONE,
-		OSD_FOPEN_RW_CREATE_OR_READ, /*device_init_basicdsk_floppy*/device_init_fd800, NULL, device_load_fd800, device_unload_basicdsk_floppy, NULL, NULL,
-		NULL, NULL, floppy_status, NULL, NULL, NULL, NULL, NULL, NULL)
+	CONFIG_DEVICE_FLOPPY(4,	fd800)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	COMPAT	MACHINE		INPUT		INIT		CONFIG		COMPANY					FULLNAME */
