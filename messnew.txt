@@ -1,3 +1,32 @@
+0.37b6
+
+Note: .inp record/playback does still not work currently.
+
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- 
+
+
+System Driver Changes:
+----------------------
+- 
+
+
+
+Other Changes:
+--------------
+- The core is based on MAME 0.37b6. This incorporates all 
+  features of the update to this core.  [MAME team] 
+
+- CRC and sysinfo updates will now be appearing at the official MESS homepage:
+  http://mess.emuverse.com
+  Please send all CRC/sysinfo file contributions to Chris Henry. 
+  (battlepriest@hotmail.com).
+
+
+
+------------------------
 0.37b5
 
 Note: .inp record/playback does still not work currently.
