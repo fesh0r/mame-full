@@ -125,7 +125,7 @@ static void tutor_vblank_interrupt(void)
 
 	Joystick:
 
-	Joystick ports seem to overlap keyboard portds, i.e. some CRU bits are
+	Joystick ports seem to overlap keyboard ports, i.e. some CRU bits are
 	mapped to both a keyboard key and a joystick switch.
 */
 

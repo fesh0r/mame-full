@@ -1086,7 +1086,7 @@ static int qsort_catalog_compare(const void *p1, const void *p2)
 #endif
 
 /*
-	Open a file as a ti99_image.
+	Open a file as a ti990_image.
 */
 static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **outimg)
 {
@@ -1161,7 +1161,7 @@ static int ti990_image_init(const struct ImageModule *mod, STREAM *f, IMAGE **ou
 }
 
 /*
-	close a ti99_image
+	close a ti990_image
 */
 static void ti990_image_exit(IMAGE *img)
 {
@@ -1172,7 +1172,7 @@ static void ti990_image_exit(IMAGE *img)
 }
 
 /*
-	get basic information on a ti99_image
+	get basic information on a ti990_image
 
 	Currently returns the volume name
 */
