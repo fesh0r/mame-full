@@ -121,10 +121,10 @@ static struct {
 	int changed;
 } vdc;
 
-static const struct { 
-	int stored, 
+static const struct {
+	int stored,
 		read;
-} reg_mask[]= { 
+} reg_mask[]= {
 	{ 0xff, 0 },
 	{ 0xff, 0 },
 	{ 0xff, 0 },
@@ -161,7 +161,7 @@ static const struct {
 	{  0xff, -1 },
 	{  0xff, -1 },
 	{  0xff, -1 },
-	{  0x0f, -1 },	
+	{  0x0f, -1 },
 };
 #define REG(x) (vdc.reg[x]&reg_mask[x].stored)
 
@@ -171,7 +171,7 @@ void vdc8563_init (int ram16konly)
 	vdc.cursor_time=0.0;
 	vdc.state=1;
 
-	if (ram16konly) { 
+	if (ram16konly) {
 		vdc.mask=0x3fff;
 		vdc.fontmask=0x2000;
 	} else {
@@ -188,7 +188,7 @@ static void vdc_videoram_w(int offset, int data)
     if (vdc.ram[offset]!=data) {
 		vdc.ram[offset] = data;
 		vdc.dirty[offset] = 1;
-		if ((vdc.fontram_start&vdc.fontmask)==(offset&vdc.fontmask)) 
+		if ((vdc.fontram_start&vdc.fontmask)==(offset&vdc.fontmask))
 			vdc.fontdirty[(offset&0x1ff0)>>4]=1;
 	}
 }
@@ -267,13 +267,13 @@ WRITE_HANDLER ( vdc8563_port_w )
 				vdc.videoram_start=CRTC6845_VIDEO_START;
 				vdc.changed=1;
 				break;
-			case 0x12: 
+			case 0x12:
 				vdc.addr=(vdc.addr&0xff)|(data<<8);
 				break;
 			case 0x13:
 				vdc.addr=(vdc.addr&0xff00)|data;
 				break;
-			case 0x20: 
+			case 0x20:
 				vdc.src=(vdc.src&0xff)|(data<<8);
 				break;
 			case 0x21:
@@ -378,7 +378,7 @@ READ_HANDLER ( vdc8563_port_r )
 	return val;
 }
 
-static int vdc8563_clocks_in_frame()
+static int vdc8563_clocks_in_frame(void)
 {
 	int clocks=CRTC6845_COLUMNS*CRTC6845_LINES;
 	switch (CRTC6845_INTERLACE_MODE) {
@@ -428,13 +428,13 @@ void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh
 		memset(vdc.dirty+vdc.videoram_start, 1, vdc.videoram_size);
 	}
 
-	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1,
 			 i=vdc.videoram_start&vdc.mask; y<h;
 		 y++, rect.min_y+=height, rect.max_y+=height) {
 		for (x=0; x<w; x++, i=(i+1)&vdc.mask) {
 			if (vdc.dirty[i]) {
 				drawgfx(bitmap,Machine->gfx[0],
-						vdc.ram[i], FRAMECOLOR|(MONOCOLOR<<4), 0, 0, 
+						vdc.ram[i], FRAMECOLOR|(MONOCOLOR<<4), 0, 0,
 						Machine->gfx[0]->width*x+8,height*y+height,
 						&rect,TRANSPARENCY_NONE,0);
 				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
@@ -442,8 +442,8 @@ void vdc8563_monotext_screenrefresh (struct osd_bitmap *bitmap, int full_refresh
 					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8, 
-								 height*y+height+CRTC6845_CURSOR_TOP, 
+						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8,
+								 height*y+height+CRTC6845_CURSOR_TOP,
 								 Machine->gfx[0]->width, k, Machine->pens[FRAMECOLOR]);
 				}
 
@@ -469,14 +469,14 @@ void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		memset(vdc.dirty+vdc.videoram_start, 1, vdc.videoram_size);
 	}
 
-	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1,
 			 i=vdc.videoram_start&vdc.mask, j=vdc.colorram_start&vdc.mask; y<h;
 		 y++, rect.min_y+=height, rect.max_y+=height) {
 		for (x=0; x<w; x++, i=(i+1)&vdc.mask, j=(j+1)&vdc.mask) {
 			if (vdc.dirty[i]||vdc.dirty[j]) {
 				ch=vdc.ram[j];
 				drawgfx(bitmap,Machine->gfx[0],
-						vdc.ram[i]|((ch&0x80)<<1), ch&0x7f, 0, 0, 
+						vdc.ram[i]|((ch&0x80)<<1), ch&0x7f, 0, 0,
 						Machine->gfx[0]->width*x+8,height*y+height,
 						&rect,TRANSPARENCY_NONE,0);
 				if ((vdc.cursor_on)&&(i==(CRTC6845_CURSOR_POS&vdc.mask))) {
@@ -484,8 +484,8 @@ void vdc8563_text_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 					if (CRTC6845_CURSOR_BOTTOM<height) k=CRTC6845_CURSOR_BOTTOM-CRTC6845_CURSOR_TOP+1;
 
 					if (k>0)
-						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8, 
-								 height*y+height+CRTC6845_CURSOR_TOP, 
+						plot_box(Machine->scrbitmap, Machine->gfx[0]->width*x+8,
+								 height*y+height+CRTC6845_CURSOR_TOP,
 								 Machine->gfx[0]->width, k, Machine->pens[0x10|(ch&0xf)]);
 				}
 
@@ -512,7 +512,7 @@ void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		memset(vdc.dirty, 1, vdc.mask+1);
 	}
 
-	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1, 
+	for (y=0, rect.min_y=height, rect.max_y=rect.min_y+height-1,
 			 i=vdc.videoram_start&vdc.mask; y<h;
 		 y++, rect.min_y+=height, rect.max_y+=height) {
 		for (x=0; x<w; x++, i=(i+1)&vdc.mask) {
@@ -520,7 +520,7 @@ void vdc8563_graphic_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 				k=((i<<4)+j)&vdc.mask;
 				if (vdc.dirty[k]) {
 					drawgfx(bitmap,Machine->gfx[1],
-							vdc.ram[k], FRAMECOLOR|(MONOCOLOR<<4), 0, 0, 
+							vdc.ram[k], FRAMECOLOR|(MONOCOLOR<<4), 0, 0,
 							Machine->gfx[0]->width*x+8,height*y+height+j,
 							&rect,TRANSPARENCY_NONE,0);
 					vdc.dirty[k]=0;
@@ -556,15 +556,15 @@ void vdc8563_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 		int w=CRTC6845_CHAR_COLUMNS;
 		int h=CRTC6845_CHAR_LINES;
 		int height=CRTC6845_CHAR_HEIGHT;
-		
+
 		plot_box(bitmap, 0, 0, Machine->gfx[0]->width*(w+2), height, Machine->pens[FRAMECOLOR]);
 
 		plot_box(bitmap, 0, height, Machine->gfx[0]->width, height*h, Machine->pens[FRAMECOLOR]);
 
-		plot_box(bitmap, Machine->gfx[0]->width*(w+1), height, Machine->gfx[0]->width, height*h, 
+		plot_box(bitmap, Machine->gfx[0]->width*(w+1), height, Machine->gfx[0]->width, height*h,
 				 Machine->pens[FRAMECOLOR]);
 
-		plot_box(bitmap, 0, height*(h+1), Machine->gfx[0]->width*(w+2), height, 
+		plot_box(bitmap, 0, height*(h+1), Machine->gfx[0]->width*(w+2), height,
 				 Machine->pens[FRAMECOLOR]);
 	}
 
