@@ -40,20 +40,6 @@ const char *osd_get_fps_text(const struct performance_info *performance)
 	return NULL;
 }
 
-int osd_start_audio_stream(int stereo)
-{
-	return (int) ((double)Machine->sample_rate / (double)Machine->refresh_rate);
-}
-
-int osd_update_audio_stream(INT16 *buffer)
-{
-	return 0;
-}
-
-void osd_stop_audio_stream(void)
-{
-}
-
 void osd_set_mastervolume(int attenuation)
 {
 }

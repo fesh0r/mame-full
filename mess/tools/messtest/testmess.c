@@ -13,6 +13,7 @@
 #include "inputx.h"
 #include "pile.h"
 #include "pool.h"
+#include "sound/wavwrite.h"
 
 enum messtest_running_state
 {
@@ -83,6 +84,7 @@ struct messtest_testcase
 
 	/* options */
 	UINT32 ram;
+	unsigned int wavwrite : 1;
 };
 
 struct messtest_specific_state
@@ -110,8 +112,6 @@ struct messtest_results
 #define MESSTEST_ALWAYS_DUMP_SCREENSHOT		1
 
 
-static struct KeyboardInfo *ki;
-static struct JoystickInfo *ji;
 static enum messtest_running_state state;
 static double wait_target;
 static double final_time;
@@ -120,6 +120,8 @@ static int test_flags;
 static int screenshot_num;
 static int format_index;
 static UINT64 runtime_hash;
+static void *wavptr;
+static UINT32 samples_this_frame;
 
 /* command list */
 static mess_pile command_pile;
@@ -208,8 +210,6 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 	begin_time = clock();
 	run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
-	ki = NULL;
-	ji = NULL;
 
 	/* what happened? */
 	switch(state)
@@ -245,6 +245,45 @@ static enum messtest_result run_test(int flags, struct messtest_results *results
 int osd_trying_to_quit(void)
 {
 	return (state == STATE_ABORTED) || (state == STATE_DONE);
+}
+
+
+
+int osd_start_audio_stream(int stereo)
+{
+	char buf[256];
+
+	if (current_testcase.wavwrite)
+	{
+		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "snap/_%s.wav", current_testcase.name);
+		wavptr = wav_open(buf, Machine->sample_rate, 2);
+	}
+	else
+	{
+		wavptr = NULL;
+	}
+	samples_this_frame = (int) ((double)Machine->sample_rate / (double)Machine->refresh_rate);
+	return samples_this_frame;
+}
+
+
+
+void osd_stop_audio_stream(void)
+{
+	if (wavptr)
+	{
+		wav_close(wavptr);
+		wavptr = NULL;
+	}
+}
+
+
+
+int osd_update_audio_stream(INT16 *buffer)
+{
+	if (wavptr && (Machine->sample_rate != 0))
+		wav_add_data_16(wavptr, buffer, samples_this_frame);
+	return 0;
 }
 
 
@@ -1126,6 +1165,11 @@ void testmess_start_handler(const char **attributes)
 	s = find_attribute(attributes, "ramsize");
 	current_testcase.ram = s ? ram_parse_string(s) : 0;
 
+	/* 'wavwrite' attribute */
+	s = find_attribute(attributes, "wavwrite");
+	current_testcase.wavwrite = (s && (atoi(s) != 0));
+
+	/* report the beginning of the test case */
 	report_testcase_begin(current_testcase.name);
 	current_testcase.commands = NULL;
 }
