@@ -7,6 +7,7 @@
 
   Hans de Goede               1998
   Anthony Kruize              2002
+  Wilbert Pol                 2004 (Megaduck/Cougar Boy)
 
   Todo list:
   Done entries kept for historical reasons, besides that it's nice to see
@@ -40,10 +41,11 @@ Priority:  Todo:                                                  Done:
 #include "includes/gb.h"
 #include "devices/cartslot.h"
 
-/* Initial value of the AF register */
-static UINT16 dmg_cpu_af_reset = 0x01B0;	/* GameBoy        / Super GameBoy   */
-static UINT16 gbp_cpu_af_reset = 0xFFB0;	/* GameBoy Pocket / Super GameBoy 2 */
-static UINT16 gbc_cpu_af_reset = 0x11B0;	/* GameBoy Color  / GameBoy Advance */
+/* Initial value of the cpu registers */
+static UINT16 dmg_cpu_reset[6] = { 0x01B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy        / Super GameBoy   */
+static UINT16 gbp_cpu_reset[6] = { 0xFFB0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Pocket / Super GameBoy 2 */
+static UINT16 gbc_cpu_reset[6] = { 0x11B0, 0x0013, 0x00D8, 0x014D, 0xFFFE, 0x0100 };	/* GameBoy Color  / Gameboy Advance */
+static UINT16 megaduck_cpu_reset[6] = { 0x0000, 0x0000, 0x0000, 0x0000, 0xFFFE, 0x0000 };	/* Megaduck */
 
 static ADDRESS_MAP_START(gb_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)				/* 16k fixed ROM bank */
@@ -123,6 +125,39 @@ static ADDRESS_MAP_START(gbc_writemem_map, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
 	AM_RANGE(0xff40, 0xff7f) AM_WRITE(gbc_video_w)			/* Video controller */
 	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127b high RAM */
+	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START(megaduck_readmem_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_BANK10)			/* 16k switched ROM bank */
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)			/* 16k switched ROM bank */
+	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_RAM)				/* 8k VRAM */
+	AM_RANGE(0xc000, 0xfe9f) AM_READ(MRA8_RAM)				/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_READ(MRA8_NOP)				/* unusable */
+	AM_RANGE(0xff00, 0xff0f) AM_READ(gb_io_r)				/* I/O */
+	AM_RANGE(0xff10, 0xff1f) AM_READ(megaduck_video_r)		/* Video registers read */
+	AM_RANGE(0xff20, 0xff2f) AM_READ(megaduck_sound_r1)		/* Sound channel 1,2,3 registers */
+	AM_RANGE(0xff30, 0xff3f) AM_READ(MRA8_RAM)				/* 6 bytes Wave pattern RAM (?) */
+	AM_RANGE(0xff40, 0xff46) AM_READ(megaduck_sound_r2)		/* Sound channel 4 and mixer sound registers */
+	AM_RANGE(0xff47, 0xff7f) AM_READ(MRA8_RAM)
+	AM_RANGE(0xff80, 0xffff) AM_READ(MRA8_RAM)				/* 127 bytes high RAM, interrupt enable io */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START(megaduck_writemem_map, ADDRESS_SPACE_PROGRAM, 8 )
+/*	AM_RANGE(0x0000, 0x1fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM enable */
+/*	AM_RANGE(0x2000, 0x3fff) AM_WRITE(INSTALL AT RUNTIME)	   ROM bank select */
+/*	AM_RANGE(0x4000, 0x5fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM bank select */
+/*	AM_RANGE(0x6000, 0x7fff) AM_WRITE(INSTALL AT RUNTIME)	   RAM/ROM mode select */
+	AM_RANGE(0x8000, 0x9fff) AM_WRITE(MWA8_RAM)				/* 8k VRAM */
+	AM_RANGE(0xc000, 0xfe9f) AM_WRITE(MWA8_RAM)				/* 8k low RAM, echo RAM, OAM RAM */
+	AM_RANGE(0xfea0, 0xfeff) AM_WRITE(MWA8_NOP)				/* Unusable */
+	AM_RANGE(0xff00, 0xff0f) AM_WRITE(gb_io_w)				/* General I/O */
+	AM_RANGE(0xff10, 0xff1f) AM_WRITE(megaduck_video_w)		/* Video controller */
+	AM_RANGE(0xff20, 0xff2f) AM_WRITE(megaduck_sound_w1)	/* Sound controller */
+	AM_RANGE(0xff30, 0xff3f) AM_WRITE(MWA8_RAM)				/* 16 bytes Wave pattern RAM */
+	AM_RANGE(0xff40, 0xff46) AM_WRITE(megaduck_sound_w2)	/* Sound controller */
+	AM_RANGE(0xff47, 0xff7f) AM_WRITE(MWA8_RAM)				/* Unused registers */
+	AM_RANGE(0xff80, 0xfffe) AM_WRITE(MWA8_RAM)				/* 127 bytes high RAM */
 	AM_RANGE(0xffff, 0xffff) AM_WRITE(gb_ie_w)				/* Interrupt enable */
 ADDRESS_MAP_END
 
@@ -237,7 +272,7 @@ static MACHINE_DRIVER_START( gameboy )
 	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
 	MDRV_CPU_PROGRAM_MAP(gb_readmem_map, gb_writemem_map)
 	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
-	MDRV_CPU_CONFIG(dmg_cpu_af_reset)
+	MDRV_CPU_CONFIG(dmg_cpu_reset)
 
 	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
 	MDRV_VBLANK_DURATION(0)
@@ -279,7 +314,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( gbpocket )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_CONFIG(gbp_cpu_af_reset)
+	MDRV_CPU_CONFIG(gbp_cpu_reset)
 	MDRV_PALETTE_INIT(gbp)
 MACHINE_DRIVER_END
 
@@ -287,7 +322,7 @@ static MACHINE_DRIVER_START( gbcolor )
 	MDRV_IMPORT_FROM(gameboy)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(gbc_readmem_map, gbc_writemem_map)
-	MDRV_CPU_CONFIG(gbc_cpu_af_reset)
+	MDRV_CPU_CONFIG(gbc_cpu_reset)
 
 	MDRV_MACHINE_INIT(gbc)
 
@@ -298,6 +333,38 @@ MACHINE_DRIVER_END
 
 SYSTEM_CONFIG_START(gameboy)
 	CONFIG_DEVICE_CARTSLOT_REQ( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", NULL, NULL, device_load_gb_cart, NULL, NULL, NULL)
+SYSTEM_CONFIG_END
+
+static MACHINE_DRIVER_START( megaduck )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
+	MDRV_CPU_PROGRAM_MAP(megaduck_readmem_map, megaduck_writemem_map)
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
+	MDRV_CPU_CONFIG(megaduck_cpu_reset)
+
+	MDRV_FRAMES_PER_SECOND(DMG_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( megaduck )
+	MDRV_MACHINE_STOP( gb )
+
+	MDRV_VIDEO_START( generic_bitmapped )
+	MDRV_VIDEO_UPDATE( generic_bitmapped )
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(20*8, 18*8)
+	MDRV_VISIBLE_AREA(0*8, 20*8-1, 0*8, 18*8-1)
+	MDRV_GFXDECODE(gb_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4)
+	MDRV_COLORTABLE_LENGTH(4)
+	MDRV_PALETTE_INIT(gb)
+	MDRV_SOUND_ADD(CUSTOM, gameboy_sound_interface)
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+MACHINE_DRIVER_END
+
+SYSTEM_CONFIG_START(megaduck)
+	CONFIG_DEVICE_CARTSLOT_REQ( 1, "bin\0", NULL, NULL, device_load_megaduck_cart, NULL, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
@@ -323,8 +390,19 @@ ROM_START( gbcolor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 ROM_END
 
+
+ROM_START( megaduck )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+ROM_END
+
 /*    YEAR  NAME      PARENT   COMPAT	MACHINE   INPUT    INIT  CONFIG   COMPANY     FULLNAME */
 CONS( 1990, gameboy,  0,       0,		gameboy,  gameboy, 0,    gameboy, "Nintendo", "GameBoy"  )
 CONS( 1994, supergb,  0,       gameboy,	supergb,  gameboy, 0,    gameboy, "Nintendo", "Super GameBoy" )
 CONS( 1996, gbpocket, gameboy, 0,		gbpocket, gameboy, 0,    gameboy, "Nintendo", "GameBoy Pocket" )
 CONS( 1998, gbcolor,  0,       gameboy,	gbcolor,  gameboy, 0,    gameboy, "Nintendo", "GameBoy Color" )
+
+/* Sound is not 100% yet, it generates some sounds which could be ok. Since we're lacking a real
+   system there's no way to verify. Same goes for the colors of the LCD. We are no using the default
+   GameBoy green colors */
+CONS( 1993, megaduck, 0,       0,       megaduck, gameboy, 0,    megaduck,"Creatronic/Videojet/Timlex/Cougar",  "MegaDuck/Cougar Boy" )
+

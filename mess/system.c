@@ -118,6 +118,8 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
+	DRIVER( megaduck )	/* Megaduck											*/
+	
 	/* SEGA */
 	DRIVER( gamegear )	/* Sega GameGear									*/
 	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/

@@ -29,6 +29,8 @@
 						 Added Super GameBoy support.
 	13/6/2002		AK - Added GameBoy Color support.
 
+	17/5/2004       WP - Added Megaduck/Cougar Boy support.
+
 ***************************************************************************/
 #define __MACHINE_GB_C
 
@@ -36,7 +38,7 @@
 #include "includes/gb.h"
 #include "image.h"
 
-static UINT8 MBCType;				   /* MBC type: 0 for none                        */
+static UINT16 MBCType;				   /* MBC type: 0 for none                        */
 static UINT8 CartType;				   /* Cart Type (battery, ram, timer etc)         */
 static UINT8 *ROMMap[512];			   /* Addresses of ROM banks                      */
 static UINT16 ROMBank;				   /* Number of ROM bank currently used           */
@@ -75,7 +77,11 @@ static void gb_init(void)
 	ROMBank = 1;
 	RAMBank = 0;
 	cpu_setbank (1, ROMMap[ROMBank] ? ROMMap[ROMBank] : gb_ram + 0x4000);
-	cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+	if ( MBCType != MEGADUCK ) {
+		cpu_setbank (2, RAMMap[RAMBank] ? RAMMap[RAMBank] : gb_ram + 0xA000);
+	} else {
+		cpu_setbank( 10, ROMMap[0] );
+	}
 
 	/* Initialize the registers */
 	LCDSTAT = 0x00;
@@ -152,6 +158,10 @@ static void gb_init(void)
 			install_mem_write_handler( 0, 0x2000, 0x3fff, gb_rom_bank_select_mbc5 );
 			install_mem_write_handler( 0, 0x4000, 0x5fff, gb_ram_bank_select_mbc5 );
 			install_mem_write_handler( 0, 0x6000, 0x7fff, MWA8_ROM );
+			break;
+		case MEGADUCK:
+			install_mem_write_handler( 0, 0x0001, 0x0001, megaduck_rom_bank_select_type1 );
+			install_mem_write_handler( 0, 0xB000, 0xB000, megaduck_rom_bank_select_type2 );
 			break;
 	}
 }
@@ -1785,4 +1795,211 @@ WRITE_HANDLER ( gbc_video_w )
 	}
 
 	gb_ram [offset] = data;
+}
+
+/****************************************************************************
+
+  Megaduck routines
+
+ ****************************************************************************/
+
+MACHINE_INIT( megaduck )
+{
+	/* We may have to add some more stuff here, if not then it can be merged back into gb */
+	gb_init();
+
+	/* set the scanline refresh function */
+	refresh_scanline = gb_refresh_scanline;
+}
+
+/* Map megaduck video related area on to regular Gameboy video area */
+/* Swap two bits, if they're set */
+
+/**************
+ Different LCDC register
+
+ GameBoy	MegaDuck
+ 0			0	- BG & Window Display : 0 - Off, 1 - On
+ 1			6	- OBJ Display: 0 - Off, 1 - On
+ 2			1	- OBJ Size: 0 - 8x8, 1 - 8x16
+ 3			2	- BG Tile Map Display: 0 - 9800, 1 - 9C00
+ 4			4	- BG & Window Tile Data Select: 0 - 8800, 1 - 8000
+ 5			5	- Window Display: 0 - Off, 1 - On
+ 6			3	- Window Tile Map Display Select: 0 - 9800, 1 - 9C00
+ 7			7	- LCD Operation
+ **************/
+
+READ_HANDLER( megaduck_video_r )
+{
+	UINT8 data;
+
+	if ( (offset & 0x0C) && ((offset & 0x0C) ^ 0x0C) ) {
+		offset ^= 0x0C;
+	}
+	if ( offset )
+		return gb_ram[offset + 0xFF40];
+	data = gb_ram[offset + 0xFF40];
+	return (data&0xB1) | ((data&0x40)>>3) | ((data&0x0C)>>1) | ((data&0x02)<<5);
+}
+
+WRITE_HANDLER ( megaduck_video_w )
+{
+	if ( !offset ) {
+		data = (data&0xB1) | ((data&0x08)<<3) | ((data&0x06)<<1) | ((data&0x40)>>5);
+	}
+	if ( (offset & 0x0C) && ((offset & 0x0C) ^ 0x0C) ) {
+		offset ^= 0x0C;
+	}
+	gb_video_w(offset, data );
+}
+
+WRITE_HANDLER( megaduck_sound_w1 )
+{
+	switch(offset) {
+		case 0x00:	gb_sound_w( 0, data );	break;
+		case 0x01:	gb_sound_w( 2, data );	break;
+		case 0x02:	gb_sound_w( 1, data );	break;
+		case 0x03:	gb_sound_w( 3, data );	break;
+		case 0x04:	gb_sound_w( 4, data );	break;
+		case 0x05:	gb_sound_w( 6, data );	break;
+		case 0x07:	gb_sound_w( 7, data );	break;
+		case 0x08:	gb_sound_w( 8, data );	break;
+		case 0x09:	gb_sound_w( 9, data );	break;
+		case 0x06:
+		case 0x0A:
+		case 0x0B:
+		case 0x0C:
+		case 0x0D:
+		case 0x0E:
+		case 0x0F:
+			gb_ram[0xFF10 + offset] = data;
+			break;
+	}
+}
+
+static UINT8 megaduck_sound_offsets[16] = { 0, 2, 1, 3, 4, 6, 5, 7, 8, 9, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
+
+/* this one needs some work */
+READ_HANDLER( megaduck_sound_r1 )
+{
+	return gb_ram[0xFF10 + megaduck_sound_offsets[offset]];
+}
+
+WRITE_HANDLER( megaduck_sound_w2 )
+{
+	switch(offset) {
+		case 0x00:	gb_sound_w( 0x10, data );	break;
+		case 0x01:	gb_sound_w( 0x12, data );	break;
+		case 0x02:	gb_sound_w( 0x11, data );	break;
+		case 0x03:	gb_sound_w( 0x13, data );	break;
+		case 0x04:	gb_sound_w( 0x14, data );	break;
+		case 0x05:	gb_sound_w( 0x16, data );	break;
+		case 0x06:	gb_sound_w( 0x15, data );	break;
+		case 0x07:
+		case 0x08:
+		case 0x09:
+		case 0x0A:
+		case 0x0B:
+		case 0x0C:
+		case 0x0D:
+		case 0x0E:
+		case 0x0F:
+			gb_ram[0xFF10 + offset] = data;
+			break;
+	}
+}
+
+READ_HANDLER( megaduck_sound_r2 )
+{
+	return gb_ram[0xFF20 + megaduck_sound_offsets[offset]];
+}
+
+WRITE_HANDLER( megaduck_rom_bank_select_type1 )
+{
+	if( ROMMask )
+	{
+		ROMBank = data & ROMMask;
+
+		/* Switch banks */
+		cpu_setbank (1, ROMMap[ROMBank]);
+	}
+}
+
+WRITE_HANDLER( megaduck_rom_bank_select_type2 )
+{
+	if( ROMMask )
+	{
+		ROMBank = (data << 1) & ROMMask;
+
+		/* Switch banks */
+		cpu_setbank( 10, ROMMap[ROMBank]);
+		cpu_setbank( 1, ROMMap[ROMBank + 1]);
+	}
+}
+
+DEVICE_LOAD(megaduck_cart)
+{
+	int I;
+
+	for (I = 0; I < 256; I++)
+		RAMMap[I] = ROMMap[I] = NULL;
+
+	if( new_memory_region(REGION_CPU1, 0x10000,0) )
+	{
+		logerror("Error loading cartridge: Memory allocation failed reading roms!\n");
+		return INIT_FAIL;
+	}
+
+	gb_ram = memory_region(REGION_CPU1);
+	memset (gb_ram, 0, 0x10000);
+
+	ROMBanks = image_length(image) / 0x4000;
+
+	if (mame_fread (file, gb_ram, 0x4000) != 0x4000)
+	{
+		logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
+		return INIT_FAIL;
+	}
+
+	ROMMap[0] = gb_ram;
+
+	/* Log cart information */
+	{
+		logerror("Cart Information\n");
+		logerror("\tName:             blah\n");
+		logerror("\tRom Banks:        %d\n", ROMBanks);
+	}
+
+	for (I = 1; I < ROMBanks; I++)
+	{
+		if ((ROMMap[I] = malloc (0x4000)))
+		{
+			if ( mame_fread( file, ROMMap[I], 0x4000) !=  0x4000 )
+			{
+				logerror("Error loading cartridge: Unable to read from file: %s.\n", image_filename(image));
+				break;
+			}
+		}
+		else
+		{
+			logerror("Error loading cartridge: Unable to allocate memory.\n");
+			break;
+		}
+	}
+
+	if (I < ROMBanks)
+		return INIT_FAIL;
+
+	/* Build rom bank Mask */
+	if (ROMBanks < 3)
+		ROMMask = 0;
+	else
+	{
+		for (I = 1; I < ROMBanks; I <<= 1) ;
+		ROMMask = I - 1;
+	}
+
+	MBCType = MEGADUCK;
+
+	return INIT_PASS;
 }

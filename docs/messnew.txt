@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Megaduck [Wilbert Pol]
 - Sinclair ZX-80 (fixed & readded) [Krzysztof Strzecha]
 - Sinclair ZX-81 (fixed & readded) [Krzysztof Strzecha]
 - Sinclair ZX-81 (2nd rev) (fixed & readded) [Krzysztof Strzecha]

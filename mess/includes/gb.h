@@ -24,14 +24,16 @@ void gameboy_sound_w(int offset, int data);
 #define EXT_INT		4		/* Joypad     */
 
 /* Memory bank controller types */
-#define NONE		0		/*  32KB ROM - No memory bank controller         */
-#define MBC1		1		/*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
-#define MBC2		2		/* 256KB ROM,  32KB RAM                          */
-#define MBC3		3		/*   2MB ROM,  32KB RAM, RTC                     */
-#define MBC5		4		/*   8MB ROM, 128KB RAM (32KB w/ Rumble)         */
-#define TAMA5		5		/*    ?? ROM     ?? RAM - What is this?          */
-#define HUC1		6		/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
-#define HUC3		7		/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+#define NONE		0x000	/*  32KB ROM - No memory bank controller         */
+#define MBC1		0x001	/*  ~2MB ROM,   8KB RAM -or- 512KB ROM, 32KB RAM */
+#define MBC2		0x002	/* 256KB ROM,  32KB RAM                          */
+#define MBC3		0x003	/*   2MB ROM,  32KB RAM, RTC                     */
+#define MBC5		0x004	/*   8MB ROM, 128KB RAM (32KB w/ Rumble)         */
+#define TAMA5		0x005	/*    ?? ROM     ?? RAM - What is this?          */
+#define HUC1		0x006	/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+#define HUC3		0x007	/*    ?? ROM,    ?? RAM - Hudson Soft Controller */
+#define MEGADUCK	0x100	/* MEGADUCK style banking, using 0x100 to not    */
+                            /* interfere with possible GBx banking methods   */
 
 /* Cartridge types */
 #define RAM			0x01	/* Cartridge has RAM                             */
@@ -157,5 +159,17 @@ extern WRITE_HANDLER ( gbc_video_w );
 extern void gbc_hdma(UINT16 length);
 /* from vidhrdw/gb.c */
 void gbc_refresh_scanline(void);
+
+/* -- Megaduck specific -- */
+extern DEVICE_LOAD(megaduck_cart);
+extern MACHINE_INIT( megaduck );
+extern READ_HANDLER( megaduck_video_r );
+extern WRITE_HANDLER( megaduck_video_w );
+extern WRITE_HANDLER( megaduck_rom_bank_select_type1 );
+extern WRITE_HANDLER( megaduck_rom_bank_select_type2 );
+extern READ_HANDLER( megaduck_sound_r1 );
+extern WRITE_HANDLER( megaduck_sound_w1 );
+extern READ_HANDLER( megaduck_sound_r2 );
+extern WRITE_HANDLER( megaduck_sound_w2 );
 
 #endif

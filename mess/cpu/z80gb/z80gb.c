@@ -12,6 +12,9 @@
 /** MESS modifications			Hans de Goede		1998	**/
 /** Adapted to new cpuintrf 	Juergen Buchmueller 2000	**/
 /** Adapted to new cpuintrf		Anthony Kruize		2002	**/
+/** Changed reset function to                               **/
+/** reset all registers instead                             **/
+/** of just AF.                            Wilbert Pol 2004 **/
 /**                                                         **/
 /*************************************************************/
 #include <stdio.h>
@@ -148,15 +151,21 @@ static void z80gb_init(void)
 /**********************************************************/
 static void z80gb_reset (void *param)
 {
-	if( param != NULL )
-		Regs.w.AF = *((INT16 *)param);
-	else
+	if( param != NULL ) {
+		Regs.w.AF = ((INT16 *)param)[0];
+		Regs.w.BC = ((INT16 *)param)[1];
+		Regs.w.DE = ((INT16 *)param)[2];
+		Regs.w.HL = ((INT16 *)param)[3];
+		Regs.w.SP = ((INT16 *)param)[4];
+		Regs.w.PC = ((INT16 *)param)[5];
+	} else {
 		Regs.w.AF = 0x01B0;
-	Regs.w.BC = 0x0013;
-	Regs.w.DE = 0x00D8;
-	Regs.w.HL = 0x014D;
-	Regs.w.SP = 0xFFFE;
-	Regs.w.PC = 0x0100;
+		Regs.w.BC = 0x0013;
+		Regs.w.DE = 0x00D8;
+		Regs.w.HL = 0x014D;
+		Regs.w.SP = 0xFFFE;
+		Regs.w.PC = 0x0100;
+	}
 	Regs.w.enable &= ~IME;
 
 //FIXME, use this in gb_machine_init!     state->TimerShift=32;
