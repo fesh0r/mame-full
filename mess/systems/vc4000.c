@@ -8,6 +8,7 @@
 #include "cpu/s2650/s2650.h"
 
 #include "includes/vc4000.h"
+#include "devices/cartslot.h"
 #include "image.h"
 
 static READ_HANDLER(vc4000_key_r)

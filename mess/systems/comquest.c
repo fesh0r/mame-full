@@ -40,8 +40,8 @@ icq3250a-d
  */
 
 #include "driver.h"
-
 #include "includes/comquest.h"
+#include "devices/cartslot.h"
 
 static READ_HANDLER(comquest_read)
 {

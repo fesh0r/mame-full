@@ -65,13 +65,13 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "devices/cartslot.h"
 #include "includes/vtech2.h"
 
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)	/* x */
 #endif

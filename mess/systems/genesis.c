@@ -47,11 +47,11 @@ In Memory Of Haruki Ikeda
 #endif
 
 #include "driver.h"
+#include "sound/2612intf.h"
 #include "vidhrdw/generic.h"
-
 #include "machine/genesis.h"
 #include "vidhrdw/genesis.h"
-#include "sound/2612intf.h"
+#include "devices/cartslot.h"
 
 #define ARMLong(x) (((x << 24) | (((unsigned long) x) >> 24) | (( x & 0x0000ff00) << 8) | (( x & 0x00ff0000) >> 8)))
 

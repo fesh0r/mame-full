@@ -145,6 +145,7 @@ http://www.z88forever.org.uk/zxplus3e/
 #include "includes/spectrum.h"
 #include "eventlst.h"
 #include "devices/snapquik.h"
+#include "devices/cartslot.h"
 
 /* +3 hardware */
 #include "includes/nec765.h"

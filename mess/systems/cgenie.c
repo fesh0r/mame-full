@@ -30,6 +30,7 @@ NMI
 #include "vidhrdw/generic.h"
 #include "includes/cgenie.h"
 #include "includes/basicdsk.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START (readmem)
 	{ 0x0000, 0x3fff, MRA_ROM },

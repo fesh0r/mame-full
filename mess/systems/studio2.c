@@ -5,10 +5,10 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "cpu/cdp1802/cdp1802.h"
-
-#include "includes/studio2.h"
 #include "image.h"
+#include "cpu/cdp1802/cdp1802.h"
+#include "devices/cartslot.h"
+#include "includes/studio2.h"
 
 static MEMORY_READ_START( studio2_readmem )
 	{ 0x0000, 0x07ff, MRA_ROM },

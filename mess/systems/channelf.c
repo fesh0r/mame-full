@@ -9,9 +9,10 @@
  ******************************************************************/
 
 #include "driver.h"
+#include "image.h"
 #include "vidhrdw/generic.h"
 #include "includes/channelf.h"
-#include "image.h"
+#include "devices/cartslot.h"
 
 #ifndef VERBOSE
 #define VERBOSE 1

@@ -161,6 +161,7 @@ when problems start with -log and look into error.log file
 #include "includes/vc1541.h"
 #include "includes/vc20tape.h"
 #include "includes/vic6560.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( vc20_readmem )
 	{0x0000, 0x03ff, MRA_RAM},

@@ -20,6 +20,7 @@
 #include "sound/sn76496.h"
 #include "vidhrdw/tms9928a.h"
 #include "includes/coleco.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( coleco_readmem )
     { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM */

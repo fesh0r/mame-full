@@ -40,6 +40,7 @@
 #include "includes/wd179x.h"
 #include "includes/mbee.h"
 #include "includes/basicdsk.h"
+#include "devices/cartslot.h"
 
 #define VERBOSE 1
 

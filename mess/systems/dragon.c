@@ -13,20 +13,21 @@
      support DECB 1.0
  ******************************************************************************/
 #include "driver.h"
+#include "inputx.h"
+#include "snprintf.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "includes/6883sam.h"
 #include "includes/dragon.h"
 #include "includes/basicdsk.h"
 #include "includes/6551.h"
+#include "formats/coco_dsk.h"
 #include "devices/printer.h"
 #include "devices/messfmts.h"
-#include "formats/coco_dsk.h"
 #include "devices/cassette.h"
 #include "devices/bitbngr.h"
 #include "devices/snapquik.h"
-#include "inputx.h"
-#include "snprintf.h"
+#include "devices/cartslot.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10

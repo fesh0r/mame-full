@@ -724,6 +724,7 @@ COREOBJS += \
 	$(OBJ)/mess/videomap.o         \
 	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/mscommon.o         \
+	$(OBJ)/mess/devices/cartslot.o \
 	$(OBJ)/mess/devices/messfmts.o \
 	$(OBJ)/mess/devices/printer.o  \
 	$(OBJ)/mess/devices/cassette.o \

@@ -24,6 +24,7 @@ T1	Mirror sync pulse
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
 #include "includes/advision.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( readmem )
     { 0x0000, 0x03FF,  MRA_BANK1 },

@@ -7,14 +7,12 @@
 
 #include "driver.h"
 #include "cpuintrf.h"
-#include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 #include "machine/z80fmly.h"
+#include "vidhrdw/generic.h"
 #include "vidhrdw/tms9928a.h"
 #include "sound/sn76496.h"
-#include "cpu/z80/z80.h"
-#include "osdepend.h"
-
-#include <stdio.h>
+#include "devices/cartslot.h"
 
 unsigned char key_sense;
 int mtx_loadindex;

@@ -106,10 +106,6 @@ struct SystemConfigurationParamBlock
 		cfg->dev = &device;																	\
 	}																						\
 
-#define CONFIG_DEVICE_CARTSLOT(count,file_extensions, init, exit, partialcrc)				\
-	CONFIG_DEVICE_BASE(IO_CARTSLOT, (count), (file_extensions), DEVICE_LOAD_RESETS_CPU, OSD_FOPEN_READ,	\
-		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc), NULL)	\
-
 #define CONFIG_DEVICE_LEGACY(type, count, file_extensions, flags, open_mode,				\
 		init, exit, status)																	\
 	CONFIG_DEVICE_BASE((type), (count), (file_extensions), (flags), (open_mode),			\

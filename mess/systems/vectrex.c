@@ -11,8 +11,8 @@ Bruce Tomlin (hardware info)
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "machine/6522via.h"
-
 #include "includes/vectrex.h"
+#include "devices/cartslot.h"
 
 MEMORY_READ_START( vectrex_readmem )
 	{ 0x0000, 0x7fff, MRA_ROM },

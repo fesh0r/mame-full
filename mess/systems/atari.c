@@ -9,6 +9,7 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
+#include "devices/cartslot.h"
 
 /******************************************************************************
     Atari 800 memory map (preliminary)

@@ -163,6 +163,7 @@ when problems start with -log and look into error.log file
 #include "includes/vc20tape.h"
 #include "includes/ted7360.h"
 #include "includes/sid6581.h"
+#include "devices/cartslot.h"
 
 /*
  * commodore c16/c116/plus 4

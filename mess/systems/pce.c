@@ -14,6 +14,7 @@
 #include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
 #include "includes/pce.h"
+#include "devices/cartslot.h"
 
 static INTERRUPT_GEN( pce_interrupt )
 {

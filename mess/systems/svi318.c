@@ -12,6 +12,7 @@
 #include "includes/wd179x.h"
 #include "includes/svi318dk.h"
 #include "devices/printer.h"
+#include "devices/cartslot.h"
 
 
 static MEMORY_READ_START (readmem)

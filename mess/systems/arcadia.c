@@ -6,9 +6,10 @@
 
 #include <assert.h>
 #include "driver.h"
+#include "image.h"
 #include "cpu/s2650/s2650.h"
 #include "includes/arcadia.h"
-#include "image.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( arcadia_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },

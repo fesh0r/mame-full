@@ -79,7 +79,7 @@ static void cgenie_offset_xy(void)
 
 	schedule_full_refresh();
 
-// if( errorlog ) fprintf(errorlog, "cgenie offset x:%d  y:%d\n", off_x, off_y);
+// logerror("cgenie offset x:%d  y:%d\n", off_x, off_y);
 }
 
 

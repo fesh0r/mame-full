@@ -23,6 +23,7 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/stic.h"
 #include "includes/intv.h"
+#include "devices/cartslot.h"
 
 #ifndef VERBOSE
 #ifdef MAME_DEBUG

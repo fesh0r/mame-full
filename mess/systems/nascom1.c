@@ -52,6 +52,7 @@ Nascom Memory map
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/nascom1.h"
+#include "devices/cartslot.h"
 
 /* port i/o functions */
 

@@ -20,7 +20,7 @@
 
 void genesis_s_interrupt(void)
 {
-	// if (errorlog) fprintf(errorlog, "Z80 interrupt ");
+	// logerror("Z80 interrupt ");
 	cpu_set_irq_line(1, 0xff, HOLD_LINE);
 }
 

@@ -39,6 +39,7 @@ Priority:  Todo:                                                  Done:
 #include "vidhrdw/generic.h"
 #include "machine/gb.h"
 #include "includes/gb.h"
+#include "devices/cartslot.h"
 
 /* Initial value of the AF register:
  *   GameBoy        / Super GameBoy   - 0x01B0

@@ -12,10 +12,11 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "includes/bbc.h"
 #include "machine/6522via.h"
+#include "includes/bbc.h"
 #include "includes/upd7002.h"
 #include "includes/basicdsk.h"
+#include "devices/cartslot.h"
 
 
 /******************************************************************************

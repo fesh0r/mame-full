@@ -41,6 +41,7 @@
 #include "sound/2413intf.h"
 #include "vidhrdw/generic.h"
 #include "includes/sms.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3FFF, MRA_RAM }, /* ROM bank #1 */

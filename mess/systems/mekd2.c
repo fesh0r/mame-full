@@ -28,7 +28,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "devices/cartslot.h"
 #include "includes/mekd2.h"
 
 #ifndef VERBOSE

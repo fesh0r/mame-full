@@ -46,6 +46,7 @@ Historical notes: TI made several last minute design changes.
 #include "includes/basicdsk.h"
 #include "inputx.h"
 #include "machine/994x_ser.h"
+#include "devices/cartslot.h"
 
 /*
 	memory map

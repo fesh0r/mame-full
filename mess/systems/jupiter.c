@@ -32,52 +32,53 @@ Ports:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 #include "includes/jupiter.h"
+#include "devices/cartslot.h"
 
 /* port i/o functions */
 
 PORT_READ_START( jupiter_readport )
-	{0xfefe, 0xfefe, jupiter_port_fefe_r},
-	{0xfdfe, 0xfdfe, jupiter_port_fdfe_r},
-	{0xfbfe, 0xfbfe, jupiter_port_fbfe_r},
-	{0xf7fe, 0xf7fe, jupiter_port_f7fe_r},
-	{0xeffe, 0xeffe, jupiter_port_effe_r},
-	{0xdffe, 0xdffe, jupiter_port_dffe_r},
-	{0xbffe, 0xbffe, jupiter_port_bffe_r},
-	{0x7ffe, 0x7ffe, jupiter_port_7ffe_r},
+	{ 0xfefe, 0xfefe, jupiter_port_fefe_r },
+	{ 0xfdfe, 0xfdfe, jupiter_port_fdfe_r },
+	{ 0xfbfe, 0xfbfe, jupiter_port_fbfe_r },
+	{ 0xf7fe, 0xf7fe, jupiter_port_f7fe_r },
+	{ 0xeffe, 0xeffe, jupiter_port_effe_r },
+	{ 0xdffe, 0xdffe, jupiter_port_dffe_r },
+	{ 0xbffe, 0xbffe, jupiter_port_bffe_r },
+	{ 0x7ffe, 0x7ffe, jupiter_port_7ffe_r },
 PORT_END
 
 PORT_WRITE_START( jupiter_writeport )
-	{0x00fe, 0xfffe, jupiter_port_fe_w},
+	{ 0x00fe, 0xfffe, jupiter_port_fe_w },
 PORT_END
 
 /* memory w/r functions */
 
 MEMORY_READ_START( jupiter_readmem )
-	{0x0000, 0x1fff, MRA_ROM},
-	{0x2000, 0x22ff, MRA_NOP},
-	{0x2300, 0x23ff, MRA_RAM},
-	{0x2400, 0x26ff, videoram_r},
-	{0x2700, 0x27ff, MRA_RAM},
-	{0x2800, 0x2bff, MRA_NOP},
-	{0x2c00, 0x2fff, MRA_RAM},	/* char RAM */
-	{0x3000, 0x3bff, MRA_NOP},
-	{0x3c00, 0x47ff, MRA_RAM},
-	{0x4800, 0x87ff, MRA_RAM},
-	{0x8800, 0xffff, MRA_RAM},
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x22ff, MRA_NOP },
+	{ 0x2300, 0x23ff, MRA_RAM },
+	{ 0x2400, 0x26ff, videoram_r },
+	{ 0x2700, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x2bff, MRA_NOP },
+	{ 0x2c00, 0x2fff, MRA_RAM },	/* char RAM */
+	{ 0x3000, 0x3bff, MRA_NOP },
+	{ 0x3c00, 0x47ff, MRA_RAM },
+	{ 0x4800, 0x87ff, MRA_RAM },
+	{ 0x8800, 0xffff, MRA_RAM },
 MEMORY_END
 
 MEMORY_WRITE_START( jupiter_writemem )
-	{0x0000, 0x1fff, MWA_ROM},
-	{0x2000, 0x22ff, MWA_NOP},
-	{0x2300, 0x23ff, MWA_RAM},
-	{0x2400, 0x26ff, videoram_w, &videoram, &videoram_size},
-	{0x2700, 0x27ff, MWA_RAM},
-	{0x2800, 0x2bff, MWA_NOP},
-	{0x2c00, 0x2fff, jupiter_vh_charram_w, &jupiter_charram, &jupiter_charram_size},
-	{0x3000, 0x3bff, MWA_NOP},
-	{0x3c00, 0x47ff, MWA_RAM},
-	{0x4800, 0x87ff, MWA_RAM},
-	{0x8800, 0xffff, MWA_RAM},
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x22ff, MWA_NOP },
+	{ 0x2300, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x26ff, videoram_w, &videoram, &videoram_size },
+	{ 0x2700, 0x27ff, MWA_RAM },
+	{ 0x2800, 0x2bff, MWA_NOP },
+	{ 0x2c00, 0x2fff, jupiter_vh_charram_w, &jupiter_charram, &jupiter_charram_size },
+	{ 0x3000, 0x3bff, MWA_NOP },
+	{ 0x3c00, 0x47ff, MWA_RAM },
+	{ 0x4800, 0x87ff, MWA_RAM },
+	{ 0x8800, 0xffff, MWA_RAM },
 MEMORY_END
 
 /* graphics output */

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #include "driver.h"
+#include "devices/cartslot.h"
 
 #ifdef __cplusplus
 extern "C" {

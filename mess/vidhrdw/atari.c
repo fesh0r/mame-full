@@ -19,7 +19,7 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)	/* x */
 #endif
@@ -720,7 +720,7 @@ VIDEO_START( atari )
 {
 	int i;
 
-	LOG((errorlog, "atari antic_vh_start\n"));
+	LOG(("atari antic_vh_start\n"));
     memset(&antic, 0, sizeof(antic));
 	memset(&gtia, 0, sizeof(gtia));
 
@@ -758,7 +758,7 @@ VIDEO_START( atari )
 	for( i = 0; i < 256; i ++ )
         antic.color_lookup[i] = (Machine->pens[0] << 8) + Machine->pens[0];
 
-	LOG((errorlog, "atari cclk_init\n"));
+	LOG(("atari cclk_init\n"));
     cclk_init();
 
 	for( i = 0; i < 64; i++ )
@@ -768,7 +768,7 @@ VIDEO_START( atari )
 			return 1;
     }
 
-	LOG((errorlog, "atari prio_init\n"));
+	LOG(("atari prio_init\n"));
     prio_init();
 
 	for( i = 0; i < Machine->drv->screen_height; i++ )
@@ -1023,7 +1023,7 @@ static void after(int cycles, void (*function)(int), const char *funcname)
 {
     double duration = cpu_getscanlineperiod() * cycles / CYCLES_PER_LINE;
     (void)funcname;
-	LOG((errorlog, "           after %3d (%5.1f us) %s\n", cycles, duration * 1.0e6, funcname));
+	LOG(("           after %3d (%5.1f us) %s\n", cycles, duration * 1.0e6, funcname));
 	timer_set(duration, 0, function);
 }
 
@@ -1031,13 +1031,13 @@ static void antic_issue_dli(int param)
 {
 	if( antic.w.nmien & DLI_NMI )
 	{
-		LOG((errorlog, "           @cycle #%3d issue DLI\n", cycle()));
+		LOG(("           @cycle #%3d issue DLI\n", cycle()));
 		antic.r.nmist |= DLI_NMI;
 		cpu_set_nmi_line(0, PULSE_LINE);
 	}
 	else
 	{
-		LOG((errorlog, "           @cycle #%3d DLI not enabled\n", cycle()));
+		LOG(("           @cycle #%3d DLI not enabled\n", cycle()));
     }
 }
 
@@ -1099,13 +1099,13 @@ static void antic_line_done(int param)
 {
 	if( antic.w.wsync )
     {
-		LOG((errorlog, "           @cycle #%3d release WSYNC\n", cycle()));
+		LOG(("           @cycle #%3d release WSYNC\n", cycle()));
         /* release the CPU if it was actually waiting for HSYNC */
         cpu_trigger(TRIGGER_HSYNC);
         /* and turn off the 'wait for hsync' flag */
         antic.w.wsync = 0;
     }
-	LOG((errorlog, "           @cycle #%3d release CPU\n", cycle()));
+	LOG(("           @cycle #%3d release CPU\n", cycle()));
     /* release the CPU (held for emulating cycles stolen by ANTIC DMA) */
 	cpu_trigger(TRIGGER_STEAL);
 
@@ -1124,7 +1124,7 @@ static void antic_line_done(int param)
  *****************************************************************************/
 static void antic_steal_cycles(int param)
 {
-	LOG((errorlog, "           @cycle #%3d steal %d cycles\n", cycle(), antic.steal_cycles));
+	LOG(("           @cycle #%3d steal %d cycles\n", cycle(), antic.steal_cycles));
 	after(antic.steal_cycles, antic_line_done, "antic_line_done");
     antic.steal_cycles = 0;
     cpu_spinuntil_trigger(TRIGGER_STEAL);
@@ -1142,7 +1142,7 @@ static void antic_steal_cycles(int param)
 static void antic_scanline_render(int param)
 {
 	VIDEO *video = antic.video[antic.scanline];
-	LOG((errorlog, "           @cycle #%3d render mode $%X lines to go #%d\n", cycle(), (antic.cmd & 0x0f), antic.modelines));
+	LOG(("           @cycle #%3d render mode $%X lines to go #%d\n", cycle(), (antic.cmd & 0x0f), antic.modelines));
 
     (*antic_renderer)(video);
 
@@ -1193,7 +1193,7 @@ static void antic_scanline_render(int param)
     gtia_render(video);
 
     antic.steal_cycles += CYCLES_REFRESH;
-	LOG((errorlog, "           run CPU for %d cycles\n", CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles));
+	LOG(("           run CPU for %d cycles\n", CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles));
 	after(CYCLES_HSYNC - CYCLES_HSTART - antic.steal_cycles, antic_steal_cycles, "antic_steal_cycles");
 }
 
@@ -1215,7 +1215,7 @@ INLINE void LMS(int new_cmd)
         antic.doffs = ++antic.doffs & DOFFS;
         antic.vpage = addr & VPAGE;
         antic.voffs = addr & VOFFS;
-		LOG((errorlog, "           LMS $%04x\n", addr));
+		LOG(("           LMS $%04x\n", addr));
         /* steal two more clock cycles from the cpu */
         antic.steal_cycles += 2;
     }
@@ -1233,7 +1233,7 @@ INLINE void LMS(int new_cmd)
  *****************************************************************************/
 static void antic_scanline_dma(int param)
 {
-	LOG((errorlog, "           @cycle #%3d DMA fetch\n", cycle()));
+	LOG(("           @cycle #%3d DMA fetch\n", cycle()));
 	if (antic.scanline == VBL_END)
 		antic.r.nmist &= ~VBL_NMI;
     if( antic.w.dmactl & DMA_ANTIC )
@@ -1250,7 +1250,7 @@ static void antic_scanline_dma(int param)
 				antic.doffs = ++antic.doffs & DOFFS;
 				/* steal at one clock cycle from the CPU for fetching the command */
                 antic.steal_cycles += 1;
-				LOG((errorlog, "           ANTIC CMD $%02x\n", new_cmd));
+				LOG(("           ANTIC CMD $%02x\n", new_cmd));
 				/* command 1 .. 15 ? */
 				if (new_cmd & ANTIC_MODE)
 				{
@@ -1318,7 +1318,7 @@ static void antic_scanline_dma(int param)
 						antic.modelines = VBL_START + 1 - antic.scanline;
 						if( antic.modelines < 0 )
 							antic.modelines = Machine->drv->screen_height - antic.scanline;
-						LOG((errorlog, "           JVB $%04x\n", antic.dpage|antic.doffs));
+						LOG(("           JVB $%04x\n", antic.dpage|antic.doffs));
 					}
 					else
 					{
@@ -1329,7 +1329,7 @@ static void antic_scanline_dma(int param)
                         antic.doffs = addr & DOFFS;
                         /* produce a single empty scanline */
 						antic.modelines = 1;
-						LOG((errorlog, "           JMP $%04x\n", antic.dpage|antic.doffs));
+						LOG(("           JMP $%04x\n", antic.dpage|antic.doffs));
 					}
 					break;
 				case 0x02:
@@ -1422,14 +1422,14 @@ static void antic_scanline_dma(int param)
         }
 		else
 		{
-			LOG((errorlog, "           out of visible range\n"));
+			LOG(("           out of visible range\n"));
 			antic.cmd = 0x00;
 			antic_renderer = antic_mode_0_xx;
         }
 	}
 	else
 	{
-		LOG((errorlog, "           DMA is off\n"));
+		LOG(("           DMA is off\n"));
         antic.cmd = 0x00;
 		antic_renderer = antic_mode_0_xx;
 	}
@@ -1451,7 +1451,7 @@ static void antic_scanline_dma(int param)
  *****************************************************************************/
 void a400_interrupt(void)
 {
-	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
+	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
@@ -1478,7 +1478,7 @@ void a400_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-			LOG((errorlog, "           cause VBL NMI\n"));
+			LOG(("           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1498,7 +1498,7 @@ void a400_interrupt(void)
  *****************************************************************************/
 void a800_interrupt(void)
 {
-	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
+	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
@@ -1525,7 +1525,7 @@ void a800_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-			LOG((errorlog, "           cause VBL NMI\n"));
+			LOG(("           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1545,7 +1545,7 @@ void a800_interrupt(void)
  *****************************************************************************/
 void a800xl_interrupt(void)
 {
-	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
+	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
@@ -1572,7 +1572,7 @@ void a800xl_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-			LOG((errorlog, "           cause VBL NMI\n"));
+			LOG(("           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);
@@ -1592,7 +1592,7 @@ void a800xl_interrupt(void)
  *****************************************************************************/
 void a5200_interrupt(void)
 {
-	LOG((errorlog, "ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
+	LOG(("ANTIC #%3d @cycle #%d scanline interrupt\n", antic.scanline, cycle()));
 
     if( antic.scanline < VBL_START )
     {
@@ -1619,7 +1619,7 @@ void a5200_interrupt(void)
         /* if the CPU want's to be interrupted at vertical blank... */
 		if( antic.w.nmien & VBL_NMI )
         {
-			LOG((errorlog, "           cause VBL NMI\n"));
+			LOG(("           cause VBL NMI\n"));
             /* set the VBL NMI status bit */
             antic.r.nmist |= VBL_NMI;
 			cpu_set_nmi_line(0, PULSE_LINE);

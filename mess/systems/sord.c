@@ -27,6 +27,7 @@
 #include "includes/centroni.h"
 #include "devices/printer.h"
 #include "machine/8255ppi.h"
+#include "devices/cartslot.h"
 
 
 #define SORD_DEBUG

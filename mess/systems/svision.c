@@ -6,11 +6,12 @@
 
 #include <assert.h>
 #include "driver.h"
+#include "image.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
 #include "includes/svision.h"
-#include "image.h"
+#include "devices/cartslot.h"
 
 /*
 supervision

@@ -21,20 +21,15 @@
 #include "driver.h"
 
 #include "includes/centroni.h"
-#include "devices/printer.h"
-
-/* for 8255 ppi */
-#include "machine/8255ppi.h"
-/* for cycle tables */
-#include "cpu/z80/z80.h"
-/* CRTC display */
-#include "vidhrdw/m6845.h"
+#include "machine/8255ppi.h"	/* for 8255 ppi */
+#include "cpu/z80/z80.h"		/* for cycle tables */
+#include "vidhrdw/m6845.h"		/* CRTC display */
 #include "includes/amstrad.h"
-/* for floppy disc controller */
-#include "includes/nec765.h"
-/* for CPCEMU style disk images */
-#include "includes/dsk.h"
+#include "includes/nec765.h"	/* for floppy disc controller */
+#include "includes/dsk.h"		/* for CPCEMU style disk images */
 #include "devices/snapquik.h"
+#include "devices/cartslot.h"
+#include "devices/printer.h"
 
 #ifdef AMSTRAD_VIDEO_EVENT_LIST
 /* for event list */

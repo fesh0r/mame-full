@@ -98,11 +98,12 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
-#include "sound/tiaintf.h"
 #include "machine/6821pia.h"
+#include "sound/tiaintf.h"
 #include "sound/hc55516.h"
+#include "vidhrdw/generic.h"
+#include "devices/cartslot.h"
 
 #include "includes/a2600.h"
 

@@ -14,6 +14,7 @@
 #include "vidhrdw/generic.h"
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
+#include "devices/cartslot.h"
 
 unsigned char *battery_ram;
 unsigned char *main_ram;

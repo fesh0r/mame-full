@@ -16,6 +16,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/tiaintf.h"
+#include "devices/cartslot.h"
 
 #include "includes/a7800.h"
 

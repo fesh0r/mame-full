@@ -6,13 +6,14 @@
 
 ******************************************************************************/
 
-#include "driver.h"
-#include "cpu/m6502/m6502.h"
-
-#include "includes/lynx.h"
-#include "image.h"
-#include "devices/snapquik.h"
 #include <zlib.h>
+
+#include "driver.h"
+#include "image.h"
+#include "cpu/m6502/m6502.h"
+#include "devices/snapquik.h"
+#include "devices/cartslot.h"
+#include "includes/lynx.h"
 
 static int rotate=0;
 int lynx_rotate;

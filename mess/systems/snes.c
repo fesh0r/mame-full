@@ -29,6 +29,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "includes/snes.h"
+#include "devices/cartslot.h"
 
 static MEMORY_READ_START( snes_readmem )
 	{ 0x000000, 0x2fffff, snes_r_bank1 },	/* I/O and ROM (repeats for each bank) */

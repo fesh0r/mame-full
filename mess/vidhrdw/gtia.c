@@ -383,7 +383,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpm0 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpm0 $%02x\n", data);
+		logerror("atari colpm0 $%02x\n", data);
 #endif
 		SETCOL_B(PL0,data); 	/* set player 0 color */
 		SETCOL_B(MI0,data); 	/* set missile 0 color */
@@ -403,7 +403,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpm1 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpm1 $%02x\n", data);
+		logerror("atari colpm1 $%02x\n", data);
 #endif
 		SETCOL_B(PL1,data); 	/* set player color 1 */
 		SETCOL_B(MI1,data); 	/* set missile color 1 */
@@ -423,7 +423,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpm2 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpm2 $%02x\n", data);
+		logerror("atari colpm2 $%02x\n", data);
 #endif
 		SETCOL_B(PL2,data); 	/* set player 2 color */
 		SETCOL_B(MI2,data); 	/* set missile 2 color */
@@ -443,7 +443,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpm3 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpm3 $%02x\n", data);
+		logerror("atari colpm3 $%02x\n", data);
 #endif
 		SETCOL_B(PL3,data); 	/* set player 3 color */
 		SETCOL_B(MI3,data); 	/* set missile 3 color */
@@ -463,7 +463,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpf0 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpf0 $%02x\n", data);
+		logerror("atari colpf0 $%02x\n", data);
 #endif
 		SETCOL_B(PF0,data); 	/* set playfield 0 color */
 		SETCOL_B(GT2+4,data);	/* set GTIA mode 2 color 4 */
@@ -474,7 +474,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpf1 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpf1 $%02x\n", data);
+		logerror("atari colpf1 $%02x\n", data);
 #endif
 		SETCOL_B(PF1,data); 	/* set playfield 1 color */
 		SETCOL_B(GT2+5,data);	/* set GTIA mode 2 color 5 */
@@ -514,7 +514,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpf2 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpf2 $%02x\n", data);
+		logerror("atari colpf2 $%02x\n", data);
 #endif
 		SETCOL_B(PF2,data); 	/* set playfield color 2 */
 		SETCOL_B(GT2+6,data);	/* set GTIA mode 2 color 6 */
@@ -533,7 +533,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colpf3 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colpf3 $%02x\n", data);
+		logerror("atari colpf3 $%02x\n", data);
 #endif
 		SETCOL_B(PF3,data); 	/* set playfield color 3 */
 		SETCOL_B(GT2+7,data);	/* set GTIA mode 2 color 7 */
@@ -552,7 +552,7 @@ WRITE_HANDLER ( MWA_GTIA )
 			break;
 		gtia.w.colbk = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "atari colbk  $%02x\n", data);
+		logerror("atari colbk  $%02x\n", data);
 #endif
 		SETCOL_B(PBK,data); 	/* set background color */
 		SETCOL_B(GT2+8,data);	/* set GTIA mode 2 color 8 */

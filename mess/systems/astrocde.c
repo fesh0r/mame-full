@@ -38,6 +38,7 @@
 #include "sound/astrocde.h"
 #include "vidhrdw/generic.h"
 #include "includes/astrocde.h"
+#include "devices/cartslot.h"
 
 /****************************************************************************
  * Bally Astrocade

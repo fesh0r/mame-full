@@ -94,20 +94,16 @@
  ******************************************************************************/
 #include "driver.h"
 #include "includes/nc.h"
-/* for NC100 real time clock */
-#include "includes/tc8521.h"
-/* for NC100 uart */
-#include "includes/msm8251.h"
-/* for NC200 real time clock */
-#include "includes/mc146818.h"
-/* for NC200 disk drive interface */
-#include "includes/nec765.h"
-/* for NC200 disk image */
-#include "includes/pc_flopp.h"
-/* for serial data transfers */
-#include "includes/serial.h"
+#include "includes/tc8521.h"	/* for NC100 real time clock */
+#include "includes/msm8251.h"	/* for NC100 uart */
+#include "includes/mc146818.h"	/* for NC200 real time clock */
+#include "includes/nec765.h"	/* for NC200 disk drive interface */
+#include "includes/pc_flopp.h"	/* for NC200 disk image */
+#include "includes/serial.h"	/* for serial data transfers */
+#include "devices/cartslot.h"
+
 /* uncomment for verbose debugging information */
-#define VERBOSE
+/* #define VERBOSE */
 
 #define NC200_DEBUG
 

@@ -10,6 +10,7 @@
 #include "cpu/i8039/i8039.h"
 #include "vidhrdw/generic.h"
 #include "includes/odyssey2.h"
+#include "devices/cartslot.h"
 
 MEMORY_READ_START( readmem )
 	{ 0x0000, 0x03FF, MRA_ROM },
