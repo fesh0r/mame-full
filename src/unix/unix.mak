@@ -79,6 +79,10 @@ INST.photon2	= doinstall
 ifdef X11_MITSHM
 CFLAGS.x11 += -DUSE_MITSHM
 endif
+ifdef X11_XV
+CFLAGS.x11 += -DUSE_XV
+LIBS.x11   += -lXv
+endif
 ifdef X11_DGA
 CFLAGS.x11 += -DUSE_DGA
 LIBS.x11   += -lXxf86dga -lXxf86vm
@@ -216,6 +220,10 @@ endif
 ifdef SOUND_SDL
 CONFIG  += -DSYSDEP_DSP_SDL `sdl-config --cflags`
 MY_LIBS += `sdl-config --libs`
+endif
+
+ifdef SOUND_WAVEOUT
+CONFIG  += -DSYSDEP_DSP_WAVEOUT
 endif
 
 # Joystick drivers config
