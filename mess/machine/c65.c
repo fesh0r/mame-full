@@ -14,7 +14,7 @@
 #include "includes/cia6526.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
-#include "includes/vic6567.h"
+#include "includes/vic4567.h"
 #include "includes/sid6581.h"
 #include "includes/state.h"
 
@@ -320,6 +320,7 @@ static struct {
 
 #define FDC_CMD_MOTOR_SPIN_UP 0x10
 
+#if 0
 static void c65_fdc_state(void)
 {
 	switch (c65_fdc.state) {
@@ -331,6 +332,7 @@ static void c65_fdc_state(void)
 		break;
 	}
 }
+#endif
 
 static void c65_fdc_w(int offset, int data)
 {
@@ -465,7 +467,7 @@ WRITE_HANDLER ( c65_write_io )
 	switch(offset&0xf00) {
 	case 0x000:
 		if (offset < 0x80)
-			vic2_port_w (offset & 0x7f, data);
+			vic3_port_w (offset & 0x7f, data);
 		else if (offset < 0xa0) {
 			c65_fdc_w(offset&0x1f,data);
 		} else {
@@ -517,7 +519,7 @@ static READ_HANDLER ( c65_read_io )
 	switch(offset&0xf00) {
 	case 0x000:
 		if (offset < 0x80)
-			return vic2_port_r (offset & 0x7f);
+			return vic3_port_r (offset & 0x7f);
 		if (offset < 0xa0) {
 			return c65_fdc_r(offset&0x1f);
 		} else {

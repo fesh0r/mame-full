@@ -1,5 +1,7 @@
 // don't include this into the makefile
-// it is included in vic5667.c yet
+// it is included in vic6567.c yet
+
+#define OPTIMIZE
 
 #define VIC3_BITPLANES_MASK (vic2.reg[0x32])
 /* bit 0, 4 not used !?*/
@@ -12,7 +14,378 @@
 #define VIC3_BITPLANE_IADDR(x) ( x&1 ? VIC3_BITPLANE_IADDR_HELPER(x)+0x10000 \
 								: VIC3_BITPLANE_IADDR_HELPER(x) )
 
-#define OPTIMIZE
+unsigned char vic3_palette[0x100*3]={0};
+
+static struct {
+	struct {
+		UINT8 red, green, blue;
+	} palette[0x100];
+	int palette_dirty;
+} vic3;
+
+WRITE_HANDLER( vic3_palette_w )
+{
+	if (offset<0x100) vic3.palette[offset].red=data;
+	else if (offset<0x200) vic3.palette[offset&0xff].green=data;
+	else vic3.palette[offset&0xff].blue=data;
+	vic3.palette_dirty=1;
+}
+
+extern void vic4567_init (int pal, int (*dma_read) (int),
+						  int (*dma_read_color) (int), void (*irq) (int),
+						  void (*param_port_changed)(int))
+{
+	memset(&vic2, 0, sizeof(vic2));
+
+	vic2.lines = VIC2_LINES;
+	vic2.vic3=true;
+
+	vic2.dma_read = dma_read;
+	vic2.dma_read_color = dma_read_color;
+	vic2.interrupt = irq;
+	vic2.pal = pal;
+	vic2.port_changed = param_port_changed;
+	vic2.on = true;
+}
+
+WRITE_HANDLER ( vic3_port_w )
+{
+	DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
+	offset &= 0x7f;
+	switch (offset)
+	{
+	case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+	case 8: case 9: case 0xa: case 0xb: case 0xc: case 0xd: case 0xe: case 0xf:
+	case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+	case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+	case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+	case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e:
+		vic2_port_w(offset,data);
+		break;
+	case 0x2f:
+		DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
+		vic2.reg[offset] = data;
+		break;
+	case 0x30:
+		vic2.reg[offset] = data;
+		if (vic2.port_changed!=NULL) {
+			DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
+			vic2.reg[offset] = data;
+			vic2.port_changed(data);
+		}
+		break;
+	case 0x31:
+		vic2.reg[offset] = data;
+		if (data&0x40) timer_set_overclock(0,1.0);
+		else timer_set_overclock(0, 1.0/3.5);
+		break;
+	case 0x32:
+	case 0x33:
+	case 0x34:
+	case 0x35:
+	case 0x36:
+	case 0x37:
+	case 0x38:
+	case 0x39:
+	case 0x3a:
+	case 0x3b:
+	case 0x3c:
+	case 0x3d:
+	case 0x3e:
+	case 0x3f:
+		vic2.reg[offset] = data;
+		DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
+		break;
+	case 0x40:
+	case 0x41:
+	case 0x42:
+	case 0x43:
+	case 0x44:
+	case 0x45:
+	case 0x46:
+	case 0x47:
+		DBG_LOG (2, "vic plane write", ("%.2x:%.2x\n", offset, data));
+		break;
+	default:
+		vic2.reg[offset] = data;
+		break;
+	}
+}
+
+READ_HANDLER ( vic3_port_r )
+{
+	int val = 0;
+	offset &= 0x7f;
+	switch (offset)
+	{
+	case 0: case 1: case 2: case 3: case 4: case 5: case 6: case 7:
+	case 8: case 9: case 0xa: case 0xb: case 0xc: case 0xd: case 0xe: case 0xf:
+	case 0x10: case 0x11: case 0x12: case 0x13: case 0x14: case 0x15: case 0x16: case 0x17:
+	case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
+	case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+	case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e:
+		return vic2_port_r(offset);
+	case 0x2f:
+	case 0x30:
+		val = vic2.reg[offset];
+		DBG_LOG (2, "vic read", ("%.2x:%.2x\n", offset, val));
+		break;
+	case 0x31:
+	case 0x32:
+	case 0x33:
+	case 0x34:
+	case 0x35:
+	case 0x36:
+	case 0x37:
+	case 0x38:
+	case 0x39:
+	case 0x3a:
+	case 0x3b:
+	case 0x3c:
+	case 0x3d:
+	case 0x3e:
+	case 0x3f:						   /* not used */
+		val = vic2.reg[offset];
+		DBG_LOG (2, "vic read", ("%.2x:%.2x\n", offset, val));
+		break;
+	case 0x40:
+	case 0x41:
+	case 0x42:
+	case 0x43:
+	case 0x44:
+	case 0x45:
+	case 0x46:
+	case 0x47:
+		DBG_LOG (2, "vic3 plane read", ("%.2x:%.2x\n", offset, val));
+		break;
+	default:
+		val = vic2.reg[offset];
+	}
+	return val;
+}
+
+static void vic3_drawlines (int first, int last)
+{
+	int line, vline, end;
+	int attr, ch, ecm;
+	int syend;
+	int offs, yoff, xoff, ybegin, yend, xbegin, xend;
+	int x_end2;
+	int i, j;
+
+	if (first == last)
+		return;
+	vic2.lastline = last;
+	if (osd_skip_this_frame ())
+		return;
+
+	/* top part of display not rastered */
+	first -= VIC2_YPOS - YPOS;
+	last -= VIC2_YPOS - YPOS;
+	if ((first >= last) || (last <= 0))
+	{
+		for (i = 0; i < 8; i++)
+			vic2.sprites[i].repeat = vic2.sprites[i].line = 0;
+		return;
+	}
+	if (first < 0)
+		first = 0;
+
+	if (!SCREENON)
+	{
+		if (Machine->color_depth == 8)
+		{
+			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
+				memset (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
+		}
+		else
+		{
+			for (line = first; (line < last) && (line < vic2.bitmap->height); line++)
+				memset16 (vic2.bitmap->line[line], Machine->pens[0], vic2.bitmap->width);
+		}
+		return;
+	}
+	if (COLUMNS40)
+		xbegin = XPOS, xend = xbegin + 640;
+	else
+		xbegin = XPOS + 7, xend = xbegin + 624;
+
+	if (last < vic2.y_begin)
+		end = last;
+	else
+		end = vic2.y_begin + YPOS;
+	if (Machine->color_depth == 8)
+	{
+		for (line = first; line < end; line++)
+			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+					vic2.bitmap->width);
+	}
+	else
+	{
+		for (line = first; line < end; line++)
+			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+					  vic2.bitmap->width);
+	}
+	if (LINES25)
+	{
+		vline = line - vic2.y_begin - YPOS;
+	}
+	else
+	{
+		vline = line - vic2.y_begin - YPOS + 8 - VERTICALPOS;
+	}
+	if (last < vic2.y_end + YPOS)
+		end = last;
+	else
+		end = vic2.y_end + YPOS;
+	x_end2=vic2.x_end*2;
+	for (; line < end; vline = (vline + 8) & ~7, line = line + 1 + yend - ybegin)
+	{
+		offs = (vline >> 3) * 80;
+		ybegin = vline & 7;
+		yoff = line - ybegin;
+		yend = (yoff + 7 < end) ? 7 : (end - yoff - 1);
+		/* rendering 39 characters */
+		/* left and right borders are overwritten later */
+		vic2.shift[line] = HORICONTALPOS;
+
+		for (xoff = vic2.x_begin + XPOS; xoff < x_end2 + XPOS; xoff += 8, offs++)
+		{
+			ch = vic2.dma_read (vic2.videoaddr + offs);
+			attr = vic2.dma_read_color (vic2.videoaddr + offs);
+			if (HIRESON)
+			{
+				vic2.bitmapmulti[1] = vic2.c64_bitmap[1] = Machine->pens[ch >> 4];
+				vic2.bitmapmulti[2] = vic2.c64_bitmap[0] = Machine->pens[ch & 0xf];
+				if (MULTICOLORON)
+				{
+					vic2.bitmapmulti[3] = Machine->pens[attr];
+					vic2_draw_bitmap_multi (ybegin, yend, offs, yoff, xoff);
+				}
+				else
+				{
+					vic2_draw_bitmap (ybegin, yend, offs, yoff, xoff);
+				}
+			}
+			else if (ECMON)
+			{
+				ecm = ch >> 6;
+				vic2.ecmcolor[0] = vic2.colors[ecm];
+				vic2.ecmcolor[1] = Machine->pens[attr];
+				vic2_draw_character (ybegin, yend, ch & ~0xC0, yoff, xoff, vic2.ecmcolor);
+			}
+			else if (MULTICOLORON && (attr & 8))
+			{
+				vic2.multi[3] = Machine->pens[attr & 7];
+				vic2_draw_character_multi (ybegin, yend, ch, yoff, xoff);
+			}
+			else
+			{
+				vic2.mono[1] = Machine->pens[attr];
+				vic2_draw_character (ybegin, yend, ch, yoff, xoff, vic2.mono);
+			}
+		}
+		/* sprite priority, sprite overwrites lowerprior pixels */
+		for (i = 7; i >= 0; i--)
+		{
+			if (vic2.sprites[i].line || vic2.sprites[i].repeat)
+			{
+				syend = yend;
+				if (SPRITE_Y_EXPAND (i))
+				{
+					if ((21 - vic2.sprites[i].line) * 2 - vic2.sprites[i].repeat < yend - ybegin + 1)
+						syend = ybegin + (21 - vic2.sprites[i].line) * 2 - vic2.sprites[i].repeat - 1;
+				}
+				else
+				{
+					if (vic2.sprites[i].line + yend - ybegin + 1 > 20)
+						syend = ybegin + 20 - vic2.sprites[i].line;
+				}
+				if (yoff + syend > YPOS + 200)
+					syend = YPOS + 200 - yoff - 1;
+				if (SPRITE_MULTICOLOR (i))
+					vic2_draw_sprite_multi (i, yoff, ybegin, syend);
+				else
+					vic2_draw_sprite (i, yoff, ybegin, syend);
+				if ((syend != yend) || (vic2.sprites[i].line > 20))
+				{
+					vic2.sprites[i].line = vic2.sprites[i].repeat = 0;
+					for (j = syend; j <= yend; j++)
+						vic2.sprites[i].paintedline[j] = 0;
+				}
+			}
+			else if (SPRITEON (i) && (yoff + ybegin <= SPRITE_Y_POS (i))
+					 && (yoff + yend >= SPRITE_Y_POS (i)))
+			{
+				syend = yend;
+				if (SPRITE_Y_EXPAND (i))
+				{
+					if (21 * 2 < yend - ybegin + 1)
+						syend = ybegin + 21 * 2 - 1;
+				}
+				else
+				{
+					if (yend - ybegin + 1 > 21)
+						syend = ybegin + 21 - 1;
+				}
+				if (yoff + syend >= YPOS + 200)
+					syend = YPOS + 200 - yoff - 1;
+				for (j = 0; j < SPRITE_Y_POS (i) - yoff; j++)
+					vic2.sprites[i].paintedline[j] = 0;
+				if (SPRITE_MULTICOLOR (i))
+					vic2_draw_sprite_multi (i, yoff, SPRITE_Y_POS (i) - yoff, syend);
+				else
+					vic2_draw_sprite (i, yoff, SPRITE_Y_POS (i) - yoff, syend);
+				if ((syend != yend) || (vic2.sprites[i].line > 20))
+				{
+					for (j = syend; j <= yend; j++)
+						vic2.sprites[i].paintedline[j] = 0;
+					vic2.sprites[i].line = vic2.sprites[i].repeat = 0;
+				}
+			}
+			else
+			{
+				memset (vic2.sprites[i].paintedline, 0, sizeof (vic2.sprites[i].paintedline));
+			}
+		}
+		if (Machine->color_depth == 8)
+		{
+			for (i = ybegin; i <= yend; i++)
+			{
+				memset (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR], xbegin);
+				memset (vic2.bitmap->line[yoff + i] + xend, Machine->pens[FRAMECOLOR],
+						vic2.bitmap->width - xend);
+			}
+		}
+		else
+		{
+			for (i = ybegin; i <= yend; i++)
+			{
+				memset16 (vic2.bitmap->line[yoff + i], Machine->pens[FRAMECOLOR],
+						  xbegin);
+				memset16 ((short *) vic2.bitmap->line[yoff + i] + xend,
+						  Machine->pens[FRAMECOLOR], vic2.bitmap->width - xend);
+			}
+		}
+	}
+	if (last < vic2.bitmap->height)
+		end = last;
+	else
+		end = vic2.bitmap->height;
+	if (Machine->color_depth == 8)
+	{
+		for (; line < end; line++)
+			memset (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+					vic2.bitmap->width);
+	}
+	else
+	{
+		for (; line < end; line++)
+			memset16 (vic2.bitmap->line[line], Machine->pens[FRAMECOLOR],
+					  vic2.bitmap->width);
+	}
+}
+
 #ifndef OPTIMIZE
 INLINE UINT8 vic3_bitplane_to_packed(UINT8 *latch, int mask, int number)
 {
@@ -107,48 +480,98 @@ INLINE void vic3_draw_block(int x, int y, UINT8 colors[8])
 }
 
 #else
-// very recognizable SPEED improvement
+/* very recognizable SPEED improvement */
+#define VIC3_MASK(M)                                            \
+    if (M)                                                      \
+    {                                                           \
+        if (M & 0x01)                                    \
+            colors[0] = c64_memory[VIC3_ADDR(0)+offset];        \
+        if (M & 0x02)                                           \
+            colors[1] = c64_memory[VIC3_ADDR(1)+offset]<<1;     \
+        if (M & 0x04)                                    \
+            colors[2] = c64_memory[VIC3_ADDR(2)+offset]<<2;     \
+        if (M & 0x08)                                           \
+            colors[3] = c64_memory[VIC3_ADDR(3)+offset]<<3;     \
+        if (M & 0x10)                                           \
+            colors[4] = c64_memory[VIC3_ADDR(4)+offset]<<4;     \
+        if (M & 0x20)                                           \
+            colors[5] = c64_memory[VIC3_ADDR(5)+offset]<<5;     \
+        if (M & 0x40)                                           \
+            colors[6] = c64_memory[VIC3_ADDR(6)+offset]<<6;     \
+        if (M & 0x80)                                           \
+            colors[7] = c64_memory[VIC3_ADDR(7)+offset]<<7;     \
+        for (i=7; i >= 0; i--)                                  \
+        {                                                       \
+            p = 0;                                              \
+            if (M & 0x01)                                \
+            {                                                   \
+                p = colors[0] & 0x01;                           \
+                colors[0] >>= 1;                                \
+            }                                                   \
+            if (M & 0x02)                                       \
+            {                                                   \
+                p |= colors[1] & 0x02;                      \
+                colors[1] >>= 1;                                \
+            }                                                   \
+            if (M & 0x04)                                       \
+            {                                                   \
+                p |= colors[2] & 0x04;                      \
+                colors[2] >>= 1;                                \
+            }                                                   \
+            if (M & 0x08)                                       \
+            {                                                   \
+                p |= colors[3] & 0x08;                      \
+                colors[3] >>= 1;                                \
+            }                                                   \
+            if (M & 0x10)                                       \
+            {                                                   \
+                p |= colors[4] & 0x10;                      \
+                colors[4] >>= 1;                                \
+            }                                                   \
+            if (M & 0x20)                                       \
+            {                                                   \
+                p |= colors[5] & 0x20;                      \
+                colors[5] >>= 1;                                \
+            }                                                   \
+            if (M & 0x40)                                       \
+            {                                                   \
+                p |= colors[6] & 0x40;                      \
+                colors[6] >>= 1;                                \
+            }                                                   \
+            if (M & 0x80)                                       \
+            {                                                   \
+                p |= colors[7] & 0x80;                      \
+                colors[7] >>= 1;                                \
+            }                                                   \
+            vic2.bitmap->line[YPOS+y][XPOS+x+i] =               \
+                Machine->pens[p];                               \
+        }                                                       \
+    }
+
 #define VIC3_ADDR(a) VIC3_BITPLANE_IADDR(a)
-
-
-
-
-
-
 void vic3_interlace_draw_block(int x, int y, int offset)
 {
 	int colors[8]={0};
-	int i;
+	int i, p;
 
 	switch (VIC3_BITPLANES_MASK) {
-	case 5:
-#define VIC3_MASK 5
-#include "includes/vic4567.h"
+	case 0x05:
+		VIC3_MASK(0x05)
 		break;
-	case 7:
-#undef VIC3_MASK
-#define VIC3_MASK 7
-#include "includes/vic4567.h"
+    case 0x07:
+		VIC3_MASK(0x07)
 		break;
-	case 0xf:
-#undef VIC3_MASK
-#define VIC3_MASK 0xf
-#include "includes/vic4567.h"
+    case 0x0f:
+		VIC3_MASK(0x0f)
 		break;
-	case 0x1f:
-#undef VIC3_MASK
-#define VIC3_MASK 0x1f
-#include "includes/vic4567.h"
+    case 0x1f:
+		VIC3_MASK(0x1f)
 		break;
-	case 0x7f:
-#undef VIC3_MASK
-#define VIC3_MASK 0x7f
-#include "includes/vic4567.h"
+    case 0x7f:
+		VIC3_MASK(0x7f)
 		break;
-	case 0xff:
-#undef VIC3_MASK
-#define VIC3_MASK 0xff
-#include "includes/vic4567.h"
+    case 0xff:
+		VIC3_MASK(0xff)
 		break;
 	default:
 		if (VIC3_BITPLANES_MASK&1) {
@@ -194,43 +617,31 @@ void vic3_interlace_draw_block(int x, int y, int offset)
 }
 
 #undef VIC3_ADDR
-#undef VIC3_MASK
 #define VIC3_ADDR(a) VIC3_BITPLANE_ADDR(a)
 void vic3_draw_block(int x, int y, int offset)
 {
 	int colors[8]={0};
-	int i;
+	int i, p;
 
 	switch (VIC3_BITPLANES_MASK) {
 	case 5:
-#define VIC3_MASK 5
-#include "includes/vic4567.h"
+		VIC3_MASK(0x05)
 		break;
 	case 7:
-#undef VIC3_MASK
-#define VIC3_MASK 7
-#include "includes/vic4567.h"
-		break;
+		VIC3_MASK(0x07)
+        break;
 	case 0xf:
-#undef VIC3_MASK
-#define VIC3_MASK 0xf
-#include "includes/vic4567.h"
-		break;
+		VIC3_MASK(0x0f)
+        break;
 	case 0x1f:
-#undef VIC3_MASK
-#define VIC3_MASK 0x1f
-#include "includes/vic4567.h"
-		break;
+		VIC3_MASK(0x1f)
+        break;
 	case 0x7f:
-#undef VIC3_MASK
-#define VIC3_MASK 0x7f
-#include "includes/vic4567.h"
-		break;
+		VIC3_MASK(0x7f)
+        break;
 	case 0xff:
-#undef VIC3_MASK
-#define VIC3_MASK 0xff
-#include "includes/vic4567.h"
-		break;
+		VIC3_MASK(0xff)
+        break;
 	default:
 		if (VIC3_BITPLANES_MASK&1) {
 			colors[0]=c64_memory[VIC3_BITPLANE_ADDR(0)+offset];
@@ -324,30 +735,98 @@ void vic3_draw_bitplanes(void)
 		vis.min_x=0;
 		vis.max_x=XPOS-1;
 		vis.min_y=0;
-		vis.max_y=Machine->visible_area.max_y;
+		vis.max_y=Machine->uiheight-1;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
 	if (XPOS+VIC3_BITPLANES_WIDTH<Machine->visible_area.max_x) {
 		vis.min_x=XPOS+VIC3_BITPLANES_WIDTH;
-		vis.max_x=Machine->visible_area.max_x;
+		vis.max_x=Machine->uiwidth-1;
 		vis.min_y=0;
-		vis.max_y=Machine->visible_area.max_y;
+		vis.max_y=Machine->uiheight-1;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
 	if (YPOS>0) {
 		vis.min_y=0;
 		vis.max_y=YPOS-1;
 		vis.min_x=0;
-		vis.max_x=Machine->visible_area.max_x;
+		vis.max_x=Machine->uiwidth-1;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
-#if 0
 	if (YPOS+VIC3_LINES<Machine->visible_area.max_y) {
 		vis.min_y=YPOS+VIC3_LINES;
-		vis.max_y=Machine->visible_area.max_y;
+		vis.max_y=Machine->uiheight-1;
 		vis.min_x=0;
-		vis.max_x=Machine->visible_area.max_x;
+		vis.max_x=Machine->uiwidth-1;
 		fillbitmap(vic2.bitmap, Machine->pens[FRAMECOLOR],&vis);
 	}
-#endif
 }
+
+int vic3_raster_irq (void)
+{
+	static int columns=640, raws=200;
+	int new_columns, new_raws;
+	int i;
+
+	vic2.rasterline++;
+	if (vic2.rasterline >= vic2.lines)
+	{
+		vic2.rasterline = 0;
+		if (vic3.palette_dirty) {
+			for (i=0; i<256; i++) {
+				palette_change_color(i,vic3.palette[i].red<<4,
+									 vic3.palette[i].green<<4,
+									 vic3.palette[i].blue<<4);
+			}
+		}
+		palette_recalc();
+		if (vic3.palette_dirty) {
+			vic2.spritemulti[1] = Machine->pens[SPRITE_MULTICOLOR1];
+			vic2.spritemulti[3] = Machine->pens[SPRITE_MULTICOLOR2];
+			vic2.mono[0] = vic2.bitmapmulti[0] = vic2.multi[0] =
+				vic2.colors[0] = Machine->pens[BACKGROUNDCOLOR];
+			vic2.multi[1] = vic2.colors[1] = Machine->pens[MULTICOLOR1];
+			vic2.multi[2] = vic2.colors[2] = Machine->pens[MULTICOLOR2];
+			vic2.colors[3] = Machine->pens[FOREGROUNDCOLOR];
+			vic3.palette_dirty=0;
+		}
+		new_raws=200;
+		if (VIC3_BITPLANES) {
+			new_columns=VIC3_BITPLANES_WIDTH;
+			if (new_columns<320) new_columns=320; /*sprites resolution about 320x200 */
+			new_raws=VIC3_LINES;
+		} else if (VIC3_80COLUMNS) {
+			new_columns=640;
+		} else {
+			new_columns=320;
+		}
+		if ((new_columns!=columns)||(new_raws!=raws)) {
+			raws=new_raws;
+			columns=new_columns;
+			osd_set_visible_area(0,columns+16-1,0, raws+16-1);
+		}
+		if (VIC3_BITPLANES) {
+			if (!osd_skip_this_frame ()) vic3_draw_bitplanes();
+		} else {
+			if (vic2.on) vic2_drawlines (vic2.lastline, vic2.lines);
+		}
+		for (i = 0; i < 8; i++)
+			vic2.sprites[i].repeat = vic2.sprites[i].line = 0;
+		vic2.lastline = 0;
+		if (LIGHTPEN_BUTTON)
+		{
+			double tme = 0.0;
+			
+			/* lightpen timer starten */
+			vic2.lightpentimer = timer_set (tme, 1, vic2_timer_timeout);
+		}
+		//state_display(vic2.bitmap);
+	}
+	if (vic2.rasterline == C64_2_RASTERLINE (RASTERLINE))
+	{
+		if (vic2.on)
+			vic2_drawlines (vic2.lastline, vic2.rasterline);
+		vic2_set_interrupt (1);
+	}
+	return 0;
+}
+

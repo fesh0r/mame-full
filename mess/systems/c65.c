@@ -7,143 +7,12 @@
 
 ***************************************************************************/
 
-/*
-------------------------------------
-c65	commodore c65 (ntsc version)
-c65pal	commodore c65 (pal version)
-------------------------------------
-(preliminary version)
-
-if the game runs to fast with the ntsc version, try the pal version!
-flickering affects in one video version, try the other video version
-
-c65 prototype
- hardware emulation mode for c64
-  adapter needed for c64 cartridges (many should work)
-  only standard c64 keys plus cursor-up and cursor-left
-  cpu not full compatible (no illegal instructions)
- enhanced keyboard
- m65ce02 processor core (1 or 3.5 Mhz frequency)
- vic3 (4567) with additional capabilities
-  vic2 compatibility mode
-  graphic modes
-  80 column modes
- second sid audio chip (both 8580)
- uart 6511 rs232 chip
- special dma controller
- 128 kb ram
- 128 kb rom (kernel, editor, basic, monitor, characters, c64 roms)
- build in mfm floppy disk 3 1/2 inch double sided double density
- connector for second mem floppy disk
- special ram expansion slot
- rs232 connector (round din)
- no tape connector
- new expansion slot
-
-state
------
-only booting
-major memory management problems
-
-rasterline based video system
- quick modified vic6567/c64 video chip
- no support for enhanced features, only 80 column mode
- no cpu holding
- imperfect scrolling support (when 40 columns or 25 lines)
- lightpen support not finished
- rasterline not finished
-no sound
-cia6526's look in machine/cia6526.c
-keyboard
-gameport a
- paddles 1,2
- joystick 1
- 2 button joystick/mouse joystick emulation
- no mouse
- lightpen (not finished)
-gameport b
- paddles 3,4
- joystick 2
- 2 button joystick/mouse joystick emulation
- no mouse
-serial bus
- simple disk drives
- no printer or other devices
-expansion modules
- none (did there any exist)
-expansion modules c64 (adapter needed)
- ultimax rom cartridges
- rom cartridges (exrom)
- no other rom cartridges (bankswitching logic in it, switching exrom, game)
- no ieee488 support
- no cpm cartridge
- no speech cartridge (no circuit diagram found)
- no fm sound cartridge
- no other expansion modules
-no userport
- no rs232/v.24 interface
-preliminary quickloader
-
-Keys
-----
-Some PC-Keyboards does not behave well when special two or more keys are
-pressed at the same time
-(with my keyboard printscreen clears the pressed pause key!)
-
-shift-cbm switches between upper-only and normal character set
-(when wrong characters on screen this can help)
-run (shift-stop) loads pogram from type and starts it
-
-Lightpen
---------
-Paddle 5 x-axe
-Paddle 6 y-axe
-
-Discs
------
-only file load from drive 8 and 9 implemented
- loads file from rom directory (*.prg,*.p00) (must NOT be specified on commandline
- or file from d64 image (here also directory LOAD"$",8 supported)
-use LOAD"filename",8
-or LOAD"filename",8,1 (for loading machine language programs at their address)
-for loading
-type RUN or the appropriate sys call to start them
-
-several programs rely on more features
-(loading other file types, writing, ...)
-
-most games rely on starting own programs in the floppy drive
-(and therefor cpu level emulation is needed)
-
-Roms
-----
-.prg
-.crt
-.80 .90 .a0 .b0 .e0 .f0
-files with boot-sign in it
-  recogniced as roms
-
-.prg files loaded at address in its first two bytes
-.?0 files to address specified in extension
-.crt roms to addresses in crt file
-
-Quickloader
------------
-.prg and .p00 files supported
-loads program into memory and sets program end pointer
-(works with most programs)
-program ready to get started with RUN
-loads first rom when you press quickload key (numeric slash)
-
-when problems start with -log and look into error.log file
-*/
-
 #include "driver.h"
 
 #define VERBOSE_DBG 0
 #include "includes/cbm.h"
 #include "includes/cia6526.h"
-#include "includes/vic6567.h"
+#include "includes/vic4567.h"
 #include "includes/sid6581.h"
 #include "includes/cbmserb.h"
 #include "includes/vc1541.h"
@@ -542,7 +411,7 @@ static struct MachineDriver machine_driver_c65 =
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
+			vic3_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
 	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -582,7 +451,7 @@ static struct MachineDriver machine_driver_c65pal =
 			c65_readmem, c65_writemem,
 			0, 0,
 			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
+			vic3_raster_irq, VIC2_HRETRACERATE,
 		},
 	},
 	VIC6569_VRETRACERATE,

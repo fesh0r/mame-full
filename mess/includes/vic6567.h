@@ -15,10 +15,6 @@
 extern void vic6567_init (int vic2e, int pal, int (*dma_read) (int),
 						  int (*dma_read_color) (int), void (*irq) (int));
 
-extern void vic4567_init (int pal, int (*dma_read) (int),
-						  int (*dma_read_color) (int), void (*irq) (int),
-						  void (*param_port_changed)(int));
-
 extern void vic2_set_rastering(int onoff);
 
 #define VIC6567_VRETRACERATE 60
@@ -55,7 +51,6 @@ extern void vic2_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 extern int vic2_raster_irq (void);
 
 extern unsigned char vic2_palette[16 * 3];
-extern unsigned char vic3_palette[0x100 * 3];
 
 /* to be inserted in GameDriver-Structure */
 
@@ -70,8 +65,6 @@ extern void vic2_lightpen_write (int level);
 int vic2e_k0_r (void);
 int vic2e_k1_r (void);
 int vic2e_k2_r (void);
-
-WRITE_HANDLER( vic3_palette_w );
 
 /* to be called each vertical retrace */
 extern int vic2_frame_interrupt (void);
