@@ -347,7 +347,7 @@ WRITE_HANDLER (v9938_vram_w)
 	{
 	int address;
 
-	v9938_update_command ();
+	/*v9938_update_command ();*/
 
 	vdp.cmd_write_first = 0;
 
@@ -571,12 +571,13 @@ static void v9938_register_write (int reg, int data)
 		return;
 		}
 
+	/*v9938_update_command (); */
+
 	switch (reg)
 		{
 		/* registers that affect interrupt and display mode */
 		case 0:
 		case 1:
-			v9938_update_command ();
 			vdp.contReg[reg] = data;
 			v9938_set_mode ();
 			v9938_check_int ();
@@ -652,7 +653,7 @@ READ_HANDLER (v9938_status_r)
 			vdp.statReg[1] &= 0xfe;
 			break;
 		case 2:
-			v9938_update_command ();
+			/*v9938_update_command ();*/
 			if ( (cpu_getcurrentcycles () % 227) > 170) vdp.statReg[2] |= 0x20;
 			else vdp.statReg[2] &= ~0x20;
 			ret = vdp.statReg[2];
@@ -1356,8 +1357,6 @@ static void v9938_interrupt_bottom (void)
 	/* at every interrupt, vdp switches fields */
 	vdp.statReg[2] = (vdp.statReg[2] & 0xfd) | (~vdp.statReg[2] & 2);
 
-	v9938_update_command ();
-
 	/* color blinking */
 	if (!(vdp.contReg[13] & 0xf0))
 		vdp.blink = 0;
@@ -1400,6 +1399,8 @@ int v9938_interrupt (void)
 	{
 	UINT8 col[256];
 	int scanline, max;
+
+	v9938_update_command ();
 
 	if (vdp.scanline == vdp.offset_y)
 		{
@@ -2479,12 +2480,12 @@ static void v9938_update_command (void)
 {
   if(VdpOpsCnt<=0)
   {
-    VdpOpsCnt+=12500*60;
+    VdpOpsCnt+=13662;
     if(VdpEngine&&(VdpOpsCnt>0)) VdpEngine();
   }
   else
   {
-    VdpOpsCnt=12500*60;
+    VdpOpsCnt=13662;
     if(VdpEngine) VdpEngine();
   }
 }
