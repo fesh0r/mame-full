@@ -63,6 +63,7 @@ TODO:
 #include "99_dsk.h"
 #include "99_ide.h"
 #include "99_hsgpl.h"
+#include "99_usbsm.h"
 
 #include "sound/tms5220.h"	/* for tms5220_set_variant() */
 
@@ -140,6 +141,8 @@ static char has_handset;
 static char has_hsgpl;
 /* TRUE if mechatronics mouse present */
 static char has_mecmouse;
+/* TRUE if usb-sm card present */
+static char has_usb_sm;
 
 
 /* tms9901 setup */
@@ -758,6 +761,7 @@ void machine_init_ti99(void)
 	has_rs232 = (readinputport(input_port_config) >> config_rs232_bit) & config_rs232_mask;
 	has_handset = (ti99_model == model_99_4) && ((readinputport(input_port_config) >> config_handsets_bit) & config_handsets_mask);
 	has_hsgpl = (ti99_model == model_99_4p) || ((readinputport(input_port_config) >> config_hsgpl_bit) & config_hsgpl_mask);
+	has_usb_sm = (readinputport(input_port_config) >> config_usbsm_bit) & config_usbsm_mask;
 
 	/* set up optional expansion hardware */
 	ti99_peb_init(ti99_model == model_99_4p, tms9901_set_int1, NULL);
@@ -849,6 +853,9 @@ void machine_init_ti99(void)
 	}
 	else
 		hsgpl_crdena = 0;
+
+	if (has_usb_sm)
+		ti99_usbsm_init(ti99_model == model_99_8);
 
 	if (has_evpc)
 		ti99_evpc_init();

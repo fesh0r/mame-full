@@ -210,6 +210,7 @@
 #include "machine/99_dsk.h"
 #include "machine/99_ide.h"
 #include "devices/mflopimg.h"
+#include "machine/smartmed.h"
 
 /*
 	memory map
@@ -266,6 +267,9 @@ INPUT_PORTS_START(geneve)
 		PORT_BITX( config_rs232_mask << config_rs232_bit, 1 << config_rs232_bit, IPT_DIPSWITCH_NAME, "TI RS232 card", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_rs232_bit, DEF_STR( On ) )
+		PORT_BITX( config_usbsm_mask << config_usbsm_bit, 1 << config_usbsm_bit, IPT_DIPSWITCH_NAME, "Nouspickel's USB-SM card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_usbsm_bit, DEF_STR( On ) )
 
 	PORT_START	/* col 1: "wired handset 1" (= joystick 1) */
 		PORT_BIT(0x0080, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1/*, "(1UP)", IP_KEY_NONE, OSD_JOY_UP*/)
@@ -537,6 +541,7 @@ SYSTEM_CONFIG_START(geneve)
 	CONFIG_DEVICE_LEGACY			(IO_HARDDISK, 	4, "hd\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,device_init_ti99_hd, NULL, device_load_ti99_hd, device_unload_ti99_hd, NULL)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
+	CONFIG_DEVICE_LEGACY			(IO_MEMCARD,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,	device_init_smartmedia,	NULL,	device_load_smartmedia,	device_unload_smartmedia,	NULL)
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME	  PARENT	COMPAT	MACHINE		 INPUT	  INIT		CONFIG	COMPANY		FULLNAME */

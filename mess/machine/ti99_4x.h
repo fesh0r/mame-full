@@ -136,7 +136,9 @@ enum
 	config_hsgpl_bit	= 9,
 	config_hsgpl_mask	= 0x1,
 	config_mecmouse_bit	= 10,
-	config_mecmouse_mask= 0x1
+	config_mecmouse_mask= 0x1,
+	config_usbsm_bit	= 11,
+	config_usbsm_mask	= 0x1
 };
 
 

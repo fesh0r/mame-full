@@ -35,7 +35,8 @@ System Driver Changes:
 
 - [TI99,GENEVE] Fixed various bugs in HSGPL ROM6 support.  Enabled the IDE card
   for the Geneve and ti99/8 drivers (this involved fixing a design flaw in the
-  original IDE card prorotype).
+  original IDE card prototype).  Added preliminary support for the SmartMedia
+  part of the  USB-SmartMedia card.
 
 - [ZX81] Tape loading added [Krzysztof Strzecha]
 

@@ -159,6 +159,7 @@ Keyboard interface:
 #include "cpu/tms9900/tms9900.h"
 #include "devices/mflopimg.h"
 #include "devices/cassette.h"
+#include "machine/smartmed.h"
 
 /*
 	Memory map - see description above
@@ -212,6 +213,9 @@ INPUT_PORTS_START(ti99_8)
 		PORT_BITX( config_mecmouse_mask << config_mecmouse_bit, 0, IPT_DIPSWITCH_NAME, "Mechatronics Mouse", KEYCODE_NONE, IP_JOY_NONE )
 			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
 			PORT_DIPSETTING( 1 << config_mecmouse_bit, DEF_STR( On ) )
+		PORT_BITX( config_usbsm_mask << config_usbsm_bit, 1 << config_usbsm_bit, IPT_DIPSWITCH_NAME, "Nouspickel's USB-SM card", KEYCODE_NONE, IP_JOY_NONE )
+			PORT_DIPSETTING( 0x0000, DEF_STR( Off ) )
+			PORT_DIPSETTING( 1 << config_usbsm_bit, DEF_STR( On ) )
 
 
 	/* 3 ports for mouse */
@@ -504,6 +508,7 @@ SYSTEM_CONFIG_START(ti99_8)
 	CONFIG_DEVICE_LEGACY			(IO_PARALLEL,	1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_pio,	device_unload_ti99_4_pio,		NULL)
 	CONFIG_DEVICE_LEGACY			(IO_SERIAL,		1, "\0",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_4_rs232,	device_unload_ti99_4_rs232,	NULL)
 	/*CONFIG_DEVICE_LEGACY			(IO_QUICKLOAD,	1, "\0",	DEVICE_LOAD_RESETS_CPU,		OSD_FOPEN_RW_CREATE_OR_READ,	NULL,	NULL,	device_load_ti99_hsgpl,		device_unload_ti99_hsgpl,	NULL)*/
+	CONFIG_DEVICE_LEGACY			(IO_MEMCARD,	1, "",	DEVICE_LOAD_RESETS_NONE,	OSD_FOPEN_RW_OR_READ,	device_init_smartmedia,	NULL,	device_load_smartmedia,	device_unload_smartmedia,	NULL)
 #endif
 
 SYSTEM_CONFIG_END

@@ -15,6 +15,7 @@
 #include "994x_ser.h"
 #include "99_dsk.h"
 #include "99_ide.h"
+#include "99_usbsm.h"
 
 
 /* prototypes */
@@ -61,6 +62,8 @@ static char has_ide;
 static char has_rs232;
 /* TRUE if genmod extension present */
 /*static char has_genmod;*/
+/* TRUE if usb-sm card present */
+static char has_usb_sm;
 
 
 /* tms9901 setup */
@@ -235,6 +238,7 @@ void machine_init_geneve(void)
 	fdc_kind = (readinputport(input_port_config) >> config_fdc_bit) & config_fdc_mask;
 	has_ide = (readinputport(input_port_config) >> config_ide_bit) & config_ide_mask;
 	has_rs232 = (readinputport(input_port_config) >> config_rs232_bit) & config_rs232_mask;
+	has_usb_sm = (readinputport(input_port_config) >> config_usbsm_bit) & config_usbsm_mask;
 
 	/* set up optional expansion hardware */
 	ti99_peb_init(0, inta_callback, intb_callback);
@@ -266,6 +270,9 @@ void machine_init_geneve(void)
 
 	if (has_rs232)
 		ti99_rs232_init();
+
+	if (has_usb_sm)
+		ti99_usbsm_init(TRUE);
 }
 
 void machine_stop_geneve(void)
