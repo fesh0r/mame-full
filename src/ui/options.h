@@ -397,6 +397,7 @@ typedef struct
 } settings_type; /* global settings for the UI only */
 
 BOOL OptionsInit(void);
+void FolderOptionsInit(void);
 void OptionsExit(void);
 
 void FreeGameOptions(options_type *o);
@@ -405,6 +406,12 @@ void SyncInGameOptions(options_type *opts, const char *filename);
 void SyncInFolderOptions(options_type *opts, int folder_index);
 options_type * GetDefaultOptions(int iProperty, BOOL bVectorFolder);
 options_type * GetFolderOptions(int folder_index, BOOL bIsVector);
+
+int * GetFolderOptionsRedirectArr(void);
+void SetFolderOptionsRedirectArr(int *redirect_arr);
+int GetRedirectIndex(int folder_index);
+int GetRedirectValue(int index);
+
 options_type * GetVectorOptions(void);
 options_type * GetSourceOptions(int driver_index );
 options_type * GetGameOptions(int driver_index, int folder_index );

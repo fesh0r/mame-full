@@ -479,6 +479,7 @@ static HINSTANCE hInst = NULL;
 static HFONT hFont = NULL;     /* Font for list view */
 
 static int              game_count = 0;
+static int optionfolder_count = 0;
 
 /* global data--know where to send messages */
 static BOOL in_emulation;
@@ -1001,28 +1002,72 @@ static BOOL WaitWithMessageLoop(HANDLE hEvent)
 
 static int RunMAME(int nGameIndex)
 {
+	time_t start, end;
+	double elapsedtime;
+
 #if MULTISESSION
 	int argc = 0;
-	char *argv[100];
+	const char *argv[100];
 	char pModule[_MAX_PATH];
-	char game_name[500];
 	extern int DECL_SPEC main_(int, char**);
-		
-	ShowWindow(hMain, SW_HIDE);
+	int exit_code;
 
 	GetModuleFileName(GetModuleHandle(NULL), pModule, _MAX_PATH);
-	argv[0] = pModule;
-	strcpy(game_name,drivers[nGameIndex]->name);
-	argv[1] = game_name;
-	argc = 2;
+	argv[argc++] = pModule;
+	argv[argc++] = drivers[nGameIndex]->name;
 
-	main_(argc, argv);
-
-	// recover windows cursor and our main window
-	while (1)
+	if (override_playback_directory != NULL)
 	{
-		if (ShowCursor(TRUE) >= 0)
-			break;
+		argv[argc++] = "-input_directory";
+		argv[argc++] = override_playback_directory;
+	}
+	if (g_pPlayBkName != NULL)
+	{
+		argv[argc++] = "-pb";
+		argv[argc++] = g_pPlayBkName;
+	}
+	if (g_pRecordName != NULL)
+	{
+		argv[argc++] = "-rec";
+		argv[argc++] = g_pRecordName;
+	}
+	if (g_pRecordWaveName != NULL)
+	{
+		argv[argc++] = "-wavwrite";
+		argv[argc++] = g_pRecordWaveName;
+	}
+	if (g_pSaveStateName != NULL)
+	{
+		argv[argc++] = "-state";
+		argv[argc++] = g_pSaveStateName;
+	}
+
+	ShowWindow(hMain, SW_HIDE);
+
+	time(&start);
+	exit_code = main_(argc, (char **)argv);
+	time(&end);
+
+	elapsedtime = end - start;
+	if (exit_code == 0)
+	{
+		// Check the exitcode before incrementing Playtime
+		IncrementPlayTime(nGameIndex, elapsedtime);
+		ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
+	}
+
+	if (GetHideMouseOnStartup())
+	{
+		ShowCursor(FALSE);
+	}
+	else
+	{
+		// recover windows cursor and our main window
+		while (1)
+		{
+			if (ShowCursor(TRUE) >= 0)
+				break;
+		}
 	}
 	ShowWindow(hMain, SW_SHOW);
 
@@ -1034,8 +1079,6 @@ static int RunMAME(int nGameIndex)
 	STARTUPINFO         si;
 	PROCESS_INFORMATION pi;
 	char pCmdLine[2048];
-	time_t start, end;
-	double elapsedtime;
 	HWND hGameWnd = NULL;
 	long lGameWndStyle = 0;
 
@@ -1311,6 +1354,19 @@ int GetNumGames()
 {
 	return game_count;
 }
+
+/* Return the number of folders with options */
+int GetNumOptionFolders()
+{
+	return optionfolder_count;
+}
+
+/* Return the number of folders with options */
+void SetNumOptionFolders(int count)
+{
+	optionfolder_count = count;
+}
+
 
 /* Sets the treeview and listviews sizes in accordance with their visibility and the splitters */
 static void ResizeTreeAndListViews(BOOL bResizeHidden)
@@ -1984,7 +2040,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 	dprintf("about to init tree");
 	InitTree(g_folderData, g_filterList);
 	dprintf("did init tree");
-
+	FolderOptionsInit();
 	PropertiesInit();
 
 	/* Initialize listview columns */

@@ -32,6 +32,8 @@ typedef struct
 HWND GetMainWindow(void);
 HWND GetTreeView(void);
 int GetNumGames(void);
+int GetNumOptionFolders(void);
+void SetNumOptionFolders(int count);
 void GetRealColumnOrder(int order[]);
 HICON LoadIconFromFile(const char *iconname);
 void UpdateScreenShot(void);

@@ -394,14 +394,21 @@ LPFILTER_ITEM GetFilterList(void)
 
 void CreateSourceFolders(int parent_index)
 {
-	int i,jj;
+	int i,jj, k=0;
 	int nGames = GetNumGames();
 	int start_folder = numFolders;
 	LPTREEFOLDER lpFolder = treeFolders[parent_index];
-
+	int *redirect_arr = GetFolderOptionsRedirectArr();
 	// no games in top level folder
 	SetAllBits(lpFolder->m_lpGameBits,FALSE);
-	
+	if( redirect_arr == NULL)
+	{
+		redirect_arr = (int*)malloc(sizeof(int*) );
+		memset(redirect_arr, '\0', sizeof (int*));
+	}	
+	//We also allow setting of options for the Vector Folder
+	redirect_arr = realloc(redirect_arr, ((k+1)* sizeof(int)) );
+	redirect_arr[k++] = FOLDER_VECTOR;
 	for (jj = 0; jj < nGames; jj++)
 	{
 		const char *s = GetDriverFilename(jj);
@@ -433,12 +440,17 @@ void CreateSourceFolders(int parent_index)
 			ExtraFolderData[next_folder_id]->m_nParent = lpFolder->m_nFolderId;
 			ExtraFolderData[next_folder_id]->m_nSubIconId = -1;
 			strcpy( ExtraFolderData[next_folder_id]->m_szTitle, s );
+			//Add it to the FolderOptionsRedirectArray
+			redirect_arr = realloc(redirect_arr, ((k+1)* sizeof(int)) );
+			redirect_arr[k++] = next_folder_id;
 			ExtraFolderData[next_folder_id++]->m_dwFlags = 0;
 
 			AddFolder(lpTemp);
 			AddGame(lpTemp,jj);
 		}
 	}
+	SetNumOptionFolders(k-1);
+	SetFolderOptionsRedirectArr(redirect_arr);
 }
 
 void CreateManufacturerFolders(int parent_index)
