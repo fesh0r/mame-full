@@ -191,7 +191,7 @@ void apple2_setvar(UINT32 val, UINT32 mask)
 	{
 		rom_length = memory_region_length(REGION_CPU1);
 		if (rom_length >= 0x10000)
-			offset = (rom_length - 1) & ~0x7FFF;
+			offset = (rom_length - 1) & ~0x3FFF;
 		else
 			offset = (a2 & VAR_ROMSWITCH) ? 0x4000 : 0x0000;
 		apple_rom = &memory_region(REGION_CPU1)[offset];
