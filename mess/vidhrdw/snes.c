@@ -764,7 +764,7 @@ static void snes_update_line_mode7( UINT16 curline )
  *********************************************/
 INLINE void snes_update_objects( UINT8 screen, UINT16 curline )
 {
-	INT8 xs, ys, tileincr;
+	INT8 xs, ys;
 	UINT8 line;
 	UINT16 oam, oam_extra, extra;
 	UINT8 range_over = 0, time_over = 0;
