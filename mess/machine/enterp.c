@@ -9,7 +9,7 @@
 
 #include <stdarg.h>
 #include "driver.h"
-#include "cpu/Z80/Z80.h"
+#include "cpu/z80/z80.h"
 #include "machine/enterp.h"
 
 extern unsigned char *Enterprise_RAM;

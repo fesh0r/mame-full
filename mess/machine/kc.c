@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "machine/z80fmly.h"
-#include "cpu\z80\z80.h"
+#include "cpu/z80/z80.h"
 #include "vidhrdw/kc.h"
 
 #define KC85_4_SCREEN_WIDTH 320
