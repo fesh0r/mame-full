@@ -34,8 +34,7 @@ int  sysdep_display_alloc_palette(int writable_colors);
 int  sysdep_display_set_pen(int pen, unsigned char red, unsigned char green, unsigned char blue);
 extern int widthscale, heightscale;
 
-/* private methods */
-static int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
+int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
    *info, unsigned char red, unsigned char green, unsigned char blue)
 {
    int pen = 0;
@@ -69,14 +68,17 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    struct sysdep_palette_struct *palette = NULL;
    int lookup_size = 0;
    
+
    /* verify if the display can handle the requested depth */
+/* HDG: we have downscaling now, so this should be verified by the display
+   driver now!
    if ( display_palette_info.depth < depth )
    {
       fprintf(stderr,
          "error in sysdep_palette_create: %d bpp requested on a %d bpp display\n",
          depth, display_palette_info.depth);
       return NULL;
-   }
+   } */
    
 /* If the display gets recreated this must be done again, but the
    palette can be kept, so now the creator of the display is responsible

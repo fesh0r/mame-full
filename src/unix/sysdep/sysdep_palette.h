@@ -99,5 +99,8 @@ void sysdep_palette_mark_dirty(struct sysdep_palette_struct *palette);
 
 void sysdep_palette_clear_dirty(struct sysdep_palette_struct *palette);
 
+int sysdep_palette_make_pen_from_info(struct sysdep_palette_info
+   *info, unsigned char red, unsigned char green, unsigned char blue);
+
 #include "end_code.h"
 #endif /* ifndef __SYSDEP_PALETTE_H */
