@@ -1,7 +1,7 @@
 /*
 	TMS9901 Programmable System Interface
 
-	Raphael Nabet, 2000-2003
+	Raphael Nabet, 2000-2004
 */
 
 #include <math.h>
@@ -33,13 +33,12 @@ Pins:
 	RST1*: reset input
 	CRUIN, CRUOUT, CRUCLK, CE*, S0-S4: CRU bus (CPU interface)
 	INTREQ*, IC0-IC3: interrupt bus (CPU interface)
-	INT1-INT7: used as interrupt/input pins.
-	P0-P7: used as input/output pins.
-	INT8/P15-INT15/P8: used as either interrupt/input or input/output pins.
+	INT*1-INT*6: used as interrupt/input pins.
+	P0-P6: used as input/output pins.
+	INT*7/P15-INT*15/P7: used as either interrupt/input or input/output pins.
 	  Note that a pin cannot be used simultaneously as output and as interrupt.
 	  (This is mostly obvious, but it implies that you cannot trigger an
 	  interrupt by setting the output state of a pin, which is not SO obvious.)
-	
 
 Interrupt handling:
 	After each clock cycle, TMS9901 latches the state of INT1*-INT15* (except
@@ -57,12 +56,12 @@ Interrupt handling:
 	This interrupt request lasts for as long as the interrupt pin and the
 	relevant bit in the interrupt mask are set (level-triggered interrupts).
 	(The request may be shadowed by a higher-priority interrupt request, but
-	it will resume when the higher level request ends.)
+	it will resume when the higher-priority request ends.)
 
 	TIMER interrupts are kind of an exception, since they are not associated
 	with an external interrupt pin.  I think there is an internal timer
 	interrupt flag that is set when the decrementer reaches 0, and is cleared
-	by a write to the 9901 int3 enable bit ("SBO 3").
+	by a write to the 9901 int*3 enable bit ("SBO 3" in interrupt mode).
 
 TODO:
 	* Emulate the RST1* input.  Note that RST1* active (low) makes INTREQ*
@@ -115,8 +114,9 @@ typedef struct tms9901_t
 	int latchedtimer;		/* when we go into timer mode, the decrementer is copied there to allow to read it reliably */
 
 	int mode9901;			/* TMS9901 current mode
-							  0 = I/O mode,
-							  1 = Clock mode (we're programming the clock). */
+							  0 = so-called interrupt mode (read interrupt
+							    state, write interrupt enable mask)
+							  1 = clock mode (read/write clock interval) */
 
 	/* driver-dependent read and write handlers */
 	int (*read_handlers[4])(int offset);
@@ -364,11 +364,11 @@ int tms9901_cru_r(int which, int offset)
 	{
 	case 0:
 		if (tms9901[which].mode9901)
-		{	/* timer mode */
+		{	/* clock mode */
 			answer = ((tms9901[which].latchedtimer & 0x7F) << 1) | 0x01;
 		}
 		else
-		{	/* I/O mode */
+		{	/* interrupt mode */
 			answer = ((~ tms9901[which].int_state) & tms9901[which].supported_int_mask) & 0xFF;
 
 			if (tms9901[which].read_handlers[0])
@@ -380,13 +380,13 @@ int tms9901_cru_r(int which, int offset)
 		break;
 	case 1:
 		if (tms9901[which].mode9901)
-		{	/* timer mode */
+		{	/* clock mode */
 			answer = (tms9901[which].latchedtimer & 0x3F80) >> 7;
 			if (! tms9901[which].int_pending)
 				answer |= 0x80;
 		}
 		else
-		{	/* I/O mode */
+		{	/* interrupt mode */
 			answer = ((~ tms9901[which].int_state) & tms9901[which].supported_int_mask) >> 8;
 
 			if (tms9901[which].read_handlers[1])
@@ -495,7 +495,7 @@ void tms9901_cru_w(int which, int offset, int data)
 			tms9901_timer_reload(which);
 		}
 		else
-		{	/* modify interrupt mask */
+		{	/* modify interrupt enable mask */
 			int mask = 1 << (offset & 0x0F);	/* corresponding mask */
 
 			if (data)
@@ -522,7 +522,7 @@ void tms9901_cru_w(int which, int offset, int data)
 			}
 		}
 		else
-		{	/* modify interrupt mask */
+		{	/* modify interrupt enable mask */
 			if (data)
 				tms9901[which].enabled_ints |= 0x4000;		/* set bit */
 			else
