@@ -137,7 +137,7 @@ READ_HANDLER ( coleco_paddle_r )
 			else
 				data = 0x0F;
 
-			return (inport1 & 0xF0) | (data);
+			return (inport1 & 0x70) | (data);
 
 		}
 		/* Joystick and fire 2*/
@@ -182,7 +182,7 @@ READ_HANDLER ( coleco_paddle_r )
 			else
 				data = 0x0F;
 
-			return (inport4 & 0xF0) | (data);
+			return (inport4 & 0x70) | (data);
 
 		}
 		/* Joystick and fire 2*/
