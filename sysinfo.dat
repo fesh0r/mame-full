@@ -1523,6 +1523,72 @@ came with a few software titles."
 
 $end
 
+#---------------------------------------------------------------------------------------------#
+
+$info=lisa2
+$bio
+Apple Lisa
+
+
+History and Trivia:
+
+The Lisa project started in the summer of 1979.  At the time, the idea was merely designing
+a powerful business computer, with scheduled release in march 1981.  After its legendary visit
+to the Xerox PARC research center, Steve Jobs realized the GUI was the future of computing.
+So, in March 1980, a GUI was added to the Lisa specs. As a consequence, Lisa borrowed many ideas
+from the Macintosh project, which included a GUI from the beginning.
+
+In spite of huge support from Apple, the project got behind schedule, and Lisa was introduced
+on January, 19th, 1983.
+
+
+The Lisa was an impressive computer for its time. It had TONS of memory (1Mb on Lisa 1),
+a high-resolution graphic display, and it was fairly expandable.  Its OS (weirdly called
+"Lisa 7/7 Office System") featured a complete GUI, and full preemptive multitasking
+with memory protection (something neither Windows 98 nor MacOS offer !).
+Its 68000 CPU was one of the fastest microprocessor in its time.
+
+Unfortunately, Lisa was never too successful. It was quite expensive. Little software was developped
+for it. Also, it was extremely ressource hungry : it was reportedly slow, and its memory
+requirement was the major cause for its high price.
+
+
+In January 1984, Lisa 1 was replaced by Lisa 2, with 3.5'' floppies and several small
+hardware changes. In January 1985, Lisa 2 was replaced by Macintosh XL, which had a modified video
+hardware, and used a variant of the Macintosh system instead of the 7/7 Lisa OS. Mac XL was
+discontinued in May 1985.
+
+
+The significance of Lisa :
+
+Lisa is a milestone in the history of computing. Arguably, the Xerox PARC research center invented
+most GUI concepts (along with Object Oriented programming and Ethernet) 10 years before Lisa was
+introduced. However, although Xerox research was public, and some Xerox Altos were actually sold,
+or given to universities, these experiments remained little known, and raised little interest.
+I guess this was because computing was mostly the field of highly-trained professionnals who did
+not care about ease of use (you know, the same kind of guys who laughed at Macintosh and worshipped
+the early IBM-PCs). So, Lisa made the world aware that GUI could exist, all the more since Apple
+was a major computer maker. Also, Lisa (along with Macintosh, Atari ST and Commodore Amiga)
+introduced GUI to the hobbyists and home computer users, which enabled GUI to live.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mac512ke
+$bio
+Apple Macintosh 512ke
+
+
+History and Trivia:
+
+The Macintosh 512ke was essentially a Mac512k with the same 128k ROMs and double-sided
+800 KB internal floppy drive as the Mac Plus.
+
+It was sold as a poor man's Macintosh.  Also, Mac512k could be upgraded to a 512ke.
+(It could be upgraded to a Mac Plus, too, but it involved changing the motherbord.)
+
+$end
 
 #---------------------------------------------------------------------------------------------#
 
@@ -1534,14 +1600,17 @@ Apple Macintosh Plus
 History and Trivia:
 
 The Macintosh Plus was the first real improvement of the Macintosh 128 (The Macintosh 512 was 
-only a Mac 128 with 512 KB RAM). It had a lot of new features: the extended ROM held the new 
+only a Mac 128 with 512 KB RAM). It had a lot of new features : the extended ROM held the new 
 version of MAC OS : enhanced graphic libraries, drivers for hard disk and external floppy disk 
-units, SCSI bus and AppleTalk network and the new files manager: HFS (Hierarchical File System).
+units, SCSI bus and AppleTalk network and the new file system : HFS (Hierarchical File System -
+which actually had with Hard Disk-20 months before).
 
 The new floppy disk unit could use double-sided 800 KB disks (compared to only one-sided 400 
 KB for the 128). It has an enhanced keyboard with a numeric pad and last but not least, it 
-had a SCSI 1 (1.5 MB/s) interface. This computer was replaced in 1988 by the new Macintosh 
-series: the Macintosh SE and the Macintosh II.
+had a SCSI 1 (1.5 MB/s) interface. This computer was introduced in early 1986.
+This computer was superseeded in 1987 by the new Macintosh series : the Macintosh SE and the
+Macintosh II ; but it remained in production as a cheaper alternative until the introduction of
+Mac Classic.
 
 
 $end
