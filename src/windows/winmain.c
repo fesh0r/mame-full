@@ -55,10 +55,10 @@ static int original_leds;
 //============================================================
 //	PROTOTYPES
 //============================================================
-
+#ifndef USE_DRMINGW
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
-
+#endif
 
 
 //============================================================
@@ -264,7 +264,7 @@ fprintf(stderr, "esp = %08x  ebp = %08x\n", esp, ebp);
 //============================================================
 //	lookup_symbol
 //============================================================
-
+#ifndef USE_DRMINGW
 static const char *lookup_symbol(UINT32 address)
 {
 	static char buffer[1024];
@@ -297,3 +297,5 @@ static const char *lookup_symbol(UINT32 address)
 	sprintf(buffer, " (%s+0x%04x)", best_symbol, address - best_addr);
 	return buffer;
 }
+#endif
+
