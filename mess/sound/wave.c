@@ -464,10 +464,12 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 
 				/* get the sample (unless we are muted) */
 				if (!(w->status & WAVE_STATUS_MUTED))
+				{
 					if (w->resolution == 16)
 						sample = *((INT16 *)w->data + pos);
 					else
 						sample = *((INT8 *)w->data + pos)*256;
+				}
 
 				if (++pos >= w->samples)
 				{
