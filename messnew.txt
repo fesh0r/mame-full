@@ -4,6 +4,10 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 (none)
 
+System Driver Changes:
+----------------------
+- [SNES] Fixed background scrolling. Added 16x16 tile mode. Improved Mode 21
+  SRAM support. [Anthony Kruize]
 
 Source Changes:
 ---------------
