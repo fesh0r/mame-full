@@ -867,7 +867,7 @@ static struct MachineDriver machine_driver_avigo =
 
 ROM_START(avigo)
         ROM_REGION((64*1024)+0x0150000, REGION_CPU1,0)
-        ROM_LOAD("avigo.rom", 0x010000, 0x0150000, 0x0000)
+        ROM_LOAD("avigo.rom", 0x010000, 0x0150000, 0x160ee4a6)
 ROM_END
 
 
