@@ -598,7 +598,7 @@ static int ram_init(const struct GameDriver *gamedrv)
 		memset(mess_ram, 0xcd, mess_ram_size);
 
 		state_save_register_UINT32("mess", 0, "ramsize", &mess_ram_size, 1);
-		state_save_register_UINT8("mess", 0, "mess_ram", mess_ram, mess_ram_size);
+		state_save_register_UINT8("mess", 0, "ram", mess_ram, mess_ram_size);
 	}
 	else
 	{
