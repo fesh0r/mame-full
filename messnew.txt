@@ -4,8 +4,7 @@ New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 NEC PC8801SR [Shouhei Nishi]
 Emerson Arcadia 2001 (preliminary) [PeT]
-Amiga (re-enabled)
-Interton VC4000 (preliminary) [PeT]
+Amiga (re-enabled) (doesn't work with 68000 C-core)
 More Nascom1/2 official releases [JoJo]
 Sharp PC1403/1403H (preliminary) [PeT]
 Texas Instruments TI-86 (preliminary) [Krzysztof Strzecha]
@@ -114,11 +113,6 @@ System Driver Changes:
 - [LYNX] Preliminary sound support & fix of the stereo allocation. Stereo enabled.
   Added enhanced blitter modes and multiplier. Added rasterline rendering,
   screen flipping, fixed reset and added audio/timer connection. [PeT]
-
-- [ODYSSEY2] added collision support. [PeT]
-
-- [MK1] Added basic video/keyboard/interrupt functionality. The driver is now
-  functional. [PeT]
 
 - [VZ200] Video code has been temporarily reverted to Jurgen's code, and doesn't
   make use of the new M6847 features. [Nate Woods]
