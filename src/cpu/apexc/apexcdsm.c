@@ -23,30 +23,30 @@
 
 		Printed format						Name
 	0         1         2
-	0123456789012345678901234
-	Stop              (##/##)			one_address
-	I                 (##/##)			one_address
-	P                 (##/##)			one_address
-	B      <(##/##) >=(##/##)			branch
-	l ##              (##/##)			shiftl
-	r ##              (##/##)			shiftr
-	Illegal           (##/##)			one_address
-	X ##    (##)      (##/##)			multiply
-	X       (##)      (##/##)			multiply
-	+c      (##/##)   (##/##)			two_address
-	-c      (##/##)   (##/##)			two_address
-	+       (##/##)   (##/##)			two_address
-	-       (##/##)   (##/##)			two_address
-	T       (##/##)   (##/##)			two_address
-	R  1-## (##/##)   (##/##)			store
-	R ##-32 (##/##)   (##/##)			store
-	R       (##/##)   (##/##)			store
-	A  1-## (##/##)   (##/##)			store
-	A ##-32 (##/##)   (##/##)			store
-	A       (##/##)   (##/##)			store
-	S       (##)      (##/##)			swap
-	+------++--------++-----+
-	mnemonic X field  Y field
+	012345678901234567890123456
+	Stop                (##/##)			one_address
+	I                   (##/##)			one_address
+	P                   (##/##)			one_address
+	B        <(##/##) >=(##/##)			branch
+	l (##)              (##/##)			shiftl
+	r (##)              (##/##)			shiftr
+	Illegal             (##/##)			one_address
+	X (##)    (##)      (##/##)			multiply
+	X         (##)      (##/##)			multiply
+	+c        (##/##)   (##/##)			two_address
+	-c        (##/##)   (##/##)			two_address
+	+         (##/##)   (##/##)			two_address
+	-         (##/##)   (##/##)			two_address
+	T         (##/##)   (##/##)			two_address
+	R  (1-##) (##/##)   (##/##)			store
+	R (##-32) (##/##)   (##/##)			store
+	R         (##/##)   (##/##)			store
+	A  (1-##) (##/##)   (##/##)			store
+	A (##-32) (##/##)   (##/##)			store
+	A         (##/##)   (##/##)			store
+	S         (##)      (##/##)			swap
+	+--------++--------++-----+
+	mnemonic   X field  Y field
 	 field
 
 	For vector instructions, replace the first space on the right of the mnemonic
@@ -101,7 +101,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 	case two_address:
 	case branch:
 	case swap:
-		buffer += sprintf(buffer, "%-8s", mnemonic);	/* 8 chars*/
+		buffer += sprintf(buffer, "%-10s", mnemonic);	/* 10 chars*/
 		break;
 
 	case shiftl:
@@ -110,32 +110,32 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 			n = c6;
 		else
 			n = 64-c6;
-		buffer += sprintf(buffer, "%-2s%2d    ", mnemonic, n);	/* 8 chars */
+		buffer += sprintf(buffer, "%-2s(%2d)    ", mnemonic, n);	/* 10 chars */
 		break;
 
 	case multiply:
 		n = 33-c6;
 		if (n == 32)
 			/* case "32" : do not show bit specifier */
-			buffer += sprintf(buffer, "%-8s", mnemonic);	/* 8 chars */
+			buffer += sprintf(buffer, "%-10s", mnemonic);	/* 10 chars */
 		else
-			buffer += sprintf(buffer, "%-2s%2d    ", mnemonic, n);	/* 8 chars */
+			buffer += sprintf(buffer, "%-2s(%2d)    ", mnemonic, n);	/* 10 chars */
 		break;
 
 	case store:
 		if (c6 == 0)
 		{	/* case "1-32" : do not show bit specifier */
-			buffer += sprintf(buffer, "%-8s", mnemonic);	/* 8 chars*/
+			buffer += sprintf(buffer, "%-10s", mnemonic);	/* 10 chars*/
 		}
 		else if (c6 & 0x20)
 		{	/* case "1-n" */
 			n = c6-32;
-			buffer += sprintf(buffer, "%-2s 1-%02d ", mnemonic, n);	/* 8 chars */
+			buffer += sprintf(buffer, "%-2s (1-%02d) ", mnemonic, n);	/* 10 chars */
 		}
 		else
 		{	/* case "n-32" */
 			n = c6+1;
-			buffer += sprintf(buffer, "%-2s%2d-32 ", mnemonic, n);	/* 8 chars */
+			buffer += sprintf(buffer, "%-2s(%02d-32) ", mnemonic, n);	/* 8 chars */
 		}
 	}
 
@@ -149,7 +149,7 @@ unsigned DasmAPEXC(char *buffer, unsigned pc)
 
 	case multiply:
 	case swap:
-		buffer += sprintf(buffer, "   (%02d)   ", (x >> 5) & 0x1f);	/* 10 chars */
+		buffer += sprintf(buffer, "(%02d)      ", (x >> 5) & 0x1f);	/* 10 chars */
 		break;
 
 	case one_address:
