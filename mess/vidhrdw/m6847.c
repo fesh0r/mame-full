@@ -75,16 +75,16 @@ static double artifactfactors[] = {
 	1.000, 0.500, 0.000, /* [ 1] */
 	0.000, 0.500, 1.000  /* [ 2] */
 #elif M6847_ARTIFACT_COLOR_COUNT == 14
-	0.157, 0.000, 0.157, /* [ 1] - dk purple   (reverse  3) */
-	1.000, 0.824, 1.000, /* [ 2] - lt purple   (reverse  4) */
-	0.000, 0.157, 0.000, /* [ 3] - dk green    (reverse  1) */
-	0.824, 1.000, 0.824, /* [ 4] - lt green    (reverse  2) */
-	0.706, 0.236, 0.118, /* [ 5] - dk blue     (reverse  8) */
-	1.000, 0.500, 0.000, /* [ 6] - blue        (reverse  9) */
-	1.000, 0.550, 0.393, /* [ 7] - lt blue     (reverse 10) */
-	0.000, 0.197, 0.471, /* [ 8] - dk red      (reverse  5) */
-	0.000, 0.500, 1.000, /* [ 9] - red         (reverse  6) */
-	0.275, 0.785, 1.000, /* [10] - lt red      (reverse  7) */
+	0.157, 0.000, 0.157, /* [ 1] - dk purple   (reverse  2) */
+	0.000, 0.157, 0.000, /* [ 2] - dk green    (reverse  1) */
+	1.000, 0.824, 1.000, /* [ 3] - lt purple   (reverse  4) */
+	0.824, 1.000, 0.824, /* [ 4] - lt green    (reverse  3) */
+	0.706, 0.236, 0.118, /* [ 5] - dk blue     (reverse  6) */
+	0.000, 0.197, 0.471, /* [ 6] - dk red      (reverse  5) */
+	1.000, 0.550, 0.393, /* [ 7] - lt blue     (reverse  8) */
+	0.275, 0.785, 1.000, /* [ 8] - lt red      (reverse  7) */
+	0.000, 0.500, 1.000, /* [ 9] - red         (reverse 10) */
+	1.000, 0.500, 0.000, /* [10] - blue        (reverse  9) */
 	1.000, 0.942, 0.785, /* [11] - cyan        (reverse 12) */
 	0.393, 0.942, 1.000, /* [12] - yellow      (reverse 11) */
 	0.236, 0.000, 0.000, /* [13] - black-blue  (reverse 14) */
@@ -793,7 +793,7 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 	struct rasterbits_frame rf;
 	int artifact_value;
 
-	artifact_value = (the_state.initparams.artifactdipswitch == -1) ? 0 : readinputport(the_state.initparams.artifactdipswitch);
+	artifact_value = (the_state.initparams.artifactdipswitch == -1) ? 0 : (readinputport(the_state.initparams.artifactdipswitch) & 3);
 
 	internal_m6847_vh_screenrefresh(&rs, &rvm, &rf,
 		full_refresh, m6847_metapalette, the_state.initparams.ram,

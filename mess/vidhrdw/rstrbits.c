@@ -147,23 +147,23 @@ static void build_scanline1a(UINT8 *scanline, UINT8 *vram, int length, int scale
 	 */
 #if 1
 	static int artifactcorrection[64][2] = {
-		{ 0,  0}, { 0,	0}, { 0,  8}, { 0,	3},
-		{ 5,  7}, { 5,	7}, { 1,  2}, { 1, 11},
-		{10,  8}, {10, 14}, {10,  9}, {10,	9},
+		{ 0,  0}, { 0,	0}, { 0,  6}, { 0,	2},
+		{ 5,  7}, { 5,	7}, { 1,  3}, { 1, 11},
+		{ 8,  6}, { 8, 14}, { 8,  9}, { 8,	9},
 		{ 4,  4}, { 4, 15}, {12, 12}, {12, 15},
 
-		{ 5, 13}, { 5, 13}, {13,  0}, {13,	3},
-		{ 6,  6}, { 6,	6}, { 6, 15}, { 6, 11},
-		{ 2,  1}, { 2,	1}, {15,  9}, {15,	9},
+		{ 5, 13}, { 5, 13}, {13,  0}, {13,	2},
+		{10, 10}, {10, 10}, {10, 15}, {10, 11},
+		{ 3,  1}, { 3,	1}, {15,  9}, {15,	9},
 		{11, 11}, {11, 11}, {15, 15}, {15, 15},
 
-		{14,  0}, {14,	0}, {14,  8}, {14,	3},
-		{ 0,  7}, { 0,	7}, { 1,  2}, { 1, 11},
-		{ 9,  8}, { 9, 14}, { 9,  9}, { 9,	9},
+		{14,  0}, {14,	0}, {14,  6}, {14,	2},
+		{ 0,  7}, { 0,	7}, { 1,  3}, { 1, 11},
+		{ 9,  6}, { 9, 14}, { 9,  9}, { 9,	9},
 		{15,  4}, {15, 15}, {12, 12}, {12, 15},
 
-		{ 3, 13}, { 3, 13}, { 3,  0}, { 3,	3},
-		{ 6,  6}, { 6,	6}, { 6, 15}, { 6, 11},
+		{ 2, 13}, { 2, 13}, { 2,  0}, { 2,	2},
+		{10, 10}, {10, 10}, {10, 15}, {10, 11},
 		{12,  1}, {12,	1}, {12,  9}, {12,	9},
 		{15, 11}, {15, 11}, {15, 15}, {15, 15}
 	};
@@ -253,18 +253,10 @@ static void build_scanline1(UINT8 *scanline, UINT8 *vram, int length, int scale,
 	}
 }
 
-static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UINT8 *c1, int reverse)
+static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UINT8 *c1)
 {
 	double v;
-	double rval[3];
 	int i;
-
-	if (reverse) {
-		rval[0] = val[2];
-		rval[1] = val[1];
-		rval[2] = val[0];
-		val = rval;
-	}
 
 	for (i = 0; i < 3; i++) {
 		v = (c0[i] * (1.0 - val[i])) + (c1[i] * val[i]);
@@ -274,7 +266,7 @@ static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UI
 
 static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_artifacting *artifact, UINT32 *artifactpens)
 {
-	int i, j;
+	int i, ii, j;
 	int totalcolors, palettebase;
 	const double *table;
 	UINT8 myrgb[3];
@@ -299,7 +291,11 @@ static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_a
 	}
 
 	for (i = 1; i < (totalcolors-1); i++) {
-		mix_colors(myrgb, &table[(i-1)*3], rgb0, rgb1, artifact->flags & RASTERBITS_ARTIFACT_REVERSE);
+		ii = i - 1;
+		if (artifact->flags & RASTERBITS_ARTIFACT_REVERSE)
+			ii ^= 1;
+
+		mix_colors(myrgb, &table[ii*3], rgb0, rgb1);
 
 		if (palettebase < 0) {
 			/* Search palette for matching color; start at the end of table because thats where we put stuff */
@@ -325,7 +321,7 @@ static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_a
 void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16 c1,
 	const double *colorfactors, int numfactors, int reverse)
 {
-	int i;
+	int i, ii;
 	const UINT8 *rgb0;
 	const UINT8 *rgb1;
 
@@ -334,7 +330,11 @@ void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16
 	destpalette += (destcolor * 3);
 
 	for (i = 0; i < numfactors; i++) {
-		mix_colors(&destpalette[i * 3], &colorfactors[i * 3], rgb0, rgb1, reverse);
+		ii = i;
+		if (reverse)
+			ii ^= 1;
+
+		mix_colors(&destpalette[i * 3], &colorfactors[ii * 3], rgb0, rgb1);
 	}
 }
 

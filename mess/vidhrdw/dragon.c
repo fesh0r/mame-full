@@ -117,7 +117,7 @@ static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 	m6847_vh_normalparams(&p);
 	p.version = m6847_version;
 	p.clock = COCO_TIMER_CMPCARRIER;
-	p.artifactdipswitch = 12;
+	p.artifactdipswitch = COCO_DIP_ARTIFACTING;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
 	p.charproc = charproc;
@@ -164,7 +164,7 @@ int coco3_vh_start(void)
 	m6847_vh_normalparams(&p);
 	p.version = M6847_VERSION_M6847T1;
 	p.clock = COCO_TIMER_CMPCARRIER;
-	p.artifactdipswitch = 12;
+	p.artifactdipswitch = COCO_DIP_ARTIFACTING;
 	p.ram = memory_region(REGION_CPU1);
 	p.ramsize = 0x10000;
 	p.charproc = coco2b_charproc;
