@@ -79,5 +79,14 @@ enum {
 int m6847_get_bordercolor(void);
 void m6847_get_bordercolor_rgb(int *red, int *green, int *blue);
 
+struct m6847_state {
+	int vram_mask;
+	int video_offset;
+	int video_gmode;
+	int video_vmode;
+};
+
+extern struct m6847_state the_state;
+
 #endif /* _M6847_H */
 

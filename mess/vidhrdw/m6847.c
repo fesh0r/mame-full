@@ -11,11 +11,7 @@
 /* The "Back doors" are declared here */
 #include "includes/dragon.h"
 
-static int vram_mask;
-static int video_offset;
-static int video_gmode;
-static int video_vmode;
-static int video_rowheight;
+struct m6847_state the_state;
 static m6847_vblank_proc vblankproc;
 static int artifact_dipswitch;
 
@@ -235,12 +231,7 @@ static void calc_videoram_size(void)
 		512,	512,	512,	512,	512,	512,	512,	512,
 		1024,	1024,	2048,	1536,	3072,	3072,	6144,	6144
 	};
-	static int rowheights[] = {
-		12,		12,		12,		12,		12,		12,		12,		12,
-		3,		3,		3,		2,		2,		1,		1,		1
-	};
-	videoram_size = videoramsizes[video_vmode >> 1];
-	video_rowheight = rowheights[video_vmode >> 1];
+	videoram_size = videoramsizes[the_state.video_vmode >> 1];
 }
 
 /* --------------------------------------------------
@@ -254,10 +245,10 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 
 int internal_m6847_vh_start(int maxvram)
 {
-	vram_mask = 0;
-	video_offset = 0;
-	video_gmode = 0;
-	video_vmode = 0;
+	the_state.vram_mask = 0;
+	the_state.video_offset = 0;
+	the_state.video_gmode = 0;
+	the_state.video_vmode = 0;
 	vblankproc = NULL;
 	artifact_dipswitch = -1;
 
@@ -278,12 +269,12 @@ int m6847_vh_start(void)
 void m6847_set_vram(void *ram, int rammask)
 {
 	videoram = ram;
-	vram_mask = rammask;
+	the_state.vram_mask = rammask;
 }
 
 void m6847_set_vram_mask(int rammask)
 {
-	vram_mask = rammask;
+	the_state.vram_mask = rammask;
 }
 
 void m6847_set_vblank_proc(m6847_vblank_proc proc)
@@ -663,7 +654,7 @@ void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
  *     bit 0	color set
  */
 void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh,
-	const int *metapalette, UINT8 *vrambase, int vrampos, int vramsize,
+	const int *metapalette, UINT8 *vrambase, struct m6847_state *currentstate,
 	int has_lowercase, int basex, int basey, int wf, artifactproc artifact)
 {
 	int x, y, fg, bg, x2, y2;
@@ -673,33 +664,45 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 	UINT8 b;
 	int artifactpalette[4];
 	UINT8 *cptr;
+	int vrampos;
+	int vramsize;
+	int video_rowheight;
+
+	static int rowheights[] = {
+		12,		12,		12,		12,		12,		12,		12,		12,
+		3,		3,		3,		2,		2,		1,		1,		1
+	};
+
+	video_rowheight = rowheights[currentstate->video_vmode >> 1];
+	vrampos = currentstate->video_offset;
+	vramsize = currentstate->vram_mask + 1;
 
 	db = dirtybuffer;
 	if (full_refresh) {
 		memset(dirtybuffer, 1, videoram_size);
 	}
 
-	if (video_gmode & 0x10)
+	if (currentstate->video_gmode & 0x10)
 	{
-		if ((video_gmode & 0x02) && !(artifact && ((video_gmode & 0x1e) == M6847_MODE_G4R)))
+		if ((currentstate->video_gmode & 0x02) && !(artifact && ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R)))
 		{
 			/* Resolution modes */
 
-			rowbytes = ((video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
-			blitgraphics2(bitmap, vrambase, vrampos, vramsize, db, &metapalette[video_gmode & 0x1 ? 10 : 8],
+			rowbytes = ((currentstate->video_gmode & 0x1e) == M6847_MODE_G4R) ? 32 : 16;
+			blitgraphics2(bitmap, vrambase, vrampos, vramsize, db, &metapalette[currentstate->video_gmode & 0x1 ? 10 : 8],
 				rowbytes, 192 / video_rowheight, basex, basey, (32 / rowbytes) * wf, video_rowheight, 0);
 		}
 		else
 		{
 			/* Color modes */
-			rowbytes = ((video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
+			rowbytes = ((currentstate->video_gmode & 0x1e) != M6847_MODE_G1C) ? 32 : 16;
 
 			/* Are we doing PMODE 4 artifact colors? */
-			artifacting = ((video_gmode & 0x0c) == 0x0c) && (video_gmode & 0x02);
+			artifacting = ((currentstate->video_gmode & 0x0c) == 0x0c) && (currentstate->video_gmode & 0x02);
 			if (artifacting) {
 				/* I am here because we are doing PMODE 4 artifact colors */
-				artifactpalette[0] = metapalette[video_gmode & 0x1 ? 10: 8];
-				artifactpalette[3] = metapalette[video_gmode & 0x1 ? 11: 9];
+				artifactpalette[0] = metapalette[currentstate->video_gmode & 0x1 ? 10: 8];
+				artifactpalette[3] = metapalette[currentstate->video_gmode & 0x1 ? 11: 9];
 				artifact(artifactpalette);
 
 				blitgraphics4artifact(bitmap, vrambase, vrampos, vramsize, db, artifactpalette,
@@ -707,7 +710,7 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 			}
 			else {
 				/* If not, calculate offset normally */
-				blitgraphics4(bitmap, vrambase, vrampos, vramsize, db, &metapalette[video_gmode & 0x1 ? 4: 0],
+				blitgraphics4(bitmap, vrambase, vrampos, vramsize, db, &metapalette[currentstate->video_gmode & 0x1 ? 4: 0],
 					rowbytes, 192 / video_rowheight, basex, basey, 64 / rowbytes * wf, video_rowheight, 0);
 			}
 		}
@@ -723,10 +726,10 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 				if (*db) {
 					b = *vidram;
 
-					if (!has_lowercase && (video_gmode & 0x02)) {
+					if (!has_lowercase && (currentstate->video_gmode & 0x02)) {
 						/* Semigraphics 6 */
 						bg = 8;
-						fg = ((b >> 6) & 0x3) + (video_gmode & 0x1 ? 4: 0);
+						fg = ((b >> 6) & 0x3) + (currentstate->video_gmode & 0x1 ? 4: 0);
 						b = 64 + (b & 0x3f);
 					}
 					else if (*vidram & 0x80) {
@@ -737,18 +740,18 @@ void internal_m6847_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 					}
 					else {
 						/* Text */
-						bg = (video_gmode & 0x01) ? 14 : 12;
+						bg = (currentstate->video_gmode & 0x01) ? 14 : 12;
 
 						/* On the M6847T1 and the CoCo 3 GIME chip, bit 2 of video_gmode
 						 * reversed the colors
 						 *
 						 * TODO: Find out what the normal M6847 did with bit 2
 						 */
-						if (video_gmode & 0x04)
+						if (currentstate->video_gmode & 0x04)
 							bg ^= 1;
 
 						/* Is this character lowercase or inverse? */
-						if ((video_gmode & 0x02) && (b < 0x20)) {
+						if ((currentstate->video_gmode & 0x02) && (b < 0x20)) {
 							/* This character is lowercase */
 							b += 144;
 						}
@@ -887,7 +890,7 @@ void m6847_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 		m6847_drawborder(bitmap, 256, 192);
 
 	internal_m6847_vh_screenrefresh(bitmap, full_refresh, m6847_metapalette, videoram,
-		video_offset, vram_mask + 1, FALSE,
+		&the_state, FALSE,
 		(bitmap->width - 256) / 2, (bitmap->height - 192) / 2,
 		1, artifacts[artifact_value & 3]);
 }
@@ -904,8 +907,8 @@ void m6847_set_gmode(int mode)
 
 	mode &= 0x1f;
 
-	if (mode != video_gmode) {
-		video_gmode = mode;
+	if (mode != the_state.video_gmode) {
+		the_state.video_gmode = mode;
 		schedule_full_refresh();
 	}
 }
@@ -918,8 +921,8 @@ void m6847_set_vmode(int mode)
 
 	mode &= 0x1f;
 
-	if (mode != video_vmode) {
-		video_vmode = mode;
+	if (mode != the_state.video_vmode) {
+		the_state.video_vmode = mode;
 		calc_videoram_size();
 		schedule_full_refresh();
 	}
@@ -927,12 +930,12 @@ void m6847_set_vmode(int mode)
 
 int m6847_get_gmode(void)
 {
-	return video_gmode;
+	return the_state.video_gmode;
 }
 
 int m6847_get_vmode(void)
 {
-	return video_vmode;
+	return the_state.video_vmode;
 }
 
 void m6847_set_video_offset(int offset)
@@ -941,22 +944,22 @@ void m6847_set_video_offset(int offset)
 	logerror("m6847_set_video_offset(): offset=$%04x\n", offset);
 #endif
 
-	offset &= vram_mask;
-	if (offset != video_offset) {
-		video_offset = offset;
+	offset &= the_state.vram_mask;
+	if (offset != the_state.video_offset) {
+		the_state.video_offset = offset;
 		schedule_full_refresh();
 	}
 }
 
 int m6847_get_video_offset(void)
 {
-	return video_offset;
+	return the_state.video_offset;
 }
 
 void m6847_touch_vram(int offset)
 {
-	offset -= video_offset;
-	offset &= vram_mask;
+	offset -= the_state.video_offset;
+	offset &= the_state.vram_mask;
 
 	if (offset < videoram_size)
 		dirtybuffer[offset] = 1;
@@ -988,7 +991,7 @@ int m6847_get_bordercolor(void)
 		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE,
 		M6847_BORDERCOLOR_GREEN,	M6847_BORDERCOLOR_WHITE
 	};
-	return bordercolortable[video_gmode];
+	return bordercolortable[the_state.video_gmode];
 }
 
 void m6847_get_bordercolor_rgb(int *red, int *green, int *blue)

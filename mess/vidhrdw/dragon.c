@@ -782,7 +782,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			coco3_vh_drawborder(bitmap, 512, 192);
 
 		internal_m6847_vh_screenrefresh(bitmap, full_refresh, coco3_metapalette,
-			&RAM[coco3_lores_vidbase()], m6847_get_video_offset(), 0x10000,
+			&RAM[coco3_lores_vidbase()], &the_state,
 			TRUE, (bitmap->width - 512) / 2, (bitmap->height - 192) / 2, 2,
 			artifacts[readinputport(12) & 3]);
 	}
