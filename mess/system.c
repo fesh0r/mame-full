@@ -217,18 +217,20 @@ TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
 
 #ifndef MESS_EXCLUDE_AMSTRAD
 	/* AMSTRAD */
-	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
-	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
-	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
-TESTDRIVER( cpc464p )	/* Amstrad CPC464  Plus - 1987					  */
-TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987					  */
-	DRIVER( pcw8256 )	/*												  */
-	DRIVER( pcw8512 )	/*												  */
-	DRIVER( pcw9256 )	/*												  */
-	DRIVER( pcw9512 )	/*												  */
-	DRIVER( pcw10 ) 	/*												  */
-	DRIVER( pcw16 ) 	/*												  */
+	DRIVER( cpc464 )		/* Amstrad (Schneider in Germany) 1984            */
+	DRIVER( cpc664 )		/* Amstrad (Schneider in Germany) 1985            */
+	DRIVER( cpc6128 )		/* Amstrad (Schneider in Germany) 1985                                    */
+  TESTDRIVER( cpc464p )		/* Amstrad CPC464  Plus - 1987                    */
+  TESTDRIVER( cpc6128p )	/* Amstrad CPC6128 Plus - 1987                    */
+	DRIVER( pcw8256 )		/*                                                */
+	DRIVER( pcw8512 )		/*                                                */
+	DRIVER( pcw9256 )		/*                                                */
+	DRIVER( pcw9512 )		/*                                                */
+	DRIVER( pcw10 )		/*                                                */
+	DRIVER( pcw16 )		/*                                                */
+        DRIVER( nc100 ) 
 
+        DRIVER( z88 )
 	/* VEB MIKROELEKTRONIK */
 	DRIVER( kccomp )	/* KC compact									  */
 	DRIVER( kc85_4 )	/* KC 85/4										  */
