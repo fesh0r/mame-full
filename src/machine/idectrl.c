@@ -160,7 +160,7 @@ INLINE void clear_interrupt(struct ide_state *ide)
  *
  *************************************/
 
-int ide_controller_init(int which, struct ide_interface *intf)
+int ide_controller_init_custom(int which, struct ide_interface *intf, void *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
 	const struct hard_disk_header *header;
@@ -174,7 +174,7 @@ int ide_controller_init(int which, struct ide_interface *intf)
 	ide->intf = intf;
 
 	/* we only support one hard disk right now; get a handle to it */
-	ide->disk = get_disk_handle(0);
+	ide->disk = diskhandle;
 
 	/* get and copy the geometry */
 	if (ide->disk)
@@ -194,6 +194,12 @@ int ide_controller_init(int which, struct ide_interface *intf)
 	/* create a timer for timing status */
 	ide->last_status_timer = timer_alloc(NULL);
 	return 0;
+}
+
+int ide_controller_init(int which, struct ide_interface *intf)
+{
+	/* we only support one hard disk right now; get a handle to it */
+	ide_controller_init_custom(which, intf, get_disk_handle(0));
 }
 
 
@@ -922,7 +928,7 @@ READ16_HANDLER( ide_controller16_0_r )
 	int size;
 
 	offset *= 2;
-	size = convert_to_offset_and_size(&offset, mem_mask);
+	size = convert_to_offset_and_size(&offset, 0xffff0000 | mem_mask);
 
 	return ide_controller_read(&idestate[0], offset, size) << ((offset & 1) * 8);
 }
@@ -933,7 +939,7 @@ WRITE16_HANDLER( ide_controller16_0_w )
 	int size;
 
 	offset *= 2;
-	size = convert_to_offset_and_size(&offset, mem_mask);
+	size = convert_to_offset_and_size(&offset, 0xffff0000 | mem_mask);
 
 	ide_controller_write(&idestate[0], offset, size, data >> ((offset & 1) * 8));
 }
