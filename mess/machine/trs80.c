@@ -145,38 +145,35 @@ static void cas_copy_callback(int param)
 	activecpu_set_reg(Z80_PC, entry);
 }
 
-int trs80_cas_init(int id, mame_file *file, int open_mode)
+int trs80_cas_load(int id, mame_file *file, int open_mode)
 {
-	if (file)
+	cas_size = mame_fsize(file);
+	cas_buff = malloc(cas_size);
+	if (cas_buff)
 	{
-		cas_size = mame_fsize(file);
-		cas_buff = malloc(cas_size);
-		if (cas_buff)
+		mame_fread(file, cas_buff, cas_size);
+		mame_fclose(file);
+		if (cas_buff[1] == 0x55)
 		{
-			mame_fread(file, cas_buff, cas_size);
-			mame_fclose(file);
-			if (cas_buff[1] == 0x55)
-			{
-				LOG(("trs80_cas_init: loading %s size %d\n", image_filename(IO_CASSETTE,id), cas_size));
-			}
-			else
-			{
-				free(cas_buff);
-				cas_buff = NULL;
-				cas_size = 0;
-				logerror("trs80_cas_init: CAS file is not in SYSTEM format\n");
-				return 1;
-			}
+			LOG(("trs80_cas_init: loading %s size %d\n", image_filename(IO_CASSETTE,id), cas_size));
 		}
 		else
 		{
+			free(cas_buff);
+			cas_buff = NULL;
 			cas_size = 0;
+			logerror("trs80_cas_init: CAS file is not in SYSTEM format\n");
+			return 1;
 		}
+	}
+	else
+	{
+		cas_size = 0;
 	}
 	return 0;
 }
 
-void trs80_cas_exit(int id)
+void trs80_cas_unload(int id)
 {
 	if (cas_buff)
 		free(cas_buff);

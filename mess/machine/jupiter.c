@@ -76,7 +76,6 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 				cpu_writemem16(0x3c57, 0x49);
 				cpu_writemem16(0x3c58, 0x3c);
 			}
-			jupiter_exit_tap(0);
 		}
 	}
 	return (-1);
@@ -145,57 +144,48 @@ MACHINE_STOP( jupiter )
    <byt>		: <byt>
 */
 
-int jupiter_load_ace(int id, mame_file *file, int open_mode)
+int jupiter_ace_load(int id, mame_file *file, int open_mode)
 {
 	unsigned char jupiter_repeat, jupiter_byte, loop;
 	int done, jupiter_index;
-
-	/* A cartridge isn't strictly mandatory, so warn */
-	if (file == NULL)
-	{
-		logerror("Jupiter - warning: no cartridge specified!\n");
-		return INIT_PASS;
-	}
 
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
 
 	done = 0;
 	jupiter_index = 0;
-	if (file)
+
+	if ((jupiter_data = malloc(0x6000)))
 	{
-		if ((jupiter_data = malloc(0x6000)))
+		logerror("Loading file %s.\r\n", image_filename(IO_CARTSLOT,id));
+		while (!done && (jupiter_index < 0x6001))
 		{
-			logerror("Loading file %s.\r\n", image_filename(IO_CARTSLOT,id));
-			while (!done && (jupiter_index < 0x6001))
+			mame_fread(file, &jupiter_byte, 1);
+			if (jupiter_byte == 0xed)
 			{
 				mame_fread(file, &jupiter_byte, 1);
-				if (jupiter_byte == 0xed)
+				switch (jupiter_byte)
 				{
+				case 0x00:
+					logerror("File loaded!\r\n");
+					done = 1;
+					break;
+				case 0x01:
 					mame_fread(file, &jupiter_byte, 1);
-					switch (jupiter_byte)
-					{
-					case 0x00:
-						logerror("File loaded!\r\n");
-						done = 1;
-						break;
-					case 0x01:
-						mame_fread(file, &jupiter_byte, 1);
-						jupiter_data[jupiter_index++] = jupiter_byte;
-						break;
-					case 0x02:
-						logerror("Sequence 0xED 0x02 found in .ace file\r\n");
-						break;
-					default:
-						mame_fread(file, &jupiter_repeat, 1);
-						for (loop = 0; loop < jupiter_byte; loop++)
-							jupiter_data[jupiter_index++] = jupiter_repeat;
-						break;
-					}
-				}
-				else
 					jupiter_data[jupiter_index++] = jupiter_byte;
+					break;
+				case 0x02:
+					logerror("Sequence 0xED 0x02 found in .ace file\r\n");
+					break;
+				default:
+					mame_fread(file, &jupiter_repeat, 1);
+					for (loop = 0; loop < jupiter_byte; loop++)
+						jupiter_data[jupiter_index++] = jupiter_repeat;
+					break;
+				}
 			}
+			else
+				jupiter_data[jupiter_index++] = jupiter_byte;
 		}
 	}
 	if (!done)
@@ -211,85 +201,74 @@ int jupiter_load_ace(int id, mame_file *file, int open_mode)
 	return (0);
 }
 
-void	jupiter_exit_tap(int id)
-{
-	logerror("jupiter_exit_tap\n");
-	if (jupiter_data)
-	{
-		free(jupiter_data);
-		jupiter_data = NULL;
-		jupiter_data_type = JUPITER_NONE;
-	}
-}
-
-int jupiter_load_tap(int id, mame_file *file, int open_mode)
+int jupiter_tap_load(int id, mame_file *file, int open_mode)
 {
 	UINT8 inpbyt;
 	int loop;
 	UINT16 hdr_len;
 
-	/* Remember, a cassette isn't strictly mandatory, so warn only! */
-	if (file == NULL)
-	{
-		logerror("Jupiter - warning: no cassette specified!\n");
-		return INIT_PASS;
-	}
-
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
-	jupiter_exit_tap(id);
-	if (file)
+
+	logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));
+
+    mame_fread(file, &inpbyt, 1);
+	hdr_len = inpbyt;
+	mame_fread(file, &inpbyt, 1);
+	hdr_len += (inpbyt * 256);
+
+	/* Read header block */
+
+	mame_fread(file, &jupiter_tape.hdr_type, 1);
+	mame_fread(file, jupiter_tape.hdr_name, 10);
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.hdr_len = inpbyt;
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.hdr_len += (inpbyt * 256);
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.hdr_addr = inpbyt;
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.hdr_addr += (inpbyt * 256);
+	mame_fread(file, &jupiter_tape.hdr_3c4c, 1);
+	mame_fread(file, &jupiter_tape.hdr_3c4d, 1);
+	mame_fread(file, jupiter_tape.hdr_vars, 8);
+	if (hdr_len > 0x19)
+		for (loop = 0x19; loop < hdr_len; loop++)
+			mame_fread(file, &inpbyt, 1);
+
+	/* Read data block */
+
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.dat_len = inpbyt;
+	mame_fread(file, &inpbyt, 1);
+	jupiter_tape.dat_len += (inpbyt * 256);
+
+	if ((jupiter_data = malloc(jupiter_tape.dat_len)))
 	{
-		logerror("Loading file %s.\r\n", image_filename(IO_CASSETTE,id));
-
-        mame_fread(file, &inpbyt, 1);
-		hdr_len = inpbyt;
-		mame_fread(file, &inpbyt, 1);
-		hdr_len += (inpbyt * 256);
-
-		/* Read header block */
-
-		mame_fread(file, &jupiter_tape.hdr_type, 1);
-		mame_fread(file, jupiter_tape.hdr_name, 10);
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.hdr_len = inpbyt;
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.hdr_len += (inpbyt * 256);
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.hdr_addr = inpbyt;
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.hdr_addr += (inpbyt * 256);
-		mame_fread(file, &jupiter_tape.hdr_3c4c, 1);
-		mame_fread(file, &jupiter_tape.hdr_3c4d, 1);
-		mame_fread(file, jupiter_tape.hdr_vars, 8);
-		if (hdr_len > 0x19)
-			for (loop = 0x19; loop < hdr_len; loop++)
-				mame_fread(file, &inpbyt, 1);
-
-		/* Read data block */
-
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.dat_len = inpbyt;
-		mame_fread(file, &inpbyt, 1);
-		jupiter_tape.dat_len += (inpbyt * 256);
-
-		if ((jupiter_data = malloc(jupiter_tape.dat_len)))
-		{
-			mame_fread(file, jupiter_data, jupiter_tape.dat_len);
-			jupiter_data_type = JUPITER_TAP;
-			logerror("File loaded\r\n");
-		}
+		mame_fread(file, jupiter_data, jupiter_tape.dat_len);
+		jupiter_data_type = JUPITER_TAP;
+		logerror("File loaded\r\n");
 	}
 
 	if (!jupiter_data)
 	{
-		jupiter_exit_tap(id);
 		logerror("file not loaded\r\n");
 		return (1);
 	}
 
 	return (0);
 
+}
+
+void jupiter_tap_unload(int id)
+{
+	logerror("jupiter_tap_unload\n");
+	if (jupiter_data)
+	{
+		free(jupiter_data);
+		jupiter_data = NULL;
+		jupiter_data_type = JUPITER_NONE;
+	}
 }
 
 READ_HANDLER ( jupiter_port_fefe_r )

@@ -8,13 +8,11 @@ extern void init_laser(void);
 extern MACHINE_INIT( laser350 );
 extern MACHINE_INIT( laser500 );
 extern MACHINE_INIT( laser700 );
-extern MACHINE_STOP( laser );
 
-extern int laser_rom_init(int id, mame_file *fp, int open_mode);
-extern void laser_rom_exit(int id);
+int laser_cart_load(int id, mame_file *fp, int open_mode);
+void laser_cart_unload(int id);
 
-extern int laser_floppy_init(int id, mame_file *fp, int open_mode);
-extern void laser_floppy_exit(int id);
+int laser_floppy_load(int id, mame_file *file, int open_mode);
 
 extern int laser_cassette_init(int id, mame_file *fp, int open_mode);
 

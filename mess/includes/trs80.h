@@ -14,41 +14,41 @@
 extern UINT8 trs80_port_ff;
 
 
-extern int trs80_cas_init(int id, mame_file *fp, int open_mode);
-extern void trs80_cas_exit(int id);
+int trs80_cas_load(int id, mame_file *fp, int open_mode);
+void trs80_cas_unload(int id);
 
-extern QUICKLOAD_LOAD( trs80_cmd );
+QUICKLOAD_LOAD( trs80_cmd );
 
-extern int trs80_floppy_init(int id, mame_file *fp, int open_mode);
+int trs80_floppy_init(int id, mame_file *fp, int open_mode);
 
-extern VIDEO_START( trs80 );
-extern VIDEO_UPDATE( trs80 );
+VIDEO_START( trs80 );
+VIDEO_UPDATE( trs80 );
 
-extern void trs80_sh_sound_init(const char * gamename);
+void trs80_sh_sound_init(const char * gamename);
 
-extern void init_trs80(void);
-extern MACHINE_INIT( trs80 );
-extern MACHINE_STOP( trs80 );
+void init_trs80(void);
+MACHINE_INIT( trs80 );
+MACHINE_STOP( trs80 );
 
-extern WRITE_HANDLER ( trs80_port_ff_w );
-extern READ_HANDLER ( trs80_port_ff_r );
-extern READ_HANDLER ( trs80_port_xx_r );
+WRITE_HANDLER ( trs80_port_ff_w );
+READ_HANDLER ( trs80_port_ff_r );
+READ_HANDLER ( trs80_port_xx_r );
 
-extern INTERRUPT_GEN( trs80_frame_interrupt );
-extern INTERRUPT_GEN( trs80_timer_interrupt );
-extern INTERRUPT_GEN( trs80_fdc_interrupt );
+INTERRUPT_GEN( trs80_frame_interrupt );
+INTERRUPT_GEN( trs80_timer_interrupt );
+INTERRUPT_GEN( trs80_fdc_interrupt );
 
-extern READ_HANDLER( trs80_irq_status_r );
-extern WRITE_HANDLER( trs80_irq_mask_w );
+READ_HANDLER( trs80_irq_status_r );
+WRITE_HANDLER( trs80_irq_mask_w );
 
-extern READ_HANDLER( trs80_printer_r );
-extern WRITE_HANDLER( trs80_printer_w );
+READ_HANDLER( trs80_printer_r );
+WRITE_HANDLER( trs80_printer_w );
 
-extern WRITE_HANDLER( trs80_motor_w );
+WRITE_HANDLER( trs80_motor_w );
 
-extern READ_HANDLER( trs80_keyboard_r );
+READ_HANDLER( trs80_keyboard_r );
 
-extern WRITE_HANDLER( trs80_videoram_w );
+WRITE_HANDLER( trs80_videoram_w );
 
 #endif	/* TRS80_H */
 

@@ -17,8 +17,7 @@ extern int vtech1_cassette_init(int id, mame_file *fp, int open_mode);
 
 extern SNAPSHOT_LOAD( vtech1 );
 
-extern int vtech1_floppy_init(int id, mame_file *fp, int open_mode);
-extern void vtech1_floppy_exit(int id);
+int vtech1_floppy_load(int id, mame_file *fp, int open_mode);
 
 extern READ_HANDLER ( vtech1_fdc_r );
 extern WRITE_HANDLER ( vtech1_fdc_w );

@@ -151,28 +151,17 @@ int mbee_cassette_init(int id, mame_file *fp, int open_mode)
 	return cassette_init(id, fp, open_mode, &args);
 }
 
-#if 0
-int mbee_floppy_init(int id)
+int mbee_cart_load(int id, mame_file *file, int open_mode)
 {
-	flop_specified[id] = image_exists(IO_FLOPPY, id);
-	return 0;
-}
-#endif
-
-int mbee_rom_load(int id, mame_file *file, int open_mode)
-{
-	if( file )
+	int size = mame_fsize(file);
+	UINT8 *mem = malloc(size);
+	if( mem )
 	{
-		int size = mame_fsize(file);
-		UINT8 *mem = malloc(size);
-		if( mem )
+		if( mame_fread(file, mem, size) == size )
 		{
-			if( mame_fread(file, mem, size) == size )
-			{
-				memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
-			}
-			free(mem);
+			memcpy(memory_region(REGION_CPU1)+0x8000, mem, size);
 		}
+		free(mem);
 	}
 	return INIT_PASS;
 }

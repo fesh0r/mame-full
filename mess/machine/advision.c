@@ -28,17 +28,11 @@ MACHINE_INIT( advision )
     advision_videoenable = 0;
 }
 
-int advision_load_rom(int id, mame_file *cartfile, int open_mode)
+int advision_cart_load(int id, mame_file *cartfile, int open_mode)
 {
-	if (cartfile == NULL)
-	{
-		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
-		return INIT_FAIL;
-    }
-
     ROM = memory_region(REGION_CPU1);
 	mame_fread (cartfile, &ROM[0x0000], 4096);
-	return 0;
+	return INIT_PASS;
 }
 
 

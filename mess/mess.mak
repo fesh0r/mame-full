@@ -164,11 +164,11 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
-#	$(OBJ)/advision.a \
-#	$(OBJ)/mbee.a	  \
-#	$(OBJ)/vtech.a	  \
-#	$(OBJ)/jupiter.a  \
-#	$(OBJ)/trs80.a	  \
+	$(OBJ)/advision.a \
+	$(OBJ)/mbee.a	  \
+	$(OBJ)/vtech.a	  \
+	$(OBJ)/jupiter.a  \
+	$(OBJ)/trs80.a	  \
 #	$(OBJ)/arcadia.a  \
 #	$(OBJ)/tangerin.a \
 #	$(OBJ)/kaypro.a   \

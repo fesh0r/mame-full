@@ -38,7 +38,6 @@ int vtech1_latch = -1;
 #define TRKSIZE_VZ	0x9a0	/* arbitrary (actually from analyzing format) */
 #define TRKSIZE_FM	3172	/* size of a standard FM mode track */
 
-static mame_file *vtech1_fdc_file[2] = {NULL, NULL};
 static UINT8 vtech1_track_x2[2] = {80, 80};
 static UINT8 vtech1_fdc_wrprot[2] = {0x80, 0x80};
 static UINT8 vtech1_fdc_status = 0;
@@ -376,10 +375,9 @@ int vtech1_floppy_id(int id)
 }
 */
 
-int vtech1_floppy_init(int id, mame_file *fp, int open_mode)
+int vtech1_floppy_load(int id, mame_file *fp, int open_mode)
 {
-	vtech1_fdc_file[id] = fp;
-	if ((vtech1_fdc_file[id]) && is_effective_mode_writable(open_mode))
+	if (is_effective_mode_writable(open_mode))
 		vtech1_fdc_wrprot[id] = 0x00;
 	else
 		vtech1_fdc_wrprot[id] = 0x80;
@@ -387,23 +385,19 @@ int vtech1_floppy_init(int id, mame_file *fp, int open_mode)
 	return INIT_PASS;
 }
 
-void vtech1_floppy_exit(int id)
-{
-	vtech1_fdc_file[id] = NULL;
-}
 
 static void vtech1_get_track(void)
 {
     //sprintf(vtech1_frame_message, "#%d get track %02d", vtech1_drive, vtech1_track_x2[vtech1_drive]/2);
     //vtech1_frame_time = 30;
     /* drive selected or and image file ok? */
-	if( vtech1_drive >= 0 && vtech1_fdc_file[vtech1_drive] != NULL )
+	if( vtech1_drive >= 0 && image_fp(IO_FLOPPY, vtech1_drive) != NULL )
 	{
 		int size, offs;
 		size = TRKSIZE_VZ;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(vtech1_fdc_file[vtech1_drive], offs, SEEK_SET);
-		size = mame_fread(vtech1_fdc_file[vtech1_drive], vtech1_fdc_data, size);
+		mame_fseek(image_fp(IO_FLOPPY, vtech1_drive), offs, SEEK_SET);
+		size = mame_fread(image_fp(IO_FLOPPY, vtech1_drive), vtech1_fdc_data, size);
 		logerror("get track @$%05x $%04x bytes\n", offs, size);
     }
 	vtech1_fdc_offs = 0;
@@ -413,12 +407,12 @@ static void vtech1_get_track(void)
 static void vtech1_put_track(void)
 {
     /* drive selected and image file ok? */
-	if( vtech1_drive >= 0 && vtech1_fdc_file[vtech1_drive] != NULL )
+	if( vtech1_drive >= 0 && image_fp(IO_FLOPPY, vtech1_drive) != NULL )
 	{
 		int size, offs;
 		offs = TRKSIZE_VZ * vtech1_track_x2[vtech1_drive]/2;
-		mame_fseek(vtech1_fdc_file[vtech1_drive], offs + vtech1_fdc_start, SEEK_SET);
-		size = mame_fwrite(vtech1_fdc_file[vtech1_drive], &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
+		mame_fseek(image_fp(IO_FLOPPY, vtech1_drive), offs + vtech1_fdc_start, SEEK_SET);
+		size = mame_fwrite(image_fp(IO_FLOPPY, vtech1_drive), &vtech1_fdc_data[vtech1_fdc_start], vtech1_fdc_write);
 		logerror("put track @$%05X+$%X $%04X/$%04X bytes\n", offs, vtech1_fdc_start, size, vtech1_fdc_write);
     }
 }
