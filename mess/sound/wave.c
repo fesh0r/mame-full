@@ -197,8 +197,8 @@ static int wave_read(int id)
 		unsigned i;
 
 		UINT8 ch;
-		intmax_t sample_buf;
-		intmax_t buf;
+		/*intmax_t*/long sample_buf;
+		/*intmax_t*/long buf;
 
 		UINT16 *dst = w->data;
 
@@ -221,7 +221,7 @@ static int wave_read(int id)
 					if (! osd_fread(w->file, &ch, 1))
 						return WAVE_ERR;
 
-					sample_buf |= ((uintmax_t) (ch /*& 0xff*/)) << bit;
+					sample_buf |= ((/*uintmax_t*/unsigned long) (ch /*& 0xff*/)) << bit;
 				}
 				/* shift out undefined bits */
 				if (bit > bitsPerSample)
@@ -232,8 +232,8 @@ static int wave_read(int id)
 				else
 				{
 					/* extend sign bit */
-					if (sample_buf & ((intmax_t)1 << (bitsPerSample-1)))
-						sample_buf |= ~ (((intmax_t)1 << bitsPerSample)-1);
+					if (sample_buf & ((/*intmax_t*/long)1 << (bitsPerSample-1)))
+						sample_buf |= ~ (((/*intmax_t*/long)1 << bitsPerSample)-1);
 				}
 
 				/* mix with previous channels */
