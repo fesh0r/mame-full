@@ -299,36 +299,14 @@ static int studio2_load_rom(int id)
 	return 0;
 }
 
-static const struct IODevice io_studio2[] = {
-	// cartridges at 0x400-0x7ff ?
-	{
-		IO_CARTSLOT,					/* type */
-		1,								/* count */
-		"bin\0",                        /* file extensions */
-		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		studio2_load_rom, 				/* init */
-		NULL,							/* exit */
-		NULL,							/* info */
-		NULL,							/* open */
-		NULL,							/* close */
-		NULL,							/* status */
-		NULL,							/* seek */
-		NULL,							/* tell */
-		NULL,							/* input */
-		NULL,							/* output */
-		NULL,							/* input_chunk */
-		NULL							/* output_chunk */
-	},
-    { IO_END }
-};
-
+#define io_studio2	io_NULL
 #define io_vip	io_NULL
 
 SYSTEM_CONFIG_START(studio2)
 	/* maybe quickloader */
 	/* tape */
+	/* cartridges at 0x400-0x7ff ? */
+	CONFIG_DEVICE_CARTSLOT(1, "bin\0", studio2_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

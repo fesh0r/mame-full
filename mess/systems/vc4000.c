@@ -249,31 +249,10 @@ static int vc4000_load_rom(int id)
 	return 0;
 }
 
-static const struct IODevice io_vc4000[] = {
-	{
-		IO_CARTSLOT,					/* type */
-		1,								/* count */
-		"bin\0",                        /* file extensions */
-		IO_RESET_CPU,					/* reset if file changed */
-		OSD_FOPEN_READ,					/* open mode */
-		0,
-		vc4000_load_rom, 				/* init */
-		NULL,							/* exit */
-		NULL,							/* info */
-		NULL,							/* open */
-		NULL,							/* close */
-		NULL,							/* status */
-		NULL,							/* seek */
-		NULL,							/* tell */
-		NULL,							/* input */
-		NULL,							/* output */
-		NULL,							/* input_chunk */
-		NULL							/* output_chunk */
-	},
-    { IO_END }
-};
+#define io_vc4000	io_NULL
 
 SYSTEM_CONFIG_START(vc4000)
+	CONFIG_DEVICE_CARTSLOT(1, "bin\0", vc4000_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -18,7 +18,7 @@ int cbm_quick_init (int id)
 {
 	void *fp;
 	int read;
-	char *cp;
+	const char *cp;
 
 	memset (&quick, 0, sizeof (quick));
 
@@ -33,14 +33,15 @@ int cbm_quick_init (int id)
 
 	quick.length = osd_fsize (fp);
 
-	if ((cp = strrchr (image_filename(IO_QUICKLOAD, id), '.')) != NULL)
+	cp = image_filetype(IO_QUICKLOAD, id);
+	if (cp)
 	{
-		if (stricmp (cp, ".prg") == 0)
+		if (stricmp (cp, "prg") == 0)
 		{
 			osd_fread_lsbfirst (fp, &quick.addr, 2);
 			quick.length -= 2;
 		}
-		else if (stricmp (cp, ".p00") == 0)
+		else if (stricmp (cp, "p00") == 0)
 		{
 			char buffer[7];
 
@@ -58,7 +59,7 @@ int cbm_quick_init (int id)
 		osd_fclose (fp);
 		return INIT_FAIL;
 	}
-	if ((quick.data = (UINT8*)malloc (quick.length)) == NULL)
+	if ((quick.data = (UINT8*) image_malloc (IO_QUICKLOAD, id, quick.length)) == NULL)
 	{
 		osd_fclose (fp);
 		return INIT_FAIL;
@@ -66,12 +67,6 @@ int cbm_quick_init (int id)
 	read = osd_fread (fp, quick.data, quick.length);
 	osd_fclose (fp);
 	return read != quick.length;
-}
-
-void cbm_quick_exit (int id)
-{
-	if (quick.data != NULL)
-		free (quick.data);
 }
 
 int cbm_quick_open (int id, int mode, void *arg)
@@ -192,9 +187,10 @@ void cbm_rom_exit(int id)
     int i;
     if (id!=0) return;
     for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))
-	     &&(cbm_rom[i].size!=0);i++) {
-	free(cbm_rom[i].chip);
-	cbm_rom[i].chip=0;cbm_rom[i].size=0;
+	     &&(cbm_rom[i].size!=0);i++)
+	{
+		cbm_rom[i].chip=0;
+		cbm_rom[i].size=0;
     }
 }
 
@@ -208,7 +204,7 @@ int cbm_rom_init(int id)
 	void *fp;
 	int i;
 	int size, j, read;
-	char *cp;
+	const char *cp;
 	int adr = 0;
 	const struct IODevice *dev;
 
@@ -235,9 +231,10 @@ int cbm_rom_init(int id)
 
 	size = osd_fsize (fp);
 
-	if ((cp = strrchr (image_filename(IO_CARTSLOT,id), '.')) != NULL)
+	cp = image_filetype(IO_CARTSLOT, id);
+	if (cp)
 	{
-		if (stricmp (cp, ".prg") == 0)
+		if (stricmp (cp, "prg") == 0)
 		{
 			unsigned short in;
 
@@ -257,7 +254,7 @@ int cbm_rom_init(int id)
 			if (read != size)
 				return INIT_FAIL;
 		}
-		else if (stricmp (cp, ".crt") == 0)
+		else if (stricmp (cp, "crt") == 0)
 		{
 			unsigned short in;
 			osd_fseek (fp, 0x18, SEEK_SET);
@@ -304,40 +301,42 @@ int cbm_rom_init(int id)
 		}
 		else
 		{
-			if (stricmp (cp, ".lo") == 0)
+			if (stricmp (cp, "lo") == 0)
 				adr = CBM_ROM_ADDR_LO;
-			else if (stricmp (cp, ".hi") == 0)
+			else if (stricmp (cp, "hi") == 0)
 				adr = CBM_ROM_ADDR_HI;
-			else if (stricmp (cp, ".10") == 0)
+			else if (stricmp (cp, "10") == 0)
 				adr = 0x1000;
-			else if (stricmp (cp, ".20") == 0)
+			else if (stricmp (cp, "20") == 0)
 				adr = 0x2000;
-			else if (stricmp (cp, ".30") == 0)
+			else if (stricmp (cp, "30") == 0)
 				adr = 0x3000;
-			else if (stricmp (cp, ".40") == 0)
+			else if (stricmp (cp, "40") == 0)
 				adr = 0x4000;
-			else if (stricmp (cp, ".50") == 0)
+			else if (stricmp (cp, "50") == 0)
 				adr = 0x5000;
-			else if (stricmp (cp, ".60") == 0)
+			else if (stricmp (cp, "60") == 0)
 				adr = 0x6000;
-			else if (stricmp (cp, ".70") == 0)
+			else if (stricmp (cp, "70") == 0)
 				adr = 0x7000;
-			else if (stricmp (cp, ".80") == 0)
+			else if (stricmp (cp, "80") == 0)
 				adr = 0x8000;
-			else if (stricmp (cp, ".90") == 0)
+			else if (stricmp (cp, "90") == 0)
 				adr = 0x9000;
-			else if (stricmp (cp, ".a0") == 0)
+			else if (stricmp (cp, "a0") == 0)
 				adr = 0xa000;
-			else if (stricmp (cp, ".b0") == 0)
+			else if (stricmp (cp, "b0") == 0)
 				adr = 0xb000;
-			else if (stricmp (cp, ".e0") == 0)
+			else if (stricmp (cp, "e0") == 0)
 				adr = 0xe000;
-			else if (stricmp (cp, ".f0") == 0)
+			else if (stricmp (cp, "f0") == 0)
 				adr = 0xf000;
 			else adr = CBM_ROM_ADDR_UNKNOWN;
 			logerror("loading %s rom at %.4x size:%.4x\n",
 						 image_filename(IO_CARTSLOT,id), adr, size);
-			if (!(cbm_rom[i].chip=(UINT8*)malloc(size)) ) {
+
+			cbm_rom[i].chip = (UINT8*) image_malloc(IO_CARTSLOT, id, size);
+			if (!cbm_rom[i].chip) {
 				osd_fclose(fp);
 				return INIT_FAIL;
 			}

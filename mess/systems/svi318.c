@@ -393,26 +393,6 @@ static const struct IODevice io_svi318[] = {
         NULL                    /* output_chunk */
     },
 #endif
-	{
-    	IO_CARTSLOT,                /* type */
-    	1,              			/* count */
-    	"rom\0",                    /* file extensions */
-		IO_RESET_NONE,				/* reset if file changed */
-		OSD_FOPEN_READ,				/* open mode */
-    	0,
-    	svi318_load_rom,            /* init */
-    	svi318_exit_rom,            /* exit */
-    	NULL,                       /* info */
-    	NULL,                       /* open */
-    	NULL,                       /* close */
-    	NULL,                       /* status */
-    	NULL,                       /* seek */
-    	NULL,                       /* tell */
-    	NULL,                       /* input */
-    	NULL,                       /* output */
-    	NULL,                       /* input_chunk */
-    	NULL                        /* output_chunk */
-	},
 		{ IO_END }
 	};
 
@@ -422,6 +402,7 @@ static const struct IODevice io_svi318[] = {
 SYSTEM_CONFIG_START(svi318)
 	CONFIG_DEVICE_CASSETTE(1, "cas\0", svi318_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_CARTSLOT(1, "rom\0", svi318_load_rom, svi318_exit_rom, NULL)
 SYSTEM_CONFIG_END
 
 /*   YEAR	NAME		PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY FULLNAME */

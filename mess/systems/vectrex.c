@@ -116,32 +116,10 @@ static MACHINE_DRIVER_START( vectrex )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_vectrex[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"bin\0gam\0",       /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        0,
-		vectrex_init_cart,	/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-    },
-	{ IO_END }
-};
+#define io_vectrex io_NULL
 
 SYSTEM_CONFIG_START(vectrex)
+	CONFIG_DEVICE_CARTSLOT(1, "bin\0gam\0", vectrex_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 ROM_START(vectrex)

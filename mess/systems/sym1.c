@@ -127,7 +127,6 @@ ROM_START(sym1)
 ROM_END
 
 static const struct IODevice io_sym1[] = {
-	IODEVICE_CBM_ROM("60\00080\0c0\0"),
 #if 0
     {
 		IO_CASSETTE,		/* type */
@@ -153,6 +152,7 @@ static const struct IODevice io_sym1[] = {
 };
 
 SYSTEM_CONFIG_START(sym1)
+	CONFIG_DEVICE_CBM_CARTSLOT("60\00080\0c0\0")
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT	CONFIG	COMPANY   FULLNAME */

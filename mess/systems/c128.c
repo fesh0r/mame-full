@@ -1380,7 +1380,6 @@ static const struct IODevice io_c128[] =
 	IODEVICE_CBM_QUICK,
 #if 0
 	IODEVICE_ROM_SOCKET,
-	IODEVICE_CBM_ROM("crt\080\0"),
 	IODEVICE_VC20TAPE, // needs 2 megahertz in c128 mode!
 #endif
 	IODEVICE_CBM_DRIVE,
@@ -1392,7 +1391,6 @@ static const struct IODevice io_c128d[] =
 	IODEVICE_CBM_QUICK,
 #if 0
 	IODEVICE_ROM_SOCKET,
-	IODEVICE_CBM_ROM(),
 	IODEVICE_VC20TAPE,
 #endif
 	IODEVICE_C1571,
@@ -1410,6 +1408,13 @@ static const struct IODevice io_c128d[] =
 #define io_c128dita io_c128
 
 SYSTEM_CONFIG_START(c128)
+	CONFIG_DEVICE_CBM_CARTSLOT("crt\080\0")
+SYSTEM_CONFIG_END
+
+SYSTEM_CONFIG_START(c128d)
+#if 0
+	CONFIG_DEVICE_CBM_CARTSLOT()
+#endif
 SYSTEM_CONFIG_END
 
 /*	  YEAR	NAME		PARENT	MACHINE 	INPUT		INIT		CONFIG  COMPANY   FULLNAME */
@@ -1421,6 +1426,6 @@ COMP (1985, c128swe,	c128,	c128pal,	c128swe,	c128pal,	c128,	"Commodore Business 
 /* other countries spanish, belgium, norwegian */
 /* please leave the following as testdriver */
 COMPX (1985, c128nor,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128 Norwegian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128d,		c128,	c128d,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
-//COMPX(1985,c128dita,	c128,	c128d,		c128,		c128,		c128,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
-COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	c128,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128d,		c128,	c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D NTSC", GAME_NOT_WORKING)
+//COMPX(1985,c128dita,	c128,	c128d,		c128,		c128,		c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
+COMPX (1985, c128dita,	c128,	c128pal,	c128ita,	c128pal,	c128d,	"Commodore Business Machines Co.","Commodore 128D Italian (PAL)", GAME_NOT_WORKING)
