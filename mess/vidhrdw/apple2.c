@@ -84,6 +84,8 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
 static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory_offset)
 {
 	int character;
+	int current_fgcolor = fgcolor;
+	int current_bgcolor = bgcolor;
 	int i;
 	
 	character = mess_ram[videobase + memory_offset];
@@ -94,16 +96,16 @@ static void apple2_generaltext_gettileinfo(int gfxset, int videobase, int memory
 	}
 	else if (flash && (character >= 0x40) && (character <= 0x7f))
 	{
-		i = fgcolor;
-		fgcolor = bgcolor;
-		bgcolor = i;
+		i = current_fgcolor;
+		current_fgcolor = current_bgcolor;
+		current_bgcolor = i;
 	}
 
 	SET_TILE_INFO(
-		gfxset,						/* gfx */
-		character,					/* character */
-		(fgcolor * 16) + bgcolor,	/* color */
-		0);							/* flags */
+		gfxset,										/* gfx */
+		character,									/* character */
+		(current_fgcolor * 16) + current_bgcolor,	/* color */
+		0);											/* flags */
 }
 
 static void apple2_text_gettileinfo(int memory_offset)
