@@ -76,3 +76,4 @@ void SmartListView_GetSorting(struct SmartListView *pListView, int *nColumn, BOO
 void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL bReverse);
 void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn);
 
+int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);

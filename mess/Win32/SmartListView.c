@@ -1,5 +1,6 @@
 #include <assert.h>
 #include "SmartListView.h"
+#include "resource.h"
 
 /* Add ... to Items in ListView if needed */
 static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nOffset)
@@ -232,6 +233,10 @@ BOOL SmartListView_IsEvent(struct SmartListView *pListView, UINT message, UINT w
 	case WM_DRAWITEM:
 		lpDis = (LPDRAWITEMSTRUCT)lParam;
 		bIsEvent = lpDis->CtlID == (UINT)pListView->nIDDlgItem;
+		break;
+
+	case WM_CONTEXTMENU:
+		bIsEvent = (HWND)wParam == pListView->hwndListView;
 		break;
 	}
 
@@ -574,12 +579,62 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
     }
 }
 
+static void SmartListView_HandleContextMenu(struct SmartListView *pListView, POINT ptScreen)
+{
+	HWND hwndHeader;
+	HMENU hMenu, hMenuLoad;
+	int i, nMenuItem, nLogicalColumn;
+	BOOL bFound = FALSE;
+	RECT rcCol;
+	POINT ptClient;
+
+	hwndHeader = GetDlgItem(pListView->hwndListView, 0);
+
+	ptClient = ptScreen;
+	ScreenToClient(hwndHeader, &ptClient);
+
+	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++ ) {
+		if (PtInRect(&rcCol, ptClient)) {
+			nLogicalColumn = SmartListView_VisualColumnToLogical(pListView, i);
+			bFound = TRUE;
+		}
+	}
+
+	if (bFound) {
+		hMenuLoad = LoadMenu(NULL, MAKEINTRESOURCE(IDR_CONTEXT_HEADER));
+		hMenu = GetSubMenu(hMenuLoad, 0);
+
+		nMenuItem = (int) TrackPopupMenu(hMenu,
+			TPM_LEFTALIGN | TPM_RIGHTBUTTON | TPM_RETURNCMD,
+			ptScreen.x,
+			ptScreen.y,
+			0,
+			pListView->hwndParent,
+			NULL);
+
+		DestroyMenu(hMenuLoad);
+
+		switch(nMenuItem) {
+		case ID_SORT_ASCENDING:
+			SmartListView_SetSorting(pListView, nLogicalColumn, FALSE);
+			break;
+		case ID_SORT_DESCENDING:
+			SmartListView_SetSorting(pListView, nLogicalColumn, TRUE);
+			break;
+		case ID_CUSTOMIZE_FIELDS:
+			/* NYI */
+			MessageBoxA(pListView->hwndParent, "3", NULL, MB_OK);
+			break;
+		}
+	}
+}
 
 BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UINT wParam, LONG lParam)
 {
 	BOOL bReturn = FALSE;
 	LPNMHDR lpNmHdr;
 	LPDRAWITEMSTRUCT lpDis;
+	POINT pt;
 
 	assert(SmartListView_IsEvent(pListView, message, wParam, lParam));
 
@@ -592,6 +647,14 @@ BOOL SmartListView_HandleEvent(struct SmartListView *pListView, UINT message, UI
 	case WM_DRAWITEM:
 		lpDis = (LPDRAWITEMSTRUCT)lParam;
 		SmartListView_HandleDrawItem(pListView, lpDis);
+		bReturn = TRUE;
+		break;
+
+	case WM_CONTEXTMENU:
+		assert((HWND)wParam == pListView->hwndListView);
+		pt.x = LOWORD(lParam);
+		pt.y = HIWORD(lParam);
+		SmartListView_HandleContextMenu(pListView, pt);
 		bReturn = TRUE;
 		break;
 	}
@@ -798,6 +861,21 @@ void SmartListView_ToggleSorting(struct SmartListView *pListView, int nColumn)
 
 	SmartListView_GetSorting(pListView, &nCurrentSorting, &bCurrentReverse);
 	SmartListView_SetSorting(pListView, nColumn, (nCurrentSorting == nColumn) && !bCurrentReverse);
+}
+
+/* ------------------------------------------------------------------------ *
+ * Comparators                                                              *
+ * ------------------------------------------------------------------------ */
+
+int Compare_TextCaseInsensitive(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn)
+{
+	const char *s1;
+	const char *s2;
+	s1 = pListView->pClass->pfnGetText(pListView, nRow1, nColumn);
+	s2 = pListView->pClass->pfnGetText(pListView, nRow2, nColumn);
+	s1 = s1 ? s1 : "";
+	s2 = s2 ? s2 : "";
+	return strcoll(s1, s2);
 }
 
 /* ------------------------------------------------------------------------ *

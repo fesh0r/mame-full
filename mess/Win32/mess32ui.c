@@ -57,7 +57,6 @@ static LPCSTR SoftwareListClass_GetText(struct SmartListView *pListView, int nRo
 static void SoftwareListClass_GetColumnInfo(struct SmartListView *pListView, int *pShown, int *pOrder, int *pWidths);
 static void SoftwareListClass_Run(struct SmartListView *pListView);
 static BOOL SoftwareListClass_IsItemSelected(struct SmartListView *pListView, int nItem);
-static int SoftwareListClass_Compare(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn);
 static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView);
 static void SoftwareListClass_Idle(struct SmartListView *pListView);
 
@@ -78,7 +77,7 @@ static struct SmartListViewClass s_softwareListClass =
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
 	SoftwareListClass_IsItemSelected,
-	SoftwareListClass_Compare,
+	Compare_TextCaseInsensitive,
 	SoftwareListClass_CanIdle,
 	SoftwareListClass_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
@@ -985,13 +984,6 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 	return TRUE;
 }
 
-static int SoftwareListClass_Compare(struct SmartListView *pListView, int nRow1, int nRow2, int nColumn)
-{
-	const ImageData *img1 = mess_images_index[nRow1];
-	const ImageData *img2 = mess_images_index[nRow2];
-	return stricmp(img1->name, img2->name);
-}
-
 static BOOL SoftwareListClass_CanIdle(struct SmartListView *pListView)
 {
 	return mess_idle_work;
@@ -1061,7 +1053,7 @@ static struct SmartListViewClass s_filemgrListClass =
 	SoftwareListClass_GetText,
 	SoftwareListClass_GetColumnInfo,
 	FileMgrListClass_IsItemSelected,
-	SoftwareListClass_Compare,
+	Compare_TextCaseInsensitive,
 	SoftwareListClass_CanIdle,
 	SoftwareListClass_Idle,
 	sizeof(mess_column_names) / sizeof(mess_column_names[0]),
