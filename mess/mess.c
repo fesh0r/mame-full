@@ -385,7 +385,6 @@ int messvaliditychecks(void)
 {
 	int i, j;
 	int error = 0;
-	const struct RomModule *region, *rom;
 	const struct IODevice *dev;
 	long used_devices;
 	const char *s;
