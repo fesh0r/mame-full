@@ -193,6 +193,7 @@ static int xf86_dga_vidmode_setup_mode_restore(void)
 		disp = XOpenDisplay(NULL);
 		XDGACloseFramebuffer(disp, xf86ctx.screen);
 		XDGASetMode(disp, xf86ctx.screen, 0);
+		XSync(display, True);
 		XCloseDisplay(disp);
 		_exit(!WIFEXITED(status));
 	}
@@ -489,6 +490,7 @@ void xf86_dga2_close_display(void)
 		XDGASetMode(display, xf86ctx.screen, 0);
 		xf86ctx.vidmode_changed = FALSE;
 	}
+	XSync(display, True);
 }
 
 #endif /*def X_XDGASetMode*/

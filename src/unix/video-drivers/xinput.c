@@ -58,6 +58,8 @@ static int xinput_old_mouse_grab = 0;
 static int xinput_keyboard_grabbed = 0;
 static int xinput_mouse_grabbed = 0;
 static int xinput_cursors_allocated = 0;
+static int xinput_keyb_leds = 0;
+static int xinput_old_leds = 0;
 /* 2 should be MOUSE_AXES but we don't support more than 2 axes at the moment */
 static int xinput_current_mouse[2];
 static int xinput_mouse_motion[2];
@@ -65,6 +67,7 @@ static Cursor xinput_normal_cursor;
 static Cursor xinput_invisible_cursor;
 
 static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
+static void xinput_set_leds(int leds);
 
 struct rc_option x11_input_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
@@ -166,12 +169,13 @@ void sysdep_update_keyboard (void)
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_invisible_cursor);
 					}
+					xinput_set_leds(xinput_keyb_leds);
 					break;
 				case FocusOut:
 					/* check for multiple events and ignore them */
 					if (!xinput_focus) break;
 					xinput_focus = FALSE;
-					if (xinput_mouse_grabbed && !xinput_force_grab)
+					if (xinput_mouse_grabbed)
 					{
 						XUngrabPointer(display, CurrentTime);
 						if (xinput_cursors_allocated && xinput_show_cursor)
@@ -179,6 +183,7 @@ void sysdep_update_keyboard (void)
 						xinput_mouse_grabbed = 0;
 						xinput_old_mouse_grab = 1;
 					}
+					xinput_set_leds(0);
 					break;
 				case EnterNotify:
 					if (use_private_cmap) XInstallColormap(display,colormap);
@@ -357,8 +362,39 @@ static Cursor xinput_create_invisible_cursor (Display * display, Window win)
    return cursor;
 }
 
+static void xinput_set_leds(int leds)
+{
+   XKeyboardControl values;
+   int i;
+   
+   for (i=0;i<32;i++)
+   {
+      values.led_mode = -1;
+      if ((xinput_old_leds & (0x01 << i)) &&
+	            !(leds & (0x01 << i)) )
+         values.led_mode = LedModeOff;
+      if (!(xinput_old_leds & (0x01 << i)) &&
+	              (leds & (0x01 << i)) )
+         values.led_mode = LedModeOn;
+      if (values.led_mode != -1)
+      {
+         values.led = i + 1;
+         /* GRR leds 1 and 2 are swapped in X */
+         if (values.led == 1)
+            values.led = 2;
+         else if (values.led == 2)
+            values.led = 1;
+         XChangeKeyboardControl(display, KBLed|KBLedMode, &values);
+      }
+   }
+   xinput_old_leds = leds;
+}
+
 void sysdep_set_leds(int leds)
 {
+   xinput_keyb_leds = leds;
+   if (xinput_focus)
+      xinput_set_leds(leds);
 }
 
 int xinput_open(int force_grab, int event_mask)
@@ -425,6 +461,8 @@ int xinput_open(int force_grab, int event_mask)
 
 void xinput_close(void)
 {
+  sysdep_set_leds(0);
+
   if (xinput_mouse_grabbed)
   {
      XUngrabPointer (display, CurrentTime);
@@ -457,6 +495,7 @@ void xinput_check_hotkeys(void)
         if (xinput_cursors_allocated && xinput_show_cursor)
            XDefineCursor (display, window, xinput_normal_cursor);
         xinput_mouse_grabbed = 0;
+        xinput_grab_mouse = 0;
      }
      else if (!XGrabPointer (display, window, True,
                  PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
@@ -465,6 +504,7 @@ void xinput_check_hotkeys(void)
         if (xinput_cursors_allocated && xinput_show_cursor)
            XDefineCursor (display, window, xinput_invisible_cursor);
         xinput_mouse_grabbed = 1;
+        xinput_grab_mouse = 1;
      }
   }
 
@@ -476,10 +516,12 @@ void xinput_check_hotkeys(void)
     {
       XUngrabKeyboard (display, CurrentTime);
       xinput_keyboard_grabbed = 0;
+      xinput_grab_keyboard = 0;
     }
     else if (!XGrabKeyboard(display, window, True, GrabModeAsync, GrabModeAsync, CurrentTime))
     {
       xinput_keyboard_grabbed = 1;
+      xinput_grab_keyboard = 1;
     }
   }
 }

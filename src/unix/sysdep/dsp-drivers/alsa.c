@@ -420,7 +420,6 @@ static int alsa_dsp_write(struct sysdep_dsp_struct *dsp, unsigned char *data,
 
 		snd_pcm_status_alloca(&status);
 		err = snd_pcm_status(priv->pcm_handle, status);
-		printf("pipe\n");
 		if (err < 0) {
 			fprintf(stderr_file,
 				"Alsa error: status error: %s\n",

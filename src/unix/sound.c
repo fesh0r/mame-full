@@ -10,7 +10,6 @@
 
 /* #define SOUND_DEBUG */
 
-static int sound_samplerate = 44100;
 static float sound_bufsize = 3.0;
 static int sound_attenuation = -3;
 static char *sound_dsp_device = NULL;
@@ -24,7 +23,7 @@ struct rc_option sound_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Sound Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "samples", "sam", rc_bool, &options.use_samples, "1", 0, 0, NULL, "Use/don't use samples (if available)" },
-	{ "samplefreq", "sf", rc_int, &sound_samplerate, "44100", 8000, 48000, NULL, "Set the playback sample-frequency/rate" },
+	{ "samplefreq", "sf", rc_int, &(options.samplerate), "44100", 8000, 48000, NULL, "Set the playback sample-frequency/rate" },
 	{ "bufsize",  "bs", rc_float, &sound_bufsize, "3.0", 1.0, 30.0, NULL, "Number of frames of sound to buffer" },
 	{ "volume", "v", rc_int, &sound_attenuation, "-3", -32, 0, NULL, "Set volume to <int> db, (-32 (soft) - 0(loud) )" },
 	{ "audiodevice", "ad", rc_string, &sound_dsp_device, NULL, 0, 0, NULL, "Use an alternative audiodevice" },

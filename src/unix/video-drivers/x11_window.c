@@ -1290,7 +1290,7 @@ void x11_window_close_display (void)
    if (private_cmap_allocated)
       XFreeColormap (display, colormap);
 
-   XSync (display, False);      /* send all events to sync; */
+   XSync (display, True); /* send all events to sync; discard events */
 }
 
 /*
