@@ -95,7 +95,7 @@ struct pia6821_interface apple1_pia0 =
 
 #define ESCAPE	'\x1b'
 
-static UINT8 apple1_unshifted_keymap[] =
+static const UINT8 apple1_unshifted_keymap[] =
 {
 	'0', '1', '2', '3', '4', '5', '6', '7',
 	'8', '9', '-', '=', '[', ']', ';', '\'',
@@ -106,7 +106,7 @@ static UINT8 apple1_unshifted_keymap[] =
 	' ', ESCAPE
 };
 
-static UINT8 apple1_shifted_keymap[] =
+static const UINT8 apple1_shifted_keymap[] =
 {
 	')', '!', '@', '#', '$', '%', '^', '&',
 	'*', '(', '_', '+', '[', ']', ':', '"',
@@ -121,7 +121,7 @@ static UINT8 apple1_shifted_keymap[] =
    keyboard where possible.  Note that the Apple I ROM Monitor ignores
    most control characters. */
 
-static UINT8 apple1_control_keymap[] =
+static const UINT8 apple1_control_keymap[] =
 {
 	'0', '1', '\x00', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
 	'8', '9', '\x1f', '=', '\x1b', '\x1d', ';', '\'',
@@ -197,42 +197,60 @@ static int apple1_verify_header (UINT8 *data)
 	}
 }
 
+#define SNAP_HEADER_LEN			12
 
 /*****************************************************************************
-**	apple1_load_snap
-**	Format of the binary SnapShot Image is:
-**	[ LOAD:xxyyDATA:zzzzzzzzzzzzz....]
-**	Where xxyy is the hex value to load the Data zzzzzzz to
+**	snapshot_load_apple1
 **
+**	Format of the binary snapshot image is:
+**
+**	[ LOAD:xxyyDATA:zzzzzz...]
+**
+**	where xxyy is the binary starting address (in big-endian byte
+**	order) to load the binary data zzzzzz to.
+**
+**	The image can be of arbitrary length, but it must fit in available
+**	memory.
 *****************************************************************************/
 SNAPSHOT_LOAD(apple1)
 {
+	UINT64 filesize, datasize;
+	UINT8 *snapbuf;
+	UINT16 start_addr = 0x0000;
 	UINT8 *memptr;
-	UINT8 snapdata[0x1000];
-	UINT16 starting_offset = 0x0000;
 
-	/* Load the specified Snapshot */
+	filesize = mame_fsize(fp);
+	snapbuf = auto_malloc(filesize);
 
 	/* Read the snapshot data into a temporary array */
-	if (mame_fread(fp, snapdata, 0x1000) != 0x1000)
+	if (filesize < SNAP_HEADER_LEN ||
+		mame_fread(fp, snapbuf, filesize) != filesize)
 		return INIT_FAIL;
 
 	/* Verify the snapshot header */
-	if (apple1_verify_header(snapdata) == IMAGE_VERIFY_FAIL)
+	if (apple1_verify_header(snapbuf) == IMAGE_VERIFY_FAIL)
 	{
-		logerror("Apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
+		printf("apple1 - Snapshot Header is in incorrect format - needs to be LOAD:xxyyDATA:\n");
 		return INIT_FAIL;
 	}
 
-	/* Extract the starting offset to load the snapshot to! */
-	starting_offset = (snapdata[5] << 8) | (snapdata[6]);
-	logerror("Apple1 - LoadAddress is 0x%04x\n", starting_offset);
+	datasize = filesize - SNAP_HEADER_LEN;
 
-	/* Point to the region where the snapshot will be loaded to */
-	memptr = memory_region(REGION_CPU1) + starting_offset;
+	/* Extract the starting address to load the snapshot to. */
+	start_addr = (snapbuf[5] << 8) | (snapbuf[6]);
+	logerror("apple1 - LoadAddress is 0x%04x\n", start_addr);
 
-	/* Copy the Actual Data into Memory Space */
-	memcpy(memptr, &snapdata[12], 0x1000);
+	if (start_addr + datasize > mess_ram_size)
+	{
+		printf("apple1 - Snapshot won't fit in this %d-byte memory configuration; needs %d bytes\n", mess_ram_size, (int) (start_addr + datasize));
+		return INIT_FAIL;
+	}
+
+	/* Point to the memory region where the snapshot will be loaded to */
+	memptr = mess_ram + start_addr;
+
+	/* Copy the data into memory space. */
+	memcpy(memptr, snapbuf + SNAP_HEADER_LEN, datasize);
 
 	return INIT_PASS;
 }
