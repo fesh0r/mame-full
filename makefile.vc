@@ -297,11 +297,11 @@ CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS) $(BSCD
 
 $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES) 
 # always recompile the version string
-	$(CC) $(CDEFS) $(CFLAGS) -Fo$(OBJ)/version.o -c src/version.c
+	$(CC) $(CDEFS) $(CFLAGS) -FR$(OBJ)/version.sbr -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 ifdef BSCMAKE
-	$(BSCMAKE) -nologo -o$(<:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
+	$(BSCMAKE) -nologo -o$(EMULATOR:%.exe=%.bsc) $(OBJS:%.o=%.sbr) $(COREOBJS:%.o=%.sbr) $(OSOBJS:%.o=%.sbr)
 endif
 ifndef DEBUG
 ifdef UPX
@@ -393,7 +393,7 @@ $(OBJ)/cpu/m68000/68020.o:  $(OBJ)/cpu/m68000/68020.asm
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	@-$(RM) $(subst /,\,$@)
-	$(AR) -out:$@ $^
+	$(AR) -nologo -out:$@ $^
 
 makedir:
 	@echo make makedir is no longer necessary, just type make

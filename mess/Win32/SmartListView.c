@@ -918,6 +918,12 @@ void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOr
 	}
 }
 
+void SmartListView_SetTextColor(struct SmartListView *pListView, COLORREF clrText)
+{
+	pListView->rgbListFontColor = clrText;
+	ListView_SetTextColor(pListView->hwndListView, clrText);
+}
+
 /* ------------------------------------------------------------------------ *
  * Sorting                                                                  *
  * ------------------------------------------------------------------------ */

@@ -3021,7 +3021,7 @@ static void PickFont(void)
         TreeView_SetTextColor(hTreeView,textColor);
 #ifdef MESS
 		SetWindowFont(s_pSoftwareListView->hwndListView, hFont, TRUE);
-		ListView_SetTextColor(s_pSoftwareListView->hwndListView, textColor);
+	    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
 #endif
         SetListFontColor(cf.rgbColors);
         SetWindowFont(GetDlgItem(hPicker, IDC_HISTORY), hFont, FALSE);
@@ -5542,7 +5542,7 @@ static void AdjustMetrics(void)
     ListView_SetTextColor(hwndList, textColor);
 #ifdef MESS
     ListView_SetBkColor(s_pSoftwareListView->hwndListView, GetSysColor(COLOR_WINDOW));
-    ListView_SetTextColor(s_pSoftwareListView->hwndListView, textColor);
+    SmartListView_SetTextColor(s_pSoftwareListView, textColor);
 #endif
     TreeView_SetBkColor(hTreeView, GetSysColor(COLOR_WINDOW));
     TreeView_SetTextColor(hTreeView, textColor);

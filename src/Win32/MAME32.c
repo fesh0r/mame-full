@@ -123,6 +123,8 @@ void MAME32App_init(options_type* pOptions)
     MAME32App.m_pTrak          = NULL;
     MAME32App.m_pFMSynth       = NULL;
     MAME32App.m_bDone          = FALSE;
+	MAME32App.m_bMamePaused    = FALSE;
+	MAME32App.m_bAutoPaused    = FALSE;
 
 #if defined(MAME_DEBUG)
     auto_pause = FALSE;
