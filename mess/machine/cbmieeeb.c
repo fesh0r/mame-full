@@ -304,7 +304,7 @@ Pin  Signal              Abbreviation  Source
 #include "includes/cbm.h"
 
 #include "includes/cbmdrive.h"
-#include "includes/c1551.h"
+#include "includes/cbmserb.h"
 
 #include "includes/cbmieeeb.h"
 
