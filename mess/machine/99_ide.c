@@ -190,14 +190,17 @@ static void ide_controller_unfucked_0_w(int group_select, int offset, int data)
 */
 int ti99_ide_load(int id, mame_file *fp, int open_mode)
 {
+	void *handle;
+
 	hard_disk_set_interface(& mess_hard_disk_interface);
 
 	ide_fp = fp;
 	ide_fp_wp = ! is_effective_mode_writable(open_mode);
 
-	if (hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL) != NULL)
+	handle = hard_disk_open(image_filename(IO_HARDDISK, id), is_effective_mode_writable(open_mode), NULL);
+	if (handle != NULL)
 	{
-		ide_controller_init(0, & ti99_ide_interface);
+		ide_controller_init_custom(0, & ti99_ide_interface, handle);
 		ide_controller_reset(0);
 		return INIT_PASS;
 	}
@@ -212,7 +215,7 @@ void ti99_ide_unload(int id)
 {
 	hard_disk_close(get_disk_handle(0));
 	ide_fp = NULL;
-	ide_controller_init(0, & ti99_ide_interface);
+	ide_controller_init_custom(0, & ti99_ide_interface, NULL);
 	ide_controller_reset(0);
 }
 
@@ -226,7 +229,7 @@ void ti99_ide_init(void)
 
 	ti99_exp_set_card_handlers(0x1000, & ide_handlers);
 
-	ide_controller_init(0, & ti99_ide_interface);
+	ide_controller_init_custom(0, & ti99_ide_interface, NULL);
 	ide_controller_reset(0);
 }
 
