@@ -761,7 +761,7 @@ void bbc_wd179x_callback(int event)
 void bbc_wd179x_status_w(int offset,int data)
 {
 	int drive;
-	int density;
+	DENSITY density;
 
 	drive_control = data;
 

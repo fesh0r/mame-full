@@ -1091,7 +1091,7 @@ WRITE_HANDLER(oric_microdisc_w)
 			break;
 		case 0x014:
 		{
-			int density;
+			DENSITY density;
 
 			port_314_w = data;
 
