@@ -54,7 +54,7 @@ VPATH=src $(wildcard src/cpu/*)
 
 # compiler, linker and utilities
 AR = lib
-CC = cl
+CC = @cl
 LD = link
 RC = rc
 ASM = nasmw
