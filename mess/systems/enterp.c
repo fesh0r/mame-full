@@ -243,7 +243,7 @@ void Enterprise_Initialise()
 
 	wd179x_init(WD_TYPE_177X,enterp_wd177x_callback);
 
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_DS_80);
 }
 
 static READ_HANDLER ( enterprise_wd177x_read )

@@ -97,6 +97,11 @@ static int dsk_floppy_verify(UINT8 *diskimage_data)
 }
 
 
+DEVICE_INIT(dsk_floppy)
+{
+	return floppy_drive_init(image, NULL);
+}
+
 /* load floppy */
 DEVICE_LOAD(dsk_floppy)
 {
@@ -334,7 +339,7 @@ static void dsk_extended_dsk_init_sector_offsets(dsk_drive *thedrive,int track,i
 
 
 
-void dsk_disk_image_init(dsk_drive *thedrive)
+static void dsk_disk_image_init(dsk_drive *thedrive)
 {
 	/*-----------------27/02/00 11:26-------------------
 	 clear offsets

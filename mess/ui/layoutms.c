@@ -52,7 +52,7 @@ FOLDERDATA g_folderData[] =
 	{"Raster",          FOLDER_RASTER,       IDI_FOLDER,				F_RASTER,      F_VECTOR,     NULL,                       DriverIsVector,    FALSE },
 	{"Vector",          FOLDER_VECTOR,       IDI_FOLDER,				F_VECTOR,      F_RASTER,     NULL,                       DriverIsVector,    TRUE },
 	{"Trackball",       FOLDER_TRACKBALL,    IDI_FOLDER,				0,             0,            NULL,                       DriverUsesTrackball,	TRUE },
-	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,	                0,             0,            NULL,                       DriverIsStereo,    TRUE },
+//	{"Stereo",          FOLDER_STEREO,       IDI_SOUND,                0,             0,            NULL,                       DriverIsStereo,    TRUE },
 	{ NULL }
 };
 

@@ -273,7 +273,7 @@ static MACHINE_INIT( exidy )
 	
 	wd179x_init(WD_TYPE_179X,NULL);
 
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_DS_80);
 
 	/* this is temporary. Normally when a Z80 is reset, it will
 	execute address 0. The exidy starts executing from 0x0e000 */

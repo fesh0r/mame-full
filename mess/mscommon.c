@@ -365,6 +365,8 @@ void *tagpool_lookup(tag_pool *tpool, const char *tag)
 {
 	struct tag_pool_header *header;
 
+	assert(tpool);
+
 	header = tpool->header;
 	while(header && strcmp(header->tagname, tag))
 		header = header->next;

@@ -1397,8 +1397,8 @@ static MACHINE_INIT( nc200 )
 
     nec765_init(&nc200_nec765_interface, NEC765A);
     /* double sided, 80 track drive */
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
-	//floppy_drive_set_index_pulse_callback(0, nc200_floppy_drive_index_callback);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_DS_80);
+	//floppy_drive_set_index_pulse_callback(image_from_devtype_and_index(IO_FLOPPY, 0), nc200_floppy_drive_index_callback);
 
 	mc146818_init(MC146818_STANDARD);
 

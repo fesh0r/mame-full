@@ -903,7 +903,7 @@ static void pcw_init_machine(void)
 	pcw_interrupt_counter = 0;
 	fdc_interrupt_code = 0;
 
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_DS_80);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_DS_80);
 
 	roller_ram_offset = 0;
 

@@ -1401,7 +1401,7 @@ static MACHINE_INIT( einstein )
 	/* a reset causes the fire int, adc int, keyboard int mask
 	to be set to 1, which causes all these to be DISABLED */
 	einstein_int_mask = 0;
-	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(image_from_devtype_and_index(IO_FLOPPY, 0), FLOPPY_DRIVE_SS_40);
 
 	cpu_set_irq_callback(0, einstein_cpu_acknowledge_int);
 
