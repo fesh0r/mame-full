@@ -77,6 +77,7 @@ struct deviceentry {
 	int icon;
 	const char *shortname;
 	const char *longname;
+	const char *dlgname;
 };
 
 static const struct deviceentry *lookupdevice(int d)
@@ -85,18 +86,18 @@ static const struct deviceentry *lookupdevice(int d)
 
 	static struct deviceentry devices[] =
 	{
-		{ 1, "cart",	"cartridge" },	/* IO_CARTSLOT */
-		{ 4, "flop",	"floppy" },		/* IO_FLOPPY */
-		{ 9, "hard",	"harddisk" },	/* IO_HARDDISK */
-		{ 2, "cyln",	"cylinder" },	/* IO_CYLINDER */
-		{ 5, "cass",	"cassette" },	/* IO_CASSETTE */
-		{ 2, "pncd",	"punchcard" },	/* IO_PUNCHCARD */
-		{ 2, "pntp",	"punchtape" },	/* IO_PUNCHTAPE */
-		{ 8, "prin",	"printer" },	/* IO_PRINTER */
-		{ 6, "serl",	"serial" },		/* IO_SERIAL */
-		{ 2, "parl",	"parallel" },	/* IO_PARALLEL */
-		{ 7, "snap",	"snapshot" },	/* IO_SNAPSHOT */
-		{ 7, "quik",	"quickload" }	/* IO_QUICKLOAD */
+		{ 1, "cart",	"cartridge",	"Cartridge images" },	/* IO_CARTSLOT */
+		{ 4, "flop",	"floppy",		"Floppy disk images" },	/* IO_FLOPPY */
+		{ 9, "hard",	"harddisk",		"Hard disk images" },	/* IO_HARDDISK */
+		{ 2, "cyln",	"cylinder",		"Cylinders" },			/* IO_CYLINDER */
+		{ 5, "cass",	"cassette",		"Cassette images" },	/* IO_CASSETTE */
+		{ 2, "pncd",	"punchcard",	"Punchcard images" },	/* IO_PUNCHCARD */
+		{ 2, "pntp",	"punchtape",	"Punchtape images" },	/* IO_PUNCHTAPE */
+		{ 8, "prin",	"printer",		"Printer Output" },		/* IO_PRINTER */
+		{ 6, "serl",	"serial",		"Serial Output" },		/* IO_SERIAL */
+		{ 2, "parl",	"parallel",		"Parallel Output" },	/* IO_PARALLEL */
+		{ 7, "snap",	"snapshot",		"Snapshots" },			/* IO_SNAPSHOT */
+		{ 7, "quik",	"quickload",	"Quickloads" }			/* IO_QUICKLOAD */
 	};
 
 	assert((sizeof(devices) / sizeof(devices[0])) + 1 == IO_ALIAS);
@@ -1167,22 +1168,10 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     OPENFILENAME of;
     char szFilter[2048];
     LPSTR s;
+	const char *typname;
     int i;
 
-    static char *typenames[] = {
-        "Compressed images",    /* IO_END */
-        "Cartridge images",     /* IO_CARTSLOT */
-        "Floppy disk images",   /* IO_FLOPPY */
-        "Hard disk images",     /* IO_HARDDISK */
-        "Cassette images",      /* IO_CASSETTE */
-        "Printer output",       /* IO_PRINTER */
-        "Serial output",        /* IO_SERIAL */
-        "Snapshots",            /* IO_SNAPSHOT */
-        "Quickloads",           /* IO_QUICKLOAD */
-        NULL                    /* IO_ALIAS */
-    };
-
-    s = szFilter;
+	s = szFilter;
     *filename = 0;
 
     // Common image types
@@ -1205,10 +1194,12 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
  
     // The others
     for (i = 0; imagetypes[i].ext; i++) {
-        assert(imagetypes[i].type < (sizeof(typenames) / sizeof(typenames[0])));
-        assert(typenames[imagetypes[i].type]);
+		if (imagetypes[i].type == IO_END)
+			typname = "Compressed images";
+		else
+			typname = lookupdevice(imagetypes[i].type)->dlgname;
 
-        strcpy(s, typenames[imagetypes[i].type]);
+        strcpy(s, typname);
         //strcpy(s, imagetypes[i].ext);
         s += strlen(s);
         strcpy(s, " (*.");

@@ -1,6 +1,13 @@
 Whats new:
 
 ----------
+0.37 BETA 14
+------------
+
+- Fixed a bug in "other directory software" selected through a file dialog.
+  [Nate Woods]
+
+----------
 0.37 BETA 13
 ------------
 
