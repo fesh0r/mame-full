@@ -40,7 +40,6 @@
 #include <zmouse.h>         /* Intellimouse */
 #endif
 #include <wingdi.h>
-#include <tchar.h>
 #include <time.h>
 
 #include <driver.h>
@@ -84,6 +83,8 @@
 
 #define MM_PLAY_GAME (WM_APP + 15000)
 
+#define JOYGUI_MS 100
+
 /* Max size of a sub-menu */
 #define DBU_MIN_WIDTH  292
 #define DBU_MIN_HEIGHT 190
@@ -96,9 +97,6 @@ typedef BOOL (WINAPI *common_file_dialog_proc)(LPOPENFILENAME lpofn);
 /***************************************************************************
     function prototypes
  ***************************************************************************/
-
-//TreeView.c
-extern void DestroyTree(HWND hWnd);
 
 static BOOL             Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow);
 static void             Win32UI_exit(void);
@@ -121,7 +119,6 @@ static void             UpdateStatusBar(void);
 static BOOL             PickerHitTest(HWND hWnd);
 static BOOL             MamePickerNotify(NMHDR *nm);
 static BOOL             TreeViewNotify(NMHDR *nm);
-static char*            ConvertAmpersandString(const char *s);
 
 static void             LoadListBitmap(void);
 static void             PaintControl(HWND hWnd, BOOL useBitmap);
@@ -167,7 +164,7 @@ static BOOL             ListCtrlOnPaint(HWND hWnd, UINT uMsg);
 static DWORD            GetShellLargeIconSize(void);
 static BOOL             CreateIcons(HWND hWnd);
 static int              WhichIcon(int nItem);
-static void             AddIcon(int the_index);
+static void             AddIcon(int cmkindex);
 
 /* Context Menu handlers */
 static void             UpdateMenu(HWND hWnd, HMENU hMenu);
@@ -579,10 +576,13 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -state_directory \"%s\"",    GetStateDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -artwork_directory \"%s\"",  GetArtDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
+//	sprintf(&pCmdLine[strlen(pCmdLine)], " -icons_directory \"%s\"",    GetIconsDir());
 /*	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_directory %s",        GetCheatDir());*/
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -history_file \"%s\"",       GetHistoryFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -mameinfo_file \"%s\"",      GetMAMEInfoFileName());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr_directory \"%s\"",    GetCtrlrDir());
 
 	/* video */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sautoframeskip",           pOpts->autoframeskip   ? "" : "no");
@@ -609,11 +609,12 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -screen_aspect %s",          pOpts->aspect);
 
 	/* input */
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrod",                  pOpts->hotrod          ? "" : "no");
-	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrodse",                pOpts->hotrodse        ? "" : "no");
+//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrod",                  pOpts->hotrod          ? "" : "no");
+//	sprintf(&pCmdLine[strlen(pCmdLine)], " -%shotrodse",                pOpts->hotrodse        ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%smouse",                   pOpts->use_mouse       ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%sjoystick",                pOpts->use_joystick    ? "" : "no");
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssteadykey",               pOpts->steadykey    ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr \"%s\"",               	pOpts->ctrlr);
 
 	/* core video */
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -bpp %d",                    pOpts->color_depth); 
@@ -647,6 +648,7 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	if (g_pRecordName != NULL)
 		sprintf(&pCmdLine[strlen(pCmdLine)], " -record \"%s\"",         g_pRecordName);
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -%slog",                     pOpts->errorlog        ? "" : "no");
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -%ssleep",                   pOpts->sleep           ? "" : "no");
 }
 
 static BOOL WaitWithMessageLoop(HANDLE hEvent)
@@ -753,7 +755,7 @@ static int RunMAME(int nGameIndex, HANDLE hErrorWrite)
 						NULL,		  /* Process handle not inheritable. */
 						NULL,		  /* Thread handle not inheritable. */
 						TRUE,		  /* Handle inheritance.  */
-						DETACHED_PROCESS,			  /* Creation flags. */
+						0,			  /* Creation flags. */
 						NULL,		  /* Use parent's environment block.  */
 						NULL,		  /* Use parent's starting directory.  */
 						&si,		  /* STARTUPINFO */
@@ -1035,7 +1037,7 @@ HICON LoadIconFromFile(char *iconname)
 	PBYTE       bufferPtr;
 	UINT        bufferLen;
 
-	sprintf(tmpStr, "icons/%s.ico",iconname);
+	sprintf(tmpStr, "%s/%s.ico", GetIconsDir(), iconname);
 	if (stat(tmpStr, &file_stat) != 0
 	|| (hIcon = ExtractIcon(hInst, tmpStr, 0)) == 0)
 	{
@@ -1043,7 +1045,7 @@ HICON LoadIconFromFile(char *iconname)
 		if (stat(tmpStr, &file_stat) != 0
 		|| (hIcon = ExtractIcon(hInst, tmpStr, 0)) == 0)
 		{
-			sprintf(tmpStr, "icons/icons.zip");
+			sprintf(tmpStr, "%s/icons.zip", GetIconsDir());
 			sprintf(tmpIcoName, "%s.ico", iconname);
 			if (stat(tmpStr, &file_stat) == 0)
 			{
@@ -1610,7 +1612,7 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 		if (g_pJoyGUI->init() != 0)
 			g_pJoyGUI = NULL;
 		else
-			SetTimer(hMain, 0, 100, NULL);
+			SetTimer(hMain, 0, JOYGUI_MS, NULL);
 	}
 	else
 		g_pJoyGUI = NULL;
@@ -1623,6 +1625,13 @@ static BOOL Win32UI_init(HINSTANCE hInstance, LPSTR lpCmdLine, int nCmdShow)
 static void Win32UI_exit()
 {
 	ExitZip();
+
+    if (g_bDoBroadcast == TRUE)
+    {
+        ATOM a = GlobalAddAtom("");
+        SendMessage(HWND_BROADCAST, g_mame32_message, a, a);
+        GlobalDeleteAtom(a);
+    }
 
 	if (g_pJoyGUI != NULL)
 		g_pJoyGUI->exit();
@@ -1645,7 +1654,7 @@ static void Win32UI_exit()
 	FreeFolders();
 	SetViewMode(current_view_id - ID_VIEW_ICON);
 
-    DestroyTree(hTreeView);
+    //DestroyTree(hTreeView);
 
 	FreeScreenShot();
 
@@ -2165,7 +2174,7 @@ static void OnSize(HWND hWnd, UINT nState, int nWidth, int nHeight)
 
 static void ResizeWindow(HWND hParent, Resize *r)
 {
-	int the_index = 0, dx, dy;
+	int cmkindex = 0, dx, dy;
 	HWND hControl;
 	RECT parent_rect, rect;
 	ResizeItem *ri;
@@ -2180,9 +2189,9 @@ static void ResizeWindow(HWND hParent, Resize *r)
 	dy = parent_rect.bottom - r->rect.bottom;
 	ClientToScreen(hParent, &p);
 
-	while (r->items[the_index].type != RA_END)
+	while (r->items[cmkindex].type != RA_END)
 	{
-		ri = &r->items[the_index];
+		ri = &r->items[cmkindex];
 		if (ri->type == RA_ID)
 			hControl = GetDlgItem(hParent, ri->u.id);
 		else
@@ -2190,7 +2199,7 @@ static void ResizeWindow(HWND hParent, Resize *r)
 
 		if (hControl == NULL)
 		{
-			the_index++;
+			cmkindex++;
 			continue;
 		}
 
@@ -2218,7 +2227,7 @@ static void ResizeWindow(HWND hParent, Resize *r)
 		if (ri->subwindow != NULL)
 			ResizeWindow(hControl, ri->subwindow);
 
-		the_index++;
+		cmkindex++;
 	}
 
 	/* Record parent window's new location */
@@ -2349,7 +2358,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 	LPSTR pString;
 	LPSTR pDest = lpttt->lpszText;
 
-	/* Map command ID to string the_index */
+	/* Map command ID to string index */
 	for (i = 0; CommandToString[i] != -1; i++)
 	{
 		if (CommandToString[i] == iButton)
@@ -2360,7 +2369,7 @@ static void CopyToolTipText(LPTOOLTIPTEXT lpttt)
 	}
 
 	/* Check for valid parameter */
-	pString = (iButton > NUM_TOOLTIPS) ? "Invalid Button the_index" : szTbStrings[iButton];
+	pString = (iButton > NUM_TOOLTIPS) ? "Invalid Button Index" : szTbStrings[iButton];
 
 	lstrcpy(pDest, pString);
 }
@@ -2748,13 +2757,17 @@ static BOOL MamePickerNotify(NMHDR *nm)
 					break;
 
 				case COLUMN_TYPE:
+                {
+                    struct InternalMachineDriver drv;
+                    expand_machine_driver(drivers[nItem]->drv,&drv);
+
 					/* Vector/Raster */
-					if (drivers[nItem]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+					if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 						pDispInfo->item.pszText = "Vector";
 					else
 						pDispInfo->item.pszText = "Raster";
 					break;
-
+                }
 				case COLUMN_TRACKBALL:
 					/* Trackball */
 					if (GameUsesTrackball(nItem))
@@ -2895,7 +2908,7 @@ static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	/* Right button was clicked on header */
 	POINT	pt;
 	RECT	rcCol;
-	int 	the_index;
+	int 	cmkindex;
 	int 	i;
 	BOOL	found = FALSE;
 	HWND	hwndHeader;
@@ -2910,12 +2923,12 @@ static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 
 	ScreenToClient(hwndHeader, &pt);
 
-	/* Determine the column the_index */
+	/* Determine the column index */
 	for (i = 0; Header_GetItemRect(hwndHeader, i, &rcCol); i++)
 	{
 		if (PtInRect(&rcCol, pt))
 		{
-			the_index = i;
+			cmkindex = i;
 			found = TRUE;
 			break;
 		}
@@ -2942,7 +2955,7 @@ static BOOL HeaderOnContextMenu(HWND hWnd, WPARAM wParam, LPARAM lParam)
 	return FALSE;
 }
 
-static char* ConvertAmpersandString(const char *s)
+char* ConvertAmpersandString(const char *s)
 {
 	/* takes a string and changes any ampersands to double ampersands,
 	   for setting text of window controls that don't allow us to disable
@@ -3019,6 +3032,17 @@ static void PollGUIJoystick()
 	{
 		SetFocus(hwndList);
 		PressKey(hwndList, VK_HOME);
+	}
+
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(2, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_NEG)))
+	{
+		SetFocus(hwndList);
+		PressKey(hwndList, VK_PRIOR);
+	}
+	if (g_pJoyGUI->is_joy_pressed(JOYCODE(2, JOYCODE_STICK_AXIS, 2, JOYCODE_DIR_POS)))
+	{
+		SetFocus(hwndList);
+		PressKey(hwndList, VK_NEXT);
 	}
 }
 
@@ -3483,28 +3507,27 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 #if HAS_HELP
 	case ID_HELP_CONTENTS:
-//		Help_HtmlHelp(hMain, MAME32HELP, HH_DISPLAY_TOC, 0);
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32%20overview.htm", HH_DISPLAY_TOPIC, 0);
+		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_overview.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 
 	case ID_HELP_WHATS_NEW32:
-//		Help_HtmlHelp(hMain, MAME32HELP, HH_HELP_CONTEXT, 100);
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32%20what's%20new.htm", HH_DISPLAY_TOPIC, 0);
+		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_changes.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 
-	case ID_HELP_QUICKSTART:
-//		Help_HtmlHelp(hMain, MAME32HELP, HH_HELP_CONTEXT, 101);
-		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32%20windows%20install-setup.htm", HH_DISPLAY_TOPIC, 0);
+	case ID_HELP_TROUBLE:
+		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame32_support.htm", HH_DISPLAY_TOPIC, 0);
 		break;
-#endif /* HAS_HELP */
 
 	case ID_HELP_RELEASE:
 		DisplayTextFile(hMain, HELPTEXT_RELEASE);
+		//Help_HtmlHelp(hMain, MAME32HELP "::/html/mame_windows.htm", HH_DISPLAY_TOPIC, 0);
 		break;
 
 	case ID_HELP_WHATS_NEW:
-		DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
+		// DisplayTextFile(hMain, HELPTEXT_WHATS_NEW);
+		Help_HtmlHelp(hMain, MAME32HELP "::/html/mame_whatsnew.htm", HH_DISPLAY_TOPIC, 0);
 		break;
+#endif /* HAS_HELP */
 
 	case ID_HELP_ABOUT:
 		DialogBox(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_ABOUT),
@@ -3522,7 +3545,7 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 		nPictType = (nPictType + 1) % MAX_PICT_TYPES;
 		SetShowPictType(nPictType);
 #ifdef MESS
-        bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), NULL, nPictType);
+		bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), NULL, nPictType);
 #else
 		bScreenShotAvailable = LoadScreenShot(GetSelectedPickItem(), nPictType);
 #endif
@@ -3708,20 +3731,20 @@ static void ResetColumnDisplay(BOOL firstime)
 	SetSelectedPick(i);
 }
 
-static void AddIcon(int the_index)
+static void AddIcon(int cmkindex)
 {
 	HICON hIcon = 0;
 
-	if (icon_index[the_index] != 0)
+	if (icon_index[cmkindex] != 0)
 		return;
 
-	if ((hIcon = LoadIconFromFile((char *)drivers[the_index]->name)) == 0)
+	if ((hIcon = LoadIconFromFile((char *)drivers[cmkindex]->name)) == 0)
 	{
-		if (drivers[the_index]->clone_of != 0)
+		if (drivers[cmkindex]->clone_of != 0)
 		{
-			hIcon = LoadIconFromFile((char *)drivers[the_index]->clone_of->name);
-			if (!hIcon && drivers[the_index]->clone_of->clone_of)
-				hIcon = LoadIconFromFile((char *)drivers[the_index]->clone_of->clone_of->name);
+			hIcon = LoadIconFromFile((char *)drivers[cmkindex]->clone_of->name);
+			if (!hIcon && drivers[cmkindex]->clone_of->clone_of)
+				hIcon = LoadIconFromFile((char *)drivers[cmkindex]->clone_of->clone_of->name);
 		}
 	}
 
@@ -3730,10 +3753,10 @@ static void AddIcon(int the_index)
 		int nIconPos = ImageList_AddIcon(hSmall, hIcon);
 		ImageList_AddIcon(hLarge, hIcon);
 		if (nIconPos != -1)
-			icon_index[the_index] = nIconPos;
+			icon_index[cmkindex] = nIconPos;
 	}
-	if (icon_index[the_index] == 0)
-		icon_index[the_index] = 1;
+	if (icon_index[cmkindex] == 0)
+		icon_index[cmkindex] = 1;
 }
 
 static void ReloadIcons(HWND hWnd)
@@ -3761,7 +3784,7 @@ static DWORD GetShellLargeIconSize(void)
 	/* Get the Key */
 	RegOpenKey(HKEY_CURRENT_USER, "Control Panel\\desktop\\WindowMetrics", &hKey);
 	/* Save the last size */
-	RegQueryValueEx(hKey, "Shell Icon Size", NULL, &dwType, szBuffer, &dwLength);
+	RegQueryValueEx(hKey, "Shell Icon Size", NULL, &dwType, (LPBYTE)szBuffer, &dwLength);
 	dwSize = atol(szBuffer);
 
 	if (dwSize < 32)
@@ -3894,14 +3917,19 @@ static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subit
 		break;
 
 	case COLUMN_TYPE:
-		if ((drivers[index1]->drv->video_attributes & VIDEO_TYPE_VECTOR) ==
-			(drivers[index2]->drv->video_attributes & VIDEO_TYPE_VECTOR))
+    {
+        struct InternalMachineDriver drv1,drv2;
+        expand_machine_driver(drivers[index1]->drv,&drv1);
+        expand_machine_driver(drivers[index2]->drv,&drv2);
+
+		if ((drv1.video_attributes & VIDEO_TYPE_VECTOR) ==
+			(drv2.video_attributes & VIDEO_TYPE_VECTOR))
 			return ListCompareFunc(index1, index2, COLUMN_GAMES);
 
-		value = (drivers[index1]->drv->video_attributes & VIDEO_TYPE_VECTOR) -
-				(drivers[index2]->drv->video_attributes & VIDEO_TYPE_VECTOR);
+		value = (drv1.video_attributes & VIDEO_TYPE_VECTOR) -
+				(drv2.video_attributes & VIDEO_TYPE_VECTOR);
 		break;
-
+    }
 	case COLUMN_TRACKBALL:
 		if (GameUsesTrackball(index1) == GameUsesTrackball(index2))
 			return ListCompareFunc(index1, index2, COLUMN_GAMES);
@@ -3962,14 +3990,14 @@ static int CALLBACK ListCompareFunc(LPARAM index1, LPARAM index2, int sort_subit
 
 static int GetSelectedPick()
 {
-	/* returns the_index of listview selected item */
+	/* returns index of listview selected item */
 	/* This will return -1 if not found */
 	return ListView_GetNextItem(hwndList, -1, LVIS_SELECTED | LVIS_FOCUSED);
 }
 
 static int GetSelectedPickItem()
 {
-	/*r eturns lParam (game the_index) of listview selected item */
+	/*r eturns lParam (game index) of listview selected item */
 	LV_ITEM lvi;
 
 	lvi.iItem = GetSelectedPick();
@@ -4181,11 +4209,11 @@ static INT_PTR CALLBACK LanguageDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, L
 
 #if HAS_HELP
 	case WM_HELP:
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, (DWORD)dwHelpIDs);
+		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, (DWORD)dwHelpIDs);
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
+		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, (DWORD)dwHelpIDs);
 		break;
 #endif /* HAS_HELP */
 
@@ -4405,7 +4433,7 @@ static void MamePlayGameWithOptions(int nGame)
 	SetFocus(hwndList);
 
 	if (g_pJoyGUI != NULL)
-		SetTimer(hMain, 0, 25, NULL);
+		SetTimer(hMain, 0, JOYGUI_MS, NULL);
 }
 
 /* Toggle ScreenShot ON/OFF */
@@ -4961,7 +4989,7 @@ static LRESULT CALLBACK HeaderWndProc( HWND hwnd, UINT uMsg, WPARAM wParam, LPAR
 			FillRect(hdc, &rcLabel, GetSysColorBrush(COLOR_3DFACE));
 
 			/* offset the label */
-			GetTextExtentPoint32(hdc, _T(" "), 1, &size);
+			GetTextExtentPoint32(hdc, TEXT(" "), 1, &size);
 			nOffset = size.cx * 2;
 
 			/* get the column text and format */

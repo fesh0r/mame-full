@@ -13,6 +13,7 @@ unsigned char *route16_sharedram;
 unsigned char *route16_videoram1;
 unsigned char *route16_videoram2;
 size_t route16_videoram_size;
+int route16_hardware;
 
 static struct mame_bitmap *tmpbitmap1;
 static struct mame_bitmap *tmpbitmap2;
@@ -25,7 +26,6 @@ static int video_disable_2 = 0;
 static int video_remap_1;
 static int video_remap_2;
 static const unsigned char *route16_color_prom;
-static int route16_hardware;
 
 /* Local functions */
 static void modify_pen(int pen, int colorindex);
@@ -34,40 +34,9 @@ static void common_videoram_w(int offset,int data,
 
 
 
-void route16_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( route16 )
 {
 	route16_color_prom = color_prom;	/* we'll need this later */
-}
-
-
-/***************************************************************************
-
-  Set hardware dependent flag.
-
-***************************************************************************/
-void init_route16b(void)
-{
-    route16_hardware = 1;
-}
-
-void init_route16(void)
-{
-	unsigned char *rom = memory_region(REGION_CPU1);
-
-
-	/* patch the protection */
-	rom[0x00e9] = 0x3a;
-
-	rom[0x0754] = 0xc3;
-	rom[0x0755] = 0x63;
-	rom[0x0756] = 0x07;
-
-	init_route16b();
-}
-
-void init_stratvox(void)
-{
-    route16_hardware = 0;
 }
 
 
@@ -76,20 +45,13 @@ void init_stratvox(void)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int route16_vh_start(void)
+VIDEO_START( route16 )
 {
-	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
+	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-
-		bitmap_free(tmpbitmap1);
-		tmpbitmap1 = 0;
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	video_flip = 0;
 	video_color_select_1 = 0;
@@ -100,17 +62,6 @@ int route16_vh_start(void)
 	video_remap_2 = 1;
 
 	return 0;
-}
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void route16_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	bitmap_free(tmpbitmap2);
 }
 
 
@@ -205,6 +156,37 @@ WRITE_HANDLER( route16_sharedram_w )
 }
 
 /***************************************************************************
+  guessing that the unconnected IN3 and OUT2 on the stratvox schematic
+  are hooked up for speakres and spacecho to somehow read the variable
+  resistors (eg a voltage ramp), using a write to OUT2 as a trigger
+  and then bits 0-2 of IN3 going low when each pot "matches". the VRx
+  values can be seen when IN0=0x55 and p1b1 is held during power on.
+  this would then be checking that the sounds are mixed correctly.
+***************************************************************************/
+static int speakres_vrx;
+
+READ_HANDLER ( speakres_in3_r )
+{
+	int bit2=4, bit1=2, bit0=1;
+
+	/* just using a counter, the constants are the number of reads
+	   before going low, each read is 40 cycles apart. the constants
+	   were chosen based on the startup tests and for vr0=vr2 */
+	speakres_vrx++;
+	if(speakres_vrx>0x300) bit0=0;		/* VR0 100k ohm - speech */
+	if(speakres_vrx>0x200) bit1=0;		/* VR1  50k ohm - main volume */
+	if(speakres_vrx>0x300) bit2=0;		/* VR2 100k ohm - explosion */
+
+	return 0xf8|bit2|bit1|bit0;
+}
+
+WRITE_HANDLER ( speakres_out2_w )
+{
+	speakres_vrx=0;
+}
+
+
+/***************************************************************************
   route16_videoram1_r
 ***************************************************************************/
 READ_HANDLER( route16_videoram1_r )
@@ -285,7 +267,7 @@ static void common_videoram_w(int offset,int data,
   the main emulation engine.
 
 ***************************************************************************/
-void route16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( route16 )
 {
     if (video_remap_1)
 	{
@@ -304,7 +286,7 @@ void route16_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 
-	if (full_refresh || video_remap_1 || video_remap_2)
+	if (get_vh_global_attribute_changed() || video_remap_1 || video_remap_2)
 	{
 		int offs;
 

@@ -20,7 +20,7 @@ static int color = 0;
 ***************************************************************************/
 int trs80_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	return 0;
@@ -28,7 +28,6 @@ int trs80_vh_start(void)
 
 void trs80_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 /***************************************************************************

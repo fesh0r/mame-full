@@ -28,7 +28,6 @@ int coupe_vh_start(void)
 
 void    coupe_vh_stop(void) 
 {
-	generic_vh_stop();
 }
 
 //#define MONO

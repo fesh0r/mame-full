@@ -1,18 +1,13 @@
-/***************************************************************************
+/*************************************************************************
 
-  Atari Video Pinball Video Hardware
+	Atari Video Pinball hardware
 
-  Functions to emulate the video hardware of the machine.
-
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "videopin.h"
 
-
-/* Artwork */
-#include "artwork.h"
-/*static*/ struct artwork_info *videopin_backdrop = NULL;
 
 /* machine/videopin.c */
 extern int ball_position;
@@ -20,27 +15,17 @@ extern int ball_position;
 /* Playfield and ball clipping area
  * This '+8' is to adjust display to the approximate backdrop
  */
-struct rectangle vpclip = { (360-296)/2, (360-296)/2 + 296,
-							(312-256)/2 +8, (312-256)/2 +8 +256 };
+ 
 
-
-
-void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( videopin )
 {
 	int offs;
 	int balloffs[4], offsc=0;
 	int charcode;
 	int sx,sy,tsx, tsy;
-	struct rectangle aclip;
-/*	int x,rx,ry;
-	char dbuf[50];*/
 
-	/*logerror("vh_screenrefresh, %02x\n", full_refresh); */
-
-	if (full_refresh)
-	{
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
-	}
 
     /* For every character in the Video RAM, check if it has been modified
 	 * since last time and update it accordingly.
@@ -56,7 +41,7 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	 */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (full_refresh || dirtybuffer[offs])
+		if (dirtybuffer[offs])
 		{
 			dirtybuffer[offs]=0;
 
@@ -68,35 +53,10 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (sx < 128) sx += 256;
 			else sx -= 128;
 
-			/* To shift PF in place on the backdrop */
-			sx += (360-296)/2;
-			sy += (312-256)/2 +8; /* This '+8' is to adjust display to the approximate backdrop */
-
-			/* Draw Artwork */
-		    if (videopin_backdrop)
-			{
-				/* Refreshed stamp/tile clipping area */
-				aclip.min_x = sx;
-				aclip.max_x = sx+7;
-				aclip.min_y = sy;
-				aclip.max_y = sy+7;
-				copybitmap(tmpbitmap,videopin_backdrop->artwork,0,0,0,0,&aclip,TRANSPARENCY_NONE,0);
-			}
-
-			if (videoram[offs] & 0x40)
-			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, 1,
-					0,1,sx,sy,
-					&vpclip,videopin_backdrop?TRANSPARENCY_PEN:TRANSPARENCY_NONE,0);
-			}
-			else
-			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, 1,
-					0,0,sx,sy,
-					&vpclip,videopin_backdrop?TRANSPARENCY_PEN:TRANSPARENCY_NONE,0);
-			}
+			drawgfx(tmpbitmap,Machine->gfx[0],
+				charcode, 0,
+				0,videoram[offs] & 0x40,sx,sy,
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 
 		/* Bit 7 indicate presence of the ball window in four tiles.
@@ -114,6 +74,9 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		}
 	}
 
+
+	/* copy the temporary bitmap to the destination bitmap */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
 	/* We draw ball on the top of the current playfield display
 	 * Ball_position bits:
@@ -155,10 +118,6 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		if (sx < 128) sx += 256;
 		else sx -= 128;
 
-		/* To shift ball in place on the backdrop */
-		sx += (360-296)/2;
-		sy += (312-256)/2 +8;
-
 		/*rx = sx; ry = sy;	// Debug purpose */
 
 		tsx = ball_position & 0x0F;
@@ -167,10 +126,10 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		tsy = (ball_position & 0xF0) >> 4;
 		if (tsy) sy += 16-tsy;
 
-		drawgfx(tmpbitmap,Machine->gfx[1],
-			0,1,
+		drawgfx(bitmap,Machine->gfx[1],
+			0,0,
 			0,0,sx,sy,
-			&vpclip,videopin_backdrop?TRANSPARENCY_PEN:TRANSPARENCY_NONE,0);
+			cliprect,TRANSPARENCY_NONE,0);
 
 		/* Debug purpose: draw ball display information */
 		/*logerror("x=%03d,  y=%03d,   ball position=%02x\n", sx, sy, ball_position); */
@@ -180,33 +139,4 @@ void videopin_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		/*	drawgfx(tmpbitmap,Machine->uifont,dbuf[x],DT_COLOR_WHITE, */
 		/*			1,0,350,6*x,&Machine->drv->visible_area,TRANSPARENCY_NONE,0); */
 	}
-
-	/* copy the temporary bitmap to the destination bitmap */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
-
-
-int videopin_vh_start(void)
-{
-	if (generic_vh_start()!=0)
-		return 1;
-
-	if (videopin_backdrop)
-	{
-		copybitmap(tmpbitmap,videopin_backdrop->artwork,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-	return 0;
-}
-
-
-void videopin_vh_stop(void)
-{
-	generic_vh_stop();
-
-	/* Free Artwork */
-	if (videopin_backdrop)
-		artwork_free(&videopin_backdrop);
-    videopin_backdrop = NULL;
-}
-

@@ -43,9 +43,9 @@ void channelf_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 int channelf_vh_start(void)
 {
 	videoram_size = 0x2000;
-	videoram = malloc(videoram_size);
+	videoram = auto_malloc(videoram_size);
 
-    if (generic_vh_start())
+    if (video_start_generic())
         return 1;
 
     return 0;
@@ -53,8 +53,6 @@ int channelf_vh_start(void)
 
 void channelf_vh_stop(void)
 {
-	free(videoram);
-	generic_vh_stop();
 }
 
 static void plot_4_pixel(int x, int y, int color)

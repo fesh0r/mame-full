@@ -22,10 +22,10 @@ static int flipscreen;
 
 ***************************************************************************/
 
-void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( skykid )
 {
 	int i;
-	int bit0,bit1,bit2,bit3;
+	int bit0,bit1,bit2,bit3,r,g,b;
 	int totcolors = Machine->drv->total_colors;
 
 	for (i = 0; i < totcolors; i++)
@@ -35,22 +35,23 @@ void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		bit1 = (color_prom[totcolors*0] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*0] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*0] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		r = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
 		/* green component */
 		bit0 = (color_prom[totcolors*1] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors*1] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*1] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*1] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		g = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
 		/* blue component */
 		bit0 = (color_prom[totcolors*2] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors*2] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors*2] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors*2] >> 3) & 0x01;
-		*(palette++) = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
+		b = 0x0e*bit0 + 0x1f*bit1 + 0x43*bit2 + 0x8f*bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -95,7 +96,7 @@ static void get_tile_info_bg(int tile_index)
 
 ***************************************************************************/
 
-int skykid_vh_start(void)
+VIDEO_START( skykid )
 {
 	background = tilemap_create(get_tile_info_bg,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 
@@ -162,7 +163,7 @@ WRITE_HANDLER( skykid_flipscreen_w )
 
 ***************************************************************************/
 
-static void skykid_draw_sprites(struct mame_bitmap *bitmap)
+static void skykid_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	int offs;
 
@@ -208,7 +209,7 @@ static void skykid_draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->visible_area,
+						cliprect,
 						TRANSPARENCY_COLOR,255);
 				}
 			}
@@ -216,13 +217,13 @@ static void skykid_draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void skykid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( skykid )
 {
 	int offs;
 
-	tilemap_draw(bitmap,background,0,0);
+	tilemap_draw(bitmap,cliprect,background,0,0);
 	if ((priority & 0xf0) != 0x50)
-		skykid_draw_sprites(bitmap);
+		skykid_draw_sprites(bitmap,cliprect);
 
 	for (offs = 0x400 - 1; offs > 0; offs--){
 		{
@@ -253,9 +254,9 @@ void skykid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs] + (flipscreen << 8),
 					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
         }
 	}
 	if ((priority & 0xf0) == 0x50)
-		skykid_draw_sprites(bitmap);
+		skykid_draw_sprites(bitmap,cliprect);
 }

@@ -34,7 +34,7 @@ static unsigned char bgmap[9][9][2];
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gunsmoke )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -43,25 +43,26 @@ void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -92,26 +93,17 @@ void gunsmoke_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 
 
-int gunsmoke_vh_start(void)
+VIDEO_START( gunsmoke )
 {
-	if ((bgbitmap = bitmap_alloc(9*32,9*32)) == 0)
+	if ((bgbitmap = auto_bitmap_alloc(9*32,9*32)) == 0)
 		return 1;
 
-	if (generic_vh_start() == 1)
-	{
-		bitmap_free(bgbitmap);
+	if (video_start_generic() == 1)
 		return 1;
-	}
 
 	memset (bgmap, 0xff, sizeof (bgmap));
 
 	return 0;
-}
-
-
-void gunsmoke_vh_stop(void)
-{
-	bitmap_free(bgbitmap);
 }
 
 
@@ -162,7 +154,7 @@ WRITE_HANDLER( gunsmoke_d806_w )
   the main emulation engine.
 
 ***************************************************************************/
-void gunsmoke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gunsmoke )
 {
 	int offs,sx,sy;
 	int bg_scrolly, bg_scrollx;
@@ -170,7 +162,7 @@ void gunsmoke_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	int top,left;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset (bgmap, 0xff, sizeof (bgmap));
 
 

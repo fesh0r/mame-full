@@ -40,7 +40,7 @@ static int hitclr=0;
   bit 0 -- 220 ohm resistor  -- RED
 
 ***************************************************************************/
-void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bking2 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -49,25 +49,26 @@ void bking2_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+		r = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+		g = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		/* blue component */
 		bit0 = (*color_prom >> 6) & 0x01;
 		bit1 = (*color_prom >> 7) & 0x01;
 		bit2 = 0;
-		*(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
+		b = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -237,12 +238,12 @@ READ_HANDLER( bking2_pos_r )
   the main emulation engine.
 
 ***************************************************************************/
-void bking2_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( bking2 )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

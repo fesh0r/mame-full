@@ -53,9 +53,13 @@ typedef struct {
 
 static RIOT riot[MAX_RIOTS]= { {0} };
 
-void riot_config(int nr, RIOT_CONFIG *config)
+static void riot_timer_cb(int chip);
+
+void riot_init(int nr, RIOT_CONFIG *config)
 {
-	riot[nr].config=config;
+	memset(&riot[nr], 0, sizeof(riot[nr]));
+	riot[nr].timer = timer_alloc(riot_timer_cb);
+	riot[nr].config = config;
 
     LOG("RIOT - successfully initialised\n");
 }
@@ -200,35 +204,27 @@ void riot_w(int chip, int offset, int data)
 		switch (offset&3) {
 		case 0: /* Timer 1 start */
 			LOG(("rriot(%d) TMR1  write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( riot[chip].timer )
-				timer_remove(riot[chip].timer);
-			riot[chip].timer = timer_set(TIME_IN_HZ( (data+1) / riot[chip].config->baseclock), 
-										  chip, riot_timer_cb);
+			timer_adjust(riot[chip].timer, TIME_IN_HZ( (data+1) / riot[chip].config->baseclock), 
+										  chip, 0);
 			riot[chip].state=Delay1;
 			break;
 		case 1: /* Timer 8 start */
 			LOG(("riot(%d) TMR8  write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( riot[chip].timer )
-				timer_remove(riot[chip].timer);
-			riot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 8 / riot[chip].config->baseclock), 
-										  chip, riot_timer_cb);
+			timer_adjust(riot[chip].timer, TIME_IN_HZ( (data+1) * 8 / riot[chip].config->baseclock), 
+										  chip, 0);
 			riot[chip].state=Delay8;
 			break;
 		case 2: /* Timer 64 start */
 			LOG(("riot(%d) TMR64 write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( riot[chip].timer )
-				timer_remove(riot[chip].timer);
 //			LOG(("riot(%d) TMR64 write: time is $%f\n", chip, (double)(64.0 * (data + 1) / riot[chip].clock)));
-			riot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 64 / riot[chip].config->baseclock), 
-										  chip, riot_timer_cb);
+			timer_adjust(riot[chip].timer, TIME_IN_HZ( (data+1) * 64 / riot[chip].config->baseclock), 
+										  chip, 0);
 			riot[chip].state=Delay64;
 			break;
 		case 3: /* Timer 1024 start */
 			LOG(("riot(%d) TMR1K write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( riot[chip].timer )
-				timer_remove(riot[chip].timer);
-			riot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 1024 / riot[chip].config->baseclock), 
-										  chip, riot_timer_cb);
+			timer_adjust(riot[chip].timer, TIME_IN_HZ( (data+1) * 1024 / riot[chip].config->baseclock), 
+										  chip, 0);
 			riot[chip].state=Delay1024;
 			break;
 		}

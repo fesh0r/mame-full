@@ -45,7 +45,7 @@ static struct tilemap *fg_tilemap, *bg_tilemap;
 
 ***************************************************************************/
 
-void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( phoenix )
 {
 	int i;
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -53,19 +53,20 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1;
+		int bit0,bit1,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		r = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 2) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		g = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 1) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		b = 0x55 * bit0 + 0xaa * bit1;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -83,7 +84,7 @@ void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
-void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pleiads )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -92,19 +93,20 @@ void pleiads_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1;
+		int bit0,bit1,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		r = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 2) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		g = 0x55 * bit0 + 0xaa * bit1;
 		bit0 = (color_prom[0] >> 1) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
-		*(palette++) = 0x55 * bit0 + 0xaa * bit1;
+		b = 0x55 * bit0 + 0xaa * bit1;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -159,12 +161,12 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int phoenix_vh_start(void)
+VIDEO_START( phoenix )
 {
-	if ((videoram_pg1 = malloc(0x1000)) == 0)
+	if ((videoram_pg1 = auto_malloc(0x1000)) == 0)
 		return 1;
 
-	if ((videoram_pg2 = malloc(0x1000)) == 0)
+	if ((videoram_pg2 = auto_malloc(0x1000)) == 0)
 		return 1;
 
     current_videoram_pg_index = -1;
@@ -178,24 +180,12 @@ int phoenix_vh_start(void)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap,0);
+	tilemap_set_scrolldx(fg_tilemap,0,8);
+	tilemap_set_scrolldy(fg_tilemap,0,48);
+	tilemap_set_scrolldx(bg_tilemap,0,8);
+	tilemap_set_scrolldy(bg_tilemap,0,48);
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-
-void phoenix_vh_stop(void)
-{
-	free(videoram_pg1);
-	free(videoram_pg2);
-
-	videoram_pg1 = 0;
-	videoram_pg2 = 0;
 }
 
 
@@ -318,7 +308,7 @@ READ_HANDLER( pleiads_input_port_0_r )
 		ret	|= 0x08;
 		break;
 	default:
-		logerror("Unknown protection question %02X at %04X\n", pleiads_protection_question, cpu_get_pc());
+		logerror("Unknown protection question %02X at %04X\n", pleiads_protection_question, activecpu_get_pc());
 	}
 
 	return ret;
@@ -338,7 +328,7 @@ READ_HANDLER( survival_input_port_0_r )
 
 READ_HANDLER( survival_protection_r )
 {
-	if (cpu_get_pc() == 0x2017)
+	if (activecpu_get_pc() == 0x2017)
 	{
 		survival_protection_value ^= 1;
 	}
@@ -352,8 +342,8 @@ READ_HANDLER( survival_protection_r )
 
 ***************************************************************************/
 
-void phoenix_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( phoenix )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	tilemap_draw(bitmap,fg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

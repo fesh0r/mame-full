@@ -24,6 +24,7 @@
 #include "winddraw.h"
 #include "video.h"
 #include "blit.h"
+#include "mamedbg.h"
 #include "../window.h"
 
 
@@ -159,6 +160,7 @@ static struct win_effect_data effect_table[] =
 	{ "rgb3",    EFFECT_RGB3,        2, 2, 2, 2 },
 	{ "rgbtiny", EFFECT_RGB_TINY,    2, 2, 2, 2 },
 	{ "scan75v", EFFECT_SCANLINE_75V,2, 2, 2, 2 },
+	{ "sharp",   EFFECT_SHARP,       2, 2, 2, 2 },
 };
 
 
@@ -169,12 +171,12 @@ static struct win_effect_data effect_table[] =
 
 static void update_system_menu(void);
 static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update);
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update);
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
 
 static int create_debug_window(void);
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap);
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette);
 static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 
@@ -466,20 +468,13 @@ int win_create_window(int width, int height, int depth, int attributes, int orie
 	if (!converted_bitmap)
 		return 1;
 
-	// override the width/height with the vector resolution
-	if (vector_game && options.vector_width && options.vector_height)
-	{
-		width = options.vector_width;
-		height = options.vector_height;
-	}
-
 	// adjust the window position
 	set_aligned_window_pos(win_video_window, NULL, 20, 20,
 			width + wnd_extra_width() + 2, height + wnd_extra_height() + 2,
 			SWP_NOZORDER);
 
 	// make sure we paint the window once here
-	win_update_video_window(NULL);
+	win_update_video_window(NULL, NULL);
 
 	// fill in the bitmap info header
 	video_dib_info->bmiHeader.biSize			= sizeof(video_dib_info->bmiHeader);
@@ -517,8 +512,8 @@ int win_create_window(int width, int height, int depth, int attributes, int orie
 		// if it's explicitly specified, use it
 		if (attributes & VIDEO_ASPECT_RATIO_MASK)
 		{
-			double num = (double)VIDEO_ASPECT_RATIO_NUM(attributes);
-			double den = (double)VIDEO_ASPECT_RATIO_DEN(attributes);
+			double num = (double)VIDEO_ASPECT_RATIO_NUM((UINT32)attributes);
+			double den = (double)VIDEO_ASPECT_RATIO_DEN((UINT32)attributes);
 			aspect_ratio = swap_xy ? den / num : num / den;
 		}
 
@@ -600,13 +595,13 @@ static void update_system_menu(void)
 //	win_update_video_window
 //============================================================
 
-void win_update_video_window(struct mame_bitmap *bitmap)
+void win_update_video_window(struct mame_bitmap *bitmap, void *vector_dirty_pixels)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
 	{
 		HDC dc = GetDC(win_video_window);
-		draw_video_contents(dc, bitmap, 0);
+		draw_video_contents(dc, bitmap, vector_dirty_pixels, 0);
 		ReleaseDC(win_video_window, dc);
 	}
 }
@@ -617,7 +612,7 @@ void win_update_video_window(struct mame_bitmap *bitmap)
 //	draw_video_contents
 //============================================================
 
-static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update)
+static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
 {
 	static struct mame_bitmap *last;
 
@@ -652,11 +647,11 @@ static void draw_video_contents(HDC dc, struct mame_bitmap *bitmap, int update)
 	}
 
 	// if we have a blit surface, use that
-	if (win_use_ddraw && win_ddraw_draw(bitmap, update))
+	if (win_use_ddraw && win_ddraw_draw(bitmap, vector_dirty_pixels, update))
 		return;
 
 	// draw to the window with a DIB
-	dib_draw_window(dc, bitmap, update);
+	dib_draw_window(dc, bitmap, vector_dirty_pixels, update);
 }
 
 
@@ -675,7 +670,7 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		{
 			PAINTSTRUCT pstruct;
 			HDC hdc = BeginPaint(wnd, &pstruct);
-			draw_video_contents(hdc, NULL, 1);
+			draw_video_contents(hdc, NULL, NULL, 1);
 			EndPaint(wnd, &pstruct);
 			break;
 		}
@@ -965,7 +960,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 		// show the result
 		ShowWindow(win_video_window, SW_SHOW);
 		SetForegroundWindow(win_video_window);
-		win_update_video_window(NULL);
+		win_update_video_window(NULL, NULL);
 
 		// update the cursor state
 		win_update_cursor_state();
@@ -1172,7 +1167,7 @@ void win_process_events_periodic(void)
 //	win_process_events
 //============================================================
 
-void win_process_events(void)
+int win_process_events(void)
 {
 	MSG message;
 
@@ -1204,6 +1199,9 @@ void win_process_events(void)
 				break;
 		}
 	}
+
+	// return 1 if we slept this frame
+	return 0;
 }
 
 
@@ -1328,7 +1326,7 @@ UINT32 *win_prepare_palette(struct win_blit_params *params)
 //	dib_draw_window
 //============================================================
 
-static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
+static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
 {
 	int depth = (bitmap->depth == 15) ? 16 : bitmap->depth;
 	struct win_blit_params params;
@@ -1351,8 +1349,8 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
 	params.dstyskip		= (!win_old_scanlines || ymult == 1) ? 0 : 1;
 	params.dsteffect	= win_determine_effect(&params);
 
-	params.srcdata		= bitmap->line[0];
-	params.srcpitch		= ((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0]);
+	params.srcdata		= bitmap->base;
+	params.srcpitch		= bitmap->rowbytes;
 	params.srcdepth		= bitmap->depth;
 	params.srclookup	= win_prepare_palette(&params);
 	params.srcxoffs		= win_visible_rect.left;
@@ -1360,8 +1358,7 @@ static void dib_draw_window(HDC dc, struct mame_bitmap *bitmap, int update)
 	params.srcwidth		= win_visible_width;
 	params.srcheight	= win_visible_height;
 
-	params.dirtydata	= use_dirty ? dirty_grid : NULL;
-	params.dirtypitch	= DIRTY_H;
+	params.vecdirty		= vector_dirty_pixels;
 
 	win_perform_blit(&params, update);
 
@@ -1512,23 +1509,14 @@ static int create_debug_window(void)
 //	win_update_debug_window
 //============================================================
 
-void win_update_debug_window(struct mame_bitmap *bitmap)
+void win_update_debug_window(struct mame_bitmap *bitmap, const rgb_t *palette)
 {
 #ifdef MAME_DEBUG
-	// if the window isn't 8bpp, force it there and clear it
-	if (bitmap != NULL && bitmap->depth != 8)
-	{
-		bitmap->depth = 8;
-		fillbitmap(bitmap, 0, NULL);
-		win_invalidate_video();
-		return;
-	}
-
 	// get the client DC and draw to it
 	if (win_debug_window)
 	{
 		HDC dc = GetDC(win_debug_window);
-		draw_debug_contents(dc, bitmap);
+		draw_debug_contents(dc, bitmap, palette);
 		ReleaseDC(win_debug_window, dc);
 	}
 #endif
@@ -1540,39 +1528,39 @@ void win_update_debug_window(struct mame_bitmap *bitmap)
 //	draw_debug_contents
 //============================================================
 
-static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap)
+static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap, const rgb_t *palette)
 {
-	static struct mame_bitmap *last;
-	UINT8 *bitmap_base;
+	static struct mame_bitmap *last_bitmap;
+	static const rgb_t *last_palette;
 	int i;
 
 	// if no bitmap, use the last one we got
 	if (bitmap == NULL)
-		bitmap = last;
+		bitmap = last_bitmap;
+	if (palette == NULL)
+		palette = last_palette;
 
 	// if no bitmap, just fill
-	if (bitmap == NULL || !debug_focus || bitmap->depth != 8)
+	if (bitmap == NULL || palette == NULL || !debug_focus || bitmap->depth != 8)
 	{
 		RECT fill;
 		GetClientRect(win_debug_window, &fill);
 		FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
 		return;
 	}
-	last = bitmap;
+	last_bitmap = bitmap;
+	last_palette = palette;
 
 	// if we're iconic, don't bother
 	if (IsIconic(win_debug_window))
 		return;
 
-	// default to using the raw bitmap data
-	bitmap_base = bitmap->line[0];
-
 	// for 8bpp bitmaps, update the debug colors
 	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
 	{
-		debug_dib_info->bmiColors[i].rgbRed		= dbg_palette[i * 3 + 0];
-		debug_dib_info->bmiColors[i].rgbGreen	= dbg_palette[i * 3 + 1];
-		debug_dib_info->bmiColors[i].rgbBlue	= dbg_palette[i * 3 + 2];
+		debug_dib_info->bmiColors[i].rgbRed		= RGB_RED(palette[i]);
+		debug_dib_info->bmiColors[i].rgbGreen	= RGB_GREEN(palette[i]);
+		debug_dib_info->bmiColors[i].rgbBlue	= RGB_BLUE(palette[i]);
 	}
 
 	// fill in bitmap-specific info
@@ -1583,7 +1571,7 @@ static void draw_debug_contents(HDC dc, struct mame_bitmap *bitmap)
 	// blit to the screen
 	StretchDIBits(dc, 0, 0, bitmap->width, bitmap->height,
 			0, 0, bitmap->width, bitmap->height,
-			bitmap_base, debug_dib_info, DIB_RGB_COLORS, SRCCOPY);
+			bitmap->base, debug_dib_info, DIB_RGB_COLORS, SRCCOPY);
 }
 
 
@@ -1602,7 +1590,7 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 		{
 			PAINTSTRUCT pstruct;
 			HDC hdc = BeginPaint(wnd, &pstruct);
-			draw_debug_contents(hdc, NULL);
+			draw_debug_contents(hdc, NULL, NULL);
 			EndPaint(wnd, &pstruct);
 			break;
 		}
@@ -1639,10 +1627,10 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 
 
 //============================================================
-//	osd_debugger_focus
+//	win_set_debugger_focus
 //============================================================
 
-void osd_debugger_focus(int focus)
+void win_set_debugger_focus(int focus)
 {
 	debug_focus = focus;
 
@@ -1661,7 +1649,7 @@ void osd_debugger_focus(int focus)
 		SetForegroundWindow(win_debug_window);
 
 		// force an update
-		win_update_debug_window(NULL);
+		win_update_debug_window(NULL, NULL);
 	}
 
 	// if not focuessed, bring the game frontmost

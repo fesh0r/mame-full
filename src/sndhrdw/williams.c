@@ -141,6 +141,8 @@ struct dcs_state
 	UINT32	sample_position;
 	INT16	current_sample;
 	UINT16	latch_control;
+
+	void	(*notify)(int);
 };
 
 
@@ -220,6 +222,8 @@ static void cvsd_update(int num, INT16 *buffer, int length);
 static void dac_update(int num, INT16 *buffer, int length);
 
 static INT16 get_next_cvsd_sample(int bit);
+
+static void williams_dcs_irq(int state);
 
 /* ADSP */
 static WRITE16_HANDLER( williams_dcs_bank_select_w );
@@ -326,7 +330,7 @@ MEMORY_END
 MEMORY_READ16_START( williams_dcs_readmem )
 	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },					/* ??? */
 	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), williams_dcs_bank_r },			/* banked roms read */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3400), williams_dcs_latch_r },			/* soundlatch read */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), williams_dcs_latch_r },			/* soundlatch read */
 	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },					/* internal data ram */
 	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },					/* internal/external program ram */
 MEMORY_END
@@ -335,7 +339,31 @@ MEMORY_END
 MEMORY_WRITE16_START( williams_dcs_writemem )
 	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },					/* ??? */
 	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), williams_dcs_bank_select_w },	/* bank selector */
-	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3400), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3403), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },					/* internal data ram */
+	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), williams_dcs_control_w },		/* adsp control regs */
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },					/* internal/external program ram */
+MEMORY_END
+
+
+/* DCS with UART readmem/writemem structures */
+MEMORY_READ16_START( williams_dcs_uart_readmem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MRA16_RAM },					/* ??? */
+	{ ADSP_DATA_ADDR_RANGE(0x2000, 0x2fff), williams_dcs_bank_r },			/* banked roms read */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MRA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), williams_dcs_latch_r },			/* soundlatch read */
+	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MRA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MRA16_RAM },					/* internal data ram */
+	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MRA16_RAM },					/* internal/external program ram */
+MEMORY_END
+
+
+MEMORY_WRITE16_START( williams_dcs_uart_writemem )
+	{ ADSP_DATA_ADDR_RANGE(0x0000, 0x1fff), MWA16_RAM },					/* ??? */
+	{ ADSP_DATA_ADDR_RANGE(0x3000, 0x3000), williams_dcs_bank_select_w },	/* bank selector */
+	{ ADSP_DATA_ADDR_RANGE(0x3400, 0x3402), MWA16_NOP },					/* UART (ignored) */
+	{ ADSP_DATA_ADDR_RANGE(0x3403, 0x3403), williams_dcs_latch_w },			/* soundlatch write */
+	{ ADSP_DATA_ADDR_RANGE(0x3404, 0x3405), MWA16_NOP },					/* UART (ignored) */
 	{ ADSP_DATA_ADDR_RANGE(0x3800, 0x39ff), MWA16_RAM },					/* internal data ram */
 	{ ADSP_DATA_ADDR_RANGE(0x3fe0, 0x3fff), williams_dcs_control_w },		/* adsp control regs */
 	{ ADSP_PGM_ADDR_RANGE (0x0000, 0x1fff), MWA16_RAM },					/* internal/external program ram */
@@ -408,7 +436,7 @@ struct hc55516_interface williams_cvsd_interface =
 };
 
 /* OKIM6295 structure(s) */
-struct OKIM6295interface williams_adpcm_6295_interface_REGION_SOUND1 =
+struct OKIM6295interface williams_adpcm_6295_interface =
 {
 	1,          	/* 1 chip */
 	{ 8000 },       /* 8000 Hz frequency */
@@ -421,6 +449,71 @@ struct CustomSound_interface williams_dcs_custom_interface =
 {
 	dcs_custom_start,dcs_custom_stop,0
 };
+
+
+/***************************************************************************
+	MACHINE DRIVERS
+****************************************************************************/
+
+MACHINE_DRIVER_START(williams_cvsd_sound)
+	MDRV_CPU_ADD(M6809, 8000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams_cvsd_readmem,williams_cvsd_writemem)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, williams_custom_interface)
+	MDRV_SOUND_ADD(YM2151, williams_cvsd_ym2151_interface)
+	MDRV_SOUND_ADD(DAC,    williams_cvsd_dac_interface)
+	MDRV_SOUND_ADD(HC55516,williams_cvsd_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START(williams_adpcm_sound)
+	MDRV_CPU_ADD(M6809, 8000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams_adpcm_readmem,williams_adpcm_writemem)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM,  williams_custom_interface)
+	MDRV_SOUND_ADD(YM2151,  williams_adpcm_ym2151_interface)
+	MDRV_SOUND_ADD(DAC,     williams_adpcm_dac_interface)
+	MDRV_SOUND_ADD(OKIM6295,williams_adpcm_6295_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START(williams_narc_sound)
+	MDRV_CPU_ADD(M6809, 8000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams_narc_master_readmem,williams_narc_master_writemem)
+
+	MDRV_CPU_ADD(M6809, 8000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams_narc_slave_readmem,williams_narc_slave_writemem)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, williams_custom_interface)
+	MDRV_SOUND_ADD(YM2151, williams_adpcm_ym2151_interface)
+	MDRV_SOUND_ADD(DAC,    williams_narc_dac_interface)
+	MDRV_SOUND_ADD(HC55516,williams_cvsd_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START(williams_dcs_sound)
+	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10240000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(williams_dcs_readmem,williams_dcs_writemem)
+
+	MDRV_SOUND_ADD(CUSTOM, williams_dcs_custom_interface)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START(williams_dcs_uart_sound)
+	MDRV_IMPORT_FROM(williams_dcs_sound)
+
+	MDRV_CPU_MODIFY("dcs")
+	MDRV_CPU_MEMORY(williams_dcs_uart_readmem,williams_dcs_uart_writemem)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -514,6 +607,9 @@ void williams_cvsd_init(int cpunum, int pianum)
 	williams_pianum = pianum;
 	pia_config(pianum, PIA_STANDARD_ORDERING, &williams_cvsd_pia_intf);
 
+	/* initialize the global variables */
+	init_audio_state(1);
+
 	/* reset the chip */
 	williams_cvsd_reset_w(1);
 	williams_cvsd_reset_w(0);
@@ -597,7 +693,7 @@ void williams_cvsd_init(int cpunum, int pianum)
 	pia_set_input_ca1(williams_pianum, 1);
 
 	/* initialize the global variables */
-	init_audio_state(1);
+//	init_audio_state(1);
 }
 
 void williams_adpcm_init(int cpunum)
@@ -613,6 +709,9 @@ void williams_adpcm_init(int cpunum)
 	/* install the fixed ROM */
 	RAM = memory_region(REGION_CPU1+cpunum);
 	memcpy(&RAM[0xc000], &RAM[0x4c000], 0x4000);
+
+	/* initialize the global variables */
+	init_audio_state(1);
 
 	/* reset the chip */
 	williams_adpcm_reset_w(1);
@@ -663,7 +762,7 @@ void williams_adpcm_init(int cpunum)
 //	locate_audio_hotspot(&RAM[0x40000], 0xc000);
 
 	/* initialize the global variables */
-	init_audio_state(1);
+//	init_audio_state(1);
 }
 
 void williams_narc_init(int cpunum)
@@ -680,6 +779,9 @@ void williams_narc_init(int cpunum)
 	memcpy(&RAM[0xc000], &RAM[0x4c000], 0x4000);
 	RAM = memory_region(REGION_CPU1+cpunum);
 	memcpy(&RAM[0xc000], &RAM[0x2c000], 0x4000);
+
+	/* initialize the global variables */
+	init_audio_state(1);
 
 	/* reset the chip */
 	williams_narc_reset_w(1);
@@ -720,7 +822,7 @@ void williams_narc_init(int cpunum)
 	locate_audio_hotspot(&RAM[0x0000], 0xc000);
 
 	/* initialize the global variables */
-	init_audio_state(1);
+//	init_audio_state(1);
 }
 
 static void williams_dcs_boot( void )
@@ -735,6 +837,8 @@ static void williams_dcs_boot( void )
 	data = src[0];
 #ifdef LSB_FIRST // ************** not really tested yet ****************
 	data = ( ( data & 0xff ) << 24 ) | ( ( data & 0xff00 ) << 8 ) | ( ( data >> 8 ) & 0xff00 ) | ( ( data >> 24 ) & 0xff );
+#else
+	data = ((data & 0xff000000) >> 8) | ((data & 0xff0000) << 8) | ((data & 0xff) << 8) | ((data & 0xff00) >> 8);
 #endif
 	size = ( ( data & 0xff ) + 1 ) * 8;
 
@@ -743,19 +847,18 @@ static void williams_dcs_boot( void )
 		data = src[i];
 #ifdef LSB_FIRST // ************** not really tested yet ****************
 		data = ( ( data & 0xff ) << 24 ) | ( ( data & 0xff00 ) << 8 ) | ( ( data >> 8 ) & 0xff00 ) | ( ( data >> 24 ) & 0xff );
+#else
+		data = ((data & 0xff000000) >> 8) | ((data & 0xff0000) << 8) | ((data & 0xff) << 8) | ((data & 0xff00) >> 8);
 #endif
 		data >>= 8;
 		ADSP2100_WRPGM(&dst[i], data);
 	}
 }
 
-void williams_dcs_init(int cpunum)
+
+static void williams_dcs_reset(void)
 {
 	int i;
-
-	/* configure the CPU */
-	williams_cpunum = cpunum;
-	williams_audio_type = WILLIAMS_DCS;
 
 	/* initialize our state structure and install the transmit callback */
 	dcs.mem = 0;
@@ -764,7 +867,7 @@ void williams_dcs_init(int cpunum)
 	dcs.ireg = 0;
 
 	/* initialize the ADSP control regs */
-	for( i = 0; i < sizeof(dcs.control_regs) / sizeof(dcs.control_regs[0]); i++ )
+	for (i = 0; i < sizeof(dcs.control_regs) / sizeof(dcs.control_regs[0]); i++)
 		dcs.control_regs[i] = 0;
 
 	/* initialize banking */
@@ -787,18 +890,45 @@ void williams_dcs_init(int cpunum)
 	cpu_set_irq_line( williams_cpunum, ADSP2105_IRQ1, CLEAR_LINE );
 	cpu_set_irq_line( williams_cpunum, ADSP2105_IRQ2, CLEAR_LINE );
 
+	/* initialize the comm bits */
+	dcs.latch_control = 0x0c00;
+
+	/* disable notification by default */
+	dcs.notify = NULL;
+
+	/* boot */
+	williams_dcs_boot();
+}
+
+
+void williams_dcs_init(void)
+{
+	int cpunum;
+
+	/* find the DCS CPU */
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+		if (Machine->drv->cpu[cpunum].tag && strcmp(Machine->drv->cpu[cpunum].tag, "dcs") == 0)
+			break;
+	if (cpunum == MAX_CPU)
+		return;
+
+	/* configure the CPU */
+	williams_cpunum = cpunum;
+	williams_audio_type = WILLIAMS_DCS;
+
 	/* install the speedup handler */
 #if (!DISABLE_DCS_SPEEDUP)
 	dcs_speedup1 = install_mem_write16_handler(williams_cpunum, ADSP_DATA_ADDR_RANGE(0x04f8, 0x04f8), dcs_speedup1_w);
 	dcs_speedup2 = install_mem_write16_handler(williams_cpunum, ADSP_DATA_ADDR_RANGE(0x063d, 0x063d), dcs_speedup2_w);
 #endif
 
-	/* initialize the comm bits */
-	dcs.latch_control = 0x0c00;
+	/* create the timer */
+	dcs.reg_timer = timer_alloc(williams_dcs_irq);
 
-	/* boot */
-	williams_dcs_boot();
+	/* reset the system */
+	williams_dcs_reset();
 }
+
 
 static void init_audio_state(int first_time)
 {
@@ -818,11 +948,11 @@ static void init_audio_state(int first_time)
 	counter.time_leftover = 0;
 	counter.last_read_pc = 0x0000;
 	if (first_time)
-		counter.update_timer = timer_set(TIME_NEVER, 0, NULL);
+		counter.update_timer = timer_alloc(NULL);
 	counter.invalid = 1;
-	if (!first_time && counter.enable_timer)
-		timer_remove(counter.enable_timer);
-	counter.enable_timer = timer_set(TIME_IN_SEC(3), 0, counter_enable);
+	if (first_time)
+		counter.enable_timer = timer_alloc(counter_enable);
+	timer_adjust(counter.enable_timer, TIME_IN_SEC(3), 0, 0);
 
 	/* reset the CVSD generator */
 	cvsd.sample_step = 0;
@@ -902,7 +1032,7 @@ static int dcs_custom_start(const struct MachineSound *msound)
 	dac_stream = stream_init("DCS DAC", 100, Machine->sample_rate, 0, dcs_dac_update);
 
 	/* allocate memory for our buffer */
-	dcs.buffer = malloc(DCS_BUFFER_SIZE * sizeof(INT16));
+	dcs.buffer = auto_malloc(DCS_BUFFER_SIZE * sizeof(INT16));
 	if (!dcs.buffer)
 		return 1;
 
@@ -911,9 +1041,6 @@ static int dcs_custom_start(const struct MachineSound *msound)
 
 static void dcs_custom_stop(void)
 {
-	if (dcs.buffer)
-		free(dcs.buffer);
-	dcs.buffer = NULL;
 }
 
 
@@ -1019,7 +1146,7 @@ WRITE16_HANDLER( williams_dcs_bank_select_w )
 	if (data == 0x800)
 	{
 		/* calculate the next buffer address */
-		int source = cpu_get_reg( ADSP2100_I0+dcs.ireg );
+		int source = activecpu_get_reg( ADSP2100_I0+dcs.ireg );
 		int ar = source + dcs.size / 2;
 
 		/* check for wrapping */
@@ -1027,10 +1154,10 @@ WRITE16_HANDLER( williams_dcs_bank_select_w )
 			ar = dcs.ireg_base;
 
 		/* set it */
-		cpu_set_reg( ADSP2100_AR, ar );
+		activecpu_set_reg( ADSP2100_AR, ar );
 
 		/* go around the buffer syncing code, we sync manually */
-		cpu_set_reg( ADSP2100_PC, cpu_get_pc() + 8 );
+		activecpu_set_reg( ADSP2100_PC, activecpu_get_pc() + 8 );
 		cpu_spinuntil_int();
 	}
 #endif
@@ -1041,7 +1168,7 @@ READ16_HANDLER( williams_dcs_bank_r )
 	UINT8	*banks = memory_region( REGION_CPU1+williams_cpunum ) + ADSP2100_SIZE;
 
 	offset += ( dcs.bank & 0x7ff ) << 12;
-	return banks[offset];
+	return banks[BYTE_XOR_LE(offset)];
 }
 
 
@@ -1172,9 +1299,17 @@ WRITE_HANDLER( williams_narc_command2_w )
 	DCS COMMUNICATIONS
 ****************************************************************************/
 
+void williams_dcs_set_notify(void (*callback)(int))
+{
+	dcs.notify = callback;
+}
+
+
 int williams_dcs_data_r(void)
 {
 	/* data is actually only 8 bit (read from d8-d15) */
+	if (!(dcs.latch_control & 0x0400) && dcs.notify)
+		(*dcs.notify)(0);
 	dcs.latch_control |= 0x0400;
 
 	return soundlatch2_r( 0 ) & 0xff;
@@ -1202,13 +1337,13 @@ int williams_dcs_control_r(void)
 
 void williams_dcs_reset_w(int state)
 {
-	logerror( "%08x: DCS reset\n", cpu_get_pc() );
+	logerror( "%08x: DCS reset\n", activecpu_get_pc() );
 
 	/* going high halts the CPU */
 	if ( state )
 	{
 		/* just run through the init code again */
-		williams_dcs_init( williams_cpunum );
+		williams_dcs_reset();
 		cpu_set_reset_line(williams_cpunum, ASSERT_LINE);
 	}
 	/* going low resets and reactivates the CPU */
@@ -1228,6 +1363,8 @@ static READ16_HANDLER( williams_dcs_latch_r )
 
 static WRITE16_HANDLER( williams_dcs_latch_w )
 {
+	if ((dcs.latch_control & 0x0400) && dcs.notify)
+		(*dcs.notify)(1);
 	dcs.latch_control &= ~0x400;
 	soundlatch2_w( 0, data );
 }
@@ -1350,8 +1487,7 @@ static WRITE_HANDLER( williams_dac2_data_w )
 static void counter_enable(int param)
 {
 	counter.invalid = 0;
-	counter.enable_timer = NULL;
-	timer_reset(counter.update_timer, TIME_NEVER);
+	timer_adjust(counter.update_timer, TIME_NEVER, 0, 0);
 
 	/* the counter routines all reset the bank, but NARC is the only one that cares */
 	if (williams_audio_type == WILLIAMS_NARC)
@@ -1378,7 +1514,7 @@ static void update_counter(void)
 	counter.time_leftover = time_since_update - (double)firqs_since_update * timer_period;
 
 	/* reset the timer */
-	timer_reset(counter.update_timer, TIME_NEVER);
+	timer_adjust(counter.update_timer, TIME_NEVER, 0, 0);
 
 	/* determine the number of complete ticks that have occurred */
 	complete_ticks = firqs_since_update / counter.adjusted_divisor;
@@ -1421,7 +1557,7 @@ static WRITE_HANDLER( counter_down_w )
 
 static READ_HANDLER( counter_value_r )
 {
-	UINT16 pc = cpu_getpreviouspc();
+	UINT16 pc = activecpu_get_previouspc();
 
 	/* only update the counter on the MSB */
 	/* also, don't update it if we just read from it a few instructions back */
@@ -1810,10 +1946,7 @@ WRITE16_HANDLER( williams_dcs_control_w )
 				dcs.enabled = 0;
 
 				/* nuke the timer */
-				if ( dcs.reg_timer ) {
-					timer_remove( dcs.reg_timer );
-					dcs.reg_timer = 0;
-				}
+				timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
 			}
 		break;
 
@@ -1823,10 +1956,7 @@ WRITE16_HANDLER( williams_dcs_control_w )
 			if ( ( data & 0x0002 ) == 0 ) {
 				dcs.enabled = 0;
 
-				if ( dcs.reg_timer ) {
-					timer_remove( dcs.reg_timer );
-					dcs.reg_timer = 0;
-				}
+				timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
 			}
 		break;
 
@@ -1934,7 +2064,7 @@ static void sound_tx_callback( int port, INT32 data )
 			sample_rate /= 16;
 
 			/* fire off a timer wich will hit every half-buffer */
-			dcs.reg_timer = timer_pulse(TIME_IN_HZ(sample_rate) * (dcs.size / 2), 0, williams_dcs_irq);
+			timer_adjust(dcs.reg_timer, TIME_IN_HZ(sample_rate) * (dcs.size / 2), 0, TIME_IN_HZ(sample_rate) * (dcs.size / 2));
 
 			/* configure the DAC generator */
 			dcs.sample_step = (int)(sample_rate * 65536.0 / (double)Machine->sample_rate);
@@ -1952,11 +2082,7 @@ static void sound_tx_callback( int port, INT32 data )
 	dcs.enabled = 0;
 
 	/* remove timer */
-	if ( dcs.reg_timer )
-	{
-		timer_remove( dcs.reg_timer );
-		dcs.reg_timer = 0;
-	}
+	timer_adjust(dcs.reg_timer, TIME_NEVER, 0, 0);
 }
 
 static WRITE16_HANDLER( dcs_speedup1_w )
@@ -1967,7 +2093,7 @@ static WRITE16_HANDLER( dcs_speedup1_w )
 	OPENICE:trigger = $04F8 = 2, PC = $00FD, SKIPTO = $0128
 */
 	COMBINE_DATA(&dcs_speedup1[offset]);
-	if (data == 2 && cpu_get_pc() == 0xfd)
+	if (data == 2 && activecpu_get_pc() == 0xfd)
 		dcs_speedup_common();
 }
 
@@ -1977,7 +2103,7 @@ static WRITE16_HANDLER( dcs_speedup2_w )
 	MK2:	trigger = $063D = 2, PC = $00F6, SKIPTO = $0121
 */
 	COMBINE_DATA(&dcs_speedup2[offset]);
-	if (data == 2 && cpu_get_pc() == 0xf6)
+	if (data == 2 && activecpu_get_pc() == 0xf6)
 		dcs_speedup_common();
 }
 
@@ -2089,5 +2215,5 @@ static void dcs_speedup_common()
 		mem63e = mem63f;
 		mem63f >>= 1;
 	}
-	cpu_set_reg(ADSP2100_PC, cpu_get_pc() + 0x121 - 0xf6);
+	activecpu_set_reg(ADSP2100_PC, activecpu_get_pc() + 0x121 - 0xf6);
 }

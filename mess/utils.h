@@ -9,11 +9,7 @@
  * it
  * ----------------------------------------------------------------------- */
 
-#if defined(WIN32) || defined(UNIX) || defined(macintosh)
 #include "osdutils.h"
-#else
-#include "msdos/osdutils.h"
-#endif
 
 /* -----------------------------------------------------------------------
  * strncpyz

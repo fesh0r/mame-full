@@ -10,6 +10,12 @@
 #include <dirent.h>
 #include <unzip.h>
 
+#ifdef MESS
+#ifdef _MSC_VER
+#include "src/windowsui/dirent.h"
+#endif
+#endif
+
 #ifndef MESS
 enum { LIST_SHORT = 1, LIST_INFO, LIST_FULL, LIST_SAMDIR, LIST_ROMS, LIST_SAMPLES,
 		LIST_LMR, LIST_DETAILS, LIST_GAMELIST,
@@ -441,6 +447,7 @@ int CLIB_DECL compare_driver_names(const void *elem1, const void *elem2)
 
 int frontend_help (char *gamename)
 {
+	struct InternalMachineDriver drv;
 	int i, j;
 	char *all_games = "*";
 
@@ -581,17 +588,14 @@ int frontend_help (char *gamename)
 						|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)
 						) && !strwildcmp(gamename, drivers[i]->name))
 				{
+					expand_machine_driver(drivers[i]->drv, &drv);
 #if (HAS_SAMPLES || HAS_VLM5030)
-					for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+					for( j = 0; drv.sound[j].sound_type && j < MAX_SOUND; j++ )
 					{
 						const char **samplenames = NULL;
 #if (HAS_SAMPLES)
-						if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-						if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
-							samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+						if( drv.sound[j].sound_type == SOUND_SAMPLES )
+							samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
 #endif
 						if (samplenames != 0 && samplenames[0] != 0)
 						{
@@ -624,16 +628,13 @@ int frontend_help (char *gamename)
 			{
 #if (HAS_SAMPLES || HAS_VLM5030)
 				int k;
-				for( k = 0; gamedrv->drv->sound[k].sound_type && k < MAX_SOUND; k++ )
+				expand_machine_driver(gamedrv->drv, &drv);
+				for( k = 0; drv.sound[k].sound_type && k < MAX_SOUND; k++ )
 				{
 					const char **samplenames = NULL;
 #if (HAS_SAMPLES)
-					if( gamedrv->drv->sound[k].sound_type == SOUND_SAMPLES )
-							samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-					if( gamedrv->drv->sound[k].sound_type == SOUND_VLM5030 )
-							samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[k].sound_interface)->samplenames;
+					if( drv.sound[k].sound_type == SOUND_SAMPLES )
+							samplenames = ((struct Samplesinterface *)drv.sound[k].sound_interface)->samplenames;
 #endif
 					if (samplenames != 0 && samplenames[0] != 0)
 					{
@@ -702,9 +703,13 @@ int frontend_help (char *gamename)
 				{
 					/* Dummy structs to fetch the information from */
 
-					const struct MachineDriver *x_driver = drivers[i]->drv;
-					const struct MachineCPU *x_cpu = x_driver->cpu;
-					const struct MachineSound *x_sound = x_driver->sound;
+					const struct MachineCPU *x_cpu;
+					const struct MachineSound *x_sound;
+					struct InternalMachineDriver x_driver;
+
+					expand_machine_driver(drivers[i]->drv, &x_driver);
+					x_cpu = x_driver.cpu;
+					x_sound = x_driver.sound;
 
 					/* First, the rom name */
 
@@ -874,20 +879,14 @@ int frontend_help (char *gamename)
 
 					{
 						const char **samplenames = NULL;
+						expand_machine_driver(drivers[i]->drv, &drv);
 #if (HAS_SAMPLES || HAS_VLM5030)
-						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
+						for (j = 0;drv.sound[j].sound_type && j < MAX_SOUND; j++)
 						{
 #if (HAS_SAMPLES)
-							if (drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES)
+							if (drv.sound[j].sound_type == SOUND_SAMPLES)
 							{
-								samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
-								break;
-							}
-#endif
-#if (HAS_VLM5030)
-							if (drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030)
-							{
-								samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
 								break;
 							}
 #endif
@@ -972,11 +971,13 @@ int frontend_help (char *gamename)
 
 		case LIST_WRONGORIENTATION: /* list drivers which incorrectly use the orientation and visible area fields */
 			for (i = 0; drivers[i]; i++)
-				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
+			{
+				expand_machine_driver(drivers[i]->drv, &drv);
+				if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
-						drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1 <=
-						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1)
+						drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1 <=
+						drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1)
 				{
 					if (strcmp(drivers[i]->name,"crater") &&
 						strcmp(drivers[i]->name,"mpatrol") &&
@@ -1029,26 +1030,30 @@ int frontend_help (char *gamename)
 						strcmp(drivers[i]->name,"tomahawk") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
-								drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1,
-								drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1);
+								drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
+								drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1);
 				}
+			}
 			return 0;
 			break;
 
 		case LIST_WRONGFPS: /* list drivers with too high frame rate */
 			for (i = 0; drivers[i]; i++)
-				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
+			{
+				expand_machine_driver(drivers[i]->drv, &drv);
+				if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
-						drivers[i]->drv->frames_per_second > 57 &&
-						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 > 244 &&
-						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 <= 256)
+						drv.frames_per_second > 57 &&
+						drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 > 244 &&
+						drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1 <= 256)
 				{
 					printf("%s %dx%d %fHz\n",drivers[i]->name,
-							drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1,
-							drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1,
-							drivers[i]->drv->frames_per_second);
+							drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
+							drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1,
+							drv.frames_per_second);
 				}
+			}
 			return 0;
 			break;
 
@@ -1186,7 +1191,8 @@ int frontend_help (char *gamename)
 			for (i = 0; drivers[i]; i++)
 				if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 				{
-					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drivers[i]->drv->total_colors);
+					expand_machine_driver(drivers[i]->drv, &drv);
+					printf("%-8s\t%-5s\t%u\n",drivers[i]->name,drivers[i]->year,drv.total_colors);
 				}
 			return 0;
 			break;
@@ -1195,30 +1201,46 @@ int frontend_help (char *gamename)
 			{
 				int year;
 
-				for (j = 1;j < CPU_COUNT;j++)
-					printf("\t%s",cputype_name(j));
+//				for (j = 1;j < CPU_COUNT;j++)
+//					printf("\t%s",cputype_name(j));
+				for (j = 0;j < 3;j++)
+					printf("\t%d",8<<j);
 				printf("\n");
 
-				for (year = 1980;year <= 1995;year++)
+				for (year = 1980;year <= 2000;year++)
 				{
 					int count[CPU_COUNT];
+					int count_buswidth[3];
 
 					for (j = 0;j < CPU_COUNT;j++)
 						count[j] = 0;
+					for (j = 0;j < 3;j++)
+						count_buswidth[j] = 0;
 
 					i = 0;
 					while (drivers[i])
 					{
 						if (drivers[i]->clone_of == 0 || (drivers[i]->clone_of->flags & NOT_A_DRIVER))
 						{
-							const struct MachineDriver *x_driver = drivers[i]->drv;
-							const struct MachineCPU *x_cpu = x_driver->cpu;
+							struct InternalMachineDriver x_driver;
+							const struct MachineCPU *x_cpu;
+
+							expand_machine_driver(drivers[i]->drv, &x_driver);
+							x_cpu = x_driver.cpu;
 
 							if (atoi(drivers[i]->year) == year)
 							{
 //								for (j = 0;j < MAX_CPU;j++)
 j = 0;	// count only the main cpu
+								{
 									count[x_cpu[j].cpu_type & ~CPU_FLAGS_MASK]++;
+									switch(cputype_databus_width(x_cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+									{
+										case  8: count_buswidth[0]++; break;
+										case 16: count_buswidth[1]++; break;
+										case 32: count_buswidth[2]++; break;
+									}
+									}
 							}
 						}
 
@@ -1226,8 +1248,10 @@ j = 0;	// count only the main cpu
 					}
 
 					printf("%d",year);
-					for (j = 1;j < CPU_COUNT;j++)
-						printf("\t%d",count[j]);
+//					for (j = 1;j < CPU_COUNT;j++)
+//						printf("\t%d",count[j]);
+					for (j = 0;j < 3;j++)
+						printf("\t%d",count_buswidth[j]);
 					printf("\n");
 				}
 			}
@@ -1285,16 +1309,13 @@ j = 0;	// count only the main cpu
 			if (verify & VERIFY_SAMPLES)
 			{
 				const char **samplenames = NULL;
+				expand_machine_driver(drivers[i]->drv, &drv);
 #if (HAS_SAMPLES || HAS_VLM5030)
- 				for( j = 0; drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++ )
+ 				for( j = 0; drv.sound[j].sound_type && j < MAX_SOUND; j++ )
 				{
 #if (HAS_SAMPLES)
- 					if( drivers[i]->drv->sound[j].sound_type == SOUND_SAMPLES )
- 						samplenames = ((struct Samplesinterface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
-#endif
-#if (HAS_VLM5030)
-					if( drivers[i]->drv->sound[j].sound_type == SOUND_VLM5030 )
-						samplenames = ((struct VLM5030interface *)drivers[i]->drv->sound[j].sound_interface)->samplenames;
+ 					if( drv.sound[j].sound_type == SOUND_SAMPLES )
+ 						samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
 #endif
 				}
 #endif

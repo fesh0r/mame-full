@@ -8,7 +8,7 @@
 ---------------------------------------------------------------------------------------------------
 Year + Game				CPU		Sound			Gfx							Misc
 ---------------------------------------------------------------------------------------------------
-89 Sports Match			Z80 	YM2203			Color PROM + 6845 + DYNAX?
+89 Sports Match			Z80 	YM2203			Color PROM + 6845 + DYNAX(TC17G032AP-0246)
 94 Rong Rong			Z80		YM2413 + M6295	NAKANIHON NL-002
 95 Don Den Lover Vol 1	68000	YM2413 + M6295	NAKANIHON NL-005			NVRAM + RTC 72421B 4382
 ---------------------------------------------------------------------------------------------------
@@ -43,9 +43,7 @@ void sprtmtch_update_irq(void)
 	int irq	=	((dynax_sound_irq)   ? 0x08 : 0) |
 				((dynax_vblank_irq)  ? 0x10 : 0) |
 				((dynax_blitter_irq) ? 0x20 : 0) ;
-
-	cpu_irq_line_vector_w(0,0,0xc7 | irq);	/* rst $xx */
-	cpu_set_irq_line(0, 0, irq ? ASSERT_LINE : CLEAR_LINE );
+	cpu_set_irq_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
 }
 
 WRITE_HANDLER( sprtmtch_vblank_ack_w )
@@ -60,11 +58,10 @@ WRITE_HANDLER( sprtmtch_blitter_ack_w )
 	sprtmtch_update_irq();
 }
 
-int sprtmtch_vblank_interrupt(void)
+INTERRUPT_GEN( sprtmtch_vblank_interrupt )
 {
 	dynax_vblank_irq = 1;
 	sprtmtch_update_irq();
-	return ignore_interrupt();
 }
 
 void sprtmtch_sound_callback(int state)
@@ -89,27 +86,33 @@ static WRITE_HANDLER( sprtmtch_coincounter_0_w )
 {
 	coin_counter_w(0, data & 1);
 	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, coin counter 0 <- %02X\n", cpu_get_pc(), data);
+		logerror("CPU#0 PC %06X: Warning, coin counter 0 <- %02X\n", activecpu_get_pc(), data);
 }
 static WRITE_HANDLER( sprtmtch_coincounter_1_w )
 {
 	coin_counter_w(1, data & 1);
 	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, coin counter 1 <- %02X\n", cpu_get_pc(), data);
+		logerror("CPU#0 PC %06X: Warning, coin counter 1 <- %02X\n", activecpu_get_pc(), data);
 }
 
 static READ_HANDLER( ret_ff )	{	return 0xff;	}
 
+static WRITE_HANDLER( sprtmtch_rombank_w )
+{
+	data8_t *ROM = memory_region(REGION_CPU1);
+	cpu_setbank(1,&ROM[0x10000+0x8000*(data & 0x07)]);
+}
+
 static MEMORY_READ_START( sprtmtch_readmem )
 	{ 0x0000, 0x6fff, MRA_ROM					},	// ROM
 	{ 0x7000, 0x7fff, MRA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MRA_ROM					},	// ROM
+	{ 0x8000, 0xffff, MRA_BANK1					},	// BANKED ROM
 MEMORY_END
 
 static MEMORY_WRITE_START( sprtmtch_writemem )
 	{ 0x0000, 0x6fff, MWA_ROM					},	// ROM
 	{ 0x7000, 0x7fff, MWA_RAM					},	// RAM
-	{ 0x8000, 0xffff, MWA_ROM					},	// ROM
+	{ 0x8000, 0xffff, MWA_ROM					},	// BANKED ROM
 MEMORY_END
 
 static PORT_READ_START( sprtmtch_readport )
@@ -134,6 +137,7 @@ static PORT_WRITE_START( sprtmtch_writeport )
 //	{ 0x12, 0x12, IOWP_NOP					},	// ?? CRT Controller ??
 //	{ 0x13, 0x13, IOWP_NOP					},	// ?? CRT Controller ??
 	{ 0x30, 0x30, dynax_blit_enable_w		},	// Layers Enable
+	{ 0x31, 0x31, sprtmtch_rombank_w		},	// BANK ROM Select
 	{ 0x32, 0x32, dynax_blit_dest_w			},	// Destination Layer
 	{ 0x33, 0x33, dynax_blit_pen_w			},	// Destination Pen
 	{ 0x34, 0x34, dynax_blit_palette01_w	},	// Layers Palettes (Low Bits)
@@ -167,7 +171,7 @@ static READ16_HANDLER( ddenlovr_gfxrom_r )
 	if (address >= size)
 	{
 		address %= size;
-		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", cpu_get_pc(), address);
+		logerror("CPU#0 PC %06X: Error, Blitter address %06X out of range\n", activecpu_get_pc(), address);
 	}
 
 	dynax_blit_address++;
@@ -180,7 +184,7 @@ static WRITE16_HANDLER( ddenlovr_blit_w )
 	if (ACCESSING_LSB)
 	{
 		data &= 0xff;
-//logerror("CPU#0 PC %06X: Blitter %x <- %02X\n", cpu_get_pc(), offset, data);
+//logerror("CPU#0 PC %06X: Blitter %x <- %02X\n", activecpu_get_pc(), offset, data);
 		switch(offset)
 		{
 		case 0:
@@ -242,14 +246,14 @@ static WRITE16_HANDLER( ddenlovr_coincounter_0_w )
 	if (ACCESSING_LSB)
 		coin_counter_w(0, data & 1);
 	else
-		logerror("CPU#0 PC %06X: Error, MSB of coin counter 0 written\n", cpu_get_pc());
+		logerror("CPU#0 PC %06X: Error, MSB of coin counter 0 written\n", activecpu_get_pc());
 }
 static WRITE16_HANDLER( ddenlovr_coincounter_1_w )
 {
 	if (ACCESSING_LSB)
 		coin_counter_w(1, data & 1);
 	else
-		logerror("CPU#0 PC %06X: Error, MSB of coin counter 1 written\n", cpu_get_pc());
+		logerror("CPU#0 PC %06X: Error, MSB of coin counter 1 written\n", activecpu_get_pc());
 }
 
 static MEMORY_READ16_START( ddenlovr_readmem )
@@ -423,7 +427,7 @@ INPUT_PORTS_START( sprtmtch )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	// IN4 - DSW
-	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )	// Time
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )	// Time
 	PORT_DIPSETTING(    0x00, "1 (Easy)" )
 	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "3" )
@@ -432,18 +436,18 @@ INPUT_PORTS_START( sprtmtch )
 	PORT_DIPSETTING(    0x05, "6" )
 	PORT_DIPSETTING(    0x06, "7" )
 	PORT_DIPSETTING(    0x07, "8 (Hard)" )
-	PORT_DIPNAME( 0x18, 0x18, "Vs Time" )
+	PORT_DIPNAME( 0x18, 0x10, "Vs Time" )
 	PORT_DIPSETTING(    0x18, "8 s" )
 	PORT_DIPSETTING(    0x10, "10 s" )
 	PORT_DIPSETTING(    0x08, "12 s" )
 	PORT_DIPSETTING(    0x00, "14 s" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-8" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -611,7 +615,7 @@ INPUT_PORTS_END
 static struct YM2203interface ym2203_intf =
 {
 	1,
-	22000000 / 6,					/* ? */
+	22000000 / 8,					/* 2.75MHz */
 	{ YM2203_VOL(100,100) },
 	{ input_port_3_r },				/* Port A Read: DSW */
 	{ input_port_4_r },				/* Port B Read: DSW */
@@ -620,38 +624,31 @@ static struct YM2203interface ym2203_intf =
 	{ sprtmtch_sound_callback },	/* IRQ handler */
 };
 
-static const struct MachineDriver machine_driver_sprtmtch =
-{
-	{
-		{
-			CPU_Z80,
-			22000000 / 6,	/* ? */
-			sprtmtch_readmem,  sprtmtch_writemem,
-			sprtmtch_readport, sprtmtch_writeport,
-			sprtmtch_vblank_interrupt, 1	/* IM 0 needs an opcode on the data bus */
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( sprtmtch )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80,22000000 / 4)	/* 5.5MHz */
+	MDRV_CPU_MEMORY(sprtmtch_readmem,sprtmtch_writemem)
+	MDRV_CPU_PORTS(sprtmtch_readport,sprtmtch_writeport)
+	MDRV_CPU_VBLANK_INT(sprtmtch_vblank_interrupt,1)	/* IM 0 needs an opcode on the data bus */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+8, 256-1-8 },
-	0,	// no tiles
-	512, 0,
-	sprtmtch_vh_convert_color_prom,			// static palette
-	VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT,	// needs alpha blending
-	0,
-	sprtmtch_vh_start,
-	sprtmtch_vh_stop,
-	sprtmtch_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)	// needs alpha blending
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+8, 256-1-8)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_PALETTE_INIT(sprtmtch)			// static palette
+	MDRV_VIDEO_START(sprtmtch)
+	MDRV_VIDEO_UPDATE(sprtmtch)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&ym2203_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -673,77 +670,63 @@ static struct OKIM6295interface okim6295_intf =
 	{ 100 }
 };
 
-static const struct MachineDriver machine_driver_ddenlovr =
-{
-	{
-		{
-			CPU_M68000,
-			24000000 / 2,
-			ddenlovr_readmem, ddenlovr_writemem,0,0,
-			m68_level1_irq, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( ddenlovr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,24000000 / 2)
+	MDRV_CPU_MEMORY(ddenlovr_readmem,ddenlovr_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 256, { 0, 320-1, 0, 256-1 },
-	0,		// no tiles
-	0x800, 0x800,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	dynax_vh_start,
-	0,
-	dynax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x800)
+
+	MDRV_VIDEO_START(dynax)
+	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2413,	&ym2413_intf	},
-		{	SOUND_OKIM6295,	&okim6295_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Rong Rong
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_rongrong =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* ? */
-			rongrong_readmem,  rongrong_writemem,
-			rongrong_readport, rongrong_writeport,
-			interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rongrong )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* ? */
+	MDRV_CPU_MEMORY(rongrong_readmem,rongrong_writemem)
+	MDRV_CPU_PORTS(rongrong_readport,rongrong_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0, 256-1 },
-	0,		// no tiles
-	0x800, 0x800,
-	0,
-	VIDEO_TYPE_RASTER,
-	0,
-	dynax_vh_start,
-	0,
-	dynax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+	MDRV_PALETTE_LENGTH(0x800)
+	MDRV_COLORTABLE_LENGTH(0x800)
+
+	MDRV_VIDEO_START(dynax)
+	MDRV_VIDEO_UPDATE(dynax)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2413,	&ym2413_intf	},
-		{	SOUND_OKIM6295,	&okim6295_intf	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2413, ym2413_intf)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -780,8 +763,9 @@ Dynax 1989
 ***************************************************************************/
 
 ROM_START( sprtmtch )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* Z80 Code */
-	ROM_LOAD( "3101.3d", 0x0000, 0x10000, 0xd8fa9638 )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "3101.3d", 0x00000, 0x08000, 0xd8fa9638 )
+	ROM_CONTINUE(        0x30000, 0x08000 )
 
 	ROM_REGION( 0x40000, REGION_GFX1, 0 )	/* Gfx Data (Do not dispose) */
 	ROM_LOAD( "3102.6c", 0x00000, 0x20000, 0x46f90e59 )
@@ -792,6 +776,24 @@ ROM_START( sprtmtch )
 	ROM_LOAD( "17g", 0x200, 0x200, 0x5443ebfb )
 ROM_END
 
+ROM_START( drgpunch )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "2401.3d", 0x00000, 0x08000, 0xb310709c )
+	ROM_CONTINUE(        0x10000, 0x08000 )
+	ROM_LOAD( "2402.6d", 0x30000, 0x10000, 0xd21ed237 )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )	/* Gfx Data (Do not dispose) */
+	ROM_LOAD( "2403.6c", 0x00000, 0x20000, 0xb936f202 )
+	ROM_LOAD( "2404.5c", 0x20000, 0x20000, 0x2ee0683a )
+	ROM_LOAD( "2405.3c", 0x40000, 0x20000, 0xaefbe192 )
+	ROM_LOAD( "2406.1c", 0x60000, 0x20000, 0xe137f96e )
+	ROM_LOAD( "2407.6a", 0x80000, 0x20000, 0xf3f1b065 )
+	ROM_LOAD( "2408.5a", 0xa0000, 0x20000, 0x3a91e2b9 )
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
+	ROM_LOAD( "2.18g", 0x000, 0x200, 0x9adccc33 )	// FIXED BITS (0xxxxxxx)
+	ROM_LOAD( "1.17g", 0x200, 0x200, 0x324fa9cf )
+ROM_END
 
 
 /***************************************************************************
@@ -886,7 +888,8 @@ ROM_END
 
 ***************************************************************************/
 
-GAME ( 1989, sprtmtch, 0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
+GAME ( 1989, sprtmtch,        0, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax (Fabtek license)", "Sports Match" )
+GAME ( 1989, drgpunch, sprtmtch, sprtmtch, sprtmtch, 0, ROT0, "Log+Dynax", "Dragon Punch (Japan)" )
 
 /* TESTDRIVERS */
 GAMEX( 1995, ddenlovr, 0, ddenlovr, ddenlovr, 0, ROT0, "Dynax",     "Don Den Lover Vol 1", GAME_NOT_WORKING )

@@ -1,6 +1,6 @@
 #####################################################################
 
-MAME_VERSION = -DMAME_VERSION=57
+MAME_VERSION = -DMAME_VERSION=60
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
@@ -261,10 +261,16 @@ all: maketree $(EMULATORCLI) $(EMULATORGUI) extra
 
 # include the various .mak files
 include src/core.mak
+ifdef MESS
 include mess/$(TARGET).mak
+else
+include src/$(TARGET).mak
+endif
 include src/rules.mak
 include src/$(MAMEOS)/$(MAMEOS).mak
+ifdef MESS
 include mess/rules_ms.mak
+endif
 
 ifdef DEBUG
 DBGDEFS = -DMAME_DEBUG

@@ -44,7 +44,7 @@ unsigned char *zBuffer;
 ***************************************************************************/
 int snes_vh_start(void)
 {
-	zBuffer=malloc((256+32)*(256+32));
+	zBuffer = auto_malloc((256+32)*(256+32));
 	if (!zBuffer)
 		return 1;
 	if( generic_bitmapped_vh_start() )
@@ -54,8 +54,6 @@ int snes_vh_start(void)
 
 void snes_vh_stop(void)
 {
-	generic_vh_stop();
-	free(zBuffer);
 }
 
 /***************************************************************************

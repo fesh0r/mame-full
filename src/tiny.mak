@@ -1,15 +1,15 @@
 # a tiny compile is without Neogeo games
 COREDEFS += -DTINY_COMPILE=1
-COREDEFS += -DTINY_NAME="driver_spatter"
-COREDEFS += -DTINY_POINTER="&driver_spatter"
+COREDEFS += -DTINY_NAME="driver_taxidrvr"
+COREDEFS += -DTINY_POINTER="&driver_taxidrvr"
 
 # uses these CPUs
-CPUS+=CPU_Z80@
+CPUS+=Z80@
 
 # uses these SOUNDs
-SOUNDS+=SOUND_SN76496@
+SOUNDS+=AY8910@
 
-OBJS = $(OBJ)/drivers/system1.o $(OBJ)/vidhrdw/system1.o $(OBJ)/machine/segacrpt.o
+OBJS = $(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

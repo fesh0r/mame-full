@@ -69,7 +69,6 @@ typedef struct
 	unsigned int length;
 	eFileType type;
 	unsigned int crc;
-	int		eof;	// for kRamFiles only
 }	FakeFileHandle;
 
 /***************************************************************************
@@ -266,6 +265,7 @@ void File_UpdatePaths(void)
 	rc_set_option2(fileio_opts, "cheat_file",		  GetCheatFileName(),	 MAXINT_PTR);
 	rc_set_option2(fileio_opts, "history_file", 	  GetHistoryFileName(),  MAXINT_PTR);
 	rc_set_option2(fileio_opts, "mameinfo_file",	  GetMAMEInfoFileName(), MAXINT_PTR);
+	rc_set_option2(fileio_opts, "ctrlr_directory",    GetCtrlrDir(),         MAXINT_PTR);
 }
 
 void* osd_fopen2(const char *gamename, const char *filename, int filetype, int openforwrite)

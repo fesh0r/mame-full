@@ -652,9 +652,10 @@ void pc_hdc_data_w(int n, int data)
 			status[n] &= ~STA_REQUEST;
 			status[n] &= ~STA_READY;
 			status[n] |= STA_INPUT;
-			if( timer[n] )
-				timer_remove(timer[n]);
-			timer[n] = timer_set(0.001, n, pc_hdc_command);
+			
+			if (!timer[n])
+				timer[n] = timer_alloc(pc_hdc_command);
+			timer_adjust(timer[n], 0.001, n, 0);
         }
 	}
 }
@@ -771,6 +772,7 @@ READ_HANDLER ( pc_HDC2_r ) { return pc_HDC_r(1, offset); }
 int pc_harddisk_init(int id)
 {
 	pc_hdc_file[id] = image_fopen(IO_HARDDISK, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_RW);
+
 	return INIT_PASS;
 }
 

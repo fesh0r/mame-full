@@ -2,8 +2,10 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *jailbrek_scroll_x;
+unsigned char *jailbrek_scroll_dir;
 
-void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( jailbrek )
 {
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -11,27 +13,28 @@ void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for ( i = 0; i < Machine->drv->total_colors; i++ )
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[0] >> 4) & 0x01;
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -44,24 +47,16 @@ void jailbrek_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		COLOR(1,i) = *color_prom++;
 }
 
-int jailbrek_vh_start( void )
+VIDEO_START( jailbrek )
 {
-	if ( ( dirtybuffer = malloc( videoram_size ) ) == 0 )
+	if ( ( dirtybuffer = auto_malloc( videoram_size ) ) == 0 )
 		return 1;
 	memset( dirtybuffer, 1, videoram_size );
 
-	if ( ( tmpbitmap = bitmap_alloc(Machine->drv->screen_width * 2,Machine->drv->screen_height) ) == 0 ) {
-		free(dirtybuffer);
+	if ( ( tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width * 2,Machine->drv->screen_height) ) == 0 )
 		return 1;
-	}
 
 	return 0;
-}
-
-void jailbrek_vh_stop( void )
-{
-	free( dirtybuffer );
-	bitmap_free( tmpbitmap );
 }
 
 static void drawsprites( struct mame_bitmap *bitmap )
@@ -96,11 +91,11 @@ static void drawsprites( struct mame_bitmap *bitmap )
 	}
 }
 
-void jailbrek_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jailbrek )
 {
 	int i;
 
-	if ( full_refresh )
+	if ( get_vh_global_attribute_changed() )
 		memset( dirtybuffer, 1, videoram_size );
 
 	for ( i = 0; i < videoram_size; i++ )
@@ -144,7 +139,11 @@ void jailbrek_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				scrollx[i] = -( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		/* added support for vertical scrolling (credits).  23/1/2002  -BR */
+		if( jailbrek_scroll_dir[0x00] & 0x04 )  /* bit 2 appears to be horizontal/vertical scroll control */
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scrollx,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		else
+			copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	drawsprites( bitmap );

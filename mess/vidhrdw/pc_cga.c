@@ -122,10 +122,12 @@ struct GfxDecodeInfo CGA_gfxdecodeinfo[] =
 };
 
 /* Initialise the cga palette */
-void pc_cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( pc_cga )
 {
-	memcpy(sys_palette,cga_palette,sizeof(cga_palette));
-	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
+	int i;
+	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
+		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+	memcpy(colortable,cga_colortable,sizeof(cga_colortable));
 }
 
 typedef enum { TYPE_CGA, TYPE_PC1512 } TYPE;
@@ -156,17 +158,12 @@ extern void pc_cga_init_video(struct _CRTC6845 *crtc)
 	cga.crtc=crtc;
 }
 
-int pc_cga_vh_start(void)
+VIDEO_START( pc_cga )
 {
 	cga.crtc=crtc6845;
 	crtc6845_init(cga.crtc, &config);
 
-    return generic_vh_start();
-}
-
-void pc_cga_vh_stop(void)
-{
-    generic_vh_stop();
+    return video_start_generic();
 }
 
 WRITE_HANDLER ( pc_cga_videoram_w )
@@ -574,7 +571,7 @@ extern void pc_cga_timer(void)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc_cga )
 {
 	static int video_active = 0;
 	static int width=0, height=0;
@@ -582,7 +579,7 @@ void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if( crtc6845_do_full_refresh(cga.crtc)||full_refresh||cga.full_refresh )
+	/*if( crtc6845_do_full_refresh(cga.crtc)||full_refresh||cga.full_refresh )*/
 	{
 		cga.full_refresh=0;
 		memset(dirtybuffer, 1, videoram_size);
@@ -653,7 +650,7 @@ void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
 #ifndef GFX_ZOOMING
 		if ((width>100)&&(height>100))
-			osd_set_visible_area(0,width-1,0, height-1);
+			set_visible_area(0,width-1,0, height-1);
 		else logerror("video %d %d\n",width, height);
 #endif
 	}
@@ -694,25 +691,22 @@ extern WRITE_HANDLER ( pc1512_videoram_w )
 	dirtybuffer[offset]=1;
 }
 
-extern int	pc1512_vh_start(void)
+VIDEO_START( pc1512 )
 {
-	cga.type=TYPE_PC1512;	
-	videoram=(UINT8*)malloc(0x10000);
-	if (videoram==0) return 1;
-	videoram_size=0x4000; //! used in cga this way, size of plain memory in 1 bank
+	cga.type = TYPE_PC1512;	
+	
+	videoram = (UINT8*) auto_malloc(0x10000);
+	if (videoram==0)
+		return 1;
+
+	videoram_size = 0x4000; //! used in cga this way, size of plain memory in 1 bank
 	cpu_setbank(1,videoram+videoram_offset[0]);
-	pc1512.write=0xf;
-	pc1512.read=0;
-	return pc_cga_vh_start();
+	pc1512.write = 0xf;
+	pc1512.read = 0;
+	return video_start_pc_cga();
 }
 
-extern void pc1512_vh_stop(void)
+VIDEO_UPDATE( pc1512 )
 {
-	free(videoram);
-	pc_cga_vh_stop();
-}
-
-extern void pc1512_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-	pc_cga_vh_screenrefresh(bitmap, full_refresh);
+	video_update_pc_cga(bitmap, cliprect);
 }

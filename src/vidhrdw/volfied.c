@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "state.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/taitoic.h"
 
 static struct mame_bitmap* pixel_layer = 0;
 
@@ -8,8 +9,6 @@ static UINT16* video_ram = NULL;
 
 static UINT16 video_ctrl = 0;
 static UINT16 video_mask = 0;
-static UINT16 sprite_ctrl = 0;
-static UINT16 sprite_flip = 0;
 
 static UINT8* line_dirty = NULL;
 
@@ -23,41 +22,27 @@ static void mark_all_dirty(void)
           INITIALISATION AND CLEAN-UP
 ******************************************************/
 
-int volfied_vh_start (void)
+VIDEO_START( volfied )
 {
-	pixel_layer = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	pixel_layer = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (pixel_layer == NULL)
 		return 1;
 
-	line_dirty = malloc(256);
+	line_dirty = auto_malloc(256);
 	if (line_dirty == NULL)
 		return 1;
 
-	video_ram = malloc(0x40000 * sizeof (UINT16));
+	video_ram = auto_malloc(0x40000 * sizeof (UINT16));
 	if (video_ram == NULL)
 		return 1;
 
-	state_save_register_UINT16("volfied", 0, "video_ram",     video_ram,     0x40000);
-	state_save_register_UINT16("volfied", 0, "video_ctrl",    &video_ctrl,   1);
-	state_save_register_UINT16("volfied", 0, "video_mask",    &video_mask,   1);
-	state_save_register_UINT16("volfied", 0, "sprite_ctrl",   &sprite_ctrl,  1);
-	state_save_register_UINT16("volfied", 0, "sprite_flip",   &sprite_flip,  1);
+	state_save_register_UINT16("volfied", 0, "video_ram",   video_ram,    0x40000);
+	state_save_register_UINT16("volfied", 0, "video_ctrl",  &video_ctrl,  1);
+	state_save_register_UINT16("volfied", 0, "video_mask",  &video_mask,  1);
 
 	state_save_register_func_postload (mark_all_dirty);
 
-	return 0;
-}
-
-void volfied_vh_stop (void)
-{
-	if (video_ram != NULL)
-		free(video_ram);
-
-	if (line_dirty != NULL)
-		free(line_dirty);
-
-	if (pixel_layer != NULL)
-		bitmap_free(pixel_layer);
+	return PC090OJ_vh_start(0, 0, 0, 0);
 }
 
 
@@ -107,56 +92,13 @@ WRITE16_HANDLER( volfied_video_mask_w )
 
 WRITE16_HANDLER( volfied_sprite_ctrl_w )
 {
-	COMBINE_DATA(&sprite_ctrl);
-}
-
-WRITE16_HANDLER( volfied_sprite_flip_w )
-{
-	COMBINE_DATA(&sprite_flip);
+	PC090OJ_sprite_ctrl = (data & 0x3c) >> 2;
 }
 
 
 /*******************************************************
 				SCREEN REFRESH
 *******************************************************/
-
-static void draw_sprites(struct mame_bitmap* bitmap)
-{
-	int offs;
-
-	int color_bank = 4 * (sprite_ctrl & 0x3c);
-
-	for (offs = (spriteram_size / 2) - 4; offs >= 0; offs -= 4)
-	{
-		int tilenum = spriteram16[offs + 2] & 0x1fff;
-
-		if (tilenum != 0)
-		{
-			int color = spriteram16[offs] & 0xf;
-
-			int x = spriteram16[offs+3] & 0x1ff;
-			int y = spriteram16[offs+1] & 0x1ff;
-
-			int flipx = (spriteram16[offs] >> 14) & 1;
-			int flipy = (spriteram16[offs] >> 15) & 1;
-
-			/* treat coords as signed */
-			if (x > 0x140) x -= 0x200;
-			if (y > 0x140) y -= 0x200;
-
-			if ((sprite_flip & 1) == 0)
-			{
-				x = 320 - x - 15; /* ? */
-				y = 256 - y - 17; /* ? */
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap, Machine->gfx[0], tilenum, color_bank | color,
-				flipx, flipy, x, y, &Machine->visible_area, TRANSPARENCY_PEN, 0);
-		}
-	}
-}
 
 static void refresh_pixel_layer(void)
 {
@@ -216,11 +158,13 @@ static void refresh_pixel_layer(void)
 	}
 }
 
-void volfied_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( volfied )
 {
+	fillbitmap(priority_bitmap, 0, cliprect);
+
 	refresh_pixel_layer();
 
-	copybitmap(bitmap, pixel_layer, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, pixel_layer, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
-	draw_sprites(bitmap);
+	PC090OJ_draw_sprites(bitmap, cliprect, 0);
 }

@@ -24,6 +24,24 @@ static struct rectangle spritevisiblearea =
 	2*8, 30*8-1
 };
 
+static struct rectangle flip_spritevisiblearea =
+{
+	6*8, 31*8-1,
+	2*8, 30*8-1
+};
+
+
+WRITE_HANDLER( mermaid_flip_screen_x_w )
+{
+	flip_screen_x_set(data & 0x01);
+}
+
+WRITE_HANDLER( mermaid_flip_screen_y_w )
+{
+	flip_screen_y_set(data & 0x01);
+}
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -31,7 +49,7 @@ static struct rectangle spritevisiblearea =
   I'm not sure about the resistor value, I'm using the Galaxian ones.
 
 ***************************************************************************/
-void mermaid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mermaid )
 {
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -41,31 +59,30 @@ void mermaid_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* first, the char acter/sprite palette */
 	for (i = 0;i < TOTAL_COLORS(0); i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 	/* blue background */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0xff;
+	palette_set_color(TOTAL_COLORS(0),0,0,0xff);
 
 	/* set up background palette */
     COLOR(2,0) = 32;
@@ -83,7 +100,7 @@ void mermaid_vh_convert_color_prom(unsigned char *palette, unsigned short *color
   the main emulation engine.
 
 ***************************************************************************/
-void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mermaid )
 {
 	int offs;
 
@@ -100,10 +117,18 @@ void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		code = mermaid_background_videoram[offs];
 
+		if (flip_screen_x)
+			sx = 248 - sx;
+
+		if (flip_screen_y)
+			sy = 248 - sy;
+
 		drawgfx(tmpbitmap,Machine->gfx[2],
 				code,
-				(sx >= 26*8) ? 0 : 1,
-				0,0,
+				(flip_screen_x ?
+				    ((sx <= 5*8) ? 0 : 1) :
+				    ((sx >= 26*8) ? 0 : 1)),
+				flip_screen_x,flip_screen_y,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
 	}
@@ -116,7 +141,9 @@ void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		for (i = 0;i < 32;i++)
 		{
-			scroll[i] = -mermaid_background_scrollram[i];
+			scroll[i] = (flip_screen_x ?
+			    mermaid_background_scrollram[31 - i] :
+			    -mermaid_background_scrollram[i]);
 		}
 
 
@@ -137,10 +164,16 @@ void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		code = mermaid_foreground_videoram[offs] | ((mermaid_foreground_colorram[offs] & 0x30) << 4);
 
+		if (flip_screen_x)
+			sx = 31 - sx;
+
+		if (flip_screen_y)
+			sy = 248 - sy;
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				mermaid_foreground_colorram[offs] & 0x0f,
-				0,0,
+				flip_screen_x,flip_screen_y,
 				8*sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -180,11 +213,23 @@ void mermaid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		code = (spriteram[offs + 0] & 0x3f) | (bank << 6);
 
+		if (flip_screen_x) {
+			flipx = !flipx;
+			sx = 240 - sx;
+		}
+
+		if (flip_screen_y) {
+			flipy = !flipy;
+			sy = spriteram[offs + 1];
+		}
+
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				spriteram[offs + 2] & 0x0f,
 				flipx, flipy,
 				sx, sy,
-				&spritevisiblearea,TRANSPARENCY_PEN,0);
+				(flip_screen_x ? &flip_spritevisiblearea :
+				    &spritevisiblearea),
+				TRANSPARENCY_PEN,0);
 	}
 }

@@ -33,6 +33,7 @@ P1-049-A				89 Meta Fox						Taito / RomStar
 P0-053-1				89 Castle of Dragon/Dragon Unit	Taito / RomStar / Athena
 P0-053-A				91 Strike Gunner S.T.G			Athena / Tecmo
 P0-053-A				92 Quiz Kokology				Tecmo
+P0-055-B				89 Wit's						Athena
 P0-055-D				90 Thunder & Lightning			Romstar / Visco
 P0-063-A				91 Rezon						Allumer
 P0-068-B (M6100723A)	92 Block Carnival				Visco
@@ -45,6 +46,7 @@ P0-079-A				94 Eight Forces					Tecmo
 ?        (93111A)		93 War Of Aero					Yang Cheng
 P0-081-A				93 Mobile Suit Gundam(3)		Banpresto
 P0-097-A				93 Oishii Puzzle ..				Sunsoft + Atlus
+P0-100-A				93 Quiz Kokology 2				Tecmo
 P0-101-1				94 Pro Mahjong Kiwame			Athena
 P0-114-A (SKB-001)		94 Krazy Bowl					American Sammy
 P0-117-A (DH-01)		95 Extreme Downhill				Sammy Japan
@@ -73,6 +75,39 @@ To Do:
 
 static unsigned char *sharedram;
 
+
+/***************************************************************************
+
+
+									Sound
+
+
+***************************************************************************/
+
+static int seta_sh_start_8MHz(const struct MachineSound *msound)
+{
+	return seta_sh_start(msound, 8000000);
+}
+
+static int seta_sh_start_16MHz(const struct MachineSound *msound)
+{
+	return seta_sh_start(msound, 16000000);
+}
+
+static struct CustomSound_interface seta_sound_intf_8MHz =
+{
+	seta_sh_start_8MHz,
+	0,
+	0,
+};
+static struct CustomSound_interface seta_sound_intf_16MHz =
+{
+	seta_sh_start_16MHz,
+	0,
+	0,
+};
+
+
 /***************************************************************************
 
 
@@ -96,7 +131,7 @@ READ16_HANDLER( mirror_ram_r )
 WRITE16_HANDLER( mirror_ram_w )
 {
 	COMBINE_DATA(&mirror_ram[offset]);
-//	logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", cpu_get_pc(), offset*2, data);
+//	logerror("PC %06X - Mirror RAM Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 
@@ -215,7 +250,7 @@ static READ_HANDLER( dsw2_r )
  Sprites Buffering
 
 */
-void seta_buffer_sprites(void)
+VIDEO_EOF( seta_buffer_sprites )
 {
 	int ctrl2	=	spriteram16[ 0x602/2 ];
 	if (~ctrl2 & 0x20)
@@ -400,7 +435,7 @@ READ16_HANDLER ( calibr50_ip_r )
 		case 0x16/2:	return (dir2>>8);			// upper 4 bits of p2 rotation
 		case 0x18/2:	return 0xffff;				// ? (value's read but not used)
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0;
 	}
 }
@@ -490,11 +525,12 @@ MEMORY_END
 
 
 /***************************************************************************
-				Dragon Unit, Quiz Kokology, Strike Gunner
+		Dragon Unit, Quiz Kokology, Quiz Kokology 2, Strike Gunner
 ***************************************************************************/
 
 static MEMORY_READ16_START( drgnunit_readmem )
 	{ 0x000000, 0x07ffff, MRA16_ROM				},	// ROM
+	{ 0x080000, 0x0bffff, MRA16_RAM				},	// ROM (qzkklgy2)
 	{ 0xf00000, 0xf0ffff, MRA16_RAM				},	// RAM (qzkklogy)
 	{ 0xffc000, 0xffffff, MRA16_RAM				},	// RAM (drgnunit,stg)
 	{ 0x100000, 0x1000ff, seta_sound_word_r		},	// Sound
@@ -515,11 +551,12 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( drgnunit_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM						},	// ROM
+	{ 0x080000, 0x0bffff, MWA16_RAM						},	// ROM (qzkklgy2)
 	{ 0xf00000, 0xf0ffff, MWA16_RAM						},	// RAM (qzkklogy)
 	{ 0xffc000, 0xffffff, MWA16_RAM						},	// RAM (drgnunit,stg)
 	{ 0x100000, 0x1000ff, seta_sound_word_w				},	// Sound
 	{ 0x100100, 0x103fff, MWA16_RAM						},	//
-	{ 0x200000, 0x200001, MWA16_NOP						},	// ? Watchdog
+	{ 0x200000, 0x200001, MWA16_NOP						},	// Watchdog
 	{ 0x300000, 0x300001, MWA16_NOP						},	// ? IRQ Ack
 	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs		},	// Coin Lockout + Video Registers
 	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
@@ -616,7 +653,7 @@ static READ16_HANDLER( krzybowl_input_r )
 		case 0xc/2:	return dir2y & 0xff;
 		case 0xe/2:	return dir2y >> 8;
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0;
 	}
 }
@@ -804,7 +841,7 @@ READ16_HANDLER( kiwame_input_r )
 		case 0x08/2:	return 0xffff;
 
 		default:
-			logerror("PC %06X - Read input %02X !\n", cpu_get_pc(), offset*2);
+			logerror("PC %06X - Read input %02X !\n", activecpu_get_pc(), offset*2);
 			return 0x0000;
 	}
 }
@@ -837,17 +874,17 @@ MEMORY_END
 
 
 /***************************************************************************
-							Thunder & Lightning
+						Thunder & Lightning / Wit's
 ***************************************************************************/
 
 static READ16_HANDLER( thunderl_protection_r )
 {
-//	logerror("PC %06X - Protection Read\n", cpu_get_pc());
+//	logerror("PC %06X - Protection Read\n", activecpu_get_pc());
 	return 0x00dd;
 }
 static WRITE16_HANDLER( thunderl_protection_w )
 {
-//	logerror("PC %06X - Protection Written: %04X <- %04X\n", cpu_get_pc(), offset*2, data);
+//	logerror("PC %06X - Protection Written: %04X <- %04X\n", activecpu_get_pc(), offset*2, data);
 }
 
 /* Similar to downtown etc. */
@@ -862,10 +899,13 @@ static MEMORY_READ16_START( thunderl_readmem )
 	{ 0xb00000, 0xb00001, input_port_0_word_r	},	// P1
 	{ 0xb00002, 0xb00003, input_port_1_word_r	},	// P2
 	{ 0xb00004, 0xb00005, input_port_2_word_r	},	// Coins
-	{ 0xb0000c, 0xb0000d, thunderl_protection_r	},	// Protection
+	{ 0xb0000c, 0xb0000d, thunderl_protection_r	},	// Protection (not in wits)
+	{ 0xb00008, 0xb00009, input_port_4_word_r	},	// P3 (wits)
+	{ 0xb0000a, 0xb0000b, input_port_5_word_r	},	// P4 (wits)
 /**/{ 0xc00000, 0xc00001, MRA16_RAM				},	// ? 0x4000
 /**/{ 0xd00000, 0xd00607, MRA16_RAM				},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MRA16_RAM				},	// Sprites Code + X + Attr
+	{ 0xe04000, 0xe07fff, MRA16_RAM				},	// (wits)
 MEMORY_END
 
 static MEMORY_WRITE16_START( thunderl_writemem )
@@ -875,12 +915,13 @@ static MEMORY_WRITE16_START( thunderl_writemem )
 	{ 0x100100, 0x10ffff, MWA16_RAM					},	//
 	{ 0x200000, 0x200001, MWA16_NOP					},	// ?
 	{ 0x300000, 0x300001, MWA16_NOP					},	// ?
-	{ 0x400000, 0x40ffff, thunderl_protection_w		},	// Protection
+	{ 0x400000, 0x40ffff, thunderl_protection_w		},	// Protection (not in wits)
 	{ 0x500000, 0x500001, seta_vregs_w, &seta_vregs	},	// Coin Lockout
 	{ 0x700000, 0x7003ff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xc00000, 0xc00001, MWA16_RAM					},	// ? 0x4000
 	{ 0xd00000, 0xd00607, MWA16_RAM, &spriteram16	},	// Sprites Y
 	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2	},	// Sprites Code + X + Attr
+	{ 0xe04000, 0xe07fff, MWA16_RAM					},	// (wits)
 MEMORY_END
 
 
@@ -2135,7 +2176,7 @@ INPUT_PORTS_START( jjsquawk )
 	PORT_DIPSETTING(      0x0c00, "Normal"  )
 	PORT_DIPSETTING(      0x0400, "Hard"    )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x3000, 0x3000, "Energy" )
 	PORT_DIPSETTING(      0x2000, "2" )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x1000, "4" )
@@ -2143,7 +2184,7 @@ INPUT_PORTS_START( jjsquawk )
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x8000, "20K, Every 100K" )
 	PORT_DIPSETTING(      0xc000, "50K, Every 200K" )
-	PORT_DIPSETTING(      0x4000, "70K, Every 200K" )
+	PORT_DIPSETTING(      0x4000, "70K, 200K Only" )
 	PORT_DIPSETTING(      0x0000, "100K Only" )
 INPUT_PORTS_END
 
@@ -2599,7 +2640,7 @@ INPUT_PORTS_START( qzkklogy )
 	PORT_DIPSETTING(      0x0001, "1" )
 	PORT_DIPSETTING(      0x0002, "2" )
 	PORT_DIPSETTING(      0x0003, "3" )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2*" )
+	PORT_BITX(    0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Highlight Right Answer", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
@@ -2640,6 +2681,85 @@ INPUT_PORTS_START( qzkklogy )
 	PORT_DIPSETTING(      0x0000, "5" )
 INPUT_PORTS_END
 
+
+
+/***************************************************************************
+								Quiz Kokology 2
+***************************************************************************/
+
+INPUT_PORTS_START( qzkklgy2 )
+	PORT_START	// IN0 - Player 1 - $b00001.b
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_START	// IN1 - Player 2 - $b00003.b
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_START	// IN2 - Coins - $b00005.b
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
+	PORT_DIPNAME( 0x0003, 0x0003, "Unknown 1-0&1*" )
+	PORT_DIPSETTING(      0x0000, "0" )
+	PORT_DIPSETTING(      0x0001, "1" )
+	PORT_DIPSETTING(      0x0002, "2" )
+	PORT_DIPSETTING(      0x0003, "3" )
+	PORT_BITX(    0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Highlight Right Answer", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0020, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x3000, "Easy" )
+	PORT_DIPSETTING(      0x2000, "Normal" )
+	PORT_DIPSETTING(      0x1000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x8000, "2" )
+	PORT_DIPSETTING(      0xc000, "3" )
+	PORT_DIPSETTING(      0x4000, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -3105,14 +3225,16 @@ INPUT_PORTS_START( twineagl )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
 
 	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown 1-0*" )	// this is merged with 2-6!
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4001, 0x4001, "Copyright" )		// Always "Seta" if sim. players = 1
+	PORT_DIPSETTING(      0x4001, "Seta (Taito license)" )
+	PORT_DIPSETTING(      0x0001, "Taito" )
+	PORT_DIPSETTING(      0x4000, "Taito America" )
+	PORT_DIPSETTING(      0x0000, "Taito America (Romstar license)" )
 	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x0008, 0x0000, DEF_STR( Cabinet ) )	// Only if simultaneous players = 1
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0008, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) )
@@ -3125,13 +3247,12 @@ INPUT_PORTS_START( twineagl )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
-
-	PORT_DIPNAME( 0x0300, 0x0100, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x0300, "Normal"  )
 	PORT_DIPSETTING(      0x0200, "Easy"    )
 	PORT_DIPSETTING(      0x0100, "Hard"    )
 	PORT_DIPSETTING(      0x0000, "Hardest" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x0c00, 0x0000, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(      0x0c00, "Never" )
 	PORT_DIPSETTING(      0x0800, "500K Only" )
 	PORT_DIPSETTING(      0x0400, "1000K Only" )
@@ -3141,12 +3262,15 @@ INPUT_PORTS_START( twineagl )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x2000, "5" )
-	PORT_DIPNAME( 0x4000, 0x4000, "?Continue Mode?" )
-	PORT_DIPSETTING(      0x4000, "1" )
-	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x8000, 0x8000, "Coinage Type" )	// not supported
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
+
+	/* Fake Dip Switch to determine maximum numbers of simultaneous players */
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x00, "Max. simultaneous players" )
+	PORT_DIPSETTING(	0x00, "1" )
+	PORT_DIPSETTING(	0x01, "2" )
 INPUT_PORTS_END
 
 
@@ -3308,82 +3432,6 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
-								Zing Zing Zip
-***************************************************************************/
-
-INPUT_PORTS_START( zingzip )
-	PORT_START	// IN0 - Player 1 - $400000.w
-	JOY_TYPE1_2BUTTONS(1)
-
-	PORT_START	// IN1 - Player 2 - $400002.w
-	JOY_TYPE1_2BUTTONS(2)
-
-	PORT_START	// IN2 - Coins - $400004.w
-	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // no coin 2
-	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
-
-	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-2" )	// remaining switches seem unused
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-3" )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-4" )
-	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-5" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-6" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
-
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
-	PORT_DIPSETTING(      0x0200, "2" )
-	PORT_DIPSETTING(      0x0300, "3" )
-	PORT_DIPSETTING(      0x0100, "4" )
-	PORT_DIPSETTING(      0x0000, "5" )
-	PORT_DIPNAME( 0x0c00, 0x0c00, "Unknown 2-2&3" )
-	PORT_DIPSETTING(      0x0800, "01" )
-	PORT_DIPSETTING(      0x0c00, "08" )
-	PORT_DIPSETTING(      0x0400, "10" )
-	PORT_DIPSETTING(      0x0000, "18" )
-	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(      0xa000, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(      0xb000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0xc000, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0xd000, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( 8C_3C ) )
-	PORT_DIPSETTING(      0xe000, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( 5C_3C ) )
-	PORT_DIPSETTING(      0x3000, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(      0x9000, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x7000, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(      0x5000, DEF_STR( 1C_6C ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
-INPUT_PORTS_END
-
-
-
-/***************************************************************************
 								War of Aero
 ***************************************************************************/
 
@@ -3460,6 +3508,159 @@ INPUT_PORTS_END
 
 
 
+/***************************************************************************
+									Wit's
+***************************************************************************/
+
+INPUT_PORTS_START( wits )
+	PORT_START	// IN0 - Player 1
+	JOY_TYPE1_2BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins + DSW
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT_IMPULSE( 0x0002, IP_ACTIVE_LOW, IPT_COIN2, 5 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 3-4*" )	// Jumpers, I guess
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 3-5*" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x00c0, 0x0040, "License" )
+	PORT_DIPSETTING(      0x00c0, "Romstar" )
+	PORT_DIPSETTING(      0x0080, "Seta U.S.A" )
+	PORT_DIPSETTING(      0x0040, "Visco (Japan Only)" )
+	PORT_DIPSETTING(      0x0000, "Athena (Japan Only)" )
+
+	PORT_START	// IN3 - 2 DSWs - $600003 & 1.b
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0002, "Easy" )
+	PORT_DIPSETTING(      0x0003, "Normal" )
+	PORT_DIPSETTING(      0x0001, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0008, "150k, 350k" )
+	PORT_DIPSETTING(      0x000c, "200k, 500k" )
+	PORT_DIPSETTING(      0x0004, "300k, 600k" )
+	PORT_DIPSETTING(      0x0000, "400k" )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0030, "3" )
+	PORT_DIPSETTING(      0x0020, "5" )
+	PORT_DIPNAME( 0x0040, 0x0040, "Max Players" )
+	PORT_DIPSETTING(      0x0040, "2" )
+	PORT_DIPSETTING(      0x0000, "4" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Unknown 1-7*" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_DIPNAME( 0x0100, 0x0100, "Unknown 2-0" )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, "Unknown 2-2*" )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0800, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+
+	PORT_START	// IN4 - Player 3
+	JOY_TYPE1_2BUTTONS(3)
+
+	PORT_START	// IN5 - Player 4
+	JOY_TYPE1_2BUTTONS(4)
+INPUT_PORTS_END
+
+
+/***************************************************************************
+								Zing Zing Zip
+***************************************************************************/
+
+INPUT_PORTS_START( zingzip )
+	PORT_START	// IN0 - Player 1 - $400000.w
+	JOY_TYPE1_2BUTTONS(1)
+
+	PORT_START	// IN1 - Player 2 - $400002.w
+	JOY_TYPE1_2BUTTONS(2)
+
+	PORT_START	// IN2 - Coins - $400004.w
+	PORT_BIT_IMPULSE( 0x0001, IP_ACTIVE_LOW, IPT_COIN1, 5 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN  ) // no coin 2
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_TILT     )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+
+	PORT_START	// IN3 - 2 DSWs - $600001 & 3.b
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, "Unknown 1-3" )	// remaining switches seem unused
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, "Unknown 1-4" )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Unknown 1-5" )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "Unknown 1-6" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Unknown 1-7" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0200, "2" )
+	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPSETTING(      0x0100, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0800, "Easy"    )
+	PORT_DIPSETTING(      0x0c00, "Normal"  )
+	PORT_DIPSETTING(      0x0400, "Hard"    )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0xf000, 0xf000, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0xa000, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(      0xb000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0xc000, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0xd000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 8C_3C ) )
+	PORT_DIPSETTING(      0xe000, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 5C_3C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0xf000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x9000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x7000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x6000, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x5000, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+INPUT_PORTS_END
 
 
 /***************************************************************************
@@ -3609,6 +3810,17 @@ static struct GfxDecodeInfo msgundam_gfxdecodeinfo[] =
 };
 
 /***************************************************************************
+								Quiz Kokology 2
+***************************************************************************/
+
+static struct GfxDecodeInfo qzkklgy2_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &layout_planes_2roms,	512*0, 32 }, // [0] Sprites
+	{ REGION_GFX2, 0, &layout_packed, 		512*0, 32 }, // [1] Layer 1
+	{ -1 }
+};
+
+/***************************************************************************
 								Thundercade
 ***************************************************************************/
 
@@ -3661,36 +3873,33 @@ static struct GfxDecodeInfo zingzip_gfxdecodeinfo[] =
 
 #define SETA_INTERRUPTS_NUM 2
 
-static int seta_interrupt_1_and_2(void)
+static INTERRUPT_GEN( seta_interrupt_1_and_2 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 1;
-		case 1:		return 2;
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
-static int seta_interrupt_2_and_4(void)
+static INTERRUPT_GEN( seta_interrupt_2_and_4 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 2;
-		case 1:		return 4;
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 1:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
 	}
 }
 
 
 #define SETA_SUB_INTERRUPTS_NUM 2
 
-static int seta_sub_interrupt(void)
+static INTERRUPT_GEN( seta_sub_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return nmi_interrupt();
-		case 1:		return interrupt();
-		default:	return ignore_interrupt();
+		case 0:		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);	break;
+		case 1:		cpu_set_irq_line(1, 0, HOLD_LINE);				break;
 	}
 }
 
@@ -3699,38 +3908,30 @@ static int seta_sub_interrupt(void)
 								Athena no Hatena?
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_atehate =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			atehate_readmem, atehate_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( atehate )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(atehate_readmem,atehate_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3743,81 +3944,70 @@ static struct MachineDriver machine_driver_atehate =
 	samples are bankswitched
 */
 
-void blandia_init_machine(void)
+MACHINE_INIT( blandia )
 {
 	seta_samples_bank = -1;	// set the samples bank to an out of range value at start-up
 }
 
-static const struct MachineDriver machine_driver_blandia =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	blandia_init_machine,	// Bankswitched Samples
+static MACHINE_DRIVER_START( blandia )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(blandia)	// Bankswitched Samples
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	blandia_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer1, layer2 */
-	blandia_vh_init_palette,				/* layers 1&2 are 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(blandia_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* Blandia uses sprite buffering */
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(blandia)				/* layers 1&2 are 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)		/* Blandia uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Block Carnival
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_blockcar =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			blockcar_readmem, blockcar_writemem,0,0,
-			m68_level3_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( blockcar )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(blockcar_readmem,blockcar_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3829,62 +4019,47 @@ static struct MachineDriver machine_driver_blockcar =
 	5 ints per frame */
 
 #define calibr50_INTERRUPTS_NUM (4+1)
-int calibr50_interrupt(void)
+INTERRUPT_GEN( calibr50_interrupt )
 {
 	switch (cpu_getiloops())
 	{
 		case 0:
 		case 1:
 		case 2:
-		case 3:		return 4;
-
-		case 4:		return 2;
-
-		default:	return ignore_interrupt();
+		case 3:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
+		case 4:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
 
-static const struct MachineDriver machine_driver_calibr50 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			calibr50_readmem, calibr50_writemem,0,0,
-			calibr50_interrupt, calibr50_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			2000000,	/* ?? */
-			calibr50_sub_readmem, calibr50_sub_writemem,0,0,
-			interrupt, 4	/* IRQ: 4/frame
+static MACHINE_DRIVER_START( calibr50 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(calibr50_readmem,calibr50_writemem)
+	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
+	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* IRQ: 4/frame
 							   NMI: when the 68k writes the sound latch */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-//	seta_vh_start_1_layer,
-	seta_vh_start_1_layer_offset_0x02,	// a little offset
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer_offset_0x02)	// a little offset
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -3893,44 +4068,34 @@ static const struct MachineDriver machine_driver_calibr50 =
 
 /* downtown lev 3 = lev 2 + lev 1 ! */
 
-static const struct MachineDriver machine_driver_downtown =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			downtown_sub_readmem, downtown_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( downtown )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(downtown_sub_readmem,downtown_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_8MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -3944,77 +4109,92 @@ static const struct MachineDriver machine_driver_downtown =
 	lev 2 drives the game
 */
 
-static const struct MachineDriver machine_driver_drgnunit =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			drgnunit_readmem, drgnunit_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( drgnunit )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* qzkklogy uses sprite buffering */
-//	seta_vh_start_1_layer,
-	seta_vh_start_1_layer_offset_0x02,	// a little offset
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer_offset_0x02)	// a little offset
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* qzkklogy uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
+
+/*	Same as qzkklogy, but with a 16MHz CPU and different
+	layout for the layer's tiles	*/
+
+static MACHINE_DRIVER_START( qzkklgy2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(drgnunit_readmem,drgnunit_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16+1, 400-1+1, 0, 256-1 -16)	// a little offset
+	MDRV_GFXDECODE(qzkklgy2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* qzkklogy uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Eight Force
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_eightfrc =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	blandia_init_machine,	// Bankswitched Samples
+static MACHINE_DRIVER_START( eightfrc )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(blandia)	// Bankswitched Samples
 
 	/* video hardware */
-	400, 256-16-8, { 16, 400-1, 0, 256-1 -16-16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4026,38 +4206,32 @@ static const struct MachineDriver machine_driver_eightfrc =
 	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
 	lev 2 drives the game
 */
-static const struct MachineDriver machine_driver_extdwnhl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			extdwnhl_readmem, extdwnhl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( extdwnhl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(extdwnhl_readmem,extdwnhl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256-16, { 16, 320+16-1, 0, 256-16-1},
-	zingzip_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
-	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 320+16-1, 0, 256-16-1)
+	MDRV_GFXDECODE(zingzip_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+16*32+64*32)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers_offset_0x02,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zingzip)			/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers_offset_0x02)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4068,38 +4242,32 @@ static const struct MachineDriver machine_driver_extdwnhl =
 	lev 2: Sound (generated by a timer mapped at $d00000-6 ?)
 	lev 4: VBlank
 */
-static const struct MachineDriver machine_driver_gundhara =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( gundhara )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256-16, { 16+8, 320+32+16+8+16-1, 0, 256-16-1},
-	jjsquawk_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
-	gundhara_vh_init_palette,				/* layers are 6 planes deep (but have only 4 palettes) */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16+8, 320+32+16+8+16-1, 0, 256-16-1)
+	MDRV_GFXDECODE(jjsquawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gundhara)				/* layers are 6 planes deep (but have only 4 palettes) */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4110,76 +4278,62 @@ static const struct MachineDriver machine_driver_gundhara =
 	lev 1 == lev 3 (writes to $500000, bit 4 -> 1 then 0)
 	lev 2 drives the game
 */
-static const struct MachineDriver machine_driver_jjsquawk =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( jjsquawk )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	jjsquawk_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+64*32+64*32,	/* sprites, layer2, layer1 */
-	jjsquawk_vh_init_palette,				/* layers are 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(jjsquawk_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(jjsquawk)				/* layers are 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Krazy Bowl
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_krzybowl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			krzybowl_readmem, krzybowl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( krzybowl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(krzybowl_readmem,krzybowl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16+8, 320+8-1, 0, 256-1 -16-16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16+8, 320+8-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4188,44 +4342,34 @@ static struct MachineDriver machine_driver_krzybowl =
 
 /* metafox lev 3 = lev 2 + lev 1 ! */
 
-static const struct MachineDriver machine_driver_metafox =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			m68_level3_irq, 1
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			metafox_sub_readmem, metafox_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( metafox )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(metafox_sub_readmem,metafox_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 400-1, 0, 256-1 -16-16 +2},
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16-16 +2)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4235,39 +4379,31 @@ static const struct MachineDriver machine_driver_metafox =
 
 /* msgundam lev 2 == lev 6 ! */
 
-static const struct MachineDriver machine_driver_msgundam =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			msgundam_readmem, msgundam_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-		},
-	},
-//	60,DEFAULT_60HZ_VBLANK_DURATION,
-	56.66,DEFAULT_60HZ_VBLANK_DURATION,	/* between 56 and 57 to match a real PCB's game speed */
-	1,
-	0,
+static MACHINE_DRIVER_START( msgundam )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(msgundam_readmem,msgundam_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(56.66)	/* between 56 and 57 to match a real PCB's game speed */
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer2, layer1 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	seta_buffer_sprites,	/* msgundam uses sprite buffering */
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)	/* msgundam uses sprite buffering */
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4275,78 +4411,60 @@ static const struct MachineDriver machine_driver_msgundam =
 							Oishii Puzzle
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_oisipuzl =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			oisipuzl_readmem, oisipuzl_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( oisipuzl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(oisipuzl_readmem,oisipuzl_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 320+16-1, 0, 256-1 -16-16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer2, layer1 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 320+16-1, 0, 256-1 -16-16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-//	seta_vh_start_2_layers,
-	oisipuzl_vh_start_2_layers,	// flip is inverted for the tilemaps
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(oisipuzl_2_layers)	// flip is inverted for the tilemaps
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 							Pro Mahjong Kiwame
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_kiwame =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			kiwame_readmem, kiwame_writemem,0,0,
-			m68_level1_irq, 1	/* lev 1-7 are the same. WARNING:
+static MACHINE_DRIVER_START( kiwame )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(kiwame_readmem,kiwame_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)/* lev 1-7 are the same. WARNING:
 								   the interrupt table is written to. */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	464, 256 -16, { 16, 464-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(464, 256 -16)
+	MDRV_VISIBLE_AREA(16, 464-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4356,79 +4474,88 @@ static struct MachineDriver machine_driver_kiwame =
 
 /* pretty much like wrofaero, but ints are 1&2, not 2&4 */
 
-static const struct MachineDriver machine_driver_rezon =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_1_and_2, SETA_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rezon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
 /***************************************************************************
-							Thunder & Lightning
+						Thunder & Lightning / Wit's
 ***************************************************************************/
 
 /*	thunderl lev 2 = lev 3 - other levels lead to an error */
 
-static struct MachineDriver machine_driver_thunderl =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			thunderl_readmem, thunderl_writemem,0,0,
-			m68_level3_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( thunderl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( wits )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(thunderl_readmem,thunderl_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
+
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_8MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4445,7 +4572,7 @@ static struct YM2203interface tndrcade_ym2203_interface =
 {
 	1,
 	2000000,		/* ? */
-	{ YM2203_VOL(50,50) },
+	{ YM2203_VOL(35,35) },
 	{ dsw1_r },		/* input A: DSW 1 */
 	{ dsw2_r },		/* input B: DSW 2 */
 	{ 0 },
@@ -4457,66 +4584,50 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 80,80 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 //	{ irq_handler },
 };
 
 
 #define TNDRCADE_SUB_INTERRUPTS_NUM 			1+16
-static int tndrcade_sub_interrupt(void)
+static INTERRUPT_GEN( tndrcade_sub_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return nmi_interrupt();
-		default:	return interrupt();
+		case 0:		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);	break;
+		default:	cpu_set_irq_line(1, 0, HOLD_LINE);				break;
 	}
 }
 
-static const struct MachineDriver machine_driver_tndrcade =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			tndrcade_readmem, tndrcade_writemem,0,0,
-			m68_level2_irq, 1
-		},
-		{
-			CPU_M65C02,
-			2000000,	/* ?? */
-			tndrcade_sub_readmem, tndrcade_sub_writemem,0,0,
-			tndrcade_sub_interrupt, TNDRCADE_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( tndrcade )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(tndrcade_readmem,tndrcade_writemem)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 2000000)	/* ?? */
+	MDRV_CPU_MEMORY(tndrcade_sub_readmem,tndrcade_sub_writemem)
+	MDRV_CPU_VBLANK_INT(tndrcade_sub_interrupt,TNDRCADE_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16-8, { 16, 400-1, 0+8, 256-1 -16-8},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16-8)
+	MDRV_VISIBLE_AREA(16, 400-1, 0+8, 256-1 -16-8)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&tndrcade_ym2203_interface
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, tndrcade_ym2203_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -4528,82 +4639,64 @@ static const struct MachineDriver machine_driver_tndrcade =
    the sub cpu reads the ip at different locations,
    the visible area seems different. */
 
-static const struct MachineDriver machine_driver_twineagl =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			downtown_readmem, downtown_writemem,0,0,
-			m68_level3_irq, 1
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			twineagl_sub_readmem, twineagl_sub_writemem,0,0,
-			seta_sub_interrupt, SETA_SUB_INTERRUPTS_NUM
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( twineagl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(downtown_readmem,downtown_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(twineagl_sub_readmem,twineagl_sub_writemem)
+	MDRV_CPU_VBLANK_INT(seta_sub_interrupt,SETA_SUB_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16 },
-	downtown_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(downtown_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 								Ultraman Club
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_umanclub =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			umanclub_readmem, umanclub_writemem,0,0,
-			m68_level3_irq, 1
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( umanclub )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(umanclub_readmem,umanclub_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	tndrcade_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(tndrcade_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_no_layers,
-	0,
-	seta_vh_screenrefresh_no_layers, /* just draw the sprites */
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_UPDATE(seta_no_layers) /* just draw the sprites */
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4616,44 +4709,36 @@ static struct MachineDriver machine_driver_umanclub =
 	5 ints per frame
 */
 
-static const struct MachineDriver machine_driver_usclssic =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,
-			usclssic_readmem, usclssic_writemem,0,0,
-			calibr50_interrupt, calibr50_INTERRUPTS_NUM
-		},
-		{
-			CPU_M65C02,
-			1000000,	/* ?? */
-			calibr50_sub_readmem, calibr50_sub_writemem,0,0,
-			interrupt, 1	/* NMI caused by main cpu when writing to the sound latch */
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( usclssic )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)
+	MDRV_CPU_MEMORY(usclssic_readmem,usclssic_writemem)
+	MDRV_CPU_VBLANK_INT(calibr50_interrupt,calibr50_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(M65C02, 1000000)	/* ?? */
+	MDRV_CPU_MEMORY(calibr50_sub_readmem,calibr50_sub_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* NMI caused by main cpu when writing to the sound latch */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	usclssic_gfxdecodeinfo,
-	16*32, 16*32 + 64*32,		/* sprites, layer */
-	usclssic_vh_init_palette,	/* layer is 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(usclssic_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32)
+	MDRV_COLORTABLE_LENGTH(16*32 + 64*32)		/* sprites, layer */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_1_layer,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(usclssic)	/* layer is 6 planes deep */
+	MDRV_VIDEO_START(seta_1_layer)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -4664,17 +4749,17 @@ static const struct MachineDriver machine_driver_usclssic =
    call in the latter (sound related?) */
 
 
-static int wrofaero_interrupt(void)
+static INTERRUPT_GEN( wrofaero_interrupt )
 {
 	static int enab = 0;
 	switch (cpu_getiloops())
 	{
-		case 0:		return 2;
+		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
 case 1:
 	enab++;
 	enab %= 2;
-	if 	(enab == 0)	return 4;
-	else			return ignore_interrupt();
+	if 	(enab == 0)	cpu_set_irq_line(0, 4, HOLD_LINE);
+	break;
 
 #if 0
 		case 1:
@@ -4691,51 +4776,40 @@ case 1:
 
 			for(i=0;i<16;i++)
 				if ( ((new_enab&(1<<i))==0) && (old_enab&(1<<i)) )
-					return 4;
-
-			return ignore_interrupt();
+					cpu_set_irq_line(0, 4, HOLD_LINE);
+			break;
 		}
 
 #endif
-		default:	return ignore_interrupt();
 	}
 }
 
 
-static const struct MachineDriver machine_driver_wrofaero =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			seta_interrupt_2_and_4, SETA_INTERRUPTS_NUM
-//			wrofaero_interrupt,2
+static MACHINE_DRIVER_START( wrofaero )
 
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+//	MDRV_CPU_VBLANK_INT(wrofaero_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	msgundam_gfxdecodeinfo,
-	512 * 3, 0,	/* sprites, layer1, layer2 */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(msgundam_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512 * 3)	/* sprites, layer1, layer2 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4749,38 +4823,32 @@ static const struct MachineDriver machine_driver_wrofaero =
    at int 1 is necessary: it plays the background music.
 */
 
-static const struct MachineDriver machine_driver_zingzip =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,
-			wrofaero_readmem, wrofaero_writemem,0,0,
-			m68_level3_irq, 1
-		},
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( zingzip )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_MEMORY(wrofaero_readmem,wrofaero_writemem)
+	MDRV_CPU_VBLANK_INT(irq3_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	400, 256 -16, { 16, 400-1, 0, 256-1 -16},
-	zingzip_gfxdecodeinfo,
-	16*32+16*32+16*32, 16*32+16*32+64*32,	/* sprites, layer2, layer1 */
-	zingzip_vh_init_palette,				/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256 -16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1 -16)
+	MDRV_GFXDECODE(zingzip_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+16*32+64*32)	/* sprites, layer2, layer1 */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	seta_vh_start_2_layers,
-	0,
-	seta_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zingzip)				/* layer 1 gfx is 6 planes deep */
+	MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_UPDATE(seta)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &seta_sound_interface }
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, seta_sound_intf_16MHz)
+MACHINE_DRIVER_END
 
 
 
@@ -4836,7 +4904,7 @@ READ16_HANDLER( arbalest_protection_r )
 	return 0;
 }
 
-void init_arbalest(void)
+DRIVER_INIT( arbalest )
 {
 	install_mem_read16_handler(0, 0x80000, 0x8000f, arbalest_protection_r);
 }
@@ -5106,7 +5174,7 @@ static WRITE16_HANDLER( downtown_protection_w )
 	COMBINE_DATA(&downtown_protection[offset]);
 }
 
-void init_downtown(void)
+DRIVER_INIT( downtown )
 {
 	install_mem_read16_handler (0, 0x200000, 0x2001ff, downtown_protection_r);
 	install_mem_write16_handler(0, 0x200000, 0x2001ff, downtown_protection_w);
@@ -5230,7 +5298,7 @@ ROM_START( eightfrc )
 	ROM_LOAD( "u69.bin",  0x140000, 0x100000, 0x82ec08f1 )
 ROM_END
 
-void init_eightfrc(void)
+DRIVER_INIT( eightfrc )
 {
 	install_mem_read16_handler(0, 0x500004, 0x500005, MRA16_NOP);	// watchdog??
 }
@@ -5535,7 +5603,7 @@ ROM_START( metafox )
 ROM_END
 
 
-void init_metafox(void)
+DRIVER_INIT( metafox )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -5704,7 +5772,7 @@ ROM_START( kiwame )
 	ROM_LOAD( "fp001005.bin", 0x080000, 0x080000, 0x65b5fe9a )
 ROM_END
 
-void init_kiwame(void)
+DRIVER_INIT( kiwame )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -5759,6 +5827,50 @@ ROM_END
 
 /***************************************************************************
 
+								Quiz Koko-logy 2
+
+(c)1992 Tecmo
+
+P0-100A
+
+CPU  : MC68HC000B16
+Sound: X1-010
+OSC  : 16.000MHz
+
+FN001001.106 - Main program (27C4096)
+FN001003.107 / (40pin 2M mask)
+
+FN001004.100 - OBJ chr. (42pin mask)
+FN001005.104 - BG chr. (42pin mask)
+FN001006.105 - Samples (32pin mask)
+
+Custom chips:	X1-001A		X1-002A
+				X1-004
+				X1-006
+				X1-007
+				X1-010
+				X1-011		X1-012
+
+***************************************************************************/
+
+ROM_START( qzkklgy2 )
+	ROM_REGION( 0x0c0000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "fn001001.106", 0x000000, 0x080000, 0x7bf8eb17 )
+	ROM_LOAD16_WORD_SWAP( "fn001003.107", 0x080000, 0x040000, 0xee6ef111 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "fn001004.100", 0x000000, 0x100000, 0x5ba139a2 )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "fn001005.104", 0x000000, 0x200000, 0x95726a63 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "fn001006.105", 0x000000, 0x100000, 0x83f201e6 )
+ROM_END
+
+
+/***************************************************************************
+
 								Rezon (Japan)
 
 PCB 	: PO-063A
@@ -5795,7 +5907,7 @@ ROM_START( rezon )
 	ROM_LOAD16_WORD_SWAP( "us001009.u70",  0x000000, 0x100000, 0x0d7d2e2b )
 ROM_END
 
-void init_rezon(void)
+DRIVER_INIT( rezon )
 {
 	install_mem_read16_handler(0, 0x500006, 0x500007, MRA16_NOP);	// irq ack?
 }
@@ -6050,13 +6162,31 @@ READ16_HANDLER( twineagl_protection_r )
 	return 0;
 }
 
-void init_twineagl(void)
+/* Extra RAM ? Check code at 0x00ba90 */
+READ16_HANDLER( twineagl_200100_r )
+{
+	const data16_t data[8] =
+	{
+		0x004d,0x0054,0x0058,0x0044,0x0041,0x0059,0x004f,0x004e
+	};
+
+	if (readinputport(4) & 1)
+		return (data[offset]);
+
+	return 0;
+}
+
+DRIVER_INIT( twineagl )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_GFX2);	// Layer
 
 	/* Protection? */
-	install_mem_read16_handler(0, 0x800000, 0x8000ff, twineagl_protection_r);
+	install_mem_read16_handler (0, 0x800000, 0x8000ff, twineagl_protection_r);
+
+	/* This allows 2 simultaneous players and the use of the "Copyright" Dip Switch. */
+	install_mem_read16_handler (0, 0x200100, 0x20010f, twineagl_200100_r);
+
 
 #if 1
 	// waterfalls: tiles 3e00-3fff must be a copy of 2e00-2fff ??
@@ -6195,59 +6325,6 @@ ROM_START( usclssic )
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "ue001005.132", 0x000000, 0x080000, 0xc5fea37c )
 ROM_END
-
-
-
-
-/***************************************************************************
-
-								Zing Zing Zip
-
-P0-079A
-
-UY-001-005   X1-002A   X1-001A   5168-10      256k-12
-UY-001-006                       5168-10      UY-001-001
-UY-001-007                                    UY-001-002
-UY-001-008   X1-011 X1-012                    58257-12
-                                 5168-10
-UY-001-010   X1-011 X1-012       5168-10
-UY-001-017
-UY-001-018
-                                 5168-10
-X1-010                           5168-10       68000-16
-
-
-                           8464-80
-                           8464-80       16MHz
-
-
-                             X1-007    X1-004
-
-***************************************************************************/
-
-ROM_START( zingzip )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
-	ROM_LOAD16_BYTE( "uy001001",  0x000000, 0x040000, 0x1a1687ec )
-	ROM_LOAD16_BYTE( "uy001002",  0x000001, 0x040000, 0x62e3b0c4 )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "uy001016",  0x000000, 0x080000, 0x46e4a7d8 )
-	ROM_LOAD( "uy001015",  0x080000, 0x080000, 0x4aac128e )
-
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
-	ROM_LOAD( "uy001008",  0x000000, 0x200000, 0x0d07d34b ) // FIRST AND SECOND HALF IDENTICAL
-	ROM_LOAD16_BYTE( "uy001007",  0x100000, 0x080000, 0xec5b3ab9 )
-
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
-	ROM_LOAD( "uy001010",  0x000000, 0x200000, 0x0129408a ) // FIRST AND SECOND HALF IDENTICAL
-
-	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "uy001017",  0x000000, 0x080000, 0xd2cda2eb )
-	ROM_LOAD( "uy001018",  0x080000, 0x080000, 0x3d30229a )
-ROM_END
-
-
-
 /***************************************************************************
 
 							   War of Aero
@@ -6295,6 +6372,103 @@ ROM_END
 
 /***************************************************************************
 
+									Wit's
+
+(c)1989 Athena (distributed by Visco)
+P0-055B (board is made by Seta)
+
+CPU  : TMP68000N-8
+Sound: X1-010
+OSC  : 16.000MHz
+
+ROMs:
+UN001001.U1 - Main program (27256)
+UN001002.U4 - Main program (27256)
+
+UN001003.10A - Samples (28pin mask)
+UN001004.12A /
+
+UN001005.2L - Graphics (28pin mask)
+UN001006.4L |
+UN001007.5L |
+UN001008.7L /
+
+Custom chips:	X1-001A		X1-002A
+				X1-004 (x2)
+				X1-006
+				X1-007
+				X1-010
+
+***************************************************************************/
+
+ROM_START( wits )
+	ROM_REGION( 0x010000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "un001001.u1", 0x000000, 0x008000, 0x416c567e )
+	ROM_LOAD16_BYTE( "un001002.u4", 0x000001, 0x008000, 0x497a3fa6 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "un001008.7l", 0x000000, 0x020000, 0x1d5d0b2b )
+	ROM_LOAD16_BYTE( "un001007.5l", 0x000001, 0x020000, 0x9e1e6d51 )
+	ROM_LOAD16_BYTE( "un001006.4l", 0x040000, 0x020000, 0x98a980d4 )
+	ROM_LOAD16_BYTE( "un001005.2l", 0x040001, 0x020000, 0x6f2ce3c0 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "un001004.12a", 0x000000, 0x020000, 0xa15ff938 )
+	ROM_LOAD( "un001003.10a", 0x020000, 0x020000, 0x3f4b9e55 )
+ROM_END
+
+
+
+/***************************************************************************
+
+								Zing Zing Zip
+
+P0-079A
+
+UY-001-005   X1-002A   X1-001A   5168-10      256k-12
+UY-001-006                       5168-10      UY-001-001
+UY-001-007                                    UY-001-002
+UY-001-008   X1-011 X1-012                    58257-12
+                                 5168-10
+UY-001-010   X1-011 X1-012       5168-10
+UY-001-017
+UY-001-018
+                                 5168-10
+X1-010                           5168-10       68000-16
+
+
+                           8464-80
+                           8464-80       16MHz
+
+
+                             X1-007    X1-004
+
+***************************************************************************/
+
+ROM_START( zingzip )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "uy001001.3",	0x000000, 0x040000, 0x1a1687ec )
+	ROM_LOAD16_BYTE( "uy001002.4",	0x000001, 0x040000, 0x62e3b0c4 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "uy001006.64",		0x000000, 0x080000, 0x46e4a7d8 )
+	ROM_LOAD( "uy001005.63",		0x080000, 0x080000, 0x4aac128e )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "uy001008.66",		0x000000, 0x100000, 0x1dff7c4b ) // FIRST AND SECOND HALF IDENTICAL
+	ROM_LOAD16_BYTE( "uy001007.65",	0x100000, 0x080000, 0xec5b3ab9 )
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "uy001010.68",		0x000000, 0x100000, 0xbdbcdf03 ) // FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "uy001011.70",		0x000000, 0x100000, 0xbd845f55 ) // uy001017 + uy001018
+ROM_END
+
+
+
+/***************************************************************************
+
 								Game Drivers
 
 ***************************************************************************/
@@ -6303,13 +6477,14 @@ ROM_END
 
 GAMEX( 1987, tndrcade, 0,        tndrcade, tndrcade, 0,        ROT270, "[Seta] (Taito license)", "Thundercade / Twin Formation",   GAME_IMPERFECT_SOUND ) // Title/License: DSW
 GAMEX( 1987, tndrcadj, tndrcade, tndrcade, tndrcadj, 0,        ROT270, "[Seta] (Taito license)", "Tokusyu Butai UAG (Japan)",      GAME_IMPERFECT_SOUND ) // License: DSW
-GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta (Taito license)",   "Twin Eagle - Revenge Joe's Brother (Japan)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, twineagl, 0,        twineagl, twineagl, twineagl, ROT270, "Seta / Taito",   "Twin Eagle - Revenge Joe's Brother",     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, calibr50, 0,        calibr50, calibr50, 0,        ROT270, "Athena / Seta",          "Caliber 50",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, drgnunit, 0,        drgnunit, drgnunit, 0,        ROT0,   "Seta",                   "Dragon Unit / Castle of Dragon", GAME_IMPERFECT_SOUND )
 GAMEX( 1989, downtown, 0,        downtown, downtown, downtown, ROT270, "Seta",                   "DownTown",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, usclssic, 0,        usclssic, usclssic, 0,        ROT270, "Seta",                   "U.S. Classic",                   GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS ) // Country/License: DSW
 GAMEX( 1989, arbalest, 0,        metafox,  arbalest, arbalest, ROT270, "Seta",                   "Arbalester",                     GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1989, metafox,  0,        metafox,  metafox,  metafox,  ROT270, "Seta",                   "Meta Fox",                       GAME_IMPERFECT_SOUND ) // Country/License: DSW
+GAMEX( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (Visco license)", "Wit's (Japan)",                  GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning",            GAME_IMPERFECT_SOUND ) // Country/License: DSW
 GAMEX( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon",                          GAME_IMPERFECT_SOUND )
 GAMEX( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G",            GAME_IMPERFECT_SOUND )
@@ -6321,6 +6496,7 @@ GAMEX( 1992, zingzip,  0,        zingzip,  zingzip,  0,        ROT270, "Allumer 
 GAMEX( 1993, atehate,  0,        atehate,  atehate,  0,        ROT0,   "Athena",                 "Athena no Hatena ?",             GAME_IMPERFECT_SOUND )
 GAMEX( 1993, msgundam, 0,        msgundam, msgundam, 0,        ROT0,   "Banpresto",              "Mobile Suit Gundam",             GAME_IMPERFECT_SOUND )
 GAMEX( 1993, oisipuzl, 0,        oisipuzl, oisipuzl, 0,        ROT0,   "Sunsoft + Atlus",        "Oishii Puzzle Ha Irimasenka",    GAME_IMPERFECT_SOUND )
+GAMEX( 1993, qzkklgy2, 0,        qzkklgy2, qzkklgy2, 0,        ROT0,   "Tecmo",                  "Quiz Kokology 2",                GAME_IMPERFECT_SOUND )
 GAMEX( 1993, wrofaero, 0,        wrofaero, wrofaero, 0,        ROT270, "Yang Cheng",             "War of Aero - Project MEIOU",    GAME_IMPERFECT_SOUND )
 GAMEX( 1993, jjsquawk, 0,        jjsquawk, jjsquawk, 0,        ROT0,   "Athena / Able",          "J. J. Squawkers",                GAME_IMPERFECT_SOUND )
 GAMEX( 1994, eightfrc, 0,        eightfrc, eightfrc, eightfrc, ROT90,  "Tecmo",                  "Eight Forces",                   GAME_IMPERFECT_SOUND )

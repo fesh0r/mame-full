@@ -47,10 +47,10 @@ READ_HANDLER( suna8_banked_spriteram_r );
 WRITE_HANDLER( suna8_banked_paletteram_w );
 WRITE_HANDLER( brickzn_banked_paletteram_w );
 
-int  suna8_vh_start_textdim0(void);
-int  suna8_vh_start_textdim8(void);
-int  suna8_vh_start_textdim12(void);
-void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( suna8_textdim0 );
+VIDEO_START( suna8_textdim8 );
+VIDEO_START( suna8_textdim12 );
+VIDEO_UPDATE( suna8 );
 
 
 /***************************************************************************
@@ -65,7 +65,7 @@ void suna8_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
 								Hard Head
 ***************************************************************************/
 
-void init_hardhead(void)
+DRIVER_INIT( hardhead )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int i;
@@ -90,7 +90,7 @@ void init_hardhead(void)
 }
 
 /* Non encrypted bootleg */
-static void init_hardhedb( void )
+static DRIVER_INIT( hardhedb )
 {
 	/* patch ROM checksum (ROM1 fails self test) */
 	memory_region( REGION_CPU1 )[0x1e5b] = 0xAF;
@@ -126,7 +126,7 @@ static int is_special(int i)
 	}
 }
 
-void init_brickzn3(void)
+DRIVER_INIT( brickzn3 )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
@@ -416,7 +416,7 @@ INLINE data8_t hardhea2_decrypt(data8_t x, int encry, int mask)
 		}
 }
 
-void init_hardhea2(void)
+DRIVER_INIT( hardhea2 )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
@@ -611,7 +611,7 @@ INLINE data8_t starfigh_decrypt(data8_t x, int encry, int mask)
 		}
 }
 
-void init_starfigh(void)
+DRIVER_INIT( starfigh )
 {
 	data8_t	*RAM	=	memory_region(REGION_CPU1);
 	size_t	size	=	memory_region_length(REGION_CPU1)/2;
@@ -756,7 +756,7 @@ static READ_HANDLER( hardhead_ip_r )
 		case 2:	return readinputport(2);
 		case 3:	return readinputport(3);
 		default:
-			logerror("CPU #0 - PC %04X: Unknown IP read: %02X\n",cpu_get_pc(),hardhead_ip);
+			logerror("CPU #0 - PC %04X: Unknown IP read: %02X\n",activecpu_get_pc(),hardhead_ip);
 			return 0xff;
 	}
 }
@@ -771,7 +771,7 @@ static WRITE_HANDLER( hardhead_bankswitch_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0xef) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 	cpu_setbank(1, RAM);
@@ -843,7 +843,7 @@ static WRITE_HANDLER( rranger_bankswitch_w )
 	int bank = data & 0x07;
 	if ((~data & 0x10) && (bank >= 4))	bank += 4;
 
-	if (data & ~0xf7) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0xf7) 	logerror("CPU #0 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -919,7 +919,7 @@ static READ_HANDLER( brickzn_c140_r )
 static WRITE_HANDLER( brickzn_palettebank_w )
 {
 	suna8_palettebank = (data >> 1) & 1;
-	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown palettebank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown palettebank bits: %02X\n",activecpu_get_pc(),data);
 
 	/* Also used as soundlatch - depending on c0c0? */
 	soundlatch_w(0,data);
@@ -933,7 +933,7 @@ static WRITE_HANDLER( brickzn_palettebank_w )
 static WRITE_HANDLER( brickzn_spritebank_w )
 {
 	suna8_spritebank = (data >> 1) & 1;
-	if (data & ~0x03) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x03) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",activecpu_get_pc(),data);
 	flip_screen_set( data & 0x01 );
 }
 
@@ -951,7 +951,7 @@ static WRITE_HANDLER( brickzn_rombank_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -1003,7 +1003,7 @@ static data8_t suna8_nmi_enable;
 static WRITE_HANDLER( hardhea2_nmi_w )
 {
 	suna8_nmi_enable = data & 0x01;
-	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown nmi bits: %02X\n",activecpu_get_pc(),data);
 }
 
 /*
@@ -1013,7 +1013,7 @@ static WRITE_HANDLER( hardhea2_nmi_w )
 static WRITE_HANDLER( hardhea2_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
-	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown flipscreen bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x01) 	logerror("CPU #0 - PC %04X: unknown flipscreen bits: %02X\n",activecpu_get_pc(),data);
 }
 
 WRITE_HANDLER( hardhea2_leds_w )
@@ -1021,7 +1021,7 @@ WRITE_HANDLER( hardhea2_leds_w )
 	set_led_status(0, data & 0x01);
 	set_led_status(1, data & 0x02);
 	coin_counter_w(0, data & 0x04);
-	if (data & ~0x07)	logerror("CPU#0  - PC %06X: unknown leds bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x07)	logerror("CPU#0  - PC %06X: unknown leds bits: %02X\n",activecpu_get_pc(),data);
 }
 
 /*
@@ -1032,7 +1032,7 @@ WRITE_HANDLER( hardhea2_leds_w )
 static WRITE_HANDLER( hardhea2_spritebank_w )
 {
 	suna8_spritebank = (data >> 1) & 1;
-	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x02) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",activecpu_get_pc(),data);
 }
 
 static READ_HANDLER( hardhea2_c080_r )
@@ -1049,7 +1049,7 @@ static WRITE_HANDLER( hardhea2_rombank_w )
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x0f;
 
-	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x0f) 	logerror("CPU #0 - PC %04X: unknown rom bank bits: %02X\n",activecpu_get_pc(),data);
 
 	RAM = &RAM[0x4000 * bank + 0x10000];
 
@@ -1100,7 +1100,7 @@ static data8_t spritebank_latch;
 static WRITE_HANDLER( starfigh_spritebank_latch_w )
 {
 	spritebank_latch = (data >> 2) & 1;
-	if (data & ~0x04) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",cpu_get_pc(),data);
+	if (data & ~0x04) 	logerror("CPU #0 - PC %04X: unknown spritebank bits: %02X\n",activecpu_get_pc(),data);
 }
 
 static WRITE_HANDLER( starfigh_spritebank_w )
@@ -1606,52 +1606,43 @@ static struct YM3812interface hardhead_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{  0 },		/* IRQ Line */
 };
 
 
-static const struct MachineDriver machine_driver_hardhead =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,					/* ? */
-			hardhead_readmem, hardhead_writemem,
-			hardhead_readport,hardhead_writeport,
-			interrupt, 1	/* No NMI */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			hardhead_sound_readmem, hardhead_sound_writemem,
-			hardhead_sound_readport,hardhead_sound_writeport,
-			interrupt, 4	/* No NMI */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( hardhead )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_MEMORY(hardhead_readmem,hardhead_writemem)
+	MDRV_CPU_PORTS(hardhead_readport,hardhead_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* No NMI */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(hardhead_sound_readmem,hardhead_sound_writemem)
+	MDRV_CPU_PORTS(hardhead_sound_readport,hardhead_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna8_gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	suna8_vh_start_textdim12,
-	0,
-	suna8_vh_screenrefresh,
+	MDRV_VIDEO_START(suna8_textdim12)
+	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&hardhead_ym3812_interface	},
-		{	SOUND_AY8910,	&hardhead_ay8910_interface	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, hardhead_ym3812_interface)
+	MDRV_SOUND_ADD(AY8910, hardhead_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1674,46 +1665,37 @@ static struct YM2203interface rranger_ym2203_interface =
 	{ 0,0 }		/* IRQ handler  */
 };
 
-static const struct MachineDriver machine_driver_rranger =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,					/* ? */
-			rranger_readmem,  rranger_writemem,
-			rranger_readport, rranger_writeport,
-			interrupt, 1	/* IRQ & NMI ! */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			rranger_sound_readmem,  rranger_sound_writemem,
-			rranger_sound_readport, rranger_sound_writeport,
-			interrupt, 4	/* NMI = retn */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( rranger )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_MEMORY(rranger_readmem,rranger_writemem)
+	MDRV_CPU_PORTS(rranger_readport,rranger_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	/* IRQ & NMI ! */
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(rranger_sound_readmem,rranger_sound_writemem)
+	MDRV_CPU_PORTS(rranger_sound_readport,rranger_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* NMI = retn */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna8_gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	suna8_vh_start_textdim8,
-	0,
-	suna8_vh_screenrefresh,
+	MDRV_VIDEO_START(suna8_textdim8)
+	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2203,	&rranger_ym2203_interface	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, rranger_ym2203_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1737,7 +1719,7 @@ static struct YM3812interface brickzn_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 33 },
+	{ 66 },
 	{ soundirq },	/* IRQ Line */
 };
 
@@ -1748,62 +1730,50 @@ static struct DACinterface brickzn_dac_interface =
 		MIXER(17,MIXER_PAN_LEFT), MIXER(17,MIXER_PAN_RIGHT)	}
 };
 
-int brickzn_interrupt(void)
+INTERRUPT_GEN( brickzn_interrupt )
 {
-	if (cpu_getiloops())	return Z80_NMI_INT;
-	else					return Z80_IRQ_INT;
+	if (cpu_getiloops()) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	else				 cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-static const struct MachineDriver machine_driver_brickzn =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,					/* ? */
-			brickzn_readmem, brickzn_writemem,
-			brickzn_readport,brickzn_writeport,
-//			brickzn_interrupt, 2
-interrupt, 1	// nmi breaks ramtest but is needed!
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			brickzn_sound_readmem, brickzn_sound_writemem,
-			brickzn_sound_readport,brickzn_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM3812; No NMI */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			brickzn_pcm_readmem, brickzn_pcm_writemem,
-			brickzn_pcm_readport,brickzn_pcm_writeport,
-			ignore_interrupt, 1	/* No interrupts */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+static MACHINE_DRIVER_START( brickzn )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_MEMORY(brickzn_readmem,brickzn_writemem)
+	MDRV_CPU_PORTS(brickzn_readport,brickzn_writeport)
+//	MDRV_CPU_VBLANK_INT(brickzn_interrupt, 2)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)	// nmi breaks ramtest but is needed!
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(brickzn_sound_readmem,brickzn_sound_writemem)
+	MDRV_CPU_PORTS(brickzn_sound_readport,brickzn_sound_writeport)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(brickzn_pcm_readmem,brickzn_pcm_writemem)
+	MDRV_CPU_PORTS(brickzn_pcm_readport,brickzn_pcm_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna8_gfxdecodeinfo,
-	512, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	suna8_vh_start_textdim0,
-	0,
-	suna8_vh_screenrefresh,
+	MDRV_VIDEO_START(suna8_textdim0)
+	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&brickzn_ym3812_interface	},
-		{	SOUND_AY8910,	&brickzn_ay8910_interface	},
-		{	SOUND_DAC,		&brickzn_dac_interface		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, brickzn_ym3812_interface)
+	MDRV_SOUND_ADD(AY8910, brickzn_ay8910_interface)
+	MDRV_SOUND_ADD(DAC, brickzn_dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1812,66 +1782,53 @@ interrupt, 1	// nmi breaks ramtest but is needed!
 
 /* 1 x 24 MHz crystal */
 
-int hardhea2_interrupt(void)
+INTERRUPT_GEN( hardhea2_interrupt )
 {
 	if (cpu_getiloops())
-		if (suna8_nmi_enable)	return Z80_NMI_INT;
-		else					return ignore_interrupt();
-	else					return Z80_IRQ_INT;
+	{
+		if (suna8_nmi_enable)	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	}
+	else cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-static const struct MachineDriver machine_driver_hardhea2 =
-{
-	{
-		{
-			CPU_Z80,	/* SUNA T568009 */
-			4000000,					/* ? */
-			hardhea2_readmem, hardhea2_writemem,
-			hardhea2_readport,hardhea2_writeport,
-			hardhea2_interrupt, 2	/* IRQ & NMI */
-		},
+static MACHINE_DRIVER_START( hardhea2 )
 
-		/* The sound section is identical to that of brickzn */
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* SUNA T568009 */
+	MDRV_CPU_MEMORY(hardhea2_readmem,hardhea2_writemem)
+	MDRV_CPU_PORTS(hardhea2_readport,hardhea2_writeport)
+	MDRV_CPU_VBLANK_INT(hardhea2_interrupt,2)	/* IRQ & NMI */
 
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			brickzn_sound_readmem, brickzn_sound_writemem,
-			brickzn_sound_readport,brickzn_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM3812; No NMI */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			brickzn_pcm_readmem, brickzn_pcm_writemem,
-			brickzn_pcm_readport,brickzn_pcm_writeport,
-			ignore_interrupt, 1	/* No interrupts */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* The sound section is identical to that of brickzn */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(brickzn_sound_readmem,brickzn_sound_writemem)
+	MDRV_CPU_PORTS(brickzn_sound_readport,brickzn_sound_writeport)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(brickzn_pcm_readmem,brickzn_pcm_writemem)
+	MDRV_CPU_PORTS(brickzn_pcm_readport,brickzn_pcm_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna8_gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	suna8_vh_start_textdim0,
-	0,
-	suna8_vh_screenrefresh,
+	MDRV_VIDEO_START(suna8_textdim0)
+	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&brickzn_ym3812_interface	},
-		{	SOUND_AY8910,	&brickzn_ay8910_interface	},
-		{	SOUND_DAC,		&brickzn_dac_interface		},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, brickzn_ym3812_interface)
+	MDRV_SOUND_ADD(AY8910, brickzn_ay8910_interface)
+	MDRV_SOUND_ADD(DAC, brickzn_dac_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -1893,54 +1850,43 @@ static struct YM3812interface starfigh_ym3812_interface =
 {
 	1,
 	4000000,	/* ? */
-	{ 50 },
+	{ 100 },
 	{  0 },
 };
 
-static const struct MachineDriver machine_driver_starfigh =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,					/* ? */
-			starfigh_readmem, starfigh_writemem,
-			starfigh_readport,starfigh_writeport,
-			brickzn_interrupt, 2	/* IRQ & NMI */
-		},
+static MACHINE_DRIVER_START( starfigh )
 
-		/* The sound section is identical to that of hardhead */
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)					/* ? */
+	MDRV_CPU_MEMORY(starfigh_readmem,starfigh_writemem)
+	MDRV_CPU_PORTS(starfigh_readport,starfigh_writeport)
+	MDRV_CPU_VBLANK_INT(brickzn_interrupt,2)	/* IRQ & NMI */
 
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,					/* ? */
-			hardhead_sound_readmem, hardhead_sound_writemem,
-			hardhead_sound_readport,hardhead_sound_writeport,
-			interrupt, 4	/* No NMI */
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* The sound section is identical to that of hardhead */
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)					/* ? */
+	MDRV_CPU_MEMORY(hardhead_sound_readmem,hardhead_sound_writemem)
+	MDRV_CPU_PORTS(hardhead_sound_readport,hardhead_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* No NMI */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	suna8_gfxdecodeinfo,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna8_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	suna8_vh_start_textdim0,
-	0,
-	suna8_vh_screenrefresh,
+	MDRV_VIDEO_START(suna8_textdim0)
+	MDRV_VIDEO_UPDATE(suna8)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM3812,	&starfigh_ym3812_interface	},
-		{	SOUND_AY8910,	&starfigh_ay8910_interface	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM3812, starfigh_ym3812_interface)
+	MDRV_SOUND_ADD(AY8910, starfigh_ay8910_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2184,7 +2130,7 @@ ROM_END
 
 ROM_START( srangerw )
 	ROM_REGION( 0x48000, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "1",  0x00000, 0x8000, 0x2287d3fc )	// 88,2,28
+	ROM_LOAD( "w1", 0x00000, 0x8000, 0x2287d3fc )	// 88,2,28
 	ROM_LOAD( "2",  0x10000, 0x8000, 0xff65af29 )
 	ROM_LOAD( "3",  0x18000, 0x8000, 0x64e09436 )
 	ROM_LOAD( "r4", 0x30000, 0x8000, 0x4346fae6 )
@@ -2199,14 +2145,14 @@ ROM_START( srangerw )
 	ROM_LOAD( "15", 0x0000, 0x8000, 0x28c2c87e )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
-	ROM_LOAD( "6",  0x00000, 0x8000, 0x312ecda6 )
-	ROM_LOAD( "7",  0x08000, 0x8000, 0x9f35dbfa )
-	ROM_LOAD( "8",  0x10000, 0x8000, 0xf400db89 )
-	ROM_LOAD( "9",  0x18000, 0x8000, 0xfa2a11ea )
-	ROM_LOAD( "10", 0x20000, 0x8000, 0x8731abc6 )
-	ROM_LOAD( "11", 0x28000, 0x8000, 0x19037a7b )
-	ROM_LOAD( "12", 0x30000, 0x8000, 0xc59c0ec7 )
-	ROM_LOAD( "13", 0x38000, 0x8000, 0x9809fee8 )
+	ROM_LOAD( "w6",  0x00000, 0x8000, 0x312ecda6 )
+	ROM_LOAD( "7",   0x08000, 0x8000, 0x9f35dbfa )
+	ROM_LOAD( "8",   0x10000, 0x8000, 0xf400db89 )
+	ROM_LOAD( "9",   0x18000, 0x8000, 0xfa2a11ea )
+	ROM_LOAD( "w10", 0x20000, 0x8000, 0x8731abc6 )
+	ROM_LOAD( "11",  0x28000, 0x8000, 0x19037a7b )
+	ROM_LOAD( "12",  0x30000, 0x8000, 0xc59c0ec7 )
+	ROM_LOAD( "13",  0x38000, 0x8000, 0x9809fee8 )
 ROM_END
 
 
@@ -2373,40 +2319,40 @@ ROM_END
 
 ROM_START( starfigh )
 	ROM_REGION( 0x50000 * 2, REGION_CPU1, 0 )		/* Main Z80 Code */
-	ROM_LOAD( "suna3.bin", 0x00000, 0x08000, 0xf93802c6 )	// V.1
-	ROM_RELOAD(            0x50000, 0x08000             )
-	ROM_LOAD( "suna2.bin", 0x10000, 0x10000, 0xfcfcf08a )
-	ROM_RELOAD(            0x60000, 0x10000             )
-	ROM_LOAD( "suna1.bin", 0x20000, 0x10000, 0x6935fcdb )
-	ROM_RELOAD(            0x70000, 0x10000             )
-	ROM_LOAD( "suna5.bin", 0x30000, 0x10000, 0x50c072a4 )	// 0xxxxxxxxxxxxxxx = 0xFF (ROM Test: OK)
-	ROM_RELOAD(            0x80000, 0x10000             )
-	ROM_LOAD( "suna4.bin", 0x40000, 0x10000, 0x3fe3c714 )	// clear text here
-	ROM_RELOAD(            0x90000, 0x10000             )
+	ROM_LOAD( "starfgtr.l1", 0x00000, 0x08000, 0xf93802c6 )	// V.1
+	ROM_RELOAD(              0x50000, 0x08000             )
+	ROM_LOAD( "starfgtr.j1", 0x10000, 0x10000, 0xfcfcf08a )
+	ROM_RELOAD(              0x60000, 0x10000             )
+	ROM_LOAD( "starfgtr.i1", 0x20000, 0x10000, 0x6935fcdb )
+	ROM_RELOAD(              0x70000, 0x10000             )
+	ROM_LOAD( "starfgtr.l3", 0x30000, 0x10000, 0x50c072a4 )	// 0xxxxxxxxxxxxxxx = 0xFF (ROM Test: OK)
+	ROM_RELOAD(              0x80000, 0x10000             )
+	ROM_LOAD( "starfgtr.j3", 0x40000, 0x10000, 0x3fe3c714 )	// clear text here
+	ROM_RELOAD(              0x90000, 0x10000             )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Music Z80 Code */
-	ROM_LOAD( "suna14.bin", 0x0000, 0x8000, 0xae3b0691 )
+	ROM_LOAD( "starfgtr.m8", 0x0000, 0x8000, 0xae3b0691 )
 
 	ROM_REGION( 0x8000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
-	ROM_LOAD( "suna15.bin", 0x0000, 0x8000, 0xfa510e94 )
+	ROM_LOAD( "starfgtr.q10", 0x0000, 0x8000, 0xfa510e94 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
-	ROM_LOAD( "suna9.bin",  0x00000, 0x10000, 0x54c0ca3d )
-	ROM_RELOAD(             0x20000, 0x10000             )
-	ROM_LOAD( "suna8.bin",  0x10000, 0x10000, 0x4313ba40 )
-	ROM_RELOAD(             0x30000, 0x10000             )
-	ROM_LOAD( "suna7.bin",  0x40000, 0x10000, 0xad8d0f21 )
-	ROM_RELOAD(             0x60000, 0x10000             )
-	ROM_LOAD( "suna6.bin",  0x50000, 0x10000, 0x6d8f74c8 )
-	ROM_RELOAD(             0x70000, 0x10000             )
-	ROM_LOAD( "suna13.bin", 0x80000, 0x10000, 0xceff00ff )
-	ROM_RELOAD(             0xa0000, 0x10000             )
-	ROM_LOAD( "suna12.bin", 0x90000, 0x10000, 0x7aaa358a )
-	ROM_RELOAD(             0xb0000, 0x10000             )
-	ROM_LOAD( "suna11.bin", 0xc0000, 0x10000, 0x47d6049c )
-	ROM_RELOAD(             0xe0000, 0x10000             )
-	ROM_LOAD( "suna10.bin", 0xd0000, 0x10000, 0x4a33f6f3 )
-	ROM_RELOAD(             0xf0000, 0x10000             )
+	ROM_LOAD( "starfgtr.e4", 0x00000, 0x10000, 0x54c0ca3d )
+	ROM_RELOAD(              0x20000, 0x10000             )
+	ROM_LOAD( "starfgtr.d4", 0x10000, 0x10000, 0x4313ba40 )
+	ROM_RELOAD(              0x30000, 0x10000             )
+	ROM_LOAD( "starfgtr.b4", 0x40000, 0x10000, 0xad8d0f21 )
+	ROM_RELOAD(              0x60000, 0x10000             )
+	ROM_LOAD( "starfgtr.a4", 0x50000, 0x10000, 0x6d8f74c8 )
+	ROM_RELOAD(              0x70000, 0x10000             )
+	ROM_LOAD( "starfgtr.e6", 0x80000, 0x10000, 0xceff00ff )
+	ROM_RELOAD(              0xa0000, 0x10000             )
+	ROM_LOAD( "starfgtr.d6", 0x90000, 0x10000, 0x7aaa358a )
+	ROM_RELOAD(              0xb0000, 0x10000             )
+	ROM_LOAD( "starfgtr.b6", 0xc0000, 0x10000, 0x47d6049c )
+	ROM_RELOAD(              0xe0000, 0x10000             )
+	ROM_LOAD( "starfgtr.a6", 0xd0000, 0x10000, 0x4a33f6f3 )
+	ROM_RELOAD(              0xf0000, 0x10000             )
 
 	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
 	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
@@ -2422,14 +2368,14 @@ ROM_END
 ***************************************************************************/
 
 /* Working Games */
-GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA", "Rough Ranger (v2.0, Sharp Image license)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, rranger,  0,        rranger,  rranger,  0,        ROT0,  "SunA (Sharp Image license)", "Rough Ranger (v2.0)", GAME_IMPERFECT_SOUND )
 GAMEX( 1988, hardhead, 0,        hardhead, hardhead, hardhead, ROT0,  "SunA", "Hard Head",           GAME_IMPERFECT_SOUND )
-GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "SunA", "Hard Head (Bootleg)", GAME_IMPERFECT_SOUND )
+GAMEX( 1988, hardhedb, hardhead, hardhead, hardhead, hardhedb, ROT0,  "bootleg", "Hard Head (bootleg)", GAME_IMPERFECT_SOUND )
 
 /* Non Working Games */
-GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",         GAME_NOT_WORKING )
-GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (NIWA Bootleg)", GAME_NOT_WORKING )
-GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (WDK License)",  GAME_NOT_WORKING )
+GAMEX( 1988, sranger,  rranger,  rranger,  rranger,	0,         ROT0,  "SunA", "Super Ranger (v2.0)",    GAME_NOT_WORKING )
+GAMEX( 1988, srangerb, rranger,  rranger,  rranger,	0,         ROT0,  "bootleg", "Super Ranger (bootleg)", GAME_NOT_WORKING )
+GAMEX( 1988, srangerw, rranger,  rranger,  rranger,	0,         ROT0,  "SunA (WDK license)", "Super Ranger (WDK)",  GAME_NOT_WORKING )
 GAMEX( 1990, starfigh, 0,        starfigh, hardhea2, starfigh, ROT90, "SunA", "Star Fighter (v1)",   GAME_NOT_WORKING )
 GAMEX( 1991, hardhea2, 0,        hardhea2, hardhea2, hardhea2, ROT0,  "SunA", "Hard Head 2 (v2.0)",  GAME_NOT_WORKING )
 GAMEX( 1992, brickzn,  0,        brickzn,  brickzn,  brickzn3, ROT90, "SunA", "Brick Zone (v5.0)",   GAME_NOT_WORKING )

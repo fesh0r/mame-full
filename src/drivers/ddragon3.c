@@ -20,11 +20,11 @@
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/generic.h"
 
-void ddragon3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ctribe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( ddragon3 );
+VIDEO_UPDATE( ctribe );
 WRITE16_HANDLER( ddragon3_scroll16_w );
 
-extern int ddragon3_vh_start(void);
+extern VIDEO_START( ddragon3 );
 
 extern data16_t *ddragon3_bg_videoram16;
 WRITE16_HANDLER( ddragon3_bg_videoram16_w );
@@ -81,14 +81,13 @@ static READ16_HANDLER( ddragon3_io16_r )
 
 extern UINT16 ddragon3_vreg;
 
-static int ddragon3_cpu_interrupt(void) { /* 6:0x177e - 5:0x176a */
+static INTERRUPT_GEN( ddragon3_cpu_interrupt ) { /* 6:0x177e - 5:0x176a */
 	if( cpu_getiloops() == 0 ){
-		return MC68000_IRQ_6;  /* VBlank */
+		cpu_set_irq_line(0, 6, HOLD_LINE);  /* VBlank */
 	}
 	else {
-		return MC68000_IRQ_5; /* Input Ports */
+		cpu_set_irq_line(0, 5, HOLD_LINE); /* Input Ports */
 	}
-	return ignore_interrupt();
 }
 
 static data16_t reg[8];
@@ -105,7 +104,7 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 
 	case 1: /* soundlatch_w */
 	soundlatch_w(1,reg[1]&0xff);
-	cpu_cause_interrupt( 1, Z80_NMI_INT );
+	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 	break;
 
 	case 2:
@@ -124,7 +123,7 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 	break;
 
 	default:
-	logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
+	logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, activecpu_get_pc() );
 	break;
 	}
 }
@@ -559,240 +558,195 @@ static struct OKIM6295interface okim6295_interface =
 
 /**************************************************************************/
 
-static const struct MachineDriver machine_driver_ddragon3 =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			readmem,writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ddragon3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ddragon3_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ddragon3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ddrago3b =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			dd3b_readmem,dd3b_writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ddrago3b )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(dd3b_readmem,dd3b_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ddragon3_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ddragon3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ctribe =
-{
-	{
-		{
-			CPU_M68000,
-			12000000, /* Guess */
-			ctribe_readmem,ctribe_writemem,0,0,
-			ddragon3_cpu_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* Guess */
-			ctribe_readmem_sound,ctribe_writemem_sound,0,0,
-			ignore_interrupt,0
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( ctribe )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000) /* Guess */
+	MDRV_CPU_MEMORY(ctribe_readmem,ctribe_writemem)
+	MDRV_CPU_VBLANK_INT(ddragon3_cpu_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Guess */
+	MDRV_CPU_MEMORY(ctribe_readmem_sound,ctribe_writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	320, 240, { 0, 319, 8, 239 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 8, 239)
+	MDRV_GFXDECODE(ddragon3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(768)
 
-	ddragon3_gfxdecodeinfo,
-	768, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ddragon3_vh_start,
-	0,
-	ctribe_vh_screenrefresh,
+	MDRV_VIDEO_START(ddragon3)
+	MDRV_VIDEO_UPDATE(ctribe)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /**************************************************************************/
 
 ROM_START( ddragon3 )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 64k for cpu code */
-	ROM_LOAD16_BYTE( "30a14" ,  0x00001, 0x40000, 0xf42fe016 )
-	ROM_LOAD16_BYTE( "30a15" ,  0x00000, 0x20000, 0xad50e92c )
+	ROM_LOAD16_BYTE( "30a14",   0x00001, 0x40000, 0xf42fe016 )
+	ROM_LOAD16_BYTE( "30a15",   0x00000, 0x20000, 0xad50e92c )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
-	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
+	ROM_LOAD( "dd3.06",    0x00000, 0x10000, 0x1e974d9b )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "dd3.f" ,  0x000000, 0x40000, 0x89d58d32 ) /* Background */
-	ROM_LOAD( "dd3.e" ,  0x040000, 0x40000, 0x9bf1538e )
-	ROM_LOAD( "dd3.b" ,  0x080000, 0x40000, 0x8f671a62 )
-	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
+	ROM_LOAD( "dd3.f",   0x000000, 0x40000, 0x89d58d32 ) /* Background */
+	ROM_LOAD( "dd3.e",   0x040000, 0x40000, 0x9bf1538e )
+	ROM_LOAD( "dd3.b",   0x080000, 0x40000, 0x8f671a62 )
+	ROM_LOAD( "dd3.a",   0x0c0000, 0x40000, 0x0f74ea1c )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* sprites	*/
-	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
-	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
-	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
-	ROM_LOAD( "dd3.3b" ,  0x060000, 0x20000, 0xb864cf17 ) //1a
-	ROM_LOAD( "dd3.3a" ,  0x080000, 0x10000, 0x20d64bea ) //5a
+	ROM_LOAD( "dd3.3e",   0x000000, 0x20000, 0x726c49b7 ) //4a
+	ROM_LOAD( "dd3.3d",   0x020000, 0x20000, 0x37a1c335 ) //3a
+	ROM_LOAD( "dd3.3c",   0x040000, 0x20000, 0x2bcfe63c ) //2a
+	ROM_LOAD( "dd3.3b",   0x060000, 0x20000, 0xb864cf17 ) //1a
+	ROM_LOAD( "dd3.3a",   0x080000, 0x10000, 0x20d64bea ) //5a
 
-	ROM_LOAD( "dd3.2e" ,  0x100000, 0x20000, 0x8c71eb06 ) //4b
-	ROM_LOAD( "dd3.2d" ,  0x120000, 0x20000, 0x3e134be9 ) //3b
-	ROM_LOAD( "dd3.2c" ,  0x140000, 0x20000, 0xb4115ef0 ) //2b
-	ROM_LOAD( "dd3.2b" ,  0x160000, 0x20000, 0x4639333d ) //1b
-	ROM_LOAD( "dd3.2a" ,  0x180000, 0x10000, 0x785d71b0 ) //5b
+	ROM_LOAD( "dd3.2e",   0x100000, 0x20000, 0x8c71eb06 ) //4b
+	ROM_LOAD( "dd3.2d",   0x120000, 0x20000, 0x3e134be9 ) //3b
+	ROM_LOAD( "dd3.2c",   0x140000, 0x20000, 0xb4115ef0 ) //2b
+	ROM_LOAD( "dd3.2b",   0x160000, 0x20000, 0x4639333d ) //1b
+	ROM_LOAD( "dd3.2a",   0x180000, 0x10000, 0x785d71b0 ) //5b
 
-	ROM_LOAD( "dd3.1e" ,  0x200000, 0x20000, 0x04420cc8 ) //4c
-	ROM_LOAD( "dd3.1d" ,  0x220000, 0x20000, 0x33f97b2f ) //3c
-	ROM_LOAD( "dd3.1c" ,  0x240000, 0x20000, 0x0f9a8f2a ) //2c
-	ROM_LOAD( "dd3.1b" ,  0x260000, 0x20000, 0x15c91772 ) //1c
-	ROM_LOAD( "dd3.1a" ,  0x280000, 0x10000, 0x15e43d12 ) //5c
+	ROM_LOAD( "dd3.1e",   0x200000, 0x20000, 0x04420cc8 ) //4c
+	ROM_LOAD( "dd3.1d",   0x220000, 0x20000, 0x33f97b2f ) //3c
+	ROM_LOAD( "dd3.1c",   0x240000, 0x20000, 0x0f9a8f2a ) //2c
+	ROM_LOAD( "dd3.1b",   0x260000, 0x20000, 0x15c91772 ) //1c
+	ROM_LOAD( "dd3.1a",   0x280000, 0x10000, 0x15e43d12 ) //5c
 
-	ROM_LOAD( "dd3.0e" ,  0x300000, 0x20000, 0x894734b3 ) //4d
-	ROM_LOAD( "dd3.0d" ,  0x320000, 0x20000, 0xcd504584 ) //3d
-	ROM_LOAD( "dd3.0c" ,  0x340000, 0x20000, 0x38e8a9ad ) //2d
-	ROM_LOAD( "dd3.0b" ,  0x360000, 0x20000, 0x80c1cb74 ) //1d
-	ROM_LOAD( "dd3.0a" ,  0x380000, 0x10000, 0x5a47e7a4 ) //5d
+	ROM_LOAD( "dd3.0e",   0x300000, 0x20000, 0x894734b3 ) //4d
+	ROM_LOAD( "dd3.0d",   0x320000, 0x20000, 0xcd504584 ) //3d
+	ROM_LOAD( "dd3.0c",   0x340000, 0x20000, 0x38e8a9ad ) //2d
+	ROM_LOAD( "dd3.0b",   0x360000, 0x20000, 0x80c1cb74 ) //1d
+	ROM_LOAD( "dd3.0a",   0x380000, 0x10000, 0x5a47e7a4 ) //5d
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM Samples */
-	ROM_LOAD( "dd3.j7" ,  0x000000, 0x40000, 0x3af21dbe )
-	ROM_LOAD( "dd3.j8" ,  0x040000, 0x40000, 0xc28b53cd )
+	ROM_LOAD( "dd3.j7",   0x000000, 0x40000, 0x3af21dbe )
+	ROM_LOAD( "dd3.j8",   0x040000, 0x40000, 0xc28b53cd )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7114h.38", 0x0000, 0x0100, 0x113c7443 )
 ROM_END
 
 ROM_START( ddrago3b )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 64k for cpu code */
-	ROM_LOAD16_BYTE( "dd3.01" ,  0x00001, 0x20000, 0x68321d8b )
-	ROM_LOAD16_BYTE( "dd3.03" ,  0x00000, 0x20000, 0xbc05763b )
-	ROM_LOAD16_BYTE( "dd3.02" ,  0x40001, 0x20000, 0x38d9ae75 )
+	ROM_LOAD16_BYTE( "dd3.01",   0x00001, 0x20000, 0x68321d8b )
+	ROM_LOAD16_BYTE( "dd3.03",   0x00000, 0x20000, 0xbc05763b )
+	ROM_LOAD16_BYTE( "dd3.02",   0x40001, 0x20000, 0x38d9ae75 )
 	/* No EVEN rom! */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu code */
-	ROM_LOAD( "dd3.06" ,   0x00000, 0x10000, 0x1e974d9b )
+	ROM_LOAD( "dd3.06",    0x00000, 0x10000, 0x1e974d9b )
 
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* Background */
-	ROM_LOAD( "dd3.f" ,  0x000000, 0x40000, 0x89d58d32 )
-	ROM_LOAD( "dd3.e" ,  0x040000, 0x40000, 0x9bf1538e )
-	ROM_LOAD( "dd3.b" ,  0x080000, 0x40000, 0x8f671a62 )
-	ROM_LOAD( "dd3.a" ,  0x0c0000, 0x40000, 0x0f74ea1c )
+	ROM_LOAD( "dd3.f",   0x000000, 0x40000, 0x89d58d32 )
+	ROM_LOAD( "dd3.e",   0x040000, 0x40000, 0x9bf1538e )
+	ROM_LOAD( "dd3.b",   0x080000, 0x40000, 0x8f671a62 )
+	ROM_LOAD( "dd3.a",   0x0c0000, 0x40000, 0x0f74ea1c )
 
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* sprites	*/
-	ROM_LOAD( "dd3.3e" ,  0x000000, 0x20000, 0x726c49b7 ) //4a
-	ROM_LOAD( "dd3.3d" ,  0x020000, 0x20000, 0x37a1c335 ) //3a
-	ROM_LOAD( "dd3.3c" ,  0x040000, 0x20000, 0x2bcfe63c ) //2a
-	ROM_LOAD( "dd3.3b" ,  0x060000, 0x20000, 0xb864cf17 ) //1a
-	ROM_LOAD( "dd3.3a" ,  0x080000, 0x10000, 0x20d64bea ) //5a
+	ROM_LOAD( "dd3.3e",   0x000000, 0x20000, 0x726c49b7 ) //4a
+	ROM_LOAD( "dd3.3d",   0x020000, 0x20000, 0x37a1c335 ) //3a
+	ROM_LOAD( "dd3.3c",   0x040000, 0x20000, 0x2bcfe63c ) //2a
+	ROM_LOAD( "dd3.3b",   0x060000, 0x20000, 0xb864cf17 ) //1a
+	ROM_LOAD( "dd3.3a",   0x080000, 0x10000, 0x20d64bea ) //5a
 
-	ROM_LOAD( "dd3.2e" ,  0x100000, 0x20000, 0x8c71eb06 ) //4b
-	ROM_LOAD( "dd3.2d" ,  0x120000, 0x20000, 0x3e134be9 ) //3b
-	ROM_LOAD( "dd3.2c" ,  0x140000, 0x20000, 0xb4115ef0 ) //2b
-	ROM_LOAD( "dd3.2b" ,  0x160000, 0x20000, 0x4639333d ) //1b
-	ROM_LOAD( "dd3.2a" ,  0x180000, 0x10000, 0x785d71b0 ) //5b
+	ROM_LOAD( "dd3.2e",   0x100000, 0x20000, 0x8c71eb06 ) //4b
+	ROM_LOAD( "dd3.2d",   0x120000, 0x20000, 0x3e134be9 ) //3b
+	ROM_LOAD( "dd3.2c",   0x140000, 0x20000, 0xb4115ef0 ) //2b
+	ROM_LOAD( "dd3.2b",   0x160000, 0x20000, 0x4639333d ) //1b
+	ROM_LOAD( "dd3.2a",   0x180000, 0x10000, 0x785d71b0 ) //5b
 
-	ROM_LOAD( "dd3.1e" ,  0x200000, 0x20000, 0x04420cc8 ) //4c
-	ROM_LOAD( "dd3.1d" ,  0x220000, 0x20000, 0x33f97b2f ) //3c
-	ROM_LOAD( "dd3.1c" ,  0x240000, 0x20000, 0x0f9a8f2a ) //2c
-	ROM_LOAD( "dd3.1b" ,  0x260000, 0x20000, 0x15c91772 ) //1c
-	ROM_LOAD( "dd3.1a" ,  0x280000, 0x10000, 0x15e43d12 ) //5c
+	ROM_LOAD( "dd3.1e",   0x200000, 0x20000, 0x04420cc8 ) //4c
+	ROM_LOAD( "dd3.1d",   0x220000, 0x20000, 0x33f97b2f ) //3c
+	ROM_LOAD( "dd3.1c",   0x240000, 0x20000, 0x0f9a8f2a ) //2c
+	ROM_LOAD( "dd3.1b",   0x260000, 0x20000, 0x15c91772 ) //1c
+	ROM_LOAD( "dd3.1a",   0x280000, 0x10000, 0x15e43d12 ) //5c
 
-	ROM_LOAD( "dd3.0e" ,  0x300000, 0x20000, 0x894734b3 ) //4d
-	ROM_LOAD( "dd3.0d" ,  0x320000, 0x20000, 0xcd504584 ) //3d
-	ROM_LOAD( "dd3.0c" ,  0x340000, 0x20000, 0x38e8a9ad ) //2d
-	ROM_LOAD( "dd3.0b" ,  0x360000, 0x20000, 0x80c1cb74 ) //1d
-	ROM_LOAD( "dd3.0a" ,  0x380000, 0x10000, 0x5a47e7a4 ) //5d
+	ROM_LOAD( "dd3.0e",   0x300000, 0x20000, 0x894734b3 ) //4d
+	ROM_LOAD( "dd3.0d",   0x320000, 0x20000, 0xcd504584 ) //3d
+	ROM_LOAD( "dd3.0c",   0x340000, 0x20000, 0x38e8a9ad ) //2d
+	ROM_LOAD( "dd3.0b",   0x360000, 0x20000, 0x80c1cb74 ) //1d
+	ROM_LOAD( "dd3.0a",   0x380000, 0x10000, 0x5a47e7a4 ) //5d
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* ADPCM Samples */
-	ROM_LOAD( "dd3.j7" ,  0x000000, 0x40000, 0x3af21dbe )
-	ROM_LOAD( "dd3.j8" ,  0x040000, 0x40000, 0xc28b53cd )
+	ROM_LOAD( "dd3.j7",   0x000000, 0x40000, 0x3af21dbe )
+	ROM_LOAD( "dd3.j8",   0x040000, 0x40000, 0xc28b53cd )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7114h.38", 0x0000, 0x0100, 0x113c7443 )
 ROM_END
 
 ROM_START( ctribe )
@@ -822,7 +776,7 @@ ROM_START( ctribe )
 	ROM_LOAD( "ct_ep8.rom",  0x380000, 0x10000, 0x4da1d8e5 )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* ADPCM Samples */
-	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
+	ROM_LOAD( "ct_mr8.rom",   0x020000, 0x20000, 0x9963a6be )
 	ROM_CONTINUE(			  0x000000, 0x20000 )
 ROM_END
 
@@ -853,7 +807,7 @@ ROM_START( ctribeb )
 	ROM_LOAD( "ct_ep8.rom",  0x380000, 0x10000, 0x4da1d8e5 )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* ADPCM Samples */
-	ROM_LOAD( "ct_mr8.rom" ,  0x020000, 0x20000, 0x9963a6be )
+	ROM_LOAD( "ct_mr8.rom",   0x020000, 0x20000, 0x9963a6be )
 	ROM_CONTINUE(			  0x000000, 0x20000 )
 ROM_END
 

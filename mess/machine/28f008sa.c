@@ -82,17 +82,6 @@ char *flash_get_base(int index1)
 	return flash[index1].base;
 }
 
-
-static void flash_remove_timer(int index1)
-{
-	if (flash[index1].flash_timer!=NULL)
-	{
-		timer_remove(flash[index1].flash_timer);
-	}
-
-	flash[index1].flash_timer = NULL;
-}
-
 static void flash_check_complete_erase(int index1)
 {
 	if (flash[index1].flash_offset>=65536)
@@ -161,7 +150,7 @@ static void flash_suspend_erase(int index1)
 		flash[index1].flash_offset += num_bytes;
 
 		/* remove timer */
-		flash_remove_timer(index1);
+		timer_reset(flash[index1].flash_timer, TIME_NEVER);
 
 		/* set erase state to suspended */
 		flash[index1].flash_erase_status = FLASH_ERASE_STATUS_SUSPENDED;
@@ -179,26 +168,24 @@ static void flash_resume_erase(int index1)
 
 	flash[index1].flash_erase_status = FLASH_ERASE_STATUS_ERASING;
 
-	/* remove timer if present */
-	flash_remove_timer(index1);
-
 	/* calc number of bytes remaining to erase */
 	num_bytes_remaining = 65536-flash[index1].flash_offset;
 
 	/* issue a timer for this */
-	flash[index1].flash_timer = timer_set(TIME_IN_SEC((FLASH_TIME_PER_BYTE_IN_SECS*num_bytes_remaining)), index1, flash_timer_callback);
+	timer_adjust(flash[index1].flash_timer, TIME_IN_SEC((FLASH_TIME_PER_BYTE_IN_SECS*num_bytes_remaining)), index1, 0);
 }
 
 
 void	flash_init(int index1)
 {
-	flash[index1].flash_timer = NULL;
+	flash[index1].flash_timer = timer_alloc(flash_timer_callback);
 
 	/* 1mb ram */
-	flash[index1].base = (char *)malloc(1024*1024);
+	flash[index1].base = (char *) auto_malloc(1024*1024);
 	if (flash[index1].base!=NULL)
 	{
                 memset(flash[index1].base, 0x080, 1024*1024);
+
 	}
 	flash_reset(index1);
 	/* no erase state */
@@ -207,13 +194,8 @@ void	flash_init(int index1)
 
 void	flash_finish(int index1)
 {
-	flash_remove_timer(index1);
-
 	if (flash[index1].base!=NULL)
-	{
-		free(flash[index1].base);
 		flash[index1].base = NULL;
-	}
 }
 
 void	flash_store(int index1, char *flash_name)
@@ -258,7 +240,7 @@ void	flash_reset(int index1)
 	flash[index1].flash_status = FLASH_STATUS_WRITE_STATE_MACHINE_STATUS_READY;
 	flash[index1].flash_command = FLASH_COMMAND_READ_ARRAY_OR_RESET;
 	flash[index1].flash_erase_status = FLASH_ERASE_STATUS_NONE;
-	flash_remove_timer(index1);
+	timer_reset(flash[index1].flash_timer, TIME_NEVER);
 }
 	
 

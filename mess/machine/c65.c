@@ -336,7 +336,7 @@ static void c65_fdc_state(void)
 
 static void c65_fdc_w(int offset, int data)
 {
-	DBG_LOG (1, "fdc write", ("%.5x %.2x %.2x\n", cpu_get_pc(), offset, data));
+	DBG_LOG (1, "fdc write", ("%.5x %.2x %.2x\n", activecpu_get_pc(), offset, data));
 	switch (offset&0xf) {
 	case 0:
 		c65_fdc.reg[0]=data;
@@ -417,7 +417,7 @@ static int c65_fdc_r(int offset)
 		data=c65_fdc.reg[offset&0xf];
 		break;
 	}
-	DBG_LOG (1, "fdc read", ("%.5x %.2x %.2x\n", cpu_get_pc(), offset, data));
+	DBG_LOG (1, "fdc read", ("%.5x %.2x %.2x\n", activecpu_get_pc(), offset, data));
 	return data;
 }
 
@@ -444,13 +444,13 @@ static READ_HANDLER(c65_ram_expansion_r)
 	int data=0xff;
 	if (C65_MAIN_MEMORY==C65_4096KB)
 		data=expansion_ram.reg;
-	DBG_LOG (1, "expansion read", ("%.5x %.2x %.2x\n", cpu_get_pc(),offset,data));
+	DBG_LOG (1, "expansion read", ("%.5x %.2x %.2x\n", activecpu_get_pc(),offset,data));
 	return data;
 }
 
 static WRITE_HANDLER(c65_ram_expansion_w)
 {
-	DBG_LOG (1, "expansion write", ("%.5x %.2x %.2x\n", cpu_get_pc(), offset, data));
+	DBG_LOG (1, "expansion write", ("%.5x %.2x %.2x\n", activecpu_get_pc(), offset, data));
 	expansion_ram.reg=data;
 
 #if 0

@@ -1368,9 +1368,9 @@ static void v9938_interrupt_start_vblank (void)
 	if (vdp.size != vdp.size_old)
 		{
 		if (vdp.size == RENDER_HIGH)
-			osd_set_visible_area (0, 512 + 32 - 1, 0, 424 + 32 - 1);
+			set_visible_area (0, 512 + 32 - 1, 0, 424 + 32 - 1);
 		else
-			osd_set_visible_area (0, 256 + 16 - 1, 0, 212 + 16 - 1);
+			set_visible_area (0, 256 + 16 - 1, 0, 212 + 16 - 1);
 
 		vdp.size_old = vdp.size;
 		}

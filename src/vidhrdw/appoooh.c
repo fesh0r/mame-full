@@ -31,7 +31,7 @@ static int priority;
   Because these hardware is similar.
 
 ***************************************************************************/
-void appoooh_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( appoooh )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -58,7 +58,6 @@ void appoooh_vh_convert_color_prom(unsigned char *obsolete,unsigned short *color
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		palette_set_color(i,r,g,b);
-
 		color_prom++;
 	}
 
@@ -112,7 +111,7 @@ static void get_bg_tile_info(int tile_index)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int appoooh_vh_start(void)
+VIDEO_START( appoooh )
 {
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,32,32);
@@ -132,14 +131,6 @@ WRITE_HANDLER( appoooh_scroll_w )
 	scroll_x = data;
 }
 
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void appoooh_vh_stop(void)
-{
-}
 
 WRITE_HANDLER( appoooh_fg_videoram_w )
 {
@@ -208,6 +199,7 @@ WRITE_HANDLER( appoooh_out_w )
 }
 
 static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
+		const struct rectangle *cliprect,
         const struct GfxElement *gfx,
         unsigned char *sprite)
 {
@@ -234,7 +226,7 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
 				color,
 				flipx,flipscreen,
 				sx, sy,
-				&Machine->visible_area,
+				cliprect,
 				TRANSPARENCY_PEN , 0);
 	 }
 }
@@ -246,29 +238,29 @@ static void appoooh_draw_sprites(struct mame_bitmap *dest_bmp,
   the main emulation engine.
 
 ***************************************************************************/
-void appoooh_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( appoooh )
 {
-	tilemap_draw(bitmap,bg_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	if (priority == 0)	/* fg behind sprites */
-		tilemap_draw(bitmap,fg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 
 	/* draw sprites */
 	if (priority == 1)
 	{
 		/* sprite set #1 */
-		appoooh_draw_sprites( bitmap, Machine->gfx[2],spriteram);
+		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[2],spriteram);
 		/* sprite set #2 */
-		appoooh_draw_sprites( bitmap, Machine->gfx[3],spriteram_2);
+		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[3],spriteram_2);
 	}
 	else
 	{
 		/* sprite set #2 */
-		appoooh_draw_sprites( bitmap, Machine->gfx[3],spriteram_2);
+		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[3],spriteram_2);
 		/* sprite set #1 */
-		appoooh_draw_sprites( bitmap, Machine->gfx[2],spriteram);
+		appoooh_draw_sprites( bitmap, cliprect, Machine->gfx[2],spriteram);
 	}
 
 	if (priority != 0)	/* fg in front of sprites */
-		tilemap_draw(bitmap,fg_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

@@ -6,37 +6,22 @@
     driver by Aaron Giles
 
     Games supported:
-		* Strata Bowling
+		* Strata Bowling [2 sets]
 		* Super Strike Bowling
-		* Wheel of Fortune
+		* Wheel of Fortune [2 sets]
 		* Golden Tee Golf
 		* Golden Tee Golf II [3 sets]
-		* Slick Shot
+		* Slick Shot [2 sets]
+		* Dyno-Bop
 		* Arlington Horse Racing
 		* Neck & Neck
 		* Peggle [2 sets]
-		* Hot Shots Tennis
-		* Rim Rockin' Basketball [2 sets]
+		* Hot Shots Tennis [2 sets]
+		* Rim Rockin' Basketball [4 sets]
 		* Ninja Clowns
 
-	Similar games that ran on advanced (32-bit) graphics hardware:
-		* Time Killers
-		* Bloodstorm
-		* Golden Tee 3D Golf
-		* World Class Bowling
-		* Golden Tee Golf '97
-		* Golden Tee Golf '98
-		* Golden Tee Golf '99
-		* Golden Tee Golf 2K
-		* Hard Yardage
-		* Pairs
-		* Street Fighter: The Movie
-
-	No known (good) dumps:
-		* Dyno-Bop
+	Dumps still needed:
 		* Poker Dice
-		* Driver's Edge
-		* Shuffleshot
 
 	Known issues:
 		* The credits screen in Peggle shows for less than half the time
@@ -44,6 +29,7 @@
 		* Rim Rockin' Basketball should use an HD6309, but that core is
 		  broken, so we're using the 6809 for now
 		* Ninja Clowns main ROM dump claims it's bad
+		* Super Strike Bowling/Dyno-Bop input doesn't work
 
 ****************************************************************************
 
@@ -165,6 +151,7 @@
 #include "machine/ticket.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
+#include "itech8.h"
 #include <math.h>
 
 
@@ -172,38 +159,6 @@
 
 #define CLOCK_8MHz		(8000000)
 #define CLOCK_12MHz		(12000000)
-
-
-
-/*************************************
- *
- *	External definitions
- *
- *************************************/
-
-/* machine functions */
-READ_HANDLER( slikshot_z80_r );
-READ_HANDLER( slikshot_z80_control_r );
-READ_HANDLER( slikz80_port_r );
-WRITE_HANDLER( slikz80_port_w );
-WRITE_HANDLER( slikshot_z80_control_w );
-
-/* video driver data & functions */
-extern UINT8 *itech8_grom_bank;
-extern UINT8 *itech8_display_page;
-
-int itech8_vh_start(void);
-int slikshot_vh_start(void);
-void itech8_vh_stop(void);
-void itech8_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-READ_HANDLER( itech8_tms34061_r );
-READ_HANDLER( itech8_blitter_r );
-
-WRITE_HANDLER( itech8_tms34061_w );
-WRITE_HANDLER( itech8_palette_address_w );
-WRITE_HANDLER( itech8_palette_data_w );
-WRITE_HANDLER( itech8_blitter_w );
 
 
 
@@ -297,18 +252,17 @@ void itech8_update_interrupts(int periodic, int tms34061, int blitter)
  *
  *************************************/
 
-static int generate_nmi(void)
+static INTERRUPT_GEN( generate_nmi )
 {
 	/* signal the NMI */
 	itech8_update_interrupts(1, -1, -1);
 	itech8_update_interrupts(0, -1, -1);
 
 	if (FULL_LOGGING) logerror("------------ VBLANK (%d) --------------\n", cpu_getscanline());
-	return ignore_interrupt();
 }
 
 
-static WRITE_HANDLER( nmi_ack_w )
+static WRITE_HANDLER( itech8_nmi_ack_w )
 {
 /* doesn't seem to hold for every game (e.g., hstennis) */
 /*	cpu_set_nmi_line(0, CLEAR_LINE);*/
@@ -328,7 +282,9 @@ static void generate_sound_irq(int state)
  *
  *************************************/
 
-static void init_machine(void)
+static void via6522_timer_callback(int which);
+
+static MACHINE_INIT( itech8 )
 {
 	/* make sure bank 0 is selected */
 	if ((Machine->drv->cpu[0].cpu_type & ~CPU_FLAGS_MASK) == CPU_M6809)
@@ -341,7 +297,8 @@ static void init_machine(void)
 
 	/* reset the VIA chip (if used) */
 	via6522_timer_count[0] = via6522_timer_count[1] = 0;
-	via6522_timer[0] = via6522_timer[1] = 0;
+	via6522_timer[0] = timer_alloc(via6522_timer_callback);
+	via6522_timer[1] = 0;
 	via6522_int_state = 0;
 
 	/* reset the ticket dispenser */
@@ -396,14 +353,14 @@ static READ_HANDLER( special_port0_r )
  *
  *************************************/
 
-WRITE_HANDLER( pia_porta_out )
+static WRITE_HANDLER( pia_porta_out )
 {
 	logerror("PIA port A write = %02x\n", data);
 	pia_porta_data = data;
 }
 
 
-WRITE_HANDLER( pia_portb_out )
+static WRITE_HANDLER( pia_portb_out )
 {
 	logerror("PIA port B write = %02x\n", data);
 
@@ -417,7 +374,7 @@ WRITE_HANDLER( pia_portb_out )
 }
 
 
-WRITE_HANDLER( ym2203_portb_out )
+static WRITE_HANDLER( ym2203_portb_out )
 {
 	logerror("YM2203 port B write = %02x\n", data);
 
@@ -495,6 +452,8 @@ static void via6522_timer_callback(int which)
 
 static WRITE_HANDLER( via6522_w )
 {
+	double period;
+
 	/* update the data */
 	via6522[offset] = data;
 
@@ -507,9 +466,8 @@ static WRITE_HANDLER( via6522_w )
 
 		case 5:		/* write into high order timer 1 */
 			via6522_timer_count[0] = (via6522[5] << 8) | via6522[4];
-			if (via6522_timer[0])
-				timer_remove(via6522_timer[0]);
-			via6522_timer[0] = timer_pulse(TIME_IN_HZ(CLOCK_8MHz/4) * (double)via6522_timer_count[0], 0, via6522_timer_callback);
+			period = TIME_IN_HZ(CLOCK_8MHz/4) * (double)via6522_timer_count[0];
+			timer_adjust(via6522_timer[0], period, 0, period);
 
 			via6522_int_state &= ~0x40;
 			update_via_int();
@@ -645,7 +603,7 @@ static WRITE16_HANDLER( tms34061_16_w )
  *
  *************************************/
 
-static void nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( itech8 )
 {
 	int i;
 
@@ -689,7 +647,7 @@ static MEMORY_WRITE_START( tmslo_writemem )
 	{ 0x1140, 0x1140, MWA_RAM, &itech8_grom_bank },
 	{ 0x1160, 0x1160, MWA_RAM, &itech8_display_page },
 	{ 0x1180, 0x1180, tms34061_latch_w },
-	{ 0x11a0, 0x11a0, nmi_ack_w },
+	{ 0x11a0, 0x11a0, itech8_nmi_ack_w },
 	{ 0x11c0, 0x11df, blitter_w },
 	{ 0x11e0, 0x11e0, itech8_palette_address_w },
 	{ 0x11e2, 0x11e3, itech8_palette_data_w },
@@ -721,7 +679,7 @@ static MEMORY_WRITE_START( tmshi_writemem )
 	{ 0x0140, 0x0140, MWA_RAM, &itech8_grom_bank },
 	{ 0x0160, 0x0160, MWA_RAM, &itech8_display_page },
 	{ 0x0180, 0x0180, tms34061_latch_w },
-	{ 0x01a0, 0x01a0, nmi_ack_w },
+	{ 0x01a0, 0x01a0, itech8_nmi_ack_w },
 	{ 0x01c0, 0x01df, blitter_w },
 	{ 0x01e0, 0x01e0, itech8_palette_address_w },
 	{ 0x01e2, 0x01e3, itech8_palette_data_w },
@@ -752,7 +710,7 @@ static MEMORY_WRITE_START( gtg2_writemem )
 	{ 0x0160, 0x0160, MWA_RAM, &itech8_grom_bank },
 	{ 0x0120, 0x0120, MWA_RAM, &itech8_display_page },
 	{ 0x01e0, 0x01e0, tms34061_latch_w },
-	{ 0x0100, 0x0100, nmi_ack_w },
+	{ 0x0100, 0x0100, itech8_nmi_ack_w },
 	{ 0x0180, 0x019f, blitter_w },
 	{ 0x0140, 0x0140, itech8_palette_address_w },
 	{ 0x0142, 0x0143, itech8_palette_data_w },
@@ -875,9 +833,6 @@ MEMORY_END
  *
  *************************************/
 
-#define PORT_SERVICE_NO_TOGGLE(mask,default)	\
-	PORT_BITX(    mask, mask & default, IPT_SERVICE1, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-
 #define UNUSED_ANALOG	\
 	PORT_START	\
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -937,7 +892,7 @@ INPUT_PORTS_START( sstrike )
 	PORT_BIT     ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* 80 */
-	PORT_BIT_NAME( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3, "Roll" )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* analog C */
     PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 32, 0x80, 0x7f )
@@ -949,6 +904,9 @@ INPUT_PORTS_START( sstrike )
 	PORT_ANALOG( 0xff, 0x60, IPT_PADDLE | IPF_PLAYER2, 100, 1, 0x28, 0x98 )
 
 	UNUSED_ANALOG	/* analog F */
+
+	PORT_START	/* fake "shoot" port */
+	PORT_BIT_NAME( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3, "Roll" )
 INPUT_PORTS_END
 
 
@@ -1116,7 +1074,7 @@ INPUT_PORTS_START( slikshot )
 	PORT_BIT     ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* 80 */
-	PORT_BIT_NAME( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON4, "Shoot" )
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* analog C */
     PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 32, 0x80, 0x7f )
@@ -1128,6 +1086,44 @@ INPUT_PORTS_START( slikshot )
 	PORT_ANALOG( 0xff, 0x60, IPT_PADDLE | IPF_PLAYER2, 100, 1, 0x28, 0x98 )
 
 	UNUSED_ANALOG	/* analog F */
+
+	PORT_START	/* fake "shoot" port */
+	PORT_BIT_NAME( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON4, "Shoot" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( dynobop )
+	PORT_START	/* 40 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* input from sound board */
+	PORT_BIT( 0x7e, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE_NO_TOGGLE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* 60 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* ball gate */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* ball detect */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	PORT_START	/* 80 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* analog C */
+    PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_X | IPF_PLAYER1, 50, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog D */
+    PORT_ANALOG( 0xff, 0x00, IPT_AD_STICK_Y | IPF_PLAYER1 | IPF_REVERSE, 50, 32, 0x80, 0x7f )
+
+	PORT_START	/* analog E */
+	PORT_ANALOG( 0xff, 0x60, IPT_PADDLE | IPF_PLAYER2, 100, 1, 0x28, 0x98 )
+
+	UNUSED_ANALOG	/* analog F */
+
+	PORT_START	/* fake "shoot" port */
+//	PORT_BIT_NAME( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON4, "Shoot" )
 INPUT_PORTS_END
 
 
@@ -1446,159 +1442,203 @@ static struct OKIM6295interface oki6295_interface_high =
  *
  *************************************/
 
-#define ITECH_DRIVER(NAME, CPUTYPE, CPUCLOCK, MAINMEM, YMTYPE, OKISPEED, XMIN, XMAX)	\
-static struct MachineDriver machine_driver_##NAME =								\
-{																				\
-	/* basic machine hardware */												\
-	{																			\
-		{																		\
-			CPU_##CPUTYPE,														\
-			CPUCLOCK,															\
-			MAINMEM##_readmem,MAINMEM##_writemem,0,0,							\
-			generate_nmi,1														\
-		},																		\
-		{																		\
-			CPU_M6809,															\
-			CLOCK_8MHz/4,														\
-			sound##YMTYPE##_readmem,sound##YMTYPE##_writemem,0,0,				\
-			ignore_interrupt,1													\
-		}																		\
-	},																			\
-	60,(int)(((263. - 240.) / 263.) * 1000000. / 60.),							\
-	1,																			\
-	init_machine,																\
-																				\
-	/* video hardware */														\
-	512, 263, { XMIN, XMAX, 0, 239 },											\
-	0,																			\
-	256, 0,																		\
-	0,																			\
-																				\
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,								\
-	0,																			\
-	itech8_vh_start,															\
-	itech8_vh_stop,																\
-	itech8_vh_screenrefresh,													\
-																				\
-	/* sound hardware */														\
-	0,0,0,0,																	\
-	{																			\
-		{ SOUND_YM##YMTYPE, &ym##YMTYPE##_interface },							\
-		{ SOUND_OKIM6295, &oki6295_interface_##OKISPEED },						\
-	},																			\
-	nvram_handler																\
-}
+/************* core pieces ******************/
 
+static MACHINE_DRIVER_START( itech8_core_lo )
 
-/*           NAME,      CPU,    CPUCLOCK,      MAINMEM,  YMTYPE, OKISPEED, XMIN, XMAX) */
-ITECH_DRIVER(tmslo2203, M6809,  CLOCK_8MHz/4,  tmslo,    2203,   high,     0,    255);
-ITECH_DRIVER(tmshi2203, M6809,  CLOCK_8MHz/4,  tmshi,    2203,   high,     0,    255);
-ITECH_DRIVER(gtg2,      M6809,  CLOCK_8MHz/4,  gtg2,     3812,   high,     0,    255);
-ITECH_DRIVER(peggle,    M6809,  CLOCK_8MHz/4,  tmslo,    3812,   high,     18,   367);
-ITECH_DRIVER(arlingtn,  M6809,  CLOCK_8MHz/4,  tmshi,    3812,   low,      16,   389);
-ITECH_DRIVER(neckneck,  M6809,  CLOCK_8MHz/4,  tmslo,    3812,   high,     8,    375);
-ITECH_DRIVER(hstennis,  M6809,  CLOCK_8MHz/4,  tmshi,    3812,   high,     0,    375);
-ITECH_DRIVER(rimrockn,  M6809,  CLOCK_12MHz/4, tmshi,    3812,   high,     24,   375);
-ITECH_DRIVER(ninclown,  M68000, CLOCK_12MHz,   ninclown, 3812,   high,     64,   423);
-
-
-static struct MachineDriver machine_driver_slikshot =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			CLOCK_8MHz/4,
-			tmshi_readmem,tmshi_writemem,0,0,
-			generate_nmi,1
-		},
-		{
-			CPU_M6809,
-			CLOCK_8MHz/4,
-			sound2203_readmem,sound2203_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			CLOCK_8MHz/2,
-			slikz80_readmem,slikz80_writemem,slikz80_readport,slikz80_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60,(int)(((263. - 240.) / 263.) * 1000000. / 60.),
-	1,
-	init_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, CLOCK_8MHz/4)
+	MDRV_CPU_MEMORY(tmslo_readmem,tmslo_writemem)
+	MDRV_CPU_VBLANK_INT(generate_nmi,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION((int)(((263. - 240.) / 263.) * 1000000. / 60.))
+
+	MDRV_MACHINE_INIT(itech8)
+	MDRV_NVRAM_HANDLER(itech8)
 
 	/* video hardware */
-	512, 263, { 0, 255, 0, 239 },
-	0,
-	256+1, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(512, 263)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	slikshot_vh_start,
-	itech8_vh_stop,
-	itech8_vh_screenrefresh,
+	MDRV_VIDEO_START(itech8)
+	MDRV_VIDEO_UPDATE(itech8)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2203, &ym2203_interface },
-		{ SOUND_OKIM6295, &oki6295_interface_high },
-	},
-	nvram_handler
-};
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, oki6295_interface_high)
+MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( itech8_core_hi )
 
-static struct MachineDriver machine_driver_sstrike =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			CLOCK_8MHz/4,
-			tmslo_readmem,tmslo_writemem,0,0,
-			generate_nmi,1
-		},
-		{
-			CPU_M6809,
-			CLOCK_8MHz/4,
-			sound2203_readmem,sound2203_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			CLOCK_8MHz/2,
-			slikz80_readmem,slikz80_writemem,slikz80_readport,slikz80_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60,(int)(((263. - 240.) / 263.) * 1000000. / 60.),
-	1,
-	init_machine,
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(tmshi_readmem,tmshi_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( itech8_sound_ym2203 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
+	MDRV_CPU_MEMORY(sound2203_readmem,sound2203_writemem)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("ym", YM2203, ym2203_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( itech8_sound_ym3812 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("sound", M6809, CLOCK_8MHz/4)
+	MDRV_CPU_MEMORY(sound3812_readmem,sound3812_writemem)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("ym", YM3812, ym3812_interface)
+MACHINE_DRIVER_END
+
+
+/************* full drivers ******************/
+
+static MACHINE_DRIVER_START( tmslo2203 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_IMPORT_FROM(itech8_sound_ym2203)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tmshi2203 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym2203)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gtg2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(gtg2_readmem,gtg2_writemem)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( peggle )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
 
 	/* video hardware */
-	512, 263, { 0, 255, 0, 239 },
-	0,
-	256+1, 0,
-	0,
+	MDRV_VISIBLE_AREA(18, 367, 0, 239)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	slikshot_vh_start,
-	itech8_vh_stop,
-	itech8_vh_screenrefresh,
+
+static MACHINE_DRIVER_START( arlingtn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(16, 389, 0, 239)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_YM2203, &ym2203_interface },
-		{ SOUND_OKIM6295, &oki6295_interface_high },
-	},
-	nvram_handler
-};
+	MDRV_SOUND_REPLACE("oki", OKIM6295, oki6295_interface_low)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( neckneck )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(8, 375, 0, 239)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hstennis )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 375, 0, 239)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( rimrockn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	MDRV_CPU_REPLACE("main", M6809, CLOCK_12MHz/4)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(24, 375, 0, 239)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ninclown )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym3812)
+
+	MDRV_CPU_REPLACE("main", M68000, CLOCK_12MHz)
+	MDRV_CPU_MEMORY(ninclown_readmem,ninclown_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(64, 423, 0, 239)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( slikshot )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_hi)
+	MDRV_IMPORT_FROM(itech8_sound_ym2203)
+
+	MDRV_CPU_ADD(Z80, CLOCK_8MHz/2)
+	MDRV_CPU_MEMORY(slikz80_readmem,slikz80_writemem)
+	MDRV_CPU_PORTS(slikz80_readport,slikz80_writeport)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(256+1)
+
+	MDRV_VIDEO_START(slikshot)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sstrike )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(itech8_core_lo)
+	MDRV_IMPORT_FROM(itech8_sound_ym2203)
+
+	MDRV_CPU_ADD(Z80, CLOCK_8MHz/2)
+	MDRV_CPU_MEMORY(slikz80_readmem,slikz80_writemem)
+	MDRV_CPU_PORTS(slikz80_readport,slikz80_writeport)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_PALETTE_LENGTH(256+1)
+
+	MDRV_VIDEO_START(slikshot)
+MACHINE_DRIVER_END
 
 
 
@@ -1611,6 +1651,24 @@ static struct MachineDriver machine_driver_sstrike =
 ROM_START( stratab )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
 	ROM_LOAD( "sbprogv3.bin", 0x08000, 0x8000, 0xa5ae728f )
+	ROM_COPY( REGION_CPU1,    0x8000, 0x14000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "sbsnds.bin", 0x08000, 0x8000, 0xb36c8f0a )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0xa915b0bd )
+	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, 0x340c661f )
+	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, 0x5df9f1cf )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, 0x6ff390b9 )
+ROM_END
+
+
+ROM_START( stratab1 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "sbprgv1.bin",  0x08000, 0x8000, 0x46d51604 )
 	ROM_COPY( REGION_CPU1,    0x8000, 0x14000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
@@ -1733,6 +1791,30 @@ ROM_START( sliksh17 )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
 	ROM_LOAD( "srom0.bin", 0x00000, 0x10000, 0x4b075f5e )
+ROM_END
+
+
+ROM_START( dynobop )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "dynobop.u5", 0x04000, 0x4000, 0x98452c40 )
+	ROM_CONTINUE(           0x10000, 0xc000 )
+	ROM_COPY( REGION_CPU1,  0x14000, 0x8000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "dynobop.u27", 0x08000, 0x8000, 0xa37d862b )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )
+	ROM_LOAD( "dynobop.u53", 0x00000, 0x0800, 0x04b85918 )
+	ROM_CONTINUE(            0x00000, 0x0800 )
+	ROM_CONTINUE(            0x00000, 0x0800 )
+	ROM_CONTINUE(            0x00000, 0x0800 )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	ROM_LOAD( "dynobop.gr0", 0x00000, 0x20000, 0x3525a7a3 )
+	ROM_LOAD( "dynobop.gr1", 0x20000, 0x20000, 0x1544a232 )
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_LOAD( "dynobop.sr0", 0x00000, 0x10000, 0xb355bf1d )
 ROM_END
 
 
@@ -1909,12 +1991,33 @@ ROM_END
 
 ROM_START( hstennis )
 	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
-	ROM_LOAD( "ten_v1_1.bin", 0x04000, 0x4000, 0xfaffab5c )
-	ROM_CONTINUE(             0x10000, 0xc000 )
+	ROM_LOAD( "tenbim.v11", 0x04000, 0x4000, 0xfaffab5c )
+	ROM_CONTINUE(           0x10000, 0xc000 )
+	ROM_COPY( REGION_CPU1,  0x14000, 0x8000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "tensnd.v1", 0x08000, 0x8000, 0xf034a694 )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
+	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0x1e69ebae )
+	ROM_LOAD( "grom1.bin", 0x20000, 0x20000, 0x4e6a22d5 )
+	ROM_LOAD( "grom2.bin", 0x40000, 0x20000, 0xc0b643a9 )
+	ROM_LOAD( "grom3.bin", 0x60000, 0x20000, 0x54afb456 )
+	ROM_LOAD( "grom4.bin", 0x80000, 0x20000, 0xee09d645 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "srom0.bin", 0x00000, 0x20000, 0xd9ce58c3 )
+ROM_END
+
+
+ROM_START( hstenn10 )
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )
+	ROM_LOAD( "tenbim.v10", 0x04000, 0x4000, 0xd108a6e0 )
+	ROM_CONTINUE(           0x10000, 0xc000 )
 	ROM_COPY( REGION_CPU1, 0x14000, 0x8000, 0x8000 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "tensd_v1.bin", 0x08000, 0x8000, 0xf034a694 )
+	ROM_LOAD( "tensnd.v1", 0x08000, 0x8000, 0xf034a694 )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
 	ROM_LOAD( "grom0.bin", 0x00000, 0x20000, 0x1e69ebae )
@@ -2057,7 +2160,7 @@ ROM_END
  *
  *************************************/
 
-static void init_viasound(void)
+static DRIVER_INIT( viasound )
 {
 	/* some games with a YM3812 use a VIA(6522) for timing and communication */
 	install_mem_read_handler (1, 0x5000, 0x500f, via6522_r);
@@ -2065,7 +2168,7 @@ static void init_viasound(void)
 }
 
 
-static void init_slikshot(void)
+static DRIVER_INIT( slikshot )
 {
 	install_mem_read_handler (0, 0x0180, 0x0180, slikshot_z80_r);
 	install_mem_read_handler (0, 0x01cf, 0x01cf, slikshot_z80_control_r);
@@ -2073,7 +2176,7 @@ static void init_slikshot(void)
 }
 
 
-static void init_sstrike(void)
+static DRIVER_INIT( sstrike )
 {
 	install_mem_read_handler (0, 0x1180, 0x1180, slikshot_z80_r);
 	install_mem_read_handler (0, 0x11cf, 0x11cf, slikshot_z80_control_r);
@@ -2081,7 +2184,7 @@ static void init_sstrike(void)
 }
 
 
-static void init_rimrockn(void)
+static DRIVER_INIT( rimrockn )
 {
 	/* additional input ports */
 	install_mem_read_handler (0, 0x0161, 0x0161, input_port_3_r);
@@ -2108,12 +2211,15 @@ static void init_rimrockn(void)
 
 GAME ( 1989, wfortune, 0,        tmshi2203, wfortune, 0,        ROT0,   "GameTek", "Wheel Of Fortune" )
 GAME ( 1989, wfortuna, wfortune, tmshi2203, wfortune, 0,        ROT0,   "GameTek", "Wheel Of Fortune (alternate)" )
-GAME ( 1990, stratab,  0,        tmshi2203, stratab,  0,        ROT270, "Strata/Incredible Technologies", "Strata Bowling" )
+GAME ( 1990, stratab,  0,        tmshi2203, stratab,  0,        ROT270, "Strata/Incredible Technologies", "Strata Bowling (V3)" )
+GAME ( 1990, stratab1, stratab,  tmshi2203, stratab,  0,        ROT270, "Strata/Incredible Technologies", "Strata Bowling (V1)" )
 GAMEX( 1990, sstrike,  0,        sstrike,   sstrike,  sstrike,  ROT270, "Strata/Incredible Technologies", "Super Strike Bowling", GAME_NOT_WORKING )
 GAME ( 1990, gtg,      0,        tmshi2203, gtg,      0,        ROT0,   "Strata/Incredible Technologies", "Golden Tee Golf" )
 GAME ( 1990, slikshot, 0,        slikshot,  slikshot, slikshot, ROT90,  "Grand Products/Incredible Technologies", "Slick Shot (V2.2)" )
 GAME ( 1990, sliksh17, slikshot, slikshot,  slikshot, slikshot, ROT90,  "Grand Products/Incredible Technologies", "Slick Shot (V1.7)" )
-GAME ( 1990, hstennis, 0,        hstennis,  hstennis, 0,        ROT90,  "Strata/Incredible Technologies", "Hot Shots Tennis" )
+GAMEX( 1990, dynobop,  0,        slikshot,  dynobop,  slikshot, ROT90,  "Grand Products/Incredible Technologies", "Dyno Bop", GAME_NOT_WORKING )
+GAME ( 1990, hstennis, 0,        hstennis,  hstennis, 0,        ROT90,  "Strata/Incredible Technologies", "Hot Shots Tennis (V1.1)" )
+GAME ( 1990, hstenn10, hstennis, hstennis,  hstennis, 0,        ROT90,  "Strata/Incredible Technologies", "Hot Shots Tennis (V1.0)" )
 GAME ( 1991, arlingtn, 0,        arlingtn,  arlingtn, 0,        ROT0,   "Strata/Incredible Technologies", "Arlington Horse Racing" )
 GAME ( 1991, peggle,   0,        peggle,    peggle,   0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Joystick)" )
 GAME ( 1991, pegglet,  peggle,   peggle,    pegglet,  0,        ROT90,  "Strata/Incredible Technologies", "Peggle (Trackball)" )

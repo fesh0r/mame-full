@@ -78,14 +78,15 @@ void pit8253_reset(int which)
 		pit->timer[i].reset = 0;
         pit->timer[i].gate = 1;
 		pit->timer[i].time_access = 0.0;
-		if (pit->timer[i].timer)
-            timer_remove(pit->timer[i].timer);
-        pit->timer[i].timer = NULL;
     }
 }
 
+static void pit8253_timer_callback(int which);
+
 void pit8253_config(int which, PIT8253_CONFIG *config)
 {
+	int timer;
+
 	PIT8253 *this = pit + which;
     if (which >= MAX_PIT8253)
 	{
@@ -93,7 +94,11 @@ void pit8253_config(int which, PIT8253_CONFIG *config)
 		return;
     }
 
+	memset(this, 0, sizeof(*this));
 	this->config = config;
+	for (timer = 0; timer < MAX_TIMER; timer++)
+		this->timer[timer].timer = timer_alloc(pit8253_timer_callback);
+
 	pit8253_reset(which);
 }
 
@@ -195,11 +200,6 @@ static void pit8253_timer_pulse(int which, int timer)
 
     double rate = 0.0;
 
-	if( this->timer[timer].timer )
-		timer_remove( this->timer[timer].timer );
-
-	this->timer[timer].timer = NULL;
-
 	if (this->config->timer[timer].irq_callback == NULL)
 		return;
 
@@ -211,8 +211,7 @@ static void pit8253_timer_pulse(int which, int timer)
 	else
 		rate = 65536.0 / this->config->timer[timer].clockin;
 
-	if( rate > 0.0 )
-		this->timer[timer].timer = timer_pulse(rate, which | (timer<<4), pit8253_timer_callback);
+	timer_adjust(this->timer[timer].timer, 0, which | (timer<<4), (rate > 0.0) ? rate : 0);
 }
 
 static void pit8253_timer_clock(int which, int timer)
@@ -220,11 +219,6 @@ static void pit8253_timer_clock(int which, int timer)
 	PIT8253 *this = pit + which;
 
 	double rate = 0.0;
-
-	if( this->timer[timer].timer )
-		timer_remove( this->timer[timer].timer );
-
-	this->timer[timer].timer = NULL;
 
 	if( this->timer[timer].clock )
 		rate = this->timer[timer].clock / this->config->timer[timer].clockin;

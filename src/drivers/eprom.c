@@ -21,20 +21,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int eprom_vh_start(void);
-void eprom_vh_stop(void);
-void eprom_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void eprom_scanline_update(int scanline);
+#include "eprom.h"
 
 
 
@@ -76,7 +63,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( eprom )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -189,12 +176,12 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
-	{ 0x3f0000, 0x3f1fff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x3f2000, 0x3f3fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f4000, 0x3f4f7f, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f4000, 0x3f4f7f, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f4f80, 0x3f4fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f5000, 0x3f7fff, MWA16_RAM },
-	{ 0x3f8000, 0x3f9fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f8000, 0x3f9fff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
 MEMORY_END
 
 
@@ -358,80 +345,65 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_eprom =
-{
+static MACHINE_DRIVER_START( eprom )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz/2,
-			extra_readmem,extra_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_I_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(extra_readmem,extra_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(eprom)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	eprom_vh_start,
-	eprom_vh_stop,
-	eprom_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(eprom)
+	MDRV_VIDEO_UPDATE(eprom)
+	
 	/* sound hardware */
-	JSA_I_MONO_WITH_SPEECH,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_i_mono_speech)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_klaxp =
-{
+static MACHINE_DRIVER_START( klaxp )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(eprom)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	eprom_vh_start,
-	eprom_vh_stop,
-	eprom_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(eprom)
+	MDRV_VIDEO_UPDATE(eprom)
+	
 	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -584,7 +556,7 @@ ROM_END
  *
  *************************************/
 
-static void init_eprom(void)
+static DRIVER_INIT( eprom )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 6, 1, 0x0002);
@@ -598,7 +570,7 @@ static void init_eprom(void)
 }
 
 
-static void init_klaxp(void)
+static DRIVER_INIT( klaxp )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 2, 1, 0x0002);

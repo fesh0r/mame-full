@@ -201,7 +201,7 @@ static void set_custom_blit(void)
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( magmax )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -209,24 +209,25 @@ void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0, bit1, bit2, bit3;
+		int bit0, bit1, bit2, bit3, r, g, b;
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -245,29 +246,17 @@ void magmax_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 }
 
-void magmax_vh_stop(void)
-{
-	free(prom_tab);
-	prom_tab = 0;
-
-	bitmap_free(tmpbitmap);
-	tmpbitmap = 0;
-}
-
-int magmax_vh_start(void)
+VIDEO_START( magmax )
 {
 	int i,v;
 	unsigned char * prom14D = memory_region(REGION_USER2);
 
-	if ((prom_tab = malloc(256 * sizeof(UINT32))) == 0)
+	if ((prom_tab = auto_malloc(256 * sizeof(UINT32))) == 0)
 		return 1;
 
 	/* Allocate temporary bitmap */
- 	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
-	{
-		magmax_vh_stop ();
+ 	if ((tmpbitmap = auto_bitmap_alloc(256,256)) == 0)
 		return 1;
-	}
 
 	for (i=0; i<256; i++)
 	{
@@ -282,7 +271,7 @@ int magmax_vh_start(void)
 
 
 
-void magmax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( magmax )
 {
 	int offs;
 

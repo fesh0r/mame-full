@@ -330,7 +330,7 @@ void doGDMA(unsigned char bits)
 
             type=port43xx[dmaBase + 0x00] & 0x07;
 /*
-            logerror("CPU -> %06X , DMA43%02X Type [%d] from %sPU [%08X] -> %sPU [%08X], %05X bytes , ABUS inc = %d\n",cpu_get_pc(),dmaBase,type,direc==1 ? "P" : "C",direc==1 ? BUSB : BUSA,direc==1 ? "C" : "P",direc==1 ? BUSA : BUSB,LEN==0 ? 0x10000 : LEN,increment);
+            logerror("CPU -> %06X , DMA43%02X Type [%d] from %sPU [%08X] -> %sPU [%08X], %05X bytes , ABUS inc = %d\n",activecpu_get_pc(),dmaBase,type,direc==1 ? "P" : "C",direc==1 ? BUSB : BUSA,direc==1 ? "C" : "P",direc==1 ? BUSA : BUSB,LEN==0 ? 0x10000 : LEN,increment);
             if ((BUSB&0xFF)==0x18 || (BUSB&0xFF)==0x19)
             {
                 logerror("VMAIN -> %02X\n",port21xx[0x15]);

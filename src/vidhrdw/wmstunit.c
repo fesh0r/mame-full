@@ -6,11 +6,11 @@
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
-
+#include "wmstunit.h"
 
 
 /* compile-time options */
-#define FAST_DMA			1		/* DMAs complete immediately; reduces number of CPU switches */
+#define FAST_DMA			0		/* DMAs complete immediately; reduces number of CPU switches */
 #define LOG_DMA				0		/* DMAs are logged if the 'L' key is pressed */
 
 
@@ -32,7 +32,7 @@ enum
 	DMA_TOPCLIP,
 	DMA_BOTCLIP,
 	DMA_UNKNOWN_E,	/* MK1/2 never write here; NBA only writes 0 */
-	DMA_CONTROL,
+	DMA_CONFIG,
 	DMA_LEFTCLIP,	/* pseudo-register */
 	DMA_RIGHTCLIP	/* pseudo-register */
 };
@@ -40,8 +40,6 @@ enum
 
 
 /* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
        UINT8	wms_gfx_rom_large;
 static data16_t	wms_control;
 static UINT8	wms_using_34020;
@@ -83,10 +81,6 @@ static struct
 
 
 
-/* prototypes */
-void wms_tunit_vh_stop(void);
-
-
 /* macros */
 #define TMS_SET_IRQ_LINE(x)				\
 	if (wms_using_34020) 				\
@@ -102,20 +96,17 @@ void wms_tunit_vh_stop(void);
  *
  *************************************/
 
-int wms_tunit_vh_start(void)
+VIDEO_START( wms_tunit )
 {
 	int i;
 
 	/* allocate memory */
-	local_videoram = malloc(0x100000);
-	pen_map = malloc(65536 * sizeof(pen_map[0]));
+	local_videoram = auto_malloc(0x100000);
+	pen_map = auto_malloc(65536 * sizeof(pen_map[0]));
 
 	/* handle failure */
 	if (!local_videoram || !pen_map)
-	{
-		wms_tunit_vh_stop();
 		return 1;
-	}
 
 	/* initialize pen map */
 	for (i = 0; i < 0x10000; i++)
@@ -133,40 +124,21 @@ int wms_tunit_vh_start(void)
 }
 
 
-int wms_wolfu_vh_start(void)
+VIDEO_START( wms_wolfu )
 {
-	int result = wms_tunit_vh_start();
+	int result = video_start_wms_tunit();
 	wms_gfx_rom_large = 1;
 	return result;
 }
 
 
-int wms_revx_vh_start(void)
+VIDEO_START( revx )
 {
-	int result = wms_tunit_vh_start();
+	int result = video_start_wms_tunit();
 	wms_gfx_rom_large = 1;
 	wms_using_34020 = 1;
 	videobank_select = 1;
 	return result;
-}
-
-
-
-/*************************************
- *
- *	Video shutdown
- *
- *************************************/
-
-void wms_tunit_vh_stop(void)
-{
-	if (pen_map)
-		free(pen_map);
-	pen_map = NULL;
-
-	if (local_videoram)
-		free(local_videoram);
-	local_videoram = NULL;
 }
 
 
@@ -361,6 +333,19 @@ WRITE16_HANDLER( wms_tunit_paletteram_w )
 }
 
 
+WRITE16_HANDLER( revx_paletteram_w )
+{
+	if (!(offset & 1))
+		wms_tunit_paletteram_w(offset / 2, data, mem_mask);
+}
+
+
+READ16_HANDLER( revx_paletteram_r )
+{
+	return paletteram16_word_r(offset / 2, 0);
+}
+
+
 
 /*************************************
  *
@@ -381,6 +366,9 @@ WRITE16_HANDLER( wms_tunit_paletteram_w )
 
 #define SCALE_NO		0
 #define SCALE_YES		1
+
+#define XPOSMASK		0x3ff
+#define YPOSMASK		0x1ff
 
 
 typedef void (*dma_draw_func)(void);
@@ -428,7 +416,10 @@ typedef void (*dma_draw_func)(void);
 			/* adjust for preskip */											\
 			pre = (value & 0x0f) << (dma_state.preskip + 8);					\
 			tx = pre / xstep;													\
-			xflip ? (sx -= tx) : (sx += tx);									\
+			if (xflip)															\
+				sx = (sx - tx) & XPOSMASK;										\
+			else																\
+				sx = (sx + tx) & XPOSMASK;										\
 			ix += tx * xstep;													\
 																				\
 			/* adjust for postskip */											\
@@ -440,22 +431,6 @@ typedef void (*dma_draw_func)(void);
 		/* handle Y clipping */													\
 		if (sy < dma_state.topclip || sy > dma_state.botclip)					\
 			goto clipy;															\
-																				\
-		/* handle left clip */													\
-		if (!xflip && sx < 0)													\
-		{																		\
-			tx = -sx * xstep;													\
-			ix += tx;															\
-			o += (tx >> 8) * bpp;												\
-			sx = 0;																\
-		}																		\
-		else if (xflip && sx >= 512)											\
-		{																		\
-			tx = (sx - 511) * xstep;											\
-			ix += tx;															\
-			o += (tx >> 8) * bpp;												\
-			sx = 511;															\
-		}																		\
 																				\
 		/* handle start skip */													\
 		if (ix < startskip)														\
@@ -470,49 +445,53 @@ typedef void (*dma_draw_func)(void);
 			width = (dma_state.width - dma_state.endskip) << 8;					\
 																				\
 		/* determine destination pointer */										\
-		d = &local_videoram[sy * 512 + sx];										\
+		d = &local_videoram[sy * 512];											\
 																				\
 		/* loop until we draw the entire width */								\
-		while (ix < width && ((!xflip && sx < 512) || (xflip && sx >= 0)))		\
+		while (ix < width)														\
 		{																		\
-			/* special case similar handling of zero/non-zero */				\
-			if (zero == nonzero)												\
+			/* only process if not clipped */									\
+			if (sx >= dma_state.leftclip && sx <= dma_state.rightclip)			\
 			{																	\
-				if (zero == PIXEL_COLOR)										\
-					*d = color;													\
-				else if (zero == PIXEL_COPY)									\
-					*d = (extractor(mask)) | pal;								\
-			}																	\
-																				\
-			/* otherwise, read the pixel and look */							\
-			else																\
-			{																	\
-				int pixel = (extractor(mask));									\
-																				\
-				/* non-zero pixel case */										\
-				if (pixel)														\
-				{																\
-					if (nonzero == PIXEL_COLOR)									\
-						*d = color;												\
-					else if (nonzero == PIXEL_COPY)								\
-						*d = pixel | pal;										\
-				}																\
-																				\
-				/* zero pixel case */											\
-				else															\
+				/* special case similar handling of zero/non-zero */			\
+				if (zero == nonzero)											\
 				{																\
 					if (zero == PIXEL_COLOR)									\
-						*d = color;												\
+						d[sx] = color;											\
 					else if (zero == PIXEL_COPY)								\
-						*d = pal;												\
+						d[sx] = (extractor(mask)) | pal;						\
+				}																\
+																				\
+				/* otherwise, read the pixel and look */						\
+				else															\
+				{																\
+					int pixel = (extractor(mask));								\
+																				\
+					/* non-zero pixel case */									\
+					if (pixel)													\
+					{															\
+						if (nonzero == PIXEL_COLOR)								\
+							d[sx] = color;										\
+						else if (nonzero == PIXEL_COPY)							\
+							d[sx] = pixel | pal;								\
+					}															\
+																				\
+					/* zero pixel case */										\
+					else														\
+					{															\
+						if (zero == PIXEL_COLOR)								\
+							d[sx] = color;										\
+						else if (zero == PIXEL_COPY)							\
+							d[sx] = pal;										\
+					}															\
 				}																\
 			}																	\
 																				\
 			/* update pointers */												\
 			if (xflip) 															\
-				d--, sx--; 														\
+				sx = (sx - 1) & XPOSMASK;										\
 			else 																\
-				d++, sx++;														\
+				sx = (sx + 1) & XPOSMASK;										\
 																				\
 			/* advance to the next pixel */										\
 			if (!scale)															\
@@ -531,7 +510,10 @@ typedef void (*dma_draw_func)(void);
 																				\
 	clipy:																		\
 		/* advance to the next row */											\
-		dma_state.yflip ? sy-- : sy++;											\
+		if (dma_state.yflip)													\
+			sy = (sy - 1) & YPOSMASK;											\
+		else																	\
+			sy = (sy + 1) & YPOSMASK;											\
 		if (!scale)																\
 		{																		\
 			iy += 0x100;														\
@@ -659,7 +641,7 @@ static void dma_callback(int is_in_34010_context)
 		TMS_SET_IRQ_LINE(ASSERT_LINE);
 	}
 	else
-		cpu_cause_interrupt(0, 0);
+		cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
 
@@ -696,7 +678,7 @@ READ16_HANDLER( wms_tunit_dma_r )
  *           | ----84---------- | post skip size = (1<<x)
  *           | ------21-------- | pre skip size = (1<<x)
  *           | --------8------- | pre/post skip enable
- *           | ---------4------ | pixel skip control
+ *           | ---------4------ | clipping enable
  *           | ----------2----- | flip y
  *           | -----------1---- | flip x
  *           | ------------8--- | blit nonzero pixels as color
@@ -705,16 +687,21 @@ READ16_HANDLER( wms_tunit_dma_r )
  *           | ---------------1 | blit zero pixels
  *     2     | xxxxxxxxxxxxxxxx | source address low word
  *     3     | xxxxxxxxxxxxxxxx | source address high word
- *     4     | xxxxxxxxxxxxxxxx | detination x
- *     5     | xxxxxxxxxxxxxxxx | destination y
- *     6     | xxxxxxxxxxxxxxxx | image columns
- *     7     | xxxxxxxxxxxxxxxx | image rows
+ *     4     | -------xxxxxxxxx | detination x
+ *     5     | -------xxxxxxxxx | destination y
+ *     6     | ------xxxxxxxxxx | image columns
+ *     7     | ------xxxxxxxxxx | image rows
  *     8     | xxxxxxxxxxxxxxxx | palette
  *     9     | xxxxxxxxxxxxxxxx | color
- *    10     | xxxxxxxxxxxxxxxx | scale x
- *    11     | xxxxxxxxxxxxxxxx | scale y
- *    12     | xxxxxxxxxxxxxxxx | top clip
- *    13     | xxxxxxxxxxxxxxxx | bottom clip
+ *    10     | ---xxxxxxxxxxxxx | scale x
+ *    11     | ---xxxxxxxxxxxxx | scale y
+ *    12     | -------xxxxxxxxx | top/left clip
+ *    13     | -------xxxxxxxxx | bottom/right clip
+ *    14     | ---------------- | test
+ *    15     | xxxxxxxx-------- | zero detect byte
+ *           | --------8------- | extra page
+ *           | ---------4------ | destination size
+ *           | ----------2----- | select top/bottom or left/right for reg 12/13
  */
 
 WRITE16_HANDLER( wms_tunit_dma_w )
@@ -724,18 +711,13 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 		{ 0,1,2,3,4,5,6,7,8,9,10,11,16,17,14,15 },
 		{ 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 }
 	};
-	int regbank = (dma_register[DMA_CONTROL] >> 5) & 1;
+	int regbank = (dma_register[DMA_CONFIG] >> 5) & 1;
 	int command, bpp, regnum;
 	UINT32 gfxoffset;
 
 	/* blend with the current register contents */
 	regnum = register_map[regbank][offset];
 	COMBINE_DATA(&dma_register[regnum]);
-
-#if LOG_DMA
-	if (keyboard_pressed(KEYCODE_L))
-		logerror("%08X:DMA %d = %04X\n", cpu_get_pc(), regnum, data);
-#endif
 
 	/* only writes to DMA_COMMAND actually cause actions */
 	if (regnum != DMA_COMMAND)
@@ -749,35 +731,16 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 		return;
 	}
 
-#if LOG_DMA
-	if (keyboard_pressed(KEYCODE_L))
-	{
-		logerror("DMA command %04X: (bpp=%d skip=%d xflip=%d yflip=%d preskip=%d postskip=%d)\n",
-				command, (command >> 12) & 7, (command >> 7) & 1, (command >> 4) & 1, (command >> 5) & 1, (command >> 8) & 3, (command >> 10) & 3);
-		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d clip=(%d,%d)\n",
-				dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16),
-				(INT16)dma_register[DMA_XSTART], (INT16)dma_register[DMA_YSTART],
-				dma_register[DMA_WIDTH], dma_register[DMA_HEIGHT],
-				dma_register[DMA_TOPCLIP], dma_register[DMA_BOTCLIP]);
-		logerror("  palette=%04X color=%04X lskip=%02X rskip=%02X xstep=%04X ystep=%04X unkE=%04X unkF=%04X\n",
-				dma_register[DMA_PALETTE], dma_register[DMA_COLOR],
-				dma_register[DMA_LRSKIP] >> 8, dma_register[DMA_LRSKIP] & 0xff,
-				dma_register[DMA_SCALE_X], dma_register[DMA_SCALE_Y], dma_register[DMA_UNKNOWN_E],
-				dma_register[DMA_CONTROL]);
-		logerror("----\n");
-	}
-#endif
-
 	profiler_mark(PROFILER_USER1);
 
 	/* determine bpp */
 	bpp = (command >> 12) & 7;
 
 	/* fill in the basic data */
-	dma_state.xpos = (INT16)dma_register[DMA_XSTART];
-	dma_state.ypos = (INT16)dma_register[DMA_YSTART];
-	dma_state.width = dma_register[DMA_WIDTH];
-	dma_state.height = dma_register[DMA_HEIGHT];
+	dma_state.xpos = dma_register[DMA_XSTART] & XPOSMASK;
+	dma_state.ypos = dma_register[DMA_YSTART] & YPOSMASK;
+	dma_state.width = dma_register[DMA_WIDTH] & 0x3ff;
+	dma_state.height = dma_register[DMA_HEIGHT] & 0x3ff;
 	dma_state.palette = dma_register[DMA_PALETTE] & 0x7f00;
 	dma_state.color = dma_register[DMA_COLOR] & 0xff;
 
@@ -786,21 +749,35 @@ WRITE16_HANDLER( wms_tunit_dma_w )
 	dma_state.bpp = bpp ? bpp : 8;
 	dma_state.preskip = (command >> 8) & 3;
 	dma_state.postskip = (command >> 10) & 3;
-	dma_state.topclip = (INT16)dma_register[DMA_TOPCLIP];
-	dma_state.botclip = (INT16)dma_register[DMA_BOTCLIP];
-	dma_state.leftclip = (INT16)dma_register[DMA_LEFTCLIP];
-	dma_state.rightclip = (INT16)dma_register[DMA_RIGHTCLIP];
 	dma_state.xstep = dma_register[DMA_SCALE_X] ? dma_register[DMA_SCALE_X] : 0x100;
 	dma_state.ystep = dma_register[DMA_SCALE_Y] ? dma_register[DMA_SCALE_Y] : 0x100;
 
 	/* clip the clippers */
-	if (dma_state.topclip < 0) dma_state.topclip = 0;
-	if (dma_state.botclip > 512 || dma_state.botclip == 0) dma_state.botclip = 512;
-	if (dma_state.leftclip < 0) dma_state.leftclip = 0;
-	if (dma_state.rightclip > 512) dma_state.rightclip = 512;
+	dma_state.topclip = dma_register[DMA_TOPCLIP] & 0x1ff;
+	dma_state.botclip = dma_register[DMA_BOTCLIP] & 0x1ff;
+	dma_state.leftclip = dma_register[DMA_LEFTCLIP] & 0x1ff;
+	dma_state.rightclip = dma_register[DMA_RIGHTCLIP] & 0x1ff;
 
 	/* determine the offset */
 	gfxoffset = dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16);
+
+#if LOG_DMA
+	if (keyboard_pressed(KEYCODE_L))
+	{
+		logerror("DMA command %04X: (bpp=%d skip=%d xflip=%d yflip=%d preskip=%d postskip=%d)\n",
+				command, (command >> 12) & 7, (command >> 7) & 1, (command >> 4) & 1, (command >> 5) & 1, (command >> 8) & 3, (command >> 10) & 3);
+		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d clip=(%d,%d)-(%d,%d)\n", gfxoffset, dma_register[DMA_XSTART], dma_register[DMA_YSTART],
+				dma_register[DMA_WIDTH], dma_register[DMA_HEIGHT], dma_register[DMA_LEFTCLIP], dma_register[DMA_TOPCLIP], dma_register[DMA_RIGHTCLIP], dma_register[DMA_BOTCLIP]);
+		logerror("  offset=%08X pos=(%d,%d) w=%d h=%d clip=(%d,%d)-(%d,%d)\n", gfxoffset, dma_state.xpos, dma_state.ypos,
+				dma_state.width, dma_state.height, dma_state.leftclip, dma_state.topclip, dma_state.rightclip, dma_state.botclip);
+		logerror("  palette=%04X color=%04X lskip=%02X rskip=%02X xstep=%04X ystep=%04X test=%04X config=%04X\n",
+				dma_register[DMA_PALETTE], dma_register[DMA_COLOR],
+				dma_register[DMA_LRSKIP] >> 8, dma_register[DMA_LRSKIP] & 0xff,
+				dma_register[DMA_SCALE_X], dma_register[DMA_SCALE_Y], dma_register[DMA_UNKNOWN_E],
+				dma_register[DMA_CONFIG]);
+		logerror("----\n");
+	}
+#endif
 
 	/* special case: drawing mode C doesn't need to know about any pixel data */
 	if ((command & 0x0f) == 0x0c)
@@ -881,45 +858,37 @@ skipdma:
 
 /*************************************
  *
- *	34010 display address callback
- *
- *************************************/
-
-void wms_tunit_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
-{
-}
-
-
-
-/*************************************
- *
  *	Core refresh routine
  *
  *************************************/
 
-void wms_tunit_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( wms_tunit )
 {
 	int v, width, xoffs;
 	UINT32 offset;
 
+#if LOG_DMA
+	if (keyboard_pressed(KEYCODE_L))
+		logerror("---\n");
+#endif
+
 	/* determine the base of the videoram */
 	if (wms_using_34020)
-		offset = (tms34020_get_DPYSTRT(0) >> 5) & 0x3ffff;
+		offset = (tms34020_get_DPYSTRT(0) >> 3) & 0x3ffff;
 	else
 		offset = ((~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5) & 0x3ffff;
-	logerror("Screen offset = %06X\n", offset);
 
 	/* determine how many pixels to copy */
-	xoffs = Machine->visible_area.min_x;
-	width = Machine->visible_area.max_x - xoffs + 1;
+	xoffs = cliprect->min_x;
+	width = cliprect->max_x - xoffs + 1;
 
 	/* adjust the offset */
 	offset += xoffs;
-	offset += 512 * Machine->visible_area.min_y;
+	offset += 512 * cliprect->min_y;
 	offset &= 0x3ffff;
 
 	/* loop over rows */
-	for (v = Machine->visible_area.min_y; v <= Machine->visible_area.max_y; v++)
+	for (v = cliprect->min_y; v <= cliprect->max_y; v++)
 	{
 		draw_scanline16(bitmap, xoffs, v, width, &local_videoram[offset], pen_map, -1);
 		offset = (offset + 512) & 0x3ffff;

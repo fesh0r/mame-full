@@ -90,11 +90,12 @@ unsigned short mda_colortable[] = {
 };
 
 /* Initialise the mda palette */
-void pc_mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( pc_mda )
 {
-//    memcpy(sys_palette,mda_palette,sizeof(mda_palette));
-    memcpy(sys_palette,cga_palette,sizeof(cga_palette));
-    memcpy(sys_colortable,mda_colortable,sizeof(mda_colortable));
+	int i;
+	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
+		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+    memcpy(colortable, mda_colortable, sizeof(mda_colortable));
 }
 
 static struct { 
@@ -193,22 +194,18 @@ extern void pc_mda_europc_init(struct _CRTC6845 *crtc)
 	mda.crtc=crtc6845;
 }
 
-int pc_mda_vh_start(void)
+VIDEO_START( pc_mda )
 {
 	pc_mda_init_video(crtc6845);
 	crtc6845_init(mda.crtc, &config);
 
-    return generic_vh_start();
-}
-
-void pc_mda_vh_stop(void)
-{
-    generic_vh_stop();
+    return video_start_generic();
 }
 
 WRITE_HANDLER ( pc_mda_videoram_w )
 {
-	if (videoram[offset] == data) return;
+	if (videoram[offset] == data)
+		return;
 	videoram[offset] = data;
 	dirtybuffer[offset] = 1;
 }
@@ -463,7 +460,7 @@ static void hercules_gfx(struct mame_bitmap *bitmap)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
  ***************************************************************************/
-void pc_mda_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc_mda )
 {
 	static int video_active = 0;
 	static int width=0, height=0;
@@ -471,7 +468,7 @@ void pc_mda_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if( crtc6845_do_full_refresh(mda.crtc)||full_refresh||mda.full_refresh )
+	/*if( crtc6845_do_full_refresh(mda.crtc)||full_refresh||mda.full_refresh )*/
 	{
 		mda.full_refresh=0;
 		memset(dirtybuffer, 1, videoram_size);
@@ -501,7 +498,7 @@ void pc_mda_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		if (width>Machine->visible_area.max_x) width=Machine->visible_area.max_x+1;
 		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
 		if ((width>100)&&(height>100))
-			osd_set_visible_area(0,width-1,0, height-1);
+			set_visible_area(0,width-1,0, height-1);
 		else logerror("video %d %d\n",width, height);
 	}
 

@@ -22,22 +22,8 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int atarig42_vh_start(void);
-void atarig42_vh_stop(void);
-void atarig42_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void atarigx2_scanline_update(int param);
-
-extern UINT8 atarig42_guardian;
+#include "vidhrdw/atarirle.h"
+#include "atarigx2.h"
 
 
 
@@ -74,7 +60,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( atarigx2 )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -118,10 +104,8 @@ static WRITE32_HANDLER( a2d_select_w )
 
 static READ32_HANDLER( a2d_data_r )
 {
-	offset = (offset - 2) / 2;
-
 	/* otherwise, assume it's hydra */
-	switch (which_input)
+	switch (offset)
 	{
 		case 0:
 			return (readinputport(5) << 24) | (readinputport(6) << 8);
@@ -145,7 +129,18 @@ static WRITE32_HANDLER( latch_w )
 		D3  = CC.L
 		D0  = CC.R
 	*/
-	if (ACCESSING_MSW32 && !ACCESSING_MSB32)
+	
+	logerror("latch_w(%08X) & %08X\n", data, ~mem_mask);
+	
+	/* upper byte */
+	if (!(mem_mask & 0xff000000))
+	{
+		/* bits 13-11 are the MO control bits */
+		atarirle_control_w(0, (data >> 27) & 7);
+	}
+	
+	/* lower byte */
+	if (!(mem_mask & 0x00ff0000))
 		cpu_set_reset_line(1, (data & 0x100000) ? CLEAR_LINE : ASSERT_LINE);
 }
 
@@ -163,11 +158,11 @@ static data16_t last_write_offset;
 static WRITE32_HANDLER( atarigx2_protection_w )
 {
 	{
-//		int pc = cpu_getpreviouspc();
+		int pc = activecpu_get_previouspc();
 //		if (pc == 0x11cbe || pc == 0x11c30)
-//			logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, cpu_get_reg(M68K_A2));
+//			logerror("%06X:Protection W@%04X = %04X  (result to %06X)\n", pc, offset, data, activecpu_get_reg(M68K_A2));
 //		else
-//			logerror("%06X:Protection W@%04X = %04X\n", pc, offset, data);
+			logerror("%06X:Protection W@%04X = %04X\n", pc, offset, data);
 	}
 
 	COMBINE_DATA(&protection_base[offset]);
@@ -188,6 +183,62 @@ static READ32_HANDLER( atarigx2_protection_r )
 {
 	static const UINT32 lookup_table[][2] =
 	{
+		// sprite flipping
+		{ 0x0000e54f, 0<<11 },
+		{ 0x00024602, 5<<11 },
+		{ 0x0004ec02, 7<<11 },
+		{ 0x00064ddb, 7<<11 },
+		{ 0x00086016, 0<<11 },
+		{ 0x000ad909, 1<<11 },
+		{ 0x000cf3cd, 3<<11 },
+		{ 0x000e0a0f, 3<<11 },
+		
+		{ 0x00001b23, 0<<11 },
+		{ 0x0002948b, 5<<11 },
+		{ 0x0004a826, 7<<11 },
+		{ 0x0006f6eb, 7<<11 },
+		{ 0x00085031, 0<<11 },
+		{ 0x000a798f, 1<<11 },
+		{ 0x000c708e, 3<<11 },
+		{ 0x000e1bf8, 3<<11 },
+		
+		{ 0x00000241, 0<<11 },
+		{ 0x00020892, 5<<11 },
+		{ 0x0004e0dc, 7<<11 },
+		{ 0x00066288, 7<<11 },
+		{ 0x0008294a, 0<<11 },
+		{ 0x000a31dc, 1<<11 },
+		{ 0x000c4413, 3<<11 },
+		{ 0x000e31b6, 3<<11 },
+		
+		{ 0x000097c1, 0<<11 },
+		{ 0x00020e6b, 5<<11 },
+		{ 0x00042f77, 7<<11 },
+		{ 0x00068256, 7<<11 },
+		{ 0x0008317f, 0<<11 },
+		{ 0x000af594, 1<<11 },
+		{ 0x000c0a72, 3<<11 },
+		{ 0x000ea856, 3<<11 },
+		
+		{ 0x0000ebd6, 0<<11 },
+		{ 0x0002e22c, 5<<11 },
+		{ 0x0004bca8, 7<<11 },
+		{ 0x000688dd, 7<<11 },
+		{ 0x00088556, 0<<11 },
+		{ 0x000ad37f, 1<<11 },
+		{ 0x000ca6d4, 3<<11 },
+		{ 0x000e88c3, 3<<11 },
+		
+		{ 0x00007d37, 0<<11 },
+		{ 0x00027b45, 5<<11 },
+		{ 0x00045981, 7<<11 },
+		{ 0x0006d53c, 7<<11 },
+		{ 0x0008223e, 0<<11 },
+		{ 0x000aaee3, 1<<11 },
+		{ 0x000cf4c8, 3<<11 },
+		{ 0x000e1064, 3<<11 },
+		
+	
 		// initialization
 
 		{ 0x00000241, 0x0000 },
@@ -1084,11 +1135,11 @@ static READ32_HANDLER( atarigx2_protection_r )
 				result = rand() << 16;
 			else
 				result = 0xffff << 16;
-			logerror("%06X:Unhandled protection R@%04X = %04X\n", cpu_getpreviouspc(), offset, result);
+			logerror("%06X:Unhandled protection R@%04X = %04X\n", activecpu_get_previouspc(), offset, result);
 		}
 	}
 
-//	logerror("%06X:Protection R@%04X = %04X\n", cpu_getpreviouspc(), offset, result);
+	logerror("%06X:Protection R@%04X = %04X\n", activecpu_get_previouspc(), offset, result);
 	return result;
 }
 
@@ -1135,8 +1186,8 @@ static MEMORY_WRITE32_START( main_writemem )
 	{ 0xd20000, 0xd20fff, atarigen_eeprom32_w, (data32_t **)&atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xd40000, 0xd40fff, atarigen_666_paletteram32_w, &paletteram32 },
 	{ 0xd70000, 0xd71fff, MWA32_RAM },
-	{ 0xd72000, 0xd75fff, ataripf_0_split32_w, &ataripf_0_base32 },
-	{ 0xd76000, 0xd76fff, atarian_0_vram32_w, &atarian_0_base32 },
+	{ 0xd72000, 0xd75fff, atarigen_playfield32_w, &atarigen_playfield32 },
+	{ 0xd76000, 0xd76fff, atarigen_alpha32_w, &atarigen_alpha32 },
 	{ 0xd77000, 0xd77fff, MWA32_RAM },
 	{ 0xd78000, 0xd78fff, atarirle_0_spriteram32_w, &atarirle_0_spriteram32 },
 	{ 0xd79000, 0xd7ffff, MWA32_RAM },
@@ -1200,21 +1251,73 @@ INPUT_PORTS_START( spclords )
 
 	JSA_III_PORT	/* audio board port */
 
-	PORT_START		/* A2D @ 0xD00002 */
+	PORT_START		/* A2D @ 0xD00000 */
 	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* A2D @ 0xD00004 */
+	PORT_START		/* A2D @ 0xD00002 */
 	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* A2D @ 0xD00006 */
+	PORT_START		/* A2D @ 0xD00004 */
 	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_PLAYER2, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START		/* A2D @ 0xD00008 */
+	PORT_START		/* A2D @ 0xD00006 */
 	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y | IPF_PLAYER2, 100, 10, 0x10, 0xf0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( rrreveng )
+	PORT_START		/* 68.SW (A1=0) */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
+	PORT_BIT( 0x3000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* 68.SW (A1=1) */
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xfe00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 68.STATUS (A2=0) */
+	PORT_BIT( 0x0007, IP_ACTIVE_LOW, IPT_UNUSED )	/* +5V */
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_UNUSED )	/* A2D.EOC */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )	/* /AUDIRQ */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )	/* /AUDFULL */
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* 68.STATUS (A2=1) */
+	PORT_BIT( 0x0003, IP_ACTIVE_LOW, IPT_UNUSED )	/* +5V */
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* /XIRQ */
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )	/* /XFULL */
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNUSED )	/* /SERVICER */
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )	/* /SER.L */
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNUSED )	/* +5V */
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	JSA_III_PORT	/* audio board port */
+
+	PORT_START		/* A2D @ 0xD00000 */
+	PORT_ANALOG ( 0x00ff, 0x0010, IPT_PEDAL, 100, 10, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* A2D @ 0xD00002 */
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* A2D @ 0xD00004 */
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_PADDLE, 100, 10, 0x10, 0xf0 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START		/* A2D @ 0xD00006 */
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -1274,79 +1377,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static struct MachineDriver machine_driver_atarigx2 =
-{
+static MACHINE_DRIVER_START( atarigx2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68EC020,		/* verified */
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_IIIS_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68EC020, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(atarigx2)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	atarig42_vh_start,
-	atarig42_vh_stop,
-	atarig42_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(atarigx2)
+	MDRV_VIDEO_EOF(atarirle)
+	MDRV_VIDEO_UPDATE(atarigx2)
+	
 	/* sound hardware */
-	JSA_IIIS_STEREO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-static void init_spclords(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x422c, 0x4244);
-
-	atarig42_guardian = 0;
-}
-
-
-static void init_motofren(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
-
-	atarig42_guardian = 0;
-}
-
-
-static void init_revrally(void)
-{
-	atarigen_eeprom_default = NULL;
-	atarijsa_init(1, 4, 2, 0x0040);
-	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x416c, 0x4184);
-
-	atarig42_guardian = 0;
-}
+	MDRV_IMPORT_FROM(jsa_iiis_stereo)
+MACHINE_DRIVER_END
 
 
 
@@ -1472,7 +1529,7 @@ ROM_START( motofren )
 ROM_END
 
 
-ROM_START( revrally )
+ROM_START( rrreveng )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )	/* 8*64k for 68000 code */
 	ROM_LOAD32_BYTE( "rrprghh.bin", 0x00000, 0x20000, 0xd2903e9d )
 	ROM_LOAD32_BYTE( "rrprghl.bin", 0x00001, 0x20000, 0x1afd500c )
@@ -1513,6 +1570,58 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( spclords )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x422c, 0x4244);
+
+	atarigx2_playfield_base = 0x000;
+	atarigx2_motion_object_base = 0x400;
+	atarigx2_motion_object_mask = 0x3ff;
+}
+
+
+static DRIVER_INIT( motofren )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x4168, 0x4180);
+
+	atarigx2_playfield_base = 0x400;
+	atarigx2_motion_object_base = 0x200;
+	atarigx2_motion_object_mask = 0x1ff;
+}
+
+static READ32_HANDLER( rrreveng_prot_r )
+{
+	return 0;
+}
+
+static DRIVER_INIT( rrreveng )
+{
+	atarigen_eeprom_default = NULL;
+	atarijsa_init(1, 4, 2, 0x0040);
+	atarijsa3_init_adpcm(REGION_SOUND1);
+	atarigen_init_6502_speedup(1, 0x416c, 0x4184);
+
+	atarigx2_playfield_base = 0x000;
+	atarigx2_motion_object_base = 0x400;
+	atarigx2_motion_object_mask = 0x3ff;
+	
+	install_mem_read32_handler(0, 0xca0fc0, 0xca0fc3, rrreveng_prot_r);
+}
+
+
+
+/*************************************
+ *
  *	Game driver(s)
  *
  *************************************/
@@ -1520,4 +1629,4 @@ ROM_END
 GAMEX( 1992, spclords, 0,        atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1992, spclorda, spclords, atarigx2, spclords, spclords, ROT0, "Atari Games", "Space Lords (alternate)", GAME_UNEMULATED_PROTECTION )
 GAMEX( 1992, motofren, 0,        atarigx2, spclords, motofren, ROT0, "Atari Games", "Moto Frenzy", GAME_UNEMULATED_PROTECTION )
-GAMEX( 1993, revrally, 0,        atarigx2, spclords, revrally, ROT0, "Atari Games", "Road Riot Revenge Rally (Prototype)", GAME_UNEMULATED_PROTECTION )
+GAMEX( 1994, rrreveng, 0,        atarigx2, rrreveng, rrreveng, ROT0, "Atari Games", "Road Riot's Revenge (prototype)", GAME_UNEMULATED_PROTECTION )

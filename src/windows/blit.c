@@ -13,6 +13,7 @@
 #include "blit.h"
 #include "video.h"
 #include "window.h"
+#include "vidhrdw/vector.h"
 
 
 
@@ -48,15 +49,7 @@ extern int verbose;
 //	TYPE DEFINITIONS
 //============================================================
 
-#ifdef _MSC_VER
-#define BLITDECL	__cdecl
-UINT32 asmblit_mmxmask1[4];
-UINT32 asmblit_mmxmask2[4];
-#else
-#define BLITDECL
-#endif
-
-typedef void (BLITDECL *blitter_func)(void);
+typedef void (*blitter_func)(void);
 
 struct rgb_descriptor
 {
@@ -69,102 +62,91 @@ struct rgb_descriptor
 //	IMPORTS
 //============================================================
 
-extern void BLITDECL asmblit1_16_to_16_x1(void);
-extern void BLITDECL asmblit1_16_to_16_x2(void);
-extern void BLITDECL asmblit1_16_to_16_x3(void);
-extern void BLITDECL asmblit1_16_to_24_x1(void);
-extern void BLITDECL asmblit1_16_to_24_x2(void);
-extern void BLITDECL asmblit1_16_to_24_x3(void);
-extern void BLITDECL asmblit1_16_to_32_x1(void);
-extern void BLITDECL asmblit1_16_to_32_x2(void);
-extern void BLITDECL asmblit1_16_to_32_x3(void);
+extern void asmblit1_16_to_16_x1(void);
+extern void asmblit1_16_to_16_x2(void);
+extern void asmblit1_16_to_16_x3(void);
+extern void asmblit1_16_to_24_x1(void);
+extern void asmblit1_16_to_24_x2(void);
+extern void asmblit1_16_to_24_x3(void);
+extern void asmblit1_16_to_32_x1(void);
+extern void asmblit1_16_to_32_x2(void);
+extern void asmblit1_16_to_32_x3(void);
 
-extern void BLITDECL asmblit1_24_to_16_x1(void);
-extern void BLITDECL asmblit1_24_to_16_x2(void);
-extern void BLITDECL asmblit1_24_to_16_x3(void);
-extern void BLITDECL asmblit1_24_to_24_x1(void);
-extern void BLITDECL asmblit1_24_to_24_x2(void);
-extern void BLITDECL asmblit1_24_to_24_x3(void);
-extern void BLITDECL asmblit1_24_to_32_x1(void);
-extern void BLITDECL asmblit1_24_to_32_x2(void);
-extern void BLITDECL asmblit1_24_to_32_x3(void);
+extern void asmblit1_24_to_16_x1(void);
+extern void asmblit1_24_to_16_x2(void);
+extern void asmblit1_24_to_16_x3(void);
+extern void asmblit1_24_to_24_x1(void);
+extern void asmblit1_24_to_24_x2(void);
+extern void asmblit1_24_to_24_x3(void);
+extern void asmblit1_24_to_32_x1(void);
+extern void asmblit1_24_to_32_x2(void);
+extern void asmblit1_24_to_32_x3(void);
 
-extern void BLITDECL asmblit1_32_to_16_x1(void);
-extern void BLITDECL asmblit1_32_to_16_x2(void);
-extern void BLITDECL asmblit1_32_to_16_x3(void);
-extern void BLITDECL asmblit1_32_to_24_x1(void);
-extern void BLITDECL asmblit1_32_to_24_x2(void);
-extern void BLITDECL asmblit1_32_to_24_x3(void);
-extern void BLITDECL asmblit1_32_to_32_x1(void);
-extern void BLITDECL asmblit1_32_to_32_x2(void);
-extern void BLITDECL asmblit1_32_to_32_x3(void);
+extern void asmblit1_32_to_16_x1(void);
+extern void asmblit1_32_to_16_x2(void);
+extern void asmblit1_32_to_16_x3(void);
+extern void asmblit1_32_to_24_x1(void);
+extern void asmblit1_32_to_24_x2(void);
+extern void asmblit1_32_to_24_x3(void);
+extern void asmblit1_32_to_32_x1(void);
+extern void asmblit1_32_to_32_x2(void);
+extern void asmblit1_32_to_32_x3(void);
 
-extern void BLITDECL asmblit16_16_to_16_x1(void);
-extern void BLITDECL asmblit16_16_to_16_x1_mmx(void);
-extern void BLITDECL asmblit16_16_to_16_x2(void);
-extern void BLITDECL asmblit16_16_to_16_x2_mmx(void);
-extern void BLITDECL asmblit16_16_to_16_x3(void);
-extern void BLITDECL asmblit16_16_to_16_x3_mmx(void);
-extern void BLITDECL asmblit16_16_to_24_x1(void);
-extern void BLITDECL asmblit16_16_to_24_x2(void);
-extern void BLITDECL asmblit16_16_to_24_x3(void);
-extern void BLITDECL asmblit16_16_to_32_x1(void);
-extern void BLITDECL asmblit16_16_to_32_x1_mmx(void);
-extern void BLITDECL asmblit16_16_to_32_x2(void);
-extern void BLITDECL asmblit16_16_to_32_x2_mmx(void);
-extern void BLITDECL asmblit16_16_to_32_x3(void);
-extern void BLITDECL asmblit16_16_to_32_x3_mmx(void);
+extern void asmblit16_16_to_16_x1(void);
+extern void asmblit16_16_to_16_x1_mmx(void);
+extern void asmblit16_16_to_16_x2(void);
+extern void asmblit16_16_to_16_x2_mmx(void);
+extern void asmblit16_16_to_16_x3(void);
+extern void asmblit16_16_to_16_x3_mmx(void);
+extern void asmblit16_16_to_24_x1(void);
+extern void asmblit16_16_to_24_x2(void);
+extern void asmblit16_16_to_24_x3(void);
+extern void asmblit16_16_to_32_x1(void);
+extern void asmblit16_16_to_32_x1_mmx(void);
+extern void asmblit16_16_to_32_x2(void);
+extern void asmblit16_16_to_32_x2_mmx(void);
+extern void asmblit16_16_to_32_x3(void);
+extern void asmblit16_16_to_32_x3_mmx(void);
 
-extern void BLITDECL asmblit16_24_to_16_x1(void);
-extern void BLITDECL asmblit16_24_to_16_x2(void);
-extern void BLITDECL asmblit16_24_to_16_x3(void);
-extern void BLITDECL asmblit16_24_to_24_x1(void);
-extern void BLITDECL asmblit16_24_to_24_x2(void);
-extern void BLITDECL asmblit16_24_to_24_x3(void);
-extern void BLITDECL asmblit16_24_to_32_x1(void);
-extern void BLITDECL asmblit16_24_to_32_x2(void);
-extern void BLITDECL asmblit16_24_to_32_x3(void);
+extern void asmblit16_24_to_16_x1(void);
+extern void asmblit16_24_to_16_x2(void);
+extern void asmblit16_24_to_16_x3(void);
+extern void asmblit16_24_to_24_x1(void);
+extern void asmblit16_24_to_24_x2(void);
+extern void asmblit16_24_to_24_x3(void);
+extern void asmblit16_24_to_32_x1(void);
+extern void asmblit16_24_to_32_x2(void);
+extern void asmblit16_24_to_32_x3(void);
 
-extern void BLITDECL asmblit16_32_to_16_x1(void);
-extern void BLITDECL asmblit16_32_to_16_x2(void);
-extern void BLITDECL asmblit16_32_to_16_x3(void);
-extern void BLITDECL asmblit16_32_to_24_x1(void);
-extern void BLITDECL asmblit16_32_to_24_x2(void);
-extern void BLITDECL asmblit16_32_to_24_x3(void);
-extern void BLITDECL asmblit16_32_to_32_x1(void);
-extern void BLITDECL asmblit16_32_to_32_x2(void);
-extern void BLITDECL asmblit16_32_to_32_x3(void);
+extern void asmblit16_32_to_16_x1(void);
+extern void asmblit16_32_to_16_x2(void);
+extern void asmblit16_32_to_16_x3(void);
+extern void asmblit16_32_to_24_x1(void);
+extern void asmblit16_32_to_24_x2(void);
+extern void asmblit16_32_to_24_x3(void);
+extern void asmblit16_32_to_32_x1(void);
+extern void asmblit16_32_to_32_x2(void);
+extern void asmblit16_32_to_32_x3(void);
 
-extern void BLITDECL asmblit1_16_to_16_rgb(void);
-extern void BLITDECL asmblit16_16_to_16_rgb(void);
-extern void BLITDECL asmblit1_16_to_32_rgb(void);
-extern void BLITDECL asmblit16_16_to_32_rgb(void);
+extern void asmblit1_16_to_16_rgb(void);
+extern void asmblit16_16_to_16_rgb(void);
+extern void asmblit1_16_to_32_rgb(void);
+extern void asmblit16_16_to_32_rgb(void);
 
-extern void BLITDECL asmblit_header(void);
-extern void BLITDECL asmblit_header_dirty(void);
-extern void BLITDECL asmblit_yloop_top(void);
-extern void BLITDECL asmblit_yloop_top_dirty(void);
-extern void BLITDECL asmblit_middlexloop_header(void);
-extern void BLITDECL asmblit_middlexloop_header_dirty(void);
-extern void BLITDECL asmblit_middlexloop_top(void);
-extern void BLITDECL asmblit_middlexloop_top_dirty(void);
-extern void BLITDECL asmblit_middlexloop_bottom(void);
-extern void BLITDECL asmblit_middlexloop_bottom_dirty(void);
-extern void BLITDECL asmblit_lastxloop_header(void);
-extern void BLITDECL asmblit_lastxloop_header_dirty(void);
-extern void BLITDECL asmblit_lastxloop_top(void);
-extern void BLITDECL asmblit_lastxloop_top_dirty(void);
-extern void BLITDECL asmblit_lastxloop_bottom(void);
-extern void BLITDECL asmblit_lastxloop_bottom_dirty(void);
-extern void BLITDECL asmblit_yloop_bottom_dirty(void);
-extern void BLITDECL asmblit_yloop_bottom(void);
-extern void BLITDECL asmblit_footer(void);
-extern void BLITDECL asmblit_footer_dirty(void);
-extern void BLITDECL asmblit_footer_mmx(void);
-extern void BLITDECL asmblit_footer_mmx_dirty(void);
+extern void asmblit_header(void);
+extern void asmblit_yloop_top(void);
+extern void asmblit_middlexloop_header(void);
+extern void asmblit_middlexloop_top(void);
+extern void asmblit_middlexloop_bottom(void);
+extern void asmblit_lastxloop_header(void);
+extern void asmblit_lastxloop_top(void);
+extern void asmblit_lastxloop_bottom(void);
+extern void asmblit_yloop_bottom(void);
+extern void asmblit_footer(void);
+extern void asmblit_footer_mmx(void);
 
-extern int BLITDECL asmblit_has_mmx(void);
-extern int BLITDECL asmblit_has_xmm(void);
+extern int asmblit_has_mmx(void);
+extern int asmblit_has_xmm(void);
 
 
 //============================================================
@@ -177,8 +159,6 @@ void *asmblit_srclookup;
 
 void *asmblit_dstdata;
 UINT32 asmblit_dstpitch;
-
-void *asmblit_dirtydata;
 
 UINT32 asmblit_mmxmask[4];
 UINT32 asmblit_rgbmask[MAX_VIDEO_HEIGHT * 2 * 16];
@@ -310,11 +290,21 @@ static struct rgb_descriptor scan75v_desc =
 	}
 };
 
+// table for "sharp" pattern, i.e., no change, just pixel double
+static struct rgb_descriptor sharp_desc =
+{
+	1,
+	{
+		{ RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB, RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB }
+	}
+};
+
 
 //============================================================
 //	PROTOTYPES
 //============================================================
 
+static int blit_vectors(const struct win_blit_params *blit);
 static void generate_blitter(const struct win_blit_params *blit);
 
 
@@ -323,7 +313,7 @@ static void generate_blitter(const struct win_blit_params *blit);
 //	BLITTER CORE TABLES
 //============================================================
 
-static void (BLITDECL *blit1_core[4][4][3])(void) =
+static void (*blit1_core[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -351,7 +341,7 @@ static void (BLITDECL *blit1_core[4][4][3])(void) =
 	}
 };
 
-static void (BLITDECL *blit16_core[4][4][3])(void) =
+static void (*blit16_core[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -379,7 +369,7 @@ static void (BLITDECL *blit16_core[4][4][3])(void) =
 	}
 };
 
-static void (BLITDECL *blit16_core_mmx[4][4][3])(void) =
+static void (*blit16_core_mmx[4][4][3])(void) =
 {
 	{
 		{ NULL,                 NULL,                 NULL },
@@ -407,7 +397,7 @@ static void (BLITDECL *blit16_core_mmx[4][4][3])(void) =
 	}
 };
 
-static void (BLITDECL *blit1_core_rgb[4][4])(void) =
+static void (*blit1_core_rgb[4][4])(void) =
 {
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit1_16_to_16_rgb, NULL, asmblit1_16_to_32_rgb },
@@ -415,7 +405,7 @@ static void (BLITDECL *blit1_core_rgb[4][4])(void) =
 	{ NULL, NULL, NULL, NULL }
 };
 
-static void (BLITDECL *blit16_core_rgb[4][4])(void) =
+static void (*blit16_core_rgb[4][4])(void) =
 {
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, asmblit16_16_to_16_rgb, NULL, asmblit16_16_to_32_rgb },
@@ -434,6 +424,11 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 	int srcdepth = (blit->srcdepth + 7) / 8;
 	int dstdepth = (blit->dstdepth + 7) / 8;
 	blitter_func blitter;
+	
+	// if we have a vector dirty array, alter the plan
+	if (blit->vecdirty && !update)
+		if (blit_vectors(blit))
+			return 1;
 
 	// if anything important has changed, fix it
 	if (blit->srcwidth != active_blitter_params.srcwidth ||
@@ -444,8 +439,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 		blit->dstyskip != active_blitter_params.dstyskip ||
 		blit->dstxscale != active_blitter_params.dstxscale ||
 		blit->dstyscale != active_blitter_params.dstyscale ||
-		blit->dsteffect != active_blitter_params.dsteffect ||
-		(blit->dirtydata != NULL) != (active_blitter_params.dirtydata != NULL))
+		blit->dsteffect != active_blitter_params.dsteffect)
 	{
 		generate_blitter(blit);
 		active_blitter_params = *blit;
@@ -459,15 +453,88 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
 	asmblit_dstpitch = blit->dstpitch;
 
-	asmblit_dirtydata = blit->dirtydata;
-
-	if (((UINT32)asmblit_dstdata & 15) != 0)
+	if (((UINT32)asmblit_dstdata & 7) != 0)
 		fprintf(stderr, "Misaligned blit to: %08x\n", (UINT32)asmblit_dstdata);
 
 	// pick the blitter
 	blitter = update ? (blitter_func)active_update_blitter : (blitter_func)active_fast_blitter;
 	(*blitter)();
 	return 1;
+}
+
+
+
+//============================================================
+//	blit_vectors
+//============================================================
+
+#define PIXEL(x,y,srcdst,bits)	(*((UINT##bits *)((UINT8 *)srcdst##base + (y) * srcdst##pitch) + (x)))
+
+static int blit_vectors(const struct win_blit_params *blit)
+{
+	int srcdepth = (blit->srcdepth + 7) / 8;
+	int dstdepth = (blit->dstdepth + 7) / 8;
+	void *srcbase = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + srcdepth * blit->srcxoffs;
+	void *dstbase = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
+	UINT32 srcpitch = blit->srcpitch;
+	UINT32 dstpitch = blit->dstpitch;
+	vector_pixel_t *list = blit->vecdirty;
+
+	// 16-bit to 16-bit
+	if (blit->srcdepth == 15 && blit->dstdepth == 15)
+	{
+		UINT32 *srclookup = blit->srclookup;
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			PIXEL(x,y,dst,16) = srclookup[PIXEL(x,y,src,16)];
+		}
+		return 1;
+	}
+	
+	// 16-bit to 32-bit
+	else if (blit->srcdepth == 15 && blit->dstdepth == 32)
+	{
+		UINT32 *srclookup = blit->srclookup;
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			PIXEL(x,y,dst,32) = srclookup[PIXEL(x,y,src,16)];
+		}
+		return 1;
+	}
+	
+	// 32-bit to 16-bit
+	else if (blit->srcdepth == 32 && blit->dstdepth == 15)
+	{
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			PIXEL(x,y,dst,16) = PIXEL(x,y,src,32);
+		}
+		return 1;
+	}
+	
+	// 32-bit to 32-bit
+	else if (blit->srcdepth == 32 && blit->dstdepth == 32)
+	{
+		while (*list != VECTOR_PIXEL_END)
+		{
+			vector_pixel_t coords = *list++;
+			int x = VECTOR_PIXEL_X(coords);
+			int y = VECTOR_PIXEL_Y(coords);
+			PIXEL(x,y,dst,32) = PIXEL(x,y,src,32);
+		}
+		return 1;
+	}
+	
+	return 0;
 }
 
 
@@ -956,7 +1023,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 	// loop over copied lines and blit them
 	for (row = 0; row < blit->dstyscale; row++)
 	{
-		// handle dimmed win_old_scanlines
+		// handle dimmed scanlines
 		if (blit->dsteffect >= EFFECT_SCANLINE_25 && blit->dsteffect <= EFFECT_SCANLINE_75 && row != 0 && row == blit->dstyscale - 1)
 		{
 			if (has_mmx)
@@ -971,7 +1038,7 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 		rowoffs += blit->dstpitch;
 	}
 
-	// if updating, and generating win_old_scanlines, store a 0
+	// if updating, and generating scanlines, store a 0
 	if (update && blit->dstyskip)
 	{
 		// if we have any MMX, generate a PXOR MM7,MM7
@@ -1053,6 +1120,8 @@ static void expand_blitter(int which, const struct win_blit_params *blit, UINT8 
 					generate_rgb_masks(&rgbtiny_desc, blit);
 				else if (blit->dsteffect == EFFECT_SCANLINE_75V)
 					generate_rgb_masks(&scan75v_desc, blit);
+				else if (blit->dsteffect == EFFECT_SHARP)
+					generate_rgb_masks(&sharp_desc, blit);
 
 				if (which == 1)
 					blitter = (UINT8 *)(blit1_core_rgb[srcdepth_index][dstdepth_index]);
@@ -1208,11 +1277,9 @@ static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
 
 #define EMIT_SNIPPET_PAIR(snipname) \
 	emit_snippet(asmblit_##snipname, &fastptr); \
-	if (blit->dirtydata) emit_snippet(asmblit_##snipname##_dirty, &fastptr); \
 	emit_snippet(asmblit_##snipname, &updateptr); \
 
 #define EMIT_SNIPPET_PAIR_REVERSE(snipname) \
-	if (blit->dirtydata) emit_snippet(asmblit_##snipname##_dirty, &fastptr); \
 	emit_snippet(asmblit_##snipname, &fastptr); \
 	emit_snippet(asmblit_##snipname, &updateptr); \
 
@@ -1292,7 +1359,7 @@ static void generate_blitter(const struct win_blit_params *blit)
 	valuefixups[3] = valuefixups[1] * 16;
 	valuefixups[4] = blit->srcpitch;
 	valuefixups[5] = blit->dstpitch * (blit->dstyscale + blit->dstyskip);
-	valuefixups[6] = blit->dirtypitch;
+	valuefixups[6] = 0;
 	valuefixups[7] = middle;
 	valuefixups[8] = last;
 	fixup_values(valuefixups, active_fast_blitter, fastptr);

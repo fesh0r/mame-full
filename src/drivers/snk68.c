@@ -20,11 +20,11 @@
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-int  pow_vh_start(void);
-int  searchar_vh_start(void);
-int  ikari3_vh_start(void);
-void pow_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void searchar_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( pow );
+VIDEO_START( searchar );
+VIDEO_START( ikari3 );
+VIDEO_UPDATE( pow );
+VIDEO_UPDATE( searchar );
 WRITE16_HANDLER( pow_paletteram16_word_w );
 WRITE16_HANDLER( pow_flipscreen16_w );
 WRITE16_HANDLER( pow_video16_w );
@@ -109,7 +109,7 @@ static WRITE16_HANDLER( protection_w )
 static WRITE16_HANDLER( sound_w )
 {
 	soundlatch_w(0,(data>>8)&0xff);
-	cpu_cause_interrupt(1,Z80_NMI_INT);
+	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 /*******************************************************************************/
@@ -185,9 +185,9 @@ MEMORY_END
 
 static WRITE_HANDLER( D7759_write_port_0_w )
 {
-	UPD7759_reset_w (0,0);
-	UPD7759_message_w(offset,data);
+	UPD7759_port_w(offset,data);
 	UPD7759_start_w (0,0);
+	UPD7759_start_w (0,1);
 }
 
 static PORT_READ_START( sound_readport )
@@ -198,7 +198,7 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x00, 0x00, YM3812_control_port_0_w },
 	{ 0x20, 0x20, YM3812_write_port_0_w },
 	{ 0x40, 0x40, D7759_write_port_0_w },
-	{ 0x80, 0x80, MWA_NOP }, /* IRQ ack? */
+	{ 0x80, 0x80, UPD7759_0_reset_w },
 PORT_END
 
 /******************************************************************************/
@@ -777,14 +777,13 @@ static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip */
 	4000000,	/* 4 MHz - accurate for POW, should be accurate for others */
-	{ 50 },
+	{ 100 },
 	{ irqhandler },
 };
 
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
 	{ REGION_SOUND1 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
@@ -793,201 +792,128 @@ static struct UPD7759_interface upd7759_interface =
 
 /******************************************************************************/
 
-static const struct MachineDriver machine_driver_ikari3 =
-{
+static MACHINE_DRIVER_START( ikari3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* Accurate */
-			searchar_readmem,searchar_writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* Accurate */
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* Accurate */
+	MDRV_CPU_MEMORY(searchar_readmem,searchar_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(ikari3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	ikari3_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	ikari3_vh_start,
-	0,
-	searchar_vh_screenrefresh,
+	MDRV_VIDEO_START(ikari3)
+	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_pow =
-{
+
+static MACHINE_DRIVER_START( pow )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* Accurate */
-			pow_readmem,pow_writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* Accurate */
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* Accurate */
+	MDRV_CPU_MEMORY(pow_readmem,pow_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(pow_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	pow_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pow_vh_start,
-	0,
-	pow_vh_screenrefresh,
+	MDRV_VIDEO_START(pow)
+	MDRV_VIDEO_UPDATE(pow)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_searchar =
-{
+
+static MACHINE_DRIVER_START( searchar )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			12000000,
-			searchar_readmem,searchar_writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(searchar_readmem,searchar_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(searchar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	searchar_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	searchar_vh_start,
-	0,
-	searchar_vh_screenrefresh,
+	MDRV_VIDEO_START(searchar)
+	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_streetsm =
-{
+
+static MACHINE_DRIVER_START( streetsm )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* Accurate */
-			pow_readmem,pow_writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* Accurate */
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(M68000, 10000000)	/* Accurate */
+	MDRV_CPU_MEMORY(pow_readmem,pow_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* Accurate */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(searchar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	searchar_gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pow_vh_start,
-	0,
-	searchar_vh_screenrefresh,
+	MDRV_VIDEO_START(pow)
+	MDRV_VIDEO_UPDATE(searchar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -1255,7 +1181,7 @@ ROM_END
 
 /******************************************************************************/
 
-static void init_searchar(void)
+static DRIVER_INIT( searchar )
 {
 	cpu_setbank(1, memory_region(REGION_USER1));
 }

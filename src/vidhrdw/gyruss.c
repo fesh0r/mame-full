@@ -38,7 +38,7 @@ static int scanline;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gyruss )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -47,25 +47,26 @@ void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -82,24 +83,14 @@ void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-void gyruss_vh_stop(void)
+VIDEO_START( gyruss )
 {
-	free(sprite_mux_buffer);
-	sprite_mux_buffer = 0;
-	generic_vh_stop();
-}
-
-int gyruss_vh_start(void)
-{
-	sprite_mux_buffer = malloc(256 * spriteram_size);
+	sprite_mux_buffer = auto_malloc(256 * spriteram_size);
 
 	if (!sprite_mux_buffer)
-	{
-		gyruss_vh_stop();
 		return 1;
-	}
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 
@@ -168,7 +159,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void gyruss_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gyruss )
 {
 	int offs;
 
@@ -242,14 +233,12 @@ void gyruss_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-int gyruss_6809_interrupt(void)
+INTERRUPT_GEN( gyruss_6809_interrupt )
 {
 	scanline = 255 - cpu_getiloops();
 
 	memcpy(sprite_mux_buffer + scanline * spriteram_size,spriteram,spriteram_size);
 
 	if (scanline == 255)
-		return interrupt();
-	else
-		return ignore_interrupt();
+		irq0_line_hold();
 }

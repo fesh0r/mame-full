@@ -17,7 +17,13 @@
 	Mahjong Bakuhatsu Junjouden
 	(c)1991 Nihon Bussan Co.,Ltd.
 
+	Ultra Maru-hi Mahjong
+	(c)1993 Apple
+
 	Mahjong Gal 10-renpatsu
+	(c)1993 FUJIC Co.,Ltd.
+
+	Mahjong Ren-ai Club
 	(c)1993 FUJIC Co.,Ltd.
 
 	Mahjong La Man
@@ -96,14 +102,11 @@ Memo:
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void sailorws_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int sailorws_vh_start(void);
-void sailorws_vh_stop(void);
-int mjkoiura_vh_start(void);
-void mjkoiura_vh_stop(void);
-void mscoutm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int mscoutm_vh_start(void);
-void mscoutm_vh_stop(void);
+VIDEO_UPDATE( sailorws );
+VIDEO_START( sailorws );
+VIDEO_START( mjkoiura );
+VIDEO_UPDATE( mscoutm );
+VIDEO_START( mscoutm );
 
 READ_HANDLER( sailorws_palette_r );
 WRITE_HANDLER( sailorws_palette_w );
@@ -148,7 +151,7 @@ static unsigned char *sailorws_nvram;
 static size_t sailorws_nvram_size;
 
 
-static void sailorws_nvram_handler(void *file, int read_or_write)
+static NVRAM_HANDLER( sailorws )
 {
 	if (read_or_write)
 		osd_fwrite(file, sailorws_nvram, sailorws_nvram_size);
@@ -216,7 +219,7 @@ static void sailorws_dipswbitsel_w(int data)
 		case	0x80:
 			break;
 		case	0xc0:
-			sailorws_dipswbitsel = ((sailorws_dipswbitsel+1) & 0x0f);
+			sailorws_dipswbitsel = ((sailorws_dipswbitsel + 1) & 0x0f);
 			break;
 		default:
 			break;
@@ -317,7 +320,7 @@ static int tmpz84c011_pio_r(int offset)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", cpu_get_pc(), offset);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", activecpu_get_pc(), offset);
 				portdata = 0xff;
 				break;
 		}
@@ -382,7 +385,7 @@ static int tmpz84c011_pio_r(int offset)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", cpu_get_pc(), offset);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Read %02X\n", activecpu_get_pc(), offset);
 				portdata = 0xff;
 				break;
 		}
@@ -437,7 +440,7 @@ static void tmpz84c011_pio_w(int offset, int data)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", cpu_get_pc(), offset, data);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", activecpu_get_pc(), offset, data);
 				break;
 		}
 	}
@@ -483,7 +486,7 @@ static void tmpz84c011_pio_w(int offset, int data)
 				break;
 
 			default:
-				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", cpu_get_pc(), offset, data);
+				logerror("PC %04X: TMPZ84C011_PIO Unknown Port Write %02X, %02X\n", activecpu_get_pc(), offset, data);
 				break;
 		}
 	}
@@ -545,20 +548,19 @@ static WRITE_HANDLER( tmpz84c011_1_dir_pe_w ) { pio_dir[9] = data; }
 
 static void ctc0_interrupt(int state)
 {
-	cpu_cause_interrupt(0, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 static void ctc1_interrupt(int state)
 {
-	cpu_cause_interrupt(1, Z80_VECTOR(0, state));
+	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 /* CTC of main cpu, ch0 trigger is vblank */
-static int ctc0_trg1(void)
+static INTERRUPT_GEN( ctc0_trg1 )
 {
 	z80ctc_0_trg1_w(0, 1);
 	z80ctc_0_trg1_w(0, 0);
-	return ignore_interrupt();
 }
 
 static z80ctc_interface ctc_intf =
@@ -589,7 +591,7 @@ static void tmpz84c011_init(void)
 	z80ctc_init(&ctc_intf);
 }
 
-static void sailorws_init_machine(void)
+static MACHINE_INIT( sailorws )
 {
 	//
 }
@@ -609,28 +611,30 @@ static void initialize_driver(void)
 }
 
 
-static void init_mjuraden(void) { initialize_driver(); }
-static void init_koinomp(void) { initialize_driver(); }
-static void init_patimono(void) { initialize_driver(); }
-static void init_mmehyou(void) { initialize_driver(); }
-static void init_gal10ren(void) { initialize_driver(); }
-static void init_mjlaman(void) { initialize_driver(); }
-static void init_mkeibaou(void) { initialize_driver(); }
-static void init_pachiten(void) { initialize_driver(); }
-static void init_mjanbari(void) { initialize_driver(); }
-static void init_sailorws(void) { initialize_driver(); }
-static void init_sailorwr(void) { initialize_driver(); }
-static void init_psailor1(void) { initialize_driver(); }
-static void init_psailor2(void) { initialize_driver(); }
-static void init_otatidai(void) { initialize_driver(); }
-static void init_ngpgal(void) { initialize_driver(); }
-static void init_mjgottsu(void) { initialize_driver(); }
-static void init_bakuhatu(void) { initialize_driver(); }
-static void init_cmehyou(void) { initialize_driver(); }
-static void init_mjkoiura(void) { initialize_driver(); }
-static void init_mscoutm(void) { initialize_driver(); }
-static void init_imekura(void) { initialize_driver(); }
-static void init_mjegolf(void) { initialize_driver(); }
+static DRIVER_INIT( mjuraden ) { initialize_driver(); }
+static DRIVER_INIT( koinomp ) { initialize_driver(); }
+static DRIVER_INIT( patimono ) { initialize_driver(); }
+static DRIVER_INIT( mmehyou ) { initialize_driver(); }
+static DRIVER_INIT( gal10ren ) { initialize_driver(); }
+static DRIVER_INIT( mjlaman ) { initialize_driver(); }
+static DRIVER_INIT( mkeibaou ) { initialize_driver(); }
+static DRIVER_INIT( pachiten ) { initialize_driver(); }
+static DRIVER_INIT( mjanbari ) { initialize_driver(); }
+static DRIVER_INIT( ultramhm ) { initialize_driver(); }
+static DRIVER_INIT( sailorws ) { initialize_driver(); }
+static DRIVER_INIT( sailorwr ) { initialize_driver(); }
+static DRIVER_INIT( psailor1 ) { initialize_driver(); }
+static DRIVER_INIT( psailor2 ) { initialize_driver(); }
+static DRIVER_INIT( otatidai ) { initialize_driver(); }
+static DRIVER_INIT( renaiclb ) { initialize_driver(); }
+static DRIVER_INIT( ngpgal ) { initialize_driver(); }
+static DRIVER_INIT( mjgottsu ) { initialize_driver(); }
+static DRIVER_INIT( bakuhatu ) { initialize_driver(); }
+static DRIVER_INIT( cmehyou ) { initialize_driver(); }
+static DRIVER_INIT( mjkoiura ) { initialize_driver(); }
+static DRIVER_INIT( mscoutm ) { initialize_driver(); }
+static DRIVER_INIT( imekura ) { initialize_driver(); }
+static DRIVER_INIT( mjegolf ) { initialize_driver(); }
 
 
 static MEMORY_READ_START( readmem_sailorws )
@@ -899,25 +903,6 @@ static PORT_WRITE_START( writeport_patimono )
 PORT_END
 
 
-static PORT_READ_START( readport_gal10ren )
-	{ 0x10, 0x13, z80ctc_0_r },
-	{ 0x50, 0x50, tmpz84c011_0_pa_r },
-	{ 0x51, 0x51, tmpz84c011_0_pb_r },
-	{ 0x52, 0x52, tmpz84c011_0_pc_r },
-	{ 0x30, 0x30, tmpz84c011_0_pd_r },
-	{ 0x40, 0x40, tmpz84c011_0_pe_r },
-	{ 0x54, 0x54, tmpz84c011_0_dir_pa_r },
-	{ 0x55, 0x55, tmpz84c011_0_dir_pb_r },
-	{ 0x56, 0x56, tmpz84c011_0_dir_pc_r },
-	{ 0x34, 0x34, tmpz84c011_0_dir_pd_r },
-	{ 0x44, 0x44, tmpz84c011_0_dir_pe_r },
-
-	{ 0x60, 0x60, sailorws_gfxbusy_0_r },
-	{ 0x61, 0x61, sailorws_gfxrom_0_r },
-	{ 0xa0, 0xa0, sailorws_gfxbusy_1_r },
-	{ 0xa1, 0xa1, sailorws_gfxrom_1_r },
-PORT_END
-
 static PORT_READ_START( readport_mmehyou )
 	{ 0x10, 0x13, z80ctc_0_r },
 	{ 0x50, 0x50, tmpz84c011_0_pa_r },
@@ -967,6 +952,25 @@ static PORT_WRITE_START( writeport_mmehyou )
 PORT_END
 
 
+static PORT_READ_START( readport_gal10ren )
+	{ 0x10, 0x13, z80ctc_0_r },
+	{ 0x50, 0x50, tmpz84c011_0_pa_r },
+	{ 0x51, 0x51, tmpz84c011_0_pb_r },
+	{ 0x52, 0x52, tmpz84c011_0_pc_r },
+	{ 0x30, 0x30, tmpz84c011_0_pd_r },
+	{ 0x40, 0x40, tmpz84c011_0_pe_r },
+	{ 0x54, 0x54, tmpz84c011_0_dir_pa_r },
+	{ 0x55, 0x55, tmpz84c011_0_dir_pb_r },
+	{ 0x56, 0x56, tmpz84c011_0_dir_pc_r },
+	{ 0x34, 0x34, tmpz84c011_0_dir_pd_r },
+	{ 0x44, 0x44, tmpz84c011_0_dir_pe_r },
+
+	{ 0x60, 0x60, sailorws_gfxbusy_0_r },
+	{ 0x61, 0x61, sailorws_gfxrom_0_r },
+	{ 0xa0, 0xa0, sailorws_gfxbusy_1_r },
+	{ 0xa1, 0xa1, sailorws_gfxrom_1_r },
+PORT_END
+
 static PORT_WRITE_START( writeport_gal10ren )
 	{ 0x10, 0x13, z80ctc_0_w },
 	{ 0x50, 0x50, tmpz84c011_0_pa_w },
@@ -1007,6 +1011,68 @@ static PORT_WRITE_START( writeport_gal10ren )
 	{ 0xc8, 0xc8, IOWP_NOP },
 	{ 0xd0, 0xd0, IOWP_NOP },
 	{ 0xd8, 0xd8, sailorws_inputportsel_w },
+PORT_END
+
+
+static PORT_READ_START( readport_renaiclb )
+	{ 0x10, 0x13, z80ctc_0_r },
+	{ 0x50, 0x50, tmpz84c011_0_pa_r },
+	{ 0x51, 0x51, tmpz84c011_0_pb_r },
+	{ 0x52, 0x52, tmpz84c011_0_pc_r },
+	{ 0x30, 0x30, tmpz84c011_0_pd_r },
+	{ 0x40, 0x40, tmpz84c011_0_pe_r },
+	{ 0x54, 0x54, tmpz84c011_0_dir_pa_r },
+	{ 0x55, 0x55, tmpz84c011_0_dir_pb_r },
+	{ 0x56, 0x56, tmpz84c011_0_dir_pc_r },
+	{ 0x34, 0x34, tmpz84c011_0_dir_pd_r },
+	{ 0x44, 0x44, tmpz84c011_0_dir_pe_r },
+
+	{ 0x60, 0x60, sailorws_gfxbusy_1_r },
+	{ 0x61, 0x61, sailorws_gfxrom_1_r },
+	{ 0xe0, 0xe0, sailorws_gfxbusy_0_r },
+	{ 0xe1, 0xe1, sailorws_gfxrom_0_r },
+PORT_END
+
+static PORT_WRITE_START( writeport_renaiclb )
+	{ 0x10, 0x13, z80ctc_0_w },
+	{ 0x50, 0x50, tmpz84c011_0_pa_w },
+	{ 0x51, 0x51, tmpz84c011_0_pb_w },
+	{ 0x52, 0x52, tmpz84c011_0_pc_w },
+	{ 0x30, 0x30, tmpz84c011_0_pd_w },
+	{ 0x40, 0x40, tmpz84c011_0_pe_w },
+	{ 0x54, 0x54, tmpz84c011_0_dir_pa_w },
+	{ 0x55, 0x55, tmpz84c011_0_dir_pb_w },
+	{ 0x56, 0x56, tmpz84c011_0_dir_pc_w },
+	{ 0x34, 0x34, tmpz84c011_0_dir_pd_w },
+	{ 0x44, 0x44, tmpz84c011_0_dir_pe_w },
+
+	{ 0x70, 0x7f, sailorws_paltbl_1_w },
+	{ 0xf0, 0xff, sailorws_paltbl_0_w },
+
+	{ 0x60, 0x60, sailorws_gfxflag_1_w },
+	{ 0x61, 0x62, sailorws_scrollx_1_w },
+	{ 0x63, 0x64, sailorws_scrolly_1_w },
+	{ 0x65, 0x67, sailorws_radr_1_w },
+	{ 0x68, 0x68, sailorws_sizex_1_w },
+	{ 0x69, 0x69, sailorws_sizey_1_w },
+	{ 0x6a, 0x6b, sailorws_drawx_1_w },
+	{ 0x6c, 0x6d, sailorws_drawy_1_w },
+	{ 0x6f, 0x6f, IOWP_NOP },
+
+	{ 0xe0, 0xe0, sailorws_gfxflag_0_w },
+	{ 0xe1, 0xe2, sailorws_scrollx_0_w },
+	{ 0xe3, 0xe4, sailorws_scrolly_0_w },
+	{ 0xe5, 0xe7, sailorws_radr_0_w },
+	{ 0xe8, 0xe8, sailorws_sizex_0_w },
+	{ 0xe9, 0xe9, sailorws_sizey_0_w },
+	{ 0xea, 0xeb, sailorws_drawx_0_w },
+	{ 0xec, 0xed, sailorws_drawy_0_w },
+	{ 0xef, 0xef, IOWP_NOP },
+
+	{ 0x20, 0x20, sailorws_sound_w },
+	{ 0x24, 0x24, IOWP_NOP },
+	{ 0x28, 0x28, IOWP_NOP },
+	{ 0x2c, 0x2c, sailorws_inputportsel_w },
 PORT_END
 
 
@@ -2052,8 +2118,8 @@ INPUT_PORTS_START( mjuraden )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Character Display Test" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2128,8 +2194,8 @@ INPUT_PORTS_START( koinomp )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2201,8 +2267,8 @@ INPUT_PORTS_START( patimono )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2285,8 +2351,8 @@ INPUT_PORTS_START( mjanbari )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2358,9 +2424,82 @@ INPUT_PORTS_START( mmehyou )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Graphic ROM Test" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// COIN OUT
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )		// COIN2
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
+
+	MJCTRL_SAILORWS_PORT1
+	MJCTRL_SAILORWS_PORT2
+	MJCTRL_SAILORWS_PORT3
+	MJCTRL_SAILORWS_PORT4
+	MJCTRL_SAILORWS_PORT5
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ultramhm )
+
+	// I don't have manual for this game.
+
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Graphic ROM Test" )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 1-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 1-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
@@ -2472,6 +2611,79 @@ INPUT_PORTS_START( gal10ren )
 	MJCTRL_SAILORWS_PORT5
 INPUT_PORTS_END
 
+INPUT_PORTS_START( renaiclb )
+
+	// I don't have manual for this game.
+
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 1-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Graphic ROM Test" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// COIN OUT
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )		// COIN2
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )		// SERVICE
+
+	MJCTRL_SAILORWS_PORT1
+	MJCTRL_SAILORWS_PORT2
+	MJCTRL_SAILORWS_PORT3
+	MJCTRL_SAILORWS_PORT4
+	MJCTRL_SAILORWS_PORT5
+INPUT_PORTS_END
+
 INPUT_PORTS_START( mjlaman )
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ) )
@@ -2486,8 +2698,8 @@ INPUT_PORTS_START( mjlaman )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xe0, "1 (Easy)" )
 	PORT_DIPSETTING(    0xc0, "2" )
@@ -2558,8 +2770,8 @@ INPUT_PORTS_START( mkeibaou )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2639,8 +2851,8 @@ INPUT_PORTS_START( pachiten )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2695,8 +2907,8 @@ INPUT_PORTS_START( sailorws )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2776,8 +2988,8 @@ INPUT_PORTS_START( sailorwr )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Character Display Test" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2829,8 +3041,8 @@ INPUT_PORTS_START( psailor1 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xe0, "1 (Easy)" )
 	PORT_DIPSETTING(    0xc0, "2" )
@@ -2897,8 +3109,8 @@ INPUT_PORTS_START( psailor2 )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0xe0, "1 (Easy)" )
 	PORT_DIPSETTING(    0xc0, "2" )
@@ -3037,8 +3249,8 @@ INPUT_PORTS_START( ngpgal )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3109,8 +3321,8 @@ INPUT_PORTS_START( mjgottsu )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3162,9 +3374,6 @@ INPUT_PORTS_START( mjgottsu )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( bakuhatu )
-
-	// I don't have manual for this game.
-
 	PORT_START	/* (0) DIPSW-A */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x03, "1" )
@@ -3181,8 +3390,8 @@ INPUT_PORTS_START( bakuhatu )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3248,8 +3457,8 @@ INPUT_PORTS_START( cmehyou )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Graphic ROM Test" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3321,8 +3530,8 @@ INPUT_PORTS_START( mjkoiura )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3396,8 +3605,8 @@ INPUT_PORTS_START( mscoutm )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
@@ -3443,19 +3652,16 @@ INPUT_PORTS_START( mscoutm )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( imekura )
-
-	// I don't have manual for this game.
-
 	PORT_START	/* (0) DIPSW-A */
-	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "1 (Easy)" )
+	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x05, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x00, "Game Sounds" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -3463,14 +3669,13 @@ INPUT_PORTS_START( imekura )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 1-8" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_3C ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
@@ -3533,8 +3738,8 @@ INPUT_PORTS_START( mjegolf )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
@@ -3602,198 +3807,312 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	4000000,			/* 4.00 MHz */
-	{ 35 }
+	{ 100 }
 };
 
 static struct DACinterface dac_interface =
 {
 	2,				/* 2 channels */
-	{ 50, 75 },
+	{ 35, 55 },
 };
 
 
-#define NBMJDRV1( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	sailorws_vh_start, \
-	sailorws_vh_stop, \
-	sailorws_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( NBMJDRV1 )
 
-#define NBMJDRV2( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mjkoiura_vh_start, \
-	mjkoiura_vh_stop, \
-	sailorws_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main",Z80,12000000/2)		/* TMPZ84C011, 6.00 MHz */
+	MDRV_CPU_CONFIG(daisy_chain_main)
+	MDRV_CPU_MEMORY(readmem_sailorws, writemem_sailorws)
+	MDRV_CPU_PORTS(readport_sailorws, writeport_sailorws)
+	MDRV_CPU_VBLANK_INT(ctc0_trg1, 1)	/* vblank is connect to ctc triggfer */
 
-#define NBMJDRV3( _name_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80,		/* TMPZ84C011 */ \
-		/*	12000000/4,	*/	/* 3.00 MHz */ \
-		/*	12000000/3,	*/	/* 4.00 MHz */ \
-			12000000/2,		/* 6.00 MHz */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			ctc0_trg1, 1, /* vblank is connect to ctc triggfer */ \
-			0, 0, daisy_chain_main \
-		}, \
-		{ \
-			CPU_Z80 | CPU_AUDIO_CPU,/* TMPZ84C011 */ \
-		/*	8000000/2,	*/	/* 4.00 MHz */ \
-			8000000/1,		/* 8.00 MHz */ \
-			sound_readmem, sound_writemem, sound_readport, sound_writeport, \
-			0, 0,	/* interrupts are made by z80 daisy chain system */ \
-			0, 0, daisy_chain_sound \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	sailorws_init_machine, \
-\
-	/* video hardware */ \
-	1024, 512, { 0, 640-1, 0, 240-1 }, \
-	0, \
-	512, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mscoutm_vh_start, \
-	mscoutm_vh_stop, \
-	mscoutm_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_CPU_ADD(Z80,8000000/1)			/* TMPZ84C011, 8.00 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_CONFIG(daisy_chain_sound)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
-//	     NAME,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1( mjuraden, mjuraden, mjuraden, mjuraden, mjuraden, 0 )
-NBMJDRV1(  koinomp,  koinomp,  koinomp,  koinomp,  koinomp, 0 )
-NBMJDRV1( patimono, sailorws, sailorws, patimono, patimono, 0 )
-NBMJDRV1( mjanbari, sailorws, sailorws, patimono, patimono, sailorws_nvram_handler )
-NBMJDRV1(  mmehyou,  koinomp,  koinomp,  mmehyou,  mmehyou, sailorws_nvram_handler )
-NBMJDRV1( gal10ren, sailorws, sailorws, gal10ren, gal10ren, 0 )
-NBMJDRV1(  mjlaman, sailorws, sailorws,  mjlaman,  mjlaman, 0 )
-NBMJDRV1( mkeibaou, sailorws, sailorws, mkeibaou, mkeibaou, 0 )
-NBMJDRV1( pachiten, sailorws, sailorws, pachiten, pachiten, sailorws_nvram_handler )
-NBMJDRV1( sailorws, sailorws, sailorws, sailorws, sailorws, 0 )
-NBMJDRV1( sailorwr, sailorws, sailorws, sailorwr, sailorwr, sailorws_nvram_handler )
-NBMJDRV1( psailor1, sailorws, sailorws, psailor1, psailor1, 0 )
-NBMJDRV1( psailor2, sailorws, sailorws, psailor2, psailor2, 0 )
-NBMJDRV1( otatidai, sailorws, sailorws, otatidai, otatidai, 0 )
-NBMJDRV2(   ngpgal,   ngpgal,   ngpgal,   ngpgal,   ngpgal, 0 )
-NBMJDRV2( mjgottsu,   ngpgal,   ngpgal, mjgottsu, mjgottsu, 0 )
-NBMJDRV2( bakuhatu,   ngpgal,   ngpgal, mjgottsu, mjgottsu, 0 )
-NBMJDRV2(  cmehyou,   ngpgal,   ngpgal,  cmehyou,  cmehyou, 0 )
-NBMJDRV2( mjkoiura, mjuraden, mjuraden, mjkoiura, mjkoiura, 0 )
-NBMJDRV3(  mscoutm,  mscoutm,  mscoutm,  mscoutm,  mscoutm, 0 )
-NBMJDRV3(  imekura,  mjegolf,  mjegolf,  imekura,  imekura, 0 )
-NBMJDRV3(  mjegolf,  mjegolf,  mjegolf,  mjegolf,  mjegolf, 0 )
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(sailorws)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(1024, 512)
+	MDRV_VISIBLE_AREA(0, 640-1, 0, 240-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(sailorws)
+	MDRV_VIDEO_UPDATE(sailorws)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_VIDEO_START(mjkoiura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(mscoutm)
+	MDRV_VIDEO_UPDATE(mscoutm)
+MACHINE_DRIVER_END
+
+
+//-------------------------------------------------------------------------
+
+static MACHINE_DRIVER_START( mjuraden )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjuraden,writemem_mjuraden)
+	MDRV_CPU_PORTS(readport_mjuraden,writeport_mjuraden)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( koinomp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_koinomp,writeport_koinomp)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( patimono )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_patimono,writeport_patimono)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjanbari )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_patimono,writeport_patimono)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mmehyou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_mmehyou,writeport_mmehyou)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ultramhm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_koinomp,writemem_koinomp)
+	MDRV_CPU_PORTS(readport_koinomp,writeport_koinomp)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( gal10ren )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_gal10ren,writeport_gal10ren)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( renaiclb )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_renaiclb,writeport_renaiclb)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjlaman )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_mjlaman,writeport_mjlaman)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mkeibaou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_mkeibaou,writeport_mkeibaou)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pachiten )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_pachiten,writeport_pachiten)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sailorws )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sailorwr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_sailorwr,writeport_sailorwr)
+
+	MDRV_NVRAM_HANDLER(sailorws)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( psailor1 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_psailor1,writeport_psailor1)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( psailor2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_psailor2,writeport_psailor2)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( otatidai )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV1 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(readport_otatidai,writeport_otatidai)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ngpgal )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_ngpgal,writeport_ngpgal)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjgottsu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_mjgottsu,writeport_mjgottsu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bakuhatu )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_mjgottsu,writeport_mjgottsu)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( cmehyou )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ngpgal,writemem_ngpgal)
+	MDRV_CPU_PORTS(readport_cmehyou,writeport_cmehyou)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjkoiura )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV2 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjuraden,writemem_mjuraden)
+	MDRV_CPU_PORTS(readport_mjkoiura,writeport_mjkoiura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mscoutm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mscoutm,writemem_mscoutm)
+	MDRV_CPU_PORTS(readport_mscoutm,writeport_mscoutm)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( imekura )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjegolf,writemem_mjegolf)
+	MDRV_CPU_PORTS(readport_imekura,writeport_imekura)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjegolf )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM( NBMJDRV3 )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjegolf,writemem_mjegolf)
+	MDRV_CPU_PORTS(readport_mjegolf,writeport_mjegolf)
+MACHINE_DRIVER_END
 
 
 ROM_START( mjuraden )
@@ -3881,6 +4200,20 @@ ROM_START( mmehyou )
 	ROM_LOAD( "9.10h", 0x240000, 0x20000, 0x18a72f2e )
 ROM_END
 
+ROM_START( ultramhm )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD( "1.7c",   0x00000,  0x10000, 0x152811b1 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "2.12e",  0x00000,  0x20000, 0xa26ba18b )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "3.1h",   0x000000, 0x80000, 0xc0b2bb01 )
+	ROM_LOAD( "4.3h",   0x080000, 0x80000, 0xc9f0fe0f )
+	ROM_LOAD( "5.4h",   0x100000, 0x80000, 0xee9a449e )
+	ROM_LOAD( "6.6h",   0x180000, 0x80000, 0x0c1a8723 )
+ROM_END
+
 ROM_START( gal10ren )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
 	ROM_LOAD( "gl10_01.bin",  0x00000,  0x10000, 0xf63f81b4 )
@@ -3897,6 +4230,21 @@ ROM_START( gal10ren )
 	ROM_LOAD( "gl10_08.bin",  0x280000, 0x80000, 0x777857d0 )
 	ROM_LOAD( "gl10_09.bin",  0x300000, 0x80000, 0xb1dba049 )
 	ROM_LOAD( "gl10_10.bin",  0x380000, 0x80000, 0xa9806b00 )
+ROM_END
+
+ROM_START( renaiclb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main program */
+	ROM_LOAD( "1.7c",  0x00000,  0x10000, 0x82f99130 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound program */
+	ROM_LOAD( "2.12e", 0x00000,  0x20000, 0x9f6204a1 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "3.1h",  0x000000, 0x80000, 0x3d205506 )
+	ROM_LOAD( "4.3h",  0x080000, 0x80000, 0xd9c1af55 )
+	ROM_LOAD( "5.5h",  0x100000, 0x80000, 0x3860cae7 )
+	ROM_LOAD( "6.6h",  0x180000, 0x80000, 0xf5a43aaa )
+	ROM_LOAD( "7.7h",  0x200000, 0x80000, 0x31676c54 )
 ROM_END
 
 ROM_START( mjlaman )
@@ -4230,7 +4578,9 @@ GAME( 1992,  koinomp, 0,         koinomp,  koinomp,  koinomp, ROT0, "Nichibutsu"
 GAME( 1992, patimono, 0,        patimono, patimono, patimono, ROT0, "Nichibutsu", "Mahjong Pachinko Monogatari (Japan)" )
 GAME( 1992, mjanbari, 0,        mjanbari, mjanbari, mjanbari, ROT0, "Nichibutsu/Yubis/AV JAPAN", "Medal Mahjong Janjan Baribari [BET] (Japan)" )
 GAME( 1992,  mmehyou, 0,         mmehyou,  mmehyou,  mmehyou, ROT0, "Nichibutsu/Kawakusu", "Medal Mahjong Circuit no Mehyou [BET] (Japan)" )
+GAME( 1993, ultramhm, 0,        ultramhm, ultramhm, ultramhm, ROT0, "Apple", "Ultra Maru-hi Mahjong (Japan)" )
 GAME( 1993, gal10ren, 0,        gal10ren, gal10ren, gal10ren, ROT0, "FUJIC", "Mahjong Gal 10-renpatsu (Japan)" )
+GAME( 1993, renaiclb, 0,        renaiclb, renaiclb, renaiclb, ROT0, "FUJIC", "Mahjong Ren-ai Club (Japan)" )
 GAME( 1993,  mjlaman, 0,         mjlaman,  mjlaman,  mjlaman, ROT0, "Nichibutsu/AV JAPAN", "Mahjong La Man (Japan)" )
 GAME( 1993, mkeibaou, 0,        mkeibaou, mkeibaou, mkeibaou, ROT0, "Nichibutsu", "Mahjong Keibaou (Japan)" )
 GAME( 1993, pachiten, 0,        pachiten, pachiten, pachiten, ROT0, "Nichibutsu/MIKI SYOUJI/AV JAPAN", "Medal Mahjong Pachi-Slot Tengoku [BET] (Japan)" )

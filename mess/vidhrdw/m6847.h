@@ -27,8 +27,6 @@ enum {
 	M6847_VERSION_M6847T1_NTSC
 };
 
-#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
-
 struct m6847_init_params {
 	int version;				/* use one of the above initialization constants */
 	int artifactdipswitch;		/* dip switch that controls artifacting; -1 if NA */
@@ -46,16 +44,24 @@ struct m6847_init_params {
  * change around the structure without breaking people's code */
 void m6847_vh_normalparams(struct m6847_init_params *params);
 
-void m6847_vh_init_palette(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom);
-int m6847_vh_start(const struct m6847_init_params *params);
-void m6847_vh_update(struct mame_bitmap *bitmap,int full_refresh);
-void m6847_vh_stop(void);
-int m6847_vh_interrupt(void);
+void palette_init_m6847(unsigned short *colortable,const unsigned char *color_prom);
+int video_start_m6847(const struct m6847_init_params *params);
+void video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+void m6847_vh_interrupt(void);
 int m6847_is_t1(int version);
 
+#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
 #define M6847_SCREEN_WIDTH	320
 #define M6847_SCREEN_HEIGHT	263
-#define M6847_SCREEN_VISIBLE_AREA	{0,319,11,250}
+
+#define MDRV_M6847(video_start)									\
+	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE)						\
+	MDRV_SCREEN_SIZE(M6847_SCREEN_WIDTH, M6847_SCREEN_HEIGHT)	\
+	MDRV_VISIBLE_AREA(0,319,11,250)								\
+	MDRV_PALETTE_LENGTH(M6847_TOTAL_COLORS)						\
+	MDRV_PALETTE_INIT(m6847)									\
+	MDRV_VIDEO_START(video_start)								\
+	MDRV_VIDEO_UPDATE(m6847)
 
 /******************* Modifiers *******************/
 

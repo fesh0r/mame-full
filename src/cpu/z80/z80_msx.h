@@ -13,7 +13,7 @@ extern int z80_msx_execute(int cycles);
 extern void z80_msx_burn(int cycles);
 extern unsigned z80_msx_get_context (void *dst);
 extern void z80_msx_set_context (void *src);
-extern void *z80_msx_get_cycle_table (int which);
+extern const void *z80_msx_get_cycle_table (int which);
 extern void z80_msx_set_cycle_table (int which, void *new_tbl);
 extern unsigned z80_msx_get_pc (void);
 extern void z80_msx_set_pc (unsigned val);

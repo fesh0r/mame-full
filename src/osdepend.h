@@ -3,7 +3,6 @@
 
 #include "osd_cpu.h"
 #include "inptport.h"
-#include "palette.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -34,6 +33,13 @@ void osd_exit(void);
 /* mame_bitmap used to be declared here, but has moved to common.c */
 /* sadly, the include order requires that at least this forward declaration is here */
 struct mame_bitmap;
+struct mame_display;
+struct rectangle;
+
+
+/* kludge for now until we remove the explicit calls from the various games */
+#define osd_mark_dirty(a,b,c,d)
+
 
 /*
   Create a display screen, or window, of the given dimensions (or larger). It is
@@ -57,56 +63,9 @@ struct mame_bitmap;
 
   Returns 0 on success.
 */
-int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
+int osd_create_display(int width, int height, int depth, float fps, int attributes, int orientation, UINT32 *rgb_components);
 void osd_close_display(void);
 
-
-/*
-  Set the portion of the screen bitmap that has to be drawn on screen. The OS
-  dependant code is allowed to display a smaller portion of the bitmap if
-  necessary, in that case the user must have a way to move the visibility
-  window around.
-  Parts of the bitmap outside the specified rectangle must never be drawn
-  because they might contain garbage.
-  The function must call set_ui_visarea() to tell the core the portion of the
-  bitmap actually visible (which might be smaller than requested), so the user
-  interface can be drawn accordingly. If the visible area is smaller than
-  requested, set_ui_visarea() must also be called whenever the user moves the
-  visibility window, so the user interface will remain at a fixed position on
-  screen while the game display moves around.
-*/
-void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
-
-
-
-/*
-  osd_allocate_colors() is called after osd_create_display(), to create and
-  initialize the palette.
-
-  palette is an array of 'totalcolors' R,G,B triplets.
-
-  For direct mapped modes, the palette contains just three entries, a pure red,
-  pure green and pure blue. Of course this is not the game palette, it is only
-  used by the core to determine the layout (RGB, BGR etc.) so the OS code can
-  do a straight copy of the bitmap without having to remap it. RGB 565 modes
-  are NOT supported yet by the core, only 555. The function must return in
-  *rgb_components the values corresponding to the requested colors.
-
-  The function must also initialize Machine->uifont->colortable[] to get proper
-  white-on-black and black-on-white text.
-
-  The debug_* parameters are for the debugger display, and may be NULL if the
-  debugger is not enabled. The debugger always uses DEBUGGER_TOTAL_COLORS
-  colors and the palette doesn't change at run time.
-
-  Return 0 for success.
-*/
-int osd_allocate_colors(unsigned int totalcolors,
-		const UINT8 *palette,UINT32 *rgb_components,
-		const UINT8 *debug_palette,pen_t *debug_pens);
-void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
-
-void osd_mark_dirty(int xmin,int ymin,int xmax,int ymax);
 
 /*
   osd_skip_this_frame() must return 0 if the current frame will be displayed.
@@ -133,15 +92,7 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
-void osd_update_video_and_audio(
-		struct mame_bitmap *game_bitmap,struct mame_bitmap *debug_bitmap,int leds_status);
-
-void osd_debugger_focus(int debugger_has_focus);
-
-void osd_set_gamma(float _gamma);
-float osd_get_gamma(void);
-void osd_set_brightness(int brightness);
-int osd_get_brightness(void);
+void osd_update_video_and_audio(struct mame_display *display);
 
 /*
   Save a screen shot of the game display. It is suggested to use the core
@@ -151,7 +102,12 @@ int osd_get_brightness(void);
   file name. This isn't scrictly necessary, so you can just call
   save_screen_snapshot() to let the core automatically pick a default name.
 */
-void osd_save_snapshot(struct mame_bitmap *bitmap);
+void osd_save_snapshot(struct mame_bitmap *bitmap, const struct rectangle *bounds);
+
+/*
+  Return the current frameskip value, or -(frameskip+1) if using auto frameskipping.
+*/
+int osd_get_frameskip(void);
 
 
 /******************************************************************************
@@ -195,10 +151,6 @@ void osd_set_mastervolume(int attenuation);
 int osd_get_mastervolume(void);
 
 void osd_sound_enable(int enable);
-
-/* direct access to the Sound Blaster OPL chip */
-void osd_opl_control(int chip,int reg);
-void osd_opl_write(int chip,int data);
 
 
 /******************************************************************************
@@ -304,22 +256,23 @@ typedef struct
 enum
 {
 	OSD_FILETYPE_ROM = 1,
+	OSD_FILETYPE_ROM_NOCRC,
+	OSD_FILETYPE_IMAGE,
+	OSD_FILETYPE_IMAGE_DIFF,
 	OSD_FILETYPE_SAMPLE,
+	OSD_FILETYPE_ARTWORK,
 	OSD_FILETYPE_NVRAM,
 	OSD_FILETYPE_HIGHSCORE,
-	OSD_FILETYPE_HIGHSCORE_DB, /* LBO 040400 */
+	OSD_FILETYPE_HIGHSCORE_DB,
 	OSD_FILETYPE_CONFIG,
 	OSD_FILETYPE_INPUTLOG,
 	OSD_FILETYPE_STATE,
-	OSD_FILETYPE_ARTWORK,
 	OSD_FILETYPE_MEMCARD,
 	OSD_FILETYPE_SCREENSHOT,
-	OSD_FILETYPE_HISTORY,  /* LBO 040400 */
-	OSD_FILETYPE_CHEAT,  /* LBO 040400 */
-	OSD_FILETYPE_LANGUAGE, /* LBO 042400 */
-#ifdef MESS
-	OSD_FILETYPE_IMAGE,
-#endif
+	OSD_FILETYPE_HISTORY,
+	OSD_FILETYPE_CHEAT,
+	OSD_FILETYPE_LANGUAGE,
+	OSD_FILETYPE_CTRLR,
 	OSD_FILETYPE_end /* dummy last entry */
 };
 
@@ -344,7 +297,6 @@ int osd_fwrite_swap(void *file,const void *buffer,int length);
 #define osd_fread_lsbfirst osd_fread_swap
 #define osd_fwrite_lsbfirst osd_fwrite_swap
 #endif
-int osd_fread_scatter(void *file,void *buffer,int length,int increment);
 int osd_fseek(void *file,int offset,int whence);
 void osd_fclose(void *file);
 int osd_fchecksum(const char *gamename, const char *filename, unsigned int *length, unsigned int *sum);

@@ -11,9 +11,9 @@
 #include "cpu/konami/konami.h"
 #include "cpu/z80/z80.h"
 
-void hcastle_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void hcastle_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-int hcastle_vh_start (void);
+PALETTE_INIT( hcastle );
+VIDEO_UPDATE( hcastle );
+VIDEO_START( hcastle );
 
 extern data8_t *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 
@@ -35,7 +35,7 @@ static WRITE_HANDLER( hcastle_bankswitch_w )
 
 static WRITE_HANDLER( hcastle_soundirq_w )
 {
-	cpu_cause_interrupt( 1, Z80_IRQ_INT );
+	cpu_set_irq_line( 1, 0, HOLD_LINE );
 }
 
 static WRITE_HANDLER( hcastle_coin_w )
@@ -138,7 +138,7 @@ INPUT_PORTS_START( hcastle )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -146,10 +146,10 @@ INPUT_PORTS_START( hcastle )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -166,25 +166,25 @@ INPUT_PORTS_START( hcastle )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unused SW 1-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unused SW 1-1" )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, "Easy" )
-	PORT_DIPSETTING(    0x10, "Normal" )
-	PORT_DIPSETTING(    0x08, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x60, 0x60, "Energy" )
-	PORT_DIPSETTING(    0x60, "Strong" )
-	PORT_DIPSETTING(    0x40, "Normal" )
-	PORT_DIPSETTING(    0x20, "Weak" )
-	PORT_DIPSETTING(    0x00, "Very Weak" )
+	PORT_DIPNAME( 0x18, 0x10, DEF_STR( Difficulty ) )	// "Difficulty 1"
+	PORT_DIPSETTING(    0x18, "Easy" )				// "Easy"
+	PORT_DIPSETTING(    0x10, "Normal" )			// "Nomal" !
+	PORT_DIPSETTING(    0x08, "Hard" )				// "Difficult"
+	PORT_DIPSETTING(    0x00, "Hardest" )			// "Very Difficult"
+	PORT_DIPNAME( 0x60, 0x40, "Damage" )			// "Difficulty 2"
+	PORT_DIPSETTING(    0x60, "Small" )				// "Strong"
+	PORT_DIPSETTING(    0x40, "Normal" )			// "Nomal" !
+	PORT_DIPSETTING(    0x20, "Big" )				// "Weak"
+	PORT_DIPSETTING(    0x00, "Biggest" )			// "Very Weak"
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -223,7 +223,7 @@ INPUT_PORTS_START( hcastle )
 	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
-//	PORT_DIPSETTING(    0x00, "Invalid" )
+//	PORT_DIPSETTING(    0x00, "Invalidity" )			// Disables the 2 coin slots
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -284,7 +284,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,
 	3579545,
-	{ 35 },
+	{ 70 },
 	{ irqhandler },
 };
 
@@ -294,88 +294,41 @@ static struct k051649_interface k051649_interface =
 	45,			/* Volume */
 };
 
-static const struct MachineDriver machine_driver_hcastle =
-{
+static MACHINE_DRIVER_START( hcastle )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_KONAMI,
-			3000000,	/* Derived from 24 MHz clock */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	59, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second verified by comparison with real board */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(KONAMI, 3000000)	/* Derived from 24 MHz clock */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(59)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)	/* frames per second verified by comparison with real board */
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128)
+	MDRV_COLORTABLE_LENGTH(2*8*16*16)
 
-	gfxdecodeinfo,
-	128, 2*8*16*16,
-	hcastle_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM,
-	0,
-	hcastle_vh_start,
-	0,
-	hcastle_vh_screenrefresh,
+	MDRV_PALETTE_INIT(hcastle)
+	MDRV_VIDEO_START(hcastle)
+	MDRV_VIDEO_UPDATE(hcastle)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-		},
-		{
-			SOUND_K051649,
-			&k051649_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(K051649, k051649_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************/
 
 ROM_START( hcastle )
-	ROM_REGION( 0x30000, REGION_CPU1, 0 )
-	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
-	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
-
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
-
-	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
-
-	ROM_REGION( 0x0500, REGION_PROMS, 0 )
-	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
-	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
-	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
-	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
-	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
-
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
-ROM_END
-
-ROM_START( hcastlea )
 	ROM_REGION( 0x30000, REGION_CPU1, 0 )
 	ROM_LOAD( "m03.k12",      0x08000, 0x08000, 0xd85e743d )
 	ROM_LOAD( "b06.k8",       0x10000, 0x20000, 0xabd07866 )
@@ -384,12 +337,12 @@ ROM_START( hcastlea )
 	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
+	ROM_LOAD( "768c09.g21",   0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "768c08.g19",   0x080000, 0x80000, 0x9633db8b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
+	ROM_LOAD( "768c04.j5",    0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "768c05.j6",    0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
@@ -399,7 +352,34 @@ ROM_START( hcastlea )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
+	ROM_LOAD( "768c07.e17",   0x00000, 0x80000, 0x01f9889c )
+ROM_END
+
+ROM_START( hcastleo )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "768.k03",      0x08000, 0x08000, 0x40ce4f38 )
+	ROM_LOAD( "768.g06",      0x10000, 0x20000, 0xcdade920 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "768.e01",      0x00000, 0x08000, 0xb9fff184 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "768c09.g21",   0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "768c08.g19",   0x080000, 0x80000, 0x9633db8b )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "768c04.j5",    0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "768c05.j6",    0x080000, 0x80000, 0x65a2f227 )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
+	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
+	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
+	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for the samples */
+	ROM_LOAD( "768c07.e17",   0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
 ROM_START( hcastlej )
@@ -411,12 +391,12 @@ ROM_START( hcastlej )
 	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
 
 	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "d95.g21",      0x000000, 0x80000, 0xe3be3fdd )
-	ROM_LOAD( "d94.g19",      0x080000, 0x80000, 0x9633db8b )
+	ROM_LOAD( "768c09.g21",   0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "768c08.g19",   0x080000, 0x80000, 0x9633db8b )
 
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "d91.j5",       0x000000, 0x80000, 0x2960680e )
-	ROM_LOAD( "d92.j6",       0x080000, 0x80000, 0x65a2f227 )
+	ROM_LOAD( "768c04.j5",    0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "768c05.j6",    0x080000, 0x80000, 0x65a2f227 )
 
 	ROM_REGION( 0x0500, REGION_PROMS, 0 )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
@@ -426,11 +406,39 @@ ROM_START( hcastlej )
 	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for the samples */
-	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
+	ROM_LOAD( "768c07.e17",   0x00000, 0x80000, 0x01f9889c )
+ROM_END
+
+ROM_START( hcastljo )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )
+	ROM_LOAD( "768n03.k12",0x08000, 0x08000, 0x3e4dca2a )
+	ROM_LOAD( "768j06.k8", 0x10000, 0x20000, 0x42283c3e )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "768.e01",   0x00000, 0x08000, 0xb9fff184 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "768c09.g21",   0x000000, 0x80000, 0xe3be3fdd )
+	ROM_LOAD( "768c08.g19",   0x080000, 0x80000, 0x9633db8b )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "768c04.j5",    0x000000, 0x80000, 0x2960680e )
+	ROM_LOAD( "768c05.j6",    0x080000, 0x80000, 0x65a2f227 )
+
+	ROM_REGION( 0x0500, REGION_PROMS, 0 )
+	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table (same) */
+	ROM_LOAD( "768c10.i3",    0x0300, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table (same) */
+	ROM_LOAD( "768b12.d20",   0x0400, 0x0100, 0x362544b8 )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for the samples */
+	ROM_LOAD( "768c07.e17",   0x00000, 0x80000, 0x01f9889c )
 ROM_END
 
 
 
-GAMEX( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1988, hcastlea, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan)", GAME_NO_COCKTAIL )
+GAME( 1988, hcastle,  0,       hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version M)" )
+GAME( 1988, hcastleo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Haunted Castle (version K)" )
+GAME( 1988, hcastlej, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version P)" )
+GAME( 1988, hcastljo, hcastle, hcastle, hcastle, 0, ROT0, "Konami", "Akuma-Jou Dracula (Japan version N)" )

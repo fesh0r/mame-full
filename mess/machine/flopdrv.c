@@ -22,6 +22,8 @@
 
 static struct floppy_drive	drives[MAX_DRIVES];
 
+static void	floppy_drive_index_callback(int id);
+
 /* this is called once in init_devices */
 /* initialise all floppy drives */
 /* and initialise real disc access */
@@ -43,7 +45,7 @@ void floppy_drives_init(void)
 		pDrive->flags = 0;
 		pDrive->index_pulse_callback = NULL;
 		pDrive->ready_state_change_callback = NULL;
-		pDrive->index_timer = NULL;
+		pDrive->index_timer = timer_alloc(floppy_drive_index_callback);
 
 		if (i==0)
 		{
@@ -81,13 +83,6 @@ void floppy_drives_exit(void)
 		struct floppy_drive *pDrive;
 
 		pDrive = &drives[i];
-
-		/* remove timer for index pulse */
-		if (pDrive->index_timer)
-		{
-			timer_remove(pDrive->index_timer);
-			pDrive->index_timer = NULL;
-		}
 	}
 
 }
@@ -260,23 +255,18 @@ void floppy_drive_set_motor_state(int drive, int state)
 
 			pDrive = &drives[drive];
 
-			if (pDrive->index_timer!=NULL)
-			{
-				timer_remove(pDrive->index_timer);
-				pDrive->index_timer = NULL;
-			}
-
 			if (new_motor_state)
 			{
 				/* off->on */
 				/* check it's in range */
 
 				/* setup timer to trigger at 300 times a second = 300rpm */
-				pDrive->index_timer = timer_pulse(TIME_IN_HZ(300), drive, floppy_drive_index_callback);
+				timer_adjust(pDrive->index_timer, 0, drive, TIME_IN_HZ(300));
 			}
 			else
 			{
 				/* on->off */
+				timer_adjust(pDrive->index_timer, 0, drive, 0);
 			}
 		}
 	}

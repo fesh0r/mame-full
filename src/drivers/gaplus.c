@@ -36,19 +36,18 @@ READ_HANDLER( galaga3_customio_1_r );
 READ_HANDLER( galaga3_customio_2_r );
 READ_HANDLER( galaga3_customio_3_r );
 
-extern int gaplus_interrupt_1(void);
+extern INTERRUPT_GEN( gaplus_interrupt_1 );
 WRITE_HANDLER( gaplus_reset_2_3_w );
-extern int gaplus_interrupt_2(void);
+extern INTERRUPT_GEN( gaplus_interrupt_2 );
 WRITE_HANDLER( gaplus_interrupt_ctrl_2_w );
-extern int gaplus_interrupt_3( void );
+extern INTERRUPT_GEN( gaplus_interrupt_3 );
 WRITE_HANDLER( gaplus_interrupt_ctrl_3a_w );
 WRITE_HANDLER( gaplus_interrupt_ctrl_3b_w );
 
-extern int gaplus_vh_start( void );
-extern void gaplus_vh_stop( void );
-extern void gaplus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-extern void gaplus_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void gaplus_init_machine(void);
+extern VIDEO_START( gaplus );
+extern PALETTE_INIT( gaplus );
+extern VIDEO_UPDATE( gaplus );
+extern MACHINE_INIT( gaplus );
 WRITE_HANDLER( gaplus_starfield_control_w );
 
 static MEMORY_READ_START( readmem_cpu1 )
@@ -255,14 +254,14 @@ INPUT_PORTS_START( galaga3 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0xa0, "30k 80k and every 100k" )
-	PORT_DIPSETTING(    0x80, "30k 100k and every 100k" )
-	PORT_DIPSETTING(    0x60, "30k 100k and every 150k" )
-	PORT_DIPSETTING(    0x00, "30k 100k and every 200k" )
-	PORT_DIPSETTING(    0x40, "30k 100k and every 300k" )
-	PORT_DIPSETTING(    0xe0, "50k 150k and every 150k" )
-	PORT_DIPSETTING(    0xc0, "50k 150k and every 200k" )
-	PORT_DIPSETTING(    0x20, "30k 150k" )
+	PORT_DIPSETTING(    0xe0, "30k 70k and every 70k" )
+	PORT_DIPSETTING(    0xc0, "30k 100k and every 100k" )
+	PORT_DIPSETTING(    0xa0, "30k 100k and every 200k" )
+	PORT_DIPSETTING(    0x80, "50k 100k and every 100k" )
+	PORT_DIPSETTING(    0x60, "50k 100k and every 200k" )
+	PORT_DIPSETTING(    0x00, "50k 150k and every 150k" )
+	PORT_DIPSETTING(    0x40, "50k 150k and every 300k" )
+	PORT_DIPSETTING(    0x20, "50k 150k" )
 
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -351,6 +350,75 @@ INPUT_PORTS_START( galaga3a )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( galaga3b )
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+
+	PORT_START  /* DSW1 */
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x05, "5" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPSETTING(    0x07, "7" )
+	PORT_SERVICE( 0x08, IP_ACTIVE_HIGH )
+	PORT_BITX( 0x10,    0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", KEYCODE_F1, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0xa0, "30k 80k and every 100k" )
+	PORT_DIPSETTING(    0x80, "30k 100k and every 100k" )
+	PORT_DIPSETTING(    0x60, "30k 100k and every 150k" )
+	PORT_DIPSETTING(    0x00, "30k 100k and every 200k" )
+	PORT_DIPSETTING(    0x40, "30k 100k and every 300k" )
+	PORT_DIPSETTING(    0xe0, "50k 150k and every 150k" )
+	PORT_DIPSETTING(    0xc0, "50k 150k and every 200k" )
+	PORT_DIPSETTING(    0x20, "30k 150k" )
+
+	PORT_START  /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+		/* 0x40 service switch (not implemented yet) */
+
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY  )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY  )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout1 =
@@ -448,170 +516,117 @@ static struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_gaplus =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( gaplus )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gaplusa =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			gaplusa_readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( gaplusa )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(gaplusa_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_galaga3 =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,			/* MAIN CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			galaga3_readmem_cpu1,writemem_cpu1,0,0,
-			gaplus_interrupt_1,1
-		},
-		{
-			CPU_M6809,			/* SUB CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			gaplus_interrupt_2,1
-		},
-		{
-			CPU_M6809,			/* SOUND CPU */
-			1536000,			/* 24.576 MHz / 16 = 1.536 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			gaplus_interrupt_3,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* a high value to ensure proper synchronization of the CPUs */
-	gaplus_init_machine,
+static MACHINE_DRIVER_START( galaga3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(galaga3_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809,	1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_2,1)
+
+	MDRV_CPU_ADD(M6809, 1536000)	/* 24.576 MHz / 16 = 1.536 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_VBLANK_INT(gaplus_interrupt_3,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* a high value to ensure proper synchronization of the CPUs */
+	MDRV_MACHINE_INIT(gaplus)
 
 	/* video hardware */
-	36*8, 28*8,
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,
-	64*4+64*8,
-	gaplus_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gaplus_vh_start,
-	gaplus_vh_stop,
-	gaplus_vh_screenrefresh,
+	MDRV_PALETTE_INIT(gaplus)
+	MDRV_VIDEO_START(gaplus)
+	MDRV_VIDEO_UPDATE(gaplus)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -800,4 +815,5 @@ GAME( 1984, gaplus,   0,      gaplus,  gaplus,   0, ROT90, "Namco", "Gaplus (set
 GAME( 1984, gaplusa,  gaplus, gaplusa, gaplus,   0, ROT90, "Namco", "Gaplus (set 2)" )
 GAME( 1984, galaga3,  gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 1)" )
 GAME( 1984, galaga3a, gaplus, galaga3, galaga3a, 0, ROT90, "Namco", "Galaga 3 (set 2)" )
-GAME( 1984, galaga3b, gaplus, galaga3, galaga3,  0, ROT90, "Namco", "Galaga 3 (set 3)" )
+GAME( 1984, galaga3b, gaplus, galaga3, galaga3b, 0, ROT90, "Namco", "Galaga 3 (set 3)" )
+

@@ -40,7 +40,7 @@ static UINT8 *view_dirty;
 
 ***************************************************************************/
 
-void polepos_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UINT8 *color_prom)
+PALETTE_INIT( polepos )
 {
 	int i, j;
 
@@ -55,28 +55,30 @@ void polepos_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UIN
 	 *******************************************************/
 	for (i = 0; i < 128; i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		/* Sheet 15B: 136014-0137 red component */
 		bit0 = (color_prom[0x000 + i] >> 0) & 1;
 		bit1 = (color_prom[0x000 + i] >> 1) & 1;
 		bit2 = (color_prom[0x000 + i] >> 2) & 1;
 		bit3 = (color_prom[0x000 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		/* Sheet 15B: 136014-0138 green component */
 		bit0 = (color_prom[0x100 + i] >> 0) & 1;
 		bit1 = (color_prom[0x100 + i] >> 1) & 1;
 		bit2 = (color_prom[0x100 + i] >> 2) & 1;
 		bit3 = (color_prom[0x100 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		/* Sheet 15B: 136014-0139 blue component */
 		bit0 = (color_prom[0x200 + i] >> 0) & 1;
 		bit1 = (color_prom[0x200 + i] >> 1) & 1;
 		bit2 = (color_prom[0x200 + i] >> 2) & 1;
 		bit3 = (color_prom[0x200 + i] >> 3) & 1;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		
+		palette_set_color(i,r,g,b);
 	}
 
 	/*******************************************************
@@ -146,28 +148,19 @@ void polepos_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UIN
 
 ***************************************************************************/
 
-int polepos_vh_start(void)
+VIDEO_START( polepos )
 {
 	/* allocate view bitmap */
-	view_bitmap = bitmap_alloc(64*8, 16*8);
+	view_bitmap = auto_bitmap_alloc(64*8, 16*8);
 	if (!view_bitmap)
 		return 1;
 
 	/* allocate view dirty buffer */
-	view_dirty = malloc(64*16);
+	view_dirty = auto_malloc(64*16);
 	if (!view_dirty)
-	{
-		bitmap_free(view_bitmap);
 		return 1;
-	}
 
 	return 0;
-}
-
-void polepos_vh_stop(void)
-{
-	bitmap_free(view_bitmap);
-	free(view_dirty);
 }
 
 
@@ -478,7 +471,7 @@ static void draw_alpha(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void polepos_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( polepos )
 {
 	draw_view(bitmap);
 	draw_road(bitmap);

@@ -65,54 +65,53 @@ static struct rectangle backgroundvisiblearea =
   bit 0 -- 2  kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-static void convert_palette(unsigned char *palette,const unsigned char *color_prom)
+static void convert_palette(const unsigned char *color_prom)
 {
 	int i;
 
 
 	for (i = 0;i < 1024;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		r = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[1024] >> 0) & 0x01;
 		bit1 = (color_prom[1024] >> 1) & 0x01;
 		bit2 = (color_prom[1024] >> 2) & 0x01;
 		bit3 = (color_prom[1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		g = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 		bit0 = (color_prom[2*1024] >> 0) & 0x01;
 		bit1 = (color_prom[2*1024] >> 1) & 0x01;
 		bit2 = (color_prom[2*1024] >> 2) & 0x01;
 		bit3 = (color_prom[2*1024] >> 3) & 0x01;
-		*(palette++) = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
+		b = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
 	/* reserve the last color for the transparent pen (none of the game colors has */
 	/* these RGB components) */
-	*(palette++) = 240;
-	*(palette++) = 240;
-	*(palette++) = 240;
+	palette_set_color(1024,240,240,240);
 }
 
 
 /* these depend on jumpers on the board and change from game to game */
 static int gfx0inv,gfx1inv,gfx2inv,gfx3inv;
 
-void punchout_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( punchout )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(palette,color_prom);
+	convert_palette(color_prom);
 
 
 	/* top monitor chars */
@@ -138,14 +137,14 @@ void punchout_vh_convert_color_prom(unsigned char *palette,unsigned short *color
 	}
 }
 
-void armwrest_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( armwrest )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(palette,color_prom);
+	convert_palette(color_prom);
 
 
 	/* top monitor / bottom monitor backround chars */
@@ -180,7 +179,7 @@ static void gfx_fix(void)
 	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
 }
 
-void init_punchout(void)
+DRIVER_INIT( punchout )
 {
 	gfx_fix();
 
@@ -190,7 +189,7 @@ void init_punchout(void)
 	gfx3inv = 0xfc;
 }
 
-void init_spnchout(void)
+DRIVER_INIT( spnchout )
 {
 	gfx_fix();
 
@@ -200,7 +199,7 @@ void init_spnchout(void)
 	gfx3inv = 0xff;
 }
 
-void init_spnchotj(void)
+DRIVER_INIT( spnchotj )
 {
 	gfx_fix();
 
@@ -210,7 +209,7 @@ void init_spnchotj(void)
 	gfx3inv = 0xff;
 }
 
-void init_armwrest(void)
+DRIVER_INIT( armwrest )
 {
 	gfx_fix();
 
@@ -227,148 +226,64 @@ void init_armwrest(void)
   Start the video hardware emulation.
 
 ***************************************************************************/
-int punchout_vh_start(void)
+VIDEO_START( punchout )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = malloc(punchout_videoram2_size)) == 0)
-	{
-		free(dirtybuffer);
+	if ((dirtybuffer2 = auto_malloc(punchout_videoram2_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
-	if ((tmpbitmap = bitmap_alloc(512,480)) == 0)
-	{
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
 		return 1;
-	}
 
-	if ((bs1dirtybuffer = malloc(punchout_bigsprite1ram_size)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size)) == 0)
 		return 1;
-	}
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
-	if ((bs1tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
+	if ((bs1tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 		return 1;
-	}
 
-	if ((bs2dirtybuffer = malloc(punchout_bigsprite2ram_size)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(bs1tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
+	if ((bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size)) == 0)
 		return 1;
-	}
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
-	if ((bs2tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(bs1tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
-		free(bs2dirtybuffer);
+	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-int armwrest_vh_start(void)
+VIDEO_START( armwrest )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((dirtybuffer2 = malloc(punchout_videoram2_size)) == 0)
-	{
-		free(dirtybuffer);
+	if ((dirtybuffer2 = auto_malloc(punchout_videoram2_size)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
-	if ((tmpbitmap = bitmap_alloc(512,480)) == 0)
-	{
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
 		return 1;
-	}
 
-	if ((bs1dirtybuffer = malloc(punchout_bigsprite1ram_size)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
+	if ((bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size)) == 0)
 		return 1;
-	}
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
-	if ((bs1tmpbitmap = bitmap_alloc(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
+	if ((bs1tmpbitmap = auto_bitmap_alloc(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
 		return 1;
-	}
 
-	if ((bs2dirtybuffer = malloc(punchout_bigsprite2ram_size)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(bs1tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
+	if ((bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size)) == 0)
 		return 1;
-	}
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
-	if ((bs2tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-	{
-		bitmap_free(tmpbitmap);
-		bitmap_free(bs1tmpbitmap);
-		free(dirtybuffer);
-		free(dirtybuffer2);
-		free(bs1dirtybuffer);
-		free(bs2dirtybuffer);
+	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void punchout_vh_stop(void)
-{
-	free(dirtybuffer);
-	free(dirtybuffer2);
-	free(bs1dirtybuffer);
-	free(bs2dirtybuffer);
-	bitmap_free(tmpbitmap);
-	bitmap_free(bs1tmpbitmap);
-	bitmap_free(bs2tmpbitmap);
 }
 
 
@@ -432,7 +347,7 @@ WRITE_HANDLER( punchout_palettebank_w )
   the main emulation engine.
 
 ***************************************************************************/
-void punchout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( punchout )
 {
 	int offs;
 
@@ -611,7 +526,7 @@ void punchout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void armwrest_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( armwrest )
 {
 	int offs;
 
@@ -752,7 +667,7 @@ void armwrest_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
 			{
 				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
+					startx,starty - 0x200*(TOP_MONITOR_ROWS-2) * zoom,
 					incxx,0,0,incyy,	/* zoom, no rotation */
 					0,	/* no wraparound */
 					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);

@@ -174,7 +174,7 @@ extern void vc20_driver_shutdown (void);
 extern void vc20_init_machine (void);
 extern void vc20_shutdown_machine (void);
 
-extern int vc20_frame_interrupt (void);
+extern void vc20_frame_interrupt (void);
 
 #endif
 

@@ -9,20 +9,33 @@
  */
 
 #include "driver.h"
+#include "8080bw.h"
+#include "artwork.h"
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 
 extern unsigned char *s2636ram;
 
-int  tinvader_vh_start(void);
-void tinvader_vh_stop(void);
-void tinvader_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( tinvader );
+VIDEO_UPDATE( tinvader );
 
 WRITE_HANDLER( zac_s2636_w );
 WRITE_HANDLER( tinvader_sound_w );
 
 READ_HANDLER( zac_s2636_r );
 READ_HANDLER( tinvader_port_0_r );
+
+
+#define WHITE           MAKE_ARGB(0x04,0xff,0xff,0xff)
+#define GREEN 			MAKE_ARGB(0x04,0x20,0xff,0x20)
+#define PURPLE			MAKE_ARGB(0x04,0xff,0x20,0xff)
+
+OVERLAY_START( tinv2650_overlay )
+	OVERLAY_RECT(   0,   0, 256, 256, WHITE )
+	OVERLAY_RECT(  16,   0,  72, 256, GREEN )
+	OVERLAY_RECT(   0,  48,  16, 134, GREEN )
+	OVERLAY_RECT( 192,   0, 209, 256, PURPLE )
+OVERLAY_END
 
 
 
@@ -149,24 +162,10 @@ INPUT_PORTS_START( sinvader )
 
 INPUT_PORTS_END
 
-static unsigned char tinvader_palette[] =
+static PALETTE_INIT( zac2650 )
 {
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0x20,0xff, /* PURPLE */
-};
-
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	#define COLOR(gfxn,offs) (game_colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
-
-	memcpy(game_palette,tinvader_palette,sizeof(tinvader_palette));
-
-	COLOR(0,0) = 0;		/* Game uses first two only */
-	COLOR(0,1) = 1;
-    COLOR(0,2) = 0;
-    COLOR(0,3) = 0;
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
 }
 
 static struct GfxLayout tinvader_character =
@@ -214,34 +213,29 @@ static struct GfxDecodeInfo tinvader_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static const struct MachineDriver machine_driver_tinvader =
-{
-	{
-		{
-			CPU_S2650,
-			3800000,
-			readmem,writemem,readport,0,
-			ignore_interrupt,1,
-		}
-	},
-	55, 1041,
-	1, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( tinvader )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650, 3800000)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,0)
+
+	MDRV_FRAMES_PER_SECOND(55)
+	MDRV_VBLANK_DURATION(1041)
 
 	/* video hardware */
-	30*8, 32*8, { 0, 239, 0, 255 },
-	tinvader_gfxdecodeinfo,
-	8,8,
-	init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	tinvader_vh_start,
-	tinvader_vh_stop,
-    tinvader_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(30*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 239, 0, 255)
+	MDRV_GFXDECODE(tinvader_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2)
+
+	MDRV_PALETTE_INIT(zac2650)
+	MDRV_VIDEO_START(tinvader)
+	MDRV_VIDEO_UPDATE(tinvader)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 WRITE_HANDLER( tinvader_sound_w )
 {
@@ -282,14 +276,6 @@ ROM_END
  *
  */
 
-int  invaders_vh_start(void);
-void invaders_vh_stop(void);
-void invaders_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-void init_8080bw(void);
-
-WRITE_HANDLER( invaders_videoram_w );
-
 static MEMORY_READ_START( emb_readmem )
 	{ 0x0000, 0x0fff, MRA_ROM },
     { 0x1e00, 0x3dff, MRA_RAM },
@@ -298,36 +284,30 @@ MEMORY_END
 static MEMORY_WRITE_START( emb_writemem )
 	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x1e00, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x3dff, invaders_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x3dff, c8080bw_videoram_w, &videoram, &videoram_size },
 MEMORY_END
 
-static struct MachineDriver machine_driver_embargo = {
-	{
-		{
-			CPU_S2650,
-			625000,
-			emb_readmem,emb_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	55, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1, /* CPU slices */
-	0, /* init machine */
+static MACHINE_DRIVER_START( embargo )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(S2650, 625000)
+	MDRV_CPU_MEMORY(emb_readmem,emb_writemem)
+
+	MDRV_FRAMES_PER_SECOND(55)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
-	0,      /* no gfxdecodeinfo - bitmapped display */
-	8,0,
-	init_palette,
-	VIDEO_TYPE_RASTER,
-	0,
-	invaders_vh_start,
-	invaders_vh_stop,
-    invaders_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(2)
+
+	MDRV_PALETTE_INIT(zac2650)
+	MDRV_VIDEO_START(8080bw)
+	MDRV_VIDEO_UPDATE(8080bw)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 ROM_START( embargo )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )
@@ -342,6 +322,13 @@ ROM_START( embargo )
 ROM_END
 
 
-GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,      ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
-GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, 0,      ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
-GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw, ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )
+
+static DRIVER_INIT( tinvader )
+{
+	artwork_set_overlay(tinv2650_overlay);
+}
+
+
+GAMEX( 19??, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
+GAMEX( 19??, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders", GAME_NO_SOUND )
+GAMEX( 1977, embargo,  0,       embargo,  tinvader, 8080bw,   ROT0,   "Cinematronics",  "Embargo", GAME_NO_SOUND )

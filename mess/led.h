@@ -1,5 +1,6 @@
+#include "osd_cpu.h"
+#include "driver.h"
 #include "mame.h"
-#include "common.h"
 
 /* draw_led() will both draw led (where the pixels are identified by '1' or
  * x-segment displays (where the pixels are masked with lowercase letters)

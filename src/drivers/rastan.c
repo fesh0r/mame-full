@@ -15,28 +15,18 @@ driver by Jarek Burczynski
 data16_t *rastan_ram;	/* speedup hack */
 
 WRITE16_HANDLER( rastan_spritectrl_w );
-WRITE16_HANDLER( rastan_spriteflip_w );
 
-int  rastan_vh_start(void);
-void rastan_vh_stop(void);
-void rastan_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( rastan );
+VIDEO_UPDATE( rastan );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
 WRITE_HANDLER( rastan_d000_w );
 
-static int banknum = -1;
-
-
-static int rastan_interrupt(void)
-{
-	return 5;  /* Interrupt vector 5 */
-}
-
 
 static READ16_HANDLER( rastan_cycle_r )
 {
-	if (cpu_get_pc()==0x3b088) cpu_spinuntil_int();
+	if (activecpu_get_pc()==0x3b088) cpu_spinuntil_int();
 
 	return rastan_ram[0x1c10/2];
 }
@@ -44,7 +34,6 @@ static READ16_HANDLER( rastan_cycle_r )
 
 static MEMORY_READ16_START( rastan_readmem )
 	{ 0x000000, 0x05ffff, MRA16_ROM },
-//	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
 	{ 0x10dc10, 0x10dc11, rastan_cycle_r },
 	{ 0x10c000, 0x10ffff, MRA16_RAM },	/* RAM */
 	{ 0x200000, 0x200fff, MRA16_RAM },	/* palette */
@@ -56,12 +45,11 @@ static MEMORY_READ16_START( rastan_readmem )
 	{ 0x390008, 0x390009, input_port_3_word_r },
 	{ 0x39000a, 0x39000b, input_port_4_word_r },
 	{ 0xc00000, 0xc0ffff, PC080SN_word_0_r },
-	{ 0xd00000, 0xd00fff, MRA16_RAM },	/* sprite ram, upper half only used in service mode */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( rastan_writemem )
 	{ 0x000000, 0x05ffff, MWA16_ROM },
-//	{ 0x10dc10, 0x10dc13, rastan_speedup_w },
 	{ 0x10c000, 0x10ffff, MWA16_RAM, &rastan_ram },
 	{ 0x200000, 0x200fff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
 	{ 0x350008, 0x35000b, MWA16_NOP },	/* 0 only (often) ? */
@@ -73,20 +61,13 @@ static MEMORY_WRITE16_START( rastan_writemem )
 	{ 0xc20000, 0xc20003, PC080SN_yscroll_word_0_w },
 	{ 0xc40000, 0xc40003, PC080SN_xscroll_word_0_w },
 	{ 0xc50000, 0xc50003, PC080SN_ctrl_word_0_w },
-	{ 0xd00000, 0xd00fff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, rastan_spriteflip_w },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 
-static void reset_sound_region(void)
-{
-	cpu_setbank( 5, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
-
 static WRITE_HANDLER( rastan_bankswitch_w )
 {
-	banknum = (data ^1) & 0x01;
-	reset_sound_region();
+	cpu_setbank( 5, memory_region(REGION_CPU2) + ((data ^1) & 0x01) * 0x4000 + 0x10000 );
 }
 
 static MEMORY_READ_START( rastan_s_readmem )
@@ -329,52 +310,34 @@ static struct ADPCMinterface adpcm_interface =
 
 
 
-static const struct MachineDriver machine_driver_rastan =
-{
+static MACHINE_DRIVER_START( rastan )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz */
-			rastan_readmem,rastan_writemem,0,0,
-			rastan_interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz */
-			rastan_s_readmem,rastan_s_writemem,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz */
+	MDRV_CPU_MEMORY(rastan_readmem,rastan_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_MEMORY(rastan_s_readmem,rastan_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
-	gfxdecodeinfo,
-	8192, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rastan_vh_start,
-	rastan_vh_stop,
-	rastan_vh_screenrefresh,
+	MDRV_VIDEO_START(rastan)
+	MDRV_VIDEO_UPDATE(rastan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -501,15 +464,8 @@ ROM_START( rastsaga )
 ROM_END
 
 
-static void init_rastan(void)
-{
-	state_save_register_int("sound", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-GAME( 1987, rastan,   0,      rastan, rastan,   rastan, ROT0, "Taito Corporation Japan", "Rastan (World)")
+GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)")
 /* IDENTICAL to rastan, only difference is copyright notice and Coin B coinage */
-GAME( 1987, rastanu,  rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 1)")
-GAME( 1987, rastanu2, rastan, rastan, rastsaga, rastan, ROT0, "Taito America Corporation", "Rastan (US set 2)")
-GAME( 1987, rastsaga, rastan, rastan, rastsaga, rastan, ROT0, "Taito Corporation", "Rastan Saga (Japan)")
+GAME( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)")
+GAME( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)")
+GAME( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)")

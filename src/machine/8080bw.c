@@ -8,17 +8,18 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "8080bw.h"
 
 
 static int shift_data1,shift_data2,shift_amount;
 
 
-WRITE_HANDLER( invaders_shift_amount_w )
+WRITE_HANDLER( c8080bw_shift_amount_w )
 {
 	shift_amount = data;
 }
 
-WRITE_HANDLER( invaders_shift_data_w )
+WRITE_HANDLER( c8080bw_shift_data_w )
 {
 	shift_data2 = shift_data1;
 	shift_data1 = data;
@@ -28,44 +29,31 @@ WRITE_HANDLER( invaders_shift_data_w )
 #define SHIFT  (((((shift_data1 << 8) | shift_data2) << (shift_amount & 0x07)) >> 8) & 0xff)
 
 
-READ_HANDLER( invaders_shift_data_r )
+READ_HANDLER( c8080bw_shift_data_r )
 {
 	return SHIFT;
 }
 
-READ_HANDLER( invaders_shift_data_rev_r )
+READ_HANDLER( c8080bw_shift_data_rev_r )
 {
 	int	ret = SHIFT;
 
-	ret = ((ret & 0x01) << 7)
-	    | ((ret & 0x02) << 5)
-	    | ((ret & 0x04) << 3)
-	    | ((ret & 0x08) << 1)
-	    | ((ret & 0x10) >> 1)
-	    | ((ret & 0x20) >> 3)
-	    | ((ret & 0x40) >> 5)
-	    | ((ret & 0x80) >> 7);
-
-	return ret;
+	return BITSWAP8(ret,0,1,2,3,4,5,6,7);
 }
 
-READ_HANDLER( invaders_shift_data_comp_r )
+READ_HANDLER( c8080bw_shift_data_comp_r )
 {
 	return SHIFT ^ 0xff;
 }
 
 
-int invaders_interrupt(void)
+INTERRUPT_GEN( c8080bw_interrupt )
 {
-	static int count;
+	int vector = cpu_getvblank() ? 0xcf : 0xd7;  /* RST 08h/10h */
 
-	count++;
-
-	if (count & 1)
-		return 0x00cf;  /* RST 08h */
-	else
-		return 0x00d7;  /* RST 10h */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
 }
+
 
 /****************************************************************************
 	Extra / Different functions for Boot Hill                (MJC 300198)
@@ -74,9 +62,9 @@ int invaders_interrupt(void)
 READ_HANDLER( boothill_shift_data_r )
 {
 	if (shift_amount < 0x10)
-		return invaders_shift_data_r(0);
+		return c8080bw_shift_data_r(0);
     else
-    	return invaders_shift_data_rev_r(0);
+    	return c8080bw_shift_data_rev_r(0);
 }
 
 /* Grays binary again! */
@@ -135,18 +123,18 @@ static const int graybit6_controller_table[64] =
 
 READ_HANDLER( spcenctr_port_0_r )
 {
-    return (input_port_0_r(0) & 0xc0) + (graybit6_controller_table[input_port_0_r(0) & 0x3f] ^ 0x3f);
+    return (input_port_0_r(0) & 0xc0) | (graybit6_controller_table[input_port_0_r(0) & 0x3f] ^ 0x3f);
 }
 
 READ_HANDLER( spcenctr_port_1_r )
 {
-    return (input_port_1_r(0) & 0xc0) + (graybit6_controller_table[input_port_1_r(0) & 0x3f] ^ 0x3f);
+    return (input_port_1_r(0) & 0xc0) | (graybit6_controller_table[input_port_1_r(0) & 0x3f] ^ 0x3f);
 }
 
 
 READ_HANDLER( seawolf_port_1_r )
 {
-	return (input_port_0_r(0) & 0xe0) + graybit6_controller_table[input_port_0_r(0) & 0x1f];
+	return (input_port_0_r(0) & 0xe0) | graybit6_controller_table[input_port_0_r(0) & 0x1f];
 }
 
 

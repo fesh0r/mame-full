@@ -120,7 +120,7 @@ write:
 
 
 
-void taitosj_init_machine(void);
+MACHINE_INIT( taitosj );
 WRITE_HANDLER( taitosj_bankswitch_w );
 READ_HANDLER( taitosj_fake_data_r );
 READ_HANDLER( taitosj_fake_status_r );
@@ -144,7 +144,7 @@ extern unsigned char *taitosj_scroll;
 extern unsigned char *taitosj_colscrolly;
 extern unsigned char *taitosj_gfxpointer;
 extern unsigned char *taitosj_colorbank,*taitosj_video_priority;
-void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( taitosj );
 READ_HANDLER( taitosj_gfxrom_r );
 WRITE_HANDLER( taitosj_videoram2_w );
 WRITE_HANDLER( taitosj_videoram3_w );
@@ -155,9 +155,8 @@ WRITE_HANDLER( taitosj_characterram_w );
 WRITE_HANDLER( junglhbr_characterram_w );
 READ_HANDLER( taitosj_collision_reg_r );
 WRITE_HANDLER( taitosj_collision_reg_clear_w );
-int taitosj_vh_start(void);
-void taitosj_vh_stop(void);
-void taitosj_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( taitosj );
+VIDEO_UPDATE( taitosj );
 
 
 static int sndnmi_disable = 1;
@@ -170,7 +169,7 @@ static WRITE_HANDLER( taitosj_sndnmi_msk_w )
 static WRITE_HANDLER( taitosj_soundcommand_w )
 {
 	soundlatch_w(offset,data);
-	if (!sndnmi_disable) cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (!sndnmi_disable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -1661,118 +1660,57 @@ static struct DACinterface dac_interface =
 
 
 
-static const struct MachineDriver machine_driver_nomcu =
-{
+static MACHINE_DRIVER_START( nomcu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,      /* 4 MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
+	MDRV_CPU_ADD_TAG("main",Z80,8000000/2)      /* 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,6000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)      /* 3 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 			/* interrupts: */
 			/* - no interrupts synced with vblank */
 			/* - NMI triggered by the main CPU */
 			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
 			/*   that is a period of 27306666.6666 ns */
-			0,0,
-			interrupt,27306667
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	taitosj_init_machine,
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,27306667)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(taitosj)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 16*8,
-	taitosj_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	MDRV_COLORTABLE_LENGTH(16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	taitosj_vh_start,
-	taitosj_vh_stop,
-	taitosj_vh_screenrefresh,
+	MDRV_PALETTE_INIT(taitosj)
+	MDRV_VIDEO_START(taitosj)
+	MDRV_VIDEO_UPDATE(taitosj)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
 
 /* same as above, but with additional 68705 MCU */
-static const struct MachineDriver machine_driver_mcu =
-{
+static MACHINE_DRIVER_START( mcu )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			8000000/2,      /* 4 MHz */
-			mcu_readmem,mcu_writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			6000000/2,      /* 3 MHz */
-			sound_readmem,sound_writemem,0,0,
-			/* interrupts: */
-			/* - no interrupts synced with vblank */
-			/* - NMI triggered by the main CPU */
-			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
-			/*   that is a period of 27306666.6666 ns */
-			0,0,
-			interrupt,27306667
-		},
-		{
-			CPU_M68705,
-			3000000/2,      /* xtal is 3MHz, I think it's divided by 2 internally */
-			m68705_readmem,m68705_writemem,0,0,
-			ignore_interrupt,0      /* IRQs are caused by the main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* 1 CPU slice per frame - interleaving is forced when necessary */
-	taitosj_init_machine,
+	MDRV_IMPORT_FROM(nomcu)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
 
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	64, 16*8,
-	taitosj_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	taitosj_vh_start,
-	taitosj_vh_stop,
-	taitosj_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	}
-};
+	MDRV_CPU_ADD(M68705,3000000/2)      /* xtal is 3MHz, I think it's divided by 2 internally */
+	MDRV_CPU_MEMORY(m68705_readmem,m68705_writemem)
+MACHINE_DRIVER_END
 
 
 
@@ -1932,6 +1870,37 @@ ROM_START( junglhbr )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, 0xb833b5ea )
+ROM_END
+
+ROM_START( piratpet )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "pp0p_ic.69", 0x00000, 0x1000, 0x8287dbc2 )
+	ROM_LOAD( "pp1p_ic.68", 0x01000, 0x1000, 0x27a90850 )
+	ROM_LOAD( "pp2p_ic.67", 0x02000, 0x1000, 0xd224fa85 )
+	ROM_LOAD( "pp3p_ic.66", 0x03000, 0x1000, 0x2c900874 )
+	ROM_LOAD( "pp4p_ic.65", 0x04000, 0x1000, 0x1aed98d9 )
+	ROM_LOAD( "pp5p_ic.64", 0x05000, 0x1000, 0x9c3aacd )
+	ROM_LOAD( "pp6p_ic.55", 0x06000, 0x1000, 0xbdeed702 )
+	ROM_LOAD( "pp7p_ic.54", 0x07000, 0x1000, 0x5f36d082 )
+	/* 10000-10fff space for another banked ROM (not used) */
+	ROM_LOAD( "pp7b_ic.52", 0x11000, 0x1000, 0xbbc38b03 ) /* banked at 7000 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
+	ROM_LOAD( "pp05_ic.70", 0x0000, 0x1000, 0xdcb5eb9d )
+	ROM_LOAD( "pp15_ic.71", 0x1000, 0x1000, 0x3123dbe1 )
+
+	ROM_REGION( 0x8000, REGION_GFX1, 0 ) /* graphic ROMs used at runtime */
+	ROM_LOAD( "pp0e_ic.1", 0x0000, 0x1000, 0xaceaf79b )
+	ROM_LOAD( "pp1e_ic.2", 0x1000, 0x1000, 0xac148214 )
+	ROM_LOAD( "pp2e_ic.3", 0x2000, 0x1000, 0x108194d2 )
+	ROM_LOAD( "pp3e_ic.4", 0x3000, 0x1000, 0x621b0da1 )
+	ROM_LOAD( "pp4e_ic.5", 0x4000, 0x1000, 0xe9826d90 )
+	ROM_LOAD( "pp5e_ic.6", 0x5000, 0x1000, 0xfe0d38c6 )
+	ROM_LOAD( "pp6e_ic.7", 0x6000, 0x1000, 0x2cfd127b )
+	ROM_LOAD( "pp7e_ic.8", 0x7000, 0x1000, 0x9857533f )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 ) /* layer PROM */
+	ROM_LOAD( "eb16.22", 0x0000, 0x0100, 0xb833b5ea )
 ROM_END
 
 ROM_START( alpine )
@@ -2337,21 +2306,21 @@ ROM_END
 
 
 
-static void init_alpine(void)
+static DRIVER_INIT( alpine )
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50f, 0xd50f, alpine_protection_w);
 }
 
-static void init_alpinea(void)
+static DRIVER_INIT( alpinea )
 {
 	/* install protection handlers */
 	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
 	install_mem_write_handler(0, 0xd50e, 0xd50e, alpinea_bankswitch_w);
 }
 
-static void init_junglhbr(void)
+static DRIVER_INIT( junglhbr )
 {
 	/* inverter on bits 0 and 1 */
 	install_mem_write_handler (0, 0x9000, 0xbfff, junglhbr_characterram_w);
@@ -2364,6 +2333,7 @@ GAME( 1982, junglek,  0,        nomcu, junglek,    0,       ROT0,   "Taito Corpo
 GAME( 1982, junglkj2, junglek,  nomcu, junglek,    0,       ROT0,   "Taito Corporation", "Jungle King (Japan, earlier)" )
 GAME( 1982, jungleh,  junglek,  nomcu, junglek,    0,       ROT0,   "Taito America Corporation", "Jungle Hunt (US)" )
 GAME( 1983, junglhbr, junglek,  nomcu, junglek,    junglhbr,ROT0,   "Taito do Brasil",   "Jungle Hunt (Brazil)" )
+GAME( 1982, piratpet, junglek,  nomcu, junglek,    0,       ROT0,   "Taito America Corporation", "Pirate Pete" )
 GAME( 1982, alpine,   0,        nomcu, alpine,     alpine,  ROT270, "Taito Corporation", "Alpine Ski (set 1)" )
 GAME( 1982, alpinea,  alpine,   nomcu, alpinea,    alpinea, ROT270, "Taito Corporation", "Alpine Ski (set 2)" )
 GAME( 1982, timetunl, 0,        nomcu, timetunl,   0,       ROT0,   "Taito Corporation", "Time Tunnel" )

@@ -60,12 +60,11 @@ int pocketc_vh_start(void)
 		backdrop_load(backdrop_name, 8);
 	}
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 void pocketc_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 void pocketc_draw_special(struct mame_bitmap *bitmap,

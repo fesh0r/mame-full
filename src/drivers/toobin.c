@@ -20,23 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( toobin_paletteram_w );
-WRITE16_HANDLER( toobin_intensity_w );
-WRITE16_HANDLER( toobin_hscroll_w );
-WRITE16_HANDLER( toobin_vscroll_w );
-
-int toobin_vh_start(void);
-void toobin_vh_stop(void);
-void toobin_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+#include "toobin.h"
 
 
 
@@ -72,7 +56,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( toobin )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -140,20 +124,20 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0xc00000, 0xc07fff, ataripf_0_large_w, &ataripf_0_base },
-	{ 0xc08000, 0xc097ff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xc00000, 0xc07fff, atarigen_playfield_large_w, &atarigen_playfield },
+	{ 0xc08000, 0xc097ff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xc09800, 0xc09fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xc10000, 0xc107ff, toobin_paletteram_w, &paletteram16 },
 	{ 0xff8000, 0xff8001, watchdog_reset16_w },
 	{ 0xff8100, 0xff8101, atarigen_sound_w },
 	{ 0xff8300, 0xff8301, toobin_intensity_w },
 	{ 0xff8340, 0xff8341, interrupt_scan_w, &interrupt_scan },
-	{ 0xff8380, 0xff8381, atarimo_0_slipram_w, &atarimo_0_slipram },
+	{ 0xff8380, 0xff8381, toobin_slip_w, &atarimo_0_slipram },
 	{ 0xff83c0, 0xff83c1, atarigen_scanline_int_ack_w },
 	{ 0xff8400, 0xff8401, atarigen_sound_reset_w },
 	{ 0xff8500, 0xff8501, atarigen_eeprom_enable_w },
-	{ 0xff8600, 0xff8601, toobin_hscroll_w },
-	{ 0xff8700, 0xff8701, toobin_vscroll_w },
+	{ 0xff8600, 0xff8601, toobin_xscroll_w, &atarigen_xscroll },
+	{ 0xff8700, 0xff8701, toobin_yscroll_w, &atarigen_yscroll },
 	{ 0xffa000, 0xffafff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffc000, 0xffffff, MWA16_RAM },
 MEMORY_END
@@ -254,39 +238,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_toobin =
-{
+static MACHINE_DRIVER_START( toobin )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68010,		/* verified */
-			ATARI_CLOCK_32MHz/4,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_I_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68010, ATARI_CLOCK_32MHz/4)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(toobin)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	64*8, 48*8, { 0*8, 64*8-1, 0*8, 48*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	toobin_vh_start,
-	toobin_vh_stop,
-	toobin_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(64*8, 48*8)
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 48*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(toobin)
+	MDRV_VIDEO_UPDATE(toobin)
+	
 	/* sound hardware */
-	JSA_I_STEREO_WITH_POKEY,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_i_stereo_pokey)
+MACHINE_DRIVER_END
 
 
 
@@ -471,7 +447,7 @@ ROM_END
  *
  *************************************/
 
-static void init_toobin(void)
+static DRIVER_INIT( toobin )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 2, 1, 0x1000);

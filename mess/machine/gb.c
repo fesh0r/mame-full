@@ -53,7 +53,7 @@ UINT8 *gb_ram;
 #define LineDelay 0
 #define IFreq 60
 
-void gb_init_machine (void)
+MACHINE_INIT( gb )
 {
 	gb_ram = memory_region (REGION_CPU1);
 
@@ -101,7 +101,7 @@ void gb_init_machine (void)
 	gameboy_sound_w(0xFF25,0xF3);
 }
 
-void gb_shutdown_machine(void)
+MACHINE_STOP( gb )
 {
 	int I;
 	UINT8 *battery_ram, *ptr;
@@ -928,13 +928,13 @@ int gb_load_rom (int id)
 	return INIT_PASS;
 }
 
-int gb_scanline_interrupt (void)
+void gb_scanline_interrupt (void)
 {
 	/* This is a little dodgy, but it works... mostly */
 	static UINT8 count = 0;
 	count = (count + 1) % 3;
 	if ( count )
-		return ignore_interrupt();
+		return;
 
 	/* First let's draw the current scanline */
 	if (CURLINE < 144)
@@ -994,10 +994,6 @@ int gb_scanline_interrupt (void)
 			cpu_set_irq_line(0, SIO_INT, HOLD_LINE);
 		}
 	}
-
-	/* Return No interrupt, we cause them ourselves since multiple int's can
-	 * occur at the same time */
-	return ignore_interrupt();
 }
 
 void gb_scanline_interrupt_set_mode0 (int param)

@@ -13,14 +13,14 @@ static struct tilemap *bg_tilemap;
 
 
 
-void spdodgeb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( spdodgeb )
 {
 	int i;
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -28,20 +28,21 @@ void spdodgeb_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
 		bit0 = (color_prom[0] >> 4) & 0x01;
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 }
@@ -77,7 +78,7 @@ static void get_bg_tile_info(int tile_index)
 
 ***************************************************************************/
 
-int spdodgeb_vh_start(void)
+VIDEO_START( spdodgeb )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info,background_scan,TILEMAP_OPAQUE,8,8,64,32);
 
@@ -98,19 +99,17 @@ int spdodgeb_vh_start(void)
 
 static int lastscroll;
 
-int spdodgeb_interrupt(void)
+INTERRUPT_GEN( spdodgeb_interrupt )
 {
 	int line = 33 - cpu_getiloops();
 
 	if (line < 30)
 	{
 		scrollx[line] = lastscroll;
-		return M6502_INT_IRQ;
+		cpu_set_irq_line(0, M6502_IRQ_LINE, HOLD_LINE);
 	}
 	else if (line == 30)	/* vblank */
-		return M6502_INT_NMI;
-	else 	/* skip 31 32 33 to allow vblank to finish */
-		return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 WRITE_HANDLER( spdodgeb_scrollx_lo_w )
@@ -161,11 +160,10 @@ WRITE_HANDLER( spdodgeb_videoram_w )
 
 #define DRAW_SPRITE( order, sx, sy ) drawgfx( bitmap, gfx, \
 					(which+order),color+ 8 * sprite_palbank,flipx,flipy,sx,sy, \
-					clip,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0);
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	unsigned char *src;
 	int i;
@@ -215,7 +213,7 @@ static void draw_sprites( struct mame_bitmap *bitmap )
 #undef DRAW_SPRITE
 
 
-void spdodgeb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( spdodgeb )
 {
 	int i;
 
@@ -231,6 +229,6 @@ void spdodgeb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			tilemap_set_scrollx(bg_tilemap,i+1,scrollx[i]+5);
 	}
 
-	tilemap_draw(bitmap,bg_tilemap,0,0);
-	draw_sprites(bitmap);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	draw_sprites(bitmap,cliprect);
 }

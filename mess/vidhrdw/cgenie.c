@@ -33,7 +33,7 @@ int cgenie_vh_start(void)
 {
 	videoram_size = 0x4000;
 
-	if( generic_vh_start() != 0 )
+	if( video_start_generic() != 0 )
         return 1;
 
     dlybitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
@@ -61,8 +61,6 @@ int cgenie_vh_start(void)
 ***************************************************************************/
 void cgenie_vh_stop(void)
 {
-	generic_vh_stop();
-
 	if( dlybitmap )
 		free(dlybitmap);
 	dlybitmap = NULL;

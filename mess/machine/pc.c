@@ -226,32 +226,32 @@ void init_pc_vga(void)
 	pc_vga_init();
 }
 
-void pc_mda_init_machine(void)
+MACHINE_INIT( pc_mda )
 {
 //	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
-void pc_cga_init_machine(void)
+MACHINE_INIT( pc_cga )
 {
 //	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
-void pc_t1t_init_machine(void)
+MACHINE_INIT( pc_t1t )
 {
 //	pc_keyboard_init();
 	pc_t1t_reset();
 	dma8237_reset(dma8237);
 }
 
-void pc_aga_init_machine(void)
+MACHINE_INIT( pc_aga )
 {
 //	pc_keyboard_init();
 	dma8237_reset(dma8237);
 }
 
-void pc_vga_init_machine(void)
+MACHINE_INIT( pc_vga )
 {
 	vga_reset();
 //	pc_keyboard_init();
@@ -263,92 +263,50 @@ void pc_vga_init_machine(void)
  *      Interrupt handlers.
  *
  **************************************************************************/
-int pc_mda_frame_interrupt (void)
+static void pc_generic_frame_interrupt(int has_turbo, void (*pc_timer)(void))
 {
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2) ) {
-		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
-		else
-			timer_set_overclock(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
+	if (has_turbo)
+	{
+		static int turboswitch = -1;
+		if (turboswitch !=(input_port_3_r(0)&2) )
+		{
+			if (input_port_3_r(0)&2)
+				timer_set_overclock(0, 1);
+			else
+				timer_set_overclock(0, 4.77/12);
+			turboswitch=input_port_3_r(0)&2;
+		}
 	}
 
-	pc_mda_timer();
+	if (pc_timer)
+		pc_timer();
 
     if( !onscrd_active() && !setup_active() )
 		pc_keyboard();
-
-    return ignore_interrupt ();
 }
 
-int pc_cga_frame_interrupt (void)
+void pc_mda_frame_interrupt (void)
 {
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2) ) {
-		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
-		else
-			timer_set_overclock(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-
-	pc_cga_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
-
-    return ignore_interrupt ();
+	pc_generic_frame_interrupt(TRUE, pc_mda_timer);
 }
 
-int tandy1000_frame_interrupt (void)
+void pc_cga_frame_interrupt (void)
 {
-	static int turboswitch=-1;
-
-	if (turboswitch !=(input_port_3_r(0)&2)) {
-		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
-		else
-			timer_set_overclock(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-
-	pc_t1t_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
-
-    return ignore_interrupt ();
+	pc_generic_frame_interrupt(TRUE, pc_cga_timer);
 }
 
-int pc_aga_frame_interrupt (void)
+void tandy1000_frame_interrupt (void)
 {
-	pc_aga_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
-
-    return ignore_interrupt ();
+	pc_generic_frame_interrupt(TRUE, pc_t1t_timer);
 }
 
-int pc_vga_frame_interrupt (void)
+void pc_aga_frame_interrupt (void)
 {
-	static int turboswitch=-1;
+	pc_generic_frame_interrupt(FALSE, pc_aga_timer);
+}
 
-	if (turboswitch !=(input_port_3_r(0)&2) ) {
-		if (input_port_3_r(0)&2)
-			timer_set_overclock(0, 1);
-		else
-			timer_set_overclock(0, 4.77/12);
-		turboswitch=input_port_3_r(0)&2;
-	}
-//	vga_timer();
-
-    if( !onscrd_active() && !setup_active() )
-		pc_keyboard();
-
-    return ignore_interrupt ();
+void pc_vga_frame_interrupt (void)
+{
+	pc_generic_frame_interrupt(TRUE, NULL /* vga_timer */);
 }
 

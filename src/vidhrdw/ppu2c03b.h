@@ -37,9 +37,8 @@ struct ppu2c03b_interface
 };
 
 /* routines */
-void ppu2c03b_init_palette( unsigned char *palette );
+void ppu2c03b_init_palette( int first_entry );
 int ppu2c03b_init( struct ppu2c03b_interface *interface );
-void ppu2c03b_dispose( void );
 
 void ppu2c03b_reset( int num, int scan_scale );
 void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int bank, int bank_size );

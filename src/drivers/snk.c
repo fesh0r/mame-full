@@ -62,19 +62,18 @@ Credits (in alphabetical order)
 #include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
-extern void aso_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-extern void snk_3bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-extern void snk_4bpp_shadow_vh_convert_color_prom(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
+extern PALETTE_INIT( aso );
+extern PALETTE_INIT( snk_3bpp_shadow );
+extern PALETTE_INIT( snk_4bpp_shadow );
 
-extern int snk_vh_start( void );
-extern void snk_vh_stop( void );
+extern VIDEO_START( snk );
 
-extern void tnk3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void ikari_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void tdfever_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void ftsoccer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-extern void gwar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-// extern void psychos_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh); /* not needed? */
+extern VIDEO_UPDATE( tnk3 );
+extern VIDEO_UPDATE( ikari );
+extern VIDEO_UPDATE( tdfever );
+extern VIDEO_UPDATE( ftsoccer );
+extern VIDEO_UPDATE( gwar );
+// extern VIDEO_UPDATE( psychos ); /* not needed? */
 
 /*********************************************************************/
 
@@ -218,21 +217,21 @@ void snk_sound_callback1_w( int state ){ /* ? */
 static struct YM3526interface ym3526_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50 },		/* mixing level */
+	{ 100 },		/* mixing level */
 	{ snk_sound_callback0_w } /* ? */
 };
 
 static struct YM3526interface ym3526_ym3526_interface = {
 	2,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50,50 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 	{ snk_sound_callback0_w, snk_sound_callback1_w } /* ? */
 };
 
 static struct Y8950interface y8950_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50 },		/* mixing level */
+	{ 100 },		/* mixing level */
 	{ snk_sound_callback1_w }, /* ? */
 	{ REGION_SOUND1 }	/* memory region */
 };
@@ -240,7 +239,7 @@ static struct Y8950interface y8950_interface = {
 static struct YM3812interface ym3812_interface = {
 	1,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50,50 },	/* mixing level */
+	{ 100,100 },	/* mixing level */
 	{ snk_sound_callback0_w } /* ? */
 };
 
@@ -253,7 +252,7 @@ static struct YM3812interface ym3812_interface = {
 static struct Y8950interface ym3526_y8950_interface = {
 	2,			/* number of chips */
 	4000000,	/* 4 MHz */
-	{ 50, 50 },		/* mixing level */
+	{ 100, 100 },		/* mixing level */
 	{ snk_sound_callback0_w, snk_sound_callback1_w }, /* ? */
 	{ REGION_SOUND1, REGION_SOUND1 }
 };
@@ -395,7 +394,7 @@ static READ_HANDLER( cpuA_io_r ){
 
 		case 0x700:
 		if( cpuB_latch & SNK_NMI_ENABLE ){
-			cpu_cause_interrupt( 1, Z80_NMI_INT );
+			cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 			cpuB_latch = 0;
 		}
 		else {
@@ -427,7 +426,7 @@ static WRITE_HANDLER( cpuA_io_w ){
 
 		case 0x700:
 		if( cpuA_latch&SNK_NMI_PENDING ){
-			cpu_cause_interrupt( 0, Z80_NMI_INT );
+			cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 			cpuA_latch = 0;
 		}
 		else {
@@ -446,7 +445,7 @@ static READ_HANDLER( cpuB_io_r ){
 		case 0x000:
 		case 0x700:
 		if( cpuA_latch & SNK_NMI_ENABLE ){
-			cpu_cause_interrupt( 0, Z80_NMI_INT );
+			cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 			cpuA_latch = 0;
 		}
 		else {
@@ -469,7 +468,7 @@ static READ_HANDLER( cpuB_io_r ){
 static WRITE_HANDLER( cpuB_io_w ){
 	if( offset==0 || offset==0x700 ){
 		if( cpuB_latch&SNK_NMI_PENDING ){
-			cpu_cause_interrupt( 1, Z80_NMI_INT );
+			cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 			cpuB_latch = 0;
 		}
 		else {
@@ -784,508 +783,369 @@ static struct GfxDecodeInfo tdfever_gfxdecodeinfo[] =
 
 /**********************************************************************/
 
-static const struct MachineDriver machine_driver_tnk3 =
-{
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			tnk3_readmem_cpuA,tnk3_writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			tnk3_readmem_cpuB,tnk3_writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_readmem_sound,YM3526_writemem_sound,0,0,
-			interrupt,2 /* ? */
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( tnk3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_readmem_sound,YM3526_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2) /* ? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(tnk3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	tnk3_gfxdecodeinfo,
-	1024, 0,
-	aso_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	tnk3_vh_screenrefresh,
+	MDRV_PALETTE_INIT(aso)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(tnk3)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_athena =
-/* mostly identical to TNK3, but with an aditional YM3526 */
-{
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			tnk3_readmem_cpuA,tnk3_writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000, /* ? */
-			tnk3_readmem_cpuB,tnk3_writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound,0,0,
-			interrupt,1
-		},
 
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	600,	/* CPU slices per frame */
-	0, /* init machine */
+static MACHINE_DRIVER_START( athena )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(tnk3_readmem_cpuA,tnk3_writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000) /* ? */
+	MDRV_CPU_MEMORY(tnk3_readmem_cpuB,tnk3_writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(600)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(athena_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	athena_gfxdecodeinfo,
-	1024, 0,
-	aso_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	tnk3_vh_screenrefresh,  //athena_vh...
+	MDRV_PALETTE_INIT(aso)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(tnk3)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ikari =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( ikari )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(ikari_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	ikari_gfxdecodeinfo,
-	1024, 0,
-	snk_3bpp_shadow_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	ikari_vh_screenrefresh,
+	MDRV_PALETTE_INIT(snk_3bpp_shadow)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(ikari)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_ym3526_interface
-	    }
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_victroad =
-/* identical to Ikari Warriors, but sound system replaces one of the YM3526 with Y8950 */
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( victroad )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 1*8, 28*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 1*8, 28*8-1)
+	MDRV_GFXDECODE(ikari_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	ikari_gfxdecodeinfo,
-	1024, 0,
-	snk_3bpp_shadow_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	ikari_vh_screenrefresh,
+	MDRV_PALETTE_INIT(snk_3bpp_shadow)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(ikari)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_Y8950,
-			&ym3526_y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_gwar =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( gwar )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384, 240, { 16, 383,0, 239-16 },
-	gwar_gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(16, 383,0, 239-16)
+	MDRV_GFXDECODE(gwar_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	gwar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_Y8950,
-			&ym3526_y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bermudat =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-//			4000000,	/* 4.0 MHz (?) */ doesn't work with this clock speed
-			5000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( bermudat )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+//	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */ -- doesn't work with this clock speed
+	MDRV_CPU_ADD(Z80, 5000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384, 240, { 16, 383,0, 239-16 },
-	bermudat_gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(16, 383,0, 239-16)
+	MDRV_GFXDECODE(bermudat_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	gwar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_Y8950,
-			&ym3526_y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_psychos =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( psychos )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384, 240, { 0, 383, 0, 239-16 },
-	psychos_gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239-16)
+	MDRV_GFXDECODE(psychos_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	gwar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_Y8950,
-			&ym3526_y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_chopper1 =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init machine */
+
+static MACHINE_DRIVER_START( chopper1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3812_Y8950_readmem_sound,YM3812_Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384, 240, { 0, 383, 0, 239-16 },
-	psychos_gfxdecodeinfo,
-	1024, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 240)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239-16)
+	MDRV_GFXDECODE(psychos_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	gwar_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(gwar)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3812,
-			&ym3812_interface
-	    },
-		{
-			SOUND_Y8950,
-			&y8950_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(Y8950, y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_tdfever =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-//			YM3526_Y8950_readmem_sound, YM3526_Y8950_writemem_sound,0,0,
-			YM3526_YM3526_readmem_sound, YM3526_YM3526_writemem_sound,0,0,
-			interrupt,1
-		},
+static MACHINE_DRIVER_START( tdfever )
 
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init_machine */
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(YM3526_Y8950_readmem_sound,YM3526_Y8950_writemem_sound)
+	MDRV_CPU_MEMORY(YM3526_YM3526_readmem_sound,YM3526_YM3526_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384,240, { 0, 383, 0, 239-16 },
-	tdfever_gfxdecodeinfo,
-	1024, 0,
-	snk_4bpp_shadow_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(384,240)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239-16)
+	MDRV_GFXDECODE(tdfever_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	tdfever_vh_screenrefresh,
+	MDRV_PALETTE_INIT(snk_4bpp_shadow)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(tdfever)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_ym3526_interface
-	    }
-//		{
-//			SOUND_Y8950,
-//			&ym3526_y8950_interface
-//		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_ym3526_interface)
+//	MDRV_SOUND_ADD(Y8950, ym3526_y8950_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ftsoccer =
-{
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuA,writemem_cpuA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4.0 MHz (?) */
-			readmem_cpuB,writemem_cpuB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 MHz (?) */
-			Y8950_readmem_sound, Y8950_writemem_sound,0,0,
-			interrupt,1
-		},
 
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init_machine */
+static MACHINE_DRIVER_START( ftsoccer )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuA,writemem_cpuA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpuB,writemem_cpuB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz (?) */
+	MDRV_CPU_MEMORY(Y8950_readmem_sound,Y8950_writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	384,240, { 0, 383, 0, 239-16 },
-	tdfever_gfxdecodeinfo,
-	1024, 0,
-	snk_4bpp_shadow_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(384,240)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239-16)
+	MDRV_GFXDECODE(tdfever_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	snk_vh_start,
-	snk_vh_stop,
-	ftsoccer_vh_screenrefresh,
+	MDRV_PALETTE_INIT(snk_4bpp_shadow)
+	MDRV_VIDEO_START(snk)
+	MDRV_VIDEO_UPDATE(ftsoccer)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM3526,
-			&ym3526_interface
-	    }
-//		{
-//			SOUND_Y8950,
-//			&y8950_interface
-//		}
-	}
-};
+	MDRV_SOUND_ADD(YM3526, ym3526_interface)
+//	MDRV_SOUND_ADD(Y8950, y8950_interface)
+MACHINE_DRIVER_END
+
 
 /***********************************************************************/
 
@@ -1419,6 +1279,36 @@ ROM_START( fitegolf )
 	ROM_LOAD( "gu9",   0x00000, 0x8000, 0xd4957ec5 )
 	ROM_LOAD( "gu10",  0x08000, 0x8000, 0xb3acdac2 )
 	ROM_LOAD( "gu11",  0x10000, 0x8000, 0xb99cf73b )
+ROM_END
+
+ROM_START( fitegol2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for cpuA code */
+	ROM_LOAD( "np45.128", 0x0000, 0x4000, 0x16e8e763 )
+	ROM_LOAD( "mn45.256", 0x4000, 0x8000, 0xa4fa09d5 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for cpuB code */
+	ROM_LOAD( "gu6",    0x0000, 0x4000, 0x2b9978c5 )	// NP8.256
+	ROM_LOAD( "gu5",    0x4000, 0x8000, 0xea3d138c )	// MN8.256
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for sound code */
+	ROM_LOAD( "gu3",    0x0000, 0x4000, 0x811b87d7 )	// FG67.256
+	ROM_LOAD( "gu4",    0x4000, 0x8000, 0x2d998e2b )	// K67.256
+
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
+	ROM_LOAD( "82s137.2c",  0x00000, 0x00400, 0x6e4c7836 )
+	ROM_LOAD( "82s137.1b",  0x00400, 0x00400, 0x29e7986f )
+	ROM_LOAD( "82s137.1c",  0x00800, 0x00400, 0x27ba9ff9 )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE ) /* characters */
+	ROM_LOAD( "gu8",   0x0000, 0x4000, 0xf1628dcf )		// D2.128
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "gu7",  0x0000, 0x8000, 0x4655f94e )		// BC2.256
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD( "gu9",   0x00000, 0x8000, 0xd4957ec5 )	// P2.256
+	ROM_LOAD( "gu10",  0x08000, 0x8000, 0xb3acdac2 )	// R2.256
+	ROM_LOAD( "gu11",  0x10000, 0x8000, 0xb99cf73b )	// S2.256
 ROM_END
 
 /***********************************************************************/
@@ -3365,7 +3255,7 @@ const SNK_INPUT_PORT_TYPE tdfever_io[SNK_MAX_INPUT_PORTS] = {
 	/* c600 */ SNK_INP10	/* DSW2 */
 };
 
-static void init_ikari(void){
+static DRIVER_INIT( ikari ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/*  Hack ROM test */
 	RAM[0x11a6] = 0x00;
@@ -3384,7 +3274,7 @@ static void init_ikari(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_ikarijp(void){
+static DRIVER_INIT( ikarijp ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x190b] = 0xc9; /* faster test */
 
@@ -3395,7 +3285,7 @@ static void init_ikarijp(void){
 	snk_bg_tilemap_baseaddr = 0xd000;
 }
 
-static void init_ikarijpb(void){
+static DRIVER_INIT( ikarijpb ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x190b] = 0xc9; /* faster test */
 
@@ -3406,7 +3296,7 @@ static void init_ikarijpb(void){
 	snk_bg_tilemap_baseaddr = 0xd000;
 }
 
-static void init_victroad(void){
+static DRIVER_INIT( victroad ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* Hack ROM test */
 	RAM[0x17bd] = 0x00;
@@ -3425,7 +3315,7 @@ static void init_victroad(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_dogosoke(void){
+static DRIVER_INIT( dogosoke ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	/* Hack ROM test */
 	RAM[0x179f] = 0x00;
@@ -3444,7 +3334,7 @@ static void init_dogosoke(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_gwar(void){
+static DRIVER_INIT( gwar ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = ikari_io;
 	hard_flags = 0;
@@ -3452,7 +3342,7 @@ static void init_gwar(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_gwara(void){
+static DRIVER_INIT( gwara ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = ikari_io;
 	hard_flags = 0;
@@ -3460,7 +3350,7 @@ static void init_gwara(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_chopper(void){
+static DRIVER_INIT( chopper ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = athena_io;
 	hard_flags = 0;
@@ -3468,7 +3358,7 @@ static void init_chopper(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_bermudat(void){
+static DRIVER_INIT( bermudat ){
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	// Patch "Turbo Error"
@@ -3483,7 +3373,7 @@ static void init_bermudat(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_worldwar(void){
+static DRIVER_INIT( worldwar ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = ikari_io;
 	hard_flags = 0;
@@ -3491,7 +3381,7 @@ static void init_worldwar(void){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_tdfever( void ){
+static DRIVER_INIT( tdfever ){
 	snk_sound_busy_bit = 0x08;
 	snk_io = tdfever_io;
 	hard_flags = 0;
@@ -3499,7 +3389,7 @@ static void init_tdfever( void ){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_ftsoccer( void ){
+static DRIVER_INIT( ftsoccer ){
 	snk_sound_busy_bit = 0x08;
 	snk_io = tdfever_io;
 	hard_flags = 0;
@@ -3507,7 +3397,7 @@ static void init_ftsoccer( void ){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_tnk3( void ){
+static DRIVER_INIT( tnk3 ){
 	snk_sound_busy_bit = 0x20;
 	snk_io = ikari_io;
 	hard_flags = 0;
@@ -3515,7 +3405,7 @@ static void init_tnk3( void ){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_athena( void ){
+static DRIVER_INIT( athena ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = athena_io;
 	hard_flags = 0;
@@ -3523,7 +3413,7 @@ static void init_athena( void ){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_fitegolf( void ){
+static DRIVER_INIT( fitegolf ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = athena_io;
 	hard_flags = 0;
@@ -3531,7 +3421,7 @@ static void init_fitegolf( void ){
 	snk_bg_tilemap_baseaddr = 0xd800;
 }
 
-static void init_psychos( void ){
+static DRIVER_INIT( psychos ){
 	snk_sound_busy_bit = 0x01;
 	snk_io = athena_io;
 	hard_flags = 0;
@@ -3543,7 +3433,8 @@ static void init_psychos( void ){
 GAMEX( 1985, tnk3,     0,        tnk3,     tnk3,     tnk3,     ROT270, "SNK", "TNK III (US?)", GAME_NO_COCKTAIL )
 GAMEX( 1985, tnk3j,    tnk3,     tnk3,     tnk3,     tnk3,     ROT270, "SNK", "Tank (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1986, athena,   0,        athena,   athena,   athena,   ROT0,   "SNK", "Athena", GAME_NO_COCKTAIL )
-GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf", GAME_NO_COCKTAIL )
+GAMEX( 1988, fitegolf, 0,        athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1988, fitegol2, fitegolf, athena,   fitegolf, fitegolf, ROT0,   "SNK", "Fighting Golf (set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikari,    0,        ikari,    ikari,    ikari,    ROT270, "SNK", "Ikari Warriors (US)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikarijp,  ikari,    ikari,    ikarijp,  ikarijp,  ROT270, "SNK", "Ikari Warriors (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1986, ikarijpb, ikari,    ikari,    ikarijp,  ikarijpb, ROT270, "bootleg", "Ikari Warriors (Japan bootleg)", GAME_NO_COCKTAIL )

@@ -26,7 +26,7 @@ static int backcolor;
   Zarzon has a different PROM layout from the others.
 
 ***************************************************************************/
-void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rockola )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -35,25 +35,26 @@ void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
         bit0 = (*color_prom >> 0) & 0x01;
         bit1 = (*color_prom >> 1) & 0x01;
         bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
         bit0 = (*color_prom >> 3) & 0x01;
         bit1 = (*color_prom >> 4) & 0x01;
         bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
         bit1 = (*color_prom >> 6) & 0x01;
         bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -70,7 +71,7 @@ void rockola_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	}
 }
 
-void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( satansat )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -79,25 +80,26 @@ void satansat_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
         bit0 = (*color_prom >> 0) & 0x01;
         bit1 = (*color_prom >> 1) & 0x01;
         bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
         bit0 = (*color_prom >> 3) & 0x01;
         bit1 = (*color_prom >> 4) & 0x01;
         bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
         bit1 = (*color_prom >> 6) & 0x01;
         bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -140,7 +142,7 @@ WRITE_HANDLER( rockola_flipscreen_w )
 		for (i = 0;i < 32;i += 4)
 			Machine->gfx[1]->colortable[i] = Machine->pens[4 * backcolor + 0x20];
 
-		schedule_full_refresh();
+		set_vh_global_attribute(NULL,0);
 	}
 
 	/* bit 3 selects char bank */
@@ -179,7 +181,7 @@ WRITE_HANDLER( satansat_backcolor_w )
 		for (i = 0;i < 16;i += 4)
 			Machine->gfx[1]->colortable[i] = Machine->pens[backcolor + 0x10];
 
-		schedule_full_refresh();
+		set_vh_global_attribute(NULL,0);
 	}
 }
 
@@ -192,12 +194,12 @@ WRITE_HANDLER( satansat_backcolor_w )
   the main emulation engine.
 
 ***************************************************************************/
-void rockola_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rockola )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -283,12 +285,12 @@ void rockola_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 /* Zarzon's background doesn't scroll, and the color code selection is different. */
-void satansat_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( satansat )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */

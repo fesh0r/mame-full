@@ -455,7 +455,7 @@ static struct DACinterface dac_interface =
 #define CPU_CLOCK	3227500
 #define CYCLES_PER_SCANLINE 207
 
-static struct MachineDriver machine_driver_zx80 =
+static MACHINE_DRIVER_START( zx80 )
 {
 	/* basic machine hardware */
 	{
@@ -483,7 +483,7 @@ static struct MachineDriver machine_driver_zx80 =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
-	generic_vh_stop,
+	NULL,
 	zx_vh_screenrefresh,
 
 	/* sound hardware */
@@ -496,7 +496,7 @@ static struct MachineDriver machine_driver_zx80 =
 	}
 };
 
-static struct MachineDriver machine_driver_zx81 =
+static MACHINE_DRIVER_START( zx81 =
 {
 	/* basic machine hardware */
 	{
@@ -524,7 +524,7 @@ static struct MachineDriver machine_driver_zx81 =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
-	generic_vh_stop,
+	NULL,
 	zx_vh_screenrefresh,
 
 	/* sound hardware */
@@ -537,7 +537,7 @@ static struct MachineDriver machine_driver_zx81 =
 	}
 };
 
-static struct MachineDriver machine_driver_ts1000 =
+static MACHINE_DRIVER_START( ts1000 =
 {
 	/* basic machine hardware */
 	{
@@ -565,7 +565,7 @@ static struct MachineDriver machine_driver_ts1000 =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
-	generic_vh_stop,
+	NULL,
 	zx_vh_screenrefresh,
 
 	/* sound hardware */
@@ -578,7 +578,7 @@ static struct MachineDriver machine_driver_ts1000 =
 	}
 };
 
-static struct MachineDriver machine_driver_pc8300 =
+static MACHINE_DRIVER_START( pc8300 =
 {
 	/* basic machine hardware */
 	{
@@ -606,7 +606,7 @@ static struct MachineDriver machine_driver_pc8300 =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
-	generic_vh_stop,
+	NULL,
 	zx_vh_screenrefresh,
 
 	/* sound hardware */
@@ -619,7 +619,7 @@ static struct MachineDriver machine_driver_pc8300 =
 	}
 };
 
-static struct MachineDriver machine_driver_pow3000 =
+static MACHINE_DRIVER_START( pow3000 =
 {
 	/* basic machine hardware */
 	{
@@ -647,7 +647,7 @@ static struct MachineDriver machine_driver_pow3000 =
 	VIDEO_TYPE_RASTER,
 	0,
 	generic_bitmapped_vh_start,
-	generic_vh_stop,
+	NULL,
 	zx_vh_screenrefresh,
 
 	/* sound hardware */

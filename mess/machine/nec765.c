@@ -285,10 +285,7 @@ static void nec765_seek_timer_callback(int param)
 		/* seek complete */
 		nec765_seek_complete();
 
-		if (fdc.seek_timer)
-		{
-			timer_reset(fdc.seek_timer, TIME_NEVER);
-		}
+		timer_reset(fdc.seek_timer, TIME_NEVER);
 }
 static void nec765_timer_callback(int param)
 {
@@ -302,11 +299,8 @@ static void nec765_timer_callback(int param)
 		
 		if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 		{
-			if (fdc.timer)
-			{
-				// for pcw
-				timer_reset(fdc.timer, TIME_IN_USEC(27));
-			}
+			// for pcw
+			timer_reset(fdc.timer, TIME_IN_USEC(27));
 		}
 		else
 		{
@@ -352,13 +346,9 @@ static void nec765_timer_callback(int param)
 
 		nec765_set_data_request();
 
-		if (fdc.timer)
-		{
-			timer_reset(fdc.timer, TIME_NEVER);
-		}
+		timer_reset(fdc.timer, TIME_NEVER);
 	}
-	else
-	if (fdc.timer_type == 4)
+	else if (fdc.timer_type == 4)
 	{
 		/* if in dma mode, a int is not generated per byte. If not in  DMA mode
 		a int is generated per byte */
@@ -375,10 +365,7 @@ static void nec765_timer_callback(int param)
 			}
 		}
 
-		if (fdc.timer)
-		{
-			timer_reset(fdc.timer, TIME_NEVER);
-		}
+		timer_reset(fdc.timer, TIME_NEVER);
 	}
 }
 
@@ -388,61 +375,40 @@ In this driver, the first NMI calls the handler function, furthur NMI's are
 effectively disabled by reading the data before the NMI int can be set.
 */
 
-/* setup data request */
-static void nec765_setup_timed_data_request(int bytes)
+static void nec765_setup_timed_generic(int timer_type, double duration)
 {
-	/* setup timer to trigger in NEC765_DATA_RATE us */
-	fdc.timer_type = 0;
-	if (fdc.timer)
-	{
-		/* disable the timer */
-		timer_remove(fdc.timer);	//timer_enable(fdc.timer, 0);
-		fdc.timer = 0;
-	}
+	fdc.timer_type = timer_type;
 
 	if (!(fdc.nec765_flags & NEC765_DMA_MODE))
 	{
-		fdc.timer = timer_set(TIME_IN_USEC(32-27)	/*NEC765_DATA_RATE)*bytes*/, 0, nec765_timer_callback);
+		timer_adjust(fdc.timer, duration, 0, 0);		
 	}
 	else
 	{
 		nec765_timer_callback(fdc.timer_type);
+		timer_reset(fdc.timer, TIME_NEVER);
 	}
+}
+
+/* setup data request */
+static void nec765_setup_timed_data_request(int bytes)
+{
+	/* setup timer to trigger in NEC765_DATA_RATE us */
+	nec765_setup_timed_generic(0, TIME_IN_USEC(32-27)	/*NEC765_DATA_RATE)*bytes*/);		
 }
 
 /* setup result data request */
 static void nec765_setup_timed_result_data_request(void)
 {
-	fdc.timer_type = 2;
-	if (fdc.timer)
-	{
-		/* disable the timer */
-		timer_remove(fdc.timer);
-		fdc.timer = 0;
-	}
-	if (!(fdc.nec765_flags & NEC765_DMA_MODE))
-	{
-		fdc.timer = timer_set(TIME_IN_USEC(NEC765_DATA_RATE)*2, 0, nec765_timer_callback);
-	}
-	else
-	{
-		nec765_timer_callback(fdc.timer_type);
-	}
+	nec765_setup_timed_generic(2, TIME_IN_USEC(NEC765_DATA_RATE)*2);
 }
 
 
 /* sets up a timer to issue a seek complete in signed_tracks time */
 static void nec765_setup_timed_int(int signed_tracks)
 {
-	if (fdc.seek_timer)
-	{
-		/* disable the timer */
-		timer_remove(fdc.seek_timer);	
-		fdc.seek_timer = 0;
-	}
-
 	/* setup timer to signal after seek time is complete */
-	fdc.seek_timer = timer_pulse(TIME_IN_MSEC(fdc.srt_in_ms*abs(signed_tracks)), 0, nec765_seek_timer_callback);
+	timer_adjust(fdc.seek_timer, 0, 0, TIME_IN_MSEC(fdc.srt_in_ms*abs(signed_tracks)));
 }
 
 static void nec765_seek_setup(int is_recalibrate)
@@ -668,8 +634,8 @@ void nec765_set_ready_change_callback(int drive, int state)
 void    nec765_init(nec765_interface *iface, int version)
 {
 	fdc.version = version;
-	fdc.timer = 0;	//timer_set(TIME_NEVER, 0, nec765_timer_callback);
-	fdc.seek_timer = 0;
+	fdc.timer = timer_alloc(nec765_timer_callback);
+	fdc.seek_timer = timer_alloc(nec765_seek_timer_callback);
 	memset(&nec765_iface, 0, sizeof(nec765_interface));
 
 	if (iface)

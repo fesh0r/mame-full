@@ -99,7 +99,7 @@ static unsigned char palette[] =
 	0x4E,0x4E,0x4E
 };
 
-static unsigned short colortable[] =
+static unsigned short gb_colortable[] =
 {
 	0,1,2,3,	/* Background colours */
 	0,1,2,3,	/* Sprite 0 colours */
@@ -108,10 +108,12 @@ static unsigned short colortable[] =
 };
 
 /* Initialise the palette */
-static void gb_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+static PALETTE_INIT( gb )
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colortable,sizeof(colortable));
+	int i;
+	for (i = 0; i < (sizeof(palette) / 3); i++)
+		palette_set_color(i, palette[i*3+0], palette[i*3+1], palette[i*3+2]);
+	memcpy(colortable,gb_colortable,sizeof(gb_colortable));
 }
 
 static struct CustomSound_interface gameboy_sound_interface = {
@@ -120,42 +122,34 @@ static struct CustomSound_interface gameboy_sound_interface = {
 	0
 };
 
-static struct MachineDriver machine_driver_gameboy =
-{
+static MACHINE_DRIVER_START( gameboy )
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80GB,
-			4194304,	  /* 4.194304 Mhz */
-			readmem,writemem,0,0,
-			gb_scanline_interrupt, 154 * 3 /* 1 int each scanline ! */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration */
-	1,
-	gb_init_machine,
-	gb_shutdown_machine,	/* shutdown machine */
+	MDRV_CPU_ADD_TAG("main", Z80GB, 4194304)			/* 4.194304 Mhz */
+	MDRV_CPU_MEMORY(readmem, writemem)
+	MDRV_CPU_VBLANK_INT(gb_scanline_interrupt, 154 * 3)	/* 1 int each scanline ! */
 
-	/* video hardware (double size) */
-	160, 144,
-	{ 0, 160 - 1, 0, 144 - 1 },
-	gfxdecodeinfo,
-	sizeof(palette) / sizeof(palette[0]) / 3,	/* Palette length */
-	16,								/* Colortable length */
-	gb_init_palette,				/* init palette */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	gb_vh_start,					/* vh_start */
-	gb_vh_stop,						/* vh_stop */
-	gb_vh_screen_refresh,			/* vh_update */
+	MDRV_INTERLEAVE(1)
+	MDRV_MACHINE_INIT( gb )
+	MDRV_MACHINE_STOP( gb )
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{ SOUND_CUSTOM, &gameboy_sound_interface }
-	}
-};
+	MDRV_VIDEO_START( generic_bitmapped )
+	MDRV_VIDEO_UPDATE( gb )
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(160, 144)
+	MDRV_VISIBLE_AREA(0, 160 - 1, 0, 144 - 1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(palette) / sizeof(palette[0]) / 3)
+	MDRV_COLORTABLE_LENGTH(16)
+	MDRV_PALETTE_INIT(gb)
+
+    /* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, gameboy_sound_interface)
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_gameboy[] = {
 	{

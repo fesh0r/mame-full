@@ -73,9 +73,13 @@ typedef struct {
 
 static RRIOT rriot[MAX_RRIOTS]= { {0} };
 
-void rriot_config(int nr, RRIOT_CONFIG *config)
+static void rriot_timer_cb(int chip);
+
+void rriot_init(int nr, RRIOT_CONFIG *config)
 {
-	rriot[nr].config=config;
+	memset(&rriot[nr], 0, sizeof(rriot[nr]));
+	rriot[nr].config = config;
+	rriot[nr].timer = timer_alloc(rriot_timer_cb);
 
     LOG("RRIOT - successfully initialised\n");
 }
@@ -130,20 +134,16 @@ int rriot_r(int chip, int offset)
 		case 0: /* Timer count read */
 			switch (rriot[chip].state) {
 			case Delay1:
-				if (rriot[chip].timer)
-					data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock);
+				data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock);
 				break;
 			case Delay8:
-				if (rriot[chip].timer)
-					data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>3;
+				data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>3;
 				break;
 			case Delay64:
-				if (rriot[chip].timer)
-					data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>6;
+				data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>6;
 				break;
 			case Delay1024:
-				if (rriot[chip].timer)
-					data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>10;
+				data = (int)(timer_timeleft(rriot[chip].timer)*rriot[chip].config->baseclock)>>10;
 				break;
 			case TimerShot:
 				data=255-(int)((timer_get_time()-rriot[chip].shottime)*rriot[chip].config->baseclock);
@@ -220,35 +220,27 @@ void rriot_w(int chip, int offset, int data)
 		switch (offset&3) {
 		case 0: /* Timer 1 start */
 			LOG(("rriot(%d) TMR1  write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( rriot[chip].timer )
-				timer_remove(rriot[chip].timer);
-			rriot[chip].timer = timer_set(TIME_IN_HZ( (data+1) / rriot[chip].config->baseclock), 
-										  chip, rriot_timer_cb);
+			timer_adjust(rriot[chip].timer, TIME_IN_HZ( (data+1) / rriot[chip].config->baseclock), 
+										  chip, 0);
 			rriot[chip].state=Delay1;
 			break;
 		case 1: /* Timer 8 start */
 			LOG(("rriot(%d) TMR8  write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( rriot[chip].timer )
-				timer_remove(rriot[chip].timer);
-			rriot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 8 / rriot[chip].config->baseclock), 
-										  chip, rriot_timer_cb);
+			timer_adjust(rriot[chip].timer, TIME_IN_HZ( (data+1) * 8 / rriot[chip].config->baseclock), 
+										  chip, 0);
 			rriot[chip].state=Delay8;
 			break;
 		case 2: /* Timer 64 start */
 			LOG(("rriot(%d) TMR64 write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( rriot[chip].timer )
-				timer_remove(rriot[chip].timer);
 //			LOG(("rriot(%d) TMR64 write: time is $%f\n", chip, (double)(64.0 * (data + 1) / rriot[chip].clock)));
-			rriot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 64 / rriot[chip].config->baseclock), 
-										  chip, rriot_timer_cb);
+			timer_adjust(rriot[chip].timer, TIME_IN_HZ( (data+1) * 64 / rriot[chip].config->baseclock), 
+										  chip, 0);
 			rriot[chip].state=Delay64;
 			break;
 		case 3: /* Timer 1024 start */
 			LOG(("rriot(%d) TMR1K write: $%02x%s\n", chip, data, (char*)((offset & 8) ? " (IRQ)":" ")));
-			if( rriot[chip].timer )
-				timer_remove(rriot[chip].timer);
-			rriot[chip].timer = timer_set(TIME_IN_HZ( (data+1) * 1024 / rriot[chip].config->baseclock), 
-										  chip, rriot_timer_cb);
+			timer_adjust(rriot[chip].timer, TIME_IN_HZ( (data+1) * 1024 / rriot[chip].config->baseclock), 
+										  chip, 0);
 			rriot[chip].state=Delay1024;
 			break;
 		}
@@ -259,10 +251,11 @@ static int rriot_a_r(int chip)
 {
 	int data;
 	if (rriot[chip].config->port_a.input) 
-		data=rriot[chip].config->port_a.input(chip);
-	else data=0xff;
-	data&=~rriot[chip].port_a.ddr;
-	data|=(rriot[chip].port_a.ddr&rriot[chip].port_a.out);
+		data = rriot[chip].config->port_a.input(chip);
+	else
+		data = 0xff;
+	data &= ~rriot[chip].port_a.ddr;
+	data |= (rriot[chip].port_a.ddr&rriot[chip].port_a.out);
 	return data;
 }
 
@@ -270,10 +263,11 @@ static int rriot_b_r(int chip)
 {
 	int data;
 	if (rriot[chip].config->port_b.input) 
-		data=rriot[chip].config->port_b.input(chip);
-	else data=0xff;
-	data&=~rriot[chip].port_b.ddr;
-	data|=(rriot[chip].port_b.ddr&rriot[chip].port_b.out);
+		data = rriot[chip].config->port_b.input(chip);
+	else
+		data = 0xff;
+	data &= ~rriot[chip].port_b.ddr;
+	data |= (rriot[chip].port_b.ddr&rriot[chip].port_b.out);
 	return data;
 }
 

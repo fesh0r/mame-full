@@ -37,7 +37,7 @@ int sym1_vh_start (void)
 		backdrop_load(backdrop_name, 3);
 	}  
 
-	if (generic_vh_start () != 0)
+	if (video_start_generic () != 0)
         return 1;
 
     return 0;
@@ -46,7 +46,6 @@ int sym1_vh_start (void)
 void sym1_vh_stop (void)
 {
     videoram = NULL;
-    generic_vh_stop ();
 }
 
 static const char led[] =

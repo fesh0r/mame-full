@@ -44,6 +44,9 @@
 	House Mannequin Roppongi Live hen
 	(c)1987 Nihon Bussan Co.,Ltd.
 
+	Crystal Gal
+	(c)1986 Nihon Bussan Co.,Ltd.
+
 	Crystal Gal 2
 	(c)1986 Nihon Bussan Co.,Ltd.
 
@@ -67,7 +70,7 @@ Memo:
 - You cannot set to LCD mode (it's not implemented yet).
   Housemnq is LCD mode only, so you cannot play it.
 
-- Input handling is wrong in crystal2.
+- Input handling is wrong in crystalg and crystal2.
 
 - Some games display "GFXROM BANK OVER!!" or "GFXROM ADDRESS OVER!!"
   in Debug build.
@@ -79,22 +82,21 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom);
-void mjsikaku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int mjsikaku_vh_start(void);
-int secolove_vh_start(void);
-int bijokkoy_vh_start(void);
-int seiha_vh_start(void);
-int crystal2_vh_start(void);
-void mjsikaku_vh_stop(void);
+PALETTE_INIT( mjsikaku );
+PALETTE_INIT( seiha );
+PALETTE_INIT( crystal2 );
+VIDEO_UPDATE( mjsikaku );
+VIDEO_START( mjsikaku );
+VIDEO_START( secolove );
+VIDEO_START( bijokkoy );
+VIDEO_START( seiha );
+VIDEO_START( crystal2 );
 
 WRITE_HANDLER( mjsikaku_palette_w );
 WRITE_HANDLER( secolove_palette_w );
@@ -115,19 +117,17 @@ void seiha_romsel_w(int data);
 void crystal2_romsel_w(int data);
 
 
-static void init_mjsikaku(void)
+static DRIVER_INIT( mjsikaku )
 {
 	nb1413m3_type = NB1413M3_MJSIKAKU;
-	nb1413m3_int_count = 144;
 }
 
-static void init_otonano(void)
+static DRIVER_INIT( otonano )
 {
 	nb1413m3_type = NB1413M3_OTONANO;
-	nb1413m3_int_count = 144;
 }
 
-static void init_mjcamera(void)
+static DRIVER_INIT( mjcamera )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -138,85 +138,76 @@ static void init_mjcamera(void)
 	ROM[0x013f] = 0x00;
 #endif
 	nb1413m3_type = NB1413M3_MJCAMERA;
-	nb1413m3_int_count = 144;
 }
 
-static void init_kaguya(void)
+static DRIVER_INIT( kaguya )
 {
 	nb1413m3_type = NB1413M3_KAGUYA;
-	nb1413m3_int_count = 128;
 }
 
-static void init_secolove(void)
+static DRIVER_INIT( secolove )
 {
 	nb1413m3_type = NB1413M3_SECOLOVE;
-	nb1413m3_int_count = 128;
 }
 
-static void init_citylove(void)
+static DRIVER_INIT( citylove )
 {
 	nb1413m3_type = NB1413M3_CITYLOVE;
-	nb1413m3_int_count = 128;
 }
 
-static void init_seiha(void)
+static DRIVER_INIT( seiha )
 {
 	nb1413m3_type = NB1413M3_SEIHA;
-	nb1413m3_int_count = 128;
 }
 
-static void init_seiham(void)
+static DRIVER_INIT( seiham )
 {
 	nb1413m3_type = NB1413M3_SEIHAM;
-	nb1413m3_int_count = 128;
 }
 
-static void init_iemoto(void)
+static DRIVER_INIT( iemoto )
 {
 	nb1413m3_type = NB1413M3_IEMOTO;
-	nb1413m3_int_count = 128;
 }
 
-static void init_ojousan(void)
+static DRIVER_INIT( ojousan )
 {
 	nb1413m3_type = NB1413M3_OJOUSAN;
-	nb1413m3_int_count = 128;
 }
 
-static void init_bijokkoy(void)
+static DRIVER_INIT( bijokkoy )
 {
 	nb1413m3_type = NB1413M3_BIJOKKOY;
-	nb1413m3_int_count = 128;
 }
 
-static void init_bijokkog(void)
+static DRIVER_INIT( bijokkog )
 {
 	nb1413m3_type = NB1413M3_BIJOKKOG;
-	nb1413m3_int_count = 128;
 }
 
-static void init_housemnq(void)
+static DRIVER_INIT( housemnq )
 {
 	nb1413m3_type = NB1413M3_HOUSEMNQ;
-	nb1413m3_int_count = 128;
 }
 
-static void init_housemn2(void)
+static DRIVER_INIT( housemn2 )
 {
 	nb1413m3_type = NB1413M3_HOUSEMN2;
-	nb1413m3_int_count = 128;
 }
 
-static void init_crystal2(void)
+static DRIVER_INIT( crystalg )
+{
+	nb1413m3_type = NB1413M3_CRYSTALG;
+}
+
+static DRIVER_INIT( crystal2 )
 {
 	nb1413m3_type = NB1413M3_CRYSTAL2;
-	nb1413m3_int_count = 96;
 }
 
-static void init_apparel(void)
+static DRIVER_INIT( apparel )
 {
 	nb1413m3_type = NB1413M3_APPAREL;
-	nb1413m3_int_count = 128;
 }
 
 
@@ -792,8 +783,8 @@ INPUT_PORTS_START( mjcamera )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x80, 0x80, "Character Display Test" )
@@ -843,8 +834,8 @@ INPUT_PORTS_START( kaguya )
 	PORT_DIPSETTING(    0x40, "[big]" )
 	PORT_DIPSETTING(    0x00, "[small]" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x00, "Nudity graphic on bet" )
@@ -1263,8 +1254,8 @@ INPUT_PORTS_START( bijokkog )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_3C ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* (2) PORT 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
@@ -1451,6 +1442,79 @@ INPUT_PORTS_START( ojousan )
 	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( crystalg )
+
+	// I don't have manual for this game.
+
+	PORT_START	/* (0) DIPSW-A */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 1-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 1-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 1-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 1-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 1-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 1-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 1-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 1-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (1) DIPSW-B */
+	PORT_DIPNAME( 0x01, 0x01, "DIPSW 2-1" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "DIPSW 2-2" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "DIPSW 2-3" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "DIPSW 2-4" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "DIPSW 2-5" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "DIPSW 2-6" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* (2) PORT 0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )		// DRAW BUSY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )		//
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE3 )		// MEMORY RESET
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )		// ANALYZER
+	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )			// TEST
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )		// COIN1
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START3 )		// CREDIT CLEAR
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )		// OPTION (?)
+
+	NBMJCTRL_PORT1	/* (3) PORT 1-1 */
+	NBMJCTRL_PORT2	/* (4) PORT 1-2 */
+	NBMJCTRL_PORT3	/* (5) PORT 1-3 */
+	NBMJCTRL_PORT4	/* (6) PORT 1-4 */
+	NBMJCTRL_PORT5	/* (7) PORT 1-5 */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( crystal2 )
 
 	// I don't have manual for this game.
@@ -1582,7 +1646,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	20000000/8,			/* 2.50 MHz */
-	{ 35 }
+	{ 70 }
 };
 
 static struct AY8910interface ay8910_interface =
@@ -1603,318 +1667,308 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	4096, 0, \
-	mjsikaku_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mjsikaku_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
 
-#define NBMJDRV2( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			10000000/2,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	4096, 0, \
-	mjsikaku_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mjsikaku_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+static MACHINE_DRIVER_START( NBMJDRV1 )
 
-#define NBMJDRV3( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	65536, 0, \
-	seiha_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
-	0, \
-	bijokkoy_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 20000000/4)	/* 5.00 MHz ? */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
 
-#define NBMJDRV4( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	65536, 0, \
-	seiha_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN, \
-	0, \
-	seiha_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-#define NBMJDRV5( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	256, 0, \
-	crystal2_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	crystal2_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_MACHINE_INIT(nb1413m3)
+	MDRV_NVRAM_HANDLER(nb1413m3)
 
-#define NBMJDRV6( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			10000000/2,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	4096, 0, \
-	mjsikaku_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	mjsikaku_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 15, 239-1)
+	MDRV_PALETTE_LENGTH(4096)
 
-#define NBMJDRV7( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			5000000/1,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	4096, 0, \
-	mjsikaku_init_palette, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	secolove_vh_start, \
-	mjsikaku_vh_stop, \
-	mjsikaku_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
+	MDRV_PALETTE_INIT(mjsikaku)
+	MDRV_VIDEO_START(mjsikaku)
+	MDRV_VIDEO_UPDATE(mjsikaku)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-//	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1( mjsikaku, 144, mjsikaku, mjsikaku, mjsikaku, mjsikaku, nb1413m3_nvram_handler )
-NBMJDRV2(  otonano, 144, mjsikaku, mjsikaku,  otonano,  otonano, nb1413m3_nvram_handler )
-NBMJDRV2( mjcamera, 144, mjsikaku, mjsikaku,  otonano,  otonano, nb1413m3_nvram_handler )
-NBMJDRV7( secolove, 128, secolove, secolove, secolove, secolove, nb1413m3_nvram_handler )
-NBMJDRV7( citylove, 128, secolove, secolove, secolove, secolove, nb1413m3_nvram_handler )
-NBMJDRV3( bijokkoy, 128, secolove, secolove, secolove, bijokkoy, nb1413m3_nvram_handler )
-NBMJDRV3( bijokkog, 128, secolove, secolove, secolove, bijokkoy, nb1413m3_nvram_handler )
-NBMJDRV3( housemnq, 128, secolove, secolove, secolove, bijokkoy, nb1413m3_nvram_handler )
-NBMJDRV3( housemn2, 128, secolove, secolove, secolove, bijokkoy, nb1413m3_nvram_handler )
-NBMJDRV4(    seiha, 128, secolove, secolove, secolove,    seiha, nb1413m3_nvram_handler )
-NBMJDRV4(   seiham, 128, secolove, secolove, secolove,    seiha, nb1413m3_nvram_handler )
-NBMJDRV4(   iemoto, 128, secolove, secolove, secolove,   iemoto, nb1413m3_nvram_handler )
-NBMJDRV4(  ojousan, 128,  ojousan,  ojousan, secolove,   iemoto, nb1413m3_nvram_handler )
-NBMJDRV6(   kaguya, 128, mjsikaku, mjsikaku,   kaguya,   kaguya, nb1413m3_nvram_handler )
-NBMJDRV5( crystal2,  96, secolove, secolove, secolove, crystal2, nb1413m3_nvram_handler )
-NBMJDRV5(  apparel, 128, secolove, secolove, secolove, secolove, nb1413m3_nvram_handler )
+static MACHINE_DRIVER_START( NBMJDRV2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 10000000/2)		/* 5.00 MHz ? */
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 5000000/1)		/* 5.00 MHz ? */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_PALETTE_LENGTH(65536)
+
+	MDRV_PALETTE_INIT(seiha)
+	MDRV_VIDEO_START(bijokkoy)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV4 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 5000000/1)		/* 5.00 MHz ? */
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_PALETTE_LENGTH(65536)
+
+	MDRV_PALETTE_INIT(seiha)
+	MDRV_VIDEO_START(seiha)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV5 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 5000000/1)		/* 5.00 MHz ? */
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_PALETTE_INIT(crystal2)
+	MDRV_VIDEO_START(crystal2)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV6 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 10000000/2)		/* 5.00 MHz ? */
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( NBMJDRV7 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_REPLACE("main", Z80, 5000000/1)		/* 5.00 MHz ? */
+
+	/* video hardware */
+	MDRV_VIDEO_START(secolove)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+// --------------------------------------------------------------------------------
+
+static MACHINE_DRIVER_START( mjsikaku )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_PORTS(readport_mjsikaku,writeport_mjsikaku)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,144)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( otonano )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_PORTS(readport_otonano,writeport_otonano)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,144)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mjcamera )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV2)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_PORTS(readport_otonano,writeport_otonano)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,144)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( secolove )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV7)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( citylove )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV7)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bijokkoy )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV3)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_bijokkoy)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bijokkog )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV3)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_bijokkoy)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( housemnq )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV3)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_bijokkoy)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( housemn2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV3)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_bijokkoy)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( seiha )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV4)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_seiha)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( seiham )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV4)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_seiha)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( iemoto )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV4)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_iemoto)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ojousan )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV4)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_ojousan,writemem_ojousan)
+	MDRV_CPU_PORTS(readport_secolove,writeport_iemoto)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( kaguya )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV6)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_mjsikaku,writemem_mjsikaku)
+	MDRV_CPU_PORTS(readport_kaguya,writeport_kaguya)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( crystalg )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV5)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_crystal2)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( crystal2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV5)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_crystal2)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,96)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( apparel )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(NBMJDRV5)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_secolove,writemem_secolove)
+	MDRV_CPU_PORTS(readport_secolove,writeport_secolove)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
 
 
 ROM_START( mjsikaku )
@@ -2225,6 +2279,26 @@ ROM_START( housemn2 )
 	ROM_LOAD( "hmq2_c4.bin",  0x100000, 0x40000, 0xea2b78b3 )
 ROM_END
 
+ROM_START( crystalg )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "mbs1.3c",  0x00000, 0x04000, 0x1cacdbbd )
+	ROM_LOAD( "mbs2.4c",  0x04000, 0x04000, 0xbf833674 )
+	ROM_LOAD( "mbs3.5c",  0x08000, 0x04000, 0xfaacafd0 )
+	ROM_LOAD( "mbs4.6c",  0x0c000, 0x04000, 0xb3bedcf1 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "ft1.1h",   0x000000, 0x08000, 0x99b982ea )
+	ROM_LOAD( "ft2.2h",   0x008000, 0x08000, 0x026301da )
+	ROM_LOAD( "ft3.3h",   0x010000, 0x08000, 0xbff22ef7 )
+	ROM_LOAD( "ft4.4h",   0x018000, 0x08000, 0x4601e3a7 )
+	ROM_LOAD( "ft5.5h",   0x020000, 0x08000, 0xe1388239 )
+	ROM_LOAD( "ft6.6h",   0x028000, 0x08000, 0xda635046 )
+	ROM_LOAD( "ft7.7h",   0x030000, 0x08000, 0xb4d2121b )
+	ROM_LOAD( "ft8.8h",   0x038000, 0x08000, 0xb3fab376 )
+	ROM_LOAD( "ft9.9h",   0x040000, 0x08000, 0x3d4102ca )
+	ROM_LOAD( "ft10.10h", 0x048000, 0x08000, 0x264b6f7d )
+ROM_END
+
 ROM_START( crystal2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "cgl2_01.bin",  0x00000, 0x04000, 0x67673350 )
@@ -2271,7 +2345,6 @@ ROM_START( kaguya )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
 GAME( 1988, mjsikaku, 0,        mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 1)" )
 GAME( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0, "Nichibutsu", "Mahjong Sikaku (Japan set 2)" )
 GAME( 1988,  otonano, 0,         otonano,  otonano,  otonano, ROT0, "Apple", "Otona no Mahjong (Japan)" )
@@ -2287,5 +2360,6 @@ GAME( 1988, bijokkog, 0,        bijokkog, bijokkog, bijokkog, ROT0, "Nichibutsu"
 GAMEX(1987, housemnq, 0,        housemnq, housemnq, housemnq, ROT0, "Nichibutsu", "House Mannequin (Japan)", GAME_NOT_WORKING )
 GAMEX(1987, housemn2, 0,        housemn2, housemn2, housemn2, ROT0, "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NOT_WORKING )
 GAME( 1988,   kaguya, 0,          kaguya,   kaguya,   kaguya, ROT0, "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan)" )
+GAMEX(1986, crystalg, 0,        crystalg, crystalg, crystalg, ROT0, "Nichibutsu", "Crystal Gal (Japan)", GAME_NOT_WORKING )
 GAMEX(1986, crystal2, 0,        crystal2, crystal2, crystal2, ROT0, "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NOT_WORKING )
 GAME( 1986,  apparel, 0,         apparel,  apparel,  apparel, ROT0, "Central Denshi", "Apparel Night (Japan)" )

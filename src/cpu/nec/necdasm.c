@@ -350,7 +350,9 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
     if (fp_segment(addr)==0 || fp_offset(addr)==0xffff) /* 'coz of wraparound */
       sprintf(buffer, "%04X", (unsigned)fp_offset(addr) );
     else
-      sprintf(buffer, "%04X:%04X", (unsigned)fp_segment(addr), (unsigned)fp_offset(addr) );
+//      sprintf(buffer, "%04X:%04X", (unsigned)fp_segment(addr), (unsigned)fp_offset(addr) );
+      sprintf(buffer, "%04X:%04X", (unsigned)addr >> 4, (unsigned)addr - ((addr >> 4) << 4) );
+
   } else {
     if (fp_segment(addr)==0 || fp_segment(addr)==0xffff) /* 'coz of wraparound */
       sprintf(buffer, "%04X", (unsigned)fp_offset(addr) );
@@ -361,13 +363,28 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
   return buffer;
 }
 
+/* in nec.c */
+unsigned nec_get_reg(int regnum);
+
 static UINT8 getopcode(void)
 {
-	return OP_ROM[instruction_offset++];
+	UINT8 res;
+
+	int pc_masked = (instruction_offset++)&0xfffff;
+	change_pc20(pc_masked);
+	res = OP_ROM[pc_masked];
+	change_pc20(nec_get_reg(REG_PC));
+	return res;
 }
 
 static UINT8 getbyte(void) {
-  	return OP_RAM[instruction_offset++];
+	UINT8 res;
+
+	int pc_masked = (instruction_offset++)&0xfffff;
+	change_pc20(pc_masked);
+	res = OP_RAM[pc_masked];
+	change_pc20(nec_get_reg(REG_PC));
+	return res;
 }
 
 static int modrm(void)
@@ -669,8 +686,7 @@ static void percent(char type, char subtype)
             break;
        case 2:
             vofs = getbyte();
-            vofs += getbyte()<<8;
-            vofs = (INT16)vofs;
+            vofs |= getbyte()<<8;
             break;
        case 4:
             vofs = (UINT32)getbyte();           /* yuk! */

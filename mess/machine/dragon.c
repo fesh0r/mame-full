@@ -736,7 +736,7 @@ WRITE_HANDLER( coco3_m6847_hs_w )
 
 int coco3_calculate_rows(int *bordertop, int *borderbottom);
 
-int coco3_vh_interrupt(void)
+void coco3_vh_interrupt(void)
 {
 	int border_top, border_bottom, body_scanlines;
 	int scanline;
@@ -759,7 +759,7 @@ int coco3_vh_interrupt(void)
 	else if (scanline >= border_top+body_scanlines)
 		coco3_raise_interrupt(COCO3_INT_VBORD, ASSERT_LINE);
 
-	return internal_m6847_vh_interrupt(scanline, 4, 0);
+	internal_m6847_vh_interrupt(scanline, 4, 0);
 }
 
 
@@ -1334,9 +1334,11 @@ static int coco3_timer_interval;	/* interval: 1=280 nsec, 0=63.5 usec */
 static int coco3_timer_value;
 static int coco3_timer_base;
 
+static void coco3_timer_cannonicalize(int newvalue);
+
 static void coco3_timer_init(void)
 {
-	coco3_timer_counter = NULL;
+	coco3_timer_counter = timer_alloc(coco3_timer_cannonicalize);
 	coco3_timer_interval = 0;
 	coco3_timer_base = 0;
 	coco3_timer_value = 0;
@@ -1395,10 +1397,8 @@ static void coco3_timer_cannonicalize(int newvalue)
 	logerror("coco3_timer_cannonicalize(): Entering; current_time=%g\n", current_time);
 #endif
 
-	/* This part resolves timer issues with the CMP Carrier */
-	if (coco3_timer_counter) {
-		assert(coco3_timer_value > 0);
-
+	if (coco3_timer_value > 0)
+	{
 		/* Calculate how many transitions elapsed */
 		elapsed = (int) ((current_time - coco3_timer_counterbase) / COCO_TIMER_CMPCARRIER);
 		assert(elapsed >= 0);
@@ -1406,14 +1406,6 @@ static void coco3_timer_cannonicalize(int newvalue)
 #if LOG_TIMER
 		logerror("coco3_timer_cannonicalize(): Recalculating; current_time=%g base=%g elapsed=%i\n", current_time, coco3_timer_counterbase, elapsed);
 #endif
-
-		/* Remove the timer.  Note that we might be called as part of a timer
-		 * proc resolving.  In this case; we must _not_ call timer_remove() on
-		 * ourself, due to the way the MAME core works
-		 */
-		if (newvalue != -1)
-			timer_remove(coco3_timer_counter);
-		coco3_timer_counter = NULL;
 
 		if (elapsed) {
 			coco3_timer_value -= elapsed;
@@ -1424,23 +1416,23 @@ static void coco3_timer_cannonicalize(int newvalue)
 
 			coco3_timer_newvalue();
 		}
-	}
 
-	if (newvalue >= 0) {
+		if (newvalue >= 0) {
 #if LOG_TIMER
-		logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
+			logerror("coco3_timer_cannonicalize(): Setting timer to %i\n", newvalue);
 #endif
-		coco3_timer_value = newvalue;
-	}
+			coco3_timer_value = newvalue;
+		}
 
-	if (coco3_timer_interval && coco3_timer_value) {
-		coco3_timer_counterbase = current_time; //floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
-		duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
-		coco3_timer_counter = timer_set(duration, -1, coco3_timer_cannonicalize);
+		if (coco3_timer_interval && coco3_timer_value) {
+			coco3_timer_counterbase = current_time; //floor(current_time / COCO_TIMER_CMPCARRIER) * COCO_TIMER_CMPCARRIER;
+			duration = coco3_timer_counterbase + (coco3_timer_value * COCO_TIMER_CMPCARRIER) + (COCO_TIMER_CMPCARRIER / 2) - current_time;
+			timer_adjust(coco3_timer_counter, duration, -1, 0);
 
 #if LOG_TIMER
-		logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
+			logerror("coco3_timer_cannonicalize(): Setting CMP timer for duration %g\n", duration);
 #endif
+		}
 	}
 }
 
@@ -1718,7 +1710,7 @@ WRITE_HANDLER(coco3_gime_w)
 	coco3_gimereg[offset] = data;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, cpu_get_pc());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x\n", offset + 0xff90, data, activecpu_get_pc());
 #endif
 
 	/* Features marked with '!' are not yet implemented */
@@ -2142,14 +2134,14 @@ static void generic_init_machine(struct pia6821_interface *piaintf, struct sam68
 	autocenter_init(12, 0x04);
 }
 
-void dragon32_init_machine(void)
+void machine_init_dragon32(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_dragon, &coco_cartcallbacks);
 }
 
-void dragon64_init_machine(void)
+void machine_init_dragon64(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
@@ -2158,21 +2150,21 @@ void dragon64_init_machine(void)
 	dragon64_sethipage(DRAGON64_ALL, 0);
 }
 
-void coco_init_machine(void)
+void machine_init_coco(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
-void coco2_init_machine(void)
+void machine_init_coco2(void)
 {
 	cpu_setbank(1, &mess_ram[0]);
 	memory_set_bankhandler_w(1, 0, coco_ram_w);
 	generic_init_machine(coco2_pia_intf, &coco_sam_intf, &cartridge_fdc_coco, &coco_cartcallbacks);
 }
 
-void coco3_init_machine(void)
+void machine_init_coco3(void)
 {
 	int i;
 
@@ -2197,17 +2189,11 @@ void coco3_init_machine(void)
 	timer_pulse(TIME_IN_HZ(50), 0, coco3_poll_keyboard);
 }
 
-void coco_stop_machine(void)
+void machine_stop_coco(void)
 {
 	if (coco_cart_interface && coco_cart_interface->term)
 		coco_cart_interface->term();
 	sam_reset();
-}
-
-void dragon64_stop_machine(void)
-{
-	coco_stop_machine();
-	acia_6551_stop();
 }
 
 /***************************************************************************
@@ -2377,13 +2363,13 @@ void log_os9call(int call)
 	if (!mnemonic)
 		mnemonic = "(unknown)";
 
-	logerror("Logged OS9 Call Through SWI2 $%02x (%s): pc=$%04x\n", (void *) call, mnemonic, cpu_get_pc());
+	logerror("Logged OS9 Call Through SWI2 $%02x (%s): pc=$%04x\n", (void *) call, mnemonic, activecpu_get_pc());
 }
 
 void os9_in_swi2(void)
 {
 	unsigned pc;
-	pc = cpu_get_pc();
+	pc = activecpu_get_pc();
 	log_os9call(cpu_readmem16(pc));
 }
 

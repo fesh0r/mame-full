@@ -19,7 +19,7 @@
 
 WRITE_HANDLER( ramtek_videoram_w );
 
-int  invaders_interrupt(void);
+INTERRUPT_GEN( invaders_interrupt );
 void ramtek_sh_update(void);
 WRITE_HANDLER( ramtek_mask_w );
 
@@ -108,28 +108,23 @@ INPUT_PORTS_START( m79amb )
 INPUT_PORTS_END
 
 
-static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
+static PALETTE_INIT( m79amb )
 {
-	0x00,0x00,0x00, /* BLACK */
-	0xff,0xff,0xff, /* WHITE */
-	0xff,0x20,0x20, /* RED */
-	0x20,0xff,0x20, /* GREEN */
-	0xff,0xff,0x20, /* YELLOW */
-	0x20,0xff,0xff, /* CYAN */
-	0xff,0x20,0xff  /* PURPLE */
-};
-
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
+	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(2,0xff,0x20,0x20); /* RED */
+	palette_set_color(3,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(4,0xff,0xff,0x20); /* YELLOW */
+	palette_set_color(5,0x20,0xff,0xff); /* CYAN */
+	palette_set_color(6,0xff,0x20,0xff); /* PURPLE */
 }
 
-static int M79_interrupt(void)
+static INTERRUPT_GEN( M79_interrupt )
 {
-	return 0x00cf;  /* RST 08h */
+	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);  /* RST 08h */
 }
 
-static void init_m79amb(void)
+static DRIVER_INIT( m79amb )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int i;
@@ -139,36 +134,28 @@ static void init_m79amb(void)
 		rom[i] = ~rom[i];
 }
 
-static const struct MachineDriver machine_driver_m79amb =
-{
+static MACHINE_DRIVER_START( m79amb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_8080,
-			1996800,
-			readmem,writemem,0,0,
-			M79_interrupt, 1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,      /* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(8080, 1996800)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(M79_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 28*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	0,      /* no gfxdecodeinfo - bitmapped display */
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(32*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_PALETTE_LENGTH(7)
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	generic_bitmapped_vh_start,
-	generic_bitmapped_vh_stop,
-	generic_bitmapped_vh_screenrefresh,
+	MDRV_PALETTE_INIT(m79amb)
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
-	0,0,0,0
-};
+MACHINE_DRIVER_END
 
 
 

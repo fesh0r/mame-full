@@ -31,22 +31,17 @@ static CENTRONICS cent[3]={
 	{ 0,0,0, 0.0 }
 };
 
+static void centronics_timer_callback(int nr);
+
 void centronics_config(int nr, CENTRONICS_CONFIG *config)
 {
 	CENTRONICS *This=cent+nr;
 	This->config=config;
-	This->timer = NULL;
+	This->timer = timer_alloc(centronics_timer_callback);
 }
 
-/* exit and free up timer */
 void centronics_exit(int nr)
 {
-	CENTRONICS *This=cent+nr;
-	if (This->timer!=NULL)
-	{
-		timer_remove(This->timer);
-		This->timer = NULL;
-	}
 }
 
 void centronics_write_data(int nr, UINT8 data)
@@ -85,18 +80,13 @@ void centronics_write_handshake(int nr, int data, int mask)
 			
 			/* setup timer for data acknowledge */
 
-			/* if timer has been setup, remove */
-			if (This->timer!=NULL)
-			{
-				timer_remove(This->timer);
-			}
 			/* set mask for data that has changed */
 			This->new_control_mask = CENTRONICS_ACKNOWLEDGE;
 			/* set data that has changed */
 			This->new_control_data = CENTRONICS_ACKNOWLEDGE;
 
 			/* setup a new timer */
-			This->timer = timer_set(TIME_IN_USEC(1), nr, centronics_timer_callback);
+			timer_adjust(This->timer, TIME_IN_USEC(1), nr, 0);
 		}
 	}
 	This->control=neu;

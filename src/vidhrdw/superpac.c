@@ -33,26 +33,27 @@ static UINT8 color15_mask[64];
 
 ***************************************************************************/
 
-void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( superpac )
 {
 	int i, j;
 
 	for (i = 0; i < 32; i++)
 	{
-		int bit0, bit1, bit2;
+		int bit0, bit1, bit2, r, g, b;
 
 		bit0 = (color_prom[31-i] >> 0) & 0x01;
 		bit1 = (color_prom[31-i] >> 1) & 0x01;
 		bit2 = (color_prom[31-i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[31-i] >> 3) & 0x01;
 		bit1 = (color_prom[31-i] >> 4) & 0x01;
 		bit2 = (color_prom[31-i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[31-i] >> 6) & 0x01;
 		bit2 = (color_prom[31-i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		palette_set_color(i,r,g,b);
 	}
 
 	/* characters */
@@ -195,11 +196,11 @@ static void draw_sprites(struct mame_bitmap *bitmap, struct rectangle *clip, int
 
 ***************************************************************************/
 
-void superpac_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( superpac )
 {
 	int offs;
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer, 1, videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */

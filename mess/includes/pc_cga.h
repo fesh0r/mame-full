@@ -17,13 +17,12 @@ extern struct GfxLayout CGA_charlayout;
 extern struct GfxLayout CGA_gfxlayout_1bpp;
 extern struct GfxLayout CGA_gfxlayout_2bpp;
 extern struct GfxDecodeInfo CGA_gfxdecodeinfo[];
-void pc_cga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
+extern PALETTE_INIT( pc_cga );
 
 extern void pc_cga_init_video(struct _CRTC6845 *crtc);
 
-extern int	pc_cga_vh_start(void);
-extern void pc_cga_vh_stop(void);
-extern void pc_cga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( pc_cga );
+extern VIDEO_UPDATE( pc_cga );
 
 // call this with 240 times pre second
 extern void pc_cga_timer(void);
@@ -40,9 +39,8 @@ extern int	pc_cga_status_r(void);
 #endif
 
 // has a special 640x200 in 16 color mode, 4 banks at 0xb8000
-extern int	pc1512_vh_start(void);
-extern void pc1512_vh_stop(void);
-extern void pc1512_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START( pc1512 );
+extern VIDEO_UPDATE( pc1512 );
 
 extern WRITE_HANDLER ( pc1512_w );
 extern READ_HANDLER ( pc1512_r );

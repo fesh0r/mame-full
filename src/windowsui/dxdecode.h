@@ -9,4 +9,4 @@
 
 extern const char* DirectXDecodeError(HRESULT errorval);
 
-#endif DXDECODE_H
+#endif /* DXDECODE_H */

@@ -67,7 +67,7 @@ int vic2e_k1_r (void);
 int vic2e_k2_r (void);
 
 /* to be called each vertical retrace */
-extern int vic2_frame_interrupt (void);
+extern void vic2_frame_interrupt (void);
 
 /* private area */
 

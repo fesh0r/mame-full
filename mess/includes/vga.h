@@ -28,8 +28,9 @@ extern unsigned char ega_palette[0x40][3];
 extern unsigned short vga_colortable[];
 extern struct GfxLayout vga_charlayout;
 extern struct GfxDecodeInfo vga_gfxdecodeinfo[];
-void ega_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
-void vga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
+
+extern PALETTE_INIT( ega );
+extern PALETTE_INIT( vga );
 
 void vga_init(mem_read_handler read_dipswitch);
 
@@ -50,13 +51,11 @@ WRITE_HANDLER( vga_port_03b0_w );
 WRITE_HANDLER( vga_port_03c0_w );
 WRITE_HANDLER( vga_port_03d0_w );
 
-int ega_vh_start(void);
-int vga_vh_start(void);
+extern VIDEO_START( ega );
+extern VIDEO_START( vga );
 
-void vga_vh_stop(void);
-
-void ega_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_UPDATE( ega );
+extern VIDEO_UPDATE( vga );
 
 /*
   pega notes (paradise)

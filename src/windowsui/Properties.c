@@ -19,6 +19,11 @@
     Created 8/29/98 by Mike Haaland (mhaaland@hypertech.com)
 
 ***************************************************************************/
+
+#ifdef __GNUC__
+#undef bool
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #define NONAMELESSUNION 1
 #include <windows.h>
@@ -26,7 +31,6 @@
 #include <commctrl.h>
 #include <commdlg.h>
 #undef NONAMELESSUNION
-#undef bool //hack for the mingw compiler and mess code
 #include <ddraw.h>
 #include <stdio.h>
 #include <string.h>
@@ -69,9 +73,9 @@ static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wPa
 static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-static void SetStereoEnabled(HWND hWnd, int the_index);
-static void SetYM3812Enabled(HWND hWnd, int the_index);
-static void SetSamplesEnabled(HWND hWnd, int the_index, BOOL bSoundEnabled);
+static void SetStereoEnabled(HWND hWnd, int nIndex);
+static void SetYM3812Enabled(HWND hWnd, int nIndex);
+static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled);
 static void InitializeOptions(HWND hDlg);
 static void InitializeMisc(HWND hDlg);
 static void OptOnHScroll(HWND hWnd, HWND hwndCtl, UINT code, int pos);
@@ -158,6 +162,7 @@ static DWORD dwHelpIDs[] =
 	IDC_AUTOFRAMESKIP,      HIDC_AUTOFRAMESKIP,
 	IDC_BEAM,               HIDC_BEAM,
 	IDC_BRIGHTNESS,         HIDC_BRIGHTNESS,
+	IDC_BROADCAST,			HIDC_BROADCAST,
 	IDC_CHEAT,              HIDC_CHEAT,
 	IDC_DDRAW,              HIDC_DDRAW,
 	IDC_DEFAULT_INPUT,      HIDC_DEFAULT_INPUT,
@@ -187,6 +192,7 @@ static DWORD dwHelpIDs[] =
 	IDC_LANGUAGECHECK,      HIDC_LANGUAGECHECK,
 	IDC_LANGUAGEEDIT,       HIDC_LANGUAGEEDIT,
 	IDC_LOG,                HIDC_LOG,
+	IDC_SLEEP,				HIDC_SLEEP,
 	IDC_MATCHREFRESH,       HIDC_MATCHREFRESH,
 	IDC_MAXIMIZE,           HIDC_MAXIMIZE,
 	IDC_NOROTATE,           HIDC_NOROTATE,
@@ -237,7 +243,8 @@ static struct ComboBoxEffect
 	{ "RGB triad of 4 pixels",          "rgb4"    },
 	{ "RGB triad of 4 vertical pixels", "rgb4v"   },
 	{ "RGB triad of 3 pixels",          "rgb3"    },
-	{ "RGB tiny",                       "rgbtiny" }
+	{ "RGB tiny",                       "rgbtiny" },
+	{ "RGB sharp",                      "sharp"   }
 };
 
 #define NUMEFFECTS (sizeof(g_ComboBoxEffect) / sizeof(g_ComboBoxEffect[0]))
@@ -312,24 +319,25 @@ BOOL GameUsesSamples(int game)
 #if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 
 	int i;
-	static const struct GameDriver *gamedrv;
+    struct InternalMachineDriver drv;
 
-	gamedrv = drivers[game];
+	expand_machine_driver(drivers[game]->drv,&drv);
 
-	for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
+	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
 	{
 		const char **samplenames = NULL;
 
 #if (HAS_SAMPLES == 1)
-		if (gamedrv->drv->sound[i].sound_type == SOUND_SAMPLES)
-			samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+		if (drv.sound[i].sound_type == SOUND_SAMPLES)
+			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
 #endif
 
+        /*
 #if (HAS_VLM5030 == 1)
-		if (gamedrv->drv->sound[i].sound_type == SOUND_VLM5030)
-			samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+		if (drv.sound[i].sound_type == SOUND_VLM5030)
+			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
 #endif
-
+        */
 		if (samplenames != 0 && samplenames[0] != 0)
 			return TRUE;
 	}
@@ -347,30 +355,32 @@ BOOL FindSampleSet(int game)
 #if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 
 	static const struct GameDriver *gamedrv;
+
 	const char* sharedname;
 	BOOL bStatus;
 	int  skipfirst;
 	int  j, i;
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[game]->drv,&drv);
+	gamedrv = drivers[game];
 
 	if (GameUsesSamples(game) == FALSE)
 		return TRUE;
 
-	gamedrv = drivers[game];
-
-	for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
+	for (i = 0; drv.sound[i].sound_type && i < MAX_SOUND; i++)
 	{
 		const char **samplenames = NULL;
 
 #if (HAS_SAMPLES == 1)
-		if (gamedrv->drv->sound[i].sound_type == SOUND_SAMPLES)
-			samplenames = ((struct Samplesinterface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+		if (drv.sound[i].sound_type == SOUND_SAMPLES)
+			samplenames = ((struct Samplesinterface *)drv.sound[i].sound_interface)->samplenames;
 #endif
-
+        /*
 #if (HAS_VLM5030 == 1)
-		if (gamedrv->drv->sound[i].sound_type == SOUND_VLM5030)
-			samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
+		if (drv.sound[i].sound_type == SOUND_VLM5030)
+			samplenames = ((struct VLM5030interface *)drv.sound[i].sound_interface)->samplenames;
 #endif
-
+        */
 		if (samplenames != 0 && samplenames[0] != 0)
 		{
 			BOOL have_samples = FALSE;
@@ -492,10 +502,12 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 	PROPSHEETPAGE   pspage[NUM_PROPSHEETS];
 	int             i;
 	int             maxPropSheets;
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[game_num]->drv,&drv);
 
 	InitGameAudit(game_num);
 	g_nGame = game_num;
-	maxPropSheets = (drivers[g_nGame]->drv->video_attributes & VIDEO_TYPE_VECTOR) ? NUM_PROPSHEETS : NUM_PROPSHEETS - 1;
+	maxPropSheets = (drv.video_attributes & VIDEO_TYPE_VECTOR) ? NUM_PROPSHEETS : NUM_PROPSHEETS - 1;
 
 	/* Get Game options to populate property sheets */
 	pGameOpts = GetGameOptions(game_num);
@@ -568,23 +580,25 @@ static char *GameInfoCPU(UINT nIndex)
 {
 	int i;
 	static char buf[1024] = "";
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
 	i = 0;
-	while (i < MAX_CPU && drivers[nIndex]->drv->cpu[i].cpu_type)
+	while (i < MAX_CPU && drv.cpu[i].cpu_type)
 	{
-		if (drivers[nIndex]->drv->cpu[i].cpu_clock >= 1000000)
+		if (drv.cpu[i].cpu_clock >= 1000000)
 			sprintf(&buf[strlen(buf)], "%s %d.%06d MHz",
-					cputype_name(drivers[nIndex]->drv->cpu[i].cpu_type),
-					drivers[nIndex]->drv->cpu[i].cpu_clock / 1000000,
-					drivers[nIndex]->drv->cpu[i].cpu_clock % 1000000);
+					cputype_name(drv.cpu[i].cpu_type),
+					drv.cpu[i].cpu_clock / 1000000,
+					drv.cpu[i].cpu_clock % 1000000);
 		else
 			sprintf(&buf[strlen(buf)], "%s %d.%03d kHz",
-					cputype_name(drivers[nIndex]->drv->cpu[i].cpu_type),
-					drivers[nIndex]->drv->cpu[i].cpu_clock / 1000,
-					drivers[nIndex]->drv->cpu[i].cpu_clock % 1000);
+					cputype_name(drv.cpu[i].cpu_type),
+					drv.cpu[i].cpu_clock / 1000,
+					drv.cpu[i].cpu_clock % 1000);
 
-		if (drivers[nIndex]->drv->cpu[i].cpu_type & CPU_AUDIO_CPU)
+		if (drv.cpu[i].cpu_type & CPU_AUDIO_CPU)
 			strcat(buf, " (sound)");
 
 		strcat(buf, "\n");
@@ -600,26 +614,28 @@ static char *GameInfoSound(UINT nIndex)
 {
 	int i;
 	static char buf[1024] = "";
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
 	i = 0;
-	while (i < MAX_SOUND && drivers[nIndex]->drv->sound[i].sound_type)
+	while (i < MAX_SOUND && drv.sound[i].sound_type)
 	{
-		if (1 < sound_num(&drivers[nIndex]->drv->sound[i]))
-			sprintf(&buf[strlen(buf)], "%d x ", sound_num(&drivers[nIndex]->drv->sound[i]));
+		if (1 < sound_num(&drv.sound[i]))
+			sprintf(&buf[strlen(buf)], "%d x ", sound_num(&drv.sound[i]));
 
-		sprintf(&buf[strlen(buf)], "%s", sound_name(&drivers[nIndex]->drv->sound[i]));
+		sprintf(&buf[strlen(buf)], "%s", sound_name(&drv.sound[i]));
 
-		if (sound_clock(&drivers[nIndex]->drv->sound[i]))
+		if (sound_clock(&drv.sound[i]))
 		{
-			if (sound_clock(&drivers[nIndex]->drv->sound[i]) >= 1000000)
+			if (sound_clock(&drv.sound[i]) >= 1000000)
 				sprintf(&buf[strlen(buf)], " %d.%06d MHz",
-						sound_clock(&drivers[nIndex]->drv->sound[i]) / 1000000,
-						sound_clock(&drivers[nIndex]->drv->sound[i]) % 1000000);
+						sound_clock(&drv.sound[i]) / 1000000,
+						sound_clock(&drv.sound[i]) % 1000000);
 			else
 				sprintf(&buf[strlen(buf)], " %d.%03d kHz",
-						sound_clock(&drivers[nIndex]->drv->sound[i]) / 1000,
-						sound_clock(&drivers[nIndex]->drv->sound[i]) % 1000);
+						sound_clock(&drv.sound[i]) / 1000,
+						sound_clock(&drv.sound[i]) % 1000);
 		}
 
 		strcat(buf,"\n");
@@ -633,21 +649,23 @@ static char *GameInfoSound(UINT nIndex)
 static char *GameInfoScreen(UINT nIndex)
 {
 	static char buf[1024];
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[nIndex]->drv,&drv);
 
-	if (drivers[nIndex]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		strcpy(buf, "Vector Game");
 	else
 	{
 		if (drivers[nIndex]->flags & ORIENTATION_SWAP_XY)
 			sprintf(buf,"%d x %d (vert) %5.2f Hz",
-					drivers[nIndex]->drv->default_visible_area.max_y - drivers[nIndex]->drv->default_visible_area.min_y + 1,
-					drivers[nIndex]->drv->default_visible_area.max_x - drivers[nIndex]->drv->default_visible_area.min_x + 1,
-					drivers[nIndex]->drv->frames_per_second);
+					drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1,
+					drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
+					drv.frames_per_second);
 		else
 			sprintf(buf,"%d x %d (horz) %5.2f Hz",
-					drivers[nIndex]->drv->default_visible_area.max_x - drivers[nIndex]->drv->default_visible_area.min_x + 1,
-					drivers[nIndex]->drv->default_visible_area.max_y - drivers[nIndex]->drv->default_visible_area.min_y + 1,
-					drivers[nIndex]->drv->frames_per_second);
+					drv.default_visible_area.max_x - drv.default_visible_area.min_x + 1,
+					drv.default_visible_area.max_y - drv.default_visible_area.min_y + 1,
+					drv.frames_per_second);
 	}
 	return buf;
 }
@@ -656,13 +674,15 @@ static char *GameInfoScreen(UINT nIndex)
 static char *GameInfoColors(UINT nIndex)
 {
 	static char buf[1024];
+    struct InternalMachineDriver drv;
+    expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	ZeroMemory(buf, sizeof(buf));
-	if (drivers[nIndex]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		strcpy(buf, "Vector Game");
 	else
 	{
-		sprintf(buf, "%d colors ", drivers[nIndex]->drv->total_colors);
+		sprintf(buf, "%d colors ", drv.total_colors);
 	}
 
 	return buf;
@@ -724,7 +744,7 @@ static char *GameInfoCloneOf(UINT nIndex)
 	&&  !(drivers[nIndex]->clone_of->flags & NOT_A_DRIVER))
 	{
 		sprintf(buf, "%s - \"%s\"",
-				ModifyThe(drivers[nIndex]->clone_of->description),
+				ConvertAmpersandString(ModifyThe(drivers[nIndex]->clone_of->description)),
 				drivers[nIndex]->clone_of->name);
 	}
 
@@ -1031,13 +1051,14 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 #if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
+		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
 #endif /* HAS_HELP */
+
 	}
 	EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), g_bReset);
 
@@ -1348,11 +1369,31 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 		Static_SetText(hCtrl, buf);
 	}
 
+	g_bInternalSet = FALSE;
+
+	g_nInputIndex = 0;
+	hCtrl = GetDlgItem(hWnd, IDC_DEFAULT_INPUT);	
+	if (hCtrl)
+	{
+		int nCount;
+
+		/* Get the number of items in the control */
+		nCount = ComboBox_GetCount(hCtrl);
+        
+		while (0 < nCount--)
+		{
+			ComboBox_GetLBText(hCtrl, nCount, buf);
+
+			if (stricmp (buf,o->ctrlr) == 0)
+				g_nInputIndex = nCount;
+		}
+
+		ComboBox_SetCurSel(hCtrl, g_nInputIndex);
+	}
+
 #ifdef MESS
 	MessOptionsToProp(hWnd, o);
 #endif
-
-	g_bInternalSet = FALSE;
 }
 
 /* Adjust controls - tune them to the currently selected game */
@@ -1362,6 +1403,7 @@ static void SetPropEnabledControls(HWND hWnd)
 	int  nIndex;
 	int  sound;
 	int  ddraw = 0;
+    BOOL dirty;
 
 	nIndex = g_nGame;
 
@@ -1414,11 +1456,20 @@ static void SetPropEnabledControls(HWND hWnd)
 		SetStereoEnabled(hWnd, nIndex);
 		SetYM3812Enabled(hWnd, nIndex);
 	}
+    
+    dirty = (nIndex == -1);
+    if (!dirty)
+    {
+        struct InternalMachineDriver drv;
+        expand_machine_driver(drivers[nIndex]->drv,&drv);
+        if ((drv.video_attributes & VIDEO_SUPPORTS_DIRTY) 
+            || (drv.video_attributes & VIDEO_TYPE_VECTOR))
+            dirty = TRUE;
+	}
+
 
 	/* Dirty rectangles */
-	if (nIndex == -1
-	||  (drivers[nIndex]->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
-	||  (drivers[nIndex]->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	if (dirty)
 	{
 		Button_Enable(GetDlgItem(hWnd, IDC_DIRTY), TRUE);
 	}
@@ -1501,15 +1552,7 @@ static void AssignRotate(HWND hWnd)
 
 static void AssignInput(HWND hWnd)
 {
-	pGameOpts->hotrod   = 0;
-	pGameOpts->hotrodse = 0;
-
-	switch (g_nInputIndex)
-	{
-		case 1:  pGameOpts->hotrod   = 1; break;
-		case 2:  pGameOpts->hotrodse = 1; break;
-		default: break;
-	}
+	ComboBox_GetLBText (hWnd, g_nInputIndex, pGameOpts->ctrlr);
 }
 
 static void AssignEffect(HWND hWnd)
@@ -1532,16 +1575,21 @@ static void ResetDataMap(void)
 	g_nBeamIndex       = (int)((pGameOpts->f_beam         - 1.0) * 20.0);
 	g_nFlickerIndex    = (int)(pGameOpts->f_flicker);
 
-	if (pGameOpts->hotrod == 0 && pGameOpts->hotrodse == 0)
-		g_nInputIndex = 0;
-	else
-	if (pGameOpts->hotrod == 1 && pGameOpts->hotrodse == 0)
-		g_nInputIndex = 1;
-	else
-	if (pGameOpts->hotrod == 0 && pGameOpts->hotrodse == 1)
-		g_nInputIndex = 2;
-	else
-		g_nInputIndex = 0;
+	// if no controller type was specified or it was standard
+	if ((pGameOpts->ctrlr == NULL) || *pGameOpts->ctrlr == 0 || (stricmp(pGameOpts->ctrlr,"Standard") == 0))
+	{
+		// automatically set to hotrod or hotrodse if selected
+		if (pGameOpts->hotrod == 1 && pGameOpts->hotrodse == 0)
+   			strcpy (pGameOpts->ctrlr, "HotRod");
+		else
+		if (pGameOpts->hotrod == 0 && pGameOpts->hotrodse == 1)
+   			strcpy (pGameOpts->ctrlr, "HotRodSE");
+		else
+   			strcpy (pGameOpts->ctrlr, "Standard");
+	}
+	// turn off hotrod/hotrodse selection
+	pGameOpts->hotrod = 0;
+	pGameOpts->hotrodse = 0;
 
 	if (pGameOpts->ror == 0 && pGameOpts->rol == 0)
 		g_nRotateIndex = 0;
@@ -1644,31 +1692,40 @@ static void BuildDataMap(void)
 	DataMapAdd(IDC_CHEAT,         DM_BOOL, CT_BUTTON,   &pGameOpts->cheat,         0, 0, 0);
 /*	DataMapAdd(IDC_DEBUG,         DM_BOOL, CT_BUTTON,   &pGameOpts->mame_debug,    0, 0, 0);*/
 	DataMapAdd(IDC_LOG,           DM_BOOL, CT_BUTTON,   &pGameOpts->errorlog,      0, 0, 0);
+	DataMapAdd(IDC_SLEEP,         DM_BOOL, CT_BUTTON,   &pGameOpts->sleep,         0, 0, 0);
 #ifdef MESS
 	DataMapAdd(IDC_NEW_FILEMGR,   DM_BOOL, CT_BUTTON,   &pGameOpts->use_new_filemgr, 0, 0, 0);
 #endif
 }
 
-static void SetStereoEnabled(HWND hWnd, int the_index)
+static void SetStereoEnabled(HWND hWnd, int nIndex)
 {
 	BOOL enabled = FALSE;
 	HWND hCtrl;
+    struct InternalMachineDriver drv;
+
+	if (-1 != nIndex)
+		expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	hCtrl = GetDlgItem(hWnd, IDC_STEREO);
 	if (hCtrl)
 	{
-		if (the_index == -1 || drivers[the_index]->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
+		if (nIndex == -1 || drv.sound_attributes & SOUND_SUPPORTS_STEREO)
 			enabled = TRUE;
 
 		EnableWindow(hCtrl, enabled);
 	}
 }
 
-static void SetYM3812Enabled(HWND hWnd, int the_index)
+static void SetYM3812Enabled(HWND hWnd, int nIndex)
 {
 	int i;
 	BOOL enabled;
 	HWND hCtrl;
+    struct InternalMachineDriver drv;
+
+	if (-1 != nIndex)
+		expand_machine_driver(drivers[nIndex]->drv,&drv);
 
 	hCtrl = GetDlgItem(hWnd, IDC_USE_FM_YM3812);
 	if (hCtrl)
@@ -1676,15 +1733,15 @@ static void SetYM3812Enabled(HWND hWnd, int the_index)
 		enabled = FALSE;
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (the_index == -1
+			if (nIndex == -1
 #if HAS_YM3812
-			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM3812
+			||  drv.sound[i].sound_type == SOUND_YM3812
 #endif
 #if HAS_YM3526
-			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM3526
+			||  drv.sound[i].sound_type == SOUND_YM3526
 #endif
 #if HAS_YM2413
-			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM2413
+			||  drv.sound[i].sound_type == SOUND_YM2413
 #endif
 			)
 				enabled = TRUE;
@@ -1694,27 +1751,31 @@ static void SetYM3812Enabled(HWND hWnd, int the_index)
 	}
 }
 
-static void SetSamplesEnabled(HWND hWnd, int the_index, BOOL bSoundEnabled)
+static void SetSamplesEnabled(HWND hWnd, int nIndex, BOOL bSoundEnabled)
 {
 #if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 	int i;
 	BOOL enabled = FALSE;
 	HWND hCtrl;
+    struct InternalMachineDriver drv;
 
 	hCtrl = GetDlgItem(hWnd, IDC_SAMPLES);
+
+	if (-1 != nIndex)
+		expand_machine_driver(drivers[nIndex]->drv,&drv);
+	
 	if (hCtrl)
 	{
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (the_index == -1
-			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_SAMPLES
+			if (nIndex == -1
+			||  drv.sound[i].sound_type == SOUND_SAMPLES
 #if HAS_VLM5030
-			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_VLM5030
+			||  drv.sound[i].sound_type == SOUND_VLM5030
 #endif
 			)
 				enabled = TRUE;
 		}
-
 		enabled = enabled && bSoundEnabled;
 		EnableWindow(hCtrl, enabled);
 	}
@@ -2141,11 +2202,60 @@ static void InitializeDefaultInputUI(HWND hwnd)
 {
 	HWND hCtrl = GetDlgItem(hwnd, IDC_DEFAULT_INPUT);
 
+	WIN32_FIND_DATA FindFileData;
+	HANDLE hFind;
+	char *ext;
+	int isZipFile;
+	char root[256];
+	char path[256];
+
 	if (hCtrl)
 	{
 		ComboBox_AddString(hCtrl, "Standard");
-		ComboBox_AddString(hCtrl, "HotRod");
-		ComboBox_AddString(hCtrl, "HotRod SE");
+
+		sprintf (path, "%s\\*.*", GetCtrlrDir());
+
+		hFind = FindFirstFile(path, &FindFileData);
+
+	    if (hFind != INVALID_HANDLE_VALUE)
+		{
+			do 
+			{
+				if (strcmp (FindFileData.cFileName,".") != 0 && 
+					strcmp (FindFileData.cFileName,"..") != 0)
+				{
+					// copy the filename
+					strcpy (root,FindFileData.cFileName);
+
+					// assume it's not a zip file
+					isZipFile = 0;
+
+					// find the extension
+					ext = strrchr (root,'.');
+					if (ext)
+					{
+						// check if it's a zip file
+						if (strcmp (ext, ".zip") == 0)
+						{
+							isZipFile = 1;
+						}
+
+						// and strip off the extension
+						*ext = 0;
+					}
+
+					if ((FindFileData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) || isZipFile)
+					{
+						ComboBox_AddString(hCtrl, root);
+					}
+				}
+			}
+			while (FindNextFile (hFind, &FindFileData) != 0);
+			
+			FindClose (hFind);
+		}
+//		ComboBox_AddString(hCtrl, "HotRod");
+//		ComboBox_AddString(hCtrl, "HotRod SE");
 	}
 }
 

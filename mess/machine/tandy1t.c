@@ -26,11 +26,11 @@ static struct {
 	} ee[0x40]; /* only 0 to 4 used in hx, addressing seems to allow this */
 } eeprom={0};
 
-void tandy1000_nvram_handler(void* file, int write)
+NVRAM_HANDLER( tandy1000 )
 {
 	if (file==NULL) {
 		// init only 
-	} else if (write) {
+	} else if (read_or_write) {
 		osd_fwrite(file, eeprom.ee, sizeof(eeprom.ee));
 	} else {
 		osd_fread(file, eeprom.ee, sizeof(eeprom.ee));
@@ -148,9 +148,9 @@ static struct {
 
 WRITE_HANDLER ( pc_t1t_p37x_w )
 {
-//	DBG_LOG(2,"T1T_p37x_w",("%.5x #%d $%02x\n", cpu_get_pc(),offset, data));
+//	DBG_LOG(2,"T1T_p37x_w",("%.5x #%d $%02x\n", activecpu_get_pc(),offset, data));
 	if (offset!=4)
-		logerror("T1T_p37x_w %.5x #%d $%02x\n", cpu_get_pc(),offset, data);
+		logerror("T1T_p37x_w %.5x #%d $%02x\n", activecpu_get_pc(),offset, data);
 	tandy.data[offset]=data;
 	switch( offset )
 	{
@@ -163,7 +163,7 @@ WRITE_HANDLER ( pc_t1t_p37x_w )
 READ_HANDLER ( pc_t1t_p37x_r )
 {
 	int data = tandy.data[offset];
-//	DBG_LOG(1,"T1T_p37x_r",("%.5x #%d $%02x\n", cpu_get_pc(), offset, data));
+//	DBG_LOG(1,"T1T_p37x_r",("%.5x #%d $%02x\n", activecpu_get_pc(), offset, data));
     return data;
 }
 

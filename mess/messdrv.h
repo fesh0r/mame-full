@@ -87,7 +87,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
@@ -107,7 +107,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
@@ -127,7 +127,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
@@ -147,7 +147,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
@@ -167,7 +167,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
@@ -187,7 +187,7 @@ const struct GameDriver driver_##NAME = 	\
 	FULLNAME,								\
 	#YEAR,									\
 	COMPANY,								\
-	&machine_driver_##MACHINE,				\
+	construct_##MACHINE,					\
 	input_ports_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\

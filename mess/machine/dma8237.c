@@ -11,7 +11,7 @@
 #if 0
 #define DMA_LOG(level, text, print) \
 		if (level>0) { \
-				logerror("%s %g %06x\t", text, timer_get_time(), cpu_get_pc()); \
+				logerror("%s %g %06x\t", text, timer_get_time(), activecpu_get_pc()); \
 				logerror print; \
 		}
 #else
@@ -291,7 +291,7 @@ void at_page_w(offs_t offset, data8_t data)
 {
 	offset&=0xf;
 	pages[offset]=data;
-	logerror("at page write %g %06x\t%02x %02x\n", timer_get_time(), cpu_get_pc(), offset, data);
+	logerror("at page write %g %06x\t%02x %02x\n", timer_get_time(), activecpu_get_pc(), offset, data);
 	switch( offset )
 	{
 	case 0:
@@ -377,7 +377,7 @@ READ_HANDLER( at_page_r )
 		DMA_LOG(1,"DMA_page_7_w",("$%02x\n", data));
 		break;
     }
-	logerror("at page read %g %06x\t%02x %02x\n", timer_get_time(), cpu_get_pc(), offset, data);
+	logerror("at page read %g %06x\t%02x %02x\n", timer_get_time(), activecpu_get_pc(), offset, data);
 	return data;
 }
 

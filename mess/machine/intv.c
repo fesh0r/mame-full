@@ -278,7 +278,7 @@ WRITE_HANDLER ( intvkbd_dualport8_msb_w )
 				intvkbd_tms9927_w(offset-0xc0, data);
 				break;
 			default:
-				logerror("%04X: Unknown write %02x to 0x40%02x\n",cpu_get_pc(),data,offset);
+				logerror("%04X: Unknown write %02x to 0x40%02x\n",activecpu_get_pc(),data,offset);
 				break;
 		}
 	}

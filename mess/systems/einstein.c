@@ -566,7 +566,7 @@ static WRITE_HANDLER(einstein_fdc_w)
 {
 	int reg = offset & 0x03;
 
-	logerror("fdc w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data); 
+	logerror("fdc w: PC: %04x %04x %02x\n",activecpu_get_pc(),offset,data); 
 
 	switch (reg)
 	{
@@ -601,7 +601,7 @@ static READ_HANDLER(einstein_fdc_r)
 {
 	int reg = offset & 0x03;
 
-	logerror("fdc r: PC: %04x %04x\n",cpu_get_pc(),offset); 
+	logerror("fdc r: PC: %04x %04x\n",activecpu_get_pc(),offset); 
 
 	switch (reg)
 	{
@@ -824,7 +824,7 @@ static WRITE_HANDLER(einstein_drive_w)
 	/* bit 1: select drive 1 */
 	/* bit 0: select drive 0 */
 
-	logerror("drive w: PC: %04x %04x %02x\n",cpu_get_pc(),offset,data); 
+	logerror("drive w: PC: %04x %04x %02x\n",activecpu_get_pc(),offset,data); 
 
 	wd179x_set_side((data>>4) & 0x01);
 	

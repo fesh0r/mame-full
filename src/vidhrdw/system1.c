@@ -34,6 +34,8 @@ static const unsigned char *system1_color_prom;
 static unsigned char *wbml_paged_videoram;
 static unsigned char wbml_videoram_bank=0,wbml_videoram_bank_latch=0;
 
+static int blockgal_kludgeoffset;
+
 /***************************************************************************
 
   There are two kind of color handling: in the System 1 games, values in the
@@ -56,7 +58,7 @@ static unsigned char wbml_videoram_bank=0,wbml_videoram_bank_latch=0;
   accurate to +/- .003K ohms.
 
 ***************************************************************************/
-void system1_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( system1 )
 {
 	system1_color_prom = color_prom;
 }
@@ -111,42 +113,22 @@ WRITE_HANDLER( system1_paletteram_w )
 
 
 
-int system1_vh_start(void)
+VIDEO_START( system1 )
 {
-	if ((sprite_onscreen_map = malloc(256*256)) == 0)
+	if ((sprite_onscreen_map = auto_malloc(256*256)) == 0)
 		return 1;
 	memset(sprite_onscreen_map,255,256*256);
 
-	if ((bg_dirtybuffer = malloc(1024)) == 0)
-	{
-		free(sprite_onscreen_map);
+	if ((bg_dirtybuffer = auto_malloc(1024)) == 0)
 		return 1;
-	}
 	memset(bg_dirtybuffer,1,1024);
-	if ((wbml_paged_videoram = malloc(0x4000)) == 0)			/* Allocate 16k for background banked ram */
-	{
-		free(bg_dirtybuffer);
-		free(sprite_onscreen_map);
+	if ((wbml_paged_videoram = auto_malloc(0x4000)) == 0)			/* Allocate 16k for background banked ram */
 		return 1;
-	}
 	memset(wbml_paged_videoram,0,0x4000);
-	if ((tmp_bitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(wbml_paged_videoram);
-		free(bg_dirtybuffer);
-		free(sprite_onscreen_map);
+	if ((tmp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-void system1_vh_stop(void)
-{
-	bitmap_free(tmp_bitmap);
-	free(wbml_paged_videoram);
-	free(bg_dirtybuffer);
-	free(sprite_onscreen_map);
 }
 
 WRITE_HANDLER( system1_videomode_w )
@@ -392,6 +374,7 @@ static int system1_draw_fg(struct mame_bitmap *bitmap,int priority)
 				sy = 31 - sy;
 			}
 
+			code %= Machine->gfx[0]->total_elements;
 			if (Machine->gfx[0]->pen_usage[code] & ~1)
 			{
 				drawn = 1;
@@ -400,7 +383,7 @@ static int system1_draw_fg(struct mame_bitmap *bitmap,int priority)
 						code,
 						color,
 						flip_screen,flip_screen,
-						8*sx,8*sy,
+						8*sx + blockgal_kludgeoffset,8*sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -415,7 +398,7 @@ static void system1_draw_bg(struct mame_bitmap *bitmap,int priority)
 	int background_scrollx_flip, background_scrolly_flip;
 
 
-	background_scrollx = ((system1_scroll_x[0] >> 1) + ((system1_scroll_x[1] & 1) << 7) + 14) & 0xff;
+	background_scrollx = ((system1_scroll_x[0] >> 1) + ((system1_scroll_x[1] & 1) << 7) + 14 + 2*blockgal_kludgeoffset) & 0xff;
 	background_scrolly = (-*system1_scroll_y) & 0xff;
 
 	background_scrollx_flip = (275 - background_scrollx) & 0xff;
@@ -523,7 +506,7 @@ static void system1_draw_bg(struct mame_bitmap *bitmap,int priority)
 	}
 }
 
-void system1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( system1 )
 {
 	int drawn;
 
@@ -663,7 +646,7 @@ static void chplft_draw_bg(struct mame_bitmap *bitmap, int priority)
 	}
 }
 
-void choplifter_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( choplifter )
 {
 	int drawn;
 
@@ -800,7 +783,7 @@ static void wbml_draw_fg(struct mame_bitmap *bitmap)
 }
 
 
-void wbml_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wbml )
 {
 	wbml_draw_bg(bitmap,0);
 	draw_sprites(bitmap);
@@ -810,4 +793,26 @@ void wbml_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+}
+
+VIDEO_UPDATE( blockgal )
+{
+	int drawn;
+
+
+	blockgal_kludgeoffset = -8;
+
+	system1_draw_bg(bitmap,-1);
+	drawn = system1_draw_fg(bitmap,0);
+	/* redraw low priority bg tiles if necessary */
+	if (drawn) system1_draw_bg(bitmap,0);
+	draw_sprites(bitmap);
+	system1_draw_bg(bitmap,1);
+	system1_draw_fg(bitmap,1);
+
+	/* even if screen is off, sprites must still be drawn to update the collision table */
+	if (system1_video_mode & 0x10)  /* screen off */
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	blockgal_kludgeoffset = 0;
 }

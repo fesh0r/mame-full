@@ -282,7 +282,9 @@ void europc_rtc_init(void)
 {
 	memset(&europc_rtc,0,sizeof(europc_rtc));
 	europc_rtc.data[0xf]=1;
-	europc_rtc.timer=timer_pulse(1.0,0,europc_rtc_timer);
+
+	europc_rtc.timer = timer_alloc(europc_rtc_timer);
+	timer_adjust(europc_rtc.timer, 0, 0, 1.0);
 }
 
 READ_HANDLER( europc_rtc_r )
@@ -331,12 +333,12 @@ void europc_rtc_save_stream(void *file)
 	osd_fwrite(file, europc_rtc.data, sizeof(europc_rtc.data));
 }
 
-void europc_rtc_nvram_handler(void* file, int write)
+NVRAM_HANDLER( europc_rtc )
 {
 	if (file==NULL) {
 		// init only 
 //		europc_rtc_set_time();
-	} else if (write) {
+	} else if (read_or_write) {
 		europc_rtc_save_stream(file);
 	} else {
 		europc_rtc_load_stream(file);

@@ -115,10 +115,9 @@ WRITE_HANDLER( naughtyb_videoram2_w );
 WRITE_HANDLER( naughtyb_scrollreg_w );
 WRITE_HANDLER( naughtyb_videoreg_w );
 WRITE_HANDLER( popflame_videoreg_w );
-int naughtyb_vh_start(void);
-void naughtyb_vh_stop(void);
-void naughtyb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void naughtyb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( naughtyb );
+PALETTE_INIT( naughtyb );
+VIDEO_UPDATE( naughtyb );
 
 WRITE_HANDLER( pleiads_sound_control_a_w );
 WRITE_HANDLER( pleiads_sound_control_b_w );
@@ -126,6 +125,51 @@ int naughtyb_sh_start(const struct MachineSound *msound);
 int popflame_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);
+
+
+/* Pop Flamer
+   1st protection relies on reading values from a device at $9000 and writing to 400A-400D (See $26A9).
+   Then value stored in 400C must be xxxx1001 (rrca x 3) or else reset
+   2nd protection relies on the values stored in 400A-400D matching $2690+($400E) (Starts at $460)
+   If the values all match then it will jump to 0x0011 instead of 0x0009 (refresh instead of reset)
+   Paul Priest: tourniquet@mameworld.net */
+
+//static int popflame_prot_count = 0;
+
+READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
+{
+	static int values[4] = { 0x78, 0x68, 0x48, 0x38|0x80 };
+	static int count;
+
+	count = (count + 1) % 4;
+	return values[count];
+
+#if 0
+	if ( activecpu_get_pc() == (0x26F2 + 0x03) )
+	{
+		popflame_prot_count = 0;
+		return 0x01;
+	} /* Must not carry when rotated left */
+
+	if ( activecpu_get_pc() == (0x26F9 + 0x03) )
+		return 0x80; /* Must carry when rotated left */
+
+	if ( activecpu_get_pc() == (0x270F + 0x03) )
+	{
+		switch( popflame_prot_count++ )
+		{
+			case 0: return 0x78; /* x111 1xxx, matches 0x0F at $2690, stored in $400A */
+			case 1: return 0x68; /* x110 1xxx, matches 0x0D at $2691, stored in $400B */
+			case 2: return 0x48; /* x100 1xxx, matches 0x09 at $2692, stored in $400C */
+			case 3: return 0x38; /* x011 1xxx, matches 0x07 at $2693, stored in $400D */
+		}
+	}
+	logerror("CPU #0 PC %06x: unmapped protection read\n", activecpu_get_pc());
+	return 0x00;
+#endif
+}
+
+
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -166,11 +210,10 @@ MEMORY_END
 
 ***************************************************************************/
 
-int naughtyb_interrupt(void)
+INTERRUPT_GEN( naughtyb_interrupt )
 {
 	if (readinputport(2) & 1)
-		return nmi_interrupt();
-	else return ignore_interrupt();
+		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 INPUT_PORTS_START( naughtyb )
@@ -271,90 +314,62 @@ static struct TMS36XXinterface tms3615_interface =
 
 
 
-static const struct MachineDriver machine_driver_naughtyb =
-{
+static MACHINE_DRIVER_START( naughtyb )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1500000,	/* 3 MHz ? */
-			readmem,writemem,0,0,
-			naughtyb_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,32*4+32*4,
-	naughtyb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*4+32*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	naughtyb_vh_start,
-	naughtyb_vh_stop,
-	naughtyb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(naughtyb)
+	MDRV_VIDEO_START(naughtyb)
+	MDRV_VIDEO_UPDATE(naughtyb)
 
 	/* sound hardware */
 	/* uses the TMS3615NS for sound */
-	0,0,0,0,
-	{
-		{
-			SOUND_TMS36XX,
-			&tms3615_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&naughtyb_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
+	MDRV_SOUND_ADD(CUSTOM, naughtyb_custom_interface)
+MACHINE_DRIVER_END
+
 
 /* Exactly the same but for the writemem handler */
-static const struct MachineDriver machine_driver_popflame =
-{
+static MACHINE_DRIVER_START( popflame )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			1500000,	/* 3 MHz ? */
-			readmem,popflame_writemem,0,0,
-			naughtyb_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_CPU_ADD(Z80, 1500000)	/* 3 MHz ? */
+	MDRV_CPU_MEMORY(readmem,popflame_writemem)
+	MDRV_CPU_VBLANK_INT(naughtyb_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256,32*4+32*4,
-	naughtyb_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*4+32*4)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	naughtyb_vh_start,
-	naughtyb_vh_stop,
-	naughtyb_vh_screenrefresh,
+	MDRV_PALETTE_INIT(naughtyb)
+	MDRV_VIDEO_START(naughtyb)
+	MDRV_VIDEO_UPDATE(naughtyb)
 
 	/* sound hardware */
-	/* uses the TMS3615NS for sound */
-	0,0,0,0,
-	{
-		{
-			SOUND_TMS36XX,
-			&tms3615_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&popflame_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(TMS36XX, tms3615_interface)
+	MDRV_SOUND_ADD(CUSTOM, popflame_custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -449,46 +464,6 @@ ROM_START( naughtyc )
 ROM_END
 
 ROM_START( popflame )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ic86.pop",	  0x0000, 0x1000, 0x5e32bbdf )
-	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
-	ROM_LOAD( "ic94.pop",	  0x2000, 0x1000, 0x945a3c0f )
-	ROM_LOAD( "ic100.pop",	  0x3000, 0x1000, 0xf9f2343b )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
-	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
-
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
-	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
-ROM_END
-
-ROM_START( popflama )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "popflama.30",	 0x0000, 0x1000, 0xa9bb0e8a )
-	ROM_LOAD( "popflama.28",	 0x1000, 0x1000, 0xdebe6d03 )
-	ROM_LOAD( "popflama.26",	 0x2000, 0x1000, 0x09df0d4d )
-	ROM_LOAD( "popflama.24",	 0x3000, 0x1000, 0xf399d553 )
-
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
-	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
-
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
-	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
-	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
-ROM_END
-
-ROM_START( popflamb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )		/* 64k for code */
 	ROM_LOAD( "ic86.bin",	  0x0000, 0x1000, 0x06397a4b )
 	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
@@ -508,11 +483,58 @@ ROM_START( popflamb )
 	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
 
+ROM_START( popflama )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ic86.pop",	  0x0000, 0x1000, 0x5e32bbdf )
+	ROM_LOAD( "ic80.pop",	  0x1000, 0x1000, 0xb77abf3d )
+	ROM_LOAD( "ic94.pop",	  0x2000, 0x1000, 0x945a3c0f )
+	ROM_LOAD( "ic100.pop",	  0x3000, 0x1000, 0xf9f2343b )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
+ROM_END
+
+ROM_START( popflamb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "popflama.30",	 0x0000, 0x1000, 0xa9bb0e8a )
+	ROM_LOAD( "popflama.28",	 0x1000, 0x1000, 0xdebe6d03 )
+	ROM_LOAD( "popflama.26",	 0x2000, 0x1000, 0x09df0d4d )
+	ROM_LOAD( "popflama.24",	 0x3000, 0x1000, 0xf399d553 )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic13.pop",	  0x0000, 0x1000, 0x2367131e )
+	ROM_LOAD( "ic3.pop",	  0x1000, 0x1000, 0xdeed0a8b )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic29.pop",	  0x0000, 0x1000, 0x7b54f60f )
+	ROM_LOAD( "ic38.pop",	  0x1000, 0x1000, 0xdd2d9601 )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )
+	ROM_LOAD( "ic53",		  0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
+	ROM_LOAD( "ic54",		  0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
+ROM_END
 
 
-GAMEX( 1982, naughtyb, 0,		 naughtyb, naughtyb, 0, ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0, ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
-GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0, ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflame, 0,		 popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0, ROT90, "Jaleco", "Pop Flamer (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1982, popflamb, popflame, popflame, naughtyb, 0, ROT90, "Jaleco (Stern License)", "Pop Flamer (set 3)", GAME_NO_COCKTAIL )
+
+DRIVER_INIT( popflame )
+{
+	/* install a handler to catch protection checks */
+	install_mem_read_handler(0, 0x9000, 0x9000, popflame_protection_r);
+}
+
+
+GAMEX( 1982, naughtyb, 0,		 naughtyb, naughtyb, 0,        ROT90, "Jaleco", "Naughty Boy", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtya, naughtyb, naughtyb, naughtyb, 0,        ROT90, "bootleg", "Naughty Boy (bootleg)", GAME_NO_COCKTAIL )
+GAMEX( 1982, naughtyc, naughtyb, naughtyb, naughtyb, 0,        ROT90, "Jaleco (Cinematronics license)", "Naughty Boy (Cinematronics)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflame, 0,		 popflame, naughtyb, popflame, ROT90, "Jaleco", "Pop Flamer (protected)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflama, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (not protected)", GAME_NO_COCKTAIL )
+GAMEX( 1982, popflamb, popflame, popflame, naughtyb, 0,        ROT90, "Jaleco", "Pop Flamer (hack?)", GAME_NO_COCKTAIL )

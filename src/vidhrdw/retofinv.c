@@ -33,7 +33,7 @@ static unsigned adj_data(unsigned v)
 			((v & 0x80) >> 3) | ((v & 0x40) >> 1) | ((v & 0x20) << 1) | ((v & 0x10) << 3);
 }
 
-void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( retofinv )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -42,26 +42,27 @@ void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[1*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[1*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[1*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[1*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		bit0 = (color_prom[0*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[0*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[0*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[0*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -88,26 +89,17 @@ void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-int retofinv_vh_start(void)
+VIDEO_START( retofinv )
 {
-	if ((bg_dirtybuffer = malloc(retofinv_videoram_size)) == 0)
-	{
+	if ((bg_dirtybuffer = auto_malloc(retofinv_videoram_size)) == 0)
 		return 1;
-	}
-	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(bg_dirtybuffer);
+
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
+
 	memset(bg_dirtybuffer,1,retofinv_videoram_size);
 	bg_bank = 0;
 	return 0;
-}
-
-void retofinv_vh_stop(void)
-{
-	free(bg_dirtybuffer);
-	bitmap_free(bitmap_bg);
 }
 
 WRITE_HANDLER( retofinv_flip_screen_w )
@@ -408,7 +400,7 @@ void retofinv_draw_foreground(struct mame_bitmap *bitmap)
 
 ***************************************************************************/
 
-void retofinv_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( retofinv )
 {
 	retofinv_draw_background(bitmap);
 	retofinv_render_sprites(bitmap);

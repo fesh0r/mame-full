@@ -28,12 +28,11 @@ a symmetrical visible area).
 
 extern data16_t *gradius3_gfxram;
 extern int gradius3_priority;
-int gradius3_vh_start(void);
-void gradius3_vh_stop(void);
+VIDEO_START( gradius3 );
 READ16_HANDLER( gradius3_gfxrom_r );
 READ16_HANDLER( gradius3_gfxram_r );
 WRITE16_HANDLER( gradius3_gfxram_w );
-void gradius3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( gradius3 );
 
 
 
@@ -50,7 +49,7 @@ static WRITE16_HANDLER( K052109_halfword_w )
 	/* is this a bug in the game or something else? */
 	if (!ACCESSING_LSB)
 		K052109_w(offset,(data >> 8) & 0xff);
-//		logerror("%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
+//		logerror("%06x half %04x = %04x\n",activecpu_get_pc(),offset,data);
 }
 
 static READ16_HANDLER( K051937_halfword_r )
@@ -80,7 +79,7 @@ static WRITE16_HANDLER( K051960_halfword_w )
 static int irqAen,irqBmask;
 
 
-static void gradius3_init(void)
+static MACHINE_INIT( gradius3 )
 {
 	/* start with cpu B halted */
 	cpu_set_reset_line(1,ASSERT_LINE);
@@ -120,7 +119,7 @@ static WRITE16_HANDLER( cpuA_ctrl_w )
 		irqAen = data & 0x20;
 
 		/* other bits unknown */
-//logerror("%06x: write %04x to c0000\n",cpu_get_pc(),data);
+//logerror("%06x: write %04x to c0000\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -130,34 +129,35 @@ static WRITE16_HANDLER( cpuB_irqenable_w )
 		irqBmask = (data >> 8) & 0x07;
 }
 
-static int cpuA_interrupt(void)
+static INTERRUPT_GEN( cpuA_interrupt )
 {
-	if (irqAen) return 2;
-	return ignore_interrupt();
+	if (irqAen)
+		cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
-static int cpuB_interrupt(void)
+static INTERRUPT_GEN( cpuB_interrupt )
 {
 	if (cpu_getiloops() & 1)	/* ??? */
 	{
-		if (irqBmask & 2) return 2;
+		if (irqBmask & 2)
+			cpu_set_irq_line(1, 2, HOLD_LINE);
 	}
 	else
 	{
-		if (irqBmask & 1) return 1;
+		if (irqBmask & 1)
+			cpu_set_irq_line(1, 1, HOLD_LINE);
 	}
-	return ignore_interrupt();
 }
 
 static WRITE16_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
-logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
-		cpu_cause_interrupt(1,4);
+logerror("%04x trigger cpu B irq 4 %02x\n",activecpu_get_pc(),data);
+		cpu_set_irq_line(1,4,HOLD_LINE);
 	}
 	else
-logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
+logerror("%04x MISSED cpu B irq 4 %02x\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( sound_command_w )
@@ -168,7 +168,7 @@ static WRITE16_HANDLER( sound_command_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_cause_interrupt(2,0xff);
+	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 static WRITE_HANDLER( sound_bank_w )
@@ -337,7 +337,7 @@ INPUT_PORTS_START( gradius3 )
 	PORT_DIPSETTING(    0x10, "100000 and every 100000" )
 	PORT_DIPSETTING(    0x08, "50000" )
 	PORT_DIPSETTING(    0x00, "100000" )
-	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x60, "Easy" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x20, "Hard" )
@@ -386,60 +386,42 @@ static struct K007232_interface k007232_interface =
 
 
 
-static const struct MachineDriver machine_driver_gradius3 =
-{
+static MACHINE_DRIVER_START( gradius3 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			gradius3_readmem,gradius3_writemem,0,0,
-			cpuA_interrupt,1
-		},
-		{
-			CPU_M68000,
-			10000000,	/* 10 MHz */
-			gradius3_readmem2,gradius3_writemem2,0,0,
-			cpuB_interrupt,2	/* has three interrupt vectors, 1 2 and 4 */
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(gradius3_readmem,gradius3_writemem)
+	MDRV_CPU_VBLANK_INT(cpuA_interrupt,1)
+
+	MDRV_CPU_ADD(M68000, 10000000)	/* 10 MHz */
+	MDRV_CPU_MEMORY(gradius3_readmem2,gradius3_writemem2)
+	MDRV_CPU_VBLANK_INT(cpuB_interrupt,2)	/* has three interrupt vectors, 1 2 and 4 */
 								/* 4 is triggered by cpu A, the others are unknown but */
 								/* required for the game to run. */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			gradius3_s_readmem,gradius3_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100, /* CPU slices */
-	gradius3_init,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(gradius3_s_readmem,gradius3_s_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	MDRV_MACHINE_INIT(gradius3)
 
 	/* video hardware */
-	64*8, 32*8, { 12*8, (64-14)*8-1, 2*8, 30*8-1 },	/* asymmetrical! */
-	0,	/* gfx decoded by konamiic.c */
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(12*8, (64-14)*8-1, 2*8, 30*8-1 )	/* asymmetrical! */
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	gradius3_vh_start,
-	gradius3_vh_stop,
-	gradius3_vh_screenrefresh,
+	MDRV_VIDEO_START(gradius3)
+	MDRV_VIDEO_UPDATE(gradius3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -451,91 +433,132 @@ static const struct MachineDriver machine_driver_gradius3 =
 
 ROM_START( gradius3 )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "945s13.f15",   0x00000, 0x20000, 0x70c240a2 )
-	ROM_LOAD16_BYTE( "945s12.e15",   0x00001, 0x20000, 0xbbc300d4 )
+	ROM_LOAD16_BYTE( "945_s13.f15",		0x00000, 0x20000, 0x70c240a2 )
+	ROM_LOAD16_BYTE( "945_s12.e15",		0x00001, 0x20000, 0xbbc300d4 )
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 )
-	ROM_LOAD16_BYTE( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
-	ROM_LOAD16_BYTE( "g3_n17.rom",   0x000001, 0x20000, 0x74e981d2 )
-	ROM_LOAD16_BYTE( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
-	ROM_LOAD16_BYTE( "g3_n11.rom",   0x040001, 0x20000, 0xe1fd75b6 )
-	ROM_LOAD16_BYTE( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
-	ROM_LOAD16_BYTE( "g3_n15.rom",   0x080001, 0x20000, 0x96222d04 )
-	ROM_LOAD16_BYTE( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
-	ROM_LOAD16_BYTE( "g3_n13.rom",   0x0c0001, 0x20000, 0x5e209d01 )
+	ROM_LOAD16_BYTE( "945_m09.r17",		0x000000, 0x20000, 0xb4a6df25 )
+	ROM_LOAD16_BYTE( "945_m08.n17",		0x000001, 0x20000, 0x74e981d2 )
+	ROM_LOAD16_BYTE( "945_l06b.r11",	0x040000, 0x20000, 0x83772304 )
+	ROM_LOAD16_BYTE( "945_l06a.n11",	0x040001, 0x20000, 0xe1fd75b6 )
+	ROM_LOAD16_BYTE( "945_l07c.r15",	0x080000, 0x20000, 0xc1e399b6 )
+	ROM_LOAD16_BYTE( "945_l07a.n15",	0x080001, 0x20000, 0x96222d04 )
+	ROM_LOAD16_BYTE( "945_l07d.r13",	0x0c0000, 0x20000, 0x4c16d4bd )
+	ROM_LOAD16_BYTE( "945_l07b.n13",	0x0c0001, 0x20000, 0x5e209d01 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
+	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, 0xc8c45365 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "945a02.l3",             0x000000, 0x80000, 0x4dfffd74 )
-	ROM_LOAD16_BYTE( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
-	ROM_LOAD16_BYTE( "g3_m6.rom",    0x080001, 0x20000, 0x45bcd921 )
-	ROM_LOAD16_BYTE( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
-	ROM_LOAD16_BYTE( "g3_m8.rom",    0x0c0001, 0x20000, 0x0a98d08e )
-	ROM_LOAD( "945a01.h3",             0x100000, 0x80000, 0x339d6dd2 )
-	ROM_LOAD16_BYTE( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
-	ROM_LOAD16_BYTE( "g3_h6.rom",    0x180001, 0x20000, 0xa56be17a )
-	ROM_LOAD16_BYTE( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
-	ROM_LOAD16_BYTE( "g3_h8.rom",    0x1c0001, 0x20000, 0xf375e87b )
+	ROM_LOAD( "945_a02.l3",				0x000000, 0x80000, 0x4dfffd74 )
+	ROM_LOAD16_BYTE( "945_l04a.k6",		0x080000, 0x20000, 0x884e21ee )
+	ROM_LOAD16_BYTE( "945_l04c.m6",		0x080001, 0x20000, 0x45bcd921 )
+	ROM_LOAD16_BYTE( "945_l04b.k8",		0x0c0000, 0x20000, 0x843bc67d )
+	ROM_LOAD16_BYTE( "945_l04d.m8",		0x0c0001, 0x20000, 0x0a98d08e )
+	ROM_LOAD( "945_a01.h3",				0x100000, 0x80000, 0x339d6dd2 )
+	ROM_LOAD16_BYTE( "945_l03a.e6",		0x180000, 0x20000, 0xa67ef087 )
+	ROM_LOAD16_BYTE( "945_l03c.h6",		0x180001, 0x20000, 0xa56be17a )
+	ROM_LOAD16_BYTE( "945_l03b.e8",		0x1c0000, 0x20000, 0x933e68b9 )
+	ROM_LOAD16_BYTE( "945_l03d.h8",		0x1c0001, 0x20000, 0xf375e87b )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
+	ROM_LOAD( "945l14.j28",				0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 007232 samples */
-	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
-	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
-	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
+	ROM_LOAD( "945_a10.b15",			0x00000, 0x40000, 0x1d083e10 )
+	ROM_LOAD( "945_l11a.c18",			0x40000, 0x20000, 0x6043f4eb )
+	ROM_LOAD( "945_l11b.c20",			0x60000, 0x20000, 0x89ea3baf )
 ROM_END
 
 ROM_START( grdius3a )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "g3_f15.rom",   0x00000, 0x20000, 0x9974fe6b )
-	ROM_LOAD16_BYTE( "g3_e15.rom",   0x00001, 0x20000, 0xe9771b91 )
+	ROM_LOAD16_BYTE( "945_13.f15",		0x00000, 0x20000, 0x9974fe6b )
+	ROM_LOAD16_BYTE( "945_12.e15",		0x00001, 0x20000, 0xe9771b91 )
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 )
-	ROM_LOAD16_BYTE( "g3_r17.rom",   0x000000, 0x20000, 0xb4a6df25 )
-	ROM_LOAD16_BYTE( "g3_n17.rom",   0x000001, 0x20000, 0x74e981d2 )
-	ROM_LOAD16_BYTE( "g3_r11.rom",   0x040000, 0x20000, 0x83772304 )
-	ROM_LOAD16_BYTE( "g3_n11.rom",   0x040001, 0x20000, 0xe1fd75b6 )
-	ROM_LOAD16_BYTE( "g3_r15.rom",   0x080000, 0x20000, 0xc1e399b6 )
-	ROM_LOAD16_BYTE( "g3_n15.rom",   0x080001, 0x20000, 0x96222d04 )
-	ROM_LOAD16_BYTE( "g3_r13.rom",   0x0c0000, 0x20000, 0x4c16d4bd )
-	ROM_LOAD16_BYTE( "g3_n13.rom",   0x0c0001, 0x20000, 0x5e209d01 )
+	ROM_LOAD16_BYTE( "945_m09.r17",		0x000000, 0x20000, 0xb4a6df25 )
+	ROM_LOAD16_BYTE( "945_m08.n17",		0x000001, 0x20000, 0x74e981d2 )
+	ROM_LOAD16_BYTE( "945_l06b.r11",	0x040000, 0x20000, 0x83772304 )
+	ROM_LOAD16_BYTE( "945_l06a.n11",	0x040001, 0x20000, 0xe1fd75b6 )
+	ROM_LOAD16_BYTE( "945_l07c.r15",	0x080000, 0x20000, 0xc1e399b6 )
+	ROM_LOAD16_BYTE( "945_l07a.n15",	0x080001, 0x20000, 0x96222d04 )
+	ROM_LOAD16_BYTE( "945_l07d.r13",	0x0c0000, 0x20000, 0x4c16d4bd )
+	ROM_LOAD16_BYTE( "945_l07b.n13",	0x0c0001, 0x20000, 0x5e209d01 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "g3_d9.rom",    0x00000, 0x10000, 0xc8c45365 )
+	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, 0xc8c45365 )
 
 	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
-	ROM_LOAD( "945a02.l3",             0x000000, 0x80000, 0x4dfffd74 )
-	ROM_LOAD16_BYTE( "g3_k6.rom",    0x080000, 0x20000, 0x884e21ee )
-	ROM_LOAD16_BYTE( "g3_m6.rom",    0x080001, 0x20000, 0x45bcd921 )
-	ROM_LOAD16_BYTE( "g3_k8.rom",    0x0c0000, 0x20000, 0x843bc67d )
-	ROM_LOAD16_BYTE( "g3_m8.rom",    0x0c0001, 0x20000, 0x0a98d08e )
-	ROM_LOAD( "945a01.h3",             0x100000, 0x80000, 0x339d6dd2 )
-	ROM_LOAD16_BYTE( "g3_e6.rom",    0x180000, 0x20000, 0xa67ef087 )
-	ROM_LOAD16_BYTE( "g3_h6.rom",    0x180001, 0x20000, 0xa56be17a )
-	ROM_LOAD16_BYTE( "g3_e8.rom",    0x1c0000, 0x20000, 0x933e68b9 )
-	ROM_LOAD16_BYTE( "g3_h8.rom",    0x1c0001, 0x20000, 0xf375e87b )
+	ROM_LOAD( "945_a02.l3",				0x000000, 0x80000, 0x4dfffd74 )
+	ROM_LOAD16_BYTE( "945_l04a.k6",		0x080000, 0x20000, 0x884e21ee )
+	ROM_LOAD16_BYTE( "945_l04c.m6",		0x080001, 0x20000, 0x45bcd921 )
+	ROM_LOAD16_BYTE( "945_l04b.k8",		0x0c0000, 0x20000, 0x843bc67d )
+	ROM_LOAD16_BYTE( "945_l04d.m8",		0x0c0001, 0x20000, 0x0a98d08e )
+	ROM_LOAD( "945_a01.h3",				0x100000, 0x80000, 0x339d6dd2 )
+	ROM_LOAD16_BYTE( "945_l03a.e6",		0x180000, 0x20000, 0xa67ef087 )
+	ROM_LOAD16_BYTE( "945_l03c.h6",		0x180001, 0x20000, 0xa56be17a )
+	ROM_LOAD16_BYTE( "945_l03b.e8",		0x1c0000, 0x20000, 0x933e68b9 )
+	ROM_LOAD16_BYTE( "945_l03d.h8",		0x1c0001, 0x20000, 0xf375e87b )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )
-	ROM_LOAD( "945l14.j28",  0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
+	ROM_LOAD( "945l14.j28",				0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 007232 samples */
-	ROM_LOAD( "945a10.bin",   0x00000, 0x40000, 0x1d083e10 )
-	ROM_LOAD( "g3_c18.rom",   0x40000, 0x20000, 0x6043f4eb )
-	ROM_LOAD( "g3_c20.rom",   0x60000, 0x20000, 0x89ea3baf )
+	ROM_LOAD( "945_a10.b15",			0x00000, 0x40000, 0x1d083e10 )
+	ROM_LOAD( "945_l11a.c18",			0x40000, 0x20000, 0x6043f4eb )
+	ROM_LOAD( "945_l11b.c20",			0x60000, 0x20000, 0x89ea3baf )
+ROM_END
+
+ROM_START( grdius3e )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "945_r13.f15",		0x00000, 0x20000, 0xcffd103f )
+	ROM_LOAD16_BYTE( "945_r12.e15",		0x00001, 0x20000, 0x0b968ef6 )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE( "945_m09.r17",		0x000000, 0x20000, 0xb4a6df25 )
+	ROM_LOAD16_BYTE( "945_m08.n17",		0x000001, 0x20000, 0x74e981d2 )
+	ROM_LOAD16_BYTE( "945_l06b.r11",	0x040000, 0x20000, 0x83772304 )
+	ROM_LOAD16_BYTE( "945_l06a.n11",	0x040001, 0x20000, 0xe1fd75b6 )
+	ROM_LOAD16_BYTE( "945_l07c.r15",	0x080000, 0x20000, 0xc1e399b6 )
+	ROM_LOAD16_BYTE( "945_l07a.n15",	0x080001, 0x20000, 0x96222d04 )
+	ROM_LOAD16_BYTE( "945_l07d.r13",	0x0c0000, 0x20000, 0x4c16d4bd )
+	ROM_LOAD16_BYTE( "945_l07b.n13",	0x0c0001, 0x20000, 0x5e209d01 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, 0xc8c45365 ) /* 945_r05.d9 */
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
+	/* gfx data is dynamically generated in RAM */
+
+	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "945_a02.l3",				0x000000, 0x80000, 0x4dfffd74 )
+	ROM_LOAD16_BYTE( "945_l04a.k6",		0x080000, 0x20000, 0x884e21ee )
+	ROM_LOAD16_BYTE( "945_l04c.m6",		0x080001, 0x20000, 0x45bcd921 )
+	ROM_LOAD16_BYTE( "945_l04b.k8",		0x0c0000, 0x20000, 0x843bc67d )
+	ROM_LOAD16_BYTE( "945_l04d.m8",		0x0c0001, 0x20000, 0x0a98d08e )
+	ROM_LOAD( "945_a01.h3",				0x100000, 0x80000, 0x339d6dd2 )
+	ROM_LOAD16_BYTE( "945_l03a.e6",		0x180000, 0x20000, 0xa67ef087 )
+	ROM_LOAD16_BYTE( "945_l03c.h6",		0x180001, 0x20000, 0xa56be17a )
+	ROM_LOAD16_BYTE( "945_l03b.e8",		0x1c0000, 0x20000, 0x933e68b9 )
+	ROM_LOAD16_BYTE( "945_l03d.h8",		0x1c0001, 0x20000, 0xf375e87b )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "945l14.j28",				0x0000, 0x0100, 0xc778c189 )	/* priority encoder (not used) */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 007232 samples */
+	ROM_LOAD( "945_a10.b15",			0x00000, 0x40000, 0x1d083e10 )
+	ROM_LOAD( "945_l11a.c18",			0x40000, 0x20000, 0x6043f4eb )
+	ROM_LOAD( "945_l11b.c20",			0x60000, 0x20000, 0x89ea3baf )
 ROM_END
 
 
-
-static void init_gradius3(void)
+static DRIVER_INIT( gradius3 )
 {
 	konami_rom_deinterleave_2(REGION_GFX2);
 }
@@ -544,4 +567,4 @@ static void init_gradius3(void)
 
 GAME( 1989, gradius3, 0,        gradius3, gradius3, gradius3, ROT0, "Konami", "Gradius III (Japan)" )
 GAME( 1989, grdius3a, gradius3, gradius3, gradius3, gradius3, ROT0, "Konami", "Gradius III (Asia)" )
-
+GAME( 1989, grdius3e, gradius3, gradius3, gradius3, gradius3, ROT0, "Konami", "Gradius III (World ?)" )

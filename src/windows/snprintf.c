@@ -94,7 +94,7 @@
 #define LDOUBLE double
 #endif
 #if defined(_MSC_VER)
-int DECL_SPEC snprintf (char *str, size_t count, const char *fmt, ...);
+int snprintf (char *str, size_t count, const char *fmt, ...);
 #else
 int snprintf (char *str, size_t count, const char *fmt, ...);
 #endif

@@ -487,14 +487,14 @@ static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow)
 {
 	BOOL bResult;
-    BOOL bNewScreenShot;
+	BOOL bNewScreenShot;
 	const char *name;
 	char *s;
 	char *newname;
 
 	bResult = SoftwareList_ItemChanged(pListView, bWasSelected, bNowSelected, nRow);
 
-    if (!bWasSelected && bNowSelected) {
+	if (!bWasSelected && bNowSelected) {
 		name = GetImageName(nRow);
 		s = strrchr(name, '\\');
 		if (s)

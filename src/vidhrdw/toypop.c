@@ -23,49 +23,51 @@ static int flipscreen, palettebank;
 
 
 ***************************************************************************/
-void toypop_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( toypop )
 {
 	int i;
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		// red component
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		bit3 = (color_prom[i] >> 3) & 0x01;
-		palette[3*i] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		// green component
 		bit0 = (color_prom[i+0x100] >> 0) & 0x01;
 		bit1 = (color_prom[i+0x100] >> 1) & 0x01;
 		bit2 = (color_prom[i+0x100] >> 2) & 0x01;
 		bit3 = (color_prom[i+0x100] >> 3) & 0x01;
-		palette[3*i + 1] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		// blue component
 		bit0 = (color_prom[i+0x200] >> 0) & 0x01;
 		bit1 = (color_prom[i+0x200] >> 1) & 0x01;
 		bit2 = (color_prom[i+0x200] >> 2) & 0x01;
 		bit3 = (color_prom[i+0x200] >> 3) & 0x01;
-		palette[3*i + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		palette_set_color(i,r,g,b);
 	}
 
-	// characters
 	for (i = 0;i < 256;i++)
-		colortable[i] = color_prom[i + 0x300] | 0x70;
-
-	// sprites
-	for (i = 256;i < Machine->drv->color_table_len;i++)
-		colortable[i] = color_prom[i + 0x400];	// 0x500-5ff
+	{
+		// characters
+		colortable[i]     = color_prom[i + 0x300] | 0x70;
+		colortable[i+256] = color_prom[i + 0x300] | 0xf0;
+		// sprites
+		colortable[i+512] = color_prom[i + 0x500];
+	}
 }
 
 WRITE_HANDLER( toypop_palettebank_w )
 {
 	if (offset)
-		palettebank = 0xe0;
+		palettebank = 1;
 	else
-		palettebank = 0x60;
+		palettebank = 0;
 }
 
 WRITE16_HANDLER( toypop_flipscreen_w )
@@ -117,7 +119,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 				scanline[x+1] = data >> 8;
 				offs--;
 			}
-			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[0x60 + 0x80*palettebank], -1);
 		}
 	}
 	else
@@ -132,7 +134,7 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 				scanline[x+1] = data;
 				offs++;
 			}
-			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[palettebank], -1);
+			draw_scanline8(bitmap, 0, y, 288, scanline, &Machine->pens[0x60 + 0x80*palettebank], -1);
 		}
 	}
 
@@ -155,11 +157,11 @@ void draw_background_and_characters(struct mame_bitmap *bitmap)
 			x = 280 - x;
 			y = 216 - y;
 		}
-		drawgfx(bitmap,Machine->gfx[0],videoram[offs],colorram[offs],flipscreen,flipscreen,x,y,0,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0],videoram[offs],colorram[offs] + 64*palettebank,flipscreen,flipscreen,x,y,0,TRANSPARENCY_PEN,0);
 	}
 }
 
-void toypop_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( toypop )
 {
 	register int offs, x, y;
 

@@ -13,11 +13,6 @@
 #include "driver.h"
 #include "ticker.h"
 
-#ifndef _MSC_VER
-#define HAS_RDTSC 1
-#else
-#define HAS_RDTSC 0
-#endif
 
 
 //============================================================
@@ -44,7 +39,24 @@ TICKER			ticks_per_sec;
 //	init_ticker
 //============================================================
 
-#if HAS_RDTSC
+#ifdef _MSC_VER
+
+static int has_rdtsc(void)
+{
+	int nFeatures;
+
+	__asm {
+
+		mov eax, 1
+		cpuid
+		mov nFeatures, edx
+	}
+
+	return ((nFeatures & 0x10) == 0x10) ? TRUE : FALSE;
+}
+
+#else
+
 static int has_rdtsc(void)
 {
 	int result;
@@ -64,10 +76,8 @@ static int has_rdtsc(void)
 	);
 	return result;
 }
-#else
-#define has_rdtsc()	(0)
-#endif // HAS_RDTSC
 
+#endif
 
 //============================================================
 //	init_ticker
@@ -91,7 +101,7 @@ static TICKER init_ticker(void)
 		ticker = time_ticker;
 		logerror("using timeGetTime for timing ... ");
 	}
-	
+
 	// temporarily set our priority higher
 	priority = GetThreadPriority(GetCurrentThread());
 	SetThreadPriority(GetCurrentThread(), THREAD_PRIORITY_TIME_CRITICAL);
@@ -102,28 +112,28 @@ static TICKER init_ticker(void)
 	{
 		b = timeGetTime();
 	} while (a == b);
-	
+
 	// get the starting ticker
 	start = ticker();
-	
+
 	// now wait for 1/4 second total
 	do
 	{
 		a = timeGetTime();
 	} while (a - b < 250);
-	
+
 	// get the ending ticker
 	end = ticker();
-	
+
 	// compute ticks_per_sec
 	ticks_per_sec = (end - start) * 4;
-	
+
 	// reduce our priority
 	SetThreadPriority(GetCurrentThread(), priority);
-	
+
 	// log the results
 	logerror("ticks/second = %d\n", (int)ticks_per_sec);
-	
+
 	// return the current ticker value
 	return ticker();
 }
@@ -134,9 +144,29 @@ static TICKER init_ticker(void)
 //	rdtsc_ticker
 //============================================================
 
+
+#ifdef _MSC_VER
+
 static TICKER rdtsc_ticker(void)
 {
-#if HAS_RDTSC
+	INT64 result;
+	INT64 *presult = &result;
+
+	__asm {
+
+		rdtsc
+		mov ebx, presult
+		mov [ebx],eax
+		mov [ebx+4],edx
+	}
+
+	return result;
+}
+
+#else
+
+static TICKER rdtsc_ticker(void)
+{
 	INT64 result;
 
 	// use RDTSC
@@ -146,12 +176,9 @@ static TICKER rdtsc_ticker(void)
 	);
 
 	return result;
-#else
-	return 0;
-#endif // HAS_RDTSC
 }
 
-
+#endif
 
 //============================================================
 //	time_ticker

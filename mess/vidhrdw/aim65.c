@@ -91,7 +91,7 @@ int aim65_vh_start (void)
 		backdrop_load(backdrop_name, 2);
 	}
     
-	if (generic_vh_start () != 0)
+	if (video_start_generic () != 0)
         return 1;
 
     return 0;
@@ -100,7 +100,6 @@ int aim65_vh_start (void)
 void aim65_vh_stop (void)
 {
     videoram = NULL;
-    generic_vh_stop ();
 }
 
 static const char led[] = {

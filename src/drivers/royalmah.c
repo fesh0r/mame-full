@@ -21,31 +21,32 @@ Notes:    Falcon PCB No. FRM-03
 #include "vidhrdw/generic.h"
 
 
-void royalmah_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( royalmah )
 {
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 }
@@ -70,7 +71,7 @@ WRITE_HANDLER( royalmah_videoram_w )
 	{
 		int col = ((col1 & 0x01) >> 0) | ((col1 & 0x10) >> 3) | ((col2 & 0x01) << 2) | ((col2 & 0x10) >> 1);
 
-		plot_pixel(Machine->scrbitmap, x+i, y, Machine->pens[col]);
+		plot_pixel(tmpbitmap, x+i, y, Machine->pens[col]);
 
 		col1 >>= 1;
 		col2 >>= 1;
@@ -78,9 +79,9 @@ WRITE_HANDLER( royalmah_videoram_w )
 }
 
 
-void royalmah_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( royalmah )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
@@ -91,6 +92,7 @@ void royalmah_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			royalmah_videoram_w(offs, videoram[offs]);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 
@@ -295,42 +297,30 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_royalmah =
-{
+static MACHINE_DRIVER_START( royalmah )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3000000,        /* 3.00 MHz ? */
-			readmem,writemem,readport,writeport,
-			interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 3000000)        /* 3.00 MHz ? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0, 255, 0, 255 },
-	0,
-	16,0,
-	royalmah_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 255, 0, 255)
+	MDRV_PALETTE_LENGTH(16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,
-	0,
-	royalmah_vh_screenrefresh,
+	MDRV_PALETTE_INIT(royalmah)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(royalmah)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

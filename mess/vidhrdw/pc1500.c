@@ -61,7 +61,7 @@ int pc1500_vh_start(void)
     if (backdrop)
         backdrop_refresh (backdrop);
 
-	return generic_vh_start();
+	return video_start_generic();
 #else
 	return 0;
 #endif
@@ -71,9 +71,6 @@ void pc1500_vh_stop(void)
 {
     if (backdrop)
         artwork_free (&backdrop);
-#if 1
-	generic_vh_stop();
-#endif
 }
 
 static const struct {

@@ -9,7 +9,7 @@ Sound panning and other enhancements: Hiromitsu Shioya
 
 Sources:		MAME Rastan driver
 			Raine source - invaluable for this driver -
-			  many thanks to Richard Bush and the Raine Team.
+			many thanks to Richard Bush and the Raine Team.
 
 				*****
 
@@ -140,11 +140,10 @@ sounds.
 #include "sndhrdw/taitosnd.h"
 
 
-void init_darius_machine( void );
+MACHINE_INIT( darius );
 
-int  darius_vh_start(void);
-void darius_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void darius_vh_stop(void);
+VIDEO_START( darius );
+VIDEO_UPDATE( darius );
 
 static UINT16 cpua_ctrl;
 static UINT16 coin_word=0;
@@ -184,7 +183,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( darius_watchdog_w )
@@ -198,23 +197,8 @@ static READ16_HANDLER( paletteram16_r )
 }
 
 
-/***********************************************************
-				INTERRUPTS
-***********************************************************/
-
-static int darius_interrupt(void)
-{
-	return 4;
-}
-
-static int darius_cpub_interrupt(void)
-{
-	return 4;
-}
-
-
 /**********************************************************
-				GAME INPUTS
+                        GAME INPUTS
 **********************************************************/
 
 static READ16_HANDLER( darius_ioc_r )
@@ -240,7 +224,7 @@ static READ16_HANDLER( darius_ioc_r )
 			return input_port_3_word_r(0,mem_mask);	/* DSW */
 	}
 
-logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",cpu_get_pc(),offset);
+logerror("CPU #0 PC %06x: warning - read unmapped ioc offset %06x\n",activecpu_get_pc(),offset);
 
 	return 0xff;
 }
@@ -275,12 +259,12 @@ static WRITE16_HANDLER( darius_ioc_w )
 			return;
 	}
 
-logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x with %04x\n",cpu_get_pc(),offset,data);
+logerror("CPU #0 PC %06x: warning - write unmapped ioc offset %06x with %04x\n",activecpu_get_pc(),offset,data);
 }
 
 
 /***********************************************************
-			 MEMORY STRUCTURES
+                     MEMORY STRUCTURES
 ***********************************************************/
 
 static MEMORY_READ16_START( darius_readmem )
@@ -330,7 +314,7 @@ MEMORY_END
 
 
 /*****************************************************
-				SOUND
+                        SOUND
 *****************************************************/
 
 static int banknum = -1;
@@ -339,16 +323,17 @@ static int nmi_enable = 0;
 
 static void reset_sound_region(void)
 {
-	cpu_setbank( 1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
+	cpu_setbank( STATIC_BANK1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
+//	cpu_setbank( 1, memory_region(REGION_CPU2) + (banknum * 0x8000) + 0x10000 );
+
 }
 
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	if( banknum != data )
-	{
-		banknum = data;
+		banknum = data &0x03;
 		reset_sound_region();
-	}
+//		banknum = data;
+//		reset_sound_region();
 }
 
 static WRITE_HANDLER( adpcm_command_w )
@@ -366,7 +351,7 @@ static WRITE_HANDLER( display_value )
 
 
 /*****************************************************
-		Sound mixer/pan control
+               Sound mixer/pan control
 *****************************************************/
 
 static UINT32 darius_def_vol[0x10];
@@ -495,7 +480,7 @@ static WRITE_HANDLER( darius_write_portB1 )
 
 
 /*****************************************************
-		Sound memory structures / ADPCM
+           Sound memory structures / ADPCM
 *****************************************************/
 
 static MEMORY_READ_START( darius_sound_readmem )
@@ -558,7 +543,7 @@ static struct MSM5205interface msm5205_interface =
 
 static READ_HANDLER( adpcm_command_read )
 {
-	/* logerror("read port 0: %02x  PC=%4x\n",adpcm_command, cpu_get_pc() ); */
+	/* logerror("read port 0: %02x  PC=%4x\n",adpcm_command, activecpu_get_pc() ); */
 	return adpcm_command;
 }
 
@@ -575,13 +560,13 @@ static READ_HANDLER( readport3 )
 static WRITE_HANDLER ( adpcm_nmi_disable )
 {
 	nmi_enable = 0;
-	/* logerror("write port 0: NMI DISABLE  PC=%4x\n", data, cpu_get_pc() ); */
+	/* logerror("write port 0: NMI DISABLE  PC=%4x\n", data, activecpu_get_pc() ); */
 }
 
 static WRITE_HANDLER ( adpcm_nmi_enable )
 {
 	nmi_enable = 1;
-	/* logerror("write port 1: NMI ENABLE   PC=%4x\n", cpu_get_pc() ); */
+	/* logerror("write port 1: NMI ENABLE   PC=%4x\n", activecpu_get_pc() ); */
 }
 
 static WRITE_HANDLER( adpcm_data_w )
@@ -604,71 +589,89 @@ PORT_END
 
 
 /***********************************************************
-			 INPUT PORTS, DIPs
+                      INPUT PORTS, DIPs
 ***********************************************************/
 
-INPUT_PORTS_START( darius )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+#define TAITO_COINAGE_WORLD_16 \
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(      0x0000, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(      0x0010, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(      0x0040, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_6C ) )
+
+#define TAITO_COINAGE_JAPAN_16 \
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ) ) \
+	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(      0x0000, DEF_STR( 2C_3C ) ) \
+	PORT_DIPSETTING(      0x0080, DEF_STR( 1C_2C ) )
+
+#define TAITO_DIFFICULTY_16 \
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) ) \
+	PORT_DIPSETTING(      0x0200, "Easy" ) \
+	PORT_DIPSETTING(      0x0300, "Medium" ) \
+	PORT_DIPSETTING(      0x0100, "Hard" ) \
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+
+#define DARIUS_PLAYERS_INPUT( player ) \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | player ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+#define DARIUS_SYSTEM_INPUT \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )  \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
+
+INPUT_PORTS_START( darius )
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	DARIUS_SYSTEM_INPUT
+
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Medium" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Autofire" )
+	PORT_DIPSETTING(      0x0002, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Fast" )
+	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
+	TAITO_COINAGE_WORLD_16
+	TAITO_DIFFICULTY_16
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0000, "?K, ?K" )
-	PORT_DIPSETTING(      0x0400, "?K, ?K" )
-	PORT_DIPSETTING(      0x0800, "?K, ?K" )
-	PORT_DIPSETTING(      0x0c00, "?K, ?K" )
+	PORT_DIPSETTING(      0x0800, "every 600k" )
+	PORT_DIPSETTING(      0x0c00, "600k only" )
+	PORT_DIPSETTING(      0x0400, "800k only" )
+	PORT_DIPSETTING(      0x0000, "none" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x2000, "4" )
@@ -677,73 +680,74 @@ INPUT_PORTS_START( darius )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, "Continue" )
+	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dariuse )
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	DARIUS_SYSTEM_INPUT
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Autofire" )
+	PORT_DIPSETTING(      0x0002, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Fast" )
+	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_16
+	TAITO_DIFFICULTY_16
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0800, "every 600k" )
+	PORT_DIPSETTING(      0x0c00, "600k only" )
+	PORT_DIPSETTING(      0x0400, "800k only" )
+	PORT_DIPSETTING(      0x0000, "none" )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x3000, "3" )
+	PORT_DIPSETTING(      0x2000, "4" )
+	PORT_DIPSETTING(      0x1000, "5" )
+	PORT_DIPSETTING(      0x0000, "6" )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, "Allow Continue" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( dariusj )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER1 )
 
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	DARIUS_PLAYERS_INPUT( IPF_PLAYER2 )
 
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	DARIUS_SYSTEM_INPUT
 
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Continuous fire" )
-	PORT_DIPSETTING(    0x02, "Normal" )
-	PORT_DIPSETTING(    0x00, "Fast" )
-	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, "Easy" )
-	PORT_DIPSETTING(      0x0300, "Medium" )
-	PORT_DIPSETTING(      0x0100, "Hard" )
-	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, "Autofire" )
+	PORT_DIPSETTING(      0x0002, "Normal" )
+	PORT_DIPSETTING(      0x0000, "Fast" )
+	PORT_SERVICE( 0x0004, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_16
+	TAITO_DIFFICULTY_16
 	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(      0x0000, "?K, ?K" )
-	PORT_DIPSETTING(      0x0400, "?K, ?K" )
-	PORT_DIPSETTING(      0x0800, "?K, ?K" )
-	PORT_DIPSETTING(      0x0c00, "?K, ?K" )
+	PORT_DIPSETTING(      0x0800, "every 600k" )
+	PORT_DIPSETTING(      0x0c00, "600k only" )
+	PORT_DIPSETTING(      0x0400, "800k only" )
+	PORT_DIPSETTING(      0x0000, "none" )
 	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x3000, "3" )
 	PORT_DIPSETTING(      0x2000, "4" )
@@ -757,9 +761,8 @@ INPUT_PORTS_START( dariusj )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
 /**************************************************************
-				GFX DECODING
+                           GFX DECODING
 **************************************************************/
 
 static struct GfxLayout tilelayout =
@@ -808,7 +811,7 @@ static struct GfxDecodeInfo darius_gfxdecodeinfo[] =
 
 
 /**************************************************************
-			     YM2203 (SOUND)
+                        YM2203 (SOUND)
 **************************************************************/
 
 /* handler called by the YM2203 emulator when the internal timers cause an IRQ */
@@ -831,71 +834,55 @@ static struct YM2203interface ym2203_interface =
 
 
 /***********************************************************
-			     MACHINE DRIVERS
+                       MACHINE DRIVERS
 ***********************************************************/
 
-static const struct MachineDriver machine_driver_darius =
-{
+static MACHINE_DRIVER_START( darius )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius_readmem,darius_writemem,0,0,
-			darius_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 MHz ? */
-			darius_sound_readmem,darius_sound_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius_cpub_readmem,darius_cpub_writemem,0,0,
-			darius_cpub_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,	/* ADPCM player using MSM5205 */
-			8000000/2,	/* 4 MHz ? */
-			darius_sound2_readmem,darius_sound2_writemem, darius_sound2_readport, darius_sound2_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame ? */
-	init_darius_machine,
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius_readmem,darius_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(darius_sound_readmem,darius_sound_writemem)
+
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius_cpub_readmem,darius_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,8000000/2) /* 4 MHz ? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ADPCM player using MSM5205 */
+	MDRV_CPU_MEMORY(darius_sound2_readmem,darius_sound2_writemem)
+	MDRV_CPU_PORTS(darius_sound2_readport,darius_sound2_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* 10 CPU slices per frame ? */
+
+	MDRV_MACHINE_INIT(darius)
 
 	/* video hardware */
-	108*8, 32*8, { 0*8, 108*8-1, 1*8, 29*8-1 },
-	darius_gfxdecodeinfo,
-	4096*2, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(12,3)
+	MDRV_SCREEN_SIZE(108*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 108*8-1, 1*8, 29*8-1)
+	MDRV_GFXDECODE(darius_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*2)
 
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
-	0,
-	darius_vh_start,
-	darius_vh_stop,
-	darius_vh_screenrefresh,
+	MDRV_VIDEO_START(darius)
+	MDRV_VIDEO_UPDATE(darius)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2203,
-			&ym2203_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
-					DRIVERS
+                                  DRIVERS
 ***************************************************************************/
 
 ROM_START( darius )
@@ -1123,7 +1110,7 @@ ROM_START( dariuse )
 ROM_END
 
 
-static void init_darius(void)
+static DRIVER_INIT( darius )
 {
 //	taitosnd_setz80_soundcpu( 2 );
 
@@ -1140,7 +1127,7 @@ static void init_darius(void)
 }
 
 
-void init_darius_machine( void )
+MACHINE_INIT( darius )
 {
 	int  i;
 
@@ -1170,4 +1157,4 @@ void init_darius_machine( void )
 GAME( 1986, darius,   0,        darius,   darius,   darius,   ROT0, "Taito Corporation Japan", "Darius (World)" )
 GAME( 1986, dariusj,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan)" )
 GAME( 1986, dariuso,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Japan old version)" )
-GAME( 1986, dariuse,  darius,   darius,   dariusj,  darius,   ROT0, "Taito Corporation", "Darius (Extra) (Japan)" )
+GAME( 1986, dariuse,  darius,   darius,   dariuse,  darius,   ROT0, "Taito Corporation", "Darius (Extra) (Japan)" )

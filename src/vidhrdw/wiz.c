@@ -37,9 +37,9 @@ static unsigned char palbank[2];
 static int palette_bank;
 
 
-int wiz_vh_start(void)
+VIDEO_START( wiz )
 {
-	if (generic_vh_start())
+	if (video_start_generic())
 		return 1;
 
 	state_save_register_UINT8("wiz", 0, "char_bank",   char_bank,   2);
@@ -64,31 +64,33 @@ int wiz_vh_start(void)
   bit 0 -- 1  kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void wiz_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( wiz )
 {
 	int i;
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -269,7 +271,7 @@ static void draw_sprites(struct mame_bitmap *bitmap, unsigned char* sprite_ram,
   the main emulation engine.
 
 ***************************************************************************/
-void wiz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( wiz )
 {
 	int bank;
 	const struct rectangle* visible_area;
@@ -287,7 +289,7 @@ void wiz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 }
 
 
-void stinger_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( stinger )
 {
 	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area);
 	draw_background(bitmap, 2 + char_bank[0], 1);

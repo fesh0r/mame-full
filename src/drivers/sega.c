@@ -1,164 +1,148 @@
 /***************************************************************************
 
-4/25/99 - Tac-Scan sound call for coins now works. (Jim Hernandez)
-2/5/98 - Added input ports support for Tac Scan. Bonus Ships now work.
-		 Zektor now uses it's own input port section. (Jim Hernandez)
+	Sega vector hardware
 
-Sega Vector memory map (preliminary)
+	Games supported:
+		* Space Fury
+		* Zektor
+		* Tac/Scan
+		* Eliminator
+		* Star Trek
 
-Most of the info here comes from the wiretap archive at:
-http://www.spies.com/arcade/simulation/gameHardware/
+	Known bugs:
+		* none at this time
 
- * Sega G80 Vector Simulation
+****************************************************************************
 
-ROM Address Map
----------------
-	   Eliminator Elim4Player Space Fury  Zektor  TAC/SCAN	Star Trk
------+-----------+-----------+-----------+-------+---------+---------+
-0000 | 969		 | 1390 	 | 969		 | 1611  | 1711    | 1873	 | CPU u25
------+-----------+-----------+-----------+-------+---------+---------+
-0800 | 1333 	 | 1347 	 | 960		 | 1586  | 1670    | 1848	 | ROM u1
------+-----------+-----------+-----------+-------+---------+---------+
-1000 | 1334 	 | 1348 	 | 961		 | 1587  | 1671    | 1849	 | ROM u2
------+-----------+-----------+-----------+-------+---------+---------+
-1800 | 1335 	 | 1349 	 | 962		 | 1588  | 1672    | 1850	 | ROM u3
------+-----------+-----------+-----------+-------+---------+---------+
-2000 | 1336 	 | 1350 	 | 963		 | 1589  | 1673    | 1851	 | ROM u4
------+-----------+-----------+-----------+-------+---------+---------+
-2800 | 1337 	 | 1351 	 | 964		 | 1590  | 1674    | 1852	 | ROM u5
------+-----------+-----------+-----------+-------+---------+---------+
-3000 | 1338 	 | 1352 	 | 965		 | 1591  | 1675    | 1853	 | ROM u6
------+-----------+-----------+-----------+-------+---------+---------+
-3800 | 1339 	 | 1353 	 | 966		 | 1592  | 1676    | 1854	 | ROM u7
------+-----------+-----------+-----------+-------+---------+---------+
-4000 | 1340 	 | 1354 	 | 967		 | 1593  | 1677    | 1855	 | ROM u8
------+-----------+-----------+-----------+-------+---------+---------+
-4800 | 1341 	 | 1355 	 | 968		 | 1594  | 1678    | 1856	 | ROM u9
------+-----------+-----------+-----------+-------+---------+---------+
-5000 | 1342 	 | 1356 	 |			 | 1595  | 1679    | 1857	 | ROM u10
------+-----------+-----------+-----------+-------+---------+---------+
-5800 | 1343 	 | 1357 	 |			 | 1596  | 1680    | 1858	 | ROM u11
------+-----------+-----------+-----------+-------+---------+---------+
-6000 | 1344 	 | 1358 	 |			 | 1597  | 1681    | 1859	 | ROM u12
------+-----------+-----------+-----------+-------+---------+---------+
-6800 | 1345 	 | 1359 	 |			 | 1598  | 1682    | 1860	 | ROM u13
------+-----------+-----------+-----------+-------+---------+---------+
-7000 |			 | 1360 	 |			 | 1599  | 1683    | 1861	 | ROM u14
------+-----------+-----------+-----------+-------+---------+---------+
-7800 |									 | 1600  | 1684    | 1862	 | ROM u15
------+-----------+-----------+-----------+-------+---------+---------+
-8000 |									 | 1601  | 1685    | 1863	 | ROM u16
------+-----------+-----------+-----------+-------+---------+---------+
-8800 |									 | 1602  | 1686    | 1864	 | ROM u17
------+-----------+-----------+-----------+-------+---------+---------+
-9000 |									 | 1603  | 1687    | 1865	 | ROM u18
------+-----------+-----------+-----------+-------+---------+---------+
-9800 |									 | 1604  | 1688    | 1866	 | ROM u19
------+-----------+-----------+-----------+-------+---------+---------+
-A000 |									 | 1605  | 1709    | 1867	 | ROM u20
------+-----------+-----------+-----------+-------+---------+---------+
-A800 |									 | 1606  | 1710    | 1868	 | ROM u21
------+-----------+-----------+-----------+-------+---------+---------+
-B000 |													   | 1869	 | ROM u22
------+-----------+-----------+-----------+-------+---------+---------+
-B800 |													   | 1870	 | ROM u23
------+-----------+-----------+-----------+-------+---------+---------+
+	4/25/99 - Tac-Scan sound call for coins now works. (Jim Hernandez)
+	2/5/98 - Added input ports support for Tac Scan. Bonus Ships now work.
+			 Zektor now uses it's own input port section. (Jim Hernandez)
 
-I/O ports:
-read:
+	Sega Vector memory map (preliminary)
 
-write:
+	Most of the info here comes from the wiretap archive at:
+	http://www.spies.com/arcade/simulation/gameHardware/
 
-These games all have dipswitches, but they are mapped in such a way as to make
-using them with MAME extremely difficult. I might try to implement them in the
-future.
+	 * Sega G80 Vector Simulation
 
-SWITCH MAPPINGS
----------------
+	ROM Address Map
+	---------------
+		   Eliminator Elim4Player Space Fury  Zektor  TAC/SCAN	Star Trk
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	0000 | 969		 | 1390 	 | 969		 | 1611  | 1711    | 1873	 | CPU u25
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	0800 | 1333 	 | 1347 	 | 960		 | 1586  | 1670    | 1848	 | ROM u1
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	1000 | 1334 	 | 1348 	 | 961		 | 1587  | 1671    | 1849	 | ROM u2
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	1800 | 1335 	 | 1349 	 | 962		 | 1588  | 1672    | 1850	 | ROM u3
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	2000 | 1336 	 | 1350 	 | 963		 | 1589  | 1673    | 1851	 | ROM u4
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	2800 | 1337 	 | 1351 	 | 964		 | 1590  | 1674    | 1852	 | ROM u5
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	3000 | 1338 	 | 1352 	 | 965		 | 1591  | 1675    | 1853	 | ROM u6
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	3800 | 1339 	 | 1353 	 | 966		 | 1592  | 1676    | 1854	 | ROM u7
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	4000 | 1340 	 | 1354 	 | 967		 | 1593  | 1677    | 1855	 | ROM u8
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	4800 | 1341 	 | 1355 	 | 968		 | 1594  | 1678    | 1856	 | ROM u9
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	5000 | 1342 	 | 1356 	 |			 | 1595  | 1679    | 1857	 | ROM u10
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	5800 | 1343 	 | 1357 	 |			 | 1596  | 1680    | 1858	 | ROM u11
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	6000 | 1344 	 | 1358 	 |			 | 1597  | 1681    | 1859	 | ROM u12
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	6800 | 1345 	 | 1359 	 |			 | 1598  | 1682    | 1860	 | ROM u13
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	7000 |			 | 1360 	 |			 | 1599  | 1683    | 1861	 | ROM u14
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	7800 |									 | 1600  | 1684    | 1862	 | ROM u15
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	8000 |									 | 1601  | 1685    | 1863	 | ROM u16
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	8800 |									 | 1602  | 1686    | 1864	 | ROM u17
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	9000 |									 | 1603  | 1687    | 1865	 | ROM u18
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	9800 |									 | 1604  | 1688    | 1866	 | ROM u19
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	A000 |									 | 1605  | 1709    | 1867	 | ROM u20
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	A800 |									 | 1606  | 1710    | 1868	 | ROM u21
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	B000 |													   | 1869	 | ROM u22
+	-----+-----------+-----------+-----------+-------+---------+---------+
+	B800 |													   | 1870	 | ROM u23
+	-----+-----------+-----------+-----------+-------+---------+---------+
 
-+------+------+------+------+------+------+------+------+
-|SW1-8 |SW1-7 |SW1-6 |SW1-5 |SW1-4 |SW1-3 |SW1-2 |SW1-1 |
-+------+------+------+------+------+------+------+------+
- F8:08 |F9:08 |FA:08 |FB:08 |F8:04 |F9:04  FA:04  FB:04    Zektor &
-	   |	  | 	 |		|	   |	  | 			   Space Fury
-	   |	  | 	 |		|	   |	  |
-   1  -|------|------|------|------|------|--------------- upright
-   0  -|------|------|------|------|------|--------------- cocktail
-	   |	  | 	 |		|	   |	  |
-	   |  1  -|------|------|------|------|--------------- voice
-	   |  0  -|------|------|------|------|--------------- no voice
-			  | 	 |		|	   |	  |
-			  |  1	 |	1  -|------|------|--------------- 5 ships
-			  |  0	 |	1  -|------|------|--------------- 4 ships
-			  |  1	 |	0  -|------|------|--------------- 3 ships
-			  |  0	 |	0  -|------|------|--------------- 2 ships
-							|	   |	  |
-							|  1   |  1  -|--------------- hardest
-							|  0   |  1  -|--------------- hard
-1 = Open					|  1   |  0  -|--------------- medium
-0 = Closed					|  0   |  0  -|--------------- easy
+	I/O ports:
+	read:
 
-+------+------+------+------+------+------+------+------+
-|SW2-8 |SW2-7 |SW2-6 |SW2-5 |SW2-4 |SW2-3 |SW2-2 |SW2-1 |
-+------+------+------+------+------+------+------+------+
-|F8:02 |F9:02 |FA:02 |FB:02 |F8:01 |F9:01 |FA:01 |FB:01 |
-|	   |	  | 	 |		|	   |	  | 	 |		|
-|  1   |  1   |  0	 |	0	|  1   | 1	  | 0	 |	0	| 1 coin/ 1 play
-+------+------+------+------+------+------+------+------+
+	write:
 
-Known problems:
+	These games all have dipswitches, but they are mapped in such a way as to make
+	using them with MAME extremely difficult. I might try to implement them in the
+	future.
 
-1 The games seem to run too fast. This is most noticable
-  with the speech samples in Zektor - they don't match the mouth.
-  Slowing down the Z80 doesn't help and in fact hurts performance.
+	SWITCH MAPPINGS
+	---------------
 
-2 Cocktail mode isn't implemented.
+	+------+------+------+------+------+------+------+------+
+	|SW1-8 |SW1-7 |SW1-6 |SW1-5 |SW1-4 |SW1-3 |SW1-2 |SW1-1 |
+	+------+------+------+------+------+------+------+------+
+	 F8:08 |F9:08 |FA:08 |FB:08 |F8:04 |F9:04  FA:04  FB:04    Zektor &
+		   |	  | 	 |		|	   |	  | 			   Space Fury
+		   |	  | 	 |		|	   |	  |
+	   1  -|------|------|------|------|------|--------------- upright
+	   0  -|------|------|------|------|------|--------------- cocktail
+		   |	  | 	 |		|	   |	  |
+		   |  1  -|------|------|------|------|--------------- voice
+		   |  0  -|------|------|------|------|--------------- no voice
+				  | 	 |		|	   |	  |
+				  |  1	 |	1  -|------|------|--------------- 5 ships
+				  |  0	 |	1  -|------|------|--------------- 4 ships
+				  |  1	 |	0  -|------|------|--------------- 3 ships
+				  |  0	 |	0  -|------|------|--------------- 2 ships
+								|	   |	  |
+								|  1   |  1  -|--------------- hardest
+								|  0   |  1  -|--------------- hard
+	1 = Open					|  1   |  0  -|--------------- medium
+	0 = Closed					|  0   |  0  -|--------------- easy
 
-Is 1) still valid?
+	+------+------+------+------+------+------+------+------+
+	|SW2-8 |SW2-7 |SW2-6 |SW2-5 |SW2-4 |SW2-3 |SW2-2 |SW2-1 |
+	+------+------+------+------+------+------+------+------+
+	|F8:02 |F9:02 |FA:02 |FB:02 |F8:01 |F9:01 |FA:01 |FB:01 |
+	|	   |	  | 	 |		|	   |	  | 	 |		|
+	|  1   |  1   |  0	 |	0	|  1   | 1	  | 0	 |	0	| 1 coin/ 1 play
+	+------+------+------+------+------+------+------+------+
+
+	Known problems:
+
+	1 The games seem to run too fast. This is most noticable
+	  with the speech samples in Zektor - they don't match the mouth.
+	  Slowing down the Z80 doesn't help and in fact hurts performance.
+
+	2 Cocktail mode isn't implemented.
+
+	Is 1) still valid?
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "sega.h"
 
-extern unsigned char *sega_mem;
-extern void sega_security(int chip);
-WRITE_HANDLER( sega_w );
 
-READ_HANDLER( sega_ports_r );
-READ_HANDLER( sega_IN4_r );
-READ_HANDLER( elim4_IN4_r );
 
-int sega_interrupt(void);
-READ_HANDLER( sega_mult_r );
-WRITE_HANDLER( sega_mult1_w );
-WRITE_HANDLER( sega_mult2_w );
-WRITE_HANDLER( sega_switch_w );
-WRITE_HANDLER( sega_coin_counter_w );
-
-/* Sound hardware prototypes */
-int sega_sh_start (const struct MachineSound *msound);
-READ_HANDLER( sega_sh_r );
-WRITE_HANDLER( sega_sh_speech_w );
-void sega_sh_update(void);
-
-WRITE_HANDLER( elim1_sh_w );
-WRITE_HANDLER( elim2_sh_w );
-WRITE_HANDLER( spacfury1_sh_w );
-WRITE_HANDLER( spacfury2_sh_w );
-WRITE_HANDLER( zektor1_sh_w );
-WRITE_HANDLER( zektor2_sh_w );
-
-int tacscan_sh_start (const struct MachineSound *msound);
-WRITE_HANDLER( tacscan_sh_w );
-void tacscan_sh_update(void);
-
-WRITE_HANDLER( startrek_sh_w );
-
-/* Video hardware prototypes */
-int sega_vh_start (void);
-void sega_vh_stop (void);
-void sega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
@@ -167,87 +151,46 @@ static MEMORY_READ_START( readmem )
 	{ 0xd000, 0xdfff, MRA_RAM },			/* sound ram */
 MEMORY_END
 
+
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xffff, sega_w, &sega_mem },
 	{ 0xe000, 0xefff, MWA_RAM, &vectorram, &vectorram_size },	/* handled by the above, */
 												/* here only to initialize the pointer */
 MEMORY_END
 
-static PORT_READ_START( spacfury_readport )
+
+static PORT_READ_START( readport )
 	{ 0x3f, 0x3f, sega_sh_r },
 	{ 0xbe, 0xbe, sega_mult_r },
 	{ 0xf8, 0xfb, sega_ports_r },
 PORT_END
 
-static PORT_WRITE_START( spacfury_writeport )
-	{ 0x38, 0x38, sega_sh_speech_w },
-	{ 0x3e, 0x3e, spacfury1_sh_w },
-	{ 0x3f, 0x3f, spacfury2_sh_w },
-	{ 0xbd, 0xbd, sega_mult1_w },
-	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-PORT_END
 
-static PORT_READ_START( zektor_readport )
-	{ 0x3f, 0x3f, sega_sh_r },
-	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_ports_r },
-	{ 0xfc, 0xfc, sega_IN4_r },
-PORT_END
-
-static PORT_WRITE_START( zektor_writeport )
-	{ 0x38, 0x38, sega_sh_speech_w },
-		{ 0x3e, 0x3e, zektor1_sh_w },
-		{ 0x3f, 0x3f, zektor2_sh_w },
+static PORT_WRITE_START( writeport )
 	{ 0xbd, 0xbd, sega_mult1_w },
 	{ 0xbe, 0xbe, sega_mult2_w },
 	{ 0xf8, 0xf8, sega_switch_w },
 	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
 PORT_END
 
-static PORT_WRITE_START( tacscan_writeport )
-	{ 0x3f, 0x3f, tacscan_sh_w },
-	{ 0xbd, 0xbd, sega_mult1_w },
-	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-PORT_END
 
-static PORT_READ_START( elim2_readport )
-	{ 0x3f, 0x3f, sega_sh_r },
-	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_ports_r },
-	{ 0xfc, 0xfc, input_port_4_r },
-PORT_END
 
-static PORT_READ_START( elim4_readport )
-	{ 0x3f, 0x3f, sega_sh_r },
-	{ 0xbe, 0xbe, sega_mult_r },
-	{ 0xf8, 0xfb, sega_ports_r },
-	{ 0xfc, 0xfc, elim4_IN4_r },
-PORT_END
 
-static PORT_WRITE_START( elim_writeport )
-	{ 0x3e, 0x3e, elim1_sh_w },
-	{ 0x3f, 0x3f, elim2_sh_w },
-	{ 0xbd, 0xbd, sega_mult1_w },
-	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-PORT_END
+static MEMORY_READ_START( speech_readmem )
+	{ 0x0000, 0x07ff, MRA_ROM },
+MEMORY_END
 
-static PORT_WRITE_START( startrek_writeport )
-	{ 0x38, 0x38, sega_sh_speech_w },
-	{ 0x3f, 0x3f, startrek_sh_w },
-	{ 0xbd, 0xbd, sega_mult1_w },
-	{ 0xbe, 0xbe, sega_mult2_w },
-	{ 0xf8, 0xf8, sega_switch_w },
-	{ 0xf9, 0xf9, sega_coin_counter_w }, /* 0x80 = enable, 0x00 = disable */
-PORT_END
 
-/*************************************************************************
-Input Ports
-*************************************************************************/
+static MEMORY_WRITE_START( speech_writemem )
+	{ 0x0000, 0x07ff, MWA_ROM },
+MEMORY_END
+
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 /* This fake input port is used for DIP Switch 2
    for all games except Eliminato 4 players */
@@ -349,8 +292,8 @@ INPUT_PORTS_START( spacfury )
 	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( zektor )
 	PORT_START	/* IN0 - port 0xf8 */
@@ -587,7 +530,6 @@ INPUT_PORTS_START( elim2 )
 		PORT_DIPSETTING(	0x00, DEF_STR ( Cocktail ) )
 
 		COINAGE
-
 INPUT_PORTS_END
 
 
@@ -663,57 +605,12 @@ INPUT_PORTS_START( elim4 )
 INPUT_PORTS_END
 
 
-/***************************************************************************
 
-  Security Chips
-
-***************************************************************************/
-
-void init_spacfury(void)
-{
-	/* This game uses the 315-0064 security chip */
-	sega_security(64);
-
-	install_port_read_handler(0, 0xfc, 0xfc, input_port_8_r);
-}
-
-void init_zektor(void)
-{
-	/* This game uses the 315-0082 security chip */
-	sega_security(82);
-}
-
-void init_elim2(void)
-{
-	/* This game uses the 315-0070 security chip */
-	sega_security(70);
-}
-
-void init_elim4(void)
-{
-	/* This game uses the 315-0076 security chip */
-	sega_security(76);
-}
-
-void init_startrek(void)
-{
-	/* This game uses the 315-0064 security chip */
-	sega_security(64);
-}
-
-void init_tacscan(void)
-{
-	/* This game uses the 315-0076 security chip */
-	sega_security(76);
-}
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	Space Fury sound interfaces
+ *
+ *************************************/
 
 static const char *spacfury_sample_names[] =
 {
@@ -754,12 +651,14 @@ static const char *spacfury_sample_names[] =
 	0	/* end of array */
 };
 
+
 static struct Samplesinterface spacfury_samples_interface =
 {
 	9,	/* 9 channels */
-	25, /* volume */
+	100, /* volume */
 	spacfury_sample_names
 };
+
 
 static struct CustomSound_interface sega_custom_interface =
 {
@@ -768,56 +667,13 @@ static struct CustomSound_interface sega_custom_interface =
 	sega_sh_update
 };
 
-static const struct MachineDriver machine_driver_spacfury =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem, writemem, spacfury_readport, spacfury_writeport,
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 552, 1464 },
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&spacfury_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
 
 
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	Zektor sound interfaces
+ *
+ *************************************/
 
 static const char *zektor_sample_names[] =
 {
@@ -860,65 +716,21 @@ static const char *zektor_sample_names[] =
 	0	/* end of array */
 };
 
+
 static struct Samplesinterface zektor_samples_interface =
 {
 	12, /* only speech for now */
-	25, /* volume */
+	100, /* volume */
 	zektor_sample_names
 };
 
 
 
-static const struct MachineDriver machine_driver_zektor =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem,writemem,zektor_readport,zektor_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 624, 1432 },
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zektor_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	Tac/Scan sound interfaces
+ *
+ *************************************/
 
 static const char *tacscan_sample_names[] =
 {
@@ -927,7 +739,7 @@ static const char *tacscan_sample_names[] =
 	"01.wav",
 	"02.wav",
 	"03.wav",
-		"plaser.wav",
+	"plaser.wav",
 	"pexpl.wav",
 	"pship.wav",
 	"tunnelh.wav",
@@ -936,26 +748,28 @@ static const char *tacscan_sample_names[] =
 	"sexpl.wav",
 	"eshot.wav",
 	"eexpl.wav",
-		"tunnelw.wav",
-		"flight1.wav",
-		"flight2.wav",
-		"flight3.wav",
-		"flight4.wav",
-		"flight5.wav",
-		"formatn.wav",
-		"warp.wav",
-		"credit.wav",
-		"1up.wav",
+	"tunnelw.wav",
+	"flight1.wav",
+	"flight2.wav",
+	"flight3.wav",
+	"flight4.wav",
+	"flight5.wav",
+	"formatn.wav",
+	"warp.wav",
+	"credit.wav",
+	"1up.wav",
 
 	0	/* end of array */
 };
 
+
 static struct Samplesinterface tacscan_samples_interface =
 {
 	12, /* 12 channels */
-	25, /* volume */
+	100, /* volume */
 	tacscan_sample_names
 };
+
 
 static struct CustomSound_interface tacscan_custom_interface =
 {
@@ -966,56 +780,12 @@ static struct CustomSound_interface tacscan_custom_interface =
 
 
 
-static const struct MachineDriver machine_driver_tacscan =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem,writemem,zektor_readport,tacscan_writeport,
+/*************************************
+ *
+ *	Eliminator sound interfaces
+ *
+ *************************************/
 
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 496, 1552, 592, 1456 },
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&tacscan_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&tacscan_custom_interface
-		}
-	}
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-/* Eliminator sound samples (all versions) */
 static const char *elim_sample_names[] =
 {
 	"*elim2",
@@ -1037,104 +807,17 @@ static const char *elim_sample_names[] =
 static struct Samplesinterface elim2_samples_interface =
 {
 	8,	/* 8 channels */
-	25, /* volume */
+	100, /* volume */
 	elim_sample_names
 };
 
 
-static const struct MachineDriver machine_driver_elim2 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem,writemem,elim2_readport,elim_writeport,
 
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 600, 1440 },
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&elim2_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-
-
-static const struct MachineDriver machine_driver_elim4 =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem,writemem,elim4_readport,elim_writeport,
-
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	400, 300, { 512, 1536, 600, 1440 },
-	0,
-	256, 0,
-	0,
-
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&elim2_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	Star Trek sound interfaces
+ *
+ *************************************/
 
 static const char *startrek_sample_names[] =
 {
@@ -1195,87 +878,168 @@ static const char *startrek_sample_names[] =
 	0	/* end of array */
 };
 
+
 static struct Samplesinterface startrek_samples_interface =
 {
 	10, /* 10 channels */
-	25, /* volume */
+	100, /* volume */
 	startrek_sample_names
 };
 
-static const struct MachineDriver machine_driver_startrek =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3867120,	/* 3.86712 MHz */
-			readmem,writemem,zektor_readport,startrek_writeport,
 
-			0, 0, /* no vblank interrupt */
-			sega_interrupt, 40 /* 40 Hz */
-		}
-	},
-	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,	/* single CPU, no need for interleaving */
-	0,
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( elim2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3867120)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_PERIODIC_INT(sega_interrupt,40)
+
+	MDRV_FRAMES_PER_SECOND(40)
 
 	/* video hardware */
-	400, 300, { 512, 1536, 616, 1464 },
-	0,
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(400, 300)
+	MDRV_VISIBLE_AREA(512, 1536, 600, 1440)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
-	0,
-	sega_vh_start,
-	sega_vh_stop,
-	sega_vh_screenrefresh,
+	MDRV_VIDEO_START(sega)
+	MDRV_VIDEO_UPDATE(sega)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&startrek_samples_interface
-		},
-		{
-			SOUND_CUSTOM,	/* actually plays the samples */
-			&sega_custom_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD_TAG("samples", SAMPLES, elim2_samples_interface)
+	MDRV_SOUND_ADD_TAG("custom",  CUSTOM,  sega_custom_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( zektor )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(512, 1536, 624, 1432)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("samples", SAMPLES, zektor_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tacscan )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(elim2)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(496, 1552, 592, 1456)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("samples", SAMPLES, tacscan_samples_interface)
+	MDRV_SOUND_REPLACE("custom",  CUSTOM,  tacscan_custom_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( spacfury )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(512, 1536, 552, 1464)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("samples", SAMPLES, spacfury_samples_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( startrek )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(elim2)
+
+	MDRV_CPU_ADD(I8035, 3120000/15)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(speech_readmem,speech_writemem)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(512, 1536, 616, 1464)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("samples", SAMPLES, startrek_samples_interface)
+MACHINE_DRIVER_END
 
 
 
-
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( spacfury ) /* Revision C */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-		ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
-		ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
-		ROM_LOAD( "961c.u2",      0x1000, 0x0800, 0xaebc7b97 )
-		ROM_LOAD( "962c.u3",      0x1800, 0x0800, 0xdbbba35e )
-		ROM_LOAD( "963c.u4",      0x2000, 0x0800, 0xd9e9eadc )
-		ROM_LOAD( "964c.u5",      0x2800, 0x0800, 0x7ed947b6 )
-		ROM_LOAD( "965c.u6",      0x3000, 0x0800, 0xd2443a22 )
-		ROM_LOAD( "966c.u7",      0x3800, 0x0800, 0x1985ccfc )
-		ROM_LOAD( "967c.u8",      0x4000, 0x0800, 0x330f0751 )
-		ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
+	ROM_LOAD( "969c.u25",     0x0000, 0x0800, 0x411207f2 )
+	ROM_LOAD( "960c.u1",      0x0800, 0x0800, 0xd071ab7e )
+	ROM_LOAD( "961c.u2",      0x1000, 0x0800, 0xaebc7b97 )
+	ROM_LOAD( "962c.u3",      0x1800, 0x0800, 0xdbbba35e )
+	ROM_LOAD( "963c.u4",      0x2000, 0x0800, 0xd9e9eadc )
+	ROM_LOAD( "964c.u5",      0x2800, 0x0800, 0x7ed947b6 )
+	ROM_LOAD( "965c.u6",      0x3000, 0x0800, 0xd2443a22 )
+	ROM_LOAD( "966c.u7",      0x3800, 0x0800, 0x1985ccfc )
+	ROM_LOAD( "967c.u8",      0x4000, 0x0800, 0x330f0751 )
+	ROM_LOAD( "968c.u9",      0x4800, 0x0800, 0x8366eadb )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "808c.u7",     0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD( "970c.u6",     0x0800, 0x1000, 0x979d8535 )
+	ROM_LOAD( "971c.u5",     0x1800, 0x1000, 0x022dbd32 )
+	ROM_LOAD( "972c.u4",     0x2800, 0x1000, 0xfad9346d )
 ROM_END
+
 
 ROM_START( spacfura ) /* Revision A */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-		ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
-		ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
-		ROM_LOAD( "961a.u2",      0x1000, 0x0800, 0xcdb04233 )
-		ROM_LOAD( "962a.u3",      0x1800, 0x0800, 0x5f03e632 )
-		ROM_LOAD( "963a.u4",      0x2000, 0x0800, 0x45a77b44 )
-		ROM_LOAD( "964a.u5",      0x2800, 0x0800, 0xba008f8b )
-		ROM_LOAD( "965a.u6",      0x3000, 0x0800, 0x78677d31 )
-		ROM_LOAD( "966a.u7",      0x3800, 0x0800, 0xa8a51105 )
-		ROM_LOAD( "967a.u8",      0x4000, 0x0800, 0xd60f667d )
-		ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
+	ROM_LOAD( "969a.u25",     0x0000, 0x0800, 0x896a615c )
+	ROM_LOAD( "960a.u1",      0x0800, 0x0800, 0xe1ea7964 )
+	ROM_LOAD( "961a.u2",      0x1000, 0x0800, 0xcdb04233 )
+	ROM_LOAD( "962a.u3",      0x1800, 0x0800, 0x5f03e632 )
+	ROM_LOAD( "963a.u4",      0x2000, 0x0800, 0x45a77b44 )
+	ROM_LOAD( "964a.u5",      0x2800, 0x0800, 0xba008f8b )
+	ROM_LOAD( "965a.u6",      0x3000, 0x0800, 0x78677d31 )
+	ROM_LOAD( "966a.u7",      0x3800, 0x0800, 0xa8a51105 )
+	ROM_LOAD( "967a.u8",      0x4000, 0x0800, 0xd60f667d )
+	ROM_LOAD( "968a.u9",      0x4800, 0x0800, 0xaea85b6a )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "808a.u7",     0x0000, 0x0800, 0x5988c767 )
+	ROM_LOAD( "970.u6",      0x0800, 0x1000, 0xf3b47b36 )
+	ROM_LOAD( "971.u5",      0x1800, 0x1000, 0xe72bbe88 )
+	ROM_LOAD( "972.u4",      0x2800, 0x1000, 0x8b3da539 )
 ROM_END
+
 
 ROM_START( zektor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1301,7 +1065,18 @@ ROM_START( zektor )
 	ROM_LOAD( "1604.rom",     0x9800, 0x0800, 0xad2f0f6c )
 	ROM_LOAD( "1605.rom",     0xa000, 0x0800, 0xe27d7144 )
 	ROM_LOAD( "1606.rom",     0xa800, 0x0800, 0x7965f636 )
+
+/* I'm not sure where these roms are supposed to go, but they are speech */
+/* related (from what I've read), so I just took a wild guess here, */
+/* until their location is determined and speech is emulated, plus, it */
+/* helps make sure everyone has them for the future... MRH */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD( "1607.spc",    0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD( "1608.spc",    0x0800, 0x1000, 0x637e2b13 )
+	ROM_LOAD( "1609.spc",    0x1800, 0x1000, 0x675ee8e5 )
+	ROM_LOAD( "1610.spc",    0x2800, 0x1000, 0x2915c7bd )
 ROM_END
+
 
 ROM_START( tacscan )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1329,6 +1104,7 @@ ROM_START( tacscan )
 	ROM_LOAD( "1710a",        0xa800, 0x0800, 0x6203be22 )
 ROM_END
 
+
 ROM_START( elim2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "cpu_u25.969",  0x0000, 0x0800, 0x411207f2 )
@@ -1345,7 +1121,11 @@ ROM_START( elim2 )
 	ROM_LOAD( "1343",         0x5800, 0x0800, 0xd29d70d2 )
 	ROM_LOAD( "1344",         0x6000, 0x0800, 0xc5e153a3 )
 	ROM_LOAD( "1345",         0x6800, 0x0800, 0x40597a92 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
+
 
 ROM_START( elim2a )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1363,7 +1143,11 @@ ROM_START( elim2a )
 	ROM_LOAD( "1168a",        0x5800, 0x0800, 0x3c7c893a )
 	ROM_LOAD( "1169a",        0x6000, 0x0800, 0x5cee23b1 )
 	ROM_LOAD( "1170a",        0x6800, 0x0800, 0x8cdacd35 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
+
 
 ROM_START( elim4 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1382,7 +1166,11 @@ ROM_START( elim4 )
 	ROM_LOAD( "1358",         0x6000, 0x0800, 0xc5dabc77 )
 	ROM_LOAD( "1359",         0x6800, 0x0800, 0x24c8e5d8 )
 	ROM_LOAD( "1360",         0x7000, 0x0800, 0x96d48238 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
+
 
 ROM_START( startrek )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1415,20 +1203,110 @@ ROM_START( startrek )
 /* related (from what I've read), so I just took a wild guess here, */
 /* until their location is determined and speech is emulated, plus, it */
 /* helps make sure everyone has them for the future... MRH */
-	ROM_LOAD ("1670",         0xc000, 0x0800, 0xb779884b )
-	ROM_LOAD ("1871",         0xc800, 0x1000, 0x03713920 )
-	ROM_LOAD ("1872",         0xd800, 0x1000, 0xebb5c3a9 )
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code */
+	ROM_LOAD ("1670",         0x0000, 0x0800, 0xb779884b )
+	ROM_LOAD ("1871",         0x0800, 0x1000, 0x03713920 )
+	ROM_LOAD ("1872",         0x1800, 0x1000, 0xebb5c3a9 )
+
+	ROM_REGION( 0x0400, REGION_USER1, 0 )
+	ROM_LOAD ("s-c.u39",      0x0000, 0x0400, 0x56484d19 )	/* unknown */
 ROM_END
 
 
 
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
 
-GAME( 1981, spacfury, 0,		spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
+DRIVER_INIT( spacfury )
+{
+	/* This game uses the 315-0064 security chip */
+	sega_security(64);
+
+	install_port_read_handler(0, 0xfc, 0xfc, input_port_8_r);
+
+	install_port_write_handler(0, 0x38, 0x38, sega_sh_speech_w);
+	install_port_write_handler(0, 0x3e, 0x3e, spacfury1_sh_w);
+	install_port_write_handler(0, 0x3f, 0x3f, spacfury2_sh_w);
+	install_port_write_handler(0, 0xf8, 0xf8, IOWP_NOP);
+}
+
+
+DRIVER_INIT( zektor )
+{
+	/* This game uses the 315-0082 security chip */
+	sega_security(82);
+
+	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+
+	install_port_write_handler(0, 0x38, 0x38, sega_sh_speech_w);
+	install_port_write_handler(0, 0x3e, 0x3e, zektor1_sh_w);
+	install_port_write_handler(0, 0x3f, 0x3f, zektor2_sh_w);
+}
+
+
+DRIVER_INIT( elim2 )
+{
+	/* This game uses the 315-0070 security chip */
+	sega_security(70);
+
+	install_port_read_handler(0, 0xfc, 0xfc, input_port_4_r);
+
+	install_port_write_handler(0, 0x3e, 0x3e, elim1_sh_w);
+	install_port_write_handler(0, 0x3f, 0x3f, elim2_sh_w);
+}
+
+
+DRIVER_INIT( elim4 )
+{
+	/* This game uses the 315-0076 security chip */
+	sega_security(76);
+
+	install_port_read_handler(0, 0xfc, 0xfc, elim4_IN4_r);
+
+	install_port_write_handler(0, 0x3e, 0x3e, elim1_sh_w);
+	install_port_write_handler(0, 0x3f, 0x3f, elim2_sh_w);
+}
+
+
+DRIVER_INIT( startrek )
+{
+	/* This game uses the 315-0064 security chip */
+	sega_security(64);
+
+	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+
+	install_port_write_handler(0, 0x38, 0x38, sega_sh_speech_w);
+	install_port_write_handler(0, 0x3f, 0x3f, startrek_sh_w);
+}
+
+
+DRIVER_INIT( tacscan )
+{
+	/* This game uses the 315-0076 security chip */
+	sega_security(76);
+
+	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+
+	install_port_write_handler(0, 0x3f, 0x3f, tacscan_sh_w);
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAME( 1981, spacfury, 0,        spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision C)" )
 GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ROT0,   "Sega", "Space Fury (revision A)" )
-GAME( 1982, zektor,   0,		zektor,   zektor,	zektor,   ROT0,   "Sega", "Zektor (revision B)" )
-GAME( 1982, tacscan,  0,		tacscan,  tacscan,	tacscan,  ROT270, "Sega", "Tac/Scan" )
-GAME( 1981, elim2,	  0,		elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
-GAME( 1981, elim2a,   elim2,	elim2,	  elim2,	elim2,	  ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
-GAME( 1981, elim4,	  elim2,	elim4,	  elim4,	elim4,	  ROT0,   "Gremlin", "Eliminator (4 Players)" )
-GAME( 1982, startrek, 0,		startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
+GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ROT0,   "Sega", "Zektor (revision B)" )
+GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ROT270, "Sega", "Tac/Scan" )
+GAME( 1981, elim2,	  0,        elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 1)" )
+GAME( 1981, elim2a,   elim2,    elim2,    elim2,    elim2,    ROT0,   "Gremlin", "Eliminator (2 Players, set 2)" )
+GAME( 1981, elim4,	  elim2,    elim2,    elim4,    elim4,    ROT0,   "Gremlin", "Eliminator (4 Players)" )
+GAME( 1982, startrek, 0,        startrek, startrek, startrek, ROT0,   "Sega", "Star Trek" )
 

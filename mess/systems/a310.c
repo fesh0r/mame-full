@@ -63,14 +63,13 @@ void init_a310(void)
 
 int a310_vh_start(void)
 {
-	if (generic_vh_start())
+	if (video_start_generic())
         return 1;
 	return 0;
 }
 
 void a310_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 void a310_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)

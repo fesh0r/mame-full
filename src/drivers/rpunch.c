@@ -112,13 +112,11 @@
 
 
 #define MASTER_CLOCK		16000000
-#define UPD_CLOCK			640000
 
 
 /* video driver data & functions */
-int rpunch_vh_start(void);
-void rpunch_vh_stop(void);
-void rpunch_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( rpunch );
+VIDEO_UPDATE( rpunch );
 
 extern data16_t *rpunch_bitmapram;
 extern size_t rpunch_bitmapram_size;
@@ -152,7 +150,7 @@ static void ym2151_irq_gen(int state)
 }
 
 
-static void init_machine(void)
+MACHINE_INIT( rpunch )
 {
 	memcpy(memory_region(REGION_SOUND1), memory_region(REGION_SOUND1) + 0x20000, 0x20000);
 }
@@ -227,7 +225,7 @@ WRITE_HANDLER( upd_control_w )
 
 WRITE_HANDLER( upd_data_w )
 {
-	UPD7759_message_w(0, data);
+	UPD7759_port_w(0, data);
 	UPD7759_start_w(0, 0);
 	UPD7759_start_w(0, 1);
 }
@@ -610,7 +608,6 @@ static struct YM2151interface ym2151_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,			/* 1 chip */
-	UPD_CLOCK,
 	{ 50 },
 	{ REGION_SOUND1 },
 	UPD7759_STANDALONE_MODE,
@@ -625,53 +622,34 @@ static struct UPD7759_interface upd7759_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_rpunch =
-{
+static MACHINE_DRIVER_START( rpunch )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			MASTER_CLOCK/2,
-			readmem,writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_Z80,
-			MASTER_CLOCK/4,
-			readmem_sound,writemem_sound,0,0,
-			ignore_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK/2)
+	MDRV_CPU_MEMORY(readmem,writemem)
+
+	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(rpunch)
 
 	/* video hardware */
-	304, 224, { 8, 303-8, 0, 223-8 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(304, 224)
+	MDRV_VISIBLE_AREA(8, 303-8, 0, 223-8)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	rpunch_vh_start,
-	rpunch_vh_stop,
-	rpunch_vh_screenrefresh,
+	MDRV_VIDEO_START(rpunch)
+	MDRV_VIDEO_UPDATE(rpunch)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	},
-	0
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -842,13 +820,13 @@ ROM_END
  *
  *************************************/
 
-static void init_rabiolep(void)
+static DRIVER_INIT( rabiolep )
 {
 	rpunch_sprite_palette = 0x300;
 }
 
 
-static void init_svolley(void)
+static DRIVER_INIT( svolley )
 {
 	/* the main differences between Super Volleyball and Rabbit Punch are */
 	/* the lack of direct-mapped bitmap and a different palette base for sprites */

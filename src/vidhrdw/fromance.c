@@ -23,10 +23,13 @@ static UINT8 gfxreg;
 static UINT8 flipscreen;
 
 static UINT8 crtc_register;
+static UINT8 crtc_data[0x10];
 static void *crtc_timer;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
+
+static void crtc_interrupt_gen(int param);
 
 
 /*************************************
@@ -35,7 +38,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap;
  *
  *************************************/
 
-INLINE void get_tile_info(int tile_index,int layer)
+INLINE void get_fromance_tile_info(int tile_index,int layer)
 {
 	int tile = ((local_videoram[layer][0x0000 + tile_index] & 0x80) << 9) |
 				(local_videoram[layer][0x1000 + tile_index] << 8) |
@@ -45,8 +48,20 @@ INLINE void get_tile_info(int tile_index,int layer)
 	SET_TILE_INFO(layer, tile, color, 0);
 }
 
-static void get_bg_tile_info(int tile_index) { get_tile_info(tile_index, 0); }
-static void get_fg_tile_info(int tile_index) { get_tile_info(tile_index, 1); }
+static void get_fromance_bg_tile_info(int tile_index) { get_fromance_tile_info(tile_index, 0); }
+static void get_fromance_fg_tile_info(int tile_index) { get_fromance_tile_info(tile_index, 1); }
+
+INLINE void get_nekkyoku_tile_info(int tile_index,int layer)
+{
+	int tile = (local_videoram[layer][0x0000 + tile_index] << 8) |
+				local_videoram[layer][0x1000 + tile_index];
+	int color = local_videoram[layer][tile_index + 0x2000] & 0x3f;
+
+	SET_TILE_INFO(layer, tile, color, 0);
+}
+
+static void get_nekkyoku_bg_tile_info(int tile_index) { get_nekkyoku_tile_info(tile_index, 0); }
+static void get_nekkyoku_fg_tile_info(int tile_index) { get_nekkyoku_tile_info(tile_index, 1); }
 
 
 
@@ -56,51 +71,54 @@ static void get_fg_tile_info(int tile_index) { get_tile_info(tile_index, 1); }
  *
  *************************************/
 
-int fromance_vh_start(void)
+VIDEO_START( fromance )
 {
 	/* allocate tilemaps */
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
+	bg_tilemap = tilemap_create(get_fromance_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
+	fg_tilemap = tilemap_create(get_fromance_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
 
 	/* allocate local videoram */
-	local_videoram[0] = malloc(0x1000 * 3);
-	local_videoram[1] = malloc(0x1000 * 3);
+	local_videoram[0] = auto_malloc(0x1000 * 3);
+	local_videoram[1] = auto_malloc(0x1000 * 3);
 
 	/* allocate local palette RAM */
-	local_paletteram = malloc(0x800 * 2);
+	local_paletteram = auto_malloc(0x800 * 2);
 
 	/* handle failure */
 	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
-	{
-		fromance_vh_stop();
 		return 1;
-	}
 
 	/* configure tilemaps */
 	tilemap_set_transparent_pen(fg_tilemap,15);
 
 	/* reset the timer */
-	crtc_timer = NULL;
+	crtc_timer = timer_alloc(crtc_interrupt_gen);
 	return 0;
 }
 
-
-
-/*************************************
- *
- *	Video system stop
- *
- *************************************/
-
-void fromance_vh_stop(void)
+VIDEO_START( nekkyoku )
 {
-	/* free all RAM */
-	free(local_paletteram);
-	local_paletteram = 0;
-	free(local_videoram[1]);
-	local_videoram[1] = 0;
-	free(local_videoram[0]);
-	local_videoram[0] = 0;
+	/* allocate tilemaps */
+	bg_tilemap = tilemap_create(get_nekkyoku_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE,      8,4, 64,64);
+	fg_tilemap = tilemap_create(get_nekkyoku_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,4, 64,64);
+
+	/* allocate local videoram */
+	local_videoram[0] = auto_malloc(0x1000 * 3);
+	local_videoram[1] = auto_malloc(0x1000 * 3);
+
+	/* allocate local palette RAM */
+	local_paletteram = auto_malloc(0x800 * 2);
+
+	/* handle failure */
+	if (!bg_tilemap || !fg_tilemap || !local_videoram[0] || !local_videoram[1] || !local_paletteram)
+		return 1;
+
+	/* configure tilemaps */
+	tilemap_set_transparent_pen(fg_tilemap,15);
+
+	/* reset the timer */
+	crtc_timer = timer_alloc(crtc_interrupt_gen);
+	return 0;
 }
 
 
@@ -243,21 +261,21 @@ WRITE_HANDLER( fromance_scroll_w )
 
 static void crtc_interrupt_gen(int param)
 {
-	cpu_cause_interrupt(1, 1);
+	cpu_set_irq_line(1, 0, HOLD_LINE);
 	if (param != 0)
-		crtc_timer = timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, crtc_interrupt_gen);
+		timer_adjust(crtc_timer, TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, TIME_IN_HZ(Machine->drv->frames_per_second * param));
 }
 
 
 WRITE_HANDLER( fromance_crtc_data_w )
 {
+	crtc_data[crtc_register] = data;
+
 	switch (crtc_register)
 	{
 		/* only register we know about.... */
 		case 0x0b:
-			if (crtc_timer)
-				timer_remove(crtc_timer);
-			crtc_timer = timer_set(cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data > 0x80) ? 2 : 1, crtc_interrupt_gen);
+			timer_adjust(crtc_timer, cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data > 0x80) ? 2 : 1, 0);
 			break;
 
 		default:
@@ -280,7 +298,7 @@ WRITE_HANDLER( fromance_crtc_register_w )
  *
  *************************************/
 
-static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int draw_priority)
 {
 	UINT8 zoomtable[16] = { 0,7,14,20,25,30,34,38,42,46,49,52,54,57,59,61 };
 	int offs;
@@ -325,10 +343,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[2], code, color, 0, 0,
-									x + xt * 16, y + yt * 16, 0, TRANSPARENCY_PEN, 15);
+									x + xt * 16, y + yt * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 0, 0,
-									x + xt * xzoom, y + yt * yzoom, 0, TRANSPARENCY_PEN, 15,
+									x + xt * xzoom, y + yt * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -339,10 +357,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[2], code, color, 1, 0,
-									x + (xtiles - 1 - xt) * 16, y + yt * 16, 0, TRANSPARENCY_PEN, 15);
+									x + (xtiles - 1 - xt) * 16, y + yt * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 1, 0,
-									x + (xtiles - 1 - xt) * xzoom, y + yt * yzoom, 0, TRANSPARENCY_PEN, 15,
+									x + (xtiles - 1 - xt) * xzoom, y + yt * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -353,10 +371,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[2], code, color, 0, 1,
-									x + xt * 16, y + (ytiles - 1 - yt) * 16, 0, TRANSPARENCY_PEN, 15);
+									x + xt * 16, y + (ytiles - 1 - yt) * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 0, 1,
-									x + xt * xzoom, y + (ytiles - 1 - yt) * yzoom, 0, TRANSPARENCY_PEN, 15,
+									x + xt * xzoom, y + (ytiles - 1 - yt) * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 
@@ -367,10 +385,10 @@ static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
 					for (xt = 0; xt < xtiles; xt++, code++)
 						if (!zoomed)
 							drawgfx(bitmap, Machine->gfx[2], code, color, 1, 1,
-									x + (xtiles - 1 - xt) * 16, y + (ytiles - 1 - yt) * 16, 0, TRANSPARENCY_PEN, 15);
+									x + (xtiles - 1 - xt) * 16, y + (ytiles - 1 - yt) * 16, cliprect, TRANSPARENCY_PEN, 15);
 						else
 							drawgfxzoom(bitmap, Machine->gfx[2], code, color, 1, 1,
-									x + (xtiles - 1 - xt) * xzoom, y + (ytiles - 1 - yt) * yzoom, 0, TRANSPARENCY_PEN, 15,
+									x + (xtiles - 1 - xt) * xzoom, y + (ytiles - 1 - yt) * yzoom, cliprect, TRANSPARENCY_PEN, 15,
 									0x1000 * xzoom, 0x1000 * yzoom);
 			}
 		}
@@ -385,27 +403,27 @@ static void draw_sprites(struct mame_bitmap *bitmap, int draw_priority)
  *
  *************************************/
 
-void fromance_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( fromance )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, scrollx[0]);
 	tilemap_set_scrolly(bg_tilemap, 0, scrolly[0]);
 	tilemap_set_scrollx(fg_tilemap, 0, scrollx[1]);
 	tilemap_set_scrolly(fg_tilemap, 0, scrolly[1]);
 
-	tilemap_draw(bitmap, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap,cliprect, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
 }
 
 
-void pipedrm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pipedrm )
 {
 	/* there seems to be no logical mapping for the X scroll register -- maybe it's gone */
 	tilemap_set_scrolly(bg_tilemap, 0, scrolly[1]);
 	tilemap_set_scrolly(fg_tilemap, 0, scrolly[0]);
 
-	tilemap_draw(bitmap, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap,cliprect, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
 
-	draw_sprites(bitmap, 0);
-	draw_sprites(bitmap, 1);
+	draw_sprites(bitmap,cliprect, 0);
+	draw_sprites(bitmap,cliprect, 1);
 }

@@ -14,6 +14,9 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- The core is based on MAME 0.60.  This incorporates all features of the 
+  update to this core.  [MAME team] 
+
 - Added new videomap code that makes it easy to support arbitrary video modes
   in a fast, efficient manner.  This takes the place of the old
   rasterbits/rastertrack code; converted m6847 and CoCo 3 video hardware to

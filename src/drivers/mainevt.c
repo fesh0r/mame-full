@@ -26,18 +26,17 @@ Notes:
 #include "cpu/m6809/m6809.h"
 
 
-void mainevt_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void dv_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-int mainevt_vh_start (void);
-int dv_vh_start (void);
-void mainevt_vh_stop (void);
+VIDEO_UPDATE( mainevt );
+VIDEO_UPDATE( dv );
+VIDEO_START( mainevt );
+VIDEO_START( dv );
 
 
 
-static int mainevt_interrupt(void)
+static INTERRUPT_GEN( mainevt_interrupt )
 {
-	if (K052109_is_IRQ_enabled()) return M6809_INT_IRQ;
-	else return ignore_interrupt();
+	if (K052109_is_IRQ_enabled())
+		irq0_line_hold();
 }
 
 
@@ -48,10 +47,10 @@ static WRITE_HANDLER( dv_nmienable_w )
 	nmi_enable = data;
 }
 
-static int dv_interrupt(void)
+static INTERRUPT_GEN( dv_interrupt )
 {
-	if (nmi_enable) return M6809_INT_NMI;
-	else return ignore_interrupt();
+	if (nmi_enable)
+		nmi_line_pulse();
 }
 
 
@@ -87,20 +86,13 @@ WRITE_HANDLER( mainevt_coin_w )
 
 WRITE_HANDLER( mainevt_sh_irqtrigger_w )
 {
-	cpu_cause_interrupt(1,0xff);
+	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 WRITE_HANDLER( mainevt_sh_irqcontrol_w )
 {
- 	/* I think bit 1 resets the UPD7795C sound chip */
- 	if ((data & 0x02) == 0)
- 	{
- 		UPD7759_reset_w(0,(data & 0x02) >> 1);
- 	}
-	else if ((data & 0x01))
- 	{
-		UPD7759_start_w(0,0);
- 	}
+	UPD7759_reset_w(0, data & 2);
+	UPD7759_start_w(0, data & 1);
 
 	interrupt_enable_w(0,data & 4);
 }
@@ -112,11 +104,10 @@ interrupt_enable_w(0,data & 4);
 
 WRITE_HANDLER( mainevt_sh_bankswitch_w )
 {
-	unsigned char *src,*dest;
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
-//logerror("CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
+//logerror("CPU #1 PC: %04x bank switch = %02x\n",activecpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
 	bank_A=0x20000 * (data&0x3);
@@ -124,9 +115,7 @@ WRITE_HANDLER( mainevt_sh_bankswitch_w )
 	K007232_bankswitch(0,RAM+bank_A,RAM+bank_B);
 
 	/* bits 4-5 select the UPD7759 bank */
-	src = &memory_region(REGION_SOUND2)[0x20000];
-	dest = memory_region(REGION_SOUND2);
-	memcpy(dest,&src[((data >> 4) & 0x03) * 0x20000],0x20000);
+	UPD7759_set_bank_base(0, ((data >> 4) & 0x03) * 0x20000);
 }
 
 WRITE_HANDLER( dv_sh_bankswitch_w )
@@ -134,7 +123,7 @@ WRITE_HANDLER( dv_sh_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
-//logerror("CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
+//logerror("CPU #1 PC: %04x bank switch = %02x\n",activecpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
 	bank_A=0x20000 * (data&0x3);
@@ -215,7 +204,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x83ff, MWA_RAM },
 	{ 0xb000, 0xb00d, K007232_write_port_0_w },
-	{ 0x9000, 0x9000, UPD7759_0_message_w },
+	{ 0x9000, 0x9000, UPD7759_0_port_w },
 	{ 0xe000, 0xe000, mainevt_sh_irqcontrol_w },
 	{ 0xf000, 0xf000, mainevt_sh_bankswitch_w },
 MEMORY_END
@@ -602,7 +591,6 @@ static struct K007232_interface k007232_interface =
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
-	UPD7759_STANDARD_CLOCK,
 	{ 50 }, /* volume */
 	{ REGION_SOUND2 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
@@ -617,99 +605,64 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static const struct MachineDriver machine_driver_mainevt =
-{
+static MACHINE_DRIVER_START( mainevt )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_HD6309,
-			3000000,	/* ?? */
-			readmem,writemem,0,0,
-			mainevt_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,8	/* ??? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(HD6309, 3000000)	/* ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(mainevt_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)	/* ??? */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 14*8, (64-14)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(14*8, (64-14)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	mainevt_vh_start,
-	mainevt_vh_stop,
-	mainevt_vh_screenrefresh,
+	MDRV_VIDEO_START(mainevt)
+	MDRV_VIDEO_UPDATE(mainevt)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		},
-		{
-			SOUND_UPD7759,
-			&upd7759_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+	MDRV_SOUND_ADD(UPD7759, upd7759_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_devstors =
-{
+
+static MACHINE_DRIVER_START( devstors )
+
 	/* basic machine hardware */
-	{
- 		{
-			CPU_HD6309,
-			3000000,	/* ?? */
-			dv_readmem,dv_writemem,0,0,
-			dv_interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* 3.579545 MHz */
-			dv_sound_readmem,dv_sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(HD6309, 3000000)	/* ?? */
+	MDRV_CPU_MEMORY(dv_readmem,dv_writemem)
+	MDRV_CPU_VBLANK_INT(dv_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.579545 MHz */
+	MDRV_CPU_MEMORY(dv_sound_readmem,dv_sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 13*8, (64-13)*8-1, 2*8, 30*8-1 },
-	0,	/* gfx decoded by konamiic.c */
-	256, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(13*8, (64-13)*8-1, 2*8, 30*8-1 )
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS,
-	0,
-	dv_vh_start,
-	mainevt_vh_stop,
-	dv_vh_screenrefresh,
+	MDRV_VIDEO_START(dv)
+	MDRV_VIDEO_UPDATE(dv)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_K007232,
-			&k007232_interface,
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(K007232, k007232_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -743,9 +696,8 @@ ROM_START( mainevt )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( mainevt2 )
@@ -772,9 +724,8 @@ ROM_START( mainevt2 )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( ringohja )
@@ -801,9 +752,8 @@ ROM_START( ringohja )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* 512k for 007232 samples */
 	ROM_LOAD( "799b03.d4",    0x00000, 0x80000, 0xf1cfd342 )
 
-	ROM_REGION( 0xa0000, REGION_SOUND2, 0 )	/* 128+512k for the UPD7759C samples */
-	/* 00000-1ffff space where the following ROM is bank switched */
-	ROM_LOAD( "799b06.c22",   0x20000, 0x80000, 0x2c8c47d7 )
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* 512k for the UPD7759C samples */
+	ROM_LOAD( "799b06.c22",   0x00000, 0x80000, 0x2c8c47d7 )
 ROM_END
 
 ROM_START( devstors )
@@ -908,7 +858,7 @@ ROM_END
 
 
 
-static void init_mainevt(void)
+static DRIVER_INIT( mainevt )
 {
 	konami_rom_deinterleave_2(REGION_GFX1);
 	konami_rom_deinterleave_2(REGION_GFX2);

@@ -15,12 +15,18 @@ static struct {
 
 	void *timer;
 
-} pc_mouse= { TYPE_MICROSOFT_MOUSE,12,-1 };
+} pc_mouse;
+
+static void pc_mouse_scan(int n);
 
 void pc_mouse_initialise(void)
 {
+	memset(&pc_mouse, 0, sizeof(pc_mouse));
+	pc_mouse.protocol = TYPE_MICROSOFT_MOUSE;
+	pc_mouse.input_base = 12;
+	pc_mouse.serial_port = -1;
 	pc_mouse.head = pc_mouse.tail = 0;
-	pc_mouse.timer = NULL;
+	pc_mouse.timer = timer_alloc(pc_mouse_scan);
 	pc_mouse.inputs=UART8250_HANDSHAKE_IN_DSR|UART8250_HANDSHAKE_IN_CTS;
 	if (pc_mouse.serial_port!=-1)
 		uart8250_handshake_in(pc_mouse.serial_port, pc_mouse.inputs);
@@ -207,15 +213,12 @@ void pc_mouse_handshake_in(int n, int outputs)
 			pc_mouse.queue[pc_mouse.head] = 'M';  /* put 'M' into the buffer.. hmm */
 			pc_mouse.head = ++pc_mouse.head % 256;
 			/* start a timer to scan the mouse input */
-			pc_mouse.timer = timer_pulse(TIME_IN_HZ(240),
-									  pc_mouse.serial_port, pc_mouse_scan);
+			timer_adjust(pc_mouse.timer, 0, pc_mouse.serial_port, TIME_IN_HZ(240));
 		}
 		else
 		{
 			/* CTS just went to 0 */
- 			if( pc_mouse.timer )
-				timer_remove(pc_mouse.timer);
-			pc_mouse.timer = NULL;
+			timer_adjust(pc_mouse.timer, 0, pc_mouse.serial_port, 0);
 			pc_mouse.head = pc_mouse.tail = 0;
 		}
 	}

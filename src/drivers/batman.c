@@ -20,20 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int batman_vh_start(void);
-void batman_vh_stop(void);
-void batman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-void batman_scanline_update(int scanline);
+#include "batman.h"
 
 
 
@@ -69,10 +56,10 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( batman )
 {
 	atarigen_eeprom_reset();
-	atarivc_reset(atarivc_eof_data);
+	atarivc_reset(atarivc_eof_data, 2);
 	atarigen_interrupt_reset(update_interrupts);
 	atarigen_scanline_timer_reset(batman_scanline_update, 8);
 	atarijsa_reset();
@@ -108,7 +95,11 @@ static WRITE16_HANDLER( latch_w )
 
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ latch_data) & 0x7000)
-		atarian_set_bankbits(0, ((latch_data >> 12) & 7) << 16);
+	{
+		force_partial_update(cpu_getscanline());
+		tilemap_mark_all_tiles_dirty(atarigen_alpha_tilemap);
+		batman_alpha_tile_bank = (latch_data >> 12) & 7;
+	}
 }
 
 
@@ -123,12 +114,12 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0x000000, 0x0bffff, MRA16_ROM },
 	{ 0x100000, 0x10ffff, MRA16_RAM },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
-	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
-	{ 0x3effc0, 0x3effff, atarivc_r },
 	{ 0x260000, 0x260001, input_port_0_word_r },
 	{ 0x260002, 0x260003, input_port_1_word_r },
 	{ 0x260010, 0x260011, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
+	{ 0x3e0000, 0x3e0fff, MRA16_RAM },
+	{ 0x3effc0, 0x3effff, atarivc_r },
 	{ 0x3f0000, 0x3fffff, MRA16_RAM },
 MEMORY_END
 
@@ -143,11 +134,11 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x2a0000, 0x2a0001, watchdog_reset16_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram16 },
 	{ 0x3effc0, 0x3effff, atarivc_w, &atarivc_data },
-	{ 0x3f0000, 0x3f1fff, ataripf_1_latched_w, &ataripf_1_base },
-	{ 0x3f2000, 0x3f3fff, ataripf_0_latched_w, &ataripf_0_base },
-	{ 0x3f4000, 0x3f5fff, ataripf_01_upper_lsb_msb_w, &ataripf_0_upper },
+	{ 0x3f0000, 0x3f1fff, atarigen_playfield2_latched_msb_w, &atarigen_playfield2 },
+	{ 0x3f2000, 0x3f3fff, atarigen_playfield_latched_lsb_w, &atarigen_playfield },
+	{ 0x3f4000, 0x3f5fff, atarigen_playfield_dual_upper_w, &atarigen_playfield_upper },
 	{ 0x3f6000, 0x3f7fff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0x3f8000, 0x3f8fef, atarian_0_vram_w, &atarian_0_base },
+	{ 0x3f8000, 0x3f8fef, atarigen_alpha_w, &atarigen_alpha },
 	{ 0x3f8f00, 0x3f8f7f, MWA16_RAM, &atarivc_eof_data },
 	{ 0x3f8f80, 0x3f8fff, atarimo_0_slipram_w, &atarimo_0_slipram },
 	{ 0x3f9000, 0x3fffff, MWA16_RAM },
@@ -234,39 +225,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_batman =
-{
+static MACHINE_DRIVER_START( batman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			ATARI_CLOCK_14MHz,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		JSA_III_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(batman)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 2048,	/* can't make colortable_len = 0 because of 0xffff transparency kludge */
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	batman_vh_start,
-	batman_vh_stop,
-	batman_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	MDRV_COLORTABLE_LENGTH(2048) /* can't make colortable_len = 0 because of 0xffff transparency kludge */
+	
+	MDRV_VIDEO_START(batman)
+	MDRV_VIDEO_UPDATE(batman)
+	
 	/* sound hardware */
-	JSA_III_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_iii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -327,7 +311,7 @@ ROM_END
  *
  *************************************/
 
-static void init_batman(void)
+static DRIVER_INIT( batman )
 {
 	static const data16_t default_eeprom[] =
 	{

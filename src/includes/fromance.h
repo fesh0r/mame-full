@@ -12,10 +12,10 @@
 
 /*----------- defined in vidhrdw/fromance.c -----------*/
 
-int fromance_vh_start(void);
-void fromance_vh_stop(void);
-void fromance_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-void pipedrm_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+VIDEO_START( fromance );
+VIDEO_START( nekkyoku );
+VIDEO_UPDATE( fromance );
+VIDEO_UPDATE( pipedrm );
 
 WRITE_HANDLER( fromance_crtc_data_w );
 WRITE_HANDLER( fromance_crtc_register_w );
@@ -29,5 +29,3 @@ WRITE_HANDLER( fromance_paletteram_w );
 
 READ_HANDLER( fromance_videoram_r );
 WRITE_HANDLER( fromance_videoram_w );
-
-

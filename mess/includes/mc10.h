@@ -7,8 +7,6 @@ extern READ_HANDLER ( mc10_port2_r );
 extern WRITE_HANDLER ( mc10_port1_w );
 extern WRITE_HANDLER ( mc10_port2_w );
 
-extern int mc10_vh_start(void);
-extern void mc10_vh_stop(void);
-extern void mc10_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern int video_start_mc10(void);
 extern WRITE_HANDLER ( mc10_ram_w );
 

@@ -124,12 +124,8 @@ static void	wd179x_busy_callback(int dummy)
 
 static void wd179x_set_busy(WD179X *w, double milliseconds)
 {
-	if (busy_timer)
-	{
-		timer_remove(busy_timer);
-	}
 	w->status |= STA_1_BUSY;
-	busy_timer = timer_set(TIME_IN_MSEC(milliseconds), (int)w, wd179x_busy_callback);
+	timer_adjust(busy_timer, TIME_IN_MSEC(milliseconds), (int)w, 0);
 }
 
 
@@ -179,6 +175,10 @@ void	wd179x_reset(void)
 	wd179x_restore(&wd);
 }
 
+static void	wd179x_busy_callback(int dummy);
+static void	wd179x_misc_timer_callback(int code);
+static void	wd179x_read_sector_callback(int code);
+static void	wd179x_write_sector_callback(int code);
 
 void wd179x_init(int type,void (*callback)(int))
 {
@@ -188,7 +188,10 @@ void wd179x_init(int type,void (*callback)(int))
 	wd.callback = callback;
 //	wd.status_ipl = STA_1_IPL;
 	wd.density = DEN_MFM_LO;
-	busy_timer = NULL;
+	busy_timer = timer_alloc(wd179x_busy_callback);
+	wd.timer = timer_alloc(wd179x_misc_timer_callback);
+	wd.timer_rs = timer_alloc(wd179x_read_sector_callback);
+	wd.timer_ws = timer_alloc(wd179x_write_sector_callback);
 
 	wd179x_reset();
 
@@ -382,31 +385,6 @@ static void read_track(WD179X * w)
 /* currently a empty function - to be completed! */
 void	wd179x_exit(void)
 {
-	WD179X *w = &wd;
-
-	if (busy_timer!=NULL)
-	{
-		timer_remove(busy_timer);
-		busy_timer = NULL;
-	}
-
-	if (w->timer!=NULL)
-	{
-		timer_remove(w->timer);
-		w->timer = NULL;
-	}
-
-	if (w->timer_rs!=NULL)
-	{
-		timer_remove(w->timer_rs);
-		w->timer = NULL;
-	}
-
-	if (w->timer_ws!=NULL)
-	{
-		timer_remove(w->timer_ws);
-		w->timer_ws = NULL;
-	}
 }
 
 #if 0
@@ -578,11 +556,29 @@ static void	wd179x_set_irq(WD179X *w)
 		(*w->callback) (WD179X_IRQ_SET);
 }
 
-static void wd179x_complete_command_callback(int dummy)
+/* 0=command callback; 1=data callback */
+enum
+{
+	MISCCALLBACK_COMMAND,
+	MISCCALLBACK_DATA
+};
+
+static void wd179x_misc_timer_callback(int callback_type)
 {
 	WD179X *w = &wd;
 
-	wd179x_set_irq(w);
+	switch(callback_type) {
+	case MISCCALLBACK_COMMAND:
+		/* command callback */
+		wd179x_set_irq(w);
+		break;
+
+	case MISCCALLBACK_DATA:
+		/* data callback */
+		/* ok, trigger data request now */
+		wd179x_set_data_request();
+		break;
+	}
 
 	/* stop it, but don't allow it to be free'd */
 	timer_reset(w->timer, TIME_NEVER); 
@@ -607,15 +603,8 @@ static void wd179x_complete_command(WD179X *w, int delay)
 	usecs = floppy_drive_get_datarate_in_us(w->density);
 	usecs *= delay;
 
-	/* remove old timer if it exists */
-	if (w->timer!=NULL)
-	{
-		timer_remove(w->timer);
-		w->timer = NULL;
-	}
-
 	/* set new timer */
-	w->timer = timer_set(TIME_IN_USEC(usecs), 0, wd179x_complete_command_callback);
+	timer_adjust(w->timer, TIME_IN_USEC(usecs), MISCCALLBACK_COMMAND, 0);
 }
 
 static void wd179x_write_sector(WD179X *w)
@@ -704,20 +693,7 @@ static void wd179x_set_data_request(void)
 	w->status |= STA_2_DRQ;
 }
 
-/* callback for data transfers */
-static void	wd179x_data_timer_callback(int code)
-{
-	WD179X *w = &wd;
-
-	/* ok, trigger data request now */
-	wd179x_set_data_request();
-
-	/* stop it, but don't allow it to be free'd */
-	timer_reset(w->timer, TIME_NEVER); 
-}
-
 /* callback to initiate read sector */
-
 static void	wd179x_read_sector_callback(int code)
 {
 	WD179X *w = &wd;
@@ -734,8 +710,7 @@ static void	wd179x_read_sector_callback(int code)
 		wd179x_read_sector(w);
 
 	/* stop it, but don't allow it to be free'd */
-	if (w->timer_rs !=NULL)
-		timer_reset(w->timer_rs, TIME_NEVER); 
+	timer_reset(w->timer_rs, TIME_NEVER); 
 }
 
 /* callback to initiate write sector */
@@ -780,8 +755,7 @@ static void	wd179x_write_sector_callback(int code)
 	}
 
 	/* stop it, but don't allow it to be free'd */
-	if (w->timer_ws !=NULL)
-		timer_reset(w->timer_ws, TIME_NEVER); 
+	timer_reset(w->timer_ws, TIME_NEVER); 
 }
 
 /* setup a timed data request - data request will be triggered in a few usecs time */
@@ -792,15 +766,8 @@ static void wd179x_timed_data_request(void)
 
 	usecs = floppy_drive_get_datarate_in_us(w->density);
 
-	/* remove old timer if it exists */
-	if (w->timer!=NULL)
-	{
-		timer_remove(w->timer);
-		w->timer = NULL;
-	}
-
 	/* set new timer */
-	w->timer = timer_set(TIME_IN_USEC(usecs), 0, wd179x_data_timer_callback);
+	timer_adjust(w->timer, TIME_IN_USEC(usecs), MISCCALLBACK_DATA, 0);
 }
 
 /* setup a timed read sector - read sector will be triggered in a few usecs time */
@@ -811,15 +778,8 @@ static void wd179x_timed_read_sector_request(void)
 
 	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
 
-	/* remove old timer if it exists */
-	if (w->timer_rs !=NULL)
-	{
-		timer_remove(w->timer_rs);
-		w->timer_rs = NULL;
-	}
-
 	/* set new timer */
-	w->timer_rs = timer_set(TIME_IN_USEC(usecs), 0, wd179x_read_sector_callback);
+	timer_reset(w->timer_rs, TIME_IN_USEC(usecs));
 }
 
 /* setup a timed write sector - write sector will be triggered in a few usecs time */
@@ -830,15 +790,8 @@ static void wd179x_timed_write_sector_request(void)
 
 	usecs = 20; /* How long should we wait? How about 20 micro seconds? */
 
-	/* remove old timer if it exists */
-	if (w->timer_ws !=NULL)
-	{
-		timer_remove(w->timer_ws);
-		w->timer_ws = NULL;
-	}
-
 	/* set new timer */
-	w->timer_ws = timer_set(TIME_IN_USEC(usecs), 0, wd179x_write_sector_callback);
+	timer_reset(w->timer_ws, TIME_IN_USEC(usecs));
 }
 
 

@@ -138,48 +138,21 @@ static struct DACinterface mc10_dac_interface =
 	{ 100 }
 };
 
-static struct MachineDriver machine_driver_mc10 =
-{
+static MACHINE_DRIVER_START( mc10 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6803,
-			894886,	/* 0,894886 Mhz */
-			mc10_readmem,mc10_writemem,
-			mc10_readport, mc10_writeport,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	60, 0,		 /* frames per second, vblank duration */
-	0,
-	mc10_init_machine,
-	mc10_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6803, 894886)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(mc10_readmem, mc10_writemem)
+	MDRV_CPU_PORTS(mc10_readport, mc10_writeport)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(0)
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,										/* screen width */
-	M6847_SCREEN_HEIGHT,									/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,							/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-	0,
-	mc10_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847(mc10)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&mc10_dac_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(DAC, mc10_dac_interface)
+MACHINE_DRIVER_END
 
 ROM_START(mc10)
 	ROM_REGION(0x10000,REGION_CPU1,0)

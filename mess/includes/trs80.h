@@ -35,8 +35,8 @@ extern WRITE_HANDLER ( trs80_port_ff_w );
 extern READ_HANDLER ( trs80_port_ff_r );
 extern READ_HANDLER ( trs80_port_xx_r );
 
-extern int trs80_timer_interrupt(void);
-extern int trs80_frame_interrupt(void);
+extern void trs80_timer_interrupt(void);
+extern void trs80_frame_interrupt(void);
 
 extern READ_HANDLER ( trs80_irq_status_r );
 extern WRITE_HANDLER ( trs80_irq_mask_w );

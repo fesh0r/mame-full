@@ -8,7 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 static int mjsikaku_scrolly;
@@ -43,14 +43,14 @@ static void crystal2_gfxdraw(void);
 
 
 ******************************************************************************/
-void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mjsikaku )
 {
 	int i;
 
 	/* initialize 444 RGB lookup */
 	for (i = 0; i < 4096; i++)
 	{
-		int r,g,b;
+		int r, g, b;
 
 		// xxxxbbbb_ggggrrrr
 		r = ((i >> 0) & 0x0f);
@@ -61,11 +61,11 @@ void mjsikaku_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 		g = ((g << 4) | g);
 		b = ((b << 4) | b);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
-void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( seiha )
 {
 	int i;
 
@@ -83,18 +83,18 @@ void seiha_init_palette(unsigned char *obsolete,unsigned short *colortable,const
 		g = ((g << 3) | (g >> 2));
 		b = ((b << 3) | (b >> 2));
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
-void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( crystal2 )
 {
 	int i;
 
 	/* initialize 332 RGB lookup */
 	for (i = 0; i < 256; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
+		int bit0, bit1, bit2, r, g, b;
 
 		// xxxxxxxx_bbgggrrr
 		/* red component */
@@ -113,7 +113,7 @@ void crystal2_init_palette(unsigned char *obsolete,unsigned short *colortable,co
 		bit2 = ((i >> 7) & 0x01);
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(i, r, g, b);
 	}
 }
 
@@ -192,6 +192,7 @@ void mjsikaku_gfxflag1_w(int data)
 	    (nb1413m3_type == NB1413M3_BIJOKKOY) ||
 	    (nb1413m3_type == NB1413M3_HOUSEMNQ) ||
 	    (nb1413m3_type == NB1413M3_HOUSEMN2) ||
+	    (nb1413m3_type == NB1413M3_CRYSTALG) ||
 	    (nb1413m3_type == NB1413M3_CRYSTAL2) ||
 	    (nb1413m3_type == NB1413M3_APPAREL))
 	{
@@ -1125,88 +1126,76 @@ static void crystal2_gfxdraw(void)
 
 
 ******************************************************************************/
-int mjsikaku_vh_start(void)
+VIDEO_START( mjsikaku )
 {
-	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = auto_malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	mjsikaku_gfxmode = 0;
 	return 0;
 }
 
-int secolove_vh_start(void)
+VIDEO_START( secolove )
 {
-	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = auto_malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	mjsikaku_gfxmode = 1;
 	return 0;
 }
 
-int bijokkoy_vh_start(void)
+VIDEO_START( bijokkoy )
 {
-	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = auto_malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	mjsikaku_gfxmode = 4;
 	return 0;
 }
 
-int seiha_vh_start(void)
+VIDEO_START( seiha )
 {
-	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = auto_malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	mjsikaku_gfxmode = 2;
 	return 0;
 }
 
-int crystal2_vh_start(void)
+VIDEO_START( crystal2 )
 {
-	if ((mjsikaku_tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((mjsikaku_videoram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_videoworkram = malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
-	if ((mjsikaku_palette = malloc(0x20 * sizeof(char))) == 0) return 1;
+	if ((mjsikaku_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
+	if ((mjsikaku_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_videoworkram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short))) == 0) return 1;
+	if ((mjsikaku_palette = auto_malloc(0x20 * sizeof(char))) == 0) return 1;
 	memset(mjsikaku_videoram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	memset(mjsikaku_videoworkram, 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(short)));
 	mjsikaku_gfxmode = 3;
 	return 0;
 }
 
-void mjsikaku_vh_stop(void)
-{
-	free(mjsikaku_palette);
-	free(mjsikaku_videoworkram);
-	free(mjsikaku_videoram);
-	bitmap_free(mjsikaku_tmpbitmap);
-	mjsikaku_palette = 0;
-	mjsikaku_videoworkram = 0;
-	mjsikaku_videoram = 0;
-	mjsikaku_tmpbitmap = 0;
-}
-
 /******************************************************************************
 
 
 ******************************************************************************/
-void mjsikaku_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mjsikaku )
 {
 	int x, y;
 	unsigned short color;
 
-	if (full_refresh || mjsikaku_screen_refresh)
+	if (get_vh_global_attribute_changed() || mjsikaku_screen_refresh)
 	{
 		mjsikaku_screen_refresh = 0;
 		for (y = 0; y < Machine->drv->screen_height; y++)

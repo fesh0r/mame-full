@@ -17,7 +17,7 @@ int	apple1_vh_start (void)
 	dsp_pntr = 0;
 	if (!(videoram = malloc (videoram_size = 40 * 24)))
 		return (1);;
-	if (generic_vh_start ())
+	if (video_start_generic ())
 		return (1);
 
 	memset (videoram, 0, videoram_size);
@@ -27,7 +27,6 @@ int	apple1_vh_start (void)
 
 void	apple1_vh_stop (void)
 {
-	generic_vh_stop ();
 }
 
 void	apple1_vh_dsp_w (int data)

@@ -7,37 +7,38 @@ extern int pc10_sdcs;			/* ShareD Chip Select */
 extern int pc10_dispmask;		/* Display Mask */
 extern int pc10_gun_controller;	/* wether we need to draw a crosshair or not */
 
-void playch10_vh_convert_color_prom( unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom )
+PALETTE_INIT( playch10 )
 {
 	int i;
 
 	for ( i = 0;i < 256; i++ )
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		/* red component */
 		bit0 = ~(color_prom[0] >> 0) & 0x01;
 		bit1 = ~(color_prom[0] >> 1) & 0x01;
 		bit2 = ~(color_prom[0] >> 2) & 0x01;
 		bit3 = ~(color_prom[0] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
 		bit0 = ~(color_prom[256] >> 0) & 0x01;
 		bit1 = ~(color_prom[256] >> 1) & 0x01;
 		bit2 = ~(color_prom[256] >> 2) & 0x01;
 		bit3 = ~(color_prom[256] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
 		bit0 = ~(color_prom[2*256] >> 0) & 0x01;
 		bit1 = ~(color_prom[2*256] >> 1) & 0x01;
 		bit2 = ~(color_prom[2*256] >> 2) & 0x01;
 		bit3 = ~(color_prom[2*256] >> 3) & 0x01;
-		*palette++ = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
-	ppu2c03b_init_palette( palette );
+	ppu2c03b_init_palette( 256 );
 }
 
 extern int pc10_int_detect;
@@ -61,19 +62,13 @@ static struct ppu2c03b_interface ppu_interface =
 	{ ppu_irq }				/* irq */
 };
 
-int playch10_vh_start( void )
+VIDEO_START( playch10 )
 {
 	if ( ppu2c03b_init( &ppu_interface ) )
 		return 1;
 
 	/* the bios uses the generic stuff */
-	return generic_vh_start();
-}
-
-void playch10_vh_stop( void )
-{
-	ppu2c03b_dispose();
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 
@@ -83,7 +78,7 @@ void playch10_vh_stop( void )
 
 ***************************************************************************/
 
-void playch10_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
+VIDEO_UPDATE( playch10 )
 {
 	int offs;
 
@@ -93,7 +88,7 @@ void playch10_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh )
 	top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 	bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
 
-	if ( full_refresh )
+	if ( get_vh_global_attribute_changed() )
 		memset( dirtybuffer, 1, videoram_size );
 
 	/* On Playchoice 10 single monitor, this bit toggles	*/

@@ -919,8 +919,8 @@ static struct MachineDriver machine_driver_cbm600 =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	cbmb_vh_screenrefresh,
 
   /* sound hardware */
@@ -962,8 +962,8 @@ static struct MachineDriver machine_driver_cbm600pal =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	cbmb_vh_screenrefresh,
 
   /* sound hardware */
@@ -1002,7 +1002,7 @@ static struct MachineDriver machine_driver_cbm700 =
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
 	cbm700_vh_start,
-	generic_vh_stop,
+	NULL,
 	cbmb_vh_screenrefresh,
 
   /* sound hardware */

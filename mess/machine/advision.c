@@ -98,7 +98,7 @@ WRITE_HANDLER ( advision_putp2 ) {
 READ_HANDLER ( advision_getp1 ) {
     int d,in;
 
-    logerror("P1 READ PC=%x\n",cpu_get_pc());
+    logerror("P1 READ PC=%x\n",activecpu_get_pc());
     in = input_port_0_r(0);
     d = in | 0x0F;
     if (in & 0x02) d = d & 0xF7;    /* Button 3 */

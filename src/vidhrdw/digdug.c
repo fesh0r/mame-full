@@ -36,26 +36,27 @@ static int flipscreen;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( digdug )
 {
 	int i;
 
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		bit0 = (color_prom[31-i] >> 0) & 0x01;
 		bit1 = (color_prom[31-i] >> 1) & 0x01;
 		bit2 = (color_prom[31-i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[31-i] >> 3) & 0x01;
 		bit1 = (color_prom[31-i] >> 4) & 0x01;
 		bit2 = (color_prom[31-i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[31-i] >> 6) & 0x01;
 		bit2 = (color_prom[31-i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		palette_set_color(i,r,g,b);
 	}
 
 	/* characters */
@@ -79,26 +80,15 @@ void digdug_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
   Start the video hardware emulation.
 
 ***************************************************************************/
-int digdug_vh_start(void)
+VIDEO_START( digdug )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	pflastindex = -1;
 	pflastcolor = -1;
 
 	return 0;
-}
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void digdug_vh_stop(void)
-{
-	generic_vh_stop();
 }
 
 
@@ -158,7 +148,7 @@ WRITE_HANDLER( digdug_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void digdug_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( digdug )
 {
 	int offs,pfindex,pfcolor;
 	unsigned char *pf;

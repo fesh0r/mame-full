@@ -650,7 +650,7 @@ static UINT8 ccounts_page11_na[256] =    /* Cycle Counts Page 11, Native 6309 */
 /* 0xFX */      5,    5, IIP1, IIP1, IIP1, IIP1,    5,    5, IIP1, IIP1, IIP1,    5, IIP1, IIP1, IIP1, IIP1
 };
 
-#if !BIG_SWITCH
+#ifndef BIG_SWITCH
 
 static void (*hd6309_main[0x100])(void) = {
 /*	        0xX0,   0xX1,     0xX2,    0xX3,    0xX4,    0xX5,    0xX6,    0xX7,

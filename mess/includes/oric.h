@@ -22,7 +22,7 @@ extern int oric_cassette_init(int id);
 extern void oric_cassette_exit(int id);
 
 /* Telestrat specific */
-void	telestrat_init_machine(void);
+extern MACHINE_INIT( telestrat );
 void	telestrat_shutdown_machine(void);
 
 READ_HANDLER ( telestrat_IO_r );

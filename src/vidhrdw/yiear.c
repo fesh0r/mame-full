@@ -31,33 +31,34 @@ static int nmi_enable;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void yiear_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( yiear )
 {
 	int i;
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 }
@@ -80,10 +81,10 @@ WRITE_HANDLER( yiear_control_w )
 }
 
 
-int yiear_nmi_interrupt(void)
+INTERRUPT_GEN( yiear_nmi_interrupt )
 {
-	/* can't use nmi_interrupt() because interrupt_enable_w() effects it */
-	return nmi_enable ? M6809_INT_NMI : ignore_interrupt();
+	/* can't use nmi_line_pulse() because interrupt_enable_w() effects it */
+	if (nmi_enable) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -94,12 +95,12 @@ int yiear_nmi_interrupt(void)
   the main emulation engine.
 
 ***************************************************************************/
-void yiear_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yiear )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

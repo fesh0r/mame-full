@@ -102,25 +102,24 @@ extern unsigned char *zaxxon_char_color_bank;
 extern unsigned char *zaxxon_background_position;
 extern unsigned char *zaxxon_background_color_bank;
 extern unsigned char *zaxxon_background_enable;
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-int  zaxxon_vh_start(void);
-int  razmataz_vh_start(void);
-void zaxxon_vh_stop(void);
-void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( zaxxon );
+VIDEO_START( zaxxon );
+VIDEO_START( razmataz );
+VIDEO_UPDATE( zaxxon );
+VIDEO_UPDATE( razmataz );
+VIDEO_UPDATE( ixion );
 extern int zaxxon_vid_type;
 
 WRITE_HANDLER( zaxxon_sound_w );
 
 
 
-void zaxxon_init_machine(void)
+MACHINE_INIT( zaxxon )
 {
 	zaxxon_vid_type = 0;
 }
 
-void futspy_init_machine(void)
+MACHINE_INIT( futspy )
 {
 	zaxxon_vid_type = 2;
 }
@@ -133,6 +132,11 @@ static WRITE_HANDLER( zaxxon_coin_counter_w )
 static WRITE_HANDLER( zaxxon_screen_flip_w )
 {
 	flip_screen_set(~data & 1);
+}
+
+static WRITE_HANDLER( razmataz_screen_flip_w )
+{
+	flip_screen_set(data & 1);
 }
 
 static READ_HANDLER( razmataz_unknown1_r )
@@ -259,7 +263,7 @@ static MEMORY_WRITE_START( razmataz_writemem )
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xc000, 0xc002, MWA_NOP },	/* coin enables */
 	{ 0xc003, 0xc004, zaxxon_coin_counter_w },
-	{ 0xc006, 0xc006, zaxxon_screen_flip_w },
+	{ 0xc006, 0xc006, razmataz_screen_flip_w },	/* ? */
 	{ 0xe0f0, 0xe0f0, interrupt_enable_w },
 	{ 0xe0f1, 0xe0f1, MWA_RAM, &zaxxon_char_color_bank },
 	{ 0xe0f8, 0xe0f9, MWA_RAM, &zaxxon_background_position },
@@ -276,19 +280,20 @@ MEMORY_END
 
 ***************************************************************************/
 
-static int zaxxon_interrupt(void)
+static INTERRUPT_GEN( zaxxon_interrupt )
 {
 	if (readinputport(5) & 1)	/* get status of the F2 key */
-		return nmi_interrupt(); /* trigger self test */
-	else return interrupt();
+		nmi_line_pulse(); /* trigger self test */
+	else
+		irq0_line_hold();
 }
 
 INPUT_PORTS_START( zaxxon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )	/* the self test calls this UP */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )	/* the self test calls this DOWN */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )	/* the self test calls this DOWN */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -296,9 +301,9 @@ INPUT_PORTS_START( zaxxon )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL ) /* the self test calls this DOWN */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -314,72 +319,364 @@ INPUT_PORTS_START( zaxxon )
 	/* the game will keep inserting coins. */
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x03, "10000" )
-	PORT_DIPSETTING(	0x01, "20000" )
-	PORT_DIPSETTING(	0x02, "30000" )
-	PORT_DIPSETTING(	0x00, "40000" )
-	/* The Super Zaxxon manual lists the following as unused. */
-	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???" )
-	PORT_DIPSETTING(	0x0c, "Easy?" )
-	PORT_DIPSETTING(	0x04, "Medium?" )
-	PORT_DIPSETTING(	0x08, "Hard?" )
-	PORT_DIPSETTING(	0x00, "Hardest?" )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unused ) )			// Only checked in "test mode"
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )			// (check code at 0x4e84)
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )			// Only checked in "test mode"
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )			// (check code at 0x4e84)
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x30, "3" )
-	PORT_DIPSETTING(	0x10, "4" )
-	PORT_DIPSETTING(	0x20, "5" )
-	PORT_BITX( 0,		0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_B ) )
-	PORT_DIPSETTING(	0x0f, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x07, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x0b, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x06, "2 Coins/1 Credit 5/3 6/4" )
-	PORT_DIPSETTING(	0x0a, "2 Coins/1 Credit 3/2 4/3" )
-	PORT_DIPSETTING(	0x03, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x02, "1 Coin/1 Credit 5/6" )
-	PORT_DIPSETTING(	0x0c, "1 Coin/1 Credit 4/5" )
-	PORT_DIPSETTING(	0x04, "1 Coin/1 Credit 2/3" )
-	PORT_DIPSETTING(	0x0d, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x08, "1 Coin/2 Credits 5/11" )
-	PORT_DIPSETTING(	0x00, "1 Coin/2 Credits 4/9" )
-	PORT_DIPSETTING(	0x05, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x09, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR ( 1C_5C ) )
-	PORT_DIPSETTING(	0x0e, DEF_STR ( 1C_6C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x0d, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR ( 1C_6C ) )
 	PORT_DIPNAME( 0xf0, 0x30, DEF_STR ( Coin_A ) )
-	PORT_DIPSETTING(	0xf0, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x70, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0xb0, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x60, "2 Coins/1 Credit 5/3 6/4" )
-	PORT_DIPSETTING(	0xa0, "2 Coins/1 Credit 3/2 4/3" )
-	PORT_DIPSETTING(	0x30, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x20, "1 Coin/1 Credit 5/6" )
-	PORT_DIPSETTING(	0xc0, "1 Coin/1 Credit 4/5" )
-	PORT_DIPSETTING(	0x40, "1 Coin/1 Credit 2/3" )
-	PORT_DIPSETTING(	0xd0, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x80, "1 Coin/2 Credits 5/11" )
-	PORT_DIPSETTING(	0x00, "1 Coin/2 Credits 4/9" )
-	PORT_DIPSETTING(	0x50, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x90, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR ( 1C_5C ) )
-	PORT_DIPSETTING(	0xe0, DEF_STR ( 1C_6C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0xd0, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x50, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR ( 1C_6C ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+/* Same as 'zaxxon' but additional "Difficulty" Dip Switch */
+INPUT_PORTS_START( szaxxon )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x03, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x00, "40000" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unused ) )			// Only checked in "test mode"
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )			// (check code at 0x4e84)
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_B ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x0d, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR ( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x30, DEF_STR ( Coin_A ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x60, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit 3/2 4/3" )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0xd0, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x00, "1 Coin/2 Credits 4/9" )
+	PORT_DIPSETTING(    0x50, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR ( 1C_6C ) )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( futspy )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x00, DEF_STR ( Coin_A ) )
+	PORT_DIPSETTING(    0x08, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0x0b, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x0e, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x09, DEF_STR ( 2C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x0f, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x02, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_6C ) )
+	PORT_DIPNAME( 0xf0, 0x00, DEF_STR ( Coin_B ) )
+	PORT_DIPSETTING(    0x80, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credit 5/3 6/4" )
+	PORT_DIPSETTING(    0xb0, "2 Coins/1 Credit 4/3" )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0xe0, "1 Coin/1 Credit 2/3" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/1 Credit 4/5" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit 5/6" )
+	PORT_DIPSETTING(    0x90, DEF_STR ( 2C_3C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0xf0, "1 Coin/2 Credits 5/11" )
+	PORT_DIPSETTING(    0x20, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR ( 1C_6C ) )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x08, "5" )
+	PORT_BITX( 0,       0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "20k 40k 60k" )
+	PORT_DIPSETTING(    0x10, "30k 60k 90k" )
+	PORT_DIPSETTING(    0x20, "40k 70k 100k" )
+	PORT_DIPSETTING(    0x30, "40k 80k 120k" )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x40, "Normal" )
+	PORT_DIPSETTING(    0x80, "Hard" )
+	PORT_DIPSETTING(    0xc0, "Very Hard" )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( razmataz )
+	PORT_START	/* IN0 */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER1, 30, 15, 0, 0 )
+
+	PORT_START	/* IN1 */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER2 | IPF_REVERSE, 30, 15, 0, 0 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	/* the coin inputs must stay active for exactly one frame, otherwise */
+	/* the game will keep inserting coins. */
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 50k" )
+	PORT_DIPSETTING(    0x01, "Every 100k" )
+	PORT_DIPSETTING(    0x02, "Every 150k" )
+	PORT_DIPSETTING(    0x03, "Every 200k" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x0c, "Very Hard" )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPSETTING(    0x30, "6" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )			// Only checked in "test mode"
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Screen Flipping" )		// Only checked in "test mode"
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )				// (check code at 0x0390)
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START	/* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ixion )
@@ -406,259 +703,62 @@ INPUT_PORTS_START( ixion )
 	/* the game will keep inserting coins. */
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1, 1 )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "Every 40k" )
+	PORT_DIPSETTING(    0x01, "Every 60k" )
+	PORT_DIPSETTING(    0x02, "Every 80k" )
+	PORT_DIPSETTING(    0x03, "Every 100k" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPNAME( 0x70, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easiest" )
+	PORT_DIPSETTING(    0x10, "Easier" )
+	PORT_DIPSETTING(    0x20, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x50, "Hard" )
+	PORT_DIPSETTING(    0x60, "Harder" )
+	PORT_DIPSETTING(    0x70, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x02, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x04, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x05, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x06, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x07, DEF_STR ( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR ( 1C_5C ) )
 	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x08, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x18, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x20, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x28, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x38, DEF_STR ( 1C_5C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR ( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR ( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR ( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR ( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR ( 1C_2C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR ( 1C_3C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR ( 1C_4C ) )
+	PORT_DIPSETTING(    0x38, DEF_STR ( 1C_5C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )			// Only checked in "test mode"
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the F2 key, */
 	/* and activate the test mode, which is triggered by a NMI */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( futspy )
-	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )	/* the self test calls this UP */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )	/* the self test calls this DOWN */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL ) /* the self test calls this UP */
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
-	/* the coin inputs must stay active for exactly one frame, otherwise */
-	/* the game will keep inserting coins. */
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x0f, 0x00, DEF_STR ( Coin_A ) )
-	PORT_DIPSETTING(	0x08, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x07, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x06, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x0a, "2 Coins/1 Credit 5/3 6/4" )
-	PORT_DIPSETTING(	0x0b, "2 Coins/1 Credit 4/3" )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x0e, "1 Coin/1 Credit 2/3" )
-	PORT_DIPSETTING(	0x0d, "1 Coin/1 Credit 4/5" )
-	PORT_DIPSETTING(	0x0c, "1 Coin/1 Credit 11/12" )
-	PORT_DIPSETTING(	0x09, DEF_STR ( 2C_3C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x0f, "1 Coin/2 Credits 5/11" )
-	PORT_DIPSETTING(	0x02, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x04, DEF_STR ( 1C_5C ) )
-	PORT_DIPSETTING(	0x05, DEF_STR ( 1C_6C ) )
-	PORT_DIPNAME( 0xf0, 0x00, DEF_STR ( Coin_B ) )
-	PORT_DIPSETTING(	0x80, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x70, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x60, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0xa0, "2 Coins/1 Credit 5/3 6/4" )
-	PORT_DIPSETTING(	0xb0, "2 Coins/1 Credit 4/3" )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0xe0, "1 Coin/1 Credit 2/3" )
-	PORT_DIPSETTING(	0xd0, "1 Coin/1 Credit 4/5" )
-	PORT_DIPSETTING(	0xc0, "1 Coin/1 Credit 11/12" )
-	PORT_DIPSETTING(	0x90, DEF_STR ( 2C_3C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0xf0, "1 Coin/2 Credits 5/11" )
-	PORT_DIPSETTING(	0x20, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x40, DEF_STR ( 1C_5C ) )
-	PORT_DIPSETTING(	0x50, DEF_STR ( 1C_6C ) )
-
-
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x00, "3" )
-	PORT_DIPSETTING(	0x04, "4" )
-	PORT_DIPSETTING(	0x08, "5" )
-	PORT_BITX( 0,		0x0c, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "20k 40k 60k" )
-	PORT_DIPSETTING(	0x10, "30k 60k 90k" )
-	PORT_DIPSETTING(	0x20, "40k 70k 100k" )
-	PORT_DIPSETTING(	0x30, "40k 80k 120k" )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(	0x00, "Easy" )
-	PORT_DIPSETTING(	0x40, "Medium" )
-	PORT_DIPSETTING(	0x80, "Hard" )
-	PORT_DIPSETTING(	0xc0, "Hardest" )
-
-	PORT_START	/* FAKE */
-	/* This fake input port is used to get the status of the F2 key, */
-	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( razmataz )
-	PORT_START	/* IN0 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER1, 30, 15, 0, 0 )
-
-	PORT_START	/* IN1 */
-	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER2 | IPF_REVERSE, 30, 15, 0, 0 )
-
-	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	/* the coin inputs must stay active for exactly one frame, otherwise */
-	/* the game will keep inserting coins. */
-	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_HIGH, IPT_COIN3, 1 )
-
-	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0x00, "2" )
-	PORT_DIPSETTING(	0x10, "3" )
-	PORT_DIPSETTING(	0x20, "4" )
-	PORT_DIPSETTING(	0x30, "5" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x07, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x02, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x03, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x04, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x05, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x06, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x07, DEF_STR ( 1C_5C ) )
-	PORT_DIPNAME( 0x38, 0x18, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ) )
-	PORT_DIPSETTING(	0x08, DEF_STR ( 3C_1C ) )
-	PORT_DIPSETTING(	0x10, DEF_STR ( 2C_1C ) )
-	PORT_DIPSETTING(	0x18, DEF_STR ( 1C_1C ) )
-	PORT_DIPSETTING(	0x20, DEF_STR ( 1C_2C ) )
-	PORT_DIPSETTING(	0x28, DEF_STR ( 1C_3C ) )
-	PORT_DIPSETTING(	0x30, DEF_STR ( 1C_4C ) )
-	PORT_DIPSETTING(	0x38, DEF_STR ( 1C_5C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START	/* FAKE */
-	/* This fake input port is used to get the status of the F2 key, */
-	/* and activate the test mode, which is triggered by a NMI */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-
-	PORT_START	/* IN3 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START	/* IN4 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -765,141 +865,118 @@ static struct Samplesinterface zaxxon_samples_interface =
 };
 
 
-static const struct MachineDriver machine_driver_zaxxon =
-{
+static MACHINE_DRIVER_START( zaxxon )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			readmem,writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zaxxon_vh_start,
-	zaxxon_vh_stop,
-	zaxxon_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(zaxxon)
+	MDRV_VIDEO_UPDATE(zaxxon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zaxxon_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_futspy =
-{
+
+static MACHINE_DRIVER_START( futspy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			readmem,futspy_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	futspy_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,futspy_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(futspy)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	futspy_gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(futspy_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	zaxxon_vh_start,
-	zaxxon_vh_stop,
-	zaxxon_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(zaxxon)
+	MDRV_VIDEO_UPDATE(zaxxon)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SAMPLES,
-			&zaxxon_samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(SAMPLES, zaxxon_samples_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_razmataz =
-{
+
+static MACHINE_DRIVER_START( razmataz )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			razmataz_readmem,razmataz_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(razmataz_readmem,razmataz_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	razmataz_vh_start,
-	zaxxon_vh_stop,
-	razmataz_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(razmataz)
+	MDRV_VIDEO_UPDATE(razmataz)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_ixion =
-{
+
+static MACHINE_DRIVER_START( ixion )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 MHz ?? */
-			ixion_readmem,razmataz_writemem,0,0,
-			zaxxon_interrupt,1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	zaxxon_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz ?? */
+	MDRV_CPU_MEMORY(ixion_readmem,razmataz_writemem)
+	MDRV_CPU_VBLANK_INT(zaxxon_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(zaxxon)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,32*8,
-	zaxxon_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(32*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	razmataz_vh_start,
-	zaxxon_vh_stop,
-	ixion_vh_screenrefresh,
+	MDRV_PALETTE_INIT(zaxxon)
+	MDRV_VIDEO_START(razmataz)
+	MDRV_VIDEO_UPDATE(ixion)
 
 	/* sound hardware */
-	0,0,0,0,
-};
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1139,7 +1216,7 @@ ROM_START( ixion )
 	ROM_LOAD( "1944a.u51",      0x0800, 0x0800, 0x88215098 )
 ROM_END
 
-static void init_zaxxonb(void)
+static DRIVER_INIT( zaxxonb )
 {
 /*
 	the values vary, but the translation mask is always laid out like this:
@@ -1214,32 +1291,32 @@ static void init_zaxxonb(void)
 	}
 }
 
-static void init_szaxxon(void)
+static DRIVER_INIT( szaxxon )
 {
 	szaxxon_decode();
 }
 
-static void init_futspy(void)
+static DRIVER_INIT( futspy )
 {
 	futspy_decode();
 }
 
-static void init_razmataz(void)
+static DRIVER_INIT( razmataz )
 {
 	nprinces_decode();
 }
 
-static void init_ixion(void)
+static DRIVER_INIT( ixion )
 {
 	szaxxon_decode();
 }
 
 
-GAME( 1982, zaxxon,   0,	   zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 1)" )
-GAME( 1982, zaxxon2,  zaxxon, zaxxon,	 zaxxon,   0,		 ROT90,  "Sega",    "Zaxxon (set 2)" )
-GAME( 1982, zaxxonb,  zaxxon, zaxxon,	 zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
-GAME( 1982, szaxxon,  0,	   zaxxon,	 zaxxon,   szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
-GAMEX(1984, futspy,   0,	   futspy,	 futspy,   futspy,	 ROT270, "Sega",    "Future Spy", GAME_NO_COCKTAIL )
-GAMEX(1983, razmataz, 0,	   razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX(1983, ixion,    0,	   ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
+GAME( 1982, zaxxon,   0,         zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)" )
+GAME( 1982, zaxxon2,  zaxxon,    zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)" )
+GAME( 1982, zaxxonb,  zaxxon,    zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson" )
+GAME( 1982, szaxxon,  0,         zaxxon,   szaxxon,  szaxxon,  ROT90,  "Sega",    "Super Zaxxon" )
+GAME( 1984, futspy,   0,         futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy" )
+GAMEX(1983, razmataz, 0,         razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND )
+GAMEX(1983, ixion,    0,         ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
 

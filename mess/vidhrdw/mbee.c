@@ -493,7 +493,7 @@ void m6545_data_w(int offs, int data)
 
 int mbee_vh_start(void)
 {
-    if( generic_vh_start() )
+    if( video_start_generic() )
 		return 1;
 	pcgram = memory_region(REGION_CPU1)+0xf000;
 	videoram = memory_region(REGION_GFX1)+0x0000;
@@ -505,7 +505,6 @@ int mbee_vh_start(void)
 
 void mbee_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 void mbee_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)

@@ -4,7 +4,7 @@
 
     driver by Christopher Kirmse, Aaron Giles
 
-	Currently implemented:
+	Games supported:
 		* Satan's Hollow
 		* Tron
 		* Kozmik Krooz'r
@@ -12,6 +12,9 @@
 		* Wacko
 		* Two Tigers
 		* Journey
+
+	Known bugs:
+		* none at this time
 
 ****************************************************************************
 
@@ -75,29 +78,14 @@
 
 ***************************************************************************/
 
-
 #include "driver.h"
-#include "machine/mcr.h"
 #include "machine/z80fmly.h"
 #include "sndhrdw/mcr.h"
 #include "vidhrdw/generic.h"
+#include "mcr.h"
 
-
-extern INT8 mcr12_sprite_xoffs;
-extern INT8 mcr12_sprite_xoffs_flip;
 
 static UINT8 wacko_mux_select;
-
-
-int mcr12_vh_start(void);
-void mcr12_vh_stop(void);
-READ_HANDLER( mcr2_videoram_r );
-READ_HANDLER( twotigra_videoram_r );
-WRITE_HANDLER( mcr2_videoram_w );
-WRITE_HANDLER( twotigra_videoram_w );
-void mcr2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void journey_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
 
 
 
@@ -171,6 +159,7 @@ static READ_HANDLER( wacko_trackball_r )
  *	Two Tigers Yoke input ports
  *
  *************************************/
+
 static READ_HANDLER( twotigra_yoke1_r )
 {
 	int p1_yoke = readinputport(6);
@@ -210,24 +199,6 @@ static READ_HANDLER( twotigra_yoke2_r )
 
 /*************************************
  *
- *	NVRAM save/load
- *
- *************************************/
-
-static void mcr2_nvram_handler(void *file, int read_or_write)
-{
-	unsigned char *ram = memory_region(REGION_CPU1);
-
-	if (read_or_write)
-		osd_fwrite(file, &ram[0xc000], 0x800);
-	else if (file)
-		osd_fread(file, &ram[0xc000], 0x800);
-}
-
-
-
-/*************************************
- *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -236,13 +207,13 @@ static MEMORY_READ_START( readmem )
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xf000, 0xf1ff, MRA_RAM },
-	{ 0xf800, 0xffff, mcr2_videoram_r },
+	{ 0xf800, 0xffff, MRA_RAM },
 MEMORY_END
 
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, MWA_RAM },
+	{ 0xc000, 0xc7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },
 	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf800, 0xffff, mcr2_videoram_w, &videoram, &videoram_size },	/* also palette */
 MEMORY_END
@@ -531,6 +502,7 @@ INPUT_PORTS_START( twotiger )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( twotigra )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -583,6 +555,7 @@ INPUT_PORTS_START( twotigra )
 INPUT_PORTS_END
 
 
+
 /*************************************
  *
  *	Graphics definitions
@@ -604,142 +577,54 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_mcr2 =
-{
+static MACHINE_DRIVER_START( mcr2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			2500000,	/* 2.5 MHz */
-			readmem,writemem,readport,writeport,
-			mcr_interrupt,2,
-			0,0,mcr_daisy_chain
-		},
-		SOUND_CPU_SSIO
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 2500000)
+	MDRV_CPU_CONFIG(mcr_daisy_chain)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_CPU_VBLANK_INT(mcr_interrupt,2)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_30HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(mcr)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
-	gfxdecodeinfo,
-	64, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	mcr12_vh_start,
-	mcr12_vh_stop,
-	mcr2_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 30*16)
+	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 30*16-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(64)
+	
+	MDRV_VIDEO_START(mcr2)
+	MDRV_VIDEO_UPDATE(mcr2)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_SSIO
-	},
-	mcr2_nvram_handler
-};
+	MDRV_IMPORT_FROM(mcr_ssio)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_journey =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			7500000,	/* Looks like it runs at 7.5 MHz rather than 5 or 2.5 */
-			readmem,writemem,readport,writeport,
-			mcr_interrupt,2,
-			0,0,mcr_daisy_chain
-		},
-		SOUND_CPU_SSIO
-	},
-	30, DEFAULT_REAL_30HZ_VBLANK_DURATION,
-	1,
-	mcr_init_machine,
+static MACHINE_DRIVER_START( twotigra )
+	MDRV_IMPORT_FROM(mcr2)
 
 	/* video hardware */
-	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
-	gfxdecodeinfo,
-	64, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	journey_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		SOUND_SSIO
-	},
-	mcr2_nvram_handler
-};
+	MDRV_VIDEO_START(twotigra)
+MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( journey )
 
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mcr2)
+	MDRV_CPU_REPLACE("main", Z80, 7500000)
 
-static void init_mcr2(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
+	/* video hardware */
+	MDRV_VIDEO_START(journey)
+	MDRV_VIDEO_UPDATE(journey)
+MACHINE_DRIVER_END
 
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 0;
-}
-
-
-static void init_domino(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
-
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 0;
-}
-
-
-static void init_wacko(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_write_handler(0, 0x04, 0x04, wacko_mux_select_w);
-	install_port_read_handler(0, 0x01, 0x02, wacko_trackball_r);
-
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 0;
-}
-
-
-static void init_kroozr(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_read_handler(0, 0x01, 0x01, kroozr_dial_r);
-	install_port_read_handler(0, 0x02, 0x02, kroozr_trakball_x_r);
-	install_port_read_handler(0, 0x04, 0x04, kroozr_trakball_y_r);
-
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 0;
-}
-
-static void init_twotigra(void)
-{
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
-	install_port_read_handler(0, 0x01, 0x01, twotigra_yoke2_r);
-	install_port_read_handler(0, 0x02, 0x02, twotigra_yoke1_r);
-	install_mem_read_handler(0, 0xf800, 0xffff, twotigra_videoram_r);
-	install_mem_write_handler(0, 0xf800, 0xffff, twotigra_videoram_w);
-	mcr12_sprite_xoffs = 0;
-	mcr12_sprite_xoffs_flip = 0;
-}
 
 
 /*************************************
@@ -771,6 +656,9 @@ ROM_START( shollow )
 	ROM_LOAD( "sh-fg.01",     0x02000, 0x2000, 0xba1a38b4 )
 	ROM_LOAD( "sh-fg.02",     0x04000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x06000, 0x2000, 0x37ea9d07 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -797,6 +685,9 @@ ROM_START( shollow2 )
 	ROM_LOAD( "sh-fg.01",     0x02000, 0x2000, 0xba1a38b4 )
 	ROM_LOAD( "sh-fg.02",     0x04000, 0x2000, 0x6b57f6da )
 	ROM_LOAD( "sh-fg.03",     0x06000, 0x2000, 0x37ea9d07 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -823,6 +714,9 @@ ROM_START( tron )
 	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, 0x58ee14d3 )
 	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, 0x9743f873 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -849,6 +743,9 @@ ROM_START( tron2 )
 	ROM_LOAD( "vg_2.bin",     0x02000, 0x2000, 0x58ee14d3 )
 	ROM_LOAD( "vg_1.bin",     0x04000, 0x2000, 0x3329f9d4 )
 	ROM_LOAD( "vg_0.bin",     0x06000, 0x2000, 0x9743f873 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.d12",   0x0000, 0x0020, 0xe1281ee9 )
 ROM_END
 
 
@@ -874,6 +771,9 @@ ROM_START( kroozr )
 	ROM_LOAD( "kozmkvid.1d",  0x02000, 0x2000, 0x4e23b35b )
 	ROM_LOAD( "kozmkvid.1b",  0x04000, 0x2000, 0xc6041ba7 )
 	ROM_LOAD( "kozmkvid.1a",  0x06000, 0x2000, 0xb57fb0ff )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -899,6 +799,9 @@ ROM_START( domino )
 	ROM_LOAD( "dmanfg1.bin",  0x02000, 0x2000, 0x16aa4b9b )
 	ROM_LOAD( "dmanfg2.bin",  0x04000, 0x2000, 0x4a8e76b8 )
 	ROM_LOAD( "dmanfg3.bin",  0x06000, 0x2000, 0x1f39257e )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -923,6 +826,9 @@ ROM_START( wacko )
 	ROM_LOAD( "wackovid.1d",  0x02000, 0x2000, 0xa02f1672 )
 	ROM_LOAD( "wackovid.1b",  0x04000, 0x2000, 0x7d899790 )
 	ROM_LOAD( "wackovid.1a",  0x06000, 0x2000, 0x080be3ad )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -947,6 +853,9 @@ ROM_START( twotiger )
 	ROM_LOAD( "2tgrfg1.bin",  0x02000, 0x2000, 0xfbcaffa5 )
 	ROM_LOAD( "2tgrfg2.bin",  0x04000, 0x2000, 0x08e3e1a6 )
 	ROM_LOAD( "2tgrfg3.bin",  0x06000, 0x2000, 0x9b22697b )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -971,6 +880,9 @@ ROM_START( twotigra )
 	ROM_LOAD( "vid_c1",  0x02000, 0x2000, 0x62ed737b )
 	ROM_LOAD( "vid_b1",  0x04000, 0x2000, 0x0939921e )
 	ROM_LOAD( "vid_a1",  0x06000, 0x2000, 0xef515824 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
 
 
@@ -1001,7 +913,74 @@ ROM_START( journey )
 	ROM_LOAD( "a4",           0x0a000, 0x2000, 0x765876a7 )
 	ROM_LOAD( "a1",           0x0c000, 0x2000, 0x4af986f8 )
 	ROM_LOAD( "a2",           0x0e000, 0x2000, 0xb30cd2a7 )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, 0xe1281ee9 )	/* from shollow, assuming it's the same */
 ROM_END
+
+
+
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
+
+static DRIVER_INIT( mcr2 )
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 0;
+}
+
+
+static DRIVER_INIT( domino )
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 0;
+}
+
+
+static DRIVER_INIT( wacko )
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_write_handler(0, 0x04, 0x04, wacko_mux_select_w);
+	install_port_read_handler(0, 0x01, 0x02, wacko_trackball_r);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 0;
+}
+
+
+static DRIVER_INIT( kroozr )
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_read_handler(0, 0x01, 0x01, kroozr_dial_r);
+	install_port_read_handler(0, 0x02, 0x02, kroozr_trakball_x_r);
+	install_port_read_handler(0, 0x04, 0x04, kroozr_trakball_y_r);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 0;
+}
+
+
+static DRIVER_INIT( twotigra )
+{
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_write_handler(0, 0x00, 0x00, mcr_control_port_w);
+	install_port_read_handler(0, 0x01, 0x01, twotigra_yoke2_r);
+	install_port_read_handler(0, 0x02, 0x02, twotigra_yoke1_r);
+	
+	install_mem_write_handler(0, 0xf800, 0xffff, twotigra_videoram_w);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 0;
+}
 
 
 
@@ -1011,13 +990,13 @@ ROM_END
  *
  *************************************/
 
-GAME( 1981, shollow,  0,        mcr2,    shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
-GAME( 1981, shollow2, shollow,  mcr2,    shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
-GAME( 1982, tron,     0,        mcr2,    tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 1)" )
-GAME( 1982, tron2,    tron,     mcr2,    tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 2)" )
-GAME( 1982, kroozr,   0,        mcr2,    kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
-GAME( 1982, domino,   0,        mcr2,    domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
-GAME( 1982, wacko,    0,        mcr2,    wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
-GAME( 1984, twotiger, 0,        mcr2,    twotiger, mcr2,     ROT0,  "Bally Midway", "Two Tigers" )
-GAME( 1984, twotigra, twotiger, mcr2,    twotigra, twotigra, ROT0,  "Bally Midway", "Two Tigers (dedicated)" )
-GAMEX(1983, journey,  0,        journey, domino,   mcr2,     ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )
+GAME( 1981, shollow,  0,        mcr2,     shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 1)" )
+GAME( 1981, shollow2, shollow,  mcr2,     shollow,  mcr2,     ROT90, "Bally Midway", "Satan's Hollow (set 2)" )
+GAME( 1982, tron,     0,        mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 1)" )
+GAME( 1982, tron2,    tron,     mcr2,     tron,     mcr2,     ROT90, "Bally Midway", "Tron (set 2)" )
+GAME( 1982, kroozr,   0,        mcr2,     kroozr,   kroozr,   ROT0,  "Bally Midway", "Kozmik Kroozr" )
+GAME( 1982, domino,   0,        mcr2,     domino,   domino,   ROT0,  "Bally Midway", "Domino Man" )
+GAME( 1982, wacko,    0,        mcr2,     wacko,    wacko,    ROT0,  "Bally Midway", "Wacko" )
+GAME( 1984, twotiger, 0,        mcr2,     twotiger, mcr2,     ROT0,  "Bally Midway", "Two Tigers" )
+GAME( 1984, twotigra, twotiger, twotigra, twotigra, twotigra, ROT0,  "Bally Midway", "Two Tigers (dedicated)" )
+GAMEX(1983, journey,  0,        journey,  domino,   mcr2,     ROT90, "Bally Midway", "Journey", GAME_IMPERFECT_SOUND )

@@ -8,8 +8,8 @@ struct VLM5030interface konami_vlm5030_interface =
 {
     3580000,    /* master clock  */
     255,        /* volume        */
-    4,         /* memory region  */
-    0,         /* memory size    */
+    4,          /* memory region  */
+    0           /* memory size    */
 };
 
 struct SN76496interface konami_sn76496_interface =
@@ -116,7 +116,7 @@ WRITE_HANDLER( konami_sh_irqtrigger_w )
     if (last == 0 && data)
     {
         /* setting bit 0 low then high triggers IRQ on the sound CPU */
-        cpu_cause_interrupt(1,0xff);
+        cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
     }
 
     last = data;

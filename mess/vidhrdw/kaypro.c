@@ -136,10 +136,10 @@ int kaypro_vh_start(void)
 	scroll_lines = KAYPRO_SCREEN_H;
 	videoram_size = KAYPRO_SCREEN_W * KAYPRO_SCREEN_H;
 
-	if (generic_vh_start())
+	if (video_start_generic())
 		return 1;
 
-	video_buffer = malloc(videoram_size * sizeof(short));
+	video_buffer = auto_malloc(videoram_size * sizeof(short));
 	if (!video_buffer)
 		return 1;
 
@@ -190,11 +190,7 @@ int kaypro_vh_start(void)
 
 void kaypro_vh_stop(void)
 {
-	if (video_buffer)
-		free(video_buffer);
 	video_buffer = NULL;
-
-	generic_vh_stop();
 }
 
 void kaypro_vh_screenrefresh(struct mame_bitmap * bitmap, int full_refresh)

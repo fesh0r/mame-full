@@ -54,8 +54,6 @@ enum {
 
 #define LOG_M6847 0
 
-static UINT8 *game_palette;
-
 static unsigned char palette[] = {
 	0x00,0x00,0x00, /* BLACK */
 	0x00,0xff,0x00, /* GREEN */
@@ -861,45 +859,44 @@ static void mix_colors(UINT8 *dest, const double *val, const UINT8 *c0, const UI
 	}
 }
 
-static void setup_artifact_palette(UINT8 *destpalette, int destcolor, UINT16 c0, UINT16 c1,
+static void setup_artifact_palette(int destcolor, UINT16 c0, UINT16 c1,
 	const double *colorfactors, int numfactors, int reverse)
 {
 	int i, ii;
-	const UINT8 *rgb0;
-	const UINT8 *rgb1;
+	UINT8 rgb0[3];
+	UINT8 rgb1[3];
+	UINT8 rgbdest[3];
 
-	rgb0 = &destpalette[c0 * 3];
-	rgb1 = &destpalette[c1 * 3];
-	destpalette += (destcolor * 3);
+	palette_get_color(c0, &rgb0[0], &rgb0[1], &rgb0[2]);
+	palette_get_color(c1, &rgb1[0], &rgb1[1], &rgb1[2]);
 
 	for (i = 0; i < numfactors; i++) {
 		ii = i;
 		if (reverse)
 			ii ^= 1;
 
-		mix_colors(&destpalette[i * 3], &colorfactors[ii * 3], rgb0, rgb1);
+		mix_colors(rgbdest, &colorfactors[ii * 3], rgb0, rgb1);
+		palette_set_color(destcolor, rgbdest[0], rgbdest[1], rgbdest[2]);
 	}
 }
 
-void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( m6847 )
 {
+	int i;
+
 	assert((sizeof(artifactfactors) / (sizeof(artifactfactors[0]) * 3)) == M6847_ARTIFACT_COLOR_COUNT);
 
-	memcpy(sys_palette, palette, sizeof(palette));
+	for(i = 0; i < (sizeof(palette) / (sizeof(palette[0])*3)); i++)
+		palette_set_color(i, palette[i * 3 + 0], palette[i * 3 + 1], palette[i * 3 + 2]);
 
-	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*0),
+	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*0),
 		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
-	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*1),
+	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*1),
 		0, 1, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
-	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*2),
+	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*2),
 		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 0);
-	setup_artifact_palette(sys_palette, sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*3),
+	setup_artifact_palette(sizeof(palette) / (sizeof(palette[0])*3) + (M6847_ARTIFACT_COLOR_COUNT*3),
 		0, 5, artifactfactors, M6847_ARTIFACT_COLOR_COUNT, 1);
-
-	/* I'm taking advantage about how 'sys_palette' will be valid for the
-	 * entire emulation; check src/palette.c for details
-	 */
-	game_palette = sys_palette;
 }
 
 UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metapalette, int row, int skew)
@@ -1171,7 +1168,7 @@ static struct videomap_interface m6847_videomap_interface =
 	internal_m6847_get_border_color_callback
 };
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, const struct videomap_interface *videointf, int dirtyramsize)
+int internal_video_start_m6847(const struct m6847_init_params *params, const struct videomap_interface *videointf, int dirtyramsize)
 {
 	struct videomap_config cfg;
 
@@ -1184,7 +1181,7 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, const struct
 	the_state.hs = 1;
 
 	videoram_size = dirtyramsize;
-	if (generic_vh_start())
+	if (video_start_generic())
 		return 1;
 
 	cfg.intf = videointf;
@@ -1219,21 +1216,16 @@ int internal_m6847_vh_start(const struct m6847_init_params *params, const struct
 	return 0;
 }
 
-int m6847_vh_start(const struct m6847_init_params *params)
+int video_start_m6847(const struct m6847_init_params *params)
 {
 	int result;
 
-	result = internal_m6847_vh_start(params, &m6847_videomap_interface, MAX_VRAM);
+	result = internal_video_start_m6847(params, &m6847_videomap_interface, MAX_VRAM);
 	if (result)
 		return result;
 
 	state_save_register_func_postload(schedule_full_refresh);
 	return 0;
-}
-
-void m6847_vh_stop(void)
-{
-	generic_vh_stop();
 }
 
 /* --------------------------------------------------
@@ -1297,15 +1289,19 @@ static void do_invoke(int ci_int)
 	struct callback_info *ci;
 	ci = (struct callback_info *) ci_int;
 	ci->callback(0, ci->value);
-	free(ci);
 }
 
 static void invoke_callback(mem_write_handler callback, double delay, int value)
 {
+	static int index_ = 0;
+	static struct callback_info callback_buf[32];
+
 	struct callback_info *ci;
 
 	if (callback) {
-		ci = (struct callback_info *) malloc(sizeof(struct callback_info));
+		index_ %= sizeof(callback_buf) / sizeof(callback_buf[0]);
+
+		ci = &callback_buf[index_++];
 		if (!ci)
 			return;
 		ci->callback = callback;
@@ -1373,7 +1369,7 @@ int internal_m6847_getadjustedscanline(void)
 	return scanline;
 }
 
-int internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline)
+void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline)
 {
 #if LOG_INTERRUPT
 	logerror("internal_m6847_vh_interrupt(): scanline=%d horzbeampos=%d\n", scanline, cpu_gethorzbeampos());
@@ -1398,13 +1394,11 @@ int internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanli
 	/* hsync interrupt */
 	timer_set(DHS_F, 0, hs_fall);
 	timer_set(DHS_R + (TIME_IN_HZ(3588545.0) * 16.5), 0, hs_rise);
-
-	return ignore_interrupt();
 }
 
-int m6847_vh_interrupt(void)
+void m6847_vh_interrupt(void)
 {
-	return internal_m6847_vh_interrupt(internal_m6847_getadjustedscanline(), 0, 13+25+192);
+	internal_m6847_vh_interrupt(internal_m6847_getadjustedscanline(), 0, 13+25+192);
 }
 
 /* --------------------------------------------------
@@ -1442,7 +1436,7 @@ int m6847_get_bordercolor(void)
 	return bordercolor;
 }
 
-void m6847_vh_update(struct mame_bitmap *bitmap, int full_refresh)
+void video_update_m6847(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	static int last_artifact_value = 0;
 	int artifact_value;
@@ -1459,7 +1453,7 @@ void m6847_vh_update(struct mame_bitmap *bitmap, int full_refresh)
 		}
 	}
 
-	videomap_update(bitmap, full_refresh);
+	videomap_update(bitmap, cliprect);
 }
 
 int m6847_is_t1(int version)

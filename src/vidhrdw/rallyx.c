@@ -18,21 +18,8 @@ unsigned char *rallyx_scrollx,*rallyx_scrolly;
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static struct mame_bitmap *tmpbitmap1;
-static int flipscreen;
 
 
-
-static struct rectangle spritevisiblearea =
-{
-	0*8, 28*8-1,
-	0*8, 28*8-1
-};
-
-static struct rectangle spritevisibleareaflip =
-{
-	8*8, 36*8-1,
-	0*8, 28*8-1
-};
 
 static struct rectangle radarvisiblearea =
 {
@@ -68,7 +55,7 @@ static struct rectangle radarvisibleareaflip =
   1 kohm pull-down is an all three RGB outputs.
 
 ***************************************************************************/
-void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( rallyx )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -77,24 +64,26 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -113,7 +102,7 @@ void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(2,i) = 16 + i;
 }
 
-void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( locomotn )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -122,23 +111,25 @@ void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (*color_prom >> 6) & 0x01;
 		bit1 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x50 * bit0 + 0xab * bit1;
+		b = 0x50 * bit0 + 0xab * bit1;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -163,37 +154,19 @@ void locomotn_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int rallyx_vh_start(void)
+VIDEO_START( rallyx )
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
+	if ((dirtybuffer2 = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap1 = bitmap_alloc(32*8,32*8)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
+	if ((tmpbitmap1 = auto_bitmap_alloc(32*8,32*8)) == 0)
 		return 1;
-	}
 
 	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void rallyx_vh_stop(void)
-{
-	bitmap_free(tmpbitmap1);
-	free(dirtybuffer2);
-	generic_vh_stop();
 }
 
 
@@ -223,9 +196,9 @@ WRITE_HANDLER( rallyx_colorram2_w )
 
 WRITE_HANDLER( rallyx_flipscreen_w )
 {
-	if (flipscreen != (data & 1))
+	if (flip_screen != (data & 1))
 	{
-		flipscreen = data & 1;
+		flip_screen_set(data & 1);
 		memset(dirtybuffer,1,videoram_size);
 		memset(dirtybuffer2,1,videoram_size);
 	}
@@ -241,14 +214,14 @@ WRITE_HANDLER( rallyx_flipscreen_w )
 
 ***************************************************************************/
 
-void rallyx_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( rallyx )
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
 const int displacement = 1;
 
 
-	if (flipscreen)
+	if (flip_screen)
 	{
 		scrollx = (*rallyx_scrollx - displacement) + 32;
 		scrolly = (*rallyx_scrolly + 16) - 32;
@@ -276,7 +249,7 @@ const int displacement = 1;
 			sy = offs / 32;
 			flipx = ~rallyx_colorram2[offs] & 0x40;
 			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -307,7 +280,7 @@ const int displacement = 1;
 			sy = offs / 32 - 2;
 			flipx = ~colorram[offs] & 0x40;
 			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 7 - sx;
 				sy = 27 - sy;
@@ -340,7 +313,7 @@ const int displacement = 1;
 				spriteram_2[offs + 1] & 0x3f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx,sy,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
@@ -356,7 +329,7 @@ const int displacement = 1;
 		sy = offs / 32;
 		flipx = ~rallyx_colorram2[offs] & 0x40;
 		flipy = rallyx_colorram2[offs] & 0x80;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 31 - sx;
 			sy = 31 - sy;
@@ -380,7 +353,7 @@ const int displacement = 1;
 
 
 	/* radar */
-	if (flipscreen)
+	if (flip_screen)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -391,18 +364,14 @@ const int displacement = 1;
 	{
 		int x,y;
 
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8) - 2;
-		y = 235 - rallyx_radary[offs];
-		if (flipscreen)
-		{
-			x -= 1;
-			y += 2;
-		}
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x01) << 8);
+		y = 237 - rallyx_radary[offs];
+		if (flip_screen) x -= 3;
 
 		drawgfx(bitmap,Machine->gfx[2],
 				((rallyx_radarattr[offs] & 0x0e) >> 1) ^ 0x07,
 				0,
-				flipscreen,flipscreen,
+				0,0,
 				x,y,
 				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
@@ -410,14 +379,14 @@ const int displacement = 1;
 
 
 
-void jungler_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jungler )
 {
 	int offs,sx,sy;
 	int scrollx,scrolly;
 const int displacement = 0;
 
 
-	if (flipscreen)
+	if (flip_screen)
 	{
 		scrollx = (*rallyx_scrollx - displacement) + 32;
 		scrolly = (*rallyx_scrolly + 16) - 32;
@@ -442,7 +411,7 @@ const int displacement = 0;
 			sy = offs / 32;
 			flipx = ~rallyx_colorram2[offs] & 0x40;
 			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -473,7 +442,7 @@ const int displacement = 0;
 			sy = offs / 32 - 2;
 			flipx = ~colorram[offs] & 0x40;
 			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 7 - sx;
 				sy = 27 - sy;
@@ -506,12 +475,12 @@ const int displacement = 0;
 				spriteram_2[offs + 1] & 0x3f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx,sy,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
 	/* radar */
-	if (flipscreen)
+	if (flip_screen)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -528,7 +497,7 @@ const int displacement = 0;
 		drawgfx(bitmap,Machine->gfx[2],
 				(rallyx_radarattr[offs] & 0x07) ^ 0x07,
 				0,
-				flipscreen,flipscreen,
+				0,0,
 				x,y,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -536,9 +505,10 @@ const int displacement = 0;
 
 
 
-void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( locomotn )
 {
 	int offs,sx,sy;
+const int displacement = 0;
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -557,7 +527,7 @@ void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			/* not a mistake, one bit selects both  flips */
 			flipx = rallyx_colorram2[offs] & 0x80;
 			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -589,7 +559,7 @@ void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			/* not a mistake, one bit selects both  flips */
 			flipx = colorram[offs] & 0x80;
 			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 7 - sx;
 				sy = 27 - sy;
@@ -612,7 +582,7 @@ void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		int scrollx,scrolly;
 
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			scrollx = (*rallyx_scrollx) + 32;
 			scrolly = (*rallyx_scrolly + 16) - 32;
@@ -628,7 +598,7 @@ void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 	/* radar */
-	if (flipscreen)
+	if (flip_screen)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -637,16 +607,18 @@ void locomotn_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
-		sx = spriteram[offs + 1] - 1;
-		sy = 224 - spriteram_2[offs];
-if (flipscreen) sx += 32;
+		sx = spriteram[offs + 1] + ((spriteram_2[offs + 1] & 0x80) << 1) - displacement;
+		sy = 225 - spriteram_2[offs] - displacement;
+
+		/* handle reduced visible area in some games */
+		if (flip_screen && Machine->drv->default_visible_area.max_x == 32*8-1) sx += 32;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
 				spriteram_2[offs + 1] & 0x3f,
-				!flipscreen,!flipscreen,
+				spriteram[offs] & 2,spriteram[offs] & 2,
 				sx,sy,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
@@ -655,30 +627,25 @@ if (flipscreen) sx += 32;
 	{
 		int x,y;
 
-		/* it looks like the addresses used are
-		   a000-a003  a004-a00f
-		   8020-8023  8034-803f
-		   8820-8823  8834-883f
-		   so 8024-8033 and 8824-8833 are not used
-		*/
-
-		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
-		if (flipscreen) x += 32;
+		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs] & 0x08) << 5);
 		y = 237 - rallyx_radary[offs];
+		if (flip_screen) x -= 3;
+
+		/* handle reduced visible area in some games */
+		if (flip_screen && Machine->drv->default_visible_area.max_x == 32*8-1) x += 32;
 
 		drawgfx(bitmap,Machine->gfx[2],
 				(rallyx_radarattr[offs & 0x0f] & 0x07) ^ 0x07,
 				0,
-				flipscreen,flipscreen,
+				0,0,
 				x,y,
-//				&Machine->visible_area,TRANSPARENCY_PEN,3);
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
 
 
 
-void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( commsega )
 {
 	int offs,sx,sy;
 
@@ -699,7 +666,7 @@ void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			/* not a mistake, one bit selects both  flips */
 			flipx = rallyx_colorram2[offs] & 0x80;
 			flipy = rallyx_colorram2[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -731,7 +698,7 @@ void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			/* not a mistake, one bit selects both  flips */
 			flipx = colorram[offs] & 0x80;
 			flipy = colorram[offs] & 0x80;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 7 - sx;
 				sy = 27 - sy;
@@ -754,7 +721,7 @@ void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		int scrollx,scrolly;
 
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			scrollx = (*rallyx_scrollx) + 32;
 			scrolly = (*rallyx_scrolly + 16) - 32;
@@ -770,7 +737,7 @@ void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 	/* radar */
-	if (flipscreen)
+	if (flip_screen)
 		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 	else
 		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
@@ -784,10 +751,10 @@ void commsega_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		sx = spriteram[offs + 1] - 1;
 		sy = 224 - spriteram_2[offs];
-if (flipscreen) sx += 32;
+if (flip_screen) sx += 32;
 		flipx = ~spriteram[offs] & 1;
 		flipy = ~spriteram[offs] & 2;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			flipx = !flipx;
 			flipy = !flipy;
@@ -817,14 +784,14 @@ if (flipscreen) sx += 32;
 		*/
 
 		x = rallyx_radarx[offs] + ((~rallyx_radarattr[offs & 0x0f] & 0x08) << 5);
-		if (flipscreen) x += 32;
+		if (flip_screen) x += 32;
 		y = 237 - rallyx_radary[offs];
 
 
 		drawgfx(bitmap,Machine->gfx[2],
 				(rallyx_radarattr[offs & 0x0f] & 0x07) ^ 0x07,
 				0,
-				flipscreen,flipscreen,
+				0,0,
 				x,y,
 				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}

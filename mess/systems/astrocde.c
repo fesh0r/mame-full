@@ -204,8 +204,8 @@ static struct MachineDriver machine_driver_astrocde =
 
 	VIDEO_TYPE_RASTER,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	astrocade_vh_screenrefresh,
 
 	/* sound hardware */

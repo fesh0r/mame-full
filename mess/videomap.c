@@ -21,8 +21,6 @@
 #define FALSE 0
 #endif
 
-static int force_partial_update(int row);
-
 #define PROFILER_VIDEOMAP_DRAWBORDER	PROFILER_USER3
 #define PROFILER_VIDEOMAP_DRAWBODY		PROFILER_USER4
 
@@ -942,7 +940,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 	}
 
 	/* mark us dirty, if necessary */
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+/*	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
 	{
 		mark_dirty(
 			Machine->visible_area.min_x,
@@ -950,7 +948,7 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 			Machine->visible_area.max_x,
 			base_scanline + frame_info.bordertop_scanlines + scanline_count - 1);
 	}
-
+*/
 	/* free the pens, if used */
 	if (pens)
 		free(pens);
@@ -963,9 +961,9 @@ static void plot_modified_border(struct mame_bitmap *bitmap, int x, int y, int w
 {
 	assert(height);
 
-	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
+/*	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
 		mark_dirty(x, y, x + width - 1, y + height - 1);
-
+*/
 	do
 	{
 		draw_scanline16(bitmap, x, y++, width, border_scanline + x, NULL, -1);
@@ -982,7 +980,7 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 
 	profiler_mark(PROFILER_VIDEOMAP_DRAWBORDER);
 
-	plot_border = (flags & FLAG_BORDER_MODIFIED) ? plot_modified_border : plot_box;
+	plot_border = (flags & FLAG_BORDER_MODIFIED) ? plot_modified_border : bitmap->plot_box;
 	scanline_length = cliprect->max_x - cliprect->min_x + 1;
 
 	if (draw_border)
@@ -1029,50 +1027,13 @@ static void internal_videomap_update(struct mame_bitmap *bitmap, const struct re
 	profiler_mark(PROFILER_END);
 }
 
-static int last_partial_scanline;
-static struct mame_bitmap *the_bitmap;
-
-static int force_partial_update(int scanline)
+void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	struct rectangle r;
-
-	assert(scanline >= 0);
-	assert(scanline < Machine->scrbitmap->height);
-
-	if (the_bitmap)
-	{
-		if (last_partial_scanline <= scanline)
-		{
-#if 0
-			logerror("force_partial_update(): scanline=%d\n", scanline);
-#endif
-			if (last_partial_scanline == 0)
-				calc_videoram_pos();
-			r = Machine->visible_area;
-			r.min_y = last_partial_scanline;
-			r.max_y = scanline;
-			internal_videomap_update(the_bitmap, &r, NULL, TRUE);
-			last_partial_scanline = scanline + 1;
-		}
-	}
-	return 0;
-}
-
-void videomap_update(struct mame_bitmap *bitmap, int full_refresh)
-{
-	struct rectangle r;
-
-	r = Machine->visible_area;
-	r.min_y = last_partial_scanline;
-	the_bitmap = bitmap;
-
-	if (last_partial_scanline == 0)
+	if (cliprect->min_y == Machine->visible_area.min_y)
 		calc_videoram_pos();
 
-	internal_videomap_update(bitmap, &r,
-		(full_refresh || !videoram_dirtybuffer) ? NULL : &videoram_dirtybuffer_pos,
-		full_refresh);
-	last_partial_scanline = 0;
+	internal_videomap_update(bitmap, cliprect,
+		/*videoram_dirtybuffer ? &videoram_dirtybuffer_pos :*/ NULL, 1);
 }
 
 /* ----------------------------------------------------------------------- *

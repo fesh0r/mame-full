@@ -33,7 +33,7 @@ typedef struct {
 } RIOT_CONFIG;
 
 /* This has to be called from a driver at startup */
-void riot_config(int nr, RIOT_CONFIG *riot);
+void riot_init(int nr, RIOT_CONFIG *riot);
 	
 int riot_r(int chip, int offs);
 void riot_w(int chip, int offs, int data);

@@ -223,7 +223,8 @@ static void pc_rtc_timer(int param)
 void pc_rtc_init(void)
 {
 	memset(&pc_rtc,0,sizeof(pc_rtc));
-	pc_rtc.timer=timer_pulse(1.0,0,pc_rtc_timer);
+	pc_rtc.timer = timer_alloc(pc_rtc_timer);
+	timer_adjust(pc_rtc.timer, 0, 0, 1.0);
 }
 
 READ_HANDLER( pc_rtc_r )

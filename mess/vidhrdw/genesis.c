@@ -190,33 +190,29 @@ WRITE16_HANDLER ( genesis_videoram1_w )
 
 int genesis_vh_start (void)
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* create scrollA and scrollB playfields */
 
   /*	if ((scroll_a = osd_create_bitmap(1024,1024)) == 0)
 	{
-		generic_vh_stop();
 		return 1;
 	}
 	if ((scroll_b = osd_create_bitmap(1024,1024)) == 0)
 	{
-		generic_vh_stop();
 		bitmap_free(scroll_a);
 		return 1;
 	}*/
 
    	if ((spritelayer = bitmap_alloc(2500,2500)) == 0)
 	{
-		generic_vh_stop();
    //		bitmap_free(scroll_a);
    //		bitmap_free(scroll_b);
 		return 1;
 	}
 	if ((bitmap2 = bitmap_alloc(320,224)) == 0)
 	{
-		generic_vh_stop();
    //		bitmap_free(scroll_a);
    //		bitmap_free(scroll_b);
 		return 1;
@@ -226,7 +222,6 @@ int genesis_vh_start (void)
 
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
     	bitmap_free(spritelayer);
@@ -237,7 +232,6 @@ int genesis_vh_start (void)
 
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
@@ -246,9 +240,8 @@ int genesis_vh_start (void)
 	}*/
 
 
-	if ((tile_changed_1 = malloc(0x1000)) == 0)
+	if ((tile_changed_1 = auto_malloc(0x1000)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
@@ -257,15 +250,13 @@ int genesis_vh_start (void)
 		return 1;
 	}
 
-	if ((tile_changed_2 = malloc(0x1000)) == 0)
+	if ((tile_changed_2 = auto_malloc(0x1000)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
 	//	bitmap_free(bitmap_vram);
 	//	bitmap_free(bitmap_sprite);
-		free(tile_changed_1);
 		return 1;
 	}
 
@@ -343,10 +334,6 @@ void genesis_vh_stop (void)
 	bitmap_free(spritelayer);
  //	bitmap_free(bitmap_vram);
  //	bitmap_free(bitmap_sprite);
-	free(tile_changed_1);
-	free(tile_changed_2);
-
-	generic_vh_stop ();
 }
 
 static unsigned char *get_dma_dest_address(int id)
@@ -618,7 +605,7 @@ WRITE16_HANDLER ( genesis_vdp_ctrl_w )
 						vdp_h_scroll_addr	= (char *)(&vdp_vram[0]+(vdp_data<<10));
 						break;
 					case 14: /* nothing */
-						logerror("$c10001c register usage @ PC=%08x\n",(UINT32)cpu_get_pc());
+						logerror("$c10001c register usage @ PC=%08x\n",(UINT32)activecpu_get_pc());
 						break;
 					case 15: /* autoincrement data */
 						vdp_auto_increment	= vdp_data;
@@ -1754,33 +1741,29 @@ void genesis_videoram1_w (int offset, int data)
 
 int genesis_vh_start (void)
 {
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* create scrollA and scrollB playfields */
 
   	if ((scroll_a = osd_create_bitmap(1024,1024)) == 0)
 	{
-		generic_vh_stop();
 		return 1;
 	}
 	if ((scroll_b = osd_create_bitmap(1024,1024)) == 0)
 	{
-		generic_vh_stop();
 		bitmap_free(scroll_a);
 		return 1;
 	}
 
    	if ((spritelayer = osd_create_bitmap(2500,2500)) == 0)
 	{
-		generic_vh_stop();
    //		bitmap_free(scroll_a);
    //		bitmap_free(scroll_b);
 		return 1;
 	}
 	if ((bitmap2 = osd_create_bitmap(320,224)) == 0)
 	{
-		generic_vh_stop();
    //		bitmap_free(scroll_a);
    //		bitmap_free(scroll_b);
 		return 1;
@@ -1790,7 +1773,6 @@ int genesis_vh_start (void)
 
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
     	bitmap_free(spritelayer);
@@ -1801,7 +1783,6 @@ int genesis_vh_start (void)
 
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
@@ -1810,9 +1791,8 @@ int genesis_vh_start (void)
 	}*/
 
 
-	if ((tile_changed_1 = malloc(0x800)) == 0)
+	if ((tile_changed_1 = auto_malloc(0x800)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
@@ -1821,15 +1801,13 @@ int genesis_vh_start (void)
 		return 1;
 	}
 
-	if ((tile_changed_2 = malloc(0x800)) == 0)
+	if ((tile_changed_2 = auto_malloc(0x800)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
 	//	bitmap_free(bitmap_vram);
 	//	bitmap_free(bitmap_sprite);
-		free(tile_changed_1);
 		return 1;
 	}
 
@@ -1907,10 +1885,6 @@ void genesis_vh_stop (void)
 	bitmap_free(spritelayer);
  //	bitmap_free(bitmap_vram);
  //	bitmap_free(bitmap_sprite);
-	free(tile_changed_1);
-	free(tile_changed_2);
-
-	generic_vh_stop ();
 }
 
 unsigned char *get_dma_dest_address(int id)

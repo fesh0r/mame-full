@@ -63,7 +63,7 @@ extern "C" {
 #define DECL_SPEC
 #endif
 
-int DECL_SPEC mess_printf(char *fmt, ...);
+int mess_printf(char *fmt, ...);
 
 extern void showmessinfo(void);
 extern int displayimageinfo(struct mame_bitmap *bitmap, int selected);

@@ -23,33 +23,34 @@ extern unsigned char *phozon_spriteram;
   bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom){
+PALETTE_INIT( phozon ){
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 	for (i = 0; i < Machine->drv->total_colors; i++){
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 		/* red component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -64,19 +65,14 @@ void phozon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(2,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-int phozon_vh_start( void ) {
+VIDEO_START( phozon ) {
 	/* set up spriteram area */
 	spriteram_size = 0x80;
 	spriteram = &phozon_spriteram[0x780];
 	spriteram_2 = &phozon_spriteram[0x780+0x800];
 	spriteram_3 = &phozon_spriteram[0x780+0x800+0x800];
 
-	return generic_vh_start();
-}
-
-void phozon_vh_stop( void ) {
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 void phozon_draw_sprite(struct mame_bitmap *dest,unsigned int code,unsigned int color,
@@ -100,7 +96,7 @@ void phozon_draw_sprite8(struct mame_bitmap *dest,unsigned int code,unsigned int
   the main emulation engine.
 
 ***************************************************************************/
-void phozon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( phozon )
 {
 	int offs;
 

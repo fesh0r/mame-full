@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "machine/system16.h"
+#include "system16.h"
 
 //int sys16_sh_shadowpal;
 //int sys16_MaxShadowColors;
@@ -51,7 +51,7 @@ READ16_HANDLER( SYS16_CPU2_RESET_HACK ){
 
 void (*sys16_custom_irq)(void);
 
-void sys16_onetime_init_machine( void ){
+MACHINE_INIT( sys16_onetime ){
 	sys16_bg1_trans=0;
 	sys16_rowscroll_scroll=0;
 	sys18_splittab_bg_x=0;
@@ -2202,16 +2202,6 @@ struct DACinterface sys16_7751_dac_interface =
 struct UPD7759_interface sys16_upd7759_interface =
 {
 	1,			/* 1 chip */
-	UPD7759_STANDARD_CLOCK,
-	{ 60 }, 	/* volumes */
-	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
-    UPD7759_SLAVE_MODE,
-	{ sound_cause_nmi },
-};
-struct UPD7759_interface aliensyn_upd7759_interface =
-{
-	1,			/* 1 chip */
-	480000,
 	{ 60 }, 	/* volumes */
 	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
     UPD7759_SLAVE_MODE,

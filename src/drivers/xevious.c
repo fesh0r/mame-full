@@ -215,10 +215,10 @@ READ_HANDLER( xevious_customio_data_r );
 WRITE_HANDLER( xevious_customio_w );
 WRITE_HANDLER( xevious_customio_data_w );
 WRITE_HANDLER( xevious_halt_w );
-int  xevious_interrupt_1(void);
-int  xevious_interrupt_2(void);
-int  xevious_interrupt_3(void);
-void xevious_init_machine(void);
+INTERRUPT_GEN( xevious_interrupt_1 );
+INTERRUPT_GEN( xevious_interrupt_2 );
+INTERRUPT_GEN( xevious_interrupt_3 );
+MACHINE_INIT( xevious );
 
 WRITE_HANDLER( xevious_vh_latch_w );
 
@@ -228,9 +228,9 @@ WRITE_HANDLER( xevious_fg_videoram_w );
 WRITE_HANDLER( xevious_fg_colorram_w );
 WRITE_HANDLER( xevious_bg_videoram_w );
 WRITE_HANDLER( xevious_bg_colorram_w );
-int  xevious_vh_start( void );
-void xevious_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void xevious_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( xevious );
+PALETTE_INIT( xevious );
+VIDEO_UPDATE( xevious );
 
 WRITE_HANDLER( pengo_sound_w );
 extern unsigned char *pengo_soundregs;
@@ -306,11 +306,11 @@ INPUT_PORTS_START( xevious )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x40, "Easy" )
@@ -322,7 +322,7 @@ INPUT_PORTS_START( xevious )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Left Coin" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
@@ -332,11 +332,22 @@ INPUT_PORTS_START( xevious )
 	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
 	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
 	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
 	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
-	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
+	/* Bonus scores for 5 lives
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x14, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x1c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x0c, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x04, "20K 80K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	*/
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x20, "2" )
@@ -372,18 +383,18 @@ INPUT_PORTS_START( xevious )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1, 1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-/* same as xevious, the only difference is DSW0 bit 7 */
+/* same as xevious but different "Coin B" Dip Switch and "Copyright" Dip Switch instead of "Freeze?" */
 INPUT_PORTS_START( xeviousa )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
@@ -400,7 +411,7 @@ INPUT_PORTS_START( xeviousa )
 	PORT_DIPSETTING(    0x80, "Atari/Namco" )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Left Coin" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
@@ -410,11 +421,22 @@ INPUT_PORTS_START( xeviousa )
 	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
 	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
 	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
 	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
-	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
+	/* Bonus scores for 5 lives
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x14, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x1c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x0c, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x04, "20K 80K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	*/
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x20, "2" )
@@ -450,19 +472,107 @@ INPUT_PORTS_START( xeviousa )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1, 1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-/* same as xevious, the only difference is DSW0 bit 7. Note that the bit is */
-/* inverted wrt xevious. */
+/* same as xevious but "Copyright" Dip Switch instead of "Freeze?" */
+INPUT_PORTS_START( xeviousb )
+	PORT_START	/* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	/* when switch is on Namco, high score names are 10 letters long */
+	PORT_DIPNAME( 0x80, 0x80, "Copyright" )
+	PORT_DIPSETTING(    0x00, "Namco" )
+	PORT_DIPSETTING(    0x80, "Atari/Namco" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	/* TODO: bonus scores are different for 5 lives */
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
+	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x04, "20K 60K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	/* Bonus scores for 5 lives
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x14, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x1c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x0c, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x04, "20K 80K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	*/
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x60, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+
+	PORT_START	/* FAKE */
+	/* The player inputs are not memory mapped, they are handled by an I/O chip. */
+	/* These fake input ports are read by galaga_customio_data_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL)
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_START1, 1 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1, 1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
+
+/* same as xevious but different "Coin B" Dip Switch and inverted "Freeze?" Dip Switch */
 INPUT_PORTS_START( sxevious )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "Right Coin" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
@@ -478,7 +588,7 @@ INPUT_PORTS_START( sxevious )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x03, 0x03, "Left Coin" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
@@ -488,11 +598,22 @@ INPUT_PORTS_START( sxevious )
 	PORT_DIPSETTING(    0x18, "10K 40K 40K" )
 	PORT_DIPSETTING(    0x14, "10K 50K 50K" )
 	PORT_DIPSETTING(    0x10, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x0c, "20K 70K 70K" )
 	PORT_DIPSETTING(    0x08, "20K 80K 80K" )
-	PORT_DIPSETTING(    0x1c, "20K 60K 60K" )
 	PORT_DIPSETTING(    0x04, "20K 60K" )
 	PORT_DIPSETTING(    0x00, "None" )
+	/* Bonus scores for 5 lives
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10K 50K 50K" )
+	PORT_DIPSETTING(    0x14, "20K 50K 50K" )
+	PORT_DIPSETTING(    0x10, "20K 60K 60K" )
+	PORT_DIPSETTING(    0x1c, "20K 70K 70K" )
+	PORT_DIPSETTING(    0x0c, "20K 80K 80K" )
+	PORT_DIPSETTING(    0x08, "30K 100K 100K" )
+	PORT_DIPSETTING(    0x04, "20K 80K" )
+	PORT_DIPSETTING(    0x00, "None" )
+	*/
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x40, "1" )
 	PORT_DIPSETTING(    0x20, "2" )
@@ -528,7 +649,7 @@ INPUT_PORTS_START( sxevious )
 	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_START2, 1 )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_LOW, IPT_COIN2, 1 )
-	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN3, 1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1, 1 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
@@ -637,60 +758,43 @@ struct Samplesinterface samples_interface =
 
 
 
-static const struct MachineDriver machine_driver_xevious =
-{
+static MACHINE_DRIVER_START( xevious )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz (?) */
-			readmem_cpu1,writemem_cpu1,0,0,
-			xevious_interrupt_1,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz */
-			readmem_cpu2,writemem_cpu2,0,0,
-			xevious_interrupt_2,1
-		},
-		{
-			CPU_Z80,
-			3072000,	/* 3.125 MHz */
-			readmem_cpu3,writemem_cpu3,0,0,
-			0,0,
-			xevious_interrupt_3,16000.0/128
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	xevious_init_machine,
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz (?) */
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_1,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(xevious_interrupt_2,1)
+
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.125 MHz */
+	MDRV_CPU_MEMORY(readmem_cpu3,writemem_cpu3)
+	MDRV_CPU_PERIODIC_INT(xevious_interrupt_3,16000.0/128)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(xevious)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	128+1,128*4+64*8+64*2,
-	xevious_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+1)
+	MDRV_COLORTABLE_LENGTH(128*4+64*8+64*2)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	xevious_vh_start,
-	0,
-	xevious_vh_screenrefresh,
+	MDRV_PALETTE_INIT(xevious)
+	MDRV_VIDEO_START(xevious)
+	MDRV_VIDEO_UPDATE(xevious)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		},
-		{
-			SOUND_SAMPLES,
-			&samples_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+	MDRV_SOUND_ADD(SAMPLES, samples_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -754,6 +858,50 @@ ROM_START( xeviousa )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
 	ROM_LOAD( "xea-4c-a.bin", 0x0000, 0x2000, 0x14d8fa03 )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_12.3b",    0x0000, 0x1000, 0x088c8b26 )	/* foreground characters */
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_13.3c",    0x0000, 0x1000, 0xde60ba25 )	/* bg pattern B0 */
+	ROM_LOAD( "xvi_14.3d",    0x1000, 0x1000, 0x535cdbbc )	/* bg pattern B1 */
+
+	ROM_REGION( 0x8000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "xvi_15.4m",    0x0000, 0x2000, 0xdc2c0ecb )	/* sprite set #1, planes 0/1 */
+	ROM_LOAD( "xvi_18.4r",    0x2000, 0x2000, 0x02417d19 )	/* sprite set #1, plane 2, set #2, plane 0 */
+	ROM_LOAD( "xvi_17.4p",    0x4000, 0x2000, 0xdfb587ce )	/* sprite set #2, planes 1/2 */
+	ROM_LOAD( "xvi_16.4n",    0x6000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
+	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
+
+	ROM_REGION( 0x4000, REGION_GFX4, 0 )	/* background tilemaps */
+	ROM_LOAD( "xvi_9.2a",     0x0000, 0x1000, 0x57ed9879 )
+	ROM_LOAD( "xvi_10.2b",    0x1000, 0x2000, 0xae3ba9e5 )
+	ROM_LOAD( "xvi_11.2c",    0x3000, 0x1000, 0x31e244dd )
+
+	ROM_REGION( 0x0b00, REGION_PROMS, 0 )
+	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
+	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
+	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
+	ROM_LOAD( "xvi_7bpr.4h",  0x0300, 0x0200, 0x22d98032 ) /* bg tiles lookup table low bits */
+	ROM_LOAD( "xvi_6bpr.4f",  0x0500, 0x0200, 0x3a7599f0 ) /* bg tiles lookup table high bits */
+	ROM_LOAD( "xvi_4bpr.3l",  0x0700, 0x0200, 0xfd8b9d91 ) /* sprite lookup table low bits */
+	ROM_LOAD( "xvi_5bpr.3m",  0x0900, 0x0200, 0xbf906d82 ) /* sprite lookup table high bits */
+
+	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
+	ROM_LOAD( "xvi_2bpr.7n",  0x0000, 0x0100, 0x550f06bc )
+	ROM_LOAD( "xvi_1bpr.5n",  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( xeviousb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for the first CPU */
+	ROM_LOAD( "1m.bin",     0x0000, 0x2000, 0xe82a22f6 )
+	ROM_LOAD( "1l.bin",     0x2000, 0x2000, 0x13831df9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "4c.bin",     0x0000, 0x2000, 0x827e7747 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "xvi_7.2c",     0x0000, 0x1000, 0xdd35cf1c )
@@ -893,7 +1041,7 @@ ROM_END
 
 
 
-static void init_xevios(void)
+static DRIVER_INIT( xevios )
 {
 	int A,i;
 
@@ -944,6 +1092,8 @@ static void init_xevios(void)
 
 
 GAME( 1982, xevious,  0,       xevious, xevious,  0,      ROT90, "Namco", "Xevious (Namco)" )
-GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari)" )
-GAME( 1982, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
+GAME( 1982, xeviousa, xevious, xevious, xeviousa, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 1)" )
+GAME( 1982, xeviousb, xevious, xevious, xeviousb, 0,      ROT90, "Namco (Atari license)", "Xevious (Atari set 2)" )
+GAME( 1983, xevios,   xevious, xevious, xevious,  xevios, ROT90, "bootleg", "Xevios" )
 GAME( 1984, sxevious, xevious, xevious, sxevious, 0,      ROT90, "Namco", "Super Xevious" )
+

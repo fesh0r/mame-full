@@ -72,12 +72,12 @@ FILE *videolog;
 FILE *colorlog;
 #endif
 
-void nes_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
-{
 #ifndef M_PI
 #define M_PI			(3.14159265358979323846L)
 #endif
 
+PALETTE_INIT( nes )
+{
 	/* This routine builds a palette using a transformation from */
 	/* the YUV (Y, B-Y, R-Y) to the RGB color space */
 
@@ -188,12 +188,15 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
 					B = 255;
 
 				/* Round, and set the value */
-				nes_palette[(i*16+j)*3] = *palette = floor(R+.5);
-				palette++;
-				nes_palette[(i*16+j)*3+1] = *palette = floor(G+.5);
-				palette++;
-				nes_palette[(i*16+j)*3+2] = *palette = floor(B+.5);
-				palette++;
+				{
+					UINT8 r, g, b;
+
+					nes_palette[(i*16+j)*3] = r = floor(R+.5);
+					nes_palette[(i*16+j)*3+1] = g = floor(G+.5);
+					nes_palette[(i*16+j)*3+2] = b = floor(B+.5);
+
+					palette_set_color(i*16+j, r, g, b);
+				}
 			}
 		}
 #ifdef COLOR_INTENSITY
@@ -215,47 +218,33 @@ void nes_init_palette(unsigned char *palette, unsigned short *colortable,const u
   Start the video hardware emulation.
 
 ***************************************************************************/
-int nes_vh_start(void)
+VIDEO_START( nes )
 {
 	int i;
 
 	/* We must clear the videoram on startup */
-	if ((videoram = calloc (VIDEORAM_SIZE, 1)) == 0)
+	if ((videoram = auto_malloc(VIDEORAM_SIZE)) == 0)
 		return 1;
+	memset(videoram, 0, VIDEORAM_SIZE);
 
 	/* We use an offscreen bitmap that's 4 times as large as the visible one */
-	if ((tmpbitmap = bitmap_alloc_depth(2 * 32*8, 2 * 30*8,Machine->scrbitmap->depth)) == 0)
-	{
-		free (videoram);
-		bitmap_free (tmpbitmap);
+	if ((tmpbitmap = auto_bitmap_alloc_depth(2 * 32*8, 2 * 30*8,Machine->scrbitmap->depth)) == 0)
 		return 1;
-	}
 
 	/* sprite RAM must be clear on startup */
-	if ((spriteram = calloc (SPRITERAM_SIZE,1)) == 0)
-	{
-		free (videoram);
-		bitmap_free (tmpbitmap);
+	if ((spriteram = auto_malloc(SPRITERAM_SIZE)) == 0)
 		return 1;
-	}
+
+	memset(spriteram, 0, SPRITERAM_SIZE);
 
 #ifdef DIRTY_BUFFERS
-	dirtybuffer  = malloc (VRAM_SIZE);
-	dirtybuffer2 = malloc (VRAM_SIZE);
-	dirtybuffer3 = malloc (VRAM_SIZE);
-	dirtybuffer4 = malloc (VRAM_SIZE);
+	dirtybuffer  = auto_malloc (VRAM_SIZE);
+	dirtybuffer2 = auto_malloc (VRAM_SIZE);
+	dirtybuffer3 = auto_malloc (VRAM_SIZE);
+	dirtybuffer4 = auto_malloc (VRAM_SIZE);
 
 	if ((!dirtybuffer) || (!dirtybuffer2) || (!dirtybuffer3) || (!dirtybuffer4))
-	{
-		free (videoram);
-		bitmap_free (tmpbitmap);
-		free (spriteram);
-		if (dirtybuffer)  free (dirtybuffer);
-		if (dirtybuffer2) free (dirtybuffer2);
-		if (dirtybuffer3) free (dirtybuffer3);
-		if (dirtybuffer4) free (dirtybuffer4);
 		return 1;
-	}
 
 	memset (dirtybuffer,  1, VRAM_SIZE);
 	memset (dirtybuffer2, 1, VRAM_SIZE);
@@ -287,18 +276,8 @@ int nes_vh_start(void)
   Stop the video hardware emulation.
 
 ***************************************************************************/
-void nes_vh_stop(void)
+VIDEO_STOP( nes )
 {
-	free (videoram);
-	free (spriteram);
-#ifdef DIRTY_BUFFERS
-	free (dirtybuffer);
-	free (dirtybuffer2);
-	free (dirtybuffer3);
-	free (dirtybuffer4);
-#endif
-	bitmap_free (tmpbitmap);
-
 #ifdef LOG_VIDEO
 	if (videolog) fclose (videolog);
 #endif
@@ -795,7 +774,7 @@ static void draw_sight(int playerNum, int x_center, int y_center)
 }
 
 /* This routine is called at the start of vblank to refresh the screen */
-void nes_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( nes )
 {
 #ifdef BIG_SCREEN
 	int page;

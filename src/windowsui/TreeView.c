@@ -100,6 +100,7 @@ static char treeIconNames[][15] =
 	"neo-geo"
 };
 
+
 typedef struct
 {
 	LPSTR       m_lpTitle;      /* Folder Title */
@@ -139,6 +140,9 @@ FOLDERDATA folderData[] =
 	{"Vector",      IS_ROOT,  FOLDER_VECTOR,      FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Trackball",   IS_ROOT,  FOLDER_TRACKBALL,   FOLDER_NONE,  0,        ICON_FOLDER},
 	{"Stereo",      IS_ROOT,  FOLDER_STEREO,      FOLDER_NONE,  0,        ICON_STEREO}
+#ifdef SHOW_UNAVAILABLE_FOLDER
+	,{"Unavailable", IS_ROOT,  FOLDER_UNAVAILABLE, FOLDER_NONE,  0,        ICON_FOLDER_UNAVAILABLE}
+#endif
 };
 
 #define NUM_FOLDERS (sizeof(folderData) / sizeof(FOLDERDATA))
@@ -380,6 +384,7 @@ void InitGames(UINT nGames)
 			}
 			break;
 
+#ifdef SHOW_UNAVAILABLE_FOLDER
 		case FOLDER_UNAVAILABLE:
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 0; jj < nGames; jj++)
@@ -388,7 +393,7 @@ void InitGames(UINT nGames)
 					AddGame(lpFolder, jj);
 			}
 			break;
-
+#endif
 #ifndef NEOFREE
 		case FOLDER_NEOGEO:
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
@@ -549,7 +554,9 @@ void InitGames(UINT nGames)
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 0; jj < nGames; jj++)
 			{
-				if ((drivers[jj]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0)
+                struct InternalMachineDriver drv;
+                expand_machine_driver(drivers[jj]->drv,&drv);
+                if ((drv.video_attributes & VIDEO_TYPE_VECTOR) == 0)
 					AddGame(lpFolder, jj);
 			}
 			break;
@@ -558,7 +565,9 @@ void InitGames(UINT nGames)
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 0; jj < nGames; jj++)
 			{
-				if (drivers[jj]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+                struct InternalMachineDriver drv;
+                expand_machine_driver(drivers[jj]->drv,&drv);
+				if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 					AddGame(lpFolder, jj);
 			}
 			break;
@@ -623,7 +632,9 @@ void InitGames(UINT nGames)
 			SetAllBits(lpFolder->m_lpGameBits, FALSE);
 			for (jj = 0; jj < nGames; jj++)
 			{
-				if (drivers[jj]->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
+                struct InternalMachineDriver drv;
+                expand_machine_driver(drivers[jj]->drv,&drv);
+				if (drv.sound_attributes & SOUND_SUPPORTS_STEREO)
 					AddGame(lpFolder, jj);
 			}
 			break;
@@ -646,6 +657,7 @@ void Tree_Initialize(HWND hWnd)
 BOOL GameFiltered(int nGame, DWORD dwMask)
 {
 	BOOL vector;
+    struct InternalMachineDriver drv;
 #ifndef NEOFREE
 	game_data_type *gameData = GetGameData();
 #endif
@@ -696,7 +708,8 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
 	if (dwMask & F_UNAVAILABLE && GetHasRoms(nGame) == FALSE)
 		return TRUE;
 
-	vector = drivers[nGame]->drv->video_attributes & VIDEO_TYPE_VECTOR;
+    expand_machine_driver(drivers[nGame]->drv,&drv);
+	vector = drv.video_attributes & VIDEO_TYPE_VECTOR;
 
 	/* Filter vector games */
 	if (dwMask & F_VECTOR && vector)
@@ -733,11 +746,12 @@ INT_PTR CALLBACK ResetDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPar
 #if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
+		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+
 		break;
 #endif /* HAS_HELP */
 
@@ -795,16 +809,18 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 	case WM_INITDIALOG:
 		Button_SetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK), 	GetGameCheck());
 		Button_SetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN),	GetVersionCheck());
+		Button_SetCheck(GetDlgItem(hDlg, IDC_JOY_GUI),	GetJoyGUI());
+		Button_SetCheck(GetDlgItem(hDlg, IDC_BROADCAST),	GetBroadcast());
 		return TRUE;
 
 #if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
+		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
 #endif /* HAS_HELP */
 
@@ -814,6 +830,8 @@ INT_PTR CALLBACK StartupDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lP
 		case IDOK :
 			SetGameCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_GAME_CHECK)));
 			SetVersionCheck(Button_GetCheck(GetDlgItem(hDlg, IDC_START_VERSION_WARN)));
+            SetJoyGUI(Button_GetCheck(GetDlgItem(hDlg, IDC_JOY_GUI)));
+            SetBroadcast(Button_GetCheck(GetDlgItem(hDlg, IDC_BROADCAST)));
 			/* Fall through */
 
 		case IDCANCEL :
@@ -980,7 +998,7 @@ static void BuildTreeFolders(HWND hWnd)
 			tvi.iImage	= lpFolder->m_nIconId;
 			tvi.iSelectedImage = 0;
 
-#ifndef HAS_DUMMYUNIONNAME /* bug in commctrl.h */
+#if defined(__GNUC__) /* bug in commctrl.h */
 			tvs.item = tvi;
 #else
 			tvs.DUMMYUNIONNAME.item = tvi;
@@ -1008,7 +1026,7 @@ static void BuildTreeFolders(HWND hWnd)
 					tvi.pszText = tmp->m_lpTitle;
 					tvi.lParam	= (LPARAM)tmp;
 
-#ifndef HAS_DUMMYUNIONNAME /* bug in commctrl.h */
+#if defined(__GNUC__) /* bug in commctrl.h */
 					tvs.item = tvi;
 #else
 					tvs.DUMMYUNIONNAME.item = tvi;
@@ -1410,11 +1428,11 @@ INT_PTR CALLBACK FilterDialogProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lPa
 #if HAS_HELP
 	case WM_HELP:
 		/* User clicked the ? from the upper right on a control */
-		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
+		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32CONTEXTHELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
 	case WM_CONTEXTMENU:
-		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
+		Help_HtmlHelp((HWND)wParam, MAME32CONTEXTHELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
 		break;
 #endif /* HAS_HELP */
 

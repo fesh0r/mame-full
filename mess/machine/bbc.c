@@ -126,7 +126,7 @@ WRITE_HANDLER ( memorybp0_w )
 static int vdudriverset(void)
 {
 	int PC;
-	PC=cpu_get_pc(); // this needs to be set to the 6502 program counter
+	PC=activecpu_get_pc(); // this needs to be set to the 6502 program counter
 	return (((PC>=0xc000) && (PC<=0xdfff)) || ((pagedRAM) && ((PC>=0xa000) && (PC<=0xafff))));
 }
 

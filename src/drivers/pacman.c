@@ -1,160 +1,165 @@
 /***************************************************************************
 
-Pac-Man memory map (preliminary)
+	Namco PuckMan
 
-0000-3fff ROM
-4000-43ff Video RAM
-4400-47ff Color RAM
-4c00-4fff RAM
-8000-9fff ROM (Ms Pac-Man and Ponpoko only)
-a000-bfff ROM (Ponpoko only)
+    driver by Nicola Salmoria and many others
 
-memory mapped ports:
+    Games supported:
+		* PuckMan
+		* Pac-Man Plus
+		* Ms. Pac-Man
+		* Crush Roller
+		* Ponpoko
+		* Eyes
+		* Mr. TNT
+		* Lizard Wizard
+		* The Glob
+		* Dream Shopper
+		* Van Van Car
+		* Ali Baba and 40 Thieves
+		* Jump Shot
+		* Shoot the Bull
 
-read:
-5000      IN0
-5040      IN1
-5080      DSW 1
-50c0	  DSW 2 (Ponpoko only)
-see the input_ports definition below for details on the input bits
+	Known issues:
+		* mystery items in Ali Baba don't work correctly because of protection
 
-write:
-4ff0-4fff 8 pairs of two bytes:
-          the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
-		  X flip (bit 1); the second byte the color
-5000      interrupt enable
-5001      sound enable
-5002      ????
-5003      flip screen
-5004      1 player start lamp
-5005      2 players start lamp
-5006      coin lockout
-5007      coin counter
-5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
-5045      sound voice 1 waveform (nibble)
-5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
-504a      sound voice 2 waveform (nibble)
-504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
-504f      sound voice 3 waveform (nibble)
-5050-5054 sound voice 1 frequency (nibbles)
-5055      sound voice 1 volume (nibble)
-5056-5059 sound voice 2 frequency (nibbles)
-505a      sound voice 2 volume (nibble)
-505b-505e sound voice 3 frequency (nibbles)
-505f      sound voice 3 volume (nibble)
-5060-506f Sprite coordinates, x/y pairs for 8 sprites
-50c0      Watchdog reset
+****************************************************************************
 
-I/O ports:
-OUT on port $0 sets the interrupt vector
+	Pac-Man memory map (preliminary)
 
+	0000-3fff ROM
+	4000-43ff Video RAM
+	4400-47ff Color RAM
+	4c00-4fff RAM
+	8000-9fff ROM (Ms Pac-Man and Ponpoko only)
+	a000-bfff ROM (Ponpoko only)
 
+	memory mapped ports:
 
-Make Trax driver
+	read:
+	5000      IN0
+	5040      IN1
+	5080      DSW 1
+	50c0	  DSW 2 (Ponpoko only)
+	see the input_ports definition below for details on the input bits
 
+	write:
+	4ff0-4fff 8 pairs of two bytes:
+	          the first byte contains the sprite image number (bits 2-7), Y flip (bit 0),
+			  X flip (bit 1); the second byte the color
+	5000      interrupt enable
+	5001      sound enable
+	5002      ????
+	5003      flip screen
+	5004      1 player start lamp
+	5005      2 players start lamp
+	5006      coin lockout
+	5007      coin counter
+	5040-5044 sound voice 1 accumulator (nibbles) (used by the sound hardware only)
+	5045      sound voice 1 waveform (nibble)
+	5046-5049 sound voice 2 accumulator (nibbles) (used by the sound hardware only)
+	504a      sound voice 2 waveform (nibble)
+	504b-504e sound voice 3 accumulator (nibbles) (used by the sound hardware only)
+	504f      sound voice 3 waveform (nibble)
+	5050-5054 sound voice 1 frequency (nibbles)
+	5055      sound voice 1 volume (nibble)
+	5056-5059 sound voice 2 frequency (nibbles)
+	505a      sound voice 2 volume (nibble)
+	505b-505e sound voice 3 frequency (nibbles)
+	505f      sound voice 3 volume (nibble)
+	5060-506f Sprite coordinates, x/y pairs for 8 sprites
+	50c0      Watchdog reset
 
-Make Trax protection description:
-
-Make Trax has a "Special" chip that it uses for copy protection.
-The following chart shows when reads and writes may occur:
-
-AAAAAAAA AAAAAAAA
-11111100 00000000  <- address bits
-54321098 76543210
-xxx1xxxx 01xxxxxx - read data bits 4 and 7
-xxx1xxxx 10xxxxxx - read data bits 6 and 7
-xxx1xxxx 11xxxxxx - read data bits 0 through 5
-
-xxx1xxxx 00xxx100 - write to Special
-xxx1xxxx 00xxx101 - write to Special
-xxx1xxxx 00xxx110 - write to Special
-xxx1xxxx 00xxx111 - write to Special
-
-In practical terms, it reads from Special when it reads from
-location $5040-$50FF.  Note that these locations overlap our
-inputs and Dip Switches.  Yuk.
-
-I don't bother trapping the writes right now, because I don't
-know how to interpret them.  However, comparing against Crush
-Roller gives most of the values necessary on the reads.
-
-Instead of always reading from $5040, $5080, and $50C0, the Make
-Trax programmers chose to read from a wide variety of locations,
-probably to make debugging easier.  To us, it means that for the most
-part we can just assign a specific value to return for each address and
-we'll be OK.  This falls apart for the following addresses:  $50C0, $508E,
-$5090, and $5080.  These addresses should return multiple values.  The other
-ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
-different values of $50C0 and $5080, and weird things happen if it gets
-the wrong values.  The only way I've found around these is to patch the
-ROMs using the same patches Crush Roller uses.  The only thing to watch
-with this is that changing the ROMs will break the beginning checksum.
-That's why we use the rom opcode decode function to do our patches.
-
-Incidentally, there are extremely few differences between Crush Roller
-and Make Trax.  About 98% of the differences appear to be either unused
-bytes, the name of the game, or code related to the protection.  I've
-only spotted two or three actual differences in the games, and they all
-seem minor.
-
-If anybody cares, here's a list of disassembled addresses for every
-read and write to the Special chip (not all of the reads are
-specifically for checking the Special bits, some are for checking
-player inputs and Dip Switches):
-
-Writes: $0084, $012F, $0178, $023C, $0C4C, $1426, $1802, $1817,
-	$280C, $2C2E, $2E22, $3205, $3AB7, $3ACC, $3F3D, $3F40,
-	$3F4E, $3F5E
-Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
-	$0560, $0568, $05B0, $05B8, $096D, $0972, $0981, $0C27,
-	$0C2C, $0F0A, $10B8, $10BE, $111F, $1127, $1156, $115E,
-	$11E3, $11E8, $18B7, $18BC, $18CA, $1973, $197A, $1BE7,
-	$1C06, $1C9F, $1CAA, $1D79, $213D, $2142, $2389, $238F,
-	$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
-	$3EE9, $3F07, $3F0D
+	I/O ports:
+	OUT on port $0 sets the interrupt vector
 
 
+****************************************************************************
 
-Notes:
+	Make Trax protection description:
 
-- The mystery items in Ali Baba don't work correctly because of protection
+	Make Trax has a "Special" chip that it uses for copy protection.
+	The following chart shows when reads and writes may occur:
+
+	AAAAAAAA AAAAAAAA
+	11111100 00000000  <- address bits
+	54321098 76543210
+	xxx1xxxx 01xxxxxx - read data bits 4 and 7
+	xxx1xxxx 10xxxxxx - read data bits 6 and 7
+	xxx1xxxx 11xxxxxx - read data bits 0 through 5
+
+	xxx1xxxx 00xxx100 - write to Special
+	xxx1xxxx 00xxx101 - write to Special
+	xxx1xxxx 00xxx110 - write to Special
+	xxx1xxxx 00xxx111 - write to Special
+
+	In practical terms, it reads from Special when it reads from
+	location $5040-$50FF.  Note that these locations overlap our
+	inputs and Dip Switches.  Yuk.
+
+	I don't bother trapping the writes right now, because I don't
+	know how to interpret them.  However, comparing against Crush
+	Roller gives most of the values necessary on the reads.
+
+	Instead of always reading from $5040, $5080, and $50C0, the Make
+	Trax programmers chose to read from a wide variety of locations,
+	probably to make debugging easier.  To us, it means that for the most
+	part we can just assign a specific value to return for each address and
+	we'll be OK.  This falls apart for the following addresses:  $50C0, $508E,
+	$5090, and $5080.  These addresses should return multiple values.  The other
+	ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
+	different values of $50C0 and $5080, and weird things happen if it gets
+	the wrong values.  The only way I've found around these is to patch the
+	ROMs using the same patches Crush Roller uses.  The only thing to watch
+	with this is that changing the ROMs will break the beginning checksum.
+	That's why we use the rom opcode decode function to do our patches.
+
+	Incidentally, there are extremely few differences between Crush Roller
+	and Make Trax.  About 98% of the differences appear to be either unused
+	bytes, the name of the game, or code related to the protection.  I've
+	only spotted two or three actual differences in the games, and they all
+	seem minor.
+
+	If anybody cares, here's a list of disassembled addresses for every
+	read and write to the Special chip (not all of the reads are
+	specifically for checking the Special bits, some are for checking
+	player inputs and Dip Switches):
+
+	Writes: $0084, $012F, $0178, $023C, $0C4C, $1426, $1802, $1817,
+		$280C, $2C2E, $2E22, $3205, $3AB7, $3ACC, $3F3D, $3F40,
+		$3F4E, $3F5E
+	Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
+		$0560, $0568, $05B0, $05B8, $096D, $0972, $0981, $0C27,
+		$0C2C, $0F0A, $10B8, $10BE, $111F, $1127, $1156, $115E,
+		$11E3, $11E8, $18B7, $18BC, $18CA, $1973, $197A, $1BE7,
+		$1C06, $1C9F, $1CAA, $1D79, $213D, $2142, $2389, $238F,
+		$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
+		$3EE9, $3F07, $3F0D
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "pacman.h"
+#include "pengo.h"
 
 
 
-int pacman_vh_start(void);
-void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( pengo_flipscreen_w );
-void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-extern unsigned char *pengo_soundregs;
-WRITE_HANDLER( pengo_sound_enable_w );
-WRITE_HANDLER( pengo_sound_w );
-
-extern void pacplus_decode(void);
-extern void jumpshot_decode(void);
-extern void shootbul_decode(void);
-
-void theglobp_init_machine(void);
-READ_HANDLER( theglobp_decrypt_rom );
-
-void mspacman_init_machine(void);
-WRITE_HANDLER( mspacman_activate_rom );
+static UINT8 speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */
+								/* his usual speed. When we start the emulation, we check if the */
+								/* hack can be applied, and set this flag accordingly. */
 
 
-static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at four times */
-					/* his usual speed. When we start the emulation, we check if the */
-					/* hack can be applied, and set this flag accordingly. */
 
+/*************************************
+ *
+ *	Machine init
+ *
+ *************************************/
 
-void pacman_init_machine(void)
+MACHINE_INIT( pacman )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
-
 
 	/* check if the loaded set of ROMs allows the Pac Man speed hack */
 	if ((RAM[0x180b] == 0xbe && RAM[0x1ffd] == 0x00) ||
@@ -164,7 +169,8 @@ void pacman_init_machine(void)
 		speedcheat = 0;
 }
 
-void mschamp_init_machine(void)
+
+MACHINE_INIT( mschamp )
 {
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
 	int bankaddr = ((readinputport(3) & 1) * 0x8000);
@@ -173,7 +179,15 @@ void mschamp_init_machine(void)
 	cpu_setbank(2,&rom[bankaddr+0x4000]);
 }
 
-static int pacman_interrupt(void)
+
+
+/*************************************
+ *
+ *	Interrupts
+ *
+ *************************************/
+
+static INTERRUPT_GEN( pacman_interrupt )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -194,10 +208,11 @@ static int pacman_interrupt(void)
 		}
 	}
 
-	return interrupt();
+	irq0_line_hold();
 }
 
-static int mspacman_interrupt(void)
+
+static INTERRUPT_GEN( mspacman_interrupt )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -218,18 +233,41 @@ static int mspacman_interrupt(void)
 		}
 	}
 
-	return interrupt();
+	irq0_line_hold();
 }
+
+
+
+/*************************************
+ *
+ *	LEDs/coin counters
+ *
+ *************************************/
 
 static WRITE_HANDLER( pacman_leds_w )
 {
 	set_led_status(offset,data & 1);
 }
 
+
 static WRITE_HANDLER( pacman_coin_counter_w )
 {
 	coin_counter_w(offset,data & 1);
 }
+
+
+static WRITE_HANDLER( pacman_coin_lockout_global_w )
+{
+	coin_lockout_global_w(~data & 0x01);
+}
+
+
+
+/*************************************
+ *
+ *	Ali Baba sound
+ *
+ *************************************/
 
 static WRITE_HANDLER( alibaba_sound_w )
 {
@@ -252,6 +290,7 @@ static READ_HANDLER( alibaba_mystery_1_r )
 	return rand() & 0x0f;
 }
 
+
 static READ_HANDLER( alibaba_mystery_2_r )
 {
 	static int mystery = 0;
@@ -264,11 +303,77 @@ static READ_HANDLER( alibaba_mystery_2_r )
 }
 
 
-static WRITE_HANDLER( pacman_coin_lockout_global_w )
+
+/*************************************
+ *
+ *	Make Trax input handlers
+ *
+ *************************************/
+
+static READ_HANDLER( maketrax_special_port2_r )
 {
-	coin_lockout_global_w(~data & 0x01);
+	int data = input_port_2_r(offset);
+	int pc = activecpu_get_previouspc();
+
+	if ((pc == 0x1973) || (pc == 0x2389)) return data | 0x40;
+
+	switch (offset)
+	{
+		case 0x01:
+		case 0x04:
+			data |= 0x40; break;
+		case 0x05:
+			data |= 0xc0; break;
+		default:
+			data &= 0x3f; break;
+	}
+
+	return data;
 }
 
+
+static READ_HANDLER( maketrax_special_port3_r )
+{
+	int pc = activecpu_get_previouspc();
+
+	if (pc == 0x040e) return 0x20;
+
+	if ((pc == 0x115e) || (pc == 0x3ae2)) return 0x00;
+
+	switch (offset)
+	{
+		case 0x00:
+			return 0x1f;
+		case 0x09:
+			return 0x30;
+		case 0x0c:
+			return 0x00;
+		default:
+			return 0x20;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Zola kludge
+ *
+ *************************************/
+
+static READ_HANDLER( mschamp_kludge_r )
+{
+	static UINT8 counter;
+	return counter++;
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
 
 static MEMORY_READ_START( readmem )
 	{ 0x0000, 0x3fff, MRA_ROM },
@@ -280,6 +385,7 @@ static MEMORY_READ_START( readmem )
 	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
 	{ 0x8000, 0xbfff, MRA_ROM },	/* Ms. Pac-Man / Ponpoko only */
 MEMORY_END
+
 
 static MEMORY_WRITE_START( writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
@@ -326,6 +432,7 @@ static MEMORY_READ_START( mspacman_readmem )
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( mspacman_writemem )
 	{ 0x0000, 0x3fff, MWA_BANK1 },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
@@ -364,6 +471,7 @@ static MEMORY_READ_START( alibaba_readmem )
 	{ 0xa000, 0xa7ff, MRA_ROM },
 MEMORY_END
 
+
 static MEMORY_WRITE_START( alibaba_writemem )
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
@@ -387,6 +495,56 @@ static MEMORY_WRITE_START( alibaba_writemem )
 MEMORY_END
 
 
+static MEMORY_READ_START( theglobp_readmem )
+	{ 0x0000, 0x3fff, MRA_BANK1 },
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
+MEMORY_END
+
+
+static MEMORY_READ_START( vanvan_readmem )
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x4800, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
+	{ 0x5000, 0x5000, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x5040, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x5080, input_port_2_r },	/* DSW1 */
+	{ 0x50c0, 0x50c0, input_port_3_r },	/* DSW2 */
+	{ 0x8000, 0x8fff, MRA_ROM },
+MEMORY_END
+
+
+static MEMORY_WRITE_START( vanvan_writemem )
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
+	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4800, 0x4fef, MWA_RAM },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5001, 0x5001, vanvan_bgcolor_w },
+	{ 0x5003, 0x5003, pengo_flipscreen_w },
+	{ 0x5005, 0x5006, MWA_NOP },	/* always written together with 5001 */
+ 	{ 0x5007, 0x5007, pacman_coin_counter_w },
+	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
+	{ 0x5080, 0x5080, MWA_NOP },	/* ??? toggled before reading 5000 */
+	{ 0x50c0, 0x50c0, watchdog_reset_w },
+	{ 0x8000, 0x8fff, MWA_ROM },
+	{ 0xb800, 0xb87f, MWA_NOP },	/* probably a leftover from development: the Sanritsu version */
+									/* writes the color lookup table here, while the Karateko version */
+									/* writes garbage. */
+MEMORY_END
+
+
+
+/*************************************
+ *
+ *	Main CPU port handlers
+ *
+ *************************************/
 
 static PORT_WRITE_START( writeport )
 	{ 0x00, 0x00, interrupt_vector_w },	/* Pac-Man only */
@@ -398,38 +556,29 @@ static PORT_WRITE_START( vanvan_writeport )
 	{ 0x02, 0x02, SN76496_1_w },
 PORT_END
 
+
 static PORT_WRITE_START( dremshpr_writeport )
 	{ 0x06, 0x06, AY8910_write_port_0_w },
 	{ 0x07, 0x07, AY8910_control_port_0_w },
 PORT_END
 
 
-static MEMORY_READ_START( theglobp_readmem )
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ 0x50c0, 0x50ff, input_port_3_r },	/* DSW2 */
-MEMORY_END
-
 static PORT_READ_START( theglobp_readport )
 	{ 0x00, 0xff, theglobp_decrypt_rom },	/* Switch protection logic */
 PORT_END
 
 
-static READ_HANDLER( zolakludge_r )
-{
-	static int counter;
-	return counter++;
-}
-
-static PORT_READ_START( zolapac_readport)
-	{ 0x00,0x00, zolakludge_r },
+static PORT_READ_START( mschamp_readport )
+	{ 0x00,0x00, mschamp_kludge_r },
 PORT_END
 
 
+
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( pacman )
 	PORT_START	/* IN0 */
@@ -490,6 +639,7 @@ INPUT_PORTS_START( pacman )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 /* Ms. Pac-Man input ports are identical to Pac-Man, the only difference is */
 /* the missing Ghost Names dip switch. */
 INPUT_PORTS_START( mspacman )
@@ -548,6 +698,7 @@ INPUT_PORTS_START( mspacman )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( mschamp )
 	PORT_START	/* IN0 */
@@ -610,6 +761,7 @@ INPUT_PORTS_START( mschamp )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( maketrax )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -655,6 +807,7 @@ INPUT_PORTS_START( maketrax )
 	PORT_START	/* DSW 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( mbrush )
 	PORT_START	/* IN0 */
@@ -702,6 +855,7 @@ INPUT_PORTS_START( mbrush )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( paintrlr )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -747,6 +901,7 @@ INPUT_PORTS_START( paintrlr )
 	PORT_START	/* DSW 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( ponpoko )
 	PORT_START	/* IN0 */
@@ -825,6 +980,7 @@ INPUT_PORTS_START( ponpoko )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( eyes )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -872,6 +1028,7 @@ INPUT_PORTS_START( eyes )
 	PORT_START	/* DSW 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( mrtnt )
 	PORT_START  /* IN0 */
@@ -921,6 +1078,7 @@ INPUT_PORTS_START( mrtnt )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( lizwiz )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -968,6 +1126,7 @@ INPUT_PORTS_START( lizwiz )
 	PORT_START	/* DSW 2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( theglobp )
 	PORT_START	/* IN0 */
@@ -1023,6 +1182,7 @@ INPUT_PORTS_START( theglobp )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( vanvan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -1032,7 +1192,7 @@ INPUT_PORTS_START( vanvan )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )
 
 	/* The 2nd player controls are used even in upright mode */
 	PORT_START	/* IN1 */
@@ -1096,6 +1256,7 @@ INPUT_PORTS_START( vanvan )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( vanvans )
 	PORT_START	/* IN0 */
@@ -1170,6 +1331,7 @@ INPUT_PORTS_START( vanvans )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( dremshpr )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -1222,6 +1384,7 @@ INPUT_PORTS_START( dremshpr )
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( alibaba )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
@@ -1270,6 +1433,7 @@ INPUT_PORTS_START( alibaba )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( jumpshot )
 	PORT_START /* IN0 */
@@ -1325,6 +1489,7 @@ INPUT_PORTS_START( jumpshot )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( shootbul )
 	PORT_START /* IN0 */
 	PORT_ANALOG( 0x0f, 0x0f, IPT_TRACKBALL_X , 50, 25, 0, 0)
@@ -1368,6 +1533,11 @@ INPUT_PORTS_END
 
 
 
+/*************************************
+ *
+ *	Graphics layouts
+ *
+ *************************************/
 
 static struct GfxLayout tilelayout =
 {
@@ -1402,6 +1572,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
 static struct GfxDecodeInfo mschampgfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &tilelayout,   0, 32 },
@@ -1409,6 +1580,13 @@ static struct GfxDecodeInfo mschampgfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
+/*************************************
+ *
+ *	Sound interfaces
+ *
+ *************************************/
 
 static struct namco_interface namco_interface =
 {
@@ -1418,12 +1596,14 @@ static struct namco_interface namco_interface =
 	REGION_SOUND1	/* memory region */
 };
 
+
 static struct SN76496interface sn76496_interface =
 {
 	2,
 	{ 1789750, 1789750 },	/* 1.78975 MHz ? */
 	{ 75, 75 }
 };
+
 
 static struct AY8910interface dremshpr_ay8910_interface =
 {
@@ -1437,270 +1617,141 @@ static struct AY8910interface dremshpr_ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_pacman =
-{
+
+/*************************************
+ *
+ *	Machine drivers
+ *
+ *************************************/
+
+static MACHINE_DRIVER_START( pacman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,writeport,
-			pacman_interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	pacman_init_machine,
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(0,writeport)
+	MDRV_CPU_VBLANK_INT(pacman_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_MACHINE_INIT(pacman)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(4*32)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	MDRV_PALETTE_INIT(pacman)
+	MDRV_VIDEO_START(pacman)
+	MDRV_VIDEO_UPDATE(pengo)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD_TAG("namco", NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_mspacman =
-{
+
+static MACHINE_DRIVER_START( mspacman )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			mspacman_readmem,mspacman_writemem,0,writeport,
-			mspacman_interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	mspacman_init_machine,
+	MDRV_IMPORT_FROM(pacman)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mspacman_readmem,mspacman_writemem)
+	MDRV_CPU_VBLANK_INT(mspacman_interrupt,1)
+
+	MDRV_MACHINE_INIT(mspacman)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mschamp )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(pacman)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(mschamp_readmem,writemem)
+	MDRV_CPU_PORTS(mschamp_readport,writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_MACHINE_INIT(mschamp)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
+	MDRV_GFXDECODE(mschampgfxdecodeinfo)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( theglobp )
 
-static struct MachineDriver machine_driver_mschamp =
-{
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			mschamp_readmem,writemem,zolapac_readport,writeport,
-			interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	mschamp_init_machine,
+	MDRV_IMPORT_FROM(pacman)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(theglobp_readmem,writemem)
+	MDRV_CPU_PORTS(theglobp_readport,writeport)
+
+	MDRV_MACHINE_INIT(theglobp)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( vanvan )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(pacman)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(vanvan_readmem,vanvan_writemem)
+	MDRV_CPU_PORTS(0,vanvan_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_MACHINE_INIT(NULL)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	mschampgfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	MDRV_VISIBLE_AREA(2*8, 34*8-1, 0*8, 28*8-1)
+	MDRV_VIDEO_UPDATE(vanvan)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_REPLACE("namco", SN76496, sn76496_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_theglobp =
-{
+
+static MACHINE_DRIVER_START( dremshpr )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			theglobp_readmem,writemem,theglobp_readport,writeport,
-			pacman_interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	theglobp_init_machine,
+	MDRV_IMPORT_FROM(pacman)
 
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PORTS(0,dremshpr_writeport)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	MDRV_MACHINE_INIT(NULL)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_REPLACE("namco", AY8910, dremshpr_ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_vanvan =
-{
+
+static MACHINE_DRIVER_START( alibaba )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,vanvan_writeport,
-			nmi_interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
+	MDRV_IMPORT_FROM(pacman)
 
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(alibaba_readmem,alibaba_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	MDRV_MACHINE_INIT(NULL)
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_SN76496,
-			&sn76496_interface
-		}
-	}
-};
 
-static const struct MachineDriver machine_driver_dremshpr =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			readmem,writemem,0,dremshpr_writeport,
-			nmi_interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
 
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&dremshpr_ay8910_interface
-		}
-	}
-};
-
-static const struct MachineDriver machine_driver_alibaba =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			18432000/6,	/* 3.072 MHz */
-			alibaba_readmem,alibaba_writemem,0,0,
-			interrupt,1
-		}
-	},
-	60.606060, 2500,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-	0,
-
-	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	16, 4*32,
-	pacman_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( puckman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1724,6 +1775,7 @@ ROM_START( puckman )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( puckmod )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "namcopac.6e",  0x0000, 0x1000, 0xfee263b3 )
@@ -1745,6 +1797,7 @@ ROM_START( puckmod )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( puckmana )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1770,6 +1823,7 @@ ROM_START( puckmana )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( pacman )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pacman.6e",    0x0000, 0x1000, 0xc1e6ab10 )
@@ -1791,6 +1845,7 @@ ROM_START( pacman )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( pacmod )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1814,6 +1869,7 @@ ROM_START( pacmod )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( hangly )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "hangly.6e",    0x0000, 0x1000, 0x5fe8610a )
@@ -1835,6 +1891,7 @@ ROM_START( hangly )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( hangly2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -1860,6 +1917,7 @@ ROM_START( hangly2 )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( newpuckx )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "puckman.6e",   0x0000, 0x1000, 0xa8ae23c5 )
@@ -1881,6 +1939,7 @@ ROM_START( newpuckx )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( pacheart )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -1910,6 +1969,7 @@ ROM_START( pacheart )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )  /* timing - not used */
 ROM_END
 
+
 ROM_START( piranha )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pr1.cpu",      0x0000, 0x1000, 0xbc5ad024 )
@@ -1934,6 +1994,7 @@ ROM_START( piranha )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( pacplus )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "pacplus.6e",   0x0000, 0x1000, 0xd611ef68 )
@@ -1955,6 +2016,7 @@ ROM_START( pacplus )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( mspacman )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code+64k for decrypted code */
@@ -1981,6 +2043,7 @@ ROM_START( mspacman )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( mspacmab )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
@@ -2004,6 +2067,7 @@ ROM_START( mspacmab )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( mspacmat )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code+64k for decrypted code */
@@ -2030,6 +2094,7 @@ ROM_START( mspacmat )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( mspacpls )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "boot1",        0x0000, 0x1000, 0xd16b31b7 )
@@ -2053,6 +2118,7 @@ ROM_START( mspacpls )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( pacgal )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2079,6 +2145,7 @@ ROM_START( pacgal )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( mschamp )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD( "pm4.bin", 0x10000, 0x10000, 0x7d6b6303 )	/* banked */
@@ -2098,6 +2165,7 @@ ROM_START( mschamp )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )
 ROM_END
 
+
 ROM_START( crush )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for opcode copy to hack protection */
 	ROM_LOAD( "crushkrl.6e",  0x0000, 0x1000, 0xa8dd8f54 )
@@ -2113,12 +2181,13 @@ ROM_START( crush )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( crush2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2141,12 +2210,13 @@ ROM_START( crush2 )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( crush3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2169,12 +2239,13 @@ ROM_START( crush3 )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( maketrax )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for opcode copy to hack protection */
@@ -2191,12 +2262,13 @@ ROM_START( maketrax )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( mbrush )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2215,12 +2287,13 @@ ROM_START( mbrush )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( paintrlr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2243,12 +2316,13 @@ ROM_START( paintrlr )
 
 	ROM_REGION( 0x0120, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
-	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+	ROM_LOAD( "2s140.4a",     0x0020, 0x0100, 0x63efb927 )
 
 	ROM_REGION( 0x0200, REGION_SOUND1, 0 )	/* sound PROMs */
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( ponpoko )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2276,6 +2350,7 @@ ROM_START( ponpoko )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( ponpokov )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "ppoko1.bin",   0x0000, 0x1000, 0x49077667 )
@@ -2302,6 +2377,7 @@ ROM_START( ponpokov )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( eyes )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "d7",           0x0000, 0x1000, 0x3b09ac89 )
@@ -2323,6 +2399,7 @@ ROM_START( eyes )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( eyes2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2346,6 +2423,7 @@ ROM_START( eyes2 )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( mrtnt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "tnt.1",        0x0000, 0x1000, 0x0e836586 )
@@ -2367,6 +2445,7 @@ ROM_START( mrtnt )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( lizwiz )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2392,6 +2471,7 @@ ROM_START( lizwiz )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( theglobp )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "glob.u2",      0x0000, 0x2000, 0x829d0bea )
@@ -2411,6 +2491,7 @@ ROM_START( theglobp )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( beastf )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )	/* 64k for code */
@@ -2432,13 +2513,14 @@ ROM_START( beastf )
 	ROM_LOAD( "82s126.3m"  ,  0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( vanvan )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
+	ROM_LOAD( "van-1.50",     0x0000, 0x1000, 0xcf1b2df0 )
 	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
 	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
-	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
+	ROM_LOAD( "van-4.53",     0x3000, 0x1000, 0xb724cbe0 )
+	ROM_LOAD( "van-5.39",     0x8000, 0x1000, 0xdb67414c )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
@@ -2451,13 +2533,13 @@ ROM_START( vanvan )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
 
-ROM_START( vanvans )
+ROM_START( vanvank )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "van-1.50",     0x0000, 0x1000, 0xcf1b2df0 )
+	ROM_LOAD( "van1.bin",	  0x0000, 0x1000, 0x00f48295 )
 	ROM_LOAD( "van-2.51",     0x1000, 0x1000, 0xdf58e1cb )
 	ROM_LOAD( "van-3.52",     0x2000, 0x1000, 0x15571e24 )
-	ROM_LOAD( "van-4.53",     0x3000, 0x1000, 0xb724cbe0 )
-	ROM_LOAD( "van-5.39",     0x8000, 0x1000, 0xdb67414c )
+	ROM_LOAD( "van4.bin",     0x3000, 0x1000, 0xf8b37ed5 )
+	ROM_LOAD( "van5.bin",     0x8000, 0x1000, 0xb8c1e089 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "van-20.18",    0x0000, 0x1000, 0x60efbe66 )
@@ -2491,6 +2573,7 @@ ROM_START( dremshpr )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x39d6fb5c )
 ROM_END
 
+
 ROM_START( alibaba )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0x38d701aa )
@@ -2517,6 +2600,7 @@ ROM_START( alibaba )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
 ROM_START( jumpshot )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "6e",           0x0000, 0x1000, 0xf00def9a )
@@ -2538,6 +2622,7 @@ ROM_START( jumpshot )
 	ROM_LOAD( "82s126.1m",    0x0000, 0x0100, 0xa9cc86bf )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
+
 
 ROM_START( shootbul )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
@@ -2563,52 +2648,11 @@ ROM_END
 
 
 
-static READ_HANDLER( maketrax_special_port2_r )
-{
-	int pc,data;
-
-	pc = cpu_getpreviouspc();
-
-	data = input_port_2_r(offset);
-
-	if ((pc == 0x1973) || (pc == 0x2389)) return data | 0x40;
-
-	switch (offset)
-	{
-		case 0x01:
-		case 0x04:
-			data |= 0x40; break;
-		case 0x05:
-			data |= 0xc0; break;
-		default:
-			data &= 0x3f; break;
-	}
-
-	return data;
-}
-
-static READ_HANDLER( maketrax_special_port3_r )
-{
-	int pc;
-
-	pc = cpu_getpreviouspc();
-
-	if ( pc == 0x040e) return 0x20;
-
-	if ((pc == 0x115e) || (pc == 0x3ae2)) return 0x00;
-
-	switch (offset)
-	{
-		case 0x00:
-			return 0x1f;
-		case 0x09:
-			return 0x30;
-		case 0x0c:
-			return 0x00;
-		default:
-			return 0x20;
-	}
-}
+/*************************************
+ *
+ *	Driver initialization
+ *
+ *************************************/
 
 static void maketrax_rom_decode(void)
 {
@@ -2633,7 +2677,7 @@ static void maketrax_rom_decode(void)
 	rom[0x3aef + diff] = 0xb0;
 }
 
-static void init_maketrax(void)
+static DRIVER_INIT( maketrax )
 {
 	/* set up protection handlers */
 	install_mem_read_handler(0, 0x5080, 0x50bf, maketrax_special_port2_r);
@@ -2642,7 +2686,7 @@ static void init_maketrax(void)
 	maketrax_rom_decode();
 }
 
-static void init_ponpoko(void)
+static DRIVER_INIT( ponpoko )
 {
 	int i, j;
 	unsigned char *RAM, temp;
@@ -2696,7 +2740,7 @@ static void eyes_decode(unsigned char *data)
 	}
 }
 
-static void init_eyes(void)
+static DRIVER_INIT( eyes )
 {
 	int i;
 	unsigned char *RAM;
@@ -2724,22 +2768,28 @@ static void init_eyes(void)
 }
 
 
-static void init_pacplus(void)
+static DRIVER_INIT( pacplus )
 {
 	pacplus_decode();
 }
 
-static void init_jumpshot(void)
+static DRIVER_INIT( jumpshot )
 {
 	jumpshot_decode();
 }
 
-static void init_shootbul(void)
+static DRIVER_INIT( shootbul )
 {
 	shootbul_decode();
 }
 
 
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 /*          rom       parent    machine   inp       init */
 GAME( 1980, puckman,  0,        pacman,   pacman,   0,        ROT90,  "Namco", "PuckMan (Japan set 1)" )
@@ -2769,13 +2819,13 @@ GAME( 1982, ponpoko,  0,        pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent
 GAME( 1982, ponpokov, ponpoko,  pacman,   ponpoko,  ponpoko,  ROT0,   "Sigma Ent. Inc. (Venture Line license)", "Ponpoko (Venture Line)" )
 GAME( 1982, eyes,     0,        pacman,   eyes,     eyes,     ROT90,  "Digitrex Techstar (Rock-ola license)", "Eyes (Digitrex Techstar)" )
 GAME( 1982, eyes2,    eyes,     pacman,   eyes,     eyes,     ROT90,  "Techstar Inc. (Rock-ola license)", "Eyes (Techstar Inc.)" )
-GAME( 1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT" )
+GAMEX(1983, mrtnt,    0,        pacman,   mrtnt,    eyes,     ROT90,  "Telko", "Mr. TNT", GAME_WRONG_COLORS )
 GAME( 1985, lizwiz,   0,        pacman,   lizwiz,   0,        ROT90,  "Techstar (Sunn license)", "Lizard Wizard" )
 GAME( 1983, theglobp, suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "The Glob (Pac-Man hardware)" )
 GAME( 1984, beastf,   suprglob, theglobp, theglobp, 0,        ROT90,  "Epos Corporation", "Beastie Feastie" )
 GAME( 1982, dremshpr, 0,        dremshpr, dremshpr, 0,        ROT270, "Sanritsu", "Dream Shopper" )
-GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Karateco", "Van Van Car" )
-GAME( 1983, vanvans,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Sanritsu", "Van Van Car (Sanritsu)" )
-GAME( 1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves" )
+GAME( 1983, vanvan,   0,        vanvan,   vanvan,   0,        ROT270, "Sanritsu", "Van-Van Car" )
+GAME( 1983, vanvank,  vanvan,   vanvan,   vanvans,  0,        ROT270, "Karateco", "Van-Van Car (Karateco)" )
+GAMEX(1982, alibaba,  0,        alibaba,  alibaba,  0,        ROT90,  "Sega", "Ali Baba and 40 Thieves", GAME_WRONG_COLORS | GAME_UNEMULATED_PROTECTION )
 GAME( 1985, jumpshot, 0,        pacman,   jumpshot, jumpshot, ROT90,  "Bally Midway", "Jump Shot" )
 GAME( 1985, shootbul, 0,        pacman,   shootbul, shootbul, ROT90,  "Bally Midway", "Shoot the Bull" )

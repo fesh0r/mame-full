@@ -28,6 +28,7 @@
 	arkblock	Another bootleg of the early Japanese one, more heavily modified
 	arkbloc2	Another bootleg
 	arkbl3   	Another bootleg of the early Japanese one, more heavily modified
+	paddle2   	Another bootleg of the early Japanese one, more heavily modified
 	arkangc		Game Corporation bootleg with level selector
 
 
@@ -45,10 +46,10 @@
 
 
 
-void arkanoid_init_machine(void);
+MACHINE_INIT( arkanoid );
 
 WRITE_HANDLER( arkanoid_d008_w );
-void arkanoid_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( arkanoid );
 
 READ_HANDLER( arkanoid_Z80_mcu_r );
 WRITE_HANDLER( arkanoid_Z80_mcu_w );
@@ -63,6 +64,29 @@ WRITE_HANDLER( arkanoid_68705_ddrC_w );
 
 READ_HANDLER( arkanoid_68705_input_0_r );
 READ_HANDLER( arkanoid_input_2_r );
+
+
+static int paddle2_prot;
+
+static READ_HANDLER( paddle2_prot_r )
+{
+logerror("%04x: prot_r\n",activecpu_get_pc());
+	switch (paddle2_prot)
+	{
+		case 0xc3: return 0x1d;
+		case 0x24: return 0x9b;
+		case 0x8a: return 0x0a;	/* ??? */
+		case 0xff: return 0x52;	/* ??? */
+		default: return 0;
+	}
+}
+
+static WRITE_HANDLER( paddle2_prot_w )
+{
+logerror("%04x: prot_w %02x\n",activecpu_get_pc(),data);
+	paddle2_prot = data;
+}
+
 
 
 static MEMORY_READ_START( readmem )
@@ -317,85 +341,61 @@ static struct AY8910interface ay8910_interface =
 
 
 
-static const struct MachineDriver machine_driver_arkanoid =
-{
+static MACHINE_DRIVER_START( arkanoid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ?? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_M68705,
-			500000,	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100, /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
-	arkanoid_init_machine,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(M68705, 500000)	/* .5 MHz (don't know really how fast, but it doesn't need to even be this fast) */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per second to synchronize between the MCU and the main CPU */
+
+	MDRV_MACHINE_INIT(arkanoid)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	arkanoid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_bootleg =
-{
+static MACHINE_DRIVER_START( bootleg )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			6000000,	/* 6 MHz ?? */
-			boot_readmem,boot_writemem,0,0,
-			interrupt,1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	0,
+	MDRV_CPU_ADD(Z80, 6000000)	/* 6 MHz ?? */
+	MDRV_CPU_MEMORY(boot_readmem,boot_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	palette_RRRR_GGGG_BBBB_convert_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	arkanoid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(arkanoid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -516,6 +516,22 @@ ROM_START( arkbl3 )
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
 ROM_END
 
+ROM_START( paddle2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "paddle2.16",   0x0000, 0x8000, 0xa286333c )
+	ROM_LOAD( "paddle2.17",   0x8000, 0x8000, 0x04c2acb5 )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a75_03.rom",   0x00000, 0x8000, 0x038b74ba )
+	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
+	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
+	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
+	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
+ROM_END
+
 ROM_START( arkatayt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "arkanoid.1",   0x0000, 0x8000, 0x6e0a2b6f )
@@ -582,13 +598,21 @@ ROM_END
 
 
 
-GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0, ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
-GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0, ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
-GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0, ROT90, "Taito Corporation", "Arkanoid (Japan)" )
-GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
-GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
-GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0, ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
-GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
-GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Block (Game Corporation bootleg)" )
-GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0, ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )
-GAME( 1987, arkatour, arkanoid, arkanoid, arkanoid, 0, ROT90, "Taito America Corporation (Romstar license)", "Tournament Arkanoid (US)" )
+static DRIVER_INIT( paddle2 )
+{
+	install_mem_read_handler (0, 0xf002, 0xf002, paddle2_prot_r);
+	install_mem_write_handler(0, 0xd018, 0xd018, paddle2_prot_w);
+}
+
+
+GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0,       ROT90, "Taito Corporation Japan", "Arkanoid (World)" )
+GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)" )
+GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0,       ROT90, "Taito Corporation", "Arkanoid (Japan)" )
+GAMEX(1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
+GAMEX(1986, arkbl3,   arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
+GAMEX(1986, paddle2,  arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Paddle 2", GAME_NOT_WORKING )
+GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0,       ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)" )
+GAMEX(1986, arkblock, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
+GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (Game Corporation bootleg)" )
+GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)" )
+GAME( 1987, arkatour, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Tournament Arkanoid (US)" )

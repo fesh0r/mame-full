@@ -1,3 +1,4 @@
+/* */
 #include "cassette.h"
 
 int cassette_init(int id, const struct cassette_args *args)

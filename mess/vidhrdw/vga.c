@@ -140,16 +140,22 @@ unsigned short vga_colortable[] = {
     15, 0,15, 1,15, 2,15, 3,15, 4,15, 5,15, 6,15, 7,15, 8,15, 9,15,10,15,11,15,12,15,13,15,14,15,15
 };
 
-void ega_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( ega )
 {
-	memcpy(sys_palette,ega_palette,sizeof(ega_palette));
-	memcpy(sys_colortable,vga_colortable,0x200);
+	int i;
+	for(i = 0; i < (sizeof(ega_palette) / 3); i++)
+		palette_set_color(i, ega_palette[i][0], ega_palette[i][1], ega_palette[i][2]);
+
+	memcpy(colortable,vga_colortable,0x200);
 }
 
-void vga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( vga )
 {
-	memcpy(sys_palette,vga_palette,sizeof(vga_palette));
-	memcpy(sys_colortable,vga_colortable,0x200);
+	int i;
+	for(i = 0; i < (sizeof(vga_palette) / 3); i++)
+		palette_set_color(i, vga_palette[i][0], vga_palette[i][1], vga_palette[i][2]);
+
+	memcpy(colortable,vga_colortable,0x200);
 }
 
 static UINT8 rotate_right[8][256];
@@ -934,7 +940,7 @@ static void vga_timer(int param)
 	vga.monitor.retrace=1;
 }
 
-int ega_vh_start(void)
+VIDEO_START( ega )
 {
 	vga.monitor.get_clock=ega_get_clock;
 	vga.monitor.get_lines=ega_get_crtc_lines;
@@ -945,7 +951,7 @@ int ega_vh_start(void)
 	return 0;
 }
 
-int vga_vh_start(void)
+VIDEO_START( vga )
 {
 #ifdef VGA_GFX
 	int i;
@@ -971,11 +977,6 @@ int vga_vh_start(void)
 
 
 	return 0;
-}
-
-void vga_vh_stop(void)
-{
-
 }
 
 #ifndef VGA_GFX
@@ -1174,7 +1175,7 @@ void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 	}
 }
 
-void ega_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( ega )
 {
 	static int columns=720, raws=480;
 	int new_columns, new_raws;
@@ -1185,11 +1186,11 @@ void ega_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			vga.pens[i]=Machine->pens[i/*vga.attribute.data[i]&0x3f*/];
 		}
 		if (!GRAPHIC_MODE) {
-			vga_vh_text(bitmap, full_refresh);
+			vga_vh_text(bitmap, 1);
 			new_raws=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		} else {
-			vga_vh_ega(bitmap, full_refresh);
+			vga_vh_ega(bitmap, 1);
 			new_raws=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
@@ -1197,14 +1198,14 @@ void ega_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			raws=new_raws;
 			columns=new_columns;
 			if ((columns>100)&&(raws>100))
-				osd_set_visible_area(0,columns-1,0, raws-1);
+				set_visible_area(0,columns-1,0, raws-1);
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}
 //	state_display(bitmap);
 }
 
-void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( vga )
 {
 	static int columns=720, raws=480;
 	int new_columns, new_raws;
@@ -1217,7 +1218,6 @@ void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 									 (vga.dac.color[i].blue&0x3f)<<2);
 			}
 			vga.dac.dirty=0;
-			full_refresh=1;
 		}
 		if (vga.attribute.data[0x10]&0x80) {
 			for (i=0; i<16;i++) {
@@ -1259,15 +1259,15 @@ void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 				}
 			}
 #endif
-			vga_vh_text(bitmap, full_refresh);
+			vga_vh_text(bitmap, 1);
 			new_raws=TEXT_LINES;
 			new_columns=TEXT_COLUMNS*CHAR_WIDTH;
 		} else if (vga.gc.data[5]&0x40) {
-			vga_vh_vga(bitmap, full_refresh);
+			vga_vh_vga(bitmap, 1);
 			new_raws=LINES;
 			new_columns=VGA_COLUMNS*8;
 		} else {
-			vga_vh_ega(bitmap, full_refresh);
+			vga_vh_ega(bitmap, 1);
 			new_raws=LINES;
 			new_columns=EGA_COLUMNS*8;
 		}
@@ -1275,7 +1275,7 @@ void vga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 			raws=new_raws;
 			columns=new_columns;
 			if ((columns>100)&&(raws>100))
-				osd_set_visible_area(0,columns-1,0, raws-1);
+				set_visible_area(0,columns-1,0, raws-1);
 			else logerror("video %d %d\n",columns, raws);
 		}
 	}

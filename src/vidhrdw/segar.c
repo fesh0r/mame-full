@@ -1,19 +1,18 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Sega G-80 raster hardware
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "segar.h"
 
 
-unsigned char *segar_characterram;
-unsigned char *segar_characterram2;
-unsigned char *segar_mem_colortable;
-unsigned char *segar_mem_bcolortable;
+UINT8 *segar_characterram;
+UINT8 *segar_characterram2;
+UINT8 *segar_mem_colortable;
+UINT8 *segar_mem_bcolortable;
 
 typedef struct
 {
@@ -57,15 +56,13 @@ static SEGAR_VID_STRUCT sv;
 
 ***************************************************************************/
 
-void segar_init_colors(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( segar )
 {
 	static unsigned char color_scale[] = {0x00, 0x40, 0x80, 0xC0 };
 	int i;
 
 	/* Our first color needs to be black (transparent) */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0;
+	palette_set_color(0,0,0,0);
 
 	/* Space Odyssey uses a static palette for the background, so
 	   our choice of colors isn't exactly arbitrary.  S.O. uses a
@@ -76,9 +73,10 @@ void segar_init_colors(unsigned char *palette, unsigned short *colortable, const
 	*/
 	for (i = 0;i < (Machine->drv->total_colors - 1);i++)
 	{
-		*(palette++) = color_scale[((i & 0x30) >> 4)];
-		*(palette++) = color_scale[((i & 0x0C) >> 2)];
-		*(palette++) = color_scale[((i & 0x03) << 0)];
+		int r = color_scale[((i & 0x30) >> 4)];
+		int g = color_scale[((i & 0x0C) >> 2)];
+		int b = color_scale[((i & 0x03) << 0)];
+		palette_set_color(i+1,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -208,10 +206,9 @@ WRITE_HANDLER( segar_bcolortable_w )
 
 ***************************************************************************/
 
-
-int segar_vh_start(void)
+VIDEO_START( segar )
 {
-	if (generic_vh_start()!=0)
+	if (video_start_generic()!=0)
 		return 1;
 
 	// Init our vid struct, everything defaults to 0
@@ -285,9 +282,10 @@ static void segar_common_screenrefresh(struct mame_bitmap *bitmap, int sprite_tr
 /***************************************************************************
 "Standard" refresh for games without special background boards.
 ***************************************************************************/
-void segar_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( segar )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		sv.refresh = 1;
 
 	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_NONE);
@@ -308,39 +306,20 @@ scrolls that's 4 times taller than the screen.
 
 ***************************************************************************/
 
-int spaceod_vh_start(void)
+VIDEO_START( spaceod )
 {
-	if (segar_vh_start()!=0)
+	if (video_start_segar())
 		return 1;
 
-	if ((sv.horizbackbitmap = bitmap_alloc(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		generic_vh_stop();
+	if ((sv.horizbackbitmap = auto_bitmap_alloc(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((sv.vertbackbitmap = bitmap_alloc(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
-	{
-		bitmap_free(sv.horizbackbitmap);
-		generic_vh_stop();
+	if ((sv.vertbackbitmap = auto_bitmap_alloc(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-/***************************************************************************
-
-Get rid of the Space Odyssey background bitmaps.
-
-***************************************************************************/
-
-void spaceod_vh_stop(void)
-{
-	bitmap_free(sv.horizbackbitmap);
-	bitmap_free(sv.vertbackbitmap);
-	generic_vh_stop();
-}
 
 /***************************************************************************
 This port controls which background to draw for Space Odyssey.	The temp_scene
@@ -425,7 +404,8 @@ WRITE_HANDLER( spaceod_nobackfill_w )
 /***************************************************************************
 Special refresh for Space Odyssey, this code refreshes the static background.
 ***************************************************************************/
-void spaceod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( spaceod )
 {
 	int offs;
 	int charcode;
@@ -434,7 +414,7 @@ void spaceod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		sv.refresh = 1;
 
 	// scenes 0,1 are horiz.  scenes 2,3 are vert.
@@ -538,9 +518,9 @@ void spaceod_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
  ---------------------------------------------------------------------------
 ***************************************************************************/
 
-int monsterb_vh_start(void)
+VIDEO_START( monsterb )
 {
-	if (segar_vh_start()!=0)
+	if (video_start_segar())
 		return 1;
 
 	sv.has_bcolorRAM = 1;
@@ -587,7 +567,8 @@ WRITE_HANDLER( monsterb_back_port_w )
 /***************************************************************************
 Special refresh for Monster Bash, this code refreshes the static background.
 ***************************************************************************/
-void monsterb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( monsterb )
 {
 	int offs;
 	int charcode;
@@ -595,7 +576,7 @@ void monsterb_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;
@@ -761,7 +742,8 @@ WRITE_HANDLER( sindbadm_back_port_w )
 /***************************************************************************
 Special refresh for Sinbad Mystery, this code refreshes the static background.
 ***************************************************************************/
-void sindbadm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+
+VIDEO_UPDATE( sindbadm )
 {
 	int offs;
 	int charcode;
@@ -771,7 +753,7 @@ void sindbadm_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	unsigned char *back_charmap = memory_region(REGION_USER1);
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		sv.refresh = 1;
 
 	sprite_transparency=TRANSPARENCY_NONE;

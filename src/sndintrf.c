@@ -252,6 +252,9 @@ int OKIM6295_clock(const struct MachineSound *msound) { return ((struct OKIM6295
 #if (HAS_MSM5205)
 int MSM5205_num(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->num; }
 #endif
+#if (HAS_MSM5232)
+int MSM5232_num(const struct MachineSound *msound) { return ((struct MSM5232interface*)msound->sound_interface)->num; }
+#endif
 #if (HAS_HC55516)
 int HC55516_num(const struct MachineSound *msound) { return ((struct hc55516_interface*)msound->sound_interface)->num; }
 #endif
@@ -323,8 +326,8 @@ int SN76496_num(const struct MachineSound *msound) { return ((struct SN76496inte
 #if (HAS_MSM5205)
 int MSM5205_clock(const struct MachineSound *msound) { return ((struct MSM5205interface*)msound->sound_interface)->baseclock; }
 #endif
-#if (HAS_UPD7759)
-int UPD7759_clock(const struct MachineSound *msound) { return ((struct UPD7759_interface*)msound->sound_interface)->clock_rate; }
+#if (HAS_MSM5232)
+int MSM5232_clock(const struct MachineSound *msound) { return ((struct MSM5232interface*)msound->sound_interface)->baseclock; }
 #endif
 #if (HAS_ASTROCADE)
 int ASTROCADE_clock(const struct MachineSound *msound) { return ((struct astrocade_interface*)msound->sound_interface)->baseclock; }
@@ -360,6 +363,10 @@ int ES5505_num(const struct MachineSound *msound) { return ((struct ES5505interf
 #if (HAS_ES5506)
 int ES5506_clock(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->baseclock[0]; }
 int ES5506_num(const struct MachineSound *msound) { return ((struct ES5506interface*)msound->sound_interface)->num; }
+#endif
+#if (HAS_BSMT2000)
+int BSMT2000_clock(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->baseclock[0]; }
+int BSMT2000_num(const struct MachineSound *msound) { return ((struct BSMT2000interface*)msound->sound_interface)->num; }
 #endif
 
 #ifdef MESS
@@ -444,7 +451,7 @@ struct snd_interface sndintf[] =
 		AY8910_num,
 		AY8910_clock,
 		AY8910_sh_start,
-		0,
+		AY8910_sh_stop,
 		0,
 		AY8910_sh_reset
 	},
@@ -748,14 +755,26 @@ struct snd_interface sndintf[] =
 		MSM5205_sh_reset,
 	},
 #endif
+#if (HAS_MSM5232)
+    {
+		SOUND_MSM5232,
+		"MSM5232",
+		MSM5232_num,
+		MSM5232_clock,
+		MSM5232_sh_start,
+		MSM5232_sh_stop,
+		0,
+		MSM5232_sh_reset,
+	},
+#endif
 #if (HAS_UPD7759)
     {
 		SOUND_UPD7759,
 		"uPD7759",
 		0,
-		UPD7759_clock,
+		0,
 		UPD7759_sh_start,
-		UPD7759_sh_stop,
+		0,
 		0,
 		0
 	},
@@ -940,6 +959,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_BSMT2000)
+	{
+		SOUND_BSMT2000,
+		"BSMT2000",
+		BSMT2000_num,
+		BSMT2000_clock,
+		BSMT2000_sh_start,
+		BSMT2000_sh_stop,
+		0,
+		0
+	},
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
@@ -1021,7 +1052,7 @@ logerror("Sound #%d wrong ID %d: check enum SOUND_... in src/sndintrf.h!\n",i,sn
 
 	refresh_period = TIME_IN_HZ(Machine->drv->frames_per_second);
 	refresh_period_inv = 1.0 / refresh_period;
-	sound_update_timer = timer_set(TIME_NEVER,0,NULL);
+	sound_update_timer = timer_alloc(NULL);
 
 	if (mixer_sh_start() != 0)
 		return 1;
@@ -1063,14 +1094,7 @@ void sound_stop(void)
 	streams_sh_stop();
 	mixer_sh_stop();
 
-	if (sound_update_timer)
-	{
-		timer_remove(sound_update_timer);
-		sound_update_timer = 0;
-	}
-
 	/* free audio samples */
-	freesamples(Machine->samples);
 	Machine->samples = 0;
 }
 
@@ -1094,7 +1118,7 @@ void sound_update(void)
 	streams_sh_update();
 	mixer_sh_update();
 
-	timer_reset(sound_update_timer,TIME_NEVER);
+	timer_adjust(sound_update_timer, TIME_NEVER, 0, 0);
 
 	profiler_mark(PROFILER_END);
 }
@@ -1143,7 +1167,7 @@ int sound_clock(const struct MachineSound *msound)
 
 int sound_scalebufferpos(int value)
 {
-	int result = (int)((double)value * timer_timeelapsed (sound_update_timer) * refresh_period_inv);
+	int result = (int)((double)value * timer_timeelapsed(sound_update_timer) * refresh_period_inv);
 	if (value >= 0) return (result < value) ? result : value;
 	else return (result > value) ? result : value;
 }

@@ -1612,7 +1612,7 @@ WRITE_HANDLER(nc200_uart_control_w)
 
 	/* bit 5 is used in disk interface */
 #ifdef NC200_DEBUG
-	logerror("bit 5: PC: %04x %02x\n",cpu_get_pc(), data & (1<<5));
+	logerror("bit 5: PC: %04x %02x\n",activecpu_get_pc(), data & (1<<5));
 #endif
 }
 
@@ -1632,7 +1632,7 @@ WRITE_HANDLER(nc200_uart_control_w)
 WRITE_HANDLER(nc200_memory_card_wait_state_w)
 {
 #ifdef NC200_DEBUG
-	logerror("nc200 memory card wait state: PC: %04x %02x\n",cpu_get_pc(),data);
+	logerror("nc200 memory card wait state: PC: %04x %02x\n",activecpu_get_pc(),data);
 #endif
 	floppy_drive_set_motor_state(0,1);
 	floppy_drive_set_ready_state(0,1,1);
@@ -1646,7 +1646,7 @@ WRITE_HANDLER(nc200_memory_card_wait_state_w)
 WRITE_HANDLER(nc200_poweroff_control_w)
 {
 #ifdef NC200_DEBUG
-	logerror("nc200 power off: PC: %04x %02x\n", cpu_get_pc(),data);
+	logerror("nc200 power off: PC: %04x %02x\n", activecpu_get_pc(),data);
 #endif
 
 	nc200_video_set_backlight(((data^(1<<2))>>2) & 0x01);

@@ -17,15 +17,11 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/19 -
 	Palette Setting.
 
 *******************************************************************/
-static unsigned char minivadr_palette[] =
-{
-	0x00,0x00,0x00,			/* black */
-	0xff,0xff,0xff			/* white */
-};
 
-void minivadr_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
+PALETTE_INIT( minivadr )
 {
-	memcpy(game_palette, minivadr_palette, sizeof(minivadr_palette));
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0xff,0xff,0xff);
 }
 
 
@@ -55,15 +51,15 @@ WRITE_HANDLER( minivadr_videoram_w )
 		{
 			color = Machine->pens[((data >> i) & 0x01)];
 
-			plot_pixel(Machine->scrbitmap, x + (7 - i), y, color);
+			plot_pixel(tmpbitmap, x + (7 - i), y, color);
 		}
 	}
 }
 
 
-void minivadr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( minivadr )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		int offs;
 
@@ -72,4 +68,5 @@ void minivadr_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		for (offs = 0; offs < videoram_size; offs++)
 			minivadr_videoram_w(offs,videoram[offs]);
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

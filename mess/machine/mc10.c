@@ -127,7 +127,7 @@ WRITE_HANDLER ( mc10_port2_w )
  * Video hardware
  * -------------------------------------------------- */
 
-int mc10_vh_start(void)
+int video_start_mc10(void)
 {
 	extern void dragon_charproc(UINT8 c);
 	struct m6847_init_params p;
@@ -140,7 +140,7 @@ int mc10_vh_start(void)
 	p.charproc = dragon_charproc;
 	p.initial_video_offset = 0x4000;
 
-	return m6847_vh_start(&p);
+	return video_start_m6847(&p);
 }
 
 WRITE_HANDLER ( mc10_bfff_w )

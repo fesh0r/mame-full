@@ -50,7 +50,7 @@ static WRITE_HANDLER( cps1_snd_bankswitch_w )
 	bankaddr = (data * 0x4000) & (length-1);
 	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
 
-	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
+	if (data & 0xfe) logerror("%04x: write %02x to f004\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( cps1_sound_fade_w )
@@ -137,12 +137,12 @@ static WRITE16_HANDLER( cpsq_coinctrl2_w )
     }
 }
 
-static int cps1_interrupt(void)
+static INTERRUPT_GEN( cps1_interrupt )
 {
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
 	/* *only* game to have that. */
-	return 2;
+	cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
 /********************************************************************
@@ -161,7 +161,7 @@ struct QSound_interface qsound_interface =
 
 static unsigned char *qsound_sharedram1,*qsound_sharedram2;
 
-int cps1_qsound_interrupt(void)
+INTERRUPT_GEN( cps1_qsound_interrupt )
 {
 #if 0
 I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
@@ -170,7 +170,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 		qsound_sharedram1[0xfff] = 0x77;
 #endif
 
-	return 2;
+	cpu_set_irq_line(cpu_getactivecpu(), 2, HOLD_LINE);
 }
 
 
@@ -181,7 +181,7 @@ READ16_HANDLER( qsound_rom_r )
 	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		usrintf_showmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -253,7 +253,7 @@ static struct EEPROM_interface pang3_eeprom_interface =
 	"0111"	/* erase command */
 };
 
-static void qsound_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( qsound )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -266,7 +266,7 @@ static void qsound_nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static void pang3_nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( pang3 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -310,6 +310,7 @@ static MEMORY_READ16_START( cps1_readmem )
 	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
 	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
+	{ 0x800178, 0x800179, cps1_input3_r }, /* Captain Commando player 4 controls */
 	{ 0x8001fc, 0x8001fd, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
 	{ 0x900000, 0x92ffff, MRA16_RAM },	/* SF2CE executes code from here */
@@ -521,12 +522,11 @@ INPUT_PORTS_START( ghouls )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0xc0, "Upright 1 Player"  )
+	PORT_DIPSETTING(    0x80, "Upright 2 Players"  )
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
+	/* 0x00 gives again Cocktail */
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
@@ -549,7 +549,7 @@ INPUT_PORTS_START( ghouls )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Freeze"  )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -2303,6 +2303,26 @@ INPUT_PORTS_START( captcomm )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START  /* Player 3 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
+
+	PORT_START  /*Player 4 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( knights )
@@ -3474,99 +3494,83 @@ static struct OKIM6295interface okim6295_interface_7576 =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(DRVNAME,CPU_FRQ,OKI_FREQ,NVRAM)						\
-static const struct MachineDriver machine_driver_##DRVNAME =				\
-{																			\
-	/* basic machine hardware */											\
-	{																		\
-		{																	\
-			CPU_M68000,														\
-			CPU_FRQ,														\
-			cps1_readmem,cps1_writemem,0,0,									\
-			cps1_interrupt, 1												\
-		},																	\
-		{																	\
-			CPU_Z80 | CPU_AUDIO_CPU,										\
-			4000000,  /* 4 MHz ??? TODO: find real FRQ */					\
-			sound_readmem,sound_writemem,0,0,								\
-			ignore_interrupt,0												\
-		}																	\
-	},																		\
-	60, DEFAULT_60HZ_VBLANK_DURATION,										\
-	1,																		\
-	0,																		\
-																			\
-	/* video hardware */													\
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },							\
-	gfxdecodeinfo,															\
-	4096, 0,																\
-	0,																		\
-																			\
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,	\
-	cps1_eof_callback,														\
-	cps1_vh_start,															\
-	cps1_vh_stop,															\
-	cps1_vh_screenrefresh,													\
-																			\
-	/* sound hardware */													\
-	0,0,0,0,																\
-	{ { SOUND_YM2151,  &ym2151_interface },									\
-	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }					\
-	},																		\
-	NVRAM																	\
-};
+static MACHINE_DRIVER_START( cps1 )
 
-static const struct MachineDriver machine_driver_qsound =
-{
-	{
-		{
-			CPU_M68000,
-			10000000,	/* ??? */
-			cps1_readmem,cps1_writemem,0,0,
-			cps1_qsound_interrupt, 1  /* ??? interrupts per frame */
-		},
-		{
-			CPU_Z80,	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
-			6000000,  /* 6 MHz ??? TODO: find real FRQ */
-			qsound_readmem,qsound_writemem,0,0,
-			0,0,
-			interrupt,250	/* ?? */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	0,
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 10000000)
+	MDRV_CPU_MEMORY(cps1_readmem,cps1_writemem)
+	MDRV_CPU_VBLANK_INT(cps1_interrupt,1)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)	/* 4 MHz ??? TODO: find real FRQ */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	cps1_eof_callback,
-	cps1_vh_start,
-	cps1_vh_stop,
-	cps1_vh_screenrefresh,
+	MDRV_VIDEO_START(cps1)
+	MDRV_VIDEO_EOF(cps1)
+	MDRV_VIDEO_UPDATE(cps1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_QSOUND,
-			&qsound_interface
-		}
-	},
-
-	qsound_nvram_handler
-};
+	MDRV_SOUND_ADD_TAG("2151", YM2151, ym2151_interface)
+	MDRV_SOUND_ADD_TAG("okim", OKIM6295, okim6295_interface_7576)
+MACHINE_DRIVER_END
 
 
-MACHINE_DRIVER( forgottn, 10000000, 6061, 0 )
-MACHINE_DRIVER( cps1,     10000000, 7576, 0 )	/* 10 MHz should be the "standard" freq */
-MACHINE_DRIVER( sf2,      12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( sf2accp2, 12000000, 7576, 0 )	/* 12 MHz */
-MACHINE_DRIVER( pang3,    10000000, 7576, pang3_nvram_handler )	/* 10 MHz?? */
+static MACHINE_DRIVER_START( forgottn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("okim", OKIM6295, okim6295_interface_6061)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( sf2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_CPU_REPLACE("main", M68000, 12000000)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( pang3 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_NVRAM_HANDLER(pang3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( qsound )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(cps1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(cps1_qsound_interrupt,1)  /* ??? interrupts per frame */
+
+	MDRV_CPU_REPLACE("sound", Z80, 6000000)
+	MDRV_CPU_FLAGS(0)	/* can't use CPU_AUDIO_CPU, slammast requires the Z80 for protection */
+	MDRV_CPU_MEMORY(qsound_readmem,qsound_writemem)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,250)	/* ?? */
+
+	MDRV_NVRAM_HANDLER(qsound)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_REPLACE("2151", QSOUND, qsound_interface)
+	MDRV_SOUND_REMOVE("okim")
+
+MACHINE_DRIVER_END
 
 
 
@@ -3837,6 +3841,63 @@ ROM_START( stridrja )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "strider.18",   0x00000, 0x20000, 0x4386bc80 )
 	ROM_LOAD( "strider.19",   0x20000, 0x20000, 0x444536d7 )
+ROM_END
+
+ROM_START( dw )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "d_wars30.11f", 0x00000, 0x20000, 0xf9ec6d68 )
+	ROM_LOAD16_BYTE( "d_wars35.11h", 0x00001, 0x20000, 0xe41fff2f )
+	ROM_LOAD16_BYTE( "d_wars31.12f", 0x40000, 0x20000, 0xe3de76ff )
+	ROM_LOAD16_BYTE( "d_wars36.12h", 0x40001, 0x20000, 0x7a13cfbf )
+	ROM_LOAD16_BYTE( "34.bin",       0x80000, 0x20000, 0x8f663d00 )
+	ROM_LOAD16_BYTE( "40.bin",       0x80001, 0x20000, 0x1586dbf3 )
+	ROM_LOAD16_BYTE( "35.bin",       0xc0000, 0x20000, 0x9db93d7a )
+	ROM_LOAD16_BYTE( "41.bin",       0xc0001, 0x20000, 0x1aae69a4 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "09.bin",       0x000000, 0x20000, 0xc3e83c69, ROM_SKIP(7) )
+	ROMX_LOAD( "01.bin",       0x000001, 0x20000, 0x187b2886, ROM_SKIP(7) )
+	ROMX_LOAD( "13.bin",       0x000002, 0x20000, 0x0273d87d, ROM_SKIP(7) )
+	ROMX_LOAD( "05.bin",       0x000003, 0x20000, 0x339378b8, ROM_SKIP(7) )
+	ROMX_LOAD( "24.bin",       0x000004, 0x20000, 0xc6909b6f, ROM_SKIP(7) )
+	ROMX_LOAD( "17.bin",       0x000005, 0x20000, 0x2e2f8320, ROM_SKIP(7) )
+	ROMX_LOAD( "38.bin",       0x000006, 0x20000, 0xcd7923ed, ROM_SKIP(7) )
+	ROMX_LOAD( "32.bin",       0x000007, 0x20000, 0x21a0a453, ROM_SKIP(7) )
+	ROMX_LOAD( "10.bin",       0x100000, 0x20000, 0xff28f8d0, ROM_SKIP(7) )
+	ROMX_LOAD( "02.bin",       0x100001, 0x20000, 0xcc83c02f, ROM_SKIP(7) )
+	ROMX_LOAD( "14.bin",       0x100002, 0x20000, 0x18fb232c, ROM_SKIP(7) )
+	ROMX_LOAD( "06.bin",       0x100003, 0x20000, 0x6f9edd75, ROM_SKIP(7) )
+	ROMX_LOAD( "25.bin",       0x100004, 0x20000, 0x152ea74a, ROM_SKIP(7) )
+	ROMX_LOAD( "18.bin",       0x100005, 0x20000, 0x1833f932, ROM_SKIP(7) )
+	ROMX_LOAD( "39.bin",       0x100006, 0x20000, 0xbc09b360, ROM_SKIP(7) )
+	ROMX_LOAD( "33.bin",       0x100007, 0x20000, 0x89de1533, ROM_SKIP(7) )
+	ROMX_LOAD( "11.bin",       0x200000, 0x20000, 0x29eaf490, ROM_SKIP(7) )
+	ROMX_LOAD( "03.bin",       0x200001, 0x20000, 0x7bf51337, ROM_SKIP(7) )
+	ROMX_LOAD( "15.bin",       0x200002, 0x20000, 0xd36cdb91, ROM_SKIP(7) )
+	ROMX_LOAD( "07.bin",       0x200003, 0x20000, 0xe04af054, ROM_SKIP(7) )
+	ROMX_LOAD( "26.bin",       0x200004, 0x20000, 0x07fc714b, ROM_SKIP(7) )
+	ROMX_LOAD( "19.bin",       0x200005, 0x20000, 0x7114e5c6, ROM_SKIP(7) )
+	ROMX_LOAD( "28.bin",       0x200006, 0x20000, 0xaf62bf07, ROM_SKIP(7) )
+	ROMX_LOAD( "21.bin",       0x200007, 0x20000, 0x523f462a, ROM_SKIP(7) )
+	ROMX_LOAD( "12.bin",       0x300000, 0x20000, 0x38652339, ROM_SKIP(7) )
+	ROMX_LOAD( "04.bin",       0x300001, 0x20000, 0x4951bc0f, ROM_SKIP(7) )
+	ROMX_LOAD( "16.bin",       0x300002, 0x20000, 0x381608ae, ROM_SKIP(7) )
+	ROMX_LOAD( "08.bin",       0x300003, 0x20000, 0xb475d4e9, ROM_SKIP(7) )
+	ROMX_LOAD( "27.bin",       0x300004, 0x20000, 0xa27e81fa, ROM_SKIP(7) )
+	ROMX_LOAD( "20.bin",       0x300005, 0x20000, 0x002796dc, ROM_SKIP(7) )
+	ROMX_LOAD( "29.bin",       0x300006, 0x20000, 0x6b41f82d, ROM_SKIP(7) )
+	ROMX_LOAD( "22.bin",       0x300007, 0x20000, 0x52145369, ROM_SKIP(7) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 ) /* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "23.bin",        0x00000, 0x08000, 0xb3b79d4f )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "d_wars19.12c",  0x20000, 0x20000, 0x068741db )
+	ROM_LOAD( "d_wars18.11c",  0x00000, 0x20000, 0xac6e307d )
 ROM_END
 
 ROM_START( dwj )
@@ -6425,31 +6486,31 @@ ROM_END
 
 
 
-static void init_wof(void)
+static DRIVER_INIT( wof )
 {
 	wof_decode();
 	init_cps1();
 }
 
-static void init_dino(void)
+static DRIVER_INIT( dino )
 {
 	dino_decode();
 	init_cps1();
 }
 
-static void init_punisher(void)
+static DRIVER_INIT( punisher )
 {
 	punisher_decode();
 	init_cps1();
 }
 
-static void init_slammast(void)
+static DRIVER_INIT( slammast )
 {
 	slammast_decode();
 	init_cps1();
 }
 
-static void init_pang3(void)
+static DRIVER_INIT( pang3 )
 {
 	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
 	int A,src,dst;
@@ -6483,7 +6544,8 @@ GAME( 1988, daimakai, ghouls,   cps1,     ghouls,   cps1,     ROT0,   "Capcom", 
 GAME( 1989, strider,  0,        cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider (US)" )
 GAME( 1989, striderj, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider Hiryu (Japan set 1)" )
 GAME( 1989, stridrja, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider Hiryu (Japan set 2)" )
-GAME( 1989, dwj,      0,        cps1,     dwj,      cps1,     ROT0,   "Capcom", "Tenchi wo Kurau (Japan)" )
+GAME( 1989, dw,       0,        cps1,     dwj,      cps1,     ROT0,   "Capcom", "Dynasty Wars (World)" )
+GAME( 1989, dwj,      dw,       cps1,     dwj,      cps1,     ROT0,   "Capcom", "Tenchi wo Kurau (Japan)" )
 GAME( 1989, willow,   0,        cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, English)" )
 GAME( 1989, willowj,  willow,   cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, Japanese)" )
 GAME( 1989, unsquad,  0,        cps1,     unsquad,  cps1,     ROT0,   "Capcom", "U.N. Squadron (US)" )
@@ -6534,7 +6596,7 @@ GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "
 GAME( 1992, sf2rb2,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Rainbow set 2)" )
 GAME( 1992, sf2red,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Red Wave)" )
 GAME( 1992, sf2v004,  sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II! - Champion Edition (V004)" )
-GAME( 1992, sf2accp2, sf2ce,    sf2accp2, sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
+GAME( 1992, sf2accp2, sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Accelerator Pt.II)" )
 GAME( 1992, varth,    0,        cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (World)" )
 GAME( 1992, varthu,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom (Romstar license)", "Varth - Operation Thunderstorm (US)" )
 GAME( 1992, varthj,   varth,    cps1,     varth,    cps1,     ROT270, "Capcom", "Varth - Operation Thunderstorm (Japan)" )

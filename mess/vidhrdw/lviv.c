@@ -67,7 +67,6 @@ int lviv_vh_start (void)
 
 void lviv_vh_stop (void)
 {
-	generic_vh_stop();
 }
 
 

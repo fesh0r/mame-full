@@ -93,8 +93,8 @@ static int create_clipper(void);
 static void erase_surfaces(void);
 static void release_surfaces(void);
 static void compute_color_masks(const DDSURFACEDESC *desc);
-static int render_to_blit(struct mame_bitmap *bitmap, int update);
-static int render_to_primary(struct mame_bitmap *bitmap, int update);
+static int render_to_blit(struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
+static int render_to_primary(struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update);
 static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update);
 
 
@@ -314,7 +314,11 @@ static HRESULT WINAPI enum_callback(LPDDSURFACEDESC desc, LPVOID context)
 static HRESULT WINAPI enum2_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 {
 	int refresh = (win_match_refresh || win_gfx_refresh) ? desc->DUMMYUNIONNAMEN(2).dwRefreshRate : 0;
+#ifdef _MSC_VER
+	int depth = desc->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+#else
 	int depth = desc->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+#endif
 	double score;
 
 	// compute this mode's score
@@ -546,7 +550,8 @@ static int create_surfaces(void)
 	result = IDirectDraw_CreateSurface(ddraw, &primary_desc, &primary_surface, NULL);
 	if (result != DD_OK)
 	{
-		fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
 		goto cant_create_primary;
 	}
 
@@ -560,7 +565,6 @@ static int create_surfaces(void)
 
 	// determine the color masks and force the palette to recalc
 	compute_color_masks(&primary_desc);
-	win_mark_palette_dirty();
 
 	// if this is a full-screen mode, attempt to create a color control object
 	if (!win_window_mode && win_gfx_brightness != 0.0)
@@ -605,9 +609,6 @@ static int create_surfaces(void)
 
 	// erase all the surfaces we created
 	erase_surfaces();
-
-	// compute the mask colors
-	compute_color_masks(&primary_desc);
 	return 0;
 
 	// error handling
@@ -655,7 +656,8 @@ static int create_blit_surface(void)
 	}
 	if (result != DD_OK)
 	{
-		fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
 		goto cant_create_blit;
 	}
 
@@ -704,7 +706,8 @@ static void set_brightness(void)
 	result = IDirectDrawSurface_QueryInterface(primary_surface, &IID_IDirectDrawGammaControl, (void **)&gamma_control);
 	if (result != DD_OK)
 	{
-		fprintf(stderr, "Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
 		gamma_control = NULL;
 	}
 
@@ -898,6 +901,9 @@ static void compute_color_masks(const DDSURFACEDESC *desc)
 		while (!(temp & 1))
 			temp >>= 1, win_color32_bdst_shift++;
 	}
+	
+	// mark the lookups invalid
+	palette_lookups_invalid = 1;
 }
 
 
@@ -906,7 +912,7 @@ static void compute_color_masks(const DDSURFACEDESC *desc)
 //	win_ddraw_draw
 //============================================================
 
-int win_ddraw_draw(struct mame_bitmap *bitmap, int update)
+int win_ddraw_draw(struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
 {
 	int result;
 
@@ -916,15 +922,23 @@ int win_ddraw_draw(struct mame_bitmap *bitmap, int update)
 		forced_updates--;
 		update = 1;
 	}
+	
+	// if we don't have our surfaces, try to recreate them
+	if (!primary_surface)
+	{
+		release_surfaces();
+		if (create_surfaces())
+			return 0;
+	}
 
 	// if we're using hardware stretching, render to the blit surface,
 	// then blit that and stretch
 	if (win_hw_stretch)
-		result = render_to_blit(bitmap, update);
+		result = render_to_blit(bitmap, vector_dirty_pixels, update);
 
 	// otherwise, render directly to the primary/back surface
 	else
-		result = render_to_primary(bitmap, update);
+		result = render_to_primary(bitmap, vector_dirty_pixels, update);
 
 	return result;
 }
@@ -935,7 +949,7 @@ int win_ddraw_draw(struct mame_bitmap *bitmap, int update)
 //	render_to_blit
 //============================================================
 
-static int render_to_blit(struct mame_bitmap *bitmap, int update)
+static int render_to_blit(struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
 {
 	int dstdepth = blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 	LPDIRECTDRAWSURFACE target_surface;
@@ -946,8 +960,7 @@ static int render_to_blit(struct mame_bitmap *bitmap, int update)
 
 tryagain:
 	// attempt to lock the blit surface
-	result = IDirectDrawSurface_Lock(blit_surface, NULL, &blit_desc, (throttle || use_dirty) ? DDLOCK_WAIT : 0, NULL);
-
+	result = IDirectDrawSurface_Lock(blit_surface, NULL, &blit_desc, (throttle || vector_dirty_pixels) ? DDLOCK_WAIT : 0, NULL);
 	if (result == DDERR_SURFACELOST)
 		goto surface_lost;
 
@@ -956,7 +969,8 @@ tryagain:
 		return 1;
 	if (result != DD_OK)
 	{
-		fprintf(stderr, "Unable to lock blit_surface: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Unable to lock blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -975,17 +989,16 @@ tryagain:
 	params.dstyskip		= 0;
 	params.dsteffect	= win_determine_effect(&params);
 
-	params.srcdata		= bitmap->line[0];
-	params.srcpitch		= ((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0]);
+	params.srcdata		= bitmap->base;
+	params.srcpitch		= bitmap->rowbytes;
 	params.srcdepth		= bitmap->depth;
 	params.srclookup	= win_prepare_palette(&params);
 	params.srcxoffs		= win_visible_rect.left;
 	params.srcyoffs		= win_visible_rect.top;
 	params.srcwidth		= win_visible_width;
 	params.srcheight	= win_visible_height;
-
-	params.dirtydata	= use_dirty ? dirty_grid : NULL;
-	params.dirtypitch	= DIRTY_H;
+	
+	params.vecdirty		= vector_dirty_pixels;
 
 	win_perform_blit(&params, 0);
 
@@ -1085,7 +1098,8 @@ tryagain:
 	if (result != DD_OK && result != DDERR_WASSTILLDRAWING)
 	{
 		// otherwise, print the error and fall back
-		fprintf(stderr, "Unable to blt blit_surface: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Unable to blt blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1108,7 +1122,7 @@ tryagain:
 		TICKER start = ticker(), stop;
 #endif
 
-		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_NOVSYNC);
+		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_WAIT);
 
 #if SHOW_FLIP_TIMES
 		stop = ticker();
@@ -1143,7 +1157,7 @@ surface_lost:
 //	render_to_primary
 //============================================================
 
-static int render_to_primary(struct mame_bitmap *bitmap, int update)
+static int render_to_primary(struct mame_bitmap *bitmap, void *vector_dirty_pixels, int update)
 {
 	DDSURFACEDESC temp_desc = { sizeof(temp_desc) };
 	LPDIRECTDRAWSURFACE target_surface;
@@ -1222,7 +1236,8 @@ tryagain:
 		return 1;
 	if (result != DD_OK)
 	{
-		fprintf(stderr, "Unable to lock target_surface: %08x\n", (UINT32)result);
+		if (verbose)
+			fprintf(stderr, "Unable to lock target_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1237,17 +1252,20 @@ tryagain:
 	params.dstyskip		= (!win_old_scanlines || ymult == 1) ? 0 : 1;
 	params.dsteffect	= win_determine_effect(&params);
 
-	params.srcdata		= bitmap->line[0];
-	params.srcpitch		= ((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0]);
+	params.srcdata		= bitmap->base;
+	params.srcpitch		= bitmap->rowbytes;
 	params.srcdepth		= bitmap->depth;
 	params.srclookup	= win_prepare_palette(&params);
 	params.srcxoffs		= win_visible_rect.left;
 	params.srcyoffs		= win_visible_rect.top;
 	params.srcwidth		= win_visible_width;
 	params.srcheight	= win_visible_height;
-
-	params.dirtydata	= use_dirty ? dirty_grid : NULL;
-	params.dirtypitch	= DIRTY_H;
+	
+	params.vecdirty		= vector_dirty_pixels;
+	
+	// need to disable vector dirtying if we're rendering directly to a back buffer
+	if (!win_window_mode && back_surface)
+		params.vecdirty = NULL;
 
 	win_perform_blit(&params, update);
 
@@ -1267,7 +1285,7 @@ tryagain:
 		TICKER start = ticker(), stop;
 #endif
 
-		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_NOVSYNC);
+		IDirectDrawSurface_Flip(primary_surface, NULL, DDFLIP_WAIT);
 
 #if SHOW_FLIP_TIMES
 		stop = ticker();

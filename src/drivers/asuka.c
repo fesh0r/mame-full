@@ -19,7 +19,7 @@ Made out of:	Rastan driver by Jarek Burczynski
 	Earth Joker     (c) 1993 Visco Corporation
 	Kokontouzai Eto Monogatari (c) 1994 Visco Corporation
 
-Main CPU: MC68000 uses irq 5 (4 in bonze).
+Main CPU: MC68000 uses irq 5 (4 in bonze, 4&5 in cadash).
 Sound   : Z80 & YM2151 + MSM5205 (YM2610 in bonze)
 Chips   : TC0100SCN + TC0002OBJ + TC0110PCR (+ C-Chip in bonze)
 
@@ -36,6 +36,16 @@ The other games seem identical but Eto is slightly different.
 0x3e0000 - 0x3e0003 : communication with sound CPU
 0xc00000 - 0xc2000f : TC0100SCN (see taitoic.c)
 0xd00000 - 0xd007ff : sprite RAM
+
+
+Cadashu Info (Malcor)
+---------------------
+
+Main PCB (JAMMA) K1100528A
+Main processor  - 68000 12MHz
+                - HD64180RP8 8MHz (8 bit processor, dual channel DMAC,
+                             memory mapped I/O, used for multigame link)
+Misc custom ICs including three PQFPs, one PGA, and one SIP
 
 
 From "garmedes.txt"
@@ -63,21 +73,27 @@ Maze of Flott [(c) one year later] and most other games with the
 TC0100SCN do use the FG layer for text (Driftout is an exception).
 
 
+Notes on Bonze DIPs by Stephane Humbert
+---------------------------------------
+
+The 2nd bonus life is awarded at the wrong score because of a bug in
+the game code at $961E; and the unused DIP switch enables the built-in
+map editor if the branch at $7572 is skipped.
+
+
 TODO
 ----
 
 DIPs
-
-Bonze:
-  - sprite priorities seem to be wrong sometimes
-  - c-chip level data is close but not perfect
-  - player restart positions are missing
 
 Mofflot: $14c46 sub inits sound system: in a pause loop during this
 it reads a dummy address.
 
 Earthjkr: Wrong screen size? Left edge of green blueprints in
 attract looks like it's incorrectly off screen.
+
+Cadash: Hooks for twin arcade machine setup: will involve emulating an extra
+microcontroller, the 07 rom might be the program for it.
 
 Galmedes: Test mode has select1/2 stuck at on.
 
@@ -88,20 +104,18 @@ the prog rom. Doesn't seem to cause problems though.
 
 #include "driver.h"
 #include "state.h"
-#include "cpu/m68000/m68000.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
 WRITE16_HANDLER( asuka_spritectrl_w );
-WRITE16_HANDLER( asuka_spriteflip_w );
 
-int rastan_s_interrupt(void);
+INTERRUPT_GEN( rastan_s_interrupt );
 
-int asuka_vh_start(void);
-int galmedes_vh_start(void);
-void asuka_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
-void asuka_vh_stop(void);
+VIDEO_START( asuka );
+VIDEO_START( galmedes );
+VIDEO_START( cadash );
+VIDEO_UPDATE( asuka );
+VIDEO_UPDATE( bonzeadv );
 
 WRITE_HANDLER( rastan_adpcm_trigger_w );
 WRITE_HANDLER( rastan_c000_w );
@@ -111,21 +125,31 @@ WRITE16_HANDLER( bonzeadv_c_chip_w );
 READ16_HANDLER( bonzeadv_c_chip_r );
 
 
+/***********************************************************
+				INTERRUPTS
+***********************************************************/
+
+void cadash_irq_handler(int irq);
+
+static void cadash_interrupt5(int param)
+{
+	cpu_set_irq_line(0, 5, HOLD_LINE);
+}
+
+INTERRUPT_GEN( cadash_interrupt )
+{
+	timer_set(TIME_IN_CYCLES(500,0),0, cadash_interrupt5);
+	cpu_set_irq_line(0, 4, HOLD_LINE);  /* interrupt vector 4 */
+}
+
+
 /************************************************
 			SOUND
 ************************************************/
 
-static int banknum = -1;
-
-static void reset_sound_region(void)
-{
-	cpu_setbank( 1, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
-}
-
 static WRITE_HANDLER( sound_bankswitch_w )
 {
-	banknum = (data-1) & 0x03;
-	reset_sound_region();
+	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
 
 
@@ -145,8 +169,7 @@ static MEMORY_READ16_START( bonzeadv_readmem )
 	{ 0x800000, 0x800803, bonzeadv_c_chip_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
-	{ 0xd00800, 0xd01fff, MRA16_RAM },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( bonzeadv_writemem )
@@ -154,15 +177,13 @@ static MEMORY_WRITE16_START( bonzeadv_writemem )
 	{ 0x10c000, 0x10ffff, MWA16_RAM },
 	{ 0x200000, 0x200007, TC0110PCR_step1_word_w },
 	{ 0x3a0000, 0x3a0001, asuka_spritectrl_w },
-	{ 0x3c0000, 0x3c0001, MWA16_NOP },	/* watchdog ?? */
+	{ 0x3c0000, 0x3c0001, watchdog_reset16_w },
 	{ 0x3e0000, 0x3e0001, taitosound_port16_lsb_w },
 	{ 0x3e0002, 0x3e0003, taitosound_comm16_lsb_w },
 	{ 0x800000, 0x800c01, bonzeadv_c_chip_w },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, asuka_spriteflip_w },
-	{ 0xd00800, 0xd01fff, MWA16_RAM },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_READ16_START( asuka_readmem )
@@ -175,7 +196,7 @@ static MEMORY_READ16_START( asuka_readmem )
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
-	{ 0xd00000, 0xd007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_r },	/* sprite ram */
 MEMORY_END
 
 static MEMORY_WRITE16_START( asuka_writemem )
@@ -189,8 +210,34 @@ static MEMORY_WRITE16_START( asuka_writemem )
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xc10000, 0xc103ff, MWA16_NOP },	/* error in Asuka init code */
 	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
-	{ 0xd00000, 0xd007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xd01bfe, 0xd01bff, asuka_spriteflip_w },
+	{ 0xd00000, 0xd03fff, PC090OJ_word_0_w },	/* sprite ram */
+MEMORY_END
+
+static MEMORY_READ16_START( cadash_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x0c0000, 0x0c0001, MRA16_NOP },
+	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_r },
+	{ 0x100000, 0x107fff, MRA16_RAM },	/* RAM */
+	{ 0x800000, 0x800fff, MRA16_RAM },	/* network ram */
+	{ 0x900000, 0x90000f, TC0220IOC_halfword_r },
+	{ 0xa00000, 0xa0000f, TC0110PCR_word_r },
+	{ 0xb00000, 0xb03fff, PC090OJ_word_0_r },	/* sprite ram */
+	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_r },	/* tilemaps */
+	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_r },
+MEMORY_END
+
+static MEMORY_WRITE16_START( cadash_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x080000, 0x080003, asuka_spritectrl_w },
+	{ 0x0c0000, 0x0c0001, taitosound_port16_lsb_w },
+	{ 0x0c0002, 0x0c0003, taitosound_comm16_lsb_w },
+	{ 0x100000, 0x107fff, MWA16_RAM },
+	{ 0x800000, 0x800fff, MWA16_RAM },	/* network ram */
+	{ 0x900000, 0x90000f, TC0220IOC_halfword_w },
+	{ 0xa00000, 0xa0000f, TC0110PCR_step1_4bpg_word_w },
+	{ 0xb00000, 0xb03fff, PC090OJ_word_0_w },	/* sprite ram */
+	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* tilemaps */
+	{ 0xc20000, 0xc2000f, TC0100SCN_ctrl_word_0_w },
 MEMORY_END
 
 static MEMORY_READ16_START( eto_readmem )
@@ -201,7 +248,7 @@ static MEMORY_READ16_START( eto_readmem )
 	{ 0x400000, 0x40000f, TC0220IOC_halfword_r },	/* service mode mirror */
 	{ 0x4e0000, 0x4e0001, MRA16_NOP },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_r },
-	{ 0xc00000, 0xc007ff, MRA16_RAM },	/* sprite ram */
+	{ 0xc00000, 0xc03fff, PC090OJ_word_0_r },	/* sprite ram */
 	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_r },	/* tilemaps */
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_r },
 MEMORY_END
@@ -214,8 +261,7 @@ static MEMORY_WRITE16_START( eto_writemem )	/* N.B. tc100scn mirror overlaps spr
 	{ 0x4a0000, 0x4a0003, asuka_spritectrl_w },
 	{ 0x4e0000, 0x4e0001, taitosound_port16_lsb_w },
 	{ 0x4e0002, 0x4e0003, taitosound_comm16_lsb_w },
-	{ 0xc00000, 0xc007ff, MWA16_RAM, &spriteram16, &spriteram_size },
-	{ 0xc01bfe, 0xc01bff, asuka_spriteflip_w },
+	{ 0xc00000, 0xc03fff, PC090OJ_word_0_w },	/* sprite ram */
 	{ 0xc00000, 0xc0ffff, TC0100SCN_word_0_w },	/* service mode mirror */
 	{ 0xd00000, 0xd0ffff, TC0100SCN_word_0_w },	/* tilemaps */
 	{ 0xd20000, 0xd2000f, TC0100SCN_ctrl_word_0_w },
@@ -289,6 +335,30 @@ MEMORY_END
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) ) \
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
+#define TAITO_COINAGE_WORLD_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) ) \
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_4C ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+
+#define TAITO_COINAGE_US_8 \
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) ) \
+	PORT_DIPNAME( 0xc0, 0xc0, "Price to Continue" ) \
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) ) \
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) ) \
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_1C ) ) \
+	PORT_DIPSETTING(    0xc0, "Same as Start" )
+
 #define TAITO_DIFFICULTY_8 \
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) ) \
 	PORT_DIPSETTING(    0x02, "Easy" ) \
@@ -317,6 +387,28 @@ MEMORY_END
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_START1 ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_START2 )
+
+#define CADASH_PLAYERS_INPUT( player ) \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 | player ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | player ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | player ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | player ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | player ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | player )
+
+#define CADASH_SYSTEM_INPUT \
+	PORT_START \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN2 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW,  IPT_START2 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW,  IPT_START1 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW,  IPT_SERVICE1 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW,  IPT_TILT ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
 
 INPUT_PORTS_START( bonzeadv )
@@ -354,10 +446,10 @@ INPUT_PORTS_START( bonzeadv )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -417,10 +509,10 @@ INPUT_PORTS_START( jigkmgri ) /* coinage DIPs differ from bonzeadv */
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	/* probably unused */
+	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -487,7 +579,7 @@ INPUT_PORTS_START( asuka )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x40, "Continue" )
+	PORT_DIPNAME( 0xc0, 0x40, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0xc0, "Up to Level 2" )
 	PORT_DIPSETTING(    0x80, "Up to Level 3" )
@@ -505,9 +597,9 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mofflott )
 	PORT_START	/* DSWA */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -544,6 +636,138 @@ INPUT_PORTS_START( mofflott )
 
 	/* IN2 */
 	ASUKA_SYSTEM_INPUT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cadash )
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_WORLD_8
+
+	PORT_START	/* DSWB */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	/* Round cleared   Added time	*/
+	/*       1            8:00	*/
+	/*       2           10:00	*/
+	/*       3            8:00	*/
+	/*       4            7:00	*/
+	/*       5            9:00	*/
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
+
+	/* IN0 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	CADASH_SYSTEM_INPUT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cadashj )
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_JAPAN_8
+
+	PORT_START	/* DSWB */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
+
+	/* IN0 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	CADASH_SYSTEM_INPUT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( cadashu )
+	PORT_START	/* DSWA */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )	// Manual says leave it off
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	TAITO_COINAGE_US_8
+
+	PORT_START	/* DSWB */
+	TAITO_DIFFICULTY_8
+	PORT_DIPNAME( 0x0c, 0x0c, "Starting Time" )
+	PORT_DIPSETTING(    0x00, "5:00" )
+	PORT_DIPSETTING(    0x04, "6:00" )
+	PORT_DIPSETTING(    0x0c, "7:00" )
+	PORT_DIPSETTING(    0x08, "8:00" )
+	PORT_DIPNAME( 0x30, 0x30, "Added Time (after round clear)" )
+	PORT_DIPSETTING(    0x00, "Default - 2:00" )
+	PORT_DIPSETTING(    0x10, "Default - 1:00" )
+	PORT_DIPSETTING(    0x30, "Default" )
+	PORT_DIPSETTING(    0x20, "Default + 1:00" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Communication Mode" )
+	PORT_DIPSETTING(    0xc0, "Stand alone" )
+	PORT_DIPSETTING(    0x80, "Master" )
+	PORT_DIPSETTING(    0x00, "Slave" )
+//	PORT_DIPSETTING(    0x40, "Stand alone" )
+
+	/* IN0 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER1 )
+
+	/* IN1 */
+	CADASH_PLAYERS_INPUT( IPF_PLAYER2 )
+
+	/* IN2 */
+	CADASH_SYSTEM_INPUT
 INPUT_PORTS_END
 
 INPUT_PORTS_START( galmedes )
@@ -764,189 +988,160 @@ static struct ADPCMinterface adpcm_interface =
 			     MACHINE DRIVERS
 ***********************************************************/
 
-static struct MachineDriver machine_driver_bonzeadv =
+VIDEO_EOF( asuka )
 {
+	PC090OJ_eof_callback();
+}
+
+
+static MACHINE_DRIVER_START( bonzeadv )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,    /* RAINE suggests 12 MHz */
-			bonzeadv_readmem,bonzeadv_writemem,0,0,
-			m68_level4_irq, 1
-		},
-		{
-			CPU_Z80,    /* sound CPU, also required for test mode */
-			4000000,
-			bonzeadv_z80_readmem,bonzeadv_z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)    /* checked on PCB */
+	MDRV_CPU_MEMORY(bonzeadv_readmem,bonzeadv_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,4000000)    /* sound CPU, also required for test mode */
+	MDRV_CPU_MEMORY(bonzeadv_z80_readmem,bonzeadv_z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	asuka_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_asuka =
-{
+static MACHINE_DRIVER_START( asuka )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			asuka_readmem,asuka_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	asuka_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(asuka)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_galmedes =
-{
+static MACHINE_DRIVER_START( cadash )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			asuka_readmem,asuka_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz ??? */
+	MDRV_CPU_MEMORY(cadash_readmem,cadash_writemem)
+	MDRV_CPU_VBLANK_INT(cadash_interrupt,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,	/* only Mofflott uses full palette space */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	galmedes_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(cadash)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(bonzeadv)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_eto =
-{
+static MACHINE_DRIVER_START( galmedes )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ??? */
-			eto_readmem,eto_writemem,0,0,
-			m68_level5_irq,1
-		},
-		{
-			CPU_Z80,
-			4000000,	/* 4 MHz ??? */
-			z80_readmem,z80_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(asuka_readmem,asuka_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
 
 	/* video hardware */
-	40*8, 32*8, { 0*8, 40*8-1, 2*8, 32*8-1 },
-	gfxdecodeinfo,
-	4096, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)	/* only Mofflott uses full palette space */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	galmedes_vh_start,
-	asuka_vh_stop,
-	asuka_vh_screenrefresh,
+	MDRV_VIDEO_START(galmedes)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_ADPCM,
-			&adpcm_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( eto )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ??? */
+	MDRV_CPU_MEMORY(eto_readmem,eto_writemem)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz ??? */
+	MDRV_CPU_MEMORY(z80_readmem,z80_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(galmedes)
+	MDRV_VIDEO_EOF(asuka)
+	MDRV_VIDEO_UPDATE(asuka)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(ADPCM, adpcm_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -955,75 +1150,77 @@ static struct MachineDriver machine_driver_eto =
 
 ROM_START( bonzeadv )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code */
-	ROM_LOAD16_BYTE( "b41-09-1", 0x00000, 0x10000, 0xaf821fbc )
-	ROM_LOAD16_BYTE( "b41-11-1", 0x00001, 0x10000, 0x823fff00 )
-	ROM_LOAD16_BYTE( "b41-10",   0x20000, 0x10000, 0x4ca94d77 )
-	ROM_LOAD16_BYTE( "b41-15",   0x20001, 0x10000, 0xaed7a0d0 )
-	ROM_LOAD16_WORD_SWAP( "b41-01", 0x80000, 0x80000, 0x5d072fa4 )
+	ROM_LOAD16_BYTE( "b41-09-1.17", 0x00000, 0x10000, 0xaf821fbc )
+	ROM_LOAD16_BYTE( "b41-11-1.26", 0x00001, 0x10000, 0x823fff00 )
+	ROM_LOAD16_BYTE( "b41-10.16",   0x20000, 0x10000, 0x4ca94d77 )
+	ROM_LOAD16_BYTE( "b41-15.25",   0x20001, 0x10000, 0xaed7a0d0 )
+	/* 0x040000 - 0x7ffff is intentionally empty */
+	ROM_LOAD16_WORD_SWAP( "b41-01.15", 0x80000, 0x80000, 0x5d072fa4 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-03",  0x00000, 0x80000, 0x736d35d0 )	/* SCR tiles (8 x 8) */
+	ROM_LOAD( "b41-03.1",  0x00000, 0x80000, 0x736d35d0 )	/* SCR tiles (8 x 8) */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-02",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
+	ROM_LOAD( "b41-02.7",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* sound cpu */
-	ROM_LOAD( "b41-13",  0x00000, 0x04000, 0x9e464254 )
-	ROM_CONTINUE(        0x10000, 0x0c000 )
+	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, 0x9e464254 )
+	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
-	ROM_LOAD( "b41-04",  0x00000, 0x80000, 0xc668638f )
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, 0xc668638f )
 ROM_END
 
 ROM_START( bonzeadu )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code */
-	ROM_LOAD16_BYTE( "b41-09-1", 0x00000, 0x10000, 0xaf821fbc )
-	ROM_LOAD16_BYTE( "b41-11-1", 0x00001, 0x10000, 0x823fff00 )
-	ROM_LOAD16_BYTE( "b41-10",   0x20000, 0x10000, 0x4ca94d77 )
-	ROM_LOAD16_BYTE( "b41-14",   0x20001, 0x10000, 0x37def16a )
-	ROM_LOAD16_WORD_SWAP( "b41-01", 0x80000, 0x80000, 0x5d072fa4 )
+	ROM_LOAD16_BYTE( "b41-09-1.17", 0x00000, 0x10000, 0xaf821fbc )
+	ROM_LOAD16_BYTE( "b41-11-1.26", 0x00001, 0x10000, 0x823fff00 )
+	ROM_LOAD16_BYTE( "b41-10.16",   0x20000, 0x10000, 0x4ca94d77 )
+	ROM_LOAD16_BYTE( "b41-14.25",   0x20001, 0x10000, 0x37def16a )
+	/* 0x040000 - 0x7ffff is intentionally empty */
+	ROM_LOAD16_WORD_SWAP( "b41-01.15", 0x80000, 0x80000, 0x5d072fa4 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-03",  0x00000, 0x80000, 0x736d35d0 )	/* SCR tiles (8 x 8) */
+	ROM_LOAD( "b41-03.1",  0x00000, 0x80000, 0x736d35d0 )	/* SCR tiles (8 x 8) */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-02",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
+	ROM_LOAD( "b41-02.7",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* sound cpu */
-	ROM_LOAD( "b41-13",  0x00000, 0x04000, 0x9e464254 )
-	ROM_CONTINUE(        0x10000, 0x0c000 )
+	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, 0x9e464254 )
+	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
-	ROM_LOAD( "b41-04",  0x00000, 0x80000, 0xc668638f )
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, 0xc668638f )
 ROM_END
 
 ROM_START( jigkmgri )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code */
-	ROM_LOAD16_BYTE( "b41-09-1", 0x00000, 0x10000, 0xaf821fbc )
-	ROM_LOAD16_BYTE( "b41-11-1", 0x00001, 0x10000, 0x823fff00 )
-	ROM_LOAD16_BYTE( "b41-10",   0x20000, 0x10000, 0x4ca94d77 )
-	ROM_LOAD16_BYTE( "b41-12",   0x20001, 0x10000, 0x40d9c1fc )
-	ROM_LOAD16_WORD_SWAP( "b41-01", 0x80000, 0x80000, 0x5d072fa4 )
+	ROM_LOAD16_BYTE( "b41-09-1.17", 0x00000, 0x10000, 0xaf821fbc )
+	ROM_LOAD16_BYTE( "b41-11-1.26", 0x00001, 0x10000, 0x823fff00 )
+	ROM_LOAD16_BYTE( "b41-10.16",   0x20000, 0x10000, 0x4ca94d77 )
+	ROM_LOAD16_BYTE( "b41-12.25",   0x20001, 0x10000, 0x40d9c1fc )
+	/* 0x040000 - 0x7ffff is intentionally empty */
+	ROM_LOAD16_WORD_SWAP( "b41-01.15", 0x80000, 0x80000, 0x5d072fa4 )
 
 	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-03",  0x00000, 0x80000, 0x736d35d0 )	/* Tiles (8 x 8) */
+	ROM_LOAD( "b41-03.1",  0x00000, 0x80000, 0x736d35d0 )	/* Tiles (8 x 8) */
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b41-02",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
+	ROM_LOAD( "b41-02.7",  0x00000, 0x80000, 0x29f205d9 )	/* Sprites (16 x 16) */
 
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* sound cpu */
-	ROM_LOAD( "b41-13",  0x00000, 0x04000, 0x9e464254 )
+	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, 0x9e464254 )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
-	ROM_LOAD( "b41-04",  0x00000, 0x80000, 0xc668638f )
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_SOUNDONLY )	  /* ADPCM samples */
+	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, 0xc668638f )
 ROM_END
 
 ROM_START( asuka )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
 	ROM_LOAD16_BYTE( "asuka_13.rom",  0x00000, 0x20000, 0x855efb3e )
 	ROM_LOAD16_BYTE( "asuka_12.rom",  0x00001, 0x20000, 0x271eeee9 )
-
 	/* 0x040000 - 0x7ffff is intentionally empty */
 	ROM_LOAD16_WORD( "asuka_03.rom",  0x80000, 0x80000, 0xd3a59b10 )	/* Fix ROM */
 
@@ -1039,7 +1236,7 @@ ROM_START( asuka )
 	ROM_LOAD( "asuka_11.rom", 0x00000, 0x04000, 0xc378b508 )
 	ROM_CONTINUE(             0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* ADPCM samples */
 	ROM_LOAD( "asuka_10.rom", 0x00000, 0x10000, 0x387aaf40 )
 ROM_END
 
@@ -1047,7 +1244,6 @@ ROM_START( mofflott )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
 	ROM_LOAD16_BYTE( "c17-09.bin",  0x00000, 0x20000, 0x05ee110f )
 	ROM_LOAD16_BYTE( "c17-08.bin",  0x00001, 0x20000, 0xd0aacffd )
-
 	/* 0x40000 - 0x7ffff is intentionally empty */
 	ROM_LOAD16_WORD( "c17-03.bin",  0x80000, 0x80000, 0x27047fc3 )	/* Fix ROM */
 
@@ -1063,15 +1259,142 @@ ROM_START( mofflott )
 	ROM_LOAD( "c17-07.bin", 0x00000, 0x04000, 0xcdb7bc2c )
 	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* ADPCM samples */
 	ROM_LOAD( "c17-06.bin", 0x00000, 0x10000, 0x5c332125 )
+ROM_END
+
+ROM_START( cadash )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c21-14",  0x00000, 0x20000, 0x5daf13fb )
+	ROM_LOAD16_BYTE( "c21-16",  0x00001, 0x20000, 0xcbaa2e75 )
+	ROM_LOAD16_BYTE( "c21-13",  0x40000, 0x20000, 0x6b9e0ee9 )
+	ROM_LOAD16_BYTE( "c21-17",  0x40001, 0x20000, 0xbf9a578a )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-02.9",  0x00000, 0x80000, 0x205883b9 )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	/* empty region */
+
+	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
+	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, 0xf02292bd )
+
+	ROM_REGION( 0x01000, REGION_USER2, 0 )	/* pals ? */
+//	ROM_LOAD( "c21-09",   0x00000, 0x00ada, 0xf02292bd )
+//	ROM_LOAD( "c21-10",   0x00000, 0x00ada, 0xf02292bd )
+//	ROM_LOAD( "c21-11-1", 0x00000, 0x00ada, 0xf02292bd )
+//	ROM_LOAD( "c21-12",   0x00000, 0x00cd5, 0xf02292bd )
+ROM_END
+
+ROM_START( cadashj )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c21-04.11",  0x00000, 0x20000, 0xcc22ebe5 )
+	ROM_LOAD16_BYTE( "c21-06.15",  0x00001, 0x20000, 0x26e03304 )
+	ROM_LOAD16_BYTE( "c21-03.10",  0x40000, 0x20000, 0xc54888ed )
+	ROM_LOAD16_BYTE( "c21-05.14",  0x40001, 0x20000, 0x834018d2 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-02.9",  0x00000, 0x80000, 0x205883b9 )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	/* empty region */
+
+	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
+	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, 0xf02292bd )
+ROM_END
+
+ROM_START( cadashu )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c21-14-2.11",  0x00000, 0x20000, 0xf823d418 )
+	ROM_LOAD16_BYTE( "c21-16-2.15",  0x00001, 0x20000, 0x90165577 )
+	ROM_LOAD16_BYTE( "c21-13-2.10",  0x40000, 0x20000, 0x92dcc3ae )
+	ROM_LOAD16_BYTE( "c21-15-2.14",  0x40001, 0x20000, 0xf915d26a )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	// bad dump so used checksum from other sets //
+	ROM_LOAD( "c21-02.9",  0x00000, 0x80000, 0x205883b9 )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	// bad dump so used checksum from other sets //
+	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	/* empty region */
+
+	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
+	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, 0xf02292bd )
+ROM_END
+
+ROM_START( cadashi )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c21-14it",  0x00000, 0x20000, 0xd1d9e613 )
+	ROM_LOAD16_BYTE( "c21-16it",  0x00001, 0x20000, 0x142256ef )
+	ROM_LOAD16_BYTE( "c21-13it",  0x40000, 0x20000, 0xc9cf6e30 )
+	ROM_LOAD16_BYTE( "c21-17it",  0x40001, 0x20000, 0x641fc9dd )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-02.9",  0x00000, 0x80000, 0x205883b9 )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	/* empty region */
+
+	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
+	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, 0xf02292bd )
+ROM_END
+
+ROM_START( cadashf )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )     /* 512k for 68000 code */
+	ROM_LOAD16_BYTE( "c21-19",  0x00000, 0x20000, 0x4d70543b )
+	ROM_LOAD16_BYTE( "c21-21",  0x00001, 0x20000, 0x0e5b9950 )
+	ROM_LOAD16_BYTE( "c21-18",  0x40000, 0x20000, 0x8a19e59b )
+	ROM_LOAD16_BYTE( "c21-20",  0x40001, 0x20000, 0xb96acfd9 )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-02.9",  0x00000, 0x80000, 0x205883b9 )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "c21-01.1",  0x00000, 0x80000, 0x1ff6f39c )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )	/* sound cpu */
+	ROM_LOAD( "c21-08.38",   0x00000, 0x04000, 0xdca495a0 )
+	ROM_CONTINUE(            0x10000, 0x0c000 )	/* banked stuff */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	/* empty region */
+
+	ROM_REGION( 0x08000, REGION_USER1, 0 )	/* 2 machine interface mcu rom ? */
+	ROM_LOAD( "c21-07.57",   0x00000, 0x08000, 0xf02292bd )
 ROM_END
 
 ROM_START( galmedes )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
 	ROM_LOAD16_BYTE( "gm-prg1.bin",  0x00000, 0x20000, 0x32a70753 )
 	ROM_LOAD16_BYTE( "gm-prg0.bin",  0x00001, 0x20000, 0xfae546a4 )
-
 	/* 0x40000 - 0x7ffff is intentionally empty */
 	ROM_LOAD16_WORD( "gm-30.rom",    0x80000, 0x80000, 0x4da2a407 )	/* Fix ROM */
 
@@ -1085,7 +1408,7 @@ ROM_START( galmedes )
 	ROM_LOAD( "gm-snd.bin", 0x00000, 0x04000, 0xd6f56c21 )
 	ROM_CONTINUE(           0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	/* empty region */
 ROM_END
 
@@ -1093,7 +1416,6 @@ ROM_START( earthjkr )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
 	ROM_LOAD16_BYTE( "ej_3b.rom",  0x00000, 0x20000, 0xbdd86fc2 )
 	ROM_LOAD16_BYTE( "ej_3a.rom",  0x00001, 0x20000, 0x9c8050c6 )
-
 	/* 0x40000 - 0x7ffff is intentionally empty */
 	ROM_LOAD16_WORD( "ej_30e.rom", 0x80000, 0x80000, 0x49d1f77f )	/* Fix ROM */
 
@@ -1109,7 +1431,7 @@ ROM_START( earthjkr )
 	ROM_LOAD( "ej_2.rom", 0x00000, 0x04000, 0x42ba2566 )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	/* empty region */
 ROM_END
 
@@ -1117,7 +1439,6 @@ ROM_START( eto )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 1024k for 68000 code */
 	ROM_LOAD16_BYTE( "eto-1.23",  0x00000, 0x20000, 0x44286597 )
 	ROM_LOAD16_BYTE( "eto-0.8",   0x00001, 0x20000, 0x57b79370 )
-
 	/* 0x40000 - 0x7ffff is intentionally empty */
 	ROM_LOAD16_WORD( "eto-2.30",    0x80000, 0x80000, 0x12f46fb5 )	/* Fix ROM */
 
@@ -1131,23 +1452,21 @@ ROM_START( eto )
 	ROM_LOAD( "eto-5.27", 0x00000, 0x04000, 0xb3689da0 )
 	ROM_CONTINUE(         0x10000, 0x0c000 )	/* banked stuff */
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	/* empty region */
 ROM_END
 
 
-static void init_asuka(void)
-{
-	state_save_register_int("sound1", 0, "sound region", &banknum);
-	state_save_register_func_postload(reset_sound_region);
-}
-
-
-GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, asuka, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World)" )
-GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, asuka, ROT0,   "Taito America Corporation", "Bonze Adventure (US)" )
-GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, asuka, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)" )
-GAME( 1988, asuka,    0,        asuka,    asuka,    asuka, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
-GAME( 1989, mofflott, 0,        galmedes, mofflott, asuka, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
-GAME( 1992, galmedes, 0,        galmedes, galmedes, asuka, ROT270, "Visco", "Galmedes (Japan)" )
-GAME( 1993, earthjkr, 0,        galmedes, earthjkr, asuka, ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
-GAME( 1994, eto,      0,        eto,      eto,      asuka, ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )
+GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World)" )
+GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito America Corporation", "Bonze Adventure (US)" )
+GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)" )
+GAME( 1988, asuka,    0,        asuka,    asuka,    0, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)" )
+GAME( 1989, mofflott, 0,        galmedes, mofflott, 0, ROT270, "Taito Corporation", "Maze of Flott (Japan)" )
+GAME( 1989, cadash,   0,        cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (World)" )
+GAME( 1989, cadashj,  cadash,   cadash,   cadashj,  0, ROT0,   "Taito Corporation", "Cadash (Japan)" )
+GAME( 1989, cadashu,  cadash,   cadash,   cadashu,  0, ROT0,   "Taito America Corporation", "Cadash (US)" )
+GAME( 1989, cadashi,  cadash,   cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (Italy)" )
+GAME( 1989, cadashf,  cadash,   cadash,   cadash,   0, ROT0,   "Taito Corporation Japan", "Cadash (France)" )
+GAME( 1992, galmedes, 0,        galmedes, galmedes, 0, ROT270, "Visco", "Galmedes (Japan)" )
+GAME( 1993, earthjkr, 0,        galmedes, earthjkr, 0, ROT270, "Visco", "U.N. Defense Force: Earth Joker (Japan)" )
+GAME( 1994, eto,      0,        eto,      eto,      0, ROT0,   "Visco", "Kokontouzai Eto Monogatari (Japan)" )

@@ -14,22 +14,6 @@ extern int marker_x, marker_y;
 static int video_inverted = 0;
 
 
-#define JADE	0x20,0xb0,0x20,OVERLAY_DEFAULT_OPACITY
-#define MUSTARD 0xb0,0x80,0x20,OVERLAY_DEFAULT_OPACITY
-
-#define	END  {{ -1, -1, -1, -1}, 0,0,0,0}
-
-static const struct artwork_element overlay[]=
-{
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1,  0*VERT_CHR, 1*VERT_CHR-1 }, MUSTARD },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1,  0*VERT_CHR, 1*VERT_CHR-1 }, JADE    },
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1,  1*VERT_CHR,22*VERT_CHR-1 }, JADE    },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1,  1*VERT_CHR,22*VERT_CHR-1 }, MUSTARD },
-	{{  0*HORZ_CHR, 16*HORZ_CHR-1, 22*VERT_CHR,23*VERT_CHR-1 }, MUSTARD },
-	{{ 16*HORZ_CHR, 32*HORZ_CHR-1, 22*VERT_CHR,23*VERT_CHR-1 }, JADE    },
-	END
-};
-
 /* scale a markers vertical position */
 /* the following table shows how the markers */
 /* vertical position worked in hardware  */
@@ -95,23 +79,19 @@ static void plot_pattern(struct mame_bitmap *bitmap, int x, int y)
 }
 
 
-int lazercmd_vh_start(void)
+VIDEO_START( lazercmd )
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
 
 	/* is overlay enabled? */
-
-	if (input_port_2_r(0) & 0x80)
-	{
-		overlay_create(overlay, 3);
-	}
+	artwork_show(OVERLAY_TAG, (input_port_2_r(0) & 0x80) >> 7);
 
 	return 0;
 }
 
 
-void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( lazercmd )
 {
 	int i,x,y;
 
@@ -121,7 +101,7 @@ void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		memset(dirtybuffer, 1, videoram_size);
 	}
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
         memset(dirtybuffer, 1, videoram_size);
 
 	/* The first row of characters are invisible */
@@ -139,13 +119,14 @@ void lazercmd_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sx *= HORZ_CHR;
 			sy *= VERT_CHR;
 
-			drawgfx(bitmap, Machine->gfx[0],
+			drawgfx(tmpbitmap, Machine->gfx[0],
 					videoram[i], video_inverted ? 1 : 0,
 					0,0,
 					sx,sy,
 					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	x = marker_x - 1;             /* normal video lags marker by 1 pixel */
 	y = vert_scale(marker_y) - VERT_CHR; /* first line used as scratch pad */

@@ -8,11 +8,11 @@ size_t galpanic_fgvideoram_size;
 
 
 
-void galpanic_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( galpanic )
 {
 	int i;
 
-	palette += 3*1024;	/* first 1024 colors are dynamic */
+	/* first 1024 colors are dynamic */
 
 	/* initialize 555 RGB lookup */
 	for (i = 0;i < 32768;i++)
@@ -23,9 +23,10 @@ void galpanic_init_palette(unsigned char *palette, unsigned short *colortable,co
 		g = (i >> 10) & 0x1f;
 		b = (i >>  0) & 0x1f;
 
-		(*palette++) = (r << 3) | (r >> 2);
-		(*palette++) = (g << 3) | (g >> 2);
-		(*palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+		palette_set_color(i+1024,r,g,b);
 	}
 }
 
@@ -154,7 +155,7 @@ static void draw_fgbitmap(struct mame_bitmap *bitmap)
 	}
 }
 
-void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( galpanic )
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
@@ -164,7 +165,7 @@ void galpanic_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	galpanic_draw_sprites(bitmap);
 }
 
-void comad_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( comad )
 {
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);

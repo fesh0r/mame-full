@@ -229,7 +229,7 @@ extern void superpet_driver_init(void);
 extern void pet_driver_shutdown (void);
 extern void pet_init_machine (void);
 extern void pet_shutdown_machine (void);
-extern int pet_frame_interrupt (void);
+extern void pet_frame_interrupt (void);
 
 int pet_rom_id (int id);
 void pet_rom_load(void);

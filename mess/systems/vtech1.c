@@ -433,8 +433,8 @@ static struct MachineDriver machine_driver_laser110 =
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
     0,
 #ifdef OLD_VIDEO
-    generic_vh_start,
-    generic_vh_stop,
+    video_start_generic,
+    NULL,
     vtech1_vh_screenrefresh,
 #else
 	vtech1_vh_start,
@@ -495,8 +495,8 @@ static struct MachineDriver machine_driver_laser210 =
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
     0,
  #ifdef OLD_VIDEO
-    generic_vh_start,
-    generic_vh_stop,
+    video_start_generic,
+    NULL,
     vtech1_vh_screenrefresh,
 #else
 	vtech1_vh_start,
@@ -555,8 +555,8 @@ static struct MachineDriver machine_driver_laser310 =
     VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
     0,
 #ifdef OLD_VIDEO
-    generic_vh_start,
-    generic_vh_stop,
+    video_start_generic,
+    NULL,
     vtech1_vh_screenrefresh,
 #else
 	vtech1_vh_start,

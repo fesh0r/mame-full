@@ -18,7 +18,7 @@ int srmp3_gfx_bank;
 int mjyuugi_gfx_bank;
 
 
-void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( srmp2 )
 {
 	int i;
 
@@ -32,9 +32,11 @@ void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		g = (col & 0x03e0) >> 5;
 		b = (col & 0x001f);
 
-		*(palette++) = (r << 3) | (r >> 2);
-		*(palette++) = (g << 3) | (g >> 2);
-		*(palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
@@ -44,7 +46,7 @@ void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable, const unsigned char *color_prom)
+PALETTE_INIT( srmp3 )
 {
 	int i;
 
@@ -58,9 +60,11 @@ void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 		g = (col & 0x03e0) >> 5;
 		b = (col & 0x001f);
 
-		*(palette++) = (r << 3) | (r >> 2);
-		*(palette++) = (g << 3) | (g >> 2);
-		*(palette++) = (b << 3) | (b >> 2);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
+
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -417,7 +421,7 @@ static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 	xoffs	=	flip ? 0x10 : 0x10;
 	yoffs	=	flip ? 0x06 : 0x06;
 
-	for (offs = (0x400 - 2) / 2; offs >= 0 / 2; offs -= 2 / 2)
+	for (offs = (0x400 - 6) / 2; offs >= 0 / 2; offs -= 2 / 2)
 	{
 		int code	=	src[offs + 0x000 / 2];
 		int gfxbank	=	code & 0x2000;
@@ -452,23 +456,22 @@ static void mjyuugi_draw_sprites(struct mame_bitmap *bitmap)
 }
 
 
-void srmp2_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( srmp2 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp2_draw_sprites(bitmap);
 }
 
 
-void srmp3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( srmp3 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	srmp3_draw_sprites(bitmap);
 }
 
 
-void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( mjyuugi )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
 	mjyuugi_draw_sprites(bitmap);
 }
-

@@ -33,9 +33,6 @@
 #include "file.h"
 #include "options.h"
 
-#ifdef _MSC_VER
-#define alloca _alloca
-#endif
 
 /***************************************************************************
     global variables
@@ -325,6 +322,8 @@ static BOOL DrawDIB(HWND hWnd, HDC hDC, HGLOBAL hDIB, HPALETTE hPal)
 
 		OffsetRect(&rect, x, y);
 	}
+
+	SetStretchBltMode(hDC, STRETCH_HALFTONE);
 
     nResults = StretchDIBits(hDC,                        /* hDC */
 							 rect.left,                  /* DestX */
@@ -626,7 +625,7 @@ HBITMAP DIBToDDB(HDC hDC, HANDLE hDIB, LPMYBITMAPINFO desc)
     PNG graphics handling functions
 ***************************************************************************/
 
-static void store_pixels(char *buf, int len)
+static void store_pixels(UINT8 *buf, int len)
 {
 	if (pixel_ptr && copy_size)
 	{

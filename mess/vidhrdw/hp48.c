@@ -74,12 +74,11 @@ int hp48_vh_start(void)
 		backdrop_load(backdrop_name, 8);
 	}
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 void hp48_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const char *figure, int color)

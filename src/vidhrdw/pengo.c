@@ -1,15 +1,15 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Sega Pengo
 
-  Functions to emulate the video hardware of the machine.
+**************************************************************************
 
-  This file is used by the Pengo and Pac Man drivers.
-  They are almost identical, the only differences being the extra gfx bank
-  in Pengo, and the need to compensate for an hardware sprite positioning
-  "bug" in Pac Man.
+	This file is used by the Pengo and Pac Man drivers.
+	They are almost identical, the only differences being the extra gfx bank
+	in Pengo, and the need to compensate for an hardware sprite positioning
+	"bug" in Pac Man.
 
-***************************************************************************/
+**************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -48,7 +48,8 @@ static struct rectangle spritevisiblearea =
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( pacman )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -57,25 +58,26 @@ void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -88,7 +90,7 @@ void pacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = *(color_prom++) & 0x0f;
 }
 
-void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( pengo )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -97,25 +99,26 @@ void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -146,22 +149,22 @@ void pengo_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
   Start the video hardware emulation.
 
 ***************************************************************************/
-int pengo_vh_start(void)
+VIDEO_START( pengo )
 {
 	gfx_bank = 0;
 	xoffsethack = 0;
 
-    return generic_vh_start();
+    return video_start_generic();
 }
 
-int pacman_vh_start(void)
+VIDEO_START( pacman )
 {
 	gfx_bank = 0;
 	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
 	/* one pixel to the left to get a more correct placement */
 	xoffsethack = 1;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 
@@ -197,9 +200,12 @@ WRITE_HANDLER( pengo_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( pengo )
 {
+	struct rectangle spriteclip = spritevisiblearea;
 	int offs;
+	
+	sect_rect(&spriteclip, cliprect);
 
 	for (offs = videoram_size - 1; offs > 0; offs--)
 	{
@@ -244,7 +250,7 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
         }
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
     /* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
@@ -261,7 +267,7 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx,sy,
-				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&spriteclip,TRANSPARENCY_COLOR,0);
 
         /* also plot the sprite with wraparound (tunnel in Crush Roller) */
         drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
@@ -269,7 +275,7 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx - 256,sy,
-				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&spriteclip,TRANSPARENCY_COLOR,0);
 	}
 	/* In the Pac Man based games (NOT Pengo) the first two sprites must be offset */
 	/* one pixel to the left to get a more correct placement */
@@ -286,7 +292,7 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				sx,sy + xoffsethack,
-				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&spriteclip,TRANSPARENCY_COLOR,0);
 
         /* also plot the sprite with wraparound (tunnel in Crush Roller) */
         drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
@@ -294,6 +300,93 @@ void pengo_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x1f,
 				spriteram[offs] & 2,spriteram[offs] & 1,
 				sx - 256,sy + xoffsethack,
-				&spritevisiblearea,TRANSPARENCY_COLOR,0);
+				&spriteclip,TRANSPARENCY_COLOR,0);
     }
+}
+
+
+WRITE_HANDLER( vanvan_bgcolor_w )
+{
+	if (data & 1) palette_set_color(0,0xaa,0xaa,0xaa);
+	else          palette_set_color(0,0x00,0x00,0x00);
+}
+
+
+VIDEO_UPDATE( vanvan )
+{
+	struct rectangle spriteclip = spritevisiblearea;
+	int offs;
+	
+	sect_rect(&spriteclip, cliprect);
+
+	for (offs = videoram_size - 1; offs > 0; offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int mx,my,sx,sy;
+
+			dirtybuffer[offs] = 0;
+            mx = offs % 32;
+			my = offs / 32;
+
+			if (my < 2)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my + 34;
+				sy = mx - 2;
+			}
+			else if (my >= 30)
+			{
+				if (mx < 2 || mx >= 30) continue; /* not visible */
+				sx = my - 30;
+				sy = mx - 2;
+			}
+			else
+			{
+				sx = mx + 2;
+				sy = my - 2;
+			}
+
+			if (flipscreen)
+			{
+				sx = 35 - sx;
+				sy = 27 - sy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[gfx_bank*2],
+					videoram[offs],
+					colorram[offs] & 0x1f,
+					flipscreen,flipscreen,
+					sx*8,sy*8,
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
+        }
+	}
+
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
+
+    /* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 2;offs >= 0;offs -= 2)
+	{
+		int sx,sy;
+
+
+		sx = 272 - spriteram_2[offs + 1];
+		sy = spriteram_2[offs] - 31;
+
+		drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+				spriteram[offs] >> 2,
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx,sy,
+				&spriteclip,TRANSPARENCY_PEN,0);
+
+        /* also plot the sprite with wraparound (tunnel in Crush Roller) */
+        drawgfx(bitmap,Machine->gfx[gfx_bank*2+1],
+				spriteram[offs] >> 2,
+				spriteram[offs + 1] & 0x1f,
+				spriteram[offs] & 1,spriteram[offs] & 2,
+				sx - 256,sy,
+				&spriteclip,TRANSPARENCY_PEN,0);
+	}
 }

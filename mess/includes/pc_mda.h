@@ -11,9 +11,8 @@ extern void pc_mda_init_video(struct _CRTC6845 *crtc);
 extern void pc_mda_europc_init(struct _CRTC6845 *crtc);
 
 extern void pc_mda_timer(void);
-extern int  pc_mda_vh_start(void);
-extern void pc_mda_vh_stop(void);
-extern void pc_mda_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern VIDEO_START ( pc_mda );
+extern VIDEO_UPDATE ( pc_mda );
 extern WRITE_HANDLER ( pc_mda_videoram_w );
 
 extern WRITE_HANDLER ( pc_MDA_w );
@@ -24,7 +23,8 @@ extern struct GfxLayout pc_mda_charlayout;
 extern struct GfxLayout pc_mda_gfxlayout_1bpp;
 extern struct GfxDecodeInfo pc_mda_gfxdecodeinfo[];
 extern unsigned short mda_colortable[256*2+1*2];
-void pc_mda_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
+
+extern PALETTE_INIT( pc_mda );
 
 //internal use
 void pc_mda_cursor(CRTC6845_CURSOR *cursor);

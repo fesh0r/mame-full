@@ -800,7 +800,7 @@ int vic3_raster_irq (void)
 		if ((new_columns!=columns)||(new_raws!=raws)) {
 			raws=new_raws;
 			columns=new_columns;
-			osd_set_visible_area(0,columns+16-1,0, raws+16-1);
+			set_visible_area(0,columns+16-1,0, raws+16-1);
 		}
 		if (VIC3_BITPLANES) {
 			if (!osd_skip_this_frame ()) vic3_draw_bitplanes();

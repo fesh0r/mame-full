@@ -43,12 +43,11 @@ int mk1_vh_start(void)
 		backdrop_load(backdrop_name, 2);
 	}
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 void mk1_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 UINT8 mk1_led[4]= {0};

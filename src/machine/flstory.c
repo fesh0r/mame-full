@@ -28,13 +28,13 @@ static unsigned char portA_in,portA_out,ddrA;
 
 READ_HANDLER( flstory_68705_portA_r )
 {
-//logerror("%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
+//logerror("%04x: 68705 port A read %02x\n",activecpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 WRITE_HANDLER( flstory_68705_portA_w )
 {
-//logerror("%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port A write %02x\n",activecpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -63,7 +63,7 @@ READ_HANDLER( flstory_68705_portB_r )
 
 WRITE_HANDLER( flstory_68705_portB_w )
 {
-//logerror("%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port B write %02x\n",activecpu_get_pc(),data);
 
 	if ((ddrB & 0x02) && (~data & 0x02) && (portB_out & 0x02))
 	{
@@ -95,13 +95,13 @@ READ_HANDLER( flstory_68705_portC_r )
 	portC_in = 0;
 	if (main_sent) portC_in |= 0x01;
 	if (!mcu_sent) portC_in |= 0x02;
-//logerror("%04x: 68705 port C read %02x\n",cpu_get_pc(),portC_in);
+//logerror("%04x: 68705 port C read %02x\n",activecpu_get_pc(),portC_in);
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
 WRITE_HANDLER( flstory_68705_portC_w )
 {
-logerror("%04x: 68705 port C write %02x\n",cpu_get_pc(),data);
+logerror("%04x: 68705 port C write %02x\n",activecpu_get_pc(),data);
 	portC_out = data;
 }
 
@@ -110,10 +110,9 @@ WRITE_HANDLER( flstory_68705_ddrC_w )
 	ddrC = data;
 }
 
-
 WRITE_HANDLER( flstory_mcu_w )
 {
-logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
+logerror("%04x: mcu_w %02x\n",activecpu_get_pc(),data);
 	from_main = data;
 	main_sent = 1;
 	cpu_set_irq_line(2,0,ASSERT_LINE);
@@ -121,7 +120,7 @@ logerror("%04x: mcu_w %02x\n",cpu_get_pc(),data);
 
 READ_HANDLER( flstory_mcu_r )
 {
-logerror("%04x: mcu_r %02x\n",cpu_get_pc(),from_mcu);
+logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),from_mcu);
 	mcu_sent = 0;
 	return from_mcu;
 }
@@ -132,9 +131,48 @@ READ_HANDLER( flstory_mcu_status_r )
 
 	/* bit 0 = when 1, mcu is ready to receive data from main cpu */
 	/* bit 1 = when 1, mcu has sent data to the main cpu */
-//logerror("%04x: mcu_status_r\n",cpu_get_pc());
+//logerror("%04x: mcu_status_r\n",activecpu_get_pc());
 	if (!main_sent) res |= 0x01;
 	if (mcu_sent) res |= 0x02;
+
+	return res;
+}
+
+WRITE_HANDLER( onna34ro_mcu_w )
+{
+	data8_t *RAM = memory_region(REGION_CPU1);
+	UINT16 score_adr = RAM[0xe29e]*0x100 + RAM[0xe29d];
+
+	switch (data)
+	{
+		case 0x0e:
+			from_mcu = 0xff;
+			break;
+		case 0x01:
+			from_mcu = 0x6a;
+			break;
+		case 0x40:
+			from_mcu = RAM[score_adr];			/* score l*/
+			break;
+		case 0x41:
+			from_mcu = RAM[score_adr+1];		/* score m*/
+			break;
+		case 0x42:
+			from_mcu = RAM[score_adr+2] & 0x0f;	/* score h*/
+			break;
+		default:
+			from_mcu = 0x80;
+	}
+}
+
+READ_HANDLER( onna34ro_mcu_r )
+{
+	return from_mcu;
+}
+
+READ_HANDLER( onna34ro_mcu_status_r )
+{
+	int res = 3;
 
 	return res;
 }

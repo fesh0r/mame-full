@@ -36,7 +36,7 @@ static int sidepanel_enabled;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( cclimber )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -45,25 +45,26 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -126,7 +127,7 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 #define BGPEN (256+32)
 #define SIDEPEN (256+32+1)
 
-void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( swimmer )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -135,24 +136,26 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* green component */
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i+256] >> 0) & 0x01;
 		bit2 = (color_prom[i+256] >> 1) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[i+256] >> 2) & 0x01;
 		bit2 = (color_prom[i+256] >> 3) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		/* side panel */
 		if (i % 8)
@@ -173,43 +176,39 @@ void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	/* big sprite */
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		r = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* green component */
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		g = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
-		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+
+		palette_set_color(i+256,r,g,b);
 
 		if (i % 8 == 0) COLOR(2,i) = BGPEN;  /* enforce transparency */
 		else COLOR(2,i) = i+256;
 	}
 
 	/* background */
-	*(palette++) = 0;
-	*(palette++) = 0;
-	*(palette++) = 0;
+	palette_set_color(BGPEN,0,0,0);
 	/* side panel background color */
 #if 0
 	// values calculated from the resistors don't seem to match the real board
-	*(palette++) = 0x24;
-	*(palette++) = 0x5d;
-	*(palette++) = 0x4e;
+	palette_set_color(SIDEPEN,0x24,0x5d,0x4e);
 #endif
-	*(palette++) = 0x20;
-	*(palette++) = 0x98;
-	*(palette++) = 0x79;
+	palette_set_color(SIDEPEN,0x20,0x98,0x79);
 }
 
 
@@ -255,33 +254,6 @@ WRITE_HANDLER( swimmer_bgcolor_w )
 	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 	palette_set_color(BGPEN,r,g,b);
-}
-
-
-
-/***************************************************************************
-
-  Start the video hardware emulation.
-
-***************************************************************************/
-int cclimber_vh_start(void)
-{
-	if (generic_vh_start() != 0)
-		return 1;
-
-	return 0;
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void cclimber_vh_stop(void)
-{
-	generic_vh_stop();
 }
 
 
@@ -379,12 +351,12 @@ static void drawbigsprite(struct mame_bitmap *bitmap)
 }
 
 
-void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( cclimber )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -497,12 +469,12 @@ void cclimber_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 
 
-void swimmer_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( swimmer )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

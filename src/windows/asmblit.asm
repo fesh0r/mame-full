@@ -12,10 +12,8 @@ extern _asmblit_srclookup
 extern _asmblit_dstdata
 extern _asmblit_dstpitch
 
-extern _asmblit_dirtydata
-
-extern _asmblit_mmxmask1;
-extern _asmblit_mmxmask2;
+;//extern _asmblit_mmxmask1;
+;//extern _asmblit_mmxmask2;
 
 extern _asmblit_rgbmask;
 
@@ -25,7 +23,6 @@ extern _asmblit_rgbmask;
 ;//============================================================
 
 [SECTION .data]
-dirty_count:	db	0
 last_row:		dd	0
 row_index:		dd	0
 
@@ -1626,8 +1623,6 @@ SNIPPET_END
 ;//============================================================
 ;//
 ;// overall structure:
-;//	in general, dirty code is copied after original
-;// except for those blocks marked with a (*)
 ;//
 ;// 	header
 ;//
@@ -1671,24 +1666,11 @@ SNIPPET_BEGIN asmblit_header
 SNIPPET_END
 
 
-SNIPPET_BEGIN asmblit_header_dirty
-	;// load dirty pointer and reset the dirty counter
-	mov		edx,[_asmblit_dirtydata]
-	mov		byte [dirty_count],16
-SNIPPET_END
-
-
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_yloop_top
 	push	esi
 	push	edi
-SNIPPET_END
-
-
-SNIPPET_BEGIN asmblit_yloop_top_dirty
-	;// save the dirty row start
-	push	edx
 SNIPPET_END
 
 
@@ -1700,23 +1682,10 @@ SNIPPET_BEGIN asmblit_middlexloop_header
 SNIPPET_END
 
 
-SNIPPET_BEGIN asmblit_middlexloop_header_dirty
-	;// nothing to do here
-SNIPPET_END
-
-
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_middlexloop_top
 	;// nothing to do here
-SNIPPET_END
-
-
-SNIPPET_BEGIN asmblit_middlexloop_top_dirty
-	;// check for a dirty block; if not, skip
-	test	byte [edx],0xff
-	lea		edx,[edx+1]
-	jz		near FIXUPADDRESS(FIXUPADDR_MIDDLEXBOTTOM)
 SNIPPET_END
 
 
@@ -1730,11 +1699,6 @@ SNIPPET_BEGIN asmblit_middlexloop_bottom
 SNIPPET_END
 
 
-SNIPPET_BEGIN asmblit_middlexloop_bottom_dirty
-	;// nothing to do here
-SNIPPET_END
-
-
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_lastxloop_header
@@ -1742,20 +1706,9 @@ SNIPPET_BEGIN asmblit_lastxloop_header
 SNIPPET_END
 
 
-SNIPPET_BEGIN asmblit_lastxloop_header_dirty
-	test	byte [edx],0xff
-	jz		near FIXUPADDRESS(FIXUPADDR_YBOTTOM)
-SNIPPET_END
-
-
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_lastxloop_top
-	;// nothing to do here
-SNIPPET_END
-
-
-SNIPPET_BEGIN asmblit_lastxloop_top_dirty
 	;// nothing to do here
 SNIPPET_END
 
@@ -1770,22 +1723,7 @@ SNIPPET_BEGIN asmblit_lastxloop_bottom
 SNIPPET_END
 
 
-SNIPPET_BEGIN asmblit_lastxloop_bottom_dirty
-	;// nothing to do here
-SNIPPET_END
-
-
 ;//---------------------------------------------------------------
-
-SNIPPET_BEGIN asmblit_yloop_bottom_dirty
-	dec		byte [dirty_count]
-	pop		edx
-	jnz		.dontadvance
-	mov		byte [dirty_count],16
-	lea		edx,[edx+FIXUPVALUE(FIXUPVAL_DIRTYADVANCE)]
-.dontadvance:
-SNIPPET_END
-
 
 SNIPPET_BEGIN asmblit_yloop_bottom
 	dec		dword [_asmblit_srcheight]
@@ -1803,20 +1741,12 @@ SNIPPET_BEGIN asmblit_footer_mmx
 	emms
 SNIPPET_END
 
-SNIPPET_BEGIN asmblit_footer_mmx_dirty
-	;// nothing to do here
-SNIPPET_END
-
 
 ;//---------------------------------------------------------------
 
 SNIPPET_BEGIN asmblit_footer
 	popad
 	ret
-SNIPPET_END
-
-SNIPPET_BEGIN asmblit_footer_dirty
-	;// nothing to do here
 SNIPPET_END
 
 

@@ -6,6 +6,7 @@
 	Thanks to Ian Schmidt and Stileto for sound information!
 	Major thanks to Aaron Giles for sound info, figuring out the 68K/ES5505
 	rom interface and ES5505 emulator!
+	Thanks to Acho A. Tang for Kirameki Star Road sound banking info!
 
 	Main Issues:
 		Alpha blending not supported (sprite & playfield).
@@ -13,16 +14,13 @@
 			because graphics are 6bpp with 4bpp palette indexes.
 		Sound eats lots of memory as 8 bit PCM data is decoded as 16 bit for
 			use by the current ES5505 core (which rightly should be 16 bit).
-		Only 270 degree rotation is supported in the custom renderer (so you must use
-			flipscreen on Gunlock & Gseeker which are really 90 degree rotation games).
 		Zoomed layers are not always positioned quite correctly in flipscreen mode
+		(Grid Seeker)
 
 	Other Issues:
 		Dsp isn't hooked up.
 		Crowd/boards not shown in the football games
 		Sound doesn't work in RidingF/RingRage/QTheater?
-		Input bit to switch between analogue/digital control panels for Arkanoid/
-			Puchi Carat is not found.
 
 	Feel free to report any other issues to me.
 
@@ -38,15 +36,14 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
-#include "drivers/taito_f3.h"
+#include "taito_f3.h"
 #include "state.h"
 
 #define TRY_ALPHA 0
 
-int  f3_vh_start(void);
-void f3_vh_stop(void);
-void f3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void f3_eof_callback(void);
+VIDEO_START( f3 );
+VIDEO_UPDATE( f3 );
+VIDEO_EOF( f3 );
 
 extern data32_t *f3_vram,*f3_line_ram;
 extern data32_t *f3_pf_data,*f3_pivot_ram;
@@ -60,6 +57,7 @@ WRITE32_HANDLER( f3_palette_24bit_w );
 WRITE32_HANDLER( f3_pf_data_w );
 WRITE32_HANDLER( f3_vram_w );
 WRITE32_HANDLER( f3_pivot_w );
+WRITE32_HANDLER( f3_lineram_w );
 WRITE32_HANDLER( f3_videoram_w );
 
 /* from Machine.c */
@@ -103,7 +101,7 @@ static READ32_HANDLER( f3_control_r )
 			return (coin_word[1]<<16) | readinputport(6);
 	}
 
-	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",activecpu_get_pc(),offset);
 	return 0xffffffff;
 }
 
@@ -140,7 +138,7 @@ static WRITE32_HANDLER( f3_control_w )
 			}
 			return;
 	}
-	logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %08x\n",cpu_get_pc(),offset,data);
+	logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %08x\n",activecpu_get_pc(),offset,data);
 }
 
 static WRITE32_HANDLER( f3_sound_reset_0_w )
@@ -151,6 +149,28 @@ static WRITE32_HANDLER( f3_sound_reset_0_w )
 static WRITE32_HANDLER( f3_sound_reset_1_w )
 {
 	cpu_set_reset_line(1, ASSERT_LINE);
+}
+
+static WRITE32_HANDLER( f3_sound_bankswitch_w )
+{
+	if (f3_game==KIRAMEKI) {
+		data16_t *rom = (data16_t *)memory_region(REGION_CPU2);
+		unsigned int idx;
+
+		idx = (offset << 1) & 0x1e;
+		if (ACCESSING_LSW32)
+			idx += 1;
+
+		if (idx >= 8)
+			idx -= 8;
+
+		/* Banks are 0x20000 bytes each, divide by two to get data16
+		pointer rather than byte pointer */
+		cpu_setbank(2, &rom[(idx*0x20000)/2 + 0x80000]);
+
+	} else {
+		logerror("Sound bankswitch in unsupported game\n");
+	}
 }
 
 /******************************************************************************/
@@ -171,6 +191,7 @@ MEMORY_END
 
 static MEMORY_WRITE32_START( f3_writemem )
 	{ 0x000000, 0x1fffff, MWA32_RAM },
+	{ 0x300000, 0x30007f, f3_sound_bankswitch_w },
 	{ 0x400000, 0x43ffff, MWA32_RAM, &f3_ram },
 	{ 0x440000, 0x447fff, f3_palette_24bit_w, &paletteram32 },
 	{ 0x4a0000, 0x4a001f, f3_control_w },
@@ -178,7 +199,7 @@ static MEMORY_WRITE32_START( f3_writemem )
 	{ 0x610000, 0x61bfff, f3_pf_data_w, &f3_pf_data },
 	{ 0x61c000, 0x61dfff, f3_videoram_w, &videoram32 },
 	{ 0x61e000, 0x61ffff, f3_vram_w, &f3_vram },
-	{ 0x620000, 0x62ffff, MWA32_RAM, &f3_line_ram },
+	{ 0x620000, 0x62ffff, f3_lineram_w, &f3_line_ram },
 	{ 0x630000, 0x63ffff, f3_pivot_w, &f3_pivot_ram },
 	{ 0x660000, 0x66000f, f3_control_0_w },
 	{ 0x660010, 0x66001f, f3_control_1_w },
@@ -195,7 +216,9 @@ static MEMORY_READ16_START( sound_readmem )
 	{ 0x200000, 0x20001f, ES5505_data_0_r },
 	{ 0x260000, 0x2601ff, es5510_dsp_r },
 	{ 0x280000, 0x28001f, f3_68681_r },
-	{ 0xc00000, 0xcfffff, MRA16_BANK1 },
+	{ 0xc00000, 0xc1ffff, MRA16_BANK1 },
+	{ 0xc20000, 0xc3ffff, MRA16_BANK2 },
+	{ 0xc40000, 0xc7ffff, MRA16_BANK3 },
 	{ 0xff8000, 0xffffff, MRA16_RAM },
 MEMORY_END
 
@@ -207,7 +230,7 @@ static MEMORY_WRITE16_START( sound_writemem )
 	{ 0x280000, 0x28001f, f3_68681_w },
 	{ 0x300000, 0x30003f, f3_es5505_bank_w },
 	{ 0x340000, 0x340003, f3_volume_w }, /* 8 channel volume control */
-	{ 0xc00000, 0xcfffff, MWA16_ROM },
+	{ 0xc00000, 0xc7ffff, MWA16_ROM },
 	{ 0xff8000, 0xffffff, MWA16_RAM },
 MEMORY_END
 
@@ -413,17 +436,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
-static int f3_interrupt(void)
+static INTERRUPT_GEN( f3_interrupt )
 {
-	if (cpu_getiloops()) return 3;
-	return 2;
+	if (cpu_getiloops()) cpu_set_irq_line(0, 3, HOLD_LINE);
+	else cpu_set_irq_line(0, 2, HOLD_LINE);
 }
 
-static void f3_machine_reset(void)
+static MACHINE_INIT( f3 )
 {
 	/* Sound cpu program loads to 0xc00000 so we use a bank */
 	data16_t *RAM = (data16_t *)memory_region(REGION_CPU2);
 	cpu_setbank(1,&RAM[0x80000]);
+	cpu_setbank(2,&RAM[0x90000]);
+	cpu_setbank(3,&RAM[0xa0000]);
 
 	RAM[0]=RAM[0x80000]; /* Stack and Reset vectors */
 	RAM[1]=RAM[0x80001];
@@ -437,7 +462,7 @@ static void f3_machine_reset(void)
 static struct ES5505interface es5505_interface =
 {
 	1,					/* total number of chips */
-	{ 16000000 },		/* freq */
+	{ 30476100/2 },		/* freq */
 	{ REGION_SOUND1 },	/* Bank 0: Unused by F3 games? */
 	{ REGION_SOUND1 },	/* Bank 1: All games seem to use this */
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },		/* master volume */
@@ -454,7 +479,7 @@ static struct EEPROM_interface f3_eeprom_interface =
 	"0100110000",	/* lock command */
 };
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( f3 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -465,56 +490,42 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static struct MachineDriver machine_driver_f3 =
-{
+static MACHINE_DRIVER_START( f3 )
+
 	/* basic machine hardware */
-	{
-	 	{
-			CPU_M68EC020,
-			16000000,
-			f3_readmem,f3_writemem,0,0,
-			f3_interrupt,2
-		},
-		{
-			CPU_M68000 | CPU_AUDIO_CPU,
-			16000000,
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0
-		}
-	},
-	60, 624, /* 58.97 Hz, 624us vblank time */
-	1,
-	f3_machine_reset,
+	MDRV_CPU_ADD(M68EC020, 16000000)
+	MDRV_CPU_MEMORY(f3_readmem,f3_writemem)
+	MDRV_CPU_VBLANK_INT(f3_interrupt,2)
+
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(624) /* 58.97 Hz, 624us vblank time */
+
+	MDRV_MACHINE_INIT(f3)
+	MDRV_NVRAM_HANDLER(f3)
 
  	/* video hardware */
-	40*8+48*2, 32*8, { 46, 40*8-1+46, 3*8, 32*8-1 },
-
-	gfxdecodeinfo,
-	8192, 0,
-	0,
-
 #if TRY_ALPHA
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
 #else
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
 #endif
+	MDRV_SCREEN_SIZE(40*8+48*2, 32*8)
+	MDRV_VISIBLE_AREA(46, 40*8-1+46, 3*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(8192)
 
-	f3_eof_callback,
-	f3_vh_start,
-	f3_vh_stop,
-	f3_vh_screenrefresh,
+	MDRV_VIDEO_START(f3)
+	MDRV_VIDEO_EOF(f3)
+	MDRV_VIDEO_UPDATE(f3)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_ES5505,
-			&es5505_interface
-		}
-	},
-
-	nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(ES5505, es5505_interface)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -1255,17 +1266,20 @@ ROM_START( kaiserkn )
 	ROM_LOAD32_BYTE("d84-23.rom", 0x000002, 0x80000, 0x39f12a9b )
 	ROM_LOAD32_BYTE("d84-29.rom", 0x000003, 0x80000, 0x9821f17a )
 
-	ROM_REGION(0x1800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
-	ROM_LOAD16_BYTE("d84-03.rom", 0x000000, 0x200000, 0xd786f552 )
-  	ROM_LOAD16_BYTE("d84-04.rom", 0x000001, 0x200000, 0xd1f32b5d )
-	ROM_LOAD16_BYTE("d84-06.rom", 0x400000, 0x200000, 0xfa924dab )
-  	ROM_LOAD16_BYTE("d84-07.rom", 0x400001, 0x200000, 0x54517a6b )
-	ROM_LOAD16_BYTE("d84-09.rom", 0x800000, 0x200000, 0xfaa78d98 )
-  	ROM_LOAD16_BYTE("d84-10.rom", 0x800001, 0x200000, 0xb84b7320 )
-	ROM_LOAD       ("d84-05.rom", 0x1200000, 0x200000, 0x31a3c75d )
-	ROM_LOAD       ("d84-08.rom", 0x1400000, 0x200000, 0x07347bf1 )
-	ROM_LOAD       ("d84-11.rom", 0x1600000, 0x200000, 0xa062c1d4 )
-	ROM_FILL       (              0xc00000, 0x600000, 0 )
+	ROM_REGION(0x1a00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d84-03.rom", 0x0000000, 0x200000, 0xd786f552 )
+  	ROM_LOAD16_BYTE("d84-04.rom", 0x0000001, 0x200000, 0xd1f32b5d )
+	ROM_LOAD16_BYTE("d84-06.rom", 0x0400000, 0x200000, 0xfa924dab )
+  	ROM_LOAD16_BYTE("d84-07.rom", 0x0400001, 0x200000, 0x54517a6b )
+	ROM_LOAD16_BYTE("d84-09.rom", 0x0800000, 0x200000, 0xfaa78d98 )
+  	ROM_LOAD16_BYTE("d84-10.rom", 0x0800001, 0x200000, 0xb84b7320 )
+	ROM_LOAD16_BYTE("d84-19.rom", 0x0c00000, 0x080000, 0x6ddf77e5 )
+  	ROM_LOAD16_BYTE("d84-20.rom", 0x0c00001, 0x080000, 0xf85041e5 )
+	ROM_LOAD       ("d84-05.rom", 0x1380000, 0x200000, 0x31a3c75d )
+	ROM_LOAD       ("d84-08.rom", 0x1580000, 0x200000, 0x07347bf1 )
+	ROM_LOAD       ("d84-11.rom", 0x1780000, 0x200000, 0xa062c1d4 )
+	ROM_LOAD       ("d84-21.rom", 0x1980000, 0x080000, 0x89f68b66 )
+	ROM_FILL       (              0x0d00000, 0x680000, 0 )
 
 	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
 	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
@@ -1283,6 +1297,7 @@ ROM_START( kaiserkn )
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
 	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( kaiserkj )
@@ -1292,91 +1307,20 @@ ROM_START( kaiserkj )
 	ROM_LOAD32_BYTE("d84-23.rom", 0x000002, 0x80000, 0x39f12a9b )
 	ROM_LOAD32_BYTE("d84-22.17",  0x000003, 0x80000, 0x762f9056 )
 
-	ROM_REGION(0x1800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
-	ROM_LOAD16_BYTE("d84-03.rom", 0x000000, 0x200000, 0xd786f552 )
-  	ROM_LOAD16_BYTE("d84-04.rom", 0x000001, 0x200000, 0xd1f32b5d )
-	ROM_LOAD16_BYTE("d84-06.rom", 0x400000, 0x200000, 0xfa924dab )
-  	ROM_LOAD16_BYTE("d84-07.rom", 0x400001, 0x200000, 0x54517a6b )
-	ROM_LOAD16_BYTE("d84-09.rom", 0x800000, 0x200000, 0xfaa78d98 )
-  	ROM_LOAD16_BYTE("d84-10.rom", 0x800001, 0x200000, 0xb84b7320 )
-	ROM_LOAD       ("d84-05.rom", 0x1200000, 0x200000, 0x31a3c75d )
-	ROM_LOAD       ("d84-08.rom", 0x1400000, 0x200000, 0x07347bf1 )
-	ROM_LOAD       ("d84-11.rom", 0x1600000, 0x200000, 0xa062c1d4 )
-	ROM_FILL       (              0xc00000, 0x600000, 0 )
-
-	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
-	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
-	ROM_LOAD16_BYTE("d84-13.rom", 0x000001, 0x200000, 0xae125516 )
-	ROM_LOAD16_BYTE("d84-16.rom", 0x400000, 0x100000, 0xbcff9b2d )
-	ROM_LOAD16_BYTE("d84-17.rom", 0x400001, 0x100000, 0x0be37cc3 )
-	ROM_LOAD       ("d84-14.rom", 0x900000, 0x200000, 0x2b2e693e )
-	ROM_LOAD       ("d84-18.rom", 0xb00000, 0x100000, 0xe812bcc5 )
-	ROM_FILL       (              0x600000, 0x300000, 0 )
-
-	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
-	ROM_LOAD16_BYTE("d84-26.rom", 0x100000, 0x40000, 0x4f5b8563 )
-	ROM_LOAD16_BYTE("d84-27.rom", 0x100001, 0x40000, 0xfb0cb1ba )
-
-	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-ROM_END
-
-ROM_START( gblchmp )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
- 	ROM_LOAD32_BYTE("d84-25.rom", 0x000000, 0x80000, 0x2840893f )
-	ROM_LOAD32_BYTE("d84-24.rom", 0x000001, 0x80000, 0xbf20c755 )
-	ROM_LOAD32_BYTE("d84-23.rom", 0x000002, 0x80000, 0x39f12a9b )
-	ROM_LOAD32_BYTE("d84-28.bin", 0x000003, 0x80000, 0xef26c1ec )
-
-	ROM_REGION(0x1800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
-	ROM_LOAD16_BYTE("d84-03.rom", 0x000000, 0x200000, 0xd786f552 )
-  	ROM_LOAD16_BYTE("d84-04.rom", 0x000001, 0x200000, 0xd1f32b5d )
-	ROM_LOAD16_BYTE("d84-06.rom", 0x400000, 0x200000, 0xfa924dab )
-  	ROM_LOAD16_BYTE("d84-07.rom", 0x400001, 0x200000, 0x54517a6b )
-	ROM_LOAD16_BYTE("d84-09.rom", 0x800000, 0x200000, 0xfaa78d98 )
-  	ROM_LOAD16_BYTE("d84-10.rom", 0x800001, 0x200000, 0xb84b7320 )
-	ROM_LOAD       ("d84-05.rom", 0x1200000, 0x200000, 0x31a3c75d )
-	ROM_LOAD       ("d84-08.rom", 0x1400000, 0x200000, 0x07347bf1 )
-	ROM_LOAD       ("d84-11.rom", 0x1600000, 0x200000, 0xa062c1d4 )
-	ROM_FILL       (              0xc00000, 0x600000, 0 )
-
-	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
-	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
-	ROM_LOAD16_BYTE("d84-13.rom", 0x000001, 0x200000, 0xae125516 )
-	ROM_LOAD16_BYTE("d84-16.rom", 0x400000, 0x100000, 0xbcff9b2d )
-	ROM_LOAD16_BYTE("d84-17.rom", 0x400001, 0x100000, 0x0be37cc3 )
-	ROM_LOAD       ("d84-14.rom", 0x900000, 0x200000, 0x2b2e693e )
-	ROM_LOAD       ("d84-18.rom", 0xb00000, 0x100000, 0xe812bcc5 )
-	ROM_FILL       (              0x600000, 0x300000, 0 )
-
-	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
-	ROM_LOAD16_BYTE("d84-26.rom", 0x100000, 0x40000, 0x4f5b8563 )
-	ROM_LOAD16_BYTE("d84-27.rom", 0x100001, 0x40000, 0xfb0cb1ba )
-
-	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
-	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
-ROM_END
-
-ROM_START( dankuga )
-	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
- 	ROM_LOAD32_BYTE("dkg_mpr3.bin", 0x000000, 0x80000, 0xee1531ca )
-	ROM_LOAD32_BYTE("dkg_mpr2.bin", 0x000001, 0x80000, 0x18a4748b )
-	ROM_LOAD32_BYTE("dkg_mpr1.bin", 0x000002, 0x80000, 0x97566f69 )
-	ROM_LOAD32_BYTE("dkg_mpr0.bin", 0x000003, 0x80000, 0xad6ada07 )
-
-	ROM_REGION(0x1800000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
-	ROM_LOAD16_BYTE("d84-03.rom", 0x000000, 0x200000, 0xd786f552 )
-  	ROM_LOAD16_BYTE("d84-04.rom", 0x000001, 0x200000, 0xd1f32b5d )
-	ROM_LOAD16_BYTE("d84-06.rom", 0x400000, 0x200000, 0xfa924dab )
-  	ROM_LOAD16_BYTE("d84-07.rom", 0x400001, 0x200000, 0x54517a6b )
-	ROM_LOAD16_BYTE("d84-09.rom", 0x800000, 0x200000, 0xfaa78d98 )
-  	ROM_LOAD16_BYTE("d84-10.rom", 0x800001, 0x200000, 0xb84b7320 )
-	ROM_LOAD       ("d84-05.rom", 0x1200000, 0x200000, 0x31a3c75d )
-	ROM_LOAD       ("d84-08.rom", 0x1400000, 0x200000, 0x07347bf1 )
-	ROM_LOAD       ("d84-11.rom", 0x1600000, 0x200000, 0xa062c1d4 )
-	ROM_FILL       (              0xc00000, 0x600000, 0 )
+	ROM_REGION(0x1a00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d84-03.rom", 0x0000000, 0x200000, 0xd786f552 )
+  	ROM_LOAD16_BYTE("d84-04.rom", 0x0000001, 0x200000, 0xd1f32b5d )
+	ROM_LOAD16_BYTE("d84-06.rom", 0x0400000, 0x200000, 0xfa924dab )
+  	ROM_LOAD16_BYTE("d84-07.rom", 0x0400001, 0x200000, 0x54517a6b )
+	ROM_LOAD16_BYTE("d84-09.rom", 0x0800000, 0x200000, 0xfaa78d98 )
+  	ROM_LOAD16_BYTE("d84-10.rom", 0x0800001, 0x200000, 0xb84b7320 )
+	ROM_LOAD16_BYTE("d84-19.rom", 0x0c00000, 0x080000, 0x6ddf77e5 )
+  	ROM_LOAD16_BYTE("d84-20.rom", 0x0c00001, 0x080000, 0xf85041e5 )
+	ROM_LOAD       ("d84-05.rom", 0x1380000, 0x200000, 0x31a3c75d )
+	ROM_LOAD       ("d84-08.rom", 0x1580000, 0x200000, 0x07347bf1 )
+	ROM_LOAD       ("d84-11.rom", 0x1780000, 0x200000, 0xa062c1d4 )
+	ROM_LOAD       ("d84-21.rom", 0x1980000, 0x080000, 0x89f68b66 )
+	ROM_FILL       (              0x0d00000, 0x680000, 0 )
 
 	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
 	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
@@ -1394,6 +1338,89 @@ ROM_START( dankuga )
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
 	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+ROM_END
+
+ROM_START( gblchmp )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d84-25.rom", 0x000000, 0x80000, 0x2840893f )
+	ROM_LOAD32_BYTE("d84-24.rom", 0x000001, 0x80000, 0xbf20c755 )
+	ROM_LOAD32_BYTE("d84-23.rom", 0x000002, 0x80000, 0x39f12a9b )
+	ROM_LOAD32_BYTE("d84-28.bin", 0x000003, 0x80000, 0xef26c1ec )
+
+	ROM_REGION(0x1a00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d84-03.rom", 0x0000000, 0x200000, 0xd786f552 )
+  	ROM_LOAD16_BYTE("d84-04.rom", 0x0000001, 0x200000, 0xd1f32b5d )
+	ROM_LOAD16_BYTE("d84-06.rom", 0x0400000, 0x200000, 0xfa924dab )
+  	ROM_LOAD16_BYTE("d84-07.rom", 0x0400001, 0x200000, 0x54517a6b )
+	ROM_LOAD16_BYTE("d84-09.rom", 0x0800000, 0x200000, 0xfaa78d98 )
+  	ROM_LOAD16_BYTE("d84-10.rom", 0x0800001, 0x200000, 0xb84b7320 )
+	ROM_LOAD16_BYTE("d84-19.rom", 0x0c00000, 0x080000, 0x6ddf77e5 )
+  	ROM_LOAD16_BYTE("d84-20.rom", 0x0c00001, 0x080000, 0xf85041e5 )
+	ROM_LOAD       ("d84-05.rom", 0x1380000, 0x200000, 0x31a3c75d )
+	ROM_LOAD       ("d84-08.rom", 0x1580000, 0x200000, 0x07347bf1 )
+	ROM_LOAD       ("d84-11.rom", 0x1780000, 0x200000, 0xa062c1d4 )
+	ROM_LOAD       ("d84-21.rom", 0x1980000, 0x080000, 0x89f68b66 )
+	ROM_FILL       (              0x0d00000, 0x680000, 0 )
+
+	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
+	ROM_LOAD16_BYTE("d84-13.rom", 0x000001, 0x200000, 0xae125516 )
+	ROM_LOAD16_BYTE("d84-16.rom", 0x400000, 0x100000, 0xbcff9b2d )
+	ROM_LOAD16_BYTE("d84-17.rom", 0x400001, 0x100000, 0x0be37cc3 )
+	ROM_LOAD       ("d84-14.rom", 0x900000, 0x200000, 0x2b2e693e )
+	ROM_LOAD       ("d84-18.rom", 0xb00000, 0x100000, 0xe812bcc5 )
+	ROM_FILL       (              0x600000, 0x300000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d84-26.rom", 0x100000, 0x40000, 0x4f5b8563 )
+	ROM_LOAD16_BYTE("d84-27.rom", 0x100001, 0x40000, 0xfb0cb1ba )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
+ROM_END
+
+ROM_START( dankuga )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("dkg_mpr3.bin", 0x000000, 0x80000, 0xee1531ca )
+	ROM_LOAD32_BYTE("dkg_mpr2.bin", 0x000001, 0x80000, 0x18a4748b )
+	ROM_LOAD32_BYTE("dkg_mpr1.bin", 0x000002, 0x80000, 0x97566f69 )
+	ROM_LOAD32_BYTE("dkg_mpr0.bin", 0x000003, 0x80000, 0xad6ada07 )
+
+	ROM_REGION(0x1a00000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d84-03.rom", 0x0000000, 0x200000, 0xd786f552 )
+  	ROM_LOAD16_BYTE("d84-04.rom", 0x0000001, 0x200000, 0xd1f32b5d )
+	ROM_LOAD16_BYTE("d84-06.rom", 0x0400000, 0x200000, 0xfa924dab )
+  	ROM_LOAD16_BYTE("d84-07.rom", 0x0400001, 0x200000, 0x54517a6b )
+	ROM_LOAD16_BYTE("d84-09.rom", 0x0800000, 0x200000, 0xfaa78d98 )
+  	ROM_LOAD16_BYTE("d84-10.rom", 0x0800001, 0x200000, 0xb84b7320 )
+	ROM_LOAD16_BYTE("d84-19.rom", 0x0c00000, 0x080000, 0x6ddf77e5 )
+  	ROM_LOAD16_BYTE("d84-20.rom", 0x0c00001, 0x080000, 0xf85041e5 )
+	ROM_LOAD       ("d84-05.rom", 0x1380000, 0x200000, 0x31a3c75d )
+	ROM_LOAD       ("d84-08.rom", 0x1580000, 0x200000, 0x07347bf1 )
+	ROM_LOAD       ("d84-11.rom", 0x1780000, 0x200000, 0xa062c1d4 )
+	ROM_LOAD       ("d84-21.rom", 0x1980000, 0x080000, 0x89f68b66 )
+	ROM_FILL       (              0x0d00000, 0x680000, 0 )
+
+	ROM_REGION(0xc00000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d84-12.rom", 0x000000, 0x200000, 0x66a7a9aa )
+	ROM_LOAD16_BYTE("d84-13.rom", 0x000001, 0x200000, 0xae125516 )
+	ROM_LOAD16_BYTE("d84-16.rom", 0x400000, 0x100000, 0xbcff9b2d )
+	ROM_LOAD16_BYTE("d84-17.rom", 0x400001, 0x100000, 0x0be37cc3 )
+	ROM_LOAD       ("d84-14.rom", 0x900000, 0x200000, 0x2b2e693e )
+	ROM_LOAD       ("d84-18.rom", 0xb00000, 0x100000, 0xe812bcc5 )
+	ROM_FILL       (              0x600000, 0x300000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("d84-26.rom", 0x100000, 0x40000, 0x4f5b8563 )
+	ROM_LOAD16_BYTE("d84-27.rom", 0x100001, 0x40000, 0xfb0cb1ba )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("d84-01.rom", 0x000000, 0x200000, 0x9ad22149 )
+	ROM_LOAD16_BYTE("d84-02.rom", 0x400000, 0x200000, 0x9e1827e4 )
+	ROM_LOAD16_BYTE("d84-15.rom", 0xe00000, 0x100000, 0x31ceb152 )
 ROM_END
 
 ROM_START( dariusg )
@@ -1458,6 +1485,34 @@ ROM_START( bublbob2 )
 	ROM_LOAD32_BYTE("d90.11", 0x000001, 0x40000, 0xedfdbb7f )
 	ROM_LOAD32_BYTE("d90.10", 0x000002, 0x40000, 0x8e957d3d )
 	ROM_LOAD32_BYTE("d90.17", 0x000003, 0x40000, 0x711f1894 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("d90.03", 0x000000, 0x100000, 0x6fa894a1 )
+	ROM_LOAD16_BYTE("d90.02", 0x000001, 0x100000, 0x5ab04ca2 )
+	ROM_LOAD       ("d90.01", 0x300000, 0x100000, 0x8aedb9e5 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("d90.08", 0x000000, 0x100000, 0x25a4fb2c )
+	ROM_LOAD16_BYTE("d90.07", 0x000001, 0x100000, 0xb436b42d )
+	ROM_LOAD       ("d90.06", 0x300000, 0x100000, 0x166a72b8 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* sound CPU */
+	ROM_LOAD16_BYTE("d90.13", 0x100000, 0x40000, 0x6762bd90 )
+	ROM_LOAD16_BYTE("d90.14", 0x100001, 0x40000, 0x8e33357e )
+
+	ROM_REGION16_BE( 0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00  )
+	ROM_LOAD16_BYTE("d90.04", 0x000000, 0x200000, 0xfeee5fda )
+ 	ROM_LOAD16_BYTE("d90.05", 0xc00000, 0x200000, 0xc192331f )
+ROM_END
+
+ROM_START( bubsympe )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("d90.12", 0x000000, 0x40000, 0x9e523996 )
+	ROM_LOAD32_BYTE("d90.11", 0x000001, 0x40000, 0xedfdbb7f )
+	ROM_LOAD32_BYTE("d90.10", 0x000002, 0x40000, 0x8e957d3d )
+	ROM_LOAD32_BYTE("d90.16", 0x000003, 0x40000, 0xd12ef19b )
 
 	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
 	ROM_LOAD16_BYTE("d90.03", 0x000000, 0x100000, 0x6fa894a1 )
@@ -1690,6 +1745,34 @@ ROM_START( qtheater )
 	ROM_LOAD16_BYTE("d95-04.41", 0x400000, 0x200000, 0xe9049d16 )
 ROM_END
 
+ROM_START( spcinv95 )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("e06.14",     0x000000, 0x20000, 0x71ba7f00 )
+	ROM_LOAD32_BYTE("e06.13",     0x000001, 0x20000, 0xf506ba4b )
+	ROM_LOAD32_BYTE("e06.12",     0x000002, 0x20000, 0x06cbd72b )
+	ROM_LOAD32_BYTE("e06-15.u17", 0x000003, 0x20000, 0xa6ec0103 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("e06.03", 0x000000, 0x100000, 0xa24070ef )
+	ROM_LOAD16_BYTE("e06.02", 0x000001, 0x100000, 0x8f646dea )
+	ROM_LOAD       ("e06.01", 0x300000, 0x100000, 0x51721b15 )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x400000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("e06.08", 0x000000, 0x100000, 0x72ae2fbf )
+	ROM_LOAD16_BYTE("e06.07", 0x000001, 0x100000, 0x4b02e8f5 )
+	ROM_LOAD       ("e06.06", 0x300000, 0x100000, 0x9380db3c )
+	ROM_FILL       (          0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e06.09", 0x100000, 0x40000, 0x9bcafc87 )
+	ROM_LOAD16_BYTE("e06.10", 0x100001, 0x40000, 0xb752b61f )
+
+	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e06.04", 0x000000, 0x200000, 0x1dac29df )
+ 	ROM_LOAD16_BYTE("e06.05", 0x400000, 0x200000, 0xf370ff15 )
+ROM_END
+
 ROM_START( akkanvdr )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("e06.14", 0x000000, 0x20000, 0x71ba7f00 )
@@ -1827,10 +1910,10 @@ ROM_START( twinqix )
 	ROM_LOAD16_BYTE("spr0-0.b65", 0x100001, 0x40000, 0x2569eb30 )
 
 	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE("snd-0.b43", 0xe00000, 0x80000, 0xad5405a9 )
-	ROM_LOAD16_BYTE("snd-14.b10",0x000000, 0x80000, 0x26312451 )
-	ROM_LOAD16_BYTE("snd-1.b44", 0xf00000, 0x80000, 0x274864af )
-	ROM_LOAD16_BYTE("snd-15.b11",0x100000, 0x80000, 0x2edaa9dc )
+	ROM_LOAD16_BYTE("snd-0.b43",  0x000000, 0x80000, 0xad5405a9 )
+	ROM_LOAD16_BYTE("snd-1.b44",  0x100000, 0x80000, 0x274864af )
+	ROM_LOAD16_BYTE("snd-14.b10", 0xe00000, 0x80000, 0x26312451 )
+	ROM_LOAD16_BYTE("snd-15.b11", 0xf00000, 0x80000, 0x2edaa9dc )
 ROM_END
 
 ROM_START( quizhuhu )
@@ -2218,7 +2301,7 @@ ROM_START( arkretrn )
 	ROM_LOAD       ("e36.05", 0x180000, 0x080000, 0xdb18bce2 )
 	ROM_FILL       (          0x100000, 0x080000, 0 )
 
-	ROM_REGION16_BE(0x600000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_REGION16_BE(0x600000, REGION_SOUND1, ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE("e36.04", 0x000000, 0x200000, 0x2250959b )
 ROM_END
 
@@ -2247,16 +2330,14 @@ ROM_START( kirameki )
 	ROM_LOAD       ("e44-09.42", 0xb00000, 0x100000, 0xa8e68eb7 )
 	ROM_FILL       (             0x600000, 0x300000, 0 )
 
-	ROM_REGION(0x200000, REGION_CPU2, 0)	/* 68000 sound CPU */
-	ROM_LOAD16_BYTE("e44-21.52", 0x100001, 0x80000, 0xd31b94b8 )
-	ROM_LOAD16_BYTE("e44-20.51", 0x100000, 0x80000, 0x4df7e051 )
+	ROM_REGION(0x400000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e44-20.51",      0x100000, 0x080000, 0x4df7e051 )
+	ROM_LOAD16_BYTE("e44-21.52",      0x100001, 0x080000, 0xd31b94b8 )
+	ROM_LOAD16_WORD_SWAP("e44-15.53", 0x200000, 0x200000, 0x5043b608 ) /* Banked data */
 
-	ROM_REGION(0x200000, REGION_USER1, 0)	/* 68000 unknown code!? */
-	ROM_LOAD("e44-15.53", 0x000000, 0x200000, 0x5043b608 )
-
-	ROM_REGION(0xa00000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
-	ROM_LOAD("e44-07.38", 0x000000, 0x400000, 0xa9e28544 )
-	ROM_LOAD("e44-08.39", 0x400000, 0x400000, 0x33ba3037 )
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e44-07.38", 0x000000, 0x400000, 0xa9e28544 )
+	ROM_LOAD16_BYTE("e44-08.39", 0x800000, 0x400000, 0x33ba3037 )
 ROM_END
 
 ROM_START( puchicar )
@@ -2375,12 +2456,40 @@ ROM_START( pbobbl4u )
 	ROM_LOAD16_BYTE("e49.05", 0x000000, 0x200000, 0x5ce90ee2 )
 ROM_END
 
-ROM_START( popnpop )
+ROM_START( popnpopj )
 	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
  	ROM_LOAD32_BYTE("e51-12.20", 0x000000, 0x80000, 0x86a237d5 )
 	ROM_LOAD32_BYTE("e51-11.19", 0x000001, 0x80000, 0x8a49f34f )
 	ROM_LOAD32_BYTE("e51-10.18", 0x000002, 0x80000, 0x4bce68f8 )
 	ROM_LOAD32_BYTE("e51-09.17", 0x000003, 0x80000, 0x4a086017 )
+
+	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
+	ROM_LOAD16_BYTE("e51-03.12",0x000000, 0x100000, 0xa24c4607 )
+	ROM_LOAD16_BYTE("e51-02.8", 0x000001, 0x100000, 0x6aa8b96c )
+	ROM_LOAD       ("e51-01.4", 0x300000, 0x100000, 0x70347e24 )
+	ROM_FILL       (            0x200000, 0x100000, 0 )
+
+	ROM_REGION(0x800000, REGION_GFX2 , ROMREGION_DISPOSE) /* Tiles */
+	ROM_LOAD16_BYTE("e51-08.47", 0x000000, 0x200000, 0x3ad41f02 )
+	ROM_LOAD16_BYTE("e51-07.45", 0x000001, 0x200000, 0x95873e46 )
+	ROM_LOAD       ("e51-06.43", 0x600000, 0x200000, 0xc240d6c8 )
+	ROM_FILL       (             0x400000, 0x200000, 0 )
+
+	ROM_REGION(0x180000, REGION_CPU2, 0)	/* 68000 sound CPU */
+	ROM_LOAD16_BYTE("e51-13.32", 0x100000, 0x40000, 0x3b9e3986 )
+	ROM_LOAD16_BYTE("e51-14.33", 0x100001, 0x40000, 0x1f9a5015 )
+
+	ROM_REGION16_BE(0x1000000, REGION_SOUND1 , ROMREGION_SOUNDONLY | ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE("e51-04.38", 0x000000, 0x200000, 0x66790f55 )
+	ROM_LOAD16_BYTE("e51-05.41", 0xc00000, 0x200000, 0x4d08b26d )
+ROM_END
+
+ROM_START( popnpop )
+	ROM_REGION(0x200000, REGION_CPU1, 0) /* 68020 code */
+ 	ROM_LOAD32_BYTE("e51-12.20", 0x000000, 0x80000, 0x86a237d5 )
+	ROM_LOAD32_BYTE("e51-11.19", 0x000001, 0x80000, 0x8a49f34f )
+	ROM_LOAD32_BYTE("e51-10.18", 0x000002, 0x80000, 0x4bce68f8 )
+	ROM_LOAD32_BYTE("e51-16.17", 0x000003, 0x80000, 0x2a9d8e0f )
 
 	ROM_REGION(0x400000, REGION_GFX1 , ROMREGION_DISPOSE) /* Sprites */
 	ROM_LOAD16_BYTE("e51-03.12",0x000000, 0x100000, 0xa24c4607 )
@@ -2496,7 +2605,7 @@ static void tile_decode(int uses_5bpp_tiles)
 #define F3_IRQ_SPEEDUP_1_R(GAME, counter, mem_addr, mask) 		\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
-	if (cpu_get_pc()==counter && (f3_ram[mem_addr]&mask)!=0)	\
+	if (activecpu_get_pc()==counter && (f3_ram[mem_addr]&mask)!=0)	\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2504,7 +2613,7 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 #define F3_IRQ_SPEEDUP_2_R(GAME, counter, mem_addr, mask) 		\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
-	if (cpu_get_pc()==counter && (f3_ram[mem_addr]&mask)==0)	\
+	if (activecpu_get_pc()==counter && (f3_ram[mem_addr]&mask)==0)	\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2513,10 +2622,10 @@ static READ32_HANDLER( irq_speedup_r_##GAME )					\
 static READ32_HANDLER( irq_speedup_r_##GAME )					\
 {																\
 	int ptr;													\
-	if ((cpu_get_sp()&2)==0) ptr=f3_ram[(cpu_get_sp()&0x1ffff)/4];	\
-	else ptr=(((f3_ram[(cpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | \
-	(f3_ram[((cpu_get_sp()&0x1ffff)/4)+1]>>16); 				\
-	if (cpu_get_pc()==counter && ptr==stack)					\
+	if ((activecpu_get_sp()&2)==0) ptr=f3_ram[(activecpu_get_sp()&0x1ffff)/4];	\
+	else ptr=(((f3_ram[(activecpu_get_sp()&0x1ffff)/4])&0x1ffff)<<16) | \
+	(f3_ram[((activecpu_get_sp()&0x1ffff)/4)+1]>>16); 				\
+	if (activecpu_get_pc()==counter && ptr==stack)					\
 		cpu_spinuntil_int();									\
 	return f3_ram[mem_addr];									\
 }
@@ -2547,21 +2656,22 @@ F3_IRQ_SPEEDUP_2_R(arkretrn, 0x960,    0x2154/4, 0x0000ffff )
 F3_IRQ_SPEEDUP_3_R(landmakr, 0x146c,   0x0824/4, 0x00001178 )
 F3_IRQ_SPEEDUP_3_R(eaction2, 0x133c,   0x07a0/4, 0x00001048 )
 F3_IRQ_SPEEDUP_1_R(twinqix,  0xe9a52,  0x0134/4, 0x000000ff )
+F3_IRQ_SPEEDUP_2_R(kirameki, 0x12fc6,  0x0414/4, 0x0000ff00 )
 
-static void init_ringrage(void)
+static DRIVER_INIT( ringrage )
 {
 	f3_game=RINGRAGE;
 	tile_decode(0);
 }
 
-static void init_arabianm(void)
+static DRIVER_INIT( arabianm )
 {
 	install_mem_read32_handler(0, 0x408124, 0x408127, irq_speedup_r_arabianm );
 	f3_game=ARABIANM;
 	tile_decode(1);
 }
 
-static void init_ridingf(void)
+static DRIVER_INIT( ridingf )
 {
 	data16_t *RAM = (UINT16 *)memory_region(REGION_CPU2);
 
@@ -2572,41 +2682,41 @@ static void init_ridingf(void)
 	tile_decode(1);
 }
 
-static void init_gseeker(void)
+static DRIVER_INIT( gseeker )
 {
 	install_mem_read32_handler(0, 0x40ad94, 0x40ad97, irq_speedup_r_gseeker );
 	f3_game=GSEEKER;
 	tile_decode(0);
 }
 
-static void init_gunlock(void)
+static DRIVER_INIT( gunlock )
 {
 	install_mem_read32_handler(0, 0x400004, 0x400007, irq_speedup_r_gunlock );
 	f3_game=GUNLOCK;
 	tile_decode(1);
 }
 
-static void init_elvactr(void)
+static DRIVER_INIT( elvactr )
 {
 	install_mem_read32_handler(0, 0x4007a0, 0x4007a3, irq_speedup_r_eaction2 );
 	f3_game=EACTION2;
 	tile_decode(1);
 }
 
-static void init_cupfinal(void)
+static DRIVER_INIT( cupfinal )
 {
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_cupfinal );
 	f3_game=SCFINALS;
 	tile_decode(1);
 }
 
-static void init_trstaroj(void)
+static DRIVER_INIT( trstaroj )
 {
 	f3_game=TRSTAR;
 	tile_decode(1);
 }
 
-static void init_scfinals(void)
+static DRIVER_INIT( scfinals )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2621,41 +2731,41 @@ static void init_scfinals(void)
 	tile_decode(1);
 }
 
-static void init_lightbr(void)
+static DRIVER_INIT( lightbr )
 {
 	install_mem_read32_handler(0, 0x400130, 0x400133, irq_speedup_r_lightbr );
 	f3_game=LIGHTBR;
 	tile_decode(1);
 }
 
-static void init_kaiserkn(void)
+static DRIVER_INIT( kaiserkn )
 {
 	install_mem_read32_handler(0, 0x408110, 0x408113, irq_speedup_r_kaiserkn );
 	f3_game=KAISERKN;
 	tile_decode(1);
 }
 
-static void init_dariusg(void)
+static DRIVER_INIT( dariusg )
 {
 	install_mem_read32_handler(0, 0x406ba8, 0x406bab, irq_speedup_r_dariusg );
 	f3_game=DARIUSG;
 	tile_decode(0);
 }
 
-static void init_spcinvdj(void)
+static DRIVER_INIT( spcinvdj )
 {
 	install_mem_read32_handler(0, 0x400230, 0x400233, irq_speedup_r_spcinvdj );
 	f3_game=SPCINVDX;
 	tile_decode(0);
 }
 
-static void init_qtheater(void)
+static DRIVER_INIT( qtheater )
 {
 	f3_game=QTHEATER;
 	tile_decode(0);
 }
 
-static void init_spcinv95(void)
+static DRIVER_INIT( spcinv95 )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2672,35 +2782,35 @@ static void init_spcinv95(void)
 	tile_decode(1);
 }
 
-static void init_gekirido(void)
+static DRIVER_INIT( gekirido )
 {
 	install_mem_read32_handler(0, 0x406bb0, 0x406bb3, irq_speedup_r_gekirido );
 	f3_game=GEKIRIDO;
 	tile_decode(1);
 }
 
-static void init_ktiger2(void)
+static DRIVER_INIT( ktiger2 )
 {
 	install_mem_read32_handler(0, 0x400570, 0x400573, irq_speedup_r_ktiger2 );
 	f3_game=KTIGER2;
 	tile_decode(0);
 }
 
-static void init_bubsymph(void)
+static DRIVER_INIT( bubsymph )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_bubsymph );
 	f3_game=BUBSYMPH;
 	tile_decode(1);
 }
 
-static void init_bubblem(void)
+static DRIVER_INIT( bubblem )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_bubblem );
 	f3_game=BUBBLEM;
 	tile_decode(1);
 }
 
-static void init_cleopatr(void)
+static DRIVER_INIT( cleopatr )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2713,62 +2823,62 @@ static void init_cleopatr(void)
 	tile_decode(0);
 }
 
-static void init_popnpop(void)
+static DRIVER_INIT( popnpop )
 {
 	install_mem_read32_handler(0, 0x401cf8, 0x401cfb, irq_speedup_r_popnpop );
 	f3_game=POPNPOP;
 	tile_decode(0);
 }
 
-static void init_landmakr(void)
+static DRIVER_INIT( landmakr )
 {
 	install_mem_read32_handler(0, 0x400824, 0x400827, irq_speedup_r_landmakr );
 	f3_game=LANDMAKR;
 	tile_decode(0);
 }
 
-static void init_pbobble3(void)
+static DRIVER_INIT( pbobble3 )
 {
 	install_mem_read32_handler(0, 0x405af4, 0x405af7, irq_speedup_r_pbobble3 );
 	f3_game=PBOBBLE3;
 	tile_decode(0);
 }
 
-static void init_pbobble4(void)
+static DRIVER_INIT( pbobble4 )
 {
 	install_mem_read32_handler(0, 0x4058f4, 0x4058f7, irq_speedup_r_pbobble4 );
 	f3_game=PBOBBLE4;
 	tile_decode(0);
 }
 
-static void init_quizhuhu(void)
+static DRIVER_INIT( quizhuhu )
 {
 	f3_game=QUIZHUHU;
 	tile_decode(0);
 }
 
-static void init_pbobble2(void)
+static DRIVER_INIT( pbobble2 )
 {
 	install_mem_read32_handler(0, 0x404a50, 0x404a53, irq_speedup_r_pbobble2 );
 	f3_game=PBOBBLE2;
 	tile_decode(0);
 }
 
-static void init_pbobbl2x(void)
+static DRIVER_INIT( pbobbl2x )
 {
 	install_mem_read32_handler(0, 0x405c58, 0x405c5b, irq_speedup_r_pbobbl2x );
 	f3_game=PBOBBLE2;
 	tile_decode(0);
 }
 
-static void init_hthero95(void)
+static DRIVER_INIT( hthero95 )
 {
 	install_mem_read32_handler(0, 0x408114, 0x408117, irq_speedup_r_pwrgoal );
 	f3_game=HTHERO95;
 	tile_decode(0);
 }
 
-static void init_kirameki(void)
+static DRIVER_INIT( kirameki )
 {
 	data32_t *RAM = (UINT32 *)memory_region(REGION_CPU1);
 
@@ -2777,25 +2887,26 @@ static void init_kirameki(void)
     RAM[0x4aec/4]=(RAM[0x4aec/4]&0xffff0000) | 0x00004e71;
     RAM[0x4af0/4]=(RAM[0x4af0/4]&0x0000ffff) | 0x4e710000;
 
+	install_mem_read32_handler(0, 0x400414, 0x400417, irq_speedup_r_kirameki );
 	f3_game=KIRAMEKI;
 	tile_decode(0);
 }
 
-static void init_puchicar(void)
+static DRIVER_INIT( puchicar )
 {
 	install_mem_read32_handler(0, 0x4024d8, 0x4024db, irq_speedup_r_puchicar );
 	f3_game=PUCHICAR;
 	tile_decode(0);
 }
 
-static void init_twinqix(void)
+static DRIVER_INIT( twinqix )
 {
 	install_mem_read32_handler(0, 0x400134, 0x400137, irq_speedup_r_twinqix );
 	f3_game=TWINQIX;
 	tile_decode(0);
 }
 
-static void init_arkretrn(void)
+static DRIVER_INIT( arkretrn )
 {
 	install_mem_read32_handler(0, 0x402154, 0x402157, irq_speedup_r_arkretrn );
 	f3_game=ARKRETRN;
@@ -2804,21 +2915,21 @@ static void init_arkretrn(void)
 
 /******************************************************************************/
 
-GAME( 1992, ringrage, 0,        f3, f3, ringrage, ROT0,   "Taito Corporation Japan",   "Ring Rage (World)" )
-GAME( 1992, ringragj, ringrage, f3, f3, ringrage, ROT0,   "Taito Corporation",         "Ring Rage (Japan)" )
-GAME( 1992, ringragu, ringrage, f3, f3, ringrage, ROT0,   "Taito America Corporation", "Ring Rage (US)" )
+GAMEX(1992, ringrage, 0,        f3, f3, ringrage, ROT0,   "Taito Corporation Japan",   "Ring Rage (World)", GAME_NO_SOUND )
+GAMEX(1992, ringragj, ringrage, f3, f3, ringrage, ROT0,   "Taito Corporation",         "Ring Rage (Japan)", GAME_NO_SOUND )
+GAMEX(1992, ringragu, ringrage, f3, f3, ringrage, ROT0,   "Taito America Corporation", "Ring Rage (US)", GAME_NO_SOUND )
 GAME( 1992, arabianm, 0,        f3, f3, arabianm, ROT0,   "Taito Corporation Japan",   "Arabian Magic (World)" )
 GAME( 1992, arabiamj, arabianm, f3, f3, arabianm, ROT0,   "Taito Corporation",         "Arabian Magic (Japan)" )
 GAME( 1992, arabiamu, arabianm, f3, f3, arabianm, ROT0,   "Taito America Corporation", "Arabian Magic (US)" )
-GAME( 1992, ridingf,  0,        f3, f3, ridingf,  ROT0,   "Taito Corporation Japan",   "Riding Fight (World)" )
-GAME( 1992, ridefgtj, ridingf,  f3, f3, ridingf,  ROT0,   "Taito Corporation",         "Riding Fight (Japan)" )
-GAME( 1992, ridefgtu, ridingf,  f3, f3, ridingf,  ROT0,   "Taito America Corporation", "Riding Fight (US)" )
-GAME( 1992, gseeker,  0,        f3, f3, gseeker,  ROT270, "Taito Corporation Japan",   "Grid Seeker: Project Stormhammer (World)" )
-GAME( 1992, gseekerj, gseeker,  f3, f3, gseeker,  ROT270, "Taito Corporation",         "Grid Seeker: Project Stormhammer (Japan)" )
-GAME( 1992, gseekeru, gseeker,  f3, f3, gseeker,  ROT270, "Taito America Corporation", "Grid Seeker: Project Stormhammer (US)" )
-GAME( 1993, gunlock,  0,        f3, f3, gunlock,  ROT270, "Taito Corporation Japan",   "Gunlock (World)" )
-GAME( 1993, rayforcj, gunlock,  f3, f3, gunlock,  ROT270, "Taito Corporation",         "Rayforce (Japan)" )
-GAME( 1993, rayforce, gunlock,  f3, f3, gunlock,  ROT270, "Taito America Corporation", "Rayforce (US)" )
+GAMEX(1992, ridingf,  0,        f3, f3, ridingf,  ROT0,   "Taito Corporation Japan",   "Riding Fight (World)", GAME_NO_SOUND )
+GAMEX(1992, ridefgtj, ridingf,  f3, f3, ridingf,  ROT0,   "Taito Corporation",         "Riding Fight (Japan)", GAME_NO_SOUND )
+GAMEX(1992, ridefgtu, ridingf,  f3, f3, ridingf,  ROT0,   "Taito America Corporation", "Riding Fight (US)", GAME_NO_SOUND )
+GAME( 1992, gseeker,  0,        f3, f3, gseeker,  ROT90,  "Taito Corporation Japan",   "Grid Seeker: Project Stormhammer (World)" )
+GAME( 1992, gseekerj, gseeker,  f3, f3, gseeker,  ROT90,  "Taito Corporation",         "Grid Seeker: Project Stormhammer (Japan)" )
+GAME( 1992, gseekeru, gseeker,  f3, f3, gseeker,  ROT90,  "Taito America Corporation", "Grid Seeker: Project Stormhammer (US)" )
+GAME( 1993, gunlock,  0,        f3, f3, gunlock,  ROT90,  "Taito Corporation Japan",   "Gunlock (World)" )
+GAME( 1993, rayforcj, gunlock,  f3, f3, gunlock,  ROT90,  "Taito Corporation",         "Rayforce (Japan)" )
+GAME( 1993, rayforce, gunlock,  f3, f3, gunlock,  ROT90,  "Taito America Corporation", "Rayforce (US)" )
 GAME( 1993, scfinals, 0,        f3, f3, scfinals, ROT0,   "Taito Corporation Japan",   "Super Cup Finals (World)" )
 /* I don't think these really are clones of SCFinals - SCFinals may be a sequel that just shares graphics roms (Different Taito ROM code) */
 GAME( 1992, hthero93, scfinals, f3, f3, cupfinal, ROT0,   "Taito Corporation",         "Hat Trick Hero '93 (Japan)" )
@@ -2834,12 +2945,13 @@ GAME( 1993, lightbr,  0,        f3, f3, lightbr,  ROT0,   "Taito Corporation",  
 GAME( 1994, kaiserkn, 0,        f3, kn, kaiserkn, ROT0,   "Taito Corporation Japan",   "Kaiser Knuckle (World)" )
 GAME( 1994, kaiserkj, kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",         "Kaiser Knuckle (Japan)" )
 GAME( 1994, gblchmp,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito America Corporation", "Global Champion (US)" )
-GAME( 1994, dankuga,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",         "Dan-Ku-Ga (Japan)" )
+GAME( 1994, dankuga,  kaiserkn, f3, kn, kaiserkn, ROT0,   "Taito Corporation",         "Dan-Ku-Ga (Prototype)" )
 GAME( 1994, dariusg,  0,        f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk" )
-GAME( 1994, dariusgx, dariusg,  f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version)" )
+GAME( 1994, dariusgx, dariusg,  f3, f3, dariusg,  ROT0,   "Taito Corporation",         "Darius Gaiden - Silver Hawk (Extra Version) [Official Hack]" )
 GAME( 1994, bublbob2, 0,        f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Bobble 2 (World)" )
-GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
+GAME( 1994, bubsympe, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation Japan",   "Bubble Symphony (Europe)" )
 GAME( 1994, bubsympu, bublbob2, f3, f3, bubsymph, ROT0,   "Taito America Corporation", "Bubble Symphony (US)" )
+GAME( 1994, bubsymph, bublbob2, f3, f3, bubsymph, ROT0,   "Taito Corporation",         "Bubble Symphony (Japan)" )
 GAME( 1994, spcinvdj, spacedx,  f3, f3, spcinvdj, ROT0,   "Taito Corporation",         "Space Invaders DX (Japan F3 version)" )
 GAME( 1994, pwrgoal,  0,        f3, f3, hthero95, ROT0,   "Taito Corporation Japan",   "Power Goal (World)" )
 GAME( 1994, hthero95, pwrgoal,  f3, f3, hthero95, ROT0,   "Taito Corporation",         "Hat Trick Hero '95 (Japan)" )
@@ -2849,8 +2961,8 @@ GAME( 1994, elvactr,  0,        f3, f3, elvactr,  ROT0,   "Taito Corporation Jap
 GAME( 1994, elvactrj, elvactr,  f3, f3, elvactr,  ROT0,   "Taito Corporation",         "Elevator Action Returns (Japan)" )
 GAME( 1994, elvact2u, elvactr,  f3, f3, elvactr,  ROT0,   "Taito America Corporation", "Elevator Action 2 (US)" )
 /* There is also a prototype Elevator Action 2 (US) pcb with the graphics in a different rom format (same program code) */
-GAME( 1995, akkanvdr, 0,        f3, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
-/* Space Invaders '95 - Attack Of The Lunar Loonies */
+GAME( 1995, spcinv95, 0,        f3, f3, spcinv95, ROT270, "Taito America Corporation", "Space Invaders '95 - Attack Of The Lunar Loonies (US)" )
+GAME( 1995, akkanvdr, spcinv95, f3, f3, spcinv95, ROT270, "Taito Corporation",         "Akkanvader (Japan)" )
 GAME( 1995, twinqix,  0,        f3, f3, twinqix,  ROT0,   "Taito America Corporation", "Twin Qix (US Prototype)" )
 GAME( 1995, gekirido, 0,        f3, f3, gekirido, ROT270, "Taito Corporation",         "Gekirindan (Japan)" )
 GAME( 1995, quizhuhu, 0,        f3, f3, quizhuhu, ROT0,   "Taito Corporation",         "Moriguchi Hiroko no Quiz de Hyuuhyuu (Japan)" )
@@ -2872,5 +2984,6 @@ GAME( 1997, puchicar, 0,        f3, f3, puchicar, ROT0,   "Taito Corporation",  
 GAME( 1997, pbobble4, 0,        f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (World)" )
 GAME( 1997, pbobbl4j, pbobble4, f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (Japan)" )
 GAME( 1997, pbobbl4u, pbobble4, f3, f3, pbobble4, ROT0,   "Taito Corporation",         "Puzzle Bobble 4 (US)" )
-GAME( 1997, popnpop,  0,        f3, f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Japan)" )
+GAME( 1997, popnpop,  0,        f3, f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Asia)" )
+GAME( 1997, popnpopj, popnpop,  f3, f3, popnpop,  ROT0,   "Taito Corporation",         "Pop 'N Pop (Japan)" )
 GAME( 1998, landmakr, 0,        f3, f3, landmakr, ROT0,   "Taito Corporation",         "Landmaker (Japan)" )

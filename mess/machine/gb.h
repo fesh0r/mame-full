@@ -82,14 +82,12 @@ extern WRITE_HANDLER ( gb_w_io );
 extern WRITE_HANDLER ( gb_w_ie );
 extern READ_HANDLER  ( gb_r_io );
 extern int gb_load_rom (int id);
-extern int gb_scanline_interrupt(void);
+extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
 extern void gb_scanline_interrupt_set_mode3(int param);
-extern int gb_vh_start(void);
-extern void gb_vh_stop(void);
-extern void gb_vh_screen_refresh(struct mame_bitmap *bitmap, int full_refresh);
-extern void gb_init_machine(void);
-extern void gb_shutdown_machine(void);
+
+extern MACHINE_INIT( gb );
+extern MACHINE_STOP( gb );
 
 /* from vidhrdw/gb.c */
 void gb_refresh_scanline(void);

@@ -36,7 +36,7 @@ static const unsigned char *color_codes;
   bit 0 -- 470 ohm resistor -- inverter  -- BLUE
 
 ***************************************************************************/
-void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( dkong )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -45,24 +45,25 @@ void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (color_prom[256] >> 1) & 1;
 		bit1 = (color_prom[256] >> 2) & 1;
 		bit2 = (color_prom[256] >> 3) & 1;
-		*(palette++) = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
+		r = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* green component */
 		bit0 = (color_prom[0] >> 2) & 1;
 		bit1 = (color_prom[0] >> 3) & 1;
 		bit2 = (color_prom[256] >> 0) & 1;
-		*(palette++) = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
+		g = 255 - (0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2);
 		/* blue component */
 		bit0 = (color_prom[0] >> 0) & 1;
 		bit1 = (color_prom[0] >> 1) & 1;
-		*(palette++) = 255 - (0x55 * bit0 + 0xaa * bit1);
+		b = 255 - (0x55 * bit0 + 0xaa * bit1);
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -101,7 +102,7 @@ void dkong_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
   bit 0 -- 2.2kohm resistor -- inverter  -- BLUE
 
 ***************************************************************************/
-void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( dkong3 )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -110,7 +111,7 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -118,20 +119,21 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		r = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 		/* green component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		g = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 		/* blue component */
 		bit0 = (color_prom[256] >> 0) & 0x01;
 		bit1 = (color_prom[256] >> 1) & 0x01;
 		bit2 = (color_prom[256] >> 2) & 0x01;
 		bit3 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		b = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -142,12 +144,12 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-int dkong_vh_start(void)
+VIDEO_START( dkong )
 {
 	gfx_bank = 0;
 	palette_bank = 0;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 
@@ -341,11 +343,11 @@ static void draw_grid(struct mame_bitmap *bitmap)
 	}
 }
 
-void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( radarscp )
 {
 	palette_set_color(256,0xff,0x00,0x00);	/* stars */
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	draw_tiles(bitmap);
@@ -353,9 +355,9 @@ void radarscp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	draw_sprites(bitmap);
 }
 
-void dkong_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dkong )
 {
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	draw_tiles(bitmap);

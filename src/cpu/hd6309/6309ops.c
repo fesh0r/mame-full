@@ -5381,7 +5381,7 @@ INLINE void pref10( void )
 	UINT8 ireg2 = ROP(PCD);
 	PC++;
 
-#if BIG_SWITCH
+#ifdef BIG_SWITCH
 	switch( ireg2 )
 	{
 		case 0x21: lbrn();			break;
@@ -5531,7 +5531,7 @@ INLINE void pref11( void )
 	UINT8 ireg2 = ROP(PCD);
 	PC++;
 
-#if BIG_SWITCH
+#ifdef BIG_SWITCH
 	switch( ireg2 )
 	{
 		case 0x30: band();			break;

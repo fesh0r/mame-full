@@ -45,9 +45,9 @@ WRITE_HANDLER( marvins_spriteram_w );
 **
 ***************************************************************************/
 
-extern int marvins_vh_start( void );
-extern void marvins_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
-extern void madcrash_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh );
+extern VIDEO_START( marvins );
+extern VIDEO_UPDATE( marvins );
+extern VIDEO_UPDATE( madcrash );
 WRITE_HANDLER( marvins_palette_bank_w );
 
 /***************************************************************************
@@ -109,7 +109,7 @@ static WRITE_HANDLER( sound_command_w ){
 	sound_fetched = 0;
 	sound_command = data;
 	sound_cpu_ready = 0;
-	cpu_cause_interrupt( 2, Z80_IRQ_INT );
+	cpu_set_irq_line( 2, 0, HOLD_LINE );
 }
 
 static READ_HANDLER( sound_command_r ){
@@ -179,7 +179,7 @@ static WRITE_HANDLER( CPUA_int_enable_w )
 {
 	if( CPUA_latch & SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else
@@ -192,7 +192,7 @@ static READ_HANDLER( CPUA_int_trigger_r )
 {
 	if( CPUA_latch&SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 0, Z80_NMI_INT );
+		cpu_set_irq_line( 0, IRQ_LINE_NMI, PULSE_LINE );
 		CPUA_latch = 0;
 	}
 	else
@@ -206,7 +206,7 @@ static WRITE_HANDLER( CPUB_int_enable_w )
 {
 	if( CPUB_latch & SNK_NMI_PENDING )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else
@@ -219,7 +219,7 @@ static READ_HANDLER( CPUB_int_trigger_r )
 {
 	if( CPUB_latch&SNK_NMI_ENABLE )
 	{
-		cpu_cause_interrupt( 1, Z80_NMI_INT );
+		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
 		CPUB_latch = 0;
 	}
 	else
@@ -361,21 +361,21 @@ INPUT_PORTS_START( marvins )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START	/* DSW2 (unverified) */
-	PORT_DIPNAME( 0x07, 0x07, "1st Bonus Life" )
-	PORT_DIPSETTING(    0x07, "10000" )
-	PORT_DIPSETTING(    0x06, "20000" )
-	PORT_DIPSETTING(    0x05, "30000" )
-	PORT_DIPSETTING(    0x04, "40000" )
-	PORT_DIPSETTING(    0x03, "50000" )
-	PORT_DIPSETTING(    0x02, "60000" )
-	PORT_DIPSETTING(    0x01, "70000" )
-	PORT_DIPSETTING(    0x00, "80000" )
-	PORT_DIPNAME( 0x18, 0x18, "2nd Bonus Life" )
-	PORT_DIPSETTING(    0x10, "1st bonus*2" )
-	PORT_DIPSETTING(    0x08, "1st bonus*3" )
-	PORT_DIPSETTING(    0x00, "1st bonus*4" )
-//	PORT_DIPSETTING(    0x18, "Unused" )
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x07, 0x00, "1st Bonus Life" )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPSETTING(    0x02, "30000" )
+	PORT_DIPSETTING(    0x03, "40000" )
+	PORT_DIPSETTING(    0x04, "50000" )
+	PORT_DIPSETTING(    0x05, "60000" )
+	PORT_DIPSETTING(    0x06, "70000" )
+	PORT_DIPSETTING(    0x07, "80000" )
+	PORT_DIPNAME( 0x18, 0x08, "2nd Bonus Life" )
+	PORT_DIPSETTING(    0x08, "1st bonus*2" )
+	PORT_DIPSETTING(    0x10, "1st bonus*3" )
+	PORT_DIPSETTING(    0x18, "1st bonus*4" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -427,15 +427,15 @@ INPUT_PORTS_START( vangrd2 )
 	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) // difficulty?
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x38, "30000" )
+	PORT_DIPSETTING(    0x30, "40000" )
+	PORT_DIPSETTING(    0x28, "50000" )
+	PORT_DIPSETTING(    0x20, "60000" )
+	PORT_DIPSETTING(    0x18, "70000" )
+	PORT_DIPSETTING(    0x10, "80000" )
+	PORT_DIPSETTING(    0x08, "90000" )
+	PORT_DIPSETTING(    0x00, "100000" )
 	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
@@ -443,7 +443,7 @@ INPUT_PORTS_START( vangrd2 )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, "Freeze" )
@@ -455,9 +455,9 @@ INPUT_PORTS_START( vangrd2 )
 	PORT_DIPNAME( 0x08, 0x08, "Language" )
 	PORT_DIPSETTING(    0x08, "English" )
 	PORT_DIPSETTING(    0x00, "Japanese" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life Occurence" )
+	PORT_DIPSETTING(    0x00, "Every bonus" )
+	PORT_DIPSETTING(    0x10, "Bonus only" )
 	PORT_BITX(0x20,     0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_JOY_NONE, IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -500,12 +500,12 @@ INPUT_PORTS_START( madcrash )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unused SW 1-0" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -518,22 +518,21 @@ INPUT_PORTS_START( madcrash )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0xc0, 0xc0, "Bonus?" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x40, "2" )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0xc0, "4" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0xc0, "20000 60000" )
+	PORT_DIPSETTING(    0x80, "40000 90000" )
+	PORT_DIPSETTING(    0x40, "50000 120000" )
+	PORT_DIPSETTING(    0x00, "None" )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life Occurence" )
+	PORT_DIPSETTING(    0x01, "1st, 2nd, then every 2nd" )	// Check the "Non Bugs" page
+	PORT_DIPSETTING(    0x00, "1st and 2nd only" )
+	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x06, "Easy" )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x18, 0x10, "Game mode" )
 	PORT_DIPSETTING(    0x18, "Demo Sounds Off" )
 	PORT_DIPSETTING(    0x10, "Demo Sounds On" )
@@ -541,11 +540,11 @@ INPUT_PORTS_START( madcrash )
 	PORT_DIPSETTING(    0x00, "Freeze" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )				// Check the "Non Bugs" page
+	PORT_DIPNAME( 0x40, 0x40, "Unused SW 2-6" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown SW 2-7" )			// tested in many places
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
@@ -601,107 +600,76 @@ static struct GfxDecodeInfo marvins_gfxdecodeinfo[] =
 **
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_marvins = {
-	{
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			readmem_CPUA,writemem_CPUA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			marvins_readmem_CPUB,marvins_writemem_CPUB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4.0 MHz */
-			readmem_sound,writemem_sound,0,0,
-			nmi_interrupt,4 /* seems to be correct */
-		},
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* CPU slices per frame */
-	0, /* init_machine */
+static MACHINE_DRIVER_START( marvins )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(marvins_readmem_CPUB,marvins_writemem_CPUB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* seems to be correct */
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256+32, 224, { 0, 255+32,0, 223 },
-	marvins_gfxdecodeinfo,
-	(16+2)*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32, 224)
+	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
+	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH((16+2)*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	marvins_vh_start,
-	0,
-	marvins_vh_screenrefresh,
+	MDRV_VIDEO_START(marvins)
+	MDRV_VIDEO_UPDATE(marvins)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_NAMCO,
-			&snkwave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_madcrash = {
-	{
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			readmem_CPUA,writemem_CPUA,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80,
-			3360000,	/* 3.336 MHz */
-			madcrash_readmem_CPUB,madcrash_writemem_CPUB,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4.0 MHz */
-			readmem_sound,writemem_sound,0,0,
-			nmi_interrupt,4 /* wrong? */
-		},
-	},
-	60.606060, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* CPU slices per frame */
-	0, /* init_machine */
+
+static MACHINE_DRIVER_START( madcrash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(readmem_CPUA,writemem_CPUA)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3360000)	/* 3.336 MHz */
+	MDRV_CPU_MEMORY(madcrash_readmem_CPUB,madcrash_writemem_CPUB)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4.0 MHz */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4) /* wrong? */
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
 
 	/* video hardware */
-	256+32, 224, { 0, 255+32,0, 223 },
-	marvins_gfxdecodeinfo,
-	(16+2)*16, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256+32, 224)
+	MDRV_VISIBLE_AREA(0, 255+32,0, 223)
+	MDRV_GFXDECODE(marvins_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH((16+2)*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	marvins_vh_start,
-	0,
-	madcrash_vh_screenrefresh,
+	MDRV_VIDEO_START(marvins)
+	MDRV_VIDEO_UPDATE(madcrash)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_NAMCO,
-			&snkwave_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(NAMCO, snkwave_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 **
@@ -748,9 +716,9 @@ ROM_END
 
 ROM_START( madcrash )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for CPUA code */
-	ROM_LOAD( "p8",    0x0000, 0x2000, 0xecb2fdc9 )
-	ROM_LOAD( "p9",    0x2000, 0x2000, 0x0a87df26 )
-	ROM_LOAD( "p10",   0x4000, 0x2000, 0x6eb8a87c )
+	ROM_LOAD( "p8",    0x0000, 0x2000, BADCRC( 0xecb2fdc9 ) )
+	ROM_LOAD( "p9",    0x2000, 0x2000, BADCRC( 0x0a87df26 ) )
+	ROM_LOAD( "p10",   0x4000, 0x2000, BADCRC( 0x6eb8a87c ) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for CPUB code */
 	ROM_LOAD( "p4",   0x0000, 0x2000, 0x5664d699 )
@@ -823,12 +791,12 @@ ROM_END
 
 
 
-static void init_marvins(void)
+static DRIVER_INIT( marvins )
 {
 	init_sound( 0x40 );
 }
 
-static void init_madcrash( void )
+static DRIVER_INIT( madcrash )
 {
 /*
 	The following lines patch out the ROM test (which fails - probably
@@ -842,7 +810,7 @@ static void init_madcrash( void )
 	madcrash_vreg = 0x00;
 }
 
-static void init_vangrd2( void )
+static DRIVER_INIT( vangrd2 )
 {
 	init_sound( 0x20 );
 	madcrash_vreg = 0xf1;
@@ -850,6 +818,7 @@ static void init_vangrd2( void )
 
 
 
-GAME( 1983, marvins,  0, marvins,  marvins,  marvins,  ROT270, "SNK", "Marvin's Maze" )
+GAMEX(1983, marvins,  0, marvins,  marvins,  marvins,  ROT270, "SNK", "Marvin's Maze", GAME_NO_COCKTAIL )
 GAMEX(1984, madcrash, 0, madcrash, madcrash, madcrash, ROT0,   "SNK", "Mad Crasher", GAME_IMPERFECT_SOUND )
-GAME( 1984, vangrd2,  0, madcrash, vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II" )
+GAMEX(1984, vangrd2,  0, madcrash, vangrd2,  vangrd2,  ROT270, "SNK", "Vanguard II", GAME_NO_COCKTAIL )
+

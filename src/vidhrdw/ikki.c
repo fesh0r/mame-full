@@ -12,25 +12,28 @@ Video hardware driver by Uki
 
 static UINT8 ikki_flipscreen, ikki_scroll[2];
 
-void ikki_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( ikki )
 {
 	int i;
-	int colors = Machine->drv->total_colors-1;
 
-	for (i = 0; i<colors; i++)
+	for (i = 0; i<256; i++)
 	{
-		*(palette++) = color_prom[0]*0x11;
-		*(palette++) = color_prom[colors]*0x11;
-		*(palette++) = color_prom[2*colors]*0x11;
+		int r,g,b;
+
+		r = color_prom[0]*0x11;
+		g = color_prom[256]*0x11;
+		b = color_prom[2*256]*0x11;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
 
-		*(palette++) = 0; /* 256th color is not drawn on screen */
-		*(palette++) = 0; /* this is used for special transparent function */
-		*(palette++) = 1;
+	/* 256th color is not drawn on screen */
+	/* this is used for special transparent function */
+	palette_set_color(256,0,0,1);
 
-	color_prom += 2*colors;
+	color_prom += 2*256;
 
 	/* color_prom now points to the beginning of the lookup table */
 
@@ -60,7 +63,7 @@ WRITE_HANDLER( ikki_scrn_ctrl_w )
 	ikki_flipscreen = (data >> 2) & 1;
 }
 
-void ikki_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ikki )
 {
 
 	int offs,chr,col,px,py,f,bank,d;

@@ -230,20 +230,7 @@ void gb_refresh_scanline (void)
 		gb_update_sprites();
 }
 
-int gb_vh_start(void)
+VIDEO_UPDATE( gb )
 {
-	if( generic_bitmapped_vh_start() )
-		return 1;
-	return 0;
-}
-
-void gb_vh_stop(void)
-{
-	generic_vh_stop();
-}
-
-void gb_vh_screen_refresh(struct mame_bitmap *bitmap, int full_refresh)
-{
-
 }
 

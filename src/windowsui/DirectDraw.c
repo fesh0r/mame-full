@@ -369,7 +369,8 @@ static HRESULT CALLBACK EnumDisplayModesCallback(DDSURFACEDESC* pddsd, LPVOID Co
 static HRESULT CALLBACK EnumDisplayModesCallback2(DDSURFACEDESC2* pddsd2, LPVOID Context)
 {
 	struct tDisplayModes* pDisplayModes = (struct tDisplayModes*)Context;
-#if !defined(DX_SDK) || (DX_SDK <= 6) || defined(_MSC_VER)
+
+#if (!defined(DX_SDK) || (DX_SDK <= 6)) && !defined(_MSC_VER)
 	DWORD dwDepth = pddsd2->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
 #else
 	DWORD dwDepth = pddsd2->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;

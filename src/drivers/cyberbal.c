@@ -22,6 +22,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
+#include "cyberbal.h"
 
 
 
@@ -33,51 +34,6 @@
 
 /* better to leave this on; otherwise, you end up playing entire games out of the left speaker */
 #define USE_MONO_SOUND			1
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-/* video */
-void cyberbal_set_screen(int which);
-
-READ16_HANDLER( cyberbal_paletteram_0_r );
-READ16_HANDLER( cyberbal_paletteram_1_r );
-WRITE16_HANDLER( cyberbal_paletteram_0_w );
-WRITE16_HANDLER( cyberbal_paletteram_1_w );
-
-int cyberbal_vh_start(void);
-int cyberb2p_vh_start(void);
-void cyberbal_vh_stop(void);
-void cyberbal_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-
-void cyberbal_scanline_update(int param);
-
-extern data16_t *cyberbal_paletteram_0;
-extern data16_t *cyberbal_paletteram_1;
-
-
-/* audio */
-void cyberbal_sound_reset(void);
-int cyberbal_samples_start(const struct MachineSound *msound);
-void cyberbal_samples_stop(void);
-
-int cyberbal_sound_68k_irq_gen(void);
-
-READ_HANDLER( cyberbal_special_port3_r );
-READ_HANDLER( cyberbal_sound_6502_stat_r );
-READ_HANDLER( cyberbal_sound_68k_6502_r );
-WRITE_HANDLER( cyberbal_sound_bank_select_w );
-WRITE_HANDLER( cyberbal_sound_68k_6502_w );
-
-READ16_HANDLER( cyberbal_sound_68k_r );
-WRITE16_HANDLER( cyberbal_io_68k_irq_ack_w );
-WRITE16_HANDLER( cyberbal_sound_68k_w );
-WRITE16_HANDLER( cyberbal_sound_68k_dac_w );
 
 
 
@@ -115,7 +71,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( cyberbal )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -149,7 +105,7 @@ static void cyberb2p_update_interrupts(void)
 }
 
 
-static void cyberb2p_init_machine(void)
+static MACHINE_INIT( cyberb2p )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(cyberb2p_update_interrupts);
@@ -239,12 +195,12 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0xfd8000, 0xfd9fff, atarigen_sound_upper_w },
 	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_1_w, &cyberbal_paletteram_1 },
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_0_w, &cyberbal_paletteram_0 },
-	{ 0xff0000, 0xff1fff, ataripf_1_simple_w, &ataripf_1_base },
-	{ 0xff2000, 0xff2fff, atarian_1_vram_w, &atarian_1_base },
+	{ 0xff0000, 0xff1fff, atarigen_playfield2_w, &atarigen_playfield2 },
+	{ 0xff2000, 0xff2fff, atarigen_alpha2_w, &atarigen_alpha2 },
 	{ 0xff3000, 0xff37ff, atarimo_1_spriteram_w, &atarimo_1_spriteram },
 	{ 0xff3800, 0xff3fff, MWA16_BANK2 },
-	{ 0xff4000, 0xff5fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff7000, 0xff77ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xff7800, 0xff9fff, MWA16_BANK4 },
 	{ 0xffa000, 0xffbfff, MWA16_NOP },
@@ -279,12 +235,12 @@ static MEMORY_WRITE16_START( extra_writemem )
 	{ 0xfc0000, 0xfdffff, atarigen_video_int_ack_w },
 	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_1_w },
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_0_w },
-	{ 0xff0000, 0xff1fff, ataripf_1_simple_w },
-	{ 0xff2000, 0xff2fff, atarian_1_vram_w },
+	{ 0xff0000, 0xff1fff, atarigen_playfield2_w },
+	{ 0xff2000, 0xff2fff, atarigen_alpha2_w },
 	{ 0xff3000, 0xff37ff, atarimo_1_spriteram_w },
 	{ 0xff3800, 0xff3fff, MWA16_BANK2 },
-	{ 0xff4000, 0xff5fff, ataripf_0_simple_w },
-	{ 0xff6000, 0xff6fff, atarian_0_vram_w },
+	{ 0xff4000, 0xff5fff, atarigen_playfield_w },
+	{ 0xff6000, 0xff6fff, atarigen_alpha_w },
 	{ 0xff7000, 0xff77ff, atarimo_0_spriteram_w },
 	{ 0xff7800, 0xff9fff, MWA16_BANK4 },
 	{ 0xffa000, 0xffbfff, MWA16_BANK5 },
@@ -376,8 +332,8 @@ static MEMORY_WRITE16_START( cyberb2p_writemem )
 	{ 0xfd4000, 0xfd4003, watchdog_reset16_w },
 	{ 0xfd6000, 0xfd6003, atarigen_video_int_ack_w },
 	{ 0xfd8000, 0xfd8003, atarigen_sound_upper_w },
-	{ 0xff0000, 0xff1fff, ataripf_0_simple_w, &ataripf_0_base },
-	{ 0xff2000, 0xff2fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff0000, 0xff1fff, atarigen_playfield_w, &atarigen_playfield },
+	{ 0xff2000, 0xff2fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff3000, 0xff37ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0xff3800, 0xffffff, MWA16_RAM },
 MEMORY_END
@@ -431,10 +387,10 @@ INPUT_PORTS_START( cyberbal )
 	PORT_BIT( 0xfffc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START		/* audio board port */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN4 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN4 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* output buffer full */
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL )	/* input buffer full */
@@ -567,105 +523,74 @@ static struct DACinterface dac_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_cyberbal =
-{
+static MACHINE_DRIVER_START( cyberbal )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			ignore_interrupt,1
-		},
-		{
-			CPU_M6502,
-			ATARI_CLOCK_14MHz/8,
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14))
-		},
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			extra_readmem,extra_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			sound_68k_readmem,sound_68k_writemem,0,0,
-			0,0,
-			cyberbal_sound_68k_irq_gen,10000
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	10,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	
+	MDRV_CPU_ADD(M6502, ATARI_CLOCK_14MHz/8)
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,(UINT32)(1000000000.0/((double)ATARI_CLOCK_14MHz/4/4/16/16/14)))
+	
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(extra_readmem,extra_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(sound_68k_readmem,sound_68k_writemem)
+	MDRV_CPU_PERIODIC_INT(cyberbal_sound_68k_irq_gen,10000)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+	
+	MDRV_MACHINE_INIT(cyberbal)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
-	gfxdecodeinfo_interleaved,
-	4096, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	cyberbal_vh_start,
-	cyberbal_vh_stop,
-	cyberbal_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*16, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*16-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_interleaved)
+	MDRV_PALETTE_LENGTH(4096)
+	
+	MDRV_VIDEO_START(cyberbal)
+	MDRV_VIDEO_UPDATE(cyberbal)
+	
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_DAC,
-			&dac_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
 
 
-static const struct MachineDriver machine_driver_cyberb2p =
-{
+static MACHINE_DRIVER_START( cyberb2p )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			cyberb2p_readmem,cyberb2p_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_II_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	cyberb2p_init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(cyberb2p_readmem,cyberb2p_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(cyberb2p)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*16, 30*8, { 0*16, 42*16-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	2048, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK |
-			VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	cyberb2p_vh_start,
-	cyberbal_vh_stop,
-	cyberbal_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2 | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*16, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*16-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+	
+	MDRV_VIDEO_START(cyberb2p)
+	MDRV_VIDEO_UPDATE(cyberbal)
+	
 	/* sound hardware */
-	JSA_II_MONO(REGION_SOUND1),
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_ii_mono)
+MACHINE_DRIVER_END
 
 
 
@@ -906,31 +831,31 @@ static const data16_t default_eeprom[] =
 };
 
 
-static void init_cyberbal(void)
+static DRIVER_INIT( cyberbal )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 0);
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
 
 	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, ataripf_1_base);
-	cpu_setbank(3, ataripf_0_base);
+	cpu_setbank(1, atarigen_playfield2);
+	cpu_setbank(3, atarigen_playfield);
 }
 
 
-static void init_cyberbt(void)
+static DRIVER_INIT( cyberbt )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarigen_slapstic_init(0, 0x018000, 116);
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
 
 	/* make sure the banks are pointing to the correct location */
-	cpu_setbank(1, ataripf_1_base);
-	cpu_setbank(3, ataripf_0_base);
+	cpu_setbank(1, atarigen_playfield2);
+	cpu_setbank(3, atarigen_playfield);
 }
 
 
-static void init_cyberb2p(void)
+static DRIVER_INIT( cyberb2p )
 {
 	atarigen_eeprom_default = default_eeprom;
 	atarijsa_init(1, 3, 2, 0x8000);

@@ -97,16 +97,11 @@ extern LPTREEFOLDER GetCurrentFolder(void);
 extern LPTREEFOLDER GetFolder(UINT nFolder);
 extern LPTREEFOLDER GetFolderByID(UINT nID);
 
-extern TREEFOLDER** treeFolders;
-extern UINT         numFolders;
-
 extern void AddGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern void RemoveGame(LPTREEFOLDER lpFolder, UINT nGame);
 extern int  FindGame(LPTREEFOLDER lpFolder, int nGame);
 
 extern void InitTree(HWND hWnd, UINT nGames);
-extern void DestroyTree(HWND hWnd);
-
 extern void InitGames(UINT nGames);
 
 extern void Tree_Initialize(HWND hWnd);

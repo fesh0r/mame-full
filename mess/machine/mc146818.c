@@ -32,7 +32,6 @@ static struct {
 	UINT8 edata[0x2000];
 
 	double last_refresh;
-	void *timer;
 } mc146818= { MC146818_STANDARD };
 
 #define HOURS_24 (mc146818.data[0xb]&2)
@@ -131,7 +130,7 @@ void mc146818_init(MC146818_TYPE type)
 	memset(&mc146818, 0, sizeof(mc146818));
 	mc146818.type=type;
 	mc146818.last_refresh=timer_get_time();
-    mc146818.timer=timer_pulse(TIME_IN_HZ(1.0),0,mc146818_timer);
+    timer_pulse(TIME_IN_HZ(1.0),0,mc146818_timer);
 }
 
 void mc146818_load(void)
@@ -214,7 +213,6 @@ void mc146818_save_stream(void *file)
 
 void mc146818_close(void)
 {
-	timer_remove(mc146818.timer);
 }
 
 READ_HANDLER(mc146818_port_r)
@@ -264,12 +262,12 @@ WRITE_HANDLER(mc146818_port_w)
 	}
 }
 
-void mc146818_nvram_handler(void* file, int write)
+NVRAM_HANDLER( mc146818 )
 {
 	if (file==NULL) {
 		mc146818_set_time();
 		// init only 
-	} else if (write) {
+	} else if (read_or_write) {
 		mc146818_save_stream(file);
 	} else {
 		mc146818_load_stream(file);

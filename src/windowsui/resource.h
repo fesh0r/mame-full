@@ -96,6 +96,7 @@
 #define IDC_SCANLINES                   1026
 #define IDC_CHEAT                       1033
 #define IDC_LOG                         1034
+#define IDC_SLEEP			            1035
 #define IDC_DDRAW                       1041
 #define IDC_GAMMA                       1044
 #define IDC_USE_DEFAULT                 1051
@@ -227,6 +228,8 @@
 #define IDC_ASPECTRATION                1268
 #define IDC_ASPECTRATIOD                1269
 #define IDC_ASPECTRATIOTEXT             1270
+#define IDC_JOY_GUI                     1271
+#define IDC_BROADCAST                   1272
 #define ID_FILE_EXIT                    40001
 #define ID_ABOUT                        40003
 #define ID_FILE_PLAY                    40004
@@ -247,7 +250,7 @@
 #define ID_VIEW_SCREEN_SHOT             40023
 #define ID_HELP_CONTENTS                40025
 #define ID_HELP_WHATS_NEW32             40026
-#define ID_HELP_QUICKSTART              40027
+#define ID_HELP_TROUBLE                 40027
 #define ID_HELP_RELEASE                 40028
 #define ID_HELP_WHATS_NEW               40029
 #define ID_HELP_CHEATS                  40030
@@ -306,7 +309,7 @@
 #define _APS_3D_CONTROLS                     1
 #define _APS_NEXT_RESOURCE_VALUE        181
 #define _APS_NEXT_COMMAND_VALUE         40062
-#define _APS_NEXT_CONTROL_VALUE         1271
+#define _APS_NEXT_CONTROL_VALUE         1273
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -911,8 +911,8 @@ static struct MachineDriver machine_driver_pet =
 	pet_init_palette,				   /* convert color prom */
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet_vh_screenrefresh,
 
   /* sound hardware */
@@ -949,8 +949,8 @@ static struct MachineDriver machine_driver_pet40 =
 	pet_init_palette,				   /* convert color prom */
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet40_vh_screenrefresh,
 
   /* sound hardware */
@@ -987,8 +987,8 @@ static struct MachineDriver machine_driver_pet40pal =
 	pet_init_palette,				   /* convert color prom */
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet40_vh_screenrefresh,
 
   /* sound hardware */
@@ -1029,8 +1029,8 @@ static struct MachineDriver machine_driver_pet80 =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet80_vh_screenrefresh,
 
   /* sound hardware */
@@ -1071,8 +1071,8 @@ static struct MachineDriver machine_driver_pet80pal =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet80_vh_screenrefresh,
 
   /* sound hardware */
@@ -1120,8 +1120,8 @@ static struct MachineDriver machine_driver_superpet =
 	VIDEO_PIXEL_ASPECT_RATIO_1_2|VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 #endif
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	video_start_generic,
+	NULL,
 	pet80_vh_screenrefresh,
 
   /* sound hardware */

@@ -2,7 +2,7 @@
 
 
 static data8_t *vram[2],*unkram;
-static int bankctrl,rambank,gfxrom_select;
+static int bankctrl,rambank,pmcbank,gfxrom_select;
 static struct tilemap *tilemap[2];
 
 
@@ -41,7 +41,7 @@ static void get_tile_info1(int tile_index)
 
 ***************************************************************************/
 
-int hexion_vh_start(void)
+VIDEO_START( hexion )
 {
 	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_OPAQUE,     8,8,64,32);
@@ -82,12 +82,14 @@ WRITE_HANDLER( hexion_bankswitch_w )
 		memset(vram[bank],unkram[1],0x2000);
 		tilemap_mark_all_tiles_dirty(tilemap[bank]);
 	}
+	/* bit 7 = PMC-BK */
+	pmcbank = (data & 0x80) >> 7;
 
 	/* other bits unknown */
 if (data & 0x30)
 	usrintf_showmessage("bankswitch %02x",data&0xf0);
 
-//logerror("%04x: bankswitch_w %02x\n",cpu_get_pc(),data);
+//logerror("%04x: bankswitch_w %02x\n",activecpu_get_pc(),data);
 }
 
 READ_HANDLER( hexion_bankedram_r )
@@ -106,7 +108,7 @@ READ_HANDLER( hexion_bankedram_r )
 	}
 	else
 	{
-//logerror("%04x: bankedram_r offset %04x, bankctrl = %02x\n",cpu_get_pc(),offset,bankctrl);
+//logerror("%04x: bankedram_r offset %04x, bankctrl = %02x\n",activecpu_get_pc(),offset,bankctrl);
 		return 0;
 	}
 }
@@ -115,36 +117,46 @@ WRITE_HANDLER( hexion_bankedram_w )
 {
 	if (bankctrl == 3 && offset == 0 && (data & 0xfe) == 0)
 	{
-//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
+//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",activecpu_get_pc(),offset,data,bankctrl);
 		rambank = data & 1;
 	}
 	else if (bankctrl == 0)
 	{
-//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
-		if (vram[rambank][offset] != data)
+		if (pmcbank)
 		{
-			vram[rambank][offset] = data;
-			tilemap_mark_tile_dirty(tilemap[rambank],offset/4);
+//logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",activecpu_get_pc(),offset,data,bankctrl);
+			if (vram[rambank][offset] != data)
+			{
+				vram[rambank][offset] = data;
+				tilemap_mark_tile_dirty(tilemap[rambank],offset/4);
+			}
 		}
+		else
+			logerror("%04x pmc internal ram %04x = %02x\n",activecpu_get_pc(),offset,data);
 	}
 	else if (bankctrl == 2 && offset < 0x800)
 	{
-//logerror("%04x: unkram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
-		unkram[offset] = data;
+		if (pmcbank)
+		{
+//logerror("%04x: unkram_w offset %04x, data %02x, bankctrl = %02x\n",activecpu_get_pc(),offset,data,bankctrl);
+			unkram[offset] = data;
+		}
+		else
+			logerror("%04x pmc internal ram %04x = %02x\n",activecpu_get_pc(),offset,data);
 	}
 	else
-logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",cpu_get_pc(),offset,data,bankctrl);
+logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",activecpu_get_pc(),offset,data,bankctrl);
 }
 
 WRITE_HANDLER( hexion_bankctrl_w )
 {
-//logerror("%04x: bankctrl_w %02x\n",cpu_get_pc(),data);
+//logerror("%04x: bankctrl_w %02x\n",activecpu_get_pc(),data);
 	bankctrl = data;
 }
 
 WRITE_HANDLER( hexion_gfxrom_select_w )
 {
-//logerror("%04x: gfxrom_select_w %02x\n",cpu_get_pc(),data);
+//logerror("%04x: gfxrom_select_w %02x\n",activecpu_get_pc(),data);
 	gfxrom_select = data;
 }
 
@@ -156,8 +168,8 @@ WRITE_HANDLER( hexion_gfxrom_select_w )
 
 ***************************************************************************/
 
-void hexion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( hexion )
 {
-	tilemap_draw(bitmap,tilemap[1],0,0);
-	tilemap_draw(bitmap,tilemap[0],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+	tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
 }

@@ -1,48 +1,17 @@
-/***************************************************************************
+/*************************************************************************
 
-  vidhrdw.c
+	Atari Super Breakout hardware
 
-  Functions to emulate the video hardware of the machine.
-
-  CHANGES:
-  MAB 05 MAR 99 - changed overlay support to use artwork functions
-***************************************************************************/
+*************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "artwork.h"
+#include "sbrkout.h"
 
 unsigned char *sbrkout_horiz_ram;
 unsigned char *sbrkout_vert_ram;
 
-/* The first entry defines the color with which the bitmap is filled initially */
-/* The array is terminated with an entry with negative coordinates. */
-/* At least two entries are needed. */
-static const struct artwork_element sbrkout_ol[] =
-{
-	{{208, 247,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{176, 207,   8, 217}, 0xff, 0x80, 0x10,   OVERLAY_DEFAULT_OPACITY},	/* orange */
-	{{144, 175,   8, 217}, 0x20, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* green */
-	{{ 96, 143,   8, 217}, 0xff, 0xff, 0x20,   OVERLAY_DEFAULT_OPACITY},	/* yellow */
-	{{ 16,	23,   8, 217}, 0x20, 0x20, 0xff,   OVERLAY_DEFAULT_OPACITY},	/* blue */
-	{{-1,-1,-1,-1},0,0,0,0}
-};
-
-
-/***************************************************************************
-***************************************************************************/
-
-int sbrkout_vh_start(void)
-{
-	int start_pen = 2;	/* leave space for black and white */
-
-	if (generic_vh_start()!=0)
-		return 1;
-
-	overlay_create(sbrkout_ol, start_pen);
-
-	return 0;
-}
 
 /***************************************************************************
 
@@ -51,13 +20,13 @@ int sbrkout_vh_start(void)
   the main emulation engine.
 
 ***************************************************************************/
-void sbrkout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sbrkout )
 {
 	int offs;
 	int ball;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -66,7 +35,7 @@ void sbrkout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer[offs])
 		{
-			int code,sx,sy,color;
+			int code,sx,sy;
 
 
 			dirtybuffer[offs]=0;
@@ -77,12 +46,20 @@ void sbrkout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			sy = 8*(offs / 32);
 
 			/* Check the "draw" bit */
-			color = ((videoram[offs] & 0x80)>>7);
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					code, color,
-					0,0,sx,sy,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+			if (videoram[offs] & 0x80)
+				drawgfx(tmpbitmap,Machine->gfx[0],
+						code, 0,
+						0,0,sx,sy,
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
+			else
+			{
+				struct rectangle bounds;
+				bounds.min_x = sx;
+				bounds.min_y = sy;
+				bounds.max_x = sx + 7;
+				bounds.max_y = sy + 7;
+				fillbitmap(tmpbitmap, 0, &bounds);
+			}
 		}
 	}
 
@@ -101,7 +78,7 @@ void sbrkout_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		code = ((sbrkout_vert_ram[ball*2+1] & 0x80) >> 7);
 
 		drawgfx(bitmap,Machine->gfx[1],
-				code,1,
+				code,0,
 				0,0,sx,sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}

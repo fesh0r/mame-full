@@ -22,6 +22,8 @@ static int spriteram_words;
 
 static struct tilemap *background, *foreground;
 
+static unsigned char *blank_characterdata; /* pseudo character */
+
 /* gfxram dirty flags */
 static unsigned char *char_dirty;	/* 2048 chars */
 
@@ -40,9 +42,15 @@ static void get_bg_tile_info( int offs )
 	code = nemesis_videoram1f[offs];
 	color = nemesis_videoram2f[offs];
 	flags = 0;
-	if( color & 0x80 ) flags |= TILE_FLIPX;
-	if( code & 0x800 ) flags |= TILE_FLIPY;
-	SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	if ( color & 0x80)  flags |= TILE_FLIPX;
+	if ( code & 0x0800) flags |= TILE_FLIPY;
+	if ((~code & 0x2000) || ((code & 0xc000) == 0x4000))
+		 flags |= TILE_IGNORE_TRANSPARENCY;
+	if (code & 0xf800) {
+		SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	} else {
+		SET_TILE_INFO( 0, 0x800, 0x00, 0 );
+	}
 	tile_info.priority = (code & 0x1000)>>12;
 }
 
@@ -52,10 +60,19 @@ static void get_fg_tile_info( int offs )
 	code = nemesis_videoram1b[offs];
 	color = nemesis_videoram2b[offs];
 	flags = 0;
-	if( color & 0x80 ) flags |= TILE_FLIPX;
-	if( code & 0x800 ) flags |= TILE_FLIPY;
-	SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
-	tile_info.priority = (code & 0x1000)>>12;
+	if ( color & 0x80)  flags |= TILE_FLIPX;
+	if ( code & 0x0800) flags |= TILE_FLIPY;
+	if ((~code & 0x2000) || ((code & 0xc000) == 0x4000))
+		 flags |= TILE_IGNORE_TRANSPARENCY;
+	if (code & 0xf800) {
+		SET_TILE_INFO( 0, code&0x7ff, color&0x7f, flags );
+	} else {
+		SET_TILE_INFO( 0, 0x800, 0x00, 0 );
+	}
+	if (((nemesis_videoram1f[offs] & 0x5000) == 0x4000) && (code & 0x2000))
+		tile_info.priority = 0;
+	else
+		tile_info.priority = (code & 0x1000)>>12;
 }
 
 WRITE16_HANDLER( nemesis_palette_word_w )
@@ -212,25 +229,8 @@ static void nemesis_lsbify_gfx(void)
 }
 
 
-/* free the palette dirty array */
-void nemesis_vh_stop(void)
-{
-#ifdef LSB_FIRST
-	nemesis_lsbify_gfx();
-#endif
-	free (char_dirty);
-	free (sprite_dirty);
-	free (sprite3216_dirty);
-	free (sprite1632_dirty);
-	free (sprite3232_dirty);
-	free (sprite168_dirty);
-	free (sprite816_dirty);
-	free (sprite6464_dirty);
-	char_dirty = 0;
-}
-
 /* claim a palette dirty array */
-int nemesis_vh_start(void)
+VIDEO_START( nemesis )
 {
 #ifdef LSB_FIRST
 	nemesis_lsbify_gfx();
@@ -245,78 +245,67 @@ int nemesis_vh_start(void)
 		get_fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32 );
 
 	if( !(background && foreground) )
-	{
-		nemesis_vh_stop();
 		return 1;
-	}
 
 	tilemap_set_transparent_pen( background, 0 );
 	tilemap_set_transparent_pen( foreground, 0 );
 	tilemap_set_scroll_rows( background, 256 );
 	tilemap_set_scroll_rows( foreground, 256 );
 
-	char_dirty = malloc(2048);
-	if (!char_dirty) {
-		nemesis_vh_stop();
+	char_dirty = auto_malloc(2048);
+	if (!char_dirty)
 		return 1;
-	}
 	memset(char_dirty,1,2048);
 
-	sprite_dirty = malloc(512);
-	if (!sprite_dirty) {
-		nemesis_vh_stop();
+	sprite_dirty = auto_malloc(512);
+	if (!sprite_dirty)
 		return 1;
-	}
 	memset(sprite_dirty,1,512);
 
-	sprite3216_dirty = malloc(256);
-	if (!sprite3216_dirty) {
-		nemesis_vh_stop();
+	sprite3216_dirty = auto_malloc(256);
+	if (!sprite3216_dirty)
 		return 1;
-	}
 	memset(sprite3216_dirty,1,256);
 
-	sprite1632_dirty = malloc(256);
-	if (!sprite1632_dirty) {
-		nemesis_vh_stop();
+	sprite1632_dirty = auto_malloc(256);
+	if (!sprite1632_dirty)
 		return 1;
-	}
 	memset(sprite1632_dirty,1,256);
 
-	sprite3232_dirty = malloc(128);
-	if (!sprite3232_dirty) {
-		nemesis_vh_stop();
+	sprite3232_dirty = auto_malloc(128);
+	if (!sprite3232_dirty)
 		return 1;
-	}
 	memset(sprite3232_dirty,1,128);
 
-	sprite168_dirty = malloc(1024);
-	if (!sprite168_dirty) {
-		nemesis_vh_stop();
+	sprite168_dirty = auto_malloc(1024);
+	if (!sprite168_dirty)
 		return 1;
-	}
 	memset(sprite168_dirty,1,1024);
 
-	sprite816_dirty = malloc(1024);
-	if (!sprite816_dirty) {
-		nemesis_vh_stop();
+	sprite816_dirty = auto_malloc(1024);
+	if (!sprite816_dirty)
 		return 1;
-	}
 	memset(sprite816_dirty,1,32);
 
-	sprite6464_dirty = malloc(32);
-	if (!sprite6464_dirty) {
-		nemesis_vh_stop();
+	sprite6464_dirty = auto_malloc(32);
+	if (!sprite6464_dirty)
 		return 1;
-	}
 	memset(sprite6464_dirty,1,32);
 
 	memset(nemesis_characterram,0,nemesis_characterram_size);
 
+
+	blank_characterdata = auto_malloc(32*8/8*(2048+1));
+	if (!blank_characterdata)
+		return 1;
+	memset(blank_characterdata,0x00,32*8/8*(2048+1));
+	decodechar(Machine->gfx[0],0x800,(unsigned char *)blank_characterdata,
+					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+
 	return 0;
 }
 
-static void draw_sprites(struct mame_bitmap *bitmap)
+static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/*
 	 *	16 bytes per sprite, in memory from 56000-56fff
@@ -412,8 +401,8 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
-						zoom,zoom );
+						cliprect,TRANSPARENCY_PEN,0,
+						zoom,zoom);
 				}
 			} /* if sprite */
 		} /* for loop */
@@ -557,13 +546,13 @@ static void update_gfx(void)
 
 /******************************************************************************/
 
-void nemesis_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( nemesis )
 {
 	int offs;
 
 	update_gfx();
 
-	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
 	for (offs = 0;offs < 256;offs++)
@@ -577,18 +566,20 @@ void nemesis_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 	}
 
-	tilemap_draw(bitmap,background,0,0);
-	tilemap_draw(bitmap,foreground,0,0);
-	draw_sprites(bitmap);
-	tilemap_draw(bitmap,background,1,0);
-	tilemap_draw(bitmap,foreground,1,0);
+	tilemap_draw(bitmap,cliprect,background,0,0);
+	tilemap_draw(bitmap,cliprect,foreground,0,0);
+	draw_sprites(bitmap,cliprect);
+	tilemap_draw(bitmap,cliprect,background,1,0);
+	tilemap_draw(bitmap,cliprect,foreground,1,0);
 }
 
-void twinbee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( twinbee )
 {
 	int offs;
 
 	update_gfx();
+
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	tilemap_set_scrolly( background, 0, (nemesis_yscroll[0x180] & 0xff) );
 	for (offs = 0;offs < 256;offs++)
@@ -602,33 +593,33 @@ void twinbee_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 	}
 
-	tilemap_draw(bitmap,background,0,0);
-	tilemap_draw(bitmap,foreground,0,0);
+	tilemap_draw(bitmap,cliprect,background,0,0);
+	tilemap_draw(bitmap,cliprect,foreground,0,0);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 		Machine->orientation ^= ORIENTATION_FLIP_X;
 	else
 		Machine->orientation ^= ORIENTATION_FLIP_Y;
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 		Machine->orientation ^= ORIENTATION_FLIP_X;
 	else
 		Machine->orientation ^= ORIENTATION_FLIP_Y;
 
-	tilemap_draw(bitmap,background,1,0);
-	tilemap_draw(bitmap,foreground,1,0);
+	tilemap_draw(bitmap,cliprect,background,1,0);
+	tilemap_draw(bitmap,cliprect,foreground,1,0);
 }
 
-void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( salamand )
 {
 	int offs;
 	struct rectangle clip;
 
 	update_gfx();
 
-	fillbitmap(bitmap,Machine->pens[paletteram16[0x00] & 0x7ff],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	clip.min_x = 0;
 	clip.max_x = 255;
@@ -644,12 +635,10 @@ void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 
 	/* hack: we use clipping to do rowscroll and colscroll at the same time. */
-	for (offs = 0; offs < 256; offs++)
+	for (offs = cliprect->min_y; offs <= cliprect->max_y; offs++)
 	{
 		clip.min_y = offs;
 		clip.max_y = offs;
-		tilemap_set_clip( background, &clip );
-		tilemap_set_clip( foreground, &clip );
 
 		tilemap_set_scrollx( background, 0,
 			((nemesis_xscroll2[offs] & 0xff) +
@@ -659,19 +648,16 @@ void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			((nemesis_xscroll1[offs] & 0xff) +
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 
-		tilemap_draw(bitmap,foreground,0,0);
-
-		tilemap_draw(bitmap,background,0,0);
+		tilemap_draw(bitmap,&clip,foreground,0,0);
+		tilemap_draw(bitmap,&clip,background,0,0);
 	}
 
-	draw_sprites(bitmap);
+	draw_sprites(bitmap,cliprect);
 
-	for (offs = 0; offs < 256; offs++)
+	for (offs = cliprect->min_y; offs <= cliprect->max_y; offs++)
 	{
 		clip.min_y = offs;
-		clip.max_y = offs+1;
-		tilemap_set_clip( background, &clip );
-		tilemap_set_clip( foreground, &clip );
+		clip.max_y = offs;
 
 		tilemap_set_scrollx( background, 0,
 			((nemesis_xscroll2[offs] & 0xff) +
@@ -681,8 +667,7 @@ void salamand_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			((nemesis_xscroll1[offs] & 0xff) +
 			((nemesis_xscroll1[0x100 + offs] & 1) << 8)) );
 
-		tilemap_draw(bitmap,foreground,1,0);
-
-		tilemap_draw(bitmap,background,1,0);
+		tilemap_draw(bitmap,&clip,foreground,1,0);
+		tilemap_draw(bitmap,&clip,background,1,0);
 	}
 }

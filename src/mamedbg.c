@@ -53,6 +53,8 @@
 int debug_key_pressed = 0;	/* set to non zero to break into the debugger */
 int debug_key_delay = 0;	/* set to 0x7ffe to force keyboard check on next update */
 int debug_trace_delay = 0;	/* set to 0 to force a screen update */
+UINT8 debugger_bitmap_changed;
+UINT8 debugger_focus;
 
 /****************************************************************************
  * Limits
@@ -382,7 +384,7 @@ typedef struct {
 	UINT32	newval[MAX_REGS];		/* new register values */
 	s_edit	edit[MAX_REGS]; 		/* list of x,y,w triplets for the register values */
 	char	name[MAX_REGS][15+1];	/* ...fifteen characters enough!? */
-	UINT8	id[MAX_REGS];			/* the ID of the register (cpu_get_reg/cpu_set_reg) */
+	UINT8	id[MAX_REGS];			/* the ID of the register (activecpu_get_reg/activecpu_set_reg) */
 	UINT32	max_width;				/* maximum width of any dumped register */
 	INT32	idx;					/* index of current register */
 	INT32	count;					/* number of registers */
@@ -493,30 +495,27 @@ static int cursor_x, cursor_y, cursor_on;
 /* This will be intialized depending on the game framerate */
 static int dbg_key_repeat = 4;
 
+UINT8 debugger_idle;
 
-UINT8 debugger_palette[] = {
-	0x00,0x00,0x00, /* black	 */
-	0x00,0x00,0x7f, /* blue 	 */
-	0x00,0x7f,0x00, /* green	 */
-	0x00,0x7f,0x7f, /* cyan 	 */
-	0x7f,0x00,0x00, /* red		 */
-	0x7f,0x00,0x7f, /* magenta	 */
-	0x7f,0x7f,0x00, /* brown	 */
-	0x7f,0x7f,0x7f, /* ltgray	 */
-	0x5f,0x5f,0x5f, /* dkgray	 */
-	0x00,0x00,0xff, /* ltblue	 */
-	0x00,0xff,0x00, /* ltgreen	 */
-	0x00,0xff,0xff, /* ltcyan	 */
-	0xff,0x00,0x00, /* ltred	 */
-	0xff,0x00,0xff, /* ltmagenta */
-	0xff,0xff,0x00, /* yellow	 */
-	0xff,0xff,0xff	/* white	 */
+rgb_t debugger_palette[] = {
+	MAKE_RGB(0x00,0x00,0x00), /* black	 */
+	MAKE_RGB(0x00,0x00,0x7f), /* blue 	 */
+	MAKE_RGB(0x00,0x7f,0x00), /* green	 */
+	MAKE_RGB(0x00,0x7f,0x7f), /* cyan 	 */
+	MAKE_RGB(0x7f,0x00,0x00), /* red		 */
+	MAKE_RGB(0x7f,0x00,0x7f), /* magenta	 */
+	MAKE_RGB(0x7f,0x7f,0x00), /* brown	 */
+	MAKE_RGB(0x7f,0x7f,0x7f), /* ltgray	 */
+	MAKE_RGB(0x5f,0x5f,0x5f), /* dkgray	 */
+	MAKE_RGB(0x00,0x00,0xff), /* ltblue	 */
+	MAKE_RGB(0x00,0xff,0x00), /* ltgreen	 */
+	MAKE_RGB(0x00,0xff,0xff), /* ltcyan	 */
+	MAKE_RGB(0xff,0x00,0x00), /* ltred	 */
+	MAKE_RGB(0xff,0x00,0xff), /* ltmagenta */
+	MAKE_RGB(0xff,0xff,0x00), /* yellow	 */
+	MAKE_RGB(0xff,0xff,0xff)  /* white	 */
 };
 
-
-/* in usrintrf.c */
-void switch_ui_orientation(void);
-void switch_true_orientation(void);
 
 #include "dbgfonts/m0813fnt.c"
 
@@ -524,7 +523,7 @@ struct GfxElement *build_debugger_font(void)
 {
 	struct GfxElement *font;
 
-	switch_ui_orientation();
+	switch_ui_orientation(NULL);
 
 	font = decodegfx(fontdata,&fontlayout);
 
@@ -534,7 +533,7 @@ struct GfxElement *build_debugger_font(void)
 		font->total_colors = DEBUGGER_TOTAL_COLORS*DEBUGGER_TOTAL_COLORS;
 	}
 
-	switch_true_orientation();
+	switch_true_orientation(NULL);
 
 	return font;
 }
@@ -542,11 +541,8 @@ struct GfxElement *build_debugger_font(void)
 static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 {
 	int sx, sy, x, y;
-	int saved_depth = Machine->color_depth;
 
-	/* ASG: this allows the debug bitmap to be a different depth than the screen */
-	Machine->color_depth = bitmap->depth;
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 	sx = cursor_x * font->width;
 	sy = cursor_y * font->height;
 	for (y = 0; y < font->height; y++)
@@ -566,9 +562,10 @@ static void toggle_cursor(struct mame_bitmap *bitmap, struct GfxElement *font)
 			plot_pixel(bitmap, sx+x, sy+y, pen);
 		}
 	}
-	Machine->color_depth = saved_depth;
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
 	cursor_on ^= 1;
+	
+	debugger_bitmap_changed = 1;
 }
 
 void dbg_put_screen_char(int ch, int attr, int x, int y)
@@ -576,11 +573,13 @@ void dbg_put_screen_char(int ch, int attr, int x, int y)
 	struct mame_bitmap *bitmap = Machine->debug_bitmap;
 	struct GfxElement *font = Machine->debugger_font;
 
-	switch_ui_orientation();
+	switch_ui_orientation(bitmap);
 	drawgfx(bitmap, font,
 		ch, attr, 0, 0, x*font->width, y*font->height,
 		0, TRANSPARENCY_NONE, 0);
-	switch_true_orientation();
+	switch_true_orientation(bitmap);
+
+	debugger_bitmap_changed = 1;
 }
 
 static void set_screen_curpos(int x, int y)
@@ -601,10 +600,12 @@ static int readkey(void)
 	int cursor_flash = 0;
 
 	i = 0;
+	debugger_idle = 0;
 	do
 	{
 		if ((cursor_flash++ & 15) == 0)
 			toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
+		reset_partial_updates();
 		draw_screen();	/* so we can change stuff in RAM and see the effect on screen */
 		update_video_and_audio();
 
@@ -708,7 +709,12 @@ static int readkey(void)
 /*		if (keyboard_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
 /*		if (keyboard_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
 /*		if (keyboard_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
+
+		if (k == KEYCODE_NONE)
+			debugger_idle = 1;
+
 	} while (k == KEYCODE_NONE);
+	debugger_idle = 0;
 	if (cursor_on)
 		toggle_cursor(Machine->debug_bitmap, Machine->debugger_font);
 
@@ -4411,7 +4417,7 @@ static void cmd_go_break( void )
 	dbg_active = 0;
 
 	osd_sound_enable(1);
-	osd_debugger_focus(0);
+	debugger_focus = 0;
 }
 
 /**************************************************************************
@@ -4426,7 +4432,7 @@ static void cmd_here( void )
 	dbg_active = 0;
 
 	osd_sound_enable(1);
-	osd_debugger_focus(0);
+	debugger_focus = 0;
 
 	edit_cmds_reset();
 }
@@ -5044,7 +5050,7 @@ static void cmd_go( void )
 	edit_cmds_reset();
 
 	osd_sound_enable(1);
-	osd_debugger_focus(0);
+	debugger_focus = 0;
 }
 
 /**************************************************************************
@@ -5169,7 +5175,7 @@ void mame_debug_init(void)
 	FILE *file;
 
 	mame_debug_reset_statics();
-	osd_debugger_focus(1);
+	debugger_focus = 1;
 
 	total_cpu = cpu_gettotalcpu();
 
@@ -5322,7 +5328,7 @@ void MAME_Debug(void)
 			dbg_update = 0;
 			dbg_active = 0;
 			osd_sound_enable(1);
-			osd_debugger_focus(0);
+			debugger_focus = 0;
 		}
 		DBG.prev_sp = 0;
 	}
@@ -5337,7 +5343,7 @@ void MAME_Debug(void)
 		}
 
 		first_time = 0;
-		osd_debugger_focus(1);
+		debugger_focus = 1;
 		win_invalidate_video();
 
 		edit_cmds_reset();
@@ -5375,7 +5381,7 @@ void MAME_Debug(void)
 				{
 					dbg_trace = 0;
 					dbg_step = 0;
-					osd_debugger_focus(1);
+					debugger_focus = 1;
 				}
 			}
 		}

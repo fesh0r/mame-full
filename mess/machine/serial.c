@@ -116,6 +116,7 @@ void serial_device_setup(int id, int baud_rate, int num_data_bits, int stop_bit_
 	serial_devices[id].data_form.word_length = num_data_bits;
 	serial_devices[id].data_form.stop_bit_count = stop_bit_count;
 	serial_devices[id].data_form.parity = parity_code;
+	serial_devices[id].timer = timer_alloc(serial_device_baud_rate_callback);
 
 	serial_connection_init(&serial_devices[id].connection);
 	serial_connection_set_in_callback(&serial_devices[id].connection, serial_device_in_callback);
@@ -199,16 +200,12 @@ void	serial_device_set_transmit_state(int id, int state)
 		if (state)
 		{
 			/* start timer */
-			serial_devices[id].timer = timer_pulse(TIME_IN_HZ(serial_devices[id].BaudRate), id, serial_device_baud_rate_callback);
+			timer_adjust(serial_devices[id].timer, 0, id, TIME_IN_HZ(serial_devices[id].BaudRate));
 		}
 		else
 		{
 			/* remove timer */
-			if (serial_devices[id].timer)
-			{
-				timer_remove(serial_devices[id].timer);
-				serial_devices[id].timer = NULL;
-			}
+			timer_reset(serial_devices[id].timer, TIME_NEVER);
 		}
 	}
 

@@ -7,51 +7,51 @@ unsigned char *bogeyman_videoram;
 
 
 
-void bogeyman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( bogeyman )
 {
 	int i;
 
-	palette += 3*16;	/* first 16 colors are RAM */
+	/* first 16 colors are RAM */
 
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* green component */
 		bit0 = (color_prom[0] >> 3) & 0x01;
 		bit1 = (color_prom[256] >> 0) & 0x01;
 		bit2 = (color_prom[256] >> 1) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[256] >> 2) & 0x01;
 		bit2 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i+16,r,g,b);
 		color_prom++;
 	}
 }
 
-int bogeyman_vh_start(void)
+VIDEO_START( bogeyman )
 {
-	dirtybuffer = malloc(videoram_size);
+	dirtybuffer = auto_malloc(videoram_size);
+	if (!dirtybuffer)
+		return 1;
+		
 	memset(dirtybuffer,1,videoram_size);
-	tmpbitmap = bitmap_alloc(256,256);
+	tmpbitmap = auto_bitmap_alloc(256,256);
+	if (!tmpbitmap)
+		return 1;
 
 	return 0;
-}
-
-void bogeyman_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
 }
 
 /******************************************************************************/
@@ -68,7 +68,7 @@ WRITE_HANDLER( bogeyman_videoram_w )
 	dirtybuffer[offset]=1;
 }
 
-void bogeyman_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( bogeyman )
 {
 	int mx,my,offs,color,tile,bank,sx,sy,flipx,flipy,multi;
 

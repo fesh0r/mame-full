@@ -44,7 +44,7 @@ quad primitives (n x 5 words) - the four verticies plus a color code
 
 
 Known Issues:
-- Starblade has some corrupt point data
+- Starblade has some seemingly corrupt point data; but the ROMs have been confirmed correct
 - the camera transformation isn't quite right
 - transformations for individual 3d objects may be wrong
 - some DSP RAM status read/writes not emulated
@@ -153,17 +153,16 @@ CPU68 PCB:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
 #include "cpu/m6809/m6809.h"
-#include "namcos21.h"
+#include "namcoic.h"
 
 /**************************************************************************/
-
-int namcos21_gametype;
 
 static data16_t *namcos21_data16;
 static data16_t *shareram16;
 data16_t *namcos21_dspram16;
+data16_t *namcos21_spritepos;
 static data8_t *namcos2_dualportram;
 
 
@@ -233,6 +232,19 @@ static READ16_HANDLER( data2_r )
 	return namcos21_data16[0x100000/2+offset];
 }
 
+/**************************************************************************/
+
+static READ16_HANDLER( paletteram16_r )
+{
+	return paletteram16[offset];
+}
+
+static WRITE16_HANDLER( paletteram16_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+}
+
+
 /*************************************************************/
 /* MASTER 68000 CPU Memory declarations 					 */
 /*************************************************************/
@@ -245,7 +257,8 @@ static MEMORY_READ16_START( readmem_master_default )
 	{ 0x200000, 0x20ffff, MRA16_RAM },		/* DSP RAM */
 	{ 0x440000, 0x440001, dsp_status_r },
 	{ 0x480000, 0x4807ff, MRA16_RAM },		/* unknown (aircombt) */
-	{ 0x700000, 0x760001, MRA16_RAM },		/* OBJECT RAM */
+	{ 0x700000, 0x7141ff, namco_obj16_r },		/* OBJECT RAM */
+	{ 0x740000, 0x75ffff, MRA16_RAM },
 	{ 0x800000, 0x8fffff, data_r },
 	{ 0x900000, 0x90ffff, shareram16_r },	/* MAIN COMM RAM */
 	{ 0xa00000, 0xa00fff, namcos2_68k_dualportram_word_r },
@@ -262,7 +275,8 @@ static MEMORY_WRITE16_START( writemem_master_default )
 	{ 0x400000, 0x40ffff, MWA16_NOP },
 	{ 0x440000, 0x47ffff, MWA16_NOP },
 	{ 0x480000, 0x4807ff, MWA16_RAM },		/* unknown (aircombt) */
-	{ 0x700000, 0x760001, MWA16_RAM, &spriteram16 },
+	{ 0x700000, 0x7141ff, namco_obj16_w },
+	{ 0x740000, 0x75ffff, MWA16_RAM, &paletteram16 },
 	{ 0x900000, 0x90ffff, shareram16_w, &shareram16 }, /* MAIN COMM RAM */
 	{ 0xa00000, 0xa00fff, namcos2_68k_dualportram_word_w },
 	{ 0xb00000, 0xb03fff, MWA16_RAM },		/* unknown (aircombt) */
@@ -278,7 +292,8 @@ static MEMORY_READ16_START( readmem_slave_default )
 	{ 0x100000, 0x13ffff, MRA16_RAM },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_r },
 	{ 0x200000, 0x20ffff, dspram16_r },
-	{ 0x700000, 0x760001, spriteram16_r },
+	{ 0x700000, 0x7141ff, namco_obj16_r },
+	{ 0x740000, 0x75ffff, paletteram16_r },
 	{ 0x800000, 0x8fffff, data_r },
 	{ 0x900000, 0x90ffff, shareram16_r },
 	{ 0xa00000, 0xa00fff, namcos2_68k_dualportram_word_r },
@@ -290,7 +305,8 @@ static MEMORY_WRITE16_START( writemem_slave_default )
 	{ 0x100000, 0x13ffff, MWA16_RAM },
 	{ 0x1c0000, 0x1fffff, namcos2_68k_slave_C148_w },
 	{ 0x200000, 0x20ffff, dspram16_w },
-	{ 0x700000, 0x760001, spriteram16_w },
+	{ 0x700000, 0x7141ff, namco_obj16_w },
+	{ 0x740000, 0x75ffff, paletteram16_w },
 	{ 0x900000, 0x90ffff, shareram16_w },
 	{ 0xa00000, 0xa00fff, namcos2_68k_dualportram_word_w },
 MEMORY_END
@@ -380,7 +396,7 @@ static struct GfxLayout tile_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x000000, &tile_layout,  0*256, 0x80 },
+	{ REGION_GFX1, 0x000000, &tile_layout,  0x1000, 0x10 },
 	{ -1 }
 };
 
@@ -399,66 +415,49 @@ static struct C140interface C140_interface =
 	50
 };
 
-static const struct MachineDriver machine_driver_poly =
-{
-	{
-		{
-			CPU_M68000, /* Master */
-			12288000,
-			readmem_master_default,writemem_master_default,0,0,
-			namcos2_68k_master_vblank,1
-		},
-		{
-			CPU_M68000, /* Slave */
-			12288000,
-			readmem_slave_default,writemem_slave_default,0,0,
-			namcos2_68k_slave_vblank,1
-		},
-		{
-			CPU_M6809, /* Sound */
-			3072000,
-			readmem_sound,writemem_sound,0,0,
-			interrupt,2,
-			namcos2_sound_interrupt,120
-		},
-		{
-			CPU_HD63705, /* IO */
-			2048000,
-			readmem_mcu,writemem_mcu,0,0,
-			namcos2_mcu_interrupt,1,
-			0,0
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100, /* 100 CPU slices per frame */
-	namcos2_init_machine,
+static MACHINE_DRIVER_START( poly )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12288000) /* Master */
+	MDRV_CPU_MEMORY(readmem_master_default,writemem_master_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_master_vblank,1)
+
+	MDRV_CPU_ADD(M68000,12288000) /* Slave */
+	MDRV_CPU_MEMORY(readmem_slave_default,writemem_slave_default)
+	MDRV_CPU_VBLANK_INT(namcos2_68k_slave_vblank,1)
+
+	MDRV_CPU_ADD(M6809,3072000) /* Sound */
+	MDRV_CPU_MEMORY(readmem_sound,writemem_sound)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold,120)
+
+	MDRV_CPU_ADD(HD63705,2048000) /* IO */
+	MDRV_CPU_MEMORY(readmem_mcu,writemem_mcu)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100) /* 100 CPU slices per frame */
+
+	MDRV_MACHINE_INIT(namcos2)
+	MDRV_NVRAM_HANDLER(namcos2)
 
 	/* video hardware */
-	62*8, 60*8, { 0*8, 62*8-1, 0*8, 60*8-1 },
-	gfxdecodeinfo,
-	NAMCOS21_NUM_COLORS,NAMCOS21_NUM_COLORS,
-	0,
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN,
-	0,
-	namcos21_vh_start,
-	namcos21_vh_stop,
-	namcos21_vh_update_default,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(62*8, 60*8)
+	MDRV_VISIBLE_AREA(0*8, 62*8-1, 0*8, 60*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(NAMCOS21_NUM_COLORS)
+	MDRV_COLORTABLE_LENGTH(NAMCOS21_NUM_COLORS)
+
+	MDRV_VIDEO_START(namcos21)
+	MDRV_VIDEO_UPDATE(namcos21_default)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	/* Sound struct here */
-	{
-		{
-			SOUND_C140,
-			&C140_interface
-		},
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		}
-	},
-	namcos2_nvram_handler
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(C140, C140_interface)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+MACHINE_DRIVER_END
 
 ROM_START( aircombu )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* Master */
@@ -630,11 +629,11 @@ ROM_START( starblad )
 	ROM_LOAD16_BYTE( "st1_dl.bin",  0x000001, 0x20000, 0x4a2cc252 )
 
 	ROM_REGION32_BE( 0x400000, REGION_USER2, ROMREGION_ERASE ) /* 24bit signed point data */
-	ROM_LOAD32_BYTE( "st1pt0h.bin", 0x000001, 0x80000, BADCRC(0x84eb355f) ) /* corrupt! */
+	ROM_LOAD32_BYTE( "st1pt0h.bin", 0x000001, 0x80000, 0x84eb355f )
 	ROM_LOAD32_BYTE( "st1pt0u.bin", 0x000002, 0x80000, 0x1956cd0a )
 	ROM_LOAD32_BYTE( "st1pt0l.bin", 0x000003, 0x80000, 0xff577049 )
 	//
-	ROM_LOAD32_BYTE( "st1pt1h.bin", 0x200001, 0x80000, BADCRC(0x96b1bd7d) ) /* corrupt! */
+	ROM_LOAD32_BYTE( "st1pt1h.bin", 0x200001, 0x80000, 0x96b1bd7d )
 	ROM_LOAD32_BYTE( "st1pt1u.bin", 0x200002, 0x80000, 0xecf21047 )
 	ROM_LOAD32_BYTE( "st1pt1l.bin", 0x200003, 0x80000, 0x01cb0407 )
 
@@ -744,7 +743,7 @@ static void namcos21_init( int game_type )
 	data32_t *pMem;
 	int i;
 
-	namcos21_gametype = game_type;
+	namcos2_gametype = game_type;
 	namcos21_data16 = (data16_t *)memory_region( REGION_USER1 );
 
 	/* sign-extend the point data */
@@ -755,30 +754,15 @@ static void namcos21_init( int game_type )
 		{
 			pMem[i] |= 0xff000000;
 		}
-
-#if 1
-		if( namcos21_gametype == NAMCOS21_STARBLADE )
-		{
-			/* hack! this partially fixed corrupt starblade ROMs */
-			if( (pMem[i]&0xff00)==0 )
-			{
-				pMem[i]&= 0xff;
-			}
-			else if( (pMem[i]&0xff00)==0xff00 )
-			{
-				pMem[i] |= 0xffff0000;
-			}
-		}
-#endif
 	}
-}
+} /* namcos21_init */
 
-static void init_winrun( void )
+static DRIVER_INIT( winrun )
 {
 	namcos21_init( NAMCOS21_WINRUN91 );
 }
 
-static void init_aircombt( void )
+static DRIVER_INIT( aircombt )
 {
 #if 0 /* Patch test mode: replace first four tests with hidden tests */
 	data16_t *pMem = (data16_t *)memory_region( REGION_CPU1 );
@@ -791,13 +775,13 @@ static void init_aircombt( void )
 	namcos21_init( NAMCOS21_AIRCOMBAT );
 }
 
-void init_starblad( void )
+DRIVER_INIT( starblad )
 {
 	namcos21_init( NAMCOS21_STARBLADE );
 }
 
 
-void init_cybsled( void )
+DRIVER_INIT( cybsled )
 {
 	namcos21_init( NAMCOS21_CYBERSLED );
 }

@@ -198,10 +198,10 @@ static int ti99_2_vh_start(void)
 {
 	videoram_size = 768;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
-#define ti99_2_vh_stop generic_vh_stop
+#define ti99_2_vh_stop NULL
 #define ti99_2_video_w videoram_w
 
 static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)

@@ -26,6 +26,8 @@
 // routines don't clip at boundaries of the bitmap.
 #define BITMAP_SAFETY			16
 
+#define MAX_MALLOCS				1024
+
 
 
 /***************************************************************************
@@ -52,6 +54,13 @@ struct rom_load_data
 };
 
 
+struct malloc_info
+{
+	int tag;
+	void *ptr;
+};
+
+
 
 /***************************************************************************
 
@@ -65,19 +74,18 @@ unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 
-int flip_screen_x, flip_screen_y;
-
 int snapno;
 
+/* malloc tracking */
+static struct malloc_info malloc_list[MAX_MALLOCS];
+static int malloc_list_index = 0;
 
+/* resource tracking */
+int resource_tracking_tag = 0;
 
-/***************************************************************************
-
-	Prototypes
-
-***************************************************************************/
-
-static int rom_load_new(const struct RomModule *romp);
+/* generic NVRAM */
+size_t generic_nvram_size;
+data8_t *generic_nvram;
 
 
 
@@ -207,7 +215,7 @@ static struct GameSample *read_wav_sample(void *f)
 	}
 
 	/* allocate the game sample */
-	result = malloc(sizeof(struct GameSample) + length);
+	result = auto_malloc(sizeof(struct GameSample) + length);
 	if (result == NULL)
 		return NULL;
 
@@ -260,7 +268,7 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 
 	if (!i) return 0;
 
-	if ((samples = malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
+	if ((samples = auto_malloc(sizeof(struct GameSamples) + (i-1)*sizeof(struct GameSample))) == 0)
 		return 0;
 
 	samples->total = i;
@@ -285,24 +293,6 @@ struct GameSamples *readsamples(const char **samplenames,const char *basename)
 	}
 
 	return samples;
-}
-
-
-/*-------------------------------------------------
-	freesamples - free allocated samples
--------------------------------------------------*/
-
-void freesamples(struct GameSamples *samples)
-{
-	int i;
-
-
-	if (samples == 0) return;
-
-	for (i = 0;i < samples->total;i++)
-		free(samples->sample[i]);
-
-	free(samples);
 }
 
 
@@ -477,151 +467,39 @@ void coin_lockout_global_w(int on)
 
 /***************************************************************************
 
-	Global video attribute handling code
+	Generic NVRAM code
 
 ***************************************************************************/
 
 /*-------------------------------------------------
-	updateflip - handle global flipping
+	nvram_handler_generic_0fill - generic NVRAM
+	with a 0 fill
 -------------------------------------------------*/
 
-static void updateflip(void)
+void nvram_handler_generic_0fill(void *file, int read_or_write)
 {
-	int min_x,max_x,min_y,max_y;
-
-	tilemap_set_flip(ALL_TILEMAPS,(TILEMAP_FLIPX & flip_screen_x) | (TILEMAP_FLIPY & flip_screen_y));
-
-	min_x = Machine->drv->default_visible_area.min_x;
-	max_x = Machine->drv->default_visible_area.max_x;
-	min_y = Machine->drv->default_visible_area.min_y;
-	max_y = Machine->drv->default_visible_area.max_y;
-
-	if (flip_screen_x)
-	{
-		int temp;
-
-		temp = Machine->drv->screen_width - min_x - 1;
-		min_x = Machine->drv->screen_width - max_x - 1;
-		max_x = temp;
-	}
-	if (flip_screen_y)
-	{
-		int temp;
-
-		temp = Machine->drv->screen_height - min_y - 1;
-		min_y = Machine->drv->screen_height - max_y - 1;
-		max_y = temp;
-	}
-
-	set_visible_area(min_x,max_x,min_y,max_y);
-}
-
-
-/*-------------------------------------------------
-	flip_screen_set - set global flip
--------------------------------------------------*/
-
-void flip_screen_set(int on)
-{
-	flip_screen_x_set(on);
-	flip_screen_y_set(on);
-}
-
-
-/*-------------------------------------------------
-	flip_screen_x_set - set global horizontal flip
--------------------------------------------------*/
-
-void flip_screen_x_set(int on)
-{
-	if (on) on = ~0;
-	if (flip_screen_x != on)
-	{
-		set_vh_global_attribute(&flip_screen_x,on);
-		updateflip();
-	}
-}
-
-
-/*-------------------------------------------------
-	flip_screen_y_set - set global vertical flip
--------------------------------------------------*/
-
-void flip_screen_y_set(int on)
-{
-	if (on) on = ~0;
-	if (flip_screen_y != on)
-	{
-		set_vh_global_attribute(&flip_screen_y,on);
-		updateflip();
-	}
-}
-
-
-/*-------------------------------------------------
-	set_vh_global_attribute - set an arbitrary
-	global video attribute
--------------------------------------------------*/
-
-void set_vh_global_attribute( int *addr, int data )
-{
-	if (*addr != data)
-	{
-		schedule_full_refresh();
-		*addr = data;
-	}
-}
-
-
-/*-------------------------------------------------
-	set_visible_area - adjusts the visible portion
-	of the bitmap area dynamically
--------------------------------------------------*/
-
-void set_visible_area(int min_x,int max_x,int min_y,int max_y)
-{
-	Machine->visible_area.min_x = min_x;
-	Machine->visible_area.max_x = max_x;
-	Machine->visible_area.min_y = min_y;
-	Machine->visible_area.max_y = max_y;
-
-	/* vector games always use the whole bitmap */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		min_x = 0;
-		max_x = Machine->scrbitmap->width - 1;
-		min_y = 0;
-		max_y = Machine->scrbitmap->height - 1;
-	}
+	if (read_or_write)
+		osd_fwrite(file, generic_nvram, generic_nvram_size);
+	else if (file)
+		osd_fread(file, generic_nvram, generic_nvram_size);
 	else
-	{
-		int temp;
+		memset(generic_nvram, 0, generic_nvram_size);
+}
 
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			temp = min_x; min_x = min_y; min_y = temp;
-			temp = max_x; max_x = max_y; max_y = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_X)
-		{
-			temp = Machine->scrbitmap->width - min_x - 1;
-			min_x = Machine->scrbitmap->width - max_x - 1;
-			max_x = temp;
-		}
-		if (Machine->orientation & ORIENTATION_FLIP_Y)
-		{
-			temp = Machine->scrbitmap->height - min_y - 1;
-			min_y = Machine->scrbitmap->height - max_y - 1;
-			max_y = temp;
-		}
-	}
 
-	osd_set_visible_area(min_x,max_x,min_y,max_y);
+/*-------------------------------------------------
+	nvram_handler_generic_1fill - generic NVRAM
+	with a 1 fill
+-------------------------------------------------*/
 
-	Machine->absolute_visible_area.min_x = min_x;
-	Machine->absolute_visible_area.max_x = max_x;
-	Machine->absolute_visible_area.min_y = min_y;
-	Machine->absolute_visible_area.max_y = max_y;
+void nvram_handler_generic_1fill(void *file, int read_or_write)
+{
+	if (read_or_write)
+		osd_fwrite(file, generic_nvram, generic_nvram_size);
+	else if (file)
+		osd_fread(file, generic_nvram, generic_nvram_size);
+	else
+		memset(generic_nvram, 0xff, generic_nvram_size);
 }
 
 
@@ -633,22 +511,10 @@ void set_visible_area(int min_x,int max_x,int min_y,int max_y)
 ***************************************************************************/
 
 /*-------------------------------------------------
-	bitmap_alloc - allocate a bitmap at the
-	current screen depth
+	bitmap_alloc_core
 -------------------------------------------------*/
 
-struct mame_bitmap *bitmap_alloc(int width,int height)
-{
-	return bitmap_alloc_depth(width,height,Machine->scrbitmap->depth);
-}
-
-
-/*-------------------------------------------------
-	bitmap_alloc_depth - allocate a bitmap for a
-	specific depth
--------------------------------------------------*/
-
-struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+struct mame_bitmap *bitmap_alloc_core(int width,int height,int depth,int use_auto)
 {
 	struct mame_bitmap *bitmap;
 
@@ -672,7 +538,7 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 	}
 
 	/* allocate memory for the bitmap struct */
-	bitmap = malloc(sizeof(struct mame_bitmap));
+	bitmap = use_auto ? auto_malloc(sizeof(struct mame_bitmap)) : malloc(sizeof(struct mame_bitmap));
 	if (bitmap != NULL)
 	{
 		int i, rowlen, rdwidth, bitmapsize, linearraysize, pixelsize;
@@ -704,10 +570,10 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 		linearraysize = (height + 2 * BITMAP_SAFETY) * sizeof(unsigned char *);
 
 		/* allocate the bitmap data plus an array of line pointers */
-		bitmap->line = malloc(linearraysize + bitmapsize);
+		bitmap->line = use_auto ? auto_malloc(linearraysize + bitmapsize) : malloc(linearraysize + bitmapsize);
 		if (bitmap->line == NULL)
 		{
-			free(bitmap);
+			if (!use_auto) free(bitmap);
 			return NULL;
 		}
 
@@ -722,10 +588,35 @@ struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
 		/* adjust for the safety rows */
 		bitmap->line += BITMAP_SAFETY;
 		bitmap->base = bitmap->line[0];
+
+		/* set the pixel functions */
+		set_pixel_functions(bitmap);
 	}
 
 	/* return the result */
 	return bitmap;
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc - allocate a bitmap at the
+	current screen depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc(int width,int height)
+{
+	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,0);
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc_depth - allocate a bitmap for a
+	specific depth
+-------------------------------------------------*/
+
+struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+{
+	return bitmap_alloc_core(width,height,depth,0);
 }
 
 
@@ -751,6 +642,108 @@ void bitmap_free(struct mame_bitmap *bitmap)
 
 /***************************************************************************
 
+	Resource tracking code
+
+***************************************************************************/
+
+/*-------------------------------------------------
+	auto_malloc - allocate auto-freeing memory
+-------------------------------------------------*/
+
+void *auto_malloc(size_t size)
+{
+	void *result = malloc(size);
+	if (result)
+	{
+		struct malloc_info *info;
+
+		/* make sure we have space */
+		if (malloc_list_index >= MAX_MALLOCS)
+		{
+			fprintf(stderr, "Out of malloc tracking slots!\n");
+			return result;
+		}
+
+		/* fill in the current entry */
+		info = &malloc_list[malloc_list_index++];
+		info->tag = get_resource_tag();
+		info->ptr = result;
+	}
+	return result;
+}
+
+
+/*-------------------------------------------------
+	end_resource_tracking - stop tracking
+	resources
+-------------------------------------------------*/
+
+void auto_free(void)
+{
+	int tag = get_resource_tag();
+
+	/* start at the end and free everything on the current tag */
+	while (malloc_list_index > 0 && malloc_list[malloc_list_index - 1].tag >= tag)
+	{
+		struct malloc_info *info = &malloc_list[--malloc_list_index];
+		free(info->ptr);
+	}
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc - allocate a bitmap at the
+	current screen depth
+-------------------------------------------------*/
+
+struct mame_bitmap *auto_bitmap_alloc(int width,int height)
+{
+	return bitmap_alloc_core(width,height,Machine->scrbitmap->depth,1);
+}
+
+
+/*-------------------------------------------------
+	bitmap_alloc_depth - allocate a bitmap for a
+	specific depth
+-------------------------------------------------*/
+
+struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth)
+{
+	return bitmap_alloc_core(width,height,depth,1);
+}
+
+
+/*-------------------------------------------------
+	begin_resource_tracking - start tracking
+	resources
+-------------------------------------------------*/
+
+void begin_resource_tracking(void)
+{
+	/* increment the tag counter */
+	resource_tracking_tag++;
+}
+
+
+/*-------------------------------------------------
+	end_resource_tracking - stop tracking
+	resources
+-------------------------------------------------*/
+
+void end_resource_tracking(void)
+{
+	/* call everyone who tracks resources to let them know */
+	auto_free();
+	timer_free();
+
+	/* decrement the tag counter */
+	resource_tracking_tag--;
+}
+
+
+
+/***************************************************************************
+
 	Screen snapshot code
 
 ***************************************************************************/
@@ -760,7 +753,7 @@ void bitmap_free(struct mame_bitmap *bitmap)
 	the given filename
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds)
 {
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 		png_write_bitmap(fp,bitmap);
@@ -769,20 +762,21 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
 		struct mame_bitmap *copy;
 		int sizex, sizey, scalex, scaley;
 
-		sizex = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
-		sizey = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
+		sizex = bounds->max_x - bounds->min_x + 1;
+		sizey = bounds->max_y - bounds->min_y + 1;
 
 		scalex = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_2_1) ? 2 : 1;
 		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
 
 		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
-
 		if (copy)
 		{
+			struct rectangle temprect = *bounds;
 			int x,y,sx,sy;
 
-			sx = Machine->absolute_visible_area.min_x;
-			sy = Machine->absolute_visible_area.min_y;
+			orient_rect(&temprect, bitmap);
+			sx = temprect.min_x;
+			sy = temprect.min_y;
 			if (Machine->orientation & ORIENTATION_SWAP_XY)
 			{
 				int t;
@@ -836,7 +830,7 @@ void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap)
 	save_screen_snapshot - save a screen snapshot
 -------------------------------------------------*/
 
-void save_screen_snapshot(struct mame_bitmap *bitmap)
+void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds)
 {
 	char name[20];
 	void *fp;
@@ -855,7 +849,7 @@ void save_screen_snapshot(struct mame_bitmap *bitmap)
 
 	if ((fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_SCREENSHOT, 1)) != NULL)
 	{
-		save_screen_snapshot_as(fp,bitmap);
+		save_screen_snapshot_as(fp,bitmap,bounds);
 		osd_fclose(fp);
 	}
 }
@@ -1101,11 +1095,13 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 			bailing = 1;
 		}
 		else
+		{
 			#ifndef MESS
 			strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
 			#else
 			strcat(romdata->errorbuf, "WARNING: the system might not operate correctly.\n");
 			#endif
+		}
 
 		/* display the result */
 		printf("%s", romdata->errorbuf);
@@ -1500,11 +1496,11 @@ static int process_rom_entries(struct rom_load_data *romdata, const struct RomMo
 
 					/* handle flag inheritance */
 					if (!ROM_INHERITSFLAGS(&modified_romp))
-						lastflags = modified_romp._length & ROM_INHERITEDFLAGS;
+						lastflags = modified_romp._flags;
 					else
-						modified_romp._length = (modified_romp._length & ~ROM_INHERITEDFLAGS) | lastflags;
+						modified_romp._flags = (modified_romp._flags & ~ROM_INHERITEDFLAGS) | lastflags;
 
-					explength += UNCOMPACT_LENGTH(modified_romp._length);
+					explength += ROM_GETLENGTH(&modified_romp);
 
                     /* attempt to read using the modified entry */
 					readresult = read_rom_data(romdata, &modified_romp);
@@ -1550,21 +1546,11 @@ fatalerror:
 
 
 /*-------------------------------------------------
-	readroms - load all the ROMs for this machine
--------------------------------------------------*/
-
-int readroms(void)
-{
-	return rom_load_new(Machine->gamedrv->rom);
-}
-
-
-/*-------------------------------------------------
-	rom_load_new - new, more flexible ROM
+	rom_load - new, more flexible ROM
 	loading system
 -------------------------------------------------*/
 
-int rom_load_new(const struct RomModule *romp)
+int rom_load(const struct RomModule *romp)
 {
 	const struct RomModule *regionlist[REGION_MAX];
 	const struct RomModule *region;

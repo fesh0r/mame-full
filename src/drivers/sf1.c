@@ -25,8 +25,8 @@ WRITE16_HANDLER( sf1_bg_scroll_w );
 WRITE16_HANDLER( sf1_fg_scroll_w );
 WRITE16_HANDLER( sf1_videoram_w );
 WRITE16_HANDLER( sf1_gfxctrl_w );
-int sf1_vh_start(void);
-void sf1_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( sf1 );
+VIDEO_UPDATE( sf1 );
 
 
 static READ16_HANDLER( dummy_r )
@@ -53,7 +53,7 @@ static WRITE16_HANDLER( soundcmd_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -149,7 +149,7 @@ static WRITE16_HANDLER( protection_w )
 		}
 	default:
 		{
-			logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
+			logerror("Write protection at %06x (%04x)\n", activecpu_get_pc(), data&0xffff);
 			logerror("*** Unknown protection %d\n", cpu_readmem24bew(0xffc684));
 			break;
 		}
@@ -765,7 +765,7 @@ INPUT_PORTS_END
 static struct GfxLayout char_layout =
 {
 	8,8,
-	1024,
+	RGN_FRAC(1,1),
 	2,
 	{ 4, 0 },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
@@ -773,38 +773,12 @@ static struct GfxLayout char_layout =
 	16*8
 };
 
-static struct GfxLayout sprite_layoutb =
+static struct GfxLayout sprite_layout =
 {
 	16,16,
-	4096,
+	RGN_FRAC(1,2),
 	4,
-	{ 4, 0, 4096*64*8+4, 4096*64*8 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-static struct GfxLayout sprite_layoutm =
-{
-	16,16,
-	8192,
-	4,
-	{ 4, 0, 8192*64*8+4, 8192*64*8 },
-	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
-			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
-	64*8
-};
-
-static struct GfxLayout sprite_layouts =
-{
-	16,16,
-	14336,
-	4,
-	{ 4, 0, 14336*64*8+4, 14336*64*8 },
+	{ 4, 0, RGN_FRAC(1,2)+4, RGN_FRAC(1,2) },
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3,
 			16*16+0, 16*16+1, 16*16+2, 16*16+3, 16*16+8+0, 16*16+8+1, 16*16+8+2, 16*16+8+3 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -815,10 +789,10 @@ static struct GfxLayout sprite_layouts =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &sprite_layoutb,   0, 16 },
-	{ REGION_GFX2, 0, &sprite_layoutm, 256, 16 },
-	{ REGION_GFX3, 0, &sprite_layouts, 512, 16 },
-	{ REGION_GFX4, 0, &char_layout,    768, 16 },
+	{ REGION_GFX1, 0, &sprite_layout,   0, 16 },
+	{ REGION_GFX2, 0, &sprite_layout, 256, 16 },
+	{ REGION_GFX3, 0, &sprite_layout, 512, 16 },
+	{ REGION_GFX4, 0, &char_layout,   768, 16 },
 	{ -1 }
 };
 
@@ -846,170 +820,68 @@ static struct MSM5205interface msm5205_interface =
 	{ 100, 100 }
 };
 
-static const struct MachineDriver machine_driver_sf1 =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmem,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
+static MACHINE_DRIVER_START( sf1 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000)	/* 8 MHz ? (xtal is 16MHz) */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+	MDRV_CPU_ADD(Z80, 3579545)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* ? xtal is 3.579545MHz */
+	MDRV_CPU_MEMORY(sound2_readmem,sound2_writemem)
+	MDRV_CPU_PORTS(sound2_readport,sound2_writeport)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,8000)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(8*8, (64-8)*8-1, 2*8, 30*8-1 )
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
+	MDRV_VIDEO_START(sf1)
+	MDRV_VIDEO_UPDATE(sf1)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(MSM5205, msm5205_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_sf1us =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmemus,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
-								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
 
-	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+static MACHINE_DRIVER_START( sf1us )
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmemus,writemem)
+MACHINE_DRIVER_END
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
 
-static const struct MachineDriver machine_driver_sf1jp =
-{
-	{
-		{
-			CPU_M68000,
-			8000000,	/* 8 MHz ? (xtal is 16MHz) */
-			readmemjp,writemem,0,0,
-			m68_level1_irq,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are caused by the YM2151 */
-								/* NMIs are caused by the main CPU */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3579545,	/* ? xtal is 3.579545MHz */
-			sound2_readmem, sound2_writemem,
-			sound2_readport, sound2_writeport,
-			0,0,
-			interrupt,8000
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+static MACHINE_DRIVER_START( sf1jp )
 
-	/* video hardware */
-	64*8, 32*8, { 8*8, (64-8)*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmemjp,writemem)
+MACHINE_DRIVER_END
 
-	VIDEO_TYPE_RASTER,
-	0,
-	sf1_vh_start,
-	0,
-	sf1_vh_screenrefresh,
 
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2151,
-			&ym2151_interface
-		},
-		{
-			SOUND_MSM5205,
-			&msm5205_interface
-		}
-	}
-};
+static MACHINE_DRIVER_START( sf1p )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(sf1)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+MACHINE_DRIVER_END
 
 
 ROM_START( sf1 )
@@ -1204,8 +1076,66 @@ ROM_START( sf1jp )
 	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
 ROM_END
 
+ROM_START( sf1p )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE("prg8.2a", 0x00000, 0x20000, 0xd48d06a3 )
+	ROM_LOAD16_BYTE("prg0.2c", 0x00001, 0x20000, 0xe8606c1a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the music CPU */
+	ROM_LOAD( "sound.9j", 0x0000, 0x8000, 0x43cd32ae )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 256k for the samples CPU */
+	ROM_LOAD( "voice.1g", 0x00000, 0x10000, 0x3f23c180 )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "bkchr.2k", 0x000000, 0x020000, 0xe4d47aca ) /* Background b planes 0-1*/
+	ROM_LOAD( "bkchr.1k", 0x020000, 0x020000, 0x5a1cbc1b )
+	ROM_LOAD( "bkchr.4k", 0x040000, 0x020000, 0xc351bd48 ) /* planes 2-3 */
+	ROM_LOAD( "bkchr.3k", 0x060000, 0x020000, 0x6bb2b050 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mchr.1d", 0x000000, 0x020000, 0xab06a60b )	/* Background m planes 0-1 */
+	ROM_LOAD( "mchr.1e", 0x020000, 0x020000, 0xd221387d )
+	ROM_LOAD( "mchr.1g", 0x040000, 0x020000, 0x1e4c1712 )
+	ROM_LOAD( "mchr.1h", 0x060000, 0x020000, 0xa381f529 )
+	ROM_LOAD( "mchr.2d", 0x080000, 0x020000, 0xe52303c4 ) /* planes 2-3 */
+	ROM_LOAD( "mchr.2e", 0x0a0000, 0x020000, 0x23b9a6a1 )
+	ROM_LOAD( "mchr.2g", 0x0c0000, 0x020000, 0x1283ac09 )
+	ROM_LOAD( "mchr.2h", 0x0e0000, 0x020000, 0xcc6bf05c )
+
+	ROM_REGION( 0xc0000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b1m.bin", 0x000000, 0x010000, 0x64758232 ) /* Sprites planes 1-2 */
+	ROM_LOAD( "b2m.bin", 0x010000, 0x010000, 0xd958f5ad )
+	ROM_LOAD( "b1k.bin", 0x020000, 0x010000, 0xe766f5fe )
+	ROM_LOAD( "b2k.bin", 0x030000, 0x010000, 0xe71572d3 )
+	ROM_LOAD( "b1h.bin", 0x040000, 0x010000, 0x8494f38c )
+	ROM_LOAD( "b2h.bin", 0x050000, 0x010000, 0x1fc5f049 )
+	ROM_LOAD( "b3m.bin", 0x060000, 0x010000, 0xd136802e ) /* planes 2-3 */
+	ROM_LOAD( "b4m.bin", 0x070000, 0x010000, 0xb4fa85d3 )
+	ROM_LOAD( "b3k.bin", 0x080000, 0x010000, 0x40e11cc8 )
+	ROM_LOAD( "b4k.bin", 0x090000, 0x010000, 0x5ca9716e )
+	ROM_LOAD( "b3h.bin", 0x0a0000, 0x010000, 0x8c3d9173 )
+	ROM_LOAD( "b4h.bin", 0x0b0000, 0x010000, 0xa2df66f8 )
+
+	ROM_REGION( 0x004000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "vram.4d", 0x000000, 0x004000, 0xbfadfb32 ) /* Characters planes 1-2 */
+
+	ROM_REGION( 0x40000, REGION_GFX5, 0 )	/* background tilemaps */
+	ROM_LOAD( "bks1j10.5h", 0x000000, 0x010000, 0x4934aacd )
+	ROM_LOAD( "bks1j18.3h", 0x010000, 0x010000, 0x551ffc88 )
+	ROM_LOAD( "ms1j10.3g",  0x020000, 0x010000, 0xf92958b8 )
+	ROM_LOAD( "ms1j18.5g",  0x030000, 0x010000, 0x89e35dc1 )
+
+	ROM_REGION( 0x0320, REGION_PROMS, 0 )
+	ROM_LOAD( "sfb05.bin",    0x0000, 0x0100, 0x864199ad )	/* unknown */
+	ROM_LOAD( "sfb00.bin",    0x0100, 0x0100, 0xbd3f8c5d )	/* unknown */
+	ROM_LOAD( "mb7114h.12j",  0x0200, 0x0100, 0x4c734b64 )	/* unknown */
+	ROM_LOAD( "mmi-7603.13h", 0x0300, 0x0020, 0x06bcda53 )	/* unknown */
+ROM_END
+
 
 
 GAME( 1987, sf1,   0,   sf1,   sf1,   0, ROT0, "Capcom", "Street Fighter (World)" )
 GAME( 1987, sf1us, sf1, sf1us, sf1us, 0, ROT0, "Capcom", "Street Fighter (US)" )
 GAME( 1987, sf1jp, sf1, sf1jp, sf1jp, 0, ROT0, "Capcom", "Street Fighter (Japan)" )
+GAME( 1987, sf1p,  sf1, sf1p,  sf1,   0, ROT0, "Capcom", "Street Fighter (prototype)" )

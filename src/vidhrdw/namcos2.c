@@ -2,7 +2,8 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/namcos2.h"
+#include "namcos2.h"
+#include "namcoic.h"
 
 #define get_gfx_pointer(gfxelement,c,line) (gfxelement->gfxdata + (c*gfxelement->height+line) * gfxelement->line_modulo)
 
@@ -63,7 +64,7 @@ static void get_tile_info_roz(int tile_index)
 
 ***************************************************************************/
 
-int namcos2_vh_start(void)
+VIDEO_START( namcos2 )
 {
 	int i;
 
@@ -93,56 +94,6 @@ int namcos2_vh_start(void)
 
 	for (i = 0;i < 32;i++)
 		palette_bank_dirty[i] = 1;
-
-
-	/* Rotate the mask ROM if needed */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int loopX,loopY,tilenum;
-		unsigned char tilecache[8],*tiledata;
-
-		for(tilenum=0;tilenum<0x10000;tilenum++)
-		{
-			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Wipe source data */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=0;
-			/* Swap X/Y data */
-			for(loopY=0;loopY<8;loopY++)
-			{
-				for(loopX=0;loopX<8;loopX++)
-				{
-					tiledata[loopX]|=(tilecache[loopY]&(0x01<<loopX))?(1<<loopY):0x00;
-				}
-			}
-		}
-
-		/* preprocess bitmask */
-		for(tilenum=0;tilenum<0x10000;tilenum++){
-			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Flip in Y - write back in reverse */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=tilecache[7-loopY];
-		}
-
-		for(tilenum=0;tilenum<0x10000;tilenum++){
-			tiledata=memory_region(REGION_GFX4)+(tilenum*0x08);
-			/* Cache tile data */
-			for(loopY=0;loopY<8;loopY++) tilecache[loopY]=tiledata[loopY];
-			/* Wipe source data */
-			for(loopY=0;loopY<8;loopY++) tiledata[loopY]=0;
-			/* Flip in X - do bit reversal */
-			for(loopY=0;loopY<8;loopY++)
-			{
-				for(loopX=0;loopX<8;loopX++)
-				{
-					tiledata[loopY]|=(tilecache[loopY]&(1<<loopX))?(0x80>>loopX):0x00;
-				}
-			}
-		}
-	}
 
 	return 0;
 }
@@ -384,7 +335,7 @@ WRITE16_HANDLER( namcos2_68k_roz_ram_w )
 
 ***************************************************************************/
 
-static void draw_layerROZ(struct mame_bitmap *bitmap)
+static void draw_layerROZ(struct mame_bitmap *bitmap,const struct rectangle *cliprect)
 {
 	UINT32 startx,starty;
 	int incxx,incxy,incyx,incyy;
@@ -404,14 +355,14 @@ static void draw_layerROZ(struct mame_bitmap *bitmap)
 	startx += xoffset * incxx + yoffset * incyx;
 	starty += xoffset * incxy + yoffset * incyy;
 
-	tilemap_draw_roz(bitmap,tilemap_roz,startx << 8,starty << 8,
+	tilemap_draw_roz(bitmap,cliprect,tilemap_roz,startx << 8,starty << 8,
 			incxx << 8,incxy << 8,incyx << 8,incyy << 8,
 			1,	/* copy with wraparound */
 			0,0);
 }
 
 
-static void draw_sprites_default( struct mame_bitmap *bitmap, int priority )
+static void draw_sprites_default( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
 	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
 	int offset,offset0,offset2,offset4,offset6;
@@ -459,7 +410,7 @@ static void draw_sprites_default( struct mame_bitmap *bitmap, int priority )
 
 		if((offset0&0x0200)==0) sizex>>=1;
 
-		if((sizey-1) && sizex && (offset6&0x0007)==priority)
+		if((sizey-1) && sizex && (offset6&0x0007)==pri)
 		{
 			int color = (offset6>>4)&0x000f;
 
@@ -482,6 +433,11 @@ static void draw_sprites_default( struct mame_bitmap *bitmap, int priority )
 			rect.max_x=xpos+(sizex-1);
 			rect.min_y=ypos;
 			rect.max_y=ypos+(sizey-1);
+
+			if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
+			if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
+			if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
+			if (cliprect->max_y < rect.max_y) rect.max_y = cliprect->max_y;
 
 			if((offset0&0x0200)==0)
 			{
@@ -513,7 +469,7 @@ static void draw_sprites_default( struct mame_bitmap *bitmap, int priority )
 }
 
 
-static void draw_sprites_finallap( struct mame_bitmap *bitmap, int priority )
+static void draw_sprites_finallap( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri )
 {
 	int sprn,flipy,flipx,ypos,xpos,sizex,sizey,scalex,scaley;
 	int offset,offset0,offset2,offset4,offset6;
@@ -561,7 +517,7 @@ static void draw_sprites_finallap( struct mame_bitmap *bitmap, int priority )
 
 		if((offset2&0x2000)==0) sizex>>=1;
 
-		if((sizey-1) && sizex && (offset6&0x000f)==priority)
+		if((sizey-1) && sizex && (offset6&0x000f)==pri)
 		{
 			sprn=(offset2>>2)&0x7ff;
 			spr_region=(offset0&0x0200)?GFX_OBJ2:GFX_OBJ1;
@@ -590,6 +546,11 @@ static void draw_sprites_finallap( struct mame_bitmap *bitmap, int priority )
 			rect.max_x=xpos+(sizex-1);
 			rect.min_y=ypos;
 			rect.max_y=ypos+(sizey-1);
+
+			if (cliprect->min_x > rect.min_x) rect.min_x = cliprect->min_x;
+			if (cliprect->max_x < rect.max_x) rect.max_x = cliprect->max_x;
+			if (cliprect->min_y > rect.min_y) rect.min_y = cliprect->min_y;
+			if (cliprect->max_y < rect.max_y) rect.max_y = cliprect->max_y;
 
 			if((offset2&0x2000)==0)
 			{
@@ -646,9 +607,9 @@ static void fill_palette_bank(int virtual,int physical)
 }
 
 
-void namcos2_vh_update_default(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( namcos2_default )
 {
-	int priority;
+	int pri;
 	static int show[10] = {1,1,1,1,1,1,1,1,1,1};
 	int i;
 
@@ -689,30 +650,30 @@ profiler_mark(PROFILER_END);
 	tilemap_set_enable(tilemap_roz,(namcos2_gfx_ctrl & 0x7000) ? 1 : 0);
 
 	/* Scrub the bitmap clean */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* Render the screen */
-	for(priority=0;priority<=7;priority++)
+	for(pri=0;pri<=7;pri++)
 	{
-		if((namcos2_68k_vram_ctrl[0x20/2]&0x07)==priority && show[0]) tilemap_draw(bitmap,tilemap[0],0,0);
-		if((namcos2_68k_vram_ctrl[0x22/2]&0x07)==priority && show[1]) tilemap_draw(bitmap,tilemap[1],0,0);
-		if((namcos2_68k_vram_ctrl[0x24/2]&0x07)==priority && show[2]) tilemap_draw(bitmap,tilemap[2],0,0);
-		if((namcos2_68k_vram_ctrl[0x26/2]&0x07)==priority && show[3]) tilemap_draw(bitmap,tilemap[3],0,0);
-		if((namcos2_68k_vram_ctrl[0x28/2]&0x07)==priority && show[4]) tilemap_draw(bitmap,tilemap[4],0,0);
-		if((namcos2_68k_vram_ctrl[0x2a/2]&0x07)==priority && show[5]) tilemap_draw(bitmap,tilemap[5],0,0);
+		if((namcos2_68k_vram_ctrl[0x20/2]&0x07)==pri && show[0]) tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+		if((namcos2_68k_vram_ctrl[0x22/2]&0x07)==pri && show[1]) tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+		if((namcos2_68k_vram_ctrl[0x24/2]&0x07)==pri && show[2]) tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
+		if((namcos2_68k_vram_ctrl[0x26/2]&0x07)==pri && show[3]) tilemap_draw(bitmap,cliprect,tilemap[3],0,0);
+		if((namcos2_68k_vram_ctrl[0x28/2]&0x07)==pri && show[4]) tilemap_draw(bitmap,cliprect,tilemap[4],0,0);
+		if((namcos2_68k_vram_ctrl[0x2a/2]&0x07)==pri && show[5]) tilemap_draw(bitmap,cliprect,tilemap[5],0,0);
 
 		/* Draw ROZ if enabled */
-		if(priority>=1 && ((namcos2_gfx_ctrl & 0x7000) >> 12)==priority && show[6]) draw_layerROZ(bitmap);
+		if(pri>=1 && ((namcos2_gfx_ctrl & 0x7000) >> 12)==pri && show[6]) draw_layerROZ(bitmap,cliprect);
 
 		/* Sprites */
-		draw_sprites_default( bitmap,priority );
+		draw_sprites_default( bitmap,cliprect,pri );
 	}
 }
 
 
-void namcos2_vh_update_finallap(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( namcos2_finallap )
 {
-	int priority;
+	int pri;
 	static int show[10] = {1,1,1,1,1,1,1,1,1,1};
 	int i;
 
@@ -735,21 +696,21 @@ profiler_mark(PROFILER_END);
 
 
 	/* Scrub the bitmap clean */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
 	/* Render the screen */
-	for(priority=0;priority<=15;priority++)
+	for(pri=0;pri<=15;pri++)
 	{
-		if((namcos2_68k_vram_ctrl[0x20/2]&0x0f)==priority && show[0]) tilemap_draw(bitmap,tilemap[0],0,0);
-		if((namcos2_68k_vram_ctrl[0x22/2]&0x0f)==priority && show[1]) tilemap_draw(bitmap,tilemap[1],0,0);
-		if((namcos2_68k_vram_ctrl[0x24/2]&0x0f)==priority && show[2]) tilemap_draw(bitmap,tilemap[2],0,0);
-		if((namcos2_68k_vram_ctrl[0x26/2]&0x0f)==priority && show[3]) tilemap_draw(bitmap,tilemap[3],0,0);
-		if((namcos2_68k_vram_ctrl[0x28/2]&0x0f)==priority && show[4]) tilemap_draw(bitmap,tilemap[4],0,0);
-		if((namcos2_68k_vram_ctrl[0x2a/2]&0x0f)==priority && show[5]) tilemap_draw(bitmap,tilemap[5],0,0);
+		if((namcos2_68k_vram_ctrl[0x20/2]&0x0f)==pri && show[0]) tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+		if((namcos2_68k_vram_ctrl[0x22/2]&0x0f)==pri && show[1]) tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+		if((namcos2_68k_vram_ctrl[0x24/2]&0x0f)==pri && show[2]) tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
+		if((namcos2_68k_vram_ctrl[0x26/2]&0x0f)==pri && show[3]) tilemap_draw(bitmap,cliprect,tilemap[3],0,0);
+		if((namcos2_68k_vram_ctrl[0x28/2]&0x0f)==pri && show[4]) tilemap_draw(bitmap,cliprect,tilemap[4],0,0);
+		if((namcos2_68k_vram_ctrl[0x2a/2]&0x0f)==pri && show[5]) tilemap_draw(bitmap,cliprect,tilemap[5],0,0);
 		/* Not sure if priority should be 0x07 or 0x0f */
 
 		/* Sprites */
-		draw_sprites_finallap( bitmap,priority );
+		draw_sprites_finallap( bitmap,cliprect,pri );
 	}
 
 
@@ -792,16 +753,103 @@ profiler_mark(PROFILER_END);
 		int loop,linel,data;
 		unsigned char *dest_line;
 		for(loop=0;loop<28*8;loop++)
-		{
-			dest_line = bitmap->line[loop];
-			for(linel=0;linel<64;linel++)
+			if (loop >= cliprect->min_y && loop <= cliprect->max_y)
 			{
-				data = namcos2_68k_roadtile_ram[(loop*64)+linel];
-				*(dest_line++)=(data&0x000f)>>0;
-				*(dest_line++)=(data&0x00f0)>>4;
-				*(dest_line++)=(data&0x0f00)>>8;
-				*(dest_line++)=(data&0xf000)>>12;
+				dest_line = bitmap->line[loop];
+				for(linel=0;linel<64;linel++)
+				{
+					data = namcos2_68k_roadtile_ram[(loop*64)+linel];
+					*(dest_line++)=(data&0x000f)>>0;
+					*(dest_line++)=(data&0x00f0)>>4;
+					*(dest_line++)=(data&0x0f00)>>8;
+					*(dest_line++)=(data&0xf000)>>12;
+				}
 			}
-		}
+	}
+}
+
+static int objcode2tile( int code )
+{
+	return code;
+}
+
+VIDEO_START( luckywld )
+{
+	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[2] = tilemap_create(get_tile_info2,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[3] = tilemap_create(get_tile_info3,tilemap_scan_rows,TILEMAP_BITMASK,8,8,64,64);
+	tilemap[4] = tilemap_create(get_tile_info4,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+	tilemap[5] = tilemap_create(get_tile_info5,tilemap_scan_rows,TILEMAP_BITMASK,8,8,36,28);
+
+	namco_obj_init( 0, 0x0, objcode2tile );
+	namco_roz_init( 1, REGION_GFX5 );
+	namco_road_init(4);
+	return 0;
+}
+
+VIDEO_UPDATE( luckywld )
+{
+	int pri;
+	int i;
+
+	/* generate the virtual palette */
+	/* sprites */
+	for (i = 0;i < 16;i++)
+	{
+		fill_palette_bank(Machine->drv->gfxdecodeinfo[GFX_OBJ1].color_codes_start/256 + i,i);
+	}
+
+	/* tilemaps */
+	for (i = 0;i <= 5;i++)
+	{
+		int virtual = Machine->drv->gfxdecodeinfo[GFX_CHR].color_codes_start/256 + 2*i;
+		int physical = 16 + (namcos2_68k_vram_ctrl[0x30/2+i] & 0x07);
+
+		fill_palette_bank(virtual,  physical);
+		fill_palette_bank(virtual+1,physical+8);	/* shadows */
+	}
+
+//	/* roz */
+//	{
+//		int virtual = Machine->drv->gfxdecodeinfo[GFX_ROZ].color_codes_start/256;
+//		int physical = (namcos2_gfx_ctrl & 0x0f00) >> 8;
+//
+//		fill_palette_bank(virtual,  physical);
+//
+//		/* it's not clear where the ROZ shadow palette should come from. I'm using */
+//		/* tilemap #1's shadow palette since it seems to be (close to) correct for valkyrie */
+//		physical = 16 + (namcos2_68k_vram_ctrl[0x32/2] & 0x07);
+//		fill_palette_bank(virtual+1,physical+8);
+//	}
+
+//	for (i = 0;i < 32;i++)
+//	{
+//		palette_bank_dirty[i] = 0;
+//	}
+
+	/* Scrub the bitmap clean */
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+
+	//	void namco_road_update( void );
+
+	/* Render the screen */
+	for(pri=0;pri<8;pri++)
+	{
+		if( (namcos2_68k_vram_ctrl[0x20/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[0],0,0);
+		if( (namcos2_68k_vram_ctrl[0x22/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[1],0,0);
+		if( (namcos2_68k_vram_ctrl[0x24/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[2],0,0);
+		if( (namcos2_68k_vram_ctrl[0x26/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[3],0,0);
+		if( (namcos2_68k_vram_ctrl[0x28/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[4],0,0);
+		if( (namcos2_68k_vram_ctrl[0x2a/2]&0x07)==pri ) tilemap_draw(bitmap,cliprect,tilemap[5],0,0);
+
+		namco_road_draw( bitmap,pri );
+		//namco_obj_draw( bitmap, pri );
+
+		namco_roz_draw( bitmap, cliprect, pri );
+	}
+	for( pri=0; pri<8; pri++ )
+	{
+		namco_obj_draw( bitmap, pri );
 	}
 }

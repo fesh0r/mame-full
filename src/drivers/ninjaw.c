@@ -151,9 +151,10 @@ rumbling on a subwoofer in the cabinet.)
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 
-int ninjaw_vh_start (void);
-void ninjaw_vh_stop (void);
-void ninjaw_vh_screenrefresh (struct mame_bitmap *bitmap,int full_refresh);
+MACHINE_INIT( ninjaw );
+
+VIDEO_START( ninjaw );
+VIDEO_UPDATE( ninjaw );
 
 static UINT16 cpua_ctrl = 0xff;
 
@@ -188,17 +189,7 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 	parse_control();
 
-	logerror("CPU #0 PC %06x: write %04x to cpu control\n",cpu_get_pc(),data);
-}
-
-
-/***********************************************************
-				INTERRUPTS
-***********************************************************/
-
-static int ninjaw_interrupt(void)
-{
-	return 4;
+	logerror("CPU #0 PC %06x: write %04x to cpu control\n",activecpu_get_pc(),data);
 }
 
 
@@ -242,6 +233,22 @@ static READ16_HANDLER( ninjaw_sound_r )
 	if (offset == 1)
 		return ((taitosound_comm_r (0) & 0xff));
 	else return 0;
+}
+
+
+/**** sound pan control ****/
+static int ninjaw_pandata[4];
+WRITE_HANDLER( ninjaw_pancontrol )
+{
+  offset = offset&3;
+  ninjaw_pandata[offset] = (float)data * (100.f / 255.0f);
+  //usrintf_showmessage(" pan %02x %02x %02x %02x", ninjaw_pandata[0], ninjaw_pandata[1], ninjaw_pandata[2], ninjaw_pandata[3] );
+  if( offset < 2 ){
+    mixer_set_stereo_volume( 3, ninjaw_pandata[0], ninjaw_pandata[1] );
+  }
+  else{
+    mixer_set_stereo_volume( 4, ninjaw_pandata[2], ninjaw_pandata[3] );
+  }
 }
 
 
@@ -401,7 +408,7 @@ static MEMORY_WRITE_START( z80_sound_writemem )
 	{ 0xe003, 0xe003, YM2610_data_port_0_B_w },
 	{ 0xe200, 0xe200, taitosound_slave_port_w },
 	{ 0xe201, 0xe201, taitosound_slave_comm_w },
-	{ 0xe400, 0xe403, MWA_NOP }, /* pan */
+	{ 0xe400, 0xe403, ninjaw_pancontrol }, /* pan */
 	{ 0xee00, 0xee00, MWA_NOP }, /* ? */
 	{ 0xf000, 0xf000, MWA_NOP }, /* ? */
 	{ 0xf200, 0xf200, sound_bankswitch_w },
@@ -640,7 +647,7 @@ static struct YM2610interface ym2610_interface =
 	{ irqhandler },
 	{ REGION_SOUND2 },	/* Delta-T */
 	{ REGION_SOUND1 },	/* ADPCM */
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
+	{ YM3012_VOL(100,MIXER_PAN_CENTER,100,MIXER_PAN_CENTER) }
 };
 
 
@@ -655,9 +662,9 @@ static int subwoofer_sh_start(const struct MachineSound *msound)
 	/* The 150 Hz is a common top frequency played by a generic */
 	/* subwoofer, the real Arcade Machine may differs */
 
-	mixer_set_lowpass_frequency(0,100);
-	mixer_set_lowpass_frequency(1,100);
-	mixer_set_lowpass_frequency(2,100);
+	mixer_set_lowpass_frequency(0,20);
+	mixer_set_lowpass_frequency(1,20);
+	mixer_set_lowpass_frequency(2,20);
 
 	return 0;
 }
@@ -680,114 +687,82 @@ to the scrolling background.
 Darius2: arbitrary interleaving of 10 to keep cpus synced.
 *************************************************************/
 
-static struct MachineDriver machine_driver_ninjaw =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			ninjaw_readmem,ninjaw_writemem,0,0,
-			ninjaw_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 16/4 MHz ? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt, 0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			ninjaw_cpub_readmem,ninjaw_cpub_writemem,0,0,
-			ninjaw_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( ninjaw )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(ninjaw_readmem,ninjaw_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 16/4 MHz ? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(ninjaw_cpub_readmem,ninjaw_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* CPU slices */
+
+	MDRV_MACHINE_INIT(ninjaw)
 
 	/* video hardware */
-	110*8, 32*8, { 0*8, 108*8-1, 3*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(12,3)
+	MDRV_SCREEN_SIZE(110*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 108*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(ninjaw_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*3)
 
-	ninjaw_gfxdecodeinfo,
-	4096*3, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
-	0,
-	ninjaw_vh_start,
-	ninjaw_vh_stop,
-	ninjaw_vh_screenrefresh,
+	MDRV_VIDEO_START(ninjaw)
+	MDRV_VIDEO_UPDATE(ninjaw)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&subwoofer_interface
-		}
-
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_darius2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius2_readmem,darius2_writemem,0,0,
-			ninjaw_interrupt, 1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			16000000/4,	/* 4 MHz ? */
-			z80_sound_readmem, z80_sound_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the YM2610 */
-		},
-		{
-			CPU_M68000,
-			16000000/2,	/* 8 MHz ? */
-			darius2_cpub_readmem,darius2_cpub_writemem,0,0,
-			ninjaw_interrupt, 1
-		},
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	10,	/* CPU slices */
-	0,
+static MACHINE_DRIVER_START( darius2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius2_readmem,darius2_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_CPU_ADD(Z80,16000000/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 4 MHz ? */
+	MDRV_CPU_MEMORY(z80_sound_readmem,z80_sound_writemem)
+
+	MDRV_CPU_ADD(M68000,16000000/2)	/* 8 MHz ? */
+	MDRV_CPU_MEMORY(darius2_cpub_readmem,darius2_cpub_writemem)
+	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)	/* CPU slices */
+
+	MDRV_MACHINE_INIT(ninjaw)
 
 	/* video hardware */
-	110*8, 32*8, { 0*8, 108*8-1, 3*8, 31*8-1 },
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR)
+	MDRV_ASPECT_RATIO(12,3)
+	MDRV_SCREEN_SIZE(110*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 108*8-1, 3*8, 31*8-1)
+	MDRV_GFXDECODE(ninjaw_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096*3)
 
-	ninjaw_gfxdecodeinfo,
-	4096*3, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_DUAL_MONITOR | VIDEO_ASPECT_RATIO(12,3),
-	0,
-	ninjaw_vh_start,
-	ninjaw_vh_stop,
-	ninjaw_vh_screenrefresh,
+	MDRV_VIDEO_START(ninjaw)
+	MDRV_VIDEO_UPDATE(ninjaw)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface
-		},
-		{
-			SOUND_CUSTOM,
-			&subwoofer_interface
-		}
-
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2610, ym2610_interface)
+	MDRV_SOUND_ADD(CUSTOM, subwoofer_interface)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -950,7 +925,7 @@ ROM_START( darius2 )
 ROM_END
 
 
-static void init_ninjaw(void)
+static DRIVER_INIT( ninjaw )
 {
 	cpua_ctrl = 0xff;
 	state_save_register_UINT16("main1", 0, "control", &cpua_ctrl, 1);
@@ -958,6 +933,12 @@ static void init_ninjaw(void)
 
 	state_save_register_int("sound1", 0, "sound region", &banknum);
 	state_save_register_func_postload(reset_sound_region);
+}
+
+MACHINE_INIT( ninjaw )
+{
+  /**** mixer control enable ****/
+  mixer_sound_enable_global_w( 1 );	/* mixer enabled */
 }
 
 

@@ -49,7 +49,7 @@ static WRITE_HANDLER( cps1_snd_bankswitch_w )
 	bankaddr = (data * 0x4000) & (length-1);
 	cpu_setbank(1,&RAM[0x10000 + bankaddr]);
 
-	if (data & 0xfe) logerror("%04x: write %02x to f004\n",cpu_get_pc(),data);
+	if (data & 0xfe) logerror("%04x: write %02x to f004\n",activecpu_get_pc(),data);
 }
 
 static WRITE16_HANDLER( cps1_sound_fade_w )
@@ -173,7 +173,7 @@ READ16_HANDLER( qsound_rom_r )
 	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		usrintf_showmessage("%06x: read sound ROM byte %04x",cpu_get_pc(),offset);
+		usrintf_showmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
 		return 0;
 	}
 }

@@ -24,43 +24,39 @@ static kchamp_drawspritesproc kchamp_drawsprites;
   Video hardware start.
 ***************************************************************************/
 
-int kchampvs_vh_start(void) {
+VIDEO_START( kchampvs ) {
 
 	kchamp_drawsprites = kchamp_vs_drawsprites;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
-int kchamp1p_vh_start(void) {
+VIDEO_START( kchamp1p ) {
 
 	kchamp_drawsprites = kchamp_1p_drawsprites;
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 /***************************************************************************
   Convert color prom.
 ***************************************************************************/
-void kchamp_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( kchamp )
 {
-        int i, red, green, blue;
-        #define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-        #define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+	int i, red, green, blue;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-                red = color_prom[i];
-                green = color_prom[Machine->drv->total_colors+i];
-                blue = color_prom[2*Machine->drv->total_colors+i];
+		red = color_prom[i];
+		green = color_prom[Machine->drv->total_colors+i];
+		blue = color_prom[2*Machine->drv->total_colors+i];
 
+		palette_set_color(i,red*0x11,green*0x11,blue*0x11);
 
-                *(palette++) = red*0x11;
-                *(palette++) = green*0x11;
-                *(palette++) = blue*0x11;
-
-
-                *(colortable++) = i;
+		*(colortable++) = i;
 	}
 
 }
@@ -139,7 +135,7 @@ void kchamp_1p_drawsprites( struct mame_bitmap *bitmap ) {
 
 ***************************************************************************/
 
-void kchamp_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( kchamp )
 {
         int offs;
 

@@ -69,6 +69,6 @@ void videomap_invalidate_lineinfo(void);
 void videomap_invalidate_frameinfo(void);
 
 /* called by driver struct */
-void videomap_update(struct mame_bitmap *bitmap, int full_refresh);
+void videomap_update(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 
 #endif /* VIDEOMAP_H */

@@ -19,14 +19,13 @@ static int horizontal_pos = 0x0b;
 
 int galaxy_vh_start (void)
 {
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
     return 0;
 }
 
 void galaxy_vh_stop (void)
 {
-	generic_vh_stop();
 }
 
 WRITE_HANDLER( galaxy_vh_charram_w )

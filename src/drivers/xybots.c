@@ -20,18 +20,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-int xybots_vh_start(void);
-void xybots_vh_stop(void);
-void xybots_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+#include "xybots.h"
 
 
 
@@ -57,7 +46,7 @@ static void update_interrupts(void)
 }
 
 
-static void init_machine(void)
+static MACHINE_INIT( xybots )
 {
 	atarigen_eeprom_reset();
 	atarigen_slapstic_reset();
@@ -105,10 +94,10 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0xff8000, 0xff8fff, atarian_0_vram_w, &atarian_0_base },
+	{ 0xff8000, 0xff8fff, atarigen_alpha_w, &atarigen_alpha },
 	{ 0xff9000, 0xffadff, MWA16_RAM },
 	{ 0xffae00, 0xffafff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
-	{ 0xffb000, 0xffbfff, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0xffb000, 0xffbfff, atarigen_playfield_w, &atarigen_playfield },
 	{ 0xffc000, 0xffc7ff, paletteram16_IIIIRRRRGGGGBBBB_word_w, &paletteram16 },
 	{ 0xffd000, 0xffdfff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xffe800, 0xffe8ff, atarigen_eeprom_enable_w },
@@ -204,39 +193,32 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_xybots =
-{
+static MACHINE_DRIVER_START( xybots )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		},
-		JSA_I_CPU
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
-
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(xybots)
+	MDRV_NVRAM_HANDLER(atarigen)
+	
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	1024, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	xybots_vh_start,
-	xybots_vh_stop,
-	xybots_vh_screenrefresh,
-
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	
+	MDRV_VIDEO_START(xybots)
+	MDRV_VIDEO_UPDATE(xybots)
+	
 	/* sound hardware */
-	JSA_I_STEREO_SWAPPED,
-
-	atarigen_nvram_handler
-};
+	MDRV_IMPORT_FROM(jsa_i_stereo_swapped)
+MACHINE_DRIVER_END
 
 
 
@@ -284,7 +266,7 @@ ROM_END
  *
  *************************************/
 
-static void init_xybots(void)
+static DRIVER_INIT( xybots )
 {
 	atarigen_eeprom_default = NULL;
 	atarigen_slapstic_init(0, 0x008000, 107);

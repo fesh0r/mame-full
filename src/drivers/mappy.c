@@ -50,14 +50,14 @@ Aug 1999   Proper cocktail emulation implemented by Chad Hendrickson
 /* machine driver data & functions */
 extern unsigned char *mappy_sharedram;
 extern unsigned char *mappy_customio_1,*mappy_customio_2;
-void mappy_init_machine(void);
-void motos_init_machine(void);
+MACHINE_INIT( mappy );
+MACHINE_INIT( motos );
 READ_HANDLER( mappy_sharedram_r );
 WRITE_HANDLER( mappy_sharedram_w );
 WRITE_HANDLER( mappy_customio_1_w );
 WRITE_HANDLER( mappy_customio_2_w );
-int mappy_interrupt_1(void);
-int mappy_interrupt_2(void);
+INTERRUPT_GEN( mappy_interrupt_1 );
+INTERRUPT_GEN( mappy_interrupt_2 );
 WRITE_HANDLER( mappy_interrupt_enable_1_w );
 WRITE_HANDLER( mappy_interrupt_enable_2_w );
 WRITE_HANDLER( mappy_cpu_enable_w );
@@ -78,15 +78,14 @@ READ_HANDLER( todruaga_customio_1_r );
 READ_HANDLER( todruaga_customio_2_r );
 
 /* video driver data & functions */
-int mappy_vh_start(void);
-int motos_vh_start(void);
-int todruaga_vh_start(void);
-void mappy_vh_stop(void);
-void mappy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( mappy );
+VIDEO_START( motos );
+VIDEO_START( todruaga );
+VIDEO_UPDATE( mappy );
 WRITE_HANDLER( mappy_videoram_w );
 WRITE_HANDLER( mappy_colorram_w );
 WRITE_HANDLER( mappy_scroll_w );
-void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( mappy );
 
 /* sound driver data & functions */
 extern unsigned char *mappy_soundregs;
@@ -602,367 +601,320 @@ static struct namco_interface namco_interface =
 
 
 /* the machine driver: 2 6809s running at 1MHz */
-static const struct MachineDriver machine_driver_mappy =
-{
+static MACHINE_DRIVER_START( mappy )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1100000,                        /* 1.1 MHz */
-			mappy_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1100000,                        /* 1.1 MHz */
-			mappy_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_MEMORY(mappy_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1100000)                        /* 1.1 MHz */
+	MDRV_CPU_MEMORY(mappy_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	mappy_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(mappy_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mappy_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(mappy)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_digdug2 =
-{
+
+static MACHINE_DRIVER_START( digdug2 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			digdug2_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			digdug2_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(digdug2_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(digdug2_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	digdug2_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(digdug2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	mappy_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(mappy)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_motos =
-{
+
+static MACHINE_DRIVER_START( motos )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			motos_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			motos_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	motos_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(motos_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(motos_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(motos)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	digdug2_gfxdecodeinfo,
-	32,64*4+16*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(digdug2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+16*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	motos_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(motos)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
-static const struct MachineDriver machine_driver_todruaga =
-{
+
+static MACHINE_DRIVER_START( todruaga )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			todruaga_readmem_cpu1,writemem_cpu1,0,0,
-			mappy_interrupt_1,1
-		},
-		{
-			CPU_M6809,
-			1600000,                        /* 1.6 MHz */
-			todruaga_readmem_cpu2,writemem_cpu2,0,0,
-			mappy_interrupt_2,1
-		}
-	},
-	60.606060, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,    /* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
-	mappy_init_machine,
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(todruaga_readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_1,1)
+
+	MDRV_CPU_ADD(M6809, 1600000)                        /* 1.6 MHz */
+	MDRV_CPU_MEMORY(todruaga_readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(mappy_interrupt_2,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
+							/* synchronization of the CPUs */
+	MDRV_MACHINE_INIT(mappy)
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	todruaga_gfxdecodeinfo,
-	32,64*4+64*16,
-	mappy_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(todruaga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(64*4+64*16)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	todruaga_vh_start,
-	mappy_vh_stop,
-	mappy_vh_screenrefresh,
+	MDRV_PALETTE_INIT(mappy)
+	MDRV_VIDEO_START(todruaga)
+	MDRV_VIDEO_UPDATE(mappy)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 
 ROM_START( mappy )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "mappy1d.64",   0xa000, 0x2000, 0x52e6c708 )
-	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
-	ROM_LOAD( "mappy1b.64",   0xe000, 0x2000, 0x203766d4 )
+	ROM_LOAD( "mpx_3.1d",	0xa000, 0x2000, 0x52e6c708 )
+	ROM_LOAD( "mp1_2.1c",	0xc000, 0x2000, 0xa958a61c )
+	ROM_LOAD( "mpx_1.1b",	0xe000, 0x2000, 0x203766d4 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
+	ROM_LOAD( "mp1_4.1k",	0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mappy3b.32",   0x0000, 0x1000, 0x16498b9f )
+	ROM_LOAD( "mp1_5.3b",	0x0000, 0x1000, 0x16498b9f )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mappy3m.64",   0x0000, 0x2000, 0xf2d9647a )
-	ROM_LOAD( "mappy3n.64",   0x2000, 0x2000, 0x757cf2b6 )
+	ROM_LOAD( "mp1_6.3m",	0x0000, 0x2000, 0xf2d9647a )
+	ROM_LOAD( "mp1_7.3n",	0x2000, 0x2000, 0x757cf2b6 )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
-	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
-	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
+	ROM_LOAD( "mp1-5.5b",	0x0000, 0x0020, 0x56531268 ) /* palette */
+	ROM_LOAD( "mp1-6.4c",	0x0020, 0x0100, 0x50765082 ) /* characters */
+	ROM_LOAD( "mp1-7.5k",	0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
+	ROM_LOAD( "mp1-3.3m",	0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
-ROM_START( mappyjp )
+ROM_START( mappyj )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "mappy3.bin",   0xa000, 0x2000, 0xdb9d5ab5 )
-	ROM_LOAD( "mappy1c.64",   0xc000, 0x2000, 0xa958a61c )
-	ROM_LOAD( "mappy1.bin",   0xe000, 0x2000, 0x77c0b492 )
+	ROM_LOAD( "mp1_3.1d",	0xa000, 0x2000, 0xdb9d5ab5 )
+	ROM_LOAD( "mp1_2.1c",	0xc000, 0x2000, 0xa958a61c )
+	ROM_LOAD( "mp1_1.1b",	0xe000, 0x2000, 0x77c0b492 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "mappy1k.64",   0xe000, 0x2000, 0x8182dd5b )
+	ROM_LOAD( "mp1_4.1k",	0xe000, 0x2000, 0x8182dd5b )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mappy3b.32",   0x0000, 0x1000, 0x16498b9f )
+	ROM_LOAD( "mp1_5.3b",	0x0000, 0x1000, 0x16498b9f )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mappy3m.64",   0x0000, 0x2000, 0xf2d9647a )
-	ROM_LOAD( "mappy3n.64",   0x2000, 0x2000, 0x757cf2b6 )
+	ROM_LOAD( "mp1_6.3m",	0x0000, 0x2000, 0xf2d9647a )
+	ROM_LOAD( "mp1_7.3n",	0x2000, 0x2000, 0x757cf2b6 )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "mappy.pr1",    0x0000, 0x0020, 0x56531268 ) /* palette */
-	ROM_LOAD( "mappy.pr2",    0x0020, 0x0100, 0x50765082 ) /* characters */
-	ROM_LOAD( "mappy.pr3",    0x0120, 0x0100, 0x5396bd78 ) /* sprites */
+	ROM_LOAD( "mp1-5.5b",	0x0000, 0x0020, 0x56531268 ) /* palette */
+	ROM_LOAD( "mp1-6.4c",	0x0020, 0x0100, 0x50765082 ) /* characters */
+	ROM_LOAD( "mp1-7.5k",	0x0120, 0x0100, 0x5396bd78 ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "mappy.spr",    0x0000, 0x0100, 0x16a9166a )
+	ROM_LOAD( "mp1-3.3m",	0x0000, 0x0100, 0x16a9166a )
 ROM_END
 
 ROM_START( digdug2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "ddug2-3.bin",  0x8000, 0x4000, 0xbe7ec80b )
-	ROM_LOAD( "ddug2-1.bin",  0xc000, 0x4000, 0x5c77c0d4 )
+	ROM_LOAD( "d23_3.1d",	0x8000, 0x4000, 0xcc155338 )
+	ROM_LOAD( "d23_1.1b",	0xc000, 0x4000, 0x40e46af8 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
+	ROM_LOAD( "d21_4.1k",	0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ddug2-3b.bin", 0x0000, 0x1000, 0xafcb4509 )
+	ROM_LOAD( "d21_5.3b",	0x0000, 0x1000, 0xafcb4509 )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ddug2-3m.bin", 0x0000, 0x4000, 0xdf1f4ad8 )
-	ROM_LOAD( "ddug2-3n.bin", 0x4000, 0x4000, 0xccadb3ea )
+	ROM_LOAD( "d21_6.3m",	0x0000, 0x4000, 0xdf1f4ad8 )
+	ROM_LOAD( "d21_7.3n",	0x4000, 0x4000, 0xccadb3ea )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
-	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
-	ROM_LOAD( "ddclr-5k.bin", 0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
+	ROM_LOAD( "d21-5.5b",	0x0000, 0x0020, 0x9b169db5 ) /* palette */
+	ROM_LOAD( "d21-6.4c",	0x0020, 0x0100, 0x55a88695 ) /* characters */
+	ROM_LOAD( "d21-7.5k",	0x0120, 0x0100, 0x9c55feda ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
+	ROM_LOAD( "d21-3.3m",	0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
-ROM_START( digdug2a )
+ROM_START( digdug2o )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "ddug2a_3.bin",  0x8000, 0x4000, 0xcc155338 )
-	ROM_LOAD( "ddug2a_1.bin",  0xc000, 0x4000, 0x40e46af8 )
+	ROM_LOAD( "d21_3.1d",	0x8000, 0x4000, 0xbe7ec80b )
+	ROM_LOAD( "d21_1.1b",	0xc000, 0x4000, 0x5c77c0d4 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "ddug2-4.bin",  0xe000, 0x2000, 0x737443b1 )
+	ROM_LOAD( "d21_4.1k",	0xe000, 0x2000, 0x737443b1 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ddug2-3b.bin", 0x0000, 0x1000, 0xafcb4509 )
+	ROM_LOAD( "d21_5.3b",	0x0000, 0x1000, 0xafcb4509 )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "ddug2-3m.bin", 0x0000, 0x4000, 0xdf1f4ad8 )
-	ROM_LOAD( "ddug2-3n.bin", 0x4000, 0x4000, 0xccadb3ea )
+	ROM_LOAD( "d21_6.3m",	0x0000, 0x4000, 0xdf1f4ad8 )
+	ROM_LOAD( "d21_7.3n",	0x4000, 0x4000, 0xccadb3ea )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "ddclr-5b.bin", 0x0000, 0x0020, 0x9b169db5 ) /* palette */
-	ROM_LOAD( "ddclr-4c.bin", 0x0020, 0x0100, 0x55a88695 ) /* characters */
-	ROM_LOAD( "ddclr_5k.bin", 0x0120, 0x0100, 0x9c55feda ) /* sprites */
-	/* Can't see the difference on screen, but CRC differs. */
+	ROM_LOAD( "d21-5.5b",	0x0000, 0x0020, 0x9b169db5 ) /* palette */
+	ROM_LOAD( "d21-6.4c",	0x0020, 0x0100, 0x55a88695 ) /* characters */
+	ROM_LOAD( "d2x-7.5k",	0x0120, 0x0100, 0x1525a4d1 ) /* sprites */
+	/* the sprite lookup table is different from the other set, could be a bad dump */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "ddsnd.bin",    0x0000, 0x0100, 0xe0074ee2 )
+	ROM_LOAD( "d21-3.3m",	0x0000, 0x0100, 0xe0074ee2 )
 ROM_END
 
 ROM_START( motos )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "mts_1d.bin",   0x8000, 0x4000, 0x1104abb2 )
-	ROM_LOAD( "mts_1b.bin",   0xc000, 0x4000, 0x57b157e2 )
+	ROM_LOAD( "mo1_3.1d",	0x8000, 0x4000, 0x1104abb2 )
+	ROM_LOAD( "mo1_1.1b",	0xc000, 0x4000, 0x57b157e2 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "mts_1k.bin",   0xe000, 0x2000, 0x55e45d21 )
+	ROM_LOAD( "mo1_4.1k",	0xe000, 0x2000, 0x55e45d21 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "mts_3b.bin",   0x0000, 0x1000, 0x5d4a2a22 )
+	ROM_LOAD( "mo1_5.3b",	0x0000, 0x1000, 0x5d4a2a22 )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "mts_3m.bin",   0x0000, 0x4000, 0x2f0e396e )
-	ROM_LOAD( "mts_3n.bin",   0x4000, 0x4000, 0xcf8a3b86 )
+	ROM_LOAD( "mo1_6.3m",	0x0000, 0x4000, 0x2f0e396e )
+	ROM_LOAD( "mo1_7.3n",	0x4000, 0x4000, 0xcf8a3b86 )
 
 	ROM_REGION( 0x0220, REGION_PROMS, 0 )
-	ROM_LOAD( "motos.pr1",    0x0000, 0x0020, 0x71972383 ) /* palette */
-	ROM_LOAD( "motos.pr2",    0x0020, 0x0100, 0x730ba7fb ) /* characters */
-	ROM_LOAD( "motos.pr3",    0x0120, 0x0100, 0x7721275d ) /* sprites */
+	ROM_LOAD( "mo1-5.5b",	0x0000, 0x0020, 0x71972383 ) /* palette */
+	ROM_LOAD( "mo1-6.4c",	0x0020, 0x0100, 0x730ba7fb ) /* characters */
+	ROM_LOAD( "mo1-7.5k",	0x0120, 0x0100, 0x7721275d ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "motos.spr",    0x0000, 0x0100, 0x2accdfb4 )
+	ROM_LOAD( "mo1-3.3m",	0x0000, 0x0100, 0x2accdfb4 )
 ROM_END
 
 ROM_START( todruaga )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "druaga3.bin",  0x8000, 0x4000, 0x7ab4f5b2 )
-	ROM_LOAD( "druaga1.bin",  0xc000, 0x4000, 0x8c20ef10 )
+	ROM_LOAD( "td2_3.1d",	0x8000, 0x4000, 0xfbf16299 )
+	ROM_LOAD( "td2_1.1b",	0xc000, 0x4000, 0xb238d723 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
+	ROM_LOAD( "td1_4.1k",	0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
+	ROM_LOAD( "td1_5.3b",	0x0000, 0x1000, 0xd32b249f )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "druaga3m.bin", 0x0000, 0x2000, 0xe827e787 )
-	ROM_LOAD( "druaga3n.bin", 0x2000, 0x2000, 0x962bd060 )
+	ROM_LOAD( "td1_6.3m",	0x0000, 0x2000, 0xe827e787 )
+	ROM_LOAD( "td1_7.3n",	0x2000, 0x2000, 0x962bd060 )
 
 	ROM_REGION( 0x0520, REGION_PROMS, 0 )
-	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
-	ROM_LOAD( "todruaga.pr2", 0x0020, 0x0100, 0x8c661d6a ) /* characters */
-	ROM_LOAD( "todruaga.pr3", 0x0120, 0x0100, 0x5bcec186 ) /* sprites */
-	ROM_LOAD( "todruaga.pr4", 0x0220, 0x0100, 0xf029e5f5 ) /* sprites */
-	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
-	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
+	ROM_LOAD( "td1-5.5b",	0x0000, 0x0020, 0x122cc395 ) /* palette */
+	ROM_LOAD( "td1-6.4c",	0x0020, 0x0100, 0x8c661d6a ) /* characters */
+	ROM_LOAD( "td1-7.5k",	0x0120, 0x0400, 0xa86c74dd ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
+	ROM_LOAD( "td1-3.3m",	0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
-ROM_START( todruagb )
+ROM_START( todruago )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code for the first CPU  */
-	ROM_LOAD( "druaga3a.bin", 0x8000, 0x4000, 0xfbf16299 )
-	ROM_LOAD( "druaga1a.bin", 0xc000, 0x4000, 0xb238d723 )
+	ROM_LOAD( "td1_3.1d",	0x8000, 0x4000, 0x7ab4f5b2 )
+	ROM_LOAD( "td1_1.1b",	0xc000, 0x4000, 0x8c20ef10 )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the second CPU */
-	ROM_LOAD( "druaga4.bin",  0xe000, 0x2000, 0xae9d06d9 )
+	ROM_LOAD( "td1_4.1k",	0xe000, 0x2000, 0xae9d06d9 )
 
 	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "druaga3b.bin", 0x0000, 0x1000, 0xd32b249f )
+	ROM_LOAD( "td1_5.3b",	0x0000, 0x1000, 0xd32b249f )
 
 	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "druaga3m.bin", 0x0000, 0x2000, 0xe827e787 )
-	ROM_LOAD( "druaga3n.bin", 0x2000, 0x2000, 0x962bd060 )
+	ROM_LOAD( "td1_6.3m",	0x0000, 0x2000, 0xe827e787 )
+	ROM_LOAD( "td1_7.3n",	0x2000, 0x2000, 0x962bd060 )
 
 	ROM_REGION( 0x0520, REGION_PROMS, 0 )
-	ROM_LOAD( "todruaga.pr1", 0x0000, 0x0020, 0x122cc395 ) /* palette */
-	ROM_LOAD( "todruaga.pr2", 0x0020, 0x0100, 0x8c661d6a ) /* characters */
-	ROM_LOAD( "todruaga.pr3", 0x0120, 0x0100, 0x5bcec186 ) /* sprites */
-	ROM_LOAD( "todruaga.pr4", 0x0220, 0x0100, 0xf029e5f5 ) /* sprites */
-	ROM_LOAD( "todruaga.pr5", 0x0320, 0x0100, 0xecdc206c ) /* sprites */
-	ROM_LOAD( "todruaga.pr6", 0x0420, 0x0100, 0x57b5ad6d ) /* sprites */
+	ROM_LOAD( "td1-5.5b",	0x0000, 0x0020, 0x122cc395 ) /* palette */
+	ROM_LOAD( "td1-6.4c",	0x0020, 0x0100, 0x8c661d6a ) /* characters */
+	ROM_LOAD( "td1-7.5k",	0x0120, 0x0400, 0xa86c74dd ) /* sprites */
 
 	ROM_REGION( 0x0100, REGION_SOUND1, 0 )	/* sound prom */
-	ROM_LOAD( "todruaga.spr", 0x0000, 0x0100, 0x07104c40 )
+	ROM_LOAD( "td1-3.3m",	0x0000, 0x0100, 0x07104c40 )
 ROM_END
 
 
 
 GAME( 1983, mappy,    0,        mappy,    mappy,    0, ROT90, "Namco", "Mappy (US)" )
-GAME( 1983, mappyjp,  mappy,    mappy,    mappy,    0, ROT90, "Namco", "Mappy (Japan)" )
-GAME( 1985, digdug2,  0,        digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (set 1)" )
-GAME( 1985, digdug2a, digdug2,  digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (set 2)" )
+GAME( 1983, mappyj,   mappy,    mappy,    mappy,    0, ROT90, "Namco", "Mappy (Japan)" )
+GAME( 1985, digdug2,  0,        digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (New Ver.)" )
+GAME( 1985, digdug2o, digdug2,  digdug2,  digdug2,  0, ROT90, "Namco", "Dig Dug II (Old Ver.)" )
 GAME( 1985, motos,    0,        motos,    motos,    0, ROT90, "Namco", "Motos" )
-GAME( 1984, todruaga, 0,        todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (set 1)" )
-GAME( 1984, todruagb, todruaga, todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (set 2)" )
+GAME( 1984, todruaga, 0,        todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (New Ver.)" )
+GAME( 1984, todruago, todruaga, todruaga, todruaga, 0, ROT90, "Namco", "Tower of Druaga (Old Ver.)" )

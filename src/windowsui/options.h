@@ -45,7 +45,8 @@ enum {
 };
 #endif
 
-enum {
+enum
+{
 	VIEW_LARGE_ICONS = 0,
 	VIEW_SMALL_ICONS,
 	VIEW_INLIST,
@@ -154,6 +155,7 @@ typedef struct
 	BOOL   use_mouse;
 	BOOL   use_joystick;
 	BOOL   steadykey;
+	char   ctrlr[64];
 
 	/* Core video */
 	int    color_depth; /* MAME bitmap depth/bpp */
@@ -185,6 +187,7 @@ typedef struct
 	char*  playbackname; // ?
 	char*  recordname; // ?
 	BOOL   errorlog;
+	BOOL   sleep;
 
 #ifdef MESS
 	BOOL   use_new_filemgr;
@@ -244,10 +247,13 @@ typedef struct
 	char*    statedir;
 	char*    artdir;
 	char*    imgdir;
+	char*    diffdir;
+	char*	 iconsdir;
 	char*    cheatdir;
 	char*    cheatfile;
 	char*    history_filename;
 	char*    mameinfo_filename;
+	char*    ctrlrdir;
 
 } settings_type; /* global settings for the UI only */
 
@@ -392,8 +398,17 @@ void SetCabinetDir(const char* path);
 const char* GetMarqueeDir(void);
 void SetMarqueeDir(const char* path);
 
+const char* GetDiffDir(void);
+void SetDiffDir(const char* path);
+
+const char* GetIconsDir(void);
+void SetIconsDir(const char* path);
+
 const char* GetCheatDir(void);
 void SetCheatFileDir(const char* path);
+
+const char* GetCtrlrDir(void);
+void SetCtrlrDir(const char* path);
 
 const char* GetCheatFileName(void);
 void SetCheatFileName(const char* path);

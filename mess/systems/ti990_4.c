@@ -114,10 +114,8 @@ static void ti990_4_init_palette(unsigned char *palette, unsigned short *colorta
 
 static int ti990_4_vh_start(void)
 {
-	return 0; /*generic_vh_start();*/
+	return 0; /*video_start_generic();*/
 }
-
-/*#define ti990_4_vh_stop generic_vh_stop*/
 
 static void ti990_4_vh_stop(void)
 {

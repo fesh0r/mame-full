@@ -2,7 +2,7 @@
 # those are added in the target.mak files)
 COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/drawgfx.o $(OBJ)/common.o $(OBJ)/usrintrf.o $(OBJ)/ui_text.o \
-	$(OBJ)/cpuintrf.o $(OBJ)/cpuexec.o $(OBJ)/memory.o $(OBJ)/timer.o \
+	$(OBJ)/cpuintrf.o $(OBJ)/cpuexec.o $(OBJ)/cpuint.o $(OBJ)/memory.o $(OBJ)/timer.o \
 	$(OBJ)/palette.o $(OBJ)/input.o $(OBJ)/inptport.o $(OBJ)/unzip.o \
 	$(OBJ)/audit.o $(OBJ)/info.o $(OBJ)/png.o $(OBJ)/artwork.o \
 	$(OBJ)/tilemap.o \
@@ -21,8 +21,8 @@ COREOBJS = $(OBJ)/version.o $(OBJ)/mame.o \
 	$(OBJ)/machine/mb87078.o \
 	$(OBJ)/mamedbg.o $(OBJ)/window.o \
 	$(OBJ)/profiler.o \
+	$(OBJ)/harddisk.o $(OBJ)/md5.o $(OBJ)/machine/idectrl.o \
+	$(OBJ)/sound/wavwrite.o \
 	$(sort $(DBGOBJS))
 
-TOOLS = romcmp$(EXE)
-TEXTS = gamelist.txt
-
+TOOLS = romcmp$(EXE) hdcomp$(EXE)

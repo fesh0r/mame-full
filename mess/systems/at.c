@@ -412,156 +412,125 @@ static struct YM3812interface ym3812_interface = {
 
 static struct DACinterface dac_interface= { 1, { 50 }};
 
-static struct MachineDriver machine_driver_atcga =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_I286,
-			12000000, /* original at 6 mhz, at03 8 megahertz */
-			at_readmem,at_writemem,
-			at_readport,at_writeport,
-			at_cga_frame_interrupt,4,
-			0,0,
-			&i286_address_mask
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	0,
-	at_machine_init,
-	0,
 
-    /* video hardware */
-    80*8,                                       /* screen width */
-	25*8, 									/* screen height (pixels doubled) */
-	{ 0,80*8-1, 0,25*8-1},					/* visible_area */
-	CGA_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(cga_palette) / sizeof(cga_palette[0]),
-	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
-	pc_cga_init_palette,							/* init palette */
+#define MDRV_CPU_ATPC(mem, port, type, clock, vblankfunc)	\
+	MDRV_CPU_ADD_TAG("main", type, clock)				\
+	MDRV_CPU_MEMORY(mem##_readmem, mem##_writemem)		\
+	MDRV_CPU_PORTS(port##_readport, port##_writeport)	\
+	MDRV_CPU_VBLANK_INT(vblankfunc, 4)					\
+	MDRV_CPU_CONFIG(i286_address_mask)
 
-#ifdef RESIZING
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
-#else
-	VIDEO_TYPE_RASTER,
-#endif
-	0,
-	pc_cga_vh_start,
-	pc_cga_vh_stop,
-	pc_cga_vh_screenrefresh,
-
-    /* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
-#if defined(GAMEBLASTER)
-		{ SOUND_SAA1099, &cms_interface },
-#endif
-		{ SOUND_DAC, &dac_interface },
-	},
-	mc146818_nvram_handler
-};
-
-static struct MachineDriver machine_driver_ps2m30286 =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_I286,
-			10000000,
-			at_readmem,at_writemem,
-			ps2m30286_readport,ps2m30286_writeport,
-			at_vga_frame_interrupt,4,
-			0,0,
-			&i286_address_mask
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	0,
-	at_vga_init_machine,
-	0,
-
-    /* video hardware */
-    720,                                       /* screen width */
-	480, 									/* screen height (pixels doubled) */
-	{ 0,720-1, 0,480-1},					/* visible_area */
-	vga_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(vga_palette) / sizeof(vga_palette[0]),
-	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
-	vga_init_palette,							/* init palette */
-
-	VIDEO_TYPE_RASTER,
-	0,
-	vga_vh_start,
-	vga_vh_stop,
-	vga_vh_screenrefresh,
-
-    /* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
-#if defined(GAMEBLASTER)
-		{ SOUND_SAA1099, &cms_interface },
-#endif
-		{ SOUND_DAC, &dac_interface },
-	},
-	mc146818_nvram_handler
-};
-
-static struct MachineDriver machine_driver_atvga =
-{
+static MACHINE_DRIVER_START( atcga )
 	/* basic machine hardware */
-	{
-		{
-			CPU_I286,
-			12000000,
-			at_readmem,at_writemem,
-			at_readport,at_writeport,
-			at_vga_frame_interrupt,4,
-			0,0,
-			&i286_address_mask
-        },
-    },
-    60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	0,
-	at_vga_init_machine,
-	0,
+	MDRV_CPU_ATPC(at, at, I286, 12000000, at_cga_frame_interrupt)
 
-    /* video hardware */
-    720,                                       /* screen width */
-	480, 									/* screen height (pixels doubled) */
-	{ 0,720-1, 0,480-1},					/* visible_area */
-	vga_gfxdecodeinfo,							/* graphics decode info */
-	sizeof(vga_palette) / sizeof(vga_palette[0]),
-	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
-	vga_init_palette,							/* init palette */
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	vga_vh_start,
-	vga_vh_stop,
-	vga_vh_screenrefresh,
+	MDRV_MACHINE_INIT( at )
 
-    /* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
+#ifdef RESIZING_WORKING
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+#else
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 #endif
-#if defined(GAMEBLASTER)
-		{ SOUND_SAA1099, &cms_interface },
+	MDRV_SCREEN_SIZE(80*8, 25*8)
+	MDRV_VISIBLE_AREA(0,80*8-1, 0,25*8-1)
+	MDRV_GFXDECODE(CGA_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(cga_palette) / sizeof(cga_palette[0]))
+	MDRV_COLORTABLE_LENGTH(sizeof(cga_colortable) / sizeof(cga_colortable[0]))
+	MDRV_PALETTE_INIT(pc_cga)
+
+	MDRV_VIDEO_START(pc_cga)
+	MDRV_VIDEO_UPDATE(pc_cga)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+#ifdef ADLIB
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 #endif
-		{ SOUND_DAC, &dac_interface },
-	},
-	mc146818_nvram_handler
-};
+#ifdef GAMEBLASTER
+	MDRV_SOUND_ADD(SAA1099, cms_interface)
+#endif
+
+	MDRV_NVRAM_HANDLER( mc146818 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( ps2m30286 )
+	/* basic machine hardware */
+	MDRV_CPU_ATPC(at, at, I286, 12000000, at_cga_frame_interrupt)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT( at_vga )
+
+#ifdef RESIZING_WORKING
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+#else
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+#endif
+	MDRV_SCREEN_SIZE(720, 480)
+	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
+	MDRV_GFXDECODE(vga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(vga_palette) / sizeof(vga_palette[0]))
+	MDRV_COLORTABLE_LENGTH(0x100*2)
+	MDRV_PALETTE_INIT(vga)
+
+	MDRV_VIDEO_START(vga)
+	MDRV_VIDEO_UPDATE(vga)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+#ifdef ADLIB
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+#endif
+#ifdef GAMEBLASTER
+	MDRV_SOUND_ADD(SAA1099, cms_interface)
+#endif
+
+	MDRV_NVRAM_HANDLER( mc146818 )
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( atvga )
+	/* basic machine hardware */
+	MDRV_CPU_ATPC(at, at, I286, 12000000, at_cga_frame_interrupt)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT( at_vga )
+
+#ifdef RESIZING_WORKING
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+#else
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+#endif
+	MDRV_SCREEN_SIZE(720, 480)
+	MDRV_VISIBLE_AREA(0,720-1, 0,480-1)
+	MDRV_GFXDECODE(vga_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(sizeof(vga_palette) / sizeof(vga_palette[0]))
+	MDRV_COLORTABLE_LENGTH(0x100*2)
+	MDRV_PALETTE_INIT(vga)
+
+	MDRV_VIDEO_START(vga)
+	MDRV_VIDEO_UPDATE(vga)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(CUSTOM, pc_sound_interface)
+#ifdef ADLIB
+	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+#endif
+#ifdef GAMEBLASTER
+	MDRV_SOUND_ADD(SAA1099, cms_interface)
+#endif
+	MDRV_SOUND_ADD(DAC, dac_interface)
+
+	MDRV_NVRAM_HANDLER( mc146818 )
+MACHINE_DRIVER_END
+
 
 #ifdef HAS_I386
 static struct MachineDriver machine_driver_at386 =

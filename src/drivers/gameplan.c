@@ -13,7 +13,7 @@ TO-DO: - Fix the input ports/dip switches of Kaos?
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int gameplan_vh_start(void);
+VIDEO_START( gameplan );
 READ_HANDLER( gameplan_video_r );
 WRITE_HANDLER( gameplan_video_w );
 READ_HANDLER( gameplan_sound_r );
@@ -26,7 +26,7 @@ static int gameplan_current_port;
 static WRITE_HANDLER( gameplan_port_select_w )
 {
 #ifdef VERY_VERBOSE
-	logerror("VIA 2: PC %04x: %x -> reg%X\n",cpu_get_pc(), data, offset);
+	logerror("VIA 2: PC %04x: %x -> reg%X\n",activecpu_get_pc(), data, offset);
 #endif /* VERY_VERBOSE */
 
 	switch (offset)
@@ -140,11 +140,6 @@ static MEMORY_WRITE_START( writemem_snd )
 	{ 0xf800, 0xffff, MWA_ROM },
 
 MEMORY_END
-
-int gameplan_interrupt(void)
-{
-	return 1;
-}
 
 INPUT_PORTS_START( kaos )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
@@ -492,20 +487,16 @@ INPUT_PORTS_END
 
 
 
-static unsigned char palette[] =
+static PALETTE_INIT( gameplan )
 {
-	0xff,0xff,0xff, /* 0 WHITE   */
-	0x20,0xff,0xff, /* 1 CYAN    */
-	0xff,0x20,0xff, /* 2 MAGENTA */
-	0x20,0x20,0xFF, /* 3 BLUE    */
-	0xff,0xff,0x20, /* 4 YELLOW  */
-	0x20,0xff,0x20, /* 5 GREEN   */
-	0xff,0x20,0x20, /* 6 RED     */
-	0x00,0x00,0x00, /* 7 BLACK   */
-};
-static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
-{
-	memcpy(game_palette,palette,sizeof(palette));
+	palette_set_color(0,0xff,0xff,0xff); /* 0 WHITE   */
+	palette_set_color(1,0x20,0xff,0xff); /* 1 CYAN    */
+	palette_set_color(2,0xff,0x20,0xff); /* 2 MAGENTA */
+	palette_set_color(3,0x20,0x20,0xFF); /* 3 BLUE    */
+	palette_set_color(4,0xff,0xff,0x20); /* 4 YELLOW  */
+	palette_set_color(5,0x20,0xff,0x20); /* 5 GREEN   */
+	palette_set_color(6,0xff,0x20,0x20); /* 6 RED     */
+	palette_set_color(7,0x00,0x00,0x00); /* 7 BLACK   */
 }
 
 
@@ -521,47 +512,33 @@ static struct AY8910interface ay8910_interface =
 };
 
 
-static const struct MachineDriver machine_driver_gameplan =
-{
-    /* basic machine hardware */
-    {							/* MachineCPU */
-		{
-			CPU_M6502,
-			3579000 / 4,		/* 3.579 / 4 MHz */
-			readmem, writemem, 0, 0,
-			gameplan_interrupt,1 /* 1 interrupt per frame */
-		},
-		{
-            CPU_M6502 | CPU_AUDIO_CPU,
-			3579000 / 4,		/* 3.579 / 4 MHz */
-			readmem_snd,writemem_snd,0,0,
-			gameplan_interrupt,1
-		},
-	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,							/* CPU slices per frame */
-    0,							/* init_machine */
+static MACHINE_DRIVER_START( gameplan )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M6502,3579000 / 4)		/* 3.579 / 4 MHz */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1) /* 1 interrupt per frame */
+
+	MDRV_CPU_ADD(M6502,3579000 / 4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)		/* 3.579 / 4 MHz */
+	MDRV_CPU_MEMORY(readmem_snd,writemem_snd)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
     /* video hardware */
-    32*8, 32*8,					/* screen_width, height */
-    { 0, 32*8-1, 0, 32*8-1 },		/* visible_area */
-    0,
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,
-	init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 32*8-1)
+	MDRV_PALETTE_LENGTH(8)
+	
+	MDRV_PALETTE_INIT(gameplan)
+	MDRV_VIDEO_START(gameplan)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
-	VIDEO_TYPE_RASTER, 0,
-	gameplan_vh_start,
-	generic_bitmapped_vh_stop,
-	generic_bitmapped_vh_screenrefresh,
-
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

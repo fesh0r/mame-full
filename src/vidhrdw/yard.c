@@ -60,7 +60,7 @@ static struct rectangle panelvisibleareaflip =
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( yard )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -70,24 +70,26 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	/* character palette */
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = 0;
 		bit1 = (color_prom[256] >> 2) & 0x01;
 		bit2 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (color_prom[0] >> 3) & 0x01;
 		bit1 = (color_prom[256] >> 0) & 0x01;
 		bit2 = (color_prom[256] >> 1) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -99,24 +101,26 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	/* sprite palette */
 	for (i = 0;i < 16;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i+256,r,g,b);
 
 		color_prom++;
 	}
@@ -135,24 +139,26 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	/* radar palette */
 	for (i = 0;i < 256;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = 0;
 		bit1 = (color_prom[256] >> 2) & 0x01;
 		bit2 = (color_prom[256] >> 3) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (color_prom[0] >> 3) & 0x01;
 		bit1 = (color_prom[256] >> 0) & 0x01;
 		bit2 = (color_prom[256] >> 1) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i+256+16,r,g,b);
 
 		color_prom++;
 	}
@@ -165,41 +171,21 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
   Start the video hardware emulation.
 
 ***************************************************************************/
-int yard_vh_start(void)
+VIDEO_START( yard )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
-	if ((scroll_panel_bitmap = bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
-		bitmap_free(tmpbitmap);
+	if ((scroll_panel_bitmap = auto_bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void yard_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-	bitmap_free(scroll_panel_bitmap);
-}
 
 
 
@@ -245,12 +231,12 @@ WRITE_HANDLER( yard_scroll_panel_w )
   the main emulation engine.
 
 ***************************************************************************/
-void yard_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( yard )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}

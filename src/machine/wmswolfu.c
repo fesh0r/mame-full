@@ -12,6 +12,7 @@
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/m6809/m6809.h"
 #include "sndhrdw/williams.h"
+#include "wmswolfu.h"
 
 
 /* speedup installation macros */
@@ -39,19 +40,15 @@
 
 
 /* code-related variables */
-extern data16_t *wms_code_rom;
        UINT8 *	wms_wolfu_decode_memory;
 
 /* CMOS-related variables */
-extern data16_t *wms_cmos_ram;
 static UINT8	cmos_write_enable;
-
-/* graphics-related variables */
-extern UINT8 *	wms_gfx_rom;
-extern size_t	wms_gfx_rom_size;
 
 /* I/O-related variables */
 static data16_t	iodata[8];
+static UINT8	ioshuffle[16];
+static UINT8	revx_analog_port;
 
 /* protection-related variables */
 static UINT8	security_data[16];
@@ -60,20 +57,13 @@ static UINT8	security_index;
 static UINT8	security_status;
 static UINT8	security_bits;
 
-/* speedup-related variables */
-extern offs_t 	wms_speedup_pc;
-extern offs_t 	wms_speedup_offset;
-extern offs_t 	wms_speedup_spin[3];
-extern data16_t *wms_speedup_base;
+/* UART-related variables */
+static UINT8	uart[8];
 
 
 /* prototype */
 static READ16_HANDLER( wms_wolfu_sound_state_r );
-
-/* speedup-related prototypes */
-extern READ16_HANDLER( wms_generic_speedup_1_16bit );
-extern READ16_HANDLER( wms_generic_speedup_1_32bit );
-extern READ16_HANDLER( wms_generic_speedup_3 );
+static void revx_dcs_notify(int state);
 
 
 
@@ -88,29 +78,31 @@ WRITE16_HANDLER( wms_wolfu_cmos_enable_w )
 	cmos_write_enable = 1;
 }
 
+
 WRITE16_HANDLER( wms_wolfu_cmos_w )
 {
 	if (cmos_write_enable)
 	{
-		COMBINE_DATA(&wms_cmos_ram[offset]);
+		COMBINE_DATA(&((data16_t *)generic_nvram)[offset]);
 		cmos_write_enable = 0;
 	}
 	else
 	{
-		logerror("%08X:Unexpected CMOS W @ %05X\n", cpu_get_pc(), offset);
+		logerror("%08X:Unexpected CMOS W @ %05X\n", activecpu_get_pc(), offset);
 		usrintf_showmessage("Bad CMOS write");
 	}
 }
 
+
 WRITE16_HANDLER( revx_cmos_w )
 {
-	COMBINE_DATA(&wms_cmos_ram[offset]);
+	COMBINE_DATA(&((data16_t *)generic_nvram)[offset]);
 }
+
 
 READ16_HANDLER( wms_wolfu_cmos_r )
 {
-	logerror("%08X:CMOS R @ %05X\n", cpu_get_pc(), offset);
-	return wms_cmos_ram[offset];
+	return ((data16_t *)generic_nvram)[offset];
 }
 
 
@@ -133,7 +125,7 @@ WRITE16_HANDLER( wms_wolfu_io_w )
 	switch (offset)
 	{
 		case 1:
-			logerror("%08X:Control W @ %05X = %04X\n", cpu_get_pc(), offset, data);
+			logerror("%08X:Control W @ %05X = %04X\n", activecpu_get_pc(), offset, data);
 
 			/* bit 4 reset sound CPU */
 			williams_dcs_reset_w(newword & 0x10);
@@ -154,7 +146,7 @@ WRITE16_HANDLER( wms_wolfu_io_w )
 			break;
 
 		default:
-			logerror("%08X:Unknown I/O write to %d = %04X\n", cpu_get_pc(), offset, data);
+			logerror("%08X:Unknown I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
 			break;
 	}
 	iodata[offset] = newword;
@@ -178,13 +170,20 @@ WRITE16_HANDLER( revx_io_w )
 			break;
 
 		default:
-			logerror("%08X:I/O write to %d = %04X\n", cpu_get_pc(), offset, data);
-//			logerror("%08X:Unknown I/O write to %d = %04X\n", cpu_get_pc(), offset, data);
+			logerror("%08X:I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
+//			logerror("%08X:Unknown I/O write to %d = %04X\n", activecpu_get_pc(), offset, data);
 			break;
 	}
 	iodata[offset] = newword;
 }
 
+
+WRITE16_HANDLER( revx_unknown_w )
+{
+	int offs = offset / 0x40000;
+	if (ACCESSING_LSB && offset % 0x40000 == 0)
+		logerror("%08X:revx_unknown_w @ %d = %02X\n", activecpu_get_pc(), offs, data & 0xff);
+}
 
 
 /*************************************
@@ -195,7 +194,8 @@ WRITE16_HANDLER( revx_io_w )
 
 READ16_HANDLER( wms_wolfu_io_r )
 {
-	offset %= 8;
+	/* apply I/O shuffling */
+	offset = ioshuffle[offset % 16];
 
 	switch (offset)
 	{
@@ -209,7 +209,7 @@ READ16_HANDLER( wms_wolfu_io_r )
 			return (security_status << 12) | wms_wolfu_sound_state_r(0,0);
 
 		default:
-			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset);
+			logerror("%08X:Unknown I/O read from %d\n", activecpu_get_pc(), offset);
 			break;
 	}
 	return ~0;
@@ -228,21 +228,150 @@ READ16_HANDLER( revx_io_r )
 		case 3:
 			return readinputport(offset);
 
-		case 4:
-			return 0;
-//			return (security_status << 12) | wms_wolfu_sound_state_r(0);
-
 		default:
-//			logerror("%08X:Unknown I/O read from %d\n", cpu_get_pc(), offset);
+			logerror("%08X:Unknown I/O read from %d\n", activecpu_get_pc(), offset);
 			break;
 	}
 	return ~0;
 }
 
 
+READ16_HANDLER( revx_analog_r )
+{
+	return readinputport(revx_analog_port);
+}
+
+
+WRITE16_HANDLER( revx_analog_select_w )
+{
+	if (offset == 0 && ACCESSING_LSB)
+		revx_analog_port = data - 8 + 4;
+}
+
+
 READ16_HANDLER( revx_status_r )
 {
-	return security_status << 1;
+	/* low bit indicates whether the ADC is done reading the current input */
+	return (security_status << 1) | 1;
+}
+
+
+
+/*************************************
+ *
+ *	Revolution X UART
+ *
+ *************************************/
+
+void revx_dcs_notify(int state)
+{
+	/* only signal if not in loopback state */
+	if (uart[1] != 0x66)
+		cpu_set_irq_line(1, 1, state ? ASSERT_LINE : CLEAR_LINE);
+}
+
+
+READ16_HANDLER( revx_uart_r )
+{
+	int result = 0;
+
+	/* convert to a byte offset */
+	if (offset & 1)
+		return 0;
+	offset /= 2;
+
+	/* switch off the offset */
+	switch (offset)
+	{
+		case 0:	/* register 0 must return 0x13 in order to pass the self test */
+			result = 0x13;
+			break;
+
+		case 1:	/* register 1 contains the status */
+
+			/* loopback case: data always ready, and always ok to send */
+			if (uart[1] == 0x66)
+				result |= 5;
+
+			/* non-loopback case: bit 0 means data ready, bit 2 means ok to send */
+			else
+			{
+				int temp = wms_wolfu_sound_state_r(0, 0);
+				result |= (temp & 0x800) >> 9;
+				result |= (~temp & 0x400) >> 10;
+				timer_set(TIME_NOW, 0, 0);
+			}
+			break;
+
+		case 3:	/* register 3 contains the data read */
+
+			/* loopback case: feed back last data wrtten */
+			if (uart[1] == 0x66)
+				result = uart[3];
+
+			/* non-loopback case: read from the DCS system */
+			else
+				result = wms_wolfu_sound_r(0, 0);
+			break;
+
+		case 5:	/* register 5 seems to be like 3, but with in/out swapped */
+
+			/* loopback case: data always ready, and always ok to send */
+			if (uart[1] == 0x66)
+				result |= 5;
+
+			/* non-loopback case: bit 0 means data ready, bit 2 means ok to send */
+			else
+			{
+				int temp = wms_wolfu_sound_state_r(0, 0);
+				result |= (temp & 0x800) >> 11;
+				result |= (~temp & 0x400) >> 8;
+				timer_set(TIME_NOW, 0, 0);
+			}
+			break;
+
+		default: /* everyone else reads themselves */
+			result = uart[offset];
+			break;
+	}
+
+/*	logerror("%08X:UART R @ %X = %02X\n", activecpu_get_pc(), offset, result);*/
+	return result;
+}
+
+
+WRITE16_HANDLER( revx_uart_w )
+{
+	/* convert to a byte offset, ignoring MSB writes */
+	if ((offset & 1) || !ACCESSING_LSB)
+		return;
+	offset /= 2;
+	data &= 0xff;
+
+	/* switch off the offset */
+	switch (offset)
+	{
+		case 3:	/* register 3 contains the data to be sent */
+
+			/* loopback case: don't feed through */
+			if (uart[1] == 0x66)
+				uart[3] = data;
+
+			/* non-loopback case: send to the DCS system */
+			else
+				wms_wolfu_sound_w(0, data, mem_mask);
+			break;
+
+		case 5:	/* register 5 write seems to reset things */
+			williams_dcs_data_r();
+			break;
+
+		default: /* everyone else just stores themselves */
+			uart[offset] = data;
+			break;
+	}
+
+/*	logerror("%08X:UART W @ %X = %02X\n", activecpu_get_pc(), offset, data);*/
 }
 
 
@@ -331,6 +460,9 @@ static void init_wolfu_generic(void)
 			*base++ = wms_wolfu_decode_memory[0x300000 + j];
 		}
 	}
+
+	/* init sound */
+	williams_dcs_init();
 }
 
 
@@ -355,31 +487,31 @@ static void init_mk3_common(void)
 	generate_serial(528);
 }
 
-void init_mk3(void)
+DRIVER_INIT( mk3 )
 {
 	init_mk3_common();
 	INSTALL_SPEEDUP_3(0x1069bd0, 0xff926810, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
-void init_mk3r20(void)
+DRIVER_INIT( mk3r20 )
 {
 	init_mk3_common();
 	INSTALL_SPEEDUP_3(0x1069bd0, 0xff926790, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
-void init_mk3r10(void)
+DRIVER_INIT( mk3r10 )
 {
 	init_mk3_common();
 	INSTALL_SPEEDUP_3(0x1078e50, 0xff923e30, 0x105d490, 0x105d4b0, 0x105d4d0);
 }
 
-void init_umk3(void)
+DRIVER_INIT( umk3 )
 {
 	init_mk3_common();
 	INSTALL_SPEEDUP_3(0x106a0e0, 0xff9696a0, 0x105dc10, 0x105dc30, 0x105dc50);
 }
 
-void init_umk3r11(void)
+DRIVER_INIT( umk3r11 )
 {
 	init_mk3_common();
 	INSTALL_SPEEDUP_3(0x106a0e0, 0xff969680, 0x105dc10, 0x105dc30, 0x105dc50);
@@ -388,7 +520,7 @@ void init_umk3r11(void)
 
 /********************** 2 On 2 Open Ice Challenge **********************/
 
-void init_openice(void)
+DRIVER_INIT( openice )
 {
 	/* common init */
 	init_wolfu_generic();
@@ -400,7 +532,7 @@ void init_openice(void)
 
 /********************** NBA Hangtime & NBA Maximum Hangtime **********************/
 
-void init_nbahangt(void)
+DRIVER_INIT( nbahangt )
 {
 	/* common init */
 	init_wolfu_generic();
@@ -423,16 +555,68 @@ static READ16_HANDLER( wms_generic_speedup_1_address )
 		return value;
 
 	/* suspend cpu if it's waiting for an interrupt */
-	if (cpu_get_pc() == wms_speedup_pc && !value)
+	if (activecpu_get_pc() == wms_speedup_pc && !value)
 		cpu_spinuntil_int();
 
 	return value;
 }
 
-void init_wwfmania(void)
+static WRITE16_HANDLER( wwfmania_io_0_w )
+{
+	int i;
+
+	/* start with the originals */
+	for (i = 0; i < 16; i++)
+		ioshuffle[i] = i % 8;
+
+	/* based on the data written, shuffle */
+	switch (data)
+	{
+		case 0:
+			break;
+
+		case 1:
+			ioshuffle[4] = 0;
+			ioshuffle[8] = 1;
+			ioshuffle[1] = 2;
+			ioshuffle[9] = 3;
+			ioshuffle[2] = 4;
+			break;
+
+		case 2:
+			ioshuffle[8] = 0;
+			ioshuffle[2] = 1;
+			ioshuffle[4] = 2;
+			ioshuffle[6] = 3;
+			ioshuffle[1] = 4;
+			break;
+
+		case 3:
+			ioshuffle[1] = 0;
+			ioshuffle[8] = 1;
+			ioshuffle[2] = 2;
+			ioshuffle[10] = 3;
+			ioshuffle[5] = 4;
+			break;
+
+		case 4:
+			ioshuffle[2] = 0;
+			ioshuffle[4] = 1;
+			ioshuffle[1] = 2;
+			ioshuffle[7] = 3;
+			ioshuffle[8] = 4;
+			break;
+	}
+	logerror("Changed I/O swiching to %d\n", data);
+}
+
+DRIVER_INIT( wwfmania )
 {
 	/* common init */
 	init_wolfu_generic();
+
+	/* enable I/O shuffling */
+	install_mem_write16_handler(0, TOBYTE(0x01800000), TOBYTE(0x0180000f), wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
 	generate_serial(528);
@@ -443,7 +627,7 @@ void init_wwfmania(void)
 
 /********************** Rampage World Tour **********************/
 
-void init_rmpgwt(void)
+DRIVER_INIT( rmpgwt )
 {
 	/* common init */
 	init_wolfu_generic();
@@ -455,7 +639,7 @@ void init_rmpgwt(void)
 
 /********************** Revolution X **********************/
 
-void init_revx(void)
+DRIVER_INIT( revx )
 {
 	UINT8 *base;
 	int i, j;
@@ -478,6 +662,9 @@ void init_revx(void)
 		}
 	}
 
+	/* init sound */
+	williams_dcs_init();
+
 	/* serial prefixes 419, 420 */
 	generate_serial(419);
 }
@@ -490,10 +677,24 @@ void init_revx(void)
  *
  *************************************/
 
-void wms_wolfu_init_machine(void)
+MACHINE_INIT( wms_wolfu )
 {
+	int i;
+
 	/* reset sound */
-	williams_dcs_init(1);
+	williams_dcs_reset_w(1);
+	williams_dcs_reset_w(0);
+
+	/* reset I/O shuffling */
+	for (i = 0; i < 16; i++)
+		ioshuffle[i] = i % 8;
+}
+
+
+MACHINE_INIT( revx )
+{
+	machine_init_wms_wolfu();
+	williams_dcs_set_notify(revx_dcs_notify);
 }
 
 
@@ -506,7 +707,7 @@ void wms_wolfu_init_machine(void)
 
 READ16_HANDLER( wms_wolfu_security_r )
 {
-	logerror("%08X:security R = %04X\n", cpu_get_pc(), security_buffer);
+	logerror("%08X:security R = %04X\n", activecpu_get_pc(), security_buffer);
 	security_status = 1;
 	return security_buffer;
 }
@@ -516,7 +717,7 @@ WRITE16_HANDLER( wms_wolfu_security_w )
 {
 	if (offset == 0 && ACCESSING_LSB)
 	{
-		logerror("%08X:security W = %04X\n", cpu_get_pc(), data);
+		logerror("%08X:security W = %04X\n", activecpu_get_pc(), data);
 
 		/* status seems to reflect the clock bit */
 		security_status = (data >> 4) & 1;
@@ -557,12 +758,13 @@ WRITE16_HANDLER( revx_security_clock_w )
 
 READ16_HANDLER( wms_wolfu_sound_r )
 {
-	logerror("%08X:Sound read\n", cpu_get_pc());
+	logerror("%08X:Sound read\n", activecpu_get_pc());
 
 	if (Machine->sample_rate)
 		return williams_dcs_data_r();
 	return 0x0000;
 }
+
 
 READ16_HANDLER( wms_wolfu_sound_state_r )
 {
@@ -571,19 +773,20 @@ READ16_HANDLER( wms_wolfu_sound_state_r )
 	return 0x0800;
 }
 
+
 WRITE16_HANDLER( wms_wolfu_sound_w )
 {
 	/* check for out-of-bounds accesses */
 	if (offset)
 	{
-		logerror("%08X:Unexpected write to sound (hi) = %04X\n", cpu_get_pc(), data);
+		logerror("%08X:Unexpected write to sound (hi) = %04X\n", activecpu_get_pc(), data);
 		return;
 	}
 
 	/* call through based on the sound type */
 	if (ACCESSING_LSB)
 	{
-		logerror("%08X:Sound write = %04X\n", cpu_get_pc(), data);
+		logerror("%08X:Sound write = %04X\n", activecpu_get_pc(), data);
 		williams_dcs_data_w(data & 0xff);
 	}
 }

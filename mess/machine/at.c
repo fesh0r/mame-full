@@ -110,20 +110,20 @@ void init_ps2m30286(void)
 	at_8042_init(&at8042);
 }
 
-void at_machine_init(void)
+MACHINE_INIT( at )
 {
 	dma8237_reset(dma8237);
 	dma8237_reset(dma8237+1);
 }
 
-void at_vga_init_machine(void)
+MACHINE_INIT( at_vga )
 {
 	vga_reset();
 	dma8237_reset(dma8237);
 	dma8237_reset(dma8237+1);
 }
 
-int at_cga_frame_interrupt (void)
+void at_cga_frame_interrupt (void)
 {
 	static int turboswitch=-1;
 
@@ -141,11 +141,9 @@ int at_cga_frame_interrupt (void)
 		at_keyboard_polling();
 		at_8042_time();
 	}
-
-    return ignore_interrupt ();
 }
 
-int at_vga_frame_interrupt (void)
+void at_vga_frame_interrupt (void)
 {
 	static int turboswitch=-1;
 
@@ -163,6 +161,4 @@ int at_vga_frame_interrupt (void)
 		at_keyboard_polling();
 		at_8042_time();
 	}
-
-    return ignore_interrupt ();
 }

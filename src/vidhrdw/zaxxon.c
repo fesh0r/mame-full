@@ -20,11 +20,8 @@ static const unsigned char *color_codes;
 int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 
 #define ZAXXON_VID	0
-#define CONGO_VID	1
+#define CONGO_VID		1
 #define FUTSPY_VID	2
-
-
-void zaxxon_vh_stop(void);
 
 
 /***************************************************************************
@@ -49,7 +46,7 @@ void zaxxon_vh_stop(void);
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( zaxxon )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -58,25 +55,26 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -150,13 +148,13 @@ static void create_background(struct mame_bitmap *dst_bm, struct mame_bitmap *sr
 }
 
 
-int zaxxon_vh_start(void)
+VIDEO_START( zaxxon )
 {
 	struct mame_bitmap *prebitmap;
 	int width, height;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* for speed, backgrounds are arranged differently if axis is swapped */
@@ -167,29 +165,20 @@ int zaxxon_vh_start(void)
 		height = 256+4096+256, width = 256;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = bitmap_alloc(width,height)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap1 = auto_bitmap_alloc(width,height)) == 0)
 		return 1;
-	}
 
 	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
-		if ((backgroundbitmap2 = bitmap_alloc(width,height)) == 0)
-		{
-			zaxxon_vh_stop();
+		if ((backgroundbitmap2 = auto_bitmap_alloc(width,height)) == 0)
 			return 1;
-		}
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		/* create a temporary bitmap to prepare the background before converting it */
 		if ((prebitmap = bitmap_alloc(256,4096)) == 0)
-		{
-			zaxxon_vh_stop();
 			return 1;
-		}
 	}
 	else
 		prebitmap = backgroundbitmap1;
@@ -212,26 +201,20 @@ int zaxxon_vh_start(void)
 	return 0;
 }
 
-int razmataz_vh_start(void)
+VIDEO_START( razmataz )
 {
 	int offs;
 
 
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = bitmap_alloc(256,4096)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap1 = auto_bitmap_alloc(256,4096)) == 0)
 		return 1;
-	}
 
-	if ((backgroundbitmap2 = bitmap_alloc(256,4096)) == 0)
-	{
-		zaxxon_vh_stop();
+	if ((backgroundbitmap2 = auto_bitmap_alloc(256,4096)) == 0)
 		return 1;
-	}
 
 
 	/* prepare the background */
@@ -261,19 +244,6 @@ int razmataz_vh_start(void)
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void zaxxon_vh_stop(void)
-{
-	if (backgroundbitmap1)  bitmap_free(backgroundbitmap1);
-	if (backgroundbitmap2)  bitmap_free(backgroundbitmap2);
-	generic_vh_stop();
-}
 
 
 /***************************************************************************
@@ -309,11 +279,26 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 			if (spriteram[offs+2] != 0xff)
 			{
+				int sx,sy,flipx,flipy;
+
+				sx = ((spriteram[offs+2+3] + 16) & 0xff) - 31;
+				sy = 255 - spriteram[offs+2] - 15;
+				flipx = spriteram[offs+2+2] & 0x80;
+				flipy = spriteram[offs+2+1] & 0x80;
+
+				if (flip_screen)
+				{
+					flipx = !flipx;
+					flipy = !flipy;
+					sx = 223 - sx;
+					sy = 224 - sy;
+				}
+
 				drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+2+1]& 0x7f,
 						spriteram[offs+2+2],
-						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
-						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
+						flipx,flipy,
+						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -324,11 +309,26 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 		{
 			if (spriteram[offs] != 0xff)
 			{
-					drawgfx(bitmap,Machine->gfx[2],
+				int sx,sy,flipx,flipy;
+
+				sx = ((spriteram[offs+3] + 16) & 0xff) - 32;
+				sy = 255 - spriteram[offs] - 16;
+				flipx = spriteram[offs+1] & 0x80;
+				flipy = spriteram[offs+1] & 0x80;
+
+				if (flip_screen)
+				{
+					flipx = !flipx;
+					flipy = !flipy;
+					sx = 223 - sx;
+					sy = 224 - sy;
+				}
+
+				drawgfx(bitmap,Machine->gfx[2],
 						spriteram[offs+1] & 0x7f,
 						spriteram[offs+2] & 0x3f,
-						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
-						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
+						flipx,flipy,
+						sx,sy,
 						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
@@ -366,7 +366,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( zaxxon )
 {
 	int offs;
 
@@ -393,7 +393,12 @@ void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 					scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 			}
 			else
-				scroll = (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7)) - 32;
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = 1024 + (zaxxon_background_position[0] + 256*zaxxon_background_position[1]) - 32;
+				else
+					scroll = (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7)) - 32;
+			}
 
 			skew = 128 - 512 + 2 * Machine->visible_area.min_x;
 
@@ -427,7 +432,12 @@ void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 							- backgroundbitmap1->height + 256;
 			}
 			else
-				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
+			{
+				if (zaxxon_vid_type == CONGO_VID)
+					scroll = -(2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])) - 2052;
+				else
+					scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
+			}
 
 			skew = 72 - (255 - Machine->visible_area.max_y);
 
@@ -486,7 +496,7 @@ void zaxxon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	}
 }
 
-void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( razmataz )
 {
 	int offs;
 
@@ -522,16 +532,22 @@ void razmataz_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		code = videoram[offs];
 		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
-void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( ixion )
 {
 	int offs;
 
@@ -563,10 +579,16 @@ void ixion_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		code = videoram[offs];
 		color =	(color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
 
+		if (flip_screen)
+		{
+			sx = 31 - sx;
+			sy = 31 - sy;
+		}
+
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}

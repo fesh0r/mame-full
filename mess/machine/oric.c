@@ -895,12 +895,12 @@ static WRITE_HANDLER(oric_jasmin_w)
 			wd179x_reset();
 			break;
 		case 0x0a:
-			logerror("jasmin overlay ram w: %02x PC: %04x\n",data,cpu_get_pc());
+			logerror("jasmin overlay ram w: %02x PC: %04x\n",data,activecpu_get_pc());
 			port_3fa_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
 		case 0x0b:
-			logerror("jasmin romdis w: %02x PC: %04x\n",data,cpu_get_pc());
+			logerror("jasmin romdis w: %02x PC: %04x\n",data,activecpu_get_pc());
 			port_3fb_w = data;
 			oric_jasmin_set_mem_0x0c000();
 			break;
@@ -1298,7 +1298,7 @@ void oric_init_machine (void)
 	
 	oric_is_telestrat = 0;
 
-	oric_ram_0x0c000 = malloc(16384);
+	oric_ram_0x0c000 = auto_malloc(16384);
 
 	disc_interface_id = readinputport(9) & 0x07;
 
@@ -1373,8 +1373,6 @@ void oric_shutdown_machine (void)
 	oric_dump_ram();
 #endif
 
-	if (oric_ram_0x0c000)
-		free(oric_ram_0x0c000);
 	oric_ram_0x0c000 = NULL;
 	wd179x_exit();
 
@@ -1810,19 +1808,19 @@ void telestrat_init_machine(void)
 
 	/* initialise overlay ram */
 	telestrat_blocks[0].MemType = TELESTRAT_MEM_BLOCK_RAM;
-	telestrat_blocks[0].ptr = (unsigned char *)malloc(16384);
+	telestrat_blocks[0].ptr = (unsigned char *) auto_malloc(16384);
 
 	telestrat_blocks[1].MemType = TELESTRAT_MEM_BLOCK_RAM;
-	telestrat_blocks[1].ptr = (unsigned char *)malloc(16384);
+	telestrat_blocks[1].ptr = (unsigned char *) auto_malloc(16384);
 	telestrat_blocks[2].MemType = TELESTRAT_MEM_BLOCK_RAM;
-	telestrat_blocks[2].ptr = (unsigned char *)malloc(16384);
+	telestrat_blocks[2].ptr = (unsigned char *) auto_malloc(16384);
 
 	/* initialise default cartridge */
 	telestrat_blocks[3].MemType = TELESTRAT_MEM_BLOCK_ROM;
 	telestrat_blocks[3].ptr = memory_region(REGION_CPU1)+0x010000;
 
 	telestrat_blocks[4].MemType = TELESTRAT_MEM_BLOCK_RAM;
-	telestrat_blocks[4].ptr = (unsigned char *)malloc(16384);
+	telestrat_blocks[4].ptr = (unsigned char *) auto_malloc(16384);
 
 	/* initialise default cartridge */
 	telestrat_blocks[5].MemType = TELESTRAT_MEM_BLOCK_ROM;
@@ -1861,13 +1859,7 @@ void	telestrat_shutdown_machine(void)
 	for (i=0; i<8; i++)
 	{
 		if (telestrat_blocks[i].MemType == TELESTRAT_MEM_BLOCK_RAM)
-		{
-			if (telestrat_blocks[i].ptr!=NULL)
-			{
-				free(telestrat_blocks[i].ptr);
-				telestrat_blocks[i].ptr = NULL;
-			}
-		}
+			telestrat_blocks[i].ptr = NULL;
 	}
 
 	oric_shutdown_machine();

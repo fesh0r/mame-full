@@ -36,11 +36,11 @@ WRITE_HANDLER( dynax_flipscreen_w )
 {
 	flip_screen_set( data & 1 );
 	if (data & ~1)
-		logerror("CPU#0 PC %06X: Warning, flip screen <- %02X\n", cpu_get_pc(), data);
+		logerror("CPU#0 PC %06X: Warning, flip screen <- %02X\n", activecpu_get_pc(), data);
 }
 
 /* 0 B01234 G01234 R01234 */
-void sprtmtch_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( sprtmtch )
 {
 	int i;
 
@@ -57,9 +57,10 @@ void sprtmtch_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		int r = BITSWAP5((x >>  0) & 0x1f);
 		int g = BITSWAP5((x >>  5) & 0x1f);
 		int b = BITSWAP5((x >> 10) & 0x1f);
-		palette[i * 3 + 0] =  (r << 3) | (r >> 2);
-		palette[i * 3 + 1] =  (g << 3) | (g >> 2);
-		palette[i * 3 + 2] =  (b << 3) | (b >> 2);
+		r =  (r << 3) | (r >> 2);
+		g =  (g << 3) | (g >> 2);
+		b =  (b << 3) | (b >> 2);
+		palette_set_color(i,r,g,b);
 	}
 }
 
@@ -375,41 +376,20 @@ WRITE_HANDLER( sprtmtch_blit_draw_w )
 
 ***************************************************************************/
 
-int dynax_vh_start(void)
+VIDEO_START( dynax )
 {
 	return 0;
 }
 
-int sprtmtch_vh_start(void)
+VIDEO_START( sprtmtch )
 {
-	if (!(dynax_pixmap[0][0] = malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[0][1] = malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][0] = malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[1][1] = malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][0] = malloc(256*256)))	return 1;
-	if (!(dynax_pixmap[2][1] = malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[0][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[0][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[1][1] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][0] = auto_malloc(256*256)))	return 1;
+	if (!(dynax_pixmap[2][1] = auto_malloc(256*256)))	return 1;
 	return 0;
-}
-
-void dynax_vh_stop(void)
-{
-}
-
-void sprtmtch_vh_stop(void)
-{
-	if (dynax_pixmap[0][0])	free(dynax_pixmap[0][0]);
-	if (dynax_pixmap[0][1])	free(dynax_pixmap[0][1]);
-	if (dynax_pixmap[1][0])	free(dynax_pixmap[1][0]);
-	if (dynax_pixmap[1][1])	free(dynax_pixmap[1][1]);
-	if (dynax_pixmap[2][0])	free(dynax_pixmap[2][0]);
-	if (dynax_pixmap[2][1])	free(dynax_pixmap[2][1]);
-
-	dynax_pixmap[0][0] = 0;	// multisession safety
-	dynax_pixmap[0][1] = 0;
-	dynax_pixmap[1][0] = 0;
-	dynax_pixmap[1][1] = 0;
-	dynax_pixmap[2][0] = 0;
-	dynax_pixmap[2][1] = 0;
 }
 
 /***************************************************************************
@@ -420,7 +400,7 @@ void sprtmtch_vh_stop(void)
 
 ***************************************************************************/
 
-void dynax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( dynax )
 {
 //	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }
@@ -480,7 +460,7 @@ void sprtmtch_copylayer(struct mame_bitmap *bitmap,int i)
 	}
 }
 
-void sprtmtch_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( sprtmtch )
 {
 #ifdef MAME_DEBUG
 #if 0

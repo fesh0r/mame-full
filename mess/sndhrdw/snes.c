@@ -235,7 +235,7 @@ void snesUnpackSample(int sample,int *length,int *looping)
 	*length=0;
 	*looping=0;
 
-	logerror("CPU -> %04X\n",cpu_get_pc());
+	logerror("CPU -> %04X\n",activecpu_get_pc());
 	logerror("Table Address = %04X\n",(int)(tableAddress));
 	logerror("Start Address = %04X\n",(int)(startAddress-SPCRamPtr));
 	logerror("Loop Address = %04X\n",(int)(loopAddress-SPCRamPtr));

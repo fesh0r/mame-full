@@ -5,7 +5,6 @@
 
 #define TC0100SCN_GFX_NUM 1
 
-void othunder_vh_stop(void);
 data16_t *othunder_ram;
 
 struct tempsprite
@@ -21,76 +20,37 @@ static struct tempsprite *spritelist;
 
 static int taito_hide_pixels;
 
+
+
 /**********************************************************/
 
-static int has_TC0110PCR(void)
-{
-	const struct Memory_WriteAddress16 *mwa;
-
-	/* scan the memory handlers and see if the TC0110PCR is used */
-
-	mwa = Machine->drv->cpu[0].memory_write;
-	if (mwa)
-	{
-		while (!IS_MEMPORT_END(mwa))
-		{
-			if (!IS_MEMPORT_MARKER(mwa))
-			{
-				if (mwa->handler == TC0110PCR_step1_rbswap_word_w)
-					return 1;
-			}
-			mwa++;
-		}
-	}
-
-	return 0;
-}
-
-
-static int othunder_core_vh_start (void)
+static VIDEO_START( othunder_core )
 {
 	/* Up to $800/8 big sprites, requires 0x100 * sizeof(*spritelist)
 	   Multiply this by 32 to give room for the number of small sprites,
 	   which are what actually get put in the structure. */
 
-	spritelist = malloc(0x2000 * sizeof(*spritelist));
+	spritelist = auto_malloc(0x2000 * sizeof(*spritelist));
 	if (!spritelist)
 		return 1;
 
 	if (TC0100SCN_vh_start(1,TC0100SCN_GFX_NUM,taito_hide_pixels,0,0,0,0,0,0))
-	{
-		othunder_vh_stop();
 		return 1;
-	}
 
 	if (has_TC0110PCR())
 		if (TC0110PCR_vh_start())
-		{
-			othunder_vh_stop();
 			return 1;
-		}
 
 	return 0;
 }
 
-int othunder_vh_start (void)
+VIDEO_START( othunder )
 {
 	/* There is a problem here. 4 is correct for text layer/sprite
 	   alignment, but the bg layers [or one of them] are wrong */
 
 	taito_hide_pixels = 4;
-	return (othunder_core_vh_start());
-}
-
-void othunder_vh_stop (void)
-{
-	free(spritelist);
-	spritelist = 0;
-
-	TC0100SCN_vh_stop();
-
-	if (has_TC0110PCR())
-		TC0110PCR_vh_stop();
+	return video_start_othunder_core();
 }
 
 
@@ -144,7 +104,7 @@ spriteram is being tested, take no notice of that.]
 ********************************************************/
 
 
-static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,int *primasks,int y_offs)
+static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,const struct rectangle *cliprect,int *primasks,int y_offs)
 {
 	data16_t *spritemap = (data16_t *)memory_region(REGION_USER1);
 	UINT16 tile_mask = (Machine->gfx[0]->total_elements) - 1;
@@ -250,7 +210,7 @@ static void othunder_draw_sprites_16x8(struct mame_bitmap *bitmap,int *primasks,
 						sprite_ptr->color,
 						sprite_ptr->flipx,sprite_ptr->flipy,
 						sprite_ptr->x,sprite_ptr->y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0,
+						cliprect,TRANSPARENCY_PEN,0,
 						sprite_ptr->zoomx,sprite_ptr->zoomy);
 			}
 		}
@@ -269,7 +229,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				sprite_ptr->color,
 				sprite_ptr->flipx,sprite_ptr->flipy,
 				sprite_ptr->x,sprite_ptr->y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0,
+				cliprect,TRANSPARENCY_PEN,0,
 				sprite_ptr->zoomx,sprite_ptr->zoomy,
 				sprite_ptr->primask);
 	}
@@ -280,7 +240,7 @@ logerror("Sprite number %04x had %02x invalid chunks\n",tilenum,bad_chunks);
 				SCREEN REFRESH
 **************************************************************/
 
-void othunder_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( othunder )
 {
 	int layer[3];
 
@@ -290,19 +250,19 @@ void othunder_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
-	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* Ensure screen blanked even when bottom layer not drawn due to disable bit */
-	fillbitmap(bitmap, Machine->pens[0], &Machine -> visible_area);
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	TC0100SCN_tilemap_draw(bitmap,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[1],0,2);
-	TC0100SCN_tilemap_draw(bitmap,0,layer[2],0,4);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,1);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	/* Sprites can be under/over the layer below text layer */
 	{
 		int primasks[2] = {0xf0,0xfc};
-		othunder_draw_sprites_16x8(bitmap,primasks,3);
+		othunder_draw_sprites_16x8(bitmap,cliprect,primasks,3);
 	}
 
 	/* See if we should draw artificial gun targets */
@@ -352,7 +312,7 @@ void othunder_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		screeny += 2;
 
 		/* player 1 */
-		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
+		draw_crosshair(bitmap,screenx,screeny,cliprect);
 
 		/* calculate p2 screen co-ords by matching routine at $AA48 */
 		rawx = othunder_ram[0x284c/2];
@@ -395,7 +355,7 @@ void othunder_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		screeny += 2;
 
 		/* player 2 */
-		draw_crosshair(bitmap,screenx,screeny,&Machine->visible_area);
+		draw_crosshair(bitmap,screenx,screeny,cliprect);
 	}
 }
 

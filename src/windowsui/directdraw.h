@@ -12,7 +12,11 @@
 
 #ifndef DIRECTDRAW_H
 #define DIRECTDRAW_H
-#undef bool //hack for the mingw compiler and mess code :(
+
+#ifdef __GNUC__
+#undef bool
+#endif
+
 #include <ddraw.h>
 
 #define MAXMODES    256 /* Maximum number of DirectDraw Display modes. */

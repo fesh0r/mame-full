@@ -992,7 +992,7 @@ static void scsi_check(void)
 READ16_HANDLER ( macplus_scsi_r )
 {
 #if LOG_SCSI
-	logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) cpu_get_pc());
+	logerror("macplus_scsi_r: offset=0x%08x pc=0x%08x\n", offset, (int) activecpu_get_pc());
 #endif
 
 	offset <<= 1;
@@ -1005,7 +1005,7 @@ READ16_HANDLER ( macplus_scsi_r )
 WRITE16_HANDLER ( macplus_scsi_w )
 {
 #if LOG_SCSI
-	logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) cpu_get_pc());
+	logerror("macplus_scsi_w: offset=0x%08x data=0x%04x pc=0x%08x\n", offset, data, (int) activecpu_get_pc());
 #endif
 
 	offset <<= 1;

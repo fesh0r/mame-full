@@ -12,31 +12,33 @@ extern data16_t *cave_videoregs;
 extern data16_t *cave_vram_0, *cave_vctrl_0;
 extern data16_t *cave_vram_1, *cave_vctrl_1;
 extern data16_t *cave_vram_2, *cave_vctrl_2;
+extern data16_t *cave_vram_3, *cave_vctrl_3;
 
 /* Functions defined in vidhrdw */
 
 WRITE16_HANDLER( cave_vram_0_w );
 WRITE16_HANDLER( cave_vram_1_w );
 WRITE16_HANDLER( cave_vram_2_w );
+WRITE16_HANDLER( cave_vram_3_w );
 
 WRITE16_HANDLER( cave_vram_0_8x8_w );
 WRITE16_HANDLER( cave_vram_1_8x8_w );
 WRITE16_HANDLER( cave_vram_2_8x8_w );
+WRITE16_HANDLER( cave_vram_3_8x8_w );
 
-void ddonpach_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void dfeveron_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void mazinger_vh_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+PALETTE_INIT( ddonpach );
+PALETTE_INIT( dfeveron );
+PALETTE_INIT( mazinger );
+PALETTE_INIT( sailormn );
 
-int cave_vh_start_16_16_16(void);
-int cave_vh_start_16_16_8(void);
-int cave_vh_start_16_16_0(void);
-int cave_vh_start_16_0_0(void);
-int cave_vh_start_8_8_0(void);
+VIDEO_START( cave_1_layer );
+VIDEO_START( cave_2_layers );
+VIDEO_START( cave_3_layers );
+VIDEO_START( cave_4_layers );
 
-int sailormn_vh_start_16_16_8(void);
+VIDEO_START( sailormn_3_layers );
 
-void cave_vh_stop(void);
 
-void cave_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( cave );
 
 void sailormn_tilebank_w( int bank );

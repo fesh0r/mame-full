@@ -5,6 +5,22 @@ Sky Kid	(c) Namco 1985
 
 Driver by Manuel Abadia <manu@teleline.es>
 
+****************************************************************************
+
+Notes for "Sky Kid" :
+
+In the "test mode", the "Flip Screen" Dip Switch is inverted :
+  - when set to "Off", you can read "FLIP ON"
+  - when set to "On" , you can read "FLIP OFF"
+Correct behavior or emulation bug ?
+
+
+Notes for "Dragon Buster" :
+
+When "Cabinet" Dip Switch is set to "Cockail", the screen is flipped for
+player 1 and normal for player 2 ! The controls are correct though.
+Correct behavior or emulation bug ?
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -16,26 +32,24 @@ static unsigned char *sharedram;
 extern unsigned char *skykid_textram, *spriteram, *skykid_videoram;
 
 /* from vidhrdw/skykid.c */
-int skykid_vh_start( void );
+VIDEO_START( skykid );
 READ_HANDLER( skykid_videoram_r );
 WRITE_HANDLER( skykid_videoram_w );
 WRITE_HANDLER( skykid_scroll_x_w );
 WRITE_HANDLER( skykid_scroll_y_w );
 WRITE_HANDLER( skykid_flipscreen_w );
-void skykid_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void drgnbstr_vh_screenrefresh( struct mame_bitmap *bitmap,int full_refresh );
-void skykid_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+VIDEO_UPDATE( skykid );
+VIDEO_UPDATE( drgnbstr );
+PALETTE_INIT( skykid );
 
 
 static int irq_disabled = 1;
 static int inputport_selected;
 
-static int skykid_interrupt( void )
+static INTERRUPT_GEN( skykid_interrupt )
 {
 	if (!irq_disabled)
-		return M6809_INT_IRQ;
-	else
-		return ignore_interrupt();
+		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 static WRITE_HANDLER( skykid_irq_ctrl_w )
@@ -213,15 +227,15 @@ INPUT_PORTS_START( skykid )
 
 	PORT_START	/* DSW B */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "2" )
 	PORT_DIPSETTING(    0x02, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "30k, 90k" )
-	PORT_DIPSETTING(    0x04, "20k, 80k" )
-	PORT_DIPSETTING(    0x08, "30k every 90k" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x0c, "20k every 80k" )
+	PORT_DIPSETTING(    0x08, "30k every 90k" )
+	PORT_DIPSETTING(    0x04, "20k and 80k" )
+	PORT_DIPSETTING(    0x00, "30k and 90k" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -231,9 +245,9 @@ INPUT_PORTS_START( skykid )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW C */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -257,10 +271,10 @@ INPUT_PORTS_START( skykid )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -307,12 +321,11 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x00, "Starting Vitality" )			// Difficulty ?
+	PORT_DIPSETTING(    0x0c, "160" )
+	PORT_DIPSETTING(    0x00, "128" )
+	PORT_DIPSETTING(    0x04, "96" )
+	PORT_DIPSETTING(    0x08, "64" )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -322,7 +335,7 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )			// Duplicated "Service Mode" ?
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -358,11 +371,11 @@ INPUT_PORTS_START( drgnbstr )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -450,142 +463,162 @@ static struct namco_interface namco_interface =
 	0					/* stereo */
 };
 
-static const struct MachineDriver machine_driver_skykid =
-{
+static MACHINE_DRIVER_START( skykid )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			49152000/32,	/* ??? */
-			skykid_readmem,skykid_writemem,0,0,
-			skykid_interrupt,1
-		},
-		{
-			CPU_HD63701,	/* or compatible 6808 with extra instructions */
-			49152000/32,	/* ??? */
-			mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
-			interrupt,1
-		}
-	},
-	60.606060,DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	100,	/* we need heavy synch */
-	0,
+	MDRV_CPU_ADD(M6809,49152000/32)	/* ??? */
+	MDRV_CPU_MEMORY(skykid_readmem,skykid_writemem)
+	MDRV_CPU_VBLANK_INT(skykid_interrupt,1)
+
+	MDRV_CPU_ADD(HD63701,49152000/32)	/* or compatible 6808 with extra instructions */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+	MDRV_CPU_PORTS(mcu_readport,mcu_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60.606060)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)	/* we need heavy synch */
 
 	/* video hardware */
-	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
-	gfxdecodeinfo,
-	256, 64*4+128*4+64*8,
-	skykid_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(36*8, 28*8)
+	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256)
+	MDRV_COLORTABLE_LENGTH(64*4+128*4+64*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	skykid_vh_start,
-	0,
-	skykid_vh_screenrefresh,
+	MDRV_PALETTE_INIT(skykid)
+	MDRV_VIDEO_START(skykid)
+	MDRV_VIDEO_UPDATE(skykid)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_NAMCO,
-			&namco_interface
-		}
-	}
-};
+	MDRV_SOUND_ADD(NAMCO, namco_interface)
+MACHINE_DRIVER_END
 
 
 ROM_START( skykid )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
-	ROM_LOAD( "sk2-6c.bin",   0x08000, 0x4000, 0xea8a5822 )
-	ROM_LOAD( "sk1-6b.bin",   0x0c000, 0x4000, 0x7abe6c6c )
-	ROM_LOAD( "sk3-6d.bin",   0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
+	ROM_LOAD( "sk1_2.6c",		0x08000, 0x4000, 0xea8a5822 )
+	ROM_LOAD( "sk1-1x.6b",		0x0c000, 0x4000, 0x7abe6c6c )
+	ROM_LOAD( "sk1_3.6d",		0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "sk4-3c.bin",   0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
-	ROM_LOAD( "sk1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "sk1_4.3c",		0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
+	ROM_LOAD( "sk1-mcu.bin",	0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
+																/* Using Pacland code (probably similar) */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk6-6l.bin",   0x00000, 0x2000, 0x58b731b9 )	/* chars */
+	ROM_LOAD( "sk1_6.6l",		0x00000, 0x2000, 0x58b731b9 )	/* chars */
 
 	ROM_REGION( 0x02000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk5-7e.bin",   0x00000, 0x2000, 0xc33a498e )
+	ROM_LOAD( "sk1_5.7e",		0x00000, 0x2000, 0xc33a498e )
 
 	ROM_REGION( 0x0a000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk9-10n.bin",  0x00000, 0x4000, 0x44bb7375 )	/* sprites */
-	ROM_LOAD( "sk7-10m.bin",  0x04000, 0x4000, 0x3454671d )
+	ROM_LOAD( "sk1_8.10n",		0x00000, 0x4000, 0x44bb7375 )	/* sprites */
+	ROM_LOAD( "sk1_7.10m",		0x04000, 0x4000, 0x3454671d )
 	/* empty space to decode the sprites as 3bpp */
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 )
-	ROM_LOAD( "sk1-2n.bin",   0x0000, 0x0100, 0x0218e726 )	/* red component */
-	ROM_LOAD( "sk2-2p.bin",   0x0100, 0x0100, 0xfc0d5b85 )	/* green component */
-	ROM_LOAD( "sk3-2r.bin",   0x0200, 0x0100, 0xd06b620b )	/* blue component */
-	ROM_LOAD( "sk-5n.bin",    0x0300, 0x0200, 0xc697ac72 )	/* tiles lookup table */
-	ROM_LOAD( "sk-6n.bin",    0x0500, 0x0200, 0x161514a4 )	/* sprites lookup table */
+	ROM_LOAD( "sk1-1.2n",		0x0000, 0x0100, 0x0218e726 )	/* red component */
+	ROM_LOAD( "sk1-2.2p",		0x0100, 0x0100, 0xfc0d5b85 )	/* green component */
+	ROM_LOAD( "sk1-3.2r",		0x0200, 0x0100, 0xd06b620b )	/* blue component */
+	ROM_LOAD( "sk1-4.5n",		0x0300, 0x0200, 0xc697ac72 )	/* tiles lookup table */
+	ROM_LOAD( "sk1-5.6n",		0x0500, 0x0200, 0x161514a4 )	/* sprites lookup table */
 ROM_END
 
-ROM_START( skykidb )
+ROM_START( skykido )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
-	ROM_LOAD( "sk2-6c.bin",   0x08000, 0x4000, 0xea8a5822 )
-	ROM_LOAD( "sk1",          0x0c000, 0x4000, 0x070a49d4 )
-	ROM_LOAD( "sk3-6d.bin",   0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
+	ROM_LOAD( "sk1_2.6c",		0x08000, 0x4000, 0xea8a5822 )
+	ROM_LOAD( "sk1_1.6b",		0x0c000, 0x4000, 0x070a49d4 )
+	ROM_LOAD( "sk1_3.6d",		0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "sk4-3c.bin",   0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
-	ROM_LOAD( "sk1-mcu.bin",  0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "sk1_4.3c",		0x8000, 0x2000, 0xa460d0e0 )	/* subprogram for the MCU */
+	ROM_LOAD( "sk1-mcu.bin",	0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
+																/* Using Pacland code (probably similar) */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk6-6l.bin",   0x00000, 0x2000, 0x58b731b9 )	/* chars */
+	ROM_LOAD( "sk1_6.6l",		0x00000, 0x2000, 0x58b731b9 )	/* chars */
 
 	ROM_REGION( 0x02000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk5-7e.bin",   0x00000, 0x2000, 0xc33a498e )
+	ROM_LOAD( "sk1_5.7e",		0x00000, 0x2000, 0xc33a498e )
 
 	ROM_REGION( 0x0a000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "sk9-10n.bin",  0x00000, 0x4000, 0x44bb7375 )	/* sprites */
-	ROM_LOAD( "sk7-10m.bin",  0x04000, 0x4000, 0x3454671d )
+	ROM_LOAD( "sk1_8.10n",		0x00000, 0x4000, 0x44bb7375 )	/* sprites */
+	ROM_LOAD( "sk1_7.10m",		0x04000, 0x4000, 0x3454671d )
 	/* empty space to decode the sprites as 3bpp */
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 )
-	ROM_LOAD( "sk1-2n.bin",   0x0000, 0x0100, 0x0218e726 )	/* red component */
-	ROM_LOAD( "sk2-2p.bin",   0x0100, 0x0100, 0xfc0d5b85 )	/* green component */
-	ROM_LOAD( "sk3-2r.bin",   0x0200, 0x0100, 0xd06b620b )	/* blue component */
-	ROM_LOAD( "sk-5n.bin",    0x0300, 0x0200, 0xc697ac72 )	/* tiles lookup table */
-	ROM_LOAD( "sk-6n.bin",    0x0500, 0x0200, 0x161514a4 )	/* sprites lookup table */
+	ROM_LOAD( "sk1-1.2n",		0x0000, 0x0100, 0x0218e726 )	/* red component */
+	ROM_LOAD( "sk1-2.2p",		0x0100, 0x0100, 0xfc0d5b85 )	/* green component */
+	ROM_LOAD( "sk1-3.2r",		0x0200, 0x0100, 0xd06b620b )	/* blue component */
+	ROM_LOAD( "sk1-4.5n",		0x0300, 0x0200, 0xc697ac72 )	/* tiles lookup table */
+	ROM_LOAD( "sk1-5.6n",		0x0500, 0x0200, 0x161514a4 )	/* sprites lookup table */
+ROM_END
+
+ROM_START( skykidd )
+	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
+	ROM_LOAD( "sk1_2x.6c",		0x08000, 0x4000, 0x8370671a )
+	ROM_LOAD( "sk1_1.6b",		0x0c000, 0x4000, 0x070a49d4 )
+	ROM_LOAD( "sk1_3.6d",		0x10000, 0x4000, 0x314b8765 )	/* banked ROM */
+
+	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
+	ROM_LOAD( "sk1_4x.3c",		0x8000, 0x2000, 0x887137cc )	/* subprogram for the MCU */
+	ROM_LOAD( "sk1-mcu.bin",	0xf000, 0x1000, 0x6ef08fb3 )	/* MCU internal code */
+																/* Using Pacland code (probably similar) */
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sk1_6.6l",		0x00000, 0x2000, 0x58b731b9 )	/* chars */
+
+	ROM_REGION( 0x02000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sk1_5.7e",		0x00000, 0x2000, 0xc33a498e )
+
+	ROM_REGION( 0x0a000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "sk1_8.10n",		0x00000, 0x4000, 0x44bb7375 )	/* sprites */
+	ROM_LOAD( "sk1_7.10m",		0x04000, 0x4000, 0x3454671d )
+	/* empty space to decode the sprites as 3bpp */
+
+	ROM_REGION( 0x0700, REGION_PROMS, 0 )
+	ROM_LOAD( "sk1-1.2n",		0x0000, 0x0100, 0x0218e726 )	/* red component */
+	ROM_LOAD( "sk1-2.2p",		0x0100, 0x0100, 0xfc0d5b85 )	/* green component */
+	ROM_LOAD( "sk1-3.2r",		0x0200, 0x0100, 0xd06b620b )	/* blue component */
+	ROM_LOAD( "sk1-4.5n",		0x0300, 0x0200, 0xc697ac72 )	/* tiles lookup table */
+	ROM_LOAD( "sk1-5.6n",		0x0500, 0x0200, 0x161514a4 )	/* sprites lookup table */
 ROM_END
 
 ROM_START( drgnbstr )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 ) /* 6809 code */
-	ROM_LOAD( "6c.bin",		0x08000, 0x04000, 0x0f11cd17 )
-	ROM_LOAD( "6b.bin",		0x0c000, 0x04000, 0x1c7c1821 )
-	ROM_LOAD( "6d.bin",		0x10000, 0x04000, 0x6da169ae )	/* banked ROM */
+	ROM_LOAD( "db1_2b.6c",		0x08000, 0x04000, 0x0f11cd17 )
+	ROM_LOAD( "db1_1.6b",		0x0c000, 0x04000, 0x1c7c1821 )
+	ROM_LOAD( "db1_3.6d",		0x10000, 0x04000, 0x6da169ae )	/* banked ROM */
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "3c.bin",		0x8000, 0x02000, 0x8a0b1fc1 )	/* subprogram for the MCU */
-	ROM_LOAD( "pl1-mcu.bin",0xf000,	0x01000, 0x6ef08fb3 )	/* The MCU internal code is missing */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "db1_4.3c",		0x8000, 0x02000, 0x8a0b1fc1 )	/* subprogram for the MCU */
+	ROM_LOAD( "pl1-mcu.bin",	0xf000,	0x01000, 0x6ef08fb3 )	/* The MCU internal code is missing */
+																/* Using Pacland code (probably similar) */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "6l.bin",		0x00000, 0x2000, 0xc080b66c )	/* tiles */
+	ROM_LOAD( "db1_6.6l",		0x00000, 0x2000, 0xc080b66c )	/* tiles */
 
 	ROM_REGION( 0x02000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "7e.bin",		0x00000, 0x2000, 0x28129aed )
+	ROM_LOAD( "db1_5.7e",		0x00000, 0x2000, 0x28129aed )
 
 	ROM_REGION( 0x0a000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "10n.bin",	0x00000, 0x4000, 0x11942c61 )	/* sprites */
-	ROM_LOAD( "10m.bin",	0x04000, 0x4000, 0xcc130fe2 )
+	ROM_LOAD( "db1_8.10n",		0x00000, 0x4000, 0x11942c61 )	/* sprites */
+	ROM_LOAD( "db1_7.10m",		0x04000, 0x4000, 0xcc130fe2 )
 		/* empty space to decode the sprites as 3bpp */
 
 	ROM_REGION( 0x0700, REGION_PROMS, 0 )
-	ROM_LOAD( "2n.bin",		0x00000, 0x0100, 0x3f8cce97 )	/* red component */
-	ROM_LOAD( "2p.bin",		0x00100, 0x0100, 0xafe32436 )	/* green component */
-	ROM_LOAD( "2r.bin",		0x00200, 0x0100, 0xc95ff576 )	/* blue component */
-	ROM_LOAD( "db1-4.5n",	0x00300, 0x0200, 0xb2180c21 )	/* tiles lookup table */
-	ROM_LOAD( "db1-5.6n",	0x00500, 0x0200, 0x5e2b3f74 )	/* sprites lookup table */
+	ROM_LOAD( "db1-1.2n",		0x00000, 0x0100, 0x3f8cce97 )	/* red component */
+	ROM_LOAD( "db1-2.2p",		0x00100, 0x0100, 0xafe32436 )	/* green component */
+	ROM_LOAD( "db1-3.2r",		0x00200, 0x0100, 0xc95ff576 )	/* blue component */
+	ROM_LOAD( "db1-4.5n",		0x00300, 0x0200, 0xb2180c21 )	/* tiles lookup table */
+	ROM_LOAD( "db1-5.6n",		0x00500, 0x0200, 0x5e2b3f74 )	/* sprites lookup table */
 ROM_END
 
 
 
-GAME( 1985, skykid,   0,      skykid, skykid,   0, ROT0, "Namco", "Sky Kid (set 1)" )
-GAME( 1985, skykidb,  skykid, skykid, skykid,   0, ROT0, "Namco", "Sky Kid (set 2)" )
+GAME( 1985, skykid,   0,      skykid, skykid,   0, ROT0, "Namco", "Sky Kid (New Ver.)" )
+GAME( 1985, skykido,  skykid, skykid, skykid,   0, ROT0, "Namco", "Sky Kid (Old Ver.)" )
+GAMEX(1985, skykidd,  skykid, skykid, skykid,   0, ROT0, "Namco", "Sky Kid (60A1 Ver.)", GAME_NOT_WORKING )
 GAME( 1984, drgnbstr, 0,      skykid, drgnbstr, 0, ROT0, "Namco", "Dragon Buster" )

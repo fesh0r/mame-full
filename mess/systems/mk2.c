@@ -265,7 +265,7 @@ static RRIOT_CONFIG riot={
 
 void init_mk2(void)
 {
-	rriot_config(0,&riot);
+	rriot_init(0,&riot);
 }
 
 CONS( 1979,	mk2,	0, 		mk2,	mk2,	mk2,	  "Quelle International",  "Chess Champion MK II")

@@ -71,7 +71,7 @@ int kim1_vh_start (void)
 		backdrop_load(backdrop_name, 21);
 	}
 
-    if (generic_vh_start () != 0)
+    if (video_start_generic () != 0)
         return 1;
 
     return 0;
@@ -80,7 +80,6 @@ int kim1_vh_start (void)
 void kim1_vh_stop (void)
 {
     videoram = NULL;
-    generic_vh_stop ();
 }
 
 void kim1_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)

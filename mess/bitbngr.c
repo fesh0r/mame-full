@@ -5,6 +5,8 @@
 #include "bitbngr.h"
 #include "printer.h"
 
+static void bitbanger_overthreshhold(int id);
+
 struct bitbanger_info
 {
 	const struct bitbanger_config *config;
@@ -39,7 +41,7 @@ int bitbanger_init(int id, const struct bitbanger_config *config)
 	bi->last_pulse_time = 0.0;
 	bi->recorded_pulses = 0;
 	bi->value = config->initial_value;
-	bi->timeout_timer = NULL;
+	bi->timeout_timer = timer_alloc(bitbanger_overthreshhold);
 	bi->over_threshhold = 1;
 
 	bitbangers[id] = bi;
@@ -106,7 +108,7 @@ static void bitbanger_overthreshhold(int id)
 	bitbanger_addpulse(id, bi, timer_get_time() - bi->last_pulse_time);
 	bi->over_threshhold = 1;
 	bi->recorded_pulses = 0;
-	bi->timeout_timer = NULL;
+	bi->timeout_timer = timer_alloc(bitbanger_overthreshhold);
 }
 
 void bitbanger_output(int id, int value)
@@ -136,10 +138,7 @@ void bitbanger_output(int id, int value)
 
 		/* update timeout timer */
 		/* remove timeout timer, if need be */
-		if (bi->timeout_timer)
-			timer_reset(bi->timeout_timer, bi->config->pulse_threshhold);
-		else
-			bi->timeout_timer = timer_set(bi->config->pulse_threshhold, id, bitbanger_overthreshhold);
+		timer_reset(bi->timeout_timer, bi->config->pulse_threshhold);
 	}
 }
 

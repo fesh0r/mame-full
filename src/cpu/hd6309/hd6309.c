@@ -792,7 +792,7 @@ int hd6309_execute(int cycles)	/* NS 970908 */
 			hd6309.ireg = ROP(PCD);
 			PC++;
 
-#if BIG_SWITCH
+#ifdef BIG_SWITCH
 			switch( hd6309.ireg )
 			{
 			case 0x00: neg_di();   				break;

@@ -356,8 +356,8 @@ static struct MachineDriver machine_driver_svision =
 
 	VIDEO_TYPE_RASTER,	/* lcd */
 	0,						/* obsolete */
-	0,// generic_vh_start,
-	0,//generic_vh_stop,
+	0,// video_start_generic,
+	0,
 	svision_vh_screenrefresh,
 
 	/* sound hardware */

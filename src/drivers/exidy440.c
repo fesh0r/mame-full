@@ -1,14 +1,13 @@
 /***************************************************************************
 
-	Exidy 440 system
+	Exidy 440 hardware
 
     driver by Aaron Giles
-
 
 	Currently implemented:
 		* Crossbow
 		* Cheyenne
-		* Combat
+		* Combat/Catch-22
 		* Crackshot
 		* Chiller
 		* Top Secret
@@ -217,6 +216,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "exidy440.h"
 
 
 /* globals */
@@ -236,49 +236,6 @@ static UINT8 last_coins;
 static UINT8 showdown_bank_triggered;
 
 
-/* sound driver data & functions */
-extern UINT8 exidy440_sound_command;
-extern UINT8 exidy440_sound_command_ack;
-extern UINT8 *exidy440_m6844_data;
-extern UINT8 *exidy440_sound_banks;
-extern UINT8 *exidy440_sound_volume;
-
-int exidy440_sh_start(const struct MachineSound *msound);
-void exidy440_sh_stop(void);
-void exidy440_sh_update(void);
-int exidy440_sound_interrupt(void);
-
-READ_HANDLER( exidy440_m6844_r );
-WRITE_HANDLER( exidy440_m6844_w );
-READ_HANDLER( exidy440_sound_command_r );
-WRITE_HANDLER( exidy440_sound_volume_w );
-WRITE_HANDLER( exidy440_sound_interrupt_clear_w );
-
-
-/* video driver data & functions */
-extern UINT8 *spriteram;
-extern UINT8 *exidy440_imageram;
-extern UINT8 *exidy440_scanline;
-extern UINT8 exidy440_firq_vblank;
-extern UINT8 exidy440_firq_beam;
-extern UINT8 topsecex_yscroll;
-
-int exidy440_vh_start(void);
-void exidy440_vh_stop(void);
-void exidy440_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void topsecex_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-int exidy440_vblank_interrupt(void);
-
-READ_HANDLER( exidy440_videoram_r );
-WRITE_HANDLER( exidy440_videoram_w );
-READ_HANDLER( exidy440_paletteram_r );
-WRITE_HANDLER( exidy440_paletteram_w );
-WRITE_HANDLER( exidy440_control_w );
-READ_HANDLER( exidy440_vertical_pos_r );
-READ_HANDLER( exidy440_horizontal_pos_r );
-WRITE_HANDLER( exidy440_interrupt_clear_w );
-
-
 
 /*************************************
  *
@@ -286,7 +243,7 @@ WRITE_HANDLER( exidy440_interrupt_clear_w );
  *
  *************************************/
 
-static void nvram_handler(void *file,int read_or_write)
+static NVRAM_HANDLER( exidy440 )
 {
 	if (read_or_write)
 		/* the EEROM lives in the uppermost 8k of the top bank */
@@ -327,15 +284,15 @@ static void handle_coins(void)
 }
 
 
-static int main_interrupt(void)
+static INTERRUPT_GEN( main_interrupt )
 {
 	/* generate coin interrupts */
 	handle_coins();
-	return exidy440_vblank_interrupt();
+	exidy440_vblank_interrupt();
 }
 
 
-static void init_machine(void)
+MACHINE_INIT( exidy440 )
 {
 	exidy440_bank = 0;
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000]);
@@ -605,7 +562,7 @@ MEMORY_END
 
 static MEMORY_WRITE_START( writemem_cpu1 )
 	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
-	{ 0x2000, 0x209f, MWA_RAM, &spriteram },
+	{ 0x2000, 0x209f, exidy440_spriteram_w, &spriteram },
 	{ 0x20a0, 0x29ff, MWA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_w },
 	{ 0x2b01, 0x2b01, exidy440_interrupt_clear_w },
@@ -762,6 +719,46 @@ INPUT_PORTS_START( combat )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x04, "4" )
 	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x10, "Hardest" )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START 				/* audio board dips */
+	COINAGE
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START				/* start button */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* coin counters */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START				/* fake analog X */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 50, 10, 0, 255 )
+
+	PORT_START				/* fake analog Y */
+	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 255 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( catch22 )
+	PORT_START				/* player inputs and logic board dips */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(    0x00, "7" )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
 	PORT_DIPSETTING(    0x30, "Normal" )
@@ -1089,92 +1086,38 @@ static struct CustomSound_interface custom_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_exidy440 =
-{
+static MACHINE_DRIVER_START( exidy440 )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			12979200/8,                     /* 12MHz/8 */
-			readmem_cpu1,writemem_cpu1,0,0,
-			main_interrupt,1
-		},
-		{
-			CPU_M6809 | CPU_AUDIO_CPU,
-			12979200/4/4,                   /* 12MHz/4 into XTAL, which is 4x clock */
-			readmem_cpu2,writemem_cpu2,0,0,
-			exidy440_sound_interrupt,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M6809,12979200/8)
+	MDRV_CPU_MEMORY(readmem_cpu1,writemem_cpu1)
+	MDRV_CPU_VBLANK_INT(main_interrupt,1)
+
+	MDRV_CPU_ADD(M6809,12979200/4/4)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(readmem_cpu2,writemem_cpu2)
+	MDRV_CPU_VBLANK_INT(irq0_line_assert,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(exidy440)
+	MDRV_NVRAM_HANDLER(exidy440)
 
 	/* video hardware */
-	320, 240, { 0, 319, 0, 239 },
-	0,
-	256,0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_PALETTE_LENGTH(256)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	exidy440_vh_start,
-	exidy440_vh_stop,
-	exidy440_vh_screenrefresh,
+	MDRV_VIDEO_START(exidy440)
+	MDRV_VIDEO_EOF(exidy440)
+	MDRV_VIDEO_UPDATE(exidy440)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_CUSTOM,
-			&custom_interface
-		}
-	},
-
-	nvram_handler
-};
-
-
-
-/*************************************
- *
- *	Driver initialization
- *
- *************************************/
-
-#define SET_PARAMS(top,p0,p2,p3,mv,mt,cpr) \
-	exidy440_topsecret 		= top;\
-	port_0_xor 				= p0;\
-	port_2_xor 				= p2;\
-	port_3_xor				= p3;\
-	mirror_vblank_bit 		= mv;\
-	mirror_trigger_bit 		= mt;\
-	copy_protection_read 	= cpr
-
-static void init_crossbow(void) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
-static void init_cheyenne(void) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
-static void init_combat  (void)   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
-static void init_cracksht(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_claypign(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
-static void init_chiller (void)  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_topsecex(void) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
-static void init_hitnmiss(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
-static void init_whodunit(void) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
-static void init_showdown(void)
-{
-	SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00);
-
-	/* set up the fake PLD */
-	showdown_bank_triggered = 0;
-	install_mem_read_handler(0, 0x4055, 0x4055, showdown_pld_trigger_r);
-	install_mem_read_handler(0, 0x40ed, 0x40ed, showdown_pld_select1_r);
-	install_mem_read_handler(0, 0x5243, 0x5243, showdown_pld_select2_r);
-
-	/* ensure that we're triggered to bank "1" to start */
-	exidy440_bank = 0;
-	showdown_pld_trigger_r(0);
-	showdown_pld_select1_r(0);
-}
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(CUSTOM, custom_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -1301,6 +1244,54 @@ ROM_START( combat )
 	ROM_LOAD( "3a",   0x0a000, 0x2000, 0x59ae51a7 )
 	ROM_LOAD( "4a",   0x0c000, 0x2000, 0x95a1f3d0 )
 	ROM_LOAD( "6a",   0x0e000, 0x2000, 0xaf3fef5f )
+	ROM_LOAD( "6d",   0x26000, 0x2000, 0x43d3eb61 )
+	ROM_LOAD( "7d",   0x28000, 0x2000, 0xef31659c )
+	ROM_LOAD( "8d",   0x2a000, 0x2000, 0xfb29c5cd )
+	ROM_LOAD( "10d",  0x2c000, 0x2000, 0x2ca0eaa4 )
+	ROM_LOAD( "11d",  0x2e000, 0x2000, 0xcc9f2001 )
+	ROM_LOAD( "1c",   0x30000, 0x2000, 0xb7b9c5ad )
+	ROM_LOAD( "3c",   0x32000, 0x2000, 0xb700e6ec )
+	ROM_LOAD( "4c",   0x34000, 0x2000, 0x89fc2b2d )
+	ROM_LOAD( "6c",   0x36000, 0x2000, 0x6a8d0dcf )
+	ROM_LOAD( "7c",   0x38000, 0x2000, 0x9df7172d )
+	ROM_LOAD( "8c",   0x3a000, 0x2000, 0x63b2e4f3 )
+	ROM_LOAD( "10c",  0x3c000, 0x2000, 0x3b430adc )
+	ROM_LOAD( "11c",  0x3e000, 0x2000, 0x04301032 )
+	ROM_LOAD( "1b",   0x40000, 0x2000, 0x70e25cae )
+	ROM_LOAD( "3b",   0x42000, 0x2000, 0xd09d167e )
+	ROM_LOAD( "4b",   0x44000, 0x2000, 0xf46aba0d )
+	ROM_LOAD( "6b",   0x46000, 0x2000, 0x8eb46f40 )
+	ROM_LOAD( "7b",   0x48000, 0x2000, 0x3be9b1bd )
+	ROM_LOAD( "8b",   0x4a000, 0x2000, 0xae977f4c )
+	ROM_LOAD( "10b",  0x4c000, 0x2000, 0x502da003 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "1h",  0x0e000, 0x2000, 0x8f3dd350 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "2k", 		 0x00000, 0x2000, 0x1c9df8b5 )
+	ROM_LOAD( "2l", 		 0x02000, 0x2000, 0x6b733306 )
+	ROM_LOAD( "2m", 		 0x04000, 0x2000, 0xdc074733 )
+	ROM_LOAD( "2n", 		 0x06000, 0x2000, 0x7985867f )
+	ROM_LOAD( "2p",  		 0x08000, 0x2000, 0x88684dcf )
+	ROM_LOAD( "2r", 		 0x0a000, 0x2000, 0x5857321e )
+	ROM_LOAD( "2s", 		 0x0c000, 0x2000, 0x371e5235 )
+	ROM_LOAD( "2t",  		 0x0e000, 0x2000, 0x7ae65f05 )
+	ROM_LOAD( "1k",   	 0x10000, 0x2000, 0xf748ea87 )
+	ROM_LOAD( "xba-1.2s", 0x16000, 0x2000, 0x14dd8993 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1n", 0x18000, 0x2000, 0x2e855698 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1p", 0x1a000, 0x2000, 0x788bfac6 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.2l", 0x1c000, 0x2000, 0x2c24cb35 )	/* from Crossbow */
+	ROM_LOAD( "xba-1.1t", 0x1e000, 0x2000, 0x5f41c282 )	/* from Crossbow */
+ROM_END
+
+
+ROM_START( catch22 )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus lots of banked ROMs */
+	ROM_LOAD( "22l-8_0.1a",   0x08000, 0x2000, 0x232e8723 )
+	ROM_LOAD( "22l-8_0.3a",   0x0a000, 0x2000, 0xa94afce6 )
+	ROM_LOAD( "22l-8_0.4a",   0x0c000, 0x2000, 0x0983ab83 )
+	ROM_LOAD( "22l-8_0.6a",   0x0e000, 0x2000, 0x9084a23a )
 	ROM_LOAD( "6d",   0x26000, 0x2000, 0x43d3eb61 )
 	ROM_LOAD( "7d",   0x28000, 0x2000, 0xef31659c )
 	ROM_LOAD( "8d",   0x2a000, 0x2000, 0xfb29c5cd )
@@ -1745,6 +1736,48 @@ ROM_END
 
 /*************************************
  *
+ *	Driver initialization
+ *
+ *************************************/
+
+#define SET_PARAMS(top,p0,p2,p3,mv,mt,cpr) \
+	exidy440_topsecret 		= top;\
+	port_0_xor 				= p0;\
+	port_2_xor 				= p2;\
+	port_3_xor				= p3;\
+	mirror_vblank_bit 		= mv;\
+	mirror_trigger_bit 		= mt;\
+	copy_protection_read 	= cpr
+
+static DRIVER_INIT( crossbow ) { SET_PARAMS(0, 0x00, 0x00, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( cheyenne ) { SET_PARAMS(0, 0xff, 0x00, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( combat )   { SET_PARAMS(0, 0xff, 0xff, 0x00, 0, 0, 0x00); }
+static DRIVER_INIT( cracksht ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( claypign ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x76); }
+static DRIVER_INIT( chiller )  { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( topsecex ) { SET_PARAMS(1, 0xff, 0xff, 0x04, 0, 0, 0x00); }
+static DRIVER_INIT( hitnmiss ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 1, 0x00); }
+static DRIVER_INIT( whodunit ) { SET_PARAMS(0, 0xff, 0xff, 0x04, 1, 0, 0x00); }
+static DRIVER_INIT( showdown )
+{
+	SET_PARAMS(0, 0xff, 0xff, 0x04, 0, 0, 0x00);
+
+	/* set up the fake PLD */
+	showdown_bank_triggered = 0;
+	install_mem_read_handler(0, 0x4055, 0x4055, showdown_pld_trigger_r);
+	install_mem_read_handler(0, 0x40ed, 0x40ed, showdown_pld_select1_r);
+	install_mem_read_handler(0, 0x5243, 0x5243, showdown_pld_select2_r);
+
+	/* ensure that we're triggered to bank "1" to start */
+	exidy440_bank = 0;
+	showdown_pld_trigger_r(0);
+	showdown_pld_select1_r(0);
+}
+
+
+
+/*************************************
+ *
  *	Game drivers
  *
  *************************************/
@@ -1752,6 +1785,7 @@ ROM_END
 GAME( 1983, crossbow, 0,        exidy440, crossbow, crossbow, ROT0, "Exidy", "Crossbow (version 2.0)" )
 GAME( 1984, cheyenne, 0,        exidy440, cheyenne, cheyenne, ROT0, "Exidy", "Cheyenne (version 1.0)" )
 GAME( 1985, combat,   0,        exidy440, combat,   combat,   ROT0, "Exidy", "Combat (version 3.0)" )
+GAME( 1985, catch22,  combat,   exidy440, catch22,  combat,   ROT0, "Exidy", "Catch-22 (version 8.0)" )
 GAME( 1985, cracksht, 0,        exidy440, cracksht, cracksht, ROT0, "Exidy", "Crackshot (version 2.0)" )
 GAME( 1986, claypign, 0,        exidy440, claypign, claypign, ROT0, "Exidy", "Clay Pigeon (version 2.0)" )
 GAME( 1986, chiller,  0,        exidy440, chiller,  chiller,  ROT0, "Exidy", "Chiller (version 3.0)" )

@@ -147,11 +147,12 @@ int nes_init_cart (int id);
 int nes_load_disk (int id);
 void nes_exit_disk(int id);
 
+extern MACHINE_INIT( nes );
+extern MACHINE_STOP( nes );
+
 void init_nes (void);
 void init_nespal (void);
-void nes_init_machine (void);
-void nes_stop_machine (void);
-int nes_interrupt (void);
+void nes_interrupt (void);
 UINT32 nes_partialcrc(const unsigned char *,unsigned int);
 READ_HANDLER  ( nes_ppu_r );
 READ_HANDLER  ( nes_IN0_r );
@@ -165,11 +166,13 @@ READ_HANDLER  ( nes_mid_mapper_r );
 WRITE_HANDLER ( nes_mapper_w );
 
 /* vidhrdw/nes.c */
-void nes_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom);
-int nes_vh_start (void);
-void nes_vh_stop (void);
+extern PALETTE_INIT( nes );
+extern VIDEO_START( nes );
+extern VIDEO_STOP( nes );
+extern VIDEO_UPDATE( nes );
+
 void nes_vh_renderscanline (int scanline);
-void nes_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
+
 WRITE_HANDLER ( nes_vh_sprite_dma_w );
 
 #endif

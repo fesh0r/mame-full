@@ -253,7 +253,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 
 					{
 						const char **samplenames = 0;
-						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
+/*						for (j = 0;drivers[i]->drv->sound[j].sound_type && j < MAX_SOUND; j++)
 						{
 
 						#if (HAS_SAMPLES)
@@ -264,7 +264,7 @@ void list_mess_info(char *gamename, char *arg, int listclones)
 							}
 						#endif
 						}
-						if (drivers[i]->flags & GAME_NO_SOUND)
+*/						if (drivers[i]->flags & GAME_NO_SOUND)
 							printf("|   No  ");
 						else if (drivers[i]->flags & GAME_IMPERFECT_SOUND)
 						{

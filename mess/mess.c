@@ -590,7 +590,7 @@ static int ram_init(const struct GameDriver *gamedrv)
 		mess_ram_size = ram_default(gamedrv);
 	}
 	/* if we have RAM, allocate it */
-	if (mess_ram_size >= 0)
+	if (mess_ram_size > 0)
 	{
 		mess_ram = (UINT8 *) auto_malloc(mess_ram_size);
 		if (!mess_ram)
@@ -1091,6 +1091,7 @@ enum
 	TESTERROR_INITDEVICESFAILED	= -1
 };
 
+#if 0
 static int try_driver(const struct GameDriver *gamedrv)
 {
 	int i;
@@ -1122,6 +1123,7 @@ static int try_driver(const struct GameDriver *gamedrv)
 
 	return 0;
 }
+#endif
 
 void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype))
 {
@@ -1136,11 +1138,13 @@ void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderima
 	options.image_count = 0;
 
 	/* try running with no attached devices */
+#if 0
 	error = try_driver(gamedrv);
 	if (gamedrv->flags & GAME_COMPUTER)
 		assert(error >= 0);	/* computers should succeed when ran with no attached devices */
 	else
 		assert(error <= 0);	/* consoles can fail; but should never fail due to a no roms error */
+#endif
 
 	/* restore old options */
 	memcpy(&options, &saved_options, sizeof(options));

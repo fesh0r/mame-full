@@ -481,342 +481,156 @@ static struct Wave_interface d_wave_interface = {
 	{ 25 }		/* mixing levels */
 };
 
-static struct MachineDriver machine_driver_dragon32 =
-{
+static MACHINE_DRIVER_START( dragon32 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			coco_readmem,coco_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	dragon32_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( dragon32 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,							/* screen width */
-	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,											/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	M6847_VIDEO_TYPE,
-	0,
-	dragon_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847( dragon )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_dragon64 =
-{
+static MACHINE_DRIVER_START( dragon64 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			d64_readmem,d64_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	dragon64_init_machine,
-	dragon64_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( dragon64 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,							/* screen width */
-	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,											/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	M6847_VIDEO_TYPE,
-	0,
-	dragon_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847( dragon )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_coco =
-{
+static MACHINE_DRIVER_START( coco )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			coco_readmem,coco_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	coco_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( coco )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,							/* screen width */
-	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,											/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	M6847_VIDEO_TYPE,
-	0,
-	dragon_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847( dragon )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_coco2 =
-{
+static MACHINE_DRIVER_START( coco2 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			coco_readmem,coco_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	coco2_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( coco2 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,							/* screen width */
-	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,											/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	M6847_VIDEO_TYPE,
-	0,
-	dragon_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847( dragon )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_coco2b =
-{
+static MACHINE_DRIVER_START( coco2b )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			coco_readmem,coco_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	coco2_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco_readmem, coco_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( coco2 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	M6847_SCREEN_WIDTH,							/* screen width */
-	M6847_SCREEN_HEIGHT,						/* screen height (pixels doubled) */
-	M6847_SCREEN_VISIBLE_AREA,					/* visible_area */
-	0,											/* graphics decode info */
-	M6847_TOTAL_COLORS,
-	0,
-	m6847_vh_init_palette,						/* initialise palette */
-
-	M6847_VIDEO_TYPE,
-	0,
-	coco2b_vh_start,
-	m6847_vh_stop,
-	m6847_vh_update,
+	MDRV_M6847( coco2b )
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_coco3 =
-{
+static MACHINE_DRIVER_START( coco3 )
 	/* basic machine hardware */
-	{
-		{
-			CPU_M6809,
-			COCO_CPU_SPEED_HZ,
-			coco3_readmem,coco3_writemem,
-			0, 0,
-			coco3_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	coco3_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", M6809, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco3_readmem, coco3_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( coco3 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	640,							/* screen width */
-	263,							/* screen height (pixels doubled) */
+	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(640, 263)
 #if SHOW_FULL_AREA
-	{ 0, 639, 0, 262 },				/* visible_area */
+	MDRV_VISIBLE_AREA(0,639,0,262)
 #else
-	{ 0, 639, 11, 250 },			/* visible_area */
+	MDRV_VISIBLE_AREA(0,639,11,250)
 #endif
-	0,								/* graphics decode info */
-	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
-	0,
-	NULL,							/* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	coco3_vh_start,
-	coco3_vh_stop,
-	coco3_vh_screenrefresh,
+	MDRV_PALETTE_LENGTH(64+M6847_ARTIFACT_COLOR_COUNT)
+	MDRV_VIDEO_START(coco3)
+	MDRV_VIDEO_UPDATE(coco3)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_coco3h =
-{
+static MACHINE_DRIVER_START( coco3h )
 	/* basic machine hardware */
-	{
-		{
-			CPU_HD6309,
-			COCO_CPU_SPEED_HZ,
-			coco3_readmem,coco3_writemem,
-			0, 0,
-			m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME,
-			0, 0,
-		},
-	},
-	COCO_FRAMES_PER_SECOND, 0,		 /* frames per second, vblank duration */
-	0,
-	coco3_init_machine,
-	coco_stop_machine,
+	MDRV_CPU_ADD_TAG("main", HD6309, COCO_CPU_SPEED_HZ)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(coco3_readmem, coco3_writemem)
+	MDRV_CPU_VBLANK_INT(m6847_vh_interrupt, M6847_INTERRUPTS_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(COCO_FRAMES_PER_SECOND)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_INIT( coco3 )
+	MDRV_MACHINE_STOP( coco )
 
 	/* video hardware */
-	640,							/* screen width */
-	263,							/* screen height (pixels doubled) */
+	MDRV_VIDEO_ATTRIBUTES(M6847_VIDEO_TYPE | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(640, 263)
 #if SHOW_FULL_AREA
-	{ 0, 639, 0, 262 },				/* visible_area */
+	MDRV_VISIBLE_AREA(0,639,0,262)
 #else
-	{ 0, 639, 11, 250 },			/* visible_area */
+	MDRV_VISIBLE_AREA(0,639,11,250)
 #endif
-	0,								/* graphics decode info */
-	64+M6847_ARTIFACT_COLOR_COUNT,	/* 64 colors + artifact colors */
-	0,
-	NULL,							/* initialise palette */
-
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_PIXEL_ASPECT_RATIO_1_2,
-	0,
-	coco3_vh_start,
-	coco3_vh_stop,
-	coco3_vh_screenrefresh,
+	MDRV_PALETTE_LENGTH(64+M6847_ARTIFACT_COLOR_COUNT)
+	MDRV_VIDEO_START(coco3)
+	MDRV_VIDEO_UPDATE(coco3)
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{
-			SOUND_DAC,
-			&d_dac_interface
-		},
-        {
-			SOUND_WAVE,
-            &d_wave_interface
-        }
-	}
-};
+	MDRV_SOUND_ADD(DAC, d_dac_interface)
+	MDRV_SOUND_ADD(WAVE, d_wave_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 

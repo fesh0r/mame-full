@@ -36,14 +36,13 @@ struct	{
 int	saa5050_vh_start (void)
 {
 	frame_count = 0;
-	if( generic_vh_start() )
+	if( video_start_generic() )
 		return 1;
     return 0;
 }
 
 void saa5050_vh_stop (void)
 {
-	generic_vh_stop();
 }
 
 void saa5050_vh_callback (void)

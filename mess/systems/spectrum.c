@@ -1519,7 +1519,7 @@ static OPBASE_HANDLER(betadisk_opbase_handler)
 
 	int pc;
 
-	pc = cpu_get_pc();
+	pc = activecpu_get_pc();
 
 	if ((pc & 0xc000)!=0x0000)
 	{

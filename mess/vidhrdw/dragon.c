@@ -103,7 +103,7 @@ static void coco2b_charproc(UINT8 c)
 	m6847_inv_w(0, inv);
 }
 
-static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
+static int internal_video_start_coco(int m6847_version, void (*charproc)(UINT8))
 {
 	struct m6847_init_params p;
 
@@ -117,26 +117,26 @@ static int internal_dragon_vh_start(int m6847_version, void (*charproc)(UINT8))
 	p.fs_func = coco_m6847_fs_w;
 	p.callback_delay = (TIME_IN_HZ(894886) * 2);
 
-	if (m6847_vh_start(&p))
+	if (video_start_m6847(&p))
 		return 1;
 
 	sam_videomode = 0;
 	return 0;
 }
 
-int dragon_vh_start(void)
+int video_start_dragon(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_PAL, dragon_charproc );
+	return internal_video_start_coco(M6847_VERSION_ORIGINAL_PAL, dragon_charproc );
 }
 
-int coco_vh_start(void)
+int video_start_coco(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_ORIGINAL_NTSC, dragon_charproc );
+	return internal_video_start_coco(M6847_VERSION_ORIGINAL_NTSC, dragon_charproc );
 }
 
-int coco2b_vh_start(void)
+int video_start_coco2b(void)
 {
-	return internal_dragon_vh_start(M6847_VERSION_M6847T1_NTSC, coco2b_charproc);
+	return internal_video_start_coco(M6847_VERSION_M6847T1_NTSC, coco2b_charproc);
 }
 
 WRITE_HANDLER(coco_ram_w)
@@ -410,7 +410,7 @@ static struct videomap_interface coco3_videomap_interface =
 	coco3_get_border_color_callback
 };
 
-int coco3_vh_start(void)
+int video_start_coco3(void)
 {
     int i;
 	struct m6847_init_params p;
@@ -425,12 +425,12 @@ int coco3_vh_start(void)
 	p.fs_func = coco_m6847_fs_w;
 
 	/* initialize palette RAM */
-	paletteram = malloc(16 * sizeof(int));
+	paletteram = auto_malloc(16 * sizeof(int));
 	if (!paletteram)
 		return 1;
 	memset(paletteram, 0, 16 * sizeof(int));
 
-	if (internal_m6847_vh_start(&p, &coco3_videomap_interface, MAX_HIRES_VRAM)) {
+	if (internal_video_start_m6847(&p, &coco3_videomap_interface, MAX_HIRES_VRAM)) {
 		paletteram = NULL;
 		return 1;
 	}
@@ -441,15 +441,6 @@ int coco3_vh_start(void)
 	coco3_hires = coco3_blinkstatus = 0;
 	coco3_palette_recalc(1);
 	return 0;
-}
-
-void coco3_vh_stop(void)
-{
-	m6847_vh_stop();
-	if (paletteram) {
-		free(paletteram);
-		paletteram = NULL;
-	}
 }
 
 static void coco3_compute_color(int color, int *red, int *green, int *blue)
@@ -774,11 +765,10 @@ static UINT8 *coco3_textmapper_noattr(UINT8 *mem, int param, int *fg, int *bg, i
  * All models of the CoCo has 262.5 scan lines.  However, we pretend that it has
  * 240 so that the emulation fits on a 640x480 screen
  */
-void coco3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+void video_update_coco3(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	if (coco3_palette_recalc(0))
-		full_refresh = 1;
-	m6847_vh_update(bitmap, full_refresh);
+	coco3_palette_recalc(0);
+	video_update_m6847(bitmap, cliprect);
 }
 
 static void coco3_ram_w(int offset, int data, int block)
@@ -856,7 +846,7 @@ WRITE_HANDLER(coco3_gimevh_w)
 	int xorval;
 
 #if LOG_GIME
-	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, cpu_get_pc(), cpu_getscanline());
+	logerror("CoCo3 GIME: $%04x <== $%02x pc=$%04x scanline=%i\n", offset + 0xff98, data, activecpu_get_pc(), cpu_getscanline());
 #endif
 	/* Features marked with '!' are not yet implemented */
 

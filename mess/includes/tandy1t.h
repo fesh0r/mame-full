@@ -1,10 +1,10 @@
-WRITE_HANDLER ( pc_t1t_p37x_w );
-READ_HANDLER ( pc_t1t_p37x_r );
+extern WRITE_HANDLER ( pc_t1t_p37x_w );
+extern READ_HANDLER ( pc_t1t_p37x_r );
 
-WRITE_HANDLER ( tandy1000_pio_w );
-READ_HANDLER(tandy1000_pio_r);
+extern WRITE_HANDLER ( tandy1000_pio_w );
+extern READ_HANDLER(tandy1000_pio_r);
 
-void tandy1000_nvram_handler(void* file, int write);
+extern NVRAM_HANDLER( tandy1000 );
 
 #define T1000_HELPER(bit,text,key1,key2) \
 	PORT_BITX( bit, 0x0000, IPT_KEYBOARD, text, key1, key2 )

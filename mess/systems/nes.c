@@ -300,98 +300,79 @@ ROM_END
 
 
 
-static struct MachineDriver machine_driver_nes =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_N2A03,
-            N2A03_DEFAULTCLOCK, /* 1.79 Mhz - good timing test is Bayou Billy startup wave */
-            readmem_nes,writemem_nes,0,0,
-            nes_interrupt,NTSC_SCANLINES_PER_FRAME /* one for each scanline */
-        }
-    },
-    60, 114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE), /* frames per second, vblank duration */
-    1,
-    nes_init_machine,
-    nes_stop_machine,
+static MACHINE_DRIVER_START( nes )
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", N2A03, N2A03_DEFAULTCLOCK)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(readmem_nes,writemem_nes)
+	MDRV_CPU_VBLANK_INT(nes_interrupt, NTSC_SCANLINES_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(114*(NTSC_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
-    /* video hardware */
+	MDRV_MACHINE_INIT( nes )
+	MDRV_MACHINE_STOP( nes )
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 #ifdef BIG_SCREEN
-    32*8*2, 30*8*2, { 0*8, 32*8*2-1, 0*8, 30*8*2-1 },
+	MDRV_SCREEN_SIZE(32*8*2, 30*8*2)
+	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8*2-1)
 #else
-    32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
+	MDRV_SCREEN_SIZE(32*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 #endif
-    nes_gfxdecodeinfo,
-#ifdef COLOR_INTENSITY
-    4*16*8, 4*8,
-#else
-    4*16, 4*8,
-#endif
-    nes_init_palette,
+	MDRV_PALETTE_INIT(nes)
+	MDRV_VIDEO_START(nes)
+	MDRV_VIDEO_STOP(nes)
+	MDRV_VIDEO_UPDATE(nes)
 
-    VIDEO_TYPE_RASTER,
-    0,
-    nes_vh_start,
-    nes_vh_stop,
-    nes_vh_screenrefresh,
+	MDRV_GFXDECODE(nes_gfxdecodeinfo)
+
+#ifdef COLOR_INTENSITY
+	MDRV_PALETTE_LENGTH(4*16*8)
+#else
+	MDRV_PALETTE_LENGTH(4*16)
+#endif
+	MDRV_COLORTABLE_LENGTH(4*8)
 
     /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_NES,
-            &nes_interface
-        }
-    }
-};
+	MDRV_SOUND_ADD(NES, nes_interface)
+MACHINE_DRIVER_END
 
-static struct MachineDriver machine_driver_nespal =
-{
-    /* basic machine hardware */
-    {
-        {
-            CPU_N2A03,
-            26601712/15,    /* 1.773 Mhz - good timing test is Bayou Billy startup wave */
-            readmem_nes,writemem_nes,0,0,
-            nes_interrupt,PAL_SCANLINES_PER_FRAME /* one for each scanline */
-        }
-    },
-    50, 114*(PAL_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE),  /* frames per second, vblank duration */
-    1,
-    nes_init_machine,
-    nes_stop_machine,
+static MACHINE_DRIVER_START( nespal)
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", N2A03, 26601712/15)        /* 0,894886 Mhz */
+	MDRV_CPU_MEMORY(readmem_nes,writemem_nes)
+	MDRV_CPU_VBLANK_INT(nes_interrupt, PAL_SCANLINES_PER_FRAME)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(114*(PAL_SCANLINES_PER_FRAME-BOTTOM_VISIBLE_SCANLINE))
 
-    /* video hardware */
+	MDRV_MACHINE_INIT( nes )
+	MDRV_MACHINE_STOP( nes )
+
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 #ifdef BIG_SCREEN
-    32*8*2, 30*8*2, { 0*8, 32*8*2-1, 0*8, 30*8*2-1 },
+	MDRV_SCREEN_SIZE(32*8*2, 30*8*2)
+	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8*2-1)
 #else
-    32*8, 30*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
+	MDRV_SCREEN_SIZE(32*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 #endif
-    nes_gfxdecodeinfo,
-#ifdef COLOR_INTENSITY
-    4*16*8, 4*8,
-#else
-    4*16, 4*8,
-#endif
-    nes_init_palette,
+	MDRV_PALETTE_INIT(nes)
+	MDRV_VIDEO_START(nes)
+	MDRV_VIDEO_STOP(nes)
+	MDRV_VIDEO_UPDATE(nes)
 
-    VIDEO_TYPE_RASTER,
-    0,
-    nes_vh_start,
-    nes_vh_stop,
-    nes_vh_screenrefresh,
+	MDRV_GFXDECODE(nes_gfxdecodeinfo)
+
+#ifdef COLOR_INTENSITY
+	MDRV_PALETTE_LENGTH(4*16*8)
+#else
+	MDRV_PALETTE_LENGTH(4*16)
+#endif
+	MDRV_COLORTABLE_LENGTH(4*8)
 
     /* sound hardware */
-    0,0,0,0,
-    {
-        {
-            SOUND_NES,
-            &nespal_interface
-        }
-    }
-};
-
+	MDRV_SOUND_ADD(NES, nespal_interface)
+MACHINE_DRIVER_END
 
 static const struct IODevice io_famicom[] = {
     {

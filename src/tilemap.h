@@ -122,15 +122,16 @@ void tilemap_set_scroll_cols( struct tilemap *tilemap, int scroll_cols ); /* def
 void tilemap_set_scrolldy( struct tilemap *tilemap, int dy, int dy_if_flipped );
 void tilemap_set_scrolly( struct tilemap *tilemap, int col, int value );
 
+void tilemap_set_palette_offset( struct tilemap *tilemap, int offset );
+
 #define TILEMAP_FLIPX 0x1
 #define TILEMAP_FLIPY 0x2
 void tilemap_set_flip( struct tilemap *tilemap, int attributes );
-void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip );
 void tilemap_set_enable( struct tilemap *tilemap, int enable );
 
-void tilemap_draw( struct mame_bitmap *dest, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
+void tilemap_draw( struct mame_bitmap *dest, const struct rectangle *cliprect, struct tilemap *tilemap, UINT32 flags, UINT32 priority );
 
-void tilemap_draw_roz(struct mame_bitmap *dest,struct tilemap *tilemap,
+void tilemap_draw_roz(struct mame_bitmap *dest,const struct rectangle *cliprect,struct tilemap *tilemap,
 		UINT32 startx,UINT32 starty,int incxx,int incxy,int incyx,int incyy,
 		int wraparound,
 		UINT32 flags, UINT32 priority );
@@ -152,5 +153,10 @@ struct mame_bitmap *tilemap_get_transparency_bitmap( struct tilemap * tilemap );
 
 UINT32 tilemap_scan_cols( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
 UINT32 tilemap_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows );
+
+/* For showcharset()'s sake */
+UINT32 tilemap_count( void );
+void tilemap_nb_size( UINT32 number, UINT32 *width, UINT32 *height );
+void tilemap_nb_draw( struct mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 scrolly );
 
 #endif

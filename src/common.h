@@ -31,6 +31,11 @@ struct mame_bitmap
 	void *base;			/* pointer to pixel (0,0) (adjusted for padding) */
 	int rowpixels;		/* pixels per row (including padding) */
 	int rowbytes;		/* bytes per row (including padding) */
+
+	/* functions to render in the correct orientation */
+	void (*plot)(struct mame_bitmap *bitmap,int x,int y,pen_t pen);
+	pen_t (*read)(struct mame_bitmap *bitmap,int x,int y);
+	void (*plot_box)(struct mame_bitmap *bitmap,int x,int y,int width,int height,pen_t pen);
 };
 
 
@@ -39,6 +44,7 @@ struct RomModule
 	const char *_name;	/* name of the file to load */
 	UINT32 _offset;		/* offset to load it to */
 	UINT32 _length;		/* length of the file */
+	UINT32 _flags;		/* flags */
 	UINT32 _crc;		/* standard CRC-32 checksum */
 };
 
@@ -115,20 +121,6 @@ enum
 
 ***************************************************************************/
 
-/* ----- length compaction macros ----- */
-#define INVALID_LENGTH 				0x7ff
-#define COMPACT_LENGTH(x)									\
-	((((x) & 0xffffff00) == 0) ? (0x000 | ((x) >> 0)) :		\
-	 (((x) & 0xfffff00f) == 0) ? (0x100 | ((x) >> 4)) :		\
-	 (((x) & 0xffff00ff) == 0) ? (0x200 | ((x) >> 8)) :		\
-	 (((x) & 0xfff00fff) == 0) ? (0x300 | ((x) >> 12)) : 	\
-	 (((x) & 0xff00ffff) == 0) ? (0x400 | ((x) >> 16)) : 	\
-	 (((x) & 0xf00fffff) == 0) ? (0x500 | ((x) >> 20)) : 	\
-	 (((x) & 0x00ffffff) == 0) ? (0x600 | ((x) >> 24)) : 	\
-	 INVALID_LENGTH)
-#define UNCOMPACT_LENGTH(x)	(((x) == INVALID_LENGTH) ? 0 : (((x) & 0xff) << (((x) & 0x700) >> 6)))
-
-
 /* ----- per-entry constants ----- */
 #define ROMENTRYTYPE_REGION			1					/* this entry marks the start of a region */
 #define ROMENTRYTYPE_END			2					/* this entry marks the end of a region */
@@ -197,7 +189,7 @@ enum
 /* ----- per-region macros ----- */
 #define ROMREGION_GETTYPE(r)		((r)->_crc)
 #define ROMREGION_GETLENGTH(r)		((r)->_length)
-#define ROMREGION_GETFLAGS(r)		((r)->_offset)
+#define ROMREGION_GETFLAGS(r)		((r)->_flags)
 #define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
 #define ROMREGION_ISLITTLEENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
 #define ROMREGION_ISBIGENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE)
@@ -210,9 +202,6 @@ enum
 
 
 /* ----- per-ROM constants ----- */
-#define ROM_LENGTHMASK				0x000007ff			/* the compacted length of the ROM */
-#define		ROM_INVALIDLENGTH		INVALID_LENGTH
-
 #define ROM_OPTIONALMASK			0x00000800			/* optional - won't hurt if it's not there */
 #define		ROM_REQUIRED			0x00000000
 #define		ROM_OPTIONAL			0x00000800
@@ -252,8 +241,8 @@ enum
 #define ROM_SAFEGETNAME(r)			(ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
 #define ROM_GETOFFSET(r)			((r)->_offset)
 #define ROM_GETCRC(r)				((r)->_crc)
-#define ROM_GETLENGTH(r)			(UNCOMPACT_LENGTH((r)->_length & ROM_LENGTHMASK))
-#define ROM_GETFLAGS(r)				((r)->_length & ~ROM_LENGTHMASK)
+#define ROM_GETLENGTH(r)			((r)->_length)
+#define ROM_GETFLAGS(r)				((r)->_flags)
 #define ROM_ISOPTIONAL(r)			((ROM_GETFLAGS(r) & ROM_OPTIONALMASK) == ROM_OPTIONAL)
 #define ROM_GETGROUPSIZE(r)			(((ROM_GETFLAGS(r) & ROM_GROUPMASK) >> 12) + 1)
 #define ROM_GETSKIPCOUNT(r)			((ROM_GETFLAGS(r) & ROM_SKIPMASK) >> 16)
@@ -273,17 +262,17 @@ enum
 
 /* ----- start/stop macros ----- */
 #define ROM_START(name)								static const struct RomModule rom_##name[] = {
-#define ROM_END										{ ROMENTRY_END, 0, 0, 0 } };
+#define ROM_END										{ ROMENTRY_END, 0, 0, 0, 0 } };
 
 /* ----- ROM region macros ----- */
-#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, flags, length, type },
+#define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, type },
 #define ROM_REGION16_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_LE)
 #define ROM_REGION16_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_16BIT | ROMREGION_BE)
 #define ROM_REGION32_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_LE)
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
 
 /* ----- core ROM loading macros ----- */
-#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, (flags) | COMPACT_LENGTH(length), crc },
+#define ROMX_LOAD(name,offset,length,crc,flags)		{ name, offset, length, flags, crc },
 #define ROM_LOAD(name,offset,length,crc)			ROMX_LOAD(name, offset, length, crc, 0)
 #define ROM_LOAD_OPTIONAL(name,offset,length,crc)	ROMX_LOAD(name, offset, length, crc, ROM_OPTIONAL)
 #define ROM_CONTINUE(offset,length)					ROMX_LOAD(ROMENTRY_CONTINUE, offset, length, 0, ROM_INHERITFLAGS)
@@ -315,6 +304,58 @@ enum
 
 void showdisclaimer(void);
 
+/* helper function that reads samples from disk - this can be used by other */
+/* drivers as well (e.g. a sound chip emulator needing drum samples) */
+struct GameSamples *readsamples(const char **samplenames,const char *name);
+#define freesamples(samps)
+
+/* return a pointer to the specified memory region - num can be either an absolute */
+/* number, or one of the REGION_XXX identifiers defined above */
+UINT8 *memory_region(int num);
+size_t memory_region_length(int num);
+
+/* allocate a new memory region - num can be either an absolute */
+/* number, or one of the REGION_XXX identifiers defined above */
+int new_memory_region(int num, size_t length, UINT32 flags);
+void free_memory_region(int num);
+
+/* common coin counter helpers */
+#define COIN_COUNTERS	4	/* total # of coin counters */
+void coin_counter_w(int num,int on);
+void coin_lockout_w(int num,int on);
+void coin_lockout_global_w(int on);  /* Locks out all coin inputs */
+
+/* generic NVRAM handler */
+extern size_t generic_nvram_size;
+extern data8_t *generic_nvram;
+extern void nvram_handler_generic_0fill(void *file, int read_or_write);
+extern void nvram_handler_generic_1fill(void *file, int read_or_write);
+
+/* bitmap allocation */
+struct mame_bitmap *bitmap_alloc(int width,int height);
+struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
+void bitmap_free(struct mame_bitmap *bitmap);
+
+/* automatic resource management */
+void begin_resource_tracking(void);
+void end_resource_tracking(void);
+INLINE int get_resource_tag(void)
+{
+	extern int resource_tracking_tag;
+	return resource_tracking_tag;
+}
+
+/* automatically-freeing memory */
+void *auto_malloc(size_t size);
+struct mame_bitmap *auto_bitmap_alloc(int width,int height);
+struct mame_bitmap *auto_bitmap_alloc_depth(int width,int height,int depth);
+
+/* screen snapshots */
+void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap,const struct rectangle *bounds);
+void save_screen_snapshot(struct mame_bitmap *bitmap,const struct rectangle *bounds);
+
+/* ROM processing */
+int rom_load(const struct RomModule *romp);
 const struct RomModule *rom_first_region(const struct GameDriver *drv);
 const struct RomModule *rom_next_region(const struct RomModule *romp);
 const struct RomModule *rom_first_file(const struct RomModule *romp);
@@ -322,49 +363,7 @@ const struct RomModule *rom_next_file(const struct RomModule *romp);
 const struct RomModule *rom_first_chunk(const struct RomModule *romp);
 const struct RomModule *rom_next_chunk(const struct RomModule *romp);
 
-
-/* LBO 042898 - added coin counters */
-#define COIN_COUNTERS	4	/* total # of coin counters */
-void coin_counter_w(int num,int on);
-void coin_lockout_w(int num,int on);
-void coin_lockout_global_w(int on);  /* Locks out all coin inputs */
-
-
-int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);
-
-/* helper function that reads samples from disk - this can be used by other */
-/* drivers as well (e.g. a sound chip emulator needing drum samples) */
-struct GameSamples *readsamples(const char **samplenames,const char *name);
-void freesamples(struct GameSamples *samples);
-
-/* return a pointer to the specified memory region - num can be either an absolute */
-/* number, or one of the REGION_XXX identifiers defined above */
-UINT8 *memory_region(int num);
-size_t memory_region_length(int num);
-/* allocate a new memory region - num can be either an absolute */
-/* number, or one of the REGION_XXX identifiers defined above */
-int new_memory_region(int num, size_t length, UINT32 flags);
-void free_memory_region(int num);
-
-extern int flip_screen_x, flip_screen_y;
-
-void flip_screen_set(int on);
-void flip_screen_x_set(int on);
-void flip_screen_y_set(int on);
-#define flip_screen flip_screen_x
-
-/* sets a variable and schedules a full screen refresh if it changed */
-void set_vh_global_attribute( int *addr, int data );
-
-void set_visible_area(int min_x,int max_x,int min_y,int max_y);
-
-struct mame_bitmap *bitmap_alloc(int width,int height);
-struct mame_bitmap *bitmap_alloc_depth(int width,int height,int depth);
-void bitmap_free(struct mame_bitmap *bitmap);
-
-void save_screen_snapshot_as(void *fp,struct mame_bitmap *bitmap);
-void save_screen_snapshot(struct mame_bitmap *bitmap);
 
 
 

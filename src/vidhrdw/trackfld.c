@@ -13,6 +13,7 @@
 unsigned char *trackfld_scroll;
 unsigned char *trackfld_scroll2;
 
+static int mastkin_kludge;
 
 
 /***************************************************************************
@@ -33,7 +34,7 @@ unsigned char *trackfld_scroll2;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( trackfld )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -42,24 +43,26 @@ void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 
 		color_prom++;
 	}
@@ -83,35 +86,31 @@ void trackfld_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int trackfld_vh_start(void)
+VIDEO_START( trackfld )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
 	/* TracknField has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	}
+
+	mastkin_kludge = 0;
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void trackfld_vh_stop(void)
+VIDEO_START( mastkin )
 {
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-}
+	int res;
 
+	res = video_start_trackfld();
+
+	mastkin_kludge = 1;
+
+	return res;
+}
 
 
 /***************************************************************************
@@ -121,12 +120,12 @@ void trackfld_vh_stop(void)
   the main emulation engine.
 
 ***************************************************************************/
-void trackfld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( trackfld )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -172,8 +171,16 @@ void trackfld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 		if (flip_screen)
 		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 - (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			if (mastkin_kludge)
+			{
+				for (offs = 0;offs < 32;offs++)
+					scroll[31-offs] = 256 + (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			}
+			else
+			{
+				for (offs = 0;offs < 32;offs++)
+					scroll[31-offs] = 256 - (trackfld_scroll[offs] + 256 * (trackfld_scroll2[offs] & 1));
+			}
 		}
 		else
 		{
@@ -199,6 +206,12 @@ void trackfld_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
+
+			if (mastkin_kludge)
+			{
+				sx = (240 - sx) & 0xff;
+				flipx = !flipx;
+			}
 		}
 
 		/* Note that this adjustement must be done AFTER handling flip screen, thus */

@@ -28,7 +28,7 @@ static int gfx_bank,flipscreen;
 
 ***************************************************************************/
 
-void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( blueprnt )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -37,9 +37,10 @@ void blueprnt_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < 16;i++)
 	{
-		(*palette++) = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
-		(*palette++) = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
-		(*palette++) = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int r = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int g = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		int b = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
+		palette_set_color(i,r,g,b);
 	}
 
 
@@ -84,7 +85,7 @@ WRITE_HANDLER( blueprnt_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void blueprnt_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( blueprnt )
 {
 	int offs;
 	int scroll[32];

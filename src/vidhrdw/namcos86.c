@@ -48,7 +48,7 @@ static const unsigned char *tile_address_prom;
 
 ***************************************************************************/
 
-void namcos86_vh_convert_color_prom( unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom )
+PALETTE_INIT( namcos86 )
 {
 	int i;
 	int totcolors,totlookup;
@@ -59,25 +59,26 @@ void namcos86_vh_convert_color_prom( unsigned char *palette,unsigned short *colo
 
 	for (i = 0;i < totcolors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[0] >> 4) & 0x01;
 		bit1 = (color_prom[0] >> 5) & 0x01;
 		bit2 = (color_prom[0] >> 6) & 0x01;
 		bit3 = (color_prom[0] >> 7) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		bit0 = (color_prom[totcolors] >> 0) & 0x01;
 		bit1 = (color_prom[totcolors] >> 1) & 0x01;
 		bit2 = (color_prom[totcolors] >> 2) & 0x01;
 		bit3 = (color_prom[totcolors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -134,7 +135,7 @@ static void get_tile_info3(int tile_index) { get_tile_info(tile_index,3,&rthunde
 
 ***************************************************************************/
 
-int namcos86_vh_start(void)
+VIDEO_START( namcos86 )
 {
 	tilemap[0] = tilemap_create(get_tile_info0,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
 	tilemap[1] = tilemap_create(get_tile_info1,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -269,11 +270,9 @@ WRITE_HANDLER( rthunder_backcolor_w )
 
 ***************************************************************************/
 
-static void draw_sprites( struct mame_bitmap *bitmap, int sprite_priority )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect, int sprite_priority )
 {
 	/* note: sprites don't yet clip at the top of the screen properly */
-	const struct rectangle *clip = &Machine->visible_area;
-
 	const unsigned char *source = &spriteram[0x1400];
 	const unsigned char *finish = &spriteram[0x1c00-16];	/* the last is NOT a sprite */
 
@@ -331,7 +330,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int sprite_priority )
 							!flipx,!flipy,
 							512-16-67 - (sx+16*(flipx?1-col:col)),
 							64-16+209 - (sy+16*(flipy?1-row:row)),
-							clip,
+							cliprect,
 							TRANSPARENCY_PEN, 0xf );
 					}
 					else
@@ -342,7 +341,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int sprite_priority )
 							flipx,flipy,
 							-67 + (sx+16*(flipx?1-col:col)),
 							209 + (sy+16*(flipy?1-row:row)),
-							clip,
+							cliprect,
 							TRANSPARENCY_PEN, 0xf );
 					}
 				}
@@ -354,7 +353,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, int sprite_priority )
 
 
 
-void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( namcos86 )
 {
 	int layer;
 
@@ -363,7 +362,7 @@ void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
-	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],cliprect);
 
 	for (layer = 0;layer < 8;layer++)
 	{
@@ -372,10 +371,10 @@ void namcos86_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 		for (i = 3;i >= 0;i--)
 		{
 			if (((xscroll[i] & 0x0e00) >> 9) == layer)
-				tilemap_draw(bitmap,tilemap[i],0,0);
+				tilemap_draw(bitmap,cliprect,tilemap[i],0,0);
 		}
 
-		draw_sprites(bitmap,layer);
+		draw_sprites(bitmap,cliprect,layer);
 	}
 #if 0
 {

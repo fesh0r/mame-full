@@ -760,7 +760,7 @@ void vc1541_serial_atn_write (int which, int level)
 			{
 				DBG_LOG(1, "vc1541",("%d:%.4x atn %s\n",
 									 cpu_getactivecpu (),
-									 cpu_get_pc(),
+									 activecpu_get_pc(),
 									 serial.atn[0]?"ATN":"atn"));
 				via_set_input_ca1 (2, !level);
 #if 0
@@ -801,7 +801,7 @@ void vc1541_serial_data_write (int which, int level)
 			{
 				DBG_LOG(1, "vc1541",("%d:%.4x data %s\n",
 									 cpu_getactivecpu (),
-									 cpu_get_pc(),
+									 activecpu_get_pc(),
 									 serial.data[0]?"DATA":"data"));
 			}
 		}
@@ -831,7 +831,7 @@ void vc1541_serial_clock_write (int which, int level)
 			{
 				DBG_LOG(1, "vc1541",("%d:%.4x clock %s\n",
 									 cpu_getactivecpu (),
-									 cpu_get_pc(),
+									 activecpu_get_pc(),
 									 serial.clock[0]?"CLOCK":"clock"));
 			}
 		}

@@ -909,7 +909,7 @@ INPUT_PORTS_START(z88)
 
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver_z88 =
+static MACHINE_DRIVER_START( z88 )
 {
 	/* basic machine hardware */
 	{

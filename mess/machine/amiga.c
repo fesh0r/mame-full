@@ -1427,7 +1427,7 @@ READ16_HANDLER ( amiga_cia_r ) {
 	}
 
 #if LOG_CIA
-	logerror("PC = %06x - Read from CIA %01x\n", cpu_get_pc(), cia_sel );
+	logerror("PC = %06x - Read from CIA %01x\n", activecpu_get_pc(), cia_sel );
 #endif
 
 	return 0;
@@ -1569,7 +1569,7 @@ WRITE16_HANDLER ( amiga_cia_w ) {
 	}
 
 #if LOG_CIA
-	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", cpu_get_pc(), cia_sel, data );
+	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", activecpu_get_pc(), cia_sel, data );
 #endif
 }
 
@@ -1695,7 +1695,7 @@ READ16_HANDLER ( amiga_custom_r ) {
 
 		default:
 #if LOG_CUSTOM
-			logerror("PC = %06x - Read from Custom %04x\n", cpu_get_pc(), offset );
+			logerror("PC = %06x - Read from Custom %04x\n", activecpu_get_pc(), offset );
 #endif
 		break;
 	}
@@ -2013,7 +2013,7 @@ WRITE16_HANDLER ( amiga_custom_w ) {
 
 		default:
 #if LOG_CUSTOM
-		logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_get_pc(), offset, data );
+		logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", activecpu_get_pc(), offset, data );
 #endif
 		break;
 	}

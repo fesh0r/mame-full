@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
+#include "cyberbal.h"
 
 
 
@@ -30,6 +31,52 @@ data16_t *cyberbal_paletteram_1;
 static UINT8 current_screen;
 static UINT8 total_screens;
 static data16_t current_slip[2];
+static UINT8 playfield_palette_bank[2];
+static UINT16 playfield_xscroll[2];
+static UINT16 playfield_yscroll[2];
+
+
+
+/*************************************
+ *
+ *	Tilemap callbacks
+ *
+ *************************************/
+
+static void get_alpha_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha[tile_index];
+	int code = data & 0xfff;
+	int color = (data >> 12) & 0x07;
+	SET_TILE_INFO(2, code, color, (data >> 15) & 1);
+}
+
+
+static void get_alpha2_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_alpha2[tile_index];
+	int code = data & 0xfff;
+	int color = (data >> 12) & 0x07;
+	SET_TILE_INFO(2, code, 0x80 | color, (data >> 15) & 1);
+}
+
+
+static void get_playfield_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield[tile_index];
+	int code = data & 0x1fff;
+	int color = (data >> 11) & 0x0f;
+	SET_TILE_INFO(0, code, color, (data >> 15) & 1);
+}
+
+
+static void get_playfield2_tile_info(int tile_index)
+{
+	UINT16 data = atarigen_playfield2[tile_index];
+	int code = data & 0x1fff;
+	int color = (data >> 11) & 0x0f;
+	SET_TILE_INFO(0, code, 0x80 | color, (data >> 15) & 1);
+}
 
 
 
@@ -39,46 +86,8 @@ static data16_t current_slip[2];
  *
  *************************************/
 
-static int cyberbal_vh_start_common(int screens)
+static int video_start_cyberbal_common(int screens)
 {
-	static const struct ataripf_desc pf0desc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x000,		/* index of palette base */
-		0x600,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x01fff,	/* tile data index mask */
-		0x77800,	/* tile data color mask */
-		0x08000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
-	static const struct ataripf_desc pf1desc =
-	{
-		0,			/* index to which gfx system */
-		64,64,		/* size of the playfield in tiles (x,y) */
-		1,64,		/* tile_index = x * xmult + y * ymult (xmult,ymult) */
-
-		0x800,		/* index of palette base */
-		0x600,		/* maximum number of colors */
-		0,			/* color XOR for shadow effect (if any) */
-		0,			/* latch mask */
-		0,			/* transparent pen mask */
-
-		0x01fff,	/* tile data index mask */
-		0x77800,	/* tile data color mask */
-		0x08000,	/* tile data hflip mask */
-		0,			/* tile data vflip mask */
-		0			/* tile data priority mask */
-	};
-
 	static const struct atarimo_desc mo0desc =
 	{
 		1,					/* index to which gfx system */
@@ -89,7 +98,7 @@ static int cyberbal_vh_start_common(int screens)
 		0,					/* render in swapped X/Y order? */
 		1,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0x600,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -110,9 +119,9 @@ static int cyberbal_vh_start_common(int screens)
 		{{ 0,0,0,0x0010 }},	/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0,					/* resulting value to indicate "ignore" */
-		0					/* callback routine for ignored entries */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
 	static const struct atarimo_desc mo1desc =
@@ -125,7 +134,7 @@ static int cyberbal_vh_start_common(int screens)
 		0,					/* render in swapped X/Y order? */
 		1,					/* does the neighbor bit affect the next object? */
 		1024,				/* pixels per SLIP entry (0 for no-slip) */
-		8,					/* number of scanlines between MO updates */
+		0,					/* pixel offset for SLIPs */
 
 		0xe00,				/* base palette entry */
 		0x100,				/* maximum number of colors */
@@ -146,38 +155,9 @@ static int cyberbal_vh_start_common(int screens)
 		{{ 0,0,0,0x0010 }},	/* mask for the neighbor */
 		{{ 0 }},			/* mask for absolute coordinates */
 
-		{{ 0 }},			/* mask for the ignore value */
-		0					/* resulting value to indicate "ignore" */
-	};
-
-	static const struct atarian_desc an0desc =
-	{
-		2,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-
-		0x780,		/* index of palette base */
-		0x080,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x0fff,		/* tile data index mask */
-		0x7000,		/* tile data color mask */
-		0x8000,		/* tile data hflip mask */
-		0			/* tile data opacity mask */
-	};
-
-	static const struct atarian_desc an1desc =
-	{
-		2,			/* index to which gfx system */
-		64,32,		/* size of the alpha RAM in tiles (x,y) */
-
-		0xf80,		/* index of palette base */
-		0x080,		/* maximum number of colors */
-		0,			/* mask of the palette split */
-
-		0x0fff,		/* tile data index mask */
-		0x7000,		/* tile data color mask */
-		0x8000,		/* tile data hflip mask */
-		0			/* tile data opacity mask */
+		{{ 0 }},			/* mask for the special value */
+		0,					/* resulting value to indicate "special" */
+		0					/* callback routine for special entries */
 	};
 
 	/* set the slip variables */
@@ -185,31 +165,37 @@ static int cyberbal_vh_start_common(int screens)
 	atarimo_1_slipram = &current_slip[1];
 
 	/* initialize the playfield */
-	if (!ataripf_init(0, &pf0desc))
-		goto cant_create_pf0;
+	atarigen_playfield_tilemap = tilemap_create(get_playfield_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,8, 64,64);
+	if (!atarigen_playfield_tilemap)
+		return 1;
 
 	/* initialize the motion objects */
 	if (!atarimo_init(0, &mo0desc))
-		goto cant_create_mo0;
+		return 1;
 
 	/* initialize the alphanumerics */
-	if (!atarian_init(0, &an0desc))
-		goto cant_create_an0;
+	atarigen_alpha_tilemap = tilemap_create(get_alpha_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,8, 64,32);
+	if (!atarigen_alpha_tilemap)
+		return 1;
+	tilemap_set_transparent_pen(atarigen_alpha_tilemap, 0);
 
 	/* allocate the second screen if necessary */
 	if (screens == 2)
 	{
 		/* initialize the playfield */
-		if (!ataripf_init(1, &pf1desc))
-			goto cant_create_pf1;
+		atarigen_playfield2_tilemap = tilemap_create(get_playfield2_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 16,8, 64,64);
+		if (!atarigen_playfield2_tilemap)
+			return 1;
 
 		/* initialize the motion objects */
 		if (!atarimo_init(1, &mo1desc))
-			goto cant_create_mo1;
+			return 1;
 
 		/* initialize the alphanumerics */
-		if (!atarian_init(1, &an1desc))
-			goto cant_create_an1;
+		atarigen_alpha2_tilemap = tilemap_create(get_alpha2_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 16,8, 64,32);
+		if (!atarigen_alpha2_tilemap)
+			return 1;
+		tilemap_set_transparent_pen(atarigen_alpha2_tilemap, 0);
 	}
 
 	/* reset statics */
@@ -218,58 +204,31 @@ static int cyberbal_vh_start_common(int screens)
 	total_screens = screens;
 	current_screen = 0;
 	return 0;
-
-	/* error cases */
-cant_create_an1:
-cant_create_mo1:
-cant_create_pf1:
-	atarian_free();
-cant_create_an0:
-	atarimo_free();
-cant_create_mo0:
-	ataripf_free();
-cant_create_pf0:
-	return 1;
 }
 
 
-int cyberbal_vh_start(void)
+VIDEO_START( cyberbal )
 {
-	int result = cyberbal_vh_start_common(2);
+	int result = video_start_cyberbal_common(2);
 	if (!result)
 	{
 		/* adjust the sprite positions */
-		atarimo_set_xscroll(0, 4, 0);
-		atarimo_set_xscroll(1, 4, 0);
+		atarimo_set_xscroll(0, 4);
+		atarimo_set_xscroll(1, 4);
 	}
 	return result;
 }
 
 
-int cyberb2p_vh_start(void)
+VIDEO_START( cyberb2p )
 {
-	int result = cyberbal_vh_start_common(1);
+	int result = video_start_cyberbal_common(1);
 	if (!result)
 	{
 		/* adjust the sprite positions */
-		atarimo_set_xscroll(0, 5, 0);
+		atarimo_set_xscroll(0, 5);
 	}
 	return result;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void cyberbal_vh_stop(void)
-{
-	atarian_free();
-	atarimo_free();
-	ataripf_free();
 }
 
 
@@ -355,7 +314,7 @@ void cyberbal_scanline_update(int scanline)
 	/* loop over screens */
 	for (i = 0; i < total_screens; i++)
 	{
-		data16_t *vram = atarian_get_vram(i);
+		data16_t *vram = i ? atarigen_alpha2 : atarigen_alpha;
 		data16_t *base = &vram[((scanline - 8) / 8) * 64 + 47];
 
 		/* keep in range */
@@ -366,19 +325,43 @@ void cyberbal_scanline_update(int scanline)
 
 		/* update the current parameters */
 		if (!(base[3] & 1))
-			ataripf_set_bankbits(i, ((base[3] >> 1) & 7) << 16, scanline);
+		{
+			if (((base[3] >> 1) & 7) != playfield_palette_bank[i])
+			{
+				force_partial_update(scanline - 1);
+				playfield_palette_bank[i] = (base[3] >> 1) & 7;
+				tilemap_set_palette_offset(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, playfield_palette_bank[i] << 8);
+			}
+		}
 		if (!(base[4] & 1))
-			ataripf_set_xscroll(i, 2 * (((base[4] >> 7) + 4) & 0x1ff), scanline);
+		{
+			int newscroll = 2 * (((base[4] >> 7) + 4) & 0x1ff);
+			if (newscroll != playfield_xscroll[i])
+			{
+				force_partial_update(scanline - 1);
+				tilemap_set_scrollx(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, newscroll);
+				playfield_xscroll[i] = newscroll;
+			}
+		}
 		if (!(base[5] & 1))
 		{
 			/* a new vscroll latches the offset into a counter; we must adjust for this */
-			ataripf_set_yscroll(i, ((base[5] >> 7) - (scanline)) & 0x1ff, scanline);
+			int newscroll = ((base[5] >> 7) - (scanline)) & 0x1ff;
+			if (newscroll != playfield_yscroll[i])
+			{
+				force_partial_update(scanline - 1);
+				tilemap_set_scrolly(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, newscroll);
+				playfield_yscroll[i] = newscroll;
+			}
 		}
 		if (!(base[7] & 1))
-			current_slip[i] = base[7];
-
-		/* update the MOs with the current parameters */
-		atarimo_force_update(i, scanline);
+		{
+			if (current_slip[i] != base[7])
+			{
+				force_partial_update(scanline - 1);
+				current_slip[i] = base[7];
+			}
+		}
 	}
 }
 
@@ -390,10 +373,34 @@ void cyberbal_scanline_update(int scanline)
  *
  *************************************/
 
-void cyberbal_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( cyberbal )
 {
-	/* draw the layers */
-	ataripf_render(current_screen, bitmap);
-	atarimo_render(current_screen, bitmap, NULL, NULL);
-	atarian_render(current_screen, bitmap);
+	struct atarimo_rect_list rectlist;
+	struct mame_bitmap *mobitmap;
+	int x, y, r;
+
+	/* draw the playfield */
+	tilemap_draw(bitmap, cliprect, current_screen ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, 0);
+
+	/* draw and merge the MO */
+	mobitmap = atarimo_render(current_screen, cliprect, &rectlist);
+	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)
+		for (y = rectlist.rect->min_y; y <= rectlist.rect->max_y; y++)
+		{
+			UINT16 *mo = (UINT16 *)mobitmap->base + mobitmap->rowpixels * y;
+			UINT16 *pf = (UINT16 *)bitmap->base + bitmap->rowpixels * y;
+			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
+				if (mo[x])
+				{
+					/* not verified: logic is all controlled in a PAL
+					*/
+					pf[x] = mo[x];
+					
+					/* erase behind ourselves */
+					mo[x] = 0;
+				}
+		}
+
+	/* add the alpha on top */
+	tilemap_draw(bitmap, cliprect, current_screen ? atarigen_alpha2_tilemap : atarigen_alpha_tilemap, 0, 0);
 }

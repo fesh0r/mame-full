@@ -17,7 +17,7 @@
  * Backdoors into mess/vidhrdw/m6847.c                                     *
  * ----------------------------------------------------------------------- */
 
-int internal_m6847_vh_start(const struct m6847_init_params *params, const struct videomap_interface *videointf,
+int internal_video_start_m6847(const struct m6847_init_params *params, const struct videomap_interface *videointf,
 	int dirtyramsize);
 
 void internal_m6847_frame_callback(struct videomap_framecallback_info *info, int offset, int border_top, int rows);
@@ -36,7 +36,7 @@ void internal_m6847_line_callback(struct videomap_linecallback_info *info, const
 UINT8 internal_m6847_charproc(UINT32 c, UINT16 *charpalette, const UINT16 *metapalette, int row, int skew);
 
 int internal_m6847_getadjustedscanline(void);
-int internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
+void internal_m6847_vh_interrupt(int scanline, int rise_scanline, int fall_scanline);
 
 /* ----------------------------------------------------------------------- *
  * from vidhrdw/dragon.c                                                   *
@@ -52,12 +52,13 @@ extern void coco3_ram_b7_w (offs_t offset, data8_t data);
 extern void coco3_ram_b8_w (offs_t offset, data8_t data);
 extern void coco3_ram_b9_w (offs_t offset, data8_t data);
 extern void coco3_vh_sethires(int hires);
-extern int dragon_vh_start(void);
-extern int coco_vh_start(void);
-extern int coco2b_vh_start(void);
-extern int coco3_vh_start(void);
-extern void coco3_vh_stop(void);
-extern void coco3_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+
+extern int video_start_dragon(void);
+extern int video_start_coco(void);
+extern int video_start_coco2b(void);
+extern int video_start_coco3(void);
+extern void video_update_coco3(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
+
 extern WRITE_HANDLER ( coco_ram_w );
 extern READ_HANDLER ( coco3_gimevh_r );
 extern WRITE_HANDLER ( coco3_gimevh_w );
@@ -68,14 +69,14 @@ extern void coco3_vh_blink(void);
  * from machine/dragon.c                                                   *
  * ----------------------------------------------------------------------- */
 
-extern int coco3_vh_interrupt(void);
-extern void dragon32_init_machine(void);
-extern void dragon64_init_machine(void);
-extern void coco_init_machine(void);
-extern void coco2_init_machine(void);
-extern void coco3_init_machine(void);
-extern void coco_stop_machine(void);
-extern void dragon64_stop_machine(void);
+extern void machine_init_dragon32(void);
+extern void machine_init_dragon64(void);
+extern void machine_init_coco(void);
+extern void machine_init_coco2(void);
+extern void machine_init_coco3(void);
+extern void machine_stop_coco(void);
+
+extern void coco3_vh_interrupt(void);
 extern int coco_cassette_init(int id);
 extern int coco3_cassette_init(int id);
 extern void coco_cassette_exit(int id);

@@ -40,7 +40,7 @@ READ_HANDLER( arknoid2_sh_f000_r )
 {
 	int val;
 
-	logerror("PC %04x: read input %04x\n", cpu_get_pc(), 0xf000 + offset);
+	logerror("PC %04x: read input %04x\n", activecpu_get_pc(), 0xf000 + offset);
 
 	val = readinputport(5 + offset/2);
 	if (offset & 1)
@@ -143,7 +143,7 @@ static READ_HANDLER( mcu_arknoid2_r )
 {
 	char *mcu_startup = "\x55\xaa\x5a";
 
-//	logerror("PC %04x: read mcu %04x\n", cpu_get_pc(), 0xc000 + offset);
+//	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -205,7 +205,7 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 {
 	if (offset == 0)
 	{
-//	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+//	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -216,12 +216,13 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 		/*
 		0xc1: read number of credits, then buttons
 		0x54+0x41: add value to number of credits
+		0x15: sub 1 credit (when "Continue Play" only)
 		0x84: coin 1 lockout (issued only in test mode)
 		0x88: coin 2 lockout (issued only in test mode)
 		0x80: release coin lockout (issued only in test mode)
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
-//	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+//	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -233,6 +234,9 @@ static WRITE_HANDLER( mcu_arknoid2_w )
 		if (data == 0xc1)
 			mcu_readcredits = 0;	/* reset input port number */
 
+		if (data == 0x15)
+			mcu_credits = (mcu_credits - 1) & 0xff;
+
 		mcu_command = data;
 	}
 }
@@ -242,7 +246,7 @@ static READ_HANDLER( mcu_chukatai_r )
 {
 	char *mcu_startup = "\xa5\x5a\xaa";
 
-	logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+	logerror("PC %04x (re %04x): read mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -318,7 +322,7 @@ logerror("error, unknown mcu command (%02x)\n",mcu_command);
 
 static WRITE_HANDLER( mcu_chukatai_w )
 {
-	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+	logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -358,7 +362,7 @@ static READ_HANDLER( mcu_tnzs_r )
 {
 	char *mcu_startup = "\x5a\xa5\x55";
 
-	logerror("PC %04x (re %04x): read mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
+	logerror("PC %04x (re %04x): read mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -452,7 +456,7 @@ static WRITE_HANDLER( mcu_tnzs_w )
 {
 	if (offset == 0)
 	{
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -474,7 +478,7 @@ static WRITE_HANDLER( mcu_tnzs_w )
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
 
-		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", cpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
+		logerror("PC %04x (re %04x): write %02x to mcu %04x\n", activecpu_get_pc(), cpu_geturnpc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -498,7 +502,7 @@ static WRITE_HANDLER( mcu_tnzs_w )
 
 
 
-void init_extrmatn(void)
+DRIVER_INIT( extrmatn )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -509,7 +513,7 @@ void init_extrmatn(void)
 	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 }
 
-void init_arknoid2(void)
+DRIVER_INIT( arknoid2 )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -520,7 +524,7 @@ void init_arknoid2(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void init_drtoppel(void)
+DRIVER_INIT( drtoppel )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -534,7 +538,7 @@ void init_drtoppel(void)
 	install_mem_write_handler(0, 0xf800, 0xfbff, MWA_NOP);
 }
 
-void init_chukatai(void)
+DRIVER_INIT( chukatai )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -545,7 +549,7 @@ void init_chukatai(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void init_tnzs(void)
+DRIVER_INIT( tnzs )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mcu_type = MCU_TNZS;
@@ -555,7 +559,7 @@ void init_tnzs(void)
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
-void init_insectx(void)
+DRIVER_INIT( insectx )
 {
 	mcu_type = MCU_NONE;
 
@@ -565,7 +569,7 @@ void init_insectx(void)
 	install_mem_read_handler(1, 0xc002, 0xc002, input_port_4_r );
 }
 
-void init_kageki(void)
+DRIVER_INIT( kageki )
 {
 	/* this game has no mcu */
 	mcu_type = MCU_NONE;
@@ -610,7 +614,7 @@ WRITE_HANDLER( tnzs_mcu_w )
 	}
 }
 
-int tnzs_interrupt(void)
+INTERRUPT_GEN( tnzs_interrupt )
 {
 	int coin;
 
@@ -639,10 +643,10 @@ int tnzs_interrupt(void)
 			break;
 	}
 
-	return 0;
+	cpu_set_irq_line(0, 0, HOLD_LINE);
 }
 
-void tnzs_init_machine (void)
+MACHINE_INIT( tnzs )
 {
 	/* initialize the mcu simulation */
 	mcu_reset();
@@ -669,7 +673,7 @@ READ_HANDLER( tnzs_workram_r )
 	{
 		int tnzs_cpu0_pc;
 
-		tnzs_cpu0_pc = cpu_get_pc();
+		tnzs_cpu0_pc = activecpu_get_pc();
 		switch (tnzs_cpu0_pc)
 		{
 			case 0xc66:		/* tnzs */
@@ -701,11 +705,11 @@ WRITE_HANDLER( tnzs_workram_w )
 	{
 		int tnzs_cpu0_pc;
 
-		tnzs_cpu0_pc = cpu_get_pc();
+		tnzs_cpu0_pc = activecpu_get_pc();
 		switch (tnzs_cpu0_pc)
 		{
 			case 0xab5:		/* tnzs2 */
-				if (cpu_getpreviouspc() == 0xab4)
+				if (activecpu_get_previouspc() == 0xab4)
 					break;  /* unfortunantly tnzsb is true here too, so stop it */
 			case 0xc63:		/* tnzs */
 			case 0xc61:		/* tnzsb */
@@ -735,7 +739,7 @@ WRITE_HANDLER( tnzs_bankswitch_w )
 		cpu_set_reset_line(1,ASSERT_LINE);
 
 	/* bits 0-2 select RAM/ROM bank */
-//	logerror("PC %04x: writing %02x to bankswitch\n", cpu_get_pc(),data);
+//	logerror("PC %04x: writing %02x to bankswitch\n", activecpu_get_pc(),data);
 	cpu_setbank (1, &RAM[0x10000 + 0x4000 * (data & 0x07)]);
 }
 
@@ -743,7 +747,7 @@ WRITE_HANDLER( tnzs_bankswitch1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
-//	logerror("PC %04x: writing %02x to bankswitch 1\n", cpu_get_pc(),data);
+//	logerror("PC %04x: writing %02x to bankswitch 1\n", activecpu_get_pc(),data);
 
 	/* bit 2 resets the mcu */
 	if (data & 0x04) mcu_reset();

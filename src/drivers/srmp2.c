@@ -18,6 +18,8 @@ Supported games :
  Super Real Mahjong Part3     (C) 1988 Seta
  Mahjong Yuugi (set 1)        (C) 1990 Visco
  Mahjong Yuugi (set 2)        (C) 1990 Visco
+ Mahjong Pon Chin Kan (set 1) (C) 1991 Visco
+ Mahjong Pon Chin Kan (set 2) (C) 1991 Visco
 
 
 Not supported game :
@@ -63,11 +65,11 @@ Note:
 
 ***************************************************************************/
 
-void srmp2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void srmp2_vh_screenrefresh     (struct mame_bitmap *bitmap,int full_refresh);
-void srmp3_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void srmp3_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-void mjyuugi_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+PALETTE_INIT( srmp2 );
+VIDEO_UPDATE( srmp2 );
+PALETTE_INIT( srmp3 );
+VIDEO_UPDATE( srmp3 );
+VIDEO_UPDATE( mjyuugi );
 
 
 extern int srmp2_color_bank;
@@ -81,11 +83,6 @@ static unsigned long srmp2_adpcm_eptr;
 
 static int srmp2_port_select;
 
-static unsigned short	*srmp2_nvram;
-static size_t			srmp2_nvram_size;
-static unsigned char	*srmp3_nvram;
-static size_t			srmp3_nvram_size;
-
 
 /***************************************************************************
 
@@ -93,22 +90,17 @@ static size_t			srmp3_nvram_size;
 
 ***************************************************************************/
 
-static int srmp2_interrupt(void)
+static INTERRUPT_GEN( srmp2_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		return 4;	/* vblank */
-		default:	return 2;	/* sound */
+		case 0:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;	/* vblank */
+		default:	cpu_set_irq_line(0, 2, HOLD_LINE);	break;	/* sound */
 	}
 }
 
-static int srmp3_interrupt(void)
-{
-	return interrupt();
-}
 
-
-static void init_srmp2(void)
+static DRIVER_INIT( srmp2 )
 {
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
@@ -116,7 +108,7 @@ static void init_srmp2(void)
 	RAM[0x20c80 / 2] = 0x4e75;								// RTS
 }
 
-static void init_srmp3(void)
+static DRIVER_INIT( srmp3 )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 
@@ -139,21 +131,12 @@ static void init_srmp3(void)
 	RAM[0x00000 + 0x7850] = 0x00;							// NOP
 }
 
-static void init_mjyuugi(void)
-{
-	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
-
-	/* Sprite RAM check skip */
-	RAM[0x0276e / 2] = 0x4e75;								// RTS
-}
-
-
-static void srmp2_init_machine(void)
+static MACHINE_INIT( srmp2 )
 {
 	srmp2_port_select = 0;
 }
 
-static void srmp3_init_machine(void)
+static MACHINE_INIT( srmp3 )
 {
 	srmp2_port_select = 0;
 }
@@ -164,45 +147,6 @@ static void srmp3_init_machine(void)
   Memory Handler(s)
 
 ***************************************************************************/
-
-static void srmp2_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		osd_fwrite(file, srmp2_nvram, srmp2_nvram_size);
-	}
-	else
-	{
-		if (file)
-		{
-			osd_fread(file, srmp2_nvram, srmp2_nvram_size);
-		}
-		else
-		{
-			memset(srmp2_nvram, 0, srmp2_nvram_size);
-		}
-	}
-}
-
-static void srmp3_nvram_handler(void *file, int read_or_write)
-{
-	if (read_or_write)
-	{
-		osd_fwrite(file, srmp3_nvram, srmp3_nvram_size);
-	}
-	else
-	{
-		if (file)
-		{
-			osd_fread(file, srmp3_nvram, srmp3_nvram_size);
-		}
-		else
-		{
-			memset(srmp3_nvram, 0, srmp3_nvram_size);
-		}
-	}
-}
-
 
 static WRITE16_HANDLER( srmp2_flags_w )
 {
@@ -452,7 +396,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( srmp2_writemem )
 	{ 0x000000, 0x03ffff, MWA16_ROM },
-	{ 0x0c0000, 0x0c3fff, MWA16_RAM, &srmp2_nvram, &srmp2_nvram_size },
+	{ 0x0c0000, 0x0c3fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 	{ 0x140000, 0x143fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
 	{ 0x180000, 0x180609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
 	{ 0x1c0000, 0x1c0001, MWA16_NOP },					/* ??? */
@@ -504,7 +448,7 @@ static MEMORY_WRITE16_START( mjyuugi_writemem )
 	{ 0xd00000, 0xd00609, MWA16_RAM, &spriteram16 },	/* Sprites Y */
 	{ 0xd02000, 0xd023ff, MWA16_RAM },					/* ??? only writes $00fa */
 	{ 0xe00000, 0xe03fff, MWA16_RAM, &spriteram16_2 },	/* Sprites Code + X + Attr */
-	{ 0xffc000, 0xffffff, MWA16_RAM, &srmp2_nvram, &srmp2_nvram_size },
+	{ 0xffc000, 0xffffff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
 MEMORY_END
 
 
@@ -525,7 +469,7 @@ static WRITE_HANDLER( srmp3_input_1_w )
 	---- -x-- : Player 2 side flag ?
 */
 
-	logerror("PC:%04X DATA:%02X  srmp3_input_1_w\n", cpu_get_pc(), data);
+	logerror("PC:%04X DATA:%02X  srmp3_input_1_w\n", activecpu_get_pc(), data);
 
 	srmp2_port_select = 0;
 
@@ -549,7 +493,7 @@ static WRITE_HANDLER( srmp3_input_2_w )
 
 	/* Key matrix reading related ? */
 
-	logerror("PC:%04X DATA:%02X  srmp3_input_2_w\n", cpu_get_pc(), data);
+	logerror("PC:%04X DATA:%02X  srmp3_input_2_w\n", activecpu_get_pc(), data);
 
 	srmp2_port_select = 1;
 
@@ -566,12 +510,12 @@ static READ_HANDLER( srmp3_input_r )
 
 	int keydata = 0xff;
 
-	logerror("PC:%04X          srmp3_input_r\n", cpu_get_pc());
+	logerror("PC:%04X          srmp3_input_r\n", activecpu_get_pc());
 
 	// PC:0x8903	ROM:0xC903
 	// PC:0x7805	ROM:0x7805
 
-	if ((cpu_get_pc() == 0x8903) || (cpu_get_pc() == 0x7805))	/* Panel keys */
+	if ((activecpu_get_pc() == 0x8903) || (activecpu_get_pc() == 0x7805))	/* Panel keys */
 	{
 		int i, j, t;
 
@@ -592,7 +536,7 @@ static READ_HANDLER( srmp3_input_r )
 	// PC:0x8926	ROM:0xC926
 	// PC:0x7822	ROM:0x7822
 
-	if ((cpu_get_pc() == 0x8926) || (cpu_get_pc() == 0x7822))	/* Analizer and memory reset keys */
+	if ((activecpu_get_pc() == 0x8926) || (activecpu_get_pc() == 0x7822))	/* Analizer and memory reset keys */
 	{
 		keydata = readinputport(7);
 	}
@@ -626,7 +570,7 @@ MEMORY_END
 static MEMORY_WRITE_START( srmp3_writemem )
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_ROM },						/* rom bank */
-	{ 0xa000, 0xa7ff, MWA_RAM, &srmp3_nvram, &srmp3_nvram_size },	/* work ram */
+	{ 0xa000, 0xa7ff, MWA_RAM, &generic_nvram, &generic_nvram_size },	/* work ram */
 	{ 0xa800, 0xa800, MWA_NOP },						/* flag ? */
 	{ 0xb000, 0xb303, MWA_RAM, &spriteram },			/* Sprites Y */
 	{ 0xb800, 0xb800, MWA_NOP },						/* flag ? */
@@ -879,12 +823,12 @@ INPUT_PORTS_START( mjyuugi )
 	PORT_START			/* DSW (1) */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x07, "1 (Easy)" )
-	PORT_DIPSETTING(    0x06, "2" )
+	PORT_DIPSETTING(    0x03, "2" )
 	PORT_DIPSETTING(    0x05, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x03, "5" )
-	PORT_DIPSETTING(    0x02, "6" )
-	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x06, "5" )
+	PORT_DIPSETTING(    0x04, "6" )
+	PORT_DIPSETTING(    0x08, "7" )
 	PORT_DIPSETTING(    0x00, "8 (Hard)" )
 	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
@@ -956,46 +900,129 @@ INPUT_PORTS_START( mjyuugi )
 	PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  3", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0010, 0x0010, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  4", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0020, 0x0020, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  5", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  6", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  7", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BIT ( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START			/* DSW (3-2) [Debug switch] */
-	PORT_BITX( 0x0001, 0x0001, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  8", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0001, 0x0001, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  4", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  9", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  5", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 10", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  6", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 11", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  7", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(   0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0010, 0x0010, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 12", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0010, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0020, 0x0020, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 13", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0020, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0040, 0x0040, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 14", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
-	PORT_BITX( 0x0080, 0x0080, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug 15", IP_KEY_NONE, IP_JOY_NONE )
-	PORT_DIPSETTING(   0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BIT ( 0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ponchin )
+	PORT_START			/* Coinnage (0) */
+	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT ( 0x0020, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT ( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START			/* DSW (1) */
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x06, "1 (Easy)" )
+	PORT_DIPSETTING(    0x05, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x07, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPSETTING(    0x02, "6" )
+	PORT_DIPSETTING(    0x01, "7" )
+	PORT_DIPSETTING(    0x00, "8 (Hard)" )
+	PORT_DIPNAME( 0x08, 0x08, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x30, 0x30, "Player Score" )
+	PORT_DIPSETTING(    0x30, "1000" )
+	PORT_DIPSETTING(    0x20, "2000" )
+//	PORT_DIPSETTING(    0x10, "1000" )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug Mode", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Auto Tsumo" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START			/* DSW (2) */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	SETAMJCTRL_PORT3	/* INPUT1 (3) */
+	SETAMJCTRL_PORT4	/* INPUT1 (4) */
+	SETAMJCTRL_PORT5	/* INPUT1 (5) */
+	SETAMJCTRL_PORT6	/* INPUT1 (6) */
+
+	PORT_START			/* INPUT1 (7) */
+	PORT_BIT ( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0002, IP_ACTIVE_LOW, IPT_SERVICE3 )
+	PORT_BIT ( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0008, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT ( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT ( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START			/* DSW (3-1) [Debug switch] */
+	PORT_BITX( 0x0001, 0x0001, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  0", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  1", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  2", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  3", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BIT ( 0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START			/* DSW (3-2) [Debug switch] */
+	PORT_BITX( 0x0001, 0x0001, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  4", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0002, 0x0002, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  5", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0004, 0x0004, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  6", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BITX( 0x0008, 0x0008, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Debug  7", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(   0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x0000, DEF_STR( On ) )
+	PORT_BIT ( 0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -1050,12 +1077,19 @@ struct MSM5205interface srmp2_msm5205_interface =
 
 struct MSM5205interface srmp3_msm5205_interface =
 {
+#if 1
 	1,
-//	455000,							/* 455 KHz */
 	384000,							/* 384 KHz */
 	{ srmp2_adpcm_int },			/* IRQ handler */
 	{ MSM5205_S48_4B },				/* 8 KHz, 4 Bits  */
 	{ 45 }
+#else
+	1,
+	455000,							/* 455 KHz */
+	{ srmp2_adpcm_int },			/* IRQ handler */
+	{ MSM5205_S64_4B },				/* 8 KHz, 4 Bits  */
+	{ 45 }
+#endif
 };
 
 
@@ -1084,114 +1118,95 @@ static struct GfxDecodeInfo srmp3_gfxdecodeinfo[] =
 };
 
 
-static struct MachineDriver machine_driver_srmp2 =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,				/* 8.00 MHz */
-			srmp2_readmem, srmp2_writemem, 0, 0,
-			srmp2_interrupt, 16		/* Interrupt times is not understood */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp2_init_machine,
+static MACHINE_DRIVER_START( srmp2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
+	MDRV_CPU_MEMORY(srmp2_readmem,srmp2_writemem)
+	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp2)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	464, 256-16, { 16, 464-1, 8, 256-1-24 },
-	srmp2_gfxdecodeinfo,
-	1024, 1024,						/* sprites only */
-	srmp2_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(464, 256-16)
+	MDRV_VISIBLE_AREA(16, 464-1, 8, 256-1-24)
+	MDRV_GFXDECODE(srmp2_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+	MDRV_COLORTABLE_LENGTH(1024)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	srmp2_vh_screenrefresh,			/* just draw the sprites */
+	MDRV_PALETTE_INIT(srmp2)
+	MDRV_VIDEO_UPDATE(srmp2)		/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &srmp2_ay8910_interface },
-		{ SOUND_MSM5205, &srmp2_msm5205_interface }
-	},
-	srmp2_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, srmp2_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_srmp3 =
-{
-	{
-		{
-			CPU_Z80,
-			3500000,				/* 3.50 MHz ? */
+static MACHINE_DRIVER_START( srmp3 )
+
+	/* basic machine hardware */
+
+	MDRV_CPU_ADD(Z80, 3500000)		/* 3.50 MHz ? */
 	//		4000000,				/* 4.00 MHz ? */
-			srmp3_readmem, srmp3_writemem, srmp3_readport, srmp3_writeport,
-	//		interrupt, 1
-			srmp3_interrupt, 1
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp3_init_machine,
+	MDRV_CPU_MEMORY(srmp3_readmem,srmp3_writemem)
+	MDRV_CPU_PORTS(srmp3_readport,srmp3_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp3)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 256-16, { 16, 400-1, 8, 256-1-24 },
-	srmp3_gfxdecodeinfo,
-	512, 0,	/* sprites only */
-	srmp3_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 400-1, 8, 256-1-24)
+	MDRV_GFXDECODE(srmp3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)	/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	srmp3_vh_screenrefresh,			/* just draw the sprites */
+	MDRV_PALETTE_INIT(srmp3)
+	MDRV_VIDEO_UPDATE(srmp3)	/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &srmp3_ay8910_interface },
-		{ SOUND_MSM5205, &srmp3_msm5205_interface }
-	},
-	srmp3_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, srmp3_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp3_msm5205_interface)
+MACHINE_DRIVER_END
 
 
-static struct MachineDriver machine_driver_mjyuugi =
-{
-	{
-		{
-			CPU_M68000,
-			16000000/2,				/* 8.00 MHz */
-			mjyuugi_readmem, mjyuugi_writemem, 0, 0,
-			srmp2_interrupt, 16		/* Interrupt times is not understood */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	srmp2_init_machine,
+static MACHINE_DRIVER_START( mjyuugi )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,16000000/2)				/* 8.00 MHz */
+	MDRV_CPU_MEMORY(mjyuugi_readmem,mjyuugi_writemem)
+	MDRV_CPU_VBLANK_INT(srmp2_interrupt,16)		/* Interrupt times is not understood */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(srmp2)
+	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	400, 256-16, { 16, 400-1, 0, 256-1-16 },
-	srmp3_gfxdecodeinfo,
-	512, 0,						/* sprites only */
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(400, 256-16)
+	MDRV_VISIBLE_AREA(16, 400-1, 0, 256-1-16)
+	MDRV_GFXDECODE(srmp3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)			/* sprites only */
 
-	VIDEO_TYPE_RASTER,
-	0,
-	0,								/* no need for a vh_start: no tilemaps */
-	0,
-	mjyuugi_vh_screenrefresh,		/* just draw the sprites */
+	MDRV_VIDEO_UPDATE(mjyuugi)			/* just draw the sprites */
 
 	/* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_AY8910, &mjyuugi_ay8910_interface },
-		{ SOUND_MSM5205, &srmp2_msm5205_interface }
-	},
-	srmp2_nvram_handler
-};
+	MDRV_SOUND_ADD(AY8910, mjyuugi_ay8910_interface)
+	MDRV_SOUND_ADD(MSM5205, srmp2_msm5205_interface)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -1290,8 +1305,46 @@ ROM_START( mjyuugia )
 	ROM_LOAD( "maj-001.02", 0x080000, 0x080000, 0xeb28e641 )
 ROM_END
 
+ROM_START( ponchin )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )					/* 68000 Code */
+	ROM_LOAD16_BYTE( "um2_1_1.u22", 0x000000, 0x020000, 0xcf88efbb )
+	ROM_LOAD16_BYTE( "um2_1_3.u42", 0x000001, 0x020000, 0xe053458f )
+	ROM_LOAD16_BYTE( "um2_1_2.u29", 0x040000, 0x020000, 0x5c2f9bcf )
+	ROM_LOAD16_BYTE( "um2_1_4.u44", 0x040001, 0x020000, 0x2ad4e0c7 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "um2_1_8.u55", 0x000000, 0x080000, 0xf74a8cb3 )
+	ROM_LOAD16_BYTE( "um2_1_7.u43", 0x000001, 0x080000, 0x1e87ca84 )
+	ROM_LOAD16_BYTE( "um2_1_6.u28", 0x200000, 0x080000, 0xb11e85a7 )
+	ROM_LOAD16_BYTE( "um2_1_5.u20", 0x200001, 0x080000, 0xa5469d11 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )				/* Samples */
+	ROM_LOAD( "um2_1_9.u56",  0x000000, 0x080000, 0x9165c79a )
+	ROM_LOAD( "um2_1_10.u63", 0x080000, 0x080000, 0x53e643e9 )
+ROM_END
+
+ROM_START( ponchina )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )					/* 68000 Code */
+	ROM_LOAD16_BYTE( "u22.bin",     0x000000, 0x020000, 0x9181de20 )
+	ROM_LOAD16_BYTE( "um2_1_3.u42", 0x000001, 0x020000, 0xe053458f )
+	ROM_LOAD16_BYTE( "um2_1_2.u29", 0x040000, 0x020000, 0x5c2f9bcf )
+	ROM_LOAD16_BYTE( "um2_1_4.u44", 0x040001, 0x020000, 0x2ad4e0c7 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD16_BYTE( "um2_1_8.u55", 0x000000, 0x080000, 0xf74a8cb3 )
+	ROM_LOAD16_BYTE( "um2_1_7.u43", 0x000001, 0x080000, 0x1e87ca84 )
+	ROM_LOAD16_BYTE( "um2_1_6.u28", 0x200000, 0x080000, 0xb11e85a7 )
+	ROM_LOAD16_BYTE( "um2_1_5.u20", 0x200001, 0x080000, 0xa5469d11 )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )				/* Samples */
+	ROM_LOAD( "um2_1_9.u56",  0x000000, 0x080000, 0x9165c79a )
+	ROM_LOAD( "um2_1_10.u63", 0x080000, 0x080000, 0x53e643e9 )
+ROM_END
+
 
 GAME( 1987, srmp2,     0,        srmp2,    srmp2,    srmp2,   ROT0, "Seta", "Super Real Mahjong Part 2 (Japan)" )
 GAME( 1988, srmp3,     0,        srmp3,    srmp3,    srmp3,   ROT0, "Seta", "Super Real Mahjong Part 3 (Japan)" )
-GAME( 1990, mjyuugi,   0,        mjyuugi,  mjyuugi,  mjyuugi, ROT0, "Visco", "Mahjong Yuugi (Japan set 1)" )
-GAME( 1990, mjyuugia,  mjyuugi,  mjyuugi,  mjyuugi,  mjyuugi, ROT0, "Visco", "Mahjong Yuugi (Japan set 2)" )
+GAME( 1990, mjyuugi,   0,        mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 1)" )
+GAME( 1990, mjyuugia,  mjyuugi,  mjyuugi,  mjyuugi,  0,       ROT0, "Visco", "Mahjong Yuugi (Japan set 2)" )
+GAME( 1991, ponchin,   0,        mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 1)" )
+GAME( 1991, ponchina,  ponchin,  mjyuugi,  ponchin,  0,       ROT0, "Visco", "Mahjong Pon Chin Kan (Japan set 2)" )

@@ -22,7 +22,7 @@ static int charbank,charpalbank;
 static int flipscreen;
 
 
-void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( josvolly )
 {
 	/* sprite lookup table is not original but it is almost 98% correct */
 
@@ -35,7 +35,7 @@ void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2,bit3;
+		int bit0,bit1,bit2,bit3,r,g,b;
 
 
 		/* red component */
@@ -43,20 +43,21 @@ void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* green component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 		/* blue component */
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -73,7 +74,7 @@ void josvolly_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 }
 
 
-void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( gsword )
 {
 	/* sprite lookup table is not original but it is almost 98% correct */
 
@@ -86,24 +87,25 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 1;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 1;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 1;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 3) & 1;
 		bit1 = (color_prom[0] >> 0) & 1;
 		bit2 = (color_prom[0] >> 1) & 1;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = 0;
 		bit1 = (color_prom[0] >> 2) & 1;
 		bit2 = (color_prom[0] >> 3) & 1;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -120,22 +122,13 @@ void gsword_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
-int gsword_vh_start(void)
+VIDEO_START( gsword )
 {
-	if ((dirtybuffer = malloc(gs_videoram_size)) == 0) return 1;
-	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((dirtybuffer = auto_malloc(gs_videoram_size)) == 0) return 1;
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 	memset(dirtybuffer,1,gs_videoram_size);
 	return 0;
-}
-
-void gsword_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(bitmap_bg);
 }
 
 WRITE_HANDLER( gs_charbank_w )
@@ -263,7 +256,7 @@ void render_sprites(struct mame_bitmap *bitmap)
 	}
 }
 
-void gsword_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( gsword )
 {
 	int scrollx=0, scrolly=-(*gs_scrolly_ram);
 

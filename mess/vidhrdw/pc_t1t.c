@@ -78,10 +78,12 @@ struct GfxDecodeInfo t1t_gfxdecodeinfo[] =
 };
 
 /* Initialise the cga palette */
-void pcjr_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( pcjr )
 {
-	memcpy(sys_palette,cga_palette,sizeof(cga_palette));
-	memcpy(sys_colortable,pcjr_colortable,sizeof(pcjr_colortable));
+	int i;
+	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
+		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+	memcpy(colortable,pcjr_colortable,sizeof(pcjr_colortable));
 }
 
 static struct { 
@@ -163,19 +165,14 @@ void pc_t1t_cursor(CRTC6845_CURSOR *cursor)
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_t1t_cursor };
 
 
-int pc_t1t_vh_start(void)
+VIDEO_START( pc_t1t )
 {
 	videoram_size = 0x8000;
 
 	pcjr.crtc=crtc6845;
 	crtc6845_init(pcjr.crtc, &config);
 
-    return generic_vh_start();
-}
-
-void pc_t1t_vh_stop(void)
-{
-    generic_vh_stop();
+    return video_start_generic();
 }
 
 WRITE_HANDLER ( pc_t1t_videoram_w )
@@ -724,7 +721,7 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
   Do NOT call osd_update_display() from this function,
   it will be called by the main emulation engine.
 ***************************************************************************/
-void pc_t1t_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc_t1t )
 {
 	static int video_active = 0;
 	static int width=0, height=0;
@@ -734,7 +731,7 @@ void pc_t1t_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	if( crtc6845_do_full_refresh(pcjr.crtc)||pcjr.full_refresh||full_refresh )
+	/*if( crtc6845_do_full_refresh(pcjr.crtc)||pcjr.full_refresh||full_refresh )*/
 	{
 		pcjr.full_refresh=0;
 		memset(dirtybuffer, 1, videoram_size);
@@ -795,7 +792,7 @@ void pc_t1t_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		if (width>Machine->visible_area.max_x) width=Machine->visible_area.max_x+1;
 		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
 		if ((width>100)&&(height>100))
-			osd_set_visible_area(0,width-1,0, height-1);
+			set_visible_area(0,width-1,0, height-1);
 		else logerror("video %d %d\n",width, height);
 	}
 

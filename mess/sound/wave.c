@@ -599,7 +599,7 @@ int wave_status(int id, int newstatus)
 
 		if( newstatus && !w->timer )
 		{
-			w->timer = timer_set(TIME_NEVER, 0, NULL);
+			timer_adjust(w->timer, TIME_NEVER, 0, 0);
 		}
 		else
 		if( !newstatus && w->timer )
@@ -874,12 +874,9 @@ int wave_seek(int id, int offset, int whence)
 		w->offset = w->length - 1;
 	w->play_pos = w->record_pos = w->offset;
 
-    if( w->timer )
-	{
-		timer_remove(w->timer);
-		w->timer = timer_set(TIME_NEVER, 0, NULL);
-	}
-    return w->offset;
+	if( w->timer )
+		timer_adjust(w->timer, TIME_NEVER, 0, 0);
+	return w->offset;
 }
 
 static int internal_wave_tell(int id, int allow_overflow)

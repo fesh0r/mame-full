@@ -141,10 +141,13 @@ static REG_OPTIONS regSettings[] =
 	{"state_directory",    RO_PSTRING, &settings.statedir,         0, 0},
 	{"artwork_directory",  RO_PSTRING, &settings.artdir,           0, 0},
 	{"snapshot_directory", RO_PSTRING, &settings.imgdir,           0, 0},
+	{"diff_directory",     RO_PSTRING, &settings.diffdir,          0, 0},
+	{"icons_directory",    RO_PSTRING, &settings.iconsdir,         0, 0},
 	{"cheat_directory",    RO_PSTRING, &settings.cheatdir,         0, 0},
 	{"cheat_file",         RO_PSTRING, &settings.cheatfile,        0, 0},
 	{"history_file",       RO_PSTRING, &settings.history_filename, 0, 0},
 	{"mameinfo_file",      RO_PSTRING, &settings.mameinfo_filename,0, 0},
+	{"ctrlr_directory",    RO_PSTRING, &settings.ctrlrdir,         0, 0},
 
 	/* ListMode needs to be before ColumnWidths settings */
 	{"ListMode",           RO_ENCODE,  &settings.view,             ListEncodeString,     ListDecodeString},
@@ -193,6 +196,7 @@ static REG_OPTIONS regGameOpts[] =
 	{ "mouse",                  RO_BOOL,    &gOpts.use_mouse,         0, 0},
 	{ "joystick",               RO_BOOL,    &gOpts.use_joystick,      0, 0},
 	{ "steadykey",              RO_BOOL,    &gOpts.steadykey,         0, 0},
+	{ "ctrlr",                  RO_STRING,  &gOpts.ctrlr,             0, 0},
 
 	/* core video */
 	{ "bpp",                    RO_INT,     &gOpts.color_depth,       0, 0}, 
@@ -212,7 +216,7 @@ static REG_OPTIONS regGameOpts[] =
 
 	/* sound */
 	{ "samplerate",             RO_INT,     &gOpts.samplerate,        0, 0},
-	{ "samples",                RO_BOOL,    &gOpts.use_samples,       0, 0},
+	{ "use_samples",            RO_BOOL,    &gOpts.use_samples,       0, 0},
 	{ "resamplefilter",         RO_BOOL,    &gOpts.use_filter,        0, 0},
 	{ "sound",                  RO_BOOL,    &gOpts.enable_sound,      0, 0},
 	{ "volume",                 RO_INT,     &gOpts.attenuation,       0, 0},
@@ -224,6 +228,7 @@ static REG_OPTIONS regGameOpts[] =
 /*	{ "playback",               RO_STRING,  &gOpts.playbackname,      0, 0},*/
 /*	{ "record",                 RO_STRING,  &gOpts.recordname,        0, 0},*/
 	{ "log",                    RO_BOOL,    &gOpts.errorlog,          0, 0},
+	{ "sleep",                  RO_BOOL,    &gOpts.sleep,             0, 0},
 
 #ifdef MESS
 	/* mess options */
@@ -308,7 +313,7 @@ void OptionsInit(int total_games)
 	settings.area.width  = 640;
 	settings.area.height = 400;
 	settings.splitter[0] = 150;
-	settings.splitter[1] = 300;
+	settings.splitter[1] = 362;
 #ifdef MESS
     settings.splitter[2] = 406;
 #endif
@@ -336,6 +341,8 @@ void OptionsInit(int total_games)
 	settings.statedir          = strdup("sta");
 	settings.artdir            = strdup("artwork");
 	settings.imgdir            = strdup("snap");
+	settings.diffdir           = strdup("diff");
+	settings.iconsdir          = strdup("icons");
 	settings.cheatdir          = strdup("cheat");
 	settings.cheatfile         = strdup("cheat.dat");
 #ifdef MESS
@@ -345,6 +352,7 @@ void OptionsInit(int total_games)
 	settings.history_filename  = strdup("history.dat");
 	settings.mameinfo_filename = strdup("mameinfo.dat");
 #endif
+	settings.ctrlrdir          = strdup("ctrlr");
 
 	settings.list_font.lfHeight         = -8;
 	settings.list_font.lfWidth          = 0;
@@ -403,6 +411,7 @@ void OptionsInit(int total_games)
 	global.use_mouse         = FALSE;
 	global.use_joystick      = FALSE;
 	global.steadykey         = FALSE;
+	strcpy(global.ctrlr,     "Standard");
 
 	/* Core video */
 	global.color_depth       = 0;
@@ -434,6 +443,7 @@ void OptionsInit(int total_games)
 	global.playbackname      = NULL;
 	global.recordname        = NULL;
 	global.errorlog          = FALSE;
+	global.sleep             = FALSE;
 
 #ifdef MESS
 	global.use_new_filemgr = TRUE;
@@ -471,10 +481,13 @@ void OptionsExit(void)
     free(settings.cabinetdir);
     free(settings.marqueedir);
     free(settings.nvramdir);
+    free(settings.diffdir);
+    free(settings.iconsdir);
 	free(settings.cheatdir);
 	free(settings.cheatfile);
 	free(settings.history_filename);
 	free(settings.mameinfo_filename);
+    free(settings.ctrlrdir);
 }
 
 options_type * GetDefaultOptions(void)
@@ -799,6 +812,23 @@ void SetSampleDirs(const char* paths)
 		settings.sampledirs = strdup(paths);
 }
 
+const char* GetCtrlrDir(void)
+{
+	return settings.ctrlrdir;
+}
+
+void SetCtrlrDir(const char* path)
+{
+	if (settings.ctrlrdir != NULL)
+	{
+		free(settings.ctrlrdir);
+		settings.ctrlrdir = NULL;
+	}
+
+	if (path != NULL)
+		settings.ctrlrdir = strdup(path);
+}
+
 const char* GetCfgDir(void)
 {
 	return settings.cfgdir;
@@ -984,6 +1014,40 @@ void SetMarqueeDir(const char* path)
 
 	if (path != NULL)
 		settings.marqueedir = strdup(path);
+}
+
+const char* GetDiffDir(void)
+{
+	return settings.diffdir;
+}
+
+void SetDiffDir(const char* path)
+{
+	if (settings.diffdir != NULL)
+	{
+		free(settings.diffdir);
+		settings.diffdir = NULL;
+	}
+
+	if (path != NULL)
+		settings.diffdir = strdup(path);
+}
+
+const char* GetIconsDir(void)
+{
+	return settings.iconsdir;
+}
+
+void SetIconsDir(const char* path)
+{
+	if (settings.iconsdir != NULL)
+	{
+		free(settings.iconsdir);
+		settings.iconsdir = NULL;
+	}
+
+	if (path != NULL)
+		settings.iconsdir = strdup(path);
 }
 
 const char* GetCheatDir(void)

@@ -101,15 +101,14 @@ extern unsigned char *buggychl_scrollv,*buggychl_scrollh;
 extern unsigned char buggychl_sprite_lookup[0x2000];
 extern unsigned char *buggychl_character_ram;
 
-void buggychl_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-void buggychl_vh_stop(void);
-int buggychl_vh_start(void);
+PALETTE_INIT( buggychl );
+VIDEO_START( buggychl );
 WRITE_HANDLER( buggychl_chargen_w );
 WRITE_HANDLER( buggychl_sprite_lookup_bank_w );
 WRITE_HANDLER( buggychl_sprite_lookup_w );
 WRITE_HANDLER( buggychl_ctrl_w );
 WRITE_HANDLER( buggychl_bg_scrollx_w );
-void buggychl_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_UPDATE( buggychl );
 
 
 
@@ -124,7 +123,7 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_cause_interrupt(1,Z80_NMI_INT);
+	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
@@ -144,7 +143,7 @@ static WRITE_HANDLER( nmi_enable_w )
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_cause_interrupt(1,Z80_NMI_INT);
+		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -208,7 +207,7 @@ static MEMORY_READ_START( sound_readmem )
 	{ 0x4000, 0x47ff, MRA_RAM },
 	{ 0x5000, 0x5000, soundlatch_r },
 //	{ 0x5001, 0x5001, MRA_RAM },	/* is command pending? */
-    { 0xe000, 0xefff, MRA_ROM },	/* space for diagnostics ROM */
+	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostics ROM */
 MEMORY_END
 
 static MEMORY_WRITE_START( sound_writemem )
@@ -218,7 +217,7 @@ static MEMORY_WRITE_START( sound_writemem )
 	{ 0x4801, 0x4801, AY8910_write_port_0_w },
 	{ 0x4802, 0x4802, AY8910_control_port_1_w },
 	{ 0x4803, 0x4803, AY8910_write_port_1_w },
-	{ 0x4810, 0x481d, MWA_RAM },	/* MSM5232 registers */
+	{ 0x4810, 0x481d, MSM5232_0_w },
 	{ 0x4820, 0x4820, MWA_RAM },	/* VOL/BAL   for the 7630 on the MSM5232 output */
 	{ 0x4830, 0x4830, MWA_RAM },	/* TRBL/BASS for the 7630 on the MSM5232 output  */
 //	{ 0x5000, 0x5000, MWA_RAM },	/* to main cpu */
@@ -250,31 +249,27 @@ MEMORY_END
 /******************************************************************************/
 
 INPUT_PORTS_START( buggychl )
-    PORT_START	/* IN0 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x03, "Game Over Bonus" )	// Arks/Flags/Fuel
+	PORT_DIPSETTING(    0x03, "2000/1000/50" )
+	PORT_DIPSETTING(    0x02, "1000/500/30" )
+	PORT_DIPSETTING(    0x01, "500/200/10" )
+	PORT_DIPSETTING(    0x00, "None" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, "Easy" )			// 1300 units of fuel
+	PORT_DIPSETTING(    0x10, "Normal" )		// 1200 units of fuel
+	PORT_DIPSETTING(    0x08, "Hard" )			// 1100 units of fuel
+	PORT_DIPSETTING(    0x00, "Hardest" )		// 1000 units of fuel
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	PORT_START /* IN1 */
+	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 9C_1C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 8C_1C ) )
@@ -311,50 +306,46 @@ INPUT_PORTS_START( buggychl )
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
 
 	PORT_START /* IN2 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, "Start button needed" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Yes ) )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Fuel loss", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x04, "Normal" )
+	PORT_DIPSETTING(    0x00, "Crash only" )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME( 0x10, 0x10, "Coinage Display" )
-	PORT_DIPSETTING(    0x10, "Coins/Credits" )
-	PORT_DIPSETTING(    0x00, "Insert Coin" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Year Display" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x80, "A and B" )
-	PORT_DIPSETTING(    0x00, "A only" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x80, "2" )
 
 	PORT_START /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )	/* shift */
-    PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_SERVICE, "Test Button", KEYCODE_F1, IP_JOY_NONE )
-    PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-    PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )	/* shift */
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_SERVICE, "Test Button", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START /* IN4 - wheel */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 30, 15, 0, 0)
 
 	PORT_START /* IN5 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-    PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-    PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-    PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_TILT )
-    PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* accelerator */
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_BUTTON1 )	/* accelerator */
 INPUT_PORTS_END
 
 
@@ -421,59 +412,50 @@ static struct AY8910interface ay8910_interface =
 	{ portB_0_w, portB_1_w }
 };
 
-
-
-static const struct MachineDriver machine_driver_buggychl =
+static struct MSM5232interface msm5232_interface =
 {
+	1, /* number of chips */
+	2000000, /* 2 MHz ? */
+	{ { 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6, 0.39e-6 } },	/* default 0.39 uF capacitors (not verified) */
+	{ 100 } /* ? */
+};
+
+
+static MACHINE_DRIVER_START( buggychl )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* 4 MHz??? */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000, /* 4 MHz??? */
-			sound_readmem,sound_writemem,0,0,
-			0,0,
-			interrupt,60	/* irq is timed, tied to the cpu clock and not to vblank */
+	MDRV_CPU_ADD(Z80, 4000000) /* 4 MHz??? */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU) /* 4 MHz??? */
+	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,60)	/* irq is timed, tied to the cpu clock and not to vblank */
 							/* nmi is caused by the main cpu */
-		},
-		{
-			CPU_M68705,
-			8000000/2,  /* 4 MHz */
-			mcu_readmem,mcu_writemem,0,0,
-			ignore_interrupt,0	/* irq's generated by Z80 */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1, /* interleaving */
-	0,
+
+	MDRV_CPU_ADD(M68705,8000000/2)  /* 4 MHz */
+	MDRV_CPU_MEMORY(mcu_readmem,mcu_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	128+128, 128,
-	buggychl_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+128)
+	MDRV_COLORTABLE_LENGTH(128)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	buggychl_vh_start,
-	buggychl_vh_stop,
-	buggychl_vh_screenrefresh,
+	MDRV_PALETTE_INIT(buggychl)
+	MDRV_VIDEO_START(buggychl)
+	MDRV_VIDEO_UPDATE(buggychl)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		}
-		/* there's a MSM5232 too */
-	}
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(MSM5232, msm5232_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -482,65 +464,64 @@ static const struct MachineDriver machine_driver_buggychl =
 ***************************************************************************/
 
 ROM_START( buggychl )
-    ROM_REGION( 0x1c000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "a22-04-2.23", 0x00000, 0x4000, 0x16445a6a )
 	ROM_LOAD( "a22-05-2.22", 0x04000, 0x4000, 0xd57430b2 )
 	ROM_LOAD( "a22-01.3",    0x10000, 0x4000, 0xaf3b7554 ) /* banked */
 	ROM_LOAD( "a22-02.2",    0x14000, 0x4000, 0xb8a645fb ) /* banked */
 	ROM_LOAD( "a22-03.1",    0x18000, 0x4000, 0x5f45d469 ) /* banked */
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* sound Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* sound Z80 */
 	ROM_LOAD( "a22-24.28",   0x00000, 0x4000, 0x1e7f841f )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "a22-19.31",   0x00000, 0x0800, 0x06a71df0 )
 
-    ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-    ROM_LOAD( "a22-06.111",  0x00000, 0x4000, 0x1df91b17 )
-    ROM_LOAD( "a22-07.110",  0x04000, 0x4000, 0x2f0ab9b7 )
-    ROM_LOAD( "a22-08.109",  0x08000, 0x4000, 0x49cb2134 )
-    ROM_LOAD( "a22-09.108",  0x0c000, 0x4000, 0xe682e200 )
-    ROM_LOAD( "a22-10.107",  0x10000, 0x4000, 0x653b7e25 )
-    ROM_LOAD( "a22-11.106",  0x14000, 0x4000, 0x8057b55c )
-    ROM_LOAD( "a22-12.105",  0x18000, 0x4000, 0x8b365b24 )
-    ROM_LOAD( "a22-13.104",  0x1c000, 0x4000, 0x2c6d68fe )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "a22-06.111",  0x00000, 0x4000, 0x1df91b17 )
+	ROM_LOAD( "a22-07.110",  0x04000, 0x4000, 0x2f0ab9b7 )
+	ROM_LOAD( "a22-08.109",  0x08000, 0x4000, 0x49cb2134 )
+	ROM_LOAD( "a22-09.108",  0x0c000, 0x4000, 0xe682e200 )
+	ROM_LOAD( "a22-10.107",  0x10000, 0x4000, 0x653b7e25 )
+	ROM_LOAD( "a22-11.106",  0x14000, 0x4000, 0x8057b55c )
+	ROM_LOAD( "a22-12.105",  0x18000, 0x4000, 0x8b365b24 )
+	ROM_LOAD( "a22-13.104",  0x1c000, 0x4000, 0x2c6d68fe )
 
-    ROM_REGION( 0x4000, REGION_GFX2, 0 )	/* sprite zoom tables */
-    ROM_LOAD( "a22-14.59",   0x0000, 0x2000, 0xa450b3ef )	/* vertical */
-    ROM_LOAD( "a22-15.115",  0x2000, 0x1000, 0x337a0c14 )	/* horizontal */
-    ROM_LOAD( "a22-16.116",  0x3000, 0x1000, 0x337a0c14 )	/* horizontal */
+	ROM_REGION( 0x4000, REGION_GFX2, 0 )	/* sprite zoom tables */
+	ROM_LOAD( "a22-14.59",   0x0000, 0x2000, 0xa450b3ef )	/* vertical */
+	ROM_LOAD( "a22-15.115",  0x2000, 0x1000, 0x337a0c14 )	/* horizontal */
+	ROM_LOAD( "a22-16.116",  0x3000, 0x1000, 0x337a0c14 )	/* horizontal */
 ROM_END
 
 ROM_START( buggycht )
-    ROM_REGION( 0x1c000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x1c000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "bu04.bin",    0x00000, 0x4000, 0xf90ab854 )
 	ROM_LOAD( "bu05.bin",    0x04000, 0x4000, 0x543d0949 )
 	ROM_LOAD( "a22-01.3",    0x10000, 0x4000, 0xaf3b7554 ) /* banked */
 	ROM_LOAD( "a22-02.2",    0x14000, 0x4000, 0xb8a645fb ) /* banked */
 	ROM_LOAD( "a22-03.1",    0x18000, 0x4000, 0x5f45d469 ) /* banked */
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* sound Z80 */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* sound Z80 */
 	ROM_LOAD( "a22-24.28",   0x00000, 0x4000, 0x1e7f841f )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 8k for the microcontroller */
 	ROM_LOAD( "a22-19.31",   0x00000, 0x0800, 0x06a71df0 )
 
-    ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
-    ROM_LOAD( "a22-06.111",  0x00000, 0x4000, 0x1df91b17 )
-    ROM_LOAD( "a22-07.110",  0x04000, 0x4000, 0x2f0ab9b7 )
-    ROM_LOAD( "a22-08.109",  0x08000, 0x4000, 0x49cb2134 )
-    ROM_LOAD( "a22-09.108",  0x0c000, 0x4000, 0xe682e200 )
-    ROM_LOAD( "a22-10.107",  0x10000, 0x4000, 0x653b7e25 )
-    ROM_LOAD( "a22-11.106",  0x14000, 0x4000, 0x8057b55c )
-    ROM_LOAD( "a22-12.105",  0x18000, 0x4000, 0x8b365b24 )
-    ROM_LOAD( "a22-13.104",  0x1c000, 0x4000, 0x2c6d68fe )
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "a22-06.111",  0x00000, 0x4000, 0x1df91b17 )
+	ROM_LOAD( "a22-07.110",  0x04000, 0x4000, 0x2f0ab9b7 )
+	ROM_LOAD( "a22-08.109",  0x08000, 0x4000, 0x49cb2134 )
+	ROM_LOAD( "a22-09.108",  0x0c000, 0x4000, 0xe682e200 )
+	ROM_LOAD( "a22-10.107",  0x10000, 0x4000, 0x653b7e25 )
+	ROM_LOAD( "a22-11.106",  0x14000, 0x4000, 0x8057b55c )
+	ROM_LOAD( "a22-12.105",  0x18000, 0x4000, 0x8b365b24 )
+	ROM_LOAD( "a22-13.104",  0x1c000, 0x4000, 0x2c6d68fe )
 
-    ROM_REGION( 0x4000, REGION_GFX2, 0 )	/* sprite zoom tables */
-    ROM_LOAD( "a22-14.59",   0x0000, 0x2000, 0xa450b3ef )	/* vertical */
-    ROM_LOAD( "a22-15.115",  0x2000, 0x1000, 0x337a0c14 )	/* horizontal */
-    ROM_LOAD( "a22-16.116",  0x3000, 0x1000, 0x337a0c14 )	/* horizontal */
+	ROM_REGION( 0x4000, REGION_GFX2, 0 )	/* sprite zoom tables */
+	ROM_LOAD( "a22-14.59",   0x0000, 0x2000, 0xa450b3ef )	/* vertical */
+	ROM_LOAD( "a22-15.115",  0x2000, 0x1000, 0x337a0c14 )	/* horizontal */
+	ROM_LOAD( "a22-16.116",  0x3000, 0x1000, 0x337a0c14 )	/* horizontal */
 ROM_END
-
 
 
 GAMEX( 1984, buggychl, 0,        buggychl, buggychl, 0, ROT270, "Taito Corporation", "Buggy Challenge", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

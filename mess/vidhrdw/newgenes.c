@@ -226,7 +226,7 @@ int genesis_vh_start (void)
 {
 	unsigned int a,b;
 	int entry;
-	if (generic_vh_start() != 0)
+	if (video_start_generic() != 0)
 		return 1;
 
 	Pen = &Machine->pens[0];
@@ -253,31 +253,15 @@ int genesis_vh_start (void)
 
 	/* create scrollA and scrollB playfields */
 
-  	if ((scroll_a = malloc(1024*1024)) == 0)
-	{
-		generic_vh_stop();
+  	if ((scroll_a = auto_malloc(1024*1024)) == 0)
 		return 1;
-	}
-	if ((scroll_b = malloc(1024*1024)) == 0)
-	{
-		generic_vh_stop();
-		free(scroll_a);
+	if ((scroll_b = auto_malloc(1024*1024)) == 0)
 		return 1;
-	}
-
-   	if ((spritelayer = malloc(512*512)) == 0)
-	{
-		generic_vh_stop();
-   //		bitmap_free(scroll_a);
-   //		bitmap_free(scroll_b);
+   	if ((spritelayer = auto_malloc(512*512)) == 0)
 		return 1;
-	}
-
-
 
    /*	if ((bitmap_vram = osd_create_bitmap(8,18000)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
     	bitmap_free(spritelayer);
@@ -288,7 +272,6 @@ int genesis_vh_start (void)
 
    /*	if ((bitmap_sprite = osd_create_bitmap(64,64)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
 		bitmap_free(spritelayer);
@@ -297,26 +280,21 @@ int genesis_vh_start (void)
 	}*/
 
 
-	if ((tile_changed_1 = malloc(0x800)) == 0)
+	if ((tile_changed_1 = auto_malloc(0x800)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
-		free(spritelayer);
 	//	bitmap_free(bitmap_vram);
 	//	bitmap_free(bitmap_sprite);
 		return 1;
 	}
 
-	if ((tile_changed_2 = malloc(0x800)) == 0)
+	if ((tile_changed_2 = auto_malloc(0x800)) == 0)
 	{
-		generic_vh_stop();
 	//	bitmap_free(scroll_a);
 	//	bitmap_free(scroll_b);
-		free(spritelayer);
 	//	bitmap_free(bitmap_vram);
 	//	bitmap_free(bitmap_sprite);
-		free(tile_changed_1);
 		return 1;
 	}
 
@@ -391,13 +369,8 @@ void genesis_vh_stop (void)
 	/* Free everything */
  //	bitmap_free(scroll_a);
  //	bitmap_free(scroll_b);
-	free(spritelayer);
  //	bitmap_free(bitmap_vram);
  //	bitmap_free(bitmap_sprite);
-	free(tile_changed_1);
-	free(tile_changed_2);
-
-	generic_vh_stop ();
 }
 
 unsigned char *get_dma_dest_address(int id)

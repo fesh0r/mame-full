@@ -487,8 +487,6 @@ static int apexc_vh_start(void)
 	return 0;
 }
 
-/*#define apexc_vh_stop generic_vh_stop*/
-
 static void apexc_vh_stop(void)
 {
 	bitmap_free(apexc_bitmap1);

@@ -777,9 +777,9 @@ void intv_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 int intvkbd_vh_start(void)
 {
 	videoram_size = 0x0800;
-	videoram = malloc(videoram_size);
+	videoram = auto_malloc(videoram_size);
 
-    if (generic_vh_start())
+    if (video_start_generic())
         return 1;
 
 	return intv_vh_start();
@@ -789,8 +789,6 @@ int intvkbd_vh_start(void)
 void intvkbd_vh_stop(void)
 {
 	intv_vh_stop();
-	free(videoram);
-	generic_vh_stop();
 }
 
 /* very rudimentary support for the tms9927 character generator IC */

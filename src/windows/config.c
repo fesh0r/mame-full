@@ -19,7 +19,6 @@
  *   gamma (is already osd_)
  *   sound (enable/disable sound)
  *   volume
- * - rename	options.use_emulated_ym3812 to options_use_real_ym3812;
  * - get rid of #ifdef MESS's by providing appropriate hooks
  */
 
@@ -30,6 +29,10 @@
 #include "driver.h"
 #include "rc.h"
 #include "misc.h"
+
+#ifdef _MSC_VER
+#define strcasecmp stricmp
+#endif
 
 extern struct rc_option frontend_opts[];
 extern struct rc_option fileio_opts[];
@@ -54,11 +57,7 @@ static int readconfig;
 static int createconfig;
 extern int verbose;
 
-static struct rc_struct *rc;
-
-/* fix me - need to have the core call osd_set_gamma with this value */
-/* instead of relying on the name of an osd variable */
-extern float gamma_correct;
+struct rc_struct *rc;
 
 /* fix me - need to have the core call osd_set_mastervolume with this value */
 /* instead of relying on the name of an osd variable */
@@ -158,6 +157,7 @@ static struct rc_option opts[] = {
 #ifdef MESS
 	{ NULL, NULL, rc_link, mess_opts, NULL, 0,	0, NULL, NULL },
 #endif
+
 	/* options supported by the mame core */
 	/* video */
 	{ "Mame CORE video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -168,8 +168,7 @@ static struct rc_option opts[] = {
 	{ "flipx", NULL, rc_bool, &options.flipx, "0", 0, 0, NULL, "flip screen upside-down" },
 	{ "flipy", NULL, rc_bool, &options.flipy, "0", 0, 0, NULL, "flip screen left-right" },
 	{ "debug_resolution", "dr", rc_string, &debugres, "auto", 0, 0, video_set_debugres, "set resolution for debugger window" },
-	/* make it options.gamma_correction? */
-	{ "gamma", NULL, rc_float, &gamma_correct , "1.0", 0.5, 2.0, NULL, "gamma correction"},
+	{ "gamma", NULL, rc_float, &options.gamma, "1.0", 0.5, 2.0, NULL, "gamma correction"},
 
 	/* vector */
 	{ "Mame CORE vector game options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
@@ -189,6 +188,7 @@ static struct rc_option opts[] = {
 	/* misc */
 	{ "Mame CORE misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "artwork", "art", rc_bool, &options.use_artwork, "1", 0, 0, NULL, "use additional game artwork" },
+	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 #ifndef MESS
@@ -348,6 +348,7 @@ int parse_config (const char* filename, const struct GameDriver *gamedrv)
 
 int cli_frontend_init (int argc, char **argv)
 {
+	struct InternalMachineDriver drv;
 	char buffer[128];
 	char *cmd_name;
 	int game_index;
@@ -358,9 +359,6 @@ int cli_frontend_init (int argc, char **argv)
 
 	/* clear all core options */
 	memset(&options,0,sizeof(options));
-
-	/* directly define these */
-	options.use_emulated_ym3812 = 1;
 
 	/* create the rc object */
 	if (!(rc = rc_create()))
@@ -489,7 +487,7 @@ int cli_frontend_init (int argc, char **argv)
 	{
 		/* do we have a driver for this? */
 		for (i = 0; drivers[i]; i++)
-			if (stricmp(gamename,drivers[i]->name) == 0)
+			if (strcasecmp(gamename,drivers[i]->name) == 0)
 			{
 				game_index = i;
 				break;
@@ -531,7 +529,8 @@ int cli_frontend_init (int argc, char **argv)
 	/* ok, got a gamename */
 
 	/* if this is a vector game, parse vector.ini first */
-	if (drivers[game_index]->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	expand_machine_driver(drivers[game_index]->drv, &drv);
+	if (drv.video_attributes & VIDEO_TYPE_VECTOR)
 		if (parse_config ("vector.ini", NULL))
 			exit(1);
 
@@ -585,6 +584,7 @@ int cli_frontend_init (int argc, char **argv)
 		options.debug_width = 640;
 	if (options.debug_height == 0)
 		options.debug_height = 480;
+	options.debug_depth = 8;
 
 	/* no sound is indicated by a 0 samplerate */
 	if (!enable_sound)
@@ -597,6 +597,7 @@ void cli_frontend_exit(void)
 {
 	/* close open files */
 	if (logfile) fclose(logfile);
+
 #ifndef MESS
 	if (options.playback) osd_fclose(options.playback);
 	if (options.record)   osd_fclose(options.record);

@@ -37,8 +37,8 @@ extern WRITE_HANDLER ( cgenie_port_ff_w );
 extern READ_HANDLER ( cgenie_port_ff_r );
 extern int cgenie_port_xx_r(int offset);
 
-extern int cgenie_timer_interrupt(void);
-extern int cgenie_frame_interrupt(void);
+extern void cgenie_timer_interrupt(void);
+extern void cgenie_frame_interrupt(void);
 
 extern READ_HANDLER ( cgenie_status_r );
 extern READ_HANDLER ( cgenie_track_r );

@@ -25,7 +25,7 @@ int crbaloon_collision;
   bit 0 RED
 
 ***************************************************************************/
-void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( crbaloon )
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -34,17 +34,18 @@ void crbaloon_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int intensity;
+		int intensity,r,g,b;
 
 
 		intensity = (~i & 0x08) ? 0xff : 0x55;
 
 		/* red component */
-		*(palette++) = intensity * ((~i >> 0) & 1);
+		r = intensity * ((~i >> 0) & 1);
 		/* green component */
-		*(palette++) = intensity * ((~i >> 1) & 1);
+		g = intensity * ((~i >> 1) & 1);
 		/* blue component */
-		*(palette++) = intensity * ((~i >> 2) & 1);
+		b = intensity * ((~i >> 2) & 1);
+		palette_set_color(i,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0);i += 2)
@@ -76,13 +77,13 @@ WRITE_HANDLER( crbaloon_flipscreen_w )
 
  ***************************************************************************/
 
-void crbaloon_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( crbaloon )
 {
 	int offs,x,y;
 	int bx,by;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 		memset(dirtybuffer,1,videoram_size);
 
 

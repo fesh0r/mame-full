@@ -19,22 +19,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-
-
-
-/*************************************
- *
- *	Externals
- *
- *************************************/
-
-WRITE16_HANDLER( klax_latch_w );
-
-int klax_vh_start(void);
-void klax_vh_stop(void);
-void klax_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
-
-void klax_scanline_update(int scanline);
+#include "klax.h"
 
 
 
@@ -80,7 +65,7 @@ static WRITE16_HANDLER( interrupt_ack_w )
  *
  *************************************/
 
-static void init_machine(void)
+static MACHINE_INIT( klax )
 {
 	atarigen_eeprom_reset();
 	atarigen_interrupt_reset(update_interrupts);
@@ -135,9 +120,9 @@ static MEMORY_WRITE16_START( main_writemem )
 	{ 0x2e0000, 0x2e0001, watchdog_reset16_w },
 	{ 0x360000, 0x360001, interrupt_ack_w },
 	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram16 },
-	{ 0x3f0000, 0x3f0f7f, ataripf_0_simple_w, &ataripf_0_base },
+	{ 0x3f0000, 0x3f0f7f, atarigen_playfield_w, &atarigen_playfield },
 	{ 0x3f0f80, 0x3f0fff, atarimo_0_slipram_w, &atarimo_0_slipram },
-	{ 0x3f1000, 0x3f1fff, ataripf_0_upper_msb_w, &ataripf_0_upper },
+	{ 0x3f1000, 0x3f1fff, atarigen_playfield_upper_w, &atarigen_playfield_upper },
 	{ 0x3f2000, 0x3f27ff, atarimo_0_spriteram_w, &atarimo_0_spriteram },
 	{ 0x3f2800, 0x3f3fff, MWA16_RAM },
 MEMORY_END
@@ -225,44 +210,32 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
-static const struct MachineDriver machine_driver_klax =
-{
+static MACHINE_DRIVER_START( klax )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,		/* verified */
-			ATARI_CLOCK_14MHz/2,
-			main_readmem,main_writemem,0,0,
-			atarigen_video_int_gen,1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	init_machine,
+	MDRV_CPU_ADD(M68000, ATARI_CLOCK_14MHz/2)
+	MDRV_CPU_MEMORY(main_readmem,main_writemem)
+	MDRV_CPU_VBLANK_INT(atarigen_video_int_gen,1)
+	
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	
+	MDRV_MACHINE_INIT(klax)
+	MDRV_NVRAM_HANDLER(atarigen)
 
 	/* video hardware */
-	42*8, 30*8, { 0*8, 42*8-1, 0*8, 30*8-1 },
-	gfxdecodeinfo,
-	512, 0,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK,
-	0,
-	klax_vh_start,
-	klax_vh_stop,
-	klax_vh_screenrefresh,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(42*8, 30*8)
+	MDRV_VISIBLE_AREA(0*8, 42*8-1, 0*8, 30*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+	
+	MDRV_VIDEO_START(klax)
+	MDRV_VIDEO_UPDATE(klax)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_OKIM6295,
-			&okim6295_interface
-		}
-	},
-
-	atarigen_nvram_handler
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 
 
@@ -394,7 +367,7 @@ ROM_END
  *
  *************************************/
 
-static void init_klax(void)
+static DRIVER_INIT( klax )
 {
 	atarigen_eeprom_default = NULL;
 }

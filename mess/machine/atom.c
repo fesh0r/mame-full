@@ -237,7 +237,7 @@ static OPBASE_HANDLER(atom_opbase_handler)
 	memory_region(REGION_CPU1)[0x0a] = rand() & 0x0ff;
 	memory_region(REGION_CPU1)[0x0b] = rand() & 0x0ff;
 
-	return cpu_get_pc() & 0x0ffff;
+	return activecpu_get_pc() & 0x0ffff;
 }
 void atom_init_machine(void)
 {

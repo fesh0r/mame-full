@@ -17,25 +17,19 @@ static unsigned char dirtycharacter[256];
 
 
 
-void polyplay_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( polyplay )
 {
-	static unsigned char polyplay_palette[] =
-	{
-		0x00,0x00,0x00,
-		0xff,0xff,0xff,
+	palette_set_color(0,0x00,0x00,0x00);
+	palette_set_color(1,0xff,0xff,0xff);
 
-		0x00,0x00,0x00,
-		0xff,0x00,0x00,
-		0x00,0xff,0x00,
-		0xff,0xff,0x00,
-		0x00,0x00,0xff,
-		0xff,0x00,0xff,
-		0x00,0xff,0xff,
-		0xff,0xff,0xff,
-	};
-
-
-	memcpy(palette,polyplay_palette,sizeof(polyplay_palette));
+	palette_set_color(2,0x00,0x00,0x00);
+	palette_set_color(3,0xff,0x00,0x00);
+	palette_set_color(4,0x00,0xff,0x00);
+	palette_set_color(5,0xff,0xff,0x00);
+	palette_set_color(6,0x00,0x00,0xff);
+	palette_set_color(7,0xff,0x00,0xff);
+	palette_set_color(8,0x00,0xff,0xff);
+	palette_set_color(9,0xff,0xff,0xff);
 }
 
 
@@ -55,12 +49,12 @@ READ_HANDLER( polyplay_characterram_r )
 }
 
 
-void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( polyplay )
 {
 	int offs;
 
 
-	if (full_refresh)
+	if (get_vh_global_attribute_changed())
 	{
 		memset(dirtybuffer,1,videoram_size);
 	}
@@ -89,7 +83,7 @@ void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				sx = offs % 64;
 				sy = offs / 64;
 
-				drawgfx(bitmap,Machine->gfx[0],
+				drawgfx(tmpbitmap,Machine->gfx[0],
 						charcode,
 						0,
 						0,0,
@@ -111,7 +105,7 @@ void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 				sx = offs % 64;
 				sy = offs / 64;
 
-				drawgfx(bitmap,Machine->gfx[1],
+				drawgfx(tmpbitmap,Machine->gfx[1],
 						charcode,
 						0,
 						0,0,
@@ -121,6 +115,7 @@ void polyplay_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	for (offs = 0;offs < 256;offs++)

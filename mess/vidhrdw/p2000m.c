@@ -15,14 +15,13 @@ static	INT8	frame_count;
 int p2000m_vh_start (void)
 {
 	frame_count = 0;
-	if (generic_vh_start ())
+	if (video_start_generic ())
 		return (1);
 	return (0);
 }
 
 void p2000m_vh_stop (void)
 {
-	generic_vh_stop ();
 }
 
 void p2000m_vh_callback (void)

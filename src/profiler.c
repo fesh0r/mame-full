@@ -117,6 +117,7 @@ void profiler_show(struct mame_bitmap *bitmap)
 		"tmdraw ",
 		"tmdrroz",
 		"tmupdat",
+		"Artwork",
 		"Blit   ",
 		"Sound  ",
 		"Mixer  ",

@@ -54,7 +54,7 @@ int cbm700_vh_start(void)
 		}
 	}
 
-    return generic_vh_start();
+    return video_start_generic();
 }
 
 void cbmb_vh_cursor(CRTC6845_CURSOR *cursor)

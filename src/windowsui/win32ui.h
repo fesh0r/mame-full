@@ -49,6 +49,9 @@ extern int   UpdateLoadProgress(const char* name, int current, int total);
 // Move The in "The Title (notes)" to "Title, The (notes)"
 extern char *ModifyThe(const char *str);
 
+// Convert Ampersand so it can display in a static control
+extern char* ConvertAmpersandString(const char *s);
+
 /* globalized for painting tree control */
 extern HBITMAP      hBitmap;
 extern HPALETTE     hPALbg;

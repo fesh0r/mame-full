@@ -1,13 +1,12 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Bally/Midway Jr. Pac-Man
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "jrpacman.h"
 
 
 
@@ -19,46 +18,47 @@ static int flipscreen;
 
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
+	Convert the color PROMs into a more useable format.
 
-  Jr. Pac Man has two 256x4 palette PROMs (the three msb of the address are
-  grounded, so the effective colors are only 32) and one 256x4 color lookup
-  table PROM.
-  The palette PROMs are connected to the RGB output this way:
+	Jr. Pac Man has two 256x4 palette PROMs (the three msb of the address are
+	grounded, so the effective colors are only 32) and one 256x4 color lookup
+	table PROM.
+	The palette PROMs are connected to the RGB output this way:
 
-  bit 3 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-  bit 0 -- 470 ohm resistor  -- GREEN
+	bit 3 -- 220 ohm resistor  -- BLUE
+	   -- 470 ohm resistor  -- BLUE
+	   -- 220 ohm resistor  -- GREEN
+	bit 0 -- 470 ohm resistor  -- GREEN
 
-  bit 3 -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-  bit 0 -- 1  kohm resistor  -- RED
+	bit 3 -- 1  kohm resistor  -- GREEN
+	   -- 220 ohm resistor  -- RED
+	   -- 470 ohm resistor  -- RED
+	bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+PALETTE_INIT( jrpacman )
 {
 	int i;
 
-
 	for (i = 0;i < 32;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i+256] >> 0) & 0x01;
 		bit2 = (color_prom[i+256] >> 1) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[i+256] >> 2) & 0x01;
 		bit2 = (color_prom[i+256] >> 3) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		palette_set_color(i,r,g,b);
 	}
 
 	color_prom += 2*256;
@@ -81,34 +81,19 @@ void jrpacman_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
   Start the video hardware emulation.
 
 ***************************************************************************/
-int jrpacman_vh_start(void)
+VIDEO_START( jrpacman )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Jr. Pac Man has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void jrpacman_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
-}
 
 
 
@@ -186,7 +171,7 @@ WRITE_HANDLER( jrpacman_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void jrpacman_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( jrpacman )
 {
 	int i,offs;
 	int scrolly[36];

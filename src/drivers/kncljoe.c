@@ -23,9 +23,9 @@ TODO:
 
 
 /* from vidhrdw */
-int kncljoe_vh_start(void);
-void kncljoe_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);
-void kncljoe_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh);
+VIDEO_START( kncljoe );
+PALETTE_INIT( kncljoe );
+VIDEO_UPDATE( kncljoe );
 WRITE_HANDLER(kncljoe_videoram_w);
 WRITE_HANDLER(kncljoe_control_w);
 WRITE_HANDLER(kncljoe_scroll_w);
@@ -89,52 +89,50 @@ INPUT_PORTS_START( kncljoe )
 
 	PORT_START	/* DSW A */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING( 0x04, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING( 0x02, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING( 0x06, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( 0x07, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( 0x03, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING( 0x05, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING( 0x01, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_5C ) )
 	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING( 0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING( 0x18, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING( 0x08, DEF_STR( 1C_2C ) )
-	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Energy", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "RAM Test?" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )	// Not working due to code at 0x296f
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START /* DSW B */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Unused SW B-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "10k and every 20k" )
+	PORT_DIPSETTING(    0x10, "20k and every 40k" )
+	PORT_DIPSETTING(    0x08, "30k and every 60k" )
+	PORT_DIPSETTING(    0x00, "40k and every 80k" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty?" )			// Stored at 0xf018
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
@@ -173,68 +171,60 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static const struct MachineDriver machine_driver_kncljoe =
-{
+static MACHINE_DRIVER_START( kncljoe )
+
 	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000, /* ? MHz */
-			readmem,writemem,0,0,
-			interrupt,1
-		},
-		IREM_AUDIO_CPU
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
+//	MDRV_CPU_ADD(Z80, 4000000) /* ? MHz */
+	MDRV_CPU_ADD(Z80, 6000000) /* with this value, the game doesn't hang ! */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	128+16, 16*8+16*8,
-	kncljoe_vh_convert_color_prom,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(128+16)
+	MDRV_COLORTABLE_LENGTH(16*8+16*8)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kncljoe_vh_start,
-	0,
-	kncljoe_vh_screenrefresh,
+	MDRV_PALETTE_INIT(kncljoe)
+	MDRV_VIDEO_START(kncljoe)
+	MDRV_VIDEO_UPDATE(kncljoe)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		IREM_AUDIO
-	}
-};
+	MDRV_IMPORT_FROM(irem_audio)
+MACHINE_DRIVER_END
 
 
 
 ROM_START( kncljoe )
-    ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "kj-1.bin", 0x0000, 0x4000, 0x4e4f5ff2 )
 	ROM_LOAD( "kj-2.bin", 0x4000, 0x4000, 0xcb11514b )
 	ROM_LOAD( "kj-3.bin", 0x8000, 0x4000, 0x0f50697b )
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
 	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
 
-    ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "kj-10.bin", 0x0000,  0x4000, 0x74d3ba33 )
-    ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
-    ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
+	ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
+	ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
 
-    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
 	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
 	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
 
-    ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
 	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
 	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
 
-    ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
 	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
 	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
 	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
@@ -243,30 +233,62 @@ ROM_START( kncljoe )
 ROM_END
 
 ROM_START( kncljoea )
-    ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
 	ROM_LOAD( "kj01.bin", 0x0000, 0x4000, 0xf251019e )
 	ROM_LOAD( "kj-2.bin", 0x4000, 0x4000, 0xcb11514b )
 	ROM_LOAD( "kj-3.bin", 0x8000, 0x4000, 0x0f50697b )
 
-    ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
 	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
 
-    ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
 	ROM_LOAD( "kj-10.bin", 0x0000,  0x4000, 0x74d3ba33 )
-    ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
-    ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
+	ROM_LOAD( "kj-11.bin", 0x4000,  0x4000, 0x8ea01455 )
+	ROM_LOAD( "kj-12.bin", 0x8000,  0x4000, 0x33367c41 )
 
-    ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
 	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
 	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
 
-    ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
 	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
 	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
 	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
 
-    ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
+	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
+	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
+	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
+	ROM_LOAD( "kjprom5.bin", 0x300, 0x020, 0x5a81dd9f ) /* sprite palette */
+	ROM_LOAD( "kjprom4.bin", 0x320, 0x100, 0x48dc2066 ) /* sprite clut */
+ROM_END
+
+ROM_START( bcrusher )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
+	ROM_LOAD( "bcrush1.bin", 0x0000, 0x4000, 0xe8979196 )
+	ROM_LOAD( "bcrush2.bin", 0x4000, 0x4000, 0x1be4c731 )
+	ROM_LOAD( "bcrush3.bin", 0x8000, 0x4000, 0x0772d993 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )  /* 64k for audio code */
+	ROM_LOAD( "kj-13.bin",0xe000, 0x2000, 0x0a0be3f5 )
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )	/* tiles */
+	ROM_LOAD( "bcrush10.bin", 0x0000,  0x4000, 0xa62f4572 )
+	ROM_LOAD( "bcrush11.bin", 0x4000,  0x4000, 0x79cc5644 )
+	ROM_LOAD( "bcrush12.bin", 0x8000,  0x4000, 0x8f09641d )
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "kj-4.bin", 0x00000,  0x8000, 0xa499ea10 )
+	ROM_LOAD( "kj-6.bin", 0x08000,  0x8000, 0x815f5c0a )
+	ROM_LOAD( "kj-5.bin", 0x10000,  0x8000, 0x11111759 )
+
+	ROM_REGION( 0xc000, REGION_GFX3, ROMREGION_DISPOSE )	/* sprites */
+	ROM_LOAD( "kj-7.bin", 0x0000,   0x4000, 0x121fcccb )
+	ROM_LOAD( "kj-9.bin", 0x4000,   0x4000, 0xaffbe3eb )
+	ROM_LOAD( "kj-8.bin", 0x8000,   0x4000, 0xe057e72a )
+
+	ROM_REGION( 0x420, REGION_PROMS, 0 )
 	ROM_LOAD( "kjclr1.bin",  0x000, 0x100, 0xc3378ac2 ) /* tile red */
 	ROM_LOAD( "kjclr2.bin",  0x100, 0x100, 0x2126da97 ) /* tile green */
 	ROM_LOAD( "kjclr3.bin",  0x200, 0x100, 0xfde62164 ) /* tile blue */
@@ -276,5 +298,6 @@ ROM_END
 
 
 
-GAMEX( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)", GAME_NOT_WORKING )
-GAMEX( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)", GAME_NOT_WORKING )
+GAME( 1985, kncljoe,  0,       kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 1)" )
+GAME( 1985, kncljoea, kncljoe, kncljoe, kncljoe, 0, ROT0, "[Seibu Kaihatsu] (Taito license)", "Knuckle Joe (set 2)" )
+GAME( 1985, bcrusher, kncljoe, kncljoe, kncljoe, 0, ROT0, "bootleg",                          "Bone Crusher" )

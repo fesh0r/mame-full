@@ -1,14 +1,17 @@
 #include "driver.h"
 #include "machine/pd4990a.h"
+#include "neogeo.h"
+#include "inptport.h"
 #include <time.h>
 
-data16_t *neogeo_ram16;
-data16_t *neogeo_sram16;
 
 static int sram_locked;
 static offs_t sram_protection_hack;
+extern void *record;
+extern void *playback;
 
-extern int neogeo_has_trackball;
+data16_t *neogeo_ram16;
+data16_t *neogeo_sram16;
 
 
 /***************** MEMCARD GLOBAL VARIABLES ******************/
@@ -19,21 +22,13 @@ int memcard_number=0;		/* 000...999, -1=None */
 int memcard_manager=0;		/* 0=Normal boot 1=Call memcard manager */
 UINT8 *neogeo_memcard;		/* Pointer to 2kb RAM zone */
 
-/*************** MEMCARD FUNCTION PROTOTYPES *****************/
-READ16_HANDLER( neogeo_memcard16_r );
-WRITE16_HANDLER( neogeo_memcard16_w );
-int neogeo_memcard_load(int);
-void neogeo_memcard_save(void);
-void neogeo_memcard_eject(void);
-int neogeo_memcard_create(int);
-
 
 
 static void neogeo_custom_memory(void);
 
 
 /* This function is called on every reset */
-void neogeo_init_machine(void)
+MACHINE_INIT( neogeo )
 {
 	data16_t src, res, *mem16= (data16_t *)memory_region(REGION_USER1);
 	time_t ltime;
@@ -68,25 +63,41 @@ void neogeo_init_machine(void)
 	time(&ltime);
 	today = localtime(&ltime);
 
-	pd4990a.seconds = ((today->tm_sec/10)<<4) + (today->tm_sec%10);
-	pd4990a.minutes = ((today->tm_min/10)<<4) + (today->tm_min%10);
-	pd4990a.hours = ((today->tm_hour/10)<<4) + (today->tm_hour%10);
-	pd4990a.days = ((today->tm_mday/10)<<4) + (today->tm_mday%10);
-	pd4990a.month = (today->tm_mon + 1);
-	pd4990a.year = (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
-	pd4990a.weekday = today->tm_wday;
+	/* Disable Real Time Clock if the user selects to record or playback an .inp file   */
+	/* This is needed in order to playback correctly an .inp on several games,as these  */
+	/* use the RTC of the NEC pd4990a as pseudo-random number generator   -kal 8 apr 02 */
+	if( record != 0 || playback != 0 )
+	{
+		pd4990a.seconds = 0;
+		pd4990a.minutes = 0;
+		pd4990a.hours = 0;
+		pd4990a.days = 0;
+		pd4990a.month = 0;
+		pd4990a.year = 0;
+		pd4990a.weekday = 0;
+	}
+	else
+	{
+		pd4990a.seconds = ((today->tm_sec/10)<<4) + (today->tm_sec%10);
+		pd4990a.minutes = ((today->tm_min/10)<<4) + (today->tm_min%10);
+		pd4990a.hours = ((today->tm_hour/10)<<4) + (today->tm_hour%10);
+		pd4990a.days = ((today->tm_mday/10)<<4) + (today->tm_mday%10);
+		pd4990a.month = (today->tm_mon + 1);
+		pd4990a.year = (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
+		pd4990a.weekday = today->tm_wday;
+	}
 }
 
 
 /* This function is only called once per game. */
-void init_neogeo(void)
+DRIVER_INIT( neogeo )
 {
 	extern struct YM2610interface neogeo_ym2610_interface;
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
 	data8_t *mem08;
 	int tileno,numtiles;
 
-	numtiles = memory_region_length(REGION_GFX2)/128;
+	numtiles = memory_region_length(REGION_GFX3)/128;
 	for (tileno = 0;tileno < numtiles;tileno++)
 	{
 		unsigned char swap[128];
@@ -94,7 +105,7 @@ void init_neogeo(void)
 		int x,y;
 		unsigned int pen;
 
-		gfxdata = &memory_region(REGION_GFX2)[128 * tileno];
+		gfxdata = &memory_region(REGION_GFX3)[128 * tileno];
 
 		memcpy(swap,gfxdata,128);
 
@@ -144,7 +155,9 @@ void init_neogeo(void)
 	}
 
 	/* Allocate ram banks */
-	neogeo_ram16 = malloc (0x10000);
+	neogeo_ram16 = auto_malloc (0x10000);
+	if (!neogeo_ram16)
+		return;
 	cpu_setbank(1, neogeo_ram16);
 
 	/* Set the biosbank */
@@ -169,7 +182,10 @@ void init_neogeo(void)
 	cpu_setbank(8,&mem08[0x0f000]);
 
 	/* Allocate and point to the memcard - bank 5 */
-	neogeo_memcard = calloc (0x800, 1);
+	neogeo_memcard = auto_malloc(0x800);
+	if (!neogeo_memcard)
+		return;
+	memset(neogeo_memcard, 0, 0x800);
 	memcard_status=0;
 	memcard_number=0;
 
@@ -251,7 +267,7 @@ static READ16_HANDLER( fatfury2_protection_16_r )
 			return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
 
 		default:
-logerror("unknown protection read at pc %06x, offset %08x\n",cpu_get_pc(),offset<<1);
+logerror("unknown protection read at pc %06x, offset %08x\n",activecpu_get_pc(),offset<<1);
 			return 0;
 	}
 }
@@ -283,14 +299,14 @@ static WRITE16_HANDLER( fatfury2_protection_16_w )
 			break;
 
 		default:
-logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_get_pc(),offset,data);
+logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",activecpu_get_pc(),offset,data);
 			break;
 	}
 }
 
 static READ16_HANDLER( popbounc_sfix_16_r )
 {
-	if (cpu_get_pc()==0x6b10)
+	if (activecpu_get_pc()==0x6b10)
 		return 0;
 	return neogeo_ram16[0x4fbc/2];
 }
@@ -328,6 +344,159 @@ static WRITE16_HANDLER( kof99_bankswitch_w )
 }
 
 
+static WRITE16_HANDLER( garou_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000, // 00
+		0x280000, 0x380000, 0x2d0000, 0x3d0000, // 04
+		0x2f0000, 0x3f0000, 0x400000, 0x500000, // 08
+		0x420000, 0x520000, 0x440000, 0x540000, // 12
+		0x498000, 0x598000, 0x4a0000, 0x5a0000, // 16
+		0x4a8000, 0x5a8000, 0x4b0000, 0x5b0000, // 20
+		0x4b8000, 0x5b8000, 0x4c0000, 0x5c0000, // 24
+		0x4c8000, 0x5c8000, 0x4d0000, 0x5d0000, // 28
+		0x458000, 0x558000, 0x460000, 0x560000, // 32
+		0x468000, 0x568000, 0x470000, 0x570000, // 36
+		0x478000, 0x578000, 0x480000, 0x580000, // 40
+		0x488000, 0x588000, 0x490000, 0x590000, // 44
+		0x5d0000, 0x5d8000, 0x5e0000, 0x5e8000, // 48
+		0x5f0000, 0x5f8000, 0x600000, /* rest not used? */
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>> 5)&1)<<0)+
+		(((data>> 9)&1)<<1)+
+		(((data>> 7)&1)<<2)+
+		(((data>> 6)&1)<<3)+
+		(((data>>14)&1)<<4)+
+		(((data>>12)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+
+static WRITE16_HANDLER( garouo_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000, // 00
+		0x280000, 0x380000, 0x2d0000, 0x3d0000, // 04
+		0x2c8000, 0x3c8000, 0x400000, 0x500000, // 08
+		0x420000, 0x520000, 0x440000, 0x540000, // 12
+		0x598000, 0x698000, 0x5a0000, 0x6a0000, // 16
+		0x5a8000, 0x6a8000, 0x5b0000, 0x6b0000, // 20
+		0x5b8000, 0x6b8000, 0x5c0000, 0x6c0000, // 24
+		0x5c8000, 0x6c8000, 0x5d0000, 0x6d0000, // 28
+		0x458000, 0x558000, 0x460000, 0x560000, // 32
+		0x468000, 0x568000, 0x470000, 0x570000, // 36
+		0x478000, 0x578000, 0x480000, 0x580000, // 40
+		0x488000, 0x588000, 0x490000, 0x590000, // 44
+		0x5d8000, 0x6d8000, 0x5e0000, 0x6e0000, // 48
+		0x5e8000, 0x6e8000, 0x6e8000, 0x000000, // 52
+		0x000000, 0x000000, 0x000000, 0x000000, // 56
+		0x000000, 0x000000, 0x000000, 0x000000, // 60
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>> 4)&1)<<0)+
+		(((data>> 8)&1)<<1)+
+		(((data>>14)&1)<<2)+
+		(((data>> 2)&1)<<3)+
+		(((data>>11)&1)<<4)+
+		(((data>>13)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+
+static WRITE16_HANDLER( mslug3_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+	  0x000000, 0x020000, 0x040000, 0x060000, // 00
+	  0x070000, 0x090000, 0x0b0000, 0x0d0000, // 04
+	  0x0e0000, 0x0f0000, 0x120000, 0x130000, // 08
+	  0x140000, 0x150000, 0x180000, 0x190000, // 12
+	  0x1a0000, 0x1b0000, 0x1e0000, 0x1f0000, // 16
+	  0x200000, 0x210000, 0x240000, 0x250000, // 20
+	  0x260000, 0x270000, 0x2a0000, 0x2b0000, // 24
+	  0x2c0000, 0x2d0000, 0x300000, 0x310000, // 28
+	  0x320000, 0x330000, 0x360000, 0x370000, // 32
+	  0x380000, 0x390000, 0x3c0000, 0x3d0000, // 36
+	  0x400000, 0x410000, 0x440000, 0x450000, // 40
+	  0x460000, 0x470000, 0x4a0000, 0x4b0000, // 44
+	  0x4c0000, /* rest not used? */
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>>14)&1)<<0)+
+		(((data>>12)&1)<<1)+
+		(((data>>15)&1)<<2)+
+		(((data>> 6)&1)<<3)+
+		(((data>> 3)&1)<<4)+
+		(((data>> 9)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+
+static WRITE16_HANDLER( kof2000_bankswitch_w )
+{
+	/* thanks to Razoola and Mr K for the info */
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	int bankaddress;
+	static int bankoffset[64] =
+	{
+		0x000000, 0x100000, 0x200000, 0x300000, // 00
+		0x3f7800, 0x4f7800, 0x3ff800, 0x4ff800, // 04
+		0x407800, 0x507800, 0x40f800, 0x50f800, // 08
+		0x416800, 0x516800, 0x41d800, 0x51d800, // 12
+		0x424000, 0x524000, 0x523800, 0x623800, // 16
+		0x526000, 0x626000, 0x528000, 0x628000, // 20
+		0x52a000, 0x62a000, 0x52b800, 0x62b800, // 24
+		0x52d000, 0x62d000, 0x52e800, 0x62e800, // 28
+		0x618000, 0x619000, 0x61a000, 0x61a800, // 32
+	};
+
+	/* unscramble bank number */
+	data =
+		(((data>>15)&1)<<0)+
+		(((data>>14)&1)<<1)+
+		(((data>> 7)&1)<<2)+
+		(((data>> 3)&1)<<3)+
+		(((data>>10)&1)<<4)+
+		(((data>> 5)&1)<<5);
+
+	bankaddress = 0x100000 + bankoffset[data];
+
+	cpu_setbank(4,&RAM[bankaddress]);
+}
+
+static READ16_HANDLER( prot_9a37_r )
+{
+	return 0x9a37;
+}
+
+
 static void neogeo_custom_memory(void)
 {
 	/* Individual games can go here... */
@@ -339,14 +508,49 @@ static void neogeo_custom_memory(void)
 	/* the game hangs after a while without this patch */
 		install_mem_read16_handler(0, 0x104fbc, 0x104fbd, popbounc_sfix_16_r);
 
-	if (!strcmp(Machine->gamedrv->name,"kof99"))
+	if (!strcmp(Machine->gamedrv->name,"kof99") || !strcmp(Machine->gamedrv->name,"kof99e"))
 	{
-		/* Fix for end of game protection which causes freeze. */
-//		data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
-//		mem16[0x1d8a/2] = 0x67b6;
-
 		/* special ROM banking handler */
 		install_mem_write16_handler(0, 0x2ffff0, 0x2ffff1, kof99_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"garou"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffc0, 0x2fffc1, garou_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"garouo"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffc0, 0x2fffc1, garouo_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"mslug3"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffe4, 0x2fffe5, mslug3_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+	}
+
+	if (!strcmp(Machine->gamedrv->name,"kof2000"))
+	{
+		/* special ROM banking handler */
+		install_mem_write16_handler(0, 0x2fffec, 0x2fffed, kof2000_bankswitch_w);
+
+		/* additional protection */
+		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
 	}
 
 	/* hacks to make the games which do protection checks run in arcade mode */
@@ -363,14 +567,19 @@ static void neogeo_custom_memory(void)
 			!strcmp(Machine->gamedrv->name,"kof97") ||
 			!strcmp(Machine->gamedrv->name,"kof98") ||
 			!strcmp(Machine->gamedrv->name,"kof99") ||
+			!strcmp(Machine->gamedrv->name,"kof99e") ||
 			!strcmp(Machine->gamedrv->name,"kof99n") ||
 			!strcmp(Machine->gamedrv->name,"kof99p") ||
 			!strcmp(Machine->gamedrv->name,"kof2000") ||
+			!strcmp(Machine->gamedrv->name,"kof2000n") ||
 			!strcmp(Machine->gamedrv->name,"kizuna") ||
 			!strcmp(Machine->gamedrv->name,"lastblad") ||
 			!strcmp(Machine->gamedrv->name,"lastbld2") ||
 			!strcmp(Machine->gamedrv->name,"rbff2") ||
 			!strcmp(Machine->gamedrv->name,"mslug2") ||
+			!strcmp(Machine->gamedrv->name,"mslug3") ||
+			!strcmp(Machine->gamedrv->name,"garou") ||
+			!strcmp(Machine->gamedrv->name,"garouo") ||
 			!strcmp(Machine->gamedrv->name,"garoup"))
 		sram_protection_hack = 0x100/2;
 
@@ -462,7 +671,7 @@ WRITE16_HANDLER( neogeo_sram16_w )
 {
 	if (sram_locked)
 	{
-logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_get_pc(),data,offset<<1);
+logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",activecpu_get_pc(),data,offset<<1);
 	}
 	else
 	{
@@ -476,7 +685,7 @@ logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cp
 	}
 }
 
-void neogeo_nvram_handler(void *file,int read_or_write)
+NVRAM_HANDLER( neogeo )
 {
 	if (read_or_write)
 	{

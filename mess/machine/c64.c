@@ -1131,11 +1131,11 @@ int c64_frame_interrupt (void)
 			if (MONITOR_TV) {
 				vic2_set_rastering(0);
 				vdc8563_set_rastering(1);
-				osd_set_visible_area(0,655,0,215);
+				set_visible_area(0,655,0,215);
 			} else {
 				vic2_set_rastering(1);
 				vdc8563_set_rastering(0);
-				osd_set_visible_area(0,335,0,215);
+				set_visible_area(0,335,0,215);
 			}
 			monitor=MONITOR_TV;
 		}

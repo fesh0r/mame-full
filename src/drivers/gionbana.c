@@ -38,7 +38,10 @@
 	Mahjong Banana Dream (Medal Type)
 	(c)1989 DIGITAL SOFT
 
-	Mahjong CLUB 90's
+	Mahjong CLUB 90's (set 1)
+	(c)1990 Nihon Bussan Co.,Ltd.
+
+	Mahjong CLUB 90's (set 2)
 	(c)1990 Nihon Bussan Co.,Ltd.
 
 	Mahjong THE LADY HUNTER
@@ -86,17 +89,15 @@ Memo:
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
-#include "machine/nb1413m3.h"
+#include "nb1413m3.h"
 
 
 #define	SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC
 
 
-void gionbana_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
-int gionbana_vh_start(void);
-void gionbana_vh_stop(void);
-int hanamomo_vh_start(void);
-void hanamomo_vh_stop(void);
+VIDEO_UPDATE( gionbana );
+VIDEO_START( gionbana );
+VIDEO_START( hanamomo );
 
 READ_HANDLER( gionbana_palette_r );
 WRITE_HANDLER( gionbana_palette_w );
@@ -117,7 +118,7 @@ READ_HANDLER( gionbana_paltbl_r );
 WRITE_HANDLER( gionbana_paltbl_w );
 
 
-static void init_gionbana(void)
+static DRIVER_INIT( gionbana )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -135,19 +136,19 @@ static void init_gionbana(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_hanamomo(void)
+static DRIVER_INIT( hanamomo )
 {
 	nb1413m3_type = NB1413M3_HANAMOMO;
 	nb1413m3_int_count = 132;
 }
 
-static void init_msjiken(void)
+static DRIVER_INIT( msjiken )
 {
 	nb1413m3_type = NB1413M3_MSJIKEN;
 	nb1413m3_int_count = 144;
 }
 
-static void init_telmahjn(void)
+static DRIVER_INIT( telmahjn )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -161,7 +162,7 @@ static void init_telmahjn(void)
 	nb1413m3_int_count = 144;
 }
 
-static void init_mgmen89(void)
+static DRIVER_INIT( mgmen89 )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -175,7 +176,7 @@ static void init_mgmen89(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_mjfocus(void)
+static DRIVER_INIT( mjfocus )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	int i;
@@ -191,7 +192,7 @@ static void init_mjfocus(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_mjfocusm(void)
+static DRIVER_INIT( mjfocusm )
 {
 #if 1
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -205,7 +206,7 @@ static void init_mjfocusm(void)
 	nb1413m3_int_count = 128;
 }
 
-static void init_peepshow(void)
+static DRIVER_INIT( peepshow )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	int i;
@@ -221,7 +222,7 @@ static void init_peepshow(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_scandal(void)
+static DRIVER_INIT( scandal )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 	int i;
@@ -232,13 +233,13 @@ static void init_scandal(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_scandalm(void)
+static DRIVER_INIT( scandalm )
 {
 	nb1413m3_type = NB1413M3_SCANDALM;
 	nb1413m3_int_count = 128;
 }
 
-static void init_mjnanpas(void)
+static DRIVER_INIT( mjnanpas )
 {
 #if 0
 	unsigned char *ROM = memory_region(REGION_CPU1);
@@ -252,37 +253,37 @@ static void init_mjnanpas(void)
 	nb1413m3_int_count = 132;
 }
 
-static void init_bananadr(void)
+static DRIVER_INIT( bananadr )
 {
 	nb1413m3_type = NB1413M3_BANANADR;
 	nb1413m3_int_count = 132;
 }
 
-static void init_club90s(void)
+static DRIVER_INIT( club90s )
 {
 	nb1413m3_type = NB1413M3_CLUB90S;
 	nb1413m3_int_count = 132;
 }
 
-static void init_mladyhtr(void)
+static DRIVER_INIT( mladyhtr )
 {
 	nb1413m3_type = NB1413M3_MLADYHTR;
 	nb1413m3_int_count = 132;
 }
 
-static void init_chinmoku(void)
+static DRIVER_INIT( chinmoku )
 {
 	nb1413m3_type = NB1413M3_CHINMOKU;
 	nb1413m3_int_count = 132;
 }
 
-static void init_maiko(void)
+static DRIVER_INIT( maiko )
 {
 	nb1413m3_type = NB1413M3_MAIKO;
 	nb1413m3_int_count = 132;
 }
 
-static void init_hanaoji(void)
+static DRIVER_INIT( hanaoji )
 {
 	nb1413m3_type = NB1413M3_HANAOJI;
 	nb1413m3_int_count = 132;
@@ -775,8 +776,8 @@ INPUT_PORTS_START( msjiken )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -842,8 +843,8 @@ INPUT_PORTS_START( telmahjn )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -911,8 +912,8 @@ INPUT_PORTS_START( gionbana )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -968,8 +969,8 @@ INPUT_PORTS_START( mgmen89 )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1021,8 +1022,8 @@ INPUT_PORTS_START( mjfocus )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -1070,8 +1071,8 @@ INPUT_PORTS_START( mjfocusm )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -1132,8 +1133,8 @@ INPUT_PORTS_START( peepshow )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (1) DIPSW-B */
@@ -1171,8 +1172,8 @@ INPUT_PORTS_START( scandal )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BIT( 0xd0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (1) DIPSW-B */
@@ -1220,8 +1221,8 @@ INPUT_PORTS_START( scandalm )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START	/* (1) DIPSW-B */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -1277,8 +1278,8 @@ INPUT_PORTS_START( mjnanpas )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1324,8 +1325,8 @@ INPUT_PORTS_START( mjnanpaa )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1372,8 +1373,8 @@ INPUT_PORTS_START( bananadr )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Character Display Test" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1438,8 +1439,8 @@ INPUT_PORTS_START( club90s )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1484,8 +1485,8 @@ INPUT_PORTS_START( mladyhtr )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
@@ -1536,8 +1537,8 @@ INPUT_PORTS_START( chinmoku )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Character Display Test" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1581,8 +1582,8 @@ INPUT_PORTS_START( maiko )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_2C ) )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* (1) DIPSW-B */
@@ -1710,7 +1711,7 @@ static struct YM3812interface ym3812_interface =
 {
 	1,				/* 1 chip */
 	2500000,			/* 4 MHz */
-	{ 35 }
+	{ 70 }
 };
 
 static struct AY8910interface ay8910_interface =
@@ -1731,277 +1732,208 @@ static struct DACinterface dac_interface =
 };
 
 
-#define NBMJDRV1( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 7, 247-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	gionbana_vh_start, \
-	gionbana_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
-
-#define NBMJDRV2( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	hanamomo_vh_start, \
-	hanamomo_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
-
-#define NBMJDRV3( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 7, 247-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	hanamomo_vh_start, \
-	hanamomo_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
-
-#define NBMJDRV4( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 7, 247-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	hanamomo_vh_start, \
-	hanamomo_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
-
-#define NBMJDRV5( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 7, 247-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	gionbana_vh_start, \
-	gionbana_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_YM3812, \
-			&ym3812_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
-
-#define NBMJDRV6( _name_, _intcnt_, _mrmem_, _mwmem_, _mrport_, _mwport_, _nvram_ ) \
-static struct MachineDriver machine_driver_##_name_ = \
-{ \
-	{ \
-		{ \
-			CPU_Z80 | CPU_16BIT_PORT, \
-			20000000/4,		/* 5.00 MHz ? */ \
-			readmem_##_mrmem_, writemem_##_mwmem_, readport_##_mrport_, writeport_##_mwport_, \
-			nb1413m3_interrupt, _intcnt_ \
-		} \
-	}, \
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION, \
-	1, \
-	nb1413m3_init_machine, \
-\
-	/* video hardware */ \
-	512, 256, { 0, 512-1, 15, 239-1 }, \
-	0, \
-	256, 0, \
-	0, \
-\
-	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2, \
-	0, \
-	hanamomo_vh_start, \
-	hanamomo_vh_stop, \
-	gionbana_vh_screenrefresh, \
-\
-	/* sound hardware */ \
-	0, 0, 0, 0, \
-	{ \
-		{ \
-			SOUND_AY8910, \
-			&ay8910_interface \
-		}, \
-		{ \
-			SOUND_DAC, \
-			&dac_interface \
-		} \
-	}, \
-	_nvram_ \
-};
 
 
-//	      NAME, INT,  MAIN_RM,  MAIN_WM,  MAIN_RP,  MAIN_WP, NV_RAM
-NBMJDRV1( gionbana, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV2( hanamomo, 132, hanamomo, hanamomo, gionbana, hanamomo, 0 )
-NBMJDRV2(  msjiken, 144, gionbana, gionbana, gionbana,  msjiken, 0 )
-NBMJDRV2(  scandal, 132, scandalm, scandalm, gionbana,  scandal, 0 )
-NBMJDRV3( telmahjn, 144, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV3(  mgmen89, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV4(  mjfocus, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV4( peepshow, 132, gionbana, gionbana, gionbana, gionbana, 0 )
-NBMJDRV5( mjnanpas, 132,  club90s,  club90s, gionbana, gionbana, 0 )
-NBMJDRV5(  club90s, 132,  club90s,  club90s, gionbana, gionbana, 0 )
-NBMJDRV5( mladyhtr, 132,  club90s,  club90s, gionbana, gionbana, 0 )
-NBMJDRV5( chinmoku, 132,  club90s,  club90s, gionbana, gionbana, 0 )
-NBMJDRV5(    maiko, 132,    maiko,    maiko,    maiko,    maiko, 0 )
-NBMJDRV5(  hanaoji, 132,  hanaoji,  hanaoji,    maiko,    maiko, nb1413m3_nvram_handler )
-NBMJDRV6( mjfocusm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler )
-NBMJDRV6( scandalm, 128, scandalm, scandalm, scandalm, scandalm, nb1413m3_nvram_handler )
-NBMJDRV5( bananadr, 132, scandalm, scandalm, gionbana, bananadr, nb1413m3_nvram_handler )
+static MACHINE_DRIVER_START( gionbana )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", Z80, 20000000/4)	/* 5.00 MHz ? */
+	MDRV_CPU_FLAGS(CPU_16BIT_PORT)
+	MDRV_CPU_MEMORY(readmem_gionbana,writemem_gionbana)
+	MDRV_CPU_PORTS(readport_gionbana,writeport_gionbana)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,132)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(nb1413m3)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 7, 247-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(gionbana)
+	MDRV_VIDEO_UPDATE(gionbana)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
+/* NBMJDRV2 */
+static MACHINE_DRIVER_START( hanamomo )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gionbana)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_hanamomo,writemem_hanamomo)
+	MDRV_CPU_PORTS(readport_gionbana,writeport_hanamomo)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 512-1, 15, 239-1)
+	MDRV_VIDEO_START(hanamomo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( msjiken )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hanamomo)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_gionbana,writemem_gionbana)
+	MDRV_CPU_PORTS(readport_gionbana,writeport_msjiken)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,142)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( scandal )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(hanamomo)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_PORTS(readport_gionbana,writeport_scandal)
+MACHINE_DRIVER_END
+
+
+/* NBMJDRV3 */
+static MACHINE_DRIVER_START( telmahjn )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gionbana)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,142)
+
+	/* video hardware */
+	MDRV_VIDEO_START(hanamomo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mgmen89 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(telmahjn)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+MACHINE_DRIVER_END
+
+
+/* NBMJDRV4 */
+static MACHINE_DRIVER_START( mjfocus )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gionbana)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+
+	/* video hardware */
+	MDRV_VIDEO_START(hanamomo)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( peepshow )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjfocus)
+MACHINE_DRIVER_END
+
+
+/* NBMJDRV5 */
+static MACHINE_DRIVER_START( mjnanpas )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gionbana)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_club90s,writemem_club90s)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( club90s )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjnanpas)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mladyhtr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjnanpas)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( chinmoku )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjnanpas)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( maiko )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjnanpas)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_maiko,writemem_maiko)
+	MDRV_CPU_PORTS(readport_maiko,writeport_maiko)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hanaoji )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(maiko)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_hanaoji,writemem_hanaoji)
+
+	MDRV_NVRAM_HANDLER(nb1413m3)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( bananadr )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjnanpas)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_PORTS(readport_gionbana,writeport_bananadr)
+
+	MDRV_NVRAM_HANDLER(nb1413m3)
+MACHINE_DRIVER_END
+
+
+/* NBMJDRV6 */
+static MACHINE_DRIVER_START( mjfocusm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gionbana)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_MEMORY(readmem_scandalm,writemem_scandalm)
+	MDRV_CPU_PORTS(readport_scandalm,writeport_scandalm)
+	MDRV_CPU_VBLANK_INT(nb1413m3_interrupt,128)
+
+	MDRV_NVRAM_HANDLER(nb1413m3)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(0, 512-1, 15, 239-1)
+	MDRV_VIDEO_START(hanamomo)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812", AY8910, ay8910_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( scandalm )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(mjfocusm)
+MACHINE_DRIVER_END
+
+
 
 
 ROM_START( gionbana )
@@ -2398,6 +2330,25 @@ ROM_START( club90s )
 	ROM_LOAD( "c90s_11.bin", 0x160000, 0x20000, 0x56ca8768 )
 ROM_END
 
+ROM_START( club90sa )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "c90s_23.bin", 0x00000, 0x10000, 0x60433c11 )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_LOAD( "c90s_02.bin", 0x00000, 0x10000, 0xb7938ed8 )
+	ROM_LOAD( "c90s_01.bin", 0x10000, 0x10000, 0xbaaf17bd )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "c90s_04.bin", 0x080000, 0x20000, 0x2c7d74ef )
+	ROM_LOAD( "c90s_05.bin", 0x0a0000, 0x20000, 0x98d1f969 )
+	ROM_LOAD( "c90s_06.bin", 0x0c0000, 0x20000, 0x509c1499 )
+	ROM_LOAD( "c90s_07.bin", 0x0e0000, 0x20000, 0x8a8e2301 )
+	ROM_LOAD( "c90s_08.bin", 0x100000, 0x20000, 0x60fb6006 )
+	ROM_LOAD( "c90s_09.bin", 0x120000, 0x20000, 0x2fb74265 )
+	ROM_LOAD( "c90s_10.bin", 0x140000, 0x20000, 0xca858e2c )
+	ROM_LOAD( "c90s_11.bin", 0x160000, 0x20000, 0x56ca8768 )
+ROM_END
+
 ROM_START( mladyhtr )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mlht_03.bin", 0x00000, 0x10000, 0xbda76c24 )
@@ -2495,22 +2446,22 @@ ROM_START( hanaoji )
 ROM_END
 
 
-//     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT,    MONITOR, COMPANY, FULLNAME, FLAGS
-GAME( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,       ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
-GAME( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken,     ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
-GAME( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn,     ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
-GAME( 1989, gionbana,        0, gionbana, gionbana, gionbana,       ROT0, "Nichibutsu", "Gionbana (Japan)" )
-GAME( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,       ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
-GAME( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,       ROT0, "Nichibutsu", "Mahjong Focus (Japan)" )
-GAME( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,       ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
-GAME( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,       ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
-GAME( 1989,  scandal,        0,  scandal,  scandal,  scandal,       ROT0, "Nichibutsu", "Scandal Mahjong (Japan)" )
-GAME( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,       ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
-GAME( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)" )
-GAME( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,       ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
-GAME( 1989, bananadr,        0, bananadr, bananadr, bananadr,       ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
-GAME( 1990,  club90s,        0,  club90s,  club90s,  club90s,       ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan)" )
-GAME( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,       ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
-GAME( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,       ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
-GAME( 1990,    maiko,        0,    maiko,    maiko,    maiko,       ROT0, "Nichibutsu", "Maikobana (Japan)" )
-GAME( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,       ROT0, "Nichibutsu", "Hana to Ojisan [BET]" )
+GAME( 1988, hanamomo,        0, hanamomo, hanamomo, hanamomo,   ROT0, "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan)" )
+GAME( 1988,  msjiken,        0,  msjiken,  msjiken,  msjiken, ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan)" )
+GAME( 1988, telmahjn,        0, telmahjn, telmahjn, telmahjn, ROT270, "Nichibutsu", "Telephone Mahjong (Japan)" )
+GAME( 1989, gionbana,        0, gionbana, gionbana, gionbana,   ROT0, "Nichibutsu", "Gionbana (Japan)" )
+GAME( 1989,  mgmen89,        0,  mgmen89,  mgmen89,  mgmen89,   ROT0, "Nichibutsu", "Mahjong G-MEN'89 (Japan)" )
+GAME( 1989,  mjfocus,        0,  mjfocus,  mjfocus,  mjfocus,   ROT0, "Nichibutsu", "Mahjong Focus (Japan)" )
+GAME( 1989, mjfocusm,  mjfocus, mjfocusm, mjfocusm, mjfocusm,   ROT0, "Nichibutsu", "Mahjong Focus [BET] (Japan)" )
+GAME( 1989, peepshow,  mjfocus, peepshow, peepshow, peepshow,   ROT0, "AC", "Nozokimeguri Mahjong Peep Show (Japan)" )
+GAME( 1989,  scandal,        0,  scandal,  scandal,  scandal,   ROT0, "Nichibutsu", "Scandal Mahjong (Japan)" )
+GAME( 1989, scandalm,  scandal, scandalm, scandalm, scandalm,   ROT0, "Nichibutsu", "Scandal Mahjong [BET] (Japan)" )
+GAME( 1989, mjnanpas,        0, mjnanpas, mjnanpas, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan)" )
+GAME( 1989, mjnanpaa, mjnanpas, mjnanpas, mjnanpaa, mjnanpas,   ROT0, "BROOKS", "Mahjong Nanpa Story (Japan old version)" )
+GAME( 1989, bananadr,        0, bananadr, bananadr, bananadr,   ROT0, "DIGITAL SOFT", "Mahjong Banana Dream [BET] (Japan)" )
+GAME( 1990,  club90s,        0,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 1)" )
+GAME( 1990, club90sa,  club90s,  club90s,  club90s,  club90s,   ROT0, "Nichibutsu", "Mahjong CLUB 90's (Japan) (set 2)" )
+GAME( 1990, mladyhtr,        0, mladyhtr, mladyhtr, mladyhtr,   ROT0, "Nichibutsu", "Mahjong THE LADY HUNTER (Japan)" )
+GAME( 1990, chinmoku,        0, chinmoku, chinmoku, chinmoku,   ROT0, "Nichibutsu", "Mahjong Chinmoku no Hentai (Japan)" )
+GAME( 1990,    maiko,        0,    maiko,    maiko,    maiko,   ROT0, "Nichibutsu", "Maikobana (Japan)" )
+GAME( 1991,  hanaoji,        0,  hanaoji,  hanaoji,  hanaoji,   ROT0, "Nichibutsu", "Hana to Ojisan [BET]" )

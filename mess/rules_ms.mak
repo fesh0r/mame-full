@@ -13,19 +13,6 @@ CPUDEFS += -DHAS_APEXC=0
 endif
 
 
-CPU=$(strip $(findstring ARM@,$(CPUS)))
-ifneq ($(CPU),)
-ARMD = mess/cpu/arm
-OBJDIRS += $(OBJ)/$(ARMD)
-CPUDEFS += -DHAS_ARM=1
-CPUOBJS += $(OBJ)/$(ARMD)/arm.o
-DBGOBJS += $(OBJ)/$(ARMD)/dasm.o
-$(OBJ)/$(ARMD)/arm.o: $(ARMD)/arm.h
-else
-CPUDEFS += -DHAS_ARM=0
-endif
-
-
 CPU=$(strip $(findstring CDP1802@,$(CPUS)))
 ifneq ($(CPU),)
 CDPD = mess/cpu/cdp1802
@@ -137,19 +124,6 @@ DBGOBJS += $(OBJ)/$(SCD)/scdasm.o
 $(OBJ)/$(SCD)/sc61860.o: $(SCD)/sc61860.h  $(SCD)/sc.h $(SCD)/scops.c $(SCD)/sctable.c
 else
 CPUDEFS += -DHAS_SC61860=0
-endif
-
-
-CPU=$(strip $(findstring SH2@,$(CPUS)))
-ifneq ($(CPU),)
-SH2D = mess/cpu/sh2
-OBJDIRS += $(OBJ)/$(SH2D)
-CPUDEFS += -DHAS_SH2=1
-CPUOBJS += $(OBJ)/$(SH2D)/sh2.o
-DBGOBJS += $(OBJ)/$(SH2D)/sh2dasm.o
-$(OBJ)/$(SH2D)/sh2.o: $(SH2D)/sh2.c $(SH2D)/sh2.h
-else
-CPUDEFS += -DHAS_SH2=0
 endif
 
 

@@ -812,7 +812,7 @@ OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
 {
 		int pc;
 
-		pc = cpu_get_pc();
+		pc = activecpu_get_pc();
 
 		/* there are two places where CALL &0065 can be found
 		in the multiface rom. At this address there is a RET.

@@ -35,27 +35,28 @@ static int flipscreen;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
-void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( mappy )
 {
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (*color_prom >> 6) & 0x01;
 		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 
@@ -69,50 +70,34 @@ void mappy_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 }
 
 
-static int common_vh_start(void)
+static VIDEO_START( common )
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	if ((dirtybuffer = auto_malloc(videoram_size)) == 0)
 		return 1;
 	memset (dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = bitmap_alloc (36*8,60*8)) == 0)
-	{
-		free (dirtybuffer);
+	if ((tmpbitmap = auto_bitmap_alloc (36*8,60*8)) == 0)
 		return 1;
-	}
 
 	return 0;
 }
 
-int mappy_vh_start(void)
+VIDEO_START( mappy )
 {
 	special_display = 0;
-	return common_vh_start();
+	return video_start_common();
 }
 
-int motos_vh_start(void)
+VIDEO_START( motos )
 {
 	special_display = 1;
-	return common_vh_start();
+	return video_start_common();
 }
 
-int todruaga_vh_start(void)
+VIDEO_START( todruaga )
 {
 	special_display = 2;
-	return common_vh_start();
-}
-
-
-
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void mappy_vh_stop(void)
-{
-	free(dirtybuffer);
-	bitmap_free(tmpbitmap);
+	return video_start_common();
 }
 
 
@@ -169,7 +154,7 @@ WRITE_HANDLER( mappy_flipscreen_w )
   the main emulation engine.
 
 ***************************************************************************/
-void mappy_vh_screenrefresh(struct mame_bitmap *bitmap,int full_refresh)
+VIDEO_UPDATE( mappy )
 {
 	int offs;
 

@@ -32,7 +32,7 @@ Year + Game					PCB			Notes
 	Sand Scorpion (by Face)				MCU protection (collision detection etc.)
 	Shogun Warriors						MCU protection (68k code snippets, NOT WORKING)
 94	Great 1000 Miles Rally				MCU protection (EEPROM handling etc.)
-9?	Great 1000 Miles Rally 2			Incomplete dump (code missing!)
+95	Great 1000 Miles Rally 2			MCU protection (EEPROM handling etc.)
 ---------------------------------------------------------------------------
 
 Note: gtmr manual shows "Compatible with AX Kaneko System Board"
@@ -48,6 +48,12 @@ To Do:
   screen and the very first screen (with the Kaneko logo in the middle).
   They're probably supposed to be disabled in those occasions, but the
   relevant registers aren't changed throughout the game (?)
+
+[gtmr2]
+
+- Finish the Inputs (different wheels and pedals)
+
+- Find infos about the communication stuff (even if it won't be supported)
 
 ***************************************************************************/
 
@@ -70,7 +76,7 @@ static data16_t *mcu_ram, gtmr_mcu_com[4];
 
 ***************************************************************************/
 
-void kaneko16_init_machine(void)
+MACHINE_INIT( kaneko16 )
 {
 	kaneko16_sprite_type  = 0;
 
@@ -97,16 +103,16 @@ void kaneko16_init_machine(void)
 	kaneko16_priority.sprite[3] = 0x0000;	// above all
 }
 
-static void berlwall_init_machine(void)
+static MACHINE_INIT( berlwall )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 2;	// like type 0, but using 16 instead of 8 bytes
 }
 
-static void blazeon_init_machine(void)
+static MACHINE_INIT( blazeon )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_xoffs = 0x10000 - 0x680;
 	kaneko16_sprite_yoffs = 0x000;
@@ -126,18 +132,18 @@ static void blazeon_init_machine(void)
 	kaneko16_priority.sprite[3] = 0x0000;	// ""
 }
 
-static void gtmr_init_machine(void)
+static MACHINE_INIT( gtmr )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 1;
 
 	memset(gtmr_mcu_com, 0, 4 * sizeof( data16_t) );
 }
 
-static void mgcrystl_init_machine (void)
+static MACHINE_INIT( mgcrystl )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 /*
 	Sx = Sprites with priority x, x = tiles with priority x,
 	Sprites - Tiles Order:
@@ -165,18 +171,18 @@ static void mgcrystl_init_machine (void)
 	kaneko16_priority.sprite[3] = 0x0000;	// ""
 }
 
-static void sandscrp_init_machine(void)
+static MACHINE_INIT( sandscrp )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	kaneko16_sprite_type = 3;	// "different" sprites layout
 
 	watchdog_reset16_r(0,0);	// start with an armed watchdog
 }
 
-static void shogwarr_init_machine(void)
+static MACHINE_INIT( shogwarr )
 {
-	kaneko16_init_machine();
+	machine_init_kaneko16();
 
 	shogwarr_mcu_status = 0;
 	shogwarr_mcu_command_offset = 0;
@@ -198,6 +204,7 @@ static void shogwarr_init_machine(void)
 const struct GameDriver driver_gtmr;
 const struct GameDriver driver_gtmre;
 const struct GameDriver driver_gtmrusa;
+const struct GameDriver driver_gtmr2;
 
 /*
 
@@ -215,7 +222,7 @@ void gtmr_mcu_run(void)
 	data16_t mcu_offset		=	mcu_ram[0x0012/2] / 2;
 	data16_t mcu_data		=	mcu_ram[0x0014/2];
 
-	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
+	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",activecpu_get_pc(),mcu_command,mcu_offset*2,mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -263,7 +270,8 @@ void gtmr_mcu_run(void)
 				mcu_ram[mcu_offset+7] = 0x3939;
 			}
 			else if ( (Machine->gamedrv == &driver_gtmre)  ||
-					  (Machine->gamedrv == &driver_gtmrusa) )
+					  (Machine->gamedrv == &driver_gtmrusa) ||
+					  (Machine->gamedrv == &driver_gtmr2) )
 			{
 				/* MCU writes the string "USMM0713-TB1994 " to shared ram */
 				mcu_ram[mcu_offset+0] = 0x5553;
@@ -322,30 +330,30 @@ static READ16_HANDLER( sandscrp_mcu_ram_r )
 		case 0x04/2:	// Bit 0: collision detection
 		{
 			/* First rectangle */
-			int x10		=	mcu_ram[0x00/2];
-			int x11		=	mcu_ram[0x02/2] + x10;
-			int y10		=	mcu_ram[0x04/2];
-			int y11		=	mcu_ram[0x06/2] + y10;
+			int x_10		=	mcu_ram[0x00/2];
+			int x_11		=	mcu_ram[0x02/2] + x_10;
+			int y_10		=	mcu_ram[0x04/2];
+			int y_11		=	mcu_ram[0x06/2] + y_10;
 
 			/* Second rectangle */
-			int x20		=	mcu_ram[0x08/2];
-			int x21		=	mcu_ram[0x0a/2] + x20;
-			int y20		=	mcu_ram[0x0c/2];
-			int y21		=	mcu_ram[0x0e/2] + y20;
+			int x_20		=	mcu_ram[0x08/2];
+			int x_21		=	mcu_ram[0x0a/2] + x_20;
+			int y_20		=	mcu_ram[0x0c/2];
+			int y_21		=	mcu_ram[0x0e/2] + y_20;
 
 			/* Sign extend the words */
-			x10 = (x10 & 0x7fff) - (x10 & 0x8000);
-			x11 = (x11 & 0x7fff) - (x11 & 0x8000);
-			y10 = (y10 & 0x7fff) - (y10 & 0x8000);
-			y11 = (y11 & 0x7fff) - (y11 & 0x8000);
-			x20 = (x20 & 0x7fff) - (x20 & 0x8000);
-			x21 = (x21 & 0x7fff) - (x21 & 0x8000);
-			y20 = (y20 & 0x7fff) - (y20 & 0x8000);
-			y21 = (y21 & 0x7fff) - (y21 & 0x8000);
+			x_10 = (x_10 & 0x7fff) - (x_10 & 0x8000);
+			x_11 = (x_11 & 0x7fff) - (x_11 & 0x8000);
+			y_10 = (y_10 & 0x7fff) - (y_10 & 0x8000);
+			y_11 = (y_11 & 0x7fff) - (y_11 & 0x8000);
+			x_20 = (x_20 & 0x7fff) - (x_20 & 0x8000);
+			x_21 = (x_21 & 0x7fff) - (x_21 & 0x8000);
+			y_20 = (y_20 & 0x7fff) - (y_20 & 0x8000);
+			y_21 = (y_21 & 0x7fff) - (y_21 & 0x8000);
 
 			/* Check if they overlap */
-			if	(	( x10 > x21 ) || ( x11 < x20 ) ||
-					( y10 > y21 ) || ( y11 < y20 )	)
+			if	(	( x_10 > x_21 ) || ( x_11 < x_20 ) ||
+					( y_10 > y_21 ) || ( y_11 < y_20 )	)
 				return 0;
 			else
 				return 1;
@@ -365,7 +373,7 @@ static READ16_HANDLER( sandscrp_mcu_ram_r )
 			return (rand() & 0xffff);
 	}
 
-	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",cpu_get_pc(),offset*2);
+	logerror("CPU #0 PC %06X : Unknown MCU word %04X read\n",activecpu_get_pc(),offset*2);
 	return mcu_ram[offset];
 }
 
@@ -401,7 +409,7 @@ void shogwarr_mcu_run(void)
 	if (mcu_command == 0) return;
 
 	logerror("CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
-	 	cpu_get_pc(),shogwarr_mcu_command_offset*2,mcu_command);
+	 	activecpu_get_pc(),shogwarr_mcu_command_offset*2,mcu_command);
 
 	switch (mcu_command)
 	{
@@ -616,15 +624,14 @@ static void update_irq_state(void)
 
 
 /* Called once/frame to generate the VBLANK interrupt */
-static int sandscrp_interrupt(void)
+static INTERRUPT_GEN( sandscrp_interrupt )
 {
 	vblank_irq = 1;
 	update_irq_state();
-	return ignore_interrupt();
 }
 
 
-static void sandscrp_eof_callback(void)
+static VIDEO_EOF( sandscrp )
 {
 	sprite_irq = 1;
 	update_irq_state();
@@ -901,7 +908,7 @@ WRITE16_HANDLER( gtmr_oki_0_bank_w )
 	{
 		OKIM6295_set_bank_base(0, 0x10000 * (data & 0xF) );
 		bank0 = (data & 0xF);
-//		logerror("CPU #0 PC %06X : OKI0 bank %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI0 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -910,7 +917,7 @@ WRITE16_HANDLER( gtmr_oki_1_bank_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_set_bank_base(1, 0x40000 * (data & 0x1) );
-//		logerror("CPU #0 PC %06X : OKI1 bank %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI1 bank %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -951,7 +958,7 @@ WRITE16_HANDLER( gtmr_oki_0_data_w )
 		}
 
 		OKIM6295_data_0_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI0 <- %08X\n",activecpu_get_pc(),data);
 
 	}
 
@@ -962,7 +969,7 @@ WRITE16_HANDLER( gtmr_oki_1_data_w )
 	if (ACCESSING_LSB)
 	{
 		OKIM6295_data_1_w(0,data);
-//		logerror("CPU #0 PC %06X : OKI1 <- %08X\n",cpu_get_pc(),data);
+//		logerror("CPU #0 PC %06X : OKI1 <- %08X\n",activecpu_get_pc(),data);
 	}
 }
 
@@ -1022,6 +1029,61 @@ static MEMORY_WRITE16_START( gtmr_writemem )
 	{ 0xe80000, 0xe80001, gtmr_oki_1_bank_w			},
 MEMORY_END
 
+
+/***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+
+READ16_HANDLER( gtmr2_wheel_r )
+{
+	switch (readinputport(4) & 0x1800)
+	{
+		case 0x0000:	// 270° A. Wheel
+			return	(readinputport(5));
+			break;
+		case 0x1000:	// 270° D. Wheel
+			return	(readinputport(6) << 8);
+			break;
+		case 0x0800:	// 360° Wheel
+			return	(readinputport(7) << 8);
+			break;
+		default:
+			logerror("gtmr2_wheel_r : read at %06x with joystick\n", activecpu_get_pc());
+			return	(~0);
+			break;
+	}
+}
+
+READ16_HANDLER( gtmr2_IN1_r )
+{
+	return	(readinputport(1) & (readinputport(8) | ~0x7100));
+}
+
+static MEMORY_READ16_START( gtmr2_readmem )
+	{ 0x000000, 0x0ffffd, MRA16_ROM					},	// ROM
+	{ 0x0ffffe, 0x0fffff, gtmr2_wheel_r				},	// Wheel Value
+	{ 0x100000, 0x10ffff, MRA16_RAM					},	// Work RAM
+	{ 0x200000, 0x20ffff, MRA16_RAM					},	// Shared With MCU
+	{ 0x300000, 0x30ffff, MRA16_RAM					},	// Palette
+	{ 0x310000, 0x327fff, MRA16_RAM					},	//
+	{ 0x400000, 0x401fff, MRA16_RAM					},	// Sprites
+	{ 0x500000, 0x503fff, MRA16_RAM					},	// Layers 0
+	{ 0x580000, 0x583fff, MRA16_RAM					},	// Layers 1
+	{ 0x600000, 0x60000f, MRA16_RAM					},	// Layers 0 Regs
+	{ 0x680000, 0x68000f, MRA16_RAM					},	// Layers 1 Regs
+	{ 0x700000, 0x70001f, kaneko16_sprites_regs_r	},	// Sprites Regs
+	{ 0x800000, 0x800001, OKIM6295_status_0_lsb_r	},	// Samples
+	{ 0x880000, 0x880001, OKIM6295_status_1_lsb_r	},
+	{ 0x900014, 0x900015, kaneko16_rnd_r			},	// Random Number ?
+	{ 0xa00000, 0xa00001, watchdog_reset16_r		},	// Watchdog
+	{ 0xb00000, 0xb00001, input_port_0_word_r		},	// Inputs
+//	{ 0xb00002, 0xb00003, input_port_1_word_r		},
+	{ 0xb00002, 0xb00003, gtmr2_IN1_r		},
+	{ 0xb00004, 0xb00005, input_port_2_word_r		},
+	{ 0xb00006, 0xb00007, input_port_3_word_r		},
+	{ 0xd00000, 0xd00001, MRA16_NOP					},	// ? (bit 0)
+MEMORY_END
 
 /***************************************************************************
 								Magical Crystal
@@ -1260,7 +1322,7 @@ WRITE_HANDLER( sandscrp_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x07;
 
-	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",cpu_get_pc(),data);
+	if ( bank != data )	logerror("CPU #1 - PC %04X: Bank %02X\n",activecpu_get_pc(),data);
 
 	if (bank < 3)	RAM = &RAM[0x4000 * bank];
 	else			RAM = &RAM[0x4000 * (bank-3) + 0x10000];
@@ -1752,6 +1814,97 @@ INPUT_PORTS_END
 
 
 /***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+INPUT_PORTS_START( gtmr2 )
+	PORT_START	// IN0 - Player 1 - 100004.w <- b00000.w (cpl)
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 ) // swapped for consistency:
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) // button1 is usually accel.
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2 - 10000c.w <- b00002.w (cpl) - for "test mode" only
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) // swapped for consistency:
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) // button1 is usually accel.
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN2 - Coins - 100014.w <- b00004.w (cpl)
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_START1	)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_START2	)	// only in "test mode"
+	PORT_BIT_IMPULSE( 0x0400, IP_ACTIVE_LOW, IPT_COIN1, 2 )
+	PORT_BIT_IMPULSE( 0x0800, IP_ACTIVE_LOW, IPT_COIN2, 2 )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_TILT	)
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_SERVICE1	)
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN	)
+
+	PORT_START	// IN3 - 100017.w <- b00006.w
+	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3, "IN 3-6", IP_KEY_DEFAULT, IP_JOY_NONE )	// Code at 0x002236 - Centers 270D wheel ?
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN4 - DSW from the MCU - 1016f7.b <- 206000.b
+	PORT_DIPNAME( 0x0700, 0x0700, "Communication" )
+	PORT_DIPSETTING(      0x0700, "None" )
+	PORT_DIPSETTING(      0x0600, "Machine 1" )
+	PORT_DIPSETTING(      0x0500, "Machine 2" )
+	PORT_DIPSETTING(      0x0400, "Machine 3" )
+	PORT_DIPSETTING(      0x0300, "Machine 4" )
+	/* 0x0000 to 0x0200 : "Machine 4"
+	PORT_DIPSETTING(      0x0200, "Machine 4 (0x0200)" )
+	PORT_DIPSETTING(      0x0100, "Machine 4 (0x0100)" )
+	PORT_DIPSETTING(      0x0000, "Machine 4 (0x0000)" )
+	*/
+	PORT_DIPNAME( 0x1800, 0x1800, "Controls" )
+	PORT_DIPSETTING(      0x1800, "Joystick" )
+	PORT_DIPSETTING(      0x0800, "Wheel (360)" )			// Not working correctly in race
+	PORT_DIPSETTING(      0x1000, "Wheel (270D)" )			// Not working correctly !
+	PORT_DIPSETTING(      0x0000, "Wheel (270A)" )			// Not working correctly in race
+	PORT_DIPNAME( 0x2000, 0x2000, "Pedal Function" )
+	PORT_DIPSETTING(      0x2000, "Microswitch" )
+//	PORT_DIPSETTING(      0x0000, "Potentiometer" )			// Not implemented yet
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On )  )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+	PORT_START	// IN5 - Wheel (270A) - 100019.b <- fffff.b
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X | IPF_CENTER, 30, 1, 0x00, 0xff )
+
+	PORT_START	// IN6 - Wheel (270D) - 100019.b <- ffffe.b
+	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_X, 30, 1, 0x00, 0xff )
+
+	PORT_START	// IN7 - Wheel (360) - 100019.b <- ffffe.b
+	PORT_ANALOGX( 0x00ff, 0x0080, IPT_DIAL, 30, 1, 0, 0, KEYCODE_LEFT, KEYCODE_RIGHT, 0, 0 )
+
+	PORT_START	// Fake IN1 - To be pressed during boot sequence - Code at 0x000c9e
+	PORT_BITX( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON5, "IN 1-0", KEYCODE_H, IP_JOY_NONE )	// "sound test"
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON6, "IN 1-4", KEYCODE_J, IP_JOY_NONE )	// "view tiles"
+	PORT_BITX( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON7, "IN 1-5", KEYCODE_K, IP_JOY_NONE )	// "view memory"
+	PORT_BITX( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON8, "IN 1-6", KEYCODE_L, IP_JOY_NONE )	// "view sprites ?"
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+/***************************************************************************
 								Magical Crystal
 ***************************************************************************/
 
@@ -2095,14 +2248,13 @@ static struct GfxDecodeInfo sandscrp_gfxdecodeinfo[] =
 ***************************************************************************/
 
 #define KANEKO16_INTERRUPTS_NUM	3
-int kaneko16_interrupt(void)
+INTERRUPT_GEN( kaneko16_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  return 3;
-		case 1:  return 4;
-		case 0:  return 5;
-		default: return 0;
+		case 2:  cpu_set_irq_line(0, 3, HOLD_LINE);	break;
+		case 1:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 0:  cpu_set_irq_line(0, 5, HOLD_LINE); break;
 	}
 }
 
@@ -2186,80 +2338,67 @@ static struct YM2151interface ym2151_intf_blazeon =
 	6-7]	rte
 */
 
-static const struct MachineDriver machine_driver_berlwall =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,	/* MC68000P12 */
-			berlwall_readmem,berlwall_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	berlwall_init_machine,
+static MACHINE_DRIVER_START( berlwall )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* MC68000P12 */
+	MDRV_CPU_MEMORY(berlwall_readmem,berlwall_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(berlwall)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 16, 240-1},
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048 + 32768, 0,	/* 32768 static colors for the bg */
-	berlwall_init_palette,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)	// mangled sprites otherwise
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048 + 32768)	/* 32768 static colors for the bg */
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
-	0,
-	berlwall_vh_start,
-	berlwall_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_PALETTE_INIT(berlwall)
+	MDRV_VIDEO_START(berlwall)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x1MHz_DSW	},
-		{	SOUND_OKIM6295,	&okim6295_intf_12kHz	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x1MHz_DSW)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_12kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
 							Bakuretsu Breaker
 ***************************************************************************/
 
-static struct MachineDriver machine_driver_bakubrkr =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* ? */
-			bakubrkr_readmem,bakubrkr_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	kaneko16_init_machine,
+static MACHINE_DRIVER_START( bakubrkr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)	/* ? */
+	MDRV_CPU_MEMORY(bakubrkr_readmem,bakubrkr_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(kaneko16)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 16, 240-1},
-	kaneko16_gfx_1x4bit_2x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)	// mangled sprites otherwise
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 16, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_2x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,	// mangled sprites otherwise
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x2MHz_EEPROM		},
-		{	SOUND_OKIM6295,	&okim6295_intf_8kHz				}
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_8kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2276,45 +2415,36 @@ static struct MachineDriver machine_driver_bakubrkr =
 		6-7]	busy loop
 */
 
-static struct MachineDriver machine_driver_blazeon =
-{
-	{
-		{
-			CPU_M68000,	/* TMP68HC000-12 */
-			12000000,
-			blazeon_readmem,blazeon_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		},
-		{
-			CPU_Z80,	/* D780C-2 */
-			4000000,	/* ? */
-			blazeon_sound_readmem, blazeon_sound_writemem,
-			blazeon_sound_readport,blazeon_sound_writeport,
-			ignore_interrupt, 1
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	blazeon_init_machine,
+static MACHINE_DRIVER_START( blazeon )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12000000)	/* TMP68HC000-12 */
+	MDRV_CPU_MEMORY(blazeon_readmem,blazeon_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_CPU_ADD(Z80,4000000)	/* D780C-2 */
+	MDRV_CPU_MEMORY(blazeon_sound_readmem,blazeon_sound_writemem)
+	MDRV_CPU_PORTS(blazeon_sound_readport,blazeon_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(blazeon)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 -8},
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1 -8)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_1xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_YM2151,	&ym2151_intf_blazeon	}
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(YM2151, ym2151_intf_blazeon)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2331,79 +2461,76 @@ static struct MachineDriver machine_driver_blazeon =
 	VIDEO_UPDATE_AFTER_VBLANK fixes the mangled/wrong colored sprites
 */
 
-static const struct MachineDriver machine_driver_gtmr =
-{
-	{
-		{
-			CPU_M68000,
-			16000000,	/* ? Most likely a 68000-HC16 */
-			gtmr_readmem,gtmr_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	gtmr_init_machine,
+static MACHINE_DRIVER_START( gtmr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("gtmr", M68000, 16000000)	/* ? Most likely a 68000-HC16 */
+	MDRV_CPU_MEMORY(gtmr_readmem,gtmr_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(gtmr)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	kaneko16_gfx_1x8bit_2x4bit,
-	32768, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x8bit_2x4bit)
+	MDRV_PALETTE_LENGTH(32768)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_2x12kHz	}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+MACHINE_DRIVER_END
 
+
+/***************************************************************************
+							Great 1000 Miles Rally 2
+***************************************************************************/
+
+static MACHINE_DRIVER_START( gtmr2 )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(gtmr)
+	MDRV_CPU_MODIFY("gtmr")
+	MDRV_CPU_MEMORY(gtmr2_readmem,gtmr_writemem)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 								Magical Crystal
 ***************************************************************************/
 
-static const struct MachineDriver machine_driver_mgcrystl =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			mgcrystl_readmem,mgcrystl_writemem,0,0,
-			kaneko16_interrupt, KANEKO16_INTERRUPTS_NUM
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
-	1,
-	mgcrystl_init_machine,
+static MACHINE_DRIVER_START( mgcrystl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(mgcrystl_readmem,mgcrystl_writemem)
+	MDRV_CPU_VBLANK_INT(kaneko16_interrupt,KANEKO16_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(mgcrystl)
+	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1},
-	kaneko16_gfx_1x4bit_2x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_2x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
-	0,
-	kaneko16_vh_start_2xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_2xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_AY8910,	&ay8910_intf_2x2MHz_EEPROM	},
-		{	SOUND_OKIM6295,	&okim6295_intf_18kHz		}
-	},
-
-	nvram_handler_93C46
-};
+	MDRV_SOUND_ADD(AY8910, ay8910_intf_2x2MHz_EEPROM)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_18kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2430,46 +2557,38 @@ static struct YM2203interface ym2203_intf_sandscrp =
 };
 
 
-static const struct MachineDriver machine_driver_sandscrp =
-{
-	{
-		{
-			CPU_M68000,	/* TMP68HC000N-12 */
-			12000000,
-			sandscrp_readmem, sandscrp_writemem,0,0,
-			sandscrp_interrupt, 1
-		},
-		{
-			CPU_Z80,	/* Z8400AB1, Reads the DSWs: it can't be disabled */
-			4000000,
-			sandscrp_sound_readmem,  sandscrp_sound_writemem,
-			sandscrp_sound_readport, sandscrp_sound_writeport,
-			ignore_interrupt, 1	/* IRQ by YM2203, NMI by Main CPU */
-		}
-	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	// eof callback
-	1,
-	sandscrp_init_machine,
+static MACHINE_DRIVER_START( sandscrp )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,12000000)	/* TMP68HC000N-12 */
+	MDRV_CPU_MEMORY(sandscrp_readmem,sandscrp_writemem)
+	MDRV_CPU_VBLANK_INT(sandscrp_interrupt,1)
+
+	MDRV_CPU_ADD(Z80,4000000)	/* Z8400AB1, Reads the DSWs: it can't be disabled */
+	MDRV_CPU_MEMORY(sandscrp_sound_readmem,sandscrp_sound_writemem)
+	MDRV_CPU_PORTS(sandscrp_sound_readport,sandscrp_sound_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// eof callback
+
+	MDRV_MACHINE_INIT(sandscrp)
 
 	/* video hardware */
-	256, 256, { 0, 256-1, 0+16, 256-16-1 },
-	sandscrp_gfxdecodeinfo,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(sandscrp_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	sandscrp_eof_callback,
-	sandscrp_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(sandscrp_1xVIEW2)
+	MDRV_VIDEO_EOF(sandscrp)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_15kHz	},
-		{	SOUND_YM2203,	&ym2203_intf_sandscrp	},
-	}
-};
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_15kHz)
+	MDRV_SOUND_ADD(YM2203, ym2203_intf_sandscrp)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2489,49 +2608,41 @@ static const struct MachineDriver machine_driver_sandscrp =
 	other: busy loop
 */
 #define SHOGWARR_INTERRUPTS_NUM	3
-int shogwarr_interrupt(void)
+INTERRUPT_GEN( shogwarr_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  return 2;
-		case 1:  return 3;
-//		case 0:  return 4;
-		default: return 0;
+		case 2:  cpu_set_irq_line(0, 2, HOLD_LINE); break;
+		case 1:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
+//		case 0:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
 	}
 }
 
-static const struct MachineDriver machine_driver_shogwarr =
-{
-	{
-		{
-			CPU_M68000,
-			12000000,
-			shogwarr_readmem,shogwarr_writemem,0,0,
-			shogwarr_interrupt, SHOGWARR_INTERRUPTS_NUM
-		}
-	},
-	60,DEFAULT_60HZ_VBLANK_DURATION,
-	1,
-	shogwarr_init_machine,
+static MACHINE_DRIVER_START( shogwarr )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)
+	MDRV_CPU_MEMORY(shogwarr_readmem,shogwarr_writemem)
+	MDRV_CPU_VBLANK_INT(shogwarr_interrupt,SHOGWARR_INTERRUPTS_NUM)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_INIT(shogwarr)
 
 	/* video hardware */
-	320, 240, { 0, 320-1, 0, 240-1 },
-	kaneko16_gfx_1x4bit_1x4bit,
-	2048, 0,
-	0,
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 240)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 240-1)
+	MDRV_GFXDECODE(kaneko16_gfx_1x4bit_1x4bit)
+	MDRV_PALETTE_LENGTH(2048)
 
-	VIDEO_TYPE_RASTER,
-	0,
-	kaneko16_vh_start_1xVIEW2,
-	kaneko16_vh_stop,
-	kaneko16_vh_screenrefresh,
+	MDRV_VIDEO_START(kaneko16_1xVIEW2)
+	MDRV_VIDEO_UPDATE(kaneko16)
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{	SOUND_OKIM6295,	&okim6295_intf_2x12kHz	}
-	}
-};
+	MDRV_SOUND_ADD(OKIM6295, okim6295_intf_2x12kHz)
+MACHINE_DRIVER_END
 
 
 /***************************************************************************
@@ -2561,13 +2672,13 @@ void kaneko16_unscramble_tiles(int region)
 	}
 }
 
-void init_kaneko16(void)
+DRIVER_INIT( kaneko16 )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
 	kaneko16_unscramble_tiles(REGION_GFX3);
 }
 
-void init_berlwall(void)
+DRIVER_INIT( berlwall )
 {
 	kaneko16_unscramble_tiles(REGION_GFX2);
 }
@@ -2948,40 +3059,101 @@ ROM_END
 
 						Great 1000 Miles Rally 2
 
-GMR2U48	1M		OKI6295: 00000-3ffff + chunks of 0x10000 with headers
+Bootup displays "TB06MM2EX 1000 Miglia 2"
+                "Master Up 95-04-04 19:39:01"
 
-GMR2U49	2M		sprites
-GMR2U50	2M		sprites
-GMR2U51	2M		sprites - FIRST AND SECOND HALF IDENTICAL
+Top board
+---------
+PCB ID : M201F00138  KANEKO AX-SYSTEM BOARD
+CPU    : TMP68HC000N-16 (68000)
+SOUND  : Oki M6295 (x2)
+OSC    : 27.000MHz, 16.000MHz, 20.000MHz, 33.3330MHz
+RAM    : LC3664 (28 pin SOIC, x4)
+         UT6264 (28 pin SOIC, x2)
+         LH628256 (28 pin DIP, x6)
+         D42101 (24 pin DIP, x2)
+         424260 (40 pin SOIC, x2)
+PALs   : AXOP048, AXOP049, AXOP050 (GAL16V8, near M6295's)
+         AXOP021 \
+         AXOP022  |
+         AXOP062  |
+         AXOP063  |  (18CV8     )
+         AXOP064  |  (near 68000)
+         AXOP070  |
+         AXOP071  |
+         AXOP089 /
 
-GMR2U89	2M		tiles
-GMR1U90	2M		tiles
-GMR2U90	IDENTICAL TO GMR1U90
+OTHER  : Custom chips
+                      Kaneko Japan 9448 TA (44 pin PQFP, near JAMMA connector)
+                      Kaneko VIEW2-CHIP (x2, 144 pin PQFP)
+                      Kaneko KC002 L0002 023 9339EK706 (208 pin PQFP)
+
+ROMs   : None
+
+
+Bottom board
+------------
+PCB ID : AX09S00138  KANEKO AX-SYSTEM BOARD ROM-08
+DIP    : 8 position (x1)
+RAM    : 6116 (x4)
+PALs   : COMUX4, COMUX4 (GAL16V8, near U21)
+         MMs4P067 (18CV8, near U47)
+         MMs6G095 (GAL16V8, near U94)
+         MMs4G084 (GAL16V8, near U50)
+         COMUX2, COMUX3 (GAL16V8, near U33)
+         COMUX1, MMS4P004 (18CV8, near U33)
+
+OTHER  : 93C46 EEPROM
+         KANEKO TBSOP02 454 9451MK002 (74 pin PQFP, Custom MCU?)
+
+ROMs   :  (filename is ROM Label, extension is PCB 'u' location)
 
 ***************************************************************************/
 
+/* Change to 1 if you want to use the GFX ROM from 'gtmr' to see the "alphabet"
+   (but the 3 first cars will have a wrong display) */
+#define USE_GTMR_GFX_ROM	0
+
 ROM_START( gtmr2 )
  	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* 68000 Code */
-	ROM_LOAD16_BYTE( "maincode.1", 0x000000, 0x080000, 0x00000000 )
-	ROM_LOAD16_BYTE( "maincode.2", 0x000001, 0x080000, 0x00000000 )
+	ROM_LOAD16_BYTE( "m2p0x1.u8",  0x000000, 0x080000, 0x525f6618 )
+	ROM_LOAD16_BYTE( "m2p1x1.u7",  0x000001, 0x080000, 0x914683e5 )
+
+ 	ROM_REGION( 0x020000, REGION_CPU2, 0 )			/* MCU Code? */
+	ROM_LOAD( "m2d0x0.u31",        0x000000, 0x020000, 0x2e1a06ff )
 
 	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
-	ROM_LOAD( "gmr2u49.bin",  0x000000, 0x200000, 0xd50f9d80 )
-	ROM_LOAD( "gmr2u50.bin",  0x200000, 0x200000, 0x39b60a83 )
-	ROM_LOAD( "gmr2u51.bin",  0x400000, 0x200000, 0xfd06b339 )
-	ROM_LOAD( "gmr2u89.bin",  0x600000, 0x200000, 0x4dc42fbb )
+	/* removing u49 from the real board gets rid of the startup text
+	   + car graphics, so its probably incomplete since the u49 we have
+	   doens't appear to contain all the needed sprites */
+	#if USE_GTMR_GFX_ROM
+	ROM_LOAD( "gmmu27.bin",  0x000000, 0x200000, 0xc0ab3efc )
+	#else
+	ROM_FILL( 0, 0x200000, 0xff )	// missing data should be in u49?
+	#endif
+	ROM_LOAD( "m2-200-0.u49",      0x200000, 0x200000, BADCRC( 0xd50f9d80 ) )	// incomplete?
+	ROM_LOAD( "m2-201-0.u50",      0x400000, 0x200000, 0x39b60a83 )
+	ROM_LOAD( "m2-202-0.u51",      0x600000, 0x200000, 0xfd06b339 )
+	ROM_LOAD16_BYTE( "m2s0x1.u32", 0x700000, 0x080000, 0x4069d6c7 )
+	ROM_LOAD16_BYTE( "m2s1x1.u33", 0x700001, 0x080000, 0xc53fe269 )
 
-	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "gmr1u90.bin", 0x000000, 0x200000, 0xf4e894f2 )
+	ROM_REGION( 0x440000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, 0x4dc42fbb )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, 0xf4e894f2 )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, 0xe023d51b )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, 0x03c48bdb )
 
-	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
-	ROM_LOAD( "gmr2u90.bin", 0x000000, 0x200000, 0xf4e894f2 )	// IDENTICAL to gmr1u90
+	ROM_REGION( 0x440000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (scrambled) */
+	ROM_LOAD( "m2-300-0.u89",      0x000000, 0x200000, 0x4dc42fbb )
+	ROM_LOAD( "m2-301-0.u90",      0x200000, 0x200000, 0xf4e894f2 )
+	ROM_LOAD16_BYTE( "m2b0x0.u93", 0x400000, 0x020000, 0xe023d51b )
+	ROM_LOAD16_BYTE( "m2b1x0.u94", 0x400001, 0x020000, 0x03c48bdb )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
-	ROM_LOAD( "gmr2u48.bin", 0x000000, 0x100000, 0x1 )
+	ROM_LOAD( "m2-100-0.u48",      0x000000, 0x100000, 0x5250fa45 )
 
-	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
-	ROM_LOAD( "samples",  0x000000, 0x100000, 0x00000000 )
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_LOAD( "m2w1x0.u47",        0x040000, 0x040000, 0x1b0513c5 )
 ROM_END
 
 
@@ -3035,6 +3207,30 @@ DIP settings:
 ***************************************************************************/
 
 ROM_START( mgcrystl )
+ 	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
+	ROM_LOAD16_BYTE( "magcrstl.u18", 0x000000, 0x020000, 0xc7456ba7 )
+	ROM_LOAD16_BYTE( "magcrstl.u19", 0x000001, 0x040000, 0xea8f9300 ) //!!
+
+	ROM_REGION( 0x280000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "mc000.u38",    0x000000, 0x100000, 0x28acf6f4 )
+	ROM_LOAD( "mc001.u37",    0x100000, 0x080000, 0x005bc43d )
+	ROM_RELOAD(               0x180000, 0x080000             )
+	ROM_LOAD( "magcrstl.u36", 0x200000, 0x020000, 0x22729037 )
+	ROM_RELOAD(               0x220000, 0x020000             )
+	ROM_RELOAD(               0x240000, 0x020000             )
+	ROM_RELOAD(               0x260000, 0x020000             )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc010.u04",  0x000000, 0x100000, 0x85072772 )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Tiles (Scrambled) */
+	ROM_LOAD( "mc020.u34",  0x000000, 0x100000, 0x1ea92ff1 )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "mc030.u32",  0x000000, 0x040000, 0xc165962e )
+ROM_END
+
+ROM_START( mgcrystj )
  	ROM_REGION( 0x040000*2, REGION_CPU1, ROMREGION_ERASE )			/* 68000 Code */
 	ROM_LOAD16_BYTE( "mc100j.u18", 0x000000, 0x020000, 0xafe5882d )
 	ROM_LOAD16_BYTE( "mc101j.u19", 0x000001, 0x040000, 0x60da5492 )	//!!
@@ -3176,7 +3372,7 @@ ROM_START( shogwarr )
 ROM_END
 
 
-void init_shogwarr(void)
+DRIVER_INIT( shogwarr )
 {
 	/* Code patches */
 #if 0
@@ -3214,7 +3410,8 @@ void init_shogwarr(void)
 
 GAME( 1991, berlwall, 0,        berlwall, berlwall, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 1)" )
 GAME( 1991, berlwalt, berlwall, berlwall, berlwalt, berlwall, ROT0,  "Kaneko", "The Berlin Wall (set 2)" )
-GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (Japan)" )
+GAME( 1991, mgcrystl, 0,        mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko", "Magical Crystals (World)" )
+GAME( 1991, mgcrystj, mgcrystl, mgcrystl, mgcrystl, kaneko16, ROT0,  "Kaneko (Atlus license)", "Magical Crystals (Japan)" )
 GAME( 1992, blazeon,  0,        blazeon,  blazeon,  kaneko16, ROT0,  "Atlus",  "Blaze On (Japan)" )
 GAME( 1992, sandscrp, 0,        sandscrp, sandscrp, 0,        ROT90, "Face",   "Sand Scorpion" )
 GAME( 1994, gtmr,     0,        gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "Great 1000 Miles Rally" )
@@ -3223,6 +3420,7 @@ GAME( 1994, gtmrusa,  gtmr,     gtmr,     gtmr,     kaneko16, ROT0,  "Kaneko", "
 
 /* Non-working games (mainly due to incomplete dumps) */
 
+GAMEX(1995, gtmr2,    0,        gtmr2,    gtmr2,    kaneko16, ROT0,  "Kaneko", "Mille Miglia 2: Great 1000 Miles Rally", GAME_NOT_WORKING )
+
 GAMEX(1992, bakubrkr, 0,        bakubrkr, bakubrkr, 0,        ROT90,      "Kaneko", "Bakuretsu Breaker",         GAME_NOT_WORKING  )
 GAMEX(1992, shogwarr, 0,        shogwarr, shogwarr, shogwarr, ROT0,       "Kaneko", "Shogun Warriors",           GAME_NOT_WORKING  )
-GAMEX(1995, gtmr2,    0,        gtmr,     gtmr,     kaneko16, ROT0,       "Kaneko", "Great 1000 Miles Rally 2",  GAME_NOT_WORKING  )

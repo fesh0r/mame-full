@@ -8,18 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
-
-/*************************************
- *
- *	External globals
- *
- *************************************/
-
-extern UINT8 balsente_shooter;
-extern UINT8 balsente_shooter_x;
-extern UINT8 balsente_shooter_y;
-
+#include "balsente.h"
 
 
 /*************************************
@@ -32,6 +21,7 @@ static UINT8 *local_videoram;
 static UINT8 *scanline_dirty;
 static UINT8 *scanline_palette;
 static UINT8 *sprite_data;
+static UINT32 sprite_mask;
 
 static UINT8 last_scanline_palette;
 static UINT8 screen_refresh_counter;
@@ -41,48 +31,34 @@ static UINT8 palettebank_vis;
 
 /*************************************
  *
- *	Prototypes
- *
- *************************************/
-
-void balsente_vh_stop(void);
-
-
-
-/*************************************
- *
  *	Video system start
  *
  *************************************/
 
-int balsente_vh_start(void)
+VIDEO_START( balsente )
 {
 	/* reset the system */
 	palettebank_vis = 0;
+	
+	/* allocate a bitmap */
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (!tmpbitmap)
+		return 1;
 
 	/* allocate a local copy of video RAM */
-	local_videoram = malloc(256 * 256);
+	local_videoram = auto_malloc(256 * 256);
 	if (!local_videoram)
-	{
-		balsente_vh_stop();
 		return 1;
-	}
 
 	/* allocate a scanline dirty array */
-	scanline_dirty = malloc(256);
+	scanline_dirty = auto_malloc(256);
 	if (!scanline_dirty)
-	{
-		balsente_vh_stop();
 		return 1;
-	}
 
 	/* allocate a scanline palette array */
-	scanline_palette = malloc(256);
+	scanline_palette = auto_malloc(256);
 	if (!scanline_palette)
-	{
-		balsente_vh_stop();
 		return 1;
-	}
 
 	/* mark everything dirty to start */
 	memset(scanline_dirty, 1, 256);
@@ -91,35 +67,11 @@ int balsente_vh_start(void)
 	memset(scanline_palette, 0, 256);
 	last_scanline_palette = 0;
 
+	/* determine sprite size */
 	sprite_data = memory_region(REGION_GFX1);
+	sprite_mask = memory_region_length(REGION_GFX1) - 1;
 
 	return 0;
-}
-
-
-
-/*************************************
- *
- *	Video system shutdown
- *
- *************************************/
-
-void balsente_vh_stop(void)
-{
-	/* free the local video RAM array */
-	if (local_videoram)
-		free(local_videoram);
-	local_videoram = NULL;
-
-	/* free the scanline dirty array */
-	if (scanline_dirty)
-		free(scanline_dirty);
-	scanline_dirty = NULL;
-
-	/* free the scanline dirty array */
-	if (scanline_palette)
-		free(scanline_palette);
-	scanline_palette = NULL;
 }
 
 
@@ -228,30 +180,33 @@ WRITE_HANDLER( balsente_paletteram_w )
  *
  *************************************/
 
-static void draw_one_sprite(struct mame_bitmap *bitmap, UINT8 *sprite)
+static void draw_one_sprite(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT8 *sprite)
 {
+	struct rectangle finalclip = *cliprect;
 	int flags = sprite[0];
-	int image = sprite[1] | ((flags & 3) << 8);
+	int image = sprite[1] | ((flags & 7) << 8);
 	int ypos = sprite[2] + 17;
 	int xpos = sprite[3];
 	UINT8 *src;
 	int x, y;
+	
+	if (finalclip.min_y < 16)
+		finalclip.min_y = 16;
+	if (finalclip.max_y > 240)
+		finalclip.max_y = 240;
 
 	/* get a pointer to the source image */
-	src = &sprite_data[64 * image];
+	src = &sprite_data[(64 * image) & sprite_mask];
 	if (flags & 0x80) src += 4 * 15;
 
 	/* loop over y */
 	for (y = 0; y < 16; y++, ypos = (ypos + 1) & 255)
 	{
-		if (ypos >= 16 && ypos < 240)
+		if (ypos >= finalclip.min_y && ypos <= finalclip.max_y)
 		{
-			pen_t *pens = &Machine->pens[scanline_palette[y] * 256];
+			UINT32 *pens = &Machine->pens[scanline_palette[y] * 256];
 			UINT8 *old = &local_videoram[ypos * 256 + xpos];
 			int currx = xpos;
-
-			/* mark this scanline dirty */
-			scanline_dirty[ypos] = 1;
 
 			/* standard case */
 			if (!(flags & 0x40))
@@ -264,12 +219,12 @@ static void draw_one_sprite(struct mame_bitmap *bitmap, UINT8 *sprite)
 					int right = (ipixel << 4) & 0xf0;
 
 					/* left pixel, combine with the background */
-					if (left && currx >= 0 && currx < 256)
+					if (left && currx >= finalclip.min_x && currx <= finalclip.max_x)
 						plot_pixel(bitmap, currx, ypos, pens[left | old[0]]);
 					currx++;
 
 					/* right pixel, combine with the background */
-					if (right && currx >= 0 && currx < 256)
+					if (right && currx >= finalclip.min_x && currx <= finalclip.max_x)
 						plot_pixel(bitmap, currx, ypos, pens[right | old[1]]);
 					currx++;
 				}
@@ -288,12 +243,12 @@ static void draw_one_sprite(struct mame_bitmap *bitmap, UINT8 *sprite)
 					int right = ipixel & 0xf0;
 
 					/* left pixel, combine with the background */
-					if (left && currx >= 0 && currx < 256)
+					if (left && currx >= finalclip.min_x && currx <= finalclip.max_x)
 						plot_pixel(bitmap, currx, ypos, pens[left | old[0]]);
 					currx++;
 
 					/* right pixel, combine with the background */
-					if (right && currx >= 0 && currx < 256)
+					if (right && currx >= finalclip.min_x && currx <= finalclip.max_x)
 						plot_pixel(bitmap, currx, ypos, pens[right | old[1]]);
 					currx++;
 				}
@@ -310,30 +265,35 @@ static void draw_one_sprite(struct mame_bitmap *bitmap, UINT8 *sprite)
 
 /*************************************
  *
- *		Main screen refresh
+ *	Main screen refresh
  *
  *************************************/
 
-void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( balsente )
 {
+	int update_all = get_vh_global_attribute_changed();
 	int y, i;
 
 	/* update the remaining scanlines */
 	screen_refresh_counter++;
 	update_palette();
 
+	/* make sure color 1024 is white for our crosshair */
+	palette_set_color(1024, 0xff, 0xff, 0xff);
+
 	/* draw any dirty scanlines from the VRAM directly */
 	for (y = 0; y < 240; y++)
-		if (scanline_dirty[y] || full_refresh)
+		if (scanline_dirty[y] || update_all)
 		{
 			pen_t *pens = &Machine->pens[scanline_palette[y] * 256];
-			draw_scanline8(bitmap, 0, y, 256, &local_videoram[y * 256], pens, -1);
+			draw_scanline8(tmpbitmap, 0, y, 256, &local_videoram[y * 256], pens, -1);
 			scanline_dirty[y] = 0;
 		}
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
 	/* draw the sprite images */
 	for (i = 0; i < 40; i++)
-		draw_one_sprite(bitmap, &spriteram[(0xe0 + i * 4) & 0xff]);
+		draw_one_sprite(bitmap, cliprect, &spriteram[(0xe0 + i * 4) & 0xff]);
 
 	/* draw a crosshair */
 	if (balsente_shooter)
@@ -341,12 +301,6 @@ void balsente_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
 		int beamx = balsente_shooter_x;
 		int beamy = balsente_shooter_y - 10;
 
-		draw_crosshair(bitmap,beamx,beamy,&Machine->visible_area);
-		for (y = -6; y <= 6; y++)
-		{
-			int yoffs = beamy + y;
-			if (yoffs >= 0 && yoffs < 240)
-				scanline_dirty[yoffs] = 1;
-		}
+		draw_crosshair(bitmap,beamx,beamy,cliprect);
 	}
 }

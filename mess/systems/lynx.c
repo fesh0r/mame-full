@@ -143,14 +143,14 @@ void lynx_draw_lines(int newline)
 	    }
 	}
     }
-    if (newline==-1) {
-	lynx_line_y=0;
-	if ((w!=width)||(h!=height)) {
-	    width=w;
-	    height=h;
-	    osd_set_visible_area(0,width-1,0, height-1);
+	if (newline==-1) {
+		lynx_line_y=0;
+		if ((w!=width)||(h!=height)) {
+			width=w;
+			height=h;
+			set_visible_area(0,width-1,0, height-1);
+		}
 	}
-    }
 }
 
 void lynx_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)

@@ -43,12 +43,11 @@ int mk2_vh_start(void)
 		backdrop_load(backdrop_name, 2);
 	}
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
 void mk2_vh_stop(void)
 {
-	generic_vh_stop();
 }
 
 static const char led[]={

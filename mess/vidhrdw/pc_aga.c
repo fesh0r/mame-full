@@ -61,11 +61,13 @@ struct GfxDecodeInfo aga_gfxdecodeinfo[] =
 };
 
 /* Initialise the cga palette */
-void pc_aga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( pc_aga )
 {
-	memcpy(sys_palette,cga_palette,sizeof(cga_palette));
-	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
-	memcpy((char*)sys_colortable+sizeof(cga_colortable), mda_colortable, sizeof(mda_colortable));
+	int i;
+	for(i = 0; i < (sizeof(cga_palette) / 3); i++)
+		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+	memcpy(colortable,cga_colortable,sizeof(cga_colortable));
+	memcpy((char*)colortable+sizeof(cga_colortable), mda_colortable, sizeof(mda_colortable));
 }
 
 
@@ -109,34 +111,38 @@ void pc_aga_cursor(CRTC6845_CURSOR *cursor)
 
 static CRTC6845_CONFIG config= { 14318180 /*?*/, pc_aga_cursor };
 
-extern int  pc_aga_vh_start(void)
+VIDEO_START( pc_aga )
 {
 	crtc6845_init(crtc6845, &config);
 	pc_mda_europc_init(crtc6845);
 	pc_cga_init_video(crtc6845);
 
-	return generic_vh_start();
+	return video_start_generic();
 }
 
-extern void pc_aga_vh_stop(void)
-{
-	generic_vh_stop();
-}
-
-extern void pc_aga_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc_aga )
 {
 	switch (aga.mode) {
-	case AGA_COLOR: pc_cga_vh_screenrefresh(bitmap, full_refresh);break;
-	case AGA_MONO: pc_mda_vh_screenrefresh(bitmap, full_refresh);break;
-	case AGA_OFF: break;
+	case AGA_COLOR:
+		video_update_pc_cga(bitmap, cliprect);
+		break;
+	case AGA_MONO:
+		video_update_pc_mda(bitmap, cliprect);
+		break;
+	case AGA_OFF:
+		break;
 	}
 }
 
-extern void pc200_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pc200 )
 {
 	switch (PC200_MODE) {
-	case PC200_MDA: pc_mda_vh_screenrefresh(bitmap, full_refresh);break;
-	default: pc_cga_vh_screenrefresh(bitmap, full_refresh);break;
+	case PC200_MDA:
+		video_update_pc_mda(bitmap, cliprect);
+		break;
+	default:
+		video_update_pc_cga(bitmap, cliprect);
+		break;
 	}
 }
 

@@ -11,6 +11,17 @@ else
 CPUDEFS += -DHAS_Z80=0
 endif
 
+CPU=$(strip $(findstring Z180@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/z180
+CPUDEFS += -DHAS_Z180=1
+CPUOBJS += $(OBJ)/cpu/z180/z180.o
+DBGOBJS += $(OBJ)/cpu/z180/z180dasm.o
+$(OBJ)/cpu/z180/z180.o: z180.c z180.h z180daa.h z180op.c z180ops.h z180tbl.h z180cb.c z180dd.c z180ed.c z180fd.c z180xy.c
+else
+CPUDEFS += -DHAS_Z180=0
+endif
+
 CPU=$(strip $(findstring 8080@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i8085
@@ -258,6 +269,7 @@ OBJDIRS += $(OBJ)/cpu/v60
 CPUDEFS += -DHAS_V60=1
 CPUOBJS += $(OBJ)/cpu/v60/v60.o
 DBGOBJS += $(OBJ)/cpu/v60/v60d.o
+$(OBJ)/cpu/v60/v60.o: am.c am1.c am2.c am3.c op12.c op2.c op3.c op4.c op5.c op6.c op7a.c optable.c v60.c v60.h v60d.c
 else
 CPUDEFS += -DHAS_V60=0
 endif
@@ -769,6 +781,61 @@ else
 CPUDEFS += -DHAS_UPD7810=0
 endif
 
+CPU=$(strip $(findstring ARM@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/arm
+CPUDEFS += -DHAS_ARM=1
+CPUOBJS += $(OBJ)/cpu/arm/arm.o
+DBGOBJS += $(OBJ)/cpu/arm/armdasm.o
+$(OBJ)/cpu/arm/arm.o: arm.c arm.h
+else
+CPUDEFS += -DHAS_ARM=0
+endif
+
+CPU=$(strip $(findstring JAGUAR@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/jaguar
+CPUDEFS += -DHAS_JAGUAR=1
+CPUOBJS += $(OBJ)/cpu/jaguar/jaguar.o
+DBGOBJS += $(OBJ)/cpu/jaguar/jagdasm.o
+$(OBJ)/cpu/jaguar/jaguar.o: jaguar.c jaguar.h
+else
+CPUDEFS += -DHAS_JAGUAR=0
+endif
+
+CPU=$(strip $(findstring R3000@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/r3000
+CPUDEFS += -DHAS_R3000=1
+CPUOBJS += $(OBJ)/cpu/mips/r3000.o
+DBGOBJS += $(OBJ)/cpu/mips/r3kdasm.o
+$(OBJ)/cpu/mips/r3000.o: r3000.c r3000.h
+else
+CPUDEFS += -DHAS_R3000=0
+endif
+
+CPU=$(strip $(findstring TMS320C31@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/tms32031
+CPUDEFS += -DHAS_TMS320C31=1
+CPUOBJS += $(OBJ)/cpu/tms32031/tms32031.o
+DBGOBJS += $(OBJ)/cpu/tms32031/dis32031.o
+$(OBJ)/cpu/tms32031/tms32031.o: tms32031.c tms32031.h
+else
+CPUDEFS += -DHAS_TMS320C31=0
+endif
+
+CPU=$(strip $(findstring SH2@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/sh2
+CPUDEFS += -DHAS_SH2=1
+CPUOBJS += $(OBJ)/cpu/sh2/sh2.o
+DBGOBJS += $(OBJ)/cpu/sh2/sh2dasm.o
+$(OBJ)/cpu/sh2/sh2.o: sh2.c sh2.h
+else
+CPUDEFS += -DHAS_SH2=0
+endif
+
 
 SOUND=$(strip $(findstring CUSTOM@,$(SOUNDS)))
 ifneq ($(SOUND),)
@@ -1022,6 +1089,14 @@ SOUNDDEFS += -DHAS_MSM5205=1
 SOUNDOBJS += $(OBJ)/sound/msm5205.o
 else
 SOUNDDEFS += -DHAS_MSM5205=0
+endif
+
+SOUND=$(strip $(findstring MSM5232@,$(SOUNDS)))
+ifneq ($(SOUND),)
+SOUNDDEFS += -DHAS_MSM5232=1
+SOUNDOBJS += $(OBJ)/sound/msm5232.o
+else
+SOUNDDEFS += -DHAS_MSM5232=0
 endif
 
 SOUND=$(strip $(findstring UPD7759@,$(SOUNDS)))

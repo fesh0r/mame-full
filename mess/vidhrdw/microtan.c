@@ -56,9 +56,9 @@ WRITE_HANDLER( microtan_videoram_w )
 
 int microtan_vh_start(void)
 {
-	if (generic_vh_start())
+	if (video_start_generic())
 		return 1;
-	microtan_chunky_buffer = malloc(videoram_size);
+	microtan_chunky_buffer = auto_malloc(videoram_size);
     microtan_chunky_graphics = 0;
 	memset(microtan_chunky_buffer, microtan_chunky_graphics, sizeof(microtan_chunky_buffer));
 
@@ -67,8 +67,6 @@ int microtan_vh_start(void)
 
 void microtan_vh_stop(void)
 {
-	generic_vh_stop();
-	free(microtan_chunky_buffer);
 	microtan_chunky_buffer = NULL;
 }
 

@@ -15,25 +15,14 @@ WRITE_HANDLER( exctsccr_gfx_bank_w ) {
 	gfx_bank = data & 1;
 }
 
-void *exctsccr_fm_timer;
-
 static void exctsccr_fm_callback( int param ) {
-	cpu_cause_interrupt( 1, 0xff );
+	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
-int exctsccr_vh_start( void ) {
-	exctsccr_fm_timer = timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
+VIDEO_START( exctsccr ) {
+	timer_pulse( TIME_IN_HZ( 75.0 ), 0, exctsccr_fm_callback ); /* updates fm */
 
-	return generic_vh_start();
-}
-
-void exctsccr_vh_stop( void ) {
-	if ( exctsccr_fm_timer ) {
-		timer_remove( exctsccr_fm_timer );
-		exctsccr_fm_timer = 0;
-	}
-
-	generic_vh_stop();
+	return video_start_generic();
 }
 
 /***************************************************************************
@@ -41,7 +30,7 @@ void exctsccr_vh_stop( void ) {
   Convert the color PROMs into a more useable format.
 
 ***************************************************************************/
-void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( exctsccr )
 {
 	int i,idx;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -49,20 +38,22 @@ void exctsccr_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		bit0 = (color_prom[i] >> 0) & 0x01;
 		bit1 = (color_prom[i] >> 1) & 0x01;
 		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = (color_prom[i] >> 3) & 0x01;
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		bit0 = 0;
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
 	}
 
 	color_prom += Machine->drv->total_colors;
@@ -217,7 +208,7 @@ static void exctsccr_drawsprites( struct mame_bitmap *bitmap ) {
   the main emulation engine.
 
 ***************************************************************************/
-void exctsccr_vh_screenrefresh( struct mame_bitmap *bitmap, int full_refresh ) {
+VIDEO_UPDATE( exctsccr ) {
 	int offs;
 
 	/* background chars */

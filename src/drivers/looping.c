@@ -63,28 +63,29 @@ L056-6    9A          "      "      VLI-8-4 7A         "
 
 static struct tilemap *tilemap;
 
-void looping_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom)
+PALETTE_INIT( looping )
 {
 	int i;
 	for (i = 0;i < 0x20;i++)
 	{
-		int bit0,bit1,bit2;
+		int bit0,bit1,bit2,r,g,b;
 
 		/* red component */
 		bit0 = (*color_prom >> 0) & 0x01;
 		bit1 = (*color_prom >> 1) & 0x01;
 		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
 		bit0 = (*color_prom >> 3) & 0x01;
 		bit1 = (*color_prom >> 4) & 0x01;
 		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
 		bit0 = (*color_prom >> 6) & 0x01;
 		bit1 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x4f * bit0 + 0xa8 * bit1;
+		b = 0x4f * bit0 + 0xa8 * bit1;
 
+		palette_set_color(i,r,g,b);
 		color_prom++;
 	}
 }
@@ -98,6 +99,16 @@ static void get_tile_info( int offset )
 			tile_number,
 			color,
 			0)
+}
+
+WRITE_HANDLER( looping_flip_screen_x_w )
+{
+	flip_screen_x_set(~data & 0x01);
+}
+
+WRITE_HANDLER( looping_flip_screen_y_w )
+{
+	flip_screen_y_set(~data & 0x01);
 }
 
 WRITE_HANDLER( looping_colorram_w )
@@ -125,7 +136,7 @@ WRITE_HANDLER( looping_colorram_w )
 	}
 }
 
-int looping_vh_init( void )
+VIDEO_START( looping )
 {
 	tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
 	if( tilemap )
@@ -145,34 +156,53 @@ WRITE_HANDLER( looping_videoram_w )
 	}
 }
 
-static void draw_sprites( struct mame_bitmap *bitmap )
+static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {
-	int tile_number;
 	const UINT8 *source = spriteram;
 	const UINT8 *finish = source + 0x10*4; /* ? */
 
-	while( source<finish )
+	UINT8 sx, sy;
+	int flipx, flipy, code, color;
+
+	while( source < finish )
 	{
-		tile_number = source[1];
-		drawgfx( bitmap,
-			Machine->gfx[1],
-			tile_number&0x3f,
-			source[2], /* color */
-			tile_number&0x40, /* flipx */
-			tile_number&0x80, /* flipy */
-			source[3], /* xpos */
-			240 - source[0], /* ypos */
-			&Machine->visible_area,
-			TRANSPARENCY_PEN,0 );
+		sx = source[3];
+		sy = source[0];
+		flipx = source[1] & 0x40;
+		flipy = source[1] & 0x80;
+		code  = source[1] & 0x3f;
+		color = source[2];
+
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+
+		if (flip_screen_y)
+		{
+			flipy = !flipy;
+		}
+		else
+		{
+			sy = 240 - sy;
+		}
+
+		drawgfx( bitmap, Machine->gfx[1],
+				code, color,
+				flipx, flipy,
+				sx, sy,
+				&Machine->visible_area,
+				TRANSPARENCY_PEN, 0 );
 
 		source += 4;
 	}
 }
 
-void looping_vh_screenrefresh( struct mame_bitmap *bitmap, int fullrefresh )
+VIDEO_UPDATE( looping )
 {
-	tilemap_draw( bitmap,tilemap,0,0 );
-	draw_sprites( bitmap );
+	tilemap_draw( bitmap,cliprect,tilemap,0,0 );
+	draw_sprites( bitmap,cliprect );
 }
 
 WRITE_HANDLER( looping_intack )
@@ -184,11 +214,10 @@ WRITE_HANDLER( looping_intack )
 	}
 }
 
-int looping_interrupt( void )
+INTERRUPT_GEN( looping_interrupt )
 {
 	cpu_irq_line_vector_w(0, 0, 4);
 	cpu_set_irq_line(0, 0, ASSERT_LINE);
-	return ignore_interrupt();
 }
 
 /****** sound *******/
@@ -239,7 +268,8 @@ static MEMORY_WRITE_START( looping_writemem )
 	{ 0x9800, 0x983f, looping_colorram_w, &colorram },
 	{ 0x9840, 0x987f, MWA_RAM, &spriteram },
 	{ 0xe000, 0xefff, MWA_RAM },
-	{ 0xb006, 0xb007, MWA_RAM }, /* unknown */
+	{ 0xb006, 0xb006, looping_flip_screen_x_w },
+	{ 0xb007, 0xb007, looping_flip_screen_y_w },
 	{ 0xf801, 0xf801, looping_soundlatch_w },
 MEMORY_END
 
@@ -328,53 +358,40 @@ static struct DACinterface dac_interface =
 	{ 30 }
 };
 
-static const struct MachineDriver machine_driver_looping =
-{
-	{
-		{
-			CPU_TMS9995,
-			3000000, /* ? */
-			looping_readmem,looping_writemem,0,looping_writeport,
-			looping_interrupt,1
-		},
-		{ /* sound */
-			CPU_TMS9980,
-			2000000, // ?
-			looping_io_readmem,looping_io_writemem,0,looping_io_writeport,
-			ignore_interrupt,1
-		}
-	},
-	60, 2500,	/* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame */
-	0,
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	looping_gfxdecodeinfo,
-	32,32,
-	looping_vh_convert_color_prom,
-	VIDEO_TYPE_RASTER,
-	0,
-	looping_vh_init,
-	0, /*looping_vh_stop*/
-	looping_vh_screenrefresh,
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_AY8910,
-			&ay8910_interface
-		},
-		{
-			SOUND_TMS5220,
-			&tms5220_interface
-		},
-		{
-			SOUND_DAC,
- 			&dac_interface
-		}
-	}
+static MACHINE_DRIVER_START( looping )
 
-};
+	/* basic machine hardware */
+	MDRV_CPU_ADD(TMS9995, 3000000) /* ? */
+	MDRV_CPU_MEMORY(looping_readmem,looping_writemem)
+	MDRV_CPU_PORTS(0,looping_writeport)
+	MDRV_CPU_VBLANK_INT(looping_interrupt,1)
+
+	MDRV_CPU_ADD(TMS9980, 2000000) // ?
+	MDRV_CPU_MEMORY(looping_io_readmem,looping_io_writemem)
+	MDRV_CPU_PORTS(0,looping_io_writeport)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(2500)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(looping_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(32)
+	MDRV_COLORTABLE_LENGTH(32)
+
+	MDRV_PALETTE_INIT(looping)
+	MDRV_VIDEO_START(looping)
+	MDRV_VIDEO_UPDATE(looping)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(AY8910, ay8910_interface)
+	MDRV_SOUND_ADD(TMS5220, tms5220_interface)
+	MDRV_SOUND_ADD(DAC, dac_interface)
+MACHINE_DRIVER_END
+
+
 
 INPUT_PORTS_START( looping )
 	PORT_START
@@ -391,11 +408,9 @@ INPUT_PORTS_START( looping )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_B ) )
@@ -410,18 +425,62 @@ INPUT_PORTS_START( looping )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_7C ) )
 	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )		// Check code at 0x2c00
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+/* Same as 'looping' but additional "Infinite Lives" Dip Switch */
+INPUT_PORTS_START( skybump )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) /* shoot */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) /* accel? */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START /* cocktail? */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x18, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0e, 0x02, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )		// Check code at 0x2c00
 	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(	0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x60, 0x40, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x40, "3" )
+	PORT_DIPSETTING(    0x60, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+//	PORT_BITX( 0,       0x20, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 ROM_START( loopinga )
@@ -494,7 +553,7 @@ ROM_START( skybump )
 	ROM_LOAD( "vid.clr",		0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
-void init_looping( void ){
+DRIVER_INIT( looping ){
 	/* unscramble the TMS9995 ROMs */
 	UINT8 *pMem = memory_region( REGION_CPU1 );
 	UINT8 raw,code;
@@ -518,4 +577,5 @@ void init_looping( void ){
 /*          rom       parent    machine   inp       init */
 GAME( 1982, looping,  0,        looping, looping, looping, ROT90, "Venture Line", "Looping (set 1)" )
 GAME( 1982, loopinga, looping,  looping, looping, looping, ROT90, "Venture Line", "Looping (set 2)" )
-GAME( 1982, skybump,  0,        looping, looping, looping, ROT90, "Venture Line", "Sky Bumper" )
+GAME( 1982, skybump,  0,        looping, skybump, looping, ROT90, "Venture Line", "Sky Bumper" )
+
