@@ -3011,7 +3011,48 @@ EIdolons inn - www.eidolons-inn.de
 
 MESS Emulation State:
 
-(?)
+???
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=gbcolor
+$bio
+Nintendo Gameboy Color (1998)
+
+
+This is an update to the original Gameboy system that adds color capabilities as well as backwards
+compatibility.
+
+
+Features:
+
+Processor:  8 MHz Z80 work alike by Sharp with two processor modes: Single (4MHz) and double (8MHz)
+
+Video: 10, 32, or 56 on screen colors from a palette of 32000, Screen made by Sharp
+
+Sound: 4 Channel FM stereo
+
+Controls:  8 directional D-Pad, A, B, select, and start buttons. 
+ 
+Resolution: 160x144x56 colors
+
+Sprites: 40 - 8x16, 8x8 (four color sprites-4 colors- 1 being a transparent)
+
+Tiles:  512 on screen making use of the 16K of VRAM
+
+Cart Size: 256KBit - 16MBit for GB compatible games. Up to 64 MBit ROM & 128 KBytes RAM for CGB 
+cartridges, although 32Mbit ROM / 64K RAM carts are the largest currently manufactured.
+
+Serial port speed: 512 Kbps
+
+Power:  ~13 hours on 2 AA batteries or AC adapter.
+  
+
+MESS Emulation State:
+
+???
 
 $end
 
@@ -3482,7 +3523,7 @@ The base unit can connect to a TV through a aerial or scart lead.
 Not many of these systems were produced and they are rare.
 
 The Amstrad CPC had a gate array chip which contained the logic for the
-palette, mode display, rom paging,ram paging and interrupt
+palette, mode display, rom paging, ram paging and interrupt
 system. This is emulated in the KC Compact using a lot of TTL logic chips
 and a Zilog 8536 chip.
 
@@ -6712,8 +6753,7 @@ The floppy disc interface:
 - 16k ROM
 - RAM
 - NEC765 compatible disc controller
-- internally the disc interface uses interrupts to transfer data into it's own
-ram.
+- internally the disc interface uses interrupts to transfer data into it's own ram.
 
 The floppy disc drives are 3" and are believed to use 40 track, double density, double sided discs,
 giving 360K per disc.
@@ -6851,6 +6891,40 @@ Mess Emulation State:
 
 no support for st2 cartridges
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=subergb
+$bio
+Nintendo Super Game Boy (1994)
+
+
+The Super Game Boy is an adapter for the SNES that let you play Game Boy games on your TV. It 
+also had some extended features like backgrounds around the game and primitive color, although
+not all games take advantage of this. It possible for Super Game Boy games to make use of the 
+SNES sound hardware for extra effects. Try compairing Astroids/Missle Commmand, Space invadors
+or Donkey Kong to see some excellent use of the of enhancments. In 1994 the Super Game Boy sold
+for under $60.
+
+There was a Super Game Boy 2 released in 199?. It has the same features of the original Super 
+Game Boy but adds a green game link LED, red power LED and a Game link port.
+
+
+Features:
+
+Supports 256 colors in static screens (i.e the title screen) and 12 colors in the normal game.
+
+
+Links:
+
+http://www.gamersgraveyard.com/repository/snes/peripherals/sgbfaq.txt
+
+
+MESS Emulation State:
+
+???
 
 $end
 
@@ -7647,6 +7721,7 @@ Features:
 
 MESS Emulation State:
 
+
 $end
 
 #---------------------------------------------------------------------------------------------#
@@ -7669,6 +7744,7 @@ radofin 1201?
 fountain 1392?
 hanimex?
 
+
 Features:
 
 grid 
@@ -7678,6 +7754,7 @@ special << load/reset button (must be pressed after power up)
 special > select button
 special start button
 2 controller with analog joystick and 14 key keypad
+
 
 controller keypad:
 
