@@ -207,14 +207,14 @@ static struct MachineDriver machine_driver_apf_m1000 =
 
 ROM_START(apfimag)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("apf_4000.rom",0x04000, 0x00800, 1)
-	ROM_LOAD("basic_68.rom",0x06800, 0x01000, 1)
-	ROM_LOAD("basic_80.rom",0x08000, 0x02000, 1)
+	ROM_LOAD("apf_4000.rom",0x04000, 0x00800, 0x2a331a33)
+	ROM_LOAD("basic_68.rom",0x06800, 0x01000, 0xef049ab8)
+	ROM_LOAD("basic_80.rom",0x08000, 0x02000, 0xa4c69fae)
 ROM_END
 
 ROM_START(apfm1000)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("apf_4000.rom",0x06800, 0x0800, 1)
+	ROM_LOAD("apf_4000.rom",0x06800, 0x0800, 0x2a331a33)
 ROM_END
 
 static const struct IODevice io_apf[] =

@@ -174,8 +174,8 @@ static struct MachineDriver machine_driver_sord_m5 =
 
 ROM_START(sordm5)
 	ROM_REGION(0x06000, REGION_CPU1,0)
-	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x01)
-	ROM_LOAD("sordbasi.rom",0x2000, 0x02000, 0x01)
+	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x78848d39)
+	ROM_LOAD("sordbasi.rom",0x2000, 0x02000, 0x9a98e6ce)
 //	ROM_LOAD("balloon.rom",0x2000, 0x03000, 0x01)
 ROM_END
 
