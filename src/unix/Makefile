@@ -24,7 +24,8 @@ SYSDEP_OBJS = $(SYSDEP_DIR)/rc.o $(SYSDEP_DIR)/misc.o \
 # video driver objs per display method
 VID_DIR = $(OBJDIR)/video-drivers
 VID_OBJS.x11    = $(VID_DIR)/xinput.o $(VID_DIR)/xil.o \
-	$(VID_DIR)/x11_window.o $(VID_DIR)/xf86_dga.o 
+	$(VID_DIR)/x11_window.o \
+	$(VID_DIR)/xf86_dga1.o $(VID_DIR)/xf86_dga2.o $(VID_DIR)/xf86_dga.o
 VID_OBJS.xgl    = $(VID_DIR)/glvec.o $(VID_DIR)/glgen.o $(VID_DIR)/gljpg.o \
 	$(VID_DIR)/glcab.o $(VID_DIR)/xinput.o $(VID_DIR)/vectorgen.o
 VID_OBJS.xfx    = $(VID_DIR)/fxgen.o $(VID_DIR)/fxvec.o $(VID_DIR)/xinput.o \
@@ -41,6 +42,8 @@ MIXER_DIR = $(OBJDIR)/sysdep/mixer-drivers
 SOUND_OBJS.linux   = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o $(DSP_DIR)/alsa.o
 SOUND_OBJS.freebsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
 SOUND_OBJS.netbsd  = $(DSP_DIR)/netbsd.o
+#SOUND_OBJS.openbsd = $(DSP_DIR)/oss.o $(MIXER_DIR)/oss.o
+SOUND_OBJS.openbsd = $(DSP_DIR)/netbsd.o 
 SOUND_OBJS.solaris = $(DSP_DIR)/solaris.o $(MIXER_DIR)/solaris.o
 SOUND_OBJS.next    = $(DSP_DIR)/soundkit.o
 SOUND_OBJS.macosx  = $(DSP_DIR)/coreaudio.o
@@ -77,6 +80,8 @@ OBJDIRS = $(OBJDIR) $(SYSDEP_DIR) $(DSP_DIR) $(MIXER_DIR) $(VID_DIR) \
 CFLAGS.linux      = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.freebsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.netbsd     = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+#CFLAGS.openbsd    = -DSYSDEP_DSP_OSS -DSYSDEP_MIXER_OSS -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
+CFLAGS.openbsd    = -DSYSDEP_DSP_NETBSD -DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS.solaris    = -DSYSDEP_DSP_SOLARIS -DSYSDEP_MIXER_SOLARIS
 CFLAGS.next       = -DSYSDEP_DSP_SOUNDKIT -DBSD43
 CFLAGS.macosx     = -DSYSDEP_DSP_COREAUDIO
@@ -116,5 +121,6 @@ $(OBJDIR)/%.o: %.m xmame.h
 
 $(VID_DIR)/x11_window.o: video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/svgalib.o: video-drivers/blit.h video-drivers/blit_core.h video-drivers/twkmodes.h video-drivers/twkuser.c
-$(VID_DIR)/xf86_dga.o: video-drivers/blit.h video-drivers/blit_core.h
+$(VID_DIR)/xf86_dga1.o: video-drivers/xf86_dga1.c video-drivers/blit.h video-drivers/blit_core.h
+$(VID_DIR)/xf86_dga2.o: video-drivers/xf86_dga2.c video-drivers/blit.h video-drivers/blit_core.h
 $(VID_DIR)/xinput.o: video-drivers/xkeyboard.h

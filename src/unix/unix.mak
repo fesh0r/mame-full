@@ -29,6 +29,7 @@ LIBS.irix_al       = -laudio
 LIBS.aix           = -lUMSobj
 LIBS.next	   = -framework SoundKit
 LIBS.macosx	   = -framework CoreAudio
+#LIBS.openbsd       = -lossaudio
 
 ##############################################################################
 # **** Display dependent settings.
@@ -317,21 +318,25 @@ install: $(INST.$(DISPLAY_METHOD)) install-man
 
 install-man:
 	@echo installing manual pages under $(MANDIR) ...
-	-mkdir $(MANDIR)
-	$(INSTALL) doc/xmame.man $(MANDIR)/xmame.6
+	-$(INSTALL_MAN_DIR) $(MANDIR)
+	$(INSTALL_MAN) doc/x$(TARGET).6 $(MANDIR)/x$(TARGET).6
 
 doinstall:
-	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
+	@echo installing binaries under $(BINDIR)...
+	-$(INSTALL_PROGRAM_DIR) $(BINDIR)
+	$(INSTALL_PROGRAM) $(NAME).$(DISPLAY_METHOD) $(BINDIR)
 
 doinstallsuid:
-	@echo installing binaries under $(DESTDIR)...
-	$(INSTALL) $(NAME).$(DISPLAY_METHOD) $(DESTDIR)
-	chmod 4755 $(DESTDIR)/$(NAME).$(DISPLAY_METHOD)
+	@echo installing binaries under $(BINDIR)...
+	-$(INSTALL_PROGRAM_DIR) $(BINDIR)
+	$(INSTALL_PROGRAM_SUID) $(NAME).$(DISPLAY_METHOD) $(BINDIR)
 
 copycab:
 	@echo installing cabinet files under $(XMAMEROOT)...
-	$(INSTALL) -R cab $(XMAMEROOT)
+	@for i in cab/*; do \
+	if test ! -d $(XMAMEROOT)/$$i; then \
+	$(INSTALL_DATA_DIR) $(XMAMEROOT)/$$i; fi; \
+	for j in $$i/*; do $(INSTALL_DATA) $$j $(XMAMEROOT)/$$i; done; done
 
 clean: 
 	rm -fr $(OBJ) $(NAME).* xlistdev contrib/cutzlib-1.1.3/libz.a contrib/cutzlib-1.1.3/*.o $(TOOLS)
