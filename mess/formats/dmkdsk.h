@@ -9,7 +9,7 @@
 
 *********************************************************************/
 
-#include "flopdrv.h"
+#include "includes/flopdrv.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,7 +25,7 @@ typedef struct
 	UINT8	idCRC_high;
 	UINT8	idCRC_low;
 	UINT8	DM;
-	UINT8	data[];
+	UINT8	*data;
 } packedIDData, *packedIDData_P;
 
 typedef struct
@@ -85,7 +85,7 @@ typedef union
 									         Note these are always sorted
 									         from first to last. All empty
 									         entires are 0x00				*/
-	UINT8		trackData[];	/* Actual track data (including header)		*/
+	UINT8		*trackData;	/* Actual track data (including header)		*/
 } dmkTrack, *dmkTrack_p;
 
 #define DMKSIDECOUNT( x )  ((x.diskOptions & 0x10) == 0) ? 0 : 1
