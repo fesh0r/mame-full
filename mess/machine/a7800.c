@@ -99,7 +99,7 @@ int a7800_id_rom (int id)
 		strlen(device_filename(IO_CARTSLOT,id)) == 0)
 		return ID_FAILED;
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
+	if (!(romfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
 		logerror("returning ID_FAILED\n");
 		return ID_FAILED;
 	}
@@ -142,19 +142,19 @@ int a7800_load_rom (int id)
         logerror("A7800 - warning: no cartridge specified!\n");
     }
 	else
-	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
+	if (!(cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
     {
 		logerror("A7800 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) == NULL);
         return 1;
     }
 
     /* Allocate memory for BIOS bank switching */
-    a7800_bios_f000 = malloc(0x1000);
+    a7800_bios_f000 = (UINT8*)malloc(0x1000);
     if (!a7800_bios_f000) {
         logerror("Could not allocate ROM memory\n");
         return 1;
     }
-    a7800_cart_f000 = malloc(0x1000);
+    a7800_cart_f000 = (UINT8*)malloc(0x1000);
     if (!a7800_cart_f000) {
         logerror("Could not allocate ROM memory\n");
         free(a7800_bios_f000);

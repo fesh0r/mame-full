@@ -3,6 +3,10 @@
 
 #include "flopdrv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	UINT8	 track;
 	UINT8	 sector;
@@ -75,3 +79,6 @@ void basicdsk_set_geometry(UINT8 drive, UINT8 tracks, UINT8 sides, UINT8 sec_per
 have a deleted data mark, if ddam==0, the sector will have a data mark */
 void	basicdsk_set_ddam(UINT8 physical_drive, UINT8 physical_track, UINT8 physical_side, UINT8 sector_id,UINT8 ddam);
 
+#ifdef __cplusplus
+}
+#endif

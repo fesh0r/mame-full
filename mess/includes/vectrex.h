@@ -11,7 +11,7 @@ extern int vectrex_imager_status;
 extern int vectrex_beam_color;
 extern unsigned char vectrex_via_out[2];
 
-extern void vectrex_imager_left_eye (double time);
+extern void vectrex_imager_left_eye (double time_);
 extern void vectrex_configuration(void);
 extern READ_HANDLER (v_via_pa_r);
 extern READ_HANDLER(v_via_pb_r );

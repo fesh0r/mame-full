@@ -57,7 +57,7 @@ int vectrex_load_rom (int id)
 	 */
 	memset (memory_region(REGION_CPU1), 1, 0x8000);
 
-	cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
+	cartfile = (FILE*)image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (cartfile)
 	{
 		osd_fread (cartfile, memory_region(REGION_CPU1), 0x8000);
@@ -275,17 +275,17 @@ static void vectrex_imager_right_eye (int param)
 	timer_set (imager_wheel_time*vectrex_imager_angles[2], 1, vectrex_imager_change_color);
 }
 
-void vectrex_imager_left_eye (double time)
+void vectrex_imager_left_eye (double time_)
 {
-	imager_wheel_time = time;
+	imager_wheel_time = time_;
 	via_0_ca1_w (0, 1);
 	via_0_ca1_w (0, 0);
 	vectrex_imager_pinlevel |= 0x80;
 
 	vectrex_imager_status = 2;
 	vectrex_beam_color = imager_colors[5];
-	timer_set (time*vectrex_imager_angles[1], 3, vectrex_imager_change_color);
-	timer_set (time*vectrex_imager_angles[2], 4, vectrex_imager_change_color);
-	timer_set (time/2, 0, vectrex_imager_right_eye);
+	timer_set (time_*vectrex_imager_angles[1], 3, vectrex_imager_change_color);
+	timer_set (time_*vectrex_imager_angles[2], 4, vectrex_imager_change_color);
+	timer_set (time_/2, 0, vectrex_imager_right_eye);
 }
 

@@ -321,7 +321,7 @@ static void vtech1_snapshot_copy(void)
 		{
 			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
             sprintf(vtech1_frame_message, "BASIC snapshot %04x-%04x", start, end);
-			vtech1_frame_time = Machine->drv->frames_per_second;
+			vtech1_frame_time = (int)Machine->drv->frames_per_second;
 			logerror("VTECH1 BASIC snapshot %04x-%04x\n", start, end);
             /* patch BASIC variables */
 			RAM[0x78a4] = start % 256;
@@ -337,7 +337,7 @@ static void vtech1_snapshot_copy(void)
 		{
 			memcpy(&RAM[start], &vtech1_snapshot_data[24], end - start);
 			sprintf(vtech1_frame_message, "M-Code snapshot %04x-%04x", start, end);
-			vtech1_frame_time = Machine->drv->frames_per_second;
+			vtech1_frame_time = (int)Machine->drv->frames_per_second;
 			logerror("VTECH1 MCODE snapshot %04x-%04x\n", start, end);
             /* set USR() address */
 			RAM[0x788e] = start % 256;
@@ -383,13 +383,13 @@ int vtech1_snapshot_init(int id)
     if( file )
 	{
 		vtech1_snapshot_size = osd_fsize(file);
-		vtech1_snapshot_data = malloc(vtech1_snapshot_size);
+		vtech1_snapshot_data =(UINT8*) malloc(vtech1_snapshot_size);
         if( vtech1_snapshot_data )
 		{
 			osd_fread(file, vtech1_snapshot_data, vtech1_snapshot_size);
 			osd_fclose(file);
 			/* 1/2 second delay after the READY message */
-			vtech1_snapshot_count = Machine->drv->frames_per_second / 2;
+			vtech1_snapshot_count = (int)Machine->drv->frames_per_second / 2;
             return INIT_OK;
 		}
 		osd_fclose(file);

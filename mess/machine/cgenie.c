@@ -126,7 +126,7 @@ static OPBASE_HANDLER (opbaseoverride)
 		cgenie_load_cas = 0;
 		if( cass_specified && strlen(device_filename(IO_CASSETTE,0)) )
 		{
-			UINT8 *buff = malloc(65536), *s, data;
+			UINT8 *buff = (UINT8*)malloc(65536), *s, data;
 			UINT16 size, entry = 0, block_len, block_ofs = 0;
 			void *cmd;
 
@@ -148,7 +148,7 @@ static OPBASE_HANDLER (opbaseoverride)
 				s = buff;
 				if( memcmp(s, TAPE_HEADER, sizeof(TAPE_HEADER)-1) == 0 )
 				{
-					s = memchr(s, 26, size);
+					s = (UINT8*)memchr(s, 26, size);
 					if( s )
 					{
 						*s++ = '\n';

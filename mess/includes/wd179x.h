@@ -4,6 +4,10 @@
 
 #include "flopdrv.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define WD179X_IRQ_CLR	0
 #define WD179X_IRQ_SET	1
 /* R Nabet : added events for the DRQ pin... */
@@ -141,6 +145,10 @@ extern READ_HANDLER ( wd179x_status_r );
 extern READ_HANDLER ( wd179x_track_r );
 extern READ_HANDLER ( wd179x_sector_r );
 extern READ_HANDLER ( wd179x_data_r );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
