@@ -15,6 +15,13 @@ setup serial interface software in driver and let the transfer begin */
 #define SERIAL_STATE_IN_DATA	0x00010
 #define SERIAL_STATE_OUT_DATA	0x00020
 
+enum
+{
+	SERIAL_PARITY_NONE,
+	SERIAL_PARITY_ODD,
+	SERIAL_PARITY_EVEN
+};
+
 #define get_out_data_bit(x) ((x & SERIAL_STATE_OUT_DATA)>>5)
 #define get_in_data_bit(x) ((x & SERIAL_STATE_IN_DATA)>>4)
 
@@ -34,14 +41,18 @@ struct data_stream
 	/* length of buffer */
 	unsigned long DataLength;
 
-	unsigned char sync_byte;
-	unsigned char sync_byte_reload;
-	unsigned long State;
-
 	/* bit offset within current byte */
 	unsigned long BitCount;
 	/* byte offset within data */
 	unsigned long ByteCount;
+
+	/* used in msm8251 asynchronous mode */
+	/* data in stream format. (start bit, data bit(s), parity, stop bits) */
+	unsigned long formatted_byte;
+	/* number of bits to transfer in stream data byte */
+	unsigned long formatted_byte_bit_count;
+	/* number of bits actually transfered */
+	unsigned long formatted_byte_bit_count_transfered;
 };
 
 /* a serial stream */
@@ -55,14 +66,14 @@ struct serial_stream
 	unsigned long State;
 
 	/* transmit/receive parameters */
-	/* number of start bits */
-	unsigned long StartBitCount;
 	/* number of stop bits */
 	unsigned long StopBitCount;
 	/* data bit count */
 	unsigned long DataBitCount;
 	/* baud rate */
 	unsigned long BaudRate;
+	/* parity */
+	int parity_code;
 
 	void	*timer;
 
