@@ -150,6 +150,144 @@ int kc_quickload_load(int id)
 	return INIT_FAILED;
 }
 
+
+/******************/
+/* DISK EMULATION */
+/******************/
+/* used by KC85/2, KC85/3 and KC85/4 */
+/* floppy disc interface has:
+- Z80 at 4Mhz
+- Z80 CTC
+- 1k ram 
+- NEC765 floppy disc controller
+*/
+
+/* bit 7: DMA Request (DRQ from FDC) */
+/* bit 6: Interrupt (INT from FDC) */
+/* bit 5: Drive Ready */
+/* bit 4: Index pulse from disc */
+static unsigned char kc85_disc_hw_input_gate;
+
+static unsigned char *kc85_disc_interface_ram;
+
+int kc85_floppy_init(int id)
+{
+	if (basicdsk_floppy_init(id)==INIT_OK)
+	{
+		basicdsk_set_geometry(id, 80, 2, 9, 512, 1);
+		return INIT_OK;
+	}
+
+	return INIT_FAILED;
+}
+
+static void kc85_disc_hw_ctc_interrupt(int state)
+{
+	cpu_cause_interrupt(1, Z80_VECTOR(1, state));
+}
+
+READ_HANDLER(kc85_disk_hw_ctc_r)
+{
+	return z80ctc_1_r(offset);
+}
+
+WRITE_HANDLER(kc85_disk_hw_ctc_w)
+{
+	z80ctc_1_w(offset,data);
+}
+
+WRITE_HANDLER(kc85_disc_interface_ram_w)
+{
+	int addr;
+
+	/* bits 1,0 of i/o address define 256 byte block to access.
+	bits 15-8 define the byte offset in the 256 byte block selected */
+	addr = ((offset & 0x03)<<8) | ((offset>>8) & 0x0ff);
+
+	cpu_writemem16(addr|0x0f000,data);
+}
+
+READ_HANDLER(kc85_disc_interface_ram_r)
+{
+	int addr;
+
+	addr = ((offset & 0x03)<<8) | ((offset>>8) & 0x0ff);
+
+	return cpu_readmem16(addr|0x0f000);
+}
+
+/* 4-bit latch used to reset disc interface etc */
+WRITE_HANDLER(kc85_disc_interface_latch_w)
+{
+
+
+}
+
+READ_HANDLER(kc85_disc_hw_input_gate_r)
+{
+	return kc85_disc_hw_input_gate;
+}
+
+WRITE_HANDLER(kc85_disc_hw_terminal_count_w)
+{
+	logerror("kc85 disc hw tc w: %02x\n",data);
+	nec765_set_tc_state(data & 0x01);
+}
+
+
+/* callback for /INT output from FDC */
+static void kc85_fdc_interrupt(int state)
+{
+	kc85_disc_hw_input_gate &=~(1<<6);
+
+	if (state)
+	{
+		kc85_disc_hw_input_gate |=(1<<6);
+	}
+}
+
+/* callback for /DRQ output from FDC */
+static void kc85_fdc_dma_drq(int state, int read)
+{
+	kc85_disc_hw_input_gate &=~(1<<7);
+
+	if (state)
+	{
+		kc85_disc_hw_input_gate |=(1<<7);
+	}
+}
+
+static struct nec765_interface kc_fdc_interface=
+{
+	kc85_fdc_interrupt,
+	kc85_fdc_dma_drq
+};
+
+void	kc_disc_interface_init(void)
+{
+	nec765_init(&kc_fdc_interface,NEC765A);
+
+	/* reset ctc */
+	z80ctc_reset(1);
+
+	kc85_disc_interface_ram = malloc(1024);
+}
+
+
+void	kc_disc_interface_exit(void)
+{
+	nec765_stop();
+
+	if (kc85_disc_interface_ram)
+	{
+		free(kc85_disc_interface_ram);
+		kc85_disc_interface_ram = NULL;
+	}
+}
+
+
+
+
 /**********************/
 /* CASSETTE EMULATION */
 /**********************/

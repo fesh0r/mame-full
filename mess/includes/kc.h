@@ -151,3 +151,60 @@ The keys are converted into codes which are transmitted by the keyboard to the b
 	/* of the scan-code sent directly */ \
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE) \
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
+
+
+/*** DISC INTERFACE **/
+#include "includes/nec765.h"
+#include "includes/basicdsk.h"
+
+/* IO_FLOPPY device */
+
+/* for IO_ device init */
+int kc85_floppy_init(int id);
+
+/* used to setup machine */
+
+#define KC_DISC_INTERFACE_CPU \
+{ \
+	CPU_Z80,  /* type */ \
+	4000000, \
+	readmem_kc85_disc_hw,		   /* MemoryReadAddress */ \
+	writemem_kc85_disc_hw,		   /* MemoryWriteAddress */ \
+	readport_kc85_disc_hw,		   /* IOReadPort */ \
+	writeport_kc85_disc_hw,		   /* IOWritePort */ \
+	0,		/* VBlank  Interrupt */ \
+	0,		/* vblanks per frame */ \
+	0, 0,	/* every scanline */ \
+    0 \
+}
+
+/* disc rom in disc interface address space */
+#define KC85_DISK_INTERFACE_ROM 
+
+#if 0
+	ROM_REGION(0x0E000, REGION_CPU2,0) \
+	ROM_LOAD("floppy.rom", 0x10000, 0x2000, 0x0)
+#endif
+
+/* these are internal to the disc interface */
+
+/* disc hardware internal i/o */
+READ_HANDLER(kc85_disk_hw_ctc_r);
+/* disc hardware internal i/o */
+WRITE_HANDLER(kc85_disk_hw_ctc_w);
+/* 4-bit input latch: DMA Data Request, FDC Int, FDD Ready.. */
+READ_HANDLER(kc85_disc_hw_input_gate_r);
+/* output port to set NEC765 terminal count input */
+WRITE_HANDLER(kc85_disc_hw_terminal_count_w);
+
+/* these are used by the kc85 to control the disc interface */
+/* xxf4 - latch used to reset cpu in disc interface */
+WRITE_HANDLER(kc85_disc_interface_latch_w);
+/* xxf0-xxf3 write to kc85 disc interface ram */
+WRITE_HANDLER(kc85_disc_interface_ram_w);
+/* xxf0-xxf3 read from kc85 disc interface ram */
+READ_HANDLER(kc85_disc_interface_ram_r);
+
+
+
+
