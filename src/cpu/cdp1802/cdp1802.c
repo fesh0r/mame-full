@@ -145,7 +145,7 @@ int cdp1802_dma_read(void)
 /***************************************************************
  * include the opcode macros, functions and tables
  ***************************************************************/
-#include "table.c"
+#include "1802tbl.c"
 
 void cdp1802_reset(void *param)
 {
