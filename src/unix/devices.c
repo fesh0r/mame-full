@@ -1105,7 +1105,7 @@ static void init_joycodes(void)
 				/* reset the type */
 				joystick_type[stick][axis] = AXIS_TYPE_INVALID;
 
-				snprintf(tempname, JOY_NAME_LEN, "Joy %d axis %d %s", stick + 1, axis + 1, "neg");
+				snprintf(tempname, JOY_NAME_LEN, "Joy %d axis %d %s", stick + 1, axis + 1, "abs");
 				add_joylist_entry(tempname, JOYCODE(stick, CODETYPE_JOYAXIS, axis), CODE_OTHER_ANALOG_ABSOLUTE);
 
 				snprintf(tempname, JOY_NAME_LEN, "Joy %d axis %d %s", stick + 1, axis + 1, "neg");
