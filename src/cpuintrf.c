@@ -643,7 +643,7 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00,CP1600_INT_NONE,   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
+    CPU0(CP1600,   cp1600,   4,  0,1.00,CP1600_INT_NONE,   CP1600_INT_INTRM,CP1600_INT_INTR,16,24bew, 0,24,BE,2, 3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount

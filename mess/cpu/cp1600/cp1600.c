@@ -13,8 +13,6 @@
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   palazzol@home.com
- *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
  *	This work is based on Juergen Buchmueller's F8 emulation,
@@ -34,16 +32,17 @@
 #define OV 0x20
 #define C  0x10
 
-#define cp1600_readop(A) cpu_readmem24bew_word(A<<1)
-#define cp1600_readmem16(A) cpu_readmem24bew_word(A<<1)
-
 typedef struct {
 	UINT16	r[8];	/* registers */
 	UINT8	flags;	/* flags */
-/*	UINT16	dbus; */	/* data bus value */
-/*	UINT16	io; */	/* last I/O address */
-/*    UINT16  irq_vector; */
+	int 	intr_enabled;
+	int		(*reset_callback)(void);
 	int 	(*irq_callback)(int irqline);
+	UINT16	intr_vector;
+	int 	reset_pending;
+	int		intr_pending;
+	int		intrm_pending;
+	int		mask_interrupts;
 }	CP1600;
 
 int cp1600_icount;
@@ -96,9 +95,25 @@ static UINT8 cp1600_win_layout[] = {
 		cp1600.flags |= C
 
 /* set carry and overflow flags */
-#define SET_COV(n,m)            \
-	if ((n + m) & 0x10000)		\
+#define SET_COV(n,m,qq)         \
+  { unsigned int pp = n + m;	\
+	if (pp & 0x10000)			\
 		cp1600.flags |= C;		\
+	if (qq)						\
+	{							\
+		if ((n^pp)&(~(m^n))&0x8000)	\
+			cp1600.flags |= OV; \
+		if (m == 0x8000)		\
+			cp1600.flags ^= OV;	\
+	}							\
+	else						\
+	{							\
+		if ((n^pp)&(~(m^n))&0x8000)	\
+			cp1600.flags |= OV;		\
+	}							\
+  }
+
+#if 0
 	if ((n&0x7fff)+(m&0x7fff) > 0x7fff)	\
 	{							\
 		if (!(cp1600.flags & C))\
@@ -109,6 +124,7 @@ static UINT8 cp1600_win_layout[] = {
 		if (cp1600.flags & C)	\
 			cp1600.flags |= OV;	\
 	}
+#endif
 
 /***********************************
  *	illegal opcodes
@@ -134,7 +150,8 @@ static void cp1600_hlt(void)
  ***************************************************/
 static void cp1600_eis(void)
 {
-	/* TBD */
+	cp1600.mask_interrupts = 1;
+	cp1600.intr_enabled = 1;
 	cp1600_icount -= 4;
 }
 
@@ -144,7 +161,8 @@ static void cp1600_eis(void)
  ***************************************************/
 static void cp1600_dis(void)
 {
-	/* TBD */
+	cp1600.mask_interrupts = 1;
+	cp1600.intr_enabled = 0;
 	cp1600_icount -= 4;
 }
 
@@ -155,6 +173,7 @@ static void cp1600_dis(void)
 static void cp1600_tci(void)
 {
 	/* TBD */
+	cp1600.mask_interrupts = 1;
 	cp1600_icount -= 4;
 }
 
@@ -164,6 +183,7 @@ static void cp1600_tci(void)
  ***************************************************/
 static void cp1600_clrc(void)
 {
+	cp1600.mask_interrupts = 1;
 	cp1600.flags &= ~C;
 	cp1600_icount -= 4;
 }
@@ -174,6 +194,7 @@ static void cp1600_clrc(void)
  ***************************************************/
 static void cp1600_setc(void)
 {
+	cp1600.mask_interrupts = 1;
 	cp1600.flags |= C;
 	cp1600_icount -= 6;
 }
@@ -220,10 +241,11 @@ static void cp1600_comr(int n)
  ***************************************************/
 static void cp1600_negr(int n)
 {
+	UINT32 temp;
 	CLR_SZOC;
-	cp1600.r[n] ^= 0xffff;
-	cp1600.r[n]++;
-	SET_COV(cp1600.r[n],0);
+	temp = (cp1600.r[n] ^ 0xffff) + 1;
+	SET_COV(0,temp,1);
+	cp1600.r[n] = temp&0xffff;
 	SET_SZ(cp1600.r[n]);
 	cp1600_icount -= 6;
 }
@@ -238,7 +260,7 @@ static void cp1600_adcr(int n)
 	if (cp1600.flags & C)
 		offset = 1;
 	CLR_SZOC;
-	SET_COV(cp1600.r[n],offset);
+	SET_COV(cp1600.r[n],offset,0);
 	cp1600.r[n] += offset;
 	SET_SZ(cp1600.r[n]);
 	cp1600_icount -= 6;
@@ -290,10 +312,15 @@ static void cp1600_rswd(int n)
 static void cp1600_swap(int r)
 {
 	UINT8 temp;
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	temp = cp1600.r[r] >> 8;
 	cp1600.r[r] = (cp1600.r[r] << 8) | temp;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -305,10 +332,15 @@ static void cp1600_dswap(int r)
 {
 	/* This instruction was not officially supported by GI */
 	UINT16 temp;
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	temp = cp1600.r[r] & 0xff;
 	cp1600.r[r] = (temp << 8) | temp;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 8;
 }
 
@@ -318,7 +350,10 @@ static void cp1600_dswap(int r)
  ***************************************************/
 static void cp1600_sll_1(int r)
 {
+	cp1600.mask_interrupts = 1;
+	CLR_SZ;
 	cp1600.r[r] <<= 1;
+	SET_SZ(cp1600.r[r]);
 	cp1600_icount -= 6;
 }
 
@@ -328,7 +363,10 @@ static void cp1600_sll_1(int r)
  ***************************************************/
 static void cp1600_sll_2(int r)
 {
+	cp1600.mask_interrupts = 1;
+	CLR_SZ;
 	cp1600.r[r] <<= 2;
+	SET_SZ(cp1600.r[r]);
 	cp1600_icount -= 8;
 }
 
@@ -339,6 +377,7 @@ static void cp1600_sll_2(int r)
 static void cp1600_rlc_1(int r)
 {
 	UINT16 offset = 0;
+	cp1600.mask_interrupts = 1;
 	if (cp1600.flags & C)
 		offset = 1;
 	CLR_SZC;
@@ -356,6 +395,7 @@ static void cp1600_rlc_1(int r)
 static void cp1600_rlc_2(int r)
 {
 	UINT16 offset = 0;
+	cp1600.mask_interrupts = 1;
 	switch(cp1600.flags & (C | OV))
 	{
 		case 0:
@@ -389,6 +429,7 @@ static void cp1600_rlc_2(int r)
  ***************************************************/
 static void cp1600_sllc_1(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZC;
 	if (cp1600.r[r] & 0x8000)
 		cp1600.flags |= C;
@@ -403,6 +444,7 @@ static void cp1600_sllc_1(int r)
  ***************************************************/
 static void cp1600_sllc_2(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZOC;
 	if (cp1600.r[r] & 0x8000)
 		cp1600.flags |= C;
@@ -419,9 +461,14 @@ static void cp1600_sllc_2(int r)
  ***************************************************/
 static void cp1600_slr_1(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	cp1600.r[r] >>= 1;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -431,9 +478,14 @@ static void cp1600_slr_1(int r)
  ***************************************************/
 static void cp1600_slr_2(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	cp1600.r[r] >>= 2;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 8;
 }
 
@@ -443,9 +495,14 @@ static void cp1600_slr_2(int r)
  ***************************************************/
 static void cp1600_sar_1(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	cp1600.r[r] = (UINT16)(((INT16)(cp1600.r[r])) >> 1);
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -455,9 +512,14 @@ static void cp1600_sar_1(int r)
  ***************************************************/
 static void cp1600_sar_2(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZ;
 	cp1600.r[r] = (UINT16)(((INT16)(cp1600.r[r])) >> 2);
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 8;
 }
 
@@ -468,7 +530,8 @@ static void cp1600_sar_2(int r)
 static void cp1600_rrc_1(int r)
 {
 	UINT16 offset = 0;
-	if (cp1600.flags | C)
+	cp1600.mask_interrupts = 1;
+	if (cp1600.flags & C)
 		offset = 0x8000;
 	CLR_SZC;
 	if (cp1600.r[r] & 1)
@@ -476,6 +539,10 @@ static void cp1600_rrc_1(int r)
 	cp1600.r[r] >>= 1;
 	cp1600.r[r] += offset;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -486,9 +553,10 @@ static void cp1600_rrc_1(int r)
 static void cp1600_rrc_2(int r)
 {
 	UINT16 offset = 0;
-	if (cp1600.flags | C)
+	cp1600.mask_interrupts = 1;
+	if (cp1600.flags & C)
 		offset |= 0x4000;
-	if (cp1600.flags | OV)
+	if (cp1600.flags & OV)
 		offset |= 0x8000;
 	CLR_SZOC;
 	if (cp1600.r[r] & 1)
@@ -498,6 +566,10 @@ static void cp1600_rrc_2(int r)
 	cp1600.r[r] >>= 2;
 	cp1600.r[r] += offset;
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 8;
 }
 
@@ -507,11 +579,16 @@ static void cp1600_rrc_2(int r)
  ***************************************************/
 static void cp1600_sarc_1(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZC;
 	if (cp1600.r[r] & 1)
 		cp1600.flags |= C;
 	cp1600.r[r] = (UINT16)(((INT16)cp1600.r[r]) >> 1);
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -521,6 +598,7 @@ static void cp1600_sarc_1(int r)
  ***************************************************/
 static void cp1600_sarc_2(int r)
 {
+	cp1600.mask_interrupts = 1;
 	CLR_SZOC;
 	if (cp1600.r[r] & 1)
 		cp1600.flags |= C;
@@ -528,6 +606,10 @@ static void cp1600_sarc_2(int r)
 		cp1600.flags |= OV;
 	cp1600.r[r] = (UINT16)(((INT16)cp1600.r[r]) >> 2);
 	SET_SZ(cp1600.r[r]);
+	/* S flag is set on bit 7 not bit 15 */
+	cp1600.flags &= ~S;
+	if (cp1600.r[r] & 0x80)
+		cp1600.flags |= S;
 	cp1600_icount -= 6;
 }
 
@@ -565,7 +647,7 @@ static void cp1600_movr(int s, int d)
 static void cp1600_addr(int s, int d)
 {
 	CLR_SZOC;
-	SET_COV(cp1600.r[s],cp1600.r[d]);
+	SET_COV(cp1600.r[s],cp1600.r[d],0);
 	cp1600.r[d] += cp1600.r[s];
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 6;
@@ -578,7 +660,7 @@ static void cp1600_addr(int s, int d)
 static void cp1600_subr(int s, int d)
 {
 	CLR_SZOC;
-	SET_COV(((cp1600.r[s]^0xffff)+1),cp1600.r[d]);
+	SET_COV(cp1600.r[d],(UINT32)((cp1600.r[s]^0xffff)+1),1);
 	cp1600.r[d] -= cp1600.r[s];
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 6;
@@ -592,7 +674,7 @@ static void cp1600_cmpr(int s, int d)
 {
 	UINT16 temp;
 	CLR_SZOC;
-	SET_COV(((cp1600.r[s]^0xffff)+1),cp1600.r[d]);
+	SET_COV(cp1600.r[d],(UINT32)((cp1600.r[s]^0xffff)+1),1);
 	temp = cp1600.r[d] - cp1600.r[s];
 	SET_SZ(temp);
 	cp1600_icount -= 6;
@@ -973,9 +1055,11 @@ static void cp1600_bext(int ext, int dir)
  ***************************************************/
 static void cp1600_mvo(int s)
 {
-	UINT16 addr = cp1600_readop(cp1600.r[7]);
+	UINT16 addr;
+	cp1600.mask_interrupts = 1;
+	addr = cp1600_readop(cp1600.r[7]);
 	cp1600.r[7]++;
-	cpu_writemem16(addr,cp1600.r[s]);
+	cp1600_writemem16(addr,cp1600.r[s]);
 	cp1600_icount -= 11;
 }
 
@@ -985,7 +1069,8 @@ static void cp1600_mvo(int s)
  ***************************************************/
 static void cp1600_mvoat(int s, int m)
 {
-	cpu_writemem16(cp1600.r[m],cp1600.r[s]);
+	cp1600.mask_interrupts = 1;
+	cp1600_writemem16(cp1600.r[m],cp1600.r[s]);
 	cp1600_icount -= 9;
 }
 
@@ -995,7 +1080,8 @@ static void cp1600_mvoat(int s, int m)
  ***************************************************/
 static void cp1600_mvoat_i(int s, int m)
 {
-	cpu_writemem16(cp1600.r[m],cp1600.r[s]);
+	cp1600.mask_interrupts = 1;
+	cp1600_writemem16(cp1600.r[m],cp1600.r[s]);
 	cp1600.r[m]++;
 	cp1600_icount -= 9;
 }
@@ -1006,7 +1092,8 @@ static void cp1600_mvoat_i(int s, int m)
  ***************************************************/
 static void cp1600_mvoi(int s)
 {
-	cpu_writemem16(cp1600.r[7],cp1600.r[s]);
+	cp1600.mask_interrupts = 1;
+	cp1600_writemem16(cp1600.r[7],cp1600.r[s]);
 	cp1600.r[7]++;
 	cp1600_icount -= 9;
 }
@@ -1018,8 +1105,8 @@ static void cp1600_mvoi(int s)
 static void cp1600_mvi(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
-	cp1600.r[d] = cp1600_readmem16(addr);
 	cp1600.r[7]++;
+	cp1600.r[d] = cp1600_readmem16(addr);
 	cp1600_icount -= 10;
 }
 
@@ -1039,9 +1126,14 @@ static void cp1600_mviat(int m, int d)
  ***************************************************/
 static void cp1600_mviat_i(int m, int d)
 {
-	cp1600.r[d] = cp1600_readmem16(cp1600.r[m]);
+	UINT16 temp = cp1600_readmem16(cp1600.r[m]);
 	cp1600.r[m]++;
+	cp1600.r[d] = temp;
 	cp1600_icount -= 8;
+
+	//cp1600.r[d] = cp1600_readmem16(cp1600.r[m]);
+	//cp1600.r[m]++;
+	//cp1600_icount -= 8;
 }
 
 /***************************************************
@@ -1061,8 +1153,9 @@ static void cp1600_pulr(int d)
  ***************************************************/
 static void cp1600_mvii(int d)
 {
-	cp1600.r[d] = cp1600_readop(cp1600.r[7]);
+	UINT16 temp = cp1600_readop(cp1600.r[7]);
 	cp1600.r[7]++;
+	cp1600.r[d] = temp;
 	cp1600_icount -= 8;
 }
 
@@ -1074,11 +1167,11 @@ static void cp1600_add(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
 	UINT16 data = cp1600_readmem16(addr);
+	cp1600.r[7]++;
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,0);
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 10;
 }
 
@@ -1090,7 +1183,7 @@ static void cp1600_addat(int m, int d)
 {
 	UINT16 data = cp1600_readmem16(cp1600.r[m]);
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,0);
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 8;
@@ -1103,11 +1196,11 @@ static void cp1600_addat(int m, int d)
 static void cp1600_addat_i(int m, int d)
 {
 	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	cp1600.r[m]++;
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,0);
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[m]++;
 	cp1600_icount -= 8;
 }
 
@@ -1121,7 +1214,7 @@ static void cp1600_addat_d(int m, int d)
 	cp1600.r[m]--;
 	data = cp1600_readmem16(cp1600.r[m]);
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,0);
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 11;
@@ -1135,11 +1228,11 @@ static void cp1600_addi(int d)
 {
 	UINT16 data;
 	data = cp1600_readop(cp1600.r[7]);
+	cp1600.r[7]++;
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,0);
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 8;
 }
 
@@ -1150,13 +1243,14 @@ static void cp1600_addi(int d)
 static void cp1600_sub(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
-	UINT16 data = cp1600_readmem16(addr);
+	UINT32 data = cp1600_readmem16(addr);
+	cp1600.r[7]++;
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 10;
 }
 
@@ -1166,10 +1260,11 @@ static void cp1600_sub(int d)
  ***************************************************/
 static void cp1600_subat(int m, int d)
 {
-	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	UINT32 data = cp1600_readmem16(cp1600.r[m]);
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 8;
@@ -1181,13 +1276,14 @@ static void cp1600_subat(int m, int d)
  ***************************************************/
 static void cp1600_subat_i(int m, int d)
 {
-	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	UINT32 data = cp1600_readmem16(cp1600.r[m]);
+	cp1600.r[m]++;
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[m]++;
 	cp1600_icount -= 8;
 }
 
@@ -1197,12 +1293,13 @@ static void cp1600_subat_i(int m, int d)
  ***************************************************/
 static void cp1600_subat_d(int m, int d)
 {
-	UINT16 data;
+	UINT32 data;
 	cp1600.r[m]--;
 	data = cp1600_readmem16(cp1600.r[m]);
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 11;
@@ -1214,14 +1311,15 @@ static void cp1600_subat_d(int m, int d)
  ***************************************************/
 static void cp1600_subi(int d)
 {
-	UINT16 data;
+	UINT32 data;
 	data = cp1600_readop(cp1600.r[7]);
+	cp1600.r[7]++;
 	data = (data ^ 0xffff) + 1;
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	cp1600.r[d] += data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 8;
 }
 
@@ -1232,14 +1330,15 @@ static void cp1600_subi(int d)
 static void cp1600_cmp(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
-	UINT16 data = cp1600_readmem16(addr);
+	UINT32 data = cp1600_readmem16(addr);
 	UINT16 res;
+	cp1600.r[7]++;
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	res = cp1600.r[d] + data;
 	SET_SZ(res);
-	cp1600.r[7]++;
 	cp1600_icount -= 10;
 }
 
@@ -1249,11 +1348,12 @@ static void cp1600_cmp(int d)
  ***************************************************/
 static void cp1600_cmpat(int m, int d)
 {
-	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	UINT32 data = cp1600_readmem16(cp1600.r[m]);
 	UINT16 res;
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	res = cp1600.r[d] + data;
 	SET_SZ(res);
 	cp1600_icount -= 8;
@@ -1265,14 +1365,15 @@ static void cp1600_cmpat(int m, int d)
  ***************************************************/
 static void cp1600_cmpat_i(int m, int d)
 {
-	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	UINT32 data = cp1600_readmem16(cp1600.r[m]);
 	UINT16 res;
+	cp1600.r[m]++;
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	res = cp1600.r[d] + data;
 	SET_SZ(res);
-	cp1600.r[m]++;
 	cp1600_icount -= 8;
 }
 
@@ -1282,13 +1383,14 @@ static void cp1600_cmpat_i(int m, int d)
  ***************************************************/
 static void cp1600_cmpat_d(int m, int d)
 {
-	UINT16 data;
+	UINT32 data;
 	UINT16 res;
 	cp1600.r[m]--;
 	data = cp1600_readmem16(cp1600.r[m]);
 	CLR_SZOC;
 	data = (data ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	res = cp1600.r[d] + data;
 	SET_SZ(res);
 	cp1600_icount -= 11;
@@ -1300,15 +1402,16 @@ static void cp1600_cmpat_d(int m, int d)
  ***************************************************/
 static void cp1600_cmpi(int d)
 {
-	UINT16 data;
+	UINT32 data;
 	UINT16 res;
 	data = cp1600_readop(cp1600.r[7]);
+	cp1600.r[7]++;
 	data = (data ^ 0xffff) + 1;
 	CLR_SZOC;
-	SET_COV(cp1600.r[d],data);
+	SET_COV(cp1600.r[d],data,1);
+	data &= 0xffff;
 	res = cp1600.r[d] + data;
 	SET_SZ(res);
-	cp1600.r[7]++;
 	cp1600_icount -= 8;
 }
 
@@ -1320,10 +1423,10 @@ static void cp1600_and(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
 	UINT16 data = cp1600_readmem16(addr);
+	cp1600.r[7]++;
 	CLR_SZ;
 	cp1600.r[d] &= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 10;
 }
 
@@ -1347,10 +1450,10 @@ static void cp1600_andat(int m, int d)
 static void cp1600_andat_i(int m, int d)
 {
 	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	cp1600.r[m]++;
 	CLR_SZ;
 	cp1600.r[d] &= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[m]++;
 	cp1600_icount -= 8;
 }
 
@@ -1377,10 +1480,10 @@ static void cp1600_andi(int d)
 {
 	UINT16 data;
 	data = cp1600_readop(cp1600.r[7]);
+	cp1600.r[7]++;
 	CLR_SZ;
 	cp1600.r[d] &= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 8;
 }
 
@@ -1392,10 +1495,10 @@ static void cp1600_xor(int d)
 {
 	UINT16 addr = cp1600_readop(cp1600.r[7]);
 	UINT16 data = cp1600_readmem16(addr);
+	cp1600.r[7]++;
 	CLR_SZ;
 	cp1600.r[d] ^= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 10;
 }
 
@@ -1419,10 +1522,10 @@ static void cp1600_xorat(int m, int d)
 static void cp1600_xorat_i(int m, int d)
 {
 	UINT16 data = cp1600_readmem16(cp1600.r[m]);
+	cp1600.r[m]++;
 	CLR_SZ;
 	cp1600.r[d] ^= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[m]++;
 	cp1600_icount -= 8;
 }
 
@@ -1449,17 +1552,17 @@ static void cp1600_xori(int d)
 {
 	UINT16 data;
 	data = cp1600_readop(cp1600.r[7]);
+	cp1600.r[7]++;
 	CLR_SZ;
 	cp1600.r[d] ^= data;
 	SET_SZ(cp1600.r[d]);
-	cp1600.r[7]++;
 	cp1600_icount -= 8;
 }
 
 void cp1600_reset(void *param)
 {
-	/* ready to fetch the first opcode */
-	cp1600.r[7] = 0x1000; /* This actually comes from a ROM chip */
+	/* This is how we set the reset vector */
+	cpu_set_irq_line(cpu_getactivecpu(), CP1600_RESET, PULSE_LINE);
 }
 
 /* Shut down CPU core */
@@ -1485,10 +1588,13 @@ static void cp1600_sdbd_mviat(int r, int d)
  ***************************************************/
 static void cp1600_sdbd_mviat_i(int r, int d)
 {
-	cp1600.r[d] = cp1600_readmem16(cp1600.r[r]) & 0xff;
+	UINT16 temp;
+	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]++;
-	cp1600.r[d] |= (cp1600_readmem16(cp1600.r[r]) << 8);
+	cp1600.r[d] = temp;
+	temp = (cp1600_readmem16(cp1600.r[r]) << 8);
 	cp1600.r[r]++;
+	cp1600.r[d] |= temp;
 	cp1600_icount -= 14;
 }
 
@@ -1516,7 +1622,7 @@ static void cp1600_sdbd_mvii(int d)
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	cp1600.r[d] = cp1600_readmem16(addr);
+	cp1600.r[d] = addr;
 	cp1600_icount -= 14;
 }
 
@@ -1530,7 +1636,7 @@ static void cp1600_sdbd_addat(int r, int d)
 	CLR_SZOC;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,0);
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1548,7 +1654,7 @@ static void cp1600_sdbd_addat_i(int r, int d)
 	cp1600.r[r]++;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	cp1600.r[r]++;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,0);
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1566,7 +1672,7 @@ static void cp1600_sdbd_addat_d(int r, int d)
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]--;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,0);
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 17;
@@ -1585,8 +1691,8 @@ static void cp1600_sdbd_addi(int d)
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	temp = cp1600_readmem16(addr);
-	SET_COV(cp1600.r[d],temp);
+	temp = addr;
+	SET_COV(cp1600.r[d],temp,0);
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1598,12 +1704,13 @@ static void cp1600_sdbd_addi(int d)
  ***************************************************/
 static void cp1600_sdbd_subat(int r, int d)
 {
-	UINT16 temp;
+	UINT32 temp;
 	CLR_SZOC;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1615,14 +1722,15 @@ static void cp1600_sdbd_subat(int r, int d)
  ***************************************************/
 static void cp1600_sdbd_subat_i(int r, int d)
 {
-	UINT16 temp;
+	UINT32 temp;
 	CLR_SZOC;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]++;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	cp1600.r[r]++;
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1634,14 +1742,15 @@ static void cp1600_sdbd_subat_i(int r, int d)
  ***************************************************/
 static void cp1600_sdbd_subat_d(int r, int d)
 {
-	UINT16 temp;
+	UINT32 temp;
 	CLR_SZOC;
 	cp1600.r[r]--;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]--;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 17;
@@ -1654,15 +1763,16 @@ static void cp1600_sdbd_subat_d(int r, int d)
 static void cp1600_sdbd_subi(int d)
 {
 	UINT16 addr;
-	UINT16 temp;
+	UINT32 temp;
 	CLR_SZOC;
 	addr = cp1600_readop(cp1600.r[7]) & 0xff;
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	temp = cp1600_readmem16(addr);
+	temp = addr;
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	cp1600.r[d] += temp;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
@@ -1674,12 +1784,14 @@ static void cp1600_sdbd_subi(int d)
  ***************************************************/
 static void cp1600_sdbd_cmpat(int r, int d)
 {
-	UINT16 temp, temp2;
+	UINT32 temp;
+	UINT16 temp2;
 	CLR_SZOC;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	temp2 = cp1600.r[d] + temp;
 	SET_SZ(temp2);
 	cp1600_icount -= 14;
@@ -1691,14 +1803,16 @@ static void cp1600_sdbd_cmpat(int r, int d)
  ***************************************************/
 static void cp1600_sdbd_cmpat_i(int r, int d)
 {
-	UINT16 temp, temp2;
+	UINT32 temp;
+	UINT16 temp2;
 	CLR_SZOC;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]++;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	cp1600.r[r]++;
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	temp2 = cp1600.r[d] + temp;
 	SET_SZ(temp2);
 	cp1600_icount -= 14;
@@ -1710,14 +1824,16 @@ static void cp1600_sdbd_cmpat_i(int r, int d)
  ***************************************************/
 static void cp1600_sdbd_cmpat_d(int r, int d)
 {
-	UINT16 temp, temp2;
+	UINT32 temp;
+	UINT16 temp2;
 	CLR_SZOC;
 	cp1600.r[r]--;
 	temp = cp1600_readmem16(cp1600.r[r]) & 0xff;
 	cp1600.r[r]--;
 	temp |= (cp1600_readmem16(cp1600.r[r]) << 8);
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	temp2 = cp1600.r[d] + temp;
 	SET_SZ(temp2);
 	cp1600_icount -= 17;
@@ -1730,15 +1846,17 @@ static void cp1600_sdbd_cmpat_d(int r, int d)
 static void cp1600_sdbd_cmpi(int d)
 {
 	UINT16 addr;
-	UINT16 temp, temp2;
+	UINT32 temp;
+	UINT16 temp2;
 	CLR_SZOC;
 	addr = cp1600_readop(cp1600.r[7]) & 0xff;
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	temp = cp1600_readmem16(addr);
+	temp = addr;
 	temp = (temp ^ 0xffff) + 1;
-	SET_COV(cp1600.r[d],temp);
+	SET_COV(cp1600.r[d],temp,1);
+	temp &= 0xffff;
 	temp2 = cp1600.r[d] + temp;
 	SET_SZ(temp2);
 	cp1600_icount -= 14;
@@ -1805,7 +1923,7 @@ static void cp1600_sdbd_andi(int d)
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	cp1600.r[d] &= cp1600_readmem16(addr);
+	cp1600.r[d] &= addr;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
 }
@@ -1871,7 +1989,7 @@ static void cp1600_sdbd_xori(int d)
 	cp1600.r[7]++;
 	addr |= (cp1600_readop(cp1600.r[7]) << 8);
 	cp1600.r[7]++;
-	cp1600.r[d] ^= cp1600_readmem16(addr);
+	cp1600.r[d] ^= addr;
 	SET_SZ(cp1600.r[d]);
 	cp1600_icount -= 14;
 }
@@ -1894,7 +2012,7 @@ static void cp1600_jsre(int r, UINT16 addr)
 {
 	cp1600.r[r] = cp1600.r[7];
 	cp1600.r[7] = addr;
-	/* TBD */
+	cp1600.intr_enabled = 1;
 }
 
 /***************************************************
@@ -1905,7 +2023,7 @@ static void cp1600_jsrd(int r, UINT16 addr)
 {
 	cp1600.r[r] = cp1600.r[7];
 	cp1600.r[7] = addr;
-	/* TBD */
+	cp1600.intr_enabled = 0;
 }
 
 /***************************************************
@@ -1924,7 +2042,7 @@ static void cp1600_j(UINT16 addr)
 static void cp1600_je(UINT16 addr)
 {
 	cp1600.r[7] = addr;
-	/* TBD */
+	cp1600.intr_enabled = 1;
 }
 
 /***************************************************
@@ -1934,12 +2052,18 @@ static void cp1600_je(UINT16 addr)
 static void cp1600_jd(UINT16 addr)
 {
 	cp1600.r[7] = addr;
-	/* TBD */
+	cp1600.intr_enabled = 0;
 }
 
 void cp1600_do_sdbd(void)
 {
 	UINT16 sdbdtype, dest;
+
+	/* Even though SDBD is uninterruptable, we don't need to set the mask bit,
+	 * because we already treat the SDBD prefixed instructions as uninterruptable
+	 */
+	//cp1600.mask_interrupts = 1;
+
 	sdbdtype = cp1600_readop(cp1600.r[7]);
 	dest = sdbdtype & 0x07;
 	cp1600.r[7]++;
@@ -2063,10 +2187,20 @@ int cp1600_execute(int cycles)
     {
         CALL_MAME_DEBUG;
 
+		cp1600.mask_interrupts = 0;
+
         opcode = cp1600_readop(cp1600.r[7]);
         cp1600.r[7]++;
-
-		/* logerror("PC: 0x%04x, opcode = 0x%03x\n",cp1600.r[7]-1,opcode); */
+#if 0
+		logerror("PC:0x%04x, opcode = 0x%03x, ",cp1600.r[7]-1,opcode);
+		logerror("R0:0x%04x, ",cp1600.r[0]);
+		logerror("R1:0x%04x, ",cp1600.r[1]);
+		logerror("R2:0x%04x, ",cp1600.r[2]);
+		logerror("R3:0x%04x, ",cp1600.r[3]);
+		logerror("R4:0x%04x, ",cp1600.r[4]);
+		logerror("R5:0x%04x, ",cp1600.r[5]);
+		logerror("R6:0x%04x\n",cp1600.r[6]);
+#endif
 
 		switch( opcode )
         {
@@ -3223,6 +3357,36 @@ int cp1600_execute(int cycles)
 		case 0x3fe: /* 1 111 111 110 */ cp1600_xori(6);			break;
 		case 0x3ff: /* 1 111 111 111 */ cp1600_xori(7);			break;
         }
+
+        if (cp1600.mask_interrupts == 0)
+        {
+			if (cp1600.intr_pending)
+			{
+				/* PSHR R7 */
+				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
+				cp1600.r[6]++;
+				cp1600_icount -= 9;
+				cp1600.intr_enabled = 0;
+				cp1600.intr_pending = 0;
+				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTR);
+			}
+			if (cp1600.intrm_pending)
+			{
+				/* PSHR R7 */
+				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
+				cp1600.r[6]++;
+				cp1600_icount -= 9;
+				cp1600.intr_enabled = 0;
+				cp1600.intrm_pending = 0;
+				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTRM);
+			}
+			if (cp1600.reset_pending)
+			{
+				cp1600.reset_pending = 0;
+				cp1600.r[7] = cp1600.irq_callback(CP1600_RESET);
+			}
+		}
+
 	} while( cp1600_icount > 0 );
 
 	return cycles - cp1600_icount;
@@ -3308,7 +3472,58 @@ void cp1600_set_irq_line(int irqline, int state)
 {
 	switch( irqline )
 	{
+		case CP1600_INT_INTR:
+			if (state == ASSERT_LINE)
+				cp1600.intr_pending = 1;
+			if (state == CLEAR_LINE)
+				cp1600.intr_pending = 0;
+			break;
+		case CP1600_INT_INTRM:
+			if (state == ASSERT_LINE)
+				cp1600.intrm_pending = 1;
+			if (state == CLEAR_LINE)
+				cp1600.intrm_pending = 0;
+			break;
+		case CP1600_RESET:
+			if (state == ASSERT_LINE)
+				cp1600.reset_pending = 1;
+			if (state == CLEAR_LINE)
+				cp1600.reset_pending = 0;
+			break;
 	}
+#if 0
+	switch( irqline )
+	{
+		case CP1600_INT_INTR:
+			if (state == ASSERT_LINE)
+			{
+				/* PSHR R7 */
+				cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
+				cp1600.r[6]++;
+				cp1600_icount -= 9;
+				cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTR);
+			}
+			break;
+		case CP1600_INT_INTRM:
+			if (state == ASSERT_LINE)
+			{
+				if ((cp1600.intr_enabled == 1) && (cp1600.mask_interrupts == 0))
+				{
+					/* PSHR R7 */
+					cp1600_writemem16(cp1600.r[6],cp1600.r[7]);
+					cp1600.r[6]++;
+					cp1600_icount -= 9;
+					cp1600.r[7] = cp1600.irq_callback(CP1600_INT_INTRM);
+				}
+			}
+			break;
+		case CP1600_RESET:
+			/* This is a how we fetch the reset vector */
+			if (state == ASSERT_LINE)
+				cp1600.r[7] = cp1600.irq_callback(CP1600_RESET);
+			break;
+	}
+#endif
 }
 
 void cp1600_set_irq_callback(int (*callback)(int irqline))
@@ -3366,14 +3581,23 @@ const char *cp1600_info(void *context, int regnum)
 unsigned cp1600_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-/*	return DasmCP1600( buffer, pc ); */
-	sprintf( buffer, "$%02X", cp1600_readop(pc) );
+	return DasmCP1600( buffer, pc );
     return 1;
 #else
-	sprintf( buffer, "$%02X", cp1600_readop(pc) );
+	sprintf( buffer, "$%04X", cp1600_readop(pc) );
 	return 1;
 #endif
 }
 
-void cp1600_init(void){ return; }
+void cp1600_init(void)
+{
+	cp1600.intr_enabled = 0;
+
+	cp1600.reset_pending = 0;
+	cp1600.intr_pending = 0;
+	cp1600.intrm_pending = 0;
+
+	return;
+}
+
 

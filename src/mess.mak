@@ -651,6 +651,10 @@ $(OBJ)/exidy.a:    \
       $(OBJ)/mess/vidhrdw/exidy.o
 
 $(OBJ)/intv.a:     \
+	$(OBJ)/mess/vidhrdw/intv.o	\
+	$(OBJ)/mess/vidhrdw/stic.o	\
+	$(OBJ)/mess/machine/intv.o	\
+	$(OBJ)/mess/sndhrdw/intv.o	\
 	$(OBJ)/mess/systems/intv.o
 
 # MESS specific core $(OBJ)s

@@ -13,8 +13,6 @@
  *	   will clearly mark each change too.  :)
  *	 - If you wish to use this for commercial purposes, please contact me at
  *	   palazzol@home.com
- *	 - The author of this copywritten work reserves the right to change the
- *     terms of its usage and license at any time, including retroactively
  *   - This entire notice must remain in the source code.
  *
  *****************************************************************************/
@@ -26,17 +24,18 @@
 #include "osd_cpu.h"
 
 enum {
-	CP1600_R0=0, CP1600_R1, CP1600_R2, CP1600_R3,
+	CP1600_R0=1, CP1600_R1, CP1600_R2, CP1600_R3,
 	CP1600_R4, CP1600_R5, CP1600_R6, CP1600_R7
 };
 
 #define CP1600_INT_NONE		0
 #define CP1600_INT_INTRM	1	/* Maskable */
 #define CP1600_INT_INTR		2	/* Non-Maskable */
+#define CP1600_RESET		3	/* Non-Maskable */
 
 extern int cp1600_icount;				 /* cycle count */
 
-extern void cp1600_init(void);
+extern void cp1600_init (void);
 extern void cp1600_reset (void *param); 		 /* Reset registers to the initial values */
 extern void cp1600_exit  (void);				 /* Shut down CPU core */
 extern int	cp1600_execute(int cycles); 		 /* Execute cycles - returns number of cycles actually run */
@@ -62,5 +61,9 @@ extern unsigned cp1600_dasm(char *buffer, unsigned pc);
 #ifdef MAME_DEBUG
 extern unsigned DasmCP1600( char *dst, unsigned pc );
 #endif
+
+#define cp1600_readop(A) cpu_readmem24bew_word(((A)<<1)&0x1fffe)
+#define cp1600_readmem16(A) cpu_readmem24bew_word(((A)<<1)&0x1fffe)
+#define cp1600_writemem16(A,B) cpu_writemem24bew_word(((A)<<1)&0x1fffe,B)
 
 #endif /* _CP1600_H */
