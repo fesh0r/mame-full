@@ -825,11 +825,11 @@ WRITE_HANDLER ( cpm_bios_command_w )
 
 
 	case 0x11: /* TRAP */
-		sprintf( buff, "Program traps in BIOS:\r\n%s\r\n", cpu_dump_state() );
+		sprintf( buff, "Program traps in BIOS:\r\n%s\r\n", activecpu_dump_state() );
 		cpm_conout_str(buff);
 #if VERBOSE_BIOS
 			logerror("BIOS 11 trap\n");
-			logerror("%s\n", cpu_dump_state() );
+			logerror("%s\n", activecpu_dump_state() );
 #endif
 		break;
 	}

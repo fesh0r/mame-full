@@ -1213,7 +1213,7 @@ void vga_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	if (CRTC_ON) {
 		if (vga.dac.dirty) {
 			for (i=0; i<256;i++) {
-				palette_change_color(i,(vga.dac.color[i].red&0x3f)<<2,
+				palette_set_color(i,(vga.dac.color[i].red&0x3f)<<2,
 									 (vga.dac.color[i].green&0x3f)<<2,
 									 (vga.dac.color[i].blue&0x3f)<<2);
 			}

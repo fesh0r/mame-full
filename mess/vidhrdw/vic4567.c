@@ -772,7 +772,7 @@ int vic3_raster_irq (void)
 		vic2.rasterline = 0;
 		if (vic3.palette_dirty) {
 			for (i=0; i<256; i++) {
-				palette_change_color(i,vic3.palette[i].red<<4,
+				palette_set_color(i,vic3.palette[i].red<<4,
 									 vic3.palette[i].green<<4,
 									 vic3.palette[i].blue<<4);
 			}

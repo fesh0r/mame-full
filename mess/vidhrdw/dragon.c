@@ -345,11 +345,17 @@ static void coco3_compute_color(int color, int *red, int *green, int *blue)
 static int coco3_palette_recalc(int force)
 {
 	int flag;
+	int i, r, g, b;   
 	static int lastflag;
 
 	flag = readinputport(COCO3_DIP_MONITORTYPE) & (COCO3_DIP_MONITORTYPE_MASK | ((coco3_gimevhreg[0] & 0x10) << 16));
 	if (force || (flag != lastflag)) {
 		lastflag = flag;
+
+		for (i = 0; i < 64; i++) {   
+			coco3_compute_color(i, &r, &g, &b);   
+			palette_set_color(i, r, g, b);   
+		}   
 		return 1;
 	}
 	return 0;
@@ -667,7 +673,7 @@ static void coco3_rastertrack_getvideomode(struct rastertrack_hvars *hvars)
 
 		hvars->mode.width = visualbytesperrow * 8 / hvars->mode.depth;
 		hvars->mode.bytesperrow = (coco3_gimevhreg[7] & 0x80) ? 256 : visualbytesperrow;
-		hvars->border_pen = Machine->pens[coco3_gimevhreg[2] & 0x3f];
+		hvars->border_pen = coco3_gimevhreg[2] & 0x3f;
 		hvars->frame_width = (coco3_gimevhreg[1] & 0x04) ? 640 : 512;
 		hvars->frame_height = rows;
 	}

@@ -208,20 +208,20 @@ void kaypro_vh_screenrefresh(struct osd_bitmap * bitmap, int full_refresh)
 	{
 		if (blink_count & 16)
 		{
-			palette_change_color(3, 0,240,	0);
-			palette_change_color(4, 0,120,	0);
+			palette_set_color(3, 0,240,	0);
+			palette_set_color(4, 0,120,	0);
 		}
 		else
 		{
-			palette_change_color(3, 0,	0,	0);
-			palette_change_color(4, 0,	0,	0);
+			palette_set_color(3, 0,	0,	0);
+			palette_set_color(4, 0,	0,	0);
 		}
 	}
 
-	palette_init_used_colors();
+/*	palette_init_used_colors();
 	if (palette_used_colors)
 		memset(palette_used_colors, PALETTE_COLOR_USED, 4);
-
+*/
 	cursor_count++;
 	if (cursor)
 		j = cur_y * KAYPRO_SCREEN_W + cur_x;

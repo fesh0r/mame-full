@@ -310,7 +310,7 @@ static void map_artifact_palette(UINT32 c0, UINT32 c1, const struct rasterbits_a
 			artifactpens[i] = j;
 		}
 		else {
-			/* We can use palette_change_color */
+			/* We can use palette_set_color */
 			palette_set_color(palettebase + i - 1, myrgb[0], myrgb[1], myrgb[2]);
 			artifactpens[i] = palettebase + i - 1;
 		}
@@ -431,7 +431,7 @@ static void raster_graphics(struct osd_bitmap *bitmap, struct rasterbits_source 
 			goto done; /* PANIC */
 
 		for (i = 0; i < num_colors; i++)
-			mappedpens[i] = Machine->pens[pens[i]];
+			mappedpens[i] = pens[i];
 		pens = mappedpens;
 	}
 	else {

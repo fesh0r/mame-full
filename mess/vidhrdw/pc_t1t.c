@@ -302,7 +302,7 @@ void pc_t1t_vga_data_w(int data)
         case 0x18: case 0x19: case 0x1a: case 0x1b:
         case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 			T1T_LOG(1,"T1T_vga_palette_w",("[$%02x] $%02x\n", pcjr.reg.index - 0x10, data));
-			palette_change_color(pcjr.reg.index-0x10, 
+			palette_set_color(pcjr.reg.index-0x10, 
 								 cga_palette[data&0xf][0],
 								 cga_palette[data&0xf][1],
 								 cga_palette[data&0xf][2]);

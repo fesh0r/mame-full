@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.5 2001/08/31 22:37:34 npwoods Exp $
+  $Id: pc8801.c,v 1.6 2001/09/02 18:52:41 npwoods Exp $
 
 ***************************************************************************/
 
@@ -926,5 +926,5 @@ WRITE_HANDLER(pc8801_palette_out)
 	r[offset] = (data & 2) ? 0xff : 0x00;
 	g[offset] = (data & 4) ? 0xff : 0x00;
   }
-  palette_change_color(palno,r[offset],g[offset],b[offset]);
+  palette_set_color(palno,r[offset],g[offset],b[offset]);
 }

@@ -113,7 +113,7 @@ int atarist_vh_start(void)
 	int i;
 
 	for (i=0; i<512; i++)
-		palette_change_color(i,((i>>6)&7)*0x24,((i>>3)&7)*0x24,(i&7)*0x24);
+		palette_set_color(i,((i>>6)&7)*0x24,((i>>3)&7)*0x24,(i&7)*0x24);
 
 	return 0;
 }

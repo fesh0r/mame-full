@@ -166,7 +166,7 @@ int sms_vdp_interrupt(void)
         sms_refresh_line(tmpbitmap, curline);
     }
 
-    return (Z80_IGNORE_INT);
+    return 0; /* Z80_IGNORE_INT */
 }
 
 
@@ -303,11 +303,14 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
     UINT16 *nametable = (UINT16 *)&(vram[ntab+((v_line >> 3) << 6)]);
     UINT8 *objtable = (UINT8 *)&(vram[satb]);
     int xscroll = (((reg[0] & 0x40)&&(line < 16)) ? 0 : reg[8]);
+	UINT16 *linep;
 
     /* Check if display is disabled */
     if(!(reg[1] & 0x40))
     {
-        memset(&bitmap->line[line][0], Machine->pens[0x10 + reg[7]], 0x100);
+		linep = (UINT16 *) bitmap->line[line];
+		for (i = 0; i < 0x100; i++)
+			linep[i] = 0x10 + reg[7];
         return;
     }
 
@@ -323,10 +326,12 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
         charindex = (tile & 0x07FF);
         palselect = (tile >> 7) & 0x10;
 
+		linep = (UINT16 *) bitmap->line[line];
+
         for(x=0;x<8;x++)
         {
-            color = cache[ (charindex << 6) + (v_row << 3) + (x)];
-            bitmap->line[line][(xscroll+(i<<3)+x) & 0xFF] = Machine->pens[color | palselect];
+			color = cache[ (charindex << 6) + (v_row << 3) + (x)];
+			linep[(xscroll+(i<<3)+x) & 0xFF] = color | palselect;
         }
     }
 
@@ -345,17 +350,22 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
 
             sl = (line - sy);
 
+			linep = (UINT16 *) bitmap->line[line];
+
             for(x=0;x<width;x++)
             {
                 color = cache[(sn << 6)+(sl << 3) + (x)];
-                if(color) bitmap->line[line][(sx + x) & 0xFF] = Machine->pens[0x10 | color];
+                if(color)
+					linep[(sx + x) & 0xFF] = 0x10 | color;
             }
         }
     }
 
     if(reg[0] & 0x20)
     {
-        memset(&bitmap->line[line][0], Machine->pens[0x10 + reg[7]], 8);
+		linep = (UINT16 *) bitmap->line[line];
+		for (i = 0; i < 8; i++)
+			linep[i] = 0x10 + reg[7];
     }
 }
 
@@ -386,7 +396,7 @@ void sms_update_palette(void)
                 b = ((cram[i] >> 4) & 0x03) << 6;
             }
 
-            palette_change_color(i, r, g, b);
+            palette_set_color(i, r, g, b);
         }
     }
 }

@@ -53,9 +53,6 @@ void pce_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     pce_visible_area.max_x = (center_x + vdc.physical_width) - 1;
     pce_visible_area.max_y = (center_x + vdc.physical_height) - 1;
 
-    /* update the hardware palette based on the colors we've requested */
-    palette_recalc();
-
     /* copy our rendering buffer to the display */
     copybitmap (bitmap,vdc.bmp,0,0,0,0,&pce_visible_area,TRANSPARENCY_NONE,0);
 }
@@ -232,7 +229,7 @@ WRITE_HANDLER ( vce_w )
                 r = ((vdc.vce_data[i].w >> 3) & 7) << 5;
                 g = ((vdc.vce_data[i].w >> 6) & 7) << 5;
                 b = ((vdc.vce_data[i].w >> 0) & 7) << 5;
-                palette_change_color(i, r, g, b);
+                palette_set_color(i, r, g, b);
              }
 
              /* bump internal address */

@@ -310,41 +310,41 @@ TESTDRIVER( vic20v ) 	/* Commodore Vic-20 NTSC, VC1540				  */
 TESTDRIVER( vc20v ) 	/* Commodore Vic-20 PAL, VC1541					  */
 	DRIVER( vic20i )	/* Commodore Vic-20 IEEE488 Interface			  */
 
-//	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
-//	DRIVER( c64 )		/* Commodore 64 - NTSC							  */
+	DRIVER( max )		/* Max (Japan)/Ultimax (US)/VC10 (German)		  */
+	DRIVER( c64 )		/* Commodore 64 - NTSC							  */
 /*	DRIVER( j64 )*/		/* Commodore 64 - NTSC (Japan)					  */
-//	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
-//	DRIVER( vic64s )	/* Commodore VIC64S (Swedish)					  */
-//	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
+	DRIVER( c64pal )	/* Commodore 64 - PAL							  */
+	DRIVER( vic64s )	/* Commodore VIC64S (Swedish)					  */
+	DRIVER( cbm4064 )	/* Commodore CBM4064							  */
 TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
 TESTDRIVER( vip64 )		/* Commodore VIP64 (SX64, PAL, Swedish)			  */
 TESTDRIVER( dx64 )		/* Commodore DX 64 - PROTOTPYE, PAL						  */
-//	DRIVER( c64gs ) 	/* Commodore 64 Games System					  */
+	DRIVER( c64gs ) 	/* Commodore 64 Games System					  */
 
-//	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
-//	DRIVER( cbm610 )	/* Commodore 610/B128LP 						  */
-//	DRIVER( cbm620 )	/* Commodore 620/B256LP 						  */
-//	DRIVER( cbm620hu )	/* Commodore 620/B256LP Hungarian				  */
+	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
+	DRIVER( cbm610 )	/* Commodore 610/B128LP 						  */
+	DRIVER( cbm620 )	/* Commodore 620/B256LP 						  */
+	DRIVER( cbm620hu )	/* Commodore 620/B256LP Hungarian				  */
 /*	DRIVER( cbm630 )*/	/* Commodore 630								  */
-//	DRIVER( cbm710 )	/* Commodore 710/B128HP 						  */
-//	DRIVER( cbm720 )	/* Commodore 720/B256HP 						  */
-//	DRIVER( cbm720se )	/* Commodore 720/B256HP Swedish/Finnish			  */
+	DRIVER( cbm710 )	/* Commodore 710/B128HP 						  */
+	DRIVER( cbm720 )	/* Commodore 720/B256HP 						  */
+	DRIVER( cbm720se )	/* Commodore 720/B256HP Swedish/Finnish			  */
 /*	DRIVER( cbm730 )*/	/* Commodore 730								  */
 
-//	DRIVER( c16 )		/* Commodore 16 								  */
-//	DRIVER( c16hun )	/* Commodore 16 Novotrade (Hungarian Character Set)	  */
-//	DRIVER( c16c )		/* Commodore 16  c1551							  */
+	DRIVER( c16 )		/* Commodore 16 								  */
+	DRIVER( c16hun )	/* Commodore 16 Novotrade (Hungarian Character Set)	  */
+	DRIVER( c16c )		/* Commodore 16  c1551							  */
 TESTDRIVER( c16v )		/* Commodore 16  vc1541 						  */
-//	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
-//	DRIVER( plus4c )	/* Commodore +4  vc1541 						  */
+	DRIVER( plus4 ) 	/* Commodore +4  c1551							  */
+	DRIVER( plus4c )	/* Commodore +4  vc1541 						  */
 TESTDRIVER( plus4v )	/* Commodore +4 								  */
-//	DRIVER( c364 )		/* Commodore 364 - Prototype					  */
+	DRIVER( c364 )		/* Commodore 364 - Prototype					  */
 
-//	DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
-//	DRIVER( c128ger )	/* Commodore 128 - PAL (german) 				  */
-//	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
-//	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
-//	DRIVER( c128swe )	/* Commodore 128 - PAL (swedish)				  */
+	DRIVER( c128 )		/* Commodore 128 - NTSC 						  */
+	DRIVER( c128ger )	/* Commodore 128 - PAL (german) 				  */
+	DRIVER( c128fra )	/* Commodore 128 - PAL (french) 				  */
+	DRIVER( c128ita )	/* Commodore 128 - PAL (italian)				  */
+	DRIVER( c128swe )	/* Commodore 128 - PAL (swedish)				  */
 TESTDRIVER( c128nor )	/* Commodore 128 - PAL (norwegian)				  */
 TESTDRIVER( c128d )		/* Commodore 128D - NTSC 						  */
 TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
@@ -356,12 +356,12 @@ TESTDRIVER( c128dita )	/* Commodore 128D - PAL (italian) cost reduced set	  */
 TESTDRIVER( amiga ) 	/* Commodore Amiga								  */
 TESTDRIVER( cdtv )
 
-//	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
-//	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
-//	DRIVER( c65d )		/* C65 / C64DX (Prototype, NTSC, 910626)		  */
-//	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)		  */
-//	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)	  */
-//	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
+	DRIVER( c65 )		/* C65 / C64DX (Prototype, NTSC, 911001)		  */
+	DRIVER( c65e )		/* C65 / C64DX (Prototype, NTSC, 910828)		  */
+	DRIVER( c65d )		/* C65 / C64DX (Prototype, NTSC, 910626)		  */
+	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)		  */
+	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)	  */
+	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)		  */
 
 	/* IBM PC & Clones */
 //	DRIVER( ibmpc )		/* 1982	IBM PC									  */
@@ -591,7 +591,7 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ep128a )	/* Enterprise 128 k 							  */
 
 	/* NON LINEAR SYSTEMS */
-//	DRIVER( kaypro )	/* Kaypro 2X									  */
+	DRIVER( kaypro )	/* Kaypro 2X									  */
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */

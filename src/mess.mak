@@ -172,17 +172,17 @@ DRVLIBS = \
 	$(OBJ)/cbm.a      \
 	$(OBJ)/cbmshare.a \
 	$(OBJ)/atari.a    \
+	$(OBJ)/kaypro.a   \
+#	$(OBJ)/necpc.a	  \
+#	$(OBJ)/nec.a	  \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/pc.a       \
 #	$(OBJ)/at.a       \
 #	$(OBJ)/pcshare.a  \
 #	$(OBJ)/hp48.a     \
-#	$(OBJ)/nec.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/cpschngr.a \
-#	$(OBJ)/necpc.a	  \
 #	$(OBJ)/veb.a	  \
-#	$(OBJ)/kaypro.a   \
 #	$(OBJ)/trs80.a	  \
 #	$(OBJ)/cgenie.a   \
 #	$(OBJ)/pdp1.a	  \
@@ -219,9 +219,9 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-#	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
-#	  $(OBJ)/mess/machine/sms.o	 \
-#	  $(OBJ)/mess/systems/sms.o	 \
+	  $(OBJ)/mess/vidhrdw/smsvdp.o	 \
+	  $(OBJ)/mess/machine/sms.o	 \
+	  $(OBJ)/mess/systems/sms.o	 \
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
@@ -275,7 +275,7 @@ $(OBJ)/cbmshare.a: \
 	  $(OBJ)/mess/machine/vc20tape.o \
 	  $(OBJ)/mess/machine/c64.o	 \
 	  $(OBJ)/mess/vidhrdw/crtc6845.o \
-#	  $(OBJ)/mess/vidhrdw/vic6567.o
+	  $(OBJ)/mess/vidhrdw/vic6567.o
 
 $(OBJ)/cbm.a: \
 	  $(OBJ)/mess/vidhrdw/pet.o	 \
@@ -412,9 +412,9 @@ $(OBJ)/pcshare.a:	   \
 	  $(OBJ)/mess/machine/pc_fdc.o	 \
 	  $(OBJ)/mess/machine/pc_hdc.o	 \
 	  $(OBJ)/mess/machine/pcshare.o	\
-#	  $(OBJ)/mess/vidhrdw/vga.o	 \
-#	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
-#	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
+	  $(OBJ)/mess/vidhrdw/vga.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_mda.o	 \
+	  $(OBJ)/mess/vidhrdw/pc_cga.o	 \
 
 $(OBJ)/pc.a:	   \
 	  $(OBJ)/mess/vidhrdw/pc_aga.o	 \
