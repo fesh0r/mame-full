@@ -973,3 +973,9 @@ void m6847_get_bordercolor_rgb(int *red, int *green, int *blue)
 	}
 }
 
+int m6847_get_vram_size(void)
+{
+	calc_videoram_size();
+	return videoram_size;
+}
+

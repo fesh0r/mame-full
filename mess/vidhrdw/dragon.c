@@ -771,14 +771,16 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 	else {
 		int borderred, bordergreen, borderblue;
+
 		m6847_get_bordercolor_rgb(&borderred, &bordergreen, &borderblue);
 		full_refresh += coco3_vh_setborder(borderred, bordergreen, borderblue);
 		if (palette_recalc())
 			full_refresh = 1;
 		if (full_refresh)
 			coco3_vh_drawborder(bitmap, 512, 192);
+
 		internal_m6847_vh_screenrefresh(bitmap, full_refresh, coco3_metapalette,
-			&RAM[0x70000], m6847_get_video_offset(), 0x10000,
+			&RAM[coco3_mmu_translatelogicaladdr(0)], m6847_get_video_offset(), 0x10000,
 			TRUE, (bitmap->width - 512) / 2, (bitmap->height - 192) / 2, 2,
 			artifacts[readinputport(12) & 3]);
 	}
@@ -804,9 +806,14 @@ static void coco3_ram_w(int offset, int data, int block)
 		else {
 			/* This code assumes that all lo-res video is always mapped from
 			 * $70000-$7FFFF.  This needs to be verified
+			 *
+			 * 8-17-2000 - This assumption has been challenged by the OS9L2 bug
 			 */
-			if (offset >= 0x70000)
-				m6847_touch_vram(offset - 0x70000);
+
+			vidbase = coco3_mmu_translatelogicaladdr(0);
+
+			if (offset >= vidbase)
+				m6847_touch_vram(offset - vidbase);
 		}
 
 		RAM[offset] = data;

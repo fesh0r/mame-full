@@ -143,7 +143,7 @@ typedef union {
 #define HAS_NSC8105     1
 #define HAS_M68705      0
 #define HAS_HD63705     0
-#define HAS_HD6309      0
+#define HAS_HD6309      1
 #define HAS_M6309       0
 #define HAS_M6809       1
 #define HAS_KONAMI      0

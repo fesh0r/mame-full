@@ -14,7 +14,9 @@ System Driver Changes:
 ----------------------
 - SPECTRUM:  Fixed +3 disk handling [David Robertson]
 
-
+- COCO 3: Fixed low resolution video so that it is sensitive to the MMU; this
+  fixes a problem that made OS-9 Level 2 display garbage.  Note:  This is still
+  not perfect yet.  [Nate Woods]
 
 Other Changes:
 --------------

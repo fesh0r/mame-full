@@ -66,6 +66,9 @@ void m6847_set_video_offset(int offset);
 int m6847_get_video_offset(void);
 void m6847_touch_vram(int offset);
 
+/* This call returns the size of video ram given the current settings */
+int m6847_get_vram_size(void);
+
 enum {
 	M6847_BORDERCOLOR_BLACK,
 	M6847_BORDERCOLOR_GREEN,

@@ -1,7 +1,10 @@
 #ifndef DRAGON_H
 #define DRAGON_H
 
-/* Backdoors into mess/vidhrdw/m6847.c */
+/* ----------------------------------------------------------------------- *
+ * Backdoors into mess/vidhrdw/m6847.c                                     *
+ * ----------------------------------------------------------------------- */
+
 typedef void (*artifactproc)(int *artifactcolors);
 void internal_m6847_drawborder(struct osd_bitmap *bitmap, int screenx, int screeny, int pen);
 int internal_m6847_vh_start(int maxvram);
@@ -18,7 +21,10 @@ void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
 	int vrampos, int vramsize, UINT8 *db, int sizex, int sizey, int basex,
 	int basey, int scalex, int scaley, int additionalrowbytes);
 
-/* from vidhrdw/dragon.c */
+/* ----------------------------------------------------------------------- *
+ * from vidhrdw/dragon.c                                                   *
+ * ----------------------------------------------------------------------- */
+
 extern WRITE_HANDLER ( coco3_ram_b1_w );
 extern WRITE_HANDLER ( coco3_ram_b2_w );
 extern WRITE_HANDLER ( coco3_ram_b3_w );
@@ -42,7 +48,10 @@ extern WRITE_HANDLER ( coco3_gimevh_w );
 extern WRITE_HANDLER ( coco3_palette_w );
 extern void coco3_vh_blink(void);
 
-/* from machine/dragon.c */
+/* ----------------------------------------------------------------------- *
+ * from machine/dragon.c                                                   *
+ * ----------------------------------------------------------------------- */
+
 extern void dragon32_init_machine(void);
 extern void dragon64_init_machine(void);
 extern void coco_init_machine(void);
@@ -76,5 +85,14 @@ extern READ_HANDLER(dragon_floppy_r);
 extern WRITE_HANDLER ( dragon_floppy_w );
 extern void coco3_vblank(void);
 extern int coco3_mmu_translate(int block, int offset);
+
+/* Returns whether a given piece of logical memory is contiguous or not */
+extern int coco3_mmu_ismemorycontiguous(int logicaladdr, int len);
+
+/* Reads logical memory into a buffer */
+extern void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len);
+
+/* Translates a logical address to a physical address */
+extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 
 #endif /* DRAGON_H */

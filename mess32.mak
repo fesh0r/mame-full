@@ -189,6 +189,7 @@ CPUOBJS = \
           $(OBJ)/cpu/m6800/m6800.o \
           $(OBJ)/cpu/m6805/m6805.o \
           $(OBJ)/cpu/m6809/m6809.o \
+          $(OBJ)/cpu/hd6309/hd6309.o \
           $(M68KOBJS) \
           $(OBJ)/cpu/t11/t11.o \
           $(OBJ)/cpu/s2650/s2650.o \
@@ -227,6 +228,7 @@ DBGOBJS = \
           $(OBJ)/cpu/m6800/6800dasm.o \
           $(OBJ)/cpu/m6805/6805dasm.o \
           $(OBJ)/cpu/m6809/6809dasm.o \
+          $(OBJ)/cpu/hd6309/6309dasm.o \
           $(OBJ)/cpu/konami/knmidasm.o \
           $(OBJ)/cpu/m68000/m68kdasm.o \
           $(OBJ)/cpu/t11/t11dasm.o \
@@ -664,6 +666,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {src/cpu/m6809}.c{$(OBJ)/cpu/m6809}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{src/cpu/hd6309}.c{$(OBJ)/cpu/hd6309}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 {src/cpu/konami}.c{$(OBJ)/cpu/konami}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
@@ -803,6 +808,7 @@ $(OBJ)/cpu/m6502/m6509.o:       src/cpu/m6502/m6509.c src/cpu/m6502/m6509.h src/
 $(OBJ)/cpu/m6800/m6800.o:	     src/cpu/m6800/m6800.c src/cpu/m6800/m6800.h src/cpu/m6800/6800ops.c src/cpu/m6800/6800tbl.c
 $(OBJ)/cpu/m6805/m6805.o:	     src/cpu/m6805/m6805.c src/cpu/m6805/m6805.h src/cpu/m6805/6805ops.c
 $(OBJ)/cpu/m6809/m6809.o:	     src/cpu/m6809/m6809.c src/cpu/m6809/m6809.h src/cpu/m6809/6809ops.c src/cpu/m6809/6809tbl.c
+$(OBJ)/cpu/hd6309/hd6309.o:	     src/cpu/hd6309/hd6309.c src/cpu/hd6309/hd6309.h src/cpu/hd6309/6309ops.c src/cpu/hd6309/6309tbl.c
 $(OBJ)/cpu/tms32010/tms32010.o: src/cpu/tms32010/tms32010.c src/cpu/tms32010/tms32010.h
 $(OBJ)/cpu/tms34010/tms34010.o: src/cpu/tms34010/tms34010.c src/cpu/tms34010/tms34010.h src/cpu/tms34010/34010ops.c src/cpu/tms34010/34010tbl.c
 $(OBJ)/cpu/tms9900/tms9900.o:   src/cpu/tms9900/tms9900.c src/cpu/tms9900/tms9900.h src/cpu/tms9900/9900stat.h
@@ -828,6 +834,7 @@ maketree:
 	md $(OBJ)\cpu\m6800
 	md $(OBJ)\cpu\m6805
 	md $(OBJ)\cpu\m6809
+	md $(OBJ)\cpu\hd6309
 	md $(OBJ)\cpu\konami
 	md $(OBJ)\cpu\m68000
 	md $(OBJ)\cpu\s2650
@@ -878,6 +885,7 @@ clean:
 	del $(OBJ)\cpu\m6800\*.exe
 	del $(OBJ)\cpu\m6805\*.o
 	del $(OBJ)\cpu\m6809\*.o
+	del $(OBJ)\cpu\hd6309\*.o
 	del $(OBJ)\cpu\konami\*.o
 	del $(OBJ)\cpu\m68000\*.o
 	del $(OBJ)\cpu\m68000\*.c
@@ -939,6 +947,7 @@ cleandebug:
 	del $(OBJ)\cpu\m6800\*.exe
 	del $(OBJ)\cpu\m6805\*.o
 	del $(OBJ)\cpu\m6809\*.o
+	del $(OBJ)\cpu\hd6309\*.o
 	del $(OBJ)\cpu\konami\*.o
 	del $(OBJ)\cpu\m68000\*.o
 	del $(OBJ)\cpu\m68000\*.c

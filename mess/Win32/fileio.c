@@ -35,10 +35,8 @@ static int MessImageFopenZip(const char *filename, mame_file *mf, int write)
 	ZIP *pZip;
 	struct zipent *pZipEnt;
 
-#if 0
-	if (write)
+	if (write != OSD_FOPEN_READ)
 		return 0;	/* Can't write to a ZIP file */
-#endif
 
 	filename = resolve_path(filename, buf1, sizeof(buf1) / sizeof(buf1[0]));
 	if (!filename)
@@ -81,7 +79,7 @@ static int MessImageFopenZip(const char *filename, mame_file *mf, int write)
 int MessImageFopen(const char *filename, mame_file *mf, int write, int (*checksum_file)(const char* file, unsigned char **p, unsigned int *size, unsigned int *crc))
 {
 	static char zipext[] = ".ZIP";
-	static char *write_modes[] = {"rb","wb","r+b","r+b","w+b"};
+	static char *write_modes[] = {"rb","wb","r+b","r+b"};
 	LPSTR lpExt;
 	unsigned int dummy;
 	int found;

@@ -17,6 +17,8 @@ Whats new:
   directory for its driver and its parent driver, but not its grandparent's
   driver and so on [Nate Woods]
 
+- Fixed a few minor file bugs [Nate Woods]
+
 ----------
 0.37 BETA 5
 ------------

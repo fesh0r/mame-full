@@ -1039,6 +1039,94 @@ int coco3_mmu_translate(int block, int offset)
 	return (coco3_mmu_lookup(block, forceram) * 0x2000) + offset;
 }
 
+int coco3_mmu_translatelogicaladdr(int logicaladdr)
+{
+	int block;;
+
+	if (logicaladdr >= 0xfe00) {
+		block = 8;
+		logicaladdr -= 0xfe00;
+	}
+	else {
+		block = logicaladdr / 0x2000;
+		logicaladdr %= 0x2000;
+	}
+
+	return coco3_mmu_translate(block, logicaladdr);
+}
+
+#if 0
+/* We don't need this code for now */
+
+static int calc_nextlogicaladdr(int logicaladdr, int len)
+{
+	int nextlogicaladdr;
+
+	if (logicaladdr < 0xe000)
+		nextlogicaladdr = logicaladdr - (logicaladdr % 0x2000) + 0x2000;
+	else if (logicaladdr < 0xfe00)
+		nextlogicaladdr = 0xfe00;
+	else
+		nextlogicaladdr = 0xffff;
+
+	if (nextlogicaladdr > (logicaladdr + len))
+		nextlogicaladdr = logicaladdr + len;
+
+	return nextlogicaladdr;
+}
+
+int coco3_mmu_ismemorycontiguous(int logicaladdr, int len)
+{
+	int physicalbase;
+	int nextlogicaladdr;
+	int nextphysicalbase;
+	int difference;
+
+	if ((logicaladdr + len) > 0xff00)
+		len -= (logicaladdr + len) - 0xff00;
+
+	physicalbase = coco3_mmu_translatelogicaladdr(logicaladdr);
+
+	while(len) {
+		nextlogicaladdr = calc_nextlogicaladdr(logicaladdr, len);
+
+		nextphysicalbase = coco3_mmu_translatelogicaladdr(nextlogicaladdr - 1);
+		if (nextphysicalbase != (physicalbase + nextlogicaladdr - logicaladdr - 1))
+			return 0;
+
+		difference = nextphysicalbase - physicalbase;
+		len -= difference;
+		logicaladdr += difference;
+		physicalbase = nextphysicalbase;
+	}
+	return 1;
+}
+
+void coco3_mmu_readlogicalmemory(UINT8 *buffer, int logicaladdr, int len)
+{
+	UINT8 *RAM = memory_region(REGION_CPU1);
+	int physicalbase;
+	int nextlogicaladdr;
+	int difference;
+
+	if ((logicaladdr + len) > 0xff00)
+		len -= (logicaladdr + len) - 0xff00;
+
+	while(len) {
+		physicalbase = coco3_mmu_translatelogicaladdr(logicaladdr);
+
+		nextlogicaladdr = calc_nextlogicaladdr(logicaladdr, len);
+
+		difference = nextlogicaladdr - logicaladdr;
+
+		memcpy(buffer, &RAM[physicalbase], difference);
+		buffer += difference;
+		len -= difference;
+		logicaladdr += difference;
+	}
+}
+#endif
+
 static void coco3_mmu_update(int lowblock, int hiblock)
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
@@ -1075,6 +1163,9 @@ WRITE_HANDLER(coco3_mmu_w)
 {
 	data &= 0x3f;
 	coco3_mmu[offset] = data;
+
+	if (offset == 0)
+		schedule_full_refresh();
 
 	/* Did we modify the live MMU bank? */
 	if ((offset >> 3) == (coco3_gimereg[1] & 1)) {
