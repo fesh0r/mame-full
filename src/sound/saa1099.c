@@ -8,7 +8,7 @@
 	========================
 
 	offs | 7654 3210 | description
-	-----+-----------+---------------------------	
+	-----+-----------+---------------------------
 	0x00 | ---- xxxx | Amplitude channel 0 (left)
 	0x00 | xxxx ---- | Amplitude channel 0 (right)
 	0x01 | ---- xxxx | Amplitude channel 1 (left)
@@ -361,7 +361,7 @@ static void saa1099_control_port_w( int chip, int reg, int data )
 		/* Error! */
 		logerror("%04x: (SAA1099 #%d) Unknown register selected\n",cpu_get_pc(), chip);
 	}
-	
+
     saa->selected_reg = data & 0x1f;
 	if (saa->selected_reg == 0x18 || saa->selected_reg == 0x19)
 	{
