@@ -43,14 +43,14 @@ INLINE void XQ2X_FUNC_NAME(blit_xq2x_line_2x2) ( SRC_PIXEL *src0,
     uv   += (p_0_1 & UVMASK) >> 1;
     uv   &= UVMASK;
     p_0_0 = (p_0_0<<16) & Y1MASK;
-    P_0_1 = (p_0_1    ) & Y2MASK;
+    p_0_1 = (p_0_1    ) & Y2MASK;
     *dst0++ = p_0_0 | p_0_1 | uv;
 
     uv    = (p_1_0 & UVMASK) >> 1;
     uv   += (p_1_1 & UVMASK) >> 1;
     uv   &= UVMASK;
     p_1_0 = (p_1_0<<16) & Y1MASK;
-    P_1_1 = (p_1_1    ) & Y2MASK;
+    p_1_1 = (p_1_1    ) & Y2MASK;
     *dst1++ = p_1_0 | p_1_1 | uv;
 #endif
   XQ2X_LINE_LOOP_END
