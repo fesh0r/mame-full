@@ -2,6 +2,40 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.85.1
+	- The SVGAlib target links again.
+	- Increased the number of games supported by src/datafile.c from 5000 
+	  to 10000.  (Inigo Luja)
+	- Fixed redefinition warnings in src/sha1.[ch].  (Krister Walfridsson)
+	- Fixed buffer overruns in the effects and rotation code that caused a 
+	  segfault on exit for some games with artwork enabled.
+	- Fixed memory leaks in the effects and rotation code that occurred 
+	  when the display settings changed.
+	- XInput was probably limited to two controllers in 0.85, but should 
+	  again support up to four.
+	- Overhauled the 3Dfx targets: Fixed a crash when using 16bbpp 
+	  palettized modes; added support for rotated/flipped games; corrected 
+	  the paused emulation test; added support for compiling and linking 
+	  against GLIDE3; fixed and cleaned up vector support; added support 
+	  for vector clipping, which fixes mhavoc.  (Hans de Goede)
+	- Fixed OpenGL vector support.  Clipping support still needs to be 
+	  added; for an example of the problem, see mhavoc.  (Hans de Goede)
+	- The SVGAlib targets now detect the signals used for console 
+	  switching.  (Hans de Goede)
+	- When "-norotate(-nr)" is specified, the UI is no longer rotated 
+	  relative to the game.  (Hans de Goede)
+	- Cleaned up the blit core.  Rotation should also be a bit faster.  
+	  Note that targets that don't define DEST will need to be fixed.  
+	  (Hans de Goede)
+	- The C version of the 6-tap filter rotates pointers now instead of 
+	  using memcpy, which should give a small speed boost.  It also no 
+	  longer reallocates a rotation buffer.  (Hans de Goede)
+	- Fixed a bunch of unused variable warnings.  (Hans de Goede)
+	- XInput now works with the xgl target.
+	- Re-applied a fix for an infrequent spurious error reported by the 
+	  included zlib.  (Mark Adler, courtesy of smf)
+	- The SDL joystick driver works again.  It should also be a bit faster. 
+
 Release 0.85, 12 August 2004
 	- Everything from MAME 0.85 (http://x.mame.net/changes-mame.html) and
 	  MESS 0.85 (http://x.mame.net/changes-mess.html).
