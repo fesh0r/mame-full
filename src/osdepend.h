@@ -4,6 +4,9 @@
 #include "osd_cpu.h"
 #include "inptport.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* The Win32 port requires this constant for variable arg routines. */
 #ifndef CLIB_DECL
@@ -356,5 +359,9 @@ int osd_net_game_exit(void);
 #endif
 
 void CLIB_DECL logerror(const char *text,...);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

@@ -116,6 +116,10 @@
 #ifndef PALETTE_H
 #define PALETTE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DYNAMIC_MAX_PENS 254	/* the Mac cannot handle more than 254 dynamic pens */
 #define STATIC_MAX_PENS 256		/* but 256 static pens can be handled */
 
@@ -228,5 +232,9 @@ WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
 WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_word_w );
 WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

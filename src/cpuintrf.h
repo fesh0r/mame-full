@@ -5,6 +5,10 @@
 #include "memory.h"
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The old system is obsolete and no longer supported by the core */
 #define NEW_INTERRUPT_SYSTEM    1
 
@@ -612,5 +616,9 @@ typedef struct {
 #define Z80_INT_IEO     0x02    /* interrupt disable mask(IEO)  */
 
 #define Z80_VECTOR(device,state) (((device)<<8)|(state))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif	/* CPUINTRF_H */
