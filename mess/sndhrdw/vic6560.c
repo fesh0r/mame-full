@@ -14,7 +14,6 @@
 #include "includes/cbm.h"
 #include "includes/vic6560.h"
 
-/*#define NEW_MODELL */
 /*
  * assumed model:
  * each write to a ton/noise generated starts it new
@@ -57,79 +56,22 @@
 #define NOISE_FREQUENCY_MAX (VIC656X_CLOCK/32/1)
 
 static int channel, tone1pos = 0, tone2pos = 0, tone3pos = 0,
-#ifdef NEW_MODELL
-	ticks_per_sample,
-	tone1count = 0, tone2count = 0, tone3count = 0,
-	tone1latch = 1, tone2latch = 1, tone3latch = 1,
-#else
 	tonesize, tone1samples = 1, tone2samples = 1, tone3samples = 1,
-#endif
 	noisesize,		  /* number of samples */
 	noisepos = 0,         /* pos of tone */
 	noisesamples = 1;	  /* count of samples to give out per tone */
 
-#ifdef NEW_MODELL
-static INT8 tone[32];
-
-#else
 static INT16 *tone;
 
-#endif
 static INT8 *noise;
 
 void vic6560_soundport_w (int offset, int data)
 {
     int old = vic6560[offset];
+	stream_update(channel,0);
 
 	switch (offset)
 	{
-#ifdef NEW_MODELL
-	case 0xa:
-		vic6560[offset] = data;
-		tone1latch = TONE1_VALUE * ticks_per_sample;
-		if ((data ^ old) & 0x80)
-		{
-			if (TONE1_ON)
-			{
-				tone1count = tone1latch;
-				tone1pos = 0;
-				tone1count = 0;
-			}
-		}
-		DBG_LOG (1, "vic6560", (errorlog, "tone1 %.2x f:%d c:%d\n",
-								data, TONE1_FREQUENCY, TONE1_VALUE));
-		break;
-	case 0xb:
-		vic6560[offset] = data;
-		tone2latch = TONE2_VALUE * ticks_per_sample;
-		if ((data ^ old) & 0x80)
-		{
-			if (TONE2_ON)
-			{
-				tone2count = tone2latch;
-				tone2pos = 0;
-				tone2count = 0;
-			}
-		}
-		DBG_LOG (1, "vic6560", (errorlog, "tone2 %.2x f:%d c:%d\n",
-								data, TONE2_FREQUENCY, TONE2_VALUE));
-		break;
-	case 0xc:
-		vic6560[offset] = data;
-		tone3latch = TONE3_VALUE * ticks_per_sample;
-		if ((data ^ old) & 0x80)
-		{
-			if (TONE3_ON)
-			{
-				tone3count = tone3latch;
-				tone3pos = 0;
-				tone3count = 0;
-			}
-		}
-		SND_LOG (1, "vic6560", (errorlog, "tone3 %.2x f:%d c:%d\n",
-								data, TONE3_FREQUENCY, TONE3_VALUE));
-		break;
-#else
 	case 0xa:
 		vic6560[offset] = data;
 		if (!(old & 0x80) && TONE1_ON)
@@ -163,7 +105,6 @@ void vic6560_soundport_w (int offset, int data)
 		}
 		DBG_LOG (1, "vic6560", (errorlog, "tone3 %.2x %d\n", data, TONE3_FREQUENCY));
 		break;
-#endif
 	case 0xd:
 		vic6560[offset] = data;
 		if (NOISE_ON)
@@ -187,7 +128,6 @@ void vic6560_soundport_w (int offset, int data)
 		DBG_LOG (3, "vic6560", (errorlog, "volume %d\n", data & 0xf));
 		break;
 	}
-/*  stream_update(channel,1.0/options.samplerate); */
 }
 
 /************************************/
@@ -201,38 +141,6 @@ static void vic6560_update (int param, INT16 *buffer, int length)
 	for (i = 0; i < length; i++)
 	{
 		v = 0;
-#ifdef NEW_MODELL
-		if (TONE1_ON)
-		{
-			tone1count -= ticks_per_sample;
-			while (tone1count <= 0)
-			{
-				tone1count += tone1latch;
-				tone1pos = (tone1pos + 1) & 0x1f;
-			}
-			v += tone[tone1pos];
-		}
-		if (TONE2_ON)
-		{
-			tone2count -= ticks_per_sample;
-			while (tone2count <= 0)
-			{
-				tone2count += tone2latch;
-				tone2pos = (tone2pos + 1) & 0x1f;
-			}
-			v += tone[tone2pos];
-		}
-		if (TONE3_ON)
-		{
-			tone3count -= ticks_per_sample;
-			while (tone3count <= 0)
-			{
-				tone3count += tone3latch;
-				tone3pos = (tone3pos + 1) & 0x1f;
-			}
-			v += tone[tone3pos];
-		}
-#else
 		if (TONE1_ON /*||(tone1pos!=0) */ )
 		{
 			v += tone[tone1pos * tonesize / tone1samples];
@@ -281,7 +189,6 @@ static void vic6560_update (int param, INT16 *buffer, int length)
 			}
 #endif
 		}
-#endif
 		if (NOISE_ON)
 		{
 			v += noise[(int) ((double) noisepos * noisesize / noisesamples)];
@@ -310,11 +217,6 @@ static void vic6560_update (int param, INT16 *buffer, int length)
 int vic6560_custom_start (const struct MachineSound *driver)
 {
 	int i;
-
-#ifdef NEW_MODELL
-	/* problems with sound disabled samplerate=0 */
-	ticks_per_sample = VIC656X_CLOCK / options.samplerate;
-#endif
 
 	channel = stream_init ("VIC6560", 50, options.samplerate, 0, vic6560_update);
 
@@ -355,13 +257,6 @@ int vic6560_custom_start (const struct MachineSound *driver)
 				noiseshift <<= 1;
 		}
 	}
-#ifdef NEW_MODELL
-	for (i = 0; i < 32 / 2; i++)
-	{
-		tone[i] = (int) (sin (2 * M_PI * i / 32) * 127 + 0.5);
-		tone[16 + i] = -tone[i];
-	}
-#else
 	tonesize = options.samplerate / TONE_FREQUENCY_MIN;
 
 	tone = malloc (tonesize * sizeof (tone[0]));
@@ -374,7 +269,6 @@ int vic6560_custom_start (const struct MachineSound *driver)
 	{
 		tone[i] = (sin (2 * M_PI * i / tonesize) * 127 + 0.5);
 	}
-#endif
 	return 0;
 }
 
@@ -383,9 +277,7 @@ int vic6560_custom_start (const struct MachineSound *driver)
 /************************************/
 void vic6560_custom_stop (void)
 {
-#ifndef NEW_MODELL
 	free (tone);
-#endif
 	free (noise);
 }
 
