@@ -9,6 +9,9 @@
 #include <sys/mman.h>
 #endif
 
+/* From video.c. */
+void osd_video_initpre();
+
 /* put here anything you need to do when the program is started. Return 0 if */
 /* initialization was successful, nonzero otherwise. */
 int osd_init(void)
@@ -18,6 +21,12 @@ int osd_init(void)
 	if (osd_net_init()      !=OSD_OK) return OSD_NOT_OK;
 #endif	
 	if (osd_input_initpre() !=OSD_OK) return OSD_NOT_OK;
+
+	/* 
+	 * Initialize whatever is needed before the display is actually 
+	 * opened, e.g., artwork setup.
+	 */
+	osd_video_initpre();
 	
 	return OSD_OK;
 }
@@ -43,7 +52,7 @@ int main (int argc, char **argv)
 	munlockall();
 	printf("Success!\n");
 #endif
-	
+
 	/* some display methods need to do some stuff with root rights */
 	if (sysdep_init()!= OSD_OK) exit(OSD_NOT_OK);
 	
