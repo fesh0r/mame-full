@@ -16,7 +16,7 @@
 	* APE(R)C : British Rayon Research Association
 	* UCC : University College, London (circa january 1956)
 	* MAC (Magnetic Automatic Calculator) : "built by Wharf Engineering Laboratories"
-	(february 1955), which used germanium diodes
+	(february 1955), which used some germanium diodes
 	* The HEC (built by the British Tabulating Machine Company), a commercial machine sold
 	in two models at least (HEC 2M and HEC 4) (before 1955)
 
@@ -35,7 +35,8 @@
 	* CPU has one accumulator (A) and one register (R), plus a Control Register (this is
 	  what we would call an "instruction register" nowadays).  No Program Counter, each
 	  instruction contains the address of the next instruction (!).
-	* memory is composed of 256 circular magnetic tracks of 32 words : only 32 tracks can
+	* memory is composed of 256 (maximal value only found on the UCC - APE(X)C only has
+	  32 tracks) circular magnetic tracks of 32 words : only 32 tracks can
 	  be accessed at a time (the 16 first ones, plus 16 others chosen by the programmer),
 	  and the rotation rate is 3750rpm (62.5 rotations per second).
 	* two I/O units : tape reader and tape puncher.  A teletyper was designed to read
@@ -47,7 +48,7 @@
 	* 1 kIPS, although memory access times make this figure fairly theorical (drum rotation
 	  time : 16ms, which would allow about 60IPS when no optimization is made)
 	* there is no indirect addressing whatever, although dynamic modification of opcodes (!)
-	  allow to simulate it...
+	  allows to simulate it...
 	* a control panel allows operation and debugging of the machine.  (See /systems/apexc.c)
 
 	Conventions :
@@ -62,7 +63,7 @@
 */
 
 /*
-	Machine code:
+	Machine code (reference : Booth) :
 
 	Format of a machine instruction :
 bits:		1-5			6-10		11-15		16-20		21-25		26-31		32
@@ -145,8 +146,69 @@ field:		X address	X address	Y address	Y address	Function	C6			Vector
 	  are the vector counterparts of A(x)(y) and +(x)(y).
 
 
-	Note4 : The code is presented as it was in 1957.  It appears that it was somewhat
-	different in 1953
+
+
+	Note that the code has been presented so far as it was in 1957.  It appears that
+	it was somewhat different in 1953 (Booth&Booth) :
+
+	Format of a machine instruction :
+	Format for r, l, A :
+bits:		1-9			10-15		16-17	18-21		22-30		31-32
+field:		X address	C6			spare	Function	Y address	spare
+	Format for other instructions :
+bits:		1-9			10-17		18-21		22-30		31-32
+field:		X address	D			Function	Y address	D (part 2)
+
+	Meaning of fields :
+	drum # : MSBs for the address of the X operand.  I don't know whether this feature
+		was actually implemented, since it is said in Booth&Booth that the APE(X)C does
+		not use this feature (it had only one drum of 16 tracks at the time, hence the 9
+		address bits).
+
+	Function code :
+	#	Mnemonic	C6		Description
+
+	1	A   (x)(y)	32+n(?)	record first bits of A in (x).  The remaining bits of x
+		 1-n				are unaffected.
+
+	2	+c(x)(y)			A <- (x)
+
+	3	-c(x)(y)			A <- -(x)
+
+	4	+(x)(y)				A <- A+(x)
+
+	5	-(x)(y)				A <- A-(x)
+
+	6	T(x)(y)				R <- (x)
+
+	7	X (x)(y)			Multiply the contents of (x) by the number in R,
+							sending the 32 MSBs to A and 31 LSBs to R
+
+	8	r (y)		64-n(?)	Shift right : the 64 bits of A and R are shifted right n times.
+		 n					The sign bit of A is duplicated.
+
+	9	l (y)		n(?)	Shift left : the 64 bits of A and R are rotated left n times.
+		 n
+
+	10	R   (x)(y)	32+n	record R into (x).
+		 1-n				"the contents of R are filled with 0s or 1s
+							according as the original contents were positive or negative".
+
+	11	B<(x)>=(y)			Branch.  If A<0, next instruction is read from @x, whereas
+							if A>=0, next instruction is read from @y
+
+	12	Print(y)			Punch.  Contents of A are printed.
+
+	13	C(d+x)				branch ("switch Control") to instruction located in position
+							(D:X)
+
+	14	Stop
+
+	You will notice the absence of input instruction.  It seems that program and data were
+	meant to be entered with a teletyper or a card reader located on the control panel.
+
+	I don't know whether this computer really was in operation with this code.  Handle
+	these info with caution.
 */
 
 /*
