@@ -67,7 +67,7 @@ TARGET = mame
 # requires an IA-32 processor with MMX capability and the NASM assembler.
 #
 # On Linux-i386 you can enable this without causing problems on non
-# MMX capable processors, the Linux code will autodetect if an MMX
+# MMX capable processors: the Linux code will autodetect if an MMX
 # capable processor is present and use the right code.
 # EFFECT_MMX_ASM = 1
 
@@ -744,6 +744,9 @@ X11_JOYNAME = "Joystick"
 # Uncomment this to use XInput devices, e.g. additional mice as 
 # trackballs.
 # XINPUT_DEVICES = 1
+
+# Enable Xinerama support
+# X11_XINERAMA = 1
 
 
 ##############################################################################
