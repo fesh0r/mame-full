@@ -326,12 +326,12 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
         charindex = (tile & 0x07FF);
         palselect = (tile >> 7) & 0x10;
 
-		linep = (UINT16 *) bitmap->line[line];
+	linep = (UINT16 *) bitmap->line[line];
 
         for(x=0;x<8;x++)
         {
-			color = cache[ (charindex << 6) + (v_row << 3) + (x)];
-			linep[(xscroll+(i<<3)+x) & 0xFF] = color | palselect;
+	    color = cache[ (charindex << 6) + (v_row << 3) + (x)];
+	    linep[(xscroll+(i<<3)+x) & 0xFF] = color | palselect;
         }
     }
 
@@ -350,13 +350,18 @@ void sms_refresh_line(struct osd_bitmap *bitmap, int line)
 
             sl = (line - sy);
 
-			linep = (UINT16 *) bitmap->line[line];
+	    linep = (UINT16 *) bitmap->line[line];
 
             for(x=0;x<width;x++)
             {
                 color = cache[(sn << 6)+(sl << 3) + (x)];
-                if(color)
-					linep[(sx + x) & 0xFF] = 0x10 | color;
+		if ((nametable[((sx+x)&0xff)/8]&0x1000)) {
+  		  if (!linep[(sx+x)&0xff])
+		    linep[(sx + x) & 0xFF] = 0x10 | color;
+ 		} else {
+  		  if (color)
+		    linep[(sx + x) & 0xFF] = 0x10 | color;
+		}
             }
         }
     }
