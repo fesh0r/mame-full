@@ -86,6 +86,7 @@ static WRITE16_HANDLER( mcat_soundlatch_w )
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
+#if 0 // mcat only.. install read handler?
 static WRITE16_HANDLER( mcat_coin_w )
 {
 	if(ACCESSING_MSB16)
@@ -96,6 +97,7 @@ static WRITE16_HANDLER( mcat_coin_w )
 		coin_lockout_w(1, ~data & 0x8000);
 	}
 }
+#endif
 
 static READ16_HANDLER( mcat_wd_r )
 {

@@ -22,6 +22,7 @@ static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilema
 static int flipscreen;
 extern data16_t* jumppop_control;
 static data16_t bcstory_tilebank;
+extern data16_t* suprtrio_control;
 
 /******************************************************************************/
 
@@ -580,5 +581,36 @@ VIDEO_UPDATE( jumppop )
 //usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x", jumppop_control[0],jumppop_control[1],jumppop_control[2],jumppop_control[3],jumppop_control[4],jumppop_control[5],jumppop_control[6],jumppop_control[7]);
 
 	jumpkids_drawsprites(bitmap,cliprect);
+}
+
+
+VIDEO_UPDATE( suprtrio )
+{
+	tilemap_set_scrollx( pf1_alt_tilemap,0, -suprtrio_control[3] );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, -suprtrio_control[4] );
+	tilemap_set_scrollx( pf2_tilemap,0, -suprtrio_control[1] );
+	tilemap_set_scrolly( pf2_tilemap,0, -suprtrio_control[2] );
+
+	tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+
+	jumpkids_drawsprites(bitmap,cliprect);
+}
+
+
+
+VIDEO_START( suprtrio )
+{
+	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8,64,32);
+	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tumblep_scan,TILEMAP_OPAQUE,16,16,64,32);
+	pf2_tilemap =     tilemap_create(get_bg2_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,     16,16,64,32);
+
+	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(pf2_tilemap,0);
+	bcstory_tilebank = 0;
+
+	return 0;
 }
 

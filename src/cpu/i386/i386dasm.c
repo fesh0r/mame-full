@@ -1560,7 +1560,7 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 	UINT8 op;
 
 	opcode_table1 = i386_opcode_table1;
-	opcode_table2 = i386_opcode_table1;
+	opcode_table2 = i386_opcode_table2;
 	address_size = addr_size;
 	operand_size = op_size;
 	pc = eip;

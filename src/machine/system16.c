@@ -790,12 +790,12 @@ struct DACinterface sys16_7751_dac_interface =
 };
 
 
-struct UPD7759_interface sys16_upd7759_interface =
+struct upd7759_interface sys16_upd7759_interface =
 {
 	1,			/* 1 chip */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 48 }, 	/* volumes */
-	{ REGION_CPU2 },			/* memory region 3 contains the sample data */
-	UPD7759_SLAVE_MODE,
+	{ 0 },			/* memory region 3 contains the sample data */
 	{ sound_cause_nmi },
 };
 

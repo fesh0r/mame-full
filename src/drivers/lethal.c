@@ -2,7 +2,7 @@
 
  Lethal Enforcers
  (c) 1992 Konami
- Driver by R. Belmont.
+ Driver by R. Belmont and Nicola Salmoria.
 
  This hardware is exceptionally weird - they have a bunch of chips intended
  for use with a 68000 hooked up to an 8-bit CPU.  So everything is bankswitched
@@ -52,7 +52,7 @@ Sound CPU:  Z80 (Zilog Z0840006PSC)
 
 Konami Custom chips:
 
-054986A (sound GLU)
+054986A (sound latch + Z80 memory mapper/banker + output DAC)
 054539  (sound)
 054000  (collision/protection)
 053244A (x2) (sprites)
@@ -103,6 +103,47 @@ Label	Printed*	Position
 Push Button Test Switch
 
 
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+000xxxxxxxxxxxxx R   xxxxxxxx PROM      program ROM (banked)
+001xxxxxxxxxxxxx R/W xxxxxxxx WRAM      work RAM
+010000--00xxxxxx   W xxxxxxxx VREG      056832 control
+010000--01--xxxx   W xxxxxxxx VSCG      056832 control
+010000--1000---- R/W -------- AFR       watchdog reset
+010000--1001----   W          SDON      sound enable?
+010000--1010                  CCLR      ?
+010000--1011----              n.c.
+010000--11-000--   W ------xx COIN1/2   coin counters
+010000--11-000--   W ----xx-- CKO1/2    coin enables?
+010000--11-000--   W ---x---- VRD       \ related to reading graphics ROMs?
+010000--11-000--   W --x----- CRDB      /
+010000--11-001--   W -----xxx EEP       EEPROM DI, CS, CLK
+010000--11-001--   W ----x--- MUT       sound mute?
+010000--11-001--   W ---x---- CBNK      bank switch 4800-7FFF region between palette and 053245/056832
+010000--11-001--   W --x----- n.c.
+010000--11-001--   W xx------ SHD0/1    shadow control
+010000--11-010--   W -----xxx PCU1/XBA  palette bank (tilemap A)
+010000--11-010--   W -xxx---- PCU1/XBB  palette bank (tilemap B)
+010000--11-011--   W -----xxx PCU2/XBC  palette bank (tilemap C)
+010000--11-011--   W -xxx---- PCU2/XBD  palette bank (tilemap D)
+010000--11-100--   W -----xxx PCU3/XBO  palette bank (sprites)
+010000--11-100--   W -xxx---- PCU3/XBK  palette bank (background?)
+010000--11-101xx R   xxxxxxxx POG       gun inputs
+010000--11-11000 R   xxxxxxxx SW        dip switches, EEPROM DO, R/B
+010000--11-11001 R   xxxxxxxx SW        inputs
+010000--11-11010 R   xxxxxxxx SW        unused inputs (crossed out in schematics)
+010000--11-11011 R   xx------ HHI1/2    gun input ready?
+010000--11-11011 R   -------x NCPU      ?
+010000--11-111--   W --xxxxxx BREG      ROM bank select
+010010--00------              n.c.
+010010--01---xxx R/W xxxxxxxx OREG      053244
+010010--10-xxxxx R/W xxxxxxxx HIP       054000
+010010--11       R/W xxxxxxxx PAR       sound communication
+010100xxxxxxxxxx R/W xxxxxxxx OBJ       053245
+011xxxxxxxxxxxxx R/W xxxxxxxx VRAM      056832
+1xxxxxxxxxxxxxxx R   xxxxxxxx PROM      program ROM
+
+
 
 ***************************************************************************/
 
@@ -117,10 +158,10 @@ Push Button Test Switch
 
 VIDEO_START(lethalen);
 VIDEO_UPDATE(lethalen);
+WRITE8_HANDLER(le_palette_control);
 
 static int init_eeprom_count;
 static int cur_control2;
-static data8_t le_ram48[0x800];
 
 static struct EEPROM_interface eeprom_interface =
 {
@@ -161,7 +202,10 @@ static WRITE8_HANDLER( control2_w )
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
 	/* bit 2  is clock (active high) */
-	/* bit 4  bankswitches the 4800-4fff region: 0 = registers, 1 = RAM */
+	/* bit 3  is "MUT" on the schematics (?) */
+	/* bit 4  bankswitches the 4800-4fff region: 0 = registers, 1 = RAM ("CBNK" on schematics) */
+	/* bit 6  is "SHD0" (some kind of shadow control) */
+	/* bit 7  is "SHD1" (ditto) */
 
 	cur_control2 = data;
 
@@ -206,24 +250,39 @@ static READ8_HANDLER( le_4800_r )
 {
 	if (cur_control2 & 0x10)	// RAM enable
 	{
-		return le_ram48[offset];
+		return paletteram_r(offset);
 	}
-
-	switch (offset)
+	else
 	{
-		case 0x40:
-		case 0x41:
-		case 0x42:
-		case 0x43:
-		case 0x44:
-		case 0x45:
-		case 0x46:
-			return K053244_r(offset-0x40);
-			break;
+		if (offset < 0x0800)
+		{
+			switch (offset)
+			{
+				case 0x40:
+				case 0x41:
+				case 0x42:
+				case 0x43:
+				case 0x44:
+				case 0x45:
+				case 0x46:
+					return K053244_r(offset-0x40);
+					break;
 
-		case 0xca:
-			return sound_status_r(0);
-			break;
+				case 0xca:
+					return sound_status_r(0);
+					break;
+			}
+		}
+		else if (offset < 0x1800)
+			return K053245_r((offset - 0x0800) & 0x07ff);
+		else if (offset < 0x2000)
+			return K056832_ram_code_lo_r(offset - 0x1800);
+		else if (offset < 0x2800)
+			return K056832_ram_code_hi_r(offset - 0x2000);
+		else if (offset < 0x3000)
+			return K056832_ram_attr_lo_r(offset - 0x2800);
+		else // (offset < 0x3800)
+			return K056832_ram_attr_hi_r(offset - 0x3000);
 	}
 
 	return 0;
@@ -233,33 +292,47 @@ static WRITE8_HANDLER( le_4800_w )
 {
 	if (cur_control2 & 0x10)	// RAM enable
 	{
-		le_ram48[offset] = data;
-		return;
+		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 	}
-
-	switch (offset)
+	else
 	{
-		case 0xc6:
-			sound_cmd_w(0, data);
-			break;
+		if (offset < 0x0800)
+		{
+			switch (offset)
+			{
+				case 0xc6:
+					sound_cmd_w(0, data);
+					break;
 
-		case 0xc7:
-			sound_irq_w(0, data);
-			break;
+				case 0xc7:
+					sound_irq_w(0, data);
+					break;
 
-		case 0x40:
-		case 0x41:
-		case 0x42:
-		case 0x43:
-		case 0x44:
-		case 0x45:
-		case 0x46:
-			K053244_w(offset-0x40, data);
-			break;
+				case 0x40:
+				case 0x41:
+				case 0x42:
+				case 0x43:
+				case 0x44:
+				case 0x45:
+				case 0x46:
+					K053244_w(offset-0x40, data);
+					break;
 
-		default:
-			logerror("Unknown LE 48xx register write: %x to %x\n", data, offset);
-			break;
+				default:
+					logerror("Unknown LE 48xx register write: %x to %x\n", data, offset);
+					break;
+			}
+		}
+		else if (offset < 0x1800)
+			K053245_w((offset - 0x0800) & 0x07ff, data);
+		else if (offset < 0x2000)
+			K056832_ram_code_lo_w(offset - 0x1800, data);
+		else if (offset < 0x2800)
+			K056832_ram_code_hi_w(offset - 0x2000, data);
+		else if (offset < 0x3000)
+			K056832_ram_attr_lo_w(offset - 0x2800, data);
+		else // (offset < 0x3800)
+			K056832_ram_attr_hi_w(offset - 0x3000, data);
 	}
 }
 
@@ -271,17 +344,13 @@ static ADDRESS_MAP_START( le_main, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4080, 0x4080) AM_READ(MRA8_NOP)		// watchdog
 	AM_RANGE(0x40a0, 0x40a0) AM_READNOP			// gun input related?
 	AM_RANGE(0x40c4, 0x40c4) AM_WRITE(control2_w)
+	AM_RANGE(0x40c8, 0x40d0) AM_WRITE(le_palette_control)	// PCU1-PCU3 on the schematics
 	AM_RANGE(0x40d4, 0x40d7) AM_READNOP			// gun inputs?
 	AM_RANGE(0x40d8, 0x40d8) AM_READ(control2_r)
 	AM_RANGE(0x40d9, 0x40d9) AM_READ(input_port_0_r)
 	AM_RANGE(0x40db, 0x40db) AM_READNOP			// gun input related?
 	AM_RANGE(0x40dc, 0x40dc) AM_WRITE(le_bankswitch_w)
-	AM_RANGE(0x4800, 0x4fff) AM_READWRITE(le_4800_r, le_4800_w)	// bankswitched: RAM and registers
-	AM_RANGE(0x5800, 0x5fff) AM_READWRITE(paletteram_r, paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)	AM_RANGE(0x5000, 0x57ff) AM_READWRITE(K053245_r, K053245_w)
-	AM_RANGE(0x6000, 0x67ff) AM_READWRITE(K056832_ram_code_lo_r, K056832_ram_code_lo_w)
-	AM_RANGE(0x6800, 0x6fff) AM_READWRITE(K056832_ram_code_hi_r, K056832_ram_code_hi_w)
-	AM_RANGE(0x7000, 0x77ff) AM_READWRITE(K056832_ram_attr_lo_r, K056832_ram_attr_lo_w)
-	AM_RANGE(0x7800, 0x7fff) AM_READWRITE(K056832_ram_attr_hi_r, K056832_ram_attr_hi_w)
+	AM_RANGE(0x4800, 0x7fff) AM_READWRITE(le_4800_r, le_4800_w)	AM_BASE(&paletteram) // bankswitched: RAM and registers
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_BANK2) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
@@ -363,9 +432,9 @@ static MACHINE_DRIVER_START( lethalen )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 64*8-1, 0, 32*8-1)
+	MDRV_VISIBLE_AREA(220, 64*8-1, 0, 32*8-1)
 
-	MDRV_PALETTE_LENGTH(2048)
+	MDRV_PALETTE_LENGTH(7168)
 
 	MDRV_VIDEO_START(lethalen)
 	MDRV_VIDEO_UPDATE(lethalen)
@@ -434,7 +503,6 @@ static DRIVER_INIT( lethalen )
 	konami_rom_deinterleave_2(REGION_GFX2);
 
 	state_save_register_int("LE", 0, "control2", &cur_control2);
-	state_save_register_UINT8("LE", 0, "Ram48", le_ram48, 0x800);
 }
 
 GAMEX( 1992, lethalen, 0,        lethalen, lethalen, lethalen, ORIENTATION_FLIP_Y, "Konami", "Lethal Enforcers (US ver UAE)", GAME_NOT_WORKING)

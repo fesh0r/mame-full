@@ -161,8 +161,6 @@ static data8_t sound_r(void)
 
 static void system18_generic_init(int _rom_board)
 {
-	int rgnum;
-
 	/* set the ROM board */
 	rom_board = _rom_board;
 
@@ -760,11 +758,11 @@ static INPUT_PORTS_START( system18_generic )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
+#if 0
 static INPUT_PORTS_START( generic )
 	PORT_INCLUDE( system18_generic )
 INPUT_PORTS_END
-
+#endif
 
 
 /*************************************
@@ -1451,7 +1449,7 @@ ROM_END
 */
 ROM_START( cltchitr )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13751.4a", 0x000000, 0x40000, CRC(c8d80233) SHA1(69cdbb989f580abbb006820347becf8d233fa773) )
+	ROM_LOAD16_BYTE( "epr13794.4a", 0x000000, 0x40000, CRC(c8d80233) SHA1(69cdbb989f580abbb006820347becf8d233fa773) )
 	ROM_LOAD16_BYTE( "epr13795.6a", 0x000001, 0x40000, CRC(b0b60b67) SHA1(ee3325ddb7461008f556c1696157a766225b9ef5) )
 	ROM_LOAD16_BYTE( "epr13784.5a", 0x200000, 0x40000, CRC(80c8180d) SHA1(80e72ab7d97714009fd31b3d50176af84b0dcdb7) )
 	ROM_LOAD16_BYTE( "epr13786.7a", 0x200001, 0x40000, CRC(3095dac0) SHA1(20edce74b6f2a82a3865613e601a0e212615d0e4) )

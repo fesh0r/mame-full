@@ -305,7 +305,7 @@ READ8_HANDLER( tmnt_sres_r )
 WRITE8_HANDLER( tmnt_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
-	UPD7759_reset_w(0, data & 2);
+	upd7759_reset_w(0, data & 2);
 
 	/* bit 2 plays the title music */
 	if (data & 0x04)
@@ -1394,7 +1394,7 @@ static ADDRESS_MAP_START( tmnt_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(UPD7759_0_busy_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(upd7759_0_busy_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tmnt_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1404,8 +1404,8 @@ static ADDRESS_MAP_START( tmnt_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(UPD7759_0_port_w)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(UPD7759_0_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(upd7759_0_port_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(upd7759_0_start_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( punkshot_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2436,12 +2436,12 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback }	/* external port callback */
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 60 }, /* volume */
 	{ REGION_SOUND2 },		/* memory region */
-	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
 

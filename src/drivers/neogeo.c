@@ -759,74 +759,180 @@ static READ16_HANDLER( sma_random_r )
 	return old;
 }
 
+static READ16_HANDLER ( neogeo_video_r )
+{
+
+	/* 8-bit reads of the low byte do NOT return the correct value on real hardware */
+	/* they actually seem to return 0xcf in tests, but kof2002 requires 0xff for the
+	   'how to play' screen to work correctly */
+	data16_t retdata=0xffff;
+
+	if (!ACCESSING_MSB)
+	{
+		return 0xff;
+	}
+
+	offset &=0x3;
+
+	switch (offset<<1)
+	{
+		case 0: retdata=neogeo_vidram16_data_r(0,mem_mask);break;
+		case 2: retdata=neogeo_vidram16_data_r(0,mem_mask);break;
+		case 4:	retdata=neogeo_vidram16_modulo_r(0,mem_mask);break;
+		case 6:	retdata=neo_control_16_r(0,mem_mask);break;
+	}
+
+	return retdata;
+}
+
+static WRITE16_HANDLER( neogeo_video_w )
+{
+	offset &=0x7;
+
+	switch (offset<<1)
+	{
+		case 0x0:neogeo_vidram16_offset_w(0,data,mem_mask); break;
+		case 0x2:neogeo_vidram16_data_w(0,data,mem_mask); break;
+		case 0x4:neogeo_vidram16_modulo_w(0,data,mem_mask); break;
+		case 0x6:neo_control_16_w(0,data,mem_mask); break;
+		case 0x8:neo_irq2pos_16_w(0,data,mem_mask); break;
+		case 0xa:neo_irq2pos_16_w(1,data,mem_mask); break;
+		case 0xc:neo_irqack_w(0,data,mem_mask); break;
+		case 0xe:break; /* Unknown, see control_r */
+	}
+}
+
+static WRITE16_HANDLER(neogeo_syscontrol_w)
+{
+	offset &=0x7f;
+
+	switch (offset<<1)
+	{
+		case 0x00: trackball_select_16_w(0,data,mem_mask);break;
+
+		case 0x30: break; // LEDs (latch)
+		case 0x40: break; // LEDs (send)
+
+
+		case 0x50: pd4990a_control_16_w(0,data,mem_mask);break;
+		case 0x60: break; // coin counters
+		case 0x62: break; // coin counters
+		case 0x64: break; // coin lockout
+		case 0x66: break;// coun lockout
+
+		case 0xd0: pd4990a_control_16_w(0,data,mem_mask);break;
+
+		case 0xe0: break;// coin counters
+		case 0xe2: break;// coin counters
+		case 0xe4: break;// coin lockout
+		case 0xe6: break;// coun lockout
+
+		default: /* put warning message here */ break;
+	}
+}
+
+static WRITE16_HANDLER( neogeo_syscontrol2_w )
+{
+	offset &=0xf;
+
+	switch (offset<<1)
+	{
+		/* BIOS Select */
+		case 0x00: break;
+		case 0x02: neogeo_select_bios_vectors(0,data,mem_mask); break;
+		case 0x04: break;
+		case 0x06: break;
+		case 0x08: break;
+		case 0x0a: neo_board_fix_16_w(0,data,mem_mask);break;
+		case 0x0c: neogeo_sram16_lock_w(0,data,mem_mask);break;
+		case 0x0e:neogeo_setpalbank1_16_w(0,data,mem_mask);break;
+		/*GAME Select */
+		case 0x10: break;
+		case 0x12: neogeo_select_game_vectors(0,data,mem_mask);break;
+		case 0x14: break;
+		case 0x16: break;
+		case 0x18: break;
+		case 0x1a: neo_game_fix_16_w(0,data,mem_mask);break;
+		case 0x1c: neogeo_sram16_unlock_w(0,data,mem_mask);break;
+		case 0x1e: neogeo_setpalbank0_16_w(0,data,mem_mask);break;
+	}
+}
+
+static READ16_HANDLER(controller1and4_16_r)
+{
+	data16_t retvalue=0;
+
+	switch ((offset<<1)&0x80)
+	{
+		case 0x00: retvalue = controller1_16_r(0,mem_mask);break;
+		case 0x80: retvalue = controller4_16_r(0,mem_mask);break;
+	}
+
+	return retvalue;
+}
+
 /******************************************************************************/
 
+/*
+Games check for the text '-SNK STG SYSTEM-' at 0xc20010
+if they find it they jump to a subroutine at 0xc200b8.
+For and example of this see routine at 0xb013c in kof2002
+*/
+
+
+/* NeoGeo Memory Map (not finished) *
+
+0x000000   0x0fffff   r/o        Rom Bank 1
+
+0x100000   0x1fffff   r/w        Work Ram (0xffff in size, mirrored 16 times)
+
+0x200000   0x2fffff   r/o        Rom Bank 2
+0x200000   0x2fffef   w/o        Protection etc. on some games
+0x2ffff0   0x2fffff   w/o        Banking registers
+
+0x3c0000   0x3dffff   r/w        Video Access
+
+0x400000   0x7fffff   r/w        Palette (0x1fff in size, mirrored)
+
+0x800000   0x800fff   r/w        Mem Card (mirrored?)
+
+0xc00000   0xcfffff   r/o        BIOS rom (mirrored 8 times)
+
+0xd00000   0xd0ffff   r/w        SRAM
+
+*/
+
+
+/* Mirroring information thanks to Razoola */
+
 static ADDRESS_MAP_START( neogeo_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)			/* Rom bank 1 */
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_BANK1)		/* Ram bank 1 */
-	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA16_BANK4)		/* Rom bank 2 */
-
-	AM_RANGE(0x300000, 0x300001) AM_READ(controller1_16_r)
-	AM_RANGE(0x300080, 0x300081) AM_READ(controller4_16_r)	/* Test switch in here */
-	AM_RANGE(0x320000, 0x320001) AM_READ(timer16_r)			/* Coins, Calendar, Z80 communication */
-	AM_RANGE(0x340000, 0x340001) AM_READ(controller2_16_r)
-	AM_RANGE(0x380000, 0x380001) AM_READ(controller3_16_r)
-	AM_RANGE(0x3c0000, 0x3c0001) AM_READ(neogeo_vidram16_data_r) /* Baseball Stars */
-	AM_RANGE(0x3c0002, 0x3c0003) AM_READ(neogeo_vidram16_data_r)
-	AM_RANGE(0x3c0004, 0x3c0005) AM_READ(neogeo_vidram16_modulo_r)
-
-	AM_RANGE(0x3c0006, 0x3c0007) AM_READ(neo_control_16_r)
-	AM_RANGE(0x3c000a, 0x3c000b) AM_READ(neogeo_vidram16_data_r) /* Puzzle de Pon */
-
-	AM_RANGE(0x400000, 0x401fff) AM_READ(neogeo_paletteram16_r)
-	AM_RANGE(0x6a0000, 0x6a1fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x800000, 0x800fff) AM_READ(neogeo_memcard16_r) /* memory card */
-	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_BANK3)		/* system bios rom */
-	AM_RANGE(0xd00000, 0xd0ffff) AM_READ(neogeo_sram16_r)	/* 64k battery backed SRAM */
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)							/* Rom bank 1 */
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_BANK1) AM_MIRROR(0x0f0000)	/* Ram bank 1 (mirrored to 0x1fffff) */
+	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA16_BANK4)						/* Rom bank 2 */
+	AM_RANGE(0x300000, 0x31ffff) AM_READ(controller1and4_16_r)				/* Inputs */
+	AM_RANGE(0x320000, 0x33ffff) AM_READ(timer16_r)							/* Coins, Calendar, Z80 communication */
+	AM_RANGE(0x340000, 0x35ffff) AM_READ(controller2_16_r)					/* Inputs */
+	AM_RANGE(0x380000, 0x39ffff) AM_READ(controller3_16_r)					/* Inputs */
+	AM_RANGE(0x3c0000, 0x3dffff) AM_READ(neogeo_video_r)					/* Video Hardware */
+	AM_RANGE(0x400000, 0x7fffff) AM_READ(neogeo_paletteram16_r)				/* Palette */
+	AM_RANGE(0x800000, 0x800fff) AM_READ(neogeo_memcard16_r)				/* Memory Card */
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_BANK3) AM_MIRROR(0x0e0000)	/* Bios rom (mirrored every 128k for standard bios) */
+	AM_RANGE(0xd00000, 0xd0ffff) AM_READ(neogeo_sram16_r) AM_MIRROR(0x0f0000)	/* 64k battery backed SRAM */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( neogeo_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)	  /* ghost pilots writes to ROM */
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_BANK1)	// WORK RAM
-/*	{ 0x200000, 0x200fff, whp copies ROM data here. Why? Is there RAM in the banked ROM space? */
-/* trally writes to 200000-200003 as well, probably looking for a serial link */
-/* both games write to 0000fe before writing to 200000. The two things could be related. */
-/* sidkicks reads and writes to several addresses in this range, using this for copy */
-/* protection. Custom parts instead of the banked ROMs? */
-	AM_RANGE(0x2ffff0, 0x2fffff) AM_WRITE(neo_bankswitch_w)	/* NOTE THIS CHANGE TO END AT FF !!! */
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(watchdog_reset16_w)
-	AM_RANGE(0x320000, 0x320001) AM_WRITE(neo_z80_w)				/* Sound CPU */
-	AM_RANGE(0x380000, 0x380001) AM_WRITE(trackball_select_16_w)	/* Used by bios, unknown */
-	AM_RANGE(0x380030, 0x380031) AM_WRITE(MWA16_NOP)				/* Used by bios, unknown */
-	AM_RANGE(0x380040, 0x380041) AM_WRITE(MWA16_NOP)				/* Output leds */
-	AM_RANGE(0x380050, 0x380051) AM_WRITE(pd4990a_control_16_w)
-	AM_RANGE(0x380060, 0x380063) AM_WRITE(MWA16_NOP)				/* Used by bios, unknown */
-	AM_RANGE(0x3800e0, 0x3800e3) AM_WRITE(MWA16_NOP)				/* Used by bios, unknown */
-
-	AM_RANGE(0x3a0000, 0x3a0001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x3a0010, 0x3a0011) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x3a0002, 0x3a0003) AM_WRITE(neogeo_select_bios_vectors)
-	AM_RANGE(0x3a0012, 0x3a0013) AM_WRITE(neogeo_select_game_vectors)
-	AM_RANGE(0x3a000a, 0x3a000b) AM_WRITE(neo_board_fix_16_w) /* Select board FIX char rom */
-	AM_RANGE(0x3a001a, 0x3a001b) AM_WRITE(neo_game_fix_16_w)	/* Select game FIX char rom */
-	AM_RANGE(0x3a000c, 0x3a000d) AM_WRITE(neogeo_sram16_lock_w)
-	AM_RANGE(0x3a001c, 0x3a001d) AM_WRITE(neogeo_sram16_unlock_w)
-	AM_RANGE(0x3a000e, 0x3a000f) AM_WRITE(neogeo_setpalbank1_16_w)
-	AM_RANGE(0x3a001e, 0x3a001f) AM_WRITE(neogeo_setpalbank0_16_w)	/* Palette banking */
-
-	AM_RANGE(0x3c0000, 0x3c0001) AM_WRITE(neogeo_vidram16_offset_w)
-	AM_RANGE(0x3c0002, 0x3c0003) AM_WRITE(neogeo_vidram16_data_w)
-	AM_RANGE(0x3c0004, 0x3c0005) AM_WRITE(neogeo_vidram16_modulo_w)
-
-	AM_RANGE(0x3c0006, 0x3c0007) AM_WRITE(neo_control_16_w)	/* IRQ2 control */
-	AM_RANGE(0x3c0008, 0x3c000b) AM_WRITE(neo_irq2pos_16_w)	/* IRQ2 position */
-	AM_RANGE(0x3c000c, 0x3c000d) AM_WRITE(neo_irqack_w)		/* IRQ acknowledge */
-//	AM_RANGE(0x3c000e, 0x3c000f) /* Unknown, see control_r */
-
-	AM_RANGE(0x400000, 0x401fff) AM_WRITE(neogeo_paletteram16_w)	// COLOR RAM BANK1
-	AM_RANGE(0x6a0000, 0x6a1fff) AM_WRITE(MWA16_RAM)	// COLOR RAM BANK0 (used only in startup tests?)
-	AM_RANGE(0x800000, 0x800fff) AM_WRITE(neogeo_memcard16_w) 	/* mem card */
-	AM_RANGE(0xd00000, 0xd0ffff) AM_WRITE(neogeo_sram16_w) AM_BASE(&neogeo_sram16)	/* 64k battery backed SRAM */
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_BANK1) AM_MIRROR(0x0f0000)	/* WORK RAM (mirrored to 0x1fffff) */
+	/* Some games have protection devices in the 0x200000 region, it appears to map to cart space, not surprising, the rom is read here too */
+	AM_RANGE(0x2ffff0, 0x2fffff) AM_WRITE(neo_bankswitch_w)			/* Bankswitch for standard games */
+	AM_RANGE(0x300000, 0x31ffff) AM_WRITE(watchdog_reset16_w)		/* Watchdog, NOTE, odd addresses only! */
+	AM_RANGE(0x320000, 0x33ffff) AM_WRITE(neo_z80_w)				/* Sound CPU  EVEN BYTES only!*/
+	AM_RANGE(0x380000, 0x39ffff) AM_WRITE(neogeo_syscontrol_w)		/* Coin Counters, LEDs, Clock etc. */
+	AM_RANGE(0x3a0000, 0x3affff) AM_WRITE(neogeo_syscontrol2_w)		/* BIOS / Game select etc. */
+	AM_RANGE(0x3c0000, 0x3dffff) AM_WRITE(neogeo_video_w)			/* Video Hardware */
+	AM_RANGE(0x400000, 0x4fffff) AM_WRITE(neogeo_paletteram16_w)	/* Palettes */
+	AM_RANGE(0x800000, 0x800fff) AM_WRITE(neogeo_memcard16_w)		/* Memory card */
+	AM_RANGE(0xd00000, 0xd0ffff) AM_WRITE(neogeo_sram16_w) AM_BASE(&neogeo_sram16) AM_MIRROR(0x0f0000)	/* 64k battery backed SRAM */
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -5770,6 +5876,43 @@ ROM_START( mslug4 ) /* Original Version - Encrypted GFX */
 	ROM_LOAD16_BYTE( "263-c6.bin",   0x2000001, 0x800000, CRC(5c8ba116) SHA1(6034db09c8706d4ddbcefc053efbc47a0953eb92) ) /* Plane 2,3 */
 ROM_END
 
+/* testing mirroring / vram read changes, remove me */
+ROM_START( kof2002 ) /* Encrypted Set */
+	ROM_REGION( 0x500000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "265-p1.bin", 0x000000, 0x100000, CRC(9ede7323) SHA1(ad9d45498777fda9fa58e75781f48e09aee705a6) )
+	ROM_LOAD16_WORD_SWAP( "265-p2.bin", 0x100000, 0x400000, CRC(327266b8) SHA1(98f445cc0a94f8744d74bca71cb420277622b034) )
+
+	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )
+	ROM_FILL( 0x000000, 0x20000, 0 )
+	ROM_REGION( 0x20000, REGION_GFX2, 0 )
+	ROM_LOAD( "sfix.sfx", 0x000000, 0x20000, CRC(354029fc) SHA1(4ae4bf23b4c2acff875775d4cbff5583893ce2a1) )
+
+	ROM_REGION( 0x20000, REGION_USER4, 0 )
+	/* Encrypted, we load it here for reference and replace with decrypted ROM */
+	ROM_LOAD( "265-m1.bin", 0x00000, 0x20000, CRC(85aaa632) SHA1(744fba4ca3bc3a5873838af886efb97a8a316104) )
+	/* Decrypted */
+	NEO_BIOS_SOUND_128K( "265-m1_decrypted.bin", CRC(1c661a4b) SHA1(4e5aa862a0a182a806d538996ddc68d9f2dffaf7) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	/* Encrypted */
+	ROM_LOAD( "265-v1.bin", 0x000000, 0x800000, CRC(15e8f3f5) SHA1(7c9e6426b9fa6db0158baa17a6485ffce057d889) )
+	ROM_LOAD( "265-v2.bin", 0x800000, 0x800000, CRC(da41d6f9) SHA1(a43021f1e58947dcbe3c8ca5283b20b649f0409d) )
+
+	NO_DELTAT_REGION
+
+	ROM_REGION( 0x4000000, REGION_GFX3, 0 )
+	/* Encrypted */
+	ROM_LOAD16_BYTE( "265-c1.bin", 0x0000000, 0x800000, CRC(2b65a656) SHA1(9c46d8cf5b1ef322db442ac6a9b9406ab49206c5) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "265-c2.bin", 0x0000001, 0x800000, CRC(adf18983) SHA1(150cd4a5e51e9df88688469d2ea7675c2cf3658a) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "265-c3.bin", 0x1000000, 0x800000, CRC(875e9fd7) SHA1(28f52d56192d48bbc5dc3c97abf456bd34a58cbd) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "265-c4.bin", 0x1000001, 0x800000, CRC(2da13947) SHA1(f8d79ec2c236aa3d3648a4f715676899602122c1) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "265-c5.bin", 0x2000000, 0x800000, CRC(61bd165d) SHA1(b3424db84bc683d858fb635bc42728f9cdd89caf) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "265-c6.bin", 0x2000001, 0x800000, CRC(03fdd1eb) SHA1(6155c7e802062f4eafa27e414c4e73ee59b868bf) ) /* Plane 2,3 */
+	ROM_LOAD16_BYTE( "265-c7.bin", 0x3000000, 0x800000, CRC(1a2749d8) SHA1(af7d9ec1d576209826fa568f676bbff92f6d6ddd) ) /* Plane 0,1 */
+	ROM_LOAD16_BYTE( "265-c8.bin", 0x3000001, 0x800000, CRC(ab0bb549) SHA1(d23afb60b7f831f7d4a98ad3c4a00ee19877a1ce) ) /* Plane 2,3 */
+ROM_END
+
 /******************************************************************************/
 
 /* dummy entry for the dummy bios driver */
@@ -6182,6 +6325,50 @@ DRIVER_INIT( popbounc )
 	init_neogeo();
 }
 
+static void neo_pcm2_swap(void)
+{
+	unsigned int addrs[2]={0x000000,0xA5000}; /* kof2002 */
+	unsigned int xordata[8]={0xF9,0xE0,0x5D,0xF3,0xEA,0x92,0xBE,0xEF}; /* kof2002 */
+
+	UINT8 *src = memory_region(REGION_SOUND1);
+	UINT8 *buf = malloc(0x1000000);
+	int i, j, d;
+
+	memcpy(buf,src,0x1000000);
+	for (i=0;i<0x1000000;i++)
+	{
+		j=BITSWAP24(i,23,22,21,20,19,18,17,0,15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,16);
+		j=j^addrs[1];
+		d=((i+addrs[0])&0xffffff);
+		src[j]=buf[d]^xordata[j&0x7];
+	}
+	free(buf);
+}
+
+DRIVER_INIT( kof2002 )
+{
+	int i;
+	unsigned int sec[]={0x100000,0x280000,0x300000,0x180000,0x000000,0x380000,0x200000,0x080000};
+	UINT8 *src = memory_region(REGION_CPU1)+0x100000;
+	UINT8 *dst = malloc(0x400000);
+	if (dst)
+	{
+		memcpy( dst, src, 0x400000 );
+		for( i=0; i<8; ++i )
+		{
+			memcpy( src+i*0x80000, dst+sec[i], 0x80000 );
+		}
+	free(dst);
+	}
+
+	neo_pcm2_swap();
+
+	neogeo_fix_bank_type = 0;
+	kof2000_neogeo_gfx_decrypt(0xec);
+
+	init_neogeo();
+}
+
 /******************************************************************************/
 
 static UINT32 cpu1_second_bankaddress;
@@ -6340,6 +6527,7 @@ GAMEB( 2001, zupapa,   neogeo,   neogeo, neogeo, neogeo,  zupapa,   ROT0, "SNK",
 GAMEB( 2001, sengoku3, neogeo,   neogeo, neo320, neogeo,  sengoku3, ROT0, "SNK", "Sengoku 3" )	/* Encrypted GFX */
 GAMEB( 2001, kof2001,  neogeo,   neogeo, neogeo, neogeo,  kof2001,  ROT0, "Eolith / SNK", "The King of Fighters 2001 (set 1)" ) /* Encrypted GFX */
 GAMEB( 2001, kof2001h, kof2001,  neogeo, neogeo, neogeo,  kof2001,  ROT0, "Eolith / SNK", "The King of Fighters 2001 (set 2)" ) /* Encrypted GFX */
+GAMEB( 2002, kof2002,  neogeo,   neogeo, neogeo, neogeo,  kof2002,  ROT0, "Eolith / Playmore", "The King of Fighters 2002" )
 
 /* Alpha Denshi Co. / ADK (changed name in 1993) */
 GAMEB( 1990, maglord,  neogeo,   neogeo, neo320, neogeo,  neogeo,   ROT0, "Alpha Denshi Co.", "Magician Lord (set 1)" )

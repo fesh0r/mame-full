@@ -5,6 +5,7 @@ MESS = 1
 COREDEFS += -DNEOFREE -DMESS
 
 # CPU cores used in MESS
+# uncomment the following lines to include a CPU core
 CPUS+=Z80@
 CPUS+=Z180@
 CPUS+=8080@
@@ -127,8 +128,10 @@ CPUS+=I386@
 #CPUS+=V810@
 #CPUS+=M37710@
 #CPUS+=PPC403@
+#CPUS+=PPC602@
 #CPUS+=PPC603@
 #CPUS+=SE3208@
+#CPUS+=MC68HC11@
 CPUS+=Z80GB@
 CPUS+=CDP1802@
 CPUS+=SC61860@

@@ -612,10 +612,11 @@ static INPUT_PORTS_START( xboard_generic )
 INPUT_PORTS_END
 
 
+#if 0
 static INPUT_PORTS_START( generic )
 	PORT_INCLUDE( xboard_generic )
 INPUT_PORTS_END
-
+#endif
 
 
 /*************************************
@@ -2081,8 +2082,8 @@ GAME( 1987, thndrbld, 0,        xboard,  thndrbld, generic_xboard, ROT0, "Sega",
 GAME( 1987, thndrbdj, thndrbld, xboard,  thndrbld, generic_xboard, ROT0, "Sega", "Thunder Blade (Japan)" ) // not encrypted
 GAMEX(1989, loffire,  0,        loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (World, FD1094 317-0136)", GAME_NOT_WORKING ) // decrypted
 GAMEX(1989, loffirej, loffire,  loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (Japan, FD1094 317-0134)", GAME_NOT_WORKING ) // decrypted
-GAMEX(19??, gprider,  0,        xboard,  gprider,  generic_xboard, ROT0, "Sega", "GP Rider (set 1, US, FD1094 317-0162)", GAME_NOT_WORKING ) // decrypted
-GAMEX(19??, gpridera, gprider,  xboard,  gprider,  generic_xboard, ROT0, "Sega", "GP Rider (set 2, FD1094 317-0163)", GAME_NOT_WORKING ) // decrypted, no prg roms
+GAMEX(1990, gprider,  0,        xboard,  gprider,  generic_xboard, ROT0, "Sega", "GP Rider (set 1, US, FD1094 317-0162)", GAME_NOT_WORKING ) // decrypted
+GAMEX(1990, gpridera, gprider,  xboard,  gprider,  generic_xboard, ROT0, "Sega", "GP Rider (set 2, FD1094 317-0163)", GAME_NOT_WORKING ) // decrypted, no prg roms
 GAME( 1989, smgp,     0,        xboard,  smgp,     generic_xboard, ROT0, "Sega", "Super Monaco GP (set 1, US, Rev A, FD1094 317-0125a)" ) // decrypted
 GAME( 1989, smgpa,    smgp,     xboard,  smgp,     generic_xboard, ROT0, "Sega", "Super Monaco GP (set 2, US, FD1094 317-0125a)" ) // decrypted
 GAME( 1989, smgpb,    smgp,     xboard,  smgp,     generic_xboard, ROT0, "Sega", "Super Monaco GP (set 3, World, Rev A, FD1094 317-0126a)" ) // decrypted

@@ -113,7 +113,7 @@ static MACHINE_INIT( hangon )
 	ppi_write_offset = 0;
 }
 
-
+#if 0
 static INTERRUPT_GEN( hangon_irq )
 {
 	/* according to the schematics, IRQ2 is generated every 16 scanlines */
@@ -122,7 +122,7 @@ static INTERRUPT_GEN( hangon_irq )
 	else
 		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
-
+#endif
 
 
 /*************************************

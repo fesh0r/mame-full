@@ -5753,7 +5753,7 @@ static void K056832_change_rambank(void)
 
 	if (K056832_regs[0] & 0x02)	// external linescroll enable
 	{
-		K056832_SelectedPage = K056832_PAGE_COUNT + 1;
+		K056832_SelectedPage = K056832_PAGE_COUNT;
 	}
 	else
 	{

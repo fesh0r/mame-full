@@ -113,8 +113,8 @@ ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
-	-Wall -Wno-sign-compare -Wunused \
+	$(ARCH) -O3 -fomit-frame-pointer -fno-strict-aliasing \
+	-Werror -Wall -Wno-sign-compare -Wunused -Wno-unused-functions \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \

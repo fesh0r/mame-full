@@ -342,8 +342,8 @@ extern struct YM2203interface sys16_3xym2203_interface;
 extern struct DACinterface datsu_dac_interface;
 extern struct DACinterface sys16_7751_dac_interface;
 
-extern struct UPD7759_interface sys16_upd7759_interface;
-extern struct UPD7759_interface aliensyn_upd7759_interface;
+extern struct upd7759_interface sys16_upd7759_interface;
+extern struct upd7759_interface aliensyn_upd7759_interface;
 
 extern struct YM2413interface sys16_ym2413_interface;
 

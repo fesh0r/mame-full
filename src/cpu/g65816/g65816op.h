@@ -624,7 +624,7 @@ INLINE uint EA_DIY(void)   {uint tmp = REGISTER_DB | OPER_16_D(); if((tmp^(tmp+R
 INLINE uint EA_DLIY(void)  {return OPER_24_D() + REGISTER_Y;}
 INLINE uint EA_AXI(void)   {return read_16_AXI(MAKE_UINT_16(OPER_16_IMM() + REGISTER_X));}
 INLINE uint EA_S(void)     {return MAKE_UINT_16(REGISTER_S + OPER_8_IMM());}
-INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
+INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_IMM()) + REGISTER_Y) | REGISTER_DB;}
 
 
 

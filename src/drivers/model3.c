@@ -2800,7 +2800,7 @@ ROM_END
 	0x02: V-blank start
 	0x01: Unused ?
 */
-static int model3_vblank = 0;
+/*static int model3_vblank = 0;*/
 static INTERRUPT_GEN(model3_interrupt)
 {
 	/*if(model3_vblank == 0) {
@@ -3208,7 +3208,6 @@ static DRIVER_INIT( dirtdvls )
 
 static DRIVER_INIT( daytona2 )
 {
-	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
 	init_model3_20();
 }
 

@@ -252,8 +252,6 @@ static void *timer[4];
 
 static data8_t vblank_state;
 
-static data32_t *asic_reset;
-
 static data8_t sio_data[4];
 static data8_t sio_irq_clear;
 static data8_t sio_irq_enable;

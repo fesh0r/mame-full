@@ -30,7 +30,7 @@ Notes(general):
 -Fix sound banking,all the games have issues with this...
 -Fix the dip-switches in the first version of this board.
 -There could be timing issues caused by MCU simulation at $80004.
--What is input tag "FF"?Investigate on it...
+-Use IPT_MAHJONG inputs.
 
 Notes (1st MCU ver.):
 -$f000e is bogus,maybe the program snippets can modify this value,or the MCU itself can
@@ -336,11 +336,15 @@ WRITE16_HANDLER( jalmah_tilebank_w )
 #define MCU_READ(_number_,_bit_,_offset_,_retval_)\
 if((0xffff - input_port_##_number_##_word_r(0,0)) & _bit_) { jm_regs[_offset_] = _retval_; }
 
-/*For debug purpose*/
+/*For debug purpose,will be better handled...*/
 static READ16_HANDLER( jalmah_reg_r )
 {
-	if(offset != 0x404/2)
-		usrintf_showmessage("Read to input area %06x %04x",activecpu_get_pc(),offset*2);
+	#ifdef MAME_DEBUG
+	if(offset != 0x404/2 && offset != 0x400/2 &&
+	   offset != 0x7b4/2 && offset != 0x7d4/2 && offset != 0x7b2/2 &&
+	   offset != 0x7aa/2 && offset != 0x452/2 && offset != 0x450/2)
+		logerror("Read to input area %06x %04x\n",activecpu_get_previouspc(),offset*2);
+	#endif
 	switch(offset)
 	{
 		case (0x000/2):
@@ -450,57 +454,57 @@ static READ16_HANDLER( jalmah_reg_r )
 			else
 				return jm_regs[offset];
 		/*kakumei 1/2 protection work-around*/
-		case (0x447/2):
+		case (0x446/2):
 			if(KAKUMEI_MCU || KAKUMEI2_MCU)
 			{
-				MCU_READ(3,0x0001,0x447/2,0x00);/*FF(?)*/
-				MCU_READ(4,0x0400,0x447/2,0x01);/*A*/
-				MCU_READ(4,0x1000,0x447/2,0x02);/*B*/
-				MCU_READ(4,0x0200,0x447/2,0x03);/*C*/
-				MCU_READ(4,0x0800,0x447/2,0x04);/*D*/
-				MCU_READ(4,0x0004,0x447/2,0x05);/*E*/
-				MCU_READ(4,0x0010,0x447/2,0x06);/*F*/
-				MCU_READ(4,0x0002,0x447/2,0x07);/*G*/
-				MCU_READ(4,0x0008,0x447/2,0x08);/*H*/
-				MCU_READ(3,0x0400,0x447/2,0x09);/*I*/
-				MCU_READ(3,0x1000,0x447/2,0x0a);/*J*/
-				MCU_READ(3,0x0200,0x447/2,0x0b);/*K*/
-				MCU_READ(3,0x0800,0x447/2,0x0c);/*L*/
-				MCU_READ(3,0x0004,0x447/2,0x0d);/*M*/
-				MCU_READ(3,0x0010,0x447/2,0x0e);/*N*/
-				MCU_READ(2,0x0200,0x447/2,0x0f);/*RON   (trusted)*/
-				MCU_READ(2,0x1000,0x447/2,0x10);/*REACH (trusted)*/
-				MCU_READ(2,0x0400,0x447/2,0x11);/*KAN            */
-				MCU_READ(3,0x0008,0x447/2,0x12);/*PON            */
-				MCU_READ(3,0x0002,0x447/2,0x13);/*CHI 	(trusted)*/
-				MCU_READ(2,0x0004,0x447/2,0x14);/*START1*/
+				MCU_READ(3,0x0001,0x446/2,0x00);/*FF*/
+				MCU_READ(4,0x0400,0x446/2,0x01);/*A*/
+				MCU_READ(4,0x1000,0x446/2,0x02);/*B*/
+				MCU_READ(4,0x0200,0x446/2,0x03);/*C*/
+				MCU_READ(4,0x0800,0x446/2,0x04);/*D*/
+				MCU_READ(4,0x0004,0x446/2,0x05);/*E*/
+				MCU_READ(4,0x0010,0x446/2,0x06);/*F*/
+				MCU_READ(4,0x0002,0x446/2,0x07);/*G*/
+				MCU_READ(4,0x0008,0x446/2,0x08);/*H*/
+				MCU_READ(3,0x0400,0x446/2,0x09);/*I*/
+				MCU_READ(3,0x1000,0x446/2,0x0a);/*J*/
+				MCU_READ(3,0x0200,0x446/2,0x0b);/*K*/
+				MCU_READ(3,0x0800,0x446/2,0x0c);/*L*/
+				MCU_READ(3,0x0004,0x446/2,0x0d);/*M*/
+				MCU_READ(3,0x0010,0x446/2,0x0e);/*N*/
+				MCU_READ(2,0x0200,0x446/2,0x0f);/*RON   (trusted)*/
+				MCU_READ(2,0x1000,0x446/2,0x10);/*REACH (trusted)*/
+				MCU_READ(2,0x0400,0x446/2,0x11);/*KAN            */
+				MCU_READ(3,0x0008,0x446/2,0x12);/*PON            */
+				MCU_READ(3,0x0002,0x446/2,0x13);/*CHI 	(trusted)*/
+				MCU_READ(2,0x0004,0x446/2,0x14);/*START1*/
 			}
 			return jm_regs[offset];
 		/*suchipi protection work-around*/
-		case (0x44b/2):
+		case (0x44a/2):
 			if(SUCHIPI_MCU)
 			{
-				MCU_READ(3,0x0001,0x44b/2,0x00);/*FF(?)*/
-				MCU_READ(4,0x0400,0x44b/2,0x01);/*A*/
-				MCU_READ(4,0x1000,0x44b/2,0x02);/*B*/
-				MCU_READ(4,0x0200,0x44b/2,0x03);/*C*/
-				MCU_READ(4,0x0800,0x44b/2,0x04);/*D*/
-				MCU_READ(4,0x0004,0x44b/2,0x05);/*E*/
-				MCU_READ(4,0x0010,0x44b/2,0x06);/*F*/
-				MCU_READ(4,0x0002,0x44b/2,0x07);/*G*/
-				MCU_READ(4,0x0008,0x44b/2,0x08);/*H*/
-				MCU_READ(3,0x0400,0x44b/2,0x09);/*I*/
-				MCU_READ(3,0x1000,0x44b/2,0x0a);/*J*/
-				MCU_READ(3,0x0200,0x44b/2,0x0b);/*K*/
-				MCU_READ(3,0x0800,0x44b/2,0x0c);/*L*/
-				MCU_READ(3,0x0004,0x44b/2,0x0d);/*M*/
-				MCU_READ(3,0x0010,0x44b/2,0x0e);/*N*/
-				MCU_READ(2,0x0200,0x44b/2,0x0f);/*RON*/
-				MCU_READ(2,0x1000,0x44b/2,0x10);/*REACH*/
-				MCU_READ(2,0x0400,0x44b/2,0x11);/*KAN*/
-				MCU_READ(3,0x0008,0x44b/2,0x12);/*PON*/
-				MCU_READ(3,0x0002,0x44b/2,0x13);/*CHI*/
-				//MCU_READ(2,0x0004,0x44b/2,0x14);/*START1(wrong)  */
+				MCU_READ(3,0x0001,0x44a/2,0x00);/*FF*/
+				MCU_READ(4,0x0400,0x44a/2,0x01);/*A*/
+				MCU_READ(4,0x1000,0x44a/2,0x02);/*B*/
+				MCU_READ(4,0x0200,0x44a/2,0x03);/*C*/
+				MCU_READ(4,0x0800,0x44a/2,0x04);/*D*/
+				MCU_READ(4,0x0004,0x44a/2,0x05);/*E*/
+				MCU_READ(4,0x0010,0x44a/2,0x06);/*F*/
+				MCU_READ(4,0x0002,0x44a/2,0x07);/*G*/
+				MCU_READ(4,0x0008,0x44a/2,0x08);/*H*/
+				MCU_READ(3,0x0400,0x44a/2,0x09);/*I*/
+				MCU_READ(3,0x1000,0x44a/2,0x0a);/*J*/
+				MCU_READ(3,0x0200,0x44a/2,0x0b);/*K*/
+				MCU_READ(3,0x0800,0x44a/2,0x0c);/*L*/
+				MCU_READ(3,0x0004,0x44a/2,0x0d);/*M*/
+				MCU_READ(3,0x0010,0x44a/2,0x0e);/*N*/
+				MCU_READ(2,0x0200,0x44a/2,0x0f);/*RON*/
+				MCU_READ(2,0x1000,0x44a/2,0x10);/*REACH*/
+				MCU_READ(2,0x0400,0x44a/2,0x11);/*KAN*/
+				MCU_READ(3,0x0008,0x44a/2,0x12);/*PON*/
+				MCU_READ(3,0x0002,0x44a/2,0x13);/*CHI*/
+				//MCU_READ(2,0x0004,0x44a/2,0x14);/*START1(wrong)  */
 			}
 			return jm_regs[offset];
 		case (0x7b8/2):
@@ -512,7 +516,7 @@ static READ16_HANDLER( jalmah_reg_r )
 		case (0xbe0/2):
 			if(MJZOOMIN_MCU || DAIREIKA_MCU)
 			{
-				MCU_READ(3,0x0001,0xbe0/2,0x00);/*FF(?)*/
+				MCU_READ(3,0x0001,0xbe0/2,0x00);/*FF*/
 				MCU_READ(4,0x0400,0xbe0/2,0x01);/*A*/
 				MCU_READ(4,0x1000,0xbe0/2,0x02);/*B*/
 				MCU_READ(4,0x0200,0xbe0/2,0x03);/*C*/
@@ -582,7 +586,7 @@ WRITE16_HANDLER( jalmah_okirom_w )
 	if(data & 2)
 		printf("ZA = 2\n");
 	//usrintf_showmessage("%02x %02x",oki_rom,oki_bank);
-	OKIM6295_set_bank_base(0, ((oki_rom * 0x80000) + (oki_bank * 0x20000)) % memory_region_length(REGION_SOUND1));
+	//OKIM6295_set_bank_base(0, ((oki_rom * 0x80000) + (oki_bank * 0x20000)) % memory_region_length(REGION_SOUND1));
 }
 
 static WRITE16_HANDLER( jalmah_okibank_w )
@@ -591,7 +595,7 @@ static WRITE16_HANDLER( jalmah_okibank_w )
 		oki_bank = data & 3;
 
 	//usrintf_showmessage("%02x %02x",oki_rom,oki_bank);
-	OKIM6295_set_bank_base(0, ((oki_rom * 0x80000) + (oki_bank * 0x20000)) % memory_region_length(REGION_SOUND1));
+	//OKIM6295_set_bank_base(0, ((oki_rom * 0x80000) + (oki_bank * 0x20000)) % memory_region_length(REGION_SOUND1));
 }
 
 WRITE16_HANDLER( jalmah_flip_screen_w )
@@ -734,7 +738,7 @@ INPUT_PORTS_START( jalmah )
 	PORT_BIT( 0xe9fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 FF")  	PORT_CODE(KEYCODE_3) //? seems a button,affects continue countdown
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 FLIP FLOP")  	PORT_CODE(KEYCODE_Y)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 CHI") 	PORT_CODE(KEYCODE_SPACE)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 M")   	PORT_CODE(KEYCODE_M)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P1 PON") 	PORT_CODE(KEYCODE_LALT)
@@ -764,7 +768,7 @@ INPUT_PORTS_START( jalmah )
 	PORT_BIT( 0xe9fb, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 FF")  	PORT_CODE(KEYCODE_4) //? seems a button,affects continue countdown
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 FLIP FLOP")  	PORT_CODE(CODE_NONE)
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 CHI") 	PORT_CODE(CODE_NONE)
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 M")   	PORT_CODE(CODE_NONE)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("P2 PON") 	PORT_CODE(CODE_NONE)
@@ -1766,4 +1770,4 @@ GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjo
 GAMEX( 1990, kakumei,  0, jalmah, jalmah2, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1992, kakumei2, 0, jalmah, jalmah2, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS )
 /*Can't play with the cards when you win,and sometimes when there are multiple CHI/PON/KAN decisions and the game waits for something,maybe is waiting for a button to be pressed or a RAM address to be changed...*/
-GAMEX( 1993, suchipi,  0, jalmah, jalmah2, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pi Special",        GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEX( 1993, suchipi,  0, jalmah, jalmah2, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pie Special",        GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -228,16 +228,6 @@ static READ16_HANDLER( trackball_r )
 	return (lower & 15) | ((upper & 15) << 4);
 }
 
-
-static READ32_HANDLER( trackball32_8bit_r )
-{
-	int lower = readinputport(6);
-	int upper = readinputport(7);
-
-	return (lower & 255) | ((upper & 255) << 8);
-}
-
-
 static READ32_HANDLER( trackball32_4bit_r )
 {
 	static int effx, effy;

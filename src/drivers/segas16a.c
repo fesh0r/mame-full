@@ -5,8 +5,7 @@
 ****************************************************************************
 
 	Known bugs:
-		* sdi is unplayable after level 1 (screen / sprites get flipped)
-		  (this occurs on both s16a & s16b versions)
+		* none at this time
 
 ***************************************************************************
 
@@ -1811,9 +1810,9 @@ ROM_START( bodyslam )
 	ROM_LOAD16_BYTE( "epr10065.b8", 0x020001, 0x8000, CRC(0e5fa314) SHA1(44e36fde102ba6aef2c3b4374ddc21690f2fe527) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "epr10321.c9",  0x00000, 0x8000, CRC(cd3e7cba) SHA1(4d3cfc7346c6e63e2221193601f949162d0e4f90) ) /* plane 1 */
-	ROM_LOAD( "epr10322.c10", 0x08000, 0x8000, CRC(b53d3217) SHA1(baebf20925e9f8ab6660f041a24721716d5b7d92) ) /* plane 2 */
-	ROM_LOAD( "epr10323.c11", 0x10000, 0x8000, CRC(915a3e61) SHA1(6504a8b26b7b4880971cd69ac2c8aae30dcfa18c) ) /* plane 3 */
+	ROM_LOAD( "epr10321.c9",  0x00000, 0x8000, CRC(cd3e7cba) SHA1(4d3cfc7346c6e63e2221193601f949162d0e4f90) )
+	ROM_LOAD( "epr10322.c10", 0x08000, 0x8000, CRC(b53d3217) SHA1(baebf20925e9f8ab6660f041a24721716d5b7d92) )
+	ROM_LOAD( "epr10323.c11", 0x10000, 0x8000, CRC(915a3e61) SHA1(6504a8b26b7b4880971cd69ac2c8aae30dcfa18c) )
 
 	ROM_REGION16_BE( 0x40000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "epr10012.c5",  0x00001, 0x08000, CRC(990824e8) SHA1(bd45f75d07cb4e17583c2d76050e5f819f4b7efe) )
@@ -1855,9 +1854,9 @@ ROM_START( dumpmtmt )
 	ROM_LOAD16_BYTE( "7703a.bin", 0x020001, 0x8000, CRC(fcb0cd40) SHA1(999e107fe08fcb52729ddebc7714a85c47e748b1) )
 
 	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "7707a.bin",  0x00000, 0x8000, CRC(45318738) SHA1(6885347321aec8c4829a71e4518d1742f939ea9c) ) /* plane 1 */
-	ROM_LOAD( "7708a.bin",  0x08000, 0x8000, CRC(411be9a4) SHA1(808a9c941d353f34c3491ca2cde984e73cc7a87d) ) /* plane 2 */
-	ROM_LOAD( "7709a.bin",  0x10000, 0x8000, CRC(74ceb5a8) SHA1(93ed6bb4a3c820f3a7ee5e9b2c2ce35d2bed8529) ) /* plane 3 */
+	ROM_LOAD( "7707a.bin",  0x00000, 0x8000, CRC(45318738) SHA1(6885347321aec8c4829a71e4518d1742f939ea9c) )
+	ROM_LOAD( "7708a.bin",  0x08000, 0x8000, CRC(411be9a4) SHA1(808a9c941d353f34c3491ca2cde984e73cc7a87d) )
+	ROM_LOAD( "7709a.bin",  0x10000, 0x8000, CRC(74ceb5a8) SHA1(93ed6bb4a3c820f3a7ee5e9b2c2ce35d2bed8529) )
 
 	ROM_REGION16_BE( 0x40000, REGION_GFX2, 0 ) /* sprites */
 	ROM_LOAD16_BYTE( "7715.bin",  	0x00001, 0x08000, CRC(bf47e040) SHA1(5aa1b9adaa2095844c10993402a0597bb5768efb) )

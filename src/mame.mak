@@ -119,6 +119,7 @@ CPUS+=H83002@
 CPUS+=V810@
 CPUS+=M37710@
 CPUS+=PPC403@
+#CPUS+=PPC602@
 CPUS+=PPC603@
 CPUS+=SE3208@
 CPUS+=MC68HC11@
@@ -1222,6 +1223,8 @@ $(OBJ)/otherz80.a: \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
 	$(OBJ)/vidhrdw/freekick.o $(OBJ)/drivers/freekick.o \
 	$(OBJ)/drivers/monzagp.o \
+	$(OBJ)/drivers/joinem.o \
+	$(OBJ)/drivers/couple.o \
 
 $(OBJ)/other.a: \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \

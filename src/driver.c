@@ -3638,6 +3638,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
 	DRIVER( bcstrya )	/* (c) 199? SemiCom */
+	DRIVER( suprtrio )	/* (c) 1994 GameAce */
 	DRIVER( lemmings )	/* prototype (c) 1991 Data East USA (US) */
 	/* MAQ ?? */
 	DRIVER( dragngun )	/* MAR (c) 1992 Data East Corporation (US) */
@@ -5442,6 +5443,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( svolly91 )	/* (c) 1991 Video System Co. (Japan) */
 	DRIVER( karatblz )	/* (c) 1991 Video System Co. */
 	DRIVER( karatblu )	/* (c) 1991 Video System Co. (US) */
+	DRIVER( karatblj )	/* (c) 1991 Video System / Tecmo (Japan) */
 	DRIVER( turbofrc )	/* (c) 1991 Video System Co. */
 	DRIVER( aerofgt )	/* (c) 1992 Video System Co. */
 	DRIVER( aerofgtb )	/* (c) 1992 Video System Co. */
@@ -6359,6 +6361,8 @@ Other Sun games
 	DRIVER( ertictac )	/* (c) 1992 Sisteme */
 	DRIVER( ssfindo )	/* (c) 1999 Icarus */
 	DRIVER( monzagp )
+	DRIVER( joinem )	/* (c) 1983 Global */
+	DRIVER( couple )
 
 #endif	/* DRIVER_RECURSIVE */
 
