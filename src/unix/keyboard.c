@@ -337,3 +337,4 @@ int osd_trying_to_quit()
 {
 	return 0;
 }
+
