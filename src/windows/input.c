@@ -57,6 +57,9 @@ enum
 	ANALOG_TYPE_PEDAL,
 	ANALOG_TYPE_DIAL,
 	ANALOG_TYPE_TRACKBALL,
+#ifdef MESS
+	ANALOG_TYPE_MOUSE,
+#endif // MESS
 	ANALOG_TYPE_COUNT
 };
 
@@ -189,6 +192,9 @@ struct rc_option input_opts[] =
 	{ "pedal", NULL, rc_string, &dummy, "joystick", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
 	{ "dial", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
 	{ "trackball", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
+#ifdef MESS
+	{ "mouse_device", NULL, rc_string, &dummy, "mouse", ANALOG_TYPE_MOUSE, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a mouse control is present" },
+#endif // MESS
 	{ "digital", NULL, rc_string, &dummy, "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -939,7 +945,10 @@ int win_init_input(void)
 		autoselect_analog_devices(inp, IPT_LIGHTGUN_X, IPT_LIGHTGUN_Y, 0,             ANALOG_TYPE_LIGHTGUN, "lightgun");
 		autoselect_analog_devices(inp, IPT_PEDAL,      IPT_PEDAL2,     IPT_PEDAL3,    ANALOG_TYPE_PEDAL,    "pedal");
 		autoselect_analog_devices(inp, IPT_DIAL,       IPT_DIAL_V,     0,             ANALOG_TYPE_DIAL,     "dial");
-		autoselect_analog_devices(inp, IPT_TRACKBALL_X,IPT_TRACKBALL_X,0,             ANALOG_TYPE_TRACKBALL,"trackball");
+		autoselect_analog_devices(inp, IPT_TRACKBALL_X,IPT_TRACKBALL_Y,0,             ANALOG_TYPE_TRACKBALL,"trackball");
+#ifdef MESS
+		autoselect_analog_devices(inp, IPT_MOUSE_X,    IPT_MOUSE_Y,    0,             ANALOG_TYPE_MOUSE,    "mouse");
+#endif // MESS
 		end_resource_tracking();
 	}
 

@@ -274,6 +274,9 @@ static int GetMessIcon(int nGame, int nSoftwareType)
     char buffer[32];
 	const char *iconname;
 
+	assert(nGame >= 0);
+	assert(nGame < game_count);
+
     if ((nSoftwareType >= 0) && (nSoftwareType < IO_COUNT))
 	{
 		iconname = device_brieftypename(nSoftwareType);
@@ -282,21 +285,21 @@ static int GetMessIcon(int nGame, int nSoftwareType)
         nIconPos = mess_icon_index[the_index];
         if (nIconPos >= 0)
 		{
-            for (drv = drivers[nGame]; drv; drv = drv->clone_of)
+			for (drv = drivers[nGame]; drv; drv = drv->clone_of)
 			{
-                _snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s/%s", drv->name, iconname);
-                hIcon = LoadIconFromFile(buffer);
-                if (hIcon)
-                    break;
-            }
+				_snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s/%s", drv->name, iconname);
+				hIcon = LoadIconFromFile(buffer);
+				if (hIcon)
+					break;
+			}
 
-            if (hIcon)
+			if (hIcon)
 			{
-                nIconPos = ImageList_AddIcon(hSmall, hIcon);
-                ImageList_AddIcon(hLarge, hIcon);
-                if (nIconPos != -1)
-                    mess_icon_index[the_index] = nIconPos;
-            }
+				nIconPos = ImageList_AddIcon(hSmall, hIcon);
+				ImageList_AddIcon(hLarge, hIcon);
+				if (nIconPos != -1)
+					mess_icon_index[the_index] = nIconPos;
+			}
         }
     }
     return nIconPos;
@@ -857,11 +860,12 @@ static int SoftwarePicker_GetItemImage(int nItem)
 {
     int nType;
     int nIcon;
+	int nGame;
 	const char *icon_name;
 
+	nGame = Picker_GetSelectedItem(GetDlgItem(hMain, IDC_LIST));
     nType = GetImageType(nItem);
-
-    nIcon = GetMessIcon(Picker_GetSelectedItem(GetDlgItem(hMain, IDC_SWLIST)), nType);
+    nIcon = GetMessIcon(nGame, nType);
     if (!nIcon)
 	{
 		switch(nType)
