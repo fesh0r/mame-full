@@ -7,7 +7,7 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
-(none)
+- [COLECO] Yolks Revenge fully playable now [JMoya]
 
 
 

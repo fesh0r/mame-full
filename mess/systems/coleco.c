@@ -63,12 +63,14 @@
 
 static MEMORY_READ_START( coleco_readmem )
     { 0x0000, 0x1FFF, MRA_ROM },  /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x2000, 0x5FFF, MRA_NOP },  /* No memory here */
     { 0x6000, 0x7fff, coleco_mem_r },  /* 1Kbyte RAM mapped on 8Kbyte Slot */
     { 0x8000, 0xFFFF, MRA_ROM },  /* Cartridge (32k max)*/
 MEMORY_END
 
 static MEMORY_WRITE_START( coleco_writemem )
     { 0x0000, 0x1FFF, MWA_ROM }, /* COLECO.ROM (ColecoVision OS7 Bios) */
+    { 0x2000, 0x5FFF, MWA_NOP }, /* No memory here */
     { 0x6000, 0x7fff, coleco_mem_w }, /* 1Kbyte RAM mapped on 8Kbyte Slot */
     { 0x8000, 0xFFFF, MWA_ROM }, /* Cartridge (32k max)*/
 MEMORY_END
@@ -235,7 +237,9 @@ void paddle_callback (int param)
 
 static MACHINE_INIT(coleco)
 {
-	timer_pulse(TIME_IN_MSEC(20), 0, paddle_callback);
+    cpu_irq_line_vector_w(0,0,0xff);
+	memset(&memory_region(REGION_CPU1)[0x6000], 0xFF, 0x2000); /* Initializing RAM */
+    timer_pulse(TIME_IN_MSEC(20), 0, paddle_callback);
 } 
 
 static const TMS9928a_interface tms9928a_interface =
