@@ -753,7 +753,7 @@ static struct MachineDriver machine_driver_pc1403 =
 	{
 		{
 			CPU_SC61860,
-			192000,
+			256000,
 			pc1403_readmem,pc1403_writemem,0,0,
 			pocketc_frame_int, 1,
 			0,0,
