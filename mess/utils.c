@@ -77,10 +77,10 @@ int strncmpi(const char *dst, const char *src, size_t n)
  * ----------------------------------------------------------------------- */
 
 #ifndef osd_basename
-char *osd_basename(const char *name)
+char *osd_basename(char *name)
 {
 	int len;
-	
+
 	len = strlen (name);
 
 	while (len-- > 0)
