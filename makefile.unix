@@ -335,6 +335,9 @@ DISPLAY_METHOD = x11
 X11_MITSHM = 1
 # XFree86 DGA
 # X11_DGA = 1
+# Work around a bug in the XFree86 tdfx driver that prevents the original mode 
+# from being restored when leaving DGA2 mode.
+# TDFX_DGA_WORKAROUND = 1
 # The XIL library (Solaris 2.5.1 and higher), uncomment
 # X11_XIL = 1
 
