@@ -335,7 +335,7 @@ void effect_scale2x_16_YUY2
 	UINT16 *u16src1 = (UINT16 *)src1;
 	UINT16 *u16src2 = (UINT16 *)src2;
 	UINT32 *u32lookup = (UINT32 *)lookup;
-	INT32 /*r,g,b,r2,g2,b2,y2,*/ y,u,v;
+	INT32 y,u,v;
 	UINT32 p1,p2,p3,p4;
 	while (count) {
 
