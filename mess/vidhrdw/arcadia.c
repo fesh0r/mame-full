@@ -579,13 +579,13 @@ READ_HANDLER(arcadia_video_r)
     return data;
 }
 
-#if DEBUG
+#if arcadia_DEBUG
 static int _y;
 #endif
 
 WRITE_HANDLER(arcadia_video_w)
 {
-#if DEBUG
+#if arcadia_DEBUG
     char str[40];
 #endif
     switch (offset) {
@@ -606,7 +606,7 @@ WRITE_HANDLER(arcadia_video_w)
     case 0xf0: case 0xf2: case 0xf4: case 0xf6:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_video.pos[(offset>>1)&3].y=(data^0xff)+1;
-#if DEBUG
+#if arcadia_DEBUG
 	snprintf(str, sizeof(str), "y %d %d",(offset>>1)&3,
 		 arcadia_video.reg.d.pos[(offset>>1)&3].y );
 	ui_text(Machine->scrbitmap, str, 120, _y);
@@ -616,7 +616,7 @@ WRITE_HANDLER(arcadia_video_w)
     case 0xf1: case 0xf3: case 0xf5: case 0xf7:
 	arcadia_video.reg.data[offset]=data;
 	arcadia_video.pos[(offset>>1)&3].x=data-43;
-#if DEBUG
+#if arcadia_DEBUG
 	snprintf(str, sizeof(str), "x %d %d",(offset>>1)&3,
 		 arcadia_video.reg.d.pos[(offset>>1)&3].x );
 	ui_text(Machine->scrbitmap, str, 120, _y);
@@ -814,7 +814,7 @@ int arcadia_video_line(void)
 
     arcadia_video.line++;
     arcadia_video.line%=262;
-#if DEBUG
+#if arcadia_DEBUG
     if (arcadia_video.line==0) _y=0;
 #endif
     // unbelievable, reflects only charline, but alien invaders uses it for
@@ -859,7 +859,7 @@ READ_HANDLER(arcadia_vsync_r)
 
 void arcadia_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
-#if DEBUG
+#if arcadia_DEBUG
 {
     char str[0x40];
 //    snprintf(str, sizeof(str), "%.2x %.2x %.2x %.2x",

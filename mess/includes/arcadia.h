@@ -10,9 +10,9 @@
 
 // use this for debugging
 #if 0
-#define DEBUG 1
+#define arcadia_DEBUG 1
 #else
-#define DEBUG 0
+#define arcadia_DEBUG 0
 #endif
 
 int arcadia_video_line(void);
@@ -29,7 +29,7 @@ WRITE_HANDLER(arcadia_video_w);
 // grand slam sprites left and right
 // space vultures left
 // space attack left
-#if DEBUG
+#if arcadia_DEBUG
 #define XPOS 48
 #else
 #define XPOS 32

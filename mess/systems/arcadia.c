@@ -257,7 +257,7 @@ static struct MachineDriver machine_driver_arcadia =
 	1,				/* single CPU */
 	arcadia_machine_init,
 	0,//pc1401_machine_stop,
-#if DEBUG
+#if arcadia_DEBUG
 	128+2*XPOS+40, 262, { 0, 2*XPOS+128-1+40, 0, 262-1},
 #else
 	128+2*XPOS, 262, { 0, 2*XPOS+128-1, 0, 262-1},
