@@ -88,7 +88,7 @@ SOUNDS+=CUSTOM@
 SOUNDS+=SAMPLES@
 SOUNDS+=DAC@
 SOUNDS+=AY8910@
-#SOUNDS+=YM2203@
+SOUNDS+=YM2203@
 # enable only one of the following two
 SOUNDS+=YM2151@
 #SOUNDS+=YM2151_ALT@
@@ -145,6 +145,7 @@ DRVLIBS = \
 	$(OBJ)/svision.a  \
 	$(OBJ)/intv.a     \
 	$(OBJ)/cpschngr.a \
+	$(OBJ)/necpc.a	  \
 	$(OBJ)/veb.a	  \
 	$(OBJ)/dragon.a   \
 	$(OBJ)/kaypro.a   \
@@ -455,6 +456,11 @@ $(OBJ)/nec.a:	   \
 	  $(OBJ)/mess/machine/pce.o	 \
 	  $(OBJ)/mess/systems/pce.o
 
+$(OBJ)/necpc.a:	   \
+	  $(OBJ)/mess/machine/pc8801.o	 \
+	  $(OBJ)/mess/systems/pc8801.o	 \
+	  $(OBJ)/mess/vidhrdw/pc8801.o
+
 $(OBJ)/ep128.a :   \
 	  $(OBJ)/mess/sndhrdw/dave.o	 \
 	  $(OBJ)/mess/vidhrdw/epnick.o	 \
@@ -664,6 +670,7 @@ COREOBJS += \
 	$(OBJ)/mess/machine/pc_fdc_h.o \
 	$(OBJ)/mess/machine/pc_flopp.o \
 	$(OBJ)/mess/machine/basicdsk.o \
+	$(OBJ)/mess/machine/d88.o      \
 	$(OBJ)/mess/machine/wd179x.o   \
 	$(OBJ)/mess/diskctrl.o	       \
 	$(OBJ)/mess/machine/dsk.o      \

@@ -129,9 +129,6 @@ TESTDRIVER( vip )		/* Cosmac VIP									  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
-	/* pc6601 series z80 based */
-	/* pc8801 series z80 based */
-	/* pc9801 series i8086 based (v30, i386, ..) */
 
 /*  DRIVER( arcadia )*/ /* Emerson Arcadia 2001                           */
 	/* schmid tvg 2000 */
@@ -467,6 +464,40 @@ TESTDRIVER( ti99_232 )	/* 1983 TI 99/2 								  */
 	DRIVER( ti85v80 )	/*TI 85 rom ver. 8.0 */
 	DRIVER( ti85v90 )	/*TI 85 rom ver. 9.0 */
 	DRIVER( ti85v100 )	/*TI 85 rom ver. 10.0 */
+
+	/* NEC */
+	/* TK80 series i8080 based */
+	/* PC-100 series i8086 based */
+	/* PC-2001 series micro PD7907 based */
+	/* PC-6001 series Z80 based */
+	/* PC-8001 series Z80 based */
+	/* PC-8201 series micro 80C85 based */
+
+	/* PC-8801 series Z80 based */
+	/* DRIVER( pc8801 ) */	/* PC-8801 */
+	/* DRIVER( pc88mk2 ) */	/* PC-8801mkII */
+	DRIVER( pc88srl )	/* PC-8801mkIISR(Low resolution display, VSYNC 15KHz) */
+	DRIVER( pc88srh )	/* PC-8801mkIISR(High resolution display, VSYNC 24KHz) */
+	/* DRIVER( pc8801tr ) */	/* PC-8801mkIITR */
+	/* DRIVER( pc8801fr ) */	/* PC-8801mkIIFR */
+	/* DRIVER( pc8801mr ) */	/* PC-8801mkIIMR */
+	/* DRIVER( pc8801fh ) */	/* PC-8801FH */
+	/* DRIVER( pc8801mh ) */	/* PC-8801MH */
+	/* DRIVER( pc8801fa ) */	/* PC-8801FA */
+	/* DRIVER( pc8801ma ) */	/* PC-8801MA */
+	/* DRIVER( pc8801fe ) */	/* PC-8801FE */
+	/* DRIVER( pc8801ma2 ) */	/* PC-8801MA2 */
+	/* DRIVER( pc8801fe2 ) */	/* PC-8801FE2 */
+	/* DRIVER( pc8801mc ) */	/* PC-8801MC */
+	/* DRIVER( pc98do88 ) */	/* PC-98DO(88mode) */
+	/* DRIVER( pc98dop8 ) */	/* PC-98DO+(88mode) */
+
+	/* PC-88VA series micro PD9002(special version of V30 with Z80 compatible mode) based */
+	/* DRIVER( pc88va ) */	/* PC-88VA */
+	/* DRIVER( pc88va2 ) */	/* PC-88VA2 */
+	/* DRIVER( pc88va3 ) */	/* PC-88VA3 */
+
+	/* PC-9801 series i8086 based (V30, i386, ..) */
 
 	/* CANTAB */
 	DRIVER( jupiter )	/* Jupiter Ace									  */
