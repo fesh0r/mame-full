@@ -104,8 +104,6 @@ void a7800_exit_rom (int id)
 
 static int a7800_verify_cart (char header[128])
 {
-    FILE *romfile;
-
     char tag[] = "ATARI7800";
 
 	if (strncmp(&tag[0], &header[1],9)) {
