@@ -10,6 +10,8 @@ System Driver Changes:
 ----------------------
 - [AMIGA] Fixed the Amiga's BIOS length.  (bug #649) [Nate Woods]
 
+- [APPLE2] Fixed modifier keys.  (bug #637) [Nate Woods]
+
 - [APPLE2] Recalibrated Joysticks. (bug #648) [Nate Woods]
 
 

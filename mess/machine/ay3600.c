@@ -152,6 +152,7 @@ static const unsigned char ay3600_key_remap[2][7*8][4] =
 static unsigned int *ay3600_keys;
 
 static UINT8 keycode;
+static UINT8 keycode_unmodified;
 static UINT8 keywaiting;
 static UINT8 keystilldown;
 
@@ -204,15 +205,17 @@ static void AY3600_poll(int dummy)
 	int any_key_pressed = 0;   /* Have we pressed a key? True/False */
 	int caps_lock = 0;
 	int curkey;
+	int curkey_unmodified;
 
-	static int last_key = 0xff; 	/* Necessary for special repeat key behaviour */
-	static unsigned int last_time = 65001;	/* Necessary for special repeat key behaviour */
+	static int last_key = 0xff; 	/* necessary for special repeat key behaviour */
+	static int last_key_unmodified = 0xff; 	/* necessary for special repeat key behaviour */
+	static unsigned int last_time = 65001;	/* necessary for special repeat key behaviour */
 
 	static unsigned int time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 
-	/* Check for these special cases because they affect the emulated key codes */
+	/* check for these special cases because they affect the emulated key codes */
 
-	/* Check caps lock and set LED here */
+	/* check caps lock and set LED here */
 	if (pressed_specialkey(SPECIALKEY_CAPSLOCK))
 	{
 		caps_lock = 1;
@@ -226,16 +229,16 @@ static void AY3600_poll(int dummy)
 
 	switchkey = A2_KEY_NORMAL;
 
-	/* Shift key check */
+	/* shift key check */
 	if (pressed_specialkey(SPECIALKEY_SHIFT))
 		switchkey |= A2_KEY_SHIFT;
 
-	/* Control key check - only one control key on the left side on the Apple */
+	/* control key check - only one control key on the left side on the Apple */
 	if (pressed_specialkey(SPECIALKEY_CONTROL))
 	{
 		switchkey |= A2_KEY_CONTROL;
 
-		/* Reset key check */
+		/* reset key check */
 		if (pressed_specialkey(SPECIALKEY_RESET) &&
 			(pressed_specialkey(SPECIALKEY_BUTTON0)
 			|| pressed_specialkey(SPECIALKEY_BUTTON1)))
@@ -244,26 +247,29 @@ static void AY3600_poll(int dummy)
 		}
 	}
 
-	/* Run through real keys and see what's being pressed */
-	for( port = 0; port < 7; port++ )
+	/* run through real keys and see what's being pressed */
+	for (port = 0; port < 7; port++)
 	{
 		data = readinputport(AY3600_KEYS_BASEPORT + port);
-		for( bit = 0; bit < 8; bit++ )
+		for (bit = 0; bit < 8; bit++)
 		{
 			curkey = ay3600_key_remap[caps_lock][port*8+bit][switchkey];
-			if( data & (1 << bit) )
+			curkey_unmodified = ay3600_key_remap[caps_lock][port*8+bit][0];
+
+			if (data & (1 << bit))
 			{
 				any_key_pressed = 1;
 
-				/* Prevent overflow */
-				if( ay3600_keys[curkey] < 65000 )
+				/* prevent overflow */
+				if (ay3600_keys[curkey] < 65000)
 					ay3600_keys[curkey]++;
 
-				/* On every key press, reset the time until repeat and the key to repeat */
-				if( ay3600_keys[curkey] == 1 )
+				/* on every key press, reset the time until repeat and the key to repeat */
+				if ((ay3600_keys[curkey] == 1) && (curkey_unmodified != last_key_unmodified))
 				{
 					time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 					last_key = curkey;
+					last_key_unmodified = curkey_unmodified;
 					last_time = 1;
 				}
 			}
@@ -274,29 +280,31 @@ static void AY3600_poll(int dummy)
 		}
 	}
 
-	if( !any_key_pressed )
+	if (!any_key_pressed)
 	{
 		/* If no keys have been pressed, reset the repeat time and return */
 		time_until_repeat = MAGIC_KEY_REPEAT_NUMBER;
 		last_key = 0xff;
+		last_key_unmodified = 0xff;
 		last_time = 65001;
 	}
 	else
 	{
 		/* Otherwise, count down the repeat time */
-		if( time_until_repeat > 0 )
+		if (time_until_repeat > 0)
 			time_until_repeat--;
 
 		/* Even if a key has been released, repeat it if it was the last key pressed */
 		/* If we should output a key, set the appropriate Apple II data lines */
-		if( time_until_repeat == 0 ||
-			time_until_repeat == MAGIC_KEY_REPEAT_NUMBER-1 )
+		if (time_until_repeat == 0 ||
+			time_until_repeat == MAGIC_KEY_REPEAT_NUMBER-1)
 		{
 			keywaiting = 1;
 			keycode = last_key;
+			keycode_unmodified = last_key_unmodified;
 		}
 	}
-	keystilldown = (last_key == keycode);
+	keystilldown = (last_key_unmodified == keycode_unmodified);
 }
 
 
