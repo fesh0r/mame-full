@@ -1,3 +1,17 @@
+
+/****************************************/
+/*  Fairchild Channel F driver  		*/
+/*                              		*/
+/*  TBD:                        		*/
+/*    	- Setup a tmpbitmap, redraw		*/
+/*			row on palette change		*/
+/*   	- Split BIOS ROM in two			*/
+/*   	- Sound							*/
+/*      - Verify visible area on HW     */
+/*      - f8dasm fixes					*/
+/*                              		*/
+/****************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
@@ -76,9 +90,9 @@ void channelf_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 static UINT8 latch[4];
 static int palette_code[64];
 static int palette_offset[64];
-static int val = 0;
-static int row = 0;
-static int col = 0;
+static int val;
+static int row;
+static int col;
 
 READ_HANDLER( channelf_port_0_r )
 {
@@ -162,6 +176,9 @@ static void plot_4_pixel(int x, int y, int color)
 
 int recalc_palette_offset(int code)
 {
+	/* Note: This is based on the very strange decoding they    */
+	/*       used to determine which palette this line is using */
+
 	switch(code)
 	{
 		case 0:
@@ -202,7 +219,7 @@ WRITE_HANDLER( channelf_port_0_w )
 			palette_code[row] |= val;
 			palette_offset[row] = recalc_palette_offset(palette_code[row]);
 		}
-		else
+		if (col < 118)
 			plot_4_pixel(col * 2, row * 2, palette_offset[row]+val);
     }
 	latch[0] = data;
@@ -287,14 +304,14 @@ INPUT_PORTS_START( channelf )
 	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START /* Right controller */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER1 )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER1 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 ) /* START (1) */
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 ) /* HOLD  (2) */
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 ) /* MODE  (3) */
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER1 ) /* TIME  (4) */
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER1 ) /* C-CLOCKWISE */
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER1 ) /* CLOCKWISE   */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER1 ) /* PULL UP     */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER1 ) /* PUSH DOWN   */
 
 	PORT_START /* unused */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -303,14 +320,14 @@ INPUT_PORTS_START( channelf )
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START /* Left controller */
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER2 )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER2 )
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON4 	   | IPF_PLAYER2 ) /* C-CLOCKWISE */
+	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON3 	   | IPF_PLAYER2 ) /* CLOCKWISE   */
+	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 	   | IPF_PLAYER2 ) /* PULL UP     */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 	   | IPF_PLAYER2 ) /* PUSH DOWN   */
 
 INPUT_PORTS_END
 
@@ -327,7 +344,7 @@ static struct MachineDriver machine_driver_channelf =
 	{
 		{
 			CPU_F8,
-			2000000,	/* 2 MHz ????? */
+			3579545/2,	/* Colorburst/2 */
 			readmem,writemem,readport,writeport,
 			ignore_interrupt, 1
         }
@@ -338,8 +355,8 @@ static struct MachineDriver machine_driver_channelf =
 	channelf_init_machine,
 	NULL,					/* stop machine */
 
-	/* video hardware - include overscan */
-	128*2, 64*2, { 0, 128*2 - 1, 0, 64*2 - 1},
+	/* video hardware */
+	118*2, 64*2, { 0, 118*2 - 1, 0, 64*2 - 1},
 	NULL,
 	8, 0,
 	init_palette,			/* convert color prom */
