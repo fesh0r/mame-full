@@ -431,4 +431,4 @@ COMP( 1984,  orica,     oric1,	oric,	    oric,	    0,	    "Tangerine",    "Oric 
 COMP( 1985,  prav8d,    oric1,  oric,       prav8d,     0,      "Pravetz",      "Pravetz 8D")
 COMPX( 1989, prav8dd,   oric1,  oric,       prav8d,     0,      "Pravetz",      "Pravetz 8D (Disk ROM)", GAME_COMPUTER_MODIFIED)
 COMPX( 1992, prav8dda,  oric1,  oric,       prav8d,     0,      "Pravetz",      "Pravetz 8D (Disk ROM, RadoSoft)", GAME_COMPUTER_MODIFIED)
-COMP( 198?,  telstrat,  oric1,  telstrat,   telstrat,   0,      "Tangerine",    "Oric Telestrat" )
+COMPX( 198?,  telstrat,  oric1,  telstrat,   telstrat,   0,      "Tangerine",    "Oric Telestrat", GAME_NOT_WORKING )
