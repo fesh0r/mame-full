@@ -725,7 +725,8 @@ TESTDRIVER( mekd2 )     /* 1977 Motorola Evaluation Kit                   */
 
 	/* PK-01 Lviv */
 	DRIVER( lviv )		/* PK-01 Lviv */
-	DRIVER( lviv2 )		/* PK-01 Lviv rev. 2 */
+	DRIVER( lviva )		/* PK-01 Lviv (alternate) */
+	DRIVER( lvive )		/* PK-01 Lviv (early)*/
 
 	/* Team Concepts */
 	/* CPU not known, else should be easy, look into systems/comquest.c */
