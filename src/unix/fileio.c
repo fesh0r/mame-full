@@ -863,6 +863,25 @@ void logerror(const char *text, ...)
 	}
 }
 
+char *osd_basename (char *filename)
+{
+	char *c;
+
+	if (!filename)
+		return NULL;
+
+	c = filename + strlen(filename);
+
+	while (c != filename)
+	{
+		c--;
+		if (*c == '\\' || *c == '/' || *c == ':')
+			return (c+1);
+	}
+
+	return filename;
+}
+
 #ifdef MESS
 int osd_select_file(int sel, char *filename)
 {
