@@ -32,7 +32,7 @@
 
 
 #ifdef MESS
-extern char *crcdir;
+char crcdir[256] = "";
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 extern char *pcrcdir;

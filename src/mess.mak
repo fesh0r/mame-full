@@ -49,9 +49,9 @@ CPUS+=HD6309@
 CPUS+=M6809@
 #CPUS+=KONAMI@
 CPUS+=M68000@
-#CPUS+=M68010@
-#CPUS+=M68EC020@
-#CPUS+=M68020@
+CPUS+=M68010@
+CPUS+=M68EC020@
+CPUS+=M68020@
 #CPUS+=T11@
 CPUS+=S2650@
 CPUS+=F8@
@@ -761,6 +761,12 @@ mess.txt: $(EMULATOR)
 	@echo Generating $@...
 	@$(EMULATOR) -listtext > mess.txt
 	@$(EMULATOR) -listdevices >> mess.txt
+endif
+ifeq ($(OS),windows)
+TEXTS = mess.txt
+mess.txt: $(EMULATOR)
+	@echo Generating $@...
+	@$(CURPATH)$(EMULATOR) -gamelist -noclones -sortname > mess.txt
 endif
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
