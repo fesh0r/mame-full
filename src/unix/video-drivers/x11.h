@@ -59,7 +59,7 @@ void xinput_check_hotkeys(unsigned int flags);
    0: Fixed size of width and height
    1: Resizable initial size is width and height
    2: Fullscreen return width and height in width and height */
-int x11_create_window(unsigned int *width, unsigned int *height, int type);
+int x11_create_window(int *width, int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size of width and height
    1: Resizable initial size is width and height
