@@ -394,12 +394,6 @@ static int sord_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-static void sord_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
-
 static void sord_m5_ctc_interrupt(int state)
 {
 	//logerror("interrupting ctc %02x\r\n ",state);
@@ -903,7 +897,7 @@ ROM_END
 	IO_PRINTER_PORT(1,"prn\0")
 
 #define sord_m5_cassette \
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,sord_cassette_init,sord_cassette_exit)
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,sord_cassette_init,cassette_exit)
 
 static const struct IODevice io_sordm5[] =
 {

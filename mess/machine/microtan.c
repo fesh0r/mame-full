@@ -453,11 +453,6 @@ int microtan_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void microtan_cassette_exit(int id)
-{
-    device_close(IO_CASSETTE,id);
-}
-
 static int microtan_varify_snapshot(UINT8 *data, int size)
 {
 	if (size == 8263)

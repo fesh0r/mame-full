@@ -29,8 +29,6 @@ extern void init_microtan(void);
 extern MACHINE_INIT( microtan );
 
 extern int microtan_cassette_init(int id);
-extern void microtan_cassette_exit(int id);
-
 
 extern int microtan_snapshot_init(int id);
 extern void microtan_snapshot_exit(int id);

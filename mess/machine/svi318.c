@@ -652,11 +652,6 @@ int svi318_cassette_init(int id)
     return INIT_FAIL;
 	}
 
-void svi318_cassette_exit(int id)
-	{
-    device_close(IO_CASSETTE,id);
-	}
-
 int svi318_cassette_present (int id)
 {
 	return image_exists(IO_CASSETTE, id);

@@ -89,7 +89,6 @@ void machine_stop_ti99(void);
 int ti99_floppy_init(int id);
 
 int ti99_cassette_init(int id);
-void ti99_cassette_exit(int id);
 
 int ti99_load_rom(int id);
 void ti99_rom_cleanup(int id);

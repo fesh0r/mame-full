@@ -22,5 +22,6 @@ struct cassette_args
 };
 
 int cassette_init(int id, const struct cassette_args *args);
+void cassette_exit(int id);
 
 #endif /* CASSETTE_H */

@@ -24,7 +24,6 @@ void amstrad_handle_snapshot(unsigned char *);
 void AmstradCPC_PALWrite(int);
 
 extern int amstrad_cassette_init(int id);
-extern void amstrad_cassette_exit(int id);
 
 extern int amstrad_floppy_init(int id);
 

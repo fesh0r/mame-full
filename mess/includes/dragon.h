@@ -81,7 +81,6 @@ extern MACHINE_STOP( coco );
 extern INTERRUPT_GEN( coco3_vh_interrupt );
 extern int coco_cassette_init(int id);
 extern int coco3_cassette_init(int id);
-extern void coco_cassette_exit(int id);
 extern int coco_rom_load(int id);
 extern int coco3_rom_load(int id);
 extern int coco_pak_load(int id);
@@ -133,7 +132,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		IO_FLOPPY,\
 		4,\
 		"dsk\0",\
-		IO_RESET_CPU,\
+		IO_RESET_NONE,\
 		OSD_FOPEN_RW_CREATE_OR_READ,\
 		0,\
 		dragon_floppy_init,\

@@ -322,7 +322,7 @@ ROM_END
 
 static const struct IODevice io_ti99_4p[] =
 {
-	IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,ti99_cassette_exit),
+	IO_CASSETTE_WAVE(2,"wav\0",NULL,ti99_cassette_init,cassette_exit),
 	{
 		IO_FLOPPY,				/* type */
 		3,						/* count */

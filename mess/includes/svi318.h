@@ -37,7 +37,6 @@ READ_HANDLER (svi318_psg_port_a_r);
 
 /* cassette functions */
 int svi318_cassette_init (int id);
-void svi318_cassette_exit (int id);
 int svi318_cassette_present (int id);
 
 /* floppy functions */

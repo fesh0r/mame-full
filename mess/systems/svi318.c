@@ -413,7 +413,7 @@ static const struct IODevice io_svi318[] = {
     	NULL,                       /* input_chunk */
     	NULL                        /* output_chunk */
 	},
-		IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, svi318_cassette_init, svi318_cassette_exit),
+		IO_CASSETTE_WAVE (1, "cas\0wav\0", NULL, svi318_cassette_init,cassette_exit),
 		IO_PRINTER_PORT (1, "prn\0"),
 		{ IO_END }
 	};

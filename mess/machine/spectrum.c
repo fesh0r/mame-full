@@ -1216,7 +1216,7 @@ int spectrum_cassette_init(int id)
 
 void spectrum_cassette_exit(int id)
 {
-	device_close(IO_CASSETTE, id);
+	cassette_exit(id);
 	spectrum_snap_exit(id);
 }
 

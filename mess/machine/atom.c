@@ -525,12 +525,6 @@ int atom_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void atom_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
-
 
 /*********************************************/
 /* emulates a 16-slot eprom box for the Atom */

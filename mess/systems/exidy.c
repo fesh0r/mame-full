@@ -819,7 +819,7 @@ ROM_END
 
 static const struct IODevice io_exidy[] =
 {
-	//IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,exidy_cassette_exit),
+	//IO_CASSETTE_WAVE(2,"wav\0",NULL,exidy_cassette_init,cassette_exit),
 	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,					/* type */

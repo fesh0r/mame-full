@@ -785,7 +785,7 @@ static const struct IODevice io_apfm1000[] =
 
 static const struct IODevice io_apfimag[] =
 {
-	IO_CASSETTE_WAVE(1,"apt\0wav\0",NULL,apf_cassette_init,apf_cassette_exit),
+	IO_CASSETTE_WAVE(1,"apt\0wav\0",NULL,apf_cassette_init,cassette_exit),
 	{
 		IO_FLOPPY,					/* type */
 		2,							/* count */

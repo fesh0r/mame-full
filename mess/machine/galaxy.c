@@ -63,11 +63,6 @@ int galaxy_init_wav(int id)
 	return cassette_init(id, &args);
 }
 
-void galaxy_exit_wav(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
 int galaxy_load_snap(int id)
 {
 	void *file;

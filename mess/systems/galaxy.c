@@ -245,7 +245,7 @@ static const struct IODevice io_galaxy[] = {
 		NULL,               /* input_chunk */
 		NULL                /* output_chunk */
 	},
-//    IO_CASSETTE_WAVE(1,"wav\0", NULL, galaxy_init_wav, galaxy_exit_wav),
+//    IO_CASSETTE_WAVE(1,"wav\0", NULL, galaxy_init_wav, cassette_exit),
 	{ IO_END }
 };
 

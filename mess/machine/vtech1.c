@@ -31,6 +31,7 @@
 #include "vidhrdw/m6847.h"
 #include "includes/vtech1.h"
 #include "cpu/z80/z80.h"
+#include "image.h"
 
 int vtech1_latch = -1;
 
@@ -287,11 +288,6 @@ int vtech1_cassette_init(int id)
         return INIT_PASS;
     }
     return INIT_PASS;
-}
-
-void vtech1_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE,id);
 }
 
 /***************************************************************************

@@ -1586,12 +1586,6 @@ int oric_cassette_init(int id)
 }
 #endif
 
-void oric_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
-
 /**** TELESTRAT ****/
 
 /*

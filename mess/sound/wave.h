@@ -40,6 +40,8 @@ extern void wave_output(int id, int data);
 extern int wave_input_chunk(int id, void *dst, int chunks);
 extern int wave_output_chunk(int id, void *src, int chunks);
 
+extern void cassette_exit(int id);
+
 #define IO_CASSETTE_WAVE(count,fileext,id,init,exit)	\
 {														\
 	IO_CASSETTE,		/* type */						\
@@ -62,8 +64,8 @@ extern int wave_output_chunk(int id, void *src, int chunks);
 	wave_output_chunk	/* output_chunk */				\
 }
 
-#define CONFIG_DEVICE_CASSETTE(count,fileext,init,exit)														\
-	CONFIG_DEVICE(IO_CASSETTE, (count), (fileext), IO_RESET_NONE, OSD_FOPEN_DUMMY, (init), (exit),			\
+#define CONFIG_DEVICE_CASSETTE(count,fileext,init)															\
+	CONFIG_DEVICE(IO_CASSETTE, (count), (fileext), IO_RESET_NONE, OSD_FOPEN_DUMMY, (init), cassette_exit,	\
 		wave_info, wave_open, wave_close, wave_status, wave_seek, wave_tell, wave_input, wave_output, NULL)	\
 
 /*****************************************************************************

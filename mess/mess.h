@@ -6,6 +6,9 @@
 #include "osdepend.h"
 #include "device.h"
 #include "driver.h"
+#include "image.h"
+
+#define MAX_INSTANCES 5
 
 #define LCD_FRAMES_PER_SECOND	30
 
@@ -131,16 +134,6 @@ enum
 /* hack: placeholder used until I determine what the open_mode value should be for an image */
 #define OSD_FOPEN_DUMMY -1
 
-/* The wrapper for osd_fopen() */
-void *image_fopen(int type, int id, int filetype, int read_or_write);
-
-/* new wrapper: always use OSD_FILETYPE_IMAGE as the filetype, and take
-the read_or_write parameters from IODevice */
-void *image_fopen_new(int type, int id, int *effective_mode);
-
-/* wrapper: return true if the filename is NULL (i.e. no file is defined) */
-int image_is_slot_empty(int type, int id);
-
 
 #ifdef MAX_KEYS
  #undef MAX_KEYS
@@ -170,6 +163,7 @@ extern void exit_devices(void);
 extern int system_supports_cassette_device (void);
 
 /* access mess.c internal fields for a device type (instance id) */
+extern int			device_count(int type);
 extern const char  *device_typename(int type);
 extern const char  *device_brieftypename(int type);
 extern const char  *device_typename_id(int type, int id);

@@ -116,12 +116,6 @@ int apf_cassette_init(int id)
 	return INIT_FAIL;
 }
 
-void apf_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
-
 /* 256 bytes per sector, single sided, single density, 40 track  */
 int apfimag_floppy_init(int id)
 {

@@ -108,7 +108,6 @@ static void bitbanger_overthreshhold(int id)
 	bitbanger_addpulse(id, bi, timer_get_time() - bi->last_pulse_time);
 	bi->over_threshhold = 1;
 	bi->recorded_pulses = 0;
-	bi->timeout_timer = timer_alloc(bitbanger_overthreshhold);
 }
 
 void bitbanger_output(int id, int value)

@@ -307,7 +307,3 @@ int lviv_tape_init(int id)
 	return INIT_FAIL;
 }
 
-void lviv_tape_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}

@@ -536,7 +536,7 @@ ROM_END
 
 static const struct IODevice io_oric1[] =
 {
-	IO_CASSETTE_WAVE(1,"tap\0wav\0",NULL,oric_cassette_init,oric_cassette_exit),
+	IO_CASSETTE_WAVE(1,"tap\0wav\0",NULL,oric_cassette_init,cassette_exit),
  	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,				/* type */
@@ -563,7 +563,7 @@ static const struct IODevice io_oric1[] =
 
 static const struct IODevice io_prav8[] =
 {
-	IO_CASSETTE_WAVE(1,"tap\0wav\0",NULL,oric_cassette_init,oric_cassette_exit),
+	IO_CASSETTE_WAVE(1,"tap\0wav\0",NULL,oric_cassette_init,cassette_exit),
  	IO_PRINTER_PORT(1,"prn\0"),
 	{
 		IO_FLOPPY,				/* type */

@@ -2826,7 +2826,7 @@ ROM_END
 	}
 
 #define AMSTRAD_IO_CASSETTE \
-	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,amstrad_cassette_exit)
+	IO_CASSETTE_WAVE(1,"wav\0",NULL,amstrad_cassette_init,cassette_exit)
 
 #define AMSTRAD_IO_PRINTER \
 	IO_PRINTER_PORT(1,"prn\0")

@@ -21,7 +21,6 @@ extern MACHINE_INIT(mz700);
 extern MACHINE_STOP(mz700);
 
 extern int mz700_cassette_init(int id);
-extern void mz700_cassette_exit(int id);
 
 extern INTERRUPT_GEN(mz700_interrupt);
 

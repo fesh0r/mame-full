@@ -1625,8 +1625,3 @@ int msx_cassette_init(int id)
     return INIT_FAIL;
 }
 
-void msx_cassette_exit(int id)
-{
-    device_close(IO_CASSETTE,id);
-}
-

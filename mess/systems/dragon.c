@@ -23,6 +23,7 @@
 #include "printer.h"
 #include "messfmts.h"
 #include "formats/coco_dsk.h"
+#include "cassette.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10
@@ -705,7 +706,7 @@ SYSTEM_CONFIG_START( generic_coco )
 	CONFIG_DEVICE_PRINTER	( coco_bitbanger_init, coco_bitbanger_exit, coco_bitbanger_output )
 
 	/* cassette */
-	CONFIG_DEVICE_CASSETTE	(1, "cas\0wav\0", coco_cassette_init, coco_cassette_exit)
+	CONFIG_DEVICE_CASSETTE	(1, "cas\0wav\0", coco_cassette_init)
 
 	/* floppy */
 	/* CONFIG_DEVICE_FLOPPY	(1, "dsk\0vdk\0", coco, coco_jvc ) */

@@ -13,6 +13,7 @@
 #include "includes/mbee.h"
 #include "cassette.h"
 #include "cpu/z80/z80.h"
+#include "image.h"
 
 static UINT8 fdc_drv = 0;
 static UINT8 fdc_head = 0;
@@ -150,10 +151,6 @@ int mbee_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void mbee_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE,id);
-}
 #if 0
 int mbee_floppy_init(int id)
 {

@@ -50,6 +50,10 @@ Source Changes:
 - In the opening display software info box, if the filename and the goodname
   (as determined by CRC) match up, the goodname will not be displayed in
   order to reduce screen clutter. [Nate Woods]
+  
+- Removed all calls to device_close(IO_CASSETTE) in system drivers, instead
+  provided a cassette_exit() function that drivers can specify, removing this
+  responsibility from system drivers. [Nate Woods]
 
 - [Imgtool] Imgtool floppy drivers can now be "templated"; a driver for a
   particular file system format can point at a structure that lists allowable

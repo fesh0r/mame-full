@@ -15,7 +15,6 @@ int	oric_floppy_init(int id);
 void oric_floppy_exit(int id);
 
 extern int oric_cassette_init(int id);
-extern void oric_cassette_exit(int id);
 
 /* Telestrat specific */
 extern MACHINE_INIT( telestrat );

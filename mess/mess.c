@@ -46,6 +46,13 @@ int system_supports_cassette_device (void)
 	return device_find(Machine->gamedrv, IO_CASSETTE) ? TRUE : FALSE;
 }
 
+int device_count(int type)
+{
+	const struct IODevice *dev;
+	dev = device_find(Machine->gamedrv, type);
+	return dev ? dev->count : 0;
+}
+
 /*
  * Return a name for the device type (to be used for UI functions)
  */
@@ -101,8 +108,6 @@ const char *device_file_extension(int type, int extnum)
 	}
 	return NULL;
 }
-
-#define MAX_INSTANCES 5
 
 struct distributed_images
 {
@@ -359,7 +364,7 @@ int displayimageinfo(struct mame_bitmap *bitmap, int selected)
 
 	for (type = 0; type < IO_COUNT; type++)
 	{
-		for( id = 0; id < image_count(type); id++ )
+		for( id = 0; id < device_count(type); id++ )
 		{
 			const char *name = image_filename(type,id);
 			if( name )

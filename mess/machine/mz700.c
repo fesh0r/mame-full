@@ -833,11 +833,6 @@ int mz700_cassette_init(int id)
 	return INIT_PASS;
 }
 
-void mz700_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE,id);
-}
-
 /******************************************************************************
  *	Sharp MZ800
  *

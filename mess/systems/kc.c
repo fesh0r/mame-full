@@ -474,7 +474,7 @@ ROM_END
    NULL,               /* input_chunk */ \
    NULL                /* output_chunk */ \
 }, \
-IO_CASSETTE_WAVE(1,"wav\0",NULL,kc_cassette_device_init,kc_cassette_device_exit)
+IO_CASSETTE_WAVE(1,"wav\0",NULL,kc_cassette_device_init,cassette_exit)
 
 
 static const struct IODevice io_kc85_4[] =

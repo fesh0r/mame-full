@@ -27,7 +27,6 @@ extern MACHINE_STOP( kc85_4d );
 
 /* cassette */
 int kc_cassette_device_init(int id);
-void kc_cassette_device_exit(int id);
 
 READ_HANDLER(kc85_4_84_r);
 WRITE_HANDLER(kc85_4_84_w);

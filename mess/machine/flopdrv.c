@@ -33,7 +33,7 @@ void floppy_drives_init(void)
 	int i;
 
 	/* if no floppies, no point setting this up */
-	if (image_count(IO_FLOPPY)==0)
+	if (device_count(IO_FLOPPY)==0)
 		return;
 
 	/* ensure first drive is present, all other drives are marked
@@ -76,7 +76,7 @@ void floppy_drives_exit(void)
 	int i;
 
 	/* if no floppies, no point cleaning up*/
-	if (image_count(IO_FLOPPY)==0)
+	if (device_count(IO_FLOPPY)==0)
 		return;
 
 	for (i=0; i<MAX_DRIVES; i++)

@@ -417,7 +417,7 @@ ROM_END
 ***************************************************************************/
 
 static const struct IODevice io_laser[] = {
-    IO_CASSETTE_WAVE(1,"wav\0cas\0",0,vtech1_cassette_init,vtech1_cassette_exit),
+    IO_CASSETTE_WAVE(1,"wav\0cas\0",0,vtech1_cassette_init,cassette_exit),
     {
         IO_SNAPSHOT,            /* type */
         1,                      /* count */

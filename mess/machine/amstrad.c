@@ -89,12 +89,6 @@ int amstrad_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void amstrad_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
-
 /* load CPCEMU style snapshots */
 void amstrad_handle_snapshot(unsigned char *pSnapshot)
 {

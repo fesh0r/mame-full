@@ -70,7 +70,6 @@ WRITE_HANDLER ( msx_writemem3 );
 
 /* cassette functions */
 int msx_cassette_init (int id);
-void msx_cassette_exit (int id);
 
 /* disk functions */
 int msx_floppy_init (int id);

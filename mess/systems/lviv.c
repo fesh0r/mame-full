@@ -445,7 +445,7 @@ MACHINE_DRIVER_END
 
 
 static const struct IODevice io_lviv[] = {
-    IO_CASSETTE_WAVE(1,"lv?\0wav\0",NULL,lviv_tape_init,lviv_tape_exit),
+    IO_CASSETTE_WAVE(1,"lv?\0wav\0",NULL,lviv_tape_init,cassette_exit),
     { IO_END }
 };
 

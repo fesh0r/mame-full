@@ -9931,7 +9931,7 @@ static void BuildCRCTable(void)
 
 	for(deviceType = 0; deviceType < IO_COUNT; deviceType++)
 	{
-		for(deviceID = 0; deviceID < image_count(deviceType); deviceID++)
+		for(deviceID = 0; deviceID < device_count(deviceType); deviceID++)
 		{
 			UINT32	crc = image_crc(deviceType, deviceID);
 			int		isUnique = 1;

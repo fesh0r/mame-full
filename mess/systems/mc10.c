@@ -2,9 +2,9 @@
 #include "cpu/m6800/m6800.h"
 #include "vidhrdw/m6847.h"
 #include "includes/mc10.h"
+#include "cassette.h"
 
 extern int coco_cassette_init(int id);
-extern void coco_cassette_exit(int id);
 
 static MEMORY_READ_START( mc10_readmem )
 	{ 0x0000, 0x001f, m6803_internal_registers_r },
@@ -160,7 +160,7 @@ ROM_START(mc10)
 ROM_END
 
 static const struct IODevice io_mc10[] = {
-	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
+	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init,cassette_exit),
     { IO_END }
 };
 

@@ -11,4 +11,3 @@ extern VIDEO_UPDATE( exidy );
 extern PALETTE_INIT( exidy );
 
 int exidy_cassette_init(int id);
-void exidy_cassette_exit(int id);

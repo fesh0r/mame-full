@@ -479,11 +479,6 @@ int kc_cassette_device_init(int id)
 	return INIT_FAIL;
 }
 
-void kc_cassette_device_exit(int id)
-{
-	device_close(IO_CASSETTE, id);
-}
-
 /* this timer is used to update the cassette */
 static void *kc_cassette_timer;
 /* this is the current state of the cassette motor */

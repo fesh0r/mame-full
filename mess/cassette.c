@@ -64,3 +64,9 @@ int cassette_init(int id, const struct cassette_args *args)
 	return INIT_FAIL;
 }
 
+void cassette_exit(int id)
+{
+	if (image_exists(IO_CASSETTE, id))
+		device_close(IO_CASSETTE, id);
+}
+

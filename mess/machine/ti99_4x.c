@@ -360,11 +360,6 @@ int ti99_cassette_init(int id)
 	return cassette_init(id, &args);
 }
 
-void ti99_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE,id);
-}
-
 /*
 	Load ROM.  All files are in raw binary format.
 	1st ROM: GROM (up to 40kb)

@@ -386,7 +386,7 @@ static const struct IODevice io_mbee[] = {
         NULL,                   /* input_chunk */
         NULL                    /* output_chunk */
     },
-    IO_CASSETTE_WAVE(1,"wav\0",NULL,mbee_cassette_init,mbee_cassette_exit),
+    IO_CASSETTE_WAVE(1,"wav\0",NULL,mbee_cassette_init,cassette_exit),
     {
         IO_FLOPPY,              /* type */
         4,                      /* count */

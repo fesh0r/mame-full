@@ -1947,11 +1947,6 @@ int coco_cassette_init(int id)
 	return cassette_init(id, &coco_cassette_args);
 }
 
-void coco_cassette_exit(int id)
-{
-	device_close(IO_CASSETTE,id);
-}
-
 /***************************************************************************
   Cartridge Expansion Slot
  ***************************************************************************/

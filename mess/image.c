@@ -21,6 +21,7 @@ struct image_memory_header
 
 struct image_info
 {
+	int loaded;
 	char *name;
 	UINT32 crc;
 	UINT32 length;
@@ -32,7 +33,6 @@ struct image_info
 	struct image_memory_header *memory;
 };
 
-#define MAX_INSTANCES 5
 static struct image_info images[IO_COUNT][MAX_INSTANCES];
 int images_is_running;
 char *renamed_image;
@@ -145,7 +145,7 @@ int image_load(int type, int id, const char *name)
 	dev = device_find(Machine->gamedrv, type);
 	assert(dev);
 
-	if (img->name)
+	if (img->loaded)
 		image_unload(type, id);
 
 	if (name && *name)
@@ -172,6 +172,7 @@ int image_load(int type, int id, const char *name)
 	if ((type == IO_FLOPPY) && img->name)
 		floppy_device_common_init(id);
 
+	img->loaded = TRUE;
 	return INIT_PASS;
 }
 
@@ -181,6 +182,8 @@ void image_unload(int type, int id)
 	struct image_info *img;
 
 	img = get_image(type, id);
+	if (!img->loaded)
+		return;
 
 	dev = device_find(Machine->gamedrv, type);
 	if (!dev)
@@ -199,6 +202,7 @@ void image_unload(int type, int id)
 		floppy_device_common_exit(id);
 
 	image_free_resources(img);
+	img->loaded = FALSE;
 }
 
 void image_unload_all(void)
@@ -254,6 +258,9 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 
 	img = get_image(type, id);
 	assert(img);
+
+	if (!img->name)
+		return NULL;
 
 	sysname = Machine->gamedrv->name;
 	logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
@@ -412,14 +419,6 @@ void *image_fopen_new(int type, int id, int *effective_mode)
 }
 
 /* ----------------------------------------------------------------------- */
-
-extern int image_count(int type)
-{
-	int count;
-	for (count = MAX_INSTANCES; count > 0 && !images[type][count-1].name; count--)
-		;
-	return count;
-}
 
 const char *image_filename(int type, int id)
 {
