@@ -236,13 +236,13 @@ INPUT_PORTS_START( dragon32 )
 	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button", KEYCODE_LALT, JOYCODE_2_BUTTON1)
 
 	PORT_START /* 12 */
-	PORT_DIPNAME( 0x03, 0x00, "Artifacting" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Standard" )
-	PORT_DIPSETTING(    0x02, "Reverse" )
-	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_CONFNAME( 0x03, 0x00, "Artifacting" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, "Standard" )
+	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x04, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /* CoCo keyboard
@@ -339,18 +339,18 @@ INPUT_PORTS_START( coco )
 	PORT_BITX( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Left Button", KEYCODE_LALT, JOYCODE_2_BUTTON1)
 
 	PORT_START /* 12 */
-	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Standard" )
-	PORT_DIPSETTING(    0x02, "Reverse" )
-	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_CONFNAME( 0x03, 0x01, "Artifacting" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, "Standard" )
+	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x04, DEF_STR( On ) )
 	
 	PORT_START /* 13 */
-	PORT_DIPNAME( 0x03, 0x00, "Real Time Clock" )
-	PORT_DIPSETTING(    0x00, "Disto" )
-	PORT_DIPSETTING(    0x01, "Cloud-9" )
+	PORT_CONFNAME( 0x03, 0x00, "Real Time Clock" )
+	PORT_CONFSETTING(    0x00, "Disto" )
+	PORT_CONFSETTING(    0x01, "Cloud-9" )
 
 INPUT_PORTS_END
 
@@ -454,25 +454,25 @@ INPUT_PORTS_START( coco3 )
 
 
 	PORT_START /* 12 */
-	PORT_DIPNAME( 0x03, 0x01, "Artifacting" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, "Standard" )
-	PORT_DIPSETTING(    0x02, "Reverse" )
-	PORT_DIPNAME( 0x04, 0x00, "Autocenter Joysticks" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Video type" )
-	PORT_DIPSETTING(	0x00, "Composite" )
-	PORT_DIPSETTING(	0x08, "RGB" )
-	PORT_DIPNAME( 0x30, 0x00, "Joystick Type" )
-	PORT_DIPSETTING(	0x00, "Normal" )
-	PORT_DIPSETTING(	0x10, "Hi-Res Interface" )
-	PORT_DIPSETTING(	0x30, "Hi-Res Interface (CoCoMax 3 Style)" )
+	PORT_CONFNAME( 0x03, 0x01, "Artifacting" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x01, "Standard" )
+	PORT_CONFSETTING(    0x02, "Reverse" )
+	PORT_CONFNAME( 0x04, 0x00, "Autocenter Joysticks" )
+	PORT_CONFSETTING(    0x00, DEF_STR( Off ) )
+	PORT_CONFSETTING(    0x04, DEF_STR( On ) )
+	PORT_CONFNAME( 0x08, 0x00, "Video type" )
+	PORT_CONFSETTING(	0x00, "Composite" )
+	PORT_CONFSETTING(	0x08, "RGB" )
+	PORT_CONFNAME( 0x30, 0x00, "Joystick Type" )
+	PORT_CONFSETTING(	0x00, "Normal" )
+	PORT_CONFSETTING(	0x10, "Hi-Res Interface" )
+	PORT_CONFSETTING(	0x30, "Hi-Res Interface (CoCoMax 3 Style)" )
 	
 	PORT_START /* 13 */
-	PORT_DIPNAME( 0x03, 0x00, "Real Time Clock" )
-	PORT_DIPSETTING(    0x00, "Disto" )
-	PORT_DIPSETTING(    0x01, "Cloud-9" )
+	PORT_CONFNAME( 0x03, 0x00, "Real Time Clock" )
+	PORT_CONFSETTING(    0x00, "Disto" )
+	PORT_CONFSETTING(    0x01, "Cloud-9" )
 INPUT_PORTS_END
 
 static struct DACinterface d_dac_interface =

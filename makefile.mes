@@ -66,6 +66,11 @@ ifdef DEBUG
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)d
 GUINAME = $(TARGET)gui$(SUFFIX)d
 else
+ifdef ATHLON
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)at
+GUINAME = $(TARGET)gui$(SUFFIX)at
+ARCH = -march=athlon
+else
 ifdef K6
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)k6
 GUINAME = $(TARGET)gui$(SUFFIX)k6
@@ -76,9 +81,16 @@ NAME = $(PREFIX)$(TARGET)$(SUFFIX)pp
 GUINAME = $(TARGET)gui$(SUFFIX)pp
 ARCH = -march=pentiumpro
 else
+ifdef P4
+NAME = $(PREFIX)$(TARGET)$(SUFFIX)p4
+GUINAME = $(TARGET)gui$(SUFFIX)p4
+ARCH = -march=pentium4
+else
 NAME = $(PREFIX)$(TARGET)$(SUFFIX)
 GUINAME = $(TARGET)gui$(SUFFIX)
 ARCH = -march=pentium
+endif
+endif
 endif
 endif
 endif

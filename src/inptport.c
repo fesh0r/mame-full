@@ -1311,6 +1311,9 @@ getout:
 		while (in->type != IPT_END && in->type != IPT_PORT)
 		{
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+#ifdef MESS
+				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
+#endif
 				(in->type & ~IPF_MASK) != IPT_EXTENSION &&			/* skip analog extension fields */
 				(in->type & IPF_UNUSED) == 0 &&						/* skip unused bits */
 				!(!options.cheat && (in->type & IPF_CHEAT)) &&				/* skip cheats if cheats disabled */
@@ -1450,6 +1453,9 @@ void save_input_port_settings(void)
 		while (in->type != IPT_END && in->type != IPT_PORT)
 		{
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+#ifdef MESS
+				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
+#endif
 				(in->type & ~IPF_MASK) != IPT_EXTENSION &&			/* skip analog extension fields */
 				(in->type & IPF_UNUSED) == 0 &&						/* skip unused bits */
 				!(!options.cheat && (in->type & IPF_CHEAT)) &&				/* skip cheats if cheats disabled */
@@ -2132,6 +2138,9 @@ profiler_mark(PROFILER_INPUT);
 		while (in->type != IPT_END && in->type != IPT_PORT)
 		{
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+#ifdef MESS
+				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
+#endif /* MESS */
 				(in->type & ~IPF_MASK) != IPT_EXTENSION)			/* skip analog extension fields */
 			{
 				input_port_value[port] =
@@ -2160,6 +2169,9 @@ profiler_mark(PROFILER_INPUT);
 			else if ((in->type & IPF_PLAYERMASK) == IPF_PLAYER4) player = 3;
 #endif /* MAME_NET */
 			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+#ifdef MESS
+				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
+#endif
 					(in->type & ~IPF_MASK) != IPT_EXTENSION)		/* skip analog extension fields */
 			{
 				if ((in->type & ~IPF_MASK) == IPT_VBLANK)
@@ -2512,10 +2524,15 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 			case IPT_PORT :
 			case IPT_DIPSWITCH_NAME :
 			case IPT_DIPSWITCH_SETTING :
+#ifdef MESS
+			case IPT_CONFIG_NAME :
+			case IPT_CONFIG_SETTING :
+#endif
 				seq_default = CODE_NONE;
-			break;
+				break;
 			default:
 				seq_default = CODE_DEFAULT;
+				break;
 		}
 
 		ext = src_end;

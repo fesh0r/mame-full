@@ -1569,12 +1569,12 @@ void snes_refresh_scanline( UINT16 curline )
 
 		/* Toggle drawing of subscreen or mainscreen */
 		if( debug_options.draw_subscreen )
-			draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanlines[SUBSCREEN].buffer, Machine->pens, -1 );
+			memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[SUBSCREEN].buffer, SNES_SCR_WIDTH * sizeof(UINT16) );
 		else
 #endif /* SNES_DBG_VIDHRDW */
 
 		/* Phew! Draw the line to screen */
-		draw_scanline16( bitmap, 0, curline, SNES_SCR_WIDTH, scanlines[MAINSCREEN].buffer, Machine->pens, -1 );
+		memcpy( (UINT16 *)bitmap->base + bitmap->rowpixels * curline, scanlines[MAINSCREEN].buffer, SNES_SCR_WIDTH * sizeof(UINT16) );
 	}
 
 	profiler_mark(PROFILER_END);

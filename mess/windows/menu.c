@@ -141,6 +141,13 @@ int is_controller_input_type(UINT32 type)
 	case IPT_BUTTON10:
 	case IPT_AD_STICK_X:
 	case IPT_AD_STICK_Y:
+	case IPT_AD_STICK_Z:
+	case IPT_TRACKBALL_X:
+	case IPT_TRACKBALL_Y:
+	case IPT_LIGHTGUN_X:
+	case IPT_LIGHTGUN_Y:
+	case IPT_MOUSE_X:
+	case IPT_MOUSE_Y:
 		result = 1;
 		break;
 
@@ -191,60 +198,83 @@ done:
 }
 
 //============================================================
+//	hasswitches
+//============================================================
+
+static int hasswitches(UINT32 ipt_name)
+{
+	struct InputPort *in;
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		if ((in->type & ~IPF_MASK) == ipt_name)
+			return TRUE;
+	}
+	return FALSE;
+}
+
+
+
+//============================================================
 //	hasdipswitches
 //============================================================
 
 static int hasdipswitches(void)
 {
-	struct InputPort *in;
-	for (in = Machine->input_ports; in->type != IPT_END; in++)
-	{
-		switch(in->type & ~IPF_MASK) {
-		case IPT_DIPSWITCH_NAME:
-		case IPT_DIPSWITCH_SETTING:
-			return 1;
-		}
-	}
-	return 0;
+	return hasswitches(IPT_DIPSWITCH_NAME);
 }
 
+
+
 //============================================================
-//	setdipswitches
+//	hasconfiguration
 //============================================================
 
-static void setdipswitches(void)
+static int hasconfiguration(void)
+{
+	return hasswitches(IPT_CONFIG_NAME);
+}
+
+
+
+//============================================================
+//	setswitchmenu
+//============================================================
+
+static void setswitchmenu(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
 {
 	void *dlg;
 	struct InputPort *in;
-	const char *dipswitch_name = NULL;
+	const char *switch_name = NULL;
+	UINT32 type;
 	
-	dlg = win_dialog_init(ui_getstring(UI_dipswitches));
+	dlg = win_dialog_init(ui_getstring(title_string_num));
 	if (!dlg)
 		goto done;
 
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		switch(in->type & ~IPF_MASK) {
-		case IPT_DIPSWITCH_NAME:
+		type = in->type & ~IPF_MASK;
+
+		if (type == ipt_name)
+		{
 			if ((in->type & IPF_UNUSED) == 0 && !(!options.cheat && (in->type & IPF_CHEAT)))
 			{
-				dipswitch_name = input_port_name(in);
-				if (win_dialog_add_combobox(dlg, dipswitch_name, &in->default_value))
+				switch_name = input_port_name(in);
+				if (win_dialog_add_combobox(dlg, switch_name, &in->default_value))
 					goto done;
 			}
 			else
 			{
-				dipswitch_name = NULL;
+				switch_name = NULL;
 			}
-			break;
-
-		case IPT_DIPSWITCH_SETTING:
-			if (dipswitch_name)
+		}
+		else if (type == ipt_setting)
+		{
+			if (switch_name)
 			{
 				if (win_dialog_add_combobox_item(dlg, input_port_name(in), in->default_value))
 					goto done;
 			}
-			break;
 		}
 	}
 
@@ -257,6 +287,30 @@ done:
 	if (dlg)
 		win_dialog_exit(dlg);
 }
+
+
+
+//============================================================
+//	setdipswitches
+//============================================================
+
+static void setdipswitches(void)
+{
+	setswitchmenu(UI_dipswitches, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
+}
+
+
+
+//============================================================
+//	setconfiguration
+//============================================================
+
+static void setconfiguration(void)
+{
+	setswitchmenu(UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
+}
+
+
 
 //============================================================
 //	loadsave
@@ -584,25 +638,26 @@ static void prepare_menus(void)
 	if (!win_menu_bar)
 		return;
 
-	set_command_state(win_menu_bar, ID_EDIT_PASTE,			inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,	hasdipswitches()			? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,			is_paused					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,		throttle					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_CONFIGURATION,	hasconfiguration()			? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_OPTIONS_DIPSWITCHES,		hasdipswitches()			? MFS_ENABLED : MFS_GRAYED);
 #if HAS_TOGGLEFULLSCREEN
-	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,		!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
 #endif
-	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,	ui_show_fps_get()			? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,		ui_show_fps_get()			? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
-	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	ui_show_profiler_get()		? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,		ui_show_profiler_get()		? MFS_CHECKED : MFS_ENABLED);
 #endif
 
-	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	inputx_can_post() ?
-															(win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED)
+	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,		!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,		inputx_can_post() ?
+																(win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED)
 																						: MFS_GRAYED);
 
-	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,		autoframeskip				? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			autoframeskip				? MFS_CHECKED : MFS_ENABLED);
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
 		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i)) ? MFS_CHECKED : MFS_ENABLED);
 
@@ -846,8 +901,8 @@ static int invoke_command(UINT command)
 		break;
 
 	case ID_OPTIONS_HARDRESET:
-		memset(mess_ram, 0xcd, mess_ram_size);
-		/* fall through */
+		machine_hard_reset();
+		break;
 
 	case ID_OPTIONS_SOFTRESET:
 		machine_reset();
@@ -868,6 +923,10 @@ static int invoke_command(UINT command)
 		debug_key_pressed = 1;
 		break;
 #endif
+
+	case ID_OPTIONS_CONFIGURATION:
+		setconfiguration();
+		break;
 
 	case ID_OPTIONS_DIPSWITCHES:
 		setdipswitches();

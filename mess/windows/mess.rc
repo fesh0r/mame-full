@@ -52,6 +52,7 @@ BEGIN
             MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
         END
         MENUITEM "&Joysticks",                  ID_OPTIONS_JOYSTICKS, GRAYED
+        MENUITEM "&Configuration...",           ID_OPTIONS_CONFIGURATION
         MENUITEM "&DIP Switches...",            ID_OPTIONS_DIPSWITCHES
         MENUITEM SEPARATOR
         POPUP "&Frameskip"

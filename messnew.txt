@@ -7,7 +7,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 - [NES] Updated NES so that it uses the ppu2c03b support within MAME (which
-  was actually originally based on the MESS NES driver code). [Nate Woods]
+  was actually originally based on the MESS NES driver code). [Brad Oliver,
+  Nate Woods]
 
 - [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
   wrap at the bottom of the screen. Fixed clearing of HDMA channels.
@@ -15,7 +16,8 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- Added separate configuration menu, to be used for configuration items that
+  were formerly represented with DIP switches. [Nate Woods]
 
 Imgtool Changes:
 ----------------

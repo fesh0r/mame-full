@@ -1529,7 +1529,7 @@ static void showcharset(struct mame_bitmap *bitmap)
 
 
 
-static int setdipswitches(struct mame_bitmap *bitmap,int selected)
+static int switchmenu(struct mame_bitmap *bitmap, int selected, UINT32 switch_name, UINT32 switch_setting)
 {
 	const char *menu_item[128];
 	const char *menu_subitem[128];
@@ -1549,7 +1549,7 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_NAME && input_port_name(in) != 0 &&
+		if ((in->type & ~IPF_MASK) == switch_name && input_port_name(in) != 0 &&
 				(in->type & IPF_UNUSED) == 0 &&
 				!(!options.cheat && (in->type & IPF_CHEAT)))
 		{
@@ -1575,11 +1575,11 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 		if (i < total - 1)
 		{
 			in = entry[i] + 1;
-			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+			while ((in->type & ~IPF_MASK) == switch_setting &&
 					in->default_value != entry[i]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+			if ((in->type & ~IPF_MASK) != switch_setting)
 				menu_subitem[i] = ui_getstring (UI_INVALID);
 			else menu_subitem[i] = input_port_name(in);
 		}
@@ -1590,16 +1590,16 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 	if (sel < total - 1)
 	{
 		in = entry[sel] + 1;
-		while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+		while ((in->type & ~IPF_MASK) == switch_setting &&
 				in->default_value != entry[sel]->default_value)
 			in++;
 
-		if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+		if ((in->type & ~IPF_MASK) != switch_setting)
 			/* invalid setting: revert to a valid one */
 			arrowize |= 1;
 		else
 		{
-			if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+			if (((in-1)->type & ~IPF_MASK) == switch_setting &&
 					!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
 				arrowize |= 1;
 		}
@@ -1607,16 +1607,16 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 	if (sel < total - 1)
 	{
 		in = entry[sel] + 1;
-		while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+		while ((in->type & ~IPF_MASK) == switch_setting &&
 				in->default_value != entry[sel]->default_value)
 			in++;
 
-		if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+		if ((in->type & ~IPF_MASK) != switch_setting)
 			/* invalid setting: revert to a valid one */
 			arrowize |= 2;
 		else
 		{
-			if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+			if (((in+1)->type & ~IPF_MASK) == switch_setting &&
 					!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
 				arrowize |= 2;
 		}
@@ -1635,16 +1635,16 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 		if (sel < total - 1)
 		{
 			in = entry[sel] + 1;
-			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+			while ((in->type & ~IPF_MASK) == switch_setting &&
 					in->default_value != entry[sel]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+			if ((in->type & ~IPF_MASK) != switch_setting)
 				/* invalid setting: revert to a valid one */
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+				if (((in+1)->type & ~IPF_MASK) == switch_setting &&
 						!(!options.cheat && ((in+1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
@@ -1659,16 +1659,16 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 		if (sel < total - 1)
 		{
 			in = entry[sel] + 1;
-			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+			while ((in->type & ~IPF_MASK) == switch_setting &&
 					in->default_value != entry[sel]->default_value)
 				in++;
 
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+			if ((in->type & ~IPF_MASK) != switch_setting)
 				/* invalid setting: revert to a valid one */
 				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
 			else
 			{
-				if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+				if (((in-1)->type & ~IPF_MASK) == switch_setting &&
 						!(!options.cheat && ((in-1)->type & IPF_CHEAT)))
 					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
 			}
@@ -1696,6 +1696,24 @@ static int setdipswitches(struct mame_bitmap *bitmap,int selected)
 
 	return sel + 1;
 }
+
+
+
+static int setdipswitches(struct mame_bitmap *bitmap, int selected)
+{
+	return switchmenu(bitmap, selected, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
+}
+
+
+
+#ifdef MESS
+static int setconfiguration(struct mame_bitmap *bitmap, int selected)
+{
+	return switchmenu(bitmap, selected, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
+}
+#endif /* MESS */
+
+
 
 /* This flag is used for record OR sequence of key/joy */
 /* when is !=0 the first sequence is record, otherwise the first free */
@@ -3073,7 +3091,8 @@ enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 #else
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT };
+		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT,
+		UI_CONFIGURATION };
 #endif
 
 
@@ -3094,6 +3113,9 @@ static void setup_menu_init(void)
 
 	menu_item[menu_total] = ui_getstring (UI_inputgeneral); menu_action[menu_total++] = UI_DEFCODE;
 	menu_item[menu_total] = ui_getstring (UI_inputspecific); menu_action[menu_total++] = UI_CODE;
+#ifdef MESS
+	menu_item[menu_total] = ui_getstring (UI_configuration); menu_action[menu_total++] = UI_CONFIGURATION;
+#endif /* MESS */
 	menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
 
 #ifdef XMAME
@@ -3229,7 +3251,10 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 				res = tapecontrol(bitmap, sel >> SEL_BITS);
 				break;
 #endif /* HAS_WAVE */
-#endif
+			case UI_CONFIGURATION:
+				res = setconfiguration(bitmap, sel >> SEL_BITS);
+				break;
+#endif /* MESS */
 			case UI_HISTORY:
 				res = displayhistory(bitmap, sel >> SEL_BITS);
 				break;
@@ -3281,15 +3306,16 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 			case UI_CODE:
 			case UI_ANALOG:
 			case UI_CALIBRATE:
-			#ifndef MESS
+#ifndef MESS
 			case UI_STATS:
 			case UI_GAMEINFO:
-			#else
+#else
 			case UI_GAMEINFO:
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:
 			case UI_TAPECONTROL:
-			#endif
+			case UI_CONFIGURATION:
+#endif /* !MESS */
 			case UI_HISTORY:
 			case UI_CHEAT:
 			case UI_MEMCARD:

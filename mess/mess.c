@@ -366,6 +366,14 @@ void ram_dump(const char *filename)
 	}
 }
 
+void machine_hard_reset(void)
+{
+	memset(mess_ram, 0xcd, mess_ram_size);
+	machine_reset();
+}
+
+
+
 /***************************************************************************
 
 	MESS specific artwork code

@@ -64,7 +64,6 @@ void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, in
 #define IPT_SELECT2		IPT_COIN2
 #define IPT_SELECT3		IPT_COIN3
 #define IPT_SELECT4		IPT_COIN4
-#define IPT_KEYBOARD	IPT_TILT
 /* driver.h - end */
 
 /* IODevice Initialisation return values.  Use these to determine if */
@@ -180,6 +179,8 @@ extern const char *mess_path;
 /* artwork callbacks for MESS */
 extern struct artwork_callbacks mess_artwork_callbacks;
 void artwork_use_device_art(mess_image *img, const char *defaultartfile);
+
+void machine_hard_reset(void);
 
 #ifdef __cplusplus
 }
