@@ -8,7 +8,7 @@
 #include "mamedbg.h"
 #include "tms7000.h"
 
-typedef enum { DONE, NONE, UI8, I8, UI16, I16 } operandtype;
+typedef enum { DONE, NONE, UI8, I8, UI16, I16, PCREL, PCABS, TRAP } operandtype;
 
 typedef struct {
 	char		opstr[4][12];
@@ -38,26 +38,26 @@ static oprandinfo of[] = {
 /* 11 */ { {" R%u",		"",			"",			""},		{UI8, DONE, DONE, DONE} },
 /* 12 */ { {" @>%04X(B)","",		"",			""},		{UI16, DONE, DONE, DONE} },
 
-/* 13 */ { {" B,A",		",%+d",		"",			""},		{NONE, I8, DONE, DONE} },
-/* 14 */ { {" R%u,A",	",%+d",		"",			""},		{UI8, I8, DONE, DONE} },
-/* 15 */ { {" R%u,B",	",%+d",		"",			""},		{UI8, I8, DONE, DONE} },
-/* 16 */ { {" R%u",		",R%u",		",%+d",		""},		{UI8, UI8, I8, DONE} },
-/* 17 */ { {" %%>%X",	",A,%+d",	"",			""},		{UI8, I8, DONE, DONE} },
-/* 18 */ { {" %%>%X",	",B,%+d",	"",			""},		{UI8, I8, DONE, DONE} },
-/* 19 */ { {" %%>%X",	",R%u"		",%+d",		""},		{UI8, UI8, I8, DONE} },
+/* 13 */ { {" B,A",		",%s",		"",			""},		{NONE, PCREL, DONE, DONE} },
+/* 14 */ { {" R%u,A",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 15 */ { {" R%u,B",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 16 */ { {" R%u",		",R%u",		",%s",		""},		{UI8, UI8, PCREL, DONE} },
+/* 17 */ { {" %%>%X",	",A,%s",	"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 18 */ { {" %%>%X",	",B,%s",	"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 19 */ { {" %%>%X",	",R%u",		",%s",		""},		{UI8, UI8, PCREL, DONE} },
 
-/* 20 */ { {" A,P%u",	",%+d",		"",			""},		{UI8, I8, DONE, DONE} },
-/* 21 */ { {" B,P%u",	",%+d",		""			""},		{UI8, I8, DONE, DONE} },
-/* 22 */ { {" R%u",		",P%u"		",%+d"		""},		{UI8, UI8, I8, DONE} },
+/* 20 */ { {" A,P%u",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 21 */ { {" B,P%u",	",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
+/* 22 */ { {" R%u",		",P%u",		",%s"		""},		{UI8, UI8, PCREL, DONE} },
 
 /* 23 */ { {"",			"",			"",			""},		{DONE, DONE, DONE, DONE} },
 /* 24 */ { {" R%u",		"",			"",			""},		{UI8, DONE, DONE, DONE} },			
 
-/* 25 */ { {" A,%+d",	"",			"",			""},		{I8, DONE, DONE, DONE} },
-/* 26 */ { {" B,%+d",	"",			"",			""},		{I8, DONE, DONE, DONE} },
-/* 27 */ { {" R%u"		",%+d",		"",			""},		{UI8, I8, DONE, DONE} },
+/* 25 */ { {" A,%s",	"",			"",			""},		{PCREL, DONE, DONE, DONE} },
+/* 26 */ { {" B,%s",	"",			"",			""},		{PCREL, DONE, DONE, DONE} },
+/* 27 */ { {" R%u"		",%s",		"",			""},		{UI8, PCREL, DONE, DONE} },
 
-/* 28 */ { {" %+d",		"",			"",			""},		{I8, DONE, DONE, DONE} },			
+/* 28 */ { {" %s",		"",			"",			""},		{PCREL, DONE, DONE, DONE} },			
 
 /* 29 */ { {" A,B",		"",			"",			""},		{NONE, DONE, DONE, DONE} },
 /* 30 */ { {" B,A",		"",			"",			""},		{NONE, DONE, DONE, DONE} },
@@ -74,7 +74,10 @@ static oprandinfo of[] = {
 /* 40 */ { {" %%>%04X(B)",",R%u",	"",			""},		{UI16, UI8, DONE, DONE} },
 
 /* 41 */ { {" P%u,A",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
-/* 42 */ { {" P%u,B",	"",			"",			""},		{UI8, DONE, DONE, DONE} }
+/* 42 */ { {" P%u,B",	"",			"",			""},		{UI8, DONE, DONE, DONE} },
+/* 43 */ { {" %s",		"",			"",			""},		{PCABS, DONE, DONE, DONE} },
+/* 44 */ { {"",			"",			"",			""},		{TRAP, DONE, DONE, DONE} } /* Only For TRAP */
+
 };
 
 static opcodeinfo opcodes[] = {
@@ -106,7 +109,7 @@ static opcodeinfo opcodes[] = {
 	{0x93, "ANDP", 8 },
 	{0xA3, "ANDP", 9 },
 
-	{0x8C, "BR", 10 },
+	{0x8C, "BR", 43 },
 	{0x9C, "BR", 11 },
 	{0xAC, "BR", 12 },
 
@@ -134,7 +137,7 @@ static opcodeinfo opcodes[] = {
 	{0x97, "BTJZP", 21 },
 	{0xA7, "BTJZP", 22 },
 
-	{0x8E, "CALL", 10 },
+	{0x8E, "CALL", 43 },
 	{0x9E, "CALL", 11 },
 	{0xAE, "CALL", 12 },
 
@@ -192,7 +195,7 @@ static opcodeinfo opcodes[] = {
 	
 	{0xB3, "INC A", 23 },
 	{0xC3, "INC B", 23 },
-	{0xD3, "INC", 2427 },
+	{0xD3, "INC", 24 },
 	
 	{0xB4, "INV A", 23 },
 	{0xC4, "INV B", 23 },
@@ -309,30 +312,30 @@ static opcodeinfo opcodes[] = {
 	{0x5A, "SUB", 5 },
 	{0x7A, "SUB", 6 },
 
-	{0xFF, "TRAP 0", 23 },
-	{0xFE, "TRAP 1", 23 },
-	{0xFD, "TRAP 2", 23 },
-	{0xFC, "TRAP 3", 23 },
-	{0xFB, "TRAP 4", 23 },
-	{0xFA, "TRAP 5", 23 },
-	{0xF9, "TRAP 6", 23 },
-	{0xF8, "TRAP 7", 23 },
-	{0xF7, "TRAP 8", 23 },
-	{0xF6, "TRAP 9", 23 },
-	{0xF5, "TRAP 10", 23 },
-	{0xF4, "TRAP 11", 23 },
-	{0xF3, "TRAP 12", 23 },
-	{0xF2, "TRAP 13", 23 },
-	{0xF1, "TRAP 14", 23 },
-	{0xF0, "TRAP 15", 23 },
-	{0xEF, "TRAP 16", 23 },
-	{0xEE, "TRAP 17", 23 },
-	{0xED, "TRAP 18", 23 },
-	{0xEC, "TRAP 19", 23 },
-	{0xEB, "TRAP 20", 23 },
-	{0xEA, "TRAP 21", 23 },
-	{0xE9, "TRAP 22", 23 },
-	{0xE8, "TRAP 23", 23 },
+	{0xFF, "TRAP 0", 44 },
+	{0xFE, "TRAP 1", 44 },
+	{0xFD, "TRAP 2", 44 },
+	{0xFC, "TRAP 3", 44 },
+	{0xFB, "TRAP 4", 44 },
+	{0xFA, "TRAP 5", 44 },
+	{0xF9, "TRAP 6", 44 },
+	{0xF8, "TRAP 7", 44 },
+	{0xF7, "TRAP 8", 44 },
+	{0xF6, "TRAP 9", 44 },
+	{0xF5, "TRAP 10", 44 },
+	{0xF4, "TRAP 11", 44 },
+	{0xF3, "TRAP 12", 44 },
+	{0xF2, "TRAP 13", 44 },
+	{0xF1, "TRAP 14", 44 },
+	{0xF0, "TRAP 15", 44 },
+	{0xEF, "TRAP 16", 44 },
+	{0xEE, "TRAP 17", 44 },
+	{0xED, "TRAP 18", 44 },
+	{0xEC, "TRAP 19", 44 },
+	{0xEB, "TRAP 20", 44 },
+	{0xEA, "TRAP 21", 44 },
+	{0xE9, "TRAP 22", 44 },
+	{0xE8, "TRAP 23", 44 },
 
 	{0xB7, "SWAP A", 23 },
 	{0xC7, "SWAP B", 23 },
@@ -363,7 +366,8 @@ static opcodeinfo opcodes[] = {
 unsigned Dasm7000 (char *buffer, unsigned pc)
 {
 	int opcode, i, size = 1;
-
+	const char *sym1;
+	
 	opcode = cpu_readop(pc++);
 
 	for( i=0; i<sizeof(opcodes) / sizeof(opcodeinfo); i++ )
@@ -372,12 +376,12 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 		{
 			/* We found a match */
 			
-			int 			j,k;
+			int 			j,k,vector;
 			UINT8	a;
 			INT8	b;
 			UINT16	c;
 			INT16	d;
-			
+
 			buffer += sprintf (buffer, opcodes[i].name);
 
 			j=opcodes[i].operand;
@@ -392,13 +396,13 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 						buffer += sprintf (buffer, of[j].opstr[k]);
 						break;
 					case UI8:
-						a = (INT8)cpu_readop( pc++ );
+						a = (UINT8)cpu_readop( pc++ );
 						buffer += sprintf (buffer, of[j].opstr[k], (unsigned int)a);
 						size += 1;
 						break;
 					case I8:
-						b = (UINT8)cpu_readop( pc++ );
-						buffer += sprintf (buffer, of[j].opstr[k], (signed int)b);
+						b = (INT8)cpu_readop( pc++ );
+						buffer += sprintf (buffer, of[j].opstr[k], (INT8)b);
 						size += 1;
 						break;
 					case UI16:
@@ -410,6 +414,23 @@ unsigned Dasm7000 (char *buffer, unsigned pc)
 						d = (INT16)((cpu_readop( pc++ ) << 8) + cpu_readop( pc++ ));
 						buffer += sprintf (buffer, of[j].opstr[k], (signed int)d);
 						size += 2;
+						break;
+					case PCREL:
+						b = (INT8)cpu_readop( pc++ );
+						sym1 = set_ea_info(EA_DST, pc, b, EA_REL_PC);
+						buffer += sprintf (buffer, of[j].opstr[k], sym1);
+						size += 1;
+						break;
+					case PCABS:
+						c = (UINT16)((cpu_readop( pc++ ) << 8) + cpu_readop( pc++ ));
+						sym1 = set_ea_info(EA_DST, c, EA_UINT16, EA_ABS_PC);
+						buffer += sprintf (buffer, of[j].opstr[k], sym1);
+						size += 2;
+						break;
+					case TRAP:
+						vector = 0xffff - ((0xff - opcode) * 2);
+						c = (UINT16)((cpu_readop( vector-1 ) << 8) + cpu_readop( vector ));
+						sym1 = set_ea_info(EA_DST, c, EA_UINT16, EA_ABS_PC);
 						break;
 				}
 			}
