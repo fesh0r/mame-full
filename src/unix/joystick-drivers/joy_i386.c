@@ -61,7 +61,6 @@ void joy_i386_init (void)
    for (i = 0; i < JOY; i++)
    {
       sprintf (devname, "%s%d", joy_dev, i);
-      printf("Ahhhhhhhhh!!!!!!!!!!!%s\n", devname);
       if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
       {
          if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
