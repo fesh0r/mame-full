@@ -79,11 +79,19 @@
    Hitachi SH1 processor. 512 Kb Buffer RAM.
 
    -= Current State Infomation =-
-   Can run for a reasonable period, and most of the main bios title screen is setup.
-   No drawing occurs and the cpu locks in an infinite loop (Probably waiting on VBlank handling) 
+   Bios starts requesting pad data so maybe we are now in the time set area ????
+   Need to emulate pad system, add more interrupts and get some grafix working so we
+   can see exactly where we are at this current time.
+   Currently locks up waiting on (i guess) a response from the 68k cpu. Probably need to
+   emulate this shortly.
 
    -= UPDATES =-
-   
+
+   25/06/2001 - Added register names for vdp1/2. Not included yet. Added support for vdp2 reg
+   read/write. Added all my bios images.
+   23/06/2001 - Had to modify sh2.c to get interrupts working. Bios starts resquesting pad data 
+   till the sound system causes a lock.. Included a small hack to bypass this lock but then
+   it blocks somewhere else. Waiting on another interrupt ?????
    20/06/2001 - Made smpc return timer not set. Starts writing stuff to vdp ram. Started adding
    prelim HBlank support. Using HBlank timing to control VBlank timing (makes scu timers easier)
    19/06/2001 - Added simple smpc and cd commands.
@@ -97,7 +105,7 @@
 #include "cpu/sh2/sh2.h"
 
 #ifndef VERBOSE
-#define VERBOSE 1
+#define VERBOSE 0
 #endif
 
 #define DISP_MEM 1 /* define to log memory access to all non work ram areas */
@@ -107,6 +115,8 @@
 #else
 #define LOG(x)  /* x */
 #endif
+
+#define PAL 0       /* Set to 1 for PAL mode. Must be set to 1 for euro bios */
 
 static UINT32 *mem; /* Base memory pointer */
 
@@ -187,10 +197,6 @@ WRITE32_HANDLER( saturn_workh_ram_w )
   offs_t ea;
 
   ea = (SATURN_WORKH_RAM_BASE / 4) + offset;
-  /*  if(offset == (0x22C / 4))
-    logerror("workram - at 0x22c offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",
-    offset,data,mem_mask,cpu_get_reg(SH2_PC));*/
-
   mem[ea] = (mem[ea] & mem_mask) | data;
 }
 
@@ -198,9 +204,14 @@ READ32_HANDLER( saturn_sound_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("soundram_r offset=%08lX mem_mask=%08lX PC=%08lX\n",offset,mem_mask,cpu_get_reg(SH2_PC));
 #endif
+
+  if(offset == 0x1c0)
+    {
+      return 0;
+    }
 
   ea = (SATURN_SOUND_RAM_BASE / 4) + offset;
   return mem[ea] & (~mem_mask);
@@ -210,7 +221,7 @@ WRITE32_HANDLER( saturn_sound_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("soundram_w offset=%08lX data=%08lX mem_mask=%08lX PC=%08lX\n",offset,data,mem_mask,cpu_get_reg(SH2_PC));
 #endif
 
@@ -222,7 +233,7 @@ READ32_HANDLER( saturn_vdp1_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("vdp1ram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -234,7 +245,7 @@ WRITE32_HANDLER( saturn_vdp1_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("vdp1ram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -246,7 +257,7 @@ READ32_HANDLER( saturn_vdp2_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("vdp2ram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -258,7 +269,7 @@ WRITE32_HANDLER( saturn_vdp2_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("vdp2ram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -270,7 +281,7 @@ READ32_HANDLER( saturn_fb1_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("fb1_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -282,7 +293,7 @@ WRITE32_HANDLER( saturn_fb1_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("fb1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -295,7 +306,7 @@ READ32_HANDLER( saturn_fb2_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("fb2_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -308,7 +319,7 @@ WRITE32_HANDLER( saturn_fb2_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("fb2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -322,7 +333,7 @@ READ32_HANDLER( saturn_color_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("colorram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -334,7 +345,7 @@ WRITE32_HANDLER( saturn_color_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("colorram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -346,7 +357,7 @@ READ32_HANDLER( saturn_back_ram_r )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("backram_r offset=%08lX mem_mask=%08lX\n",offset,mem_mask);
 #endif
 
@@ -358,7 +369,7 @@ WRITE32_HANDLER( saturn_back_ram_w )
 {
   offs_t ea;
 
-#ifdef DISP_MEM
+#if DISP_MEM
   logerror("backram_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset,data,mem_mask);
 #endif
 
@@ -498,8 +509,7 @@ READ32_HANDLER( saturn_smpc_r )   /* SMPC */
 	      {
 		switch(ea) /* See if the write is significant */
 		  {
-		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d
-					  ,cpu_get_reg(SH2_PC));
+		  case COMMREG : logerror("smpc_r COMMREG - command = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
 		  case STATUSR : logerror("smpc_r SR - data = %02lX - PC=%08lX\n",d,cpu_get_reg(SH2_PC));
 		    break;
@@ -626,67 +636,93 @@ WRITE32_HANDLER( saturn_cs2_w )   /* CS2 */
 
 /* SCU Handler */
 
-const char scu_regnames[0x34][15] = {{"DMA0 Read"},     /* 0x00 */
-				     {"DMA0 Write"},    /* 0x04 */
-				     {"DMA0 Count"},    /* 0x08 */
-				     {"DMA0 Addr add"}, /* 0x0C */
-				     {"DMA0 Enable"},   /* 0x10 */
-				     {"DMA0 Mode"},     /* 0x14 */
-				     {"X18"},           /* 0x18 */
-				     {"X1C"},           /* 0x1C */
-				     {"DMA1 Read"},     /* 0x20 */
-				     {"DMA1 Write"},    /* 0x24 */
-				     {"DMA1 Count"},    /* 0x28 */
-				     {"DMA1 Addr add"}, /* 0x2C */
-				     {"DMA1 Enable"},   /* 0x30 */
-				     {"DMA1 Mode"},     /* 0x34 */
-				     {"X38"},           /* 0x38 */
-				     {"X3C"},           /* 0x3C */
-				     {"DMA2 Read"},     /* 0x40 */
-				     {"DMA2 Write"},    /* 0x44 */
-				     {"DMA2 Count"},    /* 0x48 */
-				     {"DMA2 Addr add"}, /* 0x4C */
-				     {"DMA2 Enable"},   /* 0x50 */
-				     {"DMA2 Mode"},     /* 0x54 */
-				     {"X58"},           /* 0x58 */
-				     {"X5C"},           /* 0x5C */
-				     {"X60"},           /* DMA force stop. Doesn't exist */
-				     {"X64"},
-				     {"X68"},
-				     {"X6C"},
-				     {"X70"},
-				     {"X74"},
-				     {"X78"},
-				     {"X7C"},
-				     {"DSP Ctrl Port"},
-				     {"DSP Prog RAM"},
-				     {"DSP Data Addr"},
-				     {"DSP Data Data"},
-				     {"Timer0 Compare"},
-				     {"Timer1 Set"},
-				     {"Timer1 Mode"},
-				     {"X9C"},
-				     {"Int Mask"},
-				     {"Int Stat"},
-				     {"A-Bus IntAck"},
-				     {"XAC"},
-				     {"A-Bus Set 0"},
-				     {"A-Bus Set 1"},
-				     {"A-Bus Refresh"},
-				     {"XBC"},
-				     {"XC0"},
-				     {"SDRAM select"},
-				     {"SCU Version"},
-				     {"XCC"}};
-				   
-		      
+static const char *scu_regnames[0x34] = {"DMA0 Read",     /* 0x00 */
+					 "DMA0 Write",    /* 0x04 */
+					 "DMA0 Count",    /* 0x08 */
+					 "DMA0 Addr add", /* 0x0C */
+					 "DMA0 Enable",   /* 0x10 */
+					 "DMA0 Mode",     /* 0x14 */
+					 "X18",           /* 0x18 */
+					 "X1C",           /* 0x1C */
+					 "DMA1 Read",     /* 0x20 */
+					 "DMA1 Write",    /* 0x24 */
+					 "DMA1 Count",    /* 0x28 */
+					 "DMA1 Addr add", /* 0x2C */
+					 "DMA1 Enable",   /* 0x30 */
+					 "DMA1 Mode",     /* 0x34 */
+					 "X38",           /* 0x38 */
+					 "X3C",           /* 0x3C */
+					 "DMA2 Read",     /* 0x40 */
+					 "DMA2 Write",    /* 0x44 */
+					 "DMA2 Count",    /* 0x48 */
+					 "DMA2 Addr add", /* 0x4C */
+					 "DMA2 Enable",   /* 0x50 */
+					 "DMA2 Mode",     /* 0x54 */
+					 "X58",           /* 0x58 */
+					 "X5C",           /* 0x5C */
+					 "X60",           /* DMA force stop. Doesn't exist */
+					 "X64",
+					 "X68",
+					 "X6C",
+					 "X70",
+					 "X74",
+					 "X78",
+					 "X7C",
+					 "DSP Ctrl Port",
+					 "DSP Prog RAM",
+					 "DSP Data Addr",
+					 "DSP Data Data",
+					 "Timer0 Compare",
+					 "Timer1 Set",
+					 "Timer1 Mode",
+					 "X9C",
+					 "Int Mask",
+					 "Int Stat",
+					 "A-Bus IntAck",
+					 "XAC",
+					 "A-Bus Set 0",
+					 "A-Bus Set 1",
+					 "A-Bus Refresh",
+					 "XBC",
+					 "XC0",
+					 "SDRAM select",
+					 "SCU Version",
+					 "XCC"};
+				   		      
 
-UINT32 scu_regs[0x34]; /* SCU register block temporary structure*/ 
+UINT32 scu_regs[0x34]; /* SCU register block */ 
+static const char *int_names[16] = {
+  "VBlank-IN", "VBlank-OUT", "HBlank-IN", "Timer 0", 
+  "Timer 1", "DSP", "Sound", "SMPC", "PAD",
+  "DMA Level 2", "DMA Level 1", "DMA Level 0",
+  "DMA Illegal", "Sprite END", "Illegal", "A-Bus" };
+
+enum 
+
+{
+  VBLANK_IN_INT,
+  VBLANK_OUT_INT,
+  HBLANK_IN_INT,
+  TIMER_0_INT,
+  TIMER_1_INT,
+  DSP_INT,
+  SOUND_INT,
+  SMPC_INT,
+  PAD_INT,
+  DMA2_INT,
+  DMA1_INT,
+  DMA0_INT,
+  DMA_ILL_INT,
+  SPRITE_INT,
+  ILLEGAL_INT,
+  ABUS_INT
+};
 
 void reset_scu(void)
 
 {
   memset(scu_regs,0,0x34*4);
+  scu_regs[0x28] = 0xffffffff;
 }
 
 READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
@@ -696,22 +732,72 @@ READ32_HANDLER( saturn_scu_r )	  /* SCU, DMA/DSP */
   return scu_regs[offset] & ~mem_mask;
 }
 
+
+static int scu_irq_levels[32] =
+{
+    15, 14, 13, 12, 11, 10,  9,  8,
+     8,  6,  6,  5,  3,  2,  0,  0,
+     7,  7,  7,  7,  4,  4,  4,  4,
+     1,  1,  1,  1,  1,  1,  1,  1
+};
+
+
+static void scu_set_imask(void)
+{
+    int irq;
+
+    LOG(("saturn_scu_w    interrupt mask change:"));
+    for (irq = 0; irq < 16; irq++)
+    {
+        if ((scu_regs[0x28] & (1 <<irq)) == 0)
+            LOG((" %s", int_names[irq]));
+        else
+	  cpu_set_irq_line(0, irq /*scu_irq_levels[irq]*/, CLEAR_LINE);
+    }
+    LOG(("\n"));
+}
+
+void scu_pulse_interrupt(int irq)
+{
+    if (irq >= ABUS_INT)
+    {
+        LOG(("scu    pulsed abus irq\n"));
+    }
+    else
+    {
+        LOG(("scu    IRQ #%d", irq));
+        if ((scu_regs[0x28] & (1 << irq)) == 0)
+        {
+            LOG((" - pulsed"));
+            cpu_irq_line_vector_w(0, /*scu_irq_levels[irq]*/ irq, 0x40 + irq); /* The fact that this works is amazing */
+            cpu_set_irq_line(0, /*scu_irq_levels[irq]*/ irq, HOLD_LINE);
+        }
+        else
+        {
+            LOG((" - masked"));
+        }
+        LOG(("\n"));
+    }
+}
+
 WRITE32_HANDLER( saturn_scu_w )   /* SCU, DMA/DSP */
 {
   logerror("scu_w %s - data = %08lX - PC=%08lX\n",scu_regnames[offset],data,cpu_get_reg(SH2_PC));
   scu_regs[offset] = (scu_regs[offset] & mem_mask) | data;
+  if(offset == 0x28)
+    scu_set_imask();
 }
 
-const char cd_regnames[0xA][10] = {{"X0"},
-				   {"X4"},
-				   {"HIRQ"},
-				   {"HIRQ Mask"},
-				   {"X10"},
-				   {"X14"},
-				   {"CR1"},
-				   {"CR2"},
-				   {"CR3"},
-				   {"CR4"}};
+static const char *cd_regnames[0xA] = {"X0",
+				       "X4",
+				       "HIRQ",
+				       "HIRQ Mask",
+				       "X10",
+				       "X14",
+				       "CR1",
+				       "CR2",
+				       "CR3",
+				       "CR4"};
 				  
 UINT32 cd_regs[0xA];
 UINT32 periodic; /* Currently a hack to bypass bios area */
@@ -726,7 +812,7 @@ UINT32 periodic; /* Currently a hack to bypass bios area */
 void reset_cd(void)
      
 {
-  cd_regs[CD_CR1]  = 'C' << 16;
+  cd_regs[CD_CR1]  =  'C' << 16;
   cd_regs[CD_CR2]  = ('D' << 24) | ('B' << 16);
   cd_regs[CD_CR3]  = ('L' << 24) | ('O' << 16);
   cd_regs[CD_CR4]  = ('C' << 24) | ('K' << 16);
@@ -863,19 +949,40 @@ WRITE32_HANDLER( saturn_dsp_w )  /* DSP */
   logerror("dsp_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
 }
 
-UINT16 vdp1_regs[0xC];
+struct _vdp1_state
+
+{
+  UINT16 vdp1_regs[0xC];
+} vdp1_state;
+
+static const char *vdp1_regnames[] = 
+
+{
+  "TV Mode Selection",
+  "Frame Buffer Switch",
+  "Plot Trigger",
+  "Erase/Write Data",
+  "Erase/Write Upper Left coord",
+  "Erase/Write Lower Right coord",
+  "Plot Abnormal End",
+  "Reserved",
+  "Transfer End Status",
+  "Last Operation Addr",
+  "Current Operation Addr",
+  "Mode Status"
+};  
 
 void reset_vdp1(void)
 
 {
-  memset(vdp1_regs,0,0xC<<1);
+  memset(vdp1_state.vdp1_regs,0,0xC<<1);
 }
 
 READ32_HANDLER( saturn_vdp1_r )   /* VDP1 registers */
 {
   UINT32 ret_val;
 
-  ret_val = *(((UINT32 *) vdp1_regs) + offset);
+  ret_val = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
   ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
   
   logerror("vdp1_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
@@ -889,11 +996,11 @@ WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 
   logerror("vdp1_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
 
-  olddata = *(((UINT32 *) vdp1_regs) + offset);
+  olddata = *(((UINT32 *) vdp1_state.vdp1_regs) + offset);
   olddata &= SWAP_WORDS(mem_mask);
   olddata |= SWAP_WORDS(data);
 
-  *(((UINT32 *) vdp1_regs) + offset) = olddata;
+  *(((UINT32 *) vdp1_state.vdp1_regs) + offset) = olddata;
 }
 
 #define SCREEN_LINES 224 /* How many lines are actually displayed */
@@ -901,10 +1008,168 @@ WRITE32_HANDLER( saturn_vdp1_w )  /* VDP1 registers */
 #define FRAME_TIME 477273 /* Clock cycles per frame (~60Hz) */
 #define LINE_TIME  (FRAME_TIME/MAX_LINES)   /* Approx cycles per line (~FRAME_TIME / 512) */
 
+/* Video Display Processor 2 */
+
+struct _vdp2_state
+
+{
+  UINT16 vdp2_regs[0x90];
+} vdp2_state;
+
 void *HBlankTimer;
 UINT32 HBlankCount;
 UINT32 InVBlank;   /* Are we in vertical blanking ? */
 void timer_hblank(int param);
+
+static const char *vdp2_regnames[] =
+
+{
+  "TV Screen Mode",
+  "Ext Signal Enable",
+  "Screen Status",
+  "VRAM Size",
+  "H-Counter",
+  "V-Counter",
+  "Reserved",
+  "RAM Control",
+  "VRAM Cycle (BANK A0) L",
+  "VRAM Cycle (BANK A0) U",
+  "VRAM Cycle (BANK A1) L",
+  "VRAM Cycle (BANK A1) U",
+  "VRAM Cycle (BANK B0) L",
+  "VRAM Cycle (BANK B0) U",
+  "VRAM Cycle (BANK B1) L",
+  "VRAM Cycle (BANK B1) U",
+  "Screen Display Enable",
+  "Mosaic Control",
+  "Special Func Code Sel",
+  "Special Func Code",
+  "Char Control (NBG0, NBG1)",
+  "Char Control (NBG2, NBG3, RBG0)",
+  "Bitmap Pal No (NBG0, NBG1)",
+  "Bitmap Pal No (RBG0)",
+  "Pattern Name Ctrl (NBG0)",
+  "Pattern Name Ctrl (NBG1)",
+  "Pattern Name Ctrl (NBG2)",
+  "Pattern Name Ctrl (NBG3)",
+  "Pattern Name Ctrl (RGB0)",
+  "Plane Size",
+  "Map Offs (NBG0-NBG3)",
+  "Map Offs (Rotation Param A,B)",
+  "Map (NBG0, Plane A,B)",
+  "Map (NBG0, Plane C,D)",
+  "Map (NBG1, Plane A,B)",
+  "Map (NBG1, Plane C,D)",
+  "Map (NBG2, Plane A,B)",
+  "Map (NBG2, Plane C,D)",
+  "Map (NBG3, Plane A,B)",
+  "Map (NBG3, Plane C,D)",
+  "Map (Rotation Param A, Plane A,B)",
+  "Map (Rotation Param A, Plane C,D)",
+  "Map (Rotation Param A, Plane E,F)",
+  "Map (Rotation Param A, Plane G,H)",
+  "Map (Rotation Param A, Plane I,J)",
+  "Map (Rotation Param A, Plane K,L)",
+  "Map (Rotation Param A, Plane M,N)",
+  "Map (Rotation Param A, Plane O,P)",
+  "Map (Rotation Param B, Plane A,B)",
+  "Map (Rotation Param B, Plane C,D)",
+  "Map (Rotation Param B, Plane E,F)",
+  "Map (Rotation Param B, Plane G,H)",
+  "Map (Rotation Param B, Plane I,J)",
+  "Map (Rotation Param B, Plane K,L)",
+  "Map (Rotation Param B, Plane M,N)",
+  "Map (Rotation Param B, Plane O,P)",
+  "Scr Scrl Val (NBG0, Horiz Integer Part)",
+  "Scr Scrl Val (NBG0, Horiz Fraction Part)",
+  "Scr Scrl Val (NBG0, Vert Integer Part)",
+  "Scr Scrl Val (NBG0, Vert Fraction Part)",
+  "Coord Inc (NBG0, Horiz Integer Part)",
+  "Coord Inc (NBG0, Horiz Fraction Part)",
+  "Coord Inc (NBG0, Vert Integer Part)",
+  "Coord Inc (NBG0, Vert Fraction Part)",
+  "Scr Scrl Val (NBG1, Horiz Integer Part)",
+  "Scr Scrl Val (NBG1, Horiz Fraction Part)",
+  "Scr Scrl Val (NBG1, Vert Integer Part)",
+  "Scr Scrl Val (NBG1, Vert Fraction Part)",
+  "Coord Inc (NBG1, Horiz Integer Part)",
+  "Coord Inc (NBG1, Horiz Fraction Part)",
+  "Coord Inc (NBG1, Vert Integer Part)",
+  "Coord Inc (NBG1, Vert Fraction Part)",
+  "Scr Scrl Val (NBG2, Horizontal)",
+  "Scr Scrl Val (NBG2, Vertical)",
+  "Scr Scrl Val (NBG3, Horizontal)",
+  "Scr Scrl Val (NBG3, Vertical)",
+  "Reduction Enable",
+  "Line, Vert Cell Scroll (NBG0, NBG1)",
+  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) U",
+  "Vert Cell Scrol Tbl Addt (NBG0, NBG1) L",
+  "Line Scrl Tbl Addr (NBG0) U",
+  "Line Scrl Tbl Addr (NBG0) L",
+  "Line Scrl Tbl Addr (NBG1) U",
+  "Line Scrl Tbl Addr (NBG1) L",
+  "Line Colour Scr Table Addr U",
+  "Line Colour Scr Table Addr L",
+  "Back Scr Tbl Addr U",
+  "Back Scr Tbl Addr L",
+  "Rotation Param Mode",
+  "Rotation Param Read Ctrl",
+  "Co-efficient Tbl Ctrl",
+  "Co-efficient Tbl Addr Offs (Rot Param A,B)",
+  "Screen Over Pattern Name (Rot Param A)",
+  "Screen Over Pattern Name (Rot Param B)",
+  "Rot Param Tbl Addr (Rot Param A,B) U"
+  "Rot Param Tbl Addr (Rot Param A,B) L",
+  "Window Pos (W0, Horiz Start)",
+  "Window Pos (W0, Vert Start)",
+  "Window Pos (W0, Horiz End)",
+  "Window Pos (W0, Vert End)",
+  "Window Pos (W1, Horiz Start)",
+  "Window Pos (W1, Vert Start)",
+  "Window Pos (W1, Horiz End)",
+  "Window Pos (W1, Vert End)",
+  "Window Ctrl (NBG0, NBG1)",
+  "Window Ctrl (NBG2, NBG3)",
+  "Window Ctrl (RBG0, SPRITE)",
+  "Window Ctrl (Param Win, Colour Calc Win)",
+  "Line Win Tbl Addr (W0) U",
+  "Line Win Tbl Addr (W0) L",
+  "Line Win Tbl Addr (W1) U",
+  "Line Win Tbl Addr (W1) L",
+  "Sprite Ctrl",
+  "Shadow Ctrl",
+  "Colour RAM Addr Offs (NBG0-NBG3)",
+  "Colour RAM Addr Offs (RBG0, SPRITE)",
+  "Line Colour Scr Enable",
+  "Special Priority Mode",
+  "Colour Calc Ctrl",
+  "Special Colour Calc Mode",
+  "Priority No (SPRITE 0,1)",
+  "Priority No (SPRITE 2,3)",
+  "Priority No (SPRITE 4,5)",
+  "Priority No (SPRITE 6,7)",
+  "Priority No (NBG0, NBG1)",
+  "Priority No (NBG2, NBG3)",
+  "Priority No (RGB0)",
+  "Reserved",
+  "Colour Calc Ratio (SPRITE 0,1)",
+  "Colour Calc Ratio (SPRITE 2,3)",
+  "Colour Calc Ratio (SPRITE 4,5)",
+  "Colour Calc Ratio (SPRITE 6,7)",
+  "Colour Calc Ratio (NBG0, NBG1)",
+  "Colour Calc Ratio (NBG2, NBG3)",
+  "Colour Calc Ratio (RBG0)",
+  "Colour Calc Ratio (Line Colour Scr, Back Screen)",
+  "Colour Offs Enable",
+  "Colour Offs Select",
+  "Colour Offs A (RED)",
+  "Colour Offs A (GREEN)",
+  "Colour Offs A (BLUE)",
+  "Colour Offs B (RED)",
+  "Colour Offs B (GREEN)",
+  "Colour Offs B (BLUE)"
+};
+  
 
 void reset_vdp2(void)
 
@@ -912,6 +1177,7 @@ void reset_vdp2(void)
   HBlankCount = 0;
   HBlankTimer = timer_set(TIME_IN_CYCLES(LINE_TIME,0),0,timer_hblank);
   InVBlank = 0;
+  memset(vdp2_state.vdp2_regs,0,0x90*2);
 }
 
 void timer_hblank(int param)
@@ -930,7 +1196,7 @@ void timer_hblank(int param)
       /* We are going into vertical blanking area */
       /* Execute VBlank-IN interrupt */
       InVBlank = 1;
-      logerror("VBlankIN\n");
+      //      logerror("VBlankIN\n");
     }
   else
     {
@@ -940,7 +1206,8 @@ void timer_hblank(int param)
 	  /* Setup up VBlank-OUT Interrupt */
 	  InVBlank = 0;
 	  HBlankCount = 0; /* Reset hblank counter */
-	  logerror("VBlankOUT\n");
+	  scu_pulse_interrupt(VBLANK_OUT_INT);
+	  //  logerror("VBlankOUT\n");
 	}
       else
 	{
@@ -951,13 +1218,35 @@ void timer_hblank(int param)
 
 READ32_HANDLER( saturn_vdp2_r )   /* VDP2 registers */
 {
-  logerror("vdp2_r offset=%08lX mem_mask=%08lX\n",offset*4,mem_mask);
-  return 0xa5a5a5a5 & ~mem_mask;
+  UINT32 ret_val;
+
+  ret_val = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
+
+#if PAL
+  if(offset == 0x1)
+    {
+      ret_val |= 0x00010000;
+    }
+#endif
+
+  ret_val = SWAP_WORDS(ret_val) & ~SWAP_WORDS(mem_mask);
+
+  logerror("vdp2_r offset=%08lX mem_mask=%08lX ret_val=%08lX\n",offset*4,mem_mask,ret_val);
+  
+  return SWAP_WORDS(ret_val);
 }
 
 WRITE32_HANDLER( saturn_vdp2_w )  /* VDP2 registers */
 {
+  UINT32 olddata;
+
   logerror("vdp2_w offset=%08lX data=%08lX mem_mask=%08lX\n",offset*4,data,mem_mask);
+
+  olddata = *(((UINT32 *) vdp2_state.vdp2_regs) + offset);
+  olddata &= SWAP_WORDS(mem_mask);
+  olddata |= SWAP_WORDS(data);
+
+  *(((UINT32 *) vdp2_state.vdp2_regs) + offset) = olddata;
 }
 
 void saturn_init_machine(void)
@@ -1103,7 +1392,27 @@ INPUT_PORTS_START( saturn )
 INPUT_PORTS_END
 
 void saturn_init_palette(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+
+     /*Setup the internal palette to 15bit colour */
+
 {
+  int i;
+  
+  for ( i = 0; i < 0x8000; i++ )
+    {
+      int r, g, b;
+      
+      r = (( i >> 10 ) & 0x1f) << 3;
+      g = (( i >> 5 ) & 0x1f) << 3;
+      b = (i & 0x1f) << 3;
+      
+      *palette++ = r;
+      *palette++ = g;
+      *palette++ = b;
+      
+      colortable[i] = i;
+    }
+
   logerror("saturn_init_palette\n");
 }
 
@@ -1146,12 +1455,19 @@ static struct MachineDriver machine_driver_saturn =
   saturn_vh_screenrefresh,
 
   /* sound hardware */
-  0,0,0,0,
+  0,0,0,0
 };
 
 ROM_START(saturn)
      ROM_REGION(0x00491000, REGION_CPU1,0)
+     /*ROM_LOAD("sega_100.bin", 0x00000000, 0x00080000, 0x2ABA43C2) */
      ROM_LOAD("sega_101.bin", 0x00000000, 0x00080000, 0x224b752c)
+     /*ROM_LOAD("sega_eur.bin", 0x00000000, 0x00080000, 0x4AFCF0FA) */
+     /*Make sure you set the PAL define to 1 otherwise euro bios will lock badly */
+
+     /* STV Bios Note these are in correct endian order. not byte swapped versions */
+     /*ROM_LOAD("mp17951a.s", 0x00000000, 0x00080000, 0x574FD2C3) */
+     /*ROM_LOAD("mp17952a.s", 0x00000000, 0x00080000, 0xBF7DBDD7) */
      ROM_REGION(0x00080000, REGION_CPU2,0)
 ROM_END
 
