@@ -245,8 +245,8 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( nc100 ) 	/* 19?? NC100									  */
 #endif
 #ifndef MESS_EXCLUDE_ACORN
-	DRIVER( z88 )		/*												  */
-	DRIVER( avigo ) 	/*												  */
+TESTDRIVER( z88 )		/*												  */
+TESTDRIVER( avigo ) 	/*												  */
 #endif
 #ifndef MESS_EXCLUDE_AMSTRAD
 	/* VEB MIKROELEKTRONIK */
