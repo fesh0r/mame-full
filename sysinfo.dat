@@ -2409,6 +2409,42 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
+$info=concept
+$bio
+Corvus Concept
+
+
+Known Issues:
+
+The keyboard is not emulated fully.
+
+Hard disks, serial ports, and Omninet are not emulated.
+
+Only the original floppy controller (8" SSSD disks) is emulated.
+
+
+Usage:
+
+The driver can boot from a 8" SSSD floppy image.  Start the computer and press
+'F' when the computer asks for a boot device.
+
+You may invoke the MACSbug debugger as well by pressing the key 'D'.  However,
+this version of MACSbug requires a terminal to be connected to the serial port
+to do anything useful, so you are out of luck.
+
+
+History and Trivia:
+
+This is just another 68k-based PC.  The CCOS is mono-tasking, and vaguely
+reminiscent of UNIX.  There was also an UCSD runtime, a 8080 simulator, CPM,
+and a few application programs.  The most original feature is the extensive
+network support, but this is not emulated.
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
 $info=coupe
 $bio
 Sam Coupe (1989)
