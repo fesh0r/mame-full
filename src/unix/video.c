@@ -330,6 +330,20 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 
 void osd_video_initpre()
 {
+	/*
+	 * This may not be the best place for this, but it should 
+	 * work for the time being.
+	 */
+	effect_dbbuf = NULL;
+	rotate_dbbuf = NULL;
+	rotate_dbbuf0 = NULL;
+	rotate_dbbuf1 = NULL;
+	rotate_dbbuf2 = NULL;
+	/* these are used for the 6-tap filter */
+	rotate_dbbuf3 = NULL;
+	rotate_dbbuf4 = NULL;
+	rotate_dbbuf5 = NULL;
+
 	/* first start with the game's built-in orientation */
 	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
 	options.ui_orientation = orientation;

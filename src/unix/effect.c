@@ -193,6 +193,7 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
     }
 
     fprintf(stderr, "Initializing video effect %d: bitmap depth = %d, display depth = %d\n", effect, src_depth, rddepth);
+    free(effect_dbbuf);
     effect_dbbuf = malloc(dst_width*normal_heightscale*rddepth/8);
     for (i=0; i<dst_width*normal_heightscale*rddepth/8; i++)
       effect_dbbuf[i] = 0;
@@ -329,24 +330,35 @@ void effect_init2(int src_depth, int dst_depth, int dst_width)
     if ((effect == EFFECT_SCALE2X) ||
         (effect == EFFECT_HQ2X)    ||
         (effect == EFFECT_LQ2X)) {
-      rotate_dbbuf0 = calloc(video_width*video_depth/8, sizeof(char));
-      rotate_dbbuf1 = calloc(video_width*video_depth/8, sizeof(char));
-      rotate_dbbuf2 = calloc(video_width*video_depth/8, sizeof(char));
+      free(rotate_dbbuf0);
+      free(rotate_dbbuf1);
+      free(rotate_dbbuf2);
+      rotate_dbbuf0 = calloc(visual_width*video_depth/8, sizeof(char));
+      rotate_dbbuf1 = calloc(visual_width*video_depth/8, sizeof(char));
+      rotate_dbbuf2 = calloc(visual_width*video_depth/8, sizeof(char));
     } else {
-      rotate_dbbuf = calloc(video_width*video_depth/8, sizeof(char));
+      free(rotate_dbbuf);
+      rotate_dbbuf = calloc(visual_width*video_depth/8, sizeof(char));
     }
   }
 
   /* I need these buffers regardless of whether the display is rotated or not */
   if (effect == EFFECT_6TAP2X)
     {
-    rotate_dbbuf = calloc(video_width*4, sizeof(char));
-    rotate_dbbuf0 = calloc(video_width*8, sizeof(char));
-    rotate_dbbuf1 = calloc(video_width*8, sizeof(char));
-    rotate_dbbuf2 = calloc(video_width*8, sizeof(char));
-    rotate_dbbuf3 = calloc(video_width*8, sizeof(char));
-    rotate_dbbuf4 = calloc(video_width*8, sizeof(char));
-    rotate_dbbuf5 = calloc(video_width*8, sizeof(char));
+    free(rotate_dbbuf);
+    free(rotate_dbbuf0);
+    free(rotate_dbbuf1);
+    free(rotate_dbbuf2);
+    free(rotate_dbbuf3);
+    free(rotate_dbbuf4);
+    free(rotate_dbbuf5);
+    rotate_dbbuf = calloc(visual_width*4, sizeof(char));
+    rotate_dbbuf0 = calloc(visual_width*8, sizeof(char));
+    rotate_dbbuf1 = calloc(visual_width*8, sizeof(char));
+    rotate_dbbuf2 = calloc(visual_width*8, sizeof(char));
+    rotate_dbbuf3 = calloc(visual_width*8, sizeof(char));
+    rotate_dbbuf4 = calloc(visual_width*8, sizeof(char));
+    rotate_dbbuf5 = calloc(visual_width*8, sizeof(char));
     }
 }
 
