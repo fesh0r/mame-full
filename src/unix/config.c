@@ -248,9 +248,9 @@ int config_init (int argc, char *argv[])
 	{
 		fprintf(stderr, "error: compiled byte ordering doesn't match machine byte ordering.\n"
 #ifdef LSB_FIRST
-				"compiled for lsb-first, are you sure you choose the right cpu in makefile.unix\n");
+				"compiled for LSB first, are you sure you chose the right cpu in makefile.unix?\n");
 #else
-				"compiled for msb-first, are you sure you choose the right cpu in makefile.unix\n");
+				"compiled for MSB first, are you sure you chose the right cpu in makefile.unix?\n");
 #endif
 		return OSD_NOT_OK;
 	}
