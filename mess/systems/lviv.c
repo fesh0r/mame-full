@@ -202,7 +202,7 @@ timings:
 --------
 
 	The CPU timing is controlled by a KR580GF24 (Sovietic copy of i8224) connected to a 18MHz(?)
-	oscillator.  CPU frequency must be 18MHz/8 = 2.25MHz (no waranty).
+	oscillator.  CPU frequency must be 18MHz/9 = 2MHz.
 
 	Memory timing uses a 8-phase clock, derived from a 20MHz(?) video clock (called VCLK0 here:
 	in the schematics, it comes from pin 6 of V8, and it is labelled "0'" in the video clock bus).
@@ -211,10 +211,10 @@ timings:
 
 	When the CPU accesses RAM, wait states are inserted until the RAM transfer is complete.
 
-	CPU clock: 18MHz/8 = 2.25MHz
+	CPU clock: 18MHz/9 = 2MHz
 	memory cycle time: 20MHz/8 = 2.5MHz
 	CPU memory access time: (min) approx. 9/20MHz = 450ns
-	                        (max) approx. 17/20MHz = 850ns
+	                        (max) approx. 25/20MHz = 1250ns
 	pixel clock: 20MHz/4 = 5MHz
 	screen size: 256*256
 	HBL: 64 pixel clock cycles
@@ -263,7 +263,7 @@ timings:
 			_________________________________________________________________________
 	WRM*	\\\\\\\\\\\\\\\\\\\\\\\\\\_b__________________________________///////////
 			_________________________________________________________________________
-	RDM*	\\\\\\\\\\\\\\\\\\\\\\\\\\_c__________________________________///////////
+	RDM*	\\\\\\\\\\\\\\\\\\\\\\\\\\_c __________________________________///////////
 			_________________________________________________________________________
 	RA		\\\\\\\\\\\\\\\\\\\\\\\\\\_a__________________________________/
 
