@@ -717,28 +717,26 @@ static int execute_instruction(void)
 	int etime;
 
 
-	etime = 0;
-
 	switch (INSTR)
 	{
 	case AND:		/* Logical And */
 		AC &= READ_PDP_18BIT(MA);
-		etime += 10;
+		etime = 10;
 		break;
 	case IOR:		/* Inclusive Or */
 		AC |= READ_PDP_18BIT(MA);
-		etime += 10;
+		etime = 10;
 		break;
 	case XOR:		/* Exclusive Or */
 		AC ^= READ_PDP_18BIT(MA);
-		etime += 10;
+		etime = 10;
 		break;
 	case XCT:		/* Execute */
 		MB = READ_PDP_18BIT(MA);
 		MA = MB & 07777;
 		IB = (MB >> 12) & 1;	/* indirection flag */
 		INSTR = MB >> 13;		/* basic opcode */
-		etime += 5;
+		etime = 5;			/* actually 10, but we save next instruction fetch */
 		goto no_fetch;			/* fall through to next instruction */
 	case CALJDA:	/* Call subroutine and Jump and Deposit Accumulator instructions */
 		if (IB == 0)
@@ -748,35 +746,35 @@ static int execute_instruction(void)
 		INCREMENT_MA;
 		AC = (OV << 17) + PC;
 		PC = MA;
-		etime += 10;
+		etime = 10;
 		break;
 	case LAC:		/* Load Accumulator */
 		AC = READ_PDP_18BIT(MA);
-		etime += 10;
+		etime = 10;
 		break;
 	case LIO:		/* Load i/o register */
 		IO = READ_PDP_18BIT(MA);
-		etime += 10;
+		etime = 10;
 		break;
 	case DAC:		/* Deposit Accumulator */
 		WRITE_PDP_18BIT(MA, AC);
-		etime += 10;
+		etime = 10;
 		break;
 	case DAP:		/* Deposit Address Part */
 		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 0770000) | (AC & 07777));
-		etime += 10;
+		etime = 10;
 		break;
 	case DIP:		/* Deposit Instruction Part */
 		WRITE_PDP_18BIT(MA, (READ_PDP_18BIT(MA) & 07777) | (AC & 0770000));
-		etime += 10;
+		etime = 10;
 		break;
 	case DIO:		/* Deposit I/O Register */
 		WRITE_PDP_18BIT(MA, IO);
-		etime += 10;
+		etime = 10;
 		break;
 	case DZM:		/* Deposit Zero in Memory */
 		WRITE_PDP_18BIT(MA, 0);
-		etime += 10;
+		etime = 10;
 		break;
 	case ADD:		/* Add */
 		AC = AC + READ_PDP_18BIT(MA);
@@ -784,7 +782,7 @@ static int execute_instruction(void)
 		AC = (AC + OV) & 0777777;
 		if (AC == 0777777)
 			AC = 0;
-		etime += 10;
+		etime = 10;
 		break;
 	case SUB:		/* Subtract */
 		{
@@ -797,7 +795,7 @@ static int execute_instruction(void)
 				AC = 0;
 			if (diffsigns && (READ_PDP_18BIT(MA) >> 17 == AC >> 17))
 				OV = 1;
-			etime += 10;
+			etime = 10;
 			break;
 		}
 	case IDX:		/* Index */
@@ -805,7 +803,7 @@ static int execute_instruction(void)
 		if (AC == 0777777)
 			AC = 0;
 		WRITE_PDP_18BIT(MA, AC);
-		etime += 10;
+		etime = 10;
 		break;
 	case ISP:		/* Index and Skip if Positive */
 		AC = READ_PDP_18BIT(MA) + 1;
@@ -814,17 +812,17 @@ static int execute_instruction(void)
 		WRITE_PDP_18BIT(MA, AC);
 		if ((AC & 0400000) == 0)
 			INCREMENT_PC;
-		etime += 10;
+		etime = 10;
 		break;
 	case SAD:		/* Skip if Accumulator and Y differ */
 		if (AC != READ_PDP_18BIT(MA))
 			INCREMENT_PC;
-		etime += 10;
+		etime = 10;
 		break;
 	case SAS:		/* Skip if Accumulator and Y are the same */
 		if (AC == READ_PDP_18BIT(MA))
 			INCREMENT_PC;
-		etime += 10;
+		etime = 10;
 		break;
 	case MUS:		/* Multiply Step */
 		if ((IO & 1) == 1)
@@ -836,7 +834,7 @@ static int execute_instruction(void)
 		}
 		IO = (IO >> 1 | AC << 17) & 0777777;
 		AC >>= 1;
-		etime += 10;
+		etime = 10;
 		break;
 	case DIS:		/* Divide Step */
 		{
@@ -857,17 +855,17 @@ static int execute_instruction(void)
 			}
 			if (AC == 0777777)
 				AC = 0;
-			etime += 10;
+			etime = 10;
 			break;
 		}
 	case JMP:		/* Jump */
 		PC = MA;
-		etime += 5;
+		etime = 5;
 		break;
 	case JSP:		/* Jump and Save Program Counter */
 		AC = (OV << 17) + PC;
 		PC = MA;
-		etime += 5;
+		etime = 5;
 		break;
 	case SKP:		/* Skip Instruction Group */
 		{
@@ -892,7 +890,7 @@ static int execute_instruction(void)
 			}
 			if (mb & 01000)
 				OV = 0;
-			etime += 5;
+			etime = 5;
 			break;
 		}
 	case SFT:		/* Shift Instruction Group */
@@ -907,7 +905,7 @@ static int execute_instruction(void)
 			while (mask != 0)
 			{
 				nshift += mask & 1;
-				mask = mask >> 1;
+				mask >>= 1;
 			}
 			switch ((mb >> 9) & 017)
 			{
@@ -985,12 +983,12 @@ static int execute_instruction(void)
 				logerror("Undefined shift: 0%06o at 0%06o\n", mb, PC - 1);
 				break;
 			}
-			etime += 5;
+			etime = 5;
 			break;
 		}
 	case LAW:		/* Load Accumulator with N */
 		AC = (IB == 0) ? MA : MA ^ 0777777;
-		etime += 5;
+		etime = 5;
 		break;
 	case IOT:		/* In-Out Transfer Instruction Group */
 		/*
@@ -1026,25 +1024,24 @@ static int execute_instruction(void)
 			be attached, these bits may be used to further the in-out transfer instruction
 			to perform totally distinct functions. 
 		*/
-		etime += pdp1.extern_iot (&IO, MB);
+		etime = pdp1.extern_iot (&IO, MB);
 		break;
 	case OPR:		/* Operate Instruction Group */
 		{
+			int mb = MB;
 			int nflag;
-			int state;
 
-			etime += 5;
-			if (MA & 00200)		/* clear AC */
-				AC = 0;
-			if (MA & 04000)		/* clear I/O register */
+			if (mb & 04000)		/* clear I/O register */
 				IO = 0;
-			if (MA & 02000)		/* load Accumulator from Test Word */
+			if (mb & 00200)		/* clear AC */
+				AC = 0;
+			if (mb & 02000)		/* load Accumulator from Test Word */
 				AC |= pdp1.get_test_switches ? (*pdp1.get_test_switches)() : 0;
-			if (MA & 00100)		/* load Accumulator with Program Counter */
+			if (mb & 00100)		/* load Accumulator with Program Counter */
 				AC |= (OV << 17) + PC;
-			if (MA & 01000)		/* Complement AC */
+			if (mb & 01000)		/* Complement AC */
 				AC ^= 0777777;
-			if (MA & 00400)		/* Halt */
+			if (mb & 00400)		/* Halt */
 			{
 				logerror("PDP1 Program executed HALT: at 0%06o\n", PC - 1);
 #if 0
@@ -1057,20 +1054,26 @@ static int execute_instruction(void)
 #endif
 			}
 
-			nflag = MA & 7;
-			if (nflag < 1)			   /* was 2 */
-				break;
-			state = (MA & 010) == 010;
-			if (nflag == 7)
-				FLAGS = 077;
-			else
-				WRITEFLAG(nflag, state);
+			nflag = mb & 7;
+			if (nflag)
+			{
+				if (nflag == 7)
+					FLAGS = (mb & 010) ? 077 : 000;
+				else
+					WRITEFLAG(nflag, (mb & 010) ? 1 : 0);
+			}
 
+			etime = 5;
 			break;
 		}
 	default:
 		logerror("Illegal instruction: 0%06o at 0%06o\n", MB, PC - 1);
-		etime += 5;	/* we handle this like a nop, for lack of any specific info */
+		etime = 5;
+#if 0
+		/* we handle this like a nop, for lack of any specific info */
+		/* maybe we had better stop the CPU ? */
+		pdp1.run = 0;
+#endif
 		break;
 	}
 	pdp1.cycle = 0;
