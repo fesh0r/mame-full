@@ -59,7 +59,7 @@ const struct sysdep_display_effect_properties_struct sysdep_display_effect_prope
   { 2, 2, 2, 2, 1, "low quality filter" },   /* lq2x */
   { 2, 2, 2, 2, 1, "high quality filter" },  /* hq2x */
   { 2, 2, 2, 2, 1, "6-tap filter & scanlines" }, /* 6tap2x */
-  { 1, 8, 1, 8, 0, "black scanlines" }       /* fakescan */
+  { 1, 8, 2, 8, 0, "black scanlines" }       /* fakescan */
 };
  
 char *effect_dbbuf  = NULL;
@@ -146,11 +146,13 @@ void sysdep_display_check_effect_params(
 {
   /* warn only once about disabling yarbsize */
   static int firsttime = 1;
-  
+
+  /* Can we do effects? */  
   if (!(sysdep_display_properties.mode[params->video_mode] &
         SYSDEP_DISPLAY_EFFECTS))
     params->effect = 0;
-  
+
+  /* Adjust widthscale */ 
   if (params->widthscale <
       sysdep_display_effect_properties[params->effect].min_widthscale)
   {
@@ -164,7 +166,8 @@ void sysdep_display_check_effect_params(
     params->widthscale =
       sysdep_display_effect_properties[params->effect].max_widthscale;
   }
-
+  
+  /* Adjust heightscale */ 
   if (params->heightscale <
       sysdep_display_effect_properties[params->effect].min_heightscale)
   {
@@ -178,11 +181,9 @@ void sysdep_display_check_effect_params(
       sysdep_display_effect_properties[params->effect].max_heightscale;
   }
   
-  if (sysdep_display_effect_properties[params->effect].lock_scale &&
-      (params->heightscale != params->widthscale))
-  {
+  /* check if we need to lock widthscale and heightscale */
+  if (sysdep_display_effect_properties[params->effect].lock_scale)
     params->heightscale = params->widthscale;
-  }
 
   if (params->effect && params->yarbsize)
   {
@@ -415,42 +416,42 @@ int sysdep_display_effect_open(void)
     "YUY2",
     "YV12"
   };
-  int i = -1;
+  int i;
 
   /* FIXME only allocate if needed and of the right size */
   if (!(effect_dbbuf = malloc(sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4)))
     return 1;
   memset(effect_dbbuf, sysdep_display_params.max_width*sysdep_display_params.widthscale*sysdep_display_params.heightscale*4, 0);
 
-  switch(sysdep_display_properties.palette_info.fourcc_format)
-  {
-    case FOURCC_YUY2:
-      i = 3;
-      break;
-    case FOURCC_YV12:
-      i = 4;
-      break;
-    case 0:
-      if ( (sysdep_display_properties.palette_info.bpp == 16) &&
-           (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
-           (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
-           (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
-        i = 0;
-      if ( (sysdep_display_properties.palette_info.bpp == 16) &&
-           (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
-           (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
-           (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
-        i = 1;
-      if ( ( (sysdep_display_properties.palette_info.bpp == 24) ||
-             (sysdep_display_properties.palette_info.bpp == 32) ) &&
-           (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
-           (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
-           (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
-        i = 2;
-  }
-
   if (sysdep_display_params.effect)
   {
+    i = -1;
+    switch(sysdep_display_properties.palette_info.fourcc_format)
+    {
+      case FOURCC_YUY2:
+        i = 3;
+        break;
+      case FOURCC_YV12:
+        i = 4;
+        break;
+      case 0:
+        if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+             (sysdep_display_properties.palette_info.red_mask   == (0x1F << 10)) &&
+             (sysdep_display_properties.palette_info.green_mask == (0x1F <<  5)) &&
+             (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
+          i = 0;
+        if ( (sysdep_display_properties.palette_info.bpp == 16) &&
+             (sysdep_display_properties.palette_info.red_mask   == (0x1F << 11)) &&
+             (sysdep_display_properties.palette_info.green_mask == (0x3F <<  5)) &&
+             (sysdep_display_properties.palette_info.blue_mask  == (0x1F      )))
+          i = 1;
+        if ( ( (sysdep_display_properties.palette_info.bpp == 24) ||
+               (sysdep_display_properties.palette_info.bpp == 32) ) &&
+             (sysdep_display_properties.palette_info.red_mask   == (0xFF << 16)) &&
+             (sysdep_display_properties.palette_info.green_mask == (0xFF <<  8)) &&
+             (sysdep_display_properties.palette_info.blue_mask  == (0xFF      )))
+          i = 2;
+    }
     if (i == -1)
     {
       fprintf(stderr, "Warning your current color format is not supported by the effect code, disabling effects\n");
@@ -458,80 +459,78 @@ int sysdep_display_effect_open(void)
     }
     else
     {
-      fprintf(stderr, "Initializing video effect %s: bitmap depth = %d, color format = %s\n",
-        sysdep_display_effect_properties[sysdep_display_params.effect].name,
-        sysdep_display_params.depth, display_name[i]);
       i += (sysdep_display_params.depth / 16) * COLOR_FORMATS;
+      switch (sysdep_display_params.effect)
+      {
+        case SYSDEP_DISPLAY_EFFECT_SCAN2:
+          effect_func = effect_funcs[i];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
+          effect_func = effect_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+          effect_scale2x_func = effect_scale2x_funcs[i];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_LQ2X:
+          effect_scale2x_func = effect_scale2x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_HQ2X:
+          /* we might need a yuv lookup table */
+          init_rgb2yuv(i%COLOR_FORMATS);
+          effect_scale2x_func = effect_scale2x_funcs[i+2*SYSDEP_DISPLAY_EFFECT_MODES];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
+          effect_scale3x_func = effect_scale3x_funcs[i];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_SCAN3:
+          effect_scale3x_func = effect_scale3x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
+          break;
+        case SYSDEP_DISPLAY_EFFECT_6TAP2X:
+          effect_6tap_addline_func = effect_6tap_addline_funcs[sysdep_display_params.depth/16];
+          effect_6tap_render_func  = effect_6tap_render_funcs[i%COLOR_FORMATS];
+          effect_6tap_clear_func   = effect_6tap_clear;
+          break;
+      }
+      
+      /* check if we've got a valid implementation */
+      switch(sysdep_display_params.effect)
+      {
+        case SYSDEP_DISPLAY_EFFECT_NONE:
+          break;
+        case SYSDEP_DISPLAY_EFFECT_SCAN2:
+        case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
+          if(!effect_func) sysdep_display_params.effect = 0;
+          break;
+        case SYSDEP_DISPLAY_EFFECT_SCALE2X:
+        case SYSDEP_DISPLAY_EFFECT_LQ2X:
+        case SYSDEP_DISPLAY_EFFECT_HQ2X:
+          if (!effect_scale2x_func) sysdep_display_params.effect = 0;
+          break;
+        case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
+        case SYSDEP_DISPLAY_EFFECT_SCAN3:
+          if (!effect_scale3x_func) sysdep_display_params.effect = 0;
+          break;
+        case SYSDEP_DISPLAY_EFFECT_6TAP2X:
+          if (!effect_6tap_render_func) sysdep_display_params.effect = 0;
+          break;
+        case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
+          /* handled by normal blitting, not supported on YV12 for now */
+          if ((i%COLOR_FORMATS) == 4) 
+            sysdep_display_params.effect = 0;
+          break;
+      }
+      /* report our results to the user */
+      if (sysdep_display_params.effect)
+        fprintf(stderr,
+          "Initialized %s: bitmap depth = %d, color format = %s\n",
+          sysdep_display_effect_properties[sysdep_display_params.effect].name,
+          sysdep_display_params.depth, display_name[i%COLOR_FORMATS]);
+      else
+        fprintf(stderr,
+          "Warning effect %s is not supported with color format %s, disabling effects\n",
+          sysdep_display_effect_properties[sysdep_display_params.effect].name,
+          display_name[i%COLOR_FORMATS]);
     }
-  }
-
-  switch (sysdep_display_params.effect)
-  {
-    case SYSDEP_DISPLAY_EFFECT_SCAN2:
-      effect_func = effect_funcs[i];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
-      effect_func = effect_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_SCALE2X:
-      effect_scale2x_func = effect_scale2x_funcs[i];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_LQ2X:
-      effect_scale2x_func = effect_scale2x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_HQ2X:
-      /* we might need a yuv lookup table */
-      init_rgb2yuv(i%COLOR_FORMATS);
-      effect_scale2x_func = effect_scale2x_funcs[i+2*SYSDEP_DISPLAY_EFFECT_MODES];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
-      effect_scale3x_func = effect_scale3x_funcs[i];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_SCAN3:
-      effect_scale3x_func = effect_scale3x_funcs[i+SYSDEP_DISPLAY_EFFECT_MODES];
-      break;
-    case SYSDEP_DISPLAY_EFFECT_6TAP2X:
-      effect_6tap_addline_func = effect_6tap_addline_funcs[sysdep_display_params.depth/16];
-      effect_6tap_render_func  = effect_6tap_render_funcs[i%COLOR_FORMATS];
-      effect_6tap_clear_func   = effect_6tap_clear;
-      break;
-  }
-  
-  /* check if we've got a valid implementation */
-  switch(sysdep_display_params.effect)
-  {
-    case SYSDEP_DISPLAY_EFFECT_NONE:
-      i = -1;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_SCAN2:
-    case SYSDEP_DISPLAY_EFFECT_RGBSTRIPE:
-      if(effect_func) i = -1;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_SCALE2X:
-    case SYSDEP_DISPLAY_EFFECT_LQ2X:
-    case SYSDEP_DISPLAY_EFFECT_HQ2X:
-      if (effect_scale2x_func) i = -1;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_RGBSCAN:
-    case SYSDEP_DISPLAY_EFFECT_SCAN3:
-      if (effect_scale3x_func) i = -1;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_6TAP2X:
-      if (effect_6tap_render_func) i = -1;
-      break;
-    case SYSDEP_DISPLAY_EFFECT_FAKESCAN:
-      /* handled by normal blitting, not supported on YV12 for now */
-      if ((i%COLOR_FORMATS) != 4) 
-        i = -1;
-      break;
-  }
-  if (i != -1)
-  {
-    fprintf(stderr,
-      "Warning effect %s is not supported with color format %s, disabling effects\n",
-        sysdep_display_effect_properties[sysdep_display_params.effect].name,
-        display_name[i%COLOR_FORMATS]);
-    sysdep_display_params.effect = 0;
   }
 
   if (sysdep_display_params.orientation)

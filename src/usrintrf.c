@@ -4026,16 +4026,14 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 	int x, y = 0;
 	/* remember which area we cover so that we can
 	   schedule a full refresh if it gets smaller */
-	int min_x = 2048;
-	static int old_min_x = 0;
-	static int old_max_y = 2048;
+	int len_hash = 0;
+	static int old_len_hash = -1;
 
 	/* if we're not currently displaying, skip it */
 	if (!showfps && !showfpstemp)
 	{
 		/* reset covered area vars */
-		old_min_x = 0;
-		old_max_y = 2048;
+		old_len_hash = -1;
 		return;
 	}
 
@@ -4061,18 +4059,16 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 
 		/* render */
 		x = uirotwidth - strlen(textbuf) * uirotcharwidth;
-		if (x<min_x)
-			min_x = x;
 		ui_text(bitmap, textbuf, x, y);
 		y += uirotcharheight;
+		len_hash += (y / uirotcharheight) * x;
 	}
 	
-	if ((min_x > old_min_x) ||
-	    (    y < old_max_y))
+	if ((old_len_hash != -1) &&
+	    (old_len_hash != len_hash))
 		schedule_full_refresh();
-		
-	old_min_x = min_x;
-	old_max_y = y;
+
+	old_len_hash = len_hash;
 
 	/* update the temporary FPS display state */
 	if (showfpstemp)

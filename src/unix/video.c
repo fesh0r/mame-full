@@ -444,8 +444,6 @@ int osd_create_display(const struct osd_create_params *params,
 	    }
 	}
 	
-	sysdep_display_check_effect_params(&normal_params);
-	
 	if (sysdep_display_open(&normal_params) != OSD_OK)
 		return -1;
 
@@ -801,22 +799,46 @@ void osd_update_video_and_audio(struct mame_display *display)
                 if (effect_mod)
                 {
                   int i=0, scaled_width, scaled_height;
+                  int orig_widthscale  = normal_params.widthscale;
+                  int orig_heightscale = normal_params.heightscale;
 
-                  /* check if the effect fits the screen:
-                     1st try (i=0) new effect
-                     2nd try (i=1) new effect, widthscale = heightscale = 1
-                     2+tries (i>1) next effect, widthscale = heightscale = 1 */
+                  /* check if the effect fits the screen */
                   do
                   {
-                    if (i!=1) /* don't change the effect on the 2nd try */
+                    if (!(i&1)) /* 1st try, 3th try, etc: next effect */
                     {
+                      /* next effect */
                       normal_params.effect += effect_mod;
                       if (normal_params.effect < 0)
                         normal_params.effect = SYSDEP_DISPLAY_EFFECT_LAST;
                       if (normal_params.effect > SYSDEP_DISPLAY_EFFECT_LAST)
                         normal_params.effect = 0;
+                        
+                      /* try with the original scale factors */
+                      normal_params.widthscale  = orig_widthscale;
+                      normal_params.heightscale = orig_heightscale;
+                      normal_params.yarbsize    = 0;
+
+                      sysdep_display_check_effect_params(&normal_params);
+                      
+                      /* attempt to keep the same aspect */
+                      if (((double)normal_params.widthscale/
+                           normal_params.heightscale) !=
+                          ((double)orig_widthscale/orig_heightscale))
+                      {
+                        if (normal_params.widthscale != orig_widthscale)
+                        {
+                          normal_params.heightscale = normal_params.widthscale
+                            / ((double)orig_widthscale/orig_heightscale) + 0.5;
+                        }
+                        else
+                        {
+                          normal_params.widthscale = normal_params.heightscale
+                            * ((double)orig_widthscale/orig_heightscale) + 0.5;
+                        }
+                      }
                     }
-                    if (i>0)  /* 2nd try and later */
+                    else /* 2nd try, 4th try... same effect... */
                     {
                       normal_params.widthscale  = 1;
                       normal_params.heightscale = 1;
@@ -830,7 +852,7 @@ void osd_update_video_and_audio(struct mame_display *display)
                     scaled_height = normal_params.yarbsize? normal_params.yarbsize:
                       normal_params.height * normal_params.heightscale;
                     i++;
-                  } while ((i <= SYSDEP_DISPLAY_EFFECT_LAST) &&
+                  } while ((i <= (2*SYSDEP_DISPLAY_EFFECT_LAST)) &&
                            ((scaled_width  > sysdep_display_properties.max_width ) ||
                             (scaled_height > sysdep_display_properties.max_height)));
 
@@ -873,6 +895,16 @@ void osd_update_video_and_audio(struct mame_display *display)
                         normal_params.widthscale  += widthscale_mod;
                         normal_params.heightscale += heightscale_mod;
                         normal_params.yarbsize = 0;
+			/* clamp scale between 1 and 8 */
+                        if (normal_params.widthscale < 1)
+                          normal_params.widthscale = 1;
+                        else if (normal_params.widthscale > 8)
+                          normal_params.widthscale = 8;
+                        if (normal_params.heightscale < 1)
+                          normal_params.heightscale = 1;
+                        else if (normal_params.heightscale > 8)
+                          normal_params.heightscale = 8;
+
                         normal_params_changed |= NORMAL_PARAMS_CHANGED;
                 }
             }

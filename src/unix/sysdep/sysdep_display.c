@@ -82,7 +82,7 @@ static int sysdep_display_check_params(struct sysdep_display_open_params *params
     params->fullscreen = 0;
   
   /* lett the effect code do its magic */
-  sysdep_display_check_effect_params(&sysdep_display_params);
+  sysdep_display_check_effect_params(params);
   
   return 0;
 }  
@@ -142,11 +142,11 @@ int sysdep_display_change_params(
   struct sysdep_display_open_params orig_params = current_params;
   
   /* If the changes aren't forced and the video mode is not available
-     use the current video mode */
+     use the original video mode */
   if (!force && (new_params->video_mode >= 0) &&
       (new_params->video_mode < SYSDEP_DISPLAY_VIDEO_MODES) &&
       !sysdep_display_properties.mode[new_params->video_mode])
-    new_params->video_mode = current_params.video_mode;
+    new_params->video_mode = orig_params.video_mode;
 
   /* Check and adjust the new params */
   if (sysdep_display_check_params(new_params))
@@ -158,25 +158,30 @@ int sysdep_display_change_params(
     *new_params = orig_params;
     return 0;
   }
-
+  
+  /* Are there any changes after checking the params? */
   if (memcmp(new_params, &current_params, sizeof(current_params)))
   {
-    int reopen = 1;
-    
+    int scaled_width, scaled_height, reopen;
+
     /* do we need todo a full open and close, or just a reopen? */
-    if ((new_params->video_mode != current_params.video_mode) ||
-        (new_params->fullscreen != current_params.fullscreen))
+    if ((new_params->video_mode != orig_params.video_mode) ||
+        (new_params->fullscreen != orig_params.fullscreen))
     {
       sysdep_display_close();
+      sysdep_display_set_params(new_params);
       force_keyboard_dirty = 1;
       reopen = 0;
     }
-    else
+    else /* is this going to fit? */
     {
-      /* is this going to fit? */
-      int scaled_width  = new_params->width * new_params->widthscale;
-      int scaled_height = new_params->yarbsize? new_params->yarbsize:
-        new_params->height * new_params->heightscale;
+      sysdep_display_set_params(new_params);
+
+      scaled_width  = sysdep_display_params.width *
+        sysdep_display_params.widthscale;
+      scaled_height = sysdep_display_params.yarbsize?
+        sysdep_display_params.yarbsize:
+        sysdep_display_params.height * sysdep_display_params.heightscale;
         
       if ((scaled_width  > sysdep_display_properties.max_width ) ||
           (scaled_height > sysdep_display_properties.max_height))
@@ -186,29 +191,28 @@ int sysdep_display_change_params(
           fprintf(stderr, "Error requested display size is too large\n");
           goto sysdep_display_change_params_error;
         }
-        /* report back we're using the orig params */
+        /* restore and report back the orig params */
+        sysdep_display_set_params(&orig_params);
         *new_params = orig_params;
         return 0;
       }
+      reopen = 1;
     }
 
     /* (re)open the display) */
-    sysdep_display_set_params(new_params);
     if (sysdep_display_driver_open(reopen))
     {
-      sysdep_display_close();
-      force_keyboard_dirty = 1;
-
       if (force)
         goto sysdep_display_change_params_error;
+
+      sysdep_display_close();
+      force_keyboard_dirty = 1;
 
       /* try again with old settings */
       sysdep_display_set_params(&orig_params);
       if (sysdep_display_driver_open(0))
-      {
-        sysdep_display_close();
         goto sysdep_display_change_params_error;
-      }
+
       /* report back we're using the orig params */
       *new_params = orig_params;
     }
@@ -225,6 +229,7 @@ int sysdep_display_change_params(
   
 sysdep_display_change_params_error:
   /* oops this sorta sucks, FIXME don't use exit! */
+  sysdep_display_close();
   fprintf(stderr, "Fatal error in sysdep_display_change_params\n");
   exit(1);
   return 0; /* shut up warnings, never reached */
