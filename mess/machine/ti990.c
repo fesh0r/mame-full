@@ -47,6 +47,16 @@ void ti990_set_int3(int state)
 	ti990_set_int_line(3, state);
 }
 
+void ti990_set_int6(int state)
+{
+	ti990_set_int_line(6, state);
+}
+
+void ti990_set_int7(int state)
+{
+	ti990_set_int_line(7, state);
+}
+
 void ti990_set_int9(int state)
 {
 	ti990_set_int_line(9, state);

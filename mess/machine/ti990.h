@@ -6,6 +6,8 @@ void ti990_reset_int(void);
 void ti990_set_int_line(int line, int state);
 void ti990_set_int2(int state);
 void ti990_set_int3(int state);
+void ti990_set_int6(int state);
+void ti990_set_int7(int state);
 void ti990_set_int9(int state);
 void ti990_set_int10(int state);
 void ti990_set_int13(int state);
