@@ -14,6 +14,13 @@ usage of dumpat might be usefull
 memory modell large required
 */
 
+/*
+  dma hardware might/will have problems with
+  rom chips
+  graphics card memory
+
+  --> copy it always to normal ram, before fwrite
+ */
 char buffer[0x4000];
 
 int main(void)
