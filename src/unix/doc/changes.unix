@@ -2,6 +2,12 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.77.2
+	- You can now "make tools" without first having to "make osdepend".  
+	  Fixed a couple of minor problems with src/unix/Makefile and 
+	  src/unix/unix.mak.  (Adam Di Carlo)
+	- Rearranged a bit of code to allow the MESS tools to build.
+
 Release 0.77.1, 18 November 2003
 	- Everything from MAME 0.77 and MESS 0.77.
 	- Ported two more effects from AdvanceMAME: hq2x and lq2x.  (Pieter 
@@ -522,7 +528,7 @@ Release 0.54.2 (xmame only), 4 September 2001
 	- Applied a patch for the ES550x that fixes the runaway voices in Puzzle
 	  Bobble 3 and might fix other games with problems.  (Aaron Giles)
 	- Added -samplepath/-sp and -artworkpath/-ap command line options.
-	- Added mame-cd to contrib/tools.  (Mario J.Barchéin Molina)
+	- Added mame-cd to contrib/tools.  (Mario J.BarchÃ©in Molina)
 	- Added romcheck to contrib/tools.  (David Griffith)
 
 Release 0.54.1 (xmame only), 26 August 2001
@@ -652,7 +658,7 @@ Release 0.37b13.1 (xmame only)
 
 Release 0.37b12.1
 	- Everything from MAME and MESS 0.37b12.
-	- The SDL install no longer sets SUID root on the binary.  (Torbjörn
+	- The SDL install no longer sets SUID root on the binary.  (TorbjÃ¶rn
 	  Andersson)
 	- Updated mame_perl to 1.3.  (Stefan Becker)
 	- Added support for the RGB 555 mode for targets which support 16bpp
@@ -912,7 +918,7 @@ Release 0.37b2.2
 	- Corrected a small type in makefile.obj-xmess, thanks to:
 	  Peter Trauner
 	- Fixed the creation of tape images in xmess, thanks to:
-	  Oscar Martín González
+	  Oscar MartÃ­n GonzÃ¡lez
 	- Updated the romalizer script in contrib to v0.6, thanks to:
 	  tkmame@larry.ztnet.com
 

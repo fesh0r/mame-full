@@ -120,10 +120,5 @@ struct rc_option *rc_get_option2(struct rc_option *option, const char *name);
 /* gimmi the entire tree, I want todo all the parsing myself */
 struct rc_option *rc_get_options(struct rc_struct *rc);
 
-/* various utility functions which don't really belong to the rc object,
-   but seem to fit here well */
-int rc_check_and_create_dir(const char *name);
-char *rc_get_home_dir(void);
-
 #include "end_code.h"
 #endif /* ifndef __RC_H */

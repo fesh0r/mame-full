@@ -175,7 +175,7 @@ static void create_path(char *path, int has_filename)
 		return;
 
 	/* create the path */
-	rc_check_and_create_dir(path);
+	check_and_create_dir(path);
 }
 
 
@@ -674,7 +674,7 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 	/* compose the full path */
 	compose_path(fullpath, pathtype, pathindex, dirname);
 
-	return rc_check_and_create_dir(fullpath) ? 0 : 1;
+	return check_and_create_dir(fullpath) ? 0 : 1;
 }
 #endif
 

@@ -154,6 +154,10 @@ void sysdep_mouse_poll(void);
 int  osd_dirty_init(void);
 void osd_dirty_close(void);
 
+/* Directory functions that used to be in the rc files. */
+int check_and_create_dir(const char *name);
+char *get_home_dir(void);
+
 /* network funtions */
 int  osd_net_init(void);
 void osd_net_close(void);

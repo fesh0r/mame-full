@@ -155,7 +155,6 @@ VPATH=src $(wildcard src/cpu/*)
 # Platform-dependent objects for imgtool
 PLATFORM_IMGTOOL_OBJS = $(OBJ)/unix.$(DISPLAY_METHOD)/dirio.o \
 			$(OBJ)/unix.$(DISPLAY_METHOD)/fileio.o \
-			$(OBJ)/unix.$(DISPLAY_METHOD)/sysdep/rc.o \
 			$(OBJ)/unix.$(DISPLAY_METHOD)/sysdep/misc.o
 
 include src/core.mak
@@ -306,12 +305,15 @@ $(NAME).$(DISPLAY_METHOD): $(OBJS)
 	$(CC_COMMENT) @echo 'Linking $@ ...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $(OBJS) $(MY_LIBS)
 
-tools: $(ZLIB) $(OBJDIRS) $(TOOLS)
+tools: tooldir objdirs osdepend $(ZLIB) $(OBJDIRS) $(TOOLS)
+
+tooldir:
+	-mkdir -p tools
 
 objdirs: $(MY_OBJDIRS)
 
 $(MY_OBJDIRS):
-	-mkdir $@
+	-mkdir -p $@
 
 xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMMENT) @echo 'Compiling $< ...'

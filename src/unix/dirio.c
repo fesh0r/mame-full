@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <pwd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <zlib.h>
@@ -266,3 +267,73 @@ int osd_is_absolute_path(const char *path)
 }
 
 #endif
+
+/* 
+ * Check and, if necessary, create dir.
+ */
+int check_and_create_dir(const char *name)
+{
+	struct stat stat_buffer;
+
+	if (stat(name, &stat_buffer))
+	{
+		/* error check if it doesn't exist or something else is wrong */
+		if (errno == ENOENT)
+		{
+			/* doesn't exist letts create it ;) */
+#ifdef BSD43
+			if (mkdir(name, 0775))
+#else
+				if (mkdir(name, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH))
+#endif
+				{
+					fprintf(stderr, "Error creating dir %s", name);
+					perror(" ");
+					return -1;
+				}
+		}
+		else
+		{
+			/* something else went wrong yell about it */
+			fprintf(stderr, "Error opening %s", name);
+			perror(" ");
+			return -1;
+		}
+	}
+	else
+	{
+		/* file exists check it's a dir otherwise yell about it */
+#ifdef BSD43
+		if (!(S_IFDIR & stat_buffer.st_mode))
+#else
+			if (!S_ISDIR(stat_buffer.st_mode))
+#endif
+			{
+				fprintf(stderr,"Error %s exists but isn't a dir\n", name);
+				return -1;
+			}
+	}
+	return 0;
+}
+
+/* 
+ * Locate user's home directory.
+ */
+char *get_home_dir(void)
+{
+	struct passwd *pw;
+	char *s;
+
+	if (!(pw = getpwuid(getuid())))
+	{ 
+		fprintf(stderr, "Who are you? Not found in passwd database!!\n");
+		return NULL;
+	}
+	if (!(s = malloc(strlen(pw->pw_dir) + 1)))
+	{
+		fprintf(stderr, "error: malloc faild for homedir string\n");
+		return NULL;
+	}
+	strcpy(s, pw->pw_dir);
+	return s;
+}

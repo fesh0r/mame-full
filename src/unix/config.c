@@ -271,44 +271,44 @@ int config_init (int argc, char *argv[])
 		return OSD_NOT_OK;
 
 	/* get the homedir */
-	if(!(home_dir = rc_get_home_dir()))
+	if(!(home_dir = get_home_dir()))
 		return OSD_NOT_OK;
 
 	/* check that the required dirs exist, and create them if necessary */
 	snprintf(buffer, BUF_SIZE, "%s/.%s", home_dir, NAME);
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "cfg");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "mem");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "sta");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "nvram");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "diff");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "rc");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "hi");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	snprintf(buffer, BUF_SIZE, "%s/.%s/%s", home_dir, NAME, "inp");
-	if (rc_check_and_create_dir(buffer))
+	if (check_and_create_dir(buffer))
 		return OSD_NOT_OK;
 
 	/* parse the commandline */

@@ -31,7 +31,6 @@ Version 0.3, Februari 2000
 */
 #include <stdlib.h>
 #include <string.h>
-#include <pwd.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -809,75 +808,4 @@ struct rc_option *rc_get_option2(struct rc_option *option, const char *name)
 struct rc_option *rc_get_options(struct rc_struct *rc)
 {
    return rc->option;
-}
-
-/* various utility methods which don't really belong to the rc object,
-   but seem to fit here well */
-
-/* locate user's home directory */
-char *rc_get_home_dir(void)
-{
-   struct passwd *pw;
-   char *s;
-   
-   if (!(pw=getpwuid(getuid())))
-   { 
-      fprintf(stderr, "Who are you? Not found in passwd database!!\n");
-      return NULL;
-   }
-   if (!(s=malloc(strlen(pw->pw_dir)+1)))
-   {
-      fprintf(stderr, "error: malloc faild for homedir string\n");
-      return NULL;
-   }
-   strcpy(s, pw->pw_dir);
-   return s;
-}
-
-/* 
- * check and if nescesarry create dir
- */
-int rc_check_and_create_dir(const char *name)
-{
-   struct stat stat_buffer;
-
-   if (stat(name, &stat_buffer))
-   {
-      /* error check if it doesn't exist or something else is wrong */
-      if (errno == ENOENT)
-      {
-         /* doesn't exist letts create it ;) */
-#ifdef BSD43
-	 if (mkdir(name, 0775))
-#else
-         if (mkdir(name, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH))
-#endif
-         {
-            fprintf(stderr, "Error creating dir %s", name);
-            perror(" ");
-            return -1;
-         }
-      }
-      else
-      {
-         /* something else went wrong yell about it */
-         fprintf(stderr, "Error opening %s", name);
-         perror(" ");
-         return -1;
-      }
-   }
-   else
-   {
-      /* file exists check it's a dir otherwise yell about it */
-#ifdef BSD43
-      if(!(S_IFDIR & stat_buffer.st_mode))
-#else
-      if(!S_ISDIR(stat_buffer.st_mode))
-#endif
-      {
-         fprintf(stderr,"Error %s exists but isn't a dir\n", name);
-         return -1;
-      }
-   }
-   return 0;
 }
