@@ -132,20 +132,21 @@ void a800_floppy_exit(int id)
 	drv[id].image = NULL;
 }
 
-int a800_rom_init(int id, void *file, int open_mode)
+int a800_rom_init(int id, void *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
+	void *monitor_fp;
 	int size;
 
 	/* load an optional monitor.rom */
 	filename = "monitor.rom";
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
-	if (file)
+	monitor_fp = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE, 0);
+	if (monitor_fp)
 	{
 		logerror("%s loading optional image '%s' to C000-CFFF\n", Machine->gamedrv->name, filename);
-		size = osd_fread(file, &mem[0xc000], 0x1000);
-		osd_fclose(file);
+		size = osd_fread(monitor_fp, &mem[0xc000], 0x1000);
+		osd_fclose(monitor_fp);
 	}
 	else
 	{
@@ -153,23 +154,23 @@ int a800_rom_init(int id, void *file, int open_mode)
 	}
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if (file)
+	if (fp)
 	{
 		{
 			if( id > 0 )
 			{
-				size = osd_fread(file, &mem[0x12000], 0x2000);
+				size = osd_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = (size == 0x2000);
-				osd_fclose(file);
+				osd_fclose(fp);
 				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) );
 			}
 			else
 			{
-				size = osd_fread(file, &mem[0x10000], 0x2000);
+				size = osd_fread(fp, &mem[0x10000], 0x2000);
 				a800_cart_loaded = size > 0x0000;
-				size = osd_fread(file, &mem[0x12000], 0x2000);
+				size = osd_fread(fp, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = size > 0x2000;
-				osd_fclose(file);
+				osd_fclose(fp);
 				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 			}
 			if( a800_cart_loaded )
@@ -206,18 +207,19 @@ MACHINE_INIT( a800xl)
 }
 
 
-int a800xl_load_rom(int id, void *file, int open_mode)
+int a800xl_load_rom(int id, void *fp, int open_mode)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
+	void *basic_fp;
 	unsigned size;
 
 	filename = "basic.rom";
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
-	if( file )
+	basic_fp = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM, 0);
+	if (basic_fp)
 	{
-		size = osd_fread(file, &mem[0x14000], 0x2000);
-		osd_fclose(file);
+		size = osd_fread(basic_fp, &mem[0x14000], 0x2000);
+		osd_fclose(basic_fp);
 		if( size < 0x2000 )
 		{
 			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename);
@@ -226,14 +228,14 @@ int a800xl_load_rom(int id, void *file, int open_mode)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if (file)
+	if (fp)
 	{
 		{
-			size = osd_fread(file, &mem[0x14000], 0x2000);
+			size = osd_fread(fp, &mem[0x14000], 0x2000);
 			a800_cart_loaded = size / 0x2000;
-			size = osd_fread(file, &mem[0x16000], 0x2000);
+			size = osd_fread(fp, &mem[0x16000], 0x2000);
 			a800_cart_is_16k = size / 0x2000;
-			osd_fclose(file);
+			osd_fclose(fp);
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
 		}
