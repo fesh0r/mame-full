@@ -811,7 +811,7 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 		path += strlen(path) + 1;	
 		if (*path)
 		{
-			/* next part of the file */
+			/* we have found part of the path; we are not finished yet */
 			if (!is_dir_storagetype(ent->storage_type))
 			{
 				err = IMGTOOLERR_FILENOTFOUND;
@@ -867,6 +867,16 @@ static imgtoolerr_t prodos_lookup_path(imgtool_image *image, const char *path,
 
 			/* and place it */
 			err = prodos_put_dirent(image, direnum, ent);
+			if (err)
+				goto done;
+
+			this_block = free_block;
+			this_index = free_index;
+		}
+		else
+		{
+			/* we've found the file; seek that dirent */
+			err = prodos_enum_seek(image, direnum, this_block, this_index);
 			if (err)
 				goto done;
 		}
@@ -1361,6 +1371,34 @@ static imgtoolerr_t prodos_diskimage_writefile(imgtool_image *image, const char 
 
 
 
+static imgtoolerr_t prodos_diskimage_deletefile(imgtool_image *image, const char *path)
+{
+	imgtoolerr_t err;
+	struct prodos_dirent ent;
+	struct prodos_direnum direnum;
+
+	err = prodos_lookup_path(image, path, CREATE_NONE, &direnum, &ent);
+	if (err)
+		return err;
+
+	/* only work on files */
+	if (is_dir_storagetype(ent.storage_type))
+		return IMGTOOLERR_FILENOTFOUND;
+
+	err = prodos_set_file_size(image, &direnum, &ent, 0);
+	if (err)
+		return err;
+
+	memset(&ent, 0, sizeof(ent));
+	err = prodos_put_dirent(image, &direnum, &ent);
+	if (err)
+		return err;
+
+	return IMGTOOLERR_SUCCESS;
+}
+
+
+
 static imgtoolerr_t prodos_get_file_tree(imgtool_image *image, imgtool_chainent *chain, size_t chain_size,
 	size_t *chain_pos, UINT16 block, UINT8 total_depth, UINT8 cur_depth)
 {
@@ -1457,6 +1495,7 @@ static imgtoolerr_t apple2_prodos_module_populate(imgtool_library *library, stru
 	module->free_space					= prodos_diskimage_freespace;
 	module->read_file					= prodos_diskimage_readfile;
 	module->write_file					= prodos_diskimage_writefile;
+	module->delete_file					= prodos_diskimage_deletefile;
 	module->get_chain					= prodos_diskimage_getchain;
 	return IMGTOOLERR_SUCCESS;
 }
