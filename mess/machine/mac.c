@@ -27,7 +27,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/iwm.h"
-#include "systems/mac.h"
+#include "includes/mac.h"
 
 #include <time.h>
 

@@ -4,7 +4,7 @@
 ****************************************************************************/
 #include "driver.h"
 
-#include "systems/mac.h"
+#include "includes/mac.h"
 
 static int mac_stream;
 static int sample_enable = 0;
