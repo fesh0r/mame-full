@@ -63,31 +63,37 @@ static void apple2_setvar(UINT32 val, UINT32 mask)
 	UINT32 offset;
 	UINT32 othermask;
 
+	LOG(("apple2_setvar(): val=0x%06x mask=0x%06x pc=0x%04x\n", val, mask, activecpu_get_pc()));
+
 	assert((val & mask) == val);
 
 	a2 &= ~mask;
 	a2 |= val;
 
-	if (mask & (VAR_80STORE|VAR_PAGE2|VAR_RAMRD))
+	if (mask & (VAR_80STORE|VAR_PAGE2|VAR_HIRES|VAR_RAMRD))
 	{
 		cpu_setbank(5,  &mess_ram[(a2 & VAR_RAMRD) ? 0x10200 : 0x0200]);
 		cpu_setbank(8,  &mess_ram[(a2 & VAR_RAMRD) ? 0x10800 : 0x0800]);
-		cpu_setbank(9,  &mess_ram[(a2 & VAR_RAMRD) ? 0x12000 : 0x2000]);
 		cpu_setbank(10, &mess_ram[(a2 & VAR_RAMRD) ? 0x14000 : 0x4000]);
 
 		othermask = (a2 & VAR_80STORE) ? VAR_PAGE2 : VAR_RAMRD;
 		cpu_setbank(7,  &mess_ram[(a2 & othermask) ? 0x10400 : 0x0400]);
+
+		othermask = ((a2 & (VAR_80STORE|VAR_HIRES)) == (VAR_80STORE|VAR_HIRES)) ? VAR_PAGE2 : VAR_RAMWRT;
+		cpu_setbank(9,  &mess_ram[(a2 & VAR_RAMRD) ? 0x12000 : 0x2000]);
 	}
 
-	if (mask & (VAR_80STORE|VAR_PAGE2|VAR_RAMWRT))
+	if (mask & (VAR_80STORE|VAR_PAGE2|VAR_HIRES|VAR_RAMWRT))
 	{
 		memory_set_bankhandler_w(5,  0, (a2 & VAR_RAMWRT) ? apple2_auxram0200_w : apple2_mainram0200_w);
 		memory_set_bankhandler_w(8,  0, (a2 & VAR_RAMWRT) ? apple2_auxram0800_w : apple2_mainram0800_w);
-		memory_set_bankhandler_w(9,  0, (a2 & VAR_RAMWRT) ? apple2_auxram2000_w : apple2_mainram2000_w);
 		memory_set_bankhandler_w(10, 0, (a2 & VAR_RAMWRT) ? apple2_auxram4000_w : apple2_mainram4000_w);
 
 		othermask = (a2 & VAR_80STORE) ? VAR_PAGE2 : VAR_RAMWRT;
 		memory_set_bankhandler_w(7,  0, (a2 & othermask) ? apple2_auxram0400_w : apple2_mainram0400_w);
+
+		othermask = ((a2 & (VAR_80STORE|VAR_HIRES)) == (VAR_80STORE|VAR_HIRES)) ? VAR_PAGE2 : VAR_RAMWRT;
+		memory_set_bankhandler_w(9,  0, (a2 & VAR_RAMWRT) ? apple2_auxram2000_w : apple2_mainram2000_w);
 	}
 
 	if (mask & (VAR_INTCXROM))
@@ -578,14 +584,14 @@ WRITE_HANDLER ( apple2_c05x_w )
 	UINT32 mask;
 
 	switch (offset) {
-	case 0x00:
-	case 0x01:
-	case 0x02:
-	case 0x03:
-	case 0x04:
-	case 0x05:
-	case 0x06:
-	case 0x07:
+	case 0x00:	/* VAR_TEXT		= 0 */
+	case 0x01:	/* VAR_TEXT		= 1 */
+	case 0x02:	/* VAR_MIXED	= 0 */
+	case 0x03:	/* VAR_MIXED	= 1 */
+	case 0x04:	/* VAR_PAGE2	= 0 */
+	case 0x05:	/* VAR_PAGE2	= 1 */
+	case 0x06:	/* VAR_HIRES	= 0 */
+	case 0x07:	/* VAR_HIRES	= 1 */
 		mask = 0x100 << (offset / 2);
 		apple2_setvar((offset & 1) ? mask : 0, mask);
 		break;

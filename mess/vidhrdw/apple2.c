@@ -345,9 +345,6 @@ static void apple2_draw_tilemap(struct mame_bitmap *bitmap, const struct rectang
 	if (new_cliprect.min_y > new_cliprect.max_y)
 		return;
 
-	if (a2 & VAR_RAMRD)
-		raw_videobase += 0x10000;
-
 	if (raw_videobase != *tm_videobase)
 	{
 		*tm_videobase = raw_videobase;
@@ -636,21 +633,27 @@ VIDEO_START( apple2c )
 	return video_start_apple_common(TRUE);
 }
 
-#define A2VAR_MASK		(VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_80COL | VAR_PAGE2)
-
 VIDEO_UPDATE( apple2 )
 {
 	int page;
+	UINT32 new_a2;
 
-	page = (a2 & VAR_PAGE2) ? 1 : 0;
+	/* read out relevant softswitch variables; to see what has changed */
+	new_a2 = a2;
+	if (new_a2 & VAR_80STORE)
+		new_a2 &= ~VAR_PAGE2;
+	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_80COL | VAR_PAGE2;
 
-	if ((a2 & A2VAR_MASK) != old_a2)
+	if (new_a2 != old_a2)
 	{
-		old_a2 = a2 & A2VAR_MASK;
+		old_a2 = new_a2;
 		tilemap_mark_all_tiles_dirty(text_tilemap);
 		tilemap_mark_all_tiles_dirty(dbltext_tilemap);
 		tilemap_mark_all_tiles_dirty(lores_tilemap);
 	}
+
+	/* choose which page to use */
+	page = (new_a2 & VAR_PAGE2) ? 1 : 0;
 
 	if (a2 & VAR_TEXT)
 	{
