@@ -667,6 +667,8 @@ void pc_init_setup(PC_SETUP *setup)
 	}
 }
 
+static DMA8237_CONFIG dma= { DMA8237_PC };
+
 void init_pc_common(void)
 {
 	pit8253_config(0,&pc_pit8253_config);
@@ -705,10 +707,6 @@ void init_pc_common(void)
 	at_keyboard_set_scan_code_set(1);
 	at_keyboard_set_input_port_base(4);
 
-	/* should be in init for DMA controller? */
-	pc_DMA_status &= ~(0x10 << FDC_DMA);	/* reset DMA running flag */
-	pc_DMA_status |= 0x01 << FDC_DMA;		/* set DMA terminal count flag */
-
 	state_add_function(pc_harddisk_state);
 //	state_add_function(nec765_state);
 }
@@ -717,6 +715,8 @@ void init_pccga(void)
 {
 	pc_cga_init();
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 }
 
@@ -725,6 +725,8 @@ void init_bondwell(void)
 	pc_init_setup(pc_setup);
 	pc_cga_init();
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 //	at_keyboard_set_type(AT_KEYBOARD_TYPE_MF2);
 }
@@ -734,6 +736,8 @@ void init_pcmda(void)
 	pc_init_setup(pc_setup);
 	pc_mda_init();
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 }
 
@@ -747,6 +751,8 @@ void init_europc(void)
 
 	pc_init_setup(europc);
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 
 	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_RAM );
 	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc_cga_videoram_w );
@@ -778,6 +784,8 @@ void init_pc1512(void)
 	install_port_read_handler(0, 0x278, 0x27b, pc_parallelport2_r );
 
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 	mc146818_init(MC146818_IGNORE_CENTURY);
 }
@@ -806,6 +814,8 @@ extern void init_pc1640(void)
 	install_port_read_handler(0, 0x4278, 0x427b, pc1640_port4278_r );
 
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 
 	mc146818_init(MC146818_IGNORE_CENTURY);
@@ -815,6 +825,8 @@ void init_pc_vga(void)
 {
 	pc_init_setup(pc_setup);
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 
 	vga_init(input_port_0_r);
@@ -973,6 +985,7 @@ void pc_ppi_portb_w(int chip, int data )
 {
 	/* KB controller port B */
 	PIO_LOG(1,"PIO_B_w",("$%02x\n", data));
+
 	pc_port[0x61] = data;
 	switch( data & 3 )
 	{
@@ -1060,7 +1073,15 @@ READ_HANDLER ( pc_JOY_r )
 }
 #endif
 
-
+static struct {
+	/*
+	  reg 0 ram behaviour if in
+	  reg 4 ram behaviour ???
+	  reg 5,6 (5 hi, 6 lowbyte) ???
+	*/
+	/* selftest in ibmpc, ibmxt */
+	UINT8 reg[8];
+} pc_expansion={ { 0,0,0,0,0,0,1 } };
 /*************************************************************************
  *
  *		EXP
@@ -1069,14 +1090,33 @@ READ_HANDLER ( pc_JOY_r )
  *************************************************************************/
 WRITE_HANDLER ( pc_EXP_w )
 {
-	DBG_LOG(1,"EXP_unit_w",("$%02x\n", data));
-	pc_port[0x213] = data;
+	DBG_LOG(1,"EXP_unit_w",("%.2x $%02x\n", offset, data));
+	switch (offset) {
+	case 4:
+		pc_expansion.reg[4]=pc_expansion.reg[5]=pc_expansion.reg[6]=data;
+		break;
+	default:
+		pc_expansion.reg[offset] = data;
+	}
 }
 
 READ_HANDLER ( pc_EXP_r )
 {
-    int data = pc_port[0x213];
-    DBG_LOG(1,"EXP_unit_r",("$%02x\n", data));
+    int data;
+	UINT16 a;
+
+	switch (offset) {
+	case 6: 
+		data = pc_expansion.reg[offset];
+		a=(pc_expansion.reg[5]<<8)|pc_expansion.reg[6];
+		a<<=1;
+		pc_expansion.reg[5]=a>>8;
+		pc_expansion.reg[6]=a&0xff;
+		break;
+	default:
+		data = pc_expansion.reg[offset];
+	}
+    DBG_LOG(1,"EXP_unit_r",("%.2x $%02x\n", offset, data));
 	return data;
 }
 
@@ -1092,6 +1132,7 @@ void pc_keyboard(void)
 
 	at_keyboard_polling();
 
+//	if( !pic8259_0_irq_pending(1) && ((pc_port[0x61]&0xc0)==0xc0) ) // amstrad problems
 	if( !pic8259_0_irq_pending(1) )
 	{
 		if ( (data=at_keyboard_read())!=-1) {

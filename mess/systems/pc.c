@@ -95,9 +95,9 @@ static PORT_READ_START( pc_readport )
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
 	{ 0x0060, 0x0063, ppi8255_0_r },
-	{ 0x0080, 0x0087, dma8237_0_page_r },
+	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-	{ 0x0213, 0x0213, pc_EXP_r },
+	{ 0x0210, 0x0217, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -118,9 +118,9 @@ static PORT_WRITE_START( pc_writeport )
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
 	{ 0x0060, 0x0063, ppi8255_0_w },
-	{ 0x0080, 0x0087, dma8237_0_page_w },
+	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0213, 0x0213, pc_EXP_w },
+    { 0x0210, 0x0217, pc_EXP_w },
 #ifdef GAMEBLASTER
 	{ 0x220, 0x220, saa1099_write_port_0_w },
 	{ 0x221, 0x221, saa1099_control_port_0_w },
@@ -149,9 +149,9 @@ static PORT_READ_START( europc_readport)
 	{ 0x0040, 0x0043, pit8253_0_r },
 	{ 0x0060, 0x0063, ppi8255_0_r },
 	{ 0x0070, 0x0071, mc146818_port_r },
-	{ 0x0080, 0x0087, dma8237_0_page_r },
+	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0213, 0x0213, pc_EXP_r },
+    { 0x0210, 0x0217, pc_EXP_r },
 	{ 0x0254, 0x0257, europc_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
@@ -176,9 +176,9 @@ static PORT_WRITE_START( europc_writeport )
 	{ 0x0040, 0x0043, pit8253_0_w },
 	{ 0x0060, 0x0063, ppi8255_0_w },
 	{ 0x0070, 0x0071, mc146818_port_w },
-	{ 0x0080, 0x0087, dma8237_0_page_w },
+	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0213, 0x0213, pc_EXP_w },
+    { 0x0210, 0x0217, pc_EXP_w },
 	{ 0x0254, 0x0257, europc_w },
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
@@ -194,8 +194,8 @@ static PORT_WRITE_START( europc_writeport )
 	{ 0x03bc, 0x03be, pc_parallelport0_w },
 	{ 0x03d0, 0x03df, pc_CGA_w },
 	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
+	{ 0x03f0, 0x03f7, pc_fdc_w },
 PORT_END
 
 static MEMORY_READ_START(t1t_readmem)
@@ -229,9 +229,9 @@ static PORT_READ_START( t1t_readport )
 	{ 0x0020, 0x0021, pic8259_0_r },
 	{ 0x0040, 0x0043, pit8253_0_r },
 	{ 0x0060, 0x0063, tandy1000_pio_r },
-	{ 0x0080, 0x0087, dma8237_0_page_r },
+	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0213, 0x0213, pc_EXP_r },
+    { 0x0210, 0x0217, pc_EXP_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
 	{ 0x0320, 0x0323, pc_HDC1_r },
 	{ 0x0324, 0x0327, pc_HDC2_r },
@@ -247,10 +247,10 @@ static PORT_WRITE_START( t1t_writeport )
 	{ 0x0020, 0x0021, pic8259_0_w },
 	{ 0x0040, 0x0043, pit8253_0_w },
 	{ 0x0060, 0x0063, tandy1000_pio_w },
-	{ 0x0080, 0x0087, dma8237_0_page_w },
+	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x00c0, 0x00c0, SN76496_0_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0213, 0x0213, pc_EXP_w },
+    { 0x0210, 0x0217, pc_EXP_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
     { 0x0320, 0x0323, pc_HDC1_w },
 	{ 0x0324, 0x0327, pc_HDC2_w },
@@ -289,9 +289,9 @@ static PORT_READ_START( pc1640_readport )
 	{ 0x0070, 0x0071, mc146818_port_r },
 	{ 0x0078, 0x0078, pc1640_mouse_x_r },
 	{ 0x007a, 0x007a, pc1640_mouse_y_r },
-	{ 0x0080, 0x0087, dma8237_0_page_r },
+	{ 0x0080, 0x0087, pc_page_r },
 	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x0213, 0x0213, pc_EXP_r },
+    { 0x0210, 0x0217, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_parallelport2_r },
 	{ 0x02e8, 0x02ef, pc_COM4_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -313,9 +313,9 @@ static PORT_WRITE_START( pc1640_writeport )
 	{ 0x0070, 0x0071, mc146818_port_w },
 	{ 0x0078, 0x0078, pc1640_mouse_x_w },
 	{ 0x007a, 0x007a, pc1640_mouse_y_w },
-	{ 0x0080, 0x0087, dma8237_0_page_w },
+	{ 0x0080, 0x0087, pc_page_w },
 	{ 0x0200, 0x0207, pc_JOY_w },
-    { 0x0213, 0x0213, pc_EXP_w },
+    { 0x0210, 0x0217, pc_EXP_w },
 	{ 0x0278, 0x027b, pc_parallelport2_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -343,8 +343,8 @@ static MEMORY_READ_START( at_readmem )
 MEMORY_END
 
 static MEMORY_WRITE_START( at_writemem )
-	{ 0x000000, 0x03ffff, MWA_RAM },
-	{ 0x040000, 0x09ffff, MWA_RAM },
+	{ 0x000000, 0x07ffff, MWA_RAM },
+	{ 0x080000, 0x09ffff, MWA_RAM },
 	{ 0x0a0000, 0x0affff, MWA_NOP },
 	{ 0x0b0000, 0x0b7fff, MWA_NOP },
 	{ 0x0b8000, 0x0bbfff, pc_cga_videoram_w, &videoram, &videoram_size },
@@ -362,10 +362,7 @@ static PORT_READ_START( at_readport )
 	{ 0x0040, 0x005f, pit8253_0_r },
 	{ 0x0060, 0x006f, at_8042_r },
 	{ 0x0070, 0x007f, mc146818_port_r },
-	{ 0x0080, 0x0087, dma8237_0_page_r },
-	{ 0x0088, 0x008f, dma8237_1_page_r },
-	{ 0x0090, 0x0097, dma8237_0_page_r }, //?
-	{ 0x0098, 0x009f, dma8237_1_page_r },
+	{ 0x0080, 0x009f, at_page_r }, // 90-9f ?
 	{ 0x00a0, 0x00bf, pic8259_1_r },
 	{ 0x00c0, 0x00df, dma8237_at_1_r },
 	{ 0x01f0, 0x01f7, at_mfm_0_r },
@@ -391,10 +388,7 @@ static PORT_WRITE_START( at_writeport )
 	{ 0x0040, 0x005f, pit8253_0_w },
 	{ 0x0060, 0x006f, at_8042_w },
 	{ 0x0070, 0x007f, mc146818_port_w },
-	{ 0x0080, 0x0087, dma8237_0_page_w },
-	{ 0x0088, 0x008f, dma8237_1_page_w },
-	{ 0x0090, 0x0097, dma8237_0_page_w }, // ?
-	{ 0x0098, 0x009f, dma8237_1_page_w },
+	{ 0x0080, 0x009f, at_page_w },
 	{ 0x00a0, 0x00bf, pic8259_1_w },
 	{ 0x00c0, 0x00df, dma8237_at_1_w },
 	{ 0x01f0, 0x01f7, at_mfm_0_w },
@@ -1594,6 +1588,25 @@ static struct GfxLayout europc_mda_charlayout =
 	8*16
 };
 
+static struct GfxLayout vga_charlayout =
+{
+	9,32,					/* 9 x 32 characters (9 x 15 is the default, but..) */
+	256,					/* 256 characters */
+	1,                      /* 1 bits per pixel */
+	{ 0 },                  /* no bitplanes; 1 bit per pixel */
+	/* x offsets */
+	{ 0,1,2,3,4,5,6,7,7 },	/* pixel 7 repeated only for char code 176 to 223 */
+	/* y offsets */
+	{
+		2*8, 6*8, 10*8, 14*8, 18*8, 22*8, 26*8, 30*8,
+		34*8, 38*8, 42*8, 46*8, 50*8, 54*8, 58*8, 62*8,
+		66*8, 70*8, 74*8, 78*8, 82*8, 86*8, 90*8, 94*8,
+		98*8, 102*8, 106*8, 110*8, 114*8, 118*8, 122*8, 126*8
+	},
+	128*8
+};
+
+
 static unsigned short cga_colortable[] = {
      0, 0, 0, 1, 0, 2, 0, 3, 0, 4, 0, 5, 0, 6, 0, 7, 0, 8, 0, 9, 0,10, 0,11, 0,12, 0,13, 0,14, 0,15,
      1, 0, 1, 1, 1, 2, 1, 3, 1, 4, 1, 5, 1, 6, 1, 7, 1, 8, 1, 9, 1,10, 1,11, 1,12, 1,13, 1,14, 1,15,
@@ -1651,6 +1664,12 @@ static struct GfxDecodeInfo aga_gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 #endif
+
+static struct GfxDecodeInfo vga_gfxdecodeinfo[] =
+{
+	{ 0, 0x0000, &vga_charlayout,			  0, 256 },   /* single width */
+    { -1 } /* end of array */
+};
 
 static struct GfxLayout t1t_gfxlayout_4bpp_160 =
 {
@@ -1979,7 +1998,7 @@ static struct MachineDriver machine_driver_pc1512 =
 static void ega_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
 	memcpy(sys_palette,ega_palette,sizeof(ega_palette));
-//	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
+	memcpy(sys_colortable,cga_colortable,0x200);
 }
 
 static struct MachineDriver machine_driver_pc1640 =
@@ -2005,9 +2024,9 @@ static struct MachineDriver machine_driver_pc1640 =
     720,                                       /* screen width */
 	350, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,350-1},					/* visible_area */
-	0, //VGA_gfxdecodeinfo,							/* graphics decode info */
+	vga_gfxdecodeinfo,							/* graphics decode info */
 	sizeof(ega_palette) / sizeof(ega_palette[0]) / 3,
-	0, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
+	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	ega_init_palette,							/* init palette */
 
 	VIDEO_TYPE_RASTER,
@@ -2027,7 +2046,7 @@ static struct MachineDriver machine_driver_pc1640 =
 static void vga_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
 {
 	memcpy(sys_palette,vga_palette,sizeof(vga_palette));
-//	memcpy(sys_colortable,cga_colortable,sizeof(cga_colortable));
+	memcpy(sys_colortable,cga_colortable,0x200);
 }
 
 
@@ -2054,11 +2073,11 @@ static struct MachineDriver machine_driver_xtvga =
     720,                                       /* screen width */
 	480, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,480-1},					/* visible_area */
-	0,//VGA_gfxdecodeinfo,							/* graphics decode info */
+	vga_gfxdecodeinfo,							/* graphics decode info */
 	sizeof(vga_palette) / sizeof(vga_palette[0]) / 3,
-	0, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
+	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,
 	vga_vh_start,
 	vga_vh_stop,
@@ -2155,7 +2174,7 @@ static struct MachineDriver machine_driver_atcga =
 	sizeof(cga_colortable) / sizeof(cga_colortable[0]),
 	cga_init_palette,							/* init palette */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,
 	0,
 	pc_cga_vh_start,
 	pc_cga_vh_stop,
@@ -2198,9 +2217,9 @@ static struct MachineDriver machine_driver_atvga =
     720,                                       /* screen width */
 	480, 									/* screen height (pixels doubled) */
 	{ 0,720-1, 0,480-1},					/* visible_area */
-	0, //VGA_gfxdecodeinfo,							/* graphics decode info */
+	vga_gfxdecodeinfo,							/* graphics decode info */
 	sizeof(vga_palette) / sizeof(vga_palette[0]) / 3,
-	0, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
+	0x100*2, //sizeof(vga_colortable) / sizeof(vga_colortable[0]),
 	vga_init_palette,							/* init palette */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -2348,7 +2367,7 @@ ROM_START( ibmpc )
 ROM_END
 
 ROM_START( ibmpca )
-	ROM_REGION(0x100000,REGION_CPU1, 0)
+	ROM_REGION(0x100000,REGION_CPU1,0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD("basicc11.f6", 0xf6000, 0x2000, 0x80d3cf5d)
     ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
@@ -2414,7 +2433,8 @@ ROM_START( t1000hx )
 ROM_END
 
 ROM_START( ibmxt )
-    ROM_REGION(0x100000,REGION_CPU1, 0)
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
 //    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da) //this was inside
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
     ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
@@ -2439,21 +2459,23 @@ ROM_START( xtvga )
 ROM_END
 
 ROM_START( pc1512 )
-    ROM_REGION(0x100000,REGION_CPU1, 0)
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD16_BYTE("40044.v1", 0xfc000, 0x2000, 0x668fcc94) // v1
-    ROM_LOAD16_BYTE("40043.v1", 0xfc001, 0x2000, 0xf72f1582) // v1
+    ROM_LOAD16_BYTE("40044.v1", 0xfc001, 0x2000, 0x668fcc94) // v1
+    ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000, 0xf72f1582) // v1
 	ROM_REGION(0x01100,REGION_GFX1, 0)
     ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069) // taken from cga
 ROM_END
 
 ROM_START( pc1640 )
-    ROM_REGION(0x100000,REGION_CPU1, 0)
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
 	// this bios seams to be made for the amstrad pc
     ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae)
     ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD16_BYTE("40043.v3", 0xfc000, 0x2000, 0xe40a1513) // v3
-    ROM_LOAD16_BYTE("40044.v3", 0xfc001, 0x2000, 0xf1c074f3)
+    ROM_LOAD16_BYTE("40043.v3", 0xfc001, 0x2000, 0xe40a1513) // v3
+    ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
 ROM_END
 
 ROM_START( ibmat )

@@ -310,10 +310,13 @@ void at_keyboard_init(void)
 	keyboard.scan_code_set = 3;
 }
 
+static void at_keyboard_queue_insert(UINT8 data);
+
 void pc_keyboard_init(void)
 {
 	at_keyboard_init();
 	keyboard.scan_code_set=1;
+	at_keyboard_queue_insert(0xaa);
 }
 
 /* set initial scan set */

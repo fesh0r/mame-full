@@ -4,6 +4,7 @@
 #include "includes/pic8259.h"
 #include "includes/pit8253.h"
 #include "includes/mc146818.h"
+#include "includes/dma8237.h"
 #include "includes/vga.h"
 #include "includes/pc_cga.h"
 #include "includes/pc.h"
@@ -34,10 +35,16 @@
    f059f 0x11 timing of 0x10 bit tested
  */
 
+static DMA8237_CONFIG dma= { DMA8237_AT };
+
 void init_atcga(void)
 {
 	pc_init_setup(pc_setup_at);
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_config(dma8237+1,&dma);
+	dma8237_reset(dma8237);
+	dma8237_reset(dma8237+1);
 	pc_cga_init();
 	mc146818_init(MC146818_STANDARD);
 	/* initialise keyboard */
@@ -51,6 +58,11 @@ void init_at_vga(void)
 {
 	pc_init_setup(pc_setup_at);
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_config(dma8237+1,&dma);
+	dma8237_reset(dma8237);
+	dma8237_reset(dma8237+1);
+
 	pc_vga_init();
 	mc146818_init(MC146818_STANDARD);
 	/* initialise keyboard */
@@ -143,6 +155,7 @@ void at_8042_time(void)
 
 READ_HANDLER(at_8042_r)
 {
+	static int poll_delay=10;
 	int data=0;
 	switch (offset) {
 	case 0:
@@ -155,8 +168,11 @@ READ_HANDLER(at_8042_r)
 		data=pc_ppi_portb_r(offset);
 		data&=~0xc0; // at bios don't likes this being set
 
-		/* polled for changes in at bios */
-		at_8042.offset1^=0x10;
+		/* polled for changes in ibmat bios */
+		if (--poll_delay<0) {
+			poll_delay=4;
+			at_8042.offset1^=0x10;
+		}
 		data=(data&~0x10)|at_8042.offset1;
 		break;
 	case 2:

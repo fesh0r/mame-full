@@ -5,6 +5,9 @@
 #include "includes/pc.h"
 #include "includes/tandy1t.h"
 #include "includes/pc_t1t.h"
+#include "includes/dma8237.h"
+
+static DMA8237_CONFIG dma= { DMA8237_PC };
 
 extern void init_t1000hx(void)
 {
@@ -15,6 +18,8 @@ extern void init_t1000hx(void)
 		gfx[i] = i;
 	pc_init_setup(pc_setup_t1000hx);
 	init_pc_common();
+	dma8237_config(dma8237,&dma);
+	dma8237_reset(dma8237);
 	at_keyboard_set_type(AT_KEYBOARD_TYPE_PC);
 }
 
