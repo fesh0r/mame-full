@@ -1,4 +1,7 @@
-/* direct memory access controller 8237
+/* direct memory access controller 
+   intel 8237
+
+   page register for bigger than 16 bit address buses are done in separate discrete hardware
    used in complete pc series */
 
 #include "driver.h"
@@ -15,7 +18,20 @@
 #define DMA_LOG(level, text, print)
 #endif
 
-DMA8237 dma8237[2]= { {0} };
+DMA8237 dma8237[2]= { 
+	{ { DMA8237_PC } } 
+};
+
+void dma8237_config(DMA8237 *This, DMA8237_CONFIG *config)
+{
+	This->config=*config;
+}
+
+void dma8237_reset(DMA8237 *This)
+{
+	This->status &= ~0xf0;	/* reset DMA running flag */
+	This->status |= 0x0f;		/* set DMA terminal count flag */
+}
 
 static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
 {
@@ -24,19 +40,25 @@ static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
 	{
     case 0: case 2: case 4: case 6:
         DMA_LOG(1,"DMA_address_w",("chan #%d $%02x: ", offset>>1, data));
-        if (this->msb)
-            this->address[offset>>1] |= (data & 0xff) << 8;
-        else
-            this->address[offset>>1] = data & 0xff;
+        if (this->msb) {
+            this->chan[offset>>1].address |= (data & 0xff) << 8;
+            this->chan[offset>>1].base_address |= (data & 0xff) << 8;
+        } else {
+            this->chan[offset>>1].address = data & 0xff;
+            this->chan[offset>>1].base_address = data & 0xff;
+		}
         DMA_LOG(1,"",("[$%04x]\n", this->address[offset>>1]));
         this->msb ^= 1;
         break;
     case 1: case 3: case 5: case 7:
         DMA_LOG(1,"DMA_count_w",("chan #%d $%02x: ", offset>>1, data));
-        if (this->msb)
-            this->count[offset>>1] |= (data & 0xff) << 8;
-        else
-            this->count[offset>>1] = data & 0xff;
+        if (this->msb) {
+            this->chan[offset>>1].count |= (data & 0xff) << 8;
+            this->chan[offset>>1].base_count |= (data & 0xff) << 8;
+        } else {
+            this->chan[offset>>1].count = data & 0xff;
+            this->chan[offset>>1].base_count = data & 0xff;
+		}
         DMA_LOG(1,"",("[$%04x]\n", this->count[offset>>1]));
         this->msb ^= 1;
         break;
@@ -78,9 +100,9 @@ static void dma8237_w(DMA8237 *this, offs_t offset, data8_t data)
         break;
     case 11:    /* DMA mode register */
         this->channel = data & 3;
-        this->operation[this->channel] = (data >> 2) & 3;
-        this->direction[this->channel] = (data & 0x20) ? -1 : +1;
-        this->transfer_mode[this->channel] = (data >> 6) & 3;
+        this->chan[this->channel].operation = (data >> 2) & 3;
+        this->chan[this->channel].direction = (data & 0x20) ? -1 : +1;
+        this->chan[this->channel].transfer_mode = (data >> 6) & 3;
         DMA_LOG(1,"DMA_mode_w",("$%02x: chan #%d, oper %d, dir %d, mode %d\n", data, data&3, (data>>2)&3, (data>>5)&1, (data>>6)&3 ));
         break;
     case 12:    /* DMA clear byte pointer flip-flop */
@@ -111,19 +133,29 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 	{
 		case 0: case 2: case 4: case 6:
 			if (this->msb)
-				data = (this->address[offset>>1] >> 8) & 0xff;
-			else
-				data = this->address[offset>>1] & 0xff;
+				data = (this->chan[offset>>1].address >> 8) & 0xff;
+			else 
+				data = this->chan[offset>>1].address & 0xff;
+			
 			DMA_LOG(1,"DMA_address_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->address[offset>>1]));
 			this->msb ^= 1;
+
+			if (offset==0) { // hack simulating refresh activity for ibmxt bios
+				this->chan[0].address++;
+				this->chan[0].count--;
+				if (this->chan[0].count==0xffff) {
+					this->chan[0].address=this->chan[0].base_address;
+					this->chan[0].count==this->chan[0].base_count;
+				}
+			}
 			break;
 
 		case 1: case 3: case 5: case 7:
 			if (this->msb)
-				data = (this->count[offset>>1] >> 8) & 0xff;
+				data = (this->chan[offset>>1].count >> 8) & 0xff;
 			else
-				data = this->count[offset>>1] & 0xff;
-			DMA_LOG(1,"DMA_count_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->count[offset>>1]));
+				data = this->chan[offset>>1].count & 0xff;
+			DMA_LOG(1,"DMA_count_r",("chan #%d $%02x ($%04x)\n", offset>>1, data, this->chan[offset>>1].count));
 			this->msb ^= 1;
 			break;
 
@@ -160,12 +192,99 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 	return data;
 }
 
+UINT8 dma8237_write(DMA8237 *this, int channel)
+{
+	int data;
+
+	/* read byte from pc mem and update address */
+	if (this->chan[channel].operation == 2) 
+	{
+		switch (this->config.type) {
+		case DMA8237_PC:
+			data = cpu_readmem20(this->chan[channel].page + this->chan[channel].address);
+			break;
+		case DMA8237_AT:
+			data = cpu_readmem24(this->chan[channel].page + this->chan[channel].address);
+			break;
+		}
+	}
+	else
+	{
+		data = 0x0ff;
+	}
+	this->chan[channel].address += this->chan[channel].direction;
+	this->chan[channel].count--;
+
+	/* if all data transfered, issue a terminal count to fdc */
+	if (this->chan[channel].count==0xffff)
+	{
+		this->status &= ~(0x10 << channel);	/* reset DMA running flag */
+		this->status |= 0x01 << channel;		/* set DMA terminal count flag */
+
+	}
+	return data;
+}
+
+/* reading from FDC with dma */
+void dma8237_read(DMA8237 *this, int channel, UINT8 data)
+{
+
+	/* write byte to pc mem and update mem address */
+	if (this->chan[channel].operation == 1) 
+	{
+		switch (this->config.type) {
+		case DMA8237_PC:
+			cpu_writemem20(this->chan[channel].page + this->chan[channel].address, data);
+			break;
+		case DMA8237_AT:
+			cpu_writemem24(this->chan[channel].page + this->chan[channel].address, data);
+			break;
+		}
+	}
+
+	this->chan[channel].address += this->chan[channel].direction;
+	this->chan[channel].count--;
+
+	/* if all data transfered, issue a terminal count to fdc */
+	if (this->chan[channel].count==0xffff)
+	{
+		this->status &= ~(0x10 << channel);	/* reset DMA running flag */
+		this->status |= 0x01 << channel;		/* set DMA terminal count flag */
+	}
+
+}
+
+
+void pc_page_w(offs_t offset, data8_t data)
+{
+	offset&=3;
+	switch( offset )
+	{
+	case 1: /* DMA page register 2 */
+		DMA_LOG(1,"DMA_page_2_w",("$%02x\n", data));
+		dma8237->chan[2].page = (data << 16) & 0x0f0000;
+		break;
+	case 2:    /* DMA page register 3 */
+		DMA_LOG(1,"DMA_page_3_w",("$%02x\n", data));
+		dma8237->chan[3].page = (data << 16) & 0x0f0000;
+		break;
+	case 3:    /* DMA page register 0 */
+		DMA_LOG(1,"DMA_page_0+1_w",("$%02x\n", data));
+		/* this is verified with pc hardwarebuch and pc circuit diagram !*/
+		dma8237->chan[0].page = dma8237->chan[1].page = (data << 16) & 0x0f0000;
+		break;
+    }
+}
+
+
+static UINT8 pages[0xf]={ 0 };
+
 /* in an at SN74LS612N, full 16 register memory mapper,
    so 0x80-0x8f read and writeable */
-static void dma8237_page_w(DMA8237 *this, offs_t offset, data8_t data)
+void at_page_w(offs_t offset, data8_t data)
 {
-	offset&=7;
-	this->pagereg.data[offset]=data;
+	offset&=0xf;
+	pages[offset]=data;
 	switch( offset )
 	{
 	case 0:
@@ -173,106 +292,95 @@ static void dma8237_page_w(DMA8237 *this, offs_t offset, data8_t data)
 		break;
 	case 1: /* DMA page register 2 */
 		DMA_LOG(1,"DMA_page_2_w",("$%02x\n", data));
-		this->page[2] = (data << 16) & 0xff0000;
+		dma8237->chan[2].page = (data << 16) & 0xff0000;
 		break;
 	case 2:    /* DMA page register 3 */
 		DMA_LOG(1,"DMA_page_3_w",("$%02x\n", data));
-		this->page[3] = (data << 16) & 0xff0000;
+		dma8237->chan[3].page = (data << 16) & 0xff0000;
 		break;
 	case 3:    /* DMA page register 1 */
 		DMA_LOG(1,"DMA_page_1_w",( "$%02x\n", data));
-		this->page[1] = (data << 16) & 0xff0000;
+		dma8237->chan[1].page = (data << 16) & 0xff0000;
 		break;
 	case 7:    /* DMA page register 0 */
 		DMA_LOG(1,"DMA_page_0_w",("$%02x\n", data));
-		this->page[0] = (data << 16) & 0xff0000;
+		dma8237->chan[0].page = (data << 16) & 0xff0000;
+		break;
+	case 0xf:
+		DMA_LOG(1,"DMA_page_4_w",("$%02x\n", data));
+		dma8237[1].chan[0].page = (data << 16) & 0xff0000;
+		break;
+	case 0xb:
+		DMA_LOG(1,"DMA_page_5_w",("$%02x\n", data));
+		dma8237[1].chan[1].page = (data << 16) & 0xff0000;
+		break;
+	case 0x9:
+		DMA_LOG(1,"DMA_page_6_w",("$%02x\n", data));
+		dma8237[1].chan[2].page = (data << 16) & 0xff0000;
+		break;
+	case 0xa:
+		DMA_LOG(1,"DMA_page_7_w",("$%02x\n", data));
+		dma8237[1].chan[3].page = (data << 16) & 0xff0000;
 		break;
     }
 }
 
-static int dma8237_page_r(DMA8237 *this, offs_t offset)
+READ_HANDLER( pc_page_r )
 {
+	return 0xff; // in pc not readable !
+}
+
+READ_HANDLER( at_page_r )
+{
+	/* is it really readable!?*/
 	int data = 0xff;
-	offset&=7;
-	data=this->pagereg.data[offset];
+	offset&=0xf;
+	data=pages[offset];
 	switch( offset )
 	{
 	case 1: /* DMA page register 2 */
-		data = this->page[2] >> 16;
+		data = dma8237->chan[2].page >> 16;
 		DMA_LOG(1,"DMA_page_2_r",("$%02x\n", data));
 		break;
 	case 2:    /* DMA page register 3 */
-		data = this->page[3] >> 16;
+		data = dma8237->chan[3].page >> 16;
 		DMA_LOG(1,"DMA_page_3_r",("$%02x\n", data));
 		break;
 	case 3:    /* DMA page register 1 */
-		data = this->page[1] >> 16;
+		data = dma8237->chan[1].page >> 16;
 		DMA_LOG(1,"DMA_page_1_r",("$%02x\n", data));
 		break;
 	case 7:    /* DMA page register 0 */
-		data = this->page[0] >> 16;
+		data = dma8237->chan[0].page >> 16;
 		DMA_LOG(1,"DMA_page_0_w",("$%02x\n", data));
+		break;
+	case 0xf:    /* DMA page register 0 */
+		data = dma8237[1].chan[0].page >> 16;
+		DMA_LOG(1,"DMA_page_4_w",("$%02x\n", data));
+		break;
+	case 0xb:    /* DMA page register 0 */
+		data = dma8237[1].chan[1].page >> 16;
+		DMA_LOG(1,"DMA_page_5_w",("$%02x\n", data));
+		break;
+	case 0x9:    /* DMA page register 0 */
+		data = dma8237[1].chan[2].page >> 16;
+		DMA_LOG(1,"DMA_page_6_w",("$%02x\n", data));
+		break;
+	case 0xa:    /* DMA page register 0 */
+		data = dma8237[1].chan[3].page >> 16;
+		DMA_LOG(1,"DMA_page_7_w",("$%02x\n", data));
 		break;
     }
 	return data;
 }
 
-WRITE_HANDLER ( dma8237_0_w )
-{
-	dma8237_w(dma8237, offset, data);
-}
+WRITE_HANDLER ( dma8237_0_w ) { dma8237_w(dma8237, offset, data); }
+WRITE_HANDLER ( dma8237_1_w ) { dma8237_w(dma8237+1, offset, data); }
+READ_HANDLER ( dma8237_0_r ) { return dma8237_r(dma8237, offset); }
+READ_HANDLER ( dma8237_1_r ) { return dma8237_r(dma8237+1, offset); }
 
-WRITE_HANDLER ( dma8237_1_w )
-{
-	dma8237_w(dma8237+1, offset, data);
-}
+WRITE_HANDLER ( dma8237_at_0_w ) { dma8237_w(dma8237, offset>>1, data); }
+WRITE_HANDLER ( dma8237_at_1_w ) { dma8237_w(dma8237+1, offset>>1, data); }
+READ_HANDLER ( dma8237_at_0_r ) { return dma8237_r(dma8237, offset>>1); }
+READ_HANDLER ( dma8237_at_1_r ) { return dma8237_r(dma8237+1, offset>>1); }
 
-READ_HANDLER ( dma8237_0_r )
-{
-	return dma8237_r(dma8237, offset);
-}
-
-READ_HANDLER ( dma8237_1_r )
-{
-	return dma8237_r(dma8237+1, offset);
-}
-
-WRITE_HANDLER ( dma8237_at_0_w )
-{
-	dma8237_w(dma8237, offset>>1, data);
-}
-
-WRITE_HANDLER ( dma8237_at_1_w )
-{
-	dma8237_w(dma8237+1, offset>>1, data);
-}
-
-READ_HANDLER ( dma8237_at_0_r )
-{
-	return dma8237_r(dma8237, offset>>1);
-}
-
-READ_HANDLER ( dma8237_at_1_r )
-{
-	return dma8237_r(dma8237+1, offset>>1);
-}
-
-WRITE_HANDLER ( dma8237_0_page_w )
-{
-	dma8237_page_w(dma8237, offset, data);
-}
-
-WRITE_HANDLER ( dma8237_1_page_w )
-{
-	dma8237_page_w(dma8237+1, offset, data);
-}
-
-READ_HANDLER ( dma8237_0_page_r )
-{
-	return dma8237_page_r(dma8237, offset);
-}
-
-READ_HANDLER ( dma8237_1_page_r )
-{
-	return dma8237_page_r(dma8237+1, offset);
-}
