@@ -208,6 +208,7 @@ const char *radius_2_led =
 struct pool_memory_header
 {
 	struct pool_memory_header *next;
+	struct pool_memory_header **prev;
 #ifdef GUARD_BYTES
 	size_t size;
 	UINT32 canary;
@@ -238,7 +239,7 @@ void pool_exit(void **pool)
 	*pool = NULL;
 }
 
-void *pool_malloc(void **pool, size_t size)
+void *pool_realloc(void **pool, void *ptr, size_t size)
 {
 	struct pool_memory_header *block;
 	size_t actual_size;
@@ -248,19 +249,39 @@ void *pool_malloc(void **pool, size_t size)
 	actual_size += sizeof(block->canary);
 #endif
 
-	block = malloc(actual_size);
-	if (!block)
-		return NULL;
+	if (ptr)
+	{
+		block = ((struct pool_memory_header *) ptr) - 1;
+#ifdef GUARD_BYTES
+		assert(block->canary == 0xdeadbeef);
+#endif
+		block = realloc(block, actual_size);
+		if (!block)
+			return NULL;
+	}
+	else
+	{
+		block = malloc(actual_size);
+		if (!block)
+			return NULL;
+		block->next = (struct pool_memory_header *) *pool;
+		block->prev = (struct pool_memory_header **) pool;
+	}
+	if (block->next)
+		block->next->prev = &block->next;
+	*(block->prev) = block;
 
-	block->next = (struct pool_memory_header *) *pool;
 #ifdef GUARD_BYTES
 	block->size = size;
 	block->canary = 0xdeadbeef;
 	memcpy(((char *) (block+1)) + size, &block->canary, sizeof(block->canary));
 #endif
-
-	*pool = block;
 	return (void *) (block+1);
+}
+
+void *pool_malloc(void **pool, size_t size)
+{
+	return pool_realloc(pool, NULL, size);
 }
 
 char *pool_strdup(void **pool, const char *src)

@@ -13,6 +13,7 @@ extern void *image_fp(int type, int id);
 
 extern void *image_malloc(int type, int id, size_t size);
 extern char *image_strdup(int type, int id, const char *src);
+extern void *image_realloc(int type, int id, void *ptr, size_t size);
 
 /* needs to be phased out */
 extern void *image_fopen_custom(int type, int id, int filetype, int read_or_write);

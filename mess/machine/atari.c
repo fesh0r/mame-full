@@ -391,7 +391,7 @@ int a800_floppy_init(int id, void *file, int effective_mode)
 			return INIT_FAIL;
 		}
 		/* re allocate the buffer; we don't want to be too lazy ;) */
-        drv[id].image = realloc(drv[id].image, size);
+        drv[id].image = image_realloc(IO_FLOPPY, id, drv[id].image, size);
 
 		ext = image_filetype(IO_FLOPPY, id);
         /* no extension: assume XFD format (no header) */

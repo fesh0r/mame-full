@@ -13,6 +13,8 @@ System Driver Changes:
 
 - [APPLE2] Added support for lo-res color and 80 column text. [Nate Woods]
 
+- [A800] Fixed a recently introduced bug in disk support. [Lawrence Gold]
+
 Source Changes:
 ---------------
 - New generic code for emulating terminals, now in use by the Apple I and
