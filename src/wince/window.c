@@ -524,8 +524,11 @@ int win_init_window(void)
 			g = 6;
 			b = 5;
 		}
-		else {
-			/* ??? */
+		else if (properties.ffFormat & kfDirect888)
+		{
+			r = 8;
+			g = 8;
+			b = 8;
 		}
 
 		win_color16_rsrc_shift = 8 - r;

@@ -12,6 +12,7 @@ OSOBJS = \
 		$(OBJ)/wince/dirent.o \
 		$(OBJ)/wince/playgame.o \
 		$(OBJ)/wince/invokegx.o \
+		$(OBJ)/wince/emugx.o \
 		$(OBJ)/wince/rc.o \
 		$(OBJ)/wince/ticker.o \
 		$(OBJ)/wince/fronthlp.o \

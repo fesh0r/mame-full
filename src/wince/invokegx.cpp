@@ -1,4 +1,5 @@
 #include "invokegx.h"
+#include "emugx.h"
 
 extern "C" void CLIB_DECL logerror(const char *text,...);
 
@@ -49,9 +50,9 @@ static struct gx_call gx_calls[] =
 	{ 0, (void **) &cdecl_GXIsDisplayDRAMBuffer,	(void **) &stdcall_GXIsDisplayDRAMBuffer,	"?GXIsDisplayDRAMBuffer@@YAHXZ" },
 	{ 1, (void **) &cdecl_GXOpenDisplay,			(void **) &stdcall_GXOpenDisplay,			"?GXOpenDisplay@@YAHPAUHWND__@@K@Z" },
 	{ 1, (void **) &cdecl_GXOpenInput,				(void **) &stdcall_GXOpenInput,				"?GXOpenInput@@YAHXZ" },
-	{ 1, (void **) &cdecl_GXResume,					(void **) &stdcall_GXResume,				"?GXResume@@YAHXZ" },
+	{ 0, (void **) &cdecl_GXResume,					(void **) &stdcall_GXResume,				"?GXResume@@YAHXZ" },
 	{ 0, (void **) &cdecl_GXSetViewport,			(void **) &stdcall_GXSetViewport,			"?GXSetViewport@@YAHKKKK@Z" },
-	{ 1, (void **) &cdecl_GXSuspend,				(void **) &stdcall_GXSuspend,				"?GXSuspend@@YAHXZ" }
+	{ 0, (void **) &cdecl_GXSuspend,				(void **) &stdcall_GXSuspend,				"?GXSuspend@@YAHXZ" }
 };
 
 static void gx_close(void);
@@ -89,39 +90,59 @@ static int gx_open(void)
 	int at_pos;
 	LPTSTR s;
 	void *call;
+	int rc;
 
 	gx_library = LoadLibrary(TEXT("gx.dll"));
 	if (!gx_library)
 	{
+#if HAS_EMUGX
+		/* use emulated gapi */
+		cdecl_GXOpenDisplay = emu_GXOpenDisplay;
+		cdecl_GXCloseDisplay = emu_GXCloseDisplay;
+		cdecl_GXBeginDraw = emu_GXBeginDraw;
+		cdecl_GXEndDraw = emu_GXEndDraw;
+		cdecl_GXOpenInput = emu_GXOpenInput;
+		cdecl_GXCloseInput = emu_GXCloseInput;
+		cdecl_GXGetDisplayProperties = emu_GXGetDisplayProperties;
+		cdecl_GXGetDefaultKeys = emu_GXGetDefaultKeys;
+		cdecl_GXSuspend = emu_GXSuspend;
+		cdecl_GXResume = emu_GXResume;
+		rc = 1;
+#else
 		reporterror("Could not load gx.dll");
-		return 0;
+		rc = 0;
+#endif
 	}
-
-	for (i = 0; i < sizeof(gx_calls) / sizeof(gx_calls[0]); i++)
+	else
 	{
-		j = -1;
-		s = (LPTSTR) alloca((strlen(gx_calls[i].call_name) + 1) * sizeof(TCHAR));
-		do
+		rc = 1;
+		for (i = 0; i < sizeof(gx_calls) / sizeof(gx_calls[0]); i++)
 		{
-			j++;
-			s[j] = gx_calls[i].call_name[j];
-		}
-		while(gx_calls[i].call_name[j]);
-
-		*(gx_calls[i].cdecl_call) = call = GetProcAddress(gx_library, s);
-		if (!call)
-		{
-			wcsstr(s, TEXT("@@YA"))[3] = 'G';
-			*(gx_calls[i].stdcall_call) = call = GetProcAddress(gx_library, s);
-			if (!call && gx_calls[i].required)
+			j = -1;
+			s = (LPTSTR) alloca((strlen(gx_calls[i].call_name) + 1) * sizeof(TCHAR));
+			do
 			{
-				reporterror("Could not find required GAPI function");
-				gx_close();
-				return 0;
+				j++;
+				s[j] = gx_calls[i].call_name[j];
+			}
+			while(gx_calls[i].call_name[j]);
+
+			*(gx_calls[i].cdecl_call) = call = GetProcAddress(gx_library, s);
+			if (!call)
+			{
+				wcsstr(s, TEXT("@@YA"))[3] = 'G';
+				*(gx_calls[i].stdcall_call) = call = GetProcAddress(gx_library, s);
+				if (!call && gx_calls[i].required)
+				{
+					reporterror("Could not find required GAPI function");
+					gx_close();
+					rc = 0;
+					break;
+				}
 			}
 		}
 	}
-	return 1;
+	return rc;
 }
 
 static void gx_close(void)
@@ -129,13 +150,14 @@ static void gx_close(void)
 	int i;
 	if (gx_library)
 	{
-		for (i = 0; i < sizeof(gx_calls) / sizeof(gx_calls[0]); i++)
-		{
-			*(gx_calls[i].cdecl_call) = NULL;
-			*(gx_calls[i].stdcall_call) = NULL;
-		}
 		FreeLibrary(gx_library);
 		gx_library = NULL;
+	}
+
+	for (i = 0; i < sizeof(gx_calls) / sizeof(gx_calls[0]); i++)
+	{
+		*(gx_calls[i].cdecl_call) = NULL;
+		*(gx_calls[i].stdcall_call) = NULL;
 	}
 }
 
@@ -143,13 +165,14 @@ int gx_open_display(HWND hWnd, DWORD dwFlags)
 {
 	int rc;
 
-	if (!gx_open())
-		return 0;
-
-	if (cdecl_GXOpenDisplay)
-		rc = cdecl_GXOpenDisplay(hWnd, dwFlags);
-	else
-		rc = stdcall_GXOpenDisplay(hWnd, dwFlags);
+	if (gx_open())
+	{
+		/* use normal GAPI calls */
+		if (cdecl_GXOpenDisplay)
+			rc = cdecl_GXOpenDisplay(hWnd, dwFlags);
+		else
+			rc = stdcall_GXOpenDisplay(hWnd, dwFlags);
+	}
 
 	if (rc == 0)
 	{
@@ -160,11 +183,13 @@ int gx_open_display(HWND hWnd, DWORD dwFlags)
 
 int gx_close_display(void)
 {
-	int rc;
+	int rc = 1;
+
 	if (cdecl_GXCloseDisplay)
 		rc = cdecl_GXCloseDisplay();
-	else
+	else if (stdcall_GXCloseDisplay)
 		rc = stdcall_GXCloseDisplay();
+
 	gx_close();
 	return rc;
 }
@@ -189,16 +214,20 @@ int gx_open_input(void)
 {
 	if (cdecl_GXOpenInput)
 		return cdecl_GXOpenInput();
-	else
+	else if (stdcall_GXOpenInput)
 		return stdcall_GXOpenInput();
+	else
+		return 1;
 }
 
 int gx_close_input(void)
 {
 	if (cdecl_GXCloseInput)
 		return cdecl_GXCloseInput();
-	else
+	else if (stdcall_GXCloseInput)
 		return stdcall_GXCloseInput();
+	else
+		return 1;
 }
 
 void gx_get_display_properties(struct GXDisplayProperties *properties)
@@ -207,8 +236,6 @@ void gx_get_display_properties(struct GXDisplayProperties *properties)
 		*properties = cdecl_GXGetDisplayProperties();
 	else if (stdcall_GXGetDisplayProperties)
 		*properties = stdcall_GXGetDisplayProperties();
-	else
-		DebugBreak();
 }
 
 void gx_get_default_keys(struct GXKeyList *keylist, int iOptions)
@@ -223,16 +250,20 @@ int gx_suspend(void)
 {
 	if (cdecl_GXSuspend)
 		return cdecl_GXSuspend();
-	else
+	else if (stdcall_GXSuspend)
 		return stdcall_GXSuspend();
+	else
+		return 1;
 }
 
 int gx_resume(void)
 {
 	if (cdecl_GXResume)
 		return cdecl_GXResume();
-	else
+	else if (stdcall_GXResume)
 		return stdcall_GXResume();
+	else
+		return 1;
 }
 
 int gx_set_viewport(DWORD dwTop, DWORD dwHeight)

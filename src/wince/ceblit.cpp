@@ -11,13 +11,16 @@
 #include <assert.h>
 
 // MAME headers
-#include "driver.h"
-#include "blit.h"
-#include "video.h"
-#include "window.h"
-#include "emitblit.h"
-#include "invokegx.h"
-
+extern "C"
+{
+	#include "driver.h"
+	#include "blit.h"
+	#include "video.h"
+	#include "window.h"
+	#include "emitblit.h"
+	#include "invokegx.h"
+	#include "profiler.h"
+}
 
 //============================================================
 //	TYPE DEFINITIONS
@@ -31,6 +34,8 @@ typedef void (__cdecl *blitter_func)(void *dest_bits, const void *source_bits);
 
 #define MAX_BLITTER_SIZE	32768
 #define DEBUG_BLITTERS		1
+
+#define PROFILER_GAPI		PROFILER_USER4
 
 //============================================================
 //	LOCAL VARIABLES
@@ -307,7 +312,27 @@ extern "C" void ce_blit(struct mame_bitmap *bitmap, int orientation, const UINT3
 		}
 	}
 
+#ifdef PROFILER_GAPI
+	profiler_mark(PROFILER_GAPI);
+#endif
+
 	dest_bits = gx_begin_draw();
-	((blitter_func) (void *) current_blitter)(dest_bits, source_bits);
-	gx_end_draw();
+
+#ifdef PROFILER_GAPI
+	profiler_mark(PROFILER_END);
+#endif
+
+	if (dest_bits)
+	{
+		((blitter_func) (void *) current_blitter)(dest_bits, source_bits);
+
+#ifdef PROFILER_GAPI
+		profiler_mark(PROFILER_GAPI);
+#endif
+		gx_end_draw();
+
+#ifdef PROFILER_GAPI
+		profiler_mark(PROFILER_END);
+#endif
+	}
 }

@@ -1,5 +1,12 @@
+//============================================================
+//
+//	cemain.c - Shell for MESSCE
+//
+//============================================================
+
+// standard windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <commctrl.h>
 
 #include "resource.h"
 #include "driver.h"
@@ -13,6 +20,37 @@ struct status_of_data
     BOOL bHasRoms;
     LPTSTR lpDescription;
 };
+
+//============================================================
+//	PARAMETERS
+//============================================================
+
+// window styles
+#define SHELLWINDOW_STYLE			WS_VISIBLE
+#define SHELLWINDOW_STYLE_EX		0
+
+#define SHELLWINDOW_X				0
+#define SHELLWINDOW_Y				0
+#define SHELLWINDOW_WIDTH			CW_USEDEFAULT
+#define SHELLWINDOW_HEIGHT			CW_USEDEFAULT
+
+//============================================================
+//	LOCAL VARIABLES
+//============================================================
+
+static int*				pGame_Index;	// Index of available games
+static struct status_of_data *ptGame_Data;	// Game Data Structure - such as hasRoms etc
+static HBRUSH hBrush2; //Background Checkers
+static HWND				hwndCB;					// The command bar handle
+static SHACTIVATEINFO s_sai;
+static HWND s_hwndMain;
+
+static struct SmartListView *s_pGameListView;
+static struct SmartListView *s_pSoftwareListView;
+
+//============================================================
+//	PROTOTYPES
+//============================================================
 
 static void mamece3_init();
 static BOOL InitInstance(int nCmdShow);
@@ -28,20 +66,12 @@ static HWND CreateRpCommandBar(HWND hwnd);
 #define IDC_PLAY			201
 #define IDC_SOFTWARELIST	202
 
-static int*				pGame_Index;	// Index of available games
-static struct status_of_data *ptGame_Data;	// Game Data Structure - such as hasRoms etc
-static HBRUSH hBrush2; //Background Checkers
-static HWND				hwndCB;					// The command bar handle
-static SHACTIVATEINFO s_sai;
-static HWND s_hwndMain;
-
-static struct SmartListView *s_pGameListView;
-static struct SmartListView *s_pSoftwareListView;
-
 struct MainWindowExtra
 {
 	HMENU hMenu;
 };
+
+//============================================================
 
 /* ------------------------------------------------------------------------ *
  * Menu handling code														*
@@ -57,7 +87,8 @@ static BOOL GetMenuOption(HWND hWnd, int nOptionID)
 	mii.fMask = MIIM_STATE;
 
 	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
-	GetMenuItemInfo(pExtra->hMenu, nOptionID, FALSE, &mii);
+	if (pExtra)
+		GetMenuItemInfo(pExtra->hMenu, nOptionID, FALSE, &mii);
 
 	return (mii.fState & MFS_CHECKED) ? TRUE : FALSE;
 }
@@ -87,6 +118,8 @@ static void SetDefaultOptions(HWND hWnd)
 {
 	struct MainWindowExtra *pExtra;
 	pExtra = (struct MainWindowExtra *) GetWindowLong(hWnd, GWL_USERDATA);
+	if (!pExtra)
+		return;
 
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_ENABLESOUND,			MF_CHECKED);
 	CheckMenuItem(pExtra->hMenu,	ID_OPTIONS_SHOWFRAMERATE,		MF_UNCHECKED);
@@ -306,8 +339,6 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 	MSG msg;
 	HACCEL hAccelTable;
 
-	nCmdShow = SW_SHOWNORMAL;
-
 	mamece3_init();
 
 	// Perform application initialization:
@@ -378,14 +409,14 @@ static BOOL InitInstance(int nCmdShow)
 {
 	HWND	hWnd = NULL;
 	TCHAR	szTitle[MAX_LOADSTRING];			// The title bar text
-	TCHAR	szWindowClass[MAX_LOADSTRING];		// The window class name
 	RECT	rect;
 	HINSTANCE hInst;
+
+	TCHAR szWindowClass[] = TEXT("MAMECE");
 
 	hInst = GetModuleHandle(NULL);
 
 	// Initialize global strings
-	tcscpy(szWindowClass, TEXT("MAMECE3"));
 	LoadString(hInst, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
 
 	//If it is already running, then focus on the window
@@ -398,24 +429,11 @@ static BOOL InitInstance(int nCmdShow)
 
 	MyRegisterClass(hInst, szWindowClass);
 	
-	GetClientRect(hWnd, &rect);
-	
-	hWnd = CreateWindow(szWindowClass, szTitle, WS_VISIBLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, NULL, NULL, hInst, NULL);
+	hWnd = CreateWindowEx(SHELLWINDOW_STYLE_EX, szWindowClass, szTitle, SHELLWINDOW_STYLE,
+		SHELLWINDOW_X, SHELLWINDOW_Y, SHELLWINDOW_WIDTH, SHELLWINDOW_HEIGHT, 
+		NULL, NULL, hInst, NULL);
 	if (!hWnd)
 		return FALSE;
-
-	//When the main window is created using CW_USEDEFAULT the height of the menubar (if one
-	// is created is not taken into account). So we resize the window after creating it
-	// if a menubar is present
-	{
-		RECT rc;
-		GetWindowRect(hWnd, &rc);
-		rc.bottom -= MENU_HEIGHT;
-		if (hwndCB)
-			MoveWindow(hWnd, rc.left, rc.top, rc.right, rc.bottom, FALSE);
-	}
-
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
@@ -438,7 +456,6 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 	HDC hdc, hdcMem;
 	int wmId, wmEvent;
 	PAINTSTRUCT ps;
-	TCHAR szHello[MAX_LOADSTRING];
 	
 	HBITMAP		hBitmap;
 	BITMAP		bitmap;
@@ -532,10 +549,18 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				TBBUTTONINFO tbbi;
 				int x, y, width, height;
 
+				memset(&tbbi, 0, sizeof(tbbi));
+
 				hwndCB = CreateRpCommandBar(hWnd);
-				tbbi.cbSize = sizeof(tbbi);
-				tbbi.dwMask = TBIF_LPARAM;
-				SendMessage(hwndCB,TB_GETBUTTONINFO,IDS_CAP_OPTIONS,(LPARAM)&tbbi);
+				if (hwndCB)
+				{
+					tbbi.cbSize = sizeof(tbbi);
+					tbbi.dwMask = TBIF_LPARAM;
+					SendMessage(hwndCB,TB_GETBUTTONINFO,IDS_CAP_OPTIONS,(LPARAM)&tbbi);
+				}
+				// Initialize the shell activate info structure
+				memset (&s_sai, 0, sizeof(s_sai));
+				s_sai.cbSize = sizeof(s_sai);
 
 				pExtra = malloc(sizeof(struct MainWindowExtra));
 				pExtra->hMenu = (HMENU) tbbi.lParam;
@@ -593,7 +618,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				hdc = BeginPaint(hWnd, &ps);
 				GetClientRect(hWnd, &rt);
 				
-			//Load MameCE3 Bitmap
+				//Load MameCE3 Bitmap
 				hdcMem = CreateCompatibleDC (hdc);
 				hBitmap = LoadBitmap (hInst, MAKEINTRESOURCE(IDB_BITMAP1));
 					GetObject(hBitmap, sizeof(BITMAP), &bitmap);
@@ -601,10 +626,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 					BitBlt(hdc,5,5,bitmap.bmWidth,bitmap.bmHeight,hdcMem,0,0,SRCCOPY);
 				DeleteObject (hBitmap);
 				DeleteDC (hdcMem);
-			//
-				LoadString(hInst, IDS_HELLO, szHello, MAX_LOADSTRING);
-				DrawText(hdc, szHello, _tcslen(szHello), &rt, 
-					DT_SINGLELINE | DT_VCENTER | DT_CENTER);
+
 				EndPaint(hWnd, &ps);
 			}
 			break; 
@@ -613,10 +635,15 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 			DeleteObject(hBrush2);	// Background Checkers
 			free(ptGame_Data);		// Delete Memory allocated in mamece_init or Play Loop
 			free(pGame_Index);		// Delete Memory allocated in mamece_init or Play Loop
-			CommandBar_Destroy(hwndCB);
+			if (hwndCB)
+				CommandBar_Destroy(hwndCB);
 			free(pExtra);
 			PostQuitMessage(0);
 			break;
+		case WM_ACTIVATE:
+            // Notify shell of our activate message
+			SHHandleWMActivate(hWnd, wParam, lParam, &s_sai, FALSE);
+     		break;
 		case WM_SETTINGCHANGE:
 			SHHandleWMSettingChange(hWnd, wParam, lParam, &s_sai);
      		break;
@@ -655,7 +682,8 @@ static void RefreshGameListBox()
 	bShowClones = GetMenuOption(s_hwndMain, ID_OPTIONS_SHOWCLONES);
 
 	/* Clear out the list */
-	SmartListView_ResetColumnDisplay(s_pGameListView);
+	if (s_pGameListView)
+		SmartListView_ResetColumnDisplay(s_pGameListView);
 
 	/* Add the drivers */
 	for (i = 0; drivers[i]; i++) {
@@ -669,8 +697,11 @@ static void RefreshGameListBox()
 	}
 
 	/* Sort them */
-	SmartListView_SetTotalItems(s_pGameListView, pos);
-	SmartListView_SetSorting(s_pGameListView, 0, FALSE);
+	if (s_pGameListView)
+	{
+		SmartListView_SetTotalItems(s_pGameListView, pos);
+		SmartListView_SetSorting(s_pGameListView, 0, FALSE);
+	}
 }
 
 

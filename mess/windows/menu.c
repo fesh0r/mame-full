@@ -65,9 +65,11 @@ enum
 #endif
 
 #ifdef UNDER_CE
-#define HAS_TOGGLEMENUBAR	0
+#define HAS_TOGGLEMENUBAR		0
+#define HAS_TOGGLEFULLSCREEN	0
 #else
-#define HAS_TOGGLEMENUBAR	1
+#define HAS_TOGGLEMENUBAR		1
+#define HAS_TOGGLEFULLSCREEN	1
 #endif
 
 #ifdef UNDER_CE
@@ -540,7 +542,9 @@ static void prepare_menus(void)
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
+#if HAS_TOGGLEFULLSCREEN
 	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
+#endif
 	set_command_state(win_menu_bar, ID_OPTIONS_TOGGLEFPS,	(showfps || showfpstemp)	? MFS_CHECKED : MFS_ENABLED);
 #if HAS_PROFILER
 	set_command_state(win_menu_bar, ID_OPTIONS_PROFILER,	show_profiler				? MFS_CHECKED : MFS_ENABLED);
@@ -815,9 +819,11 @@ static int invoke_command(UINT command)
 		setdipswitches();
 		break;
 
+#if HAS_TOGGLEFULLSCREEN
 	case ID_OPTIONS_FULLSCREEN:
 		win_toggle_full_screen();
 		break;
+#endif
 
 	case ID_OPTIONS_TOGGLEFPS:
 		toggle_fps();
@@ -925,6 +931,14 @@ int win_setup_menus(HMENU menu_bar)
 	show_profiler = 0;
 #else
 	DeleteMenu(menu_bar, ID_OPTIONS_PROFILER, MF_BYCOMMAND);
+#endif
+
+#if !HAS_TOGGLEFULLSCREEN
+	DeleteMenu(menu_bar, ID_OPTIONS_FULLSCREEN, MF_BYCOMMAND);
+#endif
+
+#if !HAS_TOGGLEMENUBAR
+	DeleteMenu(menu_bar, ID_OPTIONS_TOGGLEMENUBAR, MF_BYCOMMAND);
 #endif
 
 	// set up frameskip menu

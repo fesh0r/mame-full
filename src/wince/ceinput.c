@@ -4,7 +4,11 @@
 //
 //============================================================
 
+// standard windows headers
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
+// MAME headers
 #include "driver.h"
 #include "mame.h"
 #include "inptport.h"
@@ -13,6 +17,10 @@
 #include "mamece.h"
 #include "..\windows\window.h"
 #include "invokegx.h"
+
+//============================================================
+//	PARAMETERS
+//============================================================
 
 #define NUMKEYSTATES    256
 
@@ -46,9 +54,18 @@
 #define VK_HP_B3				0xC3
 #define VK_HP_B4				0xC4
 
-/***************************************************************************
-    External variables
- ***************************************************************************/
+#define KEYCODE_CEBTN1	KEYCODE_1_PAD
+#define KEYCODE_CEBTN2	KEYCODE_2_PAD
+#define KEYCODE_CEBTN3	KEYCODE_3_PAD
+#define KEYCODE_CEBTN4	KEYCODE_4_PAD
+#define KEYCODE_CEBTN5	KEYCODE_5_PAD
+#define KEYCODE_CEBTN6	KEYCODE_6_PAD
+#define KEYCODE_CEBTN7	KEYCODE_7_PAD
+#define KEYCODE_CEBTN8	KEYCODE_8_PAD
+
+//============================================================
+//	GLOBAL VARIABLES
+//============================================================
 
 struct rc_option input_opts[] =
 {
@@ -58,44 +75,15 @@ struct rc_option input_opts[] =
 
 UINT8 win_trying_to_quit;
 
-/***************************************************************************
-    Internal variables
- ***************************************************************************/
+//============================================================
+//	LOCAL VARIABLES
+//============================================================
 
-static char pressed_char;
-static DWORD pressed_char_expire;
-static void *input_map;
-int wince_paused;
+// global states
+static cycles_t last_poll;
 
-/***************************************************************************
-    External OSD functions  
- ***************************************************************************/
-
-/*
-    put here anything you need to do when the program is started. Return 0 if 
-    initialization was successful, nonzero otherwise.
-*/
-int win_init_input(void)
-{
-    return gx_open_input() ? 0 : -1;
-}
-
-/*
-    put here cleanup routines to be executed when the program is terminated.
-*/
-void win_shutdown_input(void)
-{
-	gx_close_input();
-}
-
-#define KEYCODE_CEBTN1	KEYCODE_1_PAD
-#define KEYCODE_CEBTN2	KEYCODE_2_PAD
-#define KEYCODE_CEBTN3	KEYCODE_3_PAD
-#define KEYCODE_CEBTN4	KEYCODE_4_PAD
-#define KEYCODE_CEBTN5	KEYCODE_5_PAD
-#define KEYCODE_CEBTN6	KEYCODE_6_PAD
-#define KEYCODE_CEBTN7	KEYCODE_7_PAD
-#define KEYCODE_CEBTN8	KEYCODE_8_PAD
+static UINT32 input_map_req[NUMKEYSTATES/32];
+static UINT32 input_map[NUMKEYSTATES/32];
 
 // Keyboard Definitions
 static struct KeyboardInfo keylist[] =
@@ -193,23 +181,38 @@ static struct KeyboardInfo keylist[] =
     { 0, 0, 0 } /* end of table */
 };
 
-/*
-  return a list of all available keys (see input.h)
-*/
+//============================================================
+//	win_init_input
+//============================================================
+
+int win_init_input(void)
+{
+    return gx_open_input() ? 0 : -1;
+}
+
+
+//============================================================
+//	win_shutdown_input
+//============================================================
+
+void win_shutdown_input(void)
+{
+	gx_close_input();
+}
+
+
+//============================================================
+//	osd_get_key_list
+//============================================================
+
 const struct KeyboardInfo* osd_get_key_list(void)
 {
     return keylist;
 }
 
-/*
-  inptport.c defines some general purpose defaults for key bindings. They may be
-  further adjusted by the OS dependant code to better match the available keyboard,
-  e.g. one could map pause to the Pause key instead of P, or snapshot to PrtScr
-  instead of F12. Of course the user can further change the settings to anything
-  he/she likes.
-  This function is called on startup, before reading the configuration from disk.
-  Scan the list, and change the keys you want.
-*/
+//============================================================
+//	add_seq
+//============================================================
 
 static void add_seq(struct ipd *defaults, InputCode code)
 {
@@ -217,6 +220,11 @@ static void add_seq(struct ipd *defaults, InputCode code)
 	oldcode = seq_get_1(&defaults->seq);
 	seq_set_3(&defaults->seq, oldcode, CODE_OR, code);
 }
+
+
+//============================================================
+//	osd_customize_inputport_defaults
+//============================================================
 
 void osd_customize_inputport_defaults(struct ipd *defaults)
 {
@@ -268,13 +276,55 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	}
 }
 
-/*
-  tell whether the specified key is pressed or not. keycode is the OS dependant
-  code specified in the list returned by osd_customize_inputport_defaults().
-*/
+
+//============================================================
+//	win_poll_input
+//============================================================
+
+void win_poll_input(void)
+{
+	HWND focus = GetFocus();
+	int i, mapcode;
+
+	// remember when this happened
+	last_poll = osd_cycles();
+
+	// periodically process events, in case they're not coming through
+	win_process_events_periodic();
+
+	// clear the keymap
+	memset(input_map, 0, sizeof(input_map));
+
+	if (focus)
+	{
+		for (i = 0; i < sizeof(keylist) / sizeof(keylist[0]); i++)
+		{
+			mapcode = keylist[i].code;
+
+			// GetAsyncKeyState() appears to be an expensive operation, so we
+			// try to minimize calls to it.  When we do call it, if the high-
+			// order bit is 1, the key is down; otherwise, it is up 
+			if ((input_map_req[mapcode / 32] & (1 << (mapcode % 32))) && GetAsyncKeyState(mapcode) & 0x8000)
+				input_map[mapcode / 32] |= (1 << (mapcode % 32));
+		}
+	}
+
+	// clear the requested map
+	memset(input_map_req, 0, sizeof(input_map_req));
+}
+
+
+//============================================================
+//	osd_is_key_pressed
+//============================================================
+
 int osd_is_key_pressed(int keycode)
 {
     SHORT state;
+
+	// make sure we've polled recently
+	if (osd_cycles() > last_poll + osd_cycles_per_second()/4)
+		win_poll_input();
 
 	// special case: if we're trying to quit, fake up/down/up/down
 	if (keycode == VK_ESCAPE && win_trying_to_quit) {
@@ -282,47 +332,17 @@ int osd_is_key_pressed(int keycode)
 		return dummy_state ^= 1;
 	}
 
-    win_process_events_periodic();
+	if ((keycode < 0) || (keycode >= NUMKEYSTATES))
+		return 0;
 
-	/* Are we pressing a char received by WM_KEYDOWN? */
-	if (keycode == pressed_char) {
-		if (pressed_char_expire > GetTickCount())
-			return 1;
-		/* Ooops... we're expired */
-		pressed_char = 0;
-	}
-	
-	state = GetAsyncKeyState(keycode);
-
-    /* If the high-order bit is 1, the key is down; otherwise, it is up */
-    if (state & 0x8000)
-        return 1;
-
-    return 0;
+	input_map_req[keycode / 32] |= (1 << keycode % 32);
+	return (input_map[keycode / 32] >> (keycode % 32)) & 1;
 }
 
 
-void wince_press_char(int keycode)
-{
-	pressed_char = keycode;
-	pressed_char_expire = GetTickCount() + 100;
-}
-
-/*
-  wait for the user to press a key and return its code. This function is not
-  required to do anything, it is here so we can avoid bogging down multitasking
-  systems while using the debugger. If you don't want to or can't support this
-  function you can just return OSD_KEY_NONE.
-*/
-int osd_wait_keypress(void)
-{
-    while (1)
-    {
-       Sleep(1);
-       win_process_events_periodic();
-    }
-    return 0;
-}
+//============================================================
+//	osd_get_joy_list
+//============================================================
 
 const struct JoystickInfo *osd_get_joy_list(void)
 {
@@ -331,32 +351,67 @@ const struct JoystickInfo *osd_get_joy_list(void)
 	return &dummylist;
 }
 
+
+//============================================================
+//	osd_is_joy_pressed
+//============================================================
+
 int osd_is_joy_pressed(int joycode)
 {
 	return 0;
 }
+
+
+//============================================================
+//	osd_joystick_needs_calibration
+//============================================================
 
 int osd_joystick_needs_calibration (void)
 {
 	return 0;
 }
 
+
+//============================================================
+//	osd_joystick_start_calibration
+//============================================================
+
 void osd_joystick_start_calibration (void)
 {
 }
+
+
+//============================================================
+//	osd_joystick_calibrate_next
+//============================================================
 
 const char *osd_joystick_calibrate_next (void)
 {
 	return NULL;
 }
 
+
+//============================================================
+//	osd_joystick_calibrate
+//============================================================
+
 void osd_joystick_calibrate (void)
 {
 }
 
+
+//============================================================
+//	osd_joystick_end_calibration
+//============================================================
+
 void osd_joystick_end_calibration (void)
 {
 }
+
+
+//============================================================
+//	osd_trak_read
+//============================================================
 
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
@@ -365,43 +420,65 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 }
 
 
-/* return values in the range -128 .. 128 (yes, 128, not 127) */
+//============================================================
+//	osd_analogjoy_read
+//============================================================
+
 void osd_analogjoy_read(int player,int analog_axis[], InputCode analogjoy_input[])
 {
 	memset(analog_axis, 0, sizeof(analog_axis[0]) * MAX_ANALOG_AXES);
 }
+
+
+//============================================================
+//	osd_readkey_unicode
+//============================================================
 
 int osd_readkey_unicode(int flush)
 {
 	return 0;
 }
 
-void win_poll_input(void)
-{
-}
+
+//============================================================
+//	win_pause_input
+//============================================================
 
 void win_pause_input(int paused)
 {
-	wince_paused = paused;
 }
 
-int is_mouse_captured(void)
-{
-	return 0;
-}
+//============================================================
+//	osd_lightgun_read
+//============================================================
 
 void osd_lightgun_read(int player, int *deltax, int *deltay)
 {
 }
+
+
+//============================================================
+//	osd_is_joystick_axis_code
+//============================================================
 
 int osd_is_joystick_axis_code(int joycode)
 {
 	return 0;
 }
 
+
+//============================================================
+//	osd_set_leds
+//============================================================
+
 void osd_set_leds(int state)
 {
 }
+
+
+//============================================================
+//	osd_get_leds
+//============================================================
 
 int osd_get_leds(void)
 {
