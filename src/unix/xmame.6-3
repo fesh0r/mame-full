@@ -210,6 +210,7 @@ Hans
         Mathis Rosenhau
   7. Irix specific issues
         Tristram Scott
+        Brandon Corey
   8. GGI maintainance
         Gabriele Boccone (original port)
         Christian Groessler (current maintainer)
@@ -229,7 +230,7 @@ Hans
  15. AIX Sound code
         Chris Sharpp
  16. IRIX Sound code
-        entropy@zippy.bernstein.com
+        Brandon Corey
  17. German readme
         Robert Hamberger
  18. Documentation (SGML, HTML, MAN ...)
