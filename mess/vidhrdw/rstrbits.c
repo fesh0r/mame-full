@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "rstrbits.h"
+#include "includes/rstrbits.h"
 #include "mame.h"
 
 /* -------------------------------------------------------------------------
@@ -366,7 +366,7 @@ static void blitgraphics16(struct osd_bitmap *bitmap, UINT8 *vrambase,
 
 #define COUNTDIRTYCHARS 0
 
-static raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
+static void raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	struct rasterbits_videomode *mode, int scalex, int scaley, int basex, int basey)
 {
 	int x, y;
@@ -398,7 +398,7 @@ static raster_text(struct osd_bitmap *bitmap, struct rasterbits_source *src,
 	additionalrowbytes = mode->bytesperrow - (mode->width * bytesperchar);
 
 	charbottom = basey - 1;
-	
+
 	for (y = 0; y < mode->height; y++) {
 		chartop = charbottom + 1;
 		charbottom += scaley;
