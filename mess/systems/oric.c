@@ -199,7 +199,7 @@ static struct MachineDriver machine_driver_oric =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6502,
+			CPU_M65C02,
             1000000,
 			oric_readmem,oric_writemem,0,0,
 			0, 0,
@@ -243,7 +243,7 @@ static struct MachineDriver machine_driver_telestrat =
 	/* basic machine hardware */
 	{
 		{
-			CPU_M6502,
+			CPU_M65C02,
             1000000,
 			telestrat_readmem,telestrat_writemem,0,0,
 			0, 0,
