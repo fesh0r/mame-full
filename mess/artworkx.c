@@ -27,10 +27,7 @@ static char *override_artfile;
 
 void artwork_use_device_art(mess_image *img, const char *defaultartfile)
 {
-	const char *fname;
-	const char *ext;
 	const char *strs[3];
-	char *s;
 	int len, pos, i;
 
 	/* This function builds the override_artfile string.  This string is a
