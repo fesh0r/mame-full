@@ -18,17 +18,6 @@
 
 /* ----------------------------------------------------------------------- */
 
-
-
-enum messtest_phase
-{
-	STATE_ROOT,
-	STATE_TEST,
-	STATE_COMMAND,
-	STATE_SUBCOMMAND,
-	STATE_ABORTED
-};
-
 enum blobparse_state
 {
 	BLOBSTATE_INITIAL,
@@ -37,11 +26,25 @@ enum blobparse_state
 	BLOBSTATE_INQUOTES
 };
 
+struct messtest_state;
+
+struct messtest_tagdispatch
+{
+	const char *tag;
+	void (*start_handler)(struct messtest_state *state, const XML_Char **attributes);
+	void (*end_handler)(struct messtest_state *state);
+	void (*data_handler)(struct messtest_state *state, const XML_Char *s, int len);
+	struct messtest_tagdispatch *subdispatch;
+};
+
 struct messtest_state
 {
 	XML_Parser parser;
-	enum messtest_phase phase;
 	memory_pool pool;
+
+	struct messtest_tagdispatch *dispatch[32];
+	int dispatch_pos;
+	unsigned int aborted : 1;
 
 	const char *script_filename;
 	struct messtest_testcase testcase;
@@ -98,7 +101,7 @@ static void report_parseerror(struct messtest_state *state, const char *fmt, ...
 		XML_GetCurrentLineNumber(state->parser),
 		XML_GetCurrentColumnNumber(state->parser),
 		buf);
-	state->phase = STATE_ABORTED;
+	state->aborted = 1;
 }
 
 
@@ -121,285 +124,234 @@ static mame_time parse_time(const char *s)
 
 
 
-static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
+static void error_missingattribute(struct messtest_state *state, const char *attribute)
 {
-	struct messtest_state *state = (struct messtest_state *) data;
-	const XML_Char *s;
-	const XML_Char *s1;
-	const XML_Char *s2;
-	const XML_Char *s3;
-	const char *attr_name;
-	int region;
-	int device_type;
-	int preload;
+	report_parseerror(state, "Missing attribute '%s'\n", attribute);
+}
+
+
+
+static void error_outofmemory(struct messtest_state *state)
+{
+	report_parseerror(state, "Out of memory\n");
+}
+
+
+
+static void error_invalidmemregion(struct messtest_state *state, const char *s)
+{
+	report_parseerror(state, "Invalid memory region '%s'\n", s);
+}
+
+
+
+static void error_baddevicetype(struct messtest_state *state, const char *s)
+{
+	report_parseerror(state, "Bad device type '%s'\n", s);
+}
+
+
+
+static void wait_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s;
+
+	s = find_attribute(attributes, "time");
+	if (!s)
+	{
+		error_missingattribute(state, "time");
+		return;
+	}
+
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_WAIT;
+	state->current_command.u.wait_time = mame_time_to_double(parse_time(s));
+}
+
+
+
+static void input_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <input> - inputs natural keyboard data into a system */
+	const char *s;
 	mame_time rate;
 
-	switch(state->phase) {
-	case STATE_ROOT:
-		if (!strcmp(tagname, "tests"))
-		{
-			/* <tests> - used to group tests together */
-		}
-		else if (!strcmp(tagname, "test"))
-		{
-			/* <test> - identifies a specific test */
-
-			memset(&state->testcase, 0, sizeof(state->testcase));
-
-			/* 'driver' attribute */
-			attr_name = "driver";
-			s = find_attribute(attributes, attr_name);
-			if (!s)
-				goto missing_attribute;
-			state->testcase.driver = pool_strdup(&state->pool, s);
-			if (!state->testcase.driver)
-				goto outofmemory;
-
-			/* 'name' attribute */
-			attr_name = "name";
-			s = find_attribute(attributes, attr_name);
-			if (s)
-			{
-				state->testcase.name = pool_strdup(&state->pool, s);
-				if (!state->testcase.name)
-					goto outofmemory;
-			}
-			else
-			{
-				state->testcase.name = state->testcase.driver;
-			}
-
-			/* 'ramsize' attribute */
-			s = find_attribute(attributes, "ramsize");
-			state->testcase.ram = s ? ram_parse_string(s) : 0;
-
-			state->phase = STATE_TEST;
-			state->testcase.commands = NULL;
-			state->command_count = 0;
-		}
-		else
-			goto unknowntag;
-		break;
-
-	case STATE_TEST:
-		memset(&state->current_command, 0, sizeof(state->current_command));
-		if (!strcmp(tagname, "wait"))
-		{
-			/* <wait> - waits for a duration of emulated time */
-			attr_name = "time";
-			s = find_attribute(attributes, attr_name);
-			if (!s)
-				goto missing_attribute;
-
-			state->current_command.command_type = MESSTEST_COMMAND_WAIT;
-			state->current_command.u.wait_time = mame_time_to_double(parse_time(s));
-		}
-		else if (!strcmp(tagname, "input"))
-		{
-			/* <input> - inputs natural keyboard data into a system */
-			state->current_command.command_type = MESSTEST_COMMAND_INPUT;
-
-			s = find_attribute(attributes, "rate");
-			rate = s ? parse_time(s) : make_mame_time(0, 0);
-			state->current_command.u.input_args.rate = rate;
-		}
-		else if (!strcmp(tagname, "rawinput"))
-		{
-			/* <rawinput> - inputs raw data into a system */
-			state->current_command.command_type = MESSTEST_COMMAND_RAWINPUT;
-		}
-		else if (!strcmp(tagname, "switch"))
-		{
-			/* <switch> - switches a DIP switch/config setting */
-			state->current_command.command_type = MESSTEST_COMMAND_SWITCH;
-
-			/* 'name' attribute */
-			attr_name = "name";
-			s1 = find_attribute(attributes, attr_name);
-			if (!s1)
-				goto missing_attribute;
-
-			/* 'value' attribute */
-			attr_name = "value";
-			s2 = find_attribute(attributes, attr_name);
-			if (!s2)
-				goto missing_attribute;
-
-			state->current_command.u.switch_args.name =
-				pool_strdup(&state->pool, s1);
-			state->current_command.u.switch_args.value =
-				pool_strdup(&state->pool, s2);
-		}
-		else if (!strcmp(tagname, "screenshot"))
-		{
-			/* <screenshot> - dumps a screenshot */
-			state->current_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
-		}
-		else if (!strcmp(tagname, "imagecreate") || !strcmp(tagname, "imageload"))
-		{
-			/* <imagecreate> - creates an image */
-			/* <imageload> - loads an image */
-			if (!strcmp(tagname, "imagecreate"))
-				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_CREATE;
-			else
-				state->current_command.command_type = MESSTEST_COMMAND_IMAGE_LOAD;
-
-			/* 'preload' attribute */
-			s = find_attribute(attributes, "preload");
-			preload = s ? atoi(s) : 0;
-			if (preload)
-				state->current_command.command_type += 2;
-
-			/* 'filename' attribute */
-			s1 = find_attribute(attributes, "filename");
-
-			/* 'type' attribute */
-			attr_name = "type";
-			s2 = find_attribute(attributes, attr_name);
-			if (!s2)
-				goto missing_attribute;
-			device_type = device_typeid(s2);
-			if (device_type < 0)
-				goto bad_device_type;
-			
-			/* 'slot' attribute */
-			s3 = find_attribute(attributes, "slot");
-
-			state->current_command.u.image_args.filename =
-				s1 ? pool_strdup(&state->pool, s1) : NULL;
-			state->current_command.u.image_args.device_type = device_type;
-			state->current_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
-		}
-		else if (!strcmp(tagname, "memverify"))
-		{
-			/* <memverify> - verifies that a range of memory contains specific data */
-			attr_name = "start";
-			s1 = find_attribute(attributes, attr_name);
-			if (!s1)
-				goto missing_attribute;
-
-			attr_name = "end";
-			s2 = find_attribute(attributes, attr_name);
-			if (!s2)
-				s2 = "0";
-
-			s3 = find_attribute(attributes, "region");
-
-			state->current_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
-			state->blobstate = BLOBSTATE_INITIAL;
-			parse_offset(s1, &state->current_command.u.verify_args.start);
-			parse_offset(s2, &state->current_command.u.verify_args.end);
-
-			if (s3)
-			{
-				region = memory_region_from_string(s3);
-				if (region == REGION_INVALID)
-					goto invalid_memregion;
-				state->current_command.u.verify_args.mem_region = region;
-			}
-		}
-		else
-			goto unknowntag;
-		state->phase = STATE_COMMAND;
-		break;
-
-	case STATE_COMMAND:
-		/* allow one subcommand */
-		state->phase = STATE_SUBCOMMAND;
-		break;
-
-	default:
-		goto unknowntag;
-	}
-
-	return;
-
-outofmemory:
-	report_parseerror(state, "Out of memory");
-	return;
-
-missing_attribute:
-	report_parseerror(state, "Missing attribute '%s'\n", attr_name);
-	return;
-
-unknowntag:
-	report_parseerror(state, "Unknown tag '%s'\n", tagname);
-	return;
-
-invalid_memregion:
-	report_parseerror(state, "Invalid memory region '%s'\n", s3);
-	return;
-
-bad_device_type:
-	report_parseerror(state, "Bad device type '%s'\n", s2);
-	return;
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_INPUT;
+	s = find_attribute(attributes, "rate");
+	rate = s ? parse_time(s) : make_mame_time(0, 0);
+	state->current_command.u.input_args.rate = rate;
 }
 
 
 
-static void end_handler(void *data, const XML_Char *name)
+static void rawinput_handler(struct messtest_state *state, const XML_Char **attributes)
 {
-	struct messtest_state *state = (struct messtest_state *) data;
+	/* <rawinput> - inputs raw data into a system */
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_RAWINPUT;
+}
+
+
+
+static void input_data_handler(struct messtest_state *state, const XML_Char *s, int len)
+{
 	struct messtest_command *command = &state->current_command;
+	char *str;
+	int old_len;
 
-	switch(state->phase) {
-	case STATE_TEST:
-		/* append final end command */
-		memset(&state->current_command, 0, sizeof(state->current_command));
-		state->current_command.command_type = MESSTEST_COMMAND_END;
-		if (!append_command(state))
-			goto outofmemory;
-
-		if (run_test(&state->testcase, state->test_flags, NULL))
-			state->failure_count++;
-		state->test_count++;
-		state->phase = STATE_ROOT;
-		break;
-
-	case STATE_COMMAND:
-		switch(command->command_type) {
-		case MESSTEST_COMMAND_VERIFY_MEMORY:
-			if (command->u.verify_args.end == 0)
-			{
-				command->u.verify_args.end = command->u.verify_args.start
-					+ command->u.verify_args.verify_data_size - 1;
-			}
-			break;
-
-		default:
-			break;
-		};
-
-		if (!append_command(state))
-			goto outofmemory;
-		state->phase = STATE_TEST;
-		break;
-
-	case STATE_SUBCOMMAND:
-		state->phase = STATE_COMMAND;
-		break;
-
-	default:
-		break;
+	str = (char *) command->u.input_args.input_chars;
+	old_len = str ? strlen(str) : 0;
+	str = pool_realloc(&state->pool, str, old_len + len + 1);
+	if (!str)
+	{
+		error_outofmemory(state);
+		return;
 	}
-	return;
-
-outofmemory:
-	fprintf(stderr, "Out of memory\n");
-	state->phase = STATE_ABORTED;
-	return;
+	strncpyz(str + old_len, s, len + 1);
+	command->u.input_args.input_chars = str;
 }
 
 
 
-static int hexdigit(char c)
+static void switch_handler(struct messtest_state *state, const XML_Char **attributes)
 {
-	int result = 0;
-	if (isdigit(c))
-		result = c - '0';
-	else if (isxdigit(c))
-		result = toupper(c) - 'A' + 10;
-	return result;
+	const char *s1;
+	const char *s2;
+
+	/* <switch> - switches a DIP switch/config setting */
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_SWITCH;
+
+	/* 'name' attribute */
+	s1 = find_attribute(attributes, "name");
+	if (!s1)
+	{
+		error_missingattribute(state, "name");
+		return;
+	}
+
+	/* 'value' attribute */
+	s2 = find_attribute(attributes, "value");
+	if (!s2)
+	{
+		error_missingattribute(state, "value");
+		return;
+	}
+
+	state->current_command.u.switch_args.name =
+		pool_strdup(&state->pool, s1);
+	state->current_command.u.switch_args.value =
+		pool_strdup(&state->pool, s2);
+}
+
+
+
+static void screenshot_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <screenshot> - dumps a screenshot */
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
+}
+
+
+
+static void image_handler(struct messtest_state *state, const XML_Char **attributes, enum messtest_command_type command)
+{
+	const char *s;
+	const char *s1;
+	const char *s2;
+	const char *s3;
+	int preload, device_type;
+
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = command;
+
+	/* 'preload' attribute */
+	s = find_attribute(attributes, "preload");
+	preload = s ? atoi(s) : 0;
+	if (preload)
+		state->current_command.command_type += 2;
+
+	/* 'filename' attribute */
+	s1 = find_attribute(attributes, "filename");
+
+	/* 'type' attribute */
+	s2 = find_attribute(attributes, "type");
+	if (!s2)
+	{
+		error_missingattribute(state, "type");
+		return;
+	}
+
+	device_type = device_typeid(s2);
+	if (device_type < 0)
+	{
+		error_baddevicetype(state, s2);
+		return;
+	}
+	
+	/* 'slot' attribute */
+	s3 = find_attribute(attributes, "slot");
+
+	state->current_command.u.image_args.filename =
+		s1 ? pool_strdup(&state->pool, s1) : NULL;
+	state->current_command.u.image_args.device_type = device_type;
+	state->current_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
+}
+
+
+
+static void imagecreate_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <imagecreate> - creates an image */
+	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_CREATE);
+}
+
+
+
+static void imageload_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <imageload> - loads an image */
+	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_LOAD);
+}
+
+
+
+static void memverify_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s1;
+	const char *s2;
+	const char *s3;
+	int region;
+
+	/* <memverify> - verifies that a range of memory contains specific data */
+	s1 = find_attribute(attributes, "start");
+	if (!s1)
+	{
+		error_missingattribute(state, "start");
+		return;
+	}
+
+	s2 = find_attribute(attributes, "end");
+	if (!s2)
+		s2 = "0";
+
+	s3 = find_attribute(attributes, "region");
+
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
+	state->blobstate = BLOBSTATE_INITIAL;
+	parse_offset(s1, &state->current_command.u.verify_args.start);
+	parse_offset(s2, &state->current_command.u.verify_args.end);
+
+	if (s3)
+	{
+		region = memory_region_from_string(s3);
+		if (region == REGION_INVALID)
+			error_invalidmemregion(state, s3);
+		state->current_command.u.verify_args.mem_region = region;
+	}
 }
 
 
@@ -509,14 +461,170 @@ static void get_blob(struct messtest_state *state, const XML_Char *s, int len,
 	return;
 
 outofmemory:
-	fprintf(stderr, "Out of memory\n");
-	state->phase = STATE_ABORTED;
+	error_outofmemory(state);
 	return;
 
 parseerror:
-	fprintf(stderr, "Invalid blob string specifier\n");
-	state->phase = STATE_ABORTED;
+	error_outofmemory(state);
 	return;
+}
+
+
+
+static void memverify_data_handler(struct messtest_state *state, const XML_Char *s, int len)
+{
+	struct messtest_command *command = &state->current_command;
+
+	get_blob(state, s, len,
+		(void **) &command->u.verify_args.verify_data,
+		&command->u.verify_args.verify_data_size);
+}
+
+
+
+static void test_start_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s;
+
+	memset(&state->testcase, 0, sizeof(state->testcase));
+
+	/* 'driver' attribute */
+	s = find_attribute(attributes, "driver");
+	if (!s)
+	{
+		error_missingattribute(state, "driver");
+		return;
+	}
+	state->testcase.driver = pool_strdup(&state->pool, s);
+	if (!state->testcase.driver)
+	{
+		error_outofmemory(state);
+		return;
+	}
+
+	/* 'name' attribute */
+	s = find_attribute(attributes, "name");
+	if (s)
+	{
+		state->testcase.name = pool_strdup(&state->pool, s);
+		if (!state->testcase.name)
+		{
+			error_outofmemory(state);
+			return;
+		}
+	}
+	else
+	{
+		state->testcase.name = state->testcase.driver;
+	}
+
+	/* 'ramsize' attribute */
+	s = find_attribute(attributes, "ramsize");
+	state->testcase.ram = s ? ram_parse_string(s) : 0;
+
+	state->testcase.commands = NULL;
+	state->command_count = 0;
+}
+
+
+
+static void command_end_handler(struct messtest_state *state)
+{
+	if (!append_command(state))
+	{
+		error_outofmemory(state);
+		return;
+	}
+}
+
+
+
+static void test_end_handler(struct messtest_state *state)
+{
+	memset(&state->current_command, 0, sizeof(state->current_command));
+	state->current_command.command_type = MESSTEST_COMMAND_END;
+	if (!append_command(state))
+	{
+		error_outofmemory(state);
+		return;
+	}
+
+	if (run_test(&state->testcase, state->test_flags, NULL))
+		state->failure_count++;
+	state->test_count++;
+}
+
+
+
+static struct messtest_tagdispatch test_dispatch[] =
+{
+	{ "wait",			wait_handler,			command_end_handler },
+	{ "input",			input_handler,			command_end_handler, input_data_handler },
+	{ "rawinput",		rawinput_handler,		command_end_handler, input_data_handler },
+	{ "switch",			switch_handler,			command_end_handler },
+	{ "screenshot",		screenshot_handler,		command_end_handler },
+	{ "imagecreate",	imagecreate_handler,	command_end_handler },
+	{ "imageload",		imageload_handler,		command_end_handler },
+	{ "memverify",		memverify_handler,		command_end_handler, memverify_data_handler },
+	{ NULL }
+};
+
+
+
+static struct messtest_tagdispatch root_dispatch[] =
+{
+	{ "tests",			NULL, NULL, NULL, root_dispatch },
+	{ "test",			test_start_handler, test_end_handler, NULL, test_dispatch },
+	{ NULL }
+};
+
+
+
+static struct messtest_tagdispatch initial_dispatch = { NULL, NULL, NULL, NULL, root_dispatch };
+
+
+
+static void start_handler(void *data, const XML_Char *tagname, const XML_Char **attributes)
+{
+	struct messtest_state *state = (struct messtest_state *) data;
+	struct messtest_tagdispatch *dispatch;
+
+	/* try to find the tag */
+	dispatch = state->dispatch[state->dispatch_pos]->subdispatch;
+	if (dispatch)
+	{
+		while(dispatch->tag)
+		{
+			if (!strcmp(tagname, dispatch->tag))
+				break;
+			dispatch++;
+		}
+		if (!dispatch->tag)
+		{
+			report_parseerror(state, "Unknown tag '%s'\n", tagname);
+			return;
+		}
+
+		if (!state->aborted && dispatch->start_handler)
+			dispatch->start_handler(state, attributes);
+	}
+
+	state->dispatch[++state->dispatch_pos] = dispatch;
+}
+
+
+
+static void end_handler(void *data, const XML_Char *name)
+{
+	struct messtest_state *state = (struct messtest_state *) data;
+	struct messtest_tagdispatch *dispatch;
+
+	dispatch = state->dispatch[state->dispatch_pos];
+	if (!state->aborted && dispatch && dispatch->end_handler)
+		dispatch->end_handler(state);
+
+	if (state->dispatch_pos > 0)
+		state->dispatch_pos--;
 }
 
 
@@ -524,44 +632,14 @@ parseerror:
 static void data_handler(void *data, const XML_Char *s, int len)
 {
 	struct messtest_state *state = (struct messtest_state *) data;
-	struct messtest_command *command = &state->current_command;
-	char *str;
-	int old_len;
+	int dispatch_pos;
 
-	switch(state->phase) {
-	case STATE_COMMAND:
-	case STATE_SUBCOMMAND:
-		switch(command->command_type) {
-		case MESSTEST_COMMAND_INPUT:
-		case MESSTEST_COMMAND_RAWINPUT:
-			str = (char *) command->u.input_args.input_chars;
-			old_len = str ? strlen(str) : 0;
-			str = pool_realloc(&state->pool, str, old_len + len + 1);
-			if (!str)
-				goto outofmemory;
-			strncpyz(str + old_len, s, len + 1);
-			command->u.input_args.input_chars = str;
-			break;
+	dispatch_pos = state->dispatch_pos;
+	while((dispatch_pos > 0) && !state->dispatch[state->dispatch_pos])
+		dispatch_pos--;
 
-		case MESSTEST_COMMAND_VERIFY_MEMORY:
-			get_blob(state, s, len,
-				(void **) &command->u.verify_args.verify_data,
-				&command->u.verify_args.verify_data_size);
-			break;
-
-		default:
-			break;
-		}
-
-	default:
-		break;
-	}
-	return;
-
-outofmemory:
-	fprintf(stderr, "Out of memory\n");
-	state->phase = STATE_ABORTED;
-	return;
+	if (state->dispatch[dispatch_pos]->data_handler)
+		state->dispatch[dispatch_pos]->data_handler(data, s, len);
 }
 
 
@@ -648,6 +726,7 @@ int messtest(const char *script_filename, int flags, int *test_count, int *failu
 	memset(&state, 0, sizeof(state));
 	state.test_flags = flags;
 	state.script_filename = script_filename;
+	state.dispatch[0] = &initial_dispatch;
 
 	/* open the script file */
 	in = fopen(script_filename, "r");
@@ -714,3 +793,4 @@ done:
 		*failure_count = state.failure_count;
 	return result;
 }
+

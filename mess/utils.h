@@ -180,6 +180,7 @@ char *stripspace(const char *src);
 char *strip_extension(const char *filename);
 int compute_log2(int val);
 int findextension(const char *extensions, const char *ext);
+int hexdigit(char c);
 
 
 

@@ -226,3 +226,18 @@ unsigned short ccitt_crc16_one( unsigned short crc, const unsigned char data )
 {
     return (crc << 8) ^ ccitt_crc16_table[(crc >> 8) ^ data];
 }
+
+
+
+int hexdigit(char c)
+{
+	int result = 0;
+	if (isdigit(c))
+		result = c - '0';
+	else if (isxdigit(c))
+		result = toupper(c) - 'A' + 10;
+	return result;
+}
+
+
+
