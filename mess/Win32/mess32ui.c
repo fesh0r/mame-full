@@ -231,16 +231,18 @@ static void MessRemoveImage(int imagenum)
     options.image_count = j;
 }
 
-static void MessAddImage(int imagenum)
+static BOOL MessAddImage(int imagenum)
 {
     char *filename;
     mess_image_type imagetypes[64];
 
+	if (options.image_count >= MAX_IMAGES)
+		return FALSE;		/* Too many images */
     if (!mess_images_index || (imagenum >= mess_images_count))
-        return;
+        return FALSE;		/* Invalid image index */
     filename = strdup(mess_images_index[imagenum]->fullname);
     if (!filename)
-        return;
+        return FALSE;		/* Out of memory */
 
     MessRemoveImage(imagenum);
 
@@ -249,6 +251,7 @@ static void MessAddImage(int imagenum)
     options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
     options.image_files[options.image_count].name = filename;
     mess_image_nums[options.image_count++] = imagenum;
+	return TRUE;
 }
 
 

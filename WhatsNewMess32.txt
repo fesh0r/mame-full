@@ -6,6 +6,8 @@ Whats new:
 
 - Properties dialog now causes software pane to refresh only if the software
   paths are modified. [Nate Woods]
+- Fixed a bug that could cause crashes if too many images were selected in the
+  software pane. [Nate Woods]
 
 ----------
 0.37 BETA 12
