@@ -24,6 +24,10 @@
 	28/4/2002		AK - General code tidying.
 						 Fixed MBC3's RAM/RTC banking.
 						 Added support for games with more than 128 ROM banks.
+	12/6/2002		AK - Rewrote the way bg and sprite palettes are handled.
+						 The window layer no longer has it's own palette.
+						 Added Super GameBoy support.
+	13/6/2002		AK - Added GameBoy Color support.
 
 ***************************************************************************/
 #define __MACHINE_GB_C
@@ -46,16 +50,24 @@ static UINT32 SIOCount;				   /* Serial I/O counter                          */
 static UINT8 MBC1Mode;				   /* MBC1 ROM/RAM mode                           */
 static UINT8 MBC3RTCMap[5];			   /* MBC3 Real-Time-Clock banks                  */
 static UINT8 MBC3RTCBank;			   /* Number of RTC bank for MBC3                 */
+static UINT8 *GBC_RAMMap[8];		   /* (GBC) Addresses of internal RAM banks       */
+static UINT8 GBC_RAMBank;			   /* (GBC) Number of RAM bank currently used     */
+UINT8 *GBC_VRAMMap[2];				   /* (GBC) Addressses of video RAM banks         */
+UINT8 GBC_VRAMBank;					   /* (GBC) Number of video RAM bank currently used */
+static UINT8 sgb_atf_data[4050];	   /* (SGB) Attribute files                       */
 UINT8 *gb_ram;
 
+void (*refresh_scanline)(void);
+
 #define Verbose 0x00
-#define SGB 0
 #define CheckCRC 1
 #define LineDelay 0
 #define IFreq 60
 
 MACHINE_INIT( gb )
 {
+	int i;
+
 	/* Initialize the memory banks */
 	MBC1Mode = 0;
 	MBC3RTCBank = 0;
@@ -99,6 +111,108 @@ MACHINE_INIT( gb )
 	gameboy_sound_w(0xFF23,0xBF);
 	gameboy_sound_w(0xFF24,0x77);
 	gameboy_sound_w(0xFF25,0xF3);
+
+	/* Initialize palette arrays */
+	for( i = 0; i < 4; i++ )
+		gb_bpal[i] = gb_spal0[i] = gb_spal1[i] = i;
+
+	/* set the scanline refresh function */
+	refresh_scanline = gb_refresh_scanline;
+}
+
+MACHINE_INIT( sgb )
+{
+	/* Call GameBoy init */
+	machine_init_gb();
+
+	if( new_memory_region( REGION_GFX1, 0x2000, 0 ) )
+	{
+		logerror("Memory allocation failed for SGB border tiles!\n");
+	}
+	sgb_tile_data = (UINT8 *)memory_region( REGION_GFX1 );
+	memset( sgb_tile_data, 0, 0x2000 );
+
+	/* Initialize the Sound Registers */
+	gameboy_sound_w(0xFF26,0xF0); /* F0 for SGB */
+
+	sgb_window_mask = 0;
+	memset( sgb_pal_map, 0, 20*18 );
+	memset( sgb_atf_data, 0, 4050 );
+
+	/* HACKS for Donkey Kong Land 2 + 3.
+	   For some reason that I haven't figured out, they store the tile
+	   data differently.  Hacks will go once I figure it out */
+	sgb_hack = 0;
+	if( strncmp( gb_ram + 0x134, "DONKEYKONGLAND 2", 16 ) == 0 ||
+		strncmp( gb_ram + 0x134, "DONKEYKONGLAND 3", 16 ) == 0 )
+	{
+		sgb_hack = 1;
+	}
+
+	/* set the scanline refresh function */
+	refresh_scanline = sgb_refresh_scanline;
+}
+
+MACHINE_INIT( gbc )
+{
+	int I;
+
+	/* Call GameBoy init */
+	machine_init_gb();
+
+	/* Allocate memory for internal ram */
+	for( I = 0; I < 8; I++ )
+	{
+		if ((GBC_RAMMap[I] = malloc (0x1000)))
+			memset (GBC_RAMMap[I], 0, 0x1000);
+		else
+		{
+			logerror("Error allocating memory\n");
+		}
+	}
+	GBC_RAMBank = 0;
+	cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
+
+	/* Allocate memory for video ram */
+	for( I = 0; I < 2; I++ )
+	{
+		if ((GBC_VRAMMap[I] = malloc (0x2000)))
+		{
+			memset (GBC_VRAMMap[I], 0, 0x2000);
+		}
+		else
+		{
+			printf("Error allocating video memory\n");
+		}
+	}
+	GBC_VRAMBank = 0;
+	cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
+
+	gb_chrgen = GBC_VRAMMap[0];
+	gbc_chrgen = GBC_VRAMMap[1];
+	gb_bgdtab = gb_wndtab = GBC_VRAMMap[0] + 0x1C00;
+	gbc_bgdtab = gbc_wndtab = GBC_VRAMMap[1] + 0x1C00;
+
+	/* Initialise registers */
+	gb_w_io( 0x6C, 0xFE );
+	gb_w_io( 0x72, 0x00 );
+	gb_w_io( 0x73, 0x00 );
+	gb_w_io( 0x74, 0x8F );
+	gb_w_io( 0x75, 0x00 );
+	gb_w_io( 0x76, 0x00 );
+	gb_w_io( 0x77, 0x00 );
+
+	/* Are we in colour or mono mode? */
+	if( gb_ram[0x143] == 0x80 || gb_ram[0x143] == 0xC0 )
+		gbc_mode = GBC_MODE_GBC;
+	else
+		gbc_mode = GBC_MODE_MONO;
+
+	/* HDMA disabled */
+	gbc_hdma_enabled = 0;
+
+	/* set the scanline refresh function */
+	refresh_scanline = gbc_refresh_scanline;
 }
 
 MACHINE_STOP( gb )
@@ -261,105 +375,17 @@ WRITE_HANDLER ( gb_mem_mode_select )
 WRITE_HANDLER ( gb_w_io )
 {
 	static UINT8 timer_shifts[4] = {10, 4, 6, 8};
-	static UINT8 bit_count = 0, byte_count = 0, start = 0, rest = 0;
-	static UINT8 sgb_data[16];
-	static UINT8 controller_no = 0, controller_mode = 0;
 
 	offset += 0xFF00;
 
 	switch (offset)
 	{
-	case 0xFF00:
-		if (SGB)
-		{
-			switch (data & 0x30)
-			{
-			case 0x00:				   /* start condition */
-				if (start)
-					puts ("SGB: Start condition before end of transfer ??");
-				bit_count = 0;
-				byte_count = 0;
-				start = 1;
-				rest = 0;
-				JOYPAD = 0x0F & ((readinputport (0) >> 4) | readinputport (0) | 0xF0);
-				break;
-			case 0x10:				   /* data true */
-				if (rest)
-				{
-					if (byte_count == 16)
-					{
-						puts ("SGB: end of block is not zero!");
-						start = 0;
-					}
-					sgb_data[byte_count] >>= 1;
-					sgb_data[byte_count] |= 0x80;
-					bit_count++;
-					if (bit_count == 8)
-					{
-						bit_count = 0;
-						byte_count++;
-					}
-					rest = 0;
-				}
-				JOYPAD = 0x1F & ((readinputport (0) >> 4) | 0xF0);
-				break;
-			case 0x20:				   /* data false */
-				if (rest)
-				{
-					if (byte_count == 16)
-					{
-						printf
-								("SGB: command: %02X packets: %d data: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
-								sgb_data[0] >> 3, sgb_data[0] & 0x07, sgb_data[1], sgb_data[2], sgb_data[3],
-								sgb_data[4], sgb_data[5], sgb_data[6], sgb_data[7],
-								sgb_data[8], sgb_data[9], sgb_data[10], sgb_data[11],
-								sgb_data[12], sgb_data[13], sgb_data[14], sgb_data[15]);
-						if ((sgb_data[0] >> 3) == 0x11)
-						{
-							printf ("multicontroller command, data= %02X\n", sgb_data[1]);
-							if (sgb_data[1] == 0x00)
-								controller_mode = 0;
-							else if (sgb_data[1] == 0x01)
-								controller_mode = 2;
-						}
-						start = 0;
-/*						Trace=1; */
-					}
-					sgb_data[byte_count] >>= 1;
-					bit_count++;
-					if (bit_count == 8)
-					{
-						bit_count = 0;
-						byte_count++;
-					}
-					rest = 0;
-				}
-				JOYPAD = 0x2F & (readinputport (0) | 0xF0);
-				break;
-			case 0x30:				   /* rest condition */
-				if (start)
-					rest = 1;
-				if (controller_mode)
-				{
-					controller_no++;
-					if (controller_no == controller_mode)
-						controller_no = 0;
-					JOYPAD = 0x3F - controller_no;
-				}
-				else
-					JOYPAD = 0x3F;
-				break;
-			}
-/*                   printf("%d%d\n", (data&0x10)? 1:0, (data&0x20)? 1:0); */
-		}
-		else
-		{
-			JOYPAD = 0xCF | data;
-			if (!(data & 0x20))
-				JOYPAD &= (readinputport (0) >> 4) | 0xF0;
-			if (!(data & 0x10))
-				JOYPAD &= readinputport (0) | 0xF0;
-		}
+	case 0xFF00:						/* JOYP - Joypad */
+		JOYPAD = 0xCF | data;
+		if (!(data & 0x20))
+			JOYPAD &= (readinputport (0) >> 4) | 0xF0;
+		if (!(data & 0x10))
+			JOYPAD &= readinputport (0) | 0xF0;
 		return;
 	case 0xFF01:						/* SB - Serial transfer data */
 		break;
@@ -406,28 +432,22 @@ WRITE_HANDLER ( gb_w_io )
 		}
 		return;
 	case 0xFF47:						/* BGP - Background Palette */
-		gb_bpal[0] = Machine->remapped_colortable[(data & 0x03)];
-		gb_bpal[1] = Machine->remapped_colortable[(data & 0x0C) >> 2];
-		gb_bpal[2] = Machine->remapped_colortable[(data & 0x30) >> 4];
-		gb_bpal[3] = Machine->remapped_colortable[(data & 0xC0) >> 6];
-		/* So we can assign different colours to window tiles, even though
-		   the window shares the same palette data as the background */
-		gb_wpal[0] = Machine->remapped_colortable[(data & 0x03) + 12];
-		gb_wpal[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 12];
-		gb_wpal[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 12];
-		gb_wpal[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 12];
+		gb_bpal[0] = data & 0x3;
+		gb_bpal[1] = (data & 0xC) >> 2;
+		gb_bpal[2] = (data & 0x30) >> 4;
+		gb_bpal[3] = (data & 0xC0) >> 6;
 		break;
 	case 0xFF48:						/* OBP0 - Object Palette 0 */
-		gb_spal0[0] = Machine->remapped_colortable[(data & 0x03) + 4];
-		gb_spal0[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 4];
-		gb_spal0[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 4];
-		gb_spal0[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 4];
+		gb_spal0[0] = data & 0x3;
+		gb_spal0[1] = (data & 0xC) >> 2;
+		gb_spal0[2] = (data & 0x30) >> 4;
+		gb_spal0[3] = (data & 0xC0) >> 6;
 		break;
 	case 0xFF49:						/* OBP1 - Object Palette 1 */
-		gb_spal1[0] = Machine->remapped_colortable[(data & 0x03) + 8];
-		gb_spal1[1] = Machine->remapped_colortable[((data & 0x0C) >> 2) + 8];
-		gb_spal1[2] = Machine->remapped_colortable[((data & 0x30) >> 4) + 8];
-		gb_spal1[3] = Machine->remapped_colortable[((data & 0xC0) >> 6) + 8];
+		gb_spal1[0] = data & 0x3;
+		gb_spal1[1] = (data & 0xC) >> 2;
+		gb_spal1[2] = (data & 0x30) >> 4;
+		gb_spal1[3] = (data & 0xC0) >> 6;
 		break;
 	default:
 		/* Sound Registers */
@@ -437,6 +457,693 @@ WRITE_HANDLER ( gb_w_io )
 			return;
 		}
 	}
+	gb_ram [offset] = data;
+}
+
+static const char *sgbcmds[26] =
+{
+	"PAL01   ",
+	"PAL23   ",
+	"PAL03   ",
+	"PAL12   ",
+	"ATTR_BLK",
+	"ATTR_LIN",
+	"ATTR_DIV",
+	"ATTR_CHR",
+	"SOUND   ",
+	"SOU_TRN ",
+	"PAL_SET ",
+	"PAL_TRN ",
+	"ATRC_EN ",
+	"TEST_EN ",
+	"ICON_EN ",
+	"DATA_SND",
+	"DATA_TRN",
+	"MLT_REG ",
+	"JUMP    ",
+	"CHR_TRN ",
+	"PCT_TRN ",
+	"ATTR_TRN",
+	"ATTR_SET",
+	"MASK_EN ",
+	"OBJ_TRN ",
+	"????????",
+};
+
+WRITE_HANDLER ( sgb_w_io )
+{
+	static UINT8 sgb_bitcount = 0, sgb_bytecount = 0, sgb_start = 0, sgb_rest = 0;
+	static UINT8 sgb_controller_no = 0, sgb_controller_mode = 0;
+	static INT8 sgb_packets = -1;
+	static UINT8 sgb_data[112];
+	static UINT32 sgb_atf;
+
+	offset += 0xFF00;
+
+	switch( offset )
+	{
+		case 0xFF00:
+			switch (data & 0x30)
+			{
+			case 0x00:				   /* start condition */
+				if (sgb_start)
+					logerror("SGB: Start condition before end of transfer ??");
+				sgb_bitcount = 0;
+				sgb_start = 1;
+				sgb_rest = 0;
+				JOYPAD = 0x0F & ((readinputport (0) >> 4) | readinputport (0) | 0xF0);
+				break;
+			case 0x10:				   /* data true */
+				if (sgb_rest)
+				{
+					/* We should test for this case , but the code below won't
+					   work with the current setup */
+					/* if (sgb_bytecount == 16)
+					{
+						logerror("SGB: end of block is not zero!");
+						sgb_start = 0;
+					}*/
+					sgb_data[sgb_bytecount] >>= 1;
+					sgb_data[sgb_bytecount] |= 0x80;
+					sgb_bitcount++;
+					if (sgb_bitcount == 8)
+					{
+						sgb_bitcount = 0;
+						sgb_bytecount++;
+					}
+					sgb_rest = 0;
+				}
+				JOYPAD = 0x1F & ((readinputport (0) >> 4) | 0xF0);
+				break;
+			case 0x20:				   /* data false */
+				if (sgb_rest)
+				{
+					if( sgb_bytecount == 16 && sgb_packets == -1 )
+					{
+						if( Verbose )
+						{
+							logerror("SGB: %s (%02X) pkts: %d data: %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X %02X\n",
+									sgbcmds[sgb_data[0] >> 3],sgb_data[0] >> 3, sgb_data[0] & 0x07, sgb_data[1], sgb_data[2], sgb_data[3],
+									sgb_data[4], sgb_data[5], sgb_data[6], sgb_data[7],
+									sgb_data[8], sgb_data[9], sgb_data[10], sgb_data[11],
+									sgb_data[12], sgb_data[13], sgb_data[14], sgb_data[15]);
+						}
+						sgb_packets = sgb_data[0] & 0x07;
+						sgb_start = 0;
+					}
+					if (sgb_bytecount == (sgb_packets << 4) )
+					{
+						switch( sgb_data[0] >> 3 )
+						{
+							case 0x00:	/* PAL01 */
+								Machine->remapped_colortable[0*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[0*4 + 1] = sgb_data[3] | (sgb_data[4] << 8);
+								Machine->remapped_colortable[0*4 + 2] = sgb_data[5] | (sgb_data[6] << 8);
+								Machine->remapped_colortable[0*4 + 3] = sgb_data[7] | (sgb_data[8] << 8);
+								Machine->remapped_colortable[1*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[1*4 + 1] = sgb_data[9] | (sgb_data[10] << 8);
+								Machine->remapped_colortable[1*4 + 2] = sgb_data[11] | (sgb_data[12] << 8);
+								Machine->remapped_colortable[1*4 + 3] = sgb_data[13] | (sgb_data[14] << 8);
+								break;
+							case 0x01:	/* PAL23 */
+								Machine->remapped_colortable[2*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[2*4 + 1] = sgb_data[3] | (sgb_data[4] << 8);
+								Machine->remapped_colortable[2*4 + 2] = sgb_data[5] | (sgb_data[6] << 8);
+								Machine->remapped_colortable[2*4 + 3] = sgb_data[7] | (sgb_data[8] << 8);
+								Machine->remapped_colortable[3*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[3*4 + 1] = sgb_data[9] | (sgb_data[10] << 8);
+								Machine->remapped_colortable[3*4 + 2] = sgb_data[11] | (sgb_data[12] << 8);
+								Machine->remapped_colortable[3*4 + 3] = sgb_data[13] | (sgb_data[14] << 8);
+								break;
+							case 0x02:	/* PAL03 */
+								Machine->remapped_colortable[0*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[0*4 + 1] = sgb_data[3] | (sgb_data[4] << 8);
+								Machine->remapped_colortable[0*4 + 2] = sgb_data[5] | (sgb_data[6] << 8);
+								Machine->remapped_colortable[0*4 + 3] = sgb_data[7] | (sgb_data[8] << 8);
+								Machine->remapped_colortable[3*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[3*4 + 1] = sgb_data[9] | (sgb_data[10] << 8);
+								Machine->remapped_colortable[3*4 + 2] = sgb_data[11] | (sgb_data[12] << 8);
+								Machine->remapped_colortable[3*4 + 3] = sgb_data[13] | (sgb_data[14] << 8);
+								break;
+							case 0x03:	/* PAL12 */
+								Machine->remapped_colortable[1*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[1*4 + 1] = sgb_data[3] | (sgb_data[4] << 8);
+								Machine->remapped_colortable[1*4 + 2] = sgb_data[5] | (sgb_data[6] << 8);
+								Machine->remapped_colortable[1*4 + 3] = sgb_data[7] | (sgb_data[8] << 8);
+								Machine->remapped_colortable[2*4 + 0] = sgb_data[1] | (sgb_data[2] << 8);
+								Machine->remapped_colortable[2*4 + 1] = sgb_data[9] | (sgb_data[10] << 8);
+								Machine->remapped_colortable[2*4 + 2] = sgb_data[11] | (sgb_data[12] << 8);
+								Machine->remapped_colortable[2*4 + 3] = sgb_data[13] | (sgb_data[14] << 8);
+								break;
+							case 0x04:	/* ATTR_BLK */
+								{
+									UINT8 I, J, K, o;
+									if( Verbose )
+										logerror( "\tBLOCK: %d datasets\n", sgb_data[1] );
+									for( K = 0; K < sgb_data[1]; K++ )
+									{
+										o = K * 6;
+										if( sgb_data[o + 2] & 0x1 )
+										{
+											for( I = sgb_data[ o + 4]; I <= sgb_data[o + 6]; I++ )
+											{
+												for( J = sgb_data[o + 5]; J <= sgb_data[o + 7]; J++ )
+												{
+													sgb_pal_map[I][J] = sgb_data[o + 3] & 0x3;
+												}
+											}
+										}
+										if( Verbose )
+											logerror( "\tBlock: %d,%d to %d,%d\n", sgb_data[o + 4], sgb_data[o + 5], sgb_data[o + 6], sgb_data[o + 7] );
+									}
+								}
+								break;
+							case 0x05:	/* ATTR_LIN */
+								{
+									UINT8 J, K;
+									if( Verbose )
+										logerror( "\tLINE: %d datasets\n", sgb_data[1] );
+									if( sgb_data[1] > 15 ) sgb_data[1] = 15;
+									for( K = 0; K < sgb_data[1]; K++ )
+									{
+										if( sgb_data[K + 1] & 0x80 )
+										{
+											for( J = 0; J < 20; J++ )
+											{
+												sgb_pal_map[J][sgb_data[K + 1] & 0x1f] = (sgb_data[K + 1] & 0x60) >> 5;
+											}
+										}
+										else
+										{
+											for( J = 0; J < 18; J++ )
+											{
+												sgb_pal_map[sgb_data[K + 1] & 0x1f][J] = (sgb_data[K + 1] & 0x60) >> 5;
+											}
+										}
+									}
+								}
+								break;
+							case 0x06:	/* ATTR_DIV */
+								{
+									UINT8 I, J;
+									if( Verbose )
+										logerror( "\tDIV: %s - line %d pal1: %d pal2: %d pal3: %d\n", (sgb_data[1] & 0x40)?"Vertical":"Horizontal", sgb_data[2], (sgb_data[1] & 0xc) >> 2, (sgb_data[1] & 0x30) >> 4, sgb_data[1] & 0x3 );
+									if( sgb_data[1] & 0x40 ) /* Vertical */
+									{
+										for( I = 0; I < sgb_data[2]; I++ )
+										{
+											for( J = 0; J < 20; J++ )
+											{
+												sgb_pal_map[J][I] = (sgb_data[1] & 0xC) >> 2;
+											}
+										}
+										for( J = 0; J < 20; J++ )
+										{
+											sgb_pal_map[J][sgb_data[2]] = (sgb_data[1] & 0x30) >> 4;
+										}
+										for( I = sgb_data[2] + 1; I < 18; I++ )
+										{
+											for( J = 0; J < 20; J++ )
+											{
+												sgb_pal_map[J][I] = sgb_data[1] & 0x3;
+											}
+										}
+									}
+									else /* Horizontal */
+									{
+										for( I = 0; I < sgb_data[2]; I++ )
+										{
+											for( J = 0; J < 18; J++ )
+											{
+												sgb_pal_map[I][J] = (sgb_data[1] & 0xC) >> 2;
+											}
+										}
+										for( J = 0; J < 18; J++ )
+										{
+											sgb_pal_map[sgb_data[2]][J] = (sgb_data[1] & 0x30) >> 4;
+										}
+										for( I = sgb_data[2] + 1; I < 20; I++ )
+										{
+											for( J = 0; J < 18; J++ )
+											{
+												sgb_pal_map[I][J] = sgb_data[1] & 0x3;
+											}
+										}
+									}
+								}
+								break;
+							case 0x07:	/* ATTR_CHR */
+								{
+									UINT16 I, sets;
+									UINT8 x, y;
+
+									if( Verbose )
+									{
+										logerror( "\tCHAR: %d datasets  ", sgb_data[3] | (sgb_data[4] << 8) );
+										logerror( "x: %d   y: %d\n", sgb_data[1], sgb_data[2] );
+									}
+									sets = (sgb_data[3] | (sgb_data[4] << 8) );
+									if( sets > 360 )
+										sets = 360;
+									sets >>= 2;
+									sets += 6;
+									x = sgb_data[1];
+									y = sgb_data[2];
+									if( sgb_data[5] ) /* Vertical */
+									{
+										for( I = 6; I < sets; I++ )
+										{
+											sgb_pal_map[x][y++] = (sgb_data[I] & 0xC0) >> 6;
+											if( y > 17 )
+											{
+												y = 0;
+												x++;
+												if( x > 19 )
+													x = 0;
+											}
+
+											sgb_pal_map[x][y++] = (sgb_data[I] & 0x30) >> 4;
+											if( y > 17 )
+											{
+												y = 0;
+												x++;
+												if( x > 19 )
+													x = 0;
+											}
+
+											sgb_pal_map[x][y++] = (sgb_data[I] & 0xC) >> 2;
+											if( y > 17 )
+											{
+												y = 0;
+												x++;
+												if( x > 19 )
+													x = 0;
+											}
+
+											sgb_pal_map[x][y++] = sgb_data[I] & 0x3;
+											if( y > 17 )
+											{
+												y = 0;
+												x++;
+												if( x > 19 )
+													x = 0;
+											}
+										}
+									}
+									else /* horizontal */
+									{
+										for( I = 6; I < sets; I++ )
+										{
+											sgb_pal_map[x++][y] = (sgb_data[I] & 0xC0) >> 6;
+											if( x > 19 )
+											{
+												x = 0;
+												y++;
+												if( y > 17 )
+													y = 0;
+											}
+
+											sgb_pal_map[x++][y] = (sgb_data[I] & 0x30) >> 4;
+											if( x > 19 )
+											{
+												x = 0;
+												y++;
+												if( y > 17 )
+													y = 0;
+											}
+
+											sgb_pal_map[x++][y] = (sgb_data[I] & 0xC) >> 2;
+											if( x > 19 )
+											{
+												x = 0;
+												y++;
+												if( y > 17 )
+													y = 0;
+											}
+
+											sgb_pal_map[x++][y] = sgb_data[I] & 0x3;
+											if( x > 19 )
+											{
+												x = 0;
+												y++;
+												if( y > 17 )
+													y = 0;
+											}
+										}
+									}
+								}
+								break;
+							case 0x08:	/* SOUND */
+								/* This command enables internal sound effects */
+								/* Not Implemented */
+								if( Verbose )
+									logerror( "\tSOUND: Effect A: %x  Effect B: %x\n", sgb_data[1], sgb_data[2] );
+								break;
+							case 0x09:	/* SOU_TRN */
+								/* This command sends data to the SNES sound processor.
+								   We'll need to emulate that for this to be used */
+								/* Not Implemented */
+								break;
+							case 0x0A:	/* PAL_SET */
+								{
+									UINT16 index, J, I;
+
+									/* Palette 0 */
+									index = (UINT16)(sgb_data[1] | (sgb_data[2] << 8)) * 4;
+									Machine->remapped_colortable[0] = sgb_pal_data[index];
+									Machine->remapped_colortable[1] = sgb_pal_data[index + 1];
+									Machine->remapped_colortable[2] = sgb_pal_data[index + 2];
+									Machine->remapped_colortable[3] = sgb_pal_data[index + 3];
+									/* Palette 1 */
+									index = (UINT16)(sgb_data[3] | (sgb_data[4] << 8)) * 4;
+									Machine->remapped_colortable[4] = sgb_pal_data[index];
+									Machine->remapped_colortable[5] = sgb_pal_data[index + 1];
+									Machine->remapped_colortable[6] = sgb_pal_data[index + 2];
+									Machine->remapped_colortable[7] = sgb_pal_data[index + 3];
+									/* Palette 2 */
+									index = (UINT16)(sgb_data[5] | (sgb_data[6] << 8)) * 4;
+									Machine->remapped_colortable[8] = sgb_pal_data[index];
+									Machine->remapped_colortable[9] = sgb_pal_data[index + 1];
+									Machine->remapped_colortable[10] = sgb_pal_data[index + 2];
+									Machine->remapped_colortable[11] = sgb_pal_data[index + 3];
+									/* Palette 3 */
+									index = (UINT16)(sgb_data[7] | (sgb_data[8] << 8)) * 4;
+									Machine->remapped_colortable[12] = sgb_pal_data[index];
+									Machine->remapped_colortable[13] = sgb_pal_data[index + 1];
+									Machine->remapped_colortable[14] = sgb_pal_data[index + 2];
+									Machine->remapped_colortable[15] = sgb_pal_data[index + 3];
+									/* Attribute File */
+									if( sgb_data[9] & 0x40 )
+										sgb_window_mask = 0;
+									sgb_atf = (sgb_data[9] & 0x3f) * (18 * 5);
+									if( sgb_data[9] & 0x80 )
+									{
+										for( J = 0; J < 18; J++ )
+										{
+											for( I = 0; I < 5; I++ )
+											{
+												sgb_pal_map[I * 4][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0xC0) >> 6;
+												sgb_pal_map[(I * 4) + 1][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0x30) >> 4;
+												sgb_pal_map[(I * 4) + 2][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0xC) >> 2;
+												sgb_pal_map[(I * 4) + 3][J] = sgb_atf_data[(J * 5) + sgb_atf + I] & 0x3;
+											}
+										}
+									}
+								}
+								break;
+							case 0x0B:	/* PAL_TRN */
+								{
+									UINT16 I, col;
+
+									for( I = 0; I < 2048; I++ )
+									{
+										col = cpu_readmem16 (0x8800 + (I*2));
+										col |= (UINT16)(cpu_readmem16 (0x8800 + (I*2) + 1)) << 8;
+										sgb_pal_data[I] = col;
+									}
+								}
+								break;
+							case 0x0C:	/* ATRC_EN */
+								/* Not Implemented */
+								break;
+							case 0x0D:	/* TEST_EN */
+								/* Not Implemented */
+								break;
+							case 0x0E:	/* ICON_EN */
+								/* Not Implemented */
+								break;
+							case 0x0F:	/* DATA_SND */
+								/* Not Implemented */
+								break;
+							case 0x10:	/* DATA_TRN */
+								/* Not Implemented */
+								break;
+							case 0x11:	/* MLT_REQ - Multi controller request */
+								if (sgb_data[1] == 0x00)
+									sgb_controller_mode = 0;
+								else if (sgb_data[1] == 0x01)
+									sgb_controller_mode = 2;
+								break;
+							case 0x12:	/* JUMP */
+								/* Not Implemented */
+								break;
+							case 0x13:	/* CHR_TRN */
+								if( sgb_data[1] & 0x1 )
+									memcpy( sgb_tile_data + 4096, gb_ram + 0x8800, 4096 );
+								else
+									memcpy( sgb_tile_data, gb_ram + 0x8800, 4096 );
+								break;
+							case 0x14:	/* PCT_TRN */
+								{
+									int I;
+									UINT16 col;
+									if( sgb_hack )
+									{
+										memcpy( sgb_tile_map, gb_ram + 0x9000, 2048 );
+										for( I = 0; I < 64; I++ )
+										{
+											col = cpu_readmem16 (0x8800 + (I*2));
+											col |= (UINT16)(cpu_readmem16 (0x8800 + (I*2) + 1)) << 8;
+											Machine->remapped_colortable[SGB_BORDER_PAL_OFFSET + I] = col;
+										}
+									}
+									else /* Do things normally */
+									{
+										memcpy( sgb_tile_map, gb_ram + 0x8800, 2048 );
+										for( I = 0; I < 64; I++ )
+										{
+											col = cpu_readmem16 (0x9000 + (I*2));
+											col |= (UINT16)(cpu_readmem16 (0x9000 + (I*2) + 1)) << 8;
+											Machine->remapped_colortable[SGB_BORDER_PAL_OFFSET + I] = col;
+										}
+									}
+								}
+								break;
+							case 0x15:	/* ATTR_TRN */
+								memcpy( sgb_atf_data, gb_ram + 0x8800, 4050 );
+								break;
+							case 0x16:	/* ATTR_SET */
+								{
+									UINT8 J, I;
+
+									/* Attribute File */
+									if( sgb_data[1] & 0x40 )
+										sgb_window_mask = 0;
+									sgb_atf = (sgb_data[1] & 0x3f) * (18 * 5);
+									for( J = 0; J < 18; J++ )
+									{
+										for( I = 0; I < 5; I++ )
+										{
+											sgb_pal_map[I * 4][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0xC0) >> 6;
+											sgb_pal_map[(I * 4) + 1][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0x30) >> 4;
+											sgb_pal_map[(I * 4) + 2][J] = (sgb_atf_data[(J * 5) + sgb_atf + I] & 0xC) >> 2;
+											sgb_pal_map[(I * 4) + 3][J] = sgb_atf_data[(J * 5) + sgb_atf + I] & 0x3;
+										}
+									}
+								}
+								break;
+							case 0x17:	/* MASK_EN */
+								sgb_window_mask = sgb_data[1];
+								break;
+							case 0x18:	/* OBJ_TRN */
+								/* Not Implemnted */
+								break;
+							case 0x19:	/* ? */
+								/* Called by: dkl,dkl2,dkl3,zeldadx
+								   But I don't know what it is for. */
+								/* Not Implemented */
+								break;
+							default:
+								if( Verbose )
+									logerror( "\tSGB: Unknown Command!\n" );
+						}
+
+						sgb_start = 0;
+						sgb_bytecount = 0;
+						sgb_packets = -1;
+					}
+					if( sgb_start )
+					{
+						sgb_data[sgb_bytecount] >>= 1;
+						sgb_bitcount++;
+						if (sgb_bitcount == 8)
+						{
+							sgb_bitcount = 0;
+							sgb_bytecount++;
+						}
+					}
+					sgb_rest = 0;
+				}
+				JOYPAD = 0x2F & (readinputport (0) | 0xF0);
+				break;
+			case 0x30:				   /* rest condition */
+				if (sgb_start)
+					sgb_rest = 1;
+				if (sgb_controller_mode)
+				{
+					sgb_controller_no++;
+					if (sgb_controller_no == sgb_controller_mode)
+						sgb_controller_no = 0;
+					JOYPAD = 0x3F - sgb_controller_no;
+				}
+				else
+					JOYPAD = 0x3F;
+				break;
+			}
+			return;
+		default:
+			/* we didn't handle the write, so pass it to the GB handler */
+			gb_w_io( offset - 0xFF00, data );
+			return;
+	}
+
+	gb_ram [offset] = data;
+}
+
+WRITE_HANDLER ( gbc_w_io )
+{
+	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
+	static UINT16 BP = 0, OP = 0;
+
+	offset += 0xFF00;
+
+	switch( offset )
+	{
+		case 0xFF40:
+			gb_chrgen = GBC_VRAMMap[0] + ((data & 0x10) ? 0x0000 : 0x0800);
+			gbc_chrgen = GBC_VRAMMap[1] + ((data & 0x10) ? 0x0000 : 0x0800);
+			gb_tile_no_mod = (data & 0x10) ? 0x00 : 0x80;
+			gb_bgdtab = GBC_VRAMMap[0] + ((data & 0x08) ? 0x1C00 : 0x1800);
+			gbc_bgdtab = GBC_VRAMMap[1] + ((data & 0x08) ? 0x1C00 : 0x1800);
+			gb_wndtab = GBC_VRAMMap[0] + ((data & 0x40) ? 0x1C00 : 0x1800);
+			gbc_wndtab = GBC_VRAMMap[1] + ((data & 0x40) ? 0x1C00 : 0x1800);
+			break;
+		case 0xFF47:	/* BGP - GB background palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[0] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[1] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[2] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[3] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF48:	/* OBP0 - GB Object 0 palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[4] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[5] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[6] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[7] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF49:	/* OBP1 - GB Object 1 palette */
+			if( gbc_mode == GBC_MODE_MONO ) /* Some GBC games are lazy and still call this */
+			{
+				Machine->remapped_colortable[8] = gbc_to_gb_pal[(data & 0x03)];
+				Machine->remapped_colortable[9] = gbc_to_gb_pal[(data & 0x0C) >> 2];
+				Machine->remapped_colortable[10] = gbc_to_gb_pal[(data & 0x30) >> 4];
+				Machine->remapped_colortable[11] = gbc_to_gb_pal[(data & 0xC0) >> 6];
+			}
+			break;
+		case 0xFF4D:	/* KEY1 - Prepare speed switch */
+			if( data & 0x1 )
+			{
+				data = (gb_ram[offset] & 0x80)?0x00:0x80;
+				timer_set_overclock( 0, (data & 0x80)?2.0:1.0 );
+				logerror( "Switched to %s mode.\n", (data & 0x80) ? "FAST":"NORMAL" );
+			}
+			break;
+		case 0xFF4F:	/* VBK - VRAM bank select */
+			GBC_VRAMBank = data & 0x1;
+			cpu_setbank (4, GBC_VRAMMap[GBC_VRAMBank]);
+			data |= 0xFE;
+			break;
+		case 0xFF51:	/* HDMA1 - HBL General DMA - Source High */
+			break;
+		case 0xFF52:	/* HDMA2 - HBL General DMA - Source Low */
+			data &= 0xF0;
+			break;
+		case 0xFF53:	/* HDMA3 - HBL General DMA - Destination High */
+			data &= 0x1F;
+			break;
+		case 0xFF54:	/* HDMA4 - HBL General DMA - Destination Low */
+			data &= 0xF0;
+			break;
+		case 0xFF55:	/* HDMA5 - HBL General DMA - Mode, Length */
+			if( !(data & 0x80) )
+			{
+				/* General DMA */
+				gbc_hdma( ((data & 0x7F) + 1) * 0x10 );
+				data = 0xff;
+			}
+			else
+			{
+				/* H-Blank DMA */
+				gbc_hdma_enabled = 1;
+				data &= 0x7f;
+			}
+			break;
+		case 0xFF56:	/* RP - Infrared port */
+			break;
+		case 0xFF68:	/* BCPS - Background palette specification */
+			break;
+		case 0xFF69:	/* BCPD - background palette data */
+			if( GBCBCPS & 0x1 )
+			{
+//				BP = Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1];
+//				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = data + (BP & 0xFF00);
+//				Machine->remapped_colortable[((GBCBCPS & 0x38) >> 1) + ((GBCBCPS & 0x6) >> 1)] = ((UINT16)(data & 0x7f) << 8) | BP;
+				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((UINT16)(data & 0x7f) << 8) | BP;
+			}
+			else
+			{
+//				BP = Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1];
+//				Machine->remapped_colortable[(GBCBCPS & 0x3e) >> 1] = ((data << 8) + (BP & 0xFF));
+				BP = data;
+			}
+
+			if( GBCBCPS & 0x80 )
+			{
+				GBCBCPS += 1;
+				GBCBCPS &= 0xBF;
+			}
+			break;
+		case 0xFF6A:	/* OCPS - Object palette specification */
+			break;
+		case 0xFF6B:	/* OCPD - Object palette data */
+			if( GBCOCPS & 0x1 )
+			{
+				Machine->remapped_colortable[GBC_PAL_OBJ_OFFSET + ((GBCOCPS & 0x3e) >> 1)] = ((UINT16)(data & 0x7f) << 8) | OP;
+			}
+			else
+				OP = data;
+
+			if( GBCOCPS & 0x80 )
+			{
+				GBCOCPS += 1;
+				GBCOCPS &= 0xBF;
+			}
+			break;
+		case 0xFF70:	/* SVBK - RAM bank select */
+			GBC_RAMBank = data & 0x7;
+			cpu_setbank (3, GBC_RAMMap[GBC_RAMBank]);
+			break;
+		/* Undocumented registers */
+		case 0xFF6C:
+		case 0xFF72:
+		case 0xFF73:
+		case 0xFF74:
+		case 0xFF75:
+		case 0xFF76:
+		case 0xFF77:
+			logerror( "Write to undoco'ed register: %X = %X\n", offset, data );
+			return;
+		default:
+			/* we didn't handle the write, so pass it to the GB handler */
+			gb_w_io( offset - 0xFF00, data );
+			return;
+	}
+
 	gb_ram [offset] = data;
 }
 
@@ -496,6 +1203,20 @@ READ_HANDLER ( gb_r_io )
 		case 0xFF49:
 		case 0xFF4A:
 		case 0xFF4B:
+		/* GBC specific */
+		case 0xFF4D:
+		case 0xFF4F:
+		case 0xFF51:
+		case 0xFF52:
+		case 0xFF53:
+		case 0xFF54:
+		case 0xFF55:
+		case 0xFF56:
+		case 0xFF68:
+		case 0xFF69:
+		case 0xFF6A:
+		case 0xFF6B:
+		case 0xFF70:
 			return gb_ram[offset];
 		default:
 			/* It seems unsupported registers return 0xFF */
@@ -799,8 +1520,9 @@ int gb_load_rom (int id)
 		S[16] = '\0';
 		logerror("OK\n  Name: %s\n", S);
 		logerror("  Type: %s [%Xh]\n", CartTypes[gb_ram[0x0147]], gb_ram[0x0147] );
-		logerror("  Color GB: %s [%Xh]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
+		logerror("  GameBoy : %s\n", (gb_ram[0x0143] == 0xc0) ? "No" : "Yes" );
 		logerror("  Super GB: %s [%Xh]\n", (gb_ram[0x0146] == 0x03) ? "Yes" : "No", gb_ram[0x0146] );
+		logerror("  Color GB: %s [%Xh]\n", (gb_ram[0x0143] == 0x80 || gb_ram[0x0143] == 0xc0) ? "Yes" : "No", gb_ram[0x0143] );
 		logerror("  ROM Size: %d 16kB Banks [%X]\n", ROMBanks, gb_ram[0x0148]);
 		J = (gb_ram[0x0149] & 0x03) * 2;
 		J = J ? (1 << (J - 1)) : 0;
@@ -927,7 +1649,7 @@ void gb_scanline_interrupt (void)
 
 	/* First let's draw the current scanline */
 	if (CURLINE < 144)
-		gb_refresh_scanline ();
+		refresh_scanline ();
 
 	/* The rest only makes sense if the display is enabled */
 	if (LCDCONT & 0x80)
@@ -992,10 +1714,40 @@ void gb_scanline_interrupt_set_mode0 (int param)
 	/* Generate lcd interrupt if requested */
 	if( LCDSTAT & 0x08 )
 		cpu_set_irq_line(0, LCD_INT, HOLD_LINE);
+
+	/* Check for HBLANK DMA */
+	if( gbc_hdma_enabled && (CURLINE < 144) )
+		gbc_hdma(0x10);
 }
 
 void gb_scanline_interrupt_set_mode3 (int param)
 {
 	/* Set Mode 3 lcdstate */
 	LCDSTAT = (LCDSTAT & 0xFC) | 0x03;
+}
+
+void gbc_hdma(UINT16 length)
+{
+	UINT16 src, dst;
+
+	src = ((UINT16)HDMA1 << 8) | (HDMA2 & 0xF0);
+	dst = ((UINT16)(HDMA3 & 0x1F) << 8) | (HDMA4 & 0xF0);
+	dst |= 0x8000;
+	if( Verbose )
+		printf( "\tsrc=%X  dst=%X  length=%X\n", src, dst, length );
+	while( length > 0 )
+	{
+		cpu_writemem16( dst++, cpu_readmem16( src++ ) );
+		length--;
+	}
+	HDMA1 = src >> 8;
+	HDMA2 = src & 0xF0;
+	HDMA3 = 0x1f & (dst >> 8);
+	HDMA4 = dst & 0xF0;
+	HDMA5--;
+	if( (HDMA5 & 0x7f) == 0 )
+	{
+		HDMA5 = 0xff;
+		gbc_hdma_enabled = 0;
+	}
 }
