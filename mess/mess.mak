@@ -765,8 +765,7 @@ COREOBJS += \
 TOOLS =  dat2html$(EXE)		\
 	tools/mkhdimg$(EXE)	\
 	tools/imgtool$(EXE)	\
-	tools/mkimage$(EXE)	\
-	tools/messtest$(EXE)	
+	tools/mkimage$(EXE)
 
 
 ifdef MSVC
