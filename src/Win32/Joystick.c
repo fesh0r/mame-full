@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -308,17 +308,27 @@ int Joystick_is_joy_pressed(int joycode)
         switch (joycode)
         {
             case MOUSE_BUTTON(1):
-                if (MAME32App.m_pTrak->trak_pressed(OSD_TRAK_FIRE1))
+                if (MAME32App.m_pTrak->trak_pressed(TRAK_FIRE1))
                     return 1;
                 break;
 
             case MOUSE_BUTTON(2):
-                if (MAME32App.m_pTrak->trak_pressed(OSD_TRAK_FIRE2))
+                if (MAME32App.m_pTrak->trak_pressed(TRAK_FIRE2))
                     return 1;
                 break;
 
             case MOUSE_BUTTON(3):
-                if (MAME32App.m_pTrak->trak_pressed(OSD_TRAK_FIRE3))
+                if (MAME32App.m_pTrak->trak_pressed(TRAK_FIRE3))
+                    return 1;
+                break;
+
+            case MOUSE_BUTTON(4):
+                if (MAME32App.m_pTrak->trak_pressed(TRAK_FIRE4))
+                    return 1;
+                break;
+
+            case MOUSE_BUTTON(5):
+                if (MAME32App.m_pTrak->trak_pressed(TRAK_FIRE5))
                     return 1;
                 break;
         }       
@@ -579,9 +589,9 @@ static void Joystick_InitJoyList(void)
     tot = 0;
 
     /* first of all, map mouse buttons */
-    for (j = 0; j < 3; j++)
+    for (j = 0; j < 5; j++)
     {
-        sprintf(buf, "MOUSE B%d", j + 1);
+        sprintf(buf, "Mouse B%d", j + 1);
         strncpy(joynames[tot], buf, MAX_JOY_NAME_LEN);
         joynames[tot][MAX_JOY_NAME_LEN] = 0;
         joylist[tot].name = joynames[tot];

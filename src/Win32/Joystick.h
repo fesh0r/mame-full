@@ -1,17 +1,17 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
-#ifndef __JOYSTICK_H__
-#define __JOYSTICK_H__
+#ifndef JOYSTICK_H
+#define JOYSTICK_H
 
 #include "osdepend.h"
 
@@ -51,7 +51,7 @@ extern struct OSDJoystick Joystick;
 
 */
 #define JOYCODE(joy, stick, axis_or_button, dir) \
-		((((dir)            & 0x03) << 14) |     \
+        ((((dir)            & 0x03) << 14) |     \
          (((axis_or_button) & 0x3f) <<  8) |     \
          (((stick)          & 0x1f) <<  3) |     \
          (((joy)            & 0x07) <<  0))
@@ -72,22 +72,5 @@ extern struct OSDJoystick Joystick;
 
 /* use otherwise unused joystick codes for the three mouse buttons */
 #define MOUSE_BUTTON(button)    JOYCODE(1, JOYCODE_STICK_BTN, button, 3)
-
-
-/* cmk temp */
-enum
-{
-   OSD_JOY_LEFT,
-   OSD_JOY_RIGHT,
-   OSD_JOY_UP,
-   OSD_JOY_DOWN,
-   OSD_JOY_FIRE,
-   OSD_JOY_FIRE1,
-   OSD_JOY_FIRE2,
-   OSD_JOY_FIRE3,
-   OSD_JOY_FIRE4,
-   OSD_MAX_JOY,
-};
-
 
 #endif

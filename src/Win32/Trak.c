@@ -1,12 +1,12 @@
 /***************************************************************************
 
-    M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
-    Win32 Portions Copyright (C) 1997-98 Michael Soderstrom and Chris Kirmse
-    
-    This file is part of MAME32, and may only be used, modified and
-    distributed under the terms of the MAME license, in "readme.txt".
-    By continuing to use, modify or distribute this file you indicate
-    that you have read the license and understand and accept it fully.
+  M.A.M.E.32  -  Multiple Arcade Machine Emulator for Win32
+  Win32 Portions Copyright (C) 1997-2001 Michael Soderstrom and Chris Kirmse
+
+  This file is part of MAME32, and may only be used, modified and
+  distributed under the terms of the MAME license, in "readme.txt".
+  By continuing to use, modify or distribute this file you indicate
+  that you have read the license and understand and accept it fully.
 
  ***************************************************************************/
 
@@ -25,6 +25,21 @@
 #include "M32Util.h"
 #include "win32ui.h"
 
+#if (_WIN32_WINNT < 0x0500)
+#define WM_XBUTTONDOWN   0x020B
+#define WM_XBUTTONUP     0x020C
+#define XBUTTON1         0x0001
+#define XBUTTON2         0x0002
+#endif
+
+/* void Cls_OnXButtonDown(HWND hwnd, BOOL fDoubleClick, int x, int y, WORD wKeyState, WORD wXButton) */
+#define HANDLE_WM_XBUTTONDOWN(hwnd, wParam, lParam, fn) \
+    ((fn)((hwnd), FALSE, (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), LOWORD(wParam), HIWORD(wParam)), 1L)
+
+/* void Cls_OnXButtonUp(HWND hwnd, int x, int y, WORD wKeyState, WORD wXButton) */
+#define HANDLE_WM_XBUTTONUP(hwnd, wParam, lParam, fn) \
+    ((fn)((hwnd), (int)(short)LOWORD(lParam), (int)(short)HIWORD(lParam), LOWORD(wParam), HIWORD(wParam)), 1L)
+
 /*
     Portions shamelessly copied from msdos.c!
     Credit to Patrick Lawrence (pjl@ns.net) I believe.
@@ -41,31 +56,33 @@
     function prototypes
  ***************************************************************************/
 
-static void         OnMove(HWND hWnd, int x, int y);
-static void         OnLButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
-static void         OnLButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
-static void         OnRButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
-static void         OnRButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
-static void         OnMButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
-static void         OnMButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
+static void OnMove(HWND hWnd, int x, int y);
+static void OnLButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
+static void OnLButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
+static void OnRButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
+static void OnRButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
+static void OnMButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFlags);
+static void OnMButtonUp(HWND hWnd, int x, int y, UINT keyFlags);
+static void OnXButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, WORD wKeyState, WORD wXButton);
+static void OnXButtonUp(HWND hWnd, int x, int y, WORD wKeyState, WORD wXButton);
 
-static int          Trak_init(options_type *options);
-static void         Trak_exit(void);
-static void         Trak_read(int player, int *deltax, int *deltay);
-static int          Trak_pressed(int trakcode);
-static BOOL         Trak_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
+static int  Trak_init(options_type *options);
+static void Trak_exit(void);
+static void Trak_read(int player, int *deltax, int *deltay);
+static int  Trak_pressed(int trakcode);
+static BOOL Trak_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LRESULT* pResult);
 
 /***************************************************************************
     External variables
  ***************************************************************************/
 
-struct OSDTrak  Trak = 
+struct OSDTrak Trak = 
 {
     { Trak_init },              /* init              */
     { Trak_exit },              /* exit              */
     { Trak_read },              /* trak_read         */
-    { Trak_pressed },           /* trak_pressed      */
 
+    { Trak_pressed },           /* trak_pressed      */
     { Trak_OnMessage }          /* OnMessage         */
 };
 
@@ -79,6 +96,9 @@ struct tTrak_private
     BOOL        m_bLButton;
     BOOL        m_bMButton;
     BOOL        m_bRButton;
+    BOOL        m_bXButton1;
+    BOOL        m_bXButton2;
+
     POINT       m_Pos;
     POINT       m_Large;
 
@@ -102,12 +122,14 @@ static struct tTrak_private This;
 */
 static int Trak_init(options_type *options)
 {
-    POINT   pt;
+    POINT pt;
 
     This.m_bUseAxis     = options->use_ai_mouse;
     This.m_bLButton     = FALSE;
     This.m_bMButton     = FALSE;
     This.m_bRButton     = FALSE;
+    This.m_bXButton1    = FALSE;
+    This.m_bXButton2    = FALSE;
     This.m_Pos.x        = 0;
     This.m_Pos.y        = 0;
     This.m_Large.x      = 0;
@@ -189,31 +211,34 @@ static void Trak_read(int player, int *deltax, int *deltay)
     SetCursorPos(This.m_ptCenter.x, This.m_ptCenter.y);
 }
 
-static int Trak_pressed(int trakcode)
+static int Trak_pressed(enum ETrakCode eTrakCode)
 {
-    switch (trakcode)
+    switch (eTrakCode)
     {
-        case OSD_TRAK_LEFT:
-        case OSD_TRAK_RIGHT:
-        case OSD_TRAK_UP:
-        case OSD_TRAK_DOWN:
-            return 0;
-
-        case OSD_TRAK_FIRE1:
+        case TRAK_FIRE1:
             return (This.m_bLButton == TRUE);
 
-        case OSD_TRAK_FIRE2:
+        case TRAK_FIRE2:
             return (This.m_bRButton == TRUE);
 
-        case OSD_TRAK_FIRE3:
+        case TRAK_FIRE3:
             return (This.m_bMButton == TRUE);
 
-        case OSD_TRAK_FIRE:
-            return ((This.m_bLButton == TRUE) ||
-                    (This.m_bMButton == TRUE) ||
-                    (This.m_bRButton == TRUE));
+        case TRAK_FIRE4:
+            return (This.m_bXButton1 == TRUE);
+
+        case TRAK_FIRE5:
+            return (This.m_bXButton2 == TRUE);
+
+        case TRAK_FIRE_ANY:
+            return ((This.m_bLButton  == TRUE) ||
+                    (This.m_bMButton  == TRUE) ||
+                    (This.m_bRButton  == TRUE) ||
+                    (This.m_bXButton1 == TRUE) ||
+                    (This.m_bXButton2 == TRUE));
 
         default:
+            assert(FALSE);
             return 0;
     }
 }
@@ -226,13 +251,15 @@ static BOOL Trak_OnMessage(HWND hWnd, UINT Msg, WPARAM wParam, LPARAM lParam, LR
 {
     switch (Msg)
     {
-        PEEK_MESSAGE(hWnd, WM_MOVE,         OnMove);
-        PEEK_MESSAGE(hWnd, WM_LBUTTONDOWN,  OnLButtonDown);
-        PEEK_MESSAGE(hWnd, WM_LBUTTONUP,    OnLButtonUp);
-        PEEK_MESSAGE(hWnd, WM_RBUTTONDOWN,  OnRButtonDown);
-        PEEK_MESSAGE(hWnd, WM_RBUTTONUP,    OnRButtonUp);
-        PEEK_MESSAGE(hWnd, WM_MBUTTONDOWN,  OnMButtonDown);
-        PEEK_MESSAGE(hWnd, WM_MBUTTONUP,    OnMButtonUp);
+        HANDLE_MESSAGE(hWnd, WM_MOVE,         OnMove);
+        HANDLE_MESSAGE(hWnd, WM_LBUTTONDOWN,  OnLButtonDown);
+        HANDLE_MESSAGE(hWnd, WM_LBUTTONUP,    OnLButtonUp);
+        HANDLE_MESSAGE(hWnd, WM_RBUTTONDOWN,  OnRButtonDown);
+        HANDLE_MESSAGE(hWnd, WM_RBUTTONUP,    OnRButtonUp);
+        HANDLE_MESSAGE(hWnd, WM_MBUTTONDOWN,  OnMButtonDown);
+        HANDLE_MESSAGE(hWnd, WM_MBUTTONUP,    OnMButtonUp);       
+        HANDLE_MESSAGE(hWnd, WM_XBUTTONDOWN,  OnXButtonDown);
+        HANDLE_MESSAGE(hWnd, WM_XBUTTONUP,    OnXButtonUp);
     }
     return FALSE;
 }
@@ -275,4 +302,22 @@ static void OnMButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, UINT keyFl
 static void OnMButtonUp(HWND hWnd, int x, int y, UINT keyFlags)
 {
     This.m_bMButton = FALSE;
+}
+
+static void OnXButtonDown(HWND hWnd, BOOL fDoubleClick, int x, int y, WORD wKeyState, WORD wXButton)
+{
+    if (wXButton == XBUTTON1)
+        This.m_bXButton1 = TRUE;
+    else
+    if (wXButton == XBUTTON2)
+        This.m_bXButton2 = TRUE;
+}
+
+static void OnXButtonUp(HWND hWnd, int x, int y, WORD wKeyState, WORD wXButton)
+{
+    if (wXButton == XBUTTON1)
+        This.m_bXButton1 = FALSE;
+    else
+    if (wXButton == XBUTTON2)
+        This.m_bXButton2 = FALSE;
 }
