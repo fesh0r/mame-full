@@ -270,13 +270,14 @@ unsigned long offset;
 		return 0;
 	}
 
-	offset = w->offset;					/* First, offset to track zero */
+	offset = 0;
 	offset += t;
 	offset *= w->heads;
 	offset += h;
 	offset *= w->sec_per_track;
 	offset += (s-w->first_sector_id);
 	offset *= w->sector_length;
+	offset += w->offset;
 
 
 #if VERBOSE
