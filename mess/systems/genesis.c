@@ -174,79 +174,40 @@ static WRITE16_HANDLER(cartridge_ram_w)
 #endif
 #endif
 
-static MEMORY_READ16_START(genesis_readmem)
-	// { 0x000000, 0x3fffff, MRA16_ROM },
-	{ 0x000000, 0x1fffff, MRA16_ROM },
-	{ 0xff0000, 0xffffff, MRA16_BANK2}, /* RAM */
-	{ 0xc00014, 0xfeffff, MRA16_NOP },
-
- 	{ 0xc00000, 0xc00003, genesis_vdp_data_r },
-	{ 0xc00004, 0xc00007, genesis_vdp_ctrl_r },
-	{ 0xc00008, 0xc0000b, genesis_vdp_hv_r },
-	{ 0xc00010, 0xc00013, MRA16_NOP /*would be genesis_vdp_76489_r*/ },
-	{ 0xa11204, 0xbfffff, MRA16_NOP },
-
-	{ 0xa11000, 0xa11203, genesis_ctrl_r },
-	{ 0xa10000, 0xa1001f, genesis_io_r },
-	{ 0xa00000, 0xa01fff, genesis_soundram_r },
-	{ 0xa04000, 0xa04003, YM2612_68000_r },
-
+static ADDRESS_MAP_START(genesis_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
 #ifdef EASPORTS_HACK
-	{ 0x200000, 0x20ffff, MRA16_ROM},
+	AM_RANGE(0x200000, 0x20ffff) AM_RAM
 #endif
-MEMORY_END
+	AM_RANGE(0xa00000, 0xa01fff) AM_READWRITE(genesis_soundram_r, genesis_soundram_w)
+	AM_RANGE(0xa04000, 0xa04003) AM_READWRITE(YM2612_68000_r, YM2612_68000_w)
+	AM_RANGE(0xa06000, 0xa06003) AM_WRITE(genesis_ramlatch_68000_w)
+	AM_RANGE(0xa07f10, 0xa07f13) AM_WRITE(genesis_vdp_76489_w)
+	AM_RANGE(0xa10000, 0xa1001f) AM_READWRITE(genesis_io_r, genesis_io_w)
+	AM_RANGE(0xa11000, 0xa11203) AM_READWRITE(genesis_ctrl_r, genesis_ctrl_w)
+	AM_RANGE(0xc00000, 0xc00003) AM_READWRITE(genesis_vdp_data_r, genesis_vdp_data_w)
+	AM_RANGE(0xc00004, 0xc00007) AM_READWRITE(genesis_vdp_ctrl_r, genesis_vdp_ctrl_w)
+	AM_RANGE(0xc00008, 0xc0000b) AM_READWRITE(genesis_vdp_hv_r, genesis_vdp_hv_w)
+	AM_RANGE(0xc00010, 0xc00013) AM_WRITE(genesis_vdp_76489_w)	/* would also be genesis_vdp_76489_r*/
+	AM_RANGE(0xd00000, 0xd03fff) AM_WRITE(genesis_videoram1_w) AM_BASE((data16_t **) &videoram) AM_SIZE(&videoram_size) /*this is just a fake */
+	AM_RANGE(0xff0000, 0xffffff) AM_READWRITE(MRA16_BANK2, MWA16_BANK2)
+ADDRESS_MAP_END
 
 
-static MEMORY_WRITE16_START(genesis_writemem)
-	{ 0xff0000, 0xffffff, MWA16_BANK2, /*genesis_sharedram_w*/ },
- 	{ 0xd00000, 0xd03fff, genesis_videoram1_w, (data16_t**)&videoram, &videoram_size }, /*this is just a fake */
-	{ 0xc00014, 0xcfffff, MWA16_NOP },
-	{ 0xc00000, 0xc00003, genesis_vdp_data_w },
-	{ 0xc00004, 0xc00007, genesis_vdp_ctrl_w },
-	{ 0xc00008, 0xc0000b, genesis_vdp_hv_w },
- 	{ 0xc00010, 0xc00013, genesis_vdp_76489_w },
-	{ 0xa11204, 0xbfffff, MWA16_NOP },
-	{ 0xa11000, 0xa11203, genesis_ctrl_w },
-	{ 0xa10000, 0xa1001f, genesis_io_w},
-	{ 0xa07f10, 0xa07f13, genesis_vdp_76489_w },
-	{ 0xa06000, 0xa06003, genesis_ramlatch_68000_w },
-	{ 0xa00000, 0xa01fff, genesis_soundram_w },
-	{ 0xa04000, 0xa04003, YM2612_68000_w },
-#ifdef EASPORTS_HACK
-	{ 0x200000, 0x20ffff, MWA16_RAM /*cartridge_ram_w*/ },
-	{ 0x000000, 0x1fffff, MWA16_ROM },
-#endif
-#ifndef EASPORT_HACK
-	// { 0x000000, 0x3fffff, MWA16_ROM },
-	{ 0x000000, 0x1fffff, MWA16_ROM },
-#endif
-MEMORY_END
+static ADDRESS_MAP_START(sound_map, ADDRESS_SPACE_PROGRAM, 8)
+	AM_RANGE(0x0000, 0x1fff) AM_READWRITE(MRA8_BANK1, MWA8_BANK1)
+	AM_RANGE(0x4000, 0x4000) AM_READWRITE(YM2612_status_port_0_A_r, YM2612_control_port_0_A_w)
+	AM_RANGE(0x4001, 0x4001) AM_READWRITE(YM2612_read_port_0_r, YM2612_data_port_0_A_w)
+	AM_RANGE(0x4002, 0x4002) AM_READWRITE(YM2612_status_port_0_B_r, YM2612_control_port_0_B_w)
+	AM_RANGE(0x4003, 0x4003) AM_WRITE(YM2612_data_port_0_B_w) /*YM2612_3_r*/
+	AM_RANGE(0x7f11, 0x7f11) AM_READWRITE(genesis_vdp_76489_r, SN76496_0_w)
+	AM_RANGE(0x8000, 0xffff) AM_READWRITE(genesis_s_68000_ram_r, genesis_s_68000_ram_w)
+ADDRESS_MAP_END
 
 
-static MEMORY_READ_START(genesis_s_readmem)
- 	{ 0x0000, 0x1fff, MRA8_BANK1, /*&genesis_soundram*//*genesis_soundram_r*/ },
-	{ 0x4000, 0x4000, YM2612_status_port_0_A_r },
-	{ 0x4001, 0x4001, YM2612_read_port_0_r },
-	{ 0x4002, 0x4002, YM2612_status_port_0_B_r },
-//	{ 0x4003, 0x4003, YM2612_3_r },
-	{ 0x8000, 0xffff, genesis_s_68000_ram_r },
-	{ 0x7f11, 0x7f11, genesis_vdp_76489_r },
-MEMORY_END
-
-static MEMORY_WRITE_START(genesis_s_writemem)
-	{ 0x0000, 0x1fff, MWA8_BANK1 /*genesis_soundram_w*/ },
-	{ 0x4000, 0x4000, YM2612_control_port_0_A_w },
-	{ 0x4001, 0x4001, YM2612_data_port_0_A_w },
-	{ 0x4002, 0x4002, YM2612_control_port_0_B_w },
-	{ 0x4003, 0x4003, YM2612_data_port_0_B_w },
-	{ 0x6000, 0x6000, genesis_ramlatch_w },
- 	{ 0x7f11, 0x7f11, SN76496_0_w },
- 	{ 0x8000, 0xffff, genesis_s_68000_ram_w },
-MEMORY_END
-
-static PORT_WRITE_START(writeport)
-	{ 0x7f, 0x7f, SN76496_0_w },
-PORT_END
+static ADDRESS_MAP_START(sound_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x7f, 0x7f) AM_WRITE(SN76496_0_w)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( genesis )
@@ -302,13 +263,13 @@ static struct YM2612interface ym2612_interface =
 static MACHINE_DRIVER_START( genesis )
 	/*basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M68000, 53693100 / 7) /* 8Mhz..ish */
-	MDRV_CPU_MEMORY(genesis_readmem, genesis_writemem)
+	MDRV_CPU_PROGRAM_MAP(genesis_map, 0)
 	MDRV_CPU_VBLANK_INT(genesis_interrupt, 1) /* upto 224 int's per frame */
 
 	MDRV_CPU_ADD_TAG("sound", Z80, 53693100 / 15) /* 4Mhz..ish */
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(genesis_s_readmem, genesis_s_writemem)
-	MDRV_CPU_PORTS(0, writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
+	MDRV_CPU_IO_MAP(sound_io, 0)
 	MDRV_CPU_VBLANK_INT(genesis_s_interrupt, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)

@@ -67,7 +67,6 @@ extern int systemType;
 /* Function prototypes */
 
 WRITE_HANDLER(sms_cartram_w);
-WRITE_HANDLER(sms_ram_w);
 WRITE_HANDLER(sms_fm_detect_w);
 READ_HANDLER(sms_fm_detect_r);
 READ_HANDLER(sms_input_port_0_r);
@@ -81,7 +80,6 @@ WRITE_HANDLER(gg_sio_w);
 READ_HANDLER(gg_sio_r);
 READ_HANDLER(gg_psg_r);
 WRITE_HANDLER(gg_psg_w);
-READ_HANDLER(gg_dummy_r);
 READ_HANDLER(gg_input_port_2_r);
 
 void setup_rom(void);

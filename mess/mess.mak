@@ -190,7 +190,7 @@ DRVLIBS = \
 	$(OBJ)/pcshare.a  \
 	$(OBJ)/ti99.a     \
 	$(OBJ)/amstrad.a  \
-#	$(OBJ)/sega.a     \
+	$(OBJ)/sega.a     \
 #	$(OBJ)/acorn.a    \
 #	$(OBJ)/atari.a    \
 #	$(OBJ)/advision.a \
@@ -429,9 +429,9 @@ $(OBJ)/apple.a:   \
 	$(OBJ)/mess/vidhrdw/mac.o			\
 	$(OBJ)/mess/machine/mac.o			\
 	$(OBJ)/mess/systems/mac.o			\
-#	$(OBJ)/mess/vidhrdw/apple1.o		\
-#	$(OBJ)/mess/machine/apple1.o		\
-#	$(OBJ)/mess/systems/apple1.o
+	$(OBJ)/mess/vidhrdw/apple1.o		\
+	$(OBJ)/mess/machine/apple1.o		\
+	$(OBJ)/mess/systems/apple1.o
 
 
 $(OBJ)/avigo.a: \

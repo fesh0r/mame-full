@@ -51,23 +51,13 @@ $F000-$FFFF:	PROM (programmable read-only memory) used by the Apple Monitor prog
 
 /* memory w/r functions */
 
-MEMORY_READ_START( apple1_readmem )
-	{0x0000, 0x1fff, MRA8_RAM},
-	{0x2000, 0xcfff, MRA8_NOP},
-	{0xd000, 0xd00f, MRA8_NOP},
-	{0xd010, 0xd013, pia_0_r},
-	{0xd014, 0xfeff, MRA8_NOP},
-	{0xff00, 0xffff, MRA8_ROM},
-MEMORY_END
-
-MEMORY_WRITE_START( apple1_writemem )
-	{0x0000, 0x1fff, MWA8_RAM},
-	{0x2000, 0xcfff, MWA8_NOP},
-	{0xd000, 0xd00f, MWA8_NOP},
-	{0xd010, 0xd013, pia_0_w},
-	{0xd014, 0xfeff, MWA8_NOP},
-	{0xff00, 0xffff, MWA8_ROM},
-MEMORY_END
+static ADDRESS_MAP_START( apple1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xcfff) AM_NOP
+	AM_RANGE(0xd000, 0xd00f) AM_NOP
+	AM_RANGE(0xd010, 0xd013) AM_READWRITE(pia_0_r, pia_0_w)
+	AM_RANGE(0xd014, 0xfeff) AM_NOP
+	AM_RANGE(0xff00, 0xffff) AM_ROM
+ADDRESS_MAP_END
 
 /* graphics output */
 
@@ -85,7 +75,9 @@ struct GfxLayout apple1_charlayout =
 static struct	GfxDecodeInfo apple1_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &apple1_charlayout, 0, 1},
-MEMORY_END
+	{ -1 }
+};
+
 
 static unsigned char apple1_palette[] =
 {
@@ -100,9 +92,7 @@ static unsigned short apple1_colortable[] =
 
 static PALETTE_INIT( apple1 )
 {
-	int i;
-	for (i = 0; i < (sizeof(apple1_palette) / 3); i++)
-		palette_set_color(i, apple1_palette[i*3+0], apple1_palette[i*3+1], apple1_palette[i*3+2]);
+	palette_set_colors(0, apple1_palette, sizeof(apple1_palette) / 3);
 	memcpy(colortable, apple1_colortable, sizeof (apple1_colortable));
 }
 
@@ -166,8 +156,7 @@ INPUT_PORTS_START( apple1 )
 	PORT_BITX( 0x0004, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Escape", KEYCODE_ESC, IP_JOY_NONE )
 	PORT_BITX( 0x0008, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Shift", KEYCODE_LSHIFT, IP_JOY_NONE )
 	PORT_BITX( 0x0010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Shift", KEYCODE_RSHIFT, IP_JOY_NONE )
-	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Reset", KEYCODE_F1, IP_JOY_NONE )
-	PORT_BITX( 0x0040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Clear", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BITX( 0x0020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Clear", KEYCODE_F2, IP_JOY_NONE )
 	PORT_START	/* 4: Machine config */
 	PORT_DIPNAME( 0x01, 0, "RAM Size")
 	PORT_DIPSETTING(0, "8Kb")
@@ -180,13 +169,11 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( apple1 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", M6502, 960000)        /* 1.023 Mhz */
-	MDRV_CPU_MEMORY(apple1_readmem, apple1_writemem)
+	MDRV_CPU_PROGRAM_MAP(apple1_map, 0)
 	MDRV_CPU_VBLANK_INT(apple1_interrupt, 1)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(1)
-
-	MDRV_MACHINE_INIT(apple1)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(40 * 7, 24 * 8)
@@ -210,7 +197,9 @@ ROM_END
 
 SYSTEM_CONFIG_START(apple1)
 	CONFIG_DEVICE_SNAPSHOT("snp\0", apple1)
+	CONFIG_RAM_DEFAULT	(0x2000)
+	CONFIG_RAM			(0xD000)
 SYSTEM_CONFIG_END
 
 /*    YEAR	NAME	PARENT	COMPAT	MACHINE		INPUT		INIT	CONFIG	COMPANY				FULLNAME */
-COMP( 1976,	apple1,	0,		0,		apple1,		apple1,		0,		apple1,	"Apple Computer",	"Apple I" )
+COMP( 1976,	apple1,	0,		0,		apple1,		apple1,		apple1,	apple1,	"Apple Computer",	"Apple I" )

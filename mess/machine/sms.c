@@ -238,10 +238,6 @@ WRITE_HANDLER(sms_ram_w) {
 	}
 }
 
-READ_HANDLER(gg_dummy_r) {
-	return 0xFF;
-}
-
 WRITE_HANDLER(gg_sio_w) {
 	logerror("*** write %02X to SIO register #%d\n", data, offset);
 

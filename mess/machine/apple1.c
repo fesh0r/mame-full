@@ -61,22 +61,16 @@ static int apple1_kbd_data;
 
 
 /*****************************************************************************
-**	apple1_init_machine
+**	driver init
 *****************************************************************************/
-MACHINE_INIT( apple1 )
-{
-	logerror("apple1_init\r\n");
 
-	if (readinputport(4) & 0x01)
-	{
-		install_mem_write_handler (0, 0x2000, 0xcfff, MWA8_RAM);
-		install_mem_read_handler (0, 0x2000, 0xcfff, MRA8_RAM);
-	}
-	else
-	{
-		install_mem_write_handler (0, 0x2000, 0xcfff, MWA8_NOP);
-		install_mem_read_handler (0, 0x2000, 0xcfff, MRA8_NOP);
-	}
+DRIVER_INIT( apple1 )
+{
+	/* install RAM handlers */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, MRA8_BANK1);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, mess_ram_size - 1, 0, MWA8_BANK1);
+	cpu_setbank(1, mess_ram);
+
 	pia_config(0, PIA_8BIT | PIA_AUTOSENSE, &apple1_pia0);
 }
 
@@ -155,15 +149,7 @@ void apple1_interrupt(void)
 
 	/* Check for keypresses */
 	apple1_kbd_data = 0;
-	if (readinputport(3) & 0x0020)	/* Reset */
-	{
-		for (loop = 0; loop < 0xcfff; loop++) cpu_writemem16(loop, 0);
-		apple1_vh_dsp_clr();
-		pia_reset();
-		m6502_reset(NULL);
-		activecpu_set_pc(0xff00);
-	}
-	else if (readinputport(3) & 0x0040)	/* clear screen */
+	if (readinputport(3) & 0x0020)	/* clear screen */
 	{
 		apple1_vh_dsp_clr();
 	}

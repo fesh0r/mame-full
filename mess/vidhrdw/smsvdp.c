@@ -334,14 +334,14 @@ INTERRUPT_GEN(sms) {
 
 		if ((statusReg & STATUS_HINT) && (reg[0x00] & 0x10)) {
 			irqState = 1;
-			z80_set_irq_line(0, ASSERT_LINE);
+			activecpu_set_irq_line(0, ASSERT_LINE);
 		}
 	} else {
 		lineCountDownCounter = reg[0x0A];
 
 		if ((statusReg & STATUS_VINT) && (reg[0x01] & 0x20)) {
 			irqState = 1;
-			z80_set_irq_line(0, ASSERT_LINE);
+			activecpu_set_irq_line(0, ASSERT_LINE);
 		}
 	}
 
@@ -418,7 +418,7 @@ READ_HANDLER(sms_vdp_ctrl_r) {
 
 	if (irqState == 1) {
 		irqState = 0;
-		z80_set_irq_line(0, CLEAR_LINE);
+		activecpu_set_irq_line(0, CLEAR_LINE);
 	}
 
 	return (temp);

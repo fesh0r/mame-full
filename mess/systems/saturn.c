@@ -579,7 +579,7 @@ static WRITE32_HANDLER( saturn_smpc_w )  /* SMPC */
 		    break;
 		  case EXEL    : logerror("smpc_w EXEL    - data = %02lX - PC=%08lX\n", (long) d, (long) activecpu_get_reg(SH2_PC));
 		    break;
-		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d,activecpu_get_reg(SH2_PC));
+		  default      : logerror("smpc_w offset=%08X data=%02X - Pc=%08X\n",ea,d, (unsigned int) activecpu_get_reg(SH2_PC));
 		  }
 	      }
 	}
@@ -1869,24 +1869,16 @@ static VIDEO_UPDATE( saturn )
    These are stubs so that mame doesn't segfault on NULL pointer access. doh :)
 */
 
-static MEMORY_READ32_START( saturn_readmem )
-MEMORY_END
-
-static MEMORY_WRITE32_START( saturn_writemem )
-MEMORY_END
+static ADDRESS_MAP_START( saturn_mem, ADDRESS_SPACE_PROGRAM, 32 )
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( saturn )
-
-     PORT_START /* DIP switches */
-     PORT_BIT(0xff, 0xff, IPT_UNUSED)
-
+	PORT_START /* DIP switches */
+	PORT_BIT(0xff, 0xff, IPT_UNUSED)
 INPUT_PORTS_END
 
-static MEMORY_READ16_START( readmem_68k )
-MEMORY_END
-
-static MEMORY_WRITE16_START( writemem_68k )
-MEMORY_END
+static ADDRESS_MAP_START( sound_mem, ADDRESS_SPACE_PROGRAM, 16 )
+ADDRESS_MAP_END
 
 static PALETTE_INIT( saturn )
 {
@@ -1913,12 +1905,12 @@ static PALETTE_INIT( saturn )
 static MACHINE_DRIVER_START( saturn )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
-	MDRV_CPU_MEMORY(saturn_readmem, saturn_writemem)
+	MDRV_CPU_PROGRAM_MAP(saturn_mem, 0)
 	MDRV_CPU_ADD(SH2, 28636400)			/* NTSC Clock speed at 352/704 Pixel/line dot clock */
-	MDRV_CPU_MEMORY(saturn_readmem, saturn_writemem)
+	MDRV_CPU_PROGRAM_MAP(saturn_mem, 0)
 	MDRV_CPU_ADD(M68000, 11300000)		/* Sound CPU; 11.3mhz (MC68000-12)*/
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
-	MDRV_CPU_MEMORY(readmem_68k,writemem_68k)
+	MDRV_CPU_PROGRAM_MAP(sound_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

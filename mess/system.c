@@ -119,29 +119,29 @@ const struct GameDriver *test_drivers[] =
 	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
 	/* SEGA */
-//	DRIVER( gamegear )	/* Sega GameGear									*/
-//	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
-//	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
-//	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
-//	DRIVER( sms )		/* Sega Master System (NTSC)						*/
-//	DRIVER( smspal )	/* Sega Master System (PAL)							*/
-//	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
-//	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
-//	DRIVER( smsss )		/* Sega Master System								*/
-//	DRIVER( smsu13 )	/* Sega Master System								*/
-//	DRIVER( smse13 )	/* Sega Master System								*/
-//	DRIVER( smsu13h )	/* Sega Master System								*/
-//	DRIVER( smse13h )	/* Sega Master System								*/
-//	DRIVER( smsuam )	/* Sega Master System								*/
-//	DRIVER( smseam )	/* Sega Master System								*/
-//	DRIVER( smsesh )	/* Sega Master System								*/
-//	DRIVER( smsbsh )	/* Sega Master System								*/
-//	DRIVER( smsuhs24 )	/* Sega Master System								*/
-//	DRIVER( smsehs24 )	/* Sega Master System								*/
-//	DRIVER( smsuh34 )	/* Sega Master System								*/
-//	DRIVER( smseh34 )	/* Sega Master System								*/
-//	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
-//TESTDRIVER( saturn )	/* Sega Saturn										*/
+	DRIVER( gamegear )	/* Sega GameGear									*/
+	DRIVER( gamegj )	/* Sega GameGear (Japanese)							*/
+	DRIVER( gamg )		/* Sega GameGear (European/American Majesco)		*/
+	DRIVER( gamgj )		/* Sega GameGear (Japanese Majesco)					*/
+	DRIVER( sms )		/* Sega Master System (NTSC)						*/
+	DRIVER( smspal )	/* Sega Master System (PAL)							*/
+	DRIVER( smsj21 )	/* Sega Master System (PAL Japanese SMS BIOS v2.1)	*/
+	DRIVER( smsm3 )		/* Sega Mark III (PAL) Japanese SMS BIOS v2.1		*/
+	DRIVER( smsss )		/* Sega Master System								*/
+	DRIVER( smsu13 )	/* Sega Master System								*/
+	DRIVER( smse13 )	/* Sega Master System								*/
+	DRIVER( smsu13h )	/* Sega Master System								*/
+	DRIVER( smse13h )	/* Sega Master System								*/
+	DRIVER( smsuam )	/* Sega Master System								*/
+	DRIVER( smseam )	/* Sega Master System								*/
+	DRIVER( smsesh )	/* Sega Master System								*/
+	DRIVER( smsbsh )	/* Sega Master System								*/
+	DRIVER( smsuhs24 )	/* Sega Master System								*/
+	DRIVER( smsehs24 )	/* Sega Master System								*/
+	DRIVER( smsuh34 )	/* Sega Master System								*/
+	DRIVER( smseh34 )	/* Sega Master System								*/
+	DRIVER( genesis )	/* Sega Genesis/MegaDrive							*/
+TESTDRIVER( saturn )	/* Sega Saturn										*/
 
 	/* BALLY */
 //	DRIVER( astrocde )	/* Bally Astrocade									*/
@@ -248,7 +248,7 @@ TESTDRIVER( nc200 )		/* 19?? NC200										*/
  * Apple IIc Plus		 September		 1988
  * Apple IIgs ROM 3 	 August 		 1989
  */
-//	DRIVER( apple1 )	/* 1976 Apple 1 									*/
+	DRIVER( apple1 )	/* 1976 Apple 1 									*/
 	DRIVER( apple2 )	/* 1977 Apple ][ 									*/
 	DRIVER( apple2p )	/* 1979 Apple ][+ 									*/
 	DRIVER( apple2c )	/* 1984 Apple //c									*/
