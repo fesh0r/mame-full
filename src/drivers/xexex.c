@@ -5,7 +5,6 @@ Xexex
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpuintrf.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
@@ -14,14 +13,11 @@ Xexex
 int xexex_vh_start(void);
 void xexex_vh_stop(void);
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+READ_HANDLER( xexex_palette_r );
 WRITE_HANDLER( xexex_palette_w );
-WRITE_HANDLER( xexex_sprite_w );
 
-static int cur_rombank;
 static int cur_back_select, cur_back_ctrla;
 static int cur_control2;
-
-extern unsigned char *xexex_paletteram, *xexex_spriteram;
 
 static int init_eeprom_count;
 
@@ -54,17 +50,37 @@ static void nvram_handler(void *file,int read_or_write)
 	}
 }
 
-static void gfx_init(void)
+static WRITE_HANDLER( K053251_halfword_w )
 {
-	konami_rom_deinterleave_2(REGION_GFX1);
-	konami_rom_deinterleave_4(REGION_GFX2);
+	if ((data & 0x00ff0000) == 0)
+		K053251_w(offset >> 1,data & 0xff);
 }
 
-static void init_xexex(void)
+/* the interface with the 053247 is weird. The chip can address only 0x1000 bytes */
+/* of RAM, but they put 0x8000 there. The CPU can access them all. Address lines */
+/* A1, A5 and A6 don't go to the 053247. */
+static READ_HANDLER( K053247_scattered_word_r )
 {
-	cur_rombank = 0;
+	if (offset & 0x0062)
+		return READ_WORD(&spriteram[offset]);
+	else
+	{
+		offset = ((offset & 0x001c) >> 1) | ((offset & 0x7f80) >> 3);
+		return K053247_word_r(offset);
+	}
+}
 
-	gfx_init();
+static WRITE_HANDLER( K053247_scattered_word_w )
+{
+	if (offset & 0x0062)
+		COMBINE_WORD_MEM(&spriteram[offset],data);
+	else
+	{
+		offset = ((offset & 0x001c) >> 1) | ((offset & 0x7f80) >> 3);
+//if ((offset&0xf) == 0)
+//	logerror("%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
+		K053247_word_w(offset,data);
+	}
 }
 
 static READ_HANDLER( control0_r )
@@ -129,7 +145,7 @@ static int xexex_interrupt(void)
 
 		case 2:
 			if (K053246_is_IRQ_enabled() && (cur_control2 & 0x0020))
-				return 6;	 
+				return 6;
 			break;
 	}
 	return ignore_interrupt();
@@ -209,9 +225,9 @@ static READ_HANDLER( backrom_r )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x080000, 0x08ffff, MRA_BANK1 },			/* Main RAM */
-	{ 0x090000, 0x097fff, MRA_BANK3 },			/* Sprites */
-	{ 0x0c0000, 0x0c003f, K053157_r },
+	{ 0x080000, 0x08ffff, MRA_BANK1 },
+	{ 0x090000, 0x097fff, K053247_scattered_word_r },
+	{ 0x0c0000, 0x0c003f, K054157_r },
 	{ 0x0c4000, 0x0c4001, K053246_word_r },
 	{ 0x0c6000, 0x0c6fff, MRA_BANK4 },			/* Effects? */
 	{ 0x0c800a, 0x0c800b, back_ctrla_r },
@@ -223,29 +239,29 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0dc002, 0x0dc003, control1_r },
 	{ 0x0de000, 0x0de001, control2_r },
 	{ 0x100000, 0x17ffff, MRA_ROM },
-	{ 0x180000, 0x181fff, MRA_BANK2 },			/* Graphic planes */
+	{ 0x180000, 0x181fff, K054157_ram_word_r },
 	{ 0x190000, 0x191fff, MRA_BANK6 }, 			/* Passthrough to tile roms */
 	{ 0x1a0000, 0x1a1fff, backrom_r },
-	{ 0x1b0000, 0x1b1fff, MRA_BANK5 },
+	{ 0x1b0000, 0x1b1fff, xexex_palette_r },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x08ffff, MWA_BANK1 },
-	{ 0x090000, 0x097fff, xexex_sprite_w, &xexex_spriteram },
-	{ 0x0c0000, 0x0c003f, K053157_w },
+	{ 0x080000, 0x08ffff, MWA_BANK1 },	/* Work RAM */
+	{ 0x090000, 0x097fff, K053247_scattered_word_w, &spriteram },
+	{ 0x0c0000, 0x0c003f, K054157_w },
 	{ 0x0c2000, 0x0c2007, K053246_word_w },
 	{ 0x0c6000, 0x0c6fff, MWA_BANK4 },
 	{ 0x0c800a, 0x0c800b, back_ctrla_w },
 	{ 0x0c800e, 0x0c800f, back_select_w },
-	{ 0x0cc000, 0x0cc01f, K053251_word_w },
+	{ 0x0cc000, 0x0cc01f, K053251_halfword_w },
 	{ 0x0d600c, 0x0d600d, sound_cmd_w },
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA_ROM },
-	{ 0x180000, 0x181fff, K053157_ram_w },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &xexex_paletteram },
+	{ 0x180000, 0x181fff, K054157_ram_word_w },
+	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &paletteram },
 	{ -1 }
 };
 
@@ -275,19 +291,24 @@ static struct MemoryWriteAddress sound_writemem[] =
 #endif
 
 
+
 INPUT_PORTS_START( xexex )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0xcc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )	/* EEPROM data */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_UNUSED )	/* EEPROM ready (always 1) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )	/* EEPROM ready (always 1) */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0xf4, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -308,13 +329,9 @@ INPUT_PORTS_START( xexex )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
-
 INPUT_PORTS_END
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ -1 }
-};
+
 
 static struct MachineDriver machine_driver_xexex =
 {
@@ -339,9 +356,8 @@ static struct MachineDriver machine_driver_xexex =
 	0,
 
 	/* video hardware */
-	48*8, 32*8,
-	{ 0*8, 48*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
+	64*8, 32*8, { 8*8, (64-8)*8-1, 0*8, 32*8-1 },
+	0,	/* gfx decoded by konamiic.c */
 	2048, 2048,
 	0,
 
@@ -363,10 +379,10 @@ static struct MachineDriver machine_driver_xexex =
 
 ROM_START( xexex )
 	ROM_REGION( 0x180000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "xex_a01.rom", 0x000000,  0x40000, 0x3ebcb066 )
-	ROM_LOAD_ODD ( "xex_a02.rom", 0x000000,  0x40000, 0x36ea7a48 )
-	ROM_LOAD_EVEN( "xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
-	ROM_LOAD_ODD ( "xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
+	ROM_LOAD_EVEN( "xex_a01.rom",  0x000000, 0x40000, 0x3ebcb066 )
+	ROM_LOAD_ODD ( "xex_a02.rom",  0x000000, 0x40000, 0x36ea7a48 )
+	ROM_LOAD_EVEN( "xex_b03.rom",  0x100000, 0x40000, 0x97833086 )
+	ROM_LOAD_ODD ( "xex_b04.rom",  0x100000, 0x40000, 0x26ec5dc8 )
 
 	ROM_REGION( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "xex_a05.rom", 0x000000, 0x020000, 0x0e33d6ec )
@@ -386,12 +402,12 @@ ROM_START( xexex )
 	ROM_LOAD( "xex_b08.rom", 0x000000, 0x080000, 0xca816b7b )
 ROM_END
 
-ROM_START( xexexjp )
+ROM_START( xexexj )
 	ROM_REGION( 0x180000, REGION_CPU1 )
-	ROM_LOAD_EVEN( "067jaa01.16d", 0x000000,  0x40000, 0x06e99784 )
-	ROM_LOAD_ODD ( "067jaa02.16e", 0x000000,  0x40000, 0x30ae5bc4 )
-	ROM_LOAD_EVEN( "xex_b03.rom", 0x100000,  0x40000, 0x97833086 )
-	ROM_LOAD_ODD ( "xex_b04.rom", 0x100000,  0x40000, 0x26ec5dc8 )
+	ROM_LOAD_EVEN( "067jaa01.16d", 0x000000, 0x40000, 0x06e99784 )
+	ROM_LOAD_ODD ( "067jaa02.16e", 0x000000, 0x40000, 0x30ae5bc4 )
+	ROM_LOAD_EVEN( "xex_b03.rom",  0x100000, 0x40000, 0x97833086 )
+	ROM_LOAD_ODD ( "xex_b04.rom",  0x100000, 0x40000, 0x26ec5dc8 )
 
 	ROM_REGION( 0x30000, REGION_CPU2 )
 	ROM_LOAD( "067jaa05.4e", 0x000000, 0x020000, 0x2f4dd0a8 )
@@ -413,5 +429,12 @@ ROM_END
 
 
 
-GAME( 1991, xexex,   0,     xexex, xexex, xexex, 0, "Konami", "Xexex" )
-GAME( 1991, xexexjp, xexex, xexex, xexex, xexex, 0, "Konami", "Xexex (Japanese set)" )
+static void init_xexex(void)
+{
+	konami_rom_deinterleave_2(REGION_GFX1);
+	konami_rom_deinterleave_4(REGION_GFX2);
+}
+
+
+GAMEX( 1991, xexex,  0,     xexex, xexex, xexex, ROT0, "Konami", "Xexex (World)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1991, xexexj, xexex, xexex, xexex, xexex, ROT0, "Konami", "Xexex (Japan)", GAME_NOT_WORKING | GAME_NO_SOUND )

@@ -4,8 +4,8 @@
 
 
 static int sprite_colorbase;
-unsigned char *xexex_paletteram, *xexex_spriteram;
 static int layer_colorbase[4], bg_colorbase, layerpri[4];
+
 
 static void xexex_sprite_callback(int *code, int *color, int *priority_mask)
 {
@@ -25,16 +25,16 @@ static void xexex_tile_callback(int layer, int *code, int *color)
 }
 
 static int xexex_scrolld[2][4][2] = {
-	{{ 53, 16 }, {53, 16}, {53, 16}, {53, 16}},
-	{{ 42, 16 }, {42-4, 16}, {42-2, 16}, {42, 16}}
+	{{ 53-64, 16 }, {53-64, 16}, {53-64, 16}, {53-64, 16}},
+	{{ 42-64, 16 }, {42-64-4, 16}, {42-64-2, 16}, {42-64, 16}}
 };
 
 int xexex_vh_start(void)
 {
-	K053157_vh_start(2, 6, REGION_GFX1, xexex_scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback);
-	if (K053247_vh_start(REGION_GFX2, -92, 32, NORMAL_PLANE_ORDER, xexex_sprite_callback))
+	K054157_vh_start(2, 6, REGION_GFX1, xexex_scrolld, NORMAL_PLANE_ORDER, xexex_tile_callback);
+	if (K053247_vh_start(REGION_GFX2, -28, 32, NORMAL_PLANE_ORDER, xexex_sprite_callback))
 	{
-		K053157_vh_stop();
+		K054157_vh_stop();
 		return 1;
 	}
 	return 0;
@@ -42,22 +42,28 @@ int xexex_vh_start(void)
 
 void xexex_vh_stop(void)
 {
-	K053157_vh_stop(); 
+	K054157_vh_stop();
 	K053247_vh_stop();
 }
 
+
+
+READ_HANDLER( xexex_palette_r )
+{
+	return READ_WORD(paletteram+offset);
+}
 
 WRITE_HANDLER( xexex_palette_w )
 {
 	int r, g, b;
 	int data0, data1;
 
-	COMBINE_WORD_MEM(xexex_paletteram+offset, data);
+	COMBINE_WORD_MEM(paletteram+offset, data);
 
 	offset &= ~3;
 
-	data0 = READ_WORD(xexex_paletteram + offset);
-	data1 = READ_WORD(xexex_paletteram + offset + 2);
+	data0 = READ_WORD(paletteram + offset);
+	data1 = READ_WORD(paletteram + offset + 2);
 
 	r = data0 & 0xff;
 	g = data1 >> 8;
@@ -65,6 +71,7 @@ WRITE_HANDLER( xexex_palette_w )
 
 	palette_change_color(offset>>2, r, g, b);
 }
+
 
 
 /* useful function to sort the four tile layers by priority order */
@@ -87,13 +94,6 @@ static void sortlayers(int *layer, int *pri)
 	SWAP(2, 3)
 }
 
-WRITE_HANDLER( xexex_sprite_w )
-{
-	COMBINE_WORD_MEM(xexex_spriteram+offset, data);
-	if(!(offset & 2) && !(offset & 0x60))
-		K053247_word_w(((offset >> 3) & 0x1ff0) | ((offset >> 1) & 0xe), data);
-}
-
 void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int layer[4];
@@ -105,7 +105,7 @@ void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
 	layer_colorbase[3] = 0x70;
 
-	K053157_tilemap_update();
+	K054157_tilemap_update();
 
 	palette_init_used_colors();
 	K053247_mark_sprites_colors();
@@ -128,11 +128,11 @@ void xexex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	fillbitmap(priority_bitmap, 0, NULL);
 	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
-	K053157_tilemap_draw(bitmap, layer[0], 1<<16);
-	K053157_tilemap_draw(bitmap, layer[1], 2<<16);
-	K053157_tilemap_draw(bitmap, layer[2], 4<<16);
+	K054157_tilemap_draw(bitmap, layer[0], 1<<16);
+	K054157_tilemap_draw(bitmap, layer[1], 2<<16);
+	K054157_tilemap_draw(bitmap, layer[2], 4<<16);
 
 	K053247_sprites_draw(bitmap);
 
-	K053157_tilemap_draw(bitmap, 3, 0);
+	K054157_tilemap_draw(bitmap, 3, 0);
 }
