@@ -7,13 +7,14 @@ Miodrag Jevremovic.
 There is the need to find more information about this system, without it the 
 progress in developing driver is nearly impossible.
 
-31/01/2001 Snapshot loading corrected
-09/01/2001 Fast mode implemented (many thanks to Kevin Thacker)
-07/01/2001 Keyboard corrected (still some kays unknown)
-           Horizontal screen positioning in video subsystem added
-05/01/2001 Keyboard implemented (some keys unknown)
-03/01/2001 Snapshot loading added
-01/01/2001 Preliminary driver
+15/09/2002 Snapshot loading fixed. Code cleanup.
+31/01/2001 Snapshot loading corrected.
+09/01/2001 Fast mode implemented (many thanks to Kevin Thacker).
+07/01/2001 Keyboard corrected (still some kays unknown).
+           Horizontal screen positioning in video subsystem added.
+05/01/2001 Keyboard implemented (some keys unknown).
+03/01/2001 Snapshot loading added.
+01/01/2001 Preliminary driver.
 
 To do:
 -Video subsystem features
@@ -50,15 +51,12 @@ Ports:
 #include "vidhrdw/generic.h"
 #include "includes/galaxy.h"
 
-/* port i/o functions */
-
 PORT_READ_START( galaxy_readport )
 PORT_END
 
 PORT_WRITE_START( galaxy_writeport )
 PORT_END
 
-/* memory w/r functions */
 
 MEMORY_READ_START( galaxy_readmem )
 	{0x0000, 0x0fff, MRA_ROM},
@@ -80,44 +78,13 @@ MEMORY_WRITE_START( galaxy_writemem )
 	{0x4000, 0xffff, MWA_NOP},
 MEMORY_END
 
-/* graphics output */
-
-struct GfxLayout galaxy_charlayout =
-{
-	8, 13,	/* 8x8 characters */
-	128,	/* 128 characters */
-	1,		/* 1 bits per pixel */
-	{0},	/* no bitplanes; 1 bit per pixel */
-	{7, 6, 5, 4, 3, 2, 1, 0},
-	{0*128*8, 1*128*8,  2*128*8,  3*128*8,
-	 4*128*8, 5*128*8,  6*128*8,  7*128*8,
-	 8*128*8, 9*128*8, 10*8*128, 11*128*8, 12*128*8},
-	8 	/* each character takes 1 consecutive byte */
-};
 
 static struct GfxDecodeInfo galaxy_gfxdecodeinfo[] =
 {
 	{REGION_GFX1, 0x0000, &galaxy_charlayout, 0, 2},
-MEMORY_END								   /* end of array */
+MEMORY_END
 
-static unsigned char galaxy_palette[] =
-{
-	0x00, 0x00, 0x00,	/* Black */
-	0xff, 0xff, 0xff	/* White */
-};
 
-static unsigned short galaxy_colortable[] =
-{
-	0, 1
-};
-
-static PALETTE_INIT( galaxy )
-{
-	palette_set_colors(0, galaxy_palette, sizeof(galaxy_palette) / 3);
-	memcpy(colortable, galaxy_colortable, sizeof (galaxy_colortable));
-}
-
-/* keyboard input */
 INPUT_PORTS_START (galaxy)
 
 	PORT_START
@@ -184,25 +151,20 @@ INPUT_PORTS_START (galaxy)
 		PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "???", KEYCODE_RSHIFT,  IP_JOY_NONE )
 INPUT_PORTS_END
 
-static INTERRUPT_GEN( galaxy_interrupt )
-{
-	cpu_set_irq_line(0, 0, PULSE_LINE);
-}
 
-/* machine definition */
 static MACHINE_DRIVER_START( galaxy )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)
 	MDRV_CPU_MEMORY(galaxy_readmem, galaxy_writemem)
 	MDRV_CPU_PORTS(galaxy_readport, galaxy_writeport)
 	MDRV_CPU_VBLANK_INT(galaxy_interrupt, 1)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(0)
 	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_INIT( galaxy )
 
-    /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 16*13)
 	MDRV_VISIBLE_AREA(0, 32*8-1, 0, 16*13-1)
@@ -220,37 +182,17 @@ ROM_START (galaxy)
 	ROM_LOAD ("galrom1.bin", 0x0000, 0x1000, 0x365f3e24)
 	ROM_LOAD ("galrom2.bin", 0x1000, 0x1000, 0x5dc5a100)
 	ROM_REGION(0x0800, REGION_GFX1,0)
-	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, BADCRC(0x5c3b5bb5))
+	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, 0x5c3b5bb5)
 ROM_END
 
-
 static const struct IODevice io_galaxy[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"gal\0",        	/* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		NULL,               /* id */
-		galaxy_load_snap,	/* init */
-		galaxy_exit_snap,	/* exit */
-		NULL,		        /* info */
-		NULL,           	/* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
-		NULL,				/* tell */
-		NULL,           	/* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
-	},
-//    IO_CASSETTE_WAVE(1,"wav\0", NULL, galaxy_init_wav, cassette_exit),
 	{ IO_END }
 };
 
 SYSTEM_CONFIG_START(galaxy)
+	CONFIG_DEVICE_SNAPSHOT	( "gal\0", 1, galaxy_snapshot_load, galaxy_snapshot_exit )
 SYSTEM_CONFIG_END
 
-/*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY     FULLNAME */
-COMPX(1983,	galaxy,	0,		galaxy,	galaxy,	0,      galaxy,	"",			"Galaksija", GAME_NO_SOUND )
+
+/*    YEAR	NAME	PARENT	MACHINE	INPUT	INIT	CONFIG	COMPANY	FULLNAME */
+COMPX(1983,	galaxy,	0,	galaxy,	galaxy,	0,      galaxy,	"",	"Galaksija", GAME_NO_SOUND )
