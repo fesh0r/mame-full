@@ -104,6 +104,31 @@ static struct MemoryWriteAddress pc1401_writemem[] =
     {-1}
 };
 
+static struct MemoryReadAddress pc1350_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x3fff, MRA_RAM },
+	{ 0x4000, 0x5fff, MRA_RAM },
+	{ 0x6000, 0x6fff, MRA_RAM },
+	{ 0x7000, 0x7eff, pc1350_lcd_read },
+	{ 0x7f00, 0x7f5f, sc61860_read_internal },
+	{ 0x8000, 0xffff, MRA_ROM },
+    {-1}
+};
+
+static struct MemoryWriteAddress pc1350_writemem[] =
+{
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x2000, 0x3fff, MWA_RAM }, /*ram card 16k */
+	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
+	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0x7000, 0x7eff, pc1350_lcd_write },
+	{ 0x7f00, 0x7f5f, sc61860_write_internal },
+	{ 0x8000, 0xffff, MWA_ROM },
+    {-1}
+};
+
+
 #if 0
 static struct MemoryReadAddress pc1421_readmem[] =
 {
@@ -136,26 +161,6 @@ static struct MemoryWriteAddress pc1260_writemem[] =
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x57ff, MWA_RAM }, /* 1261 */
 	{ 0x5800, 0x67ff, MWA_RAM },
-	{ 0x6000, 0x6fff, MWA_RAM },
-
-	{ 0x8000, 0xffff, MWA_ROM },
-    {-1}
-};
-
-
-static struct MemoryReadAddress pc1350_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x5fff, MRA_RAM },
-	{ 0x8000, 0xffff, MRA_ROM },
-    {-1}
-};
-
-static struct MemoryWriteAddress pc1350_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x3fff, MWA_RAM }, /*ram card 16k */
-	{ 0x4000, 0x5fff, MWA_RAM }, /*ram card 16k oder 8k */
 	{ 0x6000, 0x6fff, MWA_RAM },
 
 	{ 0x8000, 0xffff, MWA_ROM },
@@ -265,31 +270,89 @@ INPUT_PORTS_START( pc1401 )
 	PORT_DIPSETTING( 0x80, "PC1402(10KB)" )
 INPUT_PORTS_END
 
-static unsigned char pc1401_palette[] =
-{
-	0,0,0, /* black */
-	0x10,0x10,0x10,
-	0x20,0x20,0x20,
-	0x30,0x30,0x30,
-	0x40,0x40,0x40,
-	0x50,0x50,0x50,
-	0x60,0x60,0x60,
-	0x70,0x70,0x70,
-	0x80,0x80,0x80,
-	0x90,0x90,0x90,
-	0xa0,0xa0,0xa0,
-	0xb0,0xb0,0xb0,
-	0xc0,0xc0,0xc0,
-	0xd0,0xd0,0xe0,
-	0xe0,0xe0,0xe0,
-	0xf0,0xf0,0xf0,
-	0xff,0xff,0xff,
-};
-
-static unsigned short pc1401_colortable[] = {
-	2, 10,
-	5, 15
-};
+INPUT_PORTS_START( pc1350 )
+	PORT_START
+    PORT_BITX (0x80, 0x00, IPT_DIPSWITCH_NAME|IPF_TOGGLE,
+			   "Power",CODE_DEFAULT, CODE_NONE)
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	DIPS_HELPER( 0x40, "DOWN", KEYCODE_DOWN, CODE_NONE)
+	DIPS_HELPER( 0x20, "UP", KEYCODE_UP, CODE_NONE)
+	DIPS_HELPER( 0x10, "MODE", KEYCODE_TAB, CODE_NONE)
+	DIPS_HELPER( 0x08, "CLS   CA", KEYCODE_ESC, CODE_NONE)
+	DIPS_HELPER( 0x04, "LEFT", KEYCODE_LEFT, CODE_NONE)
+	DIPS_HELPER( 0x02, "RIGHT", KEYCODE_RIGHT, CODE_NONE)
+	DIPS_HELPER( 0x01, "DEL", KEYCODE_DEL, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x80, "INS", KEYCODE_INSERT, CODE_NONE)
+	DIPS_HELPER( 0x40, "BRK   ON", KEYCODE_F2, CODE_NONE)
+	DIPS_HELPER( 0x20, "SHIFT", KEYCODE_LSHIFT, CODE_NONE)
+	DIPS_HELPER( 0x10, "7", KEYCODE_7, KEYCODE_7_PAD)
+	DIPS_HELPER( 0x08, "8", KEYCODE_8, KEYCODE_8_PAD)
+	DIPS_HELPER( 0x04, "9", KEYCODE_9, KEYCODE_9_PAD)
+	DIPS_HELPER( 0x02, "(     <", KEYCODE_OPENBRACE, CODE_NONE)
+	DIPS_HELPER( 0x01, ")     >", KEYCODE_CLOSEBRACE, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x80, "4", KEYCODE_4, KEYCODE_4_PAD)
+	DIPS_HELPER( 0x40, "5", KEYCODE_5, KEYCODE_5_PAD)
+	DIPS_HELPER( 0x20, "6", KEYCODE_6, KEYCODE_6_PAD)
+	DIPS_HELPER( 0x10, "/", KEYCODE_SLASH, KEYCODE_SLASH_PAD)
+	DIPS_HELPER( 0x08, ":", KEYCODE_COLON, CODE_NONE)
+	DIPS_HELPER( 0x04, "1", KEYCODE_1, KEYCODE_1_PAD)
+	DIPS_HELPER( 0x02, "2", KEYCODE_2, KEYCODE_2_PAD)
+	DIPS_HELPER( 0x01, "3", KEYCODE_3, KEYCODE_3_PAD)
+	PORT_START
+	DIPS_HELPER( 0x80, "*", KEYCODE_ASTERISK, CODE_NONE)
+	DIPS_HELPER( 0x40, ";", KEYCODE_QUOTE, CODE_NONE)
+	DIPS_HELPER( 0x20, "0", KEYCODE_0, KEYCODE_0_PAD)
+	DIPS_HELPER( 0x10, ".", KEYCODE_STOP, CODE_NONE)
+	DIPS_HELPER( 0x08, "+", CODE_NONE, KEYCODE_PLUS_PAD)
+	DIPS_HELPER( 0x04, "-     ^", KEYCODE_MINUS, KEYCODE_MINUS_PAD)
+	DIPS_HELPER( 0x02, ",", KEYCODE_COMMA, CODE_NONE)
+	DIPS_HELPER( 0x01, "SHIFT", KEYCODE_LSHIFT, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x80, "Q     !", KEYCODE_Q, CODE_NONE)
+	DIPS_HELPER( 0x40, "W     \"", KEYCODE_W, CODE_NONE)
+	DIPS_HELPER( 0x20, "E     #", KEYCODE_E, CODE_NONE)
+	DIPS_HELPER( 0x10, "R     $", KEYCODE_R, CODE_NONE)
+	DIPS_HELPER( 0x08, "T     %", KEYCODE_T, CODE_NONE)
+	DIPS_HELPER( 0x04, "Y     &", KEYCODE_Y, CODE_NONE)
+	DIPS_HELPER( 0x02, "U     ?", KEYCODE_U, CODE_NONE)
+	DIPS_HELPER( 0x01, "I     Pi",KEYCODE_I, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x80, "O     Squareroot", KEYCODE_O, CODE_NONE)
+	DIPS_HELPER( 0x40, "P     Alpha", KEYCODE_P, CODE_NONE)
+	DIPS_HELPER( 0x20, "DEF", KEYCODE_LCONTROL, KEYCODE_RCONTROL)
+	DIPS_HELPER( 0x10, "A", KEYCODE_A, CODE_NONE)
+	DIPS_HELPER( 0x08, "S", KEYCODE_S, CODE_NONE)
+	DIPS_HELPER( 0x04, "D", KEYCODE_D, CODE_NONE)
+	DIPS_HELPER( 0x02, "F", KEYCODE_F, CODE_NONE)
+	DIPS_HELPER( 0x01, "G", KEYCODE_G, CODE_NONE)
+	PORT_START
+ 	DIPS_HELPER( 0x80, "H", KEYCODE_H, CODE_NONE)
+	DIPS_HELPER( 0x40, "J", KEYCODE_J, CODE_NONE)
+	DIPS_HELPER( 0x20, "K", KEYCODE_K, CODE_NONE)
+	DIPS_HELPER( 0x10, "L", KEYCODE_L, CODE_NONE)
+	DIPS_HELPER( 0x08, "=", KEYCODE_EQUALS, CODE_NONE)
+	DIPS_HELPER( 0x04, "SML", KEYCODE_LALT, KEYCODE_RALT)
+	DIPS_HELPER( 0x02, "Z", KEYCODE_Z, CODE_NONE)
+	DIPS_HELPER( 0x01, "X", KEYCODE_X, CODE_NONE)
+	PORT_START
+	DIPS_HELPER( 0x80, "C", KEYCODE_C, CODE_NONE)
+	DIPS_HELPER( 0x40, "V", KEYCODE_V, CODE_NONE)
+	DIPS_HELPER( 0x20, "B", KEYCODE_B, CODE_NONE)
+	DIPS_HELPER( 0x10, "N", KEYCODE_N, CODE_NONE)
+	DIPS_HELPER( 0x08, "M", KEYCODE_M, CODE_NONE)
+	DIPS_HELPER( 0x04, "SPC", KEYCODE_SPACE, CODE_NONE)
+	DIPS_HELPER( 0x02, "ENTER P<>NP", KEYCODE_ENTER, KEYCODE_ENTER_PAD)
+	PORT_START
+	PORT_START
+	PORT_START
+    PORT_DIPNAME   ( 0xc0, 0x80, "RAM")
+	PORT_DIPSETTING( 0x00, "4KB" )
+	PORT_DIPSETTING( 0x40, "12KB" )
+	PORT_DIPSETTING( 0x80, "20KB" )
+INPUT_PORTS_END
 
 static struct GfxLayout pc1401_charlayout =
 {
@@ -305,19 +368,31 @@ static struct GfxLayout pc1401_charlayout =
         1*8
 };
 
+static struct GfxLayout pc1350_charlayout =
+{
+        2,16,
+        128,                                    /* 256 characters */
+        1,                      /* 1 bits per pixel */
+        { 0,0 },                  /* no bitplanes; 1 bit per pixel */
+        /* x offsets */
+        { 0 },
+        /* y offsets */
+        { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7
+        },
+        1*8
+};
+
 static struct GfxDecodeInfo pc1401_gfxdecodeinfo[] = {
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     0, 2 },
 	{ REGION_GFX1, 0x0000, &pc1401_charlayout,                     2, 2 },
     { -1 } /* end of array */
 };
 
-static void pocketc_init_colors (unsigned char *sys_palette,
-								 unsigned short *sys_colortable,
-								 const unsigned char *color_prom)
-{
-	memcpy (sys_palette, pc1401_palette, sizeof (pc1401_palette));
-	memcpy(sys_colortable,pc1401_colortable,sizeof(pc1401_colortable));
-}
+static struct GfxDecodeInfo pc1350_gfxdecodeinfo[] = {
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     0, 2 },
+	{ REGION_GFX1, 0x0000, &pc1350_charlayout,                     2, 2 },
+    { -1 } /* end of array */
+};
 
 #if 0
 static struct DACinterface dac_interface =
@@ -364,16 +439,68 @@ static struct MachineDriver machine_driver_pc1401 =
 	   (lcd dot displayed as 2x2 pixel) */
 
 	592, 252, { 0, 592 - 1, 0, 252 - 1},
+//	640, 273, { 0, 640 - 1, 0, 273 - 1},
 	pc1401_gfxdecodeinfo,			   /* graphics decode info */
-	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) / 3,
-	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0]),
+	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
+	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0][0]),
 	pocketc_init_colors,		/* convert color prom */
 
-	VIDEO_TYPE_RASTER/* | VIDEO_SUPPORTS_DIRTY*/,	/* video flags */
+	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
 	0,						/* obsolete */
     pocketc_vh_start,
 	pocketc_vh_stop,
 	pc1401_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+        { 0 }
+    }
+};
+
+static SC61860_CONFIG pc1350_config={
+	pc1401_reset, pc1401_brk,
+	pc1350_ina, pc1401_outa,
+	pc1401_inb, pc1401_outb,
+	pc1401_outc
+};
+
+static struct MachineDriver machine_driver_pc1350 =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_SC61860,
+			192000,
+			pc1350_readmem,pc1350_writemem,0,0,
+			pocketc_frame_int, 1,
+			0,0,
+			&pc1350_config
+        }
+	},
+	/* frames per second, VBL duration */
+	64, DEFAULT_60HZ_VBLANK_DURATION,
+	1,				/* single CPU */
+	pc1350_machine_init,
+	pc1350_machine_stop,
+
+	/*
+	   aim: show sharp with keyboard
+	   resolution depends on the dots of the lcd
+	   (lcd dot displayed as 2x2 pixel) */
+
+	592, 252, { 0, 592 - 1, 0, 252 - 1},
+//	640, 255, { 0, 640 - 1, 0, 255 - 1},
+	pc1350_gfxdecodeinfo,			   /* graphics decode info */
+	sizeof (pc1401_palette) / sizeof (pc1401_palette[0]) ,
+	sizeof (pc1401_colortable) / sizeof(pc1401_colortable[0][0]),
+	pocketc_init_colors,		/* convert color prom */
+
+	VIDEO_TYPE_RASTER| VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	0,						/* obsolete */
+    pocketc_vh_start,
+	pocketc_vh_stop,
+	pc1350_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -392,10 +519,25 @@ ROM_START(pc1401)
 	ROM_REGION(0x80,REGION_GFX1)
 ROM_END
 
+#define rom_pc1402 rom_pc1401
+
+ROM_START(pc1350)
+	ROM_REGION(0x10000,REGION_CPU1)
+	/* sc61860a13 6c 13 ld */
+	ROM_LOAD("cpu.rom", 0x0000, 0x2000, 0x79a924bc)
+	ROM_LOAD("basic.rom", 0x8000, 0x8000, 0x158b28e2)
+	ROM_REGION(0x100,REGION_GFX1)
+ROM_END
+
 static const struct IODevice io_pc1401[] = {
     { IO_END }
 };
 
+#define io_pc1402 io_pc1401
+#define io_pc1350 io_pc1401
+
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
-COMPX( 198?, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401/1402", GAME_NOT_WORKING)
+COMPX( 198?, pc1401,	  0, 		pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1401", GAME_NOT_WORKING)
+COMPX( 198?, pc1402,	  pc1401, 	pc1401,  pc1401, 	pc1401,	  "Sharp",  "Pocket Computer 1402", GAME_ALIAS|GAME_NOT_WORKING)
+COMPX( 198?, pc1350,	  0, 		pc1350,  pc1350, 	pc1350,	  "Sharp",  "Pocket Computer 1350", GAME_NOT_WORKING)
 
