@@ -601,7 +601,7 @@ void pc_keyboard(void)
 
 	at_keyboard_polling();
 
-	if( pic8259_0_irq_pending(1) )
+	if(!pic8259_0_irq_pending(1) )
 	{
 		if ( (data=at_keyboard_read())!=-1) {
 			pc_port[0x60] = data;
