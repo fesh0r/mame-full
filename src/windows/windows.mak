@@ -17,7 +17,9 @@ OSOBJS += $(OBJ)/mess/windows/dirio.o \
 endif 
 
 # uncomment this line to enable guard pages on all memory allocations
+ifdef DEBUG
 OSOBJS += $(OBJ)/windows/winalloc.o
+endif
 
 # video blitting functions
 $(OBJ)/windows/asmblit.o: src/windows/asmblit.asm
