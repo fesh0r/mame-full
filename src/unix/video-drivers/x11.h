@@ -55,6 +55,11 @@ EXTERN int devicebuttonmotion;
 /* device related */
 void process_x11_joy_event(XEvent *event);
 
+/* xinput functions */
+int xinput_open(int force_grab, int event_mask);
+void xinput_close(void);
+void xinput_check_hotkeys(void);
+
 #ifdef x11
 
 /* Normal x11_window functions */
@@ -88,11 +93,6 @@ int  xf86_dga2_modify_pen(int pen, unsigned char red,unsigned char green,unsigne
 void xf86_dga2_update_display(struct mame_bitmap *bitmap);
 int  xf86_dga2_alloc_palette(int writable_colors);
 int  xf86_dga2_16bpp_capable(void);
-
-/* xinput functions */
-int xinput_open(int force_grab, int event_mask);
-void xinput_close(void);
-void xinput_check_hotkeys(void);
 
 /* XIL functions */
 #ifdef USE_XIL

@@ -11,18 +11,22 @@
 #include "x11.h"
 #include "xkeyboard.h"
 
-static Cursor xinput_normal_cursor;
-static Cursor xinput_invisible_cursor;
-static int current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
+/* options */
 static int xinput_use_winkeys = 0;
-static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
-static int xinput_keyboard_grabbed = 0;
-static int xinput_mouse_grabbed = 0;
-static int xinput_cursors_allocated = 0;
 static int xinput_grab_mouse = 0;
 static int xinput_grab_keyboard = 0;
 static int xinput_show_cursor = 1;
+
+/* private variables */
 static int xinput_force_grab = 0;
+static int xinput_focus = 1;
+static int xinput_old_mouse_grab = 0;
+static int xinput_keyboard_grabbed = 0;
+static int xinput_mouse_grabbed = 0;
+static int xinput_cursors_allocated = 0;
+static int xinput_current_mouse[MOUSE_AXES] = {0,0,0,0,0,0,0,0};
+static Cursor xinput_normal_cursor;
+static Cursor xinput_invisible_cursor;
 
 static int xinput_mapkey(struct rc_option *option, const char *arg, int priority);
 
@@ -47,9 +51,6 @@ void sysdep_update_keyboard (void)
 	char				keyname[16+1];
 	int				mask;
 	struct xmame_keyboard_event	event;
-	/* grrr some windowmanagers send multiple focus events, this is used to
-	   filter them. */
-	static int			focus = FALSE;
 
 #ifdef NOT_DEFINED /* x11 */
 	if(run_in_root_window && x11_video_mode == X11_WINDOW)
@@ -92,32 +93,33 @@ void sysdep_update_keyboard (void)
 				/* display events */
 				case FocusIn:
 					/* check for multiple events and ignore them */
-					if (focus) break;
-					focus = TRUE;
+					if (xinput_focus) break;
+					xinput_focus = TRUE;
 					/* to avoid some meta-keys to get locked when wm iconify xmame, we must
 					   perform a key reset whenever we retrieve keyboard focus */
 					xmame_keyboard_clear();
-					if (use_mouse &&
-					    (xinput_force_grab || xinput_grab_mouse) &&
+					if ((xinput_force_grab || xinput_grab_mouse || xinput_old_mouse_grab) &&
 					    !XGrabPointer(display, window, True,
 					      PointerMotionMask|ButtonPressMask|ButtonReleaseMask,
 					      GrabModeAsync, GrabModeAsync, window, None, CurrentTime))
 					{
 						xinput_mouse_grabbed = 1;
+                                                xinput_old_mouse_grab = 0;
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_invisible_cursor);
 					}
 					break;
 				case FocusOut:
 					/* check for multiple events and ignore them */
-					if (!focus) break;
-					focus = FALSE;
+					if (!xinput_focus) break;
+					xinput_focus = FALSE;
 					if (xinput_mouse_grabbed)
 					{
 						XUngrabPointer(display, CurrentTime);
 						if (xinput_cursors_allocated && xinput_show_cursor)
 						  XDefineCursor(display,window,xinput_normal_cursor);
 						xinput_mouse_grabbed = 0;
+						xinput_old_mouse_grab = 1;
 					}
 					break;
 				case EnterNotify:
@@ -133,8 +135,8 @@ void sysdep_update_keyboard (void)
 #endif
 				/* input events */
 				case MotionNotify:
-					current_mouse[0] += E.xmotion.x_root;
-					current_mouse[1] += E.xmotion.y_root;
+					xinput_current_mouse[0] += E.xmotion.x_root;
+					xinput_current_mouse[1] += E.xmotion.y_root;
 					break;
 				case ButtonPress:
 					mask = TRUE;
@@ -223,8 +225,8 @@ void sysdep_mouse_poll(void)
 		   than 2 axes at the moment so this is faster */
 		for (i=0; i<2; i++)
 		{
-			mouse_data[0].deltas[i] = current_mouse[i];
-			current_mouse[i] = 0;
+			mouse_data[0].deltas[i] = xinput_current_mouse[i];
+			xinput_current_mouse[i] = 0;
 		}
 	}
 	else
@@ -250,10 +252,10 @@ void sysdep_mouse_poll(void)
 		}
 		else
 		{
-			mouse_data[0].deltas[0] = pos_x - current_mouse[0];
-			mouse_data[0].deltas[1] = pos_y - current_mouse[1];
-			current_mouse[0] = pos_x;
-			current_mouse[1] = pos_y;
+			mouse_data[0].deltas[0] = pos_x - xinput_current_mouse[0];
+			mouse_data[0].deltas[1] = pos_y - xinput_current_mouse[1];
+			xinput_current_mouse[0] = pos_x;
+			xinput_current_mouse[1] = pos_y;
 		}
 	}
 }

@@ -68,11 +68,12 @@ GLCapabilities glCaps;
 char * libGLName=0;
 char * libGLUName=0;
 
-static char *gl_res = NULL;
 static int fullscreen = 0;
 static int customSize=0;
 static const char * xgl_version_str = 
 	"\nGLmame v0.94 - the_peace_version , by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+
+static int xgl_glres(struct rc_option *option, const char *arg, int priority);
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -112,8 +113,8 @@ struct rc_option display_opts[] = {
    { "cabinet",		NULL,			rc_string,	&cabname,
      "glmamejau",	0,			0,		NULL,
      "Specify which cabinet model to use (default: glmamejau)" },
-   { "glres",	        NULL,			rc_string,	&gl_res,
-     NULL,		0,			0,		NULL,
+   { "glres",	        NULL,			rc_use_function, NULL,
+     NULL,		0,			0,		xgl_glres,
      "Always scale games to XresxYres, keeping their aspect ratio. This overrides the scale options" },
    { NULL,              NULL,                   rc_link,        mode_opts,
      NULL,              0,                      0,              NULL,
@@ -128,28 +129,23 @@ struct rc_option display_opts[] = {
 
 struct sysdep_display_prop_struct sysdep_display_properties = { glvec_renderer, 1 };
 
-static Cursor create_invisible_cursor (Display * display, Window win)
+static int xgl_glres(struct rc_option *option, const char *arg, int priority)
 {
-	Pixmap cursormask;
-	XGCValues xgc;
-	XColor dummycolour;
-	Cursor cursor;
-	GC gc;
+  /* check priority */
+  if(priority < option->priority)
+     return 0;
+  
+  option->priority = priority;
+  
+  if( sscanf(arg, "%dx%d", &winwidth, &winheight) != 2)
+  {
+    fprintf(stderr, "error: invalid value for glres: %s\n", arg);
+    return 1;
+  }
 
-	cursormask = XCreatePixmap (display, win, 1, 1, 1 /*depth */ );
-	xgc.function = GXclear;
-	gc = XCreateGC (display, cursormask, GCFunction, &xgc);
-	XFillRectangle (display, cursormask, gc, 0, 0, 1, 1);
-	dummycolour.pixel = 0;
-	dummycolour.red = 0;
-	dummycolour.flags = 04;
-	cursor = XCreatePixmapCursor (display, cursormask, cursormask,
-			&dummycolour, &dummycolour, 0, 0);
-	XFreeGC (display, gc);
-	XFreePixmap (display, cursormask);
-	return cursor;
+  customSize=1;
+  return 0;
 }
-
 
 int sysdep_init(void)
 {
@@ -194,28 +190,22 @@ int sysdep_create_display(int depth)
   Atom mwmatom;
   char *glxfx;
   VisualGC vgc;
-  int ownwin = 1;
   int vw, vh;
-
-  /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
-     We have to do this after glXMakeCurrent(), or else the voodoo driver
-     will give us the wrong resolution */
+  int ownwin = 1;
+  int force_grab = 0;
+    
+  /* If using 3Dfx */
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
   {
-    if(gl_res == NULL)
-      gl_res = strdup("640x480");
-    antialias = 0;
-  }
-
-  if(gl_res!=NULL)
-  {
-     if( sscanf(gl_res, "%dx%d", &winwidth, &winheight) != 2)
-     {
-        fprintf(stderr, "error: invalid value for glres: %s\n", gl_res);
-     } else {
-        customSize=1;
-        fullscreen=0;
-     }
+    if(!customSize)
+    {
+      winwidth   = 640;
+      winheight  = 480;
+      customSize = 1;
+    }
+    antialias  = 0;
+    force_grab = 2;
+    fullscreen = 0;
   }
 
   fprintf(stderr, xgl_version_str);
@@ -224,31 +214,30 @@ int sysdep_create_display(int depth)
   myscreen=DefaultScreen(display);
   cursor=XCreateFontCursor(display,XC_trek);
   
-  if(!customSize)
-  {
-	if( ! blit_swapxy )
-	{
-		  winwidth  = visual_width*widthscale;
-		  winheight = visual_height*heightscale;
-	} else {
-		  winwidth  = visual_height*heightscale;
-		  winheight = visual_width*widthscale;
-	}
-  }
-
   if(fullscreen)
   {
-	winwidth  = screen->width;
-	winheight = screen->height;
-	winmask   = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap |
-	            CWDontPropagate | CWCursor;
+	winwidth      = screen->width;
+	winheight     = screen->height;
+	winmask       = CWBorderPixel | CWBackPixel | CWEventMask |
+	                CWColormap | CWDontPropagate | CWCursor;
   	hints.flags   = PMinSize | PMaxSize | USPosition | USSize;
+  	force_grab    = 1;
   } else {
-        winmask   = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-        if (customSize)
-          hints.flags   = PMinSize | PMaxSize;
-        else
+        winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
+        if(!customSize)
+        {
+          if( ! blit_swapxy )
+          {
+                    winwidth  = visual_width*widthscale;
+                    winheight = visual_height*heightscale;
+          } else {
+                    winwidth  = visual_height*heightscale;
+                    winheight = visual_width*widthscale;
+          }
   	  hints.flags   = PSize;
+        }
+        else
+          hints.flags   = PMinSize | PMaxSize;
   }
 
   window_attr.background_pixel=0;
@@ -330,45 +319,15 @@ int sysdep_create_display(int depth)
   
 	XChangeProperty(display,window,mwmatom,mwmatom,32,
 			PropModeReplace,(unsigned char *)&mwmhints,4);
-	XDefineCursor(display,window,create_invisible_cursor (display, window));
   }
-  else
-	XDefineCursor(display,window,cursor);
-  
-  /* Map and expose the window. */
-
-  if(use_mouse) {
-	/* grab the pointer and query MotionNotify events */
-
-	XSelectInput(display, 
-				 window, 
-				 FocusChangeMask   | ExposureMask | 
-				 KeyPressMask      | KeyReleaseMask | 
-				 EnterWindowMask   | LeaveWindowMask |
-				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask
-				 );
 	
-	XGrabPointer(display,
-				 window, /* RootWindow(display,DefaultScreen(display)), */
-				 False,
-				 PointerMotionMask | ButtonMotionMask |
-				 ButtonPressMask   | ButtonReleaseMask | 
-				 EnterWindowMask   | LeaveWindowMask ,
-				 GrabModeAsync, GrabModeAsync,
-				 None, cursor, CurrentTime );
-  }
-  else {
-	XSelectInput(display, 
-				 window, 
-				 FocusChangeMask | ExposureMask | 
-				 KeyPressMask | KeyReleaseMask
-				 );
-  }
-  
+  /* Map and expose the window. */
+  XSelectInput(display, window, ExposureMask);
   XMapRaised(display,window);
   XClearWindow(display,window);
   XWindowEvent(display,window,ExposureMask,&event);
+  
+  xinput_open(force_grab, 0);
   
   mode_clip_aspect(winwidth, winheight, &vw, &vh, (double)screen->width/screen->height);
   if (!fullscreen && !cabview && !customSize)
@@ -403,15 +362,10 @@ void sysdep_display_close (void)
    glContext=0;
 
    CloseVScreen();  /* Shut down GL stuff */
+   xinput_close();
 
-   if(window) {
-     /* ungrab the pointer */
-
-     if(use_mouse) XUngrabPointer(display,CurrentTime);
-
+   if(window)
      destroyOwnOverlayWin(display, &window, &window_attr);
-     colormap=window_attr.colormap;
-   }
 
    XSync(display,False); /* send all events to sync; */
 
@@ -434,6 +388,8 @@ sysdep_update_display (struct mame_bitmap *bitmap)
   int _dint;
   unsigned int _duint,w,h;
   
+  xinput_check_hotkeys();
+  
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &w, &h, &_duint, &_duint);
   
   if ( (w != winwidth) || (h != winheight) )
@@ -448,6 +404,8 @@ sysdep_update_display (struct mame_bitmap *bitmap)
        h = vh;
     }
     
+    /* this sets winwidth to w and winheight to h for us, amongst other
+       important stuff */
     gl_resize(w, h, vw, vh);
   }
 
