@@ -89,6 +89,9 @@ const char *image_filedir(mess_image *img);
 unsigned int image_length(mess_image *img);
 unsigned int image_crc(mess_image *img);
 
+int image_is_writable(mess_image *img);
+int image_has_been_created(mess_image *img);
+
 /****************************************************************************
   Memory allocators
 

@@ -8,7 +8,7 @@
 
 /* ----------------------------------------------------------------------- */
 
-static mame_file *image_fopen_new(mess_image *img, int *effective_mode);
+static mame_file *image_fopen_new(mess_image *img);
 
 enum
 {
@@ -28,6 +28,7 @@ struct _mess_image
 	char *dir;
 	UINT32 crc;
 	UINT32 length;
+	int effective_mode;
 	char *longname;
 	char *manufacturer;
 	char *year;
@@ -91,7 +92,6 @@ int image_load(mess_image *img, const char *name)
 	const struct IODevice *dev;
 	char *newname;
 	int err = INIT_PASS;
-	int effective_mode;
 	mame_file *fp = NULL;
 	UINT8 *buffer = NULL;
 	UINT64 size;
@@ -127,7 +127,7 @@ int image_load(mess_image *img, const char *name)
 	}
 	else
 	{
-		fp = image_fopen_new(img, &effective_mode);
+		fp = image_fopen_new(img);
 		if (fp == NULL)
 			goto error;
 	}
@@ -156,7 +156,7 @@ int image_load(mess_image *img, const char *name)
 	/* call device load */
 	if (dev->load)
 	{
-		err = dev->load(img, fp, effective_mode);
+		err = dev->load(img, fp, img->effective_mode);
 		if (err)
 			goto error;
 	}
@@ -285,10 +285,9 @@ done:
 	return rc;
 }
 
-static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
+static mame_file *image_fopen_new(mess_image *img)
 {
 	mame_file *fref;
-	int effective_mode_local;
 	const struct IODevice *dev;
 
 	dev = image_device(img);
@@ -299,7 +298,7 @@ static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
 		/* unsupported modes */
 		printf("Internal Error in file \""__FILE__"\", line %d\n", __LINE__);
 		fref = NULL;
-		effective_mode_local = OSD_FOPEN_NONE;
+		img->effective_mode = OSD_FOPEN_NONE;
 		break;
 
 	case OSD_FOPEN_READ:
@@ -308,18 +307,18 @@ static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
 	case OSD_FOPEN_RW_CREATE:
 		/* supported modes */
 		fref = image_fopen_custom(img, FILETYPE_IMAGE, dev->open_mode);
-		effective_mode_local = dev->open_mode;
+		img->effective_mode = dev->open_mode;
 		break;
 
 	case OSD_FOPEN_RW_OR_READ:
 		/* R/W or read-only: emulated mode */
 		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
+			img->effective_mode = OSD_FOPEN_RW;
 		else
 		{
 			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
-			effective_mode_local = OSD_FOPEN_READ;
+			img->effective_mode = OSD_FOPEN_READ;
 		}
 		break;
 
@@ -327,16 +326,16 @@ static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
 		/* R/W, read-only, or create new R/W image: emulated mode */
 		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW);
 		if (fref)
-			effective_mode_local = OSD_FOPEN_RW;
+			img->effective_mode = OSD_FOPEN_RW;
 		else
 		{
 			fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
 			if (fref)
-				effective_mode_local = OSD_FOPEN_READ;
+				img->effective_mode = OSD_FOPEN_READ;
 			else
 			{
 				fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_RW_CREATE);
-				effective_mode_local = OSD_FOPEN_RW_CREATE;
+				img->effective_mode = OSD_FOPEN_RW_CREATE;
 			}
 		}
 		break;
@@ -345,17 +344,14 @@ static mame_file *image_fopen_new(mess_image *img, int *effective_mode)
 		/* read or write: emulated mode */
 		fref = image_fopen_custom(img, FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (fref)
-			effective_mode_local = OSD_FOPEN_READ;
+			img->effective_mode = OSD_FOPEN_READ;
 		else
 		{
 			fref = image_fopen_custom(img, FILETYPE_IMAGE, /*OSD_FOPEN_WRITE*/OSD_FOPEN_RW_CREATE);
-			effective_mode_local = OSD_FOPEN_WRITE;
+			img->effective_mode = OSD_FOPEN_WRITE;
 		}
 		break;
 	}
-
-	if (effective_mode)
-		*effective_mode = effective_mode_local;
 
 	return fref;
 }
@@ -461,6 +457,16 @@ unsigned int image_length(mess_image *img)
 unsigned int image_crc(mess_image *img)
 {
 	return img->crc;
+}
+
+int image_is_writable(mess_image *img)
+{
+	return is_effective_mode_writable(img->effective_mode);
+}
+
+int image_has_been_created(mess_image *img)
+{
+	return is_effective_mode_create(img->effective_mode);
 }
 
 /****************************************************************************
