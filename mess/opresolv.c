@@ -484,7 +484,7 @@ optreserr_t option_resolution_getdefault(const char *specification, int option_c
 	if (!specification)
 		return OPTIONRESOLUTION_ERROR_SYNTAX;
 
-	return resolve_single_param(specification + 1, val, NULL, NULL);
+	return resolve_single_param(specification + 1, val, NULL, 0);
 }
 
 

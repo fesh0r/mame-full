@@ -383,10 +383,13 @@ void machine_hard_reset(void)
 int messvaliditychecks(void)
 {
 	int i, j;
+	int is_invalid;
 	int error = 0;
 	const struct IODevice *dev;
 	long used_devices;
 	const char *s;
+	const char *s1;
+	const char *s2;
 	extern int device_valididtychecks(void);
 
 	/* MESS specific driver validity checks */
@@ -446,10 +449,47 @@ int messvaliditychecks(void)
 			}
 			used_devices |= (1 << dev->type);
 
-			/* make sure that the file extensions array is valid */
-			s = dev->file_extensions;
-			while(*s)
-				s += strlen(s) + 1;
+			/* File Extensions Checks
+			 * 
+			 * Checks the following
+			 *
+			 * 1.  Tests the integrity of the string list
+			 * 2.  Checks for duplicate extensions
+			 * 3.  Makes sure that all extensions are either lower case chars or numbers
+			 */
+			s1 = dev->file_extensions;
+			while(*s1)
+			{
+				/* check for invalid chars */
+				is_invalid = 0;
+				for (s2 = s1; *s2; s2++)
+				{
+					if (!isdigit(*s2) && !islower(*s2))
+						is_invalid = 1;
+				}
+				if (is_invalid)
+				{
+					printf("%s: device type '%s' has an invalid extension '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
+					error = 1;
+				}
+				s2++;
+
+				/* check for dupes */
+				is_invalid = 0;
+				while(*s2)
+				{
+					if (!strcmp(s1, s2))
+						is_invalid = 1;
+					s2 += strlen(s2) + 1;
+				}
+				if (is_invalid)
+				{
+					printf("%s: device type '%s' has duplicate extensions '%s'\n", drivers[i]->name, device_typename(dev->type), s1);
+					error = 1;
+				}
+
+				s1 += strlen(s1) + 1;
+			}
 
 			/* enforce certain rules for certain device types */
 			switch(dev->type) {

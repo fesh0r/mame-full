@@ -809,7 +809,7 @@ void CLIB_DECL logerror(const char *text,...)
 	if (erroroslog)
 	{
 		//extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
-		char buffer[256];
+		char buffer[2048];
 		_vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
 		OutputDebugString(buffer);
 	}

@@ -752,6 +752,7 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 	int err=0;
 	int i;
 	int block = 0;
+	UINT8 bytes;
 
 /* DUPE BLOCK */
 	/* pointer to the array of unique blocks */
@@ -937,8 +938,8 @@ int hard_disk_compress(const char *rawfile, UINT32 offset, const char *newfile, 
 				/* update the map on disk */
 				entry = destfile->map[block];
 				byteswap_mapentry(&entry);
-				i = (*interface.write)(destfile->file, destfile->header.length + block * sizeof(destfile->map[0]), sizeof(entry), &entry);
-				if (i != sizeof(entry)) return HDERR_WRITE_ERROR;
+				bytes = (*interface.write)(destfile->file, destfile->header.length + block * sizeof(destfile->map[0]), sizeof(entry), &entry);
+				if (bytes != sizeof(entry)) return HDERR_WRITE_ERROR;
 				write_this_block = 0;
 			}
 		}

@@ -43,6 +43,9 @@ Source Changes:
 
 - Added some consistency code to sanity check drivers' extension lists (bug
   #470).  [Nate Woods]
+  
+- Drivers now have the ability to add custom disassembler procs, to customize
+  the way the cores disassemble code.  [Nate Woods]
 
 
 0.74
