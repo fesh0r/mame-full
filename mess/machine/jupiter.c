@@ -47,7 +47,6 @@ OPBASE_HANDLER( jupiter_opbaseoverride )
 		{
 			for (loop = 0; loop < 0x6000; loop++)
 				cpu_writemem16(loop + 0x2000, jupiter_data[loop]);
-			jupiter_exit_ace(0);
 		}
 		else if (jupiter_data_type == JUPITER_TAP)
 		{
@@ -146,19 +145,6 @@ MACHINE_STOP( jupiter )
    <byt>		: <byt>
 */
 
-void	jupiter_exit_ace(int id)
-{
-	logerror("jupiter_exit_ace\n");
-	/*
-	if (jupiter_data)
-	{
-		free(jupiter_data);
-		jupiter_data = NULL;
-		jupiter_data_type = JUPITER_NONE;
-	}
-	*/
-}
-
 int jupiter_load_ace(int id)
 {
 
@@ -175,7 +161,6 @@ int jupiter_load_ace(int id)
 
 	if (jupiter_data_type != JUPITER_NONE)
 		return (0);
-	jupiter_exit_ace(id);
 
 	done = 0;
 	jupiter_index = 0;
@@ -219,7 +204,6 @@ int jupiter_load_ace(int id)
 	}
 	if (!done)
 	{
-		jupiter_exit_ace(id);
 		logerror("file not loaded\r\n");
 		return (1);
 	}

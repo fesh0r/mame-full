@@ -210,32 +210,10 @@ static MACHINE_DRIVER_START( pce )
 	MDRV_NVRAM_HANDLER( pce )
 MACHINE_DRIVER_END
 
-
-static const struct IODevice io_pce[] = {
-    {
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"pce\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-        NULL,				/* id */
-		pce_load_rom,		/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,               /* open */
-		NULL,               /* close */
-		NULL,               /* status */
-		NULL,               /* seek */
-		NULL,				/* tell */
-        NULL,               /* input */
-		NULL,               /* output */
-		NULL,               /* input_chunk */
-		NULL                /* output_chunk */
-	},
-	{ IO_END }
-};
+#define io_pce	io_NULL
 
 SYSTEM_CONFIG_START(pce)
+	CONFIG_DEVICE_CARTSLOT(1, "pce\0", pce_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

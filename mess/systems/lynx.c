@@ -410,7 +410,7 @@ static const struct IODevice io_lynx[] = {
 #define io_lynx2 io_lynx
 
 SYSTEM_CONFIG_START(lynx)
-	CONFIG_DEVICE_CARTSLOT( "lnx\0", 1, lynx_init_cart, NULL, lynx_partialcrc)
+	CONFIG_DEVICE_CARTSLOT(1, "lnx\0", lynx_init_cart, NULL, lynx_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

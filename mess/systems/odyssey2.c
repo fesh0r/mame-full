@@ -196,31 +196,10 @@ static DRIVER_INIT( odyssey2 )
 		gfx[i]=i;
 }
 
-static const struct IODevice io_odyssey2[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"bin\0",            /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		NULL,				/* id */
-		odyssey2_load_rom,	/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
+#define io_odyssey2	io_NULL
 
 SYSTEM_CONFIG_START(odyssey2)
+	CONFIG_DEVICE_CARTSLOT(1, "bin\0", odyssey2_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*	   YEAR  NAME		PARENT	MACHINE   INPUT 	INIT		CONFIG		COMPANY	FULLNAME */

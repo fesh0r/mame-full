@@ -1,49 +1,59 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
 <html>
 	<head>
-		<link rel="StyleSheet" href="style.css" type="text/css" />
 		<title>MESS FAQ</title>
+		<link rel="StyleSheet" href="style.css" type="text/css">
 	</head>
 	<body>
-		<p class="topic">What makes <a href="http://www.mess.org/">MESS</a> different from other emulators?/Why yet another 
-			emulator?</p>
+		<p class="topic">What makes <a href="http://www.mess.org/">MESS</a> different from 
+			other emulators?/Why yet another emulator?</p>
 		<p>
 			The main difference is that it supports many different kinds of computers and 
-			consoles, not just one like most emulators. <a href="http://www.mess.org/">MESS</a> is also open source, which 
-			means it's free and anyone who knows the C programming language can help with 
-			the project. Also, <a href="http://www.mess.org/">MESS</a>' architecture makes it easy to add lesser known systems 
-			that no one would care enough about to emulate and preserve otherwise. The main 
+			consoles, not just one like most emulators. <a href="http://www.mess.org/">MESS</a>
+			is also open source, which means it's free and anyone who knows the C 
+			programming language can help with the project. Also, <a href="http://www.mess.org/">
+				MESS</a>' architecture makes it easy to add lesser known systems that no 
+			one would care enough about to emulate and preserve otherwise. The main 
 			difference, however, is the goals of the project. Most standalone emulators 
 			have the goal of letting you play games for whatever system on your PC. Because 
 			their main goal is playability, they often include speed hacks and fudge things 
-			so that most games run fast but a few games won't work. <a href="http://www.mess.org/">MESS</a>' philosophy is to 
-			behave <u>exactly</u> like the original hardware, even if it's incredibly slow, 
-			so that <u>all</u> software for the original machine will work. This tends to 
-			make <a href="http://www.mess.org/">MESS</a> a fair bit slower than other emulators, but this is not always true.
+			so that most games run fast but a few games won't work. <a href="http://www.mess.org/">
+				MESS</a>' philosophy is to behave <u>exactly</u> like the original 
+			hardware, even if it's incredibly slow, so that <u>all</u> software for the 
+			original machine will work. This tends to make <a href="http://www.mess.org/">MESS</a>
+			a fair bit slower than other emulators, but this is not always true.
 		</p>
-		<p class="topic">Isn't <a href="http://www.mess.org/">MESS</a> the same as <a href="http://www.mame.net/">MAME</a>?</p>
+		<p class="topic">Isn't <a href="http://www.mess.org/">MESS</a> the same as <a href="http://www.mame.net/">
+				MAME</a>?</p>
 		<p>
-			No. <a href="http://www.mess.org/">MESS</a> is based on <a href="http://www.mame.net/">MAME</a>, and uses the same underlying engine, but its goals 
-			are different. To put it simply, <a href="http://www.mame.net/">MAME</a> is for arcade machines, and <a href="http://www.mess.org/">MESS</a> is for 
-			home computers and video game consoles.
+			No. <a href="http://www.mess.org/">MESS</a> is based on <a href="http://www.mame.net/">
+				MAME</a>, and uses the same underlying engine, but its goals are different. 
+			To put it simply, <a href="http://www.mame.net/">MAME</a> is for arcade 
+			machines, and <a href="http://www.mess.org/">MESS</a> is for home computers and 
+			video game consoles.
 		</p>
-		<p class="topic">How do I install <a href="http://www.mess.org/">MESS</a>?</p>
+		<p class="topic">What's a BIOS?/What's a ROM?/What's a disk image?</p>
 		<p>
-			Download the version for your machine, and decompress it into a new folder 
-			named <a href="http://www.mess.org/">MESS</a>, or you can put it in the same folder as <a href="http://www.mame.net/">MAME</a> (it's OK to overwrite 
-			any files in the <a href="http://www.mame.net/">MAME</a> folder with the same name as the <a href="http://www.mess.org/">MESS</a> files - they *are* 
-			the same). Make sure you choose the option in your compression program to 
-			recreate the directory structure. What's that? Don't have a compression 
-			program? For Windows, go to <a href="http://www.winzip.com">http://www.winzip.com/</a>, 
-			for DOS, do a search for PKWARE, for UNIX/Linux, your system should come 
-			utilities called gunzip and tar, and for Macs, do a search for StuffIt 
-			Expander. On UNIX/Linux, you'll probably need to compile it before you can run 
-			it. If you don't know how to do that, ask your local guru, but if you don't 
-			know you really shouldn't be using UNIX in the first place. After that, you'll 
-			need to pick up some ROMs.
+			First, it is important to note that in the emulation world, the term ROM is 
+			used to refer to two different things:
 		</p>
-		<p class="topic">What's a ROM?/What's a disk image?/Where do I get ROMs?/How do I 
-			use my old software with <a href="http://www.mess.org/">MESS</a>?</p>
+		<ol>
+			<li>
+				The ROM chips within a computer system, that usually contain some form of BASIC 
+				or the like</li>
+			<li>
+				The ROM chips within a game cartridge for a console system</li>
+		</ol>
+		<p>
+			For the sake of clarity, the official MESS terminology for #1 is "BIOS", after 
+			what they are typically called in Intel PC systems.&nbsp; The term "cartridge 
+			image" is used to refer to #2, where "image" is a generic term that applies to 
+			downloaded images of removable media, whether they be a cartridge, a floppy 
+			drive, or a hard disk.
+		</p>
+		<p class="topic">Where do I get BIOSes/ROMs?/How do I use my old software with <a href="http://www.mess.org/">
+				MESS</a>?</p>
+		</p>
 		<p>
 			In most cases, old software is physically incompatible with modern computers. 
 			No matter how hard you push, an Atari cartridge just plain won't fit in your 
@@ -54,42 +64,35 @@
 		<p>
 			It's possible to build special cartridge reading devices for console systems 
 			and hook up old computers to new ones to transfer floppy disks. These media get 
-			transferred into files on the new computer. These files are called ROMs for 
-			cartridges, and images for floppies and tapes and such, all though most people 
-			just call them all ROMs. There are also system ROMs inside most computers and 
-			consoles, on little integrated circuit chips (those black rectangles with all 
-			the pins that look like centipedes). These, too can be read out with the proper 
-			equipment.
+			transferred into files on the new computer.
 		</p>
 		<p>
 			Now, originally emulation was just for hobbyists who had all this special 
-			equipment, but some of them put these ROMs up on the Internet for people to 
-			download, on the honor system that people would only download the ROMs that 
-			they owned the original software for. Unfortunately, a lot of people came along 
-			who just wanted to download free games and didn't care about preservation, and 
-			gave the emulation community a bad name among software companies. There are 
-			many ROM sites on the Internet, using a search engine should turn up the ones 
-			you want. But remember: downloading ROMs that you don't own is illegal. Some 
-			people say that the copyrights have expired or that you can download it if you 
-			delete it after 24 hours, but they are wrong. It's up to you whether you want 
-			to ignore the law, as most of the games are not and will not ever be sold 
-			again.
+			equipment, but some of them put these BIOSes and images up on the Internet for 
+			people to download, on the honor system that people would only download the 
+			BIOSes and images that they owned the original software for. Unfortunately, a 
+			lot of people came along who just wanted to download free games and didn't care 
+			about preservation, and gave the emulation community a bad name among software 
+			companies. There are many BIOSes/images sites on the Internet, using a search 
+			engine should turn up the ones you want. But remember: downloading pirated 
+			BIOSes/images that you don't own is illegal. Some people say that the 
+			copyrights have expired or that you can download it if you delete it after 24 
+			hours, but they are wrong. It's up to you whether you want to ignore the law, 
+			as most of the games are not and will not ever be sold again.
 		</p>
 		<p>
-			Most systems require system ROMs. <a href="http://www.mess.org/">MESS</a> is very picky about its system ROMs -- 
-			they must be exactly the ones it is expecting, otherwise it will complain and 
-			probably won't work.
+			Most systems require BIOSes. <a href="http://www.mess.org/">MESS</a> is very 
+			picky about its BIOSes -- they must be exactly the ones it is expecting, 
+			otherwise it will complain and probably won't work.
 		</p>
-		<p class="topic">Okay, I got some ROMs, now where do I put them?</p>
+		<p class="topic">Okay, I got some BIOSes and images, now where do I put them?</p>
 		<p>
-			System ROMs should go, still zipped, in the BIOS subfolder of wherever you put 
-			<a href="http://www.mess.org/">MESS</a>. Game ROMs should go into the SOFTWARE\[system name] folder. They can 
-			still be zipped, but only one ROM per zip file. The system name is an 
-			abbreviated identifier for the system, it is the same as the name of the system 
-			ROM zip file from messroms.de. Run <a href="http://www.mess.org/">MESS</a> with the -listfull option to find out 
-			all the abbreviations.
+			BIOSes should go, still zipped, in the BIOS subfolder of wherever you put <a href="http://www.mess.org/">
+				MESS</a>. Game images should go into the SOFTWARE\[system name] folder. 
+			They can still be zipped, but only one image per zip file.
 		</p>
-		<p class="topic">All right, I did all that, now how do I run <a href="http://www.mess.org/">MESS</a>?</p>
+		<p class="topic">All right, I did all that, now how do I run <a href="http://www.mess.org/">
+				MESS</a>?</p>
 		<p>
 			It depends on what version you have. For DOS, type "mess [system] [game] 
 			[options]", where system is the system abbreviation, game is the filename of 
@@ -102,29 +105,41 @@
 		</p>
 		<p class="topic">I did everything just like you said, but it still doesn't work!</p>
 		<p>
-			There is a messageboard you can go to for help at <a href="http://mess.emuverse.com/">
-				http://mess.emuverse.com</a>. But first, make sure you read this FAQ, the 
-			readme.txt, and mess.txt. The answers can often be found there. Also check out 
-			the <a href="http://www.mame.net/">MAME</a> FAQ at http://www.mame.net --it's a very good resource for things 
-			common to <a href="http://www.mame.net/">MAME</a> and <a href="http://www.mess.org/">MESS</a>, such as sound and graphics setup. Also search through 
-			the messageboard to see if somebody already had the same problem. And at least 
-			put some effort into fixing it yourself. People on messageboards can get very 
-			annoyed with people who ask questions that have already been answered 
-			elsewhere, especially in readme.txt and mess.txt.
+			There is a messageboard you can go to for help at <a href="http://www.mess.org/">http://www.mess.org</a>. 
+			But first, make sure you read this FAQ and the rest of the documentation. The 
+			answers can often be found there. Also check out the <a href="http://www.mame.net/">
+				MAME</a> FAQ at <a href="http://www.mame.net/">http://www.mame.net</a> --it's 
+			a very good resource for things common to <a href="http://www.mame.net/">MAME</a>
+			and <a href="http://www.mess.org/">MESS</a>, such as sound and graphics setup. 
+			Also search through the messageboard to see if somebody already had the same 
+			problem. And at least put some effort into fixing it yourself. People on 
+			messageboards can get very annoyed with people who ask questions that have 
+			already been answered elsewhere, especially in readme.txt and mess.txt.
 		</p>
 		<p class="topic">It works, but it's way too slow!</p>
 		<p>
-			Because of <a href="http://www.mess.org/">MESS</a>' goal of compatibility over speed, this is often the case. You 
-			might think that your computer should be able to emulate such old machines at 
-			full speed, but keep in mind that your computer is doing the jobs of <b>every chip</b>
-			in the original machine, not just the CPU. Your CPU is doing the jobs of the 
+			Because of <a href="http://www.mess.org/">MESS</a>' goal of compatibility over 
+			speed, this is often the case. You might think that your computer should be 
+			able to emulate such old machines at full speed, but keep in mind that <a href="http://www.mess.org/">
+				MESS</a> is not performing any shortcuts in the emulation. Many other 
+			emulators perform shortcuts that sacrifice compatibility in favor of 
+			performance, which is a valid tradeoff given a different set of design goals. 
+			With <a href="http://www.mess.org/">MESS</a>, your CPU is doing the jobs of the 
 			CPU(s), graphics chip(s), sound chip(s), as well as any other special hardware 
 			present in the original machine, so it can be bogged down fairly easily, 
-			especially by the relatively unoptimized <a href="http://www.mess.org/">MESS</a> core. <a href="http://www.mess.org/">MESS</a> is written almost 
-			entirely in C, not assembly, for compatibility reasons. There are some tweaks 
-			you can do to speed up the performance a bit (see the <a href="http://www.mame.net/">MAME</a> FAQ), but if you 
-			need a big boost, there's not much you can do except buy a faster computer, 
-			wait for an update (not likely), or use another emulator.
+			especially by the relatively unoptimized <a href="http://www.mess.org/">MESS</a>
+			core. <a href="http://www.mess.org/">MESS</a> is written almost entirely in C, 
+			not assembly, for compatibility reasons. Additionally, there is a level of 
+			overhead required to get the level of modularity that it takes to have the 
+			myriad components in the emulation be usable across a broad set of drivers. 
+			There are some tweaks you can do to speed up the performance a bit (see the <a href="http://www.mame.net/">
+				MAME</a> FAQ), but if you need a big boost, there's not much you can do 
+			except buy a faster computer, wait for an update (not likely), or use another 
+			emulator.
+		</p>
+		<p class="topic">Your file manager is an abomination in the eyes of God/Allah/Jehovah/Buddah/Zoroaster/anyone with an ounce of sense</p>
+		<p>
+			We hear your cries.  We hate the thing too.  For the moment we are stuck with it, but we are trying to phase it out.
 		</p>
 	</body>
 </html>

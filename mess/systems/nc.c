@@ -1790,26 +1790,6 @@ ROM_END
 static const struct IODevice io_nc100[] =
 {
 	{
-			IO_CARTSLOT,           /* type */
-			1,                     /* count */
-			"crd\0card\0",          /* file extensions */
-			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_READ,			/* open mode */
-			0,
-			nc_pcmcia_card_load,	/* load */
-			nc_pcmcia_card_exit,	/* exit */
-			NULL,                   /* info */
-			NULL,                   /* open */
-			NULL,                   /* close */
-			NULL,                   /* status */
-			NULL,                   /* seek */
-			NULL,                   /* tell */
-			NULL,                   /* input */
-			NULL,                   /* output */
-			NULL,                   /* input chunk */
-			NULL,                   /* output chunk */
-	},
-	{
 			IO_SERIAL,           /* type */
 			1,                     /* count */
 			"txt\0",               /* file extensions */
@@ -1834,26 +1814,6 @@ static const struct IODevice io_nc100[] =
 
 static const struct IODevice io_nc200[] =
 {
-	{
-			IO_CARTSLOT,           /* type */
-			1,                     /* count */
-			"crd\0card\0",          /* file extensions */
-			IO_RESET_NONE,			/* reset if file changed */
-			OSD_FOPEN_READ,			/* open mode */
-			0,
-			nc_pcmcia_card_load,	/* load */
-			nc_pcmcia_card_exit,	/* exit */
-			NULL,                   /* info */
-			NULL,                   /* open */
-			NULL,                   /* close */
-			NULL,                   /* status */
-			NULL,                   /* seek */
-			NULL,                   /* tell */
-			NULL,                   /* input */
-			NULL,                   /* output */
-			NULL,                   /* input chunk */
-			NULL,                   /* output chunk */
-	},
 	{
 			IO_FLOPPY,
 			1,
@@ -1903,12 +1863,14 @@ static const struct IODevice io_nc200[] =
 SYSTEM_CONFIG_START(nc100)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_CARTSLOT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
 SYSTEM_CONFIG_END
 
 
 SYSTEM_CONFIG_START(nc200)
 	CONFIG_RAM_DEFAULT(128 * 1024)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_CARTSLOT(1, "crd\0card\0", nc_pcmcia_card_load, nc_pcmcia_card_exit, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

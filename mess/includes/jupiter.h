@@ -3,7 +3,6 @@
 extern OPBASE_HANDLER( jupiter_opbaseoverride );
 extern MACHINE_INIT( jupiter );
 extern MACHINE_STOP( jupiter );
-extern void jupiter_exit_ace (int id);
 extern int jupiter_load_ace (int id);
 extern void jupiter_exit_tap (int id);
 extern int jupiter_load_tap (int id);

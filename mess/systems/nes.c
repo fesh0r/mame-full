@@ -403,7 +403,7 @@ static const struct IODevice io_famicom[] = {
 #define	io_nespal	io_NULL
 
 SYSTEM_CONFIG_START(nes)
-	CONFIG_DEVICE_CARTSLOT( "nes\0", 1, nes_init_cart, NULL, nes_partialcrc)
+	CONFIG_DEVICE_CARTSLOT(1, "nes\0", nes_init_cart, NULL, nes_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

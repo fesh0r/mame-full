@@ -379,11 +379,11 @@ ROM_END
 #define io_a7800p		io_NULL
 
 SYSTEM_CONFIG_START(a7800)
-	CONFIG_DEVICE_CARTSLOT( "a78\0", 1, a7800_init_cart, NULL, a7800_partialcrc)
+	CONFIG_DEVICE_CARTSLOT( 1, "a78\0", a7800_init_cart, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(a7800p)
-	CONFIG_DEVICE_CARTSLOT( "a78\0", 1, a7800p_init_cart, NULL, a7800_partialcrc)
+	CONFIG_DEVICE_CARTSLOT( 1, "a78\0", a7800p_init_cart, NULL, a7800_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

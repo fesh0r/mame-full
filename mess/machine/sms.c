@@ -627,10 +627,6 @@ int sms_init_cart(int id) {
 	return (INIT_PASS);
 }
 
-void sms_exit_cart(int id)
-{
-}
-
 MACHINE_INIT(sms) {
 	smsVersion = 0x00;
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {

@@ -264,7 +264,7 @@ MACHINE_DRIVER_END
 #define io_gbcolor	io_NULL
 
 SYSTEM_CONFIG_START(gameboy)
-	CONFIG_DEVICE_CARTSLOT( "gb\0gmb\0cgb\0gbc\0sgb\0", 1, gb_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 1, "gb\0gmb\0cgb\0gbc\0sgb\0", gb_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

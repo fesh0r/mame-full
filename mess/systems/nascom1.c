@@ -333,28 +333,6 @@ static	const	struct	IODevice	io_nascom1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-#ifdef CART
-	{
-		IO_CARTSLOT,			/* type */
-		1,						/* count */
-		"nas\0bin\0",			/* file extn */
-		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		nascom1_init_cartridge,	/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-#endif
 	{ IO_END }
 };
 
@@ -380,28 +358,6 @@ static	const	struct	IODevice	io_nascom2[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-#ifdef CART
-	{
-		IO_CARTSLOT,			/* type */
-		1,						/* count */
-		"nas\0bin\0",			/* file extn */
-		IO_RESET_CPU,			/* reset if file changed */
-		OSD_FOPEN_READ,			/* open mode */
-        NULL,                   /* id */
-		nascom1_init_cartridge,	/* init */
-		NULL,					/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
-#endif
 	{ IO_END }
 };
 
@@ -410,6 +366,9 @@ static	const	struct	IODevice	io_nascom2[] =
 #define io_nascom2a io_nascom2
 
 SYSTEM_CONFIG_START(nascom)
+#ifdef CART
+	CONFIG_DEVICE_CARTSLOT(1, "nas\0bin\0", nascom1_init_cartridge, NULL, NULL)
+#endif
 SYSTEM_CONFIG_END
 
 

@@ -217,7 +217,7 @@ ROM_END
 #define io_colecoa	io_NULL
 
 SYSTEM_CONFIG_START(coleco)
-	CONFIG_DEVICE_CARTSLOT( "rom\0col\0", 1, coleco_init_cart, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 1, "rom\0col\0", coleco_init_cart, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

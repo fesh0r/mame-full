@@ -94,7 +94,7 @@ ROM_END
 #define io_advision		io_NULL
 
 SYSTEM_CONFIG_START(advision)
-	CONFIG_DEVICE_CARTSLOT( "bin\0", 1, advision_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", advision_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

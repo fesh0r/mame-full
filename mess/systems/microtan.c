@@ -341,6 +341,7 @@ static const struct IODevice io_microtan[] = {
 
 SYSTEM_CONFIG_START(microtan)
 	CONFIG_DEVICE_CASSETTE(1, "tap\0", microtan_cassette_init)
+	CONFIG_DEVICE_SNAPSHOT(1, "m65\0", microtan_snapshot_init, microtan_snapshot_exit)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      CONFIG    COMPANY      FULLNAME */

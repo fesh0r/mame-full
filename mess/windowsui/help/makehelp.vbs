@@ -30,7 +30,7 @@ Function HtmlEncode(ByVal strText)
 	HtmlEncode = strHtml
 End Function
 
-Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath, ByVal strTitle)
+Sub AddTopic(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath, ByVal strTitle)
 	Dim objFile
 	WScript.Echo "Adding File " & strBaseDir & "\" & strRelPath & " ..."
 	Set objFile = objFSO.GetFile(strBaseDir & "\" & strRelPath)
@@ -41,10 +41,21 @@ Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath, ByVal strTi
 	objTextStream.WriteLine("			</OBJECT>")
 End Sub
 
-Sub AddImage(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath)
+Sub AddFile(ByVal objTextStream, ByVal strBaseDir, ByVal strRelPath)
 	Dim objFile
 	Set objFile = objFSO.GetFile(strBaseDir & "\" & strRelPath)
 	objFile.Copy(strObjDir & "\" & strRelPath)
+End Sub
+
+Sub BeginFolder(ByVal objTextStream, ByVal strFolderName)
+	objTextStream.WriteLine("	<LI> <OBJECT type=""text/sitemap"">")
+	objTextStream.WriteLine("		<param name=""Name"" value=""" & strFolderName & """>")
+	objTextStream.WriteLine("		</OBJECT>")
+	objTextStream.WriteLine("	<UL>")
+End Sub
+
+Sub EndFolder(ByVal objTextStream)
+	objTextStream.WriteLine("	</UL>")
 End Sub
 
 strObjDir = "obj\mess\mess\windowsui\help\"
@@ -121,7 +132,7 @@ Set objTextStream = objFSO.CreateTextFile(strObjDir & "mess.hhp")
 objTextStream.WriteLine("[OPTIONS]")
 objTextStream.WriteLine("Compiled file=mess.chm")
 objTextStream.WriteLine("Contents file=mess.hhc")
-objTextStream.WriteLine("Default topic=html\overview.html")
+objTextStream.WriteLine("Default topic=html\mess_overview.htm")
 objTextStream.WriteLine("Language=0x409 English (United States)")
 objTextStream.WriteLine("Title=MESS Help")
 objTextStream.WriteLine("")
@@ -143,26 +154,29 @@ objTextStream.WriteLine("</OBJECT>")
 objTextStream.WriteLine("<UL>")
 
 'Help files
-AddFile objTextStream,	"mess\windowsui\help",	"html\mess_overview.htm",	"Overview"
-AddFile objTextStream,	".",					"messnew.txt",				"Whats new"
-AddFile objTextStream,	"mess\windowsui\help",	"html\mess_compile.htm",	"Compiling"
-AddFile objTextStream,	"mess\windowsui\help",	"html\mess_faq.htm",		"FAQ"
-AddFile objTextStream,	"docs",					"imgtool.txt",				"Imgtool"
-AddImage objTextStream,	"mess\windowsui\help",	"images\messlogo.gif"
-AddImage objTextStream,	"mess\windowsui\help",	"html\style.css"
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_overview.htm",			"Overview"
+AddTopic	objTextStream,	".",					"messnew.txt",						"Whats new"
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_compile.htm",			"Compiling"
+BeginFolder	objTextStream,																"Installation"
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_systemreq.htm",			"System Requirements"
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_download.htm",			"Download Location"
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_installprocedures.htm",	"Installation Procedures"
+EndFolder	objTextStream
+AddTopic	objTextStream,	"mess\windowsui\help",	"html\mess_faq.htm",				"FAQ"
+AddTopic	objTextStream,	"docs",					"imgtool.txt",						"Imgtool"
+AddFile		objTextStream,	"mess\windowsui\help",	"images\messlogo.gif"
+AddFile		objTextStream,	"mess\windowsui\help",	"html\style.css"
+
 
 ' Emulated systems
-objTextStream.WriteLine("	<LI> <OBJECT type=""text/sitemap"">")
-objTextStream.WriteLine("		<param name=""Name"" value=""Emulated systems"">")
-objTextStream.WriteLine("		</OBJECT>")
-objTextStream.WriteLine("	<UL>")
+BeginFolder	objTextStream,	"Emulated systems"
 For i = LBound(arrSystems) To UBound(arrSystems)
 	objTextStream.WriteLine("		<LI> <OBJECT type=""text/sitemap"">")
 	objTextStream.WriteLine("			<param name=""Name"" value=""" & objSysInfoDictionary(arrSystems(i)) & """>")
 	objTextStream.WriteLine("			<param name=""Local"" value=""sysinfo\" & arrSystems(i) & """>")
 	objTextStream.WriteLine("			</OBJECT>")
 Next
-objTextStream.WriteLine("	</UL>")
+EndFolder objTextStream
 
 objTextStream.WriteLine("</UL>")
 objTextStream.WriteLine("</BODY></HTML>")

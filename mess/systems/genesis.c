@@ -340,7 +340,7 @@ ROM_END
 #define io_genesis	io_NULL
 
 SYSTEM_CONFIG_START(genesis)
-	CONFIG_DEVICE_CARTSLOT( "smd\0bin\0md\0", 1, genesis_init_cart, NULL, genesis_partialcrc)
+	CONFIG_DEVICE_CARTSLOT( 1, "smd\0bin\0md\0", genesis_init_cart, NULL, genesis_partialcrc)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

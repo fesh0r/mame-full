@@ -802,7 +802,7 @@ MACHINE_DRIVER_END
 #define io_a2600		io_NULL
 
 SYSTEM_CONFIG_START(a2600)
-	CONFIG_DEVICE_CARTSLOT( "bin\0", 1, a2600_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 1, "bin\0", a2600_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -86,7 +86,6 @@ READ_HANDLER(gg_input_port_2_r);
 
 void setup_rom(void);
 int sms_init_cart(int id);
-void sms_exit_cart(int id);
 
 extern MACHINE_INIT(sms);
 extern MACHINE_STOP(sms);

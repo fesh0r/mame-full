@@ -485,11 +485,11 @@ static const struct IODevice io_intvkbd[] = {
 };
 
 SYSTEM_CONFIG_START(intv)
-	CONFIG_DEVICE_CARTSLOT( "rom\0", 1, intv_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 1, "rom\0", intv_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(intvkbd)
-	CONFIG_DEVICE_CARTSLOT( "rom\0bin\0", 2, intvkbd_load_rom, NULL, NULL)
+	CONFIG_DEVICE_CARTSLOT( 2, "rom\0bin\0", intvkbd_load_rom, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************

@@ -365,10 +365,6 @@ static int sord_cartslot_init(int id)
 	return INIT_FAIL;
 }
 
-static void	sord_cartslot_exit(int id)
-{
-}
-
 static int sord_floppy_init(int id)
 {
 	if (!image_exists(IO_FLOPPY, id))
@@ -871,37 +867,10 @@ ROM_START(srdm5fd5)
 	ROM_LOAD("sordfd5.rom",0x0000, 0x04000, 0x01)
 ROM_END
 
-#define sord_m5_cart_device \
-	{ \
-		IO_CARTSLOT,\
-		1,						/* count */\
-		"rom\0",                /* file extensions */\
-		IO_RESET_NONE,			/* reset if file changed */\
-		OSD_FOPEN_READ,			/* open mode */\
-		NULL,					/* id */\
-		sord_cartslot_init,		/* init */\
-		sord_cartslot_exit,		/* exit */\
-		NULL,					/* info */\
-		NULL,					/* open */\
-		NULL,					/* close */\
-		NULL,					/* status */\
-		NULL,					/* seek */\
-		NULL,					/* tell */\
-		NULL,					/* input */\
-		NULL,					/* output */\
-		NULL,					/* input_chunk */\
-		NULL					/* output_chunk */\
-	}
-
-static const struct IODevice io_sordm5[] =
-{
-	sord_m5_cart_device,
-	{IO_END},
-};
+#define io_sordm5	io_NULL
 
 static const struct IODevice io_srdm5fd5[] = 
 {
-	sord_m5_cart_device,
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -930,6 +899,7 @@ SYSTEM_CONFIG_START(sordm5)
 	CONFIG_RAM_DEFAULT(64 * 1024)
 	CONFIG_DEVICE_CASSETTE(1, "", sord_cassette_init)
 	CONFIG_DEVICE_PRINTER(1)
+	CONFIG_DEVICE_CARTSLOT(1, "rom\0", sord_cartslot_init, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /*    YEAR  NAME       PARENT  MACHINE    INPUT     INIT     CONFIG,  COMPANY               FULLNAME */

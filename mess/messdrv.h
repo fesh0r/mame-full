@@ -95,11 +95,11 @@ struct SystemConfigurationParamBlock
 		cfg->dev = &device;																	\
 	}																						\
 
-#define CONFIG_DEVICE_CARTSLOT(file_extensions,count,init,exit,partialcrc)					\
+#define CONFIG_DEVICE_CARTSLOT(count,file_extensions,init,exit,partialcrc)					\
 	CONFIG_DEVICE(IO_CARTSLOT, (count), (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,	\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, (partialcrc))		\
 
-#define CONFIG_DEVICE_SNAPSHOT(file_extensions,count,init,exit)								\
+#define CONFIG_DEVICE_SNAPSHOT(count,file_extensions,init,exit)								\
 	CONFIG_DEVICE(IO_SNAPSHOT, (count), (file_extensions), IO_RESET_CPU, OSD_FOPEN_READ,	\
 		(init), (exit),	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)				\
 

@@ -204,31 +204,10 @@ ROM_START(mekd2)
 		/* space filled with key icons by mekd2_init_driver */
 ROM_END
 
-static const struct IODevice io_mekd2[] = {
-	{
-		IO_CARTSLOT,		/* type */
-		1,					/* count */
-		"d2\0",             /* file extensions */
-		IO_RESET_CPU,		/* reset if file changed */
-		OSD_FOPEN_READ,		/* open mode */
-		0,
-		mekd2_rom_load, 	/* init */
-		NULL,				/* exit */
-		NULL,				/* info */
-		NULL,				/* open */
-		NULL,				/* close */
-		NULL,				/* status */
-		NULL,				/* seek */
-		NULL,				/* tell */
-		NULL,				/* input */
-		NULL,				/* output */
-		NULL,				/* input_chunk */
-		NULL				/* output_chunk */
-	},
-	{ IO_END }
-};
+#define io_mekd2	io_NULL
 
 SYSTEM_CONFIG_START(mekd2)
+	CONFIG_DEVICE_CARTSLOT(1, "d2\0", mekd2_rom_load, NULL, NULL)
 SYSTEM_CONFIG_END
 
 /***************************************************************************
