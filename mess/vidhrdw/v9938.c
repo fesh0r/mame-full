@@ -652,7 +652,7 @@ READ_HANDLER (v9938_status_r)
 		case 2:
 			/*v9938_update_command ();*/
 			n = cycles_currently_ran ();
-			if ( (n < 57) || (n > 256) ) vdp.statReg[2] |= 0x20;
+			if ( (n < 28) || (n > 199) ) vdp.statReg[2] |= 0x20;
 			else vdp.statReg[2] &= ~0x20;
 			ret = vdp.statReg[2];
 			break;
