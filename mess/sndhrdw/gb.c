@@ -108,6 +108,7 @@ struct SOUND
 	/* Mode 3 */
 	INT8   level;
 	UINT8  offset;
+	UINT32 dutycount;
 	/* Mode 4 */
 	INT32  ply_step;
 	INT16  ply_value;
@@ -247,6 +248,8 @@ void gameboy_sound_w(int offset, int data)
 			}
 			snd_3.on = 1;
 			snd_3.count = 0;
+			snd_3.duty = 1;
+			snd_3.dutycount = 0;
 			gb_ram[NR52] |= 0x4;
 		}
 		break;
@@ -441,18 +444,15 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		/* Mode 3 - Wave patterns from WaveRAM */
 		if( snd_3.on )
 		{
-			/* NOTE: This is close, but not quite right.
-			   The problem is that the calculation for the period
-			   is too course, resulting in wrong notes occasionally.
-			   The most common side effect is the same note played twice */
-			sample = gb_ram[0xFF30 + snd_3.offset];
-			if( !snd_3.duty )
+			/* NOTE: This is extremely close, but not quite right.
+			   The problem is for GB frequencies above 2000 the frequency gets
+			   clipped. This is caused because snd_3.pos is never 0 at the test.*/
+			sample = gb_ram[0xFF30 + (snd_3.offset/2)];
+			if( !(snd_3.offset % 2) )
 			{
 				sample >>= 4;
 			}
-
 			sample &= 0xF;
-			sample -= 8;
 
 			if( snd_3.level )
 				sample >>= (snd_3.level - 1);
@@ -460,16 +460,20 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample = 0;
 
 			snd_3.pos++;
-			if( snd_3.pos > (UINT32)(((snd_3.period ) >> 21)) ) /* 21 = .. >> FIXED_POINT) / 32 */
-/*			if( (snd_3.pos<<16) >= (UINT32)(((snd_3.period / 31) + (1<<16))) ) */
+			if( snd_3.pos >= ((UINT32)(((snd_3.period ) >> 21)) + snd_3.duty) )
 			{
 				snd_3.pos = 0;
-				snd_3.duty = !snd_3.duty;
-				if( !snd_3.duty )
+				if( snd_3.dutycount == ((UINT32)(((snd_3.period ) >> FIXED_POINT)) % 32) )
 				{
-					snd_3.offset++;
-					if( snd_3.offset > 0xF )
-						snd_3.offset = 0;
+					snd_3.duty--;
+				}
+				snd_3.dutycount++;
+				snd_3.offset++;
+				if( snd_3.offset > 31 )
+				{
+					snd_3.offset = 0;
+					snd_3.duty = 1;
+					snd_3.dutycount = 0;
 				}
 			}
 
@@ -565,7 +569,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 int gameboy_sh_start(const struct MachineSound* driver)
 {
 	int I, J;
-	const char *names[2] = { "Gameboy left", "Gameboy right" };
+	const char *names[2] = { "GameBoy", "GameBoy" };
 	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
 	memset(&snd_1, 0, sizeof(snd_1));
@@ -574,7 +578,6 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	memset(&snd_4, 0, sizeof(snd_4));
 
 	channel = stream_init_multi(2, names, volume, Machine->sample_rate, 0, gameboy_update);
-
 	rate = Machine->sample_rate;
 
 	/* Calculate the envelope and sweep tables */
