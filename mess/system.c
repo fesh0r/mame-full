@@ -629,11 +629,9 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coco3p ) 	/* Color Computer 3 (PAL)						  */
 	DRIVER( coco3h )	/* Hacked Color Computer 3 (6309)				  */
 	DRIVER( dragon32 )	/* Dragon32 									  */
+	//DRIVER( dragon64 )	/* Dragon64 									  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
 	DRIVER( mc10 )		/* MC-10										  */
-
-	/* dragon 32 coco compatible */
-/*	DRIVER( dragon64 */	/* Dragon 64									  */
 
 	/* EACA */
 	DRIVER( cgenie )	/* Colour Genie EG2000							  */
