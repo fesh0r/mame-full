@@ -47,6 +47,8 @@ Source Changes:
 - Fixed a bug in core floppy handling that prevented writes to CoCo DMK
   images from working.  (bug #607) [Tim Lindner]
 
+- Removed mess/snprintf.c and mess/snprintf.h.  [Nate Woods]
+
 
 
 0.87

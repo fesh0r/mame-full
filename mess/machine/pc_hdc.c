@@ -17,7 +17,6 @@
 ***************************************************************************/
 
 #include <stdio.h>
-#include "snprintf.h"
 
 #include "mscommon.h"
 #include "includes/pic8259.h"

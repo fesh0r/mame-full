@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
-#include "snprintf.h"
 #include "mess.h"
 
 #define MAX_RAM_OPTIONS	16

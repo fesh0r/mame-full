@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "image.h"
 #include "ui_text.h"
-#include "snprintf.h"
 #include "devices/cassette.h"
 
 void tapecontrol_gettime(char *timepos, size_t timepos_size, mess_image *img, int *curpos, int *endpos)

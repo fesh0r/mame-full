@@ -8,7 +8,6 @@
 #include <stdlib.h>
 
 #include "parallel.h"
-#include "snprintf.h"
 
 #define SEQUENTIAL	0
 

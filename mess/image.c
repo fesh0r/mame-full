@@ -5,7 +5,6 @@
 #include "utils.h"
 #include "pool.h"
 #include "hashfile.h"
-#include "snprintf.h"
 
 /* ----------------------------------------------------------------------- */
 

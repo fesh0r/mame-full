@@ -8,7 +8,6 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\
-	$(OBJ)/mess/snprintf.o					\
 	$(OBJ)/mess/formats/ioprocs.o			\
 	$(OBJ)/mess/formats/flopimg.o			\
 	$(OBJ)/mess/formats/cassimg.o			\

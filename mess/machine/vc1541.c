@@ -99,7 +99,6 @@ FF00-FFFF       Jump table, vectors
 
 #include <assert.h>
 #include <stdio.h>
-#include "snprintf.h"
 
 #include "driver.h"
 #include "image.h"

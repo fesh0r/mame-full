@@ -16,7 +16,6 @@
 #include "state.h"
 #include "image.h"
 #include "inputx.h"
-#include "snprintf.h"
 #include "artwork.h"
 
 extern struct GameOptions options;

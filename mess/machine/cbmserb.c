@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "snprintf.h"
 #include <ctype.h>
 #include <string.h>
 #include "driver.h"

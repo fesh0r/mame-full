@@ -148,6 +148,7 @@ INCLUDES = \
 ifeq "$(TARGET)" "mess"
 INCLUDES += \
 	-Imess \
+	-Imess/ui \
 	-Imess/includes \
 	-Imess/windows
 endif
@@ -168,7 +169,8 @@ endif
 # C Compiler flags
 #
 
-CFLAGS = -nologo -MT $(INCLUDES) -DDECL_SPEC=__cdecl -Dsnprintf=_snprintf
+CFLAGS = -nologo -MT $(INCLUDES) -DDECL_SPEC=__cdecl \
+	-Dsnprintf=_snprintf -Dvsnprintf=_vsnprintf
 
 ifdef DEBUG
 CFLAGS += -Zi -Od -DMAME_VALIDITYCHECKS=1

@@ -5,7 +5,6 @@
 #include <time.h>
 #include <assert.h>
 #include "imgtool.h"
-#include "snprintf.h"
 #include "utils.h"
 #include "mess.h"
 #include "main.h"

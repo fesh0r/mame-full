@@ -12,7 +12,6 @@
 
 #include "driver.h"
 #include "inputx.h"
-#include "snprintf.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/m6847.h"
 #include "includes/6883sam.h"

@@ -14,8 +14,6 @@
 #include "osdepend.h"
 #include "imgtoolx.h"
 
-#include "snprintf.h"
-
 /* Max sector lenght is bytes.  Generally 256, except for a few older disk
 units which use 288-byte-long sectors, and SCSI units which generally use
 standard 512-byte-long sectors. */

@@ -14,8 +14,6 @@
 #include "osdepend.h"
 #include "imgtoolx.h"
 
-#include "snprintf.h"
-
 typedef struct UINT16xE
 {
 	UINT8 bytes[2];

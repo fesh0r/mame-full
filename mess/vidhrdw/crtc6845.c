@@ -31,7 +31,6 @@
 ***************************************************************************/
 
 #include <stdio.h>
-#include "snprintf.h"
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "state.h"

@@ -7,7 +7,6 @@
 ***************************************************************************/
 #include <ctype.h>
 #include <stdio.h>
-#include "snprintf.h"
 
 #include "driver.h"
 #include "image.h"

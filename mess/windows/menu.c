@@ -18,7 +18,6 @@
 #include "messres.h"
 #include "inputx.h"
 #include "video.h"
-#include "snprintf.h"
 #include "dialog.h"
 #include "opcntrl.h"
 #include "ui_text.h"
@@ -748,7 +747,7 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 	}
 
 	// add the trailing rparen
-	pos += snprintf(dest + pos, dest_len - pos, ")", s);
+	pos += snprintf(dest + pos, dest_len - pos, ")");
 
 	// get past the \0
 	if (dest_len > 0)
