@@ -31,12 +31,20 @@ Version 0.1, January 2000
 #include <sys/ioctl.h>
 #ifdef __ARCH_freebsd
 #include <machine/soundcard.h>
+#elif defined (__ARCH_openbsd)
+#include <soundcard.h>
 #else
 #include <sys/soundcard.h>
 #endif
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_dsp_priv.h"
 #include "sysdep/plugin_manager.h"
+
+#ifdef __ARCH_openbsd
+#define AUDIO_DEVICE   "/dev/audio"
+#else
+#define AUDIO_DEVICE   "/dev/dsp"
+#endif
 
 /* our per instance private data struct */
 struct oss_dsp_priv_data {
@@ -105,12 +113,12 @@ static void *oss_dsp_create(const void *flags)
    
    /* open the sound device */
    if (!device)
-      device = "/dev/dsp";
+      device = AUDIO_DEVICE;
    
    /* always open in non-blocking mode, otherwise the open itself may
       block hanging the entire application */
    if((priv->fd = open(device, O_WRONLY|O_NONBLOCK, 0)) < 0) {
-      perror("error: /dev/dsp");
+      perror("error: " AUDIO_DEVICE);
       oss_dsp_destroy(dsp);
       return NULL;
    }
