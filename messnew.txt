@@ -10,7 +10,8 @@ System Driver Changes:
   was actually originally based on the MESS NES driver code). [Nate Woods]
 
 - [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
-  wrap at the bottom of the screen. [Jimmy Li, Anthony Kruize]
+  wrap at the bottom of the screen. Fixed clearing of HDMA channels.
+  [Jimmy Li, Anthony Kruize]
 
 User Interface Changes:
 -----------------------

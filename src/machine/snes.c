@@ -35,6 +35,7 @@ static INT16 vram_fg_offset;	/* Fullgraphic offset */
 UINT8  spc_port_in[4];	/* Port for sending data to the SPC700 */
 UINT8  spc_port_out[4];	/* Port for receiving data from the SPC700 */
 static UINT16 joypad_oldrol;				/* For old joystick stuff */
+static UINT8 snes_hdma_chnl;	/* channels enabled for HDMA */
 static struct
 {
 	UINT8  mode;		/* ROM memory mode */
@@ -1387,11 +1388,11 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 	/* Let's draw the current line */
 	if( snes_ppu.beam.current_vert < snes_ppu.beam.last_visible_line )
 	{
-		snes_refresh_scanline( snes_ppu.beam.current_vert );
-
 		/* Do HDMA */
 		if( snes_ram[HDMAEN] )
 			snes_hdma();
+
+		snes_refresh_scanline( snes_ppu.beam.current_vert );
 	}
 
 	/* Vertical IRQ timer */
@@ -1430,6 +1431,7 @@ void snes_hdma_init()
 {
 	UINT8 mask = 1, dma = 0, i;
 
+	snes_hdma_chnl = snes_ram[HDMAEN];
 	for( i = 0; i < 8; i++ )
 	{
 		if( snes_ram[HDMAEN] & mask )
@@ -1452,7 +1454,7 @@ void snes_hdma()
 	/* Assume priority of the 8 DMA channels is 0-7 */
 	for( i = 0; i < 8; i++ )
 	{
-		if( snes_ram[HDMAEN] & mask )
+		if( snes_hdma_chnl & mask )
 		{
 			/* Check if we need to read a new line from the table */
 			if( !(snes_ram[SNES_DMA_BASE + dma + 0xa] & 0x7f ) )
@@ -1464,7 +1466,7 @@ void snes_hdma()
 				if( !snes_ram[SNES_DMA_BASE + dma + 0xa] )
 				{
 					/* No more lines so clear HDMA */
-					snes_ram[HDMAEN] &= ~mask;
+					snes_hdma_chnl &= ~mask;
 					continue;
 				}
 				abus++;
