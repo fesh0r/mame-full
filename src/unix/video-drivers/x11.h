@@ -68,18 +68,20 @@ void xinput_update(int keyb_leds, int flags);
 
 /* generic helper functions */
 int x11_init_palette_info(void);
-/* Create a resizable window with the correct aspect ratio, honor
-   custom_width, custom_height, run_in_root_window and
-   sysdep_display_params.fullscreen, return width and height in width
-   and height. */
-int x11_create_resizable_window(unsigned int *width, unsigned int *height);
-void x11_resize_resizable_window(unsigned int *width, unsigned int *height);
+void x11_resize_window(unsigned int *width, unsigned int *height, int type);
 /* Create a window, type can be:
    0: Fixed size of width and height
-   1: Resizable initial size is width and height, aspect is always
-      kept to sysdep_display_params.aspect .
-   2: Resizable initial size is width and height
-   3: Fullscreen return width and height in width and height */
+   1: Resizable, if custom_width and -height are set then width and height are
+      set to these, else they are determined from sysdep_display_params. The
+      aspect is kept to sysdep_display_params.aspect.
+   2: Same as 1, but without any aspect constrains.
+   3: Fullscreen return width and height in width and height.
+   
+   Notes:
+   1) If run_in_root_window is set then type gets ignored, and
+      the width and height of/and the root window are returned. (Else ...)
+   2) If root_window_id is set and type is not fullscreen this
+      is used as the parent window instead of the root window. */
 int x11_create_window(unsigned int *width, unsigned int *height, int type);
 /* Set the hints for a window, window-type can be:
    0: Fixed size

@@ -56,14 +56,15 @@ int xil_open_display(int reopen)
         XilMemoryStorage storage_info;
         pthread_t thread_id;
 
+        /* set aspect_ratio, do this early since this can change yarbsize */
+        mode_set_aspect_ratio((double)screen->width/screen->height);
+
         if (!reopen)
         {
-          /* set the aspect_ratio, do this here since
-             this can change yarbsize */
-          mode_set_aspect_ratio((double)screen->width/screen->height);
-
-          /* create a window */
-          if (x11_create_resizable_window(&window_width, &window_height))
+	  /* create a window */
+	  if (x11_create_window(&window_width, &window_height,
+	      sysdep_display_params.fullscreen?
+	      X11_FULLSCREEN:X11_RESIZABLE_ASPECT))
             return 1;
           
           /* create and setup the images */
@@ -95,7 +96,9 @@ int xil_open_display(int reopen)
         {
           sysdep_display_effect_close();
           xil_destroy_images(void);
-          x11_resize_resizable_window(&window_width, &window_height);
+          x11_resize_window(&window_width, &window_height,
+	    sysdep_display_params.fullscreen?
+	    X11_FULLSCREEN:X11_RESIZABLE_ASPECT);
         }
 
         /* xil does normal scaling for us */

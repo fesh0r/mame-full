@@ -322,82 +322,40 @@ int x11_init_palette_info(void)
 	return 0;
 }
 
-/* Create a resizable window with the correct aspect ratio, honor
-   custom_width, custom_height, run_in_root_window and
-   sysdep_display_params.fullscreen, return width and height in width
-   and height. */
-int x11_create_resizable_window(unsigned int *width, unsigned int *height)
+void x11_resize_window(unsigned int *width, unsigned int *height,
+  int type)
 {
-	if (run_in_root_window)
-	{
-	        window  = RootWindowOfScreen (screen);
-	        *width  = screen->width;
-                *height = screen->height;
-                sysdep_display_params.fullscreen = 0;
-                return 0;
-	}
-	
-	if(sysdep_display_params.fullscreen)
-                return x11_create_window(width, height, X11_FULLSCREEN);
-
-        /* determine window size */
-        if (custom_window_width)
-        {
-          mode_clip_aspect(custom_window_width, custom_window_height,
-            width, height);
-        }
-        else
-        {
-          *width  = sysdep_display_params.max_width *
-            sysdep_display_params.widthscale;
-          *height = sysdep_display_params.yarbsize?
-            sysdep_display_params.yarbsize:
-            sysdep_display_params.max_height *
-              sysdep_display_params.heightscale;
-          mode_stretch_aspect(window_width, window_height,
-            width, height);
-        }
-        
-        return x11_create_window(width, height, X11_RESIZABLE_ASPECT);
-}
-
-void x11_resize_resizable_window(unsigned int *width, unsigned int *height)
-{
-	if (run_in_root_window || sysdep_display_params.fullscreen)
-                return;
-
-        /* determine window size */
-        if (custom_window_width)
-        {
-          mode_clip_aspect(custom_window_width, custom_window_height,
-            width, height);
-        }
-        else
-        {
-          *width  = sysdep_display_params.max_width *
-            sysdep_display_params.widthscale;
-          *height = sysdep_display_params.yarbsize?
-            sysdep_display_params.yarbsize:
-            sysdep_display_params.max_height *
-              sysdep_display_params.heightscale;
-          mode_stretch_aspect(window_width, window_height,
-            width, height);
-        }
-
-        /* set window hints to resizable */
-        x11_set_window_hints(*width, *height, X11_RESIZABLE);
-        /* resize */
-        XResizeWindow(display, window, *width, *height);
-        /* set window hints to keep aspect resizable */
-        x11_set_window_hints(*width, *height, X11_RESIZABLE_ASPECT);
+  Window _dw;
+  int _dint;
+  unsigned int _duint, window_width, window_height;
+  
+  x11_get_geometry(&_dint, &_dint, width, height, &_dint, NULL, type);
+  XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width,
+    &window_height, &_duint, &_duint);
+    
+  if ((*width != window_width) || (*height != window_height))
+  {
+    if (type != X11_RESIZABLE)
+      x11_set_window_hints(*width, *height, X11_RESIZABLE);
+    XResizeWindow(display, window, *width, *height);
+    if (type != X11_RESIZABLE)
+      x11_set_window_hints(*width, *height, type);
+  }
 }
 
 /* Create a window, type can be:
    0: Fixed size of width and height
-   1: Resizable initial size is width and height, aspect is always
-      kept to sysdep_display_params.aspect .
-   2: Resizable initial size is width and height
-   3: Fullscreen return width and height in width and height */
+   1: Resizable, if custom_width and -height are set then width and height are
+      set to these, else they are determined from sysdep_display_params. The
+      aspect is kept to sysdep_display_params.aspect.
+   2: Same as 1, but without any aspect constrains.
+   3: Fullscreen return width and height in width and height.
+   
+   Notes:
+   1) If run_in_root_window is set then type gets ignored, and
+      the width and height of/and the root window are returned. (Else ...)
+   2) If root_window_id is set and type is not fullscreen this
+      is used as the parent window instead of the root window. */
 int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
@@ -407,6 +365,13 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 
         x11_get_geometry(&x, &y, width, height, &winattr.win_gravity,
           NULL, type);
+	
+	if (run_in_root_window)
+	{
+          window = root;
+          sysdep_display_params.fullscreen = 0;
+          return 0;
+	}
 	
 	if ((type != X11_FULLSCREEN) && root_window_id)
           root = root_window_id;
@@ -458,6 +423,9 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
         XWMHints wm_hints;
 	XSizeHints hints;
 
+        if (run_in_root_window)
+          return;
+        
 	/* WM hints */
         wm_hints.input    = True;
         wm_hints.flags    = InputHint;
@@ -491,7 +459,7 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 		hints.flags |= PSize;
 		break;
 	    case X11_FULLSCREEN: /* fullscreen */
-		hints.flags = PMinSize|PMaxSize|USPosition|USSize;
+		hints.flags |= PMinSize|PMaxSize;
 		break;
 	}
 	hints.min_width  = hints.max_width  = hints.base_width  = width;
@@ -535,7 +503,17 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 void x11_get_geometry(int *x, int *y, unsigned int *width,
   unsigned int *height, int *win_gravity, long *flags, int type)
 {
-  if(type == X11_FULLSCREEN)
+  if (run_in_root_window)
+  {
+    *x = 0;
+    *y = 0;
+    *width  = screen->width;
+    *height = screen->height;
+    *win_gravity = NorthWestGravity;
+    if (flags)
+      *flags = 0;
+  }
+  else if (type == X11_FULLSCREEN)
   {
     /*
      * Get the window size and location for a fullscreen display.  Normally
@@ -555,6 +533,8 @@ void x11_get_geometry(int *x, int *y, unsigned int *width,
     *width  = screen->width;
     *height = screen->height;
     *win_gravity = NorthWestGravity;
+    if (flags)
+      *flags = USPosition|USSize;
 
 #ifdef HAVE_XINERAMA
     if (!XineramaIsActive(display) || xinerama_screen < 0) {
@@ -583,6 +563,36 @@ void x11_get_geometry(int *x, int *y, unsigned int *width,
   {
     int i;
     XSizeHints hints;
+    
+    if (type != X11_FIXED)
+    {
+      struct rc_option *option;
+
+      if (custom_window_width)
+      {
+        *width  = custom_window_width;
+        *height = custom_window_height;
+      }
+      else
+      {
+        *width  = sysdep_display_params.max_width *
+          sysdep_display_params.widthscale;
+        *height = sysdep_display_params.yarbsize?
+          sysdep_display_params.yarbsize:
+          sysdep_display_params.max_height *
+            sysdep_display_params.heightscale;
+      }
+
+      /* detect -keepaspect */
+      option = rc_get_option2(aspect_opts, "keepaspect");
+      if ((type == X11_RESIZABLE_ASPECT) && option && *((int *)option->dest))
+      {
+        if (custom_window_width)
+          mode_clip_aspect(*width, *height, width, height);
+        else
+          mode_stretch_aspect(*width, *height, width, height);
+      }
+    }
     
     hints.min_width  = hints.max_width  = hints.base_width  = *width;
     hints.min_height = hints.max_height = hints.base_height = *height;

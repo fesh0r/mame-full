@@ -97,20 +97,20 @@ int x11_window_init(void)
 int x11_window_open_display(int reopen)
 {
         XGCValues xgcv;
-        int image_height, image_width;
+        int image_height, image_width, max_image_width, max_image_height;
         char *scaled_buffer_ptr;
 
         /* set aspect_ratio, do this early since this can change yarbsize */
         mode_set_aspect_ratio((double)screen->width/screen->height);
 
-        window_width     = sysdep_display_params.width * 
+        image_width  = window_width  = sysdep_display_params.width * 
           sysdep_display_params.widthscale;
-        window_height    = sysdep_display_params.yarbsize?
+        image_height = window_height = sysdep_display_params.yarbsize?
           sysdep_display_params.yarbsize:
           sysdep_display_params.height * sysdep_display_params.heightscale;
-        image_width      = sysdep_display_params.widthscale *
+        max_image_width  = sysdep_display_params.widthscale *
           sysdep_display_params.max_width;
-        image_height     = sysdep_display_params.yarbsize?
+        max_image_height = sysdep_display_params.yarbsize?
           sysdep_display_params.yarbsize:
           sysdep_display_params.max_height * sysdep_display_params.heightscale;
 
@@ -123,29 +123,18 @@ int x11_window_open_display(int reopen)
                   return 1;
 
           /* create a window */
-          if (run_in_root_window)
-          {
-                  int width  = screen->width;
-                  int height = screen->height;
-                  if (window_width > width || window_height > height)
-                  {
-                          fprintf (stderr, "OSD ERROR: Root window is to small: %dx%d, needed %dx%d\n",
-                                          width, height, window_width, window_height);
-                          return 1;
-                  }
+          if (x11_create_window(&window_width, &window_height, X11_FIXED))
+            return 1;
 
-                  startx        = ((width  - window_width)  / 2) & ~3;
-                  starty        = ((height - window_height) / 2) & ~3;
-                  window        = RootWindowOfScreen (screen);
-                  window_width  = width;
-                  window_height = height;
-          }
-          else
+          if ((image_width > window_width) || (image_height > window_height))
           {
-                  /* create the actual window */
-                  if (x11_create_window(&window_width, &window_height, X11_FIXED))
-                          return 1;
+            fprintf (stderr, "OSD ERROR: Window is to small: %dx%d, needed %dx%d\n",
+              image_width, image_height, window_width, window_height);
+            return 1;
           }
+
+          startx        = ((window_width  - image_width)  / 2) & ~3;
+          starty        = ((window_height - window_height) / 2) & ~3;
 
           /* create gc */
           gc = XCreateGC (display, window, 0, &xgcv);
@@ -160,16 +149,8 @@ int x11_window_open_display(int reopen)
           if ( (image_width  > image->width)  ||
                (image_height > image->height) )
             x11_window_destroy_image();
-
-          if(!run_in_root_window)
-          {
-            /* set window hints to resizable */
-            x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
-            /* resize */
-            XResizeWindow(display, window, window_width, window_height);
-            /* set window hints to nonresizable */
-            x11_set_window_hints(window_width, window_height, X11_FIXED);
-          }
+          
+          x11_resize_window(&window_width, &window_height, X11_FIXED);
         }
 
         /* create and setup the image */
@@ -196,8 +177,8 @@ int x11_window_open_display(int reopen)
                                         ZPixmap,
                                         NULL,
                                         &shm_info,
-                                        image_width,
-                                        image_height);
+                                        max_image_width,
+                                        max_image_height);
                         if (image)
                         {
                                 shm_info.readOnly = False;
@@ -254,7 +235,7 @@ int x11_window_open_display(int reopen)
 #endif
                 case X11_NORMAL:
                         scaled_buffer_ptr=malloc(((screen->root_depth <= 16)?
-                          2:4) * image_width * image_height);
+                          2:4) * max_image_width * max_image_height);
                         if (!scaled_buffer_ptr)
                         {
                                 fprintf (stderr, "Error: failed to allocate bitmap buffer.\n");
@@ -266,7 +247,7 @@ int x11_window_open_display(int reopen)
                                         ZPixmap,
                                         0,
                                         scaled_buffer_ptr,
-                                        image_width, image_height,
+                                        max_image_width, max_image_height,
                                         32, /* image_width always is a multiple of 4 */
                                         0);
 

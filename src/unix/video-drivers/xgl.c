@@ -102,11 +102,12 @@ int xgl_open_display(int reopen)
 {
   char *glxfx;
   int force_grab;
-  int x = 0;
-  int y = 0;
   int ownwin = 1;
   unsigned long winmask = 0;
-  Window root = DefaultRootWindow(display);
+  Window parent_win = RootWindowOfScreen (screen);
+
+  /* set aspect_ratio, do this early since this can change yarbsize */
+  mode_set_aspect_ratio((double)screen->width/screen->height);
 
   /* Determine window size, type, etc. If using 3Dfx */
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
@@ -124,17 +125,14 @@ int xgl_open_display(int reopen)
     }
     window_type = X11_FIXED; /* non resizable */
     force_grab  = X11_FORCE_INPUT_GRAB; /* grab mouse and keyb */
-    window_attr.win_gravity = NorthWestGravity;
+    run_in_root_window = 0;
+    sysdep_display_params.fullscreen = 1;
   }
   else if (run_in_root_window)
   {
-    window        = RootWindowOfScreen (screen);
-    window_width  = screen->width;
-    window_height = screen->height;
-    window_type   = X11_FIXED; /* non resizable */
-    force_grab    = X11_NO_FORCED_GRAB; /* no grab */
-    window_attr.win_gravity = NorthWestGravity;
-    ownwin = 0;
+    window_type = X11_FIXED; /* non resizable */
+    force_grab  = X11_NO_FORCED_GRAB; /* no grab */
+    ownwin      = 0;
   }
   else
   {
@@ -147,28 +145,16 @@ int xgl_open_display(int reopen)
     }
     else
     {
+      if (root_window_id)
+        parent_win = root_window_id;
+      
       winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-      if(custom_window_width)
-        mode_clip_aspect(custom_window_width, custom_window_height,
-          &window_width, &window_height);
-      else
-      {
-        window_width     = sysdep_display_params.max_width * 
-          sysdep_display_params.widthscale;
-        window_height    = sysdep_display_params.yarbsize?
-          sysdep_display_params.yarbsize:
-          sysdep_display_params.max_height * sysdep_display_params.heightscale;
-        mode_stretch_aspect(window_width, window_height,
-          &window_width, &window_height);
-      }
       if (cabview)
         window_type = X11_RESIZABLE; /* resizable */
       else
         window_type = X11_RESIZABLE_ASPECT; /* resizable, keep aspect */
       force_grab    = X11_NO_FORCED_GRAB;   /* no grab */
     }
-    x11_get_geometry(&x, &y, &window_width, &window_height,
-      &window_attr.win_gravity, NULL, window_type);
   }
 
   if(!reopen)
@@ -176,10 +162,12 @@ int xgl_open_display(int reopen)
     XEvent event;
     VisualGC vgc;
     XVisualInfo *myvisual;
+    int x, y;
     
-    mode_set_aspect_ratio((double)screen->width/screen->height);
-
     fprintf(stderr, xgl_version_str);
+
+    x11_get_geometry(&x, &y, &window_width, &window_height,
+      &window_attr.win_gravity, NULL, window_type);
 
     window_attr.background_pixel=0;
     window_attr.border_pixel=WhitePixelOfScreen(screen);
@@ -191,11 +179,9 @@ int xgl_open_display(int reopen)
     window_attr.do_not_propagate_mask=0;
     window_attr.colormap=0; /* done later, within findVisualGlX .. */
     window_attr.cursor=None;
+    window = parent_win;
 
-    if (root_window_id)
-      root = root_window_id;
-      
-    vgc = findVisualGlX( display, root,
+    vgc = findVisualGlX( display, RootWindowOfScreen (screen),
                          &window, x, y, window_width, window_height, &glCaps, 
   		       &ownwin, &window_attr, winmask,
   		       NULL, 0, NULL, 
@@ -226,11 +212,11 @@ int xgl_open_display(int reopen)
     
     setGLCapabilities ( display, myvisual, &glCaps);
     
+    /* set the hints */
+    x11_set_window_hints(window_width, window_height, window_type);
+
     if (!run_in_root_window)
     {
-      /* set the hints */
-      x11_set_window_hints(window_width, window_height, window_type);
-          
       /* Map and expose the window. */
       XSelectInput(display, window, ExposureMask);
       XMapRaised(display,window);
@@ -241,24 +227,8 @@ int xgl_open_display(int reopen)
     xinput_open(force_grab, 0);
   }
   else
-  {
-    switch(window_type)
-    {
-      case X11_RESIZABLE_ASPECT:
-        /* set window hints to resizable, no aspect */
-        x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
-        /* resize */
-        XResizeWindow(display, window, window_width, window_height);
-        /* set window hints back */
-        x11_set_window_hints(window_width, window_height, window_type);
-        break;
-      case X11_RESIZABLE:
-        /* resize */
-        XResizeWindow(display, window, window_width, window_height);
-        break;
-    }
-  }
-
+    x11_resize_window(&window_width, &window_height, window_type);
+    
   return gl_open_display(reopen);
 }
 

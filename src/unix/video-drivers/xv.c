@@ -253,7 +253,9 @@ int xv_open_display(int reopen)
 	  sysdep_display_properties.vector_renderer = NULL;
 
 	  /* create a window */
-	  if (x11_create_resizable_window(&window_width, &window_height))
+	  if (x11_create_window(&window_width, &window_height,
+	      sysdep_display_params.fullscreen?
+	      X11_FULLSCREEN:X11_RESIZABLE_ASPECT))
             return 1;
           
           fprintf (stderr, "MIT-SHM & XV Extensions Available. trying to use.\n");
@@ -296,7 +298,9 @@ int xv_open_display(int reopen)
         else
         {
           sysdep_display_effect_close();
-          x11_resize_resizable_window(&window_width, &window_height);
+          x11_resize_window(&window_width, &window_height,
+	    sysdep_display_params.fullscreen?
+	    X11_FULLSCREEN:X11_RESIZABLE_ASPECT);
         }
         
         /* Now we have created the window we no longer need yarbsize,
@@ -617,7 +621,7 @@ const char *xv_update_display(struct mame_bitmap *bitmap,
     palette, (unsigned char *)xvimage->data, xvimage->width);
 
   XGetGeometry(display, window, &_dw, &_dint, &_dint, &window_width, &window_height, &_duint, &_duint);
-  if (sysdep_display_params.fullscreen)
+  if (sysdep_display_params.fullscreen || run_in_root_window)
   {
     mode_clip_aspect(window_width, window_height, &pw, &ph);
   }
