@@ -84,6 +84,9 @@ binary form plus a makro assembler for PDP1 programs.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/pdp1.h"
+
+#include "includes/pdp1.h"
+
 /*
  * PRECISION CRT DISPLAY (TYPE 30)
  * is the only display - hardware emulated, this is needed for SPACEWAR!
@@ -99,12 +102,9 @@ binary form plus a makro assembler for PDP1 programs.
  *
  */
 
-/* From machine/pdp1.c */
-int pdp1_load_rom (int id);
-int pdp1_id_rom (int id);
-void pdp1_init_machine(void);
-READ_HANDLER ( pdp1_read_mem );
-WRITE_HANDLER ( pdp1_write_mem );
+
+
+
 
 /* every memory handler is the same for now */
 
@@ -113,17 +113,13 @@ WRITE_HANDLER ( pdp1_write_mem );
  * be all right to use them.
  * This gives sometimes IO warnings!
  */
-static struct MemoryReadAddress pdp1_readmem[] =
-{
+static MEMORY_READ_START18(pdp1_readmem)
 	{ 0x0000, 0xffff, pdp1_read_mem },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
-static struct MemoryWriteAddress pdp1_writemem[] =
-{
+static MEMORY_WRITE_START18(pdp1_writemem)
 	{ 0x0000, 0xffff, pdp1_write_mem },
-	{ -1 }  /* end of table */
-};
+MEMORY_END
 
 INPUT_PORTS_START( pdp1 )
 

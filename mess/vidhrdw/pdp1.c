@@ -14,6 +14,8 @@
 #include "vidhrdw/generic.h"
 #include "vidhrdw/pdp1.h"
 #include "cpu/pdp1/pdp1.h"
+#include "includes/pdp1.h"
+
 
 int fio_dec=0;
 int concise=0;

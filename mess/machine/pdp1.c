@@ -3,6 +3,8 @@
 #include "vidhrdw/pdp1.h"
 #include "driver.h"
 
+#include "includes/pdp1.h"
+
 /*
  * osd_fread (romfile, pdp1_memory, 16384);
  *
@@ -19,11 +21,6 @@
  */
 
 static unsigned char *ROM;
-
-int pdp1_iot(int *io, int md);
-int pdp1_load_rom (int id);
-int pdp1_id_rom (int id);
-void pdp1_plot(int x, int y);
 
 int *pdp1_memory;
 
@@ -103,12 +100,12 @@ void pdp1_init_machine(void)
 	cpu_setOPbaseoverride(0,setOPbasefunc);
 }
 
-int pdp1_read_mem(int offset)
+READ18_HANDLER(pdp1_read_mem)
 {
 	return pdp1_memory ? pdp1_memory[offset] : 0;
 }
 
-void pdp1_write_mem(int offset, int data)
+WRITE18_HANDLER(pdp1_write_mem)
 {
 	if (pdp1_memory)
 		pdp1_memory[offset]=data;
