@@ -670,6 +670,10 @@ const struct GameDriver *drivers[] =
 	DRIVER( sws93 )		/* (c) 1993 (Japan) */
 	/* 93.6  Super World Stadium '93 */
 
+	/* Namco FL games */
+	DRIVER( speedrcr )
+	DRIVER( finalapr )
+
 	/* Namco NA-1 / NA-2 System games */
 	DRIVER( bkrtmaq )	/* (c) 1992 (Japan) */
 	DRIVER( cgangpzl )	/* (c) 1992 (US) */
@@ -2602,6 +2606,7 @@ V-V                           TP-027
 	DRIVER( astrob1 )	/* (c) 1981 */
 	DRIVER( 005 )		/* (c) 1981 */
 	DRIVER( monsterb )	/* (c) 1982 */
+	DRIVER( monster2 )	/* (c) 1982 */
 	DRIVER( spaceod )	/* (c) 1981 */
 	DRIVER( pignewt )	/* (c) 1983 */
 	DRIVER( pignewta )	/* (c) 1983 */
@@ -3790,6 +3795,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( orbit )		/* 033689-033702	1978/11 [6800] */
 	DRIVER( boxer )		/* ?????? prototype 1978    [6502] */
 	DRIVER( wolfpack )	/* ?????? prototype         [6502] */
+	DRIVER( mgolf )		/* ?????? prototype 1978	[6502] */
 	DRIVER( videopin )	/* 034253-034267	1979/02 [6502] */
 	DRIVER( atarifb4 )	/* 034754			1979/04 [6502] */
 	DRIVER( subs )		/* 033714			1979/05 [6502] */
@@ -5265,6 +5271,7 @@ Other Sun games
 	DRIVER( mjifb )		/* "29" 1990 Dynax */
 	DRIVER( sprtmtch )	/* "31" (c) 1989 Dynax + Fabtek license */
 	DRIVER( maya )		/* (c) 1994 Promat */
+	DRIVER( inca )		/* (c) 199? ???? */
 	DRIVER( mcnpshnt )	/* "33" Mahjong Campus Hunting 1990 Dynax */
 	DRIVER( 7jigen )	/* "37" 7jigen no Youseitachi 1990 Dynax */
 	DRIVER( neruton )	/* "45" Neruton Haikujiradan 1990 Dynax */
@@ -5547,6 +5554,12 @@ Other Sun games
 	DRIVER( dynadice )	/* ? */
 	DRIVER( ssingles )	/* Yachiyo? */
 	DRIVER( tcl )		/* (c) 1995 Uniwang */
+	DRIVER( kisekaem )	/* (c) 1995 I'Max */
+	DRIVER( kisekaeh )	/* (c) 1995 I'Max */
+	DRIVER( cultname )	/* (c) 1995 I'Max */
+	DRIVER( yuka )		/* (c) 1999 Yubis */
+	DRIVER( yujan )		/* (C) 1999 Yubis */
+	DRIVER( onetwo )	/* (c) 1997 Barko */
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */

@@ -85,6 +85,7 @@
 typedef struct {
 	const unsigned char *transform;
 	unsigned char state;
+	unsigned char bit;
 } znsec_state;
 
 static znsec_state zns[2];
@@ -144,32 +145,32 @@ void znsec_init(int chip, const unsigned char *transform)
 {
 	zns[chip].transform = transform;
 	zns[chip].state = 0xfc;
+	zns[chip].bit = 0;
 }
 
 void znsec_start(int chip)
 {
 	zns[chip].state = 0xfc;
+	zns[chip].bit = 0;
 }
 
 unsigned char znsec_step(int chip, unsigned char input)
 {
 	unsigned char res;
-	int i;
 	static const unsigned char initial_sbox[8] = { 0xff, 0xfe, 0xfc, 0xf8, 0xf0, 0xe0, 0xc0, 0x7f };
-	unsigned char state;
 
-	// Apply the initial xbox
-	state = apply_sbox(zns[chip].state, initial_sbox);
-
-	// Compute the output and change the state
-	res = 0;
-	for(i=0; i<8; i++) {
-		res |= state & (1<<i);
-		if(!(input & (1<<i)))
-			state = apply_bit_sbox(chip, state, i);
+	if (zns[chip].bit==0)
+	{
+		// Apply the initial xbox
+		zns[chip].state = apply_sbox(zns[chip].state, initial_sbox);
 	}
 
-	zns[chip].state = state;
+	// Compute the output and change the state
+	res = (zns[chip].state>>zns[chip].bit) & 1;
+	if((input & 1)==0)
+		zns[chip].state = apply_bit_sbox(chip, zns[chip].state, zns[chip].bit);
 
+	zns[chip].bit++;
+	zns[chip].bit&=7;
 	return res;
 }

@@ -7,7 +7,9 @@ static struct tilemap *mid_layer;
 static struct tilemap *fore_layer;
 
 UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
-UINT32 bg_2layer;
+UINT32 *back_rowscroll_ram, *mid_rowscroll_ram, *fore_rowscroll_ram;
+int old_vidhw;
+int bg_size;
 
 static UINT32 layer_bank;
 static UINT32 layer_enable;
@@ -26,8 +28,8 @@ WRITE32_HANDLER( spi_layer_enable_w )
 {
 	COMBINE_DATA( &layer_enable );
 	tilemap_set_enable(back_layer, (layer_enable & 0x1) ^ 0x1);
-	tilemap_set_enable(mid_layer, ((layer_enable >> 2) & 0x1) ^ 0x1);
-	tilemap_set_enable(fore_layer, ((layer_enable >> 1) & 0x1) ^ 0x1);
+	tilemap_set_enable(mid_layer, ((layer_enable >> 1) & 0x1) ^ 0x1);
+	tilemap_set_enable(fore_layer, ((layer_enable >> 2) & 0x1) ^ 0x1);
 }
 
 static int sprite_xtable[2][8] =
@@ -181,7 +183,7 @@ static void get_fore_tile_info( int tile_index )
 	int color = (tile >> 13) & 0x7;
 
 	tile &= 0x1fff;
-	if( bg_2layer ) {
+	if( bg_size == 0 ) {
 		tile |= 0x2000;
 	} else {
 		tile |= 0x4000;
@@ -204,6 +206,18 @@ VIDEO_START( spi )
 	return 0;
 }
 
+static void set_rowscroll(struct tilemap *layer, int scroll, INT16* rows)
+{
+	int i;
+	int x = scroll_ram[scroll] & 0xffff;
+	int y = (scroll_ram[scroll] >> 16) & 0xffff;
+	tilemap_set_scroll_rows(layer, 512);
+	for( i=0; i < 512; i++ ) {
+		tilemap_set_scrollx(layer, i, x + rows[i]);
+	}
+	tilemap_set_scrolly(layer, 0, y);
+}
+
 static void set_scroll(struct tilemap *layer, int scroll)
 {
 	int x = scroll_ram[scroll] & 0xffff;
@@ -214,16 +228,21 @@ static void set_scroll(struct tilemap *layer, int scroll)
 
 VIDEO_UPDATE( spi )
 {
-	set_scroll(back_layer, 0);
-	set_scroll(mid_layer, 1);
-	set_scroll(fore_layer, 2);
+	if( !old_vidhw ) {
+		set_rowscroll(back_layer, 0, (INT16*)back_rowscroll_ram);
+		set_rowscroll(mid_layer, 1, (INT16*)mid_rowscroll_ram);
+		set_rowscroll(fore_layer, 2, (INT16*)fore_rowscroll_ram);
+	} else {
+		set_scroll(back_layer, 0);
+		set_scroll(mid_layer, 1);
+		set_scroll(fore_layer, 2);
+	}
 
 	if( layer_enable & 0x1 )
 		fillbitmap(bitmap, 0, cliprect);
 
 	tilemap_draw(bitmap, cliprect, back_layer, 0,0);
-	if( !bg_2layer )
-		tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
+	tilemap_draw(bitmap, cliprect, mid_layer, 0,0);
 	tilemap_draw(bitmap, cliprect, fore_layer, 0,0);
 
 	if( (layer_enable & 0x10) == 0 )

@@ -21,7 +21,14 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		va_start( v, s_fmt );
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
-		logerror( "%08x: %s", activecpu_get_pc(), buf );
+		if( cpu_getactivecpu() != -1 )
+		{
+			logerror( "%08x: %s", activecpu_get_pc(), buf );
+		}
+		else
+		{
+			logerror( "(timer) : %s", buf );
+		}
 	}
 }
 
@@ -465,21 +472,23 @@ READ32_HANDLER( psx_counter_r )
 
 #define SIO_BUF_SIZE ( 8 )
 
-static data16_t m_p_n_sio_status[ 2 ];
-static data16_t m_p_n_sio_mode[ 2 ];
-static data16_t m_p_n_sio_control[ 2 ];
-static data16_t m_p_n_sio_baud[ 2 ];
-static data8_t m_p_n_sio_rx_buf[ 2 ][ SIO_BUF_SIZE ];
-static data16_t m_p_n_sio_rx_pos[ 2 ];
-static data16_t m_p_n_sio_rx_tail[ 2 ];
-static data16_t m_p_n_sio_rx_left[ 2 ];
-static data8_t m_p_n_sio_tx_buf[ 2 ][ SIO_BUF_SIZE ];
-static data16_t m_p_n_sio_tx_pos[ 2 ];
-static data16_t m_p_n_sio_tx_tail[ 2 ];
-static data16_t m_p_n_sio_tx_left[ 2 ];
+static data32_t m_p_n_sio_status[ 2 ];
+static data32_t m_p_n_sio_mode[ 2 ];
+static data32_t m_p_n_sio_control[ 2 ];
+static data32_t m_p_n_sio_baud[ 2 ];
+static data32_t m_p_n_sio_tx[ 2 ];
+static data32_t m_p_n_sio_rx[ 2 ];
+static data32_t m_p_n_sio_tx_prev[ 2 ];
+static data32_t m_p_n_sio_rx_prev[ 2 ];
+static data32_t m_p_n_sio_tx_data[ 2 ];
+static data32_t m_p_n_sio_rx_data[ 2 ];
+static data32_t m_p_n_sio_tx_shift[ 2 ];
+static data32_t m_p_n_sio_rx_shift[ 2 ];
+static data32_t m_p_n_sio_tx_bits[ 2 ];
+static data32_t m_p_n_sio_rx_bits[ 2 ];
 
 static void *m_p_timer_sio[ 2 ];
-static psx_sio_write_handler m_p_f_sio_write[ 2 ];
+static psx_sio_handler m_p_f_sio_handler[ 2 ];
 
 #define SIO_STATUS_TX_RDY ( 1 << 0 )
 #define SIO_STATUS_RX_RDY ( 1 << 1 )
@@ -494,6 +503,8 @@ static psx_sio_write_handler m_p_f_sio_write[ 2 ];
 #define SIO_CONTROL_RX_IENA ( 1 << 11 )
 #define SIO_CONTROL_DSR_IENA ( 1 << 12 )
 #define SIO_CONTROL_DTR ( 1 << 13 )
+
+#define BITS_PER_TICK ( 8 )
 
 static void sio_interrupt( int n_port )
 {
@@ -530,7 +541,7 @@ static void sio_timer( int n_port )
 		break;
 	}
 
-	n_prescaler *= 8;
+	n_prescaler *= BITS_PER_TICK;
 	if( m_p_n_sio_baud[ n_port ] != 0 && n_prescaler != 0 )
 	{
 		n_time = TIME_IN_SEC( (double)( n_prescaler * m_p_n_sio_baud[ n_port ] ) / 33868800 );
@@ -544,99 +555,96 @@ static void sio_timer( int n_port )
 	timer_adjust( m_p_timer_sio[ n_port ], n_time, n_port, 0 );
 }
 
-static void sio_finished( int n_port )
+static void sio_clock( int n_port )
 {
+	int n_bit;
+
 	verboselog( 2, "sio tick\n" );
-	if( m_p_n_sio_tx_left[ n_port ] != 0 )
+
+	for( n_bit = 0; n_bit < BITS_PER_TICK; n_bit++ )
 	{
-		if( m_p_f_sio_write[ n_port ] != NULL )
+		if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
+			( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 )
 		{
-			verboselog( 2, "port %d data %02x\n", n_port, m_p_n_sio_tx_buf[ n_port ][ m_p_n_sio_tx_tail[ n_port ] ] );
-			m_p_f_sio_write[ n_port ]( PSX_SIO_DATA, m_p_n_sio_tx_buf[ n_port ][ m_p_n_sio_tx_tail[ n_port ] ] );
-		}
-		else
-		{
-			/* todo: remove this hack */
-			psx_sio_send( n_port, 0xff );
-		}
-		m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
-		m_p_n_sio_tx_tail[ n_port ] = ( m_p_n_sio_tx_tail[ n_port ] + 1 ) % SIO_BUF_SIZE;
-		m_p_n_sio_tx_left[ n_port ]--;
-		if( m_p_n_sio_tx_left[ n_port ] == 0 )
-		{
+			m_p_n_sio_tx_bits[ n_port ] = 8;
+			m_p_n_sio_tx_shift[ n_port ] = m_p_n_sio_tx_data[ n_port ];
+			if( n_port == 0 )
+			{
+				m_p_n_sio_rx_bits[ n_port ] = 8;
+				m_p_n_sio_rx_shift[ n_port ] = 0;
+			}
 			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_EMPTY;
-			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_IENA ) != 0 )
+			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
+		}
+
+		if( m_p_n_sio_tx_bits[ n_port ] != 0 )
+		{
+			m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
+			m_p_n_sio_tx_shift[ n_port ] >>= 1;
+			m_p_n_sio_tx_bits[ n_port ]--;
+
+			if( m_p_f_sio_handler[ n_port ] != NULL )
+			{
+				if( n_port == 0 )
+				{
+					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] | PSX_SIO_OUT_CLOCK );
+				}
+				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+			}
+			else
+			{
+				m_p_n_sio_rx[ n_port ] = PSX_SIO_IN_DATA;
+			}
+
+			if( m_p_n_sio_tx_bits[ n_port ] == 0 &&
+				( m_p_n_sio_control[ n_port ] & SIO_CONTROL_TX_IENA ) != 0 )
 			{
 				sio_interrupt( n_port );
 			}
 		}
-	}
-	else if( n_port == 0 )
-	{
-		if( m_p_f_sio_write[ n_port ] != NULL )
-		{
-			verboselog( 2, "port %d idle write\n", n_port );
-/* todo:	m_p_f_sio_write[ n_port ]( PSX_SIO_DATA, 0xff ); */
-		}
-	}
 
-	if( n_port == 0 && m_p_n_sio_rx_left[ n_port ] == 0 )
-	{
-		verboselog( 2, "port %d idle read\n", n_port );
-/* todo:psx_sio_send( n_port, 0xff ); */
-	}
+		if( m_p_n_sio_rx_bits[ n_port ] != 0 )
+		{
+			m_p_n_sio_rx_shift[ n_port ] = ( m_p_n_sio_rx_shift[ n_port ] >> 1 ) | ( ( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DATA ) / PSX_SIO_IN_DATA ) << 7 );
+			m_p_n_sio_rx_bits[ n_port ]--;
 
-	if( m_p_n_sio_rx_left[ n_port ] != 0 )
-	{
-		if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_RX_RDY ) != 0 )
-		{
-			m_p_n_sio_status[ n_port ] |= SIO_STATUS_OVERRUN;
-		}
-		else
-		{
-			m_p_n_sio_status[ n_port ] |= SIO_STATUS_RX_RDY;
-			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RX_IENA ) != 0 )
+			if( m_p_n_sio_rx_bits[ n_port ] == 0 )
 			{
-				sio_interrupt( n_port );
+				if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_RX_RDY ) != 0 )
+				{
+					m_p_n_sio_status[ n_port ] |= SIO_STATUS_OVERRUN;
+				}
+				else
+				{
+					m_p_n_sio_rx_data[ n_port ] = m_p_n_sio_rx_shift[ n_port ];
+					m_p_n_sio_status[ n_port ] |= SIO_STATUS_RX_RDY;
+				}
+				if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RX_IENA ) != 0 )
+				{
+					sio_interrupt( n_port );
+				}
 			}
 		}
-	}
-	sio_timer( n_port );
-}
 
-void psx_sio_send( int n_port, data8_t n_data )
-{
-	if( m_p_n_sio_rx_left[ n_port ] < SIO_BUF_SIZE )
-	{
-		verboselog( 1, "psx_sio_send( %d, %u )\n", n_port, n_data );
-		m_p_n_sio_rx_buf[ n_port ][ m_p_n_sio_rx_pos[ n_port ] ] = n_data;
-		m_p_n_sio_rx_pos[ n_port ] = ( m_p_n_sio_rx_pos[ n_port ] + 1 ) % SIO_BUF_SIZE;
-		m_p_n_sio_rx_left[ n_port ]++;
-	}
-	else
-	{
-		verboselog( 0, "psx_sio_send( %d, %u ) buffer overrun\n", n_port, n_data );
-	}
-}
-
-void psx_sio_dsr( int n_port, int b_dsr )
-{
-	verboselog( 1, "psx_sio_dsr( %d, %u )\n", n_port, b_dsr );
-	if( b_dsr )
-	{
-		if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_DSR ) == 0 )
+		if( ( m_p_n_sio_rx[ n_port ] & PSX_SIO_IN_DSR ) != 0 &&
+			( m_p_n_sio_rx_prev[ n_port ] & PSX_SIO_IN_DSR ) == 0 )
 		{
-			m_p_n_sio_status[ n_port ] |= SIO_STATUS_DSR;
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_DSR_IENA ) != 0 )
 			{
 				sio_interrupt( n_port );
 			}
 		}
+
+		m_p_n_sio_rx_prev[ n_port ] = m_p_n_sio_rx[ n_port ];
 	}
-	else
-	{
-		m_p_n_sio_status[ n_port ] &= ~SIO_STATUS_DSR;
-	}
+
+	sio_timer( n_port );
+}
+
+void psx_sio_input( int n_port, int n_mask, int n_data )
+{
+	verboselog( 1, "psx_sio_dsr( %d, %02x, %02x )\n", n_port, n_mask, n_data );
+	m_p_n_sio_rx[ n_port ] = ( m_p_n_sio_rx[ n_port ] & ~n_mask ) | ( n_data & n_mask );
 }
 
 WRITE32_HANDLER( psx_sio_w )
@@ -648,18 +656,10 @@ WRITE32_HANDLER( psx_sio_w )
 	switch( offset % 4 )
 	{
 	case 0:
-		if( m_p_n_sio_tx_left[ n_port ] < SIO_BUF_SIZE )
-		{
-			verboselog( 1, "psx_sio_w( %d, %08x, %08x )\n", n_port, data, mem_mask );
-			m_p_n_sio_tx_buf[ n_port ][ m_p_n_sio_tx_pos[ n_port ] ] = data;
-			m_p_n_sio_tx_pos[ n_port ] = ( m_p_n_sio_tx_pos[ n_port ] + 1 ) % SIO_BUF_SIZE;
-			m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_RDY );
-			m_p_n_sio_tx_left[ n_port ]++;
-		}
-		else
-		{
-			verboselog( 0, "psx_sio_w( %d, %08x, %08x ) buffer overrun\n", n_port, data, mem_mask );
-		}
+		verboselog( 2, "psx_sio_w %d data %02x (%08x)\n", n_port, data, mem_mask );
+		m_p_n_sio_tx_data[ n_port ] = data;
+		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_RDY );
+		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_EMPTY );
 		break;
 	case 1:
 		verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
@@ -673,33 +673,40 @@ WRITE32_HANDLER( psx_sio_w )
 		}
 		if( ACCESSING_MSW32 )
 		{
-			if( ( ( ( data >> 16 ) ^ m_p_n_sio_control[ n_port ] ) & SIO_CONTROL_DTR ) != 0 )
-			{
-				if( m_p_f_sio_write[ n_port ] != NULL )
-				{
-					m_p_f_sio_write[ n_port ]( PSX_SIO_SEL, ( data >> 16 ) & SIO_CONTROL_DTR );
-				}
-			}
-			m_p_n_sio_control[ n_port ] = data >> 16;
 			verboselog( 1, "psx_sio_w %d control %04x\n", n_port, data >> 16 );
+			m_p_n_sio_control[ n_port ] = data >> 16;
 
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RESET ) != 0 )
 			{
 				verboselog( 1, "psx_sio_w reset\n" );
-				m_p_n_sio_rx_pos[ n_port ] = 0;
-				m_p_n_sio_rx_tail[ n_port ] = 0;
-				m_p_n_sio_rx_left[ n_port ] = 0;
-				m_p_n_sio_tx_pos[ n_port ] = 0;
-				m_p_n_sio_tx_tail[ n_port ] = 0;
-				m_p_n_sio_tx_left[ n_port ] = 0;
+				m_p_n_sio_rx_bits[ n_port ] = 0;
+				m_p_n_sio_tx_bits[ n_port ] = 0;
 				m_p_n_sio_status[ n_port ] = SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
 			}
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_IACK ) != 0 )
 			{
+				verboselog( 1, "psx_sio_w iack\n" );
 				m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_IRQ );
 				m_p_n_sio_control[ n_port ] &= ~( SIO_CONTROL_IACK );
-				verboselog( 1, "psx_sio_w iack\n" );
 			}
+			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_DTR ) != 0 )
+			{
+				m_p_n_sio_tx[ n_port ] |= PSX_SIO_OUT_DTR;
+			}
+			else
+			{
+				m_p_n_sio_tx[ n_port ] &= ~PSX_SIO_OUT_DTR;
+			}
+
+			if( ( ( m_p_n_sio_tx[ n_port ] ^ m_p_n_sio_tx_prev[ n_port ] ) & PSX_SIO_OUT_DTR ) != 0 )
+			{
+				if( m_p_f_sio_handler[ n_port ] != NULL )
+				{
+					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+				}
+			}
+			m_p_n_sio_tx_prev[ n_port ] = m_p_n_sio_tx[ n_port ];
+	
 		}
 		break;
 	case 3:
@@ -730,21 +737,10 @@ READ32_HANDLER( psx_sio_r )
 	switch( offset % 4 )
 	{
 	case 0:
-		if( m_p_n_sio_rx_left[ n_port ] != 0 )
-		{
-			data = m_p_n_sio_rx_buf[ n_port ][ m_p_n_sio_rx_tail[ n_port ] ];
-			m_p_n_sio_rx_tail[ n_port ] = ( m_p_n_sio_rx_tail[ n_port ] + 1 ) % SIO_BUF_SIZE;
-			m_p_n_sio_rx_left[ n_port ]--;
-			if( m_p_n_sio_rx_left[ n_port ] == 0 )
-			{
-				m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_RX_RDY );
-			}
-		}
-		else
-		{
-			data = 0xff;
-		}
-		verboselog( 1, "psx_sio_r %d data %02x\n", n_port, data );
+		data = m_p_n_sio_rx_data[ n_port ];
+		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_RX_RDY );
+		m_p_n_sio_rx_data[ n_port ] = 0xff;
+		verboselog( 1, "psx_sio_r %d data %02x (%08x)\n", n_port, data, mem_mask );
 		break;
 	case 1:
 		data = m_p_n_sio_status[ n_port ];
@@ -754,7 +750,7 @@ READ32_HANDLER( psx_sio_r )
 		}
 		if( ACCESSING_MSW32 )
 		{
-			verboselog( 1, "psx_sio_r %d mode %04x\n", n_port, data >> 16 );
+			verboselog( 0, "psx_sio_r( %08x, %08x ) %08x\n", offset, mem_mask, data );
 		}
 		break;
 	case 2:
@@ -787,9 +783,9 @@ READ32_HANDLER( psx_sio_r )
 	return data;
 }
 
-void psx_sio_install_write_handler( int n_port, psx_sio_write_handler p_f_write )
+void psx_sio_install_handler( int n_port, psx_sio_handler p_f_sio_handler )
 {
-	m_p_f_sio_write[ n_port ] = p_f_write;
+	m_p_f_sio_handler[ n_port ] = p_f_sio_handler;
 }
 
 /* MDEC */
@@ -1311,7 +1307,7 @@ void psx_driver_init( void )
 
 	for( n = 0; n < 2; n++ )
 	{
-		m_p_timer_sio[ n ] = timer_alloc( sio_finished );
+		m_p_timer_sio[ n ] = timer_alloc( sio_clock );
 	}
 
 	for( n = 0; n < 256; n++ )
@@ -1339,13 +1335,17 @@ void psx_driver_init( void )
 		m_p_n_sio_mode[ n ] = 0;
 		m_p_n_sio_control[ n ] = 0;
 		m_p_n_sio_baud[ n ] = 0;
-		m_p_n_sio_rx_pos[ n ] = 0;
-		m_p_n_sio_rx_tail[ n ] = 0;
-		m_p_n_sio_rx_left[ n ] = 0;
-		m_p_n_sio_tx_pos[ n ] = 0;
-		m_p_n_sio_tx_tail[ n ] = 0;
-		m_p_n_sio_tx_left[ n ] = 0;
-		m_p_f_sio_write[ n ] = NULL;
+		m_p_n_sio_tx[ n ] = 0;
+		m_p_n_sio_rx[ n ] = 0;
+		m_p_n_sio_tx_prev[ n ] = 0;
+		m_p_n_sio_rx_prev[ n ] = 0;
+		m_p_n_sio_rx_data[ n ] = 0;
+		m_p_n_sio_tx_data[ n ] = 0;
+		m_p_n_sio_rx_shift[ n ] = 0;
+		m_p_n_sio_tx_shift[ n ] = 0;
+		m_p_n_sio_rx_bits[ n ] = 0;
+		m_p_n_sio_tx_bits[ n ] = 0;
+		m_p_f_sio_handler[ n ] = NULL;
 	}
 
 	psx_dma_install_read_handler( 1, mdec1_read );
@@ -1365,20 +1365,22 @@ void psx_driver_init( void )
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_count", m_p_n_root_count, 3 );
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_mode", m_p_n_root_mode, 3 );
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_target", m_p_n_root_target, 3 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_status", m_p_n_sio_status, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_mode", m_p_n_sio_mode, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_control", m_p_n_sio_control, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_baud", m_p_n_sio_baud, 2 );
-	state_save_register_UINT8( "psx", 0, "m_p_n_sio_rx_buf0", m_p_n_sio_rx_buf[ 0 ], SIO_BUF_SIZE );
-	state_save_register_UINT8( "psx", 0, "m_p_n_sio_rx_buf1", m_p_n_sio_rx_buf[ 2 ], SIO_BUF_SIZE );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_rx_pos", m_p_n_sio_rx_pos, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_rx_tail", m_p_n_sio_rx_tail, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_rx_left", m_p_n_sio_rx_left, 2 );
-	state_save_register_UINT8( "psx", 0, "m_p_n_sio_tx_buf0", m_p_n_sio_tx_buf[ 0 ], SIO_BUF_SIZE );
-	state_save_register_UINT8( "psx", 0, "m_p_n_sio_tx_buf1", m_p_n_sio_tx_buf[ 2 ], SIO_BUF_SIZE );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_tx_pos", m_p_n_sio_tx_pos, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_tx_tail", m_p_n_sio_tx_tail, 2 );
-	state_save_register_UINT16( "psx", 0, "m_p_n_sio_tx_left", m_p_n_sio_tx_left, 2 );
+
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_status", m_p_n_sio_status, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_mode", m_p_n_sio_mode, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_control", m_p_n_sio_control, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_baud", m_p_n_sio_baud, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx", m_p_n_sio_tx, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx", m_p_n_sio_rx, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_prev", m_p_n_sio_tx_prev, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_prev", m_p_n_sio_rx_prev, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_data", m_p_n_sio_rx_data, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_data", m_p_n_sio_tx_data, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_shift", m_p_n_sio_rx_shift, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_shift", m_p_n_sio_tx_shift, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_rx_bits", m_p_n_sio_rx_bits, 2 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_sio_tx_bits", m_p_n_sio_tx_bits, 2 );
+
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_command", &m_n_mdec0_command, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_address", &m_n_mdec0_address, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_mdec0_size", &m_n_mdec0_size, 1 );

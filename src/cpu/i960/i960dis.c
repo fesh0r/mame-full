@@ -12,85 +12,85 @@
 
 typedef struct
 {
-	char			*mnem;
+	const char		*mnem;
 	unsigned short	type;
 } mnemonic_t;
 
 
 mnemonic_t mnemonic[256] = {
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // 00
-	"b", 8, "call", 8, "ret", 9, "bal", 8, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 00
+	{ "b", 8 }, { "call", 8 }, { "ret", 9 }, { "bal", 8 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"bno", 8, "bg", 8, "be", 8, "bge", 8, "bl", 8, "ble", 8, "bne", 8, "bo", 8, // 10
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
-	
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // 20
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
-	
-	"bbc", 6, "cmpobg", 7, "cmpobe", 7, "cmpobge", 7, "cmpobl", 7, "cmpobne", 7, "cmpoble", 7, "bbs", 6, // 30
-	"cmpibno", 7, "cmpibg", 7, "cmpibe", 7, "cmpibge", 7, "cmpibl", 7, "cmpibne", 7, "cmpible", 7, "cmpibo", 7, 
+	{ "bno", 8 }, { "bg", 8 }, { "be", 8 }, { "bge", 8 }, { "bl", 8 }, { "ble", 8 }, { "bne", 8 }, { "bo", 8 }, // 10
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // 40
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 20
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // 50
-	"58", 3, "59", 3, "5A", 3, "?", 0, "5C", 2, "5D", 3, "?", 0, "?", 0, 
+	{ "bbc", 6 }, { "cmpobg", 7 }, { "cmpobe", 7 }, { "cmpobge", 7 }, { "cmpobl", 7 }, { "cmpobne", 7 }, { "cmpoble", 7 }, { "bbs", 6 }, // 30
+	{ "cmpibno", 7 }, { "cmpibg", 7 }, { "cmpibe", 7 }, { "cmpibge", 7 }, { "cmpibl", 7 }, { "cmpibne", 7 }, { "cmpible", 7 }, { "cmpibo", 7 },
 
-	"synmov", 1, "?", 0, "?", 0, "?", 0, "64", 3, "65", 3, "calls", 0, "67", 3, // 60
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 40
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"70", 3, "?", 0, "?", 0, "?", 0, "74", 3, "?", 0, "?", 0, "?", 0, // 70
-	"78", 3, "79", 3, "7A", 3, "7B", 3, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 50
+	{ "58", 3 }, { "59", 3 }, { "5A", 3 }, { "?", 0 }, { "5C", 2 }, { "5D", 3 }, { "?", 0 }, { "?", 0 },
 
-	"ldob", 1, "?", 0, "stob", 1, "?", 0, "bx", 1, "balx", 1, "callx", 1, "?", 0, // 80
-	"ldos", 1, "?", 0, "stos", 1, "?", 0, "lda", 1, "?", 0, "?", 0, "?", 0, 
+	{ "synmov", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "64", 3 }, { "65", 3 }, { "calls", 0 }, { "67", 3 }, // 60
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"ld", 1, "?", 0, "st", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // 90
-	"ldl", 1, "?", 0, "stl", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "70", 3 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "74", 3 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 70
+	{ "78", 3 }, { "79", 3 }, { "7A", 3 }, { "7B", 3 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"ldt", 1, "?", 0, "stt", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // a0
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "ldob", 1 }, { "?", 0 }, { "stob", 1 }, { "?", 0 }, { "bx", 1 }, { "balx", 1 }, { "callx", 1 }, { "?", 0 }, // 80
+	{ "ldos", 1 }, { "?", 0 }, { "stos", 1 }, { "?", 0 }, { "lda", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"ldq", 1, "?", 0, "stq", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // b0
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "ld", 1 }, { "?", 0 }, { "st", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // 90
+	{ "ldl", 1 }, { "?", 0 }, { "stl", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"ldib", 1, "?", 0, "stib", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // c0
-	"ldis", 1, "?", 0, "stis", 1, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "ldt", 1 }, { "?", 0 }, { "stt", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // a0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // d0
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "ldq", 1 }, { "?", 0 }, { "stq", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // b0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // e0
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, 
+	{ "ldib", 1 }, { "?", 0 }, { "stib", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // c0
+	{ "ldis", 1 }, { "?", 0 }, { "stis", 1 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
 
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, // f0
-	"?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0, "?", 0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // d0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
+
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // e0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 },
+
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, // f0
+	{ "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }, { "?", 0 }
 };
 
-mnemonic_t mnem_reg[100] = 
+mnemonic_t mnem_reg[100] =
 {
-	"notbit", 0x580, "and", 0x581, "andnot", 0x582, "setbit", 0x583, "notand",0x584,
-	"xor", 0x586, "or", 0x587, "nor", 0x588,"xnor",0x589,"not",0x58a,
-	"clrbit", 0x58c,
-	"addo", 0x590,"addi",0x591,"subo",0x592,"subi",0x593,"cmpob",0x594,"shro",0x598,"shrdi",0x59a,"shri",0x59b,"shlo",0x59c,"rotate",0x59d,"shli",0x59e,
-	"cmpo",0x5a0,"cmpi",0x5a1,"concmpo",0x5a2,"concmpi",0x5a3,"cmpinco",0x5a4,"cmpinci",0x5a5,"cmpdeco",0x5a6,"cmpdeci",0x5a7,"scanbyte",0x5ac,"bswap",0x5ad,"chkbit",0x5ae,
-	"mov", 0x5cc,
-	"movl",0x5dc,
-	"modac",0x645,
-	"modify",0x650,"extract",0x651,"modtc",0x654,"modpc",0x655,
-	"emul",0x670,"ediv",0x671,
-	"mulo", 0x701,"remo",0x708,"divo",0x70b,
-	"muli",0x741,"remi",0x748,"modi",0x749,"divi",0x74b,
-	"ending_code",0
+	{ "notbit", 0x580 }, { "and", 0x581 }, { "andnot", 0x582 }, { "setbit", 0x583 }, { "notand",0x584 },
+	{ "xor", 0x586 }, { "or", 0x587 }, { "nor", 0x588 }, { "xnor",0x589 }, { "not",0x58a },
+	{ "clrbit", 0x58c },
+	{ "addo", 0x590 }, { "addi",0x591 }, { "subo",0x592 }, { "subi",0x593 }, { "cmpob",0x594 }, { "shro",0x598 }, { "shrdi",0x59a }, { "shri",0x59b }, { "shlo",0x59c }, { "rotate",0x59d }, { "shli",0x59e },
+	{ "cmpo",0x5a0 }, { "cmpi",0x5a1 }, { "concmpo",0x5a2 }, { "concmpi",0x5a3 }, { "cmpinco",0x5a4 }, { "cmpinci",0x5a5 }, { "cmpdeco",0x5a6 }, { "cmpdeci",0x5a7 }, { "scanbyte",0x5ac }, { "bswap",0x5ad }, { "chkbit",0x5ae },
+	{ "mov", 0x5cc },
+	{ "movl",0x5dc },
+	{ "modac",0x645 },
+	{ "modify",0x650 }, { "extract",0x651 }, { "modtc",0x654 }, { "modpc",0x655 },
+	{ "emul",0x670 }, { "ediv",0x671 },
+	{ "mulo", 0x701 }, { "remo",0x708 }, { "divo",0x70b },
+	{ "muli",0x741 }, { "remi",0x748 }, { "modi",0x749 }, { "divi",0x74b },
+	{ "ending_code",0 }
 };
 
-char *regnames[32] =
+const char *regnames[32] =
 {
 	"pfp","sp","rip","r3", "r4","r5","r6","r7", "r8","r9","r10","r11", "r12","r13","r14","r15",
 	"g0","g1","g2","g3", "g4","g5","g6","g7", "g8","g9","g10","g11", "g12","g13","g14","fp",
-};			
+};
 
-#define DIS_NI 		sprintf(diss->buffer,"%s %02x:%01x %08x %1x %1x",mnemonic[op].mnem,op,op2,iCode, modeh, model);
+#define DIS_NI 		sprintf(diss->buffer,"%s %02x:%01x %08lx %1x %1x",mnemonic[op].mnem,op,op2,iCode, modeh, model);
 #define DIS	    	sprintf(diss->buffer,
 #define REG_DST		regnames[dst]
 #define REG_ABASE	regnames[abase]
@@ -121,19 +121,19 @@ char *dis_decode_reg(unsigned long iCode, char* tmpStr,unsigned char cnt)
 	char src2[10];
 	char dst[10];
 
-	if (S1) sprintf(src1,"");
+	if (S1) src1[0] = 0;
 	else
 	{
-		if(M1)	sprintf(src1,"0x%x",SRC1);
+		if(M1)	sprintf(src1,"0x%lx",SRC1);
 		else		sprintf(src1,"%s",regnames[SRC1]);
 	}
 	if (S2) sprintf(src2,"reserved");
 	else
 	{
-		if(M2)	sprintf(src2,"0x%x,",SRC2);
+		if(M2)	sprintf(src2,"0x%lx,",SRC2);
 		else		sprintf(src2,"%s,",regnames[SRC2]);
 	}
-	if(M3)		sprintf(dst,"");
+	if(M3)		dst[0] = 0;
 	else 			sprintf(dst,"%s,",regnames[DST]);
 	if (cnt == 1)
 		sprintf(tmpStr,"%s%s",dst,src1);
@@ -174,7 +174,7 @@ char *i960_disassemble(disassemble_t *diss)
 		switch(modeh)
 		{
 		case 0:
-			DIS "%s\t%s, 0x%x",NEM,REG_DST, iCode&0xfff);
+			DIS "%s\t%s, 0x%lx",NEM,REG_DST, iCode&0xfff);
 			break;
 		case 1:
 			switch (model)
@@ -183,7 +183,7 @@ char *i960_disassemble(disassemble_t *diss)
 				DIS "%s\t%s,(%s)",NEM,REG_DST, REG_ABASE);
 				break;
 			case 3:
-				DIS "%s\t%s,(%s)[%s*%d]",NEM,REG_DST, REG_ABASE,REG_REG2,(iCode>>7)&0x7);
+				DIS "%s\t%s,(%s)[%s*%ld]",NEM,REG_DST, REG_ABASE,REG_REG2,(iCode>>7)&0x7);
 				break;
 			default:
 				DIS_NI;
@@ -191,7 +191,7 @@ char *i960_disassemble(disassemble_t *diss)
 			}
 			break;
 		case 2:
-			DIS "%s\t%s, 0x%x(%s)",NEM,REG_DST, iCode&0xfff,REG_ABASE);
+			DIS "%s\t%s, 0x%lx(%s)",NEM,REG_DST, iCode&0xfff,REG_ABASE);
 			break;
 		case 3:
 			switch (model)
@@ -205,11 +205,11 @@ char *i960_disassemble(disassemble_t *diss)
 				diss->IPinc = 8;
 				break;
 			case 2:
-				DIS "%s\t%s,0x%x[%s*%d]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_REG2,(iCode>>7)&0x7);
+				DIS "%s\t%s,0x%x[%s*%ld]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			case 3:
-				DIS "%s\t%s,0x%x(%s)[%s*%d]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
+				DIS "%s\t%s,0x%x(%s)[%s*%ld]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			default:
@@ -225,41 +225,41 @@ char *i960_disassemble(disassemble_t *diss)
 	case 2:
 		i = 0;
 		opc = op<<4|op2;
-		
+
 		while(mnem_reg[i].type != 0)
 		{
 			if (mnem_reg[i].type == opc) break;
 			i++;
 		}
-		
+
 		if (mnem_reg[i].type == opc) DIS "%s\t%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,1));
 		else DIS_NI;
 		break;
 	case 3:
 		i = 0;
 		opc = op<<4|op2;
-		
+
 		while(mnem_reg[i].type != 0)
 		{
 			if (mnem_reg[i].type == opc) break;
 			i++;
 		}
-		
+
 		if (mnem_reg[i].type == opc) DIS "%s\t%s", mnem_reg[i].mnem,dis_decode_reg(iCode,tmpStr,0));
 		else DIS_NI;
 		break;
 
 	case 6: // bitpos and branch type
-		DIS "%s\t%d,%s,0x%x",NEM, COBRSRC1, REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
+		DIS "%s\t%ld,%s,0x%lx",NEM, COBRSRC1, REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
 		break;
 	case 7: // compare and branch type
-		DIS "%s\t%s,%s,0x%x",NEM,REG_COBR_SRC1,REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
+		DIS "%s\t%s,%s,0x%lx",NEM,REG_COBR_SRC1,REG_COBR_SRC2,((((long)iCode&0x00fffffc)<<19)>>19) + (diss->IP));
 		break;
 	case 8: // target type
-		DIS "%s\t%08x",NEM,((((long)iCode&0x00fffffc)<<8)>>8) + (diss->IP));
+		DIS "%s\t%08lx",NEM,((((long)iCode&0x00fffffc)<<8)>>8) + (diss->IP));
 		break;
 	case 9: // no operands
-		DIS "%s",NEM,REG_DST);
+		DIS "%s",NEM);
 		break;
 	}
 	return diss->buffer;

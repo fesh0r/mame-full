@@ -260,7 +260,8 @@ DRVLIBS = \
 	$(OBJ)/mtx.a	  \
 	$(OBJ)/intv.a     \
 	$(OBJ)/rca.a	  \
-	$(OBJ)/multitch.a
+	$(OBJ)/multitch.a	\
+	$(OBJ)/telmac.a
 
 
 $(OBJ)/neocd.a:						\
@@ -808,6 +809,10 @@ $(OBJ)/compis.a:					\
 
 $(OBJ)/multitch.a:					\
 	$(OBJ)/mess/systems/mpf1.o		\
+
+$(OBJ)/telmac.a:					\
+	$(OBJ)/mess/systems/telmac.o	\
+	$(OBJ)/mess/vidhrdw/cdp186x.o	\
 
 
 

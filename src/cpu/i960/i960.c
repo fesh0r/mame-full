@@ -1427,7 +1427,7 @@ static offs_t i960_disasm( char *buffer, offs_t pc )
 	dis.IP = pc;
 	dis.buffer = buffer;
 
-//	i960_disassemble(&dis);
+	i960_disassemble(&dis);
 
 	return dis.IPinc;
 }

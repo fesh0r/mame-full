@@ -28,7 +28,9 @@
 
 	  Raiden Fighters : Game pauses for a brief second when bosses are encountered
 	  Senkyu / BBalls : ---
-	  Viper Phase 1   : ---
+	  Viper Phase 1   : OLD version (viperp1o) Game locks up / crashes after a few attract loops
+	                (386 writes to z80 fifo with data read from unmapped addresses in steps of 0x20000
+	                 past the end of z80 ram)
 	  E-Jan HS        : ---
 
 */
@@ -55,7 +57,9 @@ WRITE32_HANDLER( spi_layer_bank_w );
 WRITE32_HANDLER( spi_layer_enable_w );
 
 extern UINT32 *back_ram, *mid_ram, *fore_ram, *scroll_ram;
-extern int bg_2layer;
+extern UINT32 *back_rowscroll_ram, *mid_rowscroll_ram, *fore_rowscroll_ram;
+extern int old_vidhw;
+extern int bg_size;
 static data32_t *spimainram;
 
 /********************************************************************/
@@ -137,7 +141,7 @@ WRITE32_HANDLER( z80_fifo_w )
 {
 	UINT8* ram = memory_region(REGION_CPU2);
 	if( ACCESSING_LSB32 ) {
-		ram[z80_fifo_pos] = data & 0xff;
+		if (z80_fifo_pos<0x40000) ram[z80_fifo_pos] = data & 0xff;
 		z80_fifo_pos++;
 	}
 }
@@ -246,16 +250,7 @@ static ADDRESS_MAP_START( spi_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000680, 0x00000683) AM_READ(sound_com_r)
 	AM_RANGE(0x00000684, 0x00000687) AM_READ(sound_semaphore_r)
 	AM_RANGE(0x000006dc, 0x000006df) AM_READ(ds2404_data_r)
-	AM_RANGE(0x00000800, 0x00036fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00037000, 0x00037fff) AM_READ(MRA32_RAM)		/* Sprites */
-	AM_RANGE(0x00038000, 0x000387ff) AM_READ(MRA32_RAM)		/* Background layer */
-	AM_RANGE(0x00038800, 0x00038fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x00039000, 0x000397ff) AM_READ(MRA32_RAM)		/* Foreground layer */
-	AM_RANGE(0x00039800, 0x00039fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0003a000, 0x0003a7ff) AM_READ(MRA32_RAM)		/* Middle layer */
-	AM_RANGE(0x0003a800, 0x0003afff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x0003b000, 0x0003bfff) AM_READ(MRA32_RAM)	 	/* Text layer */
-	AM_RANGE(0x0003c000, 0x0003efff) AM_READ(MRA32_RAM)	 	/* Palette */
+	AM_RANGE(0x00000800, 0x0003efff) AM_READ(MRA32_RAM)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_READ(MRA32_RAM)	 	/* Stack */
 	AM_RANGE(0x00200000, 0x003fffff) AM_ROM AM_SHARE(2)
 	AM_RANGE(0xffe00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)		/* ROM location in real-mode */
@@ -275,13 +270,7 @@ static ADDRESS_MAP_START( spi_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000006d8, 0x000006db) AM_WRITE(ds2404_clk_w)
 	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
-	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
-	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x00039000, 0x000397ff) AM_WRITE(spi_fore_layer_w) AM_BASE(&fore_ram)	/* Foreground layer */
-	AM_RANGE(0x00039800, 0x00039fff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x0003a000, 0x0003a7ff) AM_WRITE(spi_mid_layer_w) AM_BASE(&mid_ram)	/* Middle layer */
-	AM_RANGE(0x0003a800, 0x0003afff) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x0003b000, 0x0003bfff) AM_WRITE(spi_textlayer_w) AM_BASE(&videoram32)	/* Text layer */
+	AM_RANGE(0x00038000, 0x0003bfff) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0003c000, 0x0003efff) AM_WRITE(spi_paletteram32_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x0003f000, 0x0003ffff) AM_WRITE(MWA32_RAM)			/* Stack */
 ADDRESS_MAP_END
@@ -361,7 +350,7 @@ static ADDRESS_MAP_START( seibu386_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000420, 0x0000042b) AM_WRITE(MWA32_RAM) AM_BASE(&scroll_ram)
 	AM_RANGE(0x0000042c, 0x00000603) AM_WRITE(MWA32_RAM)
 	AM_RANGE(0x0000068c, 0x0000068f) AM_WRITE(eeprom_w)
-	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x00000800, 0x00036fff) AM_WRITE(MWA32_RAM) AM_BASE(&spimainram)
 	AM_RANGE(0x00037000, 0x00037fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)	/* Sprites */
 	AM_RANGE(0x00038000, 0x000387ff) AM_WRITE(spi_back_layer_w) AM_BASE(&back_ram)	/* Background layer */
 	AM_RANGE(0x00038800, 0x00038fff) AM_WRITE(MWA32_RAM)
@@ -689,14 +678,34 @@ static INTERRUPT_GEN( spi_interrupt )
 static MACHINE_INIT( spi )
 {
 //	UINT8* rom = memory_region(REGION_USER1);
+	UINT8* ram = memory_region(REGION_CPU1);
 
 	cpunum_set_reset_line( 1, ASSERT_LINE );
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, z80_fifo_w);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, z80_enable_w);
 
-	if( bg_2layer ) {
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0039800, 0x003a7ff, 0, spi_textlayer_w);
+	if( !old_vidhw ) {
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, spi_back_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, spi_fore_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, spi_mid_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, spi_textlayer_w);
+		back_ram = (UINT32*)&ram[0x38000];
+		back_rowscroll_ram = (UINT32*)&ram[0x38800];
+		fore_ram = (UINT32*)&ram[0x39000];
+		fore_rowscroll_ram = (UINT32*)&ram[0x39800];
+		mid_ram = (UINT32*)&ram[0x3a000];
+		mid_rowscroll_ram = (UINT32*)&ram[0x3a800];
+		videoram32 = (UINT32*)&ram[0x3b000];
+	} else {
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, spi_back_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038800, 0x00038fff, 0, spi_fore_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, spi_mid_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039800, 0x0003a7ff, 0, spi_textlayer_w);
+		back_ram = (UINT32*)&ram[0x38000];
+		fore_ram = (UINT32*)&ram[0x38800];
+		mid_ram = (UINT32*)&ram[0x39000];
+		videoram32 = (UINT32*)&ram[0x39800];
 	}
 
 	cpu_setbank(4, memory_region(REGION_CPU2));
@@ -751,6 +760,46 @@ static MACHINE_DRIVER_START( sxx2f )
 
 MACHINE_DRIVER_END
 
+READ32_HANDLER ( senkyu_speedup_r )
+{
+ if (activecpu_get_pc()==0x00305bb2) cpu_spinuntil_int(); // idle
+ return spimainram[(0x0018cb4-0x800)/4];
+}
+
+READ32_HANDLER ( batlball_speedup_r )
+{
+ if (activecpu_get_pc()==0x003058aa) cpu_spinuntil_int(); // idle
+ return spimainram[(0x0018db4-0x800)/4];
+}
+
+READ32_HANDLER ( raidnfgt_speedup_r )
+{
+ if (activecpu_get_pc()==0x0203f0a) cpu_spinuntil_int(); // idle
+ return spimainram[(0x00298d0-0x800)/4];
+}
+
+READ32_HANDLER ( viperp1_speedup_r )
+{
+ if (activecpu_get_pc()==0x0202769) cpu_spinuntil_int(); // idle
+ return spimainram[(0x001e2e0-0x800)/4];
+}
+
+READ32_HANDLER ( viperp1o_speedup_r )
+{
+ if (activecpu_get_pc()==0x0201f99) cpu_spinuntil_int(); // idle
+ return spimainram[(0x001d49c-0x800)/4];
+}
+
+/*
+// causes input problems?
+READ32_HANDLER ( ejanhs_speedup_r )
+{
+// printf("%08x\n",activecpu_get_pc());
+ if (activecpu_get_pc()==0x03032c7) cpu_spinuntil_int(); // idle
+ return spimainram[(0x002d224-0x800)/4];
+}
+*/
+
 
 static DRIVER_INIT( spi )
 {
@@ -765,9 +814,11 @@ static DRIVER_INIT( raidnfgt )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x6d847] = 0x00;
+	install_mem_read32_handler(0, 0x00298d0, 0x00298d3, raidnfgt_speedup_r );
 
 	init_spi();
-	bg_2layer = 0;
+	old_vidhw = 0;
+	bg_size = 1;
 }
 
 static DRIVER_INIT( senkyu )
@@ -775,9 +826,11 @@ static DRIVER_INIT( senkyu )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x13c813] = 0x00;
+	install_mem_read32_handler(0, 0x0018cb4, 0x0018cb7, senkyu_speedup_r );
 
 	init_spi();
-	bg_2layer = 1;
+	old_vidhw = 1;
+	bg_size = 0;
 }
 
 static DRIVER_INIT( batlball )
@@ -785,9 +838,11 @@ static DRIVER_INIT( batlball )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x13c8bf] = 0x00;
+	install_mem_read32_handler(0, 0x0018db4, 0x0018db7, batlball_speedup_r );
 
 	init_spi();
-	bg_2layer = 1;
+	old_vidhw = 1;
+	bg_size = 0;
 }
 
 static DRIVER_INIT( ejanhs )
@@ -795,9 +850,12 @@ static DRIVER_INIT( ejanhs )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x12f167] = 0x00;
+//	idle skip doesn't work properly?
+//	install_mem_read32_handler(0, 0x002d224, 0x002d227, ejanhs_speedup_r );
 
 	init_spi();
-	bg_2layer = 1;
+	old_vidhw = 1;
+	bg_size = 1;
 }
 
 static DRIVER_INIT( viperp1 )
@@ -805,9 +863,11 @@ static DRIVER_INIT( viperp1 )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x6442f] = 0x00;
+	install_mem_read32_handler(0, 0x001e2e0, 0x001e2e3, viperp1_speedup_r );
 
 	init_spi();
-	bg_2layer = 1;
+	old_vidhw = 1;
+	bg_size = 1;
 }
 
 static DRIVER_INIT( viperp1o )
@@ -815,14 +875,27 @@ static DRIVER_INIT( viperp1o )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x60a73] = 0x00;
+	install_mem_read32_handler(0, 0x001d49c, 0x001d49f, viperp1o_speedup_r );
 
 	init_spi();
-	bg_2layer = 1;
+	old_vidhw = 1;
+	bg_size = 1;
 }
 
 
 
 /* SYS386 */
+
+READ32_HANDLER ( rf2_2k_speedup_r )
+{
+ if (activecpu_get_pc()==0x0203926) cpu_spinuntil_int(); // idle
+ return spimainram[(0x0282AC-0x800)/4];
+}
+
+static DRIVER_INIT( rf2_2k )
+{
+	install_mem_read32_handler(0, 0x0282AC, 0x0282AF, rf2_2k_speedup_r );
+}
 
 static MACHINE_INIT( seibu386 )
 {
@@ -1199,4 +1272,4 @@ GAMEX( 1997, rf2_eur,	0,       spi, spi_2button, spi,			ROT270,	"Seibu Kaihatsu"
 GAMEX( 1997, rf2_us,    rf2_eur,	  sxx2f, spi_2button, 0,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 (US, Single Board)", GAME_NOT_WORKING )
 
 /* SYS386 */
-GAMEX( 2000, rf2_2k,    rf2_eur,	seibu386, spi_2button, 0,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )
+GAMEX( 2000, rf2_2k,    rf2_eur,	seibu386, spi_2button, rf2_2k,	ROT270,	"Seibu Kaihatsu",	"Raiden Fighters 2 - 2000", GAME_NOT_WORKING )

@@ -165,7 +165,7 @@ static const unsigned char cp09[ 8 ] = { NODUMP };
 static const unsigned char cp10[ 8 ] = { 0xe0, 0x40, 0x38, 0x08, 0xf1, 0x03, 0xfe, 0xfc };
 static const unsigned char cp11[ 8 ] = { NODUMP };
 static const unsigned char cp12[ 8 ] = { NODUMP };
-static const unsigned char cp13[ 8 ] = { NODUMP };
+static const unsigned char cp13[ 8 ] = { 0x02, 0x70, 0x08, 0x04, 0x3c, 0x20, 0xe1, 0x01 };
 static const unsigned char cp14[ 8 ] = { NODUMP };
 static const unsigned char et01[ 8 ] = { 0x02, 0x08, 0x18, 0x1c, 0xfd, 0xc1, 0x40, 0x80 };
 static const unsigned char et02[ 8 ] = { 0xc0, 0xe1, 0xe2, 0xfe, 0x7c, 0x70, 0x08, 0xf8 };
@@ -217,8 +217,8 @@ static struct
 	{ "tgmj",     cp10, cp11 }, /* system error D094 */ /* ? */
 	{ "sfexp",    cp10, cp12 }, /* system error C094 */
 	{ "sfexpj",   cp10, cp12 }, /* system error C094 */
-	{ "strider2", cp10, cp13 }, /* system error D094 */
-	{ "shiryu2",  cp10, cp13 }, /* system error D094 */
+	{ "strider2", cp10, cp13 }, /* OK ( crashes on bosses ) */
+	{ "shiryu2",  cp10, cp13 }, /* OK ( crashes on bosses ) */
 	{ "sfex2p",   cp10, cp14 }, /* system error D094 */ /* ? */
 	{ "sfex2pj",  cp10, cp14 }, /* system error D094 */ /* ? */
 	{ "beastrzr", et01, et02 }, /* OK */
@@ -247,8 +247,9 @@ static struct
 	{ NULL, NULL, NULL }
 };
 
-static int m_b_znsecport = 0;
-static UINT32 m_n_znsecsel = 0;
+static UINT32 m_n_znsecsel;
+static UINT32 m_b_znsecport;
+static int m_n_dip_bit;
 
 static READ32_HANDLER( znsecsel_r )
 {
@@ -256,67 +257,72 @@ static READ32_HANDLER( znsecsel_r )
 	return m_n_znsecsel;
 }
 
-static WRITE32_HANDLER( znsecsel_w )
+static void sio_znsec0_handler( int n_data )
 {
-	COMBINE_DATA( &m_n_znsecsel );
-	if(m_n_znsecsel & 4)
-		znsec_start( 0 );
-	if(m_n_znsecsel & 8)
-		znsec_start( 1 );
-
-	verboselog( 2, "znsecsel_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
+	{
+		psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 0, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+	}
 }
 
-static void znsec_write( int n_chip, int n_data )
+static void sio_znsec1_handler( int n_data )
 {
-	int n_output;
-	char s_output[ 20 ];
-
-	n_output = znsec_step( n_chip, n_data );
-	psx_sio_send( 0, n_output );
-	if( n_data >= 0x20 && n_data <= 0x7f )
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
 	{
-		sprintf( s_output, " '%c'", n_data );
+		psx_sio_input( 0, PSX_SIO_IN_DATA, ( znsec_step( 1, ( n_data & PSX_SIO_OUT_DATA ) / PSX_SIO_OUT_DATA ) & 1 ) * PSX_SIO_IN_DATA );
+	}
+}
+
+static void sio_pad_handler( int n_data )
+{
+	if( ( n_data & PSX_SIO_OUT_DTR ) != 0 )
+	{
+		m_b_znsecport = 1;
 	}
 	else
 	{
-		sprintf( s_output, " $%02x", n_data );
+		m_b_znsecport = 0;
 	}
-	verboselog( 2, "sio0_w( %04x, %08x )%s -> %02x (%04x)\n", n_chip, n_data, s_output, n_output, m_b_znsecport );
+
+	verboselog( 2, "read pad %04x %04x %02x\n", m_n_znsecsel, m_b_znsecport, n_data );
+	psx_sio_input( 0, PSX_SIO_IN_DATA, PSX_SIO_IN_DATA );
 }
 
-static void znsec_sio_write( int n_method, int n_data )
+static void sio_dip_handler( int n_data )
 {
-	switch( n_method )
+	if( ( n_data & PSX_SIO_OUT_CLOCK ) != 0 )
 	{
-	case PSX_SIO_SEL:
-		m_b_znsecport = n_data;
-		break;
-	case PSX_SIO_DATA:
-		if( ( m_n_znsecsel & 0x80 ) == 0 )
-		{
-			psx_sio_dsr( 0, 1 );
-			psx_sio_send( 0, 0xff );
-			psx_sio_dsr( 0, 0 );
-			verboselog( 2, "read pad %04x %04x %02x -> %02x\n", m_n_znsecsel, m_b_znsecport, n_data, n_data );
-		}
-		else if( ( m_n_znsecsel & 0x08 ) == 0 )
-		{
-			znsec_write( 1, n_data );
-		}
-		else if( ( m_n_znsecsel & 0x04 ) == 0 )
-		{
-			znsec_write( 0, n_data );
-		}
-		else
-		{
-			psx_sio_dsr( 0, 1 );
-			psx_sio_send( 0, readinputport( 7 ) );
-			psx_sio_dsr( 0, 0 );
-			verboselog( 2, "read dip %04x %04x %02x -> %02x\n", m_n_znsecsel, m_b_znsecport, n_data, readinputport( 7 ) );
-		}
-		break;
+		verboselog( 2, "read dip %02x -> %02x\n", n_data, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
+		psx_sio_input( 0, PSX_SIO_IN_DATA, ( ( readinputport( 7 ) >> m_n_dip_bit ) & 1 ) * PSX_SIO_IN_DATA );
+		m_n_dip_bit++;
+		m_n_dip_bit &= 7;
 	}
+}
+
+static WRITE32_HANDLER( znsecsel_w )
+{
+	COMBINE_DATA( &m_n_znsecsel );
+
+	if( ( m_n_znsecsel & 0x80 ) == 0 )
+	{
+		psx_sio_install_handler( 0, sio_pad_handler );
+	}
+	else if( ( m_n_znsecsel & 0x08 ) == 0 )
+	{
+		znsec_start( 1 );
+		psx_sio_install_handler( 0, sio_znsec1_handler );
+	}
+	else if( ( m_n_znsecsel & 0x04 ) == 0 )
+	{
+		znsec_start( 0 );
+		psx_sio_install_handler( 0, sio_znsec0_handler );
+	}
+	else
+	{
+		psx_sio_install_handler( 0, sio_dip_handler );
+	}
+
+	verboselog( 2, "znsecsel_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 }
 
 static WRITE_HANDLER( qsound_bankswitch_w )
@@ -482,7 +488,7 @@ static void init_znsec( void )
 		{
 			znsec_init( 0, zn_config_table[ n_game ].p_n_mainsec );
 			znsec_init( 1, zn_config_table[ n_game ].p_n_gamesec );
-			psx_sio_install_write_handler( 0, znsec_sio_write );
+			psx_sio_install_handler( 0, sio_pad_handler );
 			break;
 		}
 		n_game++;
@@ -719,6 +725,12 @@ static struct YM2610interface ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
+static void zn_machine_init( void )
+{
+	m_n_dip_bit = 0;
+	psx_machine_init();
+}
+
 static WRITE32_HANDLER( bank_coh1000c_w )
 {
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 + ( data * 0x400000 ) );
@@ -740,7 +752,7 @@ MACHINE_INIT( coh1000c )
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 ); /* banked game rom */
 	cpu_setbank( 3, memory_region( REGION_USER3 ) ); /* country rom */
-	psx_machine_init();
+	zn_machine_init();
 	player_init();
 }
 
@@ -872,7 +884,7 @@ MACHINE_INIT( coh1000t )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
 	cpu_setbank( 2, taitofx1_eeprom );
-	psx_machine_init();
+	zn_machine_init();
 	player_init();
 }
 
@@ -1009,7 +1021,7 @@ MACHINE_INIT( coh3002c )
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 ); /* banked game rom */
 	cpu_setbank( 3, memory_region( REGION_USER3 ) ); /* country rom */
-	psx_machine_init();
+	zn_machine_init();
 	player_init();
 }
 
@@ -1121,10 +1133,9 @@ DRIVER_INIT( coh1000w )
 MACHINE_INIT( coh1000w )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	ide_controller_reset(0);
-	psx_machine_init();
+	zn_machine_init();
 
-	// hook up DMA 5
+	ide_controller_reset(0);
 	psx_dma_install_read_handler(5, atpsx_dma_read);
 	psx_dma_install_write_handler(5, atpsx_dma_write);
 }
@@ -1195,7 +1206,7 @@ MACHINE_INIT( coh1002e )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x800000 ); /* fixed game rom */
-	psx_machine_init();
+	zn_machine_init();
 }
 
 static READ16_HANDLER( psarc_ymf_r )
@@ -1404,13 +1415,13 @@ DRIVER_INIT( coh1000a )
 
 MACHINE_INIT( coh1000a )
 {
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
+	zn_machine_init();
 	if( ( !strcmp( Machine->gamedrv->name, "jdredd" ) ) ||
 		( !strcmp( Machine->gamedrv->name, "jdreddb" ) ) )
 	{
 		ide_controller_reset( 0 );
 	}
-	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	psx_machine_init();
 }
 
 static MACHINE_DRIVER_START( coh1000a )
@@ -1456,7 +1467,7 @@ DRIVER_INIT( coh1002v )
 MACHINE_INIT( coh1002v )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	psx_machine_init();
+	zn_machine_init();
 }
 
 static MACHINE_DRIVER_START( coh1002v )
@@ -1502,7 +1513,7 @@ DRIVER_INIT( coh3002t )
 MACHINE_INIT( coh3002t )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	psx_machine_init();
+	zn_machine_init();
 }
 
 static MACHINE_DRIVER_START( coh3002t )
@@ -1580,7 +1591,7 @@ DRIVER_INIT( coh1002m )
 MACHINE_INIT( coh1002m )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) );
-	psx_machine_init();
+	zn_machine_init();
 }
 
 static READ_HANDLER( cbaj_z80_latch_r )
@@ -2807,7 +2818,7 @@ GAMEX( 1997, sfexp,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "
 GAMEX( 1997, sfexpj,   sfexp,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1997, rvschool, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
@@ -2815,8 +2826,8 @@ GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech R
 GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1999, sfex2pj,  sfex2p,   coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, strider2, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, shiryu2,  strider2, coh3002c, zn, coh3002c, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 /* Atari */
 

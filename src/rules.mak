@@ -1105,6 +1105,7 @@ ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/i960
 CPUDEFS += -DHAS_I960=1
 CPUOBJS += $(OBJ)/cpu/i960/i960.o
+CPUOBJS += $(OBJ)/cpu/i960/i960dis.o
 $(OBJ)/cpu/i960/i960.o: i960.c i960.h
 else
 CPUDEFS += -DHAS_I960=0

@@ -892,7 +892,7 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Nov 15, 1995 */
+ROM_START( area51 ) /* 68020 based, Area51 Time Warner License  Date: Nov 15, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
@@ -902,10 +902,10 @@ ROM_START( area51 ) /* 68020 based, Area51 v?? Date: Nov 15, 1995 */
 	ROM_LOAD32_BYTE( "3k.bin", 0x00003, 0x80000, CRC(94f50c14) SHA1(a54552e3ac5c4f481ba4f2fc7d724534576fe76c) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
+	DISK_IMAGE( "area51", 0, MD5(60d051da941d76aafd47c862e3b6e209) SHA1(fee528eef8a256f87af299499ecf5817218f5202) )
 ROM_END
 
-ROM_START( area51a ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
+ROM_START( area51a ) /* 68020 based, Area51 Atari Games License  Date: Oct 25, 1995 */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )		/* 4MB for RAM at 0 */
 
 	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )	/* 2MB for 68020 code */
@@ -915,7 +915,7 @@ ROM_START( area51a ) /* 68020 based, Area51 v?? Date: Oct 25, 1995 */
 	ROM_LOAD32_BYTE( "3k", 0x00003, 0x80000, CRC(729eb1b7) SHA1(21864b4281b1ad17b2903e3aa294e4be74161e80) )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE( "area51", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
+	DISK_IMAGE( "area51a", 0, MD5(130b330eff59403f8fc3433ff501852b) SHA1(9ea749404c9a5d44f407cdb8803293ec0d61410d) )
 ROM_END
 
 ROM_START( a51r3k ) /* R3000 based, labeled as "Area51 2-C" */
@@ -1121,8 +1121,8 @@ static DRIVER_INIT( vcircle )
  *
  *************************************/
 
-GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Nov 15, 1995)" )
-GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Oct 25, 1995)" )
+GAME( 1995, area51,   0,        cojag68k,  area51,   area51,   ROT0, "Time Warner", "Area 51 (Time Warner License)" )
+GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51,   ROT0, "Atari Games", "Area 51 (Atari Games License)" )
 GAME( 1995, a51r3k,   area51,   r3knarrow, area51,   a51r3k,   ROT0, "Atari Games", "Area 51 (R3000)" )
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05" )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02" )
