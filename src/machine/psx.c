@@ -577,11 +577,6 @@ static void sio_clock( int n_port )
 			m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_RDY;
 		}
 
-		if( n_port == 0 )
-		{
-			m_p_n_sio_rx[ n_port ] |= PSX_SIO_IN_DATA;
-		}
-
 		if( m_p_n_sio_tx_bits[ n_port ] != 0 )
 		{
 			m_p_n_sio_tx[ n_port ] = ( m_p_n_sio_tx[ n_port ] & ~PSX_SIO_OUT_DATA ) | ( ( m_p_n_sio_tx_shift[ n_port ] & 1 ) * PSX_SIO_OUT_DATA );
@@ -592,7 +587,9 @@ static void sio_clock( int n_port )
 			{
 				if( n_port == 0 )
 				{
-					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] | PSX_SIO_OUT_CLOCK );
+					m_p_n_sio_tx[ n_port ] &= ~PSX_SIO_OUT_CLOCK;
+					m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
+					m_p_n_sio_tx[ n_port ] |= PSX_SIO_OUT_CLOCK;
 				}
 				m_p_f_sio_handler[ n_port ]( m_p_n_sio_tx[ n_port ] );
 			}
