@@ -131,7 +131,7 @@ static int scan_keys(const struct GameDriver *gamedrv, struct InputCode *codes, 
 
 #define CODE_BUFFER_SIZE	(sizeof(struct InputCode) * NUM_CODES + sizeof(struct KeyBuffer))
 
-static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes)
+static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes, int map_lowercase)
 {
 	UINT16 ports[NUM_SIMUL_KEYS];
 	const struct InputPortTiny *ipts[NUM_SIMUL_KEYS];
@@ -143,19 +143,22 @@ static int build_codes(const struct GameDriver *gamedrv, struct InputCode *codes
 	if (!scan_keys(gamedrv, codes, ports, ipts, 0, 0))
 		return 0;
 
-	/* special case; scan to see if upper case characters are specified, but not lower case */
-	switch_upper = 1;
-	for (c = 'A'; c <= 'Z'; c++)
+	if (map_lowercase)
 	{
-		if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
+		/* special case; scan to see if upper case characters are specified, but not lower case */
+		switch_upper = 1;
+		for (c = 'A'; c <= 'Z'; c++)
 		{
-			switch_upper = 0;
-			break;
+			if (!inputx_can_post_key(c) || inputx_can_post_key(towlower(c)))
+			{
+				switch_upper = 0;
+				break;
+			}
 		}
-	}
-	if (switch_upper)
-		memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
 
+		if (switch_upper)
+			memcpy(&codes['a'], &codes['A'], sizeof(codes[0]) * 26);
+	}
 	return 1;
 }
 
@@ -177,7 +180,7 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	if (gamedrv->flags & GAME_COMPUTER)
 	{
 		codes = (struct InputCode *) buf;
-		build_codes(gamedrv, codes);
+		build_codes(gamedrv, codes, FALSE);
 
 		port_count = 0;
 		for (ipt = gamedrv->input_ports; ipt->type != IPT_END; ipt++)
@@ -321,7 +324,7 @@ void inputx_init(void)
 		codes = (struct InputCode *) auto_malloc(CODE_BUFFER_SIZE);
 		if (!codes)
 			return;
-		if (!build_codes(Machine->gamedrv, codes))
+		if (!build_codes(Machine->gamedrv, codes, TRUE))
 		{
 			codes = NULL;
 			return;
