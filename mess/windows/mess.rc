@@ -29,7 +29,7 @@ IDR_RUNTIME_MENU MENU
 BEGIN
     POPUP "&File"
     BEGIN
-        MENUITEM "&Load State...",              119
+        MENUITEM "&Load State...",              ID_FILE_LOADSTATE
         MENUITEM "&Save State...",              ID_FILE_SAVESTATE
         MENUITEM SEPARATOR
         MENUITEM "&Exit",                       ID_FILE_EXIT
@@ -40,25 +40,25 @@ BEGIN
     END
     POPUP "&Options"
     BEGIN
-        MENUITEM "Pause",                       ID_OPTIONS_PAUSE, GRAYED
-        MENUITEM "Reset",                       114
+        MENUITEM "&Pause",                      ID_OPTIONS_PAUSE, GRAYED
+        MENUITEM "&Reset",                      ID_OPTIONS_RESET
         MENUITEM SEPARATOR
-        POPUP "Keyboard"
+        POPUP "&Keyboard"
         BEGIN
             MENUITEM "Emulated",                    ID_KEYBOARD_EMULATED
             MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
         END
-        MENUITEM "Joysticks",                   ID_Menu, GRAYED
-        MENUITEM "DIP Switches...",             ID_OPTIONS_DIPSWITCHES
+        MENUITEM "&Joysticks",                  ID_OPTIONS_JOYSTICKS, GRAYED
+        MENUITEM "&DIP Switches...",            ID_OPTIONS_DIPSWITCHES
         MENUITEM SEPARATOR
         POPUP "&Frameskip"
         BEGIN
             MENUITEM "Auto",                        ID_FRAMESKIP_AUTO
         END
-        MENUITEM "Throttle",                    115
+        MENUITEM "&Throttle",                   ID_OPTIONS_THROTTLE
         MENUITEM SEPARATOR
-        MENUITEM "Show Profiler",               ID_OPTIONS_FRAMESKIP, GRAYED
-        MENUITEM "Show Internal Graphics",      ID_OPTIONS_SHOWINTERNALGRAPHICS
+        MENUITEM "Show P&rofiler",              ID_OPTIONS_FRAMESKIP, GRAYED
+        MENUITEM "Show &Internal Graphics",     ID_OPTIONS_SHOWINTERNALGRAPHICS
         , GRAYED
     END
     POPUP "&Devices"

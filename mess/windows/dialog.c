@@ -120,6 +120,7 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 	INT_PTR handled = TRUE;
 	TCHAR buf[32];
 	const char *str;
+	WORD command;
 
 	switch(msg) {
 	case WM_INITDIALOG:
@@ -128,26 +129,30 @@ static INT_PTR CALLBACK dialog_proc(HWND dlgwnd, UINT msg, WPARAM wparam, LPARAM
 		break;
 
 	case WM_COMMAND:
-		GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
+		command = LOWORD(wparam);
 
+		GetWindowText((HWND) lparam, buf, sizeof(buf) / sizeof(buf[0]));
 		str = buf;
 		if (!strcmp(str, DLGTEXT_OK))
-		{
-			dialog_trigger(dlgwnd, TRIGGER_APPLY);
-			EndDialog(dlgwnd, 0);
-		}
+			command = IDOK;
 		else if (!strcmp(str, DLGTEXT_CANCEL))
-		{
-			EndDialog(dlgwnd, 0);
-		}
-		else
-		{
-			handled = FALSE;
-		}
-		break;
+			command = IDCANCEL;
+		else if (!strcmp(str, "Standard"))
+			command = 0;
 
-	case WM_DESTROY:
-		EndDialog(dlgwnd, 0);
+		switch(command) {
+		case IDOK:
+			dialog_trigger(dlgwnd, TRIGGER_APPLY);
+			/* fall through */
+
+		case IDCANCEL:
+			EndDialog(dlgwnd, 0);
+			break;
+
+		default:
+			handled = FALSE;
+			break;
+		}
 		break;
 
 	default:

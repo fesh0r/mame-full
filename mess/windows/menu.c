@@ -31,6 +31,9 @@ extern UINT8 win_trying_to_quit;
 #define FRAMESKIP_LEVELS			12
 #define ID_FRAMESKIP_0				10000
 #define ID_DEVICE_0					11000
+#define ID_JOYSTICK_0				12000
+
+#define MAX_JOYSTICKS				((IPF_PLAYERMASK / IPF_PLAYER2) + 1)
 
 //============================================================
 //	GLOBAL VARIABLES
@@ -49,10 +52,21 @@ static int is_paused;
 
 
 //============================================================
-//	dipswitches
+//	setjoystick
 //============================================================
 
-static void dipswitches(void)
+static void setjoystick(int joystick_num)
+{
+	char buf[32];
+	sprintf(buf, "Joystick %d", joystick_num);
+	MessageBox(win_video_window, "Not Yet Implemented", buf, MB_OK);
+}
+
+//============================================================
+//	setdipswitches
+//============================================================
+
+static void setdipswitches(void)
 {
 	void *dlg;
 	struct InputPort *in;
@@ -290,7 +304,7 @@ static void pause(void)
 //	find_submenu
 //============================================================
 
-static HMENU find_sub_menu(HMENU menu, LPCTSTR menutext)
+static HMENU find_sub_menu(HMENU menu, LPCTSTR menutext, int create_sub_menu)
 {
 	MENUITEMINFO mii;
 	int item_count;
@@ -316,6 +330,18 @@ static HMENU find_sub_menu(HMENU menu, LPCTSTR menutext)
 		}
 		if (i >= item_count)
 			return NULL;
+		if (!mii.hSubMenu && create_sub_menu)
+		{
+			memset(&mii, 0, sizeof(mii));
+			mii.cbSize = sizeof(mii);
+			mii.fMask = MIIM_SUBMENU;
+			mii.hSubMenu = CreateMenu();
+			if (!SetMenuItemInfo(menu, i, TRUE, &mii))
+			{
+				i = GetLastError();
+				return NULL;
+			}
+		}
 		menu = mii.hSubMenu;
 		if (!menu)
 			return NULL;
@@ -328,14 +354,22 @@ static HMENU find_sub_menu(HMENU menu, LPCTSTR menutext)
 //	set_command_state
 //============================================================
 
-static void set_command_state(UINT command, UINT state)
+static void set_command_state(HMENU menu_bar, UINT command, UINT state)
 {
 	MENUITEMINFO mii;
+	BOOL result;
+	int err;
+
 	memset(&mii, 0, sizeof(mii));
 	mii.cbSize = sizeof(mii);
 	mii.fMask = MIIM_STATE;
 	mii.fState = state;
-	SetMenuItemInfo(win_menu_bar, command, FALSE, &mii);
+	result = SetMenuItemInfo(menu_bar, command, FALSE, &mii);
+	if (!result)
+	{
+		err = GetLastError();
+		assert(FALSE);
+	}
 }
 
 //============================================================
@@ -350,21 +384,20 @@ static void prepare_menus(void)
 	const char *s;
 	HMENU device_menu;
 
-	set_command_state(ID_EDIT_PASTE,		inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
+	set_command_state(win_menu_bar, ID_EDIT_PASTE,			inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
 
-	set_command_state(ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
 
-	set_command_state(ID_OPTIONS_KEYBOARD,	inputx_can_post()			? MFS_ENABLED : MFS_GRAYED);
-	set_command_state(ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
-	set_command_state(ID_KEYBOARD_NATURAL,	win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
 
-	set_command_state(ID_FRAMESKIP_AUTO,	autoframeskip				? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,		autoframeskip				? MFS_CHECKED : MFS_ENABLED);
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
-		set_command_state(ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i)) ? MFS_CHECKED : MFS_ENABLED);
+		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i)) ? MFS_CHECKED : MFS_ENABLED);
 
 	// set up device menu
-	device_menu = find_sub_menu(win_menu_bar, "&Devices\0");
+	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
 	while(GetMenuItemCount(device_menu) > 0)
 		RemoveMenu(device_menu, 0, MF_BYPOSITION);
 
@@ -426,7 +459,7 @@ static int invoke_command(UINT command)
 		break;
 
 	case ID_OPTIONS_DIPSWITCHES:
-		dipswitches();
+		setdipswitches();
 		break;
 
 	case ID_FRAMESKIP_AUTO:
@@ -449,6 +482,10 @@ static int invoke_command(UINT command)
 			dev = device_find(Machine->gamedrv, command / MAX_DEV_INSTANCES);
 			change_device(dev, command % MAX_DEV_INSTANCES);
 		}
+		else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
+		{
+			setjoystick(command - ID_JOYSTICK_0);
+		}
 		else
 		{
 			handled = 0;
@@ -459,6 +496,54 @@ static int invoke_command(UINT command)
 }
 
 //============================================================
+//	count_joysticks
+//============================================================
+
+static int count_joysticks(void)
+{
+	const struct InputPortTiny *in;
+	int joystick_count;
+
+	assert(MAX_JOYSTICKS > 0);
+	assert(MAX_JOYSTICKS < 8);
+
+	joystick_count = 0;
+	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
+	{
+		switch(in->type & ~IPF_MASK) {
+		case IPT_JOYSTICK_UP:
+		case IPT_JOYSTICK_DOWN:
+		case IPT_JOYSTICK_LEFT:
+		case IPT_JOYSTICK_RIGHT:
+		case IPT_JOYSTICKLEFT_UP:
+		case IPT_JOYSTICKLEFT_DOWN:
+		case IPT_JOYSTICKLEFT_LEFT:
+		case IPT_JOYSTICKLEFT_RIGHT:
+		case IPT_JOYSTICKRIGHT_UP:
+		case IPT_JOYSTICKRIGHT_DOWN:
+		case IPT_JOYSTICKRIGHT_LEFT:
+		case IPT_JOYSTICKRIGHT_RIGHT:
+		case IPT_BUTTON1:
+		case IPT_BUTTON2:
+		case IPT_BUTTON3:
+		case IPT_BUTTON4:
+		case IPT_BUTTON5:
+		case IPT_BUTTON6:
+		case IPT_BUTTON7:
+		case IPT_BUTTON8:
+		case IPT_BUTTON9:
+		case IPT_BUTTON10:
+		case IPT_AD_STICK_X:
+		case IPT_AD_STICK_Y:
+			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
+				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
+			break;
+		}
+	}
+	return joystick_count;
+}
+
+//============================================================
 //	win_create_menus
 //============================================================
 
@@ -466,9 +551,10 @@ HMENU win_create_menus(void)
 {
 	HMENU menu_bar;
 	HMENU frameskip_menu;
+	HMENU joystick_menu;
 	HMODULE module;
 	TCHAR buf[32];
-	int i;
+	int i, joystick_count;
 
 	is_paused = 0;
 	
@@ -478,13 +564,28 @@ HMENU win_create_menus(void)
 		return NULL;
 
 	// set up frameskip menu
-	frameskip_menu = find_sub_menu(menu_bar, "&Options\0&Frameskip\0");
+	frameskip_menu = find_sub_menu(menu_bar, "&Options\0&Frameskip\0", FALSE);
 	if (!frameskip_menu)
 		return NULL;
 	for(i = 0; i < FRAMESKIP_LEVELS; i++)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]), "%i", i);
 		AppendMenu(frameskip_menu, MF_STRING, ID_FRAMESKIP_0 + i, buf);
+	}
+
+	// set up joystick menu
+	joystick_count = count_joysticks();
+	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, joystick_count ? MFS_ENABLED : MFS_GRAYED);
+	if (joystick_count > 0)
+	{
+		joystick_menu = find_sub_menu(menu_bar, "&Options\0&Joysticks\0", TRUE);
+		if (!joystick_menu)
+			return NULL;
+		for(i = 0; i < joystick_count; i++)
+		{
+			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Joystick %i", i + 1);
+			AppendMenu(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, buf);
+		}
 	}
 
 	win_menu_bar = menu_bar;
@@ -505,6 +606,14 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 	case WM_CHAR:
 		if (win_use_natural_keyboard)
 			inputx_postc(wparam);
+		break;
+
+	case WM_ENTERMENULOOP:
+		osd_sound_enable(0);
+		break;
+
+	case WM_EXITMENULOOP:
+		osd_sound_enable(1);
 		break;
 
 	case WM_COMMAND:
