@@ -174,7 +174,6 @@ void	amd_flash_restore(int index1, char *flash_name)
 /* flash read - offset is offset within flash-file (offset within 1mb)*/
 int amd_flash_bank_handler_r(int index1, int offset)
 {
-	logerror("amd flash read: offs: %04x\n",offset);
 
 	switch (amd_flash[index1].mode)
 	{
@@ -184,6 +183,8 @@ int amd_flash_bank_handler_r(int index1, int offset)
 
 		case AMD_FLASH_MODE_AUTOSELECT:
 		{
+			logerror("amd flash read: offs: %04x\n",offset);
+			
 			switch (offset & 0x03)
 			{
 				/* get manufacturer code */
@@ -219,14 +220,16 @@ int amd_flash_bank_handler_r(int index1, int offset)
 }
 
 
-static void	amd_autoselect_sequence_update(int index1, int address, int data)
+static void	amd_autoselect_sequence_update(int index1, int offset, int data)
 {
 	switch (amd_flash[index1].amd_autoselect_state)
 	{
 		case 0:
 		{
-			if ((address==0x0555) && (data==0x0aa))
+			int addr = offset & 0x07ff;
+			if ((addr==0x0555) && (data==0x0aa))
 			{
+				logerror("amd flash: recognised address 0x0555 and data 0x0aa\n");
 				amd_flash[index1].amd_autoselect_state++;
 			}
 			else
@@ -238,8 +241,10 @@ static void	amd_autoselect_sequence_update(int index1, int address, int data)
 
 		case 1:
 		{
-			if ((address==0x02aa) && (data==0x055))
+			int addr = offset & 0x07ff;
+			if ((addr==0x02aa) && (data==0x055))
 			{
+				logerror("amd flash: recognised address 0x02aa and data 0x055\n");
 				amd_flash[index1].amd_autoselect_state++;
 				amd_flash[index1].mode = AMD_FLASH_MODE_AUTOSELECT;
 			}
@@ -252,10 +257,24 @@ static void	amd_autoselect_sequence_update(int index1, int address, int data)
 
 		case 2:
 		{
-			if (address==0x0555)
+			int addr = offset & 0x07ff;
+			amd_flash[index1].amd_autoselect_state = 0;
+
+			if (addr==0x0555)
 			{
+				logerror("amd flash: recognised address 0x0555, command: %02x\n",data);
+
 				switch (data)
 				{
+					/* not sure if this is correct for amd flash! */
+					case AMD_FLASH_COMMAND_RESET:
+					{
+						/* return to read array */
+						amd_flash[index1].mode = AMD_FLASH_MODE_READ_ARRAY;
+						amd_flash[index1].amd_autoselect_state = 0;
+					}
+					break;
+
 					case AMD_FLASH_COMMAND_AUTOSELECT:
 					{
 						amd_flash[index1].mode = AMD_FLASH_MODE_AUTOSELECT;
@@ -288,14 +307,14 @@ void amd_flash_bank_handler_w(int index1, int offset, int data)
 {
 	logerror("amd flash write: offs: %04x data: %02x\n",offset,data);
 
-	/* reset? */
-	if (data==AMD_FLASH_COMMAND_RESET)
-	{
-		/* return to read array */
-		amd_flash[index1].mode = AMD_FLASH_MODE_READ_ARRAY;
-		amd_flash[index1].amd_autoselect_state = 0;
-		return;
-	}
+//	/* reset? */
+//	if (data==AMD_FLASH_COMMAND_RESET)
+//	{
+//		/* return to read array */
+//		amd_flash[index1].mode = AMD_FLASH_MODE_READ_ARRAY;
+//		amd_flash[index1].amd_autoselect_state = 0;
+//		return;
+//	}
 
 	amd_autoselect_sequence_update(index1, offset, data);
 
