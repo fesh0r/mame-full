@@ -8,7 +8,7 @@
 #include "driver.h"
 #include "image.h"
 
-#define MAX_INSTANCES 5
+#define MAX_DEV_INSTANCES 5
 
 #define LCD_FRAMES_PER_SECOND	30
 

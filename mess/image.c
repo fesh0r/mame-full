@@ -33,7 +33,7 @@ struct image_info
 	struct image_memory_header *memory;
 };
 
-static struct image_info images[IO_COUNT][MAX_INSTANCES];
+static struct image_info images[IO_COUNT][MAX_DEV_INSTANCES];
 int images_is_running;
 char *renamed_image;
 
@@ -46,7 +46,7 @@ extern const char *pcrcfile;
 static struct image_info *get_image(int type, int id)
 {
 	assert((type >= 0) && (type < IO_COUNT));
-	assert((id >= 0) && (id < MAX_INSTANCES));
+	assert((id >= 0) && (id < MAX_DEV_INSTANCES));
 	return &images[type][id];
 }
 
@@ -73,7 +73,7 @@ void *image_malloc(int type, int id, size_t size)
 #ifdef GUARD_BYTES
 	block->size = size;
 	block->canary = 0xdeadbeef;
-	memcpy(((char *) (block+1)) + size, block->canary, sizeof(block->canary));
+	memcpy(((char *) (block+1)) + size, &block->canary, sizeof(block->canary));
 #endif
 
 	img->memory = block;
@@ -101,8 +101,8 @@ static void image_free_resources(struct image_info *img)
 	while(mem)
 	{
 #ifdef GUARD_BYTES
-		assert(block->canary == 0xdeadbeef);
-		assert(!memcmp(block->canary, ((char *) (block+1)) + block->size, sizeof(block->canary)));
+		assert(mem->canary == 0xdeadbeef);
+		assert(!memcmp(&mem->canary, ((char *) (mem+1)) + mem->size, sizeof(mem->canary)));
 #endif
 		next = mem->next;
 		free(mem);
@@ -211,7 +211,7 @@ void image_unload_all(void)
 
 	for (type = 0; type < IO_COUNT; type++)
 	{
-		for (id = 0; id < MAX_INSTANCES; id++)
+		for (id = 0; id < MAX_DEV_INSTANCES; id++)
 			image_unload(type, id);
 	}
 }

@@ -111,7 +111,7 @@ const char *device_file_extension(int type, int extnum)
 
 struct distributed_images
 {
-	const char *names[IO_COUNT][MAX_INSTANCES];
+	const char *names[IO_COUNT][MAX_DEV_INSTANCES];
 	int count[IO_COUNT];
 };
 
@@ -136,7 +136,7 @@ static int distribute_images(struct distributed_images *images)
 		if (type < IO_COUNT)
 		{
 			/* Do we have too many devices? */
-			if (images->count[type] >= MAX_INSTANCES)
+			if (images->count[type] >= MAX_DEV_INSTANCES)
 			{
 				mess_printf(" Too many devices of type %d\n", type);
 				return 1;
