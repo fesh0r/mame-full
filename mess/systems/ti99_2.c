@@ -531,13 +531,13 @@ MACHINE_DRIVER_END
 ROM_START(ti99_224)
 	/*CPU memory space*/
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("992rom.bin", 0x0000, 0x6000, 0x00000000)      /* system ROMs */
+	ROM_LOAD("992rom.bin", 0x0000, 0x6000,CRC( 0x00000000))      /* system ROMs */
 ROM_END
 
 ROM_START(ti99_232)
 	/*64kb CPU memory space + 8kb to read the extra ROM page*/
 	ROM_REGION(0x12000,REGION_CPU1,0)
-	ROM_LOAD("992rom32.bin", 0x0000, 0x6000, 0x00000000)    /* system ROM - 32kb */
+	ROM_LOAD("992rom32.bin", 0x0000, 0x6000,CRC( 0x00000000))    /* system ROM - 32kb */
 	ROM_CONTINUE(0x10000,0x2000)
 ROM_END
 

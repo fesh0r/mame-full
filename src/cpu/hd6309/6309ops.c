@@ -5376,15 +5376,6 @@ INLINE void sts_ex( void )
 	WM16(EAD,&pS);
 }
 
-/* $11fc Emulation debug (emu_dbg) */
-INLINE void emu_dbg( void )
-{
-#ifdef MAME_DEBUG
-	extern int debug_key_pressed;
-	debug_key_pressed = 1;
-#endif
-}
-
 /* $10xx opcodes */
 INLINE void pref10( void )
 {

@@ -544,9 +544,9 @@ MACHINE_DRIVER_END
 
 ROM_START(laser350)
 	ROM_REGION(0x40000,REGION_CPU1,0)
-	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
+	ROM_LOAD("laserv3.rom", 0x00000, 0x08000,CRC( 0x9bed01f7))
 	ROM_REGION(0x00800,REGION_GFX1,0)
-	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
+	ROM_LOAD("laser.fnt",   0x00000, 0x00800,CRC( 0xed6bfb2a))
 	ROM_REGION(0x00100,REGION_GFX2,0)
     /* initialized in init_laser */
 ROM_END
@@ -554,18 +554,18 @@ ROM_END
 
 ROM_START(laser500)
 	ROM_REGION(0x40000,REGION_CPU1,0)
-	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
+	ROM_LOAD("laserv3.rom", 0x00000, 0x08000,CRC( 0x9bed01f7))
 	ROM_REGION(0x00800,REGION_GFX1,0)
-	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
+	ROM_LOAD("laser.fnt",   0x00000, 0x00800,CRC( 0xed6bfb2a))
 	ROM_REGION(0x00100,REGION_GFX2,0)
 	/* initialized in init_laser */
 ROM_END
 
 ROM_START(laser700)
 	ROM_REGION(0x40000,REGION_CPU1,0)
-	ROM_LOAD("laserv3.rom", 0x00000, 0x08000, 0x9bed01f7)
+	ROM_LOAD("laserv3.rom", 0x00000, 0x08000,CRC( 0x9bed01f7))
 	ROM_REGION(0x00800,REGION_GFX1,0)
-	ROM_LOAD("laser.fnt",   0x00000, 0x00800, 0xed6bfb2a)
+	ROM_LOAD("laser.fnt",   0x00000, 0x00800,CRC( 0xed6bfb2a))
 	ROM_REGION(0x00100,REGION_GFX2,0)
 	/* initialized in init_laser */
 ROM_END

@@ -428,35 +428,35 @@ MACHINE_DRIVER_END
 ROM_START(geneve)
 	/*CPU memory space*/
 	ROM_REGION(region_cpu1_len_geneve, REGION_CPU1, 0)
-	ROM_LOAD("genbt100.bin", offset_rom_geneve, 0x4000, 0x8001e386) /* CPU ROMs */
+	ROM_LOAD("genbt100.bin", offset_rom_geneve, 0x4000,CRC( 0x8001e386)) /* CPU ROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC( 0x8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC( 0x06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000,CRC( 0x66fbe0ed)) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC( 0xeab382fb)) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000,CRC( 0x58b155f7)) /* system speech ROM */
 ROM_END
 
 ROM_START(genmod)
 	/*CPU memory space*/
 	ROM_REGION(region_cpu1_len_geneve, REGION_CPU1, 0)
-	ROM_LOAD("gnmbt100.bin", offset_rom_geneve, 0x4000, 0x19b89479) /* CPU ROMs */
+	ROM_LOAD("gnmbt100.bin", offset_rom_geneve, 0x4000,CRC( 0x19b89479)) /* CPU ROMs */
 
 	/*DSR ROM space*/
 	ROM_REGION(region_dsr_len, region_dsr, 0)
-	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000, 0x8f7df93f) /* TI disk DSR ROM */
-	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000, 0x06f1ec89) /* BwG disk DSR ROM */
-	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000, 0x66fbe0ed) /* HFDC disk DSR ROM */
-	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000, 0xeab382fb) /* TI rs232 DSR ROM */
+	ROM_LOAD_OPTIONAL("disk.bin", offset_fdc_dsr, 0x2000,CRC( 0x8f7df93f)) /* TI disk DSR ROM */
+	ROM_LOAD_OPTIONAL("bwg.bin", offset_bwg_dsr, 0x8000,CRC( 0x06f1ec89)) /* BwG disk DSR ROM */
+	ROM_LOAD_OPTIONAL("hfdc.bin", offset_hfdc_dsr, 0x4000,CRC( 0x66fbe0ed)) /* HFDC disk DSR ROM */
+	ROM_LOAD_OPTIONAL("rs232.bin", offset_rs232_dsr, 0x1000,CRC( 0xeab382fb)) /* TI rs232 DSR ROM */
 
 	/*TMS5220 ROM space*/
 	ROM_REGION(0x8000, region_speech_rom, 0)
-	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000, 0x58b155f7) /* system speech ROM */
+	ROM_LOAD_OPTIONAL("spchrom.bin", 0x0000, 0x8000,CRC( 0x58b155f7)) /* system speech ROM */
 ROM_END
 
 SYSTEM_CONFIG_START(geneve)

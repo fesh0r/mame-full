@@ -378,11 +378,11 @@ MACHINE_DRIVER_END
 
 ROM_START( laser110 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("vtechv12.lo",  0x0000, 0x2000, 0x99412d43)
-    ROM_LOAD("vtechv12.hi",  0x2000, 0x2000, 0xe4c24e8b)
+    ROM_LOAD("vtechv12.lo",  0x0000, 0x2000,CRC( 0x99412d43))
+    ROM_LOAD("vtechv12.hi",  0x2000, 0x2000,CRC( 0xe4c24e8b))
 #ifdef OLD_VIDEO
     ROM_REGION(0x0d00,REGION_GFX1,0)
-    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
+    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00,CRC( 0xead006a1))
 #endif
 ROM_END
 #define rom_laser200    rom_laser110
@@ -390,11 +390,11 @@ ROM_END
 
 ROM_START( laser210 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("vtechv20.lo",  0x0000, 0x2000, 0xcc854fe9)
-    ROM_LOAD("vtechv20.hi",  0x2000, 0x2000, 0x7060f91a)
+    ROM_LOAD("vtechv20.lo",  0x0000, 0x2000,CRC( 0xcc854fe9))
+    ROM_LOAD("vtechv20.hi",  0x2000, 0x2000,CRC( 0x7060f91a))
 #ifdef OLD_VIDEO
     ROM_REGION(0x0d00,REGION_GFX1,0)
-    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
+    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00,CRC( 0xead006a1))
 #endif
 ROM_END
 #define rom_vz200       rom_laser210
@@ -402,10 +402,10 @@ ROM_END
 
 ROM_START( laser310 )
     ROM_REGION(0x10000,REGION_CPU1,0)
-    ROM_LOAD("vtechv20.rom", 0x0000, 0x4000, 0x613de12c)
+    ROM_LOAD("vtechv20.rom", 0x0000, 0x4000,CRC( 0x613de12c))
 #ifdef OLD_VIDEO
     ROM_REGION(0x0d00,REGION_GFX1,0)
-    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00, 0xead006a1)
+    ROM_LOAD("vtech1.chr",   0x0000, 0x0c00,CRC( 0xead006a1))
 #endif
 ROM_END
 #define rom_vz300       rom_laser310

@@ -122,7 +122,7 @@ SYSTEM_CONFIG_END
 
 ROM_START(vectrex)
     ROM_REGION(0x10000,REGION_CPU1, 0)
-    ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
+    ROM_LOAD("system.img", 0xe000, 0x2000,CRC( 0xba13fb57))
 ROM_END
 
 
@@ -191,8 +191,8 @@ MACHINE_DRIVER_END
 
 ROM_START(raaspec)
 	ROM_REGION(0x10000,REGION_CPU1, 0)
-	ROM_LOAD("spectrum.bin", 0x0000, 0x8000, 0x20af7f3f)
-	ROM_LOAD("system.img", 0xe000, 0x2000, 0xba13fb57)
+	ROM_LOAD("spectrum.bin", 0x0000, 0x8000,CRC( 0x20af7f3f))
+	ROM_LOAD("system.img", 0xe000, 0x2000,CRC( 0xba13fb57))
 ROM_END
 
 /***************************************************************************

@@ -1439,213 +1439,213 @@ MACHINE_DRIVER_END
 #if 0
 	//pcjr roms? (incomplete dump, most likely 64 kbyte)
 	// basic c1.20 
-    ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
+    ROM_LOAD("basic.rom", 0xf6000, 0x8000,CRC( 0x0c19c1a8))
 	// ???
-    ROM_LOAD("bios.rom", 0x??000, 0x2000, 0x98463f95)
+    ROM_LOAD("bios.rom", 0x??000, 0x2000,CRC( 0x98463f95))
 
 	/* turbo xt */
 	/* basic c1.10 */
-    ROM_LOAD("rom05.bin", 0xf6000, 0x2000, 0x80d3cf5d)
-    ROM_LOAD("rom04.bin", 0xf8000, 0x2000, 0x673a4acc)
-    ROM_LOAD("rom03.bin", 0xfa000, 0x2000, 0xaac3fc37)
-    ROM_LOAD("rom02.bin", 0xfc000, 0x2000, 0x3062b3fc)
+    ROM_LOAD("rom05.bin", 0xf6000, 0x2000,CRC( 0x80d3cf5d))
+    ROM_LOAD("rom04.bin", 0xf8000, 0x2000,CRC( 0x673a4acc))
+    ROM_LOAD("rom03.bin", 0xfa000, 0x2000,CRC( 0xaac3fc37))
+    ROM_LOAD("rom02.bin", 0xfc000, 0x2000,CRC( 0x3062b3fc))
 	/* sw1 0x60 readback fails write 301 to screen fe3b7 */
 	/* disk problems no disk gives 601 */
 	/* 5000-026 08/16/82 */
-    ROM_LOAD("rom01.bin", 0xfe000, 0x2000, 0x5c3f0256)
+    ROM_LOAD("rom01.bin", 0xfe000, 0x2000,CRC( 0x5c3f0256))
 
 	/* anonymous works nice */
-    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000,CRC( 0x031aafad))
 
-	ROM_LOAD("bondwell.bin", 0xfe000, 0x2000, 0xd435a405)
+	ROM_LOAD("bondwell.bin", 0xfe000, 0x2000,CRC( 0xd435a405))
 
 	/* europc */
-    ROM_LOAD("50145", 0xf8000, 0x8000, 0x1775a11d) // V2.07
-//    ROM_LOAD("eurobios.bin", 0xf8000, 0x8000, 0x52185223) scrap
+    ROM_LOAD("50145", 0xf8000, 0x8000,CRC( 0x1775a11d)) // V2.07
+//    ROM_LOAD("eurobios.bin", 0xf8000, 0x8000,CRC( 0x52185223)) scrap
 	/* cga, hercules character set */
-    ROM_LOAD("50146", 0x00000, 0x02000, 0x1305dcf5) //D1.0
+    ROM_LOAD("50146", 0x00000, 0x02000,CRC( 0x1305dcf5)) //D1.0
 
 	// ibm pc
 	// most likely 8 kbyte chips
-    ROM_LOAD("basicpc.bin", 0xf6000, 0x8000, 0xebacb791) // IBM C1.1
+    ROM_LOAD("basicpc.bin", 0xf6000, 0x8000,CRC( 0xebacb791)) // IBM C1.1
 	// split into 8 kbyte parts
 	// the same as in the basic c1.10 as in the turboxt
 	// 1501-476 10/27/82
-    ROM_LOAD("biospc.bin", 0xfe000, 0x2000, 0xe88792b3)
+    ROM_LOAD("biospc.bin", 0xfe000, 0x2000,CRC( 0xe88792b3))
 
 	/* tandy 1000 hx */
-    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
+    ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000,CRC( 0xd37a1d5f))
 
 	// ibm xt
-    ROM_LOAD("xthdd.c8", 0xc8000, 0x2000, 0xa96317da)
-    ROM_LOAD("biosxt.bin", 0xf0000, 0x10000, 0x36c32fde) // BASIC C1.1
+    ROM_LOAD("xthdd.c8", 0xc8000, 0x2000,CRC( 0xa96317da))
+    ROM_LOAD("biosxt.bin", 0xf0000, 0x10000,CRC( 0x36c32fde)) // BASIC C1.1
 	// split into 2 chips for 16 bit access
-    ROM_LOAD_EVEN("ibmxt.0", 0xf0000, 0x8000, 0x83727c42)
-    ROM_LOAD_ODD("ibmxt.1", 0xf0000, 0x8000, 0x2a629953)
+    ROM_LOAD_EVEN("ibmxt.0", 0xf0000, 0x8000,CRC( 0x83727c42))
+    ROM_LOAD_ODD("ibmxt.1", 0xf0000, 0x8000,CRC( 0x2a629953))
 
 	/* pc xt mfm controller
 	   2 harddisks 17 sectors, 4 head, 613 tracks
 	   serves 2 controllers? 0x320-3, 0x324-7, dma 3, irq5
 	   movable, works at 0xee000 */
 	/* western digital 06/28/89 */
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
 
 	/* lcs 6210d asic i2.1 09/01/1988 */
 	/* problematic, currently showing menu and calls int21 (hangs)! */
-    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da)
+    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000,CRC( 0xa96317da))
 #endif
 
 ROM_START( ibmpc )
 	ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("basicc11.f6", 0xf6000, 0x2000, 0x80d3cf5d)
-    ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
-    ROM_LOAD("basicc11.fa", 0xfa000, 0x2000, 0xaac3fc37)
-    ROM_LOAD("basicc11.fc", 0xfc000, 0x2000, 0x3062b3fc)
-    ROM_LOAD("pc102782.bin", 0xfe000, 0x2000, 0xe88792b3)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD("basicc11.f6", 0xf6000, 0x2000,CRC( 0x80d3cf5d))
+    ROM_LOAD("basicc11.f8", 0xf8000, 0x2000,CRC( 0x673a4acc))
+    ROM_LOAD("basicc11.fa", 0xfa000, 0x2000,CRC( 0xaac3fc37))
+    ROM_LOAD("basicc11.fc", 0xfc000, 0x2000,CRC( 0x3062b3fc))
+    ROM_LOAD("pc102782.bin", 0xfe000, 0x2000,CRC( 0xe88792b3))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
 ROM_END
 
 ROM_START( ibmpca )
 	ROM_REGION(0x100000,REGION_CPU1,0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("basicc11.f6", 0xf6000, 0x2000, 0x80d3cf5d)
-    ROM_LOAD("basicc11.f8", 0xf8000, 0x2000, 0x673a4acc)
-    ROM_LOAD("basicc11.fa", 0xfa000, 0x2000, 0xaac3fc37)
-    ROM_LOAD("basicc11.fc", 0xfc000, 0x2000, 0x3062b3fc)
-    ROM_LOAD("pc081682.bin", 0xfe000, 0x2000, 0x5c3f0256)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD("basicc11.f6", 0xf6000, 0x2000,CRC( 0x80d3cf5d))
+    ROM_LOAD("basicc11.f8", 0xf8000, 0x2000,CRC( 0x673a4acc))
+    ROM_LOAD("basicc11.fa", 0xfa000, 0x2000,CRC( 0xaac3fc37))
+    ROM_LOAD("basicc11.fc", 0xfc000, 0x2000,CRC( 0x3062b3fc))
+    ROM_LOAD("pc081682.bin", 0xfe000, 0x2000,CRC( 0x5c3f0256))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
 ROM_END
 
 ROM_START( bondwell )
 	ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4) // taken from other machine
-	ROM_LOAD("bondwell.bin", 0xfe000, 0x2000, 0xd435a405)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4)) // taken from other machine
+	ROM_LOAD("bondwell.bin", 0xfe000, 0x2000,CRC( 0xd435a405))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069) // taken from cga
+    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069)) // taken from cga
 ROM_END
 
 ROM_START( pcmda )
     ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000,CRC( 0x031aafad))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("mda.chr",     0x00000, 0x01000, 0xac1686f3)
+    ROM_LOAD("mda.chr",     0x00000, 0x01000,CRC( 0xac1686f3))
 ROM_END
 
 ROM_START( pc )
     ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-//    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000, 0xa96317da)
-    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+//    ROM_LOAD("xthdd.rom",  0xc8000, 0x02000,CRC( 0xa96317da))
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000,CRC( 0x031aafad))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
 ROM_END
 
 ROM_START( europc )
     ROM_REGION(0x100000,REGION_CPU1, 0)
 	// hdd bios integrated!
-    ROM_LOAD("50145", 0xf8000, 0x8000, 0x1775a11d) // V2.07
+    ROM_LOAD("50145", 0xf8000, 0x8000,CRC( 0x1775a11d)) // V2.07
 	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("50146", 0x00000, 0x02000, 0x1305dcf5) //D1.0
+    ROM_LOAD("50146", 0x00000, 0x02000,CRC( 0x1305dcf5)) //D1.0
 ROM_END
 
 
 ROM_START( ibmpcjr )
     ROM_REGION(0x100000,REGION_CPU1, 0)
 #ifndef MESS_DEBUG
-	ROM_LOAD("bios.rom", 0xf0000, 0x10000, 0)
+	ROM_LOAD("bios.rom", 0xf0000, 0x10000,CRC( 0))
 #else
-    ROM_LOAD("basic.rom", 0xf6000, 0x8000, 0x0c19c1a8)
-    ROM_LOAD("bios.rom", 0xfe000, 0x2000, 0x98463f95)
+    ROM_LOAD("basic.rom", 0xf6000, 0x8000,CRC( 0x0c19c1a8))
+    ROM_LOAD("bios.rom", 0xfe000, 0x2000,CRC( 0x98463f95))
 #endif
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-    ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+    ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
 ROM_END
 
 ROM_START( t1000hx )
 	ROM_REGION(0x100000,REGION_CPU1, 0)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
 	// partlist says it has 1 128kbyte rom
-	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
-	ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000, 0xd37a1d5f)
+	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000,CRC( 0x61dbf242))
+	ROM_LOAD("tandy1t.rom", 0xf0000, 0x10000,CRC( 0xd37a1d5f))
 	ROM_REGION(0x02000,REGION_GFX1, 0)
 	// expects 8x9 charset!
-	ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
+	ROM_LOAD("50146", 0x00000, 0x02000, CRC(BADCRC(0x1305dcf5))) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( t1000sx )
 	ROM_REGION(0x100000,REGION_CPU1, 0)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
 	// partlist says it has 1 128kbyte rom
-	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000, 0x61dbf242)
-	ROM_LOAD("t1000sx.f0", 0xf0000, 0x10000, 0x0e016ecf)
+	ROM_LOAD("t1000hx.e0", 0xe0000, 0x10000,CRC( 0x61dbf242))
+	ROM_LOAD("t1000sx.f0", 0xf0000, 0x10000,CRC( 0x0e016ecf))
 	ROM_REGION(0x02000,REGION_GFX1, 0)
 	// expects 8x9 charset!
-	ROM_LOAD("50146", 0x00000, 0x02000, BADCRC(0x1305dcf5)) //taken from europc, 9th blank
+	ROM_LOAD("50146", 0x00000, 0x02000, CRC(BADCRC(0x1305dcf5))) //taken from europc, 9th blank
 ROM_END
 
 ROM_START( ibmxt )
 	ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-	ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000, 0x83727c42) 
-	ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000, 0x2a629953)
+	ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+	ROM_LOAD16_BYTE("xt050986.0", 0xf0000, 0x8000,CRC( 0x83727c42)) 
+	ROM_LOAD16_BYTE("xt050986.1", 0xf0001, 0x8000,CRC( 0x2a629953))
 	ROM_REGION(0x01100,REGION_GFX1, 0)
-	ROM_LOAD("cga.chr",     0x00000, 0x01000, 0x42009069)
+	ROM_LOAD("cga.chr",     0x00000, 0x01000,CRC( 0x42009069))
 ROM_END
 
 ROM_START( xtvga )
     ROM_REGION(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("et4000.bin", 0xc0000, 0x8000, 0xf01e4be0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000, 0x031aafad)
+    ROM_LOAD("et4000.bin", 0xc0000, 0x8000,CRC( 0xf01e4be0))
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD("pcxt.rom",    0xfe000, 0x02000,CRC( 0x031aafad))
 ROM_END
 
 ROM_START( pc200 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
 	// special bios at 0xe0000 !?
-    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, 0x41302eb8) // v2
-    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, 0x71b84616) // v2
+    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000,CRC( 0x41302eb8)) // v2
+    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000,CRC( 0x71b84616)) // v2
 	// also mapped to f0000, f4000, f8000
 	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40109.bin",     0x00000, 0x02000, 0xecf9ebe8)
+    ROM_LOAD("40109.bin",     0x00000, 0x02000,CRC( 0xecf9ebe8))
 ROM_END
 
 ROM_START( pc20 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
 	// special bios at 0xe0000 !?
-    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, 0x41302eb8) // v2
-    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, 0x71b84616) // v2
+    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000,CRC( 0x41302eb8)) // v2
+    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000,CRC( 0x71b84616)) // v2
 	// also mapped to f0000, f4000, f8000
 	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40109.bin",     0x00000, 0x02000, 0xecf9ebe8)
+    ROM_LOAD("40109.bin",     0x00000, 0x02000,CRC( 0xecf9ebe8))
 ROM_END
 
 ROM_START( pc1512 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD16_BYTE("40044.v1", 0xfc001, 0x2000, 0x668fcc94) // v1
-    ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000, 0xf72f1582) // v1
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD16_BYTE("40044.v1", 0xfc001, 0x2000,CRC( 0x668fcc94)) // v1
+    ROM_LOAD16_BYTE("40043.v1", 0xfc000, 0x2000,CRC( 0xf72f1582)) // v1
 	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40045.bin",     0x00000, 0x02000, 0xdd5e030f)
+    ROM_LOAD("40045.bin",     0x00000, 0x02000,CRC( 0xdd5e030f))
 ROM_END
 
 ROM_START( pc1640 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
-    ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae) // this bios seams to be made for the amstrad pc
-    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
-    ROM_LOAD16_BYTE("40043.v3", 0xfc001, 0x2000, 0xe40a1513) // v3
-    ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000, 0xf1c074f3)
+    ROM_LOAD("40100", 0xc0000, 0x8000,CRC( 0xd2d1f1ae)) // this bios seams to be made for the amstrad pc
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000,CRC( 0x8e9e2bd4))
+    ROM_LOAD16_BYTE("40043.v3", 0xfc001, 0x2000,CRC( 0xe40a1513)) // v3
+    ROM_LOAD16_BYTE("40044.v3", 0xfc000, 0x2000,CRC( 0xf1c074f3))
 	ROM_REGION(0x02100,REGION_GFX1, 0)
-    ROM_LOAD("40045.bin",     0x00000, 0x02000, 0xdd5e030f)
+    ROM_LOAD("40045.bin",     0x00000, 0x02000,CRC( 0xdd5e030f))
 ROM_END
 
 SYSTEM_CONFIG_START(ibmpc)

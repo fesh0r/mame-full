@@ -466,7 +466,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 	struct rectangle temprect;
 	blitter_func blitter;
 	int srcx, srcy;
-	
+
 	// if we have a vector dirty array, alter the plan
 	if (blit->vecdirty && !update)
 		if (blit_vectors(blit))
@@ -489,7 +489,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 		generate_blitter(blit);
 		active_blitter_params = *blit;
 	}
-	
+
 	// determine the starting source X/Y
 	temprect.min_x = blit->srcxoffs;
 	temprect.min_y = blit->srcyoffs;
@@ -515,7 +515,7 @@ int win_perform_blit(const struct win_blit_params *blit, int update)
 
 	asmblit_dstdata = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
 	asmblit_dstpitch = blit->dstpitch;
-	
+
 	// pick the blitter
 	blitter = update ? (blitter_func)active_update_blitter : (blitter_func)active_fast_blitter;
 	(*blitter)();
@@ -536,15 +536,15 @@ static int blit_vectors(const struct win_blit_params *blit)
 	void *dstbase = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
 	UINT32 srcpitch = blit->srcpitch;
 	vector_pixel_t *list = blit->vecdirty;
-	
+
 	// skip if not 1:1
 	if (blit->dstxscale != 1 || blit->dstyscale != 1)
 		return 0;
-	
+
 	// can't handle anything but 15bpp
 	if (blit->srcdepth != 15)
 		return 0;
-	
+
 	// recompute the lookups
 	if (blit->srcwidth != active_vector_params.srcwidth ||
 		blit->srcpitch != active_vector_params.srcpitch ||
@@ -556,23 +556,23 @@ static int blit_vectors(const struct win_blit_params *blit)
 	{
 		struct rectangle temprect;
 		int x;
-		
+
 		for (x = 0; x < MAX_SCREEN_DIM; x++)
 		{
 			temprect.min_x = temprect.max_x = x;
 			temprect.min_y = temprect.max_y = 0;
 			win_orient_rect(&temprect);
 			xtrans[x] = blit->swapxy ? (temprect.max_y * blit->dstpitch) : (temprect.max_x * dstdepth);
-			
+
 			temprect.min_x = temprect.max_x = 0;
 			temprect.min_y = temprect.max_y = x;
 			win_orient_rect(&temprect);
 			ytrans[x] = blit->swapxy ? (temprect.max_x * dstdepth) : (temprect.max_y * blit->dstpitch);
 		}
-		
+
 		active_vector_params = *blit;
 	}
-	
+
 	// 16-bit to 16-bit
 	if (blit->dstdepth == 15)
 	{
@@ -582,12 +582,12 @@ static int blit_vectors(const struct win_blit_params *blit)
 			vector_pixel_t coords = *list++;
 			int x = VECTOR_PIXEL_X(coords);
 			int y = VECTOR_PIXEL_Y(coords);
-			*(UINT16 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) = 
+			*(UINT16 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) =
 					srclookup[*(UINT16 *)((UINT8 *)srcbase + y * srcpitch + x * 2)];
 		}
 		return 1;
 	}
-	
+
 	// 16-bit to 32-bit
 	else if (blit->dstdepth == 32)
 	{
@@ -602,7 +602,7 @@ static int blit_vectors(const struct win_blit_params *blit)
 		}
 		return 1;
 	}
-	
+
 	return 0;
 }
 
@@ -1367,7 +1367,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 				for (pix = 0; pix < 16; pix++)
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcxsize;
 			}
-			
+
 			// Y flipping, no swapping
 			else
 			{
@@ -1378,7 +1378,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcxsize - srcysize;
 			}
 		}
-		
+
 		else
 		{
 			// X flipping, no swapping
@@ -1390,7 +1390,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 				for (pix = 0; pix < 16; pix++)
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcxsize;
 			}
-			
+
 			// X and Y flipping, no swapping
 			else
 			{
@@ -1402,7 +1402,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 			}
 		}
 	}
-	
+
 	else
 	{
 		if (!blit->flipx)
@@ -1416,7 +1416,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 				for (pix = 0; pix < 16; pix++)
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcysize;
 			}
-			
+
 			// Y flipping, swapped
 			else
 			{
@@ -1427,7 +1427,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcysize - srcxsize;
 			}
 		}
-		
+
 		else
 		{
 			// X flipping, swapped
@@ -1439,7 +1439,7 @@ static void compute_source_fixups(const struct win_blit_params *blit, UINT32 val
 				for (pix = 0; pix < 16; pix++)
 					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcysize;
 			}
-			
+
 			// X and Y flipping, swapped
 			else
 			{
@@ -1484,13 +1484,13 @@ static void generate_blitter(const struct win_blit_params *blit)
 	UINT32 valuefixups[32];
 	int middle, last;
 
-#if DEBUG_BLITTERS
-	fprintf(stderr, "Generating blitter\n");
-#endif
-
 	// determine MMX/XMM support
 	if (use_mmx == -1)
 		check_for_mmx();
+
+#if DEBUG_BLITTERS
+	fprintf(stderr, "Generating blitter\n");
+#endif
 
 	// determine how many pixels to do at the middle, and end
 	middle = blit->srcwidth / 16;
@@ -1552,12 +1552,12 @@ static void generate_blitter(const struct win_blit_params *blit)
 	valuefixups[FIXUPVAL_DSTADVANCE] = blit->dstpitch * (blit->dstyscale + blit->dstyskip);
 	valuefixups[FIXUPVAL_MIDDLEXCOUNT] = middle;
 	valuefixups[FIXUPVAL_LASTXCOUNT] = last;
-	
+
 	// compute the fixup values
 	compute_source_fixups(blit, valuefixups);
 
 	valuefixups[FIXUPVAL_SRCPREFETCH16] = valuefixups[FIXUPVAL_SRCBYTES16] + 64;
-	
+
 	fixup_values(valuefixups, active_fast_blitter, fastptr);
 	fixup_values(valuefixups, active_update_blitter, updateptr);
 

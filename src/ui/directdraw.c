@@ -18,6 +18,10 @@
  
  ***************************************************************************/
 
+#ifdef __GNUC__
+ #define NONAMELESSUNION
+#endif
+
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #if !defined(__GNUC__)
@@ -347,7 +351,11 @@ static BOOL WINAPI DDEnumOldInfo(GUID FAR *lpGUID,
 static HRESULT CALLBACK EnumDisplayModesCallback(DDSURFACEDESC* pddsd, LPVOID Context)
 {
 	struct tDisplayModes* pDisplayModes = (struct tDisplayModes*)Context;
+//#if (!defined(DX_SDK) || (DX_SDK <= 6)) && !defined(_MSC_VER)
+//	DWORD dwDepth = pddsd->ddpfPixelFormat.dwRGBBitCount;
+//#else
 	DWORD dwDepth = pddsd->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+//#endif
 
 	if (dwDepth == 16
 	||	dwDepth == 24
@@ -370,11 +378,11 @@ static HRESULT CALLBACK EnumDisplayModesCallback2(DDSURFACEDESC2* pddsd2, LPVOID
 {
 	struct tDisplayModes* pDisplayModes = (struct tDisplayModes*)Context;
 
-#if (!defined(DX_SDK) || (DX_SDK <= 6)) && !defined(_MSC_VER)
-	DWORD dwDepth = pddsd2->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
-#else
+//#if (!defined(DX_SDK) || (DX_SDK <= 6)) && !defined(_MSC_VER)
+//	DWORD dwDepth = pddsd2->ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
+//#else
 	DWORD dwDepth = pddsd2->DUMMYUNIONNAMEN(4).ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount;
-#endif
+//#endif
 
 	if (dwDepth == 16
 	||	dwDepth == 24

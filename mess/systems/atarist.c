@@ -2150,14 +2150,14 @@ ROM_START( atarist )
 	/* Up to 4 Meg Main RAM */
 
 	ROM_REGION(0x40000, REGION_USER1,ROMREGION_16BIT) /* System rom */
-//	ROM_LOAD_WIDE( "tos_206.img", 0x00000, 0x30000,  0x3b5cd0c5 )
+//	ROM_LOAD_WIDE( "tos_206.img", 0x00000, 0x30000,CRC(  0x3b5cd0c5 ))
 
-	ROM_LOAD ( "tos_104.img", 0x00000, 0x30000,  0x3b5cd0c5 )
-//	ROM_LOAD_WIDE( "tos102uk.rom", 0x00000, 0x30000,  0x3b5cd0c5 )
-//	ROM_LOAD_WIDE( "tos100.img", 0x00000, 0x30000,  0xd331af30 )
+	ROM_LOAD ( "tos_104.img", 0x00000, 0x30000,CRC(  0x3b5cd0c5 ))
+//	ROM_LOAD_WIDE( "tos102uk.rom", 0x00000, 0x30000,CRC(  0x3b5cd0c5 ))
+//	ROM_LOAD_WIDE( "tos100.img", 0x00000, 0x30000,CRC(  0xd331af30 ))
 
 	ROM_REGION(0x40000, REGION_USER2,0) /* Cartridge rom */
-	//ROM_LOAD_WIDE( "cart.exe", 0x00000, 0x30000,  0xb997f9cb )
+	//ROM_LOAD_WIDE( "cart.exe", 0x00000, 0x30000,CRC(  0xb997f9cb ))
 ROM_END
 
 /***************************************************************************/

@@ -38,6 +38,14 @@ struct _mess_image
 
 static struct _mess_image images[IO_COUNT][MAX_DEV_INSTANCES];
 
+#ifdef _MSC_VER
+#define ZEXPORT __stdcall
+#else
+#define ZEXPORT
+#endif
+
+extern unsigned int ZEXPORT crc32 (unsigned int crc, const unsigned char *buf, unsigned int len);
+
 /* ----------------------------------------------------------------------- */
 
 int image_init(mess_image *img)
@@ -700,34 +708,31 @@ mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_write)
 
 		if (!img->crc)
 		{
+			unsigned char *pc_buf = (unsigned char *)malloc(img->length);
 			const struct IODevice *pc_dev;
 
-			pc_dev = device_find(Machine->gamedrv, image_devtype(img));
-			if (pc_dev && pc_dev->partialcrc)
+			if (pc_buf)
 			{
-				unsigned char *pc_buf = (unsigned char *)malloc(img->length);
-				if( pc_buf )
+				mame_fseek(file,0,SEEK_SET);
+				mame_fread(file,pc_buf,img->length);
+				mame_fseek(file,0,SEEK_SET);
+
+				pc_dev = device_find(Machine->gamedrv, image_devtype(img));
+				if (pc_dev && pc_dev->partialcrc)
 				{
-					mame_fseek(file,0,SEEK_SET);
-					mame_fread(file,pc_buf,img->length);
-					mame_fseek(file,0,SEEK_SET);
 					logerror("Calling partialcrc()\n");
 					img->crc = (*pc_dev->partialcrc)(pc_buf,img->length);
-					free(pc_buf);
 				}
 				else
 				{
-					logerror("failed to malloc(%d)\n", img->length);
+					img->crc = crc32(0L, pc_buf, img->length);
 				}
+				free(pc_buf);
 			}
-		}
-
-		if (!img->crc) img->crc = mame_fcrc(file);
-		if( img->crc == 0 && img->length < 0x100000 )
-		{
-			logerror("image_fopen: calling mame_fchecksum() for %d bytes\n", img->length);
-			mame_fchecksum(sysname, img->name, &img->length, &img->crc);
-			logerror("image_fopen: CRC is %08x\n", img->crc);
+			else
+			{
+				logerror("failed to malloc(%d)\n", img->length);
+			}
 		}
 
 		read_crc_config(sysname, img);

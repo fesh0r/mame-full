@@ -1111,90 +1111,90 @@ static struct GfxDecodeInfo c128_gfxdecodeinfo[] = {
 
 /* between rev0 and rev1 252343-03+252343-04 */
 
-	 ROM_LOAD ("basic-4000.318018-02.bin", 0x100000, 0x4000, 0x2ee6e2fa)
-	 ROM_LOAD ("basic-8000.318019-02.bin", 0x104000, 0x4000, 0xd551fce0)
+	 ROM_LOAD ("basic-4000.318018-02.bin", 0x100000, 0x4000,CRC( 0x2ee6e2fa))
+	 ROM_LOAD ("basic-8000.318019-02.bin", 0x104000, 0x4000,CRC( 0xd551fce0))
      /* same as above, but in one chip */
-     ROM_LOAD ("basic.318022-01.bin", 0x100000, 0x8000, 0xe857df90)
+     ROM_LOAD ("basic.318022-01.bin", 0x100000, 0x8000,CRC( 0xe857df90))
 
 	/* maybe 318018-03+318019-03 */
-	 ROM_LOAD ("basic.252343-03.bin", 0x100000, 0x8000, 0xbc07ed87)
+	 ROM_LOAD ("basic.252343-03.bin", 0x100000, 0x8000,CRC( 0xbc07ed87))
 
 	/* 1986 final upgrade */
-	 ROM_LOAD ("basic-4000.318018-04.bin", 0x100000, 0x4000, 0x9f9c355b)
-	 ROM_LOAD ("basic-8000.318019-04.bin", 0x104000, 0x4000, 0x6e2c91a7)
+	 ROM_LOAD ("basic-4000.318018-04.bin", 0x100000, 0x4000,CRC( 0x9f9c355b))
+	 ROM_LOAD ("basic-8000.318019-04.bin", 0x104000, 0x4000,CRC( 0x6e2c91a7))
      /* same as above, but in one chip */
-	 ROM_LOAD ("basic.318022-02.bin", 0x100000, 0x8000, 0xaf1ae1e8)
+	 ROM_LOAD ("basic.318022-02.bin", 0x100000, 0x8000,CRC( 0xaf1ae1e8))
 
-	 ROM_LOAD ("64c.251913-01.bin", 0x108000, 0x4000, 0x0010ec31)
+	 ROM_LOAD ("64c.251913-01.bin", 0x108000, 0x4000,CRC( 0x0010ec31))
 
 	 /* editor, z80 bios, c128kernel */
-	 ROM_LOAD ("kernal.318020-03.bin", 0x10c000, 0x4000, 0x1e94bb02)
-	 ROM_LOAD ("kernal.318020-05.bin", 0x10c000, 0x4000, 0xba456b8e)
-	 ROM_LOAD ("kernal.german.315078-01.bin", 0x10c000, 0x4000, 0xa51e2168)
-	 ROM_LOAD ("kernal.german.315078-02.bin", 0x10c000, 0x4000, 0xb275bb2e)
+	 ROM_LOAD ("kernal.318020-03.bin", 0x10c000, 0x4000,CRC( 0x1e94bb02))
+	 ROM_LOAD ("kernal.318020-05.bin", 0x10c000, 0x4000,CRC( 0xba456b8e))
+	 ROM_LOAD ("kernal.german.315078-01.bin", 0x10c000, 0x4000,CRC( 0xa51e2168))
+	 ROM_LOAD ("kernal.german.315078-02.bin", 0x10c000, 0x4000,CRC( 0xb275bb2e))
 	 /* 0x3e086a24 z80bios 0xca5e1179*/
-	 ROM_LOAD ("french.bin", 0x10c000, 0x4000, 0x2df282b8)
+	 ROM_LOAD ("french.bin", 0x10c000, 0x4000,CRC( 0x2df282b8))
 	 /* 0x71002a97 z80bios 0x167b8364*/
-	 ROM_LOAD ("finnish1.bin", 0x10c000, 0x4000, 0xd3ecea84)
+	 ROM_LOAD ("finnish1.bin", 0x10c000, 0x4000,CRC( 0xd3ecea84))
 	 /* 0xb7ff5efe z80bios 0x5ce42fc8 */
-	 ROM_LOAD ("finnish2.bin", 0x10c000, 0x4000, 0x9526fac4)
+	 ROM_LOAD ("finnish2.bin", 0x10c000, 0x4000,CRC( 0x9526fac4))
 	/* 0x8df58148 z80bios 0x7b0d2140 */
-	 ROM_LOAD ("italian.bin", 0x10c000, 0x4000, 0x74d6b084)
+	 ROM_LOAD ("italian.bin", 0x10c000, 0x4000,CRC( 0x74d6b084))
 	 /* 0x84c55911 z80bios 0x3ba48012 */
-	 ROM_LOAD ("norwegian.bin", 0x10c000, 0x4000, 0xa5406848)
+	 ROM_LOAD ("norwegian.bin", 0x10c000, 0x4000,CRC( 0xa5406848))
 
 	 /* c64 basic, c64 kernel, editor, z80 bios, c128kernel */
 	/* 252913-01+318020-05 */
-	 ROM_LOAD ("complete.318023-02.bin", 0x100000, 0x8000, 0xeedc120a)
+	 ROM_LOAD ("complete.318023-02.bin", 0x100000, 0x8000,CRC( 0xeedc120a))
 	/* 252913-01+0x98f2a2ed maybe 318020-04*/
-	 ROM_LOAD ("complete.252343-04.bin", 0x108000, 0x8000, 0xcc6bdb69)
+	 ROM_LOAD ("complete.252343-04.bin", 0x108000, 0x8000,CRC( 0xcc6bdb69))
 	/* 251913-01+0xbff7550b */
-	 ROM_LOAD ("complete.german.318077-01.bin", 0x108000, 0x8000, 0xeb6e2c8f)
+	 ROM_LOAD ("complete.german.318077-01.bin", 0x108000, 0x8000,CRC( 0xeb6e2c8f))
      /* chip label says Ker.Sw/Fi  */
 	/* 901226.01+ 0xf10c2c25 +0x1cf7f729 */
-	 ROM_LOAD ("complete.swedish.318034-01.bin", 0x108000, 0x8000, 0xcb4e1719)
+	 ROM_LOAD ("complete.swedish.318034-01.bin", 0x108000, 0x8000,CRC( 0xcb4e1719))
 
-	 ROM_LOAD ("characters.390059-01.bin", 0x120000, 0x2000, 0x6aaaafe6)
-	 ROM_LOAD ("characters.german.315079-01.bin", 0x120000, 0x2000, 0xfe5a2db1)
+	 ROM_LOAD ("characters.390059-01.bin", 0x120000, 0x2000,CRC( 0x6aaaafe6))
+	 ROM_LOAD ("characters.german.315079-01.bin", 0x120000, 0x2000,CRC( 0xfe5a2db1))
 	 /* chip label says I/F/B (belgium, italian, french)  characters */
      /* italian and french verified to be the same*/
-	 ROM_LOAD ("characters.french.325167-01.bin", 0x120000, 0x2000, 0xbad36b88)
+	 ROM_LOAD ("characters.french.325167-01.bin", 0x120000, 0x2000,CRC( 0xbad36b88))
 
 	 /* only parts of system roms, so not found in any c128 variant */
-	 ROM_LOAD ("editor.finnish1.bin", 0x10c000, 0x1000, 0x71002a97)
-	 ROM_LOAD ("editor.finnish2.bin", 0x10c000, 0x1000, 0xb7ff5efe)
-	 ROM_LOAD ("editor.french.bin", 0x10c000, 0x1000, 0x3e086a24)
-	 ROM_LOAD ("editor.italian.bin", 0x10c000, 0x1000, 0x8df58148)
-	 ROM_LOAD ("editor.norwegian.bin", 0x10c000, 0x1000, 0x84c55911)
+	 ROM_LOAD ("editor.finnish1.bin", 0x10c000, 0x1000,CRC( 0x71002a97))
+	 ROM_LOAD ("editor.finnish2.bin", 0x10c000, 0x1000,CRC( 0xb7ff5efe))
+	 ROM_LOAD ("editor.french.bin", 0x10c000, 0x1000,CRC( 0x3e086a24))
+	 ROM_LOAD ("editor.italian.bin", 0x10c000, 0x1000,CRC( 0x8df58148))
+	 ROM_LOAD ("editor.norwegian.bin", 0x10c000, 0x1000,CRC( 0x84c55911))
 
-	 ROM_LOAD ("kernalpart.finnish1.bin", 0x10e000, 0x2000, 0x167b8364)
-	 ROM_LOAD ("kernalpart.finnish2.bin", 0x10e000, 0x2000, 0x5ce42fc8)
-	 ROM_LOAD ("kernalpart.french.bin", 0x10e000, 0x2000, 0xca5e1179)
-	 ROM_LOAD ("kernalpart.italian.bin", 0x10e000, 0x2000, 0x7b0d2140)
-	 ROM_LOAD ("kernalpart.norwegian.bin", 0x10e000, 0x2000, 0x3ba48012)
+	 ROM_LOAD ("kernalpart.finnish1.bin", 0x10e000, 0x2000,CRC( 0x167b8364))
+	 ROM_LOAD ("kernalpart.finnish2.bin", 0x10e000, 0x2000,CRC( 0x5ce42fc8))
+	 ROM_LOAD ("kernalpart.french.bin", 0x10e000, 0x2000,CRC( 0xca5e1179))
+	 ROM_LOAD ("kernalpart.italian.bin", 0x10e000, 0x2000,CRC( 0x7b0d2140))
+	 ROM_LOAD ("kernalpart.norwegian.bin", 0x10e000, 0x2000,CRC( 0x3ba48012))
 
-	 ROM_LOAD ("z80bios.bin", 0x10d000, 0x1000, 0xc38d83c6)
+	 ROM_LOAD ("z80bios.bin", 0x10d000, 0x1000,CRC( 0xc38d83c6))
 
 	 /* function rom in internal socket */
-	 ROM_LOAD("super_chip.bin", 0x110000, 0x8000, 0xa66f73c5)
+	 ROM_LOAD("super_chip.bin", 0x110000, 0x8000,CRC( 0xa66f73c5))
 #endif
 
 ROM_START (c128)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318018.04", 0x100000, 0x4000, 0x9f9c355b)
-	ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
-	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
-	ROM_LOAD ("318020.05", 0x10c000, 0x4000, 0xba456b8e)
-	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
+	ROM_LOAD ("318018.04", 0x100000, 0x4000,CRC( 0x9f9c355b))
+	ROM_LOAD ("318019.04", 0x104000, 0x4000,CRC( 0x6e2c91a7))
+	ROM_LOAD ("251913.01", 0x108000, 0x4000,CRC( 0x0010ec31))
+	ROM_LOAD ("318020.05", 0x10c000, 0x4000,CRC( 0xba456b8e))
+	ROM_LOAD ("390059.01", 0x120000, 0x2000,CRC( 0x6aaaafe6))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
 ROM_START (c128d)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
-	ROM_LOAD ("318023.02", 0x108000, 0x8000, 0xeedc120a)
-	ROM_LOAD ("390059.01", 0x120000, 0x2000, 0x6aaaafe6)
+	ROM_LOAD ("318022.02", 0x100000, 0x8000,CRC( 0xaf1ae1e8))
+	ROM_LOAD ("318023.02", 0x108000, 0x8000,CRC( 0xeedc120a))
+	ROM_LOAD ("390059.01", 0x120000, 0x2000,CRC( 0x6aaaafe6))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	C1571_ROM(REGION_CPU3)
 	ROM_REGION (0x100, REGION_GFX1, 0)
@@ -1203,18 +1203,18 @@ ROM_END
 // submitted as cost reduced set!
 ROM_START (c128dita)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
+	ROM_LOAD ("318022.02", 0x100000, 0x8000,CRC( 0xaf1ae1e8))
 
     // in a cost reduced set this should be 1 rom
-	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
-//	ROM_LOAD ("901226.01", 0x108000, 0x2000, 0xf833d117)
-//	ROM_LOAD( "kern128d.ita", 0x10a000, 0x2000, 0xf1098d37 )
-	ROM_LOAD ("318079.01", 0x10c000, 0x4000, 0x66673e8b)
+	ROM_LOAD ("251913.01", 0x108000, 0x4000,CRC( 0x0010ec31))
+//	ROM_LOAD ("901226.01", 0x108000, 0x2000,CRC( 0xf833d117))
+//	ROM_LOAD( "kern128d.ita", 0x10a000, 0x2000,CRC( 0xf1098d37 ))
+	ROM_LOAD ("318079.01", 0x10c000, 0x4000,CRC( 0x66673e8b))
 
-    ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88) // taken from funet
+    ROM_LOAD ("325167.01", 0x120000, 0x2000,CRC( 0xbad36b88)) // taken from funet
     // normally 1 rom
-//    ROM_LOAD ("325167.01b", 0x120000, 0x1000, 0xec4272ee) //standard c64 901226.01
-//    ROM_LOAD ("325167.01b", 0x121000, 0x1000, 0x2bc73556) // bad dump
+//    ROM_LOAD ("325167.01b", 0x120000, 0x1000,CRC( 0xec4272ee)) //standard c64 901226.01
+//    ROM_LOAD ("325167.01b", 0x121000, 0x1000,CRC( 0x2bc73556)) // bad dump
 
 	ROM_REGION (0x10000, REGION_CPU2, 0)
     // not included in submission
@@ -1225,26 +1225,26 @@ ROM_END
 ROM_START (c128ger)
 	 /* c128d german */
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
-	ROM_LOAD ("318077.01", 0x108000, 0x8000, 0xeb6e2c8f)
-	ROM_LOAD ("315079.01", 0x120000, 0x2000, 0xfe5a2db1)
+	ROM_LOAD ("318022.02", 0x100000, 0x8000,CRC( 0xaf1ae1e8))
+	ROM_LOAD ("318077.01", 0x108000, 0x8000,CRC( 0xeb6e2c8f))
+	ROM_LOAD ("315079.01", 0x120000, 0x2000,CRC( 0xfe5a2db1))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
 ROM_START (c128fra)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318018.04", 0x100000, 0x4000, 0x9f9c355b)
-	ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
-	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
+	ROM_LOAD ("318018.04", 0x100000, 0x4000,CRC( 0x9f9c355b))
+	ROM_LOAD ("318019.04", 0x104000, 0x4000,CRC( 0x6e2c91a7))
+	ROM_LOAD ("251913.01", 0x108000, 0x4000,CRC( 0x0010ec31))
 #if 1
-	ROM_LOAD ("french.bin", 0x10c000, 0x4000, 0x2df282b8)
+	ROM_LOAD ("french.bin", 0x10c000, 0x4000,CRC( 0x2df282b8))
 #else
-	ROM_LOAD ("editor.french.bin", 0x10c000, 0x1000, 0x3e086a24)
-	ROM_LOAD ("z80bios.bin", 0x10d000, 0x1000, 0xc38d83c6)
-	ROM_LOAD ("kernalpart.french.bin", 0x10e000, 0x2000, 0xca5e1179)
+	ROM_LOAD ("editor.french.bin", 0x10c000, 0x1000,CRC( 0x3e086a24))
+	ROM_LOAD ("z80bios.bin", 0x10d000, 0x1000,CRC( 0xc38d83c6))
+	ROM_LOAD ("kernalpart.french.bin", 0x10e000, 0x2000,CRC( 0xca5e1179))
 #endif
-	ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88)
+	ROM_LOAD ("325167.01", 0x120000, 0x2000,CRC( 0xbad36b88))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
@@ -1252,32 +1252,32 @@ ROM_END
 ROM_START (c128ita)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
 	/* original 318022-01 */
-	ROM_LOAD ("318018.04", 0x100000, 0x4000, 0x9f9c355b)
-	ROM_LOAD ("318019.04", 0x104000, 0x4000, 0x6e2c91a7)
-	ROM_LOAD ("251913.01", 0x108000, 0x4000, 0x0010ec31)
-	ROM_LOAD ("italian.bin", 0x10c000, 0x4000, 0x74d6b084)
-	ROM_LOAD ("325167.01", 0x120000, 0x2000, 0xbad36b88)
+	ROM_LOAD ("318018.04", 0x100000, 0x4000,CRC( 0x9f9c355b))
+	ROM_LOAD ("318019.04", 0x104000, 0x4000,CRC( 0x6e2c91a7))
+	ROM_LOAD ("251913.01", 0x108000, 0x4000,CRC( 0x0010ec31))
+	ROM_LOAD ("italian.bin", 0x10c000, 0x4000,CRC( 0x74d6b084))
+	ROM_LOAD ("325167.01", 0x120000, 0x2000,CRC( 0xbad36b88))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
 ROM_START (c128swe)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318022.02", 0x100000, 0x8000, 0xaf1ae1e8)
-	ROM_LOAD ("318034.01", 0x108000, 0x8000, 0xcb4e1719)
-	ROM_LOAD ("325181.01", 0x120000, 0x2000, 0x7a70d9b8)
+	ROM_LOAD ("318022.02", 0x100000, 0x8000,CRC( 0xaf1ae1e8))
+	ROM_LOAD ("318034.01", 0x108000, 0x8000,CRC( 0xcb4e1719))
+	ROM_LOAD ("325181.01", 0x120000, 0x2000,CRC( 0x7a70d9b8))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END
 
 ROM_START (c128nor)
 	ROM_REGION (0x132800, REGION_CPU1, 0)
-	ROM_LOAD ("318018.04", 0x100000, 0x4000, BADCRC(0x9f9c355b))
-	ROM_LOAD ("318019.04", 0x104000, 0x4000, BADCRC(0x6e2c91a7))
-	ROM_LOAD ("251913.01", 0x108000, 0x4000, BADCRC(0x0010ec31))
-	ROM_LOAD ("nor.bin", 0x10c000, 0x4000, BADCRC(0xa5406848))
+	ROM_LOAD ("318018.04", 0x100000, 0x4000, CRC(BADCRC(0x9f9c355b)))
+	ROM_LOAD ("318019.04", 0x104000, 0x4000, CRC(BADCRC(0x6e2c91a7)))
+	ROM_LOAD ("251913.01", 0x108000, 0x4000, CRC(BADCRC(0x0010ec31)))
+	ROM_LOAD ("nor.bin", 0x10c000, 0x4000, CRC(BADCRC(0xa5406848)))
 	/* standard c64, vic20 based norwegian */
-	ROM_LOAD ("char.nor", 0x120000, 0x2000, BADCRC(0xba95c625))
+	ROM_LOAD ("char.nor", 0x120000, 0x2000, CRC(BADCRC(0xba95c625)))
 	ROM_REGION (0x10000, REGION_CPU2, 0)
 	ROM_REGION (0x100, REGION_GFX1, 0)
 ROM_END

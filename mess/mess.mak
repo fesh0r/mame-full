@@ -164,8 +164,6 @@ SOUNDS+=BEEP@
 
 # Archive definitions
 DRVLIBS = \
-	$(OBJ)/cbm.a      \
-	$(OBJ)/cbmshare.a \
 	$(OBJ)/coco.a     \
 	$(OBJ)/nintendo.a \
 	$(OBJ)/apple.a    \
@@ -185,8 +183,6 @@ DRVLIBS = \
 	$(OBJ)/kaypro.a   \
 	$(OBJ)/cgenie.a   \
 	$(OBJ)/aquarius.a \
-	$(OBJ)/kim1.a     \
-	$(OBJ)/sym1.a     \
 	$(OBJ)/tangerin.a \
 	$(OBJ)/sord.a     \
 	$(OBJ)/exidy.a    \
@@ -231,6 +227,10 @@ DRVLIBS = \
 	$(OBJ)/motorola.a \
 	$(OBJ)/ssystem3.a \
 	$(OBJ)/hp48.a     \
+#	$(OBJ)/cbm.a      \
+#	$(OBJ)/cbmshare.a \
+#	$(OBJ)/kim1.a     \
+#	$(OBJ)/sym1.a     \
 
 
 
@@ -254,6 +254,7 @@ $(OBJ)/sega.a:                       \
 	  $(OBJ)/mess/systems/sms.o
 
 $(OBJ)/atari.a:                      \
+	  $(OBJ)/vidhrdw/tia.o           \
 	  $(OBJ)/mess/machine/atari.o	 \
 	  $(OBJ)/mess/vidhrdw/antic.o	 \
 	  $(OBJ)/mess/vidhrdw/gtia.o	 \
@@ -263,7 +264,6 @@ $(OBJ)/atari.a:                      \
 	  $(OBJ)/mess/systems/a7800.o	 \
 	  $(OBJ)/mess/vidhrdw/a7800.o	 \
 	  $(OBJ)/mess/systems/a2600.o    \
-	  $(OBJ)/mess/vidhrdw/tia.o      \
 #	  $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	                     \
@@ -731,6 +731,7 @@ $(OBJ)/tatung.a:     \
 # MESS specific core $(OBJ)s
 COREOBJS += \
 	$(OBJ)/cheat.o  			   \
+	$(OBJ)/vidhrdw/tms9928a.o      \
 	$(OBJ)/mess/mess.o			   \
 	$(OBJ)/mess/image.o		       \
 	$(OBJ)/mess/system.o	       \
@@ -764,7 +765,6 @@ COREOBJS += \
 	$(OBJ)/mess/machine/tc8521.o   \
 	$(OBJ)/mess/vidhrdw/v9938.o    \
 	$(OBJ)/mess/vidhrdw/crtc6845.o \
-	$(OBJ)/mess/vidhrdw/tms9928a.o \
 	$(OBJ)/mess/machine/28f008sa.o \
 	$(OBJ)/mess/machine/am29f080.o \
 	$(OBJ)/mess/machine/rriot.o    \

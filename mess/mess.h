@@ -159,9 +159,6 @@ const struct IODevice *device_first(const struct GameDriver *gamedrv);
 const struct IODevice *device_next(const struct GameDriver *gamedrv, const struct IODevice *dev);
 const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
 
-/* handy wrapper for palette_set_color */
-void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count);
-
 /* RAM configuration calls */
 #define RAM_STRING_BUFLEN 16
 extern UINT32 mess_ram_size;

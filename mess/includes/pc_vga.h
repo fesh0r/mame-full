@@ -27,7 +27,7 @@ WRITE_HANDLER( vga_port_03d0_w );
   pega notes (paradise)
   build in amstrad pc1640
 
-  ROM_LOAD("40100", 0xc0000, 0x8000, 0xd2d1f1ae)
+  ROM_LOAD("40100", 0xc0000, 0x8000,CRC( 0xd2d1f1ae))
 
   4 additional dipswitches
   seems to have emulation modes at register level
@@ -60,7 +60,7 @@ WRITE_HANDLER( vga_port_03d0_w );
   oak vga (oti 037 chip)
   (below bios patch needed for running)
 
-  ROM_LOAD("oakvga.bin", 0xc0000, 0x8000, 0x318c5f43)
+  ROM_LOAD("oakvga.bin", 0xc0000, 0x8000,CRC( 0x318c5f43))
 */
 #if 0
         int i; 

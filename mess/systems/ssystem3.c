@@ -158,8 +158,8 @@ MACHINE_DRIVER_END
 
 ROM_START(ssystem3)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-	ROM_LOAD("ss3lrom", 0xc000, 0x1000, 0x9ea46ed3)
-	ROM_LOAD("ss3hrom", 0xf000, 0x1000, 0x52741e0b)
+	ROM_LOAD("ss3lrom", 0xc000, 0x1000,CRC( 0x9ea46ed3))
+	ROM_LOAD("ss3hrom", 0xf000, 0x1000,CRC( 0x52741e0b))
 	ROM_RELOAD(0xd000, 0x1000)
 /* 0xd450 reset,irq,nmi
 

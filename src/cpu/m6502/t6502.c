@@ -17,6 +17,8 @@
  *	   terms of its usage and license at any time, including retroactively
  *	 - This entire notice must remain in the source code.
  *
+ *	 2003-05-26  Fixed PHP, PLP, PHA, PLA cycle counts. [SJ]
+ *
  *****************************************************************************/
 
 #undef	OP

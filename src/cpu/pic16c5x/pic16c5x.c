@@ -520,7 +520,7 @@ static void rrf(void)
 	STORE_RESULT(ADDR, R.ALU);
 }
 
-static void sleep(void)
+static void pic_sleep(void)
 {
 	R.WDT = 0;
 	if (PSA) R.OPTION &= (~PS_REG);
@@ -643,7 +643,7 @@ static unsigned cycles_000_other[16]=
 
 static opcode_fn opcode_000_other[16]=
 {
-/*00*/  nop,	illegal,option,	sleep,	clrwdt,	tris,	tris,	tris,
+/*00*/  nop,	illegal,option,	pic_sleep,	clrwdt,	tris,	tris,	tris,
 /*08*/  illegal,illegal,illegal,illegal,illegal,illegal,illegal,illegal
 };
 
@@ -774,7 +774,7 @@ int pic16C5x_execute(int cycles)
 
 	do
 	{
-		if (PD == 0)						/* Sleep Mode */
+		if (PD == 0)						/* pic_sleep Mode */
 		{
 			inst_cycles = (1*CLK);
 			CALL_MAME_DEBUG;
@@ -1099,7 +1099,7 @@ void pic16C55_exit(void)	{ pic16C5x_exit(); }
 int pic16C55_execute(int cycles) { return pic16C5x_execute(cycles); }
 unsigned pic16C55_get_context(void *dst) { return pic16C5x_get_context(dst); }
 void pic16C55_set_context(void *src) { pic16C5x_set_context(src); }
-unsigned pic16C55_get_reg(int regnum) { return pic16C5x_get_reg(regnum); }
+unsigned pic16C55_get_reg(int regnum) { pic16C5x_get_reg(regnum); }
 void pic16C55_set_reg(int regnum, unsigned val) { pic16C5x_set_reg(regnum, val); }
 void pic16C55_set_irq_line(int irqline, int state) { pic16C5x_set_irq_line(irqline, state); }
 void pic16C55_set_irq_callback(int (*callback)(int irqline)) { pic16C5x_set_irq_callback(callback); }

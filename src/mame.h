@@ -23,6 +23,7 @@ extern char build_version[];
 #define MAX_GFX_ELEMENTS 32
 #define MAX_MEMORY_REGIONS 32
 
+extern int gbPriorityBitmapIsDirty;
 
 
 /***************************************************************************
@@ -204,6 +205,7 @@ struct GameOptions
 	int		artwork_crop;	/* 1 to crop artwork to the game screen */
 
 	char	savegame;		/* character representing a savegame to load */
+	char    crc_only;       /* specify if only CRC should be used as checksum */
 
 	int		debug_width;	/* requested width of debugger bitmap */
 	int		debug_height;	/* requested height of debugger bitmap */
@@ -243,6 +245,7 @@ struct GameOptions
 #ifdef MESS
 #define GAME_OPTIONAL_FRAMESKIP     0x00000100
 #endif
+
 
 /* the main mame_display structure, containing the current state of the */
 /* video display */

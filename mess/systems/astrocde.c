@@ -209,7 +209,7 @@ MACHINE_DRIVER_END
 
 ROM_START( astrocde )
     ROM_REGION( 0x10000, REGION_CPU1, 0 )
-    ROM_LOAD( "astro.bin",  0x0000, 0x2000, 0xebc77f3a )
+    ROM_LOAD( "astro.bin",  0x0000, 0x2000,CRC( 0xebc77f3a ))
 ROM_END
 
 SYSTEM_CONFIG_START(astrocde)

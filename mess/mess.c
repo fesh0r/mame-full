@@ -348,15 +348,6 @@ void showmessinfo(void)
 
 }
 
-void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count)
-{
-	while(color_count--)
-	{
-		palette_set_color(color_base++, colors[0], colors[1], colors[2]);
-		colors += 3;
-	}
-}
-
 void ram_dump(const char *filename)
 {
 	mame_file *file;

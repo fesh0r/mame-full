@@ -737,64 +737,64 @@ static PALETTE_INIT( cbm700 )
 
 ROM_START (cbm610)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
-	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
-	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
+	ROM_LOAD ("901243.04a", 0xf8000, 0x2000,CRC( 0xb0dcb56d))
+	ROM_LOAD ("901242.04a", 0xfa000, 0x2000,CRC( 0xde04ea4f))
+	ROM_LOAD ("901244.04a", 0xfe000, 0x2000,CRC( 0x09a5667e))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
+    ROM_LOAD ("901237.01", 0x0000, 0x1000,CRC( 0x1acf5098))
 ROM_END
 
 ROM_START (cbm620)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-    ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
-    ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
-    ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
+    ROM_LOAD ("901241.03", 0xf8000, 0x2000,CRC( 0x5c1f3347))
+    ROM_LOAD ("901240.03", 0xfa000, 0x2000,CRC( 0x72aa44e1))
+    ROM_LOAD ("901244.04a", 0xfe000, 0x2000,CRC( 0x09a5667e))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901237.01", 0x0000, 0x1000, 0x1acf5098)
+    ROM_LOAD ("901237.01", 0x0000, 0x1000,CRC( 0x1acf5098))
 ROM_END
 
 ROM_START (cbm620hu)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
-	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
+	ROM_LOAD ("610u60.bin", 0xf8000, 0x4000,CRC( 0x8eed0d7e))
+	ROM_LOAD ("kernhun.bin", 0xfe000, 0x2000,CRC( 0x0ea8ca4d))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-	ROM_LOAD ("charhun.bin", 0x0000, 0x2000, 0x1fb5e596)
+	ROM_LOAD ("charhun.bin", 0x0000, 0x2000,CRC( 0x1fb5e596))
 ROM_END
 
 ROM_START (cbm710)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-	ROM_LOAD ("901243.04a", 0xf8000, 0x2000, 0xb0dcb56d)
-	ROM_LOAD ("901242.04a", 0xfa000, 0x2000, 0xde04ea4f)
-	ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
+	ROM_LOAD ("901243.04a", 0xf8000, 0x2000,CRC( 0xb0dcb56d))
+	ROM_LOAD ("901242.04a", 0xfa000, 0x2000,CRC( 0xde04ea4f))
+	ROM_LOAD ("901244.04a", 0xfe000, 0x2000,CRC( 0x09a5667e))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
+    ROM_LOAD ("901232.01", 0x0000, 0x1000,CRC( 0x3a350bc3))
 ROM_END
 
 ROM_START (cbm720)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-    ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
-    ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
-    ROM_LOAD ("901244.04a", 0xfe000, 0x2000, 0x09a5667e)
+    ROM_LOAD ("901241.03", 0xf8000, 0x2000,CRC( 0x5c1f3347))
+    ROM_LOAD ("901240.03", 0xfa000, 0x2000,CRC( 0x72aa44e1))
+    ROM_LOAD ("901244.04a", 0xfe000, 0x2000,CRC( 0x09a5667e))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901232.01", 0x0000, 0x1000, 0x3a350bc3)
+    ROM_LOAD ("901232.01", 0x0000, 0x1000,CRC( 0x3a350bc3))
 ROM_END
 
 ROM_START (cbm720se)
 	ROM_REGION (0x100000, REGION_CPU1, 0)
-    ROM_LOAD ("901241.03", 0xf8000, 0x2000, 0x5c1f3347)
-    ROM_LOAD ("901240.03", 0xfa000, 0x2000, 0x72aa44e1)
-    ROM_LOAD ("901244.03", 0xfe000, 0x2000, 0x87bc142b)
+    ROM_LOAD ("901241.03", 0xf8000, 0x2000,CRC( 0x5c1f3347))
+    ROM_LOAD ("901240.03", 0xfa000, 0x2000,CRC( 0x72aa44e1))
+    ROM_LOAD ("901244.03", 0xfe000, 0x2000,CRC( 0x87bc142b))
 	ROM_REGION (0x2000, REGION_GFX1, 0)
-    ROM_LOAD ("901233.03", 0x0000, 0x1000, 0x09518b19)
+    ROM_LOAD ("901233.03", 0x0000, 0x1000,CRC( 0x09518b19))
 ROM_END
 
 
 ROM_START (cbm500)
 	ROM_REGION (0x101000, REGION_CPU1, 0)
-	ROM_LOAD ("901236.02", 0xf8000, 0x2000, 0xc62ab16f)
-	ROM_LOAD ("901235.02", 0xfa000, 0x2000, 0x20b7df33)
-	ROM_LOAD ("901234.02", 0xfe000, 0x2000, 0xf46bbd2b)
-	ROM_LOAD ("901225.01", 0x100000, 0x1000, 0xec4272ee)
+	ROM_LOAD ("901236.02", 0xf8000, 0x2000,CRC( 0xc62ab16f))
+	ROM_LOAD ("901235.02", 0xfa000, 0x2000,CRC( 0x20b7df33))
+	ROM_LOAD ("901234.02", 0xfe000, 0x2000,CRC( 0xf46bbd2b))
+	ROM_LOAD ("901225.01", 0x100000, 0x1000,CRC( 0xec4272ee))
 ROM_END
 
 #if 0
@@ -809,58 +809,58 @@ ROM_END
 		              inverted 6000 */
 
 	 /* 128 kb basic version */
-    ROM_LOAD ("b128-8000.901243-02b.bin", 0xf8000, 0x2000, 0x9d0366f9)
-    ROM_LOAD ("b128-a000.901242-02b.bin", 0xfa000, 0x2000, 0x837978b5)
+    ROM_LOAD ("b128-8000.901243-02b.bin", 0xf8000, 0x2000,CRC( 0x9d0366f9))
+    ROM_LOAD ("b128-a000.901242-02b.bin", 0xfa000, 0x2000,CRC( 0x837978b5))
 	 /* merged df83bbb9 */
 
-    ROM_LOAD ("b128-8000.901243-04a.bin", 0xf8000, 0x2000, 0xb0dcb56d)
-    ROM_LOAD ("b128-a000.901242-04a.bin", 0xfa000, 0x2000, 0xde04ea4f)
+    ROM_LOAD ("b128-8000.901243-04a.bin", 0xf8000, 0x2000,CRC( 0xb0dcb56d))
+    ROM_LOAD ("b128-a000.901242-04a.bin", 0xfa000, 0x2000,CRC( 0xde04ea4f))
 	 /* merged a8ff9372 */
 
 	 /* some additions to 901242-04a */
-    ROM_LOAD ("b128-a000.901242-04_3f.bin", 0xfa000, 0x2000, 0x5a680d2a)
+    ROM_LOAD ("b128-a000.901242-04_3f.bin", 0xfa000, 0x2000,CRC( 0x5a680d2a))
 
      /* 256 kbyte basic version */
-    ROM_LOAD ("b256-8000.610u60.bin", 0xf8000, 0x4000, 0x8eed0d7e)
+    ROM_LOAD ("b256-8000.610u60.bin", 0xf8000, 0x4000,CRC( 0x8eed0d7e))
 
-    ROM_LOAD ("b256-8000.901241-03.bin", 0xf8000, 0x2000, 0x5c1f3347)
-    ROM_LOAD ("b256-a000.901240-03.bin", 0xfa000, 0x2000, 0x72aa44e1)
+    ROM_LOAD ("b256-8000.901241-03.bin", 0xf8000, 0x2000,CRC( 0x5c1f3347))
+    ROM_LOAD ("b256-a000.901240-03.bin", 0xfa000, 0x2000,CRC( 0x72aa44e1))
 	 /* merged 5db15870 */
 
      /* monitor instead of tape */
-    ROM_LOAD ("kernal.901244-03b.bin", 0xfe000, 0x2000, 0x4276dbba)
+    ROM_LOAD ("kernal.901244-03b.bin", 0xfe000, 0x2000,CRC( 0x4276dbba))
      /* modified 03b for usage of vc1541 on tape port ??? */
-    ROM_LOAD ("kernelnew", 0xfe000, 0x2000, 0x19bf247e)
-    ROM_LOAD ("kernal.901244-04a.bin", 0xfe000, 0x2000, 0x09a5667e)
-    ROM_LOAD ("kernal.hungarian.bin", 0xfe000, 0x2000, 0x0ea8ca4d)
+    ROM_LOAD ("kernelnew", 0xfe000, 0x2000,CRC( 0x19bf247e))
+    ROM_LOAD ("kernal.901244-04a.bin", 0xfe000, 0x2000,CRC( 0x09a5667e))
+    ROM_LOAD ("kernal.hungarian.bin", 0xfe000, 0x2000,CRC( 0x0ea8ca4d))
 
 
 	 /* 600 8x16 chars for 8x8 size
         128 ascii, 128 ascii graphics
 		inversion logic in hardware */
-    ROM_LOAD ("characters.901237-01.bin", 0x0000, 0x1000, 0x1acf5098)
+    ROM_LOAD ("characters.901237-01.bin", 0x0000, 0x1000,CRC( 0x1acf5098))
 	 /* packing 128 national, national graphics, ascii, ascii graphics */
-    ROM_LOAD ("characters-hungarian.bin", 0x0000, 0x2000, 0x1fb5e596)
+    ROM_LOAD ("characters-hungarian.bin", 0x0000, 0x2000,CRC( 0x1fb5e596))
 	 /* 700 8x16 chars for 9x14 size*/
-    ROM_LOAD ("characters.901232-01.bin", 0x0000, 0x1000, 0x3a350bc3)
+    ROM_LOAD ("characters.901232-01.bin", 0x0000, 0x1000,CRC( 0x3a350bc3))
 
-    ROM_LOAD ("vt52emu.bin", 0xf4000, 0x2000, 0xb3b6173a)
+    ROM_LOAD ("vt52emu.bin", 0xf4000, 0x2000,CRC( 0xb3b6173a))
 	 /* load address 0xf4000? */
-    ROM_LOAD ("moni.bin", 0xfe000, 0x2000, 0x43b08d1f)
+    ROM_LOAD ("moni.bin", 0xfe000, 0x2000,CRC( 0x43b08d1f))
 
-    ROM_LOAD ("profitext.bin", 0xf2000, 0x2000, 0xac622a2b)
+    ROM_LOAD ("profitext.bin", 0xf2000, 0x2000,CRC( 0xac622a2b))
 	 /* address ?*/
-    ROM_LOAD ("sfd1001-copy-u59.bin", 0xf1000, 0x1000, 0x1c0fd916)
+    ROM_LOAD ("sfd1001-copy-u59.bin", 0xf1000, 0x1000,CRC( 0x1c0fd916))
 
-    ROM_LOAD ("", 0xfe000, 0x2000, 0x)
+    ROM_LOAD ("", 0xfe000, 0x2000,CRC( 0x))
 
 	 /* 500 */
 	 /* 128 basic, other colors than cbmb series basic */
-    ROM_LOAD ("basic-lo.901236-02.bin", 0xf8000, 0x2000, 0xc62ab16f)
-    ROM_LOAD ("basic-hi.901235-02.bin", 0xfa000, 0x2000, 0x20b7df33)
+    ROM_LOAD ("basic-lo.901236-02.bin", 0xf8000, 0x2000,CRC( 0xc62ab16f))
+    ROM_LOAD ("basic-hi.901235-02.bin", 0xfa000, 0x2000,CRC( 0x20b7df33))
      /* monitor instead of tape */
-    ROM_LOAD ("kernal.901234-02.bin", 0xfe000, 0x2000, 0xf46bbd2b)
-    ROM_LOAD ("characters.901225-01.bin", 0x100000, 0x1000, 0xec4272ee)
+    ROM_LOAD ("kernal.901234-02.bin", 0xfe000, 0x2000,CRC( 0xf46bbd2b))
+    ROM_LOAD ("characters.901225-01.bin", 0x100000, 0x1000,CRC( 0xec4272ee))
 
 #endif
 

@@ -295,6 +295,7 @@ XL/XE 16kB OS roms
 	DRIVER( a800xl )	/* 1983 Atari 800 XL								*/
 
 	/* COMMODORE */
+#if 0
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
 TESTDRIVER( sym1 )		/* Synertek SYM1									*/
 TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
@@ -365,6 +366,7 @@ TESTDRIVER( cdtv )
 	DRIVER( c65c )		/* C65 / C64DX (Prototype, NTSC, 910523)			*/
 	DRIVER( c65ger )	/* C65 / C64DX (Prototype, German PAL, 910429)		*/
 	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)			*/
+#endif
 
 	/* IBM PC & Clones */
 	DRIVER( ibmpc )		/* 1982	IBM PC										*/

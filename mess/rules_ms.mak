@@ -189,14 +189,6 @@ else
 SOUNDDEFS += -DHAS_SPEAKER=0
 endif
 
-SOUND=$(strip $(findstring TIA@,$(SOUNDS)))
-ifneq ($(SOUND),)
-SOUNDDEFS += -DHAS_TIA=1
-SOUNDOBJS += $(OBJ)/mess/sound/tiasound.o $(OBJ)/mess/sound/tiaintf.o
-else
-SOUNDDEFS += -DHAS_TIA=0
-endif
-
 SOUND=$(strip $(findstring WAVE@,$(SOUNDS)))
 ifneq ($(SOUND),)
 SOUNDDEFS += -DHAS_WAVE=1

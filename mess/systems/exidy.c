@@ -799,21 +799,21 @@ ROM_START(exidy)
 	/* these are common to all because they are inside the machine */
 	ROM_REGION(64*1024+32, REGION_CPU1,0)
 
-	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100, 0)
+	ROM_LOAD_OPTIONAL("diskboot.dat",0x0bc00, 0x0100,CRC( 0))
 
 	/* char rom */
-	ROM_LOAD("exchr-1.dat",0x0f800, 1024, 0x4a7e1cdd)
+	ROM_LOAD("exchr-1.dat",0x0f800, 1024,CRC( 0x4a7e1cdd))
 
 	/* video prom */
-	ROM_LOAD("bruce.dat", 0x010000, 32, 0xfae922cb)
+	ROM_LOAD("bruce.dat", 0x010000, 32,CRC( 0xfae922cb))
 
-	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800, 0xac924f67)
-	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800, 0xead1d0f6)
+	ROM_LOAD("exmo1-1.dat", 0x0e000, 0x0800,CRC( 0xac924f67))
+	ROM_LOAD("exmo1-2.dat", 0x0e800, 0x0800,CRC( 0xead1d0f6))
 
-	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800, 0x1dd20d80)
-	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800, 0x1068a3f8)
-	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800, 0xe6332518)
-	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800, 0xa370cb19)	
+	ROM_LOAD_OPTIONAL("exsb1-1.dat", 0x0c000, 0x0800,CRC( 0x1dd20d80))
+	ROM_LOAD_OPTIONAL("exsb1-2.dat", 0x0c800, 0x0800,CRC( 0x1068a3f8))
+	ROM_LOAD_OPTIONAL("exsb1-3.dat", 0x0d000, 0x0800,CRC( 0xe6332518))
+	ROM_LOAD_OPTIONAL("exsb1-4.dat", 0x0d800, 0x0800,CRC( 0xa370cb19))	
 ROM_END
 
 SYSTEM_CONFIG_START(exidy)

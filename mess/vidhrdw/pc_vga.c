@@ -1173,21 +1173,21 @@ static void vga_vh_vga(struct mame_bitmap *bitmap, int full_refresh)
 		bitmapline = (UINT16 *) bitmap->line[line];
 		for (pos=addr, c=0, column=0; column<VGA_COLUMNS; column++, c+=8, pos+=0x20)
 		{
-			if (*(UINT32*)(vga.dirty+pos)||full_refresh)
+			//if (*(UINT32*)(vga.dirty+pos))
 			{
-				bitmapline[c+0] = Machine->pens[vga.memory[pos+0]];
-				bitmapline[c+1] = Machine->pens[vga.memory[pos+1]];
-				bitmapline[c+2] = Machine->pens[vga.memory[pos+2]];
-				bitmapline[c+3] = Machine->pens[vga.memory[pos+3]];
-				*(UINT32*)(vga.dirty+pos)=0;
+				bitmapline[c+0] = vga.memory[pos+0];
+				bitmapline[c+1] = vga.memory[pos+1];
+				bitmapline[c+2] = vga.memory[pos+2];
+				bitmapline[c+3] = vga.memory[pos+3];
+				//*(UINT32*)(vga.dirty+pos)=0;
 			}
-			if (*(UINT32*)(vga.dirty+pos+0x10)||full_refresh)
+			//if (*(UINT32*)(vga.dirty+pos+0x10)||full_refresh)
 			{
-				bitmapline[c+4] = Machine->pens[vga.memory[pos+0x10]];
-				bitmapline[c+5] = Machine->pens[vga.memory[pos+0x11]];
-				bitmapline[c+6] = Machine->pens[vga.memory[pos+0x12]];
-				bitmapline[c+7] = Machine->pens[vga.memory[pos+0x13]];
-				*(UINT32*)(vga.dirty+pos+0x10)=0;
+				bitmapline[c+4] = vga.memory[pos+0x10];
+				bitmapline[c+5] = vga.memory[pos+0x11];
+				bitmapline[c+6] = vga.memory[pos+0x12];
+				bitmapline[c+7] = vga.memory[pos+0x13];
+				//*(UINT32*)(vga.dirty+pos+0x10)=0;
 			}
 		}
 	}

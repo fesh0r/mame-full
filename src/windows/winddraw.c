@@ -8,8 +8,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-// undef WINNT for ddraw.h to prevent duplicate definition
-#undef WINNT
+#ifdef __GNUC__
+ #define NONAMELESSUNION
+#endif
 #include <ddraw.h>
 
 // standard C headers
@@ -242,9 +243,9 @@ int win_ddraw_init(int width, int height, int depth, int attributes, const struc
 	}
 
 	// determine if hardware stretching is available
-	if (win_hw_stretch)
-		win_hw_stretch = ((ddraw_caps.dwCaps & DDCAPS_BLTSTRETCH) != 0);
-	if (win_hw_stretch && verbose)
+	if (win_dd_hw_stretch)
+		win_dd_hw_stretch = ((ddraw_caps.dwCaps & DDCAPS_BLTSTRETCH) != 0);
+	if (win_dd_hw_stretch && verbose)
 		fprintf(stderr, "Hardware stretching supported\n");
 
 	// set the cooperative level
@@ -390,7 +391,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 	// first compute a score based on size
 
 	// if not stretching, we need to keep minx and miny scale equal
-	if (!win_hw_stretch)
+	if (!win_dd_hw_stretch)
 	{
 		if (effect_min_yscale > effect_min_xscale)
 			effect_min_xscale = effect_min_yscale;
@@ -409,7 +410,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh)
 		target_width *= 2;
 
 	// hardware stretch modes prefer at least 2x expansion
-	if (win_hw_stretch)
+	if (win_dd_hw_stretch)
 	{
 		if (target_width < max_width * 2 + 2)
 			target_width = max_width * 2 + 2;
@@ -624,7 +625,7 @@ static int create_surfaces(void)
 	}
 
 	// stretch mode: create a blit surface
-	if (win_hw_stretch)
+	if (win_dd_hw_stretch)
 	{
 		if (create_blit_surface())
 			goto cant_create_blit;
@@ -999,7 +1000,7 @@ int win_ddraw_draw(struct mame_bitmap *bitmap, const struct rectangle *bounds, v
 
 	// if we're using hardware stretching, render to the blit surface,
 	// then blit that and stretch
-	if (win_hw_stretch)
+	if (win_dd_hw_stretch)
 		result = render_to_blit(bitmap, bounds, vector_dirty_pixels, update);
 
 	// otherwise, render directly to the primary/back surface

@@ -527,7 +527,7 @@ MACHINE_DRIVER_END
 
 ROM_START(zx80)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("zx80.rom",    0x0000, 0x1000, 0x4c7fc597)
+	ROM_LOAD("zx80.rom",    0x0000, 0x1000,CRC( 0x4c7fc597))
     ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END
@@ -535,64 +535,64 @@ ROM_END
 
 ROM_START(aszmic)
     ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("aszmic.rom",  0x0000, 0x1000, 0x6c123536)
+	ROM_LOAD("aszmic.rom",  0x0000, 0x1000,CRC( 0x6c123536))
     ROM_REGION(0x00100, REGION_GFX1,0)
     /* filled in by zx_init_driver */
 ROM_END
 
 ROM_START(zx81)
         ROM_REGION(0x10000, REGION_CPU1,0)
-        ROM_LOAD("zx81.rom",    0x0000, 0x2000, 0xfcbbd617)
+        ROM_LOAD("zx81.rom",    0x0000, 0x2000,CRC( 0xfcbbd617))
         ROM_REGION(0x00100, REGION_GFX1,0)
         /* filled in by zx_init_driver */
 ROM_END                                                                                                                                       
 
 ROM_START(zx81a)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("zx81a.rom",    0x0000, 0x2000, 0x4b1dd6eb)
+	ROM_LOAD("zx81a.rom",    0x0000, 0x2000,CRC( 0x4b1dd6eb))
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END
 
 ROM_START(zx81b)
         ROM_REGION(0x10000, REGION_CPU1,0)
-        ROM_LOAD("zx81b.rom",    0x0000, 0x2000, 0x522c37b8)
+        ROM_LOAD("zx81b.rom",    0x0000, 0x2000,CRC( 0x522c37b8))
         ROM_REGION(0x00100, REGION_GFX1,0)
         /* filled in by zx_init_driver */
 ROM_END                                                                                                                                       
 
 ROM_START(ts1000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("zx81a.rom",  0x0000, 0x2000, 0x4b1dd6eb)
+	ROM_LOAD("zx81a.rom",  0x0000, 0x2000,CRC( 0x4b1dd6eb))
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 ROM_END
 
 ROM_START(pc8300)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("8300_org.rom",0x0000, 0x2000, 0xa350f2b1)
+	ROM_LOAD("8300_org.rom",0x0000, 0x2000,CRC( 0xa350f2b1))
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 	ROM_REGION(0x00200, REGION_GFX2,0)
-	ROM_LOAD("8300_fnt.bin",0x0000, 0x0200, 0x6bd0408c)
+	ROM_LOAD("8300_fnt.bin",0x0000, 0x0200,CRC( 0x6bd0408c))
 ROM_END
 
 ROM_START(pow3000)
 	ROM_REGION(0x10000, REGION_CPU1,0)
-	ROM_LOAD("pow3000.rom", 0x0000, 0x2000, 0x8a49b2c3)
+	ROM_LOAD("pow3000.rom", 0x0000, 0x2000,CRC( 0x8a49b2c3))
 	ROM_REGION(0x00100, REGION_GFX1,0)
 	/* filled in by zx_init_driver */
 	ROM_REGION(0x00200, REGION_GFX2,0)
-	ROM_LOAD("pow3000.chr", 0x0000, 0x0200, 0x1c42fe46)
+	ROM_LOAD("pow3000.chr", 0x0000, 0x0200,CRC( 0x1c42fe46))
 ROM_END
 
 ROM_START(lambda)
         ROM_REGION(0x10000, REGION_CPU1,0)
-        ROM_LOAD("lambda.rom",0x0000, 0x2000, 0x8a49b2c3)
+        ROM_LOAD("lambda.rom",0x0000, 0x2000,CRC( 0x8a49b2c3))
         ROM_REGION(0x00100, REGION_GFX1,0)
         /* filled in by zx_init_driver */
         ROM_REGION(0x00200, REGION_GFX2,0)
-        ROM_LOAD("8300_fnt.bin",0x0000, 0x0200, 0x6bd0408c)
+        ROM_LOAD("8300_fnt.bin",0x0000, 0x0200,CRC( 0x6bd0408c))
 ROM_END                                                                                                                                       
 
 SYSTEM_CONFIG_START(zx80)

@@ -1216,7 +1216,7 @@ is banked. */
 #define ROM_PCW(model)												\
 	ROM_START(model)												\
 		ROM_REGION(0x014000, REGION_CPU1,0)							\
-		ROM_LOAD("pcwboot.bin", 0x010000, 608, BADCRC(0x679b0287))	\
+		ROM_LOAD("pcwboot.bin", 0x010000, 608, CRC(BADCRC(0x679b0287)))	\
 	ROM_END															\
 
 ROM_PCW(pcw8256)

@@ -1,4 +1,4 @@
-0.67.1
+0.68
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -44,6 +44,9 @@ System Driver Changes:
 
 Source Changes:
 ---------------
+- The core is based on MAME 0.68.  This incorporates all features of the
+  update to this core.  [MAME team]
+
 - Drivers now have a 'compatible_with' field, that specify drivers that have
   compatible software but are not mere clones.  [Nate Woods]
 
