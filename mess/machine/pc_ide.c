@@ -8,41 +8,51 @@
 ***************************************************************************/
 #include "includes/pc_ide.h"
 
-static int drv = 0; 					/* 0 master, 1 slave drive */
-static int lba[2] = {0,0};				/* 0 CHS mode, 1 LBA mode */
-static int cylinder[2] = {0,0}; 		/* current cylinder (lba = 0) */
-static int head[2] = {0,0}; 			/* current head (lba = 0) */
-static int sector[2] = {0,0};			/* current sector (or LBA if lba = 1) */
-static int sector_cnt[2] = {0,0};		/* sector count */
-static int error[2] = {0,0};			/* error code */
-static int status[2] = {0,0};			/* drive status */
 
-static int data_cnt = 0;                /* data count */
-static UINT8 *buffer = 0;				/* data buffer */
-static UINT8 *ptr = 0;					/* data pointer */
+typedef	struct {
+	int lba;				/* 0 CHS mode, 1 LBA mode */
+	int cylinder; 		/* current cylinder (lba = 0) */
+	int head; 			/* current head (lba = 0) */
+	int sector;			/* current sector (or LBA if lba = 1) */
+	int sector_cnt;		/* sector count */
+	int error;			/* error code */
+	int status;			/* drive status */
+	
+	int data_cnt;                /* data count */
+	UINT8 *buffer;				/* data buffer */
+	UINT8 *ptr;					/* data pointer */
+} DEVICE;
 
-void pc_ide_data_w(int data)
+typedef struct {
+	int drv; 					/* 0 master, 1 slave drive */
+	DEVICE devs[2];
+} IDE;
+static IDE ide[1]={ // currently only 1 is enough
+	{ 0 }
+};
+
+static void pc_ide_data_w(DEVICE *This, int data)
 {
-	if (data_cnt) {
-		*ptr++ = data;
-		if (--data_cnt == 0) {
+	if (This->data_cnt) {
+		*This->ptr++ = data;
+		if (--This->data_cnt == 0) {
 		}
 	}
 }
 
-int pc_ide_data_r(void)
+static int pc_ide_data_r(DEVICE *This)
 {
 	int data = 0xff;
 
-	if (data_cnt) {
-		data = *ptr++;
-		if (--data_cnt == 0) {
+	if (This->data_cnt) {
+		data = *This->ptr++;
+		if (--This->data_cnt == 0) {
 		}
 	}
 	return data;
 }
 
-void pc_ide_write_precomp_w(int data)
+void pc_ide_write_precomp_w(DEVICE *This, int data)
 {
 
 }
@@ -67,94 +77,100 @@ void pc_ide_write_precomp_w(int data)
  * 1   track 000 not found
  * 0   DAM not found (always 0 for CP-3022)
  */
-int pc_ide_error_r(void)
+int pc_ide_error_r(DEVICE *This)
 {
-	int data = error[drv];
+	int data = This->error;
 	return data;
 }
 
-void pc_ide_sector_count_w(int data)
+void pc_ide_sector_count_w(DEVICE *This, int data)
 {
-	sector_cnt[drv] = data;
+	This->sector_cnt=data;
 }
 
-int pc_ide_sector_count_r(void)
+int pc_ide_sector_count_r(DEVICE *This)
 {
-	int data = sector_cnt[drv];
+	int data = This->sector_cnt;
 	return data;
 }
 
-void pc_ide_sector_number_w(int data)
+void pc_ide_sector_number_w(DEVICE *This,int data)
 {
-	if (lba[drv])
-		sector[drv] = (sector[drv] & 0xfffff00) | (data & 0xff);
+	if (This->lba)
+		This->sector = (This->sector & 0xfffff00) | (data & 0xff);
 	else
-		sector[drv] = data;
+		This->sector = data;
 }
 
-int pc_ide_sector_number_r(void)
+int pc_ide_sector_number_r(DEVICE *This)
 {
-	int data = sector[drv] & 0xff;
+	int data = This->sector & 0xff;
 	return data;
 }
 
-void pc_ide_cylinder_number_l_w(int data)
+void pc_ide_cylinder_number_l_w(DEVICE *This, int data)
 {
-	if (lba[drv])
-		sector[drv] = (sector[drv] & 0xfff00ff) | ((data & 0xff) << 8);
+	if (This->lba)
+		This->sector = (This->sector & 0xfff00ff) | ((data & 0xff) << 8);
 	else
-		cylinder[drv] = (cylinder[drv] & 0xff00) | (data & 0xff);
+		This->cylinder = (This->cylinder & 0xff00) | (data & 0xff);
 }
 
-int pc_ide_cylinder_number_l_r(void)
+int pc_ide_cylinder_number_l_r(DEVICE *This)
 {
 	int data;
-    if (lba[drv])
-		data = (sector[drv] >> 8) & 0xff;
+    if (This->lba)
+		data = (This->sector >> 8) & 0xff;
 	else
-        data = cylinder[drv] & 0xff;
+        data = This->cylinder & 0xff;
 	return data;
 }
 
-void pc_ide_cylinder_number_h_w(int data)
+void pc_ide_cylinder_number_h_w(DEVICE *This,int data)
 {
-	if (lba[drv])
-		sector[drv] = (sector[drv] & 0xf00ffff) | ((data & 0xff) << 16);
+	if (This->lba)
+		This->sector = (This->sector & 0xf00ffff) | ((data & 0xff) << 16);
 	else
-        cylinder[drv] = (cylinder[drv] & 0x00ff) | ((data & 0xff) << 8);
+		This->cylinder = (This->cylinder & 0x00ff) | ((data & 0xff) << 8);
 }
 
-int pc_ide_cylinder_number_h_r(void)
+int pc_ide_cylinder_number_h_r(DEVICE *This)
 {
 	int data;
-    if (lba[drv])
-		data = (sector[drv] >> 16) & 0xff;
+    if (This->lba)
+		data = (This->sector >> 16) & 0xff;
 	else
-		data = (cylinder[drv] >> 8) & 0xff;
+		data = (This->cylinder >> 8) & 0xff;
 	return data;
 }
 
-void pc_ide_drive_head_w(int data)
+void pc_ide_drive_head_w(IDE *This, int data)
 {
-	drv = (data >> 4) & 1;
-    lba[drv] = (data >> 6) & 1;
-	if (lba[drv])
-		sector[drv] = (sector[drv] & 0x0ffffff) | ((data & 0x0f) << 24);
+	DEVICE *dev;
+	This->drv = (data >> 4) & 1;
+
+	dev=This->devs+This->drv;
+    dev->lba = (data >> 6) & 1;
+	if (dev->lba)
+		dev->sector = (dev->sector & 0x0ffffff) | ((data & 0x0f) << 24);
 	else
-		head[drv] = data & 0x0f;
+		dev->head = data & 0x0f;
 }
 
-int pc_ide_drive_head_r(void)
+int pc_ide_drive_head_r(IDE *This)
 {
 	int data;
-	if (lba[drv])
-		data = 0xe0 | (drv << 4) | ((sector[drv] >> 24) & 0x0f);
+	DEVICE *dev;
+	dev=This->devs+This->drv;
+
+	if (dev->lba)
+		data = 0xe0 | (This->drv << 4) | ((dev->sector >> 24) & 0x0f);
 	else
-		data = 0xa0 | (drv << 4) | head[drv];
+		data = 0xa0 | (This->drv << 4) | dev->head;
 	return data;
 }
 
-void pc_ide_command_w(int data)
+void pc_ide_command_w(DEVICE *This, int data)
 {
 	switch (data) {
 		case 0x00:
@@ -165,20 +181,20 @@ void pc_ide_command_w(int data)
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
 		case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 			/* recalibrate */
-			cylinder[drv] = 0;
+			This->cylinder = 0;
             break;
 		case 0x20: case 0x21:
 			/* read sectors (with or w/o retry) */
-			ptr = buffer;
-			data_cnt = sector_cnt[drv] * 512;
+			This->ptr = This->buffer;
+			This->data_cnt = This->sector_cnt * 512;
 			break;
 		case 0x22: case 0x23:
 			/* read long (with or w/o retry) */
             break;
 		case 0x30: case 0x31:
             /* write sectors (with or w/o retry) */
-			ptr = buffer;
-			data_cnt = sector_cnt[drv] * 512;
+			This->ptr = This->buffer;
+			This->data_cnt = This->sector_cnt * 512;
 			break;
 		case 0x32: case 0x33:
 			/* write long (with or w/o retry) */
@@ -215,9 +231,9 @@ void pc_ide_command_w(int data)
  * 1	  index - set to 1 each disk revolution
  * 0	  previous command ended in an error
  */
-int pc_ide_status_r(void)
+int pc_ide_status_r(DEVICE *This)
 {
-	int data = status[drv];
+	int data = This->status;
 	return data;
 }
 
@@ -230,15 +246,16 @@ int pc_ide_status_r(void)
  *************************************************************************/
 WRITE_HANDLER(at_mfm_0_w)
 {
+	logerror("ide write %.2x %.2x\n", offset, data);
 	switch (offset) {
-	case 0: pc_ide_data_w(data);				break;
-	case 1: pc_ide_write_precomp_w(data);		break;
-	case 2: pc_ide_sector_count_w(data);		break;
-	case 3: pc_ide_sector_number_w(data);		break;
-	case 4: pc_ide_cylinder_number_l_w(data);	break;
-	case 5: pc_ide_cylinder_number_h_w(data);	break;
-	case 6: pc_ide_drive_head_w(data);			break;
-	case 7: pc_ide_command_w(data); 			break;
+	case 0: pc_ide_data_w(ide->devs+ide->drv, data);				break;
+	case 1: pc_ide_write_precomp_w(ide->devs+ide->drv, data);		break;
+	case 2: pc_ide_sector_count_w(ide->devs+ide->drv, data);		break;
+	case 3: pc_ide_sector_number_w(ide->devs+ide->drv, data);		break;
+	case 4: pc_ide_cylinder_number_l_w(ide->devs+ide->drv, data);	break;
+	case 5: pc_ide_cylinder_number_h_w(ide->devs+ide->drv, data);	break;
+	case 6: pc_ide_drive_head_w(ide, data);			break;
+	case 7: pc_ide_command_w(ide->devs+ide->drv, data); 			break;
 	}
 }
 
@@ -247,15 +264,16 @@ READ_HANDLER(at_mfm_0_r)
 	int data=0;
 
 	switch (offset) {
-	case 0: data = pc_ide_data_r(); 			break;
-	case 1: data = pc_ide_error_r();			break;
-	case 2: data = pc_ide_sector_count_r(); 	break;
-	case 3: data = pc_ide_sector_number_r();	break;
-	case 4: data = pc_ide_cylinder_number_l_r();break;
-	case 5: data = pc_ide_cylinder_number_h_r();break;
-	case 6: data = pc_ide_drive_head_r();		break;
-	case 7: data = pc_ide_status_r();			break;
+	case 0: data = pc_ide_data_r(ide->devs+ide->drv); 			break;
+	case 1: data = pc_ide_error_r(ide->devs+ide->drv);			break;
+	case 2: data = pc_ide_sector_count_r(ide->devs+ide->drv); 	break;
+	case 3: data = pc_ide_sector_number_r(ide->devs+ide->drv);	break;
+	case 4: data = pc_ide_cylinder_number_l_r(ide->devs+ide->drv);break;
+	case 5: data = pc_ide_cylinder_number_h_r(ide->devs+ide->drv);break;
+	case 6: data = pc_ide_drive_head_r(ide);		break;
+	case 7: data = pc_ide_status_r(ide->devs+ide->drv);			break;
 	}
+	logerror("ide read %.2x %.2x\n", offset, data);
 	return data;
 }
 
