@@ -121,13 +121,14 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
     int num_extensions = 0;
     int i;
 
+	memset(types, 0, sizeof(*types) * count);
+
     count--;
     dev = drivers[nDriver]->dev;
 
     if (bZip) {
-        types[num_extensions].type = 0;
-        types[num_extensions].ext = "zip";
-        num_extensions++;
+		types[num_extensions].ext = "zip";
+		num_extensions++;
     }
 
     for (i = 0; dev[i].type != IO_END; i++) {
@@ -137,27 +138,38 @@ void SetupImageTypes(int nDriver, mess_image_type *types, int count, BOOL bZip, 
                 if (num_extensions < count) {
                     types[num_extensions].type = dev[i].type;
                     types[num_extensions].ext = ext;
+#if HAS_CRC
+					types[num_extensions].partialcrc = dev[i].partialcrc;
+#endif
                     num_extensions++;
                 }
             }
             ext += strlen(ext) + 1;
         }
     }
-    types[num_extensions].type = 0;
-    types[num_extensions].ext = NULL;
+}
+
+static mess_image_type *MessLookupImageType(mess_image_type *imagetypes, const char *extension)
+{
+	int i;
+    for (i = 0; imagetypes[i].ext; i++) {
+        if (!stricmp(extension, imagetypes[i].ext))
+			return &imagetypes[i];
+	}
+	return NULL;
 }
 
 static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip, UINT32 *crc)
 {
-	int type, i;
+	int type;
 	char *lpExt;
 	ZIP *pZip = NULL;
-	UINT32 dummy;
+	UINT32 zipcrc = 0;
+	struct zipent *pZipEnt = NULL;
+	mess_image_type *imgtype;
 
-	if (!crc)
-		crc = &dummy;
-
-	*crc = 0;
+	if (crc)
+		*crc = 0;
 	lpExt = strrchr(filename, '.');
 	type = IO_COUNT;
 
@@ -167,10 +179,10 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
             if (bReadZip) {
                 pZip = openzip(filename);
                 if (pZip) {
-                    struct zipent *pZipEnt = readzip(pZip);
+                    pZipEnt = readzip(pZip);
                     if (pZipEnt) {
                         lpExt = strrchr(pZipEnt->name, '.');
-						*crc = pZipEnt->crc32;
+						zipcrc = pZipEnt->crc32;
                     }
                 }
             }
@@ -182,12 +194,25 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 
         if (lpExt && stricmp(lpExt, ".ZIP")) {
             lpExt++;
-            for (i = 0; imagetypes[i].ext; i++) {
-                if (!stricmp(lpExt, imagetypes[i].ext)) {
-                    type = imagetypes[i].type;
-                    break;
-                }
-            }
+			imgtype = MessLookupImageType(imagetypes, lpExt);
+			if (imgtype) {
+                type = imgtype->type;
+				if (crc && zipcrc) {
+					if (imgtype->partialcrc) {
+						char *buf = NULL;
+						assert(pZipEnt);
+						buf = malloc(pZipEnt->uncompressed_size);
+						if (buf) {
+							readuncompresszip(pZip, pZipEnt, buf);
+							*crc = imgtype->partialcrc(buf, pZipEnt->uncompressed_size);
+							free(buf);
+						}
+					}
+					else {
+						*crc = zipcrc;
+					}
+				}
+			}
         }
 
         if (pZip)
@@ -311,82 +336,70 @@ static BOOL ImageData_SetCrcLine(ImageData *img, UINT32 crc, const char *crcline
 	img->extrainfo = strtok(NULL, "|");
 	return TRUE;
 }
-#endif
 
-/* stolen from mess/windows/fileio.c */
-static int checksum_file (const char *file, unsigned char **p, unsigned int *size, unsigned int *crc)
+static UINT32 CalculateCrc(const char *file, UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size))
 {
+	UINT32 crc = 0;
 	int length;
-	unsigned char *data;
-	FILE *f;
+	unsigned char *data = NULL;
+	FILE *f = NULL;
 
 	f = fopen (file, "rb");
-	if( !f )
-		return -1;
+	if (!f)
+		goto done;
 
 	/* determine length of file */
-	if( fseek (f, 0L, SEEK_END) != 0 )
-	{
-		fclose (f);
-		return -1;
-	}
+	if (fseek (f, 0L, SEEK_END) != 0)
+		goto done;
 
-	length = ftell (f);
-	if( length == -1L )
-	{
-		fclose (f);
-		return -1;
-	}
+	length = ftell(f);
+	if (length == -1)
+		goto done;
 
 	/* allocate space for entire file */
-	data = (unsigned char *) malloc (length);
-	if( !data )
-	{
-		fclose (f);
-		return -1;
-	}
+	data = (unsigned char *) malloc(length);
+	if (!data)
+		goto done;
 
 	/* read entire file into memory */
-	if( fseek (f, 0L, SEEK_SET) != 0 )
-	{
-		free (data);
-		fclose (f);
-		return -1;
-	}
+	if (fseek (f, 0L, SEEK_SET) != 0)
+		goto done;
 
-	if( fread (data, sizeof (unsigned char), length, f) != (size_t)length )
-	{
-		free (data);
-		fclose (f);
-		return -1;
-	}
+	if (fread(data, sizeof(unsigned char), length, f) != (size_t)length)
+		goto done;
 
-	*size = length;
-	*crc = crc32 (0L, data, length);
-	if( p )
-		*p = data;
+	if (partialcrc)
+		crc = partialcrc(data, length);
 	else
-		free (data);
+		crc = crc32(0, data, length);
 
-	fclose (f);
-
-	return 0;
+done:
+	if (data)
+		free(data);
+	if (f)
+		fclose(f);
+	return crc;
 }
+#endif /* HAS_CRC */
 
 static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_image_type *imagetypes)
 {
-	UINT32 crc = 0;
 	BOOL bLearnedSomething = FALSE;
 
 #if HAS_CRC
 	char crcstr[9];
 	char line[1024];
-	unsigned int dummy;
+	UINT32 crc = 0;
+	UINT32 *pzipcrc = &crc;
+	mess_image_type *imgtype;
+	const char *extension;
+#else
+	UINT32 *pzipcrc = NULL;
 #endif
 
 	/* Calculate image type */
 	if (img->type == IO_UNKNOWN) {
-		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, &crc);
+		img->type = MessDiscoverImageType(T2A(img->fullname), imagetypes, eRealize > REALIZE_IMMEDIATE, pzipcrc);
 		if (img->type != IO_UNKNOWN)
 			bLearnedSomething = TRUE;
 	}
@@ -394,8 +407,15 @@ static BOOL ImageData_Realize(ImageData *img, enum RealizeLevel eRealize, mess_i
 #if HAS_CRC
 	/* Calculate a CRC file? */
 	if ((eRealize >= REALIZE_ALL) && !crc && !img->crc) {
-		checksum_file(img->fullname, NULL, &dummy, &crc);
-		bLearnedSomething = TRUE;
+		extension = strrchr(img->fullname, '.');
+		if (extension) {
+			extension++;
+			imgtype = MessLookupImageType(imagetypes, extension);
+			if (imgtype) {
+				crc = CalculateCrc(img->fullname, imgtype->partialcrc);
+				bLearnedSomething = TRUE;
+			}
+		}
 	}
 
 	/* Load CRC information? */

@@ -15,6 +15,9 @@
 typedef struct {
     int type;
     const char *ext;
+#if HAS_CRC
+	UINT32 (*partialcrc)(const unsigned char *buf, unsigned int size);
+#endif
 } mess_image_type;
 
 /* SoftwareListView Class calls */
