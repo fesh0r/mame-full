@@ -43,7 +43,7 @@ ASMFLAGS = -f win32
 ASMDEFS =
 
 # uncomment out the DEBUG = line to build a debugging version of mame32.
-DEBUG = 1
+# DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
@@ -609,9 +609,6 @@ IMGTOOL_OBJS= \
 	  $(OBJ)/mess/tools/cococas.o   \
 	  $(OBJ)/mess/tools/vmsx_tap.o   \
 	  $(OBJ)/mess/tools/msx_dsk.o  \
-	  $(OBJ)/mess/formats/msx_dsk.o  \
-	  $(OBJ)/mess/tools/xsa.o  \
-	  $(OBJ)/mess/formats/xsa.o  \
 	  $(OBJ)/mess/tools/vmsx_gm2.o   \
 	  $(OBJ)/mess/formats/fmsx_cas.o  \
 	  $(OBJ)/mess/tools/fmsx_cas.o  \
