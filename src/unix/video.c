@@ -1205,7 +1205,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 		else if (frameskip == FRAMESKIP_LEVELS - 1)
 		{
 			frameskip = 0;
-			AUTOFRAMESKIP = 1;
+			autoframeskip = 1;
 		}
 
 		/* else just increment */
