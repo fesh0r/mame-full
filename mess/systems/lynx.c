@@ -49,46 +49,14 @@ INPUT_PORTS_START( lynx )
 	PORT_DIPSETTING(	2, "counterclockwise" )
 INPUT_PORTS_END
 
-static struct GfxLayout lynx_charlayout =
-{
-        32,1,
-        256,                                    /* 256 characters */
-        1,                      /* 1 bits per pixel */
-        { 0 },                  /* no bitplanes; 1 bit per pixel */
-        /* x offsets */
-        { 
-			0, 0, 0, 0,
-			1, 1, 1, 1, 
-			2, 2, 2, 2, 
-			3, 3, 3, 3, 
-			4, 4, 4, 4, 
-			5, 5, 5, 5, 
-			6, 6, 6, 6, 
-			7, 7, 7, 7
-        },
-        /* y offsets */
-        { 0 },
-        1*8
-};
-
-static struct GfxDecodeInfo lynx_gfxdecodeinfo[] = {
-	{ REGION_GFX1, 0x0000, &lynx_charlayout,                     0, 2 },
-    { -1 } /* end of array */
-};
-
 static int lynx_frame_int(void)
 {
 	return 0;
 }
 
-static unsigned char lynx_palette[16][3] =
+static unsigned char lynx_palette[16][3]=
 {
-	{ 0, 0, 0 },
-	{ 255,255,255 }
-};
-
-static unsigned short lynx_colortable[1][2] = {
-	{ 0, 1 },
+	{ 0 },
 };
 
 int lynx_vh_start(void)
@@ -167,7 +135,7 @@ static void lynx_init_colors (unsigned char *sys_palette,
 							  const unsigned char *color_prom)
 {
 	memcpy (sys_palette, lynx_palette, sizeof (lynx_palette));
-	memcpy(sys_colortable,lynx_colortable,sizeof(lynx_colortable));
+//	memcpy(sys_colortable,lynx_colortable,sizeof(lynx_colortable));
 }
 
 static struct MachineDriver machine_driver_lynx =
@@ -190,10 +158,10 @@ static struct MachineDriver machine_driver_lynx =
 	// 160 x 102
 //	160, 102, { 0, 160 - 1, 0, 102 - 1},
 	160, 160, { 0, 160 - 1, 0, 102 - 1},
-	lynx_gfxdecodeinfo,			   /* graphics decode info */
+	0, //lynx_gfxdecodeinfo,			   /* graphics decode info */
 	// 16 out of 4096
 	sizeof (lynx_palette) / sizeof (lynx_palette[0]) ,
-	sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
+	0, //sizeof (lynx_colortable) / sizeof(lynx_colortable[0][0]),
 	lynx_init_colors,		/* convert color prom */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,	/* video flags */
