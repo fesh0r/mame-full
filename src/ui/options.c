@@ -430,7 +430,7 @@ static REG_OPTION global_game_options[] =
 	{ "history_file",           RO_STRING,  &settings.history_filename, "history.dat" },
 	{ "mameinfo_file",          RO_STRING,  &settings.mameinfo_filename,"mameinfo.dat" },
 #endif
-	{ "ctrlr_directory",        RO_STRING,  &settings.ctrlrdir,         0, 0},
+	{ "ctrlr_directory",        RO_STRING,  &settings.ctrlrdir,         "ctrlr" },
 	{ "" }
 
 };
