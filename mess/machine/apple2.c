@@ -518,11 +518,6 @@ void apple2_setvar(UINT32 val, UINT32 mask)
 	apple2_update_memory();
 }
 
-static void apple2_updatevar(void)
-{
-	apple2_update_memory();
-}
-
 
 
 /* -----------------------------------------------------------------------
@@ -680,13 +675,28 @@ data8_t apple2_getfloatingbusvalue(void)
 
 void apple2_init_common(void)
 {
+	/* state save registers */
 	state_save_register_UINT32("apple2", 0, "softswitch", &a2, 1);
-	state_save_register_func_postload(apple2_updatevar);
+	state_save_register_func_postload(apple2_update_memory);
 
 	/* apple2 behaves much better when the default memory is zero */
 	memset(mess_ram, 0, mess_ram_size);
 
+	/* initialise 5.25" floppy */
 	apple2_slot6_init();
+
+	/* --------------------------------------------- *
+	 * set up the softswitch mask/set                *
+	 * --------------------------------------------- */
+	a2_mask = ~0;
+	a2_set = 0;
+	
+	/* disable VAR_ROMSWITCH if the ROM is only 16k */
+	if (memory_region_length(REGION_CPU1) < 0x8000)
+		a2_mask &= ~VAR_ROMSWITCH;
+
+	if (mess_ram_size <= 64*1024)
+		a2_mask &= ~(VAR_RAMRD | VAR_RAMWRT | VAR_80STORE | VAR_ALTZP | VAR_80COL);
 }
 
 
@@ -720,21 +730,6 @@ MACHINE_INIT( apple2 )
 {
 	mess_image *image;
 	int i;
-
-	/* --------------------------------------------- *
-	 * set up the softswitch mask/set                *
-	 * --------------------------------------------- */
-	a2_mask = ~0;
-	a2_set = 0;
-	
-	/* disable VAR_ROMSWITCH if the ROM is only 16k */
-	if (memory_region_length(REGION_CPU1) < 0x8000)
-		a2_mask &= ~VAR_ROMSWITCH;
-
-	if (mess_ram_size <= 64*1024)
-		a2_mask &= ~(VAR_RAMRD | VAR_RAMWRT | VAR_80STORE | VAR_ALTZP | VAR_80COL);
-
-	/* --------------------------------------------- */
 
 	apple2_setvar(strcmp(Machine->gamedrv->name, "apple2c") ? 0 : VAR_INTCXROM, ~0);
 
