@@ -8,6 +8,11 @@
 
 	http://falabella.lf2.cuni.cz/~naidr/sord/
 
+	PI-5 is the parallel interface using a 8255.
+	FD-5 is the disc operating system and disc interface.
+	FD-5 is connected to M5 via PI-5.
+
+
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -21,6 +26,8 @@
 #include "cassette.h"
 #include "includes/centroni.h"
 #include "printer.h"
+#include "machine/8255ppi.h"
+
 
 /*********************************************************************************************/
 /* FD5 disk interface */
@@ -29,13 +36,13 @@
 /* - 2x6116 RAM */
 /* - Intel8272/NEC765 */
 /* - IRQ of NEC765 is connected to INT of Z80 */
+/* PI-5 interface is required. mode 2 of the 8255 is used to communicate with the FD-5 */
 
 #include "includes/nec765.h"
 
 static void sord_m5_init_machine(void);
 static void sord_m5_shutdown_machine(void);
 
-static unsigned char fd5_communication = 0x0f0;
 static unsigned char fd5_databus;
 
 MEMORY_READ_START( readmem_sord_fd5 )
@@ -49,88 +56,71 @@ MEMORY_WRITE_START( writemem_sord_fd5 )
 	{0x4000, 0x0ffff, MWA_RAM},
 MEMORY_END
 
-/* bit 0 = 1: ready to receive data? */
-/* 0x06 */
-/* 0110 */
+static int obfa,ibfa, intra;
+static int fd5_port_0x020_data;
 
+/* stb and ack automatically set on read/write? */
 WRITE_HANDLER(fd5_communication_w)
 {
-	logerror("fd5 write to m5: %02x %04x\n",data,activecpu_get_pc());
-
-	/* clear top 4 bits */
-	fd5_communication&=0x0f;
-
-	if (data & (1<<0))
-	{
-		fd5_communication|=(1<<7);
-	}
-
-	if (data & (1<<1))
-	{
-		fd5_communication|=(1<<6);
-	}
-
-	if (data & (1<<2))
-	{
-		fd5_communication|=(1<<5);
-	}
-
-	if (data & (1<<3))
-	{
-		fd5_communication|=(1<<4);
-	}
-
-
-
 	cpu_yield();
+
+	fd5_port_0x020_data = data;
+
+	logerror("fd5 0x020: %02x %04x\n",data,activecpu_get_pc());
 }
-
-
-
-/* FD5 side */
-
-/* 0x07 to port 0x020 */
-/* 1,1,1 */
-
-/* port 0x010: read/write data to m5 */
-/* port 0x030: read */
-/* bit 0 = 0, bit 2 = 0 write to m5  */
-/* bit 0 = 0. bit 2 = 0 fd5 toggles bit 0 of port 0x020 */
-/* bit 3 = 0, read from m5 */
-
-/* bit 2 = 0: */
-/* bit 0 = 0 & bit 2 = 0, write to m5 */ 
-/* bit 0 = 0 & bit 3 = 0, read from m5 */
-
-/* M5 side */
-/* port 0x071 */
-/* 00, ff, 40  11111111 01000000 */
-/* port 0x072 */
-/* bit 7 = 1: fd5 wants data to be written to it or acknowledges it is ready for data write? */
-/* bit 5 = 1: fd5 wants data to be read from it, or acknowledges it is ready for data read? */
-/* bit 2 = 1: fd5 signalling data ready */
-/* port 0x070: read/write data to fd5 */
 
 READ_HANDLER(fd5_communication_r)
 {
-	logerror("fd5 read from m5 %04x\n",activecpu_get_pc());
+	int data;
+
 	cpu_yield();
-	return fd5_communication;
+
+	data = (obfa<<3)|(ibfa<<2)|2;		
+
+	logerror("fd5 0x030: %02x %04x\n",data, activecpu_get_pc());
+
+	return data;
 }
 
 READ_HANDLER(fd5_data_r)
 {
 	cpu_yield();
-	logerror("fd5 read from m5 databus %02x %04x\n",fd5_databus,activecpu_get_pc());
+
+	logerror("fd5 0x010 r: %02x %04x\n",fd5_databus,activecpu_get_pc());
+	
+	ppi8255_set_input_acka(0,0);
+	ppi8255_set_input_acka(0,1);
+
 	return fd5_databus;
 }
 
 WRITE_HANDLER(fd5_data_w)
 {
-	logerror("fd5 write to m5 databus: %02x %04x\n",data,activecpu_get_pc());
+	logerror("fd5 0x010 w: %02x %04x\n",data,activecpu_get_pc());
 	fd5_databus = data;
+
+	/* set stb on data write */
+	ppi8255_set_input_stba(0,0);
+	ppi8255_set_input_stba(0,1);
+
 	cpu_yield();
 }
+
+WRITE_HANDLER(fd5_drive_control_w)
+{
+	logerror("fd5 drive control w: %02x\n",data);
+	floppy_drive_set_motor_state(0,data & 0x01);
+	floppy_drive_set_motor_state(1,data & 0x01);
+	floppy_drive_set_ready_state(0,1,1);
+	floppy_drive_set_ready_state(1,1,1);
+}
+
+WRITE_HANDLER(fd5_tc_w)
+{
+	nec765_set_tc_state(1);
+	nec765_set_tc_state(0);
+}
+
 /* 0x020 fd5 writes to this port to communicate with m5 */
 /* 0x010 data bus to read/write from m5 */
 /* 0x030 fd5 reads from this port to communicate with m5 */
@@ -147,6 +137,7 @@ PORT_WRITE_START( writeport_sord_fd5 )
 	{ 0x001, 0x001, nec765_data_w},
 	{ 0x010, 0x010, fd5_data_w},	
 	{ 0x020, 0x020, fd5_communication_w},
+	{ 0x050, 0x050, fd5_tc_w},
 PORT_END
 
 /* nec765 data request is connected to interrupt of z80 inside fd5 interface */
@@ -181,88 +172,138 @@ static void sord_fd5_exit(void)
 
 static void sord_m5_fd5_init_machine(void)
 {
+
+	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
+	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
 	sord_fd5_init();
 	sord_m5_init_machine();
+	ppi8255_set_input_acka(0,1);
+	ppi8255_set_input_stba(0,1);
 }
 
 static void sord_m5_fd5_shutdown_machine(void)
 {
-	sord_fd5_exit();
-	sord_m5_shutdown_machine();
 #ifdef SORD_DUMP_RAM
 	sordfd5_dump_ram();
 #endif
+
+	sord_fd5_exit();
+	sord_m5_shutdown_machine();
 }
 
-/* read data from fd5 */
-READ_HANDLER(sord_fd5_data_r)
+
+/*********************************************************************************************/
+/* PI-5 */
+
+READ_HANDLER(sord_ppi_porta_r)
 {
-	cpu_yield();
-	logerror("m5 read from fd5 databus %02x %04x\n",fd5_databus,activecpu_get_pc());
+/*	cpu_yield(); */
+	logerror("m5 read from fd5 databus through pi5 %02x %04x\n",fd5_databus,activecpu_get_pc());
+
 	return fd5_databus;
 }
 
-/* write data to fd5 */
-WRITE_HANDLER(sord_fd5_data_w)
+READ_HANDLER(sord_ppi_portb_r)
 {
+	cpu_yield();
+
+	logerror("m5 read from pi5 port b %04x\n",activecpu_get_pc());
+
+	return 0x0ff;
+}
+
+READ_HANDLER(sord_ppi_portc_r)
+{
+	cpu_yield();
+
+	logerror("m5 read from pi5 port c %04x\n",activecpu_get_pc());
+
+	
+	/* bit 0 from 0x020 is set before data transfer, this appears as bit 2 of ppi port C */
+	/* bit 2 is 1 for reading, 0 for writing? */
+
+	/* what are these bits for? */
+	return ((fd5_port_0x020_data & 0x01)<<2) | (fd5_port_0x020_data & 0x02) | ((fd5_port_0x020_data & 0x04)>>2);
+}
+
+
+WRITE_HANDLER(sord_ppi_porta_w)
+{
+/*	cpu_yield(); */
+
 	logerror("m5 write to fd5 databus: %02x %04x\n",data,activecpu_get_pc());
 	fd5_databus = data;
-	cpu_yield();
 }
 
-
-READ_HANDLER(sord_fd5_communication_r)
+WRITE_HANDLER(sord_ppi_portb_w)
 {
-	logerror("read from fd5: %02x %04x\n",fd5_communication,activecpu_get_pc());
 	cpu_yield();
-	return fd5_communication;
+
+	/* f0, 40 */
+	/* 1111 */
+	/* 0100 */
+
+	if (data==0x0f0)
+	{
+		cpu_set_reset_line(1,ASSERT_LINE);
+		cpu_set_reset_line(1,CLEAR_LINE);
+	}
+
+	logerror("m5 write to pi5 port b: %02x %04x\n",data,activecpu_get_pc());
 }
 
+/* A,  B,  C,  D,  E,   F,  G,  H,  I,  J, K,  L,  M,   N, O, P, Q, R,   */
+/* 41, 42, 43, 44, 45, 46, 47, 48, 49, 4a, 4b, 4c, 4d, 4e, 4f, 50, 51, 52*/
 
-/* 0, f0, 40 */
-/* 00000000 */
-/* 11110000 */
-/* 01000000 */
-/* bit 0 = 0 */
-/* bit 1 = 1 */
-/* bit 2 = 0 */
-WRITE_HANDLER(sord_fd5_communication_w)
+/* C,H,N */
+
+
+WRITE_HANDLER(sord_ppi_portc_w)
 {
-	logerror("write to fd5: %02x %04x\n",data,activecpu_get_pc());
+	cpu_yield();
 
-	/* bit 0 = 0, bit 2 = 0 write to m5  */
-/* bit 0 = 0. bit 2 = 0 fd5 toggles bit 0 of port 0x020 */
-/* bit 3 = 0, read from m5 */
+	logerror("m5 write to pi5 port c: %02x %04x\n",data,activecpu_get_pc());
 
-/* bit 2 = 0: */
-/* bit 0 = 0 & bit 2 = 0, write to m5 */ 
-/* bit 0 = 0 & bit 3 = 0, read from m5 */
+}
 
-	fd5_communication &=0x0f0;
-	
-	if (data & (1<<7))
-	{
-		fd5_communication |= 1;
-	}
-
-	if (data & (1<<6))
-	{
-		fd5_communication |= 2;
-	}
-
-	if (data & (1<<5))
-	{
-		fd5_communication |=4;
-	}
-
-	if (data & (1<<4))
-	{
-		fd5_communication |=8;
-	}
-
+WRITE_HANDLER(sord_ppi_obfa_write)
+{
+//	logerror("ppi obfa write %02x %04x\n",data,activecpu_get_pc());
+	obfa = data & 0x01;
 	cpu_yield();
 }
 
+WRITE_HANDLER(sord_ppi_intra_write)
+{
+//	logerror("ppi intra write %02x %04x\n",data,activecpu_get_pc());
+	intra = data & 0x01;
+	cpu_yield();
+}
+
+WRITE_HANDLER(sord_ppi_ibfa_write)
+{
+//	logerror("ppi ibfa write %02x %04x\n",data,activecpu_get_pc());
+	ibfa = data & 0x01;
+	cpu_yield();
+}
+
+static ppi8255_mode2_interface sord_ppi8255_mode2_interface = 
+{
+	{sord_ppi_obfa_write},
+	{sord_ppi_intra_write},
+	{sord_ppi_ibfa_write}
+};
+
+static ppi8255_interface sord_ppi8255_interface =
+{
+	1,
+	{sord_ppi_porta_r},
+	{sord_ppi_portb_r},
+	{sord_ppi_portc_r},
+	{sord_ppi_porta_w},
+	{sord_ppi_portb_w},
+	{sord_ppi_portc_w}
+};
 
 /*********************************************************************************************/
 
@@ -494,21 +535,12 @@ static WRITE_HANDLER(sord_printer_w)
 	centronics_write_data(0,data);
 }
 
-static WRITE_HANDLER(sord_fd5_reset)
-{
-//	cpu_set_reset_line(1,1);
-//	cpu_set_reset_line(1,0);
-	cpu_yield();
-}
-
-
 PORT_READ_START( readport_sord_m5 )
 	{ 0x000, 0x00f, sord_ctc_r},
 	{ 0x010, 0x01f, sord_video_r},
 	{ 0x030, 0x03f, sord_keyboard_r},
 	{ 0x050, 0x050, sord_sys_r},
-	{ 0x070, 0x070, sord_fd5_data_r},
-	{ 0x072, 0x072, sord_fd5_communication_r},
+	{ 0x070, 0x073, ppi8255_0_r},
 PORT_END
 
 PORT_WRITE_START( writeport_sord_m5 )
@@ -517,11 +549,7 @@ PORT_WRITE_START( writeport_sord_m5 )
 	{ 0x020, 0x02f, SN76496_0_w},
 	{ 0x040, 0x040, sord_printer_w}, 
 	{ 0x050, 0x050, sord_sys_w},
-	{ 0x070, 0x070, sord_fd5_data_w},
-	{ 0x071, 0x071, sord_fd5_communication_w},	
-
-	/* ???? */
-{ 0x073, 0x073, sord_fd5_reset},
+	{ 0x070, 0x073, ppi8255_0_w},
 PORT_END
 
 
@@ -548,7 +576,11 @@ static CENTRONICS_CONFIG sordm5_cent_config[1]={
 void sord_m5_init_machine(void)
 {
 	z80ctc_init(&sord_m5_ctc_intf);
-	
+
+	/* PI-5 interface connected to Sord M5 */
+	ppi8255_init(&sord_ppi8255_interface);
+	ppi8255_set_mode2_interface(&sord_ppi8255_mode2_interface);
+
 	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
 
 	TMS9928A_reset ();
@@ -567,9 +599,10 @@ void sord_m5_init_machine(void)
 #ifdef SORD_DUMP_RAM
 void sord_dump_ram(void)
 {
+#if 0
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "sord.bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+	file = osd_fopen(Machine->gamedrv->name, "sord.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -587,13 +620,14 @@ void sord_dump_ram(void)
 		/* close file */
 		osd_fclose(file);
 	}
+#endif
 }
 
 void sordfd5_dump_ram(void)
 {
 	void *file;
 
-	file = osd_fopen(Machine->gamedrv->name, "sordfd5bin", OSD_FILETYPE_NVRAM,OSD_FOPEN_WRITE);
+	file = osd_fopen(Machine->gamedrv->name, "sordfd5.bin", OSD_FILETYPE_MEMCARD,OSD_FOPEN_WRITE);
  
 	if (file)
 	{
@@ -637,8 +671,8 @@ INPUT_PORTS_START(sord_m5)
     PORT_BITX (0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "FUNC", KEYCODE_LALT, IP_JOY_NONE)
     PORT_BITX (0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "LSHIFT", KEYCODE_LSHIFT, IP_JOY_NONE) 
     PORT_BITX (0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_RSHIFT, IP_JOY_NONE) 
- 	PORT_BIT  (0x10, 0x00, IPT_UNUSED)
- 	PORT_BIT  (0x20, 0x00, IPT_UNUSED)
+	PORT_BIT  (0x10, 0x00, IPT_UNUSED) 
+	PORT_BIT  (0x20, 0x00, IPT_UNUSED) 
 	PORT_BITX (0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
     PORT_BITX (0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "ENTER", KEYCODE_ENTER, IP_JOY_NONE)
 	/* line 1 */
@@ -689,7 +723,7 @@ INPUT_PORTS_START(sord_m5)
     PORT_BITX (0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "^", KEYCODE_EQUALS, IP_JOY_NONE) 
     PORT_BITX (0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, ".", KEYCODE_STOP, IP_JOY_NONE) 
     PORT_BITX (0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "/", KEYCODE_SLASH, IP_JOY_NONE) 
-    PORT_BITX (0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "_", KEYCODE_0_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "_", KEYCODE_MINUS_PAD, IP_JOY_NONE) 
     PORT_BITX (0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "\\", KEYCODE_BACKSLASH, IP_JOY_NONE) 
 	/* line 6 */
 	PORT_START
@@ -698,7 +732,7 @@ INPUT_PORTS_START(sord_m5)
     PORT_BITX (0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "@", KEYCODE_QUOTE, IP_JOY_NONE) 
     PORT_BITX (0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "[", KEYCODE_OPENBRACE, IP_JOY_NONE) 
     PORT_BITX (0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE) 
-    PORT_BITX (0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, ";", KEYCODE_1_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, ";", KEYCODE_PLUS_PAD, IP_JOY_NONE) 
     PORT_BITX (0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, ":", KEYCODE_COLON, IP_JOY_NONE) 
     PORT_BITX (0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "]", KEYCODE_CLOSEBRACE, IP_JOY_NONE) 
 	/* line 7 */
@@ -713,13 +747,21 @@ INPUT_PORTS_START(sord_m5)
     PORT_BITX (0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "JOY 2 DOWN", IP_KEY_NONE, JOYCODE_2_DOWN) 
 	/* line 8 */
 	PORT_START
-	PORT_BIT (0x0ff, 0x000, IPT_UNUSED)
+	PORT_BIT (0x0ff, 0x000, IPT_UNUSED) 
 	/* line 9 */
 	PORT_START
-	PORT_BIT (0x0ff, 0x000, IPT_UNUSED)
+	PORT_BIT (0x0ff, 0x000, IPT_UNUSED) 
 	/* line 10 */
 	PORT_START
-	PORT_BIT (0x0ff, 0x000, IPT_UNUSED)
+	PORT_BITX (0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_2_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_3_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_4_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_5_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x10, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_6_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x20, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_7_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x40, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_8_PAD, IP_JOY_NONE) 
+    PORT_BITX (0x80, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RSHIFT", KEYCODE_9_PAD, IP_JOY_NONE) 
+/*	PORT_BIT (0x0ff, 0x000, IPT_UNUSED) */
 	/* line 11 */
 	PORT_START
 	PORT_BIT (0x0ff, 0x000, IPT_UNUSED)
@@ -828,7 +870,7 @@ static struct MachineDriver machine_driver_sord_m5_fd5 =
 	},
 	50, 							   /* frames per second */
 	DEFAULT_REAL_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
+	20,								   /* cpu slices per frame */
 	sord_m5_fd5_init_machine,			   /* init machine */
 	sord_m5_fd5_shutdown_machine,
 	/* video hardware */
@@ -866,7 +908,7 @@ ROM_START(sordm5)
 ROM_END
 
 
-ROM_START(sordm5fd5)
+ROM_START(srdm5fd5)
 	ROM_REGION(0x010000, REGION_CPU1,0)
 	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x078848d39)
 	ROM_REGION(0x010000, REGION_CPU2,0)
@@ -908,7 +950,7 @@ static const struct IODevice io_sordm5[] =
 	{IO_END},
 };
 
-static const struct IODevice io_sordm5fd5[] = 
+static const struct IODevice io_srdm5fd5[] = 
 {
 	sord_m5_cart_device,
 	sord_m5_printer,
@@ -937,4 +979,4 @@ static const struct IODevice io_sordm5fd5[] =
 
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
 COMP( 1983, sordm5,      0,            sord_m5,          sord_m5,      0,       "Sord", "Sord M5")
-COMPX( 1983, sordm5fd5,	0,	sord_m5_fd5, sord_m5, 0, "Sord", "Sord M5 + FD5 disk interface", GAME_NOT_WORKING)
+COMPX( 1983, srdm5fd5,	0,	sord_m5_fd5, sord_m5, 0, "Sord", "Sord M5 + PI5 + FD5", GAME_NOT_WORKING)
