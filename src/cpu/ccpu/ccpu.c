@@ -444,8 +444,6 @@ void ccpu_SetInputs(int inputs, int switches)
 #include <stdio.h>
 #include <string.h>
 
-#include "ccpu.h"
-
 /*
  * Use 0xF000 so as to keep the current page, since it may well
  * have been changed with JPP.
