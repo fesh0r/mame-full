@@ -3,11 +3,7 @@
 
 #include "driver.h"
 
-void flash_init(int);
-void flash_reset(int);
-void flash_store(int, char *);
-void flash_restore(int, char *);
-char *flash_get_base(int);
+#include "includes/28f008sa.h"
 
 /* commands */
 #define FLASH_COMMAND_READ_ARRAY_OR_RESET					0x00FF
