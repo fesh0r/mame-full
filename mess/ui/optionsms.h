@@ -65,8 +65,8 @@ void  SetSoftwareDirs(const char* paths);
 void SetCrcDir(const char *dir);
 const char *GetCrcDir(void);
 
-void SetSelectedSoftware(int driver_index, int devtype, const char *software);
-const char *GetSelectedSoftware(int driver_index, int devtype);
+void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *software);
+const char *GetSelectedSoftware(int driver_index, iodevice_t devtype);
 
 void SetExtraSoftwarePaths(int driver_index, const char *extra_paths);
 const char *GetExtraSoftwarePaths(int driver_index);

@@ -120,7 +120,7 @@ BOOL GetUseNewUI(int driver_index)
     return GetGameOptions(driver_index, -1)->mess.use_new_ui;
 }
 
-void SetSelectedSoftware(int driver_index, int devtype, const char *software)
+void SetSelectedSoftware(int driver_index, iodevice_t devtype, const char *software)
 {
 	char *newsoftware;
 	options_type *o;
@@ -134,7 +134,7 @@ void SetSelectedSoftware(int driver_index, int devtype, const char *software)
 	o->mess.software[devtype] = newsoftware;
 }
 
-const char *GetSelectedSoftware(int driver_index, int devtype)
+const char *GetSelectedSoftware(int driver_index, iodevice_t devtype)
 {
 	const char *software;
 	software = GetGameOptions(driver_index, -1)->mess.software[devtype];

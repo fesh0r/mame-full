@@ -449,7 +449,7 @@ static BOOL IsSoftwarePaneDevice(int devtype)
 
 
 // this is a wrapper call to wrap the idiosycracies of SetSelectedSoftware()
-static void InternalSetSelectedSoftware(int nGame, int nDevType, const char *pszSoftware)
+static void InternalSetSelectedSoftware(int nGame, iodevice_t nDevType, const char *pszSoftware)
 {
 	if (!pszSoftware)
 		pszSoftware = TEXT("");
@@ -521,11 +521,7 @@ static void MessSpecifyImage(int nGame, const struct IODevice *dev, int nID, LPC
 		nLength += strlen(ppszNewSelections[i]) + 1;
 
 		if (s)
-		{
-			s = strchr(s, IMAGE_SEPARATOR);
-			if (s)
-				s++;
-		}
+			s += strlen(s) + 1;
 	}
 
 	// purge extraneous entries
