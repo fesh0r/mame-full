@@ -6,7 +6,7 @@ int channelf_val_reg;
 int channelf_row_reg;
 int channelf_col_reg;
 
-static UINT8 palette[] = {
+static UINT8 channelf_palette[] = {
 	0x00, 0x00, 0x00,	/* black */
 	0xff, 0xff, 0xff,	/* white */
 	0xff, 0x00, 0x00,	/* red	 */
@@ -34,25 +34,17 @@ static UINT16 colormap[] = {
 };
 
 /* Initialise the palette */
-void channelf_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable,const unsigned char *color_prom)
+PALETTE_INIT( channelf )
 {
-	memcpy(sys_palette,palette,sizeof(palette));
-	memcpy(sys_colortable,colormap,0);
+	palette_set_colors(0, channelf_palette, sizeof(channelf_palette) / 3);
+	memcpy(colortable,colormap,0);
 }
 
-int channelf_vh_start(void)
+VIDEO_START( channelf )
 {
 	videoram_size = 0x2000;
 	videoram = auto_malloc(videoram_size);
-
-    if (video_start_generic())
-        return 1;
-
-    return 0;
-}
-
-void channelf_vh_stop(void)
-{
+	return video_start_generic();
 }
 
 static void plot_4_pixel(int x, int y, int color)
@@ -96,9 +88,10 @@ int recalc_palette_offset(int reg1, int reg2)
 	}
 }
 
-void channelf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( channelf )
 {
 	int x,y,offset, palette_offset;
+	int full_refresh = 1;
 
 	for(y=0;y<64;y++)
 	{

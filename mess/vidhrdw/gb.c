@@ -493,11 +493,11 @@ void sgb_refresh_border(void)
 		map += (yidx % 8) ? 0 : 32;
 		for( xidx = 0; xidx < 32; xidx++ )
 		{
-			UINT8 *sgb_tile_data = memory_region( REGION_GFX1 );
+			UINT8 *sgb_tile_data_ = memory_region( REGION_GFX1 );
 			if( map[xidx] & 0x8000 ) /* Vertical flip */
-				tiles = (UINT16 *)sgb_tile_data + (7 - (yidx % 8));
+				tiles = (UINT16 *)sgb_tile_data_ + (7 - (yidx % 8));
 			else /* No vertical flip */
-				tiles = (UINT16 *)sgb_tile_data + (yidx % 8);
+				tiles = (UINT16 *)sgb_tile_data_ + (yidx % 8);
 			tiles2 = tiles + 8;
 
 			pal = ((map[xidx] & 0x1C00) >> 10) * 16;

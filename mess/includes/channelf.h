@@ -4,12 +4,9 @@ extern int channelf_val_reg;
 extern int channelf_row_reg;
 extern int channelf_col_reg;
 
-void channelf_init_palette(unsigned char *sys_palette,
-                           unsigned short *sys_colortable,
-                           const unsigned char *color_prom);
-int channelf_vh_start(void);
-void channelf_vh_stop(void);
-void channelf_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh);
+extern PALETTE_INIT( channelf );
+extern VIDEO_START( channelf );
+extern VIDEO_UPDATE( channelf );
 
 /* in sndhrdw/channelf.c */
 void channelf_sound_w(int);

@@ -50,42 +50,23 @@ int pce_load_rom(int id)
     return 0;
 }
 
-void pce_init_machine(void)
+MACHINE_INIT( pce )
 {
-    void *f;
-
-    logerror("*** pce_init_machine\n");
-    pce_user_ram = calloc(0x2000, 1);
-    pce_save_ram = calloc(0x2000, 1);
-
-
-    /* load battery backed memory from disk */
-    f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-    if(f)
-    {
-        logerror("*** pce_init_machine - BRAM loaded\n");
-        osd_fread(f, pce_save_ram, 0x2000);
-        osd_fclose(f);
-    }
 }
 
-void pce_stop_machine(void)
+NVRAM_HANDLER( pce )
 {
-    void *f;
-
-    logerror("*** pce_stop_machine\n");
-
-    /* write battery backed memory to disk */
-    f = osd_fopen(Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-    if(f)
-    {
-        logerror("*** pce_stop_machine - BRAM saved\n");
-        osd_fwrite(f, pce_save_ram, 0x2000);
-        osd_fclose(f);
-    }
-
-    if(pce_user_ram) free(pce_user_ram);
-    if(pce_save_ram) free(pce_save_ram);
+	if (read_or_write)
+	{
+		osd_fwrite(file, pce_save_ram, 0x2000);
+	}
+	else
+	{
+	    /* load battery backed memory from disk */
+		memset(pce_save_ram, 0, 0x2000);
+		if (file)
+			osd_fread(file, pce_save_ram, 0x2000);
+	}
 }
 
 

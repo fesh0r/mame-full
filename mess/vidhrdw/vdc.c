@@ -1,3 +1,4 @@
+#include <assert.h>
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
@@ -13,34 +14,29 @@ void pce_refresh_line(int line);
 void pce_refresh_sprites(int line);
 
 
-int pce_vh_start(void)
+VIDEO_START( pce )
 {
-    logerror("*** pce_vh_start\n");
+	logerror("*** pce_vh_start\n");
 
-    /* clear context */
-    memset(&vdc, 0, sizeof(vdc));
+	/* clear context */
+	memset(&vdc, 0, sizeof(vdc));
 
-    /* allocate VRAM */
-    vdc.vram = calloc(0x10000, 1);
-    if(!vdc.vram) return 1;
+	/* allocate VRAM */
+	vdc.vram = auto_malloc(0x10000);
+	if(!vdc.vram)
+		return 1;
+	memset(vdc.vram, 0, 0x10000);
 
-    /* create display bitmap */
-    vdc.bmp = bitmap_alloc(360, 256);
-    if(!vdc.bmp) return 1;
+	/* create display bitmap */
+	vdc.bmp = auto_bitmap_alloc(360, 256);
+	if(!vdc.bmp)
+		return 1;
 
-    return 0;
+	return 0;
 }
 
 
-void pce_vh_stop(void)
-{
-    logerror("*** pce_vh_stop\n");
-    if(vdc.vram) free (vdc.vram);
-    if(vdc.bmp) bitmap_free(vdc.bmp);
-}
-
-
-void pce_vh_screenrefresh(struct mame_bitmap *bitmap, int full_refresh)
+VIDEO_UPDATE( pce )
 {
     /* only refresh the visible portion of the display */
     struct rectangle pce_visible_area;
@@ -263,7 +259,10 @@ void pce_refresh_line(int line)
     int v_width =        width_table[(vdc.vdc_data[MWR].w >> 4) & 3];
 
     /* our line buffer */
-    UINT8 *line_buffer = NULL;
+    UINT8 line_buffer[(0x40 << 3) + 8];
+#ifdef MAME_DEBUG
+	int line_buffer_size;
+#endif
 
     /* pointer to the name table (Background Attribute Table) in VRAM */
     UINT16 *bat = (UINT16 *)&(vdc.vram[nt_row << (v_width+1)]);
@@ -274,9 +273,10 @@ void pce_refresh_line(int line)
     int cell_palette;
     int x, c, i;
 
-	line_buffer = malloc(vdc.physical_width);
-	if (!line_buffer)
-		return;
+#ifdef MAME_DEBUG
+	line_buffer_size = vdc.physical_width + 8;
+	assert(line_buffer_size <= sizeof(line_buffer));
+#endif
 
     /* character blanking bit */
     if(!(vdc.vdc_data[CR].w & CR_BB))
@@ -312,6 +312,10 @@ void pce_refresh_line(int line)
 				i2 = (b2 >> (7-x)) & 1;
 				i3 = (b3 >> (7-x)) & 1;
 				c = (cell_palette << 4 | i3 << 3 | i2 << 2 | i1 << 1 | i0);
+
+#ifdef MAME_DEBUG
+				assert((i<<3)+x < (line_buffer_size / sizeof(line_buffer[0])));
+#endif
 				line_buffer[(i<<3)+x] = Machine->pens[c];
 			}
 		}
@@ -323,7 +327,6 @@ void pce_refresh_line(int line)
 	}
 
 	draw_scanline8(vdc.bmp, (center_x-8)+(8-(scroll_x & 7)), center_y+line, vdc.physical_width, line_buffer, Machine->pens, -1);
-	free(line_buffer);
 }
 
 

@@ -119,7 +119,7 @@ const struct GameDriver *drivers[] =
 //  ////	DRIVER( cstudio2 )      /* Colour Studio II				        */
 
 	/* FAIRCHILD */
-////	DRIVER( channelf )      /* Fairchild Channel F VES - 1976                       */
+	DRIVER( channelf )      /* Fairchild Channel F VES - 1976                       */
 	/* checkers cartridge, additional processor in it */
 	/* saba videoplay */
 	/* itt telematch */
@@ -135,7 +135,7 @@ const struct GameDriver *drivers[] =
 //  ////	DRIVER( coleconb )	   ColecoVision (No BIOS load)					  */
 
 	/* NEC */
-////	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
+	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
 
 	DRIVER( arcadia ) /* Emerson Arcadia 2001                           */
 	/* schmid tvg 2000 */

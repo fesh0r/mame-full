@@ -24,10 +24,6 @@
 
 static UINT8 latch[4];
 
-void channelf_init_machine(void)
-{
-}
-
 void init_channelf(void)
 {
 	UINT8 *mem = memory_region(REGION_GFX1);
@@ -214,41 +210,30 @@ static struct CustomSound_interface channelf_sound_interface = {
 	channelf_sh_custom_update
 };
 
-static struct MachineDriver machine_driver_channelf =
-{
+
+static MACHINE_DRIVER_START( channelf )
 	/* basic machine hardware */
-	{
-		{
-			CPU_F8,
-			3579545/2,	/* Colorburst/2 */
-			readmem,writemem,readport,writeport,
-			ignore_interrupt, 1
-        }
-	},
-	/* frames per second, VBL duration */
-	60, DEFAULT_60HZ_VBLANK_DURATION,
-	1,						/* single CPU */
-	channelf_init_machine,
-	NULL,					/* stop machine */
+	MDRV_CPU_ADD(F8, 3579545/2)        /* Colorburst/2 */
+	MDRV_CPU_MEMORY(readmem,writemem)
+	MDRV_CPU_PORTS(readport,writeport)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
 
-	/* video hardware */
-	128*2, 64*2, { 1*2, 112*2 - 1, 0, 64*2 - 1},
-	NULL,
-	8, 0,
-	channelf_init_palette,			/* convert color prom */
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_SCREEN_SIZE(128*2, 64*2)
+	MDRV_VISIBLE_AREA(1*2, 112*2 - 1, 0, 64*2 - 1)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_COLORTABLE_LENGTH(0)
+	MDRV_PALETTE_INIT( channelf )
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
-	0,						/* obsolete */
-	channelf_vh_start,
-	channelf_vh_stop,
-	channelf_vh_screenrefresh,
+	MDRV_VIDEO_START( channelf )
+	MDRV_VIDEO_UPDATE( channelf )
 
 	/* sound hardware */
-	0,0,0,0,
-	{
-		{ SOUND_CUSTOM, &channelf_sound_interface },
-	}
-};
+	MDRV_SOUND_ADD(CUSTOM, channelf_sound_interface)
+MACHINE_DRIVER_END
 
 ROM_START(channelf)
 	ROM_REGION(0x10000,REGION_CPU1,0)

@@ -143,8 +143,8 @@ MACHINE_INIT( sgb )
 	   For some reason that I haven't figured out, they store the tile
 	   data differently.  Hacks will go once I figure it out */
 	sgb_hack = 0;
-	if( strncmp( gb_ram + 0x134, "DONKEYKONGLAND 2", 16 ) == 0 ||
-		strncmp( gb_ram + 0x134, "DONKEYKONGLAND 3", 16 ) == 0 )
+	if( strncmp( (const char*)(gb_ram + 0x134), "DONKEYKONGLAND 2", 16 ) == 0 ||
+		strncmp( (const char*)(gb_ram + 0x134), "DONKEYKONGLAND 3", 16 ) == 0 )
 	{
 		sgb_hack = 1;
 	}
@@ -806,32 +806,32 @@ WRITE_HANDLER ( sgb_w_io )
 								break;
 							case 0x0A:	/* PAL_SET */
 								{
-									UINT16 index, J, I;
+									UINT16 index_, J, I;
 
 									/* Palette 0 */
-									index = (UINT16)(sgb_data[1] | (sgb_data[2] << 8)) * 4;
-									Machine->remapped_colortable[0] = sgb_pal_data[index];
-									Machine->remapped_colortable[1] = sgb_pal_data[index + 1];
-									Machine->remapped_colortable[2] = sgb_pal_data[index + 2];
-									Machine->remapped_colortable[3] = sgb_pal_data[index + 3];
+									index_ = (UINT16)(sgb_data[1] | (sgb_data[2] << 8)) * 4;
+									Machine->remapped_colortable[0] = sgb_pal_data[index_];
+									Machine->remapped_colortable[1] = sgb_pal_data[index_ + 1];
+									Machine->remapped_colortable[2] = sgb_pal_data[index_ + 2];
+									Machine->remapped_colortable[3] = sgb_pal_data[index_ + 3];
 									/* Palette 1 */
-									index = (UINT16)(sgb_data[3] | (sgb_data[4] << 8)) * 4;
-									Machine->remapped_colortable[4] = sgb_pal_data[index];
-									Machine->remapped_colortable[5] = sgb_pal_data[index + 1];
-									Machine->remapped_colortable[6] = sgb_pal_data[index + 2];
-									Machine->remapped_colortable[7] = sgb_pal_data[index + 3];
+									index_ = (UINT16)(sgb_data[3] | (sgb_data[4] << 8)) * 4;
+									Machine->remapped_colortable[4] = sgb_pal_data[index_];
+									Machine->remapped_colortable[5] = sgb_pal_data[index_ + 1];
+									Machine->remapped_colortable[6] = sgb_pal_data[index_ + 2];
+									Machine->remapped_colortable[7] = sgb_pal_data[index_ + 3];
 									/* Palette 2 */
-									index = (UINT16)(sgb_data[5] | (sgb_data[6] << 8)) * 4;
-									Machine->remapped_colortable[8] = sgb_pal_data[index];
-									Machine->remapped_colortable[9] = sgb_pal_data[index + 1];
-									Machine->remapped_colortable[10] = sgb_pal_data[index + 2];
-									Machine->remapped_colortable[11] = sgb_pal_data[index + 3];
+									index_ = (UINT16)(sgb_data[5] | (sgb_data[6] << 8)) * 4;
+									Machine->remapped_colortable[8] = sgb_pal_data[index_];
+									Machine->remapped_colortable[9] = sgb_pal_data[index_ + 1];
+									Machine->remapped_colortable[10] = sgb_pal_data[index_ + 2];
+									Machine->remapped_colortable[11] = sgb_pal_data[index_ + 3];
 									/* Palette 3 */
-									index = (UINT16)(sgb_data[7] | (sgb_data[8] << 8)) * 4;
-									Machine->remapped_colortable[12] = sgb_pal_data[index];
-									Machine->remapped_colortable[13] = sgb_pal_data[index + 1];
-									Machine->remapped_colortable[14] = sgb_pal_data[index + 2];
-									Machine->remapped_colortable[15] = sgb_pal_data[index + 3];
+									index_ = (UINT16)(sgb_data[7] | (sgb_data[8] << 8)) * 4;
+									Machine->remapped_colortable[12] = sgb_pal_data[index_];
+									Machine->remapped_colortable[13] = sgb_pal_data[index_ + 1];
+									Machine->remapped_colortable[14] = sgb_pal_data[index_ + 2];
+									Machine->remapped_colortable[15] = sgb_pal_data[index_ + 3];
 									/* Attribute File */
 									if( sgb_data[9] & 0x40 )
 										sgb_window_mask = 0;

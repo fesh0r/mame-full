@@ -164,12 +164,13 @@ DRVLIBS = \
 	$(OBJ)/p2000.a	  \
 	$(OBJ)/veb.a	  \
 	$(OBJ)/necpc.a	  \
+	$(OBJ)/nec.a	  \
+	$(OBJ)/fairch.a   \
 #	$(OBJ)/mk1.a      \
 #	$(OBJ)/mk2.a      \
 #	$(OBJ)/coleco.a   \
 #	$(OBJ)/bally.a	  \
 #	$(OBJ)/rca.a	  \
-#	$(OBJ)/fairch.a   \
 #	$(OBJ)/magnavox.a \
 #	$(OBJ)/svision.a  \
 #	$(OBJ)/intv.a     \
@@ -192,7 +193,6 @@ DRVLIBS = \
 #	$(OBJ)/svi.a      \
 #	$(OBJ)/ti85.a     \
 #	$(OBJ)/sinclair.a \
-#	$(OBJ)/nec.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/mtx.a	  \
 #	$(OBJ)/aim65.a    \

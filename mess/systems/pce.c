@@ -8,13 +8,14 @@
 
 ****************************************************************************/
 
+#include <assert.h>
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/vdc.h"
 #include "cpu/h6280/h6280.h"
 #include "includes/pce.h"
 
-static int pce_interrupt(void)
+static INTERRUPT_GEN( pce_interrupt )
 {
     int ret = 0;
 
@@ -32,7 +33,7 @@ static int pce_interrupt(void)
     if(vdc.curline == ((vdc.vdc_data[RCR].w & 0x03FF) - 64))
     {
         vdc.status |= VDC_RR;
-        ret = H6280_INT_IRQ1;
+        ret = 1;
     }
 
     /* handle frame events */
@@ -44,22 +45,26 @@ static int pce_interrupt(void)
         if((vdc.vdc_data[DCR].w & DCR_DSR) || vdc.dvssr_write)
         {
             if(vdc.dvssr_write) vdc.dvssr_write = 0;
+#ifdef MAME_DEBUG
+			assert(((vdc.vdc_data[DVSSR].w<<1) + 512) <= 0x10000);
+#endif
             memcpy(&vdc.sprite_ram, &vdc.vram[vdc.vdc_data[DVSSR].w<<1], 512);
             vdc.status |= VDC_DS;   /* set satb done flag */
 
             /* generate interrupt if needed */
             if(vdc.vdc_data[DCR].w & DCR_DSC)
             {
-                ret = H6280_INT_IRQ1;
+                ret = 1;
             }
         }
 
         if(vdc.vdc_data[CR].w & CR_VR)  /* generate IRQ1 if enabled */
         {
-            ret = H6280_INT_IRQ1;
+            ret = 1;
         }
     }
-    return (ret);
+	if (ret)
+		cpu_set_irq_line(0, 0, PULSE_LINE);
 }
 
 /* stubs for the irq/psg/timer code */
@@ -178,33 +183,33 @@ static struct GfxDecodeInfo pce_gfxdecodeinfo[] =
 MEMORY_END
 #endif
 
-static struct MachineDriver machine_driver_pce =
-{
-    {
-        {
-            CPU_H6280,
-            7195090,
-            pce_readmem, pce_writemem, pce_readport, pce_writeport,
-            pce_interrupt, VDC_LPF
-        },
-    },
-    60, DEFAULT_60HZ_VBLANK_DURATION,
-    1,
-    pce_init_machine,
-    pce_stop_machine,
 
-    45*8, 32*8, { 0*8, 45*8-1, 0*8, 32*8-1 },
-    0,
-    /*pce_gfxdecodeinfo,*/
-    512, 512,
-    0,
-    VIDEO_TYPE_RASTER,
-    0,		/* was... (256*2) */
-    pce_vh_start,
-    pce_vh_stop,
-    pce_vh_screenrefresh,
-    0, 0, 0, 0
-};
+static MACHINE_DRIVER_START( pce )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(H6280, 7195090)
+	MDRV_CPU_MEMORY(pce_readmem, pce_writemem)
+	MDRV_CPU_PORTS(pce_readport, pce_writeport)
+	MDRV_CPU_VBLANK_INT(pce_interrupt, VDC_LPF)
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(1)
+
+	MDRV_MACHINE_INIT( pce )
+
+    /* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(45*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 45*8-1, 0*8, 32*8-1)
+	/* MDRV_GFXDECODE( pce_gfxdecodeinfo ) */
+	MDRV_PALETTE_LENGTH(512)
+	MDRV_COLORTABLE_LENGTH(512)
+
+	MDRV_VIDEO_START( pce )
+	MDRV_VIDEO_UPDATE( pce )
+
+	MDRV_NVRAM_HANDLER( pce )
+MACHINE_DRIVER_END
+
 
 static const struct IODevice io_pce[] = {
     {
