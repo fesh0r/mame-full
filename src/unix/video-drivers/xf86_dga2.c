@@ -52,6 +52,10 @@ static Visual dga_xvisual;
 
 static unsigned char *doublebuffer_buffer = NULL;
 
+#ifdef TDFX_DGA_WORKAROUND
+static int current_X11_mode = 0;
+#endif
+
 int xf86_dga2_init(void)
 {
 	int i,j ;
@@ -108,11 +112,25 @@ static int xf86_dga_vidmode_find_best_vidmode(int bitmap_depth)
 	int score, best_score = 0;
 	int i,modecount = 0;
 
+#ifdef TDFX_DGA_WORKAROUND
+	int dotclock;
+	XF86VidModeModeLine modeline;
+
+	XF86VidModeGetModeLine(display, xf86ctx.screen, &dotclock, &modeline);
+#endif
+
 	xf86ctx.modes = XDGAQueryModes(display, xf86ctx.screen, &modecount);
 	fprintf(stderr, "XDGA: info: found %d modes:\n", modecount);
 
 	for(i=0;i<modecount;i++)
 	{
+
+#ifdef TDFX_DGA_WORKAROUND
+		if (xf86ctx.modes[i].viewportWidth == modeline.hdisplay &&
+			xf86ctx.modes[i].viewportHeight == modeline.vdisplay)
+			current_X11_mode = xf86ctx.modes[i].num;
+#endif
+		
 		if (mode_disabled(xf86ctx.modes[i].viewportWidth, xf86ctx.modes[i].viewportHeight, bitmap_depth))
 			continue;
 		if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
@@ -321,7 +339,7 @@ int xf86_dga2_create_display(int bitmap_depth)
 	x11_grab_mouse         = FALSE;
 	
 	window  = RootWindow(display,xf86ctx.screen);
-        
+	
 	if (first_time)
 	{
 		if(xf86_dga_vidmode_setup_mode_restore())
@@ -405,9 +423,17 @@ int xf86_dga2_create_display(int bitmap_depth)
 	while(XDGAGetViewportStatus(display, xf86ctx.screen))
 		;
 
-	memset(xf86ctx.base_addr, 0,
-	       xf86ctx.device->mode.bytesPerScanline
-	       * xf86ctx.device->mode.imageHeight);
+	if (xf86ctx.device->mode.flags & XDGASolidFillRect) {
+		XDGAFillRectangle(display, xf86ctx.screen, 0, 0,
+			DisplayWidth(display, xf86ctx.screen),
+			DisplayHeight(display, xf86ctx.screen),
+			BlackPixel(display, xf86ctx.screen));
+		XDGASync(display, xf86ctx.screen);
+	} else {
+		memset(xf86ctx.base_addr, 0,
+		       xf86ctx.device->mode.bytesPerScanline
+		       * xf86ctx.device->mode.imageHeight);
+	}
 
 	effect_init2(bitmap_depth, depth, xf86ctx.width);
 	
@@ -567,6 +593,12 @@ void xf86_dga2_close_display(void)
 	}
 	if(xf86ctx.vidmode_changed)
 	{
+#ifdef TDFX_DGA_WORKAROUND
+		/* Restore the right video mode before leaving DGA  */
+		/* The tdfx driver would have to do it, but it doesn't work ...*/
+		XDGASetMode(display, xf86ctx.screen, current_X11_mode);
+#endif
+
 		XDGASetMode(display, xf86ctx.screen, 0);
 		xf86ctx.vidmode_changed = FALSE;
 	}
