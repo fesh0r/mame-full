@@ -1157,8 +1157,11 @@ static WRITE8_HANDLER( apple2gs_c0xx_w )
 			break;
 
 		case 0x35:	/* C035 - SHADOW */
-			apple2gs_shadow = data;
-			apple2_setvar(a2, ~0);
+			if (apple2gs_shadow != data)
+			{
+				apple2gs_shadow = data;
+				apple2_update_memory();
+			}
 			break;
 
 		case 0x36:	/* C036 - CYAREG */
@@ -1352,7 +1355,7 @@ static WRITE8_HANDLER( apple2gs_main0400_w )
 	offset += 0x000400;
 	mess_ram[offset] = data;
 
-	if ((apple2gs_shadow & 0x01) == 0x00)
+	if (!(apple2gs_shadow & 0x01))
 	{
 		apple2gs_slowmem[offset] = data;
 		apple2_video_touch(offset);
@@ -1364,7 +1367,7 @@ static WRITE8_HANDLER( apple2gs_aux0400_w )
 	offset += 0x010400;
 	mess_ram[offset] = data;
 
-	if ((apple2gs_shadow & 0x01) == 0x00)
+	if (!(apple2gs_shadow & 0x01))
 	{
 		apple2gs_slowmem[offset] = data;
 		apple2_video_touch(offset);
@@ -1412,12 +1415,12 @@ static WRITE8_HANDLER( apple2gs_aux4000_w )
 	offset += 0x014000;
 	mess_ram[offset] = data;
 
-	if ((offset >= 0x004000) && (offset <= 0x005FFF))
+	if ((offset >= 0x014000) && (offset <= 0x015FFF))
 	{
 		if (!(apple2gs_shadow & 0x14) || !(apple2gs_shadow & 0x08))
 			apple2gs_slowmem[offset] = data;
 	}
-	else if ((offset >= 0x006000) && (offset <= 0x009FFF))
+	else if ((offset >= 0x016000) && (offset <= 0x019FFF))
 	{
 		if (!(apple2gs_shadow & 0x08))
 			apple2gs_slowmem[offset] = data;

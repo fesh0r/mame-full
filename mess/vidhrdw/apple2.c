@@ -42,9 +42,9 @@ static UINT8 *lores_tiledata;
 #define AQUA	14
 #define	WHITE	15
 
-#define FLASH_PERIOD	TIME_IN_SEC(0.25)
-
-#define PROFILER_VIDEOTOUCH PROFILER_USER3
+#define ALWAYS_REFRESH			0
+#define FLASH_PERIOD			TIME_IN_SEC(0.25)
+#define PROFILER_VIDEOTOUCH		PROFILER_USER3
 
 /***************************************************************************
   helpers
@@ -473,7 +473,7 @@ VIDEO_UPDATE( apple2 )
 		new_a2 &= ~VAR_PAGE2;
 	new_a2 &= VAR_TEXT | VAR_MIXED | VAR_HIRES | VAR_DHIRES | VAR_80COL | VAR_PAGE2 | VAR_ALTCHARSET;
 
-	if (new_a2 != old_a2)
+	if (ALWAYS_REFRESH || (new_a2 != old_a2))
 	{
 		old_a2 = new_a2;
 		tilemap_mark_all_tiles_dirty(text_tilemap);
