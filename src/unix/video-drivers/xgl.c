@@ -73,8 +73,10 @@ GLCapabilities glCaps;
 char * libGLName=0;
 char * libGLUName=0;
 
+static char *gl_res = NULL;
+
 static const char * xgl_version_str = 
-	"\nGLmame v0.85, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
+	"\nGLmame v0.86, by Sven Goethel, http://www.jausoft.com, sgoethel@jausoft.com,\nbased upon GLmame v0.6 driver for xmame, written by Mike Oliphant\n\n";
 
 struct rc_option display_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
@@ -126,6 +128,9 @@ struct rc_option display_opts[] = {
    { "cabinet",		NULL,			rc_string,	&cabname,
      "glmamejau",	0,			0,		NULL,
      "Specify which cabinet model to use (default: glmamejau)" },
+   { "glres",	        NULL,			rc_string,	&gl_res,
+     NULL,		0,			0,		NULL,
+     "Always scale games to XresxYres, keeping their aspect ratio. This overrides the scale options" },
    { NULL,		NULL,			rc_link,	x11_input_opts,
      NULL,		0,			0,		NULL,
      NULL },
@@ -181,6 +186,7 @@ int sysdep_create_display(int depth)
   int resizeEvtMask = 0;
   VisualGC vgc;
   int ownwin = 1;
+  int customSize=0;
 
   /* If using 3Dfx, Resize the window to fullscreen so we don't lose focus
      We have to do this after glXMakeCurrent(), or else the voodoo driver
@@ -188,6 +194,17 @@ int sysdep_create_display(int depth)
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f') )
   	fullscreen=1;
 
+  if(gl_res!=NULL)
+  {
+     if( sscanf(gl_res, "%dx%d", &fullscreen_width, &fullscreen_height) != 2)
+     {
+        fprintf(stderr, "error: invalid value for glres: %s\n", gl_res);
+     } else {
+        customSize=1;
+	orig_width = fullscreen_width;
+	orig_height = fullscreen_height;
+     }
+  }
   if(!fullscreen) 
 	  resizeEvtMask = StructureNotifyMask ;
 
@@ -197,11 +214,13 @@ int sysdep_create_display(int depth)
   myscreen=DefaultScreen(display);
   cursor=XCreateFontCursor(display,XC_trek);
   
-  fullscreen_width = screen->width;
-  fullscreen_height = screen->height;
-
-  orig_width = visual_width*widthscale;
-  orig_height = visual_height*heightscale;
+  if(!customSize)
+  {
+  	fullscreen_width = screen->width;
+  	fullscreen_height = screen->height;
+	orig_width = visual_width*widthscale;
+	orig_height = visual_height*heightscale;
+  }
 
   if(fullscreen)
   {
