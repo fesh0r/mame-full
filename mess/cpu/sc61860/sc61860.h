@@ -40,10 +40,6 @@
 extern "C" {
 #endif
 
-#ifdef RUNTIME_LOADER
-	extern void sc61860_runtime_loader_init(void);
-#endif
-
 typedef struct {
     bool (*reset)(void);
     bool (*brk)(void);
@@ -55,23 +51,6 @@ typedef struct {
     void (*outc)(int);
 } SC61860_CONFIG;
 
-extern int sc61860_icount;				/* cycle count */
-
-extern void sc61860_init(void);
-extern void sc61860_reset(void *param);
-extern void sc61860_exit(void);
-extern int sc61860_execute(int cycles);
-extern unsigned sc61860_get_context(void *dst);
-extern void sc61860_set_context(void *src);
-extern unsigned sc61860_get_reg(int regnum);
-extern void sc61860_set_reg(int regnum, unsigned val);
-extern void sc61860_set_nmi_line(int state);
-extern void sc61860_set_irq_line(int irqline, int state);
-extern void sc61860_set_irq_callback(int (*callback)(int irqline));
-extern void sc61860_state_save(void *file);
-extern void sc61860_state_load(void *file);
-extern const char *sc61860_info(void *context, int regnum);
-extern unsigned sc61860_dasm(char *buffer, unsigned pc);
 
 /* add these in the memory region for better usage of mame debugger */
 READ_HANDLER(sc61860_internal_r);
@@ -81,6 +60,8 @@ WRITE_HANDLER(sc61860_internal_w);
 void sc61860_2ms_tick(int param);
 /* this is though for power on/off of the sharps */
 UINT8 *sc61860_internal_ram(void);
+
+void sc61860_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef __cplusplus
 }

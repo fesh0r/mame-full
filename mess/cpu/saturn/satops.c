@@ -2,13 +2,13 @@
 
 INLINE int READ_OP(void)
 {
-	saturn_icount-=3;
+	saturn_ICount-=3;
 	return cpu_readop(saturn.pc++);
 }
 
 INLINE int READ_OP_ARG(void)
 {
-	saturn_icount-=3;
+	saturn_ICount-=3;
 	return cpu_readop_arg(saturn.pc++);
 }
 
@@ -53,8 +53,8 @@ INLINE int READ_OP_ARG20(void)
 INLINE int READ_NIBBLE(SaturnAdr adr)
 {
 	int data;
-	saturn_icount-=3;
-	data=cpu_readmem20(adr);
+	saturn_ICount-=3;
+	data = program_read_byte(adr);
 	if (saturn.config&&saturn.config->crc) saturn.config->crc(adr, data);
 	return data;
 }
@@ -83,8 +83,8 @@ INLINE int READ_20(SaturnAdr adr)
 
 INLINE void WRITE_NIBBLE(SaturnAdr adr, SaturnNib nib)
 {
-	saturn_icount-=3;
-	cpu_writemem20(adr, nib);
+	saturn_ICount -= 3;
+	program_write_byte(adr, nib);
 }
 
 #ifdef LSB_FIRST
@@ -334,7 +334,7 @@ INLINE void saturn_st_jump_bit_clear(void)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -366,7 +366,7 @@ INLINE void saturn_st_jump_bit_set(void)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -430,7 +430,7 @@ INLINE void saturn_p_equals(void)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -446,7 +446,7 @@ INLINE void saturn_p_not_equals(void)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -470,8 +470,8 @@ INLINE void saturn_jump(int adr, int jump)
 {
 	if (jump) {
 		saturn.pc=adr;
-		saturn_icount-=10;
-		change_pc20(saturn.pc);
+		saturn_ICount-=10;
+		change_pc(saturn.pc);
 	}
 }
 
@@ -479,48 +479,48 @@ INLINE void saturn_call(int adr)
 {
 	saturn_push(saturn.pc);
 	saturn.pc=adr;
-//	saturn_icount-=10;
-	change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+	change_pc(saturn.pc);
 }
 
 INLINE void saturn_return(int yes)
 {
 	if (yes) {
 		saturn.pc=saturn_pop();
-//	saturn_icount-=10;
-		change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+		change_pc(saturn.pc);
 	}
 }
 
 INLINE void saturn_return_carry_set(void)
 {
 	saturn.pc=saturn_pop();
-//	saturn_icount-=10;
-	change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+	change_pc(saturn.pc);
 	saturn.carry=1;
 }
 
 INLINE void saturn_return_carry_clear(void)
 {
 	saturn.pc=saturn_pop();
-//	saturn_icount-=10;
-	change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+	change_pc(saturn.pc);
 	saturn.carry=0;
 }
 
 INLINE void saturn_return_interrupt(void)
 {
 	saturn.pc=saturn_pop();
-//	saturn_icount-=10;
-	change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+	change_pc(saturn.pc);
 }
 
 INLINE void saturn_return_xm_set(void)
 {
 	saturn.pc=saturn_pop();
 	saturn.hst|=XM;
-//	saturn_icount-=10;
-	change_pc20(saturn.pc);
+//	saturn_ICount-=10;
+	change_pc(saturn.pc);
 }
 
 INLINE void saturn_pop_c(void)
@@ -536,7 +536,7 @@ INLINE void saturn_push_c(void)
 INLINE void saturn_indirect_jump(int reg)
 {
 	saturn.pc=READ_20(S64_READ_A(reg));
-	change_pc20(saturn.pc);
+	change_pc(saturn.pc);
 }
 
 INLINE void saturn_equals_zero(int reg, int begin, int count)
@@ -545,7 +545,7 @@ INLINE void saturn_equals_zero(int reg, int begin, int count)
 	for (i=0; i<count; i++) {
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		if (t!=0) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i==count;
 	adr=READ_OP_DIS8();
@@ -555,7 +555,7 @@ INLINE void saturn_equals_zero(int reg, int begin, int count)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -566,7 +566,7 @@ INLINE void saturn_equals(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t!=t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i==count;
 	adr=READ_OP_DIS8();
@@ -576,7 +576,7 @@ INLINE void saturn_equals(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -586,7 +586,7 @@ INLINE void saturn_not_equals_zero(int reg, int begin, int count)
 	for (i=0; i<count; i++) {
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		if (t==0) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i==count;
 	adr=READ_OP_DIS8();
@@ -596,7 +596,7 @@ INLINE void saturn_not_equals_zero(int reg, int begin, int count)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -607,7 +607,7 @@ INLINE void saturn_not_equals(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t==t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i==count;
 	adr=READ_OP_DIS8();
@@ -617,7 +617,7 @@ INLINE void saturn_not_equals(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -628,7 +628,7 @@ INLINE void saturn_greater(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t<=t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i<0;
 	adr=READ_OP_DIS8();
@@ -638,7 +638,7 @@ INLINE void saturn_greater(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -649,7 +649,7 @@ INLINE void saturn_greater_equals(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t<t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i<0;
 	adr=READ_OP_DIS8();
@@ -659,7 +659,7 @@ INLINE void saturn_greater_equals(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -670,7 +670,7 @@ INLINE void saturn_smaller_equals(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t>t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i<0;
 	adr=READ_OP_DIS8();
@@ -680,7 +680,7 @@ INLINE void saturn_smaller_equals(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -691,7 +691,7 @@ INLINE void saturn_smaller(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t2=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		if (t>=t2) break;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=i<0;
 	adr=READ_OP_DIS8();
@@ -701,7 +701,7 @@ INLINE void saturn_smaller(int reg, int begin, int count, int right)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);
+		change_pc(saturn.pc);
 	}
 }
 
@@ -733,7 +733,7 @@ INLINE void saturn_jump_bit_clear(int reg)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);		
+		change_pc(saturn.pc);		
 	}
 }
 
@@ -765,14 +765,14 @@ INLINE void saturn_jump_bit_set(int reg)
 		} else {
 			saturn.pc=(saturn.pc+adr-2)&0xfffff;
 		}
-		change_pc20(saturn.pc);		
+		change_pc(saturn.pc);		
 	}
 }
 
 INLINE void saturn_load_pc(int reg)
 {
 	saturn.pc=S64_READ_A(reg);
-	change_pc20(saturn.pc);
+	change_pc(saturn.pc);
 }
 
 INLINE void saturn_store_pc(int reg)
@@ -784,7 +784,7 @@ INLINE void saturn_exchange_pc(int reg)
 {
 	int temp=saturn.pc;
 	saturn.pc=S64_READ_A(reg);
-	change_pc20(saturn.pc);
+	change_pc(saturn.pc);
 	S64_WRITE_A(reg, temp);
 }
 
@@ -859,7 +859,7 @@ INLINE void saturn_load_nibbles(int reg, int begin, int count, int adr)
 	int i;
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(reg,(begin+i)&0xf,READ_NIBBLE(saturn.d[adr]+i) );
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -868,7 +868,7 @@ INLINE void saturn_store_nibbles(int reg, int begin, int count, int adr)
 	int i;
 	for (i=0; i<count; i++) {
 		WRITE_NIBBLE(saturn.d[adr]+i,S64_READ_NIBBLE(reg,(begin+i)&0xf) );
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -924,7 +924,7 @@ INLINE void saturn_clear(int reg, int begin, int count)
 	int i;
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, 0);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -939,7 +939,7 @@ INLINE void saturn_exchange(int left, int begin, int count, int right)
 		temp=S64_READ_NIBBLE(left,(begin+i)&0xf);
 		S64_WRITE_NIBBLE(left, (begin+i)&0xf, S64_READ_NIBBLE(right,(begin+i)&0xf));
 		S64_WRITE_NIBBLE(right, (begin+i)&0xf, temp);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -951,7 +951,7 @@ INLINE void saturn_copy(int dest, int begin, int count, int src)
 	int i;
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(dest, (begin+i)&0xf, S64_READ_NIBBLE(src, (begin+i)&0xf));
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -969,7 +969,7 @@ INLINE void saturn_add(int reg, int begin, int count, int right)
 		}
 		t+=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf , t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=t==0x10;
 }
@@ -982,7 +982,7 @@ INLINE void saturn_add_const(int reg, int begin, int count, SaturnNib right)
 		t+=right;
 		right=(right>>4)+1;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 		if (t<0x10) break;
 	}
 	saturn.carry=t>=0x10;
@@ -1002,7 +1002,7 @@ INLINE void saturn_sub(int reg, int begin, int count, int right)
 		}
 		t-=S64_READ_NIBBLE(right, (begin+i)&0xf );
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	saturn.carry=t<0;
 }
@@ -1015,7 +1015,7 @@ INLINE void saturn_sub_const(int reg, int begin, int count, int right)
 		t-=right;
 		right=(right>>4)+1;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 		if (t>=0) break;
 	}
 	saturn.carry=t<0;
@@ -1031,7 +1031,7 @@ INLINE void saturn_sub2(int reg, int begin, int count, int right)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t=S64_READ_NIBBLE(right, i)-t;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 		if (t>=0) break;
 	}
 	saturn.carry=t<0;
@@ -1047,7 +1047,7 @@ INLINE void saturn_increment(int reg, int begin, int count)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t++;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t&0x0f);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 		if (t!=0x10) break;
 	}
 }
@@ -1062,7 +1062,7 @@ INLINE void saturn_decrement(int reg, int begin, int count)
 		t=S64_READ_NIBBLE(reg, (begin+i)&0xf );
 		t=(t-1)&0xf;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, t);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 		if (t!=0) break;
 	}
 	saturn.carry=t==0;
@@ -1079,7 +1079,7 @@ INLINE void saturn_invert(int reg, int begin, int count)
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, (n=S64_READ_NIBBLE(reg,(begin+i)&0xf)) ^ 0xf);
 		saturn.carry=saturn.carry && (n==0);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -1096,7 +1096,7 @@ INLINE void	saturn_negate(int reg, int begin, int count)
 		saturn.carry=saturn.carry && (n==0);
 		n=((n ^ 0xf)+1)&0xf;
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, n);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -1109,7 +1109,7 @@ INLINE void saturn_or(int dest, int begin, int count, int src)
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(dest, (begin+i)&0xf, 
 						 S64_READ_NIBBLE(dest,(begin+i)&0xf)|S64_READ_NIBBLE(src,(begin+i)&0xf));
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -1122,7 +1122,7 @@ INLINE void saturn_and(int dest, int begin, int count, int src)
 	for (i=0; i<count; i++) {
 		S64_WRITE_NIBBLE(dest, (begin+i)&0xf, 
 						 S64_READ_NIBBLE(dest,(begin+i)&0xf)&S64_READ_NIBBLE(src,(begin+i)&0xf));
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }
 
@@ -1134,10 +1134,10 @@ INLINE void saturn_shift_nibble_left(int reg, int begin, int count)
 	int i;
 	for (i=count; i>1; i--) {
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, S64_READ_NIBBLE(reg,(begin+i-1)&0xf) );
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	S64_WRITE_NIBBLE(reg, begin, 0);
-	saturn_icount-=2;
+	saturn_ICount-=2;
 }
 
 /****************************************************************************
@@ -1148,10 +1148,10 @@ INLINE void saturn_shift_nibble_right(int reg, int begin, int count)
 	int i;
 	for (i=1; i<count; i++) {
 		S64_WRITE_NIBBLE(reg, (begin+i-1)&0xf, S64_READ_NIBBLE(reg,(begin+i)&0xf) );
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	S64_WRITE_NIBBLE(reg, (begin+i-1)&0xf, 0);
-	saturn_icount-=2;
+	saturn_ICount-=2;
 }
 
 /****************************************************************************
@@ -1162,7 +1162,7 @@ INLINE void saturn_rotate_nibble_left_w(int reg)
 	SaturnNib a=S64_READ_NIBBLE(reg, 15);
 	S64_WRITE_W(reg, S64_READ_W(reg)<<4);
 	S64_WRITE_NIBBLE(reg,0,a);
-	saturn_icount-=32;
+	saturn_ICount-=32;
 }
 
 INLINE void saturn_rotate_nibble_right_w(int reg)
@@ -1171,7 +1171,7 @@ INLINE void saturn_rotate_nibble_right_w(int reg)
 	if (a) saturn.hst|=SB;
 	S64_WRITE_W(reg, S64_READ_W(reg)>>4);
 	S64_WRITE_NIBBLE(reg,15,a);
-	saturn_icount-=32;
+	saturn_ICount-=32;
 }
 
 /****************************************************************************
@@ -1185,10 +1185,10 @@ INLINE void saturn_shift_right(int reg, int begin, int count)
 		if (c) t|=0x10;
 		c=t&1;
 		S64_WRITE_NIBBLE(reg, (begin+i-1)&0xf, t>>1);
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 	if (c) saturn.hst|=SB;
-	saturn_icount-=2;
+	saturn_ICount-=2;
 }
 
 
@@ -1204,6 +1204,6 @@ INLINE void saturn_shift_left(int reg, int begin, int count)
 		t=S64_READ_NIBBLE(reg,(begin+i)&0xf);
 		S64_WRITE_NIBBLE(reg, (begin+i)&0xf, ((t<<1)&0xf)|saturn.carry);
 		saturn.carry=t&8?1:0;
-		saturn_icount-=2;
+		saturn_ICount-=2;
 	}
 }

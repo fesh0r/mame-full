@@ -1893,9 +1893,9 @@ static int validitychecks(void)
 						printf("%s: %s uses non-present CPU\n",drivers[i]->source_file,drivers[i]->name);
 						error = 1;
 					}
-
-					/* check to make sure that this CPU core has the necessities filled out */
+					else
 					{
+						/* check to make sure that this CPU core has the necessities filled out */
 						const struct cpu_interface *cpuintrf;
 						union cpuinfo info;
 						const INT8 *reg;

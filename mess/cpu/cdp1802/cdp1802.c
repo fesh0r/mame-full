@@ -32,17 +32,6 @@
 #define LOG(x)
 #endif
 
-#ifdef RUNTIME_LOADER
-#define cdp1802_ICount cdp1802_icount
-struct cpu_interface
-cdp1802_interface=
-CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,             8, 16,     0,16,BE,1, 3);
-
-extern void cdp1802_runtime_loader_init(void)
-{
-	cpuintf[CPU_CDP1802]=cdp1802_interface;
-}
-#endif
 
 enum {
 	CDP1802_P=1,
@@ -133,7 +122,7 @@ typedef struct
 	int dma_cycles;
 }	CDP1802_Regs;
 
-int cdp1802_icount = 0;
+static int cdp1802_ICount = 0;
 
 static CDP1802_Regs cdp1802;
 
@@ -142,16 +131,16 @@ static CDP1802_Regs cdp1802;
 
 void cdp1802_dma_write(UINT8 data)
 {
-	cpu_writemem16(cdp1802.reg[0].w.l++, data);
-	cdp1802.idle=0;
-	cdp1802_icount--;
+	program_write_byte(cdp1802.reg[0].w.l++, data);
+	cdp1802.idle = 0;
+	cdp1802_ICount--;
 }
 
 int cdp1802_dma_read(void)
 {
-	cdp1802.idle=0;
-	cdp1802_icount--;
-	return cpu_readmem16(cdp1802.reg[0].w.l++);
+	cdp1802.idle = 0;
+	cdp1802_ICount--;
+	return program_read_byte(cdp1802.reg[0].w.l++);
 }
 
 /***************************************************************
@@ -159,126 +148,86 @@ int cdp1802_dma_read(void)
  ***************************************************************/
 #include "1802tbl.c"
 
-void cdp1802_reset(void *param)
+static void cdp1802_reset(void *param)
 {
-	if (param) {
+	if (param)
 		cdp1802.config=(CDP1802_CONFIG *)param;
-	}
+
 	cdp1802.p=cdp1802.q=0;
 	cdp1802.q=0;
 	cdp1802.ie=1;
 	cdp1802.df=0;
 	cdp1802.reg[0].w.l=0;
-	change_pc16(PC);
+	change_pc(PC);
 
 	cdp1802.idle=0;
 	cdp1802.dma_cycles=0;
 }
 
-void cdp1802_exit(void)
+static void cdp1802_exit(void)
 {
 	/* nothing to do yet */
 }
 
-unsigned cdp1802_get_context (void *dst)
+static void cdp1802_get_context (void *dst)
 {
 	if( dst )
 		*(CDP1802_Regs*)dst = cdp1802;
-	return sizeof(CDP1802_Regs);
 }
 
-void cdp1802_set_context (void *src)
+static void cdp1802_set_context (void *src)
 {
 	if( src )
 	{
 		cdp1802 = *(CDP1802_Regs*)src;
-		change_pc16(PC);
+		change_pc(PC);
 	}
 }
 
-unsigned cdp1802_get_reg (int regnum)
+/**************************************************************************
+ * Generic set_info
+ **************************************************************************/
+
+static void cdp1802_set_info(UINT32 state, union cpuinfo *info)
 {
-	switch( regnum )
+	switch (state)
 	{
-	case REG_PC: return PC;
-	case REG_SP: return 0;
-	case CDP1802_P: return cdp1802.p;
-	case CDP1802_X: return cdp1802.x;
-	case CDP1802_T: return cdp1802.t;
-	case CDP1802_D: return cdp1802.d;
-	case CDP1802_B: return cdp1802.b;
-	case CDP1802_R0: return cdp1802.reg[0].w.l;
-	case CDP1802_R1: return cdp1802.reg[1].w.l;
-	case CDP1802_R2: return cdp1802.reg[2].w.l;
-	case CDP1802_R3: return cdp1802.reg[3].w.l;
-	case CDP1802_R4: return cdp1802.reg[4].w.l;
-	case CDP1802_R5: return cdp1802.reg[5].w.l;
-	case CDP1802_R6: return cdp1802.reg[6].w.l;
-	case CDP1802_R7: return cdp1802.reg[7].w.l;
-	case CDP1802_R8: return cdp1802.reg[8].w.l;
-	case CDP1802_R9: return cdp1802.reg[9].w.l;
-	case CDP1802_Ra: return cdp1802.reg[0xa].w.l;
-	case CDP1802_Rb: return cdp1802.reg[0xb].w.l;
-	case CDP1802_Rc: return cdp1802.reg[0xc].w.l;
-	case CDP1802_Rd: return cdp1802.reg[0xd].w.l;
-	case CDP1802_Re: return cdp1802.reg[0xe].w.l;
-	case CDP1802_Rf: return cdp1802.reg[0xf].w.l;
-	case CDP1802_DF: return cdp1802.df;
-	case CDP1802_IE: return cdp1802.ie;
-	case CDP1802_Q: return cdp1802.q;
-	case REG_PREVIOUSPC: return cdp1802.oldpc;
-	case CDP1802_IRQ_STATE: return cdp1802.irq_state;
-	}
-	return 0;
-}
+		/* --- the following bits of info are set as 64-bit signed integers --- */
+		case CPUINFO_INT_IRQ_STATE + CDP1802_IRQ_STATE:	cdp1802.irq_state = info->i;	break;
 
-void cdp1802_set_reg (int regnum, unsigned val)
-{
-	switch( regnum )
-	{
-	case REG_PC: PC=val;change_pc16(PC);break;
-	case REG_SP: break;
-	case CDP1802_P: cdp1802.p=val;break;
-	case CDP1802_X: cdp1802.x=val;break;
-	case CDP1802_T: cdp1802.t=val;break;
-	case CDP1802_D: cdp1802.d=val;break;
-	case CDP1802_B: cdp1802.b=val;break;
-	case CDP1802_R0: cdp1802.reg[0].w.l=val;break;
-	case CDP1802_R1: cdp1802.reg[1].w.l=val;break;
-	case CDP1802_R2: cdp1802.reg[2].w.l=val;break;
-	case CDP1802_R3: cdp1802.reg[3].w.l=val;break;
-	case CDP1802_R4: cdp1802.reg[4].w.l=val;break;
-	case CDP1802_R5: cdp1802.reg[5].w.l=val;break;
-	case CDP1802_R6: cdp1802.reg[6].w.l=val;break;
-	case CDP1802_R7: cdp1802.reg[7].w.l=val;break;
-	case CDP1802_R8: cdp1802.reg[8].w.l=val;break;
-	case CDP1802_R9: cdp1802.reg[9].w.l=val;break;
-	case CDP1802_Ra: cdp1802.reg[0xa].w.l=val;break;
-	case CDP1802_Rb: cdp1802.reg[0xb].w.l=val;break;
-	case CDP1802_Rc: cdp1802.reg[0xc].w.l=val;break;
-	case CDP1802_Rd: cdp1802.reg[0xd].w.l=val;break;
-	case CDP1802_Re: cdp1802.reg[0xe].w.l=val;break;
-	case CDP1802_Rf: cdp1802.reg[0xf].w.l=val;break;
-	case CDP1802_DF: cdp1802.df=val;break;
-	case CDP1802_IE: cdp1802.ie=val;break;
-	case CDP1802_Q: cdp1802.q=val;break;
-	case REG_PREVIOUSPC: cdp1802.oldpc=val;break;
-	case CDP1802_IRQ_STATE: cdp1802.irq_state=val;break;
+		case CPUINFO_INT_REGISTER + CDP1802_P: cdp1802.p = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_X: cdp1802.x = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_T: cdp1802.t = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_D: cdp1802.d = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_B: cdp1802.b = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R0: cdp1802.reg[0].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R1: cdp1802.reg[1].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R2: cdp1802.reg[2].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R3: cdp1802.reg[3].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R4: cdp1802.reg[4].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R5: cdp1802.reg[5].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R6: cdp1802.reg[6].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R7: cdp1802.reg[7].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R8: cdp1802.reg[8].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_R9: cdp1802.reg[9].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Ra: cdp1802.reg[0xa].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rb: cdp1802.reg[0xb].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rc: cdp1802.reg[0xc].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rd: cdp1802.reg[0xd].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Re: cdp1802.reg[0xe].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rf: cdp1802.reg[0xf].w.l = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_DF: cdp1802.df = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_IE: cdp1802.ie = info->i; break;
+		case CPUINFO_INT_REGISTER + CDP1802_Q: cdp1802.q = info->i; break;
 	}
 }
-
-#if 0
-INLINE void cdp1802_take_irq(void)
-{
-}
-#endif
 
 int cdp1802_execute(int cycles)
 {
 	int ref=cycles;
-	cdp1802_icount = cycles;
+	cdp1802_ICount = cycles;
 
-	change_pc16(PC);
+	change_pc(PC);
 
 	do
 	{
@@ -287,15 +236,15 @@ int cdp1802_execute(int cycles)
 		CALL_MAME_DEBUG;
 
 		if (!cdp1802.idle) cdp1802_instruction();
-		else cdp1802_icount--;
+		else cdp1802_ICount--;
 
 		if (cdp1802.config->dma) {
-			cdp1802.config->dma(ref-cdp1802_icount);ref=cdp1802_icount;
+			cdp1802.config->dma(ref-cdp1802_ICount);ref=cdp1802_ICount;
 		}
-	} while (cdp1802_icount > 0);
+	} while (cdp1802_ICount > 0);
 
 
-	return cycles - cdp1802_icount;
+	return cycles - cdp1802_ICount;
 }
 
 void cdp1802_set_nmi_line(int state)
@@ -310,7 +259,7 @@ void cdp1802_set_irq_line(int irqline, int state)
 		cdp1802.t=(cdp1802.x<<4)|cdp1802.p;
 		cdp1802.p=1;
 		cdp1802.x=2;
-		change_pc16(PC);
+		change_pc(PC);
 	}
 }
 
@@ -346,66 +295,133 @@ void cdp1802_state_load(void *file)
 #endif
 }
 
+
+static unsigned cdp1802_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return DasmCdp1802(buffer, pc);
+#else
+	sprintf( buffer, "$%X", cpu_readop(pc) );
+	return 1;
+#endif
+}
+
+static void cdp1802_init(void)
+{
+}
+
+
+
 /****************************************************************************
  * Return a formatted string for a register
  ****************************************************************************/
-const char *cdp1802_info(void *context, int regnum)
+void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 {
-	static char buffer[16][47+1];
-	static int which = 0;
-    CDP1802_Regs *r = context;
-
-	which = (which + 1) % 16;
-	buffer[which][0] = '\0';
-	if( !context )
-		r = &cdp1802;
-
-	switch( regnum )
+	switch(state)
 	{
-	case CPU_INFO_REG+CDP1802_R0: sprintf(buffer[which],"R0:%.4x",r->reg[0].w.l);break;
-	case CPU_INFO_REG+CDP1802_R1: sprintf(buffer[which],"R1:%.4x",r->reg[1].w.l);break;
-	case CPU_INFO_REG+CDP1802_R2: sprintf(buffer[which],"R2:%.4x",r->reg[2].w.l);break;
-	case CPU_INFO_REG+CDP1802_R3: sprintf(buffer[which],"R3:%.4x",r->reg[3].w.l);break;
-	case CPU_INFO_REG+CDP1802_R4: sprintf(buffer[which],"R4:%.4x",r->reg[4].w.l);break;
-	case CPU_INFO_REG+CDP1802_R5: sprintf(buffer[which],"R5:%.4x",r->reg[5].w.l);break;
-	case CPU_INFO_REG+CDP1802_R6: sprintf(buffer[which],"R6:%.4x",r->reg[6].w.l);break;
-	case CPU_INFO_REG+CDP1802_R7: sprintf(buffer[which],"R7:%.4x",r->reg[7].w.l);break;
-	case CPU_INFO_REG+CDP1802_R8: sprintf(buffer[which],"R8:%.4x",r->reg[8].w.l);break;
-	case CPU_INFO_REG+CDP1802_R9: sprintf(buffer[which],"R9:%.4x",r->reg[9].w.l);break;
-	case CPU_INFO_REG+CDP1802_Ra: sprintf(buffer[which],"Ra:%.4x",r->reg[0xa].w.l);break;
-	case CPU_INFO_REG+CDP1802_Rb: sprintf(buffer[which],"Rb:%.4x",r->reg[0xb].w.l);break;
-	case CPU_INFO_REG+CDP1802_Rc: sprintf(buffer[which],"Rc:%.4x",r->reg[0xc].w.l);break;
-	case CPU_INFO_REG+CDP1802_Rd: sprintf(buffer[which],"Rd:%.4x",r->reg[0xd].w.l);break;
-	case CPU_INFO_REG+CDP1802_Re: sprintf(buffer[which],"Re:%.4x",r->reg[0xe].w.l);break;
-	case CPU_INFO_REG+CDP1802_Rf: sprintf(buffer[which],"Rf:%.4x",r->reg[0xf].w.l);break;
-	case CPU_INFO_REG+CDP1802_P: sprintf(buffer[which],"P:%x",r->p);break;
-	case CPU_INFO_REG+CDP1802_X: sprintf(buffer[which],"X:%x",r->x);break;
-	case CPU_INFO_REG+CDP1802_D: sprintf(buffer[which],"D:%.2x",r->d);break;
-	case CPU_INFO_REG+CDP1802_B: sprintf(buffer[which],"B:%.2x",r->b);break;
-	case CPU_INFO_REG+CDP1802_T: sprintf(buffer[which],"T:%.2x",r->t);break;
-	case CPU_INFO_REG+CDP1802_DF: sprintf(buffer[which],"DF:%x",r->df);break;
-	case CPU_INFO_REG+CDP1802_IE: sprintf(buffer[which],"IE:%x",r->ie);break;
-	case CPU_INFO_REG+CDP1802_Q: sprintf(buffer[which],"Q:%x",r->q);break;
-	case CPU_INFO_FLAGS: sprintf(buffer[which], "%s%s%s", r->df?"DF":"..",
-	r->ie ? "IE":"..", r->q?"Q":"."); break;
-	case CPU_INFO_NAME: return "CDP1802";
-	case CPU_INFO_FAMILY: return "CDP1802";
-	case CPU_INFO_VERSION: return "1.0alpha";
-	case CPU_INFO_FILE: return __FILE__;
-	case CPU_INFO_CREDITS: return "Copyright (c) 2000 Peter Trauner, all rights reserved.";
-	case CPU_INFO_REG_LAYOUT: return (const char*)cdp1802_reg_layout;
-	case CPU_INFO_WIN_LAYOUT: return (const char*)cdp1802_win_layout;
+		/* --- the following bits of info are returned as 64-bit signed integers --- */
+		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(cdp1802);				break;
+		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
+		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
+		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
+		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
+		case CPUINFO_INT_MAX_CYCLES:					info->i = 19;							break;
+		
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
+
+		case CPUINFO_INT_IRQ_STATE + CDP1802_IRQ_STATE:		info->i = cdp1802.irq_state;		break;
+
+		case CPUINFO_INT_PREVIOUSPC:						info->i = cdp1802.oldpc;			break;
+
+		case CPUINFO_INT_PC:								info->i = PC;						break;
+		case CPUINFO_INT_SP:								info->i = 0;						break;
+		case CPUINFO_INT_REGISTER + CDP1802_P:				info->i = cdp1802.p;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_X:				info->i = cdp1802.x;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_T:				info->i = cdp1802.t;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_D:				info->i = cdp1802.d;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_B:				info->i = cdp1802.b;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_R0:				info->i = cdp1802.reg[0].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R1:				info->i = cdp1802.reg[1].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R2:				info->i = cdp1802.reg[2].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R3:				info->i = cdp1802.reg[3].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R4:				info->i = cdp1802.reg[4].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R5:				info->i = cdp1802.reg[5].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R6:				info->i = cdp1802.reg[6].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R7:				info->i = cdp1802.reg[7].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R8:				info->i = cdp1802.reg[8].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_R9:				info->i = cdp1802.reg[9].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Ra:				info->i = cdp1802.reg[0xa].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rb:				info->i = cdp1802.reg[0xb].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rc:				info->i = cdp1802.reg[0xc].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rd:				info->i = cdp1802.reg[0xd].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Re:				info->i = cdp1802.reg[0xe].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_Rf:				info->i = cdp1802.reg[0xf].w.l;		break;
+		case CPUINFO_INT_REGISTER + CDP1802_DF:				info->i = cdp1802.df;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_IE:				info->i = cdp1802.ie;				break;
+		case CPUINFO_INT_REGISTER + CDP1802_Q:				info->i = cdp1802.q;				break;
+
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_SET_INFO:						info->setinfo = cdp1802_set_info;				break;
+		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = cdp1802_get_context;			break;
+		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = cdp1802_set_context;			break;
+		case CPUINFO_PTR_INIT:							info->init = cdp1802_init;					break;
+		case CPUINFO_PTR_RESET:							info->reset = cdp1802_reset;					break;
+		case CPUINFO_PTR_EXIT:							info->exit = cdp1802_exit;					break;
+		case CPUINFO_PTR_EXECUTE:						info->execute = cdp1802_execute;				break;
+		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cdp1802_dasm;					break;
+		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;					break;
+		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cdp1802_ICount;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cdp1802_reg_layout;				break;
+		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cdp1802_win_layout;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "CDP1802"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "CDP1802"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0alpha"); break;
+		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2000 Peter Trauner, all rights reserved."); break;
+
+		case CPUINFO_STR_REGISTER + CDP1802_R0:	sprintf(info->s = cpuintrf_temp_str(), "R0:%.4x", cdp1802.reg[0].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R1:	sprintf(info->s = cpuintrf_temp_str(), "R1:%.4x", cdp1802.reg[1].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R2:	sprintf(info->s = cpuintrf_temp_str(), "R2:%.4x", cdp1802.reg[2].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R3:	sprintf(info->s = cpuintrf_temp_str(), "R3:%.4x", cdp1802.reg[3].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R4:	sprintf(info->s = cpuintrf_temp_str(), "R4:%.4x", cdp1802.reg[4].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R5:	sprintf(info->s = cpuintrf_temp_str(), "R5:%.4x", cdp1802.reg[5].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R6:	sprintf(info->s = cpuintrf_temp_str(), "R6:%.4x", cdp1802.reg[6].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R7:	sprintf(info->s = cpuintrf_temp_str(), "R7:%.4x", cdp1802.reg[7].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R8:	sprintf(info->s = cpuintrf_temp_str(), "R8:%.4x", cdp1802.reg[8].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_R9:	sprintf(info->s = cpuintrf_temp_str(), "R9:%.4x", cdp1802.reg[9].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Ra:	sprintf(info->s = cpuintrf_temp_str(), "Ra:%.4x", cdp1802.reg[0xa].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Rb:	sprintf(info->s = cpuintrf_temp_str(), "Rb:%.4x", cdp1802.reg[0xb].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Rc:	sprintf(info->s = cpuintrf_temp_str(), "Rc:%.4x", cdp1802.reg[0xc].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Rd:	sprintf(info->s = cpuintrf_temp_str(), "Rd:%.4x", cdp1802.reg[0xd].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Re:	sprintf(info->s = cpuintrf_temp_str(), "Re:%.4x", cdp1802.reg[0xe].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Rf:	sprintf(info->s = cpuintrf_temp_str(), "Rf:%.4x", cdp1802.reg[0xf].w.l);break;
+		case CPUINFO_STR_REGISTER + CDP1802_P:	sprintf(info->s = cpuintrf_temp_str(), "P:%x", cdp1802.p);break;
+		case CPUINFO_STR_REGISTER + CDP1802_X:	sprintf(info->s = cpuintrf_temp_str(), "X:%x", cdp1802.x);break;
+		case CPUINFO_STR_REGISTER + CDP1802_D:	sprintf(info->s = cpuintrf_temp_str(), "D:%.2x", cdp1802.d);break;
+		case CPUINFO_STR_REGISTER + CDP1802_B:	sprintf(info->s = cpuintrf_temp_str(), "B:%.2x", cdp1802.b);break;
+		case CPUINFO_STR_REGISTER + CDP1802_T:	sprintf(info->s = cpuintrf_temp_str(), "T:%.2x", cdp1802.t);break;
+		case CPUINFO_STR_REGISTER + CDP1802_DF:	sprintf(info->s = cpuintrf_temp_str(), "DF:%x", cdp1802.df);break;
+		case CPUINFO_STR_REGISTER + CDP1802_IE:	sprintf(info->s = cpuintrf_temp_str(), "IE:%x", cdp1802.ie);break;
+		case CPUINFO_STR_REGISTER + CDP1802_Q:	sprintf(info->s = cpuintrf_temp_str(), "Q:%x", cdp1802.q);break;
+		case CPUINFO_STR_FLAGS: sprintf(info->s = cpuintrf_temp_str(),
+									"%s%s%s",
+									 cdp1802.df?"DF":"..",
+									 cdp1802.ie ? "IE":"..",
+									 cdp1802.q?"Q":"."); break;
+
 	}
-	return buffer[which];
 }
-
-#ifndef MAME_DEBUG
-unsigned cdp1802_dasm(char *buffer, unsigned pc)
-{
-	sprintf( buffer, "$%X", cpu_readop(pc) );
-	return 1;
-}
-#endif
-
-void cdp1802_init(void){ return; }
-

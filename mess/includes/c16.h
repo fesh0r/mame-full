@@ -4,14 +4,6 @@
 #include "driver.h"
 #include "cbmserb.h"
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void c16_runtime_loader_init(void);
-# else
-	extern void c16_runtime_loader_init(void);
-# endif
-#endif
-
 #define JOYSTICK1_PORT (input_port_7_r(0)&0x80)
 #define JOYSTICK2_PORT (input_port_7_r(0)&0x40)
 

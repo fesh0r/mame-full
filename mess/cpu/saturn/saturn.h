@@ -49,10 +49,6 @@ HP38G             09/??/95              1LT8             Yorke
 extern "C" {
 #endif
 
-#ifdef RUNTIME_LOADER
-	extern void saturn_runtime_loader_init(void);
-#endif
-
 #define SATURN_INT_NONE	0
 #define SATURN_INT_IRQ	1
 #define SATURN_INT_NMI	2
@@ -67,23 +63,7 @@ typedef struct {
 	void (*crc)(int addr, int data);
 } SATURN_CONFIG;
 
-extern int saturn_icount;				/* cycle count */
-
-extern void saturn_init(void);
-extern void saturn_reset(void *param);
-extern void saturn_exit(void);
-extern int	saturn_execute(int cycles);
-extern unsigned saturn_get_context(void *dst);
-extern void saturn_set_context(void *src);
-extern unsigned saturn_get_reg(int regnum);
-extern void saturn_set_reg(int regnum, unsigned val);
-extern void saturn_set_nmi_line(int state);
-extern void saturn_set_irq_line(int irqline, int state);
-extern void saturn_set_irq_callback(int (*callback)(int irqline));
-extern void saturn_state_save(void *file);
-extern void saturn_state_load(void *file);
-extern const char *saturn_info(void *context, int regnum);
-extern unsigned saturn_dasm(char *buffer, unsigned pc);
+void saturn_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef __cplusplus
 	}

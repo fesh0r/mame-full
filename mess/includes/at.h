@@ -1,10 +1,3 @@
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-	extern "C" void at_runtime_loader_init(void);
-# else
-	extern void at_runtime_loader_init(void);
-# endif
-#endif
 
 void init_atcga(void);
 #ifdef HAS_I386

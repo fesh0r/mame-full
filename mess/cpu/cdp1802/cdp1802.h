@@ -32,9 +32,6 @@
 extern "C" {
 #endif
 
-#ifdef RUNTIME_LOADER
-	extern void cdp1802_runtime_loader_init(void);
-#endif
 
 
 typedef struct {
@@ -55,21 +52,9 @@ int cdp1802_dma_read(void);
 
 extern int cdp1802_icount;				/* cycle count */
 
-extern void cdp1802_init(void);
-extern void cdp1802_reset(void *param);
-extern void cdp1802_exit(void);
-extern int cdp1802_execute(int cycles);
-extern unsigned cdp1802_get_context(void *dst);
-extern void cdp1802_set_context(void *src);
-extern unsigned cdp1802_get_reg(int regnum);
-extern void cdp1802_set_reg(int regnum, unsigned val);
-extern void cdp1802_set_nmi_line(int state);
-extern void cdp1802_set_irq_line(int irqline, int state);
-extern void cdp1802_set_irq_callback(int (*callback)(int irqline));
-extern void cdp1802_state_save(void *file);
-extern void cdp1802_state_load(void *file);
-extern const char *cdp1802_info(void *context, int regnum);
-extern unsigned cdp1802_dasm(char *buffer, unsigned pc);
+void cdp1802_get_info(UINT32 state, union cpuinfo *info);
+
+unsigned DasmCdp1802(char *dst, unsigned oldpc);
 
 #ifdef __cplusplus
 }

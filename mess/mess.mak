@@ -100,12 +100,12 @@ CPUS+=G65816@
 CPUS+=SPC700@
 #CPUS+=E132XS@
 CPUS+=Z80GB@
-#CPUS+=CDP1802@
-#CPUS+=SC61860@
-#CPUS+=SATURN@
+CPUS+=CDP1802@
+CPUS+=SC61860@
+CPUS+=SATURN@
 CPUS+=APEXC@
 CPUS+=F8@
-#CPUS+=CP1610@
+CPUS+=CP1610@
 #CPUS+=TMS99010@
 CPUS+=PDP1@
 
@@ -594,7 +594,7 @@ $(OBJ)/aim65.a :    \
 $(OBJ)/vc4000.a :   \
 	$(OBJ)/mess/sndhrdw/vc4000.o	\
 	$(OBJ)/mess/systems/vc4000.o	\
-#	$(OBJ)/mess/vidhrdw/vc4000.o	\
+	$(OBJ)/mess/vidhrdw/vc4000.o	\
 
 $(OBJ)/tangerin.a :\
 	$(OBJ)/mess/devices/mfmdisk.o	\

@@ -68,10 +68,6 @@ pc 8bit
 extern "C" {
 #endif
 
-#ifdef RUNTIME_LOADER
-	extern void lh5801_runtime_loader_init(void);
-#endif
-
 
 typedef struct {
 	UINT8 (*in)(void);

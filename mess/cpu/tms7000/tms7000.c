@@ -61,9 +61,9 @@ static UINT8 tms7000_win_layout[] = {
 
 void tms7000_check_IRQ_lines( void );
 
-#define RM(Addr) ((unsigned)cpu_readmem16(Addr))
-#define SRM(Addr) ((signed)cpu_readmem16(Addr))
-#define WM(Addr,Value) (cpu_writemem16(Addr,Value))
+#define RM(Addr) ((unsigned)program_read_byte(Addr))
+#define SRM(Addr) ((signed)program_read_byte(Addr))
+#define WM(Addr,Value) (program_write_byte(Addr,Value))
 
 UINT16 RM16( UINT32 mAddr );	/* Read memory (16-bit) */
 UINT16 RM16( UINT32 mAddr )
@@ -132,8 +132,8 @@ static tms7000_Regs tms7000;
 
 #define RDA		RM(0x0000)
 #define RDB		RM(0x0001)
-#define WRA(Value) (cpu_writemem16(0x0000,Value))
-#define WRB(Value) (cpu_writemem16(0x0001,Value))
+#define WRA(Value) (program_write_byte(0x0000,Value))
+#define WRB(Value) (program_write_byte(0x0001,Value))
 
 #define SR_C	0x80		/* Carry */
 #define SR_N	0x40		/* Negative */
@@ -156,7 +156,7 @@ static tms7000_Regs tms7000;
 #define SETZ		pSR |= SR_Z
 #define SETN		pSR |= SR_N
 
-#define CHANGE_PC change_pc16(pPC)
+#define CHANGE_PC change_pc(pPC)
 
 
 /****************************************************************************

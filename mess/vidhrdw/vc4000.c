@@ -112,18 +112,18 @@ READ_HANDLER(vc4000_video_r)
 	break;
 #ifndef ANALOG_HACK
     case 0xcc:
-	if (!s2650_get_flag()) data=input_port_7_r(0)<<3;
+	if (!activecpu_get_reg(S2650_FO)) data=input_port_7_r(0)<<3;
 	else data=input_port_8_r(0)<<3;
 	break;
     case 0xcd:
-	if (!s2650_get_flag()) data=input_port_9_r(0)<<3;
+	if (!activecpu_get_reg(S2650_FO)) data=input_port_9_r(0)<<3;
 	else data=input_port_10_r(0)<<3;
 	break;
 #else
     case 0xcc:
 	data = 0x66;
 	// between 20 and 225
-	if (!s2650_get_flag()) {
+	if (!activecpu_get_reg(S2650_FO)) {
 	    if (input_port_7_r(0)&0x1) data=20; // 0x20 too big
 	    if (input_port_7_r(0)&0x2) data=225;
 	} else {
@@ -133,7 +133,7 @@ READ_HANDLER(vc4000_video_r)
 	break;
     case 0xcd:
 	data = 0x66; //shootout 0x67 shoots right, 0x66 shoots left
-	if (!s2650_get_flag()) {
+	if (!activecpu_get_reg(S2650_FO)) {
 	    if (input_port_7_r(0)&0x10) data=20;
 	    if (input_port_7_r(0)&0x20) data=225;
 	} else {

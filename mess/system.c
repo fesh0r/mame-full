@@ -148,8 +148,8 @@ TESTDRIVER( saturn )	/* Sega Saturn										*/
 	DRIVER( astrocdw )	/* Bally Astrocade (white case)						*/
 
 	/* RCA */
-//TESTDRIVER( vip )		/* Cosmac VIP										*/
-//TESTDRIVER( studio2 )	/* Studio II										*/
+TESTDRIVER( vip )		/* Cosmac VIP										*/
+TESTDRIVER( studio2 )	/* Studio II										*/
 
 	/* FAIRCHILD */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976					*/
@@ -187,7 +187,7 @@ TESTDRIVER( vcg )		/* Palladium Video-Computer-Game					*/
 	DRIVER( svision )	/* Super Vision	Handheld							*/
 
 	/* INTERON */
-//TESTDRIVER( vc4000 )	/* Interton vc4000									*/
+TESTDRIVER( vc4000 )	/* Interton vc4000									*/
 
 	/* BANDAI */
 TESTDRIVER( wswan )		/* Bandai WonderSwan Handheld						*/
@@ -301,7 +301,7 @@ XL/XE 16kB OS roms
 
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975						*/
-//TESTDRIVER( sym1 )		/* Synertek SYM1									*/
+TESTDRIVER( sym1 )		/* Synertek SYM1									*/
 TESTDRIVER( aim65 )		/* Rockwell AIM65									*/
 
 	DRIVER( pet )		/* PET2001/CBM20xx Series (Basic 1) 				*/
@@ -400,7 +400,7 @@ TESTDRIVER( ppc640 )	/* 1987 Amstrad PPC640								*/
 	DRIVER( ibmat )		/* 1985	IBM AT										*/
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics					*/
-//	DRIVER( atvga ) 	/*													*/
+	DRIVER( atvga ) 	/*													*/
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 
 	/* SINCLAIR */
@@ -440,16 +440,16 @@ TESTDRIVER( lambda )	/* Lambda 8300										*/
 	DRIVER( specp3es )	/* 2000 ZX Spectrum +3e (Spain)						*/
 
 	/* SHARP */
-//	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
-//TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
+	DRIVER( pc1251 )	/* Pocket Computer 1251 							*/
+TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
 
-//	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
-//	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
+	DRIVER( pc1401 )	/* Pocket Computer 1401 							*/
+	DRIVER( pc1402 )	/* Pocket Computer 1402 							*/
 
-//	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
+	DRIVER( pc1350 )	/* Pocket Computer 1350 							*/
 
-//	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
-//	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
+	DRIVER( pc1403 )	/* Pocket Computer 1403 							*/
+	DRIVER( pc1403h )	/* Pocket Computer 1403H 							*/
 
 	DRIVER( mz700 ) 	/* 1982 Sharp MZ700 								*/
 	DRIVER( mz700j )	/* 1982 Sharp MZ700 Japan							*/

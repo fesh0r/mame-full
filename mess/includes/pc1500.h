@@ -24,14 +24,6 @@ void pc1500a_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 void trs80pc2_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 //void pc1600_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh);
 
-#ifdef RUNTIME_LOADER
-# ifdef __cplusplus
-        extern "C" void pc1500_runtime_loader_init(void);
-# else
-        extern void pc1500_runtime_loader_init(void);
-# endif
-#endif
-
 
 // on key directly connected to bf1 and +5v
 #define KEY_DEF (readinputport(0)&1)

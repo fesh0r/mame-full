@@ -45,12 +45,12 @@ INLINE UINT16 READ_OP_ARG_WORD(void)
 
 INLINE UINT8 READ_BYTE(UINT16 adr)
 {
-	return cpu_readmem16(adr);
+	return program_read_byte(adr);
 }
 
 INLINE void WRITE_BYTE(UINT16 a,UINT8 v)
 {
-	cpu_writemem16(a,v);
+	program_write_byte(a,v);
 }
 
 #define PUSH(v) sc61860.ram[--sc61860.r]=v
@@ -299,12 +299,12 @@ INLINE void sc61860_execute_table_call(void)
 		sc61860.zero=v==sc61860.ram[A];
 		if (sc61860.zero) {
 			sc61860.pc=adr;
-			change_pc16(sc61860.pc);
+			change_pc(sc61860.pc);
 			return;
 		}
 	}
 	sc61860.pc=READ_OP_ARG_WORD();
-	change_pc16(sc61860.pc);
+	change_pc(sc61860.pc);
 }
 
 
@@ -313,7 +313,7 @@ INLINE void sc61860_call(UINT16 adr)
 	PUSH(sc61860.pc>>8);
 	PUSH(sc61860.pc&0xff);
 	sc61860.pc=adr;
-	change_pc16(sc61860.pc);
+	change_pc(sc61860.pc);
 }
 
 INLINE void sc61860_return(void)
@@ -321,7 +321,7 @@ INLINE void sc61860_return(void)
 	UINT16 t=POP();
 	t|=POP()<<8;
 	sc61860.pc=t;
-	change_pc16(sc61860.pc);
+	change_pc(sc61860.pc);
 }
 
 INLINE void sc61860_jump(bool yes)
@@ -329,7 +329,7 @@ INLINE void sc61860_jump(bool yes)
 	UINT16 adr=READ_OP_ARG_WORD();
 	if (yes) {
 		sc61860.pc=adr;
-		change_pc16(sc61860.pc);
+		change_pc(sc61860.pc);
 	}
 }
 
@@ -339,8 +339,8 @@ INLINE void sc61860_jump_rel_plus(bool yes)
 	adr+=READ_OP_ARG();
 	if (yes) {
 		sc61860.pc=adr;
-		change_pc16(sc61860.pc);
-		sc61860_icount-=3;
+		change_pc(sc61860.pc);
+		sc61860_ICount-=3;
 	}
 }
 
@@ -350,8 +350,8 @@ INLINE void sc61860_jump_rel_minus(bool yes)
 	adr-=READ_OP_ARG();
 	if (yes) {
 		sc61860.pc=adr;
-		change_pc16(sc61860.pc);
-		sc61860_icount-=3;
+		change_pc(sc61860.pc);
+		sc61860_ICount-=3;
 	}
 }
 
@@ -365,8 +365,8 @@ INLINE void sc61860_loop(void)
 	if (!sc61860.carry) {
 		sc61860.pc=adr;
 		adr=POP();
-		change_pc16(sc61860.pc);
-		sc61860_icount-=3;
+		change_pc(sc61860.pc);
+		sc61860_ICount-=3;
 	}
 }
 
@@ -378,9 +378,9 @@ INLINE void sc61860_leave(void)
 INLINE void sc61860_wait(void)
 {
 	int t=READ_OP();
-	sc61860_icount-=t;
-	sc61860_icount-=t;
-	sc61860_icount-=3;
+	sc61860_ICount-=t;
+	sc61860_ICount-=t;
+	sc61860_ICount-=3;
 }
 
 INLINE void sc61860_set_carry(void)
@@ -488,7 +488,7 @@ INLINE void sc61860_add_bcd_a(void)
   help = 0;
  }
  sc61860.carry= ( hlp1 ) ? 1 : 0;
- sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860_ICount-=3*(sc61860.ram[I]+1);
 }
 
 
@@ -509,7 +509,7 @@ hlp1;
   if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
  }
  sc61860.carry= ( hlp1 ) ? 1 : 0;
- sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860_ICount-=3*(sc61860.ram[I]+1);
  sc61860.q--;
 }
 
@@ -531,7 +531,7 @@ INLINE void sc61860_sub_bcd_a(void)
   help = 0;
  }
  sc61860.carry= ( hlp1 ) ? 1 : 0;
- sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860_ICount-=3*(sc61860.ram[I]+1);
 }
 
 
@@ -551,7 +551,7 @@ hlp1;
   if ( sc61860.ram[sc61860.p--] != 0 ) sc61860.zero = 0;
  }
  sc61860.carry= ( hlp1 ) ? 1 : 0;
- sc61860_icount-=3*(sc61860.ram[I]+1);
+ sc61860_ICount-=3*(sc61860.ram[I]+1);
  sc61860.q--;
 }
 
@@ -563,7 +563,7 @@ INLINE void sc61860_shift_left_nibble(void)
 		t|=sc61860.ram[sc61860.p]<<4;
 		sc61860.ram[sc61860.p--]=t;
 		t>>=8;
-		sc61860_icount--;
+		sc61860_ICount--;
 	}
 }
 
@@ -575,7 +575,7 @@ INLINE void sc61860_shift_right_nibble(void)
 		t|=sc61860.ram[sc61860.p];
 		sc61860.ram[sc61860.p++]=t>>4;
 		t=(t<<8)&0xf00;
-		sc61860_icount--;
+		sc61860_ICount--;
 	}
 }
 
@@ -636,7 +636,7 @@ INLINE void sc61860_fill(void)
 	int i;
 	for (i=0;i<=sc61860.ram[I];i++) {
 		sc61860.ram[sc61860.p++]=sc61860.ram[A]; /* could be overwritten? */
-		sc61860_icount--;
+		sc61860_ICount--;
 	}
 }
 
@@ -646,7 +646,7 @@ INLINE void sc61860_fill_ext(void)
 	for (i=0;i<=sc61860.ram[I];i++) {
 		WRITE_BYTE(sc61860.dp, sc61860.ram[A]);
 		if (i!=sc61860.ram[I]) sc61860.dp++;
-		sc61860_icount-=3;
+		sc61860_ICount-=3;
 	}
 }
 
@@ -656,7 +656,7 @@ INLINE void sc61860_copy(int count)
 	int i;
 	for (i=0; i<=count; i++) {
 		sc61860.ram[sc61860.p++]=sc61860.ram[sc61860.q++];
-		sc61860_icount-=2;
+		sc61860_ICount-=2;
 	}
 
 }
@@ -668,7 +668,7 @@ INLINE void sc61860_copy_ext(int count)
 	for (i=0; i<=count; i++) {
 		sc61860.ram[sc61860.p++]=READ_BYTE(sc61860.dp);
 		if (i!=count) sc61860.dp++;
-		sc61860_icount-=4;
+		sc61860_ICount-=4;
 	}
 }
 
@@ -681,7 +681,7 @@ INLINE void sc61860_copy_int(int count)
 		if (i!=count) {
 			if (++sc61860.ram[A]==0) sc61860.ram[B]++;
 		}
-		sc61860_icount-=4;
+		sc61860_ICount-=4;
 	}
 }
 
@@ -693,7 +693,7 @@ INLINE void sc61860_exchange(int count)
 		t=sc61860.ram[sc61860.p];
 		sc61860.ram[sc61860.p++]=sc61860.ram[sc61860.q];
 		sc61860.ram[sc61860.q++]=t;
-		sc61860_icount-=3;
+		sc61860_ICount-=3;
 	}
 }
 
@@ -706,7 +706,7 @@ INLINE void sc61860_exchange_ext(int count)
 		sc61860.ram[sc61860.p++]=READ_BYTE(sc61860.dp);
 		WRITE_BYTE(sc61860.dp, t);
 		if (i!=count) sc61860.dp++;
-		sc61860_icount-=6;
+		sc61860_ICount-=6;
 	}
 }
 
@@ -723,7 +723,7 @@ INLINE void sc61860_wait_x(bool level)
 //	    sc61860.ram[sc61860.p]=(sc61860.ram[sc61860.p]+1)%0x60;
 	    sc61860.ram[sc61860.p]=(sc61860.ram[sc61860.p]+1)&0x7f;
 	    sc61860.zero=sc61860.config->x();
-	    sc61860_icount-=4;
+	    sc61860_ICount-=4;
 	    if ( level != sc61860.zero) break;
 	}
     }

@@ -5,7 +5,7 @@ static void cdp1802_log_icode(void)
 {
 	// logs the i-code
 	UINT16 adr=cdp1802.reg[5].w.l;
-	UINT8 u=cpu_readmem16(adr),u2=cpu_readmem16(adr+1);
+	UINT8 u=program_read_byte(adr),u2=program_read_byte(adr+1);
 	UINT16 i=(u<<8)|u2;
 
 	switch (u&0xf0) {
@@ -82,8 +82,8 @@ static void cdp1802_log_icode(void)
 			break;
 		default:
 			logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-					 cpu_readmem16(cdp1802.reg[5].w.l),
-					 cpu_readmem16(cdp1802.reg[5].w.l+1));
+					 program_read_byte(cdp1802.reg[5].w.l),
+					 program_read_byte(cdp1802.reg[5].w.l+1));
 		}
 		break;
 	case 0x90:
@@ -110,8 +110,8 @@ static void cdp1802_log_icode(void)
 			break;
 		default:
 			logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-					 cpu_readmem16(cdp1802.reg[5].w.l),
-					 cpu_readmem16(cdp1802.reg[5].w.l+1));
+					 program_read_byte(cdp1802.reg[5].w.l),
+					 program_read_byte(cdp1802.reg[5].w.l+1));
 		}
 		break;
 	case 0xa0:
@@ -135,8 +135,8 @@ static void cdp1802_log_icode(void)
 		break;
 	default:
 		logerror("chip 8 i-code %.4x %.2x %.2x\n",cdp1802.reg[5].w.l,
-				 cpu_readmem16(cdp1802.reg[5].w.l),
-				 cpu_readmem16(cdp1802.reg[5].w.l+1));
+				 program_read_byte(cdp1802.reg[5].w.l),
+				 program_read_byte(cdp1802.reg[5].w.l+1));
 	}
 }
 #endif
@@ -212,14 +212,14 @@ INLINE void cdp1802_q(bool level)
 
 INLINE void cdp1802_read_px(void)
 {
-	UINT8 i=cpu_readmem16(X++);
+	UINT8 i=program_read_byte(X++);
 	cdp1802.p=i&0xf;
 	cdp1802.x=i>>4;
 }
 
 INLINE void cdp1802_out_n(int n)
 {
-	UINT8 i=cpu_readmem16(X++);
+	UINT8 i=program_read_byte(X++);
 	if (cdp1802.config&&cdp1802.config->out_n) cdp1802.config->out_n(i, n);
 }
 
@@ -228,7 +228,7 @@ INLINE void cdp1802_in_n(int n)
 	UINT8 i=0;
 	if (cdp1802.config&&cdp1802.config->in_n) i=cdp1802.config->in_n(n);
 	cdp1802.d=i;
-	cpu_writemem16(cpu_readmem16(X),i);
+	program_write_byte(program_read_byte(X),i);
 }
 
 static void cdp1802_instruction(void)
@@ -246,18 +246,18 @@ static void cdp1802_instruction(void)
 		if (oper==0) {
 			cdp1802.idle=1;
 		} else {
-			cdp1802.d=cpu_readmem16(cdp1802.reg[oper&0xf].w.l);
+			cdp1802.d=program_read_byte(cdp1802.reg[oper&0xf].w.l);
 		}
 		break;
 	case 0x10: cdp1802.reg[oper&0xf].w.l++;break;
 	case 0x20: cdp1802.reg[oper&0xf].w.l--;break;
-	case 0x40: cdp1802.d=cpu_readmem16(cdp1802.reg[oper&0xf].w.l++);break;
-	case 0x50: cpu_writemem16(cdp1802.reg[oper&0xf].w.l,cdp1802.d);break;
+	case 0x40: cdp1802.d=program_read_byte(cdp1802.reg[oper&0xf].w.l++);break;
+	case 0x50: program_write_byte(cdp1802.reg[oper&0xf].w.l,cdp1802.d);break;
 	case 0x80: cdp1802.d=cdp1802.reg[oper&0xf].b.l;break;
 	case 0x90: cdp1802.d=cdp1802.reg[oper&0xf].b.h;break;
 	case 0xa0: cdp1802.reg[oper&0xf].b.l=cdp1802.d;break;
 	case 0xb0: cdp1802.reg[oper&0xf].b.h=cdp1802.d;break;
-	case 0xd0: cdp1802.p=oper&0xf;change_pc16(PC);break;
+	case 0xd0: cdp1802.p=oper&0xf;change_pc(PC);break;
 	case 0xe0: cdp1802.x=oper&0xf;break;
 		break;
 	default:
@@ -295,64 +295,64 @@ static void cdp1802_instruction(void)
 			case 0x3f: cdp1802_short_branch_ef(0,8);break;
 			case 0x70: cdp1802_read_px();cdp1802.ie=1;break;
 			case 0x71: cdp1802_read_px();cdp1802.ie=0;break;
-			case 0x72: cdp1802.d=cpu_readmem16(X++);break;
-			case 0x73: cpu_writemem16(X--,cdp1802.d);break;
-			case 0x74: cdp1802_add_carry(cpu_readmem16(X));break;
-			case 0x75: cdp1802_sub_carry(cpu_readmem16(X),cdp1802.d);break;
+			case 0x72: cdp1802.d=program_read_byte(X++);break;
+			case 0x73: program_write_byte(X--,cdp1802.d);break;
+			case 0x74: cdp1802_add_carry(program_read_byte(X));break;
+			case 0x75: cdp1802_sub_carry(program_read_byte(X),cdp1802.d);break;
 			case 0x76:
 				b=cdp1802.df;cdp1802.df=cdp1802.d&1;cdp1802.d>>=1;
 				if (b) cdp1802.d|=0x80;
 				break;
-			case 0x77: cdp1802_sub_carry(cdp1802.d, cpu_readmem16(X));break;
-			case 0x78: cpu_writemem16(X, cdp1802.t);break;
+			case 0x77: cdp1802_sub_carry(cdp1802.d, program_read_byte(X));break;
+			case 0x78: program_write_byte(X, cdp1802.t);break;
 			case 0x79:
 				cdp1802.t=cdp1802.x<<4|cdp1802.p;
-				cpu_writemem16(cdp1802.reg[2].w.l, cdp1802.t);
+				program_write_byte(cdp1802.reg[2].w.l, cdp1802.t);
 				cdp1802.x=cdp1802.p;
 				cdp1802.reg[2].w.l--;
 				logerror("cpu cdp1802 unsure mark(0x79) at %.4x PC=%x\n",oper, PC-1);
 				break;
 			case 0x7a: cdp1802_q(0);break;
 			case 0x7b: cdp1802_q(1);break;
-			case 0x7c: cdp1802_add_carry(cpu_readmem16(PC++));break;
-			case 0x7d: cdp1802_sub_carry(cpu_readmem16(PC++),cdp1802.d);break;
+			case 0x7c: cdp1802_add_carry(program_read_byte(PC++));break;
+			case 0x7d: cdp1802_sub_carry(program_read_byte(PC++),cdp1802.d);break;
 			case 0x7e:
 				b=cdp1802.df;cdp1802.df=cdp1802.d&0x80;cdp1802.d<<=1;
 				if (b) cdp1802.d|=1;
 				break;
-			case 0x7f: cdp1802_sub_carry(cdp1802.d,cpu_readmem16(PC++));break;
+			case 0x7f: cdp1802_sub_carry(cdp1802.d,program_read_byte(PC++));break;
 			case 0xc0: cdp1802_long_branch(1);break;
 			case 0xc1: cdp1802_long_branch(cdp1802.q);break;
 			case 0xc2: cdp1802_long_branch(cdp1802.d==0);break;
 			case 0xc3: cdp1802_long_branch(cdp1802.df);break;
 			case 0xc4: /*nop*/break;
-			case 0xc5: cdp1802_long_skip(!cdp1802.q);cdp1802_icount-=1;break;
-			case 0xc6: cdp1802_long_skip(cdp1802.d!=0);cdp1802_icount-=1;break;
-			case 0xc7: cdp1802_long_skip(!cdp1802.df);cdp1802_icount-=1;break;
-			case 0xc8: cdp1802_long_skip(1);cdp1802_icount-=1;break;
-			case 0xc9: cdp1802_long_branch(!cdp1802.q);cdp1802_icount-=1;break;
-			case 0xca: cdp1802_long_branch(cdp1802.d!=0);cdp1802_icount-=1;break;
-			case 0xcb: cdp1802_long_branch(!cdp1802.df);cdp1802_icount-=1;break;
-			case 0xcc: cdp1802_long_skip(cdp1802.ie);cdp1802_icount-=1;break;
-			case 0xcd: cdp1802_long_skip(cdp1802.q);cdp1802_icount-=1;break;
-			case 0xce: cdp1802_long_skip(cdp1802.d==0);cdp1802_icount-=1;break;
-			case 0xcf: cdp1802_long_skip(cdp1802.df);cdp1802_icount-=1;break;
-			case 0xf0: cdp1802.d=cpu_readmem16(X);break;
-			case 0xf1: cdp1802.d|=cpu_readmem16(X);break;
-			case 0xf2: cdp1802.d&=cpu_readmem16(X);break;
-			case 0xf3: cdp1802.d^=cpu_readmem16(X);break;
-			case 0xf4: cdp1802_add(cpu_readmem16(X));break;
-			case 0xf5: cdp1802_sub(cpu_readmem16(X),cdp1802.d);break;
+			case 0xc5: cdp1802_long_skip(!cdp1802.q);cdp1802_ICount-=1;break;
+			case 0xc6: cdp1802_long_skip(cdp1802.d!=0);cdp1802_ICount-=1;break;
+			case 0xc7: cdp1802_long_skip(!cdp1802.df);cdp1802_ICount-=1;break;
+			case 0xc8: cdp1802_long_skip(1);cdp1802_ICount-=1;break;
+			case 0xc9: cdp1802_long_branch(!cdp1802.q);cdp1802_ICount-=1;break;
+			case 0xca: cdp1802_long_branch(cdp1802.d!=0);cdp1802_ICount-=1;break;
+			case 0xcb: cdp1802_long_branch(!cdp1802.df);cdp1802_ICount-=1;break;
+			case 0xcc: cdp1802_long_skip(cdp1802.ie);cdp1802_ICount-=1;break;
+			case 0xcd: cdp1802_long_skip(cdp1802.q);cdp1802_ICount-=1;break;
+			case 0xce: cdp1802_long_skip(cdp1802.d==0);cdp1802_ICount-=1;break;
+			case 0xcf: cdp1802_long_skip(cdp1802.df);cdp1802_ICount-=1;break;
+			case 0xf0: cdp1802.d=program_read_byte(X);break;
+			case 0xf1: cdp1802.d|=program_read_byte(X);break;
+			case 0xf2: cdp1802.d&=program_read_byte(X);break;
+			case 0xf3: cdp1802.d^=program_read_byte(X);break;
+			case 0xf4: cdp1802_add(program_read_byte(X));break;
+			case 0xf5: cdp1802_sub(program_read_byte(X),cdp1802.d);break;
 			case 0xf6: cdp1802.df=cdp1802.d&1;cdp1802.d>>=1;break;
-			case 0xf7: cdp1802_sub(cdp1802.d,cpu_readmem16(X));break;
-			case 0xf8: cdp1802.d=cpu_readmem16(PC++);break;
-			case 0xf9: cdp1802.d|=cpu_readmem16(PC++);break;
-			case 0xfa: cdp1802.d&=cpu_readmem16(PC++);break;
-			case 0xfb: cdp1802.d^=cpu_readmem16(PC++);break;
-			case 0xfc: cdp1802_add(cpu_readmem16(PC++));break;
-			case 0xfd: cdp1802_sub(cpu_readmem16(PC++),cdp1802.d);break;
+			case 0xf7: cdp1802_sub(cdp1802.d,program_read_byte(X));break;
+			case 0xf8: cdp1802.d=program_read_byte(PC++);break;
+			case 0xf9: cdp1802.d|=program_read_byte(PC++);break;
+			case 0xfa: cdp1802.d&=program_read_byte(PC++);break;
+			case 0xfb: cdp1802.d^=program_read_byte(PC++);break;
+			case 0xfc: cdp1802_add(program_read_byte(PC++));break;
+			case 0xfd: cdp1802_sub(program_read_byte(PC++),cdp1802.d);break;
 			case 0xfe: cdp1802.df=cdp1802.d&0x80;cdp1802.d<<=1;break;
-			case 0xff: cdp1802_sub(cdp1802.d,cpu_readmem16(PC++));break;
+			case 0xff: cdp1802_sub(cdp1802.d,program_read_byte(PC++));break;
 			default:
 				logerror("cpu cdp1802 unknown opcode %.2x at %.4x\n",oper, PC-1);
 				break;
@@ -361,6 +361,6 @@ static void cdp1802_instruction(void)
 		}
 		break;
 	}
-	cdp1802_icount-=2;
+	cdp1802_ICount-=2;
 }
 
