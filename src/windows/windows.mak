@@ -32,10 +32,12 @@ ifdef MSVC
 CFLAGS += /FI"src/windows/winprefix.h"
 endif
 
+ifndef MSVC
 # remove pedantic
 $(OBJ)/windowsui/%.o: src/windowsui/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
+endif
 
 # obj files for gui
 GUIOBJS = \
