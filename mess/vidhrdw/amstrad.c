@@ -13,6 +13,9 @@
 
 /* CRTC emulation code */
 #include "vidhrdw/m6845.h"
+static crtc6845_state amstrad_vidhrdw_6845_state;
+static int amstrad_rendering;	
+
 /* event list for storing colour changes, mode changes and CRTC writes */
 #include "eventlst.h"
 /***************************************************************************
@@ -28,6 +31,9 @@ static unsigned long amstrad_render_colours[17];
 /* the mode is re-loaded at each HSYNC */
 /* current mode to render */
 static int amstrad_render_mode;
+
+int amstrad_vsync;
+int amstrad_52_divider_vsync_reset;
 
 /* current programmed mode */
 static int amstrad_current_mode;
@@ -301,32 +307,37 @@ void amstrad_Set_Character_Row(int offset, int data)
 by the length of the HSYNC and the position of the hsync */
 void amstrad_Set_HSync(int offset, int data)
 {
-        /* hsync changed state? */
-	if ((amstrad_HSync^data)!=0)
+	if (amstrad_rendering)
 	{
-		if (data!=0)
+
+		/* hsync changed state? */
+		if ((amstrad_HSync^data)!=0)
 		{
-                        /* start of hsync */
-	
-			/* set new render mode */
-			amstrad_render_mode = amstrad_current_mode;
+
+				if (data!=0)
+				{
+								/* start of hsync */
+			
+					/* set new render mode */
+					amstrad_render_mode = amstrad_current_mode;
+				}
+					else
+					{
+							/* end of hsync */
+							y_screen_pos+=1;
+
+							if (y_screen_pos>312)
+							{
+									y_screen_pos = 0;
+							}
+
+							if ((y_screen_pos>=0) && (y_screen_pos<AMSTRAD_SCREEN_HEIGHT))
+							{
+									x_screen_pos=x_screen_offset;
+									amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+							}
+					}
 		}
-                else
-                {
-                        /* end of hsync */
-                        y_screen_pos+=1;
-
-                        if (y_screen_pos>312)
-                        {
-                                y_screen_pos = 0;
-                        }
-
-                        if (y_screen_pos<AMSTRAD_SCREEN_HEIGHT)
-                        {
-                                x_screen_pos=x_screen_offset;
-                                amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
-                        }
-                }
 	}
 
 
@@ -335,16 +346,31 @@ void amstrad_Set_HSync(int offset, int data)
 
 void amstrad_Set_VSync(int offset, int data)
 {
-        /* vsync changed state? */
-        if ((amstrad_VSync^data)!=0)
+        amstrad_vsync = data;
+
+    /* vsync changed state? */
+    if ((amstrad_VSync^data)!=0)
 	{
-                if (data!=0)
-                {
-                   y_screen_pos=y_screen_offset;
-                   amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
-                 }
-       }
-       amstrad_VSync=data;
+        if (data!=0)
+        {
+			if (amstrad_rendering)
+			{
+				y_screen_pos=y_screen_offset;
+
+			   if ((y_screen_pos>=0) && (y_screen_pos<=AMSTRAD_SCREEN_HEIGHT))
+			   {
+					amstrad_display=(amstrad_bitmap->line[y_screen_pos])+x_screen_pos;
+				}
+			}
+			else
+			{
+				amstrad_52_divider_vsync_reset = 2;
+			}
+		}
+   }
+    
+	
+	amstrad_VSync=data;
 
 }
 
@@ -369,6 +395,7 @@ void amstrad_Clock_CR(void)
 /* The cursor is not used on Amstrad. The CURSOR signal is available on the Expansion port
 for other hardware to use, but as far as I know it is not used by anything. */
 
+/* use this when rendering */
 
 static struct crtc6845_interface
 amstrad6845= {
@@ -379,7 +406,15 @@ amstrad6845= {
 	amstrad_Set_DE,// Display Enabled status
 	NULL,// Cursor status 
 };
+#if 0
+/* use this when not rendering */
+static struct crtc6845_interface amstrad6845_no_render = 
+{
 
+
+
+};
+#endif
 /************************************************************************
  * amstrad_vh_screenrefresh
  * resfresh the amstrad video screen
@@ -395,6 +430,9 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	EVENT_LIST_ITEM *pItem;
 	int NumItemsRemaining;
 	int previous_time;
+
+	amstrad_rendering = 1;
+	crtc6845_set_state(0, &amstrad_vidhrdw_6845_state);
 
 	previous_time = 0;
 	num_cycles_remaining = 19968;
@@ -500,7 +538,8 @@ void amstrad_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
     EventList_Reset();
     EventList_SetOffsetStartTime ( cpu_getcurrentcycles() );
 
-
+	crtc6845_get_state(0, &amstrad_vidhrdw_6845_state);
+	amstrad_rendering = 0;
 }
 
 
@@ -513,10 +552,13 @@ int amstrad_vh_start(void)
 {
         int i;
 
+	amstrad_rendering = 0;
 	amstrad_init_lookups();
 
 	crtc6845_config(&amstrad6845);
-
+	crtc6845_reset(0);
+	crtc6845_get_state(0, &amstrad_vidhrdw_6845_state);
+	
 //	amstrad_Video_RAM= memory_region(REGION_CPU1);
 	draw_function=*amstrad_draw_screen_disabled;
 
