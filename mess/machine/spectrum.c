@@ -1016,7 +1016,7 @@ int spec_quick_init (int id)
 
 	if (name==NULL) return INIT_OK;
 
-	quick.name = name;
+//	quick.name = name;
 
 	fp = image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
@@ -1053,7 +1053,7 @@ int spec_quick_open (int id, int mode, void *arg)
                 cpu_writemem16(i + quick.addr, quick.data[i]);
 	}
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD, id), quick.addr, quick.length);
 
 	return 0;
 }

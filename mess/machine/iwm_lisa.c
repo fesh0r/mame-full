@@ -756,7 +756,6 @@ void iwm_lisa_set_head_line(int head)
 
 int iwm_lisa_floppy_init(int id, int allowablesizes)
 {
-	const char *name;
 	floppy *f;
 	long image_len=0;
 
@@ -764,8 +763,7 @@ int iwm_lisa_floppy_init(int id, int allowablesizes)
 
 	memset(f, 0, sizeof(*f));
 
-	name = device_filename(IO_FLOPPY,id);
-	if (!name)
+	if (!device_filename(IO_FLOPPY,id))
 		return INIT_OK;
 
 	f->fd = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_RW);
@@ -861,7 +859,7 @@ int iwm_lisa_floppy_init(int id, int allowablesizes)
 
 #if LOG_IWM
 	logerror("macplus_floppy_init(): Loaded %s-sided floppy; id=%i name='%s' wp=%i\n",
-		(f->sides ? "double" : "single"), (int) id, name, (int) f->wp);
+		(f->sides ? "double" : "single"), (int) id, device_filename(IO_FLOPPY,id), (int) f->wp);
 #endif
 
 	return INIT_OK;

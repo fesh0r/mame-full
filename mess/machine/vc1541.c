@@ -641,7 +641,6 @@ static struct via6522_interface via2 =
 
 int vc1541_init (int id)
 {
-	const char *imagename=device_filename(IO_FLOPPY, id);
 	FILE *in;
 	int size;
 
@@ -654,21 +653,21 @@ int vc1541_init (int id)
 	if (!(vc1541->d64.data = malloc (size)))
 	{
 		osd_fclose (in);
-		return 1;
+		return INIT_FAILED;
 	}
 	if (size != osd_fread (in, vc1541->d64.data, size))
 	{
 		free (vc1541->d64.data);
 		osd_fclose (in);
-		return 1;
+		return INIT_FAILED;
 	}
 	osd_fclose (in);
 
-	logerror("floppy image %s loaded\n", imagename);
+	logerror("floppy image %s loaded\n", device_filename(IO_FLOPPY, id));
 
 	/*vc1541->drive = ; */
-	vc1541->d64.name = imagename;
-	return 0;
+	vc1541->d64.name = device_filename(IO_FLOPPY, id);
+	return INIT_OK;
 }
 
 void vc1541_exit(int id)

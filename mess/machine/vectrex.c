@@ -49,7 +49,7 @@ static double imager_wheel_time = 0;
  *********************************************************************/
 int vectrex_load_rom (int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
+	const char *name;
     FILE *cartfile = 0;
 
 	/* Set the whole cart ROM area to 1. This is needed to work around a bug (?)
@@ -66,7 +66,7 @@ int vectrex_load_rom (int id)
 	}
 
 	vectrex_imager_angles = unknown_game_angles;
-
+	name = device_filename(IO_CARTSLOT,id);
 	if (name)
 	{
 		/* A bit ugly but somehow we need to know which 3D game is running */

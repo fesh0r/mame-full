@@ -481,8 +481,7 @@ void vc20_shutdown_machine (void)
 
 int vc20_rom_load (int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
-    UINT8 *mem = memory_region (REGION_CPU1);
+	UINT8 *mem = memory_region (REGION_CPU1);
 	FILE *fp;
 	int size, read;
 	char *cp;
@@ -490,20 +489,20 @@ int vc20_rom_load (int id)
 
 	vc20_memory_init();
 
-	if (name==NULL) return 1;
+	if (device_filename(IO_CARTSLOT,id)==NULL) return 1;
 
 	if (!vc20_rom_id (id))
 		return 1;
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		logerror("%s file not found\n", name);
+		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
 		return 1;
 	}
 
 	size = osd_fsize (fp);
 
-	if ((cp = strrchr (name, '.')) != NULL)
+	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
 	{
 		if ((cp[1] != 0) && (cp[2] == '0') && (cp[3] == 0))
 		{
@@ -548,7 +547,7 @@ int vc20_rom_load (int id)
 		}
 	}
 
-	logerror("loading rom %s at %.4x size:%.4x\n",name, addr, size);
+	logerror("loading rom %s at %.4x size:%.4x\n",device_filename(IO_CARTSLOT,id), addr, size);
 	read = osd_fread (fp, mem + addr, size);
 	osd_fclose (fp);
 	if (read != size)
@@ -558,18 +557,17 @@ int vc20_rom_load (int id)
 
 int vc20_rom_id (int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
-    FILE *romfile;
+	FILE *romfile;
 	unsigned char magic[] =
 	{0x41, 0x30, 0x20, 0xc3, 0xc2, 0xcd};	/* A0 CBM at 0xa004 (module offset 4) */
 	unsigned char buffer[sizeof (magic)];
 	char *cp;
 	int retval;
 
-	logerror("vc20_rom_id %s\n", name);
+	logerror("vc20_rom_id %s\n", device_filename(IO_CARTSLOT,id));
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		logerror("rom %s not found\n", name);
+		logerror("rom %s not found\n", device_filename(IO_CARTSLOT,id));
 		return 0;
 	}
 
@@ -582,7 +580,7 @@ int vc20_rom_id (int id)
 	if (!memcmp (buffer, magic, sizeof (magic)))
 		retval = 1;
 
-	if ((cp = strrchr (name, '.')) != NULL)
+	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
 	{
 		if ((stricmp (cp + 1, "a0") == 0)
 			|| (stricmp (cp + 1, "20") == 0)
@@ -595,9 +593,9 @@ int vc20_rom_id (int id)
 	}
 
 		if (retval)
-			logerror("rom %s recognized\n", name);
+			logerror("rom %s recognized\n", device_filename(IO_CARTSLOT,id));
 		else
-			logerror("rom %s not recognized\n", name);
+			logerror("rom %s not recognized\n", device_filename(IO_CARTSLOT,id));
 
 	return retval;
 }

@@ -29,8 +29,7 @@ int *pdp1_memory;
 
 int pdp1_load_rom (int id)
 {
-	const char *name = device_filename(IO_CARTSLOT,id);
-    void *romfile;
+	void *romfile;
 	int i;
 
 	/* The spacewar! is mandatory for now. */
@@ -40,7 +39,7 @@ int pdp1_load_rom (int id)
 		return 1;
 	}
 
-	if (!name || strlen(name)==0)
+	if (!device_filename(IO_CARTSLOT,id) || strlen(device_filename(IO_CARTSLOT,id))==0)
 	{
 		logerror("PDP1: no file specified (doesn't matter, not used anyway)!\n");
 	}
@@ -89,7 +88,7 @@ int pdp1_load_rom (int id)
 int pdp1_id_rom (int id)
 {
 	/* This driver doesn't ID images yet */
-	return 0;
+	return ID_OK;
 }
 static OPBASE_HANDLER(setOPbasefunc)
 {

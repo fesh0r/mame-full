@@ -1081,7 +1081,7 @@ extern struct GfxLayout nes_charlayout;
 
 int nes_load_rom (int id)
 {
-	const char *rom_name = device_filename(IO_CARTSLOT,id);
+
 	const char *mapinfo;
 	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
 	FILE *romfile;
@@ -1091,14 +1091,14 @@ int nes_load_rom (int id)
 	char m;
 	int i;
 
-	if ((!rom_name) && (id == 0))
+	if ((!device_filename(IO_CARTSLOT,id)) && (id == 0))
 	{
 //		printf("NES requires cartridge!\n");
 		return INIT_FAILED;
 	}
 	else
 	{
-		strcpy (battery_name, rom_name);
+		strcpy (battery_name, device_filename(IO_CARTSLOT,id));
 
 		/* Strip off file extension if it exists */
 		for (i = strlen(battery_name) - 1; i > 0; i --)
@@ -1333,15 +1333,14 @@ int nes_id_rom (int id)
 
 int nes_load_disk (int id)
 {
-	const char *disk_name = device_filename(IO_FLOPPY,id);
  	FILE *diskfile;
 	unsigned char magic[4];
 
-	if (!disk_name) return INIT_FAILED;
+	if (!device_filename(IO_FLOPPY,id)) return INIT_FAILED;
 
 	if (!(diskfile = image_fopen (IO_FLOPPY, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		logerror("image_fopen failed in nes_load_disk.\n");
+		logerror("image_fopen failed in nes_load_disk for [%s].\n",device_filename(IO_FLOPPY,id));
 			return 1;
 	}
 
