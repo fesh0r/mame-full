@@ -1068,6 +1068,11 @@ void microtan_init_machine(void)
 
     via_config(0, &via6522[0]);
     via_config(1, &via6522[1]);
+
+	acia_6551_init();
 }
 
-
+void	microtan_exit_machine(void)
+{
+	acia_6551_stop();
+}

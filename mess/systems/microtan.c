@@ -265,7 +265,7 @@ static struct MachineDriver machine_driver_microtan =
     60, DEFAULT_60HZ_VBLANK_DURATION,
     1,              /* single CPU */
     microtan_init_machine,
-    NULL,           /* stop machine */
+    microtan_exit_machine,           /* stop machine */
 
     /* video hardware - include overscan */
     32*8, 16*16, { 0*8, 32*8 - 1, 0*16, 16*16 - 1},
