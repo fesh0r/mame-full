@@ -168,8 +168,6 @@ int png_read_file(void *fp, struct png_info *p)
 	p->num_trans = 0;
 	p->trans = NULL;
 	p->palette = NULL;
-	p->x_offset = 0;
-	p->y_offset = 0;
 
 	if (png_verify_signature(fp)==0)
 		return 0;
@@ -267,11 +265,6 @@ int png_read_file(void *fp, struct png_info *p)
 
 				while(*text++);
 				chunk_data[chunk_length]=0;
-				if (strcmp ((const char *)chunk_data, "x_offset") == 0)
-					p->x_offset = atoi(text);
-				if (strcmp ((const char *)chunk_data, "y_offset") == 0)
-					p->y_offset = atoi(text);
-                                                       
  				logerror("Keyword: %s\n", chunk_data);
 				logerror("Text: %s\n", text);
 			}
@@ -348,6 +341,115 @@ int png_read_file(void *fp, struct png_info *p)
 		return 0;
 
 	return 1;
+}
+
+int png_read_info(void *fp, struct png_info *p)
+{
+	UINT32 chunk_length, chunk_type=0, chunk_crc, crc;
+	UINT8 *chunk_data;
+	UINT8 str_chunk_type[5], v[4];
+	int res = 0;
+
+	if (png_verify_signature(fp)==0)
+		return 0;
+
+	while (chunk_type != PNG_CN_IEND)
+	{
+		if (osd_fread(fp, v, 4) != 4)
+			logerror("Unexpected EOF in PNG\n");
+		chunk_length=convert_from_network_order(v);
+
+		if (osd_fread(fp, str_chunk_type, 4) != 4)
+			logerror("Unexpected EOF in PNG file\n");
+
+		str_chunk_type[4]=0; /* terminate string */
+
+		crc=crc32(0,str_chunk_type, 4);
+		chunk_type = convert_from_network_order(str_chunk_type);
+
+		if (chunk_length)
+		{
+			if ((chunk_data = (UINT8 *)malloc(chunk_length+1))==NULL)
+			{
+				logerror("Out of memory\n");
+				return 0;
+			}
+			if (osd_fread (fp, chunk_data, chunk_length) != chunk_length)
+			{
+				logerror("Unexpected EOF in PNG file\n");
+				free(chunk_data);
+				return 0;
+			}
+
+			crc=crc32(crc,chunk_data, chunk_length);
+		}
+		else
+			chunk_data = NULL;
+
+		if (osd_fread(fp, v, 4) != 4)
+			logerror("Unexpected EOF in PNG\n");
+		chunk_crc=convert_from_network_order(v);
+
+		if (crc != chunk_crc)
+		{
+			logerror("CRC check failed while reading PNG chunk %s\n",str_chunk_type);
+			logerror("Found: %08X  Expected: %08X\n",crc,chunk_crc);
+			return 0;
+		}
+
+		logerror("Reading PNG chunk %s\n", str_chunk_type);
+
+		switch (chunk_type)
+		{
+		case PNG_CN_IHDR:
+			p->width = convert_from_network_order(chunk_data);
+			p->height = convert_from_network_order(chunk_data+4);
+			p->bit_depth = *(chunk_data+8);
+			p->color_type = *(chunk_data+9);
+			p->compression_method = *(chunk_data+10);
+			p->filter_method = *(chunk_data+11);
+			p->interlace_method = *(chunk_data+12);
+			free (chunk_data);
+
+			logerror("PNG IHDR information:\n");
+			logerror("Width: %i, Height: %i\n", p->width, p->height);
+			logerror("Bit depth %i, color type: %i\n", p->bit_depth, p->color_type);
+			logerror("Compression method: %i, filter: %i, interlace: %i\n",
+					p->compression_method, p->filter_method, p->interlace_method);
+			break;
+
+		case PNG_CN_tEXt:
+			{
+				char *text = (char *)chunk_data;
+				int c;
+
+				while(*text++);
+				chunk_data[chunk_length]=0;
+				if (strcmp ((const char *)chunk_data, "Screen") == 0)
+				{
+					c = sscanf (text, "%i%i%i%i", &p->screen.min_x, &p->screen.max_x,
+								&p->screen.min_y, &p->screen.max_y);
+					if (c == 4)
+					{
+						res = 1;
+						logerror("Screen location found at %i, %i, %i, %i\n",
+								 p->screen.min_x, p->screen.max_x,
+								 p->screen.min_y, p->screen.max_y);
+					}
+					else
+						logerror("Invalid %s value %s\n", chunk_data, text);
+				}
+			}
+			free(chunk_data);
+			break;
+
+		default:
+			if (chunk_data)
+				free(chunk_data);
+			break;
+		}
+	}
+	return res;
 }
 
 /*	Expands a p->image from p->bit_depth to 8 bit */
