@@ -303,7 +303,7 @@ typedef struct ti990_cdr
 	an ADR or a CDR.
 
 	They may be a KDR, too, but confusion is impossible because the KDR FILL00
-	fiald starts at offset 4, and therefore if we try to interpret a KDR as an
+	field starts at offset 4, and therefore if we try to interpret a KDR as an
 	FDR (or ADR, CDR), we will find fnm[0] and assume the FDR is empty.
 */
 typedef union directory_entry
