@@ -656,7 +656,9 @@ $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/systems/aquarius.o
 
 $(OBJ)/exidy.a: \
+	$(OBJ)/mess/machine/hd6402.o   \
 	$(OBJ)/mess/vidhrdw/exidy.o   \
+	$(OBJ)/mess/machine/exidy.o   \
 	$(OBJ)/mess/systems/exidy.o
 
 $(OBJ)/galaxy.a: \
