@@ -106,7 +106,7 @@ BEGIN
         MENUITEM "Rotate Screen Left",          ID_OPTIONS_ROTATESCREENLEFT
         MENUITEM "Rotate Screen Right",         ID_OPTIONS_ROTATESCREENRIGHT
         MENUITEM "Enable DirtyLine",            ID_OPTIONS_ENABLEDIRTYLINE
-        MENUITEM "Disable Throttling",          ID_OPTIONS_DISABLETHROTTLE
+        MENUITEM "Enable Throttling",           ID_OPTIONS_ENABLETHROTTLE
         MENUITEM "Enable AntiAliasing",         ID_OPTIONS_ENABLEANTIALIASING
 
         MENUITEM "Enable Translucency",         ID_OPTIONS_ENABLETRANSLUCENCY

@@ -26,7 +26,6 @@ static HWND CreateRpCommandBar(HWND hwnd);
 #define IDC_PLAYLIST		200
 #define IDC_PLAY			201
 #define IDC_SOFTWARELIST	202
-#define MENU_HEIGHT 26
 
 static int*				pGame_Index;	// Index of available games
 static struct status_of_data *ptGame_Data;	// Game Data Structure - such as hasRoms etc
@@ -123,6 +122,8 @@ static void GameList_Run(struct SmartListView *pListView)
 {
 	int nGame;
 	int nItem;
+	char *software_path_ptr;
+	TCHAR software_path[MAX_PATH];
 
 	nItem = SingleItemSmartListView_GetSelectedItem(pListView);
 	nGame = pGame_Index[nItem];
@@ -130,10 +131,12 @@ static void GameList_Run(struct SmartListView *pListView)
 	SmartListView_SetVisible(pListView, FALSE);
 	SmartListView_SetExtraColumnText(s_pSoftwareListView, A2T(drivers[nGame]->description));
 
-	{
-		const char *software_paths = "\\Software";
-		FillSoftwareList(s_pSoftwareListView, nGame, 1, &software_paths, NULL);
-	}
+	/* compute software path (based on where the executable is) */
+	get_mame_root(software_path, sizeof(software_path) / sizeof(software_path[0]));
+	tcscat(software_path, TEXT("\\Software"));
+	software_path_ptr = T2A(software_path);
+
+	FillSoftwareList(s_pSoftwareListView, nGame, 1, &software_path_ptr, NULL);
 }
 
 static LPCTSTR GameList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
@@ -162,8 +165,16 @@ static struct SmartListViewClass s_GameListClass =
  * Blah                                                                    *
  * ----------------------------------------------------------------------- */
 
-static void Display_About(HWND hWnd)
+static void Display_About(HWND hWndParent)
 {
+/*	HWND hWnd;
+
+	hWnd = CreateWindow(szAppName, TEXT("MessCE"), WS_VISIBLE,
+		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+		NULL, NULL, hWndParent, NULL);
+	if (!hWnd)
+		return NULL;
+*/
 	TCHAR buf[] = 
 		TEXT("MessCE");
 
@@ -201,7 +212,7 @@ static void SetDefaultOptions(struct ui_options *opts)
 	opts->enable_translucency = 0;
 	opts->enable_antialias = 0;
 	opts->enable_dirtyline = 0;
-	opts->disable_throttle = 0;
+	opts->enable_throttle = 1;
 	opts->rotate_left = 0;
 	opts->rotate_right = 0;
 }
@@ -426,8 +437,8 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 				case ID_OPTIONS_ENABLEFLICKER:
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
 					break;
-				case ID_OPTIONS_DISABLETHROTTLE:
-					CheckMenuOption(hWnd, ID_OPTIONS_DISABLETHROTTLE, &tUI.disable_throttle, TRUE);
+				case ID_OPTIONS_ENABLETHROTTLE:
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETHROTTLE, &tUI.enable_throttle, TRUE);
 					break;
 				case ID_OPTIONS_ENABLEDIRTYLINE:
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, TRUE);
@@ -450,7 +461,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEANTIALIASING, &tUI.enable_antialias, FALSE);
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETRANSLUCENCY, &tUI.enable_translucency, FALSE);
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEFLICKER, &tUI.enable_flicker, TRUE);
-					CheckMenuOption(hWnd, ID_OPTIONS_DISABLETHROTTLE, &tUI.disable_throttle, FALSE);
+					CheckMenuOption(hWnd, ID_OPTIONS_ENABLETHROTTLE, &tUI.enable_throttle, FALSE);
 					CheckMenuOption(hWnd, ID_OPTIONS_ENABLEDIRTYLINE, &tUI.enable_dirtyline, FALSE);
 					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENLEFT, &tUI.rotate_left, FALSE);
 					CheckMenuOption(hWnd, ID_OPTIONS_ROTATESCREENRIGHT, &tUI.rotate_right, FALSE);

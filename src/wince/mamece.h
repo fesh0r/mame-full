@@ -10,17 +10,25 @@ extern "C" {
 #include <unistd.h>
 
 // --------------------------------------------------------------------------
+// Standard C library redefines/augmentations
 
 #define sntprintf	_sntprintf
 #define tcsrchr		_tcsrchr
 #define snprintf	_snprintf
 #define tcscpy		_tcscpy
 #define tcslen		_tcslen
+#define tcscat		_tcscat
 
 char *strdup(const char *s);
 
 // --------------------------------------------------------------------------
-// Malloc redefine
+// Windows API redefines
+
+#define IsIconic(window)	(0)
+#define MENU_HEIGHT 26
+
+// --------------------------------------------------------------------------
+// Malloc redefines
 
 size_t outofmemory_occured(void);
 void *mamece_malloc(size_t sz);
@@ -30,8 +38,8 @@ void *mamece_realloc(void *ptr, size_t sz);
 #define realloc	mamece_realloc
 
 // --------------------------------------------------------------------------
-
 // Utility functions
+
 int __ascii2widelen(const char *asciistr);
 WCHAR *__ascii2wide(WCHAR *dest, const char *asciistr);
 int __wide2asciilen(const WCHAR *widestr);
@@ -48,19 +56,8 @@ char *__wide2ascii(char *dest, const WCHAR *widestr);
 #endif
 
 // --------------------------------------------------------------------------
+// Key options
 
-#ifdef MESS
-LPTSTR get_mess_output(void);
-#endif
-
-// --------------------------------------------------------------------------
-// Windows API redefines
-
-#define IsIconic(window)	(0)
-
-// --------------------------------------------------------------------------
-
-// our dialog/configured options //
 struct ui_options
 {
 	BOOL		enable_sound;		// Enable sound in games
@@ -72,13 +69,22 @@ struct ui_options
 	BOOL		enable_translucency;// Enable Translucency
 	BOOL		enable_antialias;	// Enable AntiAlias
 	BOOL		enable_dirtyline;	// Enable Dirty Line Drawing
-	BOOL		disable_throttle;	// Disable Throttling
+	BOOL		enable_throttle;	// Enable Throttling
 	BOOL		rotate_left;		// Rotate the Screen to the Left
 	BOOL		rotate_right;		// Rotate the Screen to the Right
 };
 
 void setup_paths();
 int play_game(int game_index, struct ui_options *opts);
+void get_mame_root(TCHAR *buffer, int buflen);
+
+#ifdef MESS
+LPTSTR get_mess_output(void);
+#endif
+
+#ifdef _X86_
+#define WINCE_EMULATION
+#endif
 
 // --------------------------------------------------------------------------
 // GAPI stuff
@@ -100,9 +106,6 @@ int gx_open_input(void);
 int gx_close_input(void);
 int gx_open_display(HWND hWnd);
 int gx_close_display(void);
-void *gx_begin_draw(void);
-int gx_end_draw(void);
-void gx_get_display_properties(struct gx_display_properties *properties);
 void gx_blit(struct osd_bitmap *bitmap, int update, int orientation, UINT32 *palette_16bit_lookup, UINT32 *palette_32bit_lookup);
 
 #ifdef __cplusplus

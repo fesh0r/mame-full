@@ -142,7 +142,6 @@ static void CESound_exit(void)
 	for (i = 0; i < NUM_WAVEHDRS; i++)
 	{
 		waveOutUnprepareHeader(This.m_hWaveOut, &This.m_WaveHdrs[i], sizeof(WAVEHDR));
-		free( This.m_WaveHdrs[i].lpData );
 	}
 	This.m_hWaveOut=NULL;
 }
@@ -177,7 +176,7 @@ int osd_start_audio_stream(int stereo)
 	for (i = 0; i < NUM_WAVEHDRS; i++)
 	{
 
-		This.m_WaveHdrs[i].lpData			= (LPSTR)malloc(buflen);
+		This.m_WaveHdrs[i].lpData			= (LPSTR) auto_malloc(buflen);
 		This.m_WaveHdrs[i].dwBufferLength	= buflen;
 		This.m_WaveHdrs[i].dwBytesRecorded	= 0;
 		This.m_WaveHdrs[i].dwUser			= 0;

@@ -98,12 +98,28 @@ void win_shutdown_input(void)
 // Keyboard Definitions
 static struct KeyboardInfo keylist[] =
 {
+#ifdef ARM
 	{ "QStart",		VK_IPAQ_B4,			KEYCODE_CEBTN1 },
 	{ "QMenu",		VK_IPAQ_B3,			KEYCODE_CEBTN2 },
 	{ "Contacts",	VK_IPAQ_B2,			KEYCODE_CEBTN3 },
 	{ "Calendar",	VK_IPAQ_B1,			KEYCODE_CEBTN4 },
 	{ "Action",		VK_IPAQ_ACTION,		KEYCODE_CEBTN7 },
 	{ "Record",		VK_IPAQ_REC,		KEYCODE_CEBTN8 },
+#elif defined(MIPS)
+	{ "Slider",		VK_CASSIOPEIA_SLIDER,	KEYCODE_CEBTN8 },
+	{ "Escape",		VK_CASSIOPEIA_ESC,		KEYCODE_CEBTN7 },
+	{ "Record",		VK_CASSIOPEIA_REC,		KEYCODE_CEBTN1 },
+	{ "Button 1",	VK_CASSIOPEIA_B1,		KEYCODE_CEBTN2 },
+	{ "Button 2",	VK_CASSIOPEIA_B2,		KEYCODE_CEBTN3 },
+	{ "Button 3",	VK_CASSIOPEIA_B3,		KEYCODE_CEBTN4 },
+#elif defined(SHx)
+	{ "Action",		VK_HP_ACTION,		KEYCODE_CEBTN7 },
+	{ "Record",		VK_HP_REC,			KEYCODE_CEBTN8 },
+	{ "Button 1",	VK_HP_B1,			KEYCODE_CEBTN1 },
+	{ "Button 2",	VK_HP_B2,			KEYCODE_CEBTN2 },
+	{ "Button 3",	VK_HP_B3,			KEYCODE_CEBTN3 },
+	{ "Button 4",	VK_HP_B4,			KEYCODE_CEBTN4 },
+#endif
     { "A",          'A',                KEYCODE_A },
     { "B",          'B',                KEYCODE_B },
     { "C",          'C',                KEYCODE_C },

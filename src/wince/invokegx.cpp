@@ -1,8 +1,13 @@
 #include <windows.h>
 #include <gx.h>
 #include "mamece.h"
+
+extern "C"
+{
 #include "osdepend.h"
 #include "driver.h"
+#include "mame.h"
+};
 
 enum {
 	GXSTATE_BLEND	= 1
@@ -10,10 +15,21 @@ enum {
 
 struct gxstate_params
 {
+	/* the properties, as returned by GAPI */
 	GXDisplayProperties properties;
+
+	/* the usable size of the screen (i.e. - without the menubar) */
+	int usable_width, usable_height;
+
+	/* the absolute dimensions of the game */
 	int game_width, game_height;
+
+	/* the dimensions of the game, after being scaled down */
 	int scaled_width, scaled_height;
+
+	/* the mask for lines that get doubled up */
 	int skipx_mask, skipy_mask;
+
 	void **line;
 	UINT32 *palette;
 	long xadjustment;
@@ -79,12 +95,16 @@ static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation
 	struct gxstate_params *params;
 
 	// Allocate the params
-	params = (struct gxstate_params *) malloc(sizeof(struct gxstate_params));
+	params = (struct gxstate_params *) auto_malloc(sizeof(struct gxstate_params));
 	if (!params)
 		return NULL;
 
 	// Get display properties from GX
 	params->properties = GXGetDisplayProperties();
+
+	// Figure out "usable" height/width (i.e. - screen without the menubar)
+	params->usable_width = params->properties.cxWidth;
+	params->usable_height = params->properties.cyHeight - MENU_HEIGHT;
 
 	// Modify GXProperties based on the orientation
 	params->base_adjustment = 0;
@@ -109,8 +129,8 @@ static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation
 	params->flags = GXSTATE_BLEND;
 
 	// Figure out how to scale the bitmap, if appropriate
-	calc_skip_mask(params->game_width, params->properties.cxWidth, &params->scaled_width, &params->skipx_mask); 
-	calc_skip_mask(params->game_height, params->properties.cyHeight, &params->scaled_height, &params->skipy_mask); 
+	calc_skip_mask(params->game_width, params->usable_width, &params->scaled_width, &params->skipx_mask); 
+	calc_skip_mask(params->game_height, params->usable_height, &params->scaled_height, &params->skipy_mask); 
 
 	// Tweak the pitches and the bits
 	params->xadjustment = params->properties.cbxPitch;
@@ -119,6 +139,9 @@ static struct gxstate_params *create_gxstate(osd_bitmap *bitmap, int orientation
 	params->base_adjustment -= params->xadjustment;
 	params->base_adjustment -= params->yadjustment;
 
+	// Center on screen
+	params->base_adjustment += ((params->usable_width - params->scaled_width) / 2) * params->properties.cbxPitch;
+	params->base_adjustment += ((params->usable_height - params->scaled_height) / 2) * params->properties.cbyPitch;
 	return params;
 }
 
@@ -135,10 +158,6 @@ int gx_open_display(HWND hWnd)
 
 int gx_close_display(void)
 {
-	if (gxstate) {
-		free(gxstate);
-		gxstate = NULL;
-	}
 	return GXCloseDisplay();
 }
 
@@ -150,30 +169,6 @@ int gx_open_input(void)
 int gx_close_input(void)
 {
 	return GXCloseInput();
-}
-
-void *gx_begin_draw(void)
-{
-	return GXBeginDraw();
-}
-
-int gx_end_draw(void)
-{
-	return GXEndDraw();
-}
-
-void gx_get_display_properties(struct gx_display_properties *properties)
-{
-	GXDisplayProperties gxproperties;
-	
-	gxproperties = GXGetDisplayProperties();
-
-	properties->cxWidth = gxproperties.cxWidth;
-	properties->cyHeight = gxproperties.cyHeight;
-	properties->cbxPitch = gxproperties.cbxPitch;
-	properties->cbyPitch = gxproperties.cbyPitch;
-	properties->cBPP = gxproperties.cBPP;
-	properties->ffFormat = gxproperties.ffFormat;
 }
 
 // --------------------------------------------------------------------------

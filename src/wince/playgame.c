@@ -57,9 +57,9 @@ static char *__localconcat(char *dest, const char *s1, const char *s2)
 	return dest;
 }
 
-static void get_mame_root(TCHAR *buffer, int buflen)
+void get_mame_root(TCHAR *buffer, int buflen)
 {
-#ifdef _X86_
+#ifdef WINCE_EMULATION
 	// To make things simple when running under emulation
 	sntprintf(buffer, buflen, TEXT("\\"));
 #else
@@ -83,25 +83,22 @@ void setup_paths()
 	rootpath = T2A(rootpath_buffer);
 
 #ifdef MESS
-	set_fileio_opt(rootpath, "biospath", "\\Bios");
-#else
-	set_fileio_opt(rootpath, "rompath", "\\ROMs");
-#endif
-	set_fileio_opt(rootpath, "samplepath",			"\\Samples");
-	set_fileio_opt(rootpath, "cfg_directory",			"\\Cfg");
-	set_fileio_opt(rootpath, "nvram_directory",		"\\Nvram");
-	set_fileio_opt(rootpath, "memcard_directory",		"\\Memcard");
-	set_fileio_opt(rootpath, "input_directory",		"\\Inp");
-	set_fileio_opt(rootpath, "hiscore_directory",		"\\Hi");
-	set_fileio_opt(rootpath, "artwork_directory",		"\\Artwork");
-	set_fileio_opt(rootpath, "snapshot_directory",	"\\Snap");
-#ifdef MESS
+	set_fileio_opt(rootpath, "biospath",			"\\Bios");
 	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.cdb");
 #else
+	set_fileio_opt(rootpath, "rompath",				"\\ROMs");
 	set_fileio_opt(rootpath, "cheat_file",			"\\cheat.dat");
 #endif
-	set_fileio_opt(rootpath, "history_file",			"\\history.dat");
-	set_fileio_opt(rootpath, "mameinfo_file",			"\\mameinfo.dat");
+	set_fileio_opt(rootpath, "samplepath",			"\\Samples");
+	set_fileio_opt(rootpath, "cfg_directory",		"\\Cfg");
+	set_fileio_opt(rootpath, "nvram_directory",		"\\Nvram");
+	set_fileio_opt(rootpath, "memcard_directory",	"\\Memcard");
+	set_fileio_opt(rootpath, "input_directory",		"\\Inp");
+	set_fileio_opt(rootpath, "hiscore_directory",	"\\Hi");
+	set_fileio_opt(rootpath, "artwork_directory",	"\\Artwork");
+	set_fileio_opt(rootpath, "snapshot_directory",	"\\Snap");
+	set_fileio_opt(rootpath, "history_file",		"\\history.dat");
+	set_fileio_opt(rootpath, "mameinfo_file",		"\\mameinfo.dat");
 }
 
 int play_game(int game_index, struct ui_options *opts)
@@ -142,7 +139,7 @@ int play_game(int game_index, struct ui_options *opts)
 	gamma_correct = 1;
 	attenuation = 0;
 	use_dirty = opts->enable_dirtyline;
-	throttle = !opts->disable_throttle;
+	throttle = opts->enable_throttle;
 	win_window_mode = 0;
 
 	/* remember the initial LED states */
