@@ -67,12 +67,12 @@ static void a800_setbank(int n)
 	switch (n)
 	{
 		case 1:
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, &mem[0x10000]);
 			break;
 		case 2:
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, &mem[0x12000]);
 			break;
@@ -1044,7 +1044,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		if( new_mmu & 0x01 )
 		{
 			logerror("%s MMU BIOS ROM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(3, 0, MWA8_ROM);
 			cpu_setbank(3, memory_region(REGION_CPU1)+0x14000);  /* 8K lo BIOS */
 			memory_set_bankhandler_r(4, 0, MRA_BANK4);
@@ -1075,7 +1075,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		else
 		{
 			logerror("%s MMU BASIC ROM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(1, 0, MRA_BANK2);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK2);
 			memory_set_bankhandler_w(1, 0, MWA8_ROM);
 			cpu_setbank(1, memory_region(REGION_CPU1)+0x10000);  /* 8K BASIC */
 		}
@@ -1093,7 +1093,7 @@ void a800xl_mmu(UINT8 old_mmu, UINT8 new_mmu)
 		else
 		{
 			logerror("%s MMU SELFTEST ROM\n", Machine->gamedrv->name);
-			memory_set_bankhandler_r(2, 0, MRA_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(2, 0, MWA8_ROM);
 			cpu_setbank(2, memory_region(REGION_CPU1)+0x15000);  /* 0x0800 bytes */
 		}

@@ -224,7 +224,7 @@ MEMORY_END
 
 
 static MEMORY_READ_START(genesis_s_readmem)
- 	{ 0x0000, 0x1fff, MRA_BANK1, /*&genesis_soundram*//*genesis_soundram_r*/ },
+ 	{ 0x0000, 0x1fff, MRA8_BANK1, /*&genesis_soundram*//*genesis_soundram_r*/ },
 	{ 0x4000, 0x4000, YM2612_status_port_0_A_r },
 	{ 0x4001, 0x4001, YM2612_read_port_0_r },
 	{ 0x4002, 0x4002, YM2612_status_port_0_B_r },
@@ -234,7 +234,7 @@ static MEMORY_READ_START(genesis_s_readmem)
 MEMORY_END
 
 static MEMORY_WRITE_START(genesis_s_writemem)
-	{ 0x0000, 0x1fff, MWA_BANK1 /*genesis_soundram_w*/ },
+	{ 0x0000, 0x1fff, MWA8_BANK1 /*genesis_soundram_w*/ },
 	{ 0x4000, 0x4000, YM2612_control_port_0_A_w },
 	{ 0x4001, 0x4001, YM2612_data_port_0_A_w },
 	{ 0x4002, 0x4002, YM2612_control_port_0_B_w },

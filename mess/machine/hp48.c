@@ -64,8 +64,8 @@ static void hp48_config(void)
 		begin=hp48s.mem[CARD1].adr&hp48s.mem[CARD1].size&~0xfff;
 		end=begin|(hp48s.mem[CARD1].size^0xff000)|0xfff;
 		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA_BANK1);
-			install_mem_write_handler(0, begin, end, MWA_BANK1);
+			install_mem_read_handler(0, begin, end, MRA8_BANK1);
+			install_mem_write_handler(0, begin, end, MWA8_BANK1);
 			cpu_setbank(1, hp48_card1);
 		}
 	}
@@ -73,8 +73,8 @@ static void hp48_config(void)
 		begin=hp48s.mem[CARD2].adr&hp48s.mem[CARD2].size&~0xfff;
 		end=begin|(hp48s.mem[CARD2].size^0xff000)|0xfff;
 		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA_BANK2);
-			install_mem_write_handler(0, begin, end, MWA_BANK2);
+			install_mem_read_handler(0, begin, end, MRA8_BANK2);
+			install_mem_write_handler(0, begin, end, MWA8_BANK2);
 			cpu_setbank(2, hp48_card2);
 		}
 	}
@@ -82,8 +82,8 @@ static void hp48_config(void)
 		begin=hp48s.mem[RAM].adr&hp48s.mem[RAM].size&~0xfff;
 		end=begin|(hp48s.mem[RAM].size^0xff000)|0xfff;
 		if (end!=begin) {
-			install_mem_read_handler(0, begin, end, MRA_BANK3);
-			install_mem_write_handler(0, begin, end, MWA_BANK3);
+			install_mem_read_handler(0, begin, end, MRA8_BANK3);
+			install_mem_write_handler(0, begin, end, MWA8_BANK3);
 			cpu_setbank(3, hp48_ram);
 		}
 	}

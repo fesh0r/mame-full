@@ -224,9 +224,9 @@ void Enterprise_Initialise()
 
 	Dave_SetIFace(&enterprise_dave_interface);
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 	memory_set_bankhandler_w(5, 0, MWA_BANK5);
@@ -291,9 +291,9 @@ static WRITE_HANDLER (	enterprise_wd177x_write )
 /* I've done this because the ram is banked in 16k blocks, and
 the rom can be paged into bank 0 and bank 3. */
 MEMORY_READ_START( readmem_enterprise )
-	{ 0x00000, 0x03fff, MRA_BANK1 },
-	{ 0x04000, 0x07fff, MRA_BANK2 },
-	{ 0x08000, 0x0bfff, MRA_BANK3 },
+	{ 0x00000, 0x03fff, MRA8_BANK1 },
+	{ 0x04000, 0x07fff, MRA8_BANK2 },
+	{ 0x08000, 0x0bfff, MRA8_BANK3 },
 	{ 0x0c000, 0x0ffff, MRA_BANK4 },
 MEMORY_END
 

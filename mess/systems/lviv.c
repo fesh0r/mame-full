@@ -303,16 +303,16 @@ PORT_END
 /* memory w/r functions */
 
 MEMORY_READ_START( lviv_readmem )
-	{0x0000, 0x3fff, MRA_BANK1},
-	{0x4000, 0x7fff, MRA_BANK2},
-	{0x8000, 0xbfff, MRA_BANK3},
+	{0x0000, 0x3fff, MRA8_BANK1},
+	{0x4000, 0x7fff, MRA8_BANK2},
+	{0x8000, 0xbfff, MRA8_BANK3},
 	{0xc000, 0xffff, MRA_BANK4},
 MEMORY_END
 
 MEMORY_WRITE_START( lviv_writemem )
-	{0x0000, 0x3fff, MWA_BANK1},
-	{0x4000, 0x7fff, MWA_BANK2},
-	{0x8000, 0xbfff, MWA_BANK3},
+	{0x0000, 0x3fff, MWA8_BANK1},
+	{0x4000, 0x7fff, MWA8_BANK2},
+	{0x8000, 0xbfff, MWA8_BANK3},
 	{0xc000, 0xffff, MWA_BANK4},
 MEMORY_END
 

@@ -384,7 +384,7 @@ static READ_HANDLER ( sord_keyboard_r )
 
 MEMORY_READ_START( readmem_sord_m5 )
 	{0x0000, 0x01fff, MRA8_ROM},	/* internal rom */
-	{0x2000, 0x06fff, MRA_BANK1},
+	{0x2000, 0x06fff, MRA8_BANK1},
 	{0x7000, 0x0ffff, MRA8_RAM},
 MEMORY_END
 

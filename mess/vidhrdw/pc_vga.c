@@ -6,15 +6,15 @@
 	Nathan Woods	npwoods@mess.org
 
    include in memory read list
-   { 0xa0000, 0xaffff, MRA_BANK1 }
-   { 0xb0000, 0xb7fff, MRA_BANK2 }
-   { 0xb8000, 0xbffff, MRA_BANK3 }
+   { 0xa0000, 0xaffff, MRA8_BANK1 }
+   { 0xb0000, 0xb7fff, MRA8_BANK2 }
+   { 0xb8000, 0xbffff, MRA8_BANK3 }
    { 0xc0000, 0xc7fff, MRA8_ROM }
 
    and in memory write list
-   { 0xa0000, 0xaffff, MWA_BANK1 }
-   { 0xb0000, 0xb7fff, MWA_BANK2 }
-   { 0xb8000, 0xbffff, MWA_BANK3 }
+   { 0xa0000, 0xaffff, MWA8_BANK1 }
+   { 0xb0000, 0xb7fff, MWA8_BANK2 }
+   { 0xb8000, 0xbffff, MWA8_BANK3 }
    { 0xc0000, 0xc7fff, MWA8_ROM }
 
 	(oti 037 chip)
@@ -518,6 +518,7 @@ static void vga_cpu_interface(void)
 	static int sequencer, gc;
 	read8_handler read_handler;
 	write8_handler write_handler;
+	data8_t sel;
 
 	if ((gc==vga.gc.data[6])&&(sequencer==vga.sequencer.data[4])) return;
 
@@ -542,46 +543,22 @@ static void vga_cpu_interface(void)
 		write_handler = vga_text_w;
 		DBG_LOG(1,"vga memory",("text\n"));
 	}
-	switch (vga.gc.data[6]&0xc) {
-	case 0:
-		cpu_setbank(1,vga.memory);
-		cpu_setbank(2,vga.memory+0x10000);
-		cpu_setbank(3,vga.memory+0x18000);
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
-		memory_set_bankhandler_w(1, 0, MWA_BANK1);
-		memory_set_bankhandler_w(2, 0, MWA_BANK2);
-		memory_set_bankhandler_w(3, 0, MWA_BANK3);
-		DBG_LOG(1,"vga memory",("a0000-bffff\n"));
-		break;
-	case 4:
-		memory_set_bankhandler_r(1, 0, read_handler);
-		memory_set_bankhandler_r(2, 0, MRA8_NOP);
-		memory_set_bankhandler_r(3, 0, MRA8_NOP);
-		memory_set_bankhandler_w(1, 0, write_handler);
-		memory_set_bankhandler_w(2, 0, MWA8_NOP);
-		memory_set_bankhandler_w(3, 0, MWA8_NOP);
-		DBG_LOG(1,"vga memory",("a0000-affff\n"));
-		break;
-	case 8:
-		memory_set_bankhandler_r(1, 0, MRA8_NOP);
-		memory_set_bankhandler_r(2, 0, read_handler);
-		memory_set_bankhandler_r(3, 0, MRA8_NOP);
-		memory_set_bankhandler_w(1, 0, MWA8_NOP);
-		memory_set_bankhandler_w(2, 0, write_handler);
-		memory_set_bankhandler_w(3, 0, MWA8_NOP);
-		DBG_LOG(1,"vga memory",("b0000-b7fff\n"));
-		break;
-	case 0xc:
-		memory_set_bankhandler_r(1, 0, MRA8_NOP);
-		memory_set_bankhandler_r(2, 0, MRA8_NOP);
-		memory_set_bankhandler_r(3, 0, read_handler);
-		memory_set_bankhandler_w(1, 0, MWA8_NOP);
-		memory_set_bankhandler_w(2, 0, MWA8_NOP);
-		memory_set_bankhandler_w(3, 0, write_handler);
-		DBG_LOG(1,"vga memory",("b8000-bffff\n"));
-		break;
+
+	sel = vga.gc.data[6] & 0x0c;
+	if (sel)
+	{
+		install_mem_read_handler(0,  0xa0000, 0xaffff, (sel == 0x04) ? read_handler  : MRA8_NOP);
+		install_mem_read_handler(0,  0xb0000, 0xb7fff, (sel == 0x08) ? read_handler  : MRA8_NOP);
+		install_mem_read_handler(0,  0xb8000, 0xbffff, (sel == 0x0C) ? read_handler  : MRA8_NOP);
+		install_mem_write_handler(0, 0xa0000, 0xaffff, (sel == 0x04) ? write_handler : MWA8_NOP);
+		install_mem_write_handler(0, 0xb0000, 0xb7fff, (sel == 0x08) ? write_handler : MWA8_NOP);
+		install_mem_write_handler(0, 0xb8000, 0xbffff, (sel == 0x0C) ? write_handler : MWA8_NOP);
+	}
+	else
+	{
+		cpu_setbank(1, vga.memory);
+		install_mem_read_handler(0,  0xa0000, 0xbffff, MRA8_BANK1 );
+		install_mem_write_handler(0, 0xa0000, 0xbffff, MWA8_BANK1 );
 	}
 }
 

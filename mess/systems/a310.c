@@ -25,7 +25,7 @@ static MACHINE_INIT( a310 )
 	UINT8 *mem = memory_region(REGION_CPU1);
 
 	cpu_setbank(1,&mem[0x00200000]);
-	memory_set_bankhandler_r(1,0,MRA_BANK1);
+	memory_set_bankhandler_r(1,0,MRA8_BANK1);
 	memory_set_bankhandler_w(1,0,MWA8_ROM);
 
 	cpu_setbank(2,&mem[0x00000000]);
@@ -33,7 +33,7 @@ static MACHINE_INIT( a310 )
 	memory_set_bankhandler_w(2,0,MWA8_RAM);
 
     cpu_setbank(3,&mem[0x00200000]);
-	memory_set_bankhandler_r(3,0,MRA_BANK3);
+	memory_set_bankhandler_r(3,0,MRA8_BANK3);
 	memory_set_bankhandler_w(3,0,MWA8_ROM);
 
     cpu_setbank(4,&mem[0x00200000]);

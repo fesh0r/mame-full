@@ -226,8 +226,8 @@ MEMORY_END
 static MEMORY_READ_START( c64_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
 	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0x9fff, MRA_BANK1},	   /* ram or external roml */
-	{0xa000, 0xbfff, MRA_BANK3},	   /* ram or basic rom or external romh */
+	{0x8000, 0x9fff, MRA8_BANK1},	   /* ram or external roml */
+	{0xa000, 0xbfff, MRA8_BANK3},	   /* ram or basic rom or external romh */
 	{0xc000, 0xcfff, MRA8_RAM},
 #if 1
 	{0xd000, 0xdfff, MRA_BANK5},
@@ -248,7 +248,7 @@ MEMORY_END
 static MEMORY_WRITE_START( c64_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w, &c64_memory},
 	{0x0002, 0x7fff, MWA8_RAM},
-	{0x8000, 0x9fff, MWA_BANK2},
+	{0x8000, 0x9fff, MWA8_BANK2},
 	{0xa000, 0xcfff, MWA8_RAM},
 //	{0xa000, 0xcfff, MWA_BANK16},
 #if 1

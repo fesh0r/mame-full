@@ -352,7 +352,7 @@ static void avigo_refresh_memory(void)
                         cpu_setbank(7, addr);
 
                         memory_set_bankhandler_w(7, 0, MWA_BANK7);
-                        memory_set_bankhandler_r(3, 0, MRA_BANK3);
+                        memory_set_bankhandler_r(3, 0, MRA8_BANK3);
                 }
                 break;
 
@@ -500,9 +500,9 @@ static MACHINE_INIT( avigo )
 	/* an interrupt is generated when the pen is pressed to the screen */
 	timer_pulse(TIME_IN_HZ(50), 0, avigo_dummy_timer_callback);
 
-    memory_set_bankhandler_r(1, 0, MRA_BANK1);
-    memory_set_bankhandler_r(2, 0, MRA_BANK2);
-    memory_set_bankhandler_r(3, 0, MRA_BANK3);
+    memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+    memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+    memory_set_bankhandler_r(3, 0, MRA8_BANK3);
     memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
     memory_set_bankhandler_w(5, 0, MWA_BANK5);
@@ -570,9 +570,9 @@ static MACHINE_STOP( avigo )
 
 
 MEMORY_READ_START( readmem_avigo )
-	{0x00000, 0x03fff, MRA_BANK1},
-	{0x04000, 0x07fff, MRA_BANK2},
-	{0x08000, 0x0bfff, MRA_BANK3},
+	{0x00000, 0x03fff, MRA8_BANK1},
+	{0x04000, 0x07fff, MRA8_BANK2},
+	{0x08000, 0x0bfff, MRA8_BANK3},
 	{0x0c000, 0x0ffff, MRA_BANK4},
 MEMORY_END
 

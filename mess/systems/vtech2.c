@@ -79,16 +79,16 @@
 #endif
 
 static MEMORY_READ_START( readmem )
-	{ 0x00000, 0x03fff, MRA_BANK1 },
-	{ 0x04000, 0x07fff, MRA_BANK2 },
-	{ 0x08000, 0x0bfff, MRA_BANK3 },
+	{ 0x00000, 0x03fff, MRA8_BANK1 },
+	{ 0x04000, 0x07fff, MRA8_BANK2 },
+	{ 0x08000, 0x0bfff, MRA8_BANK3 },
 	{ 0x0c000, 0x0ffff, MRA_BANK4 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )
-	{ 0x00000, 0x03fff, MWA_BANK1 },
-	{ 0x04000, 0x07fff, MWA_BANK2 },
-	{ 0x08000, 0x0bfff, MWA_BANK3 },
+	{ 0x00000, 0x03fff, MWA8_BANK1 },
+	{ 0x04000, 0x07fff, MWA8_BANK2 },
+	{ 0x08000, 0x0bfff, MWA8_BANK3 },
 	{ 0x0c000, 0x0ffff, MWA_BANK4 },
 MEMORY_END
 

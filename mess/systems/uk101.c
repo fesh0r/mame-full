@@ -33,9 +33,9 @@ Hardware:	MC6850
 /* memory w/r functions */
 
 MEMORY_READ_START( uk101_readmem )
-	{0x0000, 0x0fff, MRA_BANK1 },
-	{0x1000, 0x1fff, MRA_BANK2 },
-	{0x2000, 0x9fff, MRA_BANK3 },
+	{0x0000, 0x0fff, MRA8_BANK1 },
+	{0x1000, 0x1fff, MRA8_BANK2 },
+	{0x2000, 0x9fff, MRA8_BANK3 },
 	{0xa000, 0xbfff, MRA8_ROM},
 	{0xc000, 0xcfff, MRA8_NOP},
 	{0xd000, 0xd3ff, videoram_r},
@@ -48,9 +48,9 @@ MEMORY_READ_START( uk101_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( uk101_writemem )
-	{0x0000, 0x0fff, MWA_BANK1 },
-	{0x1000, 0x1fff, MWA_BANK2 },
-	{0x2000, 0x9fff, MWA_BANK3 },
+	{0x0000, 0x0fff, MWA8_BANK1 },
+	{0x1000, 0x1fff, MWA8_BANK2 },
+	{0x2000, 0x9fff, MWA8_BANK3 },
 	{0xa000, 0xbfff, MWA8_ROM},
 	{0xc000, 0xcfff, MWA8_NOP},
 	{0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size},
@@ -63,9 +63,9 @@ MEMORY_WRITE_START( uk101_writemem )
 MEMORY_END
 
 MEMORY_READ_START( superbrd_readmem )
-	{0x0000, 0x0fff, MRA_BANK1 },
-	{0x1000, 0x1fff, MRA_BANK2 },
-	{0x2000, 0x9fff, MRA_BANK3 },
+	{0x0000, 0x0fff, MRA8_BANK1 },
+	{0x1000, 0x1fff, MRA8_BANK2 },
+	{0x2000, 0x9fff, MRA8_BANK3 },
 	{0xa000, 0xbfff, MRA8_ROM},
 	{0xc000, 0xcfff, MRA8_NOP},
 	{0xd000, 0xd7ff, videoram_r},
@@ -78,9 +78,9 @@ MEMORY_READ_START( superbrd_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( superbrd_writemem )
-	{0x0000, 0x0fff, MWA_BANK1 },
-	{0x1000, 0x1fff, MWA_BANK2 },
-	{0x2000, 0x9fff, MWA_BANK3 },
+	{0x0000, 0x0fff, MWA8_BANK1 },
+	{0x1000, 0x1fff, MWA8_BANK2 },
+	{0x2000, 0x9fff, MWA8_BANK3 },
 	{0xa000, 0xbfff, MWA8_ROM},
 	{0xc000, 0xcfff, MWA8_NOP},
 	{0xd000, 0xd7ff, videoram_w, &videoram, &videoram_size},

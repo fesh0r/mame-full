@@ -528,9 +528,9 @@ static PORT_WRITE_START (spectrum_128_writeport)
 PORT_END
 
 static MEMORY_READ_START (spectrum_128_readmem)
-	{ 0x0000, 0x3fff, MRA_BANK1 },
-	{ 0x4000, 0x7fff, MRA_BANK2 },
-	{ 0x8000, 0xbfff, MRA_BANK3 },
+	{ 0x0000, 0x3fff, MRA8_BANK1 },
+	{ 0x4000, 0x7fff, MRA8_BANK2 },
+	{ 0x8000, 0xbfff, MRA8_BANK3 },
 	{ 0xc000, 0xffff, MRA_BANK4 },
 MEMORY_END
 
@@ -545,9 +545,9 @@ static MACHINE_INIT( spectrum_128 )
 {
 	if (spectrum_alloc_ram(128)!=0)
 	{
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 		/* 0x0000-0x3fff always holds ROM */
@@ -877,9 +877,9 @@ static MACHINE_INIT( spectrum_plus3 )
 	if (spectrum_alloc_ram(128))
 	{
 
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
@@ -1033,7 +1033,7 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(1, ExROM);
-						memory_set_bankhandler_r(1, 0, MRA_BANK1);
+						memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 						memory_set_bankhandler_w(9, 0, MWA8_ROM);
 						logerror("0000-1fff EXROM\n");
 				}
@@ -1042,7 +1042,7 @@ extern void ts2068_update_memory(void)
 						if (timex_cart_type == TIMEX_CART_DOCK)
 						{
 							cpu_setbank(1, DOCK);
-							memory_set_bankhandler_r(1, 0, MRA_BANK1);
+							memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 							if (timex_cart_chunks&0x01)
 								memory_set_bankhandler_w(9, 0, MWA_BANK9);
 							else
@@ -1060,7 +1060,7 @@ extern void ts2068_update_memory(void)
 		{
 				ChosenROM = memory_region(REGION_CPU1) + 0x010000;
 				cpu_setbank(1, ChosenROM);
-				memory_set_bankhandler_r(1, 0, MRA_BANK1);
+				memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 				memory_set_bankhandler_w(9, 0, MWA8_ROM);
 				logerror("0000-1fff HOME\n");
 		}
@@ -1070,7 +1070,7 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(2, ExROM);
-						memory_set_bankhandler_r(2, 0, MRA_BANK2);
+						memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 						memory_set_bankhandler_w(10, 0, MWA8_ROM);
 						logerror("2000-3fff EXROM\n");
 				}
@@ -1079,7 +1079,7 @@ extern void ts2068_update_memory(void)
 						if (timex_cart_type == TIMEX_CART_DOCK)
 						{
 							cpu_setbank(2, DOCK+0x2000);
-							memory_set_bankhandler_r(2, 0, MRA_BANK2);
+							memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 							if (timex_cart_chunks&0x02)
 								memory_set_bankhandler_w(10, 0, MWA_BANK10);
 							else
@@ -1097,7 +1097,7 @@ extern void ts2068_update_memory(void)
 		{
 				ChosenROM = memory_region(REGION_CPU1) + 0x012000;
 				cpu_setbank(2, ChosenROM);
-				memory_set_bankhandler_r(2, 0, MRA_BANK2);
+				memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 				memory_set_bankhandler_w(10, 0, MWA8_ROM);
 				logerror("2000-3fff HOME\n");
 		}
@@ -1107,7 +1107,7 @@ extern void ts2068_update_memory(void)
 				if (ts2068_port_ff_data & 0x80)
 				{
 						cpu_setbank(3, ExROM);
-						memory_set_bankhandler_r(3, 0, MRA_BANK3);
+						memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 						memory_set_bankhandler_w(11, 0, MWA8_ROM);
 						logerror("4000-5fff EXROM\n");
 				}
@@ -1116,7 +1116,7 @@ extern void ts2068_update_memory(void)
 						if (timex_cart_type == TIMEX_CART_DOCK)
 						{
 							cpu_setbank(3, DOCK+0x4000);
-							memory_set_bankhandler_r(3, 0, MRA_BANK3);
+							memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 							if (timex_cart_chunks&0x04)
 								memory_set_bankhandler_w(11, 0, MWA_BANK11);
 							else
@@ -1134,7 +1134,7 @@ extern void ts2068_update_memory(void)
 		{
 				cpu_setbank(3, ts2068_ram);
 				cpu_setbank(11, ts2068_ram);
-				memory_set_bankhandler_r(3, 0, MRA_BANK3);
+				memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 				memory_set_bankhandler_w(11, 0, MWA_BANK11);
 				logerror("4000-5fff RAM\n");
 		}
@@ -1335,9 +1335,9 @@ static PORT_WRITE_START (ts2068_writeport)
 PORT_END
 
 static MEMORY_READ_START (ts2068_readmem)
-	{ 0x0000, 0x1fff, MRA_BANK1 },
-	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
+	{ 0x0000, 0x1fff, MRA8_BANK1 },
+	{ 0x2000, 0x3fff, MRA8_BANK2 },
+	{ 0x4000, 0x5fff, MRA8_BANK3 },
 	{ 0x6000, 0x7fff, MRA_BANK4 },
 	{ 0x8000, 0x9fff, MRA_BANK5 },
 	{ 0xa000, 0xbfff, MRA_BANK6 },
@@ -1365,9 +1365,9 @@ static MACHINE_INIT( ts2068 )
 		return;
 	memset(ts2068_ram, 0, 48*1024);
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	memory_set_bankhandler_r(5, 0, MRA_BANK5);
 	memory_set_bankhandler_r(6, 0, MRA_BANK6);
@@ -1445,12 +1445,12 @@ PORT_END
 
 static MEMORY_READ_START (tc2048_readmem)
 	{ 0x0000, 0x3fff, MRA8_ROM },
-	{ 0x4000, 0xffff, MRA_BANK1 },
+	{ 0x4000, 0xffff, MRA8_BANK1 },
 MEMORY_END
 
 static MEMORY_WRITE_START (tc2048_writemem)
 	{ 0x0000, 0x3fff, MWA8_ROM },
-	{ 0x4000, 0xffff, MWA_BANK2 },
+	{ 0x4000, 0xffff, MWA8_BANK2 },
 MEMORY_END
 
 static MACHINE_INIT( tc2048 )
@@ -1460,8 +1460,8 @@ static MACHINE_INIT( tc2048 )
 		return;
 	memset(ts2068_ram, 0, 48*1024);
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_w(2, 0, MWA_BANK2);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_w(2, 0, MWA8_BANK2);
 	cpu_setbank(1, ts2068_ram);
 	cpu_setbank(2, ts2068_ram);
 	ts2068_port_ff_data = 0;
@@ -1644,7 +1644,7 @@ static void scorpion_update_memory(void)
 			logerror("RAM at 0x0000\n");
 
 			/* connect page 0 of ram to 0x0000 */
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(5, 0, MWA_BANK5);
 			cpu_setbank(1, spectrum_ram+(8<<14));
 			cpu_setbank(5, spectrum_ram+(8<<14));
@@ -1655,7 +1655,7 @@ static void scorpion_update_memory(void)
 			logerror("ROM at 0x0000\n");
 
 			/* connect page 0 of rom to 0x0000 */
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(5, 0, MWA8_NOP);
 
 			if (scorpion_256_port_1ffd_data & (1<<1))
@@ -1879,13 +1879,13 @@ static MACHINE_INIT( scorpion )
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		cpu_setbank(2, spectrum_ram + (5<<14));
 		cpu_setbank(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
 		cpu_setbank(3, spectrum_ram + (2<<14));
 		cpu_setbank(7, spectrum_ram + (2<<14));
@@ -1937,13 +1937,13 @@ static MACHINE_INIT( pentagon )
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);
 
 		/* Bank 5 is always in 0x4000 - 0x7fff */
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		cpu_setbank(2, spectrum_ram + (5<<14));
 		cpu_setbank(6, spectrum_ram + (5<<14));
 
 		/* Bank 2 is always in 0x8000 - 0xbfff */
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
 		cpu_setbank(3, spectrum_ram + (2<<14));
 		cpu_setbank(7, spectrum_ram + (2<<14));

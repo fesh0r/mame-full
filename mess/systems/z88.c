@@ -247,7 +247,7 @@ static void z88_rtc_timer_callback(int dummy)
 
 static read8_handler z88_read_handler[] =
 {
- MRA_BANK1, MRA_BANK2, MRA_BANK3, MRA_BANK4, MRA_BANK5
+ MRA8_BANK1, MRA8_BANK2, MRA8_BANK3, MRA_BANK4, MRA_BANK5
 };
 
 
@@ -380,7 +380,7 @@ static void z88_refresh_memory_bank(int index1)
 			addr = memory_region(REGION_CPU1) + 0x010000;
 
 			cpu_setbank(1, addr);
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 
 			logerror("lower 8k is rom\n");
@@ -392,7 +392,7 @@ static void z88_refresh_memory_bank(int index1)
 
 			cpu_setbank(1, addr);
 			cpu_setbank(6, addr);
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 			
 			logerror("lower 8k is ram\n");
@@ -411,9 +411,9 @@ static MACHINE_INIT( z88 )
 
 	blink_reset();
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	memory_set_bankhandler_r(5, 0, MRA_BANK5);
 
@@ -430,9 +430,9 @@ static MACHINE_INIT( z88 )
 }
 
 static MEMORY_READ_START (readmem_z88)
-        {0x00000, 0x01fff, MRA_BANK1},
-        {0x02000, 0x03fff, MRA_BANK2},
-        {0x04000, 0x07fff, MRA_BANK3},
+        {0x00000, 0x01fff, MRA8_BANK1},
+        {0x02000, 0x03fff, MRA8_BANK2},
+        {0x04000, 0x07fff, MRA8_BANK3},
 		{0x08000, 0x0bfff, MRA_BANK4},
         {0x0c000, 0x0ffff, MRA_BANK5},
 MEMORY_END

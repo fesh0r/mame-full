@@ -36,12 +36,12 @@ MACHINE_INIT( uk101 )
 	cpu_setbank(2, &mess_ram[0x1000]);
 	cpu_setbank(3, &mess_ram[0x2000]);
 
-	memory_set_bankhandler_r(1, 0, (mess_ram_size > 0x0000) ? MRA_BANK1 : MRA8_ROM);
-	memory_set_bankhandler_w(1, 0, (mess_ram_size > 0x0000) ? MWA_BANK1 : MWA8_ROM);
-	memory_set_bankhandler_r(2, 0, (mess_ram_size > 0x1000) ? MRA_BANK2 : MRA8_ROM);
-	memory_set_bankhandler_w(2, 0, (mess_ram_size > 0x1000) ? MWA_BANK2 : MWA8_ROM);
-	memory_set_bankhandler_r(3, 0, (mess_ram_size > 0x2000) ? MRA_BANK3 : MRA8_ROM);
-	memory_set_bankhandler_w(3, 0, (mess_ram_size > 0x2000) ? MWA_BANK3 : MWA8_ROM);
+	memory_set_bankhandler_r(1, 0, (mess_ram_size > 0x0000) ? MRA8_BANK1 : MRA8_ROM);
+	memory_set_bankhandler_w(1, 0, (mess_ram_size > 0x0000) ? MWA8_BANK1 : MWA8_ROM);
+	memory_set_bankhandler_r(2, 0, (mess_ram_size > 0x1000) ? MRA8_BANK2 : MRA8_ROM);
+	memory_set_bankhandler_w(2, 0, (mess_ram_size > 0x1000) ? MWA8_BANK2 : MWA8_ROM);
+	memory_set_bankhandler_r(3, 0, (mess_ram_size > 0x2000) ? MRA8_BANK3 : MRA8_ROM);
+	memory_set_bankhandler_w(3, 0, (mess_ram_size > 0x2000) ? MWA8_BANK3 : MWA8_ROM);
 }
 
 READ_HANDLER( uk101_acia0_casin )

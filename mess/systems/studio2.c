@@ -21,7 +21,7 @@ static MEMORY_WRITE_START( studio2_writemem )
 MEMORY_END
 
 static MEMORY_READ_START( vip_readmem )
-    { 0x0000, 0x03ff, MRA_BANK1 }, // rom mapped in at reset, switched to ram with out 4
+    { 0x0000, 0x03ff, MRA8_BANK1 }, // rom mapped in at reset, switched to ram with out 4
 	{ 0x0400, 0x0fff, MRA8_RAM },
 	{ 0x8000, 0x83ff, MRA8_ROM },
 MEMORY_END

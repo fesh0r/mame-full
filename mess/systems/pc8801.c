@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.23 2004/02/02 20:13:05 npwoods Exp $
+  $Id: pc8801.c,v 1.24 2004/02/03 16:11:59 npwoods Exp $
 
 ***************************************************************************/
 
@@ -386,18 +386,18 @@ INPUT_PORTS_END
 
 
 MEMORY_READ_START( pc8801_readmem )
-    { 0x0000, 0x5fff, MRA_BANK1 },
-    { 0x6000, 0x7fff, MRA_BANK2 },
-    { 0x8000, 0x83ff, MRA_BANK3 },
+    { 0x0000, 0x5fff, MRA8_BANK1 },
+    { 0x6000, 0x7fff, MRA8_BANK2 },
+    { 0x8000, 0x83ff, MRA8_BANK3 },
     { 0x8400, 0xbfff, MRA_BANK4 },
     { 0xc000, 0xefff, MRA_BANK5 },
     { 0xf000, 0xffff, MRA_BANK6 },
 MEMORY_END
 
 MEMORY_WRITE_START( pc8801_writemem )
-    { 0x0000, 0x5fff, MWA_BANK1 },
-    { 0x6000, 0x7fff, MWA_BANK2 },
-    { 0x8000, 0x83ff, MWA_BANK3 },
+    { 0x0000, 0x5fff, MWA8_BANK1 },
+    { 0x6000, 0x7fff, MWA8_BANK2 },
+    { 0x8000, 0x83ff, MWA8_BANK3 },
     { 0x8400, 0xbfff, MWA_BANK4 },
     { 0xc000, 0xefff, MWA_BANK5 },
     { 0xf000, 0xffff, MWA_BANK6 },

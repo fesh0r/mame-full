@@ -1180,7 +1180,7 @@ static void kc85_4_update_0x08000(void)
 
 		cpu_setbank(3, mem_ptr);
 		cpu_setbank(4, mem_ptr+0x02800);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 		/* write protect RAM8 ? */
@@ -1246,7 +1246,7 @@ static void kc85_4_update_0x08000(void)
 		cpu_setbank(3, ram_page);
 		cpu_setbank(9, ram_page);
 
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(9, 0, MWA_BANK9);
 
 		ram_page = kc85_4_get_video_ram_base(0, 0);
@@ -1273,7 +1273,7 @@ static void kc85_4_update_0x00000(void)
 	#endif
 
 			/* yes */
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			/* set address of bank */
 			cpu_setbank(1, kc85_ram);
 
@@ -1330,7 +1330,7 @@ static void kc85_4_update_0x04000(void)
 		mem_ptr = kc85_ram+0x04000;
 
 		/* yes */
-		memory_set_bankhandler_r(2, 0,MRA_BANK2);
+		memory_set_bankhandler_r(2, 0,MRA8_BANK2);
 		/* set address of bank */
 		cpu_setbank(2, mem_ptr);
 
@@ -1572,7 +1572,7 @@ static void kc85_3_update_0x0e000(void)
 }
 
 /* update status of memory area 0x0000-0x03fff */
-/* MRA_BANK1 is used for read operations and MRA_BANK5 is used
+/* MRA8_BANK1 is used for read operations and MRA_BANK5 is used
 for write operations */
 static void kc85_3_update_0x00000(void)
 {
@@ -1584,7 +1584,7 @@ static void kc85_3_update_0x00000(void)
 			logerror("ram0 enabled\n");
 	#endif
 			/* yes */
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			/* set address of bank */
 			cpu_setbank(1, kc85_ram);
 
@@ -1625,7 +1625,7 @@ static void kc85_3_update_0x00000(void)
 }
 
 /* update status of memory area 0x08000-0x0ffff */
-/* MRA_BANK2 is used for read, MRA_BANK6 is used for write */
+/* MRA8_BANK2 is used for read, MRA_BANK6 is used for write */
 static void kc85_3_update_0x08000(void)
 {
     unsigned char *ram_page;
@@ -1641,7 +1641,7 @@ static void kc85_3_update_0x08000(void)
 		cpu_setbank(3, ram_page);
 		cpu_setbank(8, ram_page);
 
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(8, 0, MWA_BANK8);
     }
     else
@@ -1654,7 +1654,7 @@ static void kc85_3_update_0x08000(void)
 		ram_page = kc85_ram + 0x04000;
 
 		cpu_setbank(3, ram_page);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 
 		/* write protect RAM8 ? */
 		if ((kc85_pio_data[1] & (1<<6))==0)

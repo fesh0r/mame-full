@@ -82,18 +82,18 @@ static write8_handler mwa_bank_soft[4] =
 /* read banked memory (plain ROM/RAM) */
 static read8_handler mra_bank_hard[4] =
 {
-    MRA_BANK1,  /* mapped in 0000-3fff */
-    MRA_BANK2,  /* mapped in 4000-7fff */
-    MRA_BANK3,  /* mapped in 8000-bfff */
+    MRA8_BANK1,  /* mapped in 0000-3fff */
+    MRA8_BANK2,  /* mapped in 4000-7fff */
+    MRA8_BANK3,  /* mapped in 8000-bfff */
     MRA_BANK4   /* mapped in c000-ffff */
 };
 
 /* write banked memory (plain ROM/RAM) */
 static write8_handler mwa_bank_hard[4] =
 {
-    MWA_BANK1,  /* mapped in 0000-3fff */
-    MWA_BANK2,  /* mapped in 4000-7fff */
-    MWA_BANK3,  /* mapped in 8000-bfff */
+    MWA8_BANK1,  /* mapped in 0000-3fff */
+    MWA8_BANK2,  /* mapped in 4000-7fff */
+    MWA8_BANK3,  /* mapped in 8000-bfff */
     MWA_BANK4   /* mapped in c000-ffff */
 };
 

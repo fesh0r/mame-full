@@ -315,14 +315,14 @@ WRITE_HANDLER(cbm8096_w)
 			memory_set_bankhandler_w(1, 0, videoram_w);
 		} else {
 			if (!(data&1)) {
-				memory_set_bankhandler_w(1, 0, MWA_BANK1);
+				memory_set_bankhandler_w(1, 0, MWA8_BANK1);
 			} else {
 				memory_set_bankhandler_w(1, 0, MWA8_NOP);
 			}
 		}
 		if (!(data&1)) {
-			memory_set_bankhandler_w(2, 0, MWA_BANK2);
-			memory_set_bankhandler_w(3, 0, MWA_BANK3);
+			memory_set_bankhandler_w(2, 0, MWA8_BANK2);
+			memory_set_bankhandler_w(3, 0, MWA8_BANK3);
 			memory_set_bankhandler_w(4, 0, MWA_BANK4);
 		} else {
 			memory_set_bankhandler_w(2, 0, MWA8_NOP);

@@ -219,9 +219,9 @@ PORT_WRITE_START( writeport_kc85_4d )
 PORT_END
 
 MEMORY_READ_START( readmem_kc85_4 )
-	{0x00000, 0x03fff, MRA_BANK1},
-	{0x04000, 0x07fff, MRA_BANK2},
-	{0x08000, 0x0a7ff, MRA_BANK3},
+	{0x00000, 0x03fff, MRA8_BANK1},
+	{0x04000, 0x07fff, MRA8_BANK2},
+	{0x08000, 0x0a7ff, MRA8_BANK3},
 	//{0x0a800, 0x0bfff, MRA8_RAM},
 	{0x0a800, 0x0bfff, MRA_BANK4},
 	{0x0c000, 0x0dfff, MRA_BANK5},
@@ -237,9 +237,9 @@ MEMORY_WRITE_START( writemem_kc85_4 )
 MEMORY_END
 
 MEMORY_READ_START( readmem_kc85_3 )
-	{0x00000, 0x03fff, MRA_BANK1},
-	{0x04000, 0x07fff, MRA_BANK2},
-	{0x08000, 0x0bfff, MRA_BANK3},
+	{0x00000, 0x03fff, MRA8_BANK1},
+	{0x04000, 0x07fff, MRA8_BANK2},
+	{0x08000, 0x0bfff, MRA8_BANK3},
 	{0x0c000, 0x0dfff, MRA_BANK4},
 	{0x0e000, 0x0ffff, MRA_BANK5},
 MEMORY_END

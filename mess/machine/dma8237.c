@@ -200,24 +200,14 @@ static int dma8237_r(DMA8237 *this, offs_t offset)
 
 UINT8 dma8237_write(DMA8237 *this, int channel)
 {
-	int data = 0;
+	data8_t data;
 
 	/* read byte from pc mem and update address */
 	if (this->chan[channel].operation == 2)
-	{
-		switch (this->config.type) {
-		case DMA8237_PC:
-			data = cpu_readmem20(this->chan[channel].page + this->chan[channel].address);
-			break;
-		case DMA8237_AT:
-			data = cpu_readmem24(this->chan[channel].page + this->chan[channel].address);
-			break;
-		}
-	}
+		data = program_read_byte(this->chan[channel].page + this->chan[channel].address);
 	else
-	{
 		data = 0x0ff;
-	}
+
 	this->chan[channel].address += this->chan[channel].direction;
 	this->chan[channel].count--;
 
@@ -237,16 +227,7 @@ void dma8237_read(DMA8237 *this, int channel, UINT8 data)
 
 	/* write byte to pc mem and update mem address */
 	if (this->chan[channel].operation == 1)
-	{
-		switch (this->config.type) {
-		case DMA8237_PC:
-			cpu_writemem20(this->chan[channel].page + this->chan[channel].address, data);
-			break;
-		case DMA8237_AT:
-			cpu_writemem24(this->chan[channel].page + this->chan[channel].address, data);
-			break;
-		}
-	}
+		program_write_byte(this->chan[channel].page + this->chan[channel].address, data);
 
 	this->chan[channel].address += this->chan[channel].direction;
 	this->chan[channel].count--;

@@ -136,7 +136,7 @@ DRIVER_INIT( pc1512 )
     for (i = 0; i < 256; i++)
 		gfx[i] = i;
 
-	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA_BANK1 );
+	install_mem_read_handler(0, 0xb8000, 0xbbfff, MRA8_BANK1 );
 	install_mem_write_handler(0, 0xb8000, 0xbbfff, pc1512_videoram_w );
 
 	install_port_read_handler(0, 0x3d0, 0x3df, pc1512_r );
@@ -152,13 +152,13 @@ DRIVER_INIT( pc1512 )
 DRIVER_INIT( pc1640 )
 {
 	vga_init(input_port_0_r);
-	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA_BANK1 );
-	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA_BANK2 );
-	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA_BANK3 );
+	install_mem_read_handler(0, 0xa0000, 0xaffff, MRA8_BANK1 );
+	install_mem_read_handler(0, 0xb0000, 0xb7fff, MRA8_BANK2 );
+	install_mem_read_handler(0, 0xb8000, 0xbffff, MRA8_BANK3 );
 
-	install_mem_write_handler(0, 0xa0000, 0xaffff, MWA_BANK1 );
-	install_mem_write_handler(0, 0xb0000, 0xb7fff, MWA_BANK2 );
-	install_mem_write_handler(0, 0xb8000, 0xbffff, MWA_BANK3 );
+	install_mem_write_handler(0, 0xa0000, 0xaffff, MWA8_BANK1 );
+	install_mem_write_handler(0, 0xb0000, 0xb7fff, MWA8_BANK2 );
+	install_mem_write_handler(0, 0xb8000, 0xbffff, MWA8_BANK3 );
 
 	install_port_read_handler(0, 0x3b0, 0x3bf, vga_port_03b0_r );
 	install_port_read_handler(0, 0x3c0, 0x3cf, paradise_ega_03c0_r );

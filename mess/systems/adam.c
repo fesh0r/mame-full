@@ -192,9 +192,9 @@ TO DO:
 #include "formats/adam_dsk.h"
 
 static MEMORY_READ_START( adam_readmem )
-	{ 0x00000, 0x01fff, MRA_BANK1 },
-	{ 0x02000, 0x03fff, MRA_BANK2 },
-	{ 0x04000, 0x05fff, MRA_BANK3 },
+	{ 0x00000, 0x01fff, MRA8_BANK1 },
+	{ 0x02000, 0x03fff, MRA8_BANK2 },
+	{ 0x04000, 0x05fff, MRA8_BANK3 },
 	{ 0x06000, 0x07fff, MRA_BANK4 },
 	{ 0x08000, 0x0ffff, MRA_BANK5 },
 MEMORY_END

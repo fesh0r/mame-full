@@ -163,14 +163,14 @@ WRITE_HANDLER ( lviv_io_w )
 	{
 		startup_mem_map = 0;
 
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
-		memory_set_bankhandler_w(1, 0, MWA_BANK1);
-		memory_set_bankhandler_w(2, 0, MWA_BANK2);
-		memory_set_bankhandler_w(3, 0, MWA_BANK3);
+		memory_set_bankhandler_w(1, 0, MWA8_BANK1);
+		memory_set_bankhandler_w(2, 0, MWA8_BANK2);
+		memory_set_bankhandler_w(3, 0, MWA8_BANK3);
 		memory_set_bankhandler_w(4, 0, MWA8_ROM);
 
 		cpu_setbank(1, mess_ram);
@@ -220,9 +220,9 @@ MACHINE_INIT( lviv )
 
 	startup_mem_map = 1;
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 	memory_set_bankhandler_w(1, 0, MWA8_ROM);

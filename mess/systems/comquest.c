@@ -56,7 +56,7 @@ static WRITE_HANDLER(comquest_write)
 }
 
 static MEMORY_READ_START( comquest_readmem )
-//	{ 0x0000, 0x7fff, MRA_BANK1 },
+//	{ 0x0000, 0x7fff, MRA8_BANK1 },
 	{ 0x0000, 0xffff, MRA8_ROM },
 //	{ 0x8000, 0xffff, MRA8_RAM }, // batterie buffered
 MEMORY_END

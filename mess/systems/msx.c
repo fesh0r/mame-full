@@ -19,9 +19,9 @@
 #include "formats/fmsx_cas.h"
 
 static MEMORY_READ_START (readmem)
-	{ 0x0000, 0x1fff, MRA_BANK1 },
-	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
+	{ 0x0000, 0x1fff, MRA8_BANK1 },
+	{ 0x2000, 0x3fff, MRA8_BANK2 },
+	{ 0x4000, 0x5fff, MRA8_BANK3 },
 	{ 0x6000, 0x7fff, MRA_BANK4 },
 	{ 0x8000, 0x9fff, MRA_BANK5 },
 	{ 0xa000, 0xbfff, MRA_BANK6 },

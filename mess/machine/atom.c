@@ -501,7 +501,7 @@ void atom_eprom_box_init(void)
 	/* set initial eprom */
 	selected_eprom = 0;
 	/* set memory handler */
-    memory_set_bankhandler_r(1, 0, MRA_BANK1);
+    memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	/* init */
 	atom_eprom_box_refresh();
 }

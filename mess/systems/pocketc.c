@@ -136,7 +136,7 @@ static MEMORY_READ_START( pc1403_readmem )
 	{ 0x0000, 0x1fff, MRA8_ROM },
 { 0x3000, 0x30bf, pc1403_lcd_read },    
 { 0x3800, 0x3fff, pc1403_asic_read },    
-{ 0x4000, 0x7fff, MRA_BANK1 },
+{ 0x4000, 0x7fff, MRA8_BANK1 },
 { 0xe000,0xffff, MRA8_RAM },
 MEMORY_END
 

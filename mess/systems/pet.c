@@ -170,9 +170,9 @@ MEMORY_END
 
 static MEMORY_READ_START( pet80_readmem )
 	{0x0000, 0x7fff, MRA8_RAM },
-	{0x8000, 0x8fff, MRA_BANK1 },
-	{0x9000, 0x9fff, MRA_BANK2 },
-	{0xa000, 0xafff, MRA_BANK3 },
+	{0x8000, 0x8fff, MRA8_BANK1 },
+	{0x9000, 0x9fff, MRA8_BANK2 },
+	{0xa000, 0xafff, MRA8_BANK3 },
 	{0xb000, 0xbfff, MRA_BANK4 },
 	{0xc000, 0xe7ff, MRA_BANK6 },
 #if 1
@@ -188,9 +188,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( pet80_writemem )
 	{0x0000, 0x7fff, MWA8_RAM, &pet_memory},
-	{0x8000, 0x8fff, MWA_BANK1, &videoram },
-	{0x9000, 0x9fff, MWA_BANK2 },
-	{0xa000, 0xafff, MWA_BANK3 },
+	{0x8000, 0x8fff, MWA8_BANK1, &videoram },
+	{0x9000, 0x9fff, MWA8_BANK2 },
+	{0xa000, 0xafff, MWA8_BANK3 },
 	{0xb000, 0xbfff, MWA_BANK4 },
 	{0xc000, 0xe7ff, MWA_BANK6 },
 #if 1
@@ -248,9 +248,9 @@ static MEMORY_WRITE_START( superpet_writemem )
 MEMORY_END
 
 static MEMORY_READ_START( superpet_m6809_readmem)
-	{0x0000, 0x7fff, MRA_BANK1,},
-	{0x8000, 0x87ff, MRA_BANK2 },
-    {0x9000, 0x9fff, MRA_BANK3 },
+	{0x0000, 0x7fff, MRA8_BANK1,},
+	{0x8000, 0x87ff, MRA8_BANK2 },
+    {0x9000, 0x9fff, MRA8_BANK3 },
 	{0xa000, 0xe7ff, MRA8_ROM },
 	{0xe810, 0xe813, pia_0_r },
 	{0xe820, 0xe823, pia_1_r },
@@ -261,9 +261,9 @@ static MEMORY_READ_START( superpet_m6809_readmem)
 MEMORY_END
 
 static MEMORY_WRITE_START( superpet_m6809_writemem )
-	{0x0000, 0x7fff, MWA_BANK1 }, /* same memory as m6502 */
+	{0x0000, 0x7fff, MWA8_BANK1 }, /* same memory as m6502 */
 	{0x8000, 0x87ff, videoram_w }, /* same memory as m6502 */
-    {0x9000, 0x9fff, MWA_BANK3 }, /* 64 kbyte ram turned in */
+    {0x9000, 0x9fff, MWA8_BANK3 }, /* 64 kbyte ram turned in */
 	{0xa000, 0xe7ff, MWA8_ROM },
 	{0xe810, 0xe813, pia_0_w },
 	{0xe820, 0xe823, pia_1_w },

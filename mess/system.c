@@ -372,36 +372,36 @@ XL/XE 16kB OS roms
 //	DRIVER( c65a )		/* C65 / C64DX (Prototype, NTSC, 910111)			*/
 
 	/* IBM PC & Clones */
-//	DRIVER( ibmpc )		/* 1982	IBM PC										*/
-//	DRIVER( ibmpca )	/* 1982 IBM PC										*/
-//	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)				*/
-//	DRIVER( pc )		/* 1987 PC with CGA									*/
-//TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)								*/
-//	DRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)			*/
+	DRIVER( ibmpc )		/* 1982	IBM PC										*/
+	DRIVER( ibmpca )	/* 1982 IBM PC										*/
+	DRIVER( pcmda ) 	/* 1987 PC with MDA (MGA aka Hercules)				*/
+	DRIVER( pc )		/* 1987 PC with CGA									*/
+TESTDRIVER( bondwell )	/* 1985	Bondwell (CGA)								*/
+	DRIVER( europc )	/* 1988	Schneider Euro PC (CGA or Hercules)			*/
 
 	/* pc junior */
-//TESTDRIVER( ibmpcjr )	/*      IBM PC Jr									*/
-//	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr)				*/
-//TESTDRIVER( t1000sx )	/* 1987 Tandy 1000SX (similiar to PCJr)				*/
+TESTDRIVER( ibmpcjr )	/*      IBM PC Jr									*/
+	DRIVER( t1000hx )	/* 1987 Tandy 1000HX (similiar to PCJr)				*/
+TESTDRIVER( t1000sx )	/* 1987 Tandy 1000SX (similiar to PCJr)				*/
 
 	/* xt */
-//	DRIVER( ibmxt )		/* 1986	IBM XT										*/
-//	DRIVER( pc200 )		/* 1988 Sinclair PC200								*/
-//	DRIVER( pc20 )		/* 1988 Amstrad PC20								*/
-//TESTDRIVER( ppc512 )	/* 1987 Amstrad PPC512								*/
-//TESTDRIVER( ppc640 )	/* 1987 Amstrad PPC640								*/
-//	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 v1 (CGA compatible)			*/
-//	DRIVER( pc1512v2 )	/* 1986 Amstrad PC1512 v2 (CGA compatible)			*/
-//	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)				*/
+	DRIVER( ibmxt )		/* 1986	IBM XT										*/
+	DRIVER( pc200 )		/* 1988 Sinclair PC200								*/
+	DRIVER( pc20 )		/* 1988 Amstrad PC20								*/
+TESTDRIVER( ppc512 )	/* 1987 Amstrad PPC512								*/
+TESTDRIVER( ppc640 )	/* 1987 Amstrad PPC640								*/
+	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 v1 (CGA compatible)			*/
+	DRIVER( pc1512v2 )	/* 1986 Amstrad PC1512 v2 (CGA compatible)			*/
+	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)				*/
 
-//	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)					*/
+	DRIVER( xtvga ) 	/* 198? PC-XT (VGA, MF2 Keyboard)					*/
 
 	/* at */
-//TESTDRIVER( ibmat )		/* 1985	IBM AT										*/
-//TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
-//	DRIVER( at )		/* 1987 AMI Bios and Diagnostics					*/
+TESTDRIVER( ibmat )		/* 1985	IBM AT										*/
+TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
+	DRIVER( at )		/* 1987 AMI Bios and Diagnostics					*/
 //	DRIVER( atvga ) 	/*													*/
-//TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
+TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 
 	/* SINCLAIR */
 //TESTDRIVER( zx80 )		/* Sinclair ZX-80									*/

@@ -202,9 +202,9 @@ when problems start with -log and look into error.log file
 static MEMORY_READ_START( c16_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x3fff, MRA8_RAM},
-	{0x4000, 0x7fff, MRA_BANK1},	   /* only ram memory configuration */
-	{0x8000, 0xbfff, MRA_BANK2},
-	{0xc000, 0xfbff, MRA_BANK3},
+	{0x4000, 0x7fff, MRA8_BANK1},	   /* only ram memory configuration */
+	{0x8000, 0xbfff, MRA8_BANK2},
+	{0xc000, 0xfbff, MRA8_BANK3},
 	{0xfc00, 0xfcff, MRA_BANK4},
 	{0xfd10, 0xfd1f, c16_fd1x_r},
 	{0xfd30, 0xfd3f, c16_6529_port_r}, /* 6529 keyboard matrix */
@@ -255,8 +255,8 @@ MEMORY_END
 static MEMORY_READ_START( plus4_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0xbfff, MRA_BANK2},
-	{0xc000, 0xfbff, MRA_BANK3},
+	{0x8000, 0xbfff, MRA8_BANK2},
+	{0xc000, 0xfbff, MRA8_BANK3},
 	{0xfc00, 0xfcff, MRA_BANK4},
 	{0xfd00, 0xfd0f, c16_6551_port_r},
 	{0xfd10, 0xfd1f, plus4_6529_port_r},
@@ -296,8 +296,8 @@ MEMORY_END
 static MEMORY_READ_START( c364_readmem )
 	{0x0000, 0x0001, c16_m7501_port_r},
 	{0x0002, 0x7fff, MRA8_RAM},
-	{0x8000, 0xbfff, MRA_BANK2},
-	{0xc000, 0xfbff, MRA_BANK3},
+	{0x8000, 0xbfff, MRA8_BANK2},
+	{0xc000, 0xfbff, MRA8_BANK3},
 	{0xfc00, 0xfcff, MRA_BANK4},
 	{0xfd00, 0xfd0f, c16_6551_port_r},
 	{0xfd10, 0xfd1f, plus4_6529_port_r},

@@ -631,9 +631,9 @@ static MACHINE_INIT( mtx512 )
 
 	z80ctc_init(&mtx_ctc_intf);
 
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	memory_set_bankhandler_r(5, 0, MRA_BANK5);
 	memory_set_bankhandler_r(6, 0, MRA_BANK6);
@@ -691,9 +691,9 @@ static INTERRUPT_GEN( mtx_interrupt )
 }
 
 MEMORY_READ_START( mtx_readmem )
-	{ 0x0000, 0x1fff, MRA_BANK1 },
-	{ 0x2000, 0x3fff, MRA_BANK2 },
-	{ 0x4000, 0x5fff, MRA_BANK3 },
+	{ 0x0000, 0x1fff, MRA8_BANK1 },
+	{ 0x2000, 0x3fff, MRA8_BANK2 },
+	{ 0x4000, 0x5fff, MRA8_BANK3 },
 	{ 0x6000, 0x7fff, MRA_BANK4 },
 	{ 0x8000, 0x9fff, MRA_BANK5 },
 	{ 0xa000, 0xbfff, MRA_BANK6 },

@@ -15,7 +15,7 @@ ernesto@imagina.com
 static MEMORY_READ16_START(readmem)
     { 0x000000, 0x07ffff, MRA16_RAM },            /* Chip Ram - 1Mb / 512k */
     { 0xbfd000, 0xbfefff, amiga_cia_r },        /* 8510's CIA A and CIA B */
-//  { 0xc00000, 0xd7ffff, MRA_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
+//  { 0xc00000, 0xd7ffff, MRA8_BANK1 },          /* Internal Expansion Ram - 1.5 Mb */
     { 0xdbf000, 0xdfffff, amiga_custom_r },     /* Custom Chips */
     { 0xf00000, 0xffffff, MRA16_BANK2 },          /* System ROM - mirror */
 MEMORY_END

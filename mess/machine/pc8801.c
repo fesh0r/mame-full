@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.15 2004/02/02 20:12:54 npwoods Exp $
+  $Id: pc8801.c,v 1.16 2004/02/03 16:11:53 npwoods Exp $
 
 ***************************************************************************/
 
@@ -377,16 +377,16 @@ void pc8801_update_bank(void)
       memory_set_bankhandler_w(2, 0, MWA8_NOP);
     } else {
       /* r/w mode */
-      memory_set_bankhandler_w(1, 0, MWA_BANK1);
-      memory_set_bankhandler_w(2, 0, MWA_BANK2);
+      memory_set_bankhandler_w(1, 0, MWA8_BANK1);
+      memory_set_bankhandler_w(2, 0, MWA8_BANK2);
       if(ext_w!=ext_r) logerror("differnt between read and write bank of extension memory.\n");
     }
   } else {
     /* 0x0000 to 0x7fff */
     if(RAMmode) {
       /* RAM */
-      memory_set_bankhandler_w(1, 0, MWA_BANK1);
-      memory_set_bankhandler_w(2, 0, MWA_BANK2);
+      memory_set_bankhandler_w(1, 0, MWA8_BANK1);
+      memory_set_bankhandler_w(2, 0, MWA8_BANK2);
       cpu_setbank(1, pc8801_mainRAM + 0x0000);
       cpu_setbank(2, pc8801_mainRAM + 0x6000);
     } else {
@@ -416,8 +416,8 @@ void pc8801_update_bank(void)
     memory_set_bankhandler_r(3, 0, pc8801_read_textwindow);
     memory_set_bankhandler_w(3, 0, pc8801_write_textwindow);
   } else {
-    memory_set_bankhandler_r(3, 0, MRA_BANK3);
-    memory_set_bankhandler_w(3, 0, MWA_BANK3);
+    memory_set_bankhandler_r(3, 0, MRA8_BANK3);
+    memory_set_bankhandler_w(3, 0, MWA8_BANK3);
     cpu_setbank(3, pc8801_mainRAM + 0x8000);
   }
   cpu_setbank(4, pc8801_mainRAM + 0x8400);

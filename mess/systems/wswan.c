@@ -19,9 +19,9 @@
 static MEMORY_READ_START (wswan_readmem)
 	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
 	{ 0x04000, 0x0ffff, MRA8_NOP },		/* Not used */
-	{ 0x10000, 0x1ffff, MRA_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MRA_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MRA_BANK3 },	/* ROM bank 2 */
+	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
+	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
+	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MRA_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MRA_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MRA_BANK6 },	/* ROM bank 5 */
@@ -39,9 +39,9 @@ MEMORY_END
 static MEMORY_WRITE_START (wswan_writemem)
 	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
 	{ 0x04000, 0x0ffff, MWA8_NOP },		/* Not used */
-	{ 0x10000, 0x1ffff, MWA_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MWA_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MWA_BANK3 },	/* ROM bank 2 */
+	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
+	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
+	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MWA_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MWA_BANK6 },	/* ROM bank 5 */
@@ -59,9 +59,9 @@ MEMORY_END
 static MEMORY_READ_START (wsc_readmem)
 	{ 0x00000, 0x03fff, MRA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
 	{ 0x04000, 0x0ffff, MRA8_RAM },		/* 16 colour tiles + palettes */
-	{ 0x10000, 0x1ffff, MRA_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MRA_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MRA_BANK3 },	/* ROM bank 2 */
+	{ 0x10000, 0x1ffff, MRA8_BANK1 },	/* SRAM bank */
+	{ 0x20000, 0x2ffff, MRA8_BANK2 },	/* ROM bank 1 */
+	{ 0x30000, 0x3ffff, MRA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MRA_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MRA_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MRA_BANK6 },	/* ROM bank 5 */
@@ -79,9 +79,9 @@ MEMORY_END
 static MEMORY_WRITE_START (wsc_writemem)
 	{ 0x00000, 0x03fff, MWA8_RAM },		/* 16kb RAM + 16kb 4 colour tiles */
 	{ 0x04000, 0x0ffff, MWA8_RAM },		/* 16 colour tiles + palettes */
-	{ 0x10000, 0x1ffff, MWA_BANK1 },	/* SRAM bank */
-	{ 0x20000, 0x2ffff, MWA_BANK2 },	/* ROM bank 1 */
-	{ 0x30000, 0x3ffff, MWA_BANK3 },	/* ROM bank 2 */
+	{ 0x10000, 0x1ffff, MWA8_BANK1 },	/* SRAM bank */
+	{ 0x20000, 0x2ffff, MWA8_BANK2 },	/* ROM bank 1 */
+	{ 0x30000, 0x3ffff, MWA8_BANK3 },	/* ROM bank 2 */
 	{ 0x40000, 0x4ffff, MWA_BANK4 },	/* ROM bank 3 */
 	{ 0x50000, 0x5ffff, MWA_BANK5 },	/* ROM bank 4 */
 	{ 0x60000, 0x6ffff, MWA_BANK6 },	/* ROM bank 5 */

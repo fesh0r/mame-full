@@ -266,10 +266,10 @@ void pcw_fdc_interrupt(int state)
   setup of the memory below.
  */
 MEMORY_READ_START( readmem_pcw )
-	{0x0000, 0x03fef, MRA_BANK1},
-	{0x3ff0, 0x03fff, MRA_BANK2},
+	{0x0000, 0x03fef, MRA8_BANK1},
+	{0x3ff0, 0x03fff, MRA8_BANK2},
 
-	{0x4000, 0x07fef, MRA_BANK3},
+	{0x4000, 0x07fef, MRA8_BANK3},
 	{0x7ff0, 0x07fff, MRA_BANK4},
 
 	{0x8000, 0x0Bfef, MRA_BANK5},
@@ -314,7 +314,7 @@ static void pcw_update_memory_block(int block, int bank)
 		{
 			case 2:
 			{
-				mra = MRA_BANK2;
+				mra = MRA8_BANK2;
 			}
 			break;
 
@@ -865,9 +865,9 @@ static void pcw_init_machine(void)
 
 	pcw_boot = 1;
 
-/*	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+/*	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 	memory_set_bankhandler_r(5, 0, MRA_BANK5);
 	memory_set_bankhandler_r(6, 0, MRA_BANK6);

@@ -27,7 +27,7 @@ T1	Mirror sync pulse
 #include "devices/cartslot.h"
 
 static MEMORY_READ_START( readmem )
-    { 0x0000, 0x03FF,  MRA_BANK1 },
+    { 0x0000, 0x03FF,  MRA8_BANK1 },
     { 0x0400, 0x0fff,  MRA8_ROM },
 	{ 0x2000, 0x23ff,  MRA8_RAM },	/* MAINRAM four banks */
 MEMORY_END

@@ -1,6 +1,9 @@
 /***************************************************************************
-    ibm at compatibles																			
+    
+	IBM AT Compatibles
+
 ***************************************************************************/
+
 #include "driver.h"
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
@@ -61,168 +64,91 @@
 */
 #define GAMEBLASTER
 
-static MEMORY_READ_START( at_readmem )
-	{ 0x000000, 0x07ffff, MRA8_RAM },
-	{ 0x080000, 0x09ffff, MRA8_RAM },
-	{ 0x0a0000, 0x0affff, MRA8_NOP },
-	{ 0x0b0000, 0x0b7fff, MRA8_NOP },
-	{ 0x0b8000, 0x0bffff, MRA8_RAM },
-	{ 0x0c0000, 0x0c7fff, MRA8_ROM },
-    { 0x0c8000, 0x0cffff, MRA8_ROM },
-    { 0x0d0000, 0x0effff, MRA8_ROM },
-	{ 0x0f0000, 0x0fffff, MRA8_ROM },
-	{ 0x100000, 0x1fffff, MRA8_RAM },
-	{ 0x200000, 0xfeffff, MRA8_NOP },
-	{ 0xff0000, 0xffffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( at_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x000000, 0x07ffff) AM_RAM
+	AM_RANGE(0x080000, 0x09ffff) AM_RAM
+	AM_RANGE(0x0a0000, 0x0affff) AM_NOP
+	AM_RANGE(0x0b0000, 0x0b7fff) AM_NOP
+	AM_RANGE(0x0b8000, 0x0bffff) AM_READWRITE(MRA8_RAM, pc_video_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x0c0000, 0x0c7fff) AM_ROM
+	AM_RANGE(0x0c8000, 0x0cffff) AM_ROM
+	AM_RANGE(0x0d0000, 0x0effff) AM_ROM
+	AM_RANGE(0x0f0000, 0x0fffff) AM_ROM
+	AM_RANGE(0x100000, 0x1fffff) AM_RAM
+	AM_RANGE(0x200000, 0xfeffff) AM_NOP
+	AM_RANGE(0xff0000, 0xffffff) AM_ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( at_writemem )
-	{ 0x000000, 0x07ffff, MWA8_RAM },
-	{ 0x080000, 0x09ffff, MWA8_RAM },
-	{ 0x0a0000, 0x0affff, MWA8_NOP },
-	{ 0x0b0000, 0x0b7fff, MWA8_NOP },
-	{ 0x0b8000, 0x0bbfff, pc_video_videoram_w, &videoram, &videoram_size },
-	{ 0x0c0000, 0x0c7fff, MWA8_ROM },
-	{ 0x0c8000, 0x0cffff, MWA8_ROM },
-    { 0x0d0000, 0x0effff, MWA8_ROM },
-	{ 0x0f0000, 0x0fffff, MWA8_ROM },
-	{ 0x100000, 0x1fffff, MWA8_RAM },
-	{ 0x200000, 0xfeffff, MWA8_NOP },
-	{ 0xff0000, 0xffffff, MWA8_ROM },
-MEMORY_END
 
-static PORT_READ_START( at_readport )
-	{ 0x0000, 0x001f, dma8237_0_r },
-	{ 0x0020, 0x003f, pic8259_0_r },
-	{ 0x0040, 0x005f, pit8253_0_r },
-	{ 0x0060, 0x006f, at_8042_r },
-	{ 0x0070, 0x007f, mc146818_port_r },
-	{ 0x0080, 0x009f, at_page_r }, // 90-9f ?
-	{ 0x00a0, 0x00bf, pic8259_1_r },
-	{ 0x00c0, 0x00df, dma8237_at_1_r },
-	{ 0x01f0, 0x01f7, at_mfm_0_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x220, 0x22f, soundblaster_r },
-	{ 0x0278, 0x027f, pc_parallelport2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-    { 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0378, 0x037f, pc_parallelport1_r },
+
+static ADDRESS_MAP_START(at_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_r,				at_8042_w)
+	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
+	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
+	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(dma8237_at_1_r,			dma8237_at_1_w)
+	AM_RANGE(0x01f0, 0x01f7) AM_READWRITE(at_mfm_0_r,				at_mfm_0_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x0220, 0x022f) AM_READWRITE(soundblaster_r,			soundblaster_w)
+	AM_RANGE(0x0278, 0x027f) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
 #ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
+	AM_RANGE(0x0388, 0x0388) AM_READWRITE(YM3812_status_port_0_r,	YM3812_control_port_0_w)
+	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( at_writeport )
-	{ 0x0000, 0x001f, dma8237_0_w },
-	{ 0x0020, 0x003f, pic8259_0_w },
-	{ 0x0040, 0x005f, pit8253_0_w },
-	{ 0x0060, 0x006f, at_8042_w },
-	{ 0x0070, 0x007f, mc146818_port_w },
-	{ 0x0080, 0x009f, at_page_w },
-	{ 0x00a0, 0x00bf, pic8259_1_w },
-	{ 0x00c0, 0x00df, dma8237_at_1_w },
-	{ 0x01f0, 0x01f7, at_mfm_0_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-#if 0 && defined(GAMEBLASTER)
-	{ 0x220, 0x220, saa1099_write_port_0_w },
-	{ 0x221, 0x221, saa1099_control_port_0_w },
-	{ 0x222, 0x222, saa1099_write_port_1_w },
-	{ 0x223, 0x223, saa1099_control_port_1_w },
-#endif
-    { 0x220, 0x22f, soundblaster_w },
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
+
+
+/* IBM ps2m30
+	port accesses
+	0x0094 
+	0x0190 postcode
+	0x0103
+	0x03bc
+	0x3bd/3dd
+*/
+
+static ADDRESS_MAP_START(ps2m30286_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x001f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x003f) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x005f) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x006f) AM_READWRITE(at_8042_r,				at_8042_w)
+	AM_RANGE(0x0070, 0x007f) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
+	AM_RANGE(0x0080, 0x009f) AM_READWRITE(at_page_r,				at_page_w)
+	AM_RANGE(0x00a0, 0x00bf) AM_READWRITE(pic8259_1_r,				pic8259_1_w)
+	AM_RANGE(0x00c0, 0x00df) AM_READWRITE(dma8237_at_1_r,			dma8237_at_1_w)
+	AM_RANGE(0x0100, 0x0107) AM_READWRITE(ps2_pos_r,				ps2_pos_w)
+	AM_RANGE(0x01f0, 0x01f7) AM_READWRITE(at_mfm_0_r,				at_mfm_0_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x0220, 0x022f) AM_READWRITE(soundblaster_r,			soundblaster_w)
+	AM_RANGE(0x0278, 0x027f) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
 #ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+	AM_RANGE(0x0388, 0x0388) AM_READWRITE(YM3812_status_port_0_r,	YM3812_control_port_0_w)
+	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
 
-/* ibm ps2m30
-port accesses
-0x0094 
-0x0190 postcode
-0x0103
-0x03bc
-0x3bd/3dd
-
- */
-static PORT_READ_START( ps2m30286_readport )
-	{ 0x0000, 0x001f, dma8237_0_r },
-	{ 0x0020, 0x003f, pic8259_0_r },
-	{ 0x0040, 0x005f, pit8253_0_r },
-	{ 0x0060, 0x006f, at_8042_r },
-	{ 0x0070, 0x007f, mc146818_port_r },
-	{ 0x0080, 0x009f, at_page_r }, // 90-9f ?
-	{ 0x00a0, 0x00bf, pic8259_1_r },
-	{ 0x00c0, 0x00df, dma8237_at_1_r },
-{ 0x0100, 0x107, ps2_pos_r },
-	{ 0x01f0, 0x01f7, at_mfm_0_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-    { 0x220, 0x22f, soundblaster_r },
-	{ 0x0278, 0x027f, pc_parallelport2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-    { 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0378, 0x037f, pc_parallelport1_r },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
-#endif
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
-
-static PORT_WRITE_START( ps2m30286_writeport )
-	{ 0x0000, 0x001f, dma8237_0_w },
-	{ 0x0020, 0x003f, pic8259_0_w },
-	{ 0x0040, 0x005f, pit8253_0_w },
-	{ 0x0060, 0x006f, at_8042_w },
-	{ 0x0070, 0x007f, mc146818_port_w },
-	{ 0x0080, 0x009f, at_page_w },
-	{ 0x00a0, 0x00bf, pic8259_1_w },
-	{ 0x00c0, 0x00df, dma8237_at_1_w },
-{ 0x0100, 0x107, ps2_pos_w },
-	{ 0x01f0, 0x01f7, at_mfm_0_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-#if 0 && defined(GAMEBLASTER)
-	{ 0x220, 0x220, saa1099_write_port_0_w },
-	{ 0x221, 0x221, saa1099_control_port_0_w },
-	{ 0x222, 0x222, saa1099_write_port_1_w },
-	{ 0x223, 0x223, saa1099_control_port_1_w },
-#endif
-    { 0x220, 0x22f, soundblaster_w },
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
-#endif
-	{ 0x03bc, 0x03be, pc_parallelport0_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
 
 INPUT_PORTS_START( atcga )
 	PORT_START /* IN0 */
@@ -417,10 +343,10 @@ static struct DACinterface dac_interface= { 1, { 50 }};
 
 
 #define MDRV_CPU_ATPC(mem, port, type, clock, vblankfunc)	\
-	MDRV_CPU_ADD_TAG("main", type, clock)				\
-	MDRV_CPU_MEMORY(mem##_readmem, mem##_writemem)		\
-	MDRV_CPU_PORTS(port##_readport, port##_writeport)	\
-	MDRV_CPU_VBLANK_INT(vblankfunc, 4)					\
+	MDRV_CPU_ADD_TAG("main", type, clock)					\
+	MDRV_CPU_PROGRAM_MAP(mem##_map, mem##_map)				\
+	MDRV_CPU_IO_MAP(port##_io, port##_io)					\
+	MDRV_CPU_VBLANK_INT(vblankfunc, 4)						\
 	MDRV_CPU_CONFIG(i286_address_mask)
 
 static MACHINE_DRIVER_START( atcga )

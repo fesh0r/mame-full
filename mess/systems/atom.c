@@ -112,7 +112,7 @@ static MEMORY_READ_START (atomeb_readmem)
 	{ 0x0a05, 0x07fff, MRA8_RAM},
 	{ 0x8000, 0x97ff, videoram_r },		// VDG 6847
 	{ 0x9800, 0x9fff, MRA8_RAM },
-    { 0xa000, 0xafff, MRA_BANK1 },		// eprom data from eprom box
+    { 0xa000, 0xafff, MRA8_BANK1 },		// eprom data from eprom box
     { 0xb000, 0xb003, ppi8255_0_r },    // PPIA 8255
 	{ 0xb800, 0xbbff, atom_via_r},		// VIA 6522
     { 0xbfff, 0xbfff, atom_eprom_box_r},

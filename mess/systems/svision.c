@@ -222,8 +222,8 @@ static MEMORY_READ_START( readmem )
     { 0x2000, 0x3fff, svision_r },
     { 0x4000, 0x5fff, MRA8_RAM }, //?
 	{ 0x6000, 0x7fff, MRA8_ROM },
-	{ 0x8000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xffff, MRA_BANK2 },
+	{ 0x8000, 0xbfff, MRA8_BANK1 },
+	{ 0xc000, 0xffff, MRA8_BANK2 },
 MEMORY_END
 
 static MEMORY_WRITE_START( writemem )

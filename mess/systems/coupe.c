@@ -33,16 +33,16 @@ Changes:
 #include "devices/basicdsk.h"
 
 MEMORY_READ_START( coupe_readmem )	 {
-	 0x0000, 0x3FFF, MRA_BANK1 },
-	{ 0x4000, 0x7FFF, MRA_BANK2 },
-	{ 0x8000, 0xBFFF, MRA_BANK3 },
+	 0x0000, 0x3FFF, MRA8_BANK1 },
+	{ 0x4000, 0x7FFF, MRA8_BANK2 },
+	{ 0x8000, 0xBFFF, MRA8_BANK3 },
 	{ 0xC000, 0xFFFF, MRA_BANK4 },
 MEMORY_END
 
 MEMORY_WRITE_START( coupe_writemem )	 {
-	 0x0000, 0x3FFF, MWA_BANK1 },
-	{ 0x4000, 0x7FFF, MWA_BANK2 },
-	{ 0x8000, 0xBFFF, MWA_BANK3 },
+	 0x0000, 0x3FFF, MWA8_BANK1 },
+	{ 0x4000, 0x7FFF, MWA8_BANK2 },
+	{ 0x8000, 0xBFFF, MWA8_BANK3 },
 	{ 0xC000, 0xFFFF, MWA_BANK4 },
 MEMORY_END
 

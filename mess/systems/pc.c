@@ -1,6 +1,6 @@
 /***************************************************************************
 
-	drivers/pc.c
+	systems/pc.c
 
 	PC-XT memory map
 
@@ -16,6 +16,7 @@
 	FE000-FFFFF   ROM
 
 ***************************************************************************/
+
 #include "driver.h"
 #include "sound/3812intf.h"
 #include "machine/8255ppi.h"
@@ -82,327 +83,179 @@
 
 static READ_HANDLER( return_0xff ) { return 0xff; }
 
-static MEMORY_READ_START( pc_readmem )
-	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xbffff, MRA8_NOP },
-	{ 0xc0000, 0xc7fff, MRA8_NOP },
-	{ 0xc8000, 0xcffff, MRA8_ROM },
-	{ 0xd0000, 0xeffff, MRA8_NOP },
-	{ 0xf0000, 0xfffff, MRA8_ROM },
-MEMORY_END
+static ADDRESS_MAP_START( pc_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x9ffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+	AM_RANGE(0xa0000, 0xbffff) AM_NOP
+	AM_RANGE(0xc0000, 0xc7fff) AM_NOP
+	AM_RANGE(0xc8000, 0xcffff) AM_ROM
+	AM_RANGE(0xd0000, 0xeffff) AM_NOP
+	AM_RANGE(0xf0000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
 
-static MEMORY_WRITE_START( pc_writemem )
-	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xbffff, MWA8_NOP },
-	{ 0xc0000, 0xc7fff, MWA8_NOP },
-	{ 0xc8000, 0xcffff, MWA8_ROM },
-	{ 0xd0000, 0xeffff, MWA8_NOP },
-	{ 0xf0000, 0xfffff, MWA8_ROM },
-MEMORY_END
 
-static PORT_READ_START( pc_readport )
-	{ 0x0000, 0x000f, dma8237_0_r },
-	{ 0x0020, 0x0021, pic8259_0_r },
-	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0063, ppi8255_0_r },
-	{ 0x0080, 0x0087, pc_page_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-	{ 0x0240, 0x257, pc_rtc_r },
-//	{ 0x0240, 0x257, return_0xff }, // anonymous bios should not recognized realtimeclock
+
+static ADDRESS_MAP_START(pc_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x000f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x0021) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x0063) AM_READWRITE(ppi8255_0_r,				ppi8255_0_w)
+	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
 #ifdef EXP_ON
-	{ 0x0210, 0x0217, pc_EXP_r },
+	AM_RANGE(0x0210, 0x0217) AM_READWRITE(pc_EXP_r,					pc_EXP_w)
 #endif
-	{ 0x0278, 0x027b, pc_parallelport2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-    { 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-//	{ 0x340, 0x357, pc_rtc_r },
-	{ 0x340, 0x357, return_0xff }, // anonymous bios should not recogniced realtimeclock
-	{ 0x0378, 0x037b, pc_parallelport1_r },
+	AM_RANGE(0x0240, 0x0257) AM_READWRITE(pc_rtc_r,					pc_rtc_w)
+	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0340, 0x0357) AM_READ(return_0xff) /* anonymous bios should not recogniced realtimeclock */
+	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
 #ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
+	AM_RANGE(0x0388, 0x0388) AM_READWRITE(YM3812_status_port_0_r,	YM3812_control_port_0_w)
+	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
 
-static PORT_WRITE_START( pc_writeport )
-	{ 0x0000, 0x000f, dma8237_0_w },
-	{ 0x0020, 0x0021, pic8259_0_w },
-	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0063, ppi8255_0_w },
-	{ 0x0080, 0x0087, pc_page_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-#ifdef EXP_ON
-    { 0x0210, 0x0217, pc_EXP_w },
-#endif
-#ifdef GAMEBLASTER
-	{ 0x220, 0x220, saa1099_write_port_0_w },
-	{ 0x221, 0x221, saa1099_control_port_0_w },
-	{ 0x222, 0x222, saa1099_write_port_1_w },
-	{ 0x223, 0x223, saa1099_control_port_1_w },
-#endif
-	{ 0x240, 0x257, pc_rtc_w },
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-	{ 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-//	{ 0x340, 0x357, pc_rtc_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
+
+
+static ADDRESS_MAP_START( europc_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x9ffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+	AM_RANGE(0xa0000, 0xaffff) AM_NOP
+	AM_RANGE(0xb0000, 0xbffff) AM_READWRITE(pc_aga_videoram_r, pc_aga_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc0000, 0xc7fff) AM_NOP
+	AM_RANGE(0xc8000, 0xcffff) AM_ROM
+	AM_RANGE(0xd0000, 0xeffff) AM_NOP
+	AM_RANGE(0xf0000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
+
+
+
+static ADDRESS_MAP_START(europc_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x000f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x0021) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x0063) AM_READWRITE(europc_pio_r,				europc_pio_w)
+	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x0250, 0x025f) AM_READWRITE(europc_jim_r,				europc_jim_w)
+	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e0, 0x02e0) AM_READ     (europc_jim2_r)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc_parallelport1_r,		pc_parallelport1_w)
 #ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+	AM_RANGE(0x0388, 0x0388) AM_READWRITE(YM3812_status_port_0_r,	YM3812_control_port_0_w)
+	AM_RANGE(0x0389, 0x0389) AM_WRITE(								YM3812_write_port_0_w)
 #endif
-	{ 0x03bc, 0x03be, pc_parallelport0_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
-
-static MEMORY_READ_START( europc_readmem )
-	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xaffff, MRA8_NOP },
-	{ 0xb0000, 0xbffff, pc_aga_videoram_r },
-	{ 0xc0000, 0xc7fff, MRA8_NOP },
-	{ 0xc8000, 0xcffff, MRA8_ROM },
-	{ 0xd0000, 0xeffff, MRA8_NOP },
-	{ 0xf0000, 0xfffff, MRA8_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( europc_writemem )
-	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xaffff, MWA8_NOP },
-	{ 0xb0000, 0xbffff, pc_aga_videoram_w, &videoram, &videoram_size },
-	{ 0xc0000, 0xc7fff, MWA8_NOP },
-	{ 0xc8000, 0xcffff, MWA8_ROM },
-	{ 0xd0000, 0xeffff, MWA8_NOP },
-	{ 0xf0000, 0xfffff, MWA8_ROM },
-MEMORY_END
-
-static PORT_READ_START( europc_readport)
-	{ 0x0000, 0x000f, dma8237_0_r },
-	{ 0x0020, 0x0021, pic8259_0_r },
-	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0063, europc_pio_r },
-	{ 0x0080, 0x0087, pc_page_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-	{ 0x0250, 0x025f, europc_jim_r },
-	{ 0x0278, 0x027b, pc_parallelport2_r },
-	{ 0x2e0, 0x2e0, europc_jim2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-    { 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-//	{ 0x0350, 0x035f, europc_r },
-	{ 0x0378, 0x037b, pc_parallelport1_r },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
-#endif
-	{ 0x3b0, 0x3bf, pc_aga_mda_r },
-//	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x3d0, 0x3df, pc_aga_cga_r },
-	{ 0x03d0, 0x03df, pc_CGA_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
-
-static PORT_WRITE_START( europc_writeport )
-	{ 0x0000, 0x000f, dma8237_0_w },
-	{ 0x0020, 0x0021, pic8259_0_w },
-	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0063, europc_pio_w },
-	{ 0x0080, 0x0087, pc_page_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-	{ 0x0250, 0x025f, europc_jim_w },
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-//	{ 0x0350, 0x035f, europc_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
-#endif
-	{ 0x3b0, 0x3bf, pc_aga_mda_w },
-//	{ 0x03bc, 0x03be, pc_parallelport0_w },
-	{ 0x3d0, 0x3df, pc_aga_cga_w },
-	{ 0x03d0, 0x03df, pc_CGA_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-PORT_END
-
-static MEMORY_READ_START(t1t_readmem)
-	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xaffff, MRA8_RAM },
-	{ 0xb0000, 0xb7fff, MRA8_NOP },
-	{ 0xb8000, 0xbffff, pc_t1t_videoram_r },
-	{ 0xc0000, 0xc7fff, MRA8_NOP },
-	{ 0xc8000, 0xc9fff, MRA8_ROM },
-	{ 0xca000, 0xcffff, MRA8_NOP },
-	{ 0xd0000, 0xeffff, MRA8_NOP },
-	{ 0xf0000, 0xfffff, MRA8_ROM },
-PORT_END
-
-static MEMORY_WRITE_START( t1t_writemem )
-	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xaffff, MWA8_RAM },
-    { 0xb0000, 0xb7fff, MWA8_NOP },
-	{ 0xb8000, 0xbffff, pc_video_videoram_w },
-	{ 0xc0000, 0xc7fff, MWA8_NOP },
-	{ 0xc8000, 0xc9fff, MWA8_ROM },
-	{ 0xca000, 0xcffff, MWA8_NOP },
-	{ 0xd0000, 0xeffff, MWA8_NOP },
-	{ 0xf0000, 0xfffff, MWA8_ROM },
-MEMORY_END
-
-static PORT_READ_START( t1t_readport )
-	{ 0x0000, 0x000f, dma8237_0_r },
-	{ 0x0020, 0x0021, pic8259_0_r },
-	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0063, tandy1000_pio_r },
-	{ 0x0080, 0x0087, pc_page_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-	{ 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0378, 0x037f, pc_t1t_p37x_r },
-    { 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03d0, 0x03df, pc_T1T_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
-
-static PORT_WRITE_START( t1t_writeport )
-	{ 0x0000, 0x000f, dma8237_0_w },
-	{ 0x0020, 0x0021, pic8259_0_w },
-	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0063, tandy1000_pio_w },
-	{ 0x0080, 0x0087, pc_page_w },
-	{ 0x00c0, 0x00c0, SN76496_0_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0378, 0x037f, pc_t1t_p37x_w },
-    { 0x03bc, 0x03be, pc_parallelport0_w },
-	{ 0x03d0, 0x03df, pc_T1T_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
-
-static PORT_READ_START( pc200_readport )
-	{ 0x0000, 0x000f, dma8237_0_r },
-	{ 0x0020, 0x0021, pic8259_0_r },
-	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0065, pc1640_port60_r },
-{ 0x0078, 0x0078, pc1640_mouse_x_r }, //?
-{ 0x007a, 0x007a, pc1640_mouse_y_r }, //?
-	{ 0x0080, 0x0087, pc_page_r },
-	{ 0x0200, 0x0207, pc_JOY_r },
-	{ 0x0278, 0x027b, pc_parallelport2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-	{ 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0378, 0x037b, pc200_port378_r },
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
+	AM_RANGE(0x03b0, 0x03bf) AM_READWRITE(pc_aga_mda_r,				pc_aga_mda_w)
+//	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_aga_cga_r,				pc_aga_cga_w)
+	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_CGA_r,					pc_CGA_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( pc200_writeport )
-	{ 0x0000, 0x000f, dma8237_0_w },
-	{ 0x0020, 0x0021, pic8259_0_w },
-	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0065, pc1640_port60_w },
-{ 0x0078, 0x0078, pc1640_mouse_x_w }, //?
-{ 0x007a, 0x007a, pc1640_mouse_y_w }, //?
-	{ 0x0080, 0x0087, pc_page_w },
-	{ 0x0200, 0x0207, pc_JOY_w },
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
-	{ 0x03bc, 0x03bd, pc_parallelport0_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
 
-static MEMORY_READ_START( pc1640_readmem )
-	{ 0x00000, 0x9ffff, MRA_BANK10 },
-	{ 0xa0000, 0xbffff, MRA8_NOP },
-	{ 0xc0000, 0xc7fff, MRA8_ROM },
-    { 0xc8000, 0xcffff, MRA8_ROM },
-    { 0xd0000, 0xfbfff, MRA8_NOP },
-	{ 0xfc000, 0xfffff, MRA8_ROM },
-MEMORY_END
-
-static MEMORY_WRITE_START( pc1640_writemem )
-	{ 0x00000, 0x9ffff, MWA_BANK10 },
-	{ 0xa0000, 0xbffff, MWA8_NOP },
-	{ 0xc0000, 0xc7fff, MWA8_ROM },
-	{ 0xc8000, 0xcffff, MWA8_ROM },
-    { 0xd0000, 0xfbfff, MWA8_NOP },
-	{ 0xfc000, 0xfffff, MWA8_ROM },
-MEMORY_END
-
-static PORT_READ_START( pc1640_readport )
-	{ 0x0000, 0x000f, dma8237_0_r },
-	{ 0x0020, 0x0021, pic8259_0_r },
-	{ 0x0040, 0x0043, pit8253_0_r },
-	{ 0x0060, 0x0065, pc1640_port60_r },
-	{ 0x0070, 0x0071, mc146818_port_r },
-	{ 0x0078, 0x0078, pc1640_mouse_x_r },
-	{ 0x007a, 0x007a, pc1640_mouse_y_r },
-	{ 0x0080, 0x0087, pc_page_r },
-{ 0x0200, 0x0207, pc_JOY_r }, //?
-	{ 0x0278, 0x027b, pc_parallelport2_r },
-	{ 0x02e8, 0x02ef, pc_COM4_r },
-	{ 0x02f8, 0x02ff, pc_COM2_r },
-    { 0x0320, 0x0323, pc_HDC1_r },
-	{ 0x0324, 0x0327, pc_HDC2_r },
-	{ 0x0378, 0x037b, pc1640_port378_r },
-	{ 0x03bc, 0x03be, pc_parallelport0_r },
-	{ 0x03e8, 0x03ef, pc_COM3_r },
-	{ 0x03f0, 0x03f7, pc_fdc_r },
-	{ 0x03f8, 0x03ff, pc_COM1_r },
-PORT_END
+static ADDRESS_MAP_START(tandy1000_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x9ffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+	AM_RANGE(0xa0000, 0xaffff) AM_RAM
+	AM_RANGE(0xb0000, 0xb7fff) AM_NOP
+	AM_RANGE(0xb8000, 0xbffff) AM_READWRITE(pc_t1t_videoram_r, pc_video_videoram_w)
+	AM_RANGE(0xc0000, 0xc7fff) AM_NOP
+	AM_RANGE(0xc8000, 0xc9fff) AM_ROM
+	AM_RANGE(0xca000, 0xcffff) AM_NOP
+	AM_RANGE(0xd0000, 0xeffff) AM_NOP
+	AM_RANGE(0xf0000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
 
 
-static PORT_WRITE_START( pc1640_writeport )
-	{ 0x0000, 0x000f, dma8237_0_w },
-	{ 0x0020, 0x0021, pic8259_0_w },
-	{ 0x0040, 0x0043, pit8253_0_w },
-	{ 0x0060, 0x0065, pc1640_port60_w },
-	{ 0x0070, 0x0071, mc146818_port_w },
-	{ 0x0078, 0x0078, pc1640_mouse_x_w },
-	{ 0x007a, 0x007a, pc1640_mouse_y_w },
-	{ 0x0080, 0x0087, pc_page_w },
-{ 0x0200, 0x0207, pc_JOY_w }, //?
-	{ 0x0278, 0x027b, pc_parallelport2_w },
-	{ 0x02e8, 0x02ef, pc_COM4_w },
-	{ 0x02f8, 0x02ff, pc_COM2_w },
-    { 0x0320, 0x0323, pc_HDC1_w },
-	{ 0x0324, 0x0327, pc_HDC2_w },
-	{ 0x0378, 0x037b, pc_parallelport1_w },
-	{ 0x03bc, 0x03bd, pc_parallelport0_w },
-	{ 0x03e8, 0x03ef, pc_COM3_w },
-	{ 0x03f0, 0x03f7, pc_fdc_w },
-	{ 0x03f8, 0x03ff, pc_COM1_w },
-PORT_END
+
+static ADDRESS_MAP_START(tandy1000_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x000f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x0021) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x0063) AM_READWRITE(tandy1000_pio_r,			tandy1000_pio_w)
+	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
+	AM_RANGE(0x00c0, 0x00c0) AM_WRITE(								SN76496_0_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037f) AM_READWRITE(pc_t1t_p37x_r,			pc_t1t_p37x_w)
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03d0, 0x03df) AM_READWRITE(pc_T1T_r,					pc_T1T_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
+
+
+
+static ADDRESS_MAP_START(pc200_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x000f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x0021) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x0065) AM_READWRITE(pc1640_port60_r,			pc1640_port60_w)
+	AM_RANGE(0x0078, 0x0078) AM_READWRITE(pc1640_mouse_x_r,			pc1640_mouse_x_w)
+	AM_RANGE(0x007a, 0x007a) AM_READWRITE(pc1640_mouse_y_r,			pc1640_mouse_y_w)
+	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc200_port378_r,			pc_parallelport1_w)
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
+
+
+
+static ADDRESS_MAP_START( pc1640_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x9ffff) AM_READWRITE(MRA8_BANK10, MWA8_BANK10)
+	AM_RANGE(0xa0000, 0xbffff) AM_NOP
+	AM_RANGE(0xc0000, 0xc7fff) AM_ROM
+	AM_RANGE(0xc8000, 0xcffff) AM_ROM
+	AM_RANGE(0xd0000, 0xfbfff) AM_NOP
+	AM_RANGE(0xfc000, 0xfffff) AM_ROM
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START(pc1640_io, ADDRESS_SPACE_IO, 8)
+	AM_RANGE(0x0000, 0x000f) AM_READWRITE(dma8237_0_r,				dma8237_0_w)
+	AM_RANGE(0x0020, 0x0021) AM_READWRITE(pic8259_0_r,				pic8259_0_w)
+	AM_RANGE(0x0040, 0x0043) AM_READWRITE(pit8253_0_r,				pit8253_0_w)
+	AM_RANGE(0x0060, 0x0065) AM_READWRITE(pc1640_port60_r,			pc1640_port60_w)
+	AM_RANGE(0x0070, 0x0071) AM_READWRITE(mc146818_port_r,			mc146818_port_w)
+	AM_RANGE(0x0078, 0x0078) AM_READWRITE(pc1640_mouse_x_r,			pc1640_mouse_x_w)
+	AM_RANGE(0x007a, 0x007a) AM_READWRITE(pc1640_mouse_y_r,			pc1640_mouse_y_w)
+	AM_RANGE(0x0080, 0x0087) AM_READWRITE(pc_page_r,				pc_page_w)
+	AM_RANGE(0x0200, 0x0207) AM_READWRITE(pc_JOY_r,					pc_JOY_w)
+	AM_RANGE(0x0278, 0x027b) AM_READWRITE(pc_parallelport2_r,		pc_parallelport2_w)
+	AM_RANGE(0x02e8, 0x02ef) AM_READWRITE(pc_COM4_r,				pc_COM4_w)
+	AM_RANGE(0x02f8, 0x02ff) AM_READWRITE(pc_COM2_r,				pc_COM2_w)
+	AM_RANGE(0x0320, 0x0323) AM_READWRITE(pc_HDC1_r,				pc_HDC1_w)
+	AM_RANGE(0x0324, 0x0327) AM_READWRITE(pc_HDC2_r,				pc_HDC2_w)
+	AM_RANGE(0x0378, 0x037b) AM_READWRITE(pc1640_port378_r,			pc_parallelport1_w)
+	AM_RANGE(0x03bc, 0x03be) AM_READWRITE(pc_parallelport0_r,		pc_parallelport0_w)
+	AM_RANGE(0x03e8, 0x03ef) AM_READWRITE(pc_COM3_r,				pc_COM3_w)
+	AM_RANGE(0x03f0, 0x03f7) AM_READWRITE(pc_fdc_r,					pc_fdc_w)
+	AM_RANGE(0x03f8, 0x03ff) AM_READWRITE(pc_COM1_r,				pc_COM1_w)
+ADDRESS_MAP_END
+
+
 
 INPUT_PORTS_START( pcmda )
 	PORT_START /* IN0 */
@@ -1261,8 +1114,8 @@ static struct SN76496interface t1t_sound_interface = {
 
 #define MDRV_CPU_PC(mem, port, type, clock, vblankfunc)	\
 	MDRV_CPU_ADD_TAG("main", type, clock)				\
-	MDRV_CPU_MEMORY(mem##_readmem, mem##_writemem)		\
-	MDRV_CPU_PORTS(port##_readport, port##_writeport)	\
+	MDRV_CPU_PROGRAM_MAP(mem##_map, mem##_map)			\
+	MDRV_CPU_IO_MAP(port##_io, port##_io)				\
 	MDRV_CPU_VBLANK_INT(vblankfunc, 4)					\
 	MDRV_CPU_CONFIG(i86_address_mask)
 
@@ -1457,7 +1310,7 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( t1000hx )
 	/* basic machine hardware */
-	MDRV_CPU_PC(t1t, t1t, I88, 8000000, tandy1000_frame_interrupt)
+	MDRV_CPU_PC(tandy1000, tandy1000, I88, 8000000, tandy1000_frame_interrupt)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

@@ -627,9 +627,9 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 		/* logerror("apple 2 interface v2: rom enabled\n"); */
 
 		/* enable rom */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
@@ -647,9 +647,9 @@ static WRITE_HANDLER(apple2_v2_interface_w)
 		/*logerror("apple 2 interface v2: ram enabled\n"); */
 
 		/* enable ram */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
 		memory_set_bankhandler_w(6, 0, MWA_BANK6);
 		memory_set_bankhandler_w(7, 0, MWA_BANK7);
@@ -721,9 +721,9 @@ static void oric_jasmin_set_mem_0x0c000(void)
 			/* no it is disabled */
 			/*logerror("&c000-&ffff is os rom\n"); */
 
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(5, 0, MWA8_NOP);
 			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 			memory_set_bankhandler_w(7, 0, MWA8_NOP);
@@ -737,9 +737,9 @@ static void oric_jasmin_set_mem_0x0c000(void)
 		{
 			/*logerror("&c000-&ffff is ram\n"); */
 
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(5, 0, MWA_BANK5);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 			memory_set_bankhandler_w(7, 0, MWA_BANK7);
@@ -773,8 +773,8 @@ static void oric_jasmin_set_mem_0x0c000(void)
 		{
 			/*logerror("&c000-&f8ff is ram!\n"); */
 
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 			memory_set_bankhandler_w(5, 0, MWA_BANK5);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 
@@ -790,7 +790,7 @@ static void oric_jasmin_set_mem_0x0c000(void)
 
 			/*logerror("&f800-&ffff is jasmin rom\n"); */
 			/* jasmin rom enabled */
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			rom_ptr = memory_region(REGION_CPU1) + 0x010000+0x04000+0x02000;
 			cpu_setbank(3, rom_ptr);
@@ -1000,7 +1000,7 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 	{
 		/*logerror("&c000-&dfff is ram\n"); */
 		/* rom disabled enable ram */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA_BANK5);
 		cpu_setbank(1, oric_ram_0x0c000);
 		cpu_setbank(5, oric_ram_0x0c000);
@@ -1010,7 +1010,7 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		unsigned char *rom_ptr;
 		/*logerror("&c000-&dfff is os rom\n"); */
 		/* basic rom */
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
+		memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 		memory_set_bankhandler_w(5, 0, MWA8_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
 		cpu_setbank(1, rom_ptr);
@@ -1024,8 +1024,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		unsigned char *rom_ptr;
 		/*logerror("&e000-&ffff is os rom\n"); */
 		/* basic rom */
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-		memory_set_bankhandler_r(3, 0, MRA_BANK3);
+		memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+		memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 		memory_set_bankhandler_w(6, 0, MWA8_NOP);
 		memory_set_bankhandler_w(7, 0, MWA8_NOP);
 		rom_ptr = memory_region(REGION_CPU1) + 0x010000;
@@ -1042,8 +1042,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		{
 			unsigned char *rom_ptr;
 			/*logerror("&e000-&ffff is disk rom\n"); */
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 			memory_set_bankhandler_w(7, 0, MWA8_NOP);
 			/* enable rom of microdisc interface */
@@ -1055,8 +1055,8 @@ static void	oric_microdisc_set_mem_0x0c000(void)
 		{
 			/*logerror("&e000-&ffff is ram\n"); */
 			/* rom disabled enable ram */
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(6, 0, MWA_BANK6);
 			memory_set_bankhandler_w(7, 0, MWA_BANK7);
 			cpu_setbank(2, oric_ram_0x0c000+0x02000);
@@ -1272,9 +1272,9 @@ MACHINE_INIT( oric )
 			unsigned char *rom_ptr;
 
 			/* os rom */
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_r(2, 0, MRA_BANK2);
-			memory_set_bankhandler_r(3, 0, MRA_BANK3);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+			memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+			memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 			memory_set_bankhandler_w(5, 0, MWA8_NOP);
 			memory_set_bankhandler_w(6, 0, MWA8_NOP);
 			memory_set_bankhandler_w(7, 0, MWA8_NOP);
@@ -1494,8 +1494,8 @@ static void	telestrat_refresh_mem(void)
 	{
 		case TELESTRAT_MEM_BLOCK_RAM:
 		{
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
-			memory_set_bankhandler_w(2, 0, MWA_BANK2);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+			memory_set_bankhandler_w(2, 0, MWA8_BANK2);
 			cpu_setbank(1, mem_block->ptr);
 			cpu_setbank(2, mem_block->ptr);
 		}
@@ -1503,7 +1503,7 @@ static void	telestrat_refresh_mem(void)
 
 		case TELESTRAT_MEM_BLOCK_ROM:
 		{
-			memory_set_bankhandler_r(1, 0, MRA_BANK1);
+			memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 			memory_set_bankhandler_w(2, 0, MWA8_NOP);
 			cpu_setbank(1, mem_block->ptr);
 		}

@@ -79,7 +79,7 @@
 #endif
 
 MEMORY_READ_START( readmem_mz700 )
-	{ 0x00000, 0x00fff, MRA_BANK1 },
+	{ 0x00000, 0x00fff, MRA8_BANK1 },
 	{ 0x01000, 0x0cfff, MRA8_RAM },
 	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
 	{ 0x0d800, 0x0dfff, MRA_BANK7 },
@@ -93,7 +93,7 @@ MEMORY_READ_START( readmem_mz700 )
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_mz700 )
-	{ 0x00000, 0x00fff, MWA_BANK1 },
+	{ 0x00000, 0x00fff, MWA8_BANK1 },
 	{ 0x01000, 0x0cfff, MWA8_RAM },
 	{ 0x0d000, 0x0d7ff, MWA_BANK6 },
 	{ 0x0d800, 0x0dfff, MWA_BANK7 },
@@ -113,10 +113,10 @@ PORT_WRITE_START( writeport_mz700 )
 PORT_END
 
 MEMORY_READ_START( readmem_mz800 )
-	{ 0x00000, 0x00fff, MRA_BANK1 },
-	{ 0x01000, 0x01fff, MRA_BANK2 },
+	{ 0x00000, 0x00fff, MRA8_BANK1 },
+	{ 0x01000, 0x01fff, MRA8_BANK2 },
 	{ 0x02000, 0x07fff, MRA8_RAM },
-	{ 0x08000, 0x09fff, MRA_BANK3 },
+	{ 0x08000, 0x09fff, MRA8_BANK3 },
 	{ 0x0a000, 0x0bfff, MRA_BANK4 },
 	{ 0x0c000, 0x0cfff, MRA_BANK5 },
 	{ 0x0d000, 0x0d7ff, MRA_BANK6 },
@@ -130,10 +130,10 @@ MEMORY_READ_START( readmem_mz800 )
 MEMORY_END
 
 MEMORY_WRITE_START( writemem_mz800 )
-	{ 0x00000, 0x00fff, MWA_BANK1 },
-	{ 0x01000, 0x01fff, MWA_BANK2 },
+	{ 0x00000, 0x00fff, MWA8_BANK1 },
+	{ 0x01000, 0x01fff, MWA8_BANK2 },
 	{ 0x02000, 0x07fff, MWA8_RAM },
-	{ 0x08000, 0x09fff, MWA_BANK3 },
+	{ 0x08000, 0x09fff, MWA8_BANK3 },
 	{ 0x0a000, 0x0bfff, MWA_BANK4 },
 	{ 0x0c000, 0x0cfff, MWA_BANK5 },
 	{ 0x0d000, 0x0d7ff, MWA_BANK6 },

@@ -326,7 +326,7 @@ static void nc_keyboard_timer_callback(int dummy)
 
 
 static read8_handler nc_bankhandler_r[]={
-MRA_BANK1, MRA_BANK2, MRA_BANK3, MRA_BANK4};
+MRA8_BANK1, MRA8_BANK2, MRA8_BANK3, MRA_BANK4};
 
 static write8_handler nc_bankhandler_w[]={
 MWA_BANK5, MWA_BANK6, MWA_BANK7, MWA_BANK8};
@@ -602,9 +602,9 @@ static void nc_common_init_machine(void)
 }
 
 MEMORY_READ_START( readmem_nc )
-    {0x00000, 0x03fff, MRA_BANK1},
-    {0x04000, 0x07fff, MRA_BANK2},
-    {0x08000, 0x0bfff, MRA_BANK3},
+    {0x00000, 0x03fff, MRA8_BANK1},
+    {0x04000, 0x07fff, MRA8_BANK2},
+    {0x08000, 0x0bfff, MRA8_BANK3},
     {0x0c000, 0x0ffff, MRA_BANK4},
 MEMORY_END
 

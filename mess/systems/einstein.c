@@ -740,14 +740,14 @@ static READ_HANDLER(einstein_psg_r)
 
 
 MEMORY_READ_START( readmem_einstein )
-	{0x0000, 0x01fff, MRA_BANK1},
-	{0x2000, 0x0ffff, MRA_BANK2},
+	{0x0000, 0x01fff, MRA8_BANK1},
+	{0x2000, 0x0ffff, MRA8_BANK2},
 MEMORY_END
 
 
 
 MEMORY_WRITE_START( writemem_einstein )
-	{0x0000, 0x01fff, MWA_BANK3},
+	{0x0000, 0x01fff, MWA8_BANK3},
 	{0x2000, 0x0ffff, MWA_BANK4},
 MEMORY_END
 

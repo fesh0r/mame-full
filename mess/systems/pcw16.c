@@ -199,9 +199,9 @@ static void pcw16_timer_callback(int dummy)
 }
 
 MEMORY_READ_START( readmem_pcw16 )
-	{0x0000, 0x03fff, MRA_BANK1},
-	{0x4000, 0x07fff, MRA_BANK2},
-	{0x8000, 0x0Bfff, MRA_BANK3},
+	{0x0000, 0x03fff, MRA8_BANK1},
+	{0x4000, 0x07fff, MRA8_BANK2},
+	{0x8000, 0x0Bfff, MRA8_BANK3},
 	{0xC000, 0x0ffff, MRA_BANK4},
 MEMORY_END
 
@@ -224,9 +224,9 @@ const write8_handler pcw16_write_handler_dram[4] =
 
 const read8_handler pcw16_read_handler_dram[4] =
 {
-	MRA_BANK1,
-	MRA_BANK2,
-	MRA_BANK3,
+	MRA8_BANK1,
+	MRA8_BANK2,
+	MRA8_BANK3,
 	MRA_BANK4
 };
 /*******************************************/
@@ -1415,9 +1415,9 @@ static CENTRONICS_CONFIG cent_config={
 
 static MACHINE_INIT( pcw16 )
 {
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_r(4, 0, MRA_BANK4);
 
 	memory_set_bankhandler_w(5, 0, MWA_BANK5);

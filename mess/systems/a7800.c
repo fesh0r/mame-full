@@ -37,9 +37,9 @@ static MEMORY_READ_START( readmem )
     { 0x2800, 0x2FFF, MRA_BANK7 },		/* MAINRAM */
     { 0x3000, 0x37FF, MRA_BANK7 },		/* MAINRAM */
     { 0x3800, 0x3FFF, MRA_BANK7 },		/* MAINRAM */
-    { 0x4000, 0x7FFF, MRA_BANK1 },		/* f18 hornet */
-    { 0x8000, 0x9FFF, MRA_BANK2 },		/* sc */
-    { 0xA000, 0xBFFF, MRA_BANK3 },		/* sc + ac */
+    { 0x4000, 0x7FFF, MRA8_BANK1 },		/* f18 hornet */
+    { 0x8000, 0x9FFF, MRA8_BANK2 },		/* sc */
+    { 0xA000, 0xBFFF, MRA8_BANK3 },		/* sc + ac */
     { 0xC000, 0xDFFF, MRA_BANK4 },		/* ac */
     { 0xE000, 0xFFFF, MRA8_ROM },
 MEMORY_END

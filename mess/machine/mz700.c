@@ -270,8 +270,8 @@ WRITE_HANDLER ( mz700_mmio_w )
 static void bank1_RAM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x00000]);
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
-	memory_set_bankhandler_w(1, 0, MWA_BANK1);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
+	memory_set_bankhandler_w(1, 0, MWA8_BANK1);
 }
 
 static void bank1_NOP(UINT8 *mem)
@@ -284,7 +284,7 @@ static void bank1_NOP(UINT8 *mem)
 static void bank1_ROM(UINT8 *mem)
 {
 	cpu_setbank(1, &mem[0x10000]);
-	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(1, 0, MRA8_BANK1);
 	memory_set_bankhandler_w(1, 0, MWA8_ROM);
 }
 
@@ -293,14 +293,14 @@ static void bank1_ROM(UINT8 *mem)
 static void bank2_RAM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x01000]);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
-	memory_set_bankhandler_w(2, 0, MWA_BANK2);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
+	memory_set_bankhandler_w(2, 0, MWA8_BANK2);
 }
 
 static void bank2_ROM(UINT8 *mem)
 {
 	cpu_setbank(2, &mem[0x11000]);
-	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(2, 0, MRA8_BANK2);
 	memory_set_bankhandler_w(2, 0, MWA8_ROM);
 }
 
@@ -309,14 +309,14 @@ static void bank2_ROM(UINT8 *mem)
 static void bank3_RAM(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x08000]);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
-	memory_set_bankhandler_w(3, 0, MWA_BANK3);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
+	memory_set_bankhandler_w(3, 0, MWA8_BANK3);
 }
 
 static void bank3_VID(UINT8 *mem)
 {
 	cpu_setbank(3, &mem[0x12000]);
-	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_r(3, 0, MRA8_BANK3);
 	memory_set_bankhandler_w(3, 0, videoram0_w);
 }
 

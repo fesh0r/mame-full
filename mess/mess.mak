@@ -26,7 +26,7 @@ CPUS+=I86@
 CPUS+=I88@
 CPUS+=I186@
 #CPUS+=I188@
-#CPUS+=I286@
+CPUS+=I286@
 CPUS+=V20@
 CPUS+=V30@
 #CPUS+=V33@
@@ -59,12 +59,14 @@ CPUS+=M68020@
 CPUS+=S2650@
 #CPUS+=TMS34010@
 #CPUS+=TMS34020@
-#CPUS+=TMS9900@
+CPUS+=TMS9900@
 #CPUS+=TMS9940@
-#CPUS+=TMS9980@
+CPUS+=TMS9980@
 #CPUS+=TMS9985@
 #CPUS+=TMS9989@
-#CPUS+=TMS9995@
+CPUS+=TMS9995@
+CPUS+=TMS99000@
+CPUS+=TMS99010@
 #CPUS+=TMS99105A@
 #CPUS+=TMS99110A@
 #CPUS+=Z8000@
@@ -183,9 +185,11 @@ DRVLIBS = \
 	$(OBJ)/pdp1.a	  \
 	$(OBJ)/sony.a     \
 	$(OBJ)/nintendo.a \
-#	$(OBJ)/at.a       \
-#	$(OBJ)/pc.a       \
-#	$(OBJ)/pcshare.a  \
+	$(OBJ)/at.a       \
+	$(OBJ)/pc.a       \
+	$(OBJ)/pcshare.a  \
+	$(OBJ)/ti99.a     \
+	$(OBJ)/amstrad.a  \
 #	$(OBJ)/sega.a     \
 #	$(OBJ)/acorn.a    \
 #	$(OBJ)/atari.a    \
@@ -208,7 +212,6 @@ DRVLIBS = \
 #	$(OBJ)/ep128.a	  \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/veb.a	  \
-#	$(OBJ)/amstrad.a  \
 #	$(OBJ)/necpc.a	  \
 #	$(OBJ)/nec.a	  \
 #	$(OBJ)/fairch.a   \
@@ -234,7 +237,6 @@ DRVLIBS = \
 #	$(OBJ)/teamconc.a \
 #	$(OBJ)/amiga.a    \
 #	$(OBJ)/svi.a      \
-#	$(OBJ)/ti99.a     \
 #	$(OBJ)/tutor.a    \
 #	$(OBJ)/sharp.a    \
 #	$(OBJ)/aim65.a    \
@@ -471,7 +473,6 @@ $(OBJ)/ti99.a:	   \
 	$(OBJ)/mess/machine/990_dk.o	\
 	$(OBJ)/mess/sndhrdw/spchroms.o	\
 	$(OBJ)/mess/systems/ti990_4.o	\
-	$(OBJ)/mess/systems/ti990_10.o	\
 	$(OBJ)/mess/systems/ti99_4x.o	\
 	$(OBJ)/mess/systems/ti99_4p.o	\
 	$(OBJ)/mess/systems/geneve.o	\
@@ -479,7 +480,9 @@ $(OBJ)/ti99.a:	   \
 	$(OBJ)/mess/systems/ti99_8.o	\
 	$(OBJ)/mess/vidhrdw/911_vdt.o	\
 	$(OBJ)/mess/vidhrdw/733_asr.o	\
-#	$(OBJ)/mess/systems/ti99_2.o	\
+	$(OBJ)/mess/systems/ti990_10.o	\
+	$(OBJ)/mess/systems/ti99_2.o	\
+	$(OBJ)/mess/systems/tutor.o		\
 
 $(OBJ)/tutor.a:   \
 	$(OBJ)/mess/systems/tutor.o
@@ -490,18 +493,18 @@ $(OBJ)/bally.a:    \
 	$(OBJ)/mess/machine/astrocde.o \
 	$(OBJ)/mess/systems/astrocde.o
 
-$(OBJ)/pcshare.a:	   \
-	$(OBJ)/mess/machine/dma8237.o  \
-	$(OBJ)/mess/machine/pic8259.o  \
-	$(OBJ)/mess/sndhrdw/pc.o	     \
-	$(OBJ)/mess/sndhrdw/sblaster.o \
-	$(OBJ)/mess/machine/pc_fdc.o	 \
-	$(OBJ)/mess/devices/pc_hdc.o	 \
-	$(OBJ)/mess/machine/pcshare.o	 \
-	$(OBJ)/mess/vidhrdw/pc_mda.o	 \
-	$(OBJ)/mess/vidhrdw/pc_cga.o	 \
-	$(OBJ)/mess/vidhrdw/pc_vga.o	 \
-	$(OBJ)/mess/vidhrdw/pc_video.o 
+$(OBJ)/pcshare.a:					\
+	$(OBJ)/mess/machine/dma8237.o	\
+	$(OBJ)/mess/machine/pic8259.o	\
+	$(OBJ)/mess/sndhrdw/pc.o		\
+	$(OBJ)/mess/sndhrdw/sblaster.o	\
+	$(OBJ)/mess/machine/pc_fdc.o	\
+	$(OBJ)/mess/devices/pc_hdc.o	\
+	$(OBJ)/mess/machine/pcshare.o	\
+	$(OBJ)/mess/vidhrdw/pc_video.o	\
+	$(OBJ)/mess/vidhrdw/pc_mda.o	\
+	$(OBJ)/mess/vidhrdw/pc_cga.o	\
+	$(OBJ)/mess/vidhrdw/pc_vga.o	\
 
 $(OBJ)/pc.a:	   \
 	$(OBJ)/mess/vidhrdw/pc_aga.o	 \
@@ -531,16 +534,16 @@ $(OBJ)/p2000.a:    \
 	$(OBJ)/mess/systems/uk101.o
 
 $(OBJ)/amstrad.a:  \
-	$(OBJ)/mess/vidhrdw/nc.o	 \
-	$(OBJ)/mess/systems/nc.o	 \
-	$(OBJ)/mess/machine/nc.o	 \
-	$(OBJ)/mess/vidhrdw/pcw.o	 \
-	$(OBJ)/mess/systems/pcw.o	 \
-	$(OBJ)/mess/systems/pcw16.o	 \
-	$(OBJ)/mess/vidhrdw/pcw16.o	 \
 	$(OBJ)/mess/systems/amstrad.o  \
 	$(OBJ)/mess/machine/amstrad.o  \
-	$(OBJ)/mess/vidhrdw/amstrad.o  
+	$(OBJ)/mess/vidhrdw/amstrad.o  \
+#	$(OBJ)/mess/vidhrdw/pcw.o	 \
+#	$(OBJ)/mess/systems/pcw.o	 \
+#	$(OBJ)/mess/systems/pcw16.o	 \
+#	$(OBJ)/mess/vidhrdw/pcw16.o	 \
+#	$(OBJ)/mess/vidhrdw/nc.o	 \
+#	$(OBJ)/mess/systems/nc.o	 \
+#	$(OBJ)/mess/machine/nc.o	 \
 
 $(OBJ)/veb.a:      \
 	$(OBJ)/mess/vidhrdw/kc.o	 \

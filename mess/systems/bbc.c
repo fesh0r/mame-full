@@ -45,9 +45,9 @@ read:
 
 static MEMORY_READ_START(readmem_bbca)
 	{ 0x0000, 0x3fff, MRA8_RAM		   },
-	{ 0x4000, 0x7fff, MRA_BANK1 	   },  /* bank 1 is a repeat of the memory at 0x0000 to 0x3fff	 */
-	{ 0x8000, 0xbfff, MRA_BANK3 	   },  /* Paged ROM                                              */
-	{ 0xc000, 0xfbff, MRA_BANK2		   },  /* OS                                                     */
+	{ 0x4000, 0x7fff, MRA8_BANK1 	   },  /* bank 1 is a repeat of the memory at 0x0000 to 0x3fff	 */
+	{ 0x8000, 0xbfff, MRA8_BANK3 	   },  /* Paged ROM                                              */
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },  /* OS                                                     */
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages                                       */
 										   /* Shiela Address Page &fe00 - &feff 					 */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			     */
@@ -62,7 +62,7 @@ static MEMORY_READ_START(readmem_bbca)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 1 ECONET controller			 */
 	{ 0xfec0, 0xfedf, BBC_NOP_00_r	   },  /* &c0-&df  uPD7002		 1 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 1 Tube system interface		 */
-	{ 0xff00, 0xffff, MRA_BANK2		   },  /* Hardware marked with a 1 is not present in a Model A	 */
+	{ 0xff00, 0xffff, MRA8_BANK2		   },  /* Hardware marked with a 1 is not present in a Model A	 */
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbca)
@@ -90,8 +90,8 @@ MEMORY_END
 
 static MEMORY_READ_START(readmem_bbcb)
 	{ 0x0000, 0x7fff, MRA8_RAM		   },
-	{ 0x8000, 0xbfff, MRA_BANK3 	   },
-	{ 0xc000, 0xfbff, MRA_BANK2		   },
+	{ 0x8000, 0xbfff, MRA8_BANK3 	   },
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
@@ -106,7 +106,7 @@ static MEMORY_READ_START(readmem_bbcb)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_r	       },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MRA_BANK2		   },
+	{ 0xff00, 0xffff, MRA8_BANK2		   },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcb)
@@ -133,8 +133,8 @@ MEMORY_END
 
 static MEMORY_READ_START(readmem_bbcb1770)
 	{ 0x0000, 0x7fff, MRA8_RAM		   },
-	{ 0x8000, 0xbfff, MRA_BANK3 	   },
-	{ 0xc000, 0xfbff, MRA_BANK2		   },
+	{ 0x8000, 0xbfff, MRA8_BANK3 	   },
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
@@ -149,7 +149,7 @@ static MEMORY_READ_START(readmem_bbcb1770)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_r  	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MRA_BANK2		   },
+	{ 0xff00, 0xffff, MRA8_BANK2		   },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcb1770)
@@ -176,10 +176,10 @@ MEMORY_END
 
 static MEMORY_READ_START(readmem_bbcbp)
 	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
-	{ 0x3000, 0x7fff, MRA_BANK1        },  /* Video/Shadow Ram                                     */
-	{ 0x8000, 0xafff, MRA_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
+	{ 0x3000, 0x7fff, MRA8_BANK1        },  /* Video/Shadow Ram                                     */
+	{ 0x8000, 0xafff, MRA8_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
 	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
-	{ 0xc000, 0xfbff, MRA_BANK2		   },  /* OS                                                   */
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },  /* OS                                                   */
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
@@ -194,7 +194,7 @@ static MEMORY_READ_START(readmem_bbcbp)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_r 	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MRA_BANK2		   },
+	{ 0xff00, 0xffff, MRA8_BANK2		   },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcbp)
@@ -224,10 +224,10 @@ MEMORY_END
 
 static MEMORY_READ_START(readmem_bbcbp128)
 	{ 0x0000, 0x2fff, MRA8_RAM		   },  /* Normal Ram                                           */
-	{ 0x3000, 0x7fff, MRA_BANK1        },  /* Video/Shadow Ram                                     */
-	{ 0x8000, 0xafff, MRA_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
+	{ 0x3000, 0x7fff, MRA8_BANK1        },  /* Video/Shadow Ram                                     */
+	{ 0x8000, 0xafff, MRA8_BANK3 	   },  /* Paged ROM or 12K of RAM                              */
 	{ 0xb000, 0xbfff, MRA_BANK4        },  /* Rest of paged ROM area                               */
-	{ 0xc000, 0xfbff, MRA_BANK2		   },  /* OS                                                   */
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },  /* OS                                                   */
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages                                     */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
@@ -242,7 +242,7 @@ static MEMORY_READ_START(readmem_bbcbp128)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_r 	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, BBC_NOP_FE_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MRA_BANK2		   },
+	{ 0xff00, 0xffff, MRA8_BANK2		   },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcbp128)
@@ -631,8 +631,8 @@ static READ_HANDLER ( bbcs_tube_r )
 
 static MEMORY_READ_START(readmem_bbcbtube)
 	{ 0x0000, 0x7fff, MRA8_RAM		   },
-	{ 0x8000, 0xbfff, MRA_BANK3 	   },
-	{ 0xc000, 0xfbff, MRA_BANK2		   },
+	{ 0x8000, 0xbfff, MRA8_BANK3 	   },
+	{ 0xc000, 0xfbff, MRA8_BANK2		   },
 	{ 0xfc00, 0xfdff, BBC_NOP_FF_r	   },  /* FRED & JIM Pages */
 										   /* Shiela Address Page &fe00 - &feff 				   */
 	{ 0xfe00, 0xfe07, BBC_6845_r	   },  /* &00-&07  6845 CRTC	 Video controller			   */
@@ -647,7 +647,7 @@ static MEMORY_READ_START(readmem_bbcbtube)
 	{ 0xfea0, 0xfebf, BBC_NOP_FE_r	   },  /* &a0-&bf  68B54 ADLC	 ECONET controller			   */
 	{ 0xfec0, 0xfedf, uPD7002_r  	   },  /* &c0-&df  uPD7002		 Analogue to digital converter */
 	{ 0xfee0, 0xfeff, tube_port_a_r	   },  /* &e0-&ff  Tube ULA 	 Tube system interface		   */
-	{ 0xff00, 0xffff, MRA_BANK2		   },
+	{ 0xff00, 0xffff, MRA8_BANK2		   },
 MEMORY_END
 
 static MEMORY_WRITE_START(writemem_bbcbtube)

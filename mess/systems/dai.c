@@ -75,9 +75,9 @@ PORT_END
 
 /* memory w/r functions */
 MEMORY_READ_START( dai_readmem )
-	{ 0x0000, 0xbfff, MRA_BANK1 },
+	{ 0x0000, 0xbfff, MRA8_BANK1 },
 	{ 0xc000, 0xdfff, MRA8_ROM },
-	{ 0xe000, 0xefff, MRA_BANK2 },
+	{ 0xe000, 0xefff, MRA8_BANK2 },
 	{ 0xf000, 0xf7ff, MRA8_NOP },
 	{ 0xf800, 0xf8ff, MRA8_RAM },
 	{ 0xfb00, 0xfbff, amd9511_r },
@@ -88,9 +88,9 @@ MEMORY_READ_START( dai_readmem )
 MEMORY_END
 
 MEMORY_WRITE_START( dai_writemem )
-	{ 0x0000, 0xbfff, MWA_BANK1},
+	{ 0x0000, 0xbfff, MWA8_BANK1},
 	{ 0xc000, 0xdfff, MWA8_ROM},
-	{ 0xe000, 0xefff, MWA_BANK2},
+	{ 0xe000, 0xefff, MWA8_BANK2},
 	{ 0xf000, 0xf7ff, MWA8_NOP},
 	{ 0xf800, 0xf8ff, MWA8_RAM},
 	{ 0xfb00, 0xfbff, amd9511_w },

@@ -329,7 +329,7 @@ static MEMORY_READ_START( c128_z80_readmem )
 	/* best to do reuse bankswitching numbers */
 	{0x0000, 0x03ff, MRA_BANK10},
 	{0x0400, 0x0fff, MRA_BANK11},
-	{0x1000, 0x1fff, MRA_BANK3},
+	{0x1000, 0x1fff, MRA8_BANK3},
 	{0x2000, 0x3fff, MRA_BANK4},
 
 	{0x4000, 0xbfff, MRA_BANK5},
@@ -347,9 +347,9 @@ static MEMORY_WRITE_START( c128_z80_writemem )
 	{0x1000, 0xbfff, c128_write_1000 },
 	{0xc000, 0xffff, MWA8_RAM },
 #else
-	{0x0000, 0x03ff, MWA_BANK1, &c64_memory},
-	{0x0400, 0x0fff, MWA_BANK2},
-	{0x1000, 0x1fff, MWA_BANK3},
+	{0x0000, 0x03ff, MWA8_BANK1, &c64_memory},
+	{0x0400, 0x0fff, MWA8_BANK2},
+	{0x1000, 0x1fff, MWA8_BANK3},
 	{0x2000, 0x3fff, MWA_BANK4},
 	{0x4000, 0xbfff, MWA_BANK5},
 	{0xc000, 0xdfff, MWA_BANK6},
@@ -402,9 +402,9 @@ PORT_END
 
 static MEMORY_READ_START( c128_readmem )
 	{0x0000, 0x0001, c64_m6510_port_r},
-	{0x0002, 0x00ff, MRA_BANK1},
-	{0x0100, 0x01ff, MRA_BANK2},
-	{0x0200, 0x03ff, MRA_BANK3},
+	{0x0002, 0x00ff, MRA8_BANK1},
+	{0x0100, 0x01ff, MRA8_BANK2},
+	{0x0200, 0x03ff, MRA8_BANK3},
 	{0x0400, 0x0fff, MRA_BANK4},
 	{0x1000, 0x1fff, MRA_BANK5},
 	{0x2000, 0x3fff, MRA_BANK6},
@@ -422,9 +422,9 @@ MEMORY_END
 
 static MEMORY_WRITE_START( c128_writemem )
 	{0x0000, 0x0001, c64_m6510_port_w},
-	{0x0002, 0x00ff, MWA_BANK1},
-	{0x0100, 0x01ff, MWA_BANK2},
-	{0x0200, 0x03ff, MWA_BANK3},
+	{0x0002, 0x00ff, MWA8_BANK1},
+	{0x0100, 0x01ff, MWA8_BANK2},
+	{0x0200, 0x03ff, MWA8_BANK3},
 	{0x0400, 0x0fff, MWA_BANK4},
 	{0x1000, 0x1fff, MWA_BANK5},
 	{0x2000, 0x3fff, MWA_BANK6},

@@ -202,7 +202,7 @@
 MEMORY_READ_START( readmem_a400 )
 	{ 0x0000, 0x3fff, MRA8_RAM },
 //	{ 0x4000, 0x9fff, MRA8_RAM },	/* optional RAM */
-	{ 0xa000, 0xbfff, MRA_BANK1 },
+	{ 0xa000, 0xbfff, MRA8_BANK1 },
 	{ 0xc000, 0xcfff, MRA8_ROM },
 	{ 0xd000, 0xd0ff, MRA_GTIA },
 	{ 0xd100, 0xd1ff, MRA8_NOP },
@@ -216,7 +216,7 @@ MEMORY_END
 MEMORY_WRITE_START( writemem_a400 )
 	{ 0x0000, 0x3fff, MWA8_RAM },
 //	{ 0x4000, 0x9fff, MRA8_RAM },	/* optional RAM */
-	{ 0xa000, 0xbfff, MWA_BANK1 },
+	{ 0xa000, 0xbfff, MWA8_BANK1 },
 	{ 0xc000, 0xcfff, MWA8_ROM },
 	{ 0xd000, 0xd0ff, MWA_GTIA },
 	{ 0xd100, 0xd1ff, MWA8_NOP },
@@ -229,7 +229,7 @@ MEMORY_END
 
 MEMORY_READ_START( readmem_a800 )
 	{ 0x0000, 0x9fff, MRA8_RAM },
-	{ 0xa000, 0xbfff, MRA_BANK1 },
+	{ 0xa000, 0xbfff, MRA8_BANK1 },
 	{ 0xc000, 0xcfff, MRA8_ROM },
 	{ 0xd000, 0xd0ff, MRA_GTIA },
 	{ 0xd100, 0xd1ff, MRA8_NOP },
@@ -242,7 +242,7 @@ MEMORY_END
 
 MEMORY_WRITE_START( writemem_a800 )
 	{ 0x0000, 0x9fff, MWA8_RAM },
-	{ 0xa000, 0xbfff, MWA_BANK1 },
+	{ 0xa000, 0xbfff, MWA8_BANK1 },
 	{ 0xc000, 0xcfff, MWA8_ROM },
 	{ 0xd000, 0xd0ff, MWA_GTIA },
 	{ 0xd100, 0xd1ff, MWA8_NOP },
@@ -255,10 +255,10 @@ MEMORY_END
 
 MEMORY_READ_START( readmem_a800xl )
 	{ 0x0000, 0x4fff, MRA8_RAM },
-	{ 0x5000, 0x57ff, MRA_BANK2 },
+	{ 0x5000, 0x57ff, MRA8_BANK2 },
 	{ 0x5800, 0x9fff, MRA8_RAM },
-	{ 0xa000, 0xbfff, MRA_BANK1 },
-	{ 0xc000, 0xcfff, MRA_BANK3 },
+	{ 0xa000, 0xbfff, MRA8_BANK1 },
+	{ 0xc000, 0xcfff, MRA8_BANK3 },
 	{ 0xd000, 0xd0ff, MRA_GTIA },
 	{ 0xd100, 0xd1ff, MRA8_NOP },
 	{ 0xd200, 0xd2ff, pokey1_r },
@@ -270,10 +270,10 @@ MEMORY_END
 
 MEMORY_WRITE_START( writemem_a800xl )
 	{ 0x0000, 0x4fff, MWA8_RAM },
-	{ 0x5000, 0x57ff, MWA_BANK2 },
+	{ 0x5000, 0x57ff, MWA8_BANK2 },
 	{ 0x5800, 0x9fff, MWA8_RAM },
-	{ 0xa000, 0xbfff, MWA_BANK1 },
-	{ 0xc000, 0xcfff, MWA_BANK3 },
+	{ 0xa000, 0xbfff, MWA8_BANK1 },
+	{ 0xc000, 0xcfff, MWA8_BANK3 },
 	{ 0xd000, 0xd0ff, MWA_GTIA },
 	{ 0xd100, 0xd1ff, MWA8_NOP },
 	{ 0xd200, 0xd2ff, pokey1_w },
