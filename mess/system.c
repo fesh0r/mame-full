@@ -158,7 +158,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( a800pal )		/* Atari 800 PAL                                  */
 	DRIVER( a800xl )		/* Atari 800 XL 						  */
 
-#ifdef MESS_CBM
+#ifndef MESS_EXCLUDE_CBM
 	/* COMMODORE */
 	DRIVER( kim1 )		/* Commodore (MOS) KIM-1 1975                     */
 	DRIVER( c16 )		/* Commodore 16                                   */
@@ -215,7 +215,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( amiga )		/* Commodore Amiga                                */
 #endif
 
-#ifdef MESS_AMSTRAD
+#ifndef MESS_EXCLUDE_AMSTRAD
 	/* AMSTRAD */
 	DRIVER( cpc464 )		/* Amstrad (Schneider in Germany) 1984            */
 	DRIVER( cpc664 )		/* Amstrad (Schneider in Germany) 1985            */
@@ -291,7 +291,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( ti99_4a )		/* Texas Instruments TI 99/4A				  */
 	DRIVER( ti99_4ae )	/* Texas Instruments TI 99/4AE			  */
 
-#ifdef MESS_IBMPC
+#ifndef MESS_EXCLUDE_IBMPC
 	/* IBM & Clones */
 	DRIVER( pc )		/* IBM PC  - parent Driver, so no need            */
 	DRIVER( pcmda )		/* IBM PC/XT with MDA (MGA aka Hercules)		  */
@@ -302,8 +302,7 @@ const struct GameDriver *drivers[] =
 	DRIVER( pc1512 )
 	DRIVER( pc1640 )
 
-  TESTDRIVER( xtcga )		/*                                                */
-  TESTDRIVER( xtega )		/*                                                */
+	DRIVER( xtcga )		/*                                                */
 	DRIVER( xtvga )		/*                                                */
 	DRIVER( atcga )		/*                                                */
   TESTDRIVER( atvga )		/*                                                */
@@ -319,7 +318,7 @@ const struct GameDriver *drivers[] =
 	/* OHIO SCIENTIFIC */
 	DRIVER( superbrd )	/*                  					  */
 
-#ifdef MESS_SINCLAIR
+#ifndef MESS_EXCLUDE_SINCLAIR
 	/* SINCLAIR */
 	DRIVER( zx80 )		/* Sinclair ZX-80						  */
 	DRIVER( zx81 )		/* Sinclair ZX-81						  */
@@ -370,7 +369,7 @@ const struct GameDriver *drivers[] =
 	/* MILES GORDON TECHNOLOGY */
 	DRIVER( coupe )		/*                      				  */
 
-#ifdef MESS_SHARP
+#ifndef MESS_EXCLUDE_SHARP
 	/* SHARP */
 	DRIVER( pc1401 )		/* Pocket Computer 1401      				  */
 	DRIVER( pc1402 )		/* Pocket Computer 1402    				  */
