@@ -12,19 +12,20 @@
 Known Dumps
 -----------
 
-Game       Description                             CPU board           Mother board             Daughter board          Keycus
+Game       Description                              CPU board           Mother board             Daughter board          Keycus
 
-tekken3    Tekken 3 (TET1/VER.E)                   COH 700             ?                        SYSTEM12 M8F2           ?
-soulclbr   Soul Calibur (SOC1/VER.A)               COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F2           KC020
-ehrgeiz    Ehrgeiz (EG3/VER.A)                     COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M4F6           KC021
-mdhorse    Derby Quiz My Dream Horse (MDH1/VER.A)  COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M10X64         KC035
-fgtlayer   Fighting Layer (FTL1/VER.A)             COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC037
-pacapp     Paca Paca Passion (PPP1/VER.A)          COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F2           KC038
-sws99      Super World Stadium '99 (SS91/VER.A)    COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC043
-tekkentt   Tekken Tag Tournament (TEG3/VER.B)      COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F4           KC044
-mrdrillr   Mr Driller (DRI1/VER.A)                 COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F2           KC048
-aquarush   Aqua Rush (AQ1/VER.A)                   COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M5F2           KC053
-golgo13    Golgo 13 (GLG1/VER.A)                   COH 700             ?                        SYSTEM12 M8F6           ?
+tekken3    Tekken 3 (TET1/VER.E1)                   COH 700             ?                        SYSTEM12 M8F2           ?
+soulclbr   Soul Calibur (SOC14/VER.C)               COH 700             SYSTEM12 MOTHER          no markings             -----
+soulclba   Soul Calibur (SOC11/VER.A2)              COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F2           KC020
+ehrgeiz    Ehrgeiz (EG3/VER.A)                      COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M4F6           KC021
+mdhorse    Derby Quiz My Dream Horse (MDH1/VER.A2)  COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M10X64         KC035
+fgtlayer   Fighting Layer (FTL0/VER.A)              COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC037
+pacapp     Paca Paca Passion (PPP1/VER.A2)          COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F2           KC038
+sws99      Super World Stadium '99 (SS91/VER.A3)    COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M5F4           KC043
+tekkentt   Tekken Tag Tournament (TEG3/VER.B)       COH 700             SYSTEM12 MOTHER(B)       SYSTEM12 M8F4           KC044
+mrdrillr   Mr Driller (DRI1/VER.A2)                 COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M8F2           KC048
+aquarush   Aqua Rush (AQ1/VER.A1)                   COH 700             SYSTEM12 MOTHER(C)       SYSTEM12 M5F2           KC053
+golgo13    Golgo 13 (GLG1/VER.A)                    COH 700             ?                        SYSTEM12 M8F6           ?
 
 COH 700
 
@@ -504,6 +505,25 @@ ROM_END
 
 ROM_START( soulclbr )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "soc14verc.2e", 0x0000000, 0x200000, CRC(c40e9614) SHA1(dc20469f0d657423e472fdf5897852ab9fb8bb73) )
+	ROM_LOAD16_BYTE( "soc14verc.2j", 0x0000001, 0x200000, CRC(80c41446) SHA1(e5620a4f0ffba913169a779df73384b7ca8780b9) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD(        "soc1rm0.7",   0x0000000, 0x800000, CRC(cdc47b55) SHA1(315ea6b819de5c4883aa400f1b9f4172637757bf) )
+	ROM_LOAD(        "soc1rm1.8",   0x0800000, 0x800000, CRC(30d2dd5a) SHA1(1c0c467ba339e0241efb8d5c3b025a046b2ca676) )
+	ROM_LOAD(        "soc1rm2.9",   0x1000000, 0x800000, CRC(dbb93955) SHA1(624cd8ad94e8ae53206f798bff81784afe95e5f1) )
+	ROM_LOAD(        "soc1fl3.6",   0x1800000, 0x400000, CRC(24d94c38) SHA1(0f9b9ab11dd4e02086d7b9104ce2f5d4e93cd696) )
+	ROM_LOAD(        "soc1fl4.5",   0x1c00000, 0x400000, CRC(6212090e) SHA1(ed5e50771180935a0c2e760e7369673098722201) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "soc1wav0.2",   0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
+ROM_END
+
+ROM_START( soulclba )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc1vera.2l", 0x0000000, 0x200000, CRC(37e0a203) SHA1(3915b5e530c8e70a07aa8ccedeb66633ae5f670e) )
 	ROM_LOAD16_BYTE( "soc1vera.2p", 0x0000001, 0x200000, CRC(7cd87a35) SHA1(5a4837b6f6a49c88126a0ddbb8059a4da77127bc) )
 
@@ -591,14 +611,15 @@ ROM_START( tekkentt )
 	ROM_LOAD( "teg3wav1.12",  0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
 ROM_END
 
-GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAMEX( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VERA)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
+GAMEX( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */
 GAMEX( 1999, tekkentt,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX( 1999, golgo13,   0,        coh700, namcos12, namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAMEX( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1999, golgo13,   0,        coh700, namcos12, namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_NOT_WORKING | GAME_NO_SOUND ) /* id */

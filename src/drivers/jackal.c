@@ -18,8 +18,6 @@ TODO:
 - Coin counters don't work correctly, because the register is overwritten by
   other routines and the coin counter bits rapidly toggle between 0 and 1.
 
- - Can this driver benefit from the memory.c update by Aaron Giles?
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -32,15 +30,11 @@ extern UINT8 *jackal_videoctrl;
 extern MACHINE_INIT( jackal );
 
 extern READ_HANDLER( jackal_zram_r );
-extern READ_HANDLER( jackal_commonram_r );
-extern READ_HANDLER( jackal_commonram1_r );
 extern READ_HANDLER( jackal_voram_r );
 extern READ_HANDLER( jackal_spriteram_r );
 
 extern WRITE_HANDLER( jackal_rambank_w );
 extern WRITE_HANDLER( jackal_zram_w );
-extern WRITE_HANDLER( jackal_commonram_w );
-extern WRITE_HANDLER( jackal_commonram1_w );
 extern WRITE_HANDLER( jackal_voram_w );
 extern WRITE_HANDLER( jackal_spriteram_w );
 
@@ -71,8 +65,8 @@ INTERRUPT_GEN( jackal_interrupt )
 
 
 
-static ADDRESS_MAP_START( jackal_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0003) AM_WRITE(MWA8_RAM) AM_BASE(&jackal_videoctrl)				// scroll + other things
+static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0003) AM_RAM AM_BASE(&jackal_videoctrl)	// scroll + other things
 	AM_RANGE(0x0004, 0x0004) AM_WRITE(jackal_flipscreen_w)
 	AM_RANGE(0x0010, 0x0010) AM_READ(input_port_0_r)
 	AM_RANGE(0x0011, 0x0011) AM_READ(input_port_1_r)
@@ -82,21 +76,21 @@ static ADDRESS_MAP_START( jackal_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0018, 0x0018) AM_READ(input_port_4_r)
 	AM_RANGE(0x0019, 0x0019) AM_WRITE(watchdog_reset_w)
 	AM_RANGE(0x001c, 0x001c) AM_WRITE(jackal_rambank_w)
-	AM_RANGE(0x0020, 0x005f) AM_READ(jackal_zram_r)	AM_WRITE(jackal_zram_w)				// MAIN   Z RAM,SUB    Z RAM
-	AM_RANGE(0x0060, 0x1fff) AM_READ(jackal_commonram_r) AM_WRITE(jackal_commonram_w)	// M COMMON RAM,S COMMON RAM
-	AM_RANGE(0x2000, 0x2fff) AM_READ(jackal_voram_r) AM_WRITE(jackal_voram_w)			// MAIN V O RAM,SUB  V O RAM
-	AM_RANGE(0x3000, 0x3fff) AM_READ(jackal_spriteram_r) AM_WRITE(jackal_spriteram_w)	// MAIN V O RAM,SUB  V O RAM
-	AM_RANGE(0x4000, 0xbfff) AM_READ(MRA8_BANK1) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x0020, 0x005f) AM_READWRITE(jackal_zram_r, jackal_zram_w)				// MAIN   Z RAM,SUB    Z RAM
+	AM_RANGE(0x0060, 0x1fff) AM_RAM AM_SHARE(1)										// M COMMON RAM,S COMMON RAM
+	AM_RANGE(0x2000, 0x2fff) AM_READWRITE(jackal_voram_r, jackal_voram_w)			// MAIN V O RAM,SUB  V O RAM
+	AM_RANGE(0x3000, 0x3fff) AM_READWRITE(jackal_spriteram_r, jackal_spriteram_w)	// MAIN V O RAM,SUB  V O RAM
+	AM_RANGE(0x4000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( jackal_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_READ(YM2151_status_port_0_r) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)	// COLOR RAM (Self test only check 0x4000-0x423f
-	AM_RANGE(0x6000, 0x605f) AM_READ(MRA8_RAM) AM_WRITE(MWA8_RAM)											// SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff
-	AM_RANGE(0x6060, 0x7fff) AM_READ(jackal_commonram1_r) AM_WRITE(jackal_commonram1_w)
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2001, 0x2001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x4000, 0x43ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)	// COLOR RAM (Self test only check 0x4000-0x423f)
+	AM_RANGE(0x6000, 0x605f) AM_RAM																	// SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff)
+	AM_RANGE(0x6060, 0x7fff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -349,11 +343,11 @@ static MACHINE_DRIVER_START( jackal )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_PROGRAM_MAP(jackal_map, 0)
+	MDRV_CPU_PROGRAM_MAP(master_map, 0)
 	MDRV_CPU_VBLANK_INT(jackal_interrupt, 1)
 
 	MDRV_CPU_ADD(M6809, 2000000)	/* 2 MHz???? */
-	MDRV_CPU_PROGRAM_MAP(jackal_sound_map, 0)
+	MDRV_CPU_PROGRAM_MAP(slave_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

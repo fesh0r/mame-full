@@ -715,7 +715,7 @@ static READ32_HANDLER( gunbulet_gun_r )
 }
 
 static
-READ32_HANDLER( rand_r )
+READ32_HANDLER( randgen_r )
 {
 	return mame_rand();
 }
@@ -733,7 +733,7 @@ static ADDRESS_MAP_START( namconb1_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x100000, 0x10001f) AM_READ(gunbulet_gun_r)
 	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM) /* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(rand_r)
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(randgen_r)
 	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM) /* workram (shared with MCU) */
 	AM_RANGE(0x400000, 0x40001f) AM_READ(MRA32_RAM) /* namconb_cpureg32 */
 	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM) /* nvmem */
@@ -765,7 +765,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( namconb2_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x1c0000, 0x1cffff) AM_READ(MRA32_RAM)	/* workram */
-	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(rand_r)
+	AM_RANGE(0x1e4000, 0x1e4003) AM_READ(randgen_r)
 	AM_RANGE(0x200000, 0x2fffff) AM_READ(MRA32_RAM)	/* workram (shared with MCU) */
 	AM_RANGE(0x400000, 0x4fffff) AM_READ(MRA32_BANK1)/* data ROMs */
 	AM_RANGE(0x600000, 0x61ffff) AM_READ(namco_obj32_r)

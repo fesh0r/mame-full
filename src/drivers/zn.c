@@ -114,357 +114,14 @@ Sound: Analog Devices ADSP-2181
 
   ***************************************************************************/
 
-#define PROTECTION_HACK ( 1 )
-
 #include "driver.h"
 #include "vidhrdw/generic.h"
 #include "cpu/mips/psx.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"
 #include "includes/psx.h"
-
-#if PROTECTION_HACK
-
-/* decodebp.c */
-static unsigned char kn_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0xef,
-
-	/* checked for explicitly ( skips red screen ) */
-	0x76, 0x00, 0xe3, 0xeb, 0x5b, 0x2f, 0x73, 0x56,
-	0xc5, 0xc9, 0x74, 0x66, 0x79, 0xce, 0xa7, 0x02,
-	0x77, 0x79, 0x2e, 0xbb, 0xda, 0x2c, 0xb3, 0x5b,
-	0x65, 0xdc, 0xb7, 0x5b, 0x08, 0x14, 0xf1, 0xe4,
-	0x73, 0x0e, 0x57, 0xc1, 0x29, 0x62, 0x76, 0x95,
-	0xb9, 0x22, 0x3b, 0x7f, 0x28, 0x66, 0x32, 0xdd,
-	0xcd,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-/* decodesce.c */
-static unsigned char mg_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0x6f,
-
-	/* checked for explicitly ( skips red screen ) */
-	0x5b, 0x35, 0xda, 0xf5, 0x42, 0x84, 0x84, 0xed,
-	0x6f, 0x1f, 0x80, 0x99, 0x67, 0x1b, 0xcc, 0xa4,
-	0x6c, 0x77, 0x8a, 0xad, 0xf7, 0xb6, 0xfa, 0xa7,
-	0x36, 0x94, 0xcd, 0x64, 0x87, 0x7c, 0x52, 0x6c,
-	0x76, 0x2a, 0x5e, 0x84, 0x7c, 0xa2, 0x7f, 0xf2,
-	0xe5, 0xff, 0x56, 0x9b, 0x00, 0xb5, 0xf9, 0x69,
-	0xdb,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-/* decodetaito.c */
-static unsigned char tt_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0xef,
-
-	/* checked for explicitly ( skips red screen ) */
-	0xd7, 0x5f, 0xb7, 0xea, 0x51, 0x15, 0x96, 0x02,
-	0x0b, 0xf8, 0xf5, 0x54, 0xc5, 0xf9, 0x5d, 0x5d,
-	0xea, 0x13, 0xd0, 0x63, 0x95, 0xd4, 0x9f, 0xee,
-	0xeb, 0x3f, 0x94, 0x36, 0x42, 0x45, 0x81, 0xb0,
-	0x80, 0xc4, 0x3f, 0x42, 0x39, 0x2a, 0xa4, 0x28,
-	0x28, 0x20, 0xac, 0x00, 0x20, 0x8a, 0x28, 0x92,
-	0xa8,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-/* decodecapcon.c */
-static unsigned char cpzn1_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0xef,
-
-	/* checked for explicitly ( skips red screen ) */
-	0xe3, 0x9a, 0x29, 0xba, 0x16, 0x09, 0x82, 0x64,
-	0x8b, 0xad, 0xf6, 0xfb, 0xbb, 0xba, 0x93, 0x3f,
-	0xec, 0xc4, 0xe4, 0xad, 0xbe, 0xaf, 0x7a, 0x9e,
-	0x7f, 0x79, 0xba, 0xac, 0xb6, 0x59, 0x11, 0x25,
-	0xf3, 0x98, 0xa9, 0x57, 0x4d, 0xe0, 0xf6, 0x74,
-	0xc4, 0x2c, 0x2b, 0xa0, 0x28, 0xee, 0xce, 0x83,
-	0xc5,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-/* decodecapcon.c */
-static unsigned char cpzn2_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0xef,
-
-	/* checked for explicitly ( skips red screen ) */
-	0xa7, 0x5d, 0x52, 0x7c, 0xdb, 0x26, 0x51, 0x1c,
-	0x9d, 0x64, 0x87, 0xdd, 0x36, 0x25, 0xf1, 0xff,
-	0xc4, 0xb7, 0x6d, 0xa7, 0x19, 0xca, 0xa2, 0xc3,
-	0x76, 0x92, 0xcb, 0x64, 0xab, 0xc1, 0xae, 0xd1,
-	0xda, 0x90, 0x90, 0x20, 0xfd, 0x2f, 0x93, 0x48,
-	0x7e, 0xaf, 0x35, 0x82, 0xd4, 0x26, 0x6d, 0x76,
-	0xa3,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-/* ?.c */
-static unsigned char tw_protection_hack[] =
-{
-	/* not dumped */
-	0x00
-};
-
-/* ?.c */
-static unsigned char psarc95_protection_hack[] =
-{
-	/* not dumped */
-	0x00
-};
-
-/* decodetaito.c */
-static unsigned char taitognet_protection_hack[] =
-{
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* first test, this byte is ignored */
-	0xaf,
-
-	/* checked for explicitly ( skips red screen ) */
-
-	0xb5, 0xfd, 0x7b, 0xa5, 0xc9, 0x52, 0x80, 0x2a,
-	0x54, 0x0a, 0x00, 0x20, 0x7c, 0x59, 0xca, 0xea,
-	0xa9, 0xb5, 0x59, 0xa0, 0x19, 0xd8, 0xd6, 0x8a,
-	0x2a, 0x04, 0xc8, 0x02, 0x80, 0x96, 0x42, 0x2a,
-	0x81, 0x12, 0xb4, 0xb9, 0x4b, 0xd0, 0xea, 0x51,
-	0x49, 0x56, 0x34, 0x00, 0x20, 0xd4, 0xd2, 0x7b,
-	0xee,
-
-	/* unknown */
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-
-	/* second test, this byte is ignored */
-	0x00,
-
-	/* checks the result of a calculation ( skips blue screen ) */
-	0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	0x00,
-
-	/* default value */
-	0x00,
-};
-
-static unsigned short n_sio0_ptr;
-static unsigned char *p_sio0_ret;
-static unsigned short n_sio0_ret_size;
-
-#endif
-
-static READ32_HANDLER( sio0_r )
-{
-	unsigned short n_return;
-
-	n_return = 0;
-	switch( offset )
-	{
-	case 0x00:
-		/* data */
-#if PROTECTION_HACK
-		if( p_sio0_ret != NULL )
-		{
-			n_return = p_sio0_ret[ n_sio0_ptr ];
-			if( n_sio0_ptr < n_sio0_ret_size - 1 )
-			{
-				n_sio0_ptr++;
-			}
-		}
-#endif
-		break;
-	case 0x01:
-		/* status */
-#if PROTECTION_HACK
-		if( p_sio0_ret != NULL )
-		{
-			n_return = 2;
-		}
-#endif
-		break;
-	case 0x02:
-		/* mode */
-		break;
-	case 0x03:
-		/* control */
-		break;
-	case 0x04:
-		/* baud */
-		break;
-	}
-	logerror( "%08x: sio0_r( %04x ) %04x\n", activecpu_get_pc(), offset, n_return );
-	return n_return;
-}
-
-static WRITE32_HANDLER( sio0_w )
-{
-	int n_char;
-	char s_char[ 5 ];
-
-	s_char[ 0 ] = 0;
-	switch( offset )
-	{
-	case 0x00:
-		/* data */
-		n_char = ( data & 0xff );
-		if( n_char >= 0x20 && n_char <= 0x7f )
-		{
-			sprintf( s_char, " '%c'", n_char );
-		}
-		else
-		{
-			sprintf( s_char, " $%02x", n_char );
-		}
-		break;
-	case 0x01:
-		/* status */
-		break;
-	case 0x02:
-		/* mode */
-		break;
-	case 0x03:
-		/* control */
-		break;
-	case 0x04:
-		/* baud */
-		break;
-	}
-	logerror( "%08x: sio0_w( %04x, %08x )%s\n", activecpu_get_pc(), offset, data, s_char );
-}
-
+#include "machine/znsec.h"
+  
 static WRITE_HANDLER( qsound_bankswitch_w )
 {
 	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( data & 0x0f ) * 0x4000 ) );
@@ -473,6 +130,16 @@ static WRITE_HANDLER( qsound_bankswitch_w )
 static WRITE_HANDLER( fx1a_sound_bankswitch_w )
 {
 	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( ( data - 1 ) & 0x07 ) * 0x4000 ) );
+}
+
+static READ32_HANDLER( jamma_0_r )
+{
+	return readinputport(4);
+}
+
+static READ32_HANDLER( jamma_3_r )
+{
+	return 0xff;
 }
 
 static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -484,7 +151,7 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
 	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
 	AM_RANGE(0x1f801014, 0x1f801017) AM_READ(psx_spu_delay_r)
-	AM_RANGE(0x1f801040, 0x1f80104f) AM_READWRITE(sio0_r, sio0_w)
+	AM_RANGE(0x1f801040, 0x1f80105f) AM_READWRITE(psx_sio_r, psx_sio_w)
 	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
 	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
 	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
@@ -494,6 +161,8 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
 	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
+	AM_RANGE(0x1fa00000, 0x1fa00003) AM_READ(jamma_0_r)
+	AM_RANGE(0x1fa00300, 0x1fa00303) AM_READ(jamma_3_r)
 	AM_RANGE(0x1fb80000, 0x1fbbffff) AM_ROM AM_REGION(REGION_USER2, 0) /* country rom */
 	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
 	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
@@ -556,6 +225,54 @@ static ADDRESS_MAP_START( fx1a_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf200, 0xf200) AM_WRITE(fx1a_sound_bankswitch_w)
 ADDRESS_MAP_END
 
+static int znsec_chip = 0;
+
+void znsec_sio_write( int n_method, int n_data )
+{
+	int n_char;
+	char s_char[ 20 ];
+
+	switch( n_method )
+	{
+	case PSX_SIO_RESET:
+		if( n_data )
+		{
+			znsec_start(0);
+			znsec_start(1);
+		}
+		break;
+	case PSX_SIO_SEL:
+		if( n_data )
+		{
+			znsec_chip = 0;
+		}
+		else
+		{
+			znsec_chip = 1;
+		}
+		break;
+	case PSX_SIO_DATA:
+		if( n_data >= 0x20 && n_data <= 0x7f )
+		{
+			sprintf( s_char, " '%c'", n_data );
+		}
+		else
+		{
+			sprintf( s_char, " $%02x", n_data );
+		}
+		n_char = znsec_step(znsec_chip, n_data);
+		if( znsec_chip == 1 )
+		{
+			/* kludge to stop capcom zn1 bios reporting an error */
+			n_char ^= 0xff;
+		}
+		sprintf(s_char+strlen(s_char), " -> %02x", n_char);
+		psx_sio_send( 0, n_char );
+		logerror( "%08x: sio0_w( %04x, %08x )%s\n", activecpu_get_pc(), znsec_chip, n_data, s_char );
+		break;
+	}
+}
+
 static DRIVER_INIT( zn )
 {
 	if( strcmp( Machine->gamedrv->name, "glpracr" ) == 0 ||
@@ -567,85 +284,202 @@ static DRIVER_INIT( zn )
 		timer_suspendcpu( 1, 1, SUSPEND_REASON_DISABLE );
 	}
 
-#if PROTECTION_HACK
-	if( strcmp( Machine->gamedrv->name, "doapp" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "glpracr2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "glprac2j" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "glprac2l" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "tondemo" ) == 0 )
-	{
-		p_sio0_ret = mg_protection_hack;
-		n_sio0_ret_size = sizeof( mg_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "sncwgltd" ) == 0 )
-	{
-		p_sio0_ret = kn_protection_hack;
-		n_sio0_ret_size = sizeof( kn_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "ftimpcta" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "gdarius" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "gdarius2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "mgcldate" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "psyforce" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "raystorm" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfchamp" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "beastrzb" ) == 0 )
-	{
-		p_sio0_ret = tt_protection_hack;
-		n_sio0_ret_size = sizeof( tt_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "starglad" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "ts2u" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "ts2j" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfexj" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "glpracr" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfexp" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfexpj" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "rvschool" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "jgakuen" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "tgmj" ) == 0 )
-	{
-		p_sio0_ret = cpzn1_protection_hack;
-		n_sio0_ret_size = sizeof( cpzn1_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "sfex2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "plsmaswd" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "stargld2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "techromn" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "kikaioh" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex2p" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "sfex2pj" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "strider2" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "shiryu2" ) == 0 )
-	{
-		p_sio0_ret = cpzn2_protection_hack;
-		n_sio0_ret_size = sizeof( cpzn2_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "beastrzr" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "brvblade" ) == 0 )
-	{
-		p_sio0_ret = psarc95_protection_hack;
-		n_sio0_ret_size = sizeof( psarc95_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "primrag2" ) == 0 )
-	{
-		p_sio0_ret = tw_protection_hack;
-		n_sio0_ret_size = sizeof( tw_protection_hack );
-	}
-	else if( strcmp( Machine->gamedrv->name, "taitogn" ) == 0 )
-	{
-		p_sio0_ret = taitognet_protection_hack;
-		n_sio0_ret_size = sizeof( taitognet_protection_hack );
-	}
-	else
-	{
-		p_sio0_ret = NULL;
-		n_sio0_ret_size = 0;
-	}
-#endif
 	psx_driver_init();
+
+	psx_sio_install_write_handler( 0, znsec_sio_write );
 }
+
+static const unsigned char znsec_nodump[8] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+
+static DRIVER_INIT( cp01 ) // Capcom ZN1 bios
+{
+	static const unsigned char cp01[8] = { 0xf0, 0x81, 0xc1, 0x20, 0xe2, 0xfe, 0x04, 0xf8 };
+
+	znsec_init(0, cp01);
+	init_zn();
+}
+
+static DRIVER_INIT( cp1x ) //    Unknown Capcom ZN1
+{
+	znsec_init(1, znsec_nodump);
+	init_cp01();
+}
+
+static DRIVER_INIT( cp05 ) //    Gallop Racer
+{
+	znsec_init(1, znsec_nodump);
+	init_cp01();
+}
+
+static DRIVER_INIT( cp06 ) //    Rival Schools
+{
+	znsec_init(1, znsec_nodump);
+	init_cp01();
+}
+
+
+static DRIVER_INIT( cp10 ) // Capcom ZN2 bios
+{
+	znsec_init(0, znsec_nodump);
+	init_zn();
+}
+
+static DRIVER_INIT( cp2x ) //    Unknown Capcom ZN2
+{
+	znsec_init(1, znsec_nodump);
+	init_cp10();
+}
+
+static DRIVER_INIT( cp07 ) //    Star Gladiator 2
+{
+	znsec_init(1, znsec_nodump);
+	init_cp10();
+}
+
+static DRIVER_INIT( cp09 ) //    Tech Romancer / Kikaiho
+{
+	znsec_init(1, znsec_nodump);
+	init_cp10();
+}
+
+static DRIVER_INIT( cp13 ) //    Strider 2
+{
+	znsec_init(1, znsec_nodump);
+	init_cp10();
+}
+
+
+static DRIVER_INIT( tw01 ) // Atari bios
+{
+	znsec_init(0, znsec_nodump);
+	init_zn();
+}
+
+static DRIVER_INIT( tw02 ) //    Primal Rage 2
+{
+	znsec_init(1, znsec_nodump);
+	init_tw01();
+}
+
+
+static DRIVER_INIT( ac01 ) // Acclaim bios
+{
+	znsec_init(0, znsec_nodump);
+	init_zn();
+}
+
+static DRIVER_INIT( ac02 ) //    NBA Jam / Judge Dredd
+{
+	znsec_init(1, znsec_nodump);
+	init_ac01();
+}
+
+
+static DRIVER_INIT( mg01 ) // Tecmo bios
+{
+	znsec_init(0, znsec_nodump);
+	init_zn();
+}
+
+static DRIVER_INIT( mg02 ) //    Gallop Racer 2
+{
+	znsec_init(1, znsec_nodump);
+	init_mg01();
+}
+
+static DRIVER_INIT( mg05 ) //    Dead or Alive ++
+{
+	znsec_init(1, znsec_nodump);
+	init_mg01();
+}
+
+static DRIVER_INIT( mg09 ) //    Tondemo Crisis
+{
+	znsec_init(1, znsec_nodump);
+	init_mg01();
+}
+
+
+static DRIVER_INIT( kn02 ) // Video System bios & Sonic Wings Limited
+{
+	znsec_init(1, znsec_nodump); // kn02
+	znsec_init(0, znsec_nodump); // kn01
+	init_zn();
+}
+
+
+static DRIVER_INIT( tt01 ) // Taito FX1 bios
+{
+	static const unsigned char tt01[8] = { 0xe0, 0xf9, 0xfd, 0x7c, 0x70, 0x30, 0xc2, 0x02 };
+	znsec_init(0, tt01);
+	init_zn();
+}
+
+static DRIVER_INIT( tt02 ) //    Super Football Champ
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+static DRIVER_INIT( tt03 ) //    Psychic Force
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+static DRIVER_INIT( tt04 ) //    Ray Storm
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+static DRIVER_INIT( tt05 ) //    Fighter's Impact Ace
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+static DRIVER_INIT( tt06 ) //    Magical Date
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+static DRIVER_INIT( tt07 ) //    G-Darius
+{
+	znsec_init(1, znsec_nodump);
+	init_tt01();
+}
+
+
+static DRIVER_INIT( tt16 ) // Taito GNET bios & games
+{
+	znsec_init(1, znsec_nodump); // tt16
+	znsec_init(0, znsec_nodump); // tt10
+	init_zn();
+}
+
+
+static DRIVER_INIT( et01 ) // Eighting/Raizing
+{
+	znsec_init(0, znsec_nodump);
+	init_zn();
+}
+
+static DRIVER_INIT( et02 ) //    Beastorizer
+{
+	znsec_init(1, znsec_nodump);
+	init_et01();
+}
+
+static DRIVER_INIT( mg11 ) //    Brave Blade
+{
+	znsec_init(1, znsec_nodump);
+	init_et01(); // huh ?
+}
+
+
+
 
 /* sound player */
 
@@ -666,9 +500,6 @@ static WRITE32_HANDLER( player_queue_w )
 
 static void player_reset( void )
 {
-#if PROTECTION_HACK
-	n_sio0_ptr = 0;
-#endif
 	queue_len = 0;
 	scode_last = -1;
 
@@ -844,6 +675,11 @@ static INTERRUPT_GEN( fx1a_sound_interrupt )
 	}
 }
 
+static struct PSXSPUinterface psxspu_interface =
+{
+	100,
+};
+
 static struct QSound_interface qsound_interface =
 {
 	QSOUND_CLOCK,
@@ -901,6 +737,7 @@ static MACHINE_DRIVER_START( zn )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( znqsound )
@@ -938,6 +775,7 @@ static MACHINE_DRIVER_START( znqsound )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 	MDRV_SOUND_ADD( QSOUND, qsound_interface )
 MACHINE_DRIVER_END
 
@@ -973,6 +811,7 @@ static MACHINE_DRIVER_START( znlink )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( fx1a )
@@ -1009,6 +848,7 @@ static MACHINE_DRIVER_START( fx1a )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 	MDRV_SOUND_ADD( YM2610, ym2610_interface )
 MACHINE_DRIVER_END
 
@@ -1041,6 +881,7 @@ static MACHINE_DRIVER_START( fx1b )
 
 	/* sound hardware */
 	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, psxspu_interface )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( zn )
@@ -1881,7 +1722,7 @@ ROM_START( beastrzb )
 ROM_END
 
 ROM_START( brvblade )
-	PSARC95_BIOS
+	TPS_BIOS
 
 	ROM_REGION32_LE( 0x0c00000, REGION_USER2, 0 )
 	/* TSOP56 Flash EEPROMs are not dumped */
@@ -1899,16 +1740,16 @@ ROM_END
 
 /* Atari PSX */
 
-#define AT_BIOS \
+#define TW_BIOS \
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) \
 	ROM_LOAD( "coh1000t.bin", 0x0000000, 0x080000, NO_DUMP )
 
 ROM_START( atpsx )
-	AT_BIOS
+	TW_BIOS
 ROM_END
 
 ROM_START( primrag2 )
-	AT_BIOS
+	TW_BIOS
 
 	ROM_REGION32_LE( 0x080000, REGION_USER2, 0 )
 	ROM_LOAD( "pr2_036.u14",  0x000000, 0x080000, CRC(c86450cd) SHA1(19c3c50d839a9efb6ffa9ada8a072f56697c1abb) )
@@ -1986,103 +1827,103 @@ ROM_END
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1002c.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1995, cpzn1,    0,        zn,       zn, zn, ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
+GAMEX( 1995, cpzn1,    0,        zn,       zn, cp01, ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
 
-GAMEX( 1995, ts2,      cpzn1,    znqsound, zn, zn, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, ts2j,     ts2,      znqsound, zn, zn, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, starglad, cpzn1,    znqsound, zn, zn, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, sfex,     cpzn1,    znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, sfexj,    sfex,     znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, glpracr,  cpzn1,    zn,       zn, zn, ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, sfexp,    cpzn1,    znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, sfexpj,   sfexp,    znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, rvschool, cpzn1,    znqsound, zn, zn, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, jgakuen,  rvschool, znqsound, zn, zn, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, tgmj,     cpzn1,    znqsound, zn, zn, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, ts2,      cpzn1,    znqsound, zn, cp1x, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, ts2j,     ts2,      znqsound, zn, cp1x, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, starglad, cpzn1,    znqsound, zn, cp1x, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, sfex,     cpzn1,    znqsound, zn, cp1x, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, sfexj,    sfex,     znqsound, zn, cp1x, ROT0, "Capcom/Arika", "Street Fighter EX (JAPAN 961130)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, glpracr,  cpzn1,    zn,       zn, cp05, ROT0, "Tecmo", "Gallop Racer (JAPAN Ver 9.01.12)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, sfexp,    cpzn1,    znqsound, zn, cp1x, ROT0, "Capcom/Arika", "Street Fighter EX Plus (USA 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, sfexpj,   sfexp,    znqsound, zn, cp1x, ROT0, "Capcom/Arika", "Street Fighter EX Plus (JAPAN 970311)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, rvschool, cpzn1,    znqsound, zn, cp06, ROT0, "Capcom", "Rival Schools (ASIA 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, jgakuen,  rvschool, znqsound, zn, cp1x, ROT0, "Capcom", "Justice Gakuen (JAPAN 971117)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, tgmj,     cpzn1,    znqsound, zn, cp1x, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /* Capcom ZN2 */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh3002c.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1997, cpzn2,    0,        zn,       zn, zn, ROT0, "Sony/Capcom", "ZN2", NOT_A_DRIVER )
+GAMEX( 1997, cpzn2,    0,        zn,       zn, cp10, ROT0, "Sony/Capcom", "ZN2", NOT_A_DRIVER )
 
-GAMEX( 1998, sfex2,    cpzn2,    znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, plsmaswd, cpzn2,    znqsound, zn, zn, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, stargld2, plsmaswd, znqsound, zn, zn, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, techromn, cpzn2,    znqsound, zn, zn, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, kikaioh,  techromn, znqsound, zn, zn, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2p,   cpzn2,    znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, sfex2pj,  sfex2p,   znqsound, zn, zn, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, strider2, cpzn2,    znqsound, zn, zn, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1999, shiryu2,  strider2, znqsound, zn, zn, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, sfex2,    cpzn2,    znqsound, zn, cp2x, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, plsmaswd, cpzn2,    znqsound, zn, cp2x, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, stargld2, plsmaswd, znqsound, zn, cp07, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, techromn, cpzn2,    znqsound, zn, cp09, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, kikaioh,  techromn, znqsound, zn, cp09, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, sfex2p,   cpzn2,    znqsound, zn, cp2x, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (USA 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, sfex2pj,  sfex2p,   znqsound, zn, cp2x, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (JAPAN 990611)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, strider2, cpzn2,    znqsound, zn, cp13, ROT0, "Capcom", "Strider 2 (ASIA 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1999, shiryu2,  strider2, znqsound, zn, cp13, ROT0, "Capcom", "Strider Hiryu 2 (JAPAN 991213)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 
 /* Atari */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1000t.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1996, atpsx,    0,        zn,       zn, zn, ROT0, "Atari", "Atari PSX", NOT_A_DRIVER )
+GAMEX( 1996, atpsx,    0,        zn,       zn, tw01, ROT0, "Atari", "Atari PSX", NOT_A_DRIVER )
 
-GAMEX( 1996, primrag2, 0,        zn,       zn, zn, ROT0, "Atari", "Primal Rage 2", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, primrag2, 0,        zn,       zn, tw02, ROT0, "Atari", "Primal Rage 2", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Acclaim */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1000a.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1995, acpsx,    0,        zn,       zn, zn, ROT0, "Acclaim", "Acclaim PSX", NOT_A_DRIVER )
+GAMEX( 1995, acpsx,    0,        zn,       zn, ac01, ROT0, "Acclaim", "Acclaim PSX", NOT_A_DRIVER )
 
-GAMEX( 1996, nbajamex, acpsx,    zn,       zn, zn, ROT0, "Acclaim", "NBA Jam Extreme", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, jdredd,   acpsx,    zn,       zn, zn, ROT0, "Acclaim", "Judge Dredd (Rev C)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, jdreddb,  jdredd,   zn,       zn, zn, ROT0, "Acclaim", "Judge Dredd (Rev B)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, nbajamex, acpsx,    zn,       zn, ac02, ROT0, "Acclaim", "NBA Jam Extreme", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, jdredd,   acpsx,    zn,       zn, ac02, ROT0, "Acclaim", "Judge Dredd (Rev C)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, jdreddb,  jdredd,   zn,       zn, ac02, ROT0, "Acclaim", "Judge Dredd (Rev B)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Tecmo */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1002m.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1997, tps,      0,        zn,       zn, zn, ROT0, "Sony/Tecmo", "TPS", NOT_A_DRIVER )
+GAMEX( 1997, tps,      0,        zn,       zn, mg01, ROT0, "Sony/Tecmo", "TPS", NOT_A_DRIVER )
 
-GAMEX( 1997, glpracr2, tps,      zn,       zn, zn, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, glprac2j, glpracr2, zn,       zn, zn, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, glprac2l, glpracr2, znlink,   zn, zn, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1998, doapp,    tps,      zn,       zn, zn, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1999, tondemo,  tps,      zn,       zn, zn, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glpracr2, tps,      zn,       zn, mg02, ROT0, "Tecmo", "Gallop Racer 2 (USA)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2j, glpracr2, zn,       zn, mg02, ROT0, "Tecmo", "Gallop Racer 2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, glprac2l, glpracr2, znlink,   zn, mg02, ROT0, "Tecmo", "Gallop Racer 2 Link HW (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1998, doapp,    tps,      zn,       zn, mg05, ROT0, "Tecmo", "Dead Or Alive ++ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1999, tondemo,  tps,      zn,       zn, mg09, ROT0, "Tecmo", "Tondemo Crisis (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Video System */
 
 /* only one game dumped on this system, so coh1002v.bin is included in the game zip file */
-GAMEX( 1996, sncwgltd, 0,        zn,       zn, zn, ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, sncwgltd, 0,        zn,       zn, kn02, ROT0, "Video System", "Sonic Wings Limited (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* Taito */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1002t.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1995, taitofx1, 0,        fx1b,     zn, zn, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
+GAMEX( 1995, taitofx1, 0,        fx1b,     zn, tt01, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
-GAMEX( 1995, psyforce, taitofx1, fx1a,     zn, zn, ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1995, sfchamp,  taitofx1, fx1a,     zn, zn, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, raystorm, taitofx1, fx1b,     zn, zn, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, ftimpcta, taitofx1, fx1b,     zn, zn, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldate, taitofx1, fx1a,     zn, zn, ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1996, mgcldtea, mgcldate, fx1a,     zn, zn, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius,  taitofx1, fx1b,     zn, zn, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, gdarius2, gdarius,  fx1b,     zn, zn, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sfchamp,  taitofx1, fx1a,     zn, tt02, ROT0, "Taito", "Super Football Champ (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1995, psyforce, taitofx1, fx1a,     zn, tt03, ROT0, "Taito", "Psychic Force (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, raystorm, taitofx1, fx1b,     zn, tt04, ROT0, "Taito", "Ray Storm (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, ftimpcta, taitofx1, fx1b,     zn, tt05, ROT0, "Taito", "Fighter's Impact Ace (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1996, mgcldate, taitofx1, fx1a,     zn, tt06, ROT0, "Taito", "Magical Date (JAPAN) set 1", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1996, mgcldtea, mgcldate, fx1a,     zn, tt06, ROT0, "Taito", "Magical Date (JAPAN) set 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1997, gdarius,  taitofx1, fx1b,     zn, tt07, ROT0, "Taito", "G-Darius (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, gdarius2, gdarius,  fx1b,     zn, tt07, ROT0, "Taito", "G-Darius Ver.2 (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh3002t.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1997, taitogn,  0,        zn,       zn, zn, ROT0, "Sony/Taito", "Taito GNET", NOT_A_DRIVER )
+GAMEX( 1997, taitogn,  0,        zn,       zn, tt16, ROT0, "Sony/Taito", "Taito GNET", NOT_A_DRIVER )
 
 /* Eighting/Raizing */
 
 /* A dummy driver, so that the bios can be debugged, and to serve as */
 /* parent for the coh1002e.bin file, so that we do not have to include */
 /* it in every zip file */
-GAMEX( 1997, psarc95,  0,        zn,       zn, zn, ROT0, "Sony/Eighting/Raizing", "PS Arcade 95", NOT_A_DRIVER )
+GAMEX( 1997, psarc95,  0,        zn,       zn, et01, ROT0, "Sony/Eighting/Raizing", "PS Arcade 95", NOT_A_DRIVER )
 
-GAMEX( 1997, beastrzr, psarc95,  zn,       zn, zn, ROT0, "Eighting/Raizing", "Beastorizer", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, beastrzb, taitofx1, zn,       zn, zn, ROT0, "Eighting/Raizing", "Beastorizer (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEX( 2000, brvblade, psarc95,  zn,       zn, zn, ROT0, "Eighting/Raizing", "Brave Blade (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, beastrzr, psarc95,  zn,       zn, et02, ROT0, "Eighting/Raizing", "Beastorizer", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 1997, beastrzb, taitofx1, zn,       zn, zn,   ROT0, "Eighting/Raizing", "Beastorizer (bootleg)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEX( 2000, brvblade, psarc95,  zn,       zn, mg11, ROT0, "Eighting/Raizing", "Brave Blade (JAPAN)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )

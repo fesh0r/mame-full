@@ -10,7 +10,7 @@
 		* Time Killers (2 sets)
 		* Bloodstorm (4 sets)
 		* Hard Yardage (2 sets)
-		* Pairs
+		* Pairs (2 sets)
 		* Driver's Edge (not working)
 		* World Class Bowling (4 sets)
 		* Street Fighter: The Movie (4 sets)
@@ -23,7 +23,7 @@
 		* Golden Tee Golf '98 (4 sets)
 		* Golden Tee Golf '99 (3 Sets)
 		* Golden Tee Golf 2K  (2 Sets)
-		* Golden Tee Classic  (2 Sets)
+		* Golden Tee Classic  (3 Sets)
 
 ****************************************************************************
 
@@ -2262,7 +2262,7 @@ static DRIVER_INIT( wcbowl )
 }
 
 
-static void init_sftm_common(int prot_addr, int sound_pc)
+static void init_sftm_common(int prot_addr)
 {
 	init_program_rom();
 	itech32_vram_height = 1024;
@@ -2278,29 +2278,24 @@ static void init_sftm_common(int prot_addr, int sound_pc)
 
 static DRIVER_INIT( sftm )
 {
-	init_sftm_common(0x7a6a, 0x905f);
+	init_sftm_common(0x7a6a);
 }
 
 
 static DRIVER_INIT( sftm110 )
 {
-	init_sftm_common(0x7a66, 0x9059);
+	init_sftm_common(0x7a66);
 }
 
 
-static void init_shuffle_bowl_common(offs_t prot_addr, offs_t sound_pc)
+static DRIVER_INIT( shufshot )
 {
-	/*
-		The newest versions of World Class Bowling are on the same exact
-		platform as Shuffle Shot. So We'll use the same general INIT
-		routine for these two programs.  IE: PCB P/N 1082 Rev 2
-	*/
 	init_program_rom();
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
 
-	itech020_prot_address = prot_addr;
+	itech020_prot_address = 0x111a;
 
 	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
 	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
@@ -2308,15 +2303,22 @@ static void init_shuffle_bowl_common(offs_t prot_addr, offs_t sound_pc)
 	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
 }
 
-static DRIVER_INIT( shufshot )	/* PIC 16C54 labeled as ITSHF-1 */
-{
-	init_shuffle_bowl_common(0x111a, 0x906c);
-}
 
 static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
+				/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
 {
-	/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
-	init_shuffle_bowl_common(0x1116, 0x9067);
+	init_program_rom();
+	itech32_vram_height = 1024;
+	itech32_planes = 1;
+	is_drivedge = 0;
+
+	itech020_prot_address = 0x1116;
+
+	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
+	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
+	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
+	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
+
 }
 
 
