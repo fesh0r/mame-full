@@ -2414,6 +2414,22 @@ void cpu_set_context(void *context)
 }
 
 /***************************************************************************
+  Retrieve or set a cycle counts lookup table for the active CPU
+***************************************************************************/
+
+void *cpu_get_cycle_table(int which)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETCYCLETBL(cpunum,which);
+}
+
+void cpu_set_cycle_tbl(int which, void *new_table)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	SETCYCLETBL(cpunum,which,new_table);
+}
+
+/***************************************************************************
   Retrieve or set the value of a specific register of the active CPU
 ***************************************************************************/
 

@@ -323,6 +323,11 @@ unsigned cpu_get_context(void *context);
 /* Set the active CPUs context */
 void cpu_set_context(void *context);
 
+/* Get a pointer to the active CPUs cycle count lookup table */
+void *cpu_get_cycle_table(int which);
+/* Override a pointer to the active CPUs cycle count lookup table */
+void cpu_set_cycle_tbl(int which, void *new_table);
+
 /* Returns a specific register value (mamedbg) */
 unsigned cpu_get_reg(int regnum);
 /* Sets a specific register value (mamedbg) */
