@@ -225,7 +225,7 @@ static struct KeyboardInfo keylist[] =
     { "[",          DIK_LBRACKET,       KEYCODE_OPENBRACE },
     { "]",          DIK_RBRACKET,       KEYCODE_CLOSEBRACE },
     { "ENTER",      DIK_RETURN,         KEYCODE_ENTER },
-    { ";",          DIK_COLON,          KEYCODE_COLON },
+    { ";",          DIK_SEMICOLON,      KEYCODE_COLON },
     { ":",          DIK_APOSTROPHE,     KEYCODE_QUOTE },
     { "\\",         DIK_BACKSLASH,      KEYCODE_BACKSLASH },
     { ",",          DIK_COMMA,          KEYCODE_COMMA },
