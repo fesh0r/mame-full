@@ -21,11 +21,11 @@
 /* binary words are stored in little endian order */
 
 /* sorry nathan, but for unaligned words stored in little endian order */
-typedef struct { 
+typedef struct {
 	unsigned char low, high;
 } littleuword;
 
-typedef struct { 
+typedef struct {
 	unsigned char low, mid, high, highest;
 } littleulong;
 
@@ -37,9 +37,9 @@ typedef struct {
 
 typedef struct {
 	unsigned char code[0x1be];
-	struct { 
+	struct {
 		unsigned char bootflag; /* 0x80 boot activ */
-		struct { 
+		struct {
 			unsigned char head;
 			littleuword sector_cylinder;
 #define GET_CYLINDER(word) (word>>6)
@@ -49,7 +49,7 @@ typedef struct {
 		unsigned char system;
 #define FAT12 1
 #define FAT16 4
-		struct { 
+		struct {
 			unsigned char head;
 			littleuword sector_cylinder;
 		} end;
@@ -115,7 +115,7 @@ typedef struct {
 	unsigned char id[2];
 } FAT_HEADER;
 
-static FAT_HEADER fat_header={ 
+static FAT_HEADER fat_header={
 	{ 0,0,0 },
 	{ 'M', 'E', 'S', 'S', '0', '.', '1', '@' },
 	{ 0, 2 }, /* 0x200 */
@@ -281,7 +281,7 @@ typedef struct {
 /* searches program with given name in directory
  * delivers -1 if not found
  * or pos in image of directory node */
-static FAT_DIRECTORY *fat_image_findfile (fat_image *image, 
+static FAT_DIRECTORY *fat_image_findfile (fat_image *image,
 										  const unsigned char *name)
 {
 	char tname[13];
@@ -333,7 +333,7 @@ static struct OptionTemplate fat_createopts[] =
 #define FAT_CREATEOPTIONS_SECTORS		1
 #define FAT_CREATEOPTIONS_HEADS			2
 
-/* IMAGE_USES_LABEL, /* flags */
+/* IMAGE_USES_LABEL,  flags */
 IMAGEMODULE(
 	msdos,
 	"MSDOS/PCDOS Diskette",			/* human readable name */
@@ -582,15 +582,15 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 
 	ent->corrupt=0;
 	ent->eof=0;
-	
+
 	for (; iter->level>=0; iter->level--) {
 		while (iter->directory[iter->level].index
 				 <iter->directory[iter->level].count) {
-			
+
 			entry=(FAT_DIRECTORY*)
 				(iter->image->data+iter->directory[iter->level].offset)
 				+iter->directory[iter->level].index;
-			
+
 			iter->directory[iter->level].index++;
 			if ((iter->level!=0)&& (iter->directory[iter->level].index==16)) {
 				if (iter->image->fat_is_special(iter->directory[iter->level].cluster)) {
@@ -634,12 +634,12 @@ static int fat_image_nextenum(IMAGEENUM *enumeration, imgtool_dirent *ent)
 					}
 					iter->level++;
 					iter->directory[iter->level].offset=
-						fat_calc_cluster_pos(iter->image, 
+						fat_calc_cluster_pos(iter->image,
 											 GET_UWORD(entry->start_cluster));
 					iter->directory[iter->level].count=16;
 					iter->directory[iter->level].index=2;
 					iter->directory[iter->level].cluster=
-						iter->image->read_fat(iter->image, 
+						iter->image->read_fat(iter->image,
 											  GET_UWORD(entry->start_cluster));
 				}
 				return 0;
@@ -678,14 +678,14 @@ static int fat_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 
 	if ((entry=fat_image_findfile(image, (const unsigned char *)fname))==NULL )
 		return IMGTOOLERR_MODULENOTFOUND;
-   
+
 	cluster = GET_UWORD(entry->start_cluster);
 	size=GET_ULONG(entry->size);
 
 	for (i = 0; i < size; i += image->cluster_size)
 	{
 		if (i+image->cluster_size<size) {
-			if (stream_write(destf, image->data+fat_calc_cluster_pos(image,cluster), 
+			if (stream_write(destf, image->data+fat_calc_cluster_pos(image,cluster),
 							 image->cluster_size)!=image->cluster_size)
 				return IMGTOOLERR_WRITEERROR;
 		} else {
@@ -709,7 +709,7 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	fsize=stream_size(sourcef);
 	if ((entry=fat_image_findfile(image, (const unsigned char *)fname))!=NULL ) {
 		/* override file !!! */
-		if (fat_image_freespace(img)+(GET_ULONG(entry->size)|(image->cluster_size-1))<fsize) 
+		if (fat_image_freespace(img)+(GET_ULONG(entry->size)|(image->cluster_size-1))<fsize)
 			return IMGTOOLERR_NOSPACE;
 
 		cluster=GET_UWORD(entry->start_cluster);
@@ -746,7 +746,7 @@ static int fat_image_writefile(IMAGE *img, const char *fname, STREAM *sourcef, c
 	while (fsize>0) {
 		while (image->read_fat(image, i)!=0) i++;
 		if (fsize<image->cluster_size) {
-			if (stream_read(sourcef, image->data+fat_calc_cluster_pos(image, i), fsize)!=fsize) 
+			if (stream_read(sourcef, image->data+fat_calc_cluster_pos(image, i), fsize)!=fsize)
 				return IMGTOOLERR_READERROR;
 		} else {
 			if (stream_read(sourcef, image->data+fat_calc_cluster_pos(image, i), image->cluster_size)
@@ -785,7 +785,7 @@ static int fat_image_deletefile(IMAGE *img, const char *fname)
 	return 0;
 }
 
-static int fat_read_sector(IMAGE *img, int head, int track, int sector, 
+static int fat_read_sector(IMAGE *img, int head, int track, int sector,
 						   char **buffer, int *size)
 {
 	fat_image *image=(fat_image*)img;
@@ -798,11 +798,11 @@ static int fat_read_sector(IMAGE *img, int head, int track, int sector,
 
 	memcpy(*buffer, image->data+pos, image->sector_size);
 	*size=image->sector_size;
-	
+
 	return 0;
 }
 
-static int fat_write_sector(IMAGE *img, int head, int track, int sector, 
+static int fat_write_sector(IMAGE *img, int head, int track, int sector,
 							char *buffer, int size)
 {
 	fat_image *image=(fat_image*)img;
@@ -812,7 +812,7 @@ static int fat_write_sector(IMAGE *img, int head, int track, int sector,
 
 	pos=fat_calc_pos(image, head, track, sector);
 	memcpy(image->data+pos, buffer, size);
-	
+
 	return 0;
 }
 
@@ -859,29 +859,29 @@ static int fat_image_create(STREAM *f, const ResolvedOption *options)
 	SET_UWORD(fat_header.sectors_in_fat, 2);
 
 	s=0;
-	if (stream_write(f, &fat_header, sizeof(fat_header)) != sizeof(fat_header)) 
+	if (stream_write(f, &fat_header, sizeof(fat_header)) != sizeof(fat_header))
 		return  IMGTOOLERR_WRITEERROR;
 	s++;
 	for (i=0; i<format->fats; i++) {
 		if (fat16) {
-			if (stream_write(f, fat_fat16, sizeof(fat_fat16)) != sizeof(fat_fat16)) 
+			if (stream_write(f, fat_fat16, sizeof(fat_fat16)) != sizeof(fat_fat16))
 				return  IMGTOOLERR_WRITEERROR;
 		} else {
-			if (stream_write(f, fat_fat12, sizeof(fat_fat12)) != sizeof(fat_fat12)) 
+			if (stream_write(f, fat_fat12, sizeof(fat_fat12)) != sizeof(fat_fat12))
 				return  IMGTOOLERR_WRITEERROR;
 		}
 		s++;
 		for (j=1; j<sectors_in_fat; j++,s++) {
-			if (stream_write(f, sector, sizeof(sector)) != sizeof(sector)) 
+			if (stream_write(f, sector, sizeof(sector)) != sizeof(sector))
 				return  IMGTOOLERR_WRITEERROR;
 		}
 	}
 	for (i=0; i<format->directory_entries; i+=32, s++) {
-		if (stream_write(f, sector, sizeof(sector)) != sizeof(sector)) 
+		if (stream_write(f, sector, sizeof(sector)) != sizeof(sector))
 			return  IMGTOOLERR_WRITEERROR;
 	}
 	for (; s<sectors; s++) {
-		if (stream_write(f, sector, sizeof(sector)) != sizeof(sector)) 
+		if (stream_write(f, sector, sizeof(sector)) != sizeof(sector))
 			return  IMGTOOLERR_WRITEERROR;
 	}
 	return 0;
@@ -920,7 +920,7 @@ static int fathd_image_create(STREAM *f, const ResolvedOption *options)
 	}
 
 	/* write this fat partition */
-	
+
 	return 0;
 }
 
