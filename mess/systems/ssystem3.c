@@ -11,7 +11,7 @@ chess champion super system III
 6502
 6522 ($6000?)
 2x2114 (1kx4 sram) ($0000)
-signetics 7947e c19081e ss-3-lrom (real empty!!!!????)
+signetics 7947e c19081e ss-3-lrom
 signetics 7945e c19082 ss-3-hrom ($d000??)
 (both connected to the same pins!,
 look into mess source mess/messroms/rddil24.c for notes)
@@ -123,8 +123,8 @@ static struct MachineDriver machine_driver_ssystem3 =
 
 ROM_START(ssystem3)
 	ROM_REGION(0x10000,REGION_CPU1,0)
-//	ROM_LOAD("ss3lrom", 0xc000, 0x1000, 0x0) // damned zero dump
-	ROM_LOAD("ss3hrom", 0xf000, 0x1000, 0x52741e0b) // not sure if complete
+	ROM_LOAD("ss3lrom", 0xc000, 0x1000, 0x9ea46ed3)
+	ROM_LOAD("ss3hrom", 0xf000, 0x1000, 0x52741e0b)
 	ROM_RELOAD(0xd000, 0x1000)
 /* 0xd450 reset,irq,nmi
 
