@@ -282,18 +282,43 @@ int msx_load_rom (int id)
             free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
             return 1;
         }
+		
+		i = 0;
         F = osd_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
                 OSD_FILETYPE_MEMCARD, 0);
-        if (F && (osd_fread (F, pmem + 0x21000, 0x2000) == 0x2000) )
-        {
-            memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
-            memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
-            logerror("Cart #%d SRAM loaded\n", id);
-        } else {
+		if (F)
+			{
+			n = osd_fsize (F);
+			if (n == 0x2000)
+				{
+	        	if (osd_fread (F, pmem + 0x21000, 0x2000) == 0x2000) 
+	   		    	{
+   	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
+            		memcpy (pmem + 0x23000, pmem + 0x22000, 0x1000);
+            		i = 1;
+					}
+				}
+
+			/* if it's an Virtual MSX Game Master 2 file, convert */
+			if (n == 0x4000)
+				{
+	        	if (osd_fread (F, pmem + 0x20000, 0x4000) == 0x4000) 
+	   		    	{
+   	         		memcpy (pmem + 0x20000, pmem + 0x21000, 0x1000);
+            		memcpy (pmem + 0x22000, pmem + 0x23000, 0x1000);
+            		i = 1;
+					}
+				}
+			}
+
+        if (F) osd_fclose (F);
+
+		if (i) logerror ("Cart #%d SRAM loaded\n", id);
+		else
+			{
             memset (pmem + 0x20000, 0, 0x4000);
             logerror("Cart #%d Failed to load SRAM\n", id);
-        }
-        if (F) osd_fclose (F);
+        	}
 
         msx1.cart[id].mem = pmem;
         break;
@@ -1062,6 +1087,10 @@ static int check_fmsx_cas (void *f)
    	osd_fseek (f, 0, SEEK_SET);
 
     ret = fmsx_cas_to_wav (casdata, caslen, &cas_samples, &cas_len);
+    if (ret == 2)
+	logerror ("cas2wav: out of memory\n");
+    else if (ret)
+	logerror ("cas2wav: conversion error\n");
 
     free (casdata);
 
