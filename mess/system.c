@@ -115,10 +115,10 @@ const struct GameDriver *test_drivers[] =
 //	DRIVER( nes )		/* Nintendo Entertainment System					*/
 //	DRIVER( nespal )	/* Nintendo Entertainment System					*/
 //	DRIVER( famicom )
-//	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
-//	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
-//	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
-//	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
+	DRIVER( gameboy )	/* Nintendo GameBoy Handheld						*/
+	DRIVER( supergb )	/* Nintendo Super GameBoy SNES Cartridge			*/
+	DRIVER( gbpocket )	/* Nintendo GameBoy Pocket Handheld					*/
+	DRIVER( gbcolor )	/* Nintendo GameBoy Color Handheld					*/
 //	DRIVER( snes )		/* Nintendo Super Nintendo NTSC						*/
 //	DRIVER( snespal )	/* Nintendo Super Nintendo PAL						*/
 
