@@ -20,6 +20,7 @@ int load_zipped_file (const char *zipfile,const char *filename, unsigned char **
 int checksum_zipped_file (const char *zipfile, const char *filename, unsigned int *length, unsigned int *sum);
 static int config_handle_inputfile(struct rc_option *option, const char *arg,
    int priority);
+static void init_rom_path(char *path);
 
 /* from ... */
 extern char *cheatfile;
@@ -31,8 +32,10 @@ extern char *mameinfo_filename;
 static char *rompathv[MAXPATHC];
 static int   rompathc = 0;
 static char *rompath = NULL;
+static char *samplepath = NULL;
+static char *artworkpath = NULL;
 static char *spooldir = NULL; /* directory to store high scores */
-static char *screenshot_dir = NULL;
+static char *screenshotdir = NULL;
 static FILE *errorlog = NULL;
 #ifdef MESS
 static char *cheatdir = NULL;
@@ -63,10 +66,16 @@ struct rc_option fileio_opts[] = {
    { "rompath",		"rp",			rc_string,	&rompath,
      XMAMEROOT,		0,			0,		NULL,
      "Set the rom search path" },
+   { "samplepath",	"sp",			rc_string,	&samplepath,
+     XMAMEROOT,		0,			0,		NULL,
+     "Set the search path for sample sets" }, 
+   { "artworkpath",	"ap",			rc_string,	&artworkpath,
+     XMAMEROOT,		0,			0,		NULL,
+     "Set the search path for artwork (overlays, etc.)" },
    { "spooldir",	"sd",			rc_string,	&spooldir,
      XMAMEROOT,		0,			0,		NULL,
-     "Set highscore spooldir" },
-   { "screenshotdir",	"ssd",			rc_string,	&screenshot_dir,
+     "Set the high score spooldir" },
+   { "screenshotdir",	"ssd",			rc_string,	&screenshotdir,
      ".",		0,			0,		NULL,
      "Set dir to store screenshots in" },
 #ifdef MESS
@@ -135,15 +144,22 @@ static int config_handle_inputfile(struct rc_option *option, const char *arg,
 
 /* unix helper functions */
 
-/* helper function which decomposes a path list into a vector of paths */
-void init_rom_path(void)
+/* helper functions which decompose a path list into a vector of paths */
+void init_search_paths(void)
 {
-	char *token = strtok(rompath, ":");
+	init_rom_path(rompath);
+	init_rom_path(samplepath);
+	init_rom_path(artworkpath);
+}
+
+void init_rom_path(char *path)
+{
+	char *token = strtok(path, ":");
 	while ((rompathc < MAXPATHC) && token)
 	{
 		rompathv[rompathc] = token;
 		rompathc++;
-		token = strtok (NULL, ":");
+		token = strtok(NULL, ":");
 	}
 }
 
@@ -327,17 +343,23 @@ int osd_faccess(const char *filename, int filetype)
 		    for(i=0;i<rompathc;i++)
 		    {
 			/* try filename.zip */
-			snprintf(name, MAXPATHL, "%s/%s.zip", rompathv[i], filename);
-			if (access(name, F_OK) == 0) return 1;
+			snprintf(name, MAXPATHL, "%s/%s.zip", rompathv[i], 
+				filename);
+			if (access(name, F_OK) == 0)
+				return 1;
 			
 			/* try filename dir */
 			snprintf(name, MAXPATHL, "%s/%s",rompathv[i],filename);
-			if (access(name, F_OK) == 0) return 1;
+			if (access(name, F_OK) == 0)
+				return 1;
 		    }
 		    break;
+
 		case OSD_FILETYPE_SCREENSHOT:
-		    snprintf(name, MAXPATHL, "%s/%s.png",screenshot_dir ,filename);
-		    if (access(name, F_OK) == 0) return 1;
+		    snprintf(name, MAXPATHL, "%s/%s.png", screenshotdir, 
+			    filename);
+		    if (access(name, F_OK) == 0)
+			    return 1;
 		    break;
 	}
 	
@@ -442,6 +464,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    }
 		    if(f->file)
 			break;
+
 		    /* fall through */
 		case OSD_FILETYPE_ROM:
 		case OSD_FILETYPE_SAMPLE:
@@ -451,7 +474,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 			break;
 		    }
 		    
-		    for(i=0; i < rompathc; i++)
+		    for (i = 0; i < rompathc; i++)
 		    {
 			/* try <rompath>/gamename.zip */
 			snprintf(name, MAXPATHL, "%s/%s.zip", rompathv[i], gamename);
@@ -508,7 +531,7 @@ void *osd_fopen(const char *gamename, const char *filename, int filetype,
 		    /* only for writing */
 		    if (!write) break;
 		    
-		    snprintf(name, MAXPATHL, "%s/%s.png", screenshot_dir, filename);
+		    snprintf(name, MAXPATHL, "%s/%s.png", screenshotdir, filename);
 		    f->file = fopen(name, "w");
 		    break;
 		case OSD_FILETYPE_INPUTLOG:

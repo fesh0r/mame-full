@@ -12,6 +12,7 @@
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_mixer.h"
 #include "sysdep/misc.h"
+#include "effect.h"
 
 /* from ... */
 extern char *cheatfile;
@@ -43,7 +44,10 @@ static int config_handle_arg(char *arg);
 static int config_handle_debug_size(struct rc_option *option, const char *arg,
    int priority);
 void show_usage(void);
+
+#ifdef MESS
 static int add_device(struct rc_option *option, const char *arg, int priority);
+#endif
 
 /* struct definitions */
 static struct rc_option opts[] = {
@@ -328,6 +332,8 @@ int config_init (int argc, char *argv[])
    /* setup stderr_file and stdout_file */
    if (!stderr_file) stderr_file = stderr;
    if (!stdout_file) stdout_file = stdout;
+
+   effect_init1();
    
    if (showconfig)
    {
@@ -353,9 +359,10 @@ int config_init (int argc, char *argv[])
       return OSD_OK;
    }
    
-   /* must be done after showconfig, since this modifies the rompath rc_string,
-      but before any of the frontend options are handled */
-   init_rom_path();
+   /* must be done after showconfig, since this modifies the
+      rompath/samplepath/artworkpath rc_strings, but before any of the frontend 
+      options are handled */
+   init_search_paths();
 
    /* handle frontend options */
    if ( (i=frontend_list(gamename)) != 1234)
