@@ -15,8 +15,6 @@ const char * xfx_update_display(struct mame_bitmap *bitmap,
 	  struct sysdep_palette_struct *palette,
 	  int flags);
 
-extern unsigned int fxwidth;
-extern unsigned int fxheight;
 extern struct rc_option	fx_opts[];
 
 #endif

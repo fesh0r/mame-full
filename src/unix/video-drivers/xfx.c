@@ -45,11 +45,8 @@ int xfx_open_display(int reopen)
 {
   if (!reopen)
   {
-    if (x11_create_window(&fxwidth, &fxheight, X11_FIXED))
+    if (x11_create_window(&window_width, &window_height, X11_FIXED))
       return 1;
-      
-    window_width  = fxwidth;
-    window_height = fxheight;
       
     xinput_open(1, 0);
   }
