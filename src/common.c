@@ -886,11 +886,19 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 		/* display either an error message or a warning message */
 		if (romdata->errors)
 		{
+			#ifndef MESS
 			strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
+			#else
+			strcat(romdata->errorbuf, "ERROR: required files are missing, the system cannot be started.\n");
+			#endif
 			bailing = 1;
 		}
 		else
+			#ifndef MESS
 			strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
+			#else
+			strcat(romdata->errorbuf, "WARNING: the system might not operate correctly.\n");
+			#endif
 
 		/* display the result */
 		printf("%s", romdata->errorbuf);

@@ -477,7 +477,11 @@ int run_game(int game)
 #ifdef MAME_DEBUG
 	/* validity checks */
 	if (validitychecks()) return 1;
+	#ifdef MESS
+	if (messvaliditychecks()) return 1;
+	#endif
 #endif
+
 
 	/* copy some settings into easier-to-handle variables */
 	record	   = options.record;
@@ -586,11 +590,6 @@ int run_game(int game)
 	/* Do the work*/
 	err = 1;
 	bailing = 0;
-
-	#ifdef MESS
-	if (get_filenames())
-		return err;
-	#endif
 
 	if (options.savegame)
 		cpu_loadsave_schedule(LOADSAVE_LOAD, options.savegame);
