@@ -14,6 +14,11 @@
 #define osd_mkdir(dir)	mkdir(dir)
 #endif
 
+/* some irritating redefinitions */
+#define read	read_
+#define write	write_
+#define access	access_
+
 #define PATH_SEPARATOR	'\\'
 
 #define EOLN "\r\n"
