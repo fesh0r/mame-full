@@ -62,14 +62,6 @@
 
 #define FRAMESKIP_LEVELS 12
 
-/* Taken from common.h since the rest of common.h creates to many conflicts
-   with X headers */
-struct my_rectangle
-{
-	int min_x,max_x;
-	int min_y,max_y;
-};
-
 /*
  * Global variables.
  */
@@ -89,7 +81,6 @@ EXTERN float		video_fps;
 EXTERN char		*home_dir;
 EXTERN char		title[50];
 EXTERN int		use_mouse;
-EXTERN int		use_dirty;
 EXTERN int		throttle;
 EXTERN int		autoframeskip;
 EXTERN int		frameskip;
@@ -114,7 +105,7 @@ EXTERN char		*crcdir;
 /* visual is the visual part of the bitmap */
 EXTERN int 		visual_width;
 EXTERN int		visual_height;
-EXTERN struct my_rectangle visual;
+EXTERN struct rectangle visual;
 
 /* File descripters for stdout / stderr redirection, without svgalib inter
    fering */
