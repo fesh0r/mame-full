@@ -2,6 +2,7 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
+- Amstrad family (fixed and reenabled) [Raphael Nabet]
 
 System Driver Changes:
 ----------------------
