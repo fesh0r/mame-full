@@ -2405,8 +2405,9 @@ V-V                           TP-027
 	DRIVER( sfa3 )		/* 04/09/1998 (c) 1998 (US) */
 	DRIVER( sfa3r1 )	/* 29/06/1998 (c) 1998 (US) */
 	DRIVER( sfa3b )		/* 29/06/1998 (c) 1998 (Brazil) */
-	DRIVER( sfz3j )		/* 27/07/1998 (c) 1998 (Japan) */
-	DRIVER( sfz3jr1 )	/* 29/06/1998 (c) 1998 (Japan) */
+	DRIVER( sfz3j )		/* 04/09/1998 (c) 1998 (Japan) */
+	DRIVER( sfz3jr1 )	/* 27/07/1998 (c) 1998 (Japan) */
+	DRIVER( sfz3jr2 )	/* 29/06/1998 (c) 1998 (Japan) */
 	DRIVER( sfz3a )		/* 01/07/1998 (c) 1998 (Asia) */
 	DRIVER( gigawing )	/* 22/02/1999 (c) 1999 Takumi (US) */
 	DRIVER( gwingj )	/* 23/02/1999 (c) 1999 Takumi (Japan) */
@@ -2859,7 +2860,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( afighter )	/* (protected) */
 	DRIVER( bullet )	/* (protected) */
 	DRIVER( cotton )	/* (protected) */
-	DRIVER( cottona )	/* (protected) */
+	DRIVER( cottonj )	/* (protected) */
 	DRIVER( dunkshot )	/* (protected) */
 	DRIVER( exctleag )  /* (protected) */
 	DRIVER( mvp )		/* (protected) */
@@ -2873,6 +2874,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aliensyb )	/* (c) 1987 (protected) */
 	DRIVER( aliensyj )	/* (c) 1987 (protected. Japan) */
 	DRIVER( altbeast )	/* (c) 1988 */
+	DRIVER( altbeasa )	/* (c) 1988 */
 	DRIVER( altbeas2 )	/* (c) 1988 */
 	DRIVER( altb8751 )	/* (c) 1988 */
 	DRIVER( jyuohki )	/* (c) 1988 (protected. Altered Beast Japan) */
@@ -2895,6 +2897,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( fantzone )	/* (c) 1986 */
 	DRIVER( fantzono )	/* (c) 1986 */
 	DRIVER( sonicbom )	/* (c) 1987 (FD1094, decrypted) */
+	DRIVER( sjryuko )	/* (c) 1988 White Board */
+	DRIVER( sjryukoa )	/* (c) 1988 White Board */
 	DRIVER( fpoint )	/* (c) 1989 (Japan, FD1094, decrypted) */
 	DRIVER( fpointbl )	/* (c) 1989 (Datsu bootleg) */
 	DRIVER( fpointbj )	/* (c) 1989 (Datsu bootleg, Japan) */
@@ -2921,7 +2925,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( shinobib )	/* (c) 1987 (protected) */
 	DRIVER( shinobl )	/* (c) 1987 (but bootleg) */
 	DRIVER( tetrisbl )	/* (c) 1988 (but bootleg) */
-	DRIVER( timscanr )	/* (c) 1987 */
+	DRIVER( timescn )	/* (c) 1987 */
+	DRIVER( timescna )	/* (c) 1987 */
 	DRIVER( toryumon )	/* (c) 1995 */
 	DRIVER( tturf )		/* (c) 1989 Sega / Sunsoft */
 	DRIVER( tturfbl )	/* (c) 1989 (Datsu bootleg) */
@@ -2932,6 +2937,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( wb3bbl )		/* BOOTLEG */
 	DRIVER( wb3a )		/* (c) 1988 Sega / Westone (FD1094, decrypted) */
 	DRIVER( wrestwar )	/* (c) 1989 */
+	DRIVER( wrestwra )	/* (c) 1989 */
 
 	/* System 18 */
 	DRIVER( astorm )	/* (c) 1990 (FD1094, decrypted) */
@@ -3016,6 +3022,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( hotrodj )	/* (c) 1988 */
 	DRIVER( bnzabros )	/* (c) 1990 */
 	DRIVER( dcclub )	/* (c) 1991 */
+	DRIVER( dcclubfd )	/* (c) 1991 */
 	DRIVER( mahmajn )	/* (c) 1992 */
 	DRIVER( qgh )		/* (c) 1994 */
 	DRIVER( quizmeku )	/* (c) 1994 */
@@ -3024,6 +3031,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( sspirits ) 	/* (c) 1988 */
 	/* not working */
 	DRIVER( sgmast )
+	DRIVER( sgmastc )
+	DRIVER( sspirtfc )
 	DRIVER( qsww )
 	DRIVER( gground )
 	DRIVER( crkdown )
@@ -3670,7 +3679,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hyprolym )	/* GX361 (c) 1983 */
 	DRIVER( hyprolyb )	/* bootleg */
 	DRIVER( atlantol )	/* bootleg */
-	DRIVER( wizzquiz )	/* (c) 1985 Zilec-Zenitone */
+	DRIVER( wizzquiz )	/* (c) 1985 Konami */
+	DRIVER( wizzquza )	/* (c) 1985 Zilec-Zenitone */
 	DRIVER( mastkin )	/* (c) 1988 Du Tech */
 	DRIVER( rocnrope )	/* GX364 (c) 1983 */
 	DRIVER( rocnropk )	/* GX364 (c) 1983 + Kosuka */
@@ -3972,8 +3982,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bm5thmix )	/* GX981 (c) 1999 (Japan */
 	DRIVER( bmcorerm )	/* GXA05 (c) 1999 (Japan) */
 	DRIVER( bmdct )		/* GX995 (c) 2000 (Japan) */
-	DRIVER( hmcompm2 )	/* GX988 (c) 2000 (Japan) */
-	DRIVER( bm6thmix )	/* GxA21 (c) 2001 (Japan) */
+	DRIVER( bmcompm2 )	/* GX988 (c) 2000 (Japan) */
+	DRIVER( hmcompm2 )	/* GX988 (c) 2000 */
+	DRIVER( bm6thmix )	/* GXA21 (c) 2001 (Japan) */
 
 	/* PowerPC based Konami games */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
@@ -4455,6 +4466,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( zarzon )	/* (c) 1981 Taito, gameplay says SNK */
 	DRIVER( vanguard )	/* (c) 1981 SNK */
 	DRIVER( vangrdce )	/* (c) 1981 SNK + Centuri */
+	DRIVER( vanguarj )	/* (c) 1981 SNK */
 	DRIVER( fantasy )	/* (c) 1981 SNK */
 	DRIVER( fantasyu )	/* (c) 1981 Rock-ola */
 	DRIVER( fantasyj )	/* (c) 1981 SNK */

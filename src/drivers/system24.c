@@ -337,6 +337,12 @@ Notes:
 #include "system16.h"
 #include "vidhrdw/segaic24.h"
 #include "sound/ym2151.h"
+#include "debug/debugcpu.h"
+
+data16_t* s24_mainram1;
+
+extern void s24_fd1094_machine_init(void);
+extern void s24_fd1094_driver_init(void);
 
 VIDEO_START(system24);
 VIDEO_UPDATE(system24);
@@ -664,6 +670,10 @@ static void reset_reset(void)
 		if(resetcontrol & 2) {
 			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
+//			printf("enable 2nd cpu!\n");
+//			debug_halt_on_next_instruction();
+			s24_fd1094_machine_init();
+
 		} else
 			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	}
@@ -939,7 +949,7 @@ AM_RANGE(0xd00300, 0xd00301) AM_WRITE(MWA16_NOP)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( system24_cpu2_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_RAM AM_SHARE(3) 			// RAM here overrides the ROM mirror
+	AM_RANGE(0x000000, 0x03ffff) AM_RAM AM_SHARE(3) AM_BASE(&s24_mainram1)			// RAM here overrides the ROM mirror
 	AM_RANGE(0x040000, 0x07ffff) AM_ROM AM_SHARE(1)
 	AM_RANGE(0x080000, 0x0fffff) AM_RAM AM_SHARE(2)
 	AM_RANGE(0x100000, 0x13ffff) AM_MIRROR(0x040000) AM_ROM AM_SHARE(1)
@@ -1057,6 +1067,18 @@ static DRIVER_INIT(sspirits)
 	mlatch_table = 0;
 	track_size = 0x2d00;
 }
+
+static DRIVER_INIT(dcclubfd)
+{
+	system24temp_sys16_io_set_callbacks(dcclub_io_r, hotrod_io_w, resetcontrol_w, iod_r, iod_w);
+	mlatch_table = dcclub_mlt;
+	track_size = 0x2d00;
+	s24_fd1094_driver_init();
+
+}
+
+
+
 
 static DRIVER_INIT(sgmast)
 {
@@ -1755,13 +1777,46 @@ ROM_START( sspirits )
 	ROM_LOAD( "ss-repaired.bin",         0x000000, 0x1c2000, BAD_DUMP CRC(cefbda69) SHA1(5b47ae0f1584ce1eb697246273ba761bd9e981c1)  )
 ROM_END
 
+
+ROM_START( sspirtfc )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
+
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+	ROM_LOAD( "317-0058-02c.key", 0x0000, 0x2000,  CRC(ebae170e) SHA1(b6d1e1b6943a35b96e98e426ecb39bb5a42fb643) )
+
+	ROM_REGION( 0x1c2000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-02c.bin",         0x000000, 0x1c2000, NO_DUMP )
+ROM_END
+
+
 ROM_START( sgmast )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
 	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+//	ROM_LOAD( "317-0058-05d.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
+
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
-	ROM_LOAD( "sm-dump.bin",         0x000000, 0x1c2000, CRC(460bdcd5) SHA1(49b7384ac5742b45b7369f220f33f04ef955e992) )
+	/* not sure which of these images is best */
+	ROM_LOAD( "ds3-5000-05d.bin",      0x000000, 0x1c2000, CRC(e9a69f93) SHA1(dc15e47ed78373688c1fab72a9605528068ad702) )
+	ROM_LOAD( "ds3-5000-05d_alt.bin",  0x000000, 0x1c2000, CRC(e71a8ebf) SHA1(60feb0af1cfc0508c8d68c8572495eec1763dc93) )
+	ROM_LOAD( "ds3-5000-05d_alt2.bin", 0x000000, 0x1c2000, CRC(460bdcd5) SHA1(49b7384ac5742b45b7369f220f33f04ef955e992) )
+
+ROM_END
+
+ROM_START( sgmastc )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
+
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+	ROM_LOAD( "317-0058-05c.key", 0x0000, 0x2000, CRC(ae0eabe5) SHA1(692d7565bf9c5b32cc80bb4bd88c9193aa04cbb0) )
+
+	ROM_REGION( 0x1c2000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-05c.dsk",         0x000000, 0x1c2000, NO_DUMP )
 ROM_END
 
 ROM_START( qsww )
@@ -1802,6 +1857,19 @@ ROM_START( dcclub )
 	ROM_LOAD16_BYTE( "mpr14097.bin", 0x100000, 0x80000, CRC(4bd74cae) SHA1(5aa90bd5d2b8e2338ef0fe41d1f794e8d51321e1) )
 	ROM_LOAD16_BYTE( "mpr14096.bin", 0x100001, 0x80000, CRC(38d96502) SHA1(c68b3c5c83fd0839c3f6f81189c310ec19bdf1c4) )
 ROM_END
+
+ROM_START( dcclubfd )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr12187.ic2", 0x000000, 0x20000, CRC(e83783f3) SHA1(4b3b32df7de85aef9cd77c8a4ffc17e10466b638) )
+	ROM_LOAD16_BYTE( "epr12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
+
+	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
+	ROM_LOAD( "317-0058-09d.key", 0x0000, 0x2000, CRC(a91ebffb) SHA1(70b8b4272ca456491f254d115b434bb4ce73f049) )
+
+	ROM_REGION( 0x1c2000, REGION_USER2, 0)
+	ROM_LOAD( "ds3-5000-09d.bin", 0x000000, 0x1c2000,  CRC(69870887) SHA1(e47a997c2c783bf6670ab213ebe2ee35492eba34) )
+ROM_END
+
 
 static struct YM2151interface ym2151_interface =
 {
@@ -1846,10 +1914,11 @@ static MACHINE_DRIVER_START( system24 )
 MACHINE_DRIVER_END
 
 GAME( 1988, hotrod,   0,        system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 1)")
-GAMEX( 1988, hotroda,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 2)", GAME_NO_SOUND)
-GAMEX( 1988, hotrodj,  hotrod,   system24, hotrod,  hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)", GAME_NO_SOUND)
+GAMEX(1988, hotroda,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (World, 3 Players, Turbo set 2)", GAME_NO_SOUND)
+GAMEX(1988, hotrodj,  hotrod,   system24, hotrod,   hotrod,   ROT0,   "Sega", "Hot Rod (Japan, 4 Players)", GAME_NO_SOUND)
 GAME( 1990, bnzabros, 0,        system24, bnzabros, bnzabros, ROT0,   "Sega", "Bonanza Bros")
 GAME( 1991, dcclub,   0,        system24, dcclub,   dcclub,   ROT0,   "Sega", "Dynamic Country Club")
+GAME( 1991, dcclubfd, 0,        system24, dcclub,   dcclubfd, ROT0,   "Sega", "Dynamic Country Club (Floppy DS3-5000-09d, FD1094 317-0058-09d)")
 GAME( 1992, mahmajn,  0,        system24, mahmajn,  mahmajn,  ROT0,   "Sega", "Tokoro San no MahMahjan")
 GAME( 1994, qgh,      0,        system24, qgh,      qgh,      ROT0,   "Sega", "Quiz Ghost Hunter")
 GAME( 1994, quizmeku, 0,        system24, quizmeku, quizmeku, ROT0,   "Sega", "Quiz Mekurumeku Story")
@@ -1858,7 +1927,11 @@ GAME( 1994, mahmajn2, 0,        system24, mahmajn,  mahmajn2, ROT0,   "Sega", "T
 GAME( 1988, sspirits, 0,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits" )
 
 /* Encrypted */
-GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0,	"Sega", "Super Masters Golf", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+GAMEX( ????, sgmast,   0, system24, bnzabros, sgmast,   ROT0,	"Sega", "Super Masters Golf (FD1094 317-0058-05d?)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, qsww,     0, system24, bnzabros, qsww,     ROT0, 	"Sega", "Quiz Syukudai wo Wasuremashita", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, gground,  0, system24, bnzabros, gground,  ROT270, "Sega", "Gain Ground", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
 GAMEX( ????, crkdown,  0, system24, bnzabros, crkdown,  ROT0,	"Sega", "Crackdown", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)
+
+/* decrypted but missing disk images */
+GAMEX(1988, sspirtfc, sspirits,        system24, sspirits, sspirits, ROT270, "Sega", "Scramble Spirits (FD1094 317-0058-02c)",GAME_NOT_WORKING )
+GAMEX(????, sgmastc,  sgmast,          system24, bnzabros, sgmast,   ROT0,	 "Sega", "Super Masters Golf (FD1094 317-0058-05c)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION)

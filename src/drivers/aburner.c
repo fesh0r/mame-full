@@ -1267,7 +1267,6 @@ static ADDRESS_MAP_START( aburner_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x2e8000, 0x2e801f) AM_READ(math1_compare_r)
 
 	AM_RANGE(0x2ec000, 0x2ee001) AM_READ(SYS16_MRA16_ROADRAM)
-	AM_RANGE(0xe00000, 0xe00001) AM_READ(SYS16_CPU2_RESET_HACK)			/* hack! */
 	AM_RANGE(0xff8000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
 ADDRESS_MAP_END
 
@@ -1368,6 +1367,7 @@ ADDRESS_MAP_END
 static void xboard_reset(void)
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 }
 
 
@@ -1384,6 +1384,7 @@ static MACHINE_INIT( aburner ){
 
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)xboard_reset);
 	fd1094_machine_init();
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 
 }
 
@@ -1402,28 +1403,12 @@ static DRIVER_INIT( thndrbdj ){
 }
 
 static DRIVER_INIT( aburner ){
-	/* reset hack for AfterBurner */
-//	sys16_patch_code(0xe76c,0x4a);
-//	sys16_patch_code(0xe76d,0x79);
-//	sys16_patch_code(0xe76e,0x00);
-//	sys16_patch_code(0xe76f,0xe0);
-//	sys16_patch_code(0xe770,0x00);
-//	sys16_patch_code(0xe771,0x00);
-
 	machine_init_sys16_onetime();
 	sys16_bg1_trans = 1;
 	sys16_interleave_sprite_data( 0x200000 );
 }
 
 static DRIVER_INIT( aburner2 ){
-	/* reset hack for AfterBurner2 */
-//	sys16_patch_code(0x1483c,0x4a);
-//	sys16_patch_code(0x1483d,0x79);
-//	sys16_patch_code(0x1483e,0x00);
-//	sys16_patch_code(0x1483f,0xe0);
-//	sys16_patch_code(0x14840,0x00);
-//	sys16_patch_code(0x14841,0x00);
-
 	machine_init_sys16_onetime();
 	sys16_bg1_trans = 1;
 	sys16_interleave_sprite_data( 0x200000 );
@@ -1499,9 +1484,9 @@ GAME( 1987, aburner2, 0,        aburner,  aburner2, aburner2, ROT0, "Sega", "Aft
 GAMEX(19??, loffire,  0,        aburner,  aburner,  aburner,  ROT0, "Sega", "Line of Fire", GAME_NOT_WORKING )
 GAMEX(19??, thndrbld, 0,        aburner,  thndrbld, thndrbdj,  ROT0, "Sega", "Thunder Blade (317-0056)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, thndrbdj, thndrbld, aburner,  thndrbld, thndrbdj, ROT0, "Sega", "Thunder Blade (Japan)", GAME_NOT_WORKING )
-GAMEX(19??, gprider,  0,        gprider,  aburner,  gprider,  ROT0, "Sega", "GP Rider (set 1, 317-0162)", GAME_NOT_WORKING ) // decrypted
+GAMEX(19??, gprider,  0,        gprider,  aburner,  gprider,  ROT0, "Sega", "GP Rider (set 1, US, 317-0162)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, gpridera, gprider,        gprider,  aburner,  gprider,  ROT0, "Sega", "GP Rider (set 2, 317-0163)", GAME_NOT_WORKING ) // decrypted, no prg roms
-GAMEX(19??, smgp,  0,        gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 1, 317-0125a)", GAME_NOT_WORKING ) // decrypted
-GAMEX(19??, smgpa, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 2, 317-0125a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(19??, smgp,  0,        gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 1, US, 317-0125a)", GAME_NOT_WORKING ) // decrypted
+GAMEX(19??, smgpa, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 2, US, 317-0125a)", GAME_NOT_WORKING ) // decrypted
 GAMEX(19??, smgpb, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 3, 317-?)", GAME_NOT_WORKING )
 GAMEX(19??, smgpc, smgp,     gprider,  smgp,  gprider,  ROT0, "Sega", "Super Monaco GP (set 4, 317-0124a)", GAME_NOT_WORKING ) // only key dumped

@@ -5,7 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/res_net.h"
+#include "segaic16.h"
 
 
 
@@ -14,26 +14,11 @@
 
 /*************************************
  *
- *	Globals
- *
- *************************************/
-
-data16_t *system16_tileram;
-data16_t *system16_textram;
-data16_t *system16_spriteram;
-
-
-
-/*************************************
- *
  *	Statics
  *
  *************************************/
 
-static struct tilemap *tilemaps[16];
 static struct tilemap *textmap;
-
-static UINT8 tilemap_page;
 
 static UINT8 tile_bank[2];
 
@@ -43,10 +28,6 @@ static const UINT8 *banklist;
 
 static UINT8 draw_enable;
 static UINT8 screen_flip;
-
-static UINT8 normal_pal[32];
-static UINT8 shadow_pal[32];
-static UINT8 hilight_pal[32];
 
 
 
@@ -60,7 +41,6 @@ static void get_tile_info(int tile_index);
 static void get_tile_info_timscanr(int tile_index);
 static void get_text_info(int tile_index);
 static void get_text_info_timscanr(int tile_index);
-static void compute_palette_tables(void);
 
 
 
@@ -72,7 +52,7 @@ static void compute_palette_tables(void);
 
 static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 {
-	int pagenum;
+//	int pagenum;
 
 	/* create the tilemap for the text layer */
 	textmap = tilemap_create(textcb, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,28);
@@ -84,18 +64,9 @@ static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 	tilemap_set_scrolldx(textmap, -24*8, -24*8);
 	tilemap_set_scrollx(textmap, 0, 0);
 
-	/* create the tilemaps for the tile pages */
-	for (pagenum = 0; pagenum < 16; pagenum++)
-	{
-		/* each page is 64x32 */
-		tilemaps[pagenum] = tilemap_create(tilecb, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 64,32);
-		if (!tilemaps[pagenum])
-			return 1;
-
-		/* configure the tilemap */
-		tilemap_set_transparent_pen(tilemaps[pagenum], 0);
-		tilemap_mark_all_tiles_dirty(tilemaps[pagenum]);
-	}
+	/* create the tilemaps for the bg/fg layers */
+	if (!segaic16_init_virtual_tilemaps(16, tilecb))
+		return 1;
 
 	/* initialize globals */
 	draw_enable = 1;
@@ -106,7 +77,7 @@ static int video_start_common(void (*tilecb)(int), void (*textcb)(int))
 	tile_bank[1] = 1;
 
 	/* compute palette info */
-	compute_palette_tables();
+	segaic16_init_palette();
 	return 0;
 }
 
@@ -140,7 +111,7 @@ static void get_tile_info(int tile_index)
 	---ccccccc------ Palette (0-127)
 	----nnnnnnnnnnnn Tile index (0-4095)
 */
-	UINT16 data = system16_tileram[tilemap_page * (64*32) + tile_index];
+	UINT16 data = segaic16_tileram[segaic16_tilemap_page * (64*32) + tile_index];
 	int bank = tile_bank[(data >> 12) & 1];
 	int color = (data >> 6) & 0x7f;
 	int code = data & 0x0fff;
@@ -160,7 +131,7 @@ static void get_tile_info_timscanr(int tile_index)
 	----ccccccc----- Palette (0-127)
 	----nnnnnnnnnnnn Tile index (0-4095)
 */
-	UINT16 data = system16_tileram[tilemap_page * (64*32) + tile_index];
+	UINT16 data = segaic16_tileram[segaic16_tilemap_page * (64*32) + tile_index];
 	int bank = tile_bank[(data >> 12) & 1];
 	int color = (data >> 5) & 0x7f;
 	int code = data & 0x0fff;
@@ -186,7 +157,7 @@ static void get_text_info(int tile_index)
 	----ccc--------- Palette (0-7)
 	-------nnnnnnnnn Tile index (0-511)
 */
-	UINT16 data = system16_textram[tile_index];
+	UINT16 data = segaic16_textram[tile_index];
 	int bank = tile_bank[0];
 	int color = (data >> 9) & 0x07;
 	int code = data & 0x1ff;
@@ -205,7 +176,7 @@ static void get_text_info_timscanr(int tile_index)
 	-----ccc-------- Palette (0-7)
 	--------nnnnnnnn Tile index (0-255)
 */
-	UINT16 data = system16_textram[tile_index];
+	UINT16 data = segaic16_textram[tile_index];
 	int bank = tile_bank[0];
 	int color = (data >> 8) & 0x07;
 	int code = data & 0xff;
@@ -222,21 +193,21 @@ static void get_text_info_timscanr(int tile_index)
  *
  *************************************/
 
-void system16_set_draw_enable(int enable)
+void system16b_set_draw_enable(int enable)
 {
 	force_partial_update(cpu_getscanline());
 	draw_enable = enable;
 }
 
 
-void system16_set_screen_flip(int flip)
+void system16b_set_screen_flip(int flip)
 {
 	force_partial_update(cpu_getscanline());
 	screen_flip = flip;
 }
 
 
-void system16_configure_sprite_banks(int use_default)
+void system16b_configure_sprite_banks(int use_default)
 {
 	if (use_default)
 		banklist = default_banklist;
@@ -245,9 +216,9 @@ void system16_configure_sprite_banks(int use_default)
 }
 
 
-void system16_set_tile_bank(int which, int bank)
+void system16b_set_tile_bank(int which, int bank)
 {
-	int i;
+//	int i;
 
 	if (bank != tile_bank[which])
 	{
@@ -255,103 +226,8 @@ void system16_set_tile_bank(int which, int bank)
 		tile_bank[which] = bank;
 
 		/* mark all tilemaps dirty */
-		for (i = 0; i < 16; i++)
-			tilemap_mark_all_tiles_dirty(tilemaps[i]);
-
-		/* if this is bank 0, also mark the text tilemap dirty */
-		if (which == 0)
-			tilemap_mark_all_tiles_dirty(textmap);
+		tilemap_mark_all_tiles_dirty(NULL);
 	}
-}
-
-
-
-/*************************************
- *
- *	Palette computation
- *
- *************************************/
-
-/*
-	Color generation details
-
-	Each color is made up of 5 bits, connected through one or more resistors like so:
-
-	Bit 0 = 1 x 3.9K ohm
-	Bit 1 = 1 x 2.0K ohm
-	Bit 2 = 1 x 1.0K ohm
-	Bit 3 = 2 x 1.0K ohm
-	Bit 4 = 4 x 1.0K ohm
-
-	Another data bit is connected by a tristate buffer to the color output through a
-	470 ohm resistor. The buffer allows the resistor to have no effect (tristate),
-	halve brightness (pull-down) or double brightness (pull-up). The data bit source
-	is bit 15 of each color RAM entry.
-*/
-
-static void compute_palette_tables(void)
-{
-	static const int resistances_normal[6] = { 3900, 2000, 1000, 1000/2, 1000/4, 0   };
-	static const int resistances_sh[6]     = { 3900, 2000, 1000, 1000/2, 1000/4, 470 };
-	double weights[2][6];
-	int i;
-
-	/* compute weight table for regular palette entries */
-	compute_resistor_weights(0, 255, -1.0,
-		6, resistances_normal, weights[0], 0, 0,
-		0, NULL, NULL, 0, 0,
-		0, NULL, NULL, 0, 0);
-
-	/* compute weight table for shadow/hilight palette entries */
-	compute_resistor_weights(0, 255, -1.0,
-		6, resistances_sh, weights[1], 0, 0,
-		0, NULL, NULL, 0, 0,
-		0, NULL, NULL, 0, 0);
-
-	/* compute R, G, B for each weight */
-	for (i = 0; i < 32; i++)
-	{
-		int i4 = (i >> 4) & 1;
-		int i3 = (i >> 3) & 1;
-		int i2 = (i >> 2) & 1;
-		int i1 = (i >> 1) & 1;
-		int i0 = (i >> 0) & 1;
-
-		normal_pal[i] = combine_6_weights(weights[0], i0, i1, i2, i3, i4, 0);
-		shadow_pal[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 0);
-		hilight_pal[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 1);
-	}
-}
-
-
-
-/*************************************
- *
- *	Palette accessors
- *
- *************************************/
-
-WRITE16_HANDLER( system16_paletteram_w )
-{
-	data16_t newval;
-	int r, g, b;
-
-	/* get the new value */
-	newval = paletteram16[offset];
-	COMBINE_DATA(&newval);
-	paletteram16[offset] = newval;
-
-	/*	   byte 0    byte 1 */
-	/*	sBGR BBBB GGGG RRRR */
-	/*	x000 4321 4321 4321 */
-	r = ((newval >> 12) & 0x01) | ((newval << 1) & 0x1e);
-	g = ((newval >> 13) & 0x01) | ((newval >> 3) & 0x1e);
-	b = ((newval >> 14) & 0x01) | ((newval >> 7) & 0x1e);
-
-	/* normal colors */
-	palette_set_color(offset,        normal_pal[r],  normal_pal[g],  normal_pal[b]);
-	palette_set_color(offset + 2048, shadow_pal[r],  shadow_pal[g],  shadow_pal[b]);
-	palette_set_color(offset + 4096, hilight_pal[r], hilight_pal[g], hilight_pal[b]);
 }
 
 
@@ -362,172 +238,14 @@ WRITE16_HANDLER( system16_paletteram_w )
  *
  *************************************/
 
-READ16_HANDLER( system16_textram_r )
-{
-	return system16_textram[offset];
-}
-
-
-WRITE16_HANDLER( system16_textram_w )
+WRITE16_HANDLER( system16b_textram_w )
 {
 	/* certain ranges need immediate updates */
 	if (offset >= 0xe80/2)
 		force_partial_update(cpu_getscanline());
 
-	COMBINE_DATA(&system16_textram[offset]);
+	COMBINE_DATA(&segaic16_textram[offset]);
 	tilemap_mark_tile_dirty(textmap, offset);
-}
-
-
-READ16_HANDLER( system16_tileram_r )
-{
-	return system16_tileram[offset];
-}
-
-
-WRITE16_HANDLER( system16_tileram_w )
-{
-	COMBINE_DATA(&system16_tileram[offset]);
-	tilemap_mark_tile_dirty(tilemaps[offset / (64*32)], offset % (64*32));
-}
-
-
-
-/*************************************
- *
- *	Draw a split tilemap in up to
- *	four pieces
- *
- *************************************/
-
-static void draw_virtual_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect, UINT16 pages, UINT16 xscroll, UINT16 yscroll, UINT32 flags, UINT32 priority)
-{
-	int leftmin = -1, leftmax=1, rightmin = -1, rightmax=1;
-	int topmin = -1, topmax=1, bottommin = -1, bottommax=1;
-	struct rectangle pageclip;
-
-	xscroll = (-320 - xscroll) & 0x3ff;
-	yscroll = (-256 + yscroll) & 0x1ff;
-
-	/* which half/halves of the virtual tilemap do we intersect in the X direction? */
-	if (xscroll < 64*8 - Machine->drv->screen_width)
-	{
-		leftmin = 0;
-		leftmax = Machine->drv->screen_width - 1;
-		rightmin = -1;
-	}
-	else if (xscroll < 64*8)
-	{
-		leftmin = 0;
-		leftmax = 64*8 - xscroll - 1;
-		rightmin = leftmax + 1;
-		rightmax = Machine->drv->screen_width - 1;
-	}
-	else if (xscroll < 128*8 - Machine->drv->screen_width)
-	{
-		rightmin = 0;
-		rightmax = Machine->drv->screen_width - 1;
-		leftmin = -1;
-	}
-	else
-	{
-		rightmin = 0;
-		rightmax = 128*8 - xscroll - 1;
-		leftmin = rightmax + 1;
-		leftmax = Machine->drv->screen_width - 1;
-	}
-
-	/* which half/halves of the virtual tilemap do we intersect in the Y direction? */
-	if (yscroll < 32*8 - Machine->drv->screen_height)
-	{
-		topmin = 0;
-		topmax = Machine->drv->screen_height - 1;
-		bottommin = -1;
-	}
-	else if (yscroll < 32*8)
-	{
-		topmin = 0;
-		topmax = 32*8 - yscroll - 1;
-		bottommin = topmax + 1;
-		bottommax = Machine->drv->screen_height - 1;
-	}
-	else if (yscroll < 64*8 - Machine->drv->screen_height)
-	{
-		bottommin = 0;
-		bottommax = Machine->drv->screen_height - 1;
-		topmin = -1;
-	}
-	else
-	{
-		bottommin = 0;
-		bottommax = 64*8 - yscroll - 1;
-		topmin = bottommax + 1;
-		topmax = Machine->drv->screen_height - 1;
-	}
-
-	/* draw the upper-left chunk */
-	if (leftmin != -1 && topmin != -1)
-	{
-		pageclip.min_x = (leftmin < cliprect->min_x) ? cliprect->min_x : leftmin;
-		pageclip.max_x = (leftmax > cliprect->max_x) ? cliprect->max_x : leftmax;
-		pageclip.min_y = (topmin < cliprect->min_y) ? cliprect->min_y : topmin;
-		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
-		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
-		{
-			tilemap_page = (pages >> 12) & 0xf;
-			tilemap_set_scrollx(tilemaps[tilemap_page], 0, xscroll);
-			tilemap_set_scrolly(tilemaps[tilemap_page], 0, yscroll);
-			tilemap_draw(bitmap, &pageclip, tilemaps[tilemap_page], flags, priority);
-		}
-	}
-
-	/* draw the upper-right chunk */
-	if (rightmin != -1 && topmin != -1)
-	{
-		pageclip.min_x = (rightmin < cliprect->min_x) ? cliprect->min_x : rightmin;
-		pageclip.max_x = (rightmax > cliprect->max_x) ? cliprect->max_x : rightmax;
-		pageclip.min_y = (topmin < cliprect->min_y) ? cliprect->min_y : topmin;
-		pageclip.max_y = (topmax > cliprect->max_y) ? cliprect->max_y : topmax;
-		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
-		{
-			tilemap_page = (pages >> 8) & 0xf;
-			tilemap_set_scrollx(tilemaps[tilemap_page], 0, xscroll);
-			tilemap_set_scrolly(tilemaps[tilemap_page], 0, yscroll);
-			tilemap_draw(bitmap, &pageclip, tilemaps[tilemap_page], flags, priority);
-		}
-	}
-
-	/* draw the lower-left chunk */
-	if (leftmin != -1 && bottommin != -1)
-	{
-		pageclip.min_x = (leftmin < cliprect->min_x) ? cliprect->min_x : leftmin;
-		pageclip.max_x = (leftmax > cliprect->max_x) ? cliprect->max_x : leftmax;
-		pageclip.min_y = (bottommin < cliprect->min_y) ? cliprect->min_y : bottommin;
-		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
-		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
-		{
-			tilemap_page = (pages >> 4) & 0xf;
-			tilemap_set_scrollx(tilemaps[tilemap_page], 0, xscroll);
-			tilemap_set_scrolly(tilemaps[tilemap_page], 0, yscroll);
-			tilemap_draw(bitmap, &pageclip, tilemaps[tilemap_page], flags, priority);
-		}
-	}
-
-	/* draw the lower-right chunk */
-	if (rightmin != -1 && bottommin != -1)
-	{
-		pageclip.min_x = (rightmin < cliprect->min_x) ? cliprect->min_x : rightmin;
-		pageclip.max_x = (rightmax > cliprect->max_x) ? cliprect->max_x : rightmax;
-		pageclip.min_y = (bottommin < cliprect->min_y) ? cliprect->min_y : bottommin;
-		pageclip.max_y = (bottommax > cliprect->max_y) ? cliprect->max_y : bottommax;
-		if (pageclip.min_x <= pageclip.max_x && pageclip.min_y <= pageclip.max_y)
-		{
-			tilemap_page = (pages >> 0) & 0xf;
-			tilemap_set_scrollx(tilemaps[tilemap_page], 0, xscroll);
-			tilemap_set_scrolly(tilemaps[tilemap_page], 0, yscroll);
-			tilemap_draw(bitmap, &pageclip, tilemaps[tilemap_page], flags, priority);
-		}
-	}
 }
 
 
@@ -543,10 +261,10 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 	UINT16 xscroll, yscroll, pages;
 	int x, y;
 
-	/* foreground layer */
-	xscroll = system16_textram[0xe98/2 + which];
-	yscroll = system16_textram[0xe90/2 + which];
-	pages = system16_textram[0xe80/2 + which];
+	/* get global values */
+	xscroll = segaic16_textram[0xe98/2 + which];
+	yscroll = segaic16_textram[0xe90/2 + which];
+	pages = segaic16_textram[0xe80/2 + which];
 
 	/* column AND row scroll */
 	if ((xscroll & 0x8000) && (yscroll & 0x8000))
@@ -573,19 +291,21 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 				rowcolclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 				/* get the effective scroll values */
-				effxscroll = system16_textram[0xf80/2 + 0x40/2 * which + y/8];
-				effyscroll = system16_textram[0xf00/2 + 0x40/2 * which + x/16];
+				effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
+				effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
 
 				/* are we using an alternate? */
 				if (effxscroll & 0x8000)
 				{
-					effxscroll = system16_textram[0xe9c/2 + which];
-					effyscroll = system16_textram[0xe94/2 + which];
-					effpages = system16_textram[0xe84/2 + which];
+					effxscroll = segaic16_textram[0xe9c/2 + which];
+					effyscroll = segaic16_textram[0xe94/2 + which];
+					effpages = segaic16_textram[0xe84/2 + which];
 				}
 
 				/* draw the chunk */
-				draw_virtual_tilemap(bitmap, &rowcolclip, effpages, effxscroll, effyscroll, flags, priority);
+				effxscroll = (-320 - effxscroll) & 0x3ff;
+				effyscroll = (-256 + effyscroll) & 0x1ff;
+				segaic16_draw_virtual_tilemap(bitmap, &rowcolclip, effpages, effxscroll, effyscroll, flags, priority);
 			}
 		}
 	}
@@ -597,17 +317,19 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 		for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
 		{
 			struct rectangle colclip = *cliprect;
-			UINT16 effyscroll;
+			UINT16 effxscroll, effyscroll;
 
 			/* adjust to clip this row only */
 			colclip.min_x = (x < cliprect->min_x) ? cliprect->min_x : x;
 			colclip.max_x = (x + 15 > cliprect->max_x) ? cliprect->max_x : x + 15;
 
 			/* get the effective scroll values */
-			effyscroll = system16_textram[0xf00/2 + 0x40/2 * which + x/16];
+			effyscroll = segaic16_textram[0xf06/2 + 0x40/2 * which + x/16];
 
 			/* draw the chunk */
-			draw_virtual_tilemap(bitmap, &colclip, pages, xscroll, effyscroll, flags, priority);
+			effxscroll = (-320 - xscroll) & 0x3ff;
+			effyscroll = (-256 + effyscroll) & 0x1ff;
+			segaic16_draw_virtual_tilemap(bitmap, &colclip, pages, effxscroll, effyscroll, flags, priority);
 		}
 	}
 	else if (xscroll & 0x8000)
@@ -626,24 +348,28 @@ static void draw_layer(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			rowclip.max_y = (y + 7 > cliprect->max_y) ? cliprect->max_y : y + 7;
 
 			/* get the effective scroll values */
-			effxscroll = system16_textram[0xf80/2 + 0x40/2 * which + y/8];
+			effxscroll = segaic16_textram[0xf80/2 + 0x40/2 * which + y/8];
 			effyscroll = yscroll;
 
 			/* are we using an alternate? */
 			if (effxscroll & 0x8000)
 			{
-				effxscroll = system16_textram[0xe9c/2 + which];
-				effyscroll = system16_textram[0xe94/2 + which];
-				effpages = system16_textram[0xe84/2 + which];
+				effxscroll = segaic16_textram[0xe9c/2 + which];
+				effyscroll = segaic16_textram[0xe94/2 + which];
+				effpages = segaic16_textram[0xe84/2 + which];
 			}
 
 			/* draw the chunk */
-			draw_virtual_tilemap(bitmap, &rowclip, effpages, effxscroll, effyscroll, flags, priority);
+			effxscroll = (-320 - effxscroll) & 0x3ff;
+			effyscroll = (-256 + effyscroll) & 0x1ff;
+			segaic16_draw_virtual_tilemap(bitmap, &rowclip, effpages, effxscroll, effyscroll, flags, priority);
 		}
 	}
 	else
 	{
-		draw_virtual_tilemap(bitmap, cliprect, pages, xscroll, yscroll, flags, priority);
+		xscroll = (-320 - xscroll) & 0x3ff;
+		yscroll = (-256 + yscroll) & 0x1ff;
+		segaic16_draw_virtual_tilemap(bitmap, cliprect, pages, xscroll, yscroll, flags, priority);
 	}
 }
 
@@ -798,12 +524,12 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 	UINT16 *cursprite;
 
 	/* first scan forward to find the end of the list */
-	for (cursprite = system16_spriteram; cursprite < system16_spriteram + 0xfff/2; cursprite += 8)
+	for (cursprite = segaic16_spriteram; cursprite < segaic16_spriteram + 0x7ff/2; cursprite += 8)
 		if (cursprite[2] & 0x8000)
 			break;
 
 	/* now scan backwards and render the sprites in order */
-	for (cursprite -= 8; cursprite >= system16_spriteram; cursprite -= 8)
+	for (cursprite -= 8; cursprite >= segaic16_spriteram; cursprite -= 8)
 		draw_one_sprite(bitmap, cliprect, cursprite);
 }
 
@@ -827,9 +553,13 @@ VIDEO_UPDATE( system16b )
 	/* reset priorities */
 	fillbitmap(priority_bitmap, 0, cliprect);
 
-	/* draw background */
-	draw_layer(bitmap, cliprect, 1, 0 | TILEMAP_IGNORE_TRANSPARENCY, 0x01);
-	draw_layer(bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY, 0x02);
+	/* draw background opaquely first, not setting any priorities */
+	draw_layer(bitmap, cliprect, 1, 0 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
+	draw_layer(bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY, 0x00);
+
+	/* draw background again, just to set the priorities on non-transparent pixels */
+	draw_layer(NULL, cliprect, 1, 0, 0x01);
+	draw_layer(NULL, cliprect, 1, 1, 0x02);
 
 	/* draw foreground */
 	draw_layer(bitmap, cliprect, 0, 0, 0x02);

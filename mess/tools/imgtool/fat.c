@@ -88,6 +88,7 @@ struct fat_diskinfo
 	UINT32 fat_bits;
 	UINT32 sector_size;
 	UINT32 sectors_per_cluster;
+	UINT32 cluster_size;
 	UINT32 reserved_sectors;
 	UINT32 fat_count;
 	UINT32 root_entries;
@@ -95,6 +96,7 @@ struct fat_diskinfo
 	UINT32 sectors_per_track;
 	UINT32 heads;
 	UINT64 total_sectors;
+	UINT32 total_clusters;
 };
 
 struct fat_file
@@ -294,7 +296,15 @@ static imgtoolerr_t fat_diskimage_open(imgtool_image *image)
 	total_sectors_h				= pick_integer(header, 32, 4);
 
 	info->total_sectors = total_sectors_l + (((UINT64) total_sectors_h) << 16);
+	info->total_clusters = info->total_sectors - info->reserved_sectors
+		- (info->sectors_per_fat - info->fat_count)
+		- (info->root_entries * FAT_DIRENT_SIZE + info->sector_size - 1) / info->sector_size;
+	info->cluster_size = info->sector_size * info->sectors_per_cluster;
 
+	if (info->fat_count == 0)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (info->sectors_per_fat == 0)
+		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->sector_size == 0)
 		return IMGTOOLERR_CORRUPTIMAGE;
 	if (info->sectors_per_cluster == 0)
@@ -454,12 +464,139 @@ static imgtoolerr_t fat_diskimage_create(imgtool_image *image, option_resolution
 
 
 
-static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, UINT32 pos)
+static void fat_get_sector_position(imgtool_image *image, UINT32 sector_index,
+	int *head, int *track, int *sector)
 {
+	const struct fat_diskinfo *disk_info;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	*head = (sector_index / disk_info->sectors_per_track) % disk_info->heads;
+	*track = sector_index / disk_info->sectors_per_track / disk_info->heads;
+	*sector = 1 + (sector_index % disk_info->sectors_per_track);
+}
+
+
+
+static imgtoolerr_t fat_load_fat(imgtool_image *image, UINT8 **fat_table)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	floperr_t ferr;
 	const struct fat_diskinfo *disk_info;
-	UINT32 bit_index;
+	UINT8 *table;
+	UINT32 table_size;
+	UINT32 pos, len;
+	UINT32 sector_index;
+	int head, track, sector;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	table_size = disk_info->sectors_per_fat * disk_info->fat_count * disk_info->sector_size;
+
+	/* allocate the table with extra bytes, in case we "overextend" our reads */
+	table = malloc(table_size + sizeof(UINT64));
+	if (!table)
+	{
+		err = IMGTOOLERR_OUTOFMEMORY;
+		goto done;
+	}
+	memset(table, 0, table_size + sizeof(UINT64));
+
+	pos = 0;
+	sector_index = disk_info->reserved_sectors;
+
+	while(pos < table_size)
+	{
+		len = MIN(table_size - pos, disk_info->sector_size);
+
+		fat_get_sector_position(image, sector_index++, &head, &track, &sector);
+		ferr = floppy_read_sector(imgtool_floppy(image), head, track, sector, 0, &table[pos], len);
+		if (ferr)
+		{
+			err = imgtool_floppy_error(ferr);
+			goto done;
+		}
+
+		pos += disk_info->sector_size;
+	}
+
+done:
+	if (err && table)
+	{
+		free(table);
+		table = NULL;
+	}
+	*fat_table = table;
+	return err;
+}
+
+
+
+static UINT32 fat_get_fat_entry(imgtool_image *image, const UINT8 *fat_table, UINT32 fat_entry)
+{
+	const struct fat_diskinfo *disk_info;
+	UINT64 entry;
+	UINT32 bit_index, i;
+	UINT32 last_entry = 0;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+	bit_index = fat_entry * disk_info->fat_bits;
+
+	assert(fat_entry < disk_info->total_clusters);
+
+	/* make sure that the cluster is free in all fats */
+	for (i = 0; i < disk_info->fat_count; i++)
+	{
+		memcpy(&entry, fat_table + (i * disk_info->sector_size
+			* disk_info->sectors_per_fat) + (bit_index / 8), sizeof(entry));
+
+		/* we've extracted the bytes; we now need to normalize it */
+		entry = LITTLE_ENDIANIZE_INT64(entry);
+		entry >>= bit_index % 8;
+		entry &= (0xFFFFFFFF >> (32 - disk_info->fat_bits));
+
+		if (i == 0)
+			last_entry = (UINT32) entry;
+		else if (last_entry != (UINT32) entry)
+			return 1;	/* if the FATs disagree; mark this as reserved */
+	}
+	return last_entry;
+}
+
+
+
+static void fat_set_fat_entry(imgtool_image *image, UINT8 *fat_table, UINT32 fat_entry, UINT32 value)
+{
+	const struct fat_diskinfo *disk_info;
+	UINT64 entry;
+	UINT32 bit_index, i;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+	bit_index = fat_entry * disk_info->fat_bits;
+
+	for (i = 0; i < disk_info->fat_count; i++)
+	{
+		memcpy(&entry, fat_table + (i * disk_info->sector_size
+			* disk_info->sectors_per_fat) + (bit_index / 8), sizeof(entry));
+
+		entry = LITTLE_ENDIANIZE_INT64(entry);
+		entry &= ~((UINT64) 0xFFFFFFFF >> (32 - disk_info->fat_bits)) << (bit_index % 8);
+		entry |= ((UINT64) value) << (bit_index % 8);
+		entry = LITTLE_ENDIANIZE_INT64(entry);
+
+		memcpy(fat_table + (i * disk_info->sector_size
+			* disk_info->sectors_per_fat) + (bit_index / 8), &entry, sizeof(entry));
+	}
+}
+
+
+
+static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, UINT32 pos)
+{
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
+	const struct fat_diskinfo *disk_info;
 	UINT32 new_cluster;
+	UINT8 *fat_table = NULL;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
@@ -486,23 +623,19 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 			pos = file->index;
 
 		/* skip ahead clusters */
-		while((file->cluster_index + (disk_info->sector_size * disk_info->sectors_per_cluster)) <= pos)
+		while((file->cluster_index + disk_info->cluster_size) <= pos)
 		{
-			bit_index = file->cluster * disk_info->fat_bits;
+			if (!fat_table)
+			{
+				err = fat_load_fat(image, &fat_table);
+				if (err)
+					goto done;
+			}
 
-			ferr = floppy_read_sector(imgtool_floppy(image), 0, 0, 1 + disk_info->reserved_sectors,
-				bit_index / 8, &new_cluster, sizeof(new_cluster));
-			if (ferr)
-				return imgtool_floppy_error(ferr);
-
-			/* compute the new cluster number */
-			new_cluster = (UINT32) LITTLE_ENDIANIZE_INT32(new_cluster);
-			new_cluster >>= bit_index % 8;
-			if (disk_info->fat_bits < 32)
-				new_cluster &= (1 << disk_info->fat_bits) - 1;
+			new_cluster = fat_get_fat_entry(image, fat_table, file->cluster);
 
 			file->cluster = new_cluster;
-			file->cluster_index += disk_info->sectors_per_cluster * disk_info->sector_size;
+			file->cluster_index += disk_info->cluster_size;
 
 			/* are we at the end of the file? */
 			if (new_cluster == (0xFFFFFFFF >> (32 - disk_info->fat_bits)))
@@ -513,7 +646,11 @@ static imgtoolerr_t fat_seek_file(imgtool_image *image, struct fat_file *file, U
 		}
 		file->index = pos;
 	}
-	return IMGTOOLERR_SUCCESS;	
+
+done:
+	if (fat_table)
+		free(fat_table);
+	return err;
 }
 
 
@@ -544,17 +681,15 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 		}
 		else
 		{
-			/* cluster values 0 and 1 are special */
-			if (file->cluster < 2)
+			/* cluster out of range? */
+			if ((file->cluster < 2) || (file->cluster >= disk_info->total_clusters))
 				return IMGTOOLERR_CORRUPTIMAGE;
 
 			sector_index += (disk_info->root_entries * FAT_DIRENT_SIZE + disk_info->sector_size - 1) / disk_info->sector_size;
 			sector_index += (file->cluster - 2) * disk_info->sectors_per_cluster;
 		}
 
-		head = (sector_index / disk_info->sectors_per_track) % disk_info->heads;
-		track = sector_index / disk_info->sectors_per_track / disk_info->heads;
-		sector = 1 + (sector_index % disk_info->sectors_per_track);
+		fat_get_sector_position(image, sector_index, &head, &track, &sector);
 		offset = file->index % disk_info->sector_size;
 		len = MIN(buffer_len, disk_info->sector_size - offset);
 
@@ -569,7 +704,7 @@ static imgtoolerr_t fat_readwrite_file(imgtool_image *image, struct fat_file *fi
 			return imgtool_floppy_error(ferr);
 
 		/* and move the file pointer ahead */
-		err = fat_seek_file(image, file, file->index + FAT_DIRENT_SIZE);
+		err = fat_seek_file(image, file, file->index + len);
 		if (err)
 			return err;
 
@@ -599,29 +734,74 @@ static imgtoolerr_t fat_write_file(imgtool_image *image, struct fat_file *file,
 
 
 
+static UINT32 fat_allocate_fat_entry(imgtool_image *image, UINT8 *fat_table)
+{
+	const struct fat_diskinfo *disk_info;
+	UINT32 i, val;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	for (i = 2; i < disk_info->total_clusters; i++)
+	{
+		val = fat_get_fat_entry(image, fat_table, i);
+		if (val == 0)
+		{
+			fat_set_fat_entry(image, fat_table, i, 1);
+			return i;
+		}
+	}
+	return 0;
+}
+
+
+
 static imgtoolerr_t fat_set_file_size(imgtool_image *image, struct fat_file *file,
 	UINT32 new_size)
 {
+	imgtoolerr_t err = IMGTOOLERR_SUCCESS;
 	const struct fat_diskinfo *disk_info;
+	UINT32 new_cluster_count;
+	UINT32 old_cluster_count;
+	UINT8 *fat_table = NULL;
 
 	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
 
 	/* if this is the trivial case (not changing the size), succeed */
 	if (file->filesize == new_size)
-		return IMGTOOLERR_SUCCESS;
+	{
+		err = IMGTOOLERR_SUCCESS;
+		goto done;
+	}
 
 	if (file->root)
 	{
 		/* this is the root directory; this is a special case */
 		if (new_size > (disk_info->root_entries * FAT_DIRENT_SIZE))
-			return IMGTOOLERR_NOSPACE;
+		{
+			err = IMGTOOLERR_NOSPACE;
+			goto done;
+		}
 	}
 	else
 	{
 		/* TODO: need to implement setting the file size */
-		return IMGTOOLERR_UNIMPLEMENTED;
+		old_cluster_count = (file->filesize + disk_info->cluster_size - 1) / disk_info->cluster_size;
+		new_cluster_count = (new_size + disk_info->cluster_size - 1) / disk_info->cluster_size;
+
+		if (old_cluster_count != new_cluster_count)
+		{
+			err = fat_load_fat(image, &fat_table);
+			if (err)
+				goto done;
+		}
+		err = IMGTOOLERR_UNIMPLEMENTED;
+		goto done;
 	}
-	return IMGTOOLERR_SUCCESS;
+
+done:
+	if (fat_table)
+		free(fat_table);
+	return err;
 }
 
 
@@ -1175,6 +1355,34 @@ static imgtoolerr_t fat_diskimage_writefile(imgtool_image *image, const char *fi
 
 
 
+static imgtoolerr_t fat_diskimage_freespace(imgtool_image *image, UINT64 *size)
+{
+	imgtoolerr_t err;
+	const struct fat_diskinfo * disk_info;
+	UINT8 *fat_table;
+	UINT32 i;
+
+	disk_info = (const struct fat_diskinfo *) imgtool_floppy_extrabytes(image);
+
+	err = fat_load_fat(image, &fat_table);
+	if (err)
+		goto done;
+
+	*size = 0;
+	for (i = 2; i < disk_info->total_clusters; i++)
+	{
+		if (fat_get_fat_entry(image, fat_table, i) == 0)
+			*size += disk_info->cluster_size;
+	}
+
+done:
+	if (fat_table)
+		free(fat_table);
+	return err;
+}
+
+
+
 /*********************************************************************
 	Imgtool module declaration
 *********************************************************************/
@@ -1194,6 +1402,7 @@ static imgtoolerr_t fat_module_populate(imgtool_library *library, struct Imgtool
 	module->next_enum					= fat_diskimage_nextenum;
 	module->read_file					= fat_diskimage_readfile;
 	module->write_file					= fat_diskimage_writefile;
+	module->free_space					= fat_diskimage_freespace;
 	return IMGTOOLERR_SUCCESS;
 }
 

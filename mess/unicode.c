@@ -141,7 +141,7 @@ int uchar_from_utf16f(unicode_char_t *uchar, const utf16_char_t *utf16char, size
 		buf[0] = FLIPENDIAN_INT16(utf16char[0]);
 	if (count > 1)
 		buf[1] = FLIPENDIAN_INT16(utf16char[0]);
-	return uchar_from_utf16f(uchar, buf, count);
+	return uchar_from_utf16(uchar, buf, count);
 }
 
 

@@ -506,13 +506,16 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/system1.o $(OBJ)/drivers/system1.o \
 	$(OBJ)/vidhrdw/segasyse.o $(OBJ)/drivers/segasyse.o \
 	$(OBJ)/machine/system16.o $(OBJ)/vidhrdw/system16.o $(OBJ)/vidhrdw/sys16spr.o \
-	$(OBJ)/sndhrdw/system16.o \
+	$(OBJ)/sndhrdw/system16.o $(OBJ)/vidhrdw/segaic16.o \
+	$(OBJ)/vidhrdw/segas16a.o $(OBJ)/drivers/segas16a.o \
+	$(OBJ)/vidhrdw/segas16b.o $(OBJ)/drivers/segas16b.o \
+	$(OBJ)/vidhrdw/segas18.o $(OBJ)/drivers/segas18.o \
 	$(OBJ)/machine/fd1094.o $(OBJ)/machine/s16fd.o \
 	$(OBJ)/drivers/system16.o $(OBJ)/drivers/segas16b.o $(OBJ)/drivers/aburner.o $(OBJ)/drivers/outrun.o \
-	$(OBJ)/vidhrdw/segas16.o $(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
-	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o \
+	$(OBJ)/drivers/sharrier.o $(OBJ)/drivers/system18.o \
+	$(OBJ)/drivers/yboard.o $(OBJ)/vidhrdw/yboard.o $(OBJ)/machine/s16math.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
-	$(OBJ)/vidhrdw/segaic24.o \
+	$(OBJ)/machine/s24fd.o $(OBJ)/vidhrdw/segaic24.o \
 	$(OBJ)/drivers/system32.o $(OBJ)/drivers/multi32.o $(OBJ)/vidhrdw/system32.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
 	$(OBJ)/drivers/model2.o \

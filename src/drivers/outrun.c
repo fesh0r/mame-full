@@ -1025,6 +1025,8 @@ static unsigned char ctrl1;
 
 static WRITE16_HANDLER( outrun_ctrl1_w )
 {
+/* sound be sound cpu reset, not 2nd 68k cpu? */
+#if 0
 	if(ACCESSING_LSB) {
 		int changed = data ^ ctrl1;
 		ctrl1 = data;
@@ -1042,11 +1044,13 @@ static WRITE16_HANDLER( outrun_ctrl1_w )
 		/* bits 2-3 continuously change: 00-01-10-11; this is the same that
 		   gets written to 140030 so is probably input related */
 	}
+#endif
 }
 
 static void outrun_reset(void)
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 }
 
 
@@ -1169,6 +1173,9 @@ static MACHINE_INIT( outrun ){
 	sys16_gr_colorflip[1][3]=0x00 / 2;
 
 	sys16_gr_second_road = &sys16_extraram[0x8000];
+
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+
 }
 
 static MACHINE_INIT( toutrun )

@@ -807,6 +807,11 @@ static MACHINE_DRIVER_START( mastkin )
 	MDRV_NVRAM_HANDLER(mastkin)
 MACHINE_DRIVER_END
 
+static MACHINE_INIT( wizzquiz )
+{
+	cpu_setbank(1,memory_region(REGION_USER1));
+}
+
 static MACHINE_DRIVER_START( wizzquiz )
 
 	/* basic machine hardware */
@@ -816,6 +821,7 @@ static MACHINE_DRIVER_START( wizzquiz )
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_NVRAM_HANDLER(NULL)
+	MDRV_MACHINE_INIT(wizzquiz)
 MACHINE_DRIVER_END
 
 /***************************************************************************
@@ -1012,6 +1018,49 @@ ROM_END
 
 ROM_START( wizzquiz )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "pros.rom",     0xe000, 0x2000, BAD_DUMP CRC(174e58a2) SHA1(0f84c96fb5a1a49f3ced73c454104d7fabb96693) )
+
+	ROM_REGION( 0x40000, REGION_USER1, 0 )    /* questions data */
+	ROM_LOAD( "sn1.rom",      0x02000, 0x6000, CRC(0ae28676) SHA1(40dbf84b710a8d92939fb698f0393023462f6b23) )
+	ROM_CONTINUE(             0x00000, 0x2000 )
+	ROM_LOAD( "sn2.rom",      0x0a000, 0x6000, CRC(f2b7374a) SHA1(c0afcca551523748dd236254a0765ffd949a7f6d) )
+	ROM_CONTINUE(             0x08000, 0x2000 )
+	ROM_LOAD( "tvmov.rom",    0x12000, 0x6000, CRC(921f551d) SHA1(2077ee5f29689ac46c932b74e63a482adcdc7670) )
+	ROM_CONTINUE(             0x10000, 0x2000 )
+	ROM_LOAD( "2tvmov.rom",   0x1a000, 0x6000, CRC(1ed44df6) SHA1(871a53340ad396ff96a5c57f1c7fcb0cd5931301) )
+	ROM_CONTINUE(             0x18000, 0x2000 )
+	ROM_LOAD( "sport1.rom",   0x22000, 0x6000, CRC(3b7f2ce4) SHA1(f655995961db6782c477b46e4c2478e367ff0d44) )
+	ROM_CONTINUE(             0x20000, 0x2000 )
+	ROM_LOAD( "sport2.rom",   0x2a000, 0x6000, CRC(5a5b41cd) SHA1(31b2cdc74925b4666820d1d6febcb1358312bbdf) )
+	ROM_CONTINUE(             0x28000, 0x2000 )
+	ROM_LOAD( "pop1.rom",     0x32000, 0x6000, CRC(61f60def) SHA1(3a3508d2cc48654643d16dc607e6957d8e8b0270) )
+	ROM_CONTINUE(             0x30000, 0x2000 )
+	ROM_LOAD( "pop2.rom",     0x3a000, 0x6000, CRC(14dbfa23) SHA1(71a0124de99c7d4401cf24facc9460360e34c904) )
+	ROM_CONTINUE(             0x38000, 0x2000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "zandz.2c",     0x0000, 0x2000, CRC(3daca93a) SHA1(743c2b787aeb2c893ea476efc95d92e33b9bd159) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom.16h",      0x0000, 0x2000, CRC(e6728bda) SHA1(8bd029af5136b0ed6c0087989c69f0b1c23305fb) )
+	ROM_LOAD( "rom.15h",      0x2000, 0x2000, CRC(9c067ef4) SHA1(2a66beee4fa76d40ca18637c0061b196d3873df3) )
+	ROM_LOAD( "rom.14h",      0x4000, 0x2000, CRC(3bbad920) SHA1(f5c491f37aa6855181c62fe6bb2975c7d011cc72) )
+
+	ROM_REGION( 0x4000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom.11c",      0x0000, 0x2000, CRC(87d060d4) SHA1(22da2dfaf71d78a4789ca34c27571733ab65ea30) )
+	ROM_LOAD( "rom.14c",      0x2000, 0x2000, CRC(5bff1607) SHA1(20c4b74c93511f9cafd6e3f2d048baad3a3a8aa4) )
+
+	ROM_REGION( 0x0220, REGION_PROMS, 0 )
+	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, CRC(d55f30b5) SHA1(4d6a851f4886778307f75771645078b97ad55f5f) ) /* palette */
+	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, CRC(d2ba4d32) SHA1(894b5cedf01ba9225a0d6215291857e455b84903) ) /* sprite lookup table */
+	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */	
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
+	ROM_LOAD( "361-d18.9c",   0x0000, 0x2000, CRC(f546a56b) SHA1(caee3d8546eb7a75ce2a578c6a1a630246aec6b8) )
+ROM_END
+
+ROM_START( wizzquza )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "ic9_a1.bin",   0xe000, 0x2000, CRC(608e1ff3) SHA1(f3350a3367df59ec1780bb22c7a6a227e7b10d5e) )
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 )    /* questions data */
@@ -1048,6 +1097,9 @@ ROM_START( wizzquiz )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, CRC(d55f30b5) SHA1(4d6a851f4886778307f75771645078b97ad55f5f) ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, CRC(d2ba4d32) SHA1(894b5cedf01ba9225a0d6215291857e455b84903) ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, CRC(053e5861) SHA1(6740a62cf7b6938a4f936a2fed429704612060a5) ) /* char lookup table */
+
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	/* 64k for speech rom */
+	ROM_LOAD( "361-d18.9c",   0x0000, 0x2000, CRC(f546a56b) SHA1(caee3d8546eb7a75ce2a578c6a1a630246aec6b8) )
 ROM_END
 
 
@@ -1127,4 +1179,5 @@ GAME( 1983, hyprolym, trackfld, trackfld, trackfld, trackfld, ROT0, "Konami", "H
 GAME( 1983, hyprolyb, trackfld, hyprolyb, trackfld, trackfld, ROT0, "bootleg", "Hyper Olympic (bootleg)" )
 GAME( 1996, atlantol, trackfld, hyprolyb, atlantol,	atlantol, ROT0, "bootleg", "Atlant Olimpic" )
 GAMEX(1988, mastkin,  0,        mastkin,  mastkin,  mastkin,  ROT0, "Du Tech", "The Masters of Kin", GAME_WRONG_COLORS )
-GAME( 1985, wizzquiz, 0,        wizzquiz, wizzquiz, wizzquiz, ROT0, "Zilec - Zenitone", "Wizz Quiz (version 4)" )
+GAMEX(1985, wizzquiz, 0,        wizzquiz, wizzquiz, wizzquiz, ROT0, "Konami", "Wizz Quiz (version ?)", GAME_NOT_WORKING )
+GAME( 1985, wizzquza, wizzquiz, wizzquiz, wizzquiz, wizzquiz, ROT0, "Zilec - Zenitone", "Wizz Quiz (version 4)" )

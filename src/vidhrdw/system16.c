@@ -992,7 +992,7 @@ VIDEO_START( hangon ){
 }
 
 
-VIDEO_START( system18 ){
+VIDEO_START( system18old ){
 	int i;
 
 	sys16_bg1_trans=1;
@@ -1318,7 +1318,7 @@ WRITE16_HANDLER( sys18_extrombank_w )
 	}
 }
 
-VIDEO_UPDATE( system18 ){
+VIDEO_UPDATE( system18old ){
 	if (!sys16_refreshenable)
 	{
 		/* should it REALLY not clear the bitmap? ddcrew vdp gfx look ugly if i don't do it like this */
