@@ -1,6 +1,6 @@
 #include <string.h>
 #include "imgtool.h"
-#include "osdutils.h"
+#include "mess/msdos/osdutils.h"
 
 struct filter_eoln_state
 {

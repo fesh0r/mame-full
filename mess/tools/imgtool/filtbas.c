@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include <assert.h>
 #include "imgtool.h"
-#include "osdutils.h"
+#include "mess/msdos/osdutils.h"
 
 struct basictoken_tableent {
 	UINT8 shift;
