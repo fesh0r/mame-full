@@ -116,7 +116,7 @@ static int is_paused;
 //	customize_input
 //============================================================
 
-static void customize_input(const char *title, int player, int category)
+static void customize_input(const char *title, int cust_type, int player, int category)
 {
 	dialog_box *dlg;
 	struct InputPort *in;
@@ -126,7 +126,7 @@ static void customize_input(const char *title, int player, int category)
 	int i;
 	int this_category, this_player;
 
-	artwork_get_inputscreen_customizations(&png, customizations, sizeof(customizations) / sizeof(customizations[0]));
+	artwork_get_inputscreen_customizations(&png, cust_type, customizations, sizeof(customizations) / sizeof(customizations[0]));
 
 	dlg = win_dialog_init(title);
 	if (!dlg)
@@ -184,7 +184,7 @@ done:
 
 static void setjoystick(int joystick_num)
 {
-	customize_input("Joysticks/Controllers", joystick_num, INPUT_CATEGORY_CONTROLLER);
+	customize_input("Joysticks/Controllers", ARTWORK_CUSTTYPE_JOYSTICK, joystick_num, INPUT_CATEGORY_CONTROLLER);
 }
 
 
@@ -195,7 +195,7 @@ static void setjoystick(int joystick_num)
 
 static void setkeyboard(void)
 {
-	customize_input("Emulated Keyboard", 0, INPUT_CATEGORY_KEYBOARD);
+	customize_input("Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CATEGORY_KEYBOARD);
 }
 
 

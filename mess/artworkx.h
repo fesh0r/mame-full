@@ -15,6 +15,19 @@
 #include "artwork.h"
 #include "png.h"
 
+
+
+/***************************************************************************
+
+	Constants
+
+***************************************************************************/
+
+#define ARTWORK_CUSTTYPE_JOYSTICK	0
+#define ARTWORK_CUSTTYPE_KEYBOARD	1
+
+
+
 /***************************************************************************
 
 	Globals
@@ -22,6 +35,8 @@
 ***************************************************************************/
 
 extern struct artwork_callbacks mess_artwork_callbacks;
+
+
 
 /***************************************************************************
 
@@ -36,6 +51,8 @@ struct inputform_customization
 	int width, height;
 };
 
+
+
 /***************************************************************************
 
 	Prototypes
@@ -44,7 +61,9 @@ struct inputform_customization
 
 void artwork_use_device_art(mess_image *img, const char *defaultartfile);
 
-void artwork_get_inputscreen_customizations(struct png_info *png,
-	struct inputform_customization *customizations, int length);
+void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
+	struct inputform_customization *customizations, int customizations_length);
+
+
 
 #endif /* ARTWORKX_H */

@@ -15,15 +15,6 @@
 
 /***************************************************************************
 
-	Constants & macros
-
-***************************************************************************/
-
-#define PNG_FILE		"ctrlr.png"
-#define INI_FILE		"ctrlr.ini"
-
-/***************************************************************************
-
 	Local variables
 
 ***************************************************************************/
@@ -123,7 +114,7 @@ static char *strip_space(char *string)
 	return start;
 }
 
-void artwork_get_inputscreen_customizations(struct png_info *png,
+void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	struct inputform_customization *customizations, int customizations_length)
 {
 	mame_file *file;
@@ -133,13 +124,20 @@ void artwork_get_inputscreen_customizations(struct png_info *png,
 	int x1, y1, x2, y2;
 	struct ik *pik;
 	const char *pik_name;
+	static const char *cust_files[] =
+	{
+		"ctrlr.png",		"ctrlr.ini",
+		"keyboard.png",		"keyboard.ini"
+	};
+
+	assert(cust_type < ((sizeof(cust_files) / sizeof(cust_files[0])) / 2));
 
 	/* subtract one from the customizations length; so we can place IPT_END */
 	customizations_length--;
 
 	/* open the PNG, if available */
 	memset(png, 0, sizeof(*png));
-	file = mame_fopen(Machine->gamedrv->name, PNG_FILE, FILETYPE_ARTWORK, 0);
+	file = mame_fopen(Machine->gamedrv->name, cust_files[cust_type * 2 + 0], FILETYPE_ARTWORK, 0);
 	if (file)
 	{
 		png_read_file(file, png);
@@ -147,7 +145,7 @@ void artwork_get_inputscreen_customizations(struct png_info *png,
 	}
 
 	/* open the INI file, if available */
-	file = mame_fopen(Machine->gamedrv->name, INI_FILE, FILETYPE_ARTWORK, 0);
+	file = mame_fopen(Machine->gamedrv->name, cust_files[cust_type * 2 + 1], FILETYPE_ARTWORK, 0);
 	if (file)
 	{
 		/* loop until we run out of lines */
