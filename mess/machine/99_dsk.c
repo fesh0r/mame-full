@@ -9,7 +9,7 @@
 	  sectors per track.  (Not emulated)
 	* CorComp FDC.  Specs unknown, but it supports DD.  (Not emulated)
 	* SNUG BwG.  A nice DD disk controller.  Supports 18 sectors per track.
-	* Myarc HFDC.  Extremely elaborate, supports DD (an HD upgrade may have
+	* Myarc HFDC.  Extremely elaborate, supports DD (a HD upgrade may have
 	  existed) and MFM harddisks.  (Preliminary emulation)
 
 	An alternative was installing the hexbus controller (which was just a
@@ -24,10 +24,12 @@
 
 #include "devices/basicdsk.h"
 #include "includes/wd179x.h"
+#include "smc92x4.h"
 #include "ti99_4x.h"
 #include "99_dsk.h"
 #include "mm58274c.h"
 
+static int use_80_track_drives;
 
 int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 {
@@ -73,7 +75,7 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 				&& (image_length(IO_FLOPPY, id) == totsecs*256))
 			{
 				/* set geometry */
-				basicdsk_set_geometry(id, vib.tracksperside, vib.sides, vib.secspertrack, 256, 0, 0);
+				basicdsk_set_geometry(id, vib.tracksperside, vib.sides, vib.secspertrack, 256, 0, 0, use_80_track_drives && (vib.density < 3));
 				done = TRUE;
 			}
 		}
@@ -86,35 +88,42 @@ int ti99_floppy_load(int id, mame_file *fp, int open_mode)
 			{
 			case 1*40*9*256:	/* 90kbytes: SSSD */
 			default:
-				basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
+				basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0, use_80_track_drives);
 				break;
 
 			case 2*40*9*256:	/* 180kbytes: either DSSD or 18-sector-per-track
 								SSDD.  We assume DSSD since DSSD is more common
 								and is supported by the original TI SD disk
 								controller. */
-				basicdsk_set_geometry(id, 40, 2, 9, 256, 0, 0);
+				basicdsk_set_geometry(id, 40, 2, 9, 256, 0, 0, use_80_track_drives);
 				break;
 
 			case 1*40*16*256:	/* 160kbytes: 16-sector-per-track SSDD (standard
-								format for TI DD disk controller prototype, TI
-								hexbus disk controller, and possibly some Myarc
-								disk controller) */
-				basicdsk_set_geometry(id, 40, 1, 16, 256, 0, 0);
+								format for TI DD disk controller prototype, and
+								the TI hexbus disk controller???) */
+				basicdsk_set_geometry(id, 40, 1, 16, 256, 0, 0, use_80_track_drives);
 				break;
 
 			case 2*40*16*256:	/* 320kbytes: 16-sector-per-track DSDD (standard
-								format for TI DD disk controller prototype, TI
-								hexbus disk controller, and possibly some Myarc
-								disk controller) */
-				basicdsk_set_geometry(id, 40, 2, 16, 256, 0, 0);
+								format for TI DD disk controller prototype, and
+								TI hexbus disk controller???) */
+				basicdsk_set_geometry(id, 40, 2, 16, 256, 0, 0, use_80_track_drives);
 				break;
 
 			case 2*40*18*256:	/* 360kbytes: 18-sector-per-track DSDD (standard
 								format for most third-party DD disk controllers,
 								but reportedly not supported by the original TI
 								DD disk controller) */
-				basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0);
+				basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0, use_80_track_drives);
+				break;
+
+			case 2*80*18*256:	/* 720kbytes: 18-sector-per-track 80-track DSDD
+								(Myarc only) */
+				basicdsk_set_geometry(id, 80, 2, 18, 256, 0, 0, /*use_80_track_drives*/FALSE);
+				break;
+
+			case 2*80*36*256:	/* 1.44Mbytes: DSHD (Myarc only) */
+				basicdsk_set_geometry(id, 80, 2, 36, 256, 0, 0, /*use_80_track_drives*/FALSE);
 				break;
 			}
 		}
@@ -197,6 +206,8 @@ void ti99_fdc_init(void)
 
 	wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
 	wd179x_set_density(DEN_FM_LO);
+
+	use_80_track_drives = FALSE;
 }
 
 
@@ -472,6 +483,8 @@ void ti99_bwg_init(void)
 
 
 	mm58274c_init();	/* initialize the RTC */
+
+	use_80_track_drives = FALSE;
 }
 
 
@@ -744,7 +757,26 @@ static int hfdc_ram_offset[3];
 static int hfdc_rom_offset;
 static int cru_sel;
 static UINT8 *hfdc_ram;
+static int hfdc_irq_state;
 
+static data8_t hfdc_dma_read_callback(int which, offs_t offset)
+{
+	(void) which;
+	return hfdc_ram[offset & 0x7fff];
+}
+
+static void hfdc_dma_write_callback(int which, offs_t offset, data8_t data)
+{
+	(void) which;
+	hfdc_ram[offset & 0x7fff] = data;
+}
+
+static void hfdc_int_callback(int which, int state)
+{
+	assert(which == 0);
+
+	hfdc_irq_state = state;
+}
 
 /*
 	Reset fdc card, set up handlers
@@ -767,11 +799,15 @@ void ti99_hfdc_init(void)
 
 	ti99_exp_set_card_handlers(0x1100, & hfdc_handlers);
 
-	//wd179x_init(WD_TYPE_179X, fdc_callback);		/* initialize the floppy disk controller */
+	/* initialize the floppy disk controller */
+	smc92x4_init(0, hfdc_dma_read_callback, hfdc_dma_write_callback, hfdc_int_callback);
+	//wd179x_init(WD_TYPE_179X, fdc_callback);		
 	//wd179x_set_density(DEN_MFM_LO);
 
 
 	mm58274c_init();	/* initialize the RTC */
+
+	use_80_track_drives = TRUE;
 }
 
 
@@ -794,12 +830,12 @@ static int hfdc_cru_r(int offset)
 				55 -> 4 fast 40-track DD drives
 				aa -> 4 80-track DD drives
 				00 -> 4 80-track HD drives */
-			reply = 0x55;	
+			reply = use_80_track_drives ? 0x00 : 0x55;
 		else
 		{
 			reply = 0;
-			/*if (hfdc_interrupt)
-				reply |= 1;*/
+			if (hfdc_irq_state)
+				reply |= 1;
 			if (motor_on)
 				reply |= 2;
 			/*if (hfdc_dma_in_progress)
@@ -830,6 +866,8 @@ static void hfdc_cru_w(int offset, int data)
 
 	case 1:
 		/* reset fdc (active low) */
+		if (data)
+			smc92x4_reset(0);
 		break;
 
 	case 2:
@@ -906,7 +944,20 @@ static READ_HANDLER(hfdc_mem_r)
 		/* disk controller */
 		/* >4fd0: data read?? */
 		/* >4fd4: controller status? */
-		logerror("hfdc9234 read %d\n", offset);
+		switch (offset)
+		{
+		case 0x0fd0:
+			reply = smc92x4_r(0, 0);
+			//logerror("hfdc9234 data read\n");
+			break;
+
+		case 0x0fd4:
+			reply = smc92x4_r(0, 1);
+			//logerror("hfdc9234 status read\n");
+			break;
+		}
+		if (offset >= 0x0fd8)
+			logerror("hfdc9234 read %d\n", offset);
 	}
 	else if (offset < 0x1000)
 	{
@@ -943,9 +994,22 @@ static WRITE_HANDLER(hfdc_mem_w)
 	else if (offset < 0x0fe0)
 	{
 		/* disk controller */
-		/* >4fd4: data write? */
+		/* >4fd2: data write? */
 		/* >4fd6: command write? */
-		logerror("hfdc9234 write %d %d\n", offset, data);
+		switch (offset)
+		{
+		case 0x0fd2:
+			smc92x4_w(0, 0, data);
+			//logerror("hfdc9234 data write %d\n", data);
+			break;
+
+		case 0x0fd6:
+			smc92x4_w(0, 1, data);
+			//logerror("hfdc9234 command write %d\n", data);
+			break;
+		}
+		if (offset >= 0x0fd8)
+			logerror("hfdc9234 write %d %d\n", offset, data);
 	}
 	else if (offset < 0x1000)
 	{
