@@ -440,7 +440,9 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/28f008sa.o \
 		  $(OBJ)/mess/systems/studio2.o  \
 		  $(OBJ)/mess/vidhrdw/studio2.o  \
-		  $(OBJ)/mess/systems/channelf.o  \
+	  $(OBJ)/mess/systems/channelf.o \
+	  $(OBJ)/mess/vidhrdw/channelf.o \
+	  $(OBJ)/mess/sndhrdw/channelf.o \
           $(OBJ)/mess/machine/tms9901.o  \
           $(OBJ)/mess/machine/ti99_4x.o  \
           $(OBJ)/mess/systems/ti99_4x.o  \
