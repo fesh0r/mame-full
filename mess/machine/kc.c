@@ -1,22 +1,9 @@
-/******************************************************************************
-
-    kc.c
-	system driver
-
-	Kevin Thacker [MESS driver]
-
- ******************************************************************************/
 #include "driver.h"
 #include "cpuintrf.h"
 #include "machine/z80fmly.h"
 #include "cpu/z80/z80.h"
-#include "vidhrdw/kc.h"
+#include "includes/kc.h"
 
-#define KC85_4_SCREEN_WIDTH 320
-#define KC85_4_SCREEN_HEIGHT (32*8)
-
-#define KC85_4_SCREEN_PIXEL_RAM_SIZE 0x04000
-#define KC85_4_SCREEN_COLOUR_RAM_SIZE 0x04000
 
 static void kc85_4_update_0x0c000(void);
 static void kc85_4_update_0x0e000(void);
@@ -24,9 +11,6 @@ static void kc85_4_update_0x08000(void);
 //static void kc85_4_update_0x04000(void);
 
 unsigned char *kc85_ram;
-
-unsigned char *kc85_4_display_video_ram;
-unsigned char *kc85_4_video_ram;
 
 static int kc85_4_pio_data[4];
 
@@ -73,37 +57,74 @@ bit 3: TONE 3
 bit 2: TONE 2
 bit 1: TONE 1
 bit 0: TRUCK */
+
+
+/* load image */
+int kc_load(char *filename, int addr)
+{
+	void *file;
+
+	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_IMAGE_R,OSD_FOPEN_READ);
+
+	if (file)
+	{
+		int datasize;
+		unsigned char *data;
+
+		/* get file size */
+		datasize = osd_fsize(file);
+
+		if (datasize!=0)
+		{
+			/* malloc memory for this data */
+			data = malloc(datasize);
+
+			if (data!=NULL)
+			{
+				int i;
+
+				/* read whole file */
+				osd_fread(file, data, datasize);
+
+				for (i=0; i<datasize; i++)
+				{
+					cpu_writemem16(addr+i, data[i]);
+				}
+
+				/* close file */
+				osd_fclose(file);
+
+				free(data);
+
+				logerror("File loaded!\n");
+
+				/* ok! */
+				return 1;
+			}
+			osd_fclose(file);
+
+		}
+	}
+
+	return 0;
+}
+
+/**********************/
+/* KEYBOARD EMULATION */
+/**********************/
+
+/* The basic transmit proceedure is working, keys are received */
+/* Todo: Key-repeat, and allowing the same key to be pressed twice! */
+
+//#define KC_KEYBOARD_DEBUG
+
 /*
-Hi!
 
-Sorry for the late answer. I'm not at the university anymore so I'm
-not reading the mail there very often. The address still works but
-i've registered an address at gmx.de that I can access much more
-easily from home: Torsten.Paul@gmx.de
+  E-mail from Torsten Paul about the keyboard:
 
-> From: "Kev Thacker" <kev@distdevs.co.uk>
-> Date: Mon, 6 Mar 2000 11:23:12 -0000
->
-> I have started a KC85/4 emulation for the MESS project. mess.emuverse.com
->
-Yes, I already noticed this. Currently I don't have the time to follow
-the MAME/MESS developement but I'm reading emulator news at retrogames.com
-so atleast I can read about new interesting things.
+	Torsten.Paul@gmx.de
 
-> I used a lot of info that I found from looking at the source code to your
-> emulator,
->
-The naming of the roms looked a bit familar too ;-).
-
-> and reading the docs from another emulator. I am lucky because in MESS the
-> Z80 PIO, Z80 CTC,
-> and Z80 are already written, so all I needed to write was the code to link
-> these together.
->
-Yup, the CTC is quite a complex thing to emulate. Fortunately the more
-difficult PIO modes are not used by the KC.
-
-> I hope that you will be able to help me so I can add keyboard
+"> I hope that you will be able to help me so I can add keyboard
 > emulation to it.
 >
 Oh yes the keyboard caused me a lot of trouble too. I still don't
@@ -175,170 +196,454 @@ twice for each keypress with a spacing of 14 * 1.024 ms. If the key
 is still pressed the double word is repeated after 19 * 1.024 ms.
 
 The impulses trigger the pio interrupt line for channel B that
-triggers the time measurement by the CTC channel 3.
-
-That's all for today :-). I'm sure I've forgotten some things so
-feel free to mail again...
-
-ciao,
-  Torsten.
+triggers the time measurement by the CTC channel 3." */
 
 
---
-Torsten.Paul@gmx.de      True wealth is measured not by what you
-//     accumulate, but by what you pass
-__________________ooO_(+ +)_Ooo__________ on to others. (Larry Wall)
-U
+/* 
+
+	The CTC timer 3 count is initialised at 0x08f and counts down.
+  
+	The pulses are connected into PIO /BSTB and generate a interrupt
+	on a positive edge. A pulse will not get through if BRDY from PIO is
+	not true!
+	
+	Then the interrupt occurs, the CTC count is read. The time between
+	pulses is therefore measured by the CTC.
+
+	The time is checked and depending on the value the KC detects
+	a 1 or 0 bit sent from the keyboard.
+
+	Summary From code below:
+
+	0x065<=count<0x078	-> 0 bit				"short pulse"
+	0x042<=count<0x065	-> 1 bit				"long pulse"
+	count<0x014			-> ignore
+	count>=0x078		-> ignore
+	0x014<=count<0x042	-> signal end of code	"very long pulse"
+	
+	codes are sent bit 0, bit 1, bit 2...bit 7. bit 0 is the state
+	of the shift key.
+
+	Torsten's e-mail indicates "short pulse" for 1 bit, and "long
+	pulse" for 0 bit, but I found this to be incorrect. However,
+	the timings are correct.
+
+
+	Keyboard reading procedure extracted from KC85/4 system rom:
+
+0345  f5        push    af
+0346  db8f      in      a,(#8f)			; get CTC timer 3 count
+0348  f5        push    af
+0349  3ea7      ld      a,#a7			; channel 3, enable int, select counter mode, control word
+										; write, software reset, time constant follows	
+034b  d38f      out     (#8f),a
+034d  3e8f      ld      a,#8f			; time constant
+034f  d38f      out     (#8f),a
+0351  f1        pop     af
+
+0352  fb        ei      
+0353  b7        or      a				; count is over
+0354  284d      jr      z,#03a3         ; 
+
+	;; check count is in range
+0356  fe14      cp      #14
+0358  3849      jr      c,#03a3         ; 
+035a  fe78      cp      #78
+035c  3045      jr      nc,#03a3        ; 
+
+	;; at this point, time must be between #14 and #77 to be valid
+
+	;; if >=#65, then carry=0, and a 0 bit has been detected
+
+035e  fe65      cp      #65
+0360  303d      jr      nc,#039f        ; (61)
+
+	;; if <#65, then a 1 bit has been detected. carry is set with the addition below.
+	;; a carry will be generated if the count is >#42
+
+	;; therefore for a 1 bit to be generated, then #42<=time<#65
+	;; must be true.
+
+0362  c6be      add     a,#be
+0364  3839      jr      c,#039f         ; (57)
+
+	;; this code appears to take the transmitted scan-code
+	;; and converts it into a useable code by the os???
+0366  e5        push    hl
+0367  d5        push    de
+	;; convert hardware scan-code into os code
+0368  dd7e0c    ld      a,(ix+#0c)
+036b  1f        rra     
+036c  ee01      xor     #01
+036e  dd6e0e    ld      l,(ix+#0e)
+0371  dd660f    ld      h,(ix+#0f)
+0374  1600      ld      d,#00
+0376  5f        ld      e,a
+0377  19        add     hl,de
+0378  7e        ld      a,(hl)
+0379  d1        pop     de
+037a  e1        pop     hl
+
+	;; shift lock pressed?
+037b  ddcb087e  bit     7,(ix+#08)
+037f  200a      jr      nz,#038b        
+	;; no.
+
+	;; alpha char?
+0381  fe40      cp      #40
+0383  3806      jr      c,#038b         
+0385  fe80      cp      #80
+0387  3002      jr      nc,#038b        
+	;; yes, it is a alpha char
+	;; force to lower case
+0389  ee20      xor     #20
+
+038b  ddbe0d    cp      (ix+#0d)		;; same as stored?
+038e  201d      jr      nz,#03ad		
+	
+	 ;; yes - must be held for a certain time before it can repeat?
+0390  f5        push    af
+0391  3ae0b7    ld      a,(#b7e0)
+0394  ddbe0a    cp      (ix+#0a)
+0397  3811      jr      c,#03aa        
+0399  f1        pop     af
+
+039a  dd340a    inc     (ix+#0a)		;; incremenent repeat count?
+039d  1804      jr      #03a3 
+
+	;; update scan-code received so far
+
+039f  ddcb0c1e  rr      (ix+#0c)		; shift in 0 or 1 bit depending on what has been selected
+
+03a3  db89      in      a,(#89)			; used to clear brdy
+03a5  d389      out     (#89),a
+03a7  f1        pop     af
+03a8  ed4d      reti    
+
+03aa  f1        pop     af
+03ab  1808      jr      #03b5           
+
+;; clear count
+03ad  dd360a00  ld      (ix+#0a),#00
+
+;; shift lock?
+03b1  fe16      cp      #16
+03b3  2809      jr      z,#03be         
+
+;; store char
+03b5  dd770d    ld      (ix+#0d),a
+03b8  ddcb08c6  set     0,(ix+#08)
+03bc  18e5      jr      #03a3           
+
+;; toggle shift lock on/off
+03be  dd7e08    ld      a,(ix+#08)
+03c1  ee80      xor     #80
+03c3  dd7708    ld      (ix+#08),a
+;; shift/lock was last key pressed
+03c6  3e16      ld      a,#16
+03c8  18eb      jr      #03b5           
+
+03ca  b7        or      a
+03cb  ddcb0846  bit     0,(ix+#08)
+03cf  c8        ret     z
+03d0  dd7e0d    ld      a,(ix+#0d)
+03d3  37        scf     
+03d4  c9        ret     
+03d5  cdcae3    call    #e3ca
+03d8  d0        ret     nc
+03d9  ddcb0886  res     0,(ix+#08)
+03dd  c9        ret     
+03de  cdcae3    call    #e3ca
+03e1  d0        ret     nc
+03e2  fe03      cp      #03
+03e4  37        scf     
+03e5  c8        ret     z
+03e6  a7        and     a
+03e7  c9        ret     
 */
 
-/* the following is a temporary key emulation. This works by poking OS
-variables. Thankyou to Torsten Paul for the details.
+/* number of keycodes that can be stored in queue */
+#define KC_KEYCODE_QUEUE_LENGTH 256
 
-  The actual key scanning uses a special transmission protocol where
-  pulses are measured by the CTC and PIO */
+/* no transmit is in progress, keyboard is idle ready to transmit a key */
+#define KC_KEYBOARD_TRANSMIT_IDLE	0x0001
+/* keyboard is transmitting a key-code */
+#define KC_KEYBOARD_TRANSMIT_ACTIVE	0x0002
 
-/* load image */
-int kc_load(char *filename, int addr)
+#define KC_KEYBOARD_NUM_LINES	9
+
+typedef struct kc_keyboard
 {
-	void *file;
+	/* list of stored keys */
+	unsigned char keycodes[KC_KEYCODE_QUEUE_LENGTH];
+	/* index of start of list */
+	int head;
+	/* index of end of list */
+	int tail;
 
-	file = osd_fopen(Machine->gamedrv->name, filename, OSD_FILETYPE_ROM,OSD_FOPEN_READ);
+	/* transmitting state */
+	int transmit_state;
 
-	if (file)
+	/* number of pulses remaining to be transmitted */
+	int	transmit_pulse_count_remaining;
+	/* count of pulses transmitted so far */
+	int transmit_pulse_count;
+
+	/* pulses to transmit */
+	unsigned char transmit_buffer[32];
+
+	/* transmit timer */
+	void	*transmit_timer;
+
+	/* update timer */
+	void	*update_timer;
+} kc_keyboard;
+
+/* previous state of keyboard - currently used to detect if a key has been pressed/released  since last scan */
+static int kc_previous_keyboard[KC_KEYBOARD_NUM_LINES-1];
+
+/* 
+	The kc keyboard is seperate from the kc base unit.
+
+	The keyboard emulation uses 2 timers:
+
+	update_timer is used to add scan-codes to the keycode list.
+	transmit_timer is used to transmit the scan-code to the kc.
+*/
+
+static kc_keyboard keyboard_data;
+static void kc_keyboard_attempt_transmit(void);
+static void kc_keyboard_update(int dummy);
+
+/* this is called at a regular interval */
+static void kc_keyboard_transmit_timer_callback(int dummy)
+{
+	if (keyboard_data.transmit_pulse_count_remaining!=0)
 	{
-		int datasize;
-		unsigned char *data;
+		int pulse_state;
+		/* byte containing pulse state */
+		int pulse_byte_count = keyboard_data.transmit_pulse_count>>3;
+		/* bit within byte containing pulse state */
+		int pulse_bit_count = 7-(keyboard_data.transmit_pulse_count & 0x07);
 
-		/* get file size */
-		datasize = osd_fsize(file);
+		/* get current pulse state */
+		pulse_state = (keyboard_data.transmit_buffer[pulse_byte_count]>>pulse_bit_count) & 0x01;
 
-		if (datasize!=0)
-		{
-			/* malloc memory for this data */
-			data = malloc(datasize);
+#ifdef KC_KEYBOARD_DEBUG
+		logerror("kc keyboard sending pulse: %02x\n",pulse_state);
+#endif
 
-			if (data!=NULL)
-			{
-				int i;
+		/* set pulse */
+		z80pio_bstb_w(0,pulse_state);
 
-				/* read whole file */
-				osd_fread(file, data, datasize);
+		/* update counts */
+		keyboard_data.transmit_pulse_count_remaining--;
+		keyboard_data.transmit_pulse_count++;
 
-				for (i=0; i<datasize; i++)
-				{
-					cpu_writemem16(addr+i, data[i]);
-				}
+	}
+	else
+	{
+		keyboard_data.transmit_state = KC_KEYBOARD_TRANSMIT_IDLE;
+	}
+}
 
-				/* close file */
-				osd_fclose(file);
+/* add a pulse */
+static void kc_keyboard_add_pulse_to_transmit_buffer(int pulse_state)
+{
+	int pulse_byte_count = keyboard_data.transmit_pulse_count_remaining>>3;
+	int pulse_bit_count = 7-(keyboard_data.transmit_pulse_count_remaining & 0x07);
 
-				free(data);
-
-				logerror("File loaded!\r\n");
-
-				/* ok! */
-				return 1;
-			}
-			osd_fclose(file);
-
-		}
+	if (pulse_state)
+	{
+		keyboard_data.transmit_buffer[pulse_byte_count] |= (1<<pulse_bit_count);
+	}
+	else
+	{
+		keyboard_data.transmit_buffer[pulse_byte_count] &= ~(1<<pulse_bit_count);
 	}
 
-	return 0;
+	keyboard_data.transmit_pulse_count_remaining++;
 }
 
 
-
-
-
-#define KC85_4_KEYCODE_QUEUE_LENGTH 256
-static unsigned char kc85_4_keycodes[KC85_4_KEYCODE_QUEUE_LENGTH];
-static int kc85_4_keycodes_head;
-static int kc85_4_keycodes_tail;
-
-static void kc85_4_keyboard_update(int);
-
-
 /* initialise keyboard queue */
-static void kc85_4_keyboard_init(void)
+static void kc_keyboard_init(void)
 {
-	/* head and tail of list is at beginning */
-	kc85_4_keycodes_head = kc85_4_keycodes_tail = 0;
+	int i;
 
-	/* 50hz is just a arbitrary value */
-	timer_pulse(TIME_IN_HZ(50), 0, kc85_4_keyboard_update);
+	/* head and tail of list is at beginning */
+	keyboard_data.head = (keyboard_data.tail = 0);
+
+	/* 50hz is just a arbitrary value - used to put scan-codes into the queue for transmitting */
+	keyboard_data.update_timer = timer_pulse(TIME_IN_HZ(50), 0, kc_keyboard_update);
+
+	/* timer to transmit pulses to kc base unit */
+	keyboard_data.transmit_timer = timer_pulse(TIME_IN_MSEC(1.024), 0, kc_keyboard_transmit_timer_callback);
+
+	/* kc keyboard is not transmitting */
+	keyboard_data.transmit_state = KC_KEYBOARD_TRANSMIT_IDLE;
+
+	/* setup transmit parameters */
+	keyboard_data.transmit_pulse_count_remaining = 0;
+	keyboard_data.transmit_pulse_count = 0;
+	
+	/* set initial state */
+	z80pio_bstb_w(0,0);
+
+
+	for (i=0; i<KC_KEYBOARD_NUM_LINES; i++)
+	{
+		/* read input port */
+		kc_previous_keyboard[i] = readinputport(i);
+	}
 }
 
 
 /* add a key to the queue */
-static void kc85_4_queue_key(int code)
+static void kc_keyboard_queue_scancode(int scan_code)
 {
 	/* add a key */
-	kc85_4_keycodes[kc85_4_keycodes_tail] = code;
+	keyboard_data.keycodes[keyboard_data.tail] = scan_code;
 	/* update next insert position */
-	kc85_4_keycodes_tail = (kc85_4_keycodes_tail + 1) % KC85_4_KEYCODE_QUEUE_LENGTH;
+	keyboard_data.tail = (keyboard_data.tail + 1) % KC_KEYCODE_QUEUE_LENGTH;
 }
 
-/* 1 = true, to send keycode, 0 = false, do not send keycode */
-static int kc85_4_can_send_keycode(void)
+
+/* exit keyboard */
+static void kc_keyboard_exit(void)
 {
-	/* temporary until correct hardware key emulation has been done */
-	/* check if os has read key yet */
+	/* turn off update timer */
+	if (keyboard_data.update_timer!=NULL)
+	{
+		timer_remove(keyboard_data.update_timer);
+		keyboard_data.update_timer = NULL;
+	}
 
-	int flag;
-
-	flag = cpu_readmem16(0x01f8);
-	flag = flag & 0x01;
-
-	if (flag==0)
-		return 1;
-
-	return 0;
+	/* turn off transmit timer */
+	if (keyboard_data.transmit_timer!=NULL)
+	{
+		timer_remove(keyboard_data.transmit_timer);
+		keyboard_data.transmit_timer = NULL;
+	}
 }
 
-static void kc85_4_send_keycode(int code)
+/* fill transmit buffer with pulse for 0 or 1 bit */
+static void kc_keyboard_add_bit(int bit)
 {
-	int flag;
+	if (bit)
+	{
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+	}
+	else
+	{
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+		kc_keyboard_add_pulse_to_transmit_buffer(0);
+	}
 
-	/* temporary until correct hardware key emulation has been done */
-
-	/* write code into OS variables */
-	cpu_writemem16(0x01fd, code);
-
-	/* indicate char is ready in OS variables */
-	flag = cpu_readmem16(0x01f8);
-	flag |= 0x01;
-	cpu_writemem16(0x01f8, flag);
+	/* "end of bit" pulse -> end of time for bit */
+	kc_keyboard_add_pulse_to_transmit_buffer(1);
 }
 
-#define KC85_4_KEYBOARD_NUM_LINES	9
 
-/* this table will eventually hold the actual keycodes */
-//static int kc85_4_keycode_translation[64];
+static void kc_keyboard_begin_transmit(int scan_code)
+{
+	int i;
+	int scan;
 
+	keyboard_data.transmit_pulse_count_remaining = 0;
+	keyboard_data.transmit_pulse_count = 0;
 
-/* previous state of keyboard - currently used to detect if a key has been pressed/released  since last scan */
-static int kc85_4_previous_keyboard[KC85_4_KEYBOARD_NUM_LINES];
+	/* initial pulse -> start of code */
+	kc_keyboard_add_pulse_to_transmit_buffer(1);
+
+	scan = scan_code;
+
+	/* state of shift key */
+	kc_keyboard_add_bit(((readinputport(8) & 0x01)^0x01));
+	
+	for (i=0; i<6; i++)
+	{
+		/* each bit in turn */
+		kc_keyboard_add_bit(scan & 0x01);
+		scan = scan>>1;
+	}
+
+	/* signal end of scan-code */
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+
+	kc_keyboard_add_pulse_to_transmit_buffer(1);
+
+	/* back to original state */
+	kc_keyboard_add_pulse_to_transmit_buffer(0);
+
+}
+
+/* attempt to transmit a new keycode to the base unit */
+static void kc_keyboard_attempt_transmit(void)
+{
+	/* is the keyboard transmit is idle */
+	if (keyboard_data.transmit_state == KC_KEYBOARD_TRANSMIT_IDLE)
+	{
+		/* keycode available? */
+		if (keyboard_data.head!=keyboard_data.tail)
+		{
+			int code;
+
+			keyboard_data.transmit_state = KC_KEYBOARD_TRANSMIT_ACTIVE;
+
+			/* get code */
+			code = keyboard_data.keycodes[keyboard_data.head];
+			/* update start of list */
+			keyboard_data.head = (keyboard_data.head + 1) % KC_KEYCODE_QUEUE_LENGTH;
+
+			/* setup transmit buffer with scan-code */
+			kc_keyboard_begin_transmit(code);
+		}
+	}
+}
+
 
 /* update keyboard */
-void	kc85_4_keyboard_update(int dummy)
+static void	kc_keyboard_update(int dummy)
 {
 	int i;
 
-	/* scan all lines */
-	for (i=0; i<8; i++)
+	/* scan all lines (excluding shift) */
+	for (i=0; i<KC_KEYBOARD_NUM_LINES-1; i++)
 	{
 		int b;
 		int keyboard_line_data;
 		int changed_keys;
-		int mask = 0x080;
+		int mask = 0x001;
 
 		/* read input port */
 		keyboard_line_data = readinputport(i);
 		/* identify keys that have changed */
-		changed_keys = keyboard_line_data ^ kc85_4_previous_keyboard[i];
+		changed_keys = keyboard_line_data ^ kc_previous_keyboard[i];
 		/* store input port for next time */
-		kc85_4_previous_keyboard[i] = keyboard_line_data;
+		kc_previous_keyboard[i] = keyboard_line_data;
 
 		/* scan through each bit */
 		for (b=0; b<8; b++)
@@ -352,140 +657,25 @@ void	kc85_4_keyboard_update(int dummy)
 				if ((keyboard_line_data & mask)!=0)
 				{
 					/* pressed */
-					int ascii_code;
-					int fake_code;
+					int code;
 
 					/* generate fake code */
-					fake_code = (i<<3) | (7-b);
-
-					if ((fake_code>=0) && (fake_code<=26))
-					{
-						/* shift? */
-						if ((readinputport(8) & 0x03)!=0)
-						{
-							ascii_code = fake_code + 'A';
-							/* lookup actual kc85/4 keycode - and add to queue */
-							kc85_4_queue_key(ascii_code);
-
-						}
-						else
-						{
-							ascii_code = fake_code + 'a';
-							/* lookup actual kc85/4 keycode - and add to queue */
-							kc85_4_queue_key(ascii_code);
-						}
-					}
-					else if ((fake_code>=27) && (fake_code<=(27+9)))
-					{
-						if (fake_code==27)
-						{
-							if ((readinputport(8) & 0x03)!=0)
-							{
-								ascii_code = '@';
-							}
-							else
-							{
-								ascii_code = '0';
-							}
-						}
-						else
-						{
-
-							if ((readinputport(8) & 0x03)!=0)
-							{
-								ascii_code = fake_code - 27 + '!';
-							}
-							else
-							{
-								ascii_code = fake_code + '0' - 27;
-							}
-						}
-						/* lookup actual kc85/4 keycode - and add to queue */
-						kc85_4_queue_key(ascii_code);
-					}
-					else if (fake_code == ((6*8) + 4))
-					{
-						kc85_4_queue_key(13);
-					}
-					else if (fake_code == ((5*8) + 5))
-					{
-						kc85_4_queue_key(127);
-					}
-					else if (fake_code == ((6*8) + 5))
-					{
-						kc85_4_queue_key(32);
-					}
-					else if (fake_code == ((6*8) + 6))
-					{
-						if ((readinputport(8) & 0x03)!=0)
-						{
-							ascii_code = '<';
-						}
-						else
-						{
-							ascii_code = ',';
-						}
-						kc85_4_queue_key(ascii_code);
-					}
-					else if (fake_code == ((6*8) + 7))
-					{
-						if ((readinputport(8) & 0x03)!=0)
-						{
-							ascii_code = '>';
-						}
-						else
-						{
-							ascii_code = '.';
-						}
-						kc85_4_queue_key(ascii_code);
-					}
-					else if (fake_code == ((7*8) + 1))
-					{
-						if ((readinputport(8) & 0x03)!=0)
-						{
-							ascii_code = ':';
-						}
-						else
-						{
-							ascii_code = '*';
-						}
-
-						kc85_4_queue_key(ascii_code);
-					}
-
-
-				//	/* lookup actual kc85/4 keycode - and add to queue */
-				//	kc85_4_queue_key(ascii_code);
-
-
+					code = (i<<3) | b;
+#ifdef KC_KEYBOARD_DEBUG
+					logerror("code: %02x\n",code);
+#endif
+					kc_keyboard_queue_scancode(code);
 				}
 			}
 
-			mask = mask>>1;
+			mask = mask<<1;
 		}
 	}
 
-
-	/* transmit a new keycode? */
-	if (kc85_4_can_send_keycode())
-	{
-
-		/* keycode available? */
-		if (kc85_4_keycodes_head!=kc85_4_keycodes_tail)
-		{
-			int code;
-
-			/* get code */
-			code = kc85_4_keycodes[kc85_4_keycodes_head];
-			/* update start of list */
-			kc85_4_keycodes_head = (kc85_4_keycodes_head + 1) % KC85_4_KEYCODE_QUEUE_LENGTH;
-
-			/* send the code */
-			kc85_4_send_keycode(code);
-
-		}
-	}
+	kc_keyboard_attempt_transmit();
 }
+
+/*********************************************************************/
 
 
 static int kc85_84_data;
@@ -515,26 +705,24 @@ OPBASE_HANDLER( kc85_opbaseoverride )
 }
 
 
-static READ_HANDLER ( kc85_4_pio_data_r )
+READ_HANDLER ( kc85_4_pio_data_r )
 {
-
-        return z80pio_d_r(0,offset);
+	return z80pio_d_r(0,offset);
 }
 
-static READ_HANDLER ( kc85_4_pio_control_r )
+READ_HANDLER ( kc85_4_pio_control_r )
 {
-
-        return z80pio_c_r(0,offset);
+	return z80pio_c_r(0,offset);
 }
 
 
-static WRITE_HANDLER ( kc85_4_pio_data_w )
+WRITE_HANDLER ( kc85_4_pio_data_w )
 {
 
    {
    int PC = cpu_get_pc();
 
-        logerror( "PIO W: PC: %04x O %02x D %02x\r\n",PC, offset, data);
+        logerror( "PIO W: PC: %04x O %02x D %02x\n",PC, offset, data);
    }
 
    kc85_4_pio_data[offset] = data;
@@ -554,51 +742,42 @@ static WRITE_HANDLER ( kc85_4_pio_data_w )
    //}
 }
 
-static WRITE_HANDLER ( kc85_4_pio_control_w )
+WRITE_HANDLER ( kc85_4_pio_control_w )
 {
    z80pio_c_w(0, offset, data);
 }
 
 
-static READ_HANDLER ( kc85_4_ctc_r )
+READ_HANDLER ( kc85_4_ctc_r )
 {
-	return z80ctc_0_r(offset);
+	unsigned char data;
+
+	data = z80ctc_0_r(offset);
+#ifdef KC_KEYBOARD_DEBUG
+	logerror("ctc data:%02x\n",data);
+#endif
+	return data;
 }
 
-static WRITE_HANDLER ( kc85_4_ctc_w )
+WRITE_HANDLER ( kc85_4_ctc_w )
 {
-        logerror("CTC W: %02x\r\n",data);
+        logerror("CTC W: %02x\n",data);
 
         z80ctc_0_w(offset,data);
 }
 
-static WRITE_HANDLER ( kc85_4_84_w )
+WRITE_HANDLER ( kc85_4_84_w )
 {
-        logerror("0x084 W: %02x\r\n",data);
+        logerror("0x084 W: %02x\n",data);
 
         kc85_84_data = data;
 
-        {
-                /* calculate address of video ram to display */
-                unsigned char *video_ram;
-
-                video_ram = kc85_4_video_ram;
-
-                if (data & 0x01)
-                {
-                        video_ram +=
-                                   (KC85_4_SCREEN_PIXEL_RAM_SIZE +
-                                   KC85_4_SCREEN_COLOUR_RAM_SIZE);
-                }
-
-                kc85_4_display_video_ram = video_ram;
-        }
+		kc85_4_video_ram_select_bank(data & 0x01);
 
         kc85_4_update_0x08000();
-
 }
 
-static READ_HANDLER ( kc85_4_84_r )
+READ_HANDLER ( kc85_4_84_r )
 {
 	return kc85_84_data;
 }
@@ -622,47 +801,32 @@ static void kc85_4_update_0x08000(void)
         if (kc85_4_pio_data[0] & 4)
         {
                 /* IRM enabled - has priority over RAM8 enabled */
-                logerror("IRM enabled\r\n");
-
-                /* base address: screen 0 pixel data */
-                ram_page = kc85_4_video_ram;
+                logerror("IRM enabled\n");
 
 
                 {
 
                         if (kc85_84_data & 0x04)
                         {
-                                logerror("access screen 1\r\n");
+                                logerror("access screen 1\n");
                         }
                         else
                         {
-                                logerror("access screen 0\r\n");
+                                logerror("access screen 0\n");
                         }
 
                         if (kc85_84_data & 0x02)
                         {
-                                logerror("access colour\r\n");
+                                logerror("access colour\n");
                         }
                         else
                         {
-                                logerror("access pixel\r\n");
+                                logerror("access pixel\n");
                         }
                }
 
 
-                if (kc85_84_data & 0x04)
-                {
-                        /* access screen 1 */
-                        ram_page += KC85_4_SCREEN_PIXEL_RAM_SIZE +
-                                KC85_4_SCREEN_COLOUR_RAM_SIZE;
-                }
-
-                if (kc85_84_data & 0x02)
-                {
-                        /* access colour information of selected screen */
-                        ram_page += KC85_4_SCREEN_PIXEL_RAM_SIZE;
-                }
-
+				ram_page = kc85_4_get_video_ram_base((kc85_84_data & 0x04), (kc85_84_data & 0x02));
 
                cpu_setbank(3, ram_page);
 
@@ -676,7 +840,7 @@ static void kc85_4_update_0x08000(void)
         if (kc85_4_pio_data[1] & 0x020)
         {
                 /* RAM8 ACCESS */
-                logerror("RAM8 enabled\r\n");
+                logerror("RAM8 enabled\n");
 
                 ram_page = kc85_ram + 0x08000;
 
@@ -703,16 +867,16 @@ static void kc85_4_update_0x08000(void)
         }
 }
 
-static WRITE_HANDLER ( kc85_4_86_w )
+WRITE_HANDLER ( kc85_4_86_w )
 {
-        logerror("0x086 W: %02x\r\n",data);
+        logerror("0x086 W: %02x\n",data);
 
 	kc85_86_data = data;
 
         kc85_4_update_0x0c000();
 }
 
-static READ_HANDLER ( kc85_4_86_r )
+READ_HANDLER ( kc85_4_86_r )
 {
 	return kc85_86_data;
 }
@@ -728,15 +892,31 @@ static void kc85_4_ctc_interrupt(int state)
         cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 }
 
+static void	kc_pio_ardy_callback(int state)
+{
+	if (state)
+	{
+		logerror("PIO A Ready\n");
+	}
+
+}
+
+static void kc_pio_brdy_callback(int state)
+{
+	if (state)
+	{
+		logerror("PIO A Ready\n");
+	}
+}
+
+
 static z80pio_interface kc85_4_pio_intf =
 {
 	1,					/* number of PIOs to emulate */
 	{ kc85_4_pio_interrupt },	/* callback when change interrupt status */
-	{ 0 },				/* portA ready active callback (do not support yet)*/
-	{ 0 }				/* portB ready active callback (do not support yet)*/
+	{ kc_pio_ardy_callback },	/* portA ready active callback */
+	{ kc_pio_brdy_callback }	/* portB ready active callback */
 };
-
-int keyboard_data = 0;
 
 static WRITE_HANDLER ( kc85_4_zc2_callback )
 {
@@ -749,24 +929,17 @@ static WRITE_HANDLER ( kc85_4_zc2_callback )
 }
 
 
-#define KC85_4_CTC_CLOCK		4000000
 static z80ctc_interface	kc85_4_ctc_intf =
 {
 	1,
-	{KC85_4_CTC_CLOCK},
+	{1379310.344828},
 	{0},
-        {kc85_4_ctc_interrupt},
+    {kc85_4_ctc_interrupt},
 	{0},
 	{0},
     {kc85_4_zc2_callback}
 };
 
-static Z80_DaisyChain kc85_4_daisy_chain[] =
-{
-        {z80pio_reset, z80pio_interrupt, z80pio_reti, 0},
-        {z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0},
-        {0,0,0,-1}
-};
 
 /* update memory address 0x0c000-0x0e000 */
 static void kc85_4_update_0x0c000(void)
@@ -775,7 +948,7 @@ static void kc85_4_update_0x0c000(void)
 	{
 		/* CAOS rom takes priority */
 
-                logerror("CAOS rom 0x0c000\r\n");
+                logerror("CAOS rom 0x0c000\n");
 
                 cpu_setbank(1,memory_region(REGION_CPU1) + 0x012000);
      //           cpu_setbankhandler_r(1,MRA_BANK1);
@@ -784,14 +957,14 @@ static void kc85_4_update_0x0c000(void)
 	if (kc85_4_pio_data[0] & 0x080)
 	{
 		/* BASIC takes next priority */
-                logerror("BASIC rom 0x0c000\r\n");
+                logerror("BASIC rom 0x0c000\n");
 
                 cpu_setbank(1, memory_region(REGION_CPU1) + 0x010000);
        //         cpu_setbankhandler_r(1, MRA_BANK1);
 	}
 	else
 	{
-                logerror("No roms 0x0c000\r\n");
+                logerror("No roms 0x0c000\n");
 
       //          cpu_setbankhandler_r(1, MRA_NOP);
 	}
@@ -804,7 +977,7 @@ static void kc85_4_update_0x0e000(void)
 	{
 		/* enable CAOS rom in memory range 0x0e000-0x0ffff */
 
-                logerror("CAOS rom 0x0e000\r\n");
+                logerror("CAOS rom 0x0e000\n");
 
 		/* read will access the rom */
                 cpu_setbank(2,memory_region(REGION_CPU1) + 0x014000);
@@ -812,7 +985,7 @@ static void kc85_4_update_0x0e000(void)
 	}
 	else
 	{
-                logerror("no rom 0x0e000\r\n");
+                logerror("no rom 0x0e000\n");
 
 		/* enable empty space memory range 0x0e000-0x0ffff */
        //         cpu_setbankhandler_r(2, MRA_NOP);
@@ -825,19 +998,16 @@ void    kc85_4_reset(void)
 	z80ctc_reset(0);
 	z80pio_reset(0);
 
+	/* enable CAOS rom in range 0x0e000-0x0ffff */
+	kc85_4_pio_data[0] = 1;
+	kc85_4_update_0x0e000();
 
-        /* enable CAOS rom in range 0x0e000-0x0ffff */
-        kc85_4_pio_data[0] = 1;
-        kc85_4_update_0x0e000();
-
-
-        /* this is temporary. Normally when a Z80 is reset, it will
-        execute address 0. It appears the KC85/4 pages in the rom
-        at address 0x0000-0x01000 which has a single jump in it,
-        can't see yet where it disables it later!!!! so for now
-        here will be a override */
-        memory_set_opbase_handler(0, kc85_opbaseoverride);
-
+	/* this is temporary. Normally when a Z80 is reset, it will
+	execute address 0. It appears the KC85/4 pages in the rom
+	at address 0x0000-0x01000 which has a single jump in it,
+	can't see yet where it disables it later!!!! so for now
+	here will be a override */
+	memory_set_opbase_handler(0, kc85_opbaseoverride);
 }
 
 void kc85_4_init_machine(void)
@@ -845,268 +1015,55 @@ void kc85_4_init_machine(void)
 	z80pio_init(&kc85_4_pio_intf);
 	z80ctc_init(&kc85_4_ctc_intf);
 
-		memory_set_bankhandler_r(1, 0, MRA_BANK1);
-		memory_set_bankhandler_r(2, 0, MRA_BANK2);
-        memory_set_bankhandler_r(3, 0, MRA_BANK3);
-        memory_set_bankhandler_w(3, 0, MWA_BANK3);
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_w(3, 0, MWA_BANK3);
 
-        kc85_ram = malloc(64*1024);
-		if (!kc85_ram) return;
-
-        kc85_4_video_ram = malloc(
-        (KC85_4_SCREEN_COLOUR_RAM_SIZE*2) +
-        (KC85_4_SCREEN_PIXEL_RAM_SIZE*2));
-		if (!kc85_4_video_ram) return;
-
-        kc85_4_display_video_ram = kc85_4_video_ram;
+	kc85_ram = malloc(64*1024);
 
 	kc85_4_reset();
 
-	kc85_4_keyboard_init();
-
-
+	kc_keyboard_init();
 }
 
 void kc85_4_shutdown_machine(void)
 {
-}
-
-
-PORT_READ_START( readport_kc85_4 )
-	{0x084, 0x084, kc85_4_84_r},
-	{0x085, 0x085, kc85_4_84_r},
-	{0x086, 0x086, kc85_4_86_r},
-	{0x087, 0x087, kc85_4_86_r},
-        {0x088, 0x089, kc85_4_pio_data_r},
-        {0x08a, 0x08b, kc85_4_pio_control_r},
-	{0x08c, 0x08f, kc85_4_ctc_r},
-PORT_END
-
-PORT_WRITE_START( writeport_kc85_4 )
-        /* D05 decodes io ports on schematic */
-
-        /* D08,D09 on schematic handle these ports */
-	{0x084, 0x084, kc85_4_84_w},
-	{0x085, 0x085, kc85_4_84_w},
-	{0x086, 0x086, kc85_4_86_w},
-	{0x087, 0x087, kc85_4_86_w},
-
-        /* D06 on schematic handle these ports */
-        {0x088, 0x089, kc85_4_pio_data_w},
-        {0x08a, 0x08b, kc85_4_pio_control_w},
-
-        /* D07 on schematic handle these ports */
-        {0x08c, 0x08f, kc85_4_ctc_w },
-PORT_END
-
-#define KC85_4_PALETTE_SIZE 24
-
-static unsigned short kc85_4_colour_table[KC85_4_PALETTE_SIZE] =
-{
-	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-        16, 17, 18, 19, 20, 21, 22, 23
-};
-
-static unsigned char kc85_4_palette[KC85_4_PALETTE_SIZE * 3] =
-{
-		 0x00, 0x00, 0x00,
-		 0x00, 0x00, 0xd0,
-		 0xd0, 0x00, 0x00,
-		 0xd0, 0x00, 0xd0,
-		 0x00, 0xd0, 0x00,
-		 0x00, 0xd0, 0xd0,
-		 0xd0, 0x00, 0x00,
-		 0xd0, 0xd0, 0xd0,
-
-		 0x00, 0x00, 0x00,
-		 0x60, 0x00, 0xa0,
-		 0xa0, 0x60, 0x00,
-		 0xa0, 0x00, 0x60,
-		 0x00, 0xa0, 0x60,
-		 0x00, 0x60, 0xa0,
-		 0x30, 0xa0, 0x30,
-		 0xd0, 0xd0, 0xd0,
-
-		 0x00, 0x00, 0x00,
-		 0x00, 0x00, 0xa0,
-		 0xa0, 0x00, 0x00,
-		 0xa0, 0x00, 0xa0,
-		 0x00, 0xa0, 0x00,
-		 0x00, 0xa0, 0xa0,
-		 0xa0, 0xa0, 0x00,
-		 0xa0, 0xa0, 0xa0
-
-};
-
-/* Initialise the palette */
-static void kc85_4_init_palette(unsigned char *sys_palette, unsigned short *sys_colortable, const unsigned char *color_prom)
-{
-	memcpy(sys_palette, kc85_4_palette, sizeof (kc85_4_palette));
-	memcpy(sys_colortable, kc85_4_colour_table, sizeof (kc85_4_colour_table));
-}
-
-MEMORY_READ_START( readmem_kc85_4 )
-        {0x00000, 0x07fff, MRA_RAM},
-
-        {0x08000, 0x0a7ff, MRA_BANK3},
-        {0x0a800, 0x0bfff, MRA_RAM},
-        {0x0c000, 0x0dfff, MRA_BANK1},
-	{0x0e000, 0x0ffff, MRA_BANK2},
-MEMORY_END
-
-MEMORY_WRITE_START( writemem_kc85_4 )
-        {0x00000, 0x07fff, MWA_RAM},
-        {0x08000, 0x0a7ff, MWA_BANK3},
-        {0x0a800, 0x0bfff, MWA_RAM},
-        {0x0c000, 0x0dfff, MWA_NOP},
-        {0x0e000, 0x0ffff, MWA_NOP},
-MEMORY_END
-
-
-
-/* this is a fake keyboard layout. The keys are converted into codes which are transmitted to the kc85/4 */
-INPUT_PORTS_START( kc85_4 )
-        PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "A", KEYCODE_A, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "B", KEYCODE_B, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "C", KEYCODE_C, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "D", KEYCODE_D, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "E", KEYCODE_E, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F", KEYCODE_F, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "G", KEYCODE_G, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "H", KEYCODE_H, IP_JOY_NONE)
-        PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "I", KEYCODE_I, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "J", KEYCODE_J, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "K", KEYCODE_K, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "L", KEYCODE_L, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "M",KEYCODE_M, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "N", KEYCODE_N, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "O", KEYCODE_O, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "P", KEYCODE_P, IP_JOY_NONE)
-        PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Q", KEYCODE_Q, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "R", KEYCODE_R, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "S", KEYCODE_S, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "T", KEYCODE_T, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "U",KEYCODE_U, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "V", KEYCODE_V, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "W", KEYCODE_W, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "X", KEYCODE_X, IP_JOY_NONE)
-        PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Y", KEYCODE_Y, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Z", KEYCODE_Z, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "0 @", KEYCODE_0, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "1 !", KEYCODE_1, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "2 \"", KEYCODE_2, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "3 #", KEYCODE_3, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "4 $", KEYCODE_4, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "5 %", KEYCODE_5, IP_JOY_NONE)
-        PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "6 &", KEYCODE_6, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "7 *", KEYCODE_7, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "8 (", KEYCODE_8, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "9 )", KEYCODE_9, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F1", KEYCODE_F1, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F2", KEYCODE_F2, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F3", KEYCODE_F3, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F4", KEYCODE_F4, IP_JOY_NONE)
-		PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F5", KEYCODE_F5, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "F6", KEYCODE_F6, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "BRK", KEYCODE_F7, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "STOP", KEYCODE_F8, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "INS", KEYCODE_F9, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_F10, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "DEL", KEYCODE_DEL, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CLR", KEYCODE_F11, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, "HOME", KEYCODE_F12, IP_JOY_NONE)
-		PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR UP", KEYCODE_UP, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR DOWN", KEYCODE_DOWN, IP_JOY_NONE)
-		PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR LEFT", KEYCODE_LEFT, IP_JOY_NONE)
-		PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_KEYBOARD, "CURSOR RIGHT", KEYCODE_RIGHT, IP_JOY_NONE)
-		PORT_BITX(0x010, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RETURN/ENTER", KEYCODE_ENTER, IP_JOY_NONE)
-		PORT_BITX(0x020, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SPACE", KEYCODE_SPACE, IP_JOY_NONE)
-		PORT_BITX(0x040, IP_ACTIVE_HIGH, IPT_KEYBOARD, ", <", KEYCODE_COMMA, IP_JOY_NONE)
-		PORT_BITX(0x080, IP_ACTIVE_HIGH, IPT_KEYBOARD, ". >", KEYCODE_STOP, IP_JOY_NONE)
-
-		PORT_START
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, ": *", KEYCODE_COLON, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "- = ", KEYCODE_EQUALS, IP_JOY_NONE)
-
-		PORT_START
-		/* has a single shift key. Mapped here to left and right shift */
-		PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_LSHIFT, IP_JOY_NONE)
-		PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD, "SHIFT", KEYCODE_RSHIFT, IP_JOY_NONE)
-INPUT_PORTS_END
-
-
-
-static struct MachineDriver machine_driver_kc85_4 =
-{
-		/* basic machine hardware */
+	if (kc85_ram)
 	{
-			/* MachineCPU */
-		{
-			CPU_Z80,  /* type */
-			4000000,
-			readmem_kc85_4,		   /* MemoryReadAddress */
-			writemem_kc85_4,		   /* MemoryWriteAddress */
-			readport_kc85_4,		   /* IOReadPort */
-			writeport_kc85_4,		   /* IOWritePort */
-			0,		/* VBlank  Interrupt */
-			0,				   /* vblanks per frame */
-			0, 0,	/* every scanline */
-                        kc85_4_daisy_chain
-                },
-	},
-	50,								   /* frames per second */
-	DEFAULT_60HZ_VBLANK_DURATION,	   /* vblank duration */
-	1,								   /* cpu slices per frame */
-	kc85_4_init_machine,			   /* init machine */
-	kc85_4_shutdown_machine,
-	/* video hardware */
-	KC85_4_SCREEN_WIDTH,			   /* screen width */
-	KC85_4_SCREEN_HEIGHT,			   /* screen height */
-	{0, (KC85_4_SCREEN_WIDTH - 1), 0, (KC85_4_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
-	0,								   /* graphics decode info */
-	KC85_4_PALETTE_SIZE,								   /* total colours
-									    */
-	KC85_4_PALETTE_SIZE,								   /* color table len */
-	kc85_4_init_palette,			   /* init palette */
+		free(kc85_ram);
+		kc85_ram = NULL;
+	}
 
-	VIDEO_TYPE_RASTER,				   /* video attributes */
-	0,								   /* MachineLayer */
-	kc85_4_vh_start,
-	kc85_4_vh_stop,
-	kc85_4_vh_screenrefresh,
+	kc_keyboard_exit();
+}
 
-		/* sound hardware */
-	0,								   /* sh init */
-	0,								   /* sh start */
-	0,								   /* sh stop */
-	0,								   /* sh update */
-};
-
-
-
-
-ROM_START(kc85_4)
-	ROM_REGION(0x016000, REGION_CPU1,0)
-
-        ROM_LOAD("basic_c0.rom", 0x10000, 0x2000, 0x0dfe34b08)
-        ROM_LOAD("caos__c0.rom", 0x12000, 0x1000, 0x057d9ab02)
-        ROM_LOAD("caos__e0.rom", 0x14000, 0x2000, 0x0d64cd50b)
-ROM_END
-
-static const struct IODevice io_kc85_4[] =
+void kc85_3_init_machine(void)
 {
-       {IO_END}
-};
+	z80pio_init(&kc85_4_pio_intf);
+	z80ctc_init(&kc85_4_ctc_intf);
 
+	memory_set_bankhandler_r(1, 0, MRA_BANK1);
+	memory_set_bankhandler_r(2, 0, MRA_BANK2);
+	memory_set_bankhandler_r(3, 0, MRA_BANK3);
+	memory_set_bankhandler_w(3, 0, MWA_BANK3);
 
+	kc85_ram = malloc(64*1024);
 
-/*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY   FULLNAME */
-COMPX( 19??, kc85_4,   0,     kc85_4,  kc85_4,        0,                "VEB Mikroelektronik", "KC 85/4", GAME_NOT_WORKING)
+	kc85_4_reset();
+
+	kc_keyboard_init();
+}
+
+void kc85_3_shutdown_machine(void)
+{
+	if (kc85_ram)
+	{
+		free(kc85_ram);
+		kc85_ram = NULL;
+	}
+
+	kc_keyboard_exit();
+}
+
 
