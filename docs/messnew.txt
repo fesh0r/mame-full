@@ -1,4 +1,4 @@
-0.76
+0.77
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -67,7 +67,7 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.76.  This incorporates all features of the
+- The core is based on MAME 0.77.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Overhaul on generic floppy and cassette image systems; added new generic

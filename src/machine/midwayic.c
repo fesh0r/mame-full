@@ -7,13 +7,14 @@
 #include "driver.h"
 #include "midwayic.h"
 #include "machine/idectrl.h"
+#include "sndhrdw/cage.h"
 #include "sndhrdw/dcs.h"
 #include <time.h>
 
 
 #define LOG_NVRAM			(0)
 
-#define PRINTF_DEBUG		(1)
+#define PRINTF_DEBUG		(0)
 #define LOG_IOASIC			(0)
 #define LOG_FIFO			(0)
 
@@ -62,11 +63,13 @@ struct ioasic_state
 {
 	UINT32	reg[16];
 	UINT8	has_dcs;
+	UINT8	has_cage;
 	UINT8	dcs_cpu;
 	UINT8	shuffle_active;
 	UINT8 *	shuffle_map;
 	void 	(*irq_callback)(int);
 	UINT8	irq_state;
+	UINT16	sound_irq_state;
 	
 	UINT16	fifo[FIFO_SIZE];
 	UINT16	fifo_in;
@@ -422,22 +425,22 @@ NVRAM_HANDLER( midway_serial_pic2 )
 
 enum
 {
-	IOASIC_PORT0,		/* input port 0 */
-	IOASIC_PORT1,		/* input port 1 */
-	IOASIC_PORT2,		/* input port 2 */
-	IOASIC_PORT3,		/* input port 3 */
-	IOASIC_UNKNOWN4,	/* ??? */
-	IOASIC_DEBUGOUT,	/* debugger output (UART likely) */
-	IOASIC_UNKNOWN6,	/* ??? */
-	IOASIC_UNKNOWN7,	/* ??? */
-	IOASIC_SOUNDCTL,	/* sound communications control */
-	IOASIC_SOUNDOUT,	/* sound output port */
-	IOASIC_SOUNDSTAT,	/* sound status port */
-	IOASIC_SOUNDIN,		/* sound input port */
-	IOASIC_PICOUT,		/* PIC output port */
-	IOASIC_PICIN,		/* PIC input port */
-	IOASIC_INTSTAT,		/* interrupt status */
-	IOASIC_INTCTL,		/* interrupt control */
+	IOASIC_PORT0,		/* 0: input port 0 */
+	IOASIC_PORT1,		/* 1: input port 1 */
+	IOASIC_PORT2,		/* 2: input port 2 */
+	IOASIC_PORT3,		/* 3: input port 3 */
+	IOASIC_UNKNOWN4,	/* 4: ??? */
+	IOASIC_DEBUGOUT,	/* 5: debugger output (UART likely) */
+	IOASIC_UNKNOWN6,	/* 6: ??? */
+	IOASIC_UNKNOWN7,	/* 7: ??? */
+	IOASIC_SOUNDCTL,	/* 8: sound communications control */
+	IOASIC_SOUNDOUT,	/* 9: sound output port */
+	IOASIC_SOUNDSTAT,	/* a: sound status port */
+	IOASIC_SOUNDIN,		/* b: sound input port */
+	IOASIC_PICOUT,		/* c: PIC output port */
+	IOASIC_PICIN,		/* d: PIC input port */
+	IOASIC_INTSTAT,		/* e: interrupt status */
+	IOASIC_INTCTL,		/* f: interrupt control */
 };
 
 
@@ -445,7 +448,7 @@ static UINT16 ioasic_fifo_r(void);
 static UINT16 ioasic_fifo_status_r(void);
 static void ioasic_fifo_reset_w(int state);
 static void update_ioasic_irq(void);
-
+static void cage_irq_handler(int state);
 
 void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callback)(int))
 {
@@ -454,12 +457,15 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 		{ 0x0,0x1,0x2,0x3,0x4,0x5,0x6,0x7,0x8,0x9,0xa,0xb,0xc,0xd,0xe,0xf },	/* WarGods, WG3DH, SFRush */
 		{ 0x4,0x5,0x6,0x7,0xb,0xa,0x9,0x8,0x3,0x2,0x1,0x0,0xf,0xe,0xd,0xc },	/* Blitz99 */
 		{ 0x7,0x3,0x2,0x0,0x1,0xc,0xd,0xe,0xf,0x4,0x5,0x6,0x8,0x9,0xa,0xb },	/* Carnevil */
-		{ 0x8,0x9,0xa,0xb,0x0,0x1,0x2,0x3,0xf,0xe,0xd,0xc,0x4,0x5,0x6,0x7 },	/* Calspeed */
-	//    --- --- --- --- --- --- --- --- --- ---                     
+		{ 0x8,0x9,0xa,0xb,0x0,0x1,0x2,0x3,0xf,0xe,0xc,0xd,0x4,0x5,0x6,0x7 },	/* Calspeed */
+	//    --- --- --- --- --- --- --- --- --- --- --- --- --- ---     
+		{ 0xf,0xe,0xd,0xc,0x4,0x6,0x5,0x7,0x9,0x8,0xa,0xb,0x2,0x3,0x1,0x0 },	/* Mace */
+	//    --- --- --- ---         ---     --- --- --- --- --- --- --- ---
 	};
 
 	/* do we have a DCS2 sound chip connected? (most likely) */
 	ioasic.has_dcs = (mame_find_cpu_index("dcs2") != -1);
+	ioasic.has_cage = (mame_find_cpu_index("cage") != -1);
 	ioasic.dcs_cpu = mame_find_cpu_index("dcs2");
 	ioasic.shuffle_map = &shuffle_maps[shuffle][0];
 	ioasic.irq_callback = irq_callback;
@@ -474,6 +480,10 @@ void midway_ioasic_init(int shuffle, int upper, int yearoffs, void (*irq_callbac
 	if (ioasic.has_dcs)
 		dcs_set_fifo(ioasic_fifo_r, ioasic_fifo_status_r);
 	ioasic_fifo_reset_w(1);
+	
+	/* configure the CAGE IRQ */
+	if (ioasic.has_cage)
+		cage_set_irq_handler(cage_irq_handler);
 }
 
 
@@ -493,6 +503,7 @@ static void update_ioasic_irq(void)
 	UINT16 irqbits = 0x2000;
 	UINT8 new_state;
 	
+	irqbits |= ioasic.sound_irq_state;
 	if (fifo_state & 8)
 		irqbits |= 0x0008;
 	if (irqbits)
@@ -507,6 +518,18 @@ static void update_ioasic_irq(void)
 		if (ioasic.irq_callback)
 			(*ioasic.irq_callback)(ioasic.irq_state ? ASSERT_LINE : CLEAR_LINE);
 	}
+}
+
+
+static void cage_irq_handler(int reason)
+{
+	logerror("CAGE irq handler: %d\n", reason);
+	ioasic.sound_irq_state = 0;
+	if (reason & CAGE_IRQ_REASON_DATA_READY)
+		ioasic.sound_irq_state |= 0x0040;
+	if (reason & CAGE_IRQ_REASON_BUFFER_EMPTY)
+		ioasic.sound_irq_state |= 0x0080;
+	update_ioasic_irq();
 }
 
 
@@ -665,6 +688,10 @@ READ32_HANDLER( midway_ioasic_r )
 				result |= ioasic_fifo_status_r() & 0x0038;
 				result |= dcs_data2_r() & 0xff00;
 			}
+			else if (ioasic.has_cage)
+			{
+				result |= (cage_control_r() << 6) ^ 0x80;
+			}
 			else
 				result |= 0x48;
 			break;
@@ -673,6 +700,8 @@ READ32_HANDLER( midway_ioasic_r )
 			result = 0;
 			if (ioasic.has_dcs)
 				result = dcs_data_r();
+			else if (ioasic.has_cage)
+				result = main_from_cage_r();
 			break;
 		
 		case IOASIC_PICIN:
@@ -722,7 +751,6 @@ WRITE32_HANDLER( midway_ioasic_w )
 			break;
 	
 		case IOASIC_DEBUGOUT:
-		case IOASIC_UNKNOWN6:
 			if (PRINTF_DEBUG)
 				printf("%c", data & 0xff);
 			break;
@@ -731,6 +759,15 @@ WRITE32_HANDLER( midway_ioasic_w )
 			/* sound reset? */
 			if (ioasic.has_dcs)
 				dcs_reset_w(~newreg & 1);
+			else if (ioasic.has_cage)
+			{
+				if ((oldreg ^ newreg) & 1)
+				{
+					cage_control_w(0);
+					if (!(~newreg & 1))
+						cage_control_w(3);
+				}
+			}
 			
 			/* FIFO reset? */
 			ioasic_fifo_reset_w(~newreg & 4);
@@ -739,6 +776,8 @@ WRITE32_HANDLER( midway_ioasic_w )
 		case IOASIC_SOUNDOUT:
 			if (ioasic.has_dcs)
 				dcs_data_w(newreg);
+			else if (ioasic.has_cage)
+				main_to_cage_w(newreg);
 			break;
 
 		case IOASIC_SOUNDIN:

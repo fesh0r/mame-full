@@ -1,14 +1,14 @@
 /***************************************************************************
 
-	PSX GPU - CXD8538Q
+	PSX GPU
 
 	Preliminary software renderer by smf.
 	Thanks to Ryan Holtz, Pete B & Farfetch'd.
 
 	Supports:
-	  type 1 1024x1024 framebuffer
+	  type 1 1024x1024 framebuffer (CXD8538Q)
 	  type 2 1024x512 framebuffer
-	  type 2 1024x1024 framebuffer
+	  type 2 1024x1024 framebuffer (CXD8561Q/CXD8654Q)
 
 	Debug Keys:
 		M toggles mesh viewer.
@@ -21,6 +21,8 @@
 #include "state.h"
 #include "includes/psx.h"
 #include "usrintrf.h"
+
+#define STOP_ON_ERROR ( 0 )
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -2742,11 +2744,12 @@ static void MoveImage( void )
 	}
 }
 
-WRITE32_HANDLER( psx_gpu_w )
+void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 {
-	switch( offset )
+	while( n_size > 0 )
 	{
-	case 0x00:
+		UINT32 data = *( p_ram );
+
 		verboselog( 2, "PSX Packet #%u %08x\n", m_n_gpu_buffer_offset, data );
 		m_packet.n_entry[ m_n_gpu_buffer_offset ] = data;
 		switch( m_packet.n_entry[ 0 ] >> 24 )
@@ -3174,10 +3177,22 @@ WRITE32_HANDLER( psx_gpu_w )
 			usrintf_showmessage_secs( 1, "unknown GPU packet %08x", m_packet.n_entry[ 0 ] );
 #endif
 			verboselog( 0, "unknown GPU packet %08x (%08x)\n", m_packet.n_entry[ 0 ], data );
-			/* kludge */
-//			m_n_gpu_buffer_offset = 1;
+#if ( STOP_ON_ERROR )
+			m_n_gpu_buffer_offset = 1;
+#endif
 			break;
 		}
+		p_ram++;
+		n_size--;
+	}
+}
+
+WRITE32_HANDLER( psx_gpu_w )
+{
+	switch( offset )
+	{
+	case 0x00:
+		psx_gpu_write( &data, 1 );
 		break;
 	case 0x01:
 		switch( data >> 24 )
@@ -3351,11 +3366,11 @@ WRITE32_HANDLER( psx_gpu_w )
 	}
 }
 
-READ32_HANDLER( psx_gpu_r )
+
+void psx_gpu_read( UINT32 *p_ram, INT32 n_size )
 {
-	switch( offset )
+	while( n_size > 0 )
 	{
-	case 0x00:
 		if( ( m_n_gpustatus & ( 1L << 0x1b ) ) != 0 )
 		{
 			UINT32 n_pixel;
@@ -3388,18 +3403,37 @@ READ32_HANDLER( psx_gpu_r )
 					}
 				}
 			}
-			return data.d;
+			*( p_ram ) = data.d;
 		}
-		verboselog( 2, "read GPU info (%08x)\n", m_n_gpuinfo );
-		return m_n_gpuinfo;
+		else
+		{
+			verboselog( 2, "read GPU info (%08x)\n", m_n_gpuinfo );
+			*( p_ram ) = m_n_gpuinfo;
+		}
+		p_ram++;
+		n_size--;
+	}
+}
+
+READ32_HANDLER( psx_gpu_r )
+{
+	UINT32 data;
+
+	switch( offset )
+	{
+	case 0x00:
+		psx_gpu_read( &data, 1 );
+		break;
 	case 0x01:
 		verboselog( 1, "read GPU status (%08x)\n", m_n_gpustatus );
-		return m_n_gpustatus;
+		data = m_n_gpustatus;
+		break;
 	default:
 		verboselog( 0, "gpu_r( %08x, %08x ) unknown register\n", offset, mem_mask );
+		data = 0;
 		break;
 	}
-	return 0;
+	return data;
 }
 
 INTERRUPT_GEN( psx_vblank )

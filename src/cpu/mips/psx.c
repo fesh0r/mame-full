@@ -1,4 +1,6 @@
 /*
+ * Sony CXD8530AQ/CXD8530CQ/CXD8661R
+ *
  * PSX CPU emulator for the MAME project written by smf
  * Thanks to Farfetch'd for information on the delay slot bug
  *

@@ -191,9 +191,6 @@
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
-#if (HAS_Z80_MSX)
-#include "cpu/z80/z80_msx.h"
-#endif
 
 #endif
 
@@ -702,9 +699,6 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00, 8, 16,	  0,16,LE,1, 4	),
-#endif
-#if (HAS_Z80_MSX)
-	CPU1(Z80_MSX,  z80_msx,	 1,255,1.00, 8, 16,	  0,16,LE,1, 4	),
 #endif
 #endif
 };

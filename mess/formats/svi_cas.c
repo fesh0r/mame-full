@@ -171,7 +171,7 @@ static struct CassetteLegacyWaveFiller svi_legacy_fill_wave =
 	0,										/* chunk_samples */
 	svi_cas_chunk_sample_calc,				/* chunk_sample_calc */
 	22050,									/* sample_frequency */
-	0,										/* header_samples */
+	-1,										/* header_samples */
 	0										/* trailer_samples */
 };
 

@@ -16,6 +16,7 @@
 #define CAS_TONE_DATA      0.15    // duration of fixed tone in secs (data)
 
 static const UINT8 CasHeader[6] = { 'S', 'O', 'R', 'D', 'M', '5'};
+static int saved_caslen;
 
 static casserr_t sord_cas_to_wav (const UINT8 *casdata, int caslen, INT16 **wavdata, int *wavlen)
 {
@@ -149,6 +150,7 @@ static int sord_cas_to_wav_size(const UINT8 *casdata, int caslen)
 {
 	int wavlen, err;
 	
+	saved_caslen = caslen;
 	err = sord_cas_to_wav( casdata, caslen, NULL, &wavlen);
 	return ((err==CASSETTE_ERROR_SUCCESS)?wavlen:-1);
 }
@@ -160,12 +162,12 @@ static int sord_cas_fill_wave(INT16 *buffer, int length, UINT8 *bytes)
 	INT16 *wavdata;
 	int wavlen;
 
-	if (sord_cas_to_wav(bytes, length, &wavdata, &wavlen))
+	if (sord_cas_to_wav(bytes, saved_caslen, &wavdata, &wavlen))
 		return -1;
 
 	memcpy(buffer, wavdata, wavlen * 2);
 	free(wavdata);
-	return 0;
+	return saved_caslen;
 }
 
 

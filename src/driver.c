@@ -739,6 +739,7 @@ const struct GameDriver *test_drivers[] =
 
 	/* Namco System 22 games */
 	DRIVER( alpinerd )	/* (c) 1994 */
+	DRIVER( alpinerc )	/* (c) 1994 */
 	DRIVER( raveracw )	/* (c) 1995 */
 	DRIVER( ridgeraj )
 	DRIVER( ridger2j )
@@ -2355,6 +2356,19 @@ V-V                           TP-027
 	DRIVER( starswep )	/* Star Sweep (STP1/VER.A) */
 	DRIVER( myangel3 )	/* Kosodate Quiz My Angel 3 (KQT1/VER.A) */
 
+	/* Namco System 12 */
+	DRIVER( tekken3 )	/* Tekken 3 (TET1/VER.E) */
+	DRIVER( soulclbr )	/* Soul Calibur (SOC1/VER.A) */
+	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
+	DRIVER( mdhorse )	/* Derby Quiz My Dream Horse (MDH1/VER.A) */
+	DRIVER( fgtlayer )	/* Fighting Layer (FTL1/VER.A) */
+	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VERA) */
+	DRIVER( sws99 )		/* Super World Stadium '99 (SS91/VER.A) */
+	DRIVER( tekkentt )	/* Tekken Tag Tournament (TEG3/VER.B) */
+	DRIVER( mrdrillr )	/* Mr Driller (DRI1/VER.A) */
+	DRIVER( aquarush )	/* Aqua Rush (AQ1/VER.A) */
+	DRIVER( golgo13 )	/* Golgo 13 (GLG1/VER.A) */
+
 	/* Mitchell games */
 	DRIVER( mgakuen )	/* (c) 1988 Yuga */
 	DRIVER( 7toitsu )	/* (c) 1988 Yuga */
@@ -2841,6 +2855,9 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( danchih )
 	DRIVER( mausuke )
 	DRIVER( batmanfr )
+
+	DRIVER( sfish2 )
+	DRIVER( sfish2j )
 
 	/* Deniam games */
 	/* they run on Sega System 16 video hardware */
@@ -3406,6 +3423,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rollergj )	/* GX999 (c) 1991 (Japan) */
 	DRIVER( simpsons )	/* GX072 (c) 1991 */
 	DRIVER( simpsn2p )	/* GX072 (c) 1991 */
+	DRIVER( simps2pa )	/* GX072 (c) 1991 */
 	DRIVER( simps2pj )	/* GX072 (c) 1991 (Japan) */
 	DRIVER( esckids )	/* GX975 (c) 1991 (Japan) */
 	DRIVER( vendetta )	/* GX081 (c) 1991 (World) */
@@ -3519,6 +3537,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( dadandrn )	/* GX170 (c) 1993 (Japan) */
 	DRIVER( metamrph )	/* GX224 (c) 1993 (US) */
 	DRIVER( metamrpj )	/* GX224 (c) 1993 (Japan) */
+	DRIVER( mtlchamp )	/* GX234 (c) 1993 (World) */
 	DRIVER( mtlchmpj )	/* GX234 (c) 1993 (Japan) */
 	DRIVER( rungun )	/* GX247 (c) 1993 (World) */
 	DRIVER( rungunu )	/* GX247 (c) 1993 (US) */
@@ -3997,6 +4016,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( spclords )	/* 136095			(c) 1992 */
 	DRIVER( spclorda )	/* 136095			(c) 1992 */
 	DRIVER( rrreveng )	/*     ??			(c) 1993 */
+	DRIVER( rrrevenp )	/*     ??		    (c) 1993 */
 	DRIVER( beathead )	/* (proto)			(c) 1993 */
 	DRIVER( tmek )		/* 136100			(c) 1994 */
 	DRIVER( tmekprot )	/* 136100			(c) 1994 */
@@ -4147,6 +4167,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( battlan3 )	/* -0215, -0216 (Data East part number) (c) 1986 + Taito license */
 	DRIVER( ddragon )	/* TA-0021 (c) 1987 */
 	DRIVER( ddragonu )	/* TA-0021 (c) 1987 Taito America */
+	DRIVER( ddragonw )	/* TA-0021 (c) 1987 Taito */
 	DRIVER( ddragonb )	/* bootleg */
 	DRIVER( spdodgeb )	/* TA-0022 (c) 1987 */
 	DRIVER( nkdodgeb )	/* TA-0022 (c) 1987 (Japan) */
@@ -4336,6 +4357,14 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( offroadc )	/* (c) 1997 Midway */
 	DRIVER( wargods )	/* (c) 1996 Midway */
 
+	/* Midway / Atari  Voodoo based Hardware (Seattle, Flagstaff) */
+	DRIVER ( wg3dh )	/* (c) 1996 Atari Games */
+	DRIVER ( mace )		/* (c) 1996 Atari Games */
+	DRIVER ( sfrush )	/* (c) 1996 Atari Games */
+	DRIVER ( calspeed )	/* (c) 1996 Atari Games */
+	DRIVER ( carnevil )	/* (c) 1998 Midway Games */
+	DRIVER ( blitz99 )	/* (c) 1998 Midway Games */
+
 	/* Cinematronics raster games */
 	DRIVER( embargo )
 	DRIVER( tripool )	/* (c) 1981 Noma (Casino Tech license) */
@@ -4461,6 +4490,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( heatbrl )	/* (c) 1992 Tad (World) */
 	DRIVER( heatbrlo )	/* (c) 1992 Tad (World) */
 	DRIVER( heatbrlu )	/* (c) 1992 Tad (US) */
+	DRIVER( godzilla )	/* (c) 1993 Banpresto */
+	DRIVER( sdgndmrb )	/* (c) 1993 Banpresto */
+	DRIVER( cupsoc )	/* (c) 1992 Seibu */
+	DRIVER( cupsoc2 )	/* (c) 1992 Seibu */
+	DRIVER( olysoc92 )	/* (c) 1992 Seibu */
+	DRIVER( cupsocbl )	/* bootleg */
+	DRIVER( goal92 )	/* bootleg */
 
 	/* Jaleco games */
 	DRIVER( exerion )	/* (c) 1983 Jaleco */
@@ -4705,6 +4741,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fjbuster )
 	DRIVER( brapboys )
 	DRIVER( bloodwar )
+	DRIVER( bonkadv )
 	DRIVER( gtmr )		/* (c) 1994 Kaneko */
 	DRIVER( gtmre )		/* (c) 1994 Kaneko */
 	DRIVER( gtmrusa )	/* (c) 1994 Kaneko (US) */

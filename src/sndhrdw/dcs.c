@@ -252,7 +252,7 @@ static struct CustomSound_interface dcs2_custom_interface =
 ****************************************************************************/
 
 MACHINE_DRIVER_START( dcs_audio )
-	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10240000)
+	MDRV_CPU_ADD_TAG("dcs", ADSP2105, 10000000)
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(dcs_readmem,dcs_writemem)
 
@@ -520,18 +520,20 @@ void dcs_set_fifo(UINT16 (*fifo_data_r)(void), UINT16 (*fifo_status_r)(void))
 
 int dcs_control_r(void)
 {
-	cpu_boost_interleave(TIME_IN_USEC(1), TIME_IN_USEC(10));
+	/* only boost for DCS2 boards */
+	if (!dcs.auto_ack)
+		cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 	return dcs.latch_control;
 }
 
 
 void dcs_reset_w(int state)
 {
-	logerror("%08x: DCS reset = %d\n", activecpu_get_pc(), state);
-
 	/* going high halts the CPU */
 	if (state)
 	{
+		logerror("%08x: DCS reset = %d\n", activecpu_get_pc(), state);
+
 		/* just run through the init code again */
 		dcs_reset();
 		cpu_set_reset_line(dcs_cpunum, ASSERT_LINE);
@@ -625,7 +627,7 @@ void dcs_data_w(int data)
 	if (LOG_DCS_IO)
 		logerror("%08X:dcs_data_w(%04X)\n", activecpu_get_pc(), data);
 
-	cpu_boost_interleave(TIME_IN_USEC(1), TIME_IN_USEC(10));
+	cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
 
 	SET_INPUT_FULL();

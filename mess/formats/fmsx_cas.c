@@ -155,7 +155,7 @@ static struct CassetteLegacyWaveFiller fmsx_legacy_fill_wave =
 	0,										/* chunk_samples */
 	fmsx_cas_to_wav_size,					/* chunk_sample_calc */
 	22050,									/* sample_frequency */
-	0,										/* header_samples */
+	-1,										/* header_samples */
 	0										/* trailer_samples */
 };
 

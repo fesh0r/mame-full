@@ -493,7 +493,7 @@ void ui_drawchar(struct mame_bitmap *dest, int ch, int color, int sx, int sy)
 #ifdef MESS
 	extern int skip_this_frame;
 	skip_this_frame = 0;
-#endif
+#endif /* MESS */
 
 	/* construct a rectangle in rotated coordinates, then transform it */
 	bounds.min_x = sx + uirotbounds.min_x;
@@ -4055,15 +4055,18 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 	}
 	if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
 
-	if (!mame_debug && osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
-	{
-		osd_selected = -1;
-		if (setup_selected != 0)
+#ifdef MAME_DEBUG
+	if (!mame_debug)
+#endif
+		if (osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 		{
-			setup_selected = 0; /* disable setup menu */
-			schedule_full_refresh();
+			osd_selected = -1;
+			if (setup_selected != 0)
+			{
+				setup_selected = 0; /* disable setup menu */
+				schedule_full_refresh();
+			}
 		}
-	}
 	if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
 
 
@@ -4182,15 +4185,18 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 			}
 			if (setup_selected != 0) setup_selected = setup_menu(bitmap, setup_selected);
 
-			if (!mame_debug && osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
-			{
-				osd_selected = -1;
-				if (setup_selected != 0)
+#ifdef MAME_DEBUG
+			if (!mame_debug)
+#endif
+				if (osd_selected == 0 && input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
 				{
-					setup_selected = 0; /* disable setup menu */
-					schedule_full_refresh();
+					osd_selected = -1;
+					if (setup_selected != 0)
+					{
+						setup_selected = 0; /* disable setup menu */
+						schedule_full_refresh();
+					}
 				}
-			}
 			if (osd_selected != 0) osd_selected = on_screen_display(bitmap, osd_selected);
 
 			if (options.cheat) DisplayWatches(bitmap);
@@ -4213,7 +4219,7 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 				mess_pause_for_ui = 0;
 				break;
 			}
-#endif
+#endif /* MESS */
 		}
 
 		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))

@@ -521,6 +521,9 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 	const UINT8 *source_ptr;
 	double d;
 
+	if (sample_period == 0)
+		return CASSETTE_ERROR_SUCCESS;
+
 	err = compute_manipulation_ranges(cassette, channel, time_index, sample_period, &ranges);
 	if (err)
 		return err;
@@ -833,7 +836,7 @@ casserr_t cassette_legacy_construct(cassette_image *cassette,
 	struct CassetteLegacyWaveFiller args;
 
 	/* sanity check the args */
-	assert(legacy_args->header_samples >= 0);
+	assert(legacy_args->header_samples >= -1);
 	assert(legacy_args->trailer_samples >= 0);
 	assert(legacy_args->fill_wave);
 
@@ -873,6 +876,9 @@ casserr_t cassette_legacy_construct(cassette_image *cassette,
 		}
 		cassette_image_read(cassette, bytes, 0, size);
 		sample_count = args.chunk_sample_calc(bytes, (int) size);
+
+		if (args.header_samples < 0)
+			args.header_samples = sample_count;
 	}
 	else
 	{
