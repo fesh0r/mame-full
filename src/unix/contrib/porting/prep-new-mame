@@ -26,6 +26,7 @@ if [ -n "$D2U" ]; then
 	$D2U `find . -name "*.txt" -print` 2> /dev/null
 	$D2U `find . -name "*.htm" -print` 2> /dev/null
 	$D2U `find . -name "*.html" -print` 2> /dev/null
+	$D2U `find . -name "*.xml" -print` 2> /dev/null
 	$D2U `find . -name "*.mak" -print` 2> /dev/null
 	$D2U `find . -name "*.cfg" -print` 2> /dev/null
 	$D2U `find . -name "*.pl" -print` 2> /dev/null

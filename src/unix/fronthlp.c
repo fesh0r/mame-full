@@ -4,6 +4,7 @@
 #include "audit.h"
 #include "common.h"
 #include "info.h"
+#include "sound/samples.h"
 
 #ifdef MESS
 #include "xmess.h"
@@ -328,6 +329,7 @@ int frontend_list(char *gamename)
 	 * init first
 	 */
 	cpuintrf_init();
+	sndintrf_init();
 
 	/* sort the list if requested */
 	if (sortby)
@@ -426,13 +428,7 @@ int frontend_list(char *gamename)
 					for(j=0;j<MAX_SOUND;j++)
 					{
 						const struct MachineSound *x_sound = drv.sound;
-						if (sound_num(&x_sound[j]))
-						{
-							fprintf(stdout_file, "%dx",sound_num(&x_sound[j]));
-							fprintf(stdout_file, "%-9s ",sound_name(&x_sound[j]));
-						}
-						else
-							fprintf(stdout_file, "%-11s ",sound_name(&x_sound[j]));
+						fprintf(stdout_file, "%-11s ", sndtype_name(x_sound[j].sound_type));
 					}
 
 					/* Lastly, the name of the game and a \newline */
@@ -489,7 +485,7 @@ int frontend_list(char *gamename)
 #if (HAS_SAMPLES)
 								if (drv.sound[j].sound_type == SOUND_SAMPLES)
 								{
-									samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+									samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 									break;
 								}
 #endif
@@ -594,7 +590,7 @@ int frontend_list(char *gamename)
 							const char **samplenames = NULL;
 #if (HAS_SAMPLES)
 							if( drv.sound[j].sound_type == SOUND_SAMPLES )
-								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+								samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif                        
 							if (samplenames && samplenames[0])
 							{
@@ -635,7 +631,7 @@ int frontend_list(char *gamename)
 						{
 #if (HAS_SAMPLES)
 							if( drv.sound[j].sound_type == SOUND_SAMPLES )
-								samplenames = ((struct Samplesinterface *)drv.sound[j].sound_interface)->samplenames;
+								samplenames = ((struct Samplesinterface *)drv.sound[j].config)->samplenames;
 #endif
 						}
 

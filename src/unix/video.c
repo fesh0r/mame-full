@@ -888,9 +888,9 @@ void osd_update_video_and_audio(struct mame_display *display)
 	static int palette_changed = 0;
 	
 	/*** STEP 1 update sound,fps,vis_area,palette and leds ***/
-	if (sound_stream)
+	if (sysdep_sound_stream)
 	{
-		sound_stream_update(sound_stream);
+		sysdep_sound_stream_update(sysdep_sound_stream);
 	}
 	if (display->changed_flags & GAME_REFRESH_RATE_CHANGED)
 	{

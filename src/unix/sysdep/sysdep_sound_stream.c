@@ -24,28 +24,28 @@ Version 0.1, March 2000
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "sound_stream.h"
-#include "sound_stream_priv.h"
+#include "sysdep_sound_stream.h"
+#include "sysdep_sound_stream_priv.h"
 #include "fifo.h"
 
-/* #define SOUND_STREAM_DEBUG */
-/* #define SOUND_STREAM_WARNING */
+/* #define SYSDEP_SOUND_STREAM_DEBUG */
+/* #define SYSDEP_SOUND_STREAM_WARNING */
 
 /* private methods */
-FIFO(INLINE, sample_buf, struct sound_stream_sample_buf *)
+FIFO(INLINE, sample_buf, struct sysdep_sound_stream_sample_buf *)
 
-/* public methods (in sound_stream.h) */
-struct sound_stream_struct *sound_stream_create(struct sysdep_dsp_struct* dsp,
+/* public methods (in sysdep_sound_stream.h) */
+struct sysdep_sound_stream_struct *sysdep_sound_stream_create(struct sysdep_dsp_struct* dsp,
    int type, int buf_size, int buf_count)
 {
    int i, bytes_per_sample[] = SYSDEP_DSP_BYTES_PER_SAMPLE;
-   struct sound_stream_struct *stream = NULL;
+   struct sysdep_sound_stream_struct *stream = NULL;
    
-   /* allocate the sound_stream struct */
-   if(!(stream = calloc(1, sizeof(struct sound_stream_struct))))
+   /* allocate the sysdep_sound_stream struct */
+   if(!(stream = calloc(1, sizeof(struct sysdep_sound_stream_struct))))
    {
       fprintf(stderr,
-         "error malloc failed for struct sound_stream_struct\n");
+         "error malloc failed for struct sysdep_sound_stream_struct\n");
       return NULL;
    }
    
@@ -61,8 +61,8 @@ struct sound_stream_struct *sound_stream_create(struct sysdep_dsp_struct* dsp,
       stream->bytes_per_sample)))
    {
       fprintf(stderr,
-         "error malloc failed for sound_stream output buffer\n");
-      sound_stream_destroy(stream);
+         "error malloc failed for sysdep_sound_stream output buffer\n");
+      sysdep_sound_stream_destroy(stream);
       return NULL;
    }
    
@@ -70,23 +70,23 @@ struct sound_stream_struct *sound_stream_create(struct sysdep_dsp_struct* dsp,
    if(!(stream->sample_buf_fifo = sample_buf_fifo_create(
       stream->sample_buf_count)))
    {
-      sound_stream_destroy(stream);
+      sysdep_sound_stream_destroy(stream);
       return NULL;
    }
    if(!(stream->empty_sample_buf_fifo = sample_buf_fifo_create(
       stream->sample_buf_count)))
    {
-      sound_stream_destroy(stream);
+      sysdep_sound_stream_destroy(stream);
       return NULL;
    }
    
    /* create sample_buf_count sample_buf structs */
    if(!(stream->sample_buf = calloc(stream->sample_buf_count,
-      sizeof(struct sound_stream_sample_buf))))
+      sizeof(struct sysdep_sound_stream_sample_buf))))
    {
       fprintf(stderr,
-         "error malloc failed for struct sound_stream_sample_buf\n");
-      sound_stream_destroy(stream);
+         "error malloc failed for struct sysdep_sound_stream_sample_buf\n");
+      sysdep_sound_stream_destroy(stream);
       return NULL;
    }
    
@@ -98,7 +98,7 @@ struct sound_stream_struct *sound_stream_create(struct sysdep_dsp_struct* dsp,
       {
          fprintf(stderr,
             "error malloc failed for sample_buf data\n");
-         sound_stream_destroy(stream);
+         sysdep_sound_stream_destroy(stream);
          return NULL;
       }
       sample_buf_fifo_put(stream->empty_sample_buf_fifo,
@@ -108,7 +108,7 @@ struct sound_stream_struct *sound_stream_create(struct sysdep_dsp_struct* dsp,
    return stream;
 }
 
-void sound_stream_destroy(struct sound_stream_struct *stream)
+void sysdep_sound_stream_destroy(struct sysdep_sound_stream_struct *stream)
 {
    int i;
    
@@ -133,10 +133,10 @@ void sound_stream_destroy(struct sound_stream_struct *stream)
    free(stream);
 }
 
-void sound_stream_write(struct sound_stream_struct *stream,
+void sysdep_sound_stream_write(struct sysdep_sound_stream_struct *stream,
    unsigned char *data, int samples)
 {
-   struct sound_stream_sample_buf *sample_buf;
+   struct sysdep_sound_stream_sample_buf *sample_buf;
    
    /* add the samples to our sample_buf_fifo */
    while(samples)
@@ -159,23 +159,23 @@ void sound_stream_write(struct sound_stream_struct *stream,
       }
       else
       {
-#ifdef SOUND_STREAM_WARNING
-         fprintf(stderr, "warning: sound_stream: fifo full, dropping sample\n");
+#ifdef SYSDEP_SOUND_STREAM_WARNING
+         fprintf(stderr, "warning: sysdep_sound_stream: fifo full, dropping sample\n");
 #endif
          samples = 0;
       }
    }
 }
 
-void sound_stream_update(struct sound_stream_struct *stream)
+void sysdep_sound_stream_update(struct sysdep_sound_stream_struct *stream)
 {
    int freespace;
-   struct sound_stream_sample_buf *sample_buf;
+   struct sysdep_sound_stream_sample_buf *sample_buf;
 
    /* get freespace */   
    freespace = sysdep_dsp_get_freespace(stream->dsp);
-#ifdef SOUND_STREAM_DEBUG
-   fprintf(stderr, "debug: sound_stream: freespace = %d\n", freespace);
+#ifdef SYSDEP_SOUND_STREAM_DEBUG
+   fprintf(stderr, "debug: sysdep_sound_stream: freespace = %d\n", freespace);
 #endif
 
    while(freespace > 0)
@@ -188,7 +188,7 @@ void sound_stream_update(struct sound_stream_struct *stream)
       if(sample_buf_fifo_peek(stream->sample_buf_fifo, &sample_buf))
          return;
       
-#ifdef SOUND_STREAM_DEBUG      
+#ifdef SYSDEP_SOUND_STREAM_DEBUG      
       fprintf(stderr, "sample_buf->length = %d, sample_buf->pos = %d\n",
          sample_buf->length, sample_buf->pos);
 #endif
@@ -204,8 +204,8 @@ void sound_stream_update(struct sound_stream_struct *stream)
       /* woops something went wrong (EAGAIN ?!), try again next update */
       if (result < 0)
       {
-#ifdef SOUND_STREAM_WARNING
-         fprintf(stderr, "warning: sound_stream: sysdep_dsp_write returned -1\n");
+#ifdef SYSDEP_SOUND_STREAM_WARNING
+         fprintf(stderr, "warning: sysdep_sound_stream: sysdep_dsp_write returned -1\n");
 #endif
          return;
       }
@@ -216,9 +216,9 @@ void sound_stream_update(struct sound_stream_struct *stream)
          otherwise try again next update */
       if (result < samples_this_loop)
       {
-#ifdef SOUND_STREAM_WARNING
+#ifdef SYSDEP_SOUND_STREAM_WARNING
          fprintf(stderr,
-            "warning: sound_stream: sysdep_dsp_write returned %d, expected %d\n",
+            "warning: sysdep_sound_stream: sysdep_dsp_write returned %d, expected %d\n",
             result, samples_this_loop);
 #endif
          return;
@@ -236,8 +236,8 @@ void sound_stream_update(struct sound_stream_struct *stream)
          }
          else
          {
-#ifdef SOUND_STREAM_WARNING
-            fprintf(stderr, "warning: sound_stream: fifo empty, looping sample\n");
+#ifdef SYSDEP_SOUND_STREAM_WARNING
+            fprintf(stderr, "warning: sysdep_sound_stream: fifo empty, looping sample\n");
 #endif
             sample_buf->pos = 0;
          }

@@ -17,30 +17,22 @@
    write to the Free Software Foundation, Inc., 59 Temple Place - Suite 330,
    Boston, MA 02111-1307, USA.
 */
-#ifndef __SOUND_STREAM_PRIV_H
-#define __SOUND_STREAM_PRIV_H
+#ifndef __SYSDEP_SOUND_STREAM_H
+#define __SYSDEP_SOUND_STREAM_H
+
 #include "sysdep_dsp.h"
 #include "begin_code.h"
 
-struct sample_buf_fifo_struct;
+struct sysdep_sound_stream_struct;
 
-struct sound_stream_sample_buf {
-   int length;
-   int pos;
-   unsigned char *data;
-};
+struct sysdep_sound_stream_struct *sysdep_sound_stream_create(struct sysdep_dsp_struct* dsp,
+   int type, int buf_size, int buf_count);
+void sysdep_sound_stream_destroy(struct sysdep_sound_stream_struct *stream);
 
-struct sound_stream_struct {
-   struct sysdep_dsp_struct *dsp;
-   int bytes_per_sample;
-   int sample_buf_size;
-   int sample_buf_count;
-   int output_buf_size;
-   unsigned char *output_buf;
-   struct sound_stream_sample_buf *sample_buf;
-   struct sample_buf_fifo_struct *sample_buf_fifo;
-   struct sample_buf_fifo_struct *empty_sample_buf_fifo;
-};
+void sysdep_sound_stream_write(struct sysdep_sound_stream_struct *stream,
+   unsigned char *data, int samples);
+
+void sysdep_sound_stream_update(struct sysdep_sound_stream_struct *stream);
 
 #include "end_code.h"
-#endif /* ifndef __SOUND_STREAM_PRIV_H */
+#endif /* ifndef __SYSDEP_SOUND_STREAM_H */

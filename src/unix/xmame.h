@@ -40,7 +40,7 @@
 #include "mame.h"
 #include "common.h"
 #include "sysdep/rc.h"
-#include "sysdep/sound_stream.h"
+#include "sysdep/sysdep_sound_stream.h"
 
 /*
  * Definitions.
@@ -81,7 +81,7 @@ EXTERN int		frameskip;
 EXTERN int		game_index;
 EXTERN int 		sleep_idle;
 EXTERN int 		max_autoframeskip;
-EXTERN struct sound_stream_struct *sound_stream;
+EXTERN struct sysdep_sound_stream_struct *sysdep_sound_stream;
 #ifdef MESS
 extern char		crcdir[];
 #endif

@@ -5,7 +5,7 @@
 #include "xmame.h"
 #include "sysdep/sysdep_dsp.h"
 #include "sysdep/sysdep_mixer.h"
-#include "sysdep/sound_stream.h"
+#include "sysdep/sysdep_sound_stream.h"
 #include "driver.h"
 
 /* #define SOUND_DEBUG */
@@ -14,8 +14,8 @@ static float sound_bufsize = 3.0;
 static int sound_attenuation = -3;
 static char *sound_dsp_device = NULL;
 static char *sound_mixer_device = NULL;
-static struct sysdep_dsp_struct *sound_dsp = NULL;
-static struct sysdep_mixer_struct *sound_mixer = NULL;
+static struct sysdep_dsp_struct *sysdep_sound_dsp = NULL;
+static struct sysdep_mixer_struct *sysdep_sound_mixer = NULL;
 static int sound_samples_per_frame = 0;
 static int type = -1;
 
@@ -41,7 +41,7 @@ void osd_set_mastervolume(int attenuation)
 {
 	float f = attenuation;
 
-	if(!sound_mixer)
+	if(!sysdep_sound_mixer)
 		return;
 
 	f += 32.0;
@@ -53,7 +53,7 @@ void osd_set_mastervolume(int attenuation)
 			attenuation, (int)f);
 #endif
 
-	sysdep_mixer_set(sound_mixer, SYSDEP_MIXER_PCM1, f, f);
+	sysdep_mixer_set(sysdep_sound_mixer, SYSDEP_MIXER_PCM1, f, f);
 }
 
 int osd_get_mastervolume(void)
@@ -61,10 +61,10 @@ int osd_get_mastervolume(void)
 	int left, right;
 	float f;
 
-	if(!sound_mixer)
+	if(!sysdep_sound_mixer)
 		return -32;
 
-	if(sysdep_mixer_get(sound_mixer, SYSDEP_MIXER_PCM1, &left, &right))
+	if(sysdep_mixer_get(sysdep_sound_mixer, SYSDEP_MIXER_PCM1, &left, &right))
 		return -32;
 
 	f = left;
@@ -84,10 +84,10 @@ void osd_sound_enable(int enable_it)
 		/* in case we get called twice with enable_it true
 		   OR we get called when osd_start_audio stream
 		   has never been called */
-		if (sound_dsp || (type==-1))
+		if (sysdep_sound_dsp || (type==-1))
 			return;
 		
-		if(!(sound_dsp = sysdep_dsp_create(NULL,
+		if(!(sysdep_sound_dsp = sysdep_dsp_create(NULL,
 						sound_dsp_device,
 						&(Machine->sample_rate),
 						&type,
@@ -101,25 +101,25 @@ void osd_sound_enable(int enable_it)
 		sound_samples_per_frame = Machine->sample_rate /
 			Machine->refresh_rate;
 
-		if(sound_dsp && !(sound_stream = sound_stream_create(sound_dsp,
+		if(sysdep_sound_dsp && !(sysdep_sound_stream = sysdep_sound_stream_create(sysdep_sound_dsp,
 						type, sound_samples_per_frame, 3)))
 		{
-			sysdep_dsp_destroy(sound_dsp);
-			sound_dsp = NULL;
+			sysdep_dsp_destroy(sysdep_sound_dsp);
+			sysdep_sound_dsp = NULL;
 		}
 
 	}
 	else
 	{
-		if (sound_dsp)
+		if (sysdep_sound_dsp)
 		{
-			sysdep_dsp_destroy(sound_dsp);
-			sound_dsp = NULL;
+			sysdep_dsp_destroy(sysdep_sound_dsp);
+			sysdep_sound_dsp = NULL;
 		}
-		if (sound_stream)
+		if (sysdep_sound_stream)
 		{
-			sound_stream_destroy(sound_stream);
-			sound_stream = NULL;
+			sysdep_sound_stream_destroy(sysdep_sound_stream);
+			sysdep_sound_stream = NULL;
 		}
 	}
 }
@@ -128,20 +128,20 @@ int osd_start_audio_stream(int stereo)
 {
 	type = SYSDEP_DSP_16BIT | (stereo? SYSDEP_DSP_STEREO:SYSDEP_DSP_MONO);
 
-	sound_dsp    = NULL;
-	sound_stream = NULL;
-	sound_mixer  = NULL;
+	sysdep_sound_dsp    = NULL;
+	sysdep_sound_stream = NULL;
+	sysdep_sound_mixer  = NULL;
 
 	osd_sound_enable(1);
 	
-	if (sound_dsp)
+	if (sysdep_sound_dsp)
 	{
 		/* create a mixer instance */
-		sound_mixer = sysdep_mixer_create(NULL, sound_mixer_device,
+		sysdep_sound_mixer = sysdep_mixer_create(NULL, sound_mixer_device,
 			SYSDEP_MIXER_RESTORE_SETTINS_ON_EXIT);
 
 		/* check if the user specified a volume, and ifso set it */
-		if(sound_mixer && rc_get_priority2(sound_opts, "volume"))
+		if(sysdep_sound_mixer && rc_get_priority2(sound_opts, "volume"))
 			osd_set_mastervolume(sound_attenuation);
 	}
 
@@ -150,8 +150,8 @@ int osd_start_audio_stream(int stereo)
 
 int osd_update_audio_stream(INT16 *buffer)
 {
-	if (sound_stream)
-		sound_stream_write(sound_stream, (unsigned char *)buffer,
+	if (sysdep_sound_stream)
+		sysdep_sound_stream_write(sysdep_sound_stream, (unsigned char *)buffer,
 				sound_samples_per_frame);
 
 	return sound_samples_per_frame;
@@ -159,10 +159,10 @@ int osd_update_audio_stream(INT16 *buffer)
 
 void osd_stop_audio_stream(void)
 {
-	if(sound_mixer)
+	if(sysdep_sound_mixer)
 	{
-		sysdep_mixer_destroy(sound_mixer);
-		sound_mixer = NULL;
+		sysdep_mixer_destroy(sysdep_sound_mixer);
+		sysdep_sound_mixer = NULL;
 	}
 	
 	osd_sound_enable(0);

@@ -2,9 +2,14 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.93
+	- Everything from MAME 0.93 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.93 (http://x.mame.net/changes-mess.html).
+	- Fixed another problem with itech32 on 64-bit architectures.  (R. 
+	  Belmont)
+
 Release 0.92, 23 February 2005
-	- Everything from MAME 0.92 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.92 (http://x.mame.net/changes-mess.html).
+	- Everything from MAME 0.92 and MESS 0.92.
 	- Fixed the lq2x and hq2x 3x3 effects with Xv.  (Hans de Goede)
 	- Added double buffering to lq2x and hq2x when blitting directly to the 
 	  framebuffer.  (Hans de Goede)
