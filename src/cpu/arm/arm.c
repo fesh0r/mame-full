@@ -55,20 +55,19 @@ struct ARM {
 static struct ARM arm;
 int arm_ICount;
 
-#define AMASK	0x03fffffc
+#define AMASK	0x03fffffcL
 
 /****************************************************************************
  * Read a byte from given memory location
  ****************************************************************************/
 INLINE UINT32 ARM_RDMEM(UINT32 addr)
 {
-	return cpu_readmem26lew(addr & AMASK);
+	return cpu_readmem26lew(addr);
 }
 
 INLINE UINT32 ARM_RDMEM_32(UINT32 addr)
 {
-	UINT32 data = cpu_readmem26lew_dword(addr & AMASK);
-	logerror("ARM_RDMEM_32 (%08x) -> %08x\n", addr, data);
+	UINT32 data = cpu_readmem26lew_dword(addr);
 	return data;
 }
 
@@ -77,12 +76,12 @@ INLINE UINT32 ARM_RDMEM_32(UINT32 addr)
  ****************************************************************************/
 INLINE void ARM_WRMEM(UINT32 addr, UINT32 val)
 {
-	cpu_writemem26lew(addr & AMASK, val & 0xff);
+	cpu_writemem26lew(addr, val & 0xff);
 }
 
 INLINE void ARM_WRMEM_32(UINT32 addr, UINT32 val)
 {
-	cpu_writemem26lew_dword(addr & AMASK, val);
+	cpu_writemem26lew_dword(addr, val);
 }
 
 #define OP		arm.queue[0]
@@ -692,7 +691,8 @@ static void PUT_RD(UINT32 val)
 
 /*
  *	----	xxxx 0000 0000 nnnn dddd ssss ssss ssss
- *	AND 	logical and with register
+ *	AND 	Rd,Rn,Rs [shift/rotate]
+ *	logical and with register
  */
 static void and_r (void)
 {
@@ -703,7 +703,8 @@ static void and_r (void)
 
 /*
  *	NZ--	cccc 0000 0001 nnnn dddd ssss ssss ssss
- *	ANDS	logical and with register - set status
+ *	ANDS	Rd,Rn,Rs [shift/rotate]
+ *	logical and with register - set status
  */
 static void ands_r(void)
 {
@@ -715,7 +716,8 @@ static void ands_r(void)
 
 /*
  *	----	cccc 0000 0010 nnnn dddd ssss ssss ssss
- *	EOR 	logical exclusive or with register
+ *	EOR 	Rd,Rn,Rs [shift/rotate]
+ *	logical exclusive or with register
  */
 static void eor_r (void)
 {
@@ -726,7 +728,8 @@ static void eor_r (void)
 
 /*
  *	NZ--	cccc 0000 0011 nnnn dddd ssss ssss ssss
- *	EORS	logical exclusive or with register - set status
+ *	EORS	Rd,Rn,Rs [shift/rotate]
+ *	logical exclusive or with register - set status
  */
 static void eors_r(void)
 {
@@ -738,7 +741,8 @@ static void eors_r(void)
 
 /*
  *	----	cccc 0000 0100 nnnn dddd ssss ssss ssss
- *	SUB 	subtract register
+ *	SUB 	Rd,Rn,Rs [shift/rotate]
+ *	subtract register
  */
 static void sub_r (void)
 {
@@ -749,7 +753,8 @@ static void sub_r (void)
 
 /*
  *	NZ--	cccc 0000 0101 nnnn dddd ssss ssss ssss
- *	SUBS	subtract register - set status
+ *	SUBS	Rd,Rn,Rs [shift/rotate]
+ * subtract register - set status
  */
 static void subs_r(void)
 {
@@ -762,7 +767,8 @@ static void subs_r(void)
 /*
  *	NZCV	31	 27   23   19	15	 11   7    3
  *	----	cccc 0000 0110 nnnn dddd ssss ssss ssss
- *	RSB 	reverse subtract register (swap Rn and Rs)
+ *	RSB 	Rd,Rn,Rs [shift/rotate]
+ * reverse subtract register (swap Rn and Rs)
  */
 static void rsb_r (void)
 {
@@ -773,8 +779,9 @@ static void rsb_r (void)
 
 /*
  *	NZCV	31	 27   23   19	15	 11   7    3
- *	NZ--	cccc 0000 0111 nnnn dddd ssss ssss ssss
- *	RSBS	reverse subtract register (swap Rn and Rs) - set status
+ *	NZCV	cccc 0000 0111 nnnn dddd ssss ssss ssss
+ *	RSBS	Rd,Rn,Rs [shift/rotate]
+ *	reverse subtract register (swap Rn and Rs) - set status
  */
 static void rsbs_r(void)
 {
@@ -785,8 +792,10 @@ static void rsbs_r(void)
 }
 
 /*
- *	----	cccc 0000 1000 nnnn dddd ssss ssss ssss
- *	ADD 	add register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0000 1000 nnnn dddd ssss ssss ssss
+ *	ADD 	Rd,Rn,Rs [shift/rotate]
+ *	add register
  */
 static void add_r (void)
 {
@@ -796,8 +805,10 @@ static void add_r (void)
 }
 
 /*
- *	NZ--	cccc 0000 1001 nnnn dddd ssss ssss ssss
- *	ADDS	add register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *	NZCV	cccc 0000 1001 nnnn dddd ssss ssss ssss
+ *	ADDS	Rd,Rn,Rs [shift/rotate]
+ *	add register - set status
  */
 static void adds_r(void)
 {
@@ -808,8 +819,10 @@ static void adds_r(void)
 }
 
 /*
- *	----	cccc 0000 1010 nnnn dddd ssss ssss ssss
- *	ADC 	add register with carry
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0000 1010 nnnn dddd ssss ssss ssss
+ *	ADC 	Rd,Rn,Rs [shift/rotate]
+ *	add register with carry
  */
 static void adc_r (void)
 {
@@ -820,8 +833,10 @@ static void adc_r (void)
 }
 
 /*
- *	NZ--	cccc 0000 1011 nnnn dddd ssss ssss ssss
- *	ADCS	add register with carry - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0000 1011 nnnn dddd ssss ssss ssss
+ *	ADCS	Rd,Rn,Rs [shift/rotate]
+ *	add register with carry - set status
  */
 static void adcs_r(void)
 {
@@ -833,8 +848,10 @@ static void adcs_r(void)
 }
 
 /*
- *	----	cccc 0000 1100 nnnn dddd ssss ssss ssss
- *	SBC 	subtract register with carry
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0000 1100 nnnn dddd ssss ssss ssss
+ *	SBC 	Rd,Rn,Rs [shift/rotate]
+ *	subtract register with carry
  */
 static void sbc_r (void)
 {
@@ -845,8 +862,10 @@ static void sbc_r (void)
 }
 
 /*
- *	NZ--	cccc 0000 1101 nnnn dddd ssss ssss ssss
- *	SBCS	subtract register with carry - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *	NZCV	cccc 0000 1101 nnnn dddd ssss ssss ssss
+ *	SBCS	Rd,Rn,Rs [shift/rotate]
+ *	subtract register with carry - set status
  */
 static void sbcs_r(void)
 {
@@ -858,8 +877,10 @@ static void sbcs_r(void)
 }
 
 /*
- *	----	cccc 0000 1110 nnnn dddd ssss ssss ssss
- *	RSC 	reverse subtract register with carry (swap Rn and Rs)
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0000 1110 nnnn dddd ssss ssss ssss
+ *	RSC 	Rd,Rn,Rs [shift/rotate]
+ *	reverse subtract register with carry (swap Rn and Rs)
  */
 static void rsc_r (void)
 {
@@ -870,8 +891,10 @@ static void rsc_r (void)
 }
 
 /*
- *	NZ--	cccc 0000 1111 nnnn dddd ssss ssss ssss
- *	RSCS	reverse subtract register with carry (swap Rn and Rs) - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *	NZCV	cccc 0000 1111 nnnn dddd ssss ssss ssss
+ *	RSCS	Rd,Rn,Rs [shift/rotate]
+ *	reverse subtract register with carry (swap Rn and Rs) - set status
  */
 static void rscs_r(void)
 {
@@ -884,8 +907,10 @@ static void rscs_r(void)
 
 #if 0
 /*
- *	NZ--	cccc 0001 0000 nnnn dddd ssss ssss ssss
- *	TST 	test register - no distinct opcode because TST always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 0000 nnnn dddd ssss ssss ssss
+ *	TST 	Rd,Rn,Rs [shift/rotate]
+ *	test register - no distinct opcode because TST always sets the status
  */
 static void tst_r (void)
 {
@@ -895,8 +920,10 @@ static void tst_r (void)
 #endif
 
 /*
- *	NZ--	cccc 0001 0001 nnnn dddd ssss ssss ssss
- *	TSTS	test register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 0001 nnnn dddd ssss ssss ssss
+ *	TSTS	Rd,Rn,Rs [shift/rotate]
+ *	test register - set status
  */
 static void tsts_r(void)
 {
@@ -907,8 +934,10 @@ static void tsts_r(void)
 
 #if 0
 /*
- *	NZ--	cccc 0001 0010 nnnn dddd ssss ssss ssss
- *	TEQ 	test equal bits register - no disctinct opcode because TEQ always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 0010 nnnn dddd ssss ssss ssss
+ *	TEQ 	Rd,Rn,Rs [shift/rotate]
+ *	test equal bits register - no disctinct opcode because TEQ always sets the status
  */
 static void teq_r (void)
 {
@@ -918,8 +947,10 @@ static void teq_r (void)
 #endif
 
 /*
- *	NZ--	cccc 0001 0011 nnnn dddd ssss ssss ssss
- *	TEQS	test equal bits register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 0011 nnnn dddd ssss ssss ssss
+ *	TEQS	Rd,Rn,Rs [shift/rotate]
+ *	test equal bits register - set status
  */
 static void teqs_r(void)
 {
@@ -930,8 +961,10 @@ static void teqs_r(void)
 
 #if 0
 /*
- *	NZ--	cccc 0001 0100 nnnn dddd ssss ssss ssss
- *	CMP 	compare register - no distinct opcode because CMP always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 0100 nnnn dddd ssss ssss ssss
+ *	CMP 	Rd,Rn,Rs [shift/rotate]
+ *	compare register - no distinct opcode because CMP always sets the status
  */
 static void cmp_r (void)
 {
@@ -941,8 +974,10 @@ static void cmp_r (void)
 #endif
 
 /*
- *	NZ--	cccc 0001 0101 nnnn dddd ssss ssss ssss
- *	CMPS	compare register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0001 0101 nnnn dddd ssss ssss ssss
+ *	CMPS	Rd,Rn,Rs [shift/rotate]
+ *	compare register - set status
  */
 static void cmps_r(void)
 {
@@ -953,8 +988,10 @@ static void cmps_r(void)
 
 #if 0
 /*
- *	NZ--	cccc 0001 0110 nnnn dddd ssss ssss ssss
- *	CMN 	compare with negative register - no distinct opcode because CMN always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0001 0110 nnnn dddd ssss ssss ssss
+ *	CMN 	Rd,Rn,Rs [shift/rotate]
+ *	compare with negative register - no distinct opcode because CMN always sets the status
  */
 static void cmn_r (void)
 {
@@ -964,8 +1001,10 @@ static void cmn_r (void)
 #endif
 
 /*
- *	NZ--	cccc 0001 0111 nnnn dddd ssss ssss ssss
- *	CMNS	compare with negative register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0001 0111 nnnn dddd ssss ssss ssss
+ *	CMNS	Rd,Rn,Rs [shift/rotate]
+ *	compare with negative register - set status
  */
 static void cmns_r(void)
 {
@@ -975,8 +1014,10 @@ static void cmns_r(void)
 }
 
 /*
- *	----	cccc 0001 1000 nnnn dddd ssss ssss ssss
- *	ORR 	logical or with register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0001 1000 nnnn dddd ssss ssss ssss
+ *	ORR 	Rd,Rn,Rs [shift/rotate]
+ *	logical or with register
  */
 static void orr_r (void)
 {
@@ -986,8 +1027,10 @@ static void orr_r (void)
 }
 
 /*
- *	NZ--	cccc 0001 1001 nnnn dddd ssss ssss ssss
- *	ORRS	logical or with register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 1001 nnnn dddd ssss ssss ssss
+ *	ORRS	Rd,Rn,Rs [shift/rotate]
+ *	logical or with register - set status
  */
 static void orrs_r(void)
 {
@@ -998,8 +1041,10 @@ static void orrs_r(void)
 }
 
 /*
- *	----	cccc 0001 1010 nnnn dddd ssss ssss ssss
- *	MOV 	register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0001 1010 nnnn dddd ssss ssss ssss
+ *	MOV 	Rd,Rs [shift/rotate]
+ *	register
  */
 static void mov_r (void)
 {
@@ -1008,8 +1053,10 @@ static void mov_r (void)
 }
 
 /*
- *	NZ--	cccc 0001 1011 nnnn dddd ssss ssss ssss
- *	MOVS	register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 1011 nnnn dddd ssss ssss ssss
+ *	MOVS	Rd,Rs [shift/rotate]
+ *	register - set status
  */
 static void movs_r(void)
 {
@@ -1019,8 +1066,10 @@ static void movs_r(void)
 }
 
 /*
- *	----	cccc 0001 1100 nnnn dddd ssss ssss ssss
- *	BIC 	bit clear register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0001 1100 nnnn dddd ssss ssss ssss
+ *	BIC 	Rd,Rn,Rs [shift/rotate]
+ *	bit clear register
  */
 static void bic_r (void)
 {
@@ -1030,8 +1079,10 @@ static void bic_r (void)
 }
 
 /*
- *	NZ--	cccc 0001 1101 nnnn dddd ssss ssss ssss
- *	BICS	bit clear register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 1101 nnnn dddd ssss ssss ssss
+ *	BICS	Rd,Rn,Rs [shift/rotate]
+ *	bit clear register - set status
  */
 static void bics_r(void)
 {
@@ -1042,8 +1093,10 @@ static void bics_r(void)
 }
 
 /*
- *	----	cccc 0001 1110 nnnn dddd ssss ssss ssss
- *	MVN 	move negative register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0001 1110 nnnn dddd ssss ssss ssss
+ *	MVN 	Rd,Rs [shift/rotate]
+ *	move negative register
  */
 static void mvn_r (void)
 {
@@ -1052,8 +1105,10 @@ static void mvn_r (void)
 }
 
 /*
- *	NZ--	cccc 0001 1111 nnnn dddd ssss ssss ssss
- *	MVNS	move negative register - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0001 1111 nnnn dddd ssss ssss ssss
+ *	MVNS	Rd,Rs [shift/rotate]
+ *	move negative register - set status
  */
 static void mvns_r(void)
 {
@@ -1063,8 +1118,10 @@ static void mvns_r(void)
 }
 
 /*
- *	----	xxxx 0010 0000 nnnn dddd iiii iiii iiii
- *	AND 	logical and with immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    xxxx 0010 0000 nnnn dddd iiii iiii iiii
+ *	AND 	Rd,Rn,#iiii
+ *	logical and with immediate
  */
 static void and_i (void)
 {
@@ -1072,8 +1129,10 @@ static void and_i (void)
 }
 
 /*
- *	NZ--	cccc 0010 0001 nnnn dddd iiii iiii iiii
- *	ANDS	logical and with immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0010 0001 nnnn dddd iiii iiii iiii
+ *	ANDS	Rd,Rn,#iiii
+ *	logical and with immediate - set status
  */
 static void ands_i(void)
 {
@@ -1083,8 +1142,10 @@ static void ands_i(void)
 }
 
 /*
- *	----	cccc 0010 0010 nnnn dddd iiii iiii iiii
- *	EOR 	logical exclusive or with immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 0010 nnnn dddd iiii iiii iiii
+ *	EOR 	Rd,Rn,#iiii
+ *	logical exclusive or with immediate
  */
 static void eor_i (void)
 {
@@ -1092,8 +1153,10 @@ static void eor_i (void)
 }
 
 /*
- *	NZ--	cccc 0010 0011 nnnn dddd iiii iiii iiii
- *	EORS	logical exclusive or with immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0010 0011 nnnn dddd iiii iiii iiii
+ *	EORS	Rd,Rn,#iiii
+ *	logical exclusive or with immediate - set status
  */
 static void eors_i(void)
 {
@@ -1103,8 +1166,10 @@ static void eors_i(void)
 }
 
 /*
- *	----	cccc 0010 0100 nnnn dddd iiii iiii iiii
- *	SUB 	subtract immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 0100 nnnn dddd iiii iiii iiii
+ *	SUB 	Rd,Rn,#iiii
+ *	subtract immediate
  */
 static void sub_i (void)
 {
@@ -1112,8 +1177,10 @@ static void sub_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 0101 nnnn dddd iiii iiii iiii
- *	SUBS	subtract immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 0101 nnnn dddd iiii iiii iiii
+ *	SUBS	Rd,Rn,#iiii
+ *	subtract immediate - set status
  */
 static void subs_i(void)
 {
@@ -1124,8 +1191,10 @@ static void subs_i(void)
 }
 
 /*
- *	----	cccc 0010 0110 nnnn dddd iiii iiii iiii
- *	RSB 	reverse subtract from immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 0110 nnnn dddd iiii iiii iiii
+ *	RSB 	Rd,Rn,#iiii
+ *	reverse subtract from immediate
  */
 static void rsb_i (void)
 {
@@ -1133,8 +1202,10 @@ static void rsb_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 0111 nnnn dddd iiii iiii iiii
- *	RSBS	reverse subtract from immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 0111 nnnn dddd iiii iiii iiii
+ *	RSBS	Rd,Rn,#iiii
+ *	reverse subtract from immediate - set status
  */
 static void rsbs_i(void)
 {
@@ -1145,8 +1216,10 @@ static void rsbs_i(void)
 }
 
 /*
- *	----	cccc 0010 1000 nnnn dddd iiii iiii iiii
- *	ADD 	add immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 1000 nnnn dddd iiii iiii iiii
+ *	ADD 	Rd,Rn,#iiii
+ *	add immediate
  */
 static void add_i (void)
 {
@@ -1154,8 +1227,10 @@ static void add_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 1001 nnnn dddd iiii iiii iiii
- *	ADDS	add immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 1001 nnnn dddd iiii iiii iiii
+ *	ADDS	Rd,Rn,#iiii
+ *	add immediate - set status
  */
 static void adds_i(void)
 {
@@ -1166,8 +1241,10 @@ static void adds_i(void)
 }
 
 /*
- *	----	cccc 0010 1010 nnnn dddd iiii iiii iiii
- *	ADC 	add immediate with carry
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 1010 nnnn dddd iiii iiii iiii
+ *	ADC 	Rd,Rn,#iiii
+ *	add immediate with carry
  */
 static void adc_i (void)
 {
@@ -1176,8 +1253,10 @@ static void adc_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 1011 nnnn dddd iiii iiii iiii
- *	ADCS	add immediate with carry - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 1011 nnnn dddd iiii iiii iiii
+ *	ADCS	Rd,Rn,#iiii
+ *	add immediate with carry - set status
  */
 static void adcs_i(void)
 {
@@ -1189,8 +1268,10 @@ static void adcs_i(void)
 }
 
 /*
- *	----	cccc 0010 1100 nnnn dddd iiii iiii iiii
- *	SBC 	subtract immediate with carry
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 1100 nnnn dddd iiii iiii iiii
+ *	SBC 	Rd,Rn,#iiii
+ *	subtract immediate with carry
  */
 static void sbc_i (void)
 {
@@ -1199,8 +1280,10 @@ static void sbc_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 1101 nnnn dddd iiii iiii iiii
- *	SBCS	subtract immediate with carry - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 1101 nnnn dddd iiii iiii iiii
+ *	SBCS	Rd,Rn,#iiii
+ *	subtract immediate with carry - set status
  */
 static void sbcs_i(void)
 {
@@ -1212,8 +1295,10 @@ static void sbcs_i(void)
 }
 
 /*
- *	----	cccc 0010 1110 nnnn dddd iiii iiii iiii
- *	RSC 	reverse subtract from immediate with carry
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0010 1110 nnnn dddd iiii iiii iiii
+ *	RSC 	Rd,Rn,#iiii
+ *	reverse subtract from immediate with carry
  */
 static void rsc_i (void)
 {
@@ -1222,8 +1307,10 @@ static void rsc_i (void)
 }
 
 /*
- *	NZCV	cccc 0010 1111 nnnn dddd iiii iiii iiii
- *	RSCS	reverse subtract from immediate with carry - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0010 1111 nnnn dddd iiii iiii iiii
+ *	RSCS	Rd,Rn,#iiii
+ *	reverse subtract from immediate with carry - set status
  */
 static void rscs_i(void)
 {
@@ -1236,8 +1323,10 @@ static void rscs_i(void)
 
 #if 0
 /*
- *	NZ--	cccc 0011 0000 nnnn dddd iiii iiii iiii
- *	TST 	test immediate - no distinct opcode because TST always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0000 nnnn dddd iiii iiii iiii
+ *	TST 	Rd,Rn,#iiii
+ *	test immediate - no distinct opcode because TST always sets the status
  */
 static void tst_i (void)
 {
@@ -1246,8 +1335,10 @@ static void tst_i (void)
 #endif
 
 /*
- *	NZ--	cccc 0011 0001 nnnn dddd iiii iiii iiii
- *	TSTS	test immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0001 nnnn dddd iiii iiii iiii
+ *	TSTS	Rd,Rn,#iiii
+ *	test immediate - set status
  */
 static void tsts_i(void)
 {
@@ -1257,8 +1348,10 @@ static void tsts_i(void)
 
 #if 0
 /*
- *	NZ--	cccc 0011 0010 nnnn dddd iiii iiii iiii
- *	TEQ 	test equal bits immediate - no disctinct opcode because TEQ always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0010 nnnn dddd iiii iiii iiii
+ *	TEQ 	Rd,Rn,#iiii
+ *	test equal bits immediate - no disctinct opcode because TEQ always sets the status
  */
 static void teq_i (void)
 {
@@ -1267,8 +1360,10 @@ static void teq_i (void)
 #endif
 
 /*
- *	NZ--	cccc 0011 0011 nnnn dddd iiii iiii iiii
- *	TEQS	test equal bits immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0011 nnnn dddd iiii iiii iiii
+ *	TEQS	Rd,Rn,#iiii
+ *	test equal bits immediate - set status
  */
 static void teqs_i(void)
 {
@@ -1278,8 +1373,10 @@ static void teqs_i(void)
 
 #if 0
 /*
- *	NZ--	cccc 0011 0100 nnnn dddd iiii iiii iiii
- *	CMP 	compare immediate - no distinct opcode because CMP always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0100 nnnn dddd iiii iiii iiii
+ *	CMP 	Rd,Rn,#iiii
+ *	compare immediate - no distinct opcode because CMP always sets the status
  */
 static void cmp_i (void)
 {
@@ -1288,8 +1385,10 @@ static void cmp_i (void)
 #endif
 
 /*
- *	NZCV	cccc 0011 0101 nnnn dddd iiii iiii iiii
- *	CMPS	compare immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0011 0101 nnnn dddd iiii iiii iiii
+ *	CMPS	Rd,Rn,#iiii
+ *	compare immediate - set status
  */
 static void cmps_i(void)
 {
@@ -1300,8 +1399,10 @@ static void cmps_i(void)
 
 #if 0
 /*
- *	NZ--	cccc 0011 0110 nnnn dddd iiii iiii iiii
- *	CMN 	compare with negative immediate - no distinct opcode because CMN always sets the status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 0110 nnnn dddd iiii iiii iiii
+ *	CMN 	Rd,Rn,#iiii
+ *	compare with negative immediate - no distinct opcode because CMN always sets the status
  */
 static void cmn_i (void)
 {
@@ -1311,8 +1412,10 @@ static void cmn_i (void)
 #endif
 
 /*
- *	NZCV	cccc 0011 0111 nnnn dddd iiii iiii iiii
- *	CMNS	compare with negative immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZCV    cccc 0011 0111 nnnn dddd iiii iiii iiii
+ *	CMNS	Rd,Rn,#iiii
+ *	compare with negative immediate - set status
  */
 static void cmns_i(void)
 {
@@ -1322,8 +1425,10 @@ static void cmns_i(void)
 }
 
 /*
- *	----	cccc 0011 1000 nnnn dddd iiii iiii iiii
- *	ORR 	logical or with immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0011 1000 nnnn dddd iiii iiii iiii
+ *	ORR 	Rd,Rn,#iiii
+ *	logical or with immediate
  */
 static void orr_i (void)
 {
@@ -1331,8 +1436,10 @@ static void orr_i (void)
 }
 
 /*
- *	NZ--	cccc 0011 1001 nnnn dddd iiii iiii iiii
- *	ORRS	logical or with immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 1001 nnnn dddd iiii iiii iiii
+ *	ORRS	Rd,Rn,#iiii
+ *	logical or with immediate - set status
  */
 static void orrs_i(void)
 {
@@ -1342,8 +1449,10 @@ static void orrs_i(void)
 }
 
 /*
- *	----	cccc 0011 1010 nnnn dddd iiii iiii iiii
- *	MOV 	move immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0011 1010 nnnn dddd iiii iiii iiii
+ *	MOV 	Rd,#iiii
+ *	move immediate
  */
 static void mov_i (void)
 {
@@ -1351,8 +1460,10 @@ static void mov_i (void)
 }
 
 /*
- *	NZ--	cccc 0011 1011 nnnn dddd iiii iiii iiii
- *	MOVS	move immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 1011 nnnn dddd iiii iiii iiii
+ *	MOVS	Rd,#iiii
+ *	move immediate - set status
  */
 static void movs_i(void)
 {
@@ -1362,8 +1473,10 @@ static void movs_i(void)
 }
 
 /*
- *	----	cccc 0011 1100 nnnn dddd iiii iiii iiii
- *	BIC 	bit clear immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0011 1100 nnnn dddd iiii iiii iiii
+ *	BIC 	Rd,Rn,#iiii
+ *	bit clear immediate
  */
 static void bic_i (void)
 {
@@ -1372,8 +1485,10 @@ static void bic_i (void)
 }
 
 /*
- *	NZ--	cccc 0011 1101 nnnn dddd iiii iiii iiii
- *	BICS	bit clear immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 1101 nnnn dddd iiii iiii iiii
+ *	BICS	Rd,Rn,#iiii
+ *	bit clear immediate - set status
  */
 static void bics_i(void)
 {
@@ -1383,8 +1498,10 @@ static void bics_i(void)
 }
 
 /*
- *	----	cccc 0011 1110 nnnn dddd iiii iiii iiii
- *	MVN 	move negative immediate
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0011 1110 nnnn dddd iiii iiii iiii
+ *	MVN 	Rd,#iiii
+ *	move negative immediate
  */
 static void mvn_i (void)
 {
@@ -1392,8 +1509,10 @@ static void mvn_i (void)
 }
 
 /*
- *	NZ--	cccc 0011 1111 nnnn dddd iiii iiii iiii
- *	MVNS	move negative immediate - set status
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  NZ--    cccc 0011 1111 nnnn dddd iiii iiii iiii
+ *	MVNS	Rd,#iiii
+ *	move negative immediate - set status
  */
 static void mvns_i(void)
 {
@@ -1410,8 +1529,10 @@ static void mvns_i(void)
  *****************************************************************************/
 
 /*
- *	----	cccc 0100 0000 nnnn dddd ssss ssss ssss
- *	STR 	store register - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0000 nnnn dddd ssss ssss ssss
+ *	STR 	Rd,[Rn,-Rs [shift/rotate]]
+ *	store register - preindexed, subtract index register
  */
 static void str_1rs(void)
 {
@@ -1421,8 +1542,10 @@ static void str_1rs(void)
 }
 
 /*
- *	----	cccc 0100 0001 nnnn dddd ssss ssss ssss
- *	LDR 	load register - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0001 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd,[Rn,-Rs [shift/rotate]]
+ *	load register - preindexed, subtract index register
  */
 static void ldr_1rs(void)
 {
@@ -1432,8 +1555,10 @@ static void ldr_1rs(void)
 }
 
 /*
- *	----	cccc 0100 0010 nnnn dddd ssss ssss ssss
- *	STR!	store register - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0010 nnnn dddd ssss ssss ssss
+ *	STR 	Rd!,[Rn,-Rs [shift/rotate]]
+ *	store register - preindexed, subtract index register, write back ea
  */
 static void str_1rsw(void)
 {
@@ -1444,8 +1569,10 @@ static void str_1rsw(void)
 }
 
 /*
- *	----	cccc 0100 0011 nnnn dddd ssss ssss ssss
- *	LDR!	load register - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0011 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd!,[Rn,-Rs [shift/rotate]]
+ *	load register - preindexed, subtract index register, write back ea
  */
 static void ldr_1rsw(void)
 {
@@ -1456,8 +1583,10 @@ static void ldr_1rsw(void)
 }
 
 /*
- *	----	cccc 0100 0100 nnnn dddd ssss ssss ssss
- *	STRB	store register byte - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0100 nnnn dddd ssss ssss ssss
+ *	STRB	Rd,[Rn,-Rs [shift/rotate]]
+ *	store register byte - preindexed, subtract index register
  */
 static void strb_1rs(void)
 {
@@ -1467,8 +1596,10 @@ static void strb_1rs(void)
 }
 
 /*
- *	----	cccc 0100 0101 nnnn dddd ssss ssss ssss
- *	LDRB	load register byte - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0101 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd,[Rn,-Rs [shift/rotate]]
+ *	load register byte - preindexed, subtract index register
  */
 static void ldrb_1rs(void)
 {
@@ -1478,8 +1609,10 @@ static void ldrb_1rs(void)
 }
 
 /*
- *	----	cccc 0100 0110 nnnn dddd ssss ssss ssss
- *	STRB!	store register byte - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0110 nnnn dddd ssss ssss ssss
+ *	STRB	Rd!,[Rn,-Rs [shift/rotate]]
+ *	store register byte - preindexed, subtract index register, write back ea
  */
 static void strb_1rsw(void)
 {
@@ -1490,8 +1623,10 @@ static void strb_1rsw(void)
 }
 
 /*
- *	----	cccc 0100 0111 nnnn dddd ssss ssss ssss
- *	LDRB!	load register byte - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 0111 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd!,[Rn,-Rs [shift/rotate]]
+ *	load register byte - preindexed, subtract index register, write back ea
  */
 static void ldrb_1rsw(void)
 {
@@ -1502,8 +1637,10 @@ static void ldrb_1rsw(void)
 }
 
 /*
- *	----	cccc 0100 1000 nnnn dddd ssss ssss ssss
- *	STR 	store register - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1000 nnnn dddd ssss ssss ssss
+ *	STR 	Rd,[Rn,+Rs [shift/rotate]]
+ *	store register - preindexed, add index register
  */
 static void str_1ra(void)
 {
@@ -1513,8 +1650,10 @@ static void str_1ra(void)
 }
 
 /*
- *	----	cccc 0100 1001 nnnn dddd ssss ssss ssss
- *	LDR 	load register - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1001 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd,[Rn,+Rs [shift/rotate]]
+ *	load register - preindexed, add index register
  */
 static void ldr_1ra(void)
 {
@@ -1524,8 +1663,10 @@ static void ldr_1ra(void)
 }
 
 /*
- *	----	cccc 0100 1010 nnnn dddd ssss ssss ssss
- *	STR!	store register - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1010 nnnn dddd ssss ssss ssss
+ *	STR 	Rd!,[Rn,+Rs [shift/rotate]]
+ *	store register - preindexed, add index register, write back ea
  */
 static void str_1raw(void)
 {
@@ -1536,8 +1677,10 @@ static void str_1raw(void)
 }
 
 /*
- *	----	cccc 0100 1011 nnnn dddd ssss ssss ssss
- *	LDR!	load register - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1011 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd!,[Rn,+Rs [shift/rotate]]
+ *	load register - preindexed, add index register, write back ea
  */
 static void ldr_1raw(void)
 {
@@ -1548,8 +1691,10 @@ static void ldr_1raw(void)
 }
 
 /*
- *	----	cccc 0100 1100 nnnn dddd ssss ssss ssss
- *	STRB	store register byte - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1100 nnnn dddd ssss ssss ssss
+ *	STRB	Rd,[Rn,+Rs [shift/rotate]]
+ *	store register byte - preindexed, add index register
  */
 static void strb_1ra(void)
 {
@@ -1559,8 +1704,10 @@ static void strb_1ra(void)
 }
 
 /*
- *	----	cccc 0100 1101 nnnn dddd ssss ssss ssss
- *	LDRB	load register byte - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1101 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd,[Rn,+Rs [shift/rotate]]
+ *	load register byte - preindexed, add index register
  */
 static void ldrb_1ra(void)
 {
@@ -1570,8 +1717,10 @@ static void ldrb_1ra(void)
 }
 
 /*
- *	----	cccc 0100 1110 nnnn dddd ssss ssss ssss
- *	STR!	store register byte - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1110 nnnn dddd ssss ssss ssss
+ *	STRB	Rd!,[Rn,+Rs [shift/rotate]]
+ *	store register byte - preindexed, add index register, write back ea
  */
 static void strb_1raw(void)
 {
@@ -1582,8 +1731,10 @@ static void strb_1raw(void)
 }
 
 /*
- *	----	cccc 0100 1111 nnnn dddd ssss ssss ssss
- *	LDR!	load register byte - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0100 1111 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd!,[Rn,+Rs [shift/rotate]]
+ *	load register byte - preindexed, add index register, write back ea
  */
 static void ldrb_1raw(void)
 {
@@ -1595,8 +1746,10 @@ static void ldrb_1raw(void)
 
 
 /*
- *	----	cccc 0101 0000 nnnn dddd ssss ssss ssss
- *	STR 	store register - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0000 nnnn dddd ssss ssss ssss
+ *	STR 	Rd,[Rn],-Rs [shift/rotate]
+ *	store register - postindexed, subtract index register
  */
 static void str_2rs(void)
 {
@@ -1607,8 +1760,10 @@ static void str_2rs(void)
 }
 
 /*
- *	----	cccc 0101 0001 nnnn dddd ssss ssss ssss
- *	LDR 	load register - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0001 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd,[Rn],-Rs [shift/rotate]
+ *	load register - postindexed, subtract index register
  */
 static void ldr_2rs(void)
 {
@@ -1619,8 +1774,10 @@ static void ldr_2rs(void)
 }
 
 /*
- *	----	cccc 0101 0010 nnnn dddd ssss ssss ssss
- *	STR!	store register - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0010 nnnn dddd ssss ssss ssss
+ *	STR 	Rd!,[Rn],-Rs [shift/rotate]
+ *	store register - postindexed, subtract index register, write back ea
  */
 static void str_2rsw(void)
 {
@@ -1631,8 +1788,10 @@ static void str_2rsw(void)
 }
 
 /*
- *	----	cccc 0101 0011 nnnn dddd ssss ssss ssss
- *	LDR!	load register - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0011 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd!,[Rn],-Rs [shift/rotate]
+ *	load register - postindexed, subtract index register, write back ea
  */
 static void ldr_2rsw(void)
 {
@@ -1643,8 +1802,10 @@ static void ldr_2rsw(void)
 }
 
 /*
- *	----	cccc 0101 0100 nnnn dddd ssss ssss ssss
- *	STRB	store register byte - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0100 nnnn dddd ssss ssss ssss
+ *	STRB	Rd,[Rn],-Rs [shift/rotate]
+ *	store register byte - postindexed, subtract index register
  */
 static void strb_2rs(void)
 {
@@ -1655,8 +1816,10 @@ static void strb_2rs(void)
 }
 
 /*
- *	----	cccc 0101 0101 nnnn dddd ssss ssss ssss
- *	LDRB	load register byte - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0101 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd,[Rn],-Rs [shift/rotate]
+ *	load register byte - postindexed, subtract index register
  */
 static void ldrb_2rs(void)
 {
@@ -1667,8 +1830,10 @@ static void ldrb_2rs(void)
 }
 
 /*
- *	----	cccc 0101 0110 nnnn dddd ssss ssss ssss
- *	STRB!	store register byte - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0110 nnnn dddd ssss ssss ssss
+ *	STRB	Rd!,[Rn],-Rs [shift/rotate]
+ *	store register byte - postindexed, subtract index register, write back ea
  */
 static void strb_2rsw(void)
 {
@@ -1679,8 +1844,10 @@ static void strb_2rsw(void)
 }
 
 /*
- *	----	cccc 0101 0111 nnnn dddd ssss ssss ssss
- *	LDRB!	load register byte - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 0111 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd!,[Rn],-Rs [shift/rotate]
+ *	load register byte - postindexed, subtract index register, write back ea
  */
 static void ldrb_2rsw(void)
 {
@@ -1691,8 +1858,10 @@ static void ldrb_2rsw(void)
 }
 
 /*
- *	----	cccc 0101 1000 nnnn dddd ssss ssss ssss
- *	STR 	store register - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1000 nnnn dddd ssss ssss ssss
+ *	STR 	Rd,[Rn],+Rs [shift/rotate]
+ *	store register - postindexed, add index register
  */
 static void str_2ra(void)
 {
@@ -1703,8 +1872,10 @@ static void str_2ra(void)
 }
 
 /*
- *	----	cccc 0101 1001 nnnn dddd ssss ssss ssss
- *	LDR 	load register - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1001 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd,[Rn],+Rs [shift/rotate]
+ *	load register - postindexed, add index register
  */
 static void ldr_2ra(void)
 {
@@ -1715,8 +1886,10 @@ static void ldr_2ra(void)
 }
 
 /*
- *	----	cccc 0101 1010 nnnn dddd ssss ssss ssss
- *	STR!	store register - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1010 nnnn dddd ssss ssss ssss
+ *	STR 	Rd!,[Rn],+Rs [shift/rotate]
+ *	store register - postindexed, add index register, write back ea
  */
 static void str_2raw(void)
 {
@@ -1727,8 +1900,10 @@ static void str_2raw(void)
 }
 
 /*
- *	----	cccc 0101 1011 nnnn dddd ssss ssss ssss
- *	LDR!	load register - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1011 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd!,[Rn],+Rs [shift/rotate]
+ *	load register - postindexed, add index register, write back ea
  */
 static void ldr_2raw(void)
 {
@@ -1739,8 +1914,10 @@ static void ldr_2raw(void)
 }
 
 /*
- *	----	cccc 0101 1100 nnnn dddd ssss ssss ssss
- *	STRB	store register byte - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1100 nnnn dddd ssss ssss ssss
+ *	STRB	Rd,[Rn],+Rs [shift/rotate]
+ *	store register byte - postindexed, add index register
  */
 static void strb_2ra(void)
 {
@@ -1751,8 +1928,10 @@ static void strb_2ra(void)
 }
 
 /*
- *	----	cccc 0101 1101 nnnn dddd ssss ssss ssss
- *	LDRB	load register byte - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1101 nnnn dddd ssss ssss ssss
+ *	LDRB	Rd,[Rn],+Rs [shift/rotate]
+ *	load register byte - postindexed, add index register
  */
 static void ldrb_2ra(void)
 {
@@ -1763,8 +1942,10 @@ static void ldrb_2ra(void)
 }
 
 /*
- *	----	cccc 0101 1110 nnnn dddd ssss ssss ssss
- *	STR!	store register byte - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1110 nnnn dddd ssss ssss ssss
+ *	STRB	Rd,[Rn],+Rs [shift/rotate]
+ *	store register byte - postindexed, add index register, write back ea
  */
 static void strb_2raw(void)
 {
@@ -1775,8 +1956,10 @@ static void strb_2raw(void)
 }
 
 /*
- *	----	cccc 0101 1111 nnnn dddd ssss ssss ssss
- *	LDR!	load register byte - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0101 1111 nnnn dddd ssss ssss ssss
+ *	LDR 	Rd,[Rn],+Rs [shift/rotate]
+ *	load register byte - postindexed, add index register, write back ea
  */
 static void ldrb_2raw(void)
 {
@@ -1789,8 +1972,10 @@ static void ldrb_2raw(void)
 
 
 /*
- *	----	cccc 0110 0000 nnnn dddd iiii iiii iiii
- *	STR 	store register - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0000 nnnn dddd iiii iiii iiii
+ *	STR 	Rd,[Rn,-#ii]
+ *	store register - preindexed, subtract immediate
  */
 static void str_1is(void)
 {
@@ -1800,8 +1985,10 @@ static void str_1is(void)
 }
 
 /*
- *	----	cccc 0110 0001 nnnn dddd iiii iiii iiii
- *	LDR 	load register - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0001 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd,[Rn,-#ii]
+ *	load register - preindexed, subtract immediate
  */
 static void ldr_1is(void)
 {
@@ -1811,8 +1998,10 @@ static void ldr_1is(void)
 }
 
 /*
- *	----	cccc 0110 0010 nnnn dddd iiii iiii iiii
- *	STR!	store register - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0010 nnnn dddd iiii iiii iiii
+ *	STR 	Rd!,[Rn,-#ii]
+ *	store register - preindexed, subtract immediate, write back ea
  */
 static void str_1isw(void)
 {
@@ -1823,8 +2012,10 @@ static void str_1isw(void)
 }
 
 /*
- *	----	cccc 0110 0011 nnnn dddd iiii iiii iiii
- *	LDR!	load register - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0011 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd!,[Rn,-#ii]
+ *	load register - preindexed, subtract immediate, write back ea
  */
 static void ldr_1isw(void)
 {
@@ -1835,8 +2026,10 @@ static void ldr_1isw(void)
 }
 
 /*
- *	----	cccc 0110 0100 nnnn dddd iiii iiii iiii
- *	STRB	store register byte - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0100 nnnn dddd iiii iiii iiii
+ *	STRB	Rd,[Rn,-#ii]
+ *	store register byte - preindexed, subtract immediate
  */
 static void strb_1is(void)
 {
@@ -1846,8 +2039,10 @@ static void strb_1is(void)
 }
 
 /*
- *	----	cccc 0110 0101 nnnn dddd iiii iiii iiii
- *	LDRB	load register byte - preindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0101 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd,[Rn,-#ii]
+ *	load register byte - preindexed, subtract immediate
  */
 static void ldrb_1is(void)
 {
@@ -1857,8 +2052,10 @@ static void ldrb_1is(void)
 }
 
 /*
- *	----	cccc 0110 0110 nnnn dddd iiii iiii iiii
- *	STRB!	store register byte - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0110 nnnn dddd iiii iiii iiii
+ *	STRB	Rd!,[Rn,-#ii]
+ *	store register byte - preindexed, subtract immediate, write back ea
  */
 static void strb_1isw(void)
 {
@@ -1869,8 +2066,10 @@ static void strb_1isw(void)
 }
 
 /*
- *	----	cccc 0110 0111 nnnn dddd iiii iiii iiii
- *	LDRB!	load register byte - preindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 0111 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd!,[Rn,-#ii]
+ *	load register byte - preindexed, subtract immediate, write back ea
  */
 static void ldrb_1isw(void)
 {
@@ -1881,8 +2080,10 @@ static void ldrb_1isw(void)
 }
 
 /*
- *	----	cccc 0110 1000 nnnn dddd iiii iiii iiii
- *	STR 	store register - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1000 nnnn dddd iiii iiii iiii
+ *	STR 	Rd,[Rn,+#ii]
+ *	store register - preindexed, add immediate
  */
 static void str_1ia(void)
 {
@@ -1892,8 +2093,10 @@ static void str_1ia(void)
 }
 
 /*
- *	----	cccc 0110 1001 nnnn dddd iiii iiii iiii
- *	LDR 	load register - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1001 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd,[Rn,+#ii]
+ *	load register - preindexed, add immediate
  */
 static void ldr_1ia(void)
 {
@@ -1903,8 +2106,10 @@ static void ldr_1ia(void)
 }
 
 /*
- *	----	cccc 0110 1010 nnnn dddd iiii iiii iiii
- *	STR!	store register - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1010 nnnn dddd iiii iiii iiii
+ *	STR 	Rd!,[Rn,+#ii]
+ *	store register - preindexed, add immediate, write back ea
  */
 static void str_1iaw(void)
 {
@@ -1915,8 +2120,10 @@ static void str_1iaw(void)
 }
 
 /*
- *	----	cccc 0110 1011 nnnn dddd iiii iiii iiii
- *	LDR!	load register - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1011 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd!,[Rn,+#ii]
+ *	load register - preindexed, add immediate, write back ea
  */
 static void ldr_1iaw(void)
 {
@@ -1927,8 +2134,10 @@ static void ldr_1iaw(void)
 }
 
 /*
- *	----	cccc 0110 1100 nnnn dddd iiii iiii iiii
- *	STRB	store register byte - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1100 nnnn dddd iiii iiii iiii
+ *	STRB	Rd,[Rn,+#ii]
+ *	store register byte - preindexed, add immediate
  */
 static void strb_1ia(void)
 {
@@ -1938,8 +2147,10 @@ static void strb_1ia(void)
 }
 
 /*
- *	----	cccc 0110 1101 nnnn dddd iiii iiii iiii
- *	LDRB	load register byte - preindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1101 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd,[Rn,+#ii]
+ *	load register byte - preindexed, add immediate
  */
 static void ldrb_1ia(void)
 {
@@ -1949,8 +2160,10 @@ static void ldrb_1ia(void)
 }
 
 /*
- *	----	cccc 0110 1110 nnnn dddd iiii iiii iiii
- *	STR!	store register byte - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1110 nnnn dddd iiii iiii iiii
+ *	STRB	Rd!,[Rn,+#ii]
+ *	store register byte - preindexed, add immediate, write back ea
  */
 static void strb_1iaw(void)
 {
@@ -1961,8 +2174,10 @@ static void strb_1iaw(void)
 }
 
 /*
- *	----	cccc 0110 1111 nnnn dddd iiii iiii iiii
- *	LDR!	load register byte - preindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0110 1111 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd!,[Rn,+#ii]
+ *	load register byte - preindexed, add immediate, write back ea
  */
 static void ldrb_1iaw(void)
 {
@@ -1974,8 +2189,10 @@ static void ldrb_1iaw(void)
 
 
 /*
- *	----	cccc 0111 0000 nnnn dddd iiii iiii iiii
- *	STR 	store register - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0000 nnnn dddd iiii iiii iiii
+ *	STR 	Rd,[Rn],-#ii
+ *	store register - postindexed, subtract immediate
  */
 static void str_2is(void)
 {
@@ -1986,8 +2203,10 @@ static void str_2is(void)
 }
 
 /*
- *	----	cccc 0111 0001 nnnn dddd iiii iiii iiii
- *	LDR 	load register - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0001 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd,[Rn],-#ii
+ *	load register - postindexed, subtract immediate
  */
 static void ldr_2is(void)
 {
@@ -1998,8 +2217,10 @@ static void ldr_2is(void)
 }
 
 /*
- *	----	cccc 0111 0010 nnnn dddd iiii iiii iiii
- *	STR!	store register - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0010 nnnn dddd iiii iiii iiii
+ *	STR 	Rd!,[Rn],-#ii
+ *	store register - postindexed, subtract immediate, write back ea
  */
 static void str_2isw(void)
 {
@@ -2010,8 +2231,10 @@ static void str_2isw(void)
 }
 
 /*
- *	----	cccc 0111 0011 nnnn dddd iiii iiii iiii
- *	LDR!	load register - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0011 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd!,[Rn],-#ii
+ *	load register - postindexed, subtract immediate, write back ea
  */
 static void ldr_2isw(void)
 {
@@ -2022,8 +2245,10 @@ static void ldr_2isw(void)
 }
 
 /*
- *	----	cccc 0111 0100 nnnn dddd iiii iiii iiii
- *	STRB	store register byte - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0100 nnnn dddd iiii iiii iiii
+ *	STRB	Rd,[Rn],-#ii
+ *	store register byte - postindexed, subtract immediate
  */
 static void strb_2is(void)
 {
@@ -2034,8 +2259,10 @@ static void strb_2is(void)
 }
 
 /*
- *	----	cccc 0111 0101 nnnn dddd iiii iiii iiii
- *	LDRB	load register byte - postindexed, subtract index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0101 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd,[Rn],-#ii
+ *	load register byte - postindexed, subtract immediate
  */
 static void ldrb_2is(void)
 {
@@ -2046,8 +2273,10 @@ static void ldrb_2is(void)
 }
 
 /*
- *	----	cccc 0111 0110 nnnn dddd iiii iiii iiii
- *	STRB!	store register byte - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0110 nnnn dddd iiii iiii iiii
+ *	STRB	Rd!,[Rn],-#ii
+ *	store register byte - postindexed, subtract immediate, write back ea
  */
 static void strb_2isw(void)
 {
@@ -2058,8 +2287,10 @@ static void strb_2isw(void)
 }
 
 /*
- *	----	cccc 0111 0111 nnnn dddd iiii iiii iiii
- *	LDRB!	load register byte - postindexed, subtract index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 0111 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd!,[Rn],-#ii
+ *	load register byte - postindexed, subtract immediate, write back ea
  */
 static void ldrb_2isw(void)
 {
@@ -2070,8 +2301,10 @@ static void ldrb_2isw(void)
 }
 
 /*
- *	----	cccc 0111 1000 nnnn dddd iiii iiii iiii
- *	STR 	store register - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1000 nnnn dddd iiii iiii iiii
+ *	STR 	Rd,[Rn],+#ii
+ *	store register - postindexed, add immediate
  */
 static void str_2ia(void)
 {
@@ -2082,8 +2315,10 @@ static void str_2ia(void)
 }
 
 /*
- *	----	cccc 0111 1001 nnnn dddd iiii iiii iiii
- *	LDR 	load register - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1001 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd,[Rn],+#ii
+ *	load register - postindexed, add immediate
  */
 static void ldr_2ia(void)
 {
@@ -2094,8 +2329,10 @@ static void ldr_2ia(void)
 }
 
 /*
- *	----	cccc 0111 1010 nnnn dddd iiii iiii iiii
- *	STR!	store register - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1010 nnnn dddd iiii iiii iiii
+ *	STR 	Rd,[Rn],+#ii!
+ *	store register - postindexed, add immediate, write back ea
  */
 static void str_2iaw(void)
 {
@@ -2106,8 +2343,10 @@ static void str_2iaw(void)
 }
 
 /*
- *	----	cccc 0111 1011 nnnn dddd iiii iiii iiii
- *	LDR!	load register - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1011 nnnn dddd iiii iiii iiii
+ *	LDR 	Rd,[Rn],+#ii!
+ *	load register - postindexed, add immediate, write back ea
  */
 static void ldr_2iaw(void)
 {
@@ -2118,8 +2357,10 @@ static void ldr_2iaw(void)
 }
 
 /*
- *	----	cccc 0111 1100 nnnn dddd iiii iiii iiii
- *	STRB	store register byte - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1100 nnnn dddd iiii iiii iiii
+ *	STRB	Rd,[Rn],+#ii
+ *	store register byte - postindexed, add immediate
  */
 static void strb_2ia(void)
 {
@@ -2130,8 +2371,10 @@ static void strb_2ia(void)
 }
 
 /*
- *	----	cccc 0111 1101 nnnn dddd iiii iiii iiii
- *	LDRB	load register byte - postindexed, add index register
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1101 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd,[Rn],+#ii
+ *	load register byte - postindexed, add immediate
  */
 static void ldrb_2ia(void)
 {
@@ -2142,8 +2385,10 @@ static void ldrb_2ia(void)
 }
 
 /*
- *	----	cccc 0111 1110 nnnn dddd iiii iiii iiii
- *	STR!	store register byte - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1110 nnnn dddd iiii iiii iiii
+ *	STRB	Rd,[Rn],+#ii!
+ *	store register byte - postindexed, add immediate, write back ea
  */
 static void strb_2iaw(void)
 {
@@ -2154,8 +2399,10 @@ static void strb_2iaw(void)
 }
 
 /*
- *	----	cccc 0111 1111 nnnn dddd iiii iiii iiii
- *	LDR!	load register byte - postindexed, add index register, write back ea
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 0111 1111 nnnn dddd iiii iiii iiii
+ *	LDRB	Rd,[Rn],+#ii!
+ *	load register byte - postindexed, add immediate, write back ea
  */
 static void ldrb_2iaw(void)
 {
@@ -2174,8 +2421,10 @@ static void ldrb_2iaw(void)
  *****************************************************************************/
 
 /*
- *	----	cccc 1000 0000 nnnn rrrr rrrr rrrr rrrr
- *	STMDA	store multiple registers, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0000 nnnn rrrr rrrr rrrr rrrr
+ *	STMDA	Rr0,Rr1...,[Rn]
+ *	store multiple registers, decrement index after
  */
 static void stmda(void)
 {
@@ -2184,8 +2433,10 @@ static void stmda(void)
 }
 
 /*
- *	----	cccc 1000 0001 nnnn rrrr rrrr rrrr rrrr
- *	LDMDA	load multiple registers, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0001 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDA	Rr0,Rr1...,[Rn]
+ *	load multiple registers, decrement index after
  */
 static void ldmda(void)
 {
@@ -2194,8 +2445,10 @@ static void ldmda(void)
 }
 
 /*
- *	----	cccc 1000 0010 nnnn rrrr rrrr rrrr rrrr
- *	STMDA!	store multiple registers, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0010 nnnn rrrr rrrr rrrr rrrr
+ *	STMDA	Rr0,Rr1...,[Rn]!
+ *	store multiple registers, decrement index after - write back
  */
 static void stmda_w(void)
 {
@@ -2205,8 +2458,10 @@ static void stmda_w(void)
 }
 
 /*
- *	----	cccc 1000 0011 nnnn rrrr rrrr rrrr rrrr
- *	LDMDA!	load multiple registers, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0011 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDA!	Rr0,Rr1...,[Rn]!
+ *	load multiple registers, decrement index after - write back
  */
 static void ldmda_w(void)
 {
@@ -2216,8 +2471,10 @@ static void ldmda_w(void)
 }
 
 /*
- *	----	cccc 1000 0100 nnnn rrrr rrrr rrrr rrrr
- *	STMDAB	store multiple register bytes, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0100 nnnn rrrr rrrr rrrr rrrr
+ *	STMDAB	Rr0,Rr1...,[Rn]
+ *	store multiple register bytes, decrement index after
  */
 static void stmdab(void)
 {
@@ -2226,8 +2483,10 @@ static void stmdab(void)
 }
 
 /*
- *	----	cccc 1000 0101 nnnn rrrr rrrr rrrr rrrr
- *	LDMDAB	load multiple register bytes, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0101 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDAB	Rr0,Rr1...,[Rn]
+ *	load multiple register bytes, increment index after
  */
 static void ldmdab(void)
 {
@@ -2236,8 +2495,10 @@ static void ldmdab(void)
 }
 
 /*
- *	----	cccc 1000 0110 nnnn rrrr rrrr rrrr rrrr
- *	STMDAB! store multiple register bytes, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0110 nnnn rrrr rrrr rrrr rrrr
+ *	STMDAB	Rr0,Rr1...,[Rn]!
+ *	store multiple register bytes, decrement index after - write back
  */
 static void stmdab_w(void)
 {
@@ -2247,8 +2508,10 @@ static void stmdab_w(void)
 }
 
 /*
- *	----	cccc 1000 0111 nnnn rrrr rrrr rrrr rrrr
- *	LDMDAB! load multiple register bytes, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 0111 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDAB	Rr0,Rr1...,[Rn]!
+ *	load multiple register bytes, decrement index after - write back
  */
 static void ldmdab_w(void)
 {
@@ -2258,8 +2521,10 @@ static void ldmdab_w(void)
 }
 
 /*
- *	----	cccc 1000 1000 nnnn rrrr rrrr rrrr rrrr
- *	STMIA	store multiple registers, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1000 nnnn rrrr rrrr rrrr rrrr
+ *	STMIA	Rr0,Rr1...,[Rn]
+ *	store multiple registers, increment index after
  */
 static void stmia(void)
 {
@@ -2268,8 +2533,10 @@ static void stmia(void)
 }
 
 /*
- *	----	cccc 1000 1001 nnnn rrrr rrrr rrrr rrrr
- *	LDMIA	load multiple registers, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1001 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIA	Rr0,Rr1...,[Rn]
+ *	load multiple registers, increment index after
  */
 static void ldmia(void)
 {
@@ -2278,8 +2545,10 @@ static void ldmia(void)
 }
 
 /*
- *	----	cccc 1000 1010 nnnn rrrr rrrr rrrr rrrr
- *	STMIA!	store multiple registers, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1010 nnnn rrrr rrrr rrrr rrrr
+ *	STMIA	Rr0,Rr1...,[Rn]!
+ *	store multiple registers, increment index after - write back
  */
 static void stmia_w(void)
 {
@@ -2289,8 +2558,10 @@ static void stmia_w(void)
 }
 
 /*
- *	----	cccc 1000 1011 nnnn rrrr rrrr rrrr rrrr
- *	LDMIA!	load multiple registers, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1011 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIA	Rr0,Rr1...,[Rn]!
+ *	load multiple registers, increment index after - write back
  */
 static void ldmia_w(void)
 {
@@ -2300,8 +2571,10 @@ static void ldmia_w(void)
 }
 
 /*
- *	----	cccc 1000 1100 nnnn rrrr rrrr rrrr rrrr
- *	STMIAB	store multiple register bytes, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1100 nnnn rrrr rrrr rrrr rrrr
+ *	STMIAB	Rr0,Rr1...,[Rn]
+ *	store multiple register bytes, increment index after
  */
 static void stmiab(void)
 {
@@ -2310,8 +2583,10 @@ static void stmiab(void)
 }
 
 /*
- *	----	cccc 1000 1101 nnnn rrrr rrrr rrrr rrrr
- *	LDMIAB	load multiple register bytes, increment index after
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1101 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIAB	Rr0,Rr1...,[Rn]
+ *	load multiple register bytes, increment index after
  */
 static void ldmiab(void)
 {
@@ -2320,8 +2595,10 @@ static void ldmiab(void)
 }
 
 /*
- *	----	cccc 1000 1110 nnnn rrrr rrrr rrrr rrrr
- *	STMIAB! store multiple register bytes, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1110 nnnn rrrr rrrr rrrr rrrr
+ *	STMIAB	Rr0,Rr1...,[Rn]!
+ *	store multiple register bytes, increment index after - write back
  */
 static void stmiab_w(void)
 {
@@ -2331,8 +2608,10 @@ static void stmiab_w(void)
 }
 
 /*
- *	----	cccc 1000 1111 nnnn rrrr rrrr rrrr rrrr
- *	LDMIAB! load multiple register bytes, increment index after - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1000 1111 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIAB	Rr0,Rr1...,[Rn]!
+ *	load multiple register bytes, increment index after - write back
  */
 static void ldmiab_w(void)
 {
@@ -2342,8 +2621,10 @@ static void ldmiab_w(void)
 }
 
 /*
- *	----	cccc 1001 0000 nnnn rrrr rrrr rrrr rrrr
- *	STMDB	store multiple registers, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0000 nnnn rrrr rrrr rrrr rrrr
+ *	STMDB	Rr0,Rr1...,[Rn]
+ *	store multiple registers, decrement index before
  */
 static void stmdb(void)
 {
@@ -2352,8 +2633,10 @@ static void stmdb(void)
 }
 
 /*
- *	----	cccc 1001 0001 nnnn rrrr rrrr rrrr rrrr
- *	LDMDB	load multiple registers, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0001 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDB	Rr0,Rr1...,[Rn]
+ *	load multiple registers, decrement index before
  */
 static void ldmdb(void)
 {
@@ -2362,8 +2645,10 @@ static void ldmdb(void)
 }
 
 /*
- *	----	cccc 1001 0010 nnnn rrrr rrrr rrrr rrrr
- *	STMDB!	store multiple registers, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0010 nnnn rrrr rrrr rrrr rrrr
+ *	STMDB	Rr0,Rr1...,[Rn]!
+ *	store multiple registers, decrement index before - write back
  */
 static void stmdb_w(void)
 {
@@ -2373,8 +2658,10 @@ static void stmdb_w(void)
 }
 
 /*
- *	----	cccc 1001 0011 nnnn rrrr rrrr rrrr rrrr
- *	LDMDB!	load multiple registers, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0011 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDB	Rr0,Rr1...,[Rn]
+ *	load multiple registers, decrement index before - write back
  */
 static void ldmdb_w(void)
 {
@@ -2384,8 +2671,10 @@ static void ldmdb_w(void)
 }
 
 /*
- *	----	cccc 1001 0100 nnnn rrrr rrrr rrrr rrrr
- *	STMDBB	store multiple register bytes, decrement index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0100 nnnn rrrr rrrr rrrr rrrr
+ *	STMDBB	Rr0,Rr1...,[Rn]
+ *	store multiple register bytes, decrement index before
  */
 static void stmdbb(void)
 {
@@ -2394,8 +2683,10 @@ static void stmdbb(void)
 }
 
 /*
- *	----	cccc 1001 0101 nnnn rrrr rrrr rrrr rrrr
- *	LDMDBB	load multiple register bytes, decrement index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0101 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDBB	Rr0,Rr1...,[Rn]
+ *	load multiple register bytes, decrement index before
  */
 static void ldmdbb(void)
 {
@@ -2404,8 +2695,10 @@ static void ldmdbb(void)
 }
 
 /*
- *	----	cccc 1001 0110 nnnn rrrr rrrr rrrr rrrr
- *	STMDBB! store multiple register bytes, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0110 nnnn rrrr rrrr rrrr rrrr
+ *	STMDBB	Rr0,Rr1...,[Rn]!
+ *	store multiple register bytes, increment index before - write back
  */
 static void stmdbb_w(void)
 {
@@ -2415,8 +2708,10 @@ static void stmdbb_w(void)
 }
 
 /*
- *	----	cccc 1001 0111 nnnn rrrr rrrr rrrr rrrr
- *	LDMDBB! load multiple register bytes, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 0111 nnnn rrrr rrrr rrrr rrrr
+ *	LDMDBB	Rr0,Rr1...,[Rn]!
+ *	load multiple register bytes, increment index before - write back
  */
 static void ldmdbb_w(void)
 {
@@ -2426,8 +2721,10 @@ static void ldmdbb_w(void)
 }
 
 /*
- *	----	cccc 1001 1000 nnnn rrrr rrrr rrrr rrrr
- *	STMIB	store multiple registers, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1000 nnnn rrrr rrrr rrrr rrrr
+ *	STMIB	Rr0,Rr1...,[Rn]
+ *	store multiple registers, increment index before
  */
 static void stmib(void)
 {
@@ -2436,8 +2733,10 @@ static void stmib(void)
 }
 
 /*
- *	----	cccc 1001 1001 nnnn rrrr rrrr rrrr rrrr
- *	LDMIB	load multiple registers, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1001 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIB	Rr0,Rr1...,[Rn]
+ *	load multiple registers, increment index before
  */
 static void ldmib(void)
 {
@@ -2446,8 +2745,10 @@ static void ldmib(void)
 }
 
 /*
- *	----	cccc 1001 1010 nnnn rrrr rrrr rrrr rrrr
- *	STMIB!	store multiple registers, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1010 nnnn rrrr rrrr rrrr rrrr
+ *	STMIB	Rr0,Rr1...,[Rn]!
+ *	store multiple registers, increment index before - write back
  */
 static void stmib_w(void)
 {
@@ -2457,8 +2758,10 @@ static void stmib_w(void)
 }
 
 /*
- *	----	cccc 1001 1011 nnnn rrrr rrrr rrrr rrrr
- *	LDMIB!	load multiple registers, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1011 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIB	Rr0,Rr1...,[Rn]!
+ *	load multiple registers, increment index before - write back
  */
 static void ldmib_w(void)
 {
@@ -2468,8 +2771,10 @@ static void ldmib_w(void)
 }
 
 /*
- *	----	cccc 1001 1100 nnnn rrrr rrrr rrrr rrrr
- *	STMIBB	store multiple register bytes, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1100 nnnn rrrr rrrr rrrr rrrr
+ *	STMIBB	Rr0,Rr1...,[Rn]
+ *	store multiple register bytes, increment index before
  */
 static void stmibb(void)
 {
@@ -2478,8 +2783,10 @@ static void stmibb(void)
 }
 
 /*
- *	----	cccc 1001 1101 nnnn rrrr rrrr rrrr rrrr
- *	LDMIBB	load multiple register bytes, increment index before
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1101 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIBB	Rr0,Rr1...,[Rn]
+ *	load multiple register bytes, increment index before
  */
 static void ldmibb(void)
 {
@@ -2488,8 +2795,10 @@ static void ldmibb(void)
 }
 
 /*
- *	----	cccc 1001 1110 nnnn rrrr rrrr rrrr rrrr
- *	STMIBB! store multiple register bytes, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1110 nnnn rrrr rrrr rrrr rrrr
+ *	STMIBB	Rr0,Rr1...,[Rn]!
+ *	store multiple register bytes, increment index before - write back
  */
 static void stmibb_w(void)
 {
@@ -2499,8 +2808,10 @@ static void stmibb_w(void)
 }
 
 /*
- *	----	cccc 1001 1111 nnnn rrrr rrrr rrrr rrrr
- *	LDMIBB! load multiple register bytes, increment index before - write back
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1001 1111 nnnn rrrr rrrr rrrr rrrr
+ *	LDMIBB	Rr0,Rr1...,[Rn]!
+ *	load multiple register bytes, increment index before - write back
  */
 static void ldmibb_w(void)
 {
@@ -2517,8 +2828,10 @@ static void ldmibb_w(void)
  *****************************************************************************/
 
 /*
- *	----	cccc 1010 oooo oooo oooo oooo oooo oooo
- *	B		branch relative
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1010 oooo oooo oooo oooo oooo oooo
+ *	B		#ooo
+ *	branch relative
  */
 static void b(void)
 {
@@ -2529,8 +2842,10 @@ static void b(void)
 }
 
 /*
- *	----	cccc 1011 oooo oooo oooo oooo oooo oooo
- *	BL		branch relative with link
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1011 oooo oooo oooo oooo oooo oooo
+ *	BL		#ooo
+ *	branch relative with link
  */
 static void bl(void)
 {
@@ -2550,7 +2865,8 @@ static void bl(void)
  *****************************************************************************/
 
 /*
- *	----	cccc 1100 xxxx xxxx xxxx xxxx xxxx xxxx
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1100 xxxx xxxx xxxx xxxx xxxx xxxx
  *	??? 	illegal opcodes
  */
 static void ill_c(void)
@@ -2559,7 +2875,8 @@ static void ill_c(void)
 }
 
 /*
- *	----	cccc 1101 xxxx xxxx xxxx xxxx xxxx xxxx
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1101 xxxx xxxx xxxx xxxx xxxx xxxx
  * ???		illegal opcodes
  */
 static void ill_d(void)
@@ -2568,7 +2885,8 @@ static void ill_d(void)
 }
 
 /*
- *	----	cccc 1110 xxxx xxxx xxxx xxxx xxxx xxxx
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1110 xxxx xxxx xxxx xxxx xxxx xxxx
  *	??? 	illegal opcodes
  */
 static void ill_e(void)
@@ -2577,8 +2895,10 @@ static void ill_e(void)
 }
 
 /*
- *	----	cccc 1111 xxxx xxxx xxxx xxxx xxxx xxxx
- *	SWI 	software interrupt
+ *	NZCV	31	 27   23   19	15	 11   7    3
+ *  ----    cccc 1111 xxxx xxxx xxxx xxxx xxxx xxxx
+ *	SWI 	#xxx
+ *	software interrupt
  */
 static void swi(void)
 {
