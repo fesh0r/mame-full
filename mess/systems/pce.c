@@ -212,7 +212,7 @@ static const struct IODevice io_pce[] = {
 		1,					/* count */
 		"pce\0",            /* file extensions */
 		IO_RESET_ALL,		/* reset if file changed */
-        pce_id_rom,         /* id */
+        NULL,				/* id */
 		pce_load_rom,		/* init */
 		NULL,				/* exit */
 		NULL,				/* info */
