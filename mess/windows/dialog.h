@@ -39,7 +39,7 @@ int win_dialog_add_active_combobox(dialog_box *dialog, const char *item_label, i
 	dialog_itemstoreval storeval, void *storeval_param,
 	dialog_itemchangedproc changed, void *changed_param);
 int win_dialog_add_combobox_item(dialog_box *dialog, const char *item_label, int item_data);
-int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *r);
+int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const RECT *r);
 int win_dialog_add_standard_buttons(dialog_box *dialog);
 int win_dialog_add_image(dialog_box *dialog, const struct png_info *png);
 int win_dialog_add_separator(dialog_box *dialog);

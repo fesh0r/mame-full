@@ -55,6 +55,7 @@ extern void win_timer_enable(int enabled);
 #define ID_FRAMESKIP_0				10000
 #define ID_DEVICE_0					11000
 #define ID_JOYSTICK_0				12000
+#define ID_INPUT_0					13000
 
 #define MAX_JOYSTICKS				((IPF_PLAYERMASK / IPF_PLAYER2) + 1)
 
@@ -114,6 +115,8 @@ int win_use_natural_keyboard;
 static HMENU win_menu_bar;
 static int is_paused;
 static HICON device_icons[IO_COUNT];
+static int use_input_categories;
+static int joystick_menu_setup;
 
 static int add_filter_entry(char *dest, size_t dest_len, const char *description, const char *extensions);
 
@@ -122,21 +125,30 @@ static int add_filter_entry(char *dest, size_t dest_len, const char *description
 //	customize_input
 //============================================================
 
-static void customize_input(const char *title, int cust_type, int player, int category)
+static void customize_input(const char *title, int cust_type, int player, int inputclass, const char *section)
 {
 	dialog_box *dlg;
 	struct InputPort *in;
 	struct png_info png;
 	struct inputform_customization customizations[128];
-	RECT r, *pr;
-	int i;
-	int this_category, this_player;
+	RECT *pr;
+	int this_inputclass, this_player, portslot_count, i;
+
+	struct
+	{
+		struct InputPort *in;
+		const RECT *pr;
+	} portslots[256];
 
 	/* check to see if there is any custom artwork for this configure dialog,
 	 * and if so, retrieve the info */
-	artwork_get_inputscreen_customizations(&png, cust_type, customizations,
-		sizeof(customizations) / sizeof(customizations[0]));
+	portslot_count = artwork_get_inputscreen_customizations(&png, cust_type, section,
+		customizations, sizeof(customizations) / sizeof(customizations[0]));
 
+	/* zero out the portslots that correspond to customizations */
+	memset(portslots, 0, sizeof(portslots[0]) * portslot_count);
+
+	/* create the dialog */
 	dlg = win_dialog_init(title, NULL);
 	if (!dlg)
 		goto done;
@@ -150,38 +162,67 @@ static void customize_input(const char *title, int cust_type, int player, int ca
 	in = Machine->input_ports;
 	while(in->type != IPT_END)
 	{
-		this_category = input_categorize_port(in);
-		this_player = input_player_number(in);
-
-		if ((this_player == player) && (this_category == category))
+		this_inputclass = input_classify_port(in);
+		if (this_inputclass == inputclass)
 		{
-			/* check to see if the custom artwork for this configure dialog
-			 * says anything about this input */
-			pr = NULL;
-			for (i = 0; customizations[i].ipt != IPT_END; i++)
+			/* most of the time, the player parameter is the player number
+			 * but in the case of INPUT_CLASS_CATEGORIZED, it is the
+			 * category */
+			if (inputclass == INPUT_CLASS_CATEGORIZED)
+				this_player = in->category;
+			else
+                this_player = input_player_number(in);
+
+			if (this_player == player)
 			{
-				if ((in->type & ~IPF_MASK) == customizations[i].ipt)
+				/* check to see if the custom artwork for this configure dialog
+				 * says anything about this input */
+				pr = NULL;
+				for (i = 0; customizations[i].ipt != IPT_END; i++)
 				{
-					r.left = customizations[i].x;
-					r.top = customizations[i].y;
-					r.right = r.left + customizations[i].width;
-					r.bottom = r.top + customizations[i].height;
-					pr = &r;
-					break;
+					if ((in->type & ~IPF_MASK) == customizations[i].ipt)
+					{
+						pr = (RECT *) alloca(sizeof(*pr));
+						pr->left = customizations[i].x;
+						pr->top = customizations[i].y;
+						pr->right = pr->left + customizations[i].width;
+						pr->bottom = pr->top + customizations[i].height;
+						break;
+					}
+				}
+
+				/* store this InputPort/RECT combo in our list.  we do not
+				 * necessarily want to add it yet because we the INI might
+				 * want to reorder the tab order */
+				if (customizations[i].ipt == IPT_END)
+					i = portslot_count++;
+				if (i < (sizeof(portslots) / sizeof(portslots[0])))
+				{
+					portslots[i].in = in;
+					portslots[i].pr = pr;
 				}
 			}
-
-			/* add the portselect to the dialog */
-			if (win_dialog_add_portselect(dlg, in, pr))
-				goto done;
 		}
 		in++;
 	}
 
+	/* finally add the portselects to the dialog */
+	if (portslot_count > (sizeof(portslots) / sizeof(portslots[0])))
+		portslot_count = sizeof(portslots) / sizeof(portslots[0]);
+	for (i = 0; i < portslot_count; i++)
+	{
+		if (portslots[i].in)
+		{
+			if (win_dialog_add_portselect(dlg, portslots[i].in, portslots[i].pr))
+				goto done;
+		}
+	}
+
+	/* ...and now add OK/Cancel */
 	if (win_dialog_add_standard_buttons(dlg))
 		goto done;
 
-	/* and finally display the dialog */
+	/* ...and finally display the dialog */
 	win_dialog_runmodal(dlg);
 
 done:
@@ -192,34 +233,46 @@ done:
 
 
 //============================================================
-//	setjoystick
+//	customize_joystick
 //============================================================
 
-static void setjoystick(int joystick_num)
+static void customize_joystick(int joystick_num)
 {
-	customize_input("Joysticks/Controllers", ARTWORK_CUSTTYPE_JOYSTICK, joystick_num, INPUT_CATEGORY_CONTROLLER);
+	customize_input("Joysticks/Controllers", ARTWORK_CUSTTYPE_JOYSTICK, joystick_num, INPUT_CLASS_CONTROLLER, NULL);
 }
 
 
 
 //============================================================
-//	setkeyboard
+//	customize_keyboard
 //============================================================
 
-static void setkeyboard(void)
+static void customize_keyboard(void)
 {
-	customize_input("Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CATEGORY_KEYBOARD);
+	customize_input("Emulated Keyboard", ARTWORK_CUSTTYPE_KEYBOARD, 0, INPUT_CLASS_KEYBOARD, NULL);
 }
 
 
 
 //============================================================
-//	setmiscinput
+//	customize_miscinput
 //============================================================
 
-static void setmiscinput(void)
+static void customize_miscinput(void)
 {
-	customize_input("Miscellaneous Input", ARTWORK_CUSTTYPE_MISC, 0, INPUT_CATEGORY_MISC);
+	customize_input("Miscellaneous Input", ARTWORK_CUSTTYPE_MISC, 0, INPUT_CLASS_MISC, NULL);
+}
+
+
+
+//============================================================
+//	customize_categorizedinput
+//============================================================
+
+static void customize_categorizedinput(const char *section, int category)
+{
+	assert(category > 0);
+	customize_input("Input", ARTWORK_CUSTTYPE_JOYSTICK, category, INPUT_CLASS_CATEGORIZED, section);
 }
 
 
@@ -237,10 +290,10 @@ static void storeval_inputport(void *param, int val)
 
 
 //============================================================
-//	setswitchmenu
+//	customize_switches
 //============================================================
 
-static void setswitchmenu(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
+static void customize_switches(int title_string_num, UINT32 ipt_name, UINT32 ipt_setting)
 {
 	void *dlg;
 	struct InputPort *in;
@@ -291,23 +344,23 @@ done:
 
 
 //============================================================
-//	setdipswitches
+//	customize_dipswitches
 //============================================================
 
-static void setdipswitches(void)
+static void customize_dipswitches(void)
 {
-	setswitchmenu(UI_dipswitches, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
+	customize_switches(UI_dipswitches, IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING);
 }
 
 
 
 //============================================================
-//	setconfiguration
+//	customize_configuration
 //============================================================
 
-static void setconfiguration(void)
+static void customize_configuration(void)
 {
-	setswitchmenu(UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
+	customize_switches(UI_configuration, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
 }
 
 
@@ -929,6 +982,138 @@ static void append_menu(HMENU menu, UINT flags, UINT_PTR id, int uistring)
 
 
 //============================================================
+//	append_category_menus
+//============================================================
+
+static void append_category_menus(HMENU menu)
+{
+	int i, j;
+	HMENU submenu = NULL;
+	const struct InputPort *in;
+	const struct InputPort *in_setting;
+	UINT flags;
+
+	for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
+	{
+		in = &Machine->input_ports[i];
+		if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+		{
+			submenu = CreateMenu();
+			if (!submenu)
+				return;
+
+			// append all of the category settings
+			for (j = i + 1; (Machine->input_ports[j].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; j++)
+			{
+				in_setting = &Machine->input_ports[j];
+				flags = MF_STRING;
+				if (in_setting->default_value == in->default_value)
+					flags |= MF_CHECKED;
+				AppendMenu(submenu, flags, ID_INPUT_0 + j, A2T(in_setting->name));
+			}
+
+			// finally append the menu item
+			AppendMenu(menu, MF_STRING | MF_POPUP, (UINT_PTR) submenu, A2T(in->name));
+		}
+	}
+}
+
+
+
+//============================================================
+//	remove_menu_items
+//============================================================
+
+static void remove_menu_items(HMENU menu)
+{
+	while(RemoveMenu(menu, 0, MF_BYPOSITION))
+		;
+}
+
+
+
+//============================================================
+//	setup_joystick_menu
+//============================================================
+
+static void setup_joystick_menu(void)
+{
+	int joystick_count = 0;
+	HMENU joystick_menu;
+	int i, j;
+	HMENU submenu = NULL;
+	const struct InputPort *in;
+	const struct InputPort *in_setting;
+	char buf[256];
+	int child_count = 0;
+
+	in = Machine->input_ports;
+	use_input_categories = 0;
+	while(in->type != IPT_END)
+	{
+		if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+		{
+			use_input_categories = 1;
+			break;
+		}
+		in++;
+	}
+
+	joystick_menu = find_sub_menu(win_menu_bar, "&Options\0&Joysticks\0", TRUE);
+	if (!joystick_menu)
+		return;
+
+	if (use_input_categories)
+	{
+		// using input categories
+		for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
+		{
+			in = &Machine->input_ports[i];
+			if ((in->type & ~IPF_MASK) == IPT_CATEGORY_NAME)
+			{
+				submenu = CreateMenu();
+				if (!submenu)
+					return;
+
+				// append all of the category settings
+				for (j = i + 1; (Machine->input_ports[j].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; j++)
+				{
+					in_setting = &Machine->input_ports[j];
+					AppendMenu(submenu, MF_STRING, ID_INPUT_0 + j, A2T(in_setting->name));
+				}
+
+				// tack on the final items and the menu item
+				AppendMenu(submenu, MF_SEPARATOR, 0, NULL);
+				AppendMenu(submenu, MF_STRING, ID_INPUT_0 + i, TEXT("&Configure..."));
+				AppendMenu(joystick_menu, MF_STRING | MF_POPUP, (UINT_PTR) submenu, A2T(in->name));
+				child_count++;
+			}
+		}
+	}
+	else
+	{
+		// set up joystick menu
+#ifndef UNDER_CE
+		joystick_count = input_count_players();
+#endif
+		if (joystick_count > 0)
+		{
+			for(i = 0; i < joystick_count; i++)
+			{
+				snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Joystick %i", i + 1);
+				AppendMenu(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, A2T(buf));
+				child_count++;
+			}
+		}
+	}
+
+	// last but not least, enable the joystick menu (or not)
+	set_command_state(win_menu_bar, ID_OPTIONS_JOYSTICKS, child_count ? MFS_ENABLED : MFS_GRAYED);
+}
+
+
+
+//============================================================
 //	prepare_menus
 //============================================================
 
@@ -945,14 +1130,22 @@ static void prepare_menus(void)
 	UINT flags_for_writing;
 	mess_image *img;
 	int has_config, has_dipswitch, has_keyboard, has_misc;
+	const struct InputPort *in;
+	UINT16 in_cat_value = 0;
 
 	if (!win_menu_bar)
 		return;
 
-	has_config		= input_has_input_category(INPUT_CATEGORY_CONFIG);
-	has_dipswitch	= input_has_input_category(INPUT_CATEGORY_DIPSWITCH);
-	has_keyboard	= input_has_input_category(INPUT_CATEGORY_KEYBOARD);
-	has_misc		= input_has_input_category(INPUT_CATEGORY_MISC);
+	if (!joystick_menu_setup)
+	{
+		setup_joystick_menu();
+		joystick_menu_setup = 1;
+	}
+
+	has_config		= input_has_input_class(INPUT_CLASS_CONFIG);
+	has_dipswitch	= input_has_input_class(INPUT_CLASS_DIPSWITCH);
+	has_keyboard	= input_has_input_class(INPUT_CLASS_KEYBOARD);
+	has_misc		= input_has_input_class(INPUT_CLASS_MISC);
 
 	set_command_state(win_menu_bar, ID_EDIT_PASTE,				inputx_can_post()							? MFS_ENABLED : MFS_GRAYED);
 
@@ -978,14 +1171,30 @@ static void prepare_menus(void)
 	set_command_state(win_menu_bar, ID_KEYBOARD_CUSTOMIZE,		has_keyboard								? MFS_ENABLED : MFS_GRAYED);
 
 	set_command_state(win_menu_bar, ID_FRAMESKIP_AUTO,			autoframeskip								? MFS_CHECKED : MFS_ENABLED);
-	for(i = 0; i < FRAMESKIP_LEVELS; i++)
+	for (i = 0; i < FRAMESKIP_LEVELS; i++)
 		set_command_state(win_menu_bar, ID_FRAMESKIP_0 + i, (!autoframeskip && (frameskip == i))			? MFS_CHECKED : MFS_ENABLED);
 
-	// set up device menu
-	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
-	while(RemoveMenu(device_menu, 0, MF_BYPOSITION))
-		;
+	// if we are using categorized input, we need to properly checkmark the categories
+	if (use_input_categories)
+	{
+		for (i = 0; Machine->input_ports[i].type != IPT_END; i++)
+		{
+			in = &Machine->input_ports[i];
+			switch(in->type & ~IPF_MASK) {
+			case IPT_CATEGORY_NAME:
+				in_cat_value = in->default_value;
+				break;
 
+			case IPT_CATEGORY_SETTING:
+				set_command_state(win_menu_bar, ID_INPUT_0 + i, (in->default_value == in_cat_value) ? MFS_CHECKED : MFS_ENABLED);
+				break;
+			}
+		}
+	}
+
+	// set up device menu; first remove all existing menu items
+	device_menu = find_sub_menu(win_menu_bar, "&Devices\0", FALSE);
+	remove_menu_items(device_menu);
 	for (dev = device_first(Machine->gamedrv); dev; dev = device_next(Machine->gamedrv, dev))
 	{
 		for (i = 0; i < dev->count; i++)
@@ -1212,8 +1421,12 @@ static mess_image *decode_deviceoption(int command, int *devoption)
 static int invoke_command(UINT command)
 {
 	int handled = 1;
-	int dev_command;
+	int dev_command, i;
 	mess_image *img;
+	int port_count;
+	UINT16 setting, category;
+	struct InputPort *in;
+	const char *section;
 
 	switch(command) {
 	case ID_FILE_LOADSTATE:
@@ -1245,7 +1458,7 @@ static int invoke_command(UINT command)
 		break;
 
 	case ID_KEYBOARD_CUSTOMIZE:
-		setkeyboard();
+		customize_keyboard();
 		break;
 
 	case ID_OPTIONS_PAUSE:
@@ -1277,15 +1490,15 @@ static int invoke_command(UINT command)
 #endif
 
 	case ID_OPTIONS_CONFIGURATION:
-		setconfiguration();
+		customize_configuration();
 		break;
 
 	case ID_OPTIONS_DIPSWITCHES:
-		setdipswitches();
+		customize_dipswitches();
 		break;
 
 	case ID_OPTIONS_MISCINPUT:
-		setmiscinput();
+		customize_miscinput();
 		break;
 
 #if HAS_TOGGLEFULLSCREEN
@@ -1324,22 +1537,66 @@ static int invoke_command(UINT command)
 		break;
 
 	default:
+		// quickly come up with a port count, so we can upper bound commands
+		// near ID_INPUT_0
+		port_count = 0;
+		while(Machine->input_ports[port_count].type != IPT_END)
+			port_count++;
+
 		if ((command >= ID_FRAMESKIP_0) && (command < ID_FRAMESKIP_0 + FRAMESKIP_LEVELS))
 		{
+			// change frameskip
 			frameskip = command - ID_FRAMESKIP_0;
 			autoframeskip = 0;
 		}
 		else if ((command >= ID_DEVICE_0) && (command < ID_DEVICE_0 + (MAX_DEV_INSTANCES*IO_COUNT*DEVOPTION_MAX)))
 		{
+			// change device
 			img = decode_deviceoption(command, &dev_command);
 			device_command(img, dev_command);
 		}
 		else if ((command >= ID_JOYSTICK_0) && (command < ID_JOYSTICK_0 + MAX_JOYSTICKS))
 		{
-			setjoystick(command - ID_JOYSTICK_0);
+			// customize joystick
+			customize_joystick(command - ID_JOYSTICK_0);
+		}
+		else if ((command >= ID_INPUT_0) && (command < ID_INPUT_0 + port_count))
+		{
+			// customize categorized input
+			in = &Machine->input_ports[command - ID_INPUT_0];
+			switch(in->type & ~IPF_MASK) {
+			case IPT_CATEGORY_NAME:
+				// customize the input type
+				category = 0;
+				section = NULL;
+				for (i = 1; (in[i].type & ~IPF_MASK) == IPT_CATEGORY_SETTING; i++)
+				{
+					if (in[i].default_value == in[0].default_value)
+					{
+						category = in[i].category;
+						section = in[i].name;
+					}
+				}
+				customize_categorizedinput(section, category);
+				break;
+
+			case IPT_CATEGORY_SETTING:
+				// change the input type for this category
+				setting = in->default_value;
+				while((in->type & ~IPF_MASK) != IPT_CATEGORY_NAME)
+					in--;
+				in->default_value = setting;
+				break;
+
+			default:
+				// should never happen
+				handled = 0;
+				break;
+			}
 		}
 		else
 		{
+			// bogus command
 			handled = 0;
 		}
 		break;
@@ -1372,9 +1629,8 @@ void set_menu_text(HMENU menu_bar, int command, const char *text)
 int win_setup_menus(HMODULE module, HMENU menu_bar)
 {
 	HMENU frameskip_menu;
-	HMENU joystick_menu;
 	char buf[256];
-	int i, joystick_count = 0;
+	int i;
 
 	static const int bitmap_ids[][2] =
 	{
@@ -1389,7 +1645,10 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 
 	// verify that our magic numbers work
 	assert((ID_DEVICE_0 + IO_COUNT * MAX_DEV_INSTANCES * DEVOPTION_MAX) < ID_JOYSTICK_0);
+
+	// initialize critical values
 	is_paused = 0;
+	joystick_menu_setup = 0;
 
 	// get the device icons
 	memset(device_icons, 0, sizeof(device_icons));
@@ -1429,23 +1688,6 @@ int win_setup_menus(HMODULE module, HMENU menu_bar)
 	{
 		RemoveMenu(menu_bar, ID_OPTIONS_HARDRESET, MF_BYCOMMAND);
 		set_menu_text(menu_bar, ID_OPTIONS_SOFTRESET, "&Reset");
-	}
-
-	// set up joystick menu
-#ifndef UNDER_CE
-	joystick_count = input_count_players();
-#endif
-	set_command_state(menu_bar, ID_OPTIONS_JOYSTICKS, joystick_count ? MFS_ENABLED : MFS_GRAYED);
-	if (joystick_count > 0)
-	{
-		joystick_menu = find_sub_menu(menu_bar, "&Options\0&Joysticks\0", TRUE);
-		if (!joystick_menu)
-			return 1;
-		for(i = 0; i < joystick_count; i++)
-		{
-			snprintf(buf, sizeof(buf) / sizeof(buf[0]), "Joystick %i", i + 1);
-			AppendMenu(joystick_menu, MF_STRING, ID_JOYSTICK_0 + i, A2T(buf));
-		}
 	}
 
 	// set the help menu to refer to this machine

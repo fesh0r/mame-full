@@ -20,10 +20,27 @@ New System Drivers Supported (in no particular order):
 
 
 
+System Driver Changes:
+----------------------
+- [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
+  Woods]
+
+- [GENESIS] Split Genesis driver into gen_usa, gen_eur and gen_jpn drivers
+  for different countries.  Also fixed a bug that caused sound to be gone in
+  certain games, and fixed Raiden Trad and Wani Wani World  [Anonymous]
+
+- [VTECH1] Fixed graphics and added printer support.  [Dirk Best]
+
+- [VTECH1] Added natural keyboard support.  [Nate Woods]
+
+
+
 User Interface Changes:
 -----------------------
 - [Windows] Added a "Miscellaneous Inputs" menu item to the Options menu,
   allowing the user to configure miscellaneous inputs.  [Nate Woods]
+
+- [Windows] Fixed tab order on custom input dialogs.  [Nate Woods]
 
 - [Windows GUI] Fixed a small bug on the "Interface Options" dialog  (bug
   #551) [Nate Woods]
@@ -39,6 +56,11 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- Added a "variable peripherals" feature that allows drivers to identify
+  which inputs pertain to a given peripheral, like a gamepad or a lightgun.
+  Changed A2600 and NES drivers to use this feature.  (bug #550 was a related
+  issue) [Nate Woods]
+
 - [A400/A800] Fixed cartridge loading and partial state save support.  [Nate
   Woods]
 

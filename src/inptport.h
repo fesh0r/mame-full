@@ -398,7 +398,6 @@ InputSeq* input_port_type_seq(int type);
 InputSeq* input_port_seq(const struct InputPort *in);
 
 struct InputPort* input_port_allocate(const struct InputPortTiny *src);
-void input_port_free(struct InputPort* dst);
 
 #ifdef MAME_NET
 void set_default_player_controls(int player);

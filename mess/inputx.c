@@ -893,12 +893,14 @@ void inputx_post_utf8(const char *text)
 
 /* this function needs to be used with InputPort and InputPortTiny structs,
  * so we have to put the type and name as separate parameters */
-static int categorize_port_type(UINT32 type, const char *name)
+static int categorize_port_type(UINT32 type, const char *name, UINT16 category)
 {
 	int result;
 
 	if ((type & IPF_MASK) == IPF_UNUSED)
-		return INPUT_CATEGORY_INTERNAL;
+		return INPUT_CLASS_INTERNAL;
+	if (category && ((type & ~IPF_MASK) != IPT_CATEGORY_SETTING))
+		return INPUT_CLASS_CATEGORIZED;
 
 	switch(type & ~IPF_MASK) {
 	case IPT_JOYSTICK_UP:
@@ -934,30 +936,30 @@ static int categorize_port_type(UINT32 type, const char *name)
 	case IPT_MOUSE_Y:
 	case IPT_START:
 	case IPT_SELECT:
-		result = INPUT_CATEGORY_CONTROLLER;
+		result = INPUT_CLASS_CONTROLLER;
 		break;
 
 	case IPT_KEYBOARD:
-		result = INPUT_CATEGORY_KEYBOARD;
+		result = INPUT_CLASS_KEYBOARD;
 		break;
 
 	case IPT_CONFIG_NAME:
-		result = INPUT_CATEGORY_CONFIG;
+		result = INPUT_CLASS_CONFIG;
 		break;
 
 	case IPT_DIPSWITCH_NAME:
-		result = INPUT_CATEGORY_DIPSWITCH;
+		result = INPUT_CLASS_DIPSWITCH;
 		break;
 
 	case 0:
 		if (name && (name != (const char *) -1))
-			result = INPUT_CATEGORY_MISC;
+			result = INPUT_CLASS_MISC;
 		else
-			result = INPUT_CATEGORY_INTERNAL;
+			result = INPUT_CLASS_INTERNAL;
 		break;
 
 	default:
-		result = INPUT_CATEGORY_INTERNAL;
+		result = INPUT_CLASS_INTERNAL;
 		break;
 	}
 	return result;
@@ -965,11 +967,11 @@ static int categorize_port_type(UINT32 type, const char *name)
 
 
 
-int input_categorize_port(const struct InputPort *port)
+int input_classify_port(const struct InputPort *port)
 {
 	if ((port->type & ~IPF_MASK) == IPT_EXTENSION)
 		port--;
-	return categorize_port_type(port->type, port->name);
+	return categorize_port_type(port->type, port->name, port->category);
 }
 
 
@@ -983,12 +985,12 @@ int input_player_number(const struct InputPort *port)
 
 
 
-int input_has_input_category(int category)
+int input_has_input_class(int inputclass)
 {
 	struct InputPort *in;
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 	{
-		if (input_categorize_port(in) == category)
+		if (input_classify_port(in) == inputclass)
 			return TRUE;
 	}
 	return FALSE;
@@ -1004,7 +1006,7 @@ int input_count_players(void)
 	joystick_count = 0;
 	for (in = Machine->gamedrv->input_ports; in->type != IPT_END; in++)
 	{
-		if (categorize_port_type(in->type, in->name) == INPUT_CATEGORY_CONTROLLER)
+		if (categorize_port_type(in->type, in->name, 0) == INPUT_CLASS_CONTROLLER)
 		{
 			if (joystick_count <= (in->type & IPF_PLAYERMASK) / IPF_PLAYER2)
 				joystick_count = (in->type & IPF_PLAYERMASK) / IPF_PLAYER2 + 1;
@@ -1013,3 +1015,27 @@ int input_count_players(void)
 	return joystick_count;
 }
 
+
+
+int input_category_active(int category)
+{
+	const struct InputPort *in;
+	const struct InputPort *in_base = NULL;
+
+	assert(category >= 1);
+
+	for (in = Machine->input_ports; in->type != IPT_END; in++)
+	{
+		switch(in->type) {
+		case IPT_CATEGORY_NAME:
+			in_base = in;
+			break;
+
+		case IPT_CATEGORY_SETTING:
+			if ((in->category == category) && (in_base->default_value == in->default_value))
+				return TRUE;
+			break;
+		}
+	}
+	return FALSE;
+}

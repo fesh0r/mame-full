@@ -14,6 +14,21 @@
 #define NTSC_SCANLINES_PER_FRAME	262
 #define PAL_SCANLINES_PER_FRAME		305		/* verify - times Elite perfectly */
 
+#define PORT_PAD0		0
+#define PORT_PAD1		1
+#define PORT_PAD2		2
+#define PORT_PAD3		3
+#define PORT_ZAPPER0_X	4
+#define PORT_ZAPPER0_Y	5
+#define PORT_ZAPPER0_T	6
+#define PORT_ZAPPER1_X	7
+#define PORT_ZAPPER1_Y	8
+#define PORT_ZAPPER1_T	9
+#define PORT_PADDLE1	10
+#define PORT_CONFIG1	11
+#define PORT_CONFIG2	12
+#define PORT_FLIPKEY	12
+
 void ppu_mirror_custom (int page, int address);
 void ppu_mirror_custom_vrom (int page, int address);
 

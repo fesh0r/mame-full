@@ -91,6 +91,7 @@ enum
 	UI_keyjoyspeed,
 	UI_reverse,
 	UI_sensitivity,
+	UI_rapidfire,
 
 	/* stats */
 	UI_tickets,

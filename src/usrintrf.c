@@ -16,8 +16,9 @@
 #include "state.h"
 
 #ifdef MESS
-  #include "mess.h"
+#include "mess.h"
 #include "mesintrf.h"
+#include "inputx.h"
 #endif
 
 
@@ -700,11 +701,6 @@ static void ui_multitextbox_ex(struct mame_bitmap *bitmap, const char *begin, co
 
 
 
-#if 0
-#pragma mark -
-#pragma mark BOXES & LINES
-#endif
-
 /*-------------------------------------------------
 	ui_drawbox - draw a black box with white border
 -------------------------------------------------*/
@@ -829,11 +825,6 @@ static void drawbar(struct mame_bitmap *bitmap, int leftx, int topy, int width, 
 }
 
 
-
-#if 0
-#pragma mark -
-#pragma mark BOXES & LINES
-#endif
 
 void ui_displaymenu(struct mame_bitmap *bitmap,const char **items,const char **subitems,char *flag,int selected,int arrowize_subitem)
 {
@@ -1709,6 +1700,13 @@ static int setconfiguration(struct mame_bitmap *bitmap, int selected)
 {
 	return switchmenu(bitmap, selected, IPT_CONFIG_NAME, IPT_CONFIG_SETTING);
 }
+
+
+
+static int setcategories(struct mame_bitmap *bitmap, int selected)
+{
+	return switchmenu(bitmap, selected, IPT_CATEGORY_NAME, IPT_CATEGORY_SETTING);
+}
 #endif /* MESS */
 
 
@@ -1871,7 +1869,12 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 	total = 0;
 	while (in->type != IPT_END)
 	{
-		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE && (in->type & ~IPF_MASK) != IPT_UNKNOWN && (in->type & ~IPF_MASK) != IPT_OSD_RESERVED)
+		if (input_port_name(in) != 0 && seq_get_1(&in->seq) != CODE_NONE
+			&& ((in->type & ~IPF_MASK) != IPT_UNKNOWN)
+#ifdef MESS
+			&& ((in->category == 0) || input_category_active(in->category))
+#endif /* MESS */
+			&& (in->type & ~IPF_MASK) != IPT_OSD_RESERVED)
 		{
 			entry[total] = in;
 			menu_item[total] = input_port_name(in);
@@ -3086,7 +3089,7 @@ enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
 		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_RAPIDFIRE,UI_EXIT,
-		UI_CONFIGURATION };
+		UI_CONFIGURATION, UI_CATEGORIES };
 #endif
 
 
@@ -3101,14 +3104,21 @@ static int menu_action[MAX_SETUPMENU_ITEMS];
 static int menu_total;
 
 
+static void append_menu(int uistring, int action)
+{
+	menu_item[menu_total] = ui_getstring(uistring);
+	menu_action[menu_total++] = action;
+}
+
+
 static void setup_menu_init(void)
 {
 	menu_total = 0;
 
-	menu_item[menu_total] = ui_getstring (UI_inputgeneral); menu_action[menu_total++] = UI_DEFCODE;
-	menu_item[menu_total] = ui_getstring (UI_inputspecific); menu_action[menu_total++] = UI_CODE;
+	append_menu(UI_inputgeneral, UI_DEFCODE);
+	append_menu(UI_inputspecific, UI_CODE);
 #ifdef MESS
-	menu_item[menu_total] = ui_getstring (UI_configuration); menu_action[menu_total++] = UI_CONFIGURATION;
+	append_menu(UI_configuration, UI_CONFIGURATION);
 #endif /* MESS */
 
 	/* Determine if there are any dip switches */
@@ -3129,7 +3139,7 @@ static void setup_menu_init(void)
 
 		if (num != 0)
 		{
-			menu_item[menu_total] = ui_getstring (UI_dipswitches); menu_action[menu_total++] = UI_SWITCH;
+			append_menu(UI_dipswitches, UI_SWITCH);
 		}
 	}
 
@@ -3139,8 +3149,7 @@ static void setup_menu_init(void)
 
 		if (rapidfire_enable != 0)
 		{
-			menu_item[menu_total] = "Rapid Fire";
-			menu_action[menu_total++] = UI_RAPIDFIRE;
+			append_menu(UI_rapidfire, UI_RAPIDFIRE);
 		}
 	}
 #endif
@@ -3163,32 +3172,32 @@ static void setup_menu_init(void)
 
 		if (num != 0)
 		{
-			menu_item[menu_total] = ui_getstring (UI_analogcontrols); menu_action[menu_total++] = UI_ANALOG;
+			append_menu(UI_analogcontrols, UI_ANALOG);
 		}
 	}
 
 	/* Joystick calibration possible? */
 	if ((osd_joystick_needs_calibration()) != 0)
 	{
-		menu_item[menu_total] = ui_getstring (UI_calibrate); menu_action[menu_total++] = UI_CALIBRATE;
+		append_menu(UI_calibrate, UI_CALIBRATE);
 	}
 
 #ifndef MESS
-	menu_item[menu_total] = ui_getstring (UI_bookkeeping); menu_action[menu_total++] = UI_STATS;
-	menu_item[menu_total] = ui_getstring (UI_gameinfo); menu_action[menu_total++] = UI_GAMEINFO;
-	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
-#else
-	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
-	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
+	append_menu(UI_bookkeeping, UI_STATS);
+	append_menu(UI_gameinfo, UI_GAMEINFO);
+	append_menu(UI_history, UI_HISTORY);
+#else /* MESS */
+	append_menu(UI_imageinfo, UI_IMAGEINFO);
+	append_menu(UI_filemanager, UI_FILEMANAGER);
 #if HAS_WAVE
-	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
-#endif
-	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
-#endif
+	append_menu(UI_tapecontrol, UI_TAPECONTROL);
+#endif /* HAS_WAVE */
+	append_menu(UI_history, UI_HISTORY);
+#endif /* !MESS */
 
 	if (options.cheat)
 	{
-		menu_item[menu_total] = ui_getstring (UI_cheat); menu_action[menu_total++] = UI_CHEAT;
+		append_menu(UI_cheat, UI_CHEAT);
 	}
 
 #ifndef MESS
@@ -3198,14 +3207,14 @@ static void setup_menu_init(void)
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 	{
-		menu_item[menu_total] = ui_getstring (UI_memorycard); menu_action[menu_total++] = UI_MEMCARD;
+		append_menu(UI_memorycard, UI_MEMCARD);
 	}
 #endif
 #endif
 #endif
 
-	menu_item[menu_total] = ui_getstring (UI_resetgame); menu_action[menu_total++] = UI_RESET;
-	menu_item[menu_total] = ui_getstring (UI_returntogame); menu_action[menu_total++] = UI_EXIT;
+	append_menu(UI_resetgame, UI_RESET);
+	append_menu(UI_returntogame, UI_EXIT);
 	menu_item[menu_total] = 0; /* terminate array */
 }
 
@@ -3266,6 +3275,9 @@ static int setup_menu(struct mame_bitmap *bitmap, int selected)
 #endif /* HAS_WAVE */
 			case UI_CONFIGURATION:
 				res = setconfiguration(bitmap, sel >> SEL_BITS);
+				break;
+			case UI_CATEGORIES:
+				res = setcategories(bitmap, sel >> SEL_BITS);
 				break;
 #endif /* MESS */
 			case UI_HISTORY:

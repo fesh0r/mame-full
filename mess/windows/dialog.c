@@ -981,7 +981,7 @@ static int dialog_add_single_seqselect(struct _dialog_box *di, short x, short y,
 //	win_dialog_add_seqselect
 //============================================================
 
-int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, RECT *r)
+int win_dialog_add_portselect(dialog_box *dialog, struct InputPort *port, const RECT *r)
 {
 	dialog_box *di = dialog;
 	short x;

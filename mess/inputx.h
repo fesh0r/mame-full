@@ -17,15 +17,16 @@
 
 ***************************************************************************/
 
-/* input categorizations */
+/* input classes */
 enum
 {
-	INPUT_CATEGORY_INTERNAL,
-	INPUT_CATEGORY_KEYBOARD,
-	INPUT_CATEGORY_CONTROLLER,
-	INPUT_CATEGORY_CONFIG,
-	INPUT_CATEGORY_DIPSWITCH,
-	INPUT_CATEGORY_MISC
+	INPUT_CLASS_INTERNAL,
+	INPUT_CLASS_KEYBOARD,
+	INPUT_CLASS_CONTROLLER,
+	INPUT_CLASS_CONFIG,
+	INPUT_CLASS_DIPSWITCH,
+	INPUT_CLASS_CATEGORIZED,
+	INPUT_CLASS_MISC
 };
 
 /***************************************************************************
@@ -75,6 +76,17 @@ enum
 #define PORT_CONFSETTING(default,name) \
 	PORT_BIT_NAME(0, default, IPT_CONFIG_SETTING, name)
 
+/* categories */
+#define PORT_CATEGORY(category) \
+	{ 0, category, IPT_CATEGORY, 0 },
+
+#define PORT_CATEGORY_CLASS(mask,default,name) \
+	PORT_BIT_NAME(mask, default, IPT_CATEGORY_NAME, name)
+
+#define PORT_CATEGORY_ITEM(default,name,category) \
+	PORT_BIT_NAME(0, default, IPT_CATEGORY_SETTING, name) \
+	PORT_CATEGORY(category)
+
 
 
 /***************************************************************************
@@ -113,9 +125,10 @@ void inputx_postn_utf8(const char *text, size_t text_len);
 void inputx_postn_utf8_rate(const char *text, size_t text_len, mame_time rate);
 
 /* miscellaneous functions */
-int input_categorize_port(const struct InputPort *in);
-int input_has_input_category(int category);
+int input_classify_port(const struct InputPort *in);
+int input_has_input_class(int inputclass);
 int input_player_number(const struct InputPort *in);
 int input_count_players(void);
+int input_category_active(int category);
 
 #endif /* INPUTX_H */

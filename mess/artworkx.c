@@ -145,11 +145,14 @@ static char *strip_space(char *string)
 
 
 
-void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
-	struct inputform_customization *customizations, int customizations_length)
+int artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
+	const char *section,
+	struct inputform_customization *customizations,
+	int customizations_length)
 {
 	mame_file *file;
 	char buffer[1000];
+	char current_section[64];
 	char ipt_name[64];
 	char *p;
 	int x1, y1, x2, y2;
@@ -157,6 +160,9 @@ void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	const char *pik_name;
 	const char *png_filename;
 	const char *ini_filename;
+	int enabled = TRUE;
+	int item_count = 0;
+
 	static const char *cust_files[] =
 	{
 		"ctrlr.png",		"ctrlr.ini",
@@ -178,18 +184,6 @@ void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	/* subtract one from the customizations length; so we can place IPT_END */
 	customizations_length--;
 
-	/* open the PNG, if available */
-	memset(png, 0, sizeof(*png));
-	if (png_filename)
-	{
-		file = mame_fopen(Machine->gamedrv->name, png_filename, FILETYPE_ARTWORK, 0);
-		if (file)
-		{
-			png_read_file(file, png);
-			mame_fclose(file);
-		}
-	}
-
 	/* open the INI file, if available */
 	if (ini_filename)
 	{
@@ -204,7 +198,21 @@ void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 				if (p)
 					*p = 0;
 
-				if (sscanf(buffer, "%64s (%d,%d)-(%d,%d)", ipt_name, &x1, &y1, &x2, &y2) != 5)
+				/* section header? */
+				if (buffer[0] == '[')
+				{
+					strncpyz(current_section, &buffer[1],
+						sizeof(current_section) / sizeof(current_section[0]));
+					p = strchr(current_section, ']');
+					if (!p)
+						continue;
+					*p = '\0';
+					if (section)
+						enabled = !stricmp(current_section, section);
+					continue;
+				}
+
+				if (!enabled || sscanf(buffer, "%64s (%d,%d)-(%d,%d)", ipt_name, &x1, &y1, &x2, &y2) != 5)
 					continue;
 
 				for (pik = input_keywords; pik->name[0]; pik++)
@@ -224,6 +232,7 @@ void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 							customizations->height = y2 - y1;
 							customizations++;				
 							customizations_length--;
+							item_count++;
 						}
 						break;
 					}
@@ -239,4 +248,17 @@ void artwork_get_inputscreen_customizations(struct png_info *png, int cust_type,
 	customizations->y = -1;
 	customizations->width = -1;
 	customizations->height = -1;
+
+	/* open the PNG, if available */
+	memset(png, 0, sizeof(*png));
+	if (png_filename && item_count > 0)
+	{
+		file = mame_fopen(Machine->gamedrv->name, png_filename, FILETYPE_ARTWORK, 0);
+		if (file)
+		{
+			png_read_file(file, png);
+			mame_fclose(file);
+		}
+	}
+	return item_count;
 }

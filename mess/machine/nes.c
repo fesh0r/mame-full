@@ -174,6 +174,8 @@ MACHINE_INIT( nes )
 	in_1_shift = 0;
 }
 
+
+
 MACHINE_STOP( nes )
 {
 	/* Write out the battery file if necessary */
@@ -181,9 +183,22 @@ MACHINE_STOP( nes )
 		image_battery_save(cartslot_image(), battery_ram, BATTERY_SIZE);
 }
 
+
+
+static int zapper_hit_pixel(const UINT32 *input)
+{
+	UINT16 pix;
+	UINT8 r, g, b;
+	pix = read_pixel(Machine->scrbitmap, input[1], input[2]);
+	palette_get_color(pix, &r, &g, &b);
+	return (((UINT16) r) + ((UINT16) g) + ((UINT16) b)) >= 240*3;
+}
+
+
+
 READ_HANDLER ( nes_IN0_r )
 {
-	int dip;
+	int cfg;
 	int retVal;
 
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
@@ -192,32 +207,19 @@ READ_HANDLER ( nes_IN0_r )
 
 	retVal |= ((in_0[0] >> in_0_shift) & 0x01);
 
-	/* Check the fake dip to see what's connected */
-	dip = readinputport (2);
+	/* Check the configuration to see what's connected */
+	cfg = readinputport(PORT_CONFIG1);
 
-	switch (dip & 0x0f)
+	if (((cfg & 0x000f) == 0x0002) || ((cfg & 0x000f) == 0x0003))
 	{
-		case 0x01: /* zapper */
-			{
-				UINT16 pix;
-				retVal |= 0x08;  /* no sprite hit */
+		/* If button 1 is pressed, indicate the light gun trigger is pressed */
+		retVal |= ((in_0[0] & 0x01) << 4);
 
-				/* If button 1 is pressed, indicate the light gun trigger is pressed */
-				retVal |= ((in_0[0] & 0x01) << 4);
-
-				/* Look at the screen and see if the cursor is over a bright pixel */
-				pix = read_pixel(Machine->scrbitmap, in_0[1], in_0[2]);
-				if ((pix == Machine->pens[0x20]) || (pix == Machine->pens[0x30]) ||
-					(pix == Machine->pens[0x33]) || (pix == Machine->pens[0x34]))
-				{
-					retVal &= ~0x08; /* sprite hit */
-				}
-			}
-			break;
-		case 0x02: /* multitap */
-			/* Handle data line 1's serial output */
-//			retVal |= ((in_0[1] >> in_0_shift) & 0x01) << 1;
-			break;
+		/* Look at the screen and see if the cursor is over a bright pixel */
+		if (zapper_hit_pixel(in_0))
+			retVal &= ~0x08; /* sprite hit */
+		else
+			retVal |= 0x08;  /* no sprite hit */
 	}
 
 #ifdef LOG_JOY
@@ -230,7 +232,7 @@ READ_HANDLER ( nes_IN0_r )
 
 READ_HANDLER ( nes_IN1_r )
 {
-	int dip;
+	int cfg;
 	int retVal;
 
 	/* Some games expect bit 6 to be set because the last entry on the data bus shows up */
@@ -241,39 +243,29 @@ READ_HANDLER ( nes_IN1_r )
 	retVal |= ((in_1[0] >> in_1_shift) & 0x01);
 
 	/* Check the fake dip to see what's connected */
-	dip = readinputport (2);
+	cfg = readinputport(PORT_CONFIG1);
 
-	switch (dip & 0xf0)
+	if (((cfg & 0x00f0) == 0x0020) || ((cfg & 0x00f0) == 0x0030))
 	{
-		case 0x10: /* zapper */
-			{
-				UINT16 pix;
-				retVal |= 0x08;  /* no sprite hit */
+		/* zapper */
+		/* If button 1 is pressed, indicate the light gun trigger is pressed */
+		retVal |= ((in_1[0] & 0x01) << 4);
 
-				/* If button 1 is pressed, indicate the light gun trigger is pressed */
-				retVal |= ((in_1[0] & 0x01) << 4);
+		/* Look at the screen and see if the cursor is over a bright pixel */
+		if (zapper_hit_pixel(in_1))
+			retVal &= ~0x08; /* sprite hit */
+		else
+			retVal |= 0x08;  /* no sprite hit */
+	}
+	else if ((cfg & 0x00f0) == 0x0040)
+	{
+		/* arkanoid dial */
+		/* Handle data line 2's serial output */
+		retVal |= ((in_1[2] >> in_1_shift) & 0x01) << 3;
 
-				/* Look at the screen and see if the cursor is over a bright pixel */
-				pix = read_pixel(Machine->scrbitmap, in_1[1], in_1[2]);
-				if ((pix == Machine->pens[0x20]) || (pix == Machine->pens[0x30]) ||
-					(pix == Machine->pens[0x33]) || (pix == Machine->pens[0x34]))
-				{
-					retVal &= ~0x08; /* sprite hit */
-				}
-			}
-			break;
-		case 0x20: /* multitap */
-			/* Handle data line 1's serial output */
-//			retVal |= ((in_1[1] >> in_1_shift) & 0x01) << 1;
-			break;
-		case 0x30: /* arkanoid dial */
-			/* Handle data line 2's serial output */
-			retVal |= ((in_1[2] >> in_1_shift) & 0x01) << 3;
-
-			/* Handle data line 3's serial output - bits are reversed */
-//			retVal |= ((in_1[3] >> in_1_shift) & 0x01) << 4;
-			retVal |= ((in_1[3] << in_1_shift) & 0x80) >> 3;
-			break;
+		/* Handle data line 3's serial output - bits are reversed */
+//		retVal |= ((in_1[3] >> in_1_shift) & 0x01) << 4;
+		retVal |= ((in_1[3] << in_1_shift) & 0x80) >> 3;
 	}
 
 #ifdef LOG_JOY
@@ -284,9 +276,54 @@ READ_HANDLER ( nes_IN1_r )
 	return retVal;
 }
 
+
+
+static void nes_read_input_device(int cfg, UINT32 *vals, int pad_port,
+	int supports_zapper, int paddle_port)
+{
+	vals[0] = 0;
+	vals[1] = 0;
+	vals[2] = 0;
+	
+	switch(cfg & 0x0f)
+	{
+		case 0x01:	/* gamepad */
+			if (pad_port >= 0)
+				vals[0] = readinputport(pad_port);
+			break;
+
+		case 0x02:	/* zapper 1 */
+			if (supports_zapper)
+			{
+				vals[0] = readinputport(PORT_ZAPPER0_T);
+				vals[1] = readinputport(PORT_ZAPPER0_X);
+				vals[2] = readinputport(PORT_ZAPPER0_Y);
+			}
+			break;
+
+		case 0x03:	/* zapper 2 */
+			if (supports_zapper)
+			{
+				vals[0] = readinputport(PORT_ZAPPER1_T);
+				vals[1] = readinputport(PORT_ZAPPER1_X);
+				vals[2] = readinputport(PORT_ZAPPER1_Y);
+			}
+			break;
+
+		case 0x04:	/* arkanoid paddle */
+			if (paddle_port >= 0)
+				vals[0] = (UINT8) ((UINT8) readinputport (paddle_port) + (UINT8)0x52) ^ 0xff;
+			break;
+	}
+}
+
+
+
 WRITE_HANDLER ( nes_IN0_w )
 {
-	int dip;
+	int cfg;
+	UINT32 in_2[3];
+	UINT32 in_3[3];
 
 	if (data & 0x01) return;
 #ifdef LOG_JOY
@@ -297,69 +334,28 @@ WRITE_HANDLER ( nes_IN0_w )
 	in_0_shift = 0;
 	in_1_shift = 0;
 
-	in_0[0] = readinputport (0);
+	/* Check the configuration to see what's connected */
+	cfg = readinputport(PORT_CONFIG1);
 
-	/* Check the fake dip to see what's connected */
-	dip = readinputport (2);
+	/* Read the input devices */
+	nes_read_input_device(cfg >>  0, in_0, PORT_PAD0,  TRUE, -1);
+	nes_read_input_device(cfg >>  4, in_1, PORT_PAD1,  TRUE, PORT_PADDLE1);
+	nes_read_input_device(cfg >>  8, in_2, PORT_PAD2, FALSE, -1);
+	nes_read_input_device(cfg >> 12, in_3, PORT_PAD3, FALSE, -1);
 
-	switch (dip & 0x0f)
-	{
-		case 0x01: /* zapper */
-			in_0[1] = readinputport (3); /* x-axis */
-			in_0[2] = readinputport (4); /* y-axis */
-			break;
-
-		case 0x02: /* multitap */
-			in_0[0] |= (readinputport (8) << 8);
-			in_0[0] |= (0x08 << 16); /* OR in the 4-player adapter id, channel 0 */
-
-			/* Optional: copy the data onto the second channel */
-//			in_0[1] = in_0[0];
-//			in_0[1] |= (0x04 << 16); /* OR in the 4-player adapter id, channel 1 */
-			break;
-	}
-
-	in_1[0] = readinputport (1);
-
-	switch (dip & 0xf0)
-	{
-		case 0x10: /* zapper */
-			if (dip & 0x01)
-			{
-				/* zapper is also on port 1, use 2nd player analog inputs */
-				in_1[1] = readinputport (5); /* x-axis */
-				in_1[2] = readinputport (6); /* y-axis */
-			}
-			else
-			{
-				in_1[1] = readinputport (3); /* x-axis */
-				in_1[2] = readinputport (4); /* y-axis */
-			}
-			break;
-
-		case 0x20: /* multitap */
-			in_1[0] |= (readinputport (9) << 8);
-			in_1[0] |= (0x04 << 16); /* OR in the 4-player adapter id, channel 0 */;
-
-			/* Optional: copy the data onto the second channel */
-//			in_1[1] = in_1[0];
-//			in_1[1] |= (0x08 << 16); /* OR in the 4-player adapter id, channel 1 */
-			break;
-
-		case 0x30: /* arkanoid dial */
-			in_1[3] = (UINT8) ((UINT8) readinputport (10) + (UINT8)0x52) ^ 0xff;
-//			in_1[3] = readinputport (10) ^ 0xff;
-//			in_1[3] = 0x02;
-
-			/* Copy the joypad data onto the third channel */
-			in_1[2] = in_1[0] /*& 0x01*/;
-			break;
-	}
+	if (cfg & 0x0f00)
+		in_0[0] |= (in_2[0] << 8) | (0x08 << 16);
+	if (cfg & 0xf000)
+		in_1[0] |= (in_3[0] << 8) | (0x04 << 16);
 }
+
+
 
 WRITE_HANDLER ( nes_IN1_w )
 {
 }
+
+
 
 DEVICE_LOAD(nes_cart)
 {

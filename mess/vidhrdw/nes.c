@@ -72,31 +72,34 @@ static void draw_sight(int playerNum, int x_center, int y_center)
 ***************************************************************************/
 VIDEO_UPDATE( nes )
 {
+	int sights = 0;
+
 	/* render the ppu */
 	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
 
-	if (readinputport (2) == 0x01) /* zapper on port 1 */
-	{
-		draw_sight (1, readinputport (3), readinputport (4));
-	}
-	else if (readinputport (2) == 0x10) /* zapper on port 2 */
-	{
-		draw_sight (1, readinputport (3), readinputport (4));
-	}
-	else if (readinputport (2) == 0x11) /* zapper on both ports */
-	{
-		draw_sight (1, readinputport (3), readinputport (4));
-		draw_sight (2, readinputport (5), readinputport (6));
-	}
+	/* figure out what sights to draw, and draw them */
+	if ((readinputport(PORT_CONFIG1) & 0x000f) == 0x0002)
+		sights |= 0x0001;
+	if ((readinputport(PORT_CONFIG1) & 0x000f) == 0x0003)
+		sights |= 0x0002;
+	if ((readinputport(PORT_CONFIG1) & 0x00f0) == 0x0020)
+		sights |= 0x0001;
+	if ((readinputport(PORT_CONFIG1) & 0x00f0) == 0x0030)
+		sights |= 0x0002;
+	if (sights & 0x0001)
+		draw_sight(1, readinputport(PORT_ZAPPER0_X), readinputport(PORT_ZAPPER0_Y));
+	if (sights & 0x0002)
+		draw_sight(2, readinputport(PORT_ZAPPER1_X), readinputport(PORT_ZAPPER1_Y));
 
 	/* if this is a disk system game, check for the flip-disk key */
 	if (nes.mapper == 20)
 	{
-		if (readinputport (11) & 0x01)
+		if (readinputport(PORT_FLIPKEY) & 0x01)
 		{
-			while (readinputport (11) & 0x01) { update_input_ports (); };
+			while (readinputport(PORT_FLIPKEY) & 0x01)
+				update_input_ports();
 
-			nes_fds.current_side ++;
+			nes_fds.current_side++;
 			if (nes_fds.current_side > nes_fds.sides)
 				nes_fds.current_side = 0;
 
