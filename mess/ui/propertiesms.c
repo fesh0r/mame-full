@@ -411,7 +411,8 @@ static BOOL RamSize_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 	case CMSG_COMMAND:
 		switch(params->wID) {
 		case IDC_RAM_COMBOBOX:
-			*(params->changed) = TRUE;
+			if (params->wNotifyCode == CBN_SELCHANGE)
+				*(params->changed) = TRUE;
 			break;
 		}
 		return FALSE;
@@ -427,6 +428,7 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 {
 	HWND hPrinterText, hPrinterCaption, hPrinterBrowse;
 	options_type *o = params->o;
+	char buf[MAX_PATH];
 
 	hPrinterText = GetDlgItem(hWnd, IDC_PRINTER_EDITTEXT);
 	hPrinterCaption = GetDlgItem(hWnd, IDC_PRINTER_CAPTION);
@@ -452,7 +454,13 @@ static BOOL Printer_ComponentProc(enum component_msg msg, HWND hWnd, const struc
 		break;
 
 	case CMSG_PROPTOOPTIONS:
-		GetWindowText(hPrinterText, o->printer, sizeof(o->printer) / sizeof(o->printer[0]));
+		GetWindowText(hPrinterText, buf, sizeof(buf) / sizeof(buf[0]));
+		if (strcmp(o->printer, buf))
+		{
+			FreeIfAllocated(&o->printer);
+			o->printer = strdup(buf);
+			MarkChanged(hWnd);
+		}
 		break;
 
 	case CMSG_COMMAND:
