@@ -320,17 +320,66 @@ void init_ti99_4p(void)
 
 int ti99_floppy_init(int id, mame_file *fp, int open_mode)
 {
+	typedef struct ti99_sc0
+	{
+		char	name[10];			/* volume name (10 characters, pad with spaces) */
+		UINT8	totsecsMSB;			/* disk length in sectors (big-endian) (usually 360, 720 or 1440) */
+		UINT8	totsecsLSB;
+		UINT8	secspertrack;		/* sectors per track (usually 9 (FM) or 18 (MFM)) */
+		UINT8	id[4];				/* 'DSK ' */
+		UINT8	tracksperside;		/* tracks per side (usually 40) */
+		UINT8	sides;				/* sides (1 or 2) */
+		UINT8	density;			/* 1 (FM) or 2 (MFM) */
+		UINT8	res[36];			/* reserved */
+		UINT8	abm[200];			/* allocation bitmap: a 1 for each sector in use (sector 0 is LSBit of byte 0, sector 7 is MSBit of byte 0, sector 8 is LSBit of byte 1, etc.) */
+	} ti99_sc0;
+
+	ti99_sc0 sec0;
+	int totsecs;
+	int done;
+
+
 	if (basicdsk_floppy_init(id, fp, open_mode)==INIT_PASS)
 	{
-		switch (image_length(IO_FLOPPY, id))
+		done = FALSE;
+
+		/* Read sector 0 to identify format */
+		if ((! mame_fseek(fp, 0, SEEK_SET)) && (mame_fread(fp, & sec0, sizeof(sec0)) == sizeof(sec0)))
 		{
-		case 1*40*9*256:	/* 90kbytes: SSSD */
-		default:
-			basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
-			break;
-		case 2*40*18*256:	/* 360kbytes: DSDD */
-			basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0);
-			break;
+			/* If we have read the sector successfully, let us parse it */
+			totsecs = (sec0.totsecsMSB << 8) | sec0.totsecsLSB;
+			if (sec0.tracksperside == 0)
+				/* Some images are like this, because the TI controller always assumes 40. */
+				sec0.tracksperside = 40;
+			if (sec0.sides == 0)
+				/* Some images are like this, because the TI controller always assumes
+				tracks beyond 40 are on side 2. */
+				sec0.sides = totsecs / (sec0.secspertrack * sec0.tracksperside);
+			/* check that the format makes sense */
+			if (((sec0.secspertrack * sec0.tracksperside * sec0.sides) == totsecs)
+				&& (totsecs >= 2) && (totsecs <= 1600) && (! memcmp(sec0.id, "DSK", 3))
+				&& (image_length(IO_FLOPPY, id) == totsecs*256))
+			{
+				/* set geometry */
+				basicdsk_set_geometry(id, sec0.tracksperside, sec0.sides, sec0.secspertrack, 256, 0, 0);
+				done = TRUE;
+			}
+		}
+
+		/* If we have been unable to parse the format, let us guess according
+		to file lenght */
+		if (! done)
+		{
+			switch (image_length(IO_FLOPPY, id))
+			{
+			case 1*40*9*256:	/* 90kbytes: SSSD */
+			default:
+				basicdsk_set_geometry(id, 40, 1, 9, 256, 0, 0);
+				break;
+			case 2*40*18*256:	/* 360kbytes: DSDD */
+				basicdsk_set_geometry(id, 40, 2, 18, 256, 0, 0);
+				break;
+			}
 		}
 
 		return INIT_PASS;
