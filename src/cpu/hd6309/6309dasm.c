@@ -473,7 +473,8 @@ static opcodeinfo pg2opcodes[] =
 	{223,2,"STS",      DIR, EA_UINT16, EA_ZPG_WR,   6},
 
 	{236,2,"LDQ",      IND, EA_UINT16, EA_MEM_RD,   8},
-	{238,2,"LDS",      IND, EA_UINT16, EA_MEM_WR,   8},
+	{237,2,"STQ",      IND, EA_UINT16, EA_MEM_WR,   8},
+	{238,2,"LDS",      IND, EA_UINT16, EA_MEM_RD,   8},
 
 	{238,2,"LDS",      IND, EA_UINT16, EA_MEM_RD,   6},
 	{239,2,"STS",      IND, EA_UINT16, EA_MEM_WR,   6},
@@ -680,7 +681,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			 }
 			 else
 			 {	/* not found in alternate page */
-				strcpy (buffer, "JMP   [$FFF0] Illegal Opcode");
+				strcpy (buffer, "JMP [$FFF0] Illegal Opcode");
 				return 2;
 			 }
 		}
@@ -697,7 +698,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 	}
 	else
 	{
-		strcpy (buffer, "JMP   [$FFF0] Illegal Opcode");
+		strcpy (buffer, "JMP [$FFF0] Illegal Opcode");
 		return 1;
 	}
 
@@ -976,7 +977,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 			if( pb2 & 0x02 )
 			{
 				if( pb2 & 0xfc ) buffer += sprintf (buffer, ",");
-				strcat (buffer, "A");
+				buffer += sprintf (buffer, "A");
 			}
 			if( pb2 & 0x01 )
 			{
@@ -1062,7 +1063,7 @@ unsigned Dasm6309 (char *buffer, unsigned pc)
 				{
 					buffer += sprintf (buffer, "#");
 					ea = operandarray[0];
-					sym1 = set_ea_info(0, ea, EA_INT8, EA_VALUE );
+					sym1 = set_ea_info(0, ea, EA_UINT8, EA_VALUE );
 					buffer += sprintf (buffer, "%s", sym1 );
 
 					buffer += sprintf (buffer, ",");

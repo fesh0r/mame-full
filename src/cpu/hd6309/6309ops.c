@@ -983,32 +983,234 @@ INLINE void cmpr( void )
 	}
 }
 
-/* $1138 TFR R0+,R1+ */
+/* $1138 TFM R0+,R1+ */
 INLINE void tfmpp( void )
 {
-IlegalInstructionError;
-/* tfmpp unimplemented */
+	UINT8	tb, srcValue;
+	int 	done = false;
+	
+	IMMBYTE(tb);
+	
+	if ( W != 0 )
+	{
+		
+
+		switch(tb>>4) {
+			case  0: srcValue = RM(D++); break;
+			case  1: srcValue = RM(X++); break;
+			case  2: srcValue = RM(Y++); break;
+			case  3: srcValue = RM(U++); break;
+			case  4: srcValue = RM(S++); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		switch(tb&15) {
+			case  0: WM(D++, srcValue); break;
+			case  1: WM(X++, srcValue); break;
+			case  2: WM(Y++, srcValue); break;
+			case  3: WM(U++, srcValue); break;
+			case  4: WM(S++, srcValue); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		if ( !done )
+		{
+			PCD = PCD - 3;
+			CHANGE_PC;
+			W--;
+		}
+	}
 }
 
-/* $1139 TFR R0-,R1- */
+/* $1139 TFM R0-,R1- */
 INLINE void tfmmm( void )
 {
-IlegalInstructionError;
-/* #warning tfmmm unimplemented */
+	UINT8	tb, srcValue;
+	int 	done = false;
+
+	IMMBYTE(tb);
+	
+	if ( W != 0 )
+	{
+		switch(tb>>4) {
+			case  0: srcValue = RM(D--); break;
+			case  1: srcValue = RM(X--); break;
+			case  2: srcValue = RM(Y--); break;
+			case  3: srcValue = RM(U--); break;
+			case  4: srcValue = RM(S--); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		switch(tb&15) {
+			case  0: WM(D--, srcValue); break;
+			case  1: WM(X--, srcValue); break;
+			case  2: WM(Y--, srcValue); break;
+			case  3: WM(U--, srcValue); break;
+			case  4: WM(S--, srcValue); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		if ( !done )
+		{
+			PCD = PCD - 3;
+			CHANGE_PC;
+			W--;
+		}
+	}
 }
 
-/* $113A TFR R0+,R1 */
+/* $113A TFM R0+,R1 */
 INLINE void tfmpc( void )
 {
-IlegalInstructionError;
-/* #warning tfmpc unimplemented */
+	UINT8	tb, srcValue;
+	int 	done = false;
+
+	IMMBYTE(tb);
+	
+	if ( W != 0 )
+	{
+		switch(tb>>4) {
+			case  0: srcValue = RM(D++); break;
+			case  1: srcValue = RM(X++); break;
+			case  2: srcValue = RM(Y++); break;
+			case  3: srcValue = RM(U++); break;
+			case  4: srcValue = RM(S++); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		switch(tb&15) {
+			case  0: WM(D, srcValue); break;
+			case  1: WM(X, srcValue); break;
+			case  2: WM(Y, srcValue); break;
+			case  3: WM(U, srcValue); break;
+			case  4: WM(S, srcValue); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		if ( !done )
+		{
+			PCD = PCD - 3;
+			CHANGE_PC;
+			W--;
+		}
+	}
 }
 
-/* $113B TFR R0,R1+ */
+/* $113B TFM R0,R1+ */
 INLINE void tfmcp( void )
 {
-IlegalInstructionError;
-/* #warning tfmcp unimplemented */
+	UINT8	tb, srcValue;
+	int 	done = false;
+
+	IMMBYTE(tb);
+	
+	if ( W != 0 )
+	{
+		switch(tb>>4) {
+			case  0: srcValue = RM(D); break;
+			case  1: srcValue = RM(X); break;
+			case  2: srcValue = RM(Y); break;
+			case  3: srcValue = RM(U); break;
+			case  4: srcValue = RM(S); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		switch(tb&15) {
+			case  0: WM(D++, srcValue); break;
+			case  1: WM(X++, srcValue); break;
+			case  2: WM(Y++, srcValue); break;
+			case  3: WM(U++, srcValue); break;
+			case  4: WM(S++, srcValue); break;
+			case  5: /* PC */ done = true; break;
+			case  6: /* W  */ done = true; break;
+			case  7: /* V  */ done = true; break;
+			case  8: /* A  */ done = true; break;
+			case  9: /* B  */ done = true; break;
+			case 10: /* CC */ done = true; break;
+			case 11: /* DP */ done = true; break;
+			case 12: /* 0  */ done = true; break;
+			case 13: /* 0  */ done = true; break;
+			case 14: /* E  */ done = true; break;
+			default: /* F  */ done = true; break;
+		}
+		
+		if ( !done )
+		{
+			PCD = PCD - 3;
+			CHANGE_PC;
+			W--;
+		}
+	}
 }
 
 /* $30 LEAX indexed --*-- */
@@ -5196,10 +5398,10 @@ INLINE void pref11( void )
 		case 0x35: bieor(); 	hd6309_ICount-=7;	break;
 		case 0x36: ldbt();		hd6309_ICount-=7;	break;
 		case 0x37: stbt();		hd6309_ICount-=8;	break;
-		case 0x38: tfmpp(); 	hd6309_ICount-=6;	break;
-		case 0x39: tfmmm(); 	hd6309_ICount-=6;	break;
-		case 0x3a: tfmpc(); 	hd6309_ICount-=6;	break;
-		case 0x3b: tfmcp(); 	hd6309_ICount-=6;	break;
+		case 0x38: tfmpp(); 	hd6309_ICount-=3;	break;	/* Timing for TFM is actually 6+3n.       */
+		case 0x39: tfmmm(); 	hd6309_ICount-=3;	break;	/* To avoid saving the state, I decided   */
+		case 0x3a: tfmpc(); 	hd6309_ICount-=3;	break;	/* to ignore to initial 6 cycles.         */
+		case 0x3b: tfmcp(); 	hd6309_ICount-=3;	break;  /* We will soon see how this fairs!       */
 		case 0x3c: bitmd_im();	hd6309_ICount-=4;	break;
 		case 0x3d: ldmd_im();	hd6309_ICount-=5;	break;
 		case 0x3f: swi3();		hd6309_ICount-=20;	break;
