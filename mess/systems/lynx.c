@@ -252,7 +252,7 @@ ROM_START(lynx2)
 	ROM_REGION(0x100000, REGION_USER1, 0)
 ROM_END
 
-UINT32 lynx_partialcrc(const unsigned char *buf,unsigned int size)
+UINT32 lynx_partialcrc(const unsigned char *buf, size_t size)
 {
 	unsigned int crc;
 

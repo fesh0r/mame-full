@@ -7,7 +7,7 @@ extern UINT32 lynx_palette[0x10];
 void lynx_draw_lines(int newline);
 
 
-extern UINT32 lynx_partialcrc(const unsigned char *,unsigned int);
+extern UINT32 lynx_partialcrc(const unsigned char *, size_t);
 
 extern int debug_pos;
 extern char debug_strings[16][30];
