@@ -21,6 +21,8 @@
 #include "includes/6551.h"
 #include "formats/dmkdsk.h"
 #include "printer.h"
+#include "messfmts.h"
+#include "formats/coco_dsk.h"
 
 #define SHOW_FULL_AREA			0
 #define JOYSTICK_DELTA			10
@@ -704,11 +706,14 @@ SYSTEM_CONFIG_START( generic_coco )
 
 	/* cassette */
 	CONFIG_DEVICE_CASSETTE	(1, "cas\0wav\0", coco_cassette_init, coco_cassette_exit)
+
+	/* floppy */
+	/* CONFIG_DEVICE_FLOPPY	(1, "dsk\0vdk\0", coco, coco_jvc ) */
 SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START( generic_coco12 )
 	CONFIG_IMPORT_FROM		( generic_coco )
-	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco_rom_load, NULL )
+	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco_rom_load, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT	( "pak\0", 1, coco_pak_load, NULL )
 SYSTEM_CONFIG_END
 
@@ -730,7 +735,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(coco3)
 	CONFIG_IMPORT_FROM		( generic_coco )
-	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco3_rom_load, NULL )
+	CONFIG_DEVICE_CARTSLOT	( "rom\0", 1, coco3_rom_load, NULL, NULL )
 	CONFIG_DEVICE_SNAPSHOT	( "pak\0", 1, coco3_pak_load, NULL )
 	CONFIG_RAM				(128 * 1024)
 	CONFIG_RAM_DEFAULT		(512 * 1024)

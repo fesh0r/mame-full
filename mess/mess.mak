@@ -303,11 +303,8 @@ $(OBJ)/cbm.a: \
 
 $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/machine/6883sam.o  \
-	  $(OBJ)/mess/formats/cocopak.o  \
-	  $(OBJ)/mess/formats/cococas.o  \
 	  $(OBJ)/mess/machine/cococart.o \
-	  $(OBJ)/mess/machine/ds1315.o \
-	  $(OBJ)/mess/formats/dmkdsk.o   \
+	  $(OBJ)/mess/machine/ds1315.o	 \
 	  $(OBJ)/mess/machine/ds1315.o   \
 	  $(OBJ)/mess/machine/m6242b.o   \
 	  $(OBJ)/mess/formats/cocovdk.o  \
@@ -315,8 +312,11 @@ $(OBJ)/coco.a:   \
 	  $(OBJ)/mess/systems/mc10.o	 \
 	  $(OBJ)/mess/machine/dragon.o	 \
 	  $(OBJ)/mess/vidhrdw/dragon.o	 \
-	  $(OBJ)/mess/systems/dragon.o
-
+	  $(OBJ)/mess/systems/dragon.o	 \
+	  $(OBJ)/mess/formats/cocopak.o  \
+	  $(OBJ)/mess/formats/cococas.o  \
+	  $(OBJ)/mess/formats/dmkdsk.o   \
+	  $(OBJ)/mess/formats/coco_dsk.o \
 
 $(OBJ)/trs80.a:    \
 	  $(OBJ)/mess/machine/trs80.o	 \

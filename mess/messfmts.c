@@ -1,4 +1,4 @@
-#include "formats.h"
+#include "messfmts.h"
 #include "osdepend.h"
 #include "mess.h"
 #include "includes/flopdrv.h"
@@ -113,12 +113,12 @@ static floppy_interface bdf_floppy_interface =
 	NULL
 };
 
-int bdf_floppy_init(int id, const formatdriver_ctor *open_formats, formatdriver_ctor create_format)
+static int bdf_floppy_init_internal(int id, const formatdriver_ctor *open_formats, formatdriver_ctor create_format)
 {
 	void *file;
 	const char *name;
 	int mode;
-	char *ext;
+	const char *ext;
 	formatdriver_ctor fmts[2];
 	int device_type = IO_FLOPPY;
 	int err;
@@ -144,6 +144,9 @@ int bdf_floppy_init(int id, const formatdriver_ctor *open_formats, formatdriver_
 			}
 		}
 
+		/* its lame that I have to do this */
+		name = device_filename(device_type, id);
+
 		if (mode == OSD_FOPEN_RW_CREATE)
 		{
 			err = bdf_create(&mess_bdf_procs, create_format, file, NULL, &bdfs[id].bdf);
@@ -156,9 +159,8 @@ int bdf_floppy_init(int id, const formatdriver_ctor *open_formats, formatdriver_
 				fmts[1] = NULL;
 				open_formats = fmts;				
 			}
-			ext = osd_strip_extension(name);
+			ext = strrchr(name, '.');
 			err = bdf_open(&mess_bdf_procs, open_formats, file, (mode == OSD_FOPEN_READ), ext, &bdfs[id].bdf);
-			free(ext);
 		}
 		if (err)
 			return INIT_FAIL;
@@ -166,6 +168,21 @@ int bdf_floppy_init(int id, const formatdriver_ctor *open_formats, formatdriver_
 		floppy_drive_set_disk_image_interface(id, &bdf_floppy_interface);
 	}
 	return INIT_PASS;
+}
+
+int bdf_floppy_init(int id)
+{
+	const struct IODevice *dev;
+	const formatdriver_ctor *open_formats;
+	formatdriver_ctor create_format;
+
+	dev = device_find(Machine->gamedrv, IO_FLOPPY);
+	assert(dev);
+
+	open_formats = (const formatdriver_ctor *) dev->input_chunk;
+	create_format = (formatdriver_ctor) dev->output_chunk;
+
+	return bdf_floppy_init_internal(id, open_formats, create_format);
 }
 
 void bdf_floppy_exit(int id)

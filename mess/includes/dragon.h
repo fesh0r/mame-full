@@ -134,7 +134,7 @@ extern int coco3_mmu_translatelogicaladdr(int logicaladdr);
 		4,\
 		"dsk\0",\
 		IO_RESET_CPU,\
-		OSD_FOPEN_DUMMY,\
+		OSD_FOPEN_RW_CREATE_OR_READ,\
 		0,\
 		dragon_floppy_init,\
 		dragon_floppy_exit,\
