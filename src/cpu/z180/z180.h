@@ -141,6 +141,8 @@ extern void z180_set_pc (unsigned val);
 extern unsigned z180_get_sp (void);
 extern void z180_set_sp (unsigned val);
 extern unsigned z180_get_reg (int regnum);
+extern READ_HANDLER( z180_internal_r );
+extern WRITE_HANDLER( z180_internal_w );
 extern void z180_set_reg (int regnum, unsigned val);
 extern void z180_set_nmi_line(int state);
 extern void z180_set_irq_line(int irqline, int state);

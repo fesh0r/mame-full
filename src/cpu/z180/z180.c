@@ -25,7 +25,7 @@
 #include "mamedbg.h"
 #include "z180.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -51,16 +51,17 @@
 #define TIME_LOOP_HACKS 	1
 
 static UINT8 z180_reg_layout[] = {
-	Z180_PC, Z180_SP, Z180_AF, Z180_BC, Z180_DE, Z180_HL, -1,
-	Z180_IX, Z180_IY, Z180_AF2,Z180_BC2,Z180_DE2,Z180_HL2,-1,
-	Z180_R,  Z180_I,  Z180_IM, Z180_IFF1,Z180_IFF2, -1,
-	Z180_NMI_STATE,Z180_INT0_STATE,Z180_INT1_STATE,Z180_INT2_STATE,Z180_DC0,Z180_DC1,Z180_DC2,Z180_DC3, 0
+	Z180_PC, Z180_SP, Z180_AF,	Z180_BC,	Z180_DE,   Z180_HL, -1,
+	Z180_IX, Z180_IY, Z180_AF2, Z180_BC2,	Z180_DE2,  Z180_HL2, -1,
+	Z180_R,  Z180_I,  Z180_IL,	Z180_IM,	Z180_IFF1, Z180_IFF2, -1,
+	Z180_INT0_STATE,Z180_INT1_STATE,Z180_INT2_STATE,Z180_DC0, Z180_DC1,Z180_DC2,Z180_DC3, -1,
+	Z180_CCR,Z180_ITC,Z180_CBR, Z180_BBR,	Z180_CBAR, Z180_OMCR, 0
 };
 
 static UINT8 z180_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
+	27, 0,53, 6,	/* register window (top rows) */
 	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
+	27, 7,53, 6,	/* memory #1 window (right, upper middle) */
 	27,14,53, 8,	/* memory #2 window (right, lower middle) */
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
@@ -164,6 +165,72 @@ typedef struct {
 #define _IFF1	Z180.IFF1
 #define _IFF2	Z180.IFF2
 #define _HALT	Z180.HALT
+
+#define IO(n)		Z180.io[(n)-Z180_CNTLA0]
+#define IO_CNTLA0	IO(Z180_CNTLA0)
+#define IO_CNTLA1	IO(Z180_CNTLA1)
+#define IO_CNTLB0	IO(Z180_CNTLB0)
+#define IO_CNTLB1	IO(Z180_CNTLB1)
+#define IO_STAT0	IO(Z180_STAT0)
+#define IO_STAT1	IO(Z180_STAT1)
+#define IO_TDR0 	IO(Z180_TDR0)
+#define IO_TDR1 	IO(Z180_TDR1)
+#define IO_RDR0 	IO(Z180_RDR0)
+#define IO_RDR1 	IO(Z180_RDR1)
+#define IO_CNTR 	IO(Z180_CNTR)
+#define IO_TRDR 	IO(Z180_TRDR)
+#define IO_TMDR0L	IO(Z180_TMDR0L)
+#define IO_TMDR0H	IO(Z180_TMDR0H)
+#define IO_RLDR0L	IO(Z180_RLDR0L)
+#define IO_RLDR0H	IO(Z180_RLDR0H)
+#define IO_TCR		IO(Z180_TCR)
+#define IO_IO11 	IO(Z180_IO11)
+#define IO_ASEXT0	IO(Z180_ASEXT0)
+#define IO_ASEXT1	IO(Z180_ASEXT1)
+#define IO_TMDR1L	IO(Z180_TMDR1L)
+#define IO_TMDR1H	IO(Z180_TMDR1H)
+#define IO_RLDR1L	IO(Z180_RLDR1L)
+#define IO_RLDR1H	IO(Z180_RLDR1H)
+#define IO_FRC		IO(Z180_FRC)
+#define IO_IO19 	IO(Z180_IO19)
+#define IO_ASTC0L	IO(Z180_ASTC0L)
+#define IO_ASTC0H	IO(Z180_ASTC0H)
+#define IO_ASTC1L	IO(Z180_ASTC1L)
+#define IO_ASTC1H	IO(Z180_ASTC1H)
+#define IO_CMR		IO(Z180_CMR)
+#define IO_CCR		IO(Z180_CCR)
+#define IO_SAR0L	IO(Z180_SAR0L)
+#define IO_SAR0H	IO(Z180_SAR0H)
+#define IO_SAR0B	IO(Z180_SAR0B)
+#define IO_DAR0L	IO(Z180_DAR0L)
+#define IO_DAR0H	IO(Z180_DAR0H)
+#define IO_DAR0B	IO(Z180_DAR0B)
+#define IO_BCR0L	IO(Z180_BCR0L)
+#define IO_BCR0H	IO(Z180_BCR0H)
+#define IO_MAR1L	IO(Z180_MAR1L)
+#define IO_MAR1H	IO(Z180_MAR1H)
+#define IO_MAR1B	IO(Z180_MAR1B)
+#define IO_IAR1L	IO(Z180_IAR1L)
+#define IO_IAR1H	IO(Z180_IAR1H)
+#define IO_IAR1B	IO(Z180_IAR1B)
+#define IO_BCR1L	IO(Z180_BCR1L)
+#define IO_BCR1H	IO(Z180_BCR1H)
+#define IO_DSTAT	IO(Z180_DSTAT)
+#define IO_DMODE	IO(Z180_DMODE)
+#define IO_DCNTL	IO(Z180_DCNTL)
+#define IO_IL		IO(Z180_IL)
+#define IO_ITC		IO(Z180_ITC)
+#define IO_IO35 	IO(Z180_IO35)
+#define IO_RCR		IO(Z180_RCR)
+#define IO_IO37 	IO(Z180_IO37)
+#define IO_CBR		IO(Z180_CBR)
+#define IO_BBR		IO(Z180_BBR)
+#define IO_CBAR 	IO(Z180_CBAR)
+#define IO_IO3B 	IO(Z180_IO3B)
+#define IO_IO3C 	IO(Z180_IO3C)
+#define IO_IO3D 	IO(Z180_IO3D)
+#define IO_OMCR 	IO(Z180_OMCR)
+#define IO_IOCR 	IO(Z180_IOCR)
 
 /* 00 ASCI control register A ch 0 */
 #define Z180_CNTLA0_MPE 		0x80
@@ -711,73 +778,73 @@ static data_t z180_readcontrol(offs_t port)
 	switch (port & 0x3f)
 	{
 	case Z180_CNTLA0:
-		data = Z180.io[Z180_CNTLA0] & Z180_CNTLA0_RMASK;
+		data = IO_CNTLA0 & Z180_CNTLA0_RMASK;
 		LOG(("Z180 #%d CNTLA0 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CNTLA1:
-		data = Z180.io[Z180_CNTLA1] & Z180_CNTLA1_RMASK;
+		data = IO_CNTLA1 & Z180_CNTLA1_RMASK;
 		LOG(("Z180 #%d CNTLA1 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CNTLB0:
-		data = Z180.io[Z180_CNTLB0] & Z180_CNTLB0_RMASK;
+		data = IO_CNTLB0 & Z180_CNTLB0_RMASK;
 		LOG(("Z180 #%d CNTLB0 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CNTLB1:
-		data = Z180.io[Z180_CNTLB1] & Z180_CNTLB1_RMASK;
+		data = IO_CNTLB1 & Z180_CNTLB1_RMASK;
 		LOG(("Z180 #%d CNTLB1 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_STAT0:
-		data = Z180.io[Z180_STAT0] & Z180_STAT0_RMASK;
+		data = IO_STAT0 & Z180_STAT0_RMASK;
 		LOG(("Z180 #%d STAT0  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_STAT1:
-		data = Z180.io[Z180_STAT1] & Z180_STAT1_RMASK;
+		data = IO_STAT1 & Z180_STAT1_RMASK;
 		LOG(("Z180 #%d STAT1  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TDR0:
-		data = Z180.io[Z180_TDR0] & Z180_TDR0_RMASK;
+		data = IO_TDR0 & Z180_TDR0_RMASK;
 		LOG(("Z180 #%d TDR0   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TDR1:
-		data = Z180.io[Z180_TDR1] & Z180_TDR1_RMASK;
+		data = IO_TDR1 & Z180_TDR1_RMASK;
 		LOG(("Z180 #%d TDR1   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RDR0:
-		data = Z180.io[Z180_RDR0] & Z180_RDR0_RMASK;
+		data = IO_RDR0 & Z180_RDR0_RMASK;
 		LOG(("Z180 #%d RDR0   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RDR1:
-		data = Z180.io[Z180_RDR1] & Z180_RDR1_RMASK;
+		data = IO_RDR1 & Z180_RDR1_RMASK;
 		LOG(("Z180 #%d RDR1   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CNTR:
-		data = Z180.io[Z180_CNTR] & Z180_CNTR_RMASK;
+		data = IO_CNTR & Z180_CNTR_RMASK;
 		LOG(("Z180 #%d CNTR   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TRDR:
-		data = Z180.io[Z180_TRDR] & Z180_TRDR_RMASK;
+		data = IO_TRDR & Z180_TRDR_RMASK;
 		LOG(("Z180 #%d TRDR   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TMDR0L:
-		data = Z180.io[Z180_TMDR0L] & Z180_TMDR0L_RMASK;
+		data = IO_TMDR0L & Z180_TMDR0L_RMASK;
 		LOG(("Z180 #%d TMDR0L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		/* if timer is counting, latch the MSB and set the latch flag */
-		if ((Z180.io[Z180_TCR] & Z180_TCR_TDE0) == 0)
+		if ((IO_TCR & Z180_TCR_TDE0) == 0)
 		{
 			Z180.tmdr_latch |= 1;
-			Z180.tmdr[0] = Z180.io[Z180_TMDR0H];
+			Z180.tmdr[0] = IO_TMDR0H;
 		}
 		break;
 
@@ -790,49 +857,49 @@ static data_t z180_readcontrol(offs_t port)
 		}
 		else
 		{
-			data = Z180.io[Z180_TMDR0H] & Z180_TMDR0H_RMASK;
+			data = IO_TMDR0H & Z180_TMDR0H_RMASK;
 		}
 		LOG(("Z180 #%d TMDR0H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RLDR0L:
-		data = Z180.io[Z180_RLDR0L] & Z180_RLDR0L_RMASK;
+		data = IO_RLDR0L & Z180_RLDR0L_RMASK;
 		LOG(("Z180 #%d RLDR0L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RLDR0H:
-		data = Z180.io[Z180_RLDR0H] & Z180_RLDR0H_RMASK;
+		data = IO_RLDR0H & Z180_RLDR0H_RMASK;
 		LOG(("Z180 #%d RLDR0H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TCR:
-		data = Z180.io[Z180_TCR] & Z180_TCR_RMASK;
+		data = IO_TCR & Z180_TCR_RMASK;
 		LOG(("Z180 #%d TCR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO11:
-		data = Z180.io[Z180_IO11] & Z180_IO11_RMASK;
+		data = IO_IO11 & Z180_IO11_RMASK;
 		LOG(("Z180 #%d IO11   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASEXT0:
-		data = Z180.io[Z180_ASEXT0] & Z180_ASEXT0_RMASK;
+		data = IO_ASEXT0 & Z180_ASEXT0_RMASK;
 		LOG(("Z180 #%d ASEXT0 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASEXT1:
-		data = Z180.io[Z180_ASEXT1] & Z180_ASEXT1_RMASK;
+		data = IO_ASEXT1 & Z180_ASEXT1_RMASK;
 		LOG(("Z180 #%d ASEXT1 rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_TMDR1L:
-		data = Z180.io[Z180_TMDR1L] & Z180_TMDR1L_RMASK;
+		data = IO_TMDR1L & Z180_TMDR1L_RMASK;
 		LOG(("Z180 #%d TMDR1L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		/* if timer is counting, latch the MSB and set the latch flag */
-		if ((Z180.io[Z180_TCR] & Z180_TCR_TDE1) == 0)
+		if ((IO_TCR & Z180_TCR_TDE1) == 0)
 		{
 			Z180.tmdr_latch |= 2;
-			Z180.tmdr[1] = Z180.io[Z180_TMDR1H];
+			Z180.tmdr[1] = IO_TMDR1H;
 		}
 		break;
 
@@ -845,218 +912,218 @@ static data_t z180_readcontrol(offs_t port)
 		}
 		else
 		{
-			data = Z180.io[Z180_TMDR1H] & Z180_TMDR1H_RMASK;
+			data = IO_TMDR1H & Z180_TMDR1H_RMASK;
 		}
 		LOG(("Z180 #%d TMDR1H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RLDR1L:
-		data = Z180.io[Z180_RLDR1L] & Z180_RLDR1L_RMASK;
+		data = IO_RLDR1L & Z180_RLDR1L_RMASK;
 		LOG(("Z180 #%d RLDR1L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RLDR1H:
-		data = Z180.io[Z180_RLDR1H] & Z180_RLDR1H_RMASK;
+		data = IO_RLDR1H & Z180_RLDR1H_RMASK;
 		LOG(("Z180 #%d RLDR1H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_FRC:
-		data = Z180.io[Z180_FRC] & Z180_FRC_RMASK;
+		data = IO_FRC & Z180_FRC_RMASK;
 		LOG(("Z180 #%d FRC    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO19:
-		data = Z180.io[Z180_IO19] & Z180_IO19_RMASK;
+		data = IO_IO19 & Z180_IO19_RMASK;
 		LOG(("Z180 #%d IO19   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASTC0L:
-		data = Z180.io[Z180_ASTC0L] & Z180_ASTC0L_RMASK;
+		data = IO_ASTC0L & Z180_ASTC0L_RMASK;
 		LOG(("Z180 #%d ASTC0L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASTC0H:
-		data = Z180.io[Z180_ASTC0H] & Z180_ASTC0H_RMASK;
+		data = IO_ASTC0H & Z180_ASTC0H_RMASK;
 		LOG(("Z180 #%d ASTC0H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASTC1L:
-		data = Z180.io[Z180_ASTC1L] & Z180_ASTC1L_RMASK;
+		data = IO_ASTC1L & Z180_ASTC1L_RMASK;
 		LOG(("Z180 #%d ASTC1L rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ASTC1H:
-		data = Z180.io[Z180_ASTC1H] & Z180_ASTC1H_RMASK;
+		data = IO_ASTC1H & Z180_ASTC1H_RMASK;
 		LOG(("Z180 #%d ASTC1H rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CMR:
-		data = Z180.io[Z180_CMR] & Z180_CMR_RMASK;
+		data = IO_CMR & Z180_CMR_RMASK;
 		LOG(("Z180 #%d CMR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CCR:
-		data = Z180.io[Z180_CCR] & Z180_CCR_RMASK;
+		data = IO_CCR & Z180_CCR_RMASK;
 		LOG(("Z180 #%d CCR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_SAR0L:
-		data = Z180.io[Z180_SAR0L] & Z180_SAR0L_RMASK;
+		data = IO_SAR0L & Z180_SAR0L_RMASK;
 		LOG(("Z180 #%d SAR0L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_SAR0H:
-		data = Z180.io[Z180_SAR0H] & Z180_SAR0H_RMASK;
+		data = IO_SAR0H & Z180_SAR0H_RMASK;
 		LOG(("Z180 #%d SAR0H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_SAR0B:
-		data = Z180.io[Z180_SAR0B] & Z180_SAR0B_RMASK;
+		data = IO_SAR0B & Z180_SAR0B_RMASK;
 		LOG(("Z180 #%d SAR0B  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DAR0L:
-		data = Z180.io[Z180_DAR0L] & Z180_DAR0L_RMASK;
+		data = IO_DAR0L & Z180_DAR0L_RMASK;
 		LOG(("Z180 #%d DAR0L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DAR0H:
-		data = Z180.io[Z180_DAR0H] & Z180_DAR0H_RMASK;
+		data = IO_DAR0H & Z180_DAR0H_RMASK;
 		LOG(("Z180 #%d DAR0H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DAR0B:
-		data = Z180.io[Z180_DAR0B] & Z180_DAR0B_RMASK;
+		data = IO_DAR0B & Z180_DAR0B_RMASK;
 		LOG(("Z180 #%d DAR0B  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_BCR0L:
-		data = Z180.io[Z180_BCR0L] & Z180_BCR0L_RMASK;
+		data = IO_BCR0L & Z180_BCR0L_RMASK;
 		LOG(("Z180 #%d BCR0L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_BCR0H:
-		data = Z180.io[Z180_BCR0H] & Z180_BCR0H_RMASK;
+		data = IO_BCR0H & Z180_BCR0H_RMASK;
 		LOG(("Z180 #%d BCR0H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_MAR1L:
-		data = Z180.io[Z180_MAR1L] & Z180_MAR1L_RMASK;
+		data = IO_MAR1L & Z180_MAR1L_RMASK;
 		LOG(("Z180 #%d MAR1L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_MAR1H:
-		data = Z180.io[Z180_MAR1H] & Z180_MAR1H_RMASK;
+		data = IO_MAR1H & Z180_MAR1H_RMASK;
 		LOG(("Z180 #%d MAR1H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_MAR1B:
-		data = Z180.io[Z180_MAR1B] & Z180_MAR1B_RMASK;
+		data = IO_MAR1B & Z180_MAR1B_RMASK;
 		LOG(("Z180 #%d MAR1B  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IAR1L:
-		data = Z180.io[Z180_IAR1L] & Z180_IAR1L_RMASK;
+		data = IO_IAR1L & Z180_IAR1L_RMASK;
 		LOG(("Z180 #%d IAR1L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IAR1H:
-		data = Z180.io[Z180_IAR1H] & Z180_IAR1H_RMASK;
+		data = IO_IAR1H & Z180_IAR1H_RMASK;
 		LOG(("Z180 #%d IAR1H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IAR1B:
-		data = Z180.io[Z180_IAR1B] & Z180_IAR1B_RMASK;
+		data = IO_IAR1B & Z180_IAR1B_RMASK;
 		LOG(("Z180 #%d IAR1B  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_BCR1L:
-		data = Z180.io[Z180_BCR1L] & Z180_BCR1L_RMASK;
+		data = IO_BCR1L & Z180_BCR1L_RMASK;
 		LOG(("Z180 #%d BCR1L  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_BCR1H:
-		data = Z180.io[Z180_BCR1H] & Z180_BCR1H_RMASK;
+		data = IO_BCR1H & Z180_BCR1H_RMASK;
 		LOG(("Z180 #%d BCR1H  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DSTAT:
-		data = Z180.io[Z180_DSTAT] & Z180_DSTAT_RMASK;
+		data = IO_DSTAT & Z180_DSTAT_RMASK;
 		LOG(("Z180 #%d DSTAT  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DMODE:
-		data = Z180.io[Z180_DMODE] & Z180_DMODE_RMASK;
+		data = IO_DMODE & Z180_DMODE_RMASK;
 		LOG(("Z180 #%d DMODE  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_DCNTL:
-		data = Z180.io[Z180_DCNTL] & Z180_DCNTL_RMASK;
+		data = IO_DCNTL & Z180_DCNTL_RMASK;
 		LOG(("Z180 #%d DCNTL  rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IL:
-		data = Z180.io[Z180_IL] & Z180_IL_RMASK;
+		data = IO_IL & Z180_IL_RMASK;
 		LOG(("Z180 #%d IL     rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_ITC:
-		data = Z180.io[Z180_ITC] & Z180_ITC_RMASK;
+		data = IO_ITC & Z180_ITC_RMASK;
 		LOG(("Z180 #%d ITC    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO35:
-		data = Z180.io[Z180_IO35] & Z180_IO35_RMASK;
+		data = IO_IO35 & Z180_IO35_RMASK;
 		LOG(("Z180 #%d IO35   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_RCR:
-		data = Z180.io[Z180_RCR] & Z180_RCR_RMASK;
+		data = IO_RCR & Z180_RCR_RMASK;
 		LOG(("Z180 #%d RCR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO37:
-		data = Z180.io[Z180_IO37] & Z180_IO37_RMASK;
+		data = IO_IO37 & Z180_IO37_RMASK;
 		LOG(("Z180 #%d IO37   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CBR:
-		data = Z180.io[Z180_CBR] & Z180_CBR_RMASK;
+		data = IO_CBR & Z180_CBR_RMASK;
 		LOG(("Z180 #%d CBR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_BBR:
-		data = Z180.io[Z180_BBR] & Z180_BBR_RMASK;
+		data = IO_BBR & Z180_BBR_RMASK;
 		LOG(("Z180 #%d BBR    rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_CBAR:
-		data = Z180.io[Z180_CBAR] & Z180_CBAR_RMASK;
+		data = IO_CBAR & Z180_CBAR_RMASK;
 		LOG(("Z180 #%d CBAR   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO3B:
-		data = Z180.io[Z180_IO3B] & Z180_IO3B_RMASK;
+		data = IO_IO3B & Z180_IO3B_RMASK;
 		LOG(("Z180 #%d IO3B   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO3C:
-		data = Z180.io[Z180_IO3C] & Z180_IO3C_RMASK;
+		data = IO_IO3C & Z180_IO3C_RMASK;
 		LOG(("Z180 #%d IO3C   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IO3D:
-		data = Z180.io[Z180_IO3D] & Z180_IO3D_RMASK;
+		data = IO_IO3D & Z180_IO3D_RMASK;
 		LOG(("Z180 #%d IO3D   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_OMCR:
-		data = Z180.io[Z180_OMCR] & Z180_OMCR_RMASK;
+		data = IO_OMCR & Z180_OMCR_RMASK;
 		LOG(("Z180 #%d OMCR   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 
 	case Z180_IOCR:
-		data = Z180.io[Z180_IOCR] & Z180_IOCR_RMASK;
+		data = IO_IOCR & Z180_IOCR_RMASK;
 		LOG(("Z180 #%d IOCR   rd $%02x ($%02x)\n", cpu_getactivecpu(), data, Z180.io[port & 0x3f]));
 		break;
 	}
@@ -1072,343 +1139,343 @@ static void z180_writecontrol(offs_t port, data_t data)
 	{
 	case Z180_CNTLA0:
 		LOG(("Z180 #%d CNTLA0 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTLA0_WMASK));
-		Z180.io[Z180_CNTLA0] = (Z180.io[Z180_CNTLA0] & ~Z180_CNTLA0_WMASK) | (data & Z180_CNTLA0_WMASK);
+		IO_CNTLA0 = (IO_CNTLA0 & ~Z180_CNTLA0_WMASK) | (data & Z180_CNTLA0_WMASK);
 		break;
 
 	case Z180_CNTLA1:
 		LOG(("Z180 #%d CNTLA1 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTLA1_WMASK));
-		Z180.io[Z180_CNTLA1] = (Z180.io[Z180_CNTLA1] & ~Z180_CNTLA1_WMASK) | (data & Z180_CNTLA1_WMASK);
+		IO_CNTLA1 = (IO_CNTLA1 & ~Z180_CNTLA1_WMASK) | (data & Z180_CNTLA1_WMASK);
 		break;
 
 	case Z180_CNTLB0:
 		LOG(("Z180 #%d CNTLB0 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTLB0_WMASK));
-		Z180.io[Z180_CNTLB0] = (Z180.io[Z180_CNTLB0] & ~Z180_CNTLB0_WMASK) | (data & Z180_CNTLB0_WMASK);
+		IO_CNTLB0 = (IO_CNTLB0 & ~Z180_CNTLB0_WMASK) | (data & Z180_CNTLB0_WMASK);
 		break;
 
 	case Z180_CNTLB1:
 		LOG(("Z180 #%d CNTLB1 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTLB1_WMASK));
-		Z180.io[Z180_CNTLB1] = (Z180.io[Z180_CNTLB1] & ~Z180_CNTLB1_WMASK) | (data & Z180_CNTLB1_WMASK);
+		IO_CNTLB1 = (IO_CNTLB1 & ~Z180_CNTLB1_WMASK) | (data & Z180_CNTLB1_WMASK);
 		break;
 
 	case Z180_STAT0:
 		LOG(("Z180 #%d STAT0  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_STAT0_WMASK));
-		Z180.io[Z180_STAT0] = (Z180.io[Z180_STAT0] & ~Z180_STAT0_WMASK) | (data & Z180_STAT0_WMASK);
+		IO_STAT0 = (IO_STAT0 & ~Z180_STAT0_WMASK) | (data & Z180_STAT0_WMASK);
 		break;
 
 	case Z180_STAT1:
 		LOG(("Z180 #%d STAT1  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_STAT1_WMASK));
-		Z180.io[Z180_STAT1] = (Z180.io[Z180_STAT1] & ~Z180_STAT1_WMASK) | (data & Z180_STAT1_WMASK);
+		IO_STAT1 = (IO_STAT1 & ~Z180_STAT1_WMASK) | (data & Z180_STAT1_WMASK);
 		break;
 
 	case Z180_TDR0:
 		LOG(("Z180 #%d TDR0   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TDR0_WMASK));
-		Z180.io[Z180_TDR0] = (Z180.io[Z180_TDR0] & ~Z180_TDR0_WMASK) | (data & Z180_TDR0_WMASK);
+		IO_TDR0 = (IO_TDR0 & ~Z180_TDR0_WMASK) | (data & Z180_TDR0_WMASK);
 		break;
 
 	case Z180_TDR1:
 		LOG(("Z180 #%d TDR1   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TDR1_WMASK));
-		Z180.io[Z180_TDR1] = (Z180.io[Z180_TDR1] & ~Z180_TDR1_WMASK) | (data & Z180_TDR1_WMASK);
+		IO_TDR1 = (IO_TDR1 & ~Z180_TDR1_WMASK) | (data & Z180_TDR1_WMASK);
 		break;
 
 	case Z180_RDR0:
 		LOG(("Z180 #%d RDR0   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RDR0_WMASK));
-		Z180.io[Z180_RDR0] = (Z180.io[Z180_RDR0] & ~Z180_RDR0_WMASK) | (data & Z180_RDR0_WMASK);
+		IO_RDR0 = (IO_RDR0 & ~Z180_RDR0_WMASK) | (data & Z180_RDR0_WMASK);
 		break;
 
 	case Z180_RDR1:
 		LOG(("Z180 #%d RDR1   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RDR1_WMASK));
-		Z180.io[Z180_RDR1] = (Z180.io[Z180_RDR1] & ~Z180_RDR1_WMASK) | (data & Z180_RDR1_WMASK);
+		IO_RDR1 = (IO_RDR1 & ~Z180_RDR1_WMASK) | (data & Z180_RDR1_WMASK);
 		break;
 
 	case Z180_CNTR:
 		LOG(("Z180 #%d CNTR   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CNTR_WMASK));
-		Z180.io[Z180_CNTR] = (Z180.io[Z180_CNTR] & ~Z180_CNTR_WMASK) | (data & Z180_CNTR_WMASK);
+		IO_CNTR = (IO_CNTR & ~Z180_CNTR_WMASK) | (data & Z180_CNTR_WMASK);
 		break;
 
 	case Z180_TRDR:
 		LOG(("Z180 #%d TRDR   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TRDR_WMASK));
-		Z180.io[Z180_TRDR] = (Z180.io[Z180_TRDR] & ~Z180_TRDR_WMASK) | (data & Z180_TRDR_WMASK);
+		IO_TRDR = (IO_TRDR & ~Z180_TRDR_WMASK) | (data & Z180_TRDR_WMASK);
 		break;
 
 	case Z180_TMDR0L:
 		LOG(("Z180 #%d TMDR0L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TMDR0L_WMASK));
-		Z180.io[Z180_TMDR0L] = (Z180.io[Z180_TMDR0L] & ~Z180_TMDR0L_WMASK) | (data & Z180_TMDR0L_WMASK);
+		IO_TMDR0L = (IO_TMDR0L & ~Z180_TMDR0L_WMASK) | (data & Z180_TMDR0L_WMASK);
 		break;
 
 	case Z180_TMDR0H:
 		LOG(("Z180 #%d TMDR0H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TMDR0H_WMASK));
-		Z180.io[Z180_TMDR0H] = (Z180.io[Z180_TMDR0H] & ~Z180_TMDR0H_WMASK) | (data & Z180_TMDR0H_WMASK);
+		IO_TMDR0H = (IO_TMDR0H & ~Z180_TMDR0H_WMASK) | (data & Z180_TMDR0H_WMASK);
 		break;
 
 	case Z180_RLDR0L:
 		LOG(("Z180 #%d RLDR0L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RLDR0L_WMASK));
-		Z180.io[Z180_RLDR0L] = (Z180.io[Z180_RLDR0L] & ~Z180_RLDR0L_WMASK) | (data & Z180_RLDR0L_WMASK);
+		IO_RLDR0L = (IO_RLDR0L & ~Z180_RLDR0L_WMASK) | (data & Z180_RLDR0L_WMASK);
 		break;
 
 	case Z180_RLDR0H:
 		LOG(("Z180 #%d RLDR0H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RLDR0H_WMASK));
-		Z180.io[Z180_RLDR0H] = (Z180.io[Z180_RLDR0H] & ~Z180_RLDR0H_WMASK) | (data & Z180_RLDR0H_WMASK);
+		IO_RLDR0H = (IO_RLDR0H & ~Z180_RLDR0H_WMASK) | (data & Z180_RLDR0H_WMASK);
 		break;
 
 	case Z180_TCR:
 		LOG(("Z180 #%d TCR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TCR_WMASK));
-		Z180.io[Z180_TCR] = (Z180.io[Z180_TCR] & ~Z180_TCR_WMASK) | (data & Z180_TCR_WMASK);
+		IO_TCR = (IO_TCR & ~Z180_TCR_WMASK) | (data & Z180_TCR_WMASK);
 		break;
 
 	case Z180_IO11:
 		LOG(("Z180 #%d IO11   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO11_WMASK));
-		Z180.io[Z180_IO11] = (Z180.io[Z180_IO11] & ~Z180_IO11_WMASK) | (data & Z180_IO11_WMASK);
+		IO_IO11 = (IO_IO11 & ~Z180_IO11_WMASK) | (data & Z180_IO11_WMASK);
 		break;
 
 	case Z180_ASEXT0:
 		LOG(("Z180 #%d ASEXT0 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASEXT0_WMASK));
-		Z180.io[Z180_ASEXT0] = (Z180.io[Z180_ASEXT0] & ~Z180_ASEXT0_WMASK) | (data & Z180_ASEXT0_WMASK);
+		IO_ASEXT0 = (IO_ASEXT0 & ~Z180_ASEXT0_WMASK) | (data & Z180_ASEXT0_WMASK);
 		break;
 
 	case Z180_ASEXT1:
 		LOG(("Z180 #%d ASEXT1 wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASEXT1_WMASK));
-		Z180.io[Z180_ASEXT1] = (Z180.io[Z180_ASEXT1] & ~Z180_ASEXT1_WMASK) | (data & Z180_ASEXT1_WMASK);
+		IO_ASEXT1 = (IO_ASEXT1 & ~Z180_ASEXT1_WMASK) | (data & Z180_ASEXT1_WMASK);
 		break;
 
 	case Z180_TMDR1L:
 		LOG(("Z180 #%d TMDR1L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TMDR1L_WMASK));
-		Z180.io[Z180_TMDR1L] = (Z180.io[Z180_TMDR1L] & ~Z180_TMDR1L_WMASK) | (data & Z180_TMDR1L_WMASK);
+		IO_TMDR1L = (IO_TMDR1L & ~Z180_TMDR1L_WMASK) | (data & Z180_TMDR1L_WMASK);
 		break;
 
 	case Z180_TMDR1H:
 		LOG(("Z180 #%d TMDR1H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_TMDR1H_WMASK));
-		Z180.io[Z180_TMDR1H] = (Z180.io[Z180_TMDR1H] & ~Z180_TMDR1H_WMASK) | (data & Z180_TMDR1H_WMASK);
+		IO_TMDR1H = (IO_TMDR1H & ~Z180_TMDR1H_WMASK) | (data & Z180_TMDR1H_WMASK);
 		break;
 
 	case Z180_RLDR1L:
 		LOG(("Z180 #%d RLDR1L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RLDR1L_WMASK));
-		Z180.io[Z180_RLDR1L] = (Z180.io[Z180_RLDR1L] & ~Z180_RLDR1L_WMASK) | (data & Z180_RLDR1L_WMASK);
+		IO_RLDR1L = (IO_RLDR1L & ~Z180_RLDR1L_WMASK) | (data & Z180_RLDR1L_WMASK);
 		break;
 
 	case Z180_RLDR1H:
 		LOG(("Z180 #%d RLDR1H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RLDR1H_WMASK));
-		Z180.io[Z180_RLDR1H] = (Z180.io[Z180_RLDR1H] & ~Z180_RLDR1H_WMASK) | (data & Z180_RLDR1H_WMASK);
+		IO_RLDR1H = (IO_RLDR1H & ~Z180_RLDR1H_WMASK) | (data & Z180_RLDR1H_WMASK);
 		break;
 
 	case Z180_FRC:
 		LOG(("Z180 #%d FRC    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_FRC_WMASK));
-		Z180.io[Z180_FRC] = (Z180.io[Z180_FRC] & ~Z180_FRC_WMASK) | (data & Z180_FRC_WMASK);
+		IO_FRC = (IO_FRC & ~Z180_FRC_WMASK) | (data & Z180_FRC_WMASK);
 		break;
 
 	case Z180_IO19:
 		LOG(("Z180 #%d IO19   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO19_WMASK));
-		Z180.io[Z180_IO19] = (Z180.io[Z180_IO19] & ~Z180_IO19_WMASK) | (data & Z180_IO19_WMASK);
+		IO_IO19 = (IO_IO19 & ~Z180_IO19_WMASK) | (data & Z180_IO19_WMASK);
 		break;
 
 	case Z180_ASTC0L:
 		LOG(("Z180 #%d ASTC0L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASTC0L_WMASK));
-		Z180.io[Z180_ASTC0L] = (Z180.io[Z180_ASTC0L] & ~Z180_ASTC0L_WMASK) | (data & Z180_ASTC0L_WMASK);
+		IO_ASTC0L = (IO_ASTC0L & ~Z180_ASTC0L_WMASK) | (data & Z180_ASTC0L_WMASK);
 		break;
 
 	case Z180_ASTC0H:
 		LOG(("Z180 #%d ASTC0H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASTC0H_WMASK));
-		Z180.io[Z180_ASTC0H] = (Z180.io[Z180_ASTC0H] & ~Z180_ASTC0H_WMASK) | (data & Z180_ASTC0H_WMASK);
+		IO_ASTC0H = (IO_ASTC0H & ~Z180_ASTC0H_WMASK) | (data & Z180_ASTC0H_WMASK);
 		break;
 
 	case Z180_ASTC1L:
 		LOG(("Z180 #%d ASTC1L wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASTC1L_WMASK));
-		Z180.io[Z180_ASTC1L] = (Z180.io[Z180_ASTC1L] & ~Z180_ASTC1L_WMASK) | (data & Z180_ASTC1L_WMASK);
+		IO_ASTC1L = (IO_ASTC1L & ~Z180_ASTC1L_WMASK) | (data & Z180_ASTC1L_WMASK);
 		break;
 
 	case Z180_ASTC1H:
 		LOG(("Z180 #%d ASTC1H wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ASTC1H_WMASK));
-		Z180.io[Z180_ASTC1H] = (Z180.io[Z180_ASTC1H] & ~Z180_ASTC1H_WMASK) | (data & Z180_ASTC1H_WMASK);
+		IO_ASTC1H = (IO_ASTC1H & ~Z180_ASTC1H_WMASK) | (data & Z180_ASTC1H_WMASK);
 		break;
 
 	case Z180_CMR:
 		LOG(("Z180 #%d CMR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CMR_WMASK));
-		Z180.io[Z180_CMR] = (Z180.io[Z180_CMR] & ~Z180_CMR_WMASK) | (data & Z180_CMR_WMASK);
+		IO_CMR = (IO_CMR & ~Z180_CMR_WMASK) | (data & Z180_CMR_WMASK);
 		break;
 
 	case Z180_CCR:
 		LOG(("Z180 #%d CCR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CCR_WMASK));
-		Z180.io[Z180_CCR] = (Z180.io[Z180_CCR] & ~Z180_CCR_WMASK) | (data & Z180_CCR_WMASK);
+		IO_CCR = (IO_CCR & ~Z180_CCR_WMASK) | (data & Z180_CCR_WMASK);
 		break;
 
 	case Z180_SAR0L:
 		LOG(("Z180 #%d SAR0L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_SAR0L_WMASK));
-		Z180.io[Z180_SAR0L] = (Z180.io[Z180_SAR0L] & ~Z180_SAR0L_WMASK) | (data & Z180_SAR0L_WMASK);
+		IO_SAR0L = (IO_SAR0L & ~Z180_SAR0L_WMASK) | (data & Z180_SAR0L_WMASK);
 		break;
 
 	case Z180_SAR0H:
 		LOG(("Z180 #%d SAR0H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_SAR0H_WMASK));
-		Z180.io[Z180_SAR0H] = (Z180.io[Z180_SAR0H] & ~Z180_SAR0H_WMASK) | (data & Z180_SAR0H_WMASK);
+		IO_SAR0H = (IO_SAR0H & ~Z180_SAR0H_WMASK) | (data & Z180_SAR0H_WMASK);
 		break;
 
 	case Z180_SAR0B:
 		LOG(("Z180 #%d SAR0B  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_SAR0B_WMASK));
-		Z180.io[Z180_SAR0B] = (Z180.io[Z180_SAR0B] & ~Z180_SAR0B_WMASK) | (data & Z180_SAR0B_WMASK);
+		IO_SAR0B = (IO_SAR0B & ~Z180_SAR0B_WMASK) | (data & Z180_SAR0B_WMASK);
 		break;
 
 	case Z180_DAR0L:
 		LOG(("Z180 #%d DAR0L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DAR0L_WMASK));
-		Z180.io[Z180_DAR0L] = (Z180.io[Z180_DAR0L] & ~Z180_DAR0L_WMASK) | (data & Z180_DAR0L_WMASK);
+		IO_DAR0L = (IO_DAR0L & ~Z180_DAR0L_WMASK) | (data & Z180_DAR0L_WMASK);
 		break;
 
 	case Z180_DAR0H:
 		LOG(("Z180 #%d DAR0H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DAR0H_WMASK));
-		Z180.io[Z180_DAR0H] = (Z180.io[Z180_DAR0H] & ~Z180_DAR0H_WMASK) | (data & Z180_DAR0H_WMASK);
+		IO_DAR0H = (IO_DAR0H & ~Z180_DAR0H_WMASK) | (data & Z180_DAR0H_WMASK);
 		break;
 
 	case Z180_DAR0B:
 		LOG(("Z180 #%d DAR0B  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DAR0B_WMASK));
-		Z180.io[Z180_DAR0B] = (Z180.io[Z180_DAR0B] & ~Z180_DAR0B_WMASK) | (data & Z180_DAR0B_WMASK);
+		IO_DAR0B = (IO_DAR0B & ~Z180_DAR0B_WMASK) | (data & Z180_DAR0B_WMASK);
 		break;
 
 	case Z180_BCR0L:
 		LOG(("Z180 #%d BCR0L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_BCR0L_WMASK));
-		Z180.io[Z180_BCR0L] = (Z180.io[Z180_BCR0L] & ~Z180_BCR0L_WMASK) | (data & Z180_BCR0L_WMASK);
+		IO_BCR0L = (IO_BCR0L & ~Z180_BCR0L_WMASK) | (data & Z180_BCR0L_WMASK);
 		break;
 
 	case Z180_BCR0H:
 		LOG(("Z180 #%d BCR0H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_BCR0H_WMASK));
-		Z180.io[Z180_BCR0H] = (Z180.io[Z180_BCR0H] & ~Z180_BCR0H_WMASK) | (data & Z180_BCR0H_WMASK);
+		IO_BCR0H = (IO_BCR0H & ~Z180_BCR0H_WMASK) | (data & Z180_BCR0H_WMASK);
 		break;
 
 	case Z180_MAR1L:
 		LOG(("Z180 #%d MAR1L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_MAR1L_WMASK));
-		Z180.io[Z180_MAR1L] = (Z180.io[Z180_MAR1L] & ~Z180_MAR1L_WMASK) | (data & Z180_MAR1L_WMASK);
+		IO_MAR1L = (IO_MAR1L & ~Z180_MAR1L_WMASK) | (data & Z180_MAR1L_WMASK);
 		break;
 
 	case Z180_MAR1H:
 		LOG(("Z180 #%d MAR1H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_MAR1H_WMASK));
-		Z180.io[Z180_MAR1H] = (Z180.io[Z180_MAR1H] & ~Z180_MAR1H_WMASK) | (data & Z180_MAR1H_WMASK);
+		IO_MAR1H = (IO_MAR1H & ~Z180_MAR1H_WMASK) | (data & Z180_MAR1H_WMASK);
 		break;
 
 	case Z180_MAR1B:
 		LOG(("Z180 #%d MAR1B  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_MAR1B_WMASK));
-		Z180.io[Z180_MAR1B] = (Z180.io[Z180_MAR1B] & ~Z180_MAR1B_WMASK) | (data & Z180_MAR1B_WMASK);
+		IO_MAR1B = (IO_MAR1B & ~Z180_MAR1B_WMASK) | (data & Z180_MAR1B_WMASK);
 		break;
 
 	case Z180_IAR1L:
 		LOG(("Z180 #%d IAR1L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IAR1L_WMASK));
-		Z180.io[Z180_IAR1L] = (Z180.io[Z180_IAR1L] & ~Z180_IAR1L_WMASK) | (data & Z180_IAR1L_WMASK);
+		IO_IAR1L = (IO_IAR1L & ~Z180_IAR1L_WMASK) | (data & Z180_IAR1L_WMASK);
 		break;
 
 	case Z180_IAR1H:
 		LOG(("Z180 #%d IAR1H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IAR1H_WMASK));
-		Z180.io[Z180_IAR1H] = (Z180.io[Z180_IAR1H] & ~Z180_IAR1H_WMASK) | (data & Z180_IAR1H_WMASK);
+		IO_IAR1H = (IO_IAR1H & ~Z180_IAR1H_WMASK) | (data & Z180_IAR1H_WMASK);
 		break;
 
 	case Z180_IAR1B:
 		LOG(("Z180 #%d IAR1B  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IAR1B_WMASK));
-		Z180.io[Z180_IAR1B] = (Z180.io[Z180_IAR1B] & ~Z180_IAR1B_WMASK) | (data & Z180_IAR1B_WMASK);
+		IO_IAR1B = (IO_IAR1B & ~Z180_IAR1B_WMASK) | (data & Z180_IAR1B_WMASK);
 		break;
 
 	case Z180_BCR1L:
 		LOG(("Z180 #%d BCR1L  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_BCR1L_WMASK));
-		Z180.io[Z180_BCR1L] = (Z180.io[Z180_BCR1L] & ~Z180_BCR1L_WMASK) | (data & Z180_BCR1L_WMASK);
+		IO_BCR1L = (IO_BCR1L & ~Z180_BCR1L_WMASK) | (data & Z180_BCR1L_WMASK);
 		break;
 
 	case Z180_BCR1H:
 		LOG(("Z180 #%d BCR1H  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_BCR1H_WMASK));
-		Z180.io[Z180_BCR1H] = (Z180.io[Z180_BCR1H] & ~Z180_BCR1H_WMASK) | (data & Z180_BCR1H_WMASK);
+		IO_BCR1H = (IO_BCR1H & ~Z180_BCR1H_WMASK) | (data & Z180_BCR1H_WMASK);
 		break;
 
 	case Z180_DSTAT:
 		LOG(("Z180 #%d DSTAT  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DSTAT_WMASK));
-		Z180.io[Z180_DSTAT] = (Z180.io[Z180_DSTAT] & ~Z180_DSTAT_WMASK) | (data & Z180_DSTAT_WMASK);
+		IO_DSTAT = (IO_DSTAT & ~Z180_DSTAT_WMASK) | (data & Z180_DSTAT_WMASK);
 		if ((data & (Z180_DSTAT_DE1 | Z180_DSTAT_DWE1)) == Z180_DSTAT_DE1)
-			Z180.io[Z180_DSTAT] |= Z180_DSTAT_DME;	/* DMA enable */
+			IO_DSTAT |= Z180_DSTAT_DME;  /* DMA enable */
 		if ((data & (Z180_DSTAT_DE0 | Z180_DSTAT_DWE0)) == Z180_DSTAT_DE0)
-			Z180.io[Z180_DSTAT] |= Z180_DSTAT_DME;	/* DMA enable */
+			IO_DSTAT |= Z180_DSTAT_DME;  /* DMA enable */
 		break;
 
 	case Z180_DMODE:
 		LOG(("Z180 #%d DMODE  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DMODE_WMASK));
-		Z180.io[Z180_DMODE] = (Z180.io[Z180_DMODE] & ~Z180_DMODE_WMASK) | (data & Z180_DMODE_WMASK);
+		IO_DMODE = (IO_DMODE & ~Z180_DMODE_WMASK) | (data & Z180_DMODE_WMASK);
 		break;
 
 	case Z180_DCNTL:
 		LOG(("Z180 #%d DCNTL  wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_DCNTL_WMASK));
-		Z180.io[Z180_DCNTL] = (Z180.io[Z180_DCNTL] & ~Z180_DCNTL_WMASK) | (data & Z180_DCNTL_WMASK);
+		IO_DCNTL = (IO_DCNTL & ~Z180_DCNTL_WMASK) | (data & Z180_DCNTL_WMASK);
 		break;
 
 	case Z180_IL:
 		LOG(("Z180 #%d IL     wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IL_WMASK));
-		Z180.io[Z180_IL] = (Z180.io[Z180_IL] & ~Z180_IL_WMASK) | (data & Z180_IL_WMASK);
+		IO_IL = (IO_IL & ~Z180_IL_WMASK) | (data & Z180_IL_WMASK);
 		break;
 
 	case Z180_ITC:
 		LOG(("Z180 #%d ITC    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_ITC_WMASK));
-		Z180.io[Z180_ITC] = (Z180.io[Z180_ITC] & ~Z180_ITC_WMASK) | (data & Z180_ITC_WMASK);
+		IO_ITC = (IO_ITC & ~Z180_ITC_WMASK) | (data & Z180_ITC_WMASK);
 		break;
 
 	case Z180_IO35:
 		LOG(("Z180 #%d IO35   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO35_WMASK));
-		Z180.io[Z180_IO35] = (Z180.io[Z180_IO35] & ~Z180_IO35_WMASK) | (data & Z180_IO35_WMASK);
+		IO_IO35 = (IO_IO35 & ~Z180_IO35_WMASK) | (data & Z180_IO35_WMASK);
 		break;
 
 	case Z180_RCR:
 		LOG(("Z180 #%d RCR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_RCR_WMASK));
-		Z180.io[Z180_RCR] = (Z180.io[Z180_RCR] & ~Z180_RCR_WMASK) | (data & Z180_RCR_WMASK);
+		IO_RCR = (IO_RCR & ~Z180_RCR_WMASK) | (data & Z180_RCR_WMASK);
 		break;
 
 	case Z180_IO37:
 		LOG(("Z180 #%d IO37   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO37_WMASK));
-		Z180.io[Z180_IO37] = (Z180.io[Z180_IO37] & ~Z180_IO37_WMASK) | (data & Z180_IO37_WMASK);
+		IO_IO37 = (IO_IO37 & ~Z180_IO37_WMASK) | (data & Z180_IO37_WMASK);
 		break;
 
 	case Z180_CBR:
 		LOG(("Z180 #%d CBR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CBR_WMASK));
-		Z180.io[Z180_CBR] = (Z180.io[Z180_CBR] & ~Z180_CBR_WMASK) | (data & Z180_CBR_WMASK);
+		IO_CBR = (IO_CBR & ~Z180_CBR_WMASK) | (data & Z180_CBR_WMASK);
 		z180_mmu();
 		break;
 
 	case Z180_BBR:
 		LOG(("Z180 #%d BBR    wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_BBR_WMASK));
-		Z180.io[Z180_BBR] = (Z180.io[Z180_BBR] & ~Z180_BBR_WMASK) | (data & Z180_BBR_WMASK);
+		IO_BBR = (IO_BBR & ~Z180_BBR_WMASK) | (data & Z180_BBR_WMASK);
 		z180_mmu();
 		break;
 
 	case Z180_CBAR:
 		LOG(("Z180 #%d CBAR   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_CBAR_WMASK));
-		Z180.io[Z180_CBAR] = (Z180.io[Z180_CBAR] & ~Z180_CBAR_WMASK) | (data & Z180_CBAR_WMASK);
+		IO_CBAR = (IO_CBAR & ~Z180_CBAR_WMASK) | (data & Z180_CBAR_WMASK);
 		z180_mmu();
 		break;
 
 	case Z180_IO3B:
 		LOG(("Z180 #%d IO3B   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO3B_WMASK));
-		Z180.io[Z180_IO3B] = (Z180.io[Z180_IO3B] & ~Z180_IO3B_WMASK) | (data & Z180_IO3B_WMASK);
+		IO_IO3B = (IO_IO3B & ~Z180_IO3B_WMASK) | (data & Z180_IO3B_WMASK);
 		break;
 
 	case Z180_IO3C:
 		LOG(("Z180 #%d IO3C   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO3C_WMASK));
-		Z180.io[Z180_IO3C] = (Z180.io[Z180_IO3C] & ~Z180_IO3C_WMASK) | (data & Z180_IO3C_WMASK);
+		IO_IO3C = (IO_IO3C & ~Z180_IO3C_WMASK) | (data & Z180_IO3C_WMASK);
 		break;
 
 	case Z180_IO3D:
 		LOG(("Z180 #%d IO3D   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IO3D_WMASK));
-		Z180.io[Z180_IO3D] = (Z180.io[Z180_IO3D] & ~Z180_IO3D_WMASK) | (data & Z180_IO3D_WMASK);
+		IO_IO3D = (IO_IO3D & ~Z180_IO3D_WMASK) | (data & Z180_IO3D_WMASK);
 		break;
 
 	case Z180_OMCR:
 		LOG(("Z180 #%d OMCR   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_OMCR_WMASK));
-		Z180.io[Z180_OMCR] = (Z180.io[Z180_OMCR] & ~Z180_OMCR_WMASK) | (data & Z180_OMCR_WMASK);
+		IO_OMCR = (IO_OMCR & ~Z180_OMCR_WMASK) | (data & Z180_OMCR_WMASK);
 		break;
 
 	case Z180_IOCR:
 		LOG(("Z180 #%d IOCR   wr $%02x ($%02x)\n", cpu_getactivecpu(), data,  data & Z180_IOCR_WMASK));
-		Z180.io[Z180_IOCR] = (Z180.io[Z180_IOCR] & ~Z180_IOCR_WMASK) | (data & Z180_IOCR_WMASK);
+		IO_IOCR = (IO_IOCR & ~Z180_IOCR_WMASK) | (data & Z180_IOCR_WMASK);
 		break;
 	}
 }
 
 static void z180_dma0(void)
 {
-	offs_t sar0 = 65536 * Z180.io[Z180_SAR0B] + 256 * Z180.io[Z180_SAR0H] + Z180.io[Z180_SAR0L];
-	offs_t dar0 = 65536 * Z180.io[Z180_DAR0B] + 256 * Z180.io[Z180_DAR0H] + Z180.io[Z180_DAR0L];
-	int bcr0 = 256 * Z180.io[Z180_BCR0H] + Z180.io[Z180_BCR0L];
-	int count = (Z180.io[Z180_DMODE] & Z180_DMODE_MMOD) ? bcr0 : 1;
+	offs_t sar0 = 65536 * IO_SAR0B + 256 * IO_SAR0H + IO_SAR0L;
+	offs_t dar0 = 65536 * IO_DAR0B + 256 * IO_DAR0H + IO_DAR0L;
+	int bcr0 = 256 * IO_BCR0H + IO_BCR0L;
+	int count = (IO_DMODE & Z180_DMODE_MMOD) ? bcr0 : 1;
 
 	if (bcr0 == 0)
 	{
-		Z180.io[Z180_DSTAT] &= ~Z180_DSTAT_DE0;
+		IO_DSTAT &= ~Z180_DSTAT_DE0;
 		return;
 	}
 
@@ -1419,7 +1486,7 @@ static void z180_dma0(void)
 		{
 			Z180.iol |= Z180_TEND0;
 		}
-		switch( Z180.io[Z180_DMODE] & (Z180_DMODE_SM | Z180_DMODE_DM) )
+		switch( IO_DMODE & (Z180_DMODE_SM | Z180_DMODE_DM) )
 		{
 		case 0x00:	/* memory SAR0+1 to memory DAR0+1 */
 			cpu_writemem20(dar0++, cpu_readmem20(sar0++));
@@ -1435,7 +1502,7 @@ static void z180_dma0(void)
 			{
 				cpu_writemem20(dar0++, IN(sar0));
 				/* edge sensitive DREQ0 ? */
-				if (Z180.io[Z180_DCNTL] & Z180_DCNTL_DIM0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1456,7 +1523,7 @@ static void z180_dma0(void)
             {
 				cpu_writemem20(dar0--, IN(sar0));
 				/* edge sensitive DREQ0 ? */
-				if (Z180.io[Z180_DCNTL] & Z180_DCNTL_DIM0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1478,7 +1545,7 @@ static void z180_dma0(void)
             {
 				OUT(dar0, cpu_readmem20(sar0++));
 				/* edge sensitive DREQ0 ? */
-				if (Z180.io[Z180_DCNTL] & Z180_DCNTL_DIM0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1490,7 +1557,7 @@ static void z180_dma0(void)
             {
 				OUT(dar0, cpu_readmem20(sar0--));
 				/* edge sensitive DREQ0 ? */
-				if (Z180.io[Z180_DCNTL] & Z180_DCNTL_DIM0)
+				if (IO_DCNTL & Z180_DCNTL_DIM0)
 				{
 					Z180.iol &= ~Z180_DREQ0;
 					count = 0;
@@ -1508,31 +1575,31 @@ static void z180_dma0(void)
 			break;
 	}
 
-	Z180.io[Z180_SAR0L] = sar0;
-	Z180.io[Z180_SAR0H] = sar0 >> 8;
-	Z180.io[Z180_SAR0B] = sar0 >> 16;
-	Z180.io[Z180_DAR0L] = dar0;
-	Z180.io[Z180_DAR0H] = dar0 >> 8;
-	Z180.io[Z180_DAR0B] = dar0 >> 16;
-	Z180.io[Z180_BCR0L] = bcr0;
-	Z180.io[Z180_BCR0H] = bcr0 >> 8;
+	IO_SAR0L = sar0;
+	IO_SAR0H = sar0 >> 8;
+	IO_SAR0B = sar0 >> 16;
+	IO_DAR0L = dar0;
+	IO_DAR0H = dar0 >> 8;
+	IO_DAR0B = dar0 >> 16;
+	IO_BCR0L = bcr0;
+	IO_BCR0H = bcr0 >> 8;
 
 	/* DMA terminal count? */
 	if (bcr0 == 0)
 	{
 		Z180.iol &= ~Z180_TEND0;
-		Z180.io[Z180_DSTAT] &= ~Z180_DSTAT_DE0;
+		IO_DSTAT &= ~Z180_DSTAT_DE0;
 		/* terminal count interrupt enabled? */
-		if (Z180.io[Z180_DSTAT] & Z180_DSTAT_DIE0 && _IFF1)
+		if (IO_DSTAT & Z180_DSTAT_DIE0 && _IFF1)
 			take_interrupt(Z180_INT_DMA0);
 	}
 }
 
 static void z180_dma1(void)
 {
-	offs_t mar1 = 65536 * Z180.io[Z180_MAR1B] + 256 * Z180.io[Z180_MAR1H] + Z180.io[Z180_MAR1L];
-	offs_t iar1 = 256 * Z180.io[Z180_IAR1H] + Z180.io[Z180_IAR1L];
-	int bcr1 = 256 * Z180.io[Z180_BCR1H] + Z180.io[Z180_BCR1L];
+	offs_t mar1 = 65536 * IO_MAR1B + 256 * IO_MAR1H + IO_MAR1L;
+	offs_t iar1 = 256 * IO_IAR1H + IO_IAR1L;
+	int bcr1 = 256 * IO_BCR1H + IO_BCR1L;
 
 	if ((Z180.iol & Z180_DREQ1) == 0)
 		return;
@@ -1540,7 +1607,7 @@ static void z180_dma1(void)
 	/* counter is zero? */
 	if (bcr1 == 0)
 	{
-		Z180.io[Z180_DSTAT] &= ~Z180_DSTAT_DE1;
+		IO_DSTAT &= ~Z180_DSTAT_DE1;
 		return;
 	}
 
@@ -1550,7 +1617,7 @@ static void z180_dma1(void)
 		Z180.iol |= Z180_TEND1;
 	}
 
-	switch (Z180.io[Z180_DCNTL] & (Z180_DCNTL_DIM1 | Z180_DCNTL_DIM0))
+	switch (IO_DCNTL & (Z180_DCNTL_DIM1 | Z180_DCNTL_DIM0))
 	{
 	case 0x00:	/* memory MAR1+1 to I/O IAR1 fixed */
 		cpu_writeport(iar1, cpu_readmem20(mar1++));
@@ -1567,21 +1634,21 @@ static void z180_dma1(void)
 	}
 
 	/* edge sensitive DREQ1 ? */
-	if (Z180.io[Z180_DCNTL] & Z180_DCNTL_DIM1)
+	if (IO_DCNTL & Z180_DCNTL_DIM1)
 		Z180.iol &= ~Z180_DREQ1;
 
-	Z180.io[Z180_MAR1L] = mar1;
-	Z180.io[Z180_MAR1H] = mar1 >> 8;
-	Z180.io[Z180_MAR1B] = mar1 >> 16;
-	Z180.io[Z180_BCR1L] = bcr1;
-	Z180.io[Z180_BCR1H] = bcr1 >> 8;
+	IO_MAR1L = mar1;
+	IO_MAR1H = mar1 >> 8;
+	IO_MAR1B = mar1 >> 16;
+	IO_BCR1L = bcr1;
+	IO_BCR1H = bcr1 >> 8;
 
 	/* DMA terminal count? */
 	if (bcr1 == 0)
 	{
 		Z180.iol &= ~Z180_TEND1;
-		Z180.io[Z180_DSTAT] &= ~Z180_DSTAT_DE1;
-		if (Z180.io[Z180_DSTAT] & Z180_DSTAT_DIE1 && _IFF1)
+		IO_DSTAT &= ~Z180_DSTAT_DE1;
+		if (IO_DSTAT & Z180_DSTAT_DIE1 && _IFF1)
 			take_interrupt(Z180_INT_DMA1);
 	}
 
@@ -1828,70 +1895,70 @@ void z180_reset(void *param)
 	Z180.irq_state[2] = CLEAR_LINE;
 
 	/* reset io registers */
-	Z180.io[Z180_CNTLA0]	= Z180_CNTLA0_RESET;
-	Z180.io[Z180_CNTLA1]	= Z180_CNTLA1_RESET;
-	Z180.io[Z180_CNTLB0]	= Z180_CNTLB0_RESET;
-	Z180.io[Z180_CNTLB1]	= Z180_CNTLB1_RESET;
-	Z180.io[Z180_STAT0] 	= Z180_STAT0_RESET;
-	Z180.io[Z180_STAT1] 	= Z180_STAT1_RESET;
-	Z180.io[Z180_TDR0]		= Z180_TDR0_RESET;
-	Z180.io[Z180_TDR1]		= Z180_TDR1_RESET;
-	Z180.io[Z180_RDR0]		= Z180_RDR0_RESET;
-	Z180.io[Z180_RDR1]		= Z180_RDR1_RESET;
-	Z180.io[Z180_CNTR]		= Z180_CNTR_RESET;
-	Z180.io[Z180_TRDR]		= Z180_TRDR_RESET;
-	Z180.io[Z180_TMDR0L]	= Z180_TMDR0L_RESET;
-	Z180.io[Z180_TMDR0H]	= Z180_TMDR0H_RESET;
-	Z180.io[Z180_RLDR0L]	= Z180_RLDR0L_RESET;
-	Z180.io[Z180_RLDR0H]	= Z180_RLDR0H_RESET;
-	Z180.io[Z180_TCR]		= Z180_TCR_RESET;
-	Z180.io[Z180_IO11]		= Z180_IO11_RESET;
-	Z180.io[Z180_ASEXT0]	= Z180_ASEXT0_RESET;
-	Z180.io[Z180_ASEXT1]	= Z180_ASEXT1_RESET;
-	Z180.io[Z180_TMDR1L]	= Z180_TMDR1L_RESET;
-	Z180.io[Z180_TMDR1H]	= Z180_TMDR1H_RESET;
-	Z180.io[Z180_RLDR1L]	= Z180_RLDR1L_RESET;
-	Z180.io[Z180_RLDR1H]	= Z180_RLDR1H_RESET;
-	Z180.io[Z180_FRC]		= Z180_FRC_RESET;
-	Z180.io[Z180_IO19]		= Z180_IO19_RESET;
-	Z180.io[Z180_ASTC0L]	= Z180_ASTC0L_RESET;
-	Z180.io[Z180_ASTC0H]	= Z180_ASTC0H_RESET;
-	Z180.io[Z180_ASTC1L]	= Z180_ASTC1L_RESET;
-	Z180.io[Z180_ASTC1H]	= Z180_ASTC1H_RESET;
-	Z180.io[Z180_CMR]		= Z180_CMR_RESET;
-	Z180.io[Z180_CCR]		= Z180_CCR_RESET;
-	Z180.io[Z180_SAR0L] 	= Z180_SAR0L_RESET;
-	Z180.io[Z180_SAR0H] 	= Z180_SAR0H_RESET;
-	Z180.io[Z180_SAR0B] 	= Z180_SAR0B_RESET;
-	Z180.io[Z180_DAR0L] 	= Z180_DAR0L_RESET;
-	Z180.io[Z180_DAR0H] 	= Z180_DAR0H_RESET;
-	Z180.io[Z180_DAR0B] 	= Z180_DAR0B_RESET;
-	Z180.io[Z180_BCR0L] 	= Z180_BCR0L_RESET;
-	Z180.io[Z180_BCR0H] 	= Z180_BCR0H_RESET;
-	Z180.io[Z180_MAR1L] 	= Z180_MAR1L_RESET;
-	Z180.io[Z180_MAR1H] 	= Z180_MAR1H_RESET;
-	Z180.io[Z180_MAR1B] 	= Z180_MAR1B_RESET;
-	Z180.io[Z180_IAR1L] 	= Z180_IAR1L_RESET;
-	Z180.io[Z180_IAR1H] 	= Z180_IAR1H_RESET;
-	Z180.io[Z180_IAR1B] 	= Z180_IAR1B_RESET;
-	Z180.io[Z180_BCR1L] 	= Z180_BCR1L_RESET;
-	Z180.io[Z180_BCR1H] 	= Z180_BCR1H_RESET;
-	Z180.io[Z180_DSTAT] 	= Z180_DSTAT_RESET;
-	Z180.io[Z180_DMODE] 	= Z180_DMODE_RESET;
-	Z180.io[Z180_DCNTL] 	= Z180_DCNTL_RESET;
-	Z180.io[Z180_IL]		= Z180_IL_RESET;
-	Z180.io[Z180_ITC]		= Z180_ITC_RESET;
-	Z180.io[Z180_IO35]		= Z180_IO35_RESET;
-	Z180.io[Z180_RCR]		= Z180_RCR_RESET;
-	Z180.io[Z180_IO37]		= Z180_IO37_RESET;
-	Z180.io[Z180_CBR]		= Z180_CBR_RESET;
-	Z180.io[Z180_BBR]		= Z180_BBR_RESET;
-	Z180.io[Z180_CBAR]		= Z180_CBAR_RESET;
-	Z180.io[Z180_IO3B]		= Z180_IO3B_RESET;
-	Z180.io[Z180_IO3C]		= Z180_IO3C_RESET;
-	Z180.io[Z180_IO3D]		= Z180_IO3D_RESET;
-	Z180.io[Z180_OMCR]		= Z180_OMCR_RESET;
-	Z180.io[Z180_IOCR]		= Z180_IOCR_RESET;
+	IO_CNTLA0  = Z180_CNTLA0_RESET;
+	IO_CNTLA1  = Z180_CNTLA1_RESET;
+	IO_CNTLB0  = Z180_CNTLB0_RESET;
+	IO_CNTLB1  = Z180_CNTLB1_RESET;
+	IO_STAT0   = Z180_STAT0_RESET;
+	IO_STAT1   = Z180_STAT1_RESET;
+	IO_TDR0    = Z180_TDR0_RESET;
+	IO_TDR1    = Z180_TDR1_RESET;
+	IO_RDR0    = Z180_RDR0_RESET;
+	IO_RDR1    = Z180_RDR1_RESET;
+	IO_CNTR    = Z180_CNTR_RESET;
+	IO_TRDR    = Z180_TRDR_RESET;
+	IO_TMDR0L  = Z180_TMDR0L_RESET;
+	IO_TMDR0H  = Z180_TMDR0H_RESET;
+	IO_RLDR0L  = Z180_RLDR0L_RESET;
+	IO_RLDR0H  = Z180_RLDR0H_RESET;
+	IO_TCR	   = Z180_TCR_RESET;
+	IO_IO11    = Z180_IO11_RESET;
+	IO_ASEXT0  = Z180_ASEXT0_RESET;
+	IO_ASEXT1  = Z180_ASEXT1_RESET;
+	IO_TMDR1L  = Z180_TMDR1L_RESET;
+	IO_TMDR1H  = Z180_TMDR1H_RESET;
+	IO_RLDR1L  = Z180_RLDR1L_RESET;
+	IO_RLDR1H  = Z180_RLDR1H_RESET;
+	IO_FRC	   = Z180_FRC_RESET;
+	IO_IO19    = Z180_IO19_RESET;
+	IO_ASTC0L  = Z180_ASTC0L_RESET;
+	IO_ASTC0H  = Z180_ASTC0H_RESET;
+	IO_ASTC1L  = Z180_ASTC1L_RESET;
+	IO_ASTC1H  = Z180_ASTC1H_RESET;
+	IO_CMR	   = Z180_CMR_RESET;
+	IO_CCR	   = Z180_CCR_RESET;
+	IO_SAR0L   = Z180_SAR0L_RESET;
+	IO_SAR0H   = Z180_SAR0H_RESET;
+	IO_SAR0B   = Z180_SAR0B_RESET;
+	IO_DAR0L   = Z180_DAR0L_RESET;
+	IO_DAR0H   = Z180_DAR0H_RESET;
+	IO_DAR0B   = Z180_DAR0B_RESET;
+	IO_BCR0L   = Z180_BCR0L_RESET;
+	IO_BCR0H   = Z180_BCR0H_RESET;
+	IO_MAR1L   = Z180_MAR1L_RESET;
+	IO_MAR1H   = Z180_MAR1H_RESET;
+	IO_MAR1B   = Z180_MAR1B_RESET;
+	IO_IAR1L   = Z180_IAR1L_RESET;
+	IO_IAR1H   = Z180_IAR1H_RESET;
+	IO_IAR1B   = Z180_IAR1B_RESET;
+	IO_BCR1L   = Z180_BCR1L_RESET;
+	IO_BCR1H   = Z180_BCR1H_RESET;
+	IO_DSTAT   = Z180_DSTAT_RESET;
+	IO_DMODE   = Z180_DMODE_RESET;
+	IO_DCNTL   = Z180_DCNTL_RESET;
+	IO_IL	   = Z180_IL_RESET;
+	IO_ITC	   = Z180_ITC_RESET;
+	IO_IO35    = Z180_IO35_RESET;
+	IO_RCR	   = Z180_RCR_RESET;
+	IO_IO37    = Z180_IO37_RESET;
+	IO_CBR	   = Z180_CBR_RESET;
+	IO_BBR	   = Z180_BBR_RESET;
+	IO_CBAR    = Z180_CBAR_RESET;
+	IO_IO3B    = Z180_IO3B_RESET;
+	IO_IO3C    = Z180_IO3C_RESET;
+	IO_IO3D    = Z180_IO3D_RESET;
+	IO_OMCR    = Z180_OMCR_RESET;
+	IO_IOCR    = Z180_IOCR_RESET;
 
 	if( daisy_chain )
 	{
@@ -1930,11 +1997,11 @@ int z180_execute(int cycles)
 
 again:
     /* check if any DMA transfer is running */
-	if ((Z180.io[Z180_DSTAT] & Z180_DSTAT_DME) == Z180_DSTAT_DME)
+	if ((IO_DSTAT & Z180_DSTAT_DME) == Z180_DSTAT_DME)
 	{
 		/* check if DMA channel 0 is running and also is in burst mode */
-		if ((Z180.io[Z180_DSTAT] & Z180_DSTAT_DE0) == Z180_DSTAT_DE0 &&
-			(Z180.io[Z180_DMODE] & Z180_DMODE_MMOD) == Z180_DMODE_MMOD)
+		if ((IO_DSTAT & Z180_DSTAT_DE0) == Z180_DSTAT_DE0 &&
+			(IO_DMODE & Z180_DMODE_MMOD) == Z180_DMODE_MMOD)
 		{
 			CALL_MAME_DEBUG;
 			z180_dma0();
@@ -1950,7 +2017,7 @@ again:
 				z180_dma0();
 				z180_dma1();
 				/* If DMA is done break out to the faster loop */
-				if ((Z180.io[Z180_DSTAT] & Z180_DSTAT_DME) != Z180_DSTAT_DME)
+				if ((IO_DSTAT & Z180_DSTAT_DME) != Z180_DSTAT_DME)
 					break;
 			} while( z180_icount > 0 );
 		}
@@ -1965,7 +2032,7 @@ again:
 			_R++;
 			EXEC_INLINE(op,ROP());
 			/* If DMA is started go to check the mode */
-			if ((Z180.io[Z180_DSTAT] & Z180_DSTAT_DME) == Z180_DSTAT_DME)
+			if ((IO_DSTAT & Z180_DSTAT_DME) == Z180_DSTAT_DME)
 				goto again;
         } while( z180_icount > 0 );
 	}
@@ -2087,7 +2154,7 @@ unsigned z180_get_reg (int regnum)
 		case Z180_IFF1: return Z180.IFF1;
 		case Z180_IFF2: return Z180.IFF2;
 		case Z180_HALT: return Z180.HALT;
-		case Z180_NMI_STATE: return Z180.nmi_state;
+        case Z180_NMI_STATE: return Z180.nmi_state;
 		case Z180_INT0_STATE: return Z180.irq_state[0];
 		case Z180_INT1_STATE: return Z180.irq_state[1];
 		case Z180_INT2_STATE: return Z180.irq_state[2];
@@ -2197,7 +2264,7 @@ void z180_set_reg (int regnum, unsigned val)
 		case Z180_IFF1: Z180.IFF1 = val; break;
 		case Z180_IFF2: Z180.IFF2 = val; break;
 		case Z180_HALT: Z180.HALT = val; break;
-		case Z180_NMI_STATE: z180_set_nmi_line(val); break;
+        case Z180_NMI_STATE: z180_set_nmi_line(val); break;
 		case Z180_INT0_STATE: z180_set_irq_line(0,val); break;
 		case Z180_INT1_STATE: z180_set_irq_line(1,val); break;
 		case Z180_INT2_STATE: z180_set_irq_line(2,val); break;
@@ -2283,6 +2350,16 @@ void z180_set_reg (int regnum, unsigned val)
 	}
 }
 
+READ_HANDLER( z180_internal_r )
+{
+	return Z180.io[offset & 0x3f];
+}
+
+WRITE_HANDLER( z180_internal_w )
+{
+	z180_set_reg( Z180_CNTLA0 + (offset & 0x3f), data );
+}
+
 /****************************************************************************
  * Set NMI line state
  ****************************************************************************/
@@ -2299,7 +2376,7 @@ void z180_set_nmi_line(int state)
 	LEAVE_HALT; 		/* Check if processor was halted */
 
 	/* disable DMA transfers!! */
-	Z180.io[Z180_DSTAT] &= ~Z180_DSTAT_DME;
+	IO_DSTAT &= ~Z180_DSTAT_DME;
 
 	_IFF1 = 0;
 	PUSH( PC );
@@ -2462,17 +2539,17 @@ const char *z180_info(void *context, int regnum)
 	case CPU_INFO_REG+Z180_HL: sprintf(buffer[which], "HL:%04X", r->HL.w.l); break;
 	case CPU_INFO_REG+Z180_IX: sprintf(buffer[which], "IX:%04X", r->IX.w.l); break;
 	case CPU_INFO_REG+Z180_IY: sprintf(buffer[which], "IY:%04X", r->IY.w.l); break;
-	case CPU_INFO_REG+Z180_R: sprintf(buffer[which], "R:%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
-	case CPU_INFO_REG+Z180_I: sprintf(buffer[which], "I:%02X", r->I); break;
+	case CPU_INFO_REG+Z180_R:  sprintf(buffer[which], "R   :%02X", (r->R & 0x7f) | (r->R2 & 0x80)); break;
+	case CPU_INFO_REG+Z180_I:  sprintf(buffer[which], "I   :%02X", r->I); break;
+	case CPU_INFO_REG+Z180_IL: sprintf(buffer[which], "IL  :%02X", r->io[Z180_IL-Z180_CNTLA0]); break;
 	case CPU_INFO_REG+Z180_AF2: sprintf(buffer[which], "AF'%04X", r->AF2.w.l); break;
 	case CPU_INFO_REG+Z180_BC2: sprintf(buffer[which], "BC'%04X", r->BC2.w.l); break;
 	case CPU_INFO_REG+Z180_DE2: sprintf(buffer[which], "DE'%04X", r->DE2.w.l); break;
 	case CPU_INFO_REG+Z180_HL2: sprintf(buffer[which], "HL'%04X", r->HL2.w.l); break;
-	case CPU_INFO_REG+Z180_IM: sprintf(buffer[which], "IM:%X", r->IM); break;
+	case CPU_INFO_REG+Z180_IM: sprintf(buffer[which], "IM  :%X", r->IM); break;
 	case CPU_INFO_REG+Z180_IFF1: sprintf(buffer[which], "IFF1:%X", r->IFF1); break;
 	case CPU_INFO_REG+Z180_IFF2: sprintf(buffer[which], "IFF2:%X", r->IFF2); break;
 	case CPU_INFO_REG+Z180_HALT: sprintf(buffer[which], "HALT:%X", r->HALT); break;
-	case CPU_INFO_REG+Z180_NMI_STATE: sprintf(buffer[which], "NMI:%X", r->nmi_state); break;
 	case CPU_INFO_REG+Z180_INT0_STATE: sprintf(buffer[which], "INT0:%X", r->irq_state[0]); break;
 	case CPU_INFO_REG+Z180_INT1_STATE: sprintf(buffer[which], "INT1:%X", r->irq_state[1]); break;
 	case CPU_INFO_REG+Z180_INT2_STATE: sprintf(buffer[which], "INT2:%X", r->irq_state[2]); break;
@@ -2480,7 +2557,14 @@ const char *z180_info(void *context, int regnum)
 	case CPU_INFO_REG+Z180_DC1: if(Z180.irq_max >= 2) sprintf(buffer[which], "DC1:%X", r->int_state[1]); break;
 	case CPU_INFO_REG+Z180_DC2: if(Z180.irq_max >= 3) sprintf(buffer[which], "DC2:%X", r->int_state[2]); break;
 	case CPU_INFO_REG+Z180_DC3: if(Z180.irq_max >= 4) sprintf(buffer[which], "DC3:%X", r->int_state[3]); break;
-	case CPU_INFO_FLAGS:
+	case CPU_INFO_REG+Z180_CCR:  sprintf(buffer[which], "CCR :%02X", r->io[Z180_CCR-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_ITC:  sprintf(buffer[which], "ITC :%02X", r->io[Z180_ITC-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_CBR:  sprintf(buffer[which], "CBR :%02X", r->io[Z180_CBR-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_BBR:  sprintf(buffer[which], "BBR :%02X", r->io[Z180_BBR-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_CBAR: sprintf(buffer[which], "CBAR:%02X", r->io[Z180_CBAR-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_OMCR: sprintf(buffer[which], "OMCR:%02X", r->io[Z180_OMCR-Z180_CNTLA0]); break;
+	case CPU_INFO_REG+Z180_IOCR: sprintf(buffer[which], "IOCR:%02X", r->io[Z180_IOCR-Z180_CNTLA0]); break;
+    case CPU_INFO_FLAGS:
 		sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 			r->AF.b.l & 0x80 ? 'S':'.',
 			r->AF.b.l & 0x40 ? 'Z':'.',

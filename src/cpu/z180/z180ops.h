@@ -23,14 +23,14 @@
  * Input a byte from given I/O port
  ***************************************************************/
 #define IN(port)												\
-	(((port ^ Z180.io[Z180_IOCR]) & 0xffc0) == 0) ? 			\
+	(((port ^ IO_IOCR) & 0xffc0) == 0) ?						\
 		z180_readcontrol(port) : cpu_readport(port)
 
 /***************************************************************
  * Output a byte to given I/O port
  ***************************************************************/
 #define OUT(port,value) 										\
-	if (((port ^ Z180.io[Z180_IOCR]) & 0xffc0) == 0)			\
+	if (((port ^ IO_IOCR) & 0xffc0) == 0)						\
 		z180_writecontrol(port,value);							\
 	else cpu_writeport(port,value)
 
@@ -46,17 +46,17 @@
 INLINE void z180_mmu( void )
 {
 	offs_t addr, page, bb, cb;
-	bb = Z180.io[Z180_CBAR] & 15;
-	cb = Z180.io[Z180_CBAR] >> 4;
+	bb = IO_CBAR & 15;
+	cb = IO_CBAR >> 4;
 	for( page = 0; page < 16; page++ )
 	{
 		addr = page << 12;
 		if (page >= bb)
 		{
 			if (page >= cb)
-				addr = (Z180.io[Z180_CBR] << 16) + ((page - cb) << 12);
+				addr = (IO_CBR << 16) + ((page - cb) << 12);
 			else
-				addr = (Z180.io[Z180_BBR] << 16) + ((page - bb) << 12);
+				addr = (IO_BBR << 16) + ((page - bb) << 12);
 		}
 		Z180.mmu[page] = addr;
 	}
