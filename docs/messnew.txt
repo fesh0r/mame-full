@@ -8,6 +8,8 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A5200] Fixed a crash on start regression introduced in 0.82 [Nate Woods]
+
 - [AMSTRAD] Refined video display and Z80 timings; the Yao demos work
   better now.  Also changed default joystick input definitions.  [Yoann
   Courtois]
