@@ -49,11 +49,6 @@ extern UINT8 win_trying_to_quit;
 // window styles
 #define WINDOW_STYLE			WS_OVERLAPPEDWINDOW
 #define WINDOW_STYLE_EX			0
-#ifndef MESS
-#define WINDOW_HAS_MENU			FALSE
-#else
-#define WINDOW_HAS_MENU			TRUE
-#endif
 
 // debugger window styles
 #define DEBUG_WINDOW_STYLE		WS_OVERLAPPED
@@ -61,7 +56,7 @@ extern UINT8 win_trying_to_quit;
 #define DEBUG_WINDOW_HAS_MENU	FALSE
 
 // full screen window styles
-#define FULLSCREEN_STYLE		WS_OVERLAPPED
+#define FULLSCREEN_STYLE		WS_POPUP
 #define FULLSCREEN_STYLE_EX		WS_EX_TOPMOST
 
 // menu items
@@ -577,7 +572,7 @@ void win_destroy_window(void)
 
 void win_update_cursor_state(void)
 {
-	if (win_window_mode && !win_is_mouse_captured())
+	if ((win_window_mode || GetMenu(win_video_window)) && !win_is_mouse_captured())
 		while (ShowCursor(TRUE) < 0) ;
 	else
 		while (ShowCursor(FALSE) >= 0) ;

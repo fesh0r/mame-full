@@ -101,6 +101,30 @@ static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT 
 
 
 //============================================================
+//	win_get_top_height
+//============================================================
+
+static int win_get_top_height(void)
+{
+	static int height_with_menubar = 0;
+	int top_height = 0;
+
+	if (GetMenu(win_video_window))
+	{
+		if (height_with_menubar == 0)
+		{
+			RECT with_menu = { 100, 100, 200, 200 };
+			RECT without_menu = { 100, 100, 200, 200 };
+			AdjustWindowRect(&with_menu, WS_OVERLAPPED, TRUE);
+			AdjustWindowRect(&without_menu, WS_OVERLAPPED, FALSE);
+			height_with_menubar = (with_menu.bottom - with_menu.top) - (without_menu.bottom - without_menu.top);
+		}
+		top_height = height_with_menubar;
+	}
+	return top_height;
+}
+
+//============================================================
 //	erase_outer_rect
 //============================================================
 
@@ -1125,6 +1149,9 @@ tryagain:
 
 		// target surface is the back buffer
 		target_surface = back_surface ? back_surface : primary_surface;
+
+		if (dst.top < win_get_top_height())
+			dst.top = win_get_top_height();
 	}
 
 	// blit and flip
@@ -1192,7 +1219,8 @@ tryagain:
 	if (update)
 	{
 		RECT outer;
-		outer.top = outer.left = 0;
+		outer.left = 0;
+		outer.top = win_get_top_height();
 		outer.right = primary_desc.dwWidth;
 		outer.bottom = primary_desc.dwHeight;
 		erase_outer_rect(&outer, dst, target_surface);
@@ -1270,7 +1298,8 @@ tryagain:
 	else
 	{
 		// win_start_maximized the rect, constraining to the aspect ratio
-		outer.left = outer.top = 0;
+		outer.left = 0;
+		outer.top = win_get_top_height();
 		outer.right = primary_desc.dwWidth;
 		outer.bottom = primary_desc.dwHeight;
 		inner = outer;

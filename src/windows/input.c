@@ -851,7 +851,11 @@ void win_poll_input(void)
 
 int win_is_mouse_captured(void)
 {
-	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse);
+	return (!input_paused && mouse_active && mouse_count > 0 && use_mouse)
+#if WINDOW_HAS_MENU
+		&& !GetMenu(win_video_window)
+#endif
+		;
 }
 
 
@@ -1653,6 +1657,13 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 					seq_set_2 (&idef->seq, KEYCODE_LALT, KEYCODE_ENTER);
 				break;
 
+#if WINDOW_HAS_MENU
+				case IPT_OSD_2:
+					idef->type = next_reserved;
+					idef->name = "Toggle menubar";
+					seq_set_1 (&idef->seq, KEYCODE_PRTSCR);
+				break;
+#endif
 				default:
 				break;
 			}

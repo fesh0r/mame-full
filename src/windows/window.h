@@ -171,4 +171,10 @@ INLINE UINT8 win_blue32(UINT32 color)
 	return color >> win_color32_bdst_shift;
 }
 
+#ifndef MESS
+#define WINDOW_HAS_MENU			FALSE
+#else
+#define WINDOW_HAS_MENU			TRUE
+#endif
+
 #endif
