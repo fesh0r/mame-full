@@ -7906,11 +7906,11 @@ software point of view, it is remarkable that the Tutor Basic is directly
 derived from TI Extended Basic (there is even a GPL interpreter in ROM, though
 the Tutor variant of GPL is quite different from TI GPL).  However, the
 remaining Tutor software does not seem to be derived from TI-99 software.
-It is therefore likely be that Matsushita designed the Tutor independently from
-TI and licenced the TI Basic from TI on afterthought; OTOH, the whole design
-could have originated from TI, as the computer is really looks like a "TI-99/3"
-(the hardware looks like the TI-99/4 series, whereas the concept reminds the
-TI-99/2).
+It is therefore likely that Matsushita designed the Tutor independently from TI
+and licenced the TI Basic from TI as an afterthought; OTOH, the whole design
+might have originated from TI, as the computer really looks like a "TI-99/3"
+(the hardware is similar to the TI-99/4 series, whereas the concept is very
+close to the TI-99/2).
 
 $end
 
