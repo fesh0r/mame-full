@@ -1,3 +1,15 @@
+#############################################################################
+# MESS Visual C++ makefile														#
+#																			#
+# MESS build commands:														#
+#																			#
+#	Command							Executable		Optimization			#
+#	------------------------------	--------------	------------			#
+#	make -f makefile.vc				messvc.exe		Pentium					#
+#	make -f makefile.vc DEBUG=1		messvcd.exe		N/A						#
+#############################################################################
+
+
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
 TARGET = mess
@@ -260,7 +272,7 @@ OBJDIRS += \
 	$(OBJ)/mess/ui
 endif
 
-PLATFORM_IMGTOOL_OBJS =				\
+PLATFORM_TOOL_OBJS =				\
 	$(OBJ)/mess/windows/glob.o		\
 	$(OBJ)/mess/windows/dirutils.o	\
 	$(OBJ)/windows/fileio.o
@@ -331,38 +343,47 @@ endif
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) $(DIRENTOBJS) -out:$@ $^
+	@echo Linking $@..
+	$(LD) $(LDFLAGS) $^ -out:$@
 
-messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(DIRENTOBJS) \
-		$(OBJ)/mess/tools/messtest/main.o		\
-		$(OBJ)/mess/tools/messtest/messtest.o	\
-		$(OBJ)/mess/tools/messtest/testexec.o	\
-		$(OBJ)/mess/tools/messtest/tststubs.o	\
-		$(OBJ)/mess/tools/messtest/tstutils.o	\
+chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ zlib.lib -out:$@
+
+xml2info$(EXE): src/xml2info/xml2info.c
+	@echo Compiling $@...
+	$(CC) -O1 -out:$@ $^
+
+dat2html$(EXE): $(DAT2HTML_OBJS) $(PLATFORM_TOOL_OBJS) $(OBJ)/mess/ui/dirent.o
+	@echo Compiling $@...
+	$(LD) $(LDFLAGS) $^ -out:$@
+
+messdocs$(EXE): $(MESSDOCS_OBJS) $(OBJ)/mess/windows/dirutils.o $(OBJ)/mess/ui/dirent.o
+	@echo Compiling $@...
+	$(LD) $(LDFLAGS) $^ -out:$@
+
+imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS) $(OBJ)/mess/ui/dirent.o
+	@echo Compiling $@...
+	$(LD) $(LDFLAGS) $^ zlib.lib -out:$@
+
+messtest$(EXE):	$(OBJS) $(COREOBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 		$(OBJ)/windows/asmtile.o				\
 		$(OBJ)/windows/ticker.o					\
 		$(OBJ)/windows/fileio.o					\
 		$(OBJ)/windows/rc.o						\
 		$(OBJ)/windows/misc.o					\
-		$(OBJ)/windows/winalloc.o				\
 		$(OBJ)/mess/windows/dirio.o				\
 		$(OBJ)/mess/windows/dirutils.o			\
 		$(OBJ)/mess/windows/glob.o				\
 		$(OBJ)/mess/windows/parallel.o			\
-		$(OBJ)/xml2info/xmlrole.o				\
-		$(OBJ)/xml2info/xmltok.o				\
-		$(OBJ)/xml2info/xmlparse.o				\
-		$(OBJ)/windows/snprintf.o				
+		$(OBJ)/mess/ui/dirent.o					\
+		$(OBJ)/mess/snprintf.o
 	@echo Linking $@...
-	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $(LIBS) -out:$@ $^
+	$(LD) $(LDFLAGS) $(CONSOLE_PROGRAM) $^ zlib.lib winmm.lib user32.lib -out:$@
 
-ifdef PERL
-$(OBJ)/cpuintrf.o: src/cpuintrf.c rules.mak
-	$(PERL) src/makelist.pl
-	@echo Compiling $<...
-	$(CC) $(CDEFS) $(CFLAGS) -c $< -o $@
-endif
+
+
+#############################################################################
 
 ifndef DEBUG
 # Workarounds for VC6 optimization bugs

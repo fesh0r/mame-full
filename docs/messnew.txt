@@ -1,4 +1,4 @@
-0.79.1
+0.80
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -49,6 +49,12 @@ Imgtool Changes:
 
 Source Changes:
 ----------------
+- The core is based on MAME 0.80.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+- Minor tools reorg; tool build rules now moved into the main makefile, and
+  the tools directory is no longer used.  [Nate Woods]
+
 - CHD will now be the standard harddrive format for MESS.  As such,
   enhancements have been made to MESS's CHD support.  Also, the PC driver
   has been converted over to use the new format and the old raw HD format is

@@ -866,57 +866,39 @@ COREOBJS += \
 
 
 # additional tools
-TOOLS =  dat2html$(EXE)		\
-	tools/mkhdimg$(EXE)	\
-	tools/imgtool$(EXE)	\
-	tools/mkimage$(EXE)
+TOOLS = dat2html$(EXE) messtest$(EXE) chdman$(EXE) messdocs$(EXE) imgtool$(EXE)
 
 
-ifdef MSVC
-OUTOPT = $(DIRENTOBJS) -out:$@
-else
-OUTOPT = -o $@
-endif
-
-dat2html$(EXE):								\
-	$(PLATFORM_IMGTOOL_OBJS)				\
+DAT2HTML_OBJS =								\
 	$(OBJ)/mess/tools/dat2html/dat2html.o	\
 	$(OBJ)/mess/tools/imgtool/stubs.o		\
 	$(OBJ)/mess/utils.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-tools/mkhdimg$(EXE):	$(OBJ)/mess/tools/mkhdimg/mkhdimg.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
-
-tools/mkimage$(EXE):	$(OBJ)/mess/tools/mkimage/mkimage.o $(OBJ)/mess/utils.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
-
-tools/messroms$(EXE):	$(OBJ)/mess/tools/messroms/main.o $(OBJ)/unzip.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
-
-tools/messdocs$(EXE):						\
+MESSDOCS_OBJS =								\
 	$(OBJ)/mess/tools/messdocs/messdocs.o	\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
-	$(OBJ)/mess/windows/dirutils.o			\
 	$(OBJ)/xml2info/xmlrole.o				\
 	$(OBJ)/xml2info/xmltok.o				\
 	$(OBJ)/xml2info/xmlparse.o
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(OUTOPT)
 
-tools/imgtool$(EXE):						\
-	$(PLATFORM_IMGTOOL_OBJS)				\
+MESSTEST_OBJS =								\
+	$(OBJ)/mess/tools/messtest/main.o		\
+	$(OBJ)/mess/tools/messtest/messtest.o	\
+	$(OBJ)/mess/tools/messtest/testexec.o	\
+	$(OBJ)/mess/tools/messtest/tststubs.o	\
+	$(OBJ)/mess/tools/messtest/tstutils.o	\
+	$(OBJ)/xml2info/xmlrole.o				\
+	$(OBJ)/xml2info/xmltok.o				\
+	$(OBJ)/xml2info/xmlparse.o
+
+IMGTOOL_OBJS =								\
 	$(OBJ)/unzip.o							\
 	$(OBJ)/chd.o							\
 	$(OBJ)/harddisk.o						\
 	$(OBJ)/md5.o							\
 	$(OBJ)/sha1.o							\
-	$(OBJ)/mess/crcfile.o	               \
+	$(OBJ)/mess/crcfile.o					\
 	$(OBJ)/mess/utils.o						\
 	$(OBJ)/mess/pool.o						\
 	$(OBJ)/mess/opresolv.o					\
@@ -968,8 +950,6 @@ tools/imgtool$(EXE):						\
 #	  $(OBJ)/mess/tools/imgtool/rom16.o    \
 #	  $(OBJ)/mess/tools/imgtool/nccard.o   \
 #	  $(OBJ)/mess/tools/imgtool/ti85.o     \
-	@echo Linking $@...
-	$(LD) $(LDFLAGS) $^ $(LIBS) $(IMGTOOL_LIBS) $(OUTOPT)
 
 # text files
 TEXTS = sysinfo.htm
@@ -984,20 +964,3 @@ sysinfo.htm: dat2html$(EXE)
 
 mess/makedep/makedep$(EXE): $(wildcard mess/makedep/*.c) $(wildcard mess/makedep/*.h)
 	make -Cmess/makedep
-
-src/$(NAME).dep depend: mess/makedep/makedep$(EXE) src/$(TARGET).mak src/rules.mak src/core.mak
-	mess/makedep/makedep$(EXE) -f - -p$(NAME).obj/ -DMESS -q -- $(INCLUDE_PATH) -- \
-	src/*.c src/cpu/*/*.c src/sound/*.c \
-	mess/*.c mess/systems/*.c* mess/machine/*.c* mess/vidhrdw/*.c* mess/sndhrdw/*.c* \
-	mess/tools/*.c mess/formats/*.c mess/messroms/*.c >src/$(NAME).dep
-
-# add following to dependancy generation if you want the few files in these
-# directories
-#	src/drivers/*.c src/machine/*.c src/vidhrdw/*.c src/sndhrdw/*.c \
-
-## uncomment the following line to include dependencies
-ifeq (src/$(NAME).dep,$(wildcard src/$(NAME).dep))
-include src/$(NAME).dep
-endif
-
-
