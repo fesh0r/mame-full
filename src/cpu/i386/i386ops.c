@@ -980,11 +980,11 @@ static void I386OP(repeat)(int invert_flag)
 	UINT8 *flag = NULL;
 
 	if( I.segment_prefix ) {
-		eas = i386_translate( I.segment_override, REG32(ESI) );
+		eas = i386_translate( I.segment_override, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	} else {
-		eas = i386_translate( DS, REG32(ESI) );
+		eas = i386_translate( DS, I.sreg[CS].d ? REG32(ESI) : REG16(SI) );
 	}
-	ead = i386_translate( ES, REG32(EDI) );
+	ead = i386_translate( ES, I.sreg[CS].d ? REG32(EDI) : REG16(DI) );
 
 	if( opcode == 0x66 ) {
 		I.operand_size ^= 1;
