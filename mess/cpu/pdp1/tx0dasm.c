@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "cpu/tx0/tx0.h"
+#include "cpu/pdp1/tx0.h"
 
 unsigned dasmtx0_64kw(char *buffer, unsigned _pc)
 {
