@@ -307,6 +307,8 @@ static int generic_rom_load(int id, UINT8 *rambase, UINT8 *rombase, UINT8 *pakba
 {
 	void *fp;
 
+	cart_inserted = 0;
+
 	fp = image_fopen (IO_SNAPSHOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (fp)
 	{
@@ -1039,6 +1041,9 @@ int coco3_mmu_translate(int block, int offset)
 	return (coco3_mmu_lookup(block, forceram) * 0x2000) + offset;
 }
 
+#if 0
+/* We don't need this code for now */
+
 int coco3_mmu_translatelogicaladdr(int logicaladdr)
 {
 	int block;;
@@ -1054,9 +1059,6 @@ int coco3_mmu_translatelogicaladdr(int logicaladdr)
 
 	return coco3_mmu_translate(block, logicaladdr);
 }
-
-#if 0
-/* We don't need this code for now */
 
 static int calc_nextlogicaladdr(int logicaladdr, int len)
 {
@@ -1163,9 +1165,6 @@ WRITE_HANDLER(coco3_mmu_w)
 {
 	data &= 0x3f;
 	coco3_mmu[offset] = data;
-
-	if (offset == 0)
-		schedule_full_refresh();
 
 	/* Did we modify the live MMU bank? */
 	if ((offset >> 3) == (coco3_gimereg[1] & 1)) {
@@ -1864,6 +1863,10 @@ static void generic_init_machine(struct pia6821_interface *piaintf)
 	pia0_irq_b = CLEAR_LINE;
 	pia1_firq_a = CLEAR_LINE;
 	pia1_firq_b = CLEAR_LINE;
+
+	pia0_pb = sound_mux = tape_motor = 0;
+	joystick_axis = joystick = 0;
+	d_dac = 0;
 
 	pia_config(0, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[0]);
 	pia_config(1, PIA_STANDARD_ORDERING | PIA_8BIT, &piaintf[1]);

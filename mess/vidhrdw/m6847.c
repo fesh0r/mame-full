@@ -254,6 +254,7 @@ void m6847_vh_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 
 int internal_m6847_vh_start(int maxvram)
 {
+	vram_mask = 0;
 	video_offset = 0;
 	video_gmode = 0;
 	video_vmode = 0;

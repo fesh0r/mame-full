@@ -231,8 +231,11 @@ int coco3_vh_start(void)
 	for (i = 0; i < 16; i++)
 		palette_change_color(i, 0, 0, 0);
 
-	coco3_hires = 0;
-	coco3_borderred = -1;
+	for (i = 0; i < (sizeof(coco3_gimevhreg) / sizeof(coco3_gimevhreg[0])); i++)
+		coco3_gimevhreg[i] = 0;
+
+	coco3_hires = coco3_somethingdirty = coco3_blinkstatus = 0;
+	coco3_borderred = coco3_bordergreen = coco3_borderblue = -1;
 	return 0;
 }
 
@@ -485,6 +488,8 @@ static int coco3_hires_vidbase(void)
 	return (((coco3_gimevhreg[5] * 0x800) + (coco3_gimevhreg[6] * 8)) | ((coco3_gimevhreg[7] & 0x7f)));
 
 }
+
+#define coco3_lores_vidbase	coco3_hires_vidbase
 
 #if LOG_VIDEO
 static void log_video(void)
@@ -780,7 +785,7 @@ void coco3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			coco3_vh_drawborder(bitmap, 512, 192);
 
 		internal_m6847_vh_screenrefresh(bitmap, full_refresh, coco3_metapalette,
-			&RAM[coco3_mmu_translatelogicaladdr(0)], m6847_get_video_offset(), 0x10000,
+			&RAM[coco3_lores_vidbase()], m6847_get_video_offset(), 0x10000,
 			TRUE, (bitmap->width - 512) / 2, (bitmap->height - 192) / 2, 2,
 			artifacts[readinputport(12) & 3]);
 	}
@@ -804,13 +809,10 @@ static void coco3_ram_w(int offset, int data, int block)
 			}
 		}
 		else {
-			/* This code assumes that all lo-res video is always mapped from
-			 * $70000-$7FFFF.  This needs to be verified
-			 *
-			 * 8-17-2000 - This assumption has been challenged by the OS9L2 bug
+			/* Apparently, lores video
 			 */
 
-			vidbase = coco3_mmu_translatelogicaladdr(0);
+			vidbase = coco3_lores_vidbase();
 
 			if (offset >= vidbase)
 				m6847_touch_vram(offset - vidbase);
