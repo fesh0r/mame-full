@@ -26,10 +26,8 @@
 enum
 {
 	JOY_NONE,
-	JOY_I386,
+	JOY_STANDARD,
 	JOY_PAD,
-	JOY_X11,
-	JOY_I386NEW,
 	JOY_USB,
 	JOY_PS2,
 	JOY_SDL
@@ -84,9 +82,8 @@ EXTERN int joytype;
 EXTERN int is_usb_ps_gamepad;
 EXTERN int rapidfire_enable;
 
-extern struct rc_option joy_i386_opts[];
+extern struct rc_option joy_standard_opts[];
 extern struct rc_option joy_pad_opts[];
-extern struct rc_option joy_x11_opts[];
 extern struct rc_option joy_usb_opts[];
 extern struct rc_option joy_ps2_opts[];
 
@@ -96,9 +93,8 @@ extern struct rc_option joy_ps2_opts[];
 
 /*** prototypes ***/
 void joy_evaluate_moves(void);
-void joy_i386_init(void);
+void joy_standard_init(void);
 void joy_pad_init(void);
-void joy_x11_init(void);
 void joy_usb_init(void);
 void joy_ps2_init(void);
 void joy_ps2_exit(void);

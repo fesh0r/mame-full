@@ -89,30 +89,21 @@ static UINT8			joystick_type[JOY_MAX][JOY_AXES];
 
 /* prototypes */
 static int decode_digital(struct rc_option *option, const char *arg, int priority);
+static int devices_verify_joytype(struct rc_option *option, const char *arg,
+		int priority);
 
 /* global input options */
 struct rc_option input_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "joytype", "jt", rc_int, &joytype, "0", 0, 7, NULL, "Select type of joystick support to use:\n"
-		"0 No joystick\n"
-		"1 i386 style joystick driver (if compiled in)\n"
-		"2 Fm Town Pad support (if compiled in)\n"
-		"3 X11 input extension joystick (if compiled in)\n"
-		"4 new i386 linux 1.x.x joystick driver(if compiled in)\n"
-		"5 NetBSD USB joystick driver (if compiled in)\n"
-		"6 PS2-Linux native pad (if compiled in)\n"
-		"7 SDL joystick driver" },
+	{ "joytype", "jt", rc_int, &joytype, "0", 0, 5, devices_verify_joytype, NULL },
 	{ "analogstick", "as", rc_bool, &analogstick, "0", 0, 0, NULL, "Use Joystick as analog for analog controls" },
-#ifdef I386_JOYSTICK
-	{ NULL, NULL, rc_link, joy_i386_opts, NULL, 0, 0, NULL, NULL },
+#ifdef STANDARD_JOYSTICK
+	{ NULL, NULL, rc_link, joy_standard_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef LIN_FM_TOWNS
 	{ NULL, NULL, rc_link, joy_pad_opts, NULL, 0, 0, NULL, NULL },
-#endif
-#ifdef X11_JOYSTICK
-	{ NULL, NULL, rc_link, joy_x11_opts, NULL, 0, 0, NULL, NULL },
 #endif
 #ifdef USB_JOYSTICK
 	{ NULL, NULL, rc_link, joy_usb_opts, NULL, 0, 0, NULL, NULL },
@@ -552,20 +543,14 @@ int osd_input_initpre(void)
 	{
 		case JOY_NONE:
 			break;
-#ifdef I386_JOYSTICK
-		case JOY_I386NEW:
-		case JOY_I386:
-			joy_i386_init();
+#ifdef STANDARD_JOYSTICK
+		case JOY_STANDARD:
+			joy_standard_init();
 			break;
 #endif
 #ifdef LIN_FM_TOWNS
 		case JOY_PAD:
 			joy_pad_init ();
-			break;
-#endif
-#ifdef X11_JOYSTICK
-		case JOY_X11:
-			joy_x11_init();
 			break;
 #endif
 #ifdef USB_JOYSTICK
@@ -1847,6 +1832,81 @@ usage:
 	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
 	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
 	return -1;
+}
+
+
+static int devices_verify_joytype(struct rc_option *option, const char *arg,
+		int priority)
+{
+	static char help_buf[1024];
+	int valid[6];
+	memset(valid, 0, sizeof(valid));
+	valid[0] = 1;
+#ifdef STANDARD_JOYSTICK
+		valid[1] = 1;
+#endif
+#ifdef LIN_FM_TOWNS
+		valid[2] = 1;
+#endif
+#ifdef USB_JOYSTICK
+		valid[3] = 1;
+#endif
+#ifdef PS2_JOYSTICK
+		valid[4] = 1;
+#endif
+#if defined SDL || defined SDL_JOYSTICK
+		valid[5] = 1;
+#endif
+	if (!option->help)
+	{
+		char *dest = help_buf;
+		int bufsize = 1024;
+		int i, n;
+
+		n = snprintf(dest, bufsize, "Select type of joystick support to use:\n"
+				"0 No joystick");
+		dest    += n;
+		bufsize -= n;
+
+#ifdef STANDARD_JOYSTICK
+		n = snprintf(dest, bufsize, "\n1 Standard joystick");
+		dest    += n;
+		bufsize -= n;
+#endif
+#ifdef LIN_FM_TOWNS
+		n = snprintf(dest, bufsize, "\n2 FM Towns pad");
+		dest    += n;
+		bufsize -= n;
+#endif
+#ifdef USB_JOYSTICK
+		n = snprintf(dest, bufsize, "\n3 NetBSD/FreeBSD USB joystick");
+		dest    += n;
+		bufsize -= n;
+#endif
+#ifdef PS2_JOYSTICK
+		n = snprintf(dest, bufsize, "\n4 PS2-Linux native pad");
+		dest    += n;
+		bufsize -= n;
+#endif
+#if defined SDL || defined SDL_JOYSTICK
+		n = snprintf(dest, bufsize, "\n5 SDL joystick");
+		dest    += n;
+		bufsize -= n;
+#endif
+
+		option->help = help_buf;
+	}
+
+	if (!valid[joytype])
+	{
+		fprintf(stderr, "Error: joytype %d is not available\n",
+				joytype);
+		return 1;
+	}
+
+	option->priority = priority;
+
+	return 0;
 }
 
 

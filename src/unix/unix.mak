@@ -39,18 +39,13 @@ LIBS.beos          = `$(SDL_CONFIG) --libs`
 ##############################################################################
 #first calculate the X11 Joystick driver settings, this is done here since
 #they are only valid for X11 based display methods
-ifdef JOY_X11
-JOY_X11_CFLAGS = -DX11_JOYSTICK "-DX11_JOYNAME='$(X11_JOYNAME)'" -DUSE_X11_JOYEVENTS
-JOY_X11_LIBS   = -lXi
-endif
-
 ifdef XINPUT_DEVICES
 XINPUT_DEVICES_CFLAGS = -DUSE_XINPUT_DEVICES
 XINPUT_DEVICES_LIBS = -lXi
 endif
 
 # svga and ggi also use $(X11LIB) since that's where zlib often is
-LIBS.x11        = $(X11LIB) $(JOY_X11_LIBS) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
+LIBS.x11        = $(X11LIB) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
 LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
 ifdef GLIDE2
@@ -62,7 +57,7 @@ LIBS.openstep	= -framework AppKit
 LIBS.SDL	= $(X11LIB) `$(SDL_CONFIG) --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
-CFLAGS.x11      = $(X11INC) $(JOY_X11_CFLAGS) $(XINPUT_DEVICES_CFLAGS)
+CFLAGS.x11      = $(X11INC) $(XINPUT_DEVICES_CFLAGS)
 ifdef GLIDE2
 CFLAGS.svgafx   = -I/usr/include/glide
 else
@@ -381,12 +376,8 @@ SOUND_OBJS += $(DSP_DIR)/waveout.o
 endif
 
 # joystick objs
-ifdef JOY_X11
-JOY_OBJS += $(JOY_DIR)/joy_x11.o
-endif
-
-ifdef JOY_I386
-JOY_OBJS += $(JOY_DIR)/joy_i386.o
+ifdef JOY_STANDARD
+JOY_OBJS += $(JOY_DIR)/joy_standard.o
 endif
 
 ifdef JOY_PAD
@@ -479,8 +470,8 @@ CONFIG  += -DSYSDEP_DSP_WAVEOUT
 endif
 
 # Joystick drivers config
-ifdef JOY_I386
-CONFIG += -DI386_JOYSTICK
+ifdef JOY_STANDARD
+CONFIG += -DSTANDARD_JOYSTICK
 endif
 ifdef JOY_PAD
 CONFIG += -DLIN_FM_TOWNS

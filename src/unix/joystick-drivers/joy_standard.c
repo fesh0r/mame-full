@@ -2,8 +2,9 @@
 #include "devices.h"
 
 static char *joy_dev = NULL; /* name of joystick device prefix */
+static int use_old_driver = 0;
 
-struct rc_option joy_i386_opts[] = {
+struct rc_option joy_standard_opts[] = {
    /* name, shortname, type, dest, deflt, min, max, func, help */
 #if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
    { "joydevname",	"jdev",			rc_string,	&joy_dev,
@@ -14,7 +15,7 @@ struct rc_option joy_i386_opts[] = {
      "/dev/js",		0,			0,		NULL,
      "Joystick device prefix (defaults to /dev/js)" },
 #else
-#ifdef I386_JOYSTICK
+#ifdef STANDARD_JOYSTICK
 #error You need to give a define for your OS here
 #endif
 #endif  /* arch */
@@ -23,7 +24,7 @@ struct rc_option joy_i386_opts[] = {
      NULL }
 };
 
-#ifdef I386_JOYSTICK
+#ifdef STANDARD_JOYSTICK
 
 #include <sys/ioctl.h>
 
@@ -39,25 +40,25 @@ typedef struct joystick joy_struct;
 typedef struct JS_DATA_TYPE joy_struct;
 
 #ifdef JS_VERSION
-#define I386NEW_JOYSTICK 1
+#define NEW_JOYSTICK 1
 #endif
 
 #else
-#error "i386 style joystick only supported under linux, openbsd, netbsd & freebsd. "
-   "patches to support other arch's are welcome ;)"
+#error "Standard joystick only supported under Linux, OpenBSD, NetBSD and FreeBSD. "
+   "Patches to support other architectures are welcome."
 #endif
 
 /* #define JDEBUG */
 
-void joy_i386_poll(void);
-void joy_i386new_poll(void);
+void joy_standard_poll(void);
+void joy_standard_new_poll(void);
 static joy_struct my_joy_data;
 
-void joy_i386_init(void)
+void joy_standard_init(void)
 {
 	int i, j;
 	char devname[20];
-#ifdef I386NEW_JOYSTICK
+#ifdef NEW_JOYSTICK
 	int version;
 #endif
 
@@ -80,13 +81,13 @@ void joy_i386_init(void)
 		}
 	}
 
-	fprintf (stderr_file, "I386 joystick interface initialization...\n");
+	fprintf (stderr_file, "Standard joystick interface initialization...\n");
 	for (i = first_dev; i <= last_dev; i++)
 	{
 		sprintf (devname, "%s%d", joy_dev, i);
 		if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
 		{
-			if(joytype != JOY_I386NEW)
+			if (use_old_driver)
 			{
 				if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
 				{
@@ -95,10 +96,11 @@ void joy_i386_init(void)
 					continue;
 				}
 			}
-			switch(joytype)
+
+			switch(use_old_driver)
 			{
-				case JOY_I386NEW:
-#ifdef I386NEW_JOYSTICK
+				case 0:
+#ifdef NEW_JOYSTICK
 					/* new joystick driver 1.x.x API 
 					   check the running version of driver, if 1.x.x is
 					   not detected fall back to 0.8 API */
@@ -122,7 +124,7 @@ void joy_i386_init(void)
 							joy_data[i].axis[j].max =  32768;
 							joy_data[i].axis[j].mid = 0;
 						}
-						joy_poll_func = joy_i386new_poll;
+						joy_poll_func = joy_standard_new_poll;
 						break;
 					}
 					/* else we're running on a kernel with 0.8 driver */
@@ -135,8 +137,9 @@ void joy_i386_init(void)
 					fprintf (stderr_file, "New joystick driver (1.x.x) support not compiled in.\n");
 					fprintf (stderr_file, "Falling back to 0.8 joystick driver api\n");
 #endif            
-					joytype = JOY_I386;
-				case JOY_I386:
+					use_old_driver = 1;
+					/* fall through to the next case */
+				case 1:
 					joy_data[i].num_axes = 2;
 #if defined(__ARCH_netbsd) || defined(__ARCH_freebsd) || defined(__ARCH_openbsd)
 					joy_data[i].num_buttons = 2;
@@ -150,7 +153,7 @@ void joy_i386_init(void)
 					joy_data[i].axis[0].max = my_joy_data.x + 10;
 					joy_data[i].axis[1].max = my_joy_data.y + 10;
 
-					joy_poll_func = joy_i386_poll;
+					joy_poll_func = joy_standard_poll;
 					break;
 			}
 			fcntl (joy_data[i].fd, F_SETFL, O_NONBLOCK);
@@ -158,11 +161,11 @@ void joy_i386_init(void)
 	}
 }
 
-#ifdef I386NEW_JOYSTICK
+#ifdef NEW_JOYSTICK
 /* 
  * Routine to manage PC clones joystick via new Linux driver 1.2.xxx
  */
-void joy_i386new_poll (void)
+void joy_standard_new_poll (void)
 {
 	struct js_event js;
 	int i;
@@ -199,7 +202,7 @@ void joy_i386new_poll (void)
 /* 
  * Routine to manage PC clones joystick via standard driver 
  */
-void joy_i386_poll(void)
+void joy_standard_poll(void)
 {
 	int i, j;
 
