@@ -83,6 +83,7 @@ Bit 6 	Bit 5
 
 
 static crtc6845_state crtc;
+static m6845_personality_t personality;
 
 #if 0
 /* VSYNC functions */
@@ -134,6 +135,7 @@ void crtc6845_config(const struct crtc6845_interface *intf)
 	crct6845_calls.out_DE_func=*intf->out_DE_func;
 	crct6845_calls.out_CR_func=*intf->out_CR_func;
 	crct6845_calls.out_CRE_func=*intf->out_CRE_func;
+	personality = M6845_PERSONALITY_GENUINE;
 }
 
 void	crtc6845_start(void)
@@ -260,6 +262,30 @@ int crtc6845_register_r(int offset)
 
 	switch (crtc.address_register)
 	{
+		case 12:
+			switch(personality)
+			{
+				case M6845_PERSONALITY_UM6845:
+				case M6845_PERSONALITY_HD6845S:
+				case M6845_PERSONALITY_AMS40489:
+				case M6845_PERSONALITY_PREASIC:
+					/* not sure about M6845_PERSONALITY_PREASIC */
+					retval=R12_screen_start_address_H;
+					break;
+			}
+			break;
+		case 13:
+			switch(personality)
+			{
+				case M6845_PERSONALITY_UM6845:
+				case M6845_PERSONALITY_HD6845S:
+				case M6845_PERSONALITY_AMS40489:
+				case M6845_PERSONALITY_PREASIC:
+					/* not sure about M6845_PERSONALITY_PREASIC */
+					retval=R13_screen_start_address_L;
+					break;
+			}
+			break;
 		case 14:
 			retval=R14_cursor_address_H;
 			break;
@@ -628,6 +654,11 @@ int crtc6845_horizontal_sync_r(int offset) { return crtc.HSYNC; }             /*
 int crtc6845_vertical_sync_r(int offset)   { return crtc.VSYNC; }             /* VS = Vertical Sync */
 int crtc6845_display_enabled_r(int offset) { return crtc.Display_Delayed_Enabled; }   /* DE = Display Enabled */
 int crtc6845_cursor_enabled_r(int offset)  { return crtc.Cursor_Delayed_Status; }             /* CR = Cursor Enabled */
+
+void crtc6845_set_personality(m6845_personality_t p)
+{
+	personality = p;
+}
 
 #if 0
 

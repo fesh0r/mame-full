@@ -9,6 +9,17 @@
 
  ************************************************************************/
 
+typedef enum
+{
+	M6845_PERSONALITY_GENUINE,
+	M6845_PERSONALITY_PC1512,
+	M6845_PERSONALITY_UM6845,
+	M6845_PERSONALITY_UM6845R,
+	M6845_PERSONALITY_HD6845S,
+	M6845_PERSONALITY_AMS40489,
+	M6845_PERSONALITY_PREASIC
+} m6845_personality_t;
+
 struct crtc6845_interface
 {
 	void (*out_MA_func)(int offset, int data);
@@ -105,9 +116,10 @@ void crtc6845_recalc(int offset, int cycles);
 void crtc6845_set_state(int offset, crtc6845_state *state);
 void crtc6845_get_state(int offset, crtc6845_state *state);
 
-void	crtc6845_reset(int which);
+void crtc6845_reset(int which);
 
 void crtc6845_start(void);
 
+void crtc6845_set_personality(m6845_personality_t personality);
 
 

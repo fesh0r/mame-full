@@ -47,7 +47,6 @@ Some bugs left :
 
 #define MANUFACTURER_NAME 0x07
 #define TV_REFRESH_RATE 0x10
-#define CRTC_TYPE 0xA0
 
 //int selected_crtc6845_address = 0;
 
@@ -582,7 +581,10 @@ static READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0xFF;
 	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
-	int crtc_type;
+	m6845_personality_t crtc_type;
+
+	crtc_type = readinputportbytag("crtc");
+	crtc6845_set_personality(crtc_type);
 
 	/* if b14 = 0 : CRTC Read selected */
 	if ((offset & (1<<14)) == 0)
@@ -591,13 +593,12 @@ static READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 		case 0x02:
 			/* CRTC Type 1 : Read Status Register
 			   CRTC Type 3 or 4 : Read from selected internal 6845 register */
-			crtc_type = (readinputport(10)&CRTC_TYPE)>>5;
 			switch(crtc_type) {
-			case 0x01:
+			case M6845_PERSONALITY_UM6845R:
 				data = amstrad_CRTC_CR; /* Read Status Register */
 				break;
-			case 0x03:
-			case 0x04:
+			case M6845_PERSONALITY_AMS40489:
+			case M6845_PERSONALITY_PREASIC:
 				data = crtc6845_register_r(0);
 				break;
 			}
@@ -855,7 +856,7 @@ int multiface_hardware_enabled(void)
 {
 		if (multiface_ram!=NULL)
 		{
-				if ((readinputport(11) & 0x01)!=0)
+				if ((readinputportbytag("multiface") & 0x01)!=0)
 				{
 						return 1;
 				}
@@ -1060,7 +1061,7 @@ static int 	amstrad_cpu_acknowledge_int(int cpu)
 
 static VIDEO_EOF( amstrad )
 {
-	if ((readinputport(11) & 0x02)!=0) {
+	if ((readinputportbytag("multiface") & 0x02)!=0) {
 			multiface_stop();
 	}
 }
@@ -1483,18 +1484,6 @@ static INPUT_PORTS_START( amstrad_keyboard )
 INPUT_PORTS_END
 
 
-#define MULTIFACE_PORTS \
-	PORT_START \
-	PORT_CONFNAME(0x01, 0x00, "Multiface Hardware" ) \
-	PORT_CONFSETTING(0x00, DEF_STR( Off) ) \
-	PORT_CONFSETTING(0x01, DEF_STR( On) ) \
-	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Multiface Stop") PORT_CODE(KEYCODE_F1) \
-
-
-
-
-
-
 /* Steph 2000-10-27	I remapped the 'Machine Name' Dip Switches (easier to understand) */
 
 INPUT_PORTS_START(amstrad)
@@ -1538,16 +1527,20 @@ PORT_START
    Pre-ASIC??? Amstrad?     4 In the "cost-down" CPC6128, the CRTC functionality is integrated into a single ASIC IC. This ASIC is often refered to as the "Pre-ASIC" because it preceeded the CPC+ ASIC
 As far as I know, the KC compact used HD6845S only. 
 */
-	PORT_START
-	PORT_DIPNAME( CRTC_TYPE, 0x20, "CRTC Type" )
-	PORT_DIPSETTING(0x00, "Type 0 - UM6845" )
-	PORT_DIPSETTING(0x00, "Type 0 - HD6845S" )
-	PORT_DIPSETTING(0x20, "Type 1 - UM6845R" )
-	PORT_DIPSETTING(0x40, "Type 2 - MC6845" )
-	PORT_DIPSETTING(0x60, "Type 3 - AMS40489" )
-	PORT_DIPSETTING(0x80, "Type 4 - Pre-ASIC???" )
+	PORT_START_TAG("crtc")
+	PORT_DIPNAME( 0xFF, M6845_PERSONALITY_UM6845R, "CRTC Type" )
+	PORT_DIPSETTING(M6845_PERSONALITY_UM6845, "Type 0 - UM6845" )
+	PORT_DIPSETTING(M6845_PERSONALITY_HD6845S, "Type 0 - HD6845S" )
+	PORT_DIPSETTING(M6845_PERSONALITY_UM6845R, "Type 1 - UM6845R" )
+	PORT_DIPSETTING(M6845_PERSONALITY_GENUINE, "Type 2 - MC6845" )
+	PORT_DIPSETTING(M6845_PERSONALITY_AMS40489, "Type 3 - AMS40489" )
+	PORT_DIPSETTING(M6845_PERSONALITY_PREASIC, "Type 4 - Pre-ASIC???" )
 
-	MULTIFACE_PORTS
+	PORT_START_TAG("multiface")
+	PORT_CONFNAME(0x01, 0x00, "Multiface Hardware" )
+	PORT_CONFSETTING(0x00, DEF_STR( Off) )
+	PORT_CONFSETTING(0x01, DEF_STR( On) )
+	PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME("Multiface Stop") PORT_CODE(KEYCODE_F1)
 
 INPUT_PORTS_END
 
