@@ -18,12 +18,12 @@ extern MACHINE_INIT( lisa );
 
 extern void lisa_interrupt(void);
 
-READ_HANDLER ( lisa_fdc_io_r );
-WRITE_HANDLER ( lisa_fdc_io_w );
-READ_HANDLER ( lisa_fdc_r );
-READ_HANDLER ( lisa210_fdc_r );
-WRITE_HANDLER ( lisa_fdc_w );
-WRITE_HANDLER ( lisa210_fdc_w );
+ READ8_HANDLER ( lisa_fdc_io_r );
+WRITE8_HANDLER ( lisa_fdc_io_w );
+ READ8_HANDLER ( lisa_fdc_r );
+ READ8_HANDLER ( lisa210_fdc_r );
+WRITE8_HANDLER ( lisa_fdc_w );
+WRITE8_HANDLER ( lisa210_fdc_w );
 READ16_HANDLER ( lisa_r );
 WRITE16_HANDLER ( lisa_w );
 

@@ -67,8 +67,8 @@ Changes:
 			uses some functions in 128, and tc2048/ts2048 use some
 			of the functions in 48k. The code has been arranged so
 			these functions come in some kind of "override" order,
-			read functions changed to use READ_HANDLER and write
-			functions changed to use WRITE_HANDLER.
+			read functions changed to use  READ8_HANDLER and write
+			functions changed to use WRITE8_HANDLER.
 			Added Scorpion256 preliminary.
 18/6/2001	DJR -	Added support for Interface 2 cartridges.
 xx/xx/2001	KS -	TS-2068 sound fixed.
@@ -181,7 +181,7 @@ static struct AY8910interface spectrum_ay_interface =
 
 int PreviousFE = 0;
 
-static WRITE_HANDLER(spectrum_port_fe_w)
+static WRITE8_HANDLER(spectrum_port_fe_w)
 {
 	unsigned char Changed;
 
@@ -228,7 +228,7 @@ ADDRESS_MAP_END
 
 /* KT: more accurate keyboard reading */
 /* DJR: Spectrum+ keys added */
-static READ_HANDLER(spectrum_port_fe_r)
+static  READ8_HANDLER(spectrum_port_fe_r)
 {
    int lines = offset>>8;
    int data = 0xff;
@@ -297,24 +297,24 @@ static READ_HANDLER(spectrum_port_fe_r)
 }
 
 /* kempston joystick interface */
-static READ_HANDLER(spectrum_port_1f_r)
+static  READ8_HANDLER(spectrum_port_1f_r)
 {
   return readinputport(13) & 0x1f;
 }
 
 /* fuller joystick interface */
-static READ_HANDLER(spectrum_port_7f_r)
+static  READ8_HANDLER(spectrum_port_7f_r)
 {
   return readinputport(14) | (0xff^0x8f);
 }
 
 /* mikrogen joystick interface */
-static READ_HANDLER(spectrum_port_df_r)
+static  READ8_HANDLER(spectrum_port_df_r)
 {
   return readinputport(15) | (0xff^0x1f);
 }
 
-static READ_HANDLER ( spectrum_port_r )
+static  READ8_HANDLER ( spectrum_port_r )
 {
 		if ((offset & 1)==0)
 			return spectrum_port_fe_r(offset);
@@ -331,7 +331,7 @@ static READ_HANDLER ( spectrum_port_r )
 		return cpu_getscanline()<193 ? spectrum_colorram[(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-static WRITE_HANDLER ( spectrum_port_w )
+static WRITE8_HANDLER ( spectrum_port_w )
 {
 	if ((offset & 1)==0)
 		spectrum_port_fe_w(offset,data);
@@ -377,7 +377,7 @@ static int spectrum_alloc_ram(int ram_size_in_k)
 int spectrum_128_port_7ffd_data = -1;
 unsigned char *spectrum_128_screen_location = NULL;
 
-static WRITE_HANDLER(spectrum_128_port_7ffd_w)
+static WRITE8_HANDLER(spectrum_128_port_7ffd_w)
 {
 	   /* D0-D2: RAM page located at 0x0c000-0x0ffff */
 	   /* D3 - Screen select (screen 0 in ram page 5, screen 1 in ram page 7 */
@@ -439,22 +439,22 @@ extern void spectrum_128_update_memory(void)
 
 
 
-static WRITE_HANDLER(spectrum_128_port_bffd_w)
+static WRITE8_HANDLER(spectrum_128_port_bffd_w)
 {
 		AY8910_write_port_0_w(0, data);
 }
 
-static WRITE_HANDLER(spectrum_128_port_fffd_w)
+static WRITE8_HANDLER(spectrum_128_port_fffd_w)
 {
 		AY8910_control_port_0_w(0, data);
 }
 
-static READ_HANDLER(spectrum_128_port_fffd_r)
+static  READ8_HANDLER(spectrum_128_port_fffd_r)
 {
 		return AY8910_read_port_0_r(0);
 }
 
-static READ_HANDLER ( spectrum_128_port_r )
+static  READ8_HANDLER ( spectrum_128_port_r )
 {
 	 if ((offset & 1)==0)
 	 {
@@ -486,7 +486,7 @@ static READ_HANDLER ( spectrum_128_port_r )
 	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-static WRITE_HANDLER ( spectrum_128_port_w )
+static WRITE8_HANDLER ( spectrum_128_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -586,13 +586,13 @@ static int spectrum_plus3_memory_selections[]=
 		4,7,6,3
 };
 
-static WRITE_HANDLER(spectrum_plus3_port_3ffd_w)
+static WRITE8_HANDLER(spectrum_plus3_port_3ffd_w)
 {
 		if (~readinputport(16) & 0x20)
 				nec765_data_w(0,data);
 }
 
-static READ_HANDLER(spectrum_plus3_port_3ffd_r)
+static  READ8_HANDLER(spectrum_plus3_port_3ffd_r)
 {
 		if (readinputport(16) & 0x20)
 				return 0xff;
@@ -601,7 +601,7 @@ static READ_HANDLER(spectrum_plus3_port_3ffd_r)
 }
 
 
-static READ_HANDLER(spectrum_plus3_port_2ffd_r)
+static  READ8_HANDLER(spectrum_plus3_port_2ffd_r)
 {
 		if (readinputport(16) & 0x20)
 				return 0xff;
@@ -699,7 +699,7 @@ void spectrum_plus3_update_memory(void)
 
 
 
-static WRITE_HANDLER(spectrum_plus3_port_7ffd_w)
+static WRITE8_HANDLER(spectrum_plus3_port_7ffd_w)
 {
 	   /* D0-D2: RAM page located at 0x0c000-0x0ffff */
 	   /* D3 - Screen select (screen 0 in ram page 5, screen 1 in ram page 7 */
@@ -717,7 +717,7 @@ static WRITE_HANDLER(spectrum_plus3_port_7ffd_w)
 		spectrum_plus3_update_memory();
 }
 
-static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
+static WRITE8_HANDLER(spectrum_plus3_port_1ffd_w)
 {
 
 		/* D0-D1: ROM/RAM paging */
@@ -741,7 +741,7 @@ static WRITE_HANDLER(spectrum_plus3_port_1ffd_w)
 }
 
 /* decoding as per spectrum FAQ on www.worldofspectrum.org */
-static READ_HANDLER ( spectrum_plus3_port_r )
+static  READ8_HANDLER ( spectrum_plus3_port_r )
 {
 	 if ((offset & 1)==0)
 	 {
@@ -786,7 +786,7 @@ static READ_HANDLER ( spectrum_plus3_port_r )
 	 return cpu_getscanline()<193 ? spectrum_128_screen_location[0x1800|(cpu_getscanline()&0xf8)<<2]:0xff;
 }
 
-static WRITE_HANDLER ( spectrum_plus3_port_w )
+static WRITE8_HANDLER ( spectrum_plus3_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -888,23 +888,23 @@ static MACHINE_INIT( spectrum_plus3 )
 int ts2068_port_ff_data = -1; /* Display enhancement control */
 int ts2068_port_f4_data = -1; /* Horizontal Select Register */
 
-static READ_HANDLER(ts2068_port_f4_r)
+static  READ8_HANDLER(ts2068_port_f4_r)
 {
 		return ts2068_port_f4_data;
 }
 
-static WRITE_HANDLER(ts2068_port_f4_w)
+static WRITE8_HANDLER(ts2068_port_f4_w)
 {
 		ts2068_port_f4_data = data;
 		ts2068_update_memory();
 }
 
-static WRITE_HANDLER(ts2068_port_f5_w)
+static WRITE8_HANDLER(ts2068_port_f5_w)
 {
 		AY8910_control_port_0_w(0, data);
 }
 
-static READ_HANDLER(ts2068_port_f6_r)
+static  READ8_HANDLER(ts2068_port_f6_r)
 {
 		/* TODO - Reading from register 14 reads the joystick ports
 		   set bit 8 of address to read joystick #1
@@ -915,17 +915,17 @@ static READ_HANDLER(ts2068_port_f6_r)
 		return AY8910_read_port_0_r(0);
 }
 
-static WRITE_HANDLER(ts2068_port_f6_w)
+static WRITE8_HANDLER(ts2068_port_f6_w)
 {
 		AY8910_write_port_0_w(0, data);
 }
 
-static READ_HANDLER(ts2068_port_ff_r)
+static  READ8_HANDLER(ts2068_port_ff_r)
 {
 		return ts2068_port_ff_data;
 }
 
-static WRITE_HANDLER(ts2068_port_ff_w)
+static WRITE8_HANDLER(ts2068_port_ff_w)
 {
 		/* Bits 0-2 Video Mode Select
 		   Bits 3-5 64 column mode ink/paper selection
@@ -939,7 +939,7 @@ static WRITE_HANDLER(ts2068_port_ff_w)
 }
 
 
-static READ_HANDLER ( ts2068_port_r )
+static  READ8_HANDLER ( ts2068_port_r )
 {
 		switch (offset & 0xff)
 		{
@@ -959,7 +959,7 @@ static READ_HANDLER ( ts2068_port_r )
 		return 0xff;
 }
 
-static WRITE_HANDLER ( ts2068_port_w )
+static WRITE8_HANDLER ( ts2068_port_w )
 {
 /* Ports #fd & #fc were reserved by Timex for bankswitching and are not used
    by either the hardware or system software.
@@ -1362,7 +1362,7 @@ static void tc2048_port_ff_w(int offset, int data)
 		logerror("Port %04x write %02x\n", offset, data);
 }
 
-static READ_HANDLER ( tc2048_port_r )
+static  READ8_HANDLER ( tc2048_port_r )
 {
 		if ((offset & 1)==0)
 				return spectrum_port_fe_r(offset);
@@ -1378,7 +1378,7 @@ static READ_HANDLER ( tc2048_port_r )
 		return 0xff;
 }
 
-static WRITE_HANDLER ( tc2048_port_w )
+static WRITE8_HANDLER ( tc2048_port_w )
 {
 		if ((offset & 1)==0)
 				spectrum_port_fe_w(offset,data);
@@ -1495,7 +1495,7 @@ static void betadisk_wd179x_callback(int state)
 }
 
 /* these are active only when betadisk is enabled */
-static WRITE_HANDLER(betadisk_w)
+static WRITE8_HANDLER(betadisk_w)
 {
 
 	if (betadisk_active)
@@ -1506,7 +1506,7 @@ static WRITE_HANDLER(betadisk_w)
 
 
 /* these are active only when betadisk is enabled */
-static READ_HANDLER(betadisk_r)
+static  READ8_HANDLER(betadisk_r)
 {
 	if (betadisk_active)
 	{
@@ -1636,7 +1636,7 @@ static void scorpion_update_memory(void)
 }
 
 
-static WRITE_HANDLER(scorpion_port_7ffd_w)
+static WRITE8_HANDLER(scorpion_port_7ffd_w)
 {
 	logerror("scorpion 7ffd w: %02x\n", data);
 
@@ -1651,7 +1651,7 @@ static WRITE_HANDLER(scorpion_port_7ffd_w)
 	scorpion_update_memory();
 }
 
-static WRITE_HANDLER(scorpion_port_1ffd_w)
+static WRITE8_HANDLER(scorpion_port_1ffd_w)
 {
 	logerror("scorpion 1ffd w: %02x\n", data);
 
@@ -1667,7 +1667,7 @@ static WRITE_HANDLER(scorpion_port_1ffd_w)
 
 /* not sure if decoding is full or partial on scorpion */
 /* TO BE CHECKED! */
-static READ_HANDLER(scorpion_port_r)
+static  READ8_HANDLER(scorpion_port_r)
 {
 	 if ((offset & 1)==0)
 	 {
@@ -1709,7 +1709,7 @@ static READ_HANDLER(scorpion_port_r)
 
 /* not sure if decoding is full or partial on scorpion */
 /* TO BE CHECKED! */
-static WRITE_HANDLER(scorpion_port_w)
+static WRITE8_HANDLER(scorpion_port_w)
 {
 	if ((offset & 1)==0)
 		spectrum_port_fe_w(offset,data);
@@ -1779,13 +1779,13 @@ static MACHINE_INIT( scorpion )
 /****************************************************************************************************/
 /* pentagon */
 
-static READ_HANDLER(pentagon_port_r)
+static  READ8_HANDLER(pentagon_port_r)
 {
 	return 0x0ff;
 }
 
 
-static WRITE_HANDLER(pentagon_port_w)
+static WRITE8_HANDLER(pentagon_port_w)
 {
 }
 

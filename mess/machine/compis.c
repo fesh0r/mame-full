@@ -197,12 +197,12 @@ void compis_osp_pic_irq(UINT8 irq)
 	pic8259_0_issue_irq(irq);
 }
 
-READ_HANDLER ( compis_osp_pic_r )
+ READ8_HANDLER ( compis_osp_pic_r )
 {
 	return pic8259_0_r (offset >> 1);
 }
 
-WRITE_HANDLER ( compis_osp_pic_w )
+WRITE8_HANDLER ( compis_osp_pic_w )
 {
 	pic8259_0_w (offset >> 1, data);
 }
@@ -316,7 +316,7 @@ static nec765_interface compis_fdc_interface =
 	compis_fdc_dma_drq
 };
 
-READ_HANDLER (compis_fdc_dack_r)
+ READ8_HANDLER (compis_fdc_dack_r)
 {
 	UINT16 data;
 	data = 0xffff;
@@ -329,7 +329,7 @@ READ_HANDLER (compis_fdc_dack_r)
 	return data;
 }
 
-WRITE_HANDLER (compis_fdc_w)
+WRITE8_HANDLER (compis_fdc_w)
 {
 	switch(offset)
 	{
@@ -342,7 +342,7 @@ WRITE_HANDLER (compis_fdc_w)
 	}
 }
 
-READ_HANDLER (compis_fdc_r)
+ READ8_HANDLER (compis_fdc_r)
 {
 	UINT16 data;
 	data = 0xffff;
@@ -378,7 +378,7 @@ READ_HANDLER (compis_fdc_r)
 /* Bit 6: J7-8 Centronics D6           		                           */
 /* Bit 7: J7-9 Centronics D7          		                           */
 /*-------------------------------------------------------------------------*/
-static WRITE_HANDLER ( compis_ppi_port_a_w )
+static WRITE8_HANDLER ( compis_ppi_port_a_w )
 {
 	compis.printer.data = data;
 }
@@ -392,7 +392,7 @@ static WRITE_HANDLER ( compis_ppi_port_a_w )
 /* Bit 6: J7-13 Centronics SELECT			                   */
 /* Bit 7: Tmr0			      	                                   */
 /*-------------------------------------------------------------------------*/
-static READ_HANDLER ( compis_ppi_port_b_r )
+static  READ8_HANDLER ( compis_ppi_port_b_r )
 {
 	UINT8 data;
 
@@ -415,7 +415,7 @@ static READ_HANDLER ( compis_ppi_port_b_r )
 /* Bit 6: V2-4 Floppy Soft reset   			                   */
 /* Bit 7: V2-3 Floppy Terminal count      	                           */
 /*-------------------------------------------------------------------------*/
-static WRITE_HANDLER ( compis_ppi_port_c_w )
+static WRITE8_HANDLER ( compis_ppi_port_c_w )
 {
 	/* Centronics Strobe */
 	if ((compis.printer.strobe) && !(data & 0x20))
@@ -441,12 +441,12 @@ static ppi8255_interface compis_ppi_interface =
     {compis_ppi_port_c_w}
 };
 
-READ_HANDLER ( compis_ppi_r )
+ READ8_HANDLER ( compis_ppi_r )
 {
 	return ppi8255_0_r (offset >> 1);
 }
 
-WRITE_HANDLER ( compis_ppi_w )
+WRITE8_HANDLER ( compis_ppi_w )
 {
 	ppi8255_0_w (offset >> 1, data);
 }
@@ -468,12 +468,12 @@ static struct pit8253_config compis_pit_config =
 	}
 };
 
-READ_HANDLER ( compis_pit_r )
+ READ8_HANDLER ( compis_pit_r )
 {
 	return pit8253_0_r (offset >> 1);
 }
 
-WRITE_HANDLER ( compis_pit_w )
+WRITE8_HANDLER ( compis_pit_w )
 {
 	pit8253_0_w (offset >> 1 , data);
 }
@@ -495,12 +495,12 @@ static struct pit8253_config compis_osp_pit_config =
 	}
 };
 
-READ_HANDLER ( compis_osp_pit_r )
+ READ8_HANDLER ( compis_osp_pit_r )
 {
 	return pit8253_1_r (offset >> 1);
 }
 
-WRITE_HANDLER ( compis_osp_pit_w )
+WRITE8_HANDLER ( compis_osp_pit_w )
 {
 	pit8253_1_w (offset >> 1, data);
 }
@@ -508,12 +508,12 @@ WRITE_HANDLER ( compis_osp_pit_w )
 /*-------------------------------------------------------------------------*/
 /*  RTC 58174                                                              */
 /*-------------------------------------------------------------------------*/
-READ_HANDLER ( compis_rtc_r )
+ READ8_HANDLER ( compis_rtc_r )
 {
 	return mm58274c_r(0, offset >> 1);
 }
 
-WRITE_HANDLER ( compis_rtc_w )
+WRITE8_HANDLER ( compis_rtc_w )
 {
 	mm58274c_w(0, offset >> 1, data);
 }
@@ -536,7 +536,7 @@ static struct msm8251_interface compis_usart_interface=
 	compis_usart_rxready
 };
 
-READ_HANDLER ( compis_usart_r )
+ READ8_HANDLER ( compis_usart_r )
 {
 	UINT8 data = 0xff;
 
@@ -578,7 +578,7 @@ READ_HANDLER ( compis_usart_r )
 	return data;
 }
 
-WRITE_HANDLER ( compis_usart_w )
+WRITE8_HANDLER ( compis_usart_w )
 {
 	switch (offset)
 	{
@@ -1061,7 +1061,7 @@ static void update_dma_control(int which, int new_control)
  *************************************/
 
 
-READ_HANDLER( i186_internal_port_r )
+ READ8_HANDLER( i186_internal_port_r )
 {
 	int shift = 8 * (offset & 1);
 	int temp, which;
@@ -1298,7 +1298,7 @@ READ_HANDLER( i186_internal_port_r )
  *
  *************************************/
 
-WRITE_HANDLER( i186_internal_port_w )
+WRITE8_HANDLER( i186_internal_port_w )
 {
 	static UINT8 even_byte;
 	int temp, which, data16;

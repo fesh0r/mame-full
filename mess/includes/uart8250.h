@@ -29,15 +29,15 @@ void uart8250_receive(int n, int data);
 #define UART8250_INPUTS_DATA_CARRIER_DETECT 0x0080
 void uart8250_handshake_in(int n, int data);
 
-WRITE_HANDLER ( uart8250_0_w );
-WRITE_HANDLER ( uart8250_1_w );
-WRITE_HANDLER ( uart8250_2_w );
-WRITE_HANDLER ( uart8250_3_w );
+WRITE8_HANDLER ( uart8250_0_w );
+WRITE8_HANDLER ( uart8250_1_w );
+WRITE8_HANDLER ( uart8250_2_w );
+WRITE8_HANDLER ( uart8250_3_w );
 
-READ_HANDLER ( uart8250_0_r );
-READ_HANDLER ( uart8250_1_r );
-READ_HANDLER ( uart8250_2_r );
-READ_HANDLER ( uart8250_3_r );
+ READ8_HANDLER ( uart8250_0_r );
+ READ8_HANDLER ( uart8250_1_r );
+ READ8_HANDLER ( uart8250_2_r );
+ READ8_HANDLER ( uart8250_3_r );
 
 int uart8250_r(int n, int offset);
 void uart8250_w(int n, int offset, int data);

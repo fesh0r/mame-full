@@ -35,14 +35,14 @@ DEVICE_LOAD( odyssey2_cart )
 
 /****** External RAM ******************************/
 
-READ_HANDLER ( odyssey2_bus_r )
+ READ8_HANDLER ( odyssey2_bus_r )
 {
     if ((p1&0x48)==0) return odyssey2_video_r(offset); // seams to have higher priority than ram???
     if (!(p1&0x10)) return ram[offset];
     return 0;
 }
 
-WRITE_HANDLER ( odyssey2_bus_w )
+WRITE8_HANDLER ( odyssey2_bus_w )
 {
     if ((p1&0x50)==0x00) ram[offset]=data;
     if (!(p1&8)) odyssey2_video_w(offset, data);
@@ -52,7 +52,7 @@ WRITE_HANDLER ( odyssey2_bus_w )
 
 /***** 8048 Ports ************************/
 
-READ_HANDLER ( odyssey2_getp1 )
+ READ8_HANDLER ( odyssey2_getp1 )
 {
     UINT8 data=p1;
     logerror("%.6f p1 read %.2x\n", timer_get_time(), data);
@@ -60,7 +60,7 @@ READ_HANDLER ( odyssey2_getp1 )
 }
 
 
-WRITE_HANDLER ( odyssey2_putp1 )
+WRITE8_HANDLER ( odyssey2_putp1 )
 {
     p1=data;
     cpu_setbank(1, memory_region(REGION_USER1)+(((data&3)^3)<<11));
@@ -74,7 +74,7 @@ WRITE_HANDLER ( odyssey2_putp1 )
     logerror("%.6f p1 written %.2x\n", timer_get_time(), data);
 }
 
-READ_HANDLER ( odyssey2_getp2 )
+ READ8_HANDLER ( odyssey2_getp2 )
 {
     UINT8 data=p2;
     UINT8 h=0xff;
@@ -94,13 +94,13 @@ READ_HANDLER ( odyssey2_getp2 )
     return data;
 }
 
-WRITE_HANDLER ( odyssey2_putp2 )
+WRITE8_HANDLER ( odyssey2_putp2 )
 {
     p2=data;
     logerror("%.6f p2 written %.2x\n", timer_get_time(), data);
 }
 
-READ_HANDLER ( odyssey2_getbus )
+ READ8_HANDLER ( odyssey2_getbus )
 {
     UINT8 data=0xff;
     if ((p2&7)!=0) data&=readinputport(6);
@@ -110,7 +110,7 @@ READ_HANDLER ( odyssey2_getbus )
     return data;
 }
 
-WRITE_HANDLER ( odyssey2_putbus )
+WRITE8_HANDLER ( odyssey2_putbus )
 {
     logerror("%.6f bus written %.2x\n", timer_get_time(), data);
 }

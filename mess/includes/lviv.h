@@ -2,8 +2,8 @@
 
 /* machine/lviv.c */
 extern unsigned char * lviv_video_ram;
-READ_HANDLER ( lviv_io_r );
-WRITE_HANDLER ( lviv_io_w );
+ READ8_HANDLER ( lviv_io_r );
+WRITE8_HANDLER ( lviv_io_w );
 MACHINE_INIT( lviv );
 SNAPSHOT_LOAD( lviv );
 

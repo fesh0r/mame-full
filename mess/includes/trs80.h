@@ -27,25 +27,25 @@ void init_trs80(void);
 MACHINE_INIT( trs80 );
 MACHINE_STOP( trs80 );
 
-WRITE_HANDLER ( trs80_port_ff_w );
-READ_HANDLER ( trs80_port_ff_r );
-READ_HANDLER ( trs80_port_xx_r );
+WRITE8_HANDLER ( trs80_port_ff_w );
+ READ8_HANDLER ( trs80_port_ff_r );
+ READ8_HANDLER ( trs80_port_xx_r );
 
 INTERRUPT_GEN( trs80_frame_interrupt );
 INTERRUPT_GEN( trs80_timer_interrupt );
 INTERRUPT_GEN( trs80_fdc_interrupt );
 
-READ_HANDLER( trs80_irq_status_r );
-WRITE_HANDLER( trs80_irq_mask_w );
+ READ8_HANDLER( trs80_irq_status_r );
+WRITE8_HANDLER( trs80_irq_mask_w );
 
-READ_HANDLER( trs80_printer_r );
-WRITE_HANDLER( trs80_printer_w );
+ READ8_HANDLER( trs80_printer_r );
+WRITE8_HANDLER( trs80_printer_w );
 
-WRITE_HANDLER( trs80_motor_w );
+WRITE8_HANDLER( trs80_motor_w );
 
-READ_HANDLER( trs80_keyboard_r );
+ READ8_HANDLER( trs80_keyboard_r );
 
-WRITE_HANDLER( trs80_videoram_w );
+WRITE8_HANDLER( trs80_videoram_w );
 
 #endif	/* TRS80_H */
 

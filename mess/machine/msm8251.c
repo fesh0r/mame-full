@@ -232,7 +232,7 @@ void	msm8251_reset(void)
 }
 
 /* write command */
-WRITE_HANDLER(msm8251_control_w)
+WRITE8_HANDLER(msm8251_control_w)
 {
 
 	if (uart.flags & MSM8251_EXPECTING_MODE)
@@ -545,7 +545,7 @@ WRITE_HANDLER(msm8251_control_w)
 }
 
 /* read status */
-READ_HANDLER(msm8251_status_r)
+ READ8_HANDLER(msm8251_status_r)
 {
 #ifdef VERBOSE
 	logerror("status: %02x\n", uart.status);
@@ -555,7 +555,7 @@ READ_HANDLER(msm8251_status_r)
 }
 
 /* write data */
-WRITE_HANDLER(msm8251_data_w)
+WRITE8_HANDLER(msm8251_data_w)
 {
 	uart.data = data;
 
@@ -587,7 +587,7 @@ static void msm8251_receive_character(UINT8 ch)
 }
 
 /* read data */
-READ_HANDLER(msm8251_data_r)
+ READ8_HANDLER(msm8251_data_r)
 {
 	logerror("read data: %02x\n",uart.data);
 	/* reading clears */

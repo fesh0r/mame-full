@@ -939,7 +939,7 @@ static void wd179x_timed_write_sector_request(void)
 
 
 /* read the FDC status register. This clears IRQ line too */
-READ_HANDLER ( wd179x_status_r )
+ READ8_HANDLER ( wd179x_status_r )
 {
 	WD179X *w = &wd;
 	int result = w->status;
@@ -998,7 +998,7 @@ READ_HANDLER ( wd179x_status_r )
 
 
 /* read the FDC track register */
-READ_HANDLER ( wd179x_track_r )
+ READ8_HANDLER ( wd179x_track_r )
 {
 	WD179X *w = &wd;
 
@@ -1011,7 +1011,7 @@ READ_HANDLER ( wd179x_track_r )
 
 
 /* read the FDC sector register */
-READ_HANDLER ( wd179x_sector_r )
+ READ8_HANDLER ( wd179x_sector_r )
 {
 	WD179X *w = &wd;
 
@@ -1024,7 +1024,7 @@ READ_HANDLER ( wd179x_sector_r )
 
 
 /* read the FDC data register */
-READ_HANDLER ( wd179x_data_r )
+ READ8_HANDLER ( wd179x_data_r )
 {
 	WD179X *w = &wd;
 
@@ -1081,7 +1081,7 @@ READ_HANDLER ( wd179x_data_r )
 
 
 /* write the FDC command register */
-WRITE_HANDLER ( wd179x_command_w )
+WRITE8_HANDLER ( wd179x_command_w )
 {
 	WD179X *w = &wd;
 
@@ -1391,7 +1391,7 @@ WRITE_HANDLER ( wd179x_command_w )
 
 
 /* write the FDC track register */
-WRITE_HANDLER ( wd179x_track_w )
+WRITE8_HANDLER ( wd179x_track_w )
 {
 	WD179X *w = &wd;
 	w->track_reg = data;
@@ -1404,7 +1404,7 @@ WRITE_HANDLER ( wd179x_track_w )
 
 
 /* write the FDC sector register */
-WRITE_HANDLER ( wd179x_sector_w )
+WRITE8_HANDLER ( wd179x_sector_w )
 {
 	WD179X *w = &wd;
 	w->sector = data;
@@ -1416,7 +1416,7 @@ WRITE_HANDLER ( wd179x_sector_w )
 
 
 /* write the FDC data register */
-WRITE_HANDLER ( wd179x_data_w )
+WRITE8_HANDLER ( wd179x_data_w )
 {
 	WD179X *w = &wd;
 
@@ -1461,7 +1461,7 @@ WRITE_HANDLER ( wd179x_data_w )
 
 
 
-READ_HANDLER( wd179x_r )
+ READ8_HANDLER( wd179x_r )
 {
 	data8_t result = 0;
 
@@ -1484,7 +1484,7 @@ READ_HANDLER( wd179x_r )
 
 
 
-WRITE_HANDLER( wd179x_w )
+WRITE8_HANDLER( wd179x_w )
 {
 	switch(offset % 4) {
 	case 0:

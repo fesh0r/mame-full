@@ -36,7 +36,7 @@ DEVICE_LOAD( coleco_cart )
 }
 
 
-READ_HANDLER ( coleco_paddle_r )
+ READ8_HANDLER ( coleco_paddle_r )
 {
 	/* Player 1 */
 	if ((offset & 0x02)==0)
@@ -136,13 +136,13 @@ READ_HANDLER ( coleco_paddle_r )
 }
 
 
-WRITE_HANDLER ( coleco_paddle_toggle_off )
+WRITE8_HANDLER ( coleco_paddle_toggle_off )
 {
 	JoyMode=0;
     return;
 }
 
-WRITE_HANDLER ( coleco_paddle_toggle_on )
+WRITE8_HANDLER ( coleco_paddle_toggle_on )
 {
 	JoyMode=1;
     return;

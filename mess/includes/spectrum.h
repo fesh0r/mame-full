@@ -56,10 +56,10 @@ extern VIDEO_UPDATE( tc2048 );
 
 extern unsigned char *spectrum_characterram;
 extern unsigned char *spectrum_colorram;
-extern WRITE_HANDLER ( spectrum_characterram_w );
-extern READ_HANDLER  ( spectrum_characterram_r );
-extern WRITE_HANDLER ( spectrum_colorram_w );
-extern READ_HANDLER  ( spectrum_colorram_r );
+extern WRITE8_HANDLER ( spectrum_characterram_w );
+extern  READ8_HANDLER  ( spectrum_characterram_r );
+extern WRITE8_HANDLER ( spectrum_colorram_w );
+extern  READ8_HANDLER  ( spectrum_colorram_r );
 
 /* Spectrum screen size in pixels */
 #define SPEC_UNSEEN_LINES  16   /* Non-visible scanlines before first border

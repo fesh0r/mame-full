@@ -21,7 +21,7 @@ extern void tms5501_sensor (int which, UINT8 data);
 UINT8 tms5501_read(int which, UINT16 offset);
 void tms5501_write(int which, UINT16 offset, UINT8 data);
 
-READ_HANDLER( tms5501_0_r );
-WRITE_HANDLER( tms5501_0_w );
+ READ8_HANDLER( tms5501_0_r );
+WRITE8_HANDLER( tms5501_0_w );
 
 #endif /* TMS5501_H */

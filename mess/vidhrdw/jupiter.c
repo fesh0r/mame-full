@@ -20,7 +20,7 @@ VIDEO_START( jupiter )
     return 0;
 }
 
-WRITE_HANDLER( jupiter_vh_charram_w )
+WRITE8_HANDLER( jupiter_vh_charram_w )
 {
 	int chr = offset / 8, offs;
 

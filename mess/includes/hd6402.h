@@ -96,6 +96,6 @@ void	hd6402_set_input(int mask, int data);
 /* link the specified connection to the hd6402 */
 void	hd6402_connect(struct serial_connection *other_connection);
 /* transmit write (tbr pins) */
-WRITE_HANDLER(hd6402_data_w);
+WRITE8_HANDLER(hd6402_data_w);
 /* receive read (rbr pins) */
-READ_HANDLER(hd6402_data_r);
+ READ8_HANDLER(hd6402_data_r);

@@ -720,7 +720,7 @@ void nec765_set_tc_state(int state)
 	}
 }
 
-READ_HANDLER(nec765_status_r)
+ READ8_HANDLER(nec765_status_r)
 {
 #ifdef SUPER_VERBOSE
 	logerror("nec765 status r: %02x\n",fdc.FDC_main);
@@ -1667,7 +1667,7 @@ void nec765_update_state(void)
 }
 
 
-READ_HANDLER(nec765_data_r)
+ READ8_HANDLER(nec765_data_r)
 {
 	if ((fdc.FDC_main & 0x0c0) == 0x0c0)
 	{
@@ -1694,7 +1694,7 @@ READ_HANDLER(nec765_data_r)
 	return fdc.nec765_data_reg;
 }
 
-WRITE_HANDLER(nec765_data_w)
+WRITE8_HANDLER(nec765_data_w)
 {
 #ifdef SUPER_VERBOSE
 	logerror("DATA W: %02x\n", data);
@@ -2027,7 +2027,7 @@ static void nec765_setup_command(void)
 
 
 /* dma acknowledge write */
-WRITE_HANDLER(nec765_dack_w)
+WRITE8_HANDLER(nec765_dack_w)
 {
 	/* clear request */
 	nec765_set_dma_drq(CLEAR_LINE);
@@ -2036,7 +2036,7 @@ WRITE_HANDLER(nec765_dack_w)
 	nec765_data_w(offset, data);
 }
 
-READ_HANDLER(nec765_dack_r)
+ READ8_HANDLER(nec765_dack_r)
 {
 	/* clear data request */
 	nec765_set_dma_drq(CLEAR_LINE);

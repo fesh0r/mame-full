@@ -37,7 +37,7 @@ void machine_stop_geneve(void);
 int video_start_geneve(void);
 void geneve_hblank_interrupt(void);
 
-READ_HANDLER ( geneve_r );
-WRITE_HANDLER ( geneve_w );
+ READ8_HANDLER ( geneve_r );
+WRITE8_HANDLER ( geneve_w );
 
-WRITE_HANDLER ( geneve_peb_mode_cru_w );
+WRITE8_HANDLER ( geneve_peb_mode_cru_w );

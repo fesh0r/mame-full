@@ -115,7 +115,7 @@ VIDEO_UPDATE( pc_video )
 
 
 
-WRITE_HANDLER ( pc_video_videoram_w )
+WRITE8_HANDLER ( pc_video_videoram_w )
 {
 	if (videoram && videoram[offset] != data)
 	{

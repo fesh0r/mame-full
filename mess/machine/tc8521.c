@@ -300,7 +300,7 @@ void tc8521_init(struct tc8521_interface *intf)
 	timer_pulse(TIME_IN_HZ(32), 0, tc8521_timer_callback);
 }
 
-READ_HANDLER(tc8521_r)
+ READ8_HANDLER(tc8521_r)
 {
 		unsigned long register_index;
 
@@ -329,7 +329,7 @@ READ_HANDLER(tc8521_r)
 }
 
 
-WRITE_HANDLER(tc8521_w)
+WRITE8_HANDLER(tc8521_w)
 {
 	unsigned long register_index;
 

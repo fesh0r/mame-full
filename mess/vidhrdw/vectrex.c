@@ -24,10 +24,10 @@
 /*********************************************************************
   Local variables
  *********************************************************************/
-static WRITE_HANDLER ( v_via_pa_w );
-static WRITE_HANDLER( v_via_pb_w );
+static WRITE8_HANDLER ( v_via_pa_w );
+static WRITE8_HANDLER( v_via_pb_w );
 static void vectrex_shift_reg_w (int via_sr);
-static WRITE_HANDLER ( v_via_ca2_w );
+static WRITE8_HANDLER ( v_via_ca2_w );
 
 static struct via6522_interface vectrex_via6522_interface =
 {
@@ -261,7 +261,7 @@ INLINE void vectrex_multiplexer (int mux)
 		DAC_data_w(0,(signed char)vectrex_via_out[PORTA]+0x80);
 }
 
-static WRITE_HANDLER ( v_via_pb_w )
+static WRITE8_HANDLER ( v_via_pb_w )
 {
 	if (!(data & 0x80))
 	{
@@ -304,7 +304,7 @@ static WRITE_HANDLER ( v_via_pb_w )
 	vectrex_via_out[PORTB] = data;
 }
 
-static WRITE_HANDLER ( v_via_pa_w )
+static WRITE8_HANDLER ( v_via_pa_w )
 {
 	double time_;
 
@@ -350,7 +350,7 @@ static void vectrex_shift_reg_w (int via_sr)
 	old_via_sr = via_sr;
 }
 
-static WRITE_HANDLER ( v_via_ca2_w )
+static WRITE8_HANDLER ( v_via_ca2_w )
 {
 	if  (!data)    /* ~ZERO low ? Then zero integrators*/
 		vectrex_zero_integrators();
@@ -390,7 +390,7 @@ static const char *radius_8_led =
 	"     111111     \r";
 */
 
-WRITE_HANDLER( raaspec_led_w )
+WRITE8_HANDLER( raaspec_led_w )
 {
 	struct rectangle;
 

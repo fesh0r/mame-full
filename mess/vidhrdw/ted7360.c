@@ -611,7 +611,7 @@ INTERRUPT_GEN( ted7360_frame_interrupt )
 		ted7360[0x1f]++;
 }
 
-WRITE_HANDLER ( ted7360_port_w )
+WRITE8_HANDLER ( ted7360_port_w )
 {
 	int old;
 
@@ -841,7 +841,7 @@ WRITE_HANDLER ( ted7360_port_w )
 	}
 }
 
-READ_HANDLER ( ted7360_port_r )
+ READ8_HANDLER ( ted7360_port_r )
 {
 	int val = 0;
 

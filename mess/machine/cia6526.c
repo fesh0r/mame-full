@@ -731,202 +731,202 @@ static void cia6526_set_input_cnt (CIA6526 *This, int data)
 	This->cnt = data;
 }
 
-READ_HANDLER ( cia6526_0_port_r )
+ READ8_HANDLER ( cia6526_0_port_r )
 {
 	return cia6526_read (cia, offset);
 }
-READ_HANDLER ( cia6526_1_port_r )
+ READ8_HANDLER ( cia6526_1_port_r )
 {
 	return cia6526_read (cia+1, offset);
 }
-READ_HANDLER ( cia6526_2_port_r )
+ READ8_HANDLER ( cia6526_2_port_r )
 {
 	return cia6526_read (cia+2, offset);
 }
-READ_HANDLER ( cia6526_3_port_r )
+ READ8_HANDLER ( cia6526_3_port_r )
 {
 	return cia6526_read (cia+3, offset);
 }
-READ_HANDLER ( cia6526_4_port_r )
+ READ8_HANDLER ( cia6526_4_port_r )
 {
 	return cia6526_read (cia+4, offset);
 }
-READ_HANDLER ( cia6526_5_port_r )
+ READ8_HANDLER ( cia6526_5_port_r )
 {
 	return cia6526_read (cia+5, offset);
 }
-READ_HANDLER ( cia6526_6_port_r )
+ READ8_HANDLER ( cia6526_6_port_r )
 {
 	return cia6526_read (cia+6, offset);
 }
-READ_HANDLER ( cia6526_7_port_r )
+ READ8_HANDLER ( cia6526_7_port_r )
 {
 	return cia6526_read (cia+7, offset);
 }
 
-WRITE_HANDLER ( cia6526_0_port_w )
+WRITE8_HANDLER ( cia6526_0_port_w )
 {
 	cia6526_write (cia, offset, data);
 }
-WRITE_HANDLER ( cia6526_1_port_w )
+WRITE8_HANDLER ( cia6526_1_port_w )
 {
 	cia6526_write (cia+1, offset, data);
 }
-WRITE_HANDLER ( cia6526_2_port_w )
+WRITE8_HANDLER ( cia6526_2_port_w )
 {
 	cia6526_write (cia+2, offset, data);
 }
-WRITE_HANDLER ( cia6526_3_port_w )
+WRITE8_HANDLER ( cia6526_3_port_w )
 {
 	cia6526_write (cia+3, offset, data);
 }
-WRITE_HANDLER ( cia6526_4_port_w )
+WRITE8_HANDLER ( cia6526_4_port_w )
 {
 	cia6526_write (cia+4, offset, data);
 }
-WRITE_HANDLER ( cia6526_5_port_w )
+WRITE8_HANDLER ( cia6526_5_port_w )
 {
 	cia6526_write (cia+5, offset, data);
 }
-WRITE_HANDLER ( cia6526_6_port_w )
+WRITE8_HANDLER ( cia6526_6_port_w )
 {
 	cia6526_write (cia+6, offset, data);
 }
-WRITE_HANDLER ( cia6526_7_port_w )
+WRITE8_HANDLER ( cia6526_7_port_w )
 {
 	cia6526_write (cia+7, offset, data);
 }
 
 /******************* 8-bit A/B port interfaces *******************/
 
-WRITE_HANDLER ( cia6526_0_porta_w )
+WRITE8_HANDLER ( cia6526_0_porta_w )
 {
 	cia_set_input_a (cia, data);
 }
-WRITE_HANDLER ( cia6526_1_porta_w )
+WRITE8_HANDLER ( cia6526_1_porta_w )
 {
 	cia_set_input_a (cia+1, data);
 }
-WRITE_HANDLER ( cia6526_2_porta_w )
+WRITE8_HANDLER ( cia6526_2_porta_w )
 {
 	cia_set_input_a (cia+2, data);
 }
-WRITE_HANDLER ( cia6526_3_porta_w )
+WRITE8_HANDLER ( cia6526_3_porta_w )
 {
 	cia_set_input_a (cia+3, data);
 }
-WRITE_HANDLER ( cia6526_4_porta_w )
+WRITE8_HANDLER ( cia6526_4_porta_w )
 {
 	cia_set_input_a (cia+4, data);
 }
-WRITE_HANDLER ( cia6526_5_porta_w )
+WRITE8_HANDLER ( cia6526_5_porta_w )
 {
 	cia_set_input_a (cia+5, data);
 }
-WRITE_HANDLER ( cia6526_6_porta_w )
+WRITE8_HANDLER ( cia6526_6_porta_w )
 {
 	cia_set_input_a (cia+6, data);
 }
-WRITE_HANDLER ( cia6526_7_porta_w )
+WRITE8_HANDLER ( cia6526_7_porta_w )
 {
 	cia_set_input_a (cia+7, data);
 }
 
-WRITE_HANDLER ( cia6526_0_portb_w )
+WRITE8_HANDLER ( cia6526_0_portb_w )
 {
 	cia_set_input_b (cia, data);
 }
-WRITE_HANDLER ( cia6526_1_portb_w )
+WRITE8_HANDLER ( cia6526_1_portb_w )
 {
 	cia_set_input_b (cia+1, data);
 }
-WRITE_HANDLER ( cia6526_2_portb_w )
+WRITE8_HANDLER ( cia6526_2_portb_w )
 {
 	cia_set_input_b (cia+2, data);
 }
-WRITE_HANDLER ( cia6526_3_portb_w )
+WRITE8_HANDLER ( cia6526_3_portb_w )
 {
 	cia_set_input_b (cia+3, data);
 }
-WRITE_HANDLER ( cia6526_4_portb_w )
+WRITE8_HANDLER ( cia6526_4_portb_w )
 {
 	cia_set_input_b (cia+4, data);
 }
-WRITE_HANDLER ( cia6526_5_portb_w )
+WRITE8_HANDLER ( cia6526_5_portb_w )
 {
 	cia_set_input_b (cia+5, data);
 }
-WRITE_HANDLER ( cia6526_6_portb_w )
+WRITE8_HANDLER ( cia6526_6_portb_w )
 {
 	cia_set_input_b (cia+6, data);
 }
-WRITE_HANDLER ( cia6526_7_portb_w )
+WRITE8_HANDLER ( cia6526_7_portb_w )
 {
 	cia_set_input_b (cia+7, data);
 }
 
-READ_HANDLER ( cia6526_0_porta_r )
+ READ8_HANDLER ( cia6526_0_porta_r )
 {
 	return cia[0].in_a;
 }
-READ_HANDLER ( cia6526_1_porta_r )
+ READ8_HANDLER ( cia6526_1_porta_r )
 {
 	return cia[1].in_a;
 }
-READ_HANDLER ( cia6526_2_porta_r )
+ READ8_HANDLER ( cia6526_2_porta_r )
 {
 	return cia[2].in_a;
 }
-READ_HANDLER ( cia6526_3_porta_r )
+ READ8_HANDLER ( cia6526_3_porta_r )
 {
 	return cia[3].in_a;
 }
-READ_HANDLER ( cia6526_4_porta_r )
+ READ8_HANDLER ( cia6526_4_porta_r )
 {
 	return cia[4].in_a;
 }
-READ_HANDLER ( cia6526_5_porta_r )
+ READ8_HANDLER ( cia6526_5_porta_r )
 {
 	return cia[5].in_a;
 }
-READ_HANDLER ( cia6526_6_porta_r )
+ READ8_HANDLER ( cia6526_6_porta_r )
 {
 	return cia[6].in_a;
 }
-READ_HANDLER ( cia6526_7_porta_r )
+ READ8_HANDLER ( cia6526_7_porta_r )
 {
 	return cia[7].in_a;
 }
 #if 0
-READ_HANDLER ( cia6526_0_portb_r )
+ READ8_HANDLER ( cia6526_0_portb_r )
 {
 	return cia[0].in_b;
 }
-READ_HANDLER ( cia6526_1_portb_r )
+ READ8_HANDLER ( cia6526_1_portb_r )
 {
 	return cia[1].in_b;
 }
-READ_HANDLER ( cia6526_2_portb_r )
+ READ8_HANDLER ( cia6526_2_portb_r )
 {
 	return cia[2].in_b;
 }
-READ_HANDLER ( cia6526_3_portb_r )
+ READ8_HANDLER ( cia6526_3_portb_r )
 {
 	return cia[3].in_b;
 }
-READ_HANDLER ( cia6526_4_portb_r )
+ READ8_HANDLER ( cia6526_4_portb_r )
 {
 	return cia[4].in_b;
 }
-READ_HANDLER ( cia6526_5_portb_r )
+ READ8_HANDLER ( cia6526_5_portb_r )
 {
 	return cia[5].in_b;
 }
-READ_HANDLER ( cia6526_6_portb_r )
+ READ8_HANDLER ( cia6526_6_portb_r )
 {
 	return cia[6].in_b;
 }
-READ_HANDLER ( cia6526_7_portb_r )
+ READ8_HANDLER ( cia6526_7_portb_r )
 {
 	return cia[7].in_b;
 }

@@ -17,8 +17,8 @@ void f3853_init(F3853_CONFIG *config);
 void f3853_reset(void);
 
 // ports 0x0c - 0x0f
-READ_HANDLER(f3853_r);
-WRITE_HANDLER(f3853_w);
+ READ8_HANDLER(f3853_r);
+WRITE8_HANDLER(f3853_w);
 
 void f3853_set_external_interrupt_in_line(bool level);
 void f3853_set_priority_in_line(bool level);

@@ -52,13 +52,13 @@ void cdp1864_set_background_color_sequence_w(int color[])
 		cdp1864.bgcolseq[i] = color[i];
 }
 
-WRITE_HANDLER( cdp1864_step_background_color_w )
+WRITE8_HANDLER( cdp1864_step_background_color_w )
 {
 	cdp1864.display = 1;
 	if (++cdp1864.bgcolor > 3) cdp1864.bgcolor = 0;
 }
 
-WRITE_HANDLER( cdp1864_tone_divisor_latch_w )
+WRITE8_HANDLER( cdp1864_tone_divisor_latch_w )
 {
 	beep_set_frequency(0, CDP1864_CLK_FREQ / 8 / 4 / (data + 1) / 2);
 }
@@ -68,13 +68,13 @@ void cdp1864_audio_output_w(int value)
 	beep_set_state(0, value);
 }
 
-READ_HANDLER( cdp1864_audio_enable_r )
+ READ8_HANDLER( cdp1864_audio_enable_r )
 {
 	beep_set_state(0, 1);
 	return 0;
 }
 
-READ_HANDLER( cdp1864_audio_disable_r )
+ READ8_HANDLER( cdp1864_audio_disable_r )
 {
 	beep_set_state(0, 0);
 	return 0;

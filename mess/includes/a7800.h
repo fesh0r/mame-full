@@ -5,8 +5,8 @@
 VIDEO_START( a7800 );
 VIDEO_UPDATE( a7800 );
 void a7800_interrupt(void);
-READ_HANDLER  ( a7800_MARIA_r);
-WRITE_HANDLER ( a7800_MARIA_w );
+ READ8_HANDLER  ( a7800_MARIA_r);
+WRITE8_HANDLER ( a7800_MARIA_w );
 
 
 /* machine/a7800.c */
@@ -20,12 +20,12 @@ void a7800_partialhash(char *dest, const unsigned char *data,
 
 DEVICE_LOAD( a7800_cart );
 
-READ_HANDLER  ( a7800_TIA_r );
-WRITE_HANDLER ( a7800_TIA_w );
-READ_HANDLER  ( a7800_RIOT_r );
-WRITE_HANDLER ( a7800_RIOT_w );
-WRITE_HANDLER ( a7800_RAM0_w );
-WRITE_HANDLER ( a7800_cart_w );
+ READ8_HANDLER  ( a7800_TIA_r );
+WRITE8_HANDLER ( a7800_TIA_w );
+ READ8_HANDLER  ( a7800_RIOT_r );
+WRITE8_HANDLER ( a7800_RIOT_w );
+WRITE8_HANDLER ( a7800_RAM0_w );
+WRITE8_HANDLER ( a7800_cart_w );
 
 DRIVER_INIT( a7800_ntsc );
 DRIVER_INIT( a7800_pal );

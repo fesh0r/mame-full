@@ -150,12 +150,12 @@ void i8271_init(i8271_interface *);
 /* reset */
 void i8271_reset(void);
 
-READ_HANDLER(i8271_r);
-WRITE_HANDLER(i8271_w);
+ READ8_HANDLER(i8271_r);
+WRITE8_HANDLER(i8271_w);
 
 
-READ_HANDLER(i8271_dack_r);
-WRITE_HANDLER(i8271_dack_w);
+ READ8_HANDLER(i8271_dack_r);
+WRITE8_HANDLER(i8271_dack_w);
 
-READ_HANDLER(i8271_data_r);
-WRITE_HANDLER(i8271_data_w);
+ READ8_HANDLER(i8271_data_r);
+WRITE8_HANDLER(i8271_data_w);

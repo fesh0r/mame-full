@@ -82,19 +82,19 @@ EXTERN unsigned int gb_timer_count;
 EXTERN UINT8 gb_timer_shift;
 EXTERN UINT8 gb_tile_no_mod;
 
-extern WRITE_HANDLER( gb_rom_bank_select_mbc1 );
-extern WRITE_HANDLER( gb_ram_bank_select_mbc1 );
-extern WRITE_HANDLER( gb_mem_mode_select_mbc1 );
-extern WRITE_HANDLER( gb_rom_bank_select_mbc2 );
-extern WRITE_HANDLER( gb_rom_bank_select_mbc3 );
-extern WRITE_HANDLER( gb_ram_bank_select_mbc3 );
-extern WRITE_HANDLER( gb_mem_mode_select_mbc3 );
-extern WRITE_HANDLER( gb_rom_bank_select_mbc5 );
-extern WRITE_HANDLER( gb_ram_bank_select_mbc5 );
-extern WRITE_HANDLER( gb_ram_enable );
-extern WRITE_HANDLER( gb_io_w );
-extern READ_HANDLER ( gb_io_r );
-extern WRITE_HANDLER( gb_ie_w );
+extern WRITE8_HANDLER( gb_rom_bank_select_mbc1 );
+extern WRITE8_HANDLER( gb_ram_bank_select_mbc1 );
+extern WRITE8_HANDLER( gb_mem_mode_select_mbc1 );
+extern WRITE8_HANDLER( gb_rom_bank_select_mbc2 );
+extern WRITE8_HANDLER( gb_rom_bank_select_mbc3 );
+extern WRITE8_HANDLER( gb_ram_bank_select_mbc3 );
+extern WRITE8_HANDLER( gb_mem_mode_select_mbc3 );
+extern WRITE8_HANDLER( gb_rom_bank_select_mbc5 );
+extern WRITE8_HANDLER( gb_ram_bank_select_mbc5 );
+extern WRITE8_HANDLER( gb_ram_enable );
+extern WRITE8_HANDLER( gb_io_w );
+extern  READ8_HANDLER ( gb_io_r );
+extern WRITE8_HANDLER( gb_ie_w );
 extern DEVICE_LOAD(gb_cart);
 extern void gb_scanline_interrupt(void);
 extern void gb_scanline_interrupt_set_mode0(int param);
@@ -104,13 +104,13 @@ extern MACHINE_INIT( gb );
 extern MACHINE_STOP( gb );
 
 /* from vidhrdw/gb.c */
-extern WRITE_HANDLER( gb_video_w );
+extern WRITE8_HANDLER( gb_video_w );
 extern VIDEO_START( gb );
 extern VIDEO_UPDATE( gb );
 void gb_refresh_scanline(void);
 EXTERN double lcd_time;
 /* Custom Sound Interface */
-extern WRITE_HANDLER( gb_sound_w );
+extern WRITE8_HANDLER( gb_sound_w );
 int gameboy_sh_start(const struct MachineSound* driver);
 
 /* -- Super GameBoy specific -- */
@@ -126,7 +126,7 @@ EXTERN UINT8 sgb_window_mask;		/* Current GB screen mask				*/
 EXTERN UINT8 sgb_hack;				/* Flag set if we're using a hack		*/
 
 extern MACHINE_INIT( sgb );
-extern WRITE_HANDLER ( sgb_io_w );
+extern WRITE8_HANDLER ( sgb_io_w );
 /* from vidhrdw/gb.c */
 void sgb_refresh_scanline(void);
 void sgb_refresh_border(void);
@@ -155,7 +155,7 @@ EXTERN UINT8 gbc_mode;				/* is the GBC in mono/colour mode?		*/
 EXTERN UINT8 gbc_hdma_enabled;		/* is HDMA enabled?						*/
 
 extern MACHINE_INIT( gbc );
-extern WRITE_HANDLER ( gbc_video_w );
+extern WRITE8_HANDLER ( gbc_video_w );
 extern void gbc_hdma(UINT16 length);
 /* from vidhrdw/gb.c */
 void gbc_refresh_scanline(void);
@@ -163,13 +163,13 @@ void gbc_refresh_scanline(void);
 /* -- Megaduck specific -- */
 extern DEVICE_LOAD(megaduck_cart);
 extern MACHINE_INIT( megaduck );
-extern READ_HANDLER( megaduck_video_r );
-extern WRITE_HANDLER( megaduck_video_w );
-extern WRITE_HANDLER( megaduck_rom_bank_select_type1 );
-extern WRITE_HANDLER( megaduck_rom_bank_select_type2 );
-extern READ_HANDLER( megaduck_sound_r1 );
-extern WRITE_HANDLER( megaduck_sound_w1 );
-extern READ_HANDLER( megaduck_sound_r2 );
-extern WRITE_HANDLER( megaduck_sound_w2 );
+extern  READ8_HANDLER( megaduck_video_r );
+extern WRITE8_HANDLER( megaduck_video_w );
+extern WRITE8_HANDLER( megaduck_rom_bank_select_type1 );
+extern WRITE8_HANDLER( megaduck_rom_bank_select_type2 );
+extern  READ8_HANDLER( megaduck_sound_r1 );
+extern WRITE8_HANDLER( megaduck_sound_w1 );
+extern  READ8_HANDLER( megaduck_sound_r2 );
+extern WRITE8_HANDLER( megaduck_sound_w2 );
 
 #endif

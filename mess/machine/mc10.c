@@ -42,7 +42,7 @@ void mc10_init_machine(void)
     }
 }
 
-READ_HANDLER ( mc10_bfff_r )
+ READ8_HANDLER ( mc10_bfff_r )
 {
 	/*   BIT 0 KEYBOARD ROW 1
 	 *   BIT 1 KEYBOARD ROW 2
@@ -70,12 +70,12 @@ READ_HANDLER ( mc10_bfff_r )
 	return val;
 }
 
-READ_HANDLER ( mc10_port1_r )
+ READ8_HANDLER ( mc10_port1_r )
 {
 	return mc10_keyboard_strobe;
 }
 
-WRITE_HANDLER ( mc10_port1_w )
+WRITE8_HANDLER ( mc10_port1_w )
 {
 	/*   BIT 0  KEYBOARD COLUMN 1 STROBE
 	 *   BIT 1  KEYBOARD COLUMN 2 STROBE
@@ -89,7 +89,7 @@ WRITE_HANDLER ( mc10_port1_w )
 	mc10_keyboard_strobe = data;
 }
 
-READ_HANDLER ( mc10_port2_r )
+ READ8_HANDLER ( mc10_port2_r )
 {
 	/*   BIT 1 KEYBOARD SHIFT/CONTROL KEYS INPUT
 	 * ! BIT 2 PRINTER OTS INPUT
@@ -109,7 +109,7 @@ READ_HANDLER ( mc10_port2_r )
 	return val;
 }
 
-WRITE_HANDLER ( mc10_port2_w )
+WRITE8_HANDLER ( mc10_port2_w )
 {
 	mess_image *img = image_from_devtype_and_index(IO_CASSETTE, 0);
 
@@ -139,7 +139,7 @@ int video_start_mc10(void)
 	return video_start_m6847(&p);
 }
 
-WRITE_HANDLER ( mc10_bfff_w )
+WRITE8_HANDLER ( mc10_bfff_w )
 {
 	/*   BIT 2 GM2 6847 CONTROL & INT/EXT CONTROL
 	 *   BIT 3 GM1 6847 CONTROL
@@ -160,7 +160,7 @@ WRITE_HANDLER ( mc10_bfff_w )
 	schedule_full_refresh();
 }
 
-WRITE_HANDLER ( mc10_ram_w )
+WRITE8_HANDLER ( mc10_ram_w )
 {
 	UINT8 *ram;
 

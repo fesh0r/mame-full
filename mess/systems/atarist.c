@@ -2014,17 +2014,17 @@ static INTERRUPT_GEN( atarist_interrupt )
 
 static int ym2149_port_a,ym2149_port_b;
 
-static READ_HANDLER( ym2149_port_a_r )
+static  READ8_HANDLER( ym2149_port_a_r )
 {
 	return ym2149_port_a;
 }
 
-static READ_HANDLER( ym2149_port_b_r )
+static  READ8_HANDLER( ym2149_port_b_r )
 {
 	return ym2149_port_b;
 }
 
-static WRITE_HANDLER( ym2149_port_a_w )
+static WRITE8_HANDLER( ym2149_port_a_w )
 {
 	static int strobe=-1;
 
@@ -2051,7 +2051,7 @@ static WRITE_HANDLER( ym2149_port_a_w )
 	/* BIT 80 */
 }
 
-static WRITE_HANDLER( ym2149_port_b_w )
+static WRITE8_HANDLER( ym2149_port_b_w )
 {
 	/* Parallel port byte */
 	ym2149_port_b=data&0xff;

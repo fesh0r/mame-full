@@ -5,8 +5,8 @@
 
 #include "driver.h"
 
-READ_HANDLER(at_mfm_0_r);
-WRITE_HANDLER(at_mfm_0_w);
+ READ8_HANDLER(at_mfm_0_r);
+WRITE8_HANDLER(at_mfm_0_w);
 
 #if 0
 void pc_ide_data_w(UINT8 data);

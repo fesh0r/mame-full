@@ -447,162 +447,162 @@ void tpi6525_1_irq4_level(int level)
 	tpi6525_irq4_level(tpi6525+1, level);
 }
 
-READ_HANDLER ( tpi6525_0_port_r )
+ READ8_HANDLER ( tpi6525_0_port_r )
 {
 	return tpi6525_port_r(tpi6525, offset);
 }
 
-READ_HANDLER ( tpi6525_1_port_r )
+ READ8_HANDLER ( tpi6525_1_port_r )
 {
 	return tpi6525_port_r(tpi6525+1, offset);
 }
 
-READ_HANDLER ( tpi6525_2_port_r )
+ READ8_HANDLER ( tpi6525_2_port_r )
 {
 	return tpi6525_port_r(tpi6525+2, offset);
 }
 
-READ_HANDLER ( tpi6525_3_port_r )
+ READ8_HANDLER ( tpi6525_3_port_r )
 {
 	return tpi6525_port_r(tpi6525+3, offset);
 }
 
-WRITE_HANDLER ( tpi6525_0_port_w )
+WRITE8_HANDLER ( tpi6525_0_port_w )
 {
 	tpi6525_port_w(tpi6525, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_1_port_w )
+WRITE8_HANDLER ( tpi6525_1_port_w )
 {
 	tpi6525_port_w(tpi6525+1, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_2_port_w )
+WRITE8_HANDLER ( tpi6525_2_port_w )
 {
 	tpi6525_port_w(tpi6525+2, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_3_port_w )
+WRITE8_HANDLER ( tpi6525_3_port_w )
 {
 	tpi6525_port_w(tpi6525+3, offset, data);
 }
 
-READ_HANDLER ( tpi6525_0_port_a_r )
+ READ8_HANDLER ( tpi6525_0_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525, offset);
 }
 
-READ_HANDLER ( tpi6525_1_port_a_r )
+ READ8_HANDLER ( tpi6525_1_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+1, offset);
 }
 
-READ_HANDLER ( tpi6525_2_port_a_r )
+ READ8_HANDLER ( tpi6525_2_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+2, offset);
 }
 
-READ_HANDLER ( tpi6525_3_port_a_r )
+ READ8_HANDLER ( tpi6525_3_port_a_r )
 {
 	return tpi6525_port_a_r(tpi6525+3, offset);
 }
 
-WRITE_HANDLER ( tpi6525_0_port_a_w )
+WRITE8_HANDLER ( tpi6525_0_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_1_port_a_w )
+WRITE8_HANDLER ( tpi6525_1_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+1, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_2_port_a_w )
+WRITE8_HANDLER ( tpi6525_2_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+2, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_3_port_a_w )
+WRITE8_HANDLER ( tpi6525_3_port_a_w )
 {
 	tpi6525_port_a_w(tpi6525+3, offset, data);
 }
 
-READ_HANDLER ( tpi6525_0_port_b_r )
+ READ8_HANDLER ( tpi6525_0_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525, offset);
 }
 
-READ_HANDLER ( tpi6525_1_port_b_r )
+ READ8_HANDLER ( tpi6525_1_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+1, offset);
 }
 
-READ_HANDLER ( tpi6525_2_port_b_r )
+ READ8_HANDLER ( tpi6525_2_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+2, offset);
 }
 
-READ_HANDLER ( tpi6525_3_port_b_r )
+ READ8_HANDLER ( tpi6525_3_port_b_r )
 {
 	return tpi6525_port_b_r(tpi6525+3, offset);
 }
 
-WRITE_HANDLER ( tpi6525_0_port_b_w )
+WRITE8_HANDLER ( tpi6525_0_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_1_port_b_w )
+WRITE8_HANDLER ( tpi6525_1_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+1, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_2_port_b_w )
+WRITE8_HANDLER ( tpi6525_2_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+2, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_3_port_b_w )
+WRITE8_HANDLER ( tpi6525_3_port_b_w )
 {
 	tpi6525_port_b_w(tpi6525+3, offset, data);
 }
 
-READ_HANDLER ( tpi6525_0_port_c_r )
+ READ8_HANDLER ( tpi6525_0_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525, offset);
 }
 
-READ_HANDLER ( tpi6525_1_port_c_r )
+ READ8_HANDLER ( tpi6525_1_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+1, offset);
 }
 
-READ_HANDLER ( tpi6525_2_port_c_r )
+ READ8_HANDLER ( tpi6525_2_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+2, offset);
 }
 
-READ_HANDLER ( tpi6525_3_port_c_r )
+ READ8_HANDLER ( tpi6525_3_port_c_r )
 {
 	return tpi6525_port_c_r(tpi6525+3, offset);
 }
 
-WRITE_HANDLER ( tpi6525_0_port_c_w )
+WRITE8_HANDLER ( tpi6525_0_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_1_port_c_w )
+WRITE8_HANDLER ( tpi6525_1_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+1, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_2_port_c_w )
+WRITE8_HANDLER ( tpi6525_2_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+2, offset, data);
 }
 
-WRITE_HANDLER ( tpi6525_3_port_c_w )
+WRITE8_HANDLER ( tpi6525_3_port_c_w )
 {
 	tpi6525_port_c_w(tpi6525+3, offset, data);
 }

@@ -177,15 +177,15 @@ void apple1_interrupt(void)
 /*****************************************************************************
 **	READ/WRITE HANDLERS
 *****************************************************************************/
-READ_HANDLER( apple1_pia0_kbdin )
+ READ8_HANDLER( apple1_pia0_kbdin )
 {
 	return (apple1_kbd_data | 0x80);
 }
-READ_HANDLER( apple1_pia0_dsprdy )
+ READ8_HANDLER( apple1_pia0_dsprdy )
 {
 	return (0x00);		/* Screen always ready */
 }
-READ_HANDLER( apple1_pia0_kbdrdy )
+ READ8_HANDLER( apple1_pia0_kbdrdy )
 {
 	if (apple1_kbd_data)
 	{
@@ -193,7 +193,7 @@ READ_HANDLER( apple1_pia0_kbdrdy )
 	}
 	return (0x00);
 }
-WRITE_HANDLER( apple1_pia0_dspout )
+WRITE8_HANDLER( apple1_pia0_dspout )
 {
 	apple1_vh_dsp_w(data);
 }

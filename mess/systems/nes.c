@@ -21,7 +21,7 @@
 unsigned char *battery_ram;
 unsigned char *main_ram;
 
-static READ_HANDLER ( nes_bogus_r )
+static  READ8_HANDLER ( nes_bogus_r )
 {
     static int val = 0xff;
     val ^= 0xff;
@@ -220,7 +220,7 @@ struct GfxLayout nes_vram_charlayout =
 };
 
 
-static WRITE_HANDLER(nes_vh_sprite_dma_w)
+static WRITE8_HANDLER(nes_vh_sprite_dma_w)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	ppu2c03b_spriteram_dma(0, &RAM[data * 0x100]);

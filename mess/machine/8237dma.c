@@ -436,10 +436,10 @@ void dma8237_run_transfer(int which, int channel)
 
 /******************* Standard 8-bit/32-bit CPU interfaces *******************/
 
-READ_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
-READ_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
-WRITE_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
-WRITE_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
+ READ8_HANDLER( dma8237_0_r )	{ return dma8237_read(0, offset); }
+ READ8_HANDLER( dma8237_1_r )	{ return dma8237_read(1, offset); }
+WRITE8_HANDLER( dma8237_0_w ) { dma8237_write(0, offset, data); }
+WRITE8_HANDLER( dma8237_1_w ) { dma8237_write(1, offset, data); }
 
 READ32_HANDLER( dma8237_32_0_r ) { return read32_with_read8_handler(dma8237_0_r, offset, mem_mask); }
 READ32_HANDLER( dma8237_32_1_r ) { return read32_with_read8_handler(dma8237_1_r, offset, mem_mask); }

@@ -35,17 +35,17 @@ static struct SN76496interface mtx_psg_interface =
 	{ 100 }
 };
 
-static READ_HANDLER ( mtx_psg_r )
+static  READ8_HANDLER ( mtx_psg_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER ( mtx_psg_w )
+static WRITE8_HANDLER ( mtx_psg_w )
 {
 	SN76496_0_w(offset,data);
 }
 
-static READ_HANDLER ( mtx_vdp_r )
+static  READ8_HANDLER ( mtx_vdp_r )
 {
 	if (offset & 0x01)
 		return TMS9928A_register_r(0);
@@ -53,7 +53,7 @@ static READ_HANDLER ( mtx_vdp_r )
 		return TMS9928A_vram_r(0);
 }
 
-static WRITE_HANDLER ( mtx_vdp_w )
+static WRITE8_HANDLER ( mtx_vdp_w )
 {
 	if (offset & 0x01)
 		TMS9928A_register_w(0, data);
@@ -61,12 +61,12 @@ static WRITE_HANDLER ( mtx_vdp_w )
 		TMS9928A_vram_w(0, data);
 }
 
-static WRITE_HANDLER ( mtx_sense_w )
+static WRITE8_HANDLER ( mtx_sense_w )
 {
 	key_sense = data;
 }
 
-static READ_HANDLER ( mtx_key_lo_r )
+static  READ8_HANDLER ( mtx_key_lo_r )
 {
 	unsigned char rtn = 0;
 
@@ -97,7 +97,7 @@ static READ_HANDLER ( mtx_key_lo_r )
 	return(rtn);
 }
 
-static READ_HANDLER ( mtx_key_hi_r )
+static  READ8_HANDLER ( mtx_key_hi_r )
 {
 	unsigned char rtn = 0;
 
@@ -138,12 +138,12 @@ static void mtx_ctc_interrupt(int state)
 	cpu_set_irq_line(0, 0, state);
 }
 
-static READ_HANDLER ( mtx_ctc_r )
+static  READ8_HANDLER ( mtx_ctc_r )
 {
 	return z80ctc_0_r(offset);
 }
 
-static WRITE_HANDLER ( mtx_ctc_w )
+static WRITE8_HANDLER ( mtx_ctc_w )
 {
 	//logerror("CTC W: %02x\r\n",data);
 	z80ctc_0_w(offset,data);
@@ -160,7 +160,7 @@ static z80ctc_interface	mtx_ctc_intf =
     {0}
 };
 
-static WRITE_HANDLER ( mtx_bankswitch_w )
+static WRITE8_HANDLER ( mtx_bankswitch_w )
 {
 
 	unsigned char *romoffset;
@@ -493,7 +493,7 @@ static void mtx_poke(int address, unsigned char data)
 
 }
 
-static WRITE_HANDLER ( mtx_trap_write )
+static WRITE8_HANDLER ( mtx_trap_write )
 {
 	int pc;
 

@@ -144,7 +144,7 @@ static struct {
    7d 01 01 mouse button right
 */
 
-WRITE_HANDLER( pc1640_port60_w )
+WRITE8_HANDLER( pc1640_port60_w )
 {
 	switch (offset) {
 	case 1:
@@ -171,7 +171,7 @@ WRITE_HANDLER( pc1640_port60_w )
 }
 
 
-READ_HANDLER( pc1640_port60_r )
+ READ8_HANDLER( pc1640_port60_r )
 {
 	int data=0;
 	switch (offset) {
@@ -195,7 +195,7 @@ READ_HANDLER( pc1640_port60_r )
 	return data;
 }
 
-READ_HANDLER( pc200_port378_r )
+ READ8_HANDLER( pc200_port378_r )
 {
 	int data=pc_parallelport1_r(offset);
 	if (offset==1) data=(data&~7)|(input_port_1_r(0)&7);
@@ -204,7 +204,7 @@ READ_HANDLER( pc200_port378_r )
 }
 
 
-READ_HANDLER( pc1640_port378_r )
+ READ8_HANDLER( pc1640_port378_r )
 {
 	int data=pc_parallelport1_r(offset);
 	if (offset==1) data=(data&~7)|(input_port_1_r(0)&7);
@@ -225,42 +225,42 @@ READ_HANDLER( pc1640_port378_r )
 	return data;
 }
 
-READ_HANDLER( pc1640_port3d0_r )
+ READ8_HANDLER( pc1640_port3d0_r )
 {
 	if (offset==0xa) pc1640.dipstate=0;
 	return vga_port_03d0_r(offset);
 }
 
-READ_HANDLER( pc1640_port4278_r )
+ READ8_HANDLER( pc1640_port4278_r )
 {
 	if (offset==2) pc1640.dipstate=1;
 	// read parallelport
 	return 0;
 }
 
-READ_HANDLER( pc1640_port278_r )
+ READ8_HANDLER( pc1640_port278_r )
 {
 	if ((offset==2)||(offset==0)) pc1640.dipstate=2;
 	// read parallelport
 	return 0;
 }
 
-READ_HANDLER( pc1640_mouse_x_r )
+ READ8_HANDLER( pc1640_mouse_x_r )
 {
 	return pc1640.mouse.x-input_port_13_r(0);
 }
 
-READ_HANDLER( pc1640_mouse_y_r )
+ READ8_HANDLER( pc1640_mouse_y_r )
 {
 	return pc1640.mouse.y-input_port_14_r(0);
 }
 
-WRITE_HANDLER( pc1640_mouse_x_w )
+WRITE8_HANDLER( pc1640_mouse_x_w )
 {
 	pc1640.mouse.x=data+input_port_13_r(0);
 }
 
-WRITE_HANDLER( pc1640_mouse_y_w )
+WRITE8_HANDLER( pc1640_mouse_y_w )
 {
 	pc1640.mouse.y=data+input_port_14_r(0);
 }

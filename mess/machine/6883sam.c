@@ -125,7 +125,7 @@ void sam_setstate(UINT16 state, UINT16 mask)
 	update_sam();
 }
 
-WRITE_HANDLER(sam_w)
+WRITE8_HANDLER(sam_w)
 {
 	UINT16 mask;
 

@@ -334,7 +334,7 @@ MSX_SLOT_RESET(konami_scc)
 	state->cart.scc.active = 0;
 }
 
-READ_HANDLER (konami_scc_bank5)
+ READ8_HANDLER (konami_scc_bank5)
 {
 	if (offset & 0x80) {
 #if 0
@@ -1141,7 +1141,7 @@ MSX_SLOT_RESET(diskrom)
 	wd179x_reset ();
 }
 
-static READ_HANDLER (msx_diskrom_page1_r)
+static  READ8_HANDLER (msx_diskrom_page1_r)
 {
 	switch (offset) {
 	case 0: return wd179x_status_r (0);
@@ -1154,7 +1154,7 @@ static READ_HANDLER (msx_diskrom_page1_r)
 	}
 }
 																				
-static READ_HANDLER (msx_diskrom_page2_r)
+static  READ8_HANDLER (msx_diskrom_page2_r)
 {
 	if (offset >= 0x7f8) {
 		switch (offset) {
@@ -1251,7 +1251,7 @@ MSX_SLOT_RESET(diskrom2)
 	wd179x_reset ();
 }
 
-static READ_HANDLER (msx_diskrom2_page1_r)
+static  READ8_HANDLER (msx_diskrom2_page1_r)
 {
 	switch (offset) {
 	case 0: return wd179x_status_r (0);
@@ -1264,7 +1264,7 @@ static READ_HANDLER (msx_diskrom2_page1_r)
 	}
 }
 																				
-static READ_HANDLER (msx_diskrom2_page2_r)
+static  READ8_HANDLER (msx_diskrom2_page2_r)
 {
 	if (offset >= 0x7b8) {
 		switch (offset) {
@@ -1967,7 +1967,7 @@ MSX_SLOT_RESET(soundcartridge)
 	state->cart.sccp.sccp_active = 0;
 }
 
-READ_HANDLER (soundcartridge_scc)
+ READ8_HANDLER (soundcartridge_scc)
 {
 	int reg;
 
@@ -1998,7 +1998,7 @@ READ_HANDLER (soundcartridge_scc)
 	return 0xff;
 }
 
-READ_HANDLER (soundcartridge_sccp)
+ READ8_HANDLER (soundcartridge_sccp)
 {
 	int reg;
 

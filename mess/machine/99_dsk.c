@@ -315,8 +315,8 @@ static void fdc_callback(int);
 static void motor_on_timer_callback(int dummy);
 static int fdc_cru_r(int offset);
 static void fdc_cru_w(int offset, int data);
-static READ_HANDLER(fdc_mem_r);
-static WRITE_HANDLER(fdc_mem_w);
+static  READ8_HANDLER(fdc_mem_r);
+static WRITE8_HANDLER(fdc_mem_w);
 
 /* pointer to the fdc ROM data */
 static UINT8 *ti99_disk_DSR;
@@ -547,7 +547,7 @@ static void fdc_cru_w(int offset, int data)
 /*
 	read a byte in disk DSR space
 */
-static READ_HANDLER(fdc_mem_r)
+static  READ8_HANDLER(fdc_mem_r)
 {
 	switch (offset)
 	{
@@ -572,7 +572,7 @@ static READ_HANDLER(fdc_mem_r)
 /*
 	write a byte in disk DSR space
 */
-static WRITE_HANDLER(fdc_mem_w)
+static WRITE8_HANDLER(fdc_mem_w)
 {
 	data ^= 0xFF;	/* inverted data bus */
 
@@ -613,8 +613,8 @@ static WRITE_HANDLER(fdc_mem_w)
 /* prototypes */
 static int bwg_cru_r(int offset);
 static void bwg_cru_w(int offset, int data);
-static READ_HANDLER(bwg_mem_r);
-static WRITE_HANDLER(bwg_mem_w);
+static  READ8_HANDLER(bwg_mem_r);
+static WRITE8_HANDLER(bwg_mem_w);
 
 static const ti99_peb_card_handlers_t bwg_handlers =
 {
@@ -810,7 +810,7 @@ static void bwg_cru_w(int offset, int data)
 /*
 	read a byte in disk DSR space
 */
-static READ_HANDLER(bwg_mem_r)
+static  READ8_HANDLER(bwg_mem_r)
 {
 	int reply = 0;
 
@@ -854,7 +854,7 @@ static READ_HANDLER(bwg_mem_r)
 /*
 	write a byte in disk DSR space
 */
-static WRITE_HANDLER(bwg_mem_w)
+static WRITE8_HANDLER(bwg_mem_w)
 {
 	if (offset < 0x1c00)
 		;
@@ -913,8 +913,8 @@ static WRITE_HANDLER(bwg_mem_w)
 /* prototypes */
 static int hfdc_cru_r(int offset);
 static void hfdc_cru_w(int offset, int data);
-static READ_HANDLER(hfdc_mem_r);
-static WRITE_HANDLER(hfdc_mem_w);
+static  READ8_HANDLER(hfdc_mem_r);
+static WRITE8_HANDLER(hfdc_mem_w);
 
 static const ti99_peb_card_handlers_t hfdc_handlers =
 {
@@ -1175,7 +1175,7 @@ static void hfdc_cru_w(int offset, int data)
 /*
 	read a byte in disk DSR space
 */
-static READ_HANDLER(hfdc_mem_r)
+static  READ8_HANDLER(hfdc_mem_r)
 {
 	int reply = 0;
 
@@ -1228,7 +1228,7 @@ static READ_HANDLER(hfdc_mem_r)
 /*
 	write a byte in disk DSR space
 */
-static WRITE_HANDLER(hfdc_mem_w)
+static WRITE8_HANDLER(hfdc_mem_w)
 {
 	if (offset < 0x0fc0)
 	{

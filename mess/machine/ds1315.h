@@ -5,7 +5,7 @@
 */
 
 void ds1315_init( void );
-READ_HANDLER ( ds1315_r_0 );
-READ_HANDLER ( ds1315_r_1 );
-READ_HANDLER ( ds1315_r_data );
-WRITE_HANDLER ( ds1315_w_data );
+ READ8_HANDLER ( ds1315_r_0 );
+ READ8_HANDLER ( ds1315_r_1 );
+ READ8_HANDLER ( ds1315_r_data );
+WRITE8_HANDLER ( ds1315_w_data );

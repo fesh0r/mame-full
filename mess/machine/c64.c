@@ -287,7 +287,7 @@ static void c64_irq (int level)
 	}
 }
 
-WRITE_HANDLER(c64_tape_read)
+WRITE8_HANDLER(c64_tape_read)
 {
 	cia6526_0_set_input_flag (data);
 }
@@ -456,7 +456,7 @@ static void c64_supergames_w(int offset, int value)
 		c64_bankswitch (0);
 }
 
-WRITE_HANDLER( c64_write_io )
+WRITE8_HANDLER( c64_write_io )
 {
 	if (offset < 0x400) {
 		vic2_port_w (offset & 0x3ff, data);
@@ -495,7 +495,7 @@ WRITE_HANDLER( c64_write_io )
 	}
 }
 
-READ_HANDLER( c64_read_io )
+ READ8_HANDLER( c64_read_io )
 {
 	if (offset < 0x400)
 		return vic2_port_r (offset & 0x3ff);
@@ -669,7 +669,7 @@ static void c64_bankswitch (int reset)
   p5 output cassette motor
   p6,7 not available on M6510
  */
-WRITE_HANDLER(c64_m6510_port_w)
+WRITE8_HANDLER(c64_m6510_port_w)
 {
 	if (offset)
 	{
@@ -698,7 +698,7 @@ WRITE_HANDLER(c64_m6510_port_w)
 		c64_bankswitch (0);
 }
 
-READ_HANDLER(c64_m6510_port_r)
+ READ8_HANDLER(c64_m6510_port_r)
 {
 	if (offset)
 	{
@@ -760,12 +760,12 @@ int c64_paddle_read (int which)
 	}
 }
 
-READ_HANDLER(c64_colorram_read)
+ READ8_HANDLER(c64_colorram_read)
 {
 	return c64_colorram[offset & 0x3ff];
 }
 
-WRITE_HANDLER( c64_colorram_write )
+WRITE8_HANDLER( c64_colorram_write )
 {
 	c64_colorram[offset & 0x3ff] = data | 0xf0;
 }

@@ -120,10 +120,10 @@ extern struct CustomSound_interface vic6560_sound_interface;
 extern INTERRUPT_GEN( vic656x_raster_interrupt );
 
 /* to be called when writting to port */
-extern WRITE_HANDLER ( vic6560_port_w );
+extern WRITE8_HANDLER ( vic6560_port_w );
 
 /* to be called when reading from port */
-extern READ_HANDLER ( vic6560_port_r );
+extern  READ8_HANDLER ( vic6560_port_r );
 
 /* private area */
 

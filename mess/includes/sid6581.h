@@ -39,10 +39,10 @@ extern void sid6581_reset (int number);
 
 extern void sid6581_update(void);
 
-extern WRITE_HANDLER ( sid6581_0_port_w );
-extern WRITE_HANDLER ( sid6581_1_port_w );
-extern READ_HANDLER  ( sid6581_0_port_r );
-extern READ_HANDLER  ( sid6581_1_port_r );
+extern WRITE8_HANDLER ( sid6581_0_port_w );
+extern WRITE8_HANDLER ( sid6581_1_port_w );
+extern  READ8_HANDLER  ( sid6581_0_port_r );
+extern  READ8_HANDLER  ( sid6581_1_port_r );
 
 int sid6581_custom_start (const struct MachineSound *driver);
 void sid6581_custom_stop(void);

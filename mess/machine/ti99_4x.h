@@ -190,5 +190,5 @@ WRITE16_HANDLER ( ti99_4p_wgpl_w );
 
 extern void tms9901_set_int2(int state);
 
-READ_HANDLER ( ti99_8_r );
-WRITE_HANDLER ( ti99_8_w );
+ READ8_HANDLER ( ti99_8_r );
+WRITE8_HANDLER ( ti99_8_w );

@@ -452,12 +452,12 @@ static void tape_get_open(void)
  *
  *************************************/
 
-READ_HANDLER( trs80_port_xx_r )
+ READ8_HANDLER( trs80_port_xx_r )
 {
 	return 0;
 }
 
-WRITE_HANDLER( trs80_port_ff_w )
+WRITE8_HANDLER( trs80_port_ff_w )
 {
 	int changes = trs80_port_ff ^ data;
 
@@ -556,7 +556,7 @@ WRITE_HANDLER( trs80_port_ff_w )
 	trs80_port_ff = data;
 }
 
-READ_HANDLER( trs80_port_ff_r )
+ READ8_HANDLER( trs80_port_ff_r )
 {
 	int now_cycles = activecpu_gettotalcycles();
 	/* virtual tape ? */
@@ -654,30 +654,30 @@ static void trs80_nmi_generate (int param)
  *									 *
  *************************************/
 
-READ_HANDLER ( trs80_printer_r )
+ READ8_HANDLER ( trs80_printer_r )
 {
 	/* nothing yet :( */
 	return 0;
 }
 
-WRITE_HANDLER( trs80_printer_w )
+WRITE8_HANDLER( trs80_printer_w )
 {
 	/* nothing yet :( */
 }
 
-READ_HANDLER( trs80_irq_status_r )
+ READ8_HANDLER( trs80_irq_status_r )
 {
 	int result = irq_status;
 	irq_status &= ~(IRQ_TIMER | IRQ_FDC);
 	return result;
 }
 
-WRITE_HANDLER( trs80_irq_mask_w )
+WRITE8_HANDLER( trs80_irq_mask_w )
 {
 	irq_mask = data;
 }
 
-WRITE_HANDLER( trs80_motor_w )
+WRITE8_HANDLER( trs80_motor_w )
 {
 	UINT8 drive = 255;
 
@@ -726,7 +726,7 @@ WRITE_HANDLER( trs80_motor_w )
 /*************************************
  *		Keyboard					 *
  *************************************/
-READ_HANDLER( trs80_keyboard_r )
+ READ8_HANDLER( trs80_keyboard_r )
 {
 	int result = 0;
 

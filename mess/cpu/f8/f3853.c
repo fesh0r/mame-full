@@ -115,7 +115,7 @@ void f3853_set_priority_in_line(bool level)
     f3853_set_interrupt_request_line();
 }
 
-READ_HANDLER(f3853_r)
+ READ8_HANDLER(f3853_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -132,7 +132,7 @@ READ_HANDLER(f3853_r)
     return data;
 }
 
-WRITE_HANDLER(f3853_w)
+WRITE8_HANDLER(f3853_w)
 {
 	switch (offset) {
 	case 0:

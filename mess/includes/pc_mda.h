@@ -14,8 +14,8 @@ void pc_mda_timer(void);
 VIDEO_START ( pc_mda );
 pc_video_update_proc pc_mda_choosevideomode(int *width, int *height, struct crtc6845 *crtc);
 
-WRITE_HANDLER ( pc_MDA_w );
-READ_HANDLER ( pc_MDA_r );
+WRITE8_HANDLER ( pc_MDA_w );
+ READ8_HANDLER ( pc_MDA_r );
 
 extern unsigned char mda_palette[4][3];
 extern struct GfxLayout pc_mda_charlayout;

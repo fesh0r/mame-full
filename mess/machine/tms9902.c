@@ -616,12 +616,12 @@ void tms9902_cru_w(int which, int offset, int data)
 }
 
 
-READ_HANDLER ( tms9902_0_cru_r )
+ READ8_HANDLER ( tms9902_0_cru_r )
 {
 	return tms9902_cru_r(0, offset);
 }
 
-WRITE_HANDLER ( tms9902_0_cru_w )
+WRITE8_HANDLER ( tms9902_0_cru_w )
 {
 	tms9902_cru_w(0, offset, data);
 }

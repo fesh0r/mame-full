@@ -173,7 +173,7 @@ VIDEO_STOP( vic6560 )
 	freegfx (pointerelement);
 }
 
-WRITE_HANDLER ( vic6560_port_w )
+WRITE8_HANDLER ( vic6560_port_w )
 {
 	DBG_LOG (1, "vic6560_port_w", (errorlog, "%.4x:%.2x\n", offset, data));
 	switch (offset)
@@ -239,7 +239,7 @@ WRITE_HANDLER ( vic6560_port_w )
 	}
 }
 
-READ_HANDLER ( vic6560_port_r )
+ READ8_HANDLER ( vic6560_port_r )
 {
 	static double lightpenreadtime = 0.0;
 	int val;

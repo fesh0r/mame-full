@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.12 2004/06/11 02:49:37 npwoods Exp $
+  $Id: pc8801.c,v 1.13 2004/06/12 21:05:39 npwoods Exp $
 
 ***************************************************************************/
 
@@ -119,7 +119,7 @@ void pc8801_video_init (int hireso)
 	analog_palette=0;
 }
 
-static WRITE_HANDLER(write_gvram)
+static WRITE8_HANDLER(write_gvram)
 {
   int x,y;
 
@@ -151,8 +151,8 @@ static WRITE_HANDLER(write_gvram)
 	XXX(2)
 
 #define XXX(n) \
-static WRITE_HANDLER(write_gvram##n##_bank5){write_gvram(offset+0x4000*n,data);} \
-static WRITE_HANDLER(write_gvram##n##_bank6){write_gvram(offset+0x4000*n+0x3000,data);}
+static WRITE8_HANDLER(write_gvram##n##_bank5){write_gvram(offset+0x4000*n,data);} \
+static WRITE8_HANDLER(write_gvram##n##_bank6){write_gvram(offset+0x4000*n+0x3000,data);}
 	VVV
 #undef XXX
 
@@ -173,7 +173,7 @@ static WRITE_HANDLER(write_gvram##n##_bank6){write_gvram(offset+0x4000*n+0x3000,
 	XXX(3)
 
 #define XXX(x) \
-static READ_HANDLER(read_gvram_alu##x) \
+static  READ8_HANDLER(read_gvram_alu##x) \
 { \
   ALU_save0 = gVRAM[offset+0x0000]; \
   ALU_save1 = gVRAM[offset+0x4000]; \
@@ -183,14 +183,14 @@ static READ_HANDLER(read_gvram_alu##x) \
     (x & 2 ? gVRAM[offset+0x4000] : ~gVRAM[offset+0x4000]) & \
     (x & 4 ? gVRAM[offset+0x8000] : ~gVRAM[offset+0x8000]); \
 } \
-static READ_HANDLER(read_gvram_alu##x##_bank5){return read_gvram_alu##x(offset);} \
-static READ_HANDLER(read_gvram_alu##x##_bank6){return read_gvram_alu##x(offset+0x3000);}
+static  READ8_HANDLER(read_gvram_alu##x##_bank5){return read_gvram_alu##x(offset);} \
+static  READ8_HANDLER(read_gvram_alu##x##_bank6){return read_gvram_alu##x(offset+0x3000);}
 
 YYY
 
 #undef XXX
 
-static WRITE_HANDLER(write_gvram_alu0)
+static WRITE8_HANDLER(write_gvram_alu0)
 {
 #define WWW(x) \
   switch(ALU1&(0x11<<x)) { \
@@ -213,18 +213,18 @@ static WRITE_HANDLER(write_gvram_alu0)
 
 #undef WWW
 }
-static WRITE_HANDLER(write_gvram_alu1)
+static WRITE8_HANDLER(write_gvram_alu1)
 {
   write_gvram(offset+0x0000 , ALU_save0);
   write_gvram(offset+0x4000 , ALU_save1);
   write_gvram(offset+0x8000 , ALU_save2);
 }
-static WRITE_HANDLER(write_gvram_alu2){write_gvram(offset+0x0000,ALU_save1);}
-static WRITE_HANDLER(write_gvram_alu3){write_gvram(offset+0x4000,ALU_save0);}
+static WRITE8_HANDLER(write_gvram_alu2){write_gvram(offset+0x0000,ALU_save1);}
+static WRITE8_HANDLER(write_gvram_alu3){write_gvram(offset+0x4000,ALU_save0);}
 
 #define XXX(x) \
-static WRITE_HANDLER(write_gvram_alu##x##_bank5){write_gvram_alu##x(offset,data);} \
-static WRITE_HANDLER(write_gvram_alu##x##_bank6){write_gvram_alu##x(offset+0x3000,data);}
+static WRITE8_HANDLER(write_gvram_alu##x##_bank5){write_gvram_alu##x(offset,data);} \
+static WRITE8_HANDLER(write_gvram_alu##x##_bank6){write_gvram_alu##x(offset+0x3000,data);}
 
 ZZZ
 
@@ -297,14 +297,14 @@ int is_pc8801_vram_select(void)
 	if (wh6) memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf000, 0xffff, 0, 0, wh6);
 }
 
-WRITE_HANDLER(pc88sr_disp_32)
+WRITE8_HANDLER(pc88sr_disp_32)
 {
   analog_palette=((data & 0x20) != 0x00);
   ALUON=((data & 0x40) != 0x00);
   pc8801_update_bank();
 }
 
-WRITE_HANDLER(pc88sr_ALU)
+WRITE8_HANDLER(pc88sr_ALU)
 {
   switch(offset) {
   case 0:
@@ -317,7 +317,7 @@ WRITE_HANDLER(pc88sr_ALU)
   pc8801_update_bank();
 }
 
-WRITE_HANDLER(pc8801_vramsel)
+WRITE8_HANDLER(pc8801_vramsel)
 {
   if(offset==3) {
     selected_vram=0;
@@ -327,7 +327,7 @@ WRITE_HANDLER(pc8801_vramsel)
   pc8801_update_bank();
 }
 
-READ_HANDLER(pc8801_vramtest)
+ READ8_HANDLER(pc8801_vramtest)
 {
   switch(selected_vram) {
   case 1: return 0xf9;
@@ -623,7 +623,7 @@ PALETTE_INIT( pc8801 )
 	palette_set_color(17, 0, 0, 0);
 }
 
-WRITE_HANDLER(pc8801_crtc_write)
+WRITE8_HANDLER(pc8801_crtc_write)
 {
   if(offset==1) {
     /* command */
@@ -754,7 +754,7 @@ WRITE_HANDLER(pc8801_crtc_write)
   }
 }
 
-READ_HANDLER(pc8801_crtc_read)
+ READ8_HANDLER(pc8801_crtc_read)
 {
   if(offset==0) {
     /* light pen point */
@@ -775,7 +775,7 @@ READ_HANDLER(pc8801_crtc_read)
   }
 }
 
-WRITE_HANDLER(pc8801_dmac_write)
+WRITE8_HANDLER(pc8801_dmac_write)
 {
   switch(offset) {
   case 8:
@@ -811,7 +811,7 @@ WRITE_HANDLER(pc8801_dmac_write)
   }
 }
 
-READ_HANDLER(pc8801_dmac_read)
+ READ8_HANDLER(pc8801_dmac_read)
 {
   switch(offset) {
   case 8:
@@ -842,12 +842,12 @@ READ_HANDLER(pc8801_dmac_read)
   return 0;
 }
 
-WRITE_HANDLER(pc88sr_disp_30)
+WRITE8_HANDLER(pc88sr_disp_30)
 {
   text_width=((data&0x01)==0x00) ? 40 : 80;
 }
 
-WRITE_HANDLER(pc88sr_disp_31)
+WRITE8_HANDLER(pc88sr_disp_31)
 {
   GMODE gmode_new;
 
@@ -876,7 +876,7 @@ WRITE_HANDLER(pc88sr_disp_31)
   }
 }
 
-WRITE_HANDLER(pc8801_palette_out)
+WRITE8_HANDLER(pc8801_palette_out)
 {
   int palno;
   int i;

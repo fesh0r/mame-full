@@ -419,7 +419,7 @@ static void vc1541_via0_irq (int level)
 					  M6502_IRQ_LINE, vc1541->via1irq || vc1541->via0irq);
 }
 
-static READ_HANDLER( vc1541_via0_read_portb )
+static  READ8_HANDLER( vc1541_via0_read_portb )
 {
 	static int old=-1;
 	int value = 0x7a;
@@ -461,7 +461,7 @@ static READ_HANDLER( vc1541_via0_read_portb )
 	return value;
 }
 
-static WRITE_HANDLER( vc1541_via0_write_portb )
+static WRITE8_HANDLER( vc1541_via0_write_portb )
 {
 	DBG_LOG(2, "vc1541 serial write",("%s %s %s\n",
 									 data&0x10?"ATN":"atn",
@@ -518,19 +518,19 @@ static void vc1541_via1_irq (int level)
 					  M6502_IRQ_LINE, vc1541->via1irq || vc1541->via0irq);
 }
 
-static READ_HANDLER( vc1541_via1_read_porta )
+static  READ8_HANDLER( vc1541_via1_read_porta )
 {
 	int data=vc1541->head.data[vc1541->d64.pos];
 	DBG_LOG(2, "vc1541 drive",("port a read %.2x\n", data));
 	return data;
 }
 
-static WRITE_HANDLER( vc1541_via1_write_porta )
+static WRITE8_HANDLER( vc1541_via1_write_porta )
 {
 	DBG_LOG(1, "vc1541 drive",("port a write %.2x\n", data));
 }
 
-static READ_HANDLER( vc1541_via1_read_portb )
+static  READ8_HANDLER( vc1541_via1_read_portb )
 {
 	UINT8 value = 0xff;
 
@@ -545,7 +545,7 @@ static READ_HANDLER( vc1541_via1_read_portb )
 	return value;
 }
 
-static WRITE_HANDLER( vc1541_via1_write_portb )
+static WRITE8_HANDLER( vc1541_via1_write_portb )
 {
 	static int old=0;
 	if (data!=old) {
@@ -837,7 +837,7 @@ static void c1551_timer(int param)
   5,6: output frequency select
   7: input byte ready
  */
-static WRITE_HANDLER ( c1551_port_w )
+static WRITE8_HANDLER ( c1551_port_w )
 {
 	static int old=0;
 	if (offset) {
@@ -894,7 +894,7 @@ static WRITE_HANDLER ( c1551_port_w )
 	}
 }
 
-static READ_HANDLER ( c1551_port_r )
+static  READ8_HANDLER ( c1551_port_r )
 {
 	int data;
 

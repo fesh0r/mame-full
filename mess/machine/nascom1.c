@@ -73,7 +73,7 @@ MACHINE_INIT( nascom1 )
 	}
 }
 
-READ_HANDLER ( nascom1_port_00_r )
+ READ8_HANDLER ( nascom1_port_00_r )
 {
 	if (nascom1_portstat.stat_count < 9)
 		return (readinputport (nascom1_portstat.stat_count) | ~0x7f);
@@ -81,7 +81,7 @@ READ_HANDLER ( nascom1_port_00_r )
 	return (0xff);
 }
 
-READ_HANDLER ( nascom1_port_01_r )
+ READ8_HANDLER ( nascom1_port_01_r )
 {
 	if (nascom1_portstat.stat_flags & NASCOM1_CAS_ENABLE)
 		return (nascom1_read_cassette());
@@ -89,14 +89,14 @@ READ_HANDLER ( nascom1_port_01_r )
 	return (0);
 }
 
-READ_HANDLER ( nascom1_port_02_r )
+ READ8_HANDLER ( nascom1_port_02_r )
 {
 	if (nascom1_portstat.stat_flags & NASCOM1_CAS_ENABLE) return (0x80);
 
 	return (0x00);
 }
 
-WRITE_HANDLER (	nascom1_port_00_w )
+WRITE8_HANDLER (	nascom1_port_00_w )
 {
 	nascom1_portstat.stat_flags &= ~NASCOM1_CAS_ENABLE;
 	nascom1_portstat.stat_flags |= (data & NASCOM1_CAS_ENABLE);
@@ -112,7 +112,7 @@ WRITE_HANDLER (	nascom1_port_00_w )
 	} else nascom1_portstat.stat_flags = NASCOM1_KEY_INCR;
 }
 
-WRITE_HANDLER (	nascom1_port_01_w )
+WRITE8_HANDLER (	nascom1_port_01_w )
 {
 }
 

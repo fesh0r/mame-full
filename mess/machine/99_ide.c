@@ -30,8 +30,8 @@ static void ide_interrupt_callback(int state);
 
 static int ide_cru_r(int offset);
 static void ide_cru_w(int offset, int data);
-static READ_HANDLER(ide_mem_r);
-static WRITE_HANDLER(ide_mem_w);
+static  READ8_HANDLER(ide_mem_r);
+static WRITE8_HANDLER(ide_mem_w);
 
 /* pointer to the IDE RAM area */
 static UINT8 *ti99_ide_RAM;
@@ -180,7 +180,7 @@ static void ide_cru_w(int offset, int data)
 /*
 	read a byte in ide DSR space
 */
-static READ_HANDLER(ide_mem_r)
+static  READ8_HANDLER(ide_mem_r)
 {
 	int reply = 0;
 
@@ -245,7 +245,7 @@ static READ_HANDLER(ide_mem_r)
 /*
 	write a byte in ide DSR space
 */
-static WRITE_HANDLER(ide_mem_w)
+static WRITE8_HANDLER(ide_mem_w)
 {
 	if (cru_register & cru_reg_page_switching)
 	{

@@ -155,7 +155,7 @@ void ti990_ckon_ckof_callback(int state)
 	F: flag (according to 990 handbook)
 */
 
-READ_HANDLER ( ti990_panel_read )
+ READ8_HANDLER ( ti990_panel_read )
 {
 	if (offset == 1)
 		return 0x48;
@@ -163,7 +163,7 @@ READ_HANDLER ( ti990_panel_read )
 	return 0;
 }
 
-WRITE_HANDLER ( ti990_panel_write )
+WRITE8_HANDLER ( ti990_panel_write )
 {
 }
 

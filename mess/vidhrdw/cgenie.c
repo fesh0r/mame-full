@@ -86,7 +86,7 @@ static void cgenie_offset_xy(void)
 /***************************************************************************
   Write to an indexed register of the 6845 CRTC
 ***************************************************************************/
-WRITE_HANDLER ( cgenie_register_w )
+WRITE8_HANDLER ( cgenie_register_w )
 {
 	int addr;
 
@@ -195,7 +195,7 @@ WRITE_HANDLER ( cgenie_register_w )
 /***************************************************************************
   Write to the index register of the 6845 CRTC
 ***************************************************************************/
-WRITE_HANDLER ( cgenie_index_w )
+WRITE8_HANDLER ( cgenie_index_w )
 {
 	crt.idx = data & 15;
 }
@@ -203,7 +203,7 @@ WRITE_HANDLER ( cgenie_index_w )
 /***************************************************************************
   Read from an indexed register of the 6845 CRTC
 ***************************************************************************/
-READ_HANDLER ( cgenie_register_r )
+ READ8_HANDLER ( cgenie_register_r )
 {
 	return cgenie_get_register(crt.idx);
 }
@@ -254,7 +254,7 @@ int cgenie_get_register(int indx)
 /***************************************************************************
   Read the index register of the 6845 CRTC
 ***************************************************************************/
-READ_HANDLER ( cgenie_index_r )
+ READ8_HANDLER ( cgenie_index_r )
 {
 	return crt.idx;
 }

@@ -348,7 +348,7 @@ VIDEO_UPDATE( laser )
 	}
 }
 
-WRITE_HANDLER( laser_bg_mode_w )
+WRITE8_HANDLER( laser_bg_mode_w )
 {
     if (laser_bg_mode != data)
     {
@@ -358,7 +358,7 @@ WRITE_HANDLER( laser_bg_mode_w )
     }
 }
 
-WRITE_HANDLER( laser_two_color_w )
+WRITE8_HANDLER( laser_two_color_w )
 {
 	if (laser_two_color != data)
 	{

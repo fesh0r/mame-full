@@ -85,7 +85,7 @@ void gtia_reset(void)
  *
  **************************************************************/
 
-READ_HANDLER ( atari_gtia_r )
+ READ8_HANDLER ( atari_gtia_r )
 {
     switch (offset & 31)
     {
@@ -279,7 +279,7 @@ static void recalc_m3(void)
     }
 }
 
-WRITE_HANDLER ( atari_gtia_w )
+WRITE8_HANDLER ( atari_gtia_w )
 {
 	/* used for mixing hue/lum of different colors */
 	static UINT8 lumpm0=0,lumpm1=0,lumpm2=0,lumpm3=0,lumpm4=0;

@@ -23,7 +23,7 @@ static struct {
 	int palette_dirty;
 } vic3;
 
-WRITE_HANDLER( vic3_palette_w )
+WRITE8_HANDLER( vic3_palette_w )
 {
 	if (offset<0x100) vic3.palette[offset].red=data;
 	else if (offset<0x200) vic3.palette[offset&0xff].green=data;
@@ -48,7 +48,7 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 	vic2.on = true;
 }
 
-WRITE_HANDLER ( vic3_port_w )
+WRITE8_HANDLER ( vic3_port_w )
 {
 	DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
 	offset &= 0x7f;
@@ -112,7 +112,7 @@ WRITE_HANDLER ( vic3_port_w )
 	}
 }
 
-READ_HANDLER ( vic3_port_r )
+ READ8_HANDLER ( vic3_port_r )
 {
 	int val = 0;
 	offset &= 0x7f;

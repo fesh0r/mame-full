@@ -106,12 +106,12 @@ DEVICE_LOAD( vectrex_cart )
 /*********************************************************************
   Vectrex memory handler
  *********************************************************************/
-READ_HANDLER ( vectrex_mirrorram_r )
+ READ8_HANDLER ( vectrex_mirrorram_r )
 {
 	return vectrex_ram[offset];
 }
 
-WRITE_HANDLER ( vectrex_mirrorram_w )
+WRITE8_HANDLER ( vectrex_mirrorram_w )
 {
 	vectrex_ram[offset] = data;
 }
@@ -209,7 +209,7 @@ void v_via_irq (int level)
 	cpu_set_irq_line(0, M6809_IRQ_LINE, level);
 }
 
-READ_HANDLER( v_via_pb_r )
+ READ8_HANDLER( v_via_pb_r )
 {
 	/* Joystick */
 	if (vectrex_via_out[PORTA] & 0x80)
@@ -229,7 +229,7 @@ READ_HANDLER( v_via_pb_r )
 	return vectrex_via_out[PORTB];
 }
 
-READ_HANDLER( v_via_pa_r )
+ READ8_HANDLER( v_via_pa_r )
 {
 	if ((!(vectrex_via_out[PORTB] & 0x10)) && (vectrex_via_out[PORTB] & 0x08))
 		/* BDIR inactive, we can read the PSG. BC1 has to be active. */
@@ -241,7 +241,7 @@ READ_HANDLER( v_via_pa_r )
 	return vectrex_via_out[PORTA];
 }
 
-READ_HANDLER( s1_via_pb_r )
+ READ8_HANDLER( s1_via_pb_r )
 {
 	return (vectrex_via_out[PORTB] & ~0x40) | ((input_port_1_r(0) & 0x1)<<6);
 }
@@ -282,7 +282,7 @@ void vectrex_imager_right_eye (int param)
 #define DAMPC (-0.2)
 #define MMI (5.0)
 
-WRITE_HANDLER ( vectrex_psg_port_w )
+WRITE8_HANDLER ( vectrex_psg_port_w )
 {
 	static int state;
 	static double sl, pwl;

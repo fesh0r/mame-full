@@ -40,34 +40,34 @@ void riot_w(int chip, int offs, int data);
 
 void riot_reset(int nr);
 
-READ_HANDLER  ( riot_0_r );
-WRITE_HANDLER ( riot_0_w );
-READ_HANDLER  ( riot_1_r );
-WRITE_HANDLER ( riot_1_w );
-READ_HANDLER  ( riot_2_r );
-WRITE_HANDLER ( riot_2_w );
-READ_HANDLER  ( riot_3_r );
-WRITE_HANDLER ( riot_3_w );
+ READ8_HANDLER  ( riot_0_r );
+WRITE8_HANDLER ( riot_0_w );
+ READ8_HANDLER  ( riot_1_r );
+WRITE8_HANDLER ( riot_1_w );
+ READ8_HANDLER  ( riot_2_r );
+WRITE8_HANDLER ( riot_2_w );
+ READ8_HANDLER  ( riot_3_r );
+WRITE8_HANDLER ( riot_3_w );
 
-READ_HANDLER( riot_0_a_r );
-READ_HANDLER( riot_1_a_r );
-READ_HANDLER( riot_2_a_r );
-READ_HANDLER( riot_3_a_r );
+ READ8_HANDLER( riot_0_a_r );
+ READ8_HANDLER( riot_1_a_r );
+ READ8_HANDLER( riot_2_a_r );
+ READ8_HANDLER( riot_3_a_r );
 
-WRITE_HANDLER( riot_0_a_w );
-WRITE_HANDLER( riot_1_a_w );
-WRITE_HANDLER( riot_2_a_w );
-WRITE_HANDLER( riot_3_a_w );
+WRITE8_HANDLER( riot_0_a_w );
+WRITE8_HANDLER( riot_1_a_w );
+WRITE8_HANDLER( riot_2_a_w );
+WRITE8_HANDLER( riot_3_a_w );
 
-READ_HANDLER( riot_0_b_r );
-READ_HANDLER( riot_1_b_r );
-READ_HANDLER( riot_2_b_r );
-READ_HANDLER( riot_3_b_r );
+ READ8_HANDLER( riot_0_b_r );
+ READ8_HANDLER( riot_1_b_r );
+ READ8_HANDLER( riot_2_b_r );
+ READ8_HANDLER( riot_3_b_r );
 
-WRITE_HANDLER( riot_0_b_w );
-WRITE_HANDLER( riot_1_b_w );
-WRITE_HANDLER( riot_2_b_w );
-WRITE_HANDLER( riot_3_b_w );
+WRITE8_HANDLER( riot_0_b_w );
+WRITE8_HANDLER( riot_1_b_w );
+WRITE8_HANDLER( riot_2_b_w );
+WRITE8_HANDLER( riot_3_b_w );
 
 #ifdef __cplusplus
 }

@@ -584,12 +584,12 @@ int cpm_disk_write_sector(void)
 	return result;
 }
 
-READ_HANDLER (	cpm_bios_command_r )
+ READ8_HANDLER (	cpm_bios_command_r )
 {
 	return 0xff;
 }
 
-WRITE_HANDLER ( cpm_bios_command_w )
+WRITE8_HANDLER ( cpm_bios_command_w )
 {
 	dsk_fmt *f;
 	char buff[256];

@@ -40,7 +40,7 @@ speaker?
 
 static UINT8 mk1_f8[2];
 
-static READ_HANDLER(mk1_f8_r)
+static  READ8_HANDLER(mk1_f8_r)
 {
     UINT8 data = mk1_f8[offset];
 
@@ -86,7 +86,7 @@ static READ_HANDLER(mk1_f8_r)
     return data;
 }
 
-static WRITE_HANDLER(mk1_f8_w)
+static WRITE8_HANDLER(mk1_f8_w)
 {
 	/* 0 is high and allows also input */
 	mk1_f8[offset]=data;

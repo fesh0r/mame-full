@@ -41,17 +41,17 @@
 #define LOG(x)	/* x */
 #endif
 
-static READ_HANDLER(mekd2_pia_r) { return 0xff; }
-static READ_HANDLER(mekd2_cas_r) { return 0xff; }
-static READ_HANDLER(mekd2_kbd_r) { return 0xff; }
-static READ_HANDLER(mekd2_mirror_r) { UINT8 *mem = memory_region(REGION_CPU1); return mem[0xe000+(offset&0x3ff)]; }
+static  READ8_HANDLER(mekd2_pia_r) { return 0xff; }
+static  READ8_HANDLER(mekd2_cas_r) { return 0xff; }
+static  READ8_HANDLER(mekd2_kbd_r) { return 0xff; }
+static  READ8_HANDLER(mekd2_mirror_r) { UINT8 *mem = memory_region(REGION_CPU1); return mem[0xe000+(offset&0x3ff)]; }
 
 UINT8 pia[8];
 
-static WRITE_HANDLER(mekd2_pia_w) { }
-static WRITE_HANDLER(mekd2_cas_w) { }
+static WRITE8_HANDLER(mekd2_pia_w) { }
+static WRITE8_HANDLER(mekd2_cas_w) { }
 
-static WRITE_HANDLER(mekd2_kbd_w)
+static WRITE8_HANDLER(mekd2_kbd_w)
 {
 	pia[offset] = data;
 	switch( offset )

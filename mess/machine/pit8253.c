@@ -937,6 +937,6 @@ READ32_HANDLER ( pit8253_32_1_r ) { return read32_with_read8_handler(pit8253_1_r
 WRITE32_HANDLER ( pit8253_32_0_w ) { write32_with_write8_handler(pit8253_0_w, offset, data, mem_mask); }
 WRITE32_HANDLER ( pit8253_32_1_w ) { write32_with_write8_handler(pit8253_1_w, offset, data, mem_mask); }
 
-WRITE_HANDLER ( pit8253_0_gate_w ) { pit8253_gate_write(0, offset, data); }
-WRITE_HANDLER ( pit8253_1_gate_w ) { pit8253_gate_write(1, offset, data); }
+WRITE8_HANDLER ( pit8253_0_gate_w ) { pit8253_gate_write(0, offset, data); }
+WRITE8_HANDLER ( pit8253_1_gate_w ) { pit8253_gate_write(1, offset, data); }
 

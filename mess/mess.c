@@ -428,9 +428,9 @@ void write32_with_write8_handler(write8_handler handler, offs_t offset, data32_t
 
 ***************************************************************************/
 
-READ_HANDLER( return8_00 )	{ return 0x00; }
-READ_HANDLER( return8_FE )	{ return 0xFE; }
-READ_HANDLER( return8_FF )	{ return 0xFF; }
+ READ8_HANDLER( return8_00 )	{ return 0x00; }
+ READ8_HANDLER( return8_FE )	{ return 0xFE; }
+ READ8_HANDLER( return8_FF )	{ return 0xFF; }
 
 
 

@@ -784,16 +784,16 @@ INLINE int m6530_r(int chip, int offset)
 	return data;
 }
 
-READ_HANDLER ( m6530_003_r )
+ READ8_HANDLER ( m6530_003_r )
 {
 	return m6530_r(0, offset);
 }
-READ_HANDLER ( m6530_002_r )
+ READ8_HANDLER ( m6530_002_r )
 {
 	return m6530_r(1, offset);
 }
 
-READ_HANDLER ( kim1_mirror_r )
+ READ8_HANDLER ( kim1_mirror_r )
 {
 	return program_read_byte(offset & 0x1fff);
 }
@@ -905,16 +905,16 @@ static void m6530_w(int chip, int offset, int data)
 	}
 }
 
-WRITE_HANDLER ( m6530_003_w )
+WRITE8_HANDLER ( m6530_003_w )
 {
 	m6530_w(0, offset, data);
 }
-WRITE_HANDLER ( m6530_002_w )
+WRITE8_HANDLER ( m6530_002_w )
 {
 	m6530_w(1, offset, data);
 }
 
-WRITE_HANDLER ( kim1_mirror_w )
+WRITE8_HANDLER ( kim1_mirror_w )
 {
 	program_write_byte(offset & 0x1fff, data);
 }

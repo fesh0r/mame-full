@@ -40,10 +40,10 @@ void cdp1864_audio_output_w(int value);
 void cdp1864_enable_w(int value);
 void cdp1864_reset_w(void);
 
-READ_HANDLER( cdp1864_audio_enable_r );
-READ_HANDLER( cdp1864_audio_disable_r );
-WRITE_HANDLER( cdp1864_step_background_color_w );
-WRITE_HANDLER( cdp1864_tone_divisor_latch_w );
+ READ8_HANDLER( cdp1864_audio_enable_r );
+ READ8_HANDLER( cdp1864_audio_disable_r );
+WRITE8_HANDLER( cdp1864_step_background_color_w );
+WRITE8_HANDLER( cdp1864_tone_divisor_latch_w );
 
 PALETTE_INIT( tmc2000 );
 PALETTE_INIT( tmc2000e );

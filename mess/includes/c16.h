@@ -134,37 +134,37 @@
 
 extern UINT8 *c16_memory;
 
-extern WRITE_HANDLER(c16_m7501_port_w);
-extern READ_HANDLER(c16_m7501_port_r);
+extern WRITE8_HANDLER(c16_m7501_port_w);
+extern  READ8_HANDLER(c16_m7501_port_r);
 
-extern WRITE_HANDLER(c16_6551_port_w);
-extern READ_HANDLER(c16_6551_port_r);
+extern WRITE8_HANDLER(c16_6551_port_w);
+extern  READ8_HANDLER(c16_6551_port_r);
 
-extern READ_HANDLER(c16_fd1x_r);
-extern WRITE_HANDLER(plus4_6529_port_w);
-extern READ_HANDLER(plus4_6529_port_r);
+extern  READ8_HANDLER(c16_fd1x_r);
+extern WRITE8_HANDLER(plus4_6529_port_w);
+extern  READ8_HANDLER(plus4_6529_port_r);
 
-extern WRITE_HANDLER(c16_6529_port_w);
-extern READ_HANDLER(c16_6529_port_r);
+extern WRITE8_HANDLER(c16_6529_port_w);
+extern  READ8_HANDLER(c16_6529_port_r);
 
-extern WRITE_HANDLER(c364_speech_w);
-extern READ_HANDLER(c364_speech_r);
+extern WRITE8_HANDLER(c364_speech_w);
+extern  READ8_HANDLER(c364_speech_r);
 
 extern void c364_speech_init(void);
 
 #if 0
-extern WRITE_HANDLER(c16_iec9_port_w);
-extern READ_HANDLER(c16_iec9_port_r);
+extern WRITE8_HANDLER(c16_iec9_port_w);
+extern  READ8_HANDLER(c16_iec9_port_r);
 
-extern WRITE_HANDLER(c16_iec8_port_w);
-extern READ_HANDLER(c16_iec8_port_r);
+extern WRITE8_HANDLER(c16_iec8_port_w);
+extern  READ8_HANDLER(c16_iec8_port_r);
 
 #endif
 
-extern WRITE_HANDLER(c16_select_roms);
-extern WRITE_HANDLER(c16_switch_to_rom);
-extern WRITE_HANDLER(c16_switch_to_ram);
-extern WRITE_HANDLER(plus4_switch_to_ram);
+extern WRITE8_HANDLER(c16_select_roms);
+extern WRITE8_HANDLER(c16_switch_to_rom);
+extern WRITE8_HANDLER(c16_switch_to_ram);
+extern WRITE8_HANDLER(plus4_switch_to_ram);
 
 /* ted reads */
 extern int c16_read_keyboard (int databus);

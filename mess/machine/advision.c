@@ -35,7 +35,7 @@ DEVICE_LOAD( advision_cart )
 
 /****** External RAM ******************************/
 
-READ_HANDLER ( advision_MAINRAM_r )
+ READ8_HANDLER ( advision_MAINRAM_r )
 {
     int d;
 
@@ -46,14 +46,14 @@ READ_HANDLER ( advision_MAINRAM_r )
     return d;
 }
 
-WRITE_HANDLER ( advision_MAINRAM_w )
+WRITE8_HANDLER ( advision_MAINRAM_w )
 {
     advision_ram[advision_rambank + offset] = data;
 }
 
 /***** 8048 Ports ************************/
 
-WRITE_HANDLER ( advision_putp1 )
+WRITE8_HANDLER ( advision_putp1 )
 {
 	static UINT8 *ROM;
 	
@@ -65,7 +65,7 @@ WRITE_HANDLER ( advision_putp1 )
 	advision_rambank = (data & 0x03) << 8;
 }
 
-WRITE_HANDLER ( advision_putp2 )
+WRITE8_HANDLER ( advision_putp2 )
 {
 	if ((advision_videoenable == 0x00) && (data & 0x10))
 	{
@@ -81,7 +81,7 @@ WRITE_HANDLER ( advision_putp2 )
 	advision_videobank = (data & 0xE0) >> 5;
 }
 
-READ_HANDLER ( advision_getp1 ) {
+ READ8_HANDLER ( advision_getp1 ) {
     int d,in;
 
     logerror("P1 READ PC=%x\n",activecpu_get_pc());
@@ -96,15 +96,15 @@ READ_HANDLER ( advision_getp1 ) {
     return d;
 }
 
-READ_HANDLER ( advision_getp2 ) {
+ READ8_HANDLER ( advision_getp2 ) {
     return 0;
 }
 
-READ_HANDLER ( advision_gett0 ) {
+ READ8_HANDLER ( advision_gett0 ) {
     return 0;
 }
 
-READ_HANDLER ( advision_gett1 ) {
+ READ8_HANDLER ( advision_gett1 ) {
     if (advision_framestart) {
         advision_framestart = 0;
         return 0;

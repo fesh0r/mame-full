@@ -308,7 +308,7 @@ DEVICE_LOAD( a7800_cart )
 
 /******  TIA  *****************************************/
 
-READ_HANDLER( a7800_TIA_r )
+ READ8_HANDLER( a7800_TIA_r )
 {
 	switch(offset)
 	{
@@ -337,7 +337,7 @@ READ_HANDLER( a7800_TIA_r )
 	return 0xFF;
 }
 
-WRITE_HANDLER( a7800_TIA_w )
+WRITE8_HANDLER( a7800_TIA_w )
 {
 	switch(offset) {
 	case 0x01:
@@ -363,7 +363,7 @@ WRITE_HANDLER( a7800_TIA_w )
 
 /****** RIOT ****************************************/
 
-READ_HANDLER( a7800_RIOT_r )
+ READ8_HANDLER( a7800_RIOT_r )
 {
 	unsigned char data;
 
@@ -392,7 +392,7 @@ READ_HANDLER( a7800_RIOT_r )
 	return 0xFF;
 }
 
-WRITE_HANDLER( a7800_RIOT_w )
+WRITE8_HANDLER( a7800_RIOT_w )
 {
 	switch( offset & 0x1F )
 	{
@@ -425,13 +425,13 @@ WRITE_HANDLER( a7800_RIOT_w )
 
 /****** RAM Mirroring ******************************/
 
-WRITE_HANDLER( a7800_RAM0_w )
+WRITE8_HANDLER( a7800_RAM0_w )
 {
 	ROM[0x2040 + offset] = data;
 	ROM[0x40 + offset] = data;
 }
 
-WRITE_HANDLER( a7800_cart_w )
+WRITE8_HANDLER( a7800_cart_w )
 {
 	if(offset < 0x4000)
 	{

@@ -283,12 +283,12 @@ MACHINE_STOP( ti86 )
 
 /* I/O ports handlers */
 
-READ_HANDLER ( ti85_port_0000_r )
+ READ8_HANDLER ( ti85_port_0000_r )
 {
 	return 0xff;
 }
 
-READ_HANDLER ( ti85_port_0001_r )
+ READ8_HANDLER ( ti85_port_0001_r )
 {
 	int data = 0xff;
 	int port;
@@ -303,12 +303,12 @@ READ_HANDLER ( ti85_port_0001_r )
 	return data;
 }
 
-READ_HANDLER ( ti85_port_0002_r )
+ READ8_HANDLER ( ti85_port_0002_r )
 {
 	return 0xff;
 }
 
-READ_HANDLER ( ti85_port_0003_r )
+ READ8_HANDLER ( ti85_port_0003_r )
 {
 	int data = 0;
 
@@ -325,22 +325,22 @@ READ_HANDLER ( ti85_port_0003_r )
 	return data;
 }
 
-READ_HANDLER ( ti85_port_0004_r )
+ READ8_HANDLER ( ti85_port_0004_r )
 {
 	return 0xff;
 }
 
-READ_HANDLER ( ti85_port_0005_r )
+ READ8_HANDLER ( ti85_port_0005_r )
 {
 	return ti85_memory_page_0x4000;
 }
 
-READ_HANDLER ( ti85_port_0006_r )
+ READ8_HANDLER ( ti85_port_0006_r )
 {
 	return ti85_power_mode;
 }
 
-READ_HANDLER ( ti85_port_0007_r )
+ READ8_HANDLER ( ti85_port_0007_r )
 {
 	ti85_update_serial();
         return  (ti85_white_out<<3) |
@@ -350,37 +350,37 @@ READ_HANDLER ( ti85_port_0007_r )
 		ti85_PCR;
 }
 
-READ_HANDLER ( ti86_port_0005_r )
+ READ8_HANDLER ( ti86_port_0005_r )
 {
 	return ti85_memory_page_0x4000;
 }
 
-READ_HANDLER ( ti86_port_0006_r )
+ READ8_HANDLER ( ti86_port_0006_r )
 {
 	return ti86_memory_page_0x8000;
 }
 
-WRITE_HANDLER ( ti81_port_0007_w )
+WRITE8_HANDLER ( ti81_port_0007_w )
 {
 	ti81_port_7_data = data;
 }
 
-WRITE_HANDLER ( ti85_port_0000_w )
+WRITE8_HANDLER ( ti85_port_0000_w )
 {
 	ti85_LCD_memory_base = data;
 }
 
-WRITE_HANDLER ( ti85_port_0001_w )
+WRITE8_HANDLER ( ti85_port_0001_w )
 {
 	ti85_keypad_mask = data&0x7f;
 }
 
-WRITE_HANDLER ( ti85_port_0002_w )
+WRITE8_HANDLER ( ti85_port_0002_w )
 {
 	ti85_LCD_contrast = data&0x1f;
 }
 
-WRITE_HANDLER ( ti85_port_0003_w )
+WRITE8_HANDLER ( ti85_port_0003_w )
 {
 	if (ti85_LCD_status && !(data&0x08))	ti85_timer_interrupt_mask = 0;
 	ti85_ON_interrupt_mask = data&0x01;
@@ -389,25 +389,25 @@ WRITE_HANDLER ( ti85_port_0003_w )
 	ti85_LCD_status = data&0x08;
 }
 
-WRITE_HANDLER ( ti85_port_0004_w )
+WRITE8_HANDLER ( ti85_port_0004_w )
 {
 	ti85_video_buffer_width = (data>>3)&0x03;
 	ti85_interrupt_speed = (data>>1)&0x03;
 	ti85_port4_bit0 = data&0x01;
 }
 
-WRITE_HANDLER ( ti85_port_0005_w )
+WRITE8_HANDLER ( ti85_port_0005_w )
 {
 	ti85_memory_page_0x4000 = data;
 	update_ti85_memory();
 }
 
-WRITE_HANDLER ( ti85_port_0006_w )
+WRITE8_HANDLER ( ti85_port_0006_w )
 {
 	ti85_power_mode = data;
 }
 
-WRITE_HANDLER ( ti85_port_0007_w )
+WRITE8_HANDLER ( ti85_port_0007_w )
 {
 	speaker_level_w(0,( (data>>2)|(data>>3) )&0x01 );
         ti85_red_out=(data>>2)&0x01;
@@ -416,13 +416,13 @@ WRITE_HANDLER ( ti85_port_0007_w )
 	ti85_PCR = data&0xf0;
 }
 
-WRITE_HANDLER ( ti86_port_0005_w )
+WRITE8_HANDLER ( ti86_port_0005_w )
 {
 	ti85_memory_page_0x4000 = data&((data&0x40)?0x47:0x4f);
 	update_ti86_memory();
 }
 
-WRITE_HANDLER ( ti86_port_0006_w )
+WRITE8_HANDLER ( ti86_port_0006_w )
 {
 	ti86_memory_page_0x8000 = data&((data&0x40)?0x47:0x4f);
 	update_ti86_memory();

@@ -302,9 +302,9 @@ MACHINE_INIT( msx2 )
 
 static void msx_wd179x_int (int state);
 
-static WRITE_HANDLER ( msx_ppi_port_a_w );
-static WRITE_HANDLER ( msx_ppi_port_c_w );
-static READ_HANDLER (msx_ppi_port_b_r );
+static WRITE8_HANDLER ( msx_ppi_port_a_w );
+static WRITE8_HANDLER ( msx_ppi_port_c_w );
+static  READ8_HANDLER (msx_ppi_port_b_r );
 
 static ppi8255_interface msx_ppi8255_interface =
 {
@@ -406,12 +406,12 @@ INTERRUPT_GEN( msx_interrupt )
 ** The I/O funtions
 */
 
-READ_HANDLER ( msx_psg_r )
+ READ8_HANDLER ( msx_psg_r )
 {
 	return AY8910_read_port_0_r (offset);
 }
 
-WRITE_HANDLER ( msx_psg_w )
+WRITE8_HANDLER ( msx_psg_w )
 {
 	if (offset & 0x01)
 		AY8910_write_port_0_w (offset, data);
@@ -429,7 +429,7 @@ static mess_image *printer_image(void)
 	return image_from_devtype_and_index(IO_PRINTER, 0);
 }
 
-READ_HANDLER ( msx_psg_port_a_r )
+ READ8_HANDLER ( msx_psg_port_a_r )
 {
 	int data, inp;
 
@@ -489,17 +489,17 @@ READ_HANDLER ( msx_psg_port_a_r )
 	return 0;
 }
 
-READ_HANDLER ( msx_psg_port_b_r )
+ READ8_HANDLER ( msx_psg_port_b_r )
 {
 	return msx1.psg_b;
 }
 
-WRITE_HANDLER ( msx_psg_port_a_w )
+WRITE8_HANDLER ( msx_psg_port_a_w )
 {
 
 }
 
-WRITE_HANDLER ( msx_psg_port_b_w )
+WRITE8_HANDLER ( msx_psg_port_b_w )
 {
 	/* Arabic or kana mode led */
 	if ( (data ^ msx1.psg_b) & 0x80)
@@ -517,7 +517,7 @@ WRITE_HANDLER ( msx_psg_port_b_w )
 	msx1.psg_b = data;
 }
 
-WRITE_HANDLER ( msx_printer_w )
+WRITE8_HANDLER ( msx_printer_w )
 {
 	if (readinputport (8) & 0x80) {
 		/* SIMPL emulation */
@@ -539,7 +539,7 @@ WRITE_HANDLER ( msx_printer_w )
 	}
 }
 
-READ_HANDLER ( msx_printer_r )
+ READ8_HANDLER ( msx_printer_r )
 {
 	if (offset == 0 && ! (readinputport (8) & 0x80) &&
 			device_status(printer_image(), 0) )
@@ -548,7 +548,7 @@ READ_HANDLER ( msx_printer_r )
 	return 0xff;
 }
 
-WRITE_HANDLER (msx_fmpac_w)
+WRITE8_HANDLER (msx_fmpac_w)
 {
 	if (msx1.opll_active) {
 
@@ -565,17 +565,17 @@ WRITE_HANDLER (msx_fmpac_w)
 ** RTC functions
 */
 
-WRITE_HANDLER (msx_rtc_latch_w)
+WRITE8_HANDLER (msx_rtc_latch_w)
 {
 	msx1.rtc_latch = data & 15;
 }
 
-WRITE_HANDLER (msx_rtc_reg_w)
+WRITE8_HANDLER (msx_rtc_reg_w)
 {
 	tc8521_w (msx1.rtc_latch, data);
 }
 
-READ_HANDLER (msx_rtc_reg_r)
+ READ8_HANDLER (msx_rtc_reg_r)
 {
 	return tc8521_r (msx1.rtc_latch);
 }
@@ -668,7 +668,7 @@ DEVICE_LOAD( msx_floppy )
 ** The PPI functions
 */
 
-static WRITE_HANDLER ( msx_ppi_port_a_w )
+static WRITE8_HANDLER ( msx_ppi_port_a_w )
 {
 	msx1.primary_slot = ppi8255_peek (0,0);
 #if VERBOSE
@@ -677,7 +677,7 @@ static WRITE_HANDLER ( msx_ppi_port_a_w )
 	msx_memory_map_all ();
 }
 
-static WRITE_HANDLER ( msx_ppi_port_c_w )
+static WRITE8_HANDLER ( msx_ppi_port_c_w )
 {
 	static int old_val = 0xff;
 
@@ -703,7 +703,7 @@ static WRITE_HANDLER ( msx_ppi_port_c_w )
 	old_val = data;
 }
 
-static READ_HANDLER( msx_ppi_port_b_r )
+static  READ8_HANDLER( msx_ppi_port_b_r )
 {
 	int row, data;
 
@@ -940,7 +940,7 @@ void msx_memory_map_all (void)
 	}
 }
 
-WRITE_HANDLER (msx_superloadrunner_w)
+WRITE8_HANDLER (msx_superloadrunner_w)
 {
 	msx1.superloadrunner_bank = data;
 	if (msx1.slot[2]->slot_type == SLOT_SUPERLOADRUNNER) {
@@ -949,7 +949,7 @@ WRITE_HANDLER (msx_superloadrunner_w)
 	msx_page0_w (-1, data);
 }
 
-WRITE_HANDLER (msx_page0_w)
+WRITE8_HANDLER (msx_page0_w)
 {
 	offset++;
 
@@ -962,7 +962,7 @@ WRITE_HANDLER (msx_page0_w)
 	}
 }
 
-WRITE_HANDLER (msx_page1_w)
+WRITE8_HANDLER (msx_page1_w)
 {
 	switch (msx1.slot[1]->mem_type) {
 	case MSX_MEM_RAM:
@@ -973,7 +973,7 @@ WRITE_HANDLER (msx_page1_w)
 	}
 }
 
-WRITE_HANDLER (msx_page2_w)
+WRITE8_HANDLER (msx_page2_w)
 {
 	switch (msx1.slot[2]->mem_type) {
 	case MSX_MEM_RAM:
@@ -984,7 +984,7 @@ WRITE_HANDLER (msx_page2_w)
 	}
 }
 
-WRITE_HANDLER (msx_page3_w)
+WRITE8_HANDLER (msx_page3_w)
 {
 	switch (msx1.slot[3]->mem_type) {
 	case MSX_MEM_RAM:
@@ -995,7 +995,7 @@ WRITE_HANDLER (msx_page3_w)
 	}
 }
 
-WRITE_HANDLER (msx_sec_slot_w)
+WRITE8_HANDLER (msx_sec_slot_w)
 {
 	int slot = msx1.primary_slot >> 6;
 	if (msx1.slot_expanded[slot]) {
@@ -1010,7 +1010,7 @@ WRITE_HANDLER (msx_sec_slot_w)
 	}
 }
 
-READ_HANDLER (msx_sec_slot_r)
+ READ8_HANDLER (msx_sec_slot_r)
 {
 	int slot = msx1.primary_slot >> 6;
 	if (msx1.slot_expanded[slot]) {
@@ -1021,7 +1021,7 @@ READ_HANDLER (msx_sec_slot_r)
 	}
 }
 
-WRITE_HANDLER (msx_ram_mapper_w)
+WRITE8_HANDLER (msx_ram_mapper_w)
 {
 	msx1.ram_mapper[offset] = data;
 	if (msx1.slot[offset]->slot_type == SLOT_RAM_MM) {
@@ -1029,12 +1029,12 @@ WRITE_HANDLER (msx_ram_mapper_w)
 	}
 }
 
-READ_HANDLER (msx_ram_mapper_r)
+ READ8_HANDLER (msx_ram_mapper_r)
 {
 	return msx1.ram_mapper[offset] | msx1.ramio_set_bits;
 }
 
-WRITE_HANDLER (msx_90in1_w)
+WRITE8_HANDLER (msx_90in1_w)
 {
 	msx1.korean90in1_bank = data;
 	if (msx1.slot[1]->slot_type == SLOT_KOREAN_90IN1) {
@@ -1045,7 +1045,7 @@ WRITE_HANDLER (msx_90in1_w)
 	}
 }
 
-READ_HANDLER (msx_kanji_r)
+ READ8_HANDLER (msx_kanji_r)
 {
 	if (msx1.kanji_mem) {
 		int latch;
@@ -1064,7 +1064,7 @@ READ_HANDLER (msx_kanji_r)
 	}
 }
 
-WRITE_HANDLER (msx_kanji_w)
+WRITE8_HANDLER (msx_kanji_w)
 {
 	if (offset) {
 		msx1.kanji_latch = 

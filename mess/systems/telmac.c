@@ -178,21 +178,21 @@ static int keylatch, vismac_latch;
 
 /* Read/Write Handlers */
 
-static READ_HANDLER( vismac_r )
+static  READ8_HANDLER( vismac_r )
 {
 	return 0;
 }
 
-static WRITE_HANDLER( vismac_w )
+static WRITE8_HANDLER( vismac_w )
 {
 }
 
-static WRITE_HANDLER( vismac_register_w )
+static WRITE8_HANDLER( vismac_register_w )
 {
 	vismac_latch = data;
 }
 
-static WRITE_HANDLER( vismac_data_w )
+static WRITE8_HANDLER( vismac_data_w )
 {
 	UINT16 word = activecpu_get_reg(activecpu_get_reg(CDP1802_X) + CDP1802_R0) - 1; // TODO: why -1 ??? is it R(X) + R(0) 
 
@@ -211,39 +211,39 @@ static WRITE_HANDLER( vismac_data_w )
 	}
 }
 
-static READ_HANDLER( floppy_r )
+static  READ8_HANDLER( floppy_r )
 {
 	return 0;
 }
 
-static WRITE_HANDLER( floppy_w )
+static WRITE8_HANDLER( floppy_w )
 {
 }
 
-static WRITE_HANDLER( printer_w )
+static WRITE8_HANDLER( printer_w )
 {
 	// TODO: output byte to printer
 }
 
-static READ_HANDLER( ascii_keyboard_r )
+static  READ8_HANDLER( ascii_keyboard_r )
 {
 	return 0;
 }
 
-static READ_HANDLER( io_r )
+static  READ8_HANDLER( io_r )
 {
 	return 0;
 }
 
-static WRITE_HANDLER( io_w )
+static WRITE8_HANDLER( io_w )
 {
 }
 
-static WRITE_HANDLER( io_select_w )
+static WRITE8_HANDLER( io_select_w )
 {
 }
 
-static WRITE_HANDLER( tmc2000_bankswitch_w )
+static WRITE8_HANDLER( tmc2000_bankswitch_w )
 {
 	if (data & 0x01)
 	{
@@ -263,7 +263,7 @@ static WRITE_HANDLER( tmc2000_bankswitch_w )
 	cdp1864_tone_divisor_latch_w(0, data);
 }
 
-static WRITE_HANDLER( keyboard_latch_w )
+static WRITE8_HANDLER( keyboard_latch_w )
 {
 	keylatch = data;
 }

@@ -90,7 +90,7 @@ Bit 1: Joystick 1: EOC
 Bit 0: Joystick 1: /SENSE
 
 */
-static READ_HANDLER ( svi318_ppi_port_a_r )
+static  READ8_HANDLER ( svi318_ppi_port_a_r )
 {
 	int data = 0x0f;
 
@@ -117,7 +117,7 @@ Bit 1: Keyboard: Column status of selected line
 Bit 0: Keyboard: Column status of selected line
 
 */
-static READ_HANDLER ( svi318_ppi_port_b_r )
+static  READ8_HANDLER ( svi318_ppi_port_b_r )
 	{
 	int row;
 
@@ -139,7 +139,7 @@ Bit 1: Keyboard: Line select 1
 Bit 0: Keyboard: Line select 0
 
 */
-static WRITE_HANDLER ( svi318_ppi_port_c_w )
+static WRITE8_HANDLER ( svi318_ppi_port_c_w )
 {
 	int val;
 
@@ -172,12 +172,12 @@ static ppi8255_interface svi318_ppi8255_interface =
 	{svi318_ppi_port_c_w}
 };
 
-READ_HANDLER (svi318_ppi_r)
+ READ8_HANDLER (svi318_ppi_r)
 {
 	return ppi8255_0_r (offset);
 }
 
-WRITE_HANDLER (svi318_ppi_w)
+WRITE8_HANDLER (svi318_ppi_w)
 {
 	ppi8255_0_w (offset + 2, data);
 }
@@ -186,7 +186,7 @@ WRITE_HANDLER (svi318_ppi_w)
 ** Printer ports
 */
 
-WRITE_HANDLER (svi318_printer_w)
+WRITE8_HANDLER (svi318_printer_w)
 {
 	if (!offset)
 		svi.prn_data = data;
@@ -199,7 +199,7 @@ WRITE_HANDLER (svi318_printer_w)
 	}
 }
 
-READ_HANDLER (svi318_printer_r)
+ READ8_HANDLER (svi318_printer_r)
 {
 	if (device_status(image_from_devtype_and_index(IO_PRINTER, 0), 0) )
 		return 0xfe;
@@ -226,7 +226,7 @@ Bit Name	Description
 disabled.
 */
 
-WRITE_HANDLER (svi318_psg_port_b_w)
+WRITE8_HANDLER (svi318_psg_port_b_w)
 	{
 	if ( (svi.bank_switch ^ data) & 0x20)
 		set_led_status (0, !(data & 0x20) );
@@ -249,7 +249,7 @@ Bit Name   Description
 
 */
 
-READ_HANDLER (svi318_psg_port_a_r)
+ READ8_HANDLER (svi318_psg_port_a_r)
 	{
 	return readinputport (11);
 	}
@@ -298,7 +298,7 @@ static void svi_fdc_callback(int param)
 /* Function: svi801_Select_DriveMotor						 */
 /* Purpose:  Floppy drive and motor select.					 */
 /*************************************************************/
-WRITE_HANDLER (fdc_disk_motor_w)
+WRITE8_HANDLER (fdc_disk_motor_w)
 {
 	UINT8 seldrive = 255;
 
@@ -319,7 +319,7 @@ WRITE_HANDLER (fdc_disk_motor_w)
 /* Function: svi801_Select_SideDensity						 */
 /* Purpose:  Floppy density and head select.				 */
 /*************************************************************/
-WRITE_HANDLER (fdc_density_side_w)
+WRITE8_HANDLER (fdc_density_side_w)
 {
 	UINT8 sec_per_track;
 	UINT16 sector_size;
@@ -348,7 +348,7 @@ WRITE_HANDLER (fdc_density_side_w)
 		basicdsk_set_geometry(image, 40, svi318_dsk_heads[svi318_fdc_status.seldrive], sec_per_track, sector_size, 1, 0, 0);
 }
 
-READ_HANDLER (svi318_fdc_status_r)
+ READ8_HANDLER (svi318_fdc_status_r)
 {
 	return svi318_fdc_status.irq_drq;
 }
@@ -563,7 +563,7 @@ INTERRUPT_GEN( svi318_interrupt )
 ** Memory stuff
 */
 
-WRITE_HANDLER (svi318_writemem0)
+WRITE8_HANDLER (svi318_writemem0)
 	{
 	if (svi.bank1 < 2) return;
 
@@ -571,7 +571,7 @@ WRITE_HANDLER (svi318_writemem0)
 		svi.banks[0][svi.bank1][offset] = data;
 	}
 
-WRITE_HANDLER (svi318_writemem1)
+WRITE8_HANDLER (svi318_writemem1)
 	{
 	switch (svi.bank2)
 		{

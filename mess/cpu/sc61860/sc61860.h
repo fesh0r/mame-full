@@ -53,8 +53,8 @@ typedef struct {
 
 
 /* add these in the memory region for better usage of mame debugger */
-READ_HANDLER(sc61860_internal_r);
-WRITE_HANDLER(sc61860_internal_w);
+ READ8_HANDLER(sc61860_internal_r);
+WRITE8_HANDLER(sc61860_internal_w);
 
 /* timer_pulse(1/500.0, 0,sc61860_2ms_tick) */
 void sc61860_2ms_tick(int param);

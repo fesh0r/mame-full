@@ -60,24 +60,24 @@ static void vc20_via0_irq (int level)
 	cpu_set_nmi_line (0, level);
 }
 
-static READ_HANDLER( vc20_via0_read_ca1 )
+static  READ8_HANDLER( vc20_via0_read_ca1 )
 {
 	return !KEY_RESTORE;
 }
 
-static READ_HANDLER( vc20_via0_read_ca2 )
+static  READ8_HANDLER( vc20_via0_read_ca2 )
 {
 	DBG_LOG (1, "tape", ("motor read %d\n", via0_ca2));
 	return via0_ca2;
 }
 
-static WRITE_HANDLER( vc20_via0_write_ca2 )
+static WRITE8_HANDLER( vc20_via0_write_ca2 )
 {
 	via0_ca2 = data ? 1 : 0;
 	vc20_tape_motor (via0_ca2);
 }
 
-static READ_HANDLER( vc20_via0_read_porta )
+static  READ8_HANDLER( vc20_via0_read_porta )
 {
 	UINT8 value = 0xff;
 
@@ -102,7 +102,7 @@ static READ_HANDLER( vc20_via0_read_porta )
 	return value;
 }
 
-static WRITE_HANDLER( vc20_via0_write_porta )
+static WRITE8_HANDLER( vc20_via0_write_porta )
 {
 	cbm_serial_atn_write (serial_atn = !(data & 0x80));
 	DBG_LOG (1, "serial out", ("atn %s\n", serial_atn ? "high" : "low"));
@@ -124,7 +124,7 @@ static void vc20_via1_irq (int level)
 	cpu_set_irq_line (0, M6502_IRQ_LINE, level);
 }
 
-static READ_HANDLER( vc20_via1_read_porta )
+static  READ8_HANDLER( vc20_via1_read_porta )
 {
 	int value = 0xff;
 
@@ -155,17 +155,17 @@ static READ_HANDLER( vc20_via1_read_porta )
 	return value;
 }
 
-static READ_HANDLER( vc20_via1_read_ca1 )
+static  READ8_HANDLER( vc20_via1_read_ca1 )
 {
 	return vc20_tape_read ();
 }
 
-static WRITE_HANDLER( vc20_via1_write_ca2 )
+static WRITE8_HANDLER( vc20_via1_write_ca2 )
 {
 	cbm_serial_clock_write (serial_clock = !data);
 }
 
-static READ_HANDLER( vc20_via1_read_portb )
+static  READ8_HANDLER( vc20_via1_read_portb )
 {
 	UINT8 value = 0xff;
 
@@ -276,26 +276,26 @@ static READ_HANDLER( vc20_via1_read_portb )
 	return value;
 }
 
-static WRITE_HANDLER( vc20_via1_write_porta )
+static WRITE8_HANDLER( vc20_via1_write_porta )
 {
 	via1_porta = data;
 }
 
 
-static WRITE_HANDLER( vc20_via1_write_portb )
+static WRITE8_HANDLER( vc20_via1_write_portb )
 {
 /*  if( errorlog ) fprintf(errorlog, "via1_write_portb: $%02X\n", data); */
 	vc20_tape_write (data & 8 ? 1 : 0);
 	via1_portb = data;
 }
 
-static READ_HANDLER( vc20_via1_read_cb1 )
+static  READ8_HANDLER( vc20_via1_read_cb1 )
 {
 	DBG_LOG (1, "serial in", ("request read\n"));
 	return cbm_serial_request_read ();
 }
 
-static WRITE_HANDLER( vc20_via1_write_cb2 )
+static WRITE8_HANDLER( vc20_via1_write_cb2 )
 {
 	cbm_serial_data_write (serial_data = !data);
 }
@@ -311,7 +311,7 @@ static WRITE_HANDLER( vc20_via1_write_cb2 )
   6 ndac in
   7 atn in
  */
-static READ_HANDLER( vc20_via4_read_portb )
+static  READ8_HANDLER( vc20_via4_read_portb )
 {
 	UINT8 data=0;
 	if (cbm_ieee_eoi_r()) data|=8;
@@ -322,7 +322,7 @@ static READ_HANDLER( vc20_via4_read_portb )
 	return data;
 }
 
-static WRITE_HANDLER( vc20_via4_write_portb )
+static WRITE8_HANDLER( vc20_via4_write_portb )
 {
 	cbm_ieee_dav_w(0,data&1);
 	cbm_ieee_nrfd_w(0,data&2);
@@ -336,27 +336,27 @@ static WRITE_HANDLER( vc20_via4_write_portb )
    cb2 eoi out
    ca2 atn out
 */
-static WRITE_HANDLER( vc20_via5_write_porta )
+static WRITE8_HANDLER( vc20_via5_write_porta )
 {
 	cbm_ieee_data_w(0,data);
 }
 
-static READ_HANDLER( vc20_via5_read_portb )
+static  READ8_HANDLER( vc20_via5_read_portb )
 {
 	return cbm_ieee_data_r();
 }
 
-static WRITE_HANDLER( vc20_via5_write_ca2 )
+static WRITE8_HANDLER( vc20_via5_write_ca2 )
 {
 	cbm_ieee_atn_w(0,data);
 }
 
-static READ_HANDLER( vc20_via5_read_cb1 )
+static  READ8_HANDLER( vc20_via5_read_cb1 )
 {
 	return cbm_ieee_srq_r();
 }
 
-static WRITE_HANDLER( vc20_via5_write_cb2 )
+static WRITE8_HANDLER( vc20_via5_write_cb2 )
 {
 	cbm_ieee_eoi_w(0,data);
 }
@@ -417,7 +417,7 @@ via4 =
 	vc20_via1_irq
 };
 
-WRITE_HANDLER ( vc20_write_9400 )
+WRITE8_HANDLER ( vc20_write_9400 )
 {
 	vc20_memory_9400[offset] = data | 0xf0;
 }

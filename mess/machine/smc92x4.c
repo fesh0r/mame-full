@@ -1215,12 +1215,12 @@ void smc92x4_w(int which, int offset, int data)
 	}
 }
 
-READ_HANDLER(smc92x4_0_r)
+ READ8_HANDLER(smc92x4_0_r)
 {
 	return smc92x4_r(0, offset);
 }
 
-WRITE_HANDLER(smc92x4_0_w)
+WRITE8_HANDLER(smc92x4_0_w)
 {
 	smc92x4_w(0, offset, data);
 }

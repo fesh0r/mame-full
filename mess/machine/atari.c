@@ -862,7 +862,7 @@ int i, drive, sector, offset;
 	}
 }
 
-READ_HANDLER ( atari_serin_r )
+ READ8_HANDLER ( atari_serin_r )
 {
 	int data = 0x00;
 	int ser_delay = 0;
@@ -889,7 +889,7 @@ READ_HANDLER ( atari_serin_r )
 	return data;
 }
 
-WRITE_HANDLER ( atari_serout_w )
+WRITE8_HANDLER ( atari_serout_w )
 {
 	/* ignore serial commands if no floppy image is specified */
 	if( !drv[0].image )
@@ -952,7 +952,7 @@ void atari_interrupt_cb(int mask)
  *
  **************************************************************/
 
-READ_HANDLER ( atari_pia_r )
+ READ8_HANDLER ( atari_pia_r )
 {
 	data8_t result;
 	switch (offset & 3)
@@ -988,7 +988,7 @@ READ_HANDLER ( atari_pia_r )
  *
  **************************************************************/
 
-WRITE_HANDLER ( atari_pia_w )
+WRITE8_HANDLER ( atari_pia_w )
 {
 	switch (offset & 3)
 	{

@@ -78,7 +78,7 @@ static int mapper41_chr, mapper41_reg2;
 
 static int mapper_warning;
 
-WRITE_HANDLER( nes_low_mapper_w )
+WRITE8_HANDLER( nes_low_mapper_w )
 {
 	if (mmc_write_low) (*mmc_write_low)(offset, data);
 	else
@@ -95,7 +95,7 @@ WRITE_HANDLER( nes_low_mapper_w )
 }
 
 /* Handle mapper reads from $4100-$5fff */
-READ_HANDLER( nes_low_mapper_r )
+ READ8_HANDLER( nes_low_mapper_r )
 {
 	if (mmc_read_low)
 		return (*mmc_read_low)(offset);
@@ -105,7 +105,7 @@ READ_HANDLER( nes_low_mapper_r )
 	return 0;
 }
 
-WRITE_HANDLER ( nes_mid_mapper_w )
+WRITE8_HANDLER ( nes_mid_mapper_w )
 {
 	if (mmc_write_mid) (*mmc_write_mid)(offset, data);
 	else if (nes.mid_ram_enable)
@@ -123,7 +123,7 @@ WRITE_HANDLER ( nes_mid_mapper_w )
 	}
 }
 
-READ_HANDLER ( nes_mid_mapper_r )
+ READ8_HANDLER ( nes_mid_mapper_r )
 {
 	if ((nes.mid_ram_enable) || (nes.mapper == 5))
 		return battery_ram[offset];
@@ -131,7 +131,7 @@ READ_HANDLER ( nes_mid_mapper_r )
 		return 0;
 }
 
-WRITE_HANDLER ( nes_mapper_w )
+WRITE8_HANDLER ( nes_mapper_w )
 {
 	if (mmc_write) (*mmc_write)(offset, data);
 	else
@@ -285,7 +285,7 @@ static void chr2_6 (int bank)
 	ppu2c03b_set_videorom_bank(0, 6, 2, bank, 128);
 }
 
-static WRITE_HANDLER( mapper1_w )
+static WRITE8_HANDLER( mapper1_w )
 {
 	int reg;
 
@@ -535,12 +535,12 @@ static WRITE_HANDLER( mapper1_w )
 	}
 }
 
-static WRITE_HANDLER( mapper2_w )
+static WRITE8_HANDLER( mapper2_w )
 {
 	prg16_89ab (data);
 }
 
-static WRITE_HANDLER( mapper3_w )
+static WRITE8_HANDLER( mapper3_w )
 {
 	chr8 (data);
 }
@@ -591,7 +591,7 @@ static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static WRITE_HANDLER( mapper4_w )
+static WRITE8_HANDLER( mapper4_w )
 {
 	static UINT8 last_bank = 0xff;
 
@@ -703,7 +703,7 @@ static WRITE_HANDLER( mapper4_w )
 	}
 }
 
-static WRITE_HANDLER( mapper118_w )
+static WRITE8_HANDLER( mapper118_w )
 {
 	static UINT8 last_bank = 0xff;
 
@@ -823,7 +823,7 @@ static void mapper5_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static READ_HANDLER( mapper5_l_r )
+static  READ8_HANDLER( mapper5_l_r )
 {
 	int retVal;
 
@@ -870,7 +870,7 @@ static READ_HANDLER( mapper5_l_r )
 //		nes_vram[i] = vrom_bank[0 + (mode * 8)] * 64;
 //}
 
-static WRITE_HANDLER( mapper5_l_w )
+static WRITE8_HANDLER( mapper5_l_w )
 {
 //	static int vrom_next[4];
 	static int vrom_page_a;
@@ -1324,12 +1324,12 @@ static WRITE_HANDLER( mapper5_l_w )
 	}
 }
 
-static WRITE_HANDLER( mapper5_w )
+static WRITE8_HANDLER( mapper5_w )
 {
 	logerror("MMC5 uncaught high mapper w, %04x: %02x\n", offset, data);
 }
 
-static WRITE_HANDLER( mapper7_w )
+static WRITE8_HANDLER( mapper7_w )
 {
 	if (data & 0x10)
 		ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
@@ -1339,7 +1339,7 @@ static WRITE_HANDLER( mapper7_w )
 	prg32 (data);
 }
 
-static WRITE_HANDLER( mapper8_w )
+static WRITE8_HANDLER( mapper8_w )
 {
 #ifdef LOG_MMC
 	logerror("* Mapper 8 switch, vrom: %02x, rom: %02x\n", data & 0x07, (data >> 3));
@@ -1370,7 +1370,7 @@ void mapper9_latch (int offset)
 	}
 }
 
-static WRITE_HANDLER( mapper9_w )
+static WRITE8_HANDLER( mapper9_w )
 {
 	switch (offset & 0x7000)
 	{
@@ -1436,7 +1436,7 @@ static void mapper10_latch (offs_t offset)
 	}
 }
 
-static WRITE_HANDLER( mapper10_w )
+static WRITE8_HANDLER( mapper10_w )
 {
 	switch (offset & 0x7000)
 	{
@@ -1480,7 +1480,7 @@ static WRITE_HANDLER( mapper10_w )
 	}
 }
 
-static WRITE_HANDLER( mapper11_w )
+static WRITE8_HANDLER( mapper11_w )
 {
 #ifdef LOG_MMC
 	logerror("* Mapper 11 switch, data: %02x\n", data);
@@ -1492,7 +1492,7 @@ static WRITE_HANDLER( mapper11_w )
 	prg32 (data & 0x0f);
 }
 
-static WRITE_HANDLER( mapper15_w )
+static WRITE8_HANDLER( mapper15_w )
 {
 	int bank = (data & (nes.prg_chunks - 1)) * 0x4000;
 	int base = data & 0x80 ? 0x12000 : 0x10000;
@@ -1548,7 +1548,7 @@ static void bandai_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static WRITE_HANDLER( mapper16_w )
+static WRITE8_HANDLER( mapper16_w )
 {
 	logerror ("mapper16 (mid and high) w, offset: %04x, data: %02x\n", offset, data);
 
@@ -1595,7 +1595,7 @@ static WRITE_HANDLER( mapper16_w )
 	}
 }
 
-static WRITE_HANDLER( mapper17_l_w )
+static WRITE8_HANDLER( mapper17_l_w )
 {
 	switch (offset)
 	{
@@ -1686,7 +1686,7 @@ static void jaleco_irq ( int num, int scanline, int vblank, int blanked )
 }
 
 
-static WRITE_HANDLER( mapper18_w )
+static WRITE8_HANDLER( mapper18_w )
 {
 //	static int irq;
 	static int bank_8000 = 0;
@@ -1898,7 +1898,7 @@ static void namcot_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static WRITE_HANDLER( mapper19_l_w )
+static WRITE8_HANDLER( mapper19_l_w )
 {
 	switch (offset & 0x1800)
 	{
@@ -1914,7 +1914,7 @@ static WRITE_HANDLER( mapper19_l_w )
 	}
 }
 
-static WRITE_HANDLER( mapper19_w )
+static WRITE8_HANDLER( mapper19_w )
 {
 	switch (offset & 0x7800)
 	{
@@ -1967,7 +1967,7 @@ static void fds_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-READ_HANDLER ( fds_r )
+ READ8_HANDLER ( fds_r )
 {
 	int ret = 0x00;
 	static int last_side = 0;
@@ -2016,7 +2016,7 @@ READ_HANDLER ( fds_r )
 	return ret;
 }
 
-WRITE_HANDLER ( fds_w )
+WRITE8_HANDLER ( fds_w )
 {
 	switch (offset)
 	{
@@ -2072,7 +2072,7 @@ static void konami_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static WRITE_HANDLER( konami_vrc2a_w )
+static WRITE8_HANDLER( konami_vrc2a_w )
 {
 	if (offset < 0x3000)
 	{
@@ -2142,7 +2142,7 @@ static WRITE_HANDLER( konami_vrc2a_w )
 	}
 }
 
-static WRITE_HANDLER( konami_vrc2b_w )
+static WRITE8_HANDLER( konami_vrc2b_w )
 {
 	UINT16 select;
 
@@ -2300,7 +2300,7 @@ static WRITE_HANDLER( konami_vrc2b_w )
 	}
 }
 
-static WRITE_HANDLER( konami_vrc4_w )
+static WRITE8_HANDLER( konami_vrc4_w )
 {
 	switch (offset & 0x7007)
 	{
@@ -2465,7 +2465,7 @@ static WRITE_HANDLER( konami_vrc4_w )
 	}
 }
 
-static WRITE_HANDLER( konami_vrc6a_w )
+static WRITE8_HANDLER( konami_vrc6a_w )
 {
 //	logerror("konami_vrc6_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
@@ -2528,7 +2528,7 @@ static WRITE_HANDLER( konami_vrc6a_w )
 }
 
 
-static WRITE_HANDLER( konami_vrc6b_w )
+static WRITE8_HANDLER( konami_vrc6b_w )
 {
 //	logerror("konami_vrc6_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
@@ -2606,7 +2606,7 @@ static WRITE_HANDLER( konami_vrc6b_w )
 	}
 }
 
-static WRITE_HANDLER( mapper32_w )
+static WRITE8_HANDLER( mapper32_w )
 {
 	static int bankSel;
 
@@ -2642,7 +2642,7 @@ static WRITE_HANDLER( mapper32_w )
 	}
 }
 
-static WRITE_HANDLER( mapper33_w )
+static WRITE8_HANDLER( mapper33_w )
 {
 
 //	logerror("mapper33_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
@@ -2689,7 +2689,7 @@ static WRITE_HANDLER( mapper33_w )
 	}
 }
 
-static WRITE_HANDLER( mapper34_m_w )
+static WRITE8_HANDLER( mapper34_m_w )
 {
 	logerror("mapper34_m_w, offset: %04x, data: %02x\n", offset, data);
 
@@ -2711,7 +2711,7 @@ static WRITE_HANDLER( mapper34_m_w )
 }
 
 
-static WRITE_HANDLER( mapper34_w )
+static WRITE8_HANDLER( mapper34_w )
 {
 	/* This portion of the mapper is nearly identical to Mapper 7, except no one-screen mirroring */
 	/* Deadly Towers is really a Mapper 34 game - the demo screens look wrong using mapper 7. */
@@ -2732,7 +2732,7 @@ static void mapper40_irq ( int num, int scanline, int vblank, int blanked )
 	}
 }
 
-static WRITE_HANDLER( mapper40_w )
+static WRITE8_HANDLER( mapper40_w )
 {
 	logerror("mapper40_w, offset: %04x, data: %02x\n", offset, data);
 
@@ -2752,7 +2752,7 @@ static WRITE_HANDLER( mapper40_w )
 	}
 }
 
-static WRITE_HANDLER( mapper41_m_w )
+static WRITE8_HANDLER( mapper41_m_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper41_m_w, offset: %04x, data: %02x\n", offset, data);
@@ -2768,7 +2768,7 @@ static WRITE_HANDLER( mapper41_m_w )
 	prg32 (offset & 0x07);
 }
 
-static WRITE_HANDLER( mapper41_w )
+static WRITE8_HANDLER( mapper41_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper41_w, offset: %04x, data: %02x\n", offset, data);
@@ -2782,12 +2782,12 @@ static WRITE_HANDLER( mapper41_w )
 	}
 }
 
-static WRITE_HANDLER( mapper64_m_w )
+static WRITE8_HANDLER( mapper64_m_w )
 {
 	logerror("mapper64_m_w, offset: %04x, data: %02x\n", offset, data);
 }
 
-static WRITE_HANDLER( mapper64_w )
+static WRITE8_HANDLER( mapper64_w )
 {
 	static int cmd = 0;
 	static int chr = 0;
@@ -2960,7 +2960,7 @@ static void irem_irq ( int num, int scanline, int vblank, int blanked )
 
 
 
-static WRITE_HANDLER( mapper65_w )
+static WRITE8_HANDLER( mapper65_w )
 {
 	switch (offset & 0x7007)
 	{
@@ -3021,7 +3021,7 @@ static WRITE_HANDLER( mapper65_w )
 	}
 }
 
-static WRITE_HANDLER( mapper66_w )
+static WRITE8_HANDLER( mapper66_w )
 {
 #ifdef LOG_MMC
 	logerror("* Mapper 66 switch, offset %04x, data: %02x\n", offset, data);
@@ -3047,7 +3047,7 @@ static void sunsoft_irq ( int num, int scanline, int vblank, int blanked )
 }
 
 
-static WRITE_HANDLER( mapper67_w )
+static WRITE8_HANDLER( mapper67_w )
 {
 //	logerror("mapper67_w, offset %04x, data: %02x\n", offset, data);
 	switch (offset & 0x7801)
@@ -3132,7 +3132,7 @@ static void mapper68_mirror (int m68_mirror, int m0, int m1)
 	}
 }
 
-static WRITE_HANDLER( mapper68_w )
+static WRITE8_HANDLER( mapper68_w )
 {
 	static int m68_mirror;
 	static int m0, m1;
@@ -3177,7 +3177,7 @@ static WRITE_HANDLER( mapper68_w )
 	}
 }
 
-static WRITE_HANDLER( mapper69_w )
+static WRITE8_HANDLER( mapper69_w )
 {
 	static int cmd = 0;
 
@@ -3244,7 +3244,7 @@ static WRITE_HANDLER( mapper69_w )
 	}
 }
 
-static WRITE_HANDLER( mapper70_w )
+static WRITE8_HANDLER( mapper70_w )
 {
 	logerror("mapper70_w offset %04x, data: %02x\n", offset, data);
 
@@ -3264,14 +3264,14 @@ static WRITE_HANDLER( mapper70_w )
 #endif
 }
 
-static WRITE_HANDLER( mapper71_m_w )
+static WRITE8_HANDLER( mapper71_m_w )
 {
 	logerror("mapper71_m_w offset: %04x, data: %02x\n", offset, data);
 
 	prg16_89ab (data);
 }
 
-static WRITE_HANDLER( mapper71_w )
+static WRITE8_HANDLER( mapper71_w )
 {
 	logerror("mapper71_w offset: %04x, data: %02x\n", offset, data);
 
@@ -3279,7 +3279,7 @@ static WRITE_HANDLER( mapper71_w )
 		prg16_89ab (data);
 }
 
-static WRITE_HANDLER( mapper72_w )
+static WRITE8_HANDLER( mapper72_w )
 {
 	logerror("mapper72_w, offset %04x, data: %02x\n", offset, data);
 	/* This routine is busted */
@@ -3290,7 +3290,7 @@ static WRITE_HANDLER( mapper72_w )
 //	chr8 (data & 0x0f);
 }
 
-static WRITE_HANDLER( mapper73_w )
+static WRITE8_HANDLER( mapper73_w )
 {
 	switch (offset & 0x7000)
 	{
@@ -3321,7 +3321,7 @@ static WRITE_HANDLER( mapper73_w )
 }
 
 
-static WRITE_HANDLER( mapper75_w )
+static WRITE8_HANDLER( mapper75_w )
 {
 	logerror("mapper75_w, offset: %04x, data: %02x\n", offset, data);
 	switch (offset & 0x7000)
@@ -3351,7 +3351,7 @@ static WRITE_HANDLER( mapper75_w )
 	}
 }
 
-static WRITE_HANDLER( mapper77_w )
+static WRITE8_HANDLER( mapper77_w )
 {
 
 /* Mapper is busted */
@@ -3372,7 +3372,7 @@ static WRITE_HANDLER( mapper77_w )
 	}
 }
 
-static WRITE_HANDLER( mapper78_w )
+static WRITE8_HANDLER( mapper78_w )
 {
 	logerror("mapper78_w, offset: %04x, data: %02x\n", offset, data);
 	/* Switch 8k VROM bank */
@@ -3382,7 +3382,7 @@ static WRITE_HANDLER( mapper78_w )
 	prg16_89ab (data & 0x0f);
 }
 
-static WRITE_HANDLER( mapper79_l_w )
+static WRITE8_HANDLER( mapper79_l_w )
 {
 	logerror("mapper79_l_w: %04x:%02x\n", offset, data);
 
@@ -3396,12 +3396,12 @@ static WRITE_HANDLER( mapper79_l_w )
 	}
 }
 
-static WRITE_HANDLER( mapper79_w )
+static WRITE8_HANDLER( mapper79_w )
 {
 	logerror("mapper79_w, offset: %04x, data: %02x\n", offset, data);
 }
 
-static WRITE_HANDLER( mapper80_m_w )
+static WRITE8_HANDLER( mapper80_m_w )
 {
 	logerror("mapper80_m_w, offset: %04x, data: %02x\n", offset, data);
 
@@ -3473,7 +3473,7 @@ static WRITE_HANDLER( mapper80_m_w )
 	}
 }
 
-static WRITE_HANDLER( mapper82_m_w )
+static WRITE8_HANDLER( mapper82_m_w )
 {
 	static int vrom_switch;
 
@@ -3535,7 +3535,7 @@ static WRITE_HANDLER( mapper82_m_w )
 	}
 }
 
-static WRITE_HANDLER( konami_vrc7_w )
+static WRITE8_HANDLER( konami_vrc7_w )
 {
 //	logerror("konami_vrc7_w offset: %04x, data: %02x, scanline: %d\n", offset, data, current_scanline);
 
@@ -3617,7 +3617,7 @@ static WRITE_HANDLER( konami_vrc7_w )
 	}
 }
 
-static WRITE_HANDLER( mapper86_w )
+static WRITE8_HANDLER( mapper86_w )
 {
 	logerror("mapper86_w, offset: %04x, data: %02x\n", offset, data);
 	switch (offset)
@@ -3633,7 +3633,7 @@ static WRITE_HANDLER( mapper86_w )
 	}
 }
 
-static WRITE_HANDLER( mapper87_m_w )
+static WRITE8_HANDLER( mapper87_m_w )
 {
 	logerror("mapper87_m_w %04x:%02x\n", offset, data);
 
@@ -3641,7 +3641,7 @@ static WRITE_HANDLER( mapper87_m_w )
 	chr8 (data >> 1);
 }
 
-static WRITE_HANDLER( mapper91_m_w )
+static WRITE8_HANDLER( mapper91_m_w )
 {
 	logerror ("mapper91_m_w, offset: %04x, data: %02x\n", offset, data);
 
@@ -3669,7 +3669,7 @@ static WRITE_HANDLER( mapper91_m_w )
 	}
 }
 
-static WRITE_HANDLER( mapper93_m_w )
+static WRITE8_HANDLER( mapper93_m_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper93_m_w %04x:%02x\n", offset, data);
@@ -3678,7 +3678,7 @@ static WRITE_HANDLER( mapper93_m_w )
 	prg16_89ab (data);
 }
 
-static WRITE_HANDLER( mapper93_w )
+static WRITE8_HANDLER( mapper93_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper93_w %04x:%02x\n", offset, data);
@@ -3687,7 +3687,7 @@ static WRITE_HANDLER( mapper93_w )
 	/* was written to the mid-area mapper */
 }
 
-static WRITE_HANDLER( mapper94_w )
+static WRITE8_HANDLER( mapper94_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper94_w %04x:%02x\n", offset, data);
@@ -3696,7 +3696,7 @@ static WRITE_HANDLER( mapper94_w )
 	prg16_89ab (data >> 2);
 }
 
-static WRITE_HANDLER( mapper95_w )
+static WRITE8_HANDLER( mapper95_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper95_w %04x:%02x\n", offset, data);
@@ -3717,7 +3717,7 @@ static WRITE_HANDLER( mapper95_w )
 	}
 }
 
-static WRITE_HANDLER( mapper101_m_w )
+static WRITE8_HANDLER( mapper101_m_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper101_m_w %04x:%02x\n", offset, data);
@@ -3726,7 +3726,7 @@ static WRITE_HANDLER( mapper101_m_w )
 	chr8 (data);
 }
 
-static WRITE_HANDLER( mapper101_w )
+static WRITE8_HANDLER( mapper101_w )
 {
 #ifdef LOG_MMC
 	logerror("mapper101_w %04x:%02x\n", offset, data);
@@ -3735,7 +3735,7 @@ static WRITE_HANDLER( mapper101_w )
 	/* ??? */
 }
 
-static WRITE_HANDLER( mapper225_w )
+static WRITE8_HANDLER( mapper225_w )
 {
 	int hi_bank;
 	int size_16;
@@ -3767,7 +3767,7 @@ static WRITE_HANDLER( mapper225_w )
 		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
-static WRITE_HANDLER( mapper226_w )
+static WRITE8_HANDLER( mapper226_w )
 {
 	int hi_bank;
 	int size_16;
@@ -3809,7 +3809,7 @@ static WRITE_HANDLER( mapper226_w )
 		prg32 (bank);
 }
 
-static WRITE_HANDLER( mapper227_w )
+static WRITE8_HANDLER( mapper227_w )
 {
 	int hi_bank;
 	int size_32;
@@ -3848,7 +3848,7 @@ static WRITE_HANDLER( mapper227_w )
 		ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
 }
 
-static WRITE_HANDLER( mapper228_w )
+static WRITE8_HANDLER( mapper228_w )
 {
 	/* The address lines double as data */
 	/* --mPPppppPP-cccc */
@@ -3903,7 +3903,7 @@ static WRITE_HANDLER( mapper228_w )
 	chr8 (chr);
 }
 
-static WRITE_HANDLER( mapper229_w )
+static WRITE8_HANDLER( mapper229_w )
 {
 #ifdef LOG_MMC
 	logerror ("mapper229_w, offset: %04x, data: %02x\n", offset, data);
@@ -3927,7 +3927,7 @@ static WRITE_HANDLER( mapper229_w )
 	}
 }
 
-static WRITE_HANDLER( mapper231_w )
+static WRITE8_HANDLER( mapper231_w )
 {
 	int bank;
 

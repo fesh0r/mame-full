@@ -36,22 +36,22 @@ void sid6581_reset(int number)
 	sidEmuReset(sid6581+number);
 }
 
-READ_HANDLER ( sid6581_0_port_r )
+ READ8_HANDLER ( sid6581_0_port_r )
 {
 	return sid6581_port_r(sid6581, offset);
 }
 
-READ_HANDLER ( sid6581_1_port_r )
+ READ8_HANDLER ( sid6581_1_port_r )
 {
 	return sid6581_port_r(sid6581+1, offset);
 }
 
-WRITE_HANDLER ( sid6581_0_port_w )
+WRITE8_HANDLER ( sid6581_0_port_w )
 {
 	sid6581_port_w(sid6581, offset, data);
 }
 
-WRITE_HANDLER ( sid6581_1_port_w )
+WRITE8_HANDLER ( sid6581_1_port_w )
 {
 	sid6581_port_w(sid6581+1, offset, data);
 }

@@ -20,13 +20,13 @@ UINT8 smsNVRam[NVRAM_SIZE];
 int smsNVRAMSaved = 0;
 UINT8 ggSIO[5] = { 0x7F, 0xFF, 0x00, 0xFF, 0x00 };
 
-WRITE_HANDLER(sms_fm_detect_w) {
+WRITE8_HANDLER(sms_fm_detect_w) {
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
 		smsFMDetect = (data & 0x01);
 	}
 }
 
-READ_HANDLER(sms_fm_detect_r) {
+ READ8_HANDLER(sms_fm_detect_r) {
 	if (biosPort & IO_CHIP) {
 		return (0xFF);
 	}
@@ -38,13 +38,13 @@ READ_HANDLER(sms_fm_detect_r) {
 	}
 }
 
-WRITE_HANDLER(sms_version_w) {
+WRITE8_HANDLER(sms_version_w) {
 	if ((data & 0x01) && (data & 0x04)) {
 		smsVersion = (data & 0xA0);
 	}
 }
 
-READ_HANDLER(sms_version_r) {
+ READ8_HANDLER(sms_version_r) {
 	UINT8 temp;
 
 	if (biosPort & IO_CHIP) {
@@ -65,7 +65,7 @@ READ_HANDLER(sms_version_r) {
 	return (temp);
 }
 
-READ_HANDLER(sms_input_port_0_r) {
+ READ8_HANDLER(sms_input_port_0_r) {
 	if (biosPort & IO_CHIP) {
 		return (0xFF);
 	} else {
@@ -73,25 +73,25 @@ READ_HANDLER(sms_input_port_0_r) {
 	}
 }
 
-WRITE_HANDLER(sms_YM2413_register_port_0_w) {
+WRITE8_HANDLER(sms_YM2413_register_port_0_w) {
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
 		YM2413_register_port_0_w(offset, (data & 0x3F));
 	}
 }
 
-WRITE_HANDLER(sms_YM2413_data_port_0_w) {
+WRITE8_HANDLER(sms_YM2413_data_port_0_w) {
 	if (IS_SMS_J_V21 || IS_SMS_J_SS) {
 		logerror("data_port_0_w %x %x\n", offset, data);
 		YM2413_data_port_0_w(offset, data);
 	}
 }
 
-READ_HANDLER(gg_input_port_2_r) {
+ READ8_HANDLER(gg_input_port_2_r) {
 	//logerror("joy 2 read, val: %02x, pc: %04x\n", (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80)), activecpu_get_pc());
 	return (((IS_GG_UE || IS_GG_MAJ_UE) ? 0x40 : 0x00) | (readinputport(2) & 0x80));
 }
 
-WRITE_HANDLER(sms_mapper_w)
+WRITE8_HANDLER(sms_mapper_w)
 {
 	int page;
 	UINT8 *RAM = memory_region(REGION_CPU1);
@@ -187,7 +187,7 @@ WRITE_HANDLER(sms_mapper_w)
 	}
 }
 
-WRITE_HANDLER(sms_bios_w) {
+WRITE8_HANDLER(sms_bios_w) {
 	biosPort = data;
 
 	logerror("bios write %02x, pc: %04x\n", data, activecpu_get_pc());
@@ -195,7 +195,7 @@ WRITE_HANDLER(sms_bios_w) {
 	setup_rom();
 }
 
-WRITE_HANDLER(sms_cartram_w) {
+WRITE8_HANDLER(sms_cartram_w) {
 	int page;
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	UINT8 *USER_RAM;
@@ -229,7 +229,7 @@ WRITE_HANDLER(sms_cartram_w) {
 	}
 }
 
-/*WRITE_HANDLER(sms_ram_w) {
+/*WRITE8_HANDLER(sms_ram_w) {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
 	RAM[0xC000 + (offset & 0x1FFF)] = data;
@@ -238,7 +238,7 @@ WRITE_HANDLER(sms_cartram_w) {
 	}
 }*/
 
-WRITE_HANDLER(gg_sio_w) {
+WRITE8_HANDLER(gg_sio_w) {
 	logerror("*** write %02X to SIO register #%d\n", data, offset);
 
 	ggSIO[offset & 0x07] = data;
@@ -256,7 +256,7 @@ WRITE_HANDLER(gg_sio_w) {
 	}
 }
 
-READ_HANDLER(gg_sio_r) {
+ READ8_HANDLER(gg_sio_r) {
 	logerror("*** read SIO register #%d\n", offset);
 
 	switch(offset & 7) {
@@ -276,11 +276,11 @@ READ_HANDLER(gg_sio_r) {
 	return (0x00);
 }
 
-READ_HANDLER(gg_psg_r) {
+ READ8_HANDLER(gg_psg_r) {
 	return 0xFF;
 }
 
-WRITE_HANDLER(gg_psg_w) {
+WRITE8_HANDLER(gg_psg_w) {
 	logerror("write %02X to psg at offset #%d.\n",data , offset);
 
 	/* D7 = Noise Left */

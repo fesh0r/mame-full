@@ -12,8 +12,8 @@ extern MACHINE_INIT( pc1401 );
 extern MACHINE_STOP( pc1401 );
 
 /* in vidhrdw/pocketc.c */
-extern READ_HANDLER(pc1401_lcd_read);
-extern WRITE_HANDLER(pc1401_lcd_write);
+extern  READ8_HANDLER(pc1401_lcd_read);
+extern WRITE8_HANDLER(pc1401_lcd_write);
 extern VIDEO_UPDATE( pc1401 );
 
 /* in systems/pocketc.c */

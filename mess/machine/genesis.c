@@ -2133,12 +2133,12 @@ WRITE16_HANDLER( genesis_68000_vdp_w )
 
 /* Main Genesis Z80 */
 
-READ_HANDLER( genesis_z80_vdp_r )
+ READ8_HANDLER( genesis_z80_vdp_r )
 {
 	return 0;
 }
 
-WRITE_HANDLER( genesis_z80_vdp_w )
+WRITE8_HANDLER( genesis_z80_vdp_w )
 {
 	int mem_mask;
 	int dat;
@@ -2167,7 +2167,7 @@ WRITE_HANDLER( genesis_z80_vdp_w )
 	genesis_vdp_write( &genesis_vdp, offset&0x1e, dat, mem_mask );
 }
 
-WRITE_HANDLER( genesis_z80_bank_sel_w )
+WRITE8_HANDLER( genesis_z80_bank_sel_w )
 {
 //int genesis_z80_bank_addr;
 //int genesis_z80_bank_partial;
@@ -2194,7 +2194,7 @@ WRITE_HANDLER( genesis_z80_bank_sel_w )
 	#define BYTE_XOR(a) (a)
 #endif
 
-READ_HANDLER ( genesis_banked_68k_r )
+ READ8_HANDLER ( genesis_banked_68k_r )
 {
 	data32_t addr;
 //	data16_t dat;
@@ -2218,7 +2218,7 @@ READ_HANDLER ( genesis_banked_68k_r )
 	return 0x00;
 }
 
-WRITE_HANDLER ( z80_ym2612_w )
+WRITE8_HANDLER ( z80_ym2612_w )
 {
 	offset &=0x03;
 //	printf("z80 PC %04x accessing z80_ym2612_w offset %02x data %08x\n",  activecpu_get_pc(), offset, data);

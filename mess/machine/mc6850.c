@@ -71,12 +71,12 @@ void acia6850_write (int which, int offset, int data)
 	}
 }
 
-READ_HANDLER( acia6850_0_r ) { return acia6850_read (0, offset); }
-READ_HANDLER( acia6850_1_r ) { return acia6850_read (1, offset); }
-READ_HANDLER( acia6850_2_r ) { return acia6850_read (2, offset); }
-READ_HANDLER( acia6850_3_r ) { return acia6850_read (3, offset); }
+ READ8_HANDLER( acia6850_0_r ) { return acia6850_read (0, offset); }
+ READ8_HANDLER( acia6850_1_r ) { return acia6850_read (1, offset); }
+ READ8_HANDLER( acia6850_2_r ) { return acia6850_read (2, offset); }
+ READ8_HANDLER( acia6850_3_r ) { return acia6850_read (3, offset); }
 
-WRITE_HANDLER( acia6850_0_w ) { acia6850_write (0, offset, data); }
-WRITE_HANDLER( acia6850_1_w ) { acia6850_write (1, offset, data); }
-WRITE_HANDLER( acia6850_2_w ) { acia6850_write (2, offset, data); }
-WRITE_HANDLER( acia6850_3_w ) { acia6850_write (3, offset, data); }
+WRITE8_HANDLER( acia6850_0_w ) { acia6850_write (0, offset, data); }
+WRITE8_HANDLER( acia6850_1_w ) { acia6850_write (1, offset, data); }
+WRITE8_HANDLER( acia6850_2_w ) { acia6850_write (2, offset, data); }
+WRITE8_HANDLER( acia6850_3_w ) { acia6850_write (3, offset, data); }

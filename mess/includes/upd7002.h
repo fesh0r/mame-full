@@ -16,9 +16,9 @@ struct uPD7002_interface
 
 void uPD7002_config(const struct uPD7002_interface *intf);
 
-READ_HANDLER ( uPD7002_EOC_r );
+ READ8_HANDLER ( uPD7002_EOC_r );
 
-READ_HANDLER ( uPD7002_r );
-WRITE_HANDLER ( uPD7002_w );
+ READ8_HANDLER ( uPD7002_r );
+WRITE8_HANDLER ( uPD7002_w );
 
 

@@ -9,19 +9,19 @@ void vga_init(read8_handler read_dipswitch);
 void vga_reset(void);
 
 // include in port access list
-READ_HANDLER( ega_port_03b0_r );
-READ_HANDLER( ega_port_03c0_r );
-READ_HANDLER( ega_port_03d0_r );
+ READ8_HANDLER( ega_port_03b0_r );
+ READ8_HANDLER( ega_port_03c0_r );
+ READ8_HANDLER( ega_port_03d0_r );
 
-READ_HANDLER( paradise_ega_03c0_r );
+ READ8_HANDLER( paradise_ega_03c0_r );
 
-READ_HANDLER( vga_port_03b0_r );
-READ_HANDLER( vga_port_03c0_r );
-READ_HANDLER( vga_port_03d0_r );
+ READ8_HANDLER( vga_port_03b0_r );
+ READ8_HANDLER( vga_port_03c0_r );
+ READ8_HANDLER( vga_port_03d0_r );
 
-WRITE_HANDLER( vga_port_03b0_w );
-WRITE_HANDLER( vga_port_03c0_w );
-WRITE_HANDLER( vga_port_03d0_w );
+WRITE8_HANDLER( vga_port_03b0_w );
+WRITE8_HANDLER( vga_port_03c0_w );
+WRITE8_HANDLER( vga_port_03d0_w );
 
 /*
   pega notes (paradise)

@@ -45,10 +45,10 @@ static int a2_speaker_state;
 static void mockingboard_init (int slot);
 static int mockingboard_r (int offset);
 static void mockingboard_w (int offset, int data);
-static WRITE_HANDLER ( apple2_mainram0400_w );
-static WRITE_HANDLER ( apple2_mainram2000_w );
-static WRITE_HANDLER ( apple2_auxram0400_w );
-static WRITE_HANDLER ( apple2_auxram2000_w );
+static WRITE8_HANDLER ( apple2_mainram0400_w );
+static WRITE8_HANDLER ( apple2_mainram2000_w );
+static WRITE8_HANDLER ( apple2_auxram0400_w );
+static WRITE8_HANDLER ( apple2_auxram2000_w );
 
 static double joystick_x1_time;
 static double joystick_y1_time;
@@ -521,28 +521,28 @@ void apple2_interrupt(void)
 	apple2_auxram2000_w
 ***************************************************************************/
 
-static WRITE_HANDLER ( apple2_mainram0400_w )
+static WRITE8_HANDLER ( apple2_mainram0400_w )
 {
 	offset += 0x400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE_HANDLER ( apple2_mainram2000_w )
+static WRITE8_HANDLER ( apple2_mainram2000_w )
 {
 	offset += 0x2000;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE_HANDLER ( apple2_auxram0400_w )
+static WRITE8_HANDLER ( apple2_auxram0400_w )
 {
 	offset += 0x10400;
 	mess_ram[offset] = data;
 	apple2_video_touch(offset);
 }
 
-static WRITE_HANDLER ( apple2_auxram2000_w )
+static WRITE8_HANDLER ( apple2_auxram2000_w )
 {
 	offset += 0x12000;
 	mess_ram[offset] = data;
@@ -553,7 +553,7 @@ static WRITE_HANDLER ( apple2_auxram2000_w )
   apple2_c00x_r
 ***************************************************************************/
 
-READ_HANDLER ( apple2_c00x_r )
+ READ8_HANDLER ( apple2_c00x_r )
 {
 	data8_t result;
 
@@ -585,7 +585,7 @@ READ_HANDLER ( apple2_c00x_r )
   C00E	ALTCHARSETOFF
   C00F	ALTCHARSETON - use alt character set
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c00x_w )
+WRITE8_HANDLER ( apple2_c00x_w )
 {
 	UINT32 mask;
 	mask = 1 << (offset / 2);
@@ -595,7 +595,7 @@ WRITE_HANDLER ( apple2_c00x_w )
 /***************************************************************************
   apple2_c01x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c01x_r )
+ READ8_HANDLER ( apple2_c01x_r )
 {
 	data8_t result = apple2_getfloatingbusvalue() & 0x7F;
 
@@ -628,7 +628,7 @@ READ_HANDLER ( apple2_c01x_r )
 /***************************************************************************
   apple2_c01x_w
 ***************************************************************************/
-WRITE_HANDLER( apple2_c01x_w )
+WRITE8_HANDLER( apple2_c01x_w )
 {
 	/* Clear the keyboard strobe - ignore the returned results */
 	profiler_mark(PROFILER_C01X);
@@ -639,7 +639,7 @@ WRITE_HANDLER( apple2_c01x_w )
 /***************************************************************************
   apple2_c02x_r
 ***************************************************************************/
-READ_HANDLER( apple2_c02x_r )
+ READ8_HANDLER( apple2_c02x_r )
 {
 	apple2_c02x_w(offset, 0);
 	return apple2_getfloatingbusvalue();
@@ -648,7 +648,7 @@ READ_HANDLER( apple2_c02x_r )
 /***************************************************************************
   apple2_c02x_w
 ***************************************************************************/
-WRITE_HANDLER( apple2_c02x_w )
+WRITE8_HANDLER( apple2_c02x_w )
 {
 	switch(offset) {
 	case 0x08:
@@ -660,7 +660,7 @@ WRITE_HANDLER( apple2_c02x_w )
 /***************************************************************************
   apple2_c03x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c03x_r )
+ READ8_HANDLER ( apple2_c03x_r )
 {
 	if (a2_speaker_state==0xFF)
 		a2_speaker_state=0;
@@ -673,7 +673,7 @@ READ_HANDLER ( apple2_c03x_r )
 /***************************************************************************
   apple2_c03x_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c03x_w )
+WRITE8_HANDLER ( apple2_c03x_w )
 {
 	apple2_c03x_r(offset);
 }
@@ -681,7 +681,7 @@ WRITE_HANDLER ( apple2_c03x_w )
 /***************************************************************************
   apple2_c05x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c05x_r )
+ READ8_HANDLER ( apple2_c05x_r )
 {
 	UINT32 mask;
 
@@ -697,7 +697,7 @@ READ_HANDLER ( apple2_c05x_r )
 /***************************************************************************
   apple2_c05x_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c05x_w )
+WRITE8_HANDLER ( apple2_c05x_w )
 {
 	apple2_c05x_r(offset);
 }
@@ -705,7 +705,7 @@ WRITE_HANDLER ( apple2_c05x_w )
 /***************************************************************************
   apple2_c06x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c06x_r )
+ READ8_HANDLER ( apple2_c06x_r )
 {
 	int result = 0;
 	switch (offset & 0x07) {
@@ -744,7 +744,7 @@ READ_HANDLER ( apple2_c06x_r )
 /***************************************************************************
   apple2_c07x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c07x_r )
+ READ8_HANDLER ( apple2_c07x_r )
 {
 	if (offset == 0)
 	{
@@ -759,7 +759,7 @@ READ_HANDLER ( apple2_c07x_r )
 /***************************************************************************
   apple2_c07x_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c07x_w )
+WRITE8_HANDLER ( apple2_c07x_w )
 {
 	apple2_c07x_r(offset);
 }
@@ -767,7 +767,7 @@ WRITE_HANDLER ( apple2_c07x_w )
 /***************************************************************************
   apple2_c08x_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c08x_r )
+ READ8_HANDLER ( apple2_c08x_r )
 {
 	UINT32 val, mask;
 
@@ -799,7 +799,7 @@ READ_HANDLER ( apple2_c08x_r )
 /***************************************************************************
   apple2_c08x_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c08x_w )
+WRITE8_HANDLER ( apple2_c08x_w )
 {
 	apple2_c08x_r(offset);
 }
@@ -807,7 +807,7 @@ WRITE_HANDLER ( apple2_c08x_w )
 /***************************************************************************
   apple2_c0xx_slot1_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot1_r )
+ READ8_HANDLER ( apple2_c0xx_slot1_r )
 {
 	return 0;
 }
@@ -815,7 +815,7 @@ READ_HANDLER ( apple2_c0xx_slot1_r )
 /***************************************************************************
   apple2_c0xx_slot2_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot2_r )
+ READ8_HANDLER ( apple2_c0xx_slot2_r )
 {
 	return 0;
 }
@@ -823,7 +823,7 @@ READ_HANDLER ( apple2_c0xx_slot2_r )
 /***************************************************************************
   apple2_c0xx_slot3_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot3_r )
+ READ8_HANDLER ( apple2_c0xx_slot3_r )
 {
 	return 0;
 }
@@ -831,7 +831,7 @@ READ_HANDLER ( apple2_c0xx_slot3_r )
 /***************************************************************************
   apple2_c0xx_slot4_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot4_r )
+ READ8_HANDLER ( apple2_c0xx_slot4_r )
 {
 	return 0;
 }
@@ -839,7 +839,7 @@ READ_HANDLER ( apple2_c0xx_slot4_r )
 /***************************************************************************
   apple2_c0xx_slot5_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot5_r )
+ READ8_HANDLER ( apple2_c0xx_slot5_r )
 {
 	return 0;
 }
@@ -847,7 +847,7 @@ READ_HANDLER ( apple2_c0xx_slot5_r )
 /***************************************************************************
   apple2_c0xx_slot7_r
 ***************************************************************************/
-READ_HANDLER ( apple2_c0xx_slot7_r )
+ READ8_HANDLER ( apple2_c0xx_slot7_r )
 {
 	return 0;
 }
@@ -855,7 +855,7 @@ READ_HANDLER ( apple2_c0xx_slot7_r )
 /***************************************************************************
   apple2_c0xx_slot1_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot1_w )
+WRITE8_HANDLER ( apple2_c0xx_slot1_w )
 {
 	return;
 }
@@ -863,7 +863,7 @@ WRITE_HANDLER ( apple2_c0xx_slot1_w )
 /***************************************************************************
   apple2_c0xx_slot2_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot2_w )
+WRITE8_HANDLER ( apple2_c0xx_slot2_w )
 {
 	return;
 }
@@ -871,7 +871,7 @@ WRITE_HANDLER ( apple2_c0xx_slot2_w )
 /***************************************************************************
   apple2_c0xx_slot3_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot3_w )
+WRITE8_HANDLER ( apple2_c0xx_slot3_w )
 {
 	return;
 }
@@ -879,7 +879,7 @@ WRITE_HANDLER ( apple2_c0xx_slot3_w )
 /***************************************************************************
   apple2_c0xx_slot4_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot4_w )
+WRITE8_HANDLER ( apple2_c0xx_slot4_w )
 {
 	return;
 }
@@ -887,7 +887,7 @@ WRITE_HANDLER ( apple2_c0xx_slot4_w )
 /***************************************************************************
   apple2_c0xx_slot5_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot5_w )
+WRITE8_HANDLER ( apple2_c0xx_slot5_w )
 {
 	return;
 }
@@ -895,7 +895,7 @@ WRITE_HANDLER ( apple2_c0xx_slot5_w )
 /***************************************************************************
   apple2_c0xx_slot7_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_c0xx_slot7_w )
+WRITE8_HANDLER ( apple2_c0xx_slot7_w )
 {
 	return;
 }
@@ -903,7 +903,7 @@ WRITE_HANDLER ( apple2_c0xx_slot7_w )
 /***************************************************************************
   apple2_slot1_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot1_w )
+WRITE8_HANDLER ( apple2_slot1_w )
 {
 	return;
 }
@@ -911,7 +911,7 @@ WRITE_HANDLER ( apple2_slot1_w )
 /***************************************************************************
   apple2_slot2_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot2_w )
+WRITE8_HANDLER ( apple2_slot2_w )
 {
 	return;
 }
@@ -919,7 +919,7 @@ WRITE_HANDLER ( apple2_slot2_w )
 /***************************************************************************
   apple2_slot3_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot3_w )
+WRITE8_HANDLER ( apple2_slot3_w )
 {
 	return;
 }
@@ -927,7 +927,7 @@ WRITE_HANDLER ( apple2_slot3_w )
 /***************************************************************************
   apple2_slot4_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot4_w )
+WRITE8_HANDLER ( apple2_slot4_w )
 {
 	mockingboard_w (offset, data);
 }
@@ -935,7 +935,7 @@ WRITE_HANDLER ( apple2_slot4_w )
 /***************************************************************************
   apple2_slot5_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot5_w )
+WRITE8_HANDLER ( apple2_slot5_w )
 {
 	return;
 }
@@ -943,11 +943,11 @@ WRITE_HANDLER ( apple2_slot5_w )
 /***************************************************************************
   apple2_slot7_w
 ***************************************************************************/
-WRITE_HANDLER ( apple2_slot7_w )
+WRITE8_HANDLER ( apple2_slot7_w )
 {
 }
 
-READ_HANDLER ( apple2_slot4_r )
+ READ8_HANDLER ( apple2_slot4_r )
 {
 	if (a2 & VAR_INTCXROM)
 		/* Read the built-in ROM */

@@ -47,19 +47,19 @@ static int laser_fdc_latch = 0;
 static void mwa_bank(int bank, int offs, int data);
 
 /* wrappers for bank #1 to #4 */
-static WRITE_HANDLER ( mwa_bank1 ) { mwa_bank(0,offset,data); }
-static WRITE_HANDLER ( mwa_bank2 ) { mwa_bank(1,offset,data); }
-static WRITE_HANDLER ( mwa_bank3 ) { mwa_bank(2,offset,data); }
-static WRITE_HANDLER ( mwa_bank4 ) { mwa_bank(3,offset,data); }
+static WRITE8_HANDLER ( mwa_bank1 ) { mwa_bank(0,offset,data); }
+static WRITE8_HANDLER ( mwa_bank2 ) { mwa_bank(1,offset,data); }
+static WRITE8_HANDLER ( mwa_bank3 ) { mwa_bank(2,offset,data); }
+static WRITE8_HANDLER ( mwa_bank4 ) { mwa_bank(3,offset,data); }
 
 /* read from banked memory (handle memory mapped i/o) */
 static int mra_bank(int bank, int offs);
 
 /* wrappers for bank #1 to #4 */
-static READ_HANDLER ( mra_bank1) { return mra_bank(0,offset); }
-static READ_HANDLER ( mra_bank2) { return mra_bank(1,offset); }
-static READ_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
-static READ_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
+static  READ8_HANDLER ( mra_bank1) { return mra_bank(0,offset); }
+static  READ8_HANDLER ( mra_bank2) { return mra_bank(1,offset); }
+static  READ8_HANDLER ( mra_bank3) { return mra_bank(2,offset); }
+static  READ8_HANDLER ( mra_bank4) { return mra_bank(3,offset); }
 
 /* read banked memory (handle memory mapped i/o) */
 static read8_handler mra_bank_soft[4] =
@@ -136,7 +136,7 @@ MACHINE_INIT( laser700 )
 }
 
 
-WRITE_HANDLER( laser_bank_select_w )
+WRITE8_HANDLER( laser_bank_select_w )
 {
     static const char *bank_name[16] = {
         "ROM lo","ROM hi","MM I/O","Video RAM lo",
@@ -415,7 +415,7 @@ static void laser_put_track(void)
 #define PHI2(n) (((n)>>2)&1)
 #define PHI3(n) (((n)>>3)&1)
 
-READ_HANDLER( laser_fdc_r )
+ READ8_HANDLER( laser_fdc_r )
 {
     int data = 0xff;
     switch( offset )
@@ -459,7 +459,7 @@ READ_HANDLER( laser_fdc_r )
     return data;
 }
 
-WRITE_HANDLER( laser_fdc_w )
+WRITE8_HANDLER( laser_fdc_w )
 {
     int drive;
 

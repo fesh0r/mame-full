@@ -243,7 +243,7 @@ int    r1irq=0;
 int    r3nmi=0;
 int    r4irq=0;
 
-static WRITE_HANDLER ( tube_port_a_w )
+static WRITE8_HANDLER ( tube_port_a_w )
 {
 	switch (offset&0x7)
 	{
@@ -325,7 +325,7 @@ static WRITE_HANDLER ( tube_port_a_w )
 	};
 }
 
-static READ_HANDLER ( tube_port_a_r )
+static  READ8_HANDLER ( tube_port_a_r )
 {
 	UINT8 retval=0x00;
 
@@ -379,7 +379,7 @@ static READ_HANDLER ( tube_port_a_r )
 }
 
 
-static WRITE_HANDLER ( tube_port_b_w )
+static WRITE8_HANDLER ( tube_port_b_w )
 {
 	switch (offset&0x7)
 	{
@@ -428,7 +428,7 @@ static WRITE_HANDLER ( tube_port_b_w )
 }
 
 
-static READ_HANDLER ( tube_port_b_r )
+static  READ8_HANDLER ( tube_port_b_r )
 {
 	UINT8 retval=0x00;
 
@@ -522,7 +522,7 @@ static READ_HANDLER ( tube_port_b_r )
 
 
 
-static READ_HANDLER ( bbcs_tube_r )
+static  READ8_HANDLER ( bbcs_tube_r )
 {
 
 	if (startbank)

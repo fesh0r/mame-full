@@ -183,7 +183,7 @@ static DEVICE_LOAD(apexc_tape)
 	return INIT_PASS;
 }
 
-static READ_HANDLER(tape_read)
+static  READ8_HANDLER(tape_read)
 {
 	UINT8 reply;
 
@@ -193,7 +193,7 @@ static READ_HANDLER(tape_read)
 		return 0;	/* unit not ready - I don't know what we should do */
 }
 
-static WRITE_HANDLER(tape_write)
+static WRITE8_HANDLER(tape_write)
 {
 	UINT8 data5 = (data & 0x1f);
 

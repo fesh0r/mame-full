@@ -57,7 +57,7 @@ static mess_image *cassette_device_image(void)
  * 6	speaker
  * 7	network interrupt
  */
-READ_HANDLER ( mbee_pio_r )
+ READ8_HANDLER ( mbee_pio_r )
 {
     int data = z80pio_0_r(offset);
 	if( offset != 2 )
@@ -70,7 +70,7 @@ READ_HANDLER ( mbee_pio_r )
     return data;
 }
 
-WRITE_HANDLER ( mbee_pio_w )
+WRITE8_HANDLER ( mbee_pio_w )
 {
     z80pio_0_w(offset,data);
 	if( offset == 2 )
@@ -101,13 +101,13 @@ static void mbee_fdc_callback(int param)
     }
 }
 
-READ_HANDLER ( mbee_fdc_status_r )
+ READ8_HANDLER ( mbee_fdc_status_r )
 {
 	logerror("mbee fdc_motor_r $%02X\n", fdc_status);
 	return fdc_status;
 }
 
-WRITE_HANDLER ( mbee_fdc_motor_w )
+WRITE8_HANDLER ( mbee_fdc_motor_w )
 {
 	logerror("mbee fdc_motor_w $%02X\n", data);
 	/* Controller latch bits

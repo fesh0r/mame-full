@@ -55,12 +55,12 @@ static DEVICE_LOAD( channelf_cart )
 	return cartslot_load_generic(file, REGION_CPU1, 0x800, 0x800, 0x2000, 0);
 }
 
-static READ_HANDLER( channelf_port_0_r )
+static  READ8_HANDLER( channelf_port_0_r )
 {
 	return port_read_with_latch(readinputport(0),latch[0]);
 }
 
-static READ_HANDLER( channelf_port_1_r )
+static  READ8_HANDLER( channelf_port_1_r )
 {
 	UINT8 ext_value;
 
@@ -75,7 +75,7 @@ static READ_HANDLER( channelf_port_1_r )
 	return port_read_with_latch(ext_value,latch[1]);
 }
 
-static READ_HANDLER( channelf_port_4_r )
+static  READ8_HANDLER( channelf_port_4_r )
 {
 	UINT8 ext_value;
 
@@ -90,7 +90,7 @@ static READ_HANDLER( channelf_port_4_r )
 	return port_read_with_latch(ext_value,latch[2]);
 }
 
-static READ_HANDLER( channelf_port_5_r )
+static  READ8_HANDLER( channelf_port_5_r )
 {
 	return port_read_with_latch(0xff,latch[3]);
 }
@@ -103,7 +103,7 @@ struct {	/* SKR - 2102 RAM chip on carts 10 and 18 I/O ports */
 	UINT8 ram[1024];	/* RAM array */
 } r2102;
 
-static READ_HANDLER( channelf_2102A_r )	/* SKR */
+static  READ8_HANDLER( channelf_2102A_r )	/* SKR */
 {
 	UINT8 pdata;
 
@@ -119,13 +119,13 @@ static READ_HANDLER( channelf_2102A_r )	/* SKR */
 		return port_read_with_latch(0xff,latch[4]);
 }
 
-static READ_HANDLER( channelf_2102B_r )  /* SKR */
+static  READ8_HANDLER( channelf_2102B_r )  /* SKR */
 {
 	LOG(("rhB\n"));
 	return port_read_with_latch(0xff,latch[5]);
 }
 
-static WRITE_HANDLER( channelf_port_0_w )
+static WRITE8_HANDLER( channelf_port_0_w )
 {
 	int offs;
 
@@ -139,26 +139,26 @@ static WRITE_HANDLER( channelf_port_0_w )
 	}
 }
 
-static WRITE_HANDLER( channelf_port_1_w )
+static WRITE8_HANDLER( channelf_port_1_w )
 {
 	latch[1] = data;
     channelf_val_reg = ((data ^ 0xff) >> 6) & 0x03;
 }
 
-static WRITE_HANDLER( channelf_port_4_w )
+static WRITE8_HANDLER( channelf_port_4_w )
 {
     latch[2] = data;
     channelf_col_reg = (data | 0x80) ^ 0xff;
 }
 
-static WRITE_HANDLER( channelf_port_5_w )
+static WRITE8_HANDLER( channelf_port_5_w )
 {
     latch[3] = data;
 	channelf_sound_w((data>>6)&3);
     channelf_row_reg = (data | 0xc0) ^ 0xff;
 }
 
-static WRITE_HANDLER( channelf_2102A_w )  /* SKR */
+static WRITE8_HANDLER( channelf_2102A_w )  /* SKR */
 {
 	latch[4]=data;
 	r2102.a[2]=(data>>2)&1;
@@ -171,7 +171,7 @@ static WRITE_HANDLER( channelf_2102A_w )  /* SKR */
 	LOG(("whA: data=%d, addr=%d, d=%d, r_w=%d, ram[%d]=%d\n",data,r2102.addr,r2102.d,r2102.r_w,r2102.addr,r2102.ram[r2102.addr]));
 }
 
-static WRITE_HANDLER( channelf_2102B_w )  /* SKR */
+static WRITE8_HANDLER( channelf_2102B_w )  /* SKR */
 {
 	latch[5]=data;
 	r2102.a[9]=(data>>7)&1;

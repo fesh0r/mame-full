@@ -5,11 +5,11 @@ extern MACHINE_INIT( zx81 );
 extern MACHINE_INIT( pc8300 );
 extern MACHINE_INIT( pow3000 );
 
-extern READ_HANDLER ( zx_io_r );
-extern WRITE_HANDLER ( zx_io_w );
+extern  READ8_HANDLER ( zx_io_r );
+extern WRITE8_HANDLER ( zx_io_w );
 
-extern READ_HANDLER ( pow3000_io_r );
-extern WRITE_HANDLER ( pow3000_io_w );
+extern  READ8_HANDLER ( pow3000_io_r );
+extern WRITE8_HANDLER ( pow3000_io_w );
 
 /* from vidhrdw/zx80.c */
 extern int zx_ula_scanline(void);

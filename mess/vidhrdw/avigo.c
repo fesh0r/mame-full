@@ -59,7 +59,7 @@ void	avigo_vh_set_stylus_marker_position(int x,int y)
 	stylus_y = y;
 }
 
-READ_HANDLER(avigo_vid_memory_r)
+ READ8_HANDLER(avigo_vid_memory_r)
 {
         unsigned char *ptr;
 
@@ -83,7 +83,7 @@ READ_HANDLER(avigo_vid_memory_r)
 		return ptr[0];
 }
 
-WRITE_HANDLER(avigo_vid_memory_w)
+WRITE8_HANDLER(avigo_vid_memory_w)
 {
 		if (offset==0)
 		{

@@ -14,9 +14,9 @@ DEVICE_UNLOAD( laser_cart );
 
 DEVICE_LOAD( laser_floppy );
 
-extern READ_HANDLER ( laser_fdc_r );
-extern WRITE_HANDLER ( laser_fdc_w );
-extern WRITE_HANDLER ( laser_bank_select_w );
+extern  READ8_HANDLER ( laser_fdc_r );
+extern WRITE8_HANDLER ( laser_fdc_w );
+extern WRITE8_HANDLER ( laser_bank_select_w );
 
 /* from vidhrdw/laser350.c */
 
@@ -25,5 +25,5 @@ extern int laser_frame_time;
 
 extern VIDEO_START( laser );
 extern VIDEO_UPDATE( laser );
-extern WRITE_HANDLER ( laser_bg_mode_w );
-extern WRITE_HANDLER ( laser_two_color_w );
+extern WRITE8_HANDLER ( laser_bg_mode_w );
+extern WRITE8_HANDLER ( laser_two_color_w );

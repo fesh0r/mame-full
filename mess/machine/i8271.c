@@ -1221,7 +1221,7 @@ static void i8271_command_execute(void)
 
 
 
-WRITE_HANDLER(i8271_w)
+WRITE8_HANDLER(i8271_w)
 {
 	switch (offset & 3)
 	{
@@ -1373,7 +1373,7 @@ WRITE_HANDLER(i8271_w)
 	}
 }
 
-READ_HANDLER(i8271_r)
+ READ8_HANDLER(i8271_r)
 {
 	switch (offset & 3)
 	{
@@ -1416,18 +1416,18 @@ READ_HANDLER(i8271_r)
 
 
 /* to be completed! */
-READ_HANDLER(i8271_dack_r)
+ READ8_HANDLER(i8271_dack_r)
 {
 	return i8271_data_r(offset);
 }
 
 /* to be completed! */
-WRITE_HANDLER(i8271_dack_w)
+WRITE8_HANDLER(i8271_dack_w)
 {
 	i8271_data_w(offset, data);
 }
 
-READ_HANDLER(i8271_data_r)
+ READ8_HANDLER(i8271_data_r)
 {
 	i8271_clear_data_request();
 
@@ -1439,7 +1439,7 @@ READ_HANDLER(i8271_data_r)
 	return i8271.data;
 }
 
-WRITE_HANDLER(i8271_data_w)
+WRITE8_HANDLER(i8271_data_w)
 {
 	i8271.data = data;
 

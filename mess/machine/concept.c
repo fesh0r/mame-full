@@ -35,11 +35,11 @@ static char clock_address;
 /*static int ready;*/			/* ready line from monochip, role unknown */
 
 /* Via */
-static READ_HANDLER(via_in_a);
-static WRITE_HANDLER(via_out_a);
-static READ_HANDLER(via_in_b);
-static WRITE_HANDLER(via_out_b);
-static WRITE_HANDLER(via_out_cb2);
+static  READ8_HANDLER(via_in_a);
+static WRITE8_HANDLER(via_out_a);
+static  READ8_HANDLER(via_in_b);
+static WRITE8_HANDLER(via_out_b);
+static WRITE8_HANDLER(via_out_cb2);
 static void via_irq_func(int state);
 
 
@@ -221,12 +221,12 @@ INTERRUPT_GEN( concept_interrupt )
 	6: DCD1 (I)
 	7: IOX (O)
 */
-static READ_HANDLER(via_in_a)
+static  READ8_HANDLER(via_in_a)
 {
 	return 1;		/* omninet ready always 1 */
 }
 
-static WRITE_HANDLER(via_out_a)
+static WRITE8_HANDLER(via_out_a)
 {
 	/*iox = (data & 0x80) != 0;*/
 }
@@ -243,19 +243,19 @@ static WRITE_HANDLER(via_out_a)
 	6: boot switch 0 (I)
 	7: boot switch 1 (I)
 */
-static READ_HANDLER(via_in_b)
+static  READ8_HANDLER(via_in_b)
 {
 	return 0/*0xc0*/;
 }
 
-static WRITE_HANDLER(via_out_b)
+static WRITE8_HANDLER(via_out_b)
 {
 }
 
 /*
 	VIA CB2: used as sound output
 */
-static WRITE_HANDLER(via_out_cb2)
+static WRITE8_HANDLER(via_out_cb2)
 {
 }
 
@@ -539,9 +539,9 @@ enum
 
 static void fdc_callback(int event);
 
-static READ_HANDLER(concept_fdc_reg_r);
-static WRITE_HANDLER(concept_fdc_reg_w);
-static READ_HANDLER(concept_fdc_rom_r);
+static  READ8_HANDLER(concept_fdc_reg_r);
+static WRITE8_HANDLER(concept_fdc_reg_w);
+static  READ8_HANDLER(concept_fdc_rom_r);
 
 static void concept_fdc_init(int slot)
 {
@@ -572,7 +572,7 @@ static void fdc_callback(int event)
 	}
 }
 
-static READ_HANDLER(concept_fdc_reg_r)
+static  READ8_HANDLER(concept_fdc_reg_r)
 {
 	switch (offset)
 	{
@@ -605,7 +605,7 @@ static READ_HANDLER(concept_fdc_reg_r)
 	return 0;
 }
 
-static WRITE_HANDLER(concept_fdc_reg_w)
+static WRITE8_HANDLER(concept_fdc_reg_w)
 {
 	switch (offset)
 	{
@@ -642,7 +642,7 @@ static WRITE_HANDLER(concept_fdc_reg_w)
 	}
 }
 
-static READ_HANDLER(concept_fdc_rom_r)
+static  READ8_HANDLER(concept_fdc_rom_r)
 {
 	UINT8 data[8] = "CORVUS01";
 	return (offset < 8) ? data[offset] : 0;

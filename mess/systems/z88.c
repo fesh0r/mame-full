@@ -357,7 +357,7 @@ static void blink_pb_w(int offset, int data, int reg_index)
 
 
 /* segment register write */
-static WRITE_HANDLER(blink_srx_w)
+static WRITE8_HANDLER(blink_srx_w)
 {
 	blink.mem[offset] = data;
 
@@ -375,7 +375,7 @@ blink w: 03b1 03
 blink w: 03b6 03
 */
 
-static WRITE_HANDLER(z88_port_w)
+static WRITE8_HANDLER(z88_port_w)
 {
 	unsigned char port;
 
@@ -503,7 +503,7 @@ static WRITE_HANDLER(z88_port_w)
 
 }
 
-static READ_HANDLER(z88_port_r)
+static  READ8_HANDLER(z88_port_r)
 {
 	unsigned char port;
 

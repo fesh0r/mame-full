@@ -144,66 +144,66 @@ static mess_image *cassette_device_image(void)
 /**************************************************************
  * VIA callback functions for VIA #0
  **************************************************************/
-static READ_HANDLER (via_0_in_a )
+static  READ8_HANDLER (via_0_in_a )
 {
     int data = readinputport(10);
     LOG(("microtan_via_0_in_a %02X\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_0_in_b )
+static  READ8_HANDLER ( via_0_in_b )
 {
     int data = 0xff;
     LOG(("microtan_via_0_in_b %02X\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_0_in_ca1 )
+static  READ8_HANDLER ( via_0_in_ca1 )
 {
     int data = 1;
     LOG(("microtan_via_0_in_ca1 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_0_in_cb1 )
+static  READ8_HANDLER ( via_0_in_cb1 )
 {
     int data = 1;
     LOG(("microtan_via_0_in_cb1 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_0_in_ca2 )
+static  READ8_HANDLER ( via_0_in_ca2 )
 {
     int data = 1;
     LOG(("microtan_via_0_in_ca2 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_0_in_cb2 )
+static  READ8_HANDLER ( via_0_in_cb2 )
 {
     int data = 1;
     LOG(("microtan_via_0_in_cb2 %d\n", data));
     return data;
 }
 
-static WRITE_HANDLER ( via_0_out_a )
+static WRITE8_HANDLER ( via_0_out_a )
 {
     LOG(("microtan_via_0_out_a %02X\n", data));
 }
 
-static WRITE_HANDLER (via_0_out_b )
+static WRITE8_HANDLER (via_0_out_b )
 {
     LOG(("microtan_via_0_out_b %02X\n", data));
     /* bit #7 is the cassette output signal */
     cassette_output(cassette_device_image(), data & 0x80 ? +1.0 : -1.0);
 }
 
-static WRITE_HANDLER ( via_0_out_ca2 )
+static WRITE8_HANDLER ( via_0_out_ca2 )
 {
     LOG(("microtan_via_0_out_ca2 %d\n", data));
 }
 
-static WRITE_HANDLER (via_0_out_cb2 )
+static WRITE8_HANDLER (via_0_out_cb2 )
 {
     LOG(("microtan_via_0_out_cb2 %d\n", data));
 }
@@ -218,64 +218,64 @@ static void via_0_irq(int state)
 /**************************************************************
  * VIA callback functions for VIA #1
  **************************************************************/
-static READ_HANDLER ( via_1_in_a )
+static  READ8_HANDLER ( via_1_in_a )
 {
     int data = 0xff;
     LOG(("microtan_via_1_in_a %02X\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_1_in_b )
+static  READ8_HANDLER ( via_1_in_b )
 {
     int data = 0xff;
     LOG(("microtan_via_1_in_b %02X\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_1_in_ca1 )
+static  READ8_HANDLER ( via_1_in_ca1 )
 {
     int data = 1;
     LOG(("microtan_via_1_in_ca1 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_1_in_cb1 )
+static  READ8_HANDLER ( via_1_in_cb1 )
 {
     int data = 1;
     LOG(("microtan_via_1_in_cb1 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_1_in_ca2 )
+static  READ8_HANDLER ( via_1_in_ca2 )
 {
     int data = 1;
     LOG(("microtan_via_1_in_ca2 %d\n", data));
     return data;
 }
 
-static READ_HANDLER ( via_1_in_cb2 )
+static  READ8_HANDLER ( via_1_in_cb2 )
 {
     int data = 1;
     LOG(("microtan_via_1_in_cb2 %d\n", data));
     return data;
 }
 
-static WRITE_HANDLER ( via_1_out_a )
+static WRITE8_HANDLER ( via_1_out_a )
 {
     LOG(("microtan_via_1_out_a %02X\n", data));
 }
 
-static WRITE_HANDLER ( via_1_out_b )
+static WRITE8_HANDLER ( via_1_out_b )
 {
     LOG(("microtan_via_1_out_b %02X\n", data));
 }
 
-static WRITE_HANDLER (via_1_out_ca2 )
+static WRITE8_HANDLER (via_1_out_ca2 )
 {
     LOG(("microtan_via_1_out_ca2 %d\n", data));
 }
 
-static WRITE_HANDLER ( via_1_out_cb2 )
+static WRITE8_HANDLER ( via_1_out_cb2 )
 {
     LOG(("microtan_via_1_out_cb2 %d\n", data));
 }
@@ -299,14 +299,14 @@ static char *via_name[16] = {
 };
 #endif
 
-READ_HANDLER( microtan_via_0_r )
+ READ8_HANDLER( microtan_via_0_r )
 {
     int data = via_0_r(offset);
     LOG(("microtan_via_0_r %s -> %02X\n", via_name[offset], data));
     return data;
 }
 
-READ_HANDLER( microtan_via_1_r )
+ READ8_HANDLER( microtan_via_1_r )
 {
     int data = via_1_r(offset);
     LOG(("microtan_via_1_r %s -> %02X\n", via_name[offset], data));
@@ -316,13 +316,13 @@ READ_HANDLER( microtan_via_1_r )
 /**************************************************************
  * VIA write wrappers
  **************************************************************/
-WRITE_HANDLER( microtan_via_0_w )
+WRITE8_HANDLER( microtan_via_0_w )
 {
     LOG(("via_0_w (%2d) %s <- %02X\n", offset, via_name[offset], data));
     via_0_w(offset,data);
 }
 
-WRITE_HANDLER( microtan_via_1_w )
+WRITE8_HANDLER( microtan_via_1_w )
 {
     LOG(("via_1_w (%2d) %s <- %02X\n", offset, via_name[offset], data));
     via_1_w(offset,data);
@@ -362,7 +362,7 @@ static void microtan_read_cassette(int param)
 		via_set_input_cb2(0,1);
 }
 
-READ_HANDLER( microtan_sio_r )
+ READ8_HANDLER( microtan_sio_r )
 {
     int data;
 	data = acia_6551_r(offset);
@@ -370,27 +370,27 @@ READ_HANDLER( microtan_sio_r )
     return data;
 }
 
-WRITE_HANDLER( microtan_sio_w )
+WRITE8_HANDLER( microtan_sio_w )
 {
     LOG(("microtan_sio_w: %d <- %02x\n", offset, data));
 	acia_6551_w(offset,data);
 }
 
 
-READ_HANDLER( microtan_sound_r )
+ READ8_HANDLER( microtan_sound_r )
 {
     int data = 0xff;
     LOG(("microtan_sound_r: -> %02x\n", data));
     return data;
 }
 
-WRITE_HANDLER( microtan_sound_w )
+WRITE8_HANDLER( microtan_sound_w )
 {
     LOG(("microtan_sound_w: <- %02x\n", data));
 }
 
 
-READ_HANDLER ( microtan_bffx_r )
+ READ8_HANDLER ( microtan_bffx_r )
 {
     int data = 0xff;
     switch( offset & 3 )
@@ -419,7 +419,7 @@ static void microtan_pulse_nmi(int param)
     cpu_set_nmi_line(0,PULSE_LINE);
 }
 
-WRITE_HANDLER ( microtan_bffx_w )
+WRITE8_HANDLER ( microtan_bffx_w )
 {
     switch( offset & 3 )
     {

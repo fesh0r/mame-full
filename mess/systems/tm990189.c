@@ -502,7 +502,7 @@ static void xmit_callback(int which, int data)
 	External instruction decoding
 */
 
-static WRITE_HANDLER(ext_instr_decode)
+static WRITE8_HANDLER(ext_instr_decode)
 {
 	int ext_op_ID;
 
@@ -551,7 +551,7 @@ static void idle_callback(int state)
 	Video Board handling
 */
 
-static READ_HANDLER(video_vdp_r)
+static  READ8_HANDLER(video_vdp_r)
 {
 	int reply = 0;
 	static UINT8 bogus_read_save;
@@ -583,7 +583,7 @@ static READ_HANDLER(video_vdp_r)
 	return reply;
 }
 
-static WRITE_HANDLER(video_vdp_w)
+static WRITE8_HANDLER(video_vdp_w)
 {
 	if (offset & 1)
 	{
@@ -594,7 +594,7 @@ static WRITE_HANDLER(video_vdp_w)
 	}
 }
 
-static READ_HANDLER(video_joy_r)
+static  READ8_HANDLER(video_joy_r)
 {
 	int reply = readinputport(9);
 
@@ -614,7 +614,7 @@ static READ_HANDLER(video_joy_r)
 	return reply;
 }
 
-static WRITE_HANDLER(video_joy_w)
+static WRITE8_HANDLER(video_joy_w)
 {
 	timer_reset(joy1x_timer, TIME_IN_USEC(readinputport(10)*28+28));
 	timer_reset(joy1y_timer, TIME_IN_USEC(readinputport(11)*28+28));

@@ -66,21 +66,21 @@ extern int systemType;
 
 /* Function prototypes */
 
-WRITE_HANDLER(sms_cartram_w);
-WRITE_HANDLER(sms_fm_detect_w);
-READ_HANDLER(sms_fm_detect_r);
-READ_HANDLER(sms_input_port_0_r);
-WRITE_HANDLER(sms_YM2413_register_port_0_w);
-WRITE_HANDLER(sms_YM2413_data_port_0_w);
-WRITE_HANDLER(sms_version_w);
-READ_HANDLER(sms_version_r);
-WRITE_HANDLER(sms_mapper_w);
-WRITE_HANDLER(sms_bios_w);
-WRITE_HANDLER(gg_sio_w);
-READ_HANDLER(gg_sio_r);
-READ_HANDLER(gg_psg_r);
-WRITE_HANDLER(gg_psg_w);
-READ_HANDLER(gg_input_port_2_r);
+WRITE8_HANDLER(sms_cartram_w);
+WRITE8_HANDLER(sms_fm_detect_w);
+ READ8_HANDLER(sms_fm_detect_r);
+ READ8_HANDLER(sms_input_port_0_r);
+WRITE8_HANDLER(sms_YM2413_register_port_0_w);
+WRITE8_HANDLER(sms_YM2413_data_port_0_w);
+WRITE8_HANDLER(sms_version_w);
+ READ8_HANDLER(sms_version_r);
+WRITE8_HANDLER(sms_mapper_w);
+WRITE8_HANDLER(sms_bios_w);
+WRITE8_HANDLER(gg_sio_w);
+ READ8_HANDLER(gg_sio_r);
+ READ8_HANDLER(gg_psg_r);
+WRITE8_HANDLER(gg_psg_w);
+ READ8_HANDLER(gg_input_port_2_r);
 
 void setup_rom(void);
 
@@ -139,11 +139,11 @@ extern int currentLine;
 
 VIDEO_START(sms);
 VIDEO_UPDATE(sms);
-READ_HANDLER(sms_vdp_curline_r);
-READ_HANDLER(sms_vdp_data_r);
-WRITE_HANDLER(sms_vdp_data_w);
-READ_HANDLER(sms_vdp_ctrl_r);
-WRITE_HANDLER(sms_vdp_ctrl_w);
+ READ8_HANDLER(sms_vdp_curline_r);
+ READ8_HANDLER(sms_vdp_data_r);
+WRITE8_HANDLER(sms_vdp_data_w);
+ READ8_HANDLER(sms_vdp_ctrl_r);
+WRITE8_HANDLER(sms_vdp_ctrl_w);
 #ifdef MAME_DEBUG
 void sms_show_tile_line(struct mame_bitmap *bitmap, int line, int palletteSelected);
 #endif

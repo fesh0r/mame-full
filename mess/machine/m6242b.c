@@ -58,7 +58,7 @@ void m6242_init( int time_1224 )
    This reads the currently latched register address.
 */
 
-READ_HANDLER ( m6242_address_r )
+ READ8_HANDLER ( m6242_address_r )
 {
 	return m6242_register;
 }
@@ -68,7 +68,7 @@ READ_HANDLER ( m6242_address_r )
    This reads the data in the currently selected register table.
 */
 
-READ_HANDLER ( m6242_data_r )
+ READ8_HANDLER ( m6242_data_r )
 {
 	return m6242_register_table[ m6242_register & 0x0f ];
 }
@@ -78,7 +78,7 @@ READ_HANDLER ( m6242_data_r )
    This writes the address to the address latch.
 */
 
-WRITE_HANDLER ( m6242_address_w )
+WRITE8_HANDLER ( m6242_address_w )
 {
 	m6242_register = data & 0x0f;
 
@@ -92,7 +92,7 @@ WRITE_HANDLER ( m6242_address_w )
    This writes the address to the currently selected data register.
 */
 
-WRITE_HANDLER ( m6242_data_w )
+WRITE8_HANDLER ( m6242_data_w )
 {
 	m6242_register_table[ m6242_register ] = data;
 }

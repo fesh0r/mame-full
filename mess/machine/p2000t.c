@@ -39,7 +39,7 @@ static	struct
 	UINT8	port_707f;
 } p2000t_ports;
 
-READ_HANDLER (	p2000t_port_000f_r )
+ READ8_HANDLER (	p2000t_port_000f_r )
 {
 	if (p2000t_ports.port_101f & P2000M_101F_KEYINT) {
 		return (readinputport (0) & readinputport (1) &
@@ -53,29 +53,29 @@ READ_HANDLER (	p2000t_port_000f_r )
 	return (0xff);
 }
 
-READ_HANDLER (	p2000t_port_202f_r ) { return (0xff); }
+ READ8_HANDLER (	p2000t_port_202f_r ) { return (0xff); }
 
-WRITE_HANDLER (	p2000t_port_101f_w )
+WRITE8_HANDLER (	p2000t_port_101f_w )
 {
 	p2000t_ports.port_101f = data;
 }
 
-WRITE_HANDLER (	p2000t_port_303f_w )
+WRITE8_HANDLER (	p2000t_port_303f_w )
 {
 	p2000t_ports.port_303f = data;
 }
 
-WRITE_HANDLER (	p2000t_port_505f_w )
+WRITE8_HANDLER (	p2000t_port_505f_w )
 {
 	speaker_level_w(0, data & 0x01);
 }
 
-WRITE_HANDLER (	p2000t_port_707f_w )
+WRITE8_HANDLER (	p2000t_port_707f_w )
 {
 	p2000t_ports.port_707f = data;
 }
 
-WRITE_HANDLER (	p2000t_port_888b_w ) {}
-WRITE_HANDLER (	p2000t_port_8c90_w ) {}
-WRITE_HANDLER (	p2000t_port_9494_w ) {}
+WRITE8_HANDLER (	p2000t_port_888b_w ) {}
+WRITE8_HANDLER (	p2000t_port_8c90_w ) {}
+WRITE8_HANDLER (	p2000t_port_9494_w ) {}
 

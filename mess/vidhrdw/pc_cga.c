@@ -1236,7 +1236,7 @@ static struct
 	UINT8 read;
 } pc1512;
 
-WRITE_HANDLER ( pc1512_w )
+WRITE8_HANDLER ( pc1512_w )
 {
 	UINT8 char_height;
 
@@ -1282,7 +1282,7 @@ WRITE_HANDLER ( pc1512_w )
 	}
 }
 
-READ_HANDLER ( pc1512_r )
+ READ8_HANDLER ( pc1512_r )
 {
 	data8_t data;
 
@@ -1303,7 +1303,7 @@ READ_HANDLER ( pc1512_r )
 }
 
 
-WRITE_HANDLER ( pc1512_videoram_w )
+WRITE8_HANDLER ( pc1512_videoram_w )
 {
 	if (pc1512.write & 1)
 		videoram[offset+videoram_offset[0]] = data; /* blue plane */

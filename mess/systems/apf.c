@@ -34,14 +34,14 @@ text screen in the superior part of the graphical screen.
 static unsigned char keyboard_data;
 static unsigned char pad_data;
 
-static READ_HANDLER(apf_m1000_pia_in_a_func)
+static  READ8_HANDLER(apf_m1000_pia_in_a_func)
 {
 	logerror("pia 0 a r: %04x\n",offset);
 
 	return pad_data;
 }
 
-static READ_HANDLER(apf_m1000_pia_in_b_func)
+static  READ8_HANDLER(apf_m1000_pia_in_b_func)
 {
 	
 	logerror("pia 0 b r: %04x\n",offset);
@@ -49,28 +49,28 @@ static READ_HANDLER(apf_m1000_pia_in_b_func)
 	return 0x0ff;
 }
 
-static READ_HANDLER(apf_m1000_pia_in_ca1_func)
+static  READ8_HANDLER(apf_m1000_pia_in_ca1_func)
 {
 	logerror("pia 0 ca1 r: %04x\n",offset);
 
 	return 0;
 }
 
-static READ_HANDLER(apf_m1000_pia_in_cb1_func)
+static  READ8_HANDLER(apf_m1000_pia_in_cb1_func)
 {
 	logerror("pia 0 cb1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-static READ_HANDLER(apf_m1000_pia_in_ca2_func)
+static  READ8_HANDLER(apf_m1000_pia_in_ca2_func)
 {
 	logerror("pia 0 ca2 r: %04x\n",offset);
 
 	return 0;
 }
 
-static READ_HANDLER(apf_m1000_pia_in_cb2_func)
+static  READ8_HANDLER(apf_m1000_pia_in_cb2_func)
 {
 	logerror("pia 0 cb2 r: %04x\n",offset);
 
@@ -78,14 +78,14 @@ static READ_HANDLER(apf_m1000_pia_in_cb2_func)
 }
 
 
-static WRITE_HANDLER(apf_m1000_pia_out_a_func)
+static WRITE8_HANDLER(apf_m1000_pia_out_a_func)
 {
 	logerror("pia 0 a w: %04x %02x\n",offset,data);
 }
 
 unsigned char previous_mode;
 
-static WRITE_HANDLER(apf_m1000_pia_out_b_func)
+static WRITE8_HANDLER(apf_m1000_pia_out_b_func)
 {
 	pad_data = 0x0ff;
 
@@ -123,12 +123,12 @@ static WRITE_HANDLER(apf_m1000_pia_out_b_func)
 	logerror("pia 0 b w: %04x %02x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_m1000_pia_out_ca2_func)
+static WRITE8_HANDLER(apf_m1000_pia_out_ca2_func)
 {
 	logerror("pia 0 ca2 w: %04x %02x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_m1000_pia_out_cb2_func)
+static WRITE8_HANDLER(apf_m1000_pia_out_cb2_func)
 {
 	speaker_level_w(0, data);
 }
@@ -206,14 +206,14 @@ struct pia6821_interface apf_m1000_pia_interface=
 };
 
 
-static READ_HANDLER(apf_imagination_pia_in_a_func)
+static  READ8_HANDLER(apf_imagination_pia_in_a_func)
 {
 	logerror("pia 1 a r: %04x\n",offset);
 
 	return keyboard_data;
 }
 
-static READ_HANDLER(apf_imagination_pia_in_b_func)
+static  READ8_HANDLER(apf_imagination_pia_in_b_func)
 {
 //	logerror("pia 1 b r: %04x\n",offset);
 	unsigned char data;
@@ -227,28 +227,28 @@ static READ_HANDLER(apf_imagination_pia_in_b_func)
 //	return 0x0ff;
 }
 
-static READ_HANDLER(apf_imagination_pia_in_ca1_func)
+static  READ8_HANDLER(apf_imagination_pia_in_ca1_func)
 {
 	logerror("pia 1 ca1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-static READ_HANDLER(apf_imagination_pia_in_cb1_func)
+static  READ8_HANDLER(apf_imagination_pia_in_cb1_func)
 {
 	logerror("pia 1 cb1 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-static READ_HANDLER(apf_imagination_pia_in_ca2_func)
+static  READ8_HANDLER(apf_imagination_pia_in_ca2_func)
 {
 	logerror("pia 1 ca2 r: %04x\n",offset);
 
 	return 0x00;
 }
 
-static READ_HANDLER(apf_imagination_pia_in_cb2_func)
+static  READ8_HANDLER(apf_imagination_pia_in_cb2_func)
 {
 	logerror("pia 1 cb2 r: %04x\n",offset);
 
@@ -256,12 +256,12 @@ static READ_HANDLER(apf_imagination_pia_in_cb2_func)
 }
 
 
-static WRITE_HANDLER(apf_imagination_pia_out_a_func)
+static WRITE8_HANDLER(apf_imagination_pia_out_a_func)
 {
 	logerror("pia 1 a w: %04x %02x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_imagination_pia_out_b_func)
+static WRITE8_HANDLER(apf_imagination_pia_out_b_func)
 {
 	/* bits 2..0 = keyboard line */
 	/* bit 3 = ??? */
@@ -289,12 +289,12 @@ static WRITE_HANDLER(apf_imagination_pia_out_b_func)
 	logerror("pia 1 b w: %04x %02x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_imagination_pia_out_ca2_func)
+static WRITE8_HANDLER(apf_imagination_pia_out_ca2_func)
 {
 	//logerror("pia 1 ca2 w: %04x %02x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_imagination_pia_out_cb2_func)
+static WRITE8_HANDLER(apf_imagination_pia_out_cb2_func)
 {
 	//logerror("pia 1 cb2 w: %04x %02x\n",offset,data);
 }
@@ -372,22 +372,22 @@ static void apf_common_init(void)
 
 }
 
-static READ_HANDLER(apf_pia_0_r)
+static  READ8_HANDLER(apf_pia_0_r)
 {
 	return pia_0_r(offset & 0x03);
 }
 
-static WRITE_HANDLER(apf_pia_0_w)
+static WRITE8_HANDLER(apf_pia_0_w)
 {
 	pia_0_w(offset & 0x03, data);
 }
 
-static READ_HANDLER(apf_pia_1_r)
+static  READ8_HANDLER(apf_pia_1_r)
 {
 	return pia_1_r(offset & 0x03);
 }
 
-static WRITE_HANDLER(apf_pia_1_w)
+static WRITE8_HANDLER(apf_pia_1_w)
 {
 	pia_1_w(offset & 0x03, data);
 }
@@ -406,7 +406,7 @@ static MACHINE_INIT( apf_m1000 )
 	apf_common_init();
 }
 
-static WRITE_HANDLER(apf_dischw_w)
+static WRITE8_HANDLER(apf_dischw_w)
 {
 	int drive;
 
@@ -418,53 +418,53 @@ static WRITE_HANDLER(apf_dischw_w)
 	logerror("disc w %04x %04x\n",offset,data);
 }
 
-static READ_HANDLER(serial_r)
+static  READ8_HANDLER(serial_r)
 {
 	logerror("serial r %04x\n",offset);
 	return 0x00;
 }
 
-static WRITE_HANDLER(serial_w)
+static WRITE8_HANDLER(serial_w)
 {
 	logerror("serial w %04x %04x\n",offset,data);
 }
 
-static WRITE_HANDLER(apf_wd179x_command_w)
+static WRITE8_HANDLER(apf_wd179x_command_w)
 {
 	wd179x_command_w(offset,~data);
 }
 
-static WRITE_HANDLER(apf_wd179x_track_w)
+static WRITE8_HANDLER(apf_wd179x_track_w)
 {
 	wd179x_track_w(offset,~data);
 }
 
-static WRITE_HANDLER(apf_wd179x_sector_w)
+static WRITE8_HANDLER(apf_wd179x_sector_w)
 {
 	wd179x_sector_w(offset,~data);
 }
 
-static WRITE_HANDLER(apf_wd179x_data_w)
+static WRITE8_HANDLER(apf_wd179x_data_w)
 {
 	wd179x_data_w(offset,~data);
 }
 
-static READ_HANDLER(apf_wd179x_status_r)
+static  READ8_HANDLER(apf_wd179x_status_r)
 {
 	return ~wd179x_status_r(offset);
 }
 
-static READ_HANDLER(apf_wd179x_track_r)
+static  READ8_HANDLER(apf_wd179x_track_r)
 {
 	return ~wd179x_track_r(offset);
 }
 
-static READ_HANDLER(apf_wd179x_sector_r)
+static  READ8_HANDLER(apf_wd179x_sector_r)
 {
 	return ~wd179x_sector_r(offset);
 }
 
-static READ_HANDLER(apf_wd179x_data_r)
+static  READ8_HANDLER(apf_wd179x_data_r)
 {
 	return wd179x_data_r(offset);
 }

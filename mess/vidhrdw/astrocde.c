@@ -121,12 +121,12 @@ PALETTE_INIT( astrocade )
 	colortable = fake_colortable;
 }
 
-WRITE_HANDLER ( astrocade_vertical_blank_w )
+WRITE8_HANDLER ( astrocade_vertical_blank_w )
 {
 	VerticalBlank = data;
 }
 
-READ_HANDLER ( astrocade_intercept_r )
+ READ8_HANDLER ( astrocade_intercept_r )
 {
 	int res;
 
@@ -137,7 +137,7 @@ READ_HANDLER ( astrocade_intercept_r )
 }
 
 
-READ_HANDLER ( astrocade_video_retrace_r )
+ READ8_HANDLER ( astrocade_video_retrace_r )
 {
 	extern int CurrentScan;
 
@@ -147,7 +147,7 @@ READ_HANDLER ( astrocade_video_retrace_r )
 /* Switches colour registers at this zone - 40 zones */
 /* Also sets the background colors */
 
-WRITE_HANDLER ( astrocade_colour_split_w )
+WRITE8_HANDLER ( astrocade_colour_split_w )
 {
 	ColourSplit = data&0x3f;
 
@@ -164,12 +164,12 @@ WRITE_HANDLER ( astrocade_colour_split_w )
 /* This selects commercial (high res, arcade) or
                   consumer (low res, astrocade) mode */
 
-WRITE_HANDLER ( astrocade_mode_w )
+WRITE8_HANDLER ( astrocade_mode_w )
 {
 	astrocade_mode = data & 0x01;
 }
 
-WRITE_HANDLER ( astrocade_colour_register_w )
+WRITE8_HANDLER ( astrocade_colour_register_w )
 {
 	if(Colour[offset] != data)
     {
@@ -186,7 +186,7 @@ WRITE_HANDLER ( astrocade_colour_register_w )
 #endif
 }
 
-WRITE_HANDLER ( astrocade_colour_block_w )
+WRITE8_HANDLER ( astrocade_colour_block_w )
 {
 	static int color_reg_num = 7;
 
@@ -206,7 +206,7 @@ WRITE_HANDLER ( astrocade_colour_block_w )
 
 }
 
-WRITE_HANDLER ( astrocade_videoram_w )
+WRITE8_HANDLER ( astrocade_videoram_w )
 {
 	if ((offset < 0x1000) && (astrocade_videoram[offset] != data))
 	{
@@ -215,7 +215,7 @@ WRITE_HANDLER ( astrocade_videoram_w )
 }
 
 
-WRITE_HANDLER ( astrocade_magic_expand_color_w )
+WRITE8_HANDLER ( astrocade_magic_expand_color_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_expand_color = %02x\n",cpu_getpc(),data);
@@ -225,7 +225,7 @@ WRITE_HANDLER ( astrocade_magic_expand_color_w )
 }
 
 
-WRITE_HANDLER ( astrocade_magic_control_w )
+WRITE8_HANDLER ( astrocade_magic_control_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_control = %02x\n",cpu_getpc(),data);
@@ -236,7 +236,7 @@ WRITE_HANDLER ( astrocade_magic_control_w )
 	magic_control = data;
 }
 
-WRITE_HANDLER ( astrocade_magicram_w )
+WRITE8_HANDLER ( astrocade_magicram_w )
 {
 	unsigned int data1,shift,bits,bibits,stib,k,old_data;
 

@@ -788,7 +788,7 @@ static UINT8 tms9927_last_row;
 /* initialized to non-zero, because we divide by it */
 static UINT8 tms9927_num_rows = 25;
 
-READ_HANDLER( intvkbd_tms9927_r )
+ READ8_HANDLER( intvkbd_tms9927_r )
 {
 	UINT8 rv;
 	switch (offset)
@@ -810,7 +810,7 @@ READ_HANDLER( intvkbd_tms9927_r )
 	return rv;
 }
 
-WRITE_HANDLER( intvkbd_tms9927_w )
+WRITE8_HANDLER( intvkbd_tms9927_w )
 {
 	switch (offset)
 	{

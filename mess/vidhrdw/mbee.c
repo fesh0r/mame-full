@@ -57,20 +57,20 @@ UINT8 *pcgram;
 extern struct GfxLayout mbee_charlayout;
 
 
-WRITE_HANDLER ( mbee_pcg_color_latch_w )
+WRITE8_HANDLER ( mbee_pcg_color_latch_w )
 {
 	logerror("mbee pcg_color_latch_w $%02X\n", data);
 	mbee_pcg_color_latch = data;
 }
 
-READ_HANDLER ( mbee_pcg_color_latch_r )
+ READ8_HANDLER ( mbee_pcg_color_latch_r )
 {
 	int data = mbee_pcg_color_latch;
 	logerror("mbee pcg_color_latch_r $%02X\n", data);
 	return data;
 }
 
-WRITE_HANDLER ( mbee_videoram_w )
+WRITE8_HANDLER ( mbee_videoram_w )
 {
     if( videoram[offset] != data )
 	{
@@ -80,7 +80,7 @@ WRITE_HANDLER ( mbee_videoram_w )
 	}
 }
 
-READ_HANDLER ( mbee_videoram_r )
+ READ8_HANDLER ( mbee_videoram_r )
 {
 	int data;
 	if( m6545_video_bank & 0x01 )
@@ -96,7 +96,7 @@ READ_HANDLER ( mbee_videoram_r )
     return data;
 }
 
-WRITE_HANDLER ( mbee_pcg_color_w )
+WRITE8_HANDLER ( mbee_pcg_color_w )
 {
 	if( (m6545_video_bank & 0x01) || (mbee_pcg_color_latch & 0x40) == 0 )
 	{
@@ -129,7 +129,7 @@ WRITE_HANDLER ( mbee_pcg_color_w )
 	}
 }
 
-READ_HANDLER ( mbee_pcg_color_r )
+ READ8_HANDLER ( mbee_pcg_color_r )
 {
 	int data;
 
@@ -203,27 +203,27 @@ static void m6545_offset_xy(void)
 	logerror("6545 offset x:%d  y:%d\n", off_x, off_y);
 }
 
-READ_HANDLER ( mbee_color_bank_r )
+ READ8_HANDLER ( mbee_color_bank_r )
 {
 	int data = m6545_color_bank;
 	logerror("6545 color_bank_r $%02X\n", data);
 	return data;
 }
 
-WRITE_HANDLER ( mbee_color_bank_w )
+WRITE8_HANDLER ( mbee_color_bank_w )
 {
 	logerror("6545 color_bank_w $%02X\n", data);
 	m6545_color_bank = data;
 }
 
-READ_HANDLER ( mbee_video_bank_r )
+ READ8_HANDLER ( mbee_video_bank_r )
 {
 	int data = m6545_video_bank;
 	logerror("6545 video_bank_r $%02X\n", data);
 	return data;
 }
 
-WRITE_HANDLER ( mbee_video_bank_w )
+WRITE8_HANDLER ( mbee_video_bank_w )
 {
 	logerror("6545 video_bank_w $%02X\n", data);
     m6545_video_bank = data;
@@ -240,7 +240,7 @@ static void m6545_update_strobe(int param)
 	}
 }
 
-READ_HANDLER ( m6545_status_r )
+ READ8_HANDLER ( m6545_status_r )
 {
 	int data = 0, y = cpu_getscanline();
 
@@ -255,7 +255,7 @@ READ_HANDLER ( m6545_status_r )
     return data;
 }
 
-READ_HANDLER ( m6545_data_r )
+ READ8_HANDLER ( m6545_data_r )
 {
 	int addr, data = 0;
 
@@ -330,12 +330,12 @@ READ_HANDLER ( m6545_data_r )
 	return data;
 }
 
-WRITE_HANDLER ( m6545_index_w )
+WRITE8_HANDLER ( m6545_index_w )
 {
 	crt.idx = data & 0x1f;
 }
 
-WRITE_HANDLER ( m6545_data_w )
+WRITE8_HANDLER ( m6545_data_w )
 {
 	int addr;
 

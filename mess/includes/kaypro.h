@@ -25,12 +25,12 @@ extern INTERRUPT_GEN( kaypro_interrupt );
 extern VIDEO_START( kaypro );
 extern VIDEO_UPDATE( kaypro );
 
-extern READ_HANDLER ( kaypro_const_r );
-extern WRITE_HANDLER ( kaypro_const_w );
-extern READ_HANDLER ( kaypro_conin_r );
-extern WRITE_HANDLER ( kaypro_conin_w );
-extern READ_HANDLER ( kaypro_conout_r );
-extern WRITE_HANDLER ( kaypro_conout_w );
+extern  READ8_HANDLER ( kaypro_const_r );
+extern WRITE8_HANDLER ( kaypro_const_w );
+extern  READ8_HANDLER ( kaypro_conin_r );
+extern WRITE8_HANDLER ( kaypro_conin_w );
+extern  READ8_HANDLER ( kaypro_conout_r );
+extern WRITE8_HANDLER ( kaypro_conout_w );
 
 extern void kaypro_bell(void);
 extern void kaypro_click(void);

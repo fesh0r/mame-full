@@ -283,33 +283,33 @@ static void rriot_b_w(int chip, int data)
 	
 }
 
-READ_HANDLER ( rriot_0_r ) { return rriot_r(0,offset); }
-WRITE_HANDLER ( rriot_0_w ) { rriot_w(0,offset,data); }
-READ_HANDLER ( rriot_1_r ) { return rriot_r(1,offset); }
-WRITE_HANDLER ( rriot_1_w ) { rriot_w(1,offset,data); }
-READ_HANDLER ( rriot_2_r ) { return rriot_r(2,offset); }
-WRITE_HANDLER ( rriot_2_w ) { rriot_w(2,offset,data); }
-READ_HANDLER ( rriot_3_r ) { return rriot_r(3,offset); }
-WRITE_HANDLER ( rriot_3_w ) { rriot_w(3,offset,data); }
+ READ8_HANDLER ( rriot_0_r ) { return rriot_r(0,offset); }
+WRITE8_HANDLER ( rriot_0_w ) { rriot_w(0,offset,data); }
+ READ8_HANDLER ( rriot_1_r ) { return rriot_r(1,offset); }
+WRITE8_HANDLER ( rriot_1_w ) { rriot_w(1,offset,data); }
+ READ8_HANDLER ( rriot_2_r ) { return rriot_r(2,offset); }
+WRITE8_HANDLER ( rriot_2_w ) { rriot_w(2,offset,data); }
+ READ8_HANDLER ( rriot_3_r ) { return rriot_r(3,offset); }
+WRITE8_HANDLER ( rriot_3_w ) { rriot_w(3,offset,data); }
 
-READ_HANDLER( rriot_0_a_r ) { return rriot_a_r(0); }
-READ_HANDLER( rriot_1_a_r ) { return rriot_a_r(1); }
-READ_HANDLER( rriot_2_a_r ) { return rriot_a_r(2); }
-READ_HANDLER( rriot_3_a_r ) { return rriot_a_r(3); }
+ READ8_HANDLER( rriot_0_a_r ) { return rriot_a_r(0); }
+ READ8_HANDLER( rriot_1_a_r ) { return rriot_a_r(1); }
+ READ8_HANDLER( rriot_2_a_r ) { return rriot_a_r(2); }
+ READ8_HANDLER( rriot_3_a_r ) { return rriot_a_r(3); }
 
-READ_HANDLER( rriot_0_b_r ) { return rriot_b_r(0); }
-READ_HANDLER( rriot_1_b_r ) { return rriot_b_r(1); }
-READ_HANDLER( rriot_2_b_r ) { return rriot_b_r(2); }
-READ_HANDLER( rriot_3_b_r ) { return rriot_b_r(3); }
+ READ8_HANDLER( rriot_0_b_r ) { return rriot_b_r(0); }
+ READ8_HANDLER( rriot_1_b_r ) { return rriot_b_r(1); }
+ READ8_HANDLER( rriot_2_b_r ) { return rriot_b_r(2); }
+ READ8_HANDLER( rriot_3_b_r ) { return rriot_b_r(3); }
 
-WRITE_HANDLER( rriot_0_a_w ) { rriot_a_w(0,data); }
-WRITE_HANDLER( rriot_1_a_w ) { rriot_a_w(1,data); }
-WRITE_HANDLER( rriot_2_a_w ) { rriot_a_w(2,data); }
-WRITE_HANDLER( rriot_3_a_w ) { rriot_a_w(3,data); }
+WRITE8_HANDLER( rriot_0_a_w ) { rriot_a_w(0,data); }
+WRITE8_HANDLER( rriot_1_a_w ) { rriot_a_w(1,data); }
+WRITE8_HANDLER( rriot_2_a_w ) { rriot_a_w(2,data); }
+WRITE8_HANDLER( rriot_3_a_w ) { rriot_a_w(3,data); }
 
-WRITE_HANDLER( rriot_0_b_w ) { rriot_b_w(0,data); }
-WRITE_HANDLER( rriot_1_b_w ) { rriot_b_w(1,data); }
-WRITE_HANDLER( rriot_2_b_w ) { rriot_b_w(2,data); }
-WRITE_HANDLER( rriot_3_b_w ) { rriot_b_w(3,data); }
+WRITE8_HANDLER( rriot_0_b_w ) { rriot_b_w(0,data); }
+WRITE8_HANDLER( rriot_1_b_w ) { rriot_b_w(1,data); }
+WRITE8_HANDLER( rriot_2_b_w ) { rriot_b_w(2,data); }
+WRITE8_HANDLER( rriot_3_b_w ) { rriot_b_w(3,data); }
 
 

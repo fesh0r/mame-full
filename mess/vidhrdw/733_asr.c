@@ -416,12 +416,12 @@ void asr733_cru_w(int offset, int data, int unit)
 	}
 }
 
-READ_HANDLER(asr733_0_cru_r)
+ READ8_HANDLER(asr733_0_cru_r)
 {
 	return asr733_cru_r(offset, 0);
 }
 
-WRITE_HANDLER(asr733_0_cru_w)
+WRITE8_HANDLER(asr733_0_cru_w)
 {
 	asr733_cru_w(offset, data, 0);
 }

@@ -26,11 +26,11 @@ typedef struct {
 } MIKEY;
 
 extern MIKEY mikey;
-WRITE_HANDLER( lynx_memory_config );
-WRITE_HANDLER(mikey_write);
-READ_HANDLER(mikey_read);
-WRITE_HANDLER(suzy_write);
-READ_HANDLER(suzy_read);
+WRITE8_HANDLER( lynx_memory_config );
+WRITE8_HANDLER(mikey_write);
+ READ8_HANDLER(mikey_read);
+WRITE8_HANDLER(suzy_write);
+ READ8_HANDLER(suzy_read);
 void lynx_timer_count_down(int nr);
 
 void lynx_audio_debug(struct mame_bitmap *bitmap);

@@ -43,14 +43,14 @@ icq3250a-d
 #include "includes/comquest.h"
 #include "devices/cartslot.h"
 
-static READ_HANDLER(comquest_read)
+static  READ8_HANDLER(comquest_read)
 {
 	UINT8 data=0;
 	logerror("comquest read %.4x %.2x\n",offset,data);
 	return data;
 }
 
-static WRITE_HANDLER(comquest_write)
+static WRITE8_HANDLER(comquest_write)
 {
 	logerror("comquest read %.4x %.2x\n",offset,data);
 }

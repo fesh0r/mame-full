@@ -35,7 +35,7 @@ UINT8 *c65_interface;
 /* processor has only 1 mega address space !? */
 /* and system 8 megabyte */
 /* dma controller and bankswitch hardware ?*/
-static READ_HANDLER(c65_read_mem)
+static  READ8_HANDLER(c65_read_mem)
 {
 	int data=0;
 
@@ -50,7 +50,7 @@ static READ_HANDLER(c65_read_mem)
 	return data;
 }
 
-static WRITE_HANDLER(c65_write_mem)
+static WRITE8_HANDLER(c65_write_mem)
 {
 	if (offset<0x20000)
 		c64_memory[offset]=data;
@@ -439,7 +439,7 @@ static int c65_fdc_r(int offset)
 static struct {
 	UINT8 reg;
 } expansion_ram= {0};
-static READ_HANDLER(c65_ram_expansion_r)
+static  READ8_HANDLER(c65_ram_expansion_r)
 {
 	int data=0xff;
 	if (C65_MAIN_MEMORY==C65_4096KB)
@@ -448,7 +448,7 @@ static READ_HANDLER(c65_ram_expansion_r)
 	return data;
 }
 
-static WRITE_HANDLER(c65_ram_expansion_w)
+static WRITE8_HANDLER(c65_ram_expansion_w)
 {
 	DBG_LOG (1, "expansion write", ("%.5x %.2x %.2x\n", activecpu_get_pc(), offset, data));
 	expansion_ram.reg=data;
@@ -462,7 +462,7 @@ static WRITE_HANDLER(c65_ram_expansion_w)
 #endif
 }
 
-static WRITE_HANDLER ( c65_write_io )
+static WRITE8_HANDLER ( c65_write_io )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -498,7 +498,7 @@ static WRITE_HANDLER ( c65_write_io )
 	}
 }
 
-static WRITE_HANDLER ( c65_write_io_dc00 )
+static WRITE8_HANDLER ( c65_write_io_dc00 )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -514,7 +514,7 @@ static WRITE_HANDLER ( c65_write_io_dc00 )
 	}
 }
 
-static READ_HANDLER ( c65_read_io )
+static  READ8_HANDLER ( c65_read_io )
 {
 	switch(offset&0xf00) {
 	case 0x000:
@@ -549,7 +549,7 @@ static READ_HANDLER ( c65_read_io )
 	return 0xff;
 }
 
-static READ_HANDLER ( c65_read_io_dc00 )
+static  READ8_HANDLER ( c65_read_io_dc00 )
 {
 	switch(offset&0x300) {
 	case 0x000:

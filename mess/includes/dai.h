@@ -6,11 +6,11 @@
 /* machine/dai.c */
 DRIVER_INIT( dai );
 MACHINE_INIT( dai );
-READ_HANDLER( dai_io_discrete_devices_r );
-WRITE_HANDLER( dai_io_discrete_devices_w );
-WRITE_HANDLER( dai_stack_interrupt_circuit_w );
-READ_HANDLER( amd9511_r );
-WRITE_HANDLER( amd9511_w );
+ READ8_HANDLER( dai_io_discrete_devices_r );
+WRITE8_HANDLER( dai_io_discrete_devices_w );
+WRITE8_HANDLER( dai_stack_interrupt_circuit_w );
+ READ8_HANDLER( amd9511_r );
+WRITE8_HANDLER( amd9511_w );
 extern UINT8 dai_noise_volume;
 extern UINT8 dai_osc_volume[3];
 

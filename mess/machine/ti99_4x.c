@@ -1320,7 +1320,7 @@ WRITE16_HANDLER ( ti99_4p_wgpl_w )
 #pragma mark 99/8 MEMORY HANDLERS
 #endif
 
-READ_HANDLER ( ti99_8_r )
+ READ8_HANDLER ( ti99_8_r )
 {
 	int page = offset >> 12;
 	UINT32 mapper_reg;
@@ -1462,7 +1462,7 @@ READ_HANDLER ( ti99_8_r )
 	return reply;
 }
 
-WRITE_HANDLER ( ti99_8_w )
+WRITE8_HANDLER ( ti99_8_w )
 {
 	int page = offset >> 12;
 	UINT32 mapper_reg;
@@ -2351,7 +2351,7 @@ static void ti99_CS_output(int offset, int data)
 
 /* prototypes */
 static void ti99_8_internal_dsr_cru_w(int offset, int data);
-static READ_HANDLER(ti99_8_internal_dsr_r);
+static  READ8_HANDLER(ti99_8_internal_dsr_r);
 
 
 static const ti99_peb_card_handlers_t ti99_8_internal_dsr_handlers =
@@ -2388,7 +2388,7 @@ static void ti99_8_internal_dsr_cru_w(int offset, int data)
 }
 
 /* read internal DSR ROM */
-static READ_HANDLER(ti99_8_internal_dsr_r)
+static  READ8_HANDLER(ti99_8_internal_dsr_r)
 {
 	return ti99_8_internal_DSR[offset];
 }
@@ -2539,8 +2539,8 @@ static WRITE16_HANDLER ( ti99_TIxramhigh_w )
 
 /* prototypes */
 static void sAMS_cru_w(int offset, int data);
-static READ_HANDLER(sAMS_mapper_r);
-static WRITE_HANDLER(sAMS_mapper_w);
+static  READ8_HANDLER(sAMS_mapper_r);
+static WRITE8_HANDLER(sAMS_mapper_w);
 
 static READ16_HANDLER ( ti99_sAMSxramlow_r );
 static WRITE16_HANDLER ( ti99_sAMSxramlow_w );
@@ -2590,13 +2590,13 @@ static void sAMS_cru_w(int offset, int data)
 }
 
 /* read a mapper register */
-static READ_HANDLER(sAMS_mapper_r)
+static  READ8_HANDLER(sAMS_mapper_r)
 {
 	return (sAMSlookup[(offset >> 1) & 0xf] >> 11);
 }
 
 /* write a mapper register */
-static WRITE_HANDLER(sAMS_mapper_w)
+static WRITE8_HANDLER(sAMS_mapper_w)
 {
 	sAMSlookup[(offset >> 1) & 0xf] = ((int) data) << 11;
 }
@@ -2936,8 +2936,8 @@ static WRITE16_HANDLER ( ti99_myarcxramhigh_w )
 /* prototypes */
 static int evpc_cru_r(int offset);
 static void evpc_cru_w(int offset, int data);
-static READ_HANDLER(evpc_mem_r);
-static WRITE_HANDLER(evpc_mem_w);
+static  READ8_HANDLER(evpc_mem_r);
+static WRITE8_HANDLER(evpc_mem_w);
 
 /* pointer to the evpc DSR area */
 static UINT8 *ti99_evpc_DSR;
@@ -3038,7 +3038,7 @@ static struct
 /*
 	read a byte in evpc DSR space
 */
-static READ_HANDLER(evpc_mem_r)
+static  READ8_HANDLER(evpc_mem_r)
 {
 	UINT8 reply = 0;
 
@@ -3117,7 +3117,7 @@ static READ_HANDLER(evpc_mem_r)
 /*
 	write a byte in evpc DSR space
 */
-static WRITE_HANDLER(evpc_mem_w)
+static WRITE8_HANDLER(evpc_mem_w)
 {
 	if ((offset >= 0x1f00) && (offset < 0x1ff0) && RAMEN)
 	{	/* NOVRAM */

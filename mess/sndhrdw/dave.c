@@ -311,7 +311,7 @@ void	Dave_sh_update(void)
 }
 
 /* used to update sound output based on data writes */
-static WRITE_HANDLER(Dave_sound_w)
+static WRITE8_HANDLER(Dave_sound_w)
 {
 
 	//logerror("sound w: %04x %02x\n",offset,data);
@@ -517,7 +517,7 @@ static WRITE_HANDLER(Dave_sound_w)
 }
 
 
-WRITE_HANDLER (	Dave_reg_w )
+WRITE8_HANDLER (	Dave_reg_w )
 {
 	logerror("dave w: %04x %02x\n",offset,data);
 
@@ -562,12 +562,12 @@ WRITE_HANDLER (	Dave_reg_w )
 }
 
 
-WRITE_HANDLER ( Dave_setreg )
+WRITE8_HANDLER ( Dave_setreg )
 {
 	dave.Regs[offset & 0x01f] = data;
 }
 
-READ_HANDLER (	Dave_reg_r )
+ READ8_HANDLER (	Dave_reg_r )
 {
 	logerror("dave r: %04x\n",offset);
 

@@ -61,16 +61,16 @@ DEVICE_UNLOAD( a800xl_cart );
 DEVICE_LOAD( a5200_cart );
 DEVICE_UNLOAD( a5200_cart );
 
-READ_HANDLER ( atari_gtia_r );
-READ_HANDLER ( atari_pia_r );
-READ_HANDLER ( atari_antic_r );
+ READ8_HANDLER ( atari_gtia_r );
+ READ8_HANDLER ( atari_pia_r );
+ READ8_HANDLER ( atari_antic_r );
 
-WRITE_HANDLER ( atari_gtia_w );
-WRITE_HANDLER ( atari_pia_w  );
-WRITE_HANDLER ( atari_antic_w );
+WRITE8_HANDLER ( atari_gtia_w );
+WRITE8_HANDLER ( atari_pia_w  );
+WRITE8_HANDLER ( atari_antic_w );
 
-READ_HANDLER ( atari_serin_r );
-WRITE_HANDLER ( atari_serout_w );
+ READ8_HANDLER ( atari_serin_r );
+WRITE8_HANDLER ( atari_serout_w );
 void atari_interrupt_cb(int mask);
 
 void a800_handle_keyboard(void);

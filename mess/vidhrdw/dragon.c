@@ -155,7 +155,7 @@ VIDEO_START( coco2b )
 	return internal_video_start_coco(M6847_VERSION_M6847T1_NTSC, coco2b_charproc);
 }
 
-WRITE_HANDLER(coco_ram_w)
+WRITE8_HANDLER(coco_ram_w)
 {
 	if (offset < mess_ram_size) {
 		if (mess_ram[offset] != data) {
@@ -633,7 +633,7 @@ void coco3_vh_blink(void)
 		schedule_full_refresh();
 }
 
-WRITE_HANDLER(coco3_palette_w)
+WRITE8_HANDLER(coco3_palette_w)
 {
 	videomap_invalidate_lineinfo();
 
@@ -826,7 +826,7 @@ void coco3_ram_b9_w (offs_t offset, data8_t data)
 	coco3_ram_w(offset, data, 8);
 }
 
-READ_HANDLER(coco3_gimevh_r)
+ READ8_HANDLER(coco3_gimevh_r)
 {
 	return coco3_gimevhreg[offset];
 }
@@ -834,7 +834,7 @@ READ_HANDLER(coco3_gimevh_r)
 
 
 /* write handler for GIME registers $FF98-$FF9F */
-WRITE_HANDLER(coco3_gimevh_w)
+WRITE8_HANDLER(coco3_gimevh_w)
 {
 	int xorval;
 

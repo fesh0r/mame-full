@@ -450,12 +450,12 @@ void vdt911_cru_w(int offset, int data, int unit)
 	}
 }
 
-READ_HANDLER(vdt911_0_cru_r)
+ READ8_HANDLER(vdt911_0_cru_r)
 {
 	return vdt911_cru_r(offset, 0);
 }
 
-WRITE_HANDLER(vdt911_0_cru_w)
+WRITE8_HANDLER(vdt911_0_cru_w)
 {
 	vdt911_cru_w(offset, data, 0);
 }

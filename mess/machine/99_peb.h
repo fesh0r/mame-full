@@ -58,23 +58,23 @@ void ti99_peb_set_16bit_card_handlers(int cru_base, const ti99_peb_16bit_card_ha
 void ti99_peb_set_ila_bit(int bit, int state);
 void ti99_peb_set_ilb_bit(int bit, int state);
 
-READ_HANDLER ( ti99_4x_peb_cru_r );
-WRITE_HANDLER ( ti99_4x_peb_cru_w );
+ READ8_HANDLER ( ti99_4x_peb_cru_r );
+WRITE8_HANDLER ( ti99_4x_peb_cru_w );
 READ16_HANDLER ( ti99_4x_peb_r );
 WRITE16_HANDLER ( ti99_4x_peb_w );
 
-READ_HANDLER ( geneve_peb_cru_r );
-WRITE_HANDLER ( geneve_peb_cru_w );
-READ_HANDLER ( geneve_peb_r );
-WRITE_HANDLER ( geneve_peb_w );
+ READ8_HANDLER ( geneve_peb_cru_r );
+WRITE8_HANDLER ( geneve_peb_cru_w );
+ READ8_HANDLER ( geneve_peb_r );
+WRITE8_HANDLER ( geneve_peb_w );
 
-READ_HANDLER ( ti99_8_peb_cru_r );
-WRITE_HANDLER ( ti99_8_peb_cru_w );
-READ_HANDLER ( ti99_8_peb_r );
-WRITE_HANDLER ( ti99_8_peb_w );
+ READ8_HANDLER ( ti99_8_peb_cru_r );
+WRITE8_HANDLER ( ti99_8_peb_cru_w );
+ READ8_HANDLER ( ti99_8_peb_r );
+WRITE8_HANDLER ( ti99_8_peb_w );
 
-READ_HANDLER ( ti99_4p_peb_cru_r );
-WRITE_HANDLER ( ti99_4p_peb_cru_w );
+ READ8_HANDLER ( ti99_4p_peb_cru_r );
+WRITE8_HANDLER ( ti99_4p_peb_cru_w );
 READ16_HANDLER ( ti99_4p_peb_r );
 WRITE16_HANDLER ( ti99_4p_peb_w );
 

@@ -38,14 +38,14 @@ void acia6850_reset(void);
 int acia6850_read( int which, int offset);
 void acia6850_write( int which, int offset, int data);
 
-READ_HANDLER( acia6850_0_r );
-READ_HANDLER( acia6850_1_r );
-READ_HANDLER( acia6850_2_r );
-READ_HANDLER( acia6850_3_r );
+ READ8_HANDLER( acia6850_0_r );
+ READ8_HANDLER( acia6850_1_r );
+ READ8_HANDLER( acia6850_2_r );
+ READ8_HANDLER( acia6850_3_r );
 
-WRITE_HANDLER( acia6850_0_w );
-WRITE_HANDLER( acia6850_1_w );
-WRITE_HANDLER( acia6850_2_w );
-WRITE_HANDLER( acia6850_3_w );
+WRITE8_HANDLER( acia6850_0_w );
+WRITE8_HANDLER( acia6850_1_w );
+WRITE8_HANDLER( acia6850_2_w );
+WRITE8_HANDLER( acia6850_3_w );
 
 #endif /* ACIA_6850 */

@@ -234,7 +234,7 @@ static void set_dragon_dskreg(int data)
 
 /* ---------------------------------------------------- */
 
-READ_HANDLER(coco_floppy_r)
+ READ8_HANDLER(coco_floppy_r)
 {
 	int result = 0;
 
@@ -282,7 +282,7 @@ READ_HANDLER(coco_floppy_r)
 	return result;
 }
 
-WRITE_HANDLER(coco_floppy_w)
+WRITE8_HANDLER(coco_floppy_w)
 {
 	switch(offset & 0xef) {
 	case 0:
@@ -325,7 +325,7 @@ WRITE_HANDLER(coco_floppy_w)
 /*	logerror("SCS write: address %4.4X, data %2.2X\n", 0xff40+offset, data );*/
 }
 
-READ_HANDLER(dragon_floppy_r)
+ READ8_HANDLER(dragon_floppy_r)
 {
 	int result = 0;
 
@@ -348,7 +348,7 @@ READ_HANDLER(dragon_floppy_r)
 	return result;
 }
 
-WRITE_HANDLER(dragon_floppy_w)
+WRITE8_HANDLER(dragon_floppy_w)
 {
 	switch(offset & 0xef) {
 	case 0:
@@ -407,7 +407,7 @@ static void cartidge_standard_init(const struct cartridge_callback *callbacks)
 	cartcallbacks->setcartline(CARTLINE_Q);
 }
 
-static WRITE_HANDLER(cartridge_banks_io_w)
+static WRITE8_HANDLER(cartridge_banks_io_w)
 {
 /* TJL- trying to turn this into a generic banking call */
 	if (offset == 0 )
@@ -419,7 +419,7 @@ static WRITE_HANDLER(cartridge_banks_io_w)
 		LOG( ("Bankswitch: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 }
 
-static READ_HANDLER(cartridge_banks_io_r)
+static  READ8_HANDLER(cartridge_banks_io_r)
 {
 /* TJL- trying to turn this into a generic banking call */
 	if (offset == 0 )
@@ -430,19 +430,19 @@ static READ_HANDLER(cartridge_banks_io_r)
 	return 0;
 }
 
-static WRITE_HANDLER(cartridge_std_io_w)
+static WRITE8_HANDLER(cartridge_std_io_w)
 {
 	LOG( ("Standard Cart: Writing to unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 }
 
-static READ_HANDLER(cartridge_std_io_r)
+static  READ8_HANDLER(cartridge_std_io_r)
 {
 	LOG( ("Standard Cart: Reading from unmapped SCS memory: $%4.4X (PC=$%4.4X)\n", 0xff40+offset, activecpu_get_pc() ) );
 
 	return 0xff;
 }
 
-static WRITE_HANDLER(cartridge_Orch90_io_w)
+static WRITE8_HANDLER(cartridge_Orch90_io_w)
 {
 	if( offset == 58 )
 		DAC_data_w(0, data);

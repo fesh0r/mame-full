@@ -617,12 +617,12 @@ static ADDRESS_MAP_START(nc_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER(nc_memory_management_r)
+static  READ8_HANDLER(nc_memory_management_r)
 {
 	return nc_memory_config[offset];
 }
 
-static WRITE_HANDLER(nc_memory_management_w)
+static WRITE8_HANDLER(nc_memory_management_w)
 {
 #ifdef VERBOSE
 	logerror("Memory management W: %02x %02x\n",offset,data);
@@ -632,7 +632,7 @@ static WRITE_HANDLER(nc_memory_management_w)
         nc_refresh_memory_config();
 }
 
-static WRITE_HANDLER(nc_irq_mask_w)
+static WRITE8_HANDLER(nc_irq_mask_w)
 {
 #ifdef VERBOSE
 	logerror("irq mask w: %02x\n", data);
@@ -647,7 +647,7 @@ static WRITE_HANDLER(nc_irq_mask_w)
 	nc_update_interrupts();
 }
 
-static WRITE_HANDLER(nc_irq_status_w)
+static WRITE8_HANDLER(nc_irq_status_w)
 {
 #ifdef VERBOSE
 	logerror("irq status w: %02x\n", data);
@@ -686,13 +686,13 @@ static WRITE_HANDLER(nc_irq_status_w)
         nc_update_interrupts();
 }
 
-static READ_HANDLER(nc_irq_status_r)
+static  READ8_HANDLER(nc_irq_status_r)
 {
         return ~((nc_irq_status & (~nc_irq_latch_mask)) | nc_irq_latch);
 }
 
 
-static READ_HANDLER(nc_key_data_in_r)
+static  READ8_HANDLER(nc_key_data_in_r)
 {
 	if (offset==9)
 	{
@@ -728,7 +728,7 @@ static void nc_sound_update(int channel)
         beep_set_frequency(channel, frequency);
 }
 
-static WRITE_HANDLER(nc_sound_w)
+static WRITE8_HANDLER(nc_sound_w)
 {
 #ifdef VERBOSE
 	logerror("sound w: %04x %02x\n", offset, data);
@@ -796,7 +796,7 @@ static void nc_serial_timer_callback(int dummy)
 	msm8251_receive_clock();
 }
 
-static WRITE_HANDLER(nc_uart_control_w)
+static WRITE8_HANDLER(nc_uart_control_w)
 {
 	/* update printer state */
 	nc_printer_update(data);
@@ -821,7 +821,7 @@ static WRITE_HANDLER(nc_uart_control_w)
 /* port 0x030 bit 6 = printer strobe */
 
 /* same for nc100 and nc200 */
-static WRITE_HANDLER(nc_printer_data_w)
+static WRITE8_HANDLER(nc_printer_data_w)
 {
 #ifdef VERBOSE
 	logerror("printer write %02x\n",data);
@@ -849,7 +849,7 @@ static void	nc_printer_update(int port0x030)
 static int previous_alarm_state;
 
 
-static WRITE_HANDLER(nc100_display_memory_start_w)
+static WRITE8_HANDLER(nc100_display_memory_start_w)
 {
 	/* bit 7: A15 */
 	/* bit 6: A14 */
@@ -865,7 +865,7 @@ static WRITE_HANDLER(nc100_display_memory_start_w)
 }
 
 
-static WRITE_HANDLER(nc100_uart_control_w)
+static WRITE8_HANDLER(nc100_uart_control_w)
 {
 	nc_uart_control_w(offset,data);
 
@@ -1014,7 +1014,7 @@ static MACHINE_STOP( nc100 )
 }
 
 
-static WRITE_HANDLER(nc100_poweroff_control_w)
+static WRITE8_HANDLER(nc100_poweroff_control_w)
 {
 	/* bits 7-1: not used */
 	/* bit 0: 1 = no effect, 0 = power off */
@@ -1026,7 +1026,7 @@ static WRITE_HANDLER(nc100_poweroff_control_w)
 
 
 /* nc100 version of card/battery status */
-static READ_HANDLER(nc100_card_battery_status_r)
+static  READ8_HANDLER(nc100_card_battery_status_r)
 {
 	int nc_card_battery_status = 0x0ff;
 
@@ -1073,7 +1073,7 @@ static READ_HANDLER(nc100_card_battery_status_r)
     return nc_card_battery_status;
 }
 
-static WRITE_HANDLER(nc100_memory_card_wait_state_w)
+static WRITE8_HANDLER(nc100_memory_card_wait_state_w)
 {
 #ifdef VERBOSE
 	logerror("nc100 memory card wait state: %02x\n",data);
@@ -1237,7 +1237,7 @@ void nc150_init_machine(void)
 /* NC200 hardware */
 
 
-static WRITE_HANDLER(nc200_display_memory_start_w)
+static WRITE8_HANDLER(nc200_display_memory_start_w)
 {
 	/* bit 7: A15 */
 	/* bit 6: A14 */
@@ -1429,7 +1429,7 @@ NC200:
 
 
 /* nc200 version of card/battery status */
-static READ_HANDLER(nc200_card_battery_status_r)
+static  READ8_HANDLER(nc200_card_battery_status_r)
 {
 	int nc_card_battery_status = 0x0ff;
 
@@ -1462,7 +1462,7 @@ static READ_HANDLER(nc200_card_battery_status_r)
   bit 0: Parallel interface BUSY
  */
 
-static READ_HANDLER(nc200_printer_status_r)
+static  READ8_HANDLER(nc200_printer_status_r)
 {
 	unsigned char nc200_printer_status = 0x0ff;
 
@@ -1485,7 +1485,7 @@ static READ_HANDLER(nc200_printer_status_r)
 }
 
 
-static WRITE_HANDLER(nc200_uart_control_w)
+static WRITE8_HANDLER(nc200_uart_control_w)
 {
 	int reset_fdc;
 
@@ -1519,7 +1519,7 @@ static WRITE_HANDLER(nc200_uart_control_w)
 /* bit 1: disk motor??  */
 /* bit 0: NEC765 Terminal Count input */
 
-static WRITE_HANDLER(nc200_memory_card_wait_state_w)
+static WRITE8_HANDLER(nc200_memory_card_wait_state_w)
 {
 #ifdef NC200_DEBUG
 	logerror("nc200 memory card wait state: PC: %04x %02x\n",activecpu_get_pc(),data);
@@ -1533,7 +1533,7 @@ static WRITE_HANDLER(nc200_memory_card_wait_state_w)
 /* bit 2: backlight: 1=off, 0=on */
 /* bit 1 cleared to zero in disk code */
 /* bit 0 seems to be the same as nc100 */
-static WRITE_HANDLER(nc200_poweroff_control_w)
+static WRITE8_HANDLER(nc200_poweroff_control_w)
 {
 #ifdef NC200_DEBUG
 	logerror("nc200 power off: PC: %04x %02x\n", activecpu_get_pc(),data);

@@ -442,7 +442,7 @@ int cbm_ieee_data_r(void)
 }
 
 
-READ_HANDLER(cbm_ieee_state)
+ READ8_HANDLER(cbm_ieee_state)
 {
 	switch (offset) {
 	case 0: return cbmieee.bus[0].data;

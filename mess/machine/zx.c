@@ -78,7 +78,7 @@ MACHINE_INIT( pc8300 )
 	memory_set_opbase_handler(0, pc8300_setopbase);
 }
 
-WRITE_HANDLER ( zx_io_w )
+WRITE8_HANDLER ( zx_io_w )
 {
 	logerror("IOW %3d $%04X", cpu_getscanline(), offset);
 	if ((offset & 2) == 0)
@@ -107,7 +107,7 @@ WRITE_HANDLER ( zx_io_w )
 	}
 }
 
-READ_HANDLER ( zx_io_r )
+ READ8_HANDLER ( zx_io_r )
 {
 	int data = 0xff;
 
@@ -165,7 +165,7 @@ READ_HANDLER ( zx_io_r )
 	return data;
 }
 
-READ_HANDLER ( pow3000_io_r )
+ READ8_HANDLER ( pow3000_io_r )
 {
 	int data = 0xff;
 

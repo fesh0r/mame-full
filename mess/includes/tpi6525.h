@@ -66,44 +66,44 @@ void tpi6525_1_irq2_level(int level);
 void tpi6525_1_irq3_level(int level);
 void tpi6525_1_irq4_level(int level);
 
-READ_HANDLER  ( tpi6525_0_port_r );
-READ_HANDLER  ( tpi6525_1_port_r );
-READ_HANDLER  ( tpi6525_2_port_r );
-READ_HANDLER  ( tpi6525_3_port_r );
+ READ8_HANDLER  ( tpi6525_0_port_r );
+ READ8_HANDLER  ( tpi6525_1_port_r );
+ READ8_HANDLER  ( tpi6525_2_port_r );
+ READ8_HANDLER  ( tpi6525_3_port_r );
 
-WRITE_HANDLER ( tpi6525_0_port_w );
-WRITE_HANDLER ( tpi6525_1_port_w );
-WRITE_HANDLER ( tpi6525_2_port_w );
-WRITE_HANDLER ( tpi6525_3_port_w );
+WRITE8_HANDLER ( tpi6525_0_port_w );
+WRITE8_HANDLER ( tpi6525_1_port_w );
+WRITE8_HANDLER ( tpi6525_2_port_w );
+WRITE8_HANDLER ( tpi6525_3_port_w );
 
-READ_HANDLER  ( tpi6525_0_port_a_r );
-READ_HANDLER  ( tpi6525_1_port_a_r );
-READ_HANDLER  ( tpi6525_2_port_a_r );
-READ_HANDLER  ( tpi6525_3_port_a_r );
+ READ8_HANDLER  ( tpi6525_0_port_a_r );
+ READ8_HANDLER  ( tpi6525_1_port_a_r );
+ READ8_HANDLER  ( tpi6525_2_port_a_r );
+ READ8_HANDLER  ( tpi6525_3_port_a_r );
 
-WRITE_HANDLER ( tpi6525_0_port_a_w );
-WRITE_HANDLER ( tpi6525_1_port_a_w );
-WRITE_HANDLER ( tpi6525_2_port_a_w );
-WRITE_HANDLER ( tpi6525_3_port_a_w );
+WRITE8_HANDLER ( tpi6525_0_port_a_w );
+WRITE8_HANDLER ( tpi6525_1_port_a_w );
+WRITE8_HANDLER ( tpi6525_2_port_a_w );
+WRITE8_HANDLER ( tpi6525_3_port_a_w );
 
-READ_HANDLER  ( tpi6525_0_port_b_r );
-READ_HANDLER  ( tpi6525_1_port_b_r );
-READ_HANDLER  ( tpi6525_2_port_b_r );
-READ_HANDLER  ( tpi6525_3_port_b_r );
+ READ8_HANDLER  ( tpi6525_0_port_b_r );
+ READ8_HANDLER  ( tpi6525_1_port_b_r );
+ READ8_HANDLER  ( tpi6525_2_port_b_r );
+ READ8_HANDLER  ( tpi6525_3_port_b_r );
 
-WRITE_HANDLER ( tpi6525_0_port_b_w );
-WRITE_HANDLER ( tpi6525_1_port_b_w );
-WRITE_HANDLER ( tpi6525_2_port_b_w );
-WRITE_HANDLER ( tpi6525_3_port_b_w );
+WRITE8_HANDLER ( tpi6525_0_port_b_w );
+WRITE8_HANDLER ( tpi6525_1_port_b_w );
+WRITE8_HANDLER ( tpi6525_2_port_b_w );
+WRITE8_HANDLER ( tpi6525_3_port_b_w );
 
-READ_HANDLER  ( tpi6525_0_port_c_r );
-READ_HANDLER  ( tpi6525_1_port_c_r );
-READ_HANDLER  ( tpi6525_2_port_c_r );
-READ_HANDLER  ( tpi6525_3_port_c_r );
+ READ8_HANDLER  ( tpi6525_0_port_c_r );
+ READ8_HANDLER  ( tpi6525_1_port_c_r );
+ READ8_HANDLER  ( tpi6525_2_port_c_r );
+ READ8_HANDLER  ( tpi6525_3_port_c_r );
 
-WRITE_HANDLER ( tpi6525_0_port_c_w );
-WRITE_HANDLER ( tpi6525_1_port_c_w );
-WRITE_HANDLER ( tpi6525_2_port_c_w );
-WRITE_HANDLER ( tpi6525_3_port_c_w );
+WRITE8_HANDLER ( tpi6525_0_port_c_w );
+WRITE8_HANDLER ( tpi6525_1_port_c_w );
+WRITE8_HANDLER ( tpi6525_2_port_c_w );
+WRITE8_HANDLER ( tpi6525_3_port_c_w );
 
 #endif

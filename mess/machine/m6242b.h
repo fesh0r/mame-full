@@ -12,7 +12,7 @@ enum
 
 void m6242_init( int time_1224 );
 
-READ_HANDLER ( m6242_address_r );
-READ_HANDLER ( m6242_data_r );
-WRITE_HANDLER ( m6242_address_w );
-WRITE_HANDLER ( m6242_data_w );
+ READ8_HANDLER ( m6242_address_r );
+ READ8_HANDLER ( m6242_data_r );
+WRITE8_HANDLER ( m6242_address_w );
+WRITE8_HANDLER ( m6242_data_w );

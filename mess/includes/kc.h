@@ -27,26 +27,26 @@ MACHINE_INIT( kc85_4d );
 /* cassette */
 DEVICE_LOAD( kc85_floppy );
 
-READ_HANDLER(kc85_4_84_r);
-WRITE_HANDLER(kc85_4_84_w);
+ READ8_HANDLER(kc85_4_84_r);
+WRITE8_HANDLER(kc85_4_84_w);
 
-READ_HANDLER(kc85_4_86_r);
-WRITE_HANDLER(kc85_4_86_w);
+ READ8_HANDLER(kc85_4_86_r);
+WRITE8_HANDLER(kc85_4_86_w);
 
-READ_HANDLER(kc85_unmapped_r);
+ READ8_HANDLER(kc85_unmapped_r);
 
-READ_HANDLER(kc85_pio_data_r);
+ READ8_HANDLER(kc85_pio_data_r);
 
-WRITE_HANDLER(kc85_module_w);
+WRITE8_HANDLER(kc85_module_w);
 
-WRITE_HANDLER(kc85_4_pio_data_w);
-WRITE_HANDLER(kc85_3_pio_data_w);
+WRITE8_HANDLER(kc85_4_pio_data_w);
+WRITE8_HANDLER(kc85_3_pio_data_w);
 
-READ_HANDLER(kc85_pio_control_r);
-WRITE_HANDLER(kc85_pio_control_w);
+ READ8_HANDLER(kc85_pio_control_r);
+WRITE8_HANDLER(kc85_pio_control_w);
 
-READ_HANDLER(kc85_ctc_r);
-WRITE_HANDLER(kc85_ctc_w);
+ READ8_HANDLER(kc85_ctc_r);
+WRITE8_HANDLER(kc85_ctc_w);
 
 /* select video ram to display */
 void kc85_4_video_ram_select_bank(int bank);
@@ -151,9 +151,9 @@ The keys are converted into codes which are transmitted by the keyboard to the b
 
 /*** MODULE SYSTEM ***/
 /* read from xx80 port */
-READ_HANDLER(kc85_module_r);
+ READ8_HANDLER(kc85_module_r);
 /* write to xx80 port */
-WRITE_HANDLER(kc85_module_w);
+WRITE8_HANDLER(kc85_module_w);
 
 
 /*** DISC INTERFACE **/
@@ -183,21 +183,21 @@ extern MACHINE_DRIVER_EXTERN( cpu_kc_disc );
 /* these are internal to the disc interface */
 
 /* disc hardware internal i/o */
-READ_HANDLER(kc85_disk_hw_ctc_r);
+ READ8_HANDLER(kc85_disk_hw_ctc_r);
 /* disc hardware internal i/o */
-WRITE_HANDLER(kc85_disk_hw_ctc_w);
+WRITE8_HANDLER(kc85_disk_hw_ctc_w);
 /* 4-bit input latch: DMA Data Request, FDC Int, FDD Ready.. */
-READ_HANDLER(kc85_disc_hw_input_gate_r);
+ READ8_HANDLER(kc85_disc_hw_input_gate_r);
 /* output port to set NEC765 terminal count input */
-WRITE_HANDLER(kc85_disc_hw_terminal_count_w);
+WRITE8_HANDLER(kc85_disc_hw_terminal_count_w);
 
 /* these are used by the kc85 to control the disc interface */
 /* xxf4 - latch used to reset cpu in disc interface */
-WRITE_HANDLER(kc85_disc_interface_latch_w);
+WRITE8_HANDLER(kc85_disc_interface_latch_w);
 /* xxf0-xxf3 write to kc85 disc interface ram */
-WRITE_HANDLER(kc85_disc_interface_ram_w);
+WRITE8_HANDLER(kc85_disc_interface_ram_w);
 /* xxf0-xxf3 read from kc85 disc interface ram */
-READ_HANDLER(kc85_disc_interface_ram_r);
+ READ8_HANDLER(kc85_disc_interface_ram_r);
 
 
 

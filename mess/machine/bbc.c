@@ -26,19 +26,19 @@ memory handleing functions
 *************************/
 
 /* for the model A just address the 4 on board ROM sockets */
-WRITE_HANDLER ( page_selecta_w )
+WRITE8_HANDLER ( page_selecta_w )
 {
 	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x03)<<14));
 }
 
 /* for the model B address all 16 of the ROM sockets */
-WRITE_HANDLER ( page_selectb_w )
+WRITE8_HANDLER ( page_selectb_w )
 {
 	cpu_setbank(3,memory_region(REGION_USER1)+((data&0x0f)<<14));
 }
 
 
-WRITE_HANDLER ( memory_w )
+WRITE8_HANDLER ( memory_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 
@@ -57,7 +57,7 @@ static int vdusel=0;
 static int rombankselect=0;
 /* the model B plus addresses all 16 of the ROM sockets plus the extra 12K of ram at 0x8000
    and 20K of shadow ram at 0x3000 */
-WRITE_HANDLER ( page_selectbp_w )
+WRITE8_HANDLER ( page_selectbp_w )
 {
 	if ((offset&0x04)==0)
 	{
@@ -90,7 +90,7 @@ WRITE_HANDLER ( page_selectbp_w )
    the writes to this memory are just done the normal
    way */
 
-WRITE_HANDLER ( memorybp0_w )
+WRITE8_HANDLER ( memorybp0_w )
 {
 	memory_region(REGION_CPU1)[offset]=data;
 
@@ -122,7 +122,7 @@ static int vdudriverset(void)
 */
 
 
-READ_HANDLER ( memorybp1_r )
+ READ8_HANDLER ( memorybp1_r )
 {
 	if (vdusel==0)
 	{
@@ -140,7 +140,7 @@ READ_HANDLER ( memorybp1_r )
 	}
 }
 
-WRITE_HANDLER ( memorybp1_w )
+WRITE8_HANDLER ( memorybp1_w )
 {
 	if (vdusel==0)
 	{
@@ -164,7 +164,7 @@ WRITE_HANDLER ( memorybp1_w )
 
 /* if the pagedRAM is set write to RAM between 0x8000 to 0xafff
 otherwise this area contains ROM so no write is required */
-WRITE_HANDLER ( memorybp3_w )
+WRITE8_HANDLER ( memorybp3_w )
 {
 	if (pagedRAM)
 	{
@@ -187,7 +187,7 @@ static unsigned short bbc_b_plus_sideways_ram_banks[16]=
 };
 
 
-WRITE_HANDLER ( memorybp3_128_w )
+WRITE8_HANDLER ( memorybp3_128_w )
 {
 	if (pagedRAM)
 	{
@@ -202,7 +202,7 @@ WRITE_HANDLER ( memorybp3_128_w )
 	}
 }
 
-WRITE_HANDLER ( memorybp4_128_w )
+WRITE8_HANDLER ( memorybp4_128_w )
 {
 	if (bbc_b_plus_sideways_ram_banks[rombankselect])
 	{
@@ -426,7 +426,7 @@ static void bbcb_IC32_initialise(void)
 	b7_shift_lock_led=0x01;
 }
 
-static WRITE_HANDLER( bbcb_via_system_write_porta )
+static WRITE8_HANDLER( bbcb_via_system_write_porta )
 {
 	via_system_porta=data;
 	if (b0_sound==0)
@@ -449,7 +449,7 @@ static WRITE_HANDLER( bbcb_via_system_write_porta )
 }
 
 
-static WRITE_HANDLER( bbcb_via_system_write_portb )
+static WRITE8_HANDLER( bbcb_via_system_write_portb )
 {
 	int bit,value;
 	bit=data & 0x07;
@@ -558,7 +558,7 @@ static WRITE_HANDLER( bbcb_via_system_write_portb )
 
 }
 
-static READ_HANDLER( bbcb_via_system_read_porta )
+static  READ8_HANDLER( bbcb_via_system_read_porta )
 {
   return via_system_porta;
 }
@@ -566,34 +566,34 @@ static READ_HANDLER( bbcb_via_system_read_porta )
 
 // D4 of portb is joystick fire button 1
 // D5 of portb is joystick fire button 2
-static READ_HANDLER( bbcb_via_system_read_portb )
+static  READ8_HANDLER( bbcb_via_system_read_portb )
 {
   return (0xcf | readinputport(16));
 }
 
 /* vertical sync pulse from video circuit */
-static READ_HANDLER( bbcb_via_system_read_ca1 )
+static  READ8_HANDLER( bbcb_via_system_read_ca1 )
 {
   return 0x01;
 }
 
 
 /* joystick EOC */
-static READ_HANDLER( bbcb_via_system_read_cb1 )
+static  READ8_HANDLER( bbcb_via_system_read_cb1 )
 {
   return uPD7002_EOC_r(0);
 }
 
 
 /* keyboard pressed detect */
-static READ_HANDLER( bbcb_via_system_read_ca2 )
+static  READ8_HANDLER( bbcb_via_system_read_ca2 )
 {
   return 0x01;
 }
 
 
 /* light pen strobe detect (not emulated) */
-static READ_HANDLER( bbcb_via_system_read_cb2 )
+static  READ8_HANDLER( bbcb_via_system_read_cb2 )
 {
   return 0x01;
 }
@@ -601,14 +601,14 @@ static READ_HANDLER( bbcb_via_system_read_cb2 )
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static WRITE_HANDLER( bbcb_via_system_write_ca2 )
+static WRITE8_HANDLER( bbcb_via_system_write_ca2 )
 {
   //if( errorlog ) fprintf(errorlog, "via_system_write_ca2: $%02X\n", data);
 }
 
 /* this is wired as in input port so writing to this port would be bad */
 
-static WRITE_HANDLER( bbcb_via_system_write_cb2 )
+static WRITE8_HANDLER( bbcb_via_system_write_cb2 )
 {
   //if( errorlog ) fprintf(errorlog, "via_system_write_cb2: $%02X\n", data);
 }
@@ -658,33 +658,33 @@ int bbc_printer_ca2;
 
 /* USER VIA 6522 port A is buffered as an output through IC70 so
 reading from this port will always return 0xff */
-static READ_HANDLER( bbcb_via_user_read_porta )
+static  READ8_HANDLER( bbcb_via_user_read_porta )
 {
 	return 0xff;
 }
 
 /* USER VIA 6522 port B is connected to the BBC user port */
-static READ_HANDLER( bbcb_via_user_read_portb )
+static  READ8_HANDLER( bbcb_via_user_read_portb )
 {
 	return 0xff;
 }
 
-static READ_HANDLER( bbcb_via_user_read_ca1 )
+static  READ8_HANDLER( bbcb_via_user_read_ca1 )
 {
 	return bbc_printer_ca1;
 }
 
-static READ_HANDLER( bbcb_via_user_read_ca2 )
+static  READ8_HANDLER( bbcb_via_user_read_ca2 )
 {
 	return 1;
 }
 
-static WRITE_HANDLER( bbcb_via_user_write_porta )
+static WRITE8_HANDLER( bbcb_via_user_write_porta )
 {
 	bbc_printer_porta=data;
 }
 
-static WRITE_HANDLER( bbcb_via_user_write_ca2 )
+static WRITE8_HANDLER( bbcb_via_user_write_ca2 )
 {
 	/* write value to printer on rising edge of ca2 */
 	if ((bbc_printer_ca2==0) && (data==1))
@@ -812,7 +812,7 @@ static i8271_interface bbc_i8271_interface=
 };
 
 
-READ_HANDLER( bbc_i8271_read )
+ READ8_HANDLER( bbc_i8271_read )
 {
 	switch (offset)
 	{
@@ -831,7 +831,7 @@ READ_HANDLER( bbc_i8271_read )
 	return 0x0ff;
 }
 
-WRITE_HANDLER( bbc_i8271_write )
+WRITE8_HANDLER( bbc_i8271_write )
 {
 	switch (offset)
 	{
@@ -997,7 +997,7 @@ static void bbc_wd177x_status_w(int offset,int data)
 
 
 
-READ_HANDLER ( bbc_wd1770_read )
+ READ8_HANDLER ( bbc_wd1770_read )
 {
 	int retval=0xff;
 	switch (offset)
@@ -1022,7 +1022,7 @@ READ_HANDLER ( bbc_wd1770_read )
 	return retval;
 }
 
-WRITE_HANDLER ( bbc_wd1770_write )
+WRITE8_HANDLER ( bbc_wd1770_write )
 {
 	//logerror("wd177x write: $%02X  $%02X\n", offset,data);
 	switch (offset)

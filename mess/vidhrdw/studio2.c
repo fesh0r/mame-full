@@ -103,7 +103,7 @@ VIDEO_UPDATE( studio2 )
 	}
 }
 
-READ_HANDLER( cdp1861_video_enable_r )
+ READ8_HANDLER( cdp1861_video_enable_r )
 {
 	studio2_video.state=1;
 	return 0; //?

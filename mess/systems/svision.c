@@ -160,7 +160,7 @@ static void svision_update_banks(void)
 	cpu_setbank(2, cart_rom + 0xC000);
 }
 
-static READ_HANDLER(svision_r)
+static  READ8_HANDLER(svision_r)
 {
 	int data = svision_reg[offset];
 	switch (offset) {
@@ -185,7 +185,7 @@ static READ_HANDLER(svision_r)
 	return data;
 }
 
-static WRITE_HANDLER(svision_w)
+static WRITE8_HANDLER(svision_w)
 {
 	svision_reg[offset] = data;
 	switch (offset) {

@@ -32,7 +32,7 @@ DEVICE_LOAD(astrocade_rom)
 	return 0;
 }
 
-WRITE_HANDLER ( astrocade_interrupt_enable_w )
+WRITE8_HANDLER ( astrocade_interrupt_enable_w )
 {
 
 	screen_interrupts_enabled = data & 0x08;
@@ -45,7 +45,7 @@ WRITE_HANDLER ( astrocade_interrupt_enable_w )
 #endif
 }
 
-WRITE_HANDLER ( astrocade_interrupt_w )
+WRITE8_HANDLER ( astrocade_interrupt_w )
 {
 	/* A write to 0F triggers an interrupt at that scanline */
 

@@ -49,19 +49,19 @@ static void pet_state(void);
   cb1 video sync in
   cb2 cassette 1 motor out
 */
-static READ_HANDLER ( pet_pia0_port_a_read )
+static  READ8_HANDLER ( pet_pia0_port_a_read )
 {
 	int data=0xff;
 	if (!cbm_ieee_eoi_r()) data&=~0x40;
 	return data;
 }
 
-static WRITE_HANDLER ( pet_pia0_port_a_write )
+static WRITE8_HANDLER ( pet_pia0_port_a_write )
 {
 	pet_keyline_select=data;  /*data is actually line here! */
 }
 
-static READ_HANDLER ( pet_pia0_port_b_read )
+static  READ8_HANDLER ( pet_pia0_port_b_read )
 {
 	int data=0;
 	switch(pet_keyline_select) {
@@ -79,7 +79,7 @@ static READ_HANDLER ( pet_pia0_port_b_read )
 	return data^0xff;
 }
 
-static WRITE_HANDLER( pet_pia0_ca2_out )
+static WRITE8_HANDLER( pet_pia0_ca2_out )
 {
 	cbm_ieee_eoi_w(0, data);
 }
@@ -106,32 +106,32 @@ static void pet_irq (int level)
   cb1 srq in
   cb2 dav out
  */
-static READ_HANDLER ( pet_pia1_port_a_read )
+static  READ8_HANDLER ( pet_pia1_port_a_read )
 {
 	return cbm_ieee_data_r();
 }
 
-static WRITE_HANDLER ( pet_pia1_port_b_write )
+static WRITE8_HANDLER ( pet_pia1_port_b_write )
 {
 	cbm_ieee_data_w(0, data);
 }
 
-static READ_HANDLER ( pet_pia1_ca1_read )
+static  READ8_HANDLER ( pet_pia1_ca1_read )
 {
 	return cbm_ieee_atn_r();
 }
 
-static WRITE_HANDLER ( pet_pia1_ca2_write )
+static WRITE8_HANDLER ( pet_pia1_ca2_write )
 {
 	cbm_ieee_ndac_w(0,data);
 }
 
-static WRITE_HANDLER ( pet_pia1_cb2_write )
+static WRITE8_HANDLER ( pet_pia1_cb2_write )
 {
 	cbm_ieee_dav_w(0,data);
 }
 
-static READ_HANDLER ( pet_pia1_cb1_read )
+static  READ8_HANDLER ( pet_pia1_cb1_read )
 {
 	return cbm_ieee_srq_r();
 }
@@ -176,7 +176,7 @@ static struct pia6821_interface pet_pia0={
     pet_pia1_cb2_write,
 };
 
-static WRITE_HANDLER( pet_address_line_11 )
+static WRITE8_HANDLER( pet_address_line_11 )
 {
 	DBG_LOG (1, "address line", ("%d\n", data));
 	if (data) pet_font|=1;
@@ -200,7 +200,7 @@ static WRITE_HANDLER( pet_address_line_11 )
    cb1 cassettes
    cb2 user port
  */
-static READ_HANDLER( pet_via_port_b_r )
+static  READ8_HANDLER( pet_via_port_b_r )
 {
 	UINT8 data=0;
 	if (cbm_ieee_ndac_r()) data|=1;
@@ -209,7 +209,7 @@ static READ_HANDLER( pet_via_port_b_r )
 	return data;
 }
 
-static WRITE_HANDLER( pet_via_port_b_w )
+static WRITE8_HANDLER( pet_via_port_b_w )
 {
 	cbm_ieee_nrfd_w(0, data&2);
 	cbm_ieee_atn_w(0, data&4);
@@ -250,7 +250,7 @@ static struct {
 	int rom; /* rom socket 6502? at 0x9000 */
 } spet= { 0 };
 
-static WRITE_HANDLER(cbm8096_io_w)
+static WRITE8_HANDLER(cbm8096_io_w)
 {
 	if (offset<0x10) ;
 	else if (offset<0x14) pia_0_w(offset&3,data);
@@ -262,7 +262,7 @@ static WRITE_HANDLER(cbm8096_io_w)
 	else if (offset<0x82) crtc6845_0_port_w(offset&1,data);
 }
 
-static READ_HANDLER(cbm8096_io_r)
+static  READ8_HANDLER(cbm8096_io_r)
 {
 	int data=0xff;
 	if (offset<0x10) ;
@@ -287,7 +287,7 @@ static READ_HANDLER(cbm8096_io_r)
         bit 7    1=enable expansion memory
 
 */
-WRITE_HANDLER(cbm8096_w)
+WRITE8_HANDLER(cbm8096_w)
 {
 	read8_handler rh;
 	write8_handler wh;
@@ -392,12 +392,12 @@ WRITE_HANDLER(cbm8096_w)
 	}
 }
 
-READ_HANDLER(superpet_r)
+ READ8_HANDLER(superpet_r)
 {
 	return 0xff;
 }
 
-extern WRITE_HANDLER(superpet_w)
+extern WRITE8_HANDLER(superpet_w)
 {
 	switch (offset) {
 	case 6:case 7:

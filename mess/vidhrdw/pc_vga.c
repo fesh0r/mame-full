@@ -365,7 +365,7 @@ static int vga_get_crtc_sync_columns(void)
 	return 40;
 }
 
-INLINE WRITE_HANDLER(vga_dirty_w)
+INLINE WRITE8_HANDLER(vga_dirty_w)
 {
 	if (vga.memory[offset]!=data)
 	{
@@ -374,7 +374,7 @@ INLINE WRITE_HANDLER(vga_dirty_w)
 	}
 }
 
-INLINE WRITE_HANDLER(vga_dirty_font_w)
+INLINE WRITE8_HANDLER(vga_dirty_font_w)
 {
 	if (vga.memory[offset]!=data)
 	{
@@ -385,7 +385,7 @@ INLINE WRITE_HANDLER(vga_dirty_font_w)
 	}
 }
 
-static READ_HANDLER(vga_text_r)
+static  READ8_HANDLER(vga_text_r)
 {
 	int data;
 	data=vga.memory[((offset&~1)<<1)|(offset&1)];
@@ -393,7 +393,7 @@ static READ_HANDLER(vga_text_r)
 	return data;
 }
 
-static WRITE_HANDLER(vga_text_w)
+static WRITE8_HANDLER(vga_text_w)
 {
 	vga_dirty_w(((offset&~1)<<1)|(offset&1),data);
 }
@@ -406,7 +406,7 @@ INLINE UINT8 ega_bitplane_to_packed(UINT8 *latch, int number)
 		|color_bitplane_to_packed[3][number][latch[3]];
 }
 
-static READ_HANDLER(vga_ega_r)
+static  READ8_HANDLER(vga_ega_r)
 {
 	int data;
 	vga.gc.latch[0]=vga.memory[(offset<<2)];
@@ -478,7 +478,7 @@ INLINE UINT8 vga_latch_write(int offs, UINT8 data)
 	return 0; /* must not be reached, suppress compiler warning */
 }
 
-static WRITE_HANDLER(vga_ega_w)
+static WRITE8_HANDLER(vga_ega_w)
 {
 	if (vga.sequencer.data[2]&1)
 		vga_dirty_w(offset<<2, vga_latch_write(0,data));
@@ -491,7 +491,7 @@ static WRITE_HANDLER(vga_ega_w)
 	if ((offset==0xffff)&&(data==0)) vga.log=1;
 }
 
-static READ_HANDLER(vga_vga_r)
+static  READ8_HANDLER(vga_vga_r)
 {
 	int data;
 	data=vga.memory[((offset&~3)<<2)|(offset&3)];
@@ -499,7 +499,7 @@ static READ_HANDLER(vga_vga_r)
 	return data;
 }
 
-static WRITE_HANDLER(vga_vga_w)
+static WRITE8_HANDLER(vga_vga_w)
 {
 	vga_dirty_font_w(((offset&~3)<<2)|(offset&3),data);
 }
@@ -553,7 +553,7 @@ static void vga_cpu_interface(void)
 	}
 }
 
-static READ_HANDLER(vga_crtc_r)
+static  READ8_HANDLER(vga_crtc_r)
 {
 	int data=0xff;
 
@@ -624,7 +624,7 @@ static READ_HANDLER(vga_crtc_r)
 	return data;
 }
 
-static WRITE_HANDLER(vga_crtc_w)
+static WRITE8_HANDLER(vga_crtc_w)
 {
 	switch (offset) {
 	case 0xa:
@@ -655,7 +655,7 @@ static WRITE_HANDLER(vga_crtc_w)
 	}
 }
 
-READ_HANDLER( vga_port_03b0_r )
+ READ8_HANDLER( vga_port_03b0_r )
 {
 	int data=0xff;
 	if (CRTC_PORT_ADDR==0x3b0)
@@ -664,7 +664,7 @@ READ_HANDLER( vga_port_03b0_r )
 	return data;
 }
 
-READ_HANDLER( ega_port_03c0_r)
+ READ8_HANDLER( ega_port_03c0_r)
 {
 	int data=0xff;
 	switch (offset) {
@@ -674,7 +674,7 @@ READ_HANDLER( ega_port_03c0_r)
 	return data;
 }
 
-READ_HANDLER( vga_port_03c0_r )
+ READ8_HANDLER( vga_port_03c0_r )
 {
 	int data=0xff;
 	switch (offset) {
@@ -776,7 +776,7 @@ READ_HANDLER( vga_port_03c0_r )
 	return data;
 }
 
-READ_HANDLER(vga_port_03d0_r)
+ READ8_HANDLER(vga_port_03d0_r)
 {
 	int data=0xff;
 	if (CRTC_PORT_ADDR==0x3d0)
@@ -785,7 +785,7 @@ READ_HANDLER(vga_port_03d0_r)
 	return data;
 }
 
-WRITE_HANDLER( vga_port_03b0_w )
+WRITE8_HANDLER( vga_port_03b0_w )
 {
 	LOG(("vga_port_03b0_w(): port=0x%04x data=0x%02x\n", offset + 0x3b0, data));
 
@@ -793,7 +793,7 @@ WRITE_HANDLER( vga_port_03b0_w )
 	vga_crtc_w(offset, data);
 }
 
-WRITE_HANDLER(vga_port_03c0_w)
+WRITE8_HANDLER(vga_port_03c0_w)
 {
 	LOG(("vga_port_03c0_w(): port=0x%04x data=0x%02x\n", offset + 0x3c0, data));
 
@@ -894,7 +894,7 @@ WRITE_HANDLER(vga_port_03c0_w)
 	}
 }
 
-WRITE_HANDLER(vga_port_03d0_w)
+WRITE8_HANDLER(vga_port_03d0_w)
 {
 	LOG(("vga_port_03d0_w(): port=0x%04x data=0x%02x\n", offset + 0x3d0, data));
 
@@ -902,7 +902,7 @@ WRITE_HANDLER(vga_port_03d0_w)
 		vga_crtc_w(offset,data);
 }
 
-READ_HANDLER( paradise_ega_03c0_r )
+ READ8_HANDLER( paradise_ega_03c0_r )
 {
 	int data=vga_port_03c0_r(offset);
 	if (offset==2) {

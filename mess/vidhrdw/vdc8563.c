@@ -239,7 +239,7 @@ VIDEO_START( vdc8563 )
 /* 0x23 number of chars from start of line to negativ edge of display enable */
 /* 0x24 0xf number of refresh cycles per line */
 
-WRITE_HANDLER ( vdc8563_port_w )
+WRITE8_HANDLER ( vdc8563_port_w )
 {
 	UINT8 i;
 
@@ -330,7 +330,7 @@ WRITE_HANDLER ( vdc8563_port_w )
 	}
 }
 
-READ_HANDLER ( vdc8563_port_r )
+ READ8_HANDLER ( vdc8563_port_r )
 {
 	int val;
 

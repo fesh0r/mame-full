@@ -45,7 +45,7 @@ static OPBASE_HANDLER(dai_opbaseoverride)
 
 /* Memory */
 
-WRITE_HANDLER( dai_stack_interrupt_circuit_w )
+WRITE8_HANDLER( dai_stack_interrupt_circuit_w )
 {
 	tms5501_sensor (0, 1);
 	tms5501_sensor (0, 0);
@@ -175,7 +175,7 @@ MACHINE_INIT( dai )
 				bit 6-7			ROM bank switching
 ***************************************************************************/
 
-READ_HANDLER( dai_io_discrete_devices_r )
+ READ8_HANDLER( dai_io_discrete_devices_r )
 {
 	data8_t data = 0x00;
 
@@ -198,7 +198,7 @@ READ_HANDLER( dai_io_discrete_devices_r )
 	return data;
 }
 
-WRITE_HANDLER( dai_io_discrete_devices_w )
+WRITE8_HANDLER( dai_io_discrete_devices_w )
 {
 	switch(offset & 0x000f) {
 	case 0x04:
@@ -242,13 +242,13 @@ WRITE_HANDLER( dai_io_discrete_devices_w )
 
 ***************************************************************************/
 
-READ_HANDLER( amd9511_r )
+ READ8_HANDLER( amd9511_r )
 {
 	/* optional and no present at this moment */
 	return 0xff;
 }
 
-WRITE_HANDLER( amd9511_w )
+WRITE8_HANDLER( amd9511_w )
 {
 	logerror ("Writing to AMD9511 math chip, %04x, %02x\n", offset, data);
 }

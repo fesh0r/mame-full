@@ -12,8 +12,8 @@ extern MACHINE_INIT( pc1251 );
 extern MACHINE_STOP( pc1251 );
 
 /* in vidhrdw/pocketc.c */
-extern READ_HANDLER(pc1251_lcd_read);
-extern WRITE_HANDLER(pc1251_lcd_write);
+extern  READ8_HANDLER(pc1251_lcd_read);
+extern WRITE8_HANDLER(pc1251_lcd_write);
 extern VIDEO_UPDATE( pc1251 );
 
 /* in systems/pocketc.c */

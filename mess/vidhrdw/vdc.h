@@ -2,10 +2,10 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER ( vdc_w );
-READ_HANDLER ( vdc_r );
-READ_HANDLER ( vce_r );
-WRITE_HANDLER ( vce_w );
+WRITE8_HANDLER ( vdc_w );
+ READ8_HANDLER ( vdc_r );
+ READ8_HANDLER ( vce_r );
+WRITE8_HANDLER ( vce_w );
 
 /* Screen timing stuff */
 
@@ -84,8 +84,8 @@ typedef struct
 extern VDC vdc;
 extern VIDEO_START( pce );
 extern VIDEO_UPDATE( pce );
-extern WRITE_HANDLER ( vdc_w );
-extern READ_HANDLER ( vdc_r );
-extern WRITE_HANDLER ( vce_w );
-extern READ_HANDLER ( vce_r );
+extern WRITE8_HANDLER ( vdc_w );
+extern  READ8_HANDLER ( vdc_r );
+extern WRITE8_HANDLER ( vce_w );
+extern  READ8_HANDLER ( vce_r );
 extern void pce_refresh_line(int line);

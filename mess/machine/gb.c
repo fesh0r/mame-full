@@ -301,7 +301,7 @@ MACHINE_STOP( gb )
 	}*/
 }
 
-WRITE_HANDLER( gb_rom_bank_select_mbc1 )
+WRITE8_HANDLER( gb_rom_bank_select_mbc1 )
 {
 	if( ROMMask )
 	{
@@ -316,7 +316,7 @@ WRITE_HANDLER( gb_rom_bank_select_mbc1 )
 	}
 }
 
-WRITE_HANDLER( gb_rom_bank_select_mbc2 )
+WRITE8_HANDLER( gb_rom_bank_select_mbc2 )
 {
 	if( ROMMask )
 	{
@@ -333,7 +333,7 @@ WRITE_HANDLER( gb_rom_bank_select_mbc2 )
 	}
 }
 
-WRITE_HANDLER( gb_rom_bank_select_mbc3 )
+WRITE8_HANDLER( gb_rom_bank_select_mbc3 )
 {
 	if( ROMMask )
 	{
@@ -348,7 +348,7 @@ WRITE_HANDLER( gb_rom_bank_select_mbc3 )
 	}
 }
 
-WRITE_HANDLER( gb_rom_bank_select_mbc5 )
+WRITE8_HANDLER( gb_rom_bank_select_mbc5 )
 {
 	if( ROMMask )
 	{
@@ -367,7 +367,7 @@ WRITE_HANDLER( gb_rom_bank_select_mbc5 )
 	}
 }
 
-WRITE_HANDLER( gb_ram_bank_select_mbc1 )
+WRITE8_HANDLER( gb_ram_bank_select_mbc1 )
 {
 	if( RAMMask )
 	{
@@ -389,7 +389,7 @@ WRITE_HANDLER( gb_ram_bank_select_mbc1 )
 	}
 }
 
-WRITE_HANDLER( gb_ram_bank_select_mbc3 )
+WRITE8_HANDLER( gb_ram_bank_select_mbc3 )
 {
 	if( RAMMask )
 	{
@@ -409,7 +409,7 @@ WRITE_HANDLER( gb_ram_bank_select_mbc3 )
 	}
 }
 
-WRITE_HANDLER( gb_ram_bank_select_mbc5 )
+WRITE8_HANDLER( gb_ram_bank_select_mbc5 )
 {
 	if( RAMMask )
 	{
@@ -424,18 +424,18 @@ WRITE_HANDLER( gb_ram_bank_select_mbc5 )
 	}
 }
 
-WRITE_HANDLER ( gb_ram_enable )
+WRITE8_HANDLER ( gb_ram_enable )
 {
 	/* FIXME: Currently we don't handle this, but a value of 0xA will enable
 	 * writing to the cart's RAM banks */
 }
 
-WRITE_HANDLER( gb_mem_mode_select_mbc1 )
+WRITE8_HANDLER( gb_mem_mode_select_mbc1 )
 {
 	MBC1Mode = data & 0x1;
 }
 
-WRITE_HANDLER( gb_mem_mode_select_mbc3 )
+WRITE8_HANDLER( gb_mem_mode_select_mbc3 )
 {
 	if( CartType & TIMER )
 	{
@@ -443,17 +443,17 @@ WRITE_HANDLER( gb_mem_mode_select_mbc3 )
 	}
 }
 
-/*READ_HANDLER( gb_echoram_r )
+/* READ8_HANDLER( gb_echoram_r )
 {
 	return program_read_byte_8( 0xc000 + offset );
 }
 
-WRITE_HANDLER( gb_echoram_w )
+WRITE8_HANDLER( gb_echoram_w )
 {
 	program_write_byte_8( 0xc000 + offset, data );
 }*/
 
-WRITE_HANDLER ( gb_io_w )
+WRITE8_HANDLER ( gb_io_w )
 {
 	static UINT8 timer_shifts[4] = {10, 4, 6, 8};
 
@@ -529,7 +529,7 @@ static const char *sgbcmds[26] =
 };
 #endif
 
-WRITE_HANDLER ( sgb_io_w )
+WRITE8_HANDLER ( sgb_io_w )
 {
 	static UINT8 sgb_bitcount = 0, sgb_bytecount = 0, sgb_start = 0, sgb_rest = 0;
 	static UINT8 sgb_controller_no = 0, sgb_controller_mode = 0;
@@ -1023,13 +1023,13 @@ WRITE_HANDLER ( sgb_io_w )
 }
 
 /* Interrupt Enable register */
-WRITE_HANDLER ( gb_ie_w )
+WRITE8_HANDLER ( gb_ie_w )
 {
 	gb_ram[0xFFFF] = data & 0x1F;
 }
 
 /* IO read */
-READ_HANDLER ( gb_io_r )
+ READ8_HANDLER ( gb_io_r )
 {
 	offset += 0xFF00;
 
@@ -1605,7 +1605,7 @@ void gbc_hdma(UINT16 length)
 	}
 }
 
-WRITE_HANDLER ( gb_video_w )
+WRITE8_HANDLER ( gb_video_w )
 {
 	offset += 0xFF40;
 
@@ -1653,7 +1653,7 @@ WRITE_HANDLER ( gb_video_w )
 	gb_ram [offset] = data;
 }
 
-WRITE_HANDLER ( gbc_video_w )
+WRITE8_HANDLER ( gbc_video_w )
 {
 	static const UINT16 gbc_to_gb_pal[4] = {32767, 21140, 10570, 0};
 	static UINT16 BP = 0, OP = 0;
@@ -1829,7 +1829,7 @@ MACHINE_INIT( megaduck )
  7			7	- LCD Operation
  **************/
 
-READ_HANDLER( megaduck_video_r )
+ READ8_HANDLER( megaduck_video_r )
 {
 	UINT8 data;
 
@@ -1842,7 +1842,7 @@ READ_HANDLER( megaduck_video_r )
 	return (data&0xB1) | ((data&0x40)>>3) | ((data&0x0C)>>1) | ((data&0x02)<<5);
 }
 
-WRITE_HANDLER ( megaduck_video_w )
+WRITE8_HANDLER ( megaduck_video_w )
 {
 	if ( !offset ) {
 		data = (data&0xB1) | ((data&0x08)<<3) | ((data&0x06)<<1) | ((data&0x40)>>5);
@@ -1853,7 +1853,7 @@ WRITE_HANDLER ( megaduck_video_w )
 	gb_video_w(offset, data );
 }
 
-WRITE_HANDLER( megaduck_sound_w1 )
+WRITE8_HANDLER( megaduck_sound_w1 )
 {
 	switch(offset) {
 		case 0x00:	gb_sound_w( 0, data );	break;
@@ -1880,12 +1880,12 @@ WRITE_HANDLER( megaduck_sound_w1 )
 static UINT8 megaduck_sound_offsets[16] = { 0, 2, 1, 3, 4, 6, 5, 7, 8, 9, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F };
 
 /* this one needs some work */
-READ_HANDLER( megaduck_sound_r1 )
+ READ8_HANDLER( megaduck_sound_r1 )
 {
 	return gb_ram[0xFF10 + megaduck_sound_offsets[offset]];
 }
 
-WRITE_HANDLER( megaduck_sound_w2 )
+WRITE8_HANDLER( megaduck_sound_w2 )
 {
 	switch(offset) {
 		case 0x00:	gb_sound_w( 0x10, data );	break;
@@ -1909,12 +1909,12 @@ WRITE_HANDLER( megaduck_sound_w2 )
 	}
 }
 
-READ_HANDLER( megaduck_sound_r2 )
+ READ8_HANDLER( megaduck_sound_r2 )
 {
 	return gb_ram[0xFF20 + megaduck_sound_offsets[offset]];
 }
 
-WRITE_HANDLER( megaduck_rom_bank_select_type1 )
+WRITE8_HANDLER( megaduck_rom_bank_select_type1 )
 {
 	if( ROMMask )
 	{
@@ -1925,7 +1925,7 @@ WRITE_HANDLER( megaduck_rom_bank_select_type1 )
 	}
 }
 
-WRITE_HANDLER( megaduck_rom_bank_select_type2 )
+WRITE8_HANDLER( megaduck_rom_bank_select_type2 )
 {
 	if( ROMMask )
 	{

@@ -14,8 +14,8 @@
 
 #include "driver.h"
 
-READ_HANDLER( soundblaster_r );
-WRITE_HANDLER( soundblaster_w );
+ READ8_HANDLER( soundblaster_r );
+WRITE8_HANDLER( soundblaster_w );
 
 typedef struct {
 	int dma;

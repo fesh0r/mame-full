@@ -152,8 +152,8 @@ DEVICE_LOAD( cpm_floppy );
 extern int  cpm_init(int n, const char *ids[]);
 extern void cpm_exit(void);
 
-extern READ_HANDLER ( cpm_bios_command_r );
-extern WRITE_HANDLER ( cpm_bios_command_w );
+extern  READ8_HANDLER ( cpm_bios_command_r );
+extern WRITE8_HANDLER ( cpm_bios_command_w );
 
 /* these are in cpm_disk.c */
 extern int	cpm_disk_select_format(int disk, const char *disk_id);

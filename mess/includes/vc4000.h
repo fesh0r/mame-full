@@ -8,10 +8,10 @@
 #define ANALOG_HACK
 
 extern INTERRUPT_GEN( vc4000_video_line );
-extern READ_HANDLER(vc4000_vsync_r);
+extern  READ8_HANDLER(vc4000_vsync_r);
 
-extern READ_HANDLER(vc4000_video_r);
-extern WRITE_HANDLER(vc4000_video_w);
+extern  READ8_HANDLER(vc4000_video_r);
+extern WRITE8_HANDLER(vc4000_video_w);
 
 
 // space vultures sprites above

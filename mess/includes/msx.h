@@ -53,20 +53,20 @@ DEVICE_UNLOAD( msx_cart );
 void msx_vdp_interrupt (int);
 
 /* I/O functions */
-WRITE_HANDLER ( msx_printer_w );
-READ_HANDLER ( msx_printer_r );
-WRITE_HANDLER ( msx_psg_w );
-WRITE_HANDLER ( msx_dsk_w );
-READ_HANDLER ( msx_psg_r );
-WRITE_HANDLER ( msx_psg_port_a_w );
-READ_HANDLER ( msx_psg_port_a_r );
-WRITE_HANDLER ( msx_psg_port_b_w );
-READ_HANDLER ( msx_psg_port_b_r );
-WRITE_HANDLER ( msx_fmpac_w );
-READ_HANDLER ( msx_rtc_reg_r );
-WRITE_HANDLER ( msx_rtc_reg_w );
-WRITE_HANDLER ( msx_rtc_latch_w );
-WRITE_HANDLER ( msx_90in1_w );
+WRITE8_HANDLER ( msx_printer_w );
+ READ8_HANDLER ( msx_printer_r );
+WRITE8_HANDLER ( msx_psg_w );
+WRITE8_HANDLER ( msx_dsk_w );
+ READ8_HANDLER ( msx_psg_r );
+WRITE8_HANDLER ( msx_psg_port_a_w );
+ READ8_HANDLER ( msx_psg_port_a_r );
+WRITE8_HANDLER ( msx_psg_port_b_w );
+ READ8_HANDLER ( msx_psg_port_b_r );
+WRITE8_HANDLER ( msx_fmpac_w );
+ READ8_HANDLER ( msx_rtc_reg_r );
+WRITE8_HANDLER ( msx_rtc_reg_w );
+WRITE8_HANDLER ( msx_rtc_latch_w );
+WRITE8_HANDLER ( msx_90in1_w );
 
 /* cassette functions */
 DEVICE_LOAD( msx_cassette );
@@ -75,17 +75,17 @@ DEVICE_LOAD( msx_cassette );
 DEVICE_LOAD( msx_floppy );
 
 /* new memory emulation */
-WRITE_HANDLER (msx_superloadrunner_w);
-WRITE_HANDLER (msx_page0_w);
-WRITE_HANDLER (msx_page1_w);
-WRITE_HANDLER (msx_page2_w);
-WRITE_HANDLER (msx_page3_w);
-WRITE_HANDLER (msx_sec_slot_w);
-READ_HANDLER (msx_sec_slot_r);
-WRITE_HANDLER (msx_ram_mapper_w);
-READ_HANDLER (msx_ram_mapper_r);
-READ_HANDLER (msx_kanji_r);
-WRITE_HANDLER (msx_kanji_w);
+WRITE8_HANDLER (msx_superloadrunner_w);
+WRITE8_HANDLER (msx_page0_w);
+WRITE8_HANDLER (msx_page1_w);
+WRITE8_HANDLER (msx_page2_w);
+WRITE8_HANDLER (msx_page3_w);
+WRITE8_HANDLER (msx_sec_slot_w);
+ READ8_HANDLER (msx_sec_slot_r);
+WRITE8_HANDLER (msx_ram_mapper_w);
+ READ8_HANDLER (msx_ram_mapper_r);
+ READ8_HANDLER (msx_kanji_r);
+WRITE8_HANDLER (msx_kanji_w);
 
 void msx_memory_map_all (void);
 void msx_memory_map_page (int page);

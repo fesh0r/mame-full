@@ -196,32 +196,32 @@ static void mato_update_memory (void)
 
 *******************************************************************************/
 
-static READ_HANDLER ( pmd85_ppi_0_porta_r )
+static  READ8_HANDLER ( pmd85_ppi_0_porta_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_0_portb_r )
+static  READ8_HANDLER ( pmd85_ppi_0_portb_r )
 {
 	return readinputport(pmd85_ppi_port_outputs[0][0]&0x0f) & readinputport(0x0f);
 }
 
-static READ_HANDLER ( pmd85_ppi_0_portc_r )
+static  READ8_HANDLER ( pmd85_ppi_0_portc_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_0_porta_w )
+static WRITE8_HANDLER ( pmd85_ppi_0_porta_w )
 {
 	pmd85_ppi_port_outputs[0][0] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_0_portb_w )
+static WRITE8_HANDLER ( pmd85_ppi_0_portb_w )
 {
 	pmd85_ppi_port_outputs[0][1] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_0_portc_w )
+static WRITE8_HANDLER ( pmd85_ppi_0_portc_w )
 {
 	pmd85_ppi_port_outputs[0][2] = data;
 	set_led_status(PMD85_LED_2, (data & 0x08) ? 1 : 0);
@@ -236,7 +236,7 @@ static WRITE_HANDLER ( pmd85_ppi_0_portc_w )
 
 *******************************************************************************/
 
-static READ_HANDLER ( mato_ppi_0_portb_r )
+static  READ8_HANDLER ( mato_ppi_0_portb_r )
 {
 	int i;
 	UINT8 data = 0xff;
@@ -249,12 +249,12 @@ static READ_HANDLER ( mato_ppi_0_portb_r )
 	return data;
 }
 
-static READ_HANDLER ( mato_ppi_0_portc_r )
+static  READ8_HANDLER ( mato_ppi_0_portc_r )
 {
 	return readinputport(0x08) | 0x8f;
 }
 
-static WRITE_HANDLER ( mato_ppi_0_portc_w )
+static WRITE8_HANDLER ( mato_ppi_0_portc_w )
 {
 	pmd85_ppi_port_outputs[0][2] = data;
 	set_led_status(PMD85_LED_2, (data & 0x08) ? 1 : 0);
@@ -269,32 +269,32 @@ static WRITE_HANDLER ( mato_ppi_0_portc_w )
 
 *******************************************************************************/
 
-static READ_HANDLER ( pmd85_ppi_1_porta_r )
+static  READ8_HANDLER ( pmd85_ppi_1_porta_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_1_portb_r )
+static  READ8_HANDLER ( pmd85_ppi_1_portb_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_1_portc_r )
+static  READ8_HANDLER ( pmd85_ppi_1_portc_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_1_porta_w )
+static WRITE8_HANDLER ( pmd85_ppi_1_porta_w )
 {
 	pmd85_ppi_port_outputs[1][0] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_1_portb_w )
+static WRITE8_HANDLER ( pmd85_ppi_1_portb_w )
 {
 	pmd85_ppi_port_outputs[1][1] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_1_portc_w )
+static WRITE8_HANDLER ( pmd85_ppi_1_portc_w )
 {
 	pmd85_ppi_port_outputs[1][2] = data;
 }
@@ -311,32 +311,32 @@ static WRITE_HANDLER ( pmd85_ppi_1_portc_w )
 
 *******************************************************************************/
 
-static READ_HANDLER ( pmd85_ppi_2_porta_r )
+static  READ8_HANDLER ( pmd85_ppi_2_porta_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_2_portb_r )
+static  READ8_HANDLER ( pmd85_ppi_2_portb_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_2_portc_r )
+static  READ8_HANDLER ( pmd85_ppi_2_portc_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_2_porta_w )
+static WRITE8_HANDLER ( pmd85_ppi_2_porta_w )
 {
 	pmd85_ppi_port_outputs[2][0] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_2_portb_w )
+static WRITE8_HANDLER ( pmd85_ppi_2_portb_w )
 {
 	pmd85_ppi_port_outputs[2][1] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_2_portc_w )
+static WRITE8_HANDLER ( pmd85_ppi_2_portc_w )
 {
 	pmd85_ppi_port_outputs[2][2] = data;
 }
@@ -404,32 +404,32 @@ static struct pit8253_config pmd85_pit8253_interface =
 
 *******************************************************************************/
 
-static READ_HANDLER ( pmd85_ppi_3_porta_r )
+static  READ8_HANDLER ( pmd85_ppi_3_porta_r )
 {
 	return memory_region(REGION_USER1)[pmd85_ppi_port_outputs[3][1]|(pmd85_ppi_port_outputs[3][2]<<8)];
 }
 
-static READ_HANDLER ( pmd85_ppi_3_portb_r )
+static  READ8_HANDLER ( pmd85_ppi_3_portb_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( pmd85_ppi_3_portc_r )
+static  READ8_HANDLER ( pmd85_ppi_3_portc_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_3_porta_w )
+static WRITE8_HANDLER ( pmd85_ppi_3_porta_w )
 {
 	pmd85_ppi_port_outputs[3][0] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_3_portb_w )
+static WRITE8_HANDLER ( pmd85_ppi_3_portb_w )
 {
 	pmd85_ppi_port_outputs[3][1] = data;
 }
 
-static WRITE_HANDLER ( pmd85_ppi_3_portc_w )
+static WRITE8_HANDLER ( pmd85_ppi_3_portc_w )
 {
 	pmd85_ppi_port_outputs[3][2] = data;
 }
@@ -457,7 +457,7 @@ static WRITE_HANDLER ( pmd85_ppi_3_portc_w )
 
 *******************************************************************************/
 
-READ_HANDLER ( pmd85_io_r )
+ READ8_HANDLER ( pmd85_io_r )
 {
 	if (pmd85_startup_mem_map)
 	{
@@ -522,7 +522,7 @@ READ_HANDLER ( pmd85_io_r )
 	return 0xff;
 }
 
-WRITE_HANDLER ( pmd85_io_w )
+WRITE8_HANDLER ( pmd85_io_w )
 {
 	if (pmd85_startup_mem_map)
 	{
@@ -607,7 +607,7 @@ WRITE_HANDLER ( pmd85_io_w )
 
 *******************************************************************************/
 
-READ_HANDLER ( mato_io_r )
+ READ8_HANDLER ( mato_io_r )
 {
 	if (pmd85_startup_mem_map)
 	{
@@ -629,7 +629,7 @@ READ_HANDLER ( mato_io_r )
 	return 0xff;
 }
 
-WRITE_HANDLER ( mato_io_w )
+WRITE8_HANDLER ( mato_io_w )
 {
 	if (pmd85_startup_mem_map)
 	{

@@ -232,7 +232,7 @@ static VIDEO_START( pc_t1t )
 	return pc_video_start(&config, pc_t1t_choosevideomode, 0x8000) ? INIT_PASS : INIT_FAIL;
 }
 
-READ_HANDLER ( pc_t1t_videoram_r )
+ READ8_HANDLER ( pc_t1t_videoram_r )
 {
 	int data = 0xff;
 	if( videoram )
@@ -438,7 +438,7 @@ static int pc_t1t_bank_r(void)
  *
  *************************************************************************/
 
-WRITE_HANDLER ( pc_T1T_w )
+WRITE8_HANDLER ( pc_T1T_w )
 {
 	switch( offset )
 	{
@@ -473,7 +473,7 @@ WRITE_HANDLER ( pc_T1T_w )
     }
 }
 
-READ_HANDLER ( pc_T1T_r )
+ READ8_HANDLER ( pc_T1T_r )
 {
 	int data = 0xff;
 	switch( offset )

@@ -33,10 +33,10 @@ extern void (*ppu_latch)(offs_t offset);
 
 int mapper_reset (int mapperNum);
 
-WRITE_HANDLER ( nes_mid_mapper_w );
-WRITE_HANDLER ( nes_mapper_w );
+WRITE8_HANDLER ( nes_mid_mapper_w );
+WRITE8_HANDLER ( nes_mapper_w );
 
-READ_HANDLER ( fds_r );
-WRITE_HANDLER ( fds_w );
+ READ8_HANDLER ( fds_r );
+WRITE8_HANDLER ( fds_w );
 
 #endif

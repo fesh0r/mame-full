@@ -582,22 +582,22 @@ void tms9901_cru_w(int which, int offset, int data)
 	}
 }
 
-READ_HANDLER ( tms9901_0_cru_r )
+ READ8_HANDLER ( tms9901_0_cru_r )
 {
 	return tms9901_cru_r(0, offset);
 }
 
-WRITE_HANDLER ( tms9901_0_cru_w )
+WRITE8_HANDLER ( tms9901_0_cru_w )
 {
 	tms9901_cru_w(0, offset, data);
 }
 
-READ_HANDLER ( tms9901_1_cru_r )
+ READ8_HANDLER ( tms9901_1_cru_r )
 {
 	return tms9901_cru_r(1, offset);
 }
 
-WRITE_HANDLER ( tms9901_1_cru_w )
+WRITE8_HANDLER ( tms9901_1_cru_w )
 {
 	tms9901_cru_w(1, offset, data);
 }

@@ -25,11 +25,11 @@ void nec765_set_ready_int(void);
 void nec765_idle(void);
 
 /* read of data register */
-READ_HANDLER(nec765_data_r);
+ READ8_HANDLER(nec765_data_r);
 /* write to data register */
-WRITE_HANDLER(nec765_data_w);
+WRITE8_HANDLER(nec765_data_w);
 /* read of main status register */
-READ_HANDLER(nec765_status_r);
+ READ8_HANDLER(nec765_status_r);
 
 /* supported versions */
 typedef enum
@@ -40,9 +40,9 @@ typedef enum
 } NEC765_VERSION;
 
 /* dma acknowledge with write */
-WRITE_HANDLER(nec765_dack_w);
+WRITE8_HANDLER(nec765_dack_w);
 /* dma acknowledge with read */
-READ_HANDLER(nec765_dack_r);
+ READ8_HANDLER(nec765_dack_r);
 
 /* reset nec765 */
 void nec765_reset(int);

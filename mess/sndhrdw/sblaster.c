@@ -84,7 +84,7 @@ void soundblaster_stop(void) {}
 void soundblaster_update(void) {}
 #endif
 
-READ_HANDLER( soundblaster_r )
+ READ8_HANDLER( soundblaster_r )
 {
 	int data=0;
 	switch (offset) {
@@ -132,7 +132,7 @@ static int soundblaster_operation(int data)
 	return 0;
 }
 	
-WRITE_HANDLER( soundblaster_w )
+WRITE8_HANDLER( soundblaster_w )
 {
 	switch (offset) {
 	case 6: 

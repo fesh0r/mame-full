@@ -233,7 +233,7 @@ ADDRESS_MAP_END
 static int KeyRow = 0;
 
 /* write the current keyboard row */
-static WRITE_HANDLER ( ti99_2_write_kbd )
+static WRITE8_HANDLER ( ti99_2_write_kbd )
 {
 	offset &= 0x7;  /* other address lines are not decoded */
 
@@ -252,7 +252,7 @@ static WRITE_HANDLER ( ti99_2_write_kbd )
 	}
 }
 
-static WRITE_HANDLER ( ti99_2_write_misc_cru )
+static WRITE8_HANDLER ( ti99_2_write_misc_cru )
 {
 	offset &= 0x7;  /* other address lines are not decoded */
 
@@ -287,12 +287,12 @@ static ADDRESS_MAP_START(ti99_2_writecru, ADDRESS_SPACE_IO, 8)
 ADDRESS_MAP_END
 
 /* read keys in the current row */
-static READ_HANDLER ( ti99_2_read_kbd )
+static  READ8_HANDLER ( ti99_2_read_kbd )
 {
 	return readinputport(KeyRow);
 }
 
-static READ_HANDLER ( ti99_2_read_misc_cru )
+static  READ8_HANDLER ( ti99_2_read_misc_cru )
 {
 	return 0;
 }

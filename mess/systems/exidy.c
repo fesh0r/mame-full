@@ -94,7 +94,7 @@ static unsigned char exidy_fe;
 static int exidy_keyboard_line;
 static unsigned long exidy_hd6402_state;
 
-static WRITE_HANDLER(exidy_fe_port_w);
+static WRITE8_HANDLER(exidy_fe_port_w);
 
 /* timer for exidy serial chip transmit and receive */
 static void *serial_timer;
@@ -277,13 +277,13 @@ static MACHINE_INIT( exidy )
 }
 
 #if 0
-static READ_HANDLER(exidy_unmapped_r)
+static  READ8_HANDLER(exidy_unmapped_r)
 {
 	logerror("unmapped r: %04x\r\n",offset);
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(exidy_unmapped_w)
+static WRITE8_HANDLER(exidy_unmapped_w)
 {
 	logerror("unmapped r: %04x %d\r\n", offset, data);
 }
@@ -291,7 +291,7 @@ static WRITE_HANDLER(exidy_unmapped_w)
 
 
 
-static READ_HANDLER ( exidy_wd179x_r )
+static  READ8_HANDLER ( exidy_wd179x_r )
 {
 	switch (offset & 0x03)
 	{
@@ -310,7 +310,7 @@ static READ_HANDLER ( exidy_wd179x_r )
 	return 0x0ff;
 }
 
-static WRITE_HANDLER ( exidy_wd179x_w )
+static WRITE8_HANDLER ( exidy_wd179x_w )
 {
 	switch (offset & 0x03)
 	{
@@ -357,7 +357,7 @@ AM_RANGE(0x0c000, 0x0efff) AM_WRITE( MWA8_ROM)			/* rom pac */
 	AM_RANGE(0x0fc00, 0x0ffff) AM_WRITE( MWA8_RAM)		/* programmable chars */
 ADDRESS_MAP_END
 
-static WRITE_HANDLER(exidy_fc_port_w)
+static WRITE8_HANDLER(exidy_fc_port_w)
 {
 	logerror("exidy fc w: %04x %02x\n",offset,data);
 
@@ -366,7 +366,7 @@ static WRITE_HANDLER(exidy_fc_port_w)
 }
 
 
-static WRITE_HANDLER(exidy_fd_port_w)
+static WRITE8_HANDLER(exidy_fd_port_w)
 {
 	logerror("exidy fd w: %04x %02x\n",offset,data);
 
@@ -423,7 +423,7 @@ static WRITE_HANDLER(exidy_fd_port_w)
 #define EXIDY_CASSETTE_MOTOR_MASK ((1<<4)|(1<<5))
 
 
-static WRITE_HANDLER(exidy_fe_port_w)
+static WRITE8_HANDLER(exidy_fe_port_w)
 {
 	int changed_bits;
 
@@ -491,7 +491,7 @@ static WRITE_HANDLER(exidy_fe_port_w)
 	exidy_fe = data;
 }
 
-static WRITE_HANDLER(exidy_ff_port_w)
+static WRITE8_HANDLER(exidy_ff_port_w)
 {
 	logerror("exidy ff w: %04x %02x\n",offset,data);
 
@@ -525,7 +525,7 @@ static WRITE_HANDLER(exidy_ff_port_w)
 
 }
 
-static READ_HANDLER(exidy_fc_port_r)
+static  READ8_HANDLER(exidy_fc_port_r)
 {
 	int data;
 
@@ -537,7 +537,7 @@ static READ_HANDLER(exidy_fc_port_r)
 	return data;
 }
 
-static READ_HANDLER(exidy_fd_port_r)
+static  READ8_HANDLER(exidy_fd_port_r)
 {
 	int data;
 
@@ -579,7 +579,7 @@ static READ_HANDLER(exidy_fd_port_r)
 	return data;
 }
 
-static READ_HANDLER(exidy_fe_port_r)
+static  READ8_HANDLER(exidy_fe_port_r)
 {
 	unsigned char data;
 
@@ -591,7 +591,7 @@ static READ_HANDLER(exidy_fe_port_r)
 	return data;
 }
 
-static READ_HANDLER(exidy_ff_port_r)
+static  READ8_HANDLER(exidy_ff_port_r)
 {
 	int data;
 

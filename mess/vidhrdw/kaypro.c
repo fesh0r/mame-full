@@ -243,7 +243,7 @@ static void kaypro_out(int offset, int data)
  * 00  no key available
  * ff  key(s) available
  ******************************************************/
-READ_HANDLER (	kaypro_const_r )
+ READ8_HANDLER (	kaypro_const_r )
 {
 	int data = 0x00;
 	if( kbd_head != kbd_tail )
@@ -256,7 +256,7 @@ READ_HANDLER (	kaypro_const_r )
  *	bit
  *	0	flush keyboard buffer
  ******************************************************/
-WRITE_HANDLER ( kaypro_const_w )
+WRITE8_HANDLER ( kaypro_const_w )
 {
 	if (data & 1)
 		kbd_head = kbd_tail = 0;
@@ -267,7 +267,7 @@ WRITE_HANDLER ( kaypro_const_w )
  *	returns next character from the keyboard buffer
  *	suspends CPU if no key is available
  ******************************************************/
-READ_HANDLER (	kaypro_conin_r )
+ READ8_HANDLER (	kaypro_conin_r )
 {
 	int data = 0;
 
@@ -285,7 +285,7 @@ READ_HANDLER (	kaypro_conin_r )
  *	releases CPU if it was waiting for a key
  *	sounds bell if buffer would overflow
  ******************************************************/
-WRITE_HANDLER ( kaypro_conin_w )
+WRITE8_HANDLER ( kaypro_conin_w )
 {
 	int kbd_head_old;
 
@@ -562,12 +562,12 @@ static void kaypro_line(int x0, int y0, int x1, int y1, int set)
 }
 
 
-READ_HANDLER ( kaypro_conout_r )
+ READ8_HANDLER ( kaypro_conout_r )
 {
 	return 0xFF;
 }
 
-WRITE_HANDLER ( kaypro_conout_w )
+WRITE8_HANDLER ( kaypro_conout_w )
 {
 	static int argcnt = 0;
 	static int argval[4];

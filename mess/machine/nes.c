@@ -196,7 +196,7 @@ static int zapper_hit_pixel(const UINT32 *input)
 
 
 
-READ_HANDLER ( nes_IN0_r )
+ READ8_HANDLER ( nes_IN0_r )
 {
 	int cfg;
 	int retVal;
@@ -230,7 +230,7 @@ READ_HANDLER ( nes_IN0_r )
 	return retVal;
 }
 
-READ_HANDLER ( nes_IN1_r )
+ READ8_HANDLER ( nes_IN1_r )
 {
 	int cfg;
 	int retVal;
@@ -319,7 +319,7 @@ static void nes_read_input_device(int cfg, UINT32 *vals, int pad_port,
 
 
 
-WRITE_HANDLER ( nes_IN0_w )
+WRITE8_HANDLER ( nes_IN0_w )
 {
 	int cfg;
 	UINT32 in_2[3];
@@ -351,7 +351,7 @@ WRITE_HANDLER ( nes_IN0_w )
 
 
 
-WRITE_HANDLER ( nes_IN1_w )
+WRITE8_HANDLER ( nes_IN1_w )
 {
 }
 

@@ -54,12 +54,12 @@ extern int tms7000_execute(int cycles);
 extern void tms7000_A6EC1( void ); /* External event counter */
 void tms7000_get_info(UINT32 state, union cpuinfo *info);
 
-extern WRITE_HANDLER( tms70x0_pf_w );
-extern READ_HANDLER( tms70x0_pf_r );
+extern WRITE8_HANDLER( tms70x0_pf_w );
+extern  READ8_HANDLER( tms70x0_pf_r );
 
 //SJE: Added these..
-extern WRITE_HANDLER( tms7000_internal_w );
-extern READ_HANDLER( tms7000_internal_r );
+extern WRITE8_HANDLER( tms7000_internal_w );
+extern  READ8_HANDLER( tms7000_internal_r );
 extern int tms7000_icount;
 
 #ifdef MAME_DEBUG

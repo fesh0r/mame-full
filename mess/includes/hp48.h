@@ -76,5 +76,5 @@ extern unsigned short hp48_colortable[0x20][2];
 extern PALETTE_INIT( hp48 );
 extern VIDEO_START( hp48 );
 extern VIDEO_UPDATE( hp48 );
-extern WRITE_HANDLER( hp48_write );
-extern READ_HANDLER( hp48_read );
+extern WRITE8_HANDLER( hp48_write );
+extern  READ8_HANDLER( hp48_read );

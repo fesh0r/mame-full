@@ -28,7 +28,7 @@ static ADDRESS_MAP_START( writemem , ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE( 0x8000, 0xffff) AM_WRITE( svi318_writemem1 )
 ADDRESS_MAP_END
 
-static READ_HANDLER (svi318_null_r)
+static  READ8_HANDLER (svi318_null_r)
 	{
 	return 0xff;
 	}

@@ -244,7 +244,7 @@ static int pc_ide_status_r(DEVICE *This)
  *		AT hard disk
  *
  *************************************************************************/
-WRITE_HANDLER(at_mfm_0_w)
+WRITE8_HANDLER(at_mfm_0_w)
 {
 	logerror("ide write %.2x %.2x\n", offset, data);
 	switch (offset) {
@@ -259,7 +259,7 @@ WRITE_HANDLER(at_mfm_0_w)
 	}
 }
 
-READ_HANDLER(at_mfm_0_r)
+ READ8_HANDLER(at_mfm_0_r)
 {
 	int data=0;
 

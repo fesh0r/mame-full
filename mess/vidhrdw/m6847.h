@@ -88,25 +88,25 @@ int m6847_vblank(void);
 
 /******************* 1-bit mode port interfaces *******************/
 
-READ_HANDLER( m6847_ag_r );
-READ_HANDLER( m6847_as_r );
-READ_HANDLER( m6847_intext_r );
-READ_HANDLER( m6847_inv_r );
-READ_HANDLER( m6847_css_r );
-READ_HANDLER( m6847_gm2_r );
-READ_HANDLER( m6847_gm1_r );
-READ_HANDLER( m6847_gm0_r );
-READ_HANDLER( m6847_hs_r );
-READ_HANDLER( m6847_fs_r );
+ READ8_HANDLER( m6847_ag_r );
+ READ8_HANDLER( m6847_as_r );
+ READ8_HANDLER( m6847_intext_r );
+ READ8_HANDLER( m6847_inv_r );
+ READ8_HANDLER( m6847_css_r );
+ READ8_HANDLER( m6847_gm2_r );
+ READ8_HANDLER( m6847_gm1_r );
+ READ8_HANDLER( m6847_gm0_r );
+ READ8_HANDLER( m6847_hs_r );
+ READ8_HANDLER( m6847_fs_r );
 
-WRITE_HANDLER( m6847_ag_w );
-WRITE_HANDLER( m6847_as_w );
-WRITE_HANDLER( m6847_intext_w );
-WRITE_HANDLER( m6847_inv_w );
-WRITE_HANDLER( m6847_css_w );
-WRITE_HANDLER( m6847_gm2_w );
-WRITE_HANDLER( m6847_gm1_w );
-WRITE_HANDLER( m6847_gm0_w );
+WRITE8_HANDLER( m6847_ag_w );
+WRITE8_HANDLER( m6847_as_w );
+WRITE8_HANDLER( m6847_intext_w );
+WRITE8_HANDLER( m6847_inv_w );
+WRITE8_HANDLER( m6847_css_w );
+WRITE8_HANDLER( m6847_gm2_w );
+WRITE8_HANDLER( m6847_gm1_w );
+WRITE8_HANDLER( m6847_gm0_w );
 
 #ifdef __cplusplus
 }

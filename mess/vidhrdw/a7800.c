@@ -458,7 +458,7 @@ VIDEO_UPDATE( a7800 )
 
 /****** MARIA ***************************************/
 
-READ_HANDLER( a7800_MARIA_r )
+ READ8_HANDLER( a7800_MARIA_r )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	switch (offset)
@@ -472,7 +472,7 @@ READ_HANDLER( a7800_MARIA_r )
 	}
 }
 
-WRITE_HANDLER( a7800_MARIA_w )
+WRITE8_HANDLER( a7800_MARIA_w )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 	switch (offset)

@@ -34,23 +34,23 @@ QUICKLOAD_LOAD( microtan_hexfile );
 
 INTERRUPT_GEN( microtan_interrupt );
 
-READ_HANDLER ( microtan_via_0_r );
-READ_HANDLER ( microtan_via_1_r );
-READ_HANDLER ( microtan_bffx_r );
-READ_HANDLER ( microtan_sound_r );
-READ_HANDLER ( microtan_sio_r );
+ READ8_HANDLER ( microtan_via_0_r );
+ READ8_HANDLER ( microtan_via_1_r );
+ READ8_HANDLER ( microtan_bffx_r );
+ READ8_HANDLER ( microtan_sound_r );
+ READ8_HANDLER ( microtan_sio_r );
 
-WRITE_HANDLER ( microtan_via_0_w );
-WRITE_HANDLER ( microtan_via_1_w );
-WRITE_HANDLER ( microtan_bffx_w );
-WRITE_HANDLER ( microtan_sound_w );
-WRITE_HANDLER ( microtan_sio_w );
+WRITE8_HANDLER ( microtan_via_0_w );
+WRITE8_HANDLER ( microtan_via_1_w );
+WRITE8_HANDLER ( microtan_bffx_w );
+WRITE8_HANDLER ( microtan_sound_w );
+WRITE8_HANDLER ( microtan_sio_w );
 
 /* from src/mess/vidhrdw/microtan.c */
 extern char microtan_frame_message[64+1];
 extern int microtan_frame_time;
 
-extern WRITE_HANDLER ( microtan_videoram_w );
+extern WRITE8_HANDLER ( microtan_videoram_w );
 
 extern PALETTE_INIT( microtan );
 extern VIDEO_START( microtan );

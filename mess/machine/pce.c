@@ -64,7 +64,7 @@ NVRAM_HANDLER( pce )
 
 
 /* todo: how many input ports does the PCE have? */
-WRITE_HANDLER ( pce_joystick_w )
+WRITE8_HANDLER ( pce_joystick_w )
 {
 
     /* bump counter on a low-to-high transition of bit 1 */
@@ -83,7 +83,7 @@ WRITE_HANDLER ( pce_joystick_w )
     }
 }
 
-READ_HANDLER ( pce_joystick_r )
+ READ8_HANDLER ( pce_joystick_r )
 {
     int data = readinputport(0);
     if(joystick_data_select) data >>= 4;

@@ -424,12 +424,12 @@ void tms5501_write (int which, UINT16 offset, UINT8 data)
 	}
 }
 
-READ_HANDLER( tms5501_0_r )
+ READ8_HANDLER( tms5501_0_r )
 {
 	return tms5501_read(0, offset);
 }
 
-WRITE_HANDLER( tms5501_0_w )
+WRITE8_HANDLER( tms5501_0_w )
 {
 	tms5501_write(0, offset, data);
 }

@@ -245,7 +245,7 @@ ADDRESS_MAP_END
 
 
 /* PCW keyboard is mapped into memory */
-static READ_HANDLER(pcw_keyboard_r)
+static  READ8_HANDLER(pcw_keyboard_r)
 {
 	return readinputport(offset);
 }
@@ -371,7 +371,7 @@ static int pcw_get_sys_status(void)
 	return pcw_interrupt_counter | (readinputport(16) & (0x040 | 0x010)) | pcw_system_status;
 }
 
-static READ_HANDLER(pcw_interrupt_counter_r)
+static  READ8_HANDLER(pcw_interrupt_counter_r)
 {
 	int data;
 
@@ -388,7 +388,7 @@ static READ_HANDLER(pcw_interrupt_counter_r)
 }
 
 
-static WRITE_HANDLER(pcw_bank_select_w)
+static WRITE8_HANDLER(pcw_bank_select_w)
 {
 #ifdef VERBOSE
 	logerror("BANK: %2x %x\n",offset, data);
@@ -398,7 +398,7 @@ static WRITE_HANDLER(pcw_bank_select_w)
 	pcw_update_mem(offset, data);
 }
 
-static WRITE_HANDLER(pcw_bank_force_selection_w)
+static WRITE8_HANDLER(pcw_bank_force_selection_w)
 {
 	pcw_bank_force = data;
 
@@ -409,7 +409,7 @@ static WRITE_HANDLER(pcw_bank_force_selection_w)
 }
 
 
-static WRITE_HANDLER(pcw_roller_ram_addr_w)
+static WRITE8_HANDLER(pcw_roller_ram_addr_w)
 {
 	/*
 	Address of roller RAM. b7-5: bank (0-7). b4-1: address / 512. */
@@ -418,17 +418,17 @@ static WRITE_HANDLER(pcw_roller_ram_addr_w)
 							((data & 0x01f)<<9);
 }
 
-static WRITE_HANDLER(pcw_pointer_table_top_scan_w)
+static WRITE8_HANDLER(pcw_pointer_table_top_scan_w)
 {
 	roller_ram_offset = data;
 }
 
-static WRITE_HANDLER(pcw_vdu_video_control_register_w)
+static WRITE8_HANDLER(pcw_vdu_video_control_register_w)
 {
 	pcw_vdu_video_control_register = data;
 }
 
-static WRITE_HANDLER(pcw_system_control_w)
+static WRITE8_HANDLER(pcw_system_control_w)
 {
 #ifdef VERBOSE
 	logerror("SYSTEM CONTROL: %d\n",data);
@@ -580,7 +580,7 @@ static WRITE_HANDLER(pcw_system_control_w)
 	}
 }
 
-static READ_HANDLER(pcw_system_status_r)
+static  READ8_HANDLER(pcw_system_status_r)
 {
 	/* from Jacob Nevins docs */
 	return pcw_get_sys_status();
@@ -588,7 +588,7 @@ static READ_HANDLER(pcw_system_status_r)
 
 /* read from expansion hardware - additional hardware not part of
 the PCW custom ASIC */
-static READ_HANDLER(pcw_expansion_r)
+static  READ8_HANDLER(pcw_expansion_r)
 {
 	logerror("pcw expansion r: %04x\n",offset+0x080);
 
@@ -638,7 +638,7 @@ static READ_HANDLER(pcw_expansion_r)
 
 /* write to expansion hardware - additional hardware not part of
 the PCW custom ASIC */
-static WRITE_HANDLER(pcw_expansion_w)
+static WRITE8_HANDLER(pcw_expansion_w)
 {
 	logerror("pcw expansion w: %04x %02x\n",offset+0x080, data);
 
@@ -649,7 +649,7 @@ static WRITE_HANDLER(pcw_expansion_w)
 
 }
 
-static READ_HANDLER(pcw_fdc_r)
+static  READ8_HANDLER(pcw_fdc_r)
 {
 	/* from Jacob Nevins docs. FDC I/O is not fully decoded */
 	if (offset & 1)
@@ -660,7 +660,7 @@ static READ_HANDLER(pcw_fdc_r)
 	return nec765_status_r(0);
 }
 
-static WRITE_HANDLER(pcw_fdc_w)
+static WRITE8_HANDLER(pcw_fdc_w)
 {
 	/* from Jacob Nevins docs. FDC I/O is not fully decoded */
 	if (offset & 1)
@@ -670,26 +670,26 @@ static WRITE_HANDLER(pcw_fdc_w)
 }
 
 /* TODO: Implement the printer for PCW8256, PCW8512,PCW9256*/
-static WRITE_HANDLER(pcw_printer_data_w)
+static WRITE8_HANDLER(pcw_printer_data_w)
 {
 }
 
-static WRITE_HANDLER(pcw_printer_command_w)
+static WRITE8_HANDLER(pcw_printer_command_w)
 {
 }
 
-static READ_HANDLER(pcw_printer_data_r)
+static  READ8_HANDLER(pcw_printer_data_r)
 {
 	return 0x0ff;
 }
 
-static READ_HANDLER(pcw_printer_status_r)
+static  READ8_HANDLER(pcw_printer_status_r)
 {
 	return 0x0ff;
 }
 
 /* TODO: Implement parallel port! */
-static READ_HANDLER(pcw9512_parallel_r)
+static  READ8_HANDLER(pcw9512_parallel_r)
 {
 	if (offset==1)
 	{
@@ -701,7 +701,7 @@ static READ_HANDLER(pcw9512_parallel_r)
 }
 
 /* TODO: Implement parallel port! */
-static WRITE_HANDLER(pcw9512_parallel_w)
+static WRITE8_HANDLER(pcw9512_parallel_w)
 {
 	logerror("pcw9512 parallel w: offs: %04x data: %02x\n",offset,data);
 }

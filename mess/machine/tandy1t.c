@@ -145,7 +145,7 @@ static struct {
 	UINT8 data[8];
 } tandy={ {0}};
 
-WRITE_HANDLER ( pc_t1t_p37x_w )
+WRITE8_HANDLER ( pc_t1t_p37x_w )
 {
 //	DBG_LOG(2,"T1T_p37x_w",("%.5x #%d $%02x\n", activecpu_get_pc(),offset, data));
 	if (offset!=4)
@@ -159,7 +159,7 @@ WRITE_HANDLER ( pc_t1t_p37x_w )
 	}
 }
 
-READ_HANDLER ( pc_t1t_p37x_r )
+ READ8_HANDLER ( pc_t1t_p37x_r )
 {
 	int data = tandy.data[offset];
 //	DBG_LOG(1,"T1T_p37x_r",("%.5x #%d $%02x\n", activecpu_get_pc(), offset, data));
@@ -178,7 +178,7 @@ static struct {
 	UINT8 portb, portc;
 } tandy_ppi= { 0 };
 
-WRITE_HANDLER ( tandy1000_pio_w )
+WRITE8_HANDLER ( tandy1000_pio_w )
 {
 	switch (offset) {
 	case 1:
@@ -194,7 +194,7 @@ WRITE_HANDLER ( tandy1000_pio_w )
 	}
 }
 
-READ_HANDLER(tandy1000_pio_r)
+ READ8_HANDLER(tandy1000_pio_r)
 {
 	int data=0xff;
 	switch (offset) {

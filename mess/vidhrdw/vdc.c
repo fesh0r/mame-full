@@ -54,7 +54,7 @@ VIDEO_UPDATE( pce )
 }
 
 
-WRITE_HANDLER ( vdc_w )
+WRITE8_HANDLER ( vdc_w )
 {
     switch(offset)
     {
@@ -138,7 +138,7 @@ WRITE_HANDLER ( vdc_w )
 }
 
 
-READ_HANDLER ( vdc_r )
+ READ8_HANDLER ( vdc_r )
 {
     int temp = 0;
     switch(offset)
@@ -170,7 +170,7 @@ READ_HANDLER ( vdc_r )
 }
 
 
-READ_HANDLER ( vce_r )
+ READ8_HANDLER ( vce_r )
 {
     int temp = 0;
     switch(offset & 7)
@@ -188,7 +188,7 @@ READ_HANDLER ( vce_r )
 }
 
 
-WRITE_HANDLER ( vce_w )
+WRITE8_HANDLER ( vce_w )
 {
     switch(offset & 7)
     {

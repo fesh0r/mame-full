@@ -33,14 +33,14 @@ DRIVER_INIT( uk101 )
 	memory_install_ram8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0xA000, 0, 1);
 }
 
-READ_HANDLER( uk101_acia0_casin )
+ READ8_HANDLER( uk101_acia0_casin )
 {
 	if (uk101_tape_image && (uk101_tape_index < uk101_tape_size))
 							return (uk101_tape_image[uk101_tape_index++]);
 	return (0);
 }
 
-READ_HANDLER (uk101_acia0_statin )
+ READ8_HANDLER (uk101_acia0_statin )
 {
 	if (uk101_tape_image && (uk101_tape_index < uk101_tape_size))
 							return (ACIA_6850_RDRF);
@@ -68,7 +68,7 @@ DEVICE_UNLOAD( uk101_cassette )
 
 static	INT8	uk101_keyb;
 
-READ_HANDLER ( uk101_keyb_r )
+ READ8_HANDLER ( uk101_keyb_r )
 {
 	int	rpl = 0xff;
 	if (!(uk101_keyb & 0x80)) rpl &= readinputport (0);
@@ -86,12 +86,12 @@ READ_HANDLER ( uk101_keyb_r )
 	return (rpl);
 }
 
-WRITE_HANDLER ( uk101_keyb_w )
+WRITE8_HANDLER ( uk101_keyb_w )
 {
 	uk101_keyb = data;
 }
 
-WRITE_HANDLER ( superbrd_keyb_w )
+WRITE8_HANDLER ( superbrd_keyb_w )
 {
 	/* Voltage values resulting from the 16 possible signals */
 	const static UINT8 voltage[16] = {81,82,84,86,89,92,95,98,109,115,123,133,151,171,204,255};

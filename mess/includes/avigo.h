@@ -5,8 +5,8 @@
 #define AVIGO_SCREEN_WIDTH        160
 #define AVIGO_SCREEN_HEIGHT       240
 
-extern READ_HANDLER(avigo_vid_memory_r);
-extern WRITE_HANDLER(avigo_vid_memory_w);
+extern  READ8_HANDLER(avigo_vid_memory_r);
+extern WRITE8_HANDLER(avigo_vid_memory_w);
 
 extern VIDEO_START( avigo );
 extern VIDEO_UPDATE( avigo );

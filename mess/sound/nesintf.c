@@ -10,20 +10,20 @@ static apu_t *apu[MAX_NESPSG];
 static int channel[MAX_NESPSG];
 static const struct NESinterface *intf = NULL;
 
-READ_HANDLER(NESPSG_0_r)
+ READ8_HANDLER(NESPSG_0_r)
 {
 	apu_setcontext(apu[0]);
 	return apu_read(0x4000 + offset);
 }
 
-READ_HANDLER(NESPSG_1_r)
+ READ8_HANDLER(NESPSG_1_r)
 {
 	apu_setcontext(apu[1]);
 	return apu_read(0x4000 + offset);
 }
 
 
-WRITE_HANDLER(NESPSG_0_w)
+WRITE8_HANDLER(NESPSG_0_w)
 {
 	if (offset == 0x14) /* OAM DMA */
 	{
@@ -40,7 +40,7 @@ WRITE_HANDLER(NESPSG_0_w)
 	}
 }
 
-WRITE_HANDLER(NESPSG_1_w)
+WRITE8_HANDLER(NESPSG_1_w)
 {
 	if (offset == 0x14) /* OAM DMA */
 	{

@@ -44,7 +44,7 @@ MACHINE_INIT( aquarius )
 	}
 }
 
-READ_HANDLER ( aquarius_port_ff_r )
+ READ8_HANDLER ( aquarius_port_ff_r )
 {
 
 	int loop, loop2, bc, rpl;
@@ -63,21 +63,21 @@ READ_HANDLER ( aquarius_port_ff_r )
 	return (rpl);
 }
 
-READ_HANDLER ( aquarius_port_fe_r )
+ READ8_HANDLER ( aquarius_port_fe_r )
 {
 	return (0xff);
 }
 
-WRITE_HANDLER ( aquarius_port_fc_w )
+WRITE8_HANDLER ( aquarius_port_fc_w )
 {
 	speaker_level_w(0, data & 0x01);
 }
 
-WRITE_HANDLER ( aquarius_port_fe_w )
+WRITE8_HANDLER ( aquarius_port_fe_w )
 {
 }
 
-WRITE_HANDLER ( aquarius_port_ff_w )
+WRITE8_HANDLER ( aquarius_port_ff_w )
 {
 }
 

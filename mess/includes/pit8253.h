@@ -36,8 +36,8 @@ READ32_HANDLER ( pit8253_32_1_r );
 WRITE32_HANDLER ( pit8253_32_0_w );
 WRITE32_HANDLER ( pit8253_32_1_w );
 
-WRITE_HANDLER ( pit8253_0_gate_w );
-WRITE_HANDLER ( pit8253_1_gate_w );
+WRITE8_HANDLER ( pit8253_0_gate_w );
+WRITE8_HANDLER ( pit8253_1_gate_w );
 
 int pit8253_get_frequency(int which, int timer);
 int pit8253_get_output(int which, int timer);

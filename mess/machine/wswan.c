@@ -64,7 +64,7 @@ MACHINE_STOP( wswan )
 {
 }
 
-READ_HANDLER( wswan_port_r )
+ READ8_HANDLER( wswan_port_r )
 {
 	UINT8 value = 0xff;
 
@@ -80,7 +80,7 @@ READ_HANDLER( wswan_port_r )
 	return ws_portram[offset];
 }
 
-WRITE_HANDLER( wswan_port_w )
+WRITE8_HANDLER( wswan_port_w )
 {
 	switch( offset )
 	{

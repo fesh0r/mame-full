@@ -551,7 +551,7 @@ static void tms7000_service_timer1( void )
 //	tick2 = activecpu_gettotalcycles();
 }
 
-WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
+WRITE8_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 {
 	data8_t	temp1, temp2, temp3;
 	
@@ -619,7 +619,7 @@ WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 	}
 }
 
-READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
+ READ8_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 {
 	data8_t result;
 	data8_t	temp1, temp2, temp3;
@@ -703,10 +703,10 @@ static UINT16 bcd_sub( UINT16 a, UINT16 b)
 	return bcd_tencomp(b) - bcd_tencomp(a);
 }
 
-WRITE_HANDLER( tms7000_internal_w ) {
+WRITE8_HANDLER( tms7000_internal_w ) {
 	tms7000.rf[ offset ] = data;
 }
 
-READ_HANDLER( tms7000_internal_r ) {
+ READ8_HANDLER( tms7000_internal_r ) {
 	return tms7000.rf[ offset ]; 
 }

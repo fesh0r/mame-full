@@ -54,7 +54,7 @@ static int uPD7002_data0=0;
 static int uPD7002_digitalvalue=0;
 
 
-READ_HANDLER ( uPD7002_EOC_r )
+ READ8_HANDLER ( uPD7002_EOC_r )
 {
 	return (uPD7002_status>>7)&0x01;
 }
@@ -89,7 +89,7 @@ static void uPD7002_conversioncomplete(int counter_value)
 
 
 
-READ_HANDLER ( uPD7002_r )
+ READ8_HANDLER ( uPD7002_r )
 {
 	switch(offset&0x03)
 	{
@@ -110,7 +110,7 @@ READ_HANDLER ( uPD7002_r )
 
 
 
-WRITE_HANDLER ( uPD7002_w )
+WRITE8_HANDLER ( uPD7002_w )
 {
 
 	/* logerror("write to uPD7002 $%02X = $%02X\n",offset,data); */

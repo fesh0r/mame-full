@@ -24,9 +24,9 @@ WRITE32_HANDLER( pc_cga32_w );
 
 VIDEO_START( pc1512 );
 
-READ_HANDLER ( pc1512_r );
-WRITE_HANDLER ( pc1512_w );
-WRITE_HANDLER ( pc1512_videoram_w );
+ READ8_HANDLER ( pc1512_r );
+WRITE8_HANDLER ( pc1512_w );
+WRITE8_HANDLER ( pc1512_videoram_w );
 
 #define CGA_FONT		(input_port_20_r(0)&3)
 

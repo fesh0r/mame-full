@@ -354,7 +354,7 @@ static z80pio_interface pio_intf =
 // PA7 = tape EAR
 // PC7 = tape MIC
 
-static READ_HANDLER( mpf1_porta_r )
+static  READ8_HANDLER( mpf1_porta_r )
 {
 	UINT8 retval;
 	for(keycol = 0; keycol < 6; keycol++)
@@ -377,7 +377,7 @@ static READ_HANDLER( mpf1_porta_r )
 
 
 
-static READ_HANDLER( mpf1_portb_r )
+static  READ8_HANDLER( mpf1_portb_r )
 {
 	verboselog( 0, "PPI port B read\n" );
 	return 0;
@@ -385,7 +385,7 @@ static READ_HANDLER( mpf1_portb_r )
 
 
 
-static READ_HANDLER( mpf1_portc_r )
+static  READ8_HANDLER( mpf1_portc_r )
 {
 	verboselog( 0, "PPI port C read\n" );
 	return 0;
@@ -393,14 +393,14 @@ static READ_HANDLER( mpf1_portc_r )
 
 
 
-static WRITE_HANDLER( mpf1_porta_w )
+static WRITE8_HANDLER( mpf1_porta_w )
 {
 	verboselog( 0, "PPI port A write: %02x\n", data );
 }
 
 
 
-static WRITE_HANDLER( mpf1_portb_w )
+static WRITE8_HANDLER( mpf1_portb_w )
 {
 	/*	A	0x08
 		B	0x10
@@ -427,7 +427,7 @@ static WRITE_HANDLER( mpf1_portb_w )
 
 
 
-static WRITE_HANDLER( mpf1_portc_w )
+static WRITE8_HANDLER( mpf1_portc_w )
 {
 	kbdlatch = ~data;
 

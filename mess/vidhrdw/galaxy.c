@@ -48,7 +48,7 @@ VIDEO_START( galaxy )
 	return video_start_generic();
 }
 
-WRITE_HANDLER( galaxy_vh_charram_w )
+WRITE8_HANDLER( galaxy_vh_charram_w )
 {
 	videoram[offset] = data;
 	dirtybuffer[offset] = 1;

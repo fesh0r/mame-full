@@ -12,11 +12,11 @@ extern void vic4567_init (int pal, int (*dma_read) (int),
 extern INTERRUPT_GEN( vic3_raster_irq );
 
 /* to be called when writting to port */
-extern WRITE_HANDLER ( vic3_port_w );
-WRITE_HANDLER( vic3_palette_w );
+extern WRITE8_HANDLER ( vic3_port_w );
+WRITE8_HANDLER( vic3_palette_w );
 
 /* to be called when reading from port */
-extern READ_HANDLER ( vic3_port_r );
+extern  READ8_HANDLER ( vic3_port_r );
 
 
 #endif

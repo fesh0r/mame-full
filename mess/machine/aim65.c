@@ -22,13 +22,13 @@ static void aim65_pia(void)
 	}
 }
 
-static WRITE_HANDLER( aim65_pia_a_w)
+static WRITE8_HANDLER( aim65_pia_a_w)
 {
 	pia_a=data;
 	aim65_pia();
 }
 
-static WRITE_HANDLER( aim65_pia_b_w)
+static WRITE8_HANDLER( aim65_pia_b_w)
 {
 	pia_b=data;
 	aim65_pia();
@@ -170,7 +170,7 @@ static void aim65_printer_timer(int param)
 	printer.level^=1;
 }
 
-static WRITE_HANDLER(aim65_printer_on)
+static WRITE8_HANDLER(aim65_printer_on)
 {
 	if (!data)
 		timer_adjust(printer.timer, 0, 0, 1000e-6);
@@ -178,7 +178,7 @@ static WRITE_HANDLER(aim65_printer_on)
 		timer_reset(printer.timer, TIME_NEVER);
 }
 
-static READ_HANDLER( aim65_via0_b_r)
+static  READ8_HANDLER( aim65_via0_b_r)
 {
 	return readinputport(4);
 }

@@ -1236,7 +1236,7 @@ int gdc_nbr_expected_params(UINT8 command)
 /* Name: compis_gdc_w                                                      */
 /* Desc: GDC - 82720 Write handler   GDC   82720                           */
 /*-------------------------------------------------------------------------*/
-WRITE_HANDLER ( compis_gdc_w )
+WRITE8_HANDLER ( compis_gdc_w )
 {
    /* FIXME: Move to better place. Must be signed and larger than 8 bits */  
    static INT16 last_command = -1;
@@ -1296,7 +1296,7 @@ WRITE_HANDLER ( compis_gdc_w )
 /* Name: compis_gdc_r                                                      */
 /* Desc: GDC - 82720 Read handler                                          */
 /*-------------------------------------------------------------------------*/
-READ_HANDLER (compis_gdc_r)
+ READ8_HANDLER (compis_gdc_r)
 {
 	UINT16 data;
    

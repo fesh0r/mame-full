@@ -18,10 +18,10 @@ extern int NESPSG_sh_start(const struct MachineSound *msound);
 extern void NESPSG_sh_stop(void);
 extern void NESPSG_sh_update(void);
 
-extern READ_HANDLER(NESPSG_0_r);
-extern READ_HANDLER(NESPSG_1_r);
-extern WRITE_HANDLER(NESPSG_0_w);
-extern WRITE_HANDLER(NESPSG_1_w);
+extern  READ8_HANDLER(NESPSG_0_r);
+extern  READ8_HANDLER(NESPSG_1_r);
+extern WRITE8_HANDLER(NESPSG_0_w);
+extern WRITE8_HANDLER(NESPSG_1_w);
 
 
 #endif /* !_NESINTF_H_ */

@@ -94,10 +94,10 @@ void	Dave_Init(void);
 void	Dave_SetExternalIntState(int IntID, int State);
 
 extern int	Dave_getreg(int);
-extern WRITE_HANDLER ( Dave_setreg );
+extern WRITE8_HANDLER ( Dave_setreg );
 
-extern READ_HANDLER ( 	Dave_reg_r );
-extern WRITE_HANDLER (	Dave_reg_w );
+extern  READ8_HANDLER ( 	Dave_reg_r );
+extern WRITE8_HANDLER (	Dave_reg_w );
 
 extern void	Dave_SetInt(int);
 

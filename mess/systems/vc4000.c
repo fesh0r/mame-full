@@ -11,7 +11,7 @@
 #include "devices/cartslot.h"
 #include "image.h"
 
-static READ_HANDLER(vc4000_key_r)
+static  READ8_HANDLER(vc4000_key_r)
 {
 	UINT8 data=0;
 	switch(offset) {

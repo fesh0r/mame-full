@@ -12,13 +12,13 @@ DEVICE_LOAD( kim1_cassette );
 
 INTERRUPT_GEN( kim1_interrupt );
 
-READ_HANDLER ( m6530_003_r );
-READ_HANDLER ( m6530_002_r );
-READ_HANDLER ( kim1_mirror_r );
+ READ8_HANDLER ( m6530_003_r );
+ READ8_HANDLER ( m6530_002_r );
+ READ8_HANDLER ( kim1_mirror_r );
 
-WRITE_HANDLER ( m6530_003_w );
-WRITE_HANDLER ( m6530_002_w );
-WRITE_HANDLER ( kim1_mirror_w );
+WRITE8_HANDLER ( m6530_003_w );
+WRITE8_HANDLER ( m6530_002_w );
+WRITE8_HANDLER ( kim1_mirror_w );
 
 /* from mess/vidhrdw/kim1.c */
 PALETTE_INIT( kim1 );

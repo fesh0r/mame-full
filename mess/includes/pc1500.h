@@ -5,8 +5,8 @@
 #include "osdepend.h"
 
 UINT8 pc1500_in(void);
-WRITE_HANDLER(lh5811_w);
-READ_HANDLER(lh5811_r);
+WRITE8_HANDLER(lh5811_w);
+ READ8_HANDLER(lh5811_r);
 
 
 /* in mess/vidhrdw/ */

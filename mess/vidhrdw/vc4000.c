@@ -93,7 +93,7 @@ VIDEO_START(vc4000)
     return 0;
 }
 
-READ_HANDLER(vc4000_video_r)
+ READ8_HANDLER(vc4000_video_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -148,7 +148,7 @@ READ_HANDLER(vc4000_video_r)
     return data;
 }
 
-WRITE_HANDLER(vc4000_video_w)
+WRITE8_HANDLER(vc4000_video_w)
 {
     int nr;
     switch (offset) {
@@ -197,7 +197,7 @@ WRITE_HANDLER(vc4000_video_w)
     }
 }
 
-READ_HANDLER(vc4000_vsync_r)
+ READ8_HANDLER(vc4000_vsync_r)
 {
     return vc4000_video.line>=250?0x80:0;
 }

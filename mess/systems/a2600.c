@@ -16,8 +16,8 @@ extern PALETTE_INIT( tia_NTSC );
 extern PALETTE_INIT( tia_PAL );
 extern VIDEO_START( tia );
 extern VIDEO_UPDATE( tia );
-extern READ_HANDLER( tia_r );
-extern WRITE_HANDLER( tia_w );
+extern  READ8_HANDLER( tia_r );
+extern WRITE8_HANDLER( tia_w );
 
 extern void tia_init(void);
 
@@ -185,29 +185,29 @@ void modeDC_switch(UINT16 offset, UINT8 data)
 }
 
 
-static READ_HANDLER(mode8K_switch_r) { mode8K_switch(offset, 0); return 0; }
-static READ_HANDLER(mode12_switch_r) { mode12_switch(offset, 0); return 0; }
-static READ_HANDLER(mode16_switch_r) { mode16_switch(offset, 0); return 0; }
-static READ_HANDLER(mode32_switch_r) { mode32_switch(offset, 0); return 0; }
-static READ_HANDLER(modePB_switch_r) { modePB_switch(offset, 0); return 0; }
-static READ_HANDLER(modeMN_switch_r) { modeMN_switch(offset, 0); return 0; }
-static READ_HANDLER(modeTV_switch_r) { modeTV_switch(offset, 0); return 0; }
-static READ_HANDLER(modeUA_switch_r) { modeUA_switch(offset, 0); return 0; }
-static READ_HANDLER(modeDC_switch_r) { modeDC_switch(offset, 0); return 0; }
+static  READ8_HANDLER(mode8K_switch_r) { mode8K_switch(offset, 0); return 0; }
+static  READ8_HANDLER(mode12_switch_r) { mode12_switch(offset, 0); return 0; }
+static  READ8_HANDLER(mode16_switch_r) { mode16_switch(offset, 0); return 0; }
+static  READ8_HANDLER(mode32_switch_r) { mode32_switch(offset, 0); return 0; }
+static  READ8_HANDLER(modePB_switch_r) { modePB_switch(offset, 0); return 0; }
+static  READ8_HANDLER(modeMN_switch_r) { modeMN_switch(offset, 0); return 0; }
+static  READ8_HANDLER(modeTV_switch_r) { modeTV_switch(offset, 0); return 0; }
+static  READ8_HANDLER(modeUA_switch_r) { modeUA_switch(offset, 0); return 0; }
+static  READ8_HANDLER(modeDC_switch_r) { modeDC_switch(offset, 0); return 0; }
 
 
-static WRITE_HANDLER(mode8K_switch_w) { mode8K_switch(offset, data); }
-static WRITE_HANDLER(mode12_switch_w) { mode12_switch(offset, data); }
-static WRITE_HANDLER(mode16_switch_w) { mode16_switch(offset, data); }
-static WRITE_HANDLER(mode32_switch_w) { mode32_switch(offset, data); }
-static WRITE_HANDLER(modePB_switch_w) {	modePB_switch(offset, data); }
-static WRITE_HANDLER(modeMN_switch_w) {	modeMN_switch(offset, data); }
-static WRITE_HANDLER(modeTV_switch_w) { modeTV_switch(offset, data); }
-static WRITE_HANDLER(modeUA_switch_w) { modeUA_switch(offset, data); }
-static WRITE_HANDLER(modeDC_switch_w) { modeDC_switch(offset, data); }
+static WRITE8_HANDLER(mode8K_switch_w) { mode8K_switch(offset, data); }
+static WRITE8_HANDLER(mode12_switch_w) { mode12_switch(offset, data); }
+static WRITE8_HANDLER(mode16_switch_w) { mode16_switch(offset, data); }
+static WRITE8_HANDLER(mode32_switch_w) { mode32_switch(offset, data); }
+static WRITE8_HANDLER(modePB_switch_w) {	modePB_switch(offset, data); }
+static WRITE8_HANDLER(modeMN_switch_w) {	modeMN_switch(offset, data); }
+static WRITE8_HANDLER(modeTV_switch_w) { modeTV_switch(offset, data); }
+static WRITE8_HANDLER(modeUA_switch_w) { modeUA_switch(offset, data); }
+static WRITE8_HANDLER(modeDC_switch_w) { modeDC_switch(offset, data); }
 
 
-static READ_HANDLER(current_bank_r)
+static  READ8_HANDLER(current_bank_r)
 {
 	return current_bank;
 }
@@ -222,7 +222,7 @@ static ADDRESS_MAP_START(a2600_mem, ADDRESS_SPACE_PROGRAM, 8)
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( switch_A_r )
+static  READ8_HANDLER( switch_A_r )
 {
 	UINT8 val = 0;
 

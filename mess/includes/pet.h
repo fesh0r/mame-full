@@ -209,9 +209,9 @@ extern UINT8 *pet_memory;
 extern UINT8 *pet_videoram;
 extern UINT8 *superpet_memory;
 
-WRITE_HANDLER(cbm8096_w);
-extern READ_HANDLER(superpet_r);
-extern WRITE_HANDLER(superpet_w);
+WRITE8_HANDLER(cbm8096_w);
+extern  READ8_HANDLER(superpet_r);
+extern WRITE8_HANDLER(superpet_w);
 
 extern void pet_driver_init (void);
 extern void pet_basic1_driver_init (void);

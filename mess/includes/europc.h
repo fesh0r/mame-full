@@ -1,12 +1,12 @@
-WRITE_HANDLER( europc_pio_w );
-READ_HANDLER( europc_pio_r );
+WRITE8_HANDLER( europc_pio_w );
+ READ8_HANDLER( europc_pio_r );
 
-extern WRITE_HANDLER ( europc_jim_w );
-extern READ_HANDLER ( europc_jim_r );
-extern READ_HANDLER ( europc_jim2_r );
+extern WRITE8_HANDLER ( europc_jim_w );
+extern  READ8_HANDLER ( europc_jim_r );
+extern  READ8_HANDLER ( europc_jim2_r );
 
-extern READ_HANDLER( europc_rtc_r );
-extern WRITE_HANDLER( europc_rtc_w );
+extern  READ8_HANDLER( europc_rtc_r );
+extern WRITE8_HANDLER( europc_rtc_w );
 extern NVRAM_HANDLER( europc_rtc );
 
 void europc_rtc_set_time(void);

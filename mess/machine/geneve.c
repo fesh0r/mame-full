@@ -330,7 +330,7 @@ static void intb_callback(int state)
 /*
 	TMS5200 speech chip read
 */
-static READ_HANDLER ( geneve_speech_r )
+static  READ8_HANDLER ( geneve_speech_r )
 {
 	activecpu_adjust_icount(-8);		/* this is just a minimum, it can be more */
 
@@ -356,7 +356,7 @@ static void speech_kludge_callback(int dummy)
 /*
 	TMS5200 speech chip write
 */
-static WRITE_HANDLER ( geneve_speech_w )
+static WRITE8_HANDLER ( geneve_speech_w )
 {
 	activecpu_adjust_icount(-32*4);		/* this is just an approx. minimum, it can be much more */
 
@@ -380,7 +380,7 @@ static WRITE_HANDLER ( geneve_speech_w )
 	tms5220_data_w(offset, data);
 }
 
-READ_HANDLER ( geneve_r )
+ READ8_HANDLER ( geneve_r )
 {
 	int page;
 
@@ -614,7 +614,7 @@ READ_HANDLER ( geneve_r )
 	return 0;
 }
 
-WRITE_HANDLER ( geneve_w )
+WRITE8_HANDLER ( geneve_w )
 {
 	int page;
 
@@ -910,7 +910,7 @@ WRITE_HANDLER ( geneve_w )
 #pragma mark CRU HANDLERS
 #endif
 
-WRITE_HANDLER ( geneve_peb_mode_cru_w )
+WRITE8_HANDLER ( geneve_peb_mode_cru_w )
 {
 	if ((offset >= /*0x770*/0x775) && (offset < 0x780))
 	{

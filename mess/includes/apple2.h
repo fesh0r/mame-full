@@ -45,62 +45,62 @@ int	apple2ee_load_rom(int id);
 
 void apple2_interrupt(void);
 
-READ_HANDLER ( apple2_c00x_r );
-WRITE_HANDLER ( apple2_c00x_w );
+ READ8_HANDLER ( apple2_c00x_r );
+WRITE8_HANDLER ( apple2_c00x_w );
 
-READ_HANDLER ( apple2_c01x_r );
-WRITE_HANDLER ( apple2_c01x_w );
+ READ8_HANDLER ( apple2_c01x_r );
+WRITE8_HANDLER ( apple2_c01x_w );
 
-READ_HANDLER ( apple2_c02x_r );
-WRITE_HANDLER ( apple2_c02x_w );
+ READ8_HANDLER ( apple2_c02x_r );
+WRITE8_HANDLER ( apple2_c02x_w );
 
-READ_HANDLER ( apple2_c03x_r );
-WRITE_HANDLER ( apple2_c03x_w );
+ READ8_HANDLER ( apple2_c03x_r );
+WRITE8_HANDLER ( apple2_c03x_w );
 
-READ_HANDLER ( apple2_c05x_r );
-WRITE_HANDLER ( apple2_c05x_w );
+ READ8_HANDLER ( apple2_c05x_r );
+WRITE8_HANDLER ( apple2_c05x_w );
 
-READ_HANDLER ( apple2_c06x_r );
+ READ8_HANDLER ( apple2_c06x_r );
 
-READ_HANDLER ( apple2_c07x_r );
-WRITE_HANDLER ( apple2_c07x_w );
+ READ8_HANDLER ( apple2_c07x_r );
+WRITE8_HANDLER ( apple2_c07x_w );
 
-READ_HANDLER ( apple2_c08x_r );
-WRITE_HANDLER ( apple2_c08x_w );
+ READ8_HANDLER ( apple2_c08x_r );
+WRITE8_HANDLER ( apple2_c08x_w );
 
-READ_HANDLER ( apple2_c0xx_slot1_r );
-READ_HANDLER ( apple2_c0xx_slot2_r );
-READ_HANDLER ( apple2_c0xx_slot3_r );
-READ_HANDLER ( apple2_c0xx_slot4_r );
-READ_HANDLER ( apple2_c0xx_slot5_r );
-READ_HANDLER ( apple2_c0xx_slot7_r );
-WRITE_HANDLER ( apple2_c0xx_slot1_w );
-WRITE_HANDLER ( apple2_c0xx_slot2_w );
-WRITE_HANDLER ( apple2_c0xx_slot3_w );
-WRITE_HANDLER ( apple2_c0xx_slot4_w );
-WRITE_HANDLER ( apple2_c0xx_slot5_w );
-WRITE_HANDLER ( apple2_c0xx_slot7_w );
-WRITE_HANDLER ( apple2_slot1_w );
-WRITE_HANDLER ( apple2_slot2_w );
-WRITE_HANDLER ( apple2_slot3_w );
-WRITE_HANDLER ( apple2_slot4_w );
-WRITE_HANDLER ( apple2_slot5_w );
-WRITE_HANDLER ( apple2_slot7_w );
+ READ8_HANDLER ( apple2_c0xx_slot1_r );
+ READ8_HANDLER ( apple2_c0xx_slot2_r );
+ READ8_HANDLER ( apple2_c0xx_slot3_r );
+ READ8_HANDLER ( apple2_c0xx_slot4_r );
+ READ8_HANDLER ( apple2_c0xx_slot5_r );
+ READ8_HANDLER ( apple2_c0xx_slot7_r );
+WRITE8_HANDLER ( apple2_c0xx_slot1_w );
+WRITE8_HANDLER ( apple2_c0xx_slot2_w );
+WRITE8_HANDLER ( apple2_c0xx_slot3_w );
+WRITE8_HANDLER ( apple2_c0xx_slot4_w );
+WRITE8_HANDLER ( apple2_c0xx_slot5_w );
+WRITE8_HANDLER ( apple2_c0xx_slot7_w );
+WRITE8_HANDLER ( apple2_slot1_w );
+WRITE8_HANDLER ( apple2_slot2_w );
+WRITE8_HANDLER ( apple2_slot3_w );
+WRITE8_HANDLER ( apple2_slot4_w );
+WRITE8_HANDLER ( apple2_slot5_w );
+WRITE8_HANDLER ( apple2_slot7_w );
 /*int  apple2_slot1_r(int offset);
 int  apple2_slot2_r(int offset);
 int  apple2_slot3_r(int offset);*/
-READ_HANDLER ( apple2_slot4_r );
+ READ8_HANDLER ( apple2_slot4_r );
 /*int  apple2_slot5_r(int offset);
 int  apple2_slot6_r(int offset);*/
-READ_HANDLER ( apple2_slot7_r );
+ READ8_HANDLER ( apple2_slot7_r );
 
 
 /* machine/ap_disk2.c */
 void apple2_slot6_init(void);
 DEVICE_LOAD ( apple2_floppy );
-READ_HANDLER ( apple2_c0xx_slot6_r );
-WRITE_HANDLER ( apple2_c0xx_slot6_w );
-WRITE_HANDLER ( apple2_slot6_w );
+ READ8_HANDLER ( apple2_c0xx_slot6_r );
+WRITE8_HANDLER ( apple2_c0xx_slot6_w );
+WRITE8_HANDLER ( apple2_slot6_w );
 
 
 /* vidhrdw/apple2.c */

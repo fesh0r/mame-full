@@ -21,7 +21,7 @@ static int power=1; /* simulates pressed cce when mess is started */
 */
 static UINT8 asic[4];
 
-WRITE_HANDLER(pc1403_asic_write)
+WRITE8_HANDLER(pc1403_asic_write)
 {
     asic[offset>>9]=data;
     switch( (offset>>9) ){
@@ -40,7 +40,7 @@ WRITE_HANDLER(pc1403_asic_write)
     }
 }
 
-READ_HANDLER(pc1403_asic_read)
+ READ8_HANDLER(pc1403_asic_read)
 {
     UINT8 data=asic[offset>>9];
     switch( (offset>>9) ){

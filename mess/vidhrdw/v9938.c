@@ -225,7 +225,7 @@ pixel3 = *(data+3) & 8 ? pal_ind16[*(data+3) >> 4] : pal_indYJK[ind | *(data+3) 
 
 */
 
-WRITE_HANDLER (v9938_palette_w)
+WRITE8_HANDLER (v9938_palette_w)
 	{
 	int indexp;
 
@@ -325,7 +325,7 @@ static int v9938_vram_read (int offset)
 		return vdp.vram[offset];
 	}
 
-WRITE_HANDLER (v9938_vram_w)
+WRITE8_HANDLER (v9938_vram_w)
 	{
 	int address;
 
@@ -354,7 +354,7 @@ WRITE_HANDLER (v9938_vram_w)
 		}
 	}
 
-READ_HANDLER (v9938_vram_r)
+ READ8_HANDLER (v9938_vram_r)
 	{
 	UINT8 ret;
 	int address;
@@ -389,7 +389,7 @@ READ_HANDLER (v9938_vram_r)
 	return ret;
 	}
 
-WRITE_HANDLER (v9938_command_w)
+WRITE8_HANDLER (v9938_command_w)
 	{
 	if (vdp.cmd_write_first)
 		{
@@ -521,7 +521,7 @@ void v9938_set_resolution (int i)
 
 ***************************************************************************/
 
-WRITE_HANDLER (v9938_register_w)
+WRITE8_HANDLER (v9938_register_w)
 {
 	int reg;
 
@@ -621,7 +621,7 @@ static void v9938_register_write (int reg, int data)
 	vdp.contReg[reg] = data;
 }
 
-READ_HANDLER (v9938_status_r)
+ READ8_HANDLER (v9938_status_r)
 	{
 	int reg, n;
 	UINT8 ret;

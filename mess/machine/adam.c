@@ -698,7 +698,7 @@ If you have the source listing or the Rom dump, please send us.
 	}
 }
 
-WRITE_HANDLER( common_writes_w )
+WRITE8_HANDLER( common_writes_w )
 {
     switch (adam_upper_memory)
     {
@@ -716,13 +716,13 @@ WRITE_HANDLER( common_writes_w )
     }
 }
 
-READ_HANDLER( adamnet_r )
+ READ8_HANDLER( adamnet_r )
 {  
     //printf("adam_net_data Read %2xh\n",adam_net_data);
     return adam_net_data;
 }
 
-WRITE_HANDLER( adamnet_w )
+WRITE8_HANDLER( adamnet_w )
 {
 	/*
 	If SmartWriter ROM is selected on lower Z80 memory 
@@ -762,12 +762,12 @@ WRITE_HANDLER( adamnet_w )
 	adam_net_data = data;
 }
 
-READ_HANDLER( adam_memory_map_controller_r )
+ READ8_HANDLER( adam_memory_map_controller_r )
 {
     return (adam_upper_memory << 2) + adam_lower_memory;
 }
 
-WRITE_HANDLER( adam_memory_map_controller_w )
+WRITE8_HANDLER( adam_memory_map_controller_w )
 {
     /*
     Writes to ports 0x60 to 0x7F set memory map:
@@ -794,28 +794,28 @@ WRITE_HANDLER( adam_memory_map_controller_w )
     //printf("Configurando la memoria, L:%02xh, U:%02xh\n", adam_lower_memory, adam_upper_memory);
 }
 
-READ_HANDLER(adam_video_r)
+ READ8_HANDLER(adam_video_r)
 {  
     return ((offset&0x01) ? TMS9928A_register_r(1) : TMS9928A_vram_r(0));
 }
 
-WRITE_HANDLER(adam_video_w)
+WRITE8_HANDLER(adam_video_w)
 {
     (offset&0x01) ? TMS9928A_register_w(1, data) : TMS9928A_vram_w(0, data);
 }
 
-READ_HANDLER( master6801_ram_r )
+ READ8_HANDLER( master6801_ram_r )
 {  
     /*printf("Offset %04Xh = %02Xh\n",offset ,memory_region(REGION_CPU1)[offset]);*/
     return memory_region(REGION_CPU1)[offset+0x4000];
 }
 
-WRITE_HANDLER( master6801_ram_w )
+WRITE8_HANDLER( master6801_ram_w )
 {
     memory_region(REGION_CPU1)[offset+0x4000] = data;
 }
 
-READ_HANDLER ( adam_paddle_r )
+ READ8_HANDLER ( adam_paddle_r )
 {
 
     if (!(input_port_6_r(0) & 0x0F)) return (0xFF); /* If no controllers enabled */
@@ -919,13 +919,13 @@ READ_HANDLER ( adam_paddle_r )
 }
 
 
-WRITE_HANDLER ( adam_paddle_toggle_off )
+WRITE8_HANDLER ( adam_paddle_toggle_off )
 {
 	joy_mode = 0;
     return;
 }
 
-WRITE_HANDLER ( adam_paddle_toggle_on )
+WRITE8_HANDLER ( adam_paddle_toggle_on )
 {
 	joy_mode = 1;
     return;

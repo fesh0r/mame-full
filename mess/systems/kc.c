@@ -27,7 +27,7 @@ static Z80_DaisyChain kc85_daisy_chain[] =
         {0,0,0,-1}
 };
 
-static READ_HANDLER(kc85_4_port_r)
+static  READ8_HANDLER(kc85_4_port_r)
 {
 	int port;
 
@@ -65,7 +65,7 @@ static READ_HANDLER(kc85_4_port_r)
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(kc85_4_port_w)
+static WRITE8_HANDLER(kc85_4_port_w)
 {
 	int port;
 
@@ -117,7 +117,7 @@ ADDRESS_MAP_START( writeport_kc85_4 , ADDRESS_SPACE_IO, 8)
 	AM_RANGE(0x0000, 0x0ffff) AM_WRITE( kc85_4_port_w)
 ADDRESS_MAP_END
 
-static READ_HANDLER(kc85_4d_port_r)
+static  READ8_HANDLER(kc85_4d_port_r)
 {
 	int port;
 
@@ -160,7 +160,7 @@ static READ_HANDLER(kc85_4d_port_r)
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(kc85_4d_port_w)
+static WRITE8_HANDLER(kc85_4d_port_w)
 {
 	int port;
 
@@ -250,7 +250,7 @@ ADDRESS_MAP_START( writemem_kc85_3 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE( MWA8_BANK8)
 ADDRESS_MAP_END
 
-static READ_HANDLER(kc85_3_port_r)
+static  READ8_HANDLER(kc85_3_port_r)
 {
 	int port;
 
@@ -278,7 +278,7 @@ static READ_HANDLER(kc85_3_port_r)
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(kc85_3_port_w)
+static WRITE8_HANDLER(kc85_3_port_w)
 {
 	int port;
 

@@ -83,12 +83,12 @@ fe4a1 call ff979 tape!!! test
  *		parallel input output
  *
  *************************************************************************/
-static READ_HANDLER  ( pc_ppi_porta_r );
-static READ_HANDLER  ( pc_ppi_portb_r );
-static READ_HANDLER  ( pc_ppi_portc_r );
-static WRITE_HANDLER ( pc_ppi_porta_w );
-static WRITE_HANDLER ( pc_ppi_portb_w );
-static WRITE_HANDLER ( pc_ppi_portc_w );
+static  READ8_HANDLER  ( pc_ppi_porta_r );
+static  READ8_HANDLER  ( pc_ppi_portb_r );
+static  READ8_HANDLER  ( pc_ppi_portc_r );
+static WRITE8_HANDLER ( pc_ppi_porta_w );
+static WRITE8_HANDLER ( pc_ppi_portb_w );
+static WRITE8_HANDLER ( pc_ppi_portc_w );
 
 /* PC-XT has a 8255 which is connected to keyboard and other
 status information */
@@ -109,7 +109,7 @@ static struct {
 	int keyboard_disabled;
 } pc_ppi={ 0 };
 
-READ_HANDLER (pc_ppi_porta_r)
+ READ8_HANDLER (pc_ppi_porta_r)
 {
 	int data;
 
@@ -135,7 +135,7 @@ READ_HANDLER (pc_ppi_porta_r)
     return data;
 }
 
-READ_HANDLER (pc_ppi_portb_r )
+ READ8_HANDLER (pc_ppi_portb_r )
 {
 	int data;
 
@@ -144,7 +144,7 @@ READ_HANDLER (pc_ppi_portb_r )
 	return data;
 }
 
-READ_HANDLER ( pc_ppi_portc_r )
+ READ8_HANDLER ( pc_ppi_portc_r )
 {
 	int data=0xff;
 
@@ -168,13 +168,13 @@ READ_HANDLER ( pc_ppi_portc_r )
 	return data;
 }
 
-WRITE_HANDLER ( pc_ppi_porta_w )
+WRITE8_HANDLER ( pc_ppi_porta_w )
 {
 	/* KB controller port A */
 	PIO_LOG(1,"PIO_A_w",("$%02x\n", data));
 }
 
-WRITE_HANDLER ( pc_ppi_portb_w )
+WRITE8_HANDLER ( pc_ppi_portb_w )
 {
 	/* KB controller port B */
 	pc_ppi.portc_switch_high = data & 0x08;
@@ -186,7 +186,7 @@ WRITE_HANDLER ( pc_ppi_portb_w )
 		pc_keyb_clear();
 }
 
-WRITE_HANDLER ( pc_ppi_portc_w )
+WRITE8_HANDLER ( pc_ppi_portc_w )
 {
 	/* KB controller port C */
 	PIO_LOG(1,"PIO_C_w",("$%02x\n", data));
@@ -229,7 +229,7 @@ void pc_rtc_init(void)
 	timer_adjust(pc_rtc.timer, 0, 0, 1.0);
 }
 
-READ_HANDLER( pc_rtc_r )
+ READ8_HANDLER( pc_rtc_r )
 {
 	int data;
 	switch (offset) {
@@ -240,7 +240,7 @@ READ_HANDLER( pc_rtc_r )
 	return data;
 }
 
-WRITE_HANDLER( pc_rtc_w )
+WRITE8_HANDLER( pc_rtc_w )
 {
 	logerror( "rtc write %.2x %.2x\n", offset, data);
 	switch(offset) {
@@ -268,7 +268,7 @@ static struct {
 	UINT8 reg[8];
 } pc_expansion={ { 0,0,0,0,0,0,1 } };
 
-WRITE_HANDLER ( pc_EXP_w )
+WRITE8_HANDLER ( pc_EXP_w )
 {
 	DBG_LOG(1,"EXP_unit_w",("%.2x $%02x\n", offset, data));
 	switch (offset) {
@@ -280,7 +280,7 @@ WRITE_HANDLER ( pc_EXP_w )
 	}
 }
 
-READ_HANDLER ( pc_EXP_r )
+ READ8_HANDLER ( pc_EXP_r )
 {
     int data;
 	UINT16 a;

@@ -153,7 +153,7 @@ static void acia_6551_receive_char(unsigned char ch)
 	acia_6551_refresh_ints();
 }
 
-READ_HANDLER(acia_6551_r)
+ READ8_HANDLER(acia_6551_r)
 {
 	unsigned char data;
 
@@ -226,7 +226,7 @@ static void acia_6551_update_data_form(void)
 }
 
 
-WRITE_HANDLER(acia_6551_w)
+WRITE8_HANDLER(acia_6551_w)
 {
 	logerror("6551 W %04x %02x\n",offset & 0x03, data);
 

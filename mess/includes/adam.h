@@ -21,19 +21,19 @@ DEVICE_LOAD( adam_cart );
 DEVICE_LOAD( adam_floppy );
 DEVICE_UNLOAD( adam_floppy );
 
-READ_HANDLER  ( adamnet_r );
-WRITE_HANDLER ( adamnet_w );
-READ_HANDLER  ( adam_paddle_r );
-WRITE_HANDLER ( adam_paddle_toggle_off );
-WRITE_HANDLER ( adam_paddle_toggle_on );
-WRITE_HANDLER ( adam_memory_map_controller_w );
-READ_HANDLER ( adam_memory_map_controller_r );
-READ_HANDLER ( adam_mem_r );
-WRITE_HANDLER ( adam_mem_w );
-READ_HANDLER ( adam_video_r );
-WRITE_HANDLER ( adam_video_w );
-WRITE_HANDLER ( common_writes_w );
-READ_HANDLER  ( master6801_ram_r );
-WRITE_HANDLER ( master6801_ram_w );
+ READ8_HANDLER  ( adamnet_r );
+WRITE8_HANDLER ( adamnet_w );
+ READ8_HANDLER  ( adam_paddle_r );
+WRITE8_HANDLER ( adam_paddle_toggle_off );
+WRITE8_HANDLER ( adam_paddle_toggle_on );
+WRITE8_HANDLER ( adam_memory_map_controller_w );
+ READ8_HANDLER ( adam_memory_map_controller_r );
+ READ8_HANDLER ( adam_mem_r );
+WRITE8_HANDLER ( adam_mem_w );
+ READ8_HANDLER ( adam_video_r );
+WRITE8_HANDLER ( adam_video_w );
+WRITE8_HANDLER ( common_writes_w );
+ READ8_HANDLER  ( master6801_ram_r );
+WRITE8_HANDLER ( master6801_ram_w );
 
 #endif /* ADAM_H */

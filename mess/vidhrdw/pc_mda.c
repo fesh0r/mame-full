@@ -232,7 +232,7 @@ static void hercules_config_w(int data)
  *		monochrome display adapter
  *
  *************************************************************************/
-WRITE_HANDLER ( pc_MDA_w )
+WRITE8_HANDLER ( pc_MDA_w )
 {
 	switch( offset )
 	{
@@ -251,7 +251,7 @@ WRITE_HANDLER ( pc_MDA_w )
 	}
 }
 
-READ_HANDLER ( pc_MDA_r )
+ READ8_HANDLER ( pc_MDA_r )
 {
 	int data = 0xff;
 	switch( offset )

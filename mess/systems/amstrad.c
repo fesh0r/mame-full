@@ -104,7 +104,7 @@ int amstrad_cycles_last_write = 0;
   - MULTIFACE -
   -------------*/
 static void multiface_rethink_memory(void);
-static WRITE_HANDLER(multiface_io_write);
+static WRITE8_HANDLER(multiface_io_write);
 static void multiface_init(void);
 static void multiface_stop(void);
 static int multiface_hardware_enabled(void);
@@ -153,13 +153,13 @@ static void update_psg(void)
 }
 
 /* Read/Write 8255 PPI port A (connected to AY-3-8912 databus) */
-static READ_HANDLER ( amstrad_ppi_porta_r )
+static  READ8_HANDLER ( amstrad_ppi_porta_r )
 {
 	update_psg();
   return ppi_port_inputs[amstrad_ppi_PortA];
 }
 	
-static WRITE_HANDLER ( amstrad_ppi_porta_w )
+static WRITE8_HANDLER ( amstrad_ppi_porta_w )
 {
   	ppi_port_outputs[amstrad_ppi_PortA] = data;
     update_psg();
@@ -190,7 +190,7 @@ Note:
   On the CPC this can be used by a expansion device to report it's presence. "1" = device connected, "0" = device not connected. This is not always used by all expansion devices. 
 */
 
-static READ_HANDLER (amstrad_ppi_portb_r)
+static  READ8_HANDLER (amstrad_ppi_portb_r)
 {
 	int data = 0;
 /* Set b7 with cassette tape input */
@@ -225,7 +225,7 @@ Bit Description  Usage
 /* previous_ppi_portc_w value */
 static int previous_ppi_portc_w;
 
-static WRITE_HANDLER ( amstrad_ppi_portc_w )
+static WRITE8_HANDLER ( amstrad_ppi_portc_w )
 {
 	int changed_data;
 
@@ -581,7 +581,7 @@ Expansion Peripherals Read/Write -   -   -   -   -   0   -   -   -   -   -   -  
 
 */
 
-static READ_HANDLER ( AmstradCPC_ReadPortHandler )
+static  READ8_HANDLER ( AmstradCPC_ReadPortHandler )
 {
 	unsigned char data = 0xFF;
 	unsigned int r1r0 = (unsigned int)((offset & 0x0300) >> 8);
@@ -662,7 +662,7 @@ The exception is the case where none of b7-b0 are reset (i.e. port &FBFF), which
 }
 
 /* Offset handler for write */
-static WRITE_HANDLER ( AmstradCPC_WritePortHandler )
+static WRITE8_HANDLER ( AmstradCPC_WritePortHandler )
 {
   if ((offset & (1<<15)) == 0) {
 /* if b15 = 0 and b14 = 1 : Gate-Array Write Selected*/
@@ -926,7 +926,7 @@ static void multiface_rethink_memory(void)
 }
 
 /* any io writes are passed through here */
-static WRITE_HANDLER(multiface_io_write)
+static WRITE8_HANDLER(multiface_io_write)
 {
 	/* multiface hardware enabled? */
 		if (!multiface_hardware_enabled())
@@ -1373,7 +1373,7 @@ When port B is defined as input (bit 7 of register 7 is set to "0"), a read of t
 */
 
 /* read PSG port A */
-static READ_HANDLER ( amstrad_psg_porta_read )
+static  READ8_HANDLER ( amstrad_psg_porta_read )
 {	
 /* Read CPC Keyboard
    If keyboard matrix line 11-14 are selected, the byte is always &ff.

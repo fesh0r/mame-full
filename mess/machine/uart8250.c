@@ -254,10 +254,10 @@ void uart8250_w(int n, int idx, int data)
 		uart[n].interface.refresh_connected(n);
 }
 
-WRITE_HANDLER ( uart8250_0_w ) { uart8250_w(0, offset, data); }
-WRITE_HANDLER ( uart8250_1_w ) { uart8250_w(1, offset, data); }
-WRITE_HANDLER ( uart8250_2_w ) { uart8250_w(2, offset, data); }
-WRITE_HANDLER ( uart8250_3_w ) { uart8250_w(3, offset, data); }
+WRITE8_HANDLER ( uart8250_0_w ) { uart8250_w(0, offset, data); }
+WRITE8_HANDLER ( uart8250_1_w ) { uart8250_w(1, offset, data); }
+WRITE8_HANDLER ( uart8250_2_w ) { uart8250_w(2, offset, data); }
+WRITE8_HANDLER ( uart8250_3_w ) { uart8250_w(3, offset, data); }
 
 int uart8250_r(int n, int idx)
 {
@@ -366,10 +366,10 @@ int uart8250_r(int n, int idx)
 	logerror("uart %d: read %.2x %.2x\n",n,idx,data);
     return data;
 }
-READ_HANDLER ( uart8250_0_r ) { return uart8250_r(0, offset); }
-READ_HANDLER ( uart8250_1_r ) { return uart8250_r(1, offset); }
-READ_HANDLER ( uart8250_2_r ) { return uart8250_r(2, offset); }
-READ_HANDLER ( uart8250_3_r ) { return uart8250_r(3, offset); }
+ READ8_HANDLER ( uart8250_0_r ) { return uart8250_r(0, offset); }
+ READ8_HANDLER ( uart8250_1_r ) { return uart8250_r(1, offset); }
+ READ8_HANDLER ( uart8250_2_r ) { return uart8250_r(2, offset); }
+ READ8_HANDLER ( uart8250_3_r ) { return uart8250_r(3, offset); }
 
 
 void uart8250_receive(int n, int data)

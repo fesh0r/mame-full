@@ -11,7 +11,7 @@
 #include "includes/studio2.h"
 #include "inputx.h"
 
-extern READ_HANDLER( cdp1861_video_enable_r );
+extern  READ8_HANDLER( cdp1861_video_enable_r );
 
 static UINT8 keylatch;
 
@@ -35,12 +35,12 @@ static PALETTE_INIT( studio2 )
 
 /* Read/Write Handlers */
 
-static WRITE_HANDLER( keylatch_w )
+static WRITE8_HANDLER( keylatch_w )
 {
 	keylatch = data & 0x0f;
 }
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	cpu_setbank(1, memory_region(REGION_CPU1));
 }

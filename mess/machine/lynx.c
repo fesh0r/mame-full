@@ -646,7 +646,7 @@ static void lynx_multiply(void)
 	}
 }
 
-READ_HANDLER(suzy_read)
+ READ8_HANDLER(suzy_read)
 {
 	UINT8 data=0, input;
 	switch (offset) {
@@ -707,7 +707,7 @@ READ_HANDLER(suzy_read)
 	return data;
 }
 
-WRITE_HANDLER(suzy_write)
+WRITE8_HANDLER(suzy_write)
 {
 	suzy.u.data[offset]=data;
 	switch(offset) {
@@ -964,7 +964,7 @@ static void lynx_uart_timer(int param)
     }
 }
 
-static READ_HANDLER(lynx_uart_r)
+static  READ8_HANDLER(lynx_uart_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -981,7 +981,7 @@ static READ_HANDLER(lynx_uart_r)
     return data;
 }
 
-static WRITE_HANDLER(lynx_uart_w)
+static WRITE8_HANDLER(lynx_uart_w)
 {
     logerror("uart write %.2x %.2x\n",offset,data);
     switch (offset) {
@@ -1001,7 +1001,7 @@ static WRITE_HANDLER(lynx_uart_w)
     }
 }
 
-READ_HANDLER(mikey_read)
+ READ8_HANDLER(mikey_read)
 {
     UINT8 data=0;
     switch (offset) {
@@ -1040,7 +1040,7 @@ READ_HANDLER(mikey_read)
     return data;
 }
 
-WRITE_HANDLER(mikey_write)
+WRITE8_HANDLER(mikey_write)
 {
 	switch (offset) {
 	case 0: case 1: case 2: case 3:
@@ -1121,7 +1121,7 @@ WRITE_HANDLER(mikey_write)
     }
 }
 
-WRITE_HANDLER( lynx_memory_config )
+WRITE8_HANDLER( lynx_memory_config )
 {
     /* bit 7: hispeed, uses page mode accesses (4 instead of 5 cycles )
      * when these are safe in the cpu */

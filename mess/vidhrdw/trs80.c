@@ -147,7 +147,7 @@ VIDEO_UPDATE( trs80 )
   Write to video ram
 ***************************************************************************/
 
-WRITE_HANDLER( trs80_videoram_w )
+WRITE8_HANDLER( trs80_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

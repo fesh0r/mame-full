@@ -94,7 +94,7 @@ static struct {
   254..257 r/w memory ? JIM asic? ram behaviour
 
 */
-extern WRITE_HANDLER ( europc_jim_w )
+extern WRITE8_HANDLER ( europc_jim_w )
 {
 	switch (offset) {
 	case 2:
@@ -129,7 +129,7 @@ extern WRITE_HANDLER ( europc_jim_w )
 	europc_jim.data[offset]=data;
 }
 
-extern READ_HANDLER ( europc_jim_r )
+extern  READ8_HANDLER ( europc_jim_r )
 {
 	int data=0;
 	switch(offset) {
@@ -140,7 +140,7 @@ extern READ_HANDLER ( europc_jim_r )
 	return data;
 }
 
-extern READ_HANDLER ( europc_jim2_r )
+extern  READ8_HANDLER ( europc_jim2_r )
 {
 	switch (europc_jim.state) {
 	case 0: europc_jim.state++; return 0;
@@ -163,7 +163,7 @@ static struct {
 	int port61; // bit 0,1 must be 0 for startup; reset?
 } europc_pio= { 0 };
 
-WRITE_HANDLER( europc_pio_w )
+WRITE8_HANDLER( europc_pio_w )
 {
 	switch (offset) {
 	case 1:
@@ -179,7 +179,7 @@ WRITE_HANDLER( europc_pio_w )
 }
 
 
-READ_HANDLER( europc_pio_r )
+ READ8_HANDLER( europc_pio_r )
 {
 	int data=0;
 	switch (offset) {
@@ -286,7 +286,7 @@ void europc_rtc_init(void)
 	timer_adjust(europc_rtc.timer, 0, 0, 1.0);
 }
 
-READ_HANDLER( europc_rtc_r )
+ READ8_HANDLER( europc_rtc_r )
 {
 	int data=0;
 	switch (europc_rtc.state) {
@@ -303,7 +303,7 @@ READ_HANDLER( europc_rtc_r )
 	return data;
 }
 
-WRITE_HANDLER( europc_rtc_w )
+WRITE8_HANDLER( europc_rtc_w )
 {
 	switch (europc_rtc.state) {
 	case 0:

@@ -423,7 +423,7 @@ static int y_screen_offset=-8;
 
 
 
-WRITE_HANDLER ( videoULA_w )
+WRITE8_HANDLER ( videoULA_w )
 {
 
 	int tpal,tcol;
@@ -688,7 +688,7 @@ BBC6845= {
  * memory interface to BBC's 6845
  ************************************************************************/
 
-WRITE_HANDLER ( BBC_6845_w )
+WRITE8_HANDLER ( BBC_6845_w )
 {
 	switch (offset&1)
 	{
@@ -704,7 +704,7 @@ WRITE_HANDLER ( BBC_6845_w )
 	video_refresh=1;
 }
 
-READ_HANDLER (BBC_6845_r)
+ READ8_HANDLER (BBC_6845_r)
 {
 	int retval=0;
 

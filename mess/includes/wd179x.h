@@ -50,18 +50,18 @@ void wd179x_set_drive(UINT8);		/* set drive wd179x is accessing */
 void wd179x_set_side(UINT8);		/* set side wd179x is accessing */
 void wd179x_set_density(DENSITY);	/* set density */
 
-READ_HANDLER( wd179x_status_r );
-READ_HANDLER( wd179x_track_r );
-READ_HANDLER( wd179x_sector_r );
-READ_HANDLER( wd179x_data_r );
+ READ8_HANDLER( wd179x_status_r );
+ READ8_HANDLER( wd179x_track_r );
+ READ8_HANDLER( wd179x_sector_r );
+ READ8_HANDLER( wd179x_data_r );
 
-WRITE_HANDLER( wd179x_command_w );
-WRITE_HANDLER( wd179x_track_w );
-WRITE_HANDLER( wd179x_sector_w );
-WRITE_HANDLER( wd179x_data_w );
+WRITE8_HANDLER( wd179x_command_w );
+WRITE8_HANDLER( wd179x_track_w );
+WRITE8_HANDLER( wd179x_sector_w );
+WRITE8_HANDLER( wd179x_data_w );
 
-READ_HANDLER( wd179x_r );
-WRITE_HANDLER( wd179x_w );
+ READ8_HANDLER( wd179x_r );
+WRITE8_HANDLER( wd179x_w );
 
 #endif /* WD179X_H */
 

@@ -270,48 +270,48 @@ DEVICE_UNLOAD( jupiter_tap )
 	}
 }
 
-READ_HANDLER ( jupiter_port_fefe_r )
+ READ8_HANDLER ( jupiter_port_fefe_r )
 {
 	return (readinputport (0));
 }
 
-READ_HANDLER ( jupiter_port_fdfe_r )
+ READ8_HANDLER ( jupiter_port_fdfe_r )
 {
 	return (readinputport (1));
 }
 
-READ_HANDLER ( jupiter_port_fbfe_r )
+ READ8_HANDLER ( jupiter_port_fbfe_r )
 {
 	return (readinputport (2));
 }
 
-READ_HANDLER ( jupiter_port_f7fe_r )
+ READ8_HANDLER ( jupiter_port_f7fe_r )
 {
 	return (readinputport (3));
 }
 
-READ_HANDLER ( jupiter_port_effe_r )
+ READ8_HANDLER ( jupiter_port_effe_r )
 {
 	return (readinputport (4));
 }
 
-READ_HANDLER ( jupiter_port_dffe_r )
+ READ8_HANDLER ( jupiter_port_dffe_r )
 {
 	return (readinputport (5));
 }
 
-READ_HANDLER ( jupiter_port_bffe_r )
+ READ8_HANDLER ( jupiter_port_bffe_r )
 {
 	return (readinputport (6));
 }
 
-READ_HANDLER ( jupiter_port_7ffe_r )
+ READ8_HANDLER ( jupiter_port_7ffe_r )
 {
 	speaker_level_w(0,0);
 	return (readinputport (7));
 }
 
-WRITE_HANDLER ( jupiter_port_fe_w )
+WRITE8_HANDLER ( jupiter_port_fe_w )
 {
 	speaker_level_w(0,1);
 }

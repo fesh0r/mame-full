@@ -12,15 +12,15 @@ extern DRIVER_INIT( pc1403 );
 extern MACHINE_INIT( pc1403 );
 extern MACHINE_STOP( pc1403 );
 
-READ_HANDLER(pc1403_asic_read);
-WRITE_HANDLER(pc1403_asic_write);
+ READ8_HANDLER(pc1403_asic_read);
+WRITE8_HANDLER(pc1403_asic_write);
 
 /* in vidhrdw/pocketc.c */
 extern VIDEO_START( pc1403 );
 extern VIDEO_UPDATE( pc1403 );
 
-extern READ_HANDLER(pc1403_lcd_read);
-extern WRITE_HANDLER(pc1403_lcd_write);
+extern  READ8_HANDLER(pc1403_lcd_read);
+extern WRITE8_HANDLER(pc1403_lcd_write);
 
 /* in systems/pocketc.c */
 #define KEY_SMALL input_port_1_r(0)&0x40

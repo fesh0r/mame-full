@@ -748,7 +748,7 @@ static void tape_get_bit(void)
 #define FF_BGD2 0x80		   /* background color select 2 */
 #define FF_BGD	(FF_BGD0 | FF_BGD1 | FF_BGD2)
 
-WRITE_HANDLER( cgenie_port_ff_w )
+WRITE8_HANDLER( cgenie_port_ff_w )
 {
 	int port_ff_changed = port_ff ^ data;
 
@@ -834,7 +834,7 @@ WRITE_HANDLER( cgenie_port_ff_w )
 	port_ff = data;
 }
 
-READ_HANDLER( cgenie_port_ff_r )
+ READ8_HANDLER( cgenie_port_ff_r )
 {
 	/* virtual tape ? */
 
@@ -860,7 +860,7 @@ static UINT8 psg_b_out = 0x00;
 static UINT8 psg_a_inp = 0x00;
 static UINT8 psg_b_inp = 0x00;
 
-READ_HANDLER( cgenie_psg_port_a_r )
+ READ8_HANDLER( cgenie_psg_port_a_r )
 {
 	return psg_a_inp;
 }
@@ -900,17 +900,17 @@ data8_t cgenie_psg_port_b_r(offs_t port)
 	return psg_b_inp;
 }
 
-WRITE_HANDLER( cgenie_psg_port_a_w )
+WRITE8_HANDLER( cgenie_psg_port_a_w )
 {
 	psg_a_out = data;
 }
 
-WRITE_HANDLER( cgenie_psg_port_b_w )
+WRITE8_HANDLER( cgenie_psg_port_b_w )
 {
 	psg_b_out = data;
 }
 
-READ_HANDLER( cgenie_status_r )
+ READ8_HANDLER( cgenie_status_r )
 {
 	/* If the floppy isn't emulated, return 0 */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -918,7 +918,7 @@ READ_HANDLER( cgenie_status_r )
 	return wd179x_status_r(offset);
 }
 
-READ_HANDLER( cgenie_track_r )
+ READ8_HANDLER( cgenie_track_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -926,7 +926,7 @@ READ_HANDLER( cgenie_track_r )
 	return wd179x_track_r(offset);
 }
 
-READ_HANDLER( cgenie_sector_r )
+ READ8_HANDLER( cgenie_sector_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -934,7 +934,7 @@ READ_HANDLER( cgenie_sector_r )
 	return wd179x_sector_r(offset);
 }
 
-READ_HANDLER(cgenie_data_r )
+ READ8_HANDLER(cgenie_data_r )
 {
 	/* If the floppy isn't emulated, return 0xff */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -942,7 +942,7 @@ READ_HANDLER(cgenie_data_r )
 	return wd179x_data_r(offset);
 }
 
-WRITE_HANDLER( cgenie_command_w )
+WRITE8_HANDLER( cgenie_command_w )
 {
 	/* If the floppy isn't emulated, return immediately */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -950,7 +950,7 @@ WRITE_HANDLER( cgenie_command_w )
 	wd179x_command_w(offset, data);
 }
 
-WRITE_HANDLER( cgenie_track_w )
+WRITE8_HANDLER( cgenie_track_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -958,7 +958,7 @@ WRITE_HANDLER( cgenie_track_w )
 	wd179x_track_w(offset, data);
 }
 
-WRITE_HANDLER( cgenie_sector_w )
+WRITE8_HANDLER( cgenie_sector_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -966,7 +966,7 @@ WRITE_HANDLER( cgenie_sector_w )
 	wd179x_sector_w(offset, data);
 }
 
-WRITE_HANDLER( cgenie_data_w )
+WRITE8_HANDLER( cgenie_data_w )
 {
 	/* If the floppy isn't emulated, ignore the write */
 	if( (readinputport(0) & 0x80) == 0 )
@@ -974,7 +974,7 @@ WRITE_HANDLER( cgenie_data_w )
 	wd179x_data_w(offset, data);
 }
 
-READ_HANDLER( cgenie_irq_status_r )
+ READ8_HANDLER( cgenie_irq_status_r )
 {
 int result = irq_status;
 
@@ -1017,7 +1017,7 @@ void cgenie_fdc_callback(int event)
 	}
 }
 
-WRITE_HANDLER( cgenie_motor_w )
+WRITE8_HANDLER( cgenie_motor_w )
 {
 	UINT8 drive = 255;
 
@@ -1048,7 +1048,7 @@ WRITE_HANDLER( cgenie_motor_w )
 /*************************************
  *		Keyboard					 *
  *************************************/
-READ_HANDLER( cgenie_keyboard_r )
+ READ8_HANDLER( cgenie_keyboard_r )
 {
 	int result = 0;
 
@@ -1081,7 +1081,7 @@ int cgenie_videoram_r( int offset )
 	return videoram[offset];
 }
 
-WRITE_HANDLER( cgenie_videoram_w )
+WRITE8_HANDLER( cgenie_videoram_w )
 {
 	/* write to video RAM */
 	if( data == videoram[offset] )
@@ -1090,12 +1090,12 @@ WRITE_HANDLER( cgenie_videoram_w )
 	dirtybuffer[offset] = 1;
 }
 
-READ_HANDLER( cgenie_colorram_r )
+ READ8_HANDLER( cgenie_colorram_r )
 {
 	return colorram[offset] | 0xf0;
 }
 
-WRITE_HANDLER( cgenie_colorram_w )
+WRITE8_HANDLER( cgenie_colorram_w )
 {
 	int a;
 
@@ -1114,12 +1114,12 @@ WRITE_HANDLER( cgenie_colorram_w )
 		dirtybuffer[a] = 1;
 }
 
-READ_HANDLER( cgenie_fontram_r )
+ READ8_HANDLER( cgenie_fontram_r )
 {
 	return cgenie_fontram[offset];
 }
 
-WRITE_HANDLER( cgenie_fontram_w )
+WRITE8_HANDLER( cgenie_fontram_w )
 {
 	UINT8 *dp;
 	int code;

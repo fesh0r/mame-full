@@ -30,6 +30,6 @@ void sam_init(void);
 void sam_config(const struct sam6883_interface *intf);
 void sam_reset(void);
 
-WRITE_HANDLER(sam_w);
+WRITE8_HANDLER(sam_w);
 
 void sam_setstate(UINT16 state, UINT16 mask);

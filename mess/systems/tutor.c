@@ -131,7 +131,7 @@ static void tutor_vblank_interrupt(void)
 	mapped to both a keyboard key and a joystick switch.
 */
 
-static READ_HANDLER(read_keyboard)
+static  READ8_HANDLER(read_keyboard)
 {
 	return readinputport(offset);
 }
@@ -162,7 +162,7 @@ static DEVICE_UNLOAD(tutor_cart)
 	Cartridge may also define a boot ROM at base >0000 (see below).
 */
 
-static READ_HANDLER(tutor_mapper_r)
+static  READ8_HANDLER(tutor_mapper_r)
 {
 	int reply;
 
@@ -182,7 +182,7 @@ static READ_HANDLER(tutor_mapper_r)
 	return reply;
 }
 
-static WRITE_HANDLER(tutor_mapper_w)
+static WRITE8_HANDLER(tutor_mapper_w)
 {
 	switch (offset)
 	{
@@ -235,13 +235,13 @@ static void tape_interrupt_handler(int dummy)
 }
 
 /* CRU handler */
-static READ_HANDLER(tutor_cassette_r)
+static  READ8_HANDLER(tutor_cassette_r)
 {
 	return (device_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0) ? 1 : 0;
 }
 
 /* memory handler */
-static WRITE_HANDLER(tutor_cassette_w)
+static WRITE8_HANDLER(tutor_cassette_w)
 {
 	if (offset & /*0x1f*/0x1e)
 		logerror("unknown port in %s %d\n", __FILE__, __LINE__);
@@ -296,7 +296,7 @@ static DEVICE_UNLOAD(tutor_printer)
 }
 
 /* memory handlers */
-static READ_HANDLER(tutor_printer_r)
+static  READ8_HANDLER(tutor_printer_r)
 {
 	int reply;
 
@@ -317,7 +317,7 @@ static READ_HANDLER(tutor_printer_r)
 	return reply;
 }
 
-static WRITE_HANDLER(tutor_printer_w)
+static WRITE8_HANDLER(tutor_printer_w)
 {
 	switch (offset)
 	{
@@ -377,7 +377,7 @@ static WRITE_HANDLER(tutor_printer_w)
 	@>f000-@>f0fb: tms9995 internal RAM 2
 */
 
-/*static WRITE_HANDLER(test_w)
+/*static WRITE8_HANDLER(test_w)
 {
 	switch (offset)
 	{

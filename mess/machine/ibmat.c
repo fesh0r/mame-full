@@ -407,7 +407,7 @@ READ8_HANDLER(at_8042_8_r)
 
 
 
-WRITE_HANDLER(at_8042_8_w)
+WRITE8_HANDLER(at_8042_8_w)
 {
 	switch (offset) {
 	case 0:

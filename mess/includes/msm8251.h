@@ -64,13 +64,13 @@ struct msm8251
 and reading status and writing control share the same address */
 
 /* read data register */
-READ_HANDLER(msm8251_data_r);
+ READ8_HANDLER(msm8251_data_r);
 /* read status register */
-READ_HANDLER(msm8251_status_r);
+ READ8_HANDLER(msm8251_status_r);
 /* write data register */
-WRITE_HANDLER(msm8251_data_w);
+WRITE8_HANDLER(msm8251_data_w);
 /* write control word */
-WRITE_HANDLER(msm8251_control_w);
+WRITE8_HANDLER(msm8251_control_w);
 
 
 /* init chip, set interface, and do main setup */

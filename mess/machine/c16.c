@@ -83,7 +83,7 @@ static int c16_rom_load(mess_image *img);
   p6 serial clock in
   p7 serial data in, serial bus 5
  */
-WRITE_HANDLER(c16_m7501_port_w)
+WRITE8_HANDLER(c16_m7501_port_w)
 {
 	int dat, atn, clk;
 
@@ -106,7 +106,7 @@ WRITE_HANDLER(c16_m7501_port_w)
 	vc20_tape_motor (data & 8);
 }
 
-READ_HANDLER(c16_m7501_port_r)
+ READ8_HANDLER(c16_m7501_port_r)
 {
 	if (offset)
 	{
@@ -168,7 +168,7 @@ static void c16_bankswitch (void)
 	cpu_setbank (4, c16_memory + 0x17c00);
 }
 
-WRITE_HANDLER(c16_switch_to_rom)
+WRITE8_HANDLER(c16_switch_to_rom)
 {
 	ted7360_rom = 1;
 	c16_bankswitch ();
@@ -187,7 +187,7 @@ WRITE_HANDLER(c16_switch_to_rom)
  * 0  1  plus4 hi
  * 1  0  c1 high
  * 1  1  c2 high */
-WRITE_HANDLER(c16_select_roms)
+WRITE8_HANDLER(c16_select_roms)
 {
 	lowrom = offset & 3;
 	highrom = (offset & 0xc) >> 2;
@@ -195,7 +195,7 @@ WRITE_HANDLER(c16_select_roms)
 		c16_bankswitch ();
 }
 
-WRITE_HANDLER(c16_switch_to_ram)
+WRITE8_HANDLER(c16_switch_to_ram)
 {
 	ted7360_rom = 0;
 	switch (DIPMEMORY)
@@ -221,7 +221,7 @@ WRITE_HANDLER(c16_switch_to_ram)
 	}
 }
 
-WRITE_HANDLER(plus4_switch_to_ram)
+WRITE8_HANDLER(plus4_switch_to_ram)
 {
 	ted7360_rom = 0;
 	cpu_setbank (2, c16_memory + 0x8000);
@@ -274,12 +274,12 @@ int c16_read_keyboard (int databus)
  * output low means keyboard line selected
  * keyboard line is then read into the ted7360 latch
  */
-WRITE_HANDLER(c16_6529_port_w)
+WRITE8_HANDLER(c16_6529_port_w)
 {
 	port6529 = data;
 }
 
-READ_HANDLER(c16_6529_port_r)
+ READ8_HANDLER(c16_6529_port_r)
 {
 	return port6529 & (c16_read_keyboard (0xff /*databus */ ) | (port6529 ^ 0xff));
 }
@@ -294,11 +294,11 @@ READ_HANDLER(c16_6529_port_r)
  * p6 Userport j
  * p7 Userport f
  */
-WRITE_HANDLER(plus4_6529_port_w)
+WRITE8_HANDLER(plus4_6529_port_w)
 {
 }
 
-READ_HANDLER(plus4_6529_port_r)
+ READ8_HANDLER(plus4_6529_port_r)
 {
 	int data = 0;
 
@@ -307,7 +307,7 @@ READ_HANDLER(plus4_6529_port_r)
 	return data;
 }
 
-READ_HANDLER(c16_fd1x_r)
+ READ8_HANDLER(c16_fd1x_r)
 {
 	int data = 0;
 
@@ -353,14 +353,14 @@ READ_HANDLER(c16_fd1x_r)
    1111 19200
  control register
   */
-WRITE_HANDLER(c16_6551_port_w)
+WRITE8_HANDLER(c16_6551_port_w)
 {
 	offset &= 3;
 	DBG_LOG (3, "6551", ("port write %.2x %.2x\n", offset, data));
 	port6529 = data;
 }
 
-READ_HANDLER(c16_6551_port_r)
+ READ8_HANDLER(c16_6551_port_r)
 {
 	int data = 0;
 
@@ -369,42 +369,42 @@ READ_HANDLER(c16_6551_port_r)
 	return data;
 }
 
-static WRITE_HANDLER(c16_write_3f20)
+static WRITE8_HANDLER(c16_write_3f20)
 {
 	c16_memory[0x3f20 + offset] = data;
 }
 
-static WRITE_HANDLER(c16_write_3f40)
+static WRITE8_HANDLER(c16_write_3f40)
 {
 	c16_memory[0x3f40 + offset] = data;
 }
 
-static WRITE_HANDLER(c16_write_7f20)
+static WRITE8_HANDLER(c16_write_7f20)
 {
 	c16_memory[0x7f20 + offset] = data;
 }
 
-static WRITE_HANDLER(c16_write_7f40)
+static WRITE8_HANDLER(c16_write_7f40)
 {
 	c16_memory[0x7f40 + offset] = data;
 }
 
-static READ_HANDLER(ted7360_dma_read_16k)
+static  READ8_HANDLER(ted7360_dma_read_16k)
 {
 	return c16_memory[offset & 0x3fff];
 }
 
-static READ_HANDLER(ted7360_dma_read_32k)
+static  READ8_HANDLER(ted7360_dma_read_32k)
 {
 	return c16_memory[offset & 0x7fff];
 }
 
-static READ_HANDLER(ted7360_dma_read)
+static  READ8_HANDLER(ted7360_dma_read)
 {
 	return c16_memory[offset];
 }
 
-static READ_HANDLER(ted7360_dma_read_rom)
+static  READ8_HANDLER(ted7360_dma_read_rom)
 {
 	/* should read real c16 system bus from 0xfd00 -ff1f */
 	if (offset >= 0xc000)
@@ -533,7 +533,7 @@ void c16_driver_shutdown (void)
 	cbm_drive_close ();
 }
 
-static WRITE_HANDLER(c16_sidcart_16k)
+static WRITE8_HANDLER(c16_sidcart_16k)
 {
 	c16_memory[0x1400+offset]=data;
 	c16_memory[0x5400+offset]=data;
@@ -542,14 +542,14 @@ static WRITE_HANDLER(c16_sidcart_16k)
 	sid6581_0_port_w(offset,data);
 }
 
-static WRITE_HANDLER(c16_sidcart_32k)
+static WRITE8_HANDLER(c16_sidcart_32k)
 {
 	c16_memory[0x5400+offset]=data;
 	c16_memory[0xd400+offset]=data;
 	sid6581_0_port_w(offset,data);
 }
 
-static WRITE_HANDLER(c16_sidcart_64k)
+static WRITE8_HANDLER(c16_sidcart_64k)
 {
 	c16_memory[0xd400+offset]=data;
 	sid6581_0_port_w(offset,data);

@@ -115,7 +115,7 @@ enum
 };
 
 static void hsgpl_cru_w(int offset, int data);
-static READ_HANDLER(hsgpl_dsr_r);
+static  READ8_HANDLER(hsgpl_dsr_r);
 
 static const ti99_peb_card_handlers_t hsgpl_handlers =
 {
@@ -320,7 +320,7 @@ static void hsgpl_cru_w(int offset, int data)
 /*
 	read a byte in hsgpl DSR space
 */
-static READ_HANDLER(hsgpl_dsr_r)
+static  READ8_HANDLER(hsgpl_dsr_r)
 {
 	int dsr_page = (hsgpl.cru_reg >> cr_pg_shift) & cr_pg_mask;
 

@@ -101,7 +101,7 @@ static struct {
 	UINT8 reg[0x100];
 } pc1251_lcd;
 
-READ_HANDLER(pc1251_lcd_read)
+ READ8_HANDLER(pc1251_lcd_read)
 {
 	int data;
 	data=pc1251_lcd.reg[offset&0xff];
@@ -109,7 +109,7 @@ READ_HANDLER(pc1251_lcd_read)
 	return data;
 }
 
-WRITE_HANDLER(pc1251_lcd_write)
+WRITE8_HANDLER(pc1251_lcd_write)
 {
 	logerror("pc1251 write %.3x %.2x\n",offset,data);
 	pc1251_lcd.reg[offset&0xff]=data;

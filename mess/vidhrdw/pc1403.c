@@ -58,13 +58,13 @@ VIDEO_START( pc1403 )
 }
 
 
-READ_HANDLER(pc1403_lcd_read)
+ READ8_HANDLER(pc1403_lcd_read)
 {
     UINT8 data=pc1403_lcd.reg[offset];
     return data;
 }
 
-WRITE_HANDLER(pc1403_lcd_write)
+WRITE8_HANDLER(pc1403_lcd_write)
 {
     pc1403_lcd.reg[offset]=data;
 }

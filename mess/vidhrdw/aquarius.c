@@ -42,7 +42,7 @@ VIDEO_UPDATE( aquarius )
 	tilemap_draw(bitmap, NULL, aquarius_tilemap, 0, 0);
 }
 
-WRITE_HANDLER( aquarius_videoram_w )
+WRITE8_HANDLER( aquarius_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

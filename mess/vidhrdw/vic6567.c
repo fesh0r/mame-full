@@ -334,7 +334,7 @@ INTERRUPT_GEN( vic2_frame_interrupt )
 {
 }
 
-WRITE_HANDLER ( vic2_port_w )
+WRITE8_HANDLER ( vic2_port_w )
 {
 	DBG_LOG (2, "vic write", ("%.2x:%.2x\n", offset, data));
 	offset &= 0x3f;
@@ -561,7 +561,7 @@ WRITE_HANDLER ( vic2_port_w )
 	}
 }
 
-READ_HANDLER ( vic2_port_r )
+ READ8_HANDLER ( vic2_port_r )
 {
 	int val = 0;
 	offset &= 0x3f;

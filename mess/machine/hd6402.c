@@ -229,13 +229,13 @@ void	hd6402_set_input(int mask, int data)
 
 /* low on /TBRL transfers data into transmit register */
 /* transmit buffer write */
-WRITE_HANDLER(hd6402_data_w)
+WRITE8_HANDLER(hd6402_data_w)
 {
 //	uart.transmit_char = data;
 }
 
 /* receive buffer read */
-READ_HANDLER(hd6402_data_r)
+ READ8_HANDLER(hd6402_data_r)
 {
 
 	return uart.received_char;

@@ -138,7 +138,7 @@ static struct SOUNDC snd_control;
 
 void gameboy_update(int param, INT16 **buffer, int length);
 
-WRITE_HANDLER( gb_sound_w )
+WRITE8_HANDLER( gb_sound_w )
 {
 	offset += 0xFF10;
 

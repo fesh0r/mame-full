@@ -1,6 +1,6 @@
 /***************************************************************************
 
-  $Id: pc8801.c,v 1.28 2004/03/21 23:05:14 npwoods Exp $
+  $Id: pc8801.c,v 1.29 2004/06/12 21:04:47 npwoods Exp $
 
 ***************************************************************************/
 
@@ -392,7 +392,7 @@ ADDRESS_MAP_START( pc8801_writemem , ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE( 0xf000, 0xffff) AM_WRITE( MWA8_BANK6 )
 ADDRESS_MAP_END
 
-static READ_HANDLER ( pc8801_unknown_in )
+static  READ8_HANDLER ( pc8801_unknown_in )
 {
   logerror ("pc8801 : read from unknown port 0x%.2x.\n",offset);
   return 0xff;
@@ -450,7 +450,7 @@ ADDRESS_MAP_START( pc88sr_readport , ADDRESS_SPACE_IO, 8)
     AM_RANGE( 0x00, 0xff) AM_READ( pc8801_unknown_in )
 ADDRESS_MAP_END
 
-static WRITE_HANDLER ( pc8801_unknown_out )
+static WRITE8_HANDLER ( pc8801_unknown_out )
 {
   logerror ("pc8801 : write 0x%.2x to unknown port 0x%.2x.\n",data,offset);
 }
@@ -560,7 +560,7 @@ static struct beep_interface pc8801_beep_interface =
         { 10 }
 };
 
-static READ_HANDLER(opn_dummy_input){return 0xff;}
+static  READ8_HANDLER(opn_dummy_input){return 0xff;}
 
 static struct YM2203interface ym2203_interface =
 {

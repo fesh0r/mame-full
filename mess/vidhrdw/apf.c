@@ -35,12 +35,12 @@ static void apf_dump_ram(void)
 #endif
 
 
-READ_HANDLER(apf_video_r)
+ READ8_HANDLER(apf_video_r)
 {
 	return apf_video_ram[offset];
 }
 
-WRITE_HANDLER(apf_video_w)
+WRITE8_HANDLER(apf_video_w)
 {
 	apf_video_ram[offset] = data;
 	m6847_touch_vram(offset);
@@ -50,7 +50,7 @@ WRITE_HANDLER(apf_video_w)
 
 extern unsigned int apf_ints;
 
-static WRITE_HANDLER(apf_vsync_int)
+static WRITE8_HANDLER(apf_vsync_int)
 {
 	if (data!=0)
 	{

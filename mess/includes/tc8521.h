@@ -2,8 +2,8 @@
 
 #include "driver.h"
 
-READ_HANDLER(tc8521_r);
-WRITE_HANDLER(tc8521_w);
+ READ8_HANDLER(tc8521_r);
+WRITE8_HANDLER(tc8521_w);
 
 struct tc8521_interface
 {

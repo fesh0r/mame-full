@@ -75,12 +75,12 @@ static ADDRESS_MAP_START( coleco_writemem , ADDRESS_SPACE_PROGRAM, 8)
     AM_RANGE( 0x8000, 0xFFFF) AM_WRITE( MWA8_ROM ) /* Cartridge (32k max)*/
 ADDRESS_MAP_END
 
-READ_HANDLER(coleco_mem_r)
+ READ8_HANDLER(coleco_mem_r)
 {
     return memory_region(REGION_CPU1)[0x6000+(offset&0x3ff)];
 }
 
-WRITE_HANDLER(coleco_mem_w)
+WRITE8_HANDLER(coleco_mem_w)
 {
     memory_region(REGION_CPU1)[0x6000+(offset&0x3ff)] = data;
 }
@@ -97,12 +97,12 @@ static ADDRESS_MAP_START (coleco_writeport, ADDRESS_SPACE_IO, 8)
     AM_RANGE( 0xE0, 0xFF) AM_WRITE( SN76496_0_w )
 ADDRESS_MAP_END
 
-READ_HANDLER(coleco_video_r)
+ READ8_HANDLER(coleco_video_r)
 {  
     return ((offset&0x01) ? TMS9928A_register_r(1) : TMS9928A_vram_r(0));
 }
 
-WRITE_HANDLER(coleco_video_w)
+WRITE8_HANDLER(coleco_video_w)
 {
     (offset&0x01) ? TMS9928A_register_w(1, data) : TMS9928A_vram_w(0, data);
 }

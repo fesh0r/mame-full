@@ -147,17 +147,17 @@ static void kc85_disc_hw_ctc_interrupt(int state)
 }
 #endif
 
-READ_HANDLER(kc85_disk_hw_ctc_r)
+ READ8_HANDLER(kc85_disk_hw_ctc_r)
 {
 	return z80ctc_1_r(offset);
 }
 
-WRITE_HANDLER(kc85_disk_hw_ctc_w)
+WRITE8_HANDLER(kc85_disk_hw_ctc_w)
 {
 	z80ctc_1_w(offset,data);
 }
 
-WRITE_HANDLER(kc85_disc_interface_ram_w)
+WRITE8_HANDLER(kc85_disc_interface_ram_w)
 {
 	int addr;
 
@@ -171,7 +171,7 @@ WRITE_HANDLER(kc85_disc_interface_ram_w)
 	program_write_byte(addr|0x0f000,data);
 }
 
-READ_HANDLER(kc85_disc_interface_ram_r)
+ READ8_HANDLER(kc85_disc_interface_ram_r)
 {
 	int addr;
 
@@ -184,17 +184,17 @@ READ_HANDLER(kc85_disc_interface_ram_r)
 }
 
 /* 4-bit latch used to reset disc interface etc */
-WRITE_HANDLER(kc85_disc_interface_latch_w)
+WRITE8_HANDLER(kc85_disc_interface_latch_w)
 {
 	logerror("kc85 disc interface latch w\n");
 }
 
-READ_HANDLER(kc85_disc_hw_input_gate_r)
+ READ8_HANDLER(kc85_disc_hw_input_gate_r)
 {
 	return kc85_disc_hw_input_gate;
 }
 
-WRITE_HANDLER(kc85_disc_hw_terminal_count_w)
+WRITE8_HANDLER(kc85_disc_hw_terminal_count_w)
 {
 	logerror("kc85 disc hw tc w: %02x\n",data);
 	nec765_set_tc_state(data & 0x01);
@@ -318,7 +318,7 @@ static struct kc85_module	*modules[256>>2];
 
 /* bus drivers 4 */
 
-READ_HANDLER(kc85_module_r)
+ READ8_HANDLER(kc85_module_r)
 {
 	int port_upper;
 	int module_index;
@@ -344,7 +344,7 @@ READ_HANDLER(kc85_module_r)
 	return 0x0ff;
 }
 
-WRITE_HANDLER(kc85_module_w)
+WRITE8_HANDLER(kc85_module_w)
 {
 	logerror("kc85 module w: %04x %02x\n",offset,data);
 }
@@ -1391,7 +1391,7 @@ bit 2: TONE 2
 bit 1: TONE 1
 bit 0: TRUCK */
 
-WRITE_HANDLER ( kc85_4_pio_data_w )
+WRITE8_HANDLER ( kc85_4_pio_data_w )
 {
 	kc85_pio_data[offset] = data;
 	z80pio_d_w(0, offset, data);
@@ -1428,7 +1428,7 @@ WRITE_HANDLER ( kc85_4_pio_data_w )
 }
 
 
-WRITE_HANDLER ( kc85_4_86_w )
+WRITE8_HANDLER ( kc85_4_86_w )
 {
 #ifdef KC_DEBUG
 	logerror("0x086 W: %02x\n",data);
@@ -1440,13 +1440,13 @@ WRITE_HANDLER ( kc85_4_86_w )
 	kc85_4_update_0x04000();
 }
 
-READ_HANDLER ( kc85_4_86_r )
+ READ8_HANDLER ( kc85_4_86_r )
 {
 	return kc85_86_data;
 }
 
 
-WRITE_HANDLER ( kc85_4_84_w )
+WRITE8_HANDLER ( kc85_4_84_w )
 {
 #ifdef KC_DEBUG
 	logerror("0x084 W: %02x\n",data);
@@ -1458,7 +1458,7 @@ WRITE_HANDLER ( kc85_4_84_w )
 	kc85_4_update_0x08000();
 }
 
-READ_HANDLER ( kc85_4_84_r )
+ READ8_HANDLER ( kc85_4_84_r )
 {
 	return kc85_84_data;
 }
@@ -1657,7 +1657,7 @@ bit 2: TONE 2
 bit 1: TONE 1
 bit 0: TRUCK */
 
-WRITE_HANDLER ( kc85_3_pio_data_w )
+WRITE8_HANDLER ( kc85_3_pio_data_w )
 {
    kc85_pio_data[offset] = data;
    z80pio_d_w(0, offset, data);
@@ -1700,7 +1700,7 @@ static int kc85_50hz_state;
 static int kc85_15khz_state;
 static int kc85_15khz_count;
 
-READ_HANDLER ( kc85_unmapped_r )
+ READ8_HANDLER ( kc85_unmapped_r )
 {
 	return 0x0ff;
 }
@@ -1732,25 +1732,25 @@ static void kc85_reset_timer_callback(int dummy)
 	cpunum_set_reg(0, REG_PC, 0x0f000);
 }
 
-READ_HANDLER ( kc85_pio_data_r )
+ READ8_HANDLER ( kc85_pio_data_r )
 {
 	return z80pio_d_r(0,offset);
 }
 
-READ_HANDLER ( kc85_pio_control_r )
+ READ8_HANDLER ( kc85_pio_control_r )
 {
 	return z80pio_c_r(0,offset);
 }
 
 
 
-WRITE_HANDLER ( kc85_pio_control_w )
+WRITE8_HANDLER ( kc85_pio_control_w )
 {
    z80pio_c_w(0, offset, data);
 }
 
 
-READ_HANDLER ( kc85_ctc_r )
+ READ8_HANDLER ( kc85_ctc_r )
 {
 	unsigned char data;
 
@@ -1761,7 +1761,7 @@ READ_HANDLER ( kc85_ctc_r )
 	return data;
 }
 
-WRITE_HANDLER ( kc85_ctc_w )
+WRITE8_HANDLER ( kc85_ctc_w )
 {
 	//logerror("ctc data w:%02x\n",data);
 
@@ -1815,14 +1815,14 @@ static z80pio_interface kc85_pio_intf =
 };
 
 /* used in cassette write -> K0 */
-static WRITE_HANDLER(kc85_zc0_callback)
+static WRITE8_HANDLER(kc85_zc0_callback)
 {
 
 
 }
 
 /* used in cassette write -> K1 */
-static WRITE_HANDLER(kc85_zc1_callback)
+static WRITE8_HANDLER(kc85_zc1_callback)
 {
 
 }
@@ -1853,7 +1853,7 @@ static void kc85_15khz_timer_callback(int dummy)
 }
 
 /* video blink */
-static WRITE_HANDLER(kc85_zc2_callback)
+static WRITE8_HANDLER(kc85_zc2_callback)
 {
 	/* is blink enabled? */
 	if (kc85_pio_data[1] & (1<<7))

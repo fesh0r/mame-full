@@ -34,52 +34,52 @@ void cia6526_status(char *text, int size);
 
 /******************* Standard 8-bit CPU interfaces, D0-D7 *******************/
 
-READ_HANDLER  ( cia6526_0_port_r );
-READ_HANDLER  ( cia6526_1_port_r );
-READ_HANDLER  ( cia6526_2_port_r );
-READ_HANDLER  ( cia6526_3_port_r );
-READ_HANDLER  ( cia6526_4_port_r );
-READ_HANDLER  ( cia6526_5_port_r );
-READ_HANDLER  ( cia6526_6_port_r );
-READ_HANDLER  ( cia6526_7_port_r );
+ READ8_HANDLER  ( cia6526_0_port_r );
+ READ8_HANDLER  ( cia6526_1_port_r );
+ READ8_HANDLER  ( cia6526_2_port_r );
+ READ8_HANDLER  ( cia6526_3_port_r );
+ READ8_HANDLER  ( cia6526_4_port_r );
+ READ8_HANDLER  ( cia6526_5_port_r );
+ READ8_HANDLER  ( cia6526_6_port_r );
+ READ8_HANDLER  ( cia6526_7_port_r );
 
-WRITE_HANDLER ( cia6526_0_port_w );
-WRITE_HANDLER ( cia6526_1_port_w );
-WRITE_HANDLER ( cia6526_2_port_w );
-WRITE_HANDLER ( cia6526_3_port_w );
-WRITE_HANDLER ( cia6526_4_port_w );
-WRITE_HANDLER ( cia6526_5_port_w );
-WRITE_HANDLER ( cia6526_6_port_w );
-WRITE_HANDLER ( cia6526_7_port_w );
+WRITE8_HANDLER ( cia6526_0_port_w );
+WRITE8_HANDLER ( cia6526_1_port_w );
+WRITE8_HANDLER ( cia6526_2_port_w );
+WRITE8_HANDLER ( cia6526_3_port_w );
+WRITE8_HANDLER ( cia6526_4_port_w );
+WRITE8_HANDLER ( cia6526_5_port_w );
+WRITE8_HANDLER ( cia6526_6_port_w );
+WRITE8_HANDLER ( cia6526_7_port_w );
 
 /******************* 8-bit A/B port interfaces *******************/
 
-WRITE_HANDLER ( cia6526_0_porta_w );
-WRITE_HANDLER ( cia6526_1_porta_w );
-WRITE_HANDLER ( cia6526_2_porta_w );
-WRITE_HANDLER ( cia6526_3_porta_w );
-WRITE_HANDLER ( cia6526_4_porta_w );
-WRITE_HANDLER ( cia6526_5_porta_w );
-WRITE_HANDLER ( cia6526_6_porta_w );
-WRITE_HANDLER ( cia6526_7_porta_w );
+WRITE8_HANDLER ( cia6526_0_porta_w );
+WRITE8_HANDLER ( cia6526_1_porta_w );
+WRITE8_HANDLER ( cia6526_2_porta_w );
+WRITE8_HANDLER ( cia6526_3_porta_w );
+WRITE8_HANDLER ( cia6526_4_porta_w );
+WRITE8_HANDLER ( cia6526_5_porta_w );
+WRITE8_HANDLER ( cia6526_6_porta_w );
+WRITE8_HANDLER ( cia6526_7_porta_w );
 
-WRITE_HANDLER ( cia6526_0_portb_w );
-WRITE_HANDLER ( cia6526_1_portb_w );
-WRITE_HANDLER ( cia6526_2_portb_w );
-WRITE_HANDLER ( cia6526_3_portb_w );
-WRITE_HANDLER ( cia6526_4_portb_w );
-WRITE_HANDLER ( cia6526_5_portb_w );
-WRITE_HANDLER ( cia6526_6_portb_w );
-WRITE_HANDLER ( cia6526_7_portb_w );
+WRITE8_HANDLER ( cia6526_0_portb_w );
+WRITE8_HANDLER ( cia6526_1_portb_w );
+WRITE8_HANDLER ( cia6526_2_portb_w );
+WRITE8_HANDLER ( cia6526_3_portb_w );
+WRITE8_HANDLER ( cia6526_4_portb_w );
+WRITE8_HANDLER ( cia6526_5_portb_w );
+WRITE8_HANDLER ( cia6526_6_portb_w );
+WRITE8_HANDLER ( cia6526_7_portb_w );
 
-READ_HANDLER  ( cia6526_0_porta_r );
-READ_HANDLER  ( cia6526_1_porta_r );
-READ_HANDLER  ( cia6526_2_porta_r );
-READ_HANDLER  ( cia6526_3_porta_r );
-READ_HANDLER  ( cia6526_4_porta_r );
-READ_HANDLER  ( cia6526_5_porta_r );
-READ_HANDLER  ( cia6526_6_porta_r );
-READ_HANDLER  ( cia6526_7_porta_r );
+ READ8_HANDLER  ( cia6526_0_porta_r );
+ READ8_HANDLER  ( cia6526_1_porta_r );
+ READ8_HANDLER  ( cia6526_2_porta_r );
+ READ8_HANDLER  ( cia6526_3_porta_r );
+ READ8_HANDLER  ( cia6526_4_porta_r );
+ READ8_HANDLER  ( cia6526_5_porta_r );
+ READ8_HANDLER  ( cia6526_6_porta_r );
+ READ8_HANDLER  ( cia6526_7_porta_r );
 
 void cia6526_0_set_input_flag (int data);
 void cia6526_1_set_input_flag (int data);

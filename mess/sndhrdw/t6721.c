@@ -104,7 +104,7 @@ void c364_speech_init(void)
 	speech.timer = timer_alloc(c364_speech_timer);
 }
 
-WRITE_HANDLER(c364_speech_w)
+WRITE8_HANDLER(c364_speech_w)
 {
 	DBG_LOG (2, "364", ("port write %.2x %.2x\n", offset, data));
 	switch (offset) {
@@ -170,7 +170,7 @@ WRITE_HANDLER(c364_speech_w)
 	}
 }
 
-READ_HANDLER(c364_speech_r)
+ READ8_HANDLER(c364_speech_r)
 {
 	int data=0xff;
 	switch (offset) {

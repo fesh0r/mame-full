@@ -527,7 +527,7 @@ VIDEO_START( arcadia )
 	return 0;
 }
 
-READ_HANDLER(arcadia_video_r)
+ READ8_HANDLER(arcadia_video_r)
 {
     UINT8 data=0;
     switch (offset) {
@@ -582,7 +582,7 @@ READ_HANDLER(arcadia_video_r)
 static int _y;
 #endif
 
-WRITE_HANDLER(arcadia_video_w)
+WRITE8_HANDLER(arcadia_video_w)
 {
 #if arcadia_DEBUG
     char str[40];
@@ -859,7 +859,7 @@ INTERRUPT_GEN( arcadia_video_line )
 		arcadia_draw_sprites(Machine->scrbitmap);
 }
 
-READ_HANDLER(arcadia_vsync_r)
+ READ8_HANDLER(arcadia_vsync_r)
 {
     return arcadia_video.line>=216?0x80:0;
 }

@@ -16,4 +16,4 @@ int cbm_ieee_eoi_r(void);
 int cbm_ieee_data_r(void);
 
 /* for debugging  */
-READ_HANDLER(cbm_ieee_state);
+ READ8_HANDLER(cbm_ieee_state);

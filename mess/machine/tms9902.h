@@ -21,5 +21,5 @@ void tms9902_cru_w(int which, int offset, int data);
 
 /*********************** Standard 8-bit CPU interfaces *********************/
 
-READ_HANDLER ( tms9902_0_cru_r );
-WRITE_HANDLER ( tms9902_0_cru_w );
+ READ8_HANDLER ( tms9902_0_cru_r );
+WRITE8_HANDLER ( tms9902_0_cru_w );

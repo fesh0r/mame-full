@@ -67,7 +67,7 @@ static int obfa,ibfa, intra;
 static int fd5_port_0x020_data;
 
 /* stb and ack automatically set on read/write? */
-static WRITE_HANDLER(fd5_communication_w)
+static WRITE8_HANDLER(fd5_communication_w)
 {
 	cpu_yield();
 
@@ -77,7 +77,7 @@ static WRITE_HANDLER(fd5_communication_w)
 #endif
 }
 
-static READ_HANDLER(fd5_communication_r)
+static  READ8_HANDLER(fd5_communication_r)
 {
 	int data;
 
@@ -91,7 +91,7 @@ static READ_HANDLER(fd5_communication_r)
 	return data;
 }
 
-static READ_HANDLER(fd5_data_r)
+static  READ8_HANDLER(fd5_data_r)
 {
 	cpu_yield();
 
@@ -106,7 +106,7 @@ static READ_HANDLER(fd5_data_r)
 	return fd5_databus;
 }
 
-static WRITE_HANDLER(fd5_data_w)
+static WRITE8_HANDLER(fd5_data_w)
 {
 #ifdef SORD_DEBUG
 	logerror("fd5 0x010 w: %02x %04x\n",data,activecpu_get_pc());
@@ -122,7 +122,7 @@ static WRITE_HANDLER(fd5_data_w)
 	cpu_yield();
 }
 
-static WRITE_HANDLER(fd5_drive_control_w)
+static WRITE8_HANDLER(fd5_drive_control_w)
 {
 	int state;
 	
@@ -141,7 +141,7 @@ static WRITE_HANDLER(fd5_drive_control_w)
 	floppy_drive_set_ready_state(image_from_devtype_and_index(IO_FLOPPY, 1), 1,1);
 }
 
-static WRITE_HANDLER(fd5_tc_w)
+static WRITE8_HANDLER(fd5_tc_w)
 {
 	nec765_set_tc_state(1);
 	nec765_set_tc_state(0);
@@ -211,14 +211,14 @@ static mess_image *cassette_device_image(void)
 /*********************************************************************************************/
 /* PI-5 */
 
-static READ_HANDLER(sord_ppi_porta_r)
+static  READ8_HANDLER(sord_ppi_porta_r)
 {
 	cpu_yield(); 
 
 	return fd5_databus;
 }
 
-static READ_HANDLER(sord_ppi_portb_r)
+static  READ8_HANDLER(sord_ppi_portb_r)
 {
 	cpu_yield();
 
@@ -229,7 +229,7 @@ static READ_HANDLER(sord_ppi_portb_r)
 	return 0x0ff;
 }
 
-static READ_HANDLER(sord_ppi_portc_r)
+static  READ8_HANDLER(sord_ppi_portc_r)
 {
 	cpu_yield();
 
@@ -262,14 +262,14 @@ static READ_HANDLER(sord_ppi_portc_r)
 			);
 }
 
-static WRITE_HANDLER(sord_ppi_porta_w)
+static WRITE8_HANDLER(sord_ppi_porta_w)
 {
 	cpu_yield(); 
 
 	fd5_databus = data;
 }
 
-static WRITE_HANDLER(sord_ppi_portb_w)
+static WRITE8_HANDLER(sord_ppi_portb_w)
 {
 	cpu_yield();
 
@@ -293,7 +293,7 @@ static WRITE_HANDLER(sord_ppi_portb_w)
 /* C,H,N */
 
 
-static WRITE_HANDLER(sord_ppi_portc_w)
+static WRITE8_HANDLER(sord_ppi_portc_w)
 {
 	cpu_yield();
 #ifdef SORD_DEBUG
@@ -301,21 +301,21 @@ static WRITE_HANDLER(sord_ppi_portc_w)
 #endif
 }
 
-static WRITE_HANDLER(sord_ppi_obfa_write)
+static WRITE8_HANDLER(sord_ppi_obfa_write)
 {
 //	logerror("ppi obfa write %02x %04x\n",data,activecpu_get_pc());
 	obfa = data & 0x01;
 	cpu_yield();
 }
 
-static WRITE_HANDLER(sord_ppi_intra_write)
+static WRITE8_HANDLER(sord_ppi_intra_write)
 {
 //	logerror("ppi intra write %02x %04x\n",data,activecpu_get_pc());
 	intra = data & 0x01;
 	cpu_yield();
 }
 
-static WRITE_HANDLER(sord_ppi_ibfa_write)
+static WRITE8_HANDLER(sord_ppi_ibfa_write)
 {
 //	logerror("ppi ibfa write %02x %04x\n",data,activecpu_get_pc());
 	ibfa = data & 0x01;
@@ -365,7 +365,7 @@ static z80ctc_interface	sord_m5_ctc_intf =
     {0}
 };
 
-static READ_HANDLER ( sord_keyboard_r )
+static  READ8_HANDLER ( sord_keyboard_r )
 {
 	return readinputport(offset);
 }
@@ -384,7 +384,7 @@ ADDRESS_MAP_START( writemem_sord_m5 , ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x7000, 0x0ffff) AM_WRITE( MWA8_RAM)
 ADDRESS_MAP_END
 
-static READ_HANDLER(sord_ctc_r)
+static  READ8_HANDLER(sord_ctc_r)
 {
 	unsigned char data;
 
@@ -395,14 +395,14 @@ static READ_HANDLER(sord_ctc_r)
 	return data;
 }
 
-static WRITE_HANDLER(sord_ctc_w)
+static WRITE8_HANDLER(sord_ctc_w)
 {
 	logerror("sord ctc w: %04x %02x\n",(offset & 0x03), data);
 
 	z80ctc_0_w(offset & 0x03, data);
 }
 
-static READ_HANDLER(sord_sys_r)
+static  READ8_HANDLER(sord_sys_r)
 {
 	unsigned char data;
 	int printer_handshake;
@@ -436,7 +436,7 @@ static READ_HANDLER(sord_sys_r)
 /* bit 0 is cassette read data */
 /* bit 1 is printer busy */
 
-static WRITE_HANDLER(sord_sys_w)
+static WRITE8_HANDLER(sord_sys_w)
 {
 	int handshake;
 
@@ -462,7 +462,7 @@ static WRITE_HANDLER(sord_sys_w)
 	logerror("sys write: %02x\n",data);
 }
 
-static WRITE_HANDLER(sord_printer_w)
+static WRITE8_HANDLER(sord_printer_w)
 {
 //	logerror("centronics w: %02x\n",data);
 	centronics_write_data(0,data);

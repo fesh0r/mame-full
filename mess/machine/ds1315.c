@@ -36,7 +36,7 @@ void ds1315_init( void )
 	ds1315_mode = ds_seek_matching;
 }
 
-READ_HANDLER ( ds1315_r_0 )
+ READ8_HANDLER ( ds1315_r_0 )
 {
 	if( ds1315_pattern[ ds1315_count++ ] == 0 )
 	{
@@ -57,7 +57,7 @@ READ_HANDLER ( ds1315_r_0 )
 	return 0;
 }
 	
-READ_HANDLER ( ds1315_r_1 )
+ READ8_HANDLER ( ds1315_r_1 )
 {
 	if( ds1315_pattern[ ds1315_count++ ] == 1 )
 		return 0;
@@ -67,7 +67,7 @@ READ_HANDLER ( ds1315_r_1 )
 	return 0;
 }
 	
-READ_HANDLER ( ds1315_r_data )
+ READ8_HANDLER ( ds1315_r_data )
 {
 	data8_t	result;
 	
@@ -88,7 +88,7 @@ READ_HANDLER ( ds1315_r_data )
 	return 0;
 }
 
-WRITE_HANDLER ( ds1315_w_data )
+WRITE8_HANDLER ( ds1315_w_data )
 {
 	
 	if( ds1315_mode == ds_calendar_io )

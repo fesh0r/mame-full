@@ -75,7 +75,7 @@ static void ti990_4_line_interrupt(void)
 {
 }*/
 
-static WRITE_HANDLER ( rset_callback )
+static WRITE8_HANDLER ( rset_callback )
 {
 	ti990_cpuboard_reset();
 
@@ -87,12 +87,12 @@ static WRITE_HANDLER ( rset_callback )
 	/* clear controller panel and smi fault LEDs */
 }
 
-static WRITE_HANDLER ( ckon_ckof_callback )
+static WRITE8_HANDLER ( ckon_ckof_callback )
 {
 	ti990_ckon_ckof_callback((offset & 0x1000) ? 1 : 0);
 }
 
-static WRITE_HANDLER ( lrex_callback )
+static WRITE8_HANDLER ( lrex_callback )
 {
 	/* right??? */
 	ti990_hold_load();

@@ -187,7 +187,7 @@ PALETTE_INIT( odyssey2 )
 	colortable[1] = 1;
 }
 
-extern READ_HANDLER ( odyssey2_video_r )
+extern  READ8_HANDLER ( odyssey2_video_r )
 {
     UINT8 data=0;
     int h;
@@ -208,7 +208,7 @@ extern READ_HANDLER ( odyssey2_video_r )
     return data;
 }
 
-extern WRITE_HANDLER ( odyssey2_video_w )
+extern WRITE8_HANDLER ( odyssey2_video_w )
 {
 	/* Update the sound */
 	if( offset >= 0xa7 && offset <= 0xaa )
@@ -217,7 +217,7 @@ extern WRITE_HANDLER ( odyssey2_video_w )
 	o2_vdc.reg[offset]=data;
 }
 
-extern READ_HANDLER ( odyssey2_t1_r )
+extern  READ8_HANDLER ( odyssey2_t1_r )
 {
 //    static bool t=FALSE;
     static int t=FALSE;

@@ -8,10 +8,10 @@
 #endif
 
 extern INTERRUPT_GEN( arcadia_video_line );
-READ_HANDLER(arcadia_vsync_r);
+ READ8_HANDLER(arcadia_vsync_r);
 
-READ_HANDLER(arcadia_video_r);
-WRITE_HANDLER(arcadia_video_w);
+ READ8_HANDLER(arcadia_video_r);
+WRITE8_HANDLER(arcadia_video_w);
 
 
 // space vultures sprites above

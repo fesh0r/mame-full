@@ -48,17 +48,17 @@ static OPBASE_HANDLER(lviv_opbaseoverride)
 	return address;
 }
 
-static READ_HANDLER ( lviv_ppi_0_porta_r )
+static  READ8_HANDLER ( lviv_ppi_0_porta_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( lviv_ppi_0_portb_r )
+static  READ8_HANDLER ( lviv_ppi_0_portb_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( lviv_ppi_0_portc_r )
+static  READ8_HANDLER ( lviv_ppi_0_portc_r )
 {
 	UINT8 data = lviv_ppi_port_outputs[0][2] & 0x0f;
 	if (cassette_input(image_from_devtype_and_index(IO_CASSETTE, 0)) > 0.038)
@@ -68,18 +68,18 @@ static READ_HANDLER ( lviv_ppi_0_portc_r )
 	return data;
 }
 
-static WRITE_HANDLER ( lviv_ppi_0_porta_w )
+static WRITE8_HANDLER ( lviv_ppi_0_porta_w )
 {
 	lviv_ppi_port_outputs[0][0] = data;
 }
 
-static WRITE_HANDLER ( lviv_ppi_0_portb_w )
+static WRITE8_HANDLER ( lviv_ppi_0_portb_w )
 {
 	lviv_ppi_port_outputs[0][1] = data;
 	lviv_update_palette (data&0x7f);
 }
 
-static WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off */
+static WRITE8_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off */
 {
 	lviv_ppi_port_outputs[0][2] = data;
 	if (lviv_ppi_port_outputs[0][1]&0x80)
@@ -88,12 +88,12 @@ static WRITE_HANDLER ( lviv_ppi_0_portc_w )	/* tape in/out, video memory on/off 
 	lviv_update_memory();
 }
 
-static READ_HANDLER ( lviv_ppi_1_porta_r )
+static  READ8_HANDLER ( lviv_ppi_1_porta_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER ( lviv_ppi_1_portb_r )	/* keyboard reading */
+static  READ8_HANDLER ( lviv_ppi_1_portb_r )	/* keyboard reading */
 {
 	return	((lviv_ppi_port_outputs[1][0]&0x01) ? 0xff : readinputport(0)) &
 		((lviv_ppi_port_outputs[1][0]&0x02) ? 0xff : readinputport(1)) &
@@ -105,7 +105,7 @@ static READ_HANDLER ( lviv_ppi_1_portb_r )	/* keyboard reading */
 		((lviv_ppi_port_outputs[1][0]&0x80) ? 0xff : readinputport(7));
 }
 
-static READ_HANDLER ( lviv_ppi_1_portc_r )     /* keyboard reading */
+static  READ8_HANDLER ( lviv_ppi_1_portc_r )     /* keyboard reading */
 {
 	return	((lviv_ppi_port_outputs[1][2]&0x01) ? 0xff : readinputport(8))  &
 		((lviv_ppi_port_outputs[1][2]&0x02) ? 0xff : readinputport(9))  &
@@ -113,24 +113,24 @@ static READ_HANDLER ( lviv_ppi_1_portc_r )     /* keyboard reading */
 		((lviv_ppi_port_outputs[1][2]&0x08) ? 0xff : readinputport(11));
 }
 
-static WRITE_HANDLER ( lviv_ppi_1_porta_w )	/* kayboard scaning */
+static WRITE8_HANDLER ( lviv_ppi_1_porta_w )	/* kayboard scaning */
 {
 	lviv_ppi_port_outputs[1][0] = data;
 }
 
-static WRITE_HANDLER ( lviv_ppi_1_portb_w )
+static WRITE8_HANDLER ( lviv_ppi_1_portb_w )
 {
 	lviv_ppi_port_outputs[1][1] = data;
 }
 
-static WRITE_HANDLER ( lviv_ppi_1_portc_w )	/* kayboard scaning */
+static WRITE8_HANDLER ( lviv_ppi_1_portc_w )	/* kayboard scaning */
 {
 	lviv_ppi_port_outputs[1][2] = data;
 }
 
 
 /* I/O */
-READ_HANDLER ( lviv_io_r )
+ READ8_HANDLER ( lviv_io_r )
 {
 	if (startup_mem_map)
 	{
@@ -157,7 +157,7 @@ READ_HANDLER ( lviv_io_r )
 	}
 }
 
-WRITE_HANDLER ( lviv_io_w )
+WRITE8_HANDLER ( lviv_io_w )
 {
 	if (startup_mem_map)
 	{

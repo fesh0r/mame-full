@@ -555,14 +555,14 @@ void pc_keyboard(void)
 
 static double JOY_time = 0.0;
 
-WRITE_HANDLER ( pc_JOY_w )
+WRITE8_HANDLER ( pc_JOY_w )
 {
 	JOY_time = timer_get_time();
 }
 
 #if 0
 #define JOY_VALUE_TO_TIME(v) (24.2e-6+11e-9*(100000.0/256)*v)
-READ_HANDLER ( pc_JOY_r )
+ READ8_HANDLER ( pc_JOY_r )
 {
 	int data, delta;
 	double new_time = timer_get_time();
@@ -589,7 +589,7 @@ READ_HANDLER ( pc_JOY_r )
 	return data;
 }
 #else
-READ_HANDLER ( pc_JOY_r )
+ READ8_HANDLER ( pc_JOY_r )
 {
 	int data, delta;
 	double new_time = timer_get_time();

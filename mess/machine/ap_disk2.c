@@ -185,7 +185,7 @@ static void seek_disk(mess_image *img, struct apple2_drive *disk, signed int ste
   apple2_c0xx_slot6_r
 ***************************************************************************/
 
-READ_HANDLER ( apple2_c0xx_slot6_r )
+ READ8_HANDLER ( apple2_c0xx_slot6_r )
 {
 	struct apple2_drive *cur_disk;
 	mess_image *cur_image;
@@ -280,7 +280,7 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
   apple2_c0xx_slot6_w
 ***************************************************************************/
 
-WRITE_HANDLER ( apple2_c0xx_slot6_w )
+WRITE8_HANDLER ( apple2_c0xx_slot6_w )
 {
 	profiler_mark(PROFILER_SLOT6);
 	switch (offset)
@@ -304,7 +304,7 @@ WRITE_HANDLER ( apple2_c0xx_slot6_w )
   apple2_slot6_w
 ***************************************************************************/
 
-WRITE_HANDLER (  apple2_slot6_w )
+WRITE8_HANDLER (  apple2_slot6_w )
 {
 }
 

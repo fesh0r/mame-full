@@ -73,7 +73,7 @@ static struct {
 	{ 0 }
 };
 
-READ_HANDLER(ps2_pos_r)
+ READ8_HANDLER(ps2_pos_r)
 {
 	UINT8 data=pos.data[offset];
 	switch (offset) {
@@ -84,7 +84,7 @@ READ_HANDLER(ps2_pos_r)
 	return data;
 }
 
-WRITE_HANDLER(ps2_pos_w)
+WRITE8_HANDLER(ps2_pos_w)
 {
 	pos.data[offset]=data;
 }

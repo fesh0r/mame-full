@@ -23,10 +23,10 @@ extern VIDEO_UPDATE( vdc8563 );
 extern unsigned char vdc8563_palette[16 * 3];
 
 /* to be called when writting to port */
-extern WRITE_HANDLER ( vdc8563_port_w );
+extern WRITE8_HANDLER ( vdc8563_port_w );
 
 /* to be called when reading from port */
-extern READ_HANDLER ( vdc8563_port_r );
+extern  READ8_HANDLER ( vdc8563_port_r );
 
 extern void vdc8563_state (void);
 

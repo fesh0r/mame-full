@@ -59,10 +59,10 @@ static int scan_keyboard(void);
 static void inquiry_timeout_func(int unused);
 static void keyboard_receive(int val);
 static void keyboard_send_reply(void);
-static READ_HANDLER(mac_via_in_a);
-static READ_HANDLER(mac_via_in_b);
-static WRITE_HANDLER(mac_via_out_a);
-static WRITE_HANDLER(mac_via_out_b);
+static  READ8_HANDLER(mac_via_in_a);
+static  READ8_HANDLER(mac_via_in_b);
+static WRITE8_HANDLER(mac_via_out_a);
+static WRITE8_HANDLER(mac_via_out_b);
 static void mac_via_irq(int state);
 
 static struct via6522_interface mac_via6522_intf =
@@ -1614,12 +1614,12 @@ DEVICE_UNLOAD(mac_floppy)
  *
  */
 
-static READ_HANDLER(mac_via_in_a)
+static  READ8_HANDLER(mac_via_in_a)
 {
 	return 0x80;
 }
 
-static READ_HANDLER(mac_via_in_b)
+static  READ8_HANDLER(mac_via_in_b)
 {
 	int val = 0;
 
@@ -1639,7 +1639,7 @@ static READ_HANDLER(mac_via_in_b)
 	return val;
 }
 
-static WRITE_HANDLER(mac_via_out_a)
+static WRITE8_HANDLER(mac_via_out_a)
 {
 	set_scc_waitrequest((data & 0x80) >> 7);
 	mac_set_screen_buffer((data & 0x40) >> 6);
@@ -1649,7 +1649,7 @@ static WRITE_HANDLER(mac_via_out_a)
 	mac_set_volume(data & 0x07);
 }
 
-static WRITE_HANDLER(mac_via_out_b)
+static WRITE8_HANDLER(mac_via_out_b)
 {
 	int new_rtc_rTCClk;
 

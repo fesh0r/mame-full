@@ -203,7 +203,7 @@ void hp48_crc(int adr, int data)
 			^ ((hp48_hardware.crc& 0xf) * 0x1081);
 }
 
-WRITE_HANDLER( hp48_write )
+WRITE8_HANDLER( hp48_write )
 {
 	switch (offset) {
 		//lcd
@@ -291,7 +291,7 @@ WRITE_HANDLER( hp48_write )
 	}
 }
 
-READ_HANDLER( hp48_read )
+ READ8_HANDLER( hp48_read )
 {
 	int data=0;
 	switch (offset) {

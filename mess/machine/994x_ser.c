@@ -33,8 +33,8 @@ static void int_callback(int which, int INT);
 static void xmit_callback(int which, int data);
 static int rs232_cru_r(int offset);
 static void rs232_cru_w(int offset, int data);
-static READ_HANDLER(rs232_mem_r);
-static WRITE_HANDLER(rs232_mem_w);
+static  READ8_HANDLER(rs232_mem_r);
+static WRITE8_HANDLER(rs232_mem_w);
 
 /* pointer to the rs232 ROM data */
 static UINT8 *rs232_DSR;
@@ -381,7 +381,7 @@ static void rs232_cru_w(int offset, int data)
 /*
 	read a byte in rs232 DSR space
 */
-static READ_HANDLER(rs232_mem_r)
+static  READ8_HANDLER(rs232_mem_r)
 {
 	int reply;
 
@@ -402,7 +402,7 @@ static READ_HANDLER(rs232_mem_r)
 /*
 	write a byte in rs232 DSR space
 */
-static WRITE_HANDLER(rs232_mem_w)
+static WRITE8_HANDLER(rs232_mem_w)
 {
 	if (offset >= 0x1000)
 	{

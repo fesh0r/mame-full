@@ -153,7 +153,7 @@ static void einstein_dump_ram(void)
 static int einstein_80col_state;
 static char *einstein_80col_ram = NULL;
 
-static WRITE_HANDLER(einstein_80col_ram_w)
+static WRITE8_HANDLER(einstein_80col_ram_w)
 {
 	/* lower 3 bits of address define a 256-byte "row".
 		upper 8 bits define the offset in the row,
@@ -161,12 +161,12 @@ static WRITE_HANDLER(einstein_80col_ram_w)
 	einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)] = data;
 }
 
-static READ_HANDLER(einstein_80col_ram_r)
+static  READ8_HANDLER(einstein_80col_ram_r)
 {
 	return einstein_80col_ram[((offset & 0x07)<<8)|((offset>>8) & 0x0ff)];
 }
 
-static READ_HANDLER(einstein_80col_state_r)
+static  READ8_HANDLER(einstein_80col_state_r)
 {
 	/* fake vsync for now */
 	einstein_80col_state^=0x01;
@@ -236,7 +236,7 @@ static void	einstein_80col_init(void)
 	einstein_80col_state=(1<<2)|(1<<1);
 }
 
-static READ_HANDLER(einstein_80col_r)
+static  READ8_HANDLER(einstein_80col_r)
 {
 	switch (offset & 0x0f)
 	{
@@ -258,7 +258,7 @@ static READ_HANDLER(einstein_80col_r)
 }
 
 
-static WRITE_HANDLER(einstein_80col_w)
+static WRITE8_HANDLER(einstein_80col_w)
 {
 	switch (offset & 0x0f)
 	{
@@ -371,12 +371,12 @@ static void einstein_pio_interrupt(int state)
 	cpu_set_irq_line(0, 3, state);
 }
 
-static WRITE_HANDLER(einstein_serial_transmit_clock)
+static WRITE8_HANDLER(einstein_serial_transmit_clock)
 {
 	msm8251_transmit_clock();
 }
 
-static WRITE_HANDLER(einstein_serial_receive_clock)
+static WRITE8_HANDLER(einstein_serial_receive_clock)
 {
 	msm8251_receive_clock();
 }
@@ -487,7 +487,7 @@ static Z80_DaisyChain einstein_daisy_chain[] =
     {0,0,0,-1}
 };
 
-static READ_HANDLER(einstein_vdp_r)
+static  READ8_HANDLER(einstein_vdp_r)
 {
 	/*logerror("vdp r: %04x\n",offset); */
 
@@ -499,7 +499,7 @@ static READ_HANDLER(einstein_vdp_r)
 	return TMS9928A_vram_r(offset & 0x01);
 }
 
-static WRITE_HANDLER(einstein_vdp_w)
+static WRITE8_HANDLER(einstein_vdp_w)
 {
 	/* logerror("vdp w: %04x %02x\n",offset,data); */
 
@@ -512,7 +512,7 @@ static WRITE_HANDLER(einstein_vdp_w)
 	TMS9928A_vram_w(offset & 0x01,data);
 }
 
-static WRITE_HANDLER(einstein_fdc_w)
+static WRITE8_HANDLER(einstein_fdc_w)
 {
 	int reg = offset & 0x03;
 
@@ -547,7 +547,7 @@ static WRITE_HANDLER(einstein_fdc_w)
 }
 
 
-static READ_HANDLER(einstein_fdc_r)
+static  READ8_HANDLER(einstein_fdc_r)
 {
 	int reg = offset & 0x03;
 
@@ -583,7 +583,7 @@ static READ_HANDLER(einstein_fdc_r)
 	return 0x0ff;
 }
 
-static WRITE_HANDLER(einstein_pio_w)
+static WRITE8_HANDLER(einstein_pio_w)
 {
 	logerror("pio w: %04x %02x\n",offset,data);
 
@@ -610,7 +610,7 @@ static WRITE_HANDLER(einstein_pio_w)
 	z80pio_c_w( 0, (offset>>1) & 0x01,data);
 }
 
-static READ_HANDLER(einstein_pio_r)
+static  READ8_HANDLER(einstein_pio_r)
 {
 	logerror("pio r: %04x\n",offset);
 
@@ -622,21 +622,21 @@ static READ_HANDLER(einstein_pio_r)
 	return z80pio_c_r( 0, (offset>>1) & 0x01);
 }
 
-static READ_HANDLER(einstein_ctc_r)
+static  READ8_HANDLER(einstein_ctc_r)
 {
 	logerror("ctc r: %04x\n",offset); 
 	
 	return z80ctc_0_r(offset & 0x03);
 }
 
-static WRITE_HANDLER(einstein_ctc_w)
+static WRITE8_HANDLER(einstein_ctc_w)
 {
 	logerror("ctc w: %04x %02x\n",offset,data); 
 
 	z80ctc_0_w(offset & 0x03,data);
 }
 
-static WRITE_HANDLER(einstein_serial_w)
+static WRITE8_HANDLER(einstein_serial_w)
 {
 	int reg = offset & 0x01;
 
@@ -652,7 +652,7 @@ static WRITE_HANDLER(einstein_serial_w)
 }
 
 
-static READ_HANDLER(einstein_serial_r)
+static  READ8_HANDLER(einstein_serial_r)
 {
 	int reg = offset & 0x01;
 
@@ -691,7 +691,7 @@ static READ_HANDLER(einstein_serial_r)
 */
 
 
-static WRITE_HANDLER(einstein_psg_w)
+static WRITE8_HANDLER(einstein_psg_w)
 {
 	int reg = offset & 0x03;
 
@@ -717,7 +717,7 @@ static WRITE_HANDLER(einstein_psg_w)
 	}
 }
 
-static READ_HANDLER(einstein_psg_r)
+static  READ8_HANDLER(einstein_psg_r)
 {
 	int reg = offset & 0x03;
 
@@ -766,7 +766,7 @@ static void einstein_page_rom(void)
 	}
 }
 
-static WRITE_HANDLER(einstein_drive_w)
+static WRITE8_HANDLER(einstein_drive_w)
 {
 	/* bit 4: side select */
 	/* bit 3: select drive 3 */
@@ -799,13 +799,13 @@ static WRITE_HANDLER(einstein_drive_w)
 	}
 }
 
-static WRITE_HANDLER(einstein_rom_w)
+static WRITE8_HANDLER(einstein_rom_w)
 {
 	einstein_rom_enabled^=1;
 	einstein_page_rom();
 }
 
-static READ_HANDLER(einstein_key_int_r)
+static  READ8_HANDLER(einstein_key_int_r)
 {
 	int centronics_handshake;
 	int data;
@@ -860,7 +860,7 @@ static READ_HANDLER(einstein_key_int_r)
 }
 
 
-static WRITE_HANDLER(einstein_key_int_w)
+static WRITE8_HANDLER(einstein_key_int_w)
 {
 	logerror("key int w: %02x\n",data);
 
@@ -879,7 +879,7 @@ static WRITE_HANDLER(einstein_key_int_w)
 	einstein_update_interrupts();
 }
 
-static WRITE_HANDLER(einstein_adc_int_w)
+static WRITE8_HANDLER(einstein_adc_int_w)
 {
 	logerror("adc int w: %02x\n",data);
 	/* writing to this I/O port sets the state of the mask; D0 is used */
@@ -899,7 +899,7 @@ static WRITE_HANDLER(einstein_adc_int_w)
 	einstein_update_interrupts();
 }
 
-static WRITE_HANDLER(einstein_fire_int_w)
+static WRITE8_HANDLER(einstein_fire_int_w)
 {
 	logerror("fire int w: %02x\n",data);
 
@@ -921,7 +921,7 @@ static WRITE_HANDLER(einstein_fire_int_w)
 }
 
 
-static READ_HANDLER(einstein2_port_r)
+static  READ8_HANDLER(einstein2_port_r)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1008,7 +1008,7 @@ static READ_HANDLER(einstein2_port_r)
 	return 0xff;
 }
 
-static WRITE_HANDLER(einstein2_port_w)
+static WRITE8_HANDLER(einstein2_port_w)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1114,7 +1114,7 @@ static WRITE_HANDLER(einstein2_port_w)
 }
 
 
-static READ_HANDLER(einstein_port_r)
+static  READ8_HANDLER(einstein_port_r)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1184,7 +1184,7 @@ static READ_HANDLER(einstein_port_r)
 	return 0xff;
 }
 
-static WRITE_HANDLER(einstein_port_w)
+static WRITE8_HANDLER(einstein_port_w)
 {
 	switch (offset & 0x0ff)
 	{
@@ -1538,7 +1538,7 @@ INPUT_PORTS_START(einstein)
 
 INPUT_PORTS_END
 
-static WRITE_HANDLER(einstein_port_a_write)
+static WRITE8_HANDLER(einstein_port_a_write)
 {
 	einstein_keyboard_line = data;
 
@@ -1548,7 +1548,7 @@ static WRITE_HANDLER(einstein_port_a_write)
 	einstein_scan_keyboard();
 }
 
-static READ_HANDLER(einstein_port_b_read)
+static  READ8_HANDLER(einstein_port_b_read)
 {
 	einstein_scan_keyboard();
 

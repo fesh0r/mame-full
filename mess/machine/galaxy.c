@@ -20,14 +20,14 @@ int galaxy_interrupts_enabled = TRUE;
   Keyboard
 ***************************************************************************/
 
-READ_HANDLER( galaxy_kbd_r )
+ READ8_HANDLER( galaxy_kbd_r )
 {
 	int port = offset/8;
 	int bit = offset%8;
 	return readinputport(port)&0x01<<bit ? 0xfe : 0xff;
 }
 
-WRITE_HANDLER( galaxy_kbd_w )
+WRITE8_HANDLER( galaxy_kbd_w )
 {
 }
 

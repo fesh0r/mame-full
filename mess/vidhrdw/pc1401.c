@@ -23,13 +23,13 @@ static struct {
 	UINT8 reg[0x100];
 } pc1401_lcd;
 
-READ_HANDLER(pc1401_lcd_read)
+ READ8_HANDLER(pc1401_lcd_read)
 {
 	offset&=0xff;
 	return pc1401_lcd.reg[offset];
 }
 
-WRITE_HANDLER(pc1401_lcd_write)
+WRITE8_HANDLER(pc1401_lcd_write)
 {
 	offset&=0xff;
 	pc1401_lcd.reg[offset]=data;

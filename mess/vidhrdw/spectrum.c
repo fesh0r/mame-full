@@ -52,20 +52,20 @@ VIDEO_START( spectrum )
 /* screen is stored as:
 32 chars wide. first 0x100 bytes are top scan of lines 0 to 7 */
 
-WRITE_HANDLER (spectrum_characterram_w)
+WRITE8_HANDLER (spectrum_characterram_w)
 {
 	spectrum_characterram[offset] = data;
 
 	charsdirty[((offset & 0x0f800)>>3) + (offset & 0x0ff)] = 1;
 }
 
-READ_HANDLER (spectrum_characterram_r)
+ READ8_HANDLER (spectrum_characterram_r)
 {
 	return(spectrum_characterram[offset]);
 }
 
 
-WRITE_HANDLER (spectrum_colorram_w)
+WRITE8_HANDLER (spectrum_colorram_w)
 {
         /* Will eventually be used to emulate hi-res colour effects. No point
            doing it now as contented memory is not emulated so timings will
@@ -77,7 +77,7 @@ WRITE_HANDLER (spectrum_colorram_w)
 	charsdirty[offset] = 1;
 }
 
-READ_HANDLER (spectrum_colorram_r)
+ READ8_HANDLER (spectrum_colorram_r)
 {
 	return(spectrum_colorram[offset]);
 }

@@ -43,7 +43,7 @@ PALETTE_INIT( microtan )
 	colortable[1] = 1;
 }
 
-WRITE_HANDLER( microtan_videoram_w )
+WRITE8_HANDLER( microtan_videoram_w )
 {
 	if (videoram[offset] != data || microtan_chunky_buffer[offset] != microtan_chunky_graphics)
 	{

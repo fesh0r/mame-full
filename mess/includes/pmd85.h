@@ -1,8 +1,8 @@
 /* machine/pmd85.c */
-READ_HANDLER ( pmd85_io_r );
-WRITE_HANDLER ( pmd85_io_w );
-READ_HANDLER ( mato_io_r );
-WRITE_HANDLER ( mato_io_w );
+ READ8_HANDLER ( pmd85_io_r );
+WRITE8_HANDLER ( pmd85_io_w );
+ READ8_HANDLER ( mato_io_r );
+WRITE8_HANDLER ( mato_io_w );
 DRIVER_INIT ( pmd851 );
 DRIVER_INIT ( pmd852a );
 DRIVER_INIT ( pmd853 );
