@@ -113,11 +113,11 @@ int cmd_testsuite(struct command *c, int argc, char *argv[])
 				memset(&imgdirent, 0, sizeof(imgdirent));
 				imgdirent.fname = buffer2;
 				imgdirent.fname_len = sizeof(buffer2);
-				while(((err = img_nextenum(imgenum, &imgdirent)) != 0) && imgdirent.fname[0])
+				while(((err = img_nextenum(imgenum, &imgdirent)) == 0) && imgdirent.fname[0])
 				{
 					i = strlen(buffer2);
-					buffer[i++] = ',';
-					imgdirent.fname = &buffer[i];
+					buffer2[i++] = ',';
+					imgdirent.fname = &buffer2[i];
 					imgdirent.fname_len = sizeof(buffer2) - i;
 				}
 				img_closeenum(imgenum);
