@@ -15,11 +15,6 @@
 	F0000-FDFFF   NOP		or ROM Basic + other Extensions
 	FE000-FFFFF   ROM
 
-	TODO:
-	think about a concept to split port_r/port_w for the
-	different machines (specificially the Tandy1000/PCjr)
-	It's now all handled by two single functions in machine/pc.c
-
 ***************************************************************************/
 #include "driver.h"
 #include "sound/3812intf.h"
@@ -49,7 +44,27 @@
 
 #define ym3812_StdClock 3579545
 
+/*
+  adlib (YM3812/OPL2 chip), part of many many soundcards (soundblaster)
+  soundblaster: YM3812 also accessible at 0x228/9 (address jumperable)
+  soundblaster pro version 1: 2 YM3812 chips
+   at 0x388 both accessed, 
+   at 0x220/1 left?, 0x222/3 right? (jumperable)
+  soundblaster pro version 2: 1 OPL3 chip
+
+  pro audio spectrum +: 2 OPL2
+  pro audio spectrum 16: 1 OPL3
+ */
 #define ADLIB	/* YM3812/OPL2 Chip */
+/*
+  creativ labs game blaster (CMS creativ music system)
+  2 x saa1099 chips
+  also on sound blaster 1.0
+  option on sound blaster 1.5
+
+  jumperable? normally 0x220
+*/
+#define GAMEBLASTER
 
 static struct MemoryReadAddress mda_readmem[] =
 {
@@ -117,6 +132,12 @@ static struct IOWritePort mda_writeport[] =
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
+#ifdef GAMEBLASTER
+	{ 0x220, 0x220, saa1099_write_port_0_w },
+	{ 0x221, 0x221, saa1099_control_port_0_w },
+	{ 0x222, 0x222, saa1099_write_port_1_w },
+	{ 0x223, 0x223, saa1099_control_port_1_w },
 #endif
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
@@ -202,6 +223,12 @@ static struct IOWritePort cga_writeport[] =
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
 #endif
+#ifdef GAMEBLASTER
+	{ 0x220, 0x220, saa1099_write_port_0_w },
+	{ 0x221, 0x221, saa1099_control_port_0_w },
+	{ 0x222, 0x222, saa1099_write_port_1_w },
+	{ 0x223, 0x223, saa1099_control_port_1_w },
+#endif
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x03f0, 0x03f7, pc_fdc_w },
@@ -251,9 +278,6 @@ static struct IOReadPort t1t_readport[] =
 	{ 0x0200, 0x0207, pc_JOY_r },
     { 0x0213, 0x0213, pc_EXP_r },
 	{ 0x0378, 0x037f, pc_t1t_p37x_r },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
-#endif
     { 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -275,10 +299,6 @@ static struct IOWritePort t1t_writeport[] =
 	{ 0x0200, 0x0207, pc_JOY_w },
     { 0x0213, 0x0213, pc_EXP_w },
 	{ 0x0378, 0x037f, pc_t1t_p37x_w },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
-#endif
     { 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -332,9 +352,6 @@ static struct IOReadPort pc1512_readport[] =
     { 0x0213, 0x0213, pc_EXP_r },
 	{ 0x0278, 0x027b, pc_LPT3_r },
 	{ 0x0378, 0x037b, pc1640_port378_r },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
-#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -364,10 +381,6 @@ static struct IOWritePort pc1512_writeport[] =
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
-#endif
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x03f0, 0x03f7, pc_fdc_w },
@@ -397,9 +410,6 @@ static struct IOReadPort pc1640_readport[] =
 	{ 0x0278, 0x027b, pc1640_port278_r },
 	{ 0x4278, 0x427b, pc1640_port4278_r },
 	{ 0x0378, 0x037b, pc1640_port378_r },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_status_port_0_r },
-#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_r },
 	{ 0x03f8, 0x03ff, pc_COM1_r },
 	{ 0x02f8, 0x02ff, pc_COM2_r },
@@ -429,10 +439,6 @@ static struct IOWritePort pc1640_writeport[] =
     { 0x0213, 0x0213, pc_EXP_w },
 	{ 0x0278, 0x027b, pc_LPT3_w },
 	{ 0x0378, 0x037b, pc_LPT2_w },
-#ifdef ADLIB
-	{ 0x0388, 0x0388, YM3812_control_port_0_w },
-	{ 0x0389, 0x0389, YM3812_write_port_0_w },
-#endif
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
 	{ 0x02f8, 0x02ff, pc_COM2_w },
@@ -520,6 +526,12 @@ static struct IOWritePort vga_writeport[] =
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
+#ifdef GAMEBLASTER
+	{ 0x220, 0x220, saa1099_write_port_0_w },
+	{ 0x221, 0x221, saa1099_control_port_0_w },
+	{ 0x222, 0x222, saa1099_write_port_1_w },
+	{ 0x223, 0x223, saa1099_control_port_1_w },
 #endif
 	{ 0x03bc, 0x03bd, pc_LPT1_w },
 	{ 0x03f8, 0x03ff, pc_COM1_w },
@@ -621,6 +633,12 @@ static struct IOWritePort atvga_writeport[] =
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
 #endif
+#ifdef GAMEBLASTER
+	{ 0x220, 0x220, saa1099_write_port_0_w },
+	{ 0x221, 0x221, saa1099_control_port_0_w },
+	{ 0x222, 0x222, saa1099_write_port_1_w },
+	{ 0x223, 0x223, saa1099_control_port_1_w },
+#endif
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
 	{ 0x03f0, 0x03f7, pc_fdc_w },
@@ -720,6 +738,12 @@ static struct IOWritePort atcga_writeport[] =
 #ifdef ADLIB
 	{ 0x0388, 0x0388, YM3812_control_port_0_w },
 	{ 0x0389, 0x0389, YM3812_write_port_0_w },
+#endif
+#ifdef GAMEBLASTER
+	{ 0x220, 0x220, saa1099_write_port_0_w },
+	{ 0x221, 0x221, saa1099_control_port_0_w },
+	{ 0x222, 0x222, saa1099_write_port_1_w },
+	{ 0x223, 0x223, saa1099_control_port_1_w },
 #endif
 	{ 0x03e8, 0x03ef, pc_COM3_w },
 	{ 0x02e8, 0x02ef, pc_COM4_w },
@@ -1439,7 +1463,7 @@ PORT_BIT ( 0x04, 0x04,	 IPT_UNUSED ) // lpt 1 on motherboard
 
 	AMSTRAD_KEYBOARD
 
-	INPUT_MICROSOFT_MOUSE
+//	INPUT_MICROSOFT_MOUSE
 
 INPUT_PORTS_END
 
@@ -1703,6 +1727,16 @@ static struct CustomSound_interface pc_sound_interface = {
 	pc_sh_stop,
 	pc_sh_custom_update
 };
+
+#if defined(GAMEBLASTER)
+static struct SAA1099_interface cms_interface = {
+	2, 
+	{
+		{ 50, 50 },
+		{ 50, 50 }
+	}
+};
+#endif
 
 #if defined(ADLIB)
 /* irq line not connected to pc on adlib cards (and compatibles) */
@@ -2008,6 +2042,9 @@ static struct MachineDriver machine_driver_pcmda =
 #if defined(ADLIB)
         { SOUND_YM3812, &ym3812_interface },
 #endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
+#endif
     }
 };
 
@@ -2059,6 +2096,9 @@ static struct MachineDriver machine_driver_pccga =
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
+#endif
 	}
 };
 
@@ -2103,6 +2143,9 @@ static struct MachineDriver machine_driver_xtcga =
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
+#endif
 	}
 };
 
@@ -2144,9 +2187,6 @@ static struct MachineDriver machine_driver_pc1512 =
 	0,0,0,0,
 	{
 		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
 	}
 };
 
@@ -2194,9 +2234,6 @@ static struct MachineDriver machine_driver_pc1640 =
 	0,0,0,0,
 	{
 		{ SOUND_CUSTOM, &pc_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
 	}
 };
 
@@ -2247,6 +2284,9 @@ static struct MachineDriver machine_driver_xtvga =
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
+#endif
 	}
 };
 
@@ -2296,9 +2336,6 @@ static struct MachineDriver machine_driver_t1000hx =
 	{
 		{ SOUND_CUSTOM, &pc_sound_interface }, /* is this available on a Tandy ? */
 		{ SOUND_SN76496, &t1t_sound_interface },
-#if defined(ADLIB)
-		{ SOUND_YM3812, &ym3812_interface },
-#endif
 	}
 };
 
@@ -2343,6 +2380,9 @@ static struct MachineDriver machine_driver_atcga =
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
 #endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
+#endif
 	}
 };
 
@@ -2386,6 +2426,9 @@ static struct MachineDriver machine_driver_atvga =
 		{ SOUND_CUSTOM, &pc_sound_interface },
 #if defined(ADLIB)
 		{ SOUND_YM3812, &ym3812_interface },
+#endif
+#if defined(GAMEBLASTER)
+		{ SOUND_SAA1099, &cms_interface },
 #endif
 	}
 };
@@ -2650,8 +2693,8 @@ COMPX ( 1987, pc1640,   pc,		 pc1640,   pc1640,	 pc1640,   "Amstrad plc",  "Amst
 // pc2086 pc1512 with vga??
 
 // at class (many differences to xt)
-COMPX ( 1984, atcga,    pc,		 atcga,    atcga,	 at,	   "International Business Machines",  "PC-AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
+COMPX ( 1984, atcga,    0,		 atcga,    atcga,	 at,	   "International Business Machines",  "PC-AT (CGA, MF2 Keyboard)", GAME_NOT_WORKING )
 
 // please leave these as testdriver
 COMP ( 1983, xtcga,    pc,		 xtcga,    xtcga,	 pc,	   "International Business Machines",  "PC-XT (CGA, MF2 Keyboard)" )
-COMP ( 198?, atvga,    pc,		 atvga,    atvga,	 at_vga,   "International Business Machines",  "PC-AT (VGA, MF2 Keyboard)" )
+COMP ( 198?, atvga,    atcga,	 atvga,    atvga,	 at_vga,   "International Business Machines",  "PC-AT (VGA, MF2 Keyboard)" )
