@@ -16,6 +16,8 @@
 	* Harald Glaab's site has software and documentation for the various SNUG
 	  cards: 99/4P (nicknamed "SGCPU"), EVPC, BwG.
 		<http://home.t-online.de/home/harald.glaab/snug/>
+	* The TI99/4 boot ROM is the only source of information for the IR remote
+	handset controller protocol
 
 Emulated:
 	* All TI99 basic console hardware, except a few tricks in TMS9901 emulation.
@@ -36,8 +38,6 @@ Issues:
 	* floppy disk timings are not emulated (general issue)
 
 TODO:
-	* DUMP THIS BLOODY TI99/4 ROM
-	* Submit speech improvements to Nicola again
 	* support for other peripherals and DSRs as documentation permits
 	* find programs that use super AMS or any other extended memory card
 	* find specs for the EVPC palette chip
@@ -1148,6 +1148,88 @@ static void ti99_handset_set_ack(int offset, int data)
 	}
 }
 
+static void ti99_handset_post_message(int message)
+{
+	/* post message and assert interrupt */
+	handset_clock = 1;
+	handset_buf = ~ message;
+	handset_buflen = 3;
+	tms9901_set_single_int(0, 12, 1);
+}
+
+static int ti99_handset_poll_keyboard(int num)
+{
+	static UINT8 previous_key[max_handsets];
+
+	UINT32 key_buf;
+	UINT8 current_key;
+	int i;
+
+
+	/* read current key state */
+	key_buf = ( readinputport(input_port_IR_keypads+num)
+					| (readinputport(input_port_IR_keypads+num+1) << 16) ) >> (4*num);
+
+	/* If a key was previously pressed, this key was not shift, and this key is
+	still down, then don't change
+	the current key press. */
+	if (previous_key[num] && (previous_key[num] != 0x24)
+			&& (key_buf & (1 << (previous_key[num] & 0x1f))))
+	{
+		/* check the shift modifier state */
+		if (((previous_key[num] & 0x20) != 0) == ((key_buf & 0x0008) != 0))
+			/* the shift modifier state has not changed */
+			return FALSE;
+		else
+		{
+			/* the shift modifier state has changed: we need to update the
+			keyboard state */
+			if (key_buf & 0x0008)
+			{	/* shift has been pressed down */
+				previous_key[num] = current_key = previous_key[num] | 0x20;
+			}
+			else
+			{	/* shift has been pressed down */
+				previous_key[num] = current_key = previous_key[num] & ~0x20;
+			}
+			/* post message */
+			ti99_handset_post_message((((unsigned) current_key) << 4) | (num << 1));
+
+			return TRUE;
+		}
+				
+	}
+
+	current_key = 0;	/* default value if no key is down */
+	if (key_buf & 0x0008)
+		current_key |= 0x20;	/* set shift flag */
+	for (i=0; i<20; i++)
+	{
+		if (key_buf & (1 << i))
+		{
+			current_key = i + 1;
+
+			if (current_key != 0x24)
+				/* If this is the shift key, any other key we may find will
+				have higher priority; otherwise, we may exit the loop and keep
+				the key we have just found. */
+				break;
+		}
+	}
+
+	if (current_key != previous_key[num])
+	{
+		previous_key[num] = current_key;
+
+		/* post message */
+		ti99_handset_post_message((((unsigned) current_key) << 4) | (num << 1));
+
+		return TRUE;
+	}
+		
+	return FALSE;
+}
+
 static int ti99_handset_poll_joystick(int num)
 {
 	static UINT8 previous_joy[max_handsets];
@@ -1202,11 +1284,8 @@ static int ti99_handset_poll_joystick(int num)
 		/* set joystick address */
 		message |= (num << 1) | 0x1;
 
-		/* post message and assert interrupt */
-		handset_clock = 1;
-		handset_buf = ~message;
-		handset_buflen = 3;
-		tms9901_set_single_int(0, 12, 1);
+		/* post message */
+		ti99_handset_post_message(message);
 
 		return TRUE;
 	}
@@ -1223,11 +1302,15 @@ static void ti99_handset_task(void)
 		for (i=0; i<max_handsets; i++)
 			if (ti99_handset_poll_joystick(i))
 				return;
+		for (i=0; i<max_handsets; i++)
+			if (ti99_handset_poll_keyboard(i))
+				return;
 	}
 	else if (handset_buflen == 3)
 	{	/* update messages after they have been posted */
 		if (handset_buf & 1)
 		{	/* keyboard */
+			ti99_handset_poll_keyboard((~ (handset_buf >> 1)) & 0x3);
 		}
 		else
 		{	/* joystick */
@@ -1319,10 +1402,10 @@ static int ti99_R9901_0(int offset)
 
 
 	if ((ti99_model == model_99_4) && (KeyCol == 7))
-		answer = ti99_handset_poll_bus() << 3;
+		answer = (ti99_handset_poll_bus() << 3) | 0x80;
 	else
 	{
-		answer = (readinputport(input_port_keyboard + KeyCol) << 3) & 0xF8;
+		answer = ((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) << 3) & 0xF8;
 
 		if ((ti99_model == model_99_4a) || (ti99_model == model_99_4p))
 		{
@@ -1349,9 +1432,9 @@ static int ti99_R9901_1(int offset)
 
 
 	if ((ti99_model == model_99_4) && (KeyCol == 7))
-		answer = 0;
+		answer = 0x07;
 	else
-		answer = (readinputport(input_port_keyboard + KeyCol) >> 5) & 0x07;
+		answer = ((readinputport(input_port_keyboard + (KeyCol >> 1)) >> ((KeyCol & 1) * 8)) >> 5) & 0x07;
 
 	return answer;
 }

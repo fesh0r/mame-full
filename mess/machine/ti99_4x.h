@@ -74,8 +74,9 @@ enum
 {
 	input_port_config = 0,
 	input_port_keyboard,
-	input_port_caps_lock = input_port_keyboard+8,		/* /4a only */
-	input_port_IR_joysticks = input_port_keyboard+7		/* /4 only */
+	input_port_caps_lock = input_port_keyboard+4,		/* /4a only */
+	input_port_IR_joysticks = input_port_keyboard+4,	/* /4 only */
+	input_port_IR_keypads = input_port_IR_joysticks+8	/* /4 only */
 };
 
 /* defines for input port input_port_config */
