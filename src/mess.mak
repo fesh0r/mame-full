@@ -547,14 +547,17 @@ $(OBJ)/motorola.a: \
 
 
 # MESS specific core $(OBJ)s
-COREOBJS +=	   \
-	  $(OBJ)/mess/mess.o		 \
-	  $(OBJ)/mess/system.o		 \
-	  $(OBJ)/mess/config.o		 \
-	  $(OBJ)/mess/filemngr.o	 \
-	  $(OBJ)/mess/tapectrl.o	 \
-	  $(OBJ)/mess/machine/wd179x.o	 \
-	  $(OBJ)/mess/machine/pit8253.o  \
+COREOBJS +=        \
+          $(OBJ)/mess/mess.o             \
+          $(OBJ)/mess/system.o           \
+          $(OBJ)/mess/config.o           \
+          $(OBJ)/mess/filemngr.o         \
+          $(OBJ)/mess/tapectrl.o         \
+          $(OBJ)/mess/machine/wd179x.o   \
+          $(OBJ)/mess/machine/pit8253.o  \
+          $(OBJ)/mess/machine/basicdsk.o \
+          $(OBJ)/mess/diskctrl.o         \
+
 
 ifndef MESS_EXCLUDE_CBM
 COREOBJS += $(OBJ)/mess/machine/6522via.o
@@ -573,7 +576,7 @@ COREOBJS += $(OBJ)/mess/machine/dsk.o $(OBJ)/mess/machine/nec765.o
 endif
 
 # additional tools
-TOOLS += dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
+TOOLS += transdsk$(EXE) dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) 
 
 dat2html$(EXE): $(OBJ)/mess/tools/dat2html.o
 	@echo Linking $@...
@@ -602,6 +605,14 @@ imgtool$(EXE):	     \
 	  $(OBJ)/mess/tools/pchd.o    \
 	  $(OBJ)/mess/tools/zip.o     \
 	  $(OBJ)/mess/tools/fs.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $^ -lz -o $@
+
+
+transdsk$(EXE):       \
+      $(TRANSDISK_OBJS) \
+	  $(OBJ)/mess/tools/stubs.o   \
+      $(OBJ)/mess/tools/transdsk/nec765.o   
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
