@@ -917,6 +917,42 @@ char *osd_basename (char *filename)
 	return filename;
 }
 
+char *osd_dirname (char *filename)
+{
+        char *dirname;
+        char *c;
+        int found = 0;
+
+        if (!filename)
+                return NULL;
+
+        if ( !( dirname = malloc(strlen(filename)+1) ) )
+        {
+                fprintf(stderr, "error: malloc failed in osd_dirname\n");
+                return 0;
+        }
+
+        strcpy (dirname, filename);
+
+        c = dirname + strlen(dirname);
+        while (c != dirname)
+        {
+                --c;
+                if (*c == '\\' || *c == '/' || *c == ':')
+                {
+                        *(c+1)=0;
+                        found = 1;
+                        break;
+                }
+        }
+
+        /* did we find a path seperator? */
+        if (!found)
+                dirname[0]=0;
+
+        return dirname;
+}
+
 #ifdef MESS
 int osd_select_file(int sel, char *filename)
 {
