@@ -8,7 +8,7 @@ Note: .inp record/playback does still not work currently.
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
--N/A
+- Chess Champion MK II [PeT]
 
 System Driver Changes:
 ----------------------
@@ -30,6 +30,8 @@ System Driver Changes:
   fully yet. [Kev Thacker]
 
 - [COCO/DRAGON] Added support for printer. [Nate Woods]
+
+- [Studio II] added cartridge support [PeT]
 
 Other Changes:
 --------------
