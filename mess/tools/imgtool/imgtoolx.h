@@ -203,7 +203,7 @@ int imgtool_bdf_open(const struct ImageModule *mod, STREAM *f, IMAGE **outimg);
 void imgtool_bdf_close(IMAGE *img);
 int imgtool_bdf_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
 int imgtool_bdf_is_readonly(IMAGE *img);
-void imgtool_bdf_get_geometry(IMAGE *img, struct disk_geometry *geometry);
+const struct disk_geometry *imgtool_bdf_get_geometry(IMAGE *img);
 int imgtool_bdf_read_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size);
 int imgtool_bdf_write_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int size);
 int imgtool_bdf_read_sector_to_stream(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, int length, STREAM *s);

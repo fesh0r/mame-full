@@ -220,7 +220,7 @@ struct ImageModule
 	int (*create)(const struct ImageModule *mod, STREAM *f, const ResolvedOption *createoptions);
 
 	/* these are here for floppy stuff */
-	void (*get_geometry)(struct tagIMAGE *img, struct disk_geometry *geometry);
+	const struct disk_geometry *(*get_geometry)(struct tagIMAGE *img);
 	int (*read_sector)(struct tagIMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size);
 	int (*write_sector)(struct tagIMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int size);
 

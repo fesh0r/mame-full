@@ -693,10 +693,13 @@ int img_deletefile(IMAGE *img, const char *fname)
 
 int img_get_geometry(IMAGE *img, struct disk_geometry *geometry)
 {
+	const struct disk_geometry *geo;
+
 	if (!img->module->get_geometry)
 		return IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 
-	img->module->get_geometry(img, geometry);
+	geo = img->module->get_geometry(img);
+	memcpy(geometry, geo, sizeof(struct disk_geometry));
 	return 0;
 }
 

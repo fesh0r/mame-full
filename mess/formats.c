@@ -244,10 +244,10 @@ static int bdf_seek(struct bdf_file *bdffile, UINT8 track, UINT8 head, UINT8 sec
 	return 0;
 }
 
-void bdf_get_geometry(void *bdf, struct disk_geometry *geometry)
+const struct disk_geometry *bdf_get_geometry(void *bdf)
 {
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	*geometry = bdffile->geometry;
+	return &bdffile->geometry;
 }
 
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)

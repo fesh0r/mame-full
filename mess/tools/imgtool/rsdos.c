@@ -131,11 +131,11 @@ static int lookup_rsdos_file(IMAGE *f, const char *fname, rsdos_dirent *ent, int
 
 static UINT8 get_granule_count(IMAGE *img)
 {
-	struct disk_geometry geometry;
+	UINT16 tracks;
 	UINT16 granules;
 
-	imgtool_bdf_get_geometry(img, &geometry);
-	granules = (((UINT16) geometry.tracks) - 1) * 2;
+	tracks = imgtool_bdf_get_geometry(img)->tracks;
+	granules = (tracks - 1) * 2;
 	return (granules > 255) ? 255 : (UINT8) granules;
 }
 

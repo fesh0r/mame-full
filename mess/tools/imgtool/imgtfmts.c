@@ -133,9 +133,9 @@ int imgtool_bdf_create(const struct ImageModule *mod, STREAM *f, const ResolvedO
 	return 0;
 }
 
-void imgtool_bdf_get_geometry(IMAGE *img, struct disk_geometry *geometry)
+const struct disk_geometry *imgtool_bdf_get_geometry(IMAGE *img)
 {
-	bdf_get_geometry(get_bdf(img), geometry);
+	return bdf_get_geometry(get_bdf(img));
 }
 
 int imgtool_bdf_read_sector(IMAGE *img, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int size)
