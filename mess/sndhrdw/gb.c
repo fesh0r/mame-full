@@ -33,6 +33,8 @@
 *	13/4/2002		AK - Reset envelope value when sound is initialized.
 *	21/4/2002		AK - Backed out the mode 3 frequency calculation change.
 *						 Merged init functions into gameboy_sound_w().
+*	14/5/2002		AK - Removed magic numbers in the fixed point math.
+*	12/6/2002		AK - Merged SOUNDx structs into one SOUND struct.
 *
 ***************************************************************************************/
 
@@ -64,13 +66,13 @@
 #define LEFT 1
 #define RIGHT 2
 #define MAX_FREQUENCIES 2048
+#define FIXED_POINT 16
 
 static int channel = 1;
 static int rate;
 
 /* Represents wave duties of 12.5%, 25%, 50% and 75% */
 static float wave_duty_table[4] = { 8, 4, 2, 1.33 };
-
 static INT32 env_length_table[8];
 static INT32 swp_time_table[8];
 static UINT32 period_table[MAX_FREQUENCIES];
@@ -79,75 +81,36 @@ static UINT32 period_mode4_table[8][16];
 static UINT32 length_table[64];
 static UINT32 length_mode3_table[256];
 
-struct SOUND1
+struct SOUND
 {
-	UINT8 on;
-	UINT8 channel;
-	INT32 length;
-	INT32 pos;
+	/* Common */
+	UINT8  on;
+	UINT8  channel;
+	INT32  length;
+	INT32  pos;
 	UINT32 period;
+	INT32  count;
+	INT8   mode;
+	/* Mode 1, 2, 3 */
+	INT8   duty;
+	/* Mode 1, 2, 4 */
+	INT32  env_value;
+	INT8   env_direction;
+	INT32  env_length;
+	INT32  env_count;
+	INT8   signal;
+	/* Mode 1 */
 	UINT32 frequency;
-	INT32 count;
-	INT8 signal;
-	INT8 mode;
-	INT8 duty;
-	INT32 env_value;
-	INT8 env_direction;
-	INT32 env_length;
-	INT32 env_count;
-	INT32 swp_shift;
-	INT32 swp_direction;
-	INT32 swp_time;
-	INT32 swp_count;
-};
-
-struct SOUND2
-{
-	UINT8 on;
-	UINT8 channel;
-	INT32 length;
-	INT32 pos;
-	UINT32 period;
-	INT32 count;
-	INT8 signal;
-	INT8 mode;
-	INT8 duty;
-	INT32 env_value;
-	INT8 env_direction;
-	INT32 env_length;
-	INT32 env_count;
-};
-
-struct SOUND3
-{
-	UINT8 on;
-	UINT8 channel;
-	INT32 length;
-	INT32 pos;
-	UINT32 period;
-	INT32 count;
-	UINT8 offset;
-	INT8 duty;
-	INT8 mode;
-	INT8 level;
-};
-
-struct SOUND4
-{
-	UINT8 on;
-	UINT8 channel;
-	INT32 length;
-	UINT32 period;
-	INT32 pos;
-	INT32 count;
-	INT8 signal;
-	INT8 mode;
-	INT32 env_value;
-	INT8 env_direction;
-	INT32 env_length;
-	INT32 env_count;
-	INT32 ply_step;
-	INT16 ply_value;
+	INT32  swp_shift;
+	INT32  swp_direction;
+	INT32  swp_time;
+	INT32  swp_count;
+	/* Mode 3 */
+	INT8   level;
+	UINT8  offset;
+	/* Mode 4 */
+	INT32  ply_step;
+	INT16  ply_value;
 };
 
 struct SOUNDC
@@ -165,10 +128,10 @@ struct SOUNDC
 	UINT8 mode4_right;
 };
 
-static struct SOUND1 snd_1;
-static struct SOUND2 snd_2;
-static struct SOUND3 snd_3;
-static struct SOUND4 snd_4;
+static struct SOUND  snd_1;
+static struct SOUND  snd_2;
+static struct SOUND  snd_3;
+static struct SOUND  snd_4;
 static struct SOUNDC snd_control;
 
 void gameboy_update(int param, INT16 **buffer, int length);
@@ -362,11 +325,11 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		{
 			sample = snd_1.signal & snd_1.env_value;
 			snd_1.pos++;
-			if( snd_1.pos == (UINT32)(snd_1.period / wave_duty_table[snd_1.duty]) >> 16)
+			if( snd_1.pos == (UINT32)(snd_1.period / wave_duty_table[snd_1.duty]) >> FIXED_POINT)
 			{
 				snd_1.signal = -snd_1.signal;
 			}
-			else if( snd_1.pos > (snd_1.period >> 16) )
+			else if( snd_1.pos > (snd_1.period >> FIXED_POINT) )
 			{
 				snd_1.pos = 0;
 				snd_1.signal = -snd_1.signal;
@@ -435,11 +398,11 @@ void gameboy_update(int param, INT16 **buffer, int length)
 		{
 			sample = snd_2.signal & snd_2.env_value;
 			snd_2.pos++;
-			if( snd_2.pos == (UINT32)(snd_2.period / wave_duty_table[snd_2.duty]) >> 16)
+			if( snd_2.pos == (UINT32)(snd_2.period / wave_duty_table[snd_2.duty]) >> FIXED_POINT)
 			{
 				snd_2.signal = -snd_2.signal;
 			}
-			else if( snd_2.pos > (snd_2.period >> 16) )
+			else if( snd_2.pos > (snd_2.period >> FIXED_POINT) )
 			{
 				snd_2.pos = 0;
 				snd_2.signal = -snd_2.signal;
@@ -497,7 +460,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				sample = 0;
 
 			snd_3.pos++;
-			if( snd_3.pos > (UINT32)(((snd_3.period ) >> 21)) ) /* 21 = .. >> 16) / 32 */
+			if( snd_3.pos > (UINT32)(((snd_3.period ) >> 21)) ) /* 21 = .. >> FIXED_POINT) / 32 */
 /*			if( (snd_3.pos<<16) >= (UINT32)(((snd_3.period / 31) + (1<<16))) ) */
 			{
 				snd_3.pos = 0;
@@ -532,7 +495,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 			/* Similar problem to Mode 3, we seem to miss some notes */
 			sample = snd_4.signal & snd_4.env_value;
 			snd_4.pos++;
-			if( snd_4.pos == (snd_4.period >> 17) )
+			if( snd_4.pos == (snd_4.period >> (FIXED_POINT + 1)) )
 			{
 				/* Using a Polynomial Counter (aka Linear Feedback Shift Register)
 				   Mode 4 has a 7 bit and 15 bit counter so we need to shift the
@@ -543,7 +506,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 				snd_4.ply_value &= (snd_4.ply_step ? 0x7f : 0x7fff);
 				snd_4.signal = (INT8)snd_4.ply_value;
 			}
-			else if( snd_4.pos > (snd_4.period >> 16) )
+			else if( snd_4.pos > (snd_4.period >> FIXED_POINT) )
 			{
 				snd_4.pos = 0;
 				mode4_mask = (((snd_4.ply_value & 0x2) >> 1) ^ (snd_4.ply_value & 0x1)) << (snd_4.ply_step ? 6 : 14);
@@ -601,7 +564,7 @@ void gameboy_update(int param, INT16 **buffer, int length)
 
 int gameboy_sh_start(const struct MachineSound* driver)
 {
-	int I,J;
+	int I, J;
 	const char *names[2] = { "Gameboy left", "Gameboy right" };
 	const int volume[2] = { MIXER( 50, MIXER_PAN_LEFT ), MIXER( 50, MIXER_PAN_RIGHT ) };
 
@@ -617,15 +580,15 @@ int gameboy_sh_start(const struct MachineSound* driver)
 	/* Calculate the envelope and sweep tables */
 	for( I = 0; I < 8; I++ )
 	{
-		env_length_table[I] = (I * ((1 << 16) / 64) * rate) >> 16;
-		swp_time_table[I] = (((I << 16) / 128) * rate) >> 15;
+		env_length_table[I] = (I * ((1 << FIXED_POINT) / 64) * rate) >> FIXED_POINT;
+		swp_time_table[I] = (((I << FIXED_POINT) / 128) * rate) >> (FIXED_POINT - 1);
 	}
 
 	/* Calculate the period tables */
 	for( I = 0; I < MAX_FREQUENCIES; I++ )
 	{
-		period_table[I] = ((1 << 16) / (131072 / (2048 - I))) * rate;
-		period_mode3_table[I] = ((1 << 16) / (65536 / (2048 - I))) * rate;
+		period_table[I] = ((1 << FIXED_POINT) / (131072 / (2048 - I))) * rate;
+		period_mode3_table[I] = ((1 << FIXED_POINT) / (65536 / (2048 - I))) * rate;
 	}
 	/* Calculate the period table for mode 4 */
 	for( I = 0; I < 8; I++ )
@@ -634,19 +597,19 @@ int gameboy_sh_start(const struct MachineSound* driver)
 		{
 			/* I is the dividing ratio of frequencies
 			   J is the shift clock frequency */
-			period_mode4_table[I][J] = ((1 << 16) / (524288 / ((I == 0)?0.5:I) / (1 << (J + 1)))) * rate;
+			period_mode4_table[I][J] = ((1 << FIXED_POINT) / (524288 / ((I == 0)?0.5:I) / (1 << (J + 1)))) * rate;
 		}
 	}
 
 	/* Calculate the length table */
 	for( I = 0; I < 64; I++ )
 	{
-		length_table[I] = ((64 - I) * ((1 << 16)/256) * rate) >> 16;
+		length_table[I] = ((64 - I) * ((1 << FIXED_POINT)/256) * rate) >> FIXED_POINT;
 	}
 	/* Calculate the length table for mode 3 */
 	for( I = 0; I < 256; I++ )
 	{
-		length_mode3_table[I] = ((256 - I) * ((1 << 16)/256) * rate) >> 16;
+		length_mode3_table[I] = ((256 - I) * ((1 << FIXED_POINT)/256) * rate) >> FIXED_POINT;
 	}
 
 	return 0;
