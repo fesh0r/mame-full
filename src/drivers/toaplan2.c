@@ -23,15 +23,16 @@ Supported games:
 	batsugun	TP-030			Toaplan		Batsugun
 	batugnsp	TP-030			Toaplan		Batsugun  (Special Version)
 	snowbro2	??????			Toaplan		Snow Bros. 2 - With New Elves
+	mahoudai	??????			Raizing		Mahou Daisakusen
+	shippu		??????			Raizing		Shippu Mahou Daisakusen
+	battleg 	??????			Raizing		Battle Garegga
 
 Not supported games yet:
 
 	Name		Board No		Maker		Game name
 	----------------------------------------------------------------------------
-	mahoudai	??????			Rizing		Mahou Daisakusen
-	shippu		??????			Rizing		Shippu Mahou Daisakusen
-	batrider	??????			Rizing		Armed Police Batrider
-	btlgaleg	??????			Rizing		Battle Galegga
+	batrider	??????			Raizing		Armed Police Batrider
+
 
 Game status:
 
@@ -49,6 +50,10 @@ VFive         Working, but no sound. MCU type unknown - its a Z?80 of some sort.
 Batsugun      Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
 Batsugun Sp'  Working, but no sound and wrong GFX priorities. MCU type unknown - its a Z?80 of some sort.
 Snow Bros. 2  Working.
+Mahou Daisaks Working.
+Shippu Mahou  Working.
+Battle Gareg  Working, but no sound in beta 5. Not working in beta 6. Is this a problem of the CPU core ?
+
 
 Notes:
 	See Input Port definition header below, for instructions
@@ -84,7 +89,16 @@ To Do / Unknowns:
 #define CPU_2_Zx80		0xff
 
 static unsigned char *toaplan2_shared_ram;
+static unsigned char *raizing_shared_ram;	/* Added by Yochizo */
 static unsigned char *Zx80_shared_ram;
+static unsigned char *battleg_commram;
+static unsigned char raizing_m6295_command[2] = { 0, 0 };
+static int current_bank = 2;
+static unsigned char raizing_m6295_bankselect[2][4] =
+{
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 }
+};
 
 static int mcu_data = 0;
 int toaplan2_sub_cpu = 0;
@@ -132,11 +146,9 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /* Added by Yochizo 2000/08/19 */
 int  raizing_0_vh_start(void);
-int  raizing_1_vh_start(void);
-void raizing_0_vh_stop(void);
-void raizing_1_vh_stop(void);
+//int  raizing_1_vh_start(void);
 void raizing_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void raizing_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+//void raizing_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *textvideoram;			 /* Video ram for extra-text layer */
 /* --------------------------- */
 
@@ -300,6 +312,23 @@ static void init_tatsujn2(void)
 
 	WRITE_WORD(&RAM[0x2EC26],0x4E71);		// NOP
 
+}
+
+static void init_battleg(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *Z80 = memory_region(REGION_CPU2);
+	
+	/* Fix check sum from the source of Raine */
+	WRITE_WORD(&RAM[0x15B24],0x6100 - 0x1E);
+	
+	/* Skip video count check */
+	WRITE_WORD(&RAM[0x021FA],0x4E71);
+	
+	/* Set Z80 bank switch */
+	cpu_setbank(1, &Z80[0x10000 + 0x4000 * (2 - 2)]);	/* Default bank is 2 */
+
+	memset(battleg_commram, 0x00, 0x100);
 }
 
 static void init_snowbro2(void)
@@ -598,6 +627,105 @@ WRITE_HANDLER( Zx80_sharedram_w )
 {
 	Zx80_shared_ram[offset / 2] = data;
 }
+READ_HANDLER( raizing_shared_ram_r )
+{
+	offset >>= 1;
+	offset &= 0x3fff;
+
+	return raizing_shared_ram[offset];
+
+}
+WRITE_HANDLER( raizing_shared_ram_w )
+{
+	offset >>= 1;
+	offset &= 0x3fff;
+
+	raizing_shared_ram[offset] = data & 0xff;
+}
+READ_HANDLER( battleg_commram_r )
+{
+	int ret;
+	int hioffs = offset & 0xff;
+	int looffs = (offset + 1) & 0xff;
+	
+	ret = ( ( battleg_commram[hioffs] & 0xff ) << 8 ) |
+			( battleg_commram[looffs] & 0xff );
+	
+	return ret;
+}
+WRITE_HANDLER( battleg_commram_w )
+{
+	battleg_commram[offset & 0xff] = (data >> 8) & 0xff;
+	cpu_cause_interrupt(1, Z80_IRQ_INT);
+	battleg_commram[(offset + 1) & 0xff] = data & 0xff;
+	cpu_cause_interrupt(1, Z80_IRQ_INT);
+}
+READ_HANDLER( battleg_commram_check_r0 )
+{
+	return battleg_commram[0x01] & 0xff;
+}
+WRITE_HANDLER( battleg_commram_check_w0 )
+{
+	battleg_commram[0x02] = data & 0xff;
+}
+READ_HANDLER( battleg_z80check_r )
+{
+	return raizing_shared_ram[0x10] & 0xff;
+}
+WRITE_HANDLER( battleg_bankswitch_w )
+{
+	unsigned char *RAM = memory_region(REGION_CPU2);
+	int bankaddress = 0x4000 * current_bank;
+	int bank;
+	
+	bank = (data & 0x0f) - 10;
+	
+	if (bank > 5)
+		bank = 5;
+	if (bank < 0)
+		bank = 0;
+	
+	if (bank != current_bank){
+		current_bank = bank;
+		bankaddress = 0x10000 + 0x4000 * current_bank;
+		cpu_setbank(1, &RAM[bankaddress]);
+	}
+}
+WRITE_HANDLER( battleg_okim6295_w )
+{
+	int bank;
+	
+	if (!raizing_m6295_command[0] & 0x80){
+		raizing_m6295_command[0] = 0x80;
+		bank = 0;
+		if (data & 0x20)	bank = 1;
+		if (data & 0x40)	bank = 2;
+		if (data & 0x80)	bank = 3;
+		/* bank select */
+		OKIM6295_set_bank_base(0, 1, raizing_m6295_bankselect[0][bank] * 0x10000);
+	}
+	else{
+		if (data & 0x80){
+			raizing_m6295_command[0] = data & 0x7f;
+			data &= ~0x60;
+		}
+	}
+	OKIM6295_data_0_w( 0, data );
+}
+WRITE_HANDLER( battleg_okim6295_bankselect_0 )
+{
+	raizing_m6295_bankselect[0][0] = data & 0x0f;
+	raizing_m6295_bankselect[0][1] = (data >> 4) & 0x0f;
+	OKIM6295_set_bank_base(0, 0, raizing_m6295_bankselect[0][0] * 0x10000);
+	OKIM6295_set_bank_base(0, 1, raizing_m6295_bankselect[0][1] * 0x10000);
+}
+WRITE_HANDLER( battleg_okim6295_bankselect_1 )
+{
+	raizing_m6295_bankselect[0][2] = data & 0x0f;
+	raizing_m6295_bankselect[0][3] = (data >> 4) & 0x0f;
+	OKIM6295_set_bank_base(0, 2, raizing_m6295_bankselect[0][2] * 0x10000);
+	OKIM6295_set_bank_base(0, 3, raizing_m6295_bankselect[0][3] * 0x10000);
+}
 
 
 
@@ -767,7 +895,6 @@ static struct MemoryReadAddress tatsujn2_readmem[] =
 	{ 0x200004, 0x200007, toaplan2_0_videoram_r },
 	{ 0x20000c, 0x20000d, input_port_0_r },			/* VBlank */
 	{ 0x300000, 0x300fff, paletteram_word_r },
-//	{ 0x400000, 0x403fff, MRA_BANK2 },
 	{ 0x400000, 0x403fff, raizing_textram_r },
 	{ 0x500000, 0x50ffff, MRA_BANK3 },
 	{ 0x600000, 0x600001, video_count_r },
@@ -790,7 +917,6 @@ static struct MemoryWriteAddress tatsujn2_writemem[] =
 	{ 0x200008, 0x200009, toaplan2_0_scroll_reg_select_w },
 	{ 0x20000c, 0x20000d, toaplan2_0_scroll_reg_data_w },
 	{ 0x300000, 0x300fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-//	{ 0x400000, 0x403fff, MWA_BANK2 },				/* TEXT RAM */
 	{ 0x400000, 0x403fff, raizing_textram_w, &textvideoram },
 	{ 0x500000, 0x50ffff, MWA_BANK3 },
 	{ 0x700010, 0x700011, OKIM6295_data_0_w },
@@ -1065,6 +1191,140 @@ static struct MemoryWriteAddress snowbro2_writemem[] =
 	{ -1 }
 };
 
+static struct MemoryReadAddress mahoudai_readmem[] =
+{
+	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x100000, 0x10ffff, MRA_BANK1 },
+	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
+	{ 0x21c002, 0x21c003, YM2151_status_port_0_r },
+//	{ 0x21c008, 0x21c009, OKIM6295_status_0_r },
+	{ 0x21c020, 0x21c021, input_port_1_r },
+	{ 0x21c024, 0x21c025, input_port_2_r },
+	{ 0x21c028, 0x21c029, input_port_3_r },
+	{ 0x21c02c, 0x21c02d, input_port_4_r },
+	{ 0x21c030, 0x21c031, input_port_5_r },
+	{ 0x21c034, 0x21c035, input_port_6_r },
+	{ 0x21c03c, 0x21c03d, video_count_r },
+	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
+	{ 0x400000, 0x400fff, paletteram_word_r },
+	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress mahoudai_writemem[] =
+{
+	{ 0x000000, 0x07ffff, MWA_ROM },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
+	{ 0x218000, 0x21bfff, raizing_shared_ram_w, &raizing_shared_ram },
+	{ 0x21c000, 0x21c001, YM2151_register_port_0_w },
+	{ 0x21c004, 0x21c005, YM2151_data_port_0_w },
+	{ 0x21c008, 0x21c009, OKIM6295_data_0_w },
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram},
+	{ -1 }
+};
+
+static struct MemoryReadAddress shippumd_readmem[] =
+{
+	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x100000, 0x10ffff, MRA_BANK1 },
+	{ 0x218000, 0x21bfff, raizing_shared_ram_r },
+	{ 0x21c002, 0x21c003, YM2151_status_port_0_r },
+//	{ 0x21c008, 0x21c009, OKIM6295_status_0_r },
+	{ 0x21c020, 0x21c021, input_port_1_r },
+	{ 0x21c024, 0x21c025, input_port_2_r },
+	{ 0x21c028, 0x21c029, input_port_3_r },
+	{ 0x21c02c, 0x21c02d, input_port_4_r },
+	{ 0x21c030, 0x21c031, input_port_5_r },
+	{ 0x21c034, 0x21c035, input_port_6_r },
+	{ 0x21c03c, 0x21c03d, video_count_r },
+	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
+	{ 0x400000, 0x400fff, paletteram_word_r },
+	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress shippumd_writemem[] =
+{
+	{ 0x000000, 0x0fffff, MWA_ROM },
+	{ 0x100000, 0x10ffff, MWA_BANK1 },
+	{ 0x218000, 0x21bfff, raizing_shared_ram_w, &raizing_shared_ram },
+	{ 0x21c000, 0x21c001, YM2151_register_port_0_w },
+	{ 0x21c004, 0x21c005, YM2151_data_port_0_w },
+	{ 0x21c008, 0x21c009, OKIM6295_data_0_w },
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram},
+	{ -1 }
+};
+
+static struct MemoryReadAddress battleg_readmem[] =
+{
+	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x100000, 0x10ffff, MRA_BANK2 },
+	{ 0x218020, 0x218021, battleg_z80check_r },
+	{ 0x21c020, 0x21c021, input_port_1_r },
+	{ 0x21c024, 0x21c025, input_port_2_r },
+	{ 0x21c028, 0x21c029, input_port_3_r },
+	{ 0x21c02c, 0x21c02d, input_port_4_r },
+	{ 0x21c030, 0x21c031, input_port_5_r },
+	{ 0x21c034, 0x21c035, input_port_6_r },
+	{ 0x21c03c, 0x21c03d, video_count_r },
+	{ 0x300004, 0x300007, toaplan2_0_videoram_r },	/* tile layers */
+	{ 0x30000c, 0x30000d, input_port_0_r },			/* VBlank */
+	{ 0x400000, 0x400fff, paletteram_word_r },
+	{ 0x500000, 0x503fff, raizing_textram_r },
+	{ 0x600000, 0x600fff, battleg_commram_r },
+	{ -1 }
+};
+
+static struct MemoryWriteAddress battleg_writemem[] =
+{
+	{ 0x000000, 0x0fffff, MWA_ROM },
+	{ 0x100000, 0x10ffff, MWA_BANK2 },
+	{ 0x21c01c, 0x21c01d, toaplan2_coin_w },
+	{ 0x300000, 0x300001, toaplan2_0_voffs_w },		/* VideoRAM selector/offset */
+	{ 0x300004, 0x300007, toaplan2_0_videoram_w },	/* Tile/Sprite VideoRAM */
+	{ 0x300008, 0x300009, toaplan2_0_scroll_reg_select_w },
+	{ 0x30000c, 0x30000d, toaplan2_0_scroll_reg_data_w },
+	{ 0x400000, 0x400fff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x500000, 0x503fff, raizing_textram_w, &textvideoram},
+	{ 0x600000, 0x600fff, battleg_commram_w, &battleg_commram },
+	{ -1 }
+};
+
+static struct MemoryReadAddress batrider_readmem[] =
+{
+	{ 0x000000, 0x1fffff, MRA_ROM },
+	{ 0x200000, 0x20ffff, MRA_BANK2 },
+//	{ 0x300000, 0x37ffff, Z80romcheck },
+	{ 0x400000, 0x400001, input_port_0_r },
+	{ 0x400008, 0x40000b, toaplan2_0_videoram_r },
+//	{ 0x500000, 0x5000ff, batrider_shared_ram_r },
+};
+
+static struct MemoryWriteAddress batrider_writemem[] =
+{
+	{ 0x000000, 0x1fffff, MWA_ROM },
+	{ 0x200000, 0x20ffff, MWA_BANK2 },
+	{ 0x400000, 0x400001, toaplan2_0_scroll_reg_data_w },
+	{ 0x400004, 0x400005, toaplan2_0_scroll_reg_select_w },
+	{ 0x400008, 0x400009, toaplan2_0_videoram_w },
+	{ 0x40000c, 0x40000d, toaplan2_0_voffs_w },
+//	{ 0x500000, 0x5000ff, batrider_shared_ram_w },
+};
+
 
 static struct MemoryReadAddress sound_readmem[] =
 {
@@ -1083,6 +1343,59 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
+/* Added by Yochizo 2000/08/20 */
+
+static struct MemoryReadAddress raizing_sound_readmem[] =
+{
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe001, 0xe001, YM2151_status_port_0_r },
+//	{ 0xe004, 0xe004, OKIM6295_status_0_r },
+	{ 0xe010, 0xe010, input_port_1_r },
+	{ 0xe012, 0xe012, input_port_2_r },
+	{ 0xe014, 0xe014, input_port_3_r },
+	{ 0xe016, 0xe016, input_port_4_r },
+	{ 0xe018, 0xe018, input_port_5_r },
+	{ 0xe01a, 0xe01a, input_port_6_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress raizing_sound_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM, &raizing_shared_ram },
+	{ 0xe000, 0xe000, YM2151_register_port_0_w },
+	{ 0xe001, 0xe001, YM2151_data_port_0_w },
+	{ 0xe004, 0xe004, OKIM6295_data_0_w },
+	{ 0xe006, 0xe006, OKIM6295_data_0_w },
+	{ 0xe00e, 0xe00e, toaplan2_coin_w },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress battleg_sound_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe001, 0xe001, YM2151_status_port_0_r },
+	{ 0xe004, 0xe004, OKIM6295_status_0_r },
+	{ 0xe01c, 0xe01c, battleg_commram_check_r0 },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress battleg_sound_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xdfff, MWA_RAM, &raizing_shared_ram },
+	{ 0xe000, 0xe000, YM2151_register_port_0_w },
+	{ 0xe001, 0xe001, YM2151_data_port_0_w },
+	{ 0xe004, 0xe004, battleg_okim6295_w },
+	{ 0xe006, 0xe006, battleg_okim6295_bankselect_0 },
+	{ 0xe008, 0xe008, battleg_okim6295_bankselect_1 },
+	{ 0xe00a, 0xe00a, battleg_bankswitch_w },
+	{ 0xe00c, 0xe00c, battleg_commram_check_w0 },
+	{ -1 }  /* end of table */
+};
 
 #if HD64x180
 static struct MemoryReadAddress hd647180_readmem[] =
@@ -1124,7 +1437,6 @@ static struct MemoryWriteAddress Zx80_writemem[] =
 	Service & P2 start            : The game will pause.
 	P1 start                      : The game will continue.
 	Service & P1 start & P2 start : The game will play in slow motion.
-
 *****************************************************************************/
 
 #define  TOAPLAN2_PLAYER_INPUT( player, button3 )								\
@@ -1226,7 +1538,7 @@ INPUT_PORTS_START( tekipaki )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x0f,	0x00, "Territory" )
+	PORT_DIPNAME( 0x0f,	0x02, "Territory" )
 	PORT_DIPSETTING(	0x02, "Europe" )
 	PORT_DIPSETTING(	0x01, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1276,7 +1588,7 @@ INPUT_PORTS_START( ghox )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x0f,	0x00, "Territory" )
+	PORT_DIPNAME( 0x0f,	0x02, "Territory" )
 	PORT_DIPSETTING(	0x02, "Europe" )
 	PORT_DIPSETTING(	0x01, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1377,7 +1689,7 @@ INPUT_PORTS_START( dogyuun )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x0f,	0x00, "Territory" )
+	PORT_DIPNAME( 0x0f,	0x03, "Territory" )
 	PORT_DIPSETTING(	0x03, "Europe" )
 	PORT_DIPSETTING(	0x01, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1470,7 +1782,7 @@ INPUT_PORTS_START( kbash )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x000f,	0x0000, "Territory" )
+	PORT_DIPNAME( 0x000f,	0x000a, "Territory" )
 	PORT_DIPSETTING(		0x000a, "Europe" )
 	PORT_DIPSETTING(		0x0009, "USA" )
 	PORT_DIPSETTING(		0x0000, "Japan" )
@@ -1541,7 +1853,7 @@ INPUT_PORTS_START( tatsujn2 )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x07,	0x00, "Territory" )
+	PORT_DIPNAME( 0x07,	0x02, "Territory" )
 	PORT_DIPSETTING(	0x02, "Europe" )
 	PORT_DIPSETTING(	0x01, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1588,7 +1900,7 @@ INPUT_PORTS_START( pipibibs )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x07,	0x00, "Territory" )
+	PORT_DIPNAME( 0x07,	0x06, "Territory" )
 	PORT_DIPSETTING(	0x06, "Europe" )
 	PORT_DIPSETTING(	0x04, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1669,7 +1981,7 @@ INPUT_PORTS_START( whoopee )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x07,	0x00, "Territory" )
+	PORT_DIPNAME( 0x07,	0x06, "Territory" )
 	PORT_DIPSETTING(	0x06, "Europe" )
 	PORT_DIPSETTING(	0x04, "USA" )
 	PORT_DIPSETTING(	0x00, "Japan" )
@@ -1750,7 +2062,7 @@ INPUT_PORTS_START( pipibibi )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x07,	0x00, "Territory" )
+	PORT_DIPNAME( 0x07,	0x05, "Territory" )
 	PORT_DIPSETTING(	0x07, "World (Ryouta Kikaku)" )
 	PORT_DIPSETTING(	0x00, "Japan (Ryouta Kikaku)" )
 	PORT_DIPSETTING(	0x02, "World" )
@@ -1986,7 +2298,7 @@ INPUT_PORTS_START( batsugun )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
 	PORT_START		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x000f,	0x000e, "Territory" )
+	PORT_DIPNAME( 0x000f,	0x0009, "Territory" )
 	PORT_DIPSETTING(		0x0009, "Europe" )
 	PORT_DIPSETTING(		0x000b, "USA" )
 	PORT_DIPSETTING(		0x000e, "Japan" )
@@ -2082,7 +2394,7 @@ INPUT_PORTS_START( snowbro2 )
 	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START		/* (8) Territory Jumper block */
-	PORT_DIPNAME( 0x1c00,	0x0000, "Territory" )
+	PORT_DIPNAME( 0x1c00,	0x0800, "Territory" )
 	PORT_DIPSETTING(		0x0800, "Europe" )
 	PORT_DIPSETTING(		0x0400, "USA" )
 	PORT_DIPSETTING(		0x0000, "Japan" )
@@ -2097,6 +2409,216 @@ INPUT_PORTS_START( snowbro2 )
 	PORT_BIT( 0xc3ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mahoudai )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN )
+
+	TOAPLAN2_SYSTEM_INPUTS
+
+	PORT_START		/* (4) DSWA */
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x0030, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(		0x0001, "Easy" )
+	PORT_DIPSETTING(		0x0000, "Medium" )
+	PORT_DIPSETTING(		0x0002, "Hard" )
+	PORT_DIPSETTING(		0x0003, "Hardest" )
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "200K, 500K" )
+	PORT_DIPSETTING(		0x0000, "every 300K" )
+	PORT_DIPSETTING(		0x0008, "200K" )
+	PORT_DIPSETTING(		0x000c, "None" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_BITX(	  0x0040,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+
+	PORT_START		/* (6) Territory Jumper block */
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* not used, it seems */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( shippumd )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_UNKNOWN )
+
+	TOAPLAN2_SYSTEM_INPUTS
+
+	PORT_START		/* (4) DSWA */
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x0030, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(		0x0001, "Easy" )
+	PORT_DIPSETTING(		0x0000, "Medium" )
+	PORT_DIPSETTING(		0x0002, "Hard" )
+	PORT_DIPSETTING(		0x0003, "Hardest" )
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0004, "200K, 500K" )
+	PORT_DIPSETTING(		0x0000, "every 300K" )
+	PORT_DIPSETTING(		0x0008, "200K" )
+	PORT_DIPSETTING(		0x000c, "None" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_BITX(	  0x0040,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (6) Territory Jumper block */
+	/* title screen is wrong when set to other countries */
+	PORT_DIPNAME( 0x000e,	0x0000, "Territory" )
+	PORT_DIPSETTING(		0x0004, "Europe" )
+	PORT_DIPSETTING(		0x0002, "USA" )
+	PORT_DIPSETTING(		0x0000, "Japan" )
+	PORT_DIPSETTING(		0x0006, "South East Asia" )
+	PORT_DIPSETTING(		0x0008, "China" )
+	PORT_DIPSETTING(		0x000a, "Korea" )
+	PORT_DIPSETTING(		0x000c, "Hong Kong" )
+	PORT_DIPSETTING(		0x000e, "Taiwan" )
+	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( battleg )
+	PORT_START		/* (0) VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER1, IPT_BUTTON3 )
+
+	TOAPLAN2_PLAYER_INPUT( IPF_PLAYER2, IPT_BUTTON3 )
+
+	TOAPLAN2_SYSTEM_INPUTS
+
+	PORT_START		/* (4) DSWA */
+	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
+	PORT_DIPNAME( 0x0002,	0x0000, "Start Coin" )
+	PORT_DIPSETTING(		0x0000, "1 Credit" )
+	PORT_DIPSETTING(		0x0002, "2 Credit" )
+	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x0004, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(		0x00e0, DEF_STR( Free_Play ) )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (5) DSWB */
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(		0x0001, "Easy" )
+	PORT_DIPSETTING(		0x0000, "Medium" )
+	PORT_DIPSETTING(		0x0002, "Hard" )
+	PORT_DIPSETTING(		0x0003, "Hardest" )
+	PORT_DIPNAME( 0x000c,	0x0000, "Timer" )
+	PORT_DIPSETTING(		0x0004, "Easy" )
+	PORT_DIPSETTING(		0x0000, "Medium" )
+	PORT_DIPSETTING(		0x0008, "Hard" )
+	PORT_DIPSETTING(		0x000c, "Hardest" )
+	PORT_DIPNAME( 0x0030,	0x0020, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "4" )
+	PORT_DIPNAME( 0x00c0,   0x0000, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(		0x0000, "Every 1500k" )
+	PORT_DIPSETTING(		0x0040, "Every 1000k" )
+	PORT_DIPSETTING(		0x0080, "Every 2000k" )
+	PORT_DIPSETTING(		0x00c0, "None" )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* (6) DSWC */
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004,	0x0000, "Allow Continue" )
+	PORT_DIPSETTING(		0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008,	0x0000, "Stage Edit" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( On ) )
+	PORT_BITX(	  0x0010,	0x0000, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( On ) )
+	PORT_BIT( 0xffe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 
 static struct GfxLayout tilelayout =
@@ -2105,7 +2627,6 @@ static struct GfxLayout tilelayout =
 	RGN_FRAC(1,2),	/* Number of tiles */
 	4,		/* 4 bits per pixel */
 	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0 },
-//	{ 0x100000*8+8, 0x100000*8, 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -2124,14 +2645,37 @@ static struct GfxLayout spritelayout =
 	8*16
 };
 
-/* Added by Yochizo 2000/08/19 */
+
+#ifdef LSB_FIRST
 static struct GfxLayout tatsujn2_textlayout =
 {
 	8,8,	/* 8x8 characters */
 	1024,	/* 1024 characters */
 	4,		/* 4 bits per pixel */
-	{ 0x40000*8+0, 0x40000*8+1, 0x40000*8+2, 0x40000*8+3 },
+	{ 0, 1, 2, 3 },
 	{ 8, 12, 0, 4, 24, 28, 16, 20 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32
+};
+#else
+static struct GfxLayout tatsujn2_textlayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	8*32
+};
+#endif
+static struct GfxLayout raizing_textlayout =
+{
+	8,8,	/* 8x8 characters */
+	1024,	/* 1024 characters */
+	4,		/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 0, 4, 8, 12, 16, 20, 24, 28 },
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
 	8*32
 };
@@ -2156,12 +2700,29 @@ static struct GfxDecodeInfo gfxdecodeinfo_2[] =
 /* Added by Yochizo 2000/08/19 */
 static struct GfxDecodeInfo tatsujn2_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,   0, 128 },
-	{ REGION_GFX1, 0, &spritelayout, 0,  64 },
-	/* Tatsujin2 have extra-text tile data in CPU rom */
-	{ REGION_CPU1, 0, &tatsujn2_textlayout,  0, 128 },
+	{ REGION_GFX1, 0,       &tilelayout         , 0, 128 },
+	{ REGION_GFX1, 0,       &spritelayout       , 0,  64 },
+	{ REGION_CPU1, 0x40000, &tatsujn2_textlayout, 0, 128 },	/* Text-data is in CPU rom */
 	{ -1 } /* end of array */
 };
+
+static struct GfxDecodeInfo raizing_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout,         0, 128 },
+	{ REGION_GFX1, 0, &spritelayout,       0,  64 },
+	{ REGION_GFX2, 0, &raizing_textlayout, 0, 128 },		/* Extra-text layer */
+	{ -1 } /* end of array */
+};
+
+//static struct GfxDecodeInfo raizing_gfxdecodeinfo_2[] =
+//{
+//	{ REGION_GFX1, 0, &tilelayout,           0, 128 },
+//	{ REGION_GFX1, 0, &spritelayout,         0,  64 },
+//	{ REGION_GFX2, 0, &tilelayout,           0, 128 },
+//	{ REGION_GFX2, 0, &spritelayout,         0,  64 },
+//	{ REGION_GFX3, 0, &raizing_textlayout,   0, 128 },		/* Extra-text layer */
+//	{ -1 } /* end of array */
+//};
 
 
 static void irqhandler(int linestate)
@@ -2185,13 +2746,50 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct OKIM6295interface okim6295_interface =
+static struct YM2151interface battleg_ym2151_interface =
 {
 	1,				/* 1 chip */
-	{ 22050 },		/* frequency (Hz). M6295 has 1MHz on its clock input */
-	{ 2 },			/* memory region */
+	32000000/8,		/* Battle Garegga uses 4 MHz ? */
+	{ YM3012_VOL(45,MIXER_PAN_LEFT,45,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
+
+static struct OKIM6295interface okim6295_interface =
+{
+	1,					/* 1 chip */
+	{ 22050 },			/* frequency (Hz). M6295 has 1MHz on its clock input */
+	{ REGION_SOUND1 },	/* memory region */
 	{ 47 }
 };
+
+/* Added by Yochizo */
+/* This is M6295 interface for Raizing games. Raizing games use lower sampling */
+/* frequency but I don't know real number.                                     */
+static struct OKIM6295interface okim6295_raizing_interface =
+{
+	1,					/* 1 chip */
+	{ 11025 },			/* frequency (Hz). M6295 has 1MHz on its clock input */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 47 }
+};
+
+static struct OKIM6295interface okim6295_battleg_interface =
+{
+	1,					/* 1 chip */
+	{ 15000 },			/* frequency (Hz). M6295 has 1MHz on its clock input */
+	{ REGION_SOUND1 },	/* memory region */
+	{ 47 }
+};
+
+static struct OKIM6295interface okim6295_batrider_interface =
+{
+	2,					/* 2 chips */
+	{ 11025, 11025 },
+	{ REGION_SOUND1, REGION_SOUND2 },
+	{ 47, 47 }
+};
+
+
 
 static struct MachineDriver machine_driver_tekipaki =
 {
@@ -2414,7 +3012,7 @@ static struct MachineDriver machine_driver_tatsujn2 =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
 	toaplan2_0_eof_callback,
 	raizing_0_vh_start,
-	raizing_0_vh_stop,
+	toaplan2_0_vh_stop,
 	raizing_0_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2740,6 +3338,195 @@ static struct MachineDriver machine_driver_snowbro2 =
 	}
 };
 
+static struct MachineDriver machine_driver_mahoudai =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			16000000,
+			mahoudai_readmem,mahoudai_writemem,0,0,
+			toaplan2_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,		/* ??? */
+			raizing_sound_readmem,raizing_sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0,
+
+	/* video hardware */
+	32*16, 32*16, { 0, 319, 0, 239 },
+	raizing_gfxdecodeinfo,
+	(128*16), (128*16),
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	toaplan2_0_eof_callback,
+	raizing_0_vh_start,
+	toaplan2_0_vh_stop,
+	raizing_0_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_raizing_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_shippumd =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			16000000,
+			shippumd_readmem,shippumd_writemem,0,0,
+			toaplan2_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,		/* ??? */
+			raizing_sound_readmem,raizing_sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0,
+
+	/* video hardware */
+	32*16, 32*16, { 0, 319, 0, 239 },
+	raizing_gfxdecodeinfo,
+	(128*16), (128*16),
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	toaplan2_0_eof_callback,
+	raizing_0_vh_start,
+	toaplan2_0_vh_stop,
+	raizing_0_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_raizing_interface
+		}
+	}
+};
+
+static struct MachineDriver machine_driver_battleg =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			18000000,		/* ??? */
+			battleg_readmem,battleg_writemem,0,0,
+			toaplan2_interrupt,1
+		},
+		{
+			CPU_Z80,
+			4000000,		/* ??? */
+			battleg_sound_readmem,battleg_sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	init_battleg,
+
+	/* video hardware */
+	32*16, 32*16, { 0, 319, 0, 239 },
+	raizing_gfxdecodeinfo,
+	(128*16), (128*16),
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	toaplan2_0_eof_callback,
+	raizing_0_vh_start,
+	toaplan2_0_vh_stop,
+	raizing_0_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&battleg_ym2151_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_battleg_interface
+		}
+	}
+};
+
+
+static struct MachineDriver machine_driver_batrider =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			28000000,		/* ??? */
+			batrider_readmem,batrider_writemem,0,0,
+			toaplan2_interrupt,1
+		},
+		{
+			CPU_Z80,
+			8000000,		/* ??? */
+			battleg_sound_readmem,battleg_sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,
+	0,
+
+	/* video hardware */
+	32*16, 32*16, { 0, 319, 0, 239 },
+	gfxdecodeinfo,
+	(128*16), (128*16),
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK, /* Sprites are buffered too */
+	toaplan2_0_eof_callback,
+	raizing_0_vh_start,
+	toaplan2_0_vh_stop,
+	raizing_0_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_batrider_interface
+		}
+	}
+};
+
 
 /***************************************************************************
 
@@ -2747,6 +3534,7 @@ static struct MachineDriver machine_driver_snowbro2 =
 
 ***************************************************************************/
 
+/* -------------------------- Toaplan games ------------------------- */
 ROM_START( tekipaki )
 	ROM_REGION( 0x020000, REGION_CPU1 )			/* Main 68K code */
 	ROM_LOAD_EVEN( "tp020-1.bin", 0x000000, 0x010000, 0xd8420bd5 )
@@ -3009,6 +3797,88 @@ ROM_START( snowbro2 )
 	ROM_LOAD( "rom4", 0x00000, 0x80000, 0x638f341e )
 ROM_END
 
+/* -------------------------- Raizing games ------------------------- */
+ROM_START( mahoudai )
+	ROM_REGION( 0x080000, REGION_CPU1 )			/* Main 68K code */
+	ROM_LOAD_WIDE_SWAP( "ra_ma_01.01", 0x000000, 0x080000, 0x970ccc5c )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )			/* Sound Z80 code */
+	ROM_LOAD( "ra_ma_01.02", 0x00000, 0x10000, 0xeabfa46d )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ra_ma_01.03",  0x000000, 0x100000, 0x54e2bd95 )
+	ROM_LOAD( "ra_ma_01.04",  0x100000, 0x100000, 0x21cd378f )
+
+	ROM_REGION( 0x008000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ra_ma_01.05",  0x000000, 0x008000, 0xc00d1e80 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )			/* ADPCM Samples */
+	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, 0x6edb2ab8 )
+ROM_END
+
+ROM_START( shippumd )
+	ROM_REGION( 0x100000, REGION_CPU1 )			/* Main 68K code */
+	ROM_LOAD_EVEN( "ma02rom1.bin", 0x000000, 0x080000, 0xa678b149 )
+	ROM_LOAD_ODD ( "ma02rom0.bin", 0x000000, 0x080000, 0xf226a212 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )			/* Sound Z80 code */
+	ROM_LOAD( "ma02rom2.bin", 0x00000, 0x10000, 0xdde8a57e )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ma02rom3.bin",  0x000000, 0x200000, 0x0e797142 )
+	ROM_LOAD( "ma02rom4.bin",  0x200000, 0x200000, 0x72a6fa53 )
+
+	ROM_REGION( 0x008000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ma02rom5.bin",  0x000000, 0x008000, 0x116ae559 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1 )			/* ADPCM Samples */
+	ROM_LOAD( "ma02rom6.bin", 0x00000, 0x80000, 0x199e7cae )
+ROM_END
+
+ROM_START( battleg )
+	ROM_REGION( 0x100000, REGION_CPU1 )			/* Main 68K code */
+	ROM_LOAD_EVEN( "prg0.bin", 0x000000, 0x080000, 0xf80c2fc2 )
+	ROM_LOAD_ODD ( "prg1.bin", 0x000000, 0x080000, 0x2ccfdd1e )
+
+	ROM_REGION( 0x28000, REGION_CPU2 )			/* Sound Z80 code + bank */
+	ROM_LOAD( "snd.bin", 0x00000, 0x08000, 0x68632952 )
+	ROM_CONTINUE(        0x10000, 0x18000 )
+
+	ROM_REGION( 0x800000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rom4.bin",  0x000000, 0x200000, 0xb333d81f )
+	ROM_LOAD( "rom3.bin",  0x200000, 0x200000, 0x51b9ebfb)
+	ROM_LOAD( "rom2.bin",  0x400000, 0x200000, 0xb330e5e2 )
+	ROM_LOAD( "rom1.bin",  0x600000, 0x200000, 0x7eafdd70 )
+	
+	ROM_REGION( 0x008000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "text.bin", 0x000000, 0x008000, 0xe67fd534 )
+	
+	ROM_REGION( 0x100000, REGION_SOUND1 )		/* ADPCM Samples */
+	ROM_LOAD( "rom5.bin", 0x000000, 0x100000, 0xf6d49863 )
+ROM_END
+
+ROM_START( batrider )
+	ROM_REGION( 0x200000, REGION_CPU1 )			/* Main 68k code */
+	ROM_LOAD_EVEN( "prg0.u22" , 0x000000, 0x080000, 0x4f3fc729 )
+	ROM_LOAD_ODD ( "prg1b.u23", 0x000000, 0x080000, 0x8e70b492 )
+	ROM_LOAD_EVEN( "prg2.u21" , 0x100000, 0x080000, 0xbdaa5fbf )
+	ROM_LOAD_ODD ( "prg3.u24" , 0x100000, 0x080000, 0x7aa9f941 )
+	
+	ROM_REGION( 0x40000, REGION_CPU2 )			/* Sound Z80 code */
+	ROM_LOAD( "snd.u77", 0x00000, 0x40000, 0x56682696 )
+	
+	ROM_REGION( 0x800000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "rom-1.bin", 0x000000, 0x400000, 0x0df69ca2 )
+	ROM_LOAD( "rom-2.bin", 0x400000, 0x400000, 0x1bfea593 )
+	ROM_LOAD( "rom-3.bin", 0x800000, 0x400000, 0x60167d38 )
+	ROM_LOAD( "rom-4.bin", 0xc00000, 0x400000, 0xbee03c94 )
+	
+	ROM_REGION( 0x100000, REGION_SOUND1 )		/* ADPCM Samples 1 */
+	ROM_LOAD( "rom-5.bin", 0x000000, 0x100000, 0x4274daf6 )
+	
+	ROM_REGION( 0x100000, REGION_SOUND2 )		/* ADPCM Samples 2 */
+	ROM_LOAD( "rom-6.bin", 0x000000, 0x100000, 0x2a1c2426 )
+ROM_END
 
 
 /* The following is in order of Toaplan Board/game numbers */
@@ -3020,13 +3890,17 @@ GAMEX( 1991, tekipaki, 0,        tekipaki, tekipaki, toaplan2, ROT0,         "To
 GAMEX( 1991, ghox,     0,        ghox,     ghox,     toaplan2, ROT270,       "Toaplan", "Ghox", GAME_NO_SOUND )
 GAMEX( 1991, dogyuun,  0,        dogyuun,  dogyuun,  toaplan3, ROT270,       "Toaplan", "Dogyuun", GAME_NO_SOUND )
 GAMEX( 1993, kbash,    0,        kbash,    kbash,    toaplan2, ROT0_16BIT,   "Toaplan", "Knuckle Bash", GAME_NO_SOUND )
-GAME ( 1992, tatsujn2, 0,        tatsujn2, tatsujn2, toaplan3, ROT270,       "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
+GAME ( 1992, tatsujn2, 0,        tatsujn2, tatsujn2, tatsujn2, ROT270,       "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)" )
 GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, pipibibs, ROT0,         "Toaplan", "Pipi & Bibis / Whoopee (Japan)" )
 GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  pipibibs, ROT0,         "Toaplan", "Whoopee (Japan) / Pipi & Bibis (World)" )
-GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,         "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee (Japan) (bootleg ?)" )
+GAME ( 1991, pipibibi, pipibibs, pipibibi, pipibibi, pipibibi, ROT0,         "[Toaplan] Ryouta Kikaku", "Pipi & Bibis / Whoopee (Japan) [bootleg ?]" )
 GAMEX( 1992, fixeight, 0,        fixeight, vfive,    toaplan3, ROT270,       "Toaplan", "FixEight", GAME_NOT_WORKING )
 GAMEX( 1992, grindstm, vfive,    vfive,    grindstm, toaplan3, ROT270,       "Toaplan", "Grind Stormer", GAME_NO_SOUND )
 GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270,       "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
 GAMEX( 1993, batsugun, 0,        batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun", GAME_NO_SOUND )
 GAMEX( 1993, batugnsp, batsugun, batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun Special Ver.", GAME_NO_SOUND )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0_16BIT,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
+GAME ( 1993, mahoudai, 0,        mahoudai, mahoudai, 0,        ROT270,       "Raizing (Able license)", "Mahou Daisakusen (Japan)" )
+GAME ( 1994, shippumd, 0,        shippumd, shippumd, 0,        ROT270_16BIT, "Raizing", "Shippu Mahou Daisakusen (Japan)" )
+GAMEX( 1996, battleg,  0,        battleg,  battleg,  battleg,  ROT270_16BIT, "Raizing", "Battle Garegga (Japan)", GAME_NOT_WORKING )
+GAME ( 1998, batrider, 0,        batrider, battleg,  0,        ROT270,       "Raizing", "Armed Police Batrider" )
