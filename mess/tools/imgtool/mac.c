@@ -2,7 +2,7 @@
 	Handlers for macintosh images.
 
 	Currently, we only handle the MFS format.  This was the format I needed
-	most urgently, because modern Macintoshes do not support it any more
+	most urgently, because modern Macintoshes do not support it any more.
 	In the future, I will implement HFS as well.
 
 	Raphael Nabet, 2003
@@ -48,6 +48,11 @@ typedef struct UINT16BE
 	UINT8 bytes[2];
 } UINT16BE;
 
+typedef struct UINT24BE
+{
+	UINT8 bytes[3];
+} UINT24BE;
+
 typedef struct UINT32BE
 {
 	UINT8 bytes[4];
@@ -62,6 +67,18 @@ INLINE void set_UINT16BE(UINT16BE *word, UINT16 data)
 {
 	word->bytes[0] = (data >> 8) & 0xff;
 	word->bytes[1] = data & 0xff;
+}
+
+INLINE UINT32 get_UINT24BE(UINT24BE word)
+{
+	return (word.bytes[0] << 16) | (word.bytes[1] << 8) | word.bytes[2];
+}
+
+INLINE void set_UINT24BE(UINT24BE *word, UINT32 data)
+{
+	word->bytes[0] = (data >> 16) & 0xff;
+	word->bytes[1] = (data >> 8) & 0xff;
+	word->bytes[2] = data & 0xff;
 }
 
 INLINE UINT32 get_UINT32BE(UINT32BE word)
@@ -108,15 +125,16 @@ typedef struct mac_FInfo
 	mac_type  creator;		/* file creator */
 	UINT16BE  flags;		/* Finder flags */
 	mac_point location;		/* file's location in window */
-								/* If set to {0, 0}, the Finder will place the
-								item automatically (is it true with earlier
-								system versions???) */
+								/* If set to {0, 0}, and the initied flag is
+								clear, the Finder will place the item
+								automatically */
 	UINT16BE  fldr;			/* MFS: window that contains file */
 								/* -3: trash */
 								/* -2: desktop */
+								/* -1: new folder template?????? */
 								/* 0: disk window ("root") */
-								/* > 0: specific folder??? */
-								/* folder names are to found in the Desktop file (!!!) */
+								/* > 0: specific folder, index of FOBJ resource??? */
+								/* FOBJ resource contains folder info. */
 							/* HFS & HFS+: reserved (set to 0) */
 } mac_FInfo;
 
@@ -264,7 +282,7 @@ exit:
 /*
 	mac_strcmp()
 
-	Compare two matincosh strings
+	Compare two macintosh strings
 
 	s1 (I): the string to compare
 	s2 (I): the comparison string
@@ -272,13 +290,32 @@ exit:
 	Return a zero if s1 and s2 are equal, a negative value if s1 is less than
 	s2, and a positive value if s1 is greater than s2.
 */
-static int mac_strcmp(const UINT8 *s1, const UINT8 *s2)
+/*static int mac_strcmp(const UINT8 *s1, const UINT8 *s2)
 {
 	size_t common_len;
 
 	common_len = (s1[0] <= s2[0]) ? s1[0] : s2[0];
 
 	return memcmp(s1+1, s2+1, common_len) || ((int)s1[0] - s2[0]);
+}*/
+
+static int mac_stricmp(const UINT8 *s1, const UINT8 *s2)
+{
+	size_t common_len;
+	int i;
+	int c1, c2;
+
+	common_len = (s1[0] <= s2[0]) ? s1[0] : s2[0];
+
+	for (i=0; i<common_len; i++)
+	{
+		c1 = tolower(s1[i+1]);
+		c2 = tolower(s2[i+1]);
+		if (c1 != c2)
+			return c1 - c2;
+	}
+
+	return ((int)s1[0] - s2[0]);
 }
 
 /*
@@ -413,61 +450,8 @@ static int check_fpath(const char *fpath)
 }
 
 
-#if 0
 /*
-	Apple Single format - encode data and ressource into a single file
-*/
-/*
-	Header
-*/
-typedef struct ASHeader /* header portion of AppleSingle */ 
-{
-	UINT32BE magicNum;		/* internal file type tag */ 
-							/* AppleSingle = 0x00051600; AppleDouble = 0x00051607 */
-	UINT32BE versionNum;	/* format version: 2 = 0x00020000 */
-	UINT8 filler[16];		/* filler, currently all bits 0 */
-	UINT16BE numEntries;	/* number of entries which follow */
-} ASHeader;
-
-enum
-{
-	AS_MAGICNUM = 0x00051600,
-	AS_CURVERSION = 0x00020000
-};
-
-/*
-	AppleSingle entry descriptor
-*/
-typedef struct ASEntry
-{
-	UINT32BE entryID;		/* entry type: see list, 0 invalid */
-	UINT32BE entryOffset;	/* offset in bytes from beginning of file to this
-								entry's data */
-	UINT32BE entryLength;	/* length of data in bytes */
-} ASEntry;
-
-enum
-{
-	ASEID_DATA		= 1,	/* data fork */
-	ASEID_RESOURCE	= 2,	/* resource fork */
-	ASEID_REALNAME	= 3,	/* File's name on home file system */
-	ASEID_COMMENT	= 4,	/* standard Mac comment */
-	ASEID_ICONBW	= 5,	/* Mac black & white icon */
-	ASEID_ICONCOLOR	= 6,	/* Mac color icon */
-	/*ASEID_INFO	= 7,*/	/* only used in version 1 of AppleSingle format */
-	ASEID_FILEDATES	= 8,	/* file dates; create, modify, etc */
-	ASEID_FINDERINFO= 9,	/* Mac Finder info & extended info */
-	ASEID_MACINFO	= 10,	/* Mac file info, attributes, etc */
-	AS_PRODOSINFO	= 11,	/* Pro-DOS file info, attrib., etc */
-	ASEID_MSDOSINFO	= 12,	/* MS-DOS file info, attributes, etc */
-	ASEID_AFPNAME	= 13,	/* Short name on AFP server */
-	ASEID_AFPINFO	= 14,	/* AFP file info, attrib., etc */
-	ASEID_AFPDIRID	= 15	/* AFP directory ID */
-};
-#endif
-
-/*
-	MacBinary format - encode data and ressource into a single file
+	MacBinary format - encode data and ressource forks into a single file
 
 	AppleSingle is much more flexible than MacBinary IMHO, but MacBinary is
 	supported by many more utilities.
@@ -488,7 +472,7 @@ typedef struct MBHeader /* MacBinary header */
 {
 	UINT8 version_old;		/* always 0 */
 	mac_str63 fname;		/* file name (31 characters at most for HFS & */
-								/* system 7 compatibility? */
+								/* system 7 compatibility?) */
 	UINT32BE ftype;			/* file type */
 	UINT32BE fcreator;		/* file creator */
 	UINT8 flags_MSB;		/* bits 15-8 of Finder flags */
@@ -509,7 +493,7 @@ typedef struct MBHeader /* MacBinary header */
 							/* v2 & v3: bits 7-0 of Finder flags */
 	UINT32BE signature;		/* v1 & v2: unused - set to 0 */
 							/* v3: signature for indentification purposes */
-								/* (ÔmBINÕ) */
+								/* ('mBIN') */
 	UINT8 fname_script;		/* v1 & v2: unused - set to 0 */
 							/* v3: script of file name (from the fdScript field */
 								/* of fxInfo record) */
@@ -835,6 +819,10 @@ typedef struct mfs_dir_entry
 								wheareas earlier versions support 63 chars */
 } mfs_dir_entry;
 
+/*
+	FOBJ desktop resource: describes a folder, or the location of the volume
+	icon.
+*/
 typedef struct mfs_FOBJ
 {
 	UINT8 unknown0[2];		/* $0004 for disk, $0008 for folder??? */
@@ -1028,7 +1016,7 @@ static int mfs_find_dir_entry(mfs_dirref *dirref, const mac_str255 fname, mfs_di
 		if (!cur_dir_entry)
 			/* EOF */
 			break;
-		if ((! mac_strcmp(fname, cur_dir_entry->name)) && (cur_dir_entry->flVersNum == 0))
+		if ((! mac_stricmp(fname, cur_dir_entry->name)) && (cur_dir_entry->flVersNum == 0))
 		{	/* file found */
 
 			if (dir_entry)
@@ -1119,6 +1107,29 @@ static int mfs_file_read(mfs_fileref *fileref, UINT32 len, void *dest)
 }
 
 /*
+	mfs_file_tell
+*/
+static int mfs_file_tell(mfs_fileref *fileref, UINT32 *filePos)
+{
+	*filePos = fileref->crPs;
+
+	return 0;
+}
+
+/*
+	mfs_file_seek
+*/
+static int mfs_file_seek(mfs_fileref *fileref, UINT32 filePos)
+{
+	if ((fileref->crPs / 512) != (filePos / 512))
+		fileref->reload_buf = TRUE;
+
+	fileref->crPs = filePos;
+
+	return 0;
+}
+
+/*
 	mfs_hashString
 
 	Hash string to het the resource ID of comment (FCMT ressource type).
@@ -1148,6 +1159,370 @@ static int mfs_hashString(mac_str255 string)
 	return reply;
 }
 
+#if 0
+#pragma mark -
+#pragma mark RESOURCE IMPLEMENTATION
+#endif
+
+/*
+	Resource manager
+
+	The resource manager stores arbitrary chunks of data (resource) identified
+	by a type/id pair.  The resource type is a 4-char code, which generally
+	implies the format of the data (e.g. 'PICT' is for a quickdraw picture,
+	'STR ' for a macintosh string, 'CODE' for 68k binary code, etc).  The
+	resource id is a signed 16-bit number that uniquely identifies each
+	resource of a given type.  Note that, with most ressource types, resources
+	with id < 128 are system resources that are available to all applications,
+	whereas resources with id >= 128 are application resources visible only to
+	the application that define them.
+
+	Each resource can optionally have a resource name, which is a macintosh
+	string of 255 chars at most.
+
+	Limits:
+	16MBytes of data
+	64kbytes of type+reference lists
+	64kbytes of resource names
+
+	The Macintosh toolbox can open several resource files simulteanously to
+	overcome these restrictions.
+
+	Resources are used virtually everywhere in the Macintosh Toolbox, so it is
+	no surprise that file comments and MFS folders are stored in resource files.
+*/
+
+/*
+	Resource header
+*/
+typedef struct rsrc_header
+{
+	UINT32BE data_offs;		/* Offset from beginning of resource fork to resource data */
+	UINT32BE map_offs;		/* Offset from beginning of resource fork to resource map */
+	UINT32BE data_len;		/* Length of resource data */
+	UINT32BE map_len;		/* Length of resource map */
+} rsrc_header;
+
+/*
+	Resource data: each data entry is preceded by its len (UINT32BE)
+	Offset to specific data fields are gotten from the resource map
+*/
+
+/*
+	Resource map:
+*/
+typedef struct rsrc_map_header
+{
+	rsrc_header reserved0;	/* Reserved for copy of resource header */
+	UINT32BE reserved1;		/* Reserved for handle to next resource map */
+	UINT16BE reserved2;		/* Reserved for file reference number */
+
+	UINT16BE attr;			/* Resource fork attributes */
+	UINT16BE typelist_offs;	/* Offset from beginning of map to resource type list */
+	UINT16BE namelist_offs;	/* Offset from beginning of map to resource name list */
+	UINT16BE type_count;	/* Number of types in the map minus 1 */
+} rsrc_map_header;
+
+/*
+	Resource type list entry
+*/
+typedef struct rsrc_type_entry
+{
+	UINT32BE type;			/* Resource type */
+	UINT16BE ref_count;		/* Number of resources of this type in map minus 1 */
+	UINT16BE ref_offs;		/* Offset from beginning of resource type list to reference list for this type */
+} rsrc_type_entry;
+
+/*
+	Resource reference list entry
+*/
+typedef struct rsrc_ref_entry
+{
+	UINT16BE id;			/* Resource ID */
+	UINT16BE name_offs;		/* Offset from beginning of resource name list to resource name */
+							/* (-1 if none) */
+	UINT8 attr;				/* Resource attributes */
+	UINT24BE data_offs;		/* Offset from beginning of resource data to data for this resource */
+	UINT32BE reserved;		/* Reserved for handle to resource */
+} rsrc_ref_entry;
+
+/*
+	Resource name list entry: this is just a standard macintosh string
+*/
+
+typedef struct mac_resfileref
+{
+	mfs_fileref fileref;	/* open resource fork ref (you may open resources
+								files in data fork, too, if you ever need to,
+								but Classic MacOS never does such a thing
+								(MacOS X often does so, though) */
+	UINT32 data_offs;		/* Offset from beginning of resource file to resource data */
+	UINT32 map_offs;		/* Offset from beginning of resource file to resource data */
+
+	UINT16 typelist_offs;	/* Offset from beginning of map to resource type list */
+	UINT16 namelist_offs;	/* Offset from beginning of map to resource name list */
+	UINT16 type_count;		/* Number of types in the map minus 1 */
+							/* This is actually part of the type list, which matters for offsets */
+} mac_resfileref;
+
+
+/*
+	resfile_open
+*/
+static int resfile_open(mac_resfileref *resfileref)
+{
+	int errorcode;
+	rsrc_header header;
+	rsrc_map_header map_header;
+
+	/* seek to resource header */
+	errorcode = mfs_file_seek(&resfileref->fileref, 0);
+	if (errorcode)
+		return errorcode;
+
+	errorcode = mfs_file_read(&resfileref->fileref, sizeof(header), &header);
+	if (errorcode)
+		return errorcode;
+
+	resfileref->data_offs = get_UINT32BE(header.data_offs);
+	resfileref->map_offs = get_UINT32BE(header.map_offs);
+
+	/* seek to resource map header */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->map_offs);
+	if (errorcode)
+		return errorcode;
+
+	errorcode = mfs_file_read(&resfileref->fileref, sizeof(map_header), &map_header);
+	if (errorcode)
+		return errorcode;
+
+	resfileref->typelist_offs = get_UINT16BE(map_header.typelist_offs);
+	resfileref->namelist_offs = get_UINT16BE(map_header.namelist_offs);
+	resfileref->type_count = get_UINT16BE(map_header.type_count);
+
+	return 0;
+}
+
+/*
+	resfile_get_entry
+*/
+static int resfile_get_entry(mac_resfileref *resfileref, UINT32 type, UINT16 id, rsrc_ref_entry *entry)
+{
+	int errorcode;
+	rsrc_type_entry type_entry;
+	UINT16 ref_count;
+	int i;
+
+	/* seek to resource type list in resource map */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->map_offs+resfileref->typelist_offs+2);
+	if (errorcode)
+		return errorcode;
+
+	if (resfileref->type_count == 0xffff)
+		/* type list is empty */
+		return IMGTOOLERR_FILENOTFOUND;
+
+	for (i=0; i<=resfileref->type_count; i++)
+	{
+		errorcode = mfs_file_read(&resfileref->fileref, sizeof(type_entry), &type_entry);
+		if (errorcode)
+			return errorcode;
+		if (type == get_UINT32BE(type_entry.type))
+			break;
+	}
+	if (i > resfileref->type_count)
+		/* type not found in list */
+		return IMGTOOLERR_FILENOTFOUND;
+
+	ref_count = get_UINT16BE(type_entry.ref_count);
+
+	/* seek to resource ref list for this type in resource map */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->map_offs+resfileref->typelist_offs+get_UINT16BE(type_entry.ref_offs));
+	if (errorcode)
+		return errorcode;
+
+	if (ref_count == 0xffff)
+		/* ref list is empty */
+		return IMGTOOLERR_FILENOTFOUND;
+
+	for (i=0; i<=ref_count; i++)
+	{
+		errorcode = mfs_file_read(&resfileref->fileref, sizeof(*entry), entry);
+		if (errorcode)
+			return errorcode;
+		if (id == get_UINT16BE(entry->id))
+			break;
+	}
+	if (i > ref_count)
+		/* id not found in list */
+		return IMGTOOLERR_FILENOTFOUND;
+
+	/* type+id have been found... */
+	return 0;
+}
+
+/*
+	resfile_get_resname
+*/
+static int resfile_get_resname(mac_resfileref *resfileref, const rsrc_ref_entry *entry, mac_str255 string)
+{
+	int errorcode;
+	UINT16 name_offs;
+	UINT8 len;
+
+	name_offs = get_UINT16BE(entry->name_offs);
+
+	if (name_offs == 0xffff)
+		/* ref list is empty */
+		return IMGTOOLERR_UNEXPECTED;
+
+	/* seek to resource name in name list in resource map */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->map_offs+name_offs);
+	if (errorcode)
+		return errorcode;
+
+	/* get string lenght */
+	errorcode = mfs_file_read(&resfileref->fileref, 1, &len);
+	if (errorcode)
+		return errorcode;
+
+	string[0] = len;
+
+	/* get string data */
+	errorcode = mfs_file_read(&resfileref->fileref, len, string+1);
+	if (errorcode)
+		return errorcode;
+
+	return 0;
+}
+
+/*
+	resfile_get_reslen
+*/
+static int resfile_get_reslen(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 *len)
+{
+	int errorcode;
+	UINT32 data_offs;
+	UINT32BE llen;
+
+	data_offs = get_UINT24BE(entry->data_offs);
+
+	/* seek to resource data in resource data section */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->data_offs+data_offs);
+	if (errorcode)
+		return errorcode;
+
+	/* get data lenght */
+	errorcode = mfs_file_read(&resfileref->fileref, sizeof(llen), &llen);
+	if (errorcode)
+		return errorcode;
+
+	*len = get_UINT32BE(llen);
+
+	return 0;
+}
+
+/*
+	resfile_get_resdata
+*/
+static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 offset, UINT32 len, void *dest)
+{
+	int errorcode;
+	UINT32 data_offs;
+	UINT32BE llen;
+
+	data_offs = get_UINT24BE(entry->data_offs);
+
+	/* seek to resource data in resource data section */
+	errorcode = mfs_file_seek(&resfileref->fileref, resfileref->data_offs+data_offs);
+	if (errorcode)
+		return errorcode;
+
+	/* get data lenght */
+	errorcode = mfs_file_read(&resfileref->fileref, sizeof(llen), &llen);
+	if (errorcode)
+		return errorcode;
+
+	/* check we are within tolerances */
+	if ((offset + len) > get_UINT32BE(llen))
+		return IMGTOOLERR_UNEXPECTED;
+
+	if (offset)
+	{	/* seek to resource data offset in resource data section */
+		errorcode = mfs_file_seek(&resfileref->fileref, resfileref->data_offs+data_offs+4+offset);
+		if (errorcode)
+			return errorcode;
+	}
+
+	/* get data */
+	errorcode = mfs_file_read(&resfileref->fileref, len, dest);
+	if (errorcode)
+		return errorcode;
+
+	return 0;
+}
+
+#if 0
+#pragma mark -
+#pragma mark DESKTOP FILE IMPLEMENTATION
+#endif
+
+static int get_comment(mfs_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
+{
+	UINT8 desktop_fname[] = {'\7','D','e','s','k','t','o','p'};
+	#define restype_FCMT (('F' << 24) | ('C' << 16) | ('M' << 8) | 'T')
+	mfs_dirref dirref;
+	mfs_dir_entry *dir_entry;
+	mac_resfileref resfileref;
+	rsrc_ref_entry resentry;
+	UINT32 reslen;
+	int errorcode;
+
+	/* open dir */
+	mfs_dir_open(l2_img, &dirref);
+
+	/* find file */
+	errorcode = mfs_find_dir_entry(&dirref, desktop_fname, &dir_entry);
+	if (errorcode)
+		return errorcode;
+
+	/* open file RF */
+	errorcode = mfs_file_open_RF(l2_img, dir_entry, &resfileref.fileref);
+	if (errorcode)
+		return errorcode;
+
+	/* open resource structure */
+	errorcode = resfile_open(&resfileref);
+	if (errorcode)
+		return errorcode;
+
+	/* look for resource FCMT #id */
+	errorcode = resfile_get_entry(&resfileref, restype_FCMT, id, &resentry);
+	if (errorcode)
+		return errorcode;
+
+	/* extract comment len */
+	errorcode = resfile_get_reslen(&resfileref, &resentry, &reslen);
+	if (errorcode)
+		return errorcode;
+
+	/* check comment len */
+	if (reslen > 256)
+		/* hurk */
+		/*return IMGTOOLERR_CORRUPTIMAGE;*/
+		/* people willing to extend the MFM comment field (you know, the kind
+		of masochists that try to support 20-year-old OSes) might append extra
+		fields, so we just truncate the resource */
+		reslen = 256;
+		
+	/* extract comment data */
+	errorcode = resfile_get_resdata(&resfileref, &resentry, 0, reslen, comment);
+	if (errorcode)
+		return errorcode;
+
+	/* phew, we are done! */
+	return 0;
+}
 
 #if 0
 #pragma mark -
@@ -1347,7 +1722,7 @@ static size_t mfs_image_freespace(IMAGE *img)
 }
 
 /*
-	Extract a file from a ti99_image.  The file is saved in tifile format.
+	Extract a file from a mfs image.  The file is saved in macbinary format.
 */
 static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 {
@@ -1357,8 +1732,8 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	mfs_dir_entry *dir_entry;
 	mfs_fileref fileref;
 	int errorcode;
-	/*UINT32 offset;*/
 	UINT32 data_len, rsrc_len;
+	mac_str255 comment;
 	UINT8 buf[512];
 	UINT32 i, run_len;
 
@@ -1384,77 +1759,20 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 	data_len = get_UINT32BE(dir_entry->dataLogicalSize);
 	rsrc_len = get_UINT32BE(dir_entry->rsrcLogicalSize);
 
-#if 0
-	/* write AS header */
-	{
-		ASHeader header;
-
-		set_UINT32BE(&header.magicNum, AS_MAGICNUM);
-		set_UINT32BE(&header.versionNum, AS_CURVERSION);
-		memset(header.filler, 0, sizeof(header.filler));
-		set_UINT16BE(&header.numEntries, 2);
-		if (stream_write(destf, &header, sizeof(header)) != sizeof(header))
-			return IMGTOOLERR_WRITEERROR;
-	}
-
-	{
-		ASEntry entry;
-
-		offset = sizeof(ASHeader) + 2 * sizeof(ASEntry);
-
-		set_UINT32BE(&entry.entryID, ASEID_DATA);
-		set_UINT32BE(&entry.entryOffset, offset);
-		set_UINT32BE(&entry.entryLength, data_len);
-		if (stream_write(destf, &entry, sizeof(entry)) != sizeof(entry))
-			return IMGTOOLERR_WRITEERROR;
-		offset += data_len;
-
-		set_UINT32BE(&entry.entryID, ASEID_RESOURCE);
-		set_UINT32BE(&entry.entryOffset, offset);
-		set_UINT32BE(&entry.entryLength, rsrc_len);
-		if (stream_write(destf, &entry, sizeof(entry)) != sizeof(entry))
-			return IMGTOOLERR_WRITEERROR;
-		/*offset += rsrc_len;*/
-	}
-
-	/* open file DF */
-	errorcode = mfs_file_open_DF(image, dir_entry, &fileref);
+	/* get comment from Desktop file */
+	errorcode = get_comment(image, mfs_hashString(dir_entry->name), comment);
 	if (errorcode)
-		return errorcode;
-
-	/* extract DF */
-	for (i=0; i<data_len;)
-	{
-		run_len = data_len - i;
-		if (run_len > 512)
-			run_len = 512;
-		errorcode = mfs_file_read(&fileref, run_len, buf);
-		if (errorcode)
-			return errorcode;
-		if (stream_write(destf, buf, run_len) != run_len)
-			return IMGTOOLERR_WRITEERROR;
-		i += run_len;
+	{	/*
+			Ignore any error, as:
+			a) get_comment will mistakenly return an error if a file has no
+			  attached comment on an MFS volume
+			b) we do not really care if the Desktop file is corrupt and we
+			  cannot read comments: we can still read the file's data, and it's
+			  what really matters
+		*/
+		comment[0] = '\0';
+		errorcode = 0;
 	}
-
-	/* open file RF */
-	errorcode = mfs_file_open_RF(image, dir_entry, &fileref);
-	if (errorcode)
-		return errorcode;
-
-	/* extract RF */
-	for (i=0; i<rsrc_len;)
-	{
-		run_len = rsrc_len - i;
-		if (run_len > 512)
-			run_len = 512;
-		errorcode = mfs_file_read(&fileref, run_len, buf);
-		if (errorcode)
-			return errorcode;
-		if (stream_write(destf, buf, run_len) != run_len)
-			return IMGTOOLERR_WRITEERROR;
-		i += run_len;
-	}	
-#else
 
 	/* write MB header */
 	{
@@ -1474,10 +1792,7 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		header.rsrc_len = dir_entry->rsrcLogicalSize;
 		header.crDate = dir_entry->createDate;
 		header.lsMod = dir_entry->modifyDate;
-		set_UINT16BE(&header.comment_len, 0);	/* HFS-only feature??? */
-												/* Or maybe we need to look */
-												/* for comments in the DeskTop */
-												/* file or something */
+		set_UINT16BE(&header.comment_len, comment[0]);	/* comment lenght */
 		header.flags_LSB = dir_entry->flFinderInfo.flags.bytes[1];
 		set_UINT32BE(&header.signature, 0x6d42494e/*'mBIN'*/);
 		header.fname_script = 0;	/* IIRC, 0 normally means system script */
@@ -1553,13 +1868,24 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		if (stream_write(destf, buf, run_len) != run_len)
 			return IMGTOOLERR_WRITEERROR;
 	}
-#endif
+
+	/* append comments */
+	if (stream_write(destf, comment+1, comment[0]) != comment[0])
+		return IMGTOOLERR_WRITEERROR;
+	/* pad to multiple of 128 */
+	if (comment[0] % 128)
+	{
+		run_len = 128 - (comment[0] % 128);
+		memset(buf, 0, run_len);
+		if (stream_write(destf, buf, run_len) != run_len)
+			return IMGTOOLERR_WRITEERROR;
+	}
 
 	return 0;
 }
 
 /*
-	Add a file to a ti99_image.  The file must be in tifile format.
+	Add a file to a mfs image.  The file must be in macbinary format.
 */
 static int mfs_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, const ResolvedOption *in_options)
 {
@@ -1567,7 +1893,7 @@ static int mfs_image_writefile(IMAGE *img, const char *fpath, STREAM *sourcef, c
 }
 
 /*
-	Delete a file from a ti99_image.
+	Delete a file from a mfs image.
 */
 static int mfs_image_deletefile(IMAGE *img, const char *fname)
 {
@@ -1575,9 +1901,7 @@ static int mfs_image_deletefile(IMAGE *img, const char *fname)
 }
 
 /*
-	Create a blank ti99_image (common code).
-
-	Supports MESS and V9T9 formats only
+	Create a blank mfs image.
 */
 static int mfs_image_create(const struct ImageModule *mod, STREAM *f, const ResolvedOption *in_options)
 {
@@ -1585,7 +1909,7 @@ static int mfs_image_create(const struct ImageModule *mod, STREAM *f, const Reso
 }
 
 /*
-	Read one sector from a ti99_image.
+	Read one sector from a mfs image.
 */
 static int mfs_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, void *buffer, int length)
 {
@@ -1595,7 +1919,7 @@ static int mfs_read_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, in
 }
 
 /*
-	Write one sector to a ti99_image.
+	Write one sector to a mfs image.
 */
 static int mfs_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, int offset, const void *buffer, int length)
 {
