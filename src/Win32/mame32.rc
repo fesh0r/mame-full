@@ -68,6 +68,7 @@ BEGIN
         MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
         MENUITEM SEPARATOR
 		MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
+		MENUITEM "&Create Image...",			ID_MESS_CREATE_SOFTWARE
 #else
         MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
 #endif

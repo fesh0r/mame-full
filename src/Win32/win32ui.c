@@ -3300,7 +3300,11 @@ static BOOL MameCommand(HWND hwnd,int id, HWND hwndCtl, UINT codeNotify)
 
 #ifdef MESS
 	case ID_MESS_OPEN_SOFTWARE:
-		MessOpenOtherSoftware();
+		MessOpenOtherSoftware(IO_END);
+		break;
+
+	case ID_MESS_CREATE_SOFTWARE:
+		MessCreateDevice(IO_END);
 		break;
 #endif
     }

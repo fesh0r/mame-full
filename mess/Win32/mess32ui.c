@@ -17,6 +17,11 @@ int GetMessSoftwarePathCount(void);
 static int requested_device_type(char *tchar);
 static void MessSetupCrc(int game_index);
 
+typedef struct {
+	int type;
+	const char *ext;
+} mess_image_type;
+
 typedef struct tagImageData {
 	struct tagImageData *next;
 	const char *name;
@@ -51,7 +56,8 @@ static BOOL MessPickerNotify(NMHDR *nm);
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
 static void MessRetrievePickerDefaults(void);
-static void MessOpenOtherSoftware(void);
+static void MessOpenOtherSoftware(int iDevice);
+static void MessCreateDevice(int iDevice);
 static BOOL CreateMessIcons(void);
 
 #define MAME32HELP "mess32.hlp"
@@ -106,12 +112,7 @@ static void MessSetupCrc(int game_index)
 /* Code for manipulation of image list                                      */
 /* ************************************************************************ */
 
-typedef struct {
-	int type;
-	const char *ext;
-} mess_image_type;
-
-static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip)
+static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip, int type)
 {
     const struct IODevice *dev;
 	int num_extensions = 0;
@@ -129,10 +130,12 @@ static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip)
 	for (i = 0; dev[i].type != IO_END; i++) {
 		const char *ext = dev[i].file_extensions;
 		while(*ext) {
-			if (num_extensions < count) {
-				types[num_extensions].type = dev[i].type;
-				types[num_extensions].ext = ext;
-				num_extensions++;
+			if ((type == IO_END) || (type == dev[i].type)) {
+				if (num_extensions < count) {
+					types[num_extensions].type = dev[i].type;
+					types[num_extensions].ext = ext;
+					num_extensions++;
+				}
 			}
 			ext += strlen(ext) + 1;
 		}
@@ -216,7 +219,7 @@ static void MessAddImage(int imagenum)
 
 	MessRemoveImage(imagenum);
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
+	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
 	options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
 	options.image_files[options.image_count].name = filename;
@@ -572,7 +575,7 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 	size_t pathlen;
 	mess_image_type imagetypes[64];
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE);
+	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
 
 	d = osd_dir_open(dir, "*.*");	
 	if (d) {
@@ -1059,7 +1062,7 @@ static void OnMessIdle()
 	int i;
 
 	if (nIdleImageNum == 0)
-		SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
+		SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, IO_END);
 
 	for (i = 0; (i < 10) && (nIdleImageNum < mess_images_count); i++) {
 		pImageData = mess_images_index[nIdleImageNum];
@@ -1085,7 +1088,21 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
 	LPSTR s;
 	int i;
 
+	static char *typenames[] = {
+		"Compressed images",	/* IO_END */
+		"Cartridge images",		/* IO_CARTSLOT */
+		"Floppy disk images",	/* IO_FLOPPY */
+		"Hard disk images",		/* IO_HARDDISK */
+		"Cassette images",		/* IO_CASSETTE */
+		"Printer output",		/* IO_PRINTER */
+		"Serial output",		/* IO_SERIAL */
+		"Snapshots",			/* IO_SNAPSHOT */
+		"Quickloads",			/* IO_QUICKLOAD */
+		NULL					/* IO_ALIAS */
+	};
+
 	s = szFilter;
+	*filename = 0;
 
 	// Common image types
 	strcpy(s, "Common image types");
@@ -1107,9 +1124,14 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
  
 	// The others
 	for (i = 0; imagetypes[i].ext; i++) {
-		strcpy(s, imagetypes[i].ext);
+		assert(imagetypes[i].type < (sizeof(typenames) / sizeof(typenames[0])));
+		assert(typenames[imagetypes[i].type]);
+
+		strcpy(s, typenames[imagetypes[i].type]);
+		//strcpy(s, imagetypes[i].ext);
 		s += strlen(s);
-		strcpy(s, " files (*.");
+		strcpy(s, " (*.");
+		//strcpy(s, " files (*.");
 		s += strlen(s);
 		strcpy(s, imagetypes[i].ext);
 		s += strlen(s);
@@ -1153,7 +1175,7 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     return success;
 }
 
-static void MessOpenOtherSoftware(void)
+static void MessSetupDevice(common_file_dialog_proc cfd, int iDevice)
 {
     char filename[MAX_PATH];
     LPTREEFOLDER lpOldFolder = GetCurrentFolder();
@@ -1168,11 +1190,9 @@ static void MessOpenOtherSoftware(void)
 	ImageData		**pNewIndex;
 	int i;
 
-	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
+	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE, iDevice);
 
-    *filename = 0;
-
-    if (!CommonFileImageDialog(last_directory, GetOpenFileName, filename, imagetypes))
+    if (!CommonFileImageDialog(last_directory, cfd, filename, imagetypes))
 		return;
 
 	pLastImageNext = &mess_images;
@@ -1205,4 +1225,13 @@ outofmemory:
 	return;
 }
 
+static void MessOpenOtherSoftware(int iDevice)
+{
+	MessSetupDevice(GetOpenFileName, iDevice);
+}
+
+static void MessCreateDevice(int iDevice)
+{
+	MessSetupDevice(GetSaveFileName, iDevice);
+}
 
