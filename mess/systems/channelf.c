@@ -404,5 +404,5 @@ static const struct IODevice io_channelf[] = {
 };
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      COMPANY      FULLNAME */
-CONS( 1976, channelf, 0,		channelf, channelf, channelf, "Fairchild", "Channel F" )
+CONSX( 1976, channelf, 0,		channelf, channelf, channelf, "Fairchild", "Channel F", GAME_NO_SOUND )
 
