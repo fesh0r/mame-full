@@ -379,7 +379,7 @@ void list_mess_info(const char *gamename, const char *arg, int listclones)
 
 }
 
-int osd_select_file(int sel, char *filename)
+int osd_select_file(int type, int id, char *filename)
 {
 	return 0;
 }
