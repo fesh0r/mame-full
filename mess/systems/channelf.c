@@ -1,10 +1,10 @@
 /******************************************************************
+ *
  *  Fairchild Channel F driver
  *
- *  Juergen Buchmueller & Frank Palazzolo
- *
- *  TBD:
- *      Verify timing on real unit
+ *  Juergen Buchmueller
+ *  Frank Palazzolo
+ *  Sean Riddle
  *
  ******************************************************************/
 
@@ -14,9 +14,11 @@
 #include "includes/channelf.h"
 #include "devices/cartslot.h"
 
+/*
 #ifndef VERBOSE
 #define VERBOSE 1
 #endif
+*/
 
 #if VERBOSE
 #define LOG(x)	logerror x

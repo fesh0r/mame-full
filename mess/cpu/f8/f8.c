@@ -123,7 +123,8 @@ static UINT8 f8_win_layout[] = {
  * Currently the emulation does not handle distinct PCs and DCs, but
  * only one instance inside the CPU context.
  ******************************************************************************/
-static void ROMC_00(void)
+static void ROMC_00(int insttim)	/* SKR - added parameter to tell if  */
+                                    /* it is long or short based on inst */
 {
     /*
      * Instruction Fetch. The device whose address space includes the
@@ -134,7 +135,8 @@ static void ROMC_00(void)
 
 	f8.dbus = cpu_readop(f8.pc0);
     f8.pc0 += 1;
-    f8_icount -= cS + cL;
+    f8_icount -= insttim;	/* SKR - ROMC00 is usually short, not short+long, */
+                            /* but DS is long */
 }
 
 static void ROMC_01(void)
@@ -163,15 +165,15 @@ static void ROMC_02(void)
     f8_icount -= cL;
 }
 
-static void ROMC_03(void)
-{
+static void ROMC_03(int insttim)	/* SKR - added parameter to tell if  */
+{                                   /* it is long or short based on inst */
     /*
      * Similiar to 0x00, except that it is used for immediate operands
      * fetches (using PC0) instead of instruction fetches.
      */
     f8.dbus = f8.io = cpu_readop_arg(f8.pc0);
     f8.pc0 += 1;
-    f8_icount -= cL + cS;
+    f8_icount -= insttim;
 }
 
 static void ROMC_04(void)
@@ -442,12 +444,13 @@ static void ROMC_1B(void)
     f8_icount -= cL;
 }
 
-static void ROMC_1C(void)
+static void ROMC_1C(int insttim)	/* SKR - added parameter to tell if  */
+                                    /* it is long or short based on inst */
 {
     /*
      * None.
      */
-    f8_icount -= cL;
+    f8_icount -= insttim;
 }
 
 static void ROMC_1D(void)
@@ -778,7 +781,7 @@ static void f8_lnk(void)
  ***************************************************/
 static void f8_di(void)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     f8.w &= ~I;
 }
 
@@ -788,7 +791,7 @@ static void f8_di(void)
  ***************************************************/
 static void f8_ei(void)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     f8.w |= I;
 }
 
@@ -807,7 +810,7 @@ static void f8_pop(void)
  ***************************************************/
 static void f8_lr_w_j(void)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     f8.w = f8.r[9];
 }
 
@@ -838,7 +841,7 @@ static void f8_inc(void)
  ***************************************************/
 static void f8_li(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     f8.a = f8.dbus;
 }
 
@@ -848,7 +851,7 @@ static void f8_li(void)
  ***************************************************/
 static void f8_ni(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     f8.a &= f8.dbus;
     SET_SZ(f8.a);
@@ -860,7 +863,7 @@ static void f8_ni(void)
  ***************************************************/
 static void f8_oi(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     f8.a |= f8.dbus;
     SET_SZ(f8.a);
@@ -872,7 +875,7 @@ static void f8_oi(void)
  ***************************************************/
 static void f8_xi(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     f8.a ^= f8.dbus;
     SET_SZ(f8.a);
@@ -884,7 +887,7 @@ static void f8_xi(void)
  ***************************************************/
 static void f8_ai(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     SET_OC(f8.a,f8.dbus);
     f8.a += f8.dbus;
@@ -898,7 +901,7 @@ static void f8_ai(void)
 static void f8_ci(void)
 {
     UINT16 tmp = ((UINT8)~f8.a) + 1;
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     SET_OC(tmp,f8.dbus);
     tmp += f8.dbus;
@@ -911,7 +914,7 @@ static void f8_ci(void)
  ***************************************************/
 static void f8_in(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     CLR_OZCS;
     ROMC_1B();
     f8.a = f8.dbus;
@@ -924,7 +927,7 @@ static void f8_in(void)
  ***************************************************/
 static void f8_out(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     f8.dbus = f8.a;
     ROMC_1A();
 }
@@ -935,7 +938,7 @@ static void f8_out(void)
  ***************************************************/
 static void f8_pi(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     f8.a = f8.dbus;
     ROMC_0D();
     ROMC_0C();
@@ -949,7 +952,7 @@ static void f8_pi(void)
  ***************************************************/
 static void f8_jmp(void)
 {
-    ROMC_03();
+    ROMC_03(cL);
     f8.a = f8.dbus;
     ROMC_0C();
     f8.dbus = f8.a;
@@ -963,9 +966,9 @@ static void f8_jmp(void)
 static void f8_dci(void)
 {
     ROMC_11();
-    ROMC_03();
+    ROMC_03(cS);
     ROMC_0E();
-    ROMC_03();
+    ROMC_03(cS);
 }
 
 /***************************************************
@@ -1144,11 +1147,11 @@ static void f8_lis(int i)
  ***************************************************/
 static void f8_bt(int e)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     if (f8.w & e)
 	ROMC_01();	   /* take the relative branch */
     else
-	ROMC_03();	   /* just read the argument on the data bus */
+	ROMC_03(cS);	   /* just read the argument on the data bus */
 }
 
 /***************************************************
@@ -1253,7 +1256,7 @@ static void f8_adc(void)
 static void f8_br7(void)
 {
     if ((f8.is & 7) == 7)
-	ROMC_03();		/* just read the argument on the data bus */
+	ROMC_03(cS);		/* just read the argument on the data bus */
     else
 	ROMC_01();		/* take the relative branch */
 }
@@ -1264,9 +1267,9 @@ static void f8_br7(void)
  ***************************************************/
 static void f8_bf(int t)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     if (f8.w & t)
-        ROMC_03();      /* just read the argument on the data bus */
+        ROMC_03(cS);      /* just read the argument on the data bus */
     else
         ROMC_01();      /* take the relative branch */
 }
@@ -1277,7 +1280,7 @@ static void f8_bf(int t)
  ***************************************************/
 static void f8_ins_0(int n)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     CLR_OZCS;
     f8.a = io_read_byte_8(n);
     SET_SZ(f8.a);
@@ -1289,7 +1292,7 @@ static void f8_ins_0(int n)
  ***************************************************/
 static void f8_ins_1(int n)
 {
-    ROMC_1C();
+    ROMC_1C(cL);
     f8.io = n;
     ROMC_1B();
     CLR_OZCS;
@@ -1303,7 +1306,7 @@ static void f8_ins_1(int n)
  ***************************************************/
 static void f8_outs_0(int n)
 {
-    ROMC_1C();
+    ROMC_1C(cS);
     io_write_byte_8(n, f8.a);
 }
 
@@ -1313,7 +1316,7 @@ static void f8_outs_0(int n)
  ***************************************************/
 static void f8_outs_1(int n)
 {
-    ROMC_1C();
+    ROMC_1C(cL);
     f8.io = n;
     f8.dbus = f8.a;
     ROMC_1A();
@@ -1377,7 +1380,7 @@ static void f8_asd(int r)
 {
 	UINT8 tmp = f8.a - 0x66, adj = 0x00;
 	int sum;
-	ROMC_1C();
+	ROMC_1C(cS);
 	sum = (tmp & 0x0f) + (f8.r[r] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
@@ -1399,7 +1402,7 @@ static void f8_asd_isar(void)
 {
 	UINT8 tmp = f8.a - 0x66, adj = 0x00;
 	int sum;
-	ROMC_1C();
+	ROMC_1C(cS);
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
@@ -1421,7 +1424,7 @@ static void f8_asd_isar_i(void)
 {
 	UINT8 tmp = f8.a - 0x66, adj = 0x00;
 	int sum;
-	ROMC_1C();
+	ROMC_1C(cS);
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
@@ -1444,7 +1447,7 @@ static void f8_asd_isar_d(void)
 {
 	UINT8 tmp = f8.a - 0x66, adj = 0x00;
 	int sum;
-	ROMC_1C();
+	ROMC_1C(cS);
 	sum = (tmp & 0x0f) + (f8.r[f8.is] & 0x0f);
 	if (sum > 0x09)
 		adj += 0x06;
@@ -1562,7 +1565,7 @@ void f8_reset(void *param)
 	/* save PC0 to PC1 and reset PC0 */
 	ROMC_08();
 	/* fetch the first opcode */
-	ROMC_00();
+	ROMC_00(cS);
 
 	/* initialize the timer shift register
 	 * this is an 8 bit polynome counter which can be loaded parallel
@@ -1882,15 +1885,18 @@ int f8_execute(int cycles)
 	case 0xb4:case 0xb5:case 0xb6:case 0xb7:
 	case 0xb8:case 0xb9:case 0xba:case 0xbb:
 	case 0xbc:case 0xbd:case 0xbe:case 0xbf:
-	    ROMC_00();
+	    ROMC_00(cS);
 	    break;
 	default:
 	    if (f8.w&I && f8.irq_request) {
-		ROMC_1C();
+		ROMC_1C(cL);
 		ROMC_0F();
 		ROMC_13();
 	    }
-	    ROMC_00();
+	    if((op>=0x30)&&(op<=0x3f))	/* SKR - DS is a long cycle inst */
+	    	ROMC_00(cL);
+	    else
+		    ROMC_00(cS);
 	    break;
 	}
 
@@ -2246,6 +2252,7 @@ void f8_get_info(UINT32 state, union cpuinfo *info)
 
 	return;
 }
+
 
 
 
