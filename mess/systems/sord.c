@@ -339,10 +339,7 @@ static int		sord_cartslot_init(int id)
 {
 	void *file;
 
-	if (device_filename(IO_CARTSLOT,id)==NULL)
-		return INIT_FAIL;
-
-	if (strlen(device_filename(IO_CARTSLOT,id))==0)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 		return INIT_FAIL;
 
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
@@ -373,7 +370,7 @@ static void	sord_cartslot_exit(int id)
 
 static int sord_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY,id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

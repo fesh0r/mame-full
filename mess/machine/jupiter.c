@@ -166,7 +166,7 @@ int jupiter_load_ace(int id)
 	int done, jupiter_index;
 
 	/* A cartridge isn't strictly mandatory, so warn */
-	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		logerror("Jupiter - warning: no cartridge specified!\n");
 		return INIT_PASS;
@@ -250,7 +250,7 @@ int jupiter_load_tap(int id)
 	UINT16 hdr_len;
 
 	/* Remember, a cassette isn't strictly mandatory, so warn only! */
-	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+	if (image_is_slot_empty(IO_CASSETTE, id))
 	{
 		logerror("Jupiter - warning: no cassette specified!\n");
 		return INIT_PASS;

@@ -1078,7 +1078,8 @@ int bbcb_load_rom(int id)
 	int addr = 0;
 
 
-	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
+	if (image_is_slot_empty(IO_CARTSLOT, id))
+		return INIT_PASS;
 
 	fp = image_fopen_new(IO_CARTSLOT, id, NULL);
 

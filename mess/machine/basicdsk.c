@@ -32,7 +32,6 @@ floppy_interface basicdsk_floppy_interface=
 /* attempt to insert a disk into the drive specified with id */
 int basicdsk_floppy_init(int id)
 {
-	const char *name = device_filename(IO_FLOPPY, id);
 	int effective_mode;
 
 
@@ -41,10 +40,8 @@ int basicdsk_floppy_init(int id)
 		basicdsk *w = &basicdsk_drives[id];
 
 		/* do we have an image name ? */
-		if (!name || !name[0])
-		{
+		if (image_is_slot_empty(IO_FLOPPY, id))
 			return INIT_PASS;
-		}
 
 		w->image_file = image_fopen_new(IO_FLOPPY, id, & effective_mode);
 		w->mode = (w->image_file) && is_effective_mode_writable(effective_mode);

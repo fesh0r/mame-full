@@ -12,7 +12,7 @@ int printer_init (int id)
 {
 	void *f;
 
-	if (!device_filename(IO_PRINTER,id) || !strlen(device_filename(IO_PRINTER,id) ))
+	if (image_is_slot_empty(IO_PRINTER, id))
 		return 0;
 
 	f = image_fopen_new(IO_PRINTER, id, NULL);

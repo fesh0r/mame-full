@@ -157,7 +157,7 @@ void mbee_cassette_exit(int id)
 #if 0
 int mbee_floppy_init(int id)
 {
-	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
+	flop_specified[id] = ! image_is_slot_empty(IO_FLOPPY, id);
 	return 0;
 }
 #endif

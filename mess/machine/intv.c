@@ -335,7 +335,6 @@ WRITE16_HANDLER( intv_ram16_w )
 
 static int intv_load_rom_file(int id, int required)
 {
-	const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *romfile;
     int i;
 
@@ -352,7 +351,7 @@ static int intv_load_rom_file(int id, int required)
 
 	UINT8 *memory = memory_region(REGION_CPU1);
 
-	if(!rom_name)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		if (required)
 		{
@@ -527,12 +526,11 @@ int intvkbd_load_rom (int id)
 
 	if (id == 1) /* Keyboard component cartridge slot */
 	{
-		const char *rom_name = device_filename(IO_CARTSLOT,id);
     	FILE *romfile;
 
 		UINT8 *memory = memory_region(REGION_CPU2);
 
-		if(!rom_name)
+		if(image_is_slot_empty(IO_CARTSLOT, id))
 		{
 			printf("intvkbd cartridge slot empty - ok\n");
 			return INIT_PASS;

@@ -47,7 +47,7 @@ int svi318_load_rom (int id)
 	int size;
 
 	/* A cartridge isn't strictly mandatory */
-	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		logerror("SVI318 - warning: no cartridge specified!\n");
 		return INIT_PASS;
@@ -604,8 +604,8 @@ int svi318_cassette_init(int id)
     void *file;
 	int ret;
 
-   	/* A cartridge isn't strictly mandatory for the coleco */
-	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+   	/* A cassette isn't mandatory */
+	if (image_is_slot_empty(IO_CASSETTE, id))
 	{
 		logerror("SVI318 - warning: no cassette specified!\n");
 		return INIT_PASS;
@@ -658,6 +658,6 @@ void svi318_cassette_exit(int id)
 
 int svi318_cassette_present (int id)
 	{
-	return device_filename (IO_CASSETTE, id) != NULL;
+	return ! image_is_slot_empty(IO_CASSETTE, id);
 	}
 

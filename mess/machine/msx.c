@@ -109,8 +109,8 @@ int msx_load_rom (int id)
         "Konami Synthesizer", "Cross Blaim", "Disk ROM",
 		"Korean 80-in-1", "Korean 126-in-1" };
 
-	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
-		return 0;
+	if (image_is_slot_empty(IO_CARTSLOT, id))
+		return INIT_PASS;
 
     /* try to load it */
     F = image_fopen_new(IO_CARTSLOT, id, NULL);
@@ -205,10 +205,7 @@ int msx_load_rom (int id)
         free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
         return 1;
     }
-	/* the cast to (char*) is there to make sure the argument for 
-	   osd_basename is OK. Note that IMHO osd_basename should take
-	   and return const */
-    strcpy (msx1.cart[id].sramfile, osd_basename ((char*)device_filename (IO_CARTSLOT, id) ) );
+    strcpy (msx1.cart[id].sramfile, osd_basename_const(device_filename (IO_CARTSLOT, id) ) );
     pext = strrchr (msx1.cart[id].sramfile, '.');
     if (pext) *pext = 0;
     /* do some stuff for some types :)) */
@@ -920,8 +917,8 @@ int msx_floppy_init (int id)
 	void *f;
 	int size, heads = 2;
 
-	if (!device_filename(IO_FLOPPY,id) || !strlen(device_filename(IO_FLOPPY,id) ))
-		return 0;
+	if (image_is_slot_empty(IO_FLOPPY, id))
+		return INIT_PASS;
 
 	f = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 	if (f)
@@ -1577,8 +1574,8 @@ int msx_cassette_init(int id)
     void *file;
 	int ret;
 
-	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
-		return 0;
+	if (image_is_slot_empty(IO_CASSETTE, id))
+		return INIT_PASS;
 
     file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
     if( file )

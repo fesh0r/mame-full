@@ -88,7 +88,7 @@ int vectrex_init_cart (int id)
 	}
 	else
 	{
-		if (device_filename(IO_CARTSLOT,id))
+		if (! image_is_slot_empty(IO_CARTSLOT, id))
 		{
 			logerror("Vectrex - Cart specified but not found!\n");
 			return INIT_FAIL;

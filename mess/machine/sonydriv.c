@@ -1326,7 +1326,7 @@ int sony_floppy_init(int id, int allowablesizes)
 	f->ext_speed_control = (allowablesizes & SONY_FLOPPY_EXT_SPEED_CONTROL) ? 1 : 0;
 	f->drive_sides = (allowablesizes & SONY_FLOPPY_ALLOW800K) ? 1 : 0;
 
-	if (!device_filename(IO_FLOPPY,id))
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	/* open file */

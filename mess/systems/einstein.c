@@ -370,7 +370,7 @@ static void	einstein_keyboard_timer_callback(int dummy)
 
 static int einstein_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	return dsk_floppy_load(id);

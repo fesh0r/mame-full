@@ -22,7 +22,7 @@ int cbm_quick_init (int id)
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (device_filename(IO_QUICKLOAD, id) == NULL)
+	if (image_is_slot_empty(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 	quick.specified = 1;
@@ -217,7 +217,7 @@ int cbm_rom_init(int id)
 	    cbm_c64_exrom=-1;
 	}
 
-	if (device_filename(IO_CARTSLOT,id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 		return INIT_PASS;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)

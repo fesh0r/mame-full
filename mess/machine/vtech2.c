@@ -355,7 +355,7 @@ int laser_rom_init(int id)
 	int size = 0;
     void *file;
 
-	if (device_filename(IO_CARTSLOT,id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT,id))
 		return INIT_PASS;
 
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
@@ -519,7 +519,8 @@ int laser_cassette_verify (UINT8 buff[])
 int laser_cassette_init(int id)
 {
 	void *file;
-	if (device_filename(IO_CASSETTE,id) == NULL)
+
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen_new(IO_CASSETTE, id, NULL);
@@ -565,7 +566,7 @@ int laser_floppy_init(int id)
 	void *file;
 	UINT8 buff[32];
 
-	if (device_filename(IO_FLOPPY,id) == NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 	{
 		flop_specified[id] = 0;
 		return INIT_PASS;

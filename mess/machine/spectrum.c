@@ -1172,7 +1172,7 @@ int spectrum_cassette_init(int id)
 	void *file;
 	struct cassette_args args;
 
-	if ((device_filename(IO_CASSETTE, id) != NULL) &&
+	if ((! image_is_slot_empty(IO_CASSETTE, id)) &&
 		!stricmp(device_filename(IO_CASSETTE, id) + strlen(device_filename(IO_CASSETTE, id) ) - 4, ".tap"))
 	{
 		int datasize;
@@ -1237,7 +1237,7 @@ int spec_quick_init(int id)
 
 	memset(&quick, 0, sizeof (quick));
 
-	if (device_filename(IO_QUICKLOAD, id) == NULL)
+	if (image_is_slot_empty(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 /*	quick.name = name; */
@@ -1325,7 +1325,7 @@ int timex_cart_load(int id)
 
 	int i;
 
-	if (device_filename(IO_CARTSLOT, id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		return INIT_PASS;
 	}

@@ -238,7 +238,7 @@ int lviv_tape_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (device_filename(IO_CASSETTE, id)==NULL)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);

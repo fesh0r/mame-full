@@ -80,7 +80,7 @@ static UINT8 irq_status = 0;
 static UINT8 motor_drive = 0;
 static UINT8 head = 0;
 
-static int cass_specified = 0;
+/*static int cass_specified = 0;*/
 /* current tape file handles */
 static char tape_name[12+1];
 static void *tape_put_file = 0;
@@ -124,7 +124,7 @@ static OPBASE_HANDLER (opbaseoverride)
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
 	{
 		cgenie_load_cas = 0;
-		if( cass_specified && strlen(device_filename(IO_CASSETTE,0)) )
+		if (! image_is_slot_empty(IO_CASSETTE, 0))
 		{
 			UINT8 *buff = (UINT8*)malloc(65536), *s, data;
 			UINT16 size, entry = 0, block_len, block_ofs = 0;
@@ -342,8 +342,8 @@ MACHINE_STOP( cgenie )
 
 int cgenie_cassette_init(int id)
 {
-	cass_specified = device_filename(IO_CASSETTE,id) != NULL;
-	return 0;
+	/*cass_specified = device_filename(IO_CASSETTE,id) != NULL;*/
+	return INIT_PASS;
 }
 
 #if 0
@@ -376,7 +376,7 @@ int cgenie_floppy_init(int id)
 		void *file;
 
 	/* A Floppy Isnt manditory, so return if none */
-	if (!device_filename(IO_FLOPPY,id) || !strlen(device_filename(IO_FLOPPY,id) ))
+	if (image_is_slot_empty(IO_FLOPPY, id))
 	{
 		logerror("CGENIE - warning: no floppy specified!\n");
 		return INIT_PASS;

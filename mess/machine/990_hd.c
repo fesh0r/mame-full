@@ -158,7 +158,7 @@ int ti990_hd_init(int id)
 	d = &hdc.d[id];
 	memset(d, 0, sizeof(*d));
 
-	if (!device_filename(IO_HARDDISK,id))
+	if (image_is_slot_empty(IO_HARDDISK, id))
 		return INIT_PASS;
 
 	/* open file */

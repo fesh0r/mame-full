@@ -1227,7 +1227,7 @@ ROM_PCW(pcw10)
 
 static int pcw_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	return dsk_floppy_load(id);

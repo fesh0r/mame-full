@@ -1327,7 +1327,7 @@ int a2600_load_rom(int id)
 	void *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if (device_filename(IO_CARTSLOT, id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		printf("a2600 Requires Cartridge!\n");
 		return INIT_FAIL;

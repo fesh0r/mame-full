@@ -1213,7 +1213,7 @@ int oric_floppy_init(int id)
 {
 	int result;
 
-	if (device_filename(IO_FLOPPY, id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	/* attempt to open mfm disk */
@@ -1458,7 +1458,7 @@ int oric_cassette_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (device_filename(IO_CASSETTE, id)==NULL)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 

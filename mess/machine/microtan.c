@@ -481,7 +481,7 @@ int microtan_snapshot_init(int id)
     void *file;
 
 	/* If no image specified, I guess we should start! */
-	if (!device_filename(IO_SNAPSHOT,id) || !strlen(device_filename(IO_SNAPSHOT,id) ))
+	if (image_is_slot_empty(IO_SNAPSHOT, id))
 	{
 		logerror("warning: no sanpshot specified!\n");
 		return INIT_PASS;
@@ -685,7 +685,7 @@ int microtan_hexfile_init(int id)
     void *file;
 
 	/* If no image specified, I guess we should start! */
-	if (!device_filename(IO_QUICKLOAD,id) || !strlen(device_filename(IO_QUICKLOAD,id) ))
+	if (image_is_slot_empty(IO_QUICKLOAD, id))
 	{
 		logerror("warning: no quikload specified!\n");
 		return INIT_PASS;

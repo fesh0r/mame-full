@@ -90,7 +90,7 @@ int apple2_floppy_init(int id)
 	int volume;
 	int i;
 
-	if (device_filename(IO_FLOPPY,id) == NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
     a2_drives[id].data = malloc (NIBBLE_SIZE*16*TOTAL_TRACKS);

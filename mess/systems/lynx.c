@@ -299,7 +299,7 @@ static int lynx_init_cart(int id)
    22 chars manufacturer
 */
 
-	if (device_filename(IO_CARTSLOT, id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		return 0;
 	}
@@ -350,7 +350,7 @@ static int lynx_quickload(int id)
 	// maybe the first 2 bytes must be used to identify the endianess of the file
 	UINT16 start;
 
-	if (device_filename(IO_QUICKLOAD, id) == NULL)
+	if (image_is_slot_empty(IO_QUICKLOAD, id))
 	{
 		return 0;
 	}

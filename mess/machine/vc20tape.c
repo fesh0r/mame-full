@@ -288,9 +288,9 @@ static void vc20_wav_state (void)
 
 static void vc20_wav_open (int image_type, int image_id)
 {
-	FILE *fp;
+	void *fp;
 
-	fp = (FILE*)osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
+	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", device_filename(image_type,image_id));
@@ -423,10 +423,10 @@ static void vc20_prg_state (void)
 static void vc20_prg_open (int image_type, int image_id)
 {
 	const char *name;
-    FILE *fp;
+    void *fp;
 	int i;
 
-	fp = (FILE*)osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
+	fp = osd_fopen (Machine->gamedrv->name, device_filename(image_type,image_id), OSD_FILETYPE_IMAGE, 0);
 	if (!fp)
 	{
 		logerror("tape %s file not found\n", device_filename(image_type,image_id));
@@ -1129,7 +1129,7 @@ int vc20_tape_attach_image (int id)
 	tape.motor = 0;
 	tape.data = 0;
 
-	if (device_filename(IO_CASSETTE,id) == NULL)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	if ((cp = strrchr (device_filename(IO_CASSETTE,id), '.')) == NULL)

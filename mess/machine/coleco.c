@@ -34,7 +34,7 @@ int coleco_init_cart (int id)
 	int init_result = INIT_FAIL;
 
 	/* A cartridge isn't strictly mandatory for the coleco */
-	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		logerror("Coleco - warning: no cartridge specified!\n");
 		return INIT_PASS;

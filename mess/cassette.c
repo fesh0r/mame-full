@@ -6,12 +6,8 @@ int cassette_init(int id, const struct cassette_args *args)
 	void *file;
 	struct wave_args wa;
 
-	const char *name = device_filename(IO_CASSETTE, id);
 
-	int slot_empty = ! (name && name[0]);
-
-
-	if (slot_empty)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 	{	/* no cassette */
 		memset(&wa, 0, sizeof(&wa));
 

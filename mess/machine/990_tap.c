@@ -120,7 +120,7 @@ int ti990_tape_init(int id)
 	t = &tpc.t[id];
 	memset(t, 0, sizeof(*t));
 
-	if (!device_filename(IO_CASSETTE,id))
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	/* open file */

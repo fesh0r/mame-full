@@ -793,7 +793,7 @@ int snes_load_rom(int id)
 	};
 #endif	/* V_GENERAL */
 
-	if( device_filename(IO_CARTSLOT,id) == NULL )
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		printf("Cartridge name required!\n");
 		return INIT_FAIL;

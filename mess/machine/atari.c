@@ -119,7 +119,7 @@ MACHINE_INIT( a800 )
 
 int a800_floppy_init(int id)
 {
-	if( device_filename(IO_FLOPPY,id) )
+	if (! image_is_slot_empty(IO_FLOPPY, id))
 		open_floppy(id);
 	return INIT_PASS;
 }
@@ -153,7 +153,7 @@ int a800_rom_init(int id)
 	}
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
+	if (! image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
@@ -233,7 +233,7 @@ int a800xl_load_rom(int id)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id)) )
+	if (! image_is_slot_empty(IO_CARTSLOT,id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if( file )
@@ -278,7 +278,7 @@ int a5200_rom_init(int id)
 	int size;
 
 	/* load an optional (dual) cartidge */
-	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
+	if (! image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		file = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (file)
@@ -397,7 +397,7 @@ static void open_floppy(int id)
 	void *file;
 	int size, i;
 
-	if (!device_filename(IO_FLOPPY,id))
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return;
 	if (!drv[id].image)
 	{

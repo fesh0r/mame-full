@@ -654,7 +654,8 @@ int vc20_rom_load (int id)
 
 	vc20_memory_init();
 
-	if (device_filename(IO_CARTSLOT,id)==NULL) return 0;
+	if (image_is_slot_empty(IO_CARTSLOT, id))
+		return INIT_PASS;
 
 	if (!vc20_rom_id (id))
 		return 1;

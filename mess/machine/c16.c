@@ -737,7 +737,7 @@ static int c16_rom_id (int id)
 
 int c16_rom_init (int id)
 {
-	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
+	rom_specified[id] = ! image_is_slot_empty(IO_CARTSLOT, id);
 	return (rom_specified[id] && !c16_rom_id(id)) ? INIT_FAIL: INIT_PASS;
 }
 
@@ -751,7 +751,8 @@ int c16_rom_load (int id)
 	char *cp;
 	static unsigned int addr = 0;
 
-	if (name==NULL) return 1;
+	if (image_is_slot_empty(IO_CARTSLOT, id))
+		return INIT_FAIL;
 	if (!c16_rom_id (id))
 		return 1;
 	fp = image_fopen_new(IO_CARTSLOT, id, NULL);

@@ -385,7 +385,7 @@ static int svision_load_rom(int id)
 	UINT8 *rom = memory_region(REGION_CPU1);
 	int size;
 
-	if (device_filename(IO_CARTSLOT, id) == NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;

@@ -28,7 +28,7 @@ int apf_cassette_init(int id)
 	void *file;
 	struct wave_args wa;
 
-	if (device_filename(IO_CASSETTE, id)==NULL)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 
@@ -124,10 +124,7 @@ void apf_cassette_exit(int id)
 /* 256 bytes per sector, single sided, single density, 40 track  */
 int apfimag_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
-		return INIT_PASS;
-
-	if (strlen(device_filename(IO_FLOPPY, id))==0)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

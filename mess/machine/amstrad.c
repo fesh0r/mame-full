@@ -35,7 +35,7 @@ static int snapshot_loaded = 0;
 
 int amstrad_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	return dsk_floppy_load(id);
@@ -281,7 +281,7 @@ int amstrad_snapshot_load(int id)
 {
 	/* machine can be started without a snapshot */
 	/* if filename not specified, then init is ok */
-	if (device_filename(IO_SNAPSHOT, id)==NULL)
+	if (image_is_slot_empty(IO_SNAPSHOT, id))
 		return INIT_PASS;
 
 	/* filename specified */
@@ -311,7 +311,7 @@ void amstrad_snapshot_exit(int id)
 int	amstrad_plus_cartridge_init(int id)
 {
 	/* cpc+ requires a cartridge to be inserted to run */
-	if (device_filename(IO_CARTSLOT, id)==NULL)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 		return INIT_FAIL;
 
 	return INIT_PASS;

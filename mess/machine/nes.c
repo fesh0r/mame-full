@@ -1094,7 +1094,7 @@ int nes_init_cart (int id)
 	const char *sysname;
 	sysname = Machine->gamedrv->name;
 
-	if ((!device_filename(IO_CARTSLOT,id)) && (id == 0))
+	if (image_is_slot_empty(IO_CARTSLOT, id) && (id == 0))
 	{
 		if(!strcmp(sysname, "famicom")) /* If its a famicom, then pass! */
 			return INIT_PASS;
@@ -1294,7 +1294,7 @@ int nes_load_disk (int id)
  	void *diskfile;
 	unsigned char magic[4];
 
-	if (!device_filename(IO_FLOPPY,id))
+	if (image_is_slot_empty(IO_FLOPPY, id))
 	{
 		/* The cart has passed, so this must fail if no image inserted */
 		if(!famicom_image_registered)

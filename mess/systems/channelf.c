@@ -39,7 +39,7 @@ static int channelf_load_rom(int id)
     void *file;
 	int size;
 
-    if (device_filename(IO_CARTSLOT,id) == NULL)
+    if (image_is_slot_empty(IO_CARTSLOT, id))
 		return INIT_PASS;
 	file = image_fopen_new(IO_CARTSLOT, id, NULL);
 	if (!file)

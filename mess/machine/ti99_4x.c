@@ -376,7 +376,6 @@ int ti99_load_rom(int id)
 	const char *name = device_filename(IO_CARTSLOT,id);
 	void *cartfile = NULL;
 
-	int slot_empty = ! (name && name[0]);
 
 	if (ti99_model == model_99_4p)
 	{
@@ -390,10 +389,9 @@ int ti99_load_rom(int id)
 	}
 
 
-	if (slot_empty)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 		slot_type[id] = SLOT_EMPTY;
-
-	if (! slot_empty)
+	else
 	{
 		cartfile = image_fopen_new(IO_CARTSLOT, id, NULL);
 		if (cartfile == NULL)

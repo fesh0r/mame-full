@@ -542,7 +542,7 @@ int sms_init_cart(int id) {
 	}
 
 	/* Ensure filename was specified */
-	if (device_filename(IO_CARTSLOT, id) == NULL) {
+	if (image_is_slot_empty(IO_CARTSLOT, id)) {
 		switch (systemType) {
 			case CONSOLE_SMS_U_V13:
 			case CONSOLE_SMS_E_V13:
@@ -582,7 +582,7 @@ int sms_init_cart(int id) {
 		}
 
 		/* Strip off file extension if it exists */
-		smsNVRamName = osd_strip_extension((char *)device_filename(IO_CARTSLOT, id));
+		smsNVRamName = osd_strip_extension(device_filename(IO_CARTSLOT, id));
 
 		/* Get file size */
 		size = osd_fsize(handle);

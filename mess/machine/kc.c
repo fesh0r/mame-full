@@ -128,7 +128,7 @@ int kc_quickload_load(int id)
 {
 	unsigned char *data;
 
-	if (device_filename(IO_QUICKLOAD,id)==NULL)
+	if (image_is_slot_empty(IO_QUICKLOAD, id))
 		return INIT_PASS;
 
 	if (kc_load(IO_QUICKLOAD,id,&data))
@@ -173,7 +173,7 @@ static unsigned char kc85_disc_hw_input_gate;
 
 int kc85_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)
@@ -445,7 +445,7 @@ int kc_cassette_device_init(int id)
 {
 	void *file;
 
-	if (device_filename(IO_CASSETTE, id)==NULL)
+	if (image_is_slot_empty(IO_CASSETTE, id))
 		return INIT_PASS;
 
 	file = image_fopen(IO_CASSETTE, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);

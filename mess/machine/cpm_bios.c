@@ -110,7 +110,7 @@ static void cpm_jumptable(void)
 
 int cpm_floppy_init(int id)
 {
-	ff[id] = device_filename(IO_FLOPPY,id) != NULL;
+	ff[id] = ! image_is_slot_empty(IO_FLOPPY, id);
 	return 0;
 }
 
@@ -247,7 +247,7 @@ int cpm_init(int n, const char *ids[])
 		RAM[DPH0 + d * DPHL + 15] = dph[d].alv >> 8;
 
 		/* now try to open the image if a filename is given */
-		if( ff[d] && strlen(device_filename(IO_FLOPPY,d)) )
+		if (ff[d])
 		{
 			{
 				int effective_mode;

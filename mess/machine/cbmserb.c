@@ -154,7 +154,7 @@ static int d64_open (int id)
 int cbm_drive_attach_image (int id)
 {
 #if 1
-	if (device_filename(IO_FLOPPY,id)==NULL)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return cbm_drive_attach_fs (id);
 #else
     CBM_Drive *drive = cbm_drive + id;

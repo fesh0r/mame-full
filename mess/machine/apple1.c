@@ -129,7 +129,7 @@ int apple1_load_snap (int id)
 	UINT16 starting_offset = 0x0000;
 
 	/* A snapshot isn't mandatory for the apple1 */
-	if (!device_filename(IO_SNAPSHOT,id) || !strlen(device_filename(IO_SNAPSHOT,id) ))
+	if (image_is_slot_empty(IO_SNAPSHOT, id))
 	{
 		logerror("Apple1 - warning: no snapshot specified - OK\n");
 		return INIT_PASS;

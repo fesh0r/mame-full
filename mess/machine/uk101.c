@@ -81,7 +81,7 @@ int	uk101_init_cassette(int id)
 	void	*file;
 
         /* a cassette for the uk101 isnt needed */
-        if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+        if (image_is_slot_empty(IO_CASSETTE, id))
         {
                 logerror("UK101/Superboard - warning: no cassette specified!\n");
                 return INIT_PASS;

@@ -174,8 +174,7 @@ static int a7800_init_cart_cmn(int id)
 	cpu_setbank( 4, ROM + 0xC000 );
 
 	/* A cartridge is mandatory, since it doesnt do much without one */
-	if(device_filename(IO_CARTSLOT,id) == NULL ||
-		strlen(device_filename(IO_CARTSLOT,id)) == 0)
+	if (image_is_slot_empty(IO_CARTSLOT, id))
 	{
 		if( !a7800_ispal )
 		{

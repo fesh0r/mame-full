@@ -30,7 +30,7 @@ int odyssey2_load_rom (int id)
     void *cartfile;
 
     logerror("ODYSSEY2 - Load_rom()\n");
-    if(device_filename(IO_CARTSLOT,id) == NULL)
+    if (image_is_slot_empty(IO_CARTSLOT, id))
     {
 	logerror("%s requires Cartridge!\n", Machine->gamedrv->name);
 	return INIT_FAIL;

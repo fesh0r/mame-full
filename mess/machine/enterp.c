@@ -25,10 +25,7 @@ MACHINE_INIT( enterprise )
 
 int enterprise_floppy_init(int id)
 {
-	if (device_filename(IO_FLOPPY, id)==NULL)
-		return INIT_PASS;
-
-	if (strlen(device_filename(IO_FLOPPY, id))==0)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (basicdsk_floppy_init(id)==INIT_PASS)

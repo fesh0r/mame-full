@@ -34,9 +34,8 @@ int d88image_floppy_init(int id)
 	int i,j,k;
 	unsigned long toffset;
 
-	const char *name = device_filename(IO_FLOPPY, id);
 	/* do we have an image name ? */
-	if (!name)
+	if (image_is_slot_empty(IO_FLOPPY, id))
 		return INIT_PASS;
 
 	if (id < d88image_MAX_DRIVES)

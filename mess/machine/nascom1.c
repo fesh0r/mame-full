@@ -120,7 +120,7 @@ int	nascom1_init_cassette(int id)
 	void	*file;
 
 	/* a cassette for the nascom1 isnt needed */
-	if (!device_filename(IO_CASSETTE,id) || !strlen(device_filename(IO_CASSETTE,id) ))
+	if (image_is_slot_empty(IO_CASSETTE, id))
 	{
 		logerror("Namcom - warning: no cassette specified!\n");
 		return INIT_PASS;
