@@ -18,6 +18,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
+- [WIN32] Fixed some resizing problems in windowed mode when the system
+  resized the screen (bug #100). [Nate Woods]
+
 - [WIN32 FE] Fixed a bug whereby refreshing would reset the current system to
   the last saved one (bug #384). [Nate Woods]
 
