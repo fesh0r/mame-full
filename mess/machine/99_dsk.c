@@ -589,7 +589,7 @@ void ti99_bwg_init(void)
 	wd179x_set_density(DEN_MFM_LO);
 
 
-	mm58274c_init(1);	/* initialize the RTC */
+	mm58274c_init(1, 1);	/* initialize the RTC */
 
 	use_80_track_drives = FALSE;
 
@@ -983,7 +983,7 @@ void ti99_hfdc_init(void)
 	/* initialize the floppy disk controller */
 	smc92x4_init(0, & hfdc_intf);
 
-	mm58274c_init(1);	/* initialize the RTC */
+	mm58274c_init(1, 1);	/* initialize the RTC */
 
 	use_80_track_drives = TRUE;
 

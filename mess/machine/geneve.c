@@ -109,10 +109,10 @@ enum
 	MaxKeyMessageLen = 10
 };
 static UINT8 KeyQueue[KeyQueueSize];
-int KeyQueueHead;
-int KeyQueueLen;
-int KeyInBuf;
-int KeyReset;
+static int KeyQueueHead;
+static int KeyQueueLen;
+static int KeyInBuf;
+static int KeyReset;
 static UINT32 KeyStateSave[4];
 
 /*
@@ -204,7 +204,7 @@ void machine_init_geneve(void)
 
 	v9938_reset();
 
-	mm58274c_init(0);
+	mm58274c_init(0, 1);
 
 	/* clear keyboard interface state (probably overkill, but can't harm) */
 	JoySel = 0;

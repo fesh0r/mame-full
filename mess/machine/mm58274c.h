@@ -3,7 +3,7 @@
 
 #include "mame.h"
 
-extern void mm58274c_init(int which);
+extern void mm58274c_init(int which, int mode24);
 extern int mm58274c_r(int which, int offset);
 extern void mm58274c_w(int which, int offset, int data);
 

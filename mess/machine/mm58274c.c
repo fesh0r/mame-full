@@ -20,7 +20,7 @@
 static void rtc_interrupt_callback(int which);
 static void increment_rtc(int which);
 
-#define MAX_58274 1
+#define MAX_58274 2
 
 static struct
 {
@@ -81,7 +81,7 @@ static const double interrupt_period_table[8] =
 };
 
 
-void mm58274c_init(int which)
+void mm58274c_init(int which, int mode24)
 {
 	memset(&rtc[which], 0, sizeof(rtc[which]));
 
@@ -95,7 +95,8 @@ void mm58274c_init(int which)
 		struct tm expanded_time = *localtime(& cur_time);
 
 		rtc[which].clk_set = expanded_time.tm_year & 3 << 2;
-		rtc[which].clk_set |= clk_set_24;
+		if (mode24)
+			rtc[which].clk_set |= clk_set_24;
 
 		/* The clock count starts on 1st January 1900 */
 		rtc[which].wday = expanded_time.tm_wday ? expanded_time.tm_wday : 7;
@@ -105,6 +106,17 @@ void mm58274c_init(int which)
 		rtc[which].months2 = (expanded_time.tm_mon + 1) % 10;
 		rtc[which].days1 = expanded_time.tm_mday / 10;
 		rtc[which].days2 = expanded_time.tm_mday % 10;
+		if (! mode24)
+		{
+			/* 12-hour mode */
+			if (expanded_time.tm_hour > 12)
+			{
+				expanded_time.tm_hour -= 12;
+				rtc[which].clk_set |= clk_set_pm;
+			}
+			if (expanded_time.tm_hour == 0)
+				expanded_time.tm_hour = 12;
+		}
 		rtc[which].hours1 = expanded_time.tm_hour / 10;
 		rtc[which].hours2 = expanded_time.tm_hour % 10;
 		rtc[which].minutes1 = expanded_time.tm_min / 10;
