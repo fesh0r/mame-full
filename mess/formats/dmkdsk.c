@@ -117,6 +117,11 @@ UINT16 dmkdsk_GetTrackLength( dmkHeader_p header )
 	return value;
 }
 
+UINT8 dmkdsk_GetSideCount( dmkHeader_p header )
+{
+	return ((header->diskOptions & 0x10) == 0) ? 2 : 1;
+}
+
 UINT16 dmkdsk_GetIDAMCRC( packedIDData_P IDAM )
 {
 	UINT16	value;
@@ -150,10 +155,10 @@ int dmkdsk_floppy_init(int id)
 {
 	const char *name = device_filename(IO_FLOPPY, id);
 	int			result = 0;
+	dmkdsk 		*w = &dmkdsk_drives[id];
 
 	if (id < dmkdsk_MAX_DRIVES)
 	{
-		dmkdsk *w = &dmkdsk_drives[id];
 
 		/* do we have an image name ? */
 		if (!name || !name[0])
@@ -192,6 +197,10 @@ int dmkdsk_floppy_init(int id)
 		else
 		 	osd_fclose( w->image_file );
 	}
+#if VERBOSE
+	logerror("dmkdsk geometry for drive #%d is %d tracks, %c heads \n",
+		id, w->header.trackCount,  (w->header.diskOptions & 0x10 == 0) ? '2' : '1' );
+#endif
 
 	return result;
 }
@@ -210,7 +219,7 @@ static int DMKHeuristicVerify( dmkdsk *w )
 	{
 		/* If this expression is true then we are virtuality guaranteed that this is a real DMK image */
 
-		calc_size = dmkdsk_GetTrackLength( header ) * header->trackCount * (DMKSIDECOUNT( (*header) )) + sizeof( dmkHeader );
+		calc_size = dmkdsk_GetTrackLength( header ) * header->trackCount * (dmkdsk_GetSideCount(header)) + sizeof( dmkHeader );
 
 		if( calc_size == w->image_size )
 		{
@@ -462,8 +471,8 @@ static void dmkdsk_write_sector_data_from_buffer(int drive, int side, int index1
 static void SetEntireTrack( int drive, int track, int side, dmkTrack_p track_data )
 {
 	dmkdsk			*w = &dmkdsk_drives[drive];
-	unsigned long	offset;
-
+	unsigned long	offset, tracklength = dmkdsk_GetTrackLength(&(w->header)), sidecount = dmkdsk_GetSideCount(&(w->header));
+	
     if( track > w->header.trackCount)
 	{
 		logerror("dmkdsk writing track %d > %d\n", track, w->header.trackCount);
@@ -476,10 +485,9 @@ static void SetEntireTrack( int drive, int track, int side, dmkTrack_p track_dat
 		return;
 	}
 
-	/* Adjust for single sided disks */
-
-	offset = sizeof( dmkHeader) + dmkdsk_GetTrackLength( &(w->header) ) * track + ( dmkdsk_GetTrackLength( &(w->header) ) * side );
-
+	offset = (tracklength * track * sidecount) + (tracklength * side);
+	offset += sizeof( dmkHeader);
+	
 	osd_fseek(w->image_file, offset, SEEK_SET);
 	osd_fwrite(w->image_file, track_data, dmkdsk_GetTrackLength( &(w->header) ) );
 }
@@ -488,7 +496,7 @@ static dmkTrack_p GetEntireTrack( int drive, int track, int side )
 {
 	dmkTrack_p		result;
 	dmkdsk			*w = &dmkdsk_drives[drive];
-	unsigned long	offset;
+	unsigned long	offset, tracklength = dmkdsk_GetTrackLength(&(w->header)), sidecount = dmkdsk_GetSideCount(&(w->header));
 
     if( track > w->header.trackCount)
 	{
@@ -502,9 +510,8 @@ static dmkTrack_p GetEntireTrack( int drive, int track, int side )
 		return 0;
 	}
 
-	/* Adjust for single sided disks */
-
-	offset = sizeof( dmkHeader) + dmkdsk_GetTrackLength( &(w->header) ) * track + ( dmkdsk_GetTrackLength( &(w->header) ) * side );
+	offset = (tracklength * track * sidecount) + (tracklength * side);
+	offset += sizeof( dmkHeader);
 
 	result = malloc( dmkdsk_GetTrackLength( &(w->header) ) );
 	if ( result != NULL )
