@@ -19,7 +19,7 @@
 
 /* This flag makes the emulated pdp-1 trigger a sequence break request when a character has been
 typed on the typewriter keyboard.  It is useful in order to test sequence break, but we need
-to build a connection box in which we can connect each wire to any interrupt line.  Also,
+to emulate a connection box in which we can connect each wire to any interrupt line.  Also,
 we need to determine the exact relationship between the status register and the sequence break
 system (both standard and type 20). */
 #define USE_SBS 0
@@ -27,8 +27,19 @@ system (both standard and type 20). */
 #define LOG_IOT 0
 #define LOG_IOT_EXTRA 0
 
+/* IOT completion may take much more than the 5us instruction time.  A possible programming
+error would be to execute an IOT before the last IOT of the same kind is over: such a thing
+would confuse the targeted IO device, which might ignore the latter IOT, execute either
+or both IOT incompletely, or screw up completely.  I insist that such an error can be caused
+by a pdp-1 programming error, even if there is no emulator error. */
+#define LOG_IOT_OVERLAP 0
+
+
 static int tape_read(UINT8 *reply);
 static void reader_callback(int dummy);
+static void puncher_callback(int nac);
+static void tyo_callback(int nac);
+static void dpy_callback(int dummy);
 
 
 /* pointer to pdp-1 RAM */
@@ -265,7 +276,7 @@ static OPBASE_HANDLER(setOPbasefunc)
 	return -1;
 }
 
-void pdp1_init_machine(void)
+void machine_init_pdp1(void)
 {
 	int config;
 
@@ -276,6 +287,12 @@ void pdp1_init_machine(void)
 	pdp1_reset_param.hw_multiply = config >> pdp1_config_hw_multiply_bit & pdp1_config_hw_multiply_mask;
 	pdp1_reset_param.hw_divide = config >> pdp1_config_hw_divide_bit & pdp1_config_hw_divide_mask;
 	pdp1_reset_param.type_20_sbs = config >> pdp1_config_type_20_sbs_bit & pdp1_config_type_20_sbs_mask;
+
+
+	tape_reader.timer = timer_alloc(reader_callback);
+	tape_puncher.timer = timer_alloc(puncher_callback);
+	typewriter.tyo_timer = timer_alloc(tyo_callback);
+	dpy_timer = timer_alloc(dpy_callback);
 }
 
 
@@ -313,16 +330,22 @@ int pdp1_tape_init(int id)
 	{	/* reader unit */
 		/* start motor if image actually inserted */
 		tape_reader.motor_on = tape_reader.fd ? 1 : 0;
+
 		/* restart reader IO when necessary */
+		/* note that this function may be called before pdp1_init_machine, therefore
+		before tape_reader.timer is allocated.  It does not matter, as the clutch is never
+		down at power-up, but we must not call timer_enable with a NULL parameter! */
 		if (tape_reader.timer)
 		{
-			timer_remove(tape_reader.timer);
-			tape_reader.timer = NULL;
-		}
-		if (tape_reader.motor_on && tape_reader.rcl)
-		{
-			/* delay is approximately 1/400s */
-			tape_reader.timer = timer_set(TIME_IN_MSEC(2.5), 0, reader_callback);
+			if (tape_reader.motor_on && tape_reader.rcl)
+			{
+				/* delay is approximately 1/400s */
+				timer_adjust(tape_reader.timer, TIME_IN_MSEC(2.5), 0, 0.);
+			}
+			else
+			{
+				timer_enable(tape_reader.timer, 0);
+			}
 		}
 	}
 
@@ -371,20 +394,19 @@ static void begin_tape_read(int binary, int nac)
 	tape_reader.rby = (binary) ? 1 : 0;
 	tape_reader.rcp = nac;
 
-	if (tape_reader.timer)
-	{	/* note this can be caused by a pdp-1 programming error (even if there is no emulator error) */
-		#if LOG_IOT
+	#if LOG_IOT_OVERLAP
+		if (timer_enable(tape_reader.timer, 0))
 			logerror("Error: overlapped perforated tape reads (Read-in mode, RPA/RPB instruction)\n");
-		#endif
-		timer_remove(tape_reader.timer);
-		tape_reader.timer = NULL;
-	}
-
+	#endif
 	/* set up delay if tape is advancing */
 	if (tape_reader.motor_on && tape_reader.rcl)
 	{
 		/* delay is approximately 1/400s */
-		tape_reader.timer = timer_set(TIME_IN_MSEC(2.5), 0, reader_callback);
+		timer_adjust(tape_reader.timer, TIME_IN_MSEC(2.5), 0, 0.);
+	}
+	else
+	{
+		timer_enable(tape_reader.timer, 0);
 	}
 }
 
@@ -436,9 +458,9 @@ static void reader_callback(int dummy)
 
 	if (tape_reader.motor_on && tape_reader.rcl)
 		/* delay is approximately 1/400s */
-		timer_reset(tape_reader.timer, TIME_IN_MSEC(2.5));
+		timer_adjust(tape_reader.timer, TIME_IN_MSEC(2.5), 0, 0.);
 	else
-		tape_reader.timer = NULL;
+		timer_enable(tape_reader.timer, 0);
 }
 
 /*
@@ -451,8 +473,6 @@ static void puncher_callback(int nac)
 	{
 		pdp1_pulse_iot_done();
 	}
-
-	tape_puncher.timer = NULL;
 }
 
 /*
@@ -514,8 +534,6 @@ static void tyo_callback(int nac)
 	{
 		pdp1_pulse_iot_done();
 	}
-
-	typewriter.tyo_timer = NULL;
 }
 
 
@@ -526,8 +544,6 @@ static void dpy_callback(int dummy)
 {
 	(void) dummy;
 	pdp1_pulse_iot_done();
-
-	dpy_timer = NULL;
 }
 
 
@@ -541,28 +557,16 @@ void pdp1_io_sc_callback(void)
 {
 	tape_reader.rcl = tape_reader.rc = 0;
 	if (tape_reader.timer)
-	{
-		timer_remove(tape_reader.timer);
-		tape_reader.timer = NULL;
-	}
+		timer_enable(tape_reader.timer, 0);
 
 	if (tape_puncher.timer)
-	{
-		timer_remove(tape_puncher.timer);
-		tape_puncher.timer = NULL;
-	}
+		timer_enable(tape_puncher.timer, 0);
 
 	if (typewriter.tyo_timer)
-	{
-		timer_remove(typewriter.tyo_timer);
-		typewriter.tyo_timer = NULL;
-	}
+		timer_enable(typewriter.tyo_timer, 0);
 
 	if (dpy_timer)
-	{
-		timer_remove(dpy_timer);
-		dpy_timer = NULL;
-	}
+		timer_enable(dpy_timer, 0);
 
 	io_status = io_st_tyo | io_st_ptp;
 }
@@ -662,14 +666,11 @@ void pdp1_iot(int op2, int nac, int mb, int *io, int ac)
 		tape_write(*io & 0377);
 		io_status &= ~io_st_ptp;
 		/* delay is approximately 1/63.3 second */
-		if (tape_puncher.timer)
-		{	/* note this can be caused by a pdp-1 programming error (even if there is no emulator error) */
-			#if LOG_IOT
-				logerror("Error: overlapped PPA/PPB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-			#endif
-			timer_remove(tape_puncher.timer);
-		}
-		tape_puncher.timer = timer_set(TIME_IN_MSEC(15.8), nac, puncher_callback);
+		#if LOG_IOT_OVERLAP
+			if (timer_enable(tape_puncher.timer, 0))
+				logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+		#endif
+		timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
 		break;
 
 	case 006: /* PPB */
@@ -687,14 +688,11 @@ void pdp1_iot(int op2, int nac, int mb, int *io, int ac)
 		tape_write((*io >> 12) | 0200);
 		io_status &= ~io_st_ptp;
 		/* delay is approximately 1/63.3 second */
-		if (tape_puncher.timer)
-		{	/* note this can be caused by a pdp-1 programming error (even if there is no emulator error) */
-			#if LOG_IOT
-				logerror("Error: overlapped PPA/PPB instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-			#endif
-			timer_remove(tape_puncher.timer);
-		}
-		tape_puncher.timer = timer_set(TIME_IN_MSEC(15.8), nac, puncher_callback);
+		#if LOG_IOT_OVERLAP
+			if (timer_enable(tape_puncher.timer, 0))
+				logerror("Error: overlapped PPA/PPB instructions: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
+		#endif
+		timer_adjust(tape_puncher.timer, TIME_IN_MSEC(15.8), nac, 0.);
 		break;
 
 
@@ -730,14 +728,11 @@ void pdp1_iot(int op2, int nac, int mb, int *io, int ac)
 			delay = 105;	/* approximately 105ms */
 			break;
 		}
-		if (typewriter.tyo_timer)
-		{	/* note this can be caused by a pdp-1 programming error (even if there is no emulator error) */
-			#if LOG_IOT
+		#if LOG_IOT_OVERLAP
+			if (timer_enable(typewriter.tyo_timer, 0))
 				logerror("Error: overlapped TYO instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-			#endif
-			timer_remove(typewriter.tyo_timer);
-		}
-		typewriter.tyo_timer = timer_set(TIME_IN_MSEC(delay), nac, tyo_callback);
+		#endif
+		timer_adjust(typewriter.tyo_timer, TIME_IN_MSEC(delay), nac, 0.);
 		break;
 	}
 	case 004: /* TYI */
@@ -813,14 +808,14 @@ void pdp1_iot(int op2, int nac, int mb, int *io, int ac)
 
 		if (nac)
 		{
-			if (dpy_timer)
-			{	/* note this can be caused by a pdp-1 programming error (even if there is no emulator error) */
-				#if LOG_IOT
+			/* 50us delay */
+			#if LOG_IOT_OVERLAP
+				/* note that overlap detection is incomplete: it will only work if both DPY
+				instructions require a completion pulse */
+				if (timer_enable(dpy_timer, 0))
 					logerror("Error: overlapped DPY instruction: mb=0%06o, pc=0%06o\n", mb, cpunum_get_reg(0, PDP1_PC));
-				#endif
-				timer_remove(dpy_timer);
-			}
-			dpy_timer = timer_set(TIME_IN_USEC(50), 0, dpy_callback);
+			#endif
+			timer_adjust(dpy_timer, TIME_IN_USEC(50), 0, 0.);
 		}
 		break;
 	}
@@ -893,7 +888,7 @@ static void pdp1_keyboard(void)
 #ifdef USE_SBS
 			cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 0);	/* interrupt it, baby */
 #endif
-			cpu_set_reg(PDP1_PF1, 1);
+			cpunum_set_reg(0, PDP1_PF1, 1);
 			/*pdp1_teletyper_drawchar(typewriter.tb);*/	/* right??? */
 			break;
 		}
@@ -906,7 +901,7 @@ static void pdp1_keyboard(void)
 /*
 	Not a real interrupt - just handle keyboard input
 */
-int pdp1_interrupt(void)
+void pdp1_interrupt(void)
 {
 	int control_keys;
 	int tw_keys;
@@ -925,7 +920,7 @@ int pdp1_interrupt(void)
 	pdp1_screen_update();
 
 
-	cpu_set_reg(PDP1_SS, readinputport(pdp1_sense_switches));
+	cpunum_set_reg(0, PDP1_SS, readinputport(pdp1_sense_switches));
 
 	/* read new state of control keys */
 	control_keys = readinputport(pdp1_control_switches);
@@ -1053,6 +1048,4 @@ int pdp1_interrupt(void)
 
 		pdp1_keyboard();
 	}
-
-	return ignore_interrupt();
 }

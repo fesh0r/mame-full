@@ -97,7 +97,7 @@ extern pdp1_reset_param_t pdp1_reset_param;
 extern int *pdp1_memory;
 
 void init_pdp1(void);
-void pdp1_init_machine(void);
+void machine_init_pdp1(void);
 READ18_HANDLER ( pdp1_read_mem );
 WRITE18_HANDLER ( pdp1_write_mem );
 
@@ -112,13 +112,13 @@ void pdp1_typewriter_exit(int id);
 void pdp1_io_sc_callback(void);
 void pdp1_iot(int op2, int nac, int mb, int *io, int ac);
 
-int pdp1_interrupt(void);
+void pdp1_interrupt(void);
 
 
 /* From vidhrdw/pdp1.c */
-void pdp1_vh_update (struct mame_bitmap *bitmap, int full_refresh);
-void pdp1_vh_stop(void);
-int pdp1_vh_start(void);
+int video_start_pdp1(void);
+void video_stop_pdp1(void);
+void video_update_pdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect);
 
 void pdp1_plot(int x, int y);
 void pdp1_screen_update(void);
