@@ -100,7 +100,6 @@ struct DEBUGOPTS
 static struct DEBUGOPTS debug_options  = {5, {0,0,0,0,0,0}, 0, 0, 0};
 /*                                    red   green  blue    purple  yellow cyan    grey    white */
 static UINT16 dbg_mode_colours[8] = { 0x1f, 0x3e0, 0x7c00, 0x7c1f, 0x3ff, 0x7fe0, 0x4210, 0x7fff };
-
 static UINT8 snes_dbg_vidhrdw(UINT16 curline);
 #endif /* SNES_DBG_VIDHRDW */
 
@@ -134,7 +133,6 @@ struct SNES_PPU_STRUCT snes_ppu;
 VIDEO_UPDATE( snes )
 {
 }
-
 
 /*****************************************
  * snes_draw_blend()
@@ -975,6 +973,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 	UINT16 tile;
 	INT16 i, x, y;
 	UINT8 *oamram = (UINT8 *)snes_oam;
+	UINT32 name_sel = 0;
 
 #ifdef SNES_DBG_VIDHRDW
 	if( debug_options.bg_disabled[4] )
@@ -1003,7 +1002,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 		extra <<= 1;
 
 		/* Adjust if past maximum position */
-		if( y > 239 )
+		if( y >= snes_ppu.beam.last_visible_line )
 			y -= 256;
 		if( x > 255 )
 			x -= 512;
@@ -1013,6 +1012,9 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 		{
 			/* Only objects using palettes 4-7 can be transparent */
 			blend = (pal < 192) ? 0 : 1;
+
+			/* Only objects using tiles over 255 use name select */
+			name_sel = (tile < 256) ? 0 : snes_ppu.oam.name_select;
 
 			ys = (curline - y) >> 3;
 			line = (curline - y) % 8;
@@ -1029,7 +1031,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				for( xs = (snes_ppu.oam.size[size] - 1); xs >= 0; xs-- )
 				{
 					if( (x + (count << 3) < SNES_SCR_WIDTH + 8) )
-						snes_draw_tile_object( screen, snes_ppu.layer[4].data + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
+						snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (count++ << 3), priority, hflip, pal, blend );
 					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
 				}
 			}
@@ -1038,7 +1040,7 @@ static void snes_update_objects( UINT8 screen, UINT16 curline )
 				for( xs = 0; xs < snes_ppu.oam.size[size]; xs++ )
 				{
 					if( (x + (xs << 3) < SNES_SCR_WIDTH + 8) )
-						snes_draw_tile_object( screen, snes_ppu.layer[4].data + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
+						snes_draw_tile_object( screen, snes_ppu.layer[4].data + name_sel + tile + table_obj_offset[ys][xs] + line, x + (xs << 3), priority, hflip, pal, blend );
 					time_over++;	/* Increase time_over. Should we stop drawing if exceeded 34 tiles? */
 				}
 			}

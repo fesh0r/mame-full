@@ -9,6 +9,9 @@ System Driver Changes:
 - [NES] Updated NES so that it uses the ppu2c03b support within MAME (which
   was actually originally based on the MESS NES driver code). [Nate Woods]
 
+- [SNES] Name select is only for sprites using tiles over 255. Fixed sprite
+  wrap at the bottom of the screen. [Jimmy Li, Anthony Kruize]
+
 User Interface Changes:
 -----------------------
 (none)

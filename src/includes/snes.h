@@ -1,7 +1,7 @@
 #ifndef _SNES_H_
 #define _SNES_H_
 
-/* Debug defines */
+/* Debug definitions */
 #ifdef MAME_DEBUG
 /* #define SNES_DBG_GENERAL*/		/* Display general debug info */
 /* #define SNES_DBG_VIDHRDW*/		/* Display video debug info */
@@ -11,7 +11,7 @@
 /* #define SNES_DBG_REG_W*/			/* Display register write info */
 #endif /* MAME_DEBUG */
 
-/* Useful defines */
+/* Useful definitions */
 #define SNES_SCR_WIDTH		256		/* 32 characters 8 pixels wide */
 #define SNES_SCR_HEIGHT		240		/* Can be 224 of 240 height (maybe we'll have switching later on) */
 #define SNES_MAX_LINES_NTSC	262		/* Maximum number of lines for NTSC systems */
@@ -26,7 +26,7 @@
 #define SNES_CGRAM_SIZE		0x202	/* 256 16-bit colours + 1 tacked on 16-bit colour for fixed colour */
 #define SNES_OAM_SIZE		0x440	/* 1088 bytes of Object Attribute Memory */
 #define FIXED_COLOUR		256		/* Position in cgram for fixed colour */
-/* Defines for Memory-Mapped registers */
+/* Definitions for PPU Memory-Mapped registers */
 #define INIDISP			0x2100
 #define OBSEL			0x2101
 #define OAMADDL			0x2102
@@ -99,6 +99,7 @@
 #define WMADDL			0x2181
 #define WMADDM			0x2182
 #define WMADDH			0x2183
+/* Definitions for CPU Memory-Mapped registers */
 #define OLDJOY1			0x4016
 #define OLDJOY2			0x4017
 #define NMITIMEN		0x4200
@@ -131,6 +132,7 @@
 #define JOY3H			0x421D
 #define JOY4L			0x421E
 #define JOY4H			0x421F
+/* DMA */
 #define DMAP0			0x4300
 #define BBAD0			0x4301
 #define A1T0L			0x4302
@@ -219,7 +221,7 @@
 #define A2A7L			0x4378
 #define A2A7H			0x4379
 #define NTRL7			0x437A
-/* Defines for sound DSP */
+/* Definitions for sound DSP */
 #define DSP_V0_VOLL		0x00
 #define DSP_V0_VOLR		0x01
 #define DSP_V0_PITCHL	0x02
@@ -349,10 +351,10 @@ extern void snes_hdma(void);
 extern void snes_refresh_scanline( UINT16 curline );
 
 /* (PPU) Video related */
-extern UINT8  *snes_vram;			/* Video RAM (Should be 16-bit, but it's easier this way) */
-extern UINT16 *snes_cgram;			/* Colour RAM */
-extern UINT16 *snes_oam;			/* Object Attribute Memory */
-extern UINT8  *snes_ram;			/* Main memory */
+extern UINT8  *snes_vram;		/* Video RAM (Should be 16-bit, but it's easier this way) */
+extern UINT16 *snes_cgram;		/* Colour RAM */
+extern UINT16 *snes_oam;		/* Object Attribute Memory */
+extern UINT8  *snes_ram;		/* Main memory */
 extern VIDEO_UPDATE( snes );
 struct SNES_PPU_STRUCT
 {
@@ -371,6 +373,7 @@ struct SNES_PPU_STRUCT
 		UINT16 address;
 		UINT16 high_priority;
 		UINT8 size[2];
+		UINT32 name_select;
 	} oam;
 	struct
 	{
@@ -404,8 +407,8 @@ extern struct SNES_PPU_STRUCT snes_ppu;
 
 /* (APU) Sound related */
 extern UINT8 *spc_ram;			/* SPC main memory */
-extern UINT8 spc_port_in[4];	/* SPC input port */
-extern UINT8 spc_port_out[4];	/* SPC output port */
+extern UINT8 spc_port_in[4];	/* SPC input ports */
+extern UINT8 spc_port_out[4];	/* SPC output ports */
 extern READ_HANDLER( spc_r_io );
 extern WRITE_HANDLER( spc_w_io );
 extern int snes_sh_start( const struct MachineSound *driver );
