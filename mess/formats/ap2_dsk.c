@@ -205,7 +205,7 @@ static floperr_t apple2_dsk_read_track(floppy_image *floppy, int head, int track
 	for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
 	{
 		nibble = buffer;
-		nibble += sector * APPLE2_NIBBLE_SIZE;
+		nibble += sector * APPLE2_SMALL_NIBBLE_SIZE;
 
 		floppy_read_sector(floppy, head, track, sector, 0, sector_buffer, sizeof(sector_buffer));
 		disk_encode_nib(nibble, sector_buffer, 254, track, sector);
@@ -227,7 +227,7 @@ static floperr_t apple2_dsk_write_track(floppy_image *floppy, int head, int trac
 	for (sector = 0; sector < APPLE2_SECTOR_COUNT; sector++)
 	{
 		nibble = buffer;
-		nibble += sector * APPLE2_NIBBLE_SIZE;
+		nibble += sector * APPLE2_SMALL_NIBBLE_SIZE;
 
 		disk_decode_nib(sector_buffer, nibble, NULL, NULL, NULL);
 		floppy_write_sector(floppy, head, track, sector, 0, sector_buffer, sizeof(sector_buffer));
@@ -392,7 +392,7 @@ static void disk_encode_nib(UINT8 *nibble, const UINT8 *data, int volume, int tr
 	/* setup header values */
 	checksum = volume ^ track ^ sector;
 
-	memset(nibble, 0, APPLE2_NIBBLE_SIZE);
+	memset(nibble, 0xFF, APPLE2_NIBBLE_SIZE);
 	nibble[ 7]     = 0xD5;
 	nibble[ 8]     = 0xAA;
 	nibble[ 9]     = 0x96;

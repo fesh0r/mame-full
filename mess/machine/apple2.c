@@ -18,6 +18,7 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/apple2.h"
 #include "machine/ay3600.h"
+#include "devices/flopdrv.h"
 
 #ifdef MAME_DEBUG
 #define LOG(x)	logerror x
@@ -376,6 +377,9 @@ DRIVER_INIT( apple2 )
 ***************************************************************************/
 MACHINE_INIT( apple2 )
 {
+	mess_image *image;
+	int i;
+
 	/* --------------------------------------------- *
 	 * set up the softswitch mask/set                *
 	 * --------------------------------------------- */
@@ -420,6 +424,17 @@ MACHINE_INIT( apple2 )
 
 	joystick_x1_time = joystick_y1_time = 0;
 	joystick_x2_time = joystick_y2_time = 0;
+
+	/* seek middle sector */
+	for (i = 0; i < device_count(IO_FLOPPY); i++)
+	{
+		image = image_from_devtype_and_index(IO_FLOPPY, i);
+		if (image_exists(image))
+		{
+			floppy_drive_seek(image, -999);
+			floppy_drive_seek(image, +35/2);
+		}
+	}
 }
 
 /***************************************************************************

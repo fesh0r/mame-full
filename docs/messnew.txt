@@ -13,6 +13,9 @@ System Driver Changes:
 - [APPLE2] Fixed two softswitch banking bugs that garbled graphics in King's
   Quest.  (bugs #487, #489)  [Nate Woods]
 
+- [APPLE2] Fixed recently introduced slowness in floppy loading.  (bug #495)
+  [Nate Woods]
+
 - [COLECO] Yolks Revenge fully playable now.  [Jose Moya]
 
 - [DRAGON] Fixed disk controller when used with double sided disks.  (bug
