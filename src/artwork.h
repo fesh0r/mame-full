@@ -38,7 +38,6 @@ struct artwork_info
 	UINT8 *brightness;                 /* brightness of each palette entry */
 	UINT64 *rgb;
 	UINT8 *pTable;                     /* Conversion table usually used for mixing colors */
-	INT32 x_offset, y_offset;
 };
 
 
@@ -47,6 +46,12 @@ struct artwork_element
 	struct rectangle box;
 	UINT8 red,green,blue;
 	UINT16 alpha;   /* 0x00-0xff or OVERLAY_DEFAULT_OPACITY */
+};
+
+struct artwork_size_info
+{
+	int width, height;         /* widht and height of the artwork */
+	struct rectangle screen;   /* location of the screen relative to the artwork */
 };
 
 #define OVERLAY_DEFAULT_OPACITY         0xffff
@@ -72,6 +77,7 @@ void artwork_load(struct artwork_info **a,const char *filename, unsigned int sta
 void artwork_load_size(struct artwork_info **a,const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork_info **a);
+int artwork_get_size_info(const char *file_name, struct artwork_size_info *a);
 
 /*********************************************************************
   functions that are backdrop-specific

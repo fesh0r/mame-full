@@ -614,7 +614,6 @@ static void load_png(const char *filename, unsigned int start_pen, unsigned int 
 	struct osd_bitmap *picture = 0, *alpha = 0;
 	struct png_info p;
 	int scalex, scaley;
-	float sw=1, sh=1;
 
 	/* If the user turned artwork off, bail */
 	if (!options.use_artwork) return;
@@ -622,13 +621,7 @@ static void load_png(const char *filename, unsigned int start_pen, unsigned int 
 	if (!decode_png(filename, &picture, &alpha, &p))
 		return;
 
-	if (p.x_offset || p.y_offset)
-	{
-		sw = picture->width / (picture->width - 2.0 * p.x_offset);
-		sh = picture->height / (picture->height - 2.0 * p.y_offset);
-	}
-
-	allocate_artwork_mem(width * sw, height * sh, a);
+	allocate_artwork_mem(width, height, a);
 
 	if (*a==NULL)
 		return;
@@ -639,8 +632,6 @@ static void load_png(const char *filename, unsigned int start_pen, unsigned int 
 	(*a)->num_pens_trans = p.num_trans;
 	(*a)->orig_palette = p.palette;
 	(*a)->transparency = p.trans;
-	(*a)->x_offset = (width * sw - width) / 2;
-	(*a)->y_offset = (height * sh - height) / 2;
  
 	/* Make sure we don't have too many colors */
 	if ((*a)->num_pens_used > max_pens)
@@ -1441,3 +1432,42 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 	if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 		overlay_remap();
 }
+
+int artwork_get_size_info(const char *file_name, struct artwork_size_info *a)
+{
+	void *fp;
+	struct png_info p;
+	int file_name_len;
+	char file_name2[256];
+
+	/* If the user turned artwork off, bail */
+	if (!options.use_artwork) return 0;
+
+	/* check for .png */
+	strcpy(file_name2, file_name);
+	file_name_len = strlen(file_name2);
+	if ((file_name_len < 4) || stricmp(&file_name2[file_name_len - 4], ".png"))
+	{
+		strcat(file_name2, ".png");
+	}
+
+	if (!(fp = osd_fopen(Machine->gamedrv->name, file_name2, OSD_FILETYPE_ARTWORK, 0)))
+	{
+		logerror("Unable to open PNG %s\n", file_name);
+		return 0;
+	}
+
+	if (!png_read_info(fp, &p))
+	{
+		osd_fclose (fp);
+		return 0;
+	}
+	osd_fclose (fp);
+
+	a->width = p.width;
+	a->height = p.height;
+	a->screen = p.screen;
+
+	return 1;
+}
+
