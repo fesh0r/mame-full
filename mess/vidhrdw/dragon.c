@@ -831,6 +831,9 @@ READ_HANDLER(coco3_gimevh_r)
 	return coco3_gimevhreg[offset];
 }
 
+
+
+/* write handler for GIME registers $FF98-$FF9F */
 WRITE_HANDLER(coco3_gimevh_w)
 {
 	int xorval;
@@ -932,9 +935,13 @@ WRITE_HANDLER(coco3_gimevh_w)
 		 *  Unline $FF9D-E, this value can be modified mid frame
 		 */
 		videomap_invalidate_lineinfo();
+		if (xorval & 0x80)
+			videomap_invalidate_frameinfo();
 		break;
 	}
 }
+
+
 
 void coco3_vh_sethires(int hires)
 {

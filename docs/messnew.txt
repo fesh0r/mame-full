@@ -16,6 +16,9 @@ System Driver Changes:
   and then the emulation was restarted without a cartridge in the same session.
   [Nate Woods]
 
+- [COCO3] Fixed a minor video glitch due to not properly updating a value when
+  bit 7 of $FF9F was changed. (bug #359) [Nate Woods]
+
 - [PC] Complete 8237 DMA and 8253 PIT rewrites, and associated changes in the
   NEC765, 8259 PIC, FDC and HDC implementations.  The new 8237 and 8253
   implementations are cleaner and purer hardware emulations and should be
