@@ -302,7 +302,7 @@ void cassette_get_info(cassette_image *cassette, struct CassetteInfo *info)
 
 void cassette_close(cassette_image *cassette)
 {
-	if (cassette->flags & (CASSETTE_FLAG_DIRTY|CASSETTE_FLAG_SAVEONEXIT))
+	if ((cassette->flags & CASSETTE_FLAG_DIRTY) && (cassette->flags & CASSETTE_FLAG_SAVEONEXIT))
 		cassette_save(cassette);
 	pool_exit(&cassette->pool);
 	free(cassette);
@@ -518,6 +518,8 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 	size_t sample_index;
 	INT32 *dest_ptr;
 	INT32 dest_value;
+	INT16 word;
+	INT32 dword;
 	const UINT8 *source_ptr;
 	double d;
 
@@ -551,10 +553,16 @@ casserr_t cassette_put_samples(cassette_image *cassette, int channel,
 			dest_value = extrapolate8(*((INT8 *) source_ptr));
 			break;
 		case 2:
-			dest_value = extrapolate16(*((INT16 *) source_ptr));
+			word = *((INT16 *) source_ptr);
+			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+				word = FLIPENDIAN_INT16(word);
+			dest_value = extrapolate16(word);
 			break;
 		case 4:
-			dest_value = *((INT32 *) source_ptr);
+			dword = *((INT32 *) source_ptr);
+			if (waveform_flags & CASSETTE_WAVEFORM_ENDIAN_FLIP)
+				dword = FLIPENDIAN_INT32(dword);
+			dest_value = dword;
 			break;
 		default:
 			return CASSETTE_ERROR_INTERNAL;
