@@ -175,10 +175,6 @@ static struct {
 	{ 0x4345359f , 0x4000, "PROTON view" },
 	{ 0x9fb8d13f , 0x4000, "PROTON dfs144" },
 
-	{ 0x1356d440, 0x20000, "Z88 v4.00" },
-	{ 0x802cb9aa, 0x20000, "Z88 ???" },
-	{ 0xad0c407d, 0x20000, "Z88 ???" },
-
 	{ 0xc1adde84 , 0x80000, "ARCHIMEDES 310 bios 20000" },
 	{ 0x15d89664 , 0x80000, "ARCHIMEDES 310 bios 28000" },
 	{ 0xa81ceb7c , 0x80000, "ARCHIMEDES 310 bios 30000" },
@@ -991,6 +987,20 @@ static struct {
 	{ 0x54e93572, 0xc000 , "Sinclair QL mf (german)" },
 	{ 0x930befe3, 0xc000 , "Sinclair QL Minerva 1.89 (QDOS replacement)" },
 
+/* Cambridge Computer Z88 Personal Organiser *********************************************/
+	{ 0x0ae7d0fc, 0x20000, "Cambridge Computer Z88 v2.2" },
+	{ 0xdad01338, 0x20000, "Cambridge Computer Z88 v2.5 (swedish)" },
+	{ 0x293f35c8, 0x20000, "Cambridge Computer Z88 v2.6 (norwegian)" },
+	{ 0x802cb9aa, 0x20000, "Cambridge Computer Z88 v3.0" },
+	{ 0xa56d732c, 0x20000, "Cambridge Computer Z88 v3.13 (swiss)" },
+	{ 0x9468d677, 0x20000, "Cambridge Computer Z88 v3.17 (turkish)" },
+	{ 0xd7eaf937, 0x20000, "Cambridge Computer Z88 v3.18 (german)" },
+	{ 0x7a08af73, 0x20000, "Cambridge Computer Z88 v3.19 (spanish)" },
+	{ 0xbaa80408, 0x20000, "Cambridge Computer Z88 v3.21 (danish)" },
+	{ 0x13f54308, 0x20000, "Cambridge Computer Z88 v3.23 (italian)" },
+	{ 0x218fbb72, 0x20000, "Cambridge Computer Z88 v3.26 (french)" },
+	{ 0x1356d440, 0x20000, "Cambridge Computer Z88 v4.0" },
+
 
 /* tandy *************************************************************************/
 	{ 0x73316e3e , 0x2000, "NOT AUTHENTIC? COCO basic 1.0" },
@@ -1150,7 +1160,7 @@ static struct {
 	{ 0x24b4076f , 0x160000, "Texas Instruments AVIGO v1.004 (italian)" },
 
 /* Texas Instruments Calculators ***********************************************/
-	{ 0x94ac58e2 , 0x8000 , "Texas Instruments TI-81 v1.8" },
+	{ 0x94ac58e2 , 0x08000 , "Texas Instruments TI-81 v1.8" },
 
 	{ 0xe2f5721c , 0x20000 , "Texas Instruments TI-82 v16.0" },
 	{ 0x0fc956d4 , 0x20000 , "Texas Instruments TI-82 v17.0" },
@@ -1346,6 +1356,8 @@ static struct {
 
 	{ 0x82030062 , 0x080000, "USR Pilot 1000/5000 OS v1.0" },
 	{ 0xbaa5b36a , 0x100000, "Palm Pilot Professional OS v2.0 Pro" },
+	{ 0x40ea8baa , 0x100000, "Palm Pilot Professional OS v2.0 Pro (modified)" },
+	{ 0x0c6f533e , 0x0ea000, "Palm Pilot Professional OS v2.0.2+ Pro (debug)" },
 	{ 0x4f31e1c9 , 0x119000, "Palm III OS v3.0" },
 	{ 0xa0b059f9 , 0x119000, "Palm III OS v3.0 (debug)" },
 	{ 0x467ff0de , 0x148000, "Palm III OS v3.3" },
@@ -1390,11 +1402,14 @@ static struct {
 	{ 0x93cded38 , 0x200000, "Handspring Visor OS v3.1H2" },
 	{ 0xc9e55271 , 0x200000, "Handspring Visor Platinum/Prism/Edge OS v3.5.2H1.1" },
 
+	{ 0x482c4e3b , 0x190000, "Sony CLIE PEG-S300 OS v3.5.0" },
 	{ 0x361ba712 , 0x190000, "Sony CLIE PEG-S300 OS v3.5.1" },
 	{ 0xd39dc1e2 , 0x3b0000, "Sony CLIE PEG-S300 OS v3.5.1 (japanese)" },
 	{ 0x566d18ec , 0x3b0000, "Sony CLIE PEG-S500c OS v3.5.1 (japanese)" },
 
 	{ 0xdd93b80f , 0x1f0000, "TRG Pro OS v3.5.2" },
+
+	{ 0xd0bdba79 , 0x1f8000, "IBM WorkPad OS v3.1 (japanese)" },
 
 
 /* Hewlett Packard Calculators *************************************************/
