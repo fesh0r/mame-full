@@ -527,6 +527,7 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 {
 	DIPROPDWORD value;
 	HRESULT result = DI_OK;
+	DWORD flags;
 
 	// if we're not out of mice, log this one
 	if (joystick_count >= MAX_JOYSTICKS)
@@ -564,8 +565,13 @@ static BOOL CALLBACK enum_joystick_callback(LPCDIDEVICEINSTANCE instance, LPVOID
 		goto cant_set_format;
 
 	// set the cooperative level
-	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window,
-					DISCL_FOREGROUND | DISCL_EXCLUSIVE);
+#ifndef MESS
+	flags = DISCL_FOREGROUND | DISCL_EXCLUSIVE;
+#else
+	flags = DISCL_BACKGROUND | DISCL_EXCLUSIVE;
+#endif;
+	result = IDirectInputDevice_SetCooperativeLevel(joystick_device[joystick_count], win_video_window, 
+					flags);
 	if (result != DI_OK)
 		goto cant_set_coop_level;
 

@@ -2,6 +2,7 @@
 // Microsoft Visual C++ generated include file.
 // Used by mess.rc
 //
+#define ID_OPTIONS_HIDEMENUBAR          0
 #define ID_EDIT_PASTE                   101
 #define ID_HELP_ABOUT                   102
 #define ID_OPTIONS_KEYBOARD             103
@@ -13,7 +14,7 @@
 #define ID_HELP_RUNTHISHTMLINFLEXEDIT   109
 #define ID_DEVICES                      110
 #define ID_FILE_SAVESTATE               111
-#define ID_OPTIONS_JOYSTICKS            112
+#define ID_OPTIONS_TOGGLEMENUBAR        112
 #define ID_OPTIONS_SHOWINTERNALGRAPHICS 113
 #define ID_OPTIONS_RESET                114
 #define ID_OPTIONS_THROTTLE             115
@@ -22,7 +23,8 @@
 #define ID_OPTIONS_PAUSE                118
 #define ID_FILE_LOADSTATE               119
 #define ID_FRAMESKIP_AUTO               120
-#define ID_OPTIONS_JOYSTICKS121         121
+#define ID_OPTIONS_JOYSTICKS            121
+#define ID_OPTIONS_FULLSCREEN           122
 #define IDR_RUNTIME_MENU                6000
 #define ID_FILE_EXIT                    6001
 
@@ -30,7 +32,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        122
+#define _APS_NEXT_RESOURCE_VALUE        123
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         6000
 #define _APS_NEXT_SYMED_VALUE           101

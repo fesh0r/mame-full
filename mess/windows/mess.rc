@@ -48,7 +48,8 @@ BEGIN
             MENUITEM "Emulated",                    ID_KEYBOARD_EMULATED
             MENUITEM "Natural",                     ID_KEYBOARD_NATURAL
         END
-        MENUITEM "&Joysticks",                  ID_OPTIONS_JOYSTICKS, GRAYED
+        MENUITEM "&Joysticks",                  ID_OPTIONS_TOGGLEMENUBAR
+        , GRAYED
         MENUITEM "&DIP Switches...",            ID_OPTIONS_DIPSWITCHES
         MENUITEM SEPARATOR
         POPUP "&Frameskip"
@@ -56,6 +57,9 @@ BEGIN
             MENUITEM "Auto",                        ID_FRAMESKIP_AUTO
         END
         MENUITEM "&Throttle",                   ID_OPTIONS_THROTTLE
+        MENUITEM SEPARATOR
+        MENUITEM "Hide Menubar",                ID_OPTIONS_TOGGLEMENUBAR
+        MENUITEM "Full Screen",                 ID_OPTIONS_FULLSCREEN
         MENUITEM SEPARATOR
         MENUITEM "Show P&rofiler",              ID_OPTIONS_FRAMESKIP, GRAYED
         MENUITEM "Show &Internal Graphics",     ID_OPTIONS_SHOWINTERNALGRAPHICS

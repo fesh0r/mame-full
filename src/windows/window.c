@@ -201,8 +201,10 @@ static LRESULT CALLBACK debug_window_proc(HWND wnd, UINT message, WPARAM wparam,
 INLINE int wnd_extra_width(void)
 {
 	RECT window = { 100, 100, 200, 200 };
+#if !WINDOW_HAS_MENU
 	if (!win_window_mode)
 		return 0;
+#endif
 	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
 	return (window.right - window.left) - 100;
 }
@@ -216,9 +218,12 @@ INLINE int wnd_extra_width(void)
 INLINE int wnd_extra_height(void)
 {
 	RECT window = { 100, 100, 200, 200 };
+#if !WINDOW_HAS_MENU
 	if (!win_window_mode)
 		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, WINDOW_HAS_MENU, WINDOW_STYLE_EX);
+#endif
+	AdjustWindowRectEx(&window, win_window_mode ? WINDOW_STYLE : FULLSCREEN_STYLE, WINDOW_HAS_MENU,
+		win_window_mode ? WINDOW_STYLE_EX : FULLSCREEN_STYLE_EX);
 	return (window.bottom - window.top) - 100;
 }
 
@@ -674,10 +679,12 @@ static LRESULT CALLBACK video_window_proc(HWND wnd, UINT message, WPARAM wparam,
 	switch (message)
 	{
 		// non-client paint: punt if full screen
+#if !WINDOW_HAS_MENU
 		case WM_NCPAINT:
 			if (win_window_mode)
 				return DefWindowProc(wnd, message, wparam, lparam);
 			break;
+#endif
 	
 		// paint: redraw the last bitmap
 		case WM_PAINT:

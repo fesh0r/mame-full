@@ -462,6 +462,7 @@ static void prepare_menus(void)
 
 	set_command_state(win_menu_bar, ID_OPTIONS_PAUSE,		is_paused					? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_OPTIONS_THROTTLE,	throttle					? MFS_CHECKED : MFS_ENABLED);
+	set_command_state(win_menu_bar, ID_OPTIONS_FULLSCREEN,	!win_window_mode			? MFS_CHECKED : MFS_ENABLED);
 
 	set_command_state(win_menu_bar, ID_KEYBOARD_EMULATED,	!win_use_natural_keyboard	? MFS_CHECKED : MFS_ENABLED);
 	set_command_state(win_menu_bar, ID_KEYBOARD_NATURAL,	inputx_can_post() ?
@@ -486,6 +487,16 @@ static void prepare_menus(void)
 			AppendMenu(device_menu, MF_STRING, ID_DEVICE_0 + (dev->type * MAX_DEV_INSTANCES) + i, buf);
 		}
 	}
+}
+
+
+//============================================================
+//	win_toggle_menubar
+//============================================================
+
+void win_toggle_menubar(void)
+{
+	SetMenu(win_video_window, GetMenu(win_video_window) ? NULL : win_menu_bar);
 }
 
 //============================================================
@@ -536,6 +547,14 @@ static int invoke_command(UINT command)
 
 	case ID_OPTIONS_DIPSWITCHES:
 		setdipswitches();
+		break;
+
+	case ID_OPTIONS_FULLSCREEN:
+		win_toggle_full_screen();
+		break;
+
+	case ID_OPTIONS_TOGGLEMENUBAR:
+		win_toggle_menubar();
 		break;
 
 	case ID_FRAMESKIP_AUTO:
@@ -662,6 +681,7 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 
 	case WM_ENTERMENULOOP:
 		osd_sound_enable(0);
+		DrawMenuBar(win_video_window);
 		break;
 
 	case WM_EXITMENULOOP:
@@ -678,6 +698,10 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 	}
 	return 0;
 }
+
+//============================================================
+//	osd_keyboard_disabled
+//============================================================
 
 int osd_keyboard_disabled(void)
 {

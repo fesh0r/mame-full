@@ -79,7 +79,7 @@ struct dialog_info
 #define DIM_COMBO_ROW_HEIGHT	12
 #define DIM_BUTTON_ROW_HEIGHT	12
 #define DIM_LABEL_WIDTH			80
-#define DIM_SEQ_WIDTH			60
+#define DIM_SEQ_WIDTH			120
 #define DIM_COMBO_WIDTH			140
 #define DIM_BUTTON_WIDTH		50
 
@@ -95,6 +95,11 @@ struct dialog_info
 #define DLGTEXT_OK				ui_getstring(UI_OK)
 #define DLGTEXT_APPLY			"Apply"
 #define DLGTEXT_CANCEL			"Cancel"
+
+#define FONT_SIZE				8
+#define FONT_FACE				"Microsoft Sans Serif"
+
+#define TIMER_ID				0xdeadbeef
 
 //============================================================
 //	dialog_trigger
@@ -365,7 +370,7 @@ void *win_dialog_init(const char *title)
 	di->cy = 0;
 
 	memset(&dlg_template, 0, sizeof(dlg_template));
-	dlg_template.style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION;
+	dlg_template.style = WS_POPUP | WS_BORDER | WS_SYSMENU | DS_MODALFRAME | WS_CAPTION | DS_SETFONT;
 	dlg_template.x = 10;
 	dlg_template.y = 10;
 	if (dialog_write(di, &dlg_template, sizeof(dlg_template), 4))
@@ -377,6 +382,12 @@ void *win_dialog_init(const char *title)
 		goto error;
 
 	if (dialog_write_string(di, title))
+		goto error;
+
+	w[0] = FONT_SIZE;
+	if (dialog_write(di, w, sizeof(w[0]), 2))
+		goto error;
+	if (dialog_write_string(di, FONT_FACE))
 		goto error;
 
 	return (void *) di;
@@ -454,32 +465,77 @@ struct seqselect_stuff
 	INT_PTR (CALLBACK *oldwndproc)(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 	InputSeq *code;
 	InputSeq newcode;
+	UINT_PTR timer;
+	WORD pos;
 };
 
 static INT_PTR CALLBACK seqselect_wndproc(HWND editwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
-	const struct KeyboardInfo *keylist;
 	struct seqselect_stuff *stuff;
 	INT_PTR result;
+	int dlgitem;
+	HWND dlgwnd;
+	HWND dlgitemwnd;
+	InputCode code;
 
 	stuff = (struct seqselect_stuff *) GetWindowLongPtr(editwnd, GWLP_USERDATA);
 
 	switch(msg) {
 	case WM_KEYDOWN:
 	case WM_SYSKEYDOWN:
-		keylist = osd_get_key_list();
-		while(keylist->name)
-		{
-			if (osd_is_key_pressed(keylist->code))
-			{
-				seq_set_1(&stuff->newcode, keylist->standardcode);
-				SetWindowText(editwnd, keylist->name);
-				SendMessage(editwnd, EM_SETSEL, 0, -1);
-				break;
-			}
-			keylist++;
-		}
 		result = 1;
+		break;
+
+	case WM_TIMER:
+		if (wparam == TIMER_ID)
+		{
+			code = code_read_async();
+			if (code != CODE_NONE)
+			{
+				seq_set_1(&stuff->newcode, code);
+				SetWindowText(editwnd, code_name(code));
+
+				dlgwnd = GetParent(editwnd);
+
+				dlgitem = stuff->pos;
+				do
+				{
+					dlgitem++;
+					dlgitemwnd = GetDlgItem(dlgwnd, dlgitem);
+				}
+				while(dlgitemwnd && (GetWindowLongPtr(dlgitemwnd, GWLP_WNDPROC) != (LONG_PTR) seqselect_wndproc));
+				if (dlgitemwnd)
+				{
+					SetFocus(dlgitemwnd);
+					SendMessage(dlgitemwnd, EM_SETSEL, 0, -1);
+				}
+				else
+				{
+					SetFocus(dlgwnd);
+				}
+			}
+			result = 0;
+		}
+		else
+		{
+			result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		}
+		break;
+
+	case WM_SETFOCUS:
+		if (stuff->timer)
+			KillTimer(editwnd, stuff->timer);
+		stuff->timer = SetTimer(editwnd, TIMER_ID, 100, (TIMERPROC) NULL);
+		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
+		break;
+
+	case WM_KILLFOCUS:
+		if (stuff->timer)
+		{
+			KillTimer(editwnd, stuff->timer);
+			stuff->timer = 0;
+		}
+		result = stuff->oldwndproc(editwnd, msg, wparam, lparam);
 		break;
 
 	case WM_LBUTTONDOWN:
@@ -546,6 +602,8 @@ static int dialog_add_single_seqselect(struct dialog_info *di, short x, short y,
 	if (!stuff)
 		return 1;
 	stuff->code = code;
+	stuff->pos = di->item_count;
+	stuff->timer = 0;
 	if (dialog_add_trigger(di, di->item_count, TRIGGER_INITDIALOG, 0, seqselect_setup, di->item_count, (LPARAM) stuff, NULL))
 		return 1;
 	if (dialog_add_trigger(di, di->item_count, TRIGGER_APPLY, 0, seqselect_apply, 0, 0, NULL))
