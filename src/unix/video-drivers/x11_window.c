@@ -1596,7 +1596,7 @@ static void x11_window_update_16_to_YV12(struct mame_bitmap *bitmap)
 
 static void x11_window_update_16_to_YV12_perfect(struct mame_bitmap *bitmap)
 {      /* this one is used when scale==2 */
-   unsigned int _x,_y,r;
+   unsigned int _x,_y /*,r*/ ;
    unsigned char *dest_y;
    unsigned char *dest_u;
    unsigned char *dest_v;
