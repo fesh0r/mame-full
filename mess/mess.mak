@@ -172,9 +172,9 @@ DRVLIBS = \
 	$(OBJ)/gce.a	  \
 	$(OBJ)/arcadia.a  \
 	$(OBJ)/tangerin.a \
-#	$(OBJ)/kaypro.a   \
-#	$(OBJ)/cgenie.a   \
-#	$(OBJ)/aquarius.a \
+	$(OBJ)/kaypro.a   \
+	$(OBJ)/cgenie.a   \
+	$(OBJ)/aquarius.a \
 #	$(OBJ)/kim1.a     \
 #	$(OBJ)/p2000.a	  \
 #	$(OBJ)/veb.a	  \

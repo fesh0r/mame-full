@@ -1,62 +1,62 @@
 extern UINT8 *cgenie_fontram;
 
-extern int cgenie_cassette_init(int id, mame_file *fp, int open_mode);
-extern int cgenie_floppy_init(int id, mame_file *fp, int open_mode);
-extern int cgenie_rom_load(int id, mame_file *fp, int open_mode);
+int cgenie_cassette_load(int id, mame_file *fp, int open_mode);
+int cgenie_floppy_init(int id, mame_file *fp, int open_mode);
+int cgenie_rom_load(int id, mame_file *fp, int open_mode);
 
-extern VIDEO_START( cgenie );
-extern VIDEO_UPDATE( cgenie );
+VIDEO_START( cgenie );
+VIDEO_UPDATE( cgenie );
 
-extern void cgenie_sh_sound_init(const char * gamename);
-extern WRITE_HANDLER ( cgenie_sh_control_port_w );
-extern WRITE_HANDLER ( cgenie_sh_data_port_w );
-extern READ_HANDLER ( cgenie_sh_control_port_r );
-extern READ_HANDLER ( cgenie_sh_data_port_r );
+void cgenie_sh_sound_init(const char * gamename);
+WRITE_HANDLER ( cgenie_sh_control_port_w );
+WRITE_HANDLER ( cgenie_sh_data_port_w );
+READ_HANDLER ( cgenie_sh_control_port_r );
+READ_HANDLER ( cgenie_sh_data_port_r );
 
-/* from src/mess/machine/cgenie.c */
+/* from mess/machine/cgenie.c */
 extern int cgenie_tv_mode;
 
-extern READ_HANDLER ( cgenie_psg_port_a_r);
-extern READ_HANDLER ( cgenie_psg_port_b_r );
-extern WRITE_HANDLER ( cgenie_psg_port_a_w );
-extern WRITE_HANDLER ( cgenie_psg_port_b_w );
+READ_HANDLER ( cgenie_psg_port_a_r);
+READ_HANDLER ( cgenie_psg_port_b_r );
+WRITE_HANDLER ( cgenie_psg_port_a_w );
+WRITE_HANDLER ( cgenie_psg_port_b_w );
 
-extern void init_cgenie(void);
-extern MACHINE_INIT( cgenie );
-extern MACHINE_STOP( cgenie );
+void init_cgenie(void);
+MACHINE_INIT( cgenie );
+MACHINE_STOP( cgenie );
 
-extern READ_HANDLER ( cgenie_colorram_r );
-extern READ_HANDLER ( cgenie_fontram_r );
+READ_HANDLER ( cgenie_colorram_r );
+READ_HANDLER ( cgenie_fontram_r );
 
-extern void cgenie_dos_rom_w(int offset, int data);
-extern void cgenie_ext_rom_w(int offset, int data);
-extern WRITE_HANDLER ( cgenie_colorram_w );
-extern WRITE_HANDLER ( cgenie_fontram_w );
+void cgenie_dos_rom_w(int offset, int data);
+void cgenie_ext_rom_w(int offset, int data);
+WRITE_HANDLER ( cgenie_colorram_w );
+WRITE_HANDLER ( cgenie_fontram_w );
 
-extern WRITE_HANDLER ( cgenie_port_ff_w );
-extern READ_HANDLER ( cgenie_port_ff_r );
-extern int cgenie_port_xx_r(int offset);
+WRITE_HANDLER ( cgenie_port_ff_w );
+READ_HANDLER ( cgenie_port_ff_r );
+int cgenie_port_xx_r(int offset);
 
-extern INTERRUPT_GEN( cgenie_timer_interrupt );
-extern INTERRUPT_GEN( cgenie_frame_interrupt );
+INTERRUPT_GEN( cgenie_timer_interrupt );
+INTERRUPT_GEN( cgenie_frame_interrupt );
 
-extern READ_HANDLER ( cgenie_status_r );
-extern READ_HANDLER ( cgenie_track_r );
-extern READ_HANDLER ( cgenie_sector_r );
-extern READ_HANDLER ( cgenie_data_r );
+READ_HANDLER ( cgenie_status_r );
+READ_HANDLER ( cgenie_track_r );
+READ_HANDLER ( cgenie_sector_r );
+READ_HANDLER ( cgenie_data_r );
 
-extern WRITE_HANDLER ( cgenie_command_w );
-extern WRITE_HANDLER ( cgenie_track_w );
-extern WRITE_HANDLER ( cgenie_sector_w );
-extern WRITE_HANDLER ( cgenie_data_w );
+WRITE_HANDLER ( cgenie_command_w );
+WRITE_HANDLER ( cgenie_track_w );
+WRITE_HANDLER ( cgenie_sector_w );
+WRITE_HANDLER ( cgenie_data_w );
 
-extern READ_HANDLER ( cgenie_irq_status_r );
+READ_HANDLER ( cgenie_irq_status_r );
 
-extern WRITE_HANDLER ( cgenie_motor_w );
+WRITE_HANDLER ( cgenie_motor_w );
 
-extern READ_HANDLER ( cgenie_keyboard_r );
-extern int cgenie_videoram_r(int offset);
-extern WRITE_HANDLER ( cgenie_videoram_w );
+READ_HANDLER ( cgenie_keyboard_r );
+int cgenie_videoram_r(int offset);
+WRITE_HANDLER ( cgenie_videoram_w );
 
 typedef struct {         // CRTC 6845
         UINT8    cursor_address_lo;
@@ -82,8 +82,8 @@ typedef struct {         // CRTC 6845
 
 extern	int 	cgenie_font_offset[4];
 
-extern VIDEO_START( cgenie );
-extern VIDEO_UPDATE( cgenie );
+VIDEO_START( cgenie );
+VIDEO_UPDATE( cgenie );
 
 extern	READ_HANDLER ( cgenie_index_r );
 extern	READ_HANDLER ( cgenie_register_r );

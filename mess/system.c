@@ -510,7 +510,7 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS			*/
 //	DRIVER( ep128a )	/* Enterprise 128 k 								*/
 
 	/* NON LINEAR SYSTEMS */
-//	DRIVER( kaypro )	/* Kaypro 2X										*/
+	DRIVER( kaypro )	/* Kaypro 2X										*/
 
 	/* VEB MIKROELEKTRONIK */
 	/* KC compact is partial CPC compatible */
@@ -545,7 +545,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	DRIVER( mc10 )		/* MC-10											*/
 
 	/* EACA */
-//	DRIVER( cgenie )	/* Colour Genie EG2000								*/
+	DRIVER( cgenie )	/* Colour Genie EG2000								*/
 	/* system 80 trs80 compatible */
 
 	/* VIDEO TECHNOLOGY */
@@ -620,7 +620,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 			*/
 	/* MATTEL */
 //	DRIVER( intvkbd )	/* 1981 - Mattel Intellivision Keyboard Component	*/
 						/* (Test marketed, later recalled )					*/
-//	DRIVER( aquarius )	/* 1983 Aquarius									*/
+	DRIVER( aquarius )	/* 1983 Aquarius									*/
 
 	/*EXIDY INC */
 //	DRIVER( exidy )  /* Sorcerer											*/
