@@ -8,12 +8,6 @@
 #define BLANK_DELAY 0
 #define SH_DELAY 6.333e-6
 
-#define BLACK 0x00
-#define RED   0x04
-#define GREEN 0x02
-#define BLUE  0x01
-#define WHITE RED|GREEN|BLUE
-#define DARKRED 0x08
 #define VEC_SHIFT 16
 #define INT_PER_CLOCK 900
 #define VECTREX_CLOCK 1500000
@@ -194,50 +188,11 @@ INLINE void vectrex_solid_line(double time_, int pattern)
 /*********************************************************************
   Color init.
  *********************************************************************/
-static void shade_fill (int rgb, int start_index, int end_index, int start_inten, int end_inten)
-{
-	int i, inten, index_range, inten_range;
 
-	index_range = end_index - start_index;
-	inten_range = end_inten - start_inten;
-	for (i = start_index; i <= end_index; i++)
-	{
-		inten = start_inten + (inten_range) * (i-start_index) / (index_range);
-		palette_set_color(i, (rgb & RED  ) ? inten : 0,
-						  (rgb & GREEN) ? inten : 0,
-						  (rgb & BLUE ) ? inten : 0);
-	}
-}
-
-void vectrex_init_colors (void)
+void vectrex_init_overlay (void)
 {
-	int i, nextfree;
 	char overlay_name[1024];
 	const struct IODevice *dev = Machine->gamedrv->dev;
-
-	/* initialize the first 8 colors with the basic colors */
-	for (i = 0; i < 8; i++)
-		palette_set_color(i, (i & RED  ) ? 0xff : 0, (i & GREEN) ? 0xff : 0, (i & BLUE ) ? 0xff : 0);
-	/* Dark red for red/blue glasses mode */
-	palette_set_color(8, 160, 0, 0);
-	nextfree = 9;
-
-	/* grey */
-	shade_fill (WHITE, nextfree, nextfree + 31, 0, 255);
-	nextfree +=32;
-	
-	/* put shades of '3D colors' into the palette */
-	shade_fill (RED, nextfree, nextfree + 31, 0, 255);
-	nextfree += 32;
-	shade_fill (GREEN, nextfree, nextfree + 31, 0, 255);
-	nextfree += 32;
-	shade_fill (BLUE, nextfree, nextfree + 31, 0, 255);
-	nextfree += 32;
-	shade_fill (RED|GREEN, nextfree, nextfree + 15, 0, 255);
-	nextfree += 16;
-	shade_fill (RED|BLUE, nextfree, nextfree + 15, 0, 255);
-	nextfree += 16;
-	shade_fill (GREEN|BLUE, nextfree, nextfree + 15, 0, 255);
 
 	/* try to load an overlay for game.bin named game.png */
 	if (device_filename(dev->type,0))
@@ -249,7 +204,7 @@ void vectrex_init_colors (void)
 		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
 	artwork_kill(); /* remove existing overlay */
-	overlay_load(overlay_name, 256);
+	overlay_load(overlay_name, 0);
 
 }
 
@@ -261,7 +216,7 @@ int vectrex_start (void)
 {
 	int width, height;
 
-	vectrex_init_colors ();
+	vectrex_init_overlay ();
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
@@ -441,36 +396,24 @@ static struct via6522_interface spectrum1_via6522_interface =
 static struct artwork_info *buttons, *led;
 static int transparent_pen;
 
-void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i;
-
-	/* initialize the first 8 colors with the basic colors */
-	for (i = 0; i < 8; i++)
-	{
-		palette[3*i+0] = (i & RED  ) ? 0xff : 0;
-		palette[3*i+1] = (i & GREEN) ? 0xff : 0;
-		palette[3*i+2] = (i & BLUE ) ? 0xff : 0;
-	}
-
-	/* 16 shades of gray for the vector functions */
-	shade_fill (WHITE, 8, 63, 0, 255);
 	vectrex_refresh_with_T2=1;
 
 	/* artwork */
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
-		artwork_load_size(&buttons, "spec_bt.png", 256, 
+		artwork_load_size(&buttons, "spec_bt.png", 0, 
 						  (int)(Machine->scrbitmap->height * 0.1151961), Machine->scrbitmap->height);
 		if (buttons)
-			artwork_load_size(&led, "led.png", 256, buttons->artwork->width, buttons->artwork->height / 8);
+			artwork_load_size(&led, "led.png", 0, buttons->artwork->width, buttons->artwork->height / 8);
 	}
 	else
 	{
-		artwork_load_size(&buttons, "spec_bt.png", 256, 
+		artwork_load_size(&buttons, "spec_bt.png", 0, 
 						  Machine->scrbitmap->width, (int)(Machine->scrbitmap->width * 0.1151961));
 		if (buttons)
-			artwork_load_size(&led, "led.png", 256, buttons->artwork->width / 8, buttons->artwork->height);
+			artwork_load_size(&led, "led.png", 0, buttons->artwork->width / 8, buttons->artwork->height);
 	}
 }
 

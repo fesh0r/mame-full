@@ -7,7 +7,7 @@ extern int vectrex_init_cart (int id);
 /* From machine/vectrex.c */
 extern int vectrex_refresh_with_T2;
 extern int vectrex_imager_status;
-extern int vectrex_beam_color;
+extern UINT32 vectrex_beam_color;
 extern unsigned char vectrex_via_out[2];
 
 extern void vectrex_imager_left_eye (double time_);
@@ -24,13 +24,13 @@ extern void vectrex_vh_update (struct mame_bitmap *bitmap, int full_refresh);
 
 extern int raaspec_start(void);
 extern WRITE_HANDLER  ( raaspec_led_w );
-extern void raaspec_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern void raaspec_init_artwork (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void raaspec_vh_update (struct mame_bitmap *bitmap, int full_refresh);
 
 /* from vidhrdw/vectrex.c */
 extern void vector_add_point_stereo (int x, int y, int color, int intensity);
 extern void (*vector_add_point_function) (int, int, int, int);
-extern void vectrex_init_colors (void);
+extern void vectrex_init_overlay (void);
 
 #ifdef RUNTIME_LOADER
 # ifdef __cplusplus

@@ -5,12 +5,12 @@
 
 #include "includes/vectrex.h"
 
-#define BLACK 0x00
-#define RED	  0x04
-#define GREEN 0x02
-#define BLUE  0x01
+#define BLACK 0x00000000
+#define RED   0x00ff0000
+#define GREEN 0x0000ff00
+#define BLUE  0x000000ff
 #define WHITE RED|GREEN|BLUE
-#define DARKRED 0x08
+#define DARKRED 0x00800000
 
 #define PORTB 0
 #define PORTA 1
@@ -20,7 +20,7 @@
  *********************************************************************/
 unsigned char *vectrex_ram;		   /* RAM at 0xc800 -- 0xcbff mirrored at 0xcc00 -- 0xcfff */
 unsigned char vectrex_via_out[2];
-int vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
+UINT32 vectrex_beam_color = WHITE;	   /* the color of the vectrex beam */
 int vectrex_imager_status = 0;	   /* 0 = off, 1 = right eye, 2 = left eye */
 int vectrex_refresh_with_T2;	   /* For all known games it's OK to do the screen refresh when T2 expires.
 					* This behaviour can be turned off via dipswitch settings */
@@ -30,7 +30,7 @@ int vectrex_refresh_with_T2;	   /* For all known games it's OK to do the screen 
  *********************************************************************/
 
 /* Colors for right and left eye */
-static int imager_colors[6] = {WHITE,WHITE,WHITE,WHITE,WHITE,WHITE};
+static UINT32 imager_colors[6] = {WHITE,WHITE,WHITE,WHITE,WHITE,WHITE};
 
 /* Startpoint (in rad) of the three colors */
 /* Tanks to Chris Salomon for the values */
@@ -104,7 +104,7 @@ int vectrex_init_cart (int id)
 	}
 
 	if (Machine->scrbitmap)
-		vectrex_init_colors ();
+		vectrex_init_overlay ();
 
 	return INIT_PASS;
 }
@@ -214,12 +214,7 @@ void vectrex_configuration(void)
  *********************************************************************/
 void v_via_irq (int level)
 {
-	static int old_level;
-	if (level != old_level)
-	{
-		cpu_set_irq_line(0, M6809_IRQ_LINE, level);
-		old_level = level;
-	}
+	cpu_set_irq_line(0, M6809_IRQ_LINE, level);
 }
 
 READ_HANDLER( v_via_pb_r )
