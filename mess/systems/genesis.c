@@ -65,7 +65,7 @@ unsigned int	z80_latch_bitcount		= 0;
 UINT16 cartridge_ram[0x10000]; /* any cartridge RAM */
 
 
-#if LSB_FIRST
+#ifdef LSB_FIRST
 	#define BYTE_XOR(a) ((a) ^ 1)
 #else
 	#define BYTE_XOR(a) (a)
