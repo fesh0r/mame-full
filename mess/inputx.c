@@ -177,125 +177,127 @@ static const struct
 	const char *str;
 } alternate_charmap[] =
 {
-	{ 0x0009,	"    " },	/* TAB */
-	{ 0x0061,	"A" },		/* a */
-	{ 0x0062,	"B" },		/* b */
-	{ 0x0063,	"C" },		/* c */
-	{ 0x0064,	"D" },		/* d */
-	{ 0x0065,	"E" },		/* e */
-	{ 0x0066,	"F" },		/* f */
-	{ 0x0067,	"G" },		/* g */
-	{ 0x0068,	"H" },		/* h */
-	{ 0x0069,	"I" },		/* i */
-	{ 0x006a,	"J" },		/* j */
-	{ 0x006b,	"K" },		/* k */
-	{ 0x006c,	"L" },		/* l */
-	{ 0x006d,	"M" },		/* m */
-	{ 0x006e,	"N" },		/* n */
-	{ 0x006f,	"O" },		/* o */
-	{ 0x0070,	"P" },		/* p */
-	{ 0x0071,	"Q" },		/* q */
-	{ 0x0072,	"R" },		/* r */
-	{ 0x0073,	"S" },		/* s */
-	{ 0x0074,	"T" },		/* t */
-	{ 0x0075,	"U" },		/* u */
-	{ 0x0076,	"V" },		/* v */
-	{ 0x0077,	"W" },		/* w */
-	{ 0x0078,	"X" },		/* x */
-	{ 0x0079,	"Y" },		/* y */
-	{ 0x007a,	"Z" },		/* z */
-	{ 0x00a0,	" " },		/* non breaking space */
-	{ 0x00a1,	"!" },		/* inverted exclaimation mark */
-	{ 0x00a6,	"|" },		/* broken bar */
-	{ 0x00a9,	"(c)" },	/* copyright sign */
-	{ 0x00ab,	"<<" },		/* left pointing double angle */
-	{ 0x00ae,	"(r)" },	/* registered sign */
-	{ 0x00bb,	">>" },		/* right pointing double angle */
-	{ 0x00bc,	"1/4" },	/* vulgar fraction one quarter */
-	{ 0x00bd,	"1/2" },	/* vulgar fraction one half */
-	{ 0x00be,	"3/4" },	/* vulgar fraction three quarters */
-	{ 0x00bf,	"?" },		/* inverted question mark */
-	{ 0x00c0,	"A" },		/* 'A' grave */
-	{ 0x00c1,	"A" },		/* 'A' acute */
-	{ 0x00c2,	"A" },		/* 'A' circumflex */
-	{ 0x00c3,	"A" },		/* 'A' tilde */
-	{ 0x00c4,	"A" },		/* 'A' diaeresis */
-	{ 0x00c5,	"A" },		/* 'A' ring above */
-	{ 0x00c6,	"AE" },		/* 'AE' ligature */
-	{ 0x00c7,	"C" },		/* 'C' cedilla */
-	{ 0x00c8,	"E" },		/* 'E' grave */
-	{ 0x00c9,	"E" },		/* 'E' acute */
-	{ 0x00ca,	"E" },		/* 'E' circumflex */
-	{ 0x00cb,	"E" },		/* 'E' diaeresis */
-	{ 0x00cc,	"I" },		/* 'I' grave */
-	{ 0x00cd,	"I" },		/* 'I' acute */
-	{ 0x00ce,	"I" },		/* 'I' circumflex */
-	{ 0x00cf,	"I" },		/* 'I' diaeresis */
-	{ 0x00d0,	"D" },		/* 'ETH' */
-	{ 0x00d1,	"N" },		/* 'N' tilde */
-	{ 0x00d2,	"O" },		/* 'O' grave */
-	{ 0x00d3,	"O" },		/* 'O' acute */
-	{ 0x00d4,	"O" },		/* 'O' circumflex */
-	{ 0x00d5,	"O" },		/* 'O' tilde */
-	{ 0x00d6,	"O" },		/* 'O' diaeresis */
-	{ 0x00d7,	"X" },		/* multiplication sign */
-	{ 0x00d8,	"O" },		/* 'O' stroke */
-	{ 0x00d9,	"U" },		/* 'U' grave */
-	{ 0x00da,	"U" },		/* 'U' acute */
-	{ 0x00db,	"U" },		/* 'U' circumflex */
-	{ 0x00dc,	"U" },		/* 'U' diaeresis */
-	{ 0x00dd,	"Y" },		/* 'Y' acute */
-	{ 0x00df,	"SS" },		/* sharp S */
-	{ 0x00e0,	"a" },		/* 'a' grave */
-	{ 0x00e1,	"a" },		/* 'a' acute */
-	{ 0x00e2,	"a" },		/* 'a' circumflex */
-	{ 0x00e3,	"a" },		/* 'a' tilde */
-	{ 0x00e4,	"a" },		/* 'a' diaeresis */
-	{ 0x00e5,	"a" },		/* 'a' ring above */
-	{ 0x00e6,	"ae" },		/* 'ae' ligature */
-	{ 0x00e7,	"c" },		/* 'c' cedilla */
-	{ 0x00e8,	"e" },		/* 'e' grave */
-	{ 0x00e9,	"e" },		/* 'e' acute */
-	{ 0x00ea,	"e" },		/* 'e' circumflex */
-	{ 0x00eb,	"e" },		/* 'e' diaeresis */
-	{ 0x00ec,	"i" },		/* 'i' grave */
-	{ 0x00ed,	"i" },		/* 'i' acute */
-	{ 0x00ee,	"i" },		/* 'i' circumflex */
-	{ 0x00ef,	"i" },		/* 'i' diaeresis */
-	{ 0x00f0,	"d" },		/* 'eth' */
-	{ 0x00f1,	"n" },		/* 'n' tilde */
-	{ 0x00f2,	"o" },		/* 'o' grave */
-	{ 0x00f3,	"o" },		/* 'o' acute */
-	{ 0x00f4,	"o" },		/* 'o' circumflex */
-	{ 0x00f5,	"o" },		/* 'o' tilde */
-	{ 0x00f6,	"o" },		/* 'o' diaeresis */
-	{ 0x00f8,	"o" },		/* 'o' stroke */
-	{ 0x00f9,	"u" },		/* 'u' grave */
-	{ 0x00fa,	"u" },		/* 'u' acute */
-	{ 0x00fb,	"u" },		/* 'u' circumflex */
-	{ 0x00fc,	"u" },		/* 'u' diaeresis */
-	{ 0x00fd,	"y" },		/* 'y' acute */
-	{ 0x00ff,	"y" },		/* 'y' diaeresis */
-	{ 0x2010,	"-" },		/* hyphen */
-	{ 0x2011,	"-" },		/* non-breaking hyphen */
-	{ 0x2012,	"-" },		/* figure dash */
-	{ 0x2013,	"-" },		/* en dash */
-	{ 0x2014,	"-" },		/* em dash */
-	{ 0x2015,	"-" },		/* horizontal dash */
-	{ 0x2018,	"\'" },		/* left single quotation mark */
-	{ 0x2019,	"\'" },		/* right single quotation mark */
-	{ 0x201a,	"\'" },		/* single low quotation mark */
-	{ 0x201b,	"\'" },		/* single high reversed quotation mark */
-	{ 0x201c,	"\"" },		/* left double quotation mark */
-	{ 0x201d,	"\"" },		/* right double quotation mark */
-	{ 0x201e,	"\"" },		/* double low quotation mark */
-	{ 0x201f,	"\"" },		/* double high reversed quotation mark */
-	{ 0x2024,	"." },		/* one dot leader */
-	{ 0x2025,	".." },		/* two dot leader */
-	{ 0x2026,	"..." },	/* horizontal ellipsis */
-	{ 0x2047,	"??" },		/* double question mark */
-	{ 0x2048,	"?!" },		/* question exclamation mark */
-	{ 0x2049,	"!?" }		/* exclamation question mark */		
+	{ 0x0009,				"    " },	/* TAB */
+	{ 0x0061,				"A" },		/* a */
+	{ 0x0062,				"B" },		/* b */
+	{ 0x0063,				"C" },		/* c */
+	{ 0x0064,				"D" },		/* d */
+	{ 0x0065,				"E" },		/* e */
+	{ 0x0066,				"F" },		/* f */
+	{ 0x0067,				"G" },		/* g */
+	{ 0x0068,				"H" },		/* h */
+	{ 0x0069,				"I" },		/* i */
+	{ 0x006a,				"J" },		/* j */
+	{ 0x006b,				"K" },		/* k */
+	{ 0x006c,				"L" },		/* l */
+	{ 0x006d,				"M" },		/* m */
+	{ 0x006e,				"N" },		/* n */
+	{ 0x006f,				"O" },		/* o */
+	{ 0x0070,				"P" },		/* p */
+	{ 0x0071,				"Q" },		/* q */
+	{ 0x0072,				"R" },		/* r */
+	{ 0x0073,				"S" },		/* s */
+	{ 0x0074,				"T" },		/* t */
+	{ 0x0075,				"U" },		/* u */
+	{ 0x0076,				"V" },		/* v */
+	{ 0x0077,				"W" },		/* w */
+	{ 0x0078,				"X" },		/* x */
+	{ 0x0079,				"Y" },		/* y */
+	{ 0x007a,				"Z" },		/* z */
+	{ 0x00a0,				" " },		/* non breaking space */
+	{ 0x00a1,				"!" },		/* inverted exclaimation mark */
+	{ 0x00a6,				"|" },		/* broken bar */
+	{ 0x00a9,				"(c)" },	/* copyright sign */
+	{ 0x00ab,				"<<" },		/* left pointing double angle */
+	{ 0x00ae,				"(r)" },	/* registered sign */
+	{ 0x00bb,				">>" },		/* right pointing double angle */
+	{ 0x00bc,				"1/4" },	/* vulgar fraction one quarter */
+	{ 0x00bd,				"1/2" },	/* vulgar fraction one half */
+	{ 0x00be,				"3/4" },	/* vulgar fraction three quarters */
+	{ 0x00bf,				"?" },		/* inverted question mark */
+	{ 0x00c0,				"A" },		/* 'A' grave */
+	{ 0x00c1,				"A" },		/* 'A' acute */
+	{ 0x00c2,				"A" },		/* 'A' circumflex */
+	{ 0x00c3,				"A" },		/* 'A' tilde */
+	{ 0x00c4,				"A" },		/* 'A' diaeresis */
+	{ 0x00c5,				"A" },		/* 'A' ring above */
+	{ 0x00c6,				"AE" },		/* 'AE' ligature */
+	{ 0x00c7,				"C" },		/* 'C' cedilla */
+	{ 0x00c8,				"E" },		/* 'E' grave */
+	{ 0x00c9,				"E" },		/* 'E' acute */
+	{ 0x00ca,				"E" },		/* 'E' circumflex */
+	{ 0x00cb,				"E" },		/* 'E' diaeresis */
+	{ 0x00cc,				"I" },		/* 'I' grave */
+	{ 0x00cd,				"I" },		/* 'I' acute */
+	{ 0x00ce,				"I" },		/* 'I' circumflex */
+	{ 0x00cf,				"I" },		/* 'I' diaeresis */
+	{ 0x00d0,				"D" },		/* 'ETH' */
+	{ 0x00d1,				"N" },		/* 'N' tilde */
+	{ 0x00d2,				"O" },		/* 'O' grave */
+	{ 0x00d3,				"O" },		/* 'O' acute */
+	{ 0x00d4,				"O" },		/* 'O' circumflex */
+	{ 0x00d5,				"O" },		/* 'O' tilde */
+	{ 0x00d6,				"O" },		/* 'O' diaeresis */
+	{ 0x00d7,				"X" },		/* multiplication sign */
+	{ 0x00d8,				"O" },		/* 'O' stroke */
+	{ 0x00d9,				"U" },		/* 'U' grave */
+	{ 0x00da,				"U" },		/* 'U' acute */
+	{ 0x00db,				"U" },		/* 'U' circumflex */
+	{ 0x00dc,				"U" },		/* 'U' diaeresis */
+	{ 0x00dd,				"Y" },		/* 'Y' acute */
+	{ 0x00df,				"SS" },		/* sharp S */
+	{ 0x00e0,				"a" },		/* 'a' grave */
+	{ 0x00e1,				"a" },		/* 'a' acute */
+	{ 0x00e2,				"a" },		/* 'a' circumflex */
+	{ 0x00e3,				"a" },		/* 'a' tilde */
+	{ 0x00e4,				"a" },		/* 'a' diaeresis */
+	{ 0x00e5,				"a" },		/* 'a' ring above */
+	{ 0x00e6,				"ae" },		/* 'ae' ligature */
+	{ 0x00e7,				"c" },		/* 'c' cedilla */
+	{ 0x00e8,				"e" },		/* 'e' grave */
+	{ 0x00e9,				"e" },		/* 'e' acute */
+	{ 0x00ea,				"e" },		/* 'e' circumflex */
+	{ 0x00eb,				"e" },		/* 'e' diaeresis */
+	{ 0x00ec,				"i" },		/* 'i' grave */
+	{ 0x00ed,				"i" },		/* 'i' acute */
+	{ 0x00ee,				"i" },		/* 'i' circumflex */
+	{ 0x00ef,				"i" },		/* 'i' diaeresis */
+	{ 0x00f0,				"d" },		/* 'eth' */
+	{ 0x00f1,				"n" },		/* 'n' tilde */
+	{ 0x00f2,				"o" },		/* 'o' grave */
+	{ 0x00f3,				"o" },		/* 'o' acute */
+	{ 0x00f4,				"o" },		/* 'o' circumflex */
+	{ 0x00f5,				"o" },		/* 'o' tilde */
+	{ 0x00f6,				"o" },		/* 'o' diaeresis */
+	{ 0x00f8,				"o" },		/* 'o' stroke */
+	{ 0x00f9,				"u" },		/* 'u' grave */
+	{ 0x00fa,				"u" },		/* 'u' acute */
+	{ 0x00fb,				"u" },		/* 'u' circumflex */
+	{ 0x00fc,				"u" },		/* 'u' diaeresis */
+	{ 0x00fd,				"y" },		/* 'y' acute */
+	{ 0x00ff,				"y" },		/* 'y' diaeresis */
+	{ 0x2010,				"-" },		/* hyphen */
+	{ 0x2011,				"-" },		/* non-breaking hyphen */
+	{ 0x2012,				"-" },		/* figure dash */
+	{ 0x2013,				"-" },		/* en dash */
+	{ 0x2014,				"-" },		/* em dash */
+	{ 0x2015,				"-" },		/* horizontal dash */
+	{ 0x2018,				"\'" },		/* left single quotation mark */
+	{ 0x2019,				"\'" },		/* right single quotation mark */
+	{ 0x201a,				"\'" },		/* single low quotation mark */
+	{ 0x201b,				"\'" },		/* single high reversed quotation mark */
+	{ 0x201c,				"\"" },		/* left double quotation mark */
+	{ 0x201d,				"\"" },		/* right double quotation mark */
+	{ 0x201e,				"\"" },		/* double low quotation mark */
+	{ 0x201f,				"\"" },		/* double high reversed quotation mark */
+	{ 0x2024,				"." },		/* one dot leader */
+	{ 0x2025,				".." },		/* two dot leader */
+	{ 0x2026,				"..." },	/* horizontal ellipsis */
+	{ 0x2047,				"??" },		/* double question mark */
+	{ 0x2048,				"?!" },		/* question exclamation mark */
+	{ 0x2049,				"!?" },		/* exclamation question mark */
+	{ UCHAR_MAMEKEY(DEL),	"\010" },	/* delete key */
+	{ UCHAR_MAMEKEY(HOME),	"\014" }	/* clear key */
 };
 
 static const char *find_alternate(unicode_char_t target_char)
@@ -572,12 +574,15 @@ void inputx_postn(const unicode_char_t *text, size_t text_len)
 #if LOG_INPUTX
 				logerror("inputx_postn(): code=%i (%s) port=%i ipt->name='%s'\n", (int) ch, charstr(ch), codes[ch].port[0], codes[ch].ipt[0] ? codes[ch].ipt[0]->name : "<null>");
 #endif
+
 				if (can_post_key_directly(ch))
 				{
+					/* we can post this key in the queue directly */
 					internal_post_key(ch);
 				}
 				else if (can_post_key_alternate(ch))
 				{
+					/* we can post this key with an alternate representation */
 					s = find_alternate(ch);
 					assert(s);
 					while(*s)

@@ -145,19 +145,15 @@ DEVICE_LOAD( msx_cart )
     size_aligned = 0x2000;
     while (size_aligned < size) size_aligned *= 2;
 
-    pmem = (UINT8*)malloc (size_aligned);
+    pmem = (UINT8*) image_malloc(image, size_aligned);
     if (!pmem)
-    {
-        logerror("malloc () failed\n");
-        return 1;
-    }
-    memset (pmem, 0xff, size_aligned);
+		goto error;
+
+	memset (pmem, 0xff, size_aligned);
     if (mame_fread (file, pmem, size) != size)
     {
-        logerror("%s: can't read file\n",
-            image_filename (image));
-        free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-        return 1;
+        logerror("%s: can't read file\n", image_filename (image));
+		goto error;
     }
 
     /* check type */
@@ -177,15 +173,14 @@ DEVICE_LOAD( msx_cart )
     if (!type)
     {
         size_aligned = 0x10000;
-        pmem = realloc (pmem, 0x10000);
+        pmem = image_realloc(image, pmem, 0x10000);
         if (!pmem)
-        {
-            logerror("Realloc failed!\n");
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        if (size < 0x10000) memset (pmem + size, 0xff, 0x10000 - size);
-        if (size > 0x10000) size = 0x10000;
+			goto error;
+
+		if (size < 0x10000)
+			memset (pmem + size, 0xff, 0x10000 - size);
+        if (size > 0x10000)
+			size = 0x10000;
     }
 
     /* set mapper specific stuff */
@@ -195,14 +190,9 @@ DEVICE_LOAD( msx_cart )
     for (i=0;i<4;i++) msx1.cart[id].banks[i] = (i & msx1.cart[id].bank_mask);
     logerror("Cart #%d size %d, mask %d, type: %s\n",id, size, msx1.cart[id].bank_mask, mapper_types[type]);
     /* set filename for sram (memcard) */
-    msx1.cart[id].sramfile = malloc (strlen (image_filename
-        (image)) + 1);
+    msx1.cart[id].sramfile = image_malloc(image, strlen(image_filename(image)) + 1);
     if (!msx1.cart[id].sramfile)
-    {
-        logerror("malloc () failed\n");
-        free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-        return 1;
-    }
+		goto error;
 
 	strcpy(msx1.cart[id].sramfile, image_basename(image));
     pext2 = strrchr (msx1.cart[id].sramfile, '.');
@@ -270,23 +260,18 @@ DEVICE_LOAD( msx_cart )
         }
         break;
    case 1: /* msx-dos 2: extra blank page for page 2 */
-        pmem = realloc (msx1.cart[id].mem, 0x12000);
+        pmem = image_realloc(image, msx1.cart[id].mem, 0x12000);
         if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        msx1.cart[id].mem = pmem;
+			goto error;
+
+		msx1.cart[id].mem = pmem;
         msx1.cart[id].banks[2] = 8;
         msx1.cart[id].banks[3] = 8;
         break;
    case 6: /* game master 2; try to load sram */
-        pmem = realloc (msx1.cart[id].mem, 0x24000);
+        pmem = image_realloc(image, msx1.cart[id].mem, 0x24000);
         if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
+			goto error;
 
 		i = 0;
         file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
@@ -318,24 +303,24 @@ DEVICE_LOAD( msx_cart )
 
         if (file) mame_fclose (file);
 
-		if (i) logerror ("Cart #%d SRAM loaded\n", id);
+		if (i)
+			logerror ("Cart #%d SRAM loaded\n", id);
 		else
-			{
-            memset (pmem + 0x20000, 0, 0x4000);
-            logerror("Cart #%d Failed to load SRAM\n", id);
-        	}
+		{
+			memset (pmem + 0x20000, 0, 0x4000);
+			logerror("Cart #%d Failed to load SRAM\n", id);
+		}
 
         msx1.cart[id].mem = pmem;
         break;
+
     case 2: /* Konami SCC */
         /* we want an extra page that looks like the SCC page */
-        pmem = realloc (pmem, size_aligned + 0x2000);
+        pmem = image_realloc(image, pmem, size_aligned + 0x2000);
         if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        memcpy (pmem + size_aligned, pmem + size_aligned - 0x2000, 0x1800);
+			goto error;
+
+		memcpy (pmem + size_aligned, pmem + size_aligned - 0x2000, 0x1800);
         for (i=0;i<8;i++)
         {
             memset (pmem + size_aligned + i * 0x100 + 0x1800, 0, 0x80);
@@ -345,50 +330,49 @@ DEVICE_LOAD( msx_cart )
         /*msx1.cart[id].banks[0] = 0x1; */
         break;
    case 7: /* ASCII/8kB with SRAM */
-        pmem = realloc (msx1.cart[id].mem, size_aligned + 0x2000);
-        if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                FILETYPE_MEMCARD, 0);
-        if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
-        {
-            logerror("Cart #%d SRAM loaded\n", id);
-        } else {
-            memset (pmem + size_aligned, 0, 0x2000);
-            logerror("Cart #%d Failed to load SRAM\n", id);
-        }
-        if (file) mame_fclose (file);
+		pmem = image_realloc(image, msx1.cart[id].mem, size_aligned + 0x2000);
+		if (!pmem)
+			goto error;
 
-        msx1.cart[id].mem = pmem;
-        break;
+		file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+				FILETYPE_MEMCARD, 0);
+		if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
+		{
+			logerror("Cart #%d SRAM loaded\n", id);
+		} else {
+			memset (pmem + size_aligned, 0, 0x2000);
+			logerror("Cart #%d Failed to load SRAM\n", id);
+		}
+		if (file) mame_fclose (file);
+
+		msx1.cart[id].mem = pmem;
+		break;
    case 8: /* ASCII/16kB with SRAM */
-        pmem = realloc (msx1.cart[id].mem, size_aligned + 0x4000);
-        if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                FILETYPE_MEMCARD, 0);
-        if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
-        {
-            for (i=1;i<8;i++)
-            {
-                memcpy (pmem + size_aligned + i * 0x800,
-                    pmem + size_aligned, 0x800);
-            }
-            logerror("Cart #%d SRAM loaded\n", id);
-        } else {
-            memset (pmem + size_aligned, 0, 0x4000);
-            logerror("Cart #%d Failed to load SRAM\n", id);
-        }
-        if (file) mame_fclose (file);
+		pmem = image_realloc(image, msx1.cart[id].mem, size_aligned + 0x4000);
+		if (!pmem)
+			goto error;
 
-        msx1.cart[id].mem = pmem;
-        break;
+		file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+				FILETYPE_MEMCARD, 0);
+		if (file && (mame_fread (file, pmem + size_aligned, 0x2000) == 0x2000) )
+		{
+			for (i=1;i<8;i++)
+			{
+				memcpy (pmem + size_aligned + i * 0x800,
+					pmem + size_aligned, 0x800);
+			}
+			logerror("Cart #%d SRAM loaded\n", id);
+			if (file)
+				mame_fclose (file);
+		}
+		else
+		{
+			memset (pmem + size_aligned, 0, 0x4000);
+			logerror("Cart #%d Failed to load SRAM\n", id);
+		}
+
+		msx1.cart[id].mem = pmem;
+		break;
     case 9: /* R-Type */
         msx1.cart[id].banks[0] = 0x1e;
         msx1.cart[id].banks[1] = 0x1f;
@@ -396,36 +380,37 @@ DEVICE_LOAD( msx_cart )
         msx1.cart[id].banks[3] = 0x1f;
         break;
     case 11: /* fm-pac */
-        msx1.cart[id].pacsram = !strncmp ((char*)msx1.cart[id].mem + 0x18, "PAC2", 4);
-        pmem = realloc (msx1.cart[id].mem, 0x18000);
-        if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
-        memset (pmem + size_aligned, 0xff, 0x18000 - size_aligned);
-        pmem[0x13ff6] = 0;
-        pmem[0x13ff7] = 0;
-        if (msx1.cart[id].pacsram)
-        {
-            file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
-                FILETYPE_MEMCARD, 0);
-            if (file &&
-                (mame_fread (file, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
-                !strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
-                (mame_fread (file, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
-            {
-               logerror("Cart #%d SRAM loaded\n", id);
-            } else {
-               memset (pmem + 0x10000, 0, 0x2000);
-               logerror("Cart #%d Failed to load SRAM\n", id);
-            }
-            if (file) mame_fclose (file);
-        }
-        msx1.cart[id].banks[2] = (0x14000/0x2000);
-        msx1.cart[id].banks[3] = (0x16000/0x2000);
-        msx1.cart[id].mem = pmem;
-        break;
+		msx1.cart[id].pacsram = !strncmp ((char*)msx1.cart[id].mem + 0x18, "PAC2", 4);
+		pmem = image_realloc(image, msx1.cart[id].mem, 0x18000);
+		if (!pmem)
+		{
+			msx1.cart[id].mem = NULL;
+			return 1;
+		}
+		memset (pmem + size_aligned, 0xff, 0x18000 - size_aligned);
+		pmem[0x13ff6] = 0;
+		pmem[0x13ff7] = 0;
+		if (msx1.cart[id].pacsram)
+		{
+			file = mame_fopen (Machine->gamedrv->name, msx1.cart[id].sramfile,
+				FILETYPE_MEMCARD, 0);
+			if (file &&
+				(mame_fread (file, buf, PAC_HEADER_LEN) == PAC_HEADER_LEN) &&
+				!strncmp (buf, PAC_HEADER, PAC_HEADER_LEN) &&
+				(mame_fread (file, pmem + 0x10000, 0x1ffe) == 0x1ffe) )
+			{
+				logerror("Cart #%d SRAM loaded\n", id);
+			} else {
+				memset (pmem + 0x10000, 0, 0x2000);
+				logerror("Cart #%d Failed to load SRAM\n", id);
+			}
+			if (file)
+				mame_fclose (file);
+		}
+		msx1.cart[id].banks[2] = (0x14000/0x2000);
+		msx1.cart[id].banks[3] = (0x16000/0x2000);
+		msx1.cart[id].mem = pmem;
+		break;
     case 5: /* ASCII 16kb */
         msx1.cart[id].banks[0] = 0;
         msx1.cart[id].banks[1] = 1;
@@ -439,12 +424,10 @@ DEVICE_LOAD( msx_cart )
         msx1.cart[id].banks[3] = 1;
         break;
 	case 15: /* disk rom */
-        pmem = realloc (msx1.cart[id].mem, 0x8000);
+        pmem = image_realloc(image, msx1.cart[id].mem, 0x8000);
         if (!pmem)
-        {
-            free (msx1.cart[id].mem); msx1.cart[id].mem = NULL;
-            return 1;
-        }
+			goto error;
+
 		msx1.cart[id].mem = pmem;
 		memset (pmem + 0x4000, 0xff, 0x4000);
         msx1.cart[id].banks[2] = 2;
@@ -452,8 +435,13 @@ DEVICE_LOAD( msx_cart )
 		break;
 	}
 
-    if (msx1.run) msx_set_all_mem_banks ();
-    return 0;
+    if (msx1.run)
+		msx_set_all_mem_banks ();
+    return INIT_PASS;
+
+error:
+	msx1.cart[id].mem = NULL;
+	return INIT_FAIL;
 }
 
 static int save_sram (int id, char *filename, UINT8* pmem, int size)
@@ -513,8 +501,6 @@ DEVICE_UNLOAD( msx_cart )
         } else if (res > 0) {
             logerror("Cart %d# failed to save SRAM\n", id);
         }
-        free (msx1.cart[id].mem);
-        free (msx1.cart[id].sramfile);
     }
 }
 
