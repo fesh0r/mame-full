@@ -601,7 +601,6 @@ static struct MachineDriver machine_driver_coco3 =
 	}
 };
 
-#if HAS_HD6309
 static struct MachineDriver machine_driver_coco36309 =
 {
 	/* basic machine hardware */
@@ -648,7 +647,6 @@ static struct MachineDriver machine_driver_coco36309 =
         }
 	}
 };
-#endif /* HAS_HD6309 */
 
 /***************************************************************************
 
@@ -702,97 +700,49 @@ ROM_END
         NULL \
     }
 
+#define IO_SNAPSHOT_COCOPAK(loadproc) \
+	{\
+		IO_SNAPSHOT,\
+		1,\
+		"pak\0",\
+        NULL,\
+		NULL,\
+		loadproc,\
+		NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL,\
+        NULL\
+    }
+
 static const struct IODevice io_coco[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"pak\0", 		    /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
-		dragon64_rom_load,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
     { IO_END }
 };
 
 static const struct IODevice io_dragon32[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"pak\0",		    /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
-		dragon32_rom_load,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_SNAPSHOT_COCOPAK(dragon32_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
     { IO_END }
 };
 
 static const struct IODevice io_cp400[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"pak\0",		    /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
-		dragon64_rom_load,	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_SNAPSHOT_COCOPAK(dragon64_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
     { IO_END }
 };
 
 static const struct IODevice io_coco3[] = {
-	{
-		IO_SNAPSHOT,		/* type */
-		1,					/* count */
-		"pak\0",		    /* file extensions */
-        NULL,               /* private */
-		NULL,				/* id */
-		coco3_rom_load, 	/* init */
-		NULL,				/* exit */
-        NULL,               /* info */
-        NULL,               /* open */
-        NULL,               /* close */
-        NULL,               /* status */
-        NULL,               /* seek */
-        NULL,               /* input */
-        NULL,               /* output */
-        NULL,               /* input_chunk */
-        NULL                /* output_chunk */
-    },
+	IO_SNAPSHOT_COCOPAK(coco3_rom_load),
 	IO_CASSETTE_WAVE(1, "cas\0wav\0", NULL, coco_cassette_init, coco_cassette_exit),
 	IO_FLOPPY_COCO,
     { IO_END }
@@ -805,6 +755,4 @@ COMP(  1982, coco,      0,		coco,      coco,     0,		  "Tandy Radio Shack",  "Co
 COMP(  1986, coco3,     coco, 	coco3,	   coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3" )
 COMP(  1982, dragon32,  coco, 	dragon32,  dragon32, 0,		  "Dragon Data Ltd",    "Dragon 32" )
 COMP(  1984, cp400,     coco, 	coco,      coco,     0,		  "Prologica",          "Prologica CP400" )
-#if HAS_HD6309
 COMPX( 19??, coco36309, coco3, 	coco36309, coco3,    0,		  "Tandy Radio Shack",  "Color Computer 3 (6309)", GAME_NOT_WORKING|GAME_COMPUTER_MODIFIED)
-#endif

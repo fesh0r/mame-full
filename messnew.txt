@@ -8,7 +8,7 @@ Note: .inp record/playback does still not work currently.
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
 - Amstrad NC100 [Kev Thacker]
-
+- CoCo 3 (with 6309 processor) [Tim Linder, Nate Woods]
 
 System Driver Changes:
 ----------------------

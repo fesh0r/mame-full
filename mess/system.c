@@ -271,7 +271,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coco )		/* Color Computer								  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
-/*TESTDRIVER( coco36309 )*/ /* Color Computer 3 (6809)						  */
+	DRIVER( coco36309 ) /* Color Computer 3 (6309)						  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
 	DRIVER( mc10 )		/* MC-10									      */
 
