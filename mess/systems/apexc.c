@@ -69,7 +69,7 @@ static int apexc_cylinder_init(int id)
 
 			RAM = (UINT32 *) memory_region(REGION_CPU1);
 
-			for (i=0; i < 0x2000; i++)
+			for (i=0; i < /*0x2000*/0x0400; i++)
 				RAM[i] = BIG_ENDIANIZE_INT32(RAM[i]);
 		}
 #endif
@@ -94,7 +94,7 @@ static void apexc_cylinder_exit(int id)
 
 			RAM = (UINT32 *) memory_region(REGION_CPU1);
 
-			for (i=0; i < 0x2000; i++)
+			for (i=0; i < /*0x2000*/0x0400; i++)
 				RAM[i] = BIG_ENDIANIZE_INT32(RAM[i]);
 		}
 #endif
@@ -200,7 +200,8 @@ static WRITE32_HANDLER(tape_write)
 {
 	UINT8 data5 = (data & 0x1f);
 
-	osd_fwrite(apexc_tapes[1].fd, & data5, 1);
+	if (apexc_tapes[1].fd)
+		osd_fwrite(apexc_tapes[1].fd, & data5, 1);
 
 	apexc_teletyper_putchar(data & 0x1f);	/* display on screen */
 }
