@@ -32,6 +32,13 @@ void pile_delete(mess_pile *pile)
 
 
 
+void pile_clear(mess_pile *pile)
+{
+	pile_delete(pile);
+}
+
+
+
 void *pile_detach(mess_pile *pile)
 {
 	void *ptr;

@@ -911,6 +911,7 @@ MESSDOCS_OBJS =								\
 
 MESSTEST_OBJS =								\
 	$(EXPAT)								\
+	$(OBJ)/mess/pile.o						\
 	$(OBJ)/mess/tools/messtest/main.o		\
 	$(OBJ)/mess/tools/messtest/messtest.o	\
 	$(OBJ)/mess/tools/messtest/testexec.o	\

@@ -9,90 +9,46 @@
 #ifndef MESSTEST_H
 #define MESSTEST_H
 
+#include <expat.h>
 #include "mame.h"
 #include "timer.h"
 
-enum messtest_command_type
-{
-	MESSTEST_COMMAND_END,
-	MESSTEST_COMMAND_WAIT,
-	MESSTEST_COMMAND_INPUT,
-	MESSTEST_COMMAND_RAWINPUT,
-	MESSTEST_COMMAND_SWITCH,
-	MESSTEST_COMMAND_SCREENSHOT,
-	MESSTEST_COMMAND_IMAGE_CREATE,
-	MESSTEST_COMMAND_IMAGE_LOAD,
-	MESSTEST_COMMAND_IMAGE_PRECREATE,
-	MESSTEST_COMMAND_IMAGE_PRELOAD,
-	MESSTEST_COMMAND_VERIFY_MEMORY
-};
-
-enum messtest_result
-{
-	MESSTEST_RESULT_SUCCESS,
-	MESSTEST_RESULT_STARTFAILURE,
-	MESSTEST_RESULT_RUNTIMEFAILURE
-};
-
-struct messtest_command
-{
-	enum messtest_command_type command_type;
-	union
-	{
-		double wait_time;
-		struct
-		{
-			const char *input_chars;
-			mame_time rate;
-		} input_args;
-		struct
-		{
-			int mem_region;
-			offs_t start;
-			offs_t end;
-			const void *verify_data;
-			size_t verify_data_size;
-		} verify_args;
-		struct
-		{
-			const char *filename;
-			int device_type;
-			int device_slot;
-		} image_args;
-		struct
-		{
-			const char *name;
-			const char *value;
-		} switch_args;
-	} u;
-};
-
-struct messtest_testcase
-{
-	const char *name;
-	const char *driver;
-	double time_limit;	/* 0.0 = default */
-	struct messtest_command *commands;
-
-	/* options */
-	UINT32 ram;
-};
-
-struct messtest_results
-{
-	enum messtest_result rc;
-	UINT64 runtime_hash;	/* A value that is a hash taken from certain runtime parameters; used to detect different execution paths */
-};
-
-
-
-#define MESSTEST_ALWAYS_DUMP_SCREENSHOT		1
-
+int messtest(const char *script_filename, int flags, int *test_count, int *failure_count);
 
 int memory_region_from_string(const char *region_name);
 const char *memory_region_to_string(int region);
 
-enum messtest_result run_test(const struct messtest_testcase *testcase, int flags, struct messtest_results *results);
-int messtest(const char *script_filename, int flags, int *test_count, int *failure_count);
+const XML_Char *find_attribute(const XML_Char **attributes, const XML_Char *seek_attribute);
+mame_time parse_time(const char *s);
+void parse_offset(const char *s, offs_t *result);
+
+struct messtest_state;
+
+typedef enum
+{
+	DATA_NONE,
+	DATA_TEXT,
+	DATA_BINARY
+} tagdatatype_t;
+
+struct messtest_tagdispatch
+{
+	const char *tag;
+	tagdatatype_t datatype;
+	void (*start_handler)(struct messtest_state *state, const XML_Char **attributes);
+	void (*end_handler)(struct messtest_state *state, const void *ptr, size_t len);
+	struct messtest_tagdispatch *subdispatch;
+};
+
+void error_missingattribute(struct messtest_state *state, const char *attribute);
+void error_outofmemory(struct messtest_state *state);
+void error_invalidmemregion(struct messtest_state *state, const char *s);
+void error_baddevicetype(struct messtest_state *state, const char *s);
+
+void report_testcase_ran(struct messtest_state *state, int failure);
+
+extern struct messtest_tagdispatch test_dispatch[];
+void test_start_handler(struct messtest_state *state, const XML_Char **attributes);
+void test_end_handler(struct messtest_state *state, const void *buffer, size_t size);
 
 #endif /* MESSTEST_H */

@@ -3,8 +3,10 @@
 
 #include "inputx.h"
 #include "messtest.h"
+#include "pile.h"
+#include "pool.h"
 
-enum messtest_state
+enum messtest_running_state
 {
 	STATE_READY,
 	STATE_INCOMMAND,
@@ -19,16 +21,107 @@ enum messtest_messagetype
 	MSG_PREFAILURE
 };
 
+enum messtest_command_type
+{
+	MESSTEST_COMMAND_END,
+	MESSTEST_COMMAND_WAIT,
+	MESSTEST_COMMAND_INPUT,
+	MESSTEST_COMMAND_RAWINPUT,
+	MESSTEST_COMMAND_SWITCH,
+	MESSTEST_COMMAND_SCREENSHOT,
+	MESSTEST_COMMAND_IMAGE_CREATE,
+	MESSTEST_COMMAND_IMAGE_LOAD,
+	MESSTEST_COMMAND_IMAGE_PRECREATE,
+	MESSTEST_COMMAND_IMAGE_PRELOAD,
+	MESSTEST_COMMAND_VERIFY_MEMORY
+};
+
+struct messtest_command
+{
+	enum messtest_command_type command_type;
+	union
+	{
+		double wait_time;
+		struct
+		{
+			const char *input_chars;
+			mame_time rate;
+		} input_args;
+		struct
+		{
+			int mem_region;
+			offs_t start;
+			offs_t end;
+			const void *verify_data;
+			size_t verify_data_size;
+		} verify_args;
+		struct
+		{
+			const char *filename;
+			int device_type;
+			int device_slot;
+		} image_args;
+		struct
+		{
+			const char *name;
+			const char *value;
+		} switch_args;
+	} u;
+};
+
+struct messtest_testcase
+{
+	const char *name;
+	const char *driver;
+	double time_limit;	/* 0.0 = default */
+	struct messtest_command *commands;
+
+	/* options */
+	UINT32 ram;
+};
+
+struct messtest_specific_state
+{
+	struct messtest_testcase testcase;
+	int command_count;
+	struct messtest_command current_command;
+};
+
+enum messtest_result
+{
+	MESSTEST_RESULT_SUCCESS,
+	MESSTEST_RESULT_STARTFAILURE,
+	MESSTEST_RESULT_RUNTIMEFAILURE
+};
+
+struct messtest_results
+{
+	enum messtest_result rc;
+	UINT64 runtime_hash;	/* A value that is a hash taken from certain runtime parameters; used to detect different execution paths */
+};
+
+
+
+#define MESSTEST_ALWAYS_DUMP_SCREENSHOT		1
+
+
 static struct KeyboardInfo *ki;
 static struct JoystickInfo *ji;
-static const struct messtest_testcase *current_testcase;
-static enum messtest_state state;
+static enum messtest_running_state state;
 static double wait_target;
 static double final_time;
 static const struct messtest_command *current_command;
 static int test_flags;
 static int screenshot_num;
 static UINT64 runtime_hash;
+
+/* command list */
+static mess_pile command_pile;
+static memory_pool command_pool;
+static int command_count;
+static struct messtest_command new_command;
+
+static struct messtest_testcase current_testcase;
 
 static void message(enum messtest_messagetype msgtype, const char *fmt, ...);
 
@@ -42,7 +135,7 @@ static void dump_screenshot(void)
 	/* if we are at runtime, dump a screenshot */
 	snprintf(buf, sizeof(buf) / sizeof(buf[0]),
 		(screenshot_num >= 0) ? "_%s_%d.png" : "_%s.png",
-		current_testcase->name, screenshot_num);
+		current_testcase.name, screenshot_num);
 	fp = mame_fopen(Machine->gamedrv->name, buf, FILETYPE_SCREENSHOT, 1);
 	if (fp)
 	{
@@ -66,7 +159,7 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 	vsnprintf(buf, sizeof(buf) / sizeof(buf[0]), fmt, va);
 	va_end(va);
 
-	printf("%-12s %s %s\n", current_testcase->name, (msgtype ? "***" : "..."), buf);
+	printf("%-12s %s %s\n", current_testcase.name, (msgtype ? "***" : "..."), buf);
 
 	/* did we abort? */
 	if ((msgtype == MSG_FAILURE) && (state != STATE_ABORTED))
@@ -80,31 +173,29 @@ static void message(enum messtest_messagetype msgtype, const char *fmt, ...)
 
 
 
-enum messtest_result run_test(const struct messtest_testcase *testcase, int flags, struct messtest_results *results)
+static enum messtest_result run_test(int flags, struct messtest_results *results)
 {
 	int driver_num;
 	enum messtest_result rc;
 	clock_t begin_time;
 	double real_run_time;
 
-	current_testcase = testcase;
-
 	/* lookup driver */
 	for (driver_num = 0; drivers[driver_num]; driver_num++)
 	{
-		if (!strcmpi(testcase->driver, drivers[driver_num]->name))
+		if (!strcmpi(current_testcase.driver, drivers[driver_num]->name))
 			break;
 	}
 
 	/* cannot find driver? */
 	if (!drivers[driver_num])
 	{
-		message(MSG_PREFAILURE, "Cannot find driver '%s'", testcase->driver);
+		message(MSG_PREFAILURE, "Cannot find driver '%s'", current_testcase.driver);
 		return MESSTEST_RESULT_STARTFAILURE;
 	}
 
 	/* prepare testing state */
-	current_command = testcase->commands;
+	current_command = current_testcase.commands;
 	state = STATE_READY;
 	test_flags = flags;
 	screenshot_num = 0;
@@ -116,7 +207,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	options.skip_gameinfo = 1;
 	options.skip_warnings = 1;
 	options.disable_normal_ui = 1;
-	options.ram = testcase->ram;
+	options.ram = current_testcase.ram;
 	options.vector_intensity = 1.5;
 	options.use_artwork = 1;
 
@@ -130,7 +221,7 @@ enum messtest_result run_test(const struct messtest_testcase *testcase, int flag
 	}
 
 	/* perform the test */
-	message(MSG_INFO, "Beginning test (driver '%s')", testcase->driver);
+	message(MSG_INFO, "Beginning test (driver '%s')", current_testcase.driver);
 	begin_time = clock();
 	run_game(driver_num);
 	real_run_time = ((double) (clock() - begin_time)) / CLOCKS_PER_SEC;
@@ -375,7 +466,7 @@ static void command_image_loadcreate(void)
 	if (!filename)
 	{
 		snprintf(buf, sizeof(buf) / sizeof(buf[0]),	"%s.%s",
-			current_testcase->name,
+			current_testcase.name,
 			device_find(Machine->devices, device_type)->file_extensions);
 		filename = buf;
 	}
@@ -514,7 +605,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 
 	/* have we hit the time limit? */
 	current_time = timer_get_time();
-	time_limit = (current_testcase->time_limit != 0.0) ? current_testcase->time_limit
+	time_limit = (current_testcase.time_limit != 0.0) ? current_testcase.time_limit
 		: TIME_IN_SEC(600);
 	if (current_time > time_limit)
 	{
@@ -617,4 +708,325 @@ int osd_is_key_pressed(int keycode)
 
 
 char *rompath_extra;
+
+
+
+static int append_command(struct messtest_state *state)
+{
+	if (pile_write(&command_pile, &new_command, sizeof(new_command)))
+		return FALSE;
+	current_testcase.commands = (struct messtest_command *) pile_getptr(&command_pile);
+	command_count++;
+	return TRUE;
+}
+
+
+
+static void command_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+{
+	if (!append_command(state))
+	{
+		error_outofmemory(state);
+		return;
+	}
+}
+
+
+
+static void wait_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s;
+
+	s = find_attribute(attributes, "time");
+	if (!s)
+	{
+		error_missingattribute(state, "time");
+		return;
+	}
+
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_WAIT;
+	new_command.u.wait_time = mame_time_to_double(parse_time(s));
+}
+
+
+
+static void input_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <input> - inputs natural keyboard data into a system */
+	const char *s;
+	mame_time rate;
+
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_INPUT;
+	s = find_attribute(attributes, "rate");
+	rate = s ? parse_time(s) : make_mame_time(0, 0);
+	new_command.u.input_args.rate = rate;
+}
+
+
+
+static void rawinput_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <rawinput> - inputs raw data into a system */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_RAWINPUT;
+}
+
+
+
+static void input_end_handler(struct messtest_state *state, const void *ptr, size_t size)
+{
+	char *s;
+
+	if (size > 0)
+	{
+		s = pool_malloc(&command_pool, size);
+		if (!s)
+		{
+			error_outofmemory(state);
+			return;
+		}
+		memcpy(s, ptr, size);
+
+		new_command.u.input_args.input_chars = s;
+	}
+	command_end_handler(state, NULL, 0);
+}
+
+
+
+static void switch_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s1;
+	const char *s2;
+
+	/* <switch> - switches a DIP switch/config setting */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_SWITCH;
+
+	/* 'name' attribute */
+	s1 = find_attribute(attributes, "name");
+	if (!s1)
+	{
+		error_missingattribute(state, "name");
+		return;
+	}
+
+	/* 'value' attribute */
+	s2 = find_attribute(attributes, "value");
+	if (!s2)
+	{
+		error_missingattribute(state, "value");
+		return;
+	}
+
+	new_command.u.switch_args.name = pool_strdup(&command_pool, s1);
+	new_command.u.switch_args.value = pool_strdup(&command_pool, s2);
+}
+
+
+
+static void screenshot_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <screenshot> - dumps a screenshot */
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_SCREENSHOT;
+}
+
+
+
+static void image_handler(struct messtest_state *state, const XML_Char **attributes, enum messtest_command_type command)
+{
+	const char *s;
+	const char *s1;
+	const char *s2;
+	const char *s3;
+	int preload, device_type;
+
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = command;
+
+	/* 'preload' attribute */
+	s = find_attribute(attributes, "preload");
+	preload = s ? atoi(s) : 0;
+	if (preload)
+		new_command.command_type += 2;
+
+	/* 'filename' attribute */
+	s1 = find_attribute(attributes, "filename");
+
+	/* 'type' attribute */
+	s2 = find_attribute(attributes, "type");
+	if (!s2)
+	{
+		error_missingattribute(state, "type");
+		return;
+	}
+
+	device_type = device_typeid(s2);
+	if (device_type < 0)
+	{
+		error_baddevicetype(state, s2);
+		return;
+	}
+	
+	/* 'slot' attribute */
+	s3 = find_attribute(attributes, "slot");
+
+	new_command.u.image_args.filename = s1 ? pool_strdup(&command_pool, s1) : NULL;
+	new_command.u.image_args.device_type = device_type;
+	new_command.u.image_args.device_slot = s3 ? atoi(s3) : 0;
+}
+
+
+
+static void imagecreate_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <imagecreate> - creates an image */
+	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_CREATE);
+}
+
+
+
+static void imageload_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	/* <imageload> - loads an image */
+	image_handler(state, attributes, MESSTEST_COMMAND_IMAGE_LOAD);
+}
+
+
+
+static void memverify_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s1;
+	const char *s2;
+	const char *s3;
+	int region;
+
+	/* <memverify> - verifies that a range of memory contains specific data */
+	s1 = find_attribute(attributes, "start");
+	if (!s1)
+	{
+		error_missingattribute(state, "start");
+		return;
+	}
+
+	s2 = find_attribute(attributes, "end");
+	if (!s2)
+		s2 = "0";
+
+	s3 = find_attribute(attributes, "region");
+
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_VERIFY_MEMORY;
+	parse_offset(s1, &new_command.u.verify_args.start);
+	parse_offset(s2, &new_command.u.verify_args.end);
+
+	if (s3)
+	{
+		region = memory_region_from_string(s3);
+		if (region == REGION_INVALID)
+			error_invalidmemregion(state, s3);
+		new_command.u.verify_args.mem_region = region;
+	}
+}
+
+
+
+static void memverify_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+{
+	void *new_buffer;
+	new_buffer = pool_malloc(&command_pool, size);
+	memcpy(new_buffer, buffer, size);
+
+	new_command.u.verify_args.verify_data = new_buffer;
+	new_command.u.verify_args.verify_data_size = size;
+	command_end_handler(state, NULL, 0);
+}
+
+
+
+void test_start_handler(struct messtest_state *state, const XML_Char **attributes)
+{
+	const char *s;
+
+	pile_init(&command_pile);
+	pool_init(&command_pool);
+
+	memset(&new_command, 0, sizeof(new_command));
+	command_count = 0;
+
+	/* 'driver' attribute */
+	s = find_attribute(attributes, "driver");
+	if (!s)
+	{
+		error_missingattribute(state, "driver");
+		return;
+	}
+	current_testcase.driver = pool_strdup(&command_pool, s);
+	if (!current_testcase.driver)
+	{
+		error_outofmemory(state);
+		return;
+	}
+
+	/* 'name' attribute */
+	s = find_attribute(attributes, "name");
+	if (s)
+	{
+		current_testcase.name = pool_strdup(&command_pool, s);
+		if (!current_testcase.name)
+		{
+			error_outofmemory(state);
+			return;
+		}
+	}
+	else
+	{
+		current_testcase.name = current_testcase.driver;
+	}
+
+	/* 'ramsize' attribute */
+	s = find_attribute(attributes, "ramsize");
+	current_testcase.ram = s ? ram_parse_string(s) : 0;
+
+	current_testcase.commands = NULL;
+}
+
+
+
+void test_end_handler(struct messtest_state *state, const void *buffer, size_t size)
+{
+	int result;
+
+	memset(&new_command, 0, sizeof(new_command));
+	new_command.command_type = MESSTEST_COMMAND_END;
+	if (!append_command(state))
+	{
+		error_outofmemory(state);
+		return;
+	}
+
+	result = run_test(0, NULL);
+	report_testcase_ran(state, result);
+
+	pile_delete(&command_pile);
+	pool_exit(&command_pool);
+}
+
+
+
+struct messtest_tagdispatch test_dispatch[] =
+{
+	{ "wait",			DATA_NONE,		wait_handler,			command_end_handler },
+	{ "input",			DATA_TEXT,		input_handler,			input_end_handler },
+	{ "rawinput",		DATA_TEXT,		rawinput_handler,		input_end_handler },
+	{ "switch",			DATA_NONE,		switch_handler,			command_end_handler },
+	{ "screenshot",		DATA_NONE,		screenshot_handler,		command_end_handler },
+	{ "imagecreate",	DATA_NONE,		imagecreate_handler,	command_end_handler },
+	{ "imageload",		DATA_NONE,		imageload_handler,		command_end_handler },
+	{ "memverify",		DATA_BINARY,	memverify_handler,		memverify_end_handler },
+	{ NULL }
+};
 
