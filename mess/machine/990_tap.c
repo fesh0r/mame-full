@@ -121,7 +121,7 @@ DEVICE_INIT( ti990_tape )
 
 	t->img = image;
 	t->fd = NULL;
-	t->wp = 0;
+	t->wp = 1;
 	t->bot = 0;
 	t->eot = 0;
 
@@ -151,7 +151,7 @@ DEVICE_LOAD( ti990_tape )
 	/* open file */
 	t->fd = file;
 	/* tell whether the image is writable */
-	t->wp = ! ((t->fd) && is_effective_mode_writable(open_mode));
+	t->wp = ! image_is_writable(image);
 
 	t->bot = 1;
 
@@ -174,7 +174,7 @@ DEVICE_UNLOAD( ti990_tape )
 	if (t->fd)
 	{
 		t->fd = NULL;
-		t->wp = 0;
+		t->wp = 1;
 		t->bot = 0;
 		t->eot = 0;
 	}
