@@ -476,7 +476,7 @@ static void str_to_fname(char dst[8], const char *src)
 }
 
 /*
-	Convert a 10-character file name to a C string (removing trailing spaces if necessary)
+	Convert a 8-character file name to a C string (removing trailing spaces if necessary)
 */
 static void fname_to_str(char *dst, const char src[8], int n)
 {
