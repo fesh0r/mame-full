@@ -43,6 +43,7 @@ COREOBJS +=        \
           $(OBJ)/mess/machine/nec765.o   \
           $(OBJ)/mess/machine/dsk.o      \
           $(OBJ)/mess/machine/wd179x.o   \
+	  $(OBJ)/mess/machine/flopdrv.o  \
 
 
 
