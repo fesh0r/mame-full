@@ -641,8 +641,13 @@ static void CreateCommandLine(int nGameIndex, char* pCmdLine)
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -snapshot_directory \"%s\"", GetImgDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -diff_directory \"%s\"",     GetDiffDir());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -cheat_file \"%s\"",         GetCheatFileName());
+#ifdef MESS
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -sysinfo_file \"%s\"",       GetHistoryFileName());
+	sprintf(&pCmdLine[strlen(pCmdLine)], " -messinfo_file \"%s\"",      GetMAMEInfoFileName());
+#else
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -history_file \"%s\"",       GetHistoryFileName());
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -mameinfo_file \"%s\"",      GetMAMEInfoFileName());
+#endif
 	sprintf(&pCmdLine[strlen(pCmdLine)], " -ctrlr_directory \"%s\"",    GetCtrlrDir());
 
 	/* video */
