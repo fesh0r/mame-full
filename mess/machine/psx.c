@@ -78,6 +78,10 @@ static void psx_cdcmd_pause(void)
 
 static void psx_cdcmd_init(void)
 {
+	cd_result_p = 0;
+	cd_result_c = 1;
+	cd_stat = 0x02;
+	cd_result[0] = cd_stat;
 	/* NYI */
 }
 

@@ -2066,16 +2066,13 @@ static void generic_setcartbank(int bank, UINT8 *cartpos)
 
 	if (count_bank() > 0)
 	{
-		/* Pin variable to proper bit width */
+		/* pin variable to proper bit width */
 		bank &= count_bank();
-		fp = image_fopen_custom(cartslot_image(), FILETYPE_IMAGE, OSD_FOPEN_READ);
-		if (fp)
-		{
-			if (bank)
-				mame_fseek(fp, 0x4000 * bank, SEEK_SET);
-			mame_fread(fp, cartpos, 0x4000);
-			mame_fclose(fp);
-		}
+
+		/* read the bank */
+		fp = image_fp(cartslot_image());
+		mame_fseek(fp, bank * 0x4000, SEEK_SET);
+		mame_fread(fp, cartpos, 0x4000);
 	}
 }
 

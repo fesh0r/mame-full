@@ -28,26 +28,16 @@ static void	nc_card_save(mess_image *image)
 	mame_file *file;
 
 	/* if there is no data to write, quit */
-	if ((nc_card_ram==NULL) || (nc_card_size==0))
-	{
+	if (!nc_card_ram || !nc_card_size)
 		return;
-	}
 
 	logerror("attempting card save\n");
 
-	/* open file for writing */
-	file = image_fopen_custom(image, FILETYPE_IMAGE, OSD_FOPEN_WRITE);
+	/* write data */
+	file = image_fp(image);
+	mame_fwrite(file, nc_card_ram, nc_card_size);
 
-	if (file)
-	{
-		/* write data */
-		mame_fwrite(file, nc_card_ram, nc_card_size);
-
-		/* close file */
-		mame_fclose(file);
-
-		logerror("write succeeded!\r\n");
-	}
+	logerror("write succeeded!\r\n");
 }
 
 /* this mask will prevent overwrites from end of data */

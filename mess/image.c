@@ -86,7 +86,7 @@ void image_exit(mess_image *img)
   Mac floppy drives) may call this from within a driver.
 ****************************************************************************/
 
-static int image_load_internal(mess_image *img, const char *name, int create_format, option_resolution *create_args)
+static int image_load_internal(mess_image *img, const char *name, int is_create, int create_format, option_resolution *create_args)
 {
 	const struct IODevice *dev;
 	char *newname;
@@ -96,15 +96,28 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	UINT64 size;
 	int i;
 
-	static int file_modes[][4] =
+	static INT8 file_modes[2][7][4] =
 	{
-		{ OSD_FOPEN_READ, -1 },										/* OSD_FOPEN_READ */
-		{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
-		{ OSD_FOPEN_RW, -1 },										/* OSD_FOPEN_RW */
-		{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
-		{ OSD_FOPEN_RW, OSD_FOPEN_READ, -1 },						/* OSD_FOPEN_RW_OR_READ */
-		{ OSD_FOPEN_RW, OSD_FOPEN_READ, OSD_FOPEN_RW_CREATE, -1 },	/* OSD_FOPEN_RW_CREATE_OR_READ */
-		{ OSD_FOPEN_READ, OSD_FOPEN_WRITE, -1 }						/* OSD_FOPEN_READ_OR_WRITE */
+		{
+			/* open */
+			{ OSD_FOPEN_READ, -1 },										/* OSD_FOPEN_READ */
+			{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
+			{ OSD_FOPEN_RW, -1 },										/* OSD_FOPEN_RW */
+			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
+			{ OSD_FOPEN_RW, OSD_FOPEN_READ, -1 },						/* OSD_FOPEN_RW_OR_READ */
+			{ OSD_FOPEN_RW, OSD_FOPEN_READ, OSD_FOPEN_RW_CREATE, -1 },	/* OSD_FOPEN_RW_CREATE_OR_READ */
+			{ OSD_FOPEN_READ, OSD_FOPEN_WRITE, -1 }						/* OSD_FOPEN_READ_OR_WRITE */
+		},
+		{
+			/* create */
+			{ -1 },														/* OSD_FOPEN_READ */
+			{ OSD_FOPEN_WRITE, -1 },									/* OSD_FOPEN_WRITE */
+			{ -1 },														/* OSD_FOPEN_RW */
+			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE */
+			{ -1 },														/* OSD_FOPEN_RW_OR_READ */
+			{ OSD_FOPEN_RW_CREATE, -1 },								/* OSD_FOPEN_RW_CREATE_OR_READ */
+			{ -1 }														/* OSD_FOPEN_READ_OR_WRITE */
+		}
 	};
 
 	/* unload if we are loaded */
@@ -137,20 +150,20 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	if ((timer_get_time() > 0) && (dev->flags & DEVICE_LOAD_RESETS_CPU))
 		machine_reset();
 
-	if ((dev->open_mode >= 0) && (dev->open_mode < (sizeof(file_modes) / sizeof(file_modes[0]))))
+	if ((dev->open_mode >= 0) && (dev->open_mode < (sizeof(file_modes[0]) / sizeof(file_modes[0][0]))))
 	{
 		/* attempt to open the file with the various modes */
 		i = 0;
-		while(!file && (file_modes[dev->open_mode][i] >= 0))
+		while(!file && (file_modes[is_create][dev->open_mode][i] >= 0))
 		{
-			img->effective_mode = file_modes[dev->open_mode][i++];
+			img->effective_mode = file_modes[is_create][dev->open_mode][i++];
 			file = image_fopen_custom(img, FILETYPE_IMAGE, img->effective_mode);
 		}
 		if (!file)
 			goto error;
 
 		/* if applicable, call device verify */
-		if (dev->imgverify)
+		if (dev->imgverify && !image_has_been_created(img))
 		{
 			size = mame_fsize(file);
 			buffer = malloc(size);
@@ -174,12 +187,14 @@ static int image_load_internal(mess_image *img, const char *name, int create_for
 	/* call device load or create */
 	if (image_has_been_created(img) && dev->create)
 	{
+		/* using device create */
 		err = dev->create(img, file, create_format, create_args);
 		if (err)
 			goto error;
 	}
 	else if (dev->load)
 	{
+		/* using device load */
 		err = dev->load(img, file);
 		if (err)
 			goto error;
@@ -210,15 +225,14 @@ error:
 
 int image_load(mess_image *img, const char *name)
 {
-	return image_load_internal(img, name, 0, NULL);
+	return image_load_internal(img, name, 0, 0, NULL);
 }
 
 
 
 int image_create(mess_image *img, const char *name, int create_format, option_resolution *create_args)
 {
-	osd_rmfile(name);	/* hack until image_load gets cleaned */
-	return image_load_internal(img, name, create_format, create_args);
+	return image_load_internal(img, name, 1, create_format, create_args);
 }
 
 
