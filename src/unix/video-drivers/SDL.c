@@ -26,7 +26,7 @@
        Test mouse buttons (which games use them?)
 
 ***************************************************************************/
-#define PARANOIC
+/* #define PARANOIC */
 #define __SDL_C
 
 #undef SDL_DEBUG
@@ -76,15 +76,15 @@ struct rc_option display_opts[] = {
    { "SDL Related",  NULL,    rc_seperator,  NULL,
        NULL,         0,       0,             NULL,
        NULL },
-   { "listmodes",    NULL,    rc_bool,       &list_modes,
-      "0",           0,       0,             NULL,
-      "List all posible full-screen modes" },
    { "fullscreen",   NULL,    rc_bool,       &start_fullscreen,
       "0",           0,       0,             NULL,
       "Start fullscreen" },
+   { "listmodes",    NULL,    rc_bool,       &list_modes,
+      "0",           0,       0,             NULL,
+      "List all posible fullscreen modes" },
    { "modenumber",   NULL,    rc_int,        &mode_number,
       "-1",          0,       0,             NULL,
-      "Try to use the 'n' possible full-screen mode" },
+      "Try to use the fullscreen mode numbered 'n' (see the output of -listmodes)" },
    { "sdlmapkey",	"sdlmk",	rc_use_function,	NULL,
      NULL,		0,			0,		sdl_mapkey,
      "Set a specific key mapping, see xmamerc.dist" },
@@ -574,7 +574,7 @@ void sysdep_update_display(struct mame_bitmap *bitmap)
       H_Palette_modified = 0;
    }
    
-#ifdef PARANOIC 
+#ifdef PANANOIC 
       memset(Offscreen_surface->pixels,'\0' ,Vid_height * Vid_width);
 #endif 
 
@@ -804,7 +804,7 @@ void sysdep_update_keyboard()
 {
    struct xmame_keyboard_event kevent;
    SDL_Event event;
-   
+
    if (Surface) {
       while(SDL_PollEvent(&event)) {
          kevent.press = 0;
@@ -838,12 +838,32 @@ void sysdep_update_keyboard()
                /* Shoult leave this to application */
                exit(OSD_OK);
                break;
+
+    	    case SDL_JOYAXISMOTION:   
+               if (event.jaxis.which < JOY_AXIS)
+                  joy_data[event.jaxis.which].axis[event.jaxis.axis].val = event.jaxis.value;
+#ifdef SDL_DEBUG
+               fprintf (stderr,"Axis=%d,value=%d\n",event.jaxis.axis ,event.jaxis.value);
+#endif
+		break;
+	    case SDL_JOYBUTTONDOWN:
+
+	    case SDL_JOYBUTTONUP:
+               if (event.jbutton.which < JOY_BUTTONS)
+                  joy_data[event.jbutton.which].buttons[event.jbutton.button] = event.jbutton.state;
+#ifdef SDL_DEBUG
+               fprintf (stderr, "Button=%d,value=%d\n",event.jbutton.button ,event.jbutton.state);
+#endif
+		break;
+
+
             default:
 #ifdef SDL_DEBUG
                fprintf(stderr, "SDL: Debug: Other event\n");
 #endif /* SDL_DEBUG */
                break;
          }
+    joy_evaluate_moves ();
       }
    }
 }
@@ -869,7 +889,7 @@ void list_sdl_modes(void)
       return;
    }
 
-   printf("Modes availables:\n");
+   printf("Modes available:\n");
 
    while( *(vid_modes+vid_modes_i) ) {
       printf("\t%d) Mode %d x %d\n",
