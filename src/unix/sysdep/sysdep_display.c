@@ -299,12 +299,18 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
         vis_in_dest_out->min_x = dirty_area->min_x - vis_in_dest_out->min_x;
         vis_in_dest_out->min_y = dirty_area->min_y - vis_in_dest_out->min_y;
        
-	/* apply X-alignment to destbounds min_x, apply the same change to
-           dirty_area */
+	/* apply X-alignment to destbounds min_x and max_x apply the same
+	   change to dirty_area */
 	old_bound = vis_in_dest_out->min_x;
 	vis_in_dest_out->min_x &= ~x_align;
         dirty_area->min_x -= old_bound - vis_in_dest_out->min_x;
-        
+
+	old_bound = vis_in_dest_out->max_x;
+	vis_in_dest_out->max_x += 1;
+	vis_in_dest_out->max_x &= ~x_align;
+	vis_in_dest_out->max_x -= 1;
+        dirty_area->max_x -= old_bound - vis_in_dest_out->max_x;
+
         /* apply scaling to dest_bounds */
 	vis_in_dest_out->min_x *= sysdep_display_params.widthscale;
 	vis_in_dest_out->max_x *= sysdep_display_params.widthscale;	

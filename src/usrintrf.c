@@ -4066,7 +4066,10 @@ void ui_display_fps(struct mame_bitmap *bitmap)
 	
 	if ((old_len_hash != -1) &&
 	    (old_len_hash != len_hash))
+	{
 		schedule_full_refresh();
+		ui_markdirty(&uirawbounds);
+	}
 
 	old_len_hash = len_hash;
 
