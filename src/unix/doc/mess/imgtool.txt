@@ -515,3 +515,58 @@ Extracted files are in MacBinary III format (which is fully compatible with
 MacBinary I and II).  The MacBinary III format joins both macintosh file forks,
 the comment field, and most file info in one single file: it is supported by
 several Macintosh utilities.
+
+
+Texas Instruments calculators variable files
+--------------------------------------------
+
++--------+------------------------------------------+-----------+
+| Format | Description                              | Extension |
++--------+------------------------------------------+-----------+
+| ti85p  | TI-85 program file                       |    85p    |
+| ti85s  | TI-85 string file (also ZShell programs) |    85s    |
+| ti85i  | TI-85 picture file (85-image)            |    85i    |
+| ti85n  | TI-85 real number file                   |    85n    |
+| ti85c	 | TI-85 complex number file                |    85c    |
+| ti85l  | TI-85 list (real or complex)             |    85l    |
+| ti85k  | TI-85 constant file                      |    85k    |
+| ti85m  | TI-85 matrix (real or complex) file      |    85m    |
+| ti85v  | TI-85 vector (real or complex) file      |    85v    |
+| ti85d  | TI-85 graphics database file             |    85d    |
+| ti85e  | TI-85 equation file                      |    85e    |
+| ti85r  | TI-85 range settings file                |    85r    |
+| ti85g	 | TI-85 grouped file                       |    85g    |
+| ti85   | TI-85 generic file                       |    85?    |
+| ti86p  | TI-86 program file                       |    86p    |
+| ti86s  | TI-86 string file                        |    86s    |
+| ti86i  | TI-86 picture file (85-image)            |    86i    |
+| ti86n  | TI-86 real number file                   |    86n    |
+| ti86c  | TI-86 complex number file                |    86c    |
+| ti86l  | TI-86 list (real or complex) file        |    86l    |
+| ti86k	 | TI-86 constant file                      |    86k    |
+| ti86m  | TI-86 matrix (real or complex) file      |    86m    |
+| ti86v  | TI-86 vector (real or complex) file      |    86v    |
+| ti86d  | TI-86 graphics database file             |    86d    |
+| ti86e  | TI-86 equation file                      |    86e    |
+| ti86r  | TI-86 range settings file                |    86r    |
+| ti86g  | TI-86 grouped file                       |    86g    |
+| ti86   | TI-86 generic file                       |    86?    |
++--------+------------------------------------------+-----------+
+
+Grouped formats (ti85g and ti86g) can keep more than one variable.
+Generic formats (ti85 and ti86) can be used for all types of variable files.
+For all types of variable files dir, create, put, get and delete commands are
+supported.
+
+
+Texas Instruments calculators memory backup files
+-------------------------------------------------
+
++--------+------------------------------------------+-----------+
+| Format | Description                              | Extension |
++--------+------------------------------------------+-----------+
+| ti85b  | TI-85 memory backup file                 |    85b    |
++--------+------------------------------------------+-----------+
+
+For TI memory backup files only dir command is supported.
+

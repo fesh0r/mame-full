@@ -9,8 +9,8 @@
 
 /* effect type */
 EXTERN_EFFECT int effect;
-enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCAN, EFFECT_SCAN3};
-#define EFFECT_LAST EFFECT_SCAN3
+enum {EFFECT_NONE, EFFECT_SCALE2X, EFFECT_SCAN2, EFFECT_RGBSTRIPE, EFFECT_RGBSCAN, EFFECT_SCAN3, EFFECT_LQ2X, EFFECT_HQ2X};
+#define EFFECT_LAST EFFECT_HQ2X
 
 /* buffer for doublebuffering */
 EXTERN_EFFECT char *effect_dbbuf;
@@ -36,6 +36,24 @@ EXTERN_EFFECT void (*effect_scale2x_func)
 		const void *src0, const void *src1, const void *src2,
 		unsigned count, const void *lookup);
 EXTERN_EFFECT void (*effect_scale2x_direct_func)
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+EXTERN_EFFECT void (*effect_hq2x_func)
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+EXTERN_EFFECT void (*effect_hq2x_direct_func)
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+EXTERN_EFFECT void (*effect_lq2x_func)
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+EXTERN_EFFECT void (*effect_lq2x_direct_func)
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
 		unsigned count);
@@ -85,6 +103,80 @@ void effect_scale2x_16_32
 		unsigned count, const void *lookup);
 
 void effect_scale2x_32_32_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+/*****************************/
+
+void effect_hq2x_16_16
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_hq2x_16_16_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+void effect_hq2x_16_YUY2
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_hq2x_32_YUY2_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+void effect_hq2x_16_24
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_hq2x_16_32
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_hq2x_32_32_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+/*****************************/
+
+void effect_lq2x_16_16
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_lq2x_16_16_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+void effect_lq2x_16_YUY2
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_lq2x_32_YUY2_direct
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count);
+
+void effect_lq2x_16_24
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_lq2x_16_32
+		(void *dst0, void *dst1,
+		const void *src0, const void *src1, const void *src2,
+		unsigned count, const void *lookup);
+
+void effect_lq2x_32_32_direct
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
 		unsigned count);

@@ -117,7 +117,9 @@ struct rc_option video_opts[] = {
 	     "2 = scan2 (light scanlines)\n"
 	     "3 = rgbstripe (3x2 rgb vertical stripes)\n"
 	     "4 = rgbscan (2x3 rgb horizontal scanlines)\n"
-	     "5 = scan3 (3x3 deluxe scanlines)\n" },
+	     "5 = scan3 (3x3 deluxe scanlines)\n"
+	     "6 = lq2x (2x low  quality magnification filter)\n"
+	     "7 = hq2x (2x high quality magnification filter)\n" },
    { "autodouble",	"adb",			rc_bool,	&use_auto_double,
      "1",		0,			0,		NULL,
      "Enable/disable automatic scale doubling for 1:2 pixel aspect ratio games" },

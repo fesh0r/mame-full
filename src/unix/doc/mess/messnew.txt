@@ -1,4 +1,4 @@
-0.76
+0.77
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
@@ -7,19 +7,56 @@ New System Drivers Supported (in no particular order):
 
 System Driver Changes:
 ----------------------
+- [A2600/A7800] Fixed reset handling.  [Nate Woods]
+
+- [A7800] Fixed RAM0 and RAM1 bank handling, which has been broken since MESS
+  0.61.  Ikari Warriors now runs, among other games most likely.  [Nate Woods]
+  
+- [A7800] Video patch; Choplifter runs better among other games.  [Keith
+  Gerdes]
+
+- [A7800P] Minor PAL fix.  [dannonew]
+
+- [AMSTRAD, MSX, SORD, KC] Changed CPU core on these systems from Z80_MSX to
+  Z80.  Since the MAME core now has CPU opcode reading safety now, Z80_MSX is
+  no longer necessary.  [Nate Woods]
+
+- [APPLE2, APPLE2P] "Down-sized" the video hardware in accordance to the
+  capabilities of these systems (bug #401).  [Nate Woods]
+
+- [COCO3] Fixed a bug in DMK handling (bug #454).  [Nate Woods]
+
 - [COCO3] Fixed a bug that caused Hi-Res graphic modes where the line pitch
   was less than 128 bytes to fail (bug #465).  [Nate Woods]
-  
+
+- [COLECO] Extra Controller support (bug #10) which fixes Turbo etc.
+  * Memory handlers/IO ports modified to better emulate a real coleco.
+  * Memory map now has only 1k of RAM mapped on 8k Slot
+  * Paddle handler now is handled as on a real ColecoVision
+  * Support for a Driving Controller (Expansion Module #2), enabled via
+    configuration
+  * Support for a Roller Controller (Trackball), enabled via configuration
+  * Support for two Super Action Controllers, enabled via configuration  
+  * Most (All?) carts work now - Let us know which ones still don't. [JMoya]
+
+- [MSX2] MSX2 no longer marked as a clone of MSX.  [Nate Woods]
+
 - [PC] Fixed a bug in the i86 CMPSW instruction (bug #466).  [Bob Dayley]
 
 - [PC] Fixed a pit8253 bug (bug #399).  [Ruslan Staritsin]
 
-- [SORD] Added cas support.  [Tim Schuerewegen]
+- [SORD] Added cassette support.  [Tim Schuerewegen]
 
 
 User Interface Changes:
 -----------------------
-(none)
+- HOME and DEL now have default natural keyboard bindings, to ASCII values
+  12 and 8 respectively.  For systems that use a key with those values, like
+  the CoCo, this change now enables those keys to be used from the natural
+  keyboard.  [Nate Woods]
+
+- When a cassette motor is active, another icon will be displayed indicating
+  whether play or record is set.  [Nate Woods]
   
 
 Imgtool Changes:
@@ -30,7 +67,7 @@ Imgtool Changes:
 
 Source Changes:
 ---------------
-- The core is based on MAME 0.76.  This incorporates all features of the
+- The core is based on MAME 0.77.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - Overhaul on generic floppy and cassette image systems; added new generic
@@ -51,6 +88,8 @@ Source Changes:
   
 - Drivers now have the ability to add custom disassembler procs, to customize
   the way the cores disassemble code.  [Nate Woods]
+
+- CRC files will now be read for driver parents (bug #460).  [Nate Woods]
 
 
 0.74

@@ -1436,10 +1436,9 @@ INLINE void x11_window_put_image (int x, int y, int width, int height)
 #define BMASK 0x0000ff
 
 #define RGB2YUV(r,g,b,y,u,v) \
-                (y) =  ( 9797*(r) + 19237*(g) +  3734*(b) ) >> 15;\
-                (u) =  (18492*((b)-(y)) >> 15) + 128;\
-                (v) =  (23372*((r)-(y)) >> 15) + 128;
-
+    (y) = (( 9836*(r) + 19310*(g) + 3750*(b) ) >> 15); \
+    (u) = (( -5527*(r) - 10921*(g) + 16448*(b) ) >> 15) + 128; \
+    (v) = (( 16448*(r) - 13783*(g) - 2665*(b) ) >> 15) + 128;
 static void x11_window_make_yuv_lookup()
 {
    int i,r,g,b,y,u,v,n;

@@ -178,6 +178,14 @@ int sysdep_create_display(int depth)
          fprintf (stderr, "SDL: Info: Found mode %d x %d\n", cur_width, cur_height);
 #endif /* SDL_DEBUG */
 
+	 /* Do we have the perfect mode? */
+         if ((cur_width == visual_width*widthscale) && (cur_height == visual_height*heightscale)) {
+            best_vid_mode = i;
+            best_width = cur_width;
+            best_height = cur_height;
+            break;
+         }
+
          /* If width and height too small, skip to next mode */
          if ((cur_width < visual_width*widthscale) || (cur_height < visual_height*heightscale)) {
             continue;

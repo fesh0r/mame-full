@@ -77,18 +77,16 @@ if (yarbsize) /* using arbitrary Y-scaling (Adam D. Moss <adam@gimp.org>) */
       SRC_PIXEL  *src = SRC; \
       SRC_PIXEL  *end = END; \
       unsigned long *dst = (unsigned long *)DST; \
-      unsigned int r,y,y2,u,v; \
+      unsigned int r,y,y2,uv1,uv2; \
       for(;src<end;) \
       { \
          r=INDIRECT[*src++]; \
          y=r&255; \
-         u=(r>>8)&255; \
-         v=(r>>24); \
+         uv1=(r&0xff00ff00)>>1; \
          r=INDIRECT[*src++]; \
-         u=(u+((r>>8)&255))/2; \
-         v=(v+(r>>24))/2; \
-         y2=r&255; \
-         *dst++=(y&255)|((u&255)<<8)|((y2&255)<<16)|((v&255)<<24); \
+         uv2=(r&0xff00ff00)>>1; \
+         y2=r&0xff0000; \
+         *dst++=y|y2|((uv1+uv2)&0xff00ff00);\
       } \
    }
 #else /* normal indirect */
@@ -484,13 +482,13 @@ switch (heightscale | (widthscale << 8) | (use_scanlines << 16))
          r2&=RMASK;  r2>>=16; \
          g2&=GMASK;  g2>>=8; \
          b2&=BMASK;  b2>>=0; \
-         y = (( 9897*r + 19235*g + 3736*b ) >> 15); \
-         y2 = (( 9897*r2 + 19235*g2 + 3736*b2 ) >> 15); \
+         y = (( 9836*r + 19310*g + 3750*b ) >> 15); \
+         y2 = (( 9836*r2 + 19310*g2 + 3750*b2 ) >> 15); \
          r+=r2; g+=g2; b+=b2; \
          *dst++=y; \
-         u = (( -(5537/2)*r - (10878/2)*g + (16384/2)*b ) >> 15) + 128; \
+         u = (( -5527*r - 10921*g + 16448*b ) >> 16) + 128; \
          *dst++=u; \
-         v = (( (16384/2)*r - (13730/2)*g -(2664/2)*b ) >> 15 ) + 128; \
+         v = (( 16448*r - 13783*g - 2665*b ) >> 16 ) + 128; \
          *dst++=y2; \
          *dst++=v; \
       }\
@@ -638,11 +636,11 @@ break;
          r&=RMASK;  r>>=16; \
          g&=GMASK;  g>>=8; \
          b&=BMASK;  b>>=0; \
-         y = (( 9897*r + 19235*g + 3736*b ) >> 15); \
+         y = (( 9836*r + 19310*g + 3750*b ) >> 15); \
          *dst++=y; \
-         u = (( -(5537)*r - (10878)*g + (16384)*b ) >> 15) + 128; \
+         u = (( -5527*r - 10921*g + 16448*b ) >> 15) + 128; \
          *dst++=u; \
-         v = (( (16384)*r - (13730)*g -(2664)*b ) >> 15 ) + 128; \
+         v = (( 16448*r - 13783*g - 2665*b ) >> 15 ) + 128; \
          *dst++=y; \
          *dst++=v; \
       }\

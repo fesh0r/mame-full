@@ -83,6 +83,7 @@ static int sysdep_mixer_list_plugins(struct rc_option *option,
 	plugin_manager_list_plugins(sysdep_mixer_plugin_manager, stdout);
 
 	exit(OSD_OK);
+	return OSD_OK;	/* To keep the compiler happy. */
 }
 
 /* public methods */

@@ -2,6 +2,18 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
+Release 0.77.1, 18 November 2003
+	- Everything from MAME 0.77 and MESS 0.77.
+	- Ported two more effects from AdvanceMAME: hq2x and lq2x.  (Pieter 
+	  Hulshoff)
+	- Adjusted and cleaned up some YUV code.  (Alastair Robinson)
+	- The SDL video mode search now stops if it finds the exact resolution 
+	  requested.  (Thomas Jarosch)
+	- Improved the Superboard II emulation in xmess.  For details, see
+	  http://claudio.ch/SuperboardII/  (Claudio Nieder)
+	- Added support for the Solaris joystick driver available from 
+	  http://www.bolthole.com/solaris/drivers/  (Philip Brown)
+
 Release 0.76.1, 25 October 2003
 	- Everything from MAME 0.76 and MESS CVS.
 	- The I/O section of the xmess manpage should be more up-to-date.

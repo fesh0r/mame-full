@@ -107,6 +107,7 @@ static int sysdep_dsp_list_plugins(struct rc_option *option, const char *arg,
 	plugin_manager_list_plugins(sysdep_dsp_plugin_manager, stdout);
 
 	exit(OSD_OK);
+	return OSD_OK;	/* To keep the compiler happy. */
 }
 
 /* public methods (in sysdep_dsp.h) */

@@ -9,10 +9,14 @@ struct rc_option joy_i386_opts[] = {
    { "joydevname",	"jdev",			rc_string,	&joy_dev,
      "/dev/joy",	0,			0,		NULL,
      "Joystick device prefix (defaults to /dev/joy)" },
-#elif defined __ARCH_linux
+#elif defined __ARCH_linux || defined __ARCH_solaris
    { "joydevname",	"jdev",			rc_string,	&joy_dev,
      "/dev/js",		0,			0,		NULL,
      "Joystick device prefix (defaults to /dev/js)" },
+#else
+#ifdef I386_JOYSTICK
+#error You need to give a define for your OS here
+#endif
 #endif  /* arch */
    { NULL,		NULL,			rc_end,		NULL,
      NULL,		0,			0,		NULL,
@@ -29,7 +33,7 @@ struct rc_option joy_i386_opts[] = {
 #include <machine/joystick.h>
 typedef struct joystick joy_struct;
 
-#elif defined __ARCH_linux
+#elif defined __ARCH_linux || defined __ARCH_solaris
 
 #include <linux/joystick.h>
 typedef struct JS_DATA_TYPE joy_struct;
@@ -82,12 +86,15 @@ void joy_i386_init(void)
       sprintf (devname, "%s%d", joy_dev, i);
       if ((joy_data[i].fd = open (devname, O_RDONLY)) >= 0)
       {
-         if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
-         {
-            close(joy_data[i].fd);
-            joy_data[i].fd = -1;
-            continue;
-         }
+
+	 if(joytype != JOY_I386NEW){
+            if (read(joy_data[i].fd, &my_joy_data, sizeof(joy_struct)) != sizeof(joy_struct))
+            {
+               close(joy_data[i].fd);
+               joy_data[i].fd = -1;
+               continue;
+            }
+	 }
          switch(joytype)
          {
             case JOY_I386NEW:
