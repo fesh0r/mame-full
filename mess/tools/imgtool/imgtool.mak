@@ -16,6 +16,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/formats/coco_dsk.o			\
 	$(OBJ)/mess/formats/coco_cas.o			\
 	$(OBJ)/mess/formats/pc_dsk.o			\
+	$(OBJ)/mess/formats/ap2_dsk.o			\
 	$(OBJ)/mess/formats/wavfile.o			\
 	$(OBJ)/mess/tools/imgtool/stream.o		\
 	$(OBJ)/mess/tools/imgtool/library.o		\
@@ -36,6 +37,7 @@ IMGTOOL_LIB_OBJS =							\
 	$(OBJ)/mess/tools/imgtool/ti990hd.o		\
 	$(OBJ)/mess/tools/imgtool/concept.o		\
 	$(OBJ)/mess/tools/imgtool/fat.o			\
+	$(OBJ)/mess/tools/imgtool/prodos.o		\
 #	  $(OBJ)/mess/tools/imgtool/tstsuite.o \
 #	  $(OBJ)/mess/formats/fmsx_cas.o       \
 #	  $(OBJ)/mess/formats/svi_cas.o        \
