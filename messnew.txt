@@ -53,6 +53,11 @@ System Driver Changes:
 - [C16/C64/CBM B/C128/C65] SID cleanup, realtime modifications, digisound support
   (fx sound good now, random number generation ok)
 
+- [C16/C64] tape fixed [PeT]
+
+- [Supervision] nmi added (crystball bonus items fixed)
+  irq changed, preliminary sound added [PeT]
+
 Other Changes:
 --------------
 ...
