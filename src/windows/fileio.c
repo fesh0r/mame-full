@@ -862,7 +862,7 @@ char *osd_basename(char *filename)
 //	osd_dirname
 //============================================================
 
-char *osd_dirname(char *filename)
+char *osd_dirname(const char *filename)
 {
 	char *dirname;
 	char *c;
@@ -902,7 +902,7 @@ char *osd_dirname(char *filename)
 //	osd_strip_extension
 //============================================================
 
-char *osd_strip_extension(char *filename)
+char *osd_strip_extension(const char *filename)
 {
 	char *newname;
 	char *c;

@@ -2011,7 +2011,7 @@ void artwork_use_device_art(int device_type, int device_id, const char *defaulta
 	fname = device_filename(device_type, device_id);
 	if (fname)
 	{
-		override_artfile = osd_strip_extension(osd_basename(fname));
+		override_artfile = osd_strip_extension(osd_basename_const(fname));
 	}
 	else
 	{
