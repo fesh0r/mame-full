@@ -229,7 +229,7 @@ void ident(char *fn)
 	}
 }
 
-int main(int argc, char **argv)
+int DECL_SPEC main(int argc, char **argv)
 {
 	int nf;
 

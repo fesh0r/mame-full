@@ -65,7 +65,7 @@ static const char *lookup_symbol(UINT32 address);
 //	main
 //============================================================
 
-int main(int argc, char **argv)
+int DECL_SPEC main(int argc, char **argv)
 {
 	int game_index;
 	char *ext;

@@ -1,7 +1,7 @@
 /* Miscelancelous utility functions
 
    Copyright 2000 Hans de Goede
-   
+
    This file and the acompanying files in this directory are free software;
    you can redistribute them and/or modify them under the terms of the GNU
    Library General Public License as published by the Free Software Foundation;
@@ -30,7 +30,7 @@ uclock_t uclock(void);
 void print_colums(const char *text1, const char *text2);
 void fprint_colums(FILE *f, const char *text1, const char *text2);
 
-int snprintf(char *s, size_t maxlen, const char *fmt, ...);
+int DECL_SPEC snprintf(char *s, size_t maxlen, const char *fmt, ...);
 
 
 
