@@ -1082,10 +1082,12 @@ extern struct GfxLayout nes_charlayout;
 int nes_load_rom (int id)
 {
 	const char *rom_name = device_filename(IO_CARTSLOT,id);
-    FILE *romfile;
+	const char *mapinfo = device_extrainfo(IO_CARTSLOT,id);
+	int mapint1=0,mapint2=0,mapint3=0,mapint4=0,goodcrcinfo = 0;
+	FILE *romfile;
 	char magic[4];
 	char skank[8];
-	int local_options;
+	int local_options = 0;
 	char m;
 	int i;
 
@@ -1126,36 +1128,54 @@ int nes_load_rom (int id)
 		(magic[2] != 'S'))
 		goto bad;
 
-	osd_fread (romfile, &nes.prg_chunks, 1);
-	osd_fread (romfile, &nes.chr_chunks, 1);
-
-	/* Read the first ROM option byte (offset 6) */
-	osd_fread (romfile, &m, 1);
-
-	/* Interpret the iNES header flags */
-	nes.mapper = (m & 0xf0) >> 4;
-	local_options = m & 0x0f;
-
-	/* Read the second ROM option byte (offset 7) */
-	osd_fread (romfile, &m, 1);
-
-	/* Check for skanky headers */
-	osd_fread (romfile, &skank, 8);
-
-	/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
-	/* We only check the first 4 unused bytes for now */
-	for (i = 0; i < 4; i ++)
+	if (mapinfo)
 	{
-		logerror("%02x ", skank[i]);
-		if (skank[i] != 0x00)
+		if (4 == sscanf(mapinfo,"%d %d %d %d",&mapint1,&mapint2,&mapint3,&mapint4))
 		{
-			logerror("(skank: %d)", i);
-//			m = 0;
+			nes.mapper = mapint1;
+			local_options = mapint2;
+			nes.prg_chunks = mapint3;
+			nes.chr_chunks = mapint4;
+			logerror("NES.CRC info: %d %d %d %d\n",mapint1,mapint2,mapint3,mapint4);
+			goodcrcinfo = 1;
 		}
+	} else
+	{
+		logerror("NES: No extrainfo found\n");
 	}
-	logerror("\n");
+	if (!goodcrcinfo) 
+	{
+		osd_fread (romfile, &nes.prg_chunks, 1);
+		osd_fread (romfile, &nes.chr_chunks, 1);
+		/* Read the first ROM option byte (offset 6) */
+		osd_fread (romfile, &m, 1);
 
-	nes.mapper = nes.mapper | (m & 0xf0);
+		/* Interpret the iNES header flags */
+		nes.mapper = (m & 0xf0) >> 4;
+		local_options = m & 0x0f;
+
+
+		/* Read the second ROM option byte (offset 7) */
+		osd_fread (romfile, &m, 1);
+
+		/* Check for skanky headers */
+		osd_fread (romfile, &skank, 8);
+
+		/* If the header has junk in the unused bytes, assume the extra mapper byte is also invalid */
+		/* We only check the first 4 unused bytes for now */
+		for (i = 0; i < 4; i ++)
+		{
+			logerror("%02x ", skank[i]);
+			if (skank[i] != 0x00)
+			{
+				logerror("(skank: %d)", i);
+//				m = 0;
+			}
+		}
+		logerror("\n");
+
+		nes.mapper = nes.mapper | (m & 0xf0);
+	}
 
 	nes.hard_mirroring = local_options & 0x01;
 	nes.battery = local_options & 0x02;
