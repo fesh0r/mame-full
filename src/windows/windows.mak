@@ -28,6 +28,10 @@ CFLAGS += -mwindows -include src/windows/winprefix.h
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
 endif
 
+ifdef MSVC
+CFLAGS += /FI"src/windows/winprefix.h"
+endif
+
 # remove pedantic
 $(OBJ)/windowsui/%.o: src/windowsui/%.c
 	@echo Compiling $<...
