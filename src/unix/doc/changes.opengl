@@ -1,4 +1,4 @@
-GLMame v 0.85 Mame Display Driver
+GLMame v 0.86 Mame Display Driver
 =================================
 
 Sven Goethel
@@ -10,6 +10,18 @@ MAME License
 Based upon GLmame v0.6 driver for xmame, written by Mike Oliphant
 
 peace, sven
+
+  05/May/2001 GLMame   OpenGL-Display-Driver Version 0.86
+  =================================================================
+  	o Added option:
+		- glres <Xres>x<Yres>
+
+          Always scale games to XresxYres, 
+	  keeping their aspect ratio. This overrides the scale options.
+
+	  This is e.g. necessary, if you run xmame.xgl under 
+	  a Vodoo1 gfx card, which only allows you a 640x480 fullscreen
+	  "window" ;-) - but your desktop runs under a different resolution.
 
   04/April/2001 GLMame   OpenGL-Display-Driver Version 0.85
   =================================================================

@@ -774,20 +774,32 @@ routines.
 with zlib or ship with a version that is too old, xmame/xmess now
 comes with a stripped-down version of zlib. Uncomment the appropriate
 line in the Makefile to use this.
-<H2><A NAME="ss3.24">3.24 Where can I get the latest version of xmame/xmess?</A>
+<H2><A NAME="ss3.24">3.24 When I run xmame.x11, nothing happens---no window pops up or</A>
+ anything. Help!</H2>
+
+<P>Are you running a recent version of KDE, such as 2.1.1? It appears
+that there's a bug with KDE's window manager that prevents some X11
+apps from popping up their main window. You can either run the SDL
+version of xmame, or try the following workaround, which several
+people have reported as being successful:
+<P>
+<PRE>
+xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
+</PRE>
+<H2><A NAME="ss3.25">3.25 Where can I get the latest version of xmame/xmess?</A>
 </H2>
 
 <P>The xmame/xmess Home Page always has the most up-to-date version.
 The address is
 <P>
 <A HREF="http://x.mame.net/">http://x.mame.net/</A><P>
-<H2><A NAME="ss3.25">3.25 Where can I send fixes, bug reports, suggestions, or money?  :-)</A>
+<H2><A NAME="ss3.26">3.26 Where can I send fixes, bug reports, suggestions, or money?  :-)</A>
 </H2>
 
 <P>See 
 <A HREF="xmame-doc-5.html#Mail">Mail</A>
 of this document.
-<H2><A NAME="ss3.26">3.26 What if my question is still not answered?</A>
+<H2><A NAME="ss3.27">3.27 What if my question is still not answered?</A>
 </H2>
 
 <P>Please check the offical mame and mess readme files to see if

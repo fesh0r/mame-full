@@ -14,7 +14,7 @@ Juan Antonio Martinez <tt><url url="mailto:jantonio@dit.upm.es" name="jantonio@d
 </tt>
 </author>
 <date>
-v2.1.5, 10 April 2001
+v2.1.6, 5 May 2001
 </date>
 <abstract>
 xmame/xmess documentation with an installation guide, the FAQ
@@ -1693,6 +1693,20 @@ Zlib is standard on most Unix versions. For those who don't ship
  line in the Makefile to use this.
 </p>
 <sect1>
+When I run xmame.x11, nothing happens---no window pops up or
+ anything. Help!
+<p>
+Are you running a recent version of KDE, such as 2.1.1? It appears
+ that there's a bug with KDE's window manager that prevents some X11
+ apps from popping up their main window. You can either run the SDL
+ version of xmame, or try the following workaround, which several
+ people have reported as being successful:
+</p>
+<p>
+<verb>
+xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '&lcub;print &dollar;4&rcub;'`
+</verb>
+</p><sect1>
 Where can I get the latest version of xmame/xmess?
 <p>
 The xmame/xmess Home Page always has the most up-to-date version.
@@ -2042,6 +2056,14 @@ The OpenGL driver also adds several command-line options:
 
     -cabinet &lt;cabname&gt;      Specify which cabinet model to use
                             (default: glmamejau)
+ 
+   -glres &lt;string&gt;          Always scale games to &lt;Xres&gt;x&lt;Yres&gt;, 
+                            keeping their aspect ratio. 
+                            This overrides the scale options.
+                            Use this e.g. for the Vodoo1 gfx cards
+                            with: &quot;-glres 640x480&quot;
+
+
 
 </verb>
 </p><p>
@@ -2299,6 +2321,11 @@ A: We have the following experiences (date 20010327):
  <item>
 Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line
  options &quot;-noglaa&quot; and 16bpp X11 server color depth.
+ <item>
+Vodoo1 + Mesa 3.4 + Glide, with command line options "
+-glres
+ 640x480"
+ !
  <item>
 GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command
  line options and 16/24bpp X11 server color depth.

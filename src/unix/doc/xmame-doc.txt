@@ -7,7 +7,7 @@ and Hans de Goede [mailto:hans@highrise.nl||hans@highrise.nl]
 and Rene' Herrmann (4 doc/sgml) [mailto:rene.herrmann@berlin.de||rene.herrmann@berlin.de]
 and Lawrence Gold (minor editing) [mailto:gold@aros.net||gold@aros.net]
 
-v2.1.5, 10 April 2001
+v2.1.6, 5 May 2001
 
 Abstract
 
@@ -76,9 +76,10 @@ Table of Contents
     3.21 How do I read a manual page?
     3.22 Why do I get gz_open symbol not found while compiling? 
     3.23 Why do I get zlib.h not found? 
-    3.24 Where can I get the latest version of xmame/xmess?
-    3.25 Where can I send fixes, bug reports, suggestions, or money?  :-)
-    3.26 What if my question is still not answered?
+    3.24 When I run xmame.x11, nothing happens---no window pops up or anything. Help!
+    3.25 Where can I get the latest version of xmame/xmess?
+    3.26 Where can I send fixes, bug reports, suggestions, or money?  :-)
+    3.27 What if my question is still not answered?
 4 Display Subsystem-Specific Comments and Notes 
     4.1 FXmame, a glide driver for xmame
         4.1.1 Requirements
@@ -1456,19 +1457,32 @@ ship with zlib or ship with a version that is too old, xmame/xmess
 now comes with a stripped-down version of zlib. Uncomment
 the appropriate line in the Makefile to use this.
 
-3.24 Where can I get the latest version of xmame/xmess?
+3.24 When I run xmame.x11, nothing happens---no window pops
+  up or anything. Help!
+
+Are you running a recent version of KDE, such as 2.1.1? It
+appears that there's a bug with KDE's window manager that
+prevents some X11 apps from popping up their main window.
+You can either run the SDL version of xmame, or try the
+following workaround, which several people have reported
+as being successful:
+
+xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print
+$4}'`
+
+3.25 Where can I get the latest version of xmame/xmess?
 
 The xmame/xmess Home Page always has the most up-to-date
 version. The address is
 
 [http://x.mame.net/||http://x.mame.net/]
 
-3.25 Where can I send fixes, bug reports, suggestions, or money?
+3.26 Where can I send fixes, bug reports, suggestions, or money?
    :-)
 
 See [Mail] of this document.
 
-3.26 What if my question is still not answered?
+3.27 What if my question is still not answered?
 
 Please check the offical mame and mess readme files to see
 if that answers your question:
@@ -1753,6 +1767,19 @@ use
 
                             (default: glmamejau)
 
+ 
+
+   -glres <string>          Always scale games to <Xres>x<Yres>, 
+
+                            keeping their aspect ratio. 
+
+                            This overrides the scale options.
+
+                            Use this e.g. for the Vodoo1
+gfx cards
+
+                            with: "-glres 640x480"
+
 Three cabinet models are provided. The default, "glmamejau",
 is designed to look like a standard arcade cabinet, like
 "glmame". The last one, "trans", is a box with a transparent
@@ -1939,6 +1966,9 @@ A: We have the following experiences (date 20010327):
 
 * Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command
   line options "-noglaa" and 16bpp X11 server color depth.
+
+* Vodoo1 + Mesa 3.4 + Glide, with command line options "-glres
+  640x480" !
 
 * GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default
   command line options and 16/24bpp X11 server color depth.

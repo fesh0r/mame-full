@@ -64,7 +64,7 @@ Juan Antonio Martinez
 
 \layout Date
 
-v2.1.5, 10 April 2001
+v2.1.6, 5 May 2001
 \layout Abstract
 
 xmame/xmess documentation with an installation guide, the FAQ (frequently
@@ -2533,6 +2533,20 @@ Zlib is standard on most Unix versions.
  Uncomment the appropriate line in the Makefile to use this.
 \layout Subsection
 
+When I run xmame.x11, nothing happens---no window pops up or anything.
+ Help!
+\layout Standard
+
+Are you running a recent version of KDE, such as 2.1.1? It appears that there's
+ a bug with KDE's window manager that prevents some X11 apps from popping
+ up their main window.
+ You can either run the SDL version of xmame, or try the following workaround,
+ which several people have reported as being successful:
+\layout Verbatim
+
+xmame.x11 -rid `xwininfo -root | grep xwininfo: | awk '{print $4}'`
+\layout Subsection
+
 Where can I get the latest version of xmame/xmess?
 \layout Standard
 
@@ -3038,6 +3052,30 @@ The OpenGL driver also adds several command-line options:
                             (default: glmamejau)
 \layout Verbatim
 
+ 
+\layout Verbatim
+
+   -glres <string>          Always scale games to <Xres>x<Yres>, 
+\layout Verbatim
+
+                            keeping their aspect ratio.
+ 
+\layout Verbatim
+
+                            This overrides the scale options.
+\layout Verbatim
+
+                            Use this e.g.
+ for the Vodoo1 gfx cards
+\layout Verbatim
+
+                            with: "-glres 640x480"
+\layout Verbatim
+
+\layout Verbatim
+
+\layout Verbatim
+
 \layout Standard
 
 Three cabinet models are provided.
@@ -3282,6 +3320,17 @@ A: We have the following experiences (date 20010327):
 
 Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line options "-noglaa"
  and 16bpp X11 server color depth.
+\layout Itemize
+
+Vodoo1 + Mesa 3.4 + Glide, with command line options 
+\begin_inset Quotes eld
+\end_inset 
+
+-glres 640x480
+\begin_inset Quotes erd
+\end_inset 
+
+ !
 \layout Itemize
 
 GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command line options

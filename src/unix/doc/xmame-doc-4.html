@@ -239,6 +239,14 @@ games, speedup for vector games)</LI>
 
     -cabinet &lt;cabname&gt;      Specify which cabinet model to use
                             (default: glmamejau)
+ 
+   -glres &lt;string&gt;          Always scale games to &lt;Xres&gt;x&lt;Yres&gt;, 
+                            keeping their aspect ratio. 
+                            This overrides the scale options.
+                            Use this e.g. for the Vodoo1 gfx cards
+                            with: &quot;-glres 640x480&quot;
+
+
 </PRE>
 <P>Three cabinet models are provided. The default, &quot;glmamejau&quot;,
 is designed to look like a standard arcade cabinet, like &quot;glmame&quot;.
@@ -420,6 +428,10 @@ input under KDE. If you have this problem, switch window managers.
 <UL>
 <LI>Vodoo3 + DRI OpenGL driver (XFree86 4.0.2), with command line
 options &quot;-noglaa&quot; and 16bpp X11 server color depth.</LI>
+<LI>Vodoo1 + Mesa 3.4 + Glide, with command line options "
+-glres
+640x480"
+!</LI>
 <LI>GeForce + NVIDIA OpenGL driver + XFree86 4.0.2 with default command
 line options and 16/24bpp X11 server color depth.</LI>
 <LI>NVIDIA TNT2 + NVIDIA OpenGL driver + XFree86 4.0.2 with command

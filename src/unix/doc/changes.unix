@@ -10,6 +10,11 @@ Release 0.37b14.2
 	  or higher must be used to build the asm 68k cores.
 	- Added -hotrod for HotRod and HotRod SE support.  Set it to 1 for
 	  HotRod, 2 for HotRod SE.
+	- The DGA target now reports whether it's using DGA1 or DGA2.
+	  (Christian Groessler)
+	- Updated GLmame to version 0.62.  (Sven Goethel)
+	- Fixed src/tiny.mak so the tiny build would work.
+	- Added the KDE workaround to the documentation.
 
 Release 0.37b14.1 (xmame only)
 	- Everything from MAME 0.37b14 except for 'steadykey' support.
