@@ -729,7 +729,7 @@ static SID6581_interface sidc16_sound_interface =
 	{
 		{
 			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
+			MOS8580,
 			TED7360PAL_CLOCK/4,
 			NULL
 		}
@@ -747,7 +747,7 @@ static SID6581_interface sidplus4_sound_interface =
 	{
 		{
 			MIXER(50, MIXER_PAN_CENTER),
-			MOS6581,
+			MOS8580,
 			TED7360NTSC_CLOCK/4,
 			NULL
 		}
