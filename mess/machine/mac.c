@@ -23,6 +23,7 @@
 
 
 #include "driver.h"
+#include "state.h"
 #include "machine/6522via.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
@@ -33,7 +34,6 @@
 #include <time.h>
 
 #ifdef MAME_DEBUG
-
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
@@ -42,9 +42,8 @@
 #define LOG_SCC			0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
-
+#define LOG_MEMORY		0
 #else
-
 #define LOG_VIA			0
 #define LOG_RTC			0
 #define LOG_MAC_IWM		0
@@ -53,7 +52,7 @@
 #define LOG_SCC			0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
-
+#define LOG_MEMORY		0
 #endif
 
 static int scan_keyboard(void);
@@ -81,60 +80,46 @@ static struct via6522_interface mac_via6522_intf =
 };
 
 /* tells which model is being emulated (set by macxxx_init) */
-static enum
+typedef enum
 {
-	model_Mac128k512k,
-	model_Mac512ke,
-	model_MacPlus/*,
-	model_MacSE,
-	model_MacSE_FDHD,
-	model_MacClassic*/
-} mac_model;
-
-/* RAM size (set by macxxx_init). */
-/* Possible values : 0x020000 (mac 128k), 0x080000 (mac 512k(e), non-standard mac plus),
-0x100000 (standard mac plus), 0x200000, 0x280000, 0x400000 (non-standard mac plus) */
-int mac_ram_size;
-UINT8 *mac_ram_ptr;
-
-/* ROM size (set by macxxx_init). */
-/* Possible values : 0x010000, 0x020000, 0x040000 (mac plus only).  Smaller values
-MAY be possible (I think I can remember from another life that mac 128k, 512k &  512ke accept
-0x008000 ROMs), but they were never used. */
-/* standard mac 128k and 512k use 0x010000 ROMs ; standard mac plus and 512ke use 0x020000 ROMs */
-/* values other than 0x020000 have not been tested */
-static int rom_size;
-static UINT8 *rom_ptr;
-
-/*
-	Discussion of wrap-around emulation.
-
-	MAME/MESS does not offer any obvious way to emulate wrap-around.
-	The simplest way to do so is using banks.  The problem is we may need more than 18 (mac plus)
-	or 100 (mac 128k) banks, whereas MAME only provides 16.
-
-	The solution is :
-	a) providing special read/write handlers which support wrap-around
-	b) providing an opbase override function to allow the CPU core to work
-
-	However, this solution slows the thing down ; this is why I use a MAME bank for the first
-	occurence of the RAM/ROM, and special handlers for later occurences.
-
-	We may want to handle the last occurence of RAM similarly (because programs may want to access
-	RAM/sound buffers there).
-*/
-
-#define RAM_BANK1		1
-#define MRA_RAM_BANK1	MRA16_BANK1
-#define MWA_RAM_BANK1	MWA16_BANK1
-/*#define RAM_BANK2		11*/
-#define UPPER_RAM_BANK	2
-#define MRA_UPPER_RAM_BANK	MRA16_BANK2
-#define MWA_UPPER_RAM_BANK	MWA16_BANK2
-#define ROM_BANK		3
-#define MRA_ROM_BANK	MRA16_BANK3
+	model_mac128k512k,
+	model_mac512ke,
+	model_macplus
+} mac_model_t;
 
 static int mac_overlay = 0;
+
+static const char *lookup_trap(UINT16 opcode);
+
+
+
+static void mac_install_memory(offs_t memory_begin, offs_t memory_end,
+	offs_t memory_size, void *memory_data, int is_rom, int bank)
+{
+	offs_t memory_mask;
+	read16_handler rh;
+	write16_handler wh;
+
+	memory_size = MIN(memory_size, (memory_end + 1 - memory_begin));
+	memory_mask = memory_size - 1;
+
+	rh = (read16_handler) bank;
+	wh = is_rom ? MWA16_ROM : (write16_handler) bank;
+
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, memory_begin,
+		memory_end, memory_mask, rh);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, memory_begin,
+		memory_end, memory_mask, wh);
+
+	memory_set_bankptr(bank, memory_data);
+
+#if LOG_MEMORY
+	logerror("mac_install_memory(): bank=%d range=[0x%06x...0x%06x] mask=0x%06x ptr=0x%08x\n",
+		bank, memory_begin, memory_end, memory_mask, memory_data);
+#endif
+}
+
+
 
 /*
 	Interrupt handling
@@ -200,50 +185,50 @@ static void set_scc_waitrequest(int waitrequest)
 	/* Not Yet Implemented */
 }
 
-static READ16_HANDLER (mac_RAM_r);
-static WRITE16_HANDLER (mac_RAM_w);
-static READ16_HANDLER (mac_RAM_r2);
-static WRITE16_HANDLER (mac_RAM_w2);
-static READ16_HANDLER (mac_ROM_r);
+
 
 static void set_memory_overlay(int overlay)
 {
-	/* set up either main RAM area or ROM mirror at 0x000000-0x3fffff */
+	offs_t memory_size;
+	UINT8 *memory_data;
+	int is_rom;
 
-	if (overlay)
+	/* normalize overlay */
+	overlay = overlay ? TRUE : FALSE;
+
+	if (overlay != mac_overlay)
 	{
-		/* ROM mirror */
-		install_mem_read16_handler(0, 0x000000, rom_size-1, MRA_RAM_BANK1);
-		//install_mem_write16_handler(0, 0x000000, rom_size-1, MWA16_NOP);
-		cpu_setbank(RAM_BANK1, rom_ptr);
-
-		install_mem_read16_handler(0, rom_size, 0x3fffff, mac_ROM_r);
-		//install_mem_write16_handler(0, rom_size, 0x3fffff, MWA16_NOP);
-		install_mem_write16_handler(0, 0x000000, 0x3fffff, MWA16_NOP);
-
-		/* HACK! - copy in the initial reset/stack */
-		memcpy(mac_ram_ptr, rom_ptr, 8);
-	}
-	else
-	{
-		/* RAM */
-		install_mem_read16_handler(0, 0x000000, mac_ram_size-1, MRA_RAM_BANK1);
-		install_mem_write16_handler(0, 0x000000, mac_ram_size-1, MWA_RAM_BANK1);
-		cpu_setbank(RAM_BANK1, mac_ram_ptr);
-
-		if (mac_ram_size < 0x400000)
+		/* set up either main RAM area or ROM mirror at 0x000000-0x3fffff */
+		if (overlay)
 		{
-			install_mem_read16_handler(0, mac_ram_size, 0x3fffff, (mac_ram_size != 0x280000) ? mac_RAM_r : mac_RAM_r2);
-			install_mem_write16_handler(0, mac_ram_size, 0x3fffff, (mac_ram_size != 0x280000) ? mac_RAM_w : mac_RAM_w2);
+			/* ROM mirror */
+			memory_size = memory_region_length(REGION_USER1);
+			memory_data = memory_region(REGION_USER1);
+			is_rom = TRUE;
+
+			/* HACK! - copy in the initial reset/stack */
+			memcpy(mess_ram, memory_data, 8);
 		}
-	}
+		else
+		{
+			/* RAM */
+			memory_size = mess_ram_size;
+			memory_data = mess_ram;
+			is_rom = FALSE;
+		}
+
+		/* install the memory */
+		mac_install_memory(0x000000, 0x3fffff, memory_size, memory_data, is_rom, 1);
+
+		mac_overlay = overlay;
 
 #if LOG_GENERAL
-	logerror("set_memory_overlay: overlay=%i\n", overlay);
+		logerror("set_memory_overlay: overlay=%i\n", overlay);
 #endif
-
-	mac_overlay = overlay;
+	}
 }
+
+
 
 /* *************************************************************************
  * Trap Tracing
@@ -254,11 +239,10 @@ static void set_memory_overlay(int overlay)
  * m68000_1010() in m68k_in.c.  This also requires using the C version of the
  * M68k cpu core.
  *
- * Worth noting:
+ * For whatever it is worth:
  *		The first call to _Read occurs in the Mac Plus at 0x00400734
  * *************************************************************************/
 
-#if LOG_TRAPS
 static char *cstrfrompstr(char *buf)
 {
 	static char newbuf[256];
@@ -267,16 +251,17 @@ static char *cstrfrompstr(char *buf)
 	return newbuf;
 }
 
-#ifdef MAC_TRACETRAP
-static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
+
+
+static const char *lookup_trap(UINT16 opcode)
 {
-	typedef struct
+	int i;
+
+	static const struct
 	{
 		int trap;
 		const char *name;
-	} traptableentry;
-
-	static const traptableentry traps[] =
+	} traps[] =
 	{
 		/* Of course, only a subset of the traps are listed here */
 		{ 0xa000, "_Open" },
@@ -315,6 +300,40 @@ static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 		{ 0xa9fe, "_PutScrap" }
 	};
 
+	for (i = 0; i < (sizeof(traps) / sizeof(traps[0])); i++)
+	{
+		if (traps[i].trap == opcode)
+			return traps[i].name;
+	}
+	return NULL;
+}
+
+
+
+static unsigned mac_dasm_override(int cpunum, char *buffer, unsigned pc)
+{
+	UINT16 opcode;
+	unsigned result = 0;
+	const char *trap;
+
+	opcode = cpu_readop16(pc);
+	if ((opcode & 0xF000) == 0xA000)
+	{
+		trap = lookup_trap(opcode);
+		if (trap)
+		{
+			strcpy(buffer, trap);
+			result = 1;
+		}
+	}
+	return result;
+}
+
+
+
+#ifdef MAC_TRACETRAP
+static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
+{
 	typedef struct
 	{
 		int csCode;
@@ -355,17 +374,12 @@ static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 	char *s;
 	unsigned char *mem;
 	char buf[256];
+	const char *trapstr;
 
-	buf[0] = '\0';
-	for (i = 0; i < (sizeof(traps) / sizeof(traps[0])); i++)
-	{
-		if (traps[i].trap == trap)
-		{
-			strcpy(buf, traps[i].name);
-			break;
-		}
-	}
-	if (!buf[0])
+	trapstr = lookup_trap(trap);
+	if (trapstr)
+		strcpy(buf, trapstr);
+	else
 		sprintf(buf, "Trap $%04x", trap);
 
 	s = &buf[strlen(buf)];
@@ -428,7 +442,8 @@ static void mac_tracetrap(const char *cpu_name_local, int addr, int trap)
 	logerror("mac_trace_trap: %s at 0x%08x: %s\n",cpu_name_local, addr, buf);
 }
 #endif
-#endif
+
+
 
 /*
 	R Nabet 000531 : added keyboard code
@@ -459,7 +474,7 @@ static int keyboard_reply;
 /* flag set when inquiry command is in progress */
 static int inquiry_in_progress;
 /* timer which is used to time out inquiry */
-static void *inquiry_timeout;
+static mame_timer *inquiry_timeout;
 /* flag which is true while the keyboard data line is not ready to receive the keyboard reply */
 static int hold_keyboard_reply;
 
@@ -617,7 +632,7 @@ static void keyboard_receive(int val)
 	if (inquiry_in_progress)
 	{	/* new command aborts last inquiry */
 		inquiry_in_progress = FALSE;
-		timer_reset(inquiry_timeout, TIME_NEVER);
+		mame_timer_reset(inquiry_timeout, time_never);
 	}
 
 	switch (val)
@@ -629,9 +644,12 @@ static void keyboard_receive(int val)
 #endif
 		keyboard_reply = scan_keyboard();
 		if (keyboard_reply == 0x7B)
-		{	/* if NULL, wait until key pressed or timeout */
+		{	
+			/* if NULL, wait until key pressed or timeout */
 			inquiry_in_progress = TRUE;
-			timer_adjust(inquiry_timeout, .25, 0, 0.);
+			mame_timer_adjust(inquiry_timeout,
+				make_mame_time(0, DOUBLE_TO_SUBSECONDS(0.25)),
+				0, time_zero);
 		}
 		break;
 
@@ -1626,8 +1644,7 @@ static WRITE_HANDLER(mac_via_out_a)
 	set_scc_waitrequest((data & 0x80) >> 7);
 	mac_set_screen_buffer((data & 0x40) >> 6);
 	sony_set_sel_line((data & 0x20) >> 5);
-	if (((data & 0x10) >> 4) != mac_overlay)
-		set_memory_overlay((data & 0x10) >> 4);
+	set_memory_overlay((data & 0x10) >> 4);
 	mac_set_sound_buffer((data & 0x08) >> 3);
 	mac_set_volume(data & 0x07);
 }
@@ -1679,177 +1696,14 @@ WRITE16_HANDLER ( mac_via_w )
 		via_0_w(offset, (data >> 8) & 0xff);
 }
 
+
+
 /* *************************************************************************
  * Main
  * *************************************************************************/
 
-#if 0
-void init_mac128k(void)
-{
-	mac_model = model_Mac128k512k;
-
-	/* set RAM size - always 0x020000 */
-	mac_ram_size = 0x020000;
-
-	/* set ROM size - 64kb */
-	rom_size = 0x010000;
-
-	/* configure via */
-	via_config(0, &mac_via6522_intf);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup keyboard */
-	keyboard_init();
-}
-
-void init_mac512k(void)
-{
-	mac_model = model_Mac128k512k;
-
-	/* set RAM size - always 0x080000 */
-	mac_ram_size = 0x080000;
-
-	/* set ROM size - 64kb */
-	rom_size = 0x010000;
-
-	/* configure via */
-	via_config(0, &mac_via6522_intf);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup keyboard */
-	keyboard_init();
-}
-#endif
-
-void init_mac512ke(void)
-{
-	mac_model = model_Mac512ke;
-
-	/* set RAM size - always 0x080000 */
-	mac_ram_size = 0x080000;
-
-	/* set ROM size - 128kb */
-	rom_size = 0x020000;
-
-	/* configure via */
-	via_config(0, &mac_via6522_intf);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup keyboard */
-	keyboard_init();
-}
-
-void init_macplus(void)
-{
-	mac_model = model_MacPlus;
-
-	/* set RAM size - possible values are 0x080000, 0x100000, 0x200000, 0x280000, 0x400000 -
-	all Mac Plus were sold with 1Mb (0x100000) */
-	mac_ram_size = 0x400000;
-
-	/* set ROM size - 128kb */
-	rom_size = 0x020000;
-
-	/* configure via */
-	via_config(0, &mac_via6522_intf);
-	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
-
-	/* setup keyboard */
-	keyboard_init();
-}
-
-/* will not work with 2.5Mb RAM config */
-static OPBASE_HANDLER (mac_OPbaseoverride)
-{
-	if (address < 0x400000)
-		return address & (mac_overlay ? rom_size - 1 : mac_ram_size -1);
-	else if (address < 0x500000)
-		return 0x400000 + (address & (rom_size - 1));
-	else if ((address >= 0x600000) &&  (address < 0x700000))
-		return (address - 0x600000) & (mac_ram_size -1);
-	else
-		return address;
-}
-
-/* will not work with 2.5Mb RAM config */
-static READ16_HANDLER (mac_RAM_r)
-{
-	return ((UINT16*)mac_ram_ptr)[offset & ((mac_ram_size - 1) >> 1)];
-}
-
-/* will not work with 2.5Mb RAM config */
-static WRITE16_HANDLER (mac_RAM_w)
-{
-	UINT16 *dest = ((UINT16*)mac_ram_ptr) + (offset & ((mac_ram_size - 1) >> 1));
-
-	COMBINE_DATA(dest);
-}
-
-/* for 2.5Mb RAM config only */
-static OPBASE_HANDLER (mac_OPbaseoverride2)
-{
-	if (address < 0x200000)
-		return mac_overlay ? (address & (rom_size - 1)) : address;
-	else if (address < 0x400000)
-		return address & (mac_overlay ? rom_size - 1 : 0x27ffff);
-	else if (address < 0x500000)
-		return 0x400000 + (address & (rom_size - 1));
-	else if ((address >= 0x600000) &&  (address < 0x700000))
-		return address - 0x600000;
-	else
-		return address;
-}
-
-/* for 2.5Mb RAM config only */
-/* will NOT work if (offset < 0x100000) */
-static READ16_HANDLER (mac_RAM_r2)
-{
-	return ((UINT16*)mac_ram_ptr)[0x100000 + (offset & 0x03ffff)];
-}
-
-/* for 2.5Mb RAM config only */
-/* will NOT work if (offset < 0x100000) */
-static WRITE16_HANDLER (mac_RAM_w2)
-{
-	UINT16 *dest = ((UINT16*)mac_ram_ptr) + 0x100000 + (offset & 0x03ffff);
-
-	COMBINE_DATA(dest);
-}
-
-static READ16_HANDLER (mac_ROM_r)
-{
-	return ((UINT16*)rom_ptr)[offset & ((rom_size -1)>>1)];
-}
-
-static int current_scanline;
-
 MACHINE_INIT(mac)
 {
-	mac_ram_ptr = memory_region(REGION_CPU1);
-	rom_ptr = memory_region(REGION_CPU1) + 0x400000;
-
-	memory_set_opbase_handler(0, (mac_ram_size != 0x280000) ? mac_OPbaseoverride : mac_OPbaseoverride2);
-
-	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
-	install_mem_read16_handler(0, 0x600000, (mac_ram_size > 0x10000) ? 0x6fffff : (0x600000 + mac_ram_size-1),
-								MRA_UPPER_RAM_BANK);
-	install_mem_write16_handler(0, 0x600000, (mac_ram_size > 0x10000) ? 0x6fffff : (0x600000 + mac_ram_size-1),
-								MWA_UPPER_RAM_BANK);
-	cpu_setbank(UPPER_RAM_BANK, mac_ram_ptr);
-
-	if (mac_ram_size < 0x100000)
-	{
-		install_mem_read16_handler(0, 0x600000+mac_ram_size, 0x6fffff, mac_RAM_r);
-		install_mem_write16_handler(0, 0x600000+mac_ram_size, 0x6fffff, mac_RAM_w);
-	}
-
-	/* set up ROM at 0x400000-0x4fffff (-0x5fffff for mac 128k/512k/512ke) */
-	install_mem_read16_handler(0, 0x400000, (0x400000 + rom_size-1), MRA_ROM_BANK);
-	cpu_setbank(ROM_BANK, rom_ptr);
-
-	install_mem_read16_handler(0, 0x400000+rom_size,
-								(mac_model == model_MacPlus) ? 0x4fffff : 0x5fffff, mac_ROM_r);
-
 	/* initialize real-time clock */
 	rtc_init();
 
@@ -1877,14 +1731,68 @@ MACHINE_INIT(mac)
 	/* reset the via */
 	via_reset();
 
-	/* reset video */
-	current_scanline = 0;
-
 	/* setup videoram */
 	mac_set_screen_buffer(1);
-
-	inquiry_timeout = timer_alloc(inquiry_timeout_func);
 }
+
+
+
+static void mac_state_load(void)
+{
+	int overlay = mac_overlay;
+	mac_overlay = -1;
+	set_memory_overlay(overlay);
+}
+
+
+
+static void mac_driver_init(mac_model_t model)
+{
+	mac_overlay = -1;
+
+	/* set up RAM mirror at 0x600000-0x6fffff (0x7fffff ???) */
+	mac_install_memory(0x600000, 0x6fffff, mess_ram_size, mess_ram, FALSE, 2);
+
+	/* set up ROM at 0x400000-0x4fffff (-0x5fffff for mac 128k/512k/512ke) */
+	mac_install_memory(0x400000, (model == model_macplus) ? 0x4fffff : 0x5fffff,
+		memory_region_length(REGION_USER1), memory_region(REGION_USER1), TRUE, 3);
+
+	set_memory_overlay(1);
+
+	/* configure via */
+	via_config(0, &mac_via6522_intf);
+	via_set_clock(0, 1000000);	/* 6522 = 1 Mhz, 6522a = 2 Mhz */
+
+	/* setup keyboard */
+	keyboard_init();
+
+	inquiry_timeout = mame_timer_alloc(inquiry_timeout_func);
+
+	cpuintrf_set_dasm_override(mac_dasm_override);
+
+	/* save state stuff */
+	state_save_register_int("mac", 0, "overlay", &mac_overlay);
+	state_save_register_func_postload(mac_state_load);
+}
+
+
+
+DRIVER_INIT(mac128k512k)
+{
+	mac_driver_init(model_mac128k512k);
+}
+
+DRIVER_INIT(mac512ke)
+{
+	mac_driver_init(model_mac512ke);
+}
+
+DRIVER_INIT(macplus)
+{
+	mac_driver_init(model_macplus);
+}
+
+
 
 static void mac_vblank_irq(void)
 {
@@ -1927,18 +1835,19 @@ static void mac_vblank_irq(void)
 	}
 }
 
+
+
 INTERRUPT_GEN( mac_interrupt )
 {
-	mac_sh_data_w(current_scanline);
+	int scanline;
 
-	if (current_scanline == 342)
+	mac_sh_updatebuffer();
+
+	scanline = cpu_getscanline();
+	if (scanline == 342)
 		mac_vblank_irq();
 
 	/* check for mouse changes at 10 irqs per frame */
-	if (! (current_scanline % 10))
+	if (!(scanline % 10))
 		mouse_callback();
-
-	current_scanline++;
-	if (current_scanline == 370)
-		current_scanline = 0;
 }

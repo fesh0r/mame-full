@@ -2,13 +2,13 @@
 
 New System Drivers Supported (in no particular order):
 ------------------------------------------------------
-[MSX] National CF-2000 (Jirou Kaneda)
-[MSX] National CF-1200 (Jirou Kaneda)
-[MSX] National CF-2700 (Jirou Kaneda)
-[MSX] National CF-3000 (Jirou Kaneda)
-[MSX] National FS-1300 (Jirou Kaneda)
-[MSX2] Panasonic FS-A1 (Jirou Kaneda)
-[MSX2] Panasonic FS-A1MK2 (Jirou Kaneda)
+- [MSX] National CF-2000 (Jirou Kaneda)
+- [MSX] National CF-1200 (Jirou Kaneda)
+- [MSX] National CF-2700 (Jirou Kaneda)
+- [MSX] National CF-3000 (Jirou Kaneda)
+- [MSX] National FS-1300 (Jirou Kaneda)
+- [MSX2] Panasonic FS-A1 (Jirou Kaneda)
+- [MSX2] Panasonic FS-A1MK2 (Jirou Kaneda)
 
 
 
@@ -17,7 +17,7 @@ System Driver Changes:
 - [ATARI] Miscellaneous cleanups, and implemented Atari 5200 joystick top
   triggers. (bug #328) [Nate Woods]
 
-- [COCO3] Video timing fixes and cleanupts; certain SockMaster demos run
+- [COCO3] Video timing fixes and cleanups; certain SockMaster demos run
   better now.  Also, fixed a bug that caused problems if a cartridge was ran
   and then the emulation was restarted without a cartridge in the same session.
   [Nate Woods]
@@ -32,6 +32,9 @@ System Driver Changes:
   PC floppy emulation and other bugs. (bugs #154, #430) [Nate Woods]
 
 - [PC] Hard disk controller enhancements; FreeDOS now boots.  [Nate Woods]
+
+- [MAC] Cleaned up the driver a bit; implemented natural keyboard support and
+  configurable RAM.  [Nate Woods]
 
 - [SORDM5] Fixed Sord M5 .cas image loading.  [Tim Schuerwegen]
 
