@@ -1109,6 +1109,42 @@ ROM_START (c128nor)
 	ROM_REGION (0x10000, REGION_CPU2)
 ROM_END
 
+static SID6581_interface pal_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			VIC6569_CLOCK,
+			c64_paddle_read
+		}
+	}
+};
+
+static SID6581_interface ntsc_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			VIC6567_CLOCK,
+			c64_paddle_read
+		}
+	}
+};
+
 static struct MachineDriver machine_driver_c128 =
 {
   /* basic machine hardware */
@@ -1153,7 +1189,7 @@ static struct MachineDriver machine_driver_c128 =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &ntsc_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -1203,7 +1239,7 @@ static struct MachineDriver machine_driver_c128d =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &ntsc_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -1253,7 +1289,7 @@ static struct MachineDriver machine_driver_c128pal =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &pal_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };

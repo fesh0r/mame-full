@@ -488,6 +488,54 @@ ROM_START (c65a)
 ROM_END
 
 
+static SID6581_interface ntsc_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	2,
+	{
+		{
+			MIXER(50, MIXER_PAN_LEFT),
+			MOS8580,
+			985248,
+			c64_paddle_read
+		},
+		{
+			MIXER(50, MIXER_PAN_RIGHT),
+			MOS8580,
+			985248,
+			NULL
+		}
+	}		
+};
+
+static SID6581_interface pal_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	2,
+	{
+		{
+			MIXER(50, MIXER_PAN_LEFT),
+			MOS8580,
+			1022727,
+			c64_paddle_read
+		},
+		{
+			MIXER(50, MIXER_PAN_RIGHT),
+			MOS8580,
+			1022727,
+			NULL
+		}
+	}		
+};
+
 static struct MachineDriver machine_driver_c65 =
 {
   /* basic machine hardware */
@@ -523,7 +571,7 @@ static struct MachineDriver machine_driver_c65 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &ntsc_sound_interface },
 		{ 0 }
 	}
 };
@@ -564,7 +612,7 @@ static struct MachineDriver machine_driver_c65pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &pal_sound_interface },
 		{ 0 }
 	}
 };

@@ -757,6 +757,102 @@ ROM_END
 	 ROM_LOAD( "rom80.e0",    0x12000, 0x2000, 0xe801dadc )
 #endif
 
+static SID6581_interface ultimax_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			1000000,
+			c64_paddle_read
+		}
+	}
+};
+
+static SID6581_interface pal_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			VIC6569_CLOCK,
+			c64_paddle_read
+		}
+	}
+};
+
+static SID6581_interface ntsc_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			VIC6567_CLOCK,
+			c64_paddle_read
+		}
+	}
+};
+
+
+static struct MachineDriver machine_driver_ultimax =
+{
+  /* basic machine hardware */
+	{
+		{
+			CPU_M6510,
+			1000000, /*! */
+			ultimax_readmem, ultimax_writemem,
+			0, 0,
+			c64_frame_interrupt, 1,
+			vic2_raster_irq, VIC2_HRETRACERATE,
+		}
+	},
+	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	0,
+	c64_init_machine,
+	c64_shutdown_machine,
+
+  /* video hardware */
+	336,							   /* screen width */
+	216,							   /* screen height */
+	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
+	0,								   /* graphics decode info */
+	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
+	0,
+	c64_init_palette,				   /* convert color prom */
+	VIDEO_TYPE_RASTER,
+	0,
+	vic2_vh_start,
+	vic2_vh_stop,
+	vic2_vh_screenrefresh,
+
+  /* sound hardware */
+	0, 0, 0, 0,
+	{
+		{ SOUND_CUSTOM, &ultimax_sound_interface },
+		{SOUND_DAC, &vc20tape_sound_interface}
+	}
+};
+
+
 static struct MachineDriver machine_driver_c64 =
 {
   /* basic machine hardware */
@@ -792,7 +888,7 @@ static struct MachineDriver machine_driver_c64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &ntsc_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -832,7 +928,7 @@ static struct MachineDriver machine_driver_pet64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &ntsc_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -873,7 +969,7 @@ static struct MachineDriver machine_driver_c64pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &pal_sound_interface },
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -913,7 +1009,7 @@ static struct MachineDriver machine_driver_c64gs =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &pal_sound_interface },
 		{ 0 }
 	}
 };
@@ -959,48 +1055,8 @@ static struct MachineDriver machine_driver_sx64 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &pal_sound_interface },
 		{ 0 }
-	}
-};
-
-static struct MachineDriver machine_driver_ultimax =
-{
-  /* basic machine hardware */
-	{
-		{
-			CPU_M6510,
-			1000000, /*! */
-			ultimax_readmem, ultimax_writemem,
-			0, 0,
-			c64_frame_interrupt, 1,
-			vic2_raster_irq, VIC2_HRETRACERATE,
-		}
-	},
-	VIC6567_VRETRACERATE, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	0,
-	c64_init_machine,
-	c64_shutdown_machine,
-
-  /* video hardware */
-	336,							   /* screen width */
-	216,							   /* screen height */
-	{0, 336 - 1, 0, 216 - 1},		   /* visible_area */
-	0,								   /* graphics decode info */
-	sizeof (vic2_palette) / sizeof (vic2_palette[0]) / 3,
-	0,
-	c64_init_palette,				   /* convert color prom */
-	VIDEO_TYPE_RASTER,
-	0,
-	vic2_vh_start,
-	vic2_vh_stop,
-	vic2_vh_screenrefresh,
-
-  /* sound hardware */
-	0, 0, 0, 0,
-	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
-		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
 

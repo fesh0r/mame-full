@@ -679,7 +679,6 @@ static void c16_common_driver_init (void)
 	if (REAL_VC1541)
 		vc1541_config (0, 0, &vc1541);
 #endif
-	sid6581_0_init(NULL, C16_PAL);
 }
 
 void c16_driver_init (void)
@@ -724,9 +723,9 @@ void c16_init_machine (void)
 	tpi6525_2_reset();
 	tpi6525_3_reset();
 
-	sid6581_0_reset();
+	sid6581_reset(0);
 	if (SIDCARD) {
-		sid6581_0_configure(SIDCARD_8580);
+		sid6581_set_type(0, SIDCARD_8580);
 		install_mem_read_handler (0, 0xfd40, 0xfd5f, sid6581_0_port_r);
 		install_mem_write_handler (0, 0xfd40, 0xfd5f, sid6581_0_port_w);
 	} else {
@@ -801,6 +800,12 @@ void c16_init_machine (void)
 	}
 	else
 	{
+		install_mem_write_handler (0, 0x4000, 0xfcff, MWA_RAM);
+		if (SIDCARD) {
+			// lone07 works with sid at the c64 address???
+			// dizzy fantasy 3
+			install_mem_write_handler (0, 0xd400, 0xd41f, c16_sidcart_64k);
+		}
 		ted7360_set_dma (ted7360_dma_read, ted7360_dma_read_rom);
 	}
 	if (IEC8ON||REAL_C1551)

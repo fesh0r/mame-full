@@ -676,7 +676,6 @@ static void c64_common_driver_init (void)
 		cbm_drive_attach_fs (1);
 	}
 
-	sid6581_0_init (c64_paddle_read, c64_pal);
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	if (c64_cia1_on)
@@ -752,7 +751,8 @@ void c64_common_init_machine (void)
 #ifdef VC1541
 	vc1541_reset ();
 #endif
-	sid6581_0_configure(SID8580);
+	sid6581_reset(0);
+	sid6581_set_type(0, SID8580);
 	if (c64_cia1_on)
 	{
 		cbm_serial_reset_write (0);
@@ -963,6 +963,7 @@ int c64_frame_interrupt (void)
 	int value, value2;
 
 	sid6581_update();
+
 	if (nmilevel != KEY_RESTORE)
 	{
 		if (c128) {

@@ -743,7 +743,6 @@ static void c128_common_driver_init (void)
 	cbm_drive_attach_fs (0);
 	cbm_drive_attach_fs (1);
 
-	sid6581_0_init (c64_paddle_read, c64_pal);
 	c64_cia0.todin50hz = c64_pal;
 	cia6526_config (0, &c64_cia0);
 	c64_cia1.todin50hz = c64_pal;
@@ -787,8 +786,7 @@ void c128_init_machine (void)
 	c64_common_init_machine ();
 	c128_vicaddr = c64_vicaddr = c64_memory;
 
-	sid6581_0_reset();
-	sid6581_0_configure(SID8580);
+	sid6581_reset(0);
 
 	c64_rom_recognition ();
 	c64_rom_load();

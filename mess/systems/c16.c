@@ -730,6 +730,42 @@ ROM_START (c364)
 	 ROM_LOAD ("spk3cc4.bin", 0x28000, 0x4000, 0x5227c2ee)
 ROM_END
 
+static SID6581_interface sidc16_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			TED7360PAL_CLOCK/4,
+			NULL
+		}
+	}
+};
+
+static SID6581_interface sidplus4_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			TED7360NTSC_CLOCK/4,
+			NULL
+		}
+	}
+};
+
 static struct MachineDriver machine_driver_c16 =
 {
   /* basic machine hardware */
@@ -766,7 +802,7 @@ static struct MachineDriver machine_driver_c16 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidc16_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -812,7 +848,7 @@ static struct MachineDriver machine_driver_c16c =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidc16_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -858,7 +894,7 @@ static struct MachineDriver machine_driver_c16v =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidc16_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -899,7 +935,7 @@ static struct MachineDriver machine_driver_plus4 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidplus4_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -946,7 +982,7 @@ static struct MachineDriver machine_driver_plus4c =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidplus4_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -993,7 +1029,7 @@ static struct MachineDriver machine_driver_plus4v =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidplus4_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };
@@ -1035,7 +1071,7 @@ static struct MachineDriver machine_driver_c364 =
 	0, 0, 0, 0,
 	{
 		{SOUND_CUSTOM, &ted7360_sound_interface},
-		{SOUND_CUSTOM, &sid6581_sound_interface},
+		{SOUND_CUSTOM, &sidplus4_sound_interface},
 		{SOUND_DAC, &vc20tape_sound_interface}
 	}
 };

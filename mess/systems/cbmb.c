@@ -867,6 +867,25 @@ ROM_END
 
 #endif
 
+static SID6581_interface sid_sound_interface =
+{
+	{
+		sid6581_custom_start,
+		sid6581_custom_stop,
+		sid6581_custom_update
+	},
+	1,
+	{
+		{
+			MIXER(50, MIXER_PAN_CENTER),
+			MOS6581,
+			1000000,
+			NULL
+		}
+	}
+};
+
+
 static struct MachineDriver machine_driver_cbm600 =
 {
   /* basic machine hardware */
@@ -906,7 +925,7 @@ static struct MachineDriver machine_driver_cbm600 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &sid_sound_interface },
 		{ 0 }
 	}
 };
@@ -950,7 +969,7 @@ static struct MachineDriver machine_driver_cbm600pal =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &sid_sound_interface },
 		{ 0 }
 	}
 };
@@ -990,7 +1009,7 @@ static struct MachineDriver machine_driver_cbm700 =
   /* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		{ SOUND_CUSTOM, &sid_sound_interface },
 		{ 0 }
 	}
 };
@@ -1030,7 +1049,8 @@ static struct MachineDriver machine_driver_cbm500 =
 	/* sound hardware */
 	0, 0, 0, 0,
 	{
-		{ SOUND_CUSTOM, &sid6581_sound_interface },
+		// ad_converter wired to joystick ports
+		{ SOUND_CUSTOM, &sid_sound_interface },
 		{ 0 }
 	}
 };
