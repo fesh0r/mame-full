@@ -2667,6 +2667,17 @@ static void I386OP(group0F01_16)(void)		// Opcode 0x0f 01
 				CYCLES(11);
 				break;
 			}
+		case 4:			/* SMSW */
+			{
+				if( modrm >= 0xc0 ) {
+					STORE_RM16(modrm, I.cr[0]);
+				} else {
+					UINT32 ea = GetEA(modrm);
+					WRITE16(ea, I.cr[0]);
+				}
+				CYCLES(0);	// TODO: Specify cycle count
+				break;
+			}
 		case 6:			/* LMSW */
 			{
 				// TODO: Check for protection fault
