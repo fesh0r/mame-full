@@ -104,7 +104,7 @@ struct sysdep_palette_struct *sysdep_palette_create(
    }
    
    /* do we need to fill the lookup table? */
-   if ((src_depth) == 15 && palette->lookup)
+   if ((src_depth == 15) && palette->lookup)
    {
    	for (r = 0; r < 32; r++)
    		for (g = 0; g < 32; g++)
@@ -118,8 +118,7 @@ struct sysdep_palette_struct *sysdep_palette_create(
    						(b << 3) | (b >> 2));
    			}
    }
-
-   if ((src_depth) == 32 && (display_palette->fourcc_format == FOURCC_YUY2))
+   else if ((src_depth == 32) && palette->lookup)
    {
    	for (r = 0; r < 32; r++)
    		for (g = 0; g < 64; g++)

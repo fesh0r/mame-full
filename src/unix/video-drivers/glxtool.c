@@ -149,7 +149,8 @@ int LIBAPIENTRY setVisualAttribListByGLCapabilities(
  */
 VisualGC LIBAPIENTRY findVisualGlX( Display *display, 
 			       Window rootWin,
-			       Window * pWin, 
+			       Window * pWin,
+			       int x, int y,
 			       int width, int height,
     			       GLCapabilities * glCaps,
 			       int * pOwnWin,
@@ -251,7 +252,7 @@ VisualGC LIBAPIENTRY findVisualGlX( Display *display,
 					     *pWin /* the parent */,
 			       		     pOwnWinAttr,
 			                     ownWinmask,
-					     vgc.visual, width, height);
+					     vgc.visual, x, y, width, height);
 	    }
 
 	    if( offscreen && vgc.visual!=NULL)
@@ -765,7 +766,8 @@ Window LIBAPIENTRY createOwnOverlayWin
 			(Display *display, Window rootwini, Window parentWin,
 			   XSetWindowAttributes * pOwnWinAttr,
 			   unsigned long ownWinmask,
-                           XVisualInfo *visual, int width, int height)
+                           XVisualInfo *visual, int x, int y,
+                           int width, int height)
 {				  
   /*
   //------------------------------------------------------------------------//
@@ -822,8 +824,8 @@ Window LIBAPIENTRY createOwnOverlayWin
   */
     window = XCreateWindow( display
                           , parentWin  
-                          , 0
-                          , 0
+                          , x
+                          , y
                           , width
                           , height
                           , 0

@@ -87,6 +87,8 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type);
    2: Resizable
    3: Fullscreen */
 void x11_set_window_hints(unsigned int width, unsigned int height, int type);
+void x11_get_geometry(int *x, int *y, unsigned int *width,
+  unsigned int *height, int *win_gravity, long *flags, int type);
 
 /* Normal x11_window functions */
 int  x11_window_init(void);

@@ -104,14 +104,41 @@ INLINE void XQ2X_FUNC_NAME(blit_line_2x2) ( SRC_PIXEL *src0,
   XQ2X_LINE_LOOP_END
 }
 
+#undef P
+#define P(a, b) dst##a[b]
+
+INLINE void XQ2X_FUNC_NAME(blit_line_2x3) ( SRC_PIXEL *src0,
+  SRC_PIXEL *src1, SRC_PIXEL *src2, SRC_PIXEL *end1,
+  RENDER_PIXEL *dst, int dest_width, unsigned int *lookup)
+{
+  RENDER_PIXEL *dst0 = dst;
+  RENDER_PIXEL *dst1 = dst + dest_width;
+  XQ2X_LINE_LOOP_BEGIN
+    switch (mask) {
+      #ifdef HQ2X
+      #  include "hq2x3.dat"
+      #else
+      #  include "lq2x3.dat"
+      #endif
+    }
+    dst0 += 2;
+    dst1 += 2;
+  XQ2X_LINE_LOOP_END
+}
+
+#undef P
+
 BLIT_BEGIN(XQ2X_NAME(blit))
-  switch(sysdep_display_params.widthscale)
+  switch(sysdep_display_params.heightscale)
   {
     case 2:
-      switch(sysdep_display_params.heightscale)
+      switch(sysdep_display_params.widthscale)
       {
         case 2:
           BLIT_LOOP2X(XQ2X_NAME(blit_line_2x2), 2);
+          break;
+        case 3:
+          BLIT_LOOP2X(XQ2X_NAME(blit_line_2x3), 2);
           break;
       }
       break;

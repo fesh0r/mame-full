@@ -134,8 +134,8 @@ int x11_window_open_display(int reopen)
                           return 1;
                   }
 
-                  startx        = ((width  - window_width)  / 2) & ~0x07;
-                  starty        = ((height - window_height) / 2) & ~0x07;
+                  startx        = ((width  - window_width)  / 2) & ~3;
+                  starty        = ((height - window_height) / 2) & ~3;
                   window        = RootWindowOfScreen (screen);
                   window_width  = width;
                   window_height = height;

@@ -44,8 +44,13 @@ XINPUT_DEVICES_CFLAGS = -DUSE_XINPUT_DEVICES
 XINPUT_DEVICES_LIBS = -lXi
 endif
 
+ifdef X11_XINERAMA
+XINERAMA_CFLAGS = -DHAVE_XINERAMA
+XINERAMA_LIBS = -lXinerama
+endif
+
 # svga and ggi also use $(X11LIB) since that's where zlib often is
-LIBS.x11        = $(X11LIB) $(XINPUT_DEVICES_LIBS) -lX11 -lXext
+LIBS.x11        = $(X11LIB) $(XINPUT_DEVICES_LIBS) $(XINERAMA_LIBS) -lX11 -lXext
 LIBS.svgalib    = $(X11LIB) -lvga -lvgagl
 LIBS.ggi        = $(X11LIB) -lggi
 ifdef GLIDE2
@@ -57,7 +62,7 @@ LIBS.openstep	= -framework AppKit
 LIBS.SDL	= $(X11LIB) `$(SDL_CONFIG) --libs`
 LIBS.photon2	= -L/usr/lib -lph -lphrender
 
-CFLAGS.x11      = $(X11INC) $(XINPUT_DEVICES_CFLAGS)
+CFLAGS.x11      = $(X11INC) $(XINPUT_DEVICES_CFLAGS) $(XINERAMA_CFLAGS)
 ifdef GLIDE2
 CFLAGS.svgafx   = -I/usr/include/glide
 else

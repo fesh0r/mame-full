@@ -51,6 +51,7 @@
 	LIBAPI VisualGC LIBAPIENTRY findVisualGlX( Display *display, 
 				       Window rootWin,
 				       Window * pWin, 
+				       int x, int y,
 				       int width, int height,
 				       GLCapabilities * glCaps,
 				       int * pOwnWin,
@@ -91,7 +92,8 @@
 				   Window rootwini, Window parentWin,
 			           XSetWindowAttributes * pOwnWinAttr,
 				   unsigned long ownWinmask,
-				   XVisualInfo *visual, int width, int height);
+				   XVisualInfo *visual, int x, int y,
+				   int width, int height);
 
 	LIBAPI void LIBAPIENTRY destroyOwnOverlayWin
 				 (Display *display, Window *newWin,

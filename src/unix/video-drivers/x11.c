@@ -15,6 +15,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#ifdef HAVE_XINERAMA
+#include <X11/extensions/Xinerama.h>
+#endif
+
 /* for xscreensaver support */
 /* Commented out for now since it causes problems with some 
  * versions of KDE. */
@@ -23,7 +27,10 @@
 #include "sysdep/sysdep_display_priv.h"
 #include "x11.h"
 
-static XSizeHints x11_init_hints;
+static char *x11_geometry;
+#ifdef HAVE_XINERAMA
+static int xinerama_screen;
+#endif
 
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority);
 
@@ -31,10 +38,14 @@ struct rc_option sysdep_display_opts[] = {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
    	{ NULL, NULL, rc_link, aspect_opts, NULL, 0, 0, NULL, NULL },
 	{ "X11 Related", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "geometry", "geo", rc_use_function, NULL, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
+	{ "geometry", "geo", rc_string, &x11_geometry, "", 0, 0, x11_parse_geom, "Specify the size (if resizable) and location of the window" },
 	{ "xsync", "xs", rc_bool, &use_xsync, "1", 0, 0, NULL, "Use/don't use XSync instead of XFlush as screen refresh method" },
 	{ "root_window_id", "rid", rc_int, &root_window_id, "0", 0, 0, NULL, "Create the xmame window in an alternate root window; mostly useful for front-ends!" },
 	{ "run-in-root-window", "root", rc_bool, &run_in_root_window, "0", 0, 0, NULL, "Enable/disable running in root window" },
+#ifdef HAVE_XINERAMA
+	{ "xinerama-screen", NULL, rc_int, &xinerama_screen, "0", 0, 0, NULL,
+	  "Select Xinerama screen for fullscreen, use -1 to stretch over all monitors" },
+#endif
 	{ NULL, NULL, rc_link, x11_window_opts, NULL, 0, 0, NULL, NULL },
 #ifdef USE_DGA
 	{ NULL, NULL, rc_link, xf86_dga_opts, NULL, 0, 0, NULL, NULL },
@@ -144,48 +155,24 @@ static const char *x11_mode_name[] = {
 
 static int x11_parse_geom(struct rc_option *option, const char *arg, int priority)
 {
-	int i,x,y,ok = 0;
-	
-	if (strlen(arg) == 0)
-	{
-	   memset(&x11_init_hints, 0, sizeof(x11_init_hints));
-	   x11_init_hints.win_gravity = NorthWestGravity;
-	   custom_window_width = custom_window_height = 0;
-	}
-	else
-	{
-		i = XParseGeometry(arg, &x, &y, &custom_window_width, &custom_window_height);
-		if (i & (XValue|YValue))
-		{
-		  x11_init_hints.x = x;
-		  x11_init_hints.y = y;
-		  switch (i& (XNegative|YNegative))
-		  {
-		     case 0:
-		        x11_init_hints.win_gravity = NorthWestGravity;
-		        break;
-		     case YNegative:
-		        x11_init_hints.win_gravity = SouthWestGravity;
-		        break;
-		     case XNegative:
-		        x11_init_hints.win_gravity = NorthEastGravity;
-		        break;		     
-		     case (YNegative|XNegative):
-		        x11_init_hints.win_gravity = SouthEastGravity;
-		        break;
-		  }
-		  x11_init_hints.flags = PPosition | PWinGravity;
-		  ok = 1;
-		}
-		if (i & (WidthValue|HeightValue))
-		  ok = 1;
-		if (!ok)
-		{
-		  fprintf(stderr,"Invalid geometry: %s.\n", arg);
-		  return 1;
-		}
-	}
-	return 0;
+  if (strlen(x11_geometry))
+  {
+    int i = XParseGeometry(x11_geometry, &i, &i, &custom_window_width,
+      &custom_window_height);
+    if (!(i & WidthValue))
+      custom_window_width = 0;
+    if (!(i & HeightValue))
+      custom_window_height = 0;
+    if (!(i & (XValue|YValue|WidthValue|HeightValue)))
+    {
+      fprintf(stderr,"Invalid geometry: %s.\n", arg);
+      return 1;
+    }
+  }
+  else
+    custom_window_width = custom_window_height = 0;
+
+  return 0;
 }
 
 int sysdep_display_init (void)
@@ -398,11 +385,11 @@ void x11_resize_resizable_window(unsigned int *width, unsigned int *height)
         }
 
         /* set window hints to resizable */
-        x11_set_window_hints(window_width, window_height, X11_RESIZABLE);
+        x11_set_window_hints(*width, *height, X11_RESIZABLE);
         /* resize */
-        XResizeWindow(display, window, window_width, window_height);
+        XResizeWindow(display, window, *width, *height);
         /* set window hints to keep aspect resizable */
-        x11_set_window_hints(window_width, window_height, X11_RESIZABLE_ASPECT);
+        x11_set_window_hints(*width, *height, X11_RESIZABLE_ASPECT);
 }
 
 /* Create a window, type can be:
@@ -415,31 +402,19 @@ int x11_create_window(unsigned int *width, unsigned int *height, int type)
 {
 	XSetWindowAttributes winattr;
 	XEvent event;
-	int x=0,y=0,win_gravity = NorthWestGravity;
+	int x,y;
 	Window root = RootWindowOfScreen (screen);
+
+        x11_get_geometry(&x, &y, width, height, &winattr.win_gravity,
+          NULL, type);
 	
-	switch (type)
-	{
-	    case X11_FIXED: /* fixed size */
-	    case X11_RESIZABLE_ASPECT: /* resizable, keep aspect */
-	    case X11_RESIZABLE: /* resizable */
-	        x = x11_init_hints.x;
-	        y = x11_init_hints.y;
-	        win_gravity = x11_init_hints.win_gravity;
-	        if (root_window_id)
-	           root = root_window_id;
-		break;
-	    case X11_FULLSCREEN: /* fullscreen */
-		*width  = screen->width;
-		*height = screen->height;
-		break;
-	}
+	if ((type != X11_FULLSCREEN) && root_window_id)
+          root = root_window_id;
 
         /* Create and setup the window. No buttons, no fancy stuff. */
         winattr.background_pixel  = BlackPixelOfScreen (screen);
         winattr.border_pixel      = WhitePixelOfScreen (screen);
         winattr.bit_gravity       = ForgetGravity;
-        winattr.win_gravity       = win_gravity;
         winattr.backing_store     = NotUseful;
         winattr.override_redirect = False;
         winattr.save_under        = False;
@@ -481,7 +456,7 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 {
         struct rc_option *option;
         XWMHints wm_hints;
-	XSizeHints hints = x11_init_hints;
+	XSizeHints hints;
 
 	/* WM hints */
         wm_hints.input    = True;
@@ -489,6 +464,8 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
         XSetWMHints (display, window, &wm_hints);
 
 	/* Size hints */
+        x11_get_geometry(&hints.x, &hints.y, &width, &height,
+	          &hints.win_gravity, &hints.flags, type);
 	switch (type)
 	{
 	    case X11_FIXED: /* fixed size */
@@ -514,7 +491,6 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 		hints.flags |= PSize;
 		break;
 	    case X11_FULLSCREEN: /* fullscreen */
-		hints.x = hints.y = 0;
 		hints.flags = PMinSize|PMaxSize|USPosition|USSize;
 		break;
 	}
@@ -554,6 +530,75 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 #endif
         
         XStoreName (display, window, sysdep_display_params.title);
+}
+
+void x11_get_geometry(int *x, int *y, unsigned int *width,
+  unsigned int *height, int *win_gravity, long *flags, int type)
+{
+  if(type == X11_FULLSCREEN)
+  {
+    /*
+     * Get the window size and location for a fullscreen display.  Normally
+     *  this is simply the default screen coordinates.  When using Xinerama
+     *  different heads may have different capabilities.  This function
+     *  will attempt to honor the xinerama-screen parameter and use only
+     *  a specific head for fullscreen output.
+     */
+#ifdef HAVE_XINERAMA
+    XineramaScreenInfo *xinerama_screens = NULL;
+    int number_screens;
+#endif /* HAVE_XINERAMA */
+
+    /* initialize the results to default values */
+    *x = 0;
+    *y = 0;
+    *width  = screen->width;
+    *height = screen->height;
+    *win_gravity = NorthWestGravity;
+
+#ifdef HAVE_XINERAMA
+    if (!XineramaIsActive(display) || xinerama_screen < 0) {
+            /* nothing more to do */
+            return;
+    }
+
+    xinerama_screens = XineramaQueryScreens(display, &number_screens);
+    if (xinerama_screens == NULL) {
+            /* error -- return with the defaults */
+            return;
+    }
+
+    /* check that the user selected screen is valid */
+    if (xinerama_screen >= 0 && xinerama_screen < number_screens) {
+            *x = xinerama_screens[xinerama_screen].x_org;
+            *y = xinerama_screens[xinerama_screen].y_org;
+            *width = xinerama_screens[xinerama_screen].width;
+            *height = xinerama_screens[xinerama_screen].height;
+    }
+
+    XFree(xinerama_screens);
+#endif /* HAVE_XINERAMA */
+  }
+  else
+  {
+    int i;
+    XSizeHints hints;
+    
+    hints.min_width  = hints.max_width  = hints.base_width  = *width;
+    hints.min_height = hints.max_height = hints.base_height = *height;
+    hints.flags      = PSize | PMinSize | PMaxSize;
+    
+    i = XWMGeometry(display, DefaultScreen(display), x11_geometry, "+0+0", 0,
+      &hints, x, y, &i, &i, win_gravity);
+
+    if (flags)
+    {
+      if (i & (XValue|YValue))
+        *flags = PPosition | PWinGravity;
+      else
+        *flags = 0;
+    }
+  }
 }
 
 #endif /* ifdef x11 */
