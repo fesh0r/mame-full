@@ -575,11 +575,6 @@ int run_game(int game)
 	err = 1;
 	bailing = 0;
 
-	#ifdef MESS
-	if (get_filenames())
-		return err;
-	#endif
-
 	if (options.savegame)
 		cpu_loadsave_schedule(LOADSAVE_LOAD, options.savegame);
 	else

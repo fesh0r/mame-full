@@ -30,21 +30,10 @@ struct image_info {
 	char *extrainfo;
 };
 
-static struct image_info *images[IO_COUNT] = {NULL,};
-static int count[IO_COUNT] = {0,};
+#define MAX_INSTANCES 5
+static struct image_info images[IO_COUNT][MAX_INSTANCES];
+static int count[IO_COUNT];
 
-
-static char* dupe(const char *src)
-{
-	if( src )
-	{
-		char *dst = malloc(strlen(src) + 1);
-		if( dst )
-			strcpy(dst,src);
-		return dst;
-	}
-	return NULL;
-}
 
 static char* stripspace(const char *src)
 {
@@ -61,27 +50,6 @@ static char* stripspace(const char *src)
 		return buff;
 	}
 	return NULL;
-}
-
-static void free_image_info(struct image_info *img)
-{
-	if( !img )
-		return;
-	if( img->longname )
-		free(img->longname);
-	img->longname = NULL;
-	if( img->manufacturer )
-		free(img->manufacturer );
-	img->manufacturer = NULL;
-	if( img->year )
-		free(img->year );
-	img->year = NULL;
-	if( img->playable )
-		free(img->playable);
-	img->playable = NULL;
-	if( img->extrainfo )
-		free(img->extrainfo);
-	img->extrainfo = NULL;
 }
 
 int DECL_SPEC mess_printf(char *fmt, ...)
@@ -254,7 +222,6 @@ void *image_fopen(int type, int id, int filetype, int read_or_write)
 			osd_fchecksum(sysname, img->name, &img->length, &img->crc);
 			logerror("image_fopen: CRC is %08x\n", img->crc);
 		}
-		free_image_info(img);
 
 		if (read_crc_config (crcfile, img, sysname) && Machine->gamedrv->clone_of->name)
 			read_crc_config (pcrcfile, img, Machine->gamedrv->clone_of->name);
@@ -282,11 +249,11 @@ static int read_crc_config (const char *file, struct image_info *img, const char
 		if( line[0] )
 		{
 			logerror("found CRC %s= %s\n", crc, line);
-			img->longname = dupe(stripspace(strtok(line, "|")));
-			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
-			img->year = dupe(stripspace(strtok(NULL, "|")));
-			img->playable = dupe(stripspace(strtok(NULL, "|")));
-			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
+			img->longname = strdup(stripspace(strtok(line, "|")));
+			img->manufacturer = strdup(stripspace(strtok(NULL, "|")));
+			img->year = strdup(stripspace(strtok(NULL, "|")));
+			img->playable = strdup(stripspace(strtok(NULL, "|")));
+			img->extrainfo = strdup(stripspace(strtok(NULL, "|")));
 			retval = 0;
 		}
 		config_close(config);
@@ -508,17 +475,19 @@ const char *device_extrainfo(int type, int id)
 	return NULL;
 }
 
-/*
- * Copy the image names from options.image_files[] to
- * the array of filenames we keep here, depending on the
- * type identifier of each image.
- */
-int get_filenames(void)
+
+/*****************************************************************************
+ *  --Distribute images to their respective Devices--
+ *  Copy the Images specified at the CLI from options.image_files[] to the
+ *  array of filenames we keep here, depending on the Device type identifier
+ *  of each image.  Multiple instances of the same device are allowed
+ *  RETURNS 0 on success, 1 if failed
+ ****************************************************************************/
+static int distribute_images(void)
 {
-	const struct IODevice *dev = Machine->gamedrv->dev;
 	int i;
 
-	logerror("Get Filenames()...\n");
+	mess_printf("Distributing Images to Devices...\n");
 
 	for( i = 0; i < options.image_count; i++ )
 	{
@@ -527,48 +496,21 @@ int get_filenames(void)
 		if (type < IO_COUNT)
 		{
 			/* Add a filename to the arrays of names */
-			if( images[type] )
-				images[type] = realloc(images[type],(count[type]+1)*sizeof(struct image_info));
-			else
-				images[type] = malloc(sizeof(struct image_info));
-			if( !images[type] )
-				return 1;
-			memset(&images[type][count[type]], 0, sizeof(struct image_info));
 			if( options.image_files[i].name )
 			{
-				images[type][count[type]].name = dupe(options.image_files[i].name);
+				images[type][count[type]].name = strdup(options.image_files[i].name);
 				if( !images[type][count[type]].name )
+				{
+					mess_printf(" ERROR - strdup() failed\n");
 					return 1;
+				}
 			}
-			logerror("  user request -  %s #%d: %s\n", devices[type].name, count[type]+1, images[type][count[type]].name);
 			count[type]++;
 		}
 		else
 		{
-			logerror("  Invalid IO_ type %d for %s\n", type, options.image_files[i].name);
+			mess_printf(" Invalid Device type %d for %s\n", type, options.image_files[i].name);
 			return 1;
-		}
-	}
-
-	/* Does the driver have any IODevices defined? */
-	if( dev )
-	{
-		while( dev->count )
-		{
-			int type = dev->type;
-			while( count[type] < dev->count )
-			{
-				/* Add an empty slot name the arrays of names */
-				if( images[type] )
-					images[type] = realloc(images[type],(count[type]+1)*sizeof(struct image_info));
-				else
-					images[type] = malloc(sizeof(struct image_info));
-				if( !images[type] )
-					return 1;
-				memset(&images[type][count[type]], 0, sizeof(struct image_info));
-				count[type]++;
-			}
-			dev++;
 		}
 	}
 
@@ -581,42 +523,46 @@ int get_filenames(void)
 /* Small check to see if system supports device */
 static int supported_device(const struct IODevice *dev, int type)
 {
-
 	while(dev->type!=IO_END)
 	{
 		if(dev->type==type)
 			return TRUE;	/* Return OK */
 		dev++;
 	}
-	mess_printf("Error - This system does not support %s devices \n", device_typename(type));
 	return FALSE;
 }
 
-/*
- * Call the init() functions for all devices of a driver
- * with all user specified image names.
- */
+/*****************************************************************************
+ *  --Initialise Devices--
+ *  Call the init() functions for all devices of a driver
+ *  ith all user specified image names.
+ ****************************************************************************/
 int init_devices(const void *game)
 {
 	const struct GameDriver *gamedrv = game;
 	const struct IODevice *dev = gamedrv->dev;
 	int i,id;
 
-	logerror("Init Devices()...\n");
+	mess_printf("Initialising Devices...\n");
 
-	/* Check that the driver supports all devices requested */
+	/* Check that the driver supports all devices requested (options struct)*/
+
 	for( i = 0; i < options.image_count; i++ )
 	{
-		logerror("  Checking that %s device is supported\n",device_typename(options.image_files[i].type));
 		if (supported_device(dev, options.image_files[i].type)==FALSE)
 		{
-			logerror("  FAILED!\n");
+			mess_printf(" ERROR: Device [%s] is not supported by this system\n",device_typename(options.image_files[i].type));
 			return 1;
 		}
 	}
 
-	/* KT - added floppy drives init here. Drivers can override settings, and
-	settings can change in the UI */
+	/* Ok! All devices are supported.  Now distribute them 	*/
+	/* to the appropriate device.....						*/
+	if (distribute_images() == 1)
+		return 1;
+
+	/* Initialise all floppy drives here if the device is 	*/
+	/* Setting can be overriden by the drivers and UI		*/
 	floppy_drives_init();
 
 	/* initialize all devices */
@@ -696,7 +642,7 @@ int init_devices(const void *game)
 void exit_devices(void)
 {
 	const struct IODevice *dev = Machine->gamedrv->dev;
-	int type, id;
+	int id;
 
 	/* shutdown all devices */
 	while( dev->count )
@@ -729,21 +675,6 @@ void exit_devices(void)
 		}
 
 		dev++;
-	}
-	for( type = 0; type < IO_COUNT; type++ )
-	{
-		if( images[type] )
-		{
-			for( id = 0; id < device_count(dev->type); id++ )
-			{
-				if( images[type][id].name )
-					free(images[type][id].name);
-				images[type][id].name = NULL;
-			}
-			free(images[type]);
-		}
-		images[type] = NULL;
-		count[type] = 0;
 	}
 
 	/* KT: clean up */
@@ -784,15 +715,12 @@ int device_filename_change(int type, int id, const char *name)
 		 * set the new filename and reset all addition info, it will
 		 * be inserted by osd_fopen() and the crc handling
 		 */
-		if( img->name )
-			free(img->name);
 		img->name = NULL;
 		img->length = 0;
 		img->crc = 0;
-		free_image_info(img);
 		if( name )
 		{
-			img->name = dupe(name);
+			img->name = strdup(name);
 			if( !img->name )
 				return 1;
 		}
