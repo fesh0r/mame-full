@@ -2,9 +2,26 @@ Xmame history:
 
 Last Modified by Lawrence Gold (gold@aros.net)
 
-Release 0.94
-	- Everything from MAME 0.94 (http://x.mame.net/changes-mame.html) and
-	  MESS 0.94 (http://x.mame.net/changes-mess.html).
+Release 0.95, 29 March 2005
+	- Everything from MAME 0.95 (http://x.mame.net/changes-mame.html) and
+	  MESS 0.95 (http://x.mame.net/changes-mess.html).
+	- Fixed a couple of spelling errors in the xmame manpage.  (A. Costa)
+	- Forcing Xv to use YV12 ("-force-yuv 2") no longer causes rotated 
+	  games to segfault.  Fixes Bugzilla bug 679.
+	- Fixed a bug in the OpenGL display target that could cause the bitmap 
+	  to be skewed for some games, such as sfrush.
+	- Hotkey effect switching works again for MESS consoles.  (Christopher 
+	  Stone)
+	- Fixed the aspect ratio of the MESS SuperVision driver so that it's 
+	  quadratic.  (PeT)
+	- Added a setting to the makefile to disable effects: DISABLE_EFFECTS.  
+	  This makes the blit files compile much more quickly, especially for 
+	  older releases of GCC, such as 2.95.3.  This may eventually become 
+	  more finely grained, so that you can disable only certain effects or 
+	  certain scale factors.
+
+Release 0.94, 15 March 2005
+	- Everything from MAME 0.94 and MESS 0.94.
 	- The pause key works again in the input setup.  For keyboards that 
 	  generate 119 instead of 101, there's now a PAUSE_KEY_119 option in 
 	  the makefile.
@@ -14,6 +31,8 @@ Release 0.94
 	- Hotkeys for effect and mode switching are now enabled in xmess only 
 	  when the MESS UI is active.
 	- Fixed the output of '-listdevices' for xmess.  (Christopher Stone)
+	- Installing the OpenGL cabinets now really works without requiring a 
+	  symlink to src/unix/cab in the top-level directory.
 
 Release 0.92, 23 February 2005
 	- Everything from MAME 0.92 and MESS 0.92.

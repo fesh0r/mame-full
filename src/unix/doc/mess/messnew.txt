@@ -1,3 +1,71 @@
+0.95
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- LASER128 Rev4, LASER128ex Rev4a [Cowering]
+
+- Apple //c (Original Memory Expansion) [Christopher Stone]
+
+
+
+System Driver Changes:
+----------------------
+- [APPLE1] Removed extraneous and obsolete RAM size DIP switches.  (bug #676)
+  [Nate Woods]
+
+- [APPLE1] Implemented a proper reset key.  (bug #349) [Colin Howell]
+
+- [APPLE1] Implemented additional RAM size options.  (bug #482) [Colin Howell]
+
+- [APPLE2C0] Now uses the IWM chip.  [Nate Woods]
+
+- [APPLE2GS] Implemented Ensoniq ES5503 sound system.  [R. Belmont]
+
+- [C64] Fixed a regression intorduced in 0.92 that prevented the first floppy
+  drive from working properly.  (bug #681) [Nate Woods]
+
+- [MSX] Fixed a sound regression introduced in the 0.93 MAME core update.
+  (bug #683) [Nate Woods]
+
+- [TELMAC] Fixed a crash regression introduced in the 0.93 MAME core update.
+  (bug #671) [Nate Woods]
+
+- [TI990_10] Fixed a crash regression introduced in the 0.93 MAME core update.
+  [Nate Woods]
+
+
+
+User Interface Changes:
+-----------------------
+- Fixed a bug that caused the image info screen to not work properly with
+  multiple images of the same device type.  (bug #677) [Nate Woods]
+
+- [Windows GUI] Fixed a bug that could caused file filters to contain garbled
+  text.  (bug #680) [Nick Westgate, Nate Woods]
+
+- [Windows GUI] Fixed a bug that could cause trailing '|' characters in the
+  device view.  [Nate Woods]
+
+- [Windows GUI] Fixed a bug that could cause the GUI to internally lose track
+  of which images are selected.  (bug #675) [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+(none)
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.95.  This incorporates all features of the
+  update to this core.  [MAME team]  
+  
+- Fixed tinymess build.  [Nate Woods]
+
+
+
 0.94
 
 New System Drivers Supported (in no particular order):

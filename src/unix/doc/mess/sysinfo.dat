@@ -853,89 +853,6 @@ $end
 
 $info=apple2c
 $bio
-Apple //c
-
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
-$info=apple2e
-$bio
-Apple //e
-
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
-$info=apple2p
-$bio
-Apple ][+
-
-
-Known issues:
-
-Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
-default. Whilst in full keyboard emulation mode, some key associated functionality may be
-disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
-scroll_lock key.
-
-Colors are incorrect (bug #475).
-
-
-Usage:
-
-Invoking the emulator with a floppy disk will boot from that disk.  If booting without a
-floppy, use the RESET key ("F3" in partial keyboard emulation) to get to APPLESOFT.
-
-You can identify the APPLESOFT prompt as "]".  Lines can be edited from APPLESOFT using the
-arrow keys or using Escape, then "I" for up, "J" for left, "K" for right, and "M" for down.
-
-
-History and Trivia:
-
-The Apple ][+ is an incrementally improved Apple ][ that was released in 1979.
-
-Most improvements centered around the ROM chip. It featured a floating point BASIC in ROM
-called APPLESOFT instead of Integer BASIC.  It also had an "autostart" capability which
-caused the machine to boot automatically from attached Disk ][ devices or other
-peripherals.  Bug fixes increased the number of hi-res color to 8 and eliminated the
-violet and green fringe around characters in text mode.
-
-The emulator for the Apple ][+ includes a disk drive controller in slot two with two Disk
-][ drives.  This revolutionary controller was probably the first commercial soft-sector
-5.25" floppy drive, and was the cheapest ever at the when it shipped at $595.
-
-Minor as these improvements may seem, it greatly increased the desirability of the Apple ][
-line and gave a huge boost in sales to the Apple line.
-
-
-Features:
-
-CPU: MOS 6502 1MHz
-
-Memory: RAM 48kB, 12kB ROM
-
-Screen: 8 colors at 280x192, 4-bit color at 40x48
-
-Data path: 8-bit
-
-
-Links:
-
-Apple ][ History -- http://apple2history.org/history/ah06.html
-
-DOS/ProDOS FAQ -- http://www.apple2.org/faq/FAQ.dos.prodos.html
-
-APPLESOFT FAQ -- http://www.apple2.org/faq/FAQ.applesoft02.html
-
-$end
-
-#---------------------------------------------------------------------------------------------#
-
-$info=apple2c
-$bio
 Apple //c Series
 
 
@@ -1089,6 +1006,71 @@ Memory: 64kB RAM standard, 128kB RAM with extended 80-column card, 16kB ROM
 Screen: 16 colors at 560x192 (double-hi-res); 4-bit color text mode at 40x48
 
 Data path: 8-bit
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=apple2p
+$bio
+Apple ][+
+
+
+Known issues:
+
+Requires full keyboard emulation. At startup, full keyboard emulation mode is enabled by
+default. Whilst in full keyboard emulation mode, some key associated functionality may be
+disabled (like the ESC key for EXIT). The keyboard emulation mode is toggled using the
+scroll_lock key.
+
+Colors are incorrect (bug #475).
+
+
+Usage:
+
+Invoking the emulator with a floppy disk will boot from that disk.  If booting without a
+floppy, use the RESET key ("F3" in partial keyboard emulation) to get to APPLESOFT.
+
+You can identify the APPLESOFT prompt as "]".  Lines can be edited from APPLESOFT using the
+arrow keys or using Escape, then "I" for up, "J" for left, "K" for right, and "M" for down.
+
+
+History and Trivia:
+
+The Apple ][+ is an incrementally improved Apple ][ that was released in 1979.
+
+Most improvements centered around the ROM chip. It featured a floating point BASIC in ROM
+called APPLESOFT instead of Integer BASIC.  It also had an "autostart" capability which
+caused the machine to boot automatically from attached Disk ][ devices or other
+peripherals.  Bug fixes increased the number of hi-res color to 8 and eliminated the
+violet and green fringe around characters in text mode.
+
+The emulator for the Apple ][+ includes a disk drive controller in slot two with two Disk
+][ drives.  This revolutionary controller was probably the first commercial soft-sector
+5.25" floppy drive, and was the cheapest ever at the when it shipped at $595.
+
+Minor as these improvements may seem, it greatly increased the desirability of the Apple ][
+line and gave a huge boost in sales to the Apple line.
+
+
+Features:
+
+CPU: MOS 6502 1MHz
+
+Memory: RAM 48kB, 12kB ROM
+
+Screen: 8 colors at 280x192, 4-bit color at 40x48
+
+Data path: 8-bit
+
+
+Links:
+
+Apple ][ History -- http://apple2history.org/history/ah06.html
+
+DOS/ProDOS FAQ -- http://www.apple2.org/faq/FAQ.dos.prodos.html
+
+APPLESOFT FAQ -- http://www.apple2.org/faq/FAQ.applesoft02.html
 
 $end
 
