@@ -88,9 +88,16 @@ static void dragon_fdc_init(const struct cartridge_callback *callbacks)
 
 static void raise_nmi(int dummy)
 {
-	LOG(("cococart: Raising NMI, source: wd179x INTRQ\n" ));
+	LOG(("cococart: Raising NMI (and clearing halt), source: wd179x INTRQ\n" ));
 
 	cpu_set_nmi_line(0, ASSERT_LINE);
+}
+
+static void raise_halt(int dummy)
+{
+	LOG(("cococart: Raising HALT\n" ));
+
+	cpu_set_halt_line(0, ASSERT_LINE);
 }
 
 static void coco_fdc_callback(int event)
@@ -112,7 +119,8 @@ static void coco_fdc_callback(int event)
 	case WD179X_DRQ_CLR:
 		drq_state = CLEAR_LINE;
 		if( COCO_HALTENABLE )
-			cpu_set_halt_line(0, ASSERT_LINE);
+			timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
+/*			cpu_set_halt_line(0, ASSERT_LINE);*/
 		else
 			cpu_set_halt_line(0, CLEAR_LINE);
 		break;
@@ -258,12 +266,17 @@ static void set_coco_dskreg(int data)
 	dskreg = data;
 
 	if( COCO_HALTENABLE && (drq_state == CLEAR_LINE) )
-		cpu_set_halt_line(0, ASSERT_LINE);
+		timer_set( TIME_IN_CYCLES(7,0), 0, raise_halt);
+/*		cpu_set_halt_line(0, ASSERT_LINE);*/
 	else
 		cpu_set_halt_line(0, CLEAR_LINE);
 	
 	if( COCO_NMIENABLE  && (intrq_state == ASSERT_LINE) )
+	{
+		CLEAR_COCO_HALTENABLE;
+		cpu_set_halt_line(0, CLEAR_LINE);
 		timer_set( TIME_IN_USEC(0), 0, raise_nmi);
+	}
 	else
 		cpu_set_nmi_line(0, CLEAR_LINE);
 
@@ -299,9 +312,6 @@ READ_HANDLER(coco_floppy_r);
 READ_HANDLER(coco_floppy_r)
 {
 	int result = 0;
-
-	/* Clear halt enable flag (Damn flip-flop!) */
-	CLEAR_COCO_HALTENABLE;
 
 	switch(offset & 0xef) {
 	case 8:
