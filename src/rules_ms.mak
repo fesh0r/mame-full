@@ -2,12 +2,35 @@
 
 CPU=$(strip $(findstring APEXC@,$(CPUS)))
 ifneq ($(CPU),)
-APEXCDIR = mess/cpu/apexc
-OBJDIRS += $(OBJ)/$(APEXCDIR)
+APEXCD = mess/cpu/apexc
+OBJDIRS += $(OBJ)/$(APEXCD)
 CPUDEFS += -DHAS_APEXC=1
-CPUOBJS += $(OBJ)/$(APEXCDIR)/apexc.o
-DBGOBJS += $(OBJ)/$(APEXCDIR)/apexcdsm.o
-$(OBJ)/$(APEXCDIR)/apexc.o: $(APEXCDIR)/apexc.c $(APEXCDIR)/apexc.h
+CPUOBJS += $(OBJ)/$(APEXCD)/apexc.o
+DBGOBJS += $(OBJ)/$(APEXCD)/apexcdsm.o
+$(OBJ)/$(APEXCD)/apexc.o: $(APEXCD)/apexc.c $(APEXCD)/apexc.h
 else
 CPUDEFS += -DHAS_APEXC=0
+endif
+
+
+CPU=$(strip $(findstring G65816@,$(CPUS)))
+ifneq ($(CPU),)
+G6D = mess/cpu/g65816
+OBJDIRS += $(OBJ)/$(G6D)
+CPUDEFS += -DHAS_G65816=1
+CPUOBJS += $(OBJ)/$(G6D)/g65816.o
+CPUOBJS += $(OBJ)/$(G6D)/g65816o0.o
+CPUOBJS += $(OBJ)/$(G6D)/g65816o1.o
+CPUOBJS += $(OBJ)/$(G6D)/g65816o2.o
+CPUOBJS += $(OBJ)/$(G6D)/g65816o3.o
+CPUOBJS += $(OBJ)/$(G6D)/g65816o4.o
+DBGOBJS += $(OBJ)/$(G6D)/g65816ds.o
+$(OBJ)/$(G6D)/g65816.o: $(G6D)/g65816.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+$(OBJ)/$(G6D)/g65816o0.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+$(OBJ)/$(G6D)/g65816o1.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+$(OBJ)/$(G6D)/g65816o2.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+$(OBJ)/$(G6D)/g65816o3.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+$(OBJ)/$(G6D)/g65816o4.o: $(G6D)/g65816o0.c $(G6D)/g65816.h $(G6D)/g65816cm.h $(G6D)/g65816op.h
+else
+CPUDEFS += -DHAS_G65816=0
 endif

@@ -815,27 +815,6 @@ else
 CPUDEFS += -DHAS_ARM=0
 endif
 
-CPU=$(strip $(findstring G65816@,$(CPUS)))
-ifneq ($(CPU),)
-OBJDIRS += $(OBJ)/cpu/g65816
-CPUDEFS += -DHAS_G65816=1
-CPUOBJS += $(OBJ)/cpu/g65816/g65816.o
-CPUOBJS += $(OBJ)/cpu/g65816/g65816o0.o
-CPUOBJS += $(OBJ)/cpu/g65816/g65816o1.o
-CPUOBJS += $(OBJ)/cpu/g65816/g65816o2.o
-CPUOBJS += $(OBJ)/cpu/g65816/g65816o3.o
-CPUOBJS += $(OBJ)/cpu/g65816/g65816o4.o
-DBGOBJS += $(OBJ)/cpu/g65816/g65816ds.o
-$(OBJ)/cpu/g65816/g65816.o: g65816.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o0.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o1.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o2.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o3.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-$(OBJ)/cpu/g65816/g65816o4.o: g65816o0.c g65816.h g65816cm.h g65816op.h
-else
-CPUDEFS += -DHAS_G65816=0
-endif
-
 CPU=$(strip $(findstring SPC700@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/spc700

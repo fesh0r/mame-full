@@ -129,9 +129,6 @@
 #if (HAS_ARM)
 #include "cpu/arm/arm.h"
 #endif
-#if (HAS_G65816)
-#include "cpu/g65816/g65816.h"
-#endif
 #if (HAS_SPC700)
 #include "cpu/spc700/spc700.h"
 #endif
@@ -151,9 +148,12 @@
 
 #ifdef MESS
 
- #if (HAS_APEXC)
- #include "mess/cpu/apexc/apexc.h"
- #endif
+#if (HAS_APEXC)
+#include "mess/cpu/apexc/apexc.h"
+#endif
+#if (HAS_G65816)
+#include "cpu/g65816/g65816.h"
+#endif
 
 #endif
 
@@ -649,9 +649,6 @@ struct cpu_interface cpuintf[] =
 #if (HAS_ARM)
 	CPU0(ARM,	   arm, 	 2,  0,1.00,ARM_INT_NONE,	   ARM_FIRQ,	   ARM_IRQ, 	   32,26ledw, 0,26,LE,4, 4	),
 #endif
-#if (HAS_G65816)
-	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
-#endif
 #if (HAS_SPC700)
 	CPU0(SPC700,   spc700,	 0,  0,1.00,0,				   -1,			   -1,			   8, 16,	  0,16,LE,1, 3	),
 #endif
@@ -675,6 +672,9 @@ struct cpu_interface cpuintf[] =
 #ifdef MESS
 #if (HAS_APEXC)
 	CPU0(APEXC,    apexc,	 0,  0,1.00,0,				   -1,			   -1,			   32,18bedw, 0,18,LE,1, 1	),
+#endif
+#if (HAS_G65816)
+	CPU0(G65816,  g65816,	 1,  0,1.00,G65816_INT_NONE,   G65816_INT_IRQ, G65816_INT_NMI, 8, 24,	  0,24,BE,1, 3	),
 #endif
 #endif
 };
