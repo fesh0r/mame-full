@@ -9,7 +9,7 @@ extern struct DACinterface vc20tape_sound_interface;
    IO_CASSETTE,        /* type */\
    1,                  /* count */\
    "wav\0",    /* TAP, LNX and T64(maybe) later file extensions */\
-   NULL,               /* private */\
+   IO_RESET_NONE,      /* reset if file changed */\
    NULL,               /* id */\
    vc20_tape_attach_image,	/* init */\
    vc20_tape_detach_image,	/* exit */\
