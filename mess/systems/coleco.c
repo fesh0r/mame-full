@@ -49,21 +49,17 @@ MEMORY_WRITE_START( writemem )
 	{ 0x8000, 0xffff, MWA_ROM, &coleco_cartridge_rom }, /* Cartridge */
 MEMORY_END
 
-static struct IOReadPort readport[] =
-{
+static PORT_READ_START (readport)
 	{ 0xA0, 0xBF, coleco_VDP_r },
 	{ 0xE0, 0xFF, coleco_paddle_r },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
-static struct IOWritePort writeport[] =
-{
+static PORT_WRITE_START (writeport)
 	{ 0x80, 0x9F, coleco_paddle_toggle_1_w },
 	{ 0xA0, 0xBF, coleco_VDP_w },
 	{ 0xC0, 0xDF, coleco_paddle_toggle_2_w },
 	{ 0xE0, 0xFF, SN76496_0_w },
-	{ -1 }	/* end of table */
-};
+PORT_END
 
 
 
