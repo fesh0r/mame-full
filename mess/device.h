@@ -38,6 +38,11 @@ extern int device_input(int type, int id);
 extern void device_output(int type, int id, int data);
 extern int device_input_chunk(int type, int id, void *dst, int chunks);
 extern void device_output_chunk(int type, int id, void *src, int chunks);
+/* ask the osd code to eject a device image (e.g. floppy image with the Mac
+and Lisa drivers, as implemented in machine/sonydrive.c), so that it can,
+in addition to calling "device_filename_change(type, id, NULL);", update its
+internal osd caches as needed. */
+extern void osd_device_eject(int type, int id);
 
 
 #endif
