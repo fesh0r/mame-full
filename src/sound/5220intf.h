@@ -12,8 +12,6 @@ struct TMS5220interface
 	int (*read)(int count);			/* speech ROM read callback */
 	void (*load_address)(int data);	/* speech ROM load address callback */
 	void (*read_and_branch)(void);	/* speech ROM read and branch callback */
-
-	/*void (*ready_func)(int state);*/	/* CPU halt callback function - if NULL, Atari hardware interface */
 };
 
 int tms5220_sh_start(const struct MachineSound *msound);
@@ -23,6 +21,7 @@ void tms5220_sh_update(void);
 WRITE_HANDLER( tms5220_data_w );
 READ_HANDLER( tms5220_status_r );
 int tms5220_ready_r(void);
+double tms5220_time_to_ready(void);
 int tms5220_int_r(void);
 
 void tms5220_reset(void);

@@ -144,6 +144,21 @@ int tms5220_ready_r(void)
 
 /**********************************************************************************************
 
+     tms5220_ready_r -- return the time in seconds until the ready line is asserted
+
+***********************************************************************************************/
+
+double tms5220_time_to_ready(void)
+{
+    /* bring up to date first */
+    stream_update(stream, -1);
+	return (double) tms5220_cycles_to_ready() * 80 / intf->baseclock;
+}
+
+
+
+/**********************************************************************************************
+
      tms5220_int_r -- return the int status from the sound chip
 
 ***********************************************************************************************/

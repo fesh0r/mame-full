@@ -325,6 +325,46 @@ int tms5220_ready_read(void)
 }
 
 
+/**********************************************************************************************
+
+     tms5220_ready_read -- returns the number of cycles until ready is asserted
+
+***********************************************************************************************/
+
+int tms5220_cycles_to_ready(void)
+{
+	int answer;
+
+
+	if (tms5220_ready_read())
+		answer = 0;
+	else
+	{
+		int val;
+
+		answer = 200-sample_count;
+
+		/* total number of bits available in current byte is (8 - fifo_bits_taken) */
+		/* if more than 4 are available, we need to check the energy */
+		if (fifo_bits_taken < 4)
+		{
+			/* read energy */
+			val = (fifo[fifo_head] >> fifo_bits_taken) & 0xf;
+			if (val == 0)
+				/* 0 -> silence frame: we will only read 4 bits, and we will
+				therefore need to read another frame before the FIFO is not
+				full any more */
+				answer += 200;
+			/* 15 -> stop frame, we will only read 4 bits, but the FIFO will
+			we cleared */
+			/* otherwise, we need to parse the repeat flag (1 bit) and the
+			pitch (6 bits), so everything will be OK. */
+		}
+	}
+
+	return answer;
+}
+
 
 /**********************************************************************************************
 
