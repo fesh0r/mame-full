@@ -183,9 +183,7 @@ const struct KeyboardInfo *osd_get_key_list(void)
 
 #ifndef MESS
 #ifndef TINY_COMPILE
-#ifndef CPSMAME
 extern struct GameDriver driver_neogeo;
-#endif
 #endif
 #endif
 
