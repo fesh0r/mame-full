@@ -49,6 +49,7 @@ extern struct ImageModule imgmod_fmsx_cas;	/* fMSX style .cas file */
 /* extern struct ImageModule imgmod_svi_cas; */	/* SVI .cas file */
 extern struct ImageModule imgmod_msx_dsk;	/* bogus MSX images */
 extern struct ImageModule imgmod_rom16;
+extern struct ImageModule imgmod_nccard;	/* NC100/NC150/NC200 PCMCIA Card ram image */
 
 static const struct ImageModule *images[] = {
 	&imgmod_rsdos,
@@ -86,7 +87,8 @@ static const struct ImageModule *images[] = {
 	&imgmod_fmsx_cas,
 	&imgmod_msx_dsk,
 /*	&imgmod_svi_cas,  -- doesn't work yet! */
-	&imgmod_rom16
+	&imgmod_rom16,
+	&imgmod_nccard
 };
 
 /* ----------------------------------------------------------------------- */
