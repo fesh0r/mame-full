@@ -288,23 +288,15 @@ as a path separator by TI systems.  (As a matter of fact, no TI99 floppy disk
 DSR (except the HFDC DSR) implements disk directories, but other TI systems
 implement this convention extensively.)  Since period is used as the path
 separator, TI99 users often use the slash ('/') or dash ('-') characters as
-file extension separators; note, however, the use of file extensions is never
-systematic in TI99: you may use file extensions if you find them useful, just
-like you may use any other file naming scheme, but no program enforce or
+file extension separators; note, however, that the use of file extensions is
+never systematic in TI99: you may use file extensions if you find them useful,
+just like you may use any other file naming scheme, but no program enforce or
 require filename extensions as it is often the case in the DOS/windows world.
 
+
 Parameters for create:
+
 --label=...: an optional string of up to 10 characters.
---density=[1|2|3]: 1 for 40-track single density (FM), 2 for 40-track double
-	density (MFM), 3 for 80-track double density and high density (MFM).  The
-	original TI floppy disk controller only supports 40-track single density.
-	The BwG disk controller supports 40-track double density as well.  Only the
-	HFDC controller supports 80-track drives and disks correctly.  No emulated
-	disk controller supports HD on the TI99. On the Geneve, the HFDC disk
-	controller supports HD, except at boot time (this is because the Geneve
-	MDOS operating system replaces the incomplete HFDC DSR with a better DSR:
-	since the MDOS OS is not loaded yet at boot time, you cannot boot from a HD
-	disk).
 --sides=[1|2]: 1 for single-sided, 2 for double-sided
 --tracks=[1-80]: number of track per side.  From 1 to 40 on 40-track disks,
 	from 1 to 80 on 80-track disks.
@@ -313,27 +305,54 @@ Parameters for create:
 	(MFM).
 --protection=[0|1]: when set to 1, the disk will be protected and some (but not
 	all) TI99 programs won't overwrite the disk.
+--density=[0|1|2|3]: you should probably leave this parameter to 0 to select
+	the correct value automatically.  If you really want to know, 1 means
+	40-track single density (FM), 2 means 40-track double density (MFM), and 3
+	means either 80-track double density or high density (MFM).
+
+Supported geometries for create:
+
+  description    |sides|tracks|sectors| size | FDC Compatibility (1)
+                 |     |      |       |      |
+SSSD 48TPI 5"1/4 |  1  |  40  |    9  |  90K | All
+                 |     |      |       |      |
+DSSD 48TPI 5"1/4 |  2  |  40  |    9  | 180K | All
+                 |     |      |       |      |
+DSDD 48TPI 5"1/4 |  2  |  40  |   18  | 360K | SNUG BwG, Myarc HFDC
+                 |     |      |       |      |
+DSDD 96TPI 5"1/4 |  2  |  80  |   18  | 720K | Myarc HFDC (2)
+or DSDD 3"1/2    |     |      |       |      |
+                 |     |      |       |      |
+DSHD 3"1/2       |  2  |  80  |   36  |1.44M | Myarc HFDC (Geneve Only) (3)
+
+(1) Only emulated controllers are listed in this table
+(2) SNUG BwG can read such images, but it will corrupt them when writing new
+	data to them
+(3) You cannot boot from such images (this is because the Geneve MDOS operating
+	system needs to replaces the incomplete HFDC DSR with a better DSR to
+	support HD: since MDOS is not loaded yet at boot time, you cannot boot from
+	a HD disk).
+
 
 Examples:
 
-Create a SSSD image compatible with all controllers and any TI-99 with a SS
-floppy disks:
-imgtool create v9t9 test.dsk --density=1 --sides=1 --sectors=9
+List the catalog of image test.dsk:
+imgtool dir v9t9 test.dsk
+
+Create a SSSD image compatible with all controllers:
+imgtool create v9t9 test.dsk --sides=1 --tracks=40 --sectors=9
 
 Create a DSSD image compatible with all controllers:
-imgtool create v9t9 test.dsk --density=1 --sectors=9
+imgtool create v9t9 test.dsk --sides=2 --tracks=40 --sectors=9
 
 Create a DSDD image compatible with BwG and HFDC controllers:
-imgtool create v9t9 test.dsk
+imgtool create v9t9 test.dsk --sides=2 --tracks=40 --sectors=18
 
 Create a 80-track DSDD image compatible with the HFDC controller:
-imgtool create v9t9 test.dsk --density=3 --tracks=80
+imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=18
 
-Create a DSHD image compatible with the Geneve with an HFDC controller:
-imgtool create v9t9 test.dsk --density=3 --tracks=80 --sectors=36
-
-List an image:
-imgtool dir v9t9
+Create a DSHD image compatible with the Geneve with a HFDC controller:
+imgtool create v9t9 test.dsk --sides=2 --tracks=80 --sectors=36
 
 
 TI990 disk images (ti990hd)

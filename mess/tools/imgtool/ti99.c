@@ -1482,11 +1482,11 @@ static int ti99_write_sector(IMAGE *img, UINT8 head, UINT8 track, UINT8 sector, 
 static struct OptionTemplate ti99_createopts[] =
 {
 	{ "label",	"Volume name", IMGOPTION_FLAG_TYPE_STRING | IMGOPTION_FLAG_HASDEFAULT,	0,	0,	NULL},
-	{ "density",	"1 for SD, 2 for 40-track DD, 3 for 80-track DD and HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	3,	"2" },
 	{ "sides",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	2,	"2" },
 	{ "tracks",	NULL, IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	80,	"40" },
 	{ "sectors",	"1->9 for SD, 1->18 for DD, 1->36 for HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	1,	36,	"18" },
 	{ "protection",	"0 for normal, 1 for protected", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	1,	"0" },
+	{ "density",	"0 for auto-detect, 1 for SD, 2 for 40-track DD, 3 for 80-track DD and HD", IMGOPTION_FLAG_TYPE_INTEGER | IMGOPTION_FLAG_HASDEFAULT,	0,	3,	"0" },
 	{ NULL, NULL, 0, 0, 0, 0 }
 };
 
@@ -2163,6 +2163,17 @@ static int ti99_image_create(const struct ImageModule *mod, STREAM *f, const Res
 		;
 	physrecsperAU = i;
 	totAUs = totphysrecs / physrecsperAU;
+
+	/* auto-density */
+	if (density == 0)
+	{
+		if ((lvl1_ref.geometry.tracksperside <= 40) && (lvl1_ref.geometry.secspertrack <= 9))
+			density = 1;
+		else if ((lvl1_ref.geometry.tracksperside <= 40) && (lvl1_ref.geometry.secspertrack <= 18))
+			density = 2;
+		else
+			density = 3;
+	}
 
 	/* check number of tracks if 40-track image */
 	if ((density < 3) && (lvl1_ref.geometry.tracksperside > 40))
