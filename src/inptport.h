@@ -189,7 +189,8 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 	{													\
  		struct InputPort *port;							\
 		int seq_index[2] = {0,0};						\
- 		(void) port; (void)seq_index;					\
+		int key = 0;									\
+ 		(void) port; (void)seq_index; (void) key;		\
 
 /* end of table */
 #define INPUT_PORTS_END \
@@ -224,7 +225,7 @@ enum { IPT_UNUSED=0, IPT_END=1,IPT_PORT,
 		port = input_port_initialize(param, (type_));	\
 		port->mask = (mask_);							\
 		port->default_value = (default_);				\
-		seq_index[0] = seq_index[1] = 0;				\
+		seq_index[0] = seq_index[1] = key = 0;			\
 
 /* new technique to append a code */
 #define PORT_CODE_SEQ(code,seq_)									\

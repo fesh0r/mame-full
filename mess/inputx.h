@@ -44,6 +44,9 @@ enum
 #define UCHAR_SHIFT_BEGIN	(UCHAR_SHIFT_1)
 #define UCHAR_SHIFT_END		(UCHAR_SHIFT_2)
 
+#define PORT_CHAR(ch)												\
+	port->u.keyboard.chars[key++] = (ch);							\
+
 #define PORT_KEY0(mask,default,name,key1,key2)						\
 	PORT_BIT(mask, default, IPT_KEYBOARD)							\
 	PORT_NAME(name)													\
@@ -53,22 +56,22 @@ enum
 	PORT_BIT(mask, default, IPT_KEYBOARD)							\
 	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
-	port->u.keyboard.chars[0] = (uchar);							\
+	PORT_CHAR(uchar)												\
 
 #define PORT_KEY2(mask,default,name,key1,key2,uchar1,uchar2)		\
 	PORT_BIT(mask, default, IPT_KEYBOARD)							\
 	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
-	port->u.keyboard.chars[0] = (uchar1);							\
-	port->u.keyboard.chars[1] = (uchar2);							\
+	PORT_CHAR(uchar1)												\
+	PORT_CHAR(uchar2)												\
 
 #define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
 	PORT_BIT(mask, default, IPT_KEYBOARD)							\
 	PORT_NAME(name)													\
 	PORT_CODELEGACY(key1,key2)										\
-	port->u.keyboard.chars[0] = (uchar1);							\
-	port->u.keyboard.chars[1] = (uchar2);							\
-	port->u.keyboard.chars[2] = (uchar3);							\
+	PORT_CHAR(uchar1)												\
+	PORT_CHAR(uchar2)												\
+	PORT_CHAR(uchar3)												\
 
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \

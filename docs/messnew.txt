@@ -12,6 +12,8 @@ System Driver Changes:
 
 - [AMSTRAD] Renamed cpc6128fr to cpc6128f to be 8.3 compliant.  [Nate Woods]
 
+- [C16] Added natural keyboard support.  [Nate Woods]
+
 - [GENESIS] Fixed button input declarations.  [Nate Woods]
 
 - [PC] New PIT8253 implementation; Styx and Digger run better now.  Also fixed
