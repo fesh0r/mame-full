@@ -1423,7 +1423,14 @@ void draw_nbg3(void)
 		if (patlo > pat_no) { patlo = pat_no; printf("new Pattern Low bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
 		if (pathi < pat_no) { pathi = pat_no; printf("new Pattern  Hi bound: [%d] PlaneA,C=%08x %08x Regs %x %x\n",pat_no,planea_addr,planec_addr,(UINT32)regs[0x4c>>1],(UINT32)regs[0x3c>>1]);}
 
-	  if (pat_no < 4000) {draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);}
+	  if (pat_no+1 < 4000) {
+		  draw_1s8(&mem[(SATURN_VDP2_RAM_BASE/4) + (pat_no*8)],&frame[loopy*4096 + loopx*8],512);
+	   } else {
+		   printf("bye bye\n");
+	   }
+	   /* note to Tyra: on crashing, loopx is 32, and planea_addr is 0, so is the reg[4c>>1], */
+	   /* suspect the BIOS is switching resolutions to 1/2 what this function expects */
+	   /* also, why do you compute unused plane addrs in this function? */
 	}
     }
   render_plane(frame,3,0);
