@@ -14,7 +14,7 @@
 #include "ui_text.h"
 
 #ifdef MESS
-  #include "../mess/mess.h"
+#include "../mess/mess.h"
 #endif
 
 extern int bitmap_dirty;	/* set by osd_clearbitmap() */
@@ -134,7 +134,7 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 
 struct GfxElement *builduifont(void)
 {
-    static unsigned char fontdata6x8[] =
+	static unsigned char fontdata6x8[] =
 	{
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x7c,0x80,0x98,0x90,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x64,0x44,0x04,0xf4,0x04,0xf8,
@@ -264,7 +264,7 @@ struct GfxElement *builduifont(void)
 		0x10,0x20,0x88,0x88,0x88,0x98,0x68,0x00,0x70,0x00,0x88,0x88,0x88,0x98,0x68,0x00,
 		0x50,0x00,0x88,0x88,0x88,0x98,0x68,0x00,0x10,0x20,0x88,0x88,0x88,0x78,0x08,0x70,
 		0x80,0xF0,0x88,0x88,0xF0,0x80,0x80,0x80,0x50,0x00,0x88,0x88,0x88,0x78,0x08,0x70
-    };
+	};
 #if 0
 	static unsigned char fontdata6x8[] =
 	{
@@ -551,11 +551,11 @@ void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int heigh
 	black = Machine->uifont->colortable[0];
 	white = Machine->uifont->colortable[1];
 
-	plot_box(bitmap,leftx,        topy,         width,  1,       white);
-	plot_box(bitmap,leftx,        topy+height-1,width,  1,       white);
-	plot_box(bitmap,leftx,        topy,         1,      height,  white);
-	plot_box(bitmap,leftx+width-1,topy,         1,      height,  white);
-	plot_box(bitmap,leftx+1,      topy+1,       width-2,height-2,black);
+	plot_box(bitmap,leftx,		  topy, 		width,	1,		 white);
+	plot_box(bitmap,leftx,		  topy+height-1,width,	1,		 white);
+	plot_box(bitmap,leftx,		  topy, 		1,		height,  white);
+	plot_box(bitmap,leftx+width-1,topy, 		1,		height,  white);
+	plot_box(bitmap,leftx+1,	  topy+1,		width-2,height-2,black);
 
 	switch_true_orientation();
 }
@@ -2248,7 +2248,7 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 	{
 		/* startup info, print MAME version and ask for any key */
 
-		sprintf (buf2, "\n\t%s ", ui_getstring (UI_mame));	/* \t means that the line will be centered */
+		sprintf (buf2, "\n\t%s ", ui_getstring (UI_mame));  /* \t means that the line will be centered */
 		strcat(buf, buf2);
 
 		strcat(buf,build_version);
@@ -2830,7 +2830,7 @@ enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 #else
 enum { UI_SWITCH = 0,UI_DEFCODE,UI_CODE,UI_ANALOG,UI_CALIBRATE,
 		UI_GAMEINFO, UI_IMAGEINFO,UI_FILEMANAGER,UI_TAPECONTROL,
-		UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+		UI_DISKCONTROL,UI_HISTORY,UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
 #endif
 
 
@@ -2884,6 +2884,7 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
 	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
+	menu_item[menu_total] = ui_getstring (UI_diskcontrol); menu_action[menu_total++] = UI_DISKCONTROL;
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #endif
 
@@ -2956,6 +2957,9 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_TAPECONTROL:
 				res = tapecontrol(bitmap, sel >> SEL_BITS);
 				break;
+			case UI_DISKCONTROL:
+				res = diskcontrol(bitmap, sel >> SEL_BITS);
+				break;
 #endif
 			case UI_HISTORY:
 				res = displayhistory(bitmap, sel >> SEL_BITS);
@@ -3009,6 +3013,7 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_IMAGEINFO:
 			case UI_FILEMANAGER:
 			case UI_TAPECONTROL:
+			case UI_DISKCONTROL:
 			#endif
 			case UI_HISTORY:
 			case UI_CHEAT:
@@ -3439,64 +3444,64 @@ int handle_user_interface(struct osd_bitmap *bitmap)
 #endif
 
 #ifdef MESS
-if (Machine->gamedrv->flags & GAME_COMPUTER)
-{
-	static int ui_active = 0, ui_toggle_key = 0;
-	static int ui_display_count = 4 * 60;
+	if (Machine->gamedrv->flags & GAME_COMPUTER)
+	{
+		static int ui_active = 0, ui_toggle_key = 0;
+		static int ui_display_count = 2 * 50;
 
-	if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
-	{
-		if( !ui_toggle_key )
+		if( input_ui_pressed(IPT_UI_TOGGLE_UI) )
 		{
-			ui_toggle_key = 1;
-			ui_active = !ui_active;
-			ui_display_count = 4 * 60;
-			bitmap_dirty = 1;
-		 }
-	}
-	else
-	{
-		ui_toggle_key = 0;
-	}
-
-	if( ui_active )
-	{
-		if( ui_display_count > 0 )
-		{
-			char text[] = "KBD: UI  (ScrLock)";
-			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
+			if( !ui_toggle_key )
 			{
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
+				ui_toggle_key = 1;
+				ui_active = !ui_active;
+				ui_display_count = 2 * Machine->drv->frames_per_second;
+				schedule_full_refresh();
+			 }
+		}
+		else
+		{
+			ui_toggle_key = 0;
+		}
+
+		if( ui_active )
+		{
+			if( ui_display_count > 0 )
+			{
+				char text[] = "KBD: UI  (ScrLock)";
+				int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
+				int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
+				for( x = 0; text[x]; x++ )
+				{
+					drawgfx(bitmap,
+						Machine->uifont,text[x],0,0,0,
+						x0+x*Machine->uifont->width,
+						y0,0,TRANSPARENCY_NONE,0);
+				}
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
 			}
-			if( --ui_display_count == 0 )
-				bitmap_dirty = 1;
+		}
+		else
+		{
+			if( ui_display_count > 0 )
+			{
+				char text[] = "KBD: EMU (ScrLock)";
+				int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
+				int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
+				for( x = 0; text[x]; x++ )
+				{
+					drawgfx(bitmap,
+						Machine->uifont,text[x],0,0,0,
+						x0+x*Machine->uifont->width,
+						y0,0,TRANSPARENCY_NONE,0);
+				}
+				if( --ui_display_count == 0 )
+					schedule_full_refresh();
+			}
+			return 0;
 		}
 	}
-	else
-	{
-		if( ui_display_count > 0 )
-		{
-			char text[] = "KBD: EMU (ScrLock)";
-			int x, x0 = Machine->uiwidth - sizeof(text) * Machine->uifont->width - 2;
-			int y0 = Machine->uiymin + Machine->uiheight - Machine->uifont->height - 2;
-			for( x = 0; text[x]; x++ )
-			{
-				drawgfx(bitmap,
-					Machine->uifont,text[x],0,0,0,
-					x0+x*Machine->uifont->width,
-					y0,0,TRANSPARENCY_NONE,0);
-			}
-			if( --ui_display_count == 0 )
-				bitmap_dirty = 1;
-		}
-		return 0;
-	}
-}
 #endif
 
 	/* if the user pressed F12, save the screen to a file */
