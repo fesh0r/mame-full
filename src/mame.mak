@@ -1,6 +1,7 @@
 # uncomment the following lines to include a CPU core
 CPUS+=Z80@
 #CPUS+=Z80GB@
+#CPUS+=CDP1802@
 CPUS+=8080@
 CPUS+=8085A@
 CPUS+=M6502@

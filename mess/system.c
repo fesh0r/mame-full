@@ -43,7 +43,7 @@ extern struct GameDriver TINY_NAME;
 const struct GameDriver *drivers[] =
 {
   &TINY_NAME,
-  0				/* end of array */
+  0 			/* end of array */
 };
 
 #else
@@ -69,7 +69,7 @@ const struct GameDriver *drivers[] =
 const struct GameDriver *drivers[] =
 {
 #include "system.c"
-  0				/* end of array */
+  0 			/* end of array */
 };
 
 #else /* DRIVER_RECURSIVE */
@@ -86,10 +86,13 @@ const struct GameDriver *drivers[] =
 	/* BALLY */
 	DRIVER( astrocde )	/* Bally Astrocade								  */
 
+	/* RCA */
+	DRIVER( studio2 )	/* Studio II									  */
 	/* FAIRCHILD */
+
 	DRIVER( channelf )	/* Channel F									  */
 
-    /* COLECO */
+	/* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
 #if 0						/* Please dont include these next 2 in a distribution, they are Hacks	*/
 	DRIVER( colecofb )	/* ColecoVision (Fast BIOS load)				  */
@@ -100,8 +103,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( nespal )	/* Nintendo Entertainment System				  */
 	DRIVER( famicom )
 	DRIVER( gameboy )	/* Nintendo GameBoy Handheld					  */
-    DRIVER (snes)		/* Nintendo Super Nintendo                        */
-/*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy                           */
+	DRIVER (snes)		/* Nintendo Super Nintendo						  */
+/*	DRIVER (vboy)	*/	/* Nintendo Virtual Boy 						  */
 
 	/* NEC */
 	DRIVER( pce )		/* PC/Engine - Turbo Graphics-16  NEC 1989-1993   */
@@ -157,8 +160,8 @@ TESTDRIVER( odyssey2 )	/* Magnavox Odyssey 2 - 1978-1983				  */
 	DRIVER( apple2e )	/* 1983 Apple //e								  */
 	DRIVER( apple2ee )	/* 1985 Apple //e Enhanced						  */
 	DRIVER( apple2ep )	/* 1987 Apple //e Platinum						  */
-/*	DRIVER( mac512k )*/	/* 1984 Apple Macintosh 512k					  */
-    DRIVER( mac512ke )  /* 1986 Apple Macintosh 512ke                     */
+/*	DRIVER( mac512k )*/ /* 1984 Apple Macintosh 512k					  */
+	DRIVER( mac512ke )	/* 1986 Apple Macintosh 512ke					  */
 	DRIVER( macplus )	/* 1986 Apple Macintosh Plus					  */
 /*	DRIVER( mac2 )*/	/* 1987 Apple Macintosh II						  */
 	DRIVER( lisa2 ) 	/*												  */
@@ -200,10 +203,10 @@ TESTDRIVER( sx64 )		/* Commodore SX 64 - PAL						  */
 	DRIVER( c64gs ) 	/* Commodore 64 - NTSC							  */
 
 	DRIVER( cbm500 )	/* Commodore 500/P128-40						  */
-	DRIVER( cbm610 )    /* Commodore 610/B128LP                           */
-	DRIVER( cbm620 )    /* Commodore 620/B256LP                           */
-	DRIVER( cbm710 )    /* Commodore 710/B128HP                           */
-	DRIVER( cbm720 )    /* Commodore 620/B256HP                           */
+	DRIVER( cbm610 )	/* Commodore 610/B128LP 						  */
+	DRIVER( cbm620 )	/* Commodore 620/B256LP 						  */
+	DRIVER( cbm710 )	/* Commodore 710/B128HP 						  */
+	DRIVER( cbm720 )	/* Commodore 620/B256HP 						  */
 
 	DRIVER( c16 )		/* Commodore 16 								  */
 	DRIVER( c16hun )	/* Commodore 16 Hungarian Character Set Hack	  */
@@ -234,7 +237,7 @@ TESTDRIVER( plus4v )	/* Commodore +4 								  */
 	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
 	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
 	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
-/*	DRIVER( cpc464p )*/	/* Amstrad CPC464  Plus - 1987					  */
+/*	DRIVER( cpc464p )*/ /* Amstrad CPC464  Plus - 1987					  */
 /*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
 	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
 	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
@@ -277,7 +280,7 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 	DRIVER( coco3 ) 	/* Color Computer 3 							  */
 	DRIVER( coco3h ) /* Hacked Color Computer 3 (6309)						  */
 	DRIVER( cp400 ) 	/* Prologica CP400								  */
-	DRIVER( mc10 )		/* MC-10									      */
+	DRIVER( mc10 )		/* MC-10										  */
 
 	/* DRAGON DATA LTD */
 	DRIVER( dragon32 )	/* Dragon32 									  */
@@ -315,15 +318,15 @@ TESTDRIVER( trs80m3 )	/* TRS-80 Model III - Radio Shack/Tandy 		  */
 #ifndef MESS_EXCLUDE_IBMPC
 	/* IBM & Clones */
 	DRIVER( pc )		/* PC											  */
-	DRIVER( pcmda ) 	/* PC/XT with MDA (MGA aka Hercules)		      */
-	DRIVER( pccga ) 	/* PC/XT with CGA							      */
+	DRIVER( pcmda ) 	/* PC/XT with MDA (MGA aka Hercules)			  */
+	DRIVER( pccga ) 	/* PC/XT with CGA								  */
 
 	DRIVER( t1000hx )	/* Tandy 1000HX (similiar to PCJr)				  */
 
 	DRIVER( pc1512 )	/* Amstrad PC1512 (XT, CGA compatible)			  */
-	DRIVER( pc1640 )    /* Amstrad PC1640 (XT, EGA compatible)			  */
+	DRIVER( pc1640 )	/* Amstrad PC1640 (XT, EGA compatible)			  */
 
-TESTDRIVER( xtcga ) 	/* 												  */
+TESTDRIVER( xtcga ) 	/*												  */
 	DRIVER( xtvga ) 	/*												  */
 	DRIVER( atcga ) 	/*												  */
 TESTDRIVER( atvga ) 	/*												  */
@@ -404,7 +407,7 @@ TESTDRIVER( atvga ) 	/*												  */
 #endif
 
 	/* MOTOROLA */
-/*	DRIVER( mekd2 )*/ 	/* Motorola Evaluation Kit						  */
+/*	DRIVER( mekd2 )*/	/* Motorola Evaluation Kit						  */
 
 	/* DEC */
 	DRIVER( pdp1 )		/* DEC PDP1 for SPACEWAR! - 1962				  */
@@ -418,7 +421,7 @@ TESTDRIVER( atvga ) 	/*												  */
 /****************OTHERS******************************************************/
 
 #if 0
-    DRIVER( arcadia )   /* Arcadia 2001                                   */
+	DRIVER( arcadia )	/* Arcadia 2001 								  */
 	DRIVER( atarist )	/* Atari ST 									  */
 	DRIVER( channelf )	/* Fairchild Channel F VES - 1976				  */
 	DRIVER( coco2 ) 	/* Color Computer 2 							  */
@@ -435,3 +438,4 @@ TESTDRIVER( atvga ) 	/*												  */
 #endif /* DRIVER_RECURSIVE */
 
 #endif /* TINY_COMPILE */
+

@@ -21,6 +21,9 @@
 #if (HAS_Z80GB)
 #include "cpu/z80gb/z80gb.h"
 #endif
+#if (HAS_CDP1802)
+#include "cpu/cdp1802/cdp1802.h"
+#endif
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
@@ -90,8 +93,7 @@
 #if (HAS_TMS34010)
 #include "cpu/tms34010/tms34010.h"
 #endif
-#if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
-	|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
+#if (HAS_TMS9900 || HAS_TMS9940 || HAS_TMS9980 || HAS_TMS9985 || HAS_TMS9989 || HAS_TMS9995 || HAS_TMS99105A || HAS_TMS99110A)
 #include "cpu/tms9900/tms9900.h"
 #endif
 #if (HAS_Z8000)
@@ -106,7 +108,7 @@
 #if (HAS_PDP1)
 #include "cpu/pdp1/pdp1.h"
 #endif
-#if (HAS_ADSP2100) || (HAS_ADSP2105)
+#if (HAS_ADSP2100 || HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_MIPS)
@@ -397,6 +399,10 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_Z80GB)
 	CPU0(Z80GB,    z80gb,	 5,255,1.00,Z80GB_IGNORE_INT,  0,			   1,			   16,	  0,16,LE,1, 4,16	),
+#endif
+#if (HAS_CDP1802)
+#define cdp1802_ICount cdp1802_icount
+	CPU0(CDP1802,  cdp1802,  1,  0,1.00,CDP1802_INT_NONE,  CDP1802_IRQ,    -1,			   16,	  0,16,BE,1, 3,16	),
 #endif
 #if (HAS_8080)
 	CPU0(8080,	   i8080,	 4,255,1.00,I8080_NONE, 	   I8080_INTR,	   I8080_TRAP,	   16,	  0,16,LE,1, 3,16	),

@@ -59,14 +59,14 @@ enum {
  * These flags can be defined in the makefile (or project) to
  * exclude (zero) or include (non zero) specific CPU cores
  */
-#ifndef HAS_GENSYNC
-#define HAS_GENSYNC		0
-#endif
 #ifndef HAS_Z80
 #define HAS_Z80 		0
 #endif
-#ifndef HAS_Z80_VM
-#define HAS_Z80_VM		0
+#ifndef HAS_Z80GB
+#define HAS_Z80GB		0
+#endif
+#ifndef HAS_CDP1802
+#define HAS_CDP1802 	0
 #endif
 #ifndef HAS_8080
 #define HAS_8080		0
@@ -81,13 +81,7 @@ enum {
 #define HAS_M65C02		0
 #endif
 #ifndef HAS_M65SC02
-#define HAS_M65SC02		0
-#endif
-#ifndef HAS_M65CE02
-#define HAS_M65CE02		0
-#endif
-#ifndef HAS_M6509
-#define HAS_M6509		0
+#define HAS_M65SC02 	0
 #endif
 #ifndef HAS_M6510
 #define HAS_M6510		0
@@ -106,6 +100,12 @@ enum {
 #endif
 #ifndef HAS_M4510
 #define HAS_M4510		0
+#endif
+#ifndef HAS_M65CE02
+#define HAS_M65CE02 	0
+#endif
+#ifndef HAS_M6509
+#define HAS_M6509		0
 #endif
 #ifndef HAS_H6280
 #define HAS_H6280		0
@@ -173,11 +173,11 @@ enum {
 #ifndef HAS_HD63705
 #define HAS_HD63705 	0
 #endif
-#ifndef HAS_HD6309
-#define HAS_HD6309		0
-#endif
 #ifndef HAS_M6809
 #define HAS_M6809		0
+#endif
+#ifndef HAS_HD6309
+#define HAS_HD6309		0
 #endif
 #ifndef HAS_KONAMI
 #define HAS_KONAMI		0
@@ -188,20 +188,20 @@ enum {
 #ifndef HAS_M68010
 #define HAS_M68010		0
 #endif
-#ifndef HAS_M68EC020
-#define HAS_M68EC020	0
-#endif
 #ifndef HAS_M68020
 #define HAS_M68020		0
+#endif
+#ifndef HAS_M68EC020
+#define HAS_M68EC020	0
 #endif
 #ifndef HAS_T11
 #define HAS_T11 		0
 #endif
-#ifndef HAS_F8
-#define HAS_F8			0
-#endif
 #ifndef HAS_S2650
 #define HAS_S2650		0
+#endif
+#ifndef HAS_F8
+#define HAS_F8			0
 #endif
 #ifndef HAS_TMS34010
 #define HAS_TMS34010	0
@@ -225,10 +225,10 @@ enum {
 #define HAS_TMS9995 	0
 #endif
 #ifndef HAS_TMS99105A
-#define HAS_TMS99105A 	0
+#define HAS_TMS99105A	0
 #endif
 #ifndef HAS_TMS99110A
-#define HAS_TMS99110A 	0
+#define HAS_TMS99110A	0
 #endif
 #ifndef HAS_Z8000
 #define HAS_Z8000		0
@@ -252,7 +252,7 @@ enum {
 #define HAS_MIPS		0
 #endif
 #ifndef HAS_SC61860
-#define HAS_SC61860		0
+#define HAS_SC61860 	0
 #endif
 #ifndef HAS_ARM
 #define HAS_ARM 		0
@@ -263,7 +263,6 @@ enum {
 #ifndef HAS_SPC700
 #define HAS_SPC700		0
 #endif
-
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
