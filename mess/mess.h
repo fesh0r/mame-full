@@ -147,7 +147,6 @@ enum
 	DEVICE_LOAD_AT_INIT		= 4
 };
 
-#ifdef MAME_DEBUG
 /* runs checks to see if device code is proper */
 int messvaliditychecks(void);
 
@@ -155,7 +154,6 @@ int messvaliditychecks(void);
  * to provide a way to identify images to test with
  */
 void messtestdriver(const struct GameDriver *gamedrv, const char *(*getfodderimage)(unsigned int index, int *foddertype));
-#endif
 
 /* these are called from mame.c*/
 int devices_init(const struct GameDriver *gamedrv);

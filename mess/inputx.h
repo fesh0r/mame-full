@@ -70,14 +70,6 @@ enum
 	PORT_CHAR(uchar1)												\
 	PORT_CHAR(uchar2)												\
 
-#define PORT_KEY3(mask,default,name,key1,key2,uchar1,uchar2,uchar3)	\
-	PORT_BIT(mask, default, IPT_KEYBOARD)							\
-	PORT_NAME(name)													\
-	PORT_CODELEGACY(key1,key2)										\
-	PORT_CHAR(uchar1)												\
-	PORT_CHAR(uchar2)												\
-	PORT_CHAR(uchar3)												\
-
 /* config definition */
 #define PORT_CONFNAME(mask,default,name) \
 	PORT_BIT(mask, default, IPT_CONFIG_NAME)						\

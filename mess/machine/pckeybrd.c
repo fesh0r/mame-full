@@ -972,66 +972,66 @@ QUEUE_CHARS( at_keyboard )
 INPUT_PORTS_START( pc_keyboard )
     PORT_START  /* IN4 */
 	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
-	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_ESC,        CODE_NONE, 26 )			/* Esc                         01  81 */
-	PORT_KEY2( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_1,          CODE_NONE, '1', '!' )	/* 1                           02  82 */
-	PORT_KEY2( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_2,          CODE_NONE, '2', '@' )	/* 2                           03  83 */
-	PORT_KEY2( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_3,          CODE_NONE, '3', '#' )	/* 3                           04  84 */
-	PORT_KEY2( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_4,          CODE_NONE, '4', '$' )	/* 4                           05  85 */
-	PORT_KEY2( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_5,          CODE_NONE, '5', '%' )	/* 5                           06  86 */
-	PORT_KEY2( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_6,          CODE_NONE, '6', '^' )	/* 6                           07  87 */
-	PORT_KEY2( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_7,          CODE_NONE, '7', '&' )	/* 7                           08  88 */
-	PORT_KEY2( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_8,          CODE_NONE, '8', '*' )	/* 8                           09  89 */
-	PORT_KEY2( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_9,          CODE_NONE, '9', '(' )	/* 9                           0A  8A */
-	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_0,          CODE_NONE, '0', ')' )	/* 0                           0B  8B */
-	PORT_KEY2( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_MINUS,      CODE_NONE, '-', '_' )	/* -                           0C  8C */
-	PORT_KEY2( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_EQUALS,     CODE_NONE, '=', '+' )	/* =                           0D  8D */
-	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_BACKSPACE,  CODE_NONE, 8 )			/* Backspace                   0E  8E */
-	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_TAB,        CODE_NONE, 9 )			/* Tab                         0F  8F */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_ESC) PORT_CHAR(26)			/* Esc                         01  81 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_1) PORT_CHAR('1') PORT_CHAR('!')	/* 1                           02  82 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_2) PORT_CHAR('2') PORT_CHAR('@')	/* 2                           03  83 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_3) PORT_CHAR('3') PORT_CHAR('#')	/* 3                           04  84 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_4) PORT_CHAR('4') PORT_CHAR('$')	/* 4                           05  85 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_5) PORT_CHAR('5') PORT_CHAR('%')	/* 5                           06  86 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_6) PORT_CHAR('6') PORT_CHAR('^')	/* 6                           07  87 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_7) PORT_CHAR('7') PORT_CHAR('&')	/* 7                           08  88 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_8) PORT_CHAR('8') PORT_CHAR('*')	/* 8                           09  89 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_9) PORT_CHAR('9') PORT_CHAR('(')	/* 9                           0A  8A */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_0) PORT_CHAR('0') PORT_CHAR(')')	/* 0                           0B  8B */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_MINUS) PORT_CHAR('-') PORT_CHAR('_')	/* -                           0C  8C */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_EQUALS) PORT_CHAR('=') PORT_CHAR('+')	/* =                           0D  8D */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(8)			/* Backspace                   0E  8E */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_TAB) PORT_CHAR(9)			/* Tab                         0F  8F */
 		
 	PORT_START	/* IN5 */
-	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_Q,          CODE_NONE, 'Q' ) /* Q                           10  90 */
-	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_W,          CODE_NONE, 'W' ) /* W                           11  91 */
-	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_E,          CODE_NONE, 'E' ) /* E                           12  92 */
-	PORT_KEY1( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_R,          CODE_NONE, 'R' ) /* R                           13  93 */
-	PORT_KEY1( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_T,          CODE_NONE, 'T' ) /* T                           14  94 */
-	PORT_KEY1( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_Y,          CODE_NONE, 'Y' ) /* Y                           15  95 */
-	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_U,          CODE_NONE, 'U' ) /* U                           16  96 */
-	PORT_KEY1( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_I,          CODE_NONE, 'I' ) /* I                           17  97 */
-	PORT_KEY1( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_O,          CODE_NONE, 'O' ) /* O                           18  98 */
-	PORT_KEY1( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_P,          CODE_NONE, 'P' ) /* P                           19  99 */
-	PORT_KEY2( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_OPENBRACE,  CODE_NONE, '[', '{' ) /* [                           1A  9A */
-	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_CLOSEBRACE, CODE_NONE, ']', '}' ) /* ]                           1B  9B */
-	PORT_KEY1( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_ENTER,      CODE_NONE, 13  ) /* Enter                       1C  9C */
-	PORT_KEY1( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_LCONTROL,   CODE_NONE, UCHAR_MAMEKEY(LCONTROL) )      /* Left Ctrl                   1D  9D */
-	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_A,          CODE_NONE, 'A' ) /* A                           1E  9E */
-	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_S,          CODE_NONE, 'S' ) /* S                           1F  9F */
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Q) PORT_CHAR('Q') /* Q                           10  90 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_W) PORT_CHAR('W') /* W                           11  91 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_E) PORT_CHAR('E') /* E                           12  92 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_R) PORT_CHAR('R') /* R                           13  93 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_T) PORT_CHAR('T') /* T                           14  94 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Y) PORT_CHAR('Y') /* Y                           15  95 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_U) PORT_CHAR('U') /* U                           16  96 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_I) PORT_CHAR('I') /* I                           17  97 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_O) PORT_CHAR('O') /* O                           18  98 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_P) PORT_CHAR('P') /* P                           19  99 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_OPENBRACE) PORT_CHAR('[') PORT_CHAR('{') /* [                           1A  9A */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_CLOSEBRACE) PORT_CHAR(']') PORT_CHAR('}') /* ]                           1B  9B */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_ENTER) PORT_CHAR(13) /* Enter                       1C  9C */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LCONTROL) PORT_CHAR(UCHAR_MAMEKEY(LCONTROL))      /* Left Ctrl                   1D  9D */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_A) PORT_CHAR('A') /* A                           1E  9E */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_S) PORT_CHAR('S') /* S                           1F  9F */
 		\
 	PORT_START	/* IN6 */
-	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_D,          CODE_NONE, 'D' ) /* D                           20  A0 */
-	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_F,          CODE_NONE, 'F' ) /* F                           21  A1 */
-	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_G,          CODE_NONE, 'G' ) /* G                           22  A2 */
-	PORT_KEY1( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_H,          CODE_NONE, 'H' ) /* H                           23  A3 */
-	PORT_KEY1( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_J,          CODE_NONE, 'J' ) /* J                           24  A4 */
-	PORT_KEY1( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_K,          CODE_NONE, 'K' ) /* K                           25  A5 */
-	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_L,          CODE_NONE, 'L' ) /* L                           26  A6 */
-	PORT_KEY2( 0x0080, 0x0000, IP_NAME_DEFAULT, KEYCODE_COLON,      CODE_NONE, ';', ':' ) /* ;                           27  A7 */
-	PORT_KEY2( 0x0100, 0x0000, IP_NAME_DEFAULT, KEYCODE_QUOTE,      CODE_NONE, '\'', '\"' ) /* '                           28  A8 */
-	PORT_KEY2( 0x0200, 0x0000, IP_NAME_DEFAULT, KEYCODE_TILDE,      CODE_NONE, '`', '~' ) /* `                           29  A9 */
-	PORT_KEY1( 0x0400, 0x0000, IP_NAME_DEFAULT, KEYCODE_LSHIFT,     CODE_NONE, UCHAR_MAMEKEY(LSHIFT) ) /* Left Shift                  2A  AA */
-	PORT_KEY2( 0x0800, 0x0000, IP_NAME_DEFAULT, KEYCODE_BACKSLASH,  CODE_NONE, '\\', '|' ) /* \                           2B  AB */
-	PORT_KEY1( 0x1000, 0x0000, IP_NAME_DEFAULT, KEYCODE_Z,          CODE_NONE, 'Z' ) /* Z                           2C  AC */
-	PORT_KEY1( 0x2000, 0x0000, IP_NAME_DEFAULT, KEYCODE_X,          CODE_NONE, 'X' ) /* X                           2D  AD */
-	PORT_KEY1( 0x4000, 0x0000, IP_NAME_DEFAULT, KEYCODE_C,          CODE_NONE, 'C' ) /* C                           2E  AE */
-	PORT_KEY1( 0x8000, 0x0000, IP_NAME_DEFAULT, KEYCODE_V,          CODE_NONE, 'V' ) /* V                           2F  AF */
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_D) PORT_CHAR('D') /* D                           20  A0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F) PORT_CHAR('F') /* F                           21  A1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_G) PORT_CHAR('G') /* G                           22  A2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_H) PORT_CHAR('H') /* H                           23  A3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_J) PORT_CHAR('J') /* J                           24  A4 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_K) PORT_CHAR('K') /* K                           25  A5 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_L) PORT_CHAR('L') /* L                           26  A6 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_COLON) PORT_CHAR(';') PORT_CHAR(':') /* ;                           27  A7 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_QUOTE) PORT_CHAR('\'') PORT_CHAR('\"') /* '                           28  A8 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_TILDE) PORT_CHAR('`') PORT_CHAR('~') /* `                           29  A9 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LSHIFT) PORT_CHAR(UCHAR_MAMEKEY(LSHIFT)) /* Left Shift                  2A  AA */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSLASH) PORT_CHAR('\\') PORT_CHAR('|') /* \                           2B  AB */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Z) PORT_CHAR('Z') /* Z                           2C  AC */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_X) PORT_CHAR('X') /* X                           2D  AD */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_C) PORT_CHAR('C') /* C                           2E  AE */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_V) PORT_CHAR('V') /* V                           2F  AF */
 		
 	PORT_START	/* IN7 */
-	PORT_KEY1( 0x0001, 0x0000, IP_NAME_DEFAULT, KEYCODE_B,          CODE_NONE, 'B' ) /* B                           30  B0 */
-	PORT_KEY1( 0x0002, 0x0000, IP_NAME_DEFAULT, KEYCODE_N,          CODE_NONE, 'N' ) /* N                           31  B1 */
-	PORT_KEY1( 0x0004, 0x0000, IP_NAME_DEFAULT, KEYCODE_M,          CODE_NONE, 'M' ) /* M                           32  B2 */
-	PORT_KEY2( 0x0008, 0x0000, IP_NAME_DEFAULT, KEYCODE_COMMA,      CODE_NONE, ',', '<' ) /* ,                           33  B3 */
-	PORT_KEY2( 0x0010, 0x0000, IP_NAME_DEFAULT, KEYCODE_STOP,       CODE_NONE, '.', '>' ) /* .                           34  B4 */
-	PORT_KEY2( 0x0020, 0x0000, IP_NAME_DEFAULT, KEYCODE_SLASH,      CODE_NONE, '/', '?' ) /* /                           35  B5 */
-	PORT_KEY1( 0x0040, 0x0000, IP_NAME_DEFAULT, KEYCODE_RSHIFT,     CODE_NONE, UCHAR_MAMEKEY(RSHIFT) ) /* Right Shift                 36  B6 */
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_B) PORT_CHAR('B') /* B                           30  B0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_N) PORT_CHAR('N') /* N                           31  B1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_M) PORT_CHAR('M') /* M                           32  B2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_COMMA) PORT_CHAR(',') PORT_CHAR('<') /* ,                           33  B3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_STOP) PORT_CHAR('.') PORT_CHAR('>') /* .                           34  B4 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_SLASH) PORT_CHAR('/') PORT_CHAR('?') /* /                           35  B5 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_RSHIFT) PORT_CHAR(UCHAR_MAMEKEY(RSHIFT)) /* Right Shift                 36  B6 */
 	PC_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK,   CODE_NONE ) /* Keypad *  (PrtSc)           37  B7 */
 	PC_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT,       CODE_NONE ) /* Left Alt                    38  B8 */
 	PC_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE,      CODE_NONE ) /* Space                       39  B9 */
