@@ -621,7 +621,7 @@ static struct MachineDriver machine_driver_z88 =
 
 ROM_START(z88)
         ROM_REGION(((64*1024)+(128*1024)), REGION_CPU1)
-        ROM_LOAD("z88v400.rom", 0x010000, 0x020000, 0x0000)
+        ROM_LOAD("z88v400.rom", 0x010000, 0x020000, 0x1356d440)
 ROM_END
 
 static const struct IODevice io_z88[] =
