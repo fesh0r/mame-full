@@ -1,7 +1,7 @@
 # MESS System Information File
 
-# All corrections/submissions are welcome. Please zip either a patch file or the entire 
-# modified file to:
+# All corrections and submissions are welcome. Please zip either a patch file or the entire 
+# modified file and send it to:
 #	Hobie Troxell [ht1848@yahoo.com]
 
 # This file contains the basic documentation for most of the drivers presented in the MESS
@@ -4037,6 +4037,7 @@ $info=intv
 $bio
 Mattel Intellivision (1979)
 
+
 History and Trivia:
 
 At the end of 1979, Mattel Electronics released a video game system known as Intellivision 
@@ -4061,10 +4062,15 @@ to download games from your cable provider).
 Features:
 
 CPU: General Instruments 16 bit microprocessor (1 Mhz)
+
 Memory: 4K internal ROM operating system, 2K RAM
+
 Controls: 12 button numeric key pad, four action keys, 16 direction disk, overlay support
+
 Sound: Sound generator capable of 3 part harmony with programmable ASDR envelopes
+
 Color: 16 colors
+
 Resolution: 192v x 160h pixels
 
 
@@ -4086,6 +4092,7 @@ This driver is almost complete.
 Still TBD are:
 
 collision detection - 16-way controller mapping - default mapping of the right player 
+
 controller - Only .ROM format cartridges (Intellicart) are supported in this release.
 
   
@@ -4105,22 +4112,25 @@ units in late 1981. It was color-keyed to match the original Intellivision, and 
 console fit into the top of the unit. It sported a full-stroke 60-key keyboard, built in 
 cassette recorder, and brought the total memory capacity of the Intellivision to 64K.
 
+
 Spurred on by the increasingly popular home computer market, Mattel introduced the 
 Entertainment Computer System (which replaced the original expansion keyboard) along with the 
 INTV II in 1983. This unit plugs into the cartridge port of the INTV II, and has its own
 cartridge slot, two additional controller ports, a cassette interface, music keyboard, and a 
 balance dial for controlling the output level of the ECS's three additional voices.
 
+
 The ECS came packaged with a 49-key chiclet-style keyboard, power supply, and a well-written 
 manual describing INTV BASIC. Upon returning the registration card, users would receive "The 
 Step-By-Step Guide To Home Computing", which included a very detailed BASIC Tutorial, and some 
 more in-depth study of the ECS's abilities. The unit sported an additional voice chip, 10K of 
-ROM and 2K of RAM for programming purposes.  
+ROM and 2K of RAM for programming purposes.
 
 
 Usage/Known Issues:
 
 This driver is almost complete.  The tape drive is not yet supported.
+
 
 The keyboard component has two cartridge slots - one to replace the occupied intv cart slot, 
 and one for new keyboard carts (BASIC).   If you want to use the BASIC cart at startup, you
@@ -4315,6 +4325,20 @@ $end
 $info=laser110
 $bio
 Video Technology Laser 110 (1983)
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=laser200
+$bio
+Video Technology Laser 200 (1983)
 
 
 Features:
@@ -4734,6 +4758,21 @@ Features:
 MESS Emulation State:
 
 $end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=megaduck
+$bio
+MegaDuck/Cougar Boy
+
+
+Features:
+
+
+MESS Emulation State:
+
+$end
+
 #---------------------------------------------------------------------------------------------#
 
 $info=microtan
@@ -4825,6 +4864,21 @@ MESS Emulation State:
 Random number generation is not accurate (rriot6530 emulation)
 
 Led emulation not accurate (noticeable while computer is thinking)
+
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=mpf1
+$bio
+Micro Professor 1
+
+
+Features:
+
+
+MESS Emulation State:
 
 
 $end
@@ -5386,6 +5440,14 @@ $end
 $info=msx2
 $bio
 MSX 2 (1985)
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=msx2p
+$bio
+MSX 2+ (1988)
 
 $end
 
@@ -6952,6 +7014,17 @@ and the bi-directional 132 columns, 160 CPS printer. The 8050 has two 6502's, 4 
 12 KB of ROM (which contains the DOS). It was sold with Ozz - a Database, and a version of the 
 spreadsheet "Visicalc".
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=pmd851
+$bio
+PMD-85.1
+
+
+MESS Emulation State:
 
 $end
 
