@@ -235,9 +235,9 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
 	for (k=0; k<8; k++) {
 	    b=ch[k];
 	    arcadia_video.bg[y+k*2][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k*2][x>>3]|=b<<(8-(x&7));
+	    arcadia_video.bg[y+k*2][(x>>3)+1]|=b<<(8-(x&7));
 	    arcadia_video.bg[y+k*2+1][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k*2+1][x>>3]|=b<<(8-(x&7));
+	    arcadia_video.bg[y+k*2+1][(x>>3)+1]|=b<<(8-(x&7));
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
 		    0,0,x,y+k*2,
 		    0, TRANSPARENCY_NONE,0);
@@ -249,7 +249,7 @@ INLINE void arcadia_draw_char(struct osd_bitmap *bitmap, UINT8 *ch, int color,
 	for (k=0; k<8; k++) {
 	    b=ch[k];
 	    arcadia_video.bg[y+k][x>>3]|=b>>(x&7);
-	    arcadia_video.bg[y+k][x>>3]|=b<<(8-(x&7));
+	    arcadia_video.bg[y+k][(x>>3)+1]|=b<<(8-(x&7));
 	    drawgfx(bitmap, Machine->gfx[0], b,0,
 		    0,0,x,y+k,
 		    0, TRANSPARENCY_NONE,0);
@@ -325,7 +325,8 @@ READ_HANDLER(arcadia_vsync_r)
     return arcadia_video.line>=216?0x80:0;
 }
 
-bool arcadia_sprite_collision(int n1, int n2)
+//bool arcadia_sprite_collision(int n1, int n2)
+int arcadia_sprite_collision(int n1, int n2)
 {
     int k, b1, b2;
     if (arcadia_video.pos[n1].x+8<=arcadia_video.pos[n2].x) return FALSE;
@@ -333,9 +334,9 @@ bool arcadia_sprite_collision(int n1, int n2)
     for (k=0; k<8; k++) {
 	if (arcadia_video.pos[n1].y+k<arcadia_video.pos[n2].y) continue;
 	if (arcadia_video.pos[n1].y+k>=arcadia_video.pos[n2].y+8) continue;
-	b1=arcadia_video.reg.d.chars[n1][k]<<(8-arcadia_video.pos[n1].x&7);
+	b1=arcadia_video.reg.d.chars[n1][k]<<(8-(arcadia_video.pos[n1].x&7));
 	b2=arcadia_video.reg.d.chars[n2][arcadia_video.pos[n1].y+k-arcadia_video.pos[n2].y]
-	    <<(8-arcadia_video.pos[n2].x&7);
+	    <<(8-(arcadia_video.pos[n2].x&7));
 	if (b1&b2) return TRUE;
     }
     return FALSE;
