@@ -476,7 +476,20 @@ signed int pdp1_ICount;
 
 
 /*
-	interrupts are called "sequence break" in pdp1, but it does not make a big difference.
+	Interrupts are called "sequence break" in pdp1, but the general idea is the same.
+
+	There are several interrupt lines.  With the standard sequence break system, all lines
+	are logically or'ed to trigger a single interrupt level.  Interrupts can be triggered
+	by either a pulse or a level on the interrupt lines.  With the optional type 120 sequence
+	break system, each of 16 lines triggers is wired to a different priority level: additionnally,
+	each interrupt line can be masked out, and interrupt can be triggered through software.
+
+	Also, instructions can be interrupted in the middle of execution.  This is done by
+	decrementing the PC register: therefore the instruction is re-executed from start.
+
+	Interrupt routines should not execute most IOT, as the interrupt may interrupt another.
+
+	More details can be found in the handbook and the 
 */
 /*
 	This function MUST be called every time pdp1.sbm, pdp1.b4, pdp1.irq_state or pdp1.b2 change.
@@ -487,7 +500,7 @@ static void field_interrupt(void)
 	Pending interrupts are in b3 (simulated by (pdp1.irq_state & pdp1.b1) | pdp1.b2)), but they
 	are only honored if no higher priority interrupt routine is in execution (one bit set in b4
 	for each routine in execution).  The revelant mask is created with (pdp1.b4 | (- pdp1.b4)),
-	as the carry chain does precisely what we want.
+	as the carry chain (remember that -b4 = (~ b4) + 1) does precisely what we want.
 	b4:    0001001001000
 	-b4:   1110110111000
 	b4|-b4:1111111111000
@@ -499,7 +512,7 @@ static void field_interrupt(void)
 	if (pdp1.sbm && current_irq)
 	{
 		pdp1.sbs_request = 1;
-		for (i=0; i<16 && (! ((current_irq >> i) & 1)); i++)
+		for (i=0; /*i<16 &&*/ (! ((current_irq >> i) & 1)); i++)
 			;
 		pdp1.sbs_level = i;
 	}
@@ -849,7 +862,7 @@ int pdp1_execute(int cycles)
 					pdp1.b4 |= (1 << pdp1.sbs_level);	/* set "interrupt in progress" flag */
 					pdp1.b2 &= ~(1 << pdp1.sbs_level);	/* clear interrupt request */
 					field_interrupt();
-					MA = 0;				/* not true in type 120 sequence break system */
+					MA = pdp1.sbs_level << 2;	/* always 0 with standard sequence break system */
 					MB = AC;			/* save AC to MB */
 					AC = (OV << 17) | (EXD << 16) | PC;	/* save OV/EXD/PC to AC */
 					EXD = OV = 0;		/* according to maintainance manual p. 8-17 and ?-?? */
