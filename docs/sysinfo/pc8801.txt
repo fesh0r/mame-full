@@ -1,0 +1,76 @@
+NEC PC-8801 series
+------------------
+
+early Z80 based computer commonly used in Japan
+
+Features
+--------
+main Z80 CPU 4MHz(some models has 8MHz version)
+sub Z80 CPU 4MHz(for 5'floppy disk drive)
+64KB RAM
+48KB Video RAM
+640x200 8colors or B/W graphics
+640x400 B/W graphics(required "high-resolution" display(VSYNC 24KHz))
+80x25 text(alphabet or Kata-kana only, can overlay on graphics)
+YM-2203 or YM-2608 FM sound(some models or optional)
+extended RAM(various size, some models or optional)
+5'2D or 5'2HD or 8'2D floppy disk drives(some models or optional)
+96KB BASIC ROM
+Kanji ROM(some models or optional)
+Kana-Kanji dictionary ROM(some models)
+RS-232C
+CD-ROM(some models)
+printer port
+
+MESS emulation state
+--------------------
+CPU
+text or graphics
+YM-2203 sound(YM-2608 not yet)
+extended RAM
+5'2D disk drives
+Kanji ROM
+Note: Currently, each model is separated which use "High-resolution"
+      display and "Low-resolution" display. Beacause I don't know how
+      to change display resolution and HSYNC frequency dynamically
+      (when machine is running).
+
+ROM
+---
+BIOS images has same format as one of images for M88 emulator, but
+"disk.rom" is only used first 2K bytes, that is, you must truncate
+last 6KB of "disk.rom". M88 emulator and BIOS tools can be downloaded
+from this:
+
+	http://www.remus.dti.ne.jp/~cisc/m88/
+
+Currently PC-8801mkIISR rom is only tested.
+
+Disk Emulation
+--------------
+The D88 format disk image is supported now, but multiple disks image
+files are not supported, That is, disk in image file must be only
+one. The D88 disk image format is supported by more PC-8801
+emulators. Tools for D88 format can be downloaded from these:
+
+	http://www1.plala.or.jp/aoto/index.html
+	http://www.remus.dti.ne.jp/~cisc/m88/
+	http://member.nifty.ne.jp/arearea/M882.html
+
+TODO
+----
+integrate "high-resolution" and "low-resolution" mode
+optimization of CPU switching
+more accurate speed(memory wait and DMAC overhead)
+YM-2608 sound
+joystick and mouse
+5'2HD or 8'2D floppy disk drives
+font substitution
+Kana-Kanji dictionary ROM
+test ROMs of other models
+multiple disks image support
+source clean-up
+printer
+RS-232C
+CD-ROM
+more good English document
