@@ -113,6 +113,9 @@ int win_color32_rdst_shift = 16;
 int win_color32_gdst_shift = 8;
 int win_color32_bdst_shift = 0;
 
+// actual physical resolution
+int win_physical_width;
+int win_physical_height;
 
 
 //============================================================
@@ -1116,6 +1119,12 @@ void win_adjust_window(void)
 		set_aligned_window_pos(win_video_window, win_window_mode ? HWND_TOP : HWND_TOPMOST,
 				window.left, window.top,
 				window.right - window.left, window.bottom - window.top, 0);
+
+	// take note of physical window size (used for lightgun coordinate calculation)
+	win_physical_width=window.right - window.left;
+	win_physical_height=window.bottom - window.top;
+
+	logerror("Physical width %d, height %d\n",win_physical_width,win_physical_height);
 
 	// update the cursor state
 	win_update_cursor_state();

@@ -2481,7 +2481,7 @@ MACHINE_DRIVER_END
 
 INPUT_PORTS_START( desertgu )
 	PORT_START      /* IN0 */
-	PORT_ANALOG( 0x7f, 0x45, IPT_AD_STICK_X, 70, 10, 0xf, 0x7f)
+	PORT_ANALOG( 0x7f, 0x55, IPT_LIGHTGUN_X, 70, 10, 0xf, 0x7f)
 
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x00, "Time" )
@@ -2503,7 +2503,7 @@ INPUT_PORTS_START( desertgu )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG( 0x7f, 0x45, IPT_AD_STICK_Y, 70, 10, 0xf, 0x7f)
+	PORT_ANALOG( 0x7f, 0x45, IPT_LIGHTGUN_Y, 70, 10, 0xf, 0x7f)
 INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( desertgu )
@@ -3998,3 +3998,4 @@ ROM_END
 		  GAME( 1979, solfight, ozmawars, invaders, ozmawars, 8080bw,   ROT270, "bootleg", "Solar Fight" )
 		  GAME( 1979, spaceph,  ozmawars, invaders, spaceph,  8080bw,   ROT270, "Zilec Games", "Space Phantoms" )
 		  GAMEX(1979, yosakdon, 0,        yosakdon, lrescue,  8080bw,   ROT270, "bootleg", "Yosaku To Donbee (bootleg)", GAME_NO_SOUND )
+

@@ -900,7 +900,7 @@ static MACHINE_DRIVER_START( cinemat )
 	MDRV_MACHINE_INIT(cinemat_sound)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1024, 0, 768)
 	MDRV_PALETTE_LENGTH(32768)
@@ -1057,18 +1057,18 @@ ROM_END
 
 ROM_START( starcase )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
-	ROM_LOAD16_BYTE( "mottoeis.t7", 0x8000, 0x0800, 0x65d0a225 )
-	ROM_LOAD16_BYTE( "mottoeis.p7", 0x8001, 0x0800, 0xd8f58d9a )
-	ROM_LOAD16_BYTE( "mottoeis.u7", 0x9000, 0x0800, 0xd4f35b82 )
+	ROM_LOAD16_BYTE( "starcast.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "starcast.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "starcast.u7", 0x9000, 0x0800, 0xd4f35b82 )
 	ROM_LOAD16_BYTE( "mottoeis.r7", 0x9001, 0x0800, 0xa2c1ed52 )
 ROM_END
 
 ROM_START( stellcas )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 8k for code */
-	ROM_LOAD16_BYTE( "elttron.t7", 0x8000, 0x0800, 0x65d0a225 )
-	ROM_LOAD16_BYTE( "elttron.p7", 0x8001, 0x0800, 0xd8f58d9a )
-	ROM_LOAD16_BYTE( "elttron.u7", 0x9000, 0x0800, 0xd5b44050 )
-	ROM_LOAD16_BYTE( "elttron.r7", 0x9001, 0x0800, 0x6f1f261e )
+	ROM_LOAD16_BYTE( "starcast.t7", 0x8000, 0x0800, 0x65d0a225 )
+	ROM_LOAD16_BYTE( "starcast.p7", 0x8001, 0x0800, 0xd8f58d9a )
+	ROM_LOAD16_BYTE( "elttron.u7",  0x9000, 0x0800, 0xd5b44050 )
+	ROM_LOAD16_BYTE( "elttron.r7",  0x9001, 0x0800, 0x6f1f261e )
 ROM_END
 
 
@@ -1127,10 +1127,10 @@ ROM_END
 
 ROM_START( armorap )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 16k for code */
-	ROM_LOAD16_BYTE( "armorp.t7", 0x8000, 0x1000, 0xd7e71f84 )
-	ROM_LOAD16_BYTE( "armorp.p7", 0x8001, 0x1000, 0xdf1c2370 )
-	ROM_LOAD16_BYTE( "armorp.u7", 0xa000, 0x1000, 0x4a86bd8a )
-	ROM_LOAD16_BYTE( "armorp.r7", 0xa001, 0x1000, 0xd2dd4eae )
+	ROM_LOAD16_BYTE( "ar414le.t6", 0x8000, 0x1000, 0xd7e71f84 )
+	ROM_LOAD16_BYTE( "ar414lo.p6", 0x8001, 0x1000, 0xdf1c2370 )
+	ROM_LOAD16_BYTE( "armorp.u7",  0xa000, 0x1000, 0x4a86bd8a )
+	ROM_LOAD16_BYTE( "armorp.r7",  0xa001, 0x1000, 0xd2dd4eae )
 ROM_END
 
 ROM_START( armorar )

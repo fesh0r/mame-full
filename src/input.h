@@ -149,4 +149,10 @@ int input_ui_pressed_repeat(int code, int speed);
 void input_ui_post(int code);
 int input_ui_posted(void);
 
+/***************************************************************************/
+/* analog joy code functions */
+
+int is_joystick_axis_code(unsigned code);
+int return_os_joycode(InputCode code);
+
 #endif

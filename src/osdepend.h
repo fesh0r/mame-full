@@ -52,10 +52,6 @@ struct osd_create_params
 
 
 
-/* kludge for now until we remove the explicit calls from the various games */
-#define osd_mark_dirty(a,b,c,d)
-
-
 /*
   Create a display screen, or window, of the given dimensions (or larger). It is
   acceptable to create a smaller display if necessary, in that case the user must
@@ -227,8 +223,14 @@ int osd_is_joy_pressed(int joycode);
 
 /* We support 4 players for each analog control / trackball */
 #define OSD_MAX_JOY_ANALOG	4
-#define X_AXIS          1
-#define Y_AXIS          2
+#define X_AXIS			0
+#define Y_AXIS			1
+#define Z_AXIS			2
+#define PEDAL_AXIS		3
+#define MAX_ANALOG_AXES	4
+
+/* added for building joystick seq for analog inputs */
+int osd_is_joystick_axis_code(int joycode);
 
 /* Joystick calibration routines BW 19981216 */
 /* Do we need to calibrate the joystick at all? */
@@ -243,10 +245,11 @@ void osd_joystick_calibrate (void);
 /* Postprocessing (e.g. saving joystick data to config) */
 void osd_joystick_end_calibration (void);
 
+void osd_lightgun_read(int player, int *deltax, int *deltay);
 void osd_trak_read(int player,int *deltax,int *deltay);
 
 /* return values in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player,int *analog_x, int *analog_y);
+void osd_analogjoy_read(int player,int analog_axis[MAX_ANALOG_AXES], InputCode analogjoy_input[MAX_ANALOG_AXES]);
 
 
 /*

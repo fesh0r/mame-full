@@ -169,7 +169,6 @@ static void set_points(struct mame_bitmap *bitmap)
 			node->max_intensity = node->cur_intensity;
 
 		plot_pixel(bitmap, x, y, Machine->pens[node->max_intensity]);
-		osd_mark_dirty(x, y, x, y);
 
 		if (/*(node->cur_intensity > 0) ||*/ (node->max_intensity != 0))
 		{

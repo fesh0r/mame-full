@@ -276,7 +276,6 @@ static struct MachineDriver machine_driver_pc1500 =
 	sizeof (pc1500_colortable) / sizeof(pc1500_colortable[0][0]),
 	pc1500_init_colors,		/* convert color prom */
 
-//	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,	/* video flags */
 	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
     pc1500_vh_start,
@@ -321,7 +320,6 @@ static struct MachineDriver machine_driver_trs80pc2 =
 	sizeof (pc1500_colortable) / sizeof(pc1500_colortable[0][0]),
 	pc1500_init_colors,		/* convert color prom */
 
-//	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,	/* video flags */
 	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
     pc1500_vh_start,
@@ -366,7 +364,6 @@ static struct MachineDriver machine_driver_pc1500a =
 	sizeof (pc1500_colortable) / sizeof(pc1500_colortable[0][0]),
 	pc1500_init_colors,		/* convert color prom */
 
-//	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,	/* video flags */
 	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
     pc1500_vh_start,

@@ -70,7 +70,7 @@ CPUS+=TMS99010@
 #CPUS+=Z8000@
 #CPUS+=TMS320C10@
 #CPUS+=CCPU@
-CPUS+=PDP1@
+#CPUS+=PDP1@
 #CPUS+=ADSP2100@
 #CPUS+=ADSP2105@
 #CPUS+=PSXCPU@
@@ -141,7 +141,6 @@ DRVLIBS = \
 	$(OBJ)/at.a       \
 	$(OBJ)/pc.a       \
 	$(OBJ)/pcshare.a  \
-	$(OBJ)/pdp1.a	  \
 	$(OBJ)/apexc.a	  \
 	$(OBJ)/apple.a    \
 	$(OBJ)/ti99.a     \
@@ -199,6 +198,7 @@ DRVLIBS = \
 	$(OBJ)/avigo.a    \
 	$(OBJ)/motorola.a \
 	$(OBJ)/ssystem3.a \
+#	$(OBJ)/pdp1.a	  \
 #	$(OBJ)/gce.a	  \
 #	$(OBJ)/cpschngr.a \
 #	$(OBJ)/hp48.a     \

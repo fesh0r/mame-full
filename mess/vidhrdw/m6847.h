@@ -49,7 +49,7 @@ int video_start_m6847(const struct m6847_init_params *params);
 int m6847_is_t1(int version);
 extern INTERRUPT_GEN( m6847_vh_interrupt );
 
-#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+#define M6847_VIDEO_TYPE	(VIDEO_TYPE_RASTER)
 #define M6847_SCREEN_WIDTH	320
 #define M6847_SCREEN_HEIGHT	263
 

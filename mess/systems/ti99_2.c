@@ -222,7 +222,6 @@ static void ti99_2_vh_refresh(struct mame_bitmap *bitmap, int full_refresh)
 			/* Is the char code masked or not ??? */
 			drawgfx(bitmap, Machine->gfx[0], videoram[i] & 0x7F, 0,
 			          0, 0, sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
-			osd_mark_dirty(sx, sy, sx+7, sy+7);
 		}
 
 		sx += 8;

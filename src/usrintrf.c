@@ -159,7 +159,7 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 
 struct GfxElement *builduifont(void)
 {
-    static unsigned char fontdata6x8[] =
+    static const unsigned char fontdata6x8[] =
 	{
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x7c,0x80,0x98,0x90,0x80,0xbc,0x80,0x7c,0xf8,0x04,0x64,0x44,0x04,0xf4,0x04,0xf8,
@@ -291,7 +291,7 @@ struct GfxElement *builduifont(void)
 		0x80,0xF0,0x88,0x88,0xF0,0x80,0x80,0x80,0x50,0x00,0x88,0x88,0x88,0x78,0x08,0x70
     };
 
-	static struct GfxLayout fontlayout6x8 =
+	static const struct GfxLayout fontlayout6x8 =
 	{
 		6,8,	/* 6*8 characters */
 		256,	/* 256 characters */
@@ -301,7 +301,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout12x8 =
+	static const struct GfxLayout fontlayout12x8 =
 	{
 		12,8,	/* 12*8 characters */
 		256,	/* 256 characters */
@@ -311,7 +311,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout6x16 =
+	static const struct GfxLayout fontlayout6x16 =
 	{
 		6,16,	/* 6*8 characters */
 		256,	/* 256 characters */
@@ -321,7 +321,7 @@ struct GfxElement *builduifont(void)
 		{ 0*8,0*8, 1*8,1*8, 2*8,2*8, 3*8,3*8, 4*8,4*8, 5*8,5*8, 6*8,6*8, 7*8,7*8 },
 		8*8 /* every char takes 8 consecutive bytes */
 	};
-	static struct GfxLayout fontlayout12x16 =
+	static const struct GfxLayout fontlayout12x16 =
 	{
 		12,16,	/* 12*16 characters */
 		256,	/* 256 characters */
@@ -977,13 +977,20 @@ static void showcharset(struct mame_bitmap *bitmap)
 					if (total_colors)
 					{
 						int sx,sy,colors;
+						int column_heading_max;
 
 						switch_ui_orientation(bitmap);
 
 						colors = total_colors - 256 * palpage;
 						if (colors > 256) colors = 256;
 
-						for (i = 0;i < 16;i++)
+						/* min(colors, 16) */
+						if (colors < 16)
+							column_heading_max = colors;
+						else
+							column_heading_max = 16;
+
+						for (i = 0;i < column_heading_max;i++)
 						{
 							char bf[40];
 
@@ -1581,6 +1588,7 @@ static int setdefcodesettings(struct mame_bitmap *bitmap,int selected)
 			record_first_insert = ret != 0;
 		}
 
+		init_analog_seq();
 
 		return sel + 1;
 	}
@@ -1713,6 +1721,8 @@ static int setcodesettings(struct mame_bitmap *bitmap,int selected)
 
 			record_first_insert = ret != 0;
 		}
+
+		init_analog_seq();
 
 		return sel + 1;
 	}
@@ -3462,7 +3472,7 @@ static void displaymessage(struct mame_bitmap *bitmap,const char *text)
 }
 
 
-static char messagetext[80];
+static char messagetext[200];
 static int messagecounter;
 
 void CLIB_DECL usrintf_showmessage(const char *text,...)
@@ -3909,6 +3919,12 @@ int handle_user_interface(struct mame_bitmap *bitmap)
 		showcharset(bitmap);
 
 		osd_sound_enable(1);
+	}
+
+	/* if the user pressed F1 and this is a lightgun game, toggle the crosshair */
+	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
+	{
+		drawgfx_toggle_crosshair();
 	}
 
 	/* add the FPS counter */

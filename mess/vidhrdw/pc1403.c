@@ -200,9 +200,6 @@ VIDEO_UPDATE( pc1403 )
 				x,y,
 				0, TRANSPARENCY_NONE,0);
 		}
-	} else {
-	osd_mark_dirty(RIGHT, DOWN, RIGHT+(24*(5+1)-1)*2-1, DOWN+7*3-1);
-
 	}
     /* if display is off, busy is always visible? it seems to behave like 
 that. */

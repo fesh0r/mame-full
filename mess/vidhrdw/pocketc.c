@@ -66,7 +66,6 @@ void pocketc_draw_special(struct mame_bitmap *bitmap,
 			switch(fig[i][j]) {
 			case '1':
 				plot_pixel(bitmap, x+j, y, color);
-				osd_mark_dirty(x+j,y,x+j,y);
 				break;
 			case 'e': return;
 			}

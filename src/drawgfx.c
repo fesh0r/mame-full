@@ -3911,12 +3911,6 @@ void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 	profiler_mark(PROFILER_END);
 }
 
-void plot_pixel2(struct mame_bitmap *bitmap1,struct mame_bitmap *bitmap2,int x,int y,pen_t pen)
-{
-	plot_pixel(bitmap1, x, y, pen);
-	plot_pixel(bitmap2, x, y, pen);
-}
-
 static void pp_8_nd(struct mame_bitmap *b,int x,int y,pen_t p)  { ((UINT8 *)b->line[y])[x] = p; }
 static void pp_8_nd_fx(struct mame_bitmap *b,int x,int y,pen_t p)  { ((UINT8 *)b->line[y])[b->width-1-x] = p; }
 static void pp_8_nd_fy(struct mame_bitmap *b,int x,int y,pen_t p)  { ((UINT8 *)b->line[b->height-1-y])[x] = p; }
@@ -4075,6 +4069,13 @@ INLINE void plotclip(struct mame_bitmap *bitmap,int x,int y,int pen,const struct
 {
 	if (x >= clip->min_x && x <= clip->max_x && y >= clip->min_y && y <= clip->max_y)
 		plot_pixel(bitmap,x,y,pen);
+}
+
+static int crosshair_enable=1;
+
+void drawgfx_toggle_crosshair(void)
+{
+	crosshair_enable^=1;
 }
 
 void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip)

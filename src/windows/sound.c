@@ -105,6 +105,9 @@ static int					current_adjustment = 0;
 static int					lower_thresh;
 static int					upper_thresh;
 
+// enabled state
+static int					is_enabled = 1;
+
 // debugging
 #if LOG_SOUND
 static FILE *				sound_log;
@@ -301,7 +304,7 @@ static void copy_sample_data(UINT16 *data, int bytes_to_copy)
 
 	// attempt to lock the stream buffer
 	result = IDirectSoundBuffer_Lock(stream_buffer, stream_buffer_in, bytes_to_copy, &buffer1, &length1, &buffer2, &length2, 0);
-	if (result != DD_OK)
+	if (result != DS_OK)
 	{
 		buffer_underflows++;
 		return;
@@ -405,7 +408,7 @@ void osd_set_mastervolume(int _attenuation)
 	attenuation = _attenuation;
 
 	// set the master volume
-	if (stream_buffer)
+	if (stream_buffer && is_enabled)
 		IDirectSoundBuffer_SetVolume(stream_buffer, attenuation * 100);
 }
 
@@ -434,29 +437,9 @@ void osd_sound_enable(int enable_it)
 			IDirectSoundBuffer_SetVolume(stream_buffer, attenuation * 100);
 		else
 			IDirectSoundBuffer_SetVolume(stream_buffer, DSBVOLUME_MIN);
+
+		is_enabled = enable_it;
 	}
-}
-
-
-
-//============================================================
-//	osd_opl_control
-//============================================================
-
-void osd_opl_control(int chip, int reg)
-{
-	// noop - not supported
-}
-
-
-
-//============================================================
-//	osd_opl_write
-//============================================================
-
-void osd_opl_write(int chip, int data)
-{
-	// noop - not supported
 }
 
 
@@ -522,6 +505,8 @@ static int dsound_init(void)
 		goto cant_create_buffers;
 
 	// start playing
+	is_enabled = 1;
+
 	result = IDirectSoundBuffer_Play(stream_buffer, 0, 0, DSBPLAY_LOOPING);
 	if (result != DS_OK)
 	{

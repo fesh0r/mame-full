@@ -147,7 +147,7 @@ int palette_start(void)
 	global_brightness = (options.brightness > .001) ? options.brightness : 1.0;
 	global_brightness_adjust = 1.0;
 	global_gamma = (options.gamma > .001) ? options.gamma : 1.0;
-	
+
 	/* determine the color mode */
 	if (Machine->color_depth == 15)
 		colormode = DIRECT_15BIT;
@@ -171,14 +171,14 @@ int palette_start(void)
 	if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
 		total_colors += Machine->drv->total_colors;
 	total_colors_with_ui = total_colors;
-	
+
 	/* make sure we still fit in 16 bits */
 	if (total_colors > 65536)
 	{
 		logerror("Error: palette has more than 65536 colors.\n");
 		return 1;
 	}
-	
+
 	/* allocate all the data structures */
 	if (palette_alloc())
 		return 1;
@@ -203,7 +203,7 @@ static int palette_alloc(void)
 {
 	int max_total_colors = total_colors + 2;
 	int i;
-	
+
 	/* allocate memory for the raw game palette */
 	game_palette = auto_malloc(max_total_colors * sizeof(game_palette[0]));
 	if (!game_palette)
@@ -217,7 +217,7 @@ static int palette_alloc(void)
 		return 1;
 	for (i = 0; i < max_total_colors; i++)
 		adjusted_palette[i] = game_palette[i];
-	
+
 	/* allocate memory for the dirty palette array */
 	dirty_palette = auto_malloc((max_total_colors + 31) / 32 * sizeof(dirty_palette[0]));
 	if (!dirty_palette)
@@ -248,13 +248,13 @@ static int palette_alloc(void)
 			return 1;
 		for (i = 0; i < Machine->drv->color_table_len; i++)
 			Machine->game_colortable[i] = i % total_colors;
-		
+
 		/* then for the remapped colortable */
 		Machine->remapped_colortable = auto_malloc(Machine->drv->color_table_len * sizeof(Machine->remapped_colortable[0]));
 		if (!Machine->remapped_colortable)
 			return 1;
 	}
-	
+
 	/* otherwise, keep the game_colortable NULL and point the remapped_colortable to the pens */
 	else
 	{
@@ -386,7 +386,7 @@ int palette_init(void)
 			usrintf_showmessage("colortable[%d] (=%d) out of range (total_colors = %d)",
 					i,color,total_colors);
 	}
-	
+
 	/* all done */
 	return 0;
 }
@@ -430,7 +430,7 @@ void palette_update_display(struct mame_display *display)
 		if (adjusted_palette_dirty)
 			display->changed_flags |= GAME_PALETTE_CHANGED;
 	}
-	
+
 	/* direct case: no palette mucking */
 	else
 	{
@@ -438,13 +438,13 @@ void palette_update_display(struct mame_display *display)
 		display->game_palette_entries = 0;
 		display->game_palette_dirty = NULL;
 	}
-	
+
 	/* debugger always has a palette */
 #ifdef MAME_DEBUG
 	display->debug_palette = debugger_palette;
 	display->debug_palette_entries = DEBUGGER_TOTAL_COLORS;
 #endif
-	
+
 	/* update the dirty state */
 	if (debug_palette_dirty)
 		display->changed_flags |= DEBUG_PALETTE_CHANGED;
@@ -464,14 +464,14 @@ void palette_update_display(struct mame_display *display)
 static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
 {
 	rgb_t adjusted_color;
-	
+
 	/* skip if out of bounds or not ready */
 	if (pen >= total_colors)
 		return;
 
 	/* update the raw palette */
 	game_palette[pen] = color;
-	
+
 	/* now update the adjusted color if it's different */
 	adjusted_color = adjust_palette_entry(color, pen_bright);
 	if (adjusted_color != adjusted_palette[pen])
@@ -479,7 +479,7 @@ static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
 		/* change the adjusted palette entry */
 		adjusted_palette[pen] = adjusted_color;
 		adjusted_palette_dirty = 1;
-		
+
 		/* update the pen value or mark the palette dirty */
 		switch (colormode)
 		{
@@ -487,7 +487,7 @@ static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
 			case PALETTIZED_16BIT:
 				mark_pen_dirty(pen);
 				break;
-			
+
 			/* 15/32-bit direct: update the Machine->pens array */
 			case DIRECT_15BIT:
 				Machine->pens[pen] = rgb_to_direct15(adjusted_color);
@@ -511,7 +511,7 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright)
 {
 	/* first modify the base pen */
 	internal_modify_single_pen(pen, color, pen_bright);
-	
+
 	/* see if we need to handle shadow/highlight */
 	if (pen < Machine->drv->total_colors)
 	{
@@ -521,7 +521,7 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright)
 			pen += Machine->drv->total_colors;
 			internal_modify_single_pen(pen, color, (pen_bright * shadow_factor) >> PEN_BRIGHTNESS_BITS);
 		}
-	
+
 		/* check for highlights */
 		if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS)
 		{
@@ -541,7 +541,7 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright)
 static void recompute_adjusted_palette(int brightness_or_gamma_changed)
 {
 	int i;
-	
+
 	/* regenerate the color correction table if needed */
 	if (brightness_or_gamma_changed)
 		for (i = 0; i < sizeof(color_correct_table); i++)
@@ -549,7 +549,7 @@ static void recompute_adjusted_palette(int brightness_or_gamma_changed)
 			int value = (int)(255.0 * (global_brightness * global_brightness_adjust) * pow((double)i * (1.0 / 255.0), 1.0 / global_gamma) + 0.5);
 			color_correct_table[i] = (value < 0) ? 0 : (value > 255) ? 255 : value;
 		}
-	
+
 	/* now update all the palette entries */
 	for (i = 0; i < Machine->drv->total_colors; i++)
 		internal_modify_pen(i, game_palette[i], pen_brightness[i]);
@@ -583,7 +583,7 @@ void palette_set_color(pen_t pen, UINT8 r, UINT8 g, UINT8 b)
 		logerror("error: palette_set_color() called with color %d, but only %d allocated.\n", pen, total_colors);
 		return;
 	}
-	
+
 	/* set the pen value */
 	internal_modify_pen(pen, MAKE_RGB(r, g, b), pen_brightness[pen]);
 }
@@ -625,7 +625,7 @@ void palette_set_brightness(pen_t pen, double bright)
 	int brightval = (int)(bright * (double)(1 << PEN_BRIGHTNESS_BITS));
 	if (brightval > MAX_PEN_BRIGHTNESS)
 		brightval = MAX_PEN_BRIGHTNESS;
-	
+
 	/* if it changed, update the array and the adjusted palette */
 	if (pen_brightness[pen] != brightval)
 	{
@@ -685,12 +685,12 @@ void palette_set_highlight_factor(double factor)
 	gamma factor
 -------------------------------------------------*/
 
-void palette_set_global_gamma(double new_gamma)
+void palette_set_global_gamma(double gamma)
 {
 	/* if the gamma changed, recompute */
-	if (global_gamma != new_gamma)
+	if (global_gamma != gamma)
 	{
-		global_gamma = new_gamma;
+		global_gamma = gamma;
 		recompute_adjusted_palette(1);
 	}
 }
@@ -727,7 +727,7 @@ void palette_set_global_brightness(double brightness)
 
 
 /*-------------------------------------------------
-	palette_set_global_brightness_adjust - set 
+	palette_set_global_brightness_adjust - set
 	the global brightness adjustment factor
 -------------------------------------------------*/
 
@@ -756,7 +756,7 @@ double palette_get_global_brightness(void)
 
 
 /*-------------------------------------------------
-	get_black_pen - use this if you need to 
+	get_black_pen - use this if you need to
 	fillbitmap() the background with black
 -------------------------------------------------*/
 

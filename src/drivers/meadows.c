@@ -1,9 +1,9 @@
 /***************************************************************************
 
 	Meadows S2650 driver
-	
+
 	driver by J. Buchmueller, June '98
-	
+
 	Games supported:
 		* Dead Eye
 		* Gypsy Juggler
@@ -28,10 +28,10 @@
 
 			1 R analog control
 				D0-D7	center is 0x7f
-				
+
 			2 R horizontal sync divider chain
 				D7 9.765kHz ... D0 2.5MHz
-				
+
 			3 R dip switch settings
 				D0-D2	select 2 to 9 coins
 				D3-D4	Coins per play D3 D4
@@ -184,15 +184,15 @@ static WRITE_HANDLER( meadows_sound_w )
 			logerror("meadows_sound_w %d $%02x\n", offset, data);
 			meadows_0c00 = data;
             break;
-            
+
 		case 1:
 			logerror("meadows_sound_w %d $%02x\n", offset, data);
             break;
-            
+
         case 2:
 			logerror("meadows_sound_w %d $%02x\n", offset, data);
             break;
-            
+
 		case 3:
 /*			S2650_Clear_Pending_Interrupts(); */
 			break;
@@ -211,11 +211,11 @@ static INTERRUPT_GEN( meadows_interrupt )
 {
 	/* preserve the actual cycle count */
     cycles_at_vsync = cycles_currently_ran();
-    
+
     /* fake something toggling the sense input line of the S2650 */
 	main_sense_state ^= 1;
 	cpu_set_irq_line(0, 1, main_sense_state ? ASSERT_LINE : CLEAR_LINE);
-	
+
 	/* check the fake coin input */
 	if (readinputport(3) & 0x01)
 	{
@@ -260,7 +260,7 @@ static WRITE_HANDLER( sound_hardware_w )
 		case 0: /* DAC */
 			meadows_sh_dac_w(data ^ 0xff);
             break;
-            
+
 		case 1: /* counter clk 5 MHz / 256 */
 			if (data == meadows_0c01)
 				break;
@@ -637,7 +637,7 @@ static struct CustomSound_interface custom_interface =
 static MACHINE_DRIVER_START( meadows )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(meadows_interrupt,1) 	/* one interrupt per frame!? */
 
@@ -656,7 +656,7 @@ static MACHINE_DRIVER_START( meadows )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
-	
+
 	MDRV_PALETTE_INIT(meadows)
 	MDRV_VIDEO_START(meadows)
 	MDRV_VIDEO_UPDATE(meadows)
@@ -670,7 +670,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( minferno )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(S2650, 625000) 	/* 5MHz / 8 = 625 kHz */
+	MDRV_CPU_ADD(S2650, 5000000/8/3) 	/* 5MHz / 8 = 625 kHz */
 	MDRV_CPU_MEMORY(minferno_readmem,minferno_writemem)
 	MDRV_CPU_PORTS(minferno_readport,0)
 	MDRV_CPU_VBLANK_INT(minferno_interrupt,1)
@@ -684,7 +684,7 @@ static MACHINE_DRIVER_START( minferno )
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 1*8, 24*8-1)
 	MDRV_GFXDECODE(minferno_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2)
-	
+
 	MDRV_PALETTE_INIT(meadows)
 	MDRV_VIDEO_START(meadows)
 	MDRV_VIDEO_UPDATE(meadows)
@@ -804,7 +804,7 @@ static DRIVER_INIT( gypsyjug )
 		memcpy(memory_region(REGION_GFX4) + i, ball, sizeof(ball));
 		memcpy(memory_region(REGION_GFX5) + i, ball, sizeof(ball));
 	}
-	
+
 	artwork_set_overlay(gypsyjug_overlay);
 }
 

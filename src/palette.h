@@ -140,7 +140,7 @@ void palette_set_brightness(pen_t pen, double bright);
 void palette_set_shadow_factor(double factor);
 void palette_set_highlight_factor(double factor);
 
-void palette_set_global_gamma(double new_gamma);
+void palette_set_global_gamma(double gamma);
 double palette_get_global_gamma(void);
 
 void palette_set_global_brightness(double brightness);

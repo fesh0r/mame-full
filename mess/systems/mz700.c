@@ -333,7 +333,7 @@ static struct MachineDriver machine_driver_mz700 =
 	2*256,
 	mz700_init_colors,		 /* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
 	mz700_vh_start,
 	mz700_vh_stop,
@@ -376,7 +376,7 @@ static MACHINE_DRIVER_START(mz700)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - include overscan */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER/* | VIDEO_SUPPORTS_DIRTY*/)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(40*8, 25*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8 - 1, 0*8, 25*8 - 1)
@@ -424,7 +424,7 @@ static struct MachineDriver machine_driver_mz800 =
 	2*256,
 	mz700_init_colors,		 /* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
 	mz700_vh_start,
 	mz700_vh_stop,
@@ -467,7 +467,7 @@ static MACHINE_DRIVER_START(mz800)
 	/*MDRV_NVRAM_HANDLER( NULL )*/
 
 	/* video hardware - include overscan */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER/* | VIDEO_SUPPORTS_DIRTY*/)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	/*MDRV_ASPECT_RATIO(num, den)*/
 	MDRV_SCREEN_SIZE(40*8, 25*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8 - 1, 0*8, 25*8 - 1)

@@ -88,7 +88,6 @@ static void hp48_draw_special(struct mame_bitmap *bitmap,int x, int y, const cha
 		switch (figure[j]) {
 		case '1': 
 			plot_pixel(bitmap, x+xi, y, color);
-			osd_mark_dirty(x+xi,y,x+xi,y);
 			xi++;
 			break;
 		case ' ': 
@@ -176,11 +175,6 @@ void hp48_vh_screenrefresh (struct mame_bitmap *bitmap, int full_refresh)
     color[0] = Machine->pens[0];
 //    color[0] = Machine->pens[1];
 	color[1] = Machine->pens[1];
-
-    if (full_refresh)
-    {
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
 
 	for (y=0,i=LCD_BASE_ADDRESS; y<64; y+=8, i+=LCD_LINE_OFFSET) {
 		for (x=0; x<131; x++) {

@@ -102,21 +102,7 @@ WRITE_HANDLER( channelf_port_0_w )
 	{
 		offs = channelf_row_reg*128+channelf_col_reg;
 		if (videoram[offs] != channelf_val_reg)
-		{
 			videoram[offs] = channelf_val_reg;
-        	if (channelf_col_reg == 0x7d)
-			{
-			}
-			else if (channelf_col_reg == 0x7e)
-			{
-				osd_mark_dirty(0,channelf_row_reg,127,channelf_row_reg);
-			}
-			if (channelf_col_reg < 0x76)
-			{
-				osd_mark_dirty(channelf_col_reg,channelf_row_reg,
-				               channelf_col_reg,channelf_row_reg);
-			}
-		}
 	}
 	latch[0] = data;
 }
@@ -221,7 +207,7 @@ static MACHINE_DRIVER_START( channelf )
 	MDRV_INTERLEAVE(1)
 
     /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(128*2, 64*2)
 	MDRV_VISIBLE_AREA(1*2, 112*2 - 1, 0, 64*2 - 1)
 	MDRV_PALETTE_LENGTH(8)

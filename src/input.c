@@ -842,6 +842,51 @@ int input_ui_pressed_repeat(int code,int speed)
 	return pressed;
 }
 
+int is_joystick_axis_code(unsigned code)
+{
+	const struct JoystickInfo *joyinfo;
+
+	assert( code < code_mac );
+
+	if (code_map[code].type == CODE_TYPE_JOYSTICK)
+	{
+		if (code < __code_max)
+		{
+			joyinfo = internal_code_find_joystick(code);
+			if (joyinfo)
+				return osd_is_joystick_axis_code(joyinfo->code);
+		}
+		else
+		{
+			return osd_is_joystick_axis_code(code_map[code].oscode);
+		}
+	}
+
+	return 0;
+}
+
+int return_os_joycode(InputCode code)
+{
+	const struct JoystickInfo *joyinfo;
+
+	assert( code < code_mac );
+
+	if (code < __code_max)
+	{
+		if (code_map[code].type == CODE_TYPE_JOYSTICK)
+		{
+			joyinfo = internal_code_find_joystick(code);
+			if (joyinfo)
+				return joyinfo->code;
+		}
+	} else {
+		if (code_map[code].type == CODE_TYPE_JOYSTICK)
+		{
+			return code_map[code].oscode;
+		}
+	}
+	return 0;
+}
 void input_ui_post(int code)
 {
 	ui_posted_press = code;

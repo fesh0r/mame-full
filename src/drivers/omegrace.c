@@ -1,9 +1,9 @@
 /***************************************************************************
 
 	Midway Omega Race hardware
-	
+
 	driver by Bernd Wiebelt
-	
+
 	Games supported:
 		* Omega Race
 
@@ -548,11 +548,11 @@ static MACHINE_DRIVER_START( omegrace )
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT)
 	MDRV_SCREEN_SIZE(400, 300)
 	MDRV_VISIBLE_AREA(0, 1020, -10, 1010)
 	MDRV_PALETTE_LENGTH(32768)
-	
+
 	MDRV_PALETTE_INIT(avg_white)
 	MDRV_VIDEO_START(dvg)
 	MDRV_VIDEO_UPDATE(vector)

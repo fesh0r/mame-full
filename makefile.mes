@@ -157,11 +157,16 @@ DBGDEFS =
 DBGOBJS =
 endif
 
+ifdef COMPILESYSTEM_CYGWIN
+CFLAGS	+= -mno-cygwin
+LDFLAGS	+= -mno-cygwin
+endif
+
 ifdef USE_DRMINGW
 DBGDEFS += -DUSE_DRMINGW
 endif
 
-extra:	$(TEXTS) $(TOOLS) 
+extra:	$(TOOLS) $(TEXTS)
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)

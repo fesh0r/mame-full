@@ -1,6 +1,6 @@
 #####################################################################
 
-MAME_VERSION = -DMAME_VERSION=60
+MAME_VERSION = -DMAME_VERSION=61
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame

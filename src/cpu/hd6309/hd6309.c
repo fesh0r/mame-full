@@ -106,10 +106,6 @@
 #define false 0
 #endif
 
-#ifndef BIG_SWITCH
-#define BIG_SWITCH	0
-#endif
-
 void CHECK_IRQ_LINES( void );
 static void IIError(void);
 static void DZError(void);
@@ -601,7 +597,6 @@ void hd6309_init(void)
 	state_save_register_UINT8("hd6309", cpu, "DP", &DP, 1);
 	state_save_register_UINT8("hd6309", cpu, "CC", &CC, 1);
 	state_save_register_UINT8("hd6309", cpu, "MD", &MD, 1);
-	state_save_register_func_postload( UpdateState );
 	state_save_register_UINT8("hd6309", cpu, "INT", &hd6309.int_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "NMI", &hd6309.nmi_state, 1);
 	state_save_register_UINT8("hd6309", cpu, "IRQ", &hd6309.irq_state[0], 1);

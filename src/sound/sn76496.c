@@ -10,13 +10,6 @@
   layout is unknown. It can be set for either period or white noise; again,
   the details are unknown.
 
-Update (R. Nabet 2002/03/21):
-	Using white noise samples by John Kortink (found at
-	http://web.inter.nl.net/users/J.Kortink/sn76489.bits), I have been able
-	to reverse engineer the value for FB_WNOISE.  Therefore, the values for
-	both FB_WNOISE and FB_PNOISE should be regarded as solid.  I still have
-	no idea what the correct value for NG_PRESET, however.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -30,15 +23,11 @@ Update (R. Nabet 2002/03/21):
 /* Formulas for noise generator */
 /* bit0 = output */
 
-/* noise feedback for white noise mode */
-#define FB_WNOISE 0x14002	/* bit15.d(16bits) = bit0(out) == bit1 (I think) */
-							/* this value was reverse-engineered from an actual SN76489 */
-//#define FB_WNOISE 0x14000	/* bit15.d(16bits) = bit0(out) ^ bit1 (same thing with reversed polarity) */
+/* noise feedback for white noise mode (verified on real SN76489 by John Kortink) */
+#define FB_WNOISE 0x14002	/* (16bits) bit16 = bit0(out) ^ bit2 ^ bit15 */
 
 /* noise feedback for periodic noise mode */
-/* it is correct maybe (it was in the Megadrive sound manual) */
-//#define FB_PNOISE 0x10000	/* 16bit rorate */
-#define FB_PNOISE 0x08000   /* JH 981127 - fixes Do Run Run */
+#define FB_PNOISE 0x08000	/* 15bit rotate */
 
 /* noise generator start preset (for periodic noise) */
 #define NG_PRESET 0x0f35

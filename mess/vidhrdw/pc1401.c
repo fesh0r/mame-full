@@ -156,9 +156,8 @@ VIDEO_UPDATE( pc1401 )
 				x,y,
 				0, TRANSPARENCY_NONE,0);
 		}
-    } else {
-		osd_mark_dirty(RIGHT, DOWN, RIGHT+(16*(5+1)-1)*2-1, DOWN+7*3-1);
     }
+
     pocketc_draw_special(bitmap,RIGHT+149,DOWN+24,line,
 			 pc1401_lcd.reg[0x3c]&8?color[1]:color[0]);
     pocketc_draw_special(bitmap,RIGHT,DOWN-10,busy,

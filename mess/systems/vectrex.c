@@ -124,7 +124,7 @@ static struct MachineDriver machine_driver_vectrex =
 	256 + 32768, 0,
 	0,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT,
 	0,
 	vectrex_start,
 	vectrex_stop,
@@ -250,7 +250,7 @@ static struct MachineDriver machine_driver_raaspec =
 	254, 0,
 	raaspec_init_artwork,
 
-	VIDEO_TYPE_VECTOR | VIDEO_SUPPORTS_DIRTY | VIDEO_RGB_DIRECT,
+	VIDEO_TYPE_VECTOR | VIDEO_RGB_DIRECT,
 	0,
 	raaspec_start,
 	vectrex_stop,

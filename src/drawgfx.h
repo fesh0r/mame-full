@@ -258,7 +258,6 @@ void copyrozbitmap(struct mame_bitmap *dest,struct mame_bitmap *src,
 		const struct rectangle *clip,int transparency,int transparent_color,UINT32 priority);
 
 void fillbitmap(struct mame_bitmap *dest,pen_t pen,const struct rectangle *clip);
-void plot_pixel2(struct mame_bitmap *bitmap1,struct mame_bitmap *bitmap2,int x,int y,pen_t pen);
 void drawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
@@ -271,6 +270,7 @@ void mdrawgfxzoom( struct mame_bitmap *dest_bmp,const struct GfxElement *gfx,
 		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley,
 		UINT32 priority_mask);
 
+void drawgfx_toggle_crosshair(void);
 void draw_crosshair(struct mame_bitmap *bitmap,int x,int y,const struct rectangle *clip);
 
 INLINE void sect_rect(struct rectangle *dst, const struct rectangle *src)

@@ -607,7 +607,7 @@ static MACHINE_DRIVER_START( pc1401 )
 	   (lcd dot displayed as 2x3 pixel)
 	   it seams to have 3/4 ratio in the real pc1401 */
     /* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(594, 273)
 	MDRV_VISIBLE_AREA(0, 594-1, 0, 273-1)
 //	MDRV_SCREEN_SIZE(640, 273)

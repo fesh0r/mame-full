@@ -211,7 +211,7 @@ static struct MachineDriver machine_driver_hp48s =
 	sizeof (hp48_colortable) / sizeof(hp48_colortable[0][0]),
 	hp48_init_colors,		/* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
 	hp48_vh_start,
 	hp48_vh_stop,
@@ -250,7 +250,7 @@ static struct MachineDriver machine_driver_hp48g =
 	sizeof (hp48_colortable) / sizeof(hp48_colortable[0][0]),
 	hp48_init_colors,		/* convert color prom */
 
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,	/* video flags */
+	VIDEO_TYPE_RASTER,	/* video flags */
 	0,						/* obsolete */
 	hp48_vh_start,
 	hp48_vh_stop,

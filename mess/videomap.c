@@ -679,17 +679,6 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 				*db += frame_info.pitch;
 		}
 	}
-
-	/* mark us dirty, if necessary */
-/*	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
-	{
-		mark_dirty(
-			Machine->visible_area.min_x,
-			base_scanline + frame_info.bordertop_scanlines,
-			Machine->visible_area.max_x,
-			base_scanline + frame_info.bordertop_scanlines + scanline_count - 1);
-	}
-*/
 	profiler_mark(PROFILER_END);
 }
 
@@ -697,10 +686,6 @@ static void draw_body(struct mame_bitmap *bitmap, int base_scanline, int scanlin
 static void plot_modified_border(struct mame_bitmap *bitmap, int x, int y, int width, int height, pen_t pen)
 {
 	assert(height);
-
-/*	if (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY)
-		mark_dirty(x, y, x + width - 1, y + height - 1);
-*/
 	do
 	{
 		draw_scanline16(bitmap, x, y++, width, border_scanline + x, NULL, -1);

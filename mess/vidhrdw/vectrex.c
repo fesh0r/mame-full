@@ -452,7 +452,6 @@ WRITE_HANDLER( raaspec_led_w )
 					copybitmap(tmpbitmap, buttons->artwork, 0, 0, 0, y, &clip, TRANSPARENCY_NONE, 0);
 				else
 					copybitmap(tmpbitmap, led->artwork, 0,0,i*width, y,&clip,TRANSPARENCY_PEN, Machine->pens[transparent_pen]);
-				osd_mark_dirty (clip.min_x,clip.min_y,clip.max_x,clip.max_y);
 			}
 		old_data=data;
 	}

@@ -154,7 +154,6 @@ static void aim65_draw_7segment(struct mame_bitmap *bitmap,int value, int x, int
 		if (mask!=0) {
 			color=Machine->pens[(value&mask)?1:0];
 			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y+yi,x+xi,y+yi);
 		}
 		if (led[i]!='\r') xi++;
 		else { yi++, xi=0; }
@@ -203,7 +202,6 @@ static void aim65_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 		switch (single_led[j]) {
 		case '1': 
 			plot_pixel(bitmap, x+xi, y, color);
-			osd_mark_dirty(x+xi,y,x+xi,y);
 			xi++;
 			break;
 		case ' ': 
@@ -221,12 +219,6 @@ static void aim65_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int y)
 VIDEO_UPDATE( aim65 )
 {
 	int i, j;
-	int full_refresh = 1;
-
-    if (full_refresh)
-    {
-        osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
-    }
 
 	for (j=0; j<5; j++) {
 		for (i=0; i<4; i++) {

@@ -93,11 +93,8 @@
 #else
 #define LDOUBLE double
 #endif
-#if defined(_MSC_VER)
+
 int snprintf (char *str, size_t count, const char *fmt, ...);
-#else
-int snprintf (char *str, size_t count, const char *fmt, ...);
-#endif
 int vsnprintf (char *str, size_t count, const char *fmt, va_list arg);
 
 static void dopr (char *buffer, size_t maxlen, const char *format, 

@@ -98,7 +98,6 @@ static void ssystem3_draw_7segment(struct mame_bitmap *bitmap,int value, int x, 
 		if (mask!=0) {
 			color=Machine->pens[(value&mask)?1:0];
 			plot_pixel(bitmap, x+xi, y+yi, color);
-			osd_mark_dirty(x+xi,y+yi,x+xi,y+yi);
 		}
 		if (led[i]!='\r') xi++;
 		else { yi++, xi=0; }
@@ -163,7 +162,6 @@ static void ssystem3_draw_led(struct mame_bitmap *bitmap,INT16 color, int x, int
 		default:
 			if (ch==single_led[j]) {
 				plot_pixel(bitmap, x+xi, y, color);
-				osd_mark_dirty(x+xi,y,x+xi,y);
 			}
 			xi++;
 			break;
