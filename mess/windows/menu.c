@@ -15,7 +15,6 @@
 #include "snprintf.h"
 #include "dialog.h"
 #include "ui_text.h"
-#include "usrintrf.h"
 
 //============================================================
 //	IMPORTS
@@ -23,8 +22,6 @@
 
 // from input.c
 extern UINT8 win_trying_to_quit;
-// from usrinterf.c
-extern int ui_active;
 
 //============================================================
 //	PARAMETERS
@@ -684,6 +681,6 @@ LRESULT win_mess_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lpara
 
 int osd_keyboard_disabled(void)
 {
-	return (win_use_natural_keyboard || ui_active);
+	return win_use_natural_keyboard;
 }
 
