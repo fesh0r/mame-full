@@ -429,7 +429,7 @@ BOOL GetScreenShotRect(HWND hWnd, RECT *pRect, BOOL restrict)
 #ifdef MESS
 static BOOL LoadSoftwareScreenShot(const struct GameDriver *drv, LPCSTR lpSoftwareName, int nType)
 {
-	char *s = _alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 1);
+	char *s = alloca(strlen(drv->name) + 1 + strlen(lpSoftwareName) + 1);
 	sprintf(s, "%s/%s", drv->name, lpSoftwareName);
 	return LoadDIB(s, &m_hDIB, &m_hPal, nType);
 }

@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "unzip.h"
 #include "osd_cpu.h"
+#include "windowsui/mame32.h"
 
 #if HAS_CRC
 #include "config.h"
@@ -172,7 +173,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 
 	if (!crc32)
 		crc32 = &dummy;
-    
+
 	*crc32 = 0;
     lpExt = strrchr(filename, '.');
     type = IO_COUNT;
@@ -218,7 +219,7 @@ static int MessDiscoverImageType(const char *filename, mess_image_type *imagetyp
 static void MessRemoveImage(int imagenum)
 {
     int i, j;
-    
+
     for (i = 0, j = 0; i < options.image_count; i++) {
         if ((imagenum >= 0) && (imagenum != mess_image_nums[i])) {
             if (i != j) {
@@ -454,7 +455,7 @@ static void AddImagesFromDirectory(int nDriver, const char *dir, BOOL bRecurse, 
 
     SetupImageTypes(nDriver, imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), FALSE, IO_END);
 
-    d = osd_dir_open(dir, "*.*");   
+    d = osd_dir_open(dir, "*.*");
     if (d) {
         osd_change_directory(dir);
 
@@ -610,7 +611,7 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 
 	nTotalPaths = (nBasePaths * (parent_dir ? 2 : 1) + nExtraPaths);
 
-	plpPaths = (LPSTR *) _alloca(nTotalPaths * sizeof(LPCSTR));
+	plpPaths = (LPSTR *) alloca(nTotalPaths * sizeof(LPCSTR));
 	memset(plpPaths, 0, nTotalPaths * sizeof(LPCSTR));
 
 	/* Now fill the paths */
@@ -618,14 +619,14 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 	for (i = 0; i < nBasePaths; i++) {
 		/* Add default directory for system */
 		snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", plpBasePaths[i], system_dir);
-		plpPaths[nPath] = _alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
+		plpPaths[nPath] = alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
 		strcpy(plpPaths[nPath], buffer);
 		nPath++;
 
 		/* If there is a parent, add that directory also */
 		if (parent_dir) {
 			snprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), "%s\\%s", plpBasePaths[i], parent_dir);
-			plpPaths[nPath] = _alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
+			plpPaths[nPath] = alloca((strlen(buffer) + 1) * sizeof(buffer[0]));
 			strcpy(plpPaths[nPath], buffer);
 			nPath++;
 		}
@@ -639,7 +640,7 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 
 	assert(nPath == nTotalPaths);
 
-	InternalFillSoftwareList(pSoftwareListView, nGame, nTotalPaths, plpPaths);
+	InternalFillSoftwareList(pSoftwareListView, nGame, nTotalPaths, (LPCSTR*)plpPaths);
 }
 
 int MessLookupByFilename(const TCHAR *filename)
@@ -719,7 +720,7 @@ LPCTSTR GetImageFullName(int nItem)
 /* ************************************************************************ *
  * SoftwareListView class code                                              *
  * ************************************************************************ */
-
+/*
 enum {
 	MESS_COLUMN_IMAGES,
 	MESS_COLUMN_GOODNAME,
@@ -729,7 +730,7 @@ enum {
 	MESS_COLUMN_CRC,
 	MESS_COLUMN_MAX
 };
-
+*/
 LPCTSTR SoftwareList_GetText(struct SmartListView *pListView, int nRow, int nColumn)
 {
 	LPCTSTR s;

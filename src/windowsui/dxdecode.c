@@ -156,7 +156,7 @@ static ERRORCODE    g_ErrorCode[] =
 	{   DIERR_INCOMPLETEEFFECT,             "DIERR_INCOMPLETEEFFECT" },
 	{   DIERR_NOTBUFFERED,                  "DIERR_NOTBUFFERED" },
 	{   DIERR_EFFECTPLAYING,                "DIERR_EFFECTPLAYING" },
-	{   DIERR_UNPLUGGED,                    "DIERR_UNPLUGGED" },
+//	{   DIERR_UNPLUGGED,                    "DIERR_UNPLUGGED" },
 
 	{   E_NOINTERFACE,                      "E_NOINTERFACE" },
 

@@ -1,10 +1,11 @@
+#include <malloc.h>
 #include <assert.h>
 #include <tchar.h>
 #include "SmartListView.h"
-#include "resource.h"
+#include "windowsui/resource.h"
 
 #if HAS_COLUMNEDIT
-#include "ColumnEdit.h"
+#include "windowsui/ColumnEdit.h"
 #endif
 
 static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pListView, BOOL bFirstTime);
@@ -41,7 +42,7 @@ static LPCTSTR MakeShortString(HDC hDC, LPCTSTR lpszLong, int nColumnLen, int nO
 
     return szShort;
 }
-	
+
 static BOOL PickerHitTest(HWND hWnd)
 {
 	RECT            rect;
@@ -66,7 +67,7 @@ static int GetNumColumns(struct SmartListView *pListView)
 	HWND hwndHeader;
 	int  *shown;
 
-	shown = _alloca(pListView->pClass->nNumColumns * sizeof(int));
+	shown = alloca(pListView->pClass->nNumColumns * sizeof(int));
 	SmartListView_GetColumnInfo(pListView, shown, NULL, NULL);
 	hwndHeader = GetDlgItem(pListView->hwndListView, 0);
 
@@ -91,7 +92,7 @@ struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions)
 	assert(pOptions->pClass);
 	assert(pOptions->hwndParent);
 	assert(pOptions->pClass->nNumColumns > 0);
-	
+
 	hwndListView = GetDlgItem(pOptions->hwndParent, pOptions->nIDDlgItem);
 	assert(hwndListView);
 
@@ -505,7 +506,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 	int nItemCount;
 	HBITMAP hBackground;
 
-	order = _alloca(pListView->pClass->nNumColumns * sizeof(int));
+	order = alloca(pListView->pClass->nNumColumns * sizeof(int));
 
 	nColumnMax = GetNumColumns(pListView);
 
@@ -528,7 +529,7 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 		}
 	}
 
-    // Labels are offset by a certain amount  
+    // Labels are offset by a certain amount
     // This offset is related to the width of a space character
     GetTextExtentPoint32(hDC, TEXT(" "), 1 , &size);
     offset = size.cx * 2;
@@ -572,13 +573,13 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
 
         oldBitmap = SelectObject(htempDC, hBackground);
 
-        GetClientRect(pListView->hwndListView, &rcClient); 
+        GetClientRect(pListView->hwndListView, &rcClient);
         rcTmpBmp.right = rcClient.right;
         // We also need to check whether it is the last item
         // The update region has to be extended to the bottom if it is
         if ((nItemCount == 0) || (nVisualItem == nItemCount - 1))
             rcTmpBmp.bottom = rcClient.bottom;
-        
+
         rgnBitmap = CreateRectRgnIndirect(&rcTmpBmp);
         SelectClipRgn(hDC, rgnBitmap);
         DeleteObject(rgnBitmap);
@@ -591,9 +592,9 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
             SelectPalette(htempDC, hPAL, FALSE );
             RealizePalette(htempDC);
         }
-        
+
         ListView_GetItemRect(pListView->hwndListView, 0, &rcFirstItem, LVIR_BOUNDS);
-       
+
         for( i = rcFirstItem.left; i < rcClient.right; i += pListView->bmDesc.bmWidth )
             for( j = rcFirstItem.top; j < rcClient.bottom; j += pListView->bmDesc.bmHeight )
                 BitBlt(hDC, i, j, pListView->bmDesc.bmWidth, pListView->bmDesc.bmHeight, htempDC, 0, 0, SRCCOPY );
@@ -705,12 +706,12 @@ static void SmartListView_HandleDrawItem(struct SmartListView *pListView, LPDRAW
         int nRetLen;
         UINT nJustify;
         LV_ITEM lvi;
-        
+
         lvc.mask = LVCF_FMT | LVCF_WIDTH;
         ListView_GetColumn(pListView->hwndListView, order[nColumn] , &lvc);
 
         lvi.mask = LVIF_TEXT;
-        lvi.iItem = nVisualItem; 
+        lvi.iItem = nVisualItem;
         lvi.iSubItem = order[nColumn];
         lvi.pszText = szBuff;
         lvi.cchTextMax = sizeof(szBuff);
@@ -810,10 +811,10 @@ void SmartListView_SaveColumnSettings(struct SmartListView *pListView)
 	int *widths;
 	int *tmpOrder;
 
-	shown = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*shown));
-	order = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*order));
-	widths = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*widths));
-	tmpOrder = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(*tmpOrder));
+	shown = (int *) alloca(pListView->pClass->nNumColumns * sizeof(*shown));
+	order = (int *) alloca(pListView->pClass->nNumColumns * sizeof(*order));
+	widths = (int *) alloca(pListView->pClass->nNumColumns * sizeof(*widths));
+	tmpOrder = (int *) alloca(pListView->pClass->nNumColumns * sizeof(*tmpOrder));
 
 	SmartListView_GetColumnInfo(pListView, shown, order, widths);
 	nColumnMax = GetNumColumns(pListView);
@@ -848,9 +849,9 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 
 	nNumColumns = pListView->pClass->nNumColumns;
 
-	shown = (int *) _alloca(nNumColumns * sizeof(*shown));
-	order = (int *) _alloca(nNumColumns * sizeof(*order));
-	widths = (int *) _alloca(nNumColumns * sizeof(*widths));
+	shown = (int *) alloca(nNumColumns * sizeof(*shown));
+	order = (int *) alloca(nNumColumns * sizeof(*order));
+	widths = (int *) alloca(nNumColumns * sizeof(*widths));
 
 	SmartListView_GetColumnInfo(pListView, shown, order, widths);
 
@@ -880,7 +881,7 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 				static const TCHAR *pDivider = TEXT(" - ");
 				TCHAR *pNewColumnText;
 
-				pNewColumnText = _alloca((_tcslen(pColumnText) + _tcslen(pDivider) + _tcslen(pListView->lpExtraColumnText) + 1) * sizeof(TCHAR));
+				pNewColumnText = alloca((_tcslen(pColumnText) + _tcslen(pDivider) + _tcslen(pListView->lpExtraColumnText) + 1) * sizeof(TCHAR));
 				_tcscpy(pNewColumnText, pColumnText);
 				_tcscat(pNewColumnText, pDivider);
 				_tcscat(pNewColumnText, pListView->lpExtraColumnText);
@@ -888,10 +889,10 @@ static void SmartListView_InternalResetColumnDisplay(struct SmartListView *pList
 			}
 #endif /* HAS_EXTRACOLUMNTEXT */
 			lvc.mask = LVCF_FMT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_TEXT;
-			lvc.fmt = LVCFMT_LEFT; 
+			lvc.fmt = LVCFMT_LEFT;
 			lvc.pszText = pColumnText;
 			lvc.iSubItem = nColumn;
-			lvc.cx = widths[order[i]]; 
+			lvc.cx = widths[order[i]];
 			ListView_InsertColumn(pListView->hwndListView, nColumn, &lvc);
 			pListView->piRealColumns[nColumn] = order[i];
 			nColumn++;
@@ -917,10 +918,10 @@ void SmartListView_ResetColumnDisplay(struct SmartListView *pListView)
 static int SmartListView_InsertItem(struct SmartListView *pListView, int nItem)
 {
 	LV_ITEM lvi;
-	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
+	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM;
 	lvi.stateMask = 0;
 	lvi.iItem = nItem;
-	lvi.iSubItem = 0; 
+	lvi.iSubItem = 0;
 	lvi.lParam = nItem;
 	lvi.pszText  = LPSTR_TEXTCALLBACK;
 	lvi.iImage   = I_IMAGECALLBACK;
@@ -970,7 +971,7 @@ BOOL SmartListView_SetTotalItems(struct SmartListView *pListView, int nItemCount
 	if (pListView->rowMapping)
 		free(pListView->rowMapping);
 	pListView->rowMapping = newRowMapping;
-	
+
 	ListView_DeleteAllItems(pListView->hwndListView);
 	ListView_SetItemCount(pListView->hwndListView, nItemCount);
 
@@ -1018,7 +1019,7 @@ void SmartListView_GetRealColumnOrder(struct SmartListView *pListView, int *pnOr
 	int nColumnMax;
 	int i;
 
-	tmpOrder = (int *) _alloca(pListView->pClass->nNumColumns * sizeof(int));
+	tmpOrder = (int *) alloca(pListView->pClass->nNumColumns * sizeof(int));
 
 	nColumnMax = GetNumColumns(pListView);
 
@@ -1108,7 +1109,7 @@ static int CALLBACK sort_Compare(LPARAM nLogicalRow1, LPARAM nLogicalRow2, int n
 	nColumn = pSortInfo->nColumn;
 	bReverse = pSortInfo->bReverse;
 
-	nResult = pListView->pClass->pfnCompare(pListView, nLogicalRow1, nLogicalRow2, nColumn); 
+	nResult = pListView->pClass->pfnCompare(pListView, nLogicalRow1, nLogicalRow2, nColumn);
 	return bReverse ? -nResult : nResult;
 }
 
@@ -1125,7 +1126,7 @@ void SmartListView_SetSorting(struct SmartListView *pListView, int nColumn, BOOL
 	si.nColumn = nColumn;
 	si.bReverse = bReverse;
 
-	ListView_SortItems(pListView->hwndListView, sort_Compare, &si);
+	ListView_SortItems(pListView->hwndListView, sort_Compare, (LPARAM)&si);
 
 	/* Update sort condition */
 	pListView->nSortCondition = (nColumn + 1) * (bReverse ? -1 : 1);

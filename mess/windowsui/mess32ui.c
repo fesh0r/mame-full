@@ -6,12 +6,12 @@
 #include <commdlg.h>
 #include <wingdi.h>
 
-#include "mame32.h"
+#include "windowsui/mame32.h"
 #include "mess/mess.h"
 #include "config.h"
 #include "SmartListView.h"
 #include "SoftwareList.h"
-#include "../windows/window.h"
+#include "windows/window.h"
 #include "messwin.h"
 #include "rc.h"
 
@@ -34,7 +34,7 @@ static void SoftwareListClass_SetColumnInfo(struct SmartListView *pListView, int
 static void SoftwareListClass_Run(struct SmartListView *pListView);
 static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL bWasSelected, BOOL bNowSelected, int nRow);
 
-static char *mess_column_names[] = {
+static const char *mess_column_names[] = {
     "Software",
 	"Goodname",
     "Manufacturer",
@@ -43,7 +43,7 @@ static char *mess_column_names[] = {
 	"CRC"
 };
 
-static struct SmartListViewClass s_softwareListClass = 
+static struct SmartListViewClass s_softwareListClass =
 {
 	0,
 	SoftwareListClass_Run,
@@ -82,7 +82,7 @@ static void MessTestsDoneIdle(void);
 
 #define IsValidListControl(hwnd)    (((hwnd) == hwndList) || ((hwnd) == (s_pSoftwareListView->hwndListView)))
 
-#include "win32ui.c"
+#include "windowsui/win32ui.c"
 
 struct deviceentry {
 	int icon;
@@ -215,11 +215,11 @@ static void MyFillSoftwareList(int nGame)
 	LPCSTR *plpBasePaths;
 	LPCSTR lpExtraPath;
 	const struct GameDriver *drv;
-	
+
 	drv = drivers[nGame];
 
 	nBasePaths = GetMessSoftwarePathCount();
-	plpBasePaths = _alloca(sizeof(LPCSTR) * nBasePaths);
+	plpBasePaths = alloca(sizeof(LPCSTR) * nBasePaths);
 	for (i = 0; i < nBasePaths; i++)
 		plpBasePaths[i] = GetMessSoftwarePath(i);
 
@@ -242,7 +242,7 @@ static void MessSetPickerDefaults(void)
 
     for (i = 0; i < options.image_count; i++)
         nDefaultSize += strlen(options.image_files[i].name) + 1;
-    
+
     if (nDefaultSize) {
         default_software = malloc(nDefaultSize);
         if (default_software) {
@@ -344,7 +344,7 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     s += strlen(s) + 1;
     strcpy(s, "*.*");
     s += strlen(s) + 1;
- 
+
     // The others
     for (i = 0; imagetypes[i].ext; i++) {
 		if (imagetypes[i].type == IO_ZIP)
@@ -382,21 +382,21 @@ static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc 
     of.lpstrFileTitle = NULL;
     of.nMaxFileTitle = 0;
     of.lpstrInitialDir = last_directory;
-    of.lpstrTitle = NULL; 
+    of.lpstrTitle = NULL;
     of.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
     of.nFileOffset = 0;
     of.nFileExtension = 0;
-    of.lpstrDefExt = "rom"; 
+    of.lpstrDefExt = "rom";
     of.lCustData = 0;
     of.lpfnHook = NULL;
     of.lpTemplateName = NULL;
-    
+
     success = cfd(&of);
     if (success)
     {
         //GetDirectory(filename,last_directory,sizeof(last_directory));
     }
-    
+
     return success;
 }
 
@@ -436,7 +436,7 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
     int nIcon;
 
     nType = GetImageType(nItem);
-    
+
     nIcon = GetMessIcon(GetSelectedPickItem(), nType);
     if (!nIcon) {
 		switch(nType) {
@@ -444,7 +444,7 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
 			/* Unknowns */
 			nIcon = 2;
 			break;
-		
+
 		case IO_BAD:
 			/* Bad files */
 			nIcon = 3;
@@ -493,7 +493,7 @@ static BOOL SoftwareListClass_ItemChanged(struct SmartListView *pListView, BOOL 
 		s = strrchr(name, '\\');
 		if (s)
 			name = s + 1;
-		newname = _alloca(strlen(name) + 1);
+		newname = alloca(strlen(name) + 1);
 		strcpy(newname, name);
 		s = strrchr(newname, '.');
 		if (s)
@@ -541,7 +541,7 @@ static void FileMgrListClass_Run(struct SmartListView *pListView)
 	s_bChosen = TRUE;
 }
 
-static struct SmartListViewClass s_filemgrListClass = 
+static struct SmartListViewClass s_filemgrListClass =
 {
 	sizeof(struct SingleItemSmartListView),
 	FileMgrListClass_Run,

@@ -1,9 +1,10 @@
 #define WIN32_LEAN_AND_MEAN
-
+#define NONAMELESSUNION 1
+#include <windows.h>
 #include <string.h>
 
-#include "mame32.h"
-#include "Directories.h"
+#include "windowsui/mame32.h"
+#include "windowsui/Directories.h"
 #include "mess/mess.h"
 #include "mess/utils.h"
 
@@ -165,7 +166,7 @@ static BOOL SoftwareDirectories_OnDelete(HWND hDlg)
         return FALSE;
 
 	ListView_DeleteItem(hList, nItem);
-    
+
     nCount = ListView_GetItemCount(hList);
     if (nCount <= 1)
         return FALSE;

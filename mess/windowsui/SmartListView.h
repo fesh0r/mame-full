@@ -14,7 +14,7 @@
 #define HAS_COLUMNEDIT		1
 #define HAS_CONTEXTMENU		1
 #define HAS_EXTRACOLUMNTEXT	0
-#include "Screenshot.h"
+#include "windowsui/Screenshot.h"
 #endif
 
 struct SmartListView;
@@ -89,7 +89,7 @@ struct SmartListView
 };
 
 struct SmartListView *SmartListView_Create(struct SmartListViewOptions *pOptions,
-	BOOL bVisible, BOOL bSingleSel, int x, int y, int nWidth, int nHeight, HINSTANCE hInstance); 
+	BOOL bVisible, BOOL bSingleSel, int x, int y, int nWidth, int nHeight, HINSTANCE hInstance);
 
 struct SmartListView *SmartListView_Init(struct SmartListViewOptions *pOptions);
 void SmartListView_Free(struct SmartListView *pListView);

@@ -9,22 +9,24 @@
   that you have read the license and understand and accept it fully.
 
 ***************************************************************************/
- 
+
 /***************************************************************************
 
   Properties.c
 
     Properties Popup and Misc UI support routines.
-    
+
     Created 8/29/98 by Mike Haaland (mhaaland@hypertech.com)
 
 ***************************************************************************/
-
+#undef MESS
 #define WIN32_LEAN_AND_MEAN
+#define NONAMELESSUNION 1
 #include <windows.h>
 #include <windowsx.h>
 #include <commctrl.h>
 #include <commdlg.h>
+#undef NONAMELESSUNION
 #include <ddraw.h>
 #include <stdio.h>
 #include <string.h>
@@ -52,10 +54,6 @@
 #endif
 #endif
 
-#ifdef __GNUC__
-#define HAS_DUMMYUNIONNAME
-#endif
-
 /***************************************************************
  * Imported function prototypes
  ***************************************************************/
@@ -71,9 +69,9 @@ static INT_PTR CALLBACK GamePropertiesDialogProc(HWND hDlg, UINT Msg, WPARAM wPa
 static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 static INT_PTR CALLBACK GameDisplayOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPARAM lParam);
 
-static void SetStereoEnabled(HWND hWnd, int index);
-static void SetYM3812Enabled(HWND hWnd, int index);
-static void SetSamplesEnabled(HWND hWnd, int index, BOOL bSoundEnabled);
+static void SetStereoEnabled(HWND hWnd, int the_index);
+static void SetYM3812Enabled(HWND hWnd, int the_index);
+static void SetSamplesEnabled(HWND hWnd, int the_index, BOOL bSoundEnabled);
 static void InitializeOptions(HWND hDlg);
 static void InitializeMisc(HWND hDlg);
 static void OptOnHScroll(HWND hWnd, HWND hwndCtl, UINT code, int pos);
@@ -225,7 +223,7 @@ static struct ComboBoxEffect
 {
 	const char*	m_pText;
 	const char* m_pData;
-} g_ComboBoxEffect[] = 
+} g_ComboBoxEffect[] =
 {
 	{ "None",                           "none"    },
 	{ "25% scanlines",                  "scan25"  },
@@ -263,7 +261,7 @@ BOOL FindRomSet(int game)
 	unsigned int			length, icrc;
 
 	gamedrv = drivers[game];
- 
+
 	if (!osd_faccess(gamedrv->name, OSD_FILETYPE_ROM))
 	{
 		/* if the game is a clone, try loading the ROM from the main version */
@@ -313,7 +311,7 @@ BOOL GameUsesSamples(int game)
 	static const struct GameDriver *gamedrv;
 
 	gamedrv = drivers[game];
-	
+
 	for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
 	{
 		const char **samplenames = NULL;
@@ -349,12 +347,12 @@ BOOL FindSampleSet(int game)
 	BOOL bStatus;
 	int  skipfirst;
 	int  j, i;
-	
+
 	if (GameUsesSamples(game) == FALSE)
 		return TRUE;
 
 	gamedrv = drivers[game];
-	
+
 	for (i = 0; gamedrv->drv->sound[i].sound_type && i < MAX_SOUND; i++)
 	{
 		const char **samplenames = NULL;
@@ -368,7 +366,7 @@ BOOL FindSampleSet(int game)
 		if (gamedrv->drv->sound[i].sound_type == SOUND_VLM5030)
 			samplenames = ((struct VLM5030interface *)gamedrv->drv->sound[i].sound_interface)->samplenames;
 #endif
-		
+
 		if (samplenames != 0 && samplenames[0] != 0)
 		{
 			BOOL have_samples = FALSE;
@@ -452,15 +450,9 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 	pshead.hInstance                  = hInst;
 	pshead.pszCaption                 = "Default Game";
 	pshead.nPages                     = maxPropSheets;
-#ifdef HAS_DUMMYUNIONNAME
 	pshead.DUMMYUNIONNAME2.nStartPage = 0;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
-#else
-	pshead.nStartPage = 0;
-	pshead.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
-	pshead.ppsp       = pspage;
-#endif
 
 	/* Fill out the property page templates */
 	for (i = 0; i < maxPropSheets; i++)
@@ -468,11 +460,7 @@ void InitDefaultPropertyPage(HINSTANCE hInst, HWND hWnd)
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
-#ifdef HAS_DUMMYUNIONNAME
 		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i + 2]);
-#else
-		pspage[i].pszTemplate				 = MAKEINTRESOURCE(dwDlgId[i + 2]);
-#endif
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
 		pspage[i].pfnDlgProc                 = GameOptionsProc;
@@ -523,15 +511,9 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 	pshead.hInstance                  = hInst;
 	pshead.pszCaption                 = ModifyThe(drivers[g_nGame]->description);
 	pshead.nPages                     = maxPropSheets;
-#ifdef HAS_DUMMYUNIONNAME
 	pshead.DUMMYUNIONNAME2.nStartPage = start_page;
 	pshead.DUMMYUNIONNAME.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
 	pshead.DUMMYUNIONNAME3.ppsp       = pspage;
-#else
-	pshead.nStartPage = start_page;
-	pshead.pszIcon     = MAKEINTRESOURCE(IDI_MAME32_ICON);
-	pshead.ppsp       = pspage;
-#endif
 
 	/* Fill out the property page templates */
 	for (i = 0; i < maxPropSheets; i++)
@@ -539,11 +521,7 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 		pspage[i].dwSize                     = sizeof(PROPSHEETPAGE);
 		pspage[i].dwFlags                    = 0;
 		pspage[i].hInstance                  = hInst;
-#ifdef HAS_DUMMYUNIONNAME
 		pspage[i].DUMMYUNIONNAME.pszTemplate = MAKEINTRESOURCE(dwDlgId[i]);
-#else
-		pspage[i].pszTemplate = MAKEINTRESOURCE(dwDlgId[i]);
-#endif
 		pspage[i].pfnCallback                = NULL;
 		pspage[i].lParam                     = 0;
 	}
@@ -556,11 +534,11 @@ void InitPropertyPageToPage(HINSTANCE hInst, HWND hWnd, int game_num, int start_
 	pspage[4].pfnDlgProc = GameOptionsProc;
 	pspage[5].pfnDlgProc = GameOptionsProc;
 	pspage[6].pfnDlgProc = GameOptionsProc;
-    
+
 #ifdef MESS
     pspage[7].pfnDlgProc = GameOptionsProc;
 #endif
-	
+
 	/* If this is a vector game, add the vector prop sheet */
 	if (maxPropSheets == NUM_PROPSHEETS)
 	{
@@ -715,7 +693,7 @@ static char *GameInfoManufactured(UINT nIndex)
 {
 	static char buf[1024];
 
-	sprintf(buf, "%s %s", drivers[nIndex]->year, drivers[nIndex]->manufacturer); 
+	sprintf(buf, "%s %s", drivers[nIndex]->year, drivers[nIndex]->manufacturer);
 	return buf;
 }
 
@@ -727,7 +705,7 @@ char *GameInfoTitle(UINT nIndex)
 	if (nIndex == -1)
 		strcpy(buf, "Global game options\nDefault options used by all games");
 	else
-		sprintf(buf, "%s\n\"%s\"", ModifyThe(drivers[nIndex]->description), drivers[nIndex]->name); 
+		sprintf(buf, "%s\n\"%s\"", ModifyThe(drivers[nIndex]->description), drivers[nIndex]->name);
 	return buf;
 }
 
@@ -743,7 +721,7 @@ static char *GameInfoCloneOf(UINT nIndex)
 	{
 		sprintf(buf, "%s - \"%s\"",
 				ModifyThe(drivers[nIndex]->clone_of->description),
-				drivers[nIndex]->clone_of->name); 
+				drivers[nIndex]->clone_of->name);
 	}
 
 	return buf;
@@ -826,7 +804,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 
 		EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), g_bReset);
 		ShowWindow(hDlg, SW_SHOW);
-    
+
 		return 1;
 
 	case WM_HSCROLL:
@@ -931,7 +909,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 					}
 					EnableWindow(GetDlgItem(hDlg, IDC_USE_DEFAULT), (g_bUseDefaults) ? FALSE : TRUE);
 				}
-            
+
 				break;
 #ifdef MESS
 			case IDC_DIR_BROWSE:
@@ -972,7 +950,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 					changed = TRUE;
 				}
 			}
-        
+
 			/* Enable the apply button */
 			if (changed == TRUE)
 			{
@@ -1024,7 +1002,7 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 			pGameOpts->use_default = g_bUseDefaults;
 			PropToOptions(hDlg, pGameOpts);
 			SetWindowLong(hDlg, DWL_MSGRESULT, FALSE);
-			return 1;  
+			return 1;
 
 		case PSN_RESET:
 			/* Reset to the original values. Disregard changes */
@@ -1051,9 +1029,9 @@ static INT_PTR CALLBACK GameOptionsProc(HWND hDlg, UINT Msg, WPARAM wParam, LPAR
 		Help_HtmlHelp(((LPHELPINFO)lParam)->hItemHandle, MAME32HELP, HH_TP_HELP_WM_HELP, GetHelpIDs());
 		break;
 
-	case WM_CONTEXTMENU: 
+	case WM_CONTEXTMENU:
 		Help_HtmlHelp((HWND)wParam, MAME32HELP, HH_TP_HELP_CONTEXTMENU, GetHelpIDs());
-		break; 
+		break;
 
 	}
 	EnableWindow(GetDlgItem(hDlg, IDC_PROP_RESET), g_bReset);
@@ -1089,13 +1067,13 @@ static void PropToOptions(HWND hWnd, options_type *o)
 	{
 		/* Screen size control */
 		nIndex = ComboBox_GetCurSel(hCtrl);
-		
+
 		if (nIndex == 0)
 			strcpy(o->resolution, "0x0"); /* auto */
 		else
 		{
 			int w, h;
-        
+
 			ComboBox_GetText(hCtrl, buf, 100);
 			if (sscanf(buf, "%d x %d", &w, &h) == 2)
 			{
@@ -1105,7 +1083,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 			{
 				strcpy(o->resolution, "0x0"); /* auto */
 			}
-		}   
+		}
 
 		/* resolution depth */
 		hCtrl = GetDlgItem(hWnd, IDC_RESDEPTH);
@@ -1133,7 +1111,7 @@ static void PropToOptions(HWND hWnd, options_type *o)
 	if (hCtrl)
 	{
 		nIndex = ComboBox_GetCurSel(hCtrl);
-		
+
 		pGameOpts->gfx_refresh = ComboBox_GetItemData(hCtrl, nIndex);
 	}
 
@@ -1210,14 +1188,14 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 
 			/* Get the number of items in the control */
 			nCount = ComboBox_GetCount(hCtrl);
-        
+
 			while (0 < nCount--)
 			{
 				int nWidth, nHeight;
-            
+
 				/* Get the screen size */
 				ComboBox_GetLBText(hCtrl, nCount, buf);
-            
+
 				if (sscanf(buf, "%d x %d", &nWidth, &nHeight) == 2)
 				{
 					/* If we match, set nSelection to the right value */
@@ -1250,14 +1228,14 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 
 			/* Get the number of items in the control */
 			nCount = ComboBox_GetCount(hCtrl);
-        
+
 			while (0 < nCount--)
 			{
 				int nDepth;
-            
+
 				/* Get the screen depth */
 				nDepth = ComboBox_GetItemData(hCtrl, nCount);
-            
+
 				/* If we match, set nSelection to the right value */
 				if (d == nDepth)
 				{
@@ -1286,14 +1264,14 @@ static void OptionsToProp(HWND hWnd, options_type* o)
 
 			/* Get the number of items in the control */
 			nCount = ComboBox_GetCount(hCtrl);
-        
+
 			while (0 < nCount--)
 			{
 				int nRefresh;
-            
+
 				/* Get the screen depth */
 				nRefresh = ComboBox_GetItemData(hCtrl, nCount);
-            
+
 				/* If we match, set nSelection to the right value */
 				if (o->gfx_refresh == nRefresh)
 				{
@@ -1630,9 +1608,9 @@ static void BuildDataMap(void)
 
 	/* input */
 	DataMapAdd(IDC_DEFAULT_INPUT, DM_INT,  CT_COMBOBOX, &g_nInputIndex, 0, 0, AssignInput);
-	DataMapAdd(IDC_USE_MOUSE,     DM_BOOL, CT_BUTTON,   &pGameOpts->use_mouse,     0, 0, 0);   
-	DataMapAdd(IDC_JOYSTICK,      DM_BOOL, CT_BUTTON,   &pGameOpts->use_joystick,  0, 0, 0);   
-	DataMapAdd(IDC_STEADYKEY,     DM_BOOL, CT_BUTTON,   &pGameOpts->steadykey,     0, 0, 0);   
+	DataMapAdd(IDC_USE_MOUSE,     DM_BOOL, CT_BUTTON,   &pGameOpts->use_mouse,     0, 0, 0);
+	DataMapAdd(IDC_JOYSTICK,      DM_BOOL, CT_BUTTON,   &pGameOpts->use_joystick,  0, 0, 0);
+	DataMapAdd(IDC_STEADYKEY,     DM_BOOL, CT_BUTTON,   &pGameOpts->steadykey,     0, 0, 0);
 
 	/* core video */
 	DataMapAdd(IDC_DEPTH,         DM_INT,  CT_COMBOBOX, &g_nDepthIndex, 0, 0, AssignDepth);
@@ -1666,7 +1644,7 @@ static void BuildDataMap(void)
 #endif
 }
 
-static void SetStereoEnabled(HWND hWnd, int index)
+static void SetStereoEnabled(HWND hWnd, int the_index)
 {
 	BOOL enabled = FALSE;
 	HWND hCtrl;
@@ -1674,14 +1652,14 @@ static void SetStereoEnabled(HWND hWnd, int index)
 	hCtrl = GetDlgItem(hWnd, IDC_STEREO);
 	if (hCtrl)
 	{
-		if (index == -1 || drivers[index]->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
+		if (the_index == -1 || drivers[the_index]->drv->sound_attributes & SOUND_SUPPORTS_STEREO)
 			enabled = TRUE;
 
 		EnableWindow(hCtrl, enabled);
 	}
 }
 
-static void SetYM3812Enabled(HWND hWnd, int index)
+static void SetYM3812Enabled(HWND hWnd, int the_index)
 {
 	int i;
 	BOOL enabled;
@@ -1693,25 +1671,25 @@ static void SetYM3812Enabled(HWND hWnd, int index)
 		enabled = FALSE;
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (index == -1
+			if (the_index == -1
 #if HAS_YM3812
-			||  drivers[index]->drv->sound[i].sound_type == SOUND_YM3812
+			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM3812
 #endif
 #if HAS_YM3526
-			||  drivers[index]->drv->sound[i].sound_type == SOUND_YM3526
+			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM3526
 #endif
 #if HAS_YM2413
-			||  drivers[index]->drv->sound[i].sound_type == SOUND_YM2413
+			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_YM2413
 #endif
 			)
 				enabled = TRUE;
 		}
-    
+
 		EnableWindow(hCtrl, enabled);
 	}
 }
 
-static void SetSamplesEnabled(HWND hWnd, int index, BOOL bSoundEnabled)
+static void SetSamplesEnabled(HWND hWnd, int the_index, BOOL bSoundEnabled)
 {
 #if (HAS_SAMPLES == 1) || (HAS_VLM5030 == 1)
 	int i;
@@ -1723,15 +1701,15 @@ static void SetSamplesEnabled(HWND hWnd, int index, BOOL bSoundEnabled)
 	{
 		for (i = 0; i < MAX_SOUND; i++)
 		{
-			if (index == -1
-			||  drivers[index]->drv->sound[i].sound_type == SOUND_SAMPLES
+			if (the_index == -1
+			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_SAMPLES
 #if HAS_VLM5030
-			||  drivers[index]->drv->sound[i].sound_type == SOUND_VLM5030
+			||  drivers[the_index]->drv->sound[i].sound_type == SOUND_VLM5030
 #endif
 			)
 				enabled = TRUE;
 		}
-    
+
 		enabled = enabled && bSoundEnabled;
 		EnableWindow(hCtrl, enabled);
 	}
@@ -1890,7 +1868,7 @@ static void ResDepthSelectionChange(HWND hWnd, HWND hWndCtrl)
 		HWND hRefreshCtrl;
 		int nResDepth = 0;
 		int nRefresh  = 0;
-    
+
 		nResDepth = ComboBox_GetItemData(hWndCtrl, nCurSelection);
 
 		hRefreshCtrl = GetDlgItem(hWnd, IDC_REFRESH);
@@ -1916,7 +1894,7 @@ static void RefreshSelectionChange(HWND hWnd, HWND hWndCtrl)
 		HWND hResDepthCtrl;
 		int nResDepth = 0;
 		int nRefresh  = 0;
-    
+
 		nRefresh = ComboBox_GetItemData(hWndCtrl, nCurSelection);
 
 		hResDepthCtrl = GetDlgItem(hWnd, IDC_RESDEPTH);
