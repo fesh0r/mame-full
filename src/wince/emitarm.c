@@ -142,12 +142,32 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 	int shift;
 	int new_operand;
 	int rtemp;
-	int tmp;
+	UINT32 tmp;
 	INT32 subopcode1;
 	INT32 subopcode2;
 
 	assert(rd < 16);
 	assert(r1 < 16);
+
+	// are we superfulous?
+	if (r1 == rd)
+	{
+		switch(opcode) {
+		case ADD:
+		case SUB:
+		case ORR:
+		case EOR:
+		case BIC:
+			if (operand == 0)
+				return;
+			break;
+
+		case AND:
+			if (operand == 0xffffffff)
+				return;
+			break;
+		}
+	}
 
 	// minor transformations
 	switch(opcode) {
@@ -211,10 +231,9 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 		}
 
 		ror++;
-		tmp = new_operand & 3;
-		new_operand >>= 2;
-		new_operand &= 0x3fffffff;
-		new_operand |= tmp << 30;
+		tmp = new_operand & 0xc0000000;
+		new_operand <<= 2;
+		new_operand |= tmp >> 30;
 	}
 
 	opcode |= AL | (1 << 25) | (rd << 12) | (r1 << 16) | (ror << 8) | (new_operand << 0);
@@ -224,7 +243,7 @@ static void emit_regi(struct blitter_params *params, INT32 opcode, int rd, int r
 void emit_header(struct blitter_params *params)
 {
 	// stmfd	sp!,	{r4, r5, r6, r7, r8}
-	emit_int32(params, AL | 0x092 | (0x10000 << RSP) | 0x01f0);
+	emit_int32(params, AL | 0x09200000 | (0x10000 * RSP) | 0x01f0);
 	
 	// mov		r4, dest_height
 	emit_regi(params, MOV, RROWS, 0, params->dest_height);
@@ -243,11 +262,11 @@ void emit_header(struct blitter_params *params)
 
 void emit_footer(struct blitter_params *params)
 {
-	// ldmfd	sp!, {r8, r7, r6, r5, r4}
-	emit_int32(params, AL | 0x08b | (0x10000 << RSP) | 0x01f0);
+	// ldmfd	sp!, {r15, r8, r7, r6, r5, r4}
+	emit_int32(params, AL | 0x08b00000 | (0x10000 * RSP) | 0x81f0);
 
 	// mov		pc, r14
-	emit_regreg(params, MOV, RPC, RLINK, 0);
+	//emit_regreg(params, MOV, RPC, RLINK, 0);
 }
 
 void emit_increment_sourcebits(struct blitter_params *params, INT32 adjustment)
@@ -325,8 +344,11 @@ void emit_begin_loop(struct blitter_params *params)
 
 void emit_finish_loop(struct blitter_params *params, size_t loop_begin)
 {
+	INT32 adjustment;
+
 	// beq	begin
-	emit_int32(params, EQ | 0x0a000000 | (loop_begin & 0x00ffffff));
+	adjustment = loop_begin - params->blitter_size - 8;
+	emit_int32(params, EQ | 0x0a000000 | (adjustment >> 2) & 0x00ffffff);
 }
 
 void emit_filler(void *dest, size_t sz)

@@ -96,8 +96,8 @@ void system(const char *command)
 {
 }
 
-#ifndef NDEBUG
-int _fail(const char *exp, const char *file, int lineno)
+#ifdef DEBUG
+int __cdecl _fail(const char *exp, const char *file, int lineno)
 {
 	char buffer[1024];
 	LPCTSTR lpMsg;

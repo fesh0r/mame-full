@@ -18,11 +18,6 @@
 #include "window.h"
 #include "emitblit.h"
 
-#ifdef assert
-#undef assert
-#endif
-
-#define assert(a)
 
 //============================================================
 //	TYPE DEFINITIONS

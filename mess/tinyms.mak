@@ -2,18 +2,19 @@ MESS=1
 
 # a tiny compile is without Neogeo games
 COREDEFS += -DTINY_COMPILE=1 -DNEOFREE -DMESS=1
-COREDEFS += -DTINY_NAME="driver_a2600"
-COREDEFS += -DTINY_POINTER="&driver_a2600"
+COREDEFS += -DTINY_NAME="driver_coleco"
+COREDEFS += -DTINY_POINTER="&driver_coleco"
 
 
 # uses these CPUs
-CPUS+=M6502@
+CPUS+=Z80@
 
 # uses these SOUNDs
-SOUNDS+=TIA@
+SOUNDS+=SN76496@
 
-OBJS =    $(OBJ)/mess/machine/a2600.o \
-	  $(OBJ)/mess/systems/a2600.o 
+OBJS =\
+	$(OBJ)/mess/machine/coleco.o	 \
+	$(OBJ)/mess/systems/coleco.o
 
 	  
 # MESS specific core $(OBJ)s
@@ -44,4 +45,5 @@ COREOBJS += \
 	$(OBJ)/mess/formats.o          \
 	$(OBJ)/mess/messfmts.o         \
 	$(OBJ)/mess/machine/flopdrv.o  \
+	$(OBJ)/mess/vidhrdw/tms9928a.o \
 
