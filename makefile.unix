@@ -139,6 +139,9 @@ CFLAGS = -O -Wall -Wno-unused
 # CFLAGS = -O2 -Wall  -Wno-unused -funroll-loops -traditional-cpp \
 #  -fstrength-reduce -fomit-frame-pointer -ffast-math -fsigned-char
 
+# IRIX MIPSpro R5+K without IPA
+# CFLAGS = -n32 -mips4 -O3 -OPT:Olimit=0
+
 # IRIX MIPSpro with really serious optimization for R10K O2
 # CFLAGS = -fullwarn -n32 -mips4 -Ofast=ip32_10k -TARG:platform=ip32_10k \
 #  -OPT:Olimit=0 -IPA
@@ -363,8 +366,8 @@ endif
 ###########################################################################
 
 # This can very noticeably increase xmame's performance, so enabling this 
-# is encouraged.  It works fine with GCC and probably with most other 
-# compilers.
+# is encouraged.  It works fine with GCC, MIPSpro, and probably with most
+# other compilers.
 IL	= '-DINLINE=static __inline__'
 
 # Use this with strict ANSI or BeOS or Sun Forte
@@ -396,6 +399,9 @@ LD	= $(CC) -Wl,-s
 
 # For debugging only.  This only works with GNU binutils!!
 # LD	= $(CC) -Wl,-warn-common
+
+# For IRIX MIPSpro, no IPA
+# LD = $(CC) -fullwarn -n32 -mips4
 
 # For IRIX R5+K MIPSpro, optimization at link time.  This takes nearly a 
 # gig of memory!!
@@ -570,10 +576,10 @@ ARCH  = linux
 # OpenStep on Apple systems (Cocoa)
 # ARCH  = macosx
 
-# IRIX (with sound requires the dmedia package) (*)
+# IRIX (with sound using the old AL (version 1) package) (*)
 # ARCH  = irix
 
-# IRIX (with sound using the new al package) (*)
+# IRIX (with sound using the al (IRIX 6.x) package) (*)
 # ARCH  = irix_al
 
 # AIX (with sound, you'll need the UMS and SOM lpp's installed (under 
@@ -772,7 +778,7 @@ GLCFLAGS += -D_X11_
 # Uncomment to add more libraries that Mesa may require.
 # GLLIBS += -lXmu -lXi
 
-# Building against Sun's OpenGL will probably need these.
+# Sun and IRIX OpenGL implementations need these.
 # GLCFLAGS += -DNOGLEXT78 -DNOTEXIDXSIZE
 
 ###########################################################################
