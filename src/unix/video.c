@@ -14,7 +14,7 @@
 
 #define FRAMESKIP_DRIVER_COUNT 2
 
-extern int bitmap_dirty;
+//extern int bitmap_dirty;
 static const int safety = 16;
 static float beam_f, flicker_f;
 static int normal_widthscale = 1, normal_heightscale = 1;
@@ -279,7 +279,9 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 	}
 }
 
-/* set the bitmap to black */
+/* set the bitmap to black */ 
+/* not necessary from mame-0.37b8 */
+#if 0 
 void osd_clearbitmap(struct osd_bitmap *bitmap)
 {
 	int i;
@@ -290,10 +292,11 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 	if (bitmap == scrbitmap)
 	{
 		bitmap_dirty = 1;
-//		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
+		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1);
 	}
 }
+#endif
 
 int osd_create_display(int width, int height, int depth,
    int fps, int attributes, int orientation)
@@ -687,7 +690,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
    int i;
    static int showfps=0, showfpstemp=0; 
    int skip_this_frame;
-   int need_to_clear_bitmap=0;
+/*   int need_to_clear_bitmap=0; */
    struct osd_bitmap *current_bitmap = normal_bitmap;
    
    /* save the active bitmap for use in osd_clearbitmap, I know this
@@ -749,14 +752,14 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
       if (showfpstemp)
       {
 	 showfpstemp = 0;
-	 need_to_clear_bitmap = 1;
+	 schedule_full_refresh();
       }
       else
       {
 	 showfps ^= 1;
 	 if (showfps == 0)
 	 {
-	    need_to_clear_bitmap = 1;
+	    schedule_full_refresh();
 	 }
       }
    }
@@ -826,7 +829,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
    if (showfpstemp)         /* MAURY_BEGIN: nuove opzioni */
    {
       showfpstemp--;
-      if (showfpstemp == 0) need_to_clear_bitmap = 1;
+      if (showfpstemp == 0) schedule_full_refresh();
    }
 
    skip_this_frame = skip_next_frame;
@@ -845,7 +848,7 @@ void osd_update_video_and_audio(struct osd_bitmap *normal_bitmap,
       profiler_mark(PROFILER_END);
    }
    
-   if (need_to_clear_bitmap) osd_clearbitmap(normal_bitmap);
+/*   if (need_to_clear_bitmap) osd_clearbitmap(normal_bitmap); */
    
    sysdep_set_leds(leds_status);
    osd_poll_joysticks();
