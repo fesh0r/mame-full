@@ -12,6 +12,8 @@ struct bdf_file
 	struct disk_geometry geometry;
 	int offset;
 	int is_readonly;
+	int (*read_sector)(void *file, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+	int (*write_sector)(void *file, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
 };
 
 static int find_geometry_options(const struct InternalBdFormatDriver *drv, UINT32 file_size, UINT32 header_size,
@@ -203,6 +205,8 @@ int bdf_open(const struct bdf_procs *procs, const formatdriver_ctor *formats,
 	bdffile->file = file;
 	bdffile->procs = procs;
 	bdffile->is_readonly = is_readonly;
+	bdffile->read_sector = drv.read_sector;
+	bdffile->write_sector = drv.write_sector;
 	err = BLOCKDEVICE_ERROR_SUCCESS;
 
 done:
@@ -252,19 +256,41 @@ const struct disk_geometry *bdf_get_geometry(void *bdf)
 
 int bdf_read_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length)
 {
+	int err;
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	if (bdf_seek(bdffile, track, head, sector, offset))
-		return -1;
-	bdffile->procs->readproc(bdffile->file, buffer, length);
+
+	if (bdffile->read_sector)
+	{
+		err = bdffile->read_sector(bdffile->file, track, head, sector, offset, buffer, length);
+		if (err)
+			return err;
+	}
+	else
+	{
+		if (bdf_seek(bdffile, track, head, sector, offset))
+			return -1;
+		bdffile->procs->readproc(bdffile->file, buffer, length);
+	}
 	return 0;
 }
 
 int bdf_write_sector(void *bdf, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length)
 {
+	int err;
 	struct bdf_file *bdffile = (struct bdf_file *) bdf;
-	if (bdf_seek(bdffile, track, head, sector, offset))
-		return -1;
-	bdffile->procs->writeproc(bdffile->file, buffer, length);
+
+	if (bdffile->write_sector)
+	{
+		err = bdffile->write_sector(bdffile->file, track, head, sector, offset, buffer, length);
+		if (err)
+			return err;
+	}
+	else
+	{
+		if (bdf_seek(bdffile, track, head, sector, offset))
+			return -1;
+		bdffile->procs->writeproc(bdffile->file, buffer, length);
+	}
 	return 0;
 }
 

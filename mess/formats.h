@@ -52,6 +52,8 @@ struct InternalBdFormatDriver
 	UINT8 filler_byte;
 	int (*header_decode)(const void *header, UINT32 file_size, UINT32 header_size, struct disk_geometry *geometry, int *offset);
 	int (*header_encode)(void *buffer, UINT32 *header_size, const struct disk_geometry *geometry);
+	int (*read_sector)(void *file, UINT8 track, UINT8 head, UINT8 sector, int offset, void *buffer, int length);
+	int (*write_sector)(void *file, UINT8 track, UINT8 head, UINT8 sector, int offset, const void *buffer, int length);
 	int flags;
 };
 
@@ -95,6 +97,8 @@ void validate_construct_formatdriver(struct InternalBdFormatDriver *drv, int tra
 #define BDFD_HEADER_ENCODE(header_encode_)			drv->header_encode = header_encode_;
 #define BDFD_HEADER_DECODE(header_decode_)			drv->header_decode = header_decode_;
 #define BDFD_FILLER_BYTE(filler_byte_)				drv->filler_byte = filler_byte_;
+#define BDFD_READ_SECTOR(read_sector_)				drv->read_sector = read_sector_;
+#define BDFD_WRITE_SECTOR(read_sector_)				drv->write_sector = write_sector_;
 
 /***************************************************************************
 
