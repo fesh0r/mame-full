@@ -186,12 +186,19 @@ static unsigned char *empty_text = NULL;
 GLuint veclist=0;
 GLdouble vecx, vecy, vecscalex, vecscaley;
 
+#ifndef NOGLCHECKS
 #define RETURN_IF_GL_ERROR() \
-      if((err = disp__glGetError ())) \
-      { \
-        print_gl_error("GLERROR", __FILE__, __LINE__, err); \
-        return 1; \
-      }
+  { \
+    GLenum err = disp__glGetError(); \
+    if((err != GL_NO_ERROR)) \
+    { \
+      PRINT_GL_ERROR("GLERROR", err); \
+      return 1; \
+    } \
+  }
+#else
+#define RETURN_IF_GL_ERROR()
+#endif
 
 /* ---------------------------------------------------------------------- */
 /* ------------ New OpenGL Specials ------------------------------------- */
@@ -199,7 +206,6 @@ GLdouble vecx, vecy, vecscalex, vecscaley;
 static int gl_set_bilinear (int new_value)
 {
   int x, y;
-  GLenum err;
   bilinear = new_value;
   if (bilinear)
   {
@@ -273,7 +279,6 @@ int gl_set_cabview (int new_value)
 
 static int gl_set_antialias(int new_value)
 {
-  GLenum err;
   antialias = new_value;
   if (antialias)
   {
@@ -302,7 +307,6 @@ static int gl_set_antialias(int new_value)
 
 static int gl_set_beam(float new_value)
 {
-  GLenum err;
   gl_beam = new_value;
   disp__glLineWidth(gl_beam);
   RETURN_IF_GL_ERROR ();
@@ -316,7 +320,6 @@ int gl_open_display (int reopen)
   const unsigned char * glVersion;
   int x, y;
   struct TexSquare *tsq;
-  GLenum err;
   GLint format=0;
   int format_ok=0;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
@@ -395,7 +398,7 @@ int gl_open_display (int reopen)
                 &vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
       NormThisVec (&vx_scr_nz, &vy_scr_nz, &vz_scr_nz);
 
-      #if 0
+      #ifdef GLDEBUG
       {
         GLdouble t1, t1x, t1y, t1z;
         
@@ -855,7 +858,7 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
     DeltaVec (vx_gscr_p1, vy_gscr_p1, vz_gscr_p1, vx_gscr_p4, vy_gscr_p4, vz_gscr_p4,
               &vx_gscr_dh, &vy_gscr_dh, &vz_gscr_dh);
 
-#if 0
+#ifdef GLDEBUG
     fprintf(stderr, "GLINFO: test v__cscr_dh - ( v__scr_ny * s__cscr_h ) = %f\n", t1);
     fprintf(stderr, "GLINFO: cabinet vectors\n");
     fprintf(stderr, "\t cab p1     : %f / %f / %f \n", vx_cscr_p1, vy_cscr_p1, vz_cscr_p1);
@@ -1139,7 +1142,6 @@ void CalcCabPointbyViewpoint(
 /* Set up a frustum projection */
 static int SetupFrustum (void)
 {
-  GLenum err;
   double vscrnaspect = (double) window_width / (double) window_height;
 
   disp__glMatrixMode (GL_PROJECTION);
@@ -1165,8 +1167,6 @@ static int SetupFrustum (void)
 /* Set up an orthographic projection */
 static int SetupOrtho (void)
 {
-  GLenum err;
-
   disp__glMatrixMode (GL_PROJECTION);
   RETURN_IF_GL_ERROR ();
   disp__glLoadIdentity ();
@@ -1207,7 +1207,6 @@ static int SetupOrtho (void)
 
 int gl_set_windowsize(void)
 {
-  GLenum err;
   CHECK_GL_BEGINEND();
 
   if (cabview)

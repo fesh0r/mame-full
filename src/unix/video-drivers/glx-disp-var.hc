@@ -5,7 +5,6 @@
 
 
 
-void *(CALLBACK * disp__glXGetProcAddress) (const GLubyte *) = NULL;
 void (CALLBACK *  disp__glXWaitGL)( ) = NULL;
 void (CALLBACK *  disp__glXDestroyGLXPixmap)( Display *dpy, GLXPixmap pix ) = NULL;
 Bool (CALLBACK *  disp__glXQueryExtension)( Display *dpy, int *errorBase, int *eventBase ) = NULL;

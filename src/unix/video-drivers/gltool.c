@@ -25,8 +25,6 @@
 #ifdef _X11_
 	#include <string.h>
 	#include "glxtool.h"
-
-	#define GLXLIB_NAME "libglut.so"
 #endif
 
 #ifdef _WIN32_
@@ -41,7 +39,6 @@ static int _glLibsLoaded = 0;
 #endif
 
 #ifdef _X11_
-  static void *libHandleGLX=0;
   static void *libHandleGL=0;
   static void *libHandleGLU=0;
 #endif
@@ -51,11 +48,7 @@ static int _glLibsLoaded = 0;
   CFragConnectionID glLibConnectId = 0;
 #endif
 
-static int gl_begin_ctr;
-
-const char * GLTOOL_USE_GLLIB  = "GLTOOL_USE_GLLIB";
-const char * GLTOOL_USE_GLULIB = "GLTOOL_USE_GLULIB";
-
+#ifndef NOGLCHECKS
 void LIBAPIENTRY print_gl_error (const char *msg, const char *file, int line, GLenum errorcode)
 {
   if (errorcode != GL_NO_ERROR)
@@ -83,16 +76,16 @@ void LIBAPIENTRY check_wgl_error (HWND wnd, const char *file, int line)
   LocalFree (lpMsgBuf);
 }
 #endif
+#endif
 
-void LIBAPIENTRY check_gl_error (const char *file, int line)
-{
-  print_gl_error("GLCHECK", file, line, disp__glGetError());
-}
+#ifdef GLDEBUG
+static int gl_begin_ctr;
 
 void LIBAPIENTRY __sglBegin(const char * file, int line, GLenum mode)
 {
+#ifndef NOGLCHECKS
   	print_gl_error("GL-PreBEGIN-CHECK", file, line, disp__glGetError());
-
+#endif
 	if(gl_begin_ctr!=0)
 	{
 		fprintf(stderr, "\n\n****\n** GL-BEGIN-ERROR %s:%d> glBegin was called %d times (reset now)\n****\n", 
@@ -115,8 +108,9 @@ void LIBAPIENTRY __sglEnd(const char * file, int line)
 		gl_begin_ctr--;
 
 	disp__glEnd();
-
+#ifndef NOGLCHECKS
   	print_gl_error("GL-PostEND-CHECK", file, line, disp__glGetError());
+#endif
 }
 
 /** 
@@ -131,7 +125,9 @@ void LIBAPIENTRY checkGlBeginEndBalance(const char *file, int line)
 		fprintf(stderr, "\n****\n** GL-BeginEnd-ERROR %s:%d> glBegin was called %d times\n****\n", 
 			file, line, gl_begin_ctr);
 	}
+#ifndef NOGLCHECKS
   	print_gl_error("GL-BeginEnd-CHECK", file, line, disp__glGetError());
+#endif
 }
 
 void LIBAPIENTRY showGlBeginEndBalance(const char *file, int line)
@@ -139,6 +135,7 @@ void LIBAPIENTRY showGlBeginEndBalance(const char *file, int line)
 	fprintf(stderr, "\n****\n** GL-BeginEnd %s:%d> glBegin was called %d times\n****\n", 
 		file, line, gl_begin_ctr);
 }
+#endif
 
 int LIBAPIENTRY unloadGLLibrary ()
 {
@@ -165,11 +162,6 @@ int LIBAPIENTRY unloadGLLibrary ()
       {
 	      dlclose (libHandleGLU);
 	      libHandleGLU = NULL;
-      }
-      if(libHandleGLX!=NULL)
-      {
-	      dlclose (libHandleGLX);
-	      libHandleGLX = NULL;
       }
 #endif
 
@@ -198,8 +190,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
 
   if(_glLibsLoaded) return 1;
 
-  envGLName = getenv(GLTOOL_USE_GLLIB);
-  envGLUName = getenv(GLTOOL_USE_GLULIB);
+  envGLName  = getenv("GLTOOL_USE_GLLIB");
+  envGLUName = getenv("GLTOOL_USE_GLULIB");
 
   if(envGLName!=NULL)
   {
@@ -236,8 +228,6 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
 #endif
 
 #ifdef _X11_
-  if(libHandleGL!=NULL) return 1;
-
 #ifdef SUN_FORTE_DLOPEN_LIBCRUN
   {
      void *libcrun;
@@ -258,7 +248,7 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   {
       fprintf (stderr, "GLERROR: cannot access OpenGL library %s\n", libGLName);
       fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
-      fflush (NULL);
+      fflush (stderr);
       return 0;
   }
 
@@ -267,16 +257,8 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   {
       fprintf (stderr, "GLERROR: cannot access GLU library %s\n", libGLUName);
       fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
-      fflush (NULL);
+      fflush (stderr);
       return 0;
-  }
-
-  libHandleGLX = dlopen (GLXLIB_NAME, RTLD_LAZY | RTLD_GLOBAL);
-  if (libHandleGLX == NULL)
-  {
-      fprintf (stderr, "GLINFO: cannot access GLX library %s directly ...\n", GLXLIB_NAME);
-      fprintf (stderr, "GLERROR: dlerror() returns [%s]\n", dlerror());
-      fflush (NULL);
   }
 
 #endif
@@ -304,7 +286,7 @@ int LIBAPIENTRY loadGLLibrary (const char * libGLName, const char * libGLUName)
   fprintf (stderr, "GLINFO: loaded OpenGL library %s!\n", libGLName);
   fprintf (stderr, "GLINFO: loaded GLU    library %s!\n", libGLUName);
 #endif
-  fflush (NULL);
+  fflush (stderr);
   
   _glLibsLoaded = 1;
 
@@ -364,112 +346,16 @@ void * LIBAPIENTRY getGLProcAddressHelper
 #endif
 
 #ifdef _X11_
-  typedef void *(CALLBACK * procPtr) (const GLubyte *);
-
   /*
    * void (*glXGetProcAddressARB(const GLubyte *procName))
    */
-  static int __firstAccess = 1;
-
   if(!loadGLLibrary (libGLName, libGLUName))
   	return NULL;
 
-  if (disp__glXGetProcAddress == NULL && __firstAccess)
-  {
-      disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
-        "glXGetProcAddressARB");
-
-      if (disp__glXGetProcAddress != NULL && verbose)
-      {
-	fprintf (stderr, "GLINFO: found glXGetProcAddressARB in %s\n", libGLName);
-	fflush (NULL);
-      }
-
-      if (disp__glXGetProcAddress == NULL)
-      {
-	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
-	  "glXGetProcAddressEXT");
-
-	if (disp__glXGetProcAddress != NULL && verbose)
-	{
-	  fprintf (stderr, "GLINFO: found glXGetProcAddressEXT in %s\n", libGLName);
-	  fflush (NULL);
-	}
-      }
-
-      if (disp__glXGetProcAddress == NULL)
-      {
-	disp__glXGetProcAddress = (procPtr) dlsym (libHandleGL, SYMBOL_PREFIX
-	  "glXGetProcAddress");
-
-	if (disp__glXGetProcAddress != NULL && verbose)
-	{
-	  fprintf (stderr, "GLINFO: found glXGetProcAddress in %s\n", libGLName);
-	  fflush (NULL);
-	}
-      }
-
-      if (disp__glXGetProcAddress == NULL)
-      {
-	fprintf
-	  (stderr, "GLINFO: cannot find glXGetProcAddress* in OpenGL library %s\n", libGLName);
-	fflush (NULL);
-	if (libHandleGLX != NULL)
-	{
-	  disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX, SYMBOL_PREFIX
-	    "glXGetProcAddressARB");
-
-	  if (disp__glXGetProcAddress != NULL && verbose)
-	  {
-	    fprintf (stderr, "GLINFO: found glXGetProcAddressARB in %s\n", GLXLIB_NAME);
-	    fflush (NULL);
-	  }
-
-	  if (disp__glXGetProcAddress == NULL)
-	  {
-	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX,
-	      SYMBOL_PREFIX "glXGetProcAddressEXT");
-
-	    if (disp__glXGetProcAddress != NULL && verbose)
-	    {
-	      fprintf (stderr, "GLINFO: found glXGetProcAddressEXT in %s\n", GLXLIB_NAME);
-	      fflush (NULL);
-	    }
-	  }
-
-	  if (disp__glXGetProcAddress == NULL)
-	  {
-	    disp__glXGetProcAddress = (procPtr) dlsym (libHandleGLX,
-	      SYMBOL_PREFIX "glXGetProcAddress");
-
-	    if (disp__glXGetProcAddress != NULL && verbose)
-	    {
-	      fprintf (stderr, "GLINFO: found glXGetProcAddress in %s\n", GLXLIB_NAME);
-	      fflush (NULL);
-	    }
-	  }
-	  if (disp__glXGetProcAddress == NULL)
-	  {
-	    fprintf (stderr, "GLINFO: cannot find glXGetProcAddress* in GLX library %s\n", GLXLIB_NAME);
-	    fflush (NULL);
-	  }
-	}
-      }
-  }
-  __firstAccess = 0;
-
   if (strncmp(func, "glu", 3))
   {
-    if (disp__glXGetProcAddress != NULL)
-      funcPtr = disp__glXGetProcAddress ((const unsigned char *) func);
-
-    if (funcPtr == NULL)
-    {
-      lmethod = 2;
-      funcPtr = dlsym (libHandleGL, func);
-    }
-    else
-      lmethod = 1;
+    lmethod = 2;
+    funcPtr = dlsym (libHandleGL, func);
   }
   else
   {
@@ -483,7 +369,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
         Str255 funcName;
         CFragSymbolClass glLibSymClass = 0;
         OSErr returnError=fragNoErr;
-        #ifndef NDEBUG
+        #ifdef GLDEBUG
 		static int firstTime = 1;
         #endif
  
@@ -492,7 +378,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 
 	c2pstrcpy ( funcName, func );
 
-	#ifndef NDEBUG
+	#ifdef GLDEBUG
 	 if(firstTime)
 	 {
 		PrintSymbolNamesByConnection (glLibConnectId);
@@ -509,7 +395,7 @@ void * LIBAPIENTRY getGLProcAddressHelper
 			&funcPtr, & glLibSymClass );
 	    lmethod=2;
 	}
-	#ifndef NDEBUG
+	#ifdef GLDEBUG
 	 else lmethod=3;
 	#endif
 
@@ -587,7 +473,7 @@ void LIBAPIENTRY fetch_GL_FUNCS (const char * libGLName,
 
 #ifdef _MAC_OS9_
 
-#ifndef NDEBUG
+#ifdef GLDEBUG
 
 static void PrintSymbolNamesByConnection (CFragConnectionID myConnID)
 {

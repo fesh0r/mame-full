@@ -774,9 +774,9 @@ GLLIBS += -ldl
 # use Mesa's GLU, you may have to add -DGLU_VERSION_1_2 to 
 # the GLCFLAGS below.
 #
-# If you wish you can remove -DGLDEBUG for a very small speedup, but this is
-# not advised
-GLCFLAGS += -D_X11_ -DGLDEBUG
+# If you wish you can add -DNOGLCHECKS for a small speedup, but this is not
+# advised, or you can add -DGLDEBUG to get more verbose debugging messages.
+GLCFLAGS += -D_X11_
 
 # Uncomment to add more libraries that Mesa may require.
 # GLLIBS += -lXmu -lXi

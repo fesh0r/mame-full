@@ -5,7 +5,6 @@
 
 
 
-LIBAPI void *(CALLBACK * disp__glXGetProcAddress) (const GLubyte *);
 LIBAPI void (CALLBACK *  disp__glXWaitGL)( void );
 LIBAPI void (CALLBACK *  disp__glXDestroyGLXPixmap)( Display *dpy, GLXPixmap pix );
 LIBAPI Bool (CALLBACK *  disp__glXQueryExtension)( Display *dpy, int *errorBase, int *eventBase );

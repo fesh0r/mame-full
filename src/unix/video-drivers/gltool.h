@@ -15,7 +15,7 @@
 	 *
 	 * <OS - System>          <#define>  commentary
 	 * -----------------------------------------------
-	 * GNU/Linux, Unices/X11  _X11_      (loads glx also)
+	 * GNU/Linux, Unices/X11  _X11_
 	 * Macinstosh OS9         _MAC_OS9_
 	 * Macinstosh OSX         _MAC_OSX_
 	 * Win32                  _WIN32_
@@ -78,23 +78,9 @@
                 #define LIBAPI extern
         #endif
 
-	LIBAPI const char * GLTOOL_USE_GLLIB ;
-	LIBAPI const char * GLTOOL_USE_GLULIB ;
-
 	#include "glcaps.h"
-
 	#include "gl-disp-var.h"
 	#include "glu-disp-var.h"
-
-	#ifndef GLDEBUG
-		#ifndef NDEBUG
-			#define NDEBUG
-		#endif
-	#else
-		#ifdef NDEBUG
-			#undef NDEBUG
-		#endif
-	#endif
 
 	#ifndef USE_64BIT_POINTER
 		typedef int  PointerHolder;
@@ -102,43 +88,60 @@
 		typedef long PointerHolder;
 	#endif
 
-	#ifdef _WIN32_
-		#ifndef NDEBUG
-			#define CHECK_WGL_ERROR(a,b,c) check_wgl_error(a,b,c)
-		#else
-			#define CHECK_WGL_ERROR(a,b,c)
-		#endif
+	#if defined _WIN32_ && !defined NOGLCHECKS
+		#define CHECK_WGL_ERROR(a,b,c) check_wgl_error(a,b,c)
 	#else
 		#define CHECK_WGL_ERROR(a,b,c)
 	#endif
 
-	#ifndef NDEBUG
+	#ifndef NOGLCHECKS
 		#define PRINT_GL_ERROR(a, b)	print_gl_error((a), __FILE__, __LINE__, (b))
-		#define CHECK_GL_ERROR()  	check_gl_error(__FILE__,__LINE__)
-		#define GL_BEGIN(m) 		__sglBegin(__FILE__, __LINE__, (m))
-		#define GL_END()    		__sglEnd  (__FILE__, __LINE__)
-		#define SHOW_GL_BEGINEND()	showGlBeginEndBalance(__FILE__, __LINE__)
-		#define CHECK_GL_BEGINEND()	checkGlBeginEndBalance(__FILE__, __LINE__)
+		#define CHECK_GL_ERROR()  	\
+		{ \
+		  GLenum errorcode = disp__glGetError(); \
+		  if (errorcode != GL_NO_ERROR) \
+		    print_gl_error("GLCHECK", __FILE__, __LINE__, errorcode); \
+                }
 	#else
 		#define PRINT_GL_ERROR(a, b)	
 		#define CHECK_GL_ERROR()  
-		#define GL_BEGIN(m) 		disp__glBegin(m)
-		#define GL_END()    		disp__glEnd  ()
-		#define SHOW_GL_BEGINEND()	
-		#define CHECK_GL_BEGINEND()	
+	#endif
+	
+	#ifdef GLDEBUG
+	  #define GL_BEGIN(m)    	__sglBegin(__FILE__, __LINE__, m)
+	  #define GL_END()       	__sglEnd(__FILE__, __LINE__)
+	  #define SHOW_GL_BEGINEND()	showGlBeginEndBalance(__FILE__, __LINE__)
+	  #define CHECK_GL_BEGINEND()	checkGlBeginEndBalance(__FILE__, __LINE__)
+	#else
+	  #define GL_BEGIN(m)		disp__glBegin(m)
+	  #ifndef NOGLCHECKS
+	    #define GL_END()     	\
+	    { \
+              GLenum errorcode; \
+	      disp__glEnd(); \
+              errorcode = disp__glGetError(); \
+	      if (errorcode != GL_NO_ERROR) \
+	        print_gl_error("GL-PostEND-CHECK", __FILE__, __LINE__, \
+	          errorcode); \
+            }
+	  #else
+	    #define GL_END()     	disp__glEnd()
+	  #endif
+	  #define SHOW_GL_BEGINEND()	
+	  #define CHECK_GL_BEGINEND()	
 	#endif
 
-	#ifdef _WIN32_
-		LIBAPI void LIBAPIENTRY check_wgl_error 
-			(HWND wnd, const char *file, int line);
+	#if defined _WIN32_ && !defined NOGLCHECKS
+	LIBAPI void LIBAPIENTRY check_wgl_error 
+		(HWND wnd, const char *file, int line);
 	#endif
-
+	
+	#ifndef NOGLCHECKS
 	LIBAPI void LIBAPIENTRY print_gl_error 
 		(const char *msg, const char *file, int line, GLenum errorcode);
-
-	LIBAPI void LIBAPIENTRY check_gl_error 
-		(const char *file, int line);
-
+        #endif
+        
+        #ifdef GLDEBUG
 	LIBAPI void LIBAPIENTRY showGlBeginEndBalance
 		(const char *file, int line);
 
@@ -150,6 +153,7 @@
 
 	LIBAPI void LIBAPIENTRY __sglEnd
 		(const char * file, int line);
+        #endif
 
 	LIBAPI int LIBAPIENTRY unloadGLLibrary (void);
 

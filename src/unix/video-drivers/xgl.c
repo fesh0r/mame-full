@@ -80,8 +80,8 @@ struct rc_option xgl_opts[] = {
 
 int xgl_init(void)
 {
-  const char *libGLName = "libGL.so";
-  const char *libGLUName = "libGLU.so";
+  const char *libGLName = "libGL.so.1";
+  const char *libGLUName = "libGLU.so.1";
   
   if (!loadGLLibrary(libGLName, libGLUName))
   {
@@ -185,7 +185,7 @@ int xgl_open_display(int reopen)
                          &window, window_width, window_height, &glCaps, 
   		       &ownwin, &window_attr, winmask,
   		       NULL, 0, NULL, 
-  #ifndef NDEBUG
+  #ifdef GLDEBUG
   		       1);
   #else
   		       0);
@@ -265,7 +265,7 @@ void xgl_close_display (void)
 
    XSync (display, True); /* send all events to sync; discard events */
 
-#ifndef NDEBUG
+#ifdef GLDEBUG
    fprintf(stderr, "GLINFO: xgl display closed !\n");
 #endif
 }

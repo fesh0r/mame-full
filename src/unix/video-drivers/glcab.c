@@ -6,7 +6,7 @@ GLubyte **cabimg=NULL;
 struct CameraPan *cpan=NULL;
 int numpans;
 
-#ifndef NDEBUG
+#ifdef GLDEBUG
 static int wirecabinet = 1;
 #else
 static int wirecabinet = 0;
@@ -215,7 +215,7 @@ static void ParseLine(char *buf)
 		  
 		  MakeString(buf);
 		  
-		  #ifndef NDEBUG
+		  #ifdef GLDEBUG
 		    fprintf(stderr, "GLINFO (cab): Loading texture %d (%dx%d) from %s\n",
 		  	   texnum,xdim,ydim,buf);
 		  #endif
@@ -443,7 +443,7 @@ int LoadCabinet(const char *cabname)
   if(!(cfp=fopen(buf,"r")))
 	return 0;
 
-  #ifndef NDEBUG
+  #ifdef GLDEBUG
     fprintf(stderr, "GLINFO: Loading Cabinet from %s\n",buf);
   #endif
 
