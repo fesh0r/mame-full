@@ -2533,6 +2533,18 @@ ROM_START( pc200 )
     ROM_LOAD("aga.chr",     0x00000, 0x02000, 0xaca81498) //taken from aga
 ROM_END
 
+ROM_START( pc20 )
+//    ROM_REGION(0x100000,REGION_CPU1, 0)
+    ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
+    ROM_LOAD("wdbios.rom",  0xc8000, 0x02000, 0x8e9e2bd4)
+	// special bios at 0xe0000 !?
+    ROM_LOAD16_BYTE("pc20v2.0", 0xfc001, 0x2000, 0x41302eb8) // v2
+    ROM_LOAD16_BYTE("pc20v2.1", 0xfc000, 0x2000, 0x71b84616) // v2
+	// also mapped to f0000, f4000, f8000
+	ROM_REGION(0x02100,REGION_GFX1, 0)
+    ROM_LOAD("aga.chr",     0x00000, 0x02000, 0xaca81498) //taken from aga
+ROM_END
+
 ROM_START( pc1512 )
 //    ROM_REGION(0x100000,REGION_CPU1, 0)
     ROM_REGION16_LE(0x100000,REGION_CPU1, 0)
@@ -2671,6 +2683,7 @@ static const struct IODevice io_ibmpc[] = {
 #define io_ibmxt io_ibmpc
 #define io_xtvga io_ibmpc
 #define io_pc200 io_ibmpc
+#define io_pc20 io_ibmpc
 #define io_pc1512 io_ibmpc
 #define io_pc1640 io_ibmpc
 
@@ -2699,7 +2712,8 @@ COMP( 1987,		t1000hx,	ibmpc,	t1000hx,    tandy1t,	t1000hx,	"Tandy Radio Shack", 
 
 // xt class (pc but 8086)
 COMP( 1986,		ibmxt,		ibmpc,	xtcga,      xtcga,		pccga,		"International Business Machines",  "IBM PC/XT (CGA)" )
-COMP ( 1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		"Sinclair",  "PC200 Professional Series")
+COMP ( 1988,	pc200,		ibmpc,	pc200,		pc200,		pc200,		"Sinclair Research",  "PC200 Professional Series")
+COMPX ( 1988,	pc20,		ibmpc,	pc200,		pc200,		pc200,		"Amstrad plc",  "Amstrad PC20", GAME_ALIAS)
 COMP ( 1986,	pc1512,		ibmpc,	pc1512,     pc1512,		pc1512,		"Amstrad plc",  "Amstrad PC1512")
 COMPX ( 1987,	pc1640,		ibmpc,	pc1640,     pc1640,		pc1640,		"Amstrad plc",  "Amstrad PC1640 / PC6400 (US)", GAME_NOT_WORKING )
 // ppc640 portable pc1512?, nec processor?

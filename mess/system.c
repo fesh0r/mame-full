@@ -424,6 +424,8 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 
 	/* xt */
 	DRIVER( ibmxt )		/* 1986	IBM XT									  */
+	DRIVER( pc200 )     /* 1988 Sinclair PC200                            */
+	DRIVER( pc20 )      /* 1988 Amstrad PC20                              */   	
 	DRIVER( pc1512 )	/* 1986 Amstrad PC1512 (CGA compatible)			  */
 	DRIVER( pc1640 )	/* 1987 Amstrad PC1640 (EGA compatible)			  */
 
