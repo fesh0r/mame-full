@@ -77,22 +77,28 @@ int a7800_id_rom (int id)
 {
     FILE *romfile;
     const char *gamename = device_filename(IO_CARTSLOT,id);
-    unsigned char header[128];
+    char header[128];
     char tag[] = "ATARI7800";
 
     logerror("IDROM\n");
     /* If no file was specified, don't bother */
 	if (strlen(gamename) == 0)
-		return 1;
+		return ID_FAILED;
 
-	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return 0;
+	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
+		logerror("returning ID_FAILED\n");
+		return ID_FAILED;
+	}
 	osd_fread(romfile,header,sizeof(header));
     osd_fclose (romfile);
+	logerror("Trying Header Compare\n");
 
-	if (memcmp(&tag[0],&header[1],9) == -1)
-		return 0;
-    return 1;
+	if (strncmp(&tag[0],&header[1],9)) {
+		logerror("Not an valid A7800 image\n");
+		return ID_FAILED;
+	}
+	logerror("returning ID_OK\n");
+    return ID_OK;
 }
 
 void a7800_exit_rom (int id)
