@@ -100,6 +100,9 @@ a13 15
 a14 16
 */
 
+// in pixel
+#define XPOS svision_reg[2]
+
 static UINT8 *svision_reg;
 /*
   0x2000 0xa0 something to do with video dma?
@@ -272,7 +275,7 @@ static void svision_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh
 
 	for (y=0,i=0; y<160; y++,i+=0x30) {
 		for (x=0,j=i; x<160; x+=4,j++) {
-			drawgfx(bitmap, Machine->gfx[0], vram[j],0,0,0,
+			drawgfx(bitmap, Machine->gfx[0], vram[XPOS/4+j],0,0,0,
 					x,y, 0, TRANSPARENCY_NONE,0);
 		}
 	}
