@@ -1450,9 +1450,9 @@ INLINE void swi( void )
 
 /* $1130 BAND */
 
-#define decodePB_tReg(n)	((n)&3)
-#define decodePB_src(n) 	(((n)>>2)&7)
-#define decodePB_dst(n) 	(((n)>>5)&7)
+#define decodePB_tReg(n)	(((n) >> 6) & 0x03)
+#define decodePB_src(n) 	(((n) >> 3) & 0x07)
+#define decodePB_dst(n) 	(((n) >> 0) & 0x07)
 
 static unsigned char *	regTable[4] = { &(CC), &(A), &(B), &(E) };
 
