@@ -570,7 +570,7 @@ WRITE_HANDLER ( msx_psg_port_a_w )
 WRITE_HANDLER ( msx_psg_port_b_w )
 {
     /* Arabic or kana mode led */
-    if ( (data ^ msx1.psg_b) & 0x80) osd_led_w (1, !(data & 0x80) );
+	if ( (data ^ msx1.psg_b) & 0x80) set_led_status (1, !(data & 0x80) );
         msx1.psg_b = data;
 }
 
@@ -611,7 +611,7 @@ static WRITE_HANDLER( msx_ppi_port_c_w )
 
     /* caps lock */
     if ( (old_val ^ data) & 0x40)
-        osd_led_w (0, !(data & 0x40) );
+		set_led_status (0, !(data & 0x40) );
     /* key click */
     if ( (old_val ^ data) & 0x80)
         DAC_signed_data_w (0, (data & 0x80 ? 0x7f : 0));

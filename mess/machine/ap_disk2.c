@@ -60,8 +60,8 @@ static unsigned char r_skewing6[0x10] =
 void apple2_slot6_init(void)
 {
 	/* Set the two drive LEDs to OFF */
-	osd_led_w(0,0);
-	osd_led_w(2,0);
+	set_led_status(0,0);
+	set_led_status(2,0);
 
 	/* TODO: remove following ugly hacked-in code */
 	track6[0]     = track6[1]     = TOTAL_TRACKS; /* go to the middle of the disk */
@@ -292,13 +292,13 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 		/* MOTOROFF */
 		case 0x08:
 			a2_drives[cur_drive].motor = SWITCH_OFF;
-			osd_led_w(0,0);		/* We use 0 and 2 for drives */
-			osd_led_w(2,0);		/* We use 0 and 2 for drives */
+			set_led_status(0,0);	 /* We use 0 and 2 for drives */
+			set_led_status(2,0);	 /* We use 0 and 2 for drives */
 			break;
 		/* MOTORON */
 		case 0x09:
 			a2_drives[cur_drive].motor = SWITCH_ON;
-			osd_led_w(cur_drive*2,1);		/* We use 0 and 2 for drives */
+			set_led_status(cur_drive*2,1);		 /* We use 0 and 2 for drives */
 			break;
 		/* DRIVE1 */
 		case 0x0A:
@@ -306,8 +306,8 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			/* Only one drive can be "on" at a time */
 			if (a2_drives[cur_drive].motor == SWITCH_ON)
 			{
-				osd_led_w(0,1);
-				osd_led_w(2,0);
+				set_led_status(0,1);
+				set_led_status(2,0);
 			}
 			break;
 		/* DRIVE2 */
@@ -316,8 +316,8 @@ READ_HANDLER ( apple2_c0xx_slot6_r )
 			/* Only one drive can be "on" at a time */
 			if (a2_drives[cur_drive].motor == SWITCH_ON)
 			{
-				osd_led_w(0,0);
-				osd_led_w(2,1);
+				set_led_status(0,0);
+				set_led_status(2,1);
 			}
 			break;
 		/* Q6L - set transistor Q6 low */
