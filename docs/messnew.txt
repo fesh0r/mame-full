@@ -16,7 +16,7 @@ System Driver Changes:
 
 - [SORD] Added cas support.  [Tim Schuerewegen]
 
-- [COLECO] Extra Controller support (bug #10!) [JMoya]
+- [COLECO] Extra Controller support (bug #10) which fixes Turbo etc. [JMoya]
   *Memory handlers/IO ports modified to better emulate a real coleco.
   *Memory map now has only 1k of RAM mapped on 8k Slot
   *Paddle handler now is handled as on a real ColecoVision
