@@ -150,7 +150,7 @@ void *memset16 (void *dest, int value, size_t size);
  * CRC stuff
  * ----------------------------------------------------------------------- */
 unsigned short ccitt_crc16(unsigned short crc, const unsigned char *buffer, size_t buffer_len);
-
+unsigned short ccitt_crc16_one( unsigned short crc, const unsigned char data );
 
 /* -----------------------------------------------------------------------
  * Miscellaneous
