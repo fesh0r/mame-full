@@ -149,7 +149,7 @@ UINT32 dmkdsk_GetRealDiskCode( dmkHeader_p header )
 int dmkdsk_floppy_init(int id)
 {
 	const char *name = device_filename(IO_FLOPPY, id);
-	int			result;
+	int			result = 0;
 
 	if (id < dmkdsk_MAX_DRIVES)
 	{
@@ -382,7 +382,7 @@ static void dmkdsk_write_sector_data_from_buffer(int drive, int side, int index1
 {
 	dmkTrack_p	track_data;
 	UINT16		disp, crc;
-	int			i, size;
+	int			i=0, size=0;
 	dmkdsk 		*w = &dmkdsk_drives[drive];
 
 	/* Get track */
