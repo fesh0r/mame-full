@@ -7,17 +7,18 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
+unsigned char *vulgus_foreground_videoram;
+unsigned char *vulgus_foreground_colorram;
+unsigned char *vulgus_background_videoram;
+unsigned char *vulgus_background_colorram;
+unsigned char *vulgus_spriteram;
+size_t vulgus_spriteram_size;
+unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
 
-unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
-size_t vulgus_bgvideoram_size;
-unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
-unsigned char *vulgus_palette_bank;
-static unsigned char *dirtybuffer2;
-static struct osd_bitmap *tmpbitmap2;
-
+static data_t vulgus_palette_bank;
+static struct tilemap *foreground_tilemap, *background_tilemap;
 
 
 /***************************************************************************
@@ -82,6 +83,30 @@ void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 }
 
 
+/***************************************************************************
+
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_foreground_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = vulgus_foreground_videoram[tile_index];
+	color = vulgus_foreground_colorram[tile_index];
+	SET_TILE_INFO(0, code + ((color & 0x80) << 1), color & 0x3f);
+}
+
+static void get_background_tile_info(int tile_index)
+{
+	int code, color;
+
+	code = vulgus_background_videoram[tile_index];
+	color = vulgus_background_colorram[tile_index];
+	SET_TILE_INFO(1, code + ((color & 0x80) << 1), (color & 0x1f) + (0x20 * vulgus_palette_bank));
+	tile_info.flags = TILE_FLIPYX((color & 0x60) >> 5);
+}
 
 /***************************************************************************
 
@@ -90,77 +115,112 @@ void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 ***************************************************************************/
 int vulgus_vh_start(void)
 {
-	if (generic_vh_start() != 0)
+	foreground_tilemap = tilemap_create(get_foreground_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,32,32);
+	background_tilemap = tilemap_create(get_background_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE     ,16,16,32,32);
+
+	if (!foreground_tilemap || !background_tilemap)
 		return 1;
 
-	if ((dirtybuffer2 = malloc(vulgus_bgvideoram_size)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-	memset(dirtybuffer2,1,vulgus_bgvideoram_size);
-
-	/* the background area is twice as tall and twice as large as the screen */
-	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
+	/* this is wrong. It should be TRANSPARENCY_COLOR 47 */
+	foreground_tilemap->transparent_pen = 0;
 
 	return 0;
 }
 
 
 
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
-void vulgus_vh_stop(void)
+WRITE_HANDLER( vulgus_foreground_videoram_w )
 {
-	bitmap_free(tmpbitmap2);
-	free(dirtybuffer2);
-	generic_vh_stop();
+	vulgus_foreground_videoram[offset] = data;
+	tilemap_mark_tile_dirty(foreground_tilemap,offset);
+}
+
+WRITE_HANDLER( vulgus_foreground_colorram_w )
+{
+	vulgus_foreground_colorram[offset] = data;
+	tilemap_mark_tile_dirty(foreground_tilemap,offset);
+}
+
+WRITE_HANDLER( vulgus_background_videoram_w )
+{
+	vulgus_background_videoram[offset] = data;
+	tilemap_mark_tile_dirty(background_tilemap,offset);
+}
+
+WRITE_HANDLER( vulgus_background_colorram_w )
+{
+	vulgus_background_colorram[offset] = data;
+	tilemap_mark_tile_dirty(background_tilemap,offset);
 }
 
 
+extern struct GameDriver driver_vulgus;
 
-WRITE_HANDLER( vulgus_bgvideoram_w )
+WRITE_HANDLER( vulgus_c804_w )
 {
-	if (vulgus_bgvideoram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
 
-		vulgus_bgvideoram[offset] = data;
-	}
+	/* bit 7 flips screen, but it's reversed in set 1 */
+	if (Machine->gamedrv == &driver_vulgus)
+		data ^= 0x80;
+
+	flip_screen_w(offset, data & 0x80);
 }
-
-
-
-WRITE_HANDLER( vulgus_bgcolorram_w )
-{
-	if (vulgus_bgcolorram[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
-
-		vulgus_bgcolorram[offset] = data;
-	}
-}
-
 
 
 WRITE_HANDLER( vulgus_palette_bank_w )
 {
-	if (*vulgus_palette_bank != data)
-	{
-		memset(dirtybuffer2,1,vulgus_bgvideoram_size);
-		*vulgus_palette_bank = data;
-	}
+	set_vh_global_attribute( &vulgus_palette_bank, data );
 }
 
 
+static draw_sprites(struct osd_bitmap *bitmap)
+{
+	int offs;
+
+
+	for (offs = vulgus_spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		int code,i,col,sx,sy,dir;
+
+
+		code = vulgus_spriteram[offs];
+		col = vulgus_spriteram[offs + 1] & 0x0f;
+		sx = vulgus_spriteram[offs + 3];
+		sy = vulgus_spriteram[offs + 2];
+		dir = 1;
+		if (flip_screen)
+		{
+			sx = 240 - sx;
+			sy = 240 - sy;
+			dir = -1;
+		}
+
+		i = (vulgus_spriteram[offs + 1] & 0xc0) >> 6;
+		if (i == 2) i = 3;
+
+		do
+		{
+			drawgfx(bitmap,Machine->gfx[2],
+					code + i,
+					col,
+					flip_screen,flip_screen,
+					sx, sy + 16 * i * dir,
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
+
+			/* draw again with wraparound */
+			drawgfx(bitmap,Machine->gfx[2],
+					code + i,
+					col,
+					flip_screen,flip_screen,
+					sx, sy + 16 * i * dir -  dir * 256,
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
+			i--;
+		} while (i >= 0);
+	}
+}
 
 /***************************************************************************
 
@@ -171,109 +231,13 @@ WRITE_HANDLER( vulgus_palette_bank_w )
 ***************************************************************************/
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
-	int scrollx,scrolly;
+	tilemap_set_scrollx(background_tilemap, 0, vulgus_scroll_low[1] + 256 * vulgus_scroll_high[1]);
+	tilemap_set_scrolly(background_tilemap, 0, vulgus_scroll_low[0] + 256 * vulgus_scroll_high[0]);
 
+	tilemap_update(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-	scrolly = -(vulgus_scrolllow[0] + 256 * vulgus_scrollhigh[0]);
-	scrollx = -(vulgus_scrolllow[1] + 256 * vulgus_scrollhigh[1]);
-
-	for (offs = vulgus_bgvideoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		if (dirtybuffer2[offs])
-		{
-//			int minx,maxx,miny,maxy;
-
-
-			sx = (offs % 32);
-			sy = (offs / 32);
-
-			/* between level Vulgus changes the palette bank every frame. Redrawing */
-			/* the whole background every time would slow the game to a crawl, so here */
-			/* we check and redraw only the visible tiles */
-/*
-			minx = (sx + scrollx) & 0x1ff;
-			maxx = (sx + 15 + scrollx) & 0x1ff;
-			if (minx > maxx) minx = maxx - 15;
-			miny = (sy + scrolly) & 0x1ff;
-			maxy = (sy + 15 + scrolly) & 0x1ff;
-			if (miny > maxy) miny = maxy - 15;
-
-			if (minx + 15 >= Machine->visible_area.min_x &&
-					maxx - 15 <= Machine->visible_area.max_x &&
-					miny + 15 >= Machine->visible_area.min_y &&
-					maxy - 15 <= Machine->visible_area.max_y)
-*/
-			{
-				dirtybuffer2[offs] = 0;
-
-				drawgfx(tmpbitmap2,Machine->gfx[1],
-						vulgus_bgvideoram[offs] + 2 * (vulgus_bgcolorram[offs] & 0x80),
-						(vulgus_bgcolorram[offs] & 0x1f) + 32 * *vulgus_palette_bank,
-						vulgus_bgcolorram[offs] & 0x20,vulgus_bgcolorram[offs] & 0x40,
-						16*sy,16*sx,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
-
-
-	/* copy the background graphics */
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-
-
-	/* Draw the sprites. */
-	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
-	{
-		int code,i,col,sx,sy;
-
-
-		code = spriteram[offs];
-		col = spriteram[offs + 1] & 0x0f;
-		sx = spriteram[offs + 3];
-		sy = spriteram[offs + 2];
-
-		i = (spriteram[offs + 1] & 0xc0) >> 6;
-		if (i == 2) i = 3;
-
-		do
-		{
-			drawgfx(bitmap,Machine->gfx[2],
-					code + i,
-					col,
-					0, 0,
-					sx, sy + 16 * i,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
-
-			/* draw again with wraparound */
-			drawgfx(bitmap,Machine->gfx[2],
-					code + i,
-					col,
-					0, 0,
-					sx, sy + 16 * i - 256,
-					&Machine->visible_area,TRANSPARENCY_PEN,15);
-			i--;
-		} while (i >= 0);
-	}
-
-
-	/* draw the frontmost playfield. They are characters, but draw them as sprites */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-
-
-		sx = 8 * (offs % 32);
-		sy = 8 * (offs / 32);
-
-		drawgfx(bitmap,Machine->gfx[0],
-				videoram[offs] + 2 * (colorram[offs] & 0x80),
-				colorram[offs] & 0x3f,
-				0,0,
-				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_COLOR,47);
-	}
+	tilemap_draw(bitmap,background_tilemap,0);
+	draw_sprites(bitmap);
+	tilemap_draw(bitmap,foreground_tilemap,0);
 }

@@ -22,8 +22,8 @@ c003      DSW1
 c004      DSW2
 
 write:
-c808-c809 background scroll y position
-c80a-c80b background scroll x position
+c808-c809 background scroll x position
+c80a-c80b background scroll y position
 
 SOUND CPU
 0000-3fff ROM
@@ -38,19 +38,23 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
-
-extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
-extern size_t commando_bgvideoram_size;
+extern unsigned char *commando_foreground_videoram;
+extern unsigned char *commando_foreground_colorram;
+extern unsigned char *commando_background_videoram;
+extern unsigned char *commando_background_colorram;
+extern unsigned char *commando_spriteram;
+extern size_t commando_spriteram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
-WRITE_HANDLER( commando_bgvideoram_w );
-WRITE_HANDLER( commando_bgcolorram_w );
+
+WRITE_HANDLER( commando_foreground_videoram_w );
+WRITE_HANDLER( commando_foreground_colorram_w );
+WRITE_HANDLER( commando_background_videoram_w );
+WRITE_HANDLER( commando_background_colorram_w );
 WRITE_HANDLER( commando_spriteram_w );
 WRITE_HANDLER( commando_c804_w );
 int commando_vh_start(void);
-void commando_vh_stop(void);
 void commando_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -80,14 +84,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc804, 0xc804, commando_c804_w },
-	{ 0xc808, 0xc809, MWA_RAM, &commando_scrolly },
-	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrollx },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, commando_bgvideoram_w, &commando_bgvideoram, &commando_bgvideoram_size },
-	{ 0xdc00, 0xdfff, commando_bgcolorram_w, &commando_bgcolorram },
+	{ 0xc808, 0xc809, MWA_RAM, &commando_scrollx },
+	{ 0xc80a, 0xc80b, MWA_RAM, &commando_scrolly },
+	{ 0xd000, 0xd3ff, commando_foreground_videoram_w, &commando_foreground_videoram },
+	{ 0xd400, 0xd7ff, commando_foreground_colorram_w, &commando_foreground_colorram },
+	{ 0xd800, 0xdbff, commando_background_videoram_w, &commando_background_videoram },
+	{ 0xdc00, 0xdfff, commando_background_colorram_w, &commando_background_colorram },
 	{ 0xe000, 0xfdff, MWA_RAM },
-	{ 0xfe00, 0xff7f, commando_spriteram_w, &spriteram, &spriteram_size },
+	{ 0xfe00, 0xff7f, commando_spriteram_w, &commando_spriteram, &commando_spriteram_size },
 	{ 0xff80, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -340,13 +344,13 @@ static struct MachineDriver machine_driver_commando =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
+			4000000,	/* 4 Mhz (?) */
 			readmem,writemem,0,0,
 			commando_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz */
+			3000000,	/* 3 Mhz */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -365,7 +369,7 @@ static struct MachineDriver machine_driver_commando =
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK,
 	0,
 	commando_vh_start,
-	commando_vh_stop,
+	0,
 	commando_vh_screenrefresh,
 
 	/* sound hardware */

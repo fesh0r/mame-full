@@ -21,11 +21,11 @@ c003      DSW1
 c004      DSW2
 
 write:
-c802      background x scroll low 8 bits
-c803      background y scroll low 8 bits
+c802      background y scroll low 8 bits
+c803      background x scroll low 8 bits
 c805      background palette bank selector
-c902      background x scroll high bit
-c903      background y scroll high bit
+c902      background y scroll high bit
+c903      background x scroll high bit
 
 SOUND CPU
 0000-3fff ROM
@@ -40,44 +40,28 @@ c001      YM2203 #2 write
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
-
 
 
 int c1942_interrupt(void);
 
-extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
-extern size_t vulgus_bgvideoram_size;
-extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
-extern unsigned char *vulgus_palette_bank;
-WRITE_HANDLER( vulgus_bgvideoram_w );
-WRITE_HANDLER( vulgus_bgcolorram_w );
+extern unsigned char *vulgus_foreground_videoram;
+extern unsigned char *vulgus_foreground_colorram;
+extern unsigned char *vulgus_background_videoram;
+extern unsigned char *vulgus_background_colorram;
+extern unsigned char *vulgus_spriteram;
+extern size_t vulgus_spriteram_size;
+extern unsigned char *vulgus_scroll_low,*vulgus_scroll_high;
+
+WRITE_HANDLER( vulgus_foreground_videoram_w );
+WRITE_HANDLER( vulgus_foreground_colorram_w );
+WRITE_HANDLER( vulgus_background_videoram_w );
+WRITE_HANDLER( vulgus_background_colorram_w );
+WRITE_HANDLER( vulgus_c804_w );
 WRITE_HANDLER( vulgus_palette_bank_w );
 int vulgus_vh_start(void);
-void vulgus_vh_stop(void);
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-
-
-static int vulgus_interrupt(void)
-{
-	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
-	else return 0x00d7;	/* RST 10h - vblank */
-}
-
-
-
-static WRITE_HANDLER( vulgus_control_w )
-{
-	/* bit 0-1 coin counters */
-	coin_counter_w(0, data & 1);
-	coin_counter_w(1, data & 2);
-
-	/* bit 7   flip screen
-
-	   in vulgus this is active LO, in vulgusj this is active HI !!! */
-}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -96,15 +80,15 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x9fff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
-	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scrolllow },
-	{ 0xc804, 0xc804, vulgus_control_w },
-	{ 0xc805, 0xc805, vulgus_palette_bank_w, &vulgus_palette_bank },
-	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scrollhigh },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, vulgus_bgvideoram_w, &vulgus_bgvideoram, &vulgus_bgvideoram_size },
-	{ 0xdc00, 0xdfff, vulgus_bgcolorram_w, &vulgus_bgcolorram },
+	{ 0xc802, 0xc803, MWA_RAM, &vulgus_scroll_low },
+	{ 0xc804, 0xc804, vulgus_c804_w },
+	{ 0xc805, 0xc805, vulgus_palette_bank_w },
+	{ 0xc902, 0xc903, MWA_RAM, &vulgus_scroll_high },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &vulgus_spriteram, &vulgus_spriteram_size },
+	{ 0xd000, 0xd3ff, vulgus_foreground_videoram_w, &vulgus_foreground_videoram },
+	{ 0xd400, 0xd7ff, vulgus_foreground_colorram_w, &vulgus_foreground_colorram },
+	{ 0xd800, 0xdbff, vulgus_background_videoram_w, &vulgus_background_videoram },
+	{ 0xdc00, 0xdfff, vulgus_background_colorram_w, &vulgus_background_colorram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -286,13 +270,13 @@ static struct MachineDriver machine_driver_vulgus =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
+			4000000,	/* 4 Mhz (?) */
 			readmem,writemem,0,0,
-			vulgus_interrupt,2
+			c1942_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz ??? */
+			3000000,	/* 3 Mhz ??? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,8
 		}
@@ -310,7 +294,7 @@ static struct MachineDriver machine_driver_vulgus =
 	VIDEO_TYPE_RASTER,
 	0,
 	vulgus_vh_start,
-	vulgus_vh_stop,
+	0,
 	vulgus_vh_screenrefresh,
 
 	/* sound hardware */
@@ -359,15 +343,13 @@ ROM_START( vulgus )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
-	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( vulgus2 )
@@ -398,15 +380,13 @@ ROM_START( vulgus2 )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
-	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( vulgusj )
@@ -437,19 +417,17 @@ ROM_START( vulgusj )
 	ROM_LOAD( "2-4n.bin",     0x04000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x06000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION( 0x0800, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
 	ROM_LOAD( "d1.bin",       0x0300, 0x0100, 0x7179080d )	/* char lookup table */
 	ROM_LOAD( "j2.bin",       0x0400, 0x0100, 0xd0842029 )	/* sprite lookup table */
 	ROM_LOAD( "c9.bin",       0x0500, 0x0100, 0x7a1f0bd6 )	/* tile lookup table */
-	ROM_LOAD( "82s126.9k",    0x0600, 0x0100, 0x32b10521 )	/* interrupt timing? (not used) */
-	ROM_LOAD( "82s129.8n",    0x0700, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 
 
-GAMEX( 1984, vulgus,  0,      vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1984, vulgus2, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1984, vulgusj, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (Japan?)", GAME_NO_COCKTAIL )
+GAME( 1984, vulgus,  0,      vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 1)" )
+GAME( 1984, vulgus2, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (set 2)" )
+GAME( 1984, vulgusj, vulgus, vulgus, vulgus, 0, ROT270, "Capcom", "Vulgus (Japan?)" )

@@ -347,24 +347,28 @@ WWW.SPIES.COM contains DIP switch settings.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 
 extern unsigned char *c1942_foreground_videoram;
 extern unsigned char *c1942_foreground_colorram;
-extern size_t c1942_foreground_videoram_size;
+extern unsigned char *c1942_background_videoram;
+extern unsigned char *c1942_spriteram;
+extern size_t c1942_spriteram_size;
 extern unsigned char *c1942_scroll;
+
 int c1942_vh_start(void);
-void c1942_vh_stop(void);
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( c1942_palette_bank_w );
+WRITE_HANDLER( c1942_foreground_videoram_w );
+WRITE_HANDLER( c1942_foreground_colorram_w );
+WRITE_HANDLER( c1942_background_videoram_w );
 WRITE_HANDLER( c1942_c804_w );
+WRITE_HANDLER( c1942_palette_bank_w );
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static WRITE_HANDLER( c1942_bankswitch_w )
+WRITE_HANDLER( c1942_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -376,7 +380,7 @@ static WRITE_HANDLER( c1942_bankswitch_w )
 
 
 
-static int c1942_interrupt(void)
+int c1942_interrupt(void)
 {
 	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
 	else return 0x00d7;	/* RST 10h - vblank */
@@ -406,10 +410,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc804, 0xc804, c1942_c804_w },
 	{ 0xc805, 0xc805, c1942_palette_bank_w },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
-	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd3ff, MWA_RAM, &c1942_foreground_videoram, &c1942_foreground_videoram_size },
-	{ 0xd400, 0xd7ff, MWA_RAM, &c1942_foreground_colorram },
-	{ 0xd800, 0xdbff, videoram_w, &videoram, &videoram_size },
+	{ 0xcc00, 0xcc7f, MWA_RAM, &c1942_spriteram, &c1942_spriteram_size },
+	{ 0xd000, 0xd3ff, c1942_foreground_videoram_w, &c1942_foreground_videoram },
+	{ 0xd400, 0xd7ff, c1942_foreground_colorram_w, &c1942_foreground_colorram },
+	{ 0xd800, 0xdbff, c1942_background_videoram_w, &c1942_background_videoram },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -582,13 +586,13 @@ static struct MachineDriver machine_driver_1942 =
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 MHz (?) */
+			4000000,	/* 4 Mhz (?) */
 			readmem,writemem,0,0,
 			c1942_interrupt,2
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 MHz ??? */
+			3000000,	/* 3 Mhz ??? */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
@@ -606,7 +610,7 @@ static struct MachineDriver machine_driver_1942 =
 	VIDEO_TYPE_RASTER,
 	0,
 	c1942_vh_start,
-	c1942_vh_stop,
+	0,
 	c1942_vh_screenrefresh,
 
 	/* sound hardware */
@@ -655,17 +659,13 @@ ROM_START( 1942 )
 	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-	ROM_LOAD( "01d_sb-2.bin", 0x0600, 0x0100, 0x8bb8b3df )	/* tile palette selector? (not used) */
-	ROM_LOAD( "02d_sb-3.bin", 0x0700, 0x0100, 0x3b0c99af )	/* tile palette selector? (not used) */
-	ROM_LOAD( "k06_sb-1.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "01m_sb-9.bin", 0x0900, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( 1942a )
@@ -696,17 +696,13 @@ ROM_START( 1942a )
 	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-	ROM_LOAD( "01d_sb-2.bin", 0x0600, 0x0100, 0x8bb8b3df )	/* tile palette selector? (not used) */
-	ROM_LOAD( "02d_sb-3.bin", 0x0700, 0x0100, 0x3b0c99af )	/* tile palette selector? (not used) */
-	ROM_LOAD( "k06_sb-1.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "01m_sb-9.bin", 0x0900, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 ROM_START( 1942b )
@@ -737,17 +733,13 @@ ROM_START( 1942b )
 	ROM_LOAD( "2-n1.bin",     0x08000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x0c000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION( 0x0a00, REGION_PROMS )
+	ROM_REGION( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
 	ROM_LOAD( "f01_sb-0.bin", 0x0300, 0x0100, 0x6047d91b )	/* char lookup table */
 	ROM_LOAD( "06d_sb-4.bin", 0x0400, 0x0100, 0x4858968d )	/* tile lookup table */
 	ROM_LOAD( "03k_sb-8.bin", 0x0500, 0x0100, 0xf6fad943 )	/* sprite lookup table */
-	ROM_LOAD( "01d_sb-2.bin", 0x0600, 0x0100, 0x8bb8b3df )	/* tile palette selector? (not used) */
-	ROM_LOAD( "02d_sb-3.bin", 0x0700, 0x0100, 0x3b0c99af )	/* tile palette selector? (not used) */
-	ROM_LOAD( "k06_sb-1.bin", 0x0800, 0x0100, 0x712ac508 )	/* interrupt timing (not used) */
-	ROM_LOAD( "01m_sb-9.bin", 0x0900, 0x0100, 0x4921635c )	/* video timing? (not used) */
 ROM_END
 
 
