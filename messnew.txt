@@ -32,7 +32,7 @@ System Driver Changes:
 
 - [C16] added SIDCARD support at address $d400 [Peter Trauner]
 
-- [NES] new sound core.  Many carts sound great now [Matt Conte]
+- [NES] new sound core. [Matt Conte]
 
 Other Changes:
 --------------
