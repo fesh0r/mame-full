@@ -193,6 +193,7 @@ typedef struct
 	BOOL   use_new_ui;
 	UINT32 ram_size;
 	char   *software[IO_COUNT];
+	char   *softwaredirs[IO_COUNT];
 #endif
 } options_type;
 

@@ -36,6 +36,7 @@ int win_write_config;
 
 static memory_pool devfilenames_pool;
 static const char *dev_opts[IO_COUNT];
+static char *dev_dirs[IO_COUNT];
 static const char *ramsize_opt;
 
 static int add_device(struct rc_option *option, const char *arg, int priority);
@@ -58,6 +59,18 @@ struct rc_option mess_opts[] =
 	{ "parallel",		"parl", rc_string,	&dev_opts[IO_PARALLEL],		NULL, 0, 0, add_device,		"attach software to parallel device" },
 	{ "snapshot",		"dump", rc_string,	&dev_opts[IO_SNAPSHOT],		NULL, 0, 0, add_device,		"attach software to snapshot device" },
 	{ "quickload",		"quik", rc_string,	&dev_opts[IO_QUICKLOAD],	NULL, 0, 0, add_device,		"attach software to quickload device" },
+	{ "cartridge_dir",	NULL,   rc_string,	&dev_dirs[IO_CARTSLOT],		NULL, 0, 0, NULL,			"default directory for cartridge devices" },
+	{ "floppydisk_dir",	NULL,   rc_string,	&dev_dirs[IO_FLOPPY],		NULL, 0, 0, NULL,			"default directory for floppy disk device" },
+	{ "harddisk_dir",	NULL,   rc_string,	&dev_dirs[IO_HARDDISK],		NULL, 0, 0, NULL,			"default directory for hard disk devices" },
+	{ "cylinder_dir",	NULL,   rc_string,	&dev_dirs[IO_CYLINDER],		NULL, 0, 0, NULL,			"default directory for cylinder devices" },
+	{ "cassette_dir",	NULL,   rc_string,	&dev_dirs[IO_CASSETTE],		NULL, 0, 0, NULL,			"default directory for cassette devices" },
+	{ "punchcard_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHCARD],	NULL, 0, 0, NULL,			"default directory for punch card devices" },
+	{ "punchtape_dir",	NULL,   rc_string,	&dev_dirs[IO_PUNCHTAPE],	NULL, 0, 0, NULL,			"default directory for punch tape devices" },
+	{ "printer_dir",	NULL,   rc_string,	&dev_dirs[IO_PRINTER],		NULL, 0, 0, NULL,			"default directory for printer devices" },
+	{ "serial_dir",		NULL,   rc_string,	&dev_dirs[IO_SERIAL],		NULL, 0, 0, NULL,			"default directory for serial devices" },
+	{ "parallel_dir",	NULL,   rc_string,	&dev_dirs[IO_PARALLEL],		NULL, 0, 0, NULL,			"default directory for parallel devices" },
+	{ "snapshot_dir",	NULL,   rc_string,	&dev_dirs[IO_SNAPSHOT],		NULL, 0, 0, NULL,			"default directory for snapshot devices" },
+	{ "quickload_dir",	NULL,   rc_string,	&dev_dirs[IO_QUICKLOAD],	NULL, 0, 0, NULL,			"default directory for quickload devices" },
 	{ "ramsize",		"ram",  rc_string,	&ramsize_opt,				NULL, 0, 0, specify_ram,	"size of RAM (if supported by driver)" },
 	{ "threads",		"thr",  rc_int,		&win_task_count,			NULL, 0, 0, NULL,			"number of threads to use for parallel operations" },
 	{ "natural",		"nat",  rc_bool,	&win_use_natural_keyboard,	NULL, 0, 0, NULL,			"specifies whether to use a natural keyboard or not" },
@@ -212,6 +225,22 @@ static int specify_ram(struct rc_option *option, const char *arg, int priority)
 	return 0;
 }
 
+const char *get_devicedirectory(int dev)
+{
+	assert(dev >= 0);
+	assert(dev < IO_COUNT);
+	return dev_dirs[dev];
+}
+
+void set_devicedirectory(int dev, const char *dir)
+{
+	assert(dev >= 0);
+	assert(dev < IO_COUNT);
+	if (dev_dirs[dev])
+		free(dev_dirs[dev]);
+	dev_dirs[dev] = strdup(dir);
+}
+
 #ifdef MAME_DEBUG
 int messopts_valididty_checks(void)
 {
@@ -219,6 +248,12 @@ int messopts_valididty_checks(void)
 	int id_fromshortname;
 	int id_fromlongname;
 	int error = 0;
+	char buf[32];
+	int specified_devopts[IO_COUNT];
+	int specified_devdirs[IO_COUNT];
+
+	memset(specified_devopts, 0, sizeof(specified_devopts));
+	memset(specified_devdirs, 0, sizeof(specified_devdirs));
 
 	for (i = 0; i < sizeof(mess_opts) / sizeof(mess_opts[0]); i++)
 	{
@@ -243,8 +278,68 @@ int messopts_valididty_checks(void)
 				printf("options -%s and -%s are supposed to map to the same device\n", mess_opts[i].name, mess_opts[i].shortname);
 				error = 1;
 			}
+
+			if ((((const char **) mess_opts[i].dest) - dev_opts) != id_fromlongname)
+			{
+				printf("option -%s is pointed at the wrong dev_opt\n", mess_opts[i].name);
+				error = 1;
+			}
+
+			if (specified_devopts[id_fromlongname])
+			{
+				printf("option -%s is specified multiple times\n", mess_opts[i].name);
+				error = 1;
+			}
+			specified_devopts[id_fromlongname] = 1;
+		}
+		else if (mess_opts[i].name && strstr(mess_opts[i].name, "_dir"))
+		{
+			strncpyz(buf, mess_opts[i].name, sizeof(buf) / sizeof(buf[0]));
+			*strstr(buf, "_dir") = '\0';
+
+			id_fromlongname = device_typeid(buf);
+			if (id_fromlongname < 0)
+			{
+				printf("option -%s is supposed to represent a default device directory, but it doesn't\n", mess_opts[i].name);
+				error = 1;
+			}
+
+			if (mess_opts[i].shortname)
+			{
+				printf("option -%s is not supposed to represent a default device directory, but it does\n", mess_opts[i].shortname);
+				error = 1;
+			}
+
+			if ((((const char **) mess_opts[i].dest) - dev_dirs) != id_fromlongname)
+			{
+				printf("option -%s is pointed at the wrong dev_dir\n", mess_opts[i].name);
+				error = 1;
+			}
+
+			if (specified_devdirs[id_fromlongname])
+			{
+				printf("option -%s is specified multiple times\n", mess_opts[i].name);
+				error = 1;
+			}
+			specified_devdirs[id_fromlongname] = 1;
 		}
 	}
+
+	for (i = 0; i < IO_COUNT; i++)
+	{
+		if (!specified_devopts[i])
+		{
+			printf("device '%s' is not represented\n", device_typename(i));
+			error = 1;
+		}
+
+		if (!specified_devdirs[i])
+		{
+			printf("device dir '%s' is not represented\n", device_typename(i));
+			error = 1;
+		}
+	}
+
 	return error;
 }
 

@@ -505,10 +505,11 @@ const char *image_filedir(int type, int id)
 			s = info->dir + strlen(info->dir);
 			while(--s > info->dir)
 			{
-				if (!strchr("\\/:", *s))
+				if (strchr("\\/:", *s))
 				{
 					*s = '\0';
-					break;
+					if (osd_get_path_info(FILETYPE_IMAGE, 0, info->dir) == PATH_IS_DIRECTORY)
+						break;
 				}
 			}
 		}

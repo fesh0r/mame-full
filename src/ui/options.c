@@ -294,6 +294,7 @@ static REG_OPTION regGameOpts[] =
 	,
 	{ "use_new_ui",		"newui",                      RO_BOOL,    &gOpts.use_new_ui,		0, 0, FALSE},
 	{ "ram_size",		"ramsize",                    RO_INT,     &gOpts.ram_size,			0, 0, TRUE},
+
 	{ "cartridge",		"cartridge",                  RO_STRING,  &gOpts.software[IO_CARTSLOT],	0, 0, TRUE},
 	{ "floppydisk",		"floppydisk",                 RO_STRING,  &gOpts.software[IO_FLOPPY],	0, 0, TRUE},
 	{ "harddisk",		"harddisk",                   RO_STRING,  &gOpts.software[IO_HARDDISK],	0, 0, TRUE},
@@ -305,7 +306,20 @@ static REG_OPTION regGameOpts[] =
 	{ "serial",			"serial",                     RO_STRING,  &gOpts.software[IO_SERIAL],	0, 0, TRUE},
 	{ "parallel",		"parallel",                   RO_STRING,  &gOpts.software[IO_PARALLEL],	0, 0, TRUE},
 	{ "snapshot",		"snapshot",                   RO_STRING,  &gOpts.software[IO_SNAPSHOT],	0, 0, TRUE},
-	{ "quickload",		"quickload",                  RO_STRING,  &gOpts.software[IO_QUICKLOAD],0, 0, TRUE}
+	{ "quickload",		"quickload",                  RO_STRING,  &gOpts.software[IO_QUICKLOAD],0, 0, TRUE},
+
+	{ "cartridge_dir",	"cartridge_dir",              RO_STRING,  &gOpts.softwaredirs[IO_CARTSLOT],	0, 0, TRUE},
+	{ "floppydisk_dir",	"floppydisk_dir",             RO_STRING,  &gOpts.softwaredirs[IO_FLOPPY],	0, 0, TRUE},
+	{ "harddisk_dir",	"harddisk_dir",               RO_STRING,  &gOpts.softwaredirs[IO_HARDDISK],	0, 0, TRUE},
+	{ "cylinder_dir",	"cylinder_dir",               RO_STRING,  &gOpts.softwaredirs[IO_CYLINDER],	0, 0, TRUE},
+	{ "cassette_dir",	"cassette_dir",               RO_STRING,  &gOpts.softwaredirs[IO_CASSETTE],	0, 0, TRUE},
+	{ "punchcard_dir",	"punchcard_dir",              RO_STRING,  &gOpts.softwaredirs[IO_PUNCHCARD],	0, 0, TRUE},
+	{ "punchtape_dir",	"punchtape_dir",              RO_STRING,  &gOpts.softwaredirs[IO_PUNCHTAPE],	0, 0, TRUE},
+	{ "printer_dir",	"printer_dir",                RO_STRING,  &gOpts.softwaredirs[IO_PRINTER],	0, 0, TRUE},
+	{ "serial_dir",		"serial_dir",                 RO_STRING,  &gOpts.softwaredirs[IO_SERIAL],	0, 0, TRUE},
+	{ "parallel_dir",	"parallel_dir",               RO_STRING,  &gOpts.softwaredirs[IO_PARALLEL],	0, 0, TRUE},
+	{ "snapshot_dir",	"snapshot_dir",               RO_STRING,  &gOpts.softwaredirs[IO_SNAPSHOT],	0, 0, TRUE},
+	{ "quickload_dir",	"quickload_dir",              RO_STRING,  &gOpts.softwaredirs[IO_QUICKLOAD],0, 0, TRUE}
 #endif /* MESS */
 };
 #define NUM_GAME_OPTIONS (sizeof(regGameOpts) / sizeof(regGameOpts[0]))

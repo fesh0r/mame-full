@@ -26,6 +26,8 @@
 
 #ifdef UNDER_CE
 #include "invokegx.h"
+#else
+#include "configms.h"
 #endif
 
 //============================================================
@@ -330,6 +332,7 @@ static void change_device(const struct IODevice *dev, int id)
 	TCHAR filename[MAX_PATH];
 	char *s;
 	const char *ext;
+	const char *newfilename;
 
 	assert(dev);
 
@@ -382,8 +385,12 @@ static void change_device(const struct IODevice *dev, int id)
 	ofn.hwndOwner = win_video_window;
 	ofn.lpstrFilter = A2T(filter);
 	ofn.lpstrFile = filename;
+
 	if (image_exists(dev->type, id))
 		ofn.lpstrInitialDir = A2T(image_filedir(dev->type, id));
+	if (!ofn.lpstrInitialDir)
+		ofn.lpstrInitialDir = A2T(get_devicedirectory(dev->type));
+
 	ofn.nMaxFile = sizeof(filename) / sizeof(filename[0]);
 	ofn.Flags = OFN_EXPLORER | OFN_NOCHANGEDIR | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY;
 
@@ -405,8 +412,16 @@ static void change_device(const struct IODevice *dev, int id)
 
 	if (!GetOpenFileName(&ofn))
 		return;
+	newfilename = T2A(filename);
 
-	image_load(dev->type, id, T2A(filename));
+	s = osd_dirname(newfilename);
+	if (s)
+	{
+		set_devicedirectory(dev->type, s);
+		free(s);
+	}
+
+	image_load(dev->type, id, newfilename);
 }
 
 //============================================================

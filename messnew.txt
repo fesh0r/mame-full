@@ -23,7 +23,10 @@ System Driver Changes:
 
 Source Changes:
 ---------------
-(none)
+- [Windows] Default directories for the file dialogs can now be specified on
+  a device type basis at the command line (e.g. -floppydisk_dir).  This
+  option will get written out when launched from the GUI, so that per system
+  directories can be recorded (bug #345). [Nate Woods]
 
 
 
