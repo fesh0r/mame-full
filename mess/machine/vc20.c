@@ -710,12 +710,6 @@ int vc20_rom_load(int id, mame_file *fp, int open_mode)
 
 INTERRUPT_GEN( vc20_frame_interrupt )
 {
-	static int quickload = 0;
-
-	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, 0, vc20_memory);
-	quickload = QUICKLOAD;
-
 	via_0_ca1_w (0, vc20_via0_read_ca1 (0));
 	keyboard[0] = 0xff;
 	if (KEY_DEL) keyboard[0]&=~0x80;

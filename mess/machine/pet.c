@@ -850,9 +850,8 @@ static void pet_keyboard_normal(void)
 
 INTERRUPT_GEN( pet_frame_interrupt )
 {
-	static int quickload = 0;
-
-	if (superpet) {
+	if (superpet)
+	{
 		if (M6809_SELECT) {
 			cpu_set_halt_line(0,1);
 			cpu_set_halt_line(1,0);
@@ -868,15 +867,6 @@ INTERRUPT_GEN( pet_frame_interrupt )
 		pet_keyboard_business();
 	else
 		pet_keyboard_normal();
-
-	if (!quickload && QUICKLOAD)
-	{
-		if (pet_basic1)
-			cbm_pet1_quick_open (0, 0, pet_memory);
-		else
-			cbm_pet_quick_open (0, 0, pet_memory);
-	}
-	quickload = QUICKLOAD;
 
 	set_led_status (1 /*KB_CAPSLOCK_FLAG */ , KEY_B_SHIFTLOCK ? 1 : 0);
 }

@@ -1106,21 +1106,12 @@ void c64_rom_load(void)
 
 INTERRUPT_GEN( c64_frame_interrupt )
 {
-	static int quickload = 0;
 	static int monitor=-1;
 	int value, value2;
 
 	sid6581_update();
 
 	c64_nmi();
-
-	if (!quickload && QUICKLOAD) {
-		if (c65) {
-			cbm_c65_quick_open (0, 0, c64_memory);
-		} else
-			cbm_quick_open (0, 0, c64_memory);
-	}
-	quickload = QUICKLOAD;
 
 	if (c128) {
 		if (MONITOR_TV!=monitor) {

@@ -5,167 +5,136 @@
 #include "image.h"
 #include "includes/cbm.h"
 
-static struct
+static int general_cbm_loadsnap(mame_file *fp, const char *file_type, int snapshot_size, UINT8 *memory,
+	void (*cbmloadsnap)(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length))
 {
-	int specified;
-	unsigned short addr;
-	UINT8 *data;
-	int length;
-}
-quick;
+	char buffer[7];
+	UINT8 *data = NULL;
+	UINT32 bytesread;
+	UINT16 address = 0;
 
-int cbm_quick_init (int id, mame_file *fp, int open_mode)
-{
-	int read_;
-	const char *cp;
+	if (!file_type)
+		goto error;
 
-	memset (&quick, 0, sizeof (quick));
-	if (fp == NULL)
-		return INIT_PASS;
-
-	quick.specified = 1;
-
-	quick.length = mame_fsize (fp);
-
-	cp = image_filetype(IO_QUICKLOAD, id);
-	if (cp)
+	if (stricmp(file_type, "prg"))
 	{
-		if (stricmp (cp, "prg") == 0)
-		{
-			mame_fread_lsbfirst (fp, &quick.addr, 2);
-			quick.length -= 2;
-		}
-		else if (stricmp (cp, "p00") == 0)
-		{
-			char buffer[7];
-
-			mame_fread (fp, buffer, sizeof (buffer));
-			if (strncmp (buffer, "C64File", sizeof (buffer)) == 0)
-			{
-				mame_fseek (fp, 26, SEEK_SET);
-				mame_fread_lsbfirst (fp, &quick.addr, 2);
-				quick.length -= 28;
-			}
-		}
+		/* prg files */
 	}
-	if (quick.addr == 0)
-		return INIT_FAIL;
+	else if (!stricmp(file_type, "p00"))
+	{
+		/* p00 files */
+		if (mame_fread(fp, buffer, sizeof(buffer)) != sizeof(buffer))
+			goto error;
+		if (memcmp(buffer, "C64File", sizeof(buffer)))
+			goto error;
+		mame_fseek(fp, 26, SEEK_SET);
+		snapshot_size -= 26;
+	}
+	else
+	{
+		goto error;
+	}
 
-	if ((quick.data = (UINT8*) image_malloc (IO_QUICKLOAD, id, quick.length)) == NULL)
-		return INIT_FAIL;
+	mame_fread_lsbfirst(fp, &address, 2);
+	snapshot_size -= 2;
 
-	read_ = mame_fread (fp, quick.data, quick.length);
-	return read_ != quick.length;
+	data = malloc(snapshot_size);
+	if (!data)
+		goto error;
+
+	bytesread = mame_fread(fp, data, snapshot_size);
+	if (bytesread != snapshot_size)
+		goto error;
+
+	cbmloadsnap(memory, data, address, address + snapshot_size, snapshot_size);
+	free(data);
+	return INIT_PASS;
+
+error:
+	if (data)
+		free(data);
+	return INIT_FAIL;
 }
 
-int cbm_quick_open (int id, int mode, void *arg)
+static void cbm_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0x31] = memory[0x2f] = memory[0x2d] = addr & 0xff;
-	memory[0x32] = memory[0x30] = memory[0x2e] = addr >> 8;
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	memcpy(memory + address, data, length);
+	memory[0x31] = memory[0x2f] = memory[0x2d] = hiaddress & 0xff;
+	memory[0x32] = memory[0x30] = memory[0x2e] = hiaddress >> 8;
 }
 
-int cbm_pet_quick_open (int id, int mode, void *arg)
+QUICKLOAD_LOAD( cbm )
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0x2e] = memory[0x2c] = memory[0x2a] = addr & 0xff;
-	memory[0x2f] = memory[0x2d] = memory[0x2b] = addr >> 8;
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	extern UINT8 *c64_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, c64_memory, cbm_quick_open);
 }
 
-int cbm_pet1_quick_open (int id, int mode, void *arg)
+static void cbm_pet_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0x80] = memory[0x7e] = memory[0x7c] = addr & 0xff;
-	memory[0x81] = memory[0x7f] = memory[0x7d] = addr >> 8;
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	memcpy(memory + address, data, length);
+	memory[0x2e] = memory[0x2c] = memory[0x2a] = hiaddress & 0xff;
+	memory[0x2f] = memory[0x2d] = memory[0x2b] = hiaddress >> 8;
 }
 
-int cbmb_quick_open (int id, int mode, void *arg)
+QUICKLOAD_LOAD( cbm_pet )
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr+0x10000, quick.data, quick.length);
-	memory[0xf0046] = addr & 0xff;
-	memory[0xf0047] = addr >> 8;
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	extern UINT8 *pet_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, pet_memory, cbm_pet_quick_open);
 }
 
-int cbm500_quick_open (int id, int mode, void *arg)
+static void cbm_pet1_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0xf0046] = addr & 0xff;
-	memory[0xf0047] = addr >> 8;
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	memcpy(memory + address, data, length);
+	memory[0x80] = memory[0x7e] = memory[0x7c] = hiaddress & 0xff;
+	memory[0x81] = memory[0x7f] = memory[0x7d] = hiaddress >> 8;
 }
 
-int cbm_c65_quick_open (int id, int mode, void *arg)
+QUICKLOAD_LOAD( cbm_pet1 )
 {
-	int addr;
-	UINT8 *memory = (UINT8*)arg;
-
-	if (quick.data == NULL)
-		return 1;
-	addr = quick.addr + quick.length;
-
-	memcpy (memory + quick.addr, quick.data, quick.length);
-	memory[0x82] = addr & 0xff;
-	memory[0x83] = addr >> 8;
-
-	logerror("quick loading %s at %.4x size:%.4x\n",
-				 image_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
-
-	return 0;
+	extern UINT8 *pet_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, pet_memory, cbm_pet1_quick_open);
 }
+
+static void cbmb_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+{
+	memcpy(memory + address + 0x10000, data, length);
+	memory[0xf0046] = hiaddress & 0xff;
+	memory[0xf0047] = hiaddress >> 8;
+}
+
+QUICKLOAD_LOAD( cbmb )
+{
+	extern UINT8 *cbmb_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, cbmb_memory, cbmb_quick_open);
+}
+
+static void cbm500_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+{
+	memcpy(memory + address, data, length);
+	memory[0xf0046] = hiaddress & 0xff;
+	memory[0xf0047] = hiaddress >> 8;
+}
+
+QUICKLOAD_LOAD( cbm500 )
+{
+	extern UINT8 *cbmb_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, cbmb_memory, cbm500_quick_open);
+}
+
+static void cbm_c65_quick_open(UINT8 *memory, UINT8 *data, UINT16 address, UINT16 hiaddress, int length)
+{
+	memcpy(memory + address, data, length);
+	memory[0x82] = hiaddress & 0xff;
+	memory[0x83] = hiaddress >> 8;
+}
+
+QUICKLOAD_LOAD( cbm_c65 )
+{
+	extern UINT8 *c64_memory;
+	return general_cbm_loadsnap(fp, file_type, quickload_size, c64_memory, cbm_c65_quick_open);
+}
+
+/* ----------------------------------------------------------------------- */
 
 INT8 cbm_c64_game;
 INT8 cbm_c64_exrom;

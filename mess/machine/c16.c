@@ -777,14 +777,9 @@ int c16_rom_load (int id)
 
 INTERRUPT_GEN( c16_frame_interrupt )
 {
-	static int quickload = 0;
 	int value;
 
 	sid6581_update();
-
-	if (!quickload && QUICKLOAD)
-		cbm_quick_open (0, 0, c16_memory);
-	quickload = QUICKLOAD;
 
 	value = 0xff;
 	if (KEY_ATSIGN)
