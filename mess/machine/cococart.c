@@ -3,6 +3,7 @@
 #include "includes/basicdsk.h"
 #include "formats/dmkdsk.h"
 #include "formats/cocovdk.h"
+#include "ds1315.h"
 #include "includes/dragon.h"
 
 static const struct cartridge_callback *cartcallbacks;
@@ -186,38 +187,63 @@ int dragon_floppy_init(int id)
 	if (basicdsk_floppy_init(id)==INIT_PASS)
 	{
 		void *file;
-		int tracks;
-		int heads;
 
 		diskKind[ id ] = DSK_BASIC;
 		file = image_fopen(IO_FLOPPY, id, OSD_FILETYPE_IMAGE, OSD_FOPEN_READ);
 		if (file) {
-			int filesize = osd_fsize(file),
-				sectorPerTrack,
-				sectorSize;
+			int 	filesize = osd_fsize(file),
+					headerSize = filesize % 256,
+					sectorPerTrack = 18,
+					sectorSizeCode = 1,
+					firstSectorID = 1,
+					sideCount = 1,
+					attributeFlag,
+					tracks;
+			UINT8	*buffer = malloc( headerSize+1 );
 			
-			if( filesize <= 256*2*18*256 ) /* Max tracks * max sides * max sectors * max sector size */
+			if( buffer == NULL )
+				return INIT_FAIL;
+				
+			osd_fread(file, buffer, headerSize);
+
+			if( headerSize > 0 )
+				sectorPerTrack = buffer[0];
+
+			if( headerSize > 1 )
+				sideCount = buffer[1];
+
+			if( headerSize > 2 )
+				sectorSizeCode = buffer[2];
+
+			if( headerSize > 3 )
+				firstSectorID = buffer[3];
+
+			if( headerSize > 4 )
 			{
-				/* Assume 18 sectors per track, and 256 bytes per sector */
-				/* This is a standard CoCo floppy disk */
-				sectorPerTrack = 18;
-				sectorSize = 256;
+				attributeFlag = buffer[4];
+				
+				if( attributeFlag != 0 )
+				{
+					osd_fclose(file);
+					free( buffer );
+					logerror("JVC: Attribute bytes not supported.\n");
+					return INIT_FAIL;
+				}
 			}
-			else
+
+			tracks = (filesize - headerSize) / (sectorPerTrack * (128 << sectorSizeCode)) / sideCount;
+
+			if( (filesize - headerSize) != (tracks * sectorPerTrack * (128 << sectorSizeCode) * sideCount) )
 			{
-				/* Assume 255 sectors per track, and 256 bytes per sector */
-				/* This is a hack to support fake large floppy disks */
-				/* Should be removed when real hard disk support is complete */
-				sectorPerTrack = 255;
-				sectorSize = 256;
+				osd_fclose(file);
+				free( buffer );
+				logerror("JVC: Not a JVC disk.\n");
+				return INIT_FAIL;
 			}
+
+			basicdsk_set_geometry(id, tracks, sideCount, sectorPerTrack, (128 << sectorSizeCode), firstSectorID, headerSize);
 			
-			tracks = filesize / (sectorPerTrack*sectorSize);
-			heads = (tracks > 80) ? 2 : 1;
-			tracks /= heads;
-
-			basicdsk_set_geometry(id, tracks, heads, sectorPerTrack, sectorSize, 1, 0);
-
+			free( buffer );
 			osd_fclose(file);
 		}
 	}
@@ -328,7 +354,21 @@ READ_HANDLER(coco_floppy_r)
 		break;
 	}
 
+/* TJL - temp hack for RTC 
+   When a real cart interface this should be moved
+*/
+
+	if( offset == ( 0xff79-0xff40 ) )
+		ds1315_r_1( offset );
+		
+	if( offset == ( 0xff78-0xff40 ) )
+		ds1315_r_0( offset );
+		
+	if( offset == ( 0xff7c-0xff40 ) )
+		result = ds1315_r_data( offset );
+
 	return result;
+	
 }
 
 WRITE_HANDLER(coco_floppy_w);
