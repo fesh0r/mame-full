@@ -81,7 +81,7 @@ static struct rc_option fileio_opts[] =
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Windows path and directory options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 #ifdef MESS
-	{ "biospath", "rp", rc_string, &rompath, "bios", 0, 0, NULL, "path to romsets" },
+	{ "biospath", "rp", rc_string, &rompath, "bios", 0, 0, NULL, "path to BIOS files" },
 	{ "softwarepath", "swp", rc_string, &swpath, "software", 0, 0, NULL, "path to software" },
 #else
 	{ "rompath", "rp", rc_string, &rompath, "roms", 0, 0, NULL, "path to romsets" },
@@ -441,7 +441,7 @@ int parse_config_and_cmdline (int argc, char **argv)
 		rc_save(rc, "mess.ini", 0);
 #else
 		rc_save(rc, "mame.ini", 0);
-#endif	
+#endif
 		exit(0);
 	}
 
