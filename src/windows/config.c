@@ -643,7 +643,7 @@ void CLIB_DECL logerror(const char *text,...)
 	/* NPW 5-Nov-2001 - support for logging to OutputDebugString() */
 	if (erroroslog)
 	{
-		extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list arg);
+		extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
 		char buffer[256];
 		vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
 		OutputDebugString(buffer);
