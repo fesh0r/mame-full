@@ -772,8 +772,11 @@ COREOBJS += \
 
 
 # additional tools
-TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE) messroms$(EXE)
-#TOOLS +=  dat2html$(EXE) mkhdimg$(EXE) imgtool$(EXE)
+TOOLS +=  tools/dat2html$(EXE) \
+	  tools/mkhdimg$(EXE)  \
+	  tools/imgtool$(EXE)  \
+	  tools/messroms$(EXE) 
+
 
 ifeq ($(OS),win32)
 OUTOPT = $(OBJ)/Win32/dirent.o -out:$@
