@@ -106,6 +106,7 @@ OBJDIRS = $(OBJ) \
 	$(OBJ)/cpu/ccpu $(OBJ)/cpu/pdp1 $(OBJ)/cpu/konami $(OBJ)/cpu/nec \
 	$(OBJ)/cpu/gensync $(OBJ)/cpu/adsp2100 $(OBJ)/cpu/z80gb $(OBJ)/cpu/arm \
 	$(OBJ)/cpu/mips $(OBJ)/cpu/sc61860 $(OBJ)/cpu/g65816 $(OBJ)/cpu/cdp1802 \
+	$(OBJ)/cpu/cp1600 \
 	$(OBJ)/mess $(OBJ)/mess/formats $(OBJ)/mess/systems $(OBJ)/mess/machine \
 	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
 
