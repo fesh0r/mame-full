@@ -39,7 +39,7 @@
 extern UINT32 a2;
 
 /* machine/apple2.c */
-void apple2_init_common(void);
+void apple2_init_common(int keyboard_type);
 DRIVER_INIT( apple2 );
 MACHINE_INIT( apple2 );
 data8_t apple2_getfloatingbusvalue(void);

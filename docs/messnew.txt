@@ -14,7 +14,9 @@ System Driver Changes:
 
 User Interface Changes:
 -----------------------
-(none)
+- [Windows GUI] If MESS crashes at runtime, an error message will now be
+  displayed.  Previously, the emulation would end and the user would be sent
+  back into the GUI without explanation.  [Nate Woods]
 
 
 

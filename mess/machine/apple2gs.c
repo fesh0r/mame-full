@@ -106,6 +106,7 @@
 
 #include "includes/apple2gs.h"
 #include "includes/apple2.h"
+#include "machine/ay3600.h"
 #include "machine/iwm.h"
 #include "machine/sonydriv.h"
 #include "machine/8530scc.h"
@@ -114,7 +115,7 @@
 
 #define LOG_C0XX			0
 #define LOG_ADB				0
-#define LOG_IRQ				1
+#define LOG_IRQ				0
 
 #define SUPPORT_SLOT6		0
 
@@ -1744,7 +1745,7 @@ static READ8_HANDLER( apple2gs_read_vector )
 
 DRIVER_INIT( apple2gs )
 {
-	apple2_init_common();
+	apple2_init_common(AP2_KEYBOARD_2GS);
 
 	/* set up Apple IIgs vectoring */
 	cpunum_set_info_fct(0, CPUINFO_PTR_G65816_READVECTOR_CALLBACK, (genf *) apple2gs_read_vector);

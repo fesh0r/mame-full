@@ -1003,7 +1003,7 @@ static BOOL WaitWithMessageLoop(HANDLE hEvent)
 	return FALSE;
 }
 
-static int RunMAME(int nGameIndex)
+static DWORD RunMAME(int nGameIndex)
 {
 	time_t start, end;
 	double elapsedtime;
@@ -5666,6 +5666,10 @@ static void MamePlayRecordWave()
 
 static void MamePlayGameWithOptions(int nGame)
 {
+	DWORD dwExitCode;
+	TCHAR szBuffer[256];
+	TCHAR szError[256];
+
 #ifdef MESS
 	if (!MessApproveImageList(hMain, nGame))
 		return;
@@ -5685,7 +5689,8 @@ static void MamePlayGameWithOptions(int nGame)
 
 	in_emulation = TRUE;
 
-	if (RunMAME(nGame) == 0)
+	dwExitCode = RunMAME(nGame);
+	if (dwExitCode == 0)
 	{
 	   IncrementPlayCount(nGame);
 	   ListView_RedrawItems(hwndList, GetSelectedPick(), GetSelectedPick());
@@ -5693,6 +5698,18 @@ static void MamePlayGameWithOptions(int nGame)
 	else
 	{
 		ShowWindow(hMain, SW_SHOW);
+
+		// attempt to display a nice error message
+		if (FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, dwExitCode, 0,
+			szError, sizeof(szError) / sizeof(szError[0]), NULL) == 0)
+		{
+			_sntprintf(szError, sizeof(szError) / sizeof(szError[0]),
+				TEXT("Error 0x%08X"), dwExitCode);
+		}
+		_sntprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]),
+			TEXT(MAME32NAME " encountered a fatal error: %s"),
+			szError);
+		MessageBox(hMain, szBuffer, MAME32NAME, MB_OK);
 	}
 
 	in_emulation = FALSE;
