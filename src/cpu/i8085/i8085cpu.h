@@ -78,8 +78,8 @@
  " shlb $2,%%al         \n" /* shift to P/V bit position */     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%%al        \n"                                     \
- :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
- :"r" (R), "0" (I.AF.b.h)                                       \
+ :"=mq" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"q" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_ADD(R) {												\
@@ -101,8 +101,8 @@ int q = I.AF.b.h+R; 											\
  " shlb $2,%%al         \n" /* shift to P/V bit position */     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
- :"r" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
+ :"=mq" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"q" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
  )
 #else
 #define M_ADC(R) {												\
@@ -124,8 +124,8 @@ int q = I.AF.b.h+R; 											\
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb $2,%%al          \n" /* set N flag */                    \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
- :"r" (R), "0" (I.AF.b.h)                                       \
+ :"=mq" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"q" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_SUB(R) {												\
@@ -157,8 +157,8 @@ int q = I.AF.b.h+R; 											\
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb $2,%%al          \n" /* set N flag */                    \
  " orb %%ah,%%al        \n" /* combine with P/V */              \
- :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
- :"r" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
+ :"=mq" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"q" (R), "a" (I.AF.b.l), "0" (I.AF.b.h)                       \
  )
 #else
 #define M_SBB(R) {                                              \
@@ -181,8 +181,8 @@ int q = I.AF.b.h+R; 											\
  " andb $0xd1,%%ah     \n" /* sign, zero, half carry, carry */  \
  " orb $2,%%al         \n" /* set N flag */                     \
  " orb %%ah,%%al       \n" /* combine with P/V */               \
- :"=g" (I.AF.b.h), "=a" (I.AF.b.l)                              \
- :"r" (R), "0" (I.AF.b.h)                                       \
+ :"=mq" (I.AF.b.h), "=a" (I.AF.b.l)                              \
+ :"q" (R), "0" (I.AF.b.h)                                       \
  )
 #else
 #define M_CMP(R) {                                              \
@@ -210,7 +210,7 @@ int q = I.AF.b.h+R; 											\
  " lahf                 \n"                                     \
  " andb $0x11,%%ah      \n"                                     \
  " orb %%ah,%1          \n"                                     \
- :"=c" (I.HL.d), "=g" (I.AF.b.l)                                \
+ :"=c" (I.HL.d), "=mq" (I.AF.b.l)                                \
  :"0" (I.HL.d), "1" (I.AF.b.l), "a" (I.R.d)                     \
  )
 #else
