@@ -572,9 +572,8 @@ int osd_feof(osd_file *file)
 UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 {
 	UINT32 bytes_left = length;
-//	int bytes_to_copy;
+	int bytes_to_copy;
 	DWORD result;
-#if 0
 
 	// handle data from within the buffer
 	if (file->offset >= file->bufferbase && file->offset < file->bufferbase + file->bufferbytes)
@@ -595,7 +594,6 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 			return length;
 	}
 
-#endif
 	// attempt to seek to the current location if we're not there already
 	if (file->offset != file->filepos)
 	{
@@ -608,7 +606,6 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 		}
 		file->filepos = file->offset;
 	}
-#if 0
 
 	// if we have a small read remaining, do it to the buffer and copy out the results
 	if (length < FILE_BUFFER_SIZE/2)
@@ -633,7 +630,6 @@ UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
 
 	// otherwise, just read directly to the buffer
 	else
-#endif
 	{
 		// do the read
 		ReadFile(file->handle, buffer, bytes_left, &result, NULL);
