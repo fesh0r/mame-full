@@ -31,16 +31,19 @@ System Driver Changes:
 
 - [PC1512] Replaced generic character ROM with one reconstructed using CGAFont.
   [John Elliott]
-  
+
+- [PC1640] Added definition for the character ROM in ROM_LOAD structure.
+  [Stefano Priore]
+
 - [COCO] Added direct support for OS-9 floppy disk images. If an attached disk's
   filename ends in .os9, the first sector will be analyzed for geometry
-  information. [tim lindner]
+  information. [Tim Lindner]
 
-- [MC10] Fixed bug #358
-  
+- [MC10] Fixed bug #358.[Nate Woods]
+
 Source Changes:
 ---------------
-- The core is based on MAME 0.67.  This incorporates all features of the 
+- The core is based on MAME 0.67.  This incorporates all features of the
   update to this core.  [MAME team]
 
 - VIDEO_UPDATE() now has a do_skip parameter, which enables drivers to inform
