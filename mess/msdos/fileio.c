@@ -170,7 +170,7 @@ void decompose_rom_sample_path(char *rompath, char *samplepath)
 	else
 		samples = realloc(samples, strlen(samplepath) + 1);
 
-	if (!roms || !samples)
+	if (!roms)
 	{
 		logerror("decompose_rom_sample_path: failed to malloc!\n");
 		raise(SIGABRT);
@@ -188,21 +188,6 @@ void decompose_rom_sample_path(char *rompath, char *samplepath)
 		if (!rompathv)
 			break;
 		rompathv[rompathc++] = token;
-		token = strtok(NULL, ";");
-	}
-
-	strcpy(samples, samplepath);
-	token = strtok(samples, ";");
-	while (token)
-	{
-		if (samplepathc)
-			samplepathv = realloc(samplepathv, (samplepathc + 1) * sizeof (char *));
-		else
-			samplepathv = malloc(sizeof (char *));
-
-		if (!samplepathv)
-			break;
-		samplepathv[samplepathc++] = token;
 		token = strtok(NULL, ";");
 	}
 
