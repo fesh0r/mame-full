@@ -1103,8 +1103,10 @@ static void init_driver(void)
 
 	/* set up the port handlers */
 	install_mem_read_handler(0, 0x600000, 0x600001, hd68k_port0_r);
-	install_mem_read_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
+/*
+    install_mem_read_handler(0, 0x840000, 0x84ffff, hdsnd_68k_r);
 	install_mem_write_handler(0, 0x840000, 0x84ffff, hdsnd_68k_w);
+ */
 }
 
 
