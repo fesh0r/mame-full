@@ -520,11 +520,11 @@ mess.txt: $(EMULATOR)
 makedep/makedep$(EXE):
 	make -Cmakedep
 
-depend $(NAME).obj/$(NAME).dep: makedep/makedep$(EXE)
-	echo "#" $(TARGET) dependencies >$(NAME).obj/$(NAME).dep
-	makedep/makedep$(EXE) -f$(NAME).obj/$(NAME).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
+depend $(NAME).dep: makedep/makedep$(EXE)
+	echo "#" $(TARGET) dependencies >$(NAME).dep
+	makedep/makedep$(EXE) -f$(NAME).dep -p$(TARGET).obj/ -Imess -- $(CFLAGS) -- src/*.c \
 	src/cpu/*/*.c src/sound/*.c mess/systems/*.c mess/machine/*.c mess/vidhrdw/*.c mess/sndhrdw/*.c \
 	mess/tools/*.c mess/formats/*.c
 
 ## uncomment the following line to include dependencies
-include $(NAME).obj/$(NAME).dep
+include $(NAME).dep
