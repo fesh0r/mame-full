@@ -1,0 +1,29 @@
+Texas Instruments TI74 Basicalc
+-------------------------------
+
+Pocket Computer
+
+TI74S is a variant
+TI95 Procalc seams to be related
+Compact Computer CC40 seams to be related
+
+
+Features
+--------
+31 5x7 character lcd display
+32+4kb rom
+8 kb ram
+ram/rom memory expansion port
+hexbus port
+place for 4 micro batteries
+
+
+Peripherals
+-----------
+Texas Instruments PC-324 thermo? printer
+(how to dump the C70016 integrated rom? (tms7000 family))
+24 characters per line
+hexbus port
+place for 4 mignon batteries
+port for power supply
+
