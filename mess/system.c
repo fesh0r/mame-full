@@ -186,12 +186,12 @@ TESTDRIVER( a310 )      /* 1988 Acorn Archimedes 310                      */
 
 	DRIVER( z88 )		/*												  */
 
-//	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
-//	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
-//	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc464 )	/* Amstrad (Schneider in Germany) 1984			  */
+	DRIVER( cpc664 )	/* Amstrad (Schneider in Germany) 1985			  */
+	DRIVER( cpc6128 )	/* Amstrad (Schneider in Germany) 1985			  */
 /*	DRIVER( cpc464p )*/ /* Amstrad CPC464  Plus - 1987					  */
 /*	DRIVER( cpc6128p )*//* Amstrad CPC6128 Plus - 1987					  */
-//	DRIVER( kccomp )	/* VEB KC compact								  */
+	DRIVER( kccomp )	/* VEB KC compact								  */
 
 	DRIVER( pcw8256 )	/* 198? PCW8256 								  */
 	DRIVER( pcw8512 )	/* 198? PCW8512 								  */
@@ -388,7 +388,7 @@ TESTDRIVER( ibmpcjr )	/*      IBM PC Jr								  */
 	/* at */
 TESTDRIVER( ibmat )		/* 1985	IBM AT									  */
 TESTDRIVER( i8530286 )	/* 1988 IBM PS2 Model 30 286 (VGA)					*/
-TESTDRIVER( t2500xl )	/* 19?? Tandy 2500XL (VGA)					*/
+//TESTDRIVER( t2500xl )	/* 19?? Tandy 2500XL (VGA)					*/
 	DRIVER( at )		/* 1987 AMI Bios and Diagnostics				  */
 TESTDRIVER( atvga ) 	/*												  */
 TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
@@ -438,9 +438,9 @@ TESTDRIVER( neat )		/* 1989	New Enhanced AT chipset, AMI BIOS		  */
 	/* sinclair pc200 professional series ibmxt compatible*/
 
 	/* SHARP */
-TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
-TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
-TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
+//TESTDRIVER( pc1500 )	/* 1982 Pocket Computer 1500						*/
+//TESTDRIVER( trs80pc2 )	/* 1982 Tandy TRS80 PC 2							*/
+//TESTDRIVER( pc1500a )	/* 1984 Pocket Computer 1500A						*/
 /*	DRIVER( pc1600 )*/	/* 1986 Pocket Computer 1600						*/
 	DRIVER( pc1251 )	/* Pocket Computer 1251 						  */
 TESTDRIVER( trs80pc3 )	/* Tandy TRS80 PC-3									*/
