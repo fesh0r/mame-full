@@ -10,12 +10,14 @@
 
 /*
 	terminology:
-	disk block: 512-byte logical block
-	allocation block: "The File Manager always allocates logical disk blocks to
+	disk block: 512-byte logical block.  With sectors of 512 bytes, one logical
+		block is equivalent to one sector; when the sector size is not 512
+		bytes, sectors are split or grouped to 
+	allocation block: The File Manager always allocates logical disk blocks to
 		a file in groups called allocation blocks; an allocation block is
 		simply a group of consecutive logical blocks.  The size of a volume's
 		allocation blocks depends on the capacity of the volume; there can be
-		at most 65,535 allocation blocks on a volume."
+		at most 4094 (MFS) or 65535 (HFS) allocation blocks on a volume.
 
 
 	Organization of an MFS volume:
@@ -24,14 +26,15 @@
 	block
 
 	0 - 1:		System startup information
-	2 - 3:		Master directory block (MDB)
-				+ unidentified data
-	4 - n:		Directory file
-	n+1 - p-2:	Other files and free space					0 - (p-2)/k
+	2 - m:		Master directory block (MDB)
+				+ allocation block link pointers
+	m+1 - n:	Directory file
+	n+1 - p-2:	Other files and free space					0 - ((p-2)-(n+1))/k
 	p-1:		Alternate MDB
 	p:			Not used
-	usually, n = 16, p = 799 (SSDD 3.5" floppy) or 1599 (DSDD 3.5" floppy),
-	and k = 2
+	usually, k = 2, m = 3, n = 16, p = 799 (SSDD 3.5" floppy)
+	with DSDD 3.5" floppy, I assume that p = 1599, but I don't know the other
+	values
 */
 
 #include <ctype.h>
@@ -134,7 +137,8 @@ typedef struct mac_FInfo
 								/* -1: new folder template?????? */
 								/* 0: disk window ("root") */
 								/* > 0: specific folder, index of FOBJ resource??? */
-								/* FOBJ resource contains folder info. */
+								/* The FOBJ resource contains folder info, its
+								name if the folder name. */
 							/* HFS & HFS+: reserved (set to 0) */
 } mac_FInfo;
 
@@ -185,7 +189,7 @@ enum
 	mac_to_c_strncpy()
 
 	Encode a macintosh string as a C string.  The NUL character is escaped,
-	using the "%00" sequence.  To avoid any confusion, '%' is escaped with
+	using the "%00" sequence.  To avoid any ambiguity, '%' is escaped with
 	'%25'.
 
 	dst (O): C string
@@ -237,7 +241,7 @@ exit:
 	c_to_mac_strncpy()
 
 	Decode a C string to a macintosh string.  The NUL character is escaped,
-	using the "%00" sequence.  To avoid any confusion, '%' is escaped with
+	using the "%00" sequence.  To avoid any ambiguity, '%' is escaped with
 	'%25'.
 
 	dst (O): macintosh string (first byte is lenght)
@@ -316,6 +320,22 @@ static int mac_stricmp(const UINT8 *s1, const UINT8 *s2)
 	}
 
 	return ((int)s1[0] - s2[0]);
+}
+
+/*
+	mac_strcpy()
+
+	Copy a macintosh string
+
+	dst (O): dest macintosh string
+	src (I): source macintosh string (first byte is lenght)
+
+	Return a zero if s1 and s2 are equal, a negative value if s1 is less than
+	s2, and a positive value if s1 is greater than s2.
+*/
+INLINE void mac_strcpy(UINT8 *dest, const UINT8 *src)
+{
+	memcpy(dest, src, src[0]+1);
 }
 
 /*
@@ -528,20 +548,20 @@ typedef struct MBHeader /* MacBinary header */
 } MBHeader;
 
 /*
-	CalcMBCRC
+	MB_calcCRC
 
 	Compute CRC of macbinary header
 
 	This piece of code was ripped from the MacBinary II+ source (and converted
-	from 68k asm to C), as the specs for the CRC used by MacBinary are not
-	published.
+	from 68k asm to C), as AFAIK the specs for the CRC used by MacBinary are
+	not published.
 
 	header (I): pointer to MacBinary header (only 124 first bytes matter, i.e.
 		CRC and reserved2 fields are ignored)
 
 	Returns 16-bit CRC value.
 */
-static UINT16 CalcMBCRC(const MBHeader *header)
+static UINT16 MB_calcCRC(const MBHeader *header)
 {
 	static UINT16 magic[256] =
 	{
@@ -721,20 +741,20 @@ static int image_read_block(mac_l1_imgref *image, UINT64 block, void *dest)
 static int image_write_block(mac_l1_imgref *image, UINT64 block, const void *src)
 {
 	if (stream_seek(image->f, (image->format == apple_diskcopy) ? block*512 + 84 : block*512, SEEK_SET))
-		return IMGTOOLERR_READERROR;
+		return IMGTOOLERR_WRITEERROR;
 
 	if (stream_write(image->f, src, 512) != 512)
-		return IMGTOOLERR_READERROR;
+		return IMGTOOLERR_WRITEERROR;
 
 #if 0
 	/* now append tag data */
 	if ((image->format == apple_diskcopy) && (image->u.apple_diskcopy.tag_offset))
 	{	/* insert tag data from disk image */
 		if (stream_seek(image->f, image->u.apple_diskcopy.tag_offset + block*12, SEEK_SET))
-			return IMGTOOLERR_READERROR;
+			return IMGTOOLERR_WRITEERROR;
 
 		if (stream_read(image->f, (UINT8 *) src + 512, 12) != 12)
-			return IMGTOOLERR_READERROR;
+			return IMGTOOLERR_WRITEERROR;
 	}
 	else
 	{
@@ -778,11 +798,19 @@ typedef struct mfs_mdb
 
 	mac_str27 VN;			/* volume name */
 
-	UINT8    unknown[512-64];	/* ??? */
-
-	/* the rest of this block and the next one seems to include a list of
-	sorts; or maybe it is 68k code.  Anyway, it is not included in the
-	alternate VCB. */
+	UINT8    ABlink[512-64];/* Link array for file ABs.  Array of nmBlks
+							12-bit-long entries, indexed by AB address.  If an
+							AB belongs to no file, the entry is 0; if an AB is
+							the last in the file, the entry is 1; if an AB
+							belongs to the file and is not the last one, the
+							entry is the AB address of the next file AB plus 1.
+							Note that the array extends on as many consecutive
+							disk blocks as needed (usually the MDB block plus
+							the next one).  Incidentally, this array is not
+							saved in the secondary MDB: presumably, the idea
+							was that the disk utility could rely on the tag
+							data to rebuild the link array if it should ever
+							be corrupted. */
 } mfs_mdb;
 
 /*
@@ -797,8 +825,8 @@ typedef struct mfs_dir_entry
 								/* 0x00 means end of block: if we are not done
 								with reading the directory, the remnants will
 								be read from next block */
-	UINT8    flVersNum;			/* version number (usually 0x00, but I don't have the IM volume that describes it) */
-
+	UINT8    flVersNum;			/* version number (usually 0x00, but I don't
+									have the IM volume that describes it) */
 	mac_FInfo flFinderInfo;		/* information used byt the Finder */
 
 	UINT32BE flNum;				/* file number */
@@ -832,10 +860,26 @@ typedef struct mfs_FOBJ
 	UINT8 unknown2[12];		/* ??? */
 	UINT32BE createDate;	/* date and time of creation??? */
 	UINT32BE modifyDate;	/* date and time of last modification??? */
-
-	/* among the next fields, there is number of items (folders and files) in
-	this folder (2 bytes), followed by item list: 4 bytes per item (folder or
-	file).  However, the offset is not constant */
+	UINT8 unknown3[22];		/* ??? */
+	union
+	{	/* I think there are two versions of the structure */
+		struct
+		{
+			UINT16BE item_count;	/* number of items (folders and files) in
+										this folder */
+			UINT32BE item_descs[1];	/* this variable-lenght array has
+										item_count entries */
+		} v1;
+		struct
+		{
+			UINT16BE zerofill;		/* always 0? */
+			UINT16BE unknown0;		/* always 0??? */
+			UINT16BE item_count;	/* number of items (folders and files) in
+										this folder */
+			UINT8 unknown1[20];		/* ??? */
+			UINT8 name[1];			/* variable-lenght macintosh string */
+		} v2;
+	} u;
 } mfs_FOBJ;
 
 /*
@@ -849,12 +893,15 @@ typedef struct mfs_l2_imgref
 	UINT16 dir_start;
 	UINT16 dir_blk_len;
 
+	UINT16 numABs;
 	UINT16 blocksperAB;
 	UINT16 ABStart;
 
 	UINT16 num_free_blocks;
 
 	mac_str27 volname;
+
+	UINT8 ABlink[6141];
 } mfs_l2_imgref;
 
 /*
@@ -893,32 +940,70 @@ typedef struct mfs_fileref
 */
 static int mfs_image_open(mfs_l2_imgref *l2_img)
 {
-	mfs_mdb mdb;
+	/* to save a little stack space, we use the same buffer for MDB and next
+	blocks */
+	union
+	{
+		mfs_mdb mdb;
+		UINT8 raw[512];
+	} buf;
 	int errorcode;
 
-	errorcode = image_read_block(&l2_img->l1_img, 2, &mdb);
+	errorcode = image_read_block(&l2_img->l1_img, 2, &buf.mdb);
 	if (errorcode)
 		return errorcode;
 
-	if ((mdb.sigWord[0] != 0xd2) || (mdb.sigWord[1] != 0xd7) || (mdb.VN[0] > 27))
+	if ((buf.mdb.sigWord[0] != 0xd2) || (buf.mdb.sigWord[1] != 0xd7) || (buf.mdb.VN[0] > 27))
 		return IMGTOOLERR_CORRUPTIMAGE;
 
-	l2_img->dir_num_files = get_UINT16BE(mdb.nmFls);
-	l2_img->dir_start = get_UINT16BE(mdb.dirSt);
-	l2_img->dir_blk_len = get_UINT16BE(mdb.blLn);
+	l2_img->dir_num_files = get_UINT16BE(buf.mdb.nmFls);
+	l2_img->dir_start = get_UINT16BE(buf.mdb.dirSt);
+	l2_img->dir_blk_len = get_UINT16BE(buf.mdb.blLn);
 
-	/*UINT16BE nmBlks;*/		/* number of allocation blocks (0x0187) */
+	l2_img->numABs = get_UINT16BE(buf.mdb.nmBlks);
+	if (get_UINT32BE(buf.mdb.alBlkSiz) % 512)
+		return IMGTOOLERR_CORRUPTIMAGE;
+	l2_img->blocksperAB = get_UINT32BE(buf.mdb.alBlkSiz) / 512;
+	l2_img->ABStart = get_UINT16BE(buf.mdb.alBlSt);
 
-	if (get_UINT32BE(mdb.alBlkSiz) % 512)
+	l2_img->num_free_blocks = get_UINT16BE(buf.mdb.freeBks);
+
+	mac_strcpy(l2_img->volname, buf.mdb.VN);
+
+	if (l2_img->numABs > 4094)
 		return IMGTOOLERR_CORRUPTIMAGE;
 
-	l2_img->blocksperAB = get_UINT32BE(mdb.alBlkSiz) / 512;
-	l2_img->ABStart = get_UINT16BE(mdb.alBlSt);
+	/* extract link array */
+	{
+		int byte_len = l2_img->numABs + ((l2_img->numABs + 1) >> 1);
+		int cur_byte = 0;
+		int cur_block = 2;
+		int block_len = sizeof(buf.mdb.ABlink);
 
-	l2_img->num_free_blocks = get_UINT16BE(mdb.freeBks);
+		/* append the chunk after MDB to link array */
+		if (block_len > (byte_len - cur_byte))
+			block_len = byte_len - cur_byte;
+		memcpy(l2_img->ABlink+cur_byte, buf.mdb.ABlink, block_len);
+		cur_byte += block_len;
+		while (cur_byte < byte_len)
+		{
+			/* read next block */
+			cur_block++;
+			errorcode = image_read_block(&l2_img->l1_img, cur_block, buf.raw);
+			if (errorcode)
+				return errorcode;
+			block_len = 512;
 
-	memcpy(l2_img->volname, mdb.VN, mdb.VN[0]+1);
-
+			/* append this block to link array */
+			if (block_len > (byte_len - cur_byte))
+				block_len = byte_len - cur_byte;
+			memcpy(l2_img->ABlink+cur_byte, buf.raw, block_len);
+			cur_byte += block_len;
+		}
+		/* check that link array and directory don't overlap */
+		if (cur_block >= l2_img->dir_start)
+			return IMGTOOLERR_CORRUPTIMAGE;
+	}
 
 	return 0;
 }
@@ -959,7 +1044,7 @@ static int mfs_dir_read_next(mfs_dirref *dirref, mfs_dir_entry **dir_entry)
 	if (dirref->index == dirref->l2_img->dir_num_files)
 		/* EOF */
 		return 0;
-	
+
 	/* get cat entry pointer */
 	cur_dir_entry = (mfs_dir_entry *) (dirref->block_buffer + dirref->cur_offset);
 	while ((dirref->cur_block == 512) || ! (cur_dir_entry->flags & 0x80))
@@ -1068,6 +1153,60 @@ static int mfs_file_open_RF(mfs_l2_imgref *l2_img, mfs_dir_entry *dir_entry, mfs
 }
 
 /*
+	mfs_get_ABlink
+*/
+static UINT16 mfs_get_ABlink(mfs_l2_imgref *l2_img, UINT16 AB_address)
+{
+	UINT16 reply;
+	int a = (AB_address >> 1) * 3;
+
+	if (! (AB_address & 1))
+		reply = (l2_img->ABlink[a] << 4) | ((l2_img->ABlink[a+1] >> 4) & 0x0f);
+	else
+		reply = ((l2_img->ABlink[a+1] << 8) & 0xf00) | l2_img->ABlink[a+2];
+
+	return reply;
+}
+
+/*
+	mfs_file_get_nth_block_address
+*/
+static int mfs_file_get_nth_block_address(mfs_fileref *fileref, UINT32 block_num, UINT32 *block_address)
+{
+	UINT32 AB_num;
+	UINT32 i;
+	UINT16 lAB_address;
+
+	AB_num = block_num / fileref->l2_img->blocksperAB;
+
+	lAB_address = fileref->stBlk;
+	if ((lAB_address == 0) || (lAB_address >= fileref->l2_img->numABs+2))
+		/* 0 -> ??? */
+		return IMGTOOLERR_CORRUPTIMAGE;
+	if (lAB_address == 1)
+		/* EOF */
+		return IMGTOOLERR_UNEXPECTED;
+	lAB_address -= 2;
+	for (i=0; i<AB_num; i++)
+	{
+		lAB_address = mfs_get_ABlink(fileref->l2_img, lAB_address);
+		if ((lAB_address == 0) || (lAB_address >= fileref->l2_img->numABs+2))
+			/* 0 -> empty block: there is no way an empty block could make it
+			into the link chain!!! */
+			return IMGTOOLERR_CORRUPTIMAGE;
+		if (lAB_address == 1)
+			/* EOF */
+			return IMGTOOLERR_UNEXPECTED;
+		lAB_address -= 2;
+	}
+
+	*block_address = fileref->l2_img->ABStart + lAB_address * fileref->l2_img->blocksperAB
+						+ block_num % fileref->l2_img->blocksperAB;
+
+	return 0;
+}
+
+/*
 	mfs_file_read
 */
 static int mfs_file_read(mfs_fileref *fileref, UINT32 len, void *dest)
@@ -1084,8 +1223,9 @@ static int mfs_file_read(mfs_fileref *fileref, UINT32 len, void *dest)
 	{
 		if (fileref->reload_buf)
 		{
-			block = fileref->l2_img->ABStart + ((fileref->stBlk-2)*fileref->l2_img->blocksperAB)
-						+ fileref->crPs / 512;
+			errorcode = mfs_file_get_nth_block_address(fileref, fileref->crPs/512, &block);
+			if (errorcode)
+				return errorcode;
 			errorcode = image_read_block(&fileref->l2_img->l1_img, block, fileref->block_buffer);
 			if (errorcode)
 				return errorcode;
@@ -1268,6 +1408,14 @@ typedef struct mac_resfileref
 
 /*
 	resfile_open
+
+	Open a file as a resource file.  The file must be already open as a
+	macintosh file.
+
+	resfileref (I/O): ressource file handle to open (the resfileref->fileref
+		must have been open previously)
+
+	Returns imgtool error code
 */
 static int resfile_open(mac_resfileref *resfileref)
 {
@@ -1305,6 +1453,16 @@ static int resfile_open(mac_resfileref *resfileref)
 
 /*
 	resfile_get_entry
+
+	Get the resource entry in the resource map associated with a given type/id
+	pair.
+
+	resfileref (I/O): open ressource file handle
+	type (I): type of the resource
+	id (I): id of the resource
+	entry (O): resource entry that has been read
+
+	Returns imgtool error code
 */
 static int resfile_get_entry(mac_resfileref *resfileref, UINT32 type, UINT16 id, rsrc_ref_entry *entry)
 {
@@ -1363,6 +1521,15 @@ static int resfile_get_entry(mac_resfileref *resfileref, UINT32 type, UINT16 id,
 
 /*
 	resfile_get_resname
+
+	Get the name of a resource.
+
+	resfileref (I/O): open ressource file handle
+	entry (I): resource entry in the resource map (returned by
+		resfile_get_entry)
+	string (O): ressource name
+
+	Returns imgtool error code
 */
 static int resfile_get_resname(mac_resfileref *resfileref, const rsrc_ref_entry *entry, mac_str255 string)
 {
@@ -1398,6 +1565,15 @@ static int resfile_get_resname(mac_resfileref *resfileref, const rsrc_ref_entry 
 
 /*
 	resfile_get_reslen
+
+	Get the data lenght for a given resource.
+
+	resfileref (I/O): open ressource file handle
+	entry (I): resource entry in the resource map (returned by
+		resfile_get_entry)
+	len (O): ressource lenght
+
+	Returns imgtool error code
 */
 static int resfile_get_reslen(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 *len)
 {
@@ -1424,6 +1600,18 @@ static int resfile_get_reslen(mac_resfileref *resfileref, const rsrc_ref_entry *
 
 /*
 	resfile_get_resdata
+
+	Get the data for a given resource.
+
+	resfileref (I/O): open ressource file handle
+	entry (I): resource entry in the resource map (returned by
+		resfile_get_entry)
+	offset (I): offset the data should be read from, usually 0
+	len (I): lenght of the data to read, usually the value returned by
+		resfile_get_reslen
+	dest (O): ressource data
+
+	Returns imgtool error code
 */
 static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry *entry, UINT32 offset, UINT32 len, void *dest)
 {
@@ -1467,6 +1655,17 @@ static int resfile_get_resdata(mac_resfileref *resfileref, const rsrc_ref_entry 
 #pragma mark DESKTOP FILE IMPLEMENTATION
 #endif
 
+/*
+	get_comment
+
+	Get a comment from the Desktop file
+
+	l2_img (I): macintosh image the data should be read from
+	id (I): comment id (from mfs_hashString())
+	comment (O): comment that has been read
+
+	Returns imgtool error code
+*/
 static int get_comment(mfs_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
 {
 	UINT8 desktop_fname[] = {'\7','D','e','s','k','t','o','p'};
@@ -1514,7 +1713,7 @@ static int get_comment(mfs_l2_imgref *l2_img, UINT16 id, mac_str255 comment)
 		of masochists that try to support 20-year-old OSes) might append extra
 		fields, so we just truncate the resource */
 		reslen = 256;
-		
+
 	/* extract comment data */
 	errorcode = resfile_get_resdata(&resfileref, &resentry, 0, reslen, comment);
 	if (errorcode)
@@ -1807,7 +2006,7 @@ static int mfs_image_readfile(IMAGE *img, const char *fname, STREAM *destf)
 		header.compat_version = 129;
 
 		/* last step: compute CRC... */
-		set_UINT16BE(&header.crc, CalcMBCRC(&header));
+		set_UINT16BE(&header.crc, MB_calcCRC(&header));
 
 		set_UINT16BE(&header.reserved2, 0);
 
