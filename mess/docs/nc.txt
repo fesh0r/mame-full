@@ -49,7 +49,39 @@ If files have been saved onto the ram card by the emulation, then the file
 on the host filesystem will be updated (the update will happen when MESS is exited,
 or a new card is inserted).
 
-There are no utilities at this time to create a ram card.
+Use imgtool to create blank cards, and to put/get files to the card image.
+At this time, only 1mb cards can be created and there is no support to create unformatted
+or executable cards.
+
+Do not forget to insert memory card (as "Cartridge"), and if you want to write files
+to it make sure it is write enabled (see dipswitches in UI).
+
+imgtool create nccard <card name>
+	Create a blank formatted memory card. The NC100 can write files to this.
+
+	You can view the files by:
+		1. Pressing FUNCTION + B to enter BASIC, then typeing "*." at the ">"
+		prompt.
+		2. Enter wordprocessor menu and select list files.
+	
+imgtool put nccard <card name> <host filesystem name> <nc100 name>
+	Put a file from the host filesystem (e.g. PC harddrive) to the nc memory card.
+	The file will be cut if it is larger than 64k (64k is the maximum file size
+	supported by the nc100 filesystem).
+
+	At this time, all files are assumed to be ASCII. There is no support to put binary
+	or BASIC files.
+
+imgtool get nccard <card name> <nc100 name> <host filesystem name>
+	Get a file from the nc memory card to the host filesystem. Files are always
+	saved as binary regardless of file type on memory card.
+
+imgtool dir nccard <card name>
+	Show a directory listing of the memory card.
+
+imgtool del nccard <card name> <nc100 name>
+	Delete a file from the memory card
+
 
 c. SERIAL
 ---------
