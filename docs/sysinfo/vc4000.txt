@@ -1,0 +1,31 @@
+Interton VC4000
+---------------
+
+Console for tv connection (PAL only?)
+
+seams to be prequel of the arcadia 2001
+technical something between channel f and odyssey2
+
+sold from several firms with different names
+grundig super play computer 4000
+acetronic?
+prinztronic?
+fountain 1392?
+radofin?
+hanimex?
+
+Features
+--------
+grid 
+4 8x10 single color sprites
+single channel sound
+2 controller with analog joystick and keypad
+
+
+Emulator
+--------
+
+
+Mess emulation state
+--------------------
+based on info by Paul Robson, Christian Windler
