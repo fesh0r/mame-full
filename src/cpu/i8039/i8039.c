@@ -31,6 +31,10 @@ extern void i8039_runtime_loader_init(void)
 #endif
 
 /* HJB 01/05/99 changed to positive values to use pending_irq as a flag */
+#ifdef I8039_EXT_INT
+#undef I8039_EXT_INT
+#endif
+
 #define I8039_IGNORE_INT	0
 #define I8039_EXT_INT		1	/* Execute a normal extern interrupt	*/
 #define I8039_TIMER_INT 	2	/* Execute a Timer interrupt			*/
