@@ -1,6 +1,6 @@
 XMAME/XMESS DOCUMENTATION
 
-11 August 2004
+24 August 2004
 
 <authorgroup>
 <author><firstname>Juan 
@@ -2549,7 +2549,7 @@ maintainer. --Lawrence Gold)
 
  Unix sources and docs
 
-* The xmame/xmess sources[download/xmame-0.85.tar.bz2||xmame/xmess-0.85 sources]
+* The xmame/xmess sources[download/xmame-0.86.tar.bz2||xmame/xmess-0.86 sources]
 
 * xmame/xmess FAQ & Installation Guide:
 

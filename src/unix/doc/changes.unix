@@ -25,9 +25,14 @@ Release 0.86, 25 August 2004
 	    lookup.
 	  * Modified 15bpp direct RGB support to use memcpy for a small 
 	    speedup. 
-	- Fixed OpenGL vector support, with the exception of clipping support;
-	  for an example of the problem, see mhavoc.  Fixes Bugzilla bug 109.  
-	  (Hans de Goede)
+	  * Fixed support for non-square pixel games; for example, blstroid.
+	- Overhauled the OpenGL target.  Fixes Bugzilla bug 109.   (Hans de 
+	  Goede):
+	  * Fixed vector support, with the exception of clipping; for an 
+	    example of the problem, see mhavoc.
+	  * Removed 8bpp support, paletted texture support, dirty code, and 
+	    some useless options.
+	  * Fixed a lot of buffer overruns.
 	- The SVGAlib targets now detect the signals used for console 
 	  switching.  (Hans de Goede)
 	- When "-norotate(-nr)" is specified, the UI is no longer rotated 
@@ -94,8 +99,19 @@ Release 0.86, 25 August 2004
 	- The "-bpp" option now only supports 15 or 32.  (Hans de Goede)
 	- Fixed some ANSI/ISO warnings about the "%m" printf format identifier 
 	  and empty joystick and sound source files.
-	- Joystick buttons are no longers always registered as "button 9" in 
-	  the configuration menu.  Fixes Bugzilla bug 587.  (Thomas Klausner)
+	- Joystick buttons are no longer always registered as "button 9" in the 
+	  configuration menu.  Fixes Bugzilla bug 587.  (Thomas Klausner)
+	- Modified support for vector games in the OpenGL and 3Dfx targets 
+	  (Hans de Goede): 
+	  * Only update the textures in vector games when the UI is running.  
+	    This results in a tremendous speedup.
+	  * Draw very short lines as points; this makes the bullets in 
+	    Asteroids show up.
+	  * Disabled bezels and overlays; enabled "-artwork_crop (-artcrop)".
+	- Created a means for display drivers to communicate their properties 
+	  to the rest of the program; for example, whether they have their own 
+	  vector implementation and whether they do hardware rotation.  (Hans 
+	  de Goede)
 
 Release 0.85, 12 August 2004
 	- Everything from MAME 0.85 and MESS 0.85.

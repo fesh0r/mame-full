@@ -501,25 +501,25 @@ xlistdev: src/unix/contrib/tools/xlistdev.c
 	$(CC_COMPILE) $(CC) $(X11INC) src/unix/contrib/tools/xlistdev.c -o xlistdev $(JSLIB) $(LIBS.$(ARCH)) $(LIBS.$(DISPLAY_METHOD)) -lXi -lm
 
 romcmp: $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB)
-	$(CC_COMMENT) @echo Linking $@...
+	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
 chdman: $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB)
-	$(CC_COMMENT) @echo Linking $@...
+	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) -o $@ $^ -lz
 
 xml2info: $(OBJ)/xml2info.o $(EXPAT)
-	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(CC) -O1 -o $@ $^
 
 dat2html: $(DAT2HTML_OBJS)
-	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -o $@
 
 messdocs: 
 
 imgtool: $(IMGTOOL_OBJS) $(PLATFORM_IMGTOOL_OBJS)
-	$(CC_COMMENT) @echo Compiling $@...
+	$(CC_COMMENT) @echo 'Compiling $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $^ -lz -o $@
 
 messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
@@ -534,7 +534,7 @@ messtest: $(OBJS) $(DRVLIBS) $(MESSTEST_OBJS) \
 	$(OBJDIR)/sysdep/misc.o \
 	$(OBJDIR)/sysdep/rc.o \
 	$(OBJDIR)/tststubs.o
-	$(CC_COMMENT) @echo Linking $@...
+	$(CC_COMMENT) @echo 'Linking $@...'
 	$(CC_COMPILE) $(LD) $(LDFLAGS) $(MY_LIBS) $^ -o $@
 
 $(OBJDIR)/tststubs.o: src/unix/tststubs.c
@@ -566,7 +566,7 @@ $(OBJ)/%.a:
 	$(CC_COMPILE) $(RANLIB) $@
 
 $(OSDEPEND): $(UNIX_OBJS)
-	$(CC_COMMENT) @echo 'Archiving $@ ...'
+	$(CC_COMMENT) @echo '[OSDEPEND] Archiving $@ ...'
 	$(CC_COMPILE) ar $(AR_OPTS) $@ $(UNIX_OBJS)
 	$(CC_COMPILE) $(RANLIB) $@
 
@@ -582,7 +582,7 @@ $(UNIX_OBJDIR)/%.o: %.m src/unix/xmame.h
 #
 # compile generated C files for the 68000 emulator
 $(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake
-	$(CC_COMMENT) @echo Compiling $(subst .o,.c,$@)...
+	$(CC_COMMENT) @echo 'Compiling $(subst .o,.c,$@)...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -c $*.c -o $@
 
 # additional rule, because m68kcpu.c includes the generated m68kops.h :-/
@@ -590,9 +590,9 @@ $(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake
 
 # generate C source files for the 68000 emulator
 $(OBJ)/cpu/m68000/m68kmake: src/cpu/m68000/m68kmake.c
-	$(CC_COMMENT) @echo M68K make $<...
+	$(CC_COMMENT) @echo 'M68K make $<...'
 	$(CC_COMPILE) $(CC) $(MY_CFLAGS) -DDOS -o $(OBJ)/cpu/m68000/m68kmake $<
-	$(CC_COMMENT) @echo Generating M68K source files...
+	$(CC_COMMENT) @echo 'Generating M68K source files...'
 	$(CC_COMPILE) $(OBJ)/cpu/m68000/m68kmake $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 # generate asm source files for the 68000/68020 emulators
