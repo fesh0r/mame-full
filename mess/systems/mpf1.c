@@ -158,7 +158,7 @@ VIDEO_UPDATE( mpf1 )
 	fillbitmap(Machine->scrbitmap, get_black_pen(), NULL);
 
 	for(x = 0; x < 6; x++)
-		draw_led(Machine->scrbitmap, leddisplay, leddigit[x], xpositions[x], 16);
+		draw_led(Machine->scrbitmap, leddisplay, leddigit[x], xpositions[x], 377);
 }
 
 /* Memory Maps */
