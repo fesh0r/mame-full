@@ -618,7 +618,8 @@ const struct cpu_interface cpuintrf[] =
 #endif
 #if (HAS_CP1600)
 #define cp1600_ICount cp1600_icount
-	CPU0(CP1600,   cp1600,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+	//CPU0(CP1600,   cp1600,	 0,  0,1.00, 8, 16,	  0,16,LE,1, 3	),
+	CPU0(CP1600,   cp1600,	 4,  0,1.00, 16, 24bew,  -1,17,BE,2,3	),
 #endif
 #if (HAS_F8)
 #define f8_ICount f8_icount
@@ -632,7 +633,8 @@ const struct cpu_interface cpuintrf[] =
 	CPU0(LH5801,   lh5801,	 1,  0,1.00, 8, 17,	  0,17,BE,1, 5	),
 #endif
 #if (HAS_PDP1)
-	CPU0(PDP1,	   pdp1,	 0,  0,1.00, 8, 16,	  0,18,LE,1, 3	),
+	//CPU0(PDP1,	   pdp1,	 0,  0,1.00, 8, 16,	  0,18,LE,1, 3	),
+	CPU0(PDP1,	   pdp1,	 0,  0,1.00,32,18bedw,0,18,LE,1, 3	),
 #endif
 #if (HAS_SATURN)
 #define saturn_ICount saturn_icount
