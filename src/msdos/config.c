@@ -635,6 +635,16 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		}
 	}
 
+	if (options.mame_debug)
+    {
+        options.debug_width = gfx_width = 640;
+        options.debug_height = gfx_height = 480;
+        options.vector_width = gfx_width;
+        options.vector_height = gfx_height;
+        use_dirty = 0;
+        stretch = 0;
+    }
+
 #ifdef MESS
 	/* Is there an override for softwarepath= for this driver? */
 	tmpstr = get_string ((char*)drivers[game]->name,  "softwarepath", NULL, NULL);

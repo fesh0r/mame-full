@@ -3,11 +3,26 @@
 
 #include "mame.h"
 
-#ifndef DECL_SPEC
-#define DECL_SPEC
-#endif
+#ifdef  MAME_DEBUG
 
-#ifdef MAME_DEBUG
+enum {
+	BLACK,
+	BLUE,
+	GREEN,
+	CYAN,
+	RED,
+	MAGENTA,
+	BROWN,
+	LIGHTGRAY,
+	GRAY,
+	LIGHTBLUE,
+	LIGHTGREEN,
+	LIGHTCYAN,
+	LIGHTRED,
+	LIGHTMAGENTA,
+	YELLOW,
+	WHITE
+};
 
 #define COLOR_TITLE         YELLOW
 #define COLOR_FRAME 		LIGHTCYAN
@@ -74,7 +89,7 @@ enum {
  * contains a literal hex string for that address.
  * Later it could also return a symbol for that address and access.
  ***************************************************************************/
-extern const char *set_ea_info( int what, unsigned address, int size, int access );
+extern const char *set_ea_info( int what, unsigned address, int size, int acc );
 
 /* Startup and shutdown functions; called from cpu_run */
 extern void mame_debug_init(void);
@@ -93,10 +108,31 @@ extern void MAME_Debug(void);
  ***************************************************************************/
 #define CALL_MAME_DEBUG if( mame_debug ) MAME_Debug()
 
-#else   /* MAME_DEBUG */
+#ifndef DECL_SPEC
+#define DECL_SPEC
+#endif
+
+#ifndef TRUE
+#define TRUE    1
+#endif
+
+#ifndef FALSE
+#define FALSE   0
+#endif
+
+#ifndef INVALID
+#define INVALID 0xffffffff
+#endif
+
+
+extern UINT8 debugger_palette[16*3];
+struct GfxElement *build_debugger_font(void);
+void osd_put_screen_char (int ch, int attr, int x, int y);
+
+#else	/* MAME_DEBUG */
 
 #define CALL_MAME_DEBUG
 
 #endif  /* !MAME_DEBUG */
 
-#endif /* _MAMEDBG_H */
+#endif

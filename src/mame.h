@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 #ifdef MESS
-#include "mess.h"
+#include "../mess/mess.h"
 #endif
 
 extern char build_version[];
@@ -53,6 +53,12 @@ struct RunningMachine
 	int uiwidth,uiheight;
 	int ui_orientation;
 	struct rectangle absolute_visible_area;	/* as passed to osd_set_visible_area() */
+
+	/* stuff for the debugger */
+	struct osd_bitmap *debug_bitmap;
+	unsigned short *debug_pens;
+	unsigned short *debug_remapped_colortable;
+	struct GfxElement *debugger_font;
 };
 
 #ifdef MESS
@@ -85,6 +91,8 @@ struct GameOptions {
 	int color_depth;	/* 8 or 16, any other value means auto */
 	int vector_width;	/* requested width for vector games; 0 means default (640) */
 	int vector_height;	/* requested height for vector games; 0 means default (480) */
+	int debug_width;	/* initial size of the debug_bitmap */
+	int debug_height;
 	int norotate;
 	int ror;
 	int rol;

@@ -1,7 +1,7 @@
 #include "mamalleg.h"
 #include "driver.h"
+#include "mamedbg.h"
 #include <pc.h>
-#include <conio.h>
 #include <sys/farptr.h>
 #include <go32.h>
 #include "TwkUser.c"
@@ -315,6 +315,7 @@ char *mode_desc;
 int gfx_mode;
 int gfx_width;
 int gfx_height;
+static int vis_min_x,vis_max_x,vis_min_y,vis_max_y;
 
 
 /*new 'half' flag (req. for 15.75KHz Arcade Monitor Modes)*/
@@ -331,25 +332,26 @@ static int skiplinesmax;
 static int skipcolumnsmax;
 static int skiplinesmin;
 static int skipcolumnsmin;
+static int show_debugger,debugger_focus_changed;
 
 static int vector_game;
 
-static Register *reg = 0;       /* for VGA modes */
-static int reglen = 0;  /* for VGA modes */
-static int videofreq;   /* for VGA modes */
+static Register *reg = 0;		/* for VGA modes */
+static int reglen = 0;	/* for VGA modes */
+static int videofreq;	/* for VGA modes */
 
 int gfx_xoffset;
 int gfx_yoffset;
 int gfx_display_lines;
 int gfx_display_columns;
 static int xmultiply,ymultiply;
-int throttle = 1;       /* toggled by F10 */
+int throttle = 1;		/* toggled by F10 */
 
 static int gone_to_gfx_mode;
 static int frameskip_counter;
 static int frames_displayed;
-static TICKER start_time,end_time;    /* to calculate fps average on exit */
-#define FRAMES_TO_SKIP 20       /* skip the first few frames from the FPS calculation */
+static TICKER start_time,end_time;	  /* to calculate fps average on exit */
+#define FRAMES_TO_SKIP 20		/* skip the first few frames from the FPS calculation */
 							/* to avoid counting the copyright and info screens */
 
 unsigned char tw224x288_h, tw224x288_v;
@@ -371,7 +373,7 @@ struct vga_tweak vga_tweaked[] = {
 	{ 240, 256, scr240x256, sizeof(scr240x256)/sizeof(Register),  1, 0, 1 },
 	{ 256, 240, scr256x240, sizeof(scr256x240)/sizeof(Register),  0, 0, 0 },
 	{ 256, 256, scr256x256, sizeof(scr256x256)/sizeof(Register),  1, 0, 1 },
-	{ 256, 256, scr256x256hor, sizeof(scr256x256hor)/sizeof(Register),  0, 0, 0 },
+	{ 256, 256, scr256x256hor, sizeof(scr256x256hor)/sizeof(Register),	0, 0, 0 },
 	{ 224, 288, scr224x288, sizeof(scr224x288)/sizeof(Register),  1, 0, 1 },
 	{ 288, 224, scr288x224, sizeof(scr288x224)/sizeof(Register),  0, 0, 0 },
 	{ 240, 320, scr240x320, sizeof(scr240x320)/sizeof(Register),  1, 1, 1 },
@@ -382,10 +384,10 @@ struct vga_tweak vga_tweaked[] = {
 	{ 384, 256, scr384x256, sizeof(scr384x256)/sizeof(Register),  1, 1, 0 },
 	{ 0, 0 }
 };
-struct mode_adjust  {int x, y; unsigned char *hadjust; unsigned char *vadjust; int vertical_mode; };
+struct mode_adjust	{int x, y; unsigned char *hadjust; unsigned char *vadjust; int vertical_mode; };
 
 /* horizontal and vertical total tweak values for above modes */
-struct mode_adjust  pc_adjust[] = {
+struct mode_adjust	pc_adjust[] = {
 	{ 240, 256, &tw240x256_h, &tw240x256_v, 1 },
 	{ 256, 240, &tw256x240_h, &tw256x240_v, 0 },
 	{ 256, 256, &tw256x256_hor_h, &tw256x256_hor_v, 0 },
@@ -434,7 +436,7 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 	{ 512, 224, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 0, 512 },
 	{ 512, 256, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 0, 512 },
 /* SVGA Mode (VGA register array not used) */
-	{ 640, 480, NULL            , 0                                        , 0, 1, 1, 0, 640 },
+	{ 640, 480, NULL			, 0 									   , 0, 1, 1, 0, 640 },
 /* 'half y' VGA modes, used to fake hires if 'tweaked' is on */
 	{ 512, 448, scr512x224_15KHz, sizeof(scr512x224_15KHz)/sizeof(Register), 0, 0, 1, 1, 512 },
 	{ 512, 512, scr512x256_15KHz, sizeof(scr512x256_15KHz)/sizeof(Register), 0, 0, 0, 1, 512 },
@@ -442,7 +444,7 @@ struct vga_15KHz_tweak arcade_tweaked[] = {
 };
 
 /* horizontal and vertical total tweak values for above modes */
-struct mode_adjust  arcade_adjust[] = {
+struct mode_adjust	arcade_adjust[] = {
 	{ 224, 288, &tw224x288arc_h, &tw224x288arc_v, 1 },
 	{ 256, 240, &tw256x240arc_h, &tw256x240arc_v, 0 },
 	{ 256, 256, &tw256x256arc_h, &tw256x256arc_v, 0 },
@@ -485,11 +487,11 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)
 		bitmap->width = width;
 		bitmap->height = height;
 
-		rdwidth = (width + 7) & ~7;     /* round width to a quadword */
+		rdwidth = (width + 7) & ~7; 	/* round width to a quadword */
 		if (depth == 16)
 			rowlen = 2 * (rdwidth + 2 * safety) * sizeof(unsigned char);
 		else
-			rowlen =     (rdwidth + 2 * safety) * sizeof(unsigned char);
+			rowlen =	 (rdwidth + 2 * safety) * sizeof(unsigned char);
 
 		if ((bm = malloc((height + 2 * safety) * rowlen)) == 0)
 		{
@@ -544,7 +546,7 @@ void osd_clearbitmap(struct osd_bitmap *bitmap)
 
 	if (bitmap == Machine->scrbitmap || bitmap == overlay_real_scrbitmap)
 	{
-		extern int bitmap_dirty;        /* in mame.c */
+		extern int bitmap_dirty;		/* in mame.c */
 
 		osd_mark_dirty (0,0,bitmap->width-1,bitmap->height-1,1);
 		bitmap_dirty = 1;
@@ -571,7 +573,7 @@ void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 	{
 		int x, y;
 
-//        logerror("mark_dirty %3d,%3d - %3d,%3d\n", _x1,_y1, _x2,_y2);
+//		  logerror("mark_dirty %3d,%3d - %3d,%3d\n", _x1,_y1, _x2,_y2);
 
 		_x1 -= skipcolumns;
 		_x2 -= skipcolumns;
@@ -597,7 +599,7 @@ static void init_dirty(char dirty)
 
 INLINE void swap_dirty(void)
 {
-    char *tmp;
+	char *tmp;
 
 	tmp = dirty_old;
 	dirty_old = dirty_new;
@@ -614,7 +616,7 @@ static void select_display_mode(int width,int height,int depth,int attributes,in
 	int i;
 
 	auto_resolution = 0;
-	/* assume unchained video mode  */
+	/* assume unchained video mode	*/
 	unchained = 0;
 	/* see if it's a low scanrate mode */
 	switch (monitor_type)
@@ -867,7 +869,7 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 
 
 /* center image inside the display based on the visual area */
-void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
+static void internal_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 {
 	int act_width;
 
@@ -994,7 +996,7 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 
 	/* the skipcolumns from mame.cfg/cmdline is relative to the visible area */
 	skipcolumns = min_x + skipcolumns;
-	skiplines   = min_y + skiplines;
+	skiplines	= min_y + skiplines;
 
 	/* Just in case the visual area doesn't fit */
 	if (gfx_xoffset < 0)
@@ -1004,7 +1006,7 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 	}
 	if (gfx_yoffset < 0)
 	{
-		skiplines   -= gfx_yoffset;
+		skiplines	-= gfx_yoffset;
 		gfx_yoffset = 0;
 	}
 
@@ -1035,100 +1037,26 @@ logerror("set visible area %d-%d %d-%d\n",min_x,max_x,min_y,max_y);
 }
 
 
-
-/*
-Create a display screen, or window, of the given dimensions (or larger).
-Attributes are the ones defined in driver.h.
-Returns 0 on success.
-*/
-int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation)
+void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
 {
-	logerror("width %d, height %d\n", width,height);
-
-	video_depth = depth;
-	video_fps = fps;
-	video_attributes = attributes;
-	video_orientation = orientation;
-
-	brightness = 100;
-	brightness_paused_adjust = 1.0;
-	dirty_bright = 1;
-
-	if (frameskip < 0) frameskip = 0;
-	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
-
-
-
-	gone_to_gfx_mode = 0;
-
-	/* Look if this is a vector game */
-	if (attributes & VIDEO_TYPE_VECTOR)
-		vector_game = 1;
-	else
-		vector_game = 0;
-
-
-	if (use_dirty == -1)	/* dirty=auto in mame.cfg? */
-	{
-		/* Is the game using a dirty system? */
-		if ((attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
-			use_dirty = 1;
-		else
-			use_dirty = 0;
-	}
-
-	select_display_mode(width,height,depth,attributes,orientation);
-
-/* find a VESA driver for 15KHz modes just in case we need it later on */
-	if (scanrate15KHz)
-		getSVGA15KHzdriver (&SVGA15KHzdriver);
-	else
-		SVGA15KHzdriver = 0;
-
-
-	if (!osd_set_display(width,height,depth,attributes,orientation))
-		return 1;
-
-	/* set visible area to nothing just to initialize it - it will be set by the core */
-	osd_set_visible_area(0,0,0,0);
-
-   /*Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)
-     need to do this here, as the double params will be set up correctly */
-	if (use_vesa == 1 && scanrate15KHz)
-	{
-		int dbl;
-		dbl = (ymultiply >= 2);
-		/* check that we found a driver */
-		if (!SVGA15KHzdriver)
-		{
-			printf ("\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height);
-			return 1;
-		}
-		logerror("Using %s 15.75KHz SVGA driver\n", SVGA15KHzdriver->name);
-		/*and try to set the mode */
-		if (!SVGA15KHzdriver->setSVGA15KHzmode (dbl, gfx_width, gfx_height))
-		{
-			printf ("\nUnable to set SVGA 15.75KHz mode %dx%d (driver: %s)\n", gfx_width, gfx_height, SVGA15KHzdriver->name);
-			return 1;
-		}
-		/* if we're doubling, we might as well have scanlines */
-		/* the 15.75KHz driver is going to drop every other line anyway -
-			so we can avoid drawing them and save some time */
-		if(dbl)
-			scanlines=1;
-	}
-
-    return 0;
+	vis_min_x = min_x;
+	vis_max_x = max_x;
+	vis_min_y = min_y;
+	vis_max_y = max_y;
+	internal_set_visible_area(min_x,max_x,min_y,max_y);
 }
 
+
+
+
 /* set the actual display screen but don't allocate the screen bitmap */
-int osd_set_display(int width,int height,int depth,int attributes,int orientation)
+static int osd_set_display(int width,int height,int depth,int attributes,int orientation)
 {
 	struct mode_adjust *adjust_array;
 
-	int     i;
+	int 	i;
 	/* moved 'found' to here (req. for 15.75KHz Arcade Monitor Modes) */
-	int     found;
+	int 	found;
 
 	if (!gfx_height || !gfx_width)
 	{
@@ -1318,7 +1246,7 @@ int osd_set_display(int width,int height,int depth,int attributes,int orientatio
 			}
 
 			logerror("Trying ");
-			if      (mode == GFX_VESA1)
+			if		(mode == GFX_VESA1)
 				logerror("VESA1");
 			else if (mode == GFX_VESA2B)
 				logerror("VESA2B");
@@ -1608,6 +1536,93 @@ int osd_set_display(int width,int height,int depth,int attributes,int orientatio
 }
 
 
+/*
+Create a display screen, or window, of the given dimensions (or larger).
+Attributes are the ones defined in driver.h.
+Returns 0 on success.
+*/
+int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation)
+{
+	logerror("width %d, height %d\n", width,height);
+
+	video_depth = depth;
+	video_fps = fps;
+	video_attributes = attributes;
+	video_orientation = orientation;
+
+	show_debugger = 0;
+
+	brightness = 100;
+	brightness_paused_adjust = 1.0;
+	dirty_bright = 1;
+
+	if (frameskip < 0) frameskip = 0;
+	if (frameskip >= FRAMESKIP_LEVELS) frameskip = FRAMESKIP_LEVELS-1;
+
+
+
+	gone_to_gfx_mode = 0;
+
+	/* Look if this is a vector game */
+	if (attributes & VIDEO_TYPE_VECTOR)
+		vector_game = 1;
+	else
+		vector_game = 0;
+
+
+	if (use_dirty == -1)	/* dirty=auto in mame.cfg? */
+	{
+		/* Is the game using a dirty system? */
+		if ((attributes & VIDEO_SUPPORTS_DIRTY) || vector_game)
+			use_dirty = 1;
+		else
+			use_dirty = 0;
+	}
+
+	select_display_mode(width,height,depth,attributes,orientation);
+
+/* find a VESA driver for 15KHz modes just in case we need it later on */
+	if (scanrate15KHz)
+		getSVGA15KHzdriver (&SVGA15KHzdriver);
+	else
+		SVGA15KHzdriver = 0;
+
+
+	if (!osd_set_display(width,height,depth,attributes,orientation))
+		return 1;
+
+	/* set visible area to nothing just to initialize it - it will be set by the core */
+	osd_set_visible_area(0,0,0,0);
+
+   /*Check for SVGA 15.75KHz mode (req. for 15.75KHz Arcade Monitor Modes)
+	 need to do this here, as the double params will be set up correctly */
+	if (use_vesa == 1 && scanrate15KHz)
+	{
+		int dbl;
+		dbl = (ymultiply >= 2);
+		/* check that we found a driver */
+		if (!SVGA15KHzdriver)
+		{
+			printf ("\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height);
+			return 1;
+		}
+		logerror("Using %s 15.75KHz SVGA driver\n", SVGA15KHzdriver->name);
+		/*and try to set the mode */
+		if (!SVGA15KHzdriver->setSVGA15KHzmode (dbl, gfx_width, gfx_height))
+		{
+			printf ("\nUnable to set SVGA 15.75KHz mode %dx%d (driver: %s)\n", gfx_width, gfx_height, SVGA15KHzdriver->name);
+			return 1;
+		}
+		/* if we're doubling, we might as well have scanlines */
+		/* the 15.75KHz driver is going to drop every other line anyway -
+			so we can avoid drawing them and save some time */
+		if(dbl)
+			scanlines=1;
+	}
+
+	return 0;
+}
+
 
 /* shut up the display */
 void osd_close_display(void)
@@ -1636,6 +1651,41 @@ void osd_close_display(void)
 	palette_16bit_lookup = 0;
 }
 
+
+void osd_debugger_focus(int debugger_has_focus)
+{
+	static UINT8 saved_palette[16*3];
+
+	if (show_debugger != debugger_has_focus)
+	{
+		int i;
+		show_debugger = debugger_has_focus;
+		debugger_focus_changed = 1;
+
+		for (i = 0; i < 16; i++)
+		{
+			if (show_debugger)
+			{
+				saved_palette[i*3+0] = current_palette[i*3+0];
+				saved_palette[i*3+1] = current_palette[i*3+1];
+				saved_palette[i*3+2] = current_palette[i*3+2];
+#ifdef MAME_DEBUG
+				current_palette[i*3+0] = debugger_palette[i*3+0];
+				current_palette[i*3+1] = debugger_palette[i*3+1];
+				current_palette[i*3+2] = debugger_palette[i*3+2];
+#endif
+			}
+			else
+			{
+				current_palette[i*3+0] = saved_palette[i*3+0];
+				current_palette[i*3+1] = saved_palette[i*3+1];
+				current_palette[i*3+2] = saved_palette[i*3+2];
+			}
+			dirtycolor[i] = 1;
+		}
+		dirtypalette = 1;
+	}
+}
 
 
 int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable)
@@ -1838,13 +1888,13 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 {
 	if (video_depth != 8 && modifiable_palette == 0)
 	{
-		*red =   getr(pen);
+		*red =	 getr(pen);
 		*green = getg(pen);
 		*blue =  getb(pen);
 	}
 	else
 	{
-		*red =   current_palette[3*pen+0];
+		*red =	 current_palette[3*pen+0];
 		*green = current_palette[3*pen+1];
 		*blue =  current_palette[3*pen+2];
 	}
@@ -1923,7 +1973,7 @@ int osd_skip_this_frame(void)
 }
 
 /* Update the display. */
-void osd_update_video_and_audio(struct osd_bitmap *bitmap)
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap)
 {
 	static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 	{
@@ -1948,7 +1998,24 @@ void osd_update_video_and_audio(struct osd_bitmap *bitmap)
 	static int vups,vfcount;
 	int have_to_clear_bitmap = 0;
 	int already_synced;
+	struct osd_bitmap *bitmap;
 
+
+	if (debug_bitmap && keyboard_pressed_memory(KEYCODE_F5))
+	{
+		osd_debugger_focus(show_debugger ^ 1);
+	}
+
+	if (debugger_focus_changed)
+	{
+		if (show_debugger)
+			internal_set_visible_area(0,debug_bitmap->width-1,0,debug_bitmap->height-1);
+		else
+			internal_set_visible_area(vis_min_x,vis_max_x,vis_min_y,vis_max_y);
+	}
+
+	if (show_debugger && debug_bitmap) bitmap = debug_bitmap;
+	else bitmap = game_bitmap;
 
 	if (warming_up)
 	{
@@ -2383,7 +2450,7 @@ Register *make_scanline_mode(Register *inreg,int entries)
 	maxscan = inreg[MAXIMUM_SCANLINE_INDEX].value;
 	if ((maxscan & 1) == 0)
 	/* it is, so just return the array as is */
-  		return inreg;
+		return inreg;
 /* copy across our standard display array */
 	memcpy (&outreg, inreg, entries * sizeof(Register));
 /* keep hold of the overflow register - as we'll need to refer to it a lot */
@@ -2394,7 +2461,7 @@ Register *make_scanline_mode(Register *inreg,int entries)
 /* total */
 	ytotalin = inreg[V_TOTAL_INDEX].value;
 	ytotalin |= ((overflow & 1)<<0x08) | ((overflow & 0x20)<<0x04);
-    ytotalout = ytotalin >> 1;
+	ytotalout = ytotalin >> 1;
 /* display enable end */
 	ydispin = inreg[13].value | ((overflow & 0x02)<< 0x07) | ((overflow & 0x040) << 0x03);
 	ydispin ++;
@@ -2405,11 +2472,11 @@ Register *make_scanline_mode(Register *inreg,int entries)
 /* avoid top over scan */
 	if ((ytotalin - ydispin) < 40 && !center_y)
 	{
-  		vrsout = ydispout;
+		vrsout = ydispout;
 		/* give ourselves a scanline cushion */
 		ytotalout += 2;
 	}
-  	else
+	else
 	{
 /* vertical retrace start */
 		vrsin = inreg[V_RETRACE_START_INDEX].value | ((overflow & 0x04)<<0x06) | ((overflow & 0x80)<<0x02);
@@ -2545,7 +2612,7 @@ void center_mode(Register *pReg)
 		vrt_end = vert_total;
 
 /* write retrace end, include CRT protection and IRQ2 bits */
-	pReg[V_RETRACE_END_INDEX].value = (vrt_end  & 0x0f) | 0x80 | 0x20;
+	pReg[V_RETRACE_END_INDEX].value = (vrt_end	& 0x0f) | 0x80 | 0x20;
 
 /* get the start of vt blanking */
 	vblnk_start = vert_display + 1;

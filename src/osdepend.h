@@ -62,9 +62,24 @@ void osd_free_bitmap(struct osd_bitmap *bitmap);
   Returns 0 on success.
 */
 int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
-int osd_set_display(int width,int height,int depth,int attributes,int orientation);
 void osd_close_display(void);
+void osd_debugger_focus(int debugger_has_focus);
 
+
+/*
+  Set the portion of the screen bitmap that has to be drawn on screen. The OS
+  dependant code is allowed to display a smaller portion of the bitmap if
+  necessary, in that case the user must have a way to move the visibility
+  window around.
+  Parts of the bitmap outside the specified rectangle must never be drawn
+  because they might contain garbage.
+  The function must call set_ui_visarea() to tell the core the portion of the
+  bitmap actually visible (which might be smaller than requested), so the user
+  interface can be drawn accordingly. If the visible area is ssmaller than
+  requested, set_ui_visarea() must also be called whenever the user moves the
+  visibility window, so the user interface will remain at a fixed position on
+  screen while the game display moves around.
+*/
 void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
 
 /*
@@ -94,7 +109,7 @@ void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 9
   the code must already know exactly whether the next frame will be skipped or not.
 */
 int osd_skip_this_frame(void);
-void osd_update_video_and_audio(struct osd_bitmap *bitmap);
+void osd_update_video_and_audio(struct osd_bitmap *game_bitmap,struct osd_bitmap *debug_bitmap);
 void osd_set_gamma(float _gamma);
 float osd_get_gamma(void);
 void osd_set_brightness(int brightness);
