@@ -196,3 +196,15 @@ void *mess_hd_get_hard_disk_handle(mess_image *image)
 
 	return hd->hard_disk_handle;
 }
+
+/*
+	mess_hd_is_writable()
+
+	Tells if a hard disk image is writable (the image must be open)
+*/
+int mess_hd_is_writable(mess_image *image)
+{
+	mess_hd *hd = get_drive(image);
+
+	return image_is_writable(image) && (hard_disk_get_header(hd->hard_disk_handle)->flags & HDFLAGS_IS_WRITEABLE);
+}
