@@ -1070,8 +1070,8 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %0,%%ah         \n" /* get result */                    \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #define ADD(value)												\
@@ -1083,8 +1083,8 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n" /* shift to P/V bit position */     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n"                                     \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #endif
 #else
@@ -1127,8 +1127,8 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %0,%%ah         \n" /* get result */                    \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #define ADC(value)												\
@@ -1141,8 +1141,8 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n"                                     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #endif
 #else
@@ -1185,8 +1185,8 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %0,%%ah         \n" /* get result */                    \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #define SUB(value)												\
@@ -1199,8 +1199,8 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n"                                     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #endif
 #else
@@ -1244,8 +1244,8 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %0,%%ah         \n" /* get result */                    \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #define SBC(value)												\
@@ -1259,8 +1259,8 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n"                                     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #endif
 #else
@@ -1344,8 +1344,8 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %2,%%ah         \n" /* get result */                    \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #else
 #define CP(value)												\
@@ -1358,8 +1358,8 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n"                                     \
  " andb $0xd1,%%ah      \n" /* sign, zero, half carry, carry */ \
  " orb %%ah,%1          \n" /* combine with P/V */              \
- :"=r" (_A), "=r" (_F)                                          \
- :"r" (value), "1" (_F), "0" (_A)                               \
+ :"=q" (_A), "=q" (_F)                                          \
+ :"q" (value), "1" (_F), "0" (_A)                               \
  )
 #endif
 #else
@@ -1439,7 +1439,7 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %%ch,%%ah       \n" /* get result MSB */                \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=c" (Z80.DR.d), "=r" (_F)                                    \
+ :"=c" (Z80.DR.d), "=q" (_F)                                    \
  :"0" (Z80.DR.d), "1" (_F), "d" (Z80.SR.d)                      \
  )
 #else
@@ -1451,7 +1451,7 @@ INLINE UINT8 DEC(UINT8 value)
  " lahf                 \n"                                     \
  " andb $0x11,%%ah      \n"                                     \
  " orb %%ah,%1          \n"                                     \
- :"=c" (Z80.DR.d), "=r" (_F)                                    \
+ :"=c" (Z80.DR.d), "=q" (_F)                                    \
  :"0" (Z80.DR.d), "1" (_F), "d" (Z80.SR.d)                      \
  )
 #endif
@@ -1489,7 +1489,7 @@ INLINE UINT8 DEC(UINT8 value)
  " movb %%ch,%%ah       \n" /* get result MSB */                \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=c" (_HLD), "=r" (_F)                                        \
+ :"=c" (_HLD), "=q" (_F)                                        \
  :"0" (_HLD), "1" (_F), "d" (Z80.Reg.d)                         \
  )
 #else
@@ -1508,7 +1508,7 @@ INLINE UINT8 DEC(UINT8 value)
  " addb %1,%1           \n"                                     \
  " orb %%ah,%1          \n" /* overflow into P/V */             \
  " andb %%dl,%1         \n" /* mask zero */                     \
- :"=c" (_HLD), "=r" (_F)                                        \
+ :"=c" (_HLD), "=q" (_F)                                        \
  :"0" (_HLD), "1" (_F), "d" (Z80.Reg.d)                         \
  )
 #endif
@@ -1549,7 +1549,7 @@ asm (															\
  " movb %%ch,%%ah       \n" /* get result MSB */                \
  " andb $0x28,%%ah      \n" /* maks flags 5+3 */                \
  " orb %%ah,%1          \n" /* put them into flags */           \
- :"=c" (_HLD), "=r" (_F)                                        \
+ :"=c" (_HLD), "=q" (_F)                                        \
  :"0" (_HLD), "1" (_F), "d" (Z80.Reg.d)                         \
  )
 #else
@@ -1569,7 +1569,7 @@ asm (															\
  " addb %1,%1           \n"                                     \
  " orb %%ah,%1          \n" /* overflow into P/V */             \
  " andb %%dl,%1         \n" /* mask zero */                     \
- :"=c" (_HLD), "=r" (_F)                                        \
+ :"=c" (_HLD), "=q" (_F)                                        \
  :"0" (_HLD), "1" (_F), "d" (Z80.Reg.d)                         \
  )
 #endif
