@@ -537,15 +537,15 @@ $(OBJ)/samcoupe.a: \
 $(OBJ)/sharp.a:    \
 	  $(OBJ)/mess/vidhrdw/pocketc.o  \
 	  $(OBJ)/mess/systems/pocketc.o  \
-	  $(OBJ)/mess/vidhrdw/pc1401.o  \
-	  $(OBJ)/mess/machine/pc1401.o  \
-	  $(OBJ)/mess/vidhrdw/pc1350.o  \
-	  $(OBJ)/mess/machine/pc1350.o  \
-	  $(OBJ)/mess/vidhrdw/pc1251.o  \
-	  $(OBJ)/mess/machine/pc1251.o
-#	  $(OBJ)/mess/machine/mz700.o	 \
+	  $(OBJ)/mess/vidhrdw/pc1401.o   \
+	  $(OBJ)/mess/machine/pc1401.o   \
+	  $(OBJ)/mess/vidhrdw/pc1350.o   \
+	  $(OBJ)/mess/machine/pc1350.o   \
+	  $(OBJ)/mess/vidhrdw/pc1251.o   \
+	  $(OBJ)/mess/machine/pc1251.o   \
+	  $(OBJ)/mess/machine/mz700.o	 \
 	  $(OBJ)/mess/vidhrdw/mz700.o	 \
-	  $(OBJ)/mess/systems/mz700.o	 \
+	  $(OBJ)/mess/systems/mz700.o	 
 
 $(OBJ)/aquarius.a: \
 	  $(OBJ)/mess/machine/aquarius.o \
