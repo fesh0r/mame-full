@@ -746,10 +746,10 @@ WRITE_HANDLER( snes_w_io )
 				 * It doesn't really go there, but it's as good a place as any. */
 				UINT8 r,g,b,fade;
 
-				/* Get existing value.  Stored as BGR, why do Nintendo do this? */
-				b = snes_cgram[FIXED_COLOUR] & 0x1f;
+				/* Get existing value. */
+				r = snes_cgram[FIXED_COLOUR] & 0x1f;
 				g = (snes_cgram[FIXED_COLOUR] & 0x3e0) >> 5;
-				r = (snes_cgram[FIXED_COLOUR] & 0x7c00) >> 10;
+				b = (snes_cgram[FIXED_COLOUR] & 0x7c00) >> 10;
 				/* Set new value */
 				if( data & 0x20 )
 					r = data & 0x1f;
@@ -1185,6 +1185,7 @@ int snes_load_rom(int id, void *file, int open_mode)
 #ifdef V_GENERAL
 	{
 		char title[21];
+		UINT8 country;
 		printf( "ROM DETAILS\n" );
 		printf( "\tHeader found:  %s\n", offset ? "Yes" : "No" );
 		printf( "\tTotal blocks:  %d (%dmb)\n", totalblocks, totalblocks / (cart.mode == MODE_20 ? 32 : 16) );
@@ -1202,9 +1203,10 @@ int snes_load_rom(int id, void *file, int open_mode)
 		printf( "\tType:          %s [%d]\n", CartTypes[i].Name, snes_r_bank1(0x00ffd6) );
 		printf( "\tSize:          %d megabits [%d]\n", 1 << (snes_r_bank1(0x00ffd7) - 7), snes_r_bank1(0x00ffd7) );
 		printf( "\tSRAM:          %d kilobits [%d]\n", cart.sram * 8, snes_ram[0xffd8] );
-		if( snes_r_bank1(0x00ffd9) > 13 )
-			snes_w_bank1(0x00ffd9, 14 );
-		printf( "\tCountry:       %s [%d]\n", countries[snes_r_bank1(0x00ffd9)], snes_r_bank1(0x00ffd9) );
+		country = snes_r_bank1(0x00ffd9);
+		if( country > 14 )
+			country = 14;
+		printf( "\tCountry:       %s [%d]\n", countries[country], snes_r_bank1(0x00ffd9) );
 		printf( "\tLicense:       %s [%X]\n", "", snes_r_bank1(0x00ffda) );
 		printf( "\tVersion:       1.%d\n", snes_r_bank1(0x00ffdb) );
 		printf( "\tInv Checksum:  %X %X\n", snes_r_bank1(0x00ffdd), snes_r_bank1(0x00ffdc) );
@@ -1235,8 +1237,6 @@ void snes_scanline_interrupt(void)
 		snes_ram[RDNMI]  |= 0x80;		/* Set NMI occured bit */
 		snes_ram[HVBJOY] |= 0x80;		/* Set vblank bit to on */
 		snes_ram[STAT77] &= 0x3f;		/* Clear Time Over and Range Over bits - done every nmi (presumably because no sprites drawn here) */
-		cpu_writemem24( OAMADDL, oam_address_l ); /* Reset oam address at vblank */
-		cpu_writemem24( OAMADDH, oam_address_h );
 	}
 
 	/* Setup HDMA on start of new frame */
@@ -1273,9 +1273,11 @@ void snes_scanline_interrupt(void)
 	}
 
 	/* Increase current line */
-	cur_vline = (cur_vline + 1) % 262;
+	cur_vline = (cur_vline + 1) % (snes_ram[STAT78] == SNES_NTSC ? SNES_MAX_LINES_NTSC : SNES_MAX_LINES_PAL);
 	if( cur_vline == 0 )
-	{
+	{	/* VBlank is over, time for a new frame */
+		cpu_writemem24( OAMADDL, oam_address_l ); /* Reset oam address */
+		cpu_writemem24( OAMADDH, oam_address_h );
 		snes_ram[HVBJOY] &= 0x7f;		/* Clear blanking bit */
 		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
 		cpu_set_irq_line( 0, G65816_LINE_NMI, CLEAR_LINE );
