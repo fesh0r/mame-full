@@ -588,9 +588,10 @@ void cli_frontend_exit(void)
 {
 	/* close open files */
 	if (logfile) fclose(logfile);
-
+#ifndef MESS
 	if (options.playback) osd_fclose(options.playback);
 	if (options.record)   osd_fclose(options.record);
+#endif
 	if (options.language_file) osd_fclose(options.language_file);
 }
 
