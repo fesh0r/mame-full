@@ -20,9 +20,11 @@ static imgtool_library *library;
 static imgtool_image *image;
 static struct expected_dirent entries[256];
 static char filename_buffer[256];
+static char driver_buffer[256];
 static int entry_count;
 static int failed;
 static UINT64 recorded_freespace;
+static option_resolution *opts;
 
 
 
@@ -46,10 +48,10 @@ static void report_imgtoolerr(imgtoolerr_t err)
 
 
 
-static void createimage_handler(const char **attributes)
+static void createimage_start_handler(const char **attributes)
 {
-	imgtoolerr_t err;
 	const char *driver;
+	const struct ImageModule *module;
 
 	driver = find_attribute(attributes, "driver");
 	if (!driver)
@@ -58,14 +60,65 @@ static void createimage_handler(const char **attributes)
 		return;
 	}
 
-	report_message(MSG_INFO, "Creating image (module '%s')", driver);
+	strncpy(driver_buffer, driver, sizeof(driver_buffer) / sizeof(driver_buffer[0]));
+	
+	/* does image creation support options? */
+	module = imgtool_library_findmodule(library, driver);
+	if (module && module->createimage_optguide && module->createimage_optspec)
+		opts = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
+	else
+		opts = NULL;
+}
 
-	err = img_create_byname(library, driver, tempfile_name(), NULL, &image);
+
+
+static void createimage_end_handler(const void *buffer, size_t size)
+{
+	imgtoolerr_t err;
+
+	report_message(MSG_INFO, "Creating image (module '%s')", driver_buffer);
+
+	err = img_create_byname(library, driver_buffer, tempfile_name(), opts, &image);
+	if (opts)
+	{
+		option_resolution_close(opts);
+		opts = NULL;
+	}
 	if (err)
 	{
 		report_imgtoolerr(err);
 		return;
 	}
+}
+
+
+
+static void createimage_param_handler(const char **attributes)
+{
+	const char *param_name;
+	const char *param_value;
+
+	if (!opts)
+	{
+		report_message(MSG_FAILURE, "Cannot specify creation options with this module");
+		return;
+	}
+
+	param_name = find_attribute(attributes, "name");
+	if (!param_name)
+	{
+		error_missingattribute("name");
+		return;
+	}
+
+	param_value = find_attribute(attributes, "value");
+	if (!param_value)
+	{
+		error_missingattribute("value");
+		return;
+	}
+
+	option_resolution_add_param(opts, param_name, param_value);
 }
 
 
@@ -428,9 +481,15 @@ static const struct messtest_tagdispatch checkdirectory_dispatch[] =
 	{ NULL }
 };
 
+static const struct messtest_tagdispatch createimage_dispatch[] =
+{
+	{ "param",			DATA_NONE,		createimage_param_handler },
+	{ NULL }
+};
+
 const struct messtest_tagdispatch testimgtool_dispatch[] =
 {
-	{ "createimage",		DATA_NONE,		createimage_handler,			NULL },
+	{ "createimage",		DATA_NONE,		createimage_start_handler,		createimage_end_handler, createimage_dispatch },
 	{ "checkfile",			DATA_BINARY,	file_start_handler,				checkfile_end_handler },
 	{ "checkdirectory",		DATA_NONE,		checkdirectory_start_handler,	checkdirectory_end_handler, checkdirectory_dispatch },
 	{ "putfile",			DATA_BINARY,	file_start_handler,				putfile_end_handler },
