@@ -67,6 +67,7 @@ static int io_status;
 /* defines for io_status bits */
 enum
 {
+	io_st_pen = 0400000,	/* light pen: light has hit the pen */
 	io_st_ptr = 0200000,	/* perforated tape reader: reader buffer full */
 	io_st_tyo = 0100000,	/* typewriter out: device ready */
 	io_st_tyi = 0040000,	/* typewriter in: new character in buffer */
@@ -119,7 +120,8 @@ static typewriter_t typewriter;
 /* crt display timer */
 static void *dpy_timer;
 
-
+/* light pen config */
+static lightpen_t lightpen;
 
 /*
 	driver init function
@@ -278,11 +280,10 @@ MACHINE_INIT( pdp1 )
 	memory_set_opbase_handler(0, setOPbasefunc);
 
 	config = readinputport(pdp1_config);
-	pdp1_reset_param.extend_support = config >> pdp1_config_extend_bit & pdp1_config_extend_mask;
-	pdp1_reset_param.hw_multiply = config >> pdp1_config_hw_multiply_bit & pdp1_config_hw_multiply_mask;
-	pdp1_reset_param.hw_divide = config >> pdp1_config_hw_divide_bit & pdp1_config_hw_divide_mask;
-	pdp1_reset_param.type_20_sbs = config >> pdp1_config_type_20_sbs_bit & pdp1_config_type_20_sbs_mask;
-
+	pdp1_reset_param.extend_support = (config >> pdp1_config_extend_bit) & pdp1_config_extend_mask;
+	pdp1_reset_param.hw_multiply = (config >> pdp1_config_hw_multiply_bit) & pdp1_config_hw_multiply_mask;
+	pdp1_reset_param.hw_divide = (config >> pdp1_config_hw_divide_bit) & pdp1_config_hw_divide_mask;
+	pdp1_reset_param.type_20_sbs = (config >> pdp1_config_type_20_sbs_bit) & pdp1_config_type_20_sbs_mask;
 
 	tape_reader.timer = timer_alloc(reader_callback);
 	tape_puncher.timer = timer_alloc(puncher_callback);
@@ -292,6 +293,10 @@ MACHINE_INIT( pdp1 )
 	/* reset device state */
 	tape_reader.rcl = tape_reader.rc = 0;
 	io_status = io_st_tyo | io_st_ptp;
+	lightpen.active = lightpen.down = 0;
+	lightpen.x = lightpen.y = 0;
+	lightpen.radius = 10;	/* ??? */
+	pdp1_update_lightpen_state(&lightpen);
 }
 
 
@@ -899,6 +904,16 @@ void iot_dpy(int op2, int nac, int mb, int *io, int ac)
 	y = (((*io)+0400000) & 0777777) >> 8;
 	pdp1_plot(x, y);
 
+	/* light pen 32 support */
+	io_status &= ~io_st_pen;
+
+	if (lightpen.down && ((x-lightpen.x)*(x-lightpen.x)+(y-lightpen.y)*(y-lightpen.y) < lightpen.radius*lightpen.radius))
+	{
+		io_status |= io_st_pen;
+
+		cpunum_set_reg(0, PDP1_PF3, 1);
+	}
+
 	if (nac)
 	{
 		/* 50us delay */
@@ -1034,6 +1049,37 @@ static void pdp1_keyboard(void)
 
 	for (i=0; i<4; i++)
 		old_typewriter_keys[i] = typewriter_keys[i];
+}
+
+static void pdp1_lightpen(void)
+{
+	int x_delta, y_delta;
+
+	lightpen.active = (readinputport(pdp1_config) >> pdp1_config_lightpen_bit) & pdp1_config_lightpen_mask;
+
+	lightpen.down = lightpen.active ? readinputport(pdp1_lightpen_down) : 0;
+
+	x_delta = readinputport(pdp1_lightpen_x);
+	y_delta = readinputport(pdp1_lightpen_y);
+
+	if (x_delta >= 0x80)
+		x_delta -= 0x100;
+	if (y_delta >= 0x80)
+		y_delta -= 256;
+
+	lightpen.x += x_delta;
+	lightpen.y += y_delta;
+
+	if (lightpen.x < 0)
+		lightpen.x = 0;
+	if (lightpen.x > 1023)
+		lightpen.x = 1023;
+	if (lightpen.y < 0)
+		lightpen.y = 0;
+	if (lightpen.y > 1023)
+		lightpen.y = 1023;
+
+	pdp1_update_lightpen_state(&lightpen);
 }
 
 /*
@@ -1182,4 +1228,6 @@ INTERRUPT_GEN( pdp1_interrupt )
 
 		pdp1_keyboard();
 	}
+
+	pdp1_lightpen();
 }

@@ -18,7 +18,10 @@ enum
 	pdp1_tw_switches_MSB = 4,		/* test word switches */
 	pdp1_tw_switches_LSB = 5,
 	pdp1_typewriter = 6,			/* typewriter keys */
-	pdp1_config = 10				/* pseudo input port with config */
+	pdp1_config = 10,				/* pseudo input port with config */
+	pdp1_lightpen_down = 11,		/* pseudo input port with light pen down */
+	pdp1_lightpen_x = 12,			/* pseudo input port with light pen x deltas */
+	pdp1_lightpen_y = 13			/* pseudo input port with light pen y deltas */
 };
 
 /* defines for each bit and mask in input port pdp1_control_switches */
@@ -78,7 +81,9 @@ enum
 	pdp1_config_hw_divide_bit		= 3,
 	pdp1_config_hw_divide_mask		= 0x1,
 	pdp1_config_type_20_sbs_bit		= 4,
-	pdp1_config_type_20_sbs_mask	= 0x1
+	pdp1_config_type_20_sbs_mask	= 0x1,
+	pdp1_config_lightpen_bit		= 5,
+	pdp1_config_lightpen_mask		= 0x1
 };
 
 /* defines for our font */
@@ -123,6 +128,13 @@ void pdp1_io_sc_callback(void);
 
 INTERRUPT_GEN( pdp1_interrupt );
 
+typedef struct lightpen_t
+{
+	char active;
+	char down;
+	short x, y;
+	short radius;
+} lightpen_t;
 
 /* From vidhrdw/pdp1.c */
 VIDEO_START( pdp1 );
@@ -133,6 +145,7 @@ void pdp1_plot(int x, int y);
 
 void pdp1_typewriter_drawchar(int character);
 
+void pdp1_update_lightpen_state(const lightpen_t *new_state);
 
 enum
 {
@@ -199,5 +212,9 @@ enum
 	/* color constants for typewriter */
 	pen_typewriter_bg = pen_white,
 	color_typewriter_black = 1,
-	color_typewriter_red = 2
+	color_typewriter_red = 2,
+
+	/* color constants used for light pen */
+	pen_lightpen_nonpressed = pen_red,
+	pen_lightpen_pressed = pen_green
 };

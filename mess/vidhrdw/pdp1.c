@@ -75,6 +75,9 @@ static const struct rectangle panel_bitmap_bounds =
 static void pdp1_draw_panel_backdrop(struct mame_bitmap *bitmap);
 static void pdp1_draw_panel(struct mame_bitmap *bitmap);
 
+static lightpen_t lightpen_state, previous_lightpen_state;
+static void pdp1_erase_lightpen(struct mame_bitmap *bitmap);
+static void pdp1_draw_lightpen(struct mame_bitmap *bitmap);
 
 /*
 	video init
@@ -214,10 +217,13 @@ VIDEO_EOF( pdp1 )
 */
 VIDEO_UPDATE( pdp1 )
 {
+	pdp1_erase_lightpen(bitmap);
 	set_points(bitmap);
+	pdp1_draw_lightpen(bitmap);
 
 	pdp1_draw_panel(panel_bitmap);
 	copybitmap(bitmap, panel_bitmap, 0, 0, panel_window_offset_x, panel_window_offset_y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+
 	copybitmap(bitmap, typewriter_bitmap, 0, 0, typewriter_window_offset_x, typewriter_window_offset_y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
@@ -628,3 +634,111 @@ void pdp1_typewriter_drawchar(int character)
 		break;
 	}
 }
+
+void pdp1_update_lightpen_state(const lightpen_t *new_state)
+{
+	lightpen_state = *new_state;
+}
+
+#if 1
+static void pdp1_draw_circle(struct mame_bitmap *bitmap, int x, int y, int radius, int color)
+{
+	int interval;
+	int a;
+
+	x = x*crt_window_width/01777;
+	y = y*crt_window_width/01777;
+	radius = radius*crt_window_width/01777;
+
+	interval = ceil(radius/sqrt(2));
+
+	for (a=0; a<=interval; a++)
+	{
+		int b = sqrt(radius*radius-a*a) + .5;
+
+		if ((x-a >= 0) && (y-b >= 0))
+			plot_pixel(bitmap, x-a, y-b, color);
+		if ((x-a >= 0) && (y+b <= crt_window_height-1))
+			plot_pixel(bitmap, x-a, y+b, color);
+		if ((x+a <= crt_window_width-1) && (y-b >= 0))
+			plot_pixel(bitmap, x+a, y-b, color);
+		if ((x+a <= crt_window_width-1) && (y+b <= crt_window_height-1))
+			plot_pixel(bitmap, x+a, y+b, color);
+
+		if ((x-b >= 0) && (y-a >= 0))
+			plot_pixel(bitmap, x-b, y-a, color);
+		if ((x-b >= 0) && (y+a <= crt_window_height-1))
+			plot_pixel(bitmap, x-b, y+a, color);
+		if ((x+b <= crt_window_width-1) && (y-a >= 0))
+			plot_pixel(bitmap, x+b, y-a, color);
+		if ((x+b <= crt_window_width-1) && (y+a <= crt_window_height-1))
+			plot_pixel(bitmap, x+b, y+a, color);
+	}
+}
+#else
+static void pdp1_draw_circle(struct mame_bitmap *bitmap, int x, int y, int radius, int color)
+{
+	float fx, fy;
+	float interval;
+
+
+	fx = (float)x*crt_window_width/01777;
+	fy = (float)y*crt_window_height/01777;
+
+	interval = radius/sqrt(2);
+
+	for (x=/*ceil*/(fx-interval); x<=fx+interval; x++)
+	{
+		float dy = sqrt(radius*radius-(x-fx)*(x-fx));
+
+		if ((x >= 0) && (x <= crt_window_width-1) && (fy-dy >= 0))
+			plot_pixel(bitmap, x, fy-dy, color);
+		if ((x >= 0) && (x <= crt_window_width-1) && (y+dy <= crt_window_height-1))
+			plot_pixel(bitmap, x, fy+dy, color);
+	}
+	for (y=/*ceil*/(fy-interval); y<=fy+interval; y++)
+	{
+		float dx = sqrt(radius*radius-(y-fy)*(y-fy));
+
+		if ((fx-dx >= 0) && (y >= 0) && (y <= crt_window_height-1))
+			plot_pixel(bitmap, fx-dx, y, color);
+		if ((fx+dx <= crt_window_width-1) && (y >= 0) && (y <= crt_window_height-1))
+			plot_pixel(bitmap, fx+dx, y, color);
+	}
+}
+#endif
+
+static void pdp1_erase_lightpen(struct mame_bitmap *bitmap)
+{
+	if (previous_lightpen_state.active)
+	{
+		/*if (previous_lightpen_state.x>0)
+			plot_pixel(bitmap, previous_lightpen_state.x/2-1, previous_lightpen_state.y/2, pen_black);
+		if (previous_lightpen_state.x<1023)
+			plot_pixel(bitmap, previous_lightpen_state.x/2+1, previous_lightpen_state.y/2, pen_black);
+		if (previous_lightpen_state.y>0)
+			plot_pixel(bitmap, previous_lightpen_state.x/2, previous_lightpen_state.y/2-1, pen_black);
+		if (previous_lightpen_state.y<1023)
+			plot_pixel(bitmap, previous_lightpen_state.x/2, previous_lightpen_state.y/2+1, pen_black);*/
+		pdp1_draw_circle(bitmap, previous_lightpen_state.x, previous_lightpen_state.y, previous_lightpen_state.radius, pen_black);
+	}
+}
+
+static void pdp1_draw_lightpen(struct mame_bitmap *bitmap)
+{
+	if (lightpen_state.active)
+	{
+		int color = lightpen_state.down ? pen_lightpen_pressed : pen_lightpen_nonpressed;
+		/*if (lightpen_state.x>0)
+			plot_pixel(bitmap, lightpen_state.x/2-1, lightpen_state.y/2, color);
+		if (lightpen_state.x<1023)
+			plot_pixel(bitmap, lightpen_state.x/2+1, lightpen_state.y/2, color);
+		if (lightpen_state.y>0)
+			plot_pixel(bitmap, lightpen_state.x/2, lightpen_state.y/2-1, color);
+		if (lightpen_state.y<1023)
+			plot_pixel(bitmap, lightpen_state.x/2, lightpen_state.y/2+1, color);*/
+		pdp1_draw_circle(bitmap, lightpen_state.x, lightpen_state.y, lightpen_state.radius, color);
+	}
+	previous_lightpen_state = lightpen_state;
+}
+
