@@ -327,16 +327,16 @@ void g65816_reset(void* param)
 		CPU_STOPPED = 0;
 
 		/* Put into emulation mode */
-		REG_D = 0;
-		REG_PB = 0;
-		REG_DB = 0;
-		REG_S = (REG_S & 0xff) | 0x100;
-		REG_X &= 0xff;
-		REG_Y &= 0xff;
+		REGISTER_D = 0;
+		REGISTER_PB = 0;
+		REGISTER_DB = 0;
+		REGISTER_S = (REGISTER_S & 0xff) | 0x100;
+		REGISTER_X &= 0xff;
+		REGISTER_Y &= 0xff;
 		if(!FLAG_M)
 		{
-			REG_B = REG_A & 0xff00;
-			REG_A &= 0xff;
+			REGISTER_B = REGISTER_A & 0xff00;
+			REGISTER_A &= 0xff;
 		}
 		FLAG_E = EFLAG_SET;
 		FLAG_M = MFLAG_SET;
@@ -356,11 +356,11 @@ void g65816_reset(void* param)
 
 		/* 6502 expects these, but its not in the 65816 spec */
 		FLAG_Z = ZFLAG_CLEAR;
-		REG_S = 0x1ff;
+		REGISTER_S = 0x1ff;
 
 		/* Fetch the reset vector */
-		REG_PC = g65816_read_8(VECTOR_RESET) | (g65816_read_8(VECTOR_RESET+1)<<8);
-		g65816i_jumping(REG_PB | REG_PC);
+		REGISTER_PC = g65816_read_8(VECTOR_RESET) | (g65816_read_8(VECTOR_RESET+1)<<8);
+		g65816i_jumping(REGISTER_PB | REGISTER_PC);
 }
 
 /* Exit and clean up */
@@ -390,38 +390,42 @@ void g65816_set_context(void *src_context)
 	if(src_context)
 	{
 		g65816i_cpu = *(g65816i_cpu_struct*)src_context;
-		g65816i_jumping(REG_PB | REG_PC);
+		g65816i_jumping(REGISTER_PB | REGISTER_PC);
 	}
 }
 
 /* Get the current Program Counter */
 unsigned g65816_get_pc(void)
 {
-	return REG_PC;
+	return REGISTER_PC;
 }
 
 /* Set the Program Counter */
 void g65816_set_pc(unsigned val)
 {
-	REG_PC = MAKE_UINT_16(val);
-	g65816_jumping(REG_PB | REG_PC);
+	REGISTER_PC = MAKE_UINT_16(val);
+	g65816_jumping(REGISTER_PB | REGISTER_PC);
 }
 
 /* Get the current Stack Pointer */
 unsigned g65816_get_sp(void)
 {
-	return REG_S;
+	return REGISTER_S;
 }
 
 /* Set the Stack Pointer */
 void g65816_set_sp(unsigned val)
 {
-	REG_S = FLAG_E ? MAKE_UINT_8(val) | 0x100 : MAKE_UINT_16(val);
+	REGISTER_S = FLAG_E ? MAKE_UINT_8(val) | 0x100 : MAKE_UINT_16(val);
 }
 
 /* Get a register */
 unsigned g65816_get_reg(int regnum)
 {
+	/* Set the function tables to emulation mode if the FTABLE is NULL */
+	if( FTABLE_GET_REG == NULL )
+		g65816i_set_execution_mode(EXECUTION_MODE_E);
+
 	return FTABLE_GET_REG(regnum);
 }
 
@@ -524,9 +528,9 @@ const char *g65816_info(void *context, int regnum)
 unsigned g65816_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return g65816_disassemble(buffer, (pc&0xffff), REG_PB>>16, FLAG_M, FLAG_X);
+	return g65816_disassemble(buffer, (pc&0xffff), REGISTER_PB>>16, FLAG_M, FLAG_X);
 #else
-	sprintf(buffer, "$%02X", g65816_read_8_immediate(REG_PB | (pc&0xffff)));
+	sprintf(buffer, "$%02X", g65816_read_8_immediate(REGISTER_PB | (pc&0xffff)));
 	return 1;
 #endif
 }

@@ -108,16 +108,16 @@ extern void (*g65816i_set_reg[])(int regnum, uint val);
 extern void (*g65816i_set_line[])(int line, int state);
 extern int (*g65816i_execute[])(int cycles);
 
-#define REG_A			g65816i_cpu.a		/* Accumulator */
-#define REG_B			g65816i_cpu.b		/* Accumulator hi byte */
-#define REG_X			g65816i_cpu.x		/* Index X Register */
-#define REG_Y			g65816i_cpu.y		/* Index Y Register */
-#define REG_S			g65816i_cpu.s		/* Stack Pointer */
-#define REG_PC			g65816i_cpu.pc		/* Program Counter */
-#define REG_PPC			g65816i_cpu.ppc		/* Previous Program Counter */
-#define REG_PB			g65816i_cpu.pb		/* Program Bank */
-#define REG_DB			g65816i_cpu.db		/* Data Bank */
-#define REG_D			g65816i_cpu.d		/* Direct Register */
+#define REGISTER_A		g65816i_cpu.a		/* Accumulator */
+#define REGISTER_B		g65816i_cpu.b		/* Accumulator hi byte */
+#define REGISTER_X		g65816i_cpu.x		/* Index X Register */
+#define REGISTER_Y		g65816i_cpu.y		/* Index Y Register */
+#define REGISTER_S		g65816i_cpu.s		/* Stack Pointer */
+#define REGISTER_PC		g65816i_cpu.pc		/* Program Counter */
+#define REGISTER_PPC	g65816i_cpu.ppc		/* Previous Program Counter */
+#define REGISTER_PB		g65816i_cpu.pb		/* Program Bank */
+#define REGISTER_DB		g65816i_cpu.db		/* Data Bank */
+#define REGISTER_D		g65816i_cpu.d		/* Direct Register */
 #define FLAG_E			g65816i_cpu.flag_e	/* Emulation Mode Flag */
 #define FLAG_M			g65816i_cpu.flag_m	/* Memory/Accumulator Select Flag */
 #define FLAG_X			g65816i_cpu.flag_x	/* Index Select Flag */
@@ -129,7 +129,7 @@ extern int (*g65816i_execute[])(int cycles);
 #define FLAG_C			g65816i_cpu.flag_c	/* Carry Flag */
 #define LINE_IRQ		g65816i_cpu.line_irq	/* Status of the IRQ line */
 #define LINE_NMI		g65816i_cpu.line_nmi	/* Status of the NMI line */
-#define REG_IR			g65816i_cpu.ir		/* Instruction Register */
+#define REGISTER_IR		g65816i_cpu.ir		/* Instruction Register */
 #define INT_ACK			g65816i_cpu.int_ack	/* Interrupt Acknowledge function pointer */
 #define CLOCKS			g65816_ICount		/* Clock cycles remaining */
 #define IRQ_DELAY		g65816i_cpu.irq_delay /* Delay 1 instruction before checking IRQ */

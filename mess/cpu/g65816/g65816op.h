@@ -71,7 +71,7 @@ INLINE uint g65816i_read_8_direct(uint address)
 {
 #if FLAG_SET_E
 	/* force address into zero page */
-	address = REG_D + MAKE_UINT_8(address - REG_D);
+	address = REGISTER_D + MAKE_UINT_8(address - REGISTER_D);
 #else
 	address = ADDRESS_65816(address);
 #endif
@@ -88,7 +88,7 @@ INLINE void g65816i_write_8_direct(uint address, uint value)
 {
 #if FLAG_SET_E
 	/* force address into zero page */
-	address = REG_D + MAKE_UINT_8(address - REG_D);
+	address = REGISTER_D + MAKE_UINT_8(address - REGISTER_D);
 #else
 	address = ADDRESS_65816(address);
 #endif
@@ -154,22 +154,22 @@ INLINE uint g65816i_read_24_direct(uint address)
 
 INLINE void g65816i_push_8(uint value)
 {
-	g65816i_write_8_normal(REG_S, value);
+	g65816i_write_8_normal(REGISTER_S, value);
 #if FLAG_SET_E
-	REG_S = MAKE_UINT_8(REG_S-1) | 0x100;
+	REGISTER_S = MAKE_UINT_8(REGISTER_S-1) | 0x100;
 #else
-	REG_S = MAKE_UINT_16(REG_S-1);
+	REGISTER_S = MAKE_UINT_16(REGISTER_S-1);
 #endif
 }
 
 INLINE uint g65816i_pull_8(void)
 {
 #if FLAG_SET_E
-	REG_S = MAKE_UINT_8(REG_S+1) | 0x100;
+	REGISTER_S = MAKE_UINT_8(REGISTER_S+1) | 0x100;
 #else
-	REG_S = MAKE_UINT_16(REG_S+1);
+	REGISTER_S = MAKE_UINT_16(REGISTER_S+1);
 #endif
-	return g65816i_read_8_normal(REG_S);
+	return g65816i_read_8_normal(REGISTER_S);
 }
 
 INLINE void g65816i_push_16(uint value)
@@ -205,34 +205,34 @@ INLINE uint g65816i_pull_24(void)
 
 INLINE void g65816i_jump_16(uint address)
 {
-	REG_PC = MAKE_UINT_16(address);
-	g65816i_jumping(REG_PC);
+	REGISTER_PC = MAKE_UINT_16(address);
+	g65816i_jumping(REGISTER_PC);
 }
 
 INLINE void g65816i_jump_24(uint address)
 {
-	REG_PB = address&0xff0000;
-	REG_PC = MAKE_UINT_16(address);
-	g65816i_jumping(REG_PC);
+	REGISTER_PB = address&0xff0000;
+	REGISTER_PC = MAKE_UINT_16(address);
+	g65816i_jumping(REGISTER_PC);
 }
 
 INLINE void g65816i_branch_8(uint offset)
 {
 #if FLAG_SET_E
-	uint old_pc = REG_PC;
-	REG_PC = MAKE_UINT_16(REG_PC + MAKE_INT_8(offset));
-	if((REG_PC^old_pc)&0xff00)
+	uint old_pc = REGISTER_PC;
+	REGISTER_PC = MAKE_UINT_16(REGISTER_PC + MAKE_INT_8(offset));
+	if((REGISTER_PC^old_pc)&0xff00)
 		CLK(1);
 #else
-	REG_PC = MAKE_UINT_16(REG_PC + MAKE_INT_8(offset));
+	REGISTER_PC = MAKE_UINT_16(REGISTER_PC + MAKE_INT_8(offset));
 #endif
-	g65816i_branching(REG_PC);
+	g65816i_branching(REGISTER_PC);
 }
 
 INLINE void g65816i_branch_16(uint offset)
 {
-	REG_PC = MAKE_UINT_16(REG_PC + offset);
-	g65816i_branching(REG_PC);
+	REGISTER_PC = MAKE_UINT_16(REGISTER_PC + offset);
+	g65816i_branching(REGISTER_PC);
 }
 
 
@@ -246,15 +246,15 @@ INLINE void g65816i_set_flag_mx(uint value)
 #if FLAG_SET_M
 	if(!(value & FLAGPOS_M))
 	{
-		REG_A |= REG_B;
-		REG_B = 0;
+		REGISTER_A |= REGISTER_B;
+		REGISTER_B = 0;
 		FLAG_M = MFLAG_CLEAR;
 	}
 #else
 	if(value & FLAGPOS_M)
 	{
-		REG_B = REG_A & 0xff00;
-		REG_A = MAKE_UINT_8(REG_A);
+		REGISTER_B = REGISTER_A & 0xff00;
+		REGISTER_A = MAKE_UINT_8(REGISTER_A);
 		FLAG_M = MFLAG_SET;
 	}
 #endif
@@ -266,8 +266,8 @@ INLINE void g65816i_set_flag_mx(uint value)
 #else
 	if(value & FLAGPOS_X)
 	{
-		REG_X = MAKE_UINT_8(REG_X);
-		REG_Y = MAKE_UINT_8(REG_Y);
+		REGISTER_X = MAKE_UINT_8(REGISTER_X);
+		REGISTER_Y = MAKE_UINT_8(REGISTER_Y);
 		FLAG_X = XFLAG_SET;
 	}
 #endif
@@ -287,16 +287,16 @@ INLINE void g65816i_set_flag_e(uint value)
 	if(value)
 	{
 #if !FLAG_SET_M
-		REG_B = REG_A & 0xff00;
-		REG_A &= 0x00ff;
+		REGISTER_B = REGISTER_A & 0xff00;
+		REGISTER_A &= 0x00ff;
 		FLAG_M = MFLAG_SET;
 #endif
 #if !FLAG_SET_X
-		REG_X = MAKE_UINT_8(REG_X);
-		REG_Y = MAKE_UINT_8(REG_Y);
+		REGISTER_X = MAKE_UINT_8(REGISTER_X);
+		REGISTER_Y = MAKE_UINT_8(REGISTER_Y);
 		FLAG_X = XFLAG_SET;
 #endif
-		REG_S = MAKE_UINT_8(REG_S) | 0x100;
+		REGISTER_S = MAKE_UINT_8(REGISTER_S) | 0x100;
 		FLAG_E = EFLAG_SET;
 		g65816i_set_execution_mode(EXECUTION_MODE_E);
 	}
@@ -362,21 +362,21 @@ INLINE void g65816i_interrupt_hardware(uint vector)
 {
 #if FLAG_SET_E
 	CLK(7);
-	g65816i_push_16(REG_PC);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p() & ~FLAGPOS_B);
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(vector));
 	if(INT_ACK) INT_ACK(0);
 #else
 	CLK(8);
-	g65816i_push_8(REG_PB>>16);
-	g65816i_push_16(REG_PC);
+	g65816i_push_8(REGISTER_PB>>16);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p());
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(vector));
 	if(INT_ACK) INT_ACK(0);
 #endif
@@ -386,20 +386,20 @@ INLINE void g65816i_interrupt_software(uint vector)
 {
 #if FLAG_SET_E
 	CLK(7);
-	g65816i_push_16(REG_PC);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p());
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(vector));
 #else
 	CLK(8);
-	g65816i_push_8(REG_PB>>16);
-	g65816i_push_16(REG_PC);
+	g65816i_push_8(REGISTER_PB>>16);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p());
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(vector));
 #endif
 }
@@ -408,18 +408,18 @@ INLINE void g65816i_interrupt_nmi(void)
 {
 #if FLAG_SET_E
 	CLK(7);
-	g65816i_push_16(REG_PC);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p() & ~FLAGPOS_B);
 	FLAG_D = DFLAG_CLEAR;
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(VECTOR_NMI));
 #else
 	CLK(8);
-	g65816i_push_8(REG_PB>>16);
-	g65816i_push_16(REG_PC);
+	g65816i_push_8(REGISTER_PB>>16);
+	g65816i_push_16(REGISTER_PC);
 	g65816i_push_8(g65816i_get_reg_p());
 	FLAG_D = DFLAG_CLEAR;
-	REG_PB = 0;
+	REGISTER_PB = 0;
 	g65816i_jump_16(g65816i_read_16_normal(VECTOR_NMI));
 #endif
 }
@@ -604,27 +604,27 @@ INLINE void g65816i_check_maskable_interrupt(void)
 #define OPER_24_S()			read_24_S(EA_S())
 #define OPER_24_SIY()		read_24_SIY(EA_SIY())
 
-INLINE uint EA_IMM8(void)  {REG_PC += 1; return REG_PB | MAKE_UINT_16(REG_PC-1);}
-INLINE uint EA_IMM16(void) {REG_PC += 2; return REG_PB | MAKE_UINT_16(REG_PC-2);}
-INLINE uint EA_IMM24(void) {REG_PC += 3; return REG_PB | MAKE_UINT_16(REG_PC-3);}
-INLINE uint EA_D(void)     {if(MAKE_UINT_8(REG_D)) CLK(1); return MAKE_UINT_16(REG_D + OPER_8_IMM());}
-INLINE uint EA_A(void)     {return REG_DB | OPER_16_IMM();}
+INLINE uint EA_IMM8(void)  {REGISTER_PC += 1; return REGISTER_PB | MAKE_UINT_16(REGISTER_PC-1);}
+INLINE uint EA_IMM16(void) {REGISTER_PC += 2; return REGISTER_PB | MAKE_UINT_16(REGISTER_PC-2);}
+INLINE uint EA_IMM24(void) {REGISTER_PC += 3; return REGISTER_PB | MAKE_UINT_16(REGISTER_PC-3);}
+INLINE uint EA_D(void)     {if(MAKE_UINT_8(REGISTER_D)) CLK(1); return MAKE_UINT_16(REGISTER_D + OPER_8_IMM());}
+INLINE uint EA_A(void)     {return REGISTER_DB | OPER_16_IMM();}
 INLINE uint EA_AL(void)    {return OPER_24_IMM();}
-INLINE uint EA_DX(void)    {return MAKE_UINT_16(REG_D + OPER_8_IMM() + REG_X);}
-INLINE uint EA_DY(void)    {return MAKE_UINT_16(REG_D + OPER_8_IMM() + REG_Y);}
-INLINE uint EA_AX(void)    {uint tmp = EA_A(); if((tmp^(tmp+REG_X))&0xff00) CLK(1); return tmp + REG_X;}
-INLINE uint EA_ALX(void)   {return EA_AL() + REG_X;}
-INLINE uint EA_AY(void)    {uint tmp = EA_A(); if((tmp^(tmp+REG_X))&0xff00) CLK(1); return tmp + REG_Y;}
-INLINE uint EA_DI(void)    {return REG_DB | OPER_16_D();}
+INLINE uint EA_DX(void)    {return MAKE_UINT_16(REGISTER_D + OPER_8_IMM() + REGISTER_X);}
+INLINE uint EA_DY(void)    {return MAKE_UINT_16(REGISTER_D + OPER_8_IMM() + REGISTER_Y);}
+INLINE uint EA_AX(void)    {uint tmp = EA_A(); if((tmp^(tmp+REGISTER_X))&0xff00) CLK(1); return tmp + REGISTER_X;}
+INLINE uint EA_ALX(void)   {return EA_AL() + REGISTER_X;}
+INLINE uint EA_AY(void)    {uint tmp = EA_A(); if((tmp^(tmp+REGISTER_X))&0xff00) CLK(1); return tmp + REGISTER_Y;}
+INLINE uint EA_DI(void)    {return REGISTER_DB | OPER_16_D();}
 INLINE uint EA_DLI(void)   {return OPER_24_D();}
 INLINE uint EA_AI(void)    {return read_16_A(OPER_16_IMM());}
 INLINE uint EA_ALI(void)   {return OPER_24_A();}
-INLINE uint EA_DXI(void)   {return REG_DB | OPER_16_DX();}
-INLINE uint EA_DIY(void)   {uint tmp = REG_DB | OPER_16_D(); if((tmp^(tmp+REG_X))&0xff00) CLK(1); return tmp + REG_Y;}
-INLINE uint EA_DLIY(void)  {return OPER_24_D() + REG_Y;}
-INLINE uint EA_AXI(void)   {return read_16_AXI(MAKE_UINT_16(OPER_16_IMM() + REG_X));}
-INLINE uint EA_S(void)     {return MAKE_UINT_16(REG_S + OPER_8_IMM());}
-INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
+INLINE uint EA_DXI(void)   {return REGISTER_DB | OPER_16_DX();}
+INLINE uint EA_DIY(void)   {uint tmp = REGISTER_DB | OPER_16_D(); if((tmp^(tmp+REGISTER_X))&0xff00) CLK(1); return tmp + REGISTER_Y;}
+INLINE uint EA_DLIY(void)  {return OPER_24_D() + REGISTER_Y;}
+INLINE uint EA_AXI(void)   {return read_16_AXI(MAKE_UINT_16(OPER_16_IMM() + REGISTER_X));}
+INLINE uint EA_S(void)     {return MAKE_UINT_16(REGISTER_S + OPER_8_IMM());}
+INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
 
 
 
@@ -638,34 +638,34 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_ADC(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
 			SRC    = OPER_8_##MODE();										\
-			FLAG_C = REG_A + SRC + CFLAG_AS_1();							\
+			FLAG_C = REGISTER_A + SRC + CFLAG_AS_1();							\
 			if(FLAG_D)														\
-				FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REG_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
-			FLAG_V = VFLAG_ADD_8(SRC, REG_A, FLAG_C);						\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(FLAG_C)
+				FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REGISTER_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
+			FLAG_V = VFLAG_ADD_8(SRC, REGISTER_A, FLAG_C);						\
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C)
 #else
 #define OP_ADC(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
 			SRC    = OPER_16_##MODE();										\
 			if(!FLAG_D)														\
 			{																\
-				FLAG_C = REG_A + SRC + CFLAG_AS_1();						\
-				FLAG_V = VFLAG_ADD_16(SRC, REG_A, FLAG_C);					\
-				FLAG_Z = REG_A = MAKE_UINT_16(FLAG_C);						\
-				FLAG_N = NFLAG_16(REG_A);									\
+				FLAG_C = REGISTER_A + SRC + CFLAG_AS_1();						\
+				FLAG_V = VFLAG_ADD_16(SRC, REGISTER_A, FLAG_C);					\
+				FLAG_Z = REGISTER_A = MAKE_UINT_16(FLAG_C);						\
+				FLAG_N = NFLAG_16(REGISTER_A);									\
 				FLAG_C = CFLAG_16(FLAG_C);									\
 				BREAKOUT;													\
 			}																\
-			FLAG_C = MAKE_UINT_8(REG_A) + MAKE_UINT_8(SRC) + CFLAG_AS_1();	\
-			FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REG_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
+			FLAG_C = MAKE_UINT_8(REGISTER_A) + MAKE_UINT_8(SRC) + CFLAG_AS_1();	\
+			FLAG_C = g65816i_adc_tbl[FLAG_C | ((((REGISTER_A&15)+(SRC&15)+CFLAG_AS_1())<<5)&0x200)];	\
 			FLAG_Z = MAKE_UINT_8(FLAG_C);									\
 																			\
-			FLAG_C = MAKE_UINT_8(REG_A>>8) + MAKE_UINT_8(SRC>>8) + CFLAG_AS_1();	\
-			FLAG_C = g65816i_adc_tbl[FLAG_C | (((((REG_A>>8)&15)+((SRC>>8)&15)+CFLAG_AS_1())<<5)&0x200)];	\
+			FLAG_C = MAKE_UINT_8(REGISTER_A>>8) + MAKE_UINT_8(SRC>>8) + CFLAG_AS_1();	\
+			FLAG_C = g65816i_adc_tbl[FLAG_C | (((((REGISTER_A>>8)&15)+((SRC>>8)&15)+CFLAG_AS_1())<<5)&0x200)];	\
 			FLAG_Z |= MAKE_UINT_8(FLAG_C) << 8;								\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
-			FLAG_V = VFLAG_ADD_16(SRC, REG_A, FLAG_C);						\
-			REG_A  = FLAG_Z
+			FLAG_V = VFLAG_ADD_16(SRC, REGISTER_A, FLAG_C);						\
+			REGISTER_A  = FLAG_Z
 #endif
 
 /* M6502   Logical AND with accumulator */
@@ -673,12 +673,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_AND(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
-			FLAG_N = FLAG_Z = REG_A &= OPER_8_##MODE()
+			FLAG_N = FLAG_Z = REGISTER_A &= OPER_8_##MODE()
 #else
 #define OP_AND(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
-			FLAG_Z = REG_A &= OPER_16_##MODE();								\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A &= OPER_16_##MODE();								\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Arithmetic Shift Left accumulator */
@@ -686,13 +686,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_ASL()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_C = REG_A << 1;											\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(FLAG_C)
+			FLAG_C = REGISTER_A << 1;											\
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C)
 #else
 #define OP_ASL()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_C = REG_A << 1;											\
-			FLAG_Z = REG_A = MAKE_UINT_16(FLAG_C);							\
+			FLAG_C = REGISTER_A << 1;											\
+			FLAG_Z = REGISTER_A = MAKE_UINT_16(FLAG_C);							\
 			FLAG_N = NFLAG_16(FLAG_C);										\
 			FLAG_C = CFLAG_16(FLAG_C)
 #endif
@@ -735,13 +735,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_BIT(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
 			FLAG_N = OPER_8_##MODE();										\
-			FLAG_Z = FLAG_N & REG_A;										\
+			FLAG_Z = FLAG_N & REGISTER_A;										\
 			FLAG_V = FLAG_N << 1
 #else
 #define OP_BIT(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
 			FLAG_N = OPER_16_##MODE();										\
-			FLAG_Z = FLAG_N & REG_A;										\
+			FLAG_Z = FLAG_N & REGISTER_A;										\
 			FLAG_N = NFLAG_16(FLAG_N);										\
 			FLAG_V = FLAG_N << 1
 #endif
@@ -751,17 +751,17 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_BITI()															\
 			CLK(CLK_OP + CLK_R8 + CLK_IMM);									\
-			FLAG_Z = REG_A & OPER_8_IMM()
+			FLAG_Z = REGISTER_A & OPER_8_IMM()
 #else
 #define OP_BITI()															\
 			CLK(CLK_OP + CLK_R16 + CLK_IMM);								\
-			FLAG_Z = REG_A & OPER_16_IMM()
+			FLAG_Z = REGISTER_A & OPER_16_IMM()
 #endif
 
 /* M6502   Cause a Break interrupt */
 #undef OP_BRK
 #define OP_BRK()															\
-			REG_PC++;														\
+			REGISTER_PC++;														\
 			g65816i_interrupt_software(VECTOR_BRK)
 
 /* G65816  Branch Always */
@@ -806,13 +806,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_CMP(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
-			FLAG_C = REG_A - OPER_8_##MODE();								\
+			FLAG_C = REGISTER_A - OPER_8_##MODE();								\
 			FLAG_N = FLAG_Z = MAKE_UINT_8(FLAG_C);							\
 			FLAG_C ^= CFLAG_SET
 #else
 #define OP_CMP(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
-			FLAG_C = REG_A - OPER_16_##MODE();								\
+			FLAG_C = REGISTER_A - OPER_16_##MODE();								\
 			FLAG_Z = MAKE_UINT_16(FLAG_C);									\
 			FLAG_N = NFLAG_16(FLAG_C);										\
 			FLAG_C = ~CFLAG_16(FLAG_C)
@@ -839,7 +839,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 /* G65816  Coprocessor operation */
 #undef OP_COP
 #define OP_COP()															\
-			REG_PC++;														\
+			REGISTER_PC++;														\
 			g65816i_interrupt_software(VECTOR_COP)
 
 /* M6502   Decrement accumulator */
@@ -847,12 +847,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_DEC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(REG_A - 1)
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(REGISTER_A - 1)
 #else
 #define OP_DEC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = MAKE_UINT_16(REG_A - 1);						\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A = MAKE_UINT_16(REGISTER_A - 1);						\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Decrement operand */
@@ -890,12 +890,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_EOR(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
-			FLAG_N = FLAG_Z = REG_A ^= OPER_8_##MODE()
+			FLAG_N = FLAG_Z = REGISTER_A ^= OPER_8_##MODE()
 #else
 #define OP_EOR(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
-			FLAG_Z = REG_A ^= OPER_16_##MODE();								\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A ^= OPER_16_##MODE();								\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Increment accumulator */
@@ -903,12 +903,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_INC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(REG_A + 1)
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(REGISTER_A + 1)
 #else
 #define OP_INC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = MAKE_UINT_16(REG_A + 1);						\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A = MAKE_UINT_16(REGISTER_A + 1);						\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Increment operand */
@@ -957,7 +957,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_JMPAXI
 #define OP_JMPAXI()															\
 			CLK(CLK_OP + CLK_AXI);											\
-			g65816i_jump_16(read_16_AXI(REG_PB | (MAKE_UINT_16(OPER_16_IMM() + REG_X))))
+			g65816i_jump_16(read_16_AXI(REGISTER_PB | (MAKE_UINT_16(OPER_16_IMM() + REGISTER_X))))
 
 /* G65816  Jump absolute long */
 #undef OP_JMPAL
@@ -971,8 +971,8 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_JSL(MODE)														\
 			CLK(CLK_OP + CLK_W24 + CLK_##MODE + 1);							\
 			DST = EA_##MODE();												\
-			g65816i_push_8(REG_PB>>16);										\
-			g65816i_push_16(REG_PC-1);										\
+			g65816i_push_8(REGISTER_PB>>16);										\
+			g65816i_push_16(REGISTER_PC-1);										\
 			g65816i_jump_24(DST)
 
 /* M6502   Jump to Subroutine */
@@ -981,7 +981,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_JSR(MODE)														\
 			CLK(CLK_OP + CLK_W16 + CLK_##MODE);								\
 			DST = EA_##MODE();												\
-			g65816i_push_16(REG_PC-1);										\
+			g65816i_push_16(REGISTER_PC-1);										\
 			g65816i_jump_16(DST)
 
 /* M6502   Jump to Subroutine */
@@ -989,8 +989,8 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_JSRAXI
 #define OP_JSRAXI()															\
 			CLK(CLK_OP + CLK_W16 + CLK_AXI);								\
-			DST = read_16_AXI(REG_PB | (MAKE_UINT_16(OPER_16_IMM() + REG_X))); \
-			g65816i_push_16(REG_PC-1);										\
+			DST = read_16_AXI(REGISTER_PB | (MAKE_UINT_16(OPER_16_IMM() + REGISTER_X))); \
+			g65816i_push_16(REGISTER_PC-1);										\
 			g65816i_jump_16(DST)
 
 /* M6502   Load accumulator with operand */
@@ -998,12 +998,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_LDA(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
-			FLAG_N = FLAG_Z = REG_A = OPER_8_##MODE()
+			FLAG_N = FLAG_Z = REGISTER_A = OPER_8_##MODE()
 #else
 #define OP_LDA(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
-			FLAG_Z = REG_A = OPER_16_##MODE();								\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A = OPER_16_##MODE();								\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Load index register with operand */
@@ -1025,14 +1025,14 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_LSR()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
 			FLAG_N = 0;														\
-			FLAG_C = REG_A << 8;											\
-			FLAG_Z = REG_A >>= 1
+			FLAG_C = REGISTER_A << 8;											\
+			FLAG_Z = REGISTER_A >>= 1
 #else
 #define OP_LSR()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
 			FLAG_N = 0;														\
-			FLAG_C = REG_A << 8;											\
-			FLAG_Z = REG_A >>= 1
+			FLAG_C = REGISTER_A << 8;											\
+			FLAG_Z = REGISTER_A >>= 1
 #endif
 
 /* M6502   Logical Shift Right operand */
@@ -1063,40 +1063,40 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
-			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			REGISTER_A |= REGISTER_B;													\
+			CLK((REGISTER_A+1)<<3);												\
+			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
 			{																\
-				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
-				REG_X = MAKE_UINT_8(REG_X+1);								\
-				REG_Y = MAKE_UINT_8(REG_Y+1);								\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_8(REGISTER_X+1);								\
+				REGISTER_Y = MAKE_UINT_8(REGISTER_Y+1);								\
 			}																\
 			if(!FLAG_M)														\
 			{																\
-				REG_A = 0xffff;												\
+				REGISTER_A = 0xffff;												\
 				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+			REGISTER_A = 0x00ff;													\
+			REGISTER_B = 0xff00
 #else
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
-			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			REGISTER_A |= REGISTER_B;													\
+			CLK((REGISTER_A+1)<<3);												\
+			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
 			{																\
-				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
-				REG_X = MAKE_UINT_16(REG_X+1);								\
-				REG_Y = MAKE_UINT_16(REG_Y+1);								\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_16(REGISTER_X+1);								\
+				REGISTER_Y = MAKE_UINT_16(REGISTER_Y+1);								\
 			}																\
 			if(!FLAG_M)														\
 			{																\
-				REG_A = 0xffff;												\
+				REGISTER_A = 0xffff;												\
 				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+			REGISTER_A = 0x00ff;													\
+			REGISTER_B = 0xff00
 #endif
 
 /* G65816  Move Block Positive */
@@ -1105,40 +1105,40 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
-			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			REGISTER_A |= REGISTER_B;													\
+			CLK((REGISTER_A+1)<<3);												\
+			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
 			{																\
-				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
-				REG_X = MAKE_UINT_8(REG_X-1);								\
-				REG_Y = MAKE_UINT_8(REG_Y-1);								\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_8(REGISTER_X-1);								\
+				REGISTER_Y = MAKE_UINT_8(REGISTER_Y-1);								\
 			}																\
 			if(!FLAG_M)														\
 			{																\
-				REG_A = 0xffff;												\
+				REGISTER_A = 0xffff;												\
 				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+			REGISTER_A = 0x00ff;													\
+			REGISTER_B = 0xff00
 #else
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
-			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			REGISTER_A |= REGISTER_B;													\
+			CLK((REGISTER_A+1)<<3);												\
+			for(;(int)REGISTER_A >= 0;REGISTER_A--)									\
 			{																\
-				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
-				REG_X = MAKE_UINT_16(REG_X-1);								\
-				REG_Y = MAKE_UINT_16(REG_Y-1);								\
+				write_8_NORM(DST | REGISTER_Y, read_8_NORM(SRC | REGISTER_X));		\
+				REGISTER_X = MAKE_UINT_16(REGISTER_X-1);								\
+				REGISTER_Y = MAKE_UINT_16(REGISTER_Y-1);								\
 			}																\
 			if(!FLAG_M)														\
 			{																\
-				REG_A = 0xffff;												\
+				REGISTER_A = 0xffff;												\
 				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+			REGISTER_A = 0x00ff;													\
+			REGISTER_B = 0xff00
 #endif
 
 /* M6502   No Operation */
@@ -1151,12 +1151,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_ORA(MODE)														\
 			CLK(CLK_OP + CLK_R8 + CLK_##MODE);								\
-			FLAG_N = FLAG_Z = REG_A |= OPER_8_ ## MODE()
+			FLAG_N = FLAG_Z = REGISTER_A |= OPER_8_ ## MODE()
 #else
 #define OP_ORA(MODE)														\
 			CLK(CLK_OP + CLK_R16 + CLK_##MODE);								\
-			FLAG_Z = REG_A |= OPER_16_##MODE();								\
-			FLAG_N = NFLAG_16(REG_A)
+			FLAG_Z = REGISTER_A |= OPER_16_##MODE();								\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* G65816  Push Effective Address */
@@ -1176,18 +1176,18 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_PER()															\
 			CLK(CLK_OP + CLK_R16 + CLK_W16 + 1);							\
 			SRC = OPER_16_IMM();											\
-			g65816i_push_16(REG_PC + SRC)
+			g65816i_push_16(REGISTER_PC + SRC)
 
 /* M6502   Push accumulator to the stack */
 #undef OP_PHA
 #if FLAG_SET_M
 #define OP_PHA()															\
 			CLK(CLK_OP + CLK_W8 + 1);										\
-			g65816i_push_8(REG_A)
+			g65816i_push_8(REGISTER_A)
 #else
 #define OP_PHA()															\
 			CLK(CLK_OP + CLK_W16 + 1);										\
-			g65816i_push_16(REG_A)
+			g65816i_push_16(REGISTER_A)
 #endif
 
 /* M6502   Push index register to the stack */
@@ -1206,19 +1206,19 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_PHB
 #define OP_PHB()															\
 			CLK(CLK_OP + CLK_W8 + 1);										\
-			g65816i_push_8(REG_DB>>16)
+			g65816i_push_8(REGISTER_DB>>16)
 
 /* G65816  Push direct register */
 #undef OP_PHD
 #define OP_PHD()															\
 			CLK(CLK_OP + CLK_W16 + 1);										\
-			g65816i_push_16(REG_D)
+			g65816i_push_16(REGISTER_D)
 
 /* G65816  Push program bank register */
 #undef OP_PHK
 #define OP_PHK()															\
 			CLK(CLK_OP + CLK_W8 + 1);										\
-			g65816i_push_8(REG_PB>>16)
+			g65816i_push_8(REGISTER_PB>>16)
 
 /* M6502   Push the Processor Status Register to the stack */
 #undef OP_PHP
@@ -1231,11 +1231,11 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_PLA()															\
 			CLK(CLK_OP + CLK_R8 + 2);										\
-			FLAG_N = FLAG_Z = REG_A = g65816i_pull_8()
+			FLAG_N = FLAG_Z = REGISTER_A = g65816i_pull_8()
 #else
 #define OP_PLA()															\
 			CLK(CLK_OP + CLK_R16 + 2);										\
-			FLAG_Z = REG_A = g65816i_pull_16();								\
+			FLAG_Z = REGISTER_A = g65816i_pull_16();								\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1257,13 +1257,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #define OP_PLB()															\
 			CLK(CLK_OP + CLK_R8 + 2);										\
 			FLAG_N = FLAG_Z = g65816i_pull_8();								\
-			REG_DB = FLAG_Z << 16
+			REGISTER_DB = FLAG_Z << 16
 
 /* G65816  Pull direct register */
 #undef OP_PLD
 #define OP_PLD()															\
 			CLK(CLK_OP + CLK_R16 + 2);										\
-			FLAG_Z = REG_D = g65816i_pull_16();								\
+			FLAG_Z = REGISTER_D = g65816i_pull_16();								\
 			FLAG_N = NFLAG_16(FLAG_Z)
 
 /* M6502   Pull the Processor Status Register from the stack */
@@ -1283,13 +1283,13 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_ROL()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_C = (REG_A<<1) | CFLAG_AS_1();								\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(FLAG_C)
+			FLAG_C = (REGISTER_A<<1) | CFLAG_AS_1();								\
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C)
 #else
 #define OP_ROL()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_C = (REG_A<<1) | CFLAG_AS_1();								\
-			FLAG_Z = REG_A = MAKE_UINT_16(FLAG_C);							\
+			FLAG_C = (REGISTER_A<<1) | CFLAG_AS_1();								\
+			FLAG_Z = REGISTER_A = MAKE_UINT_16(FLAG_C);							\
 			FLAG_N = NFLAG_16(FLAG_C);										\
 			FLAG_C = CFLAG_16(FLAG_C)
 #endif
@@ -1319,16 +1319,16 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_ROR()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_A |= FLAG_C & 0x100;										\
-			FLAG_C = REG_A << 8;											\
-			FLAG_N = FLAG_Z = REG_A >>= 1
+			REGISTER_A |= FLAG_C & 0x100;										\
+			FLAG_C = REGISTER_A << 8;											\
+			FLAG_N = FLAG_Z = REGISTER_A >>= 1
 #else
 #define OP_ROR()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_A |= (FLAG_C<<8) & 0x10000;									\
-			FLAG_C = REG_A << 8;											\
-			FLAG_Z = REG_A >>= 1;											\
-			FLAG_N = NFLAG_16(REG_A)
+			REGISTER_A |= (FLAG_C<<8) & 0x10000;									\
+			FLAG_C = REGISTER_A << 8;											\
+			FLAG_Z = REGISTER_A >>= 1;											\
+			FLAG_N = NFLAG_16(REGISTER_A)
 #endif
 
 /* M6502   Rotate Right an operand */
@@ -1364,7 +1364,7 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			CLK(8);															\
 			g65816i_set_reg_p(g65816i_pull_8());							\
 			g65816i_jump_16(g65816i_pull_16());								\
-			REG_PB = g65816i_pull_8() << 16
+			REGISTER_PB = g65816i_pull_8() << 16
 #endif
 
 /* G65816  Return from Subroutine Long */
@@ -1391,17 +1391,17 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			FLAG_C = ~FLAG_C;												\
 			if(!FLAG_D)														\
 			{																\
-				FLAG_C = REG_A - SRC - CFLAG_AS_1();						\
-				FLAG_V = VFLAG_SUB_8(SRC, REG_A, FLAG_C);					\
-				FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(FLAG_C);				\
+				FLAG_C = REGISTER_A - SRC - CFLAG_AS_1();						\
+				FLAG_V = VFLAG_SUB_8(SRC, REGISTER_A, FLAG_C);					\
+				FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C);				\
 				FLAG_C = ~FLAG_C;											\
 				BREAKOUT;													\
 			}																\
 			DST = CFLAG_AS_1();												\
-			FLAG_C = REG_A - SRC - DST;										\
-			FLAG_V = VFLAG_SUB_8(SRC, REG_A, FLAG_C);						\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REG_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
-			FLAG_N = FLAG_Z = REG_A = MAKE_UINT_8(FLAG_C);					\
+			FLAG_C = REGISTER_A - SRC - DST;										\
+			FLAG_V = VFLAG_SUB_8(SRC, REGISTER_A, FLAG_C);						\
+			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REGISTER_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
+			FLAG_N = FLAG_Z = REGISTER_A = MAKE_UINT_8(FLAG_C);					\
 			FLAG_C = ~FLAG_C
 #else
 #define OP_SBC(MODE)														\
@@ -1410,24 +1410,24 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			FLAG_C = ~FLAG_C;												\
 			if(!FLAG_D)														\
 			{																\
-				FLAG_C = REG_A - SRC - CFLAG_AS_1();						\
-				FLAG_V = VFLAG_SUB_16(SRC, REG_A, FLAG_C);					\
-				FLAG_Z = REG_A = MAKE_UINT_16(FLAG_C);						\
-				FLAG_N = NFLAG_16(REG_A);									\
+				FLAG_C = REGISTER_A - SRC - CFLAG_AS_1();						\
+				FLAG_V = VFLAG_SUB_16(SRC, REGISTER_A, FLAG_C);					\
+				FLAG_Z = REGISTER_A = MAKE_UINT_16(FLAG_C);						\
+				FLAG_N = NFLAG_16(REGISTER_A);									\
 				FLAG_C = ~CFLAG_16(FLAG_C);									\
 				BREAKOUT;													\
 			}																\
 			DST    = CFLAG_AS_1();											\
-			FLAG_C = MAKE_UINT_8(REG_A) - MAKE_UINT_8(SRC) - DST;			\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REG_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
+			FLAG_C = MAKE_UINT_8(REGISTER_A) - MAKE_UINT_8(SRC) - DST;			\
+			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | ((((REGISTER_A&15)-(SRC&15)-DST)<<5)&0x200)];	\
 			FLAG_Z = MAKE_UINT_8(FLAG_C);									\
 			DST    = CFLAG_AS_1();											\
-			FLAG_C = MAKE_UINT_8(REG_A>>8) - MAKE_UINT_8(SRC>>8) - DST;		\
-			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | (((((REG_A>>8)&15)-((SRC>>8)&15)-DST)<<5)&0x200)];	\
+			FLAG_C = MAKE_UINT_8(REGISTER_A>>8) - MAKE_UINT_8(SRC>>8) - DST;		\
+			FLAG_C = g65816i_sbc_tbl[(FLAG_C&0x1ff) | (((((REGISTER_A>>8)&15)-((SRC>>8)&15)-DST)<<5)&0x200)];	\
 			FLAG_Z |= MAKE_UINT_8(FLAG_C) << 8;								\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
-			FLAG_V = VFLAG_SUB_16(SRC, REG_A, FLAG_Z);						\
-			REG_A  = FLAG_Z;												\
+			FLAG_V = VFLAG_SUB_16(SRC, REGISTER_A, FLAG_Z);						\
+			REGISTER_A  = FLAG_Z;												\
 			FLAG_C = ~FLAG_C
 #endif
 
@@ -1460,11 +1460,11 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_STA(MODE)														\
 			CLK(CLK_OP + CLK_W8 + CLK_W_##MODE);								\
-			write_8_##MODE(EA_##MODE(), REG_A)
+			write_8_##MODE(EA_##MODE(), REGISTER_A)
 #else
 #define OP_STA(MODE)														\
 			CLK(CLK_OP + CLK_W16 + CLK_W_##MODE);								\
-			write_16_##MODE(EA_##MODE(), REG_A)
+			write_16_##MODE(EA_##MODE(), REGISTER_A)
 #endif
 
 /* M6502   Store index register to memory */
@@ -1503,24 +1503,24 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_X
 #define OP_TAX(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG = REG_A;											\
+			FLAG_Z = REG = REGISTER_A;											\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else /* FLAG_SET_X */
 #define OP_TAX(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG = REG_B | REG_A;									\
+			FLAG_Z = REG = REGISTER_B | REGISTER_A;									\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif /* FLAG_SET_X */
 #else /* FLAG_SET_M */
 #if FLAG_SET_X
 #define OP_TAX(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG = MAKE_UINT_8(REG_A);								\
+			FLAG_Z = REG = MAKE_UINT_8(REGISTER_A);								\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else /* FLAG_SET_X */
 #define OP_TAX(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG = REG_A;											\
+			FLAG_Z = REG = REGISTER_A;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif /* FLAG_SET_X */
 #endif /* FLAG_SET_M */
@@ -1531,12 +1531,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_TXA(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = MAKE_UINT_8(REG);								\
+			FLAG_Z = REGISTER_A = MAKE_UINT_8(REG);								\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else
 #define OP_TXA(REG)															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = REG;											\
+			FLAG_Z = REGISTER_A = REG;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1545,12 +1545,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_TCD()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_D = REG_A | REG_B;									\
+			FLAG_Z = REGISTER_D = REGISTER_A | REGISTER_B;									\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #else
 #define OP_TCD()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_D = REG_A;											\
+			FLAG_Z = REGISTER_D = REGISTER_A;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1559,14 +1559,14 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_TDC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_D;													\
+			FLAG_Z = REGISTER_D;													\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
-			REG_A = MAKE_UINT_8(REG_D);										\
-			REG_B = REG_D & 0xff00
+			REGISTER_A = MAKE_UINT_8(REGISTER_D);										\
+			REGISTER_B = REGISTER_D & 0xff00
 #else
 #define OP_TDC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = REG_D;											\
+			FLAG_Z = REGISTER_A = REGISTER_D;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1575,11 +1575,11 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_E
 #define OP_TCS()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_S = MAKE_UINT_8(REG_A) | 0x100
+			REGISTER_S = MAKE_UINT_8(REGISTER_A) | 0x100
 #else
 #define OP_TCS()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_S = REG_A | REG_B
+			REGISTER_S = REGISTER_A | REGISTER_B
 #endif
 
 /* G65816  Transfer stack pointer to C */
@@ -1587,14 +1587,14 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_M
 #define OP_TSC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_S;													\
+			FLAG_Z = REGISTER_S;													\
 			FLAG_N = NFLAG_16(FLAG_Z);										\
-			REG_A = MAKE_UINT_8(REG_S);										\
-			REG_B = REG_S & 0xff00
+			REGISTER_A = MAKE_UINT_8(REGISTER_S);										\
+			REGISTER_B = REGISTER_S & 0xff00
 #else
 #define OP_TSC()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_A = REG_S;											\
+			FLAG_Z = REGISTER_A = REGISTER_S;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1603,12 +1603,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_X
 #define OP_TSX()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_X = MAKE_UINT_8(REG_S);							\
+			FLAG_Z = REGISTER_X = MAKE_UINT_8(REGISTER_S);							\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else
 #define OP_TSX()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_X = REG_S;											\
+			FLAG_Z = REGISTER_X = REGISTER_S;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1617,11 +1617,11 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_E
 #define OP_TXS()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_S = MAKE_UINT_8(REG_X) | 0x100
+			REGISTER_S = MAKE_UINT_8(REGISTER_X) | 0x100
 #else
 #define OP_TXS()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_S = REG_X
+			REGISTER_S = REGISTER_X
 #endif
 
 /* G65816  Transfer X to Y */
@@ -1629,12 +1629,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_X
 #define OP_TXY()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_Y = REG_X;											\
+			FLAG_Z = REGISTER_Y = REGISTER_X;											\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else
 #define OP_TXY()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_Y = REG_X;											\
+			FLAG_Z = REGISTER_Y = REGISTER_X;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1643,12 +1643,12 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #if FLAG_SET_X
 #define OP_TYX()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_X = REG_Y;											\
+			FLAG_Z = REGISTER_X = REGISTER_Y;											\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else
 #define OP_TYX()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_X = REG_Y;											\
+			FLAG_Z = REGISTER_X = REGISTER_Y;											\
 			FLAG_N = NFLAG_16(FLAG_Z)
 #endif
 
@@ -1659,15 +1659,15 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			CLK(CLK_OP + CLK_RMW8 + CLK_W_##MODE);							\
 			DST    = EA_##MODE();											\
 			FLAG_Z = read_8_##MODE(DST);									\
-			write_8_##MODE(DST, FLAG_Z & ~REG_A);							\
-			FLAG_Z &= REG_A
+			write_8_##MODE(DST, FLAG_Z & ~REGISTER_A);							\
+			FLAG_Z &= REGISTER_A
 #else
 #define OP_TRB(MODE)														\
 			CLK(CLK_OP + CLK_RMW16 + CLK_W_##MODE);							\
 			DST    = EA_##MODE();											\
 			FLAG_Z = read_16_##MODE(DST);									\
-			write_16_##MODE(DST, FLAG_Z & ~REG_A);							\
-			FLAG_Z &= REG_A
+			write_16_##MODE(DST, FLAG_Z & ~REGISTER_A);							\
+			FLAG_Z &= REGISTER_A
 #endif
 
 /* G65816  Test and set bit */
@@ -1677,15 +1677,15 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 			CLK(CLK_OP + CLK_RMW8 + CLK_W_##MODE);							\
 			DST    = EA_##MODE();											\
 			FLAG_Z = read_8_##MODE(DST);									\
-			write_8_##MODE(DST, FLAG_Z | REG_A);							\
-			FLAG_Z &= REG_A
+			write_8_##MODE(DST, FLAG_Z | REGISTER_A);							\
+			FLAG_Z &= REGISTER_A
 #else
 #define OP_TSB(MODE)														\
 			CLK(CLK_OP + CLK_RMW16 + CLK_W_##MODE);							\
 			DST    = EA_##MODE();											\
 			FLAG_Z = read_16_##MODE(DST);									\
-			write_16_##MODE(DST, FLAG_Z | REG_A);							\
-			FLAG_Z &= REG_A
+			write_16_##MODE(DST, FLAG_Z | REGISTER_A);							\
+			FLAG_Z &= REGISTER_A
 #endif
 
 /* G65816  Wait for interrupt */
@@ -1698,22 +1698,22 @@ INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
 #undef OP_WDM
 #define OP_WDM()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			REG_PC++
+			REGISTER_PC++
 
 /* G65816  Exchange accum high and low bytes */
 #undef OP_XBA
 #if FLAG_SET_M
 #define OP_XBA()															\
 			CLK(CLK_OP + CLK_IMPLIED);										\
-			FLAG_Z = REG_B>>8;												\
-			REG_B = REG_A<<8;												\
-			REG_A = FLAG_Z;													\
+			FLAG_Z = REGISTER_B>>8;												\
+			REGISTER_B = REGISTER_A<<8;												\
+			REGISTER_A = FLAG_Z;													\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #else
 #define OP_XBA()															\
 			CLK(CLK_OP + CLK_IMPLIED + 1);									\
-			FLAG_Z = REG_A >> 8;											\
-			REG_A = MAKE_UINT_16(REG_A<<8) | FLAG_Z;						\
+			FLAG_Z = REGISTER_A >> 8;											\
+			REGISTER_A = MAKE_UINT_16(REGISTER_A<<8) | FLAG_Z;						\
 			FLAG_N = NFLAG_8(FLAG_Z)
 #endif
 
@@ -1869,7 +1869,7 @@ OP(56, OP_LSRM ( DX          ) ) /* LSR dx      */
 OP(57, OP_EOR  ( DLIY        ) ) /* EOR dliy(G) */
 OP(58, OP_CLI  (             ) ) /* CLI         */
 OP(59, OP_EOR  ( AY          ) ) /* EOR ay      */
-OP(5a, OP_PHX  ( REG_Y       ) ) /* PHY     (C) */
+OP(5a, OP_PHX  ( REGISTER_Y       ) ) /* PHY     (C) */
 OP(5b, OP_TCD  (             ) ) /* TCD     (G) */
 OP(5c, OP_JMPAL(             ) ) /* JMP al  (G) */
 OP(5d, OP_EOR  ( AX          ) ) /* EOR ax      */
@@ -1901,7 +1901,7 @@ OP(76, OP_RORM ( DX          ) ) /* ROR dx      */
 OP(77, OP_ADC  ( DLIY        ) ) /* ADC dliy(G) */
 OP(78, OP_SEI  (             ) ) /* SEI         */
 OP(79, OP_ADC  ( AY          ) ) /* ADC ay      */
-OP(7a, OP_PLX  ( REG_Y       ) ) /* PLY     (C) */
+OP(7a, OP_PLX  ( REGISTER_Y       ) ) /* PLY     (C) */
 OP(7b, OP_TDC  (             ) ) /* TDC     (G) */
 OP(7c, OP_JMPAXI(            ) ) /* JMP axi (C) */
 OP(7d, OP_ADC  ( AX          ) ) /* ADC ax      */
@@ -1911,27 +1911,27 @@ OP(80, OP_BRA  (             ) ) /* BRA     (C) */
 OP(81, OP_STA  ( DXI         ) ) /* STA dxi     */
 OP(82, OP_BRL  (             ) ) /* BRL     (G) */
 OP(83, OP_STA  ( S           ) ) /* STA s   (G) */
-OP(84, OP_STX  ( REG_Y, D    ) ) /* STY d       */
+OP(84, OP_STX  ( REGISTER_Y, D    ) ) /* STY d       */
 OP(85, OP_STA  ( D           ) ) /* STA d       */
-OP(86, OP_STX  ( REG_X, D    ) ) /* STX d       */
+OP(86, OP_STX  ( REGISTER_X, D    ) ) /* STX d       */
 OP(87, OP_STA  ( DLI         ) ) /* STA dli (G) */
-OP(88, OP_DECX ( REG_Y       ) ) /* DEY         */
+OP(88, OP_DECX ( REGISTER_Y       ) ) /* DEY         */
 OP(89, OP_BITI (             ) ) /* BIT imm (C) */
-OP(8a, OP_TXA  ( REG_X       ) ) /* TXA         */
+OP(8a, OP_TXA  ( REGISTER_X       ) ) /* TXA         */
 OP(8b, OP_PHB  (             ) ) /* PHB     (G) */
-OP(8c, OP_STX  ( REG_Y, A    ) ) /* STY a       */
+OP(8c, OP_STX  ( REGISTER_Y, A    ) ) /* STY a       */
 OP(8d, OP_STA  ( A           ) ) /* STA a       */
-OP(8e, OP_STX  ( REG_X, A    ) ) /* STX a       */
+OP(8e, OP_STX  ( REGISTER_X, A    ) ) /* STX a       */
 OP(8f, OP_STA  ( AL          ) ) /* STA al  (G) */
 OP(90, OP_BCC  ( COND_CC()   ) ) /* BCC         */
 OP(91, OP_STA  ( DIY         ) ) /* STA diy     */
 OP(92, OP_STA  ( DI          ) ) /* STA di  (C) */
 OP(93, OP_STA  ( SIY         ) ) /* STA siy (G) */
-OP(94, OP_STX  ( REG_Y, DX   ) ) /* STY dx      */
+OP(94, OP_STX  ( REGISTER_Y, DX   ) ) /* STY dx      */
 OP(95, OP_STA  ( DX          ) ) /* STA dx      */
-OP(96, OP_STX  ( REG_X, DY   ) ) /* STX dy      */
+OP(96, OP_STX  ( REGISTER_X, DY   ) ) /* STX dy      */
 OP(97, OP_STA  ( DLIY        ) ) /* STA dliy(G) */
-OP(98, OP_TXA  ( REG_Y       ) ) /* TYA         */
+OP(98, OP_TXA  ( REGISTER_Y       ) ) /* TYA         */
 OP(99, OP_STA  ( AY          ) ) /* STA ay      */
 OP(9a, OP_TXS  (             ) ) /* TXS         */
 OP(9b, OP_TXY  (             ) ) /* TXY     (G) */
@@ -1939,51 +1939,51 @@ OP(9c, OP_STZ  ( A           ) ) /* STZ a   (C) */
 OP(9d, OP_STA  ( AX          ) ) /* STA ax      */
 OP(9e, OP_STZ  ( AX          ) ) /* STZ ax  (C) */
 OP(9f, OP_STA  ( ALX         ) ) /* STA alx (G) */
-OP(a0, OP_LDX  ( REG_Y, IMM  ) ) /* LDY imm     */
+OP(a0, OP_LDX  ( REGISTER_Y, IMM  ) ) /* LDY imm     */
 OP(a1, OP_LDA  ( DXI         ) ) /* LDA dxi     */
-OP(a2, OP_LDX  ( REG_X, IMM  ) ) /* LDX imm     */
+OP(a2, OP_LDX  ( REGISTER_X, IMM  ) ) /* LDX imm     */
 OP(a3, OP_LDA  ( S           ) ) /* LDA s   (G) */
-OP(a4, OP_LDX  ( REG_Y, D    ) ) /* LDY d       */
+OP(a4, OP_LDX  ( REGISTER_Y, D    ) ) /* LDY d       */
 OP(a5, OP_LDA  ( D           ) ) /* LDA d       */
-OP(a6, OP_LDX  ( REG_X, D    ) ) /* LDX d       */
+OP(a6, OP_LDX  ( REGISTER_X, D    ) ) /* LDX d       */
 OP(a7, OP_LDA  ( DLI         ) ) /* LDA dli (G) */
-OP(a8, OP_TAX  ( REG_Y       ) ) /* TAY         */
+OP(a8, OP_TAX  ( REGISTER_Y       ) ) /* TAY         */
 OP(a9, OP_LDA  ( IMM         ) ) /* LDA imm     */
-OP(aa, OP_TAX  ( REG_X       ) ) /* TAX         */
+OP(aa, OP_TAX  ( REGISTER_X       ) ) /* TAX         */
 OP(ab, OP_PLB  (             ) ) /* PLB     (G) */
-OP(ac, OP_LDX  ( REG_Y, A    ) ) /* LDY a       */
+OP(ac, OP_LDX  ( REGISTER_Y, A    ) ) /* LDY a       */
 OP(ad, OP_LDA  ( A           ) ) /* LDA a       */
-OP(ae, OP_LDX  ( REG_X, A    ) ) /* LDX a       */
+OP(ae, OP_LDX  ( REGISTER_X, A    ) ) /* LDX a       */
 OP(af, OP_LDA  ( AL          ) ) /* LDA al  (G) */
 OP(b0, OP_BCC  ( COND_CS()   ) ) /* BCS         */
 OP(b1, OP_LDA  ( DIY         ) ) /* LDA diy     */
 OP(b2, OP_LDA  ( DI          ) ) /* LDA di  (C) */
 OP(b3, OP_LDA  ( SIY         ) ) /* LDA siy (G) */
-OP(b4, OP_LDX  ( REG_Y, DX   ) ) /* LDY dx      */
+OP(b4, OP_LDX  ( REGISTER_Y, DX   ) ) /* LDY dx      */
 OP(b5, OP_LDA  ( DX          ) ) /* LDA dx      */
-OP(b6, OP_LDX  ( REG_X, DY   ) ) /* LDX dy      */
+OP(b6, OP_LDX  ( REGISTER_X, DY   ) ) /* LDX dy      */
 OP(b7, OP_LDA  ( DLIY        ) ) /* LDA dliy(G) */
 OP(b8, OP_CLV  (             ) ) /* CLV         */
 OP(b9, OP_LDA  ( AY          ) ) /* LDA ay      */
 OP(ba, OP_TSX  (             ) ) /* TSX         */
 OP(bb, OP_TYX  (             ) ) /* TYX     (G) */
-OP(bc, OP_LDX  ( REG_Y, AX   ) ) /* LDY ax      */
+OP(bc, OP_LDX  ( REGISTER_Y, AX   ) ) /* LDY ax      */
 OP(bd, OP_LDA  ( AX          ) ) /* LDA ax      */
-OP(be, OP_LDX  ( REG_X, AY   ) ) /* LDX ay      */
+OP(be, OP_LDX  ( REGISTER_X, AY   ) ) /* LDX ay      */
 OP(bf, OP_LDA  ( ALX         ) ) /* LDA alx (G) */
-OP(c0, OP_CMPX ( REG_Y, IMM  ) ) /* CPY imm     */
+OP(c0, OP_CMPX ( REGISTER_Y, IMM  ) ) /* CPY imm     */
 OP(c1, OP_CMP  ( DXI         ) ) /* CMP dxi     */
 OP(c2, OP_REP  (             ) ) /* REP     (G) */
 OP(c3, OP_CMP  ( S           ) ) /* CMP s   (G) */
-OP(c4, OP_CMPX ( REG_Y, D    ) ) /* CPY d       */
+OP(c4, OP_CMPX ( REGISTER_Y, D    ) ) /* CPY d       */
 OP(c5, OP_CMP  ( D           ) ) /* CMP d       */
 OP(c6, OP_DECM ( D           ) ) /* DEC d       */
 OP(c7, OP_CMP  ( DLI         ) ) /* CMP dli (G) */
-OP(c8, OP_INCX ( REG_Y       ) ) /* INY         */
+OP(c8, OP_INCX ( REGISTER_Y       ) ) /* INY         */
 OP(c9, OP_CMP  ( IMM         ) ) /* CMP imm     */
-OP(ca, OP_DECX ( REG_X       ) ) /* DEX         */
+OP(ca, OP_DECX ( REGISTER_X       ) ) /* DEX         */
 OP(cb, OP_WAI  (             ) ) /* WAI     (G) */
-OP(cc, OP_CMPX ( REG_Y, A    ) ) /* CPY a       */
+OP(cc, OP_CMPX ( REGISTER_Y, A    ) ) /* CPY a       */
 OP(cd, OP_CMP  ( A           ) ) /* CMP a       */
 OP(ce, OP_DECM ( A           ) ) /* DEC a       */
 OP(cf, OP_CMP  ( AL          ) ) /* CMP al  (G) */
@@ -1997,25 +1997,25 @@ OP(d6, OP_DECM ( DX          ) ) /* DEC dx      */
 OP(d7, OP_CMP  ( DLIY        ) ) /* CMP dliy(G) */
 OP(d8, OP_CLD  (             ) ) /* CLD         */
 OP(d9, OP_CMP  ( AY          ) ) /* CMP ay      */
-OP(da, OP_PHX  ( REG_X       ) ) /* PHX     (C) */
+OP(da, OP_PHX  ( REGISTER_X       ) ) /* PHX     (C) */
 OP(db, OP_STP  (             ) ) /* STP     (G) */
 OP(dc, OP_JMLAI(             ) ) /* JML ai  (G) */
 OP(dd, OP_CMP  ( AX          ) ) /* CMP ax      */
 OP(de, OP_DECM ( AX          ) ) /* DEC ax      */
 OP(df, OP_CMP  ( ALX         ) ) /* CMP alx (G) */
-OP(e0, OP_CMPX ( REG_X, IMM  ) ) /* CPX imm     */
+OP(e0, OP_CMPX ( REGISTER_X, IMM  ) ) /* CPX imm     */
 OP(e1, OP_SBC  ( DXI         ) ) /* SBC dxi     */
 OP(e2, OP_SEP  (             ) ) /* SEP imm (G) */
 OP(e3, OP_SBC  ( S           ) ) /* SBC s   (G) */
-OP(e4, OP_CMPX ( REG_X, D    ) ) /* CPX d       */
+OP(e4, OP_CMPX ( REGISTER_X, D    ) ) /* CPX d       */
 OP(e5, OP_SBC  ( D           ) ) /* SBC d       */
 OP(e6, OP_INCM ( D           ) ) /* INC d       */
 OP(e7, OP_SBC  ( DLI         ) ) /* SBC dli (G) */
-OP(e8, OP_INCX ( REG_X       ) ) /* INX         */
+OP(e8, OP_INCX ( REGISTER_X       ) ) /* INX         */
 OP(e9, OP_SBC  ( IMM         ) ) /* SBC imm     */
 OP(ea, OP_NOP  (             ) ) /* NOP         */
 OP(eb, OP_XBA  (             ) ) /* XBA     (G) */
-OP(ec, OP_CMPX ( REG_X, A    ) ) /* CPX a       */
+OP(ec, OP_CMPX ( REGISTER_X, A    ) ) /* CPX a       */
 OP(ed, OP_SBC  ( A           ) ) /* SBC a       */
 OP(ee, OP_INCM ( A           ) ) /* INC a       */
 OP(ef, OP_SBC  ( AL          ) ) /* SBC al  (G) */
@@ -2029,7 +2029,7 @@ OP(f6, OP_INCM ( DX          ) ) /* INC dx      */
 OP(f7, OP_SBC  ( DLIY        ) ) /* SBC dliy(G) */
 OP(f8, OP_SED  (             ) ) /* SED         */
 OP(f9, OP_SBC  ( AY          ) ) /* SBC ay      */
-OP(fa, OP_PLX  ( REG_X       ) ) /* PLX     (C) */
+OP(fa, OP_PLX  ( REGISTER_X       ) ) /* PLX     (C) */
 OP(fb, OP_XCE  (             ) ) /* XCE     (G) */
 OP(fc, OP_JSRAXI(            ) ) /* JSR axi (G) */
 OP(fd, OP_SBC  ( AX          ) ) /* SBC ax      */
@@ -2132,21 +2132,23 @@ TABLE_FUNCTION(uint, get_reg, (int regnum))
 {
 	switch(regnum)
 	{
-		case G65816_A: return REG_B | REG_A;
-		case G65816_X: return REG_X;
-		case G65816_Y: return REG_Y;
-		case G65816_S: return REG_S;
-		case G65816_PC: return REG_PC;
-		case G65816_PB: return REG_PB >> 16;
-		case G65816_DB: return REG_DB >> 16;
-		case G65816_D: return REG_D;
+		case G65816_A: return REGISTER_B | REGISTER_A;
+		case G65816_X: return REGISTER_X;
+		case G65816_Y: return REGISTER_Y;
+		case REG_SP: return REGISTER_S;
+		case G65816_S: return REGISTER_S;
+		case REG_PC: return REGISTER_PC;
+		case G65816_PC: return REGISTER_PC;
+		case G65816_PB: return REGISTER_PB >> 16;
+		case G65816_DB: return REGISTER_DB >> 16;
+		case G65816_D: return REGISTER_D;
 		case G65816_P: return g65816i_get_reg_p();
 		case G65816_NMI_STATE: return LINE_NMI;
 		case G65816_IRQ_STATE: return LINE_IRQ;
-		case REG_PREVIOUSPC: return REG_PPC;
+		case REG_PREVIOUSPC: return REGISTER_PPC;
 		default:
 			if(regnum <= REG_SP_CONTENTS)
-				return read_16_NORM(REG_S + 2 * (REG_SP_CONTENTS - regnum));
+				return read_16_NORM(REGISTER_S + 2 * (REG_SP_CONTENTS - regnum));
 	}
 	return 0;
 }
@@ -2157,30 +2159,30 @@ TABLE_FUNCTION(void, set_reg, (int regnum, uint val))
 {
 	switch(regnum)
 	{
-		case G65816_PC: REG_PC = MAKE_UINT_16(val); break;
+		case REG_PC: case G65816_PC: REGISTER_PC = MAKE_UINT_16(val); break;
 #if FLAG_SET_E
-		case G65816_S: REG_S = MAKE_UINT_8(val) | 0x100; break;
+		case REG_SP: case G65816_S: REGISTER_S = MAKE_UINT_8(val) | 0x100; break;
 #else
-		case G65816_S: REG_S = MAKE_UINT_16(val); break;
+		case REG_SP: case G65816_S: REGISTER_S = MAKE_UINT_16(val); break;
 #endif
 		case G65816_P: g65816i_set_reg_p(val); break;
 #if FLAG_SET_M
-		case G65816_A: REG_A = MAKE_UINT_8(val); REG_B = val&0xff00; break;
+		case G65816_A: REGISTER_A = MAKE_UINT_8(val); REGISTER_B = val&0xff00; break;
 #else
-		case G65816_A: REG_A = MAKE_UINT_16(val); break;
+		case G65816_A: REGISTER_A = MAKE_UINT_16(val); break;
 #endif
 #if FLAG_SET_X
-		case G65816_X: REG_X = MAKE_UINT_8(val); break;
-		case G65816_Y: REG_Y = MAKE_UINT_8(val); break;
+		case G65816_X: REGISTER_X = MAKE_UINT_8(val); break;
+		case G65816_Y: REGISTER_Y = MAKE_UINT_8(val); break;
 #else
-		case G65816_X: REG_X = MAKE_UINT_16(val); break;
-		case G65816_Y: REG_Y = MAKE_UINT_16(val); break;
+		case G65816_X: REGISTER_X = MAKE_UINT_16(val); break;
+		case G65816_Y: REGISTER_Y = MAKE_UINT_16(val); break;
 #endif
 		case G65816_NMI_STATE: FTABLE_SET_LINE(G65816_LINE_NMI, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
 		case G65816_IRQ_STATE: FTABLE_SET_LINE(G65816_LINE_IRQ, val == 0 ? CLEAR_LINE : ASSERT_LINE); break;
 		default:
 			if(regnum <= REG_SP_CONTENTS)
-				write_16_NORM(REG_S + 2 * (REG_SP_CONTENTS - regnum), val);
+				write_16_NORM(REGISTER_S + 2 * (REG_SP_CONTENTS - regnum), val);
 	 }
 }
 
@@ -2191,11 +2193,11 @@ TABLE_FUNCTION(int, execute, (int clocks))
 		CLOCKS = clocks;
 		do
 		{
-			REG_PPC = REG_PC;
+			REGISTER_PPC = REGISTER_PC;
 			G65816_CALL_DEBUGGER;
-			REG_PC++;
-			REG_IR = read_8_IMM(REG_PB | REG_PPC);
-			FTABLE_OPCODES[REG_IR]();
+			REGISTER_PC++;
+			REGISTER_IR = read_8_IMM(REGISTER_PB | REGISTER_PPC);
+			FTABLE_OPCODES[REGISTER_IR]();
 			/* Note that I'm doing a per-instruction interrupt
 			 * check until this core is working well enough
 			 * to start trying fancy stuff.
