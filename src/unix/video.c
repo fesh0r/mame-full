@@ -71,6 +71,7 @@ static int video_verify_bpp(struct rc_option *option, const char *arg,
    int priority);
 static int video_verify_vectorres(struct rc_option *option, const char *arg,
    int priority);
+static void update_debug_display(struct mame_display *display);
 static void osd_free_colors(void);
 static void update_visible_area(struct mame_display *display);
 static void update_palette(struct mame_display *display, int force_dirty);
@@ -539,14 +540,44 @@ static void update_palette(struct mame_display *display, int force_dirty)
 	}
 }
 
+static void update_debug_display(struct mame_display *display)
+{
+	struct sysdep_palette_struct *backup_palette = current_palette;
+
+	if (!debug_palette)
+		debug_palette = sysdep_palette_create(16, 65536);
+	/* Initialize the lookup table for the debug palette. */
+	if (debug_palette)
+	{
+		int  i, r, g, b;
+
+		for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
+		{
+			/* extract the RGB values */
+			rgb_t rgbvalue = display->debug_palette[i];
+			r = RGB_RED(rgbvalue);
+			g = RGB_GREEN(rgbvalue);
+			b = RGB_BLUE(rgbvalue);
+
+			sysdep_palette_set_pen(debug_palette, 
+					i, r, g, b);
+		}
+	}
+
+	current_palette = debug_palette;
+	sysdep_update_display(display->debug_bitmap);
+	current_palette = backup_palette;
+}
+
 static void osd_free_colors(void)
 {
-   if(normal_palette)
+   if (normal_palette)
    {
       sysdep_palette_destroy(normal_palette);
       normal_palette = NULL;
    }
-   if(debug_palette)
+
+   if (debug_palette)
    {
       sysdep_palette_destroy(debug_palette);
       debug_palette = NULL;
@@ -577,7 +608,7 @@ void osd_debugger_focus(int new_debugger_focus)
    if( (!debugger_has_focus &&  new_debugger_focus) ||
        ( debugger_has_focus && !new_debugger_focus))
    {
-      if(new_debugger_focus)
+      if (new_debugger_focus)
          osd_change_display_settings(&debug_visual, debug_palette,
             1, 1, 0);
       else
@@ -594,7 +625,6 @@ void osd_update_video_and_audio(struct mame_display *display)
 //   struct rectangle updatebounds = display->game_bitmap_update;
    static int showfps = 0, showfpstemp = 0; 
    int skip_this_frame;
-   struct mame_bitmap *current_bitmap = display->game_bitmap;
    cycles_t curr;
    
 /* save the active bitmap for use in osd_clearbitmap, I know this
@@ -687,17 +717,6 @@ void osd_update_video_and_audio(struct mame_display *display)
          frameskipper = 1;
    }
    
-   if (display->debug_bitmap)
-   {
-      if (input_ui_pressed(IPT_UI_TOGGLE_DEBUG))
-         osd_debugger_focus(!debugger_has_focus);
-      if (debugger_has_focus)
-         current_bitmap = display->debug_bitmap;
-   }
-   /* this should not happen I guess, but better safe than sorry */
-   else if (debugger_has_focus)
-      osd_debugger_focus(0);
-
    if (keyboard_pressed (KEYCODE_LSHIFT))
    {
       int widthscale_mod  = 0;
@@ -761,8 +780,12 @@ void osd_update_video_and_audio(struct mame_display *display)
       update_visible_area(display);
 
    /* if the debugger focus changed, update it */
-   /*if (display->changed_flags & DEBUG_FOCUS_CHANGED)
-      win_set_debugger_focus(display->debug_focus); */
+   if (display->changed_flags & DEBUG_FOCUS_CHANGED)
+      osd_debugger_focus(display->debug_focus);
+
+   /* update the debugger */
+   if (display->changed_flags & DEBUG_BITMAP_CHANGED)
+      update_debug_display(display);
 
    /* if the game palette has changed, update it */
    if (force_dirty_palette)
@@ -794,16 +817,9 @@ void osd_update_video_and_audio(struct mame_display *display)
       }
 
       profiler_mark(PROFILER_BLIT);
-      sysdep_update_display(current_bitmap);
+      sysdep_update_display(display->game_bitmap);
       profiler_mark(PROFILER_END);
    }
-
-   /* update the debugger */
-   /*if (display->changed_flags & DEBUG_BITMAP_CHANGED)
-   {
-      win_update_debug_window(display->debug_bitmap, display->debug_palette);
-      debugger_was_visible = 1;
-   }*/
 
    /* if the LEDs have changed, update them */
    if (display->changed_flags & LED_STATE_CHANGED)
@@ -815,7 +831,7 @@ void osd_update_video_and_audio(struct mame_display *display)
 void osd_set_gamma(float gamma)
 {
    sysdep_palette_set_gamma(normal_palette, gamma);
-   if(debug_palette)
+   if (debug_palette)
       sysdep_palette_set_gamma(debug_palette, gamma);
 }
 
