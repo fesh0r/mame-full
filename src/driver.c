@@ -2918,6 +2918,7 @@ TESTDRIVER( msgundam )
 	/* NMK games */
 TESTDRIVER( macross )	/* (c) 1992 NMK + Big West */
 	DRIVER( bjtwin )	/* (c) 1993 NMK */
+	DRIVER( nouryoku )	/* (c) 1995 Tecmo */
 
 	/* Comad games */
 	DRIVER( zerozone )	/* (c) 1993 Comad */
