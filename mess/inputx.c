@@ -349,7 +349,6 @@ int inputx_validitycheck(const struct GameDriver *gamedrv)
 	struct InputCode *codes;
 	const struct InputPortTiny *ipt;
 	int port_count, i, j;
-	const char *str;
 	int error = 0;
 	unicode_char_t last_char = 0;
 	const struct CharInfo *ci;
