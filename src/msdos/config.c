@@ -1,10 +1,6 @@
 /*
  * Configuration routines.
  *
- * 19971219 support for mame.cfg by Valerio Verrando
- * 19980402 moved out of msdos.c (N.S.), generalized routines (BW)
- * 19980917 added a "-cheatfile" option (misc) in MAME.CFG      JCK
- * 20010803 added support for DB9 and TGX digital joysticks (Aley)
  */
 
 #include "driver.h"
@@ -137,6 +133,9 @@ static char pcrcfilename[256] = "";
 
 /* from zvg/zvgintrf.c, for zvg board */
 extern int zvg_enabled;
+extern int zvg_artwork_enabled;
+extern int zvg_overlay_enabled;
+extern int zvg_menu_enabled;
 
 /* from video.c, for centering tweaked modes */
 extern int center_x;
@@ -885,7 +884,10 @@ struct rc_option config_opts[] =
 	{ "centerx", NULL, rc_int, &center_x, "0", 0, 0, NULL, NULL },
 	{ "centery", NULL, rc_int, &center_y, "0", 0, 0, NULL, NULL },
 	{ "waitinterlace", NULL, rc_bool, &wait_interlace, "0", 0, 0, NULL, NULL },
-    { "zvg", NULL, rc_int, &zvg_enabled, "0", 0, 0, NULL, "support for ZVG board (www.zektor.com)" },
+	{ "zvg", NULL, rc_int, &zvg_enabled, "0", 0, 0, NULL, "support for ZVG board (www.zektor.com)" },
+	{ "zvg_overlay", NULL, rc_bool, &zvg_overlay_enabled, "0", 0, 0, NULL, "support for zvg game overlays" },
+	{ "zvg_artwork", NULL, rc_bool, &zvg_artwork_enabled, "0", 0, 0, NULL, "support for zvg game artwork" },
+	{ "zvg_menu", NULL, rc_bool, &zvg_menu_enabled, "0", 0, 0, NULL, "mame called from zvg menu" },
 
 	{ "224x288_h", NULL, rc_int, &tw224x288_h, "95", 0, 0, NULL, NULL },
 	{ "224x288_v", NULL, rc_int, &tw224x288_v, "84", 0, 0, NULL, NULL },
@@ -1023,6 +1025,7 @@ struct rc_option config_opts[] =
 	{ "language", NULL, rc_string, &s_language, "english", 0, 0, NULL, NULL },
 	{ "skip_disclaimer", NULL, rc_bool, &options.skip_disclaimer, "0", 0, 0, NULL, "skip displaying the disclaimer screen" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the game info screen" },
+	{ "skip_warnings", NULL, rc_bool, &options.skip_warnings, "0", 0, 0, NULL, "skip displaying the warnings" },
 	{ "crconly", NULL, rc_bool, &options.crc_only, "0", 0, 0, NULL, "use only CRC for all integrity checks" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 
@@ -1127,6 +1130,9 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	center_y					= get_int( "config", "centery", NULL, 0 );
 	wait_interlace				= get_bool( "config", "waitinterlace", NULL, 0 );
 	zvg_enabled 				= get_int( "config", "zvg", NULL, 0 );
+	zvg_artwork_enabled 		= get_bool( "config", "zvg_artwork", NULL, 0 );
+	zvg_overlay_enabled 		= get_bool( "config", "zvg_overlay", NULL, 0 );
+	zvg_menu_enabled 			= get_bool( "config", "zvg_menu", NULL, 0 );
 
 	/* get tweaked modes info */
 	tw224x288_h 				= get_int( "tweaked", "224x288_h",     NULL, 0x5f );
@@ -1194,6 +1200,7 @@ static void parse_cmdline( int argc, char **argv, int game_index )
 	options.pause_bright		= get_float( "config", "pause_brightness", NULL, 0.65, 0.5, 2.0 );
 	options.skip_disclaimer		= get_bool( "config", "skip_disclaimer", NULL, 0 );
 	options.skip_gameinfo		= get_bool( "config", "skip_gameinfo", NULL, 0 );
+	options.skip_warnings		= get_bool( "config", "skip_warnings", NULL, 0 );
 	options.crc_only			= get_bool( "config", "crconly", NULL, 0 );
 	s_bios						= get_string( "config", "bios", NULL, "default", NULL, NULL, NULL );
 

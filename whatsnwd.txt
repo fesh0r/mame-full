@@ -1,3 +1,26 @@
+
+0.92
+
+- Added -skip_warnings, -zvg_overlay, -zvg_artwork, -zvg_menu &
+  -zvg 3. [Mark Perreira]
+
+
+==========================================================================
+
+0.91
+
+- No changes.
+
+
+==========================================================================
+
+0.90
+
+- No changes.
+
+
+==========================================================================
+
 0.89
 
 - Debug version will build with new debugger, but won't function [smf].
