@@ -1185,20 +1185,15 @@ static READ_HANDLER ( d_pia1_pb_r_coco2 )
 	/* This handles the reading of the memory sense switch (pb2) for the CoCo 2 and 3,
 	 * and serial-in (pb0). Serial-in not yet implemented.
 	 */
+	int result;
 
-	switch( readinputport(12) & 0x18 )		/* Read dip switch setting "on motherboard" */
-	{
-		case 0x00: /* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
-			return (pia0_pb & 0x40) >> 4;
-			break;
-		case 0x08: /* 16K: wire pia1_pb2 high */
-			return 0x04;
-			break;
-		case 0x10: /* 4K: wire pia1_pb2 low */
-			return 0x00;
-			break;
-	}
-	return 0;
+	if (mess_ram_size <= 0x1000)
+		result = 0x00;					/* 4K: wire pia1_pb2 low */
+	else if (mess_ram_size <= 0x4000)
+		result = 0x04;					/* 16K: wire pia1_pb2 high */
+	else
+		result = (pia0_pb & 0x40) >> 4;	/* 32/64K: wire output of pia0_pb6 to input pia1_pb2  */
+	return result;
 }
 
 /***************************************************************************
