@@ -5,7 +5,7 @@
 VERSION = -DVERSION=37
 
 # uncomment out the BETA_VERSION = line to build a beta version of MAME
-BETA_VERSION = -DBETA_VERSION=7
+BETA_VERSION = -DBETA_VERSION=8
 
 # uncomment this to build an release canidate version
 # RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
@@ -168,7 +168,7 @@ WIN32_OBJS = \
          $(AUDIOOBJS) $(OBJ)/Win32/DirectSound.o $(OBJ)/Win32/NullSound.o \
          $(OBJ)/Win32/Keyboard.o $(OBJ)/Win32/Joystick.o $(OBJ)/Win32/Trak.o \
          $(OBJ)/Win32/file.o $(OBJ)/Win32/Directories.o $(OBJ)/Win32/mzip.o \
-         $(OBJ)/Win32/debug.o $(OBJ)/Win32/DebugKeyboard.o \
+         $(OBJ)/Win32/debug.o \
          $(OBJ)/Win32/fmsynth.o $(OBJ)/Win32/NTFMSynth.o \
          $(OBJ)/Win32/audit32.o \
          $(OBJ)/mess/Win32/mess32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
@@ -195,7 +195,6 @@ CPUOBJS = \
           $(OBJ)/cpu/t11/t11.o \
           $(OBJ)/cpu/s2650/s2650.o \
 	  $(OBJ)/cpu/f8/f8.o \
-          $(OBJ)/cpu/tms34010/tms34010.o $(OBJ)/cpu/tms34010/34010fld.o \
           $(OBJ)/cpu/tms9900/tms9980a.o \
           $(OBJ)/cpu/z8000/z8000.o \
           $(OBJ)/cpu/tms32010/tms32010.o \
@@ -299,6 +298,7 @@ COREOBJS = \
          $(OBJ)/vidhrdw/generic.o $(OBJ)/vidhrdw/vector.o \
          $(OBJ)/vidhrdw/avgdvg.o $(OBJ)/machine/mathbox.o \
          $(OBJ)/machine/ticket.o $(OBJ)/machine/eeprom.o \
+         $(OBJ)/machine/6522via.o \
 	 $(OBJ)/mamedbg.o $(OBJ)/window.o \
          $(OBJ)/profiler.o \
          $(NET_OBJS) \
@@ -309,15 +309,6 @@ COREOBJS = \
 		$(OBJ)/mess/tapectrl.o         \
 		$(OBJ)/mess/utils.o \
 		$(OBJ)/mess/machine/rriot.o	 \
-		$(OBJ)/mess/machine/riot.o	 \
-		$(OBJ)/mess/machine/pit8253.o  \
-		$(OBJ)/mess/machine/mc146818.o \
-		$(OBJ)/mess/machine/uart8250.o \
-		$(OBJ)/mess/machine/pc_mouse.o \
-		$(OBJ)/mess/machine/pclpt.o	 \
-		$(OBJ)/mess/machine/pckeybrd.o \
-		$(OBJ)/mess/machine/pc_fdc_h.o \
-		$(OBJ)/mess/machine/pc_flopp.o \
 		$(OBJ)/mess/machine/basicdsk.o \
 		$(OBJ)/mess/machine/wd179x.o   \
 		$(OBJ)/mess/diskctrl.o \
@@ -343,7 +334,7 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/genesis.o  \
           $(OBJ)/mess/machine/genesis.o  \
           $(OBJ)/mess/sndhrdw/genesis.o  \
-          $(OBJ)/mess/systems/genesis.o	\
+#          $(OBJ)/mess/systems/genesis.o	\
           $(OBJ)/mess/machine/atari.o    \
           $(OBJ)/mess/vidhrdw/antic.o    \
           $(OBJ)/mess/vidhrdw/gtia.o     \
@@ -369,9 +360,6 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/snes.o     \
           $(OBJ)/mess/machine/snes.o     \
           $(OBJ)/mess/systems/snes.o	\
-          $(OBJ)/mess/vidhrdw/amiga.o    \
-          $(OBJ)/mess/machine/amiga.o    \
-          $(OBJ)/mess/systems/amiga.o    \
           $(OBJ)/mess/vidhrdw/crtc6845.o \
           $(OBJ)/mess/machine/tpi6525.o  \
           $(OBJ)/mess/machine/cbmieeeb.o \
@@ -397,26 +385,28 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/cia6526.o  \
           $(OBJ)/mess/machine/c64.o      \
           $(OBJ)/mess/vidhrdw/vic6567.o  \
-          $(OBJ)/mess/sndhrdw/sid6581.o  \
           $(OBJ)/mess/systems/c65.o      \
           $(OBJ)/mess/machine/c65.o      \
-          $(OBJ)/mess/systems/c128.o     \
-          $(OBJ)/mess/vidhrdw/vdc8563.o  \
-          $(OBJ)/mess/vidhrdw/praster.o  \
-          $(OBJ)/mess/machine/c128.o     \
-          $(OBJ)/mess/sndhrdw/mixing.o   \
-          $(OBJ)/mess/sndhrdw/envelope.o \
-          $(OBJ)/mess/sndhrdw/samples.o  \
-          $(OBJ)/mess/sndhrdw/6581_.o	\
-          $(OBJ)/mess/vidhrdw/m6847.o    \
-          $(OBJ)/mess/machine/mc10.o     \
-          $(OBJ)/mess/systems/mc10.o     \
-          $(OBJ)/mess/formats/cocopak.o  \
-		  $(OBJ)/mess/formats/cococas.o \
-          $(OBJ)/mess/machine/counter.o   \
-          $(OBJ)/mess/vidhrdw/dragon.o   \
-          $(OBJ)/mess/machine/dragon.o   \
-          $(OBJ)/mess/systems/dragon.o	\
+	  $(OBJ)/mess/systems/c128.o	 \
+	  $(OBJ)/mess/vidhrdw/vdc8563.o  \
+	  $(OBJ)/mess/vidhrdw/praster.o  \
+	  $(OBJ)/mess/machine/c128.o	 \
+	  $(OBJ)/mess/sndhrdw/sid6581.o  \
+	  $(OBJ)/mess/sndhrdw/sid.o  \
+	  $(OBJ)/mess/sndhrdw/sidenvel.o  \
+	  $(OBJ)/mess/sndhrdw/sidvoice.o  \
+	  $(OBJ)/mess/vidhrdw/amiga.o	 \
+	  $(OBJ)/mess/machine/amiga.o	 \
+#	  $(OBJ)/mess/systems/amiga.o	 \
+	  $(OBJ)/mess/machine/counter.o  \
+	  $(OBJ)/mess/formats/cocopak.o  \
+	  $(OBJ)/mess/formats/cococas.o  \
+	  $(OBJ)/mess/vidhrdw/m6847.o	 \
+	  $(OBJ)/mess/machine/mc10.o	 \
+	  $(OBJ)/mess/systems/mc10.o	 \
+	  $(OBJ)/mess/vidhrdw/dragon.o	 \
+	  $(OBJ)/mess/machine/dragon.o	 \
+	  $(OBJ)/mess/systems/dragon.o   \
           $(OBJ)/mess/machine/trs80.o    \
           $(OBJ)/mess/vidhrdw/trs80.o    \
           $(OBJ)/mess/systems/trs80.o	\
@@ -529,12 +519,13 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/kim1.o     \
           $(OBJ)/mess/machine/kim1.o     \
           $(OBJ)/mess/systems/kim1.o	\
-          $(OBJ)/mess/vidhrdw/oric.o     \
-          $(OBJ)/mess/machine/oric.o     \
-          $(OBJ)/mess/systems/oric.o	\
-          $(OBJ)/mess/vidhrdw/microtan.o \
-          $(OBJ)/mess/machine/microtan.o \
-          $(OBJ)/mess/systems/microtan.o \
+	  $(OBJ)/mess/machine/mfmdisk.o  \
+	  $(OBJ)/mess/vidhrdw/microtan.o \
+	  $(OBJ)/mess/machine/microtan.o \
+	  $(OBJ)/mess/systems/microtan.o \
+	  $(OBJ)/mess/vidhrdw/oric.o	 \
+	  $(OBJ)/mess/machine/oric.o	 \
+	  $(OBJ)/mess/systems/oric.o	\
           $(OBJ)/mess/vidhrdw/vtech1.o   \
           $(OBJ)/mess/machine/vtech1.o   \
           $(OBJ)/mess/systems/vtech1.o   \
@@ -558,8 +549,8 @@ DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/bbc.o      \
           $(OBJ)/mess/machine/bbc.o      \
           $(OBJ)/mess/systems/bbc.o	\
-          $(OBJ)/vidhrdw/cps1.o          \
-          $(OBJ)/mess/systems/cpschngr.o	\
+	  $(OBJ)/vidhrdw/cps1.o 	 \
+	  $(OBJ)/mess/systems/cpschngr.o	\
           $(OBJ)/mess/systems/mtx.o	\
           $(OBJ)/mess/machine/iwm_lisa.o     \
           $(OBJ)/mess/machine/lisa.o     \
@@ -573,12 +564,17 @@ DRV_OBJS = \
           $(OBJ)/mess/machine/coupe.o    \
           $(OBJ)/mess/vidhrdw/coupe.o    \
           $(OBJ)/mess/systems/coupe.o	\
-          $(OBJ)/mess/machine/mz700.o    \
-          $(OBJ)/mess/vidhrdw/mz700.o    \
-          $(OBJ)/mess/systems/mz700.o    \
-          $(OBJ)/mess/machine/pocketc.o  \
-          $(OBJ)/mess/vidhrdw/pocketc.o  \
-          $(OBJ)/mess/systems/pocketc.o  \
+	  $(OBJ)/mess/vidhrdw/pocketc.o  \
+	  $(OBJ)/mess/systems/pocketc.o  \
+	  $(OBJ)/mess/vidhrdw/pc1401.o  \
+	  $(OBJ)/mess/machine/pc1401.o  \
+	  $(OBJ)/mess/vidhrdw/pc1350.o  \
+	  $(OBJ)/mess/machine/pc1350.o  \
+	  $(OBJ)/mess/vidhrdw/pc1251.o  \
+	  $(OBJ)/mess/machine/pc1251.o	\
+	  $(OBJ)/mess/machine/mz700.o	 \
+	  $(OBJ)/mess/vidhrdw/mz700.o	 \
+	  $(OBJ)/mess/systems/mz700.o	 \
           $(OBJ)/mess/machine/aquarius.o \
           $(OBJ)/mess/vidhrdw/aquarius.o \
           $(OBJ)/mess/systems/aquarius.o \
