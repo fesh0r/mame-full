@@ -48,7 +48,7 @@ TARGET = mame
 
 # Enable experimental network support.  See 
 # src/unix/doc/multiplayer-readme.txt for more information.
-# MAME_NET = 1
+# XMAME_NET = 1
 
 # Uncomment the next lines to use x86-asm cpu cores.  This is only
 # supported for x86 machines with nasm-0.98 or higher available in your
@@ -214,7 +214,7 @@ ifneq (,$(findstring gcc,$(CC)))
   # Produce faster floating point code that isn't IEEE/ISO-compliant.
   # CFLAGS += -ffast-math
 
-  # Strength reduction and elimization of iteration variables.
+  # Strength reduction and elimination of iteration variables.
   # CFLAGS += -fstrength-reduce
 
   # Enable minor optimizations that are relatively expensive.
@@ -491,6 +491,14 @@ ARCH  = linux
 
 # NetBSD/FreeBSD USB joystick support.
 # JOY_USB = 1
+
+# PlayStation2-linux native pad support.
+# JOY_PS2 = 1
+
+# This will enable the use of the Happ Controls UGCI(tm) USB devices'
+# Coin/Start inputs using the libugci library available from
+# http://www.phunnypharm.org/ugci/
+# UGCICOIN = 1
 
 
 ###########################################################################
