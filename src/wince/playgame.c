@@ -201,14 +201,14 @@ void osd_exit(void)
 
 void CLIB_DECL logerror(const char *text,...)
 {
-#ifdef _X86_
+#ifdef MAME_DEBUG
 	va_list arg;
 
 	/* standard vfprintf stuff here */
 	va_start(arg, text);
 
 	{
-		char szBuffer[256];
+		char szBuffer[512];
 		_vsnprintf(szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), text, arg);
 		OutputDebugString(A2T(szBuffer));
 	}

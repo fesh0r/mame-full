@@ -115,7 +115,7 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 	size_t nFailedAlloc;
 	LPTSTR lpError;
 	LPTSTR lpMessError = NULL;
-	TCHAR szBuffer[32];
+	TCHAR szBuffer[256];
 	struct ui_options opts;
 
 	opts.enable_sound			= GetMenuOption(s_hwndMain, ID_OPTIONS_ENABLESOUND);
@@ -147,6 +147,12 @@ static void SoftwareList_Run(struct SmartListView *pListView)
 		{
 			/* error reported with mess_printf() */
 			lpError = lpMessError;
+		}
+		else if (GetLastError())
+		{
+			/* error from system */
+			FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, GetLastError(), 0, szBuffer, sizeof(szBuffer) / sizeof(szBuffer[0]), NULL);
+			lpError = szBuffer;
 		}
 		else
 		{
