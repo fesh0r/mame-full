@@ -179,7 +179,7 @@ static struct MachineDriver machine_driver_lynx =
 	lynx_vh_screenrefresh,
 
 	/* sound hardware */
-	0,0,0,0,
+	SOUND_SUPPORTS_STEREO,0,0,0,
 	{
 		{SOUND_CUSTOM, &lynx_sound_interface},
 		{ 0 }
