@@ -83,7 +83,7 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    for calling this. Also because there can be 2 palette's for one
    display (the normal and debugger one in xmame for example) */
 #if 0
-   /* if the display is 8 bpp allocate the nescesarry pens for displays
+   /* if the display is 8 bpp allocate the necessary pens for displays
       with a shared palette like X */
    if (display_palette_info.depth == 8)
       if (sysdep_display_alloc_palette(writable_colors))
@@ -122,7 +122,7 @@ struct sysdep_palette_struct *sysdep_palette_create(int depth,
    /* build the emulated palette info */
    palette->emulated.writable_colors = writable_colors;
    palette->emulated.depth           = depth;
-   /* fill in the masks and shifts if nescesarry */
+   /* fill in the masks and shifts if necessary */
 
    /* if we're emulating a truecolor palette and we use a lookup
       table, we always emulate 555 rgb */
@@ -166,7 +166,6 @@ int sysdep_palette_make_pen(struct sysdep_palette_struct *palette,
    created. So also on recreation! */
 int sysdep_palette_change_display(struct sysdep_palette_struct **palette)
 {
-   int i;
    struct sysdep_palette_struct *new_palette = NULL;
    
    if(!(new_palette=sysdep_palette_create((*palette)->emulated.depth,
