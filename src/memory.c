@@ -1561,6 +1561,10 @@ dtype name##_dword(offs_t address)														\
 	}																					\
 }
 
+/* weird handler for pdp 1 */
+READBYTE(data8_t, cpu_readmem16_18,	TYPE_8BIT,	   18)
+READLONG(data32_t, cpu_readmem16_18,	TYPE_32BIT_BE,	   18, ALWAYS_ALIGNED)
+
 
 /* the handlers we need to generate */
 READBYTE(data8_t, cpu_readmem16,	TYPE_8BIT,	   16)
@@ -1848,6 +1852,12 @@ void name##_dword(offs_t address,dtype data)											\
 }
 
 
+/* weird handler for pdp 1 */
+WRITEBYTE(data8_t, cpu_writemem16_18,	TYPE_8BIT,	   18)
+WRITELONG(data32_t, cpu_writemem16_18,	TYPE_32BIT_BE,	   18, ALWAYS_ALIGNED)
+
+
+
 /* the handlers we need to generate */
 WRITEBYTE(data8_t,  cpu_writemem16,   TYPE_8BIT,	 16)
 WRITEBYTE(data8_t,  cpu_writemem20,   TYPE_8BIT,	 20)
@@ -1930,6 +1940,10 @@ void name(offs_t pc)																	\
 
 
 /* the handlers we need to generate */
+
+/* weird handler for pdp 1 */
+SETOPBASE(cpu_setOPbase16_18,	18,	   0)
+
 SETOPBASE(cpu_setOPbase16,     16,   0)
 SETOPBASE(cpu_setOPbase20,     20,   0)
 SETOPBASE(cpu_setOPbase21,     21,   0)
