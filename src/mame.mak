@@ -187,6 +187,8 @@ $(OBJ)/nintendo.a: \
 	$(OBJ)/vidhrdw/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/drivers/mario.o \
 	$(OBJ)/vidhrdw/popeye.o $(OBJ)/drivers/popeye.o \
 	$(OBJ)/vidhrdw/punchout.o $(OBJ)/drivers/punchout.o \
+	$(OBJ)/vidhrdw/playch10.o $(OBJ)/machine/playch10.o $(OBJ)/drivers/playch10.o \
+	$(OBJ)/machine/rp5h01.o $(OBJ)/vidhrdw/ppu2c03b.o
 
 $(OBJ)/midw8080.a: \
 	$(OBJ)/machine/8080bw.o $(OBJ)/machine/74123.o \

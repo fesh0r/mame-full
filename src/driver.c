@@ -505,6 +505,19 @@ TESTDRIVER( herocast )
 	DRIVER( spnchout )	/* (c) 1984 */
 	DRIVER( spnchotj )	/* (c) 1984 (Japan) */
 	DRIVER( armwrest )	/* (c) 1985 */
+	/* Playchoice 10 */
+	DRIVER( pc_ebike )	/* 1984 Nintendo */
+	DRIVER( pc_smb	 )	/* 1985 Nintendo */
+	DRIVER( pc_duckh )	/* 1984 Nintendo of America */
+	DRIVER( pc_tkfld )	/* 1987 Konami (Nintendo of America License) */
+	DRIVER( pc_pwrst )	/* 1986 Nintendo */
+	DRIVER( pc_rnatk )	/* 1987 Konami (Nintendo of America License) */
+	DRIVER( pc_cntra )	/* 1988 Konami (Nintendo of America License) */
+	DRIVER( pc_goons )	/* 1986 Konami (Nintendo of America License) */
+	DRIVER( pc_miket )	/* 1987 Nintendo */
+	DRIVER( pc_ngaid )	/* 1989 Tecmo (Nintendo of America License) */
+	DRIVER( pc_ddrgn )	/* 198? Tecmo (Nintendo of America License) */
+	DRIVER( pc_smb3  )	/* 1988 Nintendo */
 
 	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
