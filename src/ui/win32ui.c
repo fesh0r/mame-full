@@ -23,7 +23,11 @@
   Nov/Dec 1998 - Mike Haaland
 
 ***************************************************************************/
+#ifdef MESS
+#define MULTISESSION 0
+#else
 #define MULTISESSION 1
+#endif
 
 #ifdef _MSC_VER
 #ifndef NONAMELESSUNION
@@ -2245,9 +2249,11 @@ static void Win32UI_exit()
 static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lParam)
 {
 	MINMAXINFO	*mminfo;
+#if MULTISESSION
 	int nGame;
 	HWND hGameWnd;
 	long lGameWndStyle;
+#endif // MULTISESSION
 
 
 	int 		i;
@@ -2328,6 +2334,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			TabView_UpdateSelection(hTabCtrl);
 			break;
 		case GAMEWND_TIMER:
+#if MULTISESSION
 			nGame = Picker_GetSelectedItem(hwndList);
 			if( ! GetGameCaption() )
 			{
@@ -2342,6 +2349,7 @@ static long WINAPI MameWindowProc(HWND hWnd, UINT message, UINT wParam, LONG lPa
 			}
 			if( SendIconToEmulationWindow(nGame)== TRUE);
 				KillTimer(hMain, GAMEWND_TIMER);
+#endif // MULTISESSION
 			break;
 		default:
 			break;
