@@ -13,6 +13,8 @@ New System Drivers Supported (in no particular order):
 System Driver Changes:
 ----------------------
 
+- [NC100/NC200] Implemented serial hardware. Programs can be loaded into emulation
+using the NC's terminal program [Kev Thacker]
 
 Other Changes:
 --------------
