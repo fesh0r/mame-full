@@ -1912,4 +1912,6 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 	   to init the palette and remap the colors now */
 	if (Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE)
 		backdrop_set_palette(artwork_overlay,artwork_overlay->orig_palette);
+
+	overlay_remap();
 }
