@@ -71,8 +71,9 @@ endif
 OBJ = obj/$(NAME)
 
 EMULATOR = $(NAME)$(EXE)
+GUIEMULATOR = $(NAME)gui$(EXE)
 
-DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__
+DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DWIN32 -DWINNT -D_WIN32_WINNT=0x0400
 
 ifdef SYMBOLS
 CFLAGS = -I. -Isrc -Imess -Isrc/$(MAMEOS) -Imess/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000 \
@@ -121,7 +122,8 @@ OBJDIRS += 	$(OBJ)/mess         $(OBJ)/mess/$(MAMEOS)            \
 		$(OBJ)/mess/formats $(OBJ)/mess/tools                \
 		$(OBJ)/mess/tools/dat2html $(OBJ)/mess/tools/mkhdimg \
 		$(OBJ)/mess/tools/messroms $(OBJ)/mess/tools/imgtool \
-		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound
+		$(OBJ)/mess/tools/mkimage  $(OBJ)/mess/sound \
+		$(OBJ)/windowsui $(OBJ)/mess/windowsui
 
 #MESS CPU's
 OBJDIRS += $(OBJ)/mess/cpu
@@ -158,7 +160,17 @@ $(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(CMDOSOBJS) $(DRVLIBS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(CMDOSOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
 ifndef DEBUG
-	upx -9 $(EMULATOR)
+	upx -9 $@
+endif
+
+# gui target
+$(GUIEMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(DRVLIBS)
+# always recompile the version string
+	$(CC) $(CDEFS) $(CFLAGS) -c src/version.c -o $(OBJ)/version.o
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OBJS) $(COREOBJS) $(OSOBJS) $(GUIOBJS) $(LIBS) $(DRVLIBS) -o $@ $(MAPFLAGS)
+ifndef DEBUG
+	upx -9 $@
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
