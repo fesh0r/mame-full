@@ -117,7 +117,7 @@ READ_HANDLER( snes_r_bank2 )
 		if( rom_mode == MODE_20 )
 			return 0xff;
 		else	/* MODE_21 */
-			return 0xff;	/* FIXME: this should be sram */
+			return snes_ram[0x300000 + offset];		/* FIXME: this should be sram */
 	}
 	else
 	{
