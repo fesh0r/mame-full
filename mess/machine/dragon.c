@@ -1538,7 +1538,7 @@ void coco_cassette_exit(int id)
  * ---------------------------------------------------------------------------
  */
 
-static const char *floppy_name[4];
+static int flop_specified[4];
 static int haltenable;
 static int dskreg;
 static int raise_nmi;
@@ -1557,14 +1557,14 @@ static void coco_fdc_init(void)
 
 int coco_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return INIT_OK;
 }
 
 void coco_floppy_exit(int id)
 {
 	wd179x_select_drive(id, 0, NULL, NULL);
-	floppy_name[id] = NULL;
+	flop_specified[id] = 0;
 }
 
 static void coco_fdc_callback(int event)
@@ -1644,7 +1644,7 @@ static void set_dskreg(int data, int hardware)
 	dskreg = data;
 
 	if (data & motor_mask) {
-		fd = wd179x_select_drive(drive, head, coco_fdc_callback, floppy_name[drive]);
+		fd = wd179x_select_drive(drive, head, coco_fdc_callback, device_filename(IO_FLOPPY,drive));
 		if (fd) {
 			/* For now, assume that real floppies are always 35 tracks */
 			tracks = (fd == REAL_FDD) ? 35 : (osd_fsize(fd) / (18*256));

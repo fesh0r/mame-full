@@ -12,7 +12,7 @@
 #include "machine/wd179x.h"
 #include "machine/mbee.h"
 
-static const char *floppy_name[4] = {NULL,NULL,NULL,NULL};
+static int flop_specified[4] = {0,0,0,0};
 static void *fdc_file[4] = {NULL,NULL};
 static UINT8 fdc_drv = 0;
 static UINT8 fdc_head = 0;
@@ -122,7 +122,7 @@ WRITE_HANDLER ( mbee_fdc_motor_w )
 	fdc_drv = data & 3;
 	fdc_head = (data >> 2) & 1;
 	fdc_den = (data >> 3) & 1;
-	fdc_file[fdc_drv] = wd179x_select_drive(fdc_drv, fdc_head, mbee_fdc_callback, floppy_name[fdc_drv]);
+	fdc_file[fdc_drv] = wd179x_select_drive(fdc_drv, fdc_head, mbee_fdc_callback, device_filename(IO_FLOPPY,fdc_drv));
 }
 
 int mbee_interrupt(void)
@@ -178,7 +178,7 @@ void mbee_cassette_exit(int id)
 
 int mbee_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return 0;
 }
 

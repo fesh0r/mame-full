@@ -87,13 +87,14 @@ return crc;
 int a7800_id_rom (int id)
 {
     FILE *romfile;
-    const char *gamename = device_filename(IO_CARTSLOT,id);
+	
     char header[128];
     char tag[] = "ATARI7800";
 
     logerror("A7800 IDROM\n");
     /* If no file was specified, don't bother */
-	if (strlen(gamename) == 0)
+	if (device_filename(IO_CARTSLOT,id) == NULL ||
+		strlen(device_filename(IO_CARTSLOT,id)) == 0)
 		return ID_FAILED;
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0))) {
@@ -124,7 +125,7 @@ void a7800_exit_rom (int id)
 
 int a7800_load_rom (int id)
 {
-    const char *rom_name = device_filename(IO_CARTSLOT,id);
+	
     FILE *cartfile;
     long len,start;
     unsigned char header[128];
@@ -133,14 +134,15 @@ int a7800_load_rom (int id)
 
     /* A cartridge isn't strictly mandatory, but it's recommended */
     cartfile = NULL;
-	if (!rom_name || strlen(rom_name) == 0)
+	if (device_filename(IO_CARTSLOT,id) == NULL ||
+		strlen(device_filename(IO_CARTSLOT,id)) == 0)
     {
         logerror("A7800 - warning: no cartridge specified!\n");
     }
 	else
 	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
     {
-        logerror("A7800 - Unable to locate cartridge: %s\n",rom_name);
+		logerror("A7800 - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) == NULL);
         return 1;
     }
 

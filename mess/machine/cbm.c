@@ -26,7 +26,7 @@ void *cbm_memset16 (void *dest, int value, size_t size)
 
 static struct
 {
-	const char *name;
+	int specified;
 	unsigned short addr;
 	UINT8 *data;
 	int length;
@@ -38,13 +38,13 @@ int cbm_quick_init (int id)
 	FILE *fp;
 	int read;
 	char *cp;
-	const char *name=device_filename(IO_QUICKLOAD, id);
 
 	memset (&quick, 0, sizeof (quick));
 
-	if (name==NULL) return INIT_OK;
+	if (device_filename(IO_QUICKLOAD, id) == NULL)
+		return INIT_OK;
 
-	quick.name = name;
+	quick.specified = 1;
 
 	fp = image_fopen (IO_QUICKLOAD, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
@@ -52,7 +52,7 @@ int cbm_quick_init (int id)
 
 	quick.length = osd_fsize (fp);
 
-	if ((cp = strrchr (name, '.')) != NULL)
+	if ((cp = strrchr (device_filename(IO_QUICKLOAD, id), '.')) != NULL)
 	{
 		if (stricmp (cp, ".prg") == 0)
 		{
@@ -106,7 +106,7 @@ int cbm_quick_open (int id, int mode, void *arg)
 	memory[0x31] = memory[0x2f] = memory[0x2d] = addr & 0xff;
 	memory[0x32] = memory[0x30] = memory[0x2e] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -124,7 +124,7 @@ int cbm_pet_quick_open (int id, int mode, void *arg)
 	memory[0x2e] = memory[0x2c] = memory[0x2a] = addr & 0xff;
 	memory[0x2f] = memory[0x2d] = memory[0x2b] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -142,7 +142,7 @@ int cbm_pet1_quick_open (int id, int mode, void *arg)
 	memory[0x80] = memory[0x7e] = memory[0x7c] = addr & 0xff;
 	memory[0x81] = memory[0x7f] = memory[0x7d] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -160,7 +160,7 @@ int cbmb_quick_open (int id, int mode, void *arg)
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -178,7 +178,7 @@ int cbm500_quick_open (int id, int mode, void *arg)
 	memory[0xf0046] = addr & 0xff;
 	memory[0xf0047] = addr >> 8;
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -197,7 +197,7 @@ int cbm_c65_quick_open (int id, int mode, void *arg)
 	memory[0x83] = addr >> 8;
 
 	logerror("quick loading %s at %.4x size:%.4x\n",
-				 quick.name, quick.addr, quick.length);
+				 device_filename(IO_QUICKLOAD,id), quick.addr, quick.length);
 
 	return 0;
 }
@@ -232,10 +232,10 @@ int cbm_rom_init(int id)
 	int size, j, read;
 	char *cp;
 	unsigned int adr = 0;
-	const char *name=device_filename(IO_CARTSLOT,id);
 	const struct IODevice *dev;
 
-	if (name==NULL) return INIT_OK;
+	if (device_filename(IO_CARTSLOT,id) == NULL)
+		return INIT_OK;
 
 	for (i=0;(i<sizeof(cbm_rom)/sizeof(cbm_rom[0]))&&(cbm_rom[i].size!=0);i++)
 		;
@@ -247,13 +247,13 @@ int cbm_rom_init(int id)
 	fp = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 	if (!fp)
 	{
-		logerror("%s file not found\n", name);
+		logerror("%s file not found\n", device_filename(IO_CARTSLOT,id));
 		return INIT_FAILED;
 	}
 
 	size = osd_fsize (fp);
 
-	if ((cp = strrchr (name, '.')) != NULL)
+	if ((cp = strrchr (device_filename(IO_CARTSLOT,id), '.')) != NULL)
 	{
 		if (stricmp (cp, ".prg") == 0)
 		{
@@ -263,7 +263,7 @@ int cbm_rom_init(int id)
 			logerror("rom prg %.4x\n", in);
 			size -= 2;
 			logerror("loading rom %s at %.4x size:%.4x\n",
-						 name, in, size);
+						 device_filename(IO_CARTSLOT,id), in, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAILED;
@@ -282,7 +282,7 @@ int cbm_rom_init(int id)
 			osd_fseek (fp, 64, SEEK_SET);
 			j = 64;
 			logerror("loading rom %s size:%.4x\n",
-						 name, size);
+						 device_filename(IO_CARTSLOT,id), size);
 			while (j < size)
 			{
 				unsigned short segsize;
@@ -352,7 +352,7 @@ int cbm_rom_init(int id)
 				adr = 0xf000;
 			else adr = CBM_ROM_ADDR_UNKNOWN;
 			logerror("loading %s rom at %.4x size:%.4x\n",
-						 name, adr, size);
+						 device_filename(IO_CARTSLOT,id), adr, size);
 			if (!(cbm_rom[i].chip=malloc(size)) ) {
 				osd_fclose(fp);
 				return INIT_FAILED;

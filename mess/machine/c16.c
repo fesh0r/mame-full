@@ -28,8 +28,7 @@ static UINT8 keyline[10] =
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff
 };
 
-static const char *romnames[2] =
-{0};
+static int rom_specified[2] = {0};
 
 /*
  * tia6523
@@ -813,8 +812,7 @@ void c16_init_machine (void)
 
 	cbm_serial_reset_write (0);
 
-	for (i = 0; (romnames[i] != 0) && (i < sizeof (romnames) / sizeof (romnames[0]));
-		 i++)
+	for (i = 0; rom_specified[i] && (i < sizeof (rom_specified) / sizeof (rom_specified[0])); i++)
 		c16_rom_load (i);
 
 }
@@ -825,8 +823,8 @@ void c16_shutdown_machine (void)
 
 int c16_rom_init (int id)
 {
-    romnames[id] = device_filename(IO_CARTSLOT,id);
-	return (romnames[id]==NULL) || !c16_rom_id(id);
+	rom_specified[id] = device_filename(IO_CARTSLOT,id) != NULL;
+	return rom_specified[id] || !c16_rom_id(id);
 }
 
 

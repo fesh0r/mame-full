@@ -1006,11 +1006,10 @@ int a2600_id_rom(int id)
 
 int a2600_load_rom(int id)
 {
-	const char *rom_name = device_filename(IO_CARTSLOT, id);
 	FILE *cartfile;
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	if (rom_name == NULL)
+	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
 		printf("a2600 Requires Cartridge!\n");
 		return INIT_FAILED;

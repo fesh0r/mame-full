@@ -35,10 +35,9 @@ int advision_id_rom (int id)
 
 int advision_load_rom (int id)
 {
-    const char *rom_name = device_filename(IO_CARTSLOT,id);
     FILE *cartfile;
 
-	if(rom_name==NULL)
+	if(device_filename(IO_CARTSLOT,id) == NULL)
 	{
 		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return INIT_FAILED;
@@ -48,7 +47,7 @@ int advision_load_rom (int id)
     cartfile = NULL;
 	if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		logerror("Advision - Unable to locate cartridge: %s\n",rom_name);
+		logerror("Advision - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
 		return 1;
 	}
 	osd_fread (cartfile, &ROM[0x0000], 4096);

@@ -31,7 +31,7 @@ static	UINT8			irq_status = 0;
 static UINT8 first_fdc_access = 1;
 static UINT8 motor_drive = 0;				/* currently running drive */
 static short motor_count = 0;				/* time out for motor in frames */
-static const char *floppy_name[4] = {0,};	/* filenames of the images */
+static int flop_specified[4] = {0,};		/* filenames specified for the images? */
 static UINT8 tracks[4] = {0, }; 			/* total tracks count per drive */
 static UINT8 heads[4] = {0, };				/* total heads count per drive */
 static UINT8 spt[4] = {0, };				/* sector per track count per drive */
@@ -305,20 +305,20 @@ void trs80_cmd_exit(int id)
 
 int trs80_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return 0;
 }
 
 void trs80_floppy_exit(int id)
 {
 	wd179x_stop_drive();
-    floppy_name[id] = NULL;
+	flop_specified[id] = 0;
     first_fdc_access = 1;
 }
 
 void trs80_init_machine(void)
 {
-	if( floppy_name[0] )
+	if( flop_specified[0] )
 		wd179x_init(1);
 	else
 		wd179x_init(0);
@@ -745,7 +745,7 @@ WRITE_HANDLER( trs80_motor_w )
 		return;
 
 	/* no image name given for that drive ? */
-	if (!floppy_name[drive])
+	if (!flop_specified[drive])
 		return;
 
 	/* currently selected drive */
@@ -755,7 +755,7 @@ WRITE_HANDLER( trs80_motor_w )
 	motor_count = 5 * 60;
 
 	/* select the drive / head */
-	file0 = wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
+	file0 = wd179x_select_drive(drive, head[drive], trs80_fdc_callback, device_filename(IO_FLOPPY,drive));
 
 	if (!file0)
 		return;
@@ -771,7 +771,7 @@ WRITE_HANDLER( trs80_motor_w )
 	/* read first bytes from boot sector */
 	for (n = 0; n < 4; n++)
 	{
-		file1 = wd179x_select_drive(n, head[n], trs80_fdc_callback, floppy_name[n]);
+		file1 = wd179x_select_drive(n, head[n], trs80_fdc_callback, device_filename(IO_FLOPPY,n));
 		if (!file1)
 			continue;
 		if (file1 == REAL_FDD)
@@ -805,7 +805,7 @@ WRITE_HANDLER( trs80_motor_w )
         }
 		wd179x_set_geometry(n, tracks[n], heads[n], spt[n], 256, dir_sector[n], dir_length[n], 0);
 	}
-	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, floppy_name[drive]);
+	wd179x_select_drive(drive, head[drive], trs80_fdc_callback, device_filename(IO_FLOPPY,drive));
 }
 
 /*************************************

@@ -25,28 +25,27 @@ static int JoyMode=0;
 int coleco_id_rom (int id)
 {
 	FILE *romfile;
-	const char *gamename = device_filename(IO_CARTSLOT,id);
 	unsigned char magic[2];
-	int retval;
+	int retval = ID_FAILED;
 
 	logerror("---------coleco_id_rom-----\n");
-	logerror("Gamename is %s\n",gamename);
+	logerror("Gamename is %s\n",device_filename(IO_CARTSLOT,id));
 	logerror("filetype is %d\n",OSD_FILETYPE_IMAGE_R);
 
 	/* If no file was specified, don't bother */
-	if (!gamename || !gamename[0])
-		return 1;
+	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id)) )
+		return ID_OK;
 
 	if (!(romfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
-		return 0;
+		return ID_FAILED;
 
 	retval = 0;
 	/* Verify the file is in Colecovision format */
 	osd_fread (romfile, magic, 2);
 	if ((magic[0] == 0xAA) && (magic[1] == 0x55))
-		retval = 1;
+		retval = ID_OK;
 	if ((magic[0] == 0x55) && (magic[1] == 0xAA))
-		retval = 1;
+		retval = ID_OK;
 
 	osd_fclose (romfile);
 	return retval;
@@ -55,24 +54,23 @@ int coleco_id_rom (int id)
 int coleco_load_rom (int id)
 {
     FILE *cartfile;
-	const char *rom_name = device_filename(IO_CARTSLOT,id);
 
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	logerror("---------coleco_load_rom-----\n");
 	logerror("filetype is %d  \n",OSD_FILETYPE_IMAGE_R);
 	logerror("Machine->game->name is %s  \n",Machine->gamedrv->name);
-	logerror("romname[0] is %s  \n",rom_name);
+	logerror("romname[0] is %s  \n",device_filename(IO_CARTSLOT,id));
 
 	/* A cartridge isn't strictly mandatory, but it's recommended */
 	cartfile = NULL;
-	if (!rom_name || !rom_name[0])
+	if (!device_filename(IO_CARTSLOT,id) || !strlen(device_filename(IO_CARTSLOT,id) ))
 	{
 		logerror("Coleco - warning: no cartridge specified!\n");
 	}
 	else if (!(cartfile = image_fopen (IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0)))
 	{
-		logerror("Coleco - Unable to locate cartridge: %s\n",rom_name);
+		logerror("Coleco - Unable to locate cartridge: %s\n",device_filename(IO_CARTSLOT,id) );
 		return 1;
 	}
 

@@ -77,7 +77,7 @@ static PDRIVE pd_list[12] = {
 #define IRQ_FDC         0x40
 static UINT8 irq_status = 0;
 
-static const char *floppy_name[4] = {0,};
+static int flop_specified[4] = {0,};
 static UINT8 first_fdc_access[4] = {1, 1, 1, 1};
 static UINT8 motor_drive = 0;
 static short motor_count = 0;
@@ -89,7 +89,7 @@ static UINT8 head[4] = {0,};
 static short dir_sector[4] = {0,};
 static short dir_length[4] = {0,};
 
-static const char *cassette_name = NULL;
+static int cass_specified = 0;
 /* current tape file handles */
 static char tape_name[12+1];
 static void *tape_put_file = 0;
@@ -133,7 +133,7 @@ static OPBASE_HANDLER (opbaseoverride)
 	if( cgenie_load_cas && RAM[0x4400+3*40] == 0x3e )
     {
 		cgenie_load_cas = 0;
-		if( cassette_name && cassette_name[0] )
+		if( cass_specified && strlen(device_filename(IO_CASSETTE,0)) )
 		{
 			UINT8 *buff = malloc(65536), *s, data;
 			UINT16 size, entry = 0, block_len, block_ofs = 0;
@@ -149,7 +149,7 @@ static OPBASE_HANDLER (opbaseoverride)
 				  cmd = image_fopen(IO_SNAPSHOT, 0, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 			if( !cmd )
             {
-				logerror("failed to open '%s'\n", cassette_name);
+				logerror("failed to open '%s'\n", device_filename(IO_CASSETTE,0));
             }
 			else
 			{
@@ -276,13 +276,13 @@ void cgenie_init_machine(void)
 	if( readinputport(0) & 0x80 )
 	{
 		logerror("cgenie floppy discs enabled\n");
-		if( floppy_name[0] && floppy_name[0][0] )
+		if( flop_specified[0] && strlen(device_filename(IO_FLOPPY,0)) )
 		{
             wd179x_init(1);
-			first_fdc_access[0] = (floppy_name[0]&&floppy_name[0][0]) ? 1 : 0;
-			first_fdc_access[1] = (floppy_name[1]&&floppy_name[1][0]) ? 1 : 0;
-			first_fdc_access[2] = (floppy_name[2]&&floppy_name[2][0]) ? 1 : 0;
-			first_fdc_access[3] = (floppy_name[3]&&floppy_name[3][0]) ? 1 : 0;
+			first_fdc_access[0] = strlen(device_filename(IO_FLOPPY,0)) > 0;
+			first_fdc_access[1] = strlen(device_filename(IO_FLOPPY,1)) > 0;
+			first_fdc_access[2] = strlen(device_filename(IO_FLOPPY,2)) > 0;
+			first_fdc_access[3] = strlen(device_filename(IO_FLOPPY,3)) > 0;
 		}
 		else
 		{
@@ -299,7 +299,7 @@ void cgenie_init_machine(void)
 	/* copy DOS ROM, if enabled or wipe out that memory area */
 	if( readinputport(0) & 0x40 )
 	{
-		if( floppy_name[0] && floppy_name[0][0] )
+		if( flop_specified[0] && strlen(device_filename(IO_FLOPPY,0)) )
 		{
             install_mem_read_handler(0, 0xc000, 0xdfff, MRA_ROM);
             install_mem_write_handler(0, 0xc000, 0xdfff, MWA_ROM);
@@ -361,13 +361,13 @@ void cgenie_stop_machine(void)
 
 int cgenie_cassette_init(int id)
 {
-	cassette_name = device_filename(IO_CASSETTE,id);
+	cass_specified = device_filename(IO_CASSETTE,id) != NULL;
 	return 0;
 }
 
 int cgenie_floppy_init(int id)
 {
-	floppy_name[id] = device_filename(IO_FLOPPY,id);
+	flop_specified[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return 0;
 }
 
@@ -1044,7 +1044,7 @@ void cgenie_motor_w(int offset, int data)
 		return;
 
 	/* no floppy name given for that drive ? */
-	if( !floppy_name[drive] )
+	if( !flop_specified[drive] )
 		return;
 
 	/* mask head select bit */
@@ -1057,7 +1057,7 @@ void cgenie_motor_w(int offset, int data)
 	motor_count = 5 * 60;
 
 	/* select the drive / head */
-	file = wd179x_select_drive(drive, head[drive], cgenie_fdc_callback, floppy_name[drive]);
+	file = wd179x_select_drive(drive, head[drive], cgenie_fdc_callback, device_filename(IO_FLOPPY,drive));
 
 	if( !file )
 		return;

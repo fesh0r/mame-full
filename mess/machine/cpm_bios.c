@@ -40,7 +40,7 @@ static int mode[NDSK] = {0,};		/* 0 read only, !0 read/write */
 static int bdos_trk[NDSK] = {0,};	/* BDOS track number */
 static int bdos_sec[NDSK] = {0,};	/* BDOS sector number */
 static void *fp[NDSK] = {NULL, };	/* image file pointer */
-static const char *fn[NDSK] = {NULL, }; /* image filenames */
+static int ff[NDSK] = {0, };		/* image filenames specified flags */
 static void *lp = NULL; 			/* list file handle (ie. PIP LST:=X:FILE.EXT) */
 //static void *pp = NULL;			/* punch file handle (ie. PIP PUN:=X:FILE.EXT) */
 //static void *rp = NULL;			/* reader file handle (ie. PIP X:FILE.EXE=RDR:) */
@@ -350,7 +350,7 @@ void cpm_jumptable(void)
 
 int cpm_floppy_init(int id)
 {
-	fn[id] = device_filename(IO_FLOPPY,id);
+	ff[id] = device_filename(IO_FLOPPY,id) != NULL;
 	return 0;
 }
 
@@ -489,17 +489,17 @@ int cpm_init(int n, const char *ids[])
 		RAM[DPH0 + d * DPHL + 15] = dph[d].alv >> 8;
 
 		/* now try to open the image if a filename is given */
-		if( fn[d] && strlen(fn[d]) )
+		if( ff[d] && strlen(device_filename(IO_FLOPPY,d)) )
 		{
 			/* fake name to access the real floppy disk drive A: */
-			if( !stricmp(fn[d], "fd0.dsk") )
+			if( !stricmp(device_filename(IO_FLOPPY,d), "fd0.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 0;
 			}
 			else
 			/* fake name to access the real floppy disk drive B: */
-			if( !stricmp(fn[d], "fd1.dsk") )
+			if( !stricmp(device_filename(IO_FLOPPY,d), "fd1.dsk") )
 			{
 				fp[d] = REAL_FDD;
 				dsk[d].unit = 1;
@@ -520,7 +520,7 @@ int cpm_init(int n, const char *ids[])
 				}
 				if( !fp[d] )
 				{
-					fn[d] = NULL;
+					ff[d] = 0;
 				}
 			}
 		}
@@ -540,7 +540,7 @@ int cpm_init(int n, const char *ids[])
  *****************************************************************************/
 void cpm_exit(void)
 {
-int d;
+	int d;
 
 	/* if a list file is still open close it now */
 	if (lp)

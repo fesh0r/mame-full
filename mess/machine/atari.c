@@ -139,9 +139,8 @@ void a800_floppy_exit(int id)
 int a800_rom_init(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-	const char *name = device_filename(IO_CARTSLOT,id);
-    const char *filename;
-	void *file;
+	const char *filename;
+    void *file;
 	int size;
 
 	/* load an optional monitor.rom */
@@ -159,9 +158,8 @@ int a800_rom_init(int id)
 	}
 
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
-	if( name && strlen(name) )
+	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
-		filename = name;
 		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 		if( file )
 		{
@@ -170,7 +168,7 @@ int a800_rom_init(int id)
 				size = osd_fread(file, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = (size == 0x2000);
 				osd_fclose(file);
-				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, filename);
+				logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
 			}
 			else
 			{
@@ -179,14 +177,14 @@ int a800_rom_init(int id)
 				size = osd_fread(file, &mem[0x12000], 0x2000);
 				a800_cart_is_16k = size > 0x2000;
 				osd_fclose(file);
-				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, filename, (a800_cart_is_16k) ? "16K":"8K");
+				logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) , (a800_cart_is_16k) ? "16K":"8K");
 			}
 			if( a800_cart_loaded )
 				a800_setbank(1);
 		}
 		else
 		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, filename);
+			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_OK;
@@ -232,7 +230,6 @@ void a800xl_init_machine(void)
 int a800xl_load_rom(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-    const char *name = device_filename(IO_CARTSLOT,id);
 	const char *filename;
 	void *file;
 	unsigned size;
@@ -251,9 +248,8 @@ int a800xl_load_rom(int id)
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if( name && strlen(name) )
+	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id)) )
 	{
-		filename = name;
 		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 		if( file )
 		{
@@ -263,11 +259,11 @@ int a800xl_load_rom(int id)
 			a800_cart_is_16k = size / 0x2000;
 			osd_fclose(file);
 			logerror("%s loaded cartridge '%s' size %s\n",
-					Machine->gamedrv->name, filename, (a800_cart_is_16k) ? "16K":"8K");
+					Machine->gamedrv->name, device_filename(IO_CARTSLOT,id), (a800_cart_is_16k) ? "16K":"8K");
 		}
 		else
 		{
-			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, filename);
+			logerror("%s cartridge '%s' not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id));
 		}
 	}
 
@@ -296,12 +292,11 @@ void a5200_init_machine(void)
 int a5200_rom_init(int id)
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-	const char *filename = device_filename(IO_CARTSLOT,id);
 	void *file;
 	int size;
 
 	/* load an optional (dual) cartidge */
-	if( filename && strlen(filename) )
+	if( device_filename(IO_CARTSLOT,id) && strlen(device_filename(IO_CARTSLOT,id) ) )
 	{
 		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_R, 0);
 		if (file)
@@ -319,11 +314,11 @@ int a5200_rom_init(int id)
 				memcpy(&mem[0x7000], &mem[0x5000], 0x1000);
 			}
 			logerror("%s loaded cartridge '%s' size %dK\n",
-				Machine->gamedrv->name, filename, size/1024);
+				Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) , size/1024);
 		}
 		else
 		{
-			logerror("%s %s not found\n", Machine->gamedrv->name, filename);
+			logerror("%s %s not found\n", Machine->gamedrv->name, device_filename(IO_CARTSLOT,id) );
 		}
 	}
 	return INIT_OK;
