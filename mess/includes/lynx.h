@@ -6,6 +6,13 @@ int lynx_vh_start(void);
 void lynx_vh_stop(void);
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
+#define PAD_UP 0x80
+#define PAD_DOWN 0x40
+#define PAD_LEFT 0x20
+#define PAD_RIGHT 0x10
+
+extern void lynx_machine_init(void);
+
 extern UINT16 lynx_granularity;
 
 typedef struct {
@@ -42,9 +49,8 @@ extern void lynx_runtime_loader_init(void);
 		while (p>=bits) {
 			c=(b>>(p-bits))&mask; p-=bits;
 			for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
-				if ((!trans || (c!=0))
-					&&(xi>=0)&&(xi<160)) {
-					PLOT_PIXEL(dest, xi, blitter.color[c]);
+				if ((xi>=0)&&(xi<160)) {
+					lynx_plot_pixel(blitter.mode, xi, y, c);
 				}
 			}
 			wi-=blitter.width;
@@ -77,9 +83,8 @@ extern void lynx_runtime_loader_init(void);
 				}
 				color=(b>>(p-bits))&mask;p-=bits;
 				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
-					if ( (!trans||(color!=0))
-						  &&(xi>=0)&&(xi<160)) {
-						PLOT_PIXEL(dest, xi, blitter.color[color]);
+					if ((xi>=0)&&(xi<160)) {
+						lynx_plot_pixel(blitter.mode, xi, y, color);
 					}
 				}
 				wi-=blitter.width;
@@ -94,9 +99,8 @@ extern void lynx_runtime_loader_init(void);
 			color=(b>>(p-bits))&mask;p-=bits;
 			for (;count; count--) {
 				for (;(wi<blitter.width);wi+=0x100, xi+=xdir) {
-					if ( (!trans||(color!=0))
-						  &&(xi>=0)&&(xi<160)) {
-						PLOT_PIXEL(dest, xi, blitter.color[color]);
+					if ((xi>=0)&&(xi<160)) {
+						lynx_plot_pixel(blitter.mode, xi, y, color);
 					}
 				}
 				wi-=blitter.width;

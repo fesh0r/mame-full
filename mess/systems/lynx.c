@@ -16,7 +16,8 @@ static MEMORY_READ_START( lynx_readmem )
 	{ 0xfc00, 0xfcff, MRA_BANK1 },
 	{ 0xfd00, 0xfdff, MRA_BANK2 },
 	{ 0xfe00, 0xfff7, MRA_BANK3 },
-    { 0xfff8, 0xffff, MRA_BANK4 },
+	{ 0xfff8, 0xfff9, MRA_RAM },
+    { 0xfffa, 0xffff, MRA_BANK4 },
 MEMORY_END
 
 static MEMORY_WRITE_START( lynx_writemem )
@@ -40,8 +41,12 @@ INPUT_PORTS_START( lynx )
     PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP   )
 	PORT_START
 	PORT_BITX( 0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "Pause",  KEYCODE_3, IP_JOY_DEFAULT )
-
 	// power on and power off buttons
+	PORT_START
+	PORT_DIPNAME ( 0x03, 0, "90 Degree Rotation")
+	PORT_DIPSETTING(	1, "clockwise" )
+	PORT_DIPSETTING(	0, "None" )
+	PORT_DIPSETTING(	2, "counterclockwise" )
 INPUT_PORTS_END
 
 static struct GfxLayout lynx_charlayout =
@@ -95,20 +100,65 @@ void lynx_vh_stop(void)
 {
 }
 
+/*
+DISPCTL EQU $FD92       ; set to $D by INITMIKEY
+
+; B7..B4        0
+; B3    1 EQU color
+; B2    1 EQU 4 bit mode
+; B1    1 EQU flip screen
+; B0    1 EQU video DMA enabled
+*/
 void lynx_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 {
+	static int height=-1, width=-1;
+	int h,w;
 	int x, y;
 	UINT16 j; // clipping needed!
 	UINT8 *mem=memory_region(REGION_CPU1);
 
 	if( palette_recalc() ) full_refresh = 1;
 
-
-	for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
-		for (x=0;x<160;j++,x+=2) {
-			plot_pixel(bitmap, x, y, Machine->pens[mem[j]>>4]);
-			plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]&0xf]);
+	if (readinputport(2)&3) { // rotation
+		h=160; w=102;
+		if ( ( ((readinputport(2)&3)==1)&&(mikey.data[0x92]&2))
+			 ||( ((readinputport(2)&3)==2)&&!(mikey.data[0x92]&2)) ) {
+			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
+				for (x=160-2;x>=0;j++,x-=2) {
+					plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]>>4]);
+					plot_pixel(bitmap, y, x, Machine->pens[mem[j]&0xf]);
+				}
+			}
+		} else {
+			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
+				for (x=0;x<160;j++,x+=2) {
+					plot_pixel(bitmap, y, x, Machine->pens[mem[j]>>4]);
+					plot_pixel(bitmap, y, x+1, Machine->pens[mem[j]&0xf]);
+				}
+			}
 		}
+	} else {
+		w=160; h=102;
+		if ( mikey.data[0x92]&2) {
+			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=102-1; y>=0;y--) {
+				for (x=160-2;x>=0;j++,x-=2) {
+					plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]>>4]);
+					plot_pixel(bitmap, x, y, Machine->pens[mem[j]&0xf]);
+				}
+			}
+		} else {
+			for (j=mikey.data[0x94]|(mikey.data[0x95]<<8),y=0; y<102;y++) {
+				for (x=0;x<160;j++,x+=2) {
+					plot_pixel(bitmap, x, y, Machine->pens[mem[j]>>4]);
+					plot_pixel(bitmap, x+1, y, Machine->pens[mem[j]&0xf]);
+				}
+			}
+		}
+	}
+	if ((w!=width)||(h!=height)) {
+		width=w;
+		height=h;
+		osd_set_visible_area(0,width-1,0, height-1);
 	}
 }
 
@@ -118,11 +168,6 @@ static void lynx_init_colors (unsigned char *sys_palette,
 {
 	memcpy (sys_palette, lynx_palette, sizeof (lynx_palette));
 	memcpy(sys_colortable,lynx_colortable,sizeof(lynx_colortable));
-}
-
-static void lynx_machine_init(void)
-{
-	lynx_memory_config(0,0);
 }
 
 static struct MachineDriver machine_driver_lynx =
@@ -143,7 +188,8 @@ static struct MachineDriver machine_driver_lynx =
 	0,//pc1401_machine_stop,
 
 	// 160 x 102
-	160, 102, { 0, 160 - 1, 0, 102 - 1},
+//	160, 102, { 0, 160 - 1, 0, 102 - 1},
+	160, 160, { 0, 160 - 1, 0, 102 - 1},
 	lynx_gfxdecodeinfo,			   /* graphics decode info */
 	// 16 out of 4096
 	sizeof (lynx_palette) / sizeof (lynx_palette[0]) ,
@@ -212,7 +258,6 @@ static int lynx_load_rom(int id)
 
 	if (device_filename(IO_CARTSLOT, id) == NULL)
 	{
-		printf("%s requires Cartridge!\n", Machine->gamedrv->name);
 		return 0;
 	}
 	
@@ -338,7 +383,7 @@ void init_lynx(void)
 
 /*    YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR	COMPANY   FULLNAME */
 CONSX( 1989, lynx,	  0, 		lynx,  lynx, 	lynx,	  "Atari",  "Lynx", GAME_NOT_WORKING)
-CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx alternate rom save!", GAME_NOT_WORKING)
+CONSX( 1989, lynxa,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx (alternate rom save!)", GAME_NOT_WORKING)
 CONSX( 1990, lynx2,	  lynx, 	lynx,  lynx, 	lynx,	  "Atari",  "Lynx II", GAME_NOT_WORKING)
 
 #ifdef RUNTIME_LOADER

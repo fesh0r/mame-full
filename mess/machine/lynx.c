@@ -16,26 +16,137 @@ static struct {
 	UINT8 *mem;
 	// global
 	UINT16 screen;
-	UINT16 collision;
+	UINT16 colbuf;
+	UINT16 colpos; // byte where value of collision is written
 	UINT16 xoff, yoff;
 	// in command
+	int mode;
 	UINT16 cmd;
-	UINT8 color[16]; // or stored
+	UINT8 spritenr;
+	int x,y;
 	UINT16 width, height;
 	int stretch, tilt;
-	int x,y;
-	void (*line_function)(UINT8 *dest, const int xdir);
+	UINT8 color[16]; // or stored
+	void (*line_function)(const int y, const int xdir);
 	UINT16 bitmap;
 } blitter;
 
 #define GET_WORD(mem, index) ((mem)[(index)]|((mem)[(index)+1]<<8))
 
-#define PLOT_PIXEL(yptr, x, color) \
- if (!((x)&1)) { \
-	 (yptr)[(x)/2]=(((yptr)[(x)/2])&0xf)|((color)<<4); \
- } else { \
-	 (yptr)[(x)/2]=(((yptr)[(x)/2])&0xf0)|(color); \
- }
+/*
+mode from blitter command 
+#define SHADOW         (0x07)
+#define XORSHADOW      (0x06)
+#define NONCOLLIDABLE  (0x05)
+#define NORMAL         (0x04)
+#define BOUNDARY       (0x03)
+#define BOUNDARYSHADOW (0x02)
+#define BKGRNDNOCOL    (0x01)
+#define BKGRND         (0x00)
+
+mode | 0x10 means without DONTCOLLIDE
+*/
+
+INLINE void lynx_plot_pixel(const int mode, const int x, const int y, const int color)
+{
+	int back;
+	UINT8 *screen;
+	UINT8 *colbuf;
+
+	screen=blitter.mem+blitter.screen+y*80+x/2;
+	colbuf=blitter.mem+blitter.colbuf+y*80+x/2;
+	switch (mode) {
+	case 0x00:
+	case 0x01:
+		if (!(x&1)) {
+			*screen=(*screen&0x0f)|(blitter.color[color]<<4);
+		} else {
+			*screen=(*screen&0xf0)|blitter.color[color];
+		}
+		break;
+	case 0x02:
+	case 0x03:
+	case 0x04:
+	case 0x05:
+	case 0x06:
+	case 0x07:
+	case 0x15: // prevents robotron from overwriting code
+		if (blitter.color[color]!=0) { // for sprdemo5
+//		if (color!=0) {
+			if (!(x&1)) {
+				*screen=(*screen&0x0f)|(blitter.color[color]<<4);
+			} else {
+				*screen=(*screen&0xf0)|blitter.color[color];
+			}
+		}
+		break;
+	case 0x10:
+	case 0x11: // lemmings
+		if (!(x&1)) {
+			*screen=(*screen&0x0f)|(blitter.color[color]<<4);
+			*colbuf=(*colbuf&0x0f)|(blitter.spritenr<<4);
+		} else {
+			*screen=(*screen&0xf0)|blitter.color[color];
+			*colbuf=(*colbuf&~0xf)|(blitter.spritenr);
+		}
+		break;
+	case 0x12:
+	case 0x13:
+	case 0x14:
+	case 0x16:
+	case 0x17:
+		if (blitter.color[color]!=0) {
+//		if (color!=0) {
+			if (!(x&1)) {
+//				if (blitter.spritenr) {
+					back=*colbuf;
+					if (back&0xf0) {
+						blitter.mem[blitter.colpos]=back>>4;
+					}
+					*colbuf=(back&~0xf0)|(blitter.spritenr<<4);
+//				}
+				*screen=(*screen&0x0f)|(blitter.color[color]<<4);
+			} else {
+//				if (blitter.spritenr) {
+					back=*colbuf;
+					if (back&0xf) {
+						blitter.mem[blitter.colpos]=back&0xf;
+					}
+					*colbuf=(back&~0xf)|(blitter.spritenr);
+//				}
+				*screen=(*screen&0xf0)|blitter.color[color];
+			}
+		}
+		break;
+	}
+}
+
+#define INCLUDE_LYNX_LINE_FUNCTION
+static void lynx_blit_2color_line(const int y, const int xdir)
+{
+	const int bits=1; 
+	const int mask=0x1;
+#include "includes/lynx.h"
+}
+static void lynx_blit_4color_line(const int y, const int xdir)
+{
+	const int bits=2; 
+	const int mask=0x3;
+#include "includes/lynx.h"
+}
+static void lynx_blit_8color_line(const int y, const int xdir)
+{
+	const int bits=3; 
+	const int mask=0x7;
+#include "includes/lynx.h"
+}
+static void lynx_blit_16color_line(const int y, const int xdir)
+{
+	const int bits=4; 
+	const int mask=0xf;
+#include "includes/lynx.h"
+}
+#undef INCLUDE_LYNX_LINE_FUNCTION
 
 /*
 2 color rle: ??
@@ -60,122 +171,27 @@ static struct {
  0, 4 bit repeat count-1, 4 bit color
  1, 4 bit count of values-1, 4 bit color, ....
 */
-
-#define INCLUDE_LYNX_LINE_FUNCTION
-static void lynx_blit_2color_line(UINT8 *dest, const int xdir)
-{
-	const int trans=0;
-	const int bits=1; 
-	const int mask=0x1;
-#include "includes/lynx.h"
-}
-static void lynx_blit_4color_line(UINT8 *dest, const int xdir)
-{
-	const int trans=0;
-	const int bits=2; 
-	const int mask=0x3;
-#include "includes/lynx.h"
-}
-static void lynx_blit_8color_line(UINT8 *dest, const int xdir)
-{
-	const int trans=0;
-	const int bits=3; 
-	const int mask=0x7;
-#include "includes/lynx.h"
-}
-static void lynx_blit_16color_line(UINT8 *dest, const int xdir)
-{
-	const int trans=0;
-	const int bits=4; 
-	const int mask=0xf;
-#include "includes/lynx.h"
-}
-
-
-static void lynx_blit_2color_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=1; 
-	const int mask=0x1;
-#include "includes/lynx.h"
-}
-static void lynx_blit_4color_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=2; 
-	const int mask=0x3;
-#include "includes/lynx.h"
-}
-static void lynx_blit_8color_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=3; const int mask=0x7;
-#include "includes/lynx.h"
-}
-static void lynx_blit_16color_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=4; 
-	const int mask=0xf;
-#include "includes/lynx.h"
-}
-#undef INCLUDE_LYNX_LINE_FUNCTION
-
-
 #define INCLUDE_LYNX_LINE_RLE_FUNCTION
-static void lynx_blit_2color_rle_line(UINT8 *dest, const int xdir)
+static void lynx_blit_2color_rle_line(const int y, const int xdir)
 {
-	const int trans=0;
 	const int bits=1; 
 	const int mask=0x1;
 #include "includes/lynx.h"
 }
-static void lynx_blit_4color_rle_line(UINT8 *dest, const int xdir)
+static void lynx_blit_4color_rle_line(const int y, const int xdir)
 {
-	const int trans=0;
 	const int bits=2; 
 	const int mask=0x3;
 #include "includes/lynx.h"
 }
-static void lynx_blit_8color_rle_line(UINT8 *dest, const int xdir)
+static void lynx_blit_8color_rle_line(const int y, const int xdir)
 {
-	const int trans=0;
 	const int bits=3; 
 	const int mask=0x7;
 #include "includes/lynx.h"
 }
-static void lynx_blit_16color_rle_line(UINT8 *dest, const int xdir)
+static void lynx_blit_16color_rle_line(const int y, const int xdir)
 {
-	const int trans=0;
-	const int bits=4; 
-	const int mask=0xf;
-#include "includes/lynx.h"
-}
-
-static void lynx_blit_2color_rle_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=1; 
-	const int mask=0x1;
-#include "includes/lynx.h"
-}
-static void lynx_blit_4color_rle_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=2; 
-	const int mask=0x3;
-#include "includes/lynx.h"
-}
-static void lynx_blit_8color_rle_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
-	const int bits=3;
-	const int mask=0x7;
-#include "includes/lynx.h"
-}
-static void lynx_blit_16color_rle_line_trans(UINT8 *dest, const int xdir)
-{
-	const int trans=1;
 	const int bits=4; 
 	const int mask=0xf;
 #include "includes/lynx.h"
@@ -232,6 +248,7 @@ static void lynx_blit_lines(void)
 				break;
 			case 1:
 				xdir*=-1;
+				blitter.x+=xdir;
 				y=blitter.y;
 				break;
 			case 2:
@@ -240,15 +257,17 @@ static void lynx_blit_lines(void)
 				break;
 			case 3:
 				xdir*=-1;
+				blitter.x+=xdir;
 				y=blitter.y;
 				break;
 			}
 			flip++;
+			if (ydir<0) y--;
 			continue;
 		}
 		for (;(hi<blitter.height); hi+=0x100, y+=ydir) {
 			if ((y>=0)&&(y<102))
-				blitter.line_function(blitter.mem+blitter.screen+y*80,xdir);
+				blitter.line_function(y,xdir);
 			blitter.width+=blitter.stretch;
 			blitter.x+=blitter.tilt;
 		}
@@ -282,13 +301,12 @@ static void lynx_blit_lines(void)
    bit 3: 0 color info with command
           1 no color info with command
 
-#define LITERAL        (0x80)
 #define RELHVST        (0x30)
 #define RELHVS         (0x20)
 #define RELHV          (0x10)
-#define RELPALETTE     (0x00)
-#define EXISTPALETTE   (0x08)
+
 #define SKIPSPRITE     (0x04)
+
 #define DUP            (0x02)
 #define DDOWN          (0x00)
 #define DLEFT          (0x01)
@@ -329,14 +347,29 @@ static void lynx_blit_lines(void)
   tilt: hpos adder
 
 */
-static int lynx_colors[4]={2,4,8,16};
 
 static void lynx_blitter(void)
 {
+	static const int lynx_colors[4]={2,4,8,16};
+
+	static void (* const blit_line[4])(const int y, const int xdir)= {
+		lynx_blit_2color_line,
+		lynx_blit_4color_line,
+		lynx_blit_8color_line,
+		lynx_blit_16color_line
+	};
+
+	static void (* const blit_rle_line[4])(const int y, const int xdir)= {
+		lynx_blit_2color_rle_line,
+		lynx_blit_4color_rle_line,
+		lynx_blit_8color_rle_line,
+		lynx_blit_16color_rle_line
+	};
 	int i; int o;int colors;
 
 	blitter.mem=memory_region(REGION_CPU1);
-	blitter.collision=GET_WORD(suzy.data, 0xa);
+	blitter.colbuf=GET_WORD(suzy.data, 0xa);
+//	blitter.colpos=GET_WORD(suzy.data, 0x24);
 	blitter.screen=GET_WORD(suzy.data, 8);
 	blitter.xoff=GET_WORD(suzy.data,4);
 	blitter.yoff=GET_WORD(suzy.data,6);
@@ -348,53 +381,24 @@ static void lynx_blitter(void)
 
 		if (blitter.mem[blitter.cmd+1]&4) continue;
 
+		blitter.colpos=GET_WORD(suzy.data, 0x24)+blitter.cmd;
+
 		blitter.bitmap=GET_WORD(blitter.mem,blitter.cmd+5);
 		blitter.x=(INT16)GET_WORD(blitter.mem, blitter.cmd+7)-blitter.xoff;
 		blitter.y=(INT16)GET_WORD(blitter.mem, blitter.cmd+9)-blitter.yoff;
 
-		switch ( GET_WORD(blitter.mem,blitter.cmd)&0x80c7) {
-		case 0x8000: 
-			blitter.line_function=lynx_blit_2color_line;break;
-		case 0x8001: case 0x8002: case 0x8003: 
-		case 0x8004: case 0x8005: case 0x8006: case 0x8007: 
-			blitter.line_function=lynx_blit_2color_line_trans;break;
-		case 0x0000:
-			blitter.line_function=lynx_blit_2color_rle_line;break;
-		case 0x0001: case 0x0002: case 0x0003: 
-		case 0x0004: case 0x0005: case 0x0006: case 0x0007: 
-			blitter.line_function=lynx_blit_2color_rle_line_trans;break;
-		case 0x8040: 
-			blitter.line_function=lynx_blit_4color_line;break;
-		case 0x8041: case 0x8042: case 0x8043: 
-		case 0x8044: case 0x8045: case 0x8046: case 0x8047: 
-			blitter.line_function=lynx_blit_4color_line_trans;break;
-		case 0x0040:
-			blitter.line_function=lynx_blit_4color_rle_line;break;
-		case 0x0041: case 0x0042: case 0x0043: 
-		case 0x0044: case 0x0045: case 0x0046: case 0x0047: 
-			blitter.line_function=lynx_blit_4color_rle_line_trans;break;
-		case 0x8080: 
-			blitter.line_function=lynx_blit_8color_line;break;
-		case 0x8081: case 0x8082: case 0x8083: 
-		case 0x8084: case 0x8085: case 0x8086: case 0x8087: 
-			blitter.line_function=lynx_blit_8color_line_trans;break;
-		case 0x0080:
-			blitter.line_function=lynx_blit_8color_rle_line;break;
-		case 0x0081: case 0x0082: case 0x0083: 
-		case 0x0084: case 0x0085: case 0x0086: case 0x0087: 
-			blitter.line_function=lynx_blit_8color_rle_line_trans;break;
-		case 0x80c0: 
-			blitter.line_function=lynx_blit_16color_line;break;
-		case 0x80c1: case 0x80c2: case 0x80c3: 
-		case 0x80c4: case 0x80c5: case 0x80c6: case 0x80c7: 
-			blitter.line_function=lynx_blit_16color_line_trans;break;
-		case 0x00c0:
-			blitter.line_function=lynx_blit_16color_rle_line;break;
-		case 0x00c1: case 0x00c2: case 0x00c3: 
-		case 0x00c4: case 0x00c5: case 0x00c6: case 0x00c7: 
-			blitter.line_function=lynx_blit_16color_rle_line_trans;break;
+		blitter.mode=blitter.mem[blitter.cmd]&07;
+		if (blitter.mem[blitter.cmd+1]&0x80) {
+			blitter.line_function=blit_line[blitter.mem[blitter.cmd]>>6];
+		} else {
+			blitter.line_function=blit_rle_line[blitter.mem[blitter.cmd]>>6];
 		}
-
+		if (!(blitter.mem[blitter.cmd+2]&0x20)&&!(suzy.data[0x92]&0x20)) {
+			blitter.mem[blitter.colpos]=0;
+			blitter.spritenr=blitter.mem[blitter.cmd+2]&0xf;
+			blitter.mode|=0x10;
+		}
+			
 		o=0xb;
 		blitter.width=0x100;
 		blitter.height=0x100;
@@ -480,7 +484,7 @@ void lynx_multiply(void)
 
 READ_HANDLER(suzy_read)
 {
-	UINT8 data=0;
+	UINT8 data=0, input;
 	switch (offset) {
 	case 0x88:
 		data=1; // must not be 0 for correct power up
@@ -491,19 +495,34 @@ READ_HANDLER(suzy_read)
 		data&=~1; //blitter finished
 		break;
 	case 0xb0:
-		if (suzy.data[0x92]&8) {
-			data=0;
-			if (readinputport(0)&0x80) data|=0x40;
-			if (readinputport(0)&0x40) data|=0x80;
-			if (readinputport(0)&0x20) data|=0x10;
-			if (readinputport(0)&0x10) data|=0x20;
-			if (readinputport(0)&8) data|=8;
-			if (readinputport(0)&4) data|=4;
-			if (readinputport(0)&2) data|=2;
-			if (readinputport(0)&1) data|=1;
-		} else {
-			data=readinputport(0);
+		input=readinputport(0);
+		switch (readinputport(2)&3) {
+		case 1:
+			data=input;
+			input&=0xf;
+			if (data&PAD_UP) input|=PAD_LEFT;
+			if (data&PAD_LEFT) input|=PAD_DOWN;
+			if (data&PAD_DOWN) input|=PAD_RIGHT;
+			if (data&PAD_RIGHT) input|=PAD_UP;
+			break;
+		case 2:
+			data=input;
+			input&=0xf;
+			if (data&PAD_UP) input|=PAD_RIGHT;
+			if (data&PAD_RIGHT) input|=PAD_DOWN;
+			if (data&PAD_DOWN) input|=PAD_LEFT;
+			if (data&PAD_LEFT) input|=PAD_UP;
+			break;
 		}
+		if (suzy.data[0x92]&8) {
+			data=input&0xf;
+			if (input&PAD_UP) data|=PAD_DOWN;
+			if (input&PAD_DOWN) data|=PAD_UP;
+			if (input&PAD_LEFT) data|=PAD_RIGHT;
+			if (input&PAD_RIGHT) data|=PAD_LEFT;
+		} else {
+			data=input;
+		}		
 		break;
 	case 0xb1: data=readinputport(1);break;
 	case 0xb2:
@@ -562,6 +581,15 @@ static LYNX_TIMER lynx_timer[8]= {
 	{ 6 },
 	{ 7 }
 };
+
+static void lynx_timer_reset(LYNX_TIMER *This)
+{
+	memset(&This->counter, 0, (char *)(This+1)-(char*)&(This->counter));
+//	This->nr=i;
+	This->settime=0.0;
+}
+
+
 
 static void lynx_timer_count_down(LYNX_TIMER *This);
 static void lynx_timer_signal_irq(LYNX_TIMER *This)
@@ -755,6 +783,19 @@ WRITE_HANDLER( lynx_memory_config )
 		memory_set_bankhandler_r(4, 0, MRA_RAM);
 	} else {
 		memory_set_bankhandler_r(4, 0, MRA_BANK4);
-		cpu_setbank(4,memory_region(REGION_CPU1)+0x101f8);
+		cpu_setbank(4,memory_region(REGION_CPU1)+0x101fa);
+	}
+}
+
+extern void lynx_machine_init(void)
+{
+	int i;
+	lynx_memory_config(0,0);
+
+	memset(&suzy, 0, sizeof(suzy));
+	memset(&mikey, 0, sizeof(mikey));
+
+	for (i=0; i<ARRAY_LENGTH(lynx_timer); i++) {
+		lynx_timer_reset(lynx_timer+i);
 	}
 }
