@@ -48,6 +48,6 @@ WRITE_HANDLER  ( raaspec_led_w );
 /* from vidhrdw/vectrex.c */
 void vectrex_add_point_stereo (int x, int y, rgb_t color, int intensity);
 void vectrex_add_point (int x, int y, rgb_t color, int intensity);
-void (*vector_add_point_function) (int, int, rgb_t, int);
+extern void (*vector_add_point_function) (int, int, rgb_t, int);
 
 #endif
