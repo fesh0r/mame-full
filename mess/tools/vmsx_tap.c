@@ -117,7 +117,7 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 		{
 		offset = *((UINT32*)(pmem + pos + 4));
 		offset = intelLong (offset);
-		if (strncmp (pmem + pos, "INFO", 4) )
+		if (strncmp ((char*)pmem + pos, "INFO", 4) )
 			{
 			/* not this chunk, skip */
 			pos += offset + 8;
@@ -145,9 +145,9 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 			{
 			for (i=0;i<image->count;i++)
 				{
-				strncpy (image->entries[i].title, p, 32); p += 32;
-				strncpy (image->entries[i].type, p, 10); p += 10;
-				memcpy (image->entries[i].chunk, p, 4); p += 4;
+				strncpy (image->entries[i].title, (char*)p, 32); p += 32;
+				strncpy (image->entries[i].type, (char*)p, 10); p += 10;
+				memcpy (image->entries[i].chunk, (char*)p, 4); p += 4;
 				}
 			}
 
@@ -159,7 +159,7 @@ static int vmsx_tap_read_image (TAP_IMAGE *image)
 
 static int vmsx_tap_image_read_data (TAP_IMAGE *image, char *chunk, unsigned char **pcas, int *psize)
 	{
-	int caspos, pos = 0, found = 0, offset, i, tapsize, tapblock, size, tappos;
+	int caspos, pos = 0, found = 0, offset, tapblock, size, tappos;
 	unsigned char *p, *pmem;
 
 	size = image->size;
