@@ -51,12 +51,14 @@ static imgtoolerr_t internal_open(const struct ImageModule *module, const char *
 	if (outimg)
 		*outimg = NULL;
 
-	if (createopts ? !module->create : !module->open)
+	/* is the requested functionality implemented? */
+	if ((read_or_write == OSD_FOPEN_RW_CREATE) ? !module->create : !module->open)
 	{
 		err = IMGTOOLERR_UNIMPLEMENTED | IMGTOOLERR_SRC_FUNCTIONALITY;
 		goto done;
 	}
 
+	/* open the stream */
 	f = stream_open(fname, read_or_write);
 	if (!f)
 	{
@@ -64,6 +66,7 @@ static imgtoolerr_t internal_open(const struct ImageModule *module, const char *
 		goto done;
 	}
 
+	/* setup the image structure */
 	size = sizeof(struct _imgtool_image) + module->image_extra_bytes;
 	image = (imgtool_image *) malloc(size);
 	if (!image)
@@ -74,7 +77,8 @@ static imgtoolerr_t internal_open(const struct ImageModule *module, const char *
 	memset(image, '\0', size);
 	image->module = module;
 	
-	if (createopts)
+	/* actually call create or open */
+	if (read_or_write == OSD_FOPEN_RW_CREATE)
 		err = module->create(image, f, createopts);
 	else
 		err = module->open(image, f);
@@ -107,6 +111,7 @@ done:
 
 imgtoolerr_t img_open(const struct ImageModule *module, const char *fname, int read_or_write, imgtool_image **outimg)
 {
+	read_or_write = read_or_write ? OSD_FOPEN_RW : OSD_FOPEN_READ;
 	return internal_open(module, fname, read_or_write, NULL, outimg);
 }
 
@@ -741,7 +746,7 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
 	option_resolution *alloc_resolution = NULL;
 
 	/* allocate dummy options if necessary */
-	if (!opts)
+	if (!opts && module->createimage_optguide)
 	{
 		alloc_resolution = option_resolution_create(module->createimage_optguide, module->createimage_optspec);
 		if (!alloc_resolution)
@@ -751,7 +756,8 @@ imgtoolerr_t img_create(const struct ImageModule *module, const char *fname,
 		}
 		opts = alloc_resolution;
 	}
-	option_resolution_finish(opts);
+	if (opts)
+		option_resolution_finish(opts);
 
 	err = internal_open(module, fname, OSD_FOPEN_RW_CREATE, opts, image);
 	if (err)
