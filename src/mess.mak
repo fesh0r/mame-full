@@ -225,7 +225,7 @@ $(OBJ)/sega.a:	   \
 	  $(OBJ)/mess/machine/genesis.o  \
 	  $(OBJ)/mess/sndhrdw/genesis.o  \
 	  $(OBJ)/mess/systems/genesis.o  \
-#	  $(OBJ)/mess/systems/saturn.o   \
+	  $(OBJ)/mess/systems/saturn.o   \
 
 $(OBJ)/atari.a:    \
 	  $(OBJ)/mess/machine/atari.o	 \
