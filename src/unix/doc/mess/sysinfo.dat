@@ -3995,7 +3995,7 @@ $end
 
 #---------------------------------------------------------------------------------------------#
 
-$info=imbpcjr
+$info=ibmpcjr
 $bio
 IBM PC Junior
 
@@ -9464,6 +9464,84 @@ The Model 1 was followed with the TRS 80 model II and model III (the model III h
 same characteristics as the model I).
 
 
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=tx0_64kw
+$bio
+TX-0 original demonstrator (64 kWords of RAM)
+
+
+History and Trivia:
+
+
+The TX-0 was built in 1955-1956 at the MIT Lincoln Laboratory, to demonstrate
+transistor technology (the TX-0 is regarded as the first transistorized
+computer ever) and test a 64kw magnetic core memory array for the TX-2 computer
+that was on the drawing board.  Once assembled, the TX-0 proved to be a
+reliable and interesting general purpose computer.
+
+
+A CRT was installed in 1957, and a light-pen in 1958, which enabled interactive
+graphical operation, which was exceptional on computers of the time.  The TX-0
+was one of the first computers with a light pen; on the other hand, some
+computers (e.g. Whirlwind) had had CRTs for years, but such CRTs were seldom
+used for interactive operation.
+
+
+In July 1958, the computer was taken out of Lincoln Laboratory and transferred
+to room 26-248 at the MIT Electrical Engineering Department.
+
+$end
+
+#---------------------------------------------------------------------------------------------#
+
+$info=tx0_8kw
+$bio
+TX-0 upgraded system (8 kWords of RAM)
+
+
+History and Trivia:
+
+
+After its transfer from the MIT Lincoln Laboratory in July 1958, the TX-0 was
+supported by the MIT Research Laboratory of Electronics, the MIT Electronic
+Systems Laboratory and the MIT Electrical Engineering Department.
+
+
+A so-called Extended Input/Output System was installed soon after the transfer:
+it enabled users to add custom I/O devices relatively easily.
+
+
+The TX-0 originally had a 64kw memory matrix, which had been transferred to the
+TX-2 and replaced with a 4kw matrix in the spring of 1958; this 4kw matrix
+was extended to 8 kw in 1959.
+
+
+Since the address size was reduced from 16 to 13 bits, more bits were available
+for instruction opcodes (5 instead of 2): the instruction set was subsequently
+extended from 4 instructions to 23.  The first three additional instructions,
+which required little processor changes, were implemented in 1959; the logical
+design for the other instructions was completed in 1960, and was implemented
+from 1960 to 1962.  Also, a magnetic tape system was added in 1961.
+
+
+There were projects for further expansion (e.g. timesharing system), but after
+the PDP-1 arrived at the MIT, further development on the TX-0 was stopped.
+
+
+The TX-0 remained in operation at the MIT until 1975, at which point it was
+transfered to the Computer Museum set-up by DEC in Marlborough, Massachusetts.
+
+
+Though the upgrades were designed not to break compatibility, only programs
+that use 8 kw of RAM and the 4 original instructions may run on both the 8kw
+model and the 64kw model.  (Even so, there are changes in the microprogrammed
+operate instruction that may prevent programs to run on both models.)  At the
+time of writing, all available programs were designed specifically for the
+later 8 kw model.
 
 $end
 

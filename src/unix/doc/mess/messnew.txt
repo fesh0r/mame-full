@@ -1,3 +1,46 @@
+0.89
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- TX-0 (two variants) [Raphael Nabet]
+
+
+
+System Driver Changes:
+----------------------
+- [COCO] Fixed a regression that caused printer output to not work properly.
+  (bug #612) [Nate Woods]
+
+- [DRAGON ALPHA] Completed emulation of the Dragon Alpha, including support
+  for the sound chip, and the internal disk interface.  [Phill Harvey-Smith]
+
+
+
+User Interface Changes:
+-----------------------
+- Fixed a bug that prevented keyboard inputs from being customizable in the
+  classic UI.  [Nate Woods]
+
+- [Windows GUI] Fixed a bug that caused problems when trying to mount three or
+  more images of the same type.  (bug #622) [Nate Woods]
+
+
+
+Imgtool Changes:
+----------------
+- [FAT] Rewrote the FAT driver.  [Nate Woods]
+
+- [OS9] The Imgtool OS-9 driver now supports writing files.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.89.  This incorporates all features of the
+  update to this core.  [MAME team]
+
+
+
 0.88
 
 New System Drivers Supported (in no particular order):
@@ -15,12 +58,6 @@ System Driver Changes:
 
 - [MICROBEE] Added multi screen support.  [Kelby Murie]
   
-
-
-User Interface Changes:
------------------------
-(none)
-
 
 
 User Interface Changes:
