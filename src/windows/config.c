@@ -120,7 +120,7 @@ extern struct rc_option video_opts[];
 extern int frontend_help(char *gamename);
 static int config_handle_arg(char *arg);
 
-int erlg;
+int errorlog;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -245,7 +245,7 @@ static struct rc_option opts[] = {
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
-	{ "log", NULL, rc_bool, &erlg, "0", 0, 0, NULL, "generate error.log" },
+	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, NULL, "generate error.log" },
 #ifdef MESS
 	{ "MESS specific options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "cartridge", "cart", rc_string, &temp, NULL, 0, 0, NULL, "Attatch a cartridge device" },

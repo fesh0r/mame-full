@@ -20,7 +20,7 @@
 
 // from config.c
 int parse_config_and_cmdline(int argc, char **argv);
-extern int erlg;
+extern int errorlog;
 
 
 
@@ -38,7 +38,7 @@ int _CRT_glob = 0;
 //	LOCAL VARIABLES
 //============================================================
 
-static FILE *errorlog;
+static FILE *logfile;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
@@ -82,10 +82,10 @@ int main(int argc, char **argv)
 	game_index = parse_config_and_cmdline(argc, argv);
 
 	// provide errorlog from here on 
-	if (erlg)
+	if (errorlog)
 	{
-		errorlog = fopen("error.log","wa");
-		if (!errorlog)
+		logfile = fopen("error.log","wa");
+		if (!logfile)
 		{
 			perror("unable to open log file\n");
 			exit (1);
@@ -101,7 +101,7 @@ int main(int argc, char **argv)
 		res = run_game(game_index);
 
 	// close open files
-	if (errorlog) fclose(errorlog);
+	if (logfile) fclose(logfile);
 
 	// hmm, no better place for these three to be found?
 	if (options.playback) osd_fclose(options.playback);
@@ -152,13 +152,22 @@ void osd_exit(void)
 void CLIB_DECL logerror(const char *text,...)
 {
 	va_list arg;
-	
-	// standard vfprintf stuff here
+
+	/* standard vfprintf stuff here */
 	va_start(arg, text);
-	if (erlg)
-		vfprintf(errorlog, text, arg);
+	if (errorlog)
+	{
+		if (!logfile)
+		{
+			fprintf(stderr, "oops no log file yet\n");
+			vfprintf (stderr, text, arg);
+		}
+		else
+			vfprintf(logfile, text, arg);
+	}
 	va_end(arg);
 }
+
 
 
 
