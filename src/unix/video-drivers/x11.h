@@ -20,7 +20,8 @@ EXTERN Window		window;
 EXTERN Screen 		*screen;
 EXTERN unsigned int	window_width;
 EXTERN unsigned int	window_height;
-EXTERN int		custom_windowsize;
+EXTERN unsigned int	custom_window_width;
+EXTERN unsigned int	custom_window_height;
 EXTERN unsigned char	*scaled_buffer_ptr;
 EXTERN int		x11_video_mode;
 EXTERN int		root_window_id; /* root window id (for swallowing the mame window) */

@@ -25,7 +25,7 @@
 #include "fxgen.h"
 
 /* defined in svgafx.c or x11.c */
-extern int custom_windowsize, window_width, window_height;
+extern int window_width, window_height, custom_window_width, custom_window_height;
 
 /* from fxvec.c */
 int fxvec_renderer(point *pt, int num_points);
@@ -399,11 +399,11 @@ int InitParams(void)
 {
   int i;
   
-  if(custom_windowsize)
+  if(custom_window_width)
   {
     for( i = 0; i < resTableSize; i++ )
     {
-      if( window_width==resTable[i].width && window_height==resTable[i].height)
+      if(custom_window_width==resTable[i].width && custom_window_height==resTable[i].height)
       {
          Gr_resolution = resTable[i].res;
          break;
@@ -425,11 +425,10 @@ int InitParams(void)
     } 
   }
   else
-  {
     Gr_resolution = GR_RESOLUTION_640x480;
-    window_width  = 640;
-    window_height = 480;
-  }
+
+  window_width  = resTable[Gr_resolution].width;
+  window_height = resTable[Gr_resolution].height;
 
   return 0;
 }

@@ -17,7 +17,8 @@
 #include "svgainput.h"
 #include "sysdep/sysdep_display_priv.h"
 
-const int custom_windowsize=1; /* we always specify a window size */
+unsigned int custom_window_width;
+unsigned int custom_window_height;
 unsigned int window_width;
 unsigned int window_height;
 
@@ -41,7 +42,7 @@ struct rc_option sysdep_display_opts[] =
 static int svgafx_set_resolution(struct rc_option *option, const char *arg,
    int priority)
 {
-   if (sscanf(arg, "%ux%u", &window_width, &window_height) != 2)
+   if (sscanf(arg, "%ux%u", &custom_window_width, &custom_window_height) != 2)
       return 1;
    if (InitParams())
       return 1;

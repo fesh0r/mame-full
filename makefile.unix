@@ -650,7 +650,7 @@ ARCH  = linux
 # Note: x11 is the only one supported on almost all platforms.  For BeOS, 
 # use SDL.
 
-# X11
+# X11 (including Glide & OpenGL if enabled below)
 DISPLAY_METHOD = x11
 
 # SDL library 
@@ -661,9 +661,6 @@ DISPLAY_METHOD = x11
 
 # GGI, only tested under Linux
 # DISPLAY_METHOD = ggi
-
-# OpenGL under X11
-# DISPLAY_METHOD = xgl
 
 # Glide in console mode
 # DISPLAY_METHOD = svgafx

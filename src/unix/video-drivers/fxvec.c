@@ -138,7 +138,8 @@ int fxvec_renderer(point *pt, int num_points)
         else
           fxvec_fill_vert(&v2, pt->x, pt->y, pt->col, pt->intensity);
           
-	if((vertexcount >= 2) && (v2.a>0.0)) {
+	if (pt->intensity)
+	{
 		if((fabs(v1.x-v2.x)<1.0) && (fabs(v1.y-v2.y)<1.0))
 		{
 		  grAADrawPoint(&v2);

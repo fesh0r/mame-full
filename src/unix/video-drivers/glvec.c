@@ -64,53 +64,31 @@ static void PointConvert(int x,int y,GLdouble *sx,GLdouble *sy,GLdouble *sz)
  */
 static void glvec_add_point (int x, int y, rgb_t color, int intensity)
 {
-  unsigned char r1,g1,b1;
-  double red=0.0, green=0.0, blue=0.0;
+  double red, green, blue;
   GLdouble sx,sy,sz;
-  int ptHack=0;
-  double gamma_correction = palette_get_global_gamma();
   static GLdouble vecoldx,vecoldy;
   
   PointConvert(x,y,&sx,&sy,&sz);
 
-  b1 =   color        & 0xff ;
-  g1 =  (color >>  8) & 0xff ;
-  r1 =  (color >> 16) & 0xff ;
+  red   = ((color & 0xff0000) * intensity) / (255.0 * 255.0 * 65536);
+  green = ((color & 0x00ff00) * intensity) / (255.0 * 255.0 * 256);
+  blue  = ((color & 0x0000ff) * intensity) / (255.0 * 255.0);
 
   if(intensity==0)
   {
         GL_END();
         GL_BEGIN(GL_LINE_STRIP);
   }
-  else if((fabs(sx-vecoldx) < 0.001) && (fabs(sy-vecoldy) < 0.001))
+
+  disp__glColor3d(blue, green, red); /* we use bgr not rgb ! */
+
+  if((fabs(sx-vecoldx) < 0.001) && (fabs(sy-vecoldy) < 0.001))
   {
-	  /**
-	   * Hack to draw points -- very short lines don't show up
+	  /* Hack to draw points -- very short lines don't show up
 	   *
 	   * But games, e.g. tacscan have zero lines within the LINE_STRIP,
-	   * so we do try to continue the line strip :-)
-	   *
-	   * Part 1
-	   */
-	  GL_END();
-  	  ptHack=1;
-  }
-
-  red   = (double)intensity/255.0 * pow (r1 / 255.0, 1 / gamma_correction);
-  green = (double)intensity/255.0 * pow (g1 / 255.0, 1 / gamma_correction);
-  blue  = (double)intensity/255.0 * pow (b1 / 255.0, 1 / gamma_correction);
-  disp__glColor3d(red, green, blue);
-  
-  if(ptHack)
-  {
-	/**
-	 * Hack to draw points -- zero-length lines don't show up
-	 *
-	 * But games, e.g. tacscan have zero lines within the LINE_STRIP,
-	 * so we do try to continue the line strip :-)
-	 *
-	 * Part 2
-	 */
+	   * so we do try to continue the line strip :-) */
+	GL_END();
 	GL_BEGIN(GL_POINTS);
 
 	if(cabview)

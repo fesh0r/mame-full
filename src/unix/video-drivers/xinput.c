@@ -307,11 +307,11 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 	{
 	   memset(&x11_init_hints, 0, sizeof(x11_init_hints));
 	   x11_init_hints.win_gravity = NorthWestGravity;
-	   custom_windowsize = 0;
+	   custom_window_width = custom_window_height = 0;
 	}
 	else
 	{
-		i = XParseGeometry(arg, &x, &y, &window_width, &window_height);
+		i = XParseGeometry(arg, &x, &y, &custom_window_width, &custom_window_height);
 		if (i & (XValue|YValue))
 		{
 		  x11_init_hints.x = x;
@@ -335,13 +335,9 @@ static int x11_parse_geom(struct rc_option *option, const char *arg, int priorit
 		  ok = 1;
 		}
 		if (i & (WidthValue|HeightValue))
-		{
-		  custom_windowsize = 1;
 		  ok = 1;
-		}
 		if (!ok)
 		{
-		  /* stderr isn't defined yet when we're called. */
 		  fprintf(stderr,"Invalid geometry: %s.\n", arg);
 		  return 1;
 		}

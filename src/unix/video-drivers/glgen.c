@@ -45,8 +45,8 @@ static void CopyVec(GLdouble *ax,GLdouble *ay,GLdouble *az,            /* dest  
                   );
 static void CalcFlatTexPoint( int x, int y, GLdouble texwpervw, GLdouble texhpervh, 
 		       GLdouble * px, GLdouble * py);
-static void SetupFrustum (void);
-static void SetupOrtho (void);
+static int SetupFrustum (void);
+static int SetupOrtho (void);
 
 static void WAvg (GLdouble perc, GLdouble x1, GLdouble y1, GLdouble z1,
 	   GLdouble x2, GLdouble y2, GLdouble z2,
@@ -57,7 +57,6 @@ static GLenum  gl_bitmap_format;
 static GLenum  gl_bitmap_type;
 static GLsizei text_width;
 static GLsizei text_height;
-static int line_len;
 static int texnumx;
 static int texnumy;
 
@@ -66,7 +65,6 @@ struct TexSquare
 {
   GLubyte *texture;
   GLuint texobj;
-  int isTexture;
   GLdouble x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4;
   GLdouble fx1, fy1, fx2, fy2, fx3, fy3, fx4, fy4;
   GLdouble xcov, ycov;
@@ -176,33 +174,37 @@ static int lastpan;
 static int panframe;
 
 /* Misc variables */
-static const int do_snapshot = 0; /* disabled for now */
 static unsigned short *colorBlittedMemory = NULL;
 static int cab_loaded = 0;
 static int texture_init = 0;
-unsigned char *empty_text = NULL;
+static unsigned char *empty_text = NULL;
 GLuint veclist=0;
+
+#define RETURN_IF_GL_ERROR() \
+      if((err = disp__glGetError ())) \
+      { \
+        print_gl_error("GLEROR", __FILE__, __LINE__, err); \
+        return 1; \
+      }
 
 /* ---------------------------------------------------------------------- */
 /* ------------ New OpenGL Specials ------------------------------------- */
 /* ---------------------------------------------------------------------- */
-static void gl_set_bilinear (int new_value)
+static int gl_set_bilinear (int new_value)
 {
   int x, y;
+  GLenum err;
   bilinear = new_value;
-
   if (bilinear)
   {
     if (cabtex)
     {
 	    disp__glBindTexture (GL_TEXTURE_2D, cabtex[0]);
-
+	    RETURN_IF_GL_ERROR ();
 	    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	    RETURN_IF_GL_ERROR ();
 	    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, line_len /* ?? */); 
-	    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
-	    CHECK_GL_ERROR ();
+	    RETURN_IF_GL_ERROR ();
     }
 
     for (y = 0; y < texnumy; y++)
@@ -210,13 +212,11 @@ static void gl_set_bilinear (int new_value)
       for (x = 0; x < texnumx; x++)
       {
         disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
-
+	RETURN_IF_GL_ERROR ();
         disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        RETURN_IF_GL_ERROR ();
         disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-        disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
-        CHECK_GL_ERROR ();
+        RETURN_IF_GL_ERROR ();
       }
     }
   }
@@ -225,13 +225,11 @@ static void gl_set_bilinear (int new_value)
     if (cabtex)
     {
 	    disp__glBindTexture (GL_TEXTURE_2D, cabtex[0]);
-
+	    RETURN_IF_GL_ERROR ();
 	    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	    RETURN_IF_GL_ERROR ();
 	    disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, line_len /* ?? */);
-	    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
-	    CHECK_GL_ERROR ();
+	    RETURN_IF_GL_ERROR ();
     }
 
     for (y = 0; y < texnumy; y++)
@@ -239,57 +237,70 @@ static void gl_set_bilinear (int new_value)
       for (x = 0; x < texnumx; x++)
       {
         disp__glBindTexture (GL_TEXTURE_2D, texgrid[y * texnumx + x].texobj);
-
+        RETURN_IF_GL_ERROR ();
         disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        RETURN_IF_GL_ERROR ();
         disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-        disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-        disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
-        CHECK_GL_ERROR ();
+        RETURN_IF_GL_ERROR ();
       }
     }
   }
+  return 0;
 }
 
-static void gl_set_cabview (int cabv)
+static int gl_set_cabview (int new_value)
 {
-  if (cabv)
+  cabview = new_value;
+  if (cabview)
   {
         currentpan = 1;
 	lastpan    = 0;
 	panframe   = 0;
-	SetupFrustum ();
+	return SetupFrustum ();
   } else {
-	SetupOrtho ();
+	return SetupOrtho ();
   }
-  cabview = cabv;
 }
 
-static void gl_set_antialias(int aa)
+static int gl_set_antialias(int new_value)
 {
-  if (aa)
+  GLenum err;
+  antialias = new_value;
+  if (antialias)
   {
     disp__glShadeModel (GL_SMOOTH);
+    RETURN_IF_GL_ERROR ();
     disp__glEnable (GL_POLYGON_SMOOTH);
+    RETURN_IF_GL_ERROR ();
     disp__glEnable (GL_LINE_SMOOTH);
+    RETURN_IF_GL_ERROR ();
     disp__glEnable (GL_POINT_SMOOTH);
+    RETURN_IF_GL_ERROR ();
   }
   else
   {
     disp__glShadeModel (GL_FLAT);
+    RETURN_IF_GL_ERROR ();
     disp__glDisable (GL_POLYGON_SMOOTH);
+    RETURN_IF_GL_ERROR ();
     disp__glDisable (GL_LINE_SMOOTH);
+    RETURN_IF_GL_ERROR ();
     disp__glDisable (GL_POINT_SMOOTH);
+    RETURN_IF_GL_ERROR ();
   }
-  antialias = aa;
+  return 0;
 }
 
-static void gl_set_beam(float new_value)
+static int gl_set_beam(float new_value)
 {
+	GLenum err;
 	gl_beam = new_value;
 	disp__glLineWidth(gl_beam);
+        RETURN_IF_GL_ERROR ();
 	disp__glPointSize(gl_beam);
+        RETURN_IF_GL_ERROR ();
 	printf("GLINFO (vec): beamer size %f\n", gl_beam);
+	return 0;
 }
 
 int gl_open_display (void)
@@ -299,14 +310,18 @@ int gl_open_display (void)
   double cabn_aspect ;
   GLdouble vx_gscr_p4b, vy_gscr_p4b, vz_gscr_p4b; 
   GLdouble t1;
+  GLdouble texwpervw=0.0;
+  GLdouble texhpervh=0.0;
   GLint format=0;
   GLint tidxsize=0;
+  GLenum err;
+  struct TexSquare *tsq=0;
   int e_x, e_y, s, i=0;
+  int x, y;
   int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
 
-  CHECK_GL_BEGINEND();
-
   glVersion = disp__glGetString(GL_VERSION);
+  RETURN_IF_GL_ERROR ();
 
   printf("\nGLINFO: OpenGL Driver Information:\n");
   printf("\tvendor: %s,\n\trenderer %s,\n\tversion %s\n", 
@@ -321,6 +336,10 @@ int gl_open_display (void)
        return 1;
   }
 
+  printf("GLINFO: GLU Driver Information:\n");
+  printf("\tversion %s\n",
+        disp__gluGetString(GLU_VERSION));
+  
   cab_loaded = LoadCabinet (cabname);
   if (cabview && !cab_loaded)
   {
@@ -329,12 +348,17 @@ int gl_open_display (void)
   }
 
   disp__glClearColor (0, 0, 0, 1);
+  RETURN_IF_GL_ERROR ();
   disp__glClear (GL_COLOR_BUFFER_BIT);
+  RETURN_IF_GL_ERROR ();
   disp__glFlush ();
+  RETURN_IF_GL_ERROR ();
 
-  gl_resize();
+  if (gl_resize())
+    return 1;
 
   disp__glDepthFunc (GL_LEQUAL);
+  RETURN_IF_GL_ERROR ();
 
   if (cab_loaded)
   {
@@ -543,7 +567,10 @@ int gl_open_display (void)
   if (sysdep_display_params.vec_src_bounds)
   {
     veclist=disp__glGenLists(1);
-    gl_set_beam(gl_beam);
+    if (gl_set_beam(gl_beam))
+      return 1;
+    disp__glBlendFunc (GL_ONE, GL_ONE);
+    RETURN_IF_GL_ERROR ();
   }
 
   /* no alpha .. important, because mame has no alpha set ! */
@@ -563,28 +590,25 @@ int gl_open_display (void)
 		    gl_bitmap_type   = GL_UNSIGNED_SHORT_1_5_5_5_REV;
 		    break;
 	case 16:
-		    /* RGBA5551 */
+		    /* RGB565 */
 		    sysdep_display_properties.palette_info.red_mask   = 0x0000F800;
 		    sysdep_display_properties.palette_info.green_mask = 0x000007C0;
-		    sysdep_display_properties.palette_info.blue_mask  = 0x0000003E;
-		    gl_bitmap_format = GL_RGBA;
-		    /*                                   R G B A */
-		    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_5_5_1;
+		    sysdep_display_properties.palette_info.blue_mask  = 0x0000003F;
+		    gl_bitmap_format = GL_RGB;
+		    /*                                   R G B */
+		    gl_bitmap_type   = GL_UNSIGNED_SHORT_5_6_5;
 		    break;
 	case 32:
-		 /**
-		  * skip the D of DRGB 
-		  */
-		  /* ABGR8888 */
-		  sysdep_display_properties.palette_info.blue_mask   = 0x00FF0000;
+		  /* ARGB8888 */
+		  sysdep_display_properties.palette_info.red_mask    = 0x00FF0000;
 		  sysdep_display_properties.palette_info.green_mask  = 0x0000FF00;
-		  sysdep_display_properties.palette_info.red_mask    = 0x000000FF;
+		  sysdep_display_properties.palette_info.blue_mask   = 0x000000FF;
 		  gl_bitmap_format = GL_BGRA;
-			/*  gl_bitmap_format = GL_RGBA; */
-		  /*                                 A B G R */
+		  /*                                 A R G B */
 		  gl_bitmap_type   = GL_UNSIGNED_INT_8_8_8_8_REV;
 		  break;
   }
+  sysdep_display_properties.vector_renderer = glvec_renderer;
 
   /* determine the texture size to use */
   if(force_text_width_height>0)
@@ -611,12 +635,6 @@ int gl_open_display (void)
   { s*=2; e_y++; }
   text_height=s;
 
-  CHECK_GL_BEGINEND();
-
-#ifndef NDEBUG
-  fprintf (stderr, "GLINFO: gl_internal_format= 0x%X,\n\tgl_bitmap_format =  0x%X,\n\tgl_bitmap_type = 0x%X\n", gl_internal_format, gl_bitmap_format, gl_bitmap_type);
-#endif
-
   /* Test the max texture size */
   do
   {
@@ -624,11 +642,11 @@ int gl_open_display (void)
 		  gl_internal_format,
 		  text_width, text_height,
 		  0, gl_bitmap_format, gl_bitmap_type, 0);
-
     CHECK_GL_ERROR ();
 
     disp__glGetTexLevelParameteriv
       (GL_PROXY_TEXTURE_2D, 0, GL_TEXTURE_INTERNAL_FORMAT, &format);
+    CHECK_GL_ERROR ();
 
 #ifndef NOTEXIDXSIZE
     disp__glGetTexLevelParameteriv
@@ -667,16 +685,16 @@ int gl_open_display (void)
       }
 
       fprintf (stderr, "[%dx%d] !\n", text_height, text_width);
-
     }
   }
   while(format!=gl_internal_format && text_width>=64 && text_height>=64);
+
   if(text_width < 64 || text_height < 64)
   {
     fprintf (stderr, "GLERROR: Give up .. usable texture size not available, or texture config error !\n");
     return 1;
   }
-
+  
   texnumx = sysdep_display_params.orig_width / text_width;
   if ((sysdep_display_params.orig_width % text_width) > 0)
     texnumx++;
@@ -690,88 +708,13 @@ int gl_open_display (void)
 		 (int) text_height);
 
   /* allocate some buffers */
-  texgrid    = calloc (texnumx * texnumy, sizeof (struct TexSquare));
+  texgrid    = calloc(texnumx * texnumy, sizeof (struct TexSquare));
   empty_text = calloc(text_width*text_height, bytes_per_pixel);
   if (!texgrid || !empty_text)
   {
     fprintf(stderr, "GLERROR: couldn't allocate memory\n");
     return 1;
   }
-
-  if(sysdep_display_params.depth == 16) 
-  {
-    colorBlittedMemory = malloc( sysdep_display_params.width * sysdep_display_params.height * bytes_per_pixel);
-    if (!colorBlittedMemory)
-    {
-      fprintf(stderr, "GLERROR: couldn't allocate memory\n");
-      return 1;
-    }
-    printf("GLINFO: Using bit blit to map color indices !!\n");
-  } else {
-    printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
-  }
-
-  /* done */
-  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
-		sysdep_display_params.depth, 
-		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
-		sysdep_display_properties.palette_info.blue_mask);
-  
-  return 0;
-}
-
-/* Close down the virtual screen */
-void gl_close_display (void)
-{
-  if(colorBlittedMemory!=NULL)
-  {
-    free(colorBlittedMemory);
-    colorBlittedMemory = NULL;
-  }
-  if (empty_text)
-  {
-    free (empty_text);
-    empty_text = NULL;
-  }  
-  if (texgrid)
-  {
-    free(texgrid);
-    texgrid = NULL;
-  }
-  if (cpan)
-  {
-    free(cpan);
-    cpan = NULL;
-  }
-
-  if (veclist)
-  {
-    disp__glDeleteLists(veclist, 1);
-    veclist = 0;
-  }
-  if (texture_init)
-  {
-    CHECK_GL_BEGINEND();
-    texture_init = 0;
-  }
-}
-
-/**
- * the given bitmap MUST be the original mame core bitmap !!!
- *    - no swapxy, flipx or flipy and no resize !
- *    - shall be Machine->scrbitmap
- */
-static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area)
-{
-  int x=0, y=0;
-  GLenum err;
-  unsigned char *line_1=0;
-  struct TexSquare *tsq=0;
-  GLdouble texwpervw=0.0;
-  GLdouble texhpervh=0.0;
-  int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
-
-  CHECK_GL_BEGINEND();
 
   /**
    * texwpervw, texhpervh:
@@ -786,26 +729,13 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
   if (texhpervh > 1.0)
     texhpervh = 1.0;
 
-  if(sysdep_display_params.depth == 16) 
-  {
-    line_1   = (unsigned char *)colorBlittedMemory;
-    line_len = sysdep_display_params.orig_width;
-  }
-  else
-  {
-    unsigned char *line_2;
-    line_1   = (unsigned char *) bitmap->line[vis_area->min_y];
-    line_2   = (unsigned char *) bitmap->line[vis_area->min_y + 1];
-    line_len = (line_2 - line_1) / bytes_per_pixel;
-    line_1  += vis_area->min_x * bytes_per_pixel;
-  }
-
+  /* create (but don't "fill") the textures */
   for (y = 0; y < texnumy; y++)
   {
     for (x = 0; x < texnumx; x++)
     {
       tsq = texgrid + y * texnumx + x;
-
+  
       if (x == texnumx - 1 && sysdep_display_params.orig_width % text_width)
 	tsq->xcov =
 	  (GLdouble) (sysdep_display_params.orig_width % text_width) / (GLdouble) text_width;
@@ -839,72 +769,146 @@ static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area
       		    y*(GLdouble)text_height + tsq->ycov*(GLdouble)text_height,
                    &(tsq->x4), &(tsq->y4), &(tsq->z4));
 
-      /* calculate the pixel store data, to use the machine-bitmap for our texture */
-      tsq->texture = line_1 +
-        ( (y * text_height * line_len) + (x * text_width)) * bytes_per_pixel;
-
-      tsq->isTexture=GL_FALSE;
       tsq->texobj=0;
-
       disp__glGenTextures (1, &(tsq->texobj));
-
+      RETURN_IF_GL_ERROR ();
       disp__glBindTexture (GL_TEXTURE_2D, tsq->texobj);
-      err = disp__glGetError ();
-      if(err==GL_INVALID_ENUM)
-      {
-	fprintf (stderr, "GLERROR glBindTexture (glGenText) := GL_INVALID_ENUM, texnum x=%d, y=%d, texture=%d\n", x, y, tsq->texobj);
-      } 
-      #ifndef NDEBUG
-	      else if(err==GL_INVALID_OPERATION) {
-		fprintf (stderr, "GLERROR glBindTexture (glGenText) := GL_INVALID_OPERATION, texnum x=%d, y=%d, texture=%d\n", x, y, tsq->texobj);
-	      }
-      #endif
+      RETURN_IF_GL_ERROR ();
 
       if(disp__glIsTexture(tsq->texobj) == GL_FALSE)
       {
 	fprintf (stderr, "GLERROR ain't a texture (glGenText): texnum x=%d, y=%d, texture=%d\n",
 		x, y, tsq->texobj);
-      } else {
-        tsq->isTexture=GL_TRUE;
       }
-
-      CHECK_GL_ERROR ();
+      RETURN_IF_GL_ERROR ();
 
       disp__glTexImage2D (GL_TEXTURE_2D, 0,
 		    gl_internal_format,
 		    text_width, text_height,
 		    0, gl_bitmap_format, gl_bitmap_type, empty_text);
-
-      CHECK_GL_ERROR ();
-
+      RETURN_IF_GL_ERROR ();
       disp__glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_PRIORITY, 1.0);
+      RETURN_IF_GL_ERROR ();
+      disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+      RETURN_IF_GL_ERROR ();
+      disp__glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+      RETURN_IF_GL_ERROR ();
+      disp__glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+      RETURN_IF_GL_ERROR ();
+    }	/* for all texnumx */
+  }  /* for all texnumy */
+  free (empty_text);
+  empty_text   = NULL;
 
-      CHECK_GL_ERROR ();
+  /* lets init the rest of the customizings ... */
+  if (gl_set_bilinear (bilinear))
+    return 1;
+  if (gl_set_antialias (antialias))
+    return 1;
+  if (gl_set_cabview (cabview))
+    return 1;
 
-      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  /* done */
+  if(sysdep_display_params.depth == 16)
+  {
+    colorBlittedMemory = malloc( sysdep_display_params.width * sysdep_display_params.height * bytes_per_pixel);
+    if (!colorBlittedMemory)
+    {
+      fprintf(stderr, "GLERROR: couldn't allocate memory\n");
+      return 1;
+    }
+    printf("GLINFO: Using bit blit to map color indices !!\n");
+  } else {
+    printf("GLINFO: Using true color mode (no color indices, but direct color)!!\n");
+  }
 
-      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-      disp__glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+  printf("GLINFO: depth=%d, rgb 0x%X, 0x%X, 0x%X (true color mode)\n",
+		sysdep_display_params.depth, 
+		sysdep_display_properties.palette_info.red_mask, sysdep_display_properties.palette_info.green_mask, 
+		sysdep_display_properties.palette_info.blue_mask);
+  
+  return 0;
+}
 
-      disp__glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+/* Close down the virtual screen */
+void gl_close_display (void)
+{
+  CHECK_GL_BEGINEND();
+  CHECK_GL_ERROR();
 
-      CHECK_GL_ERROR ();
+  if(colorBlittedMemory!=NULL)
+  {
+    free(colorBlittedMemory);
+    colorBlittedMemory = NULL;
+  }
+  if (empty_text)
+  {
+    free (empty_text);
+    empty_text = NULL;
+  }
+  if (texgrid)
+  {
+    free(texgrid);
+    texgrid = NULL;
+  }
+  if (cpan)
+  {
+    free(cpan);
+    cpan = NULL;
+  }
+
+  if (veclist)
+  {
+    disp__glDeleteLists(veclist, 1);
+    CHECK_GL_ERROR();
+    veclist = 0;
+  }
+
+  texture_init = 0;
+}
+
+/**
+ * the given bitmap MUST be the original mame core bitmap !!!
+ *    - no swapxy, flipx or flipy and no resize !
+ *    - shall be Machine->scrbitmap
+ */
+static void InitTextures (struct mame_bitmap *bitmap, struct rectangle *vis_area)
+{
+  int x=0, y=0;
+  unsigned char *line_1=0;
+  struct TexSquare *tsq=0;
+  int line_len;
+  int bytes_per_pixel = (sysdep_display_params.depth + 7) / 8;
+
+  if(sysdep_display_params.depth == 16) 
+  {
+    line_1   = (unsigned char *)colorBlittedMemory;
+    line_len = sysdep_display_params.orig_width;
+  }
+  else
+  {
+    unsigned char *line_2;
+    line_1   = (unsigned char *) bitmap->line[vis_area->min_y];
+    line_2   = (unsigned char *) bitmap->line[vis_area->min_y + 1];
+    line_len = (line_2 - line_1) / bytes_per_pixel;
+    line_1  += vis_area->min_x * bytes_per_pixel;
+  }
+
+  disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, line_len);
+  CHECK_GL_ERROR ();
+
+  for (y = 0; y < texnumy; y++)
+  {
+    for (x = 0; x < texnumx; x++)
+    {
+      tsq = texgrid + y * texnumx + x;
+
+      /* calculate the pixel store data, to use the machine-bitmap for our texture */
+      tsq->texture = line_1 +
+        ( (y * text_height * line_len) + (x * text_width)) * bytes_per_pixel;
     }	/* for all texnumx */
   }  /* for all texnumy */
 
-  CHECK_GL_BEGINEND();
-
-  /* lets init the rest of the custumizings ... */
-  gl_set_bilinear (bilinear);
-  gl_set_antialias (antialias);
-  gl_set_cabview (cabview);
-
-  CHECK_GL_BEGINEND();
-  CHECK_GL_ERROR ();
-
-  free (empty_text);
-  empty_text   = NULL;
   texture_init = 1;
 }
 
@@ -1074,76 +1078,84 @@ void CalcCabPointbyViewpoint(
 }
 
 /* Set up a frustum projection */
-static void SetupFrustum (void)
+static int SetupFrustum (void)
 {
+  GLenum err;
   double vscrnaspect = (double) window_width / (double) window_height;
 
-  CHECK_GL_BEGINEND();
-
   disp__glMatrixMode (GL_PROJECTION);
+  RETURN_IF_GL_ERROR ();
   disp__glLoadIdentity ();
-
-  if(!do_snapshot)
-	  disp__glFrustum (-vscrnaspect, vscrnaspect, -1.0, 1.0, 5.0, 100.0);
-  else
-	  disp__glFrustum (-vscrnaspect, vscrnaspect, 1.0, -1.0, 5.0, 100.0);
-
-  CHECK_GL_ERROR ();
-
+  RETURN_IF_GL_ERROR ();
+  disp__glFrustum (-vscrnaspect, vscrnaspect, -1.0, 1.0, 5.0, 100.0);
+  RETURN_IF_GL_ERROR ();
   disp__glGetDoublev(GL_PROJECTION_MATRIX, mxProjection);
-  CHECK_GL_ERROR ();
-
+  RETURN_IF_GL_ERROR ();
   disp__glMatrixMode (GL_MODELVIEW);
+  RETURN_IF_GL_ERROR ();
   disp__glLoadIdentity ();
+  RETURN_IF_GL_ERROR ();
   disp__glTranslatef (0.0, 0.0, -20.0);
-
+  RETURN_IF_GL_ERROR ();
   disp__glGetDoublev(GL_MODELVIEW_MATRIX, mxModel);
-  CHECK_GL_ERROR ();
+  RETURN_IF_GL_ERROR ();
+  
+  return 0;
 }
 
 /* Set up an orthographic projection */
-static void SetupOrtho (void)
+static int SetupOrtho (void)
 {
-  CHECK_GL_BEGINEND();
+  GLenum err;
 
   disp__glMatrixMode (GL_PROJECTION);
+  RETURN_IF_GL_ERROR ();
   disp__glLoadIdentity ();
-
-  if(!do_snapshot)
-  {
-	  disp__glOrtho (-0.5,  0.5, -0.5,  0.5,  1.0,  -1.0); /* normal display ! */
-  } else {
-	  disp__glOrtho (-0.5,  0.5,  0.5, -0.5,  1.0,  -1.0); /* normal display ! */
-  }
-
+  RETURN_IF_GL_ERROR ();
+  disp__glOrtho (-0.5,  0.5, -0.5,  0.5,  1.0,  -1.0); /* normal display ! */
+  RETURN_IF_GL_ERROR ();
   disp__glMatrixMode (GL_MODELVIEW);
+  RETURN_IF_GL_ERROR ();
   disp__glLoadIdentity ();
-
+  RETURN_IF_GL_ERROR ();
   disp__glRotated ( 180.0 , 1.0, 0.0, 0.0);
+  RETURN_IF_GL_ERROR ();
 
   if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) )
+  {
 	disp__glRotated (  180.0 , 0.0, 1.0, 0.0);
+        RETURN_IF_GL_ERROR ();
+  }
 
   if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY) )
+  {
 	disp__glRotated ( -180.0 , 1.0, 0.0, 0.0);
+        RETURN_IF_GL_ERROR ();
+  }
 
   if( (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY) ) {
 	disp__glRotated ( 180.0 , 0.0, 1.0, 0.0);
+        RETURN_IF_GL_ERROR ();
   	disp__glRotated (  90.0 , 0.0, 0.0, 1.0 );
+        RETURN_IF_GL_ERROR ();
   }
 
   disp__glTranslated ( -0.5 , -0.5, 0.0 );
-  	
+  RETURN_IF_GL_ERROR ();
+
+  return 0;  	
 }
 
-void gl_resize(void)
+int gl_resize(void)
 {
+  GLenum err;
   CHECK_GL_BEGINEND();
 
   if (cabview)
   {
           disp__glViewport (0, 0, window_width, window_height);
-          SetupFrustum ();
+          RETURN_IF_GL_ERROR ();
+          return SetupFrustum ();
   }
   else
   {
@@ -1157,9 +1169,9 @@ void gl_resize(void)
           vscrndy = (window_height - vh) / 2;
 
           disp__glViewport (vscrndx, vscrndy, vw, vh);
-          SetupOrtho ();
+          RETURN_IF_GL_ERROR ();
+          return SetupOrtho ();
   }
-  /* printf(stderr, "GLINFO: xgl_resize to %dx%d\n", window_width, window_height); */
 }
 
 /* Compute an average between two sets of 3D coordinates */
@@ -1241,50 +1253,64 @@ static void cabinetTextureRotationTranslation ()
 
 	/* go back on screen */
 	disp__glTranslated ( vx_gscr_p1, vy_gscr_p1, vz_gscr_p1); 
+	CHECK_GL_ERROR ();
 
 	/* x-border -> I. Q */
 	disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
+	CHECK_GL_ERROR ();
 
 	/* y-border -> I. Q */
 	disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+	CHECK_GL_ERROR ();
 
 	/********* CENTERED AT ORIGIN END  ****************/
 
 	if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPX) )
+	{
 		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
+		CHECK_GL_ERROR ();
+	}
 
 	if ( (sysdep_display_params.orientation & SYSDEP_DISPLAY_FLIPY) )
+	{
 		disp__glRotated ( -180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
-
-
+		CHECK_GL_ERROR ();
+	}
 
 	/********* CENTERED AT ORIGIN BEGIN ****************/
-
 	if( (sysdep_display_params.orientation & SYSDEP_DISPLAY_SWAPXY) )
 	{
 		disp__glRotated ( -180.0 , vx_scr_ny, vy_scr_ny, vz_scr_ny);
+		CHECK_GL_ERROR ();
 
 		/* x-center */
 		disp__glTranslated ( vx_gscr_dw/2.0, vy_gscr_dw/2.0, vz_gscr_dw/2.0);
+		CHECK_GL_ERROR ();
 
 		/* y-center */
 		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+		CHECK_GL_ERROR ();
 
 		/* swap -> III. Q */
 		disp__glRotated ( -90.0 , vx_scr_nz, vy_scr_nz, vz_scr_nz);
+		CHECK_GL_ERROR ();
 	} else {
 		/* x-center */
 		disp__glTranslated ( -vx_gscr_dw/2.0, -vy_gscr_dw/2.0, -vz_gscr_dw/2.0);
+		CHECK_GL_ERROR ();
 
 		/* y-center */
 		disp__glTranslated ( vx_gscr_dh/2.0, vy_gscr_dh/2.0, vz_gscr_dh/2.0);
+		CHECK_GL_ERROR ();
 	}
 
 	/* re-flip -> IV. Q     (normal) */
 	disp__glRotated ( 180.0 , vx_scr_nx, vy_scr_nx, vz_scr_nx);
+	CHECK_GL_ERROR ();
 
 	/* go to origin -> I. Q (flipx) */
 	disp__glTranslated ( -vx_gscr_p1, -vy_gscr_p1, -vz_gscr_p1); 
+	CHECK_GL_ERROR ();
 
 	/** START READING ... TRANSLATION / ROTATION **/
 }
@@ -1292,11 +1318,10 @@ static void cabinetTextureRotationTranslation ()
 static void drawTextureDisplay (struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
-	  unsigned int flags, int useCabinet)
+	  unsigned int flags)
 {
   struct TexSquare *square;
   int x = 0, y = 0;
-  GLenum err;
   static const double z_pos = 0.9f;
   int updateTexture = 1;
   static int ui_was_dirty=0;
@@ -1305,15 +1330,8 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
      && !ui_was_dirty)
     updateTexture = 0;
 
-  CHECK_GL_BEGINEND();
-
-  if (updateTexture)
+  if (updateTexture && (sysdep_display_params.depth == 16))
   {
-    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, line_len);
-    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 8);
-
-    if(sysdep_display_params.depth == 16)
-    {
     	unsigned short *dest=colorBlittedMemory;
     	int y,x;
     	for (y=vis_area->min_y;y<=vis_area->max_y;y++)
@@ -1323,10 +1341,12 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
     	      *dest=palette->lookup[((UINT16*)(bitmap->line[y]))[x]];
     	   }
     	}
-    }
   }
 
+  disp__glColor4d (1.0, 1.0, 1.0, 1.0);
+  CHECK_GL_ERROR ();
   disp__glEnable (GL_TEXTURE_2D);
+  CHECK_GL_ERROR ();
 
   for (y = 0; y < texnumy; y++)
   {
@@ -1344,33 +1364,8 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
 		height=text_height;
       else height=sysdep_display_params.orig_height%text_height;
 
-      if(square->isTexture==GL_FALSE)
-      {
-	#ifndef NDEBUG
-	  fprintf (stderr, "GLINFO ain't a texture(update): texnum x=%d, y=%d, texture=%d\n",
-	  	x, y, square->texobj);
-	#endif
-        continue;
-      }
-
       disp__glBindTexture (GL_TEXTURE_2D, square->texobj);
-      err = disp__glGetError ();
-      if(err==GL_INVALID_ENUM)
-      {
-	fprintf (stderr, "GLERROR glBindTexture := GL_INVALID_ENUM, texnum x=%d, y=%d, texture=%d\n", x, y, square->texobj);
-      }
-      #ifndef NDEBUG
-	      else if(err==GL_INVALID_OPERATION) {
-		fprintf (stderr, "GLERROR glBindTexture := GL_INVALID_OPERATION, texnum x=%d, y=%d, texture=%d\n", x, y, square->texobj);
-	      }
-      #endif
-
-      if(disp__glIsTexture(square->texobj) == GL_FALSE)
-      {
-        square->isTexture=GL_FALSE;
-	fprintf (stderr, "GLERROR ain't a texture(update): texnum x=%d, y=%d, texture=%d\n",
-		x, y, square->texobj);
-      }
+      CHECK_GL_ERROR ();
 
       /* This is the quickest way I know of to update the texture */
       if (updateTexture)
@@ -1378,52 +1373,92 @@ static void drawTextureDisplay (struct mame_bitmap *bitmap,
 	disp__glTexSubImage2D (GL_TEXTURE_2D, 0, 0, 0,
 		width, height,
 		gl_bitmap_format, gl_bitmap_type, square->texture);
+        CHECK_GL_ERROR ();
       }
 
-      if (useCabinet)
+      if (cabview)
       {
   	GL_BEGIN(GL_QUADS);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, 0);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x1, square->y1, square->z1);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, 0);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x2, square->y2, square->z2);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, square->ycov);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x3, square->y3, square->z3);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, square->ycov);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->x4, square->y4, square->z4);
+        CHECK_GL_ERROR ();
 	GL_END();
       }
       else
       {
 	GL_BEGIN(GL_QUADS);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, 0);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx1, square->fy1, z_pos);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, 0);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx2, square->fy2, z_pos);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (square->xcov, square->ycov);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx3, square->fy3, z_pos);
+        CHECK_GL_ERROR ();
 	disp__glTexCoord2d (0, square->ycov);
+        CHECK_GL_ERROR ();
 	disp__glVertex3d (square->fx4, square->fy4, z_pos);
+        CHECK_GL_ERROR ();
 	GL_END();
       }
     } /* for all texnumx */
   } /* for all texnumy */
-
-  if (updateTexture)
-  {
-    disp__glPixelStorei (GL_UNPACK_ROW_LENGTH, 0);
-    disp__glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
-    disp__glPixelTransferi (GL_MAP_COLOR, GL_FALSE);
-  }
-
-  disp__glDisable (GL_TEXTURE_2D);
-
   CHECK_GL_BEGINEND();
 
-  /* YES - lets catch this error ... 
-   */
-  (void) disp__glGetError ();
+  disp__glDisable (GL_TEXTURE_2D);
+  CHECK_GL_ERROR ();
   
+  /* Draw the vectors if in vector mode */
+  if (sysdep_display_params.vec_src_bounds)
+  {
+    if (antialiasvec)
+    {
+      disp__glEnable (GL_LINE_SMOOTH);
+      CHECK_GL_ERROR ();
+      disp__glEnable (GL_POINT_SMOOTH);
+      CHECK_GL_ERROR ();
+    }
+    else
+    {
+      disp__glDisable (GL_LINE_SMOOTH);
+      CHECK_GL_ERROR ();
+      disp__glDisable (GL_POINT_SMOOTH);
+      CHECK_GL_ERROR ();
+    }
+
+    disp__glShadeModel (GL_FLAT);
+    CHECK_GL_ERROR ();
+    disp__glEnable (GL_BLEND);
+    CHECK_GL_ERROR ();
+    disp__glCallList (veclist);
+    CHECK_GL_BEGINEND();
+    CHECK_GL_ERROR ();
+    disp__glDisable (GL_BLEND);
+    CHECK_GL_ERROR ();
+
+    /* restore normal antialias settings */
+    gl_set_antialias (antialias);
+  }
+
   ui_was_dirty = flags & SYSDEP_DISPLAY_UI_DIRTY;
 }
 
@@ -1433,29 +1468,18 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
 	  struct sysdep_palette_struct *palette,
 	  unsigned int flags)
 {
-  int glerrid;
-  int shadeModel;
   GLdouble camx, camy, camz;
   GLdouble dirx, diry, dirz;
   GLdouble normx, normy, normz;
   GLdouble perc;
   struct CameraPan *pan, *lpan;
 
-  /* set upside down .. */
-  if (do_snapshot)
-    SetupFrustum ();
-  
-  CHECK_GL_BEGINEND();
-
   disp__glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+  CHECK_GL_ERROR ();
+  disp__glPushMatrix ();
   CHECK_GL_ERROR ();
 
-  disp__glPushMatrix ();
-
-
   /* Do the camera panning */
-
   if (cpan)
   {
     pan = cpan + currentpan;
@@ -1510,134 +1534,21 @@ static void UpdateCabDisplay (struct mame_bitmap *bitmap,
   else
     disp__gluLookAt (-5.0, 0.0, 5.0, 0.0, 0.0, -5.0, 0.0, 1.0, 0.0);
 
+  CHECK_GL_ERROR ();
   disp__glEnable (GL_DEPTH_TEST);
+  CHECK_GL_ERROR ();
 
   /* Draw the cabinet */
   disp__glCallList (cablist);
+  CHECK_GL_BEGINEND();
+  CHECK_GL_ERROR ();
 
-  /* YES - lets catch this error ... */
-  glerrid = disp__glGetError ();
-  if (0x502 != glerrid)
-  {
-    CHECK_GL_ERROR ();
-  }
-
-  /* Draw the screen if in vector mode */
-
+  /* Draw the game screen */
   cabinetTextureRotationTranslation ();
-
-  if (sysdep_display_params.vec_src_bounds)
-  {
-    disp__glColor4d (1.0, 1.0, 1.0, 1.0);
-
-    drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 1 /*cabinet */ );
-
-    disp__glDisable (GL_TEXTURE_2D);
-    disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
-    disp__glShadeModel (GL_FLAT);
-
-    /* always enable antialias for vectors */
-    disp__glEnable (GL_LINE_SMOOTH);
-    disp__glEnable (GL_POINT_SMOOTH);
-
-    disp__glCallList (veclist);
-
-    if (!antialias)
-    {
-      disp__glDisable (GL_LINE_SMOOTH);
-      disp__glDisable (GL_POINT_SMOOTH);
-    }
-
-    disp__glShadeModel (shadeModel);
-  }
-  else
-  {				/* Draw the screen of a bitmapped game */
-
-    drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 1 /*cabinet */ );
-
-  }
+  drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags);
 
   disp__glDisable (GL_DEPTH_TEST);
-
-  disp__glPopMatrix ();
-
-#if 0 /* disabled for now */
-  if (do_snapshot)
-  {
-    gl_save_screen_snapshot();
-    do_snapshot = 0;
-    /* reset upside down .. */
-    SetupFrustum ();
-  }
-#endif  
-}
-
-static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
-	  struct rectangle *vis_area,  struct rectangle *dirty_area,
-	  struct sysdep_palette_struct *palette,
-	  unsigned int flags)
-{
-  int shadeModel;
-
-  /* set upside down .. */
-  if (do_snapshot)
-    SetupOrtho ();
-  
-  CHECK_GL_BEGINEND();
-
-  disp__glClear (GL_COLOR_BUFFER_BIT);
-
-  disp__glPushMatrix ();
-
-  CHECK_GL_BEGINEND();
-
   CHECK_GL_ERROR ();
-
-  disp__glColor4d (1.0, 1.0, 1.0, 1.0);
-
-  drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags, 0 );
-
-  if (sysdep_display_params.vec_src_bounds)
-  {
-    disp__glDisable (GL_TEXTURE_2D);
-    disp__glGetIntegerv(GL_SHADE_MODEL, &shadeModel);
-    disp__glShadeModel (GL_FLAT);
-
-    /* always enable antialias for vectors */
-    disp__glEnable (GL_LINE_SMOOTH);
-    disp__glEnable (GL_POINT_SMOOTH);
-
-    disp__glCallList (veclist);
-
-    if (!antialias)
-    {
-      disp__glDisable (GL_LINE_SMOOTH);
-      disp__glDisable (GL_POINT_SMOOTH);
-    }
-
-    disp__glShadeModel (shadeModel);
-
-  }
-
-  CHECK_GL_BEGINEND();
-
-  /* YES - lets catch this error ... 
-   */
-  (void) disp__glGetError ();
-
-  disp__glPopMatrix ();
-
-  CHECK_GL_ERROR ();
-
-#if 0 /* disabled for now */
-  if (do_snapshot)
-  {
-    gl_save_screen_snapshot();
-    do_snapshot = 0;
-    /* reset upside down .. */
-    SetupOrtho ();
-  }
-#endif
 }
 
 /**
@@ -1645,7 +1556,6 @@ static void UpdateFlatDisplay (struct mame_bitmap *bitmap,
  *    - no swapxy, flipx or flipy and no resize !
  *    - shall be Machine->scrbitmap
  */
-
 static void UpdateGLDisplay (struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -1655,27 +1565,19 @@ static void UpdateGLDisplay (struct mame_bitmap *bitmap,
     InitTextures (bitmap, vis_area);
 
   if (cabview)
-    UpdateCabDisplay (bitmap, vis_area, dirty_area, palette, flags);
-  else
-    UpdateFlatDisplay (bitmap, vis_area, dirty_area, palette, flags);
-
-  if (doublebuffer)
   {
-#ifdef WIN32
-    BOOL ret = SwapBuffers (glHDC);
-    if (ret != TRUE)
-    {
-      CHECK_WGL_ERROR (glWnd, __FILE__, __LINE__);
-      doublebuffer = FALSE;
-    }
-#else
-    SwapBuffers ();
-#endif
+    UpdateCabDisplay (bitmap, vis_area, dirty_area, palette, flags);
   }
   else
-    disp__glFlush ();
+  {
+    disp__glClear (GL_COLOR_BUFFER_BIT);
+    CHECK_GL_ERROR ();
+    disp__glPushMatrix ();
+    CHECK_GL_ERROR ();
+    drawTextureDisplay (bitmap, vis_area, dirty_area, palette, flags);
+  }
 
-  CHECK_GL_BEGINEND ();
+  disp__glPopMatrix ();
   CHECK_GL_ERROR ();
 }
 

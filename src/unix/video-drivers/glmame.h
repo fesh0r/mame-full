@@ -56,8 +56,8 @@ extern GLuint cablist;
 
 /* xgl.c */
 extern int antialias;
+extern int antialiasvec;
 extern int bilinear;
-extern int doublebuffer;
 extern int force_text_width_height;
 extern float gl_beam;
 extern int cabview;
@@ -70,9 +70,6 @@ extern GLdouble vx_cscr_p1, vy_cscr_p1, vz_cscr_p1,
         vx_cscr_p2, vy_cscr_p2, vz_cscr_p2,
         vx_cscr_p3, vy_cscr_p3, vz_cscr_p3, 
 	vx_cscr_p4, vy_cscr_p4, vz_cscr_p4;
-
-/* xgl.c */
-void SwapBuffers (void);
 
 /* glvec.c */
 int glvec_renderer(point *start, int num_points);
@@ -90,7 +87,7 @@ void gl_update_display(struct mame_bitmap *bitmap,
 void CalcCabPointbyViewpoint( 
   GLdouble vx_gscr_view, GLdouble vy_gscr_view, 
   GLdouble *vx_p, GLdouble *vy_p, GLdouble *vz_p);
-void gl_resize(void);
+int  gl_resize(void);
 
 /* glexport */
 void gl_save_screen_snapshot();

@@ -31,7 +31,7 @@
 /* options initialised through the rc_option struct */
 int bilinear;
 int antialias;
-int doublebuffer;
+int antialiasvec;
 int force_text_width_height;
 float gl_beam;
 int cabview;
@@ -53,7 +53,7 @@ struct rc_option xgl_opts[] = {
    { "OpenGL Related",	NULL,			rc_seperator,	NULL,
      NULL,		0,			0,		NULL,
      NULL },
-   { "gldblbuffer",	NULL,			rc_bool,	&doublebuffer,
+   { "gldblbuffer",	NULL,			rc_bool,	&(glCaps.buffer),
      "1",		0,			0,		NULL,
      "Enable/disable double buffering (default: true)" },
    { "gltexture_size",	NULL,			rc_int,		&force_text_width_height,
@@ -68,6 +68,9 @@ struct rc_option xgl_opts[] = {
    { "glantialias",	"glaa",			rc_bool,	&antialias,
      "0",		0,			0,		NULL,
      "Enable/disable antialiasing (default: true)" },
+   { "glantialiasvec",	"glaav",		rc_bool,	&antialiasvec,
+     "0",		0,			0,		NULL,
+     "Enable/disable vector antialiasing (default: true)" },
    { "gllibname",	"gllib",		rc_string,	&libGLName,
      "libGL.so",	0,			0,		NULL,
      "Choose the dynamically loaded OpenGL Library (default libGL.so)" },
@@ -109,14 +112,19 @@ int xgl_open_display(void)
   if((glxfx=getenv("MESA_GLX_FX")) && (glxfx[0]=='f'))
   {
     winmask     = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
-    if(!custom_windowsize)
+    if(custom_window_width)
+    {
+      window_width  = custom_window_width;
+      window_height = custom_window_height;
+    }
+    else
     {
       window_width  = 640;
       window_height = 480;
     }
     force_grab  = 2; /* grab mouse and keyb */
     window_type = 0; /* non resizable */
-    sysdep_display_params.fullscreen  = 1; /* don't allow resizing */
+    sysdep_display_params.fullscreen = 1; /* don't allow resizing */
   }
   else if(sysdep_display_params.fullscreen)
   {
@@ -132,7 +140,12 @@ int xgl_open_display(void)
     winmask       = CWBorderPixel | CWBackPixel | CWEventMask | CWColormap;
     if(cabview)
     {
-      if(!custom_windowsize)
+      if(custom_window_width)
+      {
+        window_width  = custom_window_width;
+        window_height = custom_window_height;
+      }
+      else
       {
         window_width  = 640;
         window_height = 480;
@@ -140,14 +153,18 @@ int xgl_open_display(void)
     }
     else
     {
-      if(!custom_windowsize)
+      if(custom_window_width)
+      {
+        window_width  = custom_window_width;
+        window_height = custom_window_height;
+        mode_clip_aspect(window_width, window_height, &window_width, &window_height);
+      }
+      else
       {
         window_width  = sysdep_display_params.width * sysdep_display_params.widthscale;
         window_height = sysdep_display_params.yarbsize;
         mode_stretch_aspect(window_width, window_height, &window_width, &window_height);
       }
-      else
-        mode_clip_aspect(window_width, window_height, &window_width, &window_height);
     }
     force_grab    = 0; /* no grab */
     window_type   = 1; /* resizable window */
@@ -175,8 +192,6 @@ int xgl_open_display(void)
   else
     window = DefaultRootWindow(display);
     
-  glCaps.buffer = doublebuffer;
-  
   vgc = findVisualGlX( display, window,
                        &window, window_width, window_height, &glCaps, 
 		       &ownwin, &window_attr, winmask,
@@ -207,7 +222,6 @@ int xgl_open_display(void)
   }
   
   setGLCapabilities ( display, myvisual, &glCaps);
-  doublebuffer = glCaps.buffer;
   
   /* set the hints */
   x11_set_window_hints(window_width, window_height, window_type);
@@ -253,12 +267,6 @@ void xgl_close_display (void)
 #endif
 }
 
-/* Swap GL video buffers */
-void SwapBuffers(void)
-{
-  disp__glXSwapBuffers(display,window);
-}
-
 void xgl_update_display(struct mame_bitmap *bitmap,
 	  struct rectangle *vis_area,  struct rectangle *dirty_area,
 	  struct sysdep_palette_struct *palette,
@@ -279,4 +287,9 @@ void xgl_update_display(struct mame_bitmap *bitmap,
   }
 
   gl_update_display(bitmap, vis_area, dirty_area, palette, flags);
+
+  if (glCaps.buffer)
+    disp__glXSwapBuffers(display,window);
+  else
+    disp__glFlush ();
 }
