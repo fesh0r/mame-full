@@ -1,3 +1,46 @@
+0.70u3
+
+General Source Changes
+----------------------
+
+Allowed Region to be selected via Dipswitch on Banpresto games in cave.c [David Haywood]
+	src/drivers/cave.c
+
+Message Box prompting the user to read windows.txt if MAME.EXE is double clicked on instead of being run
+from the command line [Leon van Rooij]
+	note, this still needs testing on Win9x, it works as expected on 2000/XP, if it creates new
+	problems it might not be included.
+	src/windows/winmain.c
+
+Fixed Colours in Mustache Boy with new Proms [Tomasz Slanina]
+	src/drivers/mustache.c
+	src/vidhrdw/mustache.c
+
+Fixed Colours in Tricky Doc with new Proms [David Haywood]
+	src/drivers/sauro.c
+
+Added Colour Map to Enigma 2, swapped sets around, used a more sensible cpu freq [Tomasz Slanina]
+	src/drivers/enigma2.c
+
+Fixed Trackball controls in Country Club [Tomasz Slanina]
+	src/drivers/snk.c
+
+New games supported:
+--------------------
+
+Battle Cry [Tomasz Slanina]
+	some tiny gfx glitches
+	src/drivers/homedata.c
+	src/vidhrdw/homedata.c
+	src/includes/homedata.h
+
+New clones supported
+--------------------
+
+Dock Man (parent of portman) [TheGuru]
+	src/drivers/thepit.c
+
+
 0.70u2
 
 General Source Changes
@@ -44,7 +87,7 @@ Some Dipswitch / Input Fixes [El Condor]
 	src/drivers/astrocde.c
 	src/drivers/8080bw.c
 	
-Some Dipswitch Fixes [Utuk Ku]
+Some Dipswitch Fixes [Iñigo Luja]
 	src/drivers/toaplan2.c
 	src/drivers/taito_b.c
 	src/drivers/deniam.c

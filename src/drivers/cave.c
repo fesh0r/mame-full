@@ -280,6 +280,7 @@ static data8_t cave_default_eeprom_type7[48] =	{0xff,0xff,0xff,0xff,0xff,0xff,0x
 
 static data8_t *cave_default_eeprom;
 static int cave_default_eeprom_length;
+static int cave_region_byte;
 
 READ16_HANDLER( cave_input1_r )
 {
@@ -1389,6 +1390,102 @@ INPUT_PORTS_START( cave )
 	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 INPUT_PORTS_END
 
+/* Mazinger Z (has region stored in Eeprom) */
+INPUT_PORTS_START( mazinger )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? exit service mode
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? enter & exit service mode
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// Eeprom Region
+	PORT_DIPNAME( 0xff, 0x31, "Region" )
+	PORT_DIPSETTING(    0x30, "Japan" )
+	PORT_DIPSETTING(    0x31, "World" )
+INPUT_PORTS_END
+
+/* Sailor Moon / Air Gallet (has region stored in Eeprom) */
+INPUT_PORTS_START( sailormn )
+	PORT_START	// IN0 - Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER1 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER1 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER1 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER1 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START1  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN1, 6)
+	PORT_BITX( 0x0200, IP_ACTIVE_LOW, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? exit service mode
+	PORT_BIT(  0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )	// sw? enter & exit service mode
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// IN1 - Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN	 | IPF_PLAYER2 )
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 )
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_BUTTON1        | IPF_PLAYER2 )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_BUTTON2        | IPF_PLAYER2 )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_BUTTON3        | IPF_PLAYER2 )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_START2  )
+
+	PORT_BIT_IMPULSE(  0x0100, IP_ACTIVE_LOW, IPT_COIN2, 6)
+	PORT_BIT(  0x0200, IP_ACTIVE_LOW,  IPT_SERVICE1)
+	PORT_BIT(  0x0400, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x0800, IP_ACTIVE_HIGH, IPT_SPECIAL )	// eeprom bit
+	PORT_BIT(  0x1000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x2000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x4000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+	PORT_BIT(  0x8000, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START	// Eeprom Region
+	PORT_DIPNAME( 0xff, 0x02, "Region" )
+	PORT_DIPSETTING(    0x00, "Japan" )
+	PORT_DIPSETTING(    0x01, "USA" )
+	PORT_DIPSETTING(    0x02, "Europe" )
+	PORT_DIPSETTING(    0x03, "Hong Kong" )
+	PORT_DIPSETTING(    0x04, "Taiwan" )
+	PORT_DIPSETTING(    0x05, "Korea" )
+INPUT_PORTS_END
+
 /* Different layout */
 INPUT_PORTS_START( guwange )
 	PORT_START	// IN0 - Player 1 & 2
@@ -1702,6 +1799,11 @@ static struct GfxDecodeInfo uopoko_gfxdecodeinfo[] =
 MACHINE_INIT( cave )
 {
 	soundbuf.len = 0;
+
+	/* modify the eeprom on a reset with the desired region for the games that have the
+	   region factory set in eeprom */
+	if (cave_region_byte)
+		EEPROM_get_data_pointer(0)[cave_region_byte] =  readinputport(2);
 }
 
 /* start with the watchdog armed */
@@ -3148,6 +3250,8 @@ DRIVER_INIT( agallet )
 
 	cave_default_eeprom = cave_default_eeprom_type7;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type7);
+	cave_region_byte = 0x1f;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 
@@ -3159,6 +3263,8 @@ DRIVER_INIT( dfeveron )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 }
@@ -3167,6 +3273,8 @@ DRIVER_INIT( ddonpach )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
+	cave_region_byte = -1;
+
 	ddonpach_unpack_sprites();
 	cave_spritetype = 1;	// "different" sprites (no zooming?)
 }
@@ -3175,6 +3283,8 @@ DRIVER_INIT( esprade )
 {
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
+	cave_region_byte = -1;
+
 	esprade_unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 
@@ -3190,6 +3300,8 @@ DRIVER_INIT( guwange )
 {
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
+	cave_region_byte = -1;
+
 	esprade_unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 }
@@ -3198,6 +3310,8 @@ DRIVER_INIT( hotdogst )
 {
 	cave_default_eeprom = cave_default_eeprom_type4;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
@@ -3220,9 +3334,10 @@ DRIVER_INIT( mazinger )
 
 	cave_default_eeprom = cave_default_eeprom_type5;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type5);
+	cave_region_byte = 0x05;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
-
 	/* setup extra ROM */
 	cpu_setbank(1,memory_region(REGION_USER1));
 }
@@ -3232,6 +3347,8 @@ DRIVER_INIT( metmqstr )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
@@ -3241,6 +3358,7 @@ DRIVER_INIT( pwrinst2 )
 {
 	cave_default_eeprom = 0;
 	cave_default_eeprom_length = 0;
+	cave_region_byte = -1;
 
 //	To do: Decrypt sprites
 
@@ -3268,6 +3386,8 @@ DRIVER_INIT( sailormn )
 
 	cave_default_eeprom = cave_default_eeprom_type6;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type6);
+	cave_region_byte = 0x11;
+
 	unpack_sprites();
 	cave_spritetype = 2;	// "normal" sprites with different position handling
 }
@@ -3276,6 +3396,8 @@ DRIVER_INIT( uopoko )
 {
 	cave_default_eeprom = cave_default_eeprom_type3;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
+	cave_region_byte = -1;
+
 	unpack_sprites();
 	cave_spritetype = 0;	// "normal" sprites
 }
@@ -3289,14 +3411,14 @@ DRIVER_INIT( uopoko )
 
 ***************************************************************************/
 
-GAME( 1994, mazinger, 0,        mazinger, cave,     mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 )
+GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (US)"              )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"           )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"           )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"               )
-GAME( 1995, sailormn, 0,        sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" )
-GAME( 1995, sailormo, sailormn, sailormn, cave,     sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" )
-GAME( 1996, agallet,  0,        sailormn, cave,     agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet (Taiwan)"        )
+GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)" ) // region in eeprom
+GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)" ) // region in eeprom
+GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"        ) // board was taiwan, region in eeprom
 GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"               )
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)" )
 GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"         )

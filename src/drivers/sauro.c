@@ -433,11 +433,13 @@ ROM_START( trckydoc )
 	ROM_LOAD( "trckydoc.c1",    0x08000, 0x4000, CRC(1d25574b) SHA1(924e4376a7fe6cdfff0fa6045aaa3f7c0633d275) )
 	ROM_LOAD( "trckydoc.a1",    0x0c000, 0x4000, CRC(436c59ba) SHA1(2aa9c155c432a3c81420520c53bb944dcc613a94) )
 
-	ROM_REGION( 0x0c00, REGION_PROMS, 0 )
-	/* proms were missing, 3 is a guess */
-	ROM_LOAD( "r",    0x0000, 0x0400, NO_DUMP )
-	ROM_LOAD( "g",    0x0400, 0x0400, NO_DUMP )
-	ROM_LOAD( "b",    0x0800, 0x0400, NO_DUMP )
+	ROM_REGION( 0x0c00, REGION_PROMS, 0 ) // colour proms
+	ROM_LOAD( "tdclr3.prm",    0x0000, 0x0100, CRC(671d0140) SHA1(7d5fcd9589c46590b0a240cac428f993201bec2a) )
+	ROM_LOAD( "tdclr2.prm",    0x0400, 0x0100, CRC(874f9050) SHA1(db40d68f5166657fce0eadcd82143112b0388894) )
+	ROM_LOAD( "tdclr1.prm",    0x0800, 0x0100, CRC(57f127b0) SHA1(3d2b18a7a31933579f06d92fa0cc3f0e1fe8b98a) )
+
+	ROM_REGION( 0x0200, REGION_USER1, 0 ) // unknown
+	ROM_LOAD( "tdprm.prm",    0x0000, 0x0200,  CRC(5261bc11) SHA1(1cc7a9a7376e65f4587b75ef9382049458656372) )
 ROM_END
 
 static DRIVER_INIT( sauro )
@@ -453,4 +455,4 @@ static DRIVER_INIT( sauro )
 
 
 GAMEX( 1987, sauro,    0,     sauro,    sauro, sauro, ROT0, "Tecfri",  "Sauro", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )
-GAMEX( 1987, trckydoc, 0,     trckydoc, sauro, sauro, ROT0, "Tecfri",  "Tricky Doc", GAME_WRONG_COLORS )
+GAME ( 1987, trckydoc, 0,     trckydoc, sauro, sauro, ROT0, "Tecfri",  "Tricky Doc" )

@@ -3960,6 +3960,7 @@ TESTDRIVER( kakumei2 )
 	DRIVER( roundup )	/* (c) 1981 Amenip/Centuri */
 	DRIVER( fitter )	/* (c) 1981 Taito */
 	DRIVER( thepit )	/* (c) 1982 Centuri */
+	DRIVER( dockman )	/* (c) 1982 Taito Corp. */
 	DRIVER( portman )	/* (c) 1982 Nova Games Ltd. */
 	DRIVER( funnymou )	/* (c) 1982 Chuo Co. Ltd */
 	DRIVER( suprmous )	/* (c) 1982 Taito */
@@ -4711,6 +4712,7 @@ TESTDRIVER( countrun )
 	DRIVER( mjyougo ) 	/* (c) 1989 Home Data */
 	DRIVER( lemnangl ) 	/* (c) 1990 Home Data */
 	DRIVER( mjkinjas ) 	/* (c) 1991 Home Data */
+	DRIVER( battlcry ) 	/* (c) 1991 Home Data */
 	DRIVER( jogakuen )	/* Windom corporation */
 	DRIVER( mjikaga )	/* Mitchell */
 
@@ -4826,8 +4828,8 @@ TESTDRIVER( 9ballsh3 )	/* (c) 1993 E-Scape EnterMedia + "marketed by Bundra Game
 	DRIVER( rotaryf )
 TESTDRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
 TESTDRIVER( portrait )	/* (c) 1983 Olympia */
-	DRIVER( enigma2 )	/* (c) 1984 Zilec Electronics */
-	DRIVER( enigma2a )	/* (c) 1981 Game Plan (Zilec Electronics license) */
+	DRIVER( enigma2 )	/* (c) 1981 Game Plan (Zilec Electronics license) */
+	DRIVER( enigma2a )	/* (c) 1984 Zilec Electronics (bootleg?) */
 
 #endif /* CPSMAME */
 #endif /* NEOMAME */
