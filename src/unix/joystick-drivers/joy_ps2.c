@@ -302,20 +302,20 @@ void joy_ps2_init (void)
 
 	    if (PS2PAD_TYPE(pad_data[1]) == PS2PAD_TYPE_DUALSHOCK)
 	    {
-		joy_data[i].axis[0].center = (int)pad_data[6];
-		joy_data[i].axis[1].center = (int)pad_data[7];
-		joy_data[i].axis[2].center = (int)pad_data[4];
-		joy_data[i].axis[3].center = (int)pad_data[5];
+		joy_data[i].axis[0].mid = (int)pad_data[6];
+		joy_data[i].axis[1].mid = (int)pad_data[7];
+		joy_data[i].axis[2].mid = (int)pad_data[4];
+		joy_data[i].axis[3].mid = (int)pad_data[5];
 
 		/* Set min/max values to +1/-1 and let autocalibrate
 		 * take care of the rest.
                  */
 		for (j=0; j<joy_data[i].num_axes; j++)
 		{
-		    if (joy_data[i].axis[j].center == 0)
-			joy_data[i].axis[j].center = 0x7f;
-		    joy_data[i].axis[j].min = joy_data[i].axis[j].center - 1;
-		    joy_data[i].axis[j].max = joy_data[i].axis[j].center + 1;
+		    if (joy_data[i].axis[j].mid == 0)
+			joy_data[i].axis[j].mid = 0x7f;
+		    joy_data[i].axis[j].min = joy_data[i].axis[j].mid - 1;
+		    joy_data[i].axis[j].max = joy_data[i].axis[j].mid + 1;
 		}
 	    }
 

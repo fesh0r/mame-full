@@ -50,6 +50,7 @@ void joy_SDL_init (void)
 			{
 				joy_data[i].axis[j].min = -32768;
 				joy_data[i].axis[j].max =  32768;
+				joy_data[i].axis[j].mid = 0;
 			}
 		}
 		else

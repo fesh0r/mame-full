@@ -226,10 +226,10 @@ static int joy_initialize_hid(int i)
 	    = priv_joy_data[i].axis_item[n]->logical_minimum;
 	  joy_data[i].axis[n].max
 	    = priv_joy_data[i].axis_item[n]->logical_maximum;
-	  joy_data[i].axis[n].center
+	  joy_data[i].axis[n].mid
 	    = ((joy_data[i].axis[n].max-joy_data[i].axis[n].min+1)/2
 	       + joy_data[i].axis[n].min);
-	  joy_data[i].axis[n].val = joy_data[i].axis[n].center;
+	  joy_data[i].axis[n].val = joy_data[i].axis[n].mid;
 	}
     }
       
@@ -244,7 +244,7 @@ static int joy_initialize_hid(int i)
 	    {
 	      joy_data[i].axis[n+j].min = -1;
 	      joy_data[i].axis[n+j].max = 1;
-	      joy_data[i].axis[n+j].center = 0;
+	      joy_data[i].axis[n+j].mid = 0;
 	      joy_data[i].axis[n+j].val = 0;
 	    }
 	}
@@ -269,7 +269,7 @@ static int joy_initialize_hid(int i)
 	For such joysticks, calibration can be enabled with the
 	-joyusb-calibrate command line option.
 
-	We'll approximate the center with the current joystick value
+	We'll approximate the midpoint with the current joystick value
 	if that can be read (some HID devices returns no data if the
 	state has not changed since the last time it was read.)
       */
@@ -285,7 +285,7 @@ static int joy_initialize_hid(int i)
 	    }
 
 	  if (got_values)
-	    joy_data[i].axis[j].center = joy_data[i].axis[j].val;
+	    joy_data[i].axis[j].mid = joy_data[i].axis[j].val;
 	  
 	  /*
 	    Approximate min/max values. Observe that we cannot use the
@@ -294,11 +294,11 @@ static int joy_initialize_hid(int i)
 	    (especially if you have a joystick -> USB adaptor.) We
 	    cannot use greater delta values than +/- 1, since it is OK
 	    for a gamepad (or my USB TAC 2) to reports directions as
-	    center +/- 1.
+	    mid +/- 1.
 	  */
 	  
-	  joy_data[i].axis[j].min = joy_data[i].axis[j].center - 1;
-	  joy_data[i].axis[j].max = joy_data[i].axis[j].center + 1;
+	  joy_data[i].axis[j].min = joy_data[i].axis[j].mid - 1;
+	  joy_data[i].axis[j].max = joy_data[i].axis[j].mid + 1;
 	}
     }
 	  

@@ -53,7 +53,7 @@ struct axisdata_struct
 	int val;
 	/* calibration data */
 	int min;
-	int center;
+	int mid;
 	int max;
 	/* boolean values */
 	int dirs[JOY_DIRS];

@@ -120,6 +120,7 @@ void joy_i386_init(void)
 						{
 							joy_data[i].axis[j].min = -32768;
 							joy_data[i].axis[j].max =  32768;
+							joy_data[i].axis[j].mid = 0;
 						}
 						joy_poll_func = joy_i386new_poll;
 						break;
@@ -142,12 +143,12 @@ void joy_i386_init(void)
 #else
 					joy_data[i].num_buttons = JOY_BUTTONS;
 #endif
-					joy_data[i].axis[0].center = my_joy_data.x;
-					joy_data[i].axis[1].center = my_joy_data.y;
-					joy_data[i].axis[0].min    = my_joy_data.x - 10;
-					joy_data[i].axis[1].min    = my_joy_data.y - 10;
-					joy_data[i].axis[0].max    = my_joy_data.x + 10;
-					joy_data[i].axis[1].max    = my_joy_data.y + 10;
+					joy_data[i].axis[0].mid = my_joy_data.x;
+					joy_data[i].axis[1].mid = my_joy_data.y;
+					joy_data[i].axis[0].min = my_joy_data.x - 10;
+					joy_data[i].axis[1].min = my_joy_data.y - 10;
+					joy_data[i].axis[0].max = my_joy_data.x + 10;
+					joy_data[i].axis[1].max = my_joy_data.y + 10;
 
 					joy_poll_func = joy_i386_poll;
 					break;

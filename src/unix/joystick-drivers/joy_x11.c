@@ -52,7 +52,7 @@ void process_x11_joy_event(XEvent *event) {
 	for (i=0; i<joy_data[0].num_buttons; i++)
 	   joy_data[0].buttons[i] = dbe->device_state & (0x01 << i);
 	for(i=0;i<joy_data[0].num_axes;i++)
-		joy_data[0].axis[i].val = joy_data[0].axis[i].center +
+		joy_data[0].axis[i].val = joy_data[0].axis[i].mid +
 		   dbe->axis_data[i];
     }
     if ( (event->type==devicemotionnotify) ) {
@@ -61,7 +61,7 @@ void process_x11_joy_event(XEvent *event) {
 	for (i=0; i<joy_data[0].num_buttons; i++)
 	   joy_data[0].buttons[i] = dme->device_state & (0x01 << i);
 	for(i=0;i<joy_data[0].num_axes;i++)
-		joy_data[0].axis[i].val = joy_data[0].axis[i].center +
+		joy_data[0].axis[i].val = joy_data[0].axis[i].mid +
 		   dme->axis_data[i];
     }
 #endif
@@ -125,7 +125,7 @@ void joy_x11_init(void)
 			if (joy_data[0].num_axes > JOY_AXES) joy_data[0].num_axes = JOY_AXES;
 			for (i=0; i<joy_data[0].num_axes; i++)
 			{
-			   joy_data[0].axis[i].val = joy_data[0].axis[i].center =
+			   joy_data[0].axis[i].val = joy_data[0].axis[i].mid =
 			      (vinfo->axes[i].max_value - vinfo->axes[i].min_value) / 2;
 			   joy_data[0].axis[i].min = vinfo->axes[i].min_value;
 			   joy_data[0].axis[i].max = vinfo->axes[i].max_value;
@@ -233,7 +233,7 @@ void joy_x11_poll(void)
 			vinfo=(XValuatorState *) any;
 			for (i=0; i<joy_data[0].num_axes; i++)
 			   joy_data[0].axis[i].val =
-			      joy_data[0].axis[i].center + vinfo->valuators[i];
+			      joy_data[0].axis[i].mid + vinfo->valuators[i];
 			break;
 		case KeyClass: /* no sense to use a extended key device */
 		default: break;  /* unknown class: ignore */
