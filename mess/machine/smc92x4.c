@@ -219,21 +219,173 @@ static UINT8 floppy_get_disk_status(int which, int disk_unit)
 	return reply;
 }
 
+#include "devices/mess_hd.h"
+#include "harddisk.h"
+
+static struct
+{
+	void *hd_handle;
+	unsigned int wp : 1;		/* TRUE if disk is write-protected */
+	unsigned int seek_incomplete : 1;
+	unsigned int current_cylinder;
+
+	/* disk geometry */
+	unsigned int cylinders, heads, sectors_per_track, bytes_per_sector;
+} hd[10];
+
+int smc92x4_hd_load(mess_image *image, int disk_unit)
+{
+	const struct hard_disk_header *header;
+
+	if (device_load_mess_hd(image, image_fp(image)) == INIT_PASS)
+	{
+		hd[disk_unit].hd_handle = mess_hd_get_hard_disk_handle(image);
+		hd[disk_unit].wp = ! mess_hd_is_writable(image);
+		hd[disk_unit].seek_incomplete = FALSE;
+		hd[disk_unit].current_cylinder = 0;
+		header = hard_disk_get_header(hd[disk_unit].hd_handle);
+		hd[disk_unit].cylinders = header->cylinders;
+		hd[disk_unit].heads = header->heads;
+		hd[disk_unit].sectors_per_track = header->sectors;
+		hd[disk_unit].bytes_per_sector = header->seclen;
+		if (hd[disk_unit].bytes_per_sector != 256)
+		{
+			smc92x4_hd_unload(image, disk_unit);
+			return INIT_FAIL;
+		}
+		return INIT_PASS;
+	}	
+
+	return INIT_FAIL;
+}
+
+void smc92x4_hd_unload(mess_image *image, int disk_unit)
+{
+	device_unload_mess_hd(image);
+	hd[disk_unit].hd_handle = NULL;
+}
+
+static int harddisk_chs_to_lba(int which, int disk_unit, unsigned int cylinder, unsigned int head, unsigned int sector, UINT32 *lba)
+{
+	if (cylinder >= hd[disk_unit].cylinders)
+	{
+		hd[disk_unit].current_cylinder = hd[disk_unit].cylinders-1;
+		hd[disk_unit].seek_incomplete = TRUE;
+		hfdc[which].status |= ST_TC_RDIDERR;
+		return FALSE;
+	}
+	else
+	{
+		hd[disk_unit].current_cylinder = cylinder;
+		hd[disk_unit].seek_incomplete = FALSE;
+	}
+	if ((head >= hd[disk_unit].heads) || (sector >= hd[disk_unit].sectors_per_track))
+	{
+		hfdc[which].status |= ST_TC_RDIDERR;
+		return FALSE;
+	}
+
+	* lba = (cylinder*hd[disk_unit].heads + head)*hd[disk_unit].sectors_per_track + sector;
+
+	return TRUE;
+}
+
 static int harddisk_read_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
 {
-	hfdc[which].status |= ST_TC_RDIDERR;
-	return FALSE;
+	UINT32 lba;
+	UINT8 buf[MAX_SECTOR_LEN];
+	int i;
+
+
+	if (!hd[disk_unit].hd_handle)
+	{
+		hfdc[which].status |= ST_TC_RDIDERR;
+		return FALSE;
+	}
+
+	if (! harddisk_chs_to_lba(which, disk_unit, cylinder, head, sector, &lba))
+		return FALSE;
+
+	if (! hard_disk_read(hd[disk_unit].hd_handle, lba, 1, buf))
+	{
+		hfdc[which].status |= ST_TC_DATAERR;
+		return FALSE;
+	}
+	for (i=0; i<hd[disk_unit].bytes_per_sector; i++)
+	{
+		(*hfdc[which].dma_write_callback)(which, *dma_address, buf[i]);
+		*dma_address = ((*dma_address) + 1) & 0xffffff;
+	}
+
+	return TRUE;
 }
 
 static int harddisk_write_sector(int which, int disk_unit, int cylinder, int head, int sector, int *dma_address)
 {
-	hfdc[which].status |= ST_TC_RDIDERR;
-	return FALSE;
+	UINT32 lba;
+	UINT8 buf[MAX_SECTOR_LEN];
+	int i;
+
+
+	if (!hd[disk_unit].hd_handle)
+	{
+		hfdc[which].status |= ST_TC_RDIDERR;
+		return FALSE;
+	}
+
+	if (! harddisk_chs_to_lba(which, disk_unit, cylinder, head, sector, &lba))
+		return FALSE;
+
+	for (i=0; i<hd[disk_unit].bytes_per_sector; i++)
+	{
+		buf[i] = (*hfdc[which].dma_read_callback)(which, *dma_address);
+		*dma_address = ((*dma_address) + 1) & 0xffffff;
+	}
+	if (! hard_disk_write(hd[disk_unit].hd_handle, lba, 1, buf))
+	{
+		hfdc[which].status |= ST_TC_DATAERR;
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static /*int*/void harddisk_restore(int which, int disk_unit)
+{
+	hd[disk_unit].current_cylinder = 0;
+
+	if (hd[disk_unit].hd_handle)
+		hd[disk_unit].seek_incomplete = FALSE;
+	else
+		hd[disk_unit].seek_incomplete = TRUE;
+
+	return;
 }
 
 static UINT8 harddisk_get_disk_status(int which, int disk_unit)
 {
-	return 0;
+	int reply;
+
+	reply = 0;
+
+	if (hd[disk_unit].hd_handle)
+	{
+		reply |= DS_SELACK;
+		/*if ()
+			reply |= DS_INDEX;*/
+		if (! hd[disk_unit].seek_incomplete)
+			reply |= DS_SKCOM;
+		if (hd[disk_unit].current_cylinder == 0)
+			reply |= DS_TRK00;
+		/*if (hd[disk_unit].wp)
+			reply |= DS_WRPROT;*/	/* only supported by floppy??? */
+		if (hd[disk_unit].hd_handle)
+			reply |= DS_READY;
+		/*if ()
+			reply |= DS_WRFAULT;*/
+	}
+
+	return reply;
 }
 
 
@@ -422,7 +574,7 @@ static void do_restore(int which, int mode)
 	{
 	case sm_reserved:
 	case sm_harddisk:
-		/* TODO... */
+		harddisk_restore(which, disk_unit);
 		break;
 
 	case sm_floppy_slow:
@@ -450,8 +602,12 @@ cleanup:
 
 /*
 	Handle the read logical command
+
+	which: disk controller selected
+	physical_flag: if 1, ignore CRC/ECC bytes??? (ignored)
+	mode: extra flags (ignored)
 */
-static void do_read_logical(int which, int mode)
+static void do_read(int which, int physical_flag, int mode)
 {
 	select_mode_t select_mode;
 	int disk_unit;
@@ -491,20 +647,30 @@ static void do_read_logical(int which, int mode)
 		goto cleanup;
 	}
 
-	/* do read sector */
-	switch (select_mode)
+
+	while (hfdc[which].regs[hfdc_reg_sector_count])
 	{
-	case sm_reserved:
-		break;
+		/* do read sector */
+		switch (select_mode)
+		{
+		case sm_reserved:
+			break;
 
-	case sm_harddisk:
-		harddisk_read_sector(which, disk_unit, cylinder, head, sector, &dma_address);
-		break;
+		case sm_harddisk:
+			if (! harddisk_read_sector(which, disk_unit, cylinder, head, sector, &dma_address))
+				goto cleanup;
+			break;
 
-	case sm_floppy_slow:
-	case sm_floppy_fast:
-		floppy_read_sector(which, disk_unit, cylinder, head, sector, &dma_address);
-		break;
+		case sm_floppy_slow:
+		case sm_floppy_fast:
+			if (! floppy_read_sector(which, disk_unit, cylinder, head, sector, &dma_address))
+				goto cleanup;
+			break;
+		}
+
+		hfdc[which].regs[hfdc_reg_sector_count]--;
+		sector++;
+		/* Can multiple-sector reads span multiple tracks??? */
 	}
 
 cleanup:
@@ -524,9 +690,13 @@ cleanup:
 }
 
 /*
-	Handle the write logical command
+	Handle the write command
+
+	which: disk controller selected
+	physical_flag: if 1, ignore CRC/ECC bytes??? (ignored)
+	mode: extra flags (ignored)
 */
-static void do_write_logical(int which, int mode)
+static void do_write(int which, int physical_flag, int mode)
 {
 	select_mode_t select_mode;
 	int disk_unit;
@@ -566,20 +736,29 @@ static void do_write_logical(int which, int mode)
 		goto cleanup;
 	}
 
-	/* do write sector */
-	switch (select_mode)
+	while (hfdc[which].regs[hfdc_reg_sector_count])
 	{
-	case sm_reserved:
-		break;
+		/* do write sector */
+		switch (select_mode)
+		{
+		case sm_reserved:
+			break;
 
-	case sm_harddisk:
-		harddisk_write_sector(which, disk_unit, cylinder, head, sector, &dma_address);
-		break;
+		case sm_harddisk:
+			if (!harddisk_write_sector(which, disk_unit, cylinder, head, sector, &dma_address))
+				goto cleanup;
+			break;
 
-	case sm_floppy_slow:
-	case sm_floppy_fast:
-		floppy_write_sector(which, disk_unit, cylinder, head, sector, &dma_address);
-		break;
+		case sm_floppy_slow:
+		case sm_floppy_fast:
+			if (!floppy_write_sector(which, disk_unit, cylinder, head, sector, &dma_address))
+				goto cleanup;
+			break;
+		}
+
+		hfdc[which].regs[hfdc_reg_sector_count]--;
+		sector++;
+		/* Can multiple-sector writes span multiple tracks??? */
 	}
 
 cleanup:
@@ -688,6 +867,7 @@ static void smc92x4_process_command(int which, int opcode)
 				{
 				case 0:
 					logerror("smc92x4 read physical command %X\n", opcode & 0x1);
+					do_read(which, 1, opcode & 0x3);
 					break;
 				case 1:
 					logerror("smc92x4 read track command %X\n", opcode & 0x1);
@@ -695,10 +875,11 @@ static void smc92x4_process_command(int which, int opcode)
 				case 2:
 				case 3:
 					logerror("smc92x4 read logical command %X\n", opcode & 0x3);
-					do_read_logical(which, opcode & 0x3);
+					do_read(which, 0, opcode & 0x3);
 					break;
 				}
 			}
+			break;
 		case 0x6:
 			/* FORMATTRACK */
 			/* bit 3-0: ??? */
@@ -722,14 +903,19 @@ static void smc92x4_process_command(int which, int opcode)
 		{
 		case 0:
 			logerror("smc92x4 write physical command %X\n", opcode & 0x7f);
+			do_write(which, 1, opcode & 0x7f);
 			break;
 		case 1:
 			logerror("smc92x4 write logical command %X\n", opcode & 0x7f);
-			do_write_logical(which, opcode & 0x7f);
+			do_write(which, 0, opcode & 0x7f);
 			break;
 		case 2:
+			logerror("smc92x4 write physical command??? %X\n", opcode & 0x7f);
+			do_write(which, 1, opcode & 0x7f);
+			break;
 		case 3:
 			logerror("smc92x4 write logical command??? %X\n", opcode & 0x7f);
+			do_write(which, 0, opcode & 0x7f);
 			break;
 		}
 	}
