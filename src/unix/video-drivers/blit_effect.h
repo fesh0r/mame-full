@@ -42,25 +42,25 @@
    sparse 32 bpp format for these cases ! */
 #if defined CONVERT_PIXEL || defined PACK_BITS
 #  define EFFECT() \
-     effect_func(effect_dbbuf, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, line_src, bounds_width, palette); \
+     effect_func(effect_dbbuf, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, line_src, bounds_width, palette->lookup); \
      MEMCPY(line_dest, effect_dbbuf, bounds_width*sysdep_display_params.widthscale); \
      MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, bounds_width*sysdep_display_params.widthscale)
 #  define EFFECT2X() \
-     effect_scale2x_func(effect_dbbuf, effect_dbbuf+bounds_width*8, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, bounds_width, palette); \
+     effect_scale2x_func(effect_dbbuf, effect_dbbuf+bounds_width*8, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, bounds_width, palette->lookup); \
      MEMCPY(line_dest, effect_dbbuf, bounds_width*2); \
      MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+bounds_width*8, bounds_width*2)
 #  define EFFECT3X() \
-     effect_scale3x_func(effect_dbbuf, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*8, line_src, bounds_width, palette); \
+     effect_scale3x_func(effect_dbbuf, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*8, line_src, bounds_width, palette->lookup); \
      MEMCPY(line_dest, effect_dbbuf, bounds_width*sysdep_display_params.widthscale); \
      MEMCPY(line_dest+CORRECTED_DEST_WIDTH, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*4, bounds_width*sysdep_display_params.widthscale); \
      MEMCPY(line_dest+CORRECTED_DEST_WIDTH*2, effect_dbbuf+bounds_width*sysdep_display_params.widthscale*8, bounds_width*sysdep_display_params.widthscale)
 #else
 #  define EFFECT() \
-     effect_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_src, bounds_width, palette)
+     effect_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_src, bounds_width, palette->lookup)
 #  define EFFECT2X() \
-     effect_scale2x_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, bounds_width, palette)
+     effect_scale2x_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, rotate_dbbuf0, rotate_dbbuf1, rotate_dbbuf2, bounds_width, palette->lookup)
 #  define EFFECT3X() \
-     effect_scale3x_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_dest+CORRECTED_DEST_WIDTH*2, line_src, bounds_width, palette)
+     effect_scale3x_func(line_dest, line_dest+CORRECTED_DEST_WIDTH, line_dest+CORRECTED_DEST_WIDTH*2, line_src, bounds_width, palette->lookup)
 #endif
 
 /* only use MEMCPY tricks for PACK_BITS, since 6tap2x can render 15/16 bpp
@@ -161,37 +161,37 @@
      if (sysdep_display_params.orientation) {
        /* put in the first three lines */
        rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y, src_bounds);
-       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette);
+       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
        rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y+1, src_bounds);
-       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette);
+       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
        rotate_func(rotate_dbbuf0, bitmap, src_bounds->min_y+2, src_bounds);
-       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette);
+       effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
 
        for (y = src_bounds->min_y; y <= src_bounds->max_y; line_dest+=2*CORRECTED_DEST_WIDTH, y++) {
            if (y <= src_bounds->max_y - 3)
            {
              rotate_func(rotate_dbbuf0, bitmap, y+3, src_bounds);
-             effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette);
+             effect_6tap_addline_func(rotate_dbbuf0, bounds_width, palette->lookup);
            }
 	   else
            {
-             effect_6tap_addline_func(NULL, bounds_width, palette);
+             effect_6tap_addline_func(NULL, bounds_width, palette->lookup);
            }
            EFFECT_6TAP();
        }
      } else {
-       effect_6tap_addline_func(line_src, bounds_width, palette);
-       effect_6tap_addline_func(line_src+=src_width, bounds_width, palette);
-       effect_6tap_addline_func(line_src+=src_width, bounds_width, palette);
+       effect_6tap_addline_func(line_src, bounds_width, palette->lookup);
+       effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
+       effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
 
        for (y = src_bounds->min_y; y <= src_bounds->max_y; y++, line_dest+=2*CORRECTED_DEST_WIDTH) {
            if (y <= src_bounds->max_y - 3)
            {
-             effect_6tap_addline_func(line_src+=src_width, bounds_width, palette);
+             effect_6tap_addline_func(line_src+=src_width, bounds_width, palette->lookup);
            }
 	   else
            {
-             effect_6tap_addline_func(NULL, bounds_width, palette);
+             effect_6tap_addline_func(NULL, bounds_width, palette->lookup);
            }
            EFFECT_6TAP();
        }

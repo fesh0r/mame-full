@@ -93,14 +93,13 @@ void rotate_32_32(void *dst, struct mame_bitmap *bitmap, int y, struct rectangle
 void effect_scale2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   unsigned int *u32dst0 = (unsigned int *)dst0;
   unsigned int *u32dst1 = (unsigned int *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,uv1,uv2;
   UINT32 p1,p2,p3,p4;
   while (count) {
@@ -147,7 +146,7 @@ void effect_scale2x_16_YUY2
 void effect_scale2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   unsigned char *u8dst0 = (unsigned char *)dst0;
   unsigned char *u8dst1 = (unsigned char *)dst1;
@@ -222,12 +221,11 @@ void effect_scale2x_32_YUY2_direct
  * scan2: light 2x2 scanlines
  **********************************/
 
-void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = palette->lookup;
   UINT32 r,y,u,v;
 
   while (count) {
@@ -245,7 +243,7 @@ void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned cou
 }
 
 
-void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -273,12 +271,11 @@ void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsign
  * rgbstripe
  **********************************/
 
-void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = palette->lookup;
   UINT32 r,g,b,y,u,v,y2,u2,v2,s;
   INT32 us,vs;
 
@@ -358,7 +355,7 @@ void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned
 }
 
 
-void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -435,13 +432,12 @@ void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, un
  * rgbscan
  **********************************/
 
-void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = palette->lookup;
   UINT32 r,g,b,y,u,v;
   INT32 us,vs;
 
@@ -476,7 +472,7 @@ void effect_rgbscan_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src
 }
 
 
-void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
@@ -526,13 +522,12 @@ void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const voi
  * the third line is darkened by 50%.
  */
 
-void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;
   UINT32 *u32dst2 = (UINT32 *)dst2;
   UINT16 *u16src = (UINT16 *)src;
-  UINT32 *u32lookup = palette->lookup;
   UINT32 p1,p2,y1,uv1,uv2,y2,s;
 
   s = 1;
@@ -636,7 +631,7 @@ void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, 
 }
 
 
-void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0 = (UINT32 *)dst0;
   UINT32 *u32dst1 = (UINT32 *)dst1;

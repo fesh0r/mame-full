@@ -54,16 +54,13 @@
 void FUNC_NAME(effect_scale2x)
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   DEST_PIXEL *mysrc0 = (DEST_PIXEL *)src0;
   SRC_PIXEL *mysrc1 = (SRC_PIXEL *)src1;
   SRC_PIXEL *mysrc2 = (SRC_PIXEL *)src2;
-#ifdef INDIRECT  
-  UINT32 *u32lookup = palette->lookup;
-#endif
   
   while (count) {
 
@@ -97,14 +94,11 @@ void FUNC_NAME(effect_scale2x)
  **********************************/
 
 #if !defined(EFFECT_MMX_ASM) || (DEST_DEPTH != 16 && DEST_DEPTH != 32)
-void FUNC_NAME(effect_scan2) (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void FUNC_NAME(effect_scan2) (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   SRC_PIXEL  *mysrc  = (SRC_PIXEL  *)src;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
 
   while (count) {
 
@@ -124,14 +118,11 @@ void FUNC_NAME(effect_scan2) (void *dst0, void *dst1, const void *src, unsigned 
  * rgbstripe
  **********************************/
 
-void FUNC_NAME(effect_rgbstripe) (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void FUNC_NAME(effect_rgbstripe) (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   SRC_PIXEL  *mysrc  = (SRC_PIXEL  *)src;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
 
   while (count) {
 
@@ -150,15 +141,12 @@ void FUNC_NAME(effect_rgbstripe) (void *dst0, void *dst1, const void *src, unsig
  * rgbscan
  **********************************/
 
-void FUNC_NAME(effect_rgbscan)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void FUNC_NAME(effect_rgbscan)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   DEST_PIXEL *mydst2 = (DEST_PIXEL *)dst2;
   SRC_PIXEL  *mysrc  = (SRC_PIXEL  *)src;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
 
   while (count) {
 
@@ -185,15 +173,12 @@ void FUNC_NAME(effect_rgbscan)(void *dst0, void *dst1, void *dst2, const void *s
  * the third line is darkened by 50%.
  */
 
-void FUNC_NAME(effect_scan3)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette)
+void FUNC_NAME(effect_scan3)(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   DEST_PIXEL *mydst2 = (DEST_PIXEL *)dst2;
   SRC_PIXEL *mysrc = (SRC_PIXEL *)src;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
 
   while (count) {
 
@@ -226,16 +211,13 @@ void FUNC_NAME(effect_scan3)(void *dst0, void *dst1, void *dst2, const void *src
 void FUNC_NAME(effect_hq2x)
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0   = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1   = (DEST_PIXEL *)dst1;
   SRC_PIXEL *mysrc0   = (SRC_PIXEL *)src0;
   SRC_PIXEL *mysrc1   = (SRC_PIXEL *)src1;
   SRC_PIXEL *mysrc2   = (SRC_PIXEL *)src2;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
   DEST_PIXEL  w[9];
 
   w[1] = GETPIXEL(mysrc0[-1]);
@@ -287,16 +269,13 @@ void FUNC_NAME(effect_hq2x)
 void FUNC_NAME(effect_lq2x)
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   DEST_PIXEL *mydst0 = (DEST_PIXEL *)dst0;
   DEST_PIXEL *mydst1 = (DEST_PIXEL *)dst1;
   SRC_PIXEL *u16src0 = (SRC_PIXEL *)src0;
   SRC_PIXEL *u16src1 = (SRC_PIXEL *)src1;
   SRC_PIXEL *u16src2 = (SRC_PIXEL *)src2;
-#ifdef INDIRECT
-  UINT32 *u32lookup = palette->lookup;
-#endif
   DEST_PIXEL  w[9];
 
   w[1] = GETPIXEL(u16src0[-1]);

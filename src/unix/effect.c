@@ -604,14 +604,13 @@ void effect_close(void)
 void effect_hq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -686,7 +685,7 @@ void effect_hq2x_16_YUY2
 void effect_hq2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
@@ -811,14 +810,13 @@ void effect_hq2x_32_YUY2_direct
 void effect_lq2x_16_YUY2
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;
   UINT16 *u16src0 = (UINT16 *)src0;
   UINT16 *u16src1 = (UINT16 *)src1;
   UINT16 *u16src2 = (UINT16 *)src2;
-  UINT32 *u32lookup = palette->lookup;
   INT32 y,y2,u,v;
   UINT32 p1[2], p2[2];
   UINT32 w[9];
@@ -892,7 +890,7 @@ void effect_lq2x_16_YUY2
 void effect_lq2x_32_YUY2_direct
     (void *dst0, void *dst1,
     const void *src0, const void *src1, const void *src2,
-    unsigned count, struct sysdep_palette_struct *palette)
+    unsigned count, unsigned int *u32lookup)
 {
   UINT32 *u32dst0   = (UINT32 *)dst0;
   UINT32 *u32dst1   = (UINT32 *)dst1;

@@ -35,14 +35,14 @@ void effect_close(void);
 
 /*** effect function pointers (use these) ***/
 typedef void (*effect_func_p)(void *dst0, void *dst1,
-                const void *src, unsigned count, struct sysdep_palette_struct *palette);
+                const void *src, unsigned count, unsigned int *u32lookup);
 typedef void (*effect_scale2x_func_p) (void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 typedef void (*effect_scale3x_func_p)(void *dst0, void *dst1, void *dst2,
-                const void *src, unsigned count, struct sysdep_palette_struct *palette);
+                const void *src, unsigned count, unsigned int *u32lookup);
 typedef void (*effect_6tap_clear_func_p)(unsigned count);
-typedef void (*effect_6tap_addline_func_p)(const void *src0, unsigned count, struct sysdep_palette_struct *palette);
+typedef void (*effect_6tap_addline_func_p)(const void *src0, unsigned count, unsigned int *u32lookup);
 typedef void (*effect_6tap_render_func_p)(void *dst0, void *dst1, unsigned count);
 
 EXTERN_EFFECT effect_func_p effect_func;
@@ -57,69 +57,69 @@ EXTERN_EFFECT effect_6tap_render_func_p effect_6tap_render_func;
 void effect_scale2x_16_YUY2
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 void effect_scale2x_32_YUY2_direct
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
 void effect_hq2x_16_YUY2
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 void effect_hq2x_32_YUY2_direct
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
 void effect_lq2x_16_YUY2
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 void effect_lq2x_32_YUY2_direct
 		(void *dst0, void *dst1,
 		const void *src0, const void *src1, const void *src2,
-		unsigned count, struct sysdep_palette_struct *palette);
+		unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
-void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan2_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_scan2_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
 #ifdef EFFECT_MMX_ASM
-void effect_scan2_16_16(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_scan2_16_32(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan2_16_16(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_scan2_16_16_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_scan2_16_32(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_scan2_32_32_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
 #endif
 
 /*****************************/
 
-void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_rgbstripe_16_YUY2 (void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_rgbstripe_32_YUY2_direct(void *dst0, void *dst1, const void *src, unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
-void effect_rgbscan_16_YUY2(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_rgbscan_16_YUY2(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_rgbscan_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
-void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette);
-void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, struct sysdep_palette_struct *palette);
+void effect_scan3_16_YUY2 (void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup);
+void effect_scan3_32_YUY2_direct(void *dst0, void *dst1, void *dst2, const void *src, unsigned count, unsigned int *u32lookup);
 
 /*****************************/
 
 void effect_6tap_clear(unsigned count);
-void effect_6tap_addline_15(const void *src0, unsigned count, struct sysdep_palette_struct *palette);
-void effect_6tap_addline_16(const void *src0, unsigned count, struct sysdep_palette_struct *palette);
-void effect_6tap_addline_32(const void *src0, unsigned count, struct sysdep_palette_struct *palette);
+void effect_6tap_addline_15(const void *src0, unsigned count, unsigned int *u32lookup);
+void effect_6tap_addline_16(const void *src0, unsigned count, unsigned int *u32lookup);
+void effect_6tap_addline_32(const void *src0, unsigned count, unsigned int *u32lookup);
 void effect_6tap_render_15(void *dst0, void *dst1, unsigned count);
 void effect_6tap_render_16(void *dst0, void *dst1, unsigned count);
 void effect_6tap_render_32(void *dst0, void *dst1, unsigned count);

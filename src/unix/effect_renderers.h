@@ -3793,7 +3793,7 @@ INLINE void FUNC_NAME(lq2x)(PIXEL *mydst0, PIXEL *mydst1, PIXEL w[9] )
 /* we also use this header file to generate the addline funcs, but those
    don't have yuv variants */
 #if DEST_DEPTH != YUY2 && (!defined(EFFECT_MMX_ASM) || (DEST_DEPTH != 16 && DEST_DEPTH != 32))
-void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count, struct sysdep_palette_struct *palette)
+void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count, unsigned int *u32lookup)
 {
   PIXEL *mysrc = (PIXEL *)src0;
   UINT32 *u32dest;
@@ -3801,9 +3801,6 @@ void FUNC_NAME(effect_6tap_addline)(const void *src0, unsigned count, struct sys
   INT32 pixel;
   UINT32 i;
   char *tmp;
-#if DEST_DEPTH == 16
-  UINT32 *u32lookup = palette->lookup;
-#endif
 
   /* first, move the existing lines up by one */
   tmp = _6tap2x_buf0;

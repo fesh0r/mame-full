@@ -69,8 +69,6 @@ static int video_verify_flicker(struct rc_option *option, const char *arg,
 		int priority);
 static int video_verify_intensity(struct rc_option *option, const char *arg,
 		int priority);
-static int video_verify_bpp(struct rc_option *option, const char *arg,
-		int priority);
 static int video_handle_vectorres(struct rc_option *option, const char *arg,
 		int priority);
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
@@ -84,9 +82,6 @@ struct rc_option video_opts[] = {
    { "fullscreen",   	NULL,    		rc_bool,	&normal_params.fullscreen,
      "0",           	0,       		0,		NULL,
      "Start in fullscreen mode (default: false)" },
-   { "bpp",		"b",			rc_int,		&options.color_depth,
-     "0",		0,			0,		video_verify_bpp,
-     "Specify the colordepth the core should render, one of: auto(0), 15, 32" },
    { "arbheight",	"ah",			rc_int,		&normal_params.yarbsize,
      "0",		0,			4096,		NULL,
      "Scale video to exactly this height (0 = disable)" },
@@ -253,23 +248,6 @@ static int video_verify_intensity(struct rc_option *option, const char *arg,
 {
 	options.vector_intensity = f_intensity;
 	option->priority = priority;
-	return 0;
-}
-
-static int video_verify_bpp(struct rc_option *option, const char *arg,
-   int priority)
-{
-	if (options.color_depth != 0
-			&& options.color_depth != 15
-			&& options.color_depth != 32)
-	{
-		options.color_depth = 0;
-		fprintf(stderr, "error: invalid value for bpp: %s\n", arg);
-		return -1;
-	}
-
-	option->priority = priority;
-
 	return 0;
 }
 
