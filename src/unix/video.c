@@ -218,28 +218,38 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG
 {
 	struct osd_bitmap *bitmap;
 
+	if (depth != 8 && depth != 15 && depth != 16 && depth != 32)
+	{
+		fprintf(stderr_file, "osd_alloc_bitmap() unknown depth %d\n", 
+			depth);
+		return NULL;
+	}
+
 	if ((bitmap = malloc(sizeof(struct osd_bitmap))) != 0)
 	{
 		int i,rowlen,rdwidth;
 		unsigned char *bm;
-
-		if (depth != 8 && depth != 16) depth = 8;
 
 		bitmap->depth = depth;
 		bitmap->width = width;
 		bitmap->height = height;
 
 		rdwidth = (width + 7) & ~7;     /* round width to a quadword */
-		if (depth == 16)
-			rowlen = 2 * (rdwidth + 2 * safety) * sizeof(unsigned char);
-		else
-			rowlen =     (rdwidth + 2 * safety) * sizeof(unsigned char);
+		rowlen = (rdwidth + 2 * safety) * sizeof(unsigned char);
+		if (depth == 32)
+			rowlen *= 4;
+		else if (depth == 15 || depth == 16)
+			rowlen *= 2;
 
 		if ((bm = malloc((height + 2 * safety) * rowlen)) == 0)
 		{
 			free(bitmap);
 			return 0;
 		}
+
+		/* clear ALL bitmap, including safety area, to avoid garbage on ____right */
+		/* side of screen if width is not a multiple of 4 */
+		memset(bm,0,(height + 2 * safety) * rowlen);
 
 		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
 		{
@@ -250,7 +260,9 @@ struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth)       /* ASG
 
 		for (i = 0;i < height + 2 * safety;i++)
 		{
-			if (depth == 16)
+			if (depth == 32)
+				bitmap->line[i] = &bm[i * rowlen + 4*safety];
+			else if (depth == 15 || depth == 16)
 				bitmap->line[i] = &bm[i * rowlen + 2*safety];
 			else
 				bitmap->line[i] = &bm[i * rowlen + safety];
@@ -278,6 +290,9 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 int osd_create_display(int width, int height, int depth,
    int fps, int attributes, int orientation)
 {
+   bitmap_depth = depth;
+   if (bitmap_depth == 15) bitmap_depth = 16;
+
    current_palette = normal_palette = NULL;
    debug_visual.min_x = 0;
    debug_visual.max_x = options.debug_width - 1;
@@ -321,7 +336,7 @@ int osd_create_display(int width, int height, int depth,
    use_aspect_ratio = normal_use_aspect_ratio;
    video_fps        = fps;
    
-   if (sysdep_create_display(depth) != OSD_OK)
+   if (sysdep_create_display(bitmap_depth) != OSD_OK)
       return -1;
    
    /* a lott of display_targets need to have the display initialised before
@@ -329,9 +344,7 @@ int osd_create_display(int width, int height, int depth,
    if (osd_input_initpost()!=OSD_OK) return -1;
    
    if (use_dirty) fprintf(stderr_file,"Using dirty_buffer strategy\n");
-   if (depth==16) fprintf(stderr_file,"Using 16bpp video mode\n");
-   
-   bitmap_depth = depth;
+   if (bitmap_depth==16) fprintf(stderr_file,"Using 16bpp video mode\n");
    
    return 0;
 }   
@@ -467,14 +480,14 @@ void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y)
    set_ui_visarea (normal_visual.min_x, normal_visual.min_y, normal_visual.max_x, normal_visual.max_y);
 }
 
-int osd_allocate_colors(unsigned int totalcolors, const UINT8 *palette,
-   UINT32 *pens, int modifiable, const UINT8 *debugger_palette,
-   UINT32 *debugger_pens)
+int osd_allocate_colors(unsigned int totalcolors, const unsigned char *palette,
+   unsigned int *pens, int modifiable, const unsigned char *debugger_palette,
+   unsigned int *debugger_pens)
 {
    int i;
    int writable_colors = 0;
    int max_colors = (bitmap_depth == 8)? 256:65536;
-   
+
    /* calculate the size of the normal palette */
    if (totalcolors > max_colors)
    {
