@@ -1,3 +1,5 @@
+#include <stdarg.h>
+
 #ifndef MESS_H
 #define MESS_H
 
