@@ -59,7 +59,7 @@ OBJ = $(NAME).obj
 
 EMULATOR = $(NAME)$(EXE)
 
-DEFS =	-DLSB_FIRST -DPI=3.1415926534 \
+DEFS =	-DLSB_FIRST -DM_PI=3.1415926534 -DPI=3.1415926534 \
 	-DINLINE=\"static __inline\" -Dinline=__inline -D__inline__=__inline \
 	-DCLIB_DECL=__cdecl -DDECL_SPEC=__cdecl \
 	-DPNG_SAVE_SUPPORT -D_WINDOWS -DWIN32 -DZLIB_DLL
@@ -127,13 +127,13 @@ extra:	romcmp$(EXE) $(TOOLS) $(TEXTS)
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS) $(DBGDEFS)
 
-$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS)
+$(EMULATOR): $(OBJS) $(COREOBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 # always recompile the version string
 	$(CC) $(CDEFS) $(CFLAGS) -Fo$(OBJ)/version.o -c src/version.c
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(WINDOWS_PROGRAM) -out:$(EMULATOR) $(LIBS) $(COREOBJS) $(OBJS) $(OSOBJS) $(DRVLIBS) $(RES)
 ifndef DEBUG
-	upx $(EMULATOR)
+#	upx $(EMULATOR)
 endif
 
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o
