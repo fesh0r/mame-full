@@ -271,7 +271,7 @@ static void map_artifact_palette(UINT16 c0, UINT16 c1, const struct rasterbits_a
 	int i, j;
 	int totalcolors, palettebase;
 	const double *table;
-	char myrgb[3];
+	/*char*/UINT8 myrgb[3];
 	UINT8 rgb0[3];
 	UINT8 rgb1[3];
 
