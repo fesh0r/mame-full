@@ -15,7 +15,7 @@
 #endif
 
 /* Verbose outputs to error.log ? */
-#define VERBOSE 	0
+#define VERBOSE 	1
 
 /* Use the file cache ? */
 #define FILE_CACHE	1
@@ -27,12 +27,12 @@
 #endif
 
 /* CRCs */
-const char *crcdir = NULL;
+static char crcdirbuf[256] = "";
+const char *crcdir = crcdirbuf;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
 static char pcrcfilename[256] = "";
 const char *pcrcfile = pcrcfilename;
-
 
 /* BIOS */
 static char **rompathv = NULL;
@@ -730,20 +730,11 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 				if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
 				{
 					sprintf(name,"%s/%s",dir_name,filename);
-					if( filetype == OSD_FILETYPE_ROM )
+					if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
 					{
-						if( checksum_file (name, &f->data, &f->length, &f->crc) == 0 )
-						{
-							f->type = kRAMFile;
-							f->offset = 0;
-							found = 1;
-						}
-					}
-					else
-					{
-						f->type = kPlainFile;
-						f->file = fopen(name,"rb");
-						found = f->file!=0;
+						f->type = kRAMFile;
+						f->offset = 0;
+						found = 1;
 					}
 				}
 			}
@@ -756,20 +747,11 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int openf
 				{
 					sprintf (name, "%s/%s/%s", dir_name, gamename, filename);
 					LOG(("Trying %s file\n", name));
-					if( filetype == OSD_FILETYPE_ROM )
+					if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
 					{
-						if( checksum_file(name, &f->data, &f->length, &f->crc) == 0 )
-						{
-							f->type = kRAMFile;
-							f->offset = 0;
-							found = 1;
-						}
-					}
-					else
-					{
-						f->type = kPlainFile;
-						f->file = fopen (name, "rb");
-						found = f->file != 0;
+						f->type = kRAMFile;
+						f->offset = 0;
+						found = 1;
 					}
 				}
 			}
@@ -1774,3 +1756,13 @@ char *osd_strip_extension (char *filename)
 	return newname;
 }
 
+
+void build_crc_database_filename(int game_index)
+{
+	/* Build the CRC database filename */
+	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+	if (drivers[game_index]->clone_of->name)
+		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+	else
+		pcrcfilename[0] = 0;
+}

@@ -38,6 +38,7 @@ extern struct rc_option video_opts[];
 
 #ifdef MESS
 extern struct rc_option mess_opts[];
+void build_crc_database_filename(int game_index);
 #endif
 
 extern int frontend_help(char *gamename);
@@ -553,6 +554,10 @@ int cli_frontend_init (int argc, char **argv)
 		 */
 		osd_fwrite(options.record, &inp_header, sizeof(INP_HEADER));
 	}
+
+#ifdef MESS
+	build_crc_database_filename(game_index);
+#endif
 
 	/* need a decent default for debug width/height */
 	if (options.debug_width == 0)
