@@ -826,10 +826,10 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2)
 	CONFIG_IMPORT_FROM( apple2_common )
-	//CONFIG_RAM				(4  * 1024)
-	//CONFIG_RAM				(8  * 1024)
-	//CONFIG_RAM				(12 * 1024)
-	//CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM				(4  * 1024)
+	CONFIG_RAM				(8  * 1024)
+	CONFIG_RAM				(12 * 1024)
+	CONFIG_RAM				(16 * 1024)
 	CONFIG_RAM				(20 * 1024)
 	CONFIG_RAM				(24 * 1024)
 	CONFIG_RAM				(32 * 1024)
@@ -842,7 +842,7 @@ SYSTEM_CONFIG_END
 
 SYSTEM_CONFIG_START(apple2p)
 	CONFIG_IMPORT_FROM( apple2_common )
-	//CONFIG_RAM				(16 * 1024)
+	CONFIG_RAM				(16 * 1024)
 	CONFIG_RAM				(32 * 1024)
 	CONFIG_RAM				(48 * 1024)
 	CONFIG_RAM_DEFAULT		(64 * 1024)	/* At the moment the RAM bank $C000-$FFFF is available only if you choose   */
