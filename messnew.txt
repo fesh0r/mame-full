@@ -36,6 +36,12 @@ System Driver Changes:
 
 - [A7800] Fixed interrupt handling bug - more carts run again [Ben Bruscella]
 
+- [ORICA] The FUNCT key (present on Oric Atmos/Telestrat model) is now recognized.
+  [Stefano Priore]
+
+- [PRAV8D] Pravetz keyboard is now fully mapped and the keycaps are correctly
+  displayed (see the "Input" menu) [Stefano Priore]
+
 - [SPECTRUM] 48k machines are now able to run code in screen memory (Bug #46).
   Fixed problem with interrupt vector set to 0xffff (much more 128k games works
   now). Corrected frames per second value for 48k and 128k Sincalir machines.
