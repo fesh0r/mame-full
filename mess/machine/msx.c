@@ -916,7 +916,7 @@ WRITE_HANDLER (msx_dsk_w)
 			/* NOP */
 			break;
 		default:
-			printf ("Uncaught trap: %04x\n", z80_get_pc ());
+			logerror ("Uncaught trap: %04x\n", z80_get_pc ());
 		}
 
 	}
