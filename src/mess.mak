@@ -242,7 +242,7 @@ $(OBJ)/atari.a:    \
 #    $(OBJ)/mess/systems/atarist.o
 
 $(OBJ)/gce.a:	   \
-#	  $(OBJ)/mess/vidhrdw/vectrex.o  \
+	  $(OBJ)/mess/vidhrdw/vectrex.o  \
 	  $(OBJ)/mess/machine/vectrex.o  \
 	  $(OBJ)/mess/systems/vectrex.o
 

@@ -101,7 +101,7 @@ TESTDRIVER( atarist )
 /*	DRIVER( cstudio2 )*//* Colour Studio II								  */
 
 	/* FAIRCHILD */
-//!!	DRIVER( channelf )	/* Fairchild Channel F VES - 1976				  */
+	DRIVER( channelf )	/* Fairchild Channel F VES - 1976				  */
 
     /* COLECO */
 	DRIVER( coleco )	/* ColecoVision (Original BIOS )				  */
@@ -128,9 +128,9 @@ TESTDRIVER( atarist )
 TESTDRIVER( saturn )	/* Sega Saturn									  */
 
 	/* GCE */
-//!!	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
+	DRIVER( vectrex )	/* General Consumer Electric Vectrex - 1982-1984  */
 						/* (aka Milton-Bradley Vectrex) 				  */
-//!!	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
+	DRIVER( raaspec )	/* RA+A Spectrum - Modified Vectrex 			  */
 
 	/* ENTEX */
 	DRIVER( advision )	/* Adventurevision								  */

@@ -31,18 +31,18 @@ extern unsigned char vectrex_via_out[2];
 
 extern void vectrex_imager_left_eye (double time);
 extern void vectrex_configuration(void);
-extern int v_via_pa_r (int offset);
-extern int v_via_pb_r (int offset);
+extern READ_HANDLER (v_via_pa_r);
+extern READ_HANDLER(v_via_pb_r );
 extern void v_via_irq (int level);
 
 /*********************************************************************
   Local variables
  *********************************************************************/
-static void v_via_pa_w (int offset, int data);
-static void v_via_pb_w (int offset, int data);
+static WRITE_HANDLER ( v_via_pa_w );
+static WRITE_HANDLER( v_via_pb_w );
 static void vectrex_screen_update (double time);
 static void vectrex_shift_reg_w (int via_sr);
-static void v_via_ca2_w (int offset, int level);
+static WRITE_HANDLER ( v_via_ca2_w );
 
 static struct via6522_interface vectrex_via6522_interface =
 {
@@ -114,7 +114,7 @@ void vectrex_vh_update (struct osd_bitmap *bitmap, int full_refresh)
 	copybitmap(bitmap, tmpbitmap,0,0,0,0,0,TRANSPARENCY_NONE,0);
 
 	if (full_refresh)
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+		osd_mark_dirty (0, 0, bitmap->width, bitmap->height);
 }
 
 /*********************************************************************
@@ -250,7 +250,7 @@ void vectrex_new_palette (unsigned char *palette)
 		sprintf(overlay_name,"mine.png"); /* load the minestorm overlay (built in game) */
 
 	overlay_load(overlay_name, nextfree, Machine->drv->total_colors-nextfree);
-	
+
 	if ((artwork_overlay != NULL))
 	{
 		overlay_set_palette (palette, MIN(256, Machine->drv->total_colors) - nextfree);
@@ -293,18 +293,18 @@ void vectrex_set_palette (void)
 		logerror("Not enough memory!\n");
 		return;
 	}
-	
+
 	memset (palette, 0, Machine->drv->total_colors * 3);
 	vectrex_new_palette (palette);
 	palette_recalc();
 
 
-	i = (Machine->scrbitmap->depth == 8) ? MIN(256,Machine->drv->total_colors) 
+	i = (Machine->scrbitmap->depth == 8) ? MIN(256,Machine->drv->total_colors)
 		: Machine->drv->total_colors;
 
 	while (--i >= 0)
 		palette_change_color(i, palette[i*3], palette[i*3+1], palette[i*3+2]);
-		
+
 	free (palette);
 	return;
 }
@@ -385,7 +385,7 @@ INLINE void vectrex_multiplexer (int mux)
 		DAC_data_w(0,(signed char)vectrex_via_out[PORTA]+0x80);
 }
 
-static void v_via_pb_w (int offset, int data)
+static WRITE_HANDLER ( v_via_pb_w )
 {
 	if (!(data & 0x80))
 	{
@@ -428,7 +428,7 @@ static void v_via_pb_w (int offset, int data)
 	vectrex_via_out[PORTB] = data;
 }
 
-static void v_via_pa_w (int offset, int data)
+static WRITE_HANDLER ( v_via_pa_w )
 {
 	double time;
 
@@ -474,9 +474,9 @@ static void vectrex_shift_reg_w (int via_sr)
 	old_via_sr = via_sr;
 }
 
-static void v_via_ca2_w (int offset, int level)
+static WRITE_HANDLER ( v_via_ca2_w )
 {
-	if  (!level)    /* ~ZERO low ? Then zero integrators*/
+	if  (!data)    /* ~ZERO low ? Then zero integrators*/
 		vectrex_zero_integrators();
 }
 
@@ -487,7 +487,7 @@ static void v_via_ca2_w (int offset, int level)
 *****************************************************************/
 
 extern int png_read_artwork(const char *file_name, struct osd_bitmap **bitmap, unsigned char **palette, int *num_palette, unsigned char **trans, int *num_trans);
-extern int s1_via_pb_r (int offset);
+extern READ_HANDLER ( s1_via_pb_r );
 
 static struct via6522_interface spectrum1_via6522_interface =
 {
@@ -576,7 +576,7 @@ void raaspec_led_w (int offset, int data)
 					copybitmap(tmpbitmap, buttons->artwork, 0, 0, 0, y, &clip, TRANSPARENCY_NONE, 0);
 				else
 					copybitmap(tmpbitmap, led->artwork, 0,0,i*width, y,&clip,TRANSPARENCY_PEN, Machine->pens[transparent_pen]);
-				osd_mark_dirty (clip.min_x,clip.min_y,clip.max_x,clip.max_y,0);
+				osd_mark_dirty (clip.min_x,clip.min_y,clip.max_x,clip.max_y);
 			}
 		old_data=data;
 	}
