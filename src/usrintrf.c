@@ -3683,7 +3683,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 		}
 	}
 
-	if (single_step || input_ui_pressed(IPT_UI_PAUSE) || setup_selected) /* pause the game */
+	if (single_step || input_ui_pressed(IPT_UI_PAUSE)) /* pause the game */
 	{
 /*		osd_selected = 0;	   disable on screen display, since we are going   */
 							/* to change parameters affected by it */
@@ -3694,7 +3694,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 			osd_pause(1);
 		}
 
-		while (!input_ui_pressed(IPT_UI_PAUSE) && setup_selected)
+		while (!input_ui_pressed(IPT_UI_PAUSE))
 		{
 #ifdef MAME_NET
 			osd_net_sync();
