@@ -17,8 +17,6 @@
 #include "vidhrdw/generic.h"
 
 
-/* from mame.c */
-extern int bitmap_dirty;
 
 /* from mess/vidhrdw/vtech2.c */
 extern char laser_frame_message[64+1];
@@ -329,7 +327,7 @@ static void mwa_bank(int bank, int offs, int data)
             logerror("bank #%d write to I/O [$%05X] $%02X\n", bank+1, offs, data);
             /* Toggle between graphics and text modes? */
             if ((data ^ laser_latch) & 0x08)
-                bitmap_dirty = 1;
+                schedule_full_refresh();
 			if ((data ^ laser_latch) & 0x01)
 				speaker_level_w(0, data & 1);
 #if 0
