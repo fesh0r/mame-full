@@ -51,7 +51,13 @@
 
 	The cassette interface hardware converts square-wave pulses into bits which the uart receives.
 	
-			
+	
+	Sound:
+	
+	external speaker connected to the parallel port
+	speaker is connected to all pins
+
+	  
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -72,6 +78,24 @@ static int exidy_keyboard_line;
 static unsigned long exidy_hd6402_state;
 
 static WRITE_HANDLER(exidy_fe_port_w);
+
+/* timer for exidy serial chip transmit and receive */
+static void *serial_timer;
+
+static void exidy_serial_timer_callback(int dummy)
+{
+	/* if rs232 is enabled, uart is connected to clock defined by bit6 of port fe.
+	Transmit and receive clocks are connected to the same clock */
+
+	/* if rs232 is disabled, receive clock is linked to cassette hardware */
+	if (exidy_fe & 0x080)
+	{
+		/* trigger transmit clock on hd6402 */
+		hd6402_transmit_clock();
+		/* trigger receive clock on hd6402 */
+		hd6402_receive_clock();
+	}
+}
 
 
 
@@ -149,6 +173,9 @@ static void exidy_cassette_timer_callback(int dummy)
 			set_out_data_bit(cassette_serial_connection.State, cassette_input_ff[0]);
 			/* output through serial connection */
 			serial_connection_out(&cassette_serial_connection);
+
+			/* update hd6402 receive clock */
+			hd6402_receive_clock();
 		}
 	}
 }
@@ -213,6 +240,7 @@ void exidy_init_machine(void)
 	/* assumption: select is tied low */
 	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
 
+	serial_timer = NULL;
 	cassette_timer = NULL;
 
 	serial_connection_init(&cassette_serial_connection);
@@ -234,6 +262,12 @@ void exidy_shutdown_machine(void)
 	{
 		timer_remove(cassette_timer);
 		cassette_timer = NULL;
+	}
+
+	if (serial_timer)
+	{
+		timer_remove(serial_timer);
+		serial_timer = NULL;
 	}
 }
 
@@ -388,9 +422,14 @@ static WRITE_HANDLER(exidy_fe_port_w)
 		{
 			baud_rate = 1200;
 		}
-	
-		hd6402_set_receive_baud_rate(baud_rate);
-		hd6402_set_transmit_baud_rate(baud_rate);
+
+		if (serial_timer)
+		{
+			timer_remove(serial_timer);
+			serial_timer = NULL;
+		}
+
+		serial_timer = timer_pulse(TIME_IN_HZ(baud_rate), 0, exidy_serial_timer_callback);
 	}
 
 	exidy_fe = data;
@@ -400,11 +439,34 @@ static WRITE_HANDLER(exidy_ff_port_w)
 {
 	logerror("exidy ff w: %04x %02x\n",offset,data);
 
-	/* printer */
-	/* bit 7 = strobe, bit 6..0 = data */
-	centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
-	centronics_write_handshake(0, (data>>7) & 0x01, CENTRONICS_STROBE);
-	centronics_write_data(0,data & 0x07f);
+	switch ((readinputport(0)>>1) & 0x01)
+	{
+		case 0:
+		{
+			int level;
+
+			level = 0;
+			if (data)
+			{
+				level = 0x0ff;
+			}
+
+			speaker_level_w(0, level);
+		}
+		break;
+
+		case 1:
+		{
+			/* printer */
+			/* bit 7 = strobe, bit 6..0 = data */
+			centronics_write_handshake(0, CENTRONICS_SELECT | CENTRONICS_NO_RESET, CENTRONICS_SELECT| CENTRONICS_NO_RESET);
+			centronics_write_handshake(0, (data>>7) & 0x01, CENTRONICS_STROBE);
+			centronics_write_data(0,data & 0x07f);
+
+		}
+		break;
+	}
+
 }
 
 static READ_HANDLER(exidy_fc_port_r)
@@ -510,6 +572,10 @@ INPUT_PORTS_START(exidy)
 	PORT_START
 	/* vblank */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_VBLANK)
+	/* hardware connected to printer port */
+	PORT_DIPNAME( 0x02, 0x02, "Hardware connected to printer/parallel port" )
+	PORT_DIPSETTING(    0x00, "Speaker" )
+	PORT_DIPSETTING(    0x01, "Printer" )
 	/* line 0 */
 	PORT_START
 	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_KEYBOARD, "Shift", KEYCODE_LSHIFT, IP_JOY_NONE)
@@ -629,6 +695,12 @@ INPUT_PORTS_END
 
 /**********************************************************************************************************/
 
+static struct Speaker_interface exidy_speaker_interface=
+{
+ 1,
+ {50},
+};
+
 static struct MachineDriver machine_driver_exidy =
 {
 	/* basic machine hardware */
@@ -672,9 +744,12 @@ static struct MachineDriver machine_driver_exidy =
 	0,								   /* sh start */
 	0,								   /* sh stop */
 	0,								   /* sh update */
-//	{
-//		{
-//	}
+	{
+		{
+				SOUND_SPEAKER,
+				&exidy_speaker_interface
+		},
+	}
 };
 
 
