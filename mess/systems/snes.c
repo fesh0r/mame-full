@@ -41,7 +41,7 @@ static MEMORY_READ_START( snes_readmem )
 	/* For LoROM */
 	{ 0x7d0000, 0x7dffff, MRA_RAM },		/* 4kb SRAM - or is it? */
 	/* For HiROM */
-//	{ 0x7d0000, 0x7dffff, MRA_ROM },		/* ROM */
+/*	{ 0x7d0000, 0x7dffff, MRA_ROM },*/		/* ROM */
 
 	{ 0x7e0000, 0x7e1fff, MRA_RAM },		/* 8kb Shadow RAM - shadowed in banks 00-3f */
 	{ 0x7e2000, 0x7fffff, MRA_RAM },		/* System RAM */
@@ -52,7 +52,7 @@ static MEMORY_READ_START( snes_readmem )
 	{ 0xfe0000, 0xfe1fff, MRA_RAM },		/* Shadow RAM  - is it the same as the previous shadow ram? */
 	{ 0xfe2000, 0xffffff, MRA_RAM },		/* System RAM */
 	/* For HiROM */
-//	{ 0xfe0000, 0xffffff, MRA_ROM },		/* 64k ROM chunk */
+/*	{ 0xfe0000, 0xffffff, MRA_ROM },*/		/* 64k ROM chunk */
 MEMORY_END
 
 static MEMORY_WRITE_START( snes_writemem )
@@ -63,7 +63,7 @@ static MEMORY_WRITE_START( snes_writemem )
 	/* For LoROM */
 	{ 0x7d0000, 0x7dffff, MWA_RAM },		/* 4kb SRAM  - or is it? */
 	/* For HiROM */
-//	{ 0x7d0000, 0x7dffff, MWA_ROM },		/* ROM */
+/*	{ 0x7d0000, 0x7dffff, MWA_ROM },*/		/* ROM */
 
 	{ 0x7e0000, 0x7e1fff, MWA_RAM },		/* 8kb Shadow RAM - shadowed in banks 00-3f */
 	{ 0x7e2000, 0x7fffff, MWA_RAM },		/* System RAM */
@@ -74,7 +74,7 @@ static MEMORY_WRITE_START( snes_writemem )
 	{ 0xfe0000, 0xfe1fff, MWA_RAM },		/* Shadow RAM  - is it the same as the previous shadow ram? */
 	{ 0xfe2000, 0xffffff, MWA_RAM },		/* System RAM */
 	/* For HiROM */
-//	{ 0xfe0000, 0xffffff, MWA_ROM },		/* 64k ROM chunk */
+/*	{ 0xfe0000, 0xffffff, MWA_ROM },*/		/* 64k ROM chunk */
 MEMORY_END
 
 static MEMORY_READ_START( spc_readmem )
@@ -284,16 +284,20 @@ static const struct IODevice io_snes[] =
 #define io_snespal  io_snes
 
 ROM_START(snes)
-	ROM_REGION(0x1000000, REGION_CPU1, 0)				/* 65C816 */
-	ROM_REGION(  0x20000, REGION_GFX1, 0)				/* VRAM */
-	ROM_REGION(  0x10000, REGION_CPU2, 0)				/* SPC700 */
+	ROM_REGION(0x1000000, REGION_CPU1,  0)				/* 65C816 */
+	ROM_REGION(0x20000,   REGION_GFX1,  0)				/* VRAM */
+	ROM_REGION(0x202,     REGION_USER1, 0)				/* CGRAM */
+	ROM_REGION(0x440,     REGION_USER2, 0)				/* OAM */
+	ROM_REGION(0x10000,   REGION_CPU2,  0)				/* SPC700 */
 	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
 ROM_START(snespal)
-	ROM_REGION(0x1000000, REGION_CPU1, 0)				/* 65C816 */
-	ROM_REGION(  0x20000, REGION_GFX1, 0)				/* VRAM */
-	ROM_REGION(  0x10000, REGION_CPU2, 0)				/* SPC700 */
+	ROM_REGION(0x1000000, REGION_CPU1,  0)				/* 65C816 */
+	ROM_REGION(0x20000,   REGION_GFX1,  0)				/* VRAM */
+	ROM_REGION(0x202,     REGION_USER1, 0)				/* CGRAM */
+	ROM_REGION(0x440,     REGION_USER2, 0)				/* OAM */
+	ROM_REGION(0x10000,   REGION_CPU2,  0)				/* SPC700 */
 	ROM_LOAD_OPTIONAL("spc700.rom", 0xFFC0, 0x40, 0x38000B6B)	/* boot rom */
 ROM_END
 
