@@ -304,6 +304,7 @@ all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe i
 include src/core.mak
 ifdef MESS
 include mess/$(TARGET).mak
+include mess/tools/imgtool/windows/wimgtool.mak
 else
 include src/$(TARGET).mak
 endif

@@ -152,7 +152,7 @@ static void checkdirectory_end_handler(struct messtest_state *state, const void 
 	ent.filename = filename_buffer;
 	ent.filename_len = sizeof(filename_buffer) / sizeof(filename_buffer[0]);
 
-	err = img_beginenum(image, &imageenum);
+	err = img_beginenum(image, NULL, &imageenum);
 	if (err)
 		goto done;
 

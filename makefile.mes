@@ -241,6 +241,7 @@ all:	maketree $(EMULATORCLI) $(EMULATORGUI) $(MESSTEST) $(MESSDOCS) chdman.exe i
 # include the various .mak files
 include src/core.mak
 include mess/$(TARGET).mak
+include mess/tools/imgtool/windows/wimgtool.mak
 include src/rules.mak
 include src/$(MAMEOS)/$(MAMEOS).mak
 include mess/rules_ms.mak
@@ -317,18 +318,8 @@ imgtool$(EXE): $(IMGTOOL_OBJS) $(PLATFORM_TOOL_OBJS)
 	$(LD) $(LDFLAGS) $^ -lz -o $@
 
 wimgtool$(EXE): \
-		$(IMGTOOL_LIB_OBJS)								\
-		$(PLATFORM_TOOL_OBJS)							\
-		$(OBJ)/mess/pile.o								\
-		$(OBJ)/mess/windows/opcntrl.o					\
-		$(OBJ)/mess/windows/strconv.o					\
-		$(OBJ)/mess/tools/imgtool/stubs.o				\
-		$(OBJ)/mess/tools/imgtool/windows/wmain.o		\
-		$(OBJ)/mess/tools/imgtool/windows/wimgtool.o	\
-		$(OBJ)/mess/tools/imgtool/windows/attrdlg.o		\
-		$(OBJ)/mess/tools/imgtool/windows/assoc.o		\
-		$(OBJ)/mess/tools/imgtool/windows/assocdlg.o	\
-		$(OBJ)/mess/tools/imgtool/windows/wimgtool.res
+		$(WIMGTOOL_OBJS)						\
+		$(PLATFORM_TOOL_OBJS)
 	@echo Compiling $@...
 	$(LD) $(LDFLAGS) $(LIBS) $(WINDOWS_PROGRAM) $^ -lz -lcomctl32 -lshlwapi -o $@
 
