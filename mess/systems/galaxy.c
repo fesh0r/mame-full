@@ -232,7 +232,7 @@ ROM_START (galaxy)
 	ROM_LOAD ("galrom1.bin", 0x0000, 0x1000, 0x365f3e24)
 	ROM_LOAD ("galrom2.bin", 0x1000, 0x1000, 0x5dc5a100)
 	ROM_REGION(0x0800, REGION_GFX1,0)
-	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, 0x5c3b5bb5)
+	ROM_LOAD ("galchr.bin", 0x0000, 0x0800, BADCRC(0x5c3b5bb5))
 ROM_END
 
 
