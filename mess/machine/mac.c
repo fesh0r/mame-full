@@ -25,6 +25,7 @@
 #include "driver.h"
 #include "state.h"
 #include "machine/6522via.h"
+#include "machine/8530scc.h"
 #include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/iwm.h"
@@ -39,7 +40,6 @@
 #define LOG_MAC_IWM		0
 #define LOG_TRAPS		1
 #define LOG_SCSI		1
-#define LOG_SCC			0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
 #define LOG_MEMORY		0
@@ -49,7 +49,6 @@
 #define LOG_MAC_IWM		0
 #define LOG_TRAPS		0
 #define LOG_SCSI		0
-#define LOG_SCC			0
 #define LOG_GENERAL		0
 #define LOG_KEYBOARD	0
 #define LOG_MEMORY		0
@@ -1058,16 +1057,12 @@ WRITE16_HANDLER ( macplus_scsi_w )
  * Serial Control Chip
  * *************************************************************************/
 
-static int scc_mode;
-static int scc_reg;
-static int scc_status;
-
-static void scc_init(void)
+static void mac_scc_ack(void)
 {
-	scc_mode = 0;
-	scc_reg = 0;
-	scc_status = 0;
+	set_scc_interrupt(0);
 }
+
+
 
 void mac_scc_mouse_irq( int x, int y)
 {
@@ -1076,155 +1071,48 @@ void mac_scc_mouse_irq( int x, int y)
 	if (x && y)
 	{
 		if (last_was_x)
-			scc_status = 0x0a;
+			scc_set_status(0x0a);
 		else
-			scc_status = 0x02;
+			scc_set_status(0x02);
 
 		last_was_x ^= 1;
 	}
 	else
 	{
 		if (x)
-			scc_status = 0x0a;
+			scc_set_status(0x0a);
 		else
-			scc_status = 0x02;
+			scc_set_status(0x02);
 	}
 
 	//cpunum_set_input_line(0, 2, ASSERT_LINE);
 	set_scc_interrupt(1);
 }
 
-static int scc_getareg(void)
-{
-	/* Not yet implemented */
-	return 0;
-}
 
-static int scc_getbreg(void)
-{
-
-	if (scc_reg == 2)
-		return scc_status;
-
-	return 0;
-}
-
-static void scc_putareg(int data)
-{
-	if (scc_reg == 0)
-	{
-		if (data & 0x10)
-			//cpunum_set_input_line(0, 2, CLEAR_LINE);	/* ack irq */
-			set_scc_interrupt(0);
-	}
-}
-
-static void scc_putbreg(int data)
-{
-	if (scc_reg == 0)
-	{
-		if (data & 0x10)
-			//cpunum_set_input_line(0, 2, CLEAR_LINE);	/* ack irq */
-			set_scc_interrupt(0);
-	}
-}
 
 READ16_HANDLER ( mac_scc_r )
 {
-	int result;
-
-#if LOG_SCC
-	logerror("mac_scc_r: offset=0x%08x\n", offset);
-#endif
-
-	result = 0;
-	offset &= 3;
-
-	switch(offset)
-	{
-	case 0:
-		/* Channel B (Printer Port) Control */
-		if (scc_mode == 1)
-			scc_mode = 0;
-		else
-			scc_reg = 0;
-
-		result = scc_getbreg();
-		break;
-
-	case 1:
-		/* Channel A (Modem Port) Control */
-		if (scc_mode == 1)
-			scc_mode = 0;
-		else
-			scc_reg = 0;
-
-		result = scc_getareg();
-		break;
-
-	case 2:
-		/* Channel B (Printer Port) Data */
-		/* Not yet implemented */
-		break;
-
-	case 3:
-		/* Channel A (Modem Port) Data */
-		/* Not yet implemented */
-		break;
-	}
-
+	data16_t result;
+	result = scc_r(offset);
 	return (result << 8) | result;
 }
 
+
+
 WRITE16_HANDLER ( mac_scc_w )
 {
-	offset &= 3;
-
-	data &= 0xff;
-
-	switch(offset)
-	{
-	case 0:
-		/* Channel B (Printer Port) Control */
-		if (scc_mode == 0)
-		{
-			scc_mode = 1;
-			scc_reg = data & 0x0f;
-			scc_putbreg(data & 0xf0);
-		}
-		else
-		{
-			scc_mode = 0;
-			scc_putbreg(data);
-		}
-		break;
-
-	case 1:
-		/* Channel A (Modem Port) Control */
-		if (scc_mode == 0)
-		{
-			scc_mode = 1;
-			scc_reg = data & 0x0f;
-			scc_putareg(data & 0xf0);
-		}
-		else
-		{
-			scc_mode = 0;
-			scc_putareg(data);
-		}
-		break;
-
-	case 2:
-		/* Channel B (Printer Port) Data */
-		/* Not yet implemented */
-		break;
-
-	case 3:
-		/* Channel A (Modem Port) Data */
-		/* Not yet implemented */
-		break;
-	}
+	scc_w(offset, (data8_t) data);
 }
+
+
+
+static const struct scc8530_interface mac_scc8530_interface =
+{
+	mac_scc_ack
+};
+
+
 
 /* *************************************************************************
  * RTC
@@ -1692,7 +1580,7 @@ MACHINE_INIT(mac)
 	rtc_init();
 
 	/* initialize serial */
-	scc_init();
+	scc_init(&mac_scc8530_interface);
 
 	/* initialize floppy */
 	{

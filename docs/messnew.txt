@@ -12,7 +12,8 @@ System Driver Changes:
   Siders]
 
 - [MAC/LISA] Refactored floppy disk emulation to use MESS's floppy disk format
-  abstraction code.  [Nate Woods]
+  abstraction code.  Also factored out Zilog 8530 code into a separate module.
+  [Nate Woods]
 
 
 
