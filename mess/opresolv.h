@@ -149,6 +149,7 @@ int option_resolution_countoptions(const struct OptionGuide *guide, const char *
 optreserr_t option_resolution_listranges(const char *specification, int option_char,
 	struct OptionRange *range, size_t range_count);
 optreserr_t option_resolution_getdefault(const char *specification, int option_char, int *val);
+optreserr_t option_resolution_isvalidvalue(const char *specification, int option_char, int val);
 int option_resolution_contains(const char *specification, int option_char);
 
 /* misc */

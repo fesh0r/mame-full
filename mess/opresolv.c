@@ -564,6 +564,26 @@ optreserr_t option_resolution_getdefault(const char *specification, int option_c
 
 
 
+optreserr_t option_resolution_isvalidvalue(const char *specification, int option_char, int val)
+{
+	optreserr_t err;
+	struct OptionRange ranges[256];
+	int i;
+
+	err = option_resolution_listranges(specification, option_char, ranges, sizeof(ranges) / sizeof(ranges[0]));
+	if (err)
+		return err;
+
+	for (i = 0; (ranges[i].min >= 0) && (ranges[i].max >= 0); i++)
+	{
+		if ((ranges[i].min <= val) && (ranges[i].max >= val))
+			return OPTIONRESOLUTION_ERROR_SUCCESS;
+	}
+	return OPTIONRESOLUTION_ERROR_PARAMOUTOFRANGE;
+}
+
+
+
 int option_resolution_contains(const char *specification, int option_char)
 {
 	return strchr(specification, option_char) != NULL;
