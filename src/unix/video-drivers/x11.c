@@ -464,11 +464,14 @@ void x11_set_window_hints(unsigned int width, unsigned int height, int type)
 		break;
 	    case 1: /* resizable, keep aspect */
 	    	mode_clip_aspect(x, y, &x, &y);
-	    	hints.min_aspect.x = x;
-	    	hints.min_aspect.y = y;
-	    	hints.max_aspect.x = x;
-	    	hints.max_aspect.y = y;
-		hints.flags |= PAspect;
+	    	if (x != y) /* detect -nokeepaspect */
+	    	{
+	    	  hints.min_aspect.x = x;
+	    	  hints.min_aspect.y = y;
+	    	  hints.max_aspect.x = x;
+	    	  hints.max_aspect.y = y;
+		  hints.flags |= PAspect;
+		}
 	    case 2: /* resizable */
 		hints.flags |= PSize;
 		break;
