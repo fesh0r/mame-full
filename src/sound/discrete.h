@@ -124,6 +124,7 @@
  * DISCRETE_INPUTX_STREAM(NODE,GAIN,OFFSET)
  *
  * DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)
+ * DISCRETE_COUNTER_7492(NODE,ENAB,RESET,CLK)
  * DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,CLK,AMPL,FEED,BIAS,LFSRTB)
  * DISCRETE_NOISE(NODE,ENAB,FREQ,AMP,BIAS)
  * DISCRETE_NOTE(NODE,ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE)
@@ -355,6 +356,16 @@
  *                      direction node or static value,
  *                      reset value node or static value,
  *                      clock type static value)
+ *
+ *     DISCRETE_COUNTER_7492(name of node,
+ *                           enable node or static value,
+ *                           reset node or static value,
+ *                           clock node or static value,
+ *                           max count static value)
+ *
+ *  Note: A 7492 counter outputs a special bit pattern on its /6 stage.
+ *        A 7492 clocks on falling edge.  This emulates the /6 stage only.
+ *        Use another DISCRETE_COUNTER for the /2 stage.
  *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
  *
@@ -1359,6 +1370,10 @@
  *
  *     discrete_dac_r1_ladder = {ladderLength, r{}, vBias, rBias, rGnd, cFilter}
  *
+ *  Note: Resistors in the ladder that are set to 0, will be handled like they
+ *        are out of circuit.  So the bit selecting them will have no effect
+ *        on the DAC output voltage.
+ *
  * EXAMPLES: see Fire Truck, Monte Carlo, Super Bug, Polaris
  *
  ***********************************************************************
@@ -1633,6 +1648,10 @@
  *                      filter center frequency static value,
  *                      filter type static value)
  *
+ *  Filter types: DISC_FILTER_LOWPASS,
+ *                DISC_FILTER_HIGHPASS
+ *                DISC_FILTER_BANDPASS
+ *
  ***********************************************************************
  *
  * DISCRETE_FILTER2
@@ -1645,6 +1664,12 @@
  *                      filter center frequency static value,
  *                      damp static value,
  *                      filter type static value)
+ *
+ *  Filter types: DISC_FILTER_LOWPASS,
+ *                DISC_FILTER_HIGHPASS
+ *                DISC_FILTER_BANDPASS
+ *
+ * Note: Damp = 1/Q
  *
  ***********************************************************************
  =======================================================================
@@ -2379,6 +2404,8 @@
 #define DISC_CLK_BY_COUNT		0x02
 #define DISC_CLK_IS_FREQ		0x03
 
+#define DISC_COUNTER_IS_7492	0x10
+
 /* Function possibilities for the LFSR feedback nodes */
 /* 2 inputs, one output                               */
 #define DISC_LFSR_XOR					0
@@ -2956,7 +2983,8 @@ enum
 
 /* from disc_wav.c */
 /* generic modules */
-#define DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)     { NODE, DSS_COUNTER     , 7, { ENAB,RESET,CLK,NODE_NC,DIR,INIT0,NODE_NC }, { ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE }, NULL, "External clock Binary Counter" },
+#define DISCRETE_COUNTER(NODE,ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE)     { NODE, DSS_COUNTER     , 7, { ENAB,RESET,CLK,NODE_NC,DIR,INIT0,NODE_NC }, { ENAB,RESET,CLK,MAX,DIR,INIT0,CLKTYPE }, NULL, "DISCRETE_COUNTER" },
+#define DISCRETE_COUNTER_7492(NODE,ENAB,RESET,CLK)                      { NODE, DSS_COUNTER     , 7, { ENAB,RESET,CLK,NODE_NC,NODE_NC,NODE_NC,NODE_NC }, { ENAB,RESET,CLK,5,1,0,DISC_COUNTER_IS_7492 }, NULL, "DISCRETE_COUNTER_7492" },
 #define DISCRETE_LFSR_NOISE(NODE,ENAB,RESET,CLK,AMPL,FEED,BIAS,LFSRTB)  { NODE, DSS_LFSR_NOISE  , 6, { ENAB,RESET,CLK,AMPL,FEED,BIAS }, { ENAB,RESET,CLK,AMPL,FEED,BIAS }, LFSRTB, "LFSR Noise Source" },
 #define DISCRETE_NOISE(NODE,ENAB,FREQ,AMPL,BIAS)                        { NODE, DSS_NOISE       , 4, { ENAB,FREQ,AMPL,BIAS }, { ENAB,FREQ,AMPL,BIAS }, NULL, "Noise Source" },
 #define DISCRETE_NOTE(NODE,ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE)             { NODE, DSS_NOTE        , 6, { ENAB,CLK,DATA,NODE_NC,NODE_NC,NODE_NC }, { ENAB,CLK,DATA,MAX1,MAX2,CLKTYPE }, NULL, "Note Generator" },

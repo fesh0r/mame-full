@@ -124,8 +124,8 @@ const struct discrete_555_cc_desc firetrk_motor_vco =
 
 const struct discrete_dac_r1_ladder firetrk_motor_out_dac =
 {
-	2,			// size of ladder
-	{RES_K(10), RES_K(10), 0,0,0,0,0,0},	// R74, R73
+	4,			// size of ladder
+	{RES_K(10), 0,0, RES_K(10)},	// R74, -, -, R73
 	DEFAULT_TTL_V_LOGIC_1,
 	0,			// no rBias
 	0,			// no rGnd
@@ -216,8 +216,8 @@ DISCRETE_SOUND_START(firetrk_discrete_interface)
 	/* summed as the output of the circuit.         */
 	/************************************************/
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
-				RES_K(10),	// R26 + R27 @ min
 				RES_K(260),	// R26 + R27 @ max
+				RES_K(10),	// R26 + R27 @ min
 				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q1
 			FIRETRUCK_MOTOR_DATA,	// IC F8, pins 2,5,6,9
@@ -229,14 +229,13 @@ DISCRETE_SOUND_START(firetrk_discrete_interface)
 			CAP_U(0.01),		// C25
 			RES_M(1), 0, 0,		// R28, no rGnd, no rDis
 			&firetrk_motor_vco)
-	DISCRETE_COUNTER(NODE_23, 1, FIRETRUCK_ATTRACT_EN,	// IC A9, QB-QD
-			NODE_22,									// from IC B9, pin 3
-			5, 1, 0, DISC_CLK_ON_R_EDGE)				// /6 counter on rising edge
-	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 2, "01>")	// IC A9, pin 8
+	DISCRETE_COUNTER_7492(NODE_23, 1, FIRETRUCK_ATTRACT_EN,	// IC A9, QB-QD
+			NODE_22)									// from IC B9, pin 3
+	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 0x04, "01&")	// IC A9, pin 8
 	DISCRETE_COUNTER(NODE_25, 1, FIRETRUCK_ATTRACT_EN,	// IC A9, pin 12
 			NODE_24,									// from IC A9, pin 8
-			1, 1, 0, DISC_CLK_ON_R_EDGE)				// /2 counter on rising edge
-	DISCRETE_TRANSFORM3(NODE_26, 1, NODE_24, NODE_25, 2, "12*0+")	// Mix the mess together in binary
+			1, 1, 0, DISC_CLK_ON_F_EDGE)
+	DISCRETE_TRANSFORM3(NODE_26, 1, NODE_23, 2, NODE_25, "01*2+")	// Mix QA and QB-D together
 	DISCRETE_DAC_R1(FIRETRUCK_MOTORSND, 1, NODE_26,
 			DEFAULT_TTL_V_LOGIC_1,
 			&firetrk_motor_out_dac)
@@ -352,8 +351,8 @@ const struct discrete_555_cc_desc superbug_motor_vco =
 
 const struct discrete_dac_r1_ladder superbug_motor_out_dac =
 {
-	2,			// size of ladder
-	{RES_K(10), RES_K(10), 0,0,0,0,0,0},	// R32, R34
+	4,			// size of ladder
+	{RES_K(10), 0,0, RES_K(10)},	// R34, -, -, R32
 	DEFAULT_TTL_V_LOGIC_1,
 	0,			// no rBias
 	0,			// no rGnd
@@ -421,8 +420,8 @@ DISCRETE_SOUND_START(superbug_discrete_interface)
 	/* drive a modulo 12 counter.                   */
 	/************************************************/
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
-				RES_K(10),	// R12 + R62 @ min
 				RES_K(260),	// R12 + R62 @ max
+				RES_K(10),	// R12 + R62 @ min
 				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q1
 			SUPERBUG_SPEED_DATA,	// IC B5, pins 3, 14, 6, 11
@@ -434,16 +433,15 @@ DISCRETE_SOUND_START(superbug_discrete_interface)
 			CAP_U(0.01),		// C21
 			RES_M(3.3), 0, 0,	// R11, no rGnd, no rDis
 			&superbug_motor_vco)
-	DISCRETE_COUNTER(NODE_23, 1, SUPERBUG_ATTRACT_EN,	// IC A7, QB-QD
-			NODE_22,								// from IC A6, pin 3
-			5, 1, 0, DISC_CLK_ON_R_EDGE)				// /6 counter on rising edge
-	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 2, "01>")	// IC A7, pin 8-QD
-	DISCRETE_TRANSFORM3(NODE_25, 1, NODE_23, 1, 4, "01=02=|")	// IC A7, pin 11-QB
+	DISCRETE_COUNTER_7492(NODE_23, 1, SUPERBUG_ATTRACT_EN,	// IC A7, QB-QD
+			NODE_22)										// from IC A6, pin 3
+	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 0x04, "01&")		// IC A7, pin 8-QD
+	DISCRETE_TRANSFORM2(NODE_25, 1, NODE_23, 0x01, "01&")	// IC A7, pin 11-QB
 	DISCRETE_LOGIC_XOR(NODE_26, 1, NODE_24, NODE_25)	// Gate A9, pin 8
 	DISCRETE_COUNTER(NODE_27, 1, SUPERBUG_ATTRACT_EN,	// IC A7, pin 12-QA
 			NODE_26,									// from IC A9, pin 8
-			1, 1, 0, DISC_CLK_ON_R_EDGE)				// /2 counter on rising edge
-	DISCRETE_TRANSFORM3(NODE_28, 1, NODE_24, NODE_27, 2, "12*0+")	// Mix the mess together in binary
+			1, 1, 0, DISC_CLK_ON_F_EDGE)
+	DISCRETE_TRANSFORM3(NODE_28, 1, NODE_23, 2, NODE_27, "01*2+")	// Mix QA and QB-D together
 	DISCRETE_DAC_R1(SUPERBUG_MOTORSND, 1, NODE_28,
 			DEFAULT_TTL_V_LOGIC_1,
 			&superbug_motor_out_dac)
@@ -514,8 +512,8 @@ const struct discrete_555_cc_desc montecar_motor_vco =
 
 const struct discrete_dac_r1_ladder montecar_motor_out_dac =
 {
-	3,			// size of ladder
-	{RES_K(10), RES_K(10), RES_K(10), 0,0,0,0,0},	// R31, R30, R29
+	4,			// size of ladder
+	{RES_K(10), RES_K(10), 0, RES_K(10)},	// R31, R30, -, R29
 	DEFAULT_TTL_V_LOGIC_1,
 	0,			// no rBias
 	0,			// no rGnd
@@ -607,8 +605,8 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 	/* summed as the output of the circuit.         */
 	/************************************************/
 	DISCRETE_ADJUSTMENT(NODE_20, 1,
-				RES_K(10),	// R87 + R89 @ min
 				RES_K(260),	// R87 + R89 @ max
+				RES_K(10),	// R87 + R89 @ min
 				DISC_LOGADJ, 8)
 	DISCRETE_DAC_R1(NODE_21, 1,		// base of Q7
 			MONTECAR_MOTOR_DATA,	// IC H8, pins 5, 2, 9, 6
@@ -620,16 +618,15 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 			CAP_U(0.01),		// C81
 			RES_M(1), 0, 0,		// R86, no rGnd, no rDis
 			&montecar_motor_vco)
-	DISCRETE_COUNTER(NODE_23, 1, MONTECAR_ATTRACT_EN,	// IC B/C9, QB-QD
-			NODE_22,									// from IC C9, pin 9
-			5, 1, 0, DISC_CLK_ON_R_EDGE)				// /6 counter on rising edge
-	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 2, "01>")	// IC B/C9, pin 8-QD
-	DISCRETE_TRANSFORM3(NODE_25, 1, NODE_23, 1, 4, "01=02=|")	// IC B/C9, pin 11-QB
+	DISCRETE_COUNTER_7492(NODE_23, 1, MONTECAR_ATTRACT_EN,	// IC B/C9, QB-QD
+			NODE_22)										// from IC C9, pin 9
+	DISCRETE_TRANSFORM2(NODE_24, 1, NODE_23, 0x04, "01&")	// IC B/C9, pin 8-QD
+	DISCRETE_TRANSFORM2(NODE_25, 1, NODE_23, 0x01, "01&")	// IC B/C9, pin 11-QB
 	DISCRETE_LOGIC_XOR(NODE_26, 1, NODE_24, NODE_25)	// Gate A9, pin 11
 	DISCRETE_COUNTER(NODE_27, 1, MONTECAR_ATTRACT_EN,	// IC B/C9, pin 12-QA
 			NODE_26,									// from IC A9, pin 11
-			1, 1, 0, DISC_CLK_ON_R_EDGE)				// /2 counter on rising edge
-	DISCRETE_TRANSFORM5(NODE_28, 1, NODE_27, NODE_25, NODE_24, 2, 4, "13*24*+0+")	// Mix the mess together in binary
+			1, 1, 0, DISC_CLK_ON_F_EDGE)
+	DISCRETE_TRANSFORM3(NODE_28, 1, NODE_23, 2, NODE_27, "01*2+")	// Mix QA and QB-D together
 	DISCRETE_DAC_R1(MONTECAR_MOTORSND, 1, NODE_28,
 			DEFAULT_TTL_V_LOGIC_1,
 			&montecar_motor_out_dac)
@@ -643,8 +640,8 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 	DISCRETE_COMP_ADDER(NODE_30, 1, MONTECAR_DRONE_LOUD_DATA, &montecar_drone_vol_res)	// make sure to change the node value in the mixer table if you change this node number
 
 	DISCRETE_ADJUSTMENT(NODE_40, 1,
-				RES_K(10),	// R85 + R88 @ min
 				RES_K(260),	// R85 + R88 @ max
+				RES_K(10),	// R85 + R88 @ min
 				DISC_LOGADJ, 9)
 	DISCRETE_DAC_R1(NODE_41, 1,			// base of Q7
 			MONTECAR_DRONE_MOTOR_DATA,	// IC H8, pins 19, 16, 12, 15
@@ -656,16 +653,15 @@ DISCRETE_SOUND_START(montecar_discrete_interface)
 			CAP_U(0.01),		// C80
 			RES_M(1), 0, 0,		// R81, no rGnd, no rDis
 			&montecar_motor_vco)
-	DISCRETE_COUNTER(NODE_43, 1, MONTECAR_ATTRACT_EN,	// IC A/B9, QB-QD
-			NODE_42,									// from IC C9, pin 5
-			5, 1, 0, DISC_CLK_ON_R_EDGE)				// /6 counter on rising edge
-	DISCRETE_TRANSFORM2(NODE_44, 1, NODE_43, 2, "01>")	// IC A/B9, pin 8-QD
-	DISCRETE_TRANSFORM3(NODE_45, 1, NODE_43, 1, 4, "01=02=|")	// IC A/B9, pin 11-QB
+	DISCRETE_COUNTER_7492(NODE_43, 1, MONTECAR_ATTRACT_EN,	// IC A/B9, QB-QD
+			NODE_42)										// from IC C9, pin 5
+	DISCRETE_TRANSFORM2(NODE_44, 1, NODE_43, 0x04, "01&")	// IC A/B9, pin 8-QD
+	DISCRETE_TRANSFORM2(NODE_45, 1, NODE_43, 0x01, "01&")	// IC A/B9, pin 11-QB
 	DISCRETE_LOGIC_XOR(NODE_46, 1, NODE_44, NODE_45)	// Gate A9, pin 6
 	DISCRETE_COUNTER(NODE_47, 1, MONTECAR_ATTRACT_EN,	// IC A/B9, pin 12-QA
 			NODE_46,									// from IC A9, pin 6
-			1, 1, 0, DISC_CLK_ON_R_EDGE)				// /2 counter on rising edge
-	DISCRETE_TRANSFORM5(NODE_48, 1, NODE_47, NODE_45, NODE_44, 2, 4, "13*24*+0+")	// Mix the mess together in binary
+			1, 1, 0, DISC_CLK_ON_F_EDGE)
+	DISCRETE_TRANSFORM3(NODE_48, 1, NODE_43, 2, NODE_47, "01*2+")	// Mix QA and QB-D together
 	DISCRETE_DAC_R1(MONTECAR_DRONE_MOTORSND, 1, NODE_48,
 			DEFAULT_TTL_V_LOGIC_1,
 			&montecar_motor_out_dac)

@@ -1031,13 +1031,13 @@ DISCRETE_SOUND_END
 static double schaser_effect_rc[8] =
 {
 	0,
-	(RES_K(87) + RES_K(20)) * CAP_U(1),
+	(RES_K(82) + RES_K(20)) * CAP_U(1),
 	(RES_K(39) + RES_K(20)) * CAP_U(1),
-	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39)) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(82) + 1.0/RES_K(39)) + RES_K(20)) * CAP_U(1),
 	(RES_K(15) + RES_K(20)) * CAP_U(1),
-	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1),
-	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39)) + RES_K(20)) * CAP_U(1),
-	(1.0/ (1.0/RES_K(87) + 1.0/RES_K(39) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1)
+	(1.0/ (1.0/RES_K(82) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(39) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1),
+	(1.0/ (1.0/RES_K(82) + 1.0/RES_K(39) + 1.0/RES_K(15)) + RES_K(20)) * CAP_U(1)
 };
 
 static WRITE8_HANDLER( schaser_sh_port3_w )
@@ -1166,34 +1166,199 @@ MACHINE_INIT( schaser )
 /*                                                     */
 /* Midway "Clowns"                                     */
 /*                                                     */
+/* Mar 2005, D.R.                                      */
 /*******************************************************/
+
+/* Nodes - Inputs */
+#define CLOWNS_POP_B_EN			NODE_01
+#define CLOWNS_POP_M_EN			NODE_02
+#define CLOWNS_POP_T_EN			NODE_03
+#define CLOWNS_MUSIC_EN			NODE_04
+#define CLOWNS_MUSIC_DATA_L		NODE_05
+#define CLOWNS_MUSIC_DATA_H		NODE_06
+#define CLOWNS_SB_HIT_EN		NODE_07
+/* Nodes - Sounds */
+#define CLOWNS_NOISE			NODE_11
+#define CLOWNS_POP_SND			NODE_12
+#define CLOWNS_MUSIC_SND		NODE_13
+#define CLOWNS_SB_HIT_SND		NODE_14
+
+const struct discrete_lfsr_desc clowns_lfsr={
+	DISC_CLK_IS_FREQ,
+	17,			/* Bit Length */
+	/* C101, R104, D100, have the effect of presetting all bits high at power up */
+	0x1ffff,	/* Reset Value */
+	4,			/* Use Bit 4 as XOR input 0 */
+	16,			/* Use Bit 16 as XOR input 1 */
+	DISC_LFSR_XOR,		/* Feedback stage1 is XOR */
+	DISC_LFSR_OR,		/* Feedback stage2 is just stage 1 output OR with external feed */
+	DISC_LFSR_REPLACE,	/* Feedback stage3 replaces the shifted register contents */
+	0x000001,		/* Everything is shifted into the first bit only */
+	0,			/* Output is not inverted */
+	12			/* Output bit */
+};
+
+const struct discrete_op_amp_tvca_info clowns_music_tvca_info =
+{
+	RES_M(3.3),				// r502
+	RES_K(10) + RES_K(680),	// r505 + r506
+	0,
+	RES_K(680),				// r503
+	RES_K(10),				// r500
+	0,
+	RES_K(680),				// r501
+	0, 0, 0, 0,
+	CAP_U(.001),			// c500
+	0, 0,
+	12,
+	DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE
+};
+
+const struct discrete_op_amp_tvca_info clowns_pop_tvca_info =
+{
+	RES_M(2.7),		// r304
+	RES_K(680),		// r303
+	0,
+	RES_K(680),		// r305
+	RES_K(1),		// j3
+	0,
+	RES_K(470),		// r300
+	RES_K(1),		// j3
+	RES_K(510),		// r301
+	RES_K(1),		// j3
+	RES_K(680),		// r302
+	CAP_U(.015),	// c300
+	CAP_U(.1),		// c301
+	CAP_U(.082),	// c302
+	12,
+	DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG2
+};
+
+const struct discrete_op_amp_osc_info clowns_sb_hit_osc_info =
+{
+	DISC_OP_AMP_OSCILLATOR_1 | DISC_OP_AMP_IS_NORTON,
+	RES_K(820),		// r200
+	RES_K(33),		// r203
+	RES_K(150),		// r201
+	RES_K(240),		// r204
+	RES_M(1),		// r202
+	0,0,0,
+	CAP_U(0.01),	// c200
+	12
+};
+
+const struct discrete_op_amp_tvca_info clowns_sb_hit_tvca_info =
+{
+	RES_M(2.7),		// r207
+	RES_K(680),		// r205
+	0,
+	RES_K(680),		// r208
+	RES_K(1),		// j3
+	0,
+	RES_K(680),		// r206
+	0,0,0,0,
+	CAP_U(1),		// c201
+	0,0,
+	12,
+	DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE
+};
+
+DISCRETE_SOUND_START(clowns_discrete_interface)
+	/************************************************/
+	/* Input register mapping for clowns            */
+	/************************************************/
+	DISCRETE_INPUT_LOGIC(CLOWNS_POP_B_EN)
+	DISCRETE_INPUT_LOGIC(CLOWNS_POP_M_EN)
+	DISCRETE_INPUT_LOGIC(CLOWNS_POP_T_EN)
+	DISCRETE_INPUT_LOGIC(CLOWNS_MUSIC_EN)
+	DISCRETE_INPUT_DATA (CLOWNS_MUSIC_DATA_L)
+	DISCRETE_INPUT_DATA (CLOWNS_MUSIC_DATA_H)
+	DISCRETE_INPUT_LOGIC(CLOWNS_SB_HIT_EN)
+
+	/************************************************/
+	/* Music Generator                              */
+	/************************************************/
+	DISCRETE_MULTADD(NODE_20, 1, CLOWNS_MUSIC_DATA_H, 0x40, CLOWNS_MUSIC_DATA_L)
+	DISCRETE_NOTE(NODE_21, 1, 19968000.0/10/2, NODE_20, 0xfff, 1, DISC_CLK_IS_FREQ)
+	DISCRETE_OP_AMP_TRIG_VCA(NODE_22, NODE_21, CLOWNS_MUSIC_EN, 0, 12, 0, &clowns_music_tvca_info)
+	DISCRETE_GAIN(CLOWNS_MUSIC_SND, NODE_22, .6)
+
+	/************************************************/
+	/* Balloon hit sounds                           */
+	/* Noise freq is a guess based on the fact that */
+	/* the circuit is the same as polaris but the   */
+	/* cap is .001 instead of .01.                  */
+	/************************************************/
+	DISCRETE_LFSR_NOISE(CLOWNS_NOISE, 1, 1, 8000, 12.0, 0, 12.0/2, &clowns_lfsr)
+	DISCRETE_OP_AMP_TRIG_VCA(NODE_30, CLOWNS_POP_T_EN, CLOWNS_POP_M_EN, CLOWNS_POP_B_EN, CLOWNS_NOISE, 0, &clowns_pop_tvca_info)
+	DISCRETE_RCFILTER(NODE_31, 1, NODE_30, RES_K(15), CAP_U(.01))
+	DISCRETE_CRFILTER(NODE_32, 1, NODE_31, RES_K(15) + RES_K(39), CAP_U(.01))
+	DISCRETE_GAIN(CLOWNS_POP_SND, NODE_32, RES_K(39)/(RES_K(15) + RES_K(39)))
+
+	/************************************************/
+	/* Springboard Hit                              */
+	/************************************************/
+	DISCRETE_OP_AMP_OSCILLATOR(NODE_40, 1, &clowns_sb_hit_osc_info)
+	DISCRETE_OP_AMP_TRIG_VCA(NODE_41, CLOWNS_SB_HIT_EN, 0, 0, NODE_40, 0, &clowns_sb_hit_tvca_info)
+	/* The rest of the circuit is a filter.  The frequency response was calculated with SPICE. */
+	DISCRETE_FILTER2(NODE_42, 1, NODE_41, 500, 1.0/.8, DISC_FILTER_LOWPASS)
+	/* The filter has a gain of 0.5 */
+	DISCRETE_GAIN(CLOWNS_SB_HIT_SND, NODE_42, .5)
+
+	/************************************************/
+	/* Combine all sound sources.                   */
+	/* Add some final gain to get to a good sound   */
+	/* level.                                       */
+	/************************************************/
+	DISCRETE_ADDER3(NODE_90, 1, CLOWNS_MUSIC_SND, CLOWNS_POP_SND, CLOWNS_SB_HIT_SND)
+	DISCRETE_CRFILTER(NODE_91, 1, NODE_90, RES_K(100), CAP_U(.1))
+	DISCRETE_GAIN(NODE_92, NODE_91, 5000)
+
+	DISCRETE_OUTPUT(NODE_92, 100)
+DISCRETE_SOUND_END
+
+static WRITE8_HANDLER( clowns_sh_port3_w )
+{
+	coin_counter_w(0, data & 0x01);
+}
+
+static WRITE8_HANDLER( clowns_sh_port5_w )
+{
+	discrete_sound_w(CLOWNS_MUSIC_EN, data & 0x01);
+	/* bit 0 of music data is always 0 */
+	discrete_sound_w(CLOWNS_MUSIC_DATA_L, data & 0x3e);
+}
+
+static WRITE8_HANDLER( clowns_sh_port6_w )
+{
+	discrete_sound_w(CLOWNS_MUSIC_DATA_H, data & 0x3f);
+}
 
 static WRITE8_HANDLER( clowns_sh_port7_w )
 {
-/* bit 0x08 seems to always be enabled.  Possibly sound enable? */
-/* A new sample set needs to be made with 3 different balloon sounds,
-   and the code modified to suit. */
+	/* Bottom Balloon Pop */
+	discrete_sound_w(CLOWNS_POP_B_EN, data & 0x01);
 
-	if (data & 0x01)
-		sample_start (0, 0, 0);  /* Bottom Balloon Pop */
+	/* Middle Balloon Pop */
+	discrete_sound_w(CLOWNS_POP_M_EN, data & 0x02);
 
-	if (data & 0x02)
-		sample_start (0, 0, 0);  /* Middle Balloon Pop */
+	/* Top Balloon Pop */
+	discrete_sound_w(CLOWNS_POP_T_EN, data & 0x04);
 
-	if (data & 0x04)
-		sample_start (0, 0, 0);  /* Top Balloon Pop */
+	sound_global_enable(data & 0x08);
 
-	if (data & 0x10)
-		sample_start (2, 2, 0);  /* Bounce */
+	/* Springboard hit */
+	discrete_sound_w(CLOWNS_SB_HIT_EN, data & 0x10);
 
 	if (data & 0x20)
-		sample_start (1, 1, 0);  /* Splat */
+		sample_start (1, 1, 0);  /* Springboard miss */
 }
 
 MACHINE_INIT( clowns )
 {
-	/* Ports 5 & 6 are probably the music channels. They change value when
-	 * a bonus is made. */
-
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, clowns_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, clowns_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, clowns_sh_port6_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, clowns_sh_port7_w);
 }

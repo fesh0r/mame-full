@@ -261,7 +261,7 @@ void dst_dac_r1_step(struct node_description *node)
 		{
 			/* Add up currents of ON circuits per Millman. */
 			/* Off, being 0V and having no current, can be ignored. */
-			if (DST_DAC_R1__DATA & (1 << bit))
+			if ((DST_DAC_R1__DATA & (1 << bit)) && info->r[bit])
 				i += DST_DAC_R1__VON / info->r[bit];
 		}
 
@@ -316,11 +316,8 @@ void dst_dac_r1_reset(struct node_description *node)
 	context->rTotal = 0;
 	for(bit=0; bit < info->ladderLength; bit++)
 	{
-		if (!info->r[bit])
-		{
-			discrete_log("dst_dac_r1_reset - Resistor can't equal 0");
-		}
-		context->rTotal += 1.0 / info->r[bit];
+		if (info->r[bit])
+			context->rTotal += 1.0 / info->r[bit];
 	}
 	if (info->rBias) context->rTotal += 1.0 / info->rBias;
 	if (info->rGnd) context->rTotal += 1.0 / info->rGnd;

@@ -602,7 +602,7 @@ WRITE32_HANDLER( video_dma_length_w );
 WRITE32_HANDLER( video_dma_address_w );
 WRITE32_HANDLER( sprite_dma_start_w );
 
-UINT32 *scroll_ram;
+extern UINT32 *scroll_ram;
 extern int old_vidhw;
 extern int bg_size;
 data32_t *spimainram;

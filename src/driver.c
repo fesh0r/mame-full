@@ -36,18 +36,6 @@ struct GameDriver driver_0 =
 
 #endif
 
-#ifdef TINY_COMPILE
-
-extern struct GameDriver TINY_NAME;
-
-const struct GameDriver *drivers[] =
-{
-	TINY_POINTER,
-	0	/* end of array */
-};
-
-#else
-
 #ifndef DRIVER_RECURSIVE
 
 #define DRIVER_RECURSIVE
@@ -3165,6 +3153,7 @@ Sep.1994 Quiz Ghost Hunter
 	/* not working */
 	DRIVER( sgmast )
 	DRIVER( sgmastc )
+
 	DRIVER( sspirtfc )
 
 	DRIVER( qsww )
@@ -3478,8 +3467,15 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* Sega MegaPlay */
 	DRIVER( mp_sonic )	/* 01 */
 	DRIVER( mp_gaxe2 )	/* 02 */
-						/* 03 */
+	DRIVER( mp_gslam )	/* 03 */
 	DRIVER( mp_twc )	/* 04 */
+						/* 05 */
+						/* 06 */
+						/* 07 */
+						/* 08 */
+						/* 09 */
+						/* 10 */
+	DRIVER( mp_mazin )	/* 11 */
 
 	/* Data East "Burger Time hardware" games */
 	DRIVER( lnc )		/* (c) 1981 */
@@ -3706,6 +3702,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( jumppop )	/* (c) 2001 ESD */
 	DRIVER( fncywld )	/* (c) 1996 Unico */
 	DRIVER( htchctch )	/* (c) 1995 SemiCom */
+	DRIVER( cookbib )	/* (c) 1995 SemiCom */
 	DRIVER( bcstry )	/* (c) 199? SemiCom */
 	DRIVER( bcstrya )	/* (c) 199? SemiCom */
 	DRIVER( suprtrio )	/* (c) 1994 GameAce */
@@ -4967,7 +4964,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( talbot )	/* Volt Electronics */
 	DRIVER( equites )	/* (c) 1984 Alpha Denshi Co. */
 	DRIVER( equitess )	/* (c) 1984 Alpha Denshi Co./Sega */
-	DRIVER( bullfgtr )	/* (c) 1984 Alpha Denshi Co./Sega */
+	DRIVER( bullfgtr )	/* (c) 1984 Alpha Denshi Co. */
+	DRIVER( bullfgts )	/* (c) 1984 Alpha Denshi Co./Sega */
 	DRIVER( kouyakyu )	/* (c) 1985 Alpha Denshi Co. */
 	DRIVER( splndrbt )	/* (c) 1985 Alpha Denshi Co. */
 	DRIVER( hvoltage )	/* (c) 1985 Alpha Denshi Co. */
@@ -5494,6 +5492,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( soldamj )	/* (c) 1992 (Japan) */
 	DRIVER( bigstrik )	/* (c) 1992 */
 	DRIVER( bigstrkb )	/* bootleg on different hardware */
+	DRIVER( bestleag )	/* bootleg, by Playmark? */
 	DRIVER( chimerab )	/* (c) 1993 */
 	DRIVER( cybattlr )	/* (c) 1993 */
 	DRIVER( peekaboo )	/* (c) 1993 */
@@ -6026,6 +6025,7 @@ Other Sun games
 	DRIVER( magicbub )	/* (c) Yun Sung */
 	DRIVER( shocking )	/* (c) 1997 Yun Sung */
 	DRIVER( nmg5 )		/* (c) 1998 Yun Sung */
+	DRIVER( searchey )	/* (c) 1999 Yun Sung */
 	DRIVER( pclubys )	/* (c) 2000 Yun Sung */
 
 	/* Zilec games */
@@ -6495,5 +6495,3 @@ Other Sun games
 	DRIVER( pipeline )
 
 #endif	/* DRIVER_RECURSIVE */
-
-#endif	/* TINY_COMPILE */

@@ -4312,8 +4312,8 @@ ROM_START( mp_sonic ) /* Sonic */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15177.ic2", 0x000000, 0x040000, CRC(a389b03b) SHA1(8e9e1cf3dd65ddf08757f5a1ce472130c902ea2c) )
 	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
-	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
-	ROM_LOAD16_BYTE( "15175-01.ic3", 0x300001, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
@@ -4327,9 +4327,7 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15179b.ic2", 0x000000, 0x040000, CRC(00d97b84) SHA1(914bbf566ddf940aab67b92af237d251650ddadf) )
 	ROM_LOAD16_BYTE( "ep15178b.ic1", 0x000001, 0x040000, CRC(2ea576db) SHA1(6d96b948243533de1f488b1f80e0d5431a4f1f53) )
-	/* copy instead of load again here .. */
-	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
-	ROM_LOAD16_BYTE( "ep15175-02b.ic3", 0x300001, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4340,13 +4338,27 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	MEGAPLAY_BIOS
 ROM_END
 
+ROM_START( mp_gslam ) /* Grand Slam */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "epr-15181.ic2", 0x000000, 0x040000, CRC(642437c1) SHA1(cbf88e196c04b6d886bf9642b69bf165045510fe) )
+	ROM_LOAD16_BYTE( "epr-15180.ic1", 0x000001, 0x040000, CRC(73bb48f1) SHA1(981b64f834d5618599352f5fad683bf232390ba3) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-03.ic3", 0x000000, 0x08000, CRC(70ea1aec) SHA1(0d9d82a1f8aa51d02707f7b343e7cfb6591efccd) ) // 15175-02b.ic3
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
+ROM_END
+
+
 ROM_START( mp_twc ) /* Tecmo World Cup */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "ep15183.ic2", 0x000000, 0x040000, CRC(8b79b861) SHA1(c72af72840513b82f2562409eccdf13b031bf3c0) )
 	ROM_LOAD16_BYTE( "ep15182.ic1", 0x000001, 0x040000, CRC(eb8325c3) SHA1(bb21ac926c353e14184dd476222bc6a8714606e5) )
-	/* copy instead of load again here .. */
-	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300000, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
-	ROM_LOAD16_BYTE( "ep15175-04.ic3", 0x300001, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
  	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
@@ -4355,6 +4367,22 @@ ROM_START( mp_twc ) /* Tecmo World Cup */
 
  	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
  	MEGAPLAY_BIOS
+ROM_END
+
+
+
+ROM_START( mp_mazin ) /* Mazin Wars */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-16460.ic1", 0x000000, 0x100000, CRC(e9635a83) SHA1(ab3afa11656f0ae3a50c957dce012fb15d3992e0) )
+	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-15175-11.ic2", 0x000000, 0x08000, CRC(bb651120) SHA1(81cb736f2732373e260dde162249c1d29a3489c3) )
+
+	ROM_REGION( 0x28000, REGION_CPU3, 0 ) /* Bios */
+	MEGAPLAY_BIOS
 ROM_END
 
 /******************************************************************************
@@ -4843,9 +4871,25 @@ GAMEX( 1996, pclubjv5, pclubj,   segac2, pclub,    pclub,    ROT0, "Atlus",     
 
 static DRIVER_INIT (megaplay)
 {
-	UINT8 *src = memory_region(REGION_CPU3);
+	data8_t *src = memory_region(REGION_CPU3);
+	data8_t *instruction_rom = memory_region(REGION_USER1);
+	data8_t *game_rom = memory_region(REGION_CPU1);
+	int offs;
 
-	memmove(src+0x10000,src+0x8000,0x18000);
+	memmove(src+0x10000,src+0x8000,0x18000); // move bios..
+
+	/* copy game instruction rom to main map.. maybe this should just be accessed
+	  through a handler instead?.. */
+	for (offs=0;offs<0x8000;offs++)
+	{
+		data8_t dat;
+
+		dat=instruction_rom[offs];
+
+		game_rom[0x300000+offs*2] = dat;
+		game_rom[0x300001+offs*2] = dat;
+
+	}
 
 	init_segac2();
 
@@ -4854,6 +4898,18 @@ static DRIVER_INIT (megaplay)
 /* -- */ GAMEBX(1993, megaplay, 0,        megaplay, megaplay, megaplay, megaplay, ROT0, "Sega",                  "Mega Play BIOS", NOT_A_DRIVER )
 /* 01 */ GAMEB( 1993, mp_sonic, megaplay, megaplay, megaplay, mp_sonic, megaplay, ROT0, "Sega",                  "Sonic The Hedgehog (Mega Play)"  )
 /* 02 */ GAMEB( 1993, mp_gaxe2, megaplay, megaplay, megaplay, mp_gaxe2, megaplay, ROT0, "Sega",                  "Golden Axe II (Mega Play)"  )
-/* 03 */ // unknown
+/* 03 */ GAMEBX(1993, mp_gslam, megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Grand Slam (Mega Play)",GAME_NOT_WORKING  )
 /* 04 */ GAMEB( 1993, mp_twc,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Tecmo World Cup (Mega Play)"  )
-/* Also known to exist: bio hazard battle, gunstar heroes, streets of rage 2, mazin wars, grandslam tennis */
+/* 05 */
+/* 06 */
+/* 07 */
+/* 08 */
+/* 09 */
+/* 10 */
+/* 11 */ GAMEBX(1993, mp_mazin,   megaplay, megaplay, megaplay, mp_twc,	megaplay, ROT0, "Sega",                  "Mazin Wars (Mega Play)",GAME_NOT_WORKING  )
+
+/* Also known to exist:
+Bio Hazard Battle
+Gunstar Heroes
+Streets of Rage 2
+*/

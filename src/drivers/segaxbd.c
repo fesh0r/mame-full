@@ -8,16 +8,11 @@
 
 	Known bugs:
 		* gprider has a hack to make it work
-		* loffire usually won't let you past the first level
-		* jittery sprites in loffire
 		* extra sound boards etc. in some smgp sets not hooked up
-
-	To do for each game:
-		* verify memory test
-		* verify inputs
-		* verify DIP switches
-		* verify protection
-		* check playability
+		* rachero doesn't like IC17/IC108 (divide chips) in self-test
+		  due to testing an out-of-bounds value
+		* abcop doesn't like IC41/IC108 (divide chips) in self-test
+		  due to testing an out-of-bounds value
 
 ***************************************************************************/
 
@@ -193,6 +188,7 @@ static void sound_cpu_irq(int state)
 static void xboard_reset(void)
 {
 	cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
+	cpu_boost_interleave(0, TIME_IN_USEC(100));
 }
 
 
@@ -409,7 +405,8 @@ static WRITE16_HANDLER( iocontrol_w )
 	if (ACCESSING_LSB)
 	{
 		logerror("I/O chip force input = %d\n", data & 1);
-		iochip_force_input = data & 1;
+		/* Racing Hero and ABCop set this and fouls up their output ports */
+		/*iochip_force_input = data & 1;*/
 	}
 }
 
@@ -420,6 +417,15 @@ static WRITE16_HANDLER( iocontrol_w )
  *	Line of Fire Custom I/O
  *
  *************************************/
+
+static data16_t *loffire_sync;
+
+static WRITE16_HANDLER( loffire_sync0_w )
+{
+	COMBINE_DATA(&loffire_sync[offset]);
+	cpu_boost_interleave(0, TIME_IN_USEC(10));
+}
+
 
 static VIDEO_UPDATE( loffire )
 {
@@ -985,10 +991,10 @@ static INPUT_PORTS_START( gprider )
 	PORT_START_TAG("ADC0")	/* steering */
 	PORT_BIT( 0xff, 0x7f, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(100) PORT_KEYDELTA(4)
 
-	PORT_START_TAG("ADC1")	/* brake */
+	PORT_START_TAG("ADC1")	/* gas pedal */
 	PORT_BIT( 0xff, 0x10, IPT_PEDAL ) PORT_MINMAX(0x10,0xef) PORT_SENSITIVITY(100) PORT_KEYDELTA(20) PORT_REVERSE
 
-	PORT_START_TAG("ADC2")	/* gas pedal */
+	PORT_START_TAG("ADC2")	/* brake */
 	PORT_BIT( 0xff, 0x10, IPT_PEDAL2 ) PORT_MINMAX(0x10,0xef) PORT_SENSITIVITY(100) PORT_KEYDELTA(40) PORT_REVERSE
 INPUT_PORTS_END
 
@@ -1103,7 +1109,7 @@ MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( loffire )
 	MDRV_IMPORT_FROM(xboard)
-	MDRV_INTERLEAVE(1750)
+//	MDRV_INTERLEAVE(1750)
 	MDRV_VIDEO_UPDATE(loffire)
 MACHINE_DRIVER_END
 
@@ -1229,7 +1235,7 @@ ROM_START( loffire )
 	ROM_LOAD16_BYTE( "epr12850.rom", 0x000001, 0x20000, CRC(14598f2a) SHA1(13a51529ed32acefd733d9f638621c3e023dbd6d) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, CRC(dd482fc8) SHA1(90ba9f6c4198781f60e1412d5705a6a29514c12e) )
+	ROM_LOAD( "317-0136.key", 0x0000, 0x2000, BAD_DUMP CRC(dd482fc8) SHA1(90ba9f6c4198781f60e1412d5705a6a29514c12e) )
 
 	ROM_REGION( 0x80000, REGION_CPU2, 0 ) /* 2nd 68000 code */
 	ROM_LOAD16_BYTE( "epr12804.rom", 0x000000, 0x20000, CRC(b853480e) SHA1(de0889e99251da7ea50316282ebf6f434cc2db11) )
@@ -1500,6 +1506,49 @@ ROM_END
  **************************************************************************************************************************
 	Super Monaco GP, Sega X-board
 	CPU: FD1094 (317-0126a)
+
+	This set is coming from a twin.
+
+	This set has an extra link board (834-7112) or 171-5729-01 under the main board with a Z80
+
+	Xtal is 16.000 Mhz.
+
+	It has also one eprom (Epr 12587.14) two pal 16L8 (315-5336 and 315-5337) and two 
+	fujitsu IC MB89372P and MB8421-12LP
+
+	Main Board : (834-8180-02)
+
+	Epr12576A.20 (68000)
+	Epr12577A.29 (68000)
+	Epr12563B.58 FD1094 317-0126A
+	Epr12564B.63 FD1094 317-0126A
+	Epr12609.93
+	Epr12610.97
+	Epr12611.101
+	Epr12612.105
+	Mpr12417.92
+	Mpr12418.96
+	Mpr12419.100
+	Mpr12420.104
+	Mpr12421.91
+	Mpr12422.95
+	Mpr12423.99
+	Mpr12424.103
+	Mpr12425.90
+	Mpr12426.94
+	Mpr12427.98
+	Mpr12428.102
+	Epr12429.154
+	Epr12430.153
+	Epr12431.152
+	Epr12436.17
+	Mpr12437.11
+	Mpr12438.12
+	Mpr12439.13
+
+	Link Board :
+
+	Ep12587.14
 */
 ROM_START( smgp )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1615,7 +1664,6 @@ ROM_END
 	This set is coming from a sitdown "air drive" version.
 
 	This set has an extra sound board (837-7000) under the main board with a Z80
-
 	and a few eproms, some of those eproms are already on the main board !
 
 	It has also an "air drive" board with a Z80 and one eprom.
@@ -2137,6 +2185,9 @@ static DRIVER_INIT( loffire )
 {
 	xboard_generic_init();
 	adc_reverse[1] = adc_reverse[3] = 1;
+	
+	/* install extra synchronization on core shared memory */
+	loffire_sync = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x29c000, 0x29c011, 0, 0, loffire_sync0_w);
 }
 
 
@@ -2166,8 +2217,8 @@ GAME( 1987, aburner2, 0,        xboard,  aburner2, aburner2,       ROT0, "Sega",
 GAME( 1987, aburner,  aburner2, xboard,  aburner,  aburner2,       ROT0, "Sega", "After Burner (Japan)" )
 GAME( 1987, thndrbld, 0,        xboard,  thndrbld, generic_xboard, ROT0, "Sega", "Thunder Blade (FD1094 317-0056)" )
 GAME( 1987, thndrbdj, thndrbld, xboard,  thndrbld, generic_xboard, ROT0, "Sega", "Thunder Blade (Japan)" )
-GAMEX(1989, loffire,  0,        loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (World, FD1094 317-0136)", GAME_NOT_WORKING )
-GAMEX(1989, loffirej, loffire,  loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (Japan, FD1094 317-0134)", GAME_NOT_WORKING )
+GAME( 1989, loffire,  0,        loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (World, FD1094 317-0136)" )
+GAME( 1989, loffirej, loffire,  loffire, loffire,  loffire,        ROT0, "Sega", "Line of Fire (Japan, FD1094 317-0134)" )
 GAME( 1989, rachero,  0,        xboard,  rachero,  generic_xboard, ROT0, "Sega", "Racing Hero (FD1094 317-0144)" )
 GAME( 1989, smgp,     0,        smgp,    smgp,     smgp,           ROT0, "Sega", "Super Monaco GP (set 7, World, Rev B, 'Twin', FD1094 317-0126a)" )
 GAME( 1989, smgp6,    smgp,     smgp,    smgp,     smgp,           ROT0, "Sega", "Super Monaco GP (set 6, World, Rev A, FD1094 317-0126a)" )

@@ -1348,6 +1348,8 @@ void update_video_and_audio(void)
 	recompute_fps - recompute the frame rate
 -------------------------------------------------*/
 
+int vector_updates = 0;
+
 static void recompute_fps(int skipped_it)
 {
 	/* increment the frame counters */
@@ -1377,13 +1379,9 @@ static void recompute_fps(int skipped_it)
 	vfcount++;
 	if (vfcount >= (int)Machine->refresh_rate)
 	{
-#ifndef MESS
-		/* from vidhrdw/avgdvg.c */
-		extern int vector_updates;
-
 		performance.vector_updates_last_second = vector_updates;
 		vector_updates = 0;
-#endif
+
 		vfcount -= (int)Machine->refresh_rate;
 	}
 }

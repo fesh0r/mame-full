@@ -143,21 +143,56 @@
 
 	========================================================================
 	Shrike SHM
-	Shrike shares 9e00 - 9fff as 18000 - 181ff, 9e00-9e0f as registers, and the rest as GFX RAM
-	 - for more detailed (but unfinished as yet) disassembly of 68000, get me at my hotmail address, 'nuapete'
+	Many thanks to Owen Rubin and Brian Deuel ( http://www.atarimuseum.com/orubin/ ) for their time,
+	interest, and memories!
+
+	From Owen: The motor drive included 2 motors side by side at the rear of the cabinet with a U joint pivot
+	at the front. L & R motors were used independently for side to side "roll" motion, and together for pitch.
+	The motors were guarded by two sets of h/w limit switches - stop switch and (emergency) auto-reverse
+	switch - in tandem with soft limiting. The software calibrated the motors by running the motors slowly to
+	full limits and using the data for the soft limiting. (max chops?)
+
+	The proto was never completed, there was to be a final round against a mother ship where you would have
+	to shoot out 4 engines and a target array. (He thinks there was another bank of sprite ROMs for this that
+	may never have been included.) He also says 'There was going to be a "death blossom" shot you could
+	use once that would have been a wild ride as well, but that motion was VERY tough in the simulator, so I
+	did not complete it.'
+
+	Owen's recollection of the motion diagnostics screen, the second cursor is the controllers feedback
+	and should match the yoke cursor. Two of the channels (sine/bar) are probably calculated/reported
+	motor pos. Red sine meant over/underspeed or calculated/reported discrepancy. All memories came with
+	a disclaimer ;)
+
+	Shrike shares 9e00 - 9fff as 18000 - 181ff, 9e00-9e0f as registers, and the rest as GFX RAM.
+	10000-1001f appear to be the interface to the motors/sensors.
+
+	For more detailed (but unfinished as yet) disassembly of 68000, get me at my hotmail address, 'nuapete'
 	========================================================================
+	m6809        m68000
 	9e00 RW - RW 18000 ($0,A3) : 6809 command register, commands in range 0-19
-	9e01 W  - R  18001 ($1,A3) : ?
+								cmd $0 nop
+								cmd $10 check RAM
+								cmd $11 check u22 ( 0000-3FFE )
+								cmd $12 check u24 ( 0001-3FFF )
+								cmd $13 check "u26" ( 8000-BFFE ) \ these appear to be for unused expansion slots
+								cmd $14 check "u28" ( 8001-BFFF ) /
+								cmd $15 check IRQs
+								cmd $16 check FIRQs
+								cmd $17 fetch max chops
+								cmd $18 fetch pulse width
+	9e01 W  - R  18001 ($1,A3) : &0x80 sprite bank select
 	9e02 W  - R  18002 ($2,A3) : \ joy x
 	9e03 W  - R  18003 ($3,A3) : / joy y
-	9e04 R  - W  18004 ($4,A3) : \ cursor (motor diags) y pos in diags screen
-	9e05 R  - W  18005 ($5,A3) : / cursor (motor diags) x pos in diags screen
+	9e04 R  - W  18004 ($4,A3) : \ cursor y pos in diags screen
+	9e05 R  - W  18005 ($5,A3) : / cursor x pos in diags screen
 	9e06 R  - W  18006 ($6,A3) : 68k status
 									00 = OK
-									02 = ?
+									02 = cmd 3 or a failed
 									01 = Initial status (not OK)
-									11 = ?
-									15 = IRQs bad ( in diags screen )
+									10 = RAM bad
+									11 = ROM(s) bad
+									15 = IRQs bad
+									16 = FIRQs bad
 									F7 = 68k didn't get handshake from 6809
 									F8 = Too many spurious interrupts
 									F9 = Both limit switches at once
@@ -169,37 +204,13 @@
 									FF = Excess current for too long
 	9e07 W  -  R 18007 ($7,A3) : \ writes random stuff from 9A00 which is the random number generator?
 	9e08 RW -  R 18008 ($8,A3) : / as 9e07
-									Both the above used solely in cmd $9, read, written to $14,A2 then 10/20 turned off on $0,A2
 	9e09 RW -  W 18009 ($9,A3) : \ 68k watchdog writes 0xaa
 	9e0a W  - RW 1800a ($a,A3) : / 6809 watchdog writes 0x55
 	9e0b    - RW 1800b ($b,A3) : Only writes are 0
-	9e0c R  - RW 1800c ($c,A3) : \ ypos returned from controller... affects enemy ship pos
-	9e0d R  -  W 1800d ($d,A3) : / xpos returned from controller... why read b@9e0c and not this one?
+	9e0c R  - RW 1800c ($c,A3) : \ ypos returned from controller (affects enemy ship pos)
+	9e0d R  -  W 1800d ($d,A3) : / xpos returned from controller
 	9e0e W  -  R 1800e ($e,A3) : \
-	9e0f W  -    1800f ($f,A3) : / partial pointer into SHM
-
-	While in motor diags screen, data is read from SHM as follows:
-	(note: motor info is paired, e.g. 9e10 and 9e14 will be written together.)
-	9e10 R  -  w 18010 ($10,A3): green left bar / top sine
-	9e11 R  -  w 18011 ($11,A3): yellow left bar / top sine
-	9e12 R  -  w 18012 ($12,A3): purple left bar / top sine
-	9e13 R  -  w 18013 ($13,A3): blue left bar / top sine
-	9e14 R  -  w 18014 ($14,A3): green right bar / bottom sine
-	9e15 R  -  w 18015 ($15,A3): yellow right bar / bottom sine
-	9e16 R  -  w 18016 ($16,A3): purple right bar / bottom sine
-	9e17 R  -  w 18017 ($17,A3): blue right bar / bottom sine
-	9e18 R  -  w 18018 ($18,A3): bitmask, dings and more color bars, turns sine red... limit switches?
-								 xxxx--xx lmax, lmin, rmax, rmin, lbroken?, rbroken?
-	9e19 x
-	9e1a x
-	9e1b x
-	9e1c x
-	9e1d x
-	9e1e R  -  w 1801e ($1e,A3): word "left motor max chops"  q@1801e & ffffffff00000000
-	9e1f x
-	9e20 R  -  w 18020 ($20,A3): word "right motor max chops" q@1801e & 00000000ffffffff
-	9e21 x
-	9e22 R  -  w 18022 ($22,A3): "pulse width"
+	9e0f W  -    1800f ($f,A3) : / partial pointer into SHM gfx data
 
 ***************************************************************************/
 
@@ -274,7 +285,7 @@ ADDRESS_MAP_END
 /* CPU 1 read addresses */
 static ADDRESS_MAP_START( shrike68k_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x003fff) AM_ROM
-	AM_RANGE(0x010000, 0x01001f) AM_RAM // ?i/o to 8 bit motor interface?
+	AM_RANGE(0x010000, 0x01001f) AM_RAM AM_BASE(&shrike_io)
 	AM_RANGE(0x018000, 0x018fff) AM_RAM AM_BASE(&shrike_shared)
 ADDRESS_MAP_END
 
@@ -1556,9 +1567,9 @@ INPUT_PORTS_START( shrike )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -2195,22 +2206,22 @@ ROM_START( shrike )
 	ROM_LOAD16_BYTE( "savgu22.bin", 0x00000, 0x2000, CRC(c7787162) SHA1(52d8d148206c6ceb9c28ba747b301121a7790802) )
 	ROM_LOAD16_BYTE( "savgu24.bin", 0x00001, 0x2000, CRC(a9105ca8) SHA1(1a94a052a4a8d221e1eafec0cd5b0ada6f1987f4) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )		/* up to 64k of sprites */
+	ROM_REGION( 0x20000, REGION_GFX1, 0 )		/* up to 128k of banked sprites */
 	ROM_LOAD( "savgu8.bin",  0x00000, 0x2000, CRC(499a1d06) SHA1(0f3ed5ff345abb655f5a9f926ac3eb5dbca72a14) )
-	ROM_LOAD( "savgu15.bin", 0x02000, 0x2000, CRC(6b332a5d) SHA1(58939cec237db1f741d24eb9f94488e3cf8700d2) )
+	ROM_LOAD( "savgu7.bin",  0x02000, 0x2000, CRC(ce0607f9) SHA1(0f6708d92e69a67b3eaba98f7ab4ad70eda3c854) )
 	ROM_LOAD( "savgu6.bin",  0x04000, 0x2000, CRC(01d1b31e) SHA1(8061227f18f08e3b74bc6fc341ed4902c415db6c) )
-	ROM_LOAD( "savgu13.bin", 0x06000, 0x2000, CRC(d3ce645e) SHA1(4e775af7886d699675941f74e18be2d4dbd6f41b) )
+	ROM_LOAD( "savgu5.bin",  0x06000, 0x2000, CRC(8bc6d101) SHA1(24f0b3ec3ed56b0496d07caa2475fca49a4a9b19) )
 	ROM_LOAD( "savgu4.bin",  0x08000, 0x2000, CRC(72644753) SHA1(01bdb39d32df6d8cf69cbc9370033db46e18cb59) )
-	ROM_LOAD( "savgu11.bin", 0x0a000, 0x2000, CRC(db11ff4c) SHA1(cd85486cd08ec4392421e9b94d380b81a575c811) )
-	ROM_LOAD( "savgu10.bin", 0x0c000, 0x2000, CRC(6f3d9aa1) SHA1(7616dd016f5c8990b4972cf6edf758e27857aa1e) )
+	ROM_LOAD( "savgu3.bin",  0x0a000, 0x2000, CRC(606a9cfd) SHA1(ce99a0e6d09580d35ec423177cdf41c35c7eecb7) )
+	ROM_LOAD( "savgu2.bin",  0x0c000, 0x2000, CRC(69f600f6) SHA1(5b9545897f59b5049adc0fd910c7d65f38696d30) )
 	ROM_LOAD( "savgu1.bin",  0x0e000, 0x2000, CRC(303b8e7b) SHA1(29055b621c68e93649eb0aa9cc9ecc43ac6f6eb8) )
 	ROM_LOAD( "savgu16.bin", 0x10000, 0x2000, CRC(b8f60607) SHA1(4971db01a87bd80c23b7a0ab8aaa7c8300be4ec9) )
-	ROM_LOAD( "savgu7.bin",  0x12000, 0x2000, CRC(ce0607f9) SHA1(0f6708d92e69a67b3eaba98f7ab4ad70eda3c854) )
+	ROM_LOAD( "savgu15.bin", 0x12000, 0x2000, CRC(6b332a5d) SHA1(58939cec237db1f741d24eb9f94488e3cf8700d2) )
 	ROM_LOAD( "savgu14.bin", 0x14000, 0x2000, CRC(8d5117aa) SHA1(a82911219c49ff96e3c16acec7ef37406dae2be4) )
-	ROM_LOAD( "savgu5.bin",  0x16000, 0x2000, CRC(8bc6d101) SHA1(24f0b3ec3ed56b0496d07caa2475fca49a4a9b19) )
+	ROM_LOAD( "savgu13.bin", 0x16000, 0x2000, CRC(d3ce645e) SHA1(4e775af7886d699675941f74e18be2d4dbd6f41b) )
 	ROM_LOAD( "savgu12.bin", 0x18000, 0x2000, CRC(ccdfedb1) SHA1(b87e885df46e814626f46102f323ccd8396bcf8f) )
-	ROM_LOAD( "savgu3.bin",  0x1a000, 0x2000, CRC(606a9cfd) SHA1(ce99a0e6d09580d35ec423177cdf41c35c7eecb7) )
-	ROM_LOAD( "savgu2.bin",  0x1c000, 0x2000, CRC(69f600f6) SHA1(5b9545897f59b5049adc0fd910c7d65f38696d30) )
+	ROM_LOAD( "savgu11.bin", 0x1a000, 0x2000, CRC(db11ff4c) SHA1(cd85486cd08ec4392421e9b94d380b81a575c811) )
+	ROM_LOAD( "savgu10.bin", 0x1c000, 0x2000, CRC(6f3d9aa1) SHA1(7616dd016f5c8990b4972cf6edf758e27857aa1e) )
 ROM_END
 
 
@@ -2348,6 +2359,10 @@ static DRIVER_INIT( shrike )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9fff, 0, 0, shrike_shared_6809_r);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9fff, 0, 0, shrike_shared_6809_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e01, 0x9e01, 0, 0, shrike_sprite_select_w );
+	memory_install_read16_handler(2, ADDRESS_SPACE_PROGRAM, 0x10000, 0x1001f, 0, 0, shrike_io_68k_r);
+	memory_install_write16_handler(2, ADDRESS_SPACE_PROGRAM, 0x10000, 0x1001f, 0, 0, shrike_io_68k_w );
+
 	expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 32;
 }
 
@@ -2384,4 +2399,4 @@ GAME( 1986, stompin,  0,        balsente, stompin,  stompin,  ROT0, "Bally/Sente
 GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider" )
 GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Midway", "Rescue Raider (Stand-Alone)" )
 GAME( 198?, grudge,   0,        balsente, grudge,   grudge,   ROT0, "Bally/Midway", "Grudge Match (prototype)" )
-GAMEX(198?, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)", GAME_IMPERFECT_GRAPHICS )
+GAME( 198?, shrike,   0,        shrike,   shrike,   shrike,   ROT0, "Bally/Sente", "Shrike Avenger (prototype)" )

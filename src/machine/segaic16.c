@@ -49,7 +49,6 @@ struct multiply_chip
 struct divide_chip
 {
 	UINT16 	regs[8];
-	UINT8	mode;
 };
 
 
@@ -417,34 +416,27 @@ WRITE16_HANDLER( segaic16_multiply_2_w ) { multiply_w(2, offset, data, mem_mask)
  *
  *************************************/
 
-static void update_divide(int which)
+static void update_divide(int which, int mode)
 {
-	INT32 dividend = (divide[which].regs[0] << 16) | divide[which].regs[1];
-	INT32 divisor = (INT16)divide[which].regs[2];
-	INT32 quotient, remainder;
-	
 	/* clear the flags by default */
 	divide[which].regs[6] = 0;
-	
-	/* check for divide by 0 first */
-	if (divisor == 0)
-	{
-		divide[which].regs[6] |= 0x4000;
-		quotient = (dividend < 0) ? 0x80000000 : 0x7fffffff;
-		remainder = dividend - (quotient * divisor);
-	}
-	
-	/* otherwise, do the divide */
-	else
-	{
-		quotient = dividend / divisor;
-		remainder = dividend - (quotient * divisor);
-	}
-	
+
 	/* if mode 0, store quotient/remainder */
-	if (divide[which].mode == 0)
+	if (mode == 0)
 	{
-		if (LOG_DIVIDE) logerror("-- mode 0: %08X / %08X = %08X, R=%08X\n", dividend, divisor, quotient, remainder);
+		INT32 dividend = (INT32)((divide[which].regs[0] << 16) | divide[which].regs[1]);
+		INT32 divisor = (INT16)divide[which].regs[2];
+		INT32 quotient, remainder;
+
+		/* perform signed divide */
+		if (divisor == 0)
+		{
+			quotient = dividend;//((INT32)(dividend ^ divisor) < 0) ? 0x8000 : 0x7fff;
+			divide[which].regs[6] |= 0x4000;
+		}
+		else
+			quotient = dividend / divisor;
+		remainder = dividend - quotient * divisor;
 
 		/* clamp to 16-bit signed */
 		if (quotient < -32768)
@@ -457,6 +449,8 @@ static void update_divide(int which)
 			quotient = 32767;
 			divide[which].regs[6] |= 0x8000;
 		}
+		
+		/* store quotient and remainder */
 		divide[which].regs[4] = quotient;
 		divide[which].regs[5] = remainder;
 	}
@@ -464,16 +458,20 @@ static void update_divide(int which)
 	/* if mode 1, store 32-bit quotient */
 	else
 	{
-		if (LOG_DIVIDE) logerror("-- mode 1: %08X / %08X = %08X\n", dividend, divisor, quotient);
+		UINT32 dividend = (UINT32)((divide[which].regs[0] << 16) | divide[which].regs[1]);
+		UINT32 divisor = (UINT16)divide[which].regs[2];
+		UINT32 quotient;
 
-		if (divisor != 0)
+		/* perform unsigned divide */
+		if (divisor == 0)
 		{
-			if (dividend > 0)
-				quotient = (dividend + divisor/2) / divisor;
-			else
-				quotient = (dividend - divisor/2) / divisor;
-		} 
+			quotient = dividend;//0x7fffffff;
+			divide[which].regs[6] |= 0x4000;
+		}
+		else
+			quotient = dividend / divisor;
 
+		/* store 32-bit quotient */
 		divide[which].regs[4] = quotient >> 16;
 		divide[which].regs[5] = quotient & 0xffff;
 	}
@@ -481,16 +479,16 @@ static void update_divide(int which)
 
 static data16_t divide_r(int which, offs_t offset, data16_t mem_mask)
 {
-	if (LOG_DIVIDE) logerror("%06X:divide%d_r(%X) = %04X\n", activecpu_get_pc(), which, offset, divide[which].regs[offset & 7]);
+	/* 8 effective read registers */
 	offset &= 7;
 	switch (offset)
 	{
-		case 0:	return divide[which].regs[0];
-		case 1:	return divide[which].regs[1];
-		case 2:	return divide[which].regs[2];
-		case 4: return divide[which].regs[4];
-		case 5:	return divide[which].regs[5];
-		case 6: return divide[which].regs[6];
+		case 0:	return divide[which].regs[0];	/* dividend high */
+		case 1:	return divide[which].regs[1];	/* dividend low */
+		case 2:	return divide[which].regs[2];	/* divisor */
+		case 4: return divide[which].regs[4];	/* quotient (mode 0) or quotient high (mode 1) */
+		case 5:	return divide[which].regs[5];	/* remainder (mode 0) or quotient low (mode 1) */
+		case 6: return divide[which].regs[6];	/* flags */
 	}
 	return 0xffff;
 }
@@ -500,15 +498,21 @@ static void divide_w(int which, offs_t offset, data16_t data, data16_t mem_mask)
 {
 	int a4 = offset & 8;
 	int a3 = offset & 4;
+
 	if (LOG_DIVIDE) logerror("%06X:divide%d_w(%X) = %04X\n", activecpu_get_pc(), which, offset, data);
+
+	/* only 4 effective write registers */
 	offset &= 3;
 	switch (offset)
 	{
-		case 0:	COMBINE_DATA(&divide[which].regs[0]); update_divide(which); break;
-		case 1:	COMBINE_DATA(&divide[which].regs[1]); if (a4) divide[which].mode = a3; update_divide(which); break;
-		case 2:	COMBINE_DATA(&divide[which].regs[2]); if (a4) divide[which].mode = a3; update_divide(which); break;
+		case 0:	COMBINE_DATA(&divide[which].regs[0]); break;	/* dividend high */
+		case 1:	COMBINE_DATA(&divide[which].regs[1]); break;	/* dividend low */
+		case 2:	COMBINE_DATA(&divide[which].regs[2]); break;	/* divisor/trigger */
 		case 3:	break;
 	}
+
+	/* if a4 line is high, divide, using a3 as the mode */
+	if (a4) update_divide(which, a3);
 }
 
 

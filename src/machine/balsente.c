@@ -30,6 +30,7 @@ UINT8 balsente_shooter_x;
 UINT8 balsente_shooter_y;
 UINT8 balsente_adc_shift;
 data16_t *shrike_shared;
+data16_t *shrike_io;
 
 
 /* 8253 counter state */
@@ -1200,3 +1201,16 @@ WRITE8_HANDLER( shrike_shared_6809_w )
   data16_t mem_mask = offset & 1 ? 0xff : 0xff00;
   shrike_shared[offset >> 1] = ( shrike_shared[offset >> 1] & ~mem_mask ) | ( data << ( ~mem_mask & 0x8 ) );
 }
+
+// uses movep, so writes even 8 bit addresses to odd 16 bit addresses, reads as 16 bit from odd addresses
+// i.e. write 0xdeadbeef to 10000, read 0xde from 10001, 0xad from 10003, 0xbe from 10005...
+WRITE16_HANDLER( shrike_io_68k_w )
+{
+  COMBINE_DATA( &shrike_io[offset] );
+}
+
+READ16_HANDLER( shrike_io_68k_r )
+{
+  return ( shrike_io[offset] & ~mem_mask ) >> ( 8 & mem_mask );
+}
+

@@ -174,6 +174,7 @@ WRITE8_HANDLER( vigilant_rear_color_w )
 
  ???
  **************************************************************************/
+
 static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaque )
 {
 	int offs;
@@ -215,7 +216,7 @@ static void draw_foreground( struct mame_bitmap *bitmap, int priority, int opaqu
 					color,
 					0,0,
 					sx,sy,
-					&Machine->visible_area,(opaque || color >= 8) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
+					&Machine->visible_area,(opaque || color >= 4) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -286,7 +287,6 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 VIDEO_UPDATE( vigilant )
 {
 	int i;
-
 
 	/* copy the background palette */
 	for (i = 0;i < 16;i++)
