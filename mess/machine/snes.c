@@ -254,12 +254,14 @@ void snes_exit_rom(int id)
     FILE *sramFile;
 	// De-allocate Save Ram File - saving it first
 
-	strcat(tempPath,rom_name);
-	sramFile = fopen(tempPath, "w");
-	if (sramFile)
-	{
-		fwrite(SNES_SRAM,1,0x50000,sramFile);
-		fclose(sramFile);
+	if (rom_name) {
+		strcat(tempPath,rom_name);
+		sramFile = fopen(tempPath, "w");
+		if (sramFile)
+		{
+			fwrite(SNES_SRAM,1,0x50000,sramFile);
+			fclose(sramFile);
+		}
 	}
 
 	free(SNES_SRAM);

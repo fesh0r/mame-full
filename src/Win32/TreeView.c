@@ -629,9 +629,19 @@ BOOL GameFiltered(int nGame, DWORD dwMask)
     if (dwMask & F_NONWORKING && drivers[nGame]->flags & GAME_NOT_WORKING)
         return TRUE;
 
+#ifdef MESS
+    /* Filter computer games */
+    if (dwMask & F_COMPUTER && drivers[nGame]->flags & GAME_COMPUTER)
+        return TRUE;
+
+    /* Filter console games */
+    if (dwMask & F_CONSOLE && !(drivers[nGame]->flags & GAME_COMPUTER))
+        return TRUE;
+#else
     /* Filter neo-geo games */
     if (dwMask & F_NEOGEO && gameData[nGame].neogeo)
         return TRUE;
+#endif
 
     /* Filter unavailable games */
     if (dwMask & F_UNAVAILABLE && GetHasRoms(nGame) == FALSE)
@@ -1030,7 +1040,11 @@ static BOOL CreateTreeIcons(HWND hWnd)
 
     hTreeSmall = ImageList_Create (16, 16, ILC_COLORDDB | ILC_MASK, 11, 11);
 
+#ifdef MESS
+    for (i = IDI_FOLDER_OPEN; i <= IDI_SOUND; i++)
+#else
     for (i = IDI_FOLDER_OPEN; i <= IDI_NEOGEO; i++)
+#endif
     {
         if ((hIcon = LoadIconFromFile(treeIconNames[i - IDI_FOLDER_OPEN])) == 0)
             hIcon = LoadIcon (hInst, MAKEINTRESOURCE(i));
@@ -1267,7 +1281,12 @@ DWORD filterExclusion[NUM_EXCLUSIONS] = {
 
 /* list of filter/control Id pairs */
 FILTER_ITEM filterList[F_NUM_FILTERS] = {
+#ifdef MESS
+    {F_COMPUTER,     IDC_FILTER_COMPUTER},
+    {F_CONSOLE,      IDC_FILTER_CONSOLE},
+#else
     {F_NEOGEO,       IDC_FILTER_NEOGEO},
+#endif
     {F_CLONES,       IDC_FILTER_CLONES},
     {F_NONWORKING,   IDC_FILTER_NONWORKING},
     {F_UNAVAILABLE,  IDC_FILTER_UNAVAILABLE},

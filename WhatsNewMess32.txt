@@ -10,6 +10,9 @@ Whats new:
 - Unknown file types are no longer displayed in software pane.  Unknown ZIPs
   will now be X'ed [Nate Woods]
 
+- Added "Open Other Software..." menu item so that software not in the software
+  directory can be used (similar to the pre 37b5 mechanism) [Nate Woods]
+
 ----------
 0.37 BETA 5
 ------------

@@ -51,7 +51,9 @@
 #define IDI_NONWORKING                  137
 #define IDI_YEAR                        138
 #define IDI_SOUND                       139
+#ifndef MESS
 #define IDI_NEOGEO                      140
+#endif
 #define IDR_CONTEXT_HEADER              151
 #define IDD_PROP_GAME                   152
 #define IDD_PROP_AUDIT                  153
@@ -191,7 +193,12 @@
 #define IDC_FILTER_UNAVAILABLE          1176
 #define IDC_FILTER_NONWORKING           1177
 #define IDC_FILTER_CLONES               1178
+#ifdef MESS
+#define IDC_FILTER_COMPUTER             1179
+#define IDC_FILTER_CONSOLE              1180
+#else
 #define IDC_FILTER_NEOGEO               1179
+#endif
 #define IDC_RESET_GAMES                 1181
 #define IDC_RESET_UI                    1182
 #define IDC_RESET_FILTERS               1183
@@ -294,12 +301,7 @@
 #define IDI_WIN_SNAP                    2005
 #define IDI_WIN_PRIN                    2006
 #define IDI_WIN_HARD                    2007
-#if 0
-#define ID_IMAGE0_CONFIG                50000
-#define ID_IMAGE1_CONFIG                50001
-#define ID_IMAGE2_CONFIG                50002
-#define ID_IMAGE3_CONFIG                50003
-#endif
+#define ID_MESS_OPEN_SOFTWARE           50000
 #endif
 
 // Next default values for new objects

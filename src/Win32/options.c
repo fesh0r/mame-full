@@ -151,7 +151,7 @@ static net_options  netOpts;/* Network options */
 /* Global UI options */
 REG_OPTIONS regSettings[] = {
     {"DefaultGame",     RO_STRING,  settings.default_game,      0, 0},
-#ifdef MESS_PICKER
+#ifdef MESS
     {"DefaultSoftware", RO_PSTRING, &settings.default_software, 0, 0},
 #endif
     {"FolderID",        RO_INT,     &settings.folder_id,        0, 0},
@@ -175,7 +175,7 @@ REG_OPTIONS regSettings[] = {
 
     {"RomDirs",         RO_PSTRING, &settings.romdirs,          0, 0},
     {"SampleDirs",      RO_PSTRING, &settings.sampledirs,       0, 0},
-#ifdef MESS_PICKER
+#ifdef MESS
     {"SoftwareDirs",    RO_PSTRING, &settings.softwaredirs,     0, 0},
 #endif
     {"CfgDir",          RO_PSTRING, &settings.cfgdir,           0, 0},
@@ -196,7 +196,7 @@ REG_OPTIONS regSettings[] = {
     {"ColumnWidths",    RO_ENCODE,  &settings.column_width,     ColumnEncodeString,     ColumnDecodeWidths},
     {"ColumnOrder",     RO_ENCODE,  &settings.column_order,     ColumnEncodeString,     ColumnDecodeString},
     {"ColumnShown",     RO_ENCODE,  &settings.column_shown,     ColumnEncodeString,     ColumnDecodeString},
-#ifdef MESS_PICKER
+#ifdef MESS
     {"MessColumnWidths",    RO_ENCODE,  &settings.mess_column_width,     ColumnEncodeString,     ColumnDecodeWidths},
     {"MessColumnOrder",     RO_ENCODE,  &settings.mess_column_order,     ColumnEncodeString,     ColumnDecodeString},
     {"MessColumnShown",     RO_ENCODE,  &settings.mess_column_shown,     ColumnEncodeString,     ColumnDecodeString},
@@ -282,7 +282,7 @@ static int default_column_shown[] = {   1,  0,  1,  1,  1,  1,  1,  1,  1,  1 };
 // Hidden columns need to go at the end of the order array
 static int default_column_order[] = {   0,  2,  3,  4,  5,  6,  7,  8,  9,  1 };
 
-#ifdef MESS_PICKER
+#ifdef MESS
 static int default_mess_column_width[] = { 186, 68, 84, 84 };
 static int default_mess_column_shown[] = {   1,  0,  0,  0 };
 static int default_mess_column_order[] = {   0,  1,  2,  3 };
@@ -314,7 +314,7 @@ void OptionsInit(int total_games)
     num_games = total_games;
 
     strcpy(settings.default_game, DEFAULT_GAME);
-#ifdef MESS_PICKER
+#ifdef MESS
 	settings.default_software = NULL;
 #endif
     settings.folder_id       = 0;
@@ -334,7 +334,7 @@ void OptionsInit(int total_games)
         settings.column_shown[i] = default_column_shown[i];
     }
 
-#ifdef MESS_PICKER
+#ifdef MESS
     for (i = 0; i < MESS_COLUMN_MAX; i++)
     {
         settings.mess_column_width[i] = default_mess_column_width[i];
@@ -347,7 +347,7 @@ void OptionsInit(int total_games)
     settings.sort_reverse= FALSE;
     settings.area.x      = 0;
     settings.area.y      = 0;
-#ifdef MESS_PICKER
+#ifdef MESS
     settings.area.width  = 790;
 #else
     settings.area.width  = 640;
@@ -355,7 +355,7 @@ void OptionsInit(int total_games)
     settings.area.height = 400;
     settings.splitter[0] = 150;
     settings.splitter[1] = 300;
-#ifdef MESS_PICKER
+#ifdef MESS
     settings.splitter[2] = 450;
 #endif
 
@@ -363,7 +363,7 @@ void OptionsInit(int total_games)
 
     settings.romdirs     = strdup(".;roms");
     settings.sampledirs  = strdup(".;samples");
-#ifdef MESS_PICKER
+#ifdef MESS
     settings.softwaredirs = strdup("roms;software");
 #endif
     settings.cfgdir      = strdup("cfg");
@@ -650,7 +650,7 @@ const char *GetDefaultGame(void)
     return settings.default_game;
 }
 
-#ifdef MESS_PICKER
+#ifdef MESS
 void SetDefaultSoftware(const char *name)
 {
     if (settings.default_software != NULL)
@@ -721,7 +721,7 @@ void GetColumnWidths(int width[])
         width[i] = settings.column_width[i];
 }
 
-#ifdef MESS_PICKER
+#ifdef MESS
 void SetMessColumnWidths(int width[])
 {
     int i;
@@ -873,7 +873,7 @@ void GetColumnShown(int shown[])
         shown[i] = settings.column_shown[i];
 }
 
-#ifdef MESS_PICKER
+#ifdef MESS
 void SetMessColumnOrder(int order[])
 {
     int i;
@@ -974,7 +974,7 @@ void SetSampleDirs(const char* paths)
         settings.sampledirs = strdup(paths);
 }
 
-#ifdef MESS_PICKER
+#ifdef MESS
 const char* GetSoftwareDirs(void)
 {
     return settings.softwaredirs;

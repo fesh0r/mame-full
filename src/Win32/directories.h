@@ -15,11 +15,7 @@
 
 #ifdef MESS
 #define HASDIR_SAMPLE	0
-#ifdef MESS_PICKER
 #define HASDIR_SOFTWARE	1
-#else
-#define HASDIR_SOFTWARE	0
-#endif
 #else
 #define HASDIR_SAMPLE	1
 #define HASDIR_SOFTWARE	0

@@ -123,7 +123,7 @@ static char nvramfname[FILENAME_MAX] = "";
 static tDirPaths RomDirPath;
 static tDirPaths SampleDirPath;
 
-#ifdef MESS_PICKER
+#ifdef MESS
 static tDirPaths SoftwareDirPath;
 
 int GetMessSoftwarePathCount(void)
@@ -153,7 +153,7 @@ static int File_init(void)
     SetPaths(&RomDirPath,    GetRomDirs());
     SetPaths(&SampleDirPath, GetSampleDirs());
 
-#ifdef MESS_PICKER
+#ifdef MESS
     memset(&SoftwareDirPath, 0, sizeof(tDirPaths));
     SetPaths(&SoftwareDirPath, GetSoftwareDirs());
 #endif

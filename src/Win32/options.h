@@ -32,10 +32,6 @@
 
 #define MAX_GAMEDESC 256
 
-#ifdef MESS
-#define MESS_PICKER
-#endif
-
 enum {
     COLUMN_GAMES = 0,
     COLUMN_ROMS,
@@ -50,7 +46,7 @@ enum {
     COLUMN_MAX
 };
 
-#ifdef MESS_PICKER
+#ifdef MESS
 enum {
 	MESS_COLUMN_IMAGES,
 	MESS_COLUMN_MANUFACTURER,
@@ -71,7 +67,7 @@ enum {
 enum {
     SPLITTER_LEFT = 0,
     SPLITTER_RIGHT,
-#ifdef MESS_PICKER
+#ifdef MESS
 	SPLITTER_FARRIGHT,
 #endif
     SPLITTER_MAX
@@ -197,13 +193,13 @@ typedef struct
     BOOL     version_check;     /* Version mismatch warings */
     BOOL     mmx_check;         /* Detect MMX processors */
     char     default_game[MAX_GAMEDESC];
-#ifdef MESS_PICKER
+#ifdef MESS
 	char     *default_software;
 #endif
     int      column_width[COLUMN_MAX];
     int      column_order[COLUMN_MAX];
     int      column_shown[COLUMN_MAX];
-#ifdef MESS_PICKER
+#ifdef MESS
     int      mess_column_width[MESS_COLUMN_MAX];
     int      mess_column_order[MESS_COLUMN_MAX];
     int      mess_column_shown[MESS_COLUMN_MAX];
@@ -217,7 +213,7 @@ typedef struct
     char*    language;
     char*    romdirs;
     char*    sampledirs;
-#ifdef MESS_PICKER
+#ifdef MESS
 	char*    softwaredirs;
 #endif
     char*    cfgdir;
@@ -292,7 +288,7 @@ int  GetShowPictType(void);
 void SetDefaultGame(const char *name);
 const char *GetDefaultGame(void);
 
-#ifdef MESS_PICKER
+#ifdef MESS
 void SetDefaultSoftware(const char *name);
 const char *GetDefaultSoftware(void);
 #endif
@@ -309,7 +305,7 @@ void GetColumnOrder(int order[]);
 void SetColumnShown(int shown[]);
 void GetColumnShown(int shown[]);
 
-#ifdef MESS_PICKER
+#ifdef MESS
 void SetMessColumnWidths(int widths[]);
 void GetMessColumnWidths(int widths[]);
 
@@ -344,7 +340,7 @@ void SetRomDirs(const char* paths);
 const char* GetSampleDirs(void);
 void  SetSampleDirs(const char* paths);
 
-#ifdef MESS_PICKER
+#ifdef MESS
 const char* GetSoftwareDirs(void);
 void  SetSoftwareDirs(const char* paths);
 #endif

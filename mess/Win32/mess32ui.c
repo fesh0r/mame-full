@@ -14,7 +14,6 @@ int GetMessSoftwarePathCount(void);
 static int requested_device_type(char *tchar);
 static void MessSetupCrc(int game_index);
 
-#ifdef MESS_PICKER
 typedef struct tagImageData {
 	struct tagImageData *next;
 	const char *name;
@@ -48,9 +47,7 @@ static BOOL MessPickerNotify(NMHDR *nm);
 static void MessUpdateSoftwareList(void);
 static void MessSetPickerDefaults(void);
 static void MessRetrievePickerDefaults(void);
-#else
-static void MessImageConfig(HWND hMain, char *last_directory, int image);
-#endif /* MESS_PICKER */
+static void MessOpenOtherSoftware(void);
 
 #include "win32ui.c"
 
@@ -233,8 +230,6 @@ static BOOL MessIsImageSelected(int imagenum)
 /* ************************************************************************ */
 /* UI                                                                       */
 /* ************************************************************************ */
-
-#ifdef MESS_PICKER
 
 /* List view Column text */
 static char *mess_column_names[MESS_COLUMN_MAX] = {
@@ -465,12 +460,40 @@ int DECL_SPEC CmpImageDataPtr(const void *elem1, const void *elem2)
 	return stricmp(img1->name, img2->name);
 }
 
+static BOOL AppendNewImage(const char *fullname, BOOL bReadZip, ImageData ***listend, mess_image_type *imagetypes)
+{
+	int type;
+	char *separator_pos;
+	ImageData *newimg;
+
+	type = MessDiscoverImageType(fullname, imagetypes, bReadZip);
+	if (type == IO_COUNT)
+		return FALSE; /* Unknown type of software */
+
+	newimg = malloc(sizeof(ImageData));
+	if (!newimg)
+		return FALSE;
+
+	newimg->fullname = strdup(fullname);
+	if (!newimg) {
+		free(newimg);
+		return FALSE;
+	}
+
+	separator_pos = strrchr(newimg->fullname, '\\');
+
+	newimg->name = separator_pos ? (separator_pos+1) : newimg->fullname;
+	newimg->next = NULL;
+	newimg->type = type;
+	**listend = newimg;
+	*listend = &newimg->next;
+	return TRUE;
+}
+
 static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer, size_t buffersz, ImageData ***listend)
 {
-	ImageData *newimg;
 	void *d;
 	int is_dir;
-	int type;
 	size_t pathlen;
 	mess_image_type imagetypes[64];
 
@@ -486,22 +509,8 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 		while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
 			if (!is_dir) {
 				/* Not a directory */
-				type = MessDiscoverImageType(buffer, imagetypes, FALSE);
-				if (type != IO_COUNT) {
-					/* Not obviously wrong... */
-					newimg = malloc(sizeof(ImageData));
-					if (newimg && (newimg->fullname = strdup(buffer))) {
-						newimg->name = newimg->fullname + pathlen;
-						newimg->next = NULL;
-						newimg->type = type;
-						**listend = newimg;
-						*listend = &newimg->next;
-					}
-					else if (newimg)
-						free(newimg);
-
+				if (AppendNewImage(buffer, FALSE, listend, imagetypes))
 					mess_images_count++;
-				}
 			}
 			else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
 				AddImagesFromDirectory(buffer + pathlen, bRecurse, buffer, buffersz, listend);
@@ -515,9 +524,23 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 	}
 }
 
-static void FillSoftwareList(int nGame)
+static void MessInsertPickerItem(int i)
 {
 	LV_ITEM lvi;
+
+	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
+	lvi.stateMask = 0;
+	lvi.iItem    = i;
+	lvi.iSubItem = 0; 
+	lvi.lParam   = i;
+	// Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
+	lvi.pszText  = LPSTR_TEXTCALLBACK;
+	lvi.iImage   = I_IMAGECALLBACK;
+	ListView_InsertItem(hwndSoftware,&lvi);
+}
+
+static void FillSoftwareList(int nGame)
+{
 	int i;
 	ImageData *imgd;
 	ImageData **pimgd;
@@ -587,16 +610,8 @@ static void FillSoftwareList(int nGame)
 	ListView_DeleteAllItems(hwndSoftware);
 	ListView_SetItemCount(hwndSoftware, mess_images_count);
 
-	lvi.mask = LVIF_TEXT | LVIF_IMAGE | LVIF_PARAM; 
-	lvi.stateMask = 0;
 	for (i = 0; i < mess_images_count; i++) {
-		lvi.iItem    = i;
-		lvi.iSubItem = 0; 
-		lvi.lParam   = i;
-		// Do not set listview to LVS_SORTASCENDING or LVS_SORTDESCENDING
-		lvi.pszText  = LPSTR_TEXTCALLBACK;
-		lvi.iImage   = I_IMAGECALLBACK;
-		ListView_InsertItem(hwndSoftware,&lvi);
+		MessInsertPickerItem(i);
 	}
 	mess_idle_work = TRUE;
 	nIdleImageNum = 0;
@@ -990,9 +1005,7 @@ static void OnMessIdle()
 	}
 }
 
-#else /* !MESS_PICKER */
-
-static BOOL CommonFileImageDialog(HWND hMain, char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
+static BOOL CommonFileImageDialog(char *last_directory, common_file_dialog_proc cfd, char *filename, mess_image_type *imagetypes)
 {
     BOOL success;
     OPENFILENAME of;
@@ -1068,59 +1081,56 @@ static BOOL CommonFileImageDialog(HWND hMain, char *last_directory, common_file_
     return success;
 }
 
-void MessImageConfig(HWND hMain, char *last_directory, int image)
+static void MessOpenOtherSoftware(void)
 {
-    INP_HEADER inpHeader;
     char filename[MAX_PATH];
     LPTREEFOLDER lpOldFolder = GetCurrentFolder();
     LPTREEFOLDER lpNewFolder = GetFolder(00);
     DWORD        dwOldFilters = 0;
     int          nOldPick = GetSelectedPickItem();
 
-	MENUITEMINFO	im_mmi;
-	int im;
     HMENU           hMenu = GetMenu(hMain);
-	char buf[200];
 	mess_image_type imagetypes[64];
+	ImageData       **pLastImageNext;
+	ImageData       **pOldLastImageNext;
+	ImageData		**pNewIndex;
+	int i;
 
 	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
 
     *filename = 0;
-    memset(&inpHeader,'\0', sizeof(INP_HEADER));
 
-    if (CommonFileImageDialog(hMain, last_directory, GetOpenFileName, filename, imagetypes))
-    {
-		options.image_files[image].type = MessDiscoverImageType(filename, imagetypes, TRUE);
-		options.image_files[image].name = strdup(filename);
-		if (options.image_count <= image)
-			options.image_count = image + 1;
-    }
+    if (!CommonFileImageDialog(last_directory, GetOpenFileName, filename, imagetypes))
+		return;
 
-	sprintf(buf,"Image %d: %s", image, filename);
-	im_mmi.cbSize = sizeof(im_mmi);
-	im_mmi.fMask = MIIM_TYPE;
-	im_mmi.fType = MFT_STRING;
-	im_mmi.dwTypeData = buf;
-	im_mmi.cch = strlen(im_mmi.dwTypeData);
+	pLastImageNext = &mess_images;
+	while(*pLastImageNext)
+		pLastImageNext = &(*pLastImageNext)->next;
+	pOldLastImageNext = pLastImageNext;
 
-	switch(image) {
-	case 0:
-		im=ID_IMAGE0_CONFIG;
-		break;
-	case 1:
-		im=ID_IMAGE1_CONFIG;
-		break;
-	case 2:
-		im=ID_IMAGE2_CONFIG;
-		break;
-	case 3:
-		im=ID_IMAGE3_CONFIG;
-		break;
-	}
-	SetMenuItemInfo(hMenu,im,FALSE,&im_mmi);
+	if (!AppendNewImage(filename, TRUE, &pLastImageNext, imagetypes))
+		goto unknownsoftware;
 
-	EnableMenuItem(hMenu, im, MF_ENABLED);
+	pNewIndex = (ImageData **) realloc(mess_images_index, (mess_images_count+1) * sizeof(ImageData *));
+	if (!pNewIndex)
+		goto outofmemory;
+	i = mess_images_count++;
+	pNewIndex[i] = (*pOldLastImageNext);
+	mess_images_index = pNewIndex;
+
+	MessInsertPickerItem(i);
+	ListView_SetItemState(hwndSoftware, i, LVIS_FOCUSED | LVIS_SELECTED, LVIS_FOCUSED | LVIS_SELECTED);
+	ListView_EnsureVisible(hwndSoftware, i, FALSE);
+
+	return;
+
+unknownsoftware:
+	MessageBoxA(NULL, "Unknown type of software", MAME32NAME, MB_OK);
+	return;
+
+outofmemory:
+	MessageBoxA(NULL, "Out of memory", MAME32NAME, MB_OK);
+	return;
 }
 
-#endif /* MESS_PICKER */
 

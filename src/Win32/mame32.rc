@@ -2,10 +2,6 @@
 //
 #include "resource.h"
 
-#ifdef MESS
-#define MESS_PICKER
-#endif
-
 // Generated Help ID header file
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "resource.hm"
@@ -62,9 +58,19 @@ BEGIN
         MENUITEM "Play and &Record Input...",   ID_FILE_PLAY_RECORD
         MENUITEM "P&layback Input...",          ID_FILE_PLAY_BACK
         MENUITEM "Play and Record A&VI...",     ID_FILE_PLAY_RECORD_AVI
+#ifdef MESS
+        MENUITEM "Play &network system...",     ID_FILE_NETPLAY
+#else
         MENUITEM "Play &network game...",       ID_FILE_NETPLAY
+#endif
         MENUITEM SEPARATOR
+#ifdef MESS
+        MENUITEM "&Select Random System",       ID_CONTEXT_SELECT_RANDOM
+        MENUITEM SEPARATOR
+		MENUITEM "Op&en Other Software...",     ID_MESS_OPEN_SOFTWARE
+#else
         MENUITEM "&Select Random Game",         ID_CONTEXT_SELECT_RANDOM
+#endif
         MENUITEM SEPARATOR
         MENUITEM "A&dd to 'Favorites'",         ID_CONTEXT_ADD_FAVORITE
         MENUITEM "R&emove from 'Favorites'",    ID_CONTEXT_DEL_FAVORITE
@@ -109,13 +115,6 @@ BEGIN
         MENUITEM "&Reset to Default...",        ID_OPTIONS_RESET_DEFAULTS
         MENUITEM "&Startup Options...",         ID_OPTIONS_STARTUP
         MENUITEM "&Language...",                ID_OPTIONS_LANGUAGE
-#if defined(MESS) && !defined(MESS_PICKER)
-        MENUITEM SEPARATOR
-        MENUITEM "Image 0",                     ID_IMAGE0_CONFIG
-        MENUITEM "Image 1",                     ID_IMAGE1_CONFIG
-        MENUITEM "Image 2",                     ID_IMAGE2_CONFIG
-        MENUITEM "Image 3",                     ID_IMAGE3_CONFIG
-#endif
     END
     POPUP "&Help"
     BEGIN
@@ -299,14 +298,16 @@ IDI_FOLDER_YEAR         ICON    DISCARDABLE     "res\\foldyear.ico"
 IDI_WORKING             ICON    DISCARDABLE     "res\\working.ico"
 IDI_NONWORKING          ICON    DISCARDABLE     "res\\nonwork.ico"
 IDI_YEAR                ICON    DISCARDABLE     "res\\year.ico"
+#ifndef MESS
 IDI_NEOGEO              ICON    DISCARDABLE     "res\\neogeo.ico"
+#endif
 IDI_KEYBOARD            ICON    DISCARDABLE     "Res\\keyboard.ico"
 IDI_JOYSTICK            ICON    DISCARDABLE     "Res\\joystick.ico"
 IDI_SOUND               ICON    DISCARDABLE     "Res\\samples.ico"
 IDI_DISPLAY             ICON    DISCARDABLE     "Res\\display.ico"
 IDI_CHECKMARK           ICON    DISCARDABLE     "Res\\checkmark.ico"
 IDI_NETPLAY             ICON    DISCARDABLE     "Res\\netplay.ico"
-#if defined(MESS) && defined(MESS_PICKER)
+#ifdef MESS
 IDI_WIN_FLOP            ICON    DISCARDABLE     "res/win_flop.ico"
 IDI_WIN_CASS            ICON    DISCARDABLE     "res/win_cass.ico"
 IDI_WIN_SERL            ICON    DISCARDABLE     "res/win_serl.ico"
@@ -761,7 +762,7 @@ BEGIN
                     TVS_FULLROWSELECT | WS_BORDER | WS_TABSTOP,5,28,48,172
     GROUPBOX        "",IDC_SPLITTER,55,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
     GROUPBOX        "",IDC_SPLITTER2,109,28,8,172,BS_NOTIFY | NOT WS_VISIBLE
-#ifdef MESS_PICKER
+#ifdef MESS
     CONTROL         "List2",IDC_LIST2,"SysListView32",LVS_REPORT | 
                     LVS_SHOWSELALWAYS | LVS_OWNERDRAWFIXED | WS_BORDER |
 					WS_TABSTOP,119,28,42,172
@@ -812,9 +813,16 @@ BEGIN
     CONTROL         "&Unavailable",IDC_FILTER_UNAVAILABLE,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,91,76,10,0,
                     HIDC_FILTER_UNAVAILABLE
+#ifdef MESS
+    CONTROL         "&Computers",IDC_FILTER_COMPUTER,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,23,104,76,10,0
+    CONTROL         "C&onsoles",IDC_FILTER_CONSOLE,"Button",
+                    BS_AUTOCHECKBOX | WS_TABSTOP,107,104,76,10,0
+#else
     CONTROL         "&Neo-Geo Games",IDC_FILTER_NEOGEO,"Button",
                     BS_AUTOCHECKBOX | WS_TABSTOP,23,104,76,10,0,
                     HIDC_FILTER_NEOGEO
+#endif
     GROUPBOX        "&Description filter",IDC_STATIC,13,123,179,33
     EDITTEXT        IDC_FILTER_EDIT,23,136,159,12,ES_AUTOHSCROLL,0,
                     HIDC_FILTER_EDIT
