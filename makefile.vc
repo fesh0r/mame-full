@@ -1,7 +1,7 @@
 #####################################################################
 
 MAME_VERSION = -DMAME_VERSION=37
-BETA_VERSION = -DBETA_VERSION=13
+BETA_VERSION = -DBETA_VERSION=15
 
 # set this to mame, mess or the destination you want to build
 # TARGET = mame
