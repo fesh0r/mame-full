@@ -102,6 +102,11 @@ static void set_int10(int state)
 	set_int_line(10, state);
 }
 
+static void set_int13(int state)
+{
+	set_int_line(13, state);
+}
+
 static void clear_load(int dummy)
 {
 	cpu_set_nmi_line(0, CLEAR_LINE);
@@ -115,7 +120,7 @@ static void ti990_10_init_machine(void)
 	intlines = 0;
 
 	ti990_tpc_init(set_int9);
-	ti990_hdc_init();
+	ti990_hdc_init(set_int13);
 }
 
 static void ti990_10_stop_machine(void)
@@ -123,7 +128,7 @@ static void ti990_10_stop_machine(void)
 
 }
 
-static int ti990_10_vblank_interrupt(void)
+static int ti990_10_line_interrupt(void)
 {
 	vdt911_keyboard(0);
 
@@ -178,24 +183,24 @@ Programmer panel :
 output :
 0-7 : lights 0-7
 8 : increment scan
-9 : clear scan
-A : run light
+9 : clear scan (according to 990 handbook)
+A : run light (additionally sets all data LEDs to 1s, the scan count to 0b10 and enables the HALT/SIE switch)
 B : fault light
 C : Memory Error Interrupt clear
 D : Start panel timer
 E : Set SIE function (interrupt after 2 instructions are executed)
-F : flag
+F : flag (according to 990 handbook)
 
 input :
 0-7 : switches 0-7 (or data from MDU tape)
 8 : scan count bit 1
 9 : scan count bit 0
 A : timer active
-B : programmer panel not present
-C : char in MDU tape unit buffer ?
-D : unused ?
-E : MDU tape unit present ?
-F : flag
+B : programmer panel not present or locked
+C : char in MDU tape unit buffer?
+D : unused?
+E : if 0, MDU unit present
+F : flag (according to 990 handbook)
 
 */
 
@@ -311,8 +316,8 @@ static struct MachineDriver machine_driver_ti990_10 =
 			CPU_TI990_10,
 			4000000,	/* unknown */
 			ti990_10_readmem, ti990_10_writemem, ti990_10_readport, ti990_10_writeport,
-			ti990_10_vblank_interrupt, 1,
-			0, 0,
+			NULL, 0,		/* no VBLANK interrupt for now */
+			ti990_10_line_interrupt, 120/*or 100 in Europe*/,
 			&reset_params
 		},
 	},
