@@ -13,7 +13,8 @@ System Driver Changes:
   MBC3 still needs the RTC emulated. Added support for battery backed ram.
   (Bug #133) Sprites no longer have inverted colours in some games(Bug #26).
   Fixed window layer positioning(Bug #39). Changed the palette to closer
-  resemble the LCD screen(Bug #87). [Anthony Kruize]
+  resemble the LCD screen(Bug #87). Games which originally have no sound
+  don't produce bass sound at start up (Bug #195) [Anthony Kruize]
 
 - [CGENIE] Floppy initialisation fixed for when no floppy attached 
   (Bug #95) [Ben Bruscella]
@@ -28,7 +29,7 @@ System Driver Changes:
   now). Corrected frames per second value for 48k and 128k Sincalir machines.
   Remaped some Spectrum+ keys. Added support to load .SP snapshots. Added .BLK
   tape images support. #FF port emulation added (Arkanoid works now but is still
-  not playable due to wrong timings). [Krzysztof Strzecha]
+  not playable due to wrong timings) (Bug #47). [Krzysztof Strzecha]
 
 - [COCO] Converted CoCo drivers to use configurable RAM sizes, and the CoCo 3
   driver now supports the 2 MB upgrade (if I knew the specs, it would be very
@@ -44,7 +45,7 @@ System Driver Changes:
 - [TS1000] The main rom file is now called zx81a.rom, instead of zx81.rom in
   order to match the other drivers in the family. [Nate Woods]
 
-- [COCO3] Added support for Jeff Vavsaour's virtual hard disk. His Color
+- [COCO3] Added support for Jeff Vavassour's virtual hard disk. His Color
   Computer 3 emulator comes with an OS-9 driver. [tim lindner]
 
 - [PDP1] Added support for perforated tape and read-in mode.  Removed the
