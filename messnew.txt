@@ -9,6 +9,9 @@ System Driver Changes:
 
 - [COCO] Made the hi-res joystick interface available to the CoCo 1-2 [Nate
   Woods]
+  
+- [DRAGON64] Fixed a bug that prevented the system to run (the dragon64 driver
+  was using the coco memory map) [Nate Woods]
 
 Source Changes:
 ---------------
