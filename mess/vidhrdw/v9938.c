@@ -30,7 +30,6 @@ typedef struct {
 	UINT16 address_latch;
 	UINT8 *vram, *vram_exp;
 	int vram_size;
-	struct osd_bitmap *bmp;
     /* interrupt */
     UINT8 INT;
     void (*INTCallback)(int);
@@ -439,14 +438,6 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	vdp.vram_size = vram_size;
 	vdp.INTCallback = callback;
 	vdp.size_old = -1;
-
-	/* allocate back-buffer */
-	vdp.bmp = osd_alloc_bitmap (512 + 32, (212 + 16) * 2, Machine->scrbitmap->depth);
-	if (!vdp.bmp)
-		{
-		logerror ("V9938: Unable to allocate back-buffer bitmap\n");
-		return 1;
-		}
 
 	/* allocate VRAM */
 	vdp.vram = malloc (0x20000);
@@ -1218,21 +1209,7 @@ static void v9938_refresh_line (struct osd_bitmap *bmp, int line)
 
 void v9938_refresh (struct osd_bitmap *bmp, int fullrefresh)
 	{
-	struct rectangle rc;
-
-	if (vdp.size == RENDER_HIGH)
-		copybitmap (bmp, vdp.bmp, 0, 0, 0, 0,
-			&Machine->visible_area, TRANSPARENCY_NONE, 0);
-	else
-		{
-		rc.min_x = 0;
-		rc.max_x = 256 + 16 - 1;
-		rc.min_y = 0;
-		rc.max_y = 212 + 16 - 1;
-
-		copybitmap (bmp, vdp.bmp, 0, 0, 0, 0,
-			&rc, TRANSPARENCY_NONE, 0);
-		}
+	/* already been rendered, since we're using scanline stuff */
 	}
 
 /*
@@ -1340,7 +1317,7 @@ I do not know the behaviour of FV when IE0=0. That is the part that I still
 have to test.
 */
 
-static void v9938_interrupt_bottom (void)
+static void v9938_interrupt_start_vblank (void)
 	{
 #if 0
 	if (keyboard_pressed (KEYCODE_D) )
@@ -1360,7 +1337,7 @@ static void v9938_interrupt_bottom (void)
 		}
 #endif
 
-	/* at every interrupt, vdp switches fields */
+	/* at every frame, vdp switches fields */
 	vdp.statReg[2] = (vdp.statReg[2] & 0xfd) | (~vdp.statReg[2] & 2);
 
 	/* color blinking */
@@ -1383,8 +1360,7 @@ static void v9938_interrupt_bottom (void)
 			}
 		}
 
-	//printf ("vdp.size = %d, vdp.size_now = %d, vdp.size_old = %d\n", vdp.size, vdp.size_now, vdp.size_old);
-
+	/* check screen rendering size */
 	if (vdp.size_auto && (vdp.size_now >= 0) && (vdp.size != vdp.size_now) )
 		vdp.size = vdp.size_now;
 
@@ -1404,33 +1380,26 @@ static void v9938_interrupt_bottom (void)
 int v9938_interrupt (void)
 	{
 	UINT8 col[256];
-	int scanline, max;
+	int scanline, max, pal, scanline_start;
 
 	v9938_update_command ();
 
-	if (vdp.scanline == vdp.offset_y)
+	pal = vdp.contReg[9] & 2;
+	if (pal) scanline_start = 53; else scanline_start = 26;
+
+	/* set flags */
+	if (vdp.scanline == (vdp.offset_y + scanline_start) )
 		{
 		vdp.statReg[2] &= ~0x40;
 		}
-	else if (vdp.scanline == (vdp.offset_y + vdp.visible_y) )
+	else if (vdp.scanline == (vdp.offset_y + vdp.visible_y + scanline_start) )
 		{
 		vdp.statReg[2] |= 0x40;
 		vdp.statReg[0] |= 0x80;
 		}
-	if (vdp.scanline < (212 + 16) )
-		{
-		if (osd_skip_this_frame () )
-			{
-			if ( !(vdp.statReg[2] & 0x40) && (modes[vdp.mode].sprites) )
-				modes[vdp.mode].sprites ((vdp.scanline - vdp.offset_y) & 255, col);
-			}
-		else
-			{
-			v9938_refresh_line (vdp.bmp, vdp.scanline);
-			}
-		}
-	max = (vdp.contReg[9] & 2) ? 255 : (vdp.contReg[9] & 0x80) ? 234 : 244;
-	scanline = (vdp.scanline - vdp.offset_y);
+
+	max = (pal) ? 255 : (vdp.contReg[9] & 0x80) ? 234 : 244;
+	scanline = (vdp.scanline - scanline_start - vdp.offset_y);
 	if ( (scanline >= 0) && (scanline <= max) &&
 	   ( ( (scanline + vdp.contReg[23]) & 255) == vdp.contReg[19]) )
 		{
@@ -1440,14 +1409,32 @@ int v9938_interrupt (void)
 	else
 		if ( !(vdp.contReg[0] & 0x10) ) vdp.statReg[1] &= 0xfe;
 
-	if (vdp.scanline == (212 + 32) ) /* check this!! */
-		v9938_interrupt_bottom ();
+	v9938_check_int ();
+
+	/* check for start of vblank */
+	if ((pal && (vdp.scanline == 310)) ||
+		(!pal && (vdp.scanline == 259)))
+		v9938_interrupt_start_vblank ();
+
+	/* render the current line */
+	if ((vdp.scanline >= scanline_start) && (vdp.scanline < (212 + 16 + scanline_start)))
+		{
+		scanline = (vdp.scanline - scanline_start) & 255;
+
+		if (osd_skip_this_frame () )
+			{
+			if ( !(vdp.statReg[2] & 0x40) && (modes[vdp.mode].sprites) )
+				modes[vdp.mode].sprites ( (scanline - vdp.offset_y) & 255, col);
+			}
+		else
+			{
+			v9938_refresh_line (Machine->scrbitmap, scanline);
+			}
+		}
 
 	max = (vdp.contReg[9] & 2) ? 313 : 262;
 	if (++vdp.scanline == max)
 		vdp.scanline = 0;
-
-	v9938_check_int ();
 
 	return vdp.INT;
 	}
