@@ -83,8 +83,9 @@ static void MessTestsDoneIdle(void);
 
 #include "windowsui/win32ui.c"
 
-struct deviceentry {
-	int icon;
+struct deviceentry
+{
+	const char *icon_name;
 	const char *dlgname;
 };
 
@@ -103,18 +104,18 @@ struct deviceentry {
 /* TODO - We need to make icons for Cylinders, Punch Cards, and Punch Tape! */
 static struct deviceentry s_devices[] =
 {
-	{ 1, "Cartridge images" },		/* IO_CARTSLOT */
-	{ 6, "Floppy disk images" },	/* IO_FLOPPY */
-	{ 11, "Hard disk images" },		/* IO_HARDDISK */
-	{ 2, "Cylinders" },				/* IO_CYLINDER */
-	{ 7, "Cassette images" },		/* IO_CASSETTE */
-	{ 2, "Punchcard images" },		/* IO_PUNCHCARD */
-	{ 2, "Punchtape images" },		/* IO_PUNCHTAPE */
-	{ 10, "Printer Output" },		/* IO_PRINTER */
-	{ 8, "Serial Output" },			/* IO_SERIAL */
-	{ 2, "Parallel Output" },		/* IO_PARALLEL */
-	{ 9, "Snapshots" },				/* IO_SNAPSHOT */
-	{ 9, "Quickloads" }				/* IO_QUICKLOAD */
+	{ "roms",		"Cartridge images" },	/* IO_CARTSLOT */
+	{ "floppy",		"Floppy disk images" },	/* IO_FLOPPY */
+	{ "hard",		"Hard disk images" },	/* IO_HARDDISK */
+	{ NULL,			"Cylinders" },			/* IO_CYLINDER */
+	{ NULL,			"Cassette images" },	/* IO_CASSETTE */
+	{ NULL,			"Punchcard images" },	/* IO_PUNCHCARD */
+	{ NULL,			"Punchtape images" },	/* IO_PUNCHTAPE */
+	{ NULL,			"Printer Output" },		/* IO_PRINTER */
+	{ NULL,			"Serial Output" },		/* IO_SERIAL */
+	{ NULL,			"Parallel Output" },	/* IO_PARALLEL */
+	{ "snapshot",	"Snapshots" },			/* IO_SNAPSHOT */
+	{ "snapshot",	"Quickloads" }			/* IO_QUICKLOAD */
 };
 
 static void AssertValidDevice(int d)
@@ -209,22 +210,43 @@ static int GetMessIcon(int nGame, int nSoftwareType)
 
 static void MyFillSoftwareList(int nGame)
 {
-	int nBasePaths;
 	int i;
-	LPCSTR *plpBasePaths;
-	LPCSTR lpExtraPath;
 	const struct GameDriver *drv;
+	const char *software_dirs;
+	const char *extra_path;
+	char *paths;
+	int software_dirs_length;
+	int path_count;
+	LPCSTR *pathsv;
 
 	drv = drivers[nGame];
+	software_dirs = GetSoftwareDirs();
+	extra_path = GetGameOptions(nGame)->extra_software_paths;
 
-	nBasePaths = osd_get_path_count(FILETYPE_IMAGE);
-	plpBasePaths = alloca(sizeof(LPCSTR) * nBasePaths);
-	for (i = 0; i < nBasePaths; i++)
-		plpBasePaths[i] = ""; //GetMessSoftwarePath(i);
+	software_dirs_length = strlen(software_dirs);
+	paths = alloca(software_dirs_length + 1);
+	strcpy(paths, software_dirs);
 
-	lpExtraPath = GetGameOptions(nGame)->extra_software_paths;
+	path_count = 1;
+	for (i = 0; i < software_dirs_length; i++)
+	{
+		if (paths[i] == ';')
+			path_count++;
+	}
 
-	FillSoftwareList(s_pSoftwareListView, nGame, nBasePaths, plpBasePaths, lpExtraPath);
+	pathsv = alloca(sizeof(LPCSTR) * path_count);
+	path_count = 0;
+	pathsv[path_count++] = paths;
+	for (i = 0; i < software_dirs_length; i++)
+	{
+		if (paths[i] == ';')
+		{
+			paths[i] = '\0';
+			pathsv[path_count++] = &paths[i+1];
+		}
+	}
+
+	FillSoftwareList(s_pSoftwareListView, nGame, path_count, pathsv, extra_path);
 }
 
 static void MessUpdateSoftwareList(void)
@@ -449,10 +471,22 @@ static void SoftwareListClass_Run(struct SmartListView *pListView)
 	MamePlayGame();
 }
 
+static int LookupIcon(const char *icon_name)
+{
+	int i;
+	for (i = 0; i < sizeof(icon_names) / sizeof(icon_names[0]); i++)
+	{
+		if (!strcmp(icon_names[i], icon_name))
+			return i;
+	}
+	return -1;
+}
+
 static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nItem)
 {
     int nType;
     int nIcon;
+	const char *icon_name;
 
     nType = GetImageType(nItem);
 
@@ -470,7 +504,12 @@ static int SoftwareListClass_WhichIcon(struct SmartListView *pListView, int nIte
 			break;
 
 		default:
-			nIcon = lookupdevice(nType)->icon;
+			icon_name = lookupdevice(nType)->icon_name;
+			if (!icon_name)
+				icon_name = device_typename(nType);
+			nIcon = LookupIcon(icon_name);
+			if (nIcon < 0)
+				nIcon = LookupIcon("unknown");
 			break;
 		}
     }
