@@ -724,49 +724,48 @@ static void t1t_gfx_4bpp(struct mame_bitmap *bitmap)
 VIDEO_UPDATE( pc_t1t )
 {
 	static int video_active = 0;
-	static int width=0, height=0;
 	int w,h;
 
 	if (!pcjr.displayram) return;
 
     /* draw entire scrbitmap because of usrintrf functions
 	   called osd_clearbitmap or attr change / scanline change */
-	/*if( crtc6845_do_full_refresh(pcjr.crtc)||pcjr.full_refresh||full_refresh )*/
+	if (crtc6845_do_full_refresh(pcjr.crtc) || pcjr.full_refresh)
 	{
-		pcjr.full_refresh=0;
+		pcjr.full_refresh = 0;
 		memset(dirtybuffer, 1, videoram_size);
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+		fillbitmap(tmpbitmap, Machine->pens[0], &Machine->visible_area);
 		video_active = 0;
     }
 
-	w=crtc6845_get_char_columns(pcjr.crtc)*8;
-	h=crtc6845_get_char_height(pcjr.crtc)*crtc6845_get_char_lines(pcjr.crtc);
+	w = crtc6845_get_char_columns(pcjr.crtc)*8;
+	h = crtc6845_get_char_height(pcjr.crtc)*crtc6845_get_char_lines(pcjr.crtc);
 	switch( pcjr.mode_control & 0x3b )	/* text and gfx modes */
 	{
 		case 0x08:
 			video_active = 10;
-			t1t_text_inten(bitmap); // column
+			t1t_text_inten(tmpbitmap); // column
 			break;
 		case 0x09:
 			video_active = 10;
-			t1t_text_inten(bitmap);
+			t1t_text_inten(tmpbitmap);
 			break;
 		case 0x28:
 			video_active = 10;
-			t1t_text_blink(bitmap); // 40 column
+			t1t_text_blink(tmpbitmap); // 40 column
 			break;
 		case 0x29:
 			video_active = 10;
-			t1t_text_blink(bitmap);
+			t1t_text_blink(tmpbitmap);
 			break;
         case 0x0a: case 0x0b: case 0x2a: case 0x2b:
 			video_active = 10;
 			switch (pcjr.bank & 0xc0)
 			{
 			case 0x00:	/* hmm.. text in graphics? */
-			case 0x40: t1t_gfx_2bpp(bitmap); break;
-			case 0x80: t1t_gfx_4bpp(bitmap);w/=2; break; //160
-			case 0xc0: t1t_gfx_4bpp(bitmap);w/=2; break; //320
+			case 0x40: t1t_gfx_2bpp(tmpbitmap); break;
+			case 0x80: t1t_gfx_4bpp(tmpbitmap); w/=2; break; //160
+			case 0xc0: t1t_gfx_4bpp(tmpbitmap); w/=2; break; //320
 			}
 			break;
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
@@ -775,26 +774,27 @@ VIDEO_UPDATE( pc_t1t )
 			switch (pcjr.bank & 0xc0)
 			{
 			case 0x00:	/* hmm.. text in graphics? */
-			case 0x40: t1t_gfx_1bpp(bitmap);w*=2; break;
+			case 0x40: t1t_gfx_1bpp(tmpbitmap);w*=2; break;
 			case 0x80:
-			case 0xc0: t1t_gfx_2bpp(bitmap); break; //640
+			case 0xc0: t1t_gfx_2bpp(tmpbitmap); break; //640
             }
 			break;
 
         default:
 			if( video_active && --video_active == 0 )
-				fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+				fillbitmap(tmpbitmap, Machine->pens[0], &Machine->visible_area);
     }
 
-	if ( (width!=w)||(height!=h) ) {
-		width=w;
-		height=h;
-		if (width>Machine->visible_area.max_x) width=Machine->visible_area.max_x+1;
-		if (height>Machine->visible_area.max_y) height=Machine->visible_area.max_y+1;
-		if ((width>100)&&(height>100))
-			set_visible_area(0,width-1,0, height-1);
-		else logerror("video %d %d\n",width, height);
-	}
+	if (w > Machine->scrbitmap->width)
+		w = Machine->scrbitmap->width;
+	if (h > Machine->scrbitmap->height)
+		h = Machine->scrbitmap->height;
 
-//	statetext_display(bitmap);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, 0, -1);
+
+	if ((w > 100) && (h > 100))
+	{
+		if ((w != Machine->visible_area.max_x+1) || (h != Machine->visible_area.max_y+1))
+			set_visible_area(0, w-1, 0, h-1);
+	}
 }

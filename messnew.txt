@@ -20,6 +20,8 @@ System Driver Changes:
 
 - [SFZCH] Fixed and re-enabled. [Anthony Kruize]
 
+- [T1000HX] Minor video optimizations. [Nate Woods]
+
 Source Changes:
 ---------------
 - New generic code for emulating terminals, now in use by the Apple I and
