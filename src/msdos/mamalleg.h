@@ -6,7 +6,9 @@
 #undef INLINE				/* Allegro redefines our INLINE definition */
 #define ZERO_SIZE 1			/* avoid zero-length array declarations */
 
+#define index _index
 #include <allegro.h>
+#undef index
 
 #undef inline
 #undef INLINE

@@ -1,34 +1,41 @@
-#include "mamalleg.h"
+//============================================================
+//
+//	ticker.c - MSDOS timing code
+//
+//============================================================
+
 #include "driver.h"
-#include "ticker.h"
+#include "mamalleg.h"
 #include <time.h>
 
 
 
-static int use_rdtsc;
-TICKER ticks_per_sec;
+//============================================================
+//	PROTOTYPES
+//============================================================
 
-TICKER ticker(void)
-{
-	if (use_rdtsc)
-	{
-		INT64 result;
+static cycles_t rdtsc_cycle_counter(void);
+static cycles_t uclock_cycle_counter(void);
+static cycles_t nop_cycle_counter(void);
 
-		__asm__ __volatile__ (
-			"rdtsc"
-			: "=A" (result)
-		);
 
-		return result;
-	}
-	else
-	{
-		/* this assumes that uclock_t is 64-bit (which it is) */
-		return uclock();
-	}
-}
 
-int cpu_rdtsc(void)
+//============================================================
+//	GLOBAL VARIABLES
+//============================================================
+
+// global cycle_counter function and divider
+cycles_t		(*cycle_counter)(void) = nop_cycle_counter;
+cycles_t		(*ticks_counter)(void) = nop_cycle_counter;
+cycles_t		cycles_per_sec;
+
+
+
+//============================================================
+//	has_rdtsc
+//============================================================
+
+static int has_rdtsc(void)
 {
 	int result;
 
@@ -48,41 +55,127 @@ int cpu_rdtsc(void)
 	return result;
 }
 
+
+//============================================================
+//	init_ticker
+//============================================================
+
 void init_ticker(void)
 {
-	/* if the RDTSC instruction is available use it because */
-	/* it is more precise and has less overhead than uclock() */
-	if (cpu_cpuid && cpu_rdtsc())
-	{
-		uclock_t a,b;
-		TICKER start,end;
+	uclock_t a,b;
+	cycles_t start,end;
 
-		use_rdtsc = 1;	/* must set this before calling ticker() */
+	if (cpu_cpuid && has_rdtsc())
+	{
+		// if the RDTSC instruction is available use it because
+		// it is more precise and has less overhead than uclock()
+		cycle_counter = rdtsc_cycle_counter;
+		ticks_counter = rdtsc_cycle_counter;
+		logerror("using RDTSC for timing ... ");
 
 		a = uclock();
 		/* wait some time to let everything stabilize */
 		do
 		{
 			b = uclock();
-		} while (b-a < UCLOCKS_PER_SEC/10);
+			// get the starting cycle count
+			start = (*cycle_counter)();
+		} while (b - a < UCLOCKS_PER_SEC/2);
 
-		a = uclock();
-		start = ticker();
+		// now wait for 1/2 second
 		do
 		{
-			b = uclock();
-		} while (b-a < UCLOCKS_PER_SEC/4);
-		end = ticker();
-		ticks_per_sec = (end - start)*4;
+			a = uclock();
+			// get the ending cycle count
+			end = (*cycle_counter)();
+		} while (a - b < UCLOCKS_PER_SEC/2);
 
-logerror("using RDTSC for timing, CPU speed = %d.%06d MHz\n",
-		(int)(ticks_per_sec/1000000),(int)(ticks_per_sec%1000000));
+		// compute ticks_per_sec
+		cycles_per_sec = (end - start) * 2;
 	}
 	else
 	{
-		use_rdtsc = 0;
-		ticks_per_sec = UCLOCKS_PER_SEC;
+		cycle_counter = uclock_cycle_counter;
+		ticks_counter = nop_cycle_counter;
+		logerror("using uclock for timing ... ");
 
-logerror("using uclock() for timing\n");
+		cycles_per_sec = UCLOCKS_PER_SEC;
 	}
+	// log the results
+	logerror("cycles/second = %u\n", (int)cycles_per_sec);
+}
+
+
+
+//============================================================
+//	rdtsc_cycle_counter
+//============================================================
+
+cycles_t rdtsc_cycle_counter( void )
+{
+	INT64 result;
+
+	// use RDTSC
+	__asm__ __volatile__ (
+		"rdtsc"
+		: "=A" (result)
+	);
+
+	return result;
+}
+
+
+
+//============================================================
+//	uclock_cycle_counter
+//============================================================
+
+cycles_t uclock_cycle_counter( void )
+{
+	/* this assumes that uclock_t is 64-bit (which it is) */
+	return uclock();
+}
+
+
+
+//============================================================
+//	nop_cycle_counter
+//============================================================
+
+static cycles_t nop_cycle_counter(void)
+{
+	return 0;
+}
+
+
+
+//============================================================
+//	osd_cycles
+//============================================================
+
+cycles_t osd_cycles(void)
+{
+	return (*cycle_counter)();
+}
+
+
+
+//============================================================
+//	osd_cycles_per_second
+//============================================================
+
+cycles_t osd_cycles_per_second( void )
+{
+	return cycles_per_sec;
+}
+
+
+
+//============================================================
+//	osd_profiling_ticks
+//============================================================
+
+cycles_t osd_profiling_ticks(void)
+{
+	return (*ticks_counter)();
 }

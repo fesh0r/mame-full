@@ -1,5 +1,11 @@
-#include "mamalleg.h"
 #include "driver.h"
+#include "mamalleg.h"
+#include "rc.h"
+
+#if ( ALLEGRO_VERSION >= 4 )
+extern int _joy_type;
+#define joy_type _joy_type
+#endif
 
 /* Main mouse activation flag */
 int use_mouse;
@@ -14,12 +20,16 @@ static int use_mouse_2; /* OptiMAME mouse extension, mapped on player 2 */
 static int mouse_button_2; /* OptiMAME mouse extension */
 
 int joystick;
-int use_hotrod;
 int steadykey;
 
+static struct KeyboardInfo keylist[ 256 ];
 
-
-static struct KeyboardInfo keylist[] =
+static struct
+{
+	const char *name;
+	unsigned code;
+	InputCode standardcode;
+} default_keylist[] =
 {
 	{ "A",			KEY_A,				KEYCODE_A },
 	{ "B",			KEY_B,				KEYCODE_B },
@@ -126,8 +136,31 @@ static struct KeyboardInfo keylist[] =
 	{ "SCRLOCK",    KEY_SCRLOCK,        KEYCODE_SCRLOCK },
 	{ "NUMLOCK",    KEY_NUMLOCK,        KEYCODE_NUMLOCK },
 	{ "CAPSLOCK",   KEY_CAPSLOCK,       KEYCODE_CAPSLOCK },
-	{ 0, 0, 0 }	/* end of table */
+	{ NULL, 0, 0 }	/* end of table */
 };
+
+
+static void init_key_list(void)
+{
+	int i;
+	i = 0;
+	while( default_keylist[ i ].name != NULL )
+	{
+		keylist[ i ].name = malloc( strlen( default_keylist[ i ].name ) + 1 );
+		if( keylist[ i ].name == NULL )
+		{
+			printf( "init_key_list() out of memory\n" );
+			exit( 0 );
+		}
+		strcpy( keylist[ i ].name, default_keylist[ i ].name );
+		keylist[ i ].code = default_keylist[ i ].code;
+		keylist[ i ].standardcode = default_keylist[ i ].standardcode;
+		i++;
+	}
+	keylist[ i ].name = NULL;
+	keylist[ i ].code = 0;
+	keylist[ i ].standardcode = 0;
+}
 
 
 /* return a list of all available keys */
@@ -467,16 +500,43 @@ void poll_joysticks(void)
 
 
 /* return a value in the range -128 .. 128 (yes, 128, not 127) */
-void osd_analogjoy_read(int player,int *analog_x, int *analog_y)
+void osd_analogjoy_read(int player, int analog_axis[], InputCode analogjoy_input[])
 {
-	*analog_x = *analog_y = 0;
+	int i, joy_num, stick, axis;
 
-	/* is there an analog joystick at all? */
-	if (player+1 > num_joysticks || joystick == JOY_TYPE_NONE)
-		return;
+	for (i=0; i<MAX_ANALOG_AXES; i++)
+	{
+		analog_axis[i] = 0;
+		
+		if (analogjoy_input[i] == CODE_NONE || joystick == JOY_TYPE_NONE)
+			continue;
+		
+		joy_num = GET_JOYCODE_JOY( analogjoy_input[i] );
+		if (joy_num == 0 || joy_num > num_joysticks)
+			continue;
+		joy_num--;
+		
+		stick = GET_JOYCODE_STICK( analogjoy_input[i] );
+		if (stick > joy[joy_num].num_sticks)
+			continue;
+		stick--;
+		
+		axis = GET_JOYCODE_AXIS( analogjoy_input[i] );
+		if (axis == 0 || axis > joy[joy_num].stick[stick].num_axis)
+			continue;
+		axis--;
 
-	*analog_x = joy[player].stick[0].axis[0].pos;
-	*analog_y = joy[player].stick[0].axis[1].pos;
+		analog_axis[i] = joy[joy_num].stick[stick].axis[axis].pos;
+		
+		if (GET_JOYCODE_DIR( analogjoy_input[i] ) == 2 )		/* 1 == neg, 2 == pos */
+			analog_axis[i] = -analog_axis[i];
+	}
+}
+
+
+int osd_is_joystick_axis_code(int joycode)
+{
+	return GET_JOYCODE_STICK( joycode );
 }
 
 
@@ -525,7 +585,11 @@ void osd_joystick_end_calibration (void)
 	save_joystick_data(0);
 }
 
-#include <time.h>
+void osd_lightgun_read(int player,int *deltax,int *deltay)
+{
+	*( deltax ) = 0;
+	*( deltay ) = 0;
+}
 
 void osd_trak_read(int player,int *deltax,int *deltay)
 {
@@ -555,36 +619,37 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 	}
 	else if (player == 1 && use_mouse && use_mouse_2)
 	{
-                static int skip2;
-                static int mx2,my2;
-                static __dpmi_regs r;
+		static int skip2;
+		static int mx2,my2;
+		static __dpmi_regs r;
 
-                /* Get mouse button state */
-                r.x.ax = 103;
-                __dpmi_int(0x33, &r);
-                mouse_button_2 = r.x.bx;
+		/* Get mouse button state */
+		r.x.ax = 103;
+		__dpmi_int(0x33, &r);
+		mouse_button_2 = r.x.bx;
 
 		/* get_mouse_mickeys() doesn't work when called 60 times per second,
 		   it often returns 0, so I have to call it every other frame and split
 		   the result between two frames.
 		  */
-                if (skip2)
+		if (skip2)
 		{
-                        *deltax = mx2;
-                        *deltay = my2;
-                }
-                else  /* Poll secondary mouse */
-		{
-                        r.x.ax = 111;
-                        __dpmi_int(0x33, &r);
-
-                        mx2 = (signed short)r.x.cx>>1;
-                        my2 = (signed short)r.x.dx>>1;
-
-                        *deltax = mx2;
-                        *deltay = my2;
+			*deltax = mx2;
+			*deltay = my2;
 		}
-                skip2 ^= 1;
+		else  /* Poll secondary mouse */
+		{
+			r.x.ax = 111;
+			__dpmi_int(0x33, &r);
+			mx2 = (signed short)r.x.cx;
+			my2 = (signed short)r.x.dx;
+
+			*deltax = mx2/2;
+			*deltay = my2/2;
+			mx2 -= *deltax;
+			my2 -= *deltay;
+		}
+		skip2 ^= 1;
 	}
 	else
 	{
@@ -597,87 +662,359 @@ void osd_trak_read(int player,int *deltax,int *deltay)
 #ifndef MESS
 #ifndef TINY_COMPILE
 #ifndef CPSMAME
+#ifndef MMSND
 extern int no_of_tiles;
 extern struct GameDriver driver_neogeo;
 #endif
 #endif
 #endif
+#endif
 
-void osd_customize_inputport_defaults(struct ipd *defaults)
+int verbose = 0;
+
+const char*			ctrlrtype;
+static const char*			ctrlrname;
+static const char*			trackball_ini;
+static const char*			paddle_ini;
+static const char*			dial_ini;
+static const char*			ad_stick_ini;
+static const char*			pedal_ini;
+static const char*			lightgun_ini;
+
+// this is used for the ipdef_custom_rc_func
+static struct ipd 			*ipddef_ptr = NULL;
+
+static int					num_osd_ik = 0;
+//static int					size_osd_ik = 0;
+
+struct rc_option *ctrlr_input_opts = NULL;
+
+char s_mousedeflt[ 16 ];
+
+struct rc_option ctrlr_input_opts2[] =
 {
-	if (use_hotrod)
+	/* name, shortname, type, dest, deflt, min, max, func, help */
+	{ "ctrlrname", NULL, rc_string, &ctrlrname, 0, 0, 0, NULL, "name of controller" },
+	{ "trackball_ini", NULL, rc_string, &trackball_ini, 0, 0, 0, NULL, "ctrlr opts if game has TRACKBALL input" },
+	{ "paddle_ini", NULL, rc_string, &paddle_ini, 0, 0, 0, NULL, "ctrlr opts if game has PADDLE input" },
+	{ "dial_ini", NULL, rc_string, &dial_ini, 0, 0, 0, NULL, "ctrlr opts if game has DIAL input" },
+	{ "ad_stick_ini", NULL, rc_string, &ad_stick_ini, 0, 0, 0, NULL, "ctrlr opts if game has AD STICK input" },
+	{ "lightgun_ini", NULL, rc_string, &lightgun_ini, 0, 0, 0, NULL, "ctrlr opts if game has LIGHTGUN input" },
+	{ "pedal_ini", NULL, rc_string, &pedal_ini, 0, 0, 0, NULL, "ctrlr opts if game has PEDAL input" },
+	{ "mouse", NULL, rc_bool, &use_mouse, s_mousedeflt, 0, 0, NULL, "enable mouse input" },
+	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+};
+
+struct rc_struct *rc = NULL;
+
+void process_ctrlr_file(struct rc_struct *iptrc, const char *ctype, const char *filename)
+{
+	mame_file *f;
+
+	// open the specified controller type/filename
+	f = mame_fopen (ctype, filename, FILETYPE_CTRLR, 0);
+
+	if (f)
 	{
-		while (defaults->type != IPT_END)
+		if (verbose)
 		{
-			int j;
-			for(j=0;j<SEQ_MAX;++j)
-			{
-				if (defaults->seq[j] == KEYCODE_UP) defaults->seq[j] = KEYCODE_8_PAD;
-				if (defaults->seq[j] == KEYCODE_DOWN) defaults->seq[j] = KEYCODE_2_PAD;
-				if (defaults->seq[j] == KEYCODE_LEFT) defaults->seq[j] = KEYCODE_4_PAD;
-				if (defaults->seq[j] == KEYCODE_RIGHT) defaults->seq[j] = KEYCODE_6_PAD;
-			}
-			if (defaults->type == IPT_UI_SELECT) seq_set_1(&defaults->seq, KEYCODE_LCONTROL);
-			if (defaults->type == IPT_START1) seq_set_1(&defaults->seq, KEYCODE_1);
-			if (defaults->type == IPT_START2) seq_set_1(&defaults->seq, KEYCODE_2);
-			if (defaults->type == IPT_COIN1)  seq_set_1(&defaults->seq, KEYCODE_3);
-			if (defaults->type == IPT_COIN2)  seq_set_1(&defaults->seq, KEYCODE_4);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_R);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_F);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_D);
-			if (defaults->type == (IPT_JOYSTICKRIGHT_RIGHT | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_G);
-			if (defaults->type == (IPT_JOYSTICKLEFT_UP     | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_8_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_DOWN   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_2_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_LEFT   | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_4_PAD);
-			if (defaults->type == (IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_6_PAD);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LCONTROL);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LALT);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_SPACE);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
-			if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_A);
-			if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_S);
-			if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_Q);
-			if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
-			if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
-			if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
+			if (ctype)
+				fprintf (stderr, "trying to parse ctrlr file %s/%s.ini\n", ctype, filename);
+			else
+				fprintf (stderr, "trying to parse ctrlr file %s.ini\n", filename);
+		}
 
-#ifndef MESS
-#ifndef TINY_COMPILE
-#ifndef CPSMAME
-			if (use_hotrod == 2 &&
-					(Machine->gamedrv->clone_of == &driver_neogeo ||
-					(Machine->gamedrv->clone_of && Machine->gamedrv->clone_of->clone_of == &driver_neogeo)))
+		// process this file
+		if(osd_rc_read(iptrc, f, filename, 1, 1))
+		{
+			if (verbose)
 			{
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_C);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_LSHIFT);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_Z);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_X);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER1)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON1 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_CLOSEBRACE);
-				if (defaults->type == (IPT_BUTTON2 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_W);
-				if (defaults->type == (IPT_BUTTON3 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_E);
-				if (defaults->type == (IPT_BUTTON4 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_OPENBRACE);
-				if (defaults->type == (IPT_BUTTON5 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON6 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON7 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
-				if (defaults->type == (IPT_BUTTON8 | IPF_PLAYER2)) seq_set_1(&defaults->seq,KEYCODE_NONE);
+				if (ctype)
+					fprintf (stderr, "problem parsing ctrlr file %s/%s.ini\n", ctype, filename);
+				else
+					fprintf (stderr, "problem parsing ctrlr file %s.ini\n", filename);
 			}
-#endif
-#endif
-#endif
-
-			defaults++;
 		}
 	}
+
+	// close the file
+	if (f)
+		mame_fclose (f);
+}
+
+void process_ctrlr_game(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
+{
+	// recursive call to process parents first
+	if (drv->clone_of)
+		process_ctrlr_game (iptrc, ctype, drv->clone_of);
+
+	// now process this game
+	if (drv->name && *(drv->name) != 0)
+		process_ctrlr_file (iptrc, ctype, drv->name);
+}
+
+// nice hack: load source_file.ini (omit if referenced later any)
+void process_ctrlr_system(struct rc_struct *iptrc, const char *ctype, const struct GameDriver *drv)
+{
+	char buffer[128];
+	const struct GameDriver *tmp_gd;
+
+	sprintf(buffer, "%s", drv->source_file+12);
+	buffer[strlen(buffer) - 2] = 0;
+
+	tmp_gd = drv;
+	while (tmp_gd != NULL)
+	{
+		if (strcmp(tmp_gd->name, buffer) == 0) break;
+		tmp_gd = tmp_gd->clone_of;
+	}
+
+	// not referenced later, so load it here
+	if (tmp_gd == NULL)
+		// now process this system
+		process_ctrlr_file (iptrc, ctype, buffer);
+}
+
+static int ipdef_custom_rc_func(struct rc_option *option, const char *arg, int priority)
+{
+	struct ik *pinput_keywords = (struct ik *)option->dest;
+	struct ipd *idef = ipddef_ptr;
+
+	// only process the default definitions if the input port definitions
+	// pointer has been defined
+	if (idef)
+	{
+		// if a keycode was re-assigned
+		if (pinput_keywords->type == IKT_STD)
+		{
+			InputSeq is;
+
+			// get the new keycode
+			seq_set_string (&is, arg);
+
+			// was a sequence was assigned to a keycode? - not valid!
+			if (is[1] != CODE_NONE)
+			{
+				fprintf(stderr, "error: can't map \"%s\" to \"%s\"\n",pinput_keywords->name,arg);
+			}
+
+			// for all definitions
+			while (idef->type != IPT_END)
+			{
+				int j;
+
+				// reassign all matching keystrokes to the given argument
+				for (j = 0; j < SEQ_MAX; j++)
+				{
+					// if the keystroke matches
+					if (idef->seq[j] == pinput_keywords->val)
+					{
+						// re-assign
+						idef->seq[j] = is[0];
+					}
+				}
+				// move to the next definition
+				idef++;
+			}
+		}
+
+		// if an input definition was re-defined
+		else if (pinput_keywords->type == IKT_IPT ||
+                 pinput_keywords->type == IKT_IPT_EXT)
+		{
+			// loop through all definitions
+			while (idef->type != IPT_END)
+			{
+				// if the definition matches
+				if (idef->type == pinput_keywords->val)
+				{
+                    if (pinput_keywords->type == IKT_IPT_EXT)
+                        idef++;
+					seq_set_string(&idef->seq, arg);
+					// and abort (there shouldn't be duplicate definitions)
+					break;
+				}
+
+				// move to the next definition
+				idef++;
+			}
+		}
+	}
+
+	return 0;
 }
 
 
+void osd_customize_inputport_defaults(struct ipd *defaults)
+{
+	int i;
 
+	sprintf( s_mousedeflt, "%d", use_mouse );
+
+	// create a structure for the input port options
+	if (!(ctrlr_input_opts = calloc (num_ik+num_osd_ik+1, sizeof(struct rc_option))))
+	{
+		fprintf(stderr, "error on ctrlr_input_opts creation\n");
+		exit(1);
+	}
+
+	// Populate the structure with the input_keywords.
+	// For all, use the ipdef_custom_rc_func callback.
+	// Also, reference the original ik structure.
+	for (i=0; i<num_ik+num_osd_ik; i++)
+	{
+		if (i < num_ik)
+		{
+	   		ctrlr_input_opts[i].name = input_keywords[i].name;
+			ctrlr_input_opts[i].dest = (void *)&input_keywords[i];
+		}
+		else
+		{
+	   		ctrlr_input_opts[i].name = osd_input_keywords[i-num_ik].name;
+			ctrlr_input_opts[i].dest = (void *)&osd_input_keywords[i-num_ik];
+		}
+		ctrlr_input_opts[i].shortname = NULL;
+		ctrlr_input_opts[i].type = rc_use_function;
+		ctrlr_input_opts[i].deflt = NULL;
+		ctrlr_input_opts[i].min = 0.0;
+		ctrlr_input_opts[i].max = 0.0;
+		ctrlr_input_opts[i].func = ipdef_custom_rc_func;
+		ctrlr_input_opts[i].help = NULL;
+		ctrlr_input_opts[i].priority = 0;
+	}
+
+	// add an end-of-opts indicator
+	ctrlr_input_opts[i].type = rc_end;
+
+	if (rc_register(rc, ctrlr_input_opts))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts\n");
+		exit(1);
+	}
+
+	if (rc_register(rc, ctrlr_input_opts2))
+	{
+		fprintf (stderr, "error on registering ctrlr_input_opts2\n");
+		exit(1);
+	}
+
+	// set a static variable for the ipdef_custom_rc_func callback
+	ipddef_ptr = defaults;
+
+	// process the main platform-specific default file
+	process_ctrlr_file (rc, NULL, "msdos");
+
+	// if a custom controller has been selected
+	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
+	{
+		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
+		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
+
+		// process the controller-specific default file
+		process_ctrlr_file (rc, ctrlrtype, "default");
+
+		// process the system-specific files for this controller
+		process_ctrlr_system (rc, ctrlrtype, Machine->gamedrv);
+
+		// process the game-specific files for this controller
+		process_ctrlr_game (rc, ctrlrtype, Machine->gamedrv);
+
+
+		while ((input->type & ~IPF_MASK) != IPT_END)
+		{
+			switch (input->type & ~IPF_MASK)
+			{
+				case IPT_PADDLE:
+				case IPT_PADDLE_V:
+					if (!paddle)
+					{
+						if ((paddle_ini != NULL) && (*paddle_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, paddle_ini);
+						paddle = 1;
+					}
+					break;
+
+				case IPT_DIAL:
+				case IPT_DIAL_V:
+					if (!dial)
+					{
+						if ((dial_ini != NULL) && (*dial_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, dial_ini);
+						dial = 1;
+					}
+					break;
+
+				case IPT_TRACKBALL_X:
+				case IPT_TRACKBALL_Y:
+					if (!trackball)
+					{
+						if ((trackball_ini != NULL) && (*trackball_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, trackball_ini);
+						trackball = 1;
+					}
+					break;
+
+				case IPT_AD_STICK_X:
+				case IPT_AD_STICK_Y:
+					if (!adstick)
+					{
+						if ((ad_stick_ini != NULL) && (*ad_stick_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, ad_stick_ini);
+						adstick = 1;
+					}
+					break;
+
+				case IPT_LIGHTGUN_X:
+				case IPT_LIGHTGUN_Y:
+					if (!lightgun)
+					{
+						if ((lightgun_ini != NULL) && (*lightgun_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, lightgun_ini);
+						lightgun = 1;
+					}
+					break;
+
+				case IPT_PEDAL:
+					if (!pedal)
+					{
+						if ((pedal_ini != NULL) && (*pedal_ini != 0))
+							process_ctrlr_file (rc, ctrlrtype, pedal_ini);
+						pedal = 1;
+					}
+					break;
+
+			}
+			++input;
+		}
+	}
+
+	// print the results
+	if (verbose)
+	{
+		if (ctrlrname)
+			fprintf (stderr,"\"%s\" controller support enabled\n",ctrlrname);
+	}
+	if (use_mouse)
+	{
+		__dpmi_regs r;
+
+		/* Initialize the Allegro mouse */
+		use_mouse_1 = install_mouse() != -1;
+
+		/* Initialize the custom MAME mouse driver extension */
+		r.x.ax = 100;
+		__dpmi_int(0x33, &r);
+		use_mouse_2 = r.x.ax != 100 && r.x.ax != 0;
+
+		if (!use_mouse_1 && !use_mouse_2)
+			use_mouse = 0;
+	}
+	else
+	{
+		use_mouse_1 = 0;
+		use_mouse_2 = 0;
+	}
+}
 
 void msdos_init_input (void)
 {
@@ -686,6 +1023,13 @@ void msdos_init_input (void)
 	install_keyboard();
 /* ALLEGRO BUG: the following hangs on many machines */
 //	set_leds(0);    /* turn off all leds */
+
+	/* create the rc object */
+	if (!(rc = rc_create()))
+	{
+		fprintf (stderr, "error on rc creation\n");
+		exit(1);
+	}
 
 	if (joystick != JOY_TYPE_NONE)
 	{
@@ -723,32 +1067,22 @@ void msdos_init_input (void)
 					joystick_driver->name, joystick_driver->desc);
 	}
 
+	init_key_list();
 	init_joy_list();
-
-	if (use_mouse)
-	{
-                __dpmi_regs r;
-
-		/* Initialize the Allegro mouse */
-		use_mouse_1 = install_mouse() != -1;
-
-		/* Initialize the custom MAME mouse driver extension */
-                r.x.ax = 100;
-                __dpmi_int(0x33, &r);
-                use_mouse_2 = r.x.ax != 100 && r.x.ax != 0;
-
-		if (!use_mouse_1 && !use_mouse_2)
-			use_mouse = 0;
-	}
-	else
-	{
-		use_mouse_1 = 0;
-		use_mouse_2 = 0;
-	}
 }
 
 
 void msdos_shutdown_input(void)
 {
+	if( rc != NULL )
+	{
+		rc_destroy( rc );
+		rc = NULL;
+	}
+	if( ctrlr_input_opts != NULL )
+	{
+		free( ctrlr_input_opts );
+		ctrlr_input_opts = NULL;
+	}
 	remove_keyboard();
 }

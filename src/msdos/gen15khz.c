@@ -1,5 +1,5 @@
-#include "mamalleg.h"
 #include "driver.h"
+#include "mamalleg.h"
 #include <pc.h>
 #include <conio.h>
 #include <sys/farptr.h>
@@ -19,7 +19,7 @@ static int display_interlaced=0;  /* interlaced display */
 
 extern int video_sync;
 extern int wait_vsync;
-extern int use_triplebuf;
+extern int triple_buffer;
 extern int unchained;
 
 /* Generic SVGA 15.75KHz code and SVGA 15.75KHz driver selection */
@@ -107,10 +107,9 @@ int getSVGA15KHzdriver(SVGA15KHZDRIVER **driver15KHz)
 	return 0;
 }
 
-/* generic SVGA detect, always returns true and turns off SVGA triple buffering */
+/* generic SVGA detect, always returns true */
 int genericsvga()
 {
-	use_triplebuf = 0;
 	return 1;
 }
 
@@ -120,6 +119,11 @@ int genericsvga()
 /* this means the scanrate can be lowered to arcade monitor rates without altering the card's dot clock */
 int widthgeneric15KHz(int width)
 {
+	if( triple_buffer )
+	{
+		logerror( "widthgeneric15KHz(): triple buffer disabled\n" );
+		triple_buffer = 0;
+	}
 	return width << 1;
 }
 

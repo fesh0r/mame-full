@@ -7,7 +7,7 @@
 
 [BITS 32]
 
-extern _palette_16bit_lookup			; for 16 bit palettized mode
+extern _blit_lookup_low					; for 16 bit palettized mode
 										; assuming entries are _doubled_
 										; to their respective 32 bit values
 
@@ -105,7 +105,7 @@ align 16								; align the loop
 	mov eax, 0
 	mov ebx, 0
 
-	mov edx, [_palette_16bit_lookup]
+	mov edx, _blit_lookup_low
 
 	mov ax, [esi + 0]
 	mov bx, [esi + 2]

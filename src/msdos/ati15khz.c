@@ -1,5 +1,5 @@
-#include "mamalleg.h"
 #include "driver.h"
+#include "mamalleg.h"
 #include <pc.h>
 #include <conio.h>
 #include <sys/farptr.h>
@@ -14,7 +14,7 @@
 
 extern int center_x;
 extern int center_y;
-extern int use_triplebuf;
+extern int triple_buffer;
 
 /* Save values */
 static int DSPSet;
@@ -35,12 +35,11 @@ static int SaveDSPConfig;
 /* cards which have internal clocks */
 /* The second should work on all Mach64 based cards */
 
-/* Comment out the following line to use the no-clock programming driver */
-#define ATI_PROGRAM_CLOCK
-
+/* Automatically selected depending on the clock type read from the card */
+int AtiProgramClock;
 
 /* Type of clock */
-char *mach64ClockTypeTable[] =
+const char *mach64ClockTypeTable[] =
 {
 	"ATI18818-0",
 	"ATI18818-1/ICS2595",
@@ -390,35 +389,42 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 	MemType = old & CFG_MEM_TYPE_xT;
 	logerror("15.75KHz: Video Memory  Type %d\n",MemType);
 
-#ifdef ATI_PROGRAM_CLOCK
-/* only bail out here if the clock's wrong  */
-/* so we can collect as much info as possible about the card  */
-/* - just in case I ever feel like adding RAMDAC support  */
-	if (Clock_Type != CLK_INTERNAL)
+	/* drop down to software pixel doubling if the clock is not supported */
+	if( Clock_Type != CLK_INTERNAL )
 	{
-		logerror("15.75KHz: Clock type not supported, only internal clocks implemented\n");
-		return 0;
+		logerror("15.75KHz: Found Mach64 based card with external clock\n");
+		AtiProgramClock = 0;
 	}
-#endif
+	else
+	{
+		logerror("15.75KHz: Found Mach64 based card with internal clock\n");
+		AtiProgramClock = 1;
+	}
 
 	DSPSet=0;
 
-	logerror("15.75KHz: Found Mach64 based card with internal clock\n");
 	return 1;
 }
 
 int widthati15KHz(int width)
 {
-#ifdef ATI_PROGRAM_CLOCK
+	if( AtiProgramClock )
+	{
 /* standard width */
-	return width;
-#else
+		return width;
+	}
+	else
+	{
 /* double width scan line */
 /* turn off triple buffering */
-	use_triplebuf = 0;
+		if( triple_buffer )
+		{
+			logerror( "widthati15KHz() triple buffer disabled\n" );
+			triple_buffer = 0;
+		}
 /* and return the actual width of the mode */
-	return width << 1;
-#endif
+		return width << 1;
+	}
 }
 
 int setati15KHz(int vdouble,int width, int height)
@@ -434,9 +440,6 @@ int setati15KHz(int vdouble,int width, int height)
 	int dispdouble;
 	long int temp;
 	long int gen;
-#ifdef ATI_PROGRAM_CLOCK
-  	int temp1,temp2,temp3;
-#endif
 	int	lastvisline;
 	int	vTotal;
 
@@ -462,57 +465,59 @@ int setati15KHz(int vdouble,int width, int height)
 /* unlock the regs and disable the CRTC */
 	outportw (_mach64_gen_cntrl, gen & ~(CRTC_FLAG_lock_regs|CRTC_FLAG_enable_crtc));
 
-#ifdef ATI_PROGRAM_CLOCK
 /* we need to program the DSP - otherwise we'll get nasty artifacts all over the screen */
 /* when we change the clock speed */
-	if (((ChipType == MACH64_VT || ChipType == MACH64_GT)&&(ChipRev & 0x07)))
+	if( AtiProgramClock )
 	{
-		logerror("15.75KHz: Programming the DSP\n");
-		if (!setmach64DSP(0))
+	  	int temp1,temp2,temp3;
+		if(((ChipType == MACH64_VT || ChipType == MACH64_GT)&&(ChipRev & 0x07)))
 		{
-			outportl (_mach64_gen_cntrl, gen);
-			return 0;
+			logerror("15.75KHz: Programming the DSP\n");
+			if (!setmach64DSP(0))
+			{
+				outportl (_mach64_gen_cntrl, gen);
+				return 0;
+			}
 		}
-	}
-	else
-	{
-		logerror("15.75KHz: Decided NOT to program the DSP\n");
-	}
+		else
+		{
+			logerror("15.75KHz: Decided NOT to program the DSP\n");
+		}
 
 /* now we can program the clock */
-	outportb (_mach64_clock_reg + 1, PLL_VCLK_CNTL << 2);
-	temp1 = inportb (_mach64_clock_reg + 2);
-	outportb (_mach64_clock_reg + 1, (PLL_VCLK_CNTL  << 2) | PLL_WR_EN);
-	outportb (_mach64_clock_reg + 2, temp1 | 4);
+		outportb (_mach64_clock_reg + 1, PLL_VCLK_CNTL << 2);
+		temp1 = inportb (_mach64_clock_reg + 2);
+		outportb (_mach64_clock_reg + 1, (PLL_VCLK_CNTL  << 2) | PLL_WR_EN);
+		outportb (_mach64_clock_reg + 2, temp1 | 4);
 
 
-	outportb (_mach64_clock_reg + 1, (VCLK_POST_DIV << 2));
-	temp2 = inportb (_mach64_clock_reg + 2);
+		outportb (_mach64_clock_reg + 1, (VCLK_POST_DIV << 2));
+		temp2 = inportb (_mach64_clock_reg + 2);
 
 
-	outportb (_mach64_clock_reg + 1, ((VCLK0_FB_DIV + CXClk) << 2) | PLL_WR_EN);
-	outportb (_mach64_clock_reg +2,n);
+		outportb (_mach64_clock_reg + 1, ((VCLK0_FB_DIV + CXClk) << 2) | PLL_WR_EN);
+		outportb (_mach64_clock_reg +2,n);
 
-	outportb (_mach64_clock_reg + 1, (VCLK_POST_DIV << 2) | PLL_WR_EN);
-	outportb (_mach64_clock_reg + 2, (temp2 & ~(0x03 << (2 * CXClk))) | (P << (2 * CXClk)));
+		outportb (_mach64_clock_reg + 1, (VCLK_POST_DIV << 2) | PLL_WR_EN);
+		outportb (_mach64_clock_reg + 2, (temp2 & ~(0x03 << (2 * CXClk))) | (P << (2 * CXClk)));
 
-	outportb (_mach64_clock_reg + 1, PLL_XCLK_CNTL << 2);
-	temp3 = inportb (_mach64_clock_reg + 2);
-	outportb (_mach64_clock_reg + 1, (PLL_XCLK_CNTL << 2) | PLL_WR_EN);
+		outportb (_mach64_clock_reg + 1, PLL_XCLK_CNTL << 2);
+		temp3 = inportb (_mach64_clock_reg + 2);
+		outportb (_mach64_clock_reg + 1, (PLL_XCLK_CNTL << 2) | PLL_WR_EN);
 
-	if (extdiv)
-		outportb (_mach64_clock_reg + 2, temp3 | (1 << (CXClk + 4)));
-	else
-		outportb (_mach64_clock_reg + 2, temp3 & ~(1 << (CXClk + 4)));
+		if (extdiv)
+			outportb (_mach64_clock_reg + 2, temp3 | (1 << (CXClk + 4)));
+		else
+			outportb (_mach64_clock_reg + 2, temp3 & ~(1 << (CXClk + 4)));
 
 
 
-	outportb (_mach64_clock_reg + 1, (PLL_VCLK_CNTL << 2) | PLL_WR_EN);
-	outportb (_mach64_clock_reg + 2, temp1&~0x04);
+		outportb (_mach64_clock_reg + 1, (PLL_VCLK_CNTL << 2) | PLL_WR_EN);
+		outportb (_mach64_clock_reg + 2, temp1&~0x04);
 
 /* reset the DAC */
-	inportb (_mach64_dac_cntl);
-#endif
+		inportb (_mach64_dac_cntl);
+	}
 
 	logerror("15.75KHz: H total %d, H display %d, H sync offset %d\n",nHzTotal,nHzDisplay,nHzSyncOffset);
 	logerror("15.75KHz: V total %d, V display %d, V sync offset %d\n",vTotal,lastvisline,nVSyncOffset);
@@ -523,11 +528,14 @@ int setati15KHz(int vdouble,int width, int height)
 	outportb (_mach64_crtc_h_total + 2, nHzDisplay); /* h display width */
 	outportb (_mach64_crtc_h_sync, nHzDisplay+nHzSyncOffset + center_x);   /* h sync start */
 	outportb (_mach64_crtc_h_sync + 1, 0);  /* h sync delay */
-#ifdef ATI_PROGRAM_CLOCK
-	outportb (_mach64_crtc_h_sync + 2, 12); /* h sync width */
-#else
-	outportb (_mach64_crtc_h_sync + 2, 20); /* h sync width */
-#endif
+	if( AtiProgramClock )
+	{
+		outportb (_mach64_crtc_h_sync + 2, 12); /* h sync width */
+	}
+	else
+	{
+		outportb (_mach64_crtc_h_sync + 2, 20); /* h sync width */
+	}
 	outportw (_mach64_crtc_v_total, (vTotal<<interlace));   /* v total */
 	outportw (_mach64_crtc_v_total + 2, (lastvisline<<interlace)-1);  /* v display height */
 	outportw (_mach64_crtc_v_sync, ((lastvisline+nVSyncOffset)<<interlace) + center_y);    /* v sync start */
@@ -657,22 +665,24 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 
 			return 0;
 	}
-#ifdef ATI_PROGRAM_CLOCK
+	if( AtiProgramClock )
+	{
 /* calculate the clock */
-	*nActualMHz = calc_mach64_clock (nTargetMHz, N, P, externaldiv);
+		*nActualMHz = calc_mach64_clock (nTargetMHz, N, P, externaldiv);
 /* adjust the horizontal total */
-	nActualHzTotal = (int)(((float)nTargetHzTotal / (float)nTargetMHz) * (float)*nActualMHz);
-	logerror("15.75KHz: tgt MHz:%d, act MHz:%d, tgt HzTot:%d, act HzTot:%d\n",
-				nTargetMHz, *nActualMHz, nTargetHzTotal, nActualHzTotal);
-#else
+		nActualHzTotal = (int)(((float)nTargetHzTotal / (float)nTargetMHz) * (float)*nActualMHz);
+		logerror("15.75KHz: tgt MHz:%d, act MHz:%d, tgt HzTot:%d, act HzTot:%d\n",
+			nTargetMHz, *nActualMHz, nTargetHzTotal, nActualHzTotal);
+	}
+	else
+	{
 /* not programming the clock, so setup a double width scan line */
-	*nActualMHz = 0;
-	nActualHzTotal = tw640x480arc_h + 5;
-	*nHzDispTotal = (*nHzDispTotal * 2) + 1;
-	*nHzSyncOffset = 0;
-	logerror("15.75KHz: HzTot:%d\n", nActualHzTotal);
-
-#endif
+		*nActualMHz = 0;
+		nActualHzTotal = tw640x480arc_h + 5;
+		*nHzDispTotal = (*nHzDispTotal * 2) + 1;
+		*nHzSyncOffset = 0;
+		logerror("15.75KHz: HzTot:%d\n", nActualHzTotal);
+	}
 
 	*nHzTotal = nActualHzTotal;
 	return 1;

@@ -1,360 +1,1457 @@
-#include "mamalleg.h"
 #include "driver.h"
-#include <sys/farptr.h>
-#include <go32.h>
-#include "dirty.h"
-/* for VGA triple buffer - we need the register structure */
-#include "gen15khz.h"
+#include "mamalleg.h"
+#include "blit.h"
 
-
-/* from video.c (required for 15.75KHz Arcade Monitor Modes) */
-extern int half_yres;
-extern int unchained;
-
-extern char *dirty_new;
-
-extern int gfx_xoffset;
-extern int gfx_yoffset;
-extern int gfx_display_lines;
-extern int gfx_display_columns;
-extern int gfx_width;
-extern int gfx_height;
-extern int skiplines;
-extern int skipcolumns;
-extern int use_triplebuf;
-extern int triplebuf_pos,triplebuf_page_width;
+/* from video.c */
 extern int mmxlfb;
 
-unsigned int doublepixel[256];
-unsigned int quadpixel[256]; /* for quadring pixels */
+static int display_pos;
+static int display_pages;
+static int display_page_size;
 
-UINT32 *palette_16bit_lookup;
+static int blit_laceline;
+static int blit_lacecolumn;
 
+static int blit_screenwidth;
+static int blit_sbpp;
+static int blit_dbpp;
+static int blit_xmultiply;
+static int blit_ymultiply;
+static int blit_sxdivide;
+static int blit_sydivide;
+static int blit_dxdivide;
+static int blit_dydivide;
+static int blit_hscanlines;
+static int blit_vscanlines;
+static int blit_flipx;
+static int blit_flipy;
+static int blit_swapxy;
+static unsigned long blit_cmultiply = 0x00000001;
 
-/* current 'page' for unchained modes */
-static int xpage = -1;
-/*default page sizes for non-triple buffering */
-int xpage_size = 0x8000;
-int no_xpages = 2;
+static unsigned char line_buf[ 65536 ];
 
-/* this function lifted from Allegro */
-static int vesa_scroll_async(int x, int y)
+UINT32 blit_lookup_low[ 65536 ];
+UINT32 blit_lookup_high[ 65536 ];
+
+static unsigned char *copyline_raw( unsigned char *p_src, unsigned int n_width, int n_pixelmodulo )
 {
-   int ret;
-	#define BYTES_PER_PIXEL(bpp)     (((int)(bpp) + 7) / 8)	/* in Allegro */
-	extern __dpmi_regs _dpmi_reg;	/* in Allegro... I think */
-
-//   vesa_xscroll = x;
-//   vesa_yscroll = y;
-
-#if 0
-   int seg;
-   long a;
-	extern void (*_pm_vesa_scroller)(void);	/* in Allegro */
-	extern int _mmio_segment;	/* in Allegro */
-   if (_pm_vesa_scroller) {            /* use protected mode interface? */
-      seg = _mmio_segment ? _mmio_segment : _my_ds();
-
-      a = ((x * BYTES_PER_PIXEL(screen->vtable->color_depth)) +
-	   (y * (((UINT8 *)screen->line[1]) - ((UINT8 *)screen->line[0])))) / 4;
-
-      asm (
-	 "  pushw %%es ; "
-	 "  movw %w1, %%es ; "         /* set the IO segment */
-	 "  call *%0 ; "               /* call the VESA function */
-	 "  popw %%es "
-
-      :                                /* no outputs */
-
-      : "S" (_pm_vesa_scroller),       /* function pointer in esi */
-	"a" (seg),                     /* IO segment in eax */
-	"b" (0x00),                    /* mode in ebx */
-	"c" (a & 0xFFFF),              /* low word of address in ecx */
-	"d" (a >> 16)                  /* high word of address in edx */
-
-//      : "memory", "%edi", "%cc"        /* clobbers edi and flags */
-		: "memory", "%ebp", "%edi", "%cc" /* clobbers ebp, edi and flags (at least) */
-      );
-
-      ret = 0;
-   }
-   else
-#endif
-   {                              /* use a real mode interrupt call */
-      _dpmi_reg.x.ax = 0x4F07;
-      _dpmi_reg.x.bx = 0;
-      _dpmi_reg.x.cx = x;
-      _dpmi_reg.x.dx = y;
-
-      __dpmi_int(0x10, &_dpmi_reg);
-      ret = _dpmi_reg.h.ah;
-
-//      _vsync_in();
-   }
-
-   return (ret ? -1 : 0);
+	return p_src;
 }
 
-
-void blitscreen_dirty1_vga(struct osd_bitmap *bitmap)
+static unsigned char *copyline_invalid( unsigned char *p_src, unsigned int n_width, int n_pixelmodulo )
 {
-	int width4, x, y;
-	unsigned long *lb, address;
+	logerror( "copyline_invalid\n" );
+	return p_src;
+}
 
-	width4 = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) / 4;
-	address = 0xa0000 + gfx_xoffset + gfx_yoffset * gfx_width;
-	lb = (unsigned long *)(((UINT8 *)bitmap->line[skiplines]) + skipcolumns);
+static unsigned char *( *blit_copyline )( unsigned char *p_src, unsigned int n_width, int n_pixelmodulo ) = copyline_invalid;
 
-	for (y = 0; y < gfx_display_lines; y += 16)
+#define COPYLINE( NAME ) \
+static unsigned char *NAME( unsigned char *p_src, unsigned int n_width, int n_pixelmodulo ) \
+{ \
+	unsigned int n_pos; \
+	unsigned char *p_dst; \
+\
+	p_dst = line_buf; \
+\
+	n_pos = n_width; \
+	while( n_pos > 0 ) \
+	{ \
+
+#define COPYLINE_END \
+		n_pos--; \
+	} \
+	return line_buf; \
+} \
+
+/* 8bpp */
+
+COPYLINE( copyline_1x_8bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x000000ff ) | ( n_p2 & 0x0000ff00 ) | ( n_p3 & 0x00ff0000 ) | ( n_p4 & 0xff000000 ); p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_8bpp_palettized_8bpp copyline_1x_8bpp_palettized_8bpp
+
+COPYLINE( copyline_2x_8bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p3 & 0x0000ffff ) | ( n_p4 & 0xffff0000 ); p_dst += 4;
+COPYLINE_END
+
+#define copyline_2xs_8bpp_palettized_8bpp copyline_2x_8bpp_palettized_8bpp
+
+COPYLINE( copyline_3x_8bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x00ffffff ) | ( n_p2 & 0xff000000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0x0000ffff ) | ( n_p3 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p3 & 0x000000ff ) | ( n_p4 & 0xffffff00 ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_8bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xff000000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0x000000ff ) | ( n_p3 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p4 & 0x00ffff00 ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4x_8bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+#define copyline_4xs_8bpp_palettized_8bpp copyline_4x_8bpp_palettized_8bpp
+
+#define copyline_1x_8bpp_direct_8bpp copyline_invalid
+#define copyline_1xs_8bpp_direct_8bpp copyline_invalid
+#define copyline_2x_8bpp_direct_8bpp copyline_invalid
+#define copyline_2xs_8bpp_direct_8bpp copyline_invalid
+#define copyline_3x_8bpp_direct_8bpp copyline_invalid
+#define copyline_3xs_8bpp_direct_8bpp copyline_invalid
+#define copyline_4x_8bpp_direct_8bpp copyline_invalid
+#define copyline_4xs_8bpp_direct_8bpp copyline_invalid
+
+COPYLINE( copyline_1x_16bpp_palettized_8bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = ( n_p1 & 0x00ff ) | ( n_p2 & 0xff00 ); p_dst += 2;
+COPYLINE_END
+
+#define copyline_1xs_16bpp_palettized_8bpp copyline_1x_16bpp_palettized_8bpp
+
+COPYLINE( copyline_2x_16bpp_palettized_8bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 2;
+	*( (UINT16 *)p_dst ) = n_p2; p_dst += 2;
+COPYLINE_END
+
+#define copyline_2xs_16bpp_palettized_8bpp   copyline_2x_16bpp_palettized_8bpp
+
+COPYLINE( copyline_3x_16bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x00ffffff ) | ( n_p2 & 0xff000000 ); p_dst += 4;
+	*( (UINT16 *)p_dst ) = ( n_p2 & 0x0000ffff ); p_dst += 2;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_16bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xff000000 ); p_dst += 4;
+	*( (UINT16 *)p_dst ) = ( n_p2 & 0x000000ff ); p_dst += 2;
+COPYLINE_END
+
+COPYLINE( copyline_4x_16bpp_palettized_8bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+#define copyline_4xs_16bpp_palettized_8bpp copyline_4x_16bpp_palettized_8bpp
+
+#define copyline_1x_16bpp_direct_8bpp copyline_1x_16bpp_palettized_8bpp
+#define copyline_1xs_16bpp_direct_8bpp copyline_1xs_16bpp_palettized_8bpp
+#define copyline_2x_16bpp_direct_8bpp copyline_2x_16bpp_palettized_8bpp
+#define copyline_2xs_16bpp_direct_8bpp copyline_2xs_16bpp_palettized_8bpp
+#define copyline_3x_16bpp_direct_8bpp copyline_3x_16bpp_palettized_8bpp
+#define copyline_3xs_16bpp_direct_8bpp copyline_3xs_16bpp_palettized_8bpp
+#define copyline_4x_16bpp_direct_8bpp copyline_4x_16bpp_palettized_8bpp
+#define copyline_4xs_16bpp_direct_8bpp copyline_4xs_16bpp_palettized_8bpp
+
+#define copyline_1x_32bpp_palettized_8bpp copyline_invalid
+#define copyline_1xs_32bpp_palettized_8bpp copyline_invalid
+#define copyline_2x_32bpp_palettized_8bpp copyline_invalid
+#define copyline_2xs_32bpp_palettized_8bpp copyline_invalid
+#define copyline_3x_32bpp_palettized_8bpp copyline_invalid
+#define copyline_3xs_32bpp_palettized_8bpp copyline_invalid
+#define copyline_4x_32bpp_palettized_8bpp copyline_invalid
+#define copyline_4xs_32bpp_palettized_8bpp copyline_invalid
+
+COPYLINE( copyline_1x_32bpp_direct_8bpp )
+	UINT8 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT8 *)p_dst ) = n_p1; p_dst += 1;
+COPYLINE_END
+
+#define copyline_1xs_32bpp_direct_8bpp copyline_1x_32bpp_direct_8bpp
+
+COPYLINE( copyline_2x_32bpp_direct_8bpp )
+	UINT16 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 2;
+COPYLINE_END
+
+#define copyline_2xs_32bpp_direct_8bpp copyline_2x_32bpp_direct_8bpp
+
+COPYLINE( copyline_3x_32bpp_direct_8bpp )
+	UINT16 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 2;
+	*( (UINT8 *)p_dst ) = n_p1; p_dst += 1;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_32bpp_direct_8bpp )
+	UINT16 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_4x_32bpp_direct_8bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+#define copyline_4xs_32bpp_direct_8bpp copyline_4x_32bpp_direct_8bpp
+
+/* 16bpp */
+
+COPYLINE( copyline_1x_8bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p3 & 0x0000ffff ) | ( n_p4 & 0xffff0000 ); p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_8bpp_palettized_16bpp   copyline_1x_8bpp_palettized_16bpp
+
+COPYLINE( copyline_2x_8bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+#define copyline_2xs_8bpp_palettized_16bpp copyline_2x_8bpp_palettized_16bpp
+
+COPYLINE( copyline_3x_8bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p3 & 0x0000ffff ) | ( n_p4 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_8bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0x0000ffff ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p4 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p4 & 0x0000ffff ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4x_8bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+#define copyline_4xs_8bpp_palettized_16bpp copyline_4x_8bpp_palettized_16bpp
+
+#define copyline_1x_8bpp_direct_16bpp copyline_invalid
+#define copyline_1xs_8bpp_direct_16bpp copyline_invalid
+#define copyline_2x_8bpp_direct_16bpp copyline_invalid
+#define copyline_2xs_8bpp_direct_16bpp copyline_invalid
+#define copyline_3x_8bpp_direct_16bpp copyline_invalid
+#define copyline_3xs_8bpp_direct_16bpp copyline_invalid
+#define copyline_4x_8bpp_direct_16bpp copyline_invalid
+#define copyline_4xs_8bpp_direct_16bpp copyline_invalid
+
+COPYLINE( copyline_1x_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xffff0000 ); p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_16bpp_palettized_16bpp copyline_1x_16bpp_palettized_16bpp
+
+COPYLINE( copyline_2x_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+#define copyline_2xs_16bpp_palettized_16bpp copyline_2x_16bpp_palettized_16bpp
+
+COPYLINE( copyline_3x_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ) | ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0xffff0000 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0x0000ffff ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4x_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_16bpp_palettized_16bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 & 0x0000ffff ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_1x_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p2 << 16 ) ); p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_16bpp_direct_16bpp copyline_1x_16bpp_direct_16bpp
+
+COPYLINE( copyline_2x_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 | ( n_p2 << 16 ) ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3x_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p2 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 | ( n_p2 << 16 ) ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 << 16 ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4x_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 | ( n_p2 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 | ( n_p2 << 16 ) ); p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_16bpp_direct_16bpp )
+	UINT16 n_p1;
+	UINT16 n_p2;
+
+	n_p1 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+	n_p2 = *( (UINT16 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = ( n_p1 | ( n_p1 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p2 | ( n_p2 << 16 ) ); p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+#define copyline_1x_32bpp_palettized_16bpp copyline_invalid
+#define copyline_1xs_32bpp_palettized_16bpp copyline_invalid
+#define copyline_2x_32bpp_palettized_16bpp copyline_invalid
+#define copyline_2xs_32bpp_palettized_16bpp copyline_invalid
+#define copyline_3x_32bpp_palettized_16bpp copyline_invalid
+#define copyline_3xs_32bpp_palettized_16bpp copyline_invalid
+#define copyline_4x_32bpp_palettized_16bpp copyline_invalid
+#define copyline_4xs_32bpp_palettized_16bpp copyline_invalid
+
+COPYLINE( copyline_1x_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 2;
+COPYLINE_END
+
+#define copyline_1xs_32bpp_direct_16bpp copyline_1x_32bpp_direct_16bpp
+
+COPYLINE( copyline_2x_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+#define copyline_2xs_32bpp_direct_16bpp copyline_2x_32bpp_direct_16bpp
+
+COPYLINE( copyline_3x_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT16 *)p_dst ) = n_p1; p_dst += 2;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_4x_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_32bpp_direct_16bpp )
+	UINT32 n_p1;
+
+	n_p1 = blit_lookup_high[ *( (UINT32 *)p_src ) >> 16 ] | blit_lookup_low[ *( (UINT32 *)p_src ) & 0xffff ];
+	p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = ( n_p1 & 0x0000ffff ); p_dst += 4;
+COPYLINE_END
+
+/* 24bpp */
+
+COPYLINE( copyline_1x_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+COPYLINE_END
+
+#define copyline_1xs_8bpp_palettized_24bpp copyline_1x_8bpp_palettized_24bpp
+
+COPYLINE( copyline_2x_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_3x_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_4x_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_8bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 6;
+COPYLINE_END
+
+#define copyline_1x_8bpp_direct_24bpp copyline_invalid
+#define copyline_1xs_8bpp_direct_24bpp copyline_invalid
+#define copyline_2x_8bpp_direct_24bpp copyline_invalid
+#define copyline_2xs_8bpp_direct_24bpp copyline_invalid
+#define copyline_3x_8bpp_direct_24bpp copyline_invalid
+#define copyline_3xs_8bpp_direct_24bpp copyline_invalid
+#define copyline_4x_8bpp_direct_24bpp copyline_invalid
+#define copyline_4xs_8bpp_direct_24bpp copyline_invalid
+
+COPYLINE( copyline_1x_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+COPYLINE_END
+
+#define copyline_1xs_16bpp_palettized_24bpp copyline_1x_16bpp_palettized_24bpp
+
+COPYLINE( copyline_2x_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_3x_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_4x_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_16bpp_palettized_24bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 6;
+COPYLINE_END
+
+#define copyline_1x_16bpp_direct_24bpp copyline_1x_16bpp_palettized_24bpp
+#define copyline_1xs_16bpp_direct_24bpp copyline_1xs_16bpp_palettized_24bpp
+#define copyline_2x_16bpp_direct_24bpp copyline_2x_16bpp_palettized_24bpp
+#define copyline_2xs_16bpp_direct_24bpp copyline_2xs_16bpp_palettized_24bpp
+#define copyline_3x_16bpp_direct_24bpp copyline_3x_16bpp_palettized_24bpp
+#define copyline_3xs_16bpp_direct_24bpp copyline_3xs_16bpp_palettized_24bpp
+#define copyline_4x_16bpp_direct_24bpp copyline_4x_16bpp_palettized_24bpp
+#define copyline_4xs_16bpp_direct_24bpp copyline_4xs_16bpp_palettized_24bpp
+
+#define copyline_1x_32bpp_palettized_24bpp copyline_invalid
+#define copyline_1xs_32bpp_palettized_24bpp copyline_invalid
+#define copyline_2x_32bpp_palettized_24bpp copyline_invalid
+#define copyline_2xs_32bpp_palettized_24bpp copyline_invalid
+#define copyline_3x_32bpp_palettized_24bpp copyline_invalid
+#define copyline_3xs_32bpp_palettized_24bpp copyline_invalid
+#define copyline_4x_32bpp_palettized_24bpp copyline_invalid
+#define copyline_4xs_32bpp_palettized_24bpp copyline_invalid
+
+COPYLINE( copyline_1x_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+COPYLINE_END
+
+#define copyline_1xs_32bpp_direct_24bpp copyline_1x_32bpp_direct_24bpp
+
+COPYLINE( copyline_2x_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_3x_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+COPYLINE_END
+
+COPYLINE( copyline_4x_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_32bpp_direct_24bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 3;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 6;
+COPYLINE_END
+
+/* 32bpp */
+
+COPYLINE( copyline_1x_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_8bpp_palettized_32bpp copyline_1x_8bpp_palettized_32bpp
+
+COPYLINE( copyline_2x_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_3x_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_4x_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_8bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+	UINT32 n_p3;
+	UINT32 n_p4;
+
+	n_p1 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p3 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+	n_p4 = blit_lookup_low[ *( p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p3; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p4; p_dst += 8;
+COPYLINE_END
+
+#define copyline_1x_8bpp_direct_32bpp copyline_invalid
+#define copyline_1xs_8bpp_direct_32bpp copyline_invalid
+#define copyline_2x_8bpp_direct_32bpp copyline_invalid
+#define copyline_2xs_8bpp_direct_32bpp copyline_invalid
+#define copyline_3x_8bpp_direct_32bpp copyline_invalid
+#define copyline_3xs_8bpp_direct_32bpp copyline_invalid
+#define copyline_4x_8bpp_direct_32bpp copyline_invalid
+#define copyline_4xs_8bpp_direct_32bpp copyline_invalid
+
+COPYLINE( copyline_1x_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_16bpp_palettized_32bpp copyline_1x_16bpp_palettized_32bpp
+
+COPYLINE( copyline_2x_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_3x_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_4x_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_16bpp_palettized_32bpp )
+	UINT32 n_p1;
+	UINT32 n_p2;
+
+	n_p1 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+	n_p2 = blit_lookup_low[ *( (UINT16 *)p_src ) ]; p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p2; p_dst += 8;
+COPYLINE_END
+
+#define copyline_1x_16bpp_direct_32bpp copyline_1x_16bpp_palettized_32bpp
+#define copyline_1xs_16bpp_direct_32bpp copyline_1xs_16bpp_palettized_32bpp
+#define copyline_2x_16bpp_direct_32bpp copyline_2x_16bpp_palettized_32bpp
+#define copyline_2xs_16bpp_direct_32bpp copyline_2xs_16bpp_palettized_32bpp
+#define copyline_3x_16bpp_direct_32bpp copyline_3x_16bpp_palettized_32bpp
+#define copyline_3xs_16bpp_direct_32bpp copyline_3xs_16bpp_palettized_32bpp
+#define copyline_4x_16bpp_direct_32bpp copyline_4x_16bpp_palettized_32bpp
+#define copyline_4xs_16bpp_direct_32bpp copyline_4xs_16bpp_palettized_32bpp
+
+#define copyline_1x_32bpp_palettized_32bpp copyline_invalid
+#define copyline_1xs_32bpp_palettized_32bpp copyline_invalid
+#define copyline_2x_32bpp_palettized_32bpp copyline_invalid
+#define copyline_2xs_32bpp_palettized_32bpp copyline_invalid
+#define copyline_3x_32bpp_palettized_32bpp copyline_invalid
+#define copyline_3xs_32bpp_palettized_32bpp copyline_invalid
+#define copyline_4x_32bpp_palettized_32bpp copyline_invalid
+#define copyline_4xs_32bpp_palettized_32bpp copyline_invalid
+
+COPYLINE( copyline_1x_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+#define copyline_1xs_32bpp_direct_32bpp copyline_1x_32bpp_direct_32bpp
+
+COPYLINE( copyline_2x_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_2xs_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_3x_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_3xs_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+COPYLINE_END
+
+COPYLINE( copyline_4x_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+COPYLINE_END
+
+COPYLINE( copyline_4xs_32bpp_direct_32bpp )
+	UINT32 n_p1;
+
+	n_p1 = *( (UINT32 *)p_src ); p_src += n_pixelmodulo;
+
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 4;
+	*( (UINT32 *)p_dst ) = n_p1; p_dst += 8;
+COPYLINE_END
+
+
+#define COPYLINE_VSL( TYPE, SBPP, DBPP, XMULTIPLY, VSL ) copyline_##XMULTIPLY##x##VSL##_##SBPP##bpp_##TYPE##_##DBPP##bpp
+
+#define COPYLINE_XMULTIPLY( TYPE, SBPP, DBPP, XMULTIPLY ) \
+{ \
+	COPYLINE_VSL( TYPE, SBPP, DBPP, XMULTIPLY, ), \
+	COPYLINE_VSL( TYPE, SBPP, DBPP, XMULTIPLY, s ) \
+} \
+
+#define COPYLINE_DBPP( TYPE, SBPP, DBPP ) \
+{ \
+	COPYLINE_XMULTIPLY( TYPE, SBPP, DBPP, 1 ), \
+	COPYLINE_XMULTIPLY( TYPE, SBPP, DBPP, 2 ), \
+	COPYLINE_XMULTIPLY( TYPE, SBPP, DBPP, 3 ), \
+	COPYLINE_XMULTIPLY( TYPE, SBPP, DBPP, 4 ) \
+} \
+
+#define COPYLINE_SBPP( TYPE, SBPP ) \
+{ \
+	COPYLINE_DBPP( TYPE, SBPP, 8 ), \
+	COPYLINE_DBPP( TYPE, SBPP, 16 ), \
+	COPYLINE_DBPP( TYPE, SBPP, 24 ), \
+	COPYLINE_DBPP( TYPE, SBPP, 32 ) \
+} \
+
+#define COPYLINE_TYPE( TYPE ) static unsigned char *( *blit_copyline_##TYPE[ 3 ][ 4 ][ 4 ][ 2 ] )( unsigned char *p_src, unsigned int n_width, int n_pixelmodulo ) = \
+{ \
+	COPYLINE_SBPP( TYPE, 8 ), \
+	COPYLINE_SBPP( TYPE, 16 ), \
+	COPYLINE_SBPP( TYPE, 32 ) \
+}; \
+
+COPYLINE_TYPE( direct )
+COPYLINE_TYPE( palettized )
+
+
+#define BITBLIT( type ) void bitblit_##type( struct mame_bitmap *bitmap, int sx, int sy, int sw, int sh, int dx, int dy ) \
+{ \
+	int n_line; \
+	int n_lines; \
+	int n_columns; \
+	int n_xoffset; \
+	int n_yoffset; \
+	int n_ymultiply; \
+	int n_srcwidth; \
+	int n_dstwidth; \
+	int n_dstoffset; \
+	int n_lineoffset; \
+	int n_pixeloffset; \
+	unsigned char *p_src; \
+	unsigned long n_dstaddress; \
+\
+	/* Align on a quadword */ \
+	n_xoffset = ( dx / blit_dxdivide ); \
+	n_yoffset = ( dy / blit_dydivide ); \
+	n_columns = sw; \
+	n_lines = sh; \
+	p_src = ( (UINT8 *)bitmap->line[ sy ] ) + ( blit_sbpp / 8 ) * sx; \
+	if( blit_swapxy ) \
+	{ \
+		n_lineoffset = ( blit_sbpp / 8 ); \
+		n_pixeloffset = ( ( (UINT8 *)bitmap->line[ 1 ] ) - ( (UINT8 *)bitmap->line[ 0 ] ) ); \
+	} \
+	else \
+	{ \
+		n_lineoffset = ( ( (UINT8 *)bitmap->line[ 1 ] ) - ( (UINT8 *)bitmap->line[ 0 ] ) ); \
+		n_pixeloffset = ( blit_sbpp / 8 ); \
+	} \
+	if( blit_flipx ) \
+	{ \
+		n_pixeloffset *= -1; \
+	} \
+	if( blit_flipy ) \
+	{ \
+		n_lineoffset *= -1; \
+	} \
+\
+	p_src += ( blit_lacecolumn * n_pixeloffset ) + ( blit_laceline * n_lineoffset ); \
+	blit_lacecolumn++; \
+	blit_lacecolumn %= blit_sxdivide; \
+	blit_laceline++; \
+	blit_laceline %= blit_sydivide; \
+\
+	n_lineoffset *= blit_sydivide; \
+	n_pixeloffset *= blit_sxdivide; \
+	n_srcwidth = ( ( ( ( n_columns + blit_sxdivide - 1 ) / blit_sxdivide ) * ( blit_sbpp / 8 ) ) + 3 ) / 4; \
+	n_line = ( n_lines + blit_sydivide - 1 ) / blit_sydivide; \
+	n_dstwidth = ( ( ( ( n_columns + blit_sxdivide - 1 ) / blit_sxdivide ) * ( blit_dbpp / 8 ) * blit_xmultiply ) + 3 ) / 4; \
+	n_dstoffset = blit_screenwidth; \
+
+#define BLITSCREEN_END }
+
+
+/* vga */
+
+BITBLIT( vga )
+{
+	n_dstaddress = 0xa0000 + ( n_yoffset * n_dstoffset ) + n_xoffset;
+
+	while( n_line != 0 )
 	{
-		for (x = 0; x < gfx_display_columns; )
+		n_ymultiply = blit_ymultiply - blit_hscanlines;
+		while( n_ymultiply != 0 )
 		{
-			int w = 16;
-			if (ISDIRTY(x,y))
-			{
-				unsigned long *lb0 = lb + x / 4;
-				unsigned long address0 = address + x;
-				int h;
-				while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
-                    w += 16;
-				if (x + w > gfx_display_columns)
-                    w = gfx_display_columns - x;
-				for (h = 0; h < 16 && y + h < gfx_display_lines; h++)
-				{
-					_dosmemputl(lb0, w/4, address0);
-					lb0 += width4;
-					address0 += gfx_width;
-				}
-			}
-			x += w;
-        }
-		lb += 16 * width4;
-		address += 16 * gfx_width;
-	}
-}
-
-void blitscreen_dirty0_vga(struct osd_bitmap *bitmap)
-{
-	int width4,y,columns4;
-	unsigned long *lb, address;
-
-	width4 = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) / 4;
-	columns4 = gfx_display_columns/4;
-	address = 0xa0000 + gfx_xoffset + gfx_yoffset * gfx_width;
-	lb = (unsigned long *)(((UINT8 *)bitmap->line[skiplines]) + skipcolumns);
-	for (y = 0; y < gfx_display_lines; y++)
-	{
-		_dosmemputl(lb,columns4,address);
-		lb+=width4;
-		address+=gfx_width;
-	}
-}
-
-/* for flipping between the unchained VGA pages */
-INLINE void unchained_flip(void)
-{
-	int	flip_value1,flip_value2;
-	int	temp;
-
-/* memory address of non-visible page */
-	temp = xpage_size * xpage;
-
-	flip_value1 = ((temp & 0xff00) | 0x0c);
-	flip_value2 = (((temp << 8) & 0xff00) | 0x0d);
-
-/* flip the page var */
-	xpage ++;
-	if (xpage == no_xpages)
-		xpage = 0;
-/* need to change the offset address during the active display interval */
-/* as the value is read during the vertical retrace */
-	__asm__ __volatile__ (
-
-	"movw   $0x3da,%%dx \n"
-	"cli \n"
-	".align 4                \n"
-/* check for active display interval */
-	"0:\n"
-	"inb    %%dx,%%al \n"
-	"testb  $1,%%al \n"
-	"jz  	0b \n"
-/* change the offset address */
-	"movw   $0x3d4,%%dx \n"
-	"movw   %%cx,%%ax \n"
-	"outw   %%ax,%%dx \n"
-	"movw   %%bx,%%ax \n"
-	"outw   %%ax,%%dx \n"
-	"sti \n"
-
-
-/* outputs  (none)*/
-	:"=c" (flip_value1),
-	"=b" (flip_value2)
-/* inputs -
- ecx = flip_value1 , ebx = flip_value2 */
-	:"0" (flip_value1),
-	"1" (flip_value2)
-/* registers modified */
-	:"ax", "dx", "cc", "memory"
-	);
-}
-
-
-
-/* unchained dirty modes */
-void blitscreen_dirty1_unchained_vga(struct osd_bitmap *bitmap)
-{
-	int x, y, i, outval, dirty_page, triple_page, write_triple;
-	int plane, planeval, iloop, page;
-	unsigned long *lb, address, triple_address;
-	unsigned char *lbsave;
-	unsigned long asave, triple_save;
-	static int width4, word_blit, dirty_height;
-	static int source_width, source_line_width, dest_width, dest_line_width;
-
-	/* calculate our statics on the first call */
-	if (xpage == -1)
-	{
-		width4 = ((((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) >> 2);
-		source_width = width4 << half_yres;
-		dest_width = gfx_width >> 2;
-		dest_line_width = (gfx_width << 2) >> half_yres;
-		source_line_width = width4 << 4;
-		xpage = 1;
-		dirty_height = 16 >> half_yres;
-		/* check if we have to do word rather than double word updates */
-		word_blit = ((gfx_display_columns >> 2) & 3);
-	}
-
-	/* setup or selector */
-	_farsetsel(screen->seg);
-
-	dirty_page = xpage;
-	/* non visible page, if we're triple buffering */
-	triple_page = xpage + 1;
-	if (triple_page == no_xpages)
-		triple_page = 0;
-
-	/* need to update all 'pages', but only update each page while it isn't visible */
-	for (page = 0; page < 2; page ++)
-	{
-		planeval=0x0100;
-		write_triple = (!page | (no_xpages == 3));
-
-		/* go through each bit plane */
-		for (plane = 0; plane < 4 ;plane ++)
-		{
-			address = 0xa0000 + (xpage_size * dirty_page)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
-			triple_address = 0xa0000 + (xpage_size * triple_page)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
-			lb = (unsigned long *)(((UINT8 *)bitmap->line[skiplines]) + skipcolumns + plane);
-			/*set the bit plane */
-			outportw(0x3c4, planeval|0x02);
-			for (y = 0; y < gfx_display_lines ; y += 16)
-			{
-				for (x = 0; x < gfx_display_columns; )
-				{
-					int w = 16;
-					if (ISDIRTY(x,y))
-					{
-						unsigned long *lb0 = lb + (x >> 2);
-						unsigned long address0 = address + (x >> 2);
-						unsigned long address1 = triple_address + (x >> 2);
-						int h;
-						while (x + w < gfx_display_columns && ISDIRTY(x+w,y))
-							w += 16;
-						if (x + w > gfx_display_columns)
-							w = gfx_display_columns - x;
-						if(word_blit)
-						{
-							iloop = w >> 3;
-							for (h = 0; h < dirty_height && (y + (h << half_yres)) < gfx_display_lines; h++)
-							{
-								asave = address0;
-								triple_save = address1;
-								lbsave = (unsigned char *)lb0;
-								for(i = 0; i < iloop; i++)
-								{
-									outval = *lbsave | (lbsave[4] << 8);
-									_farnspokew(asave, outval);
-									/* write 2 pages on first pass if triple buffering */
-									if (write_triple)
-									{
-										_farnspokew(triple_save, outval);
-										triple_save += 2;
-									}
-									lbsave += 8;
-									asave += 2;
-								}
-								if (w&4)
-								{
-									_farnspokeb(asave, *lbsave);
-		   							if (write_triple)
-										_farnspokeb(triple_save, *lbsave);
-								}
-
-
-								lb0 += source_width;
-								address0 += dest_width;
-								address1 += dest_width;
-							}
-						}
-						else
-						{
-							iloop = w >> 4;
-							for (h = 0; h < dirty_height && (y + (h << half_yres)) < gfx_display_lines; h++)
-							{
-								asave = address0;
-								triple_save = address1;
-								lbsave = (unsigned char *)lb0;
-								for(i = 0; i < iloop; i++)
-								{
-									outval = *lbsave | (lbsave[4] << 8) | (lbsave[8] << 16) | (lbsave[12] << 24);
-									_farnspokel(asave, outval);
-									/* write 2 pages on first pass if triple buffering */
-									if (page == 0 && no_xpages == 3)
-									{
-										_farnspokel(triple_save, outval);
-										triple_save += 4;
-									}
-									lbsave += 16;
-									asave += 4;
-								}
-								lb0 += source_width;
-								address0 += dest_width;
-								address1 += dest_width;
-							}
-						}
-					}
-					x += w;
-				}
-				lb += source_line_width;
-				address += dest_line_width;
-				triple_address += dest_line_width;
-			}
-			/* move onto the next bit plane */
-			planeval <<= 1;
+			_dosmemputl( blit_copyline( p_src, n_srcwidth, n_pixeloffset ), n_dstwidth, n_dstaddress );
+			n_dstaddress += n_dstoffset;
+			n_ymultiply--;
 		}
-		/* 'bank switch' our unchained output on the first loop */
-		if(!page)
-			unchained_flip();
-		/* move onto next 'page' */
-		dirty_page += (no_xpages - 1);
-		if (dirty_page >= no_xpages)
-			dirty_page -= no_xpages;
+		if( blit_hscanlines )
+		{
+			n_dstaddress += n_dstoffset;
+		}
+		p_src += n_lineoffset;
+		n_line--;
 	}
 }
+BLITSCREEN_END
 
-void init_unchained_blit(void)
-{
-    xpage=-1;
-}
 
-/* Macros for non dirty unchained blits */
-#define UNCHAIN_BLIT_START \
-	int dummy1,dummy2,dummy3; \
+/* unchained vga */
+
+#define UNCHAINEDMEMPUT_START \
 	__asm__ __volatile__ ( \
 /* save es and set it to our video selector */ \
 	"pushw  %%es \n" \
+	"pushl  %%ebx \n" \
 	"movw   %%dx,%%es \n" \
 	"movw   $0x102,%%ax \n" \
 	"cld \n" \
@@ -369,17 +1466,8 @@ void init_unchained_blit(void)
 /* set the bit plane */ \
 	"movw   $0x3c4,%%dx \n" \
 	"outw   %%ax,%%dx \n" \
-/* edx now free, so use it for the memwidth */ \
-	"movl   %4,%%edx \n" \
-/* --height loop-- */ \
-	"1:\n" \
-/* save counter , source + dest address */ \
-	"pushl 	%%ecx \n" \
-	"pushl	%%ebx \n" \
-	"pushl	%%edi \n" \
 /* --width loop-- */ \
-	"movl   %3,%%ecx \n" \
-	"2:\n" \
+	"1:\n" \
 /* get the 4 bytes */ \
 /* bswap should be faster than shift, */ \
 /* movl should be faster then movb */ \
@@ -392,22 +1480,13 @@ void init_unchained_blit(void)
 	"stosl \n" \
 /* move onto next source address */ \
 	"addl   $16,%%ebx \n" \
-	"loop	2b \n"
+	"loop	1b \n"
 
-#define UNCHAIN_BLIT_END \
+#define UNCHAINEDMEMPUT_END \
 /* --end of width loop-- */ \
-/* get counter, source + dest address back */ \
-	"popl	%%edi \n" \
-	"popl	%%ebx \n" \
-	"popl   %%ecx \n" \
-/* move to the next line */ \
-	"addl   %%edx,%%ebx \n" \
-	"addl   %%esi,%%edi \n" \
-	"loop   1b \n" \
-/* --end of height loop-- */ \
 /* get everything back */ \
 	"popl   %%ecx \n" \
-	"popl   %%eax \n"  \
+	"popl   %%eax \n" \
 	"popl   %%edi \n" \
 	"popl   %%ebx \n" \
 /* move onto next bit plane */ \
@@ -418,718 +1497,460 @@ void init_unchained_blit(void)
 	"jz		0b \n" \
 /* --end of bit plane loop-- */ \
 /* restore es */ \
+	"popl   %%ebx \n" \
 	"popw   %%es \n" \
-/* outputs (aka clobbered input) */ \
-	:"=S" (dummy1), \
-	"=b" (dummy2), \
-	"=d" (dummy3) \
+/* outputs */ \
+	: \
 /* inputs */ \
-/* %0=width, %1=memwidth, */ \
-/* esi = scrwidth */ \
-/* ebx = src, ecx = height */ \
-/* edx = seg, edi = address */ \
-	:"g" (width), \
-	"g" (memwidth), \
-	"c" (height), \
-	"D" (address), \
-	"0" (scrwidth), \
-	"1" (src), \
-	"2" (seg) \
+/* ebx = src, ecx = width */ \
+/* edx = seg,  edi = address */ \
+	: \
+	"b" (p_src), \
+	"c" (n_width), \
+	"d" (n_seg), \
+	"D" (n_address) \
 /* registers modified */ \
-	:"ax", "cc", "memory" \
+	: \
+	"ax", \
+	"cc", \
+	"memory" \
 	);
 
-
-
 /*asm routine for unchained blit - writes 4 bytes at a time */
-INLINE void unchain_dword_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
+static void unchainedmemput_dword( unsigned char *p_src, short n_seg, unsigned long n_address, int n_width )
 {
 /* straight forward double word blit */
-	UNCHAIN_BLIT_START
-	UNCHAIN_BLIT_END
+	UNCHAINEDMEMPUT_START
+	UNCHAINEDMEMPUT_END
 }
 
-/*asm routine for unchained blit - writes 4 bytes at a time, then 2 'odd' bytes at the end of each row */
-INLINE void unchain_word_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
+/*asm routine for unchained blit - writes 4 bytes at a time, then 3 'odd' bytes at the end of each row */
+static void unchainedmemput_triple( unsigned char *p_src, short n_seg, unsigned long n_address, int n_width )
 {
-	UNCHAIN_BLIT_START
+	UNCHAINEDMEMPUT_START
 /* get the extra 2 bytes at end of the row */
 	"movl   %%ds:(%%ebx),%%eax \n"
 	"movb   %%ds:4(%%ebx),%%ah \n"
 /* write the thing to video */
 	"stosw \n"
-	UNCHAIN_BLIT_END
+	"movb   %%ds:8(%%ebx),%%al \n"
+	"stosb \n"
+	UNCHAINEDMEMPUT_END
+}
+
+/*asm routine for unchained blit - writes 4 bytes at a time, then 2 'odd' bytes at the end of each row */
+static void unchainedmemput_word( unsigned char *p_src, short n_seg, unsigned long n_address, int n_width )
+{
+	UNCHAINEDMEMPUT_START
+/* get the extra 2 bytes at end of the row */
+	"movl   %%ds:(%%ebx),%%eax \n"
+	"movb   %%ds:4(%%ebx),%%ah \n"
+/* write the thing to video */
+	"stosw \n"
+	UNCHAINEDMEMPUT_END
 }
 
 /*asm routine for unchained blit - writes 4 bytes at a time, then 1 'odd' byte at the end of each row */
-INLINE void unchain_byte_blit(unsigned long *src,short seg,unsigned long address,int width,int height,int memwidth,int scrwidth)
+static void unchainedmemput_byte( unsigned char *p_src, short n_seg, unsigned long n_address, int n_width )
 {
-	UNCHAIN_BLIT_START
+	UNCHAINEDMEMPUT_START
 /* get the extra byte at end of the row */
 	"movb   %%ds:(%%ebx),%%al \n"
 /* write the thing to video */
 	"stosb \n"
-	UNCHAIN_BLIT_END
+	UNCHAINEDMEMPUT_END
 }
 
-/* unchained 'non-dirty' modes */
-void blitscreen_dirty0_unchained_vga(struct osd_bitmap *bitmap)
+/* for flipping between the unchained VGA pages */
+INLINE void unchained_pageflip( void )
 {
-	unsigned long *lb, address;
-	static int width4,columns4,column_chained,memwidth,scrwidth,disp_height,blit_type;
+	int n_offsethigh;
+	int n_offsetlow;
 
-   /* only calculate our statics the first time around */
-	if(xpage==-1)
+	n_offsethigh = ( ( display_pos & 0xff00 ) | 0x0c );
+	n_offsetlow = ( ( ( display_pos << 8 ) & 0xff00 ) | 0x0d );
+
+	display_pos = ( display_pos + display_page_size ) % ( display_pages * display_page_size );
+	
+/* need to change the offset address during the active display interval */
+/* as the value is read during the vertical retrace */
+	__asm__ __volatile__
+	(
+		"movw   $0x3da,%%dx \n"
+		"cli \n"
+		".align 4                \n"
+/* check for active display interval */
+		"0:\n"
+		"inb    %%dx,%%al \n"
+		"testb  $1,%%al \n"
+		"jz  	0b \n"
+/* change the offset address */
+		"movw   $0x3d4,%%dx \n"
+		"movw   %%cx,%%ax \n"
+		"outw   %%ax,%%dx \n"
+		"movw   %%bx,%%ax \n"
+		"outw   %%ax,%%dx \n"
+		"sti \n"
+
+/* outputs  (none)*/
+		:
+/* inputs - ebx = n_offsetlow, ecx = n_offsethigh */
+		:
+		"b" (n_offsetlow),
+		"c" (n_offsethigh)
+/* registers modified */
+		:
+		"ax",
+		"dx",
+		"cc",
+		"memory"
+	);
+}
+
+BITBLIT( unchained_vga )
+{
+	void (*unchainedmemput)( unsigned char *, short, unsigned long, int );
+
+	switch( n_dstwidth & 3 )
 	{
-		width4 = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) >> 2;
-		columns4 = gfx_display_columns >> 2;
-		disp_height = gfx_display_lines >> half_yres;
+	case 1:
+		unchainedmemput = unchainedmemput_byte;
+		break;
+	case 2:
+		unchainedmemput = unchainedmemput_word;
+		break;
+	case 3:
+		unchainedmemput = unchainedmemput_triple;
+		break;
+	default:
+		unchainedmemput = unchainedmemput_dword;
+		break;
+	}
 
-		xpage = 1;
-		memwidth = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])) << half_yres;
-		scrwidth = gfx_width >> 2;
+	n_dstaddress = 0xa0000 + display_pos + ( ( ( n_yoffset * n_dstoffset ) + n_xoffset ) >> 2 );
+	n_dstwidth >>= 2;
+	n_dstoffset >>= 2;
 
-		/* check for 'not divisible by 8' */
-		if((columns4 & 1))
-			blit_type = 2;    /* byte blit */
+	while( n_line != 0 )
+	{
+		n_ymultiply = blit_ymultiply - blit_hscanlines;
+		while( n_ymultiply != 0 )
+		{
+			unchainedmemput( blit_copyline( p_src, n_srcwidth, n_pixeloffset ), screen->seg, n_dstaddress, n_dstwidth );
+			n_dstaddress += n_dstoffset;
+			n_ymultiply--;
+		}
+		if( blit_hscanlines )
+		{
+			n_dstaddress += n_dstoffset;
+		}
+		p_src += n_lineoffset;
+		n_line--;
+	}
+	unchained_pageflip();
+}
+BLITSCREEN_END
+
+
+/* vesa */
+
+static void (*blit_asmblit)( int width, int lines, unsigned char *src, int line_offs, unsigned long address, unsigned long address_offset ) = NULL;
+
+#define ASMBLIT_PROTO_SL( BPP, PALETTIZED, MX, MY, HSL ) extern void asmblit_##MX##x_##MY##y_##HSL##sl_##BPP##bpp##PALETTIZED(int, int, unsigned char *, int, unsigned long, unsigned long); \
+
+#define ASMBLIT_PROTO_MY( BPP, PALETTIZED, MX, MY ) \
+ASMBLIT_PROTO_SL( BPP, PALETTIZED, MX, MY, 0 ) \
+ASMBLIT_PROTO_SL( BPP, PALETTIZED, MX, MY, 1 ) \
+
+#define ASMBLIT_PROTO_MX( BPP, PALETTIZED, MX ) \
+ASMBLIT_PROTO_MY( BPP, PALETTIZED, MX, 1 ) \
+ASMBLIT_PROTO_MY( BPP, PALETTIZED, MX, 2 ) \
+
+#define ASMBLIT_PROTO_BPP( BPP, PALETTIZED ) \
+ASMBLIT_PROTO_MX( BPP, PALETTIZED, 1 ) \
+ASMBLIT_PROTO_MX( BPP, PALETTIZED, 2 ) \
+
+ASMBLIT_PROTO_BPP( 8, )
+ASMBLIT_PROTO_BPP( 16, )
+ASMBLIT_PROTO_BPP( 16, _palettized )
+ASMBLIT_PROTO_BPP( 32, )
+
+#define ASMBLIT_SL( BPP, PALETTIZED, MX, MY, HSL ) asmblit_##MX##x_##MY##y_##HSL##sl_##BPP##bpp##PALETTIZED \
+
+#define ASMBLIT_MY( BPP, PALETTIZED, MX, MY ) \
+{ \
+	ASMBLIT_SL( BPP, PALETTIZED, MX, MY, 0 ), \
+	ASMBLIT_SL( BPP, PALETTIZED, MX, MY, 1 ) \
+} \
+
+#define ASMBLIT_MX( BPP, PALETTIZED, MX ) \
+{ \
+	ASMBLIT_MY( BPP, PALETTIZED, MX, 1 ), \
+	ASMBLIT_MY( BPP, PALETTIZED, MX, 2 ) \
+} \
+
+#define ASMBLIT_BPP( BPP, PALETTIZED ) \
+{ \
+	ASMBLIT_MX( BPP, PALETTIZED, 1 ), \
+	ASMBLIT_MX( BPP, PALETTIZED, 2 ) \
+} \
+
+static void (*asmblit[ 2 ][ 3 ][ 2 ][ 2 ][ 2 ])( int width, int lines, unsigned char *src, int line_offs, unsigned long address, unsigned long address_offset ) =
+{
+	{
+		ASMBLIT_BPP( 8, ),
+		ASMBLIT_BPP( 16, ),
+		ASMBLIT_BPP( 32, )
+	},
+	{
+		ASMBLIT_BPP( 8, ),
+		ASMBLIT_BPP( 16, _palettized ),
+		ASMBLIT_BPP( 32, )
+	}
+};
+
+static void vesa_flippage( void )
+{
+	/* use a real mode interrupt call as allegro waits for vsync */
+	__dpmi_regs _dpmi_reg;
+
+	_dpmi_reg.x.ax = 0x4f07;
+	_dpmi_reg.x.bx = 0;
+	_dpmi_reg.x.cx = display_pos;
+	_dpmi_reg.x.dx = 0;
+	__dpmi_int( 0x10, &_dpmi_reg );
+
+	display_pos = ( display_pos + display_page_size ) % ( display_pages * display_page_size );
+}
+
+BITBLIT( vesa )
+{
+	int n_vesaline;
+
+	n_dstaddress = ( n_xoffset + display_pos ) * ( blit_dbpp / 8 );
+	n_vesaline = n_yoffset;
+	if( blit_asmblit != NULL )
+	{
+		unsigned long n_dstbase;
+
+		n_dstbase = bmp_write_line( screen, n_vesaline );
+		_farsetsel( screen->seg );
+		blit_asmblit( n_srcwidth, n_lines, p_src, n_lineoffset, n_dstbase + n_dstaddress,
+			bmp_write_line( screen, n_vesaline + 1 ) - n_dstbase );
+	}
+	else
+	{
+		unsigned char *p_copy;
+
+		while( n_line != 0 )
+		{
+			p_copy = blit_copyline( p_src, n_srcwidth, n_pixeloffset );
+			p_src += n_lineoffset;
+			n_ymultiply = blit_ymultiply - blit_hscanlines;
+			while( n_ymultiply != 0 )
+			{
+				_movedatal( _my_ds(), (unsigned long)p_copy, screen->seg, bmp_write_line( screen, n_vesaline ) + n_dstaddress, n_dstwidth );
+				n_vesaline++;
+				n_ymultiply--;
+			}
+			if( blit_hscanlines )
+			{
+				n_vesaline++;
+			}
+			n_line--;
+		}
+	}
+	if( display_pages != 1 )
+	{
+		vesa_flippage();
+	}
+}
+BLITSCREEN_END
+
+
+static int sbpp_pos( int sbpp )
+{
+	if( sbpp == 8 )
+	{
+		return 0;
+	}
+	else if( sbpp == 16 )
+	{
+		return 1;
+	}
+	else
+	{
+		return 2;
+	}
+}
+
+static int dbpp_pos( int dbpp )
+{
+	return ( dbpp / 8 ) - 1;
+}
+
+unsigned long blit_setup( int dw, int dh, int sbpp, int dbpp, int video_attributes, int xmultiply, int ymultiply, int xdivide, int ydivide,
+	int vscanlines, int hscanlines, int flipx, int flipy, int swapxy )
+{
+	int i;
+	int cmultiply;
+	int cmask;
+
+	if( sbpp == 15 )
+	{
+		blit_sbpp = 16;
+	}
+	else
+	{
+		blit_sbpp = sbpp;
+	}
+	if( dbpp == 15 )
+	{
+		blit_dbpp = 16;
+	}
+	else
+	{
+		blit_dbpp = dbpp;
+	}
+
+	blit_xmultiply = xmultiply;
+	blit_ymultiply = ymultiply;
+	blit_sxdivide = xdivide;
+	blit_sydivide = ydivide;
+	blit_dxdivide = xdivide;
+	blit_dydivide = ydivide;
+	blit_vscanlines = vscanlines;
+	blit_hscanlines = hscanlines;
+	blit_flipx = flipx;
+	blit_flipy = flipy;
+	blit_swapxy = swapxy;
+
+	blit_screenwidth = ( dw / blit_dxdivide );
+
+	/* don't multiply & divide at the same time if possible */
+	if( ( blit_xmultiply % blit_sxdivide ) == 0 )
+	{
+		blit_xmultiply /= blit_sxdivide;
+		blit_sxdivide = 1;
+	}
+	if( ( blit_ymultiply % blit_sydivide ) == 0 )
+	{
+		blit_ymultiply /= blit_sydivide;
+		blit_sydivide = 1;
+	}
+
+	/* disable scanlines if not multiplying */
+	if( blit_xmultiply > 1 && blit_vscanlines != 0 )
+	{
+		blit_vscanlines = 1;
+	}
+	else
+	{
+		blit_vscanlines  = 0;
+	}
+	if( blit_ymultiply > 1 && blit_hscanlines != 0 )
+	{
+		blit_hscanlines = 1;
+	}
+	else
+	{
+		blit_hscanlines = 0;
+	}
+
+	blit_lacecolumn %= blit_sxdivide;
+	blit_laceline %= blit_sydivide;
+
+	if( video_attributes & VIDEO_RGB_DIRECT )
+	{
+		if( blit_sbpp == blit_dbpp && !blit_swapxy && !blit_flipx && !blit_flipy && blit_dxdivide == 1 && blit_xmultiply <= 2 && blit_ymultiply <= 2 && mmxlfb )
+		{
+			blit_asmblit = asmblit[ 0 ][ sbpp_pos( blit_sbpp ) ][ blit_xmultiply - 1 ][ blit_ymultiply - 1 ][ blit_hscanlines ];
+		}
 		else
 		{
-			if((columns4 & 2))
-				blit_type = 1; /* word blit */
-			else
-				blit_type = 0; /* double word blit */
+			blit_asmblit = NULL;
 		}
 
-		column_chained = columns4 >> 2;
+		if( blit_sbpp == blit_dbpp && !blit_swapxy && !blit_flipx && blit_xmultiply == 1 && blit_dxdivide == 1 )
+		{
+			blit_copyline = copyline_raw;
+		}
+		else
+		{
+			blit_copyline = blit_copyline_direct[ sbpp_pos( blit_sbpp )][ dbpp_pos( blit_dbpp ) ][ blit_xmultiply - 1 ][ blit_vscanlines ];
+		}
 	}
-
-	/* get the start of the screen bitmap */
-	lb = (unsigned long *)(((UINT8 *)bitmap->line[skiplines]) + skipcolumns);
-	/* and the start address in video memory */
-	address = 0xa0000 + (xpage_size * xpage)+(gfx_xoffset >> 2) + (((gfx_yoffset >> half_yres) * gfx_width) >> 2);
-	/* call the appropriate blit routine */
-	switch (blit_type)
+	else
 	{
-		case 0: /* double word blit */
-			unchain_dword_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
-			break;
-		case 1: /* word blit */
-			unchain_word_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
-			break;
-		case 2: /* byte blit */
-			unchain_byte_blit (lb, screen->seg, address, column_chained, disp_height, memwidth, scrwidth);
-			break;
+		if( blit_sbpp == blit_dbpp && !blit_swapxy && !blit_flipx && !blit_flipy && blit_dxdivide == 1 && blit_xmultiply <= 2 && blit_ymultiply <= 2 && mmxlfb )
+		{
+			blit_asmblit = asmblit[ 1 ][ sbpp_pos( blit_sbpp ) ][ blit_xmultiply - 1 ][ blit_ymultiply - 1 ][ blit_hscanlines ];
+		}
+		else
+		{
+			blit_asmblit = NULL;
+		}
+
+		if( blit_sbpp == blit_dbpp && !blit_swapxy && !blit_flipx && blit_xmultiply == 1 && blit_dxdivide == 1 && blit_sbpp == 8 )
+		{
+			blit_copyline = copyline_raw;
+		}
+		else
+		{
+			blit_copyline = blit_copyline_palettized[ sbpp_pos( blit_sbpp ) ][ dbpp_pos( blit_dbpp ) ][ blit_xmultiply - 1 ][ blit_vscanlines ];
+		}
 	}
-	/* 'bank switch' our unchained output */
-	unchained_flip();
-}
 
+	memset( line_buf, 0x00, sizeof( line_buf ) );
 
-
-/* setup register array to be unchained */
-void unchain_vga(Register *pReg)
-{
-/* setup registers for an unchained mode */
-	pReg[UNDERLINE_LOC_INDEX].value = 0x00;
-	pReg[MODE_CONTROL_INDEX].value = 0xe3;
-	pReg[MEMORY_MODE_INDEX].value = 0x06;
-/* flag the fact it's unchained */
-	unchained = 1;
-}
-
-INLINE void copyline_1x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
-{
-	short src_seg;
-
-	src_seg = _my_ds();
-
-	_movedatal(src_seg,(unsigned long)src,seg,address,width4);
-}
-
-INLINE void copyline_1x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	short src_seg;
-
-	src_seg = _my_ds();
-
-	_movedatal(src_seg,(unsigned long)src,seg,address,width2);
-}
-
-#if 1 /* use the C approach instead */
-INLINE void copyline_2x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
-{
-	__asm__ __volatile__ (
-	"pushw %%es              \n"
-	"movw %%dx, %%es         \n"
-	"cld                     \n"
-	".align 4                \n"
-	"0:                      \n"
-	"lodsl                   \n"
-	"movl %%eax, %%ebx       \n"
-	"bswap %%eax             \n"
-	"xchgw %%ax,%%bx         \n"
-	"roll $8, %%eax          \n"
-	"stosl                   \n"
-	"movl %%ebx, %%eax       \n"
-	"rorl $8, %%eax          \n"
-	"stosl                   \n"
-	"loop 0b                 \n"
-	"popw %%ax               \n"
-	"movw %%ax, %%es         \n"
-	:
-	"=c" (width4),
-	"=d" (seg),
-	"=S" (src),
-	"=D" (address)
-	:
-	"0" (width4),
-	"1" (seg),
-	"2" (src),
-	"3" (address):
-	"ax", "bx", "cc", "memory");
-}
-#else
-INLINE void copyline_2x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
-{
-	int i;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width; i > 0; i--)
+	if( blit_dbpp == 8 )
 	{
-		_farnspokel (address, doublepixel[*src] | (doublepixel[*(src+1)] << 16));
-		_farnspokel (address+4, doublepixel[*(src+2)] | (doublepixel[*(src+3)] << 16));
-		address+=8;
-		src+=4;
+		if( blit_xmultiply == 2 && blit_vscanlines != 0 )
+		{
+			cmultiply = 0x00010001;
+		}
+		else if( blit_xmultiply == 4 && blit_vscanlines != 0 )
+		{
+			cmultiply = 0x00010101;
+		}
+		else
+		{
+			cmultiply = 0x01010101;
+		}
+		cmask = 0xff;
 	}
-}
-#endif
-
-INLINE void copyline_2x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	__asm__ __volatile__ (
-	"pushw %%es              \n"
-	"movw %%dx, %%es         \n"
-	"cld                     \n"
-	".align 4                \n"
-	"0:                      \n"
-	"lodsl                   \n"
-	"movl %%eax, %%ebx       \n"
-	"roll $16, %%eax         \n"
-	"xchgw %%ax,%%bx         \n"
-	"stosl                   \n"
-	"movl %%ebx, %%eax       \n"
-	"stosl                   \n"
-	"loop 0b                 \n"
-	"popw %%ax               \n"
-	"movw %%ax, %%es         \n"
-	:
-	"=c" (width2),
-	"=d" (seg),
-	"=S" (src),
-	"=D" (address)
-	:
-	"0" (width2),
-	"1" (seg),
-	"2" (src),
-	"3" (address):
-	"ax", "bx", "cc", "memory");
-}
-
-INLINE void copyline_3x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	__asm__ __volatile__ (
-	"pushw %%es              \n"
-	"movw %%dx, %%es         \n"
-	"cld                     \n"
-	".align 4                \n"
-	"0:                      \n"
-	"lodsl                   \n"
-	"movl %%eax, %%ebx       \n"
-	"roll $16, %%eax         \n"
-	"xchgw %%ax,%%bx         \n"
-	"stosl                   \n"
-	"stosw                   \n"
-	"movl %%ebx, %%eax       \n"
-	"stosl                   \n"
-	"stosw                   \n"
-	"loop 0b                 \n"
-	"popw %%ax               \n"
-	"movw %%ax, %%es         \n"
-	:
-	"=c" (width2),
-	"=d" (seg),
-	"=S" (src),
-	"=D" (address)
-	:
-	"0" (width2),
-	"1" (seg),
-	"2" (src),
-	"3" (address):
-	"ax", "bx", "cc", "memory");
-}
-
-INLINE void copyline_4x_16bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	__asm__ __volatile__ (
-	"pushw %%es              \n"
-	"movw %%dx, %%es         \n"
-	"cld                     \n"
-	".align 4                \n"
-	"0:                      \n"
-	"lodsl                   \n"
-	"movl %%eax, %%ebx       \n"
-	"roll $16, %%eax         \n"
-	"xchgw %%ax,%%bx         \n"
-	"stosl                   \n"
-	"stosl                   \n"
-	"movl %%ebx, %%eax       \n"
-	"stosl                   \n"
-	"stosl 					 \n"
-
-
-	"loop 0b                 \n"
-	"popw %%ax               \n"
-	"movw %%ax, %%es         \n"
-	:
-	"=c" (width2),
-	"=d" (seg),
-	"=S" (src),
-	"=D" (address)
-	:
-	"0" (width2),
-	"1" (seg),
-	"2" (src),
-	"3" (address):
-	"ax", "bx", "cc", "memory");
-}
-
-INLINE void copyline_3x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
-{
-	int i;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width4; i > 0; i--)
+	else if( blit_dbpp == 16 )
 	{
-		_farnspokel (address, (quadpixel[*src] & 0x00ffffff) | (quadpixel[*(src+1)] & 0xff000000));
-		_farnspokel (address+4, (quadpixel[*(src+1)] & 0x0000ffff) | (quadpixel[*(src+2)] & 0xffff0000));
-		_farnspokel (address+8, (quadpixel[*(src+2)] & 0x000000ff) | (quadpixel[*(src+3)] & 0xffffff00));
-		address+=3*4;
-		src+=4;
+		if( blit_xmultiply == 2 && blit_vscanlines != 0 )
+		{
+			cmultiply = 0x00000001;
+		}
+		else
+		{
+			cmultiply = 0x00010001;
+		}
+		cmask = 0xffff;
 	}
-}
-
-INLINE void copyline_4x_8bpp(unsigned char *src,short seg,unsigned long address,int width4)
-{
-	int i;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width4; i > 0; i--)
+	else
 	{
-		_farnspokel (address, quadpixel[*src]);
-		_farnspokel (address+4, quadpixel[*(src+1)]);
-		_farnspokel (address+8, quadpixel[*(src+2)]);
-		_farnspokel (address+12, quadpixel[*(src+3)]);
-		address+=16;
-		src+=4;
+		cmultiply = 0x00000001;
+		cmask = 0xffffffff;
 	}
-}
-
-
-
-
-INLINE void copyline_1x_16bpp_palettized(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	unsigned short *s=(unsigned short *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
+	if( blit_cmultiply != cmultiply )
 	{
-		UINT32 d1,d2;
-
-		d1 = palette_16bit_lookup[*(s++)];
-		d2 = palette_16bit_lookup[*(s++)];
-		_farnspokel(address,(d1 & 0x0000ffff) | (d2 & 0xffff0000));
-		address+=4;
+		blit_cmultiply = cmultiply;
+		for( i = 0; i < 65536; i++ )
+		{
+			blit_lookup_high[ i ] = ( blit_lookup_high[ i ] & cmask ) * blit_cmultiply;
+			blit_lookup_low[ i ] = ( blit_lookup_low[ i ] & cmask ) * blit_cmultiply;
+		}
 	}
+	return blit_cmultiply;
 }
 
-INLINE void copyline_2x_16bpp_palettized(unsigned char *src,short seg,unsigned long address,int width2)
+void blit_set_buffers( int pages, int page_size )
 {
-	int i;
-	unsigned short *s=(unsigned short *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = 2*width2; i > 0; i--)
-	{
-		_farnspokel(address,palette_16bit_lookup[*(s++)]);
-		address+=4;
-	}
+	display_pos = 0;
+	display_pages = pages;
+	display_page_size = page_size;
 }
-
-INLINE void copyline_3x_16bpp_palettized(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	unsigned short *s=(unsigned short *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
-	{
-		UINT32 d1,d2;
-
-		d1 = palette_16bit_lookup[*(s++)];
-		d2 = palette_16bit_lookup[*(s++)];
-		_farnspokel(address,d1);
-		_farnspokel(address+4,(d1 & 0x0000ffff) | (d2 & 0xffff0000));
-		_farnspokel(address+8,d2);
-		address+=3*4;
-	}
-}
-
-INLINE void copyline_4x_16bpp_palettized(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	unsigned short *s=(unsigned short *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = 2*width2; i > 0; i--)
-	{
-		UINT32 d;
-
-		d = palette_16bit_lookup[*(s++)];
-		_farnspokel(address,d);
-		_farnspokel(address+4,d);
-		address+=8;
-	}
-}
-
-
-
-
-INLINE void copyline_1x_32bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	UINT32 *s=(UINT32 *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
-	{
-		_farnspokel(address,*(s++));
-		address+=4;
-	}
-}
-
-INLINE void copyline_2x_32bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	UINT32 *s=(UINT32 *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
-	{
-		UINT32 d;
-
-		d = *(s++);
-		_farnspokel(address,d);
-		_farnspokel(address+4,d);
-		address+=8;
-	}
-}
-
-INLINE void copyline_3x_32bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	UINT32 *s=(UINT32 *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
-	{
-		UINT32 d;
-
-		d = *(s++);
-		_farnspokel(address,d);
-		_farnspokel(address+4,d);
-		_farnspokel(address+8,d);
-		address+=3*4;
-	}
-}
-
-INLINE void copyline_4x_32bpp(unsigned char *src,short seg,unsigned long address,int width2)
-{
-	int i;
-	UINT32 *s=(UINT32 *)src;
-
-	/* set up selector */
-	_farsetsel(seg);
-
-	for (i = width2; i > 0; i--)
-	{
-		UINT32 d;
-
-		d = *(s++);
-		_farnspokel(address,d);
-		_farnspokel(address+4,d);
-		_farnspokel(address+8,d);
-		_farnspokel(address+12,d);
-		address+=16;
-	}
-}
-
-
-
-
-#define DIRTY1(MX,MY,SL,BPP,PALETTIZED) \
-	short dest_seg; \
-	int x,y,vesa_line,line_offs,xoffs; \
-	unsigned char *lb; \
-	unsigned long address; \
-	dest_seg = screen->seg; \
-	vesa_line = gfx_yoffset; \
-	line_offs = ((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0]); \
-	xoffs = (BPP/8)*gfx_xoffset; \
-	lb = ((UINT8 *)bitmap->line[skiplines]) + (BPP/8)*skipcolumns; \
-	for (y = 0;y < gfx_display_lines;y += 16) \
-	{ \
-		for (x = 0;x < gfx_display_columns; /* */) \
-		{ \
-			int w = 16; \
-			if (ISDIRTY(x,y)) \
-            { \
-				unsigned char *src = lb + (BPP/8)*x; \
-                int vesa_line0 = vesa_line, h; \
-				while (x + w < gfx_display_columns && ISDIRTY(x+w,y)) \
-                    w += 16; \
-				if (x + w > gfx_display_columns) \
-					w = gfx_display_columns - x; \
-				for (h = 0; h < 16 && y + h < gfx_display_lines; h++) \
-                { \
-					address = bmp_write_line(screen,vesa_line0) + xoffs + MX*(BPP/8)*x; \
-					copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-				    if ((MY > 2) || ((MY == 2) && (SL == 0))) { \
-						address = bmp_write_line(screen,vesa_line0+1) + xoffs + MX*(BPP/8)*x; \
-						copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					} \
-					if ((MY > 3) || ((MY == 3) && (SL == 0))) { \
-						address = bmp_write_line(screen,vesa_line0+2) + xoffs + MX*(BPP/8)*x; \
-						copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,w/(4/(BPP/8))); \
-					} \
-					vesa_line0 += MY; \
-					src += line_offs; \
-				} \
-			} \
-			x += w; \
-		} \
-		vesa_line += MY*16; \
-		lb += 16 * line_offs; \
-	}
-
-#define DIRTY0(MX,MY,SL,BPP,PALETTIZED) \
-	short dest_seg; \
-	int y,vesa_line,line_offs,xoffs,width; \
-	unsigned char *src; \
-	unsigned long address, address_offset; \
-	dest_seg = screen->seg; \
-	vesa_line = gfx_yoffset; \
-	line_offs = (((UINT8 *)bitmap->line[1]) - ((UINT8 *)bitmap->line[0])); \
-	xoffs = (BPP/8)*(gfx_xoffset + triplebuf_pos); \
-	width = gfx_display_columns/(4/(BPP/8)); \
-	src = ((UINT8 *)bitmap->line[skiplines]) + (BPP/8)*skipcolumns;	\
-	if (mmxlfb) { \
-		address = bmp_write_line(screen, vesa_line); \
-		_farsetsel (screen->seg); \
-		address_offset = bmp_write_line(screen, vesa_line+1) - address; \
-		address += xoffs; \
-		{ \
-		extern void asmblit_##MX##x_##MY##y_##SL##sl_##BPP##bpp##PALETTIZED \
-			(int, int, unsigned char *, int, unsigned long, unsigned long); \
-		asmblit_##MX##x_##MY##y_##SL##sl_##BPP##bpp##PALETTIZED \
-			(width, gfx_display_lines, src, line_offs, address, address_offset); \
-		} \
-	} \
-	else { \
-		for (y = 0;y < gfx_display_lines;y++) \
-		{ \
-			address = bmp_write_line(screen,vesa_line) + xoffs; \
-			copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-		    if ((MY > 2) || ((MY == 2) && (SL == 0))) { \
-				address = bmp_write_line(screen,vesa_line+1) + xoffs; \
-				copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-			} \
-			if ((MY > 3) || ((MY == 3) && (SL == 0))) { \
-				address = bmp_write_line(screen,vesa_line+2) + xoffs; \
-				copyline_##MX##x_##BPP##bpp##PALETTIZED(src,dest_seg,address,width); \
-			} \
-			vesa_line += MY; \
-			src += line_offs; \
-		} \
-	} \
-	if (use_triplebuf) \
-	{ \
-		vesa_scroll_async(triplebuf_pos,0); \
-		triplebuf_pos = (triplebuf_pos + triplebuf_page_width) % (3*triplebuf_page_width); \
-	}
-
-
-void blitscreen_dirty1_vesa_1x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(1,1,0,8,)  }
-void blitscreen_dirty1_vesa_1x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(1,2,0,8,)  }
-void blitscreen_dirty1_vesa_1x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(1,2,1,8,)  }
-void blitscreen_dirty1_vesa_2x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(2,1,0,8,)  }
-void blitscreen_dirty1_vesa_3x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(3,1,0,8,)  }
-void blitscreen_dirty1_vesa_2x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(2,2,0,8,)  }
-void blitscreen_dirty1_vesa_2x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,2,1,8,)  }
-void blitscreen_dirty1_vesa_2x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(2,3,0,8,)  }
-void blitscreen_dirty1_vesa_2x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,3,1,8,)  }
-void blitscreen_dirty1_vesa_3x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(3,2,0,8,)  }
-void blitscreen_dirty1_vesa_3x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,2,1,8,)  }
-void blitscreen_dirty1_vesa_3x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(3,3,0,8,)  }
-void blitscreen_dirty1_vesa_3x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,3,1,8,)  }
-void blitscreen_dirty1_vesa_4x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(4,2,0,8,)  }
-void blitscreen_dirty1_vesa_4x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,2,1,8,)  }
-void blitscreen_dirty1_vesa_4x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY1(4,3,0,8,)  }
-void blitscreen_dirty1_vesa_4x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,3,1,8,)  }
-
-void blitscreen_dirty1_vesa_1x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(1,1,0,16,) }
-void blitscreen_dirty1_vesa_1x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(1,2,0,16,) }
-void blitscreen_dirty1_vesa_1x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(1,2,1,16,) }
-void blitscreen_dirty1_vesa_2x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,1,0,16,) }
-void blitscreen_dirty1_vesa_2x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,2,0,16,) }
-void blitscreen_dirty1_vesa_2x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(2,2,1,16,) }
-void blitscreen_dirty1_vesa_2x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,3,0,16,) }
-void blitscreen_dirty1_vesa_2x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(2,3,1,16,) }
-void blitscreen_dirty1_vesa_3x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,1,0,16,) }
-void blitscreen_dirty1_vesa_3x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,2,0,16,) }
-void blitscreen_dirty1_vesa_3x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(3,2,1,16,) }
-void blitscreen_dirty1_vesa_3x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,3,0,16,) }
-void blitscreen_dirty1_vesa_3x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(3,3,1,16,) }
-void blitscreen_dirty1_vesa_4x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,2,0,16,) }
-void blitscreen_dirty1_vesa_4x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(4,2,1,16,) }
-void blitscreen_dirty1_vesa_4x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,3,0,16,) }
-void blitscreen_dirty1_vesa_4x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY1(4,3,1,16,) }
-
-void blitscreen_dirty1_vesa_1x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(1,1,0,16,_palettized) }
-void blitscreen_dirty1_vesa_1x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(1,2,0,16,_palettized) }
-void blitscreen_dirty1_vesa_1x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(1,2,1,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(2,1,0,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(2,2,0,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(2,2,1,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(2,3,0,16,_palettized) }
-void blitscreen_dirty1_vesa_2x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(2,3,1,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(3,1,0,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(3,2,0,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(3,2,1,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(3,3,0,16,_palettized) }
-void blitscreen_dirty1_vesa_3x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(3,3,1,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(4,2,0,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(4,2,1,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY1(4,3,0,16,_palettized) }
-void blitscreen_dirty1_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY1(4,3,1,16,_palettized) }
-
-void blitscreen_dirty1_vesa_1x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(1,1,0,32,) }
-void blitscreen_dirty1_vesa_1x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(1,2,0,32,) }
-void blitscreen_dirty1_vesa_1x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(1,2,1,32,) }
-void blitscreen_dirty1_vesa_2x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,1,0,32,) }
-void blitscreen_dirty1_vesa_2x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,2,0,32,) }
-void blitscreen_dirty1_vesa_2x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(2,2,1,32,) }
-void blitscreen_dirty1_vesa_2x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(2,3,0,32,) }
-void blitscreen_dirty1_vesa_2x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(2,3,1,32,) }
-void blitscreen_dirty1_vesa_3x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,1,0,32,) }
-void blitscreen_dirty1_vesa_3x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,2,0,32,) }
-void blitscreen_dirty1_vesa_3x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(3,2,1,32,) }
-void blitscreen_dirty1_vesa_3x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(3,3,0,32,) }
-void blitscreen_dirty1_vesa_3x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(3,3,1,32,) }
-void blitscreen_dirty1_vesa_4x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,2,0,32,) }
-void blitscreen_dirty1_vesa_4x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(4,2,1,32,) }
-void blitscreen_dirty1_vesa_4x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY1(4,3,0,32,) }
-void blitscreen_dirty1_vesa_4x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY1(4,3,1,32,) }
-
-void blitscreen_dirty0_vesa_1x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(1,1,0,8,)  }
-void blitscreen_dirty0_vesa_1x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(1,2,0,8,)  }
-void blitscreen_dirty0_vesa_1x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(1,2,1,8,)  }
-void blitscreen_dirty0_vesa_2x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(2,1,0,8,)  }
-void blitscreen_dirty0_vesa_3x_1x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(3,1,0,8,)  }
-void blitscreen_dirty0_vesa_2x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(2,2,0,8,)  }
-void blitscreen_dirty0_vesa_2x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,2,1,8,)  }
-void blitscreen_dirty0_vesa_2x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(2,3,0,8,)  }
-void blitscreen_dirty0_vesa_2x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,3,1,8,)  }
-void blitscreen_dirty0_vesa_3x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(3,2,0,8,)  }
-void blitscreen_dirty0_vesa_3x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,2,1,8,)  }
-void blitscreen_dirty0_vesa_3x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(3,3,0,8,)  }
-void blitscreen_dirty0_vesa_3x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,3,1,8,)  }
-void blitscreen_dirty0_vesa_4x_2x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(4,2,0,8,)  }
-void blitscreen_dirty0_vesa_4x_2xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,2,1,8,)  }
-void blitscreen_dirty0_vesa_4x_3x_8bpp(struct osd_bitmap *bitmap)   { DIRTY0(4,3,0,8,)  }
-void blitscreen_dirty0_vesa_4x_3xs_8bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,3,1,8,)  }
-
-void blitscreen_dirty0_vesa_1x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(1,1,0,16,) }
-void blitscreen_dirty0_vesa_1x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(1,2,0,16,) }
-void blitscreen_dirty0_vesa_1x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(1,2,1,16,) }
-void blitscreen_dirty0_vesa_2x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,1,0,16,) }
-void blitscreen_dirty0_vesa_2x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,2,0,16,) }
-void blitscreen_dirty0_vesa_2x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(2,2,1,16,) }
-void blitscreen_dirty0_vesa_2x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,3,0,16,)  }
-void blitscreen_dirty0_vesa_2x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(2,3,1,16,)  }
-void blitscreen_dirty0_vesa_3x_1x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,1,0,16,) }
-void blitscreen_dirty0_vesa_3x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,2,0,16,) }
-void blitscreen_dirty0_vesa_3x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(3,2,1,16,) }
-void blitscreen_dirty0_vesa_3x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,3,0,16,) }
-void blitscreen_dirty0_vesa_3x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(3,3,1,16,) }
-void blitscreen_dirty0_vesa_4x_2x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,2,0,16,) }
-void blitscreen_dirty0_vesa_4x_2xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(4,2,1,16,) }
-void blitscreen_dirty0_vesa_4x_3x_16bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,3,0,16,) }
-void blitscreen_dirty0_vesa_4x_3xs_16bpp(struct osd_bitmap *bitmap) { DIRTY0(4,3,1,16,) }
-
-void blitscreen_dirty0_vesa_1x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(1,1,0,16,_palettized) }
-void blitscreen_dirty0_vesa_1x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(1,2,0,16,_palettized) }
-void blitscreen_dirty0_vesa_1x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(1,2,1,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(2,1,0,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(2,2,0,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(2,2,1,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(2,3,0,16,_palettized) }
-void blitscreen_dirty0_vesa_2x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(2,3,1,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_1x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(3,1,0,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(3,2,0,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(3,2,1,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(3,3,0,16,_palettized) }
-void blitscreen_dirty0_vesa_3x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(3,3,1,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_2x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(4,2,0,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_2xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(4,2,1,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_3x_16bpp_palettized(struct osd_bitmap *bitmap)  { DIRTY0(4,3,0,16,_palettized) }
-void blitscreen_dirty0_vesa_4x_3xs_16bpp_palettized(struct osd_bitmap *bitmap) { DIRTY0(4,3,1,16,_palettized) }
-
-void blitscreen_dirty0_vesa_1x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(1,1,0,32,) }
-void blitscreen_dirty0_vesa_1x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(1,2,0,32,) }
-void blitscreen_dirty0_vesa_1x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(1,2,1,32,) }
-void blitscreen_dirty0_vesa_2x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,1,0,32,) }
-void blitscreen_dirty0_vesa_2x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,2,0,32,) }
-void blitscreen_dirty0_vesa_2x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(2,2,1,32,) }
-void blitscreen_dirty0_vesa_2x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(2,3,0,32,) }
-void blitscreen_dirty0_vesa_2x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(2,3,1,32,) }
-void blitscreen_dirty0_vesa_3x_1x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,1,0,32,) }
-void blitscreen_dirty0_vesa_3x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,2,0,32,) }
-void blitscreen_dirty0_vesa_3x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(3,2,1,32,) }
-void blitscreen_dirty0_vesa_3x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(3,3,0,32,) }
-void blitscreen_dirty0_vesa_3x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(3,3,1,32,) }
-void blitscreen_dirty0_vesa_4x_2x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,2,0,32,) }
-void blitscreen_dirty0_vesa_4x_2xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(4,2,1,32,) }
-void blitscreen_dirty0_vesa_4x_3x_32bpp(struct osd_bitmap *bitmap)  { DIRTY0(4,3,0,32,) }
-void blitscreen_dirty0_vesa_4x_3xs_32bpp(struct osd_bitmap *bitmap) { DIRTY0(4,3,1,32,) }
