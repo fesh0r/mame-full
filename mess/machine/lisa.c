@@ -1,11 +1,13 @@
 /*
 	experimental LISA driver
 
-	Runs most ROM start-up code successfully, but a floppy bug causes boot to fail.
+	Runs most ROM start-up code successfully, and loads the boot file, but it locks shortly
+	afterwards.
 
 	TODO :
-	* debug floppy controller emulation (Lisa2 seems to work - sort of, but Lisa2/10 does not)
+	* *** Boot and run LisaTest !!! ***
 	* finish MMU (does not switch to bank 0 on 68k trap)
+	* support hard disk to boot office system
 	* fix COPS support (what I assumed to be COPS reset line is NO reset line)
 	* finish keyboard/mouse support
 	* finish clock support
@@ -15,6 +17,11 @@
 	* write support for additionnal hardware (hard disk, etc...)
 	* emulate LISA1 (?)
 	* optimize MMU emulation !
+
+	DONE (just a reminder to uplift my spirit) :
+	* the lion's share of MMU (spring 2000)
+	* video hardware (except contrast control) (spring 2000)
+	* LISA2/Mac XL floppy hardware (november 2000)
 
 	Credits :
 	* the lisaemu project (<http://www.sundernet.com/>) has gathered much hardware information
@@ -45,8 +52,8 @@ UINT8 *lisa_rom_ptr;
 #define RAM_OFFSET 0x004000
 #define ROM_OFFSET 0x000000
 
-/* 1kb of RAM for 6504 floppy disk controller (shared with 68000), and 4kb of ROM (8kb,
-actually, but only one 4kb bank is selected, according to the drive type (TWIGGY or 3.5'')) */
+/* 1kb of RAM for 6504 floppy disk controller (shared with 68000), and 4kb of ROM (8kb on some
+boards, but then only one 4kb bank is selected, according to the drive type (TWIGGY or 3.5'')) */
 static UINT8 *fdc_ram;
 static UINT8 *fdc_rom;
 
@@ -97,8 +104,8 @@ static int test_parity;		/* detect parity hard errors */
 static UINT16 mem_err_addr_latch;	/* address when parity error occured */
 static int parity_error_pending;	/* parity error interrupt pending */
 
-static int bad_parity_count;	/* number of RAM bytes which have wrong parity */
-static UINT8 *bad_parity_table;	/* array : 1 bit set for each RAM byte with wrong parity */
+static int bad_parity_count;	/* total number of bytes in RAM which have wrong parity */
+static UINT8 *bad_parity_table;	/* array : 1 bit set for each byte in RAM with wrong parity */
 
 
 /*
@@ -186,6 +193,7 @@ struct
 		sony_lisa2,		/* 3.5'' drive with LisaLite adapter (Lisa 2) */
 		sony_lisa210	/* 3.5'' drive with modified fdc hardware (Lisa 2/10, Mac XL) */
 	} floppy_hardware : 2;
+	unsigned int has_double_sided_floppy : 1;	/* true on lisa 1 and *hacked* lisa 2/10 / Mac XL */
 	unsigned int has_mac_xl_video : 1;	/* modified video for MacXL */
 } lisa_features;
 
@@ -966,18 +974,20 @@ static OPBASE_HANDLER (lisa_fdc_OPbaseoverride)
 
 int lisa_floppy_init(int id)
 {
-	/*if (lisa_features.has_sony_drives)*/
-		return sony_floppy_init(id, SONY_FLOPPY_ALLOW400K /*| SONY_FLOPPY_ALLOW800K*/ | SONY_FLOPPY_EXT_SPEED_CONTROL);
-	/*else
-		return twiggy_floppy_init(id);*/
+	/*if (lisa_features.lisa_floppy_hardware == twiggy)
+		return twiggy_floppy_init(id);
+	else*/
+		return sony_floppy_init(id, (lisa_features.has_double_sided_floppy)
+										? SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_ALLOW800K
+										: SONY_FLOPPY_ALLOW400K | SONY_FLOPPY_EXT_SPEED_CONTROL);
 }
 
 void lisa_floppy_exit(int id)
 {
-	/*if (lisa_features.has_sony_drives)*/
+	/*if (lisa_features.lisa_floppy_hardware == twiggy)
+		return twiggy_floppy_exit(id);
+	else*/
 		sony_floppy_exit(id);
-	/*else
-		return twiggy_floppy_exit(id);*/
 }
 
 /*void init_lisa1(void)
@@ -985,6 +995,7 @@ void lisa_floppy_exit(int id)
 	lisa_model = lisa1;
 	lisa_features.has_fast_timers = 0;
 	lisa_features.floppy_hardware = twiggy;
+	lisa_features.has_double_sided_floppy = 1;
 	lisa_features.has_mac_xl_video = 0;
 }*/
 
@@ -993,6 +1004,7 @@ void init_lisa2(void)
 	lisa_model = lisa2;
 	lisa_features.has_fast_timers = 0;
 	lisa_features.floppy_hardware = sony_lisa2;
+	lisa_features.has_double_sided_floppy = 0;
 	lisa_features.has_mac_xl_video = 0;
 }
 
@@ -1001,6 +1013,7 @@ void init_lisa210(void)
 	lisa_model = lisa210;
 	lisa_features.has_fast_timers = 1;
 	lisa_features.floppy_hardware = sony_lisa210;
+	lisa_features.has_double_sided_floppy = 0;
 	lisa_features.has_mac_xl_video = 0;
 }
 
@@ -1009,14 +1022,21 @@ void init_mac_xl(void)
 	lisa_model = mac_xl;
 	lisa_features.has_fast_timers = 1;
 	lisa_features.floppy_hardware = sony_lisa210;
+	lisa_features.has_double_sided_floppy = 0;
 	lisa_features.has_mac_xl_video = 1;
 }
 
 static void lisa2_set_iwm_enable_lines(int enable_mask)
 {
 	/* E1 & E2 is connected to the Sony SEL line (?) */
-	logerror("new sel line state %d\n", (enable_mask) ? 0 : 1);
+	/*logerror("new sel line state %d\n", (enable_mask) ? 0 : 1);*/
 	sony_set_sel_line((enable_mask) ? 0 : 1);
+}
+
+static void lisa210_set_iwm_enable_lines(int enable_mask)
+{
+	/* E2 is connected to the Sony enable line (?) */
+	sony_set_enable_lines(enable_mask >> 1);
 }
 
 void lisa_init_machine(void)
@@ -1083,6 +1103,10 @@ void lisa_init_machine(void)
 		if (lisa_features.floppy_hardware == sony_lisa2)
 		{
 			intf.set_enable_lines = lisa2_set_iwm_enable_lines;
+		}
+		if (lisa_features.floppy_hardware == sony_lisa210)
+		{
+			intf.set_enable_lines = lisa210_set_iwm_enable_lines;
 		}
 
 		iwm_init(& intf);
