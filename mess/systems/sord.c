@@ -3,6 +3,10 @@
 	sord m5
 	system driver
 
+- floppy rom required
+- details on accessing cassette required
+- testing required
+
 	Kevin Thacker [MESS driver]
 
  ******************************************************************************/
@@ -15,65 +19,44 @@
 #include "includes/wd179x.h"
 #include "includes/basicdsk.h"
 
-//static void sordm5_video_int(int state)
-//{
-//	logerror("trigger 3 ctc w %02x\r\n ",state);
-//
-//	z80ctc_0_trg3_w(0,1);
-//	z80ctc_0_trg3_w(0,0);
-//	TMS9928A_interrupt();
-//}
+void *video_timer = NULL;
 
-
-void *video_timer;
-static char *cart_data = NULL;
+static char cart_data[0x06fff-0x02000];
 
 int		sord_cartslot_init(int id)
 {
+	void *file;
+
 	if (device_filename(IO_CARTSLOT,id)==NULL)
 		return INIT_FAIL;
 
 	if (strlen(device_filename(IO_CARTSLOT,id))==0)
 		return INIT_FAIL;
 
-	cart_data = malloc(0x06fff-0x02000);
+	file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
 
-	if (cart_data!=NULL)
+	if (file)
 	{
-		void *file;
+		int datasize;
 
-		file = image_fopen(IO_CARTSLOT, id, OSD_FILETYPE_IMAGE_RW, OSD_FOPEN_READ);
+		/* get file size */
+		datasize = osd_fsize(file);
 
-		if (file)
+		if (datasize!=0)
 		{
-			int datasize;
-
-			/* get file size */
-			datasize = osd_fsize(file);
-
-			if (datasize!=0)
-			{
-				/* read whole file */
-				osd_fread(file, cart_data, datasize);
-			}
-			osd_fclose(file);
+			/* read whole file */
+			osd_fread(file, cart_data, datasize);
 		}
+		osd_fclose(file);
 
-		cpu_setbank(1, cart_data);
-	
 		return INIT_PASS;
-	}
 
+	}
 	return INIT_FAIL;
 }
 
 void	sord_cartslot_exit(int id)
 {
-	if (cart_data!=NULL)
-	{
-		free(cart_data);
-		cart_data = NULL;
-	}
 }
 
 int sord_floppy_init(int id)
@@ -137,7 +120,7 @@ void sord_cassette_exit(int id)
 
 static void sord_m5_ctc_interrupt(int state)
 {
-	logerror("interrupting ctc %02x\r\n ",state);
+	//logerror("interrupting ctc %02x\r\n ",state);
     cpu_cause_interrupt(0, Z80_VECTOR(0, state));
 }
 
@@ -223,6 +206,14 @@ static WRITE_HANDLER(sord_diskhw_w)
 1 -   1/0	- not used ( pozdeji se pouzije pro prepinani drajvru 0 a 1 )
 0 -   2/1	- frequency MHz
 */
+	if (data & (1<<3))
+	{
+		wd179x_set_density(DEN_FM_HI);
+	}
+	else
+	{
+		wd179x_set_density(DEN_MFM_LO);
+	}
 }
 
 /* 3,2 written */
@@ -238,7 +229,9 @@ static WRITE_HANDLER(sord_diskhw_w)
 */
 static READ_HANDLER(sord_sys_r)
 {
-	return ((readinputport(16) & 0x01)<<7);
+	return 0x0ff;
+
+//	return ((readinputport(16) & 0x01)<<7);
 }
 
 static WRITE_HANDLER(sord_sys_w)
@@ -263,7 +256,7 @@ PORT_WRITE_START( writeport_sord_m5 )
 	{ 0x000, 0x00f, sord_ctc_w},
 	{ 0x010, 0x01f, sord_video_w},
 	{ 0x020, 0x02f, SN76496_0_w},
-	{ 0x050, 0x050, sord_sys_w},
+//	{ 0x050, 0x050, sord_sys_w},
 	{ 0x080, 0x080, wd179x_command_w},
 	{ 0x081, 0x081, wd179x_track_w},
 	{ 0x082, 0x082, wd179x_sector_w},
@@ -287,12 +280,15 @@ static void video_timer_callback(int dummy)
 void sord_m5_init_machine(void)
 {
 	z80ctc_init(&sord_m5_ctc_intf);
-	TMS9928A_reset ();
-
+	
 	video_timer = timer_pulse(TIME_IN_MSEC(16.7), 0, video_timer_callback);
 
 	wd179x_init(NULL);
+	TMS9928A_reset ();
+	z80ctc_reset(0);
 
+
+	/* should be done in a special callback to work properly! */
 	cpu_setbank(1, cart_data);
 
 }
@@ -300,6 +296,12 @@ void sord_m5_init_machine(void)
 
 void sord_m5_shutdown_machine(void)
 {
+	if (video_timer)
+	{
+		timer_remove(video_timer);
+		video_timer = NULL;
+	}
+
 	wd179x_exit();
 }
 
@@ -409,7 +411,7 @@ INPUT_PORTS_START(sord_m5)
 	PORT_START
 	PORT_BIT (0x0ff, 0x000, IPT_UNUSED)
 	PORT_START
-	PORT_BITX (0x01, IP_ACTIVE_HIGH, IPT_KEYBOARD, "RESET", KEYCODE_ESC, IP_JOY_NONE) 
+	PORT_BITX (0x01, IP_ACTIVE_LOW, IPT_KEYBOARD, "RESET", KEYCODE_ESC, IP_JOY_NONE) 
 
 INPUT_PORTS_END
 
@@ -482,7 +484,7 @@ static struct MachineDriver machine_driver_sord_m5 =
 
 ROM_START(sordm5)
 	ROM_REGION(0x010000, REGION_CPU1,0)
-	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x01)
+	ROM_LOAD("sordint.rom",0x0000, 0x02000, 0x078848d39)
 ROM_END
 
 static const struct IODevice io_sordm5[] =
