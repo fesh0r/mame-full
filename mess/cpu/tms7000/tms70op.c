@@ -447,6 +447,23 @@ void andp_b2p( void )
 	tms7000_ICount -= 9;
 }	
 
+
+void movp_i2p( void );
+void movp_i2p( void )
+{
+	UINT8	i,v;
+	
+	IMMBYTE(i);
+	IMMBYTE(v);
+	WM( 0x0100+v, i);
+
+	CLR_NZC;
+	SET_N8(i);
+	SET_Z8(i);
+	
+	tms7000_ICount -= 11;
+}	
+
 void andp_i2p( void );
 void andp_i2p( void )
 {

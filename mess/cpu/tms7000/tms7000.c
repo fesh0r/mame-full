@@ -24,7 +24,7 @@
 #include "mamedbg.h"
 #include "tms7000.h"
 
-#define VERBOSE 0
+#define VERBOSE 1
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -34,9 +34,7 @@
 
 /* Private prototypes */
 
-WRITE_HANDLER( tms7000_ports_w );
-READ_HANDLER( tms7000_ports_r );
-UINT16	bcd_add( UINT16 a, UINT16 b );
+UINT16 bcd_add( UINT16 a, UINT16 b );
 UINT16 bcd_tencomp( UINT16 a );
 UINT16 bcd_sub( UINT16 a, UINT16 b);
 
@@ -294,7 +292,7 @@ void tms7000_set_irq_line(int irqline, int state)
 		return;
 	}
 
-	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set iocntl0 flag */
+	tms7000.pf[0] |= (0x02 << (irqline * 2));	/* Set INTx iocntl0 flag */
 
 	tms7000_check_IRQ_lines();
 }
@@ -317,27 +315,34 @@ void tms7000_check_IRQ_lines( void )
 			{
 				newPC = RM16(0xfffc);
 				tms7000_state = TMS7000_IRQ1_LINE;
+				goto tms7000_interrupt;
 			}
 		}
-		else if( tms7000.irq_state[ TMS7000_IRQ2_LINE ] == ASSERT_LINE )
+
+		if( tms7000.irq_state[ TMS7000_IRQ2_LINE ] == ASSERT_LINE )
 		{
 			if( tms7000.pf[0] & 0x04 ) /* INT2 Enable bit */
 			{
 				newPC = RM16(0xfffa);
 				tms7000_state = TMS7000_IRQ2_LINE;
+				goto tms7000_interrupt;
 			}
 		}
-		else if( tms7000.irq_state[ TMS7000_IRQ3_LINE ] == ASSERT_LINE )
+
+		if( tms7000.irq_state[ TMS7000_IRQ3_LINE ] == ASSERT_LINE )
 		{
 			if( tms7000.pf[0] & 0x10 ) /* INT3 Enable bit */
 			{
 				newPC = RM16(0xfff8);
 				tms7000_state = TMS7000_IRQ3_LINE;
+				goto tms7000_interrupt;
 			}
 		}
-		else
-			return; /* Short circuit if there is no interrupt */
-		
+
+		return;
+
+tms7000_interrupt:
+	
 		PUSHBYTE( pSR );	/* Push Status register */
 		PUSHWORD( PC );		/* Push Program Counter */
 		pSR = 0;			/* Clear Status register */
@@ -379,102 +384,54 @@ int tms7000_execute(int cycles)
 }
 
 #pragma mark -
-#pragma mark ¥ Port Handling
-
-PORT_READ_START (tms7000_readport)
-	{ 0x00, 0x03,	tms7000_ports_r },		/* Ports A, B, C, and D */
-PORT_END
-
-PORT_WRITE_START (tms7000_writeport)
-	{ 0x00, 0x03,	tms7000_ports_w },		/* Ports A, B, C, and D */
-PORT_END
-
-WRITE_HANDLER( tms7000_ports_w )
-{
-	switch( offset )
-	{
-		case 0x00:		/* Port A */
-			tms7000.pf[0x04] = data & ~(0x00);	/* Input only */
-			break;
-			
-		case 0x01:		/* Port B */
-			tms7000.pf[0x06] = data & ~(0xff);	/* Output only */
-			break;
-			
-		case 0x02:		/* Port C */
-			tms7000.pf[0x08] = data & ~(tms7000.pf[0x09]);
-			break;
-			
-		case 0x03:		/* Port D */
-			tms7000.pf[0x0a] = data & ~(tms7000.pf[0x0b]);;
-			break;
-		
-		default:
-			logerror( "tms7000_ports_w: Writing non existing port: %d\n", offset );
-			break;
-	}
-}
-
-READ_HANDLER( tms7000_ports_r )
-{
-	data8_t result;
-
-	switch( offset )
-	{
-		case 0x00:		/* Port A */
-			result = tms7000.pf[0x04] & 0x00;	/* Input only */
-			break;
-			
-		case 0x01:		/* Port B */
-			result = tms7000.pf[0x06] & 0xff;	/* Output only */
-			break;
-			
-		case 0x02:		/* Port C */
-			result = tms7000.pf[0x08] & tms7000.pf[0x09];
-			break;
-			
-		case 0x03:		/* Port D */
-			result = tms7000.pf[0x0a] & tms7000.pf[0x0a];
-			break;
-		
-		default:
-			logerror( "tms7000_ports_r: Reading non existing port: %d\n", offset );
-			break;
-	}
-	
-	return result;
-}
-
-#pragma mark -
 #pragma mark ¥ Perpherial File Handling
 
-WRITE_HANDLER( tms7000_pf_w )	/* Perpherial file write */
+WRITE_HANDLER( tms70x0_pf_w )	/* Perpherial file write */
 {
 	data8_t	temp1, temp2, temp3, temp4;
 	
 	switch( offset )
 	{
 		case 0x00:	/* IOCNT0, Input/Ouput control */
-			/* Lots to implement here */
-			
 			temp1 = data & 0x2a;				/* Record which bits to clear */
 			temp2 = tms7000.pf[0x03] & 0x2a;	/* Get copy of current bits */
 			temp3 = (~temp1) & temp2;			/* Clear the requested bits */
 			temp4 = temp3 | (data & (~0x2a) );	/* OR in the remaining data */
 			
-			tms7000.pf[0x03] = temp4;
+			tms7000.pf[0x00] = temp4;
 			break;
 		
-		case 0x02:	/* T1DATA, timer 1 data */
-			/* Lots to implement here */
-			tms7000.pf[0x02] = data;
-			break;
+//		case 0x02:	/* T1DATA, timer 1 data */
+//			/* Lots to implement here */
+//			tms7000.pf[0x02] = data;
+//			break;
 
-		case 0x03:	/* T1CTL, timer 1 control */
-			/* Lots to implement here */
-			tms7000.pf[0x03] = data;
+//		case 0x03:	/* T1CTL, timer 1 control */
+//			/* Lots to implement here */
+//			tms7000.pf[0x03] = data;
+//			break;
+		
+		case 0x04: /* Port A write */
+			/* Port A is read only so this is a NOP */
 			break;
-
+			
+		case 0x06: /* Port B write */
+			cpu_writeport16( TMS7000_PORTB, data );
+			tms7000.pf[ 0x06 ] = data;
+			break;
+		
+		case 0x08: /* Port C write */
+			temp1 = data & tms7000.pf[ 0x09 ];	/* Mask off input bits */
+			cpu_writeport16( TMS7000_PORTC, temp1 );
+			tms7000.pf[ 0x08 ] = temp1;
+			break;
+			
+		case 0x0a: /* Port D write */
+			temp1 = data & tms7000.pf[ 0x0b ];	/* Mask off input bits */
+			cpu_writeport16( TMS7000_PORTD, temp1 );
+			tms7000.pf[ 0x0a ] = temp1;
+			break;
+			
 		default:
 			/* Just stuff the other registers */
 			tms7000.pf[ offset ] = data;
@@ -482,29 +439,56 @@ WRITE_HANDLER( tms7000_pf_w )	/* Perpherial file write */
 	}
 }
 
-READ_HANDLER( tms7000_pf_r )	/* Perpherial file read */
+READ_HANDLER( tms70x0_pf_r )	/* Perpherial file read */
 {
 	data8_t result;
+	data8_t	temp1, temp2, temp3, temp4;
 	
 	switch( offset )
 	{
 //		case 0x00:	/* IOCNT0, Input/Ouput control */
-//			/* Lots to implement here */
 //			result = tms7000.pf[0x00];
 //			break;
 		
-		case 0x02:	/* T1DATA, timer 1 data */
-			/* Lots to implement here */
-			result = tms7000.pf[0x02];
-			break;
+//		case 0x02:	/* T1DATA, timer 1 data */
+//			/* Lots to implement here */
+//			result = tms7000.pf[0x02];
+//			break;
 
-		case 0x03:	/* T1CTL, timer 1 control */
-			/* Lots to implement here */
-			result = tms7000.pf[0x03];
-			break;
+//		case 0x03:	/* T1CTL, timer 1 control */
+//			/* Lots to implement here */
+//			result = tms7000.pf[0x03];
+//			break;
 
+		case 0x04: /* Port A read */
+			result = cpu_readport16( TMS7000_PORTA );
+			break;
+			
+//		case 0x06: /* Port B read */
+//			/* Port B is write only, return a previous written value */
+//			result = tms7000.pf[ 0x06 ];
+//			break;
+		
+		case 0x08: /* Port C read */
+			temp1 = tms7000.pf[ 0x08 ] & tms7000.pf[ 0x09 ];	/* Get previous output bits */
+			temp2 = cpu_readport16( TMS7000_PORTC );			/* Read port */
+			temp3 = temp2 & (~tms7000.pf[ 0x09 ]);				/* Mask off output bits */
+			temp4 = temp1 | temp3;								/* OR together */
+			
+			result = temp4;
+			break;
+			
+		case 0x0a: /* Port D read */
+			temp1 = tms7000.pf[ 0x0a ] & tms7000.pf[ 0x0b ];	/* Get previous output bits */
+			temp2 = cpu_readport16( TMS7000_PORTD );			/* Read port */
+			temp3 = temp2 & (~tms7000.pf[ 0x0b ]);				/* Mask off output bits */
+			temp4 = temp1 | temp3;								/* OR together */
+			
+			result = temp4;
+			break;
+			
 		default:
-			/* Just stuff the other registers */
+			/* Just unstuff the other registers */
 			result = tms7000.pf[ offset ];
 			break;
 	}

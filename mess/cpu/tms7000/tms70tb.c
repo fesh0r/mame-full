@@ -51,7 +51,7 @@ static void (*opfn[0x100])(void) = {
 /* 0x9X */  illegal, illegal, movp_b2p,andp_b2p,orp_b2p, xorp_b2p,btjop_b, btjzp_b,
             movd_r,  movp_p2b,lda_ind, sta_ind, br_ind,  cmpa_ind,call_ind,illegal,
 
-/* 0xAX */  illegal, illegal, movp_r2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
+/* 0xAX */  illegal, illegal, movp_i2p,andp_i2p,orp_i2p, xorp_i2p,btjop_im,btjzp_im,
             movd_ind,illegal, lda_inx, sta_inx, br_inx,  cmpa_inx,call_inx,illegal,
 
 /* 0xBX */  clrc,    illegal, dec_a,   inc_a,   inv_a,   clr_a,   xchb_a,  swap_a,

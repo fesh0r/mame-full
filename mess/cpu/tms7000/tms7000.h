@@ -29,9 +29,19 @@ enum { TMS7000_VCC, TMS7000_VSS };
 
 extern int tms7000_ICount;
 
-#define TMS7000_IRQ1_LINE	0	/* External IRQ, first priority */
-#define TMS7000_IRQ2_LINE	1	/* Internal IRQ, fired by a timer, middle priority */
-#define TMS7000_IRQ3_LINE	2	/* External IRQ, last priority */
+enum {
+	TMS7000_IRQ1_LINE = 0,
+	TMS7000_IRQ2_LINE,
+	TMS7000_IRQ3_LINE,
+	TMS7000_IRQNONE = 255
+};
+
+enum {
+	TMS7000_PORTA = 0,
+	TMS7000_PORTB,
+	TMS7000_PORTC,
+	TMS7000_PORTD
+};
 
 /* PUBLIC FUNCTIONS */
 extern unsigned tms7000_get_context(void *dst);
@@ -48,10 +58,8 @@ extern int tms7000_execute(int cycles);
 extern unsigned tms7000_get_reg(int regnum);
 extern void tms7000_set_mc_line( int value );
 
-extern const struct IO_ReadPort tms7000_readport[];
-extern const struct IO_WritePort tms7000_writeport[];
-extern WRITE_HANDLER( tms7000_pf_w );
-extern READ_HANDLER( tms7000_pf_r );
+extern WRITE_HANDLER( tms70x0_pf_w );
+extern READ_HANDLER( tms70x0_pf_r );
 
 #ifdef MAME_DEBUG
 extern unsigned Dasm7000 (char *buffer, unsigned pc);
