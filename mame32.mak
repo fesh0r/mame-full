@@ -8,7 +8,7 @@ VERSION = -DVERSION=37
 BETA_VERSION = -DBETA_VERSION=5
 
 # uncomment this to build an release canidate version
-RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
+# RELEASE_CANDIDATE = -DRELEASE_CANDIDATE=1
 
 # uncomment out the MAME_DEBUG = line to build a version of MAME for debugging games
 # MAME_DEBUG = -DMAME_DEBUG
@@ -23,7 +23,7 @@ MAME_MMX = -DMAME_MMX
 USE_FASTCALL = 1
 
 # uncomment to build without MIDAS
-NOMIDAS =
+# NOMIDAS =
 
 # uncomment to build Helpfiles
 # HELPFILE = Mame32.hlp
@@ -88,7 +88,7 @@ Z80OBJS = $(OBJ)/cpu/z80/z80.o
 z80DEF =
 !endif
 
-DEFS   = -DLSB_FIRST -DWIN32 -DPI=3.1415926535 -DHAS_ADSP2105 \
+DEFS   = -DLSB_FIRST -DWIN32 -DPI=3.1415926535 \
          -DINLINE="static __inline" -Dinline=__inline -D__inline__=__inline \
 	 -DPNG_SAVE_SUPPORT -D_WINDOWS -DZLIB_DLL
 
@@ -235,7 +235,7 @@ SNDOBJS = \
          $(OBJ)/sound/2610intf.o \
          $(OBJ)/sound/2612intf.o \
          $(OBJ)/sound/3812intf.o \
-		 $(OBJ)/sound/ymz280b.o \
+         $(OBJ)/sound/ymz280b.o \
          $(OBJ)/sound/fmopl.o \
          $(OBJ)/sound/tms36xx.o \
          $(OBJ)/sound/tms5220.o \
@@ -385,8 +385,8 @@ DRV_OBJS = \
 	$(OBJ)/machine/tnzs.o $(OBJ)/vidhrdw/tnzs.o $(OBJ)/drivers/tnzs.o \
 	$(OBJ)/machine/lkage.o $(OBJ)/drivers/lkage.o $(OBJ)/vidhrdw/lkage.o \
 	$(OBJ)/vidhrdw/taito_l.o $(OBJ)/drivers/taito_l.o \
-	$(OBJ)/vidhrdw/taitoic.o  \
 	$(OBJ)/vidhrdw/taito_b.o $(OBJ)/drivers/taito_b.o \
+	$(OBJ)/vidhrdw/taitoic.o \
 	$(OBJ)/vidhrdw/taito_f2.o $(OBJ)/drivers/taito_f2.o \
 	$(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o $(OBJ)/drivers/slapfght.o \
 	$(OBJ)/machine/twincobr.o $(OBJ)/vidhrdw/twincobr.o \
@@ -394,6 +394,7 @@ DRV_OBJS = \
 	$(OBJ)/machine/toaplan1.o $(OBJ)/vidhrdw/toaplan1.o $(OBJ)/drivers/toaplan1.o \
 	$(OBJ)/vidhrdw/snowbros.o $(OBJ)/drivers/snowbros.o \
 	$(OBJ)/vidhrdw/toaplan2.o $(OBJ)/drivers/toaplan2.o \
+	$(OBJ)/vidhrdw/cave.o $(OBJ)/drivers/cave.o \
 	$(OBJ)/drivers/kyugo.o $(OBJ)/vidhrdw/kyugo.o \
 	$(OBJ)/machine/williams.o $(OBJ)/vidhrdw/williams.o $(OBJ)/sndhrdw/williams.o $(OBJ)/drivers/williams.o \
 	$(OBJ)/vidhrdw/vulgus.o $(OBJ)/drivers/vulgus.o \
@@ -548,10 +549,10 @@ DRV_OBJS = \
 	$(OBJ)/drivers/starwars.o $(OBJ)/sndhrdw/starwars.o \
 	$(OBJ)/machine/mhavoc.o $(OBJ)/drivers/mhavoc.o \
 	$(OBJ)/machine/quantum.o $(OBJ)/drivers/quantum.o \
+	$(OBJ)/machine/atarifb.o $(OBJ)/vidhrdw/atarifb.o $(OBJ)/drivers/atarifb.o \
 	$(OBJ)/machine/sprint2.o $(OBJ)/vidhrdw/sprint2.o $(OBJ)/drivers/sprint2.o \
 	$(OBJ)/machine/sbrkout.o $(OBJ)/vidhrdw/sbrkout.o $(OBJ)/drivers/sbrkout.o \
 	$(OBJ)/machine/dominos.o $(OBJ)/vidhrdw/dominos.o $(OBJ)/drivers/dominos.o \
-	$(OBJ)/machine/atarifb.o $(OBJ)/vidhrdw/atarifb.o $(OBJ)/drivers/atarifb.o \
 	$(OBJ)/vidhrdw/nitedrvr.o $(OBJ)/machine/nitedrvr.o $(OBJ)/drivers/nitedrvr.o \
 	$(OBJ)/vidhrdw/bsktball.o $(OBJ)/machine/bsktball.o $(OBJ)/drivers/bsktball.o \
 	$(OBJ)/vidhrdw/copsnrob.o $(OBJ)/machine/copsnrob.o $(OBJ)/drivers/copsnrob.o \
@@ -621,6 +622,7 @@ DRV_OBJS = \
 	$(OBJ)/machine/berzerk.o $(OBJ)/vidhrdw/berzerk.o $(OBJ)/sndhrdw/berzerk.o $(OBJ)/drivers/berzerk.o \
 	$(OBJ)/vidhrdw/gameplan.o $(OBJ)/drivers/gameplan.o \
 	$(OBJ)/vidhrdw/route16.o $(OBJ)/drivers/route16.o \
+	$(OBJ)/vidhrdw/ttmahjng.o $(OBJ)/drivers/ttmahjng.o \
 	$(OBJ)/vidhrdw/zaccaria.o $(OBJ)/drivers/zaccaria.o \
 	$(OBJ)/vidhrdw/nova2001.o $(OBJ)/drivers/nova2001.o \
 	$(OBJ)/vidhrdw/pkunwar.o $(OBJ)/drivers/pkunwar.o \
@@ -656,6 +658,7 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/tail2nos.o $(OBJ)/drivers/tail2nos.o \
 	$(OBJ)/vidhrdw/pipedrm.o $(OBJ)/drivers/pipedrm.o \
 	$(OBJ)/vidhrdw/aerofgt.o $(OBJ)/drivers/aerofgt.o \
+	$(OBJ)/vidhrdw/psikyo.o $(OBJ)/drivers/psikyo.o \
 	$(OBJ)/machine/8254pit.o $(OBJ)/drivers/leland.o $(OBJ)/vidhrdw/leland.o $(OBJ)/sndhrdw/leland.o \
 	$(OBJ)/drivers/ataxx.o \
 	$(OBJ)/vidhrdw/marineb.o $(OBJ)/drivers/marineb.o \
@@ -670,14 +673,17 @@ DRV_OBJS = \
 	$(OBJ)/machine/neogeo.o $(OBJ)/machine/pd4990a.o $(OBJ)/vidhrdw/neogeo.o $(OBJ)/drivers/neogeo.o \
 	$(OBJ)/vidhrdw/hanaawas.o $(OBJ)/drivers/hanaawas.o \
 	$(OBJ)/vidhrdw/seta.o $(OBJ)/sndhrdw/seta.o $(OBJ)/drivers/seta.o \
-	$(OBJ)/vidhrdw/cave.o $(OBJ)/drivers/cave.o \
 	$(OBJ)/vidhrdw/ohmygod.o $(OBJ)/drivers/ohmygod.o \
 	$(OBJ)/vidhrdw/powerins.o $(OBJ)/drivers/powerins.o \
+	$(OBJ)/drivers/shanghai.o \
+	$(OBJ)/vidhrdw/shangha3.o $(OBJ)/drivers/shangha3.o \
+	$(OBJ)/vidhrdw/gundealr.o $(OBJ)/drivers/gundealr.o \
+	$(OBJ)/vidhrdw/macross.o $(OBJ)/drivers/macross.o \
+	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
 	$(OBJ)/vidhrdw/spacefb.o $(OBJ)/drivers/spacefb.o \
 	$(OBJ)/vidhrdw/blueprnt.o $(OBJ)/drivers/blueprnt.o \
 	$(OBJ)/drivers/omegrace.o \
 	$(OBJ)/vidhrdw/dday.o $(OBJ)/drivers/dday.o \
-	$(OBJ)/vidhrdw/gundealr.o $(OBJ)/drivers/gundealr.o \
 	$(OBJ)/vidhrdw/leprechn.o $(OBJ)/drivers/leprechn.o \
 	$(OBJ)/vidhrdw/hexa.o $(OBJ)/drivers/hexa.o \
 	$(OBJ)/vidhrdw/redalert.o $(OBJ)/sndhrdw/redalert.o $(OBJ)/drivers/redalert.o \
@@ -691,11 +697,9 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/sauro.o $(OBJ)/drivers/sauro.o \
 	$(OBJ)/vidhrdw/ambush.o $(OBJ)/drivers/ambush.o \
 	$(OBJ)/vidhrdw/starcrus.o $(OBJ)/drivers/starcrus.o \
-	$(OBJ)/drivers/shanghai.o \
 	$(OBJ)/vidhrdw/goindol.o $(OBJ)/drivers/goindol.o \
 	$(OBJ)/drivers/dlair.o \
 	$(OBJ)/vidhrdw/meteor.o $(OBJ)/drivers/meteor.o \
-	$(OBJ)/vidhrdw/bjtwin.o $(OBJ)/drivers/bjtwin.o \
 	$(OBJ)/vidhrdw/aztarac.o $(OBJ)/sndhrdw/aztarac.o $(OBJ)/drivers/aztarac.o \
 	$(OBJ)/vidhrdw/mole.o $(OBJ)/drivers/mole.o \
 	$(OBJ)/vidhrdw/gotya.o $(OBJ)/sndhrdw/gotya.o $(OBJ)/drivers/gotya.o \
@@ -704,10 +708,6 @@ DRV_OBJS = \
 	$(OBJ)/vidhrdw/mermaid.o $(OBJ)/drivers/mermaid.o \
 	$(OBJ)/vidhrdw/magix.o $(OBJ)/drivers/magix.o \
 	$(OBJ)/drivers/royalmah.o \
-	$(OBJ)/vidhrdw/macross.o $(OBJ)/drivers/macross.o \
- 	$(OBJ)/vidhrdw/ttmahjng.o $(OBJ)/drivers/ttmahjng.o \
- 	$(OBJ)/vidhrdw/psikyo.o $(OBJ)/drivers/psikyo.o \
- 	$(OBJ)/vidhrdw/shangha3.o $(OBJ)/drivers/shangha3.o \
 
 !ifdef TINY_COMPILE
 OBJS = $(TINY_OBJS)
@@ -920,7 +920,7 @@ $(OBJ)/cpu/tms32010/tms32010.o: src/cpu/tms32010/tms32010.c src/cpu/tms32010/tms
 $(OBJ)/cpu/tms34010/tms34010.o: src/cpu/tms34010/tms34010.c src/cpu/tms34010/tms34010.h src/cpu/tms34010/34010ops.c src/cpu/tms34010/34010tbl.c
 $(OBJ)/cpu/tms9900/tms9900.o:   src/cpu/tms9900/tms9900.c src/cpu/tms9900/tms9900.h src/cpu/tms9900/9900stat.h
 $(OBJ)/cpu/t11/t11.o:           src/cpu/t11/t11.c src/cpu/t11/t11.h src/cpu/t11/t11ops.c src/cpu/t11/t11table.c
-$(OBJ)/cpu/m68000/m68kcpu.o:    $(OBJ)/cpu/m68000/m68kops.c  src/cpu/m68000/m68k_in.c src/cpu/m68000/m68kmake.c 
+$(OBJ)/cpu/m68000/m68kcpu.o:    $(OBJ)/cpu/m68000/m68kops.c src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
 $(OBJ)/cpu/ccpu/ccpu.o:         src/cpu/ccpu/ccpu.c src/cpu/ccpu/ccpu.h src/cpu/ccpu/ccputabl.c
 $(OBJ)/cpu/konami/konami.o:     src/cpu/konami/konami.c src/cpu/konami/konami.h src/cpu/konami/konamops.c src/cpu/konami/konamtbl.c
 
