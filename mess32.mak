@@ -43,7 +43,7 @@ ASMFLAGS = -f win32
 ASMDEFS =
 
 # uncomment out the DEBUG = line to build a debugging version of mame32.
-# DEBUG = 1
+DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
@@ -145,7 +145,7 @@ LDFLAGS = $(LDFLAGSGLOBAL) $(LDFLAGSDEBUG)
 LDFLAGS = $(LDFLAGSGLOBAL) $(LDFLAGSOPTIMIZED)
 !endif
 
-RCFLAGS = -l 0x409 -DNDEBUG -I./Win32 $(MAME_NET) $(MAME_MMX) -DMESS
+RCFLAGS = -l 0x409 -DNDEBUG -I./Win32 $(MAME_NET) $(MAME_MMX) -DMESS -Imess/Win32
 
 LIBS   = kernel32.lib user32.lib gdi32.lib comctl32.lib comdlg32.lib advapi32.lib \
          winmm.lib shell32.lib dinput.lib dxguid.lib vfw32.lib ZLIB\zlib.lib \
@@ -171,7 +171,7 @@ WIN32_OBJS = \
          $(OBJ)/Win32/debug.o \
          $(OBJ)/Win32/fmsynth.o $(OBJ)/Win32/NTFMSynth.o \
          $(OBJ)/Win32/audit32.o \
-         $(OBJ)/Win32/mess32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
+         $(OBJ)/mess/Win32/mess32ui.o $(OBJ)/Win32/Properties.o $(OBJ)/Win32/ColumnEdit.o \
          $(OBJ)/Win32/Screenshot.o $(OBJ)/Win32/TreeView.o $(OBJ)/Win32/Splitters.o \
          $(OBJ)/Win32/options.o $(OBJ)/Win32/Bitmask.o $(OBJ)/Win32/DataMap.o \
          $(OBJ)/Win32/Avi.o \
@@ -295,7 +295,9 @@ COREOBJS = \
           $(OBJ)/mess/machine/dsk.o      \
           $(OBJ)/mess/machine/wd179x.o	\
           $(OBJ)/mess/sndhrdw/beep.o	\
-		  $(OBJ)/mess/win32.o
+		  $(OBJ)/mess/Win32/fileio.o	\
+		  $(OBJ)/mess/Win32/dirio.o		\
+		  $(OBJ)/mess/Win32/fdc.o
 
 DRV_OBJS = \
           $(OBJ)/mess/vidhrdw/tms9928a.o \
@@ -713,6 +715,9 @@ imgtool.exe:	$(IMGTOOL_OBJS)
 {mess/tools}.c{$(OBJ)/mess/tools}.o:
 	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
 
+{mess/Win32}.c{$(OBJ)/mess/Win32}.o:
+	$(CC) $(DEFS) $(CFLAGS) -Fo$@ -c $<
+
 CFLAGS_MAKE_68K = $(CFLAGS) -DWIN32
 !ifdef USE_FASTCALL
 CFLAGS_MAKE_68K = $(CFLAGS_MAKE_68K) -DFASTCALL
@@ -763,7 +768,7 @@ $(OBJ)/cpu/t11/t11.o:           src/cpu/t11/t11.c src/cpu/t11/t11.h src/cpu/t11/
 $(OBJ)/cpu/m68000/m68kcpu.o:    $(OBJ)/cpu/m68000/m68kops.c src/cpu/m68000/m68kmake.c src/cpu/m68000/m68k_in.c
 $(OBJ)/cpu/ccpu/ccpu.o:         src/cpu/ccpu/ccpu.c src/cpu/ccpu/ccpu.h src/cpu/ccpu/ccputabl.c
 $(OBJ)/cpu/konami/konami.o:     src/cpu/konami/konami.c src/cpu/konami/konami.h src/cpu/konami/konamops.c src/cpu/konami/konamtbl.c
-$(OBJ)/win32/mess32ui.o:		src/win32/mess32ui.c src/win32/win32ui.c src/win32/win32ui.h
+$(OBJ)/mess/win32/mess32ui.o:	src/win32/mess32ui.c src/win32/win32ui.c src/win32/win32ui.h
 
 .IGNORE:
 
@@ -807,6 +812,7 @@ maketree:
 	md $(OBJ)\mess\formats
 	md $(OBJ)\mess\sndhrdw
 	md $(OBJ)\mess\tools
+	md $(OBJ)\mess\Win32
 	md $(OBJ)\Win32
 
 clean:
@@ -863,6 +869,7 @@ clean:
 	del $(OBJ)\mess\formats\*.o
 	del $(OBJ)\mess\sndhrdw\*.o
 	del $(OBJ)\mess\tools\*.o
+	del $(OBJ)\Win32\tools\*.o
 !ifdef HELPFILE
 	del mame32.hlp
 	del mame32.cnt

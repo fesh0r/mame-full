@@ -105,7 +105,7 @@ static void coco3_pia1_firq_b(int state);
 #define LOG_INT_MASKING	0
 #define LOG_INT_TMR		0
 #define LOG_INT_COCO3	0
-#define LOG_GIME		0
+#define LOG_GIME		1
 #define LOG_MMU			0
 
 #define COCO_CPU_SPEED	(TIME_IN_HZ(894886))
