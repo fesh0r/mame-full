@@ -300,6 +300,7 @@ typedef union {
 #define HAS_SPEAKER     1
 #define HAS_WAVE        1
 #define HAS_BEEP        1
+#define HAS_TMS5110     0
 #else
 #define HAS_CUSTOM      1
 #define HAS_SAMPLES     1
@@ -345,6 +346,7 @@ typedef union {
 #define HAS_SPEAKER     0
 #define HAS_WAVE        0
 #define HAS_BEEP        0
+#define HAS_TMS5110     1
 #endif
 
 #endif  /* !NEOMAME */

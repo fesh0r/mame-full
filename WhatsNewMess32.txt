@@ -7,6 +7,9 @@ Whats new:
 - MESS32 will now remember what items were selected in the software picker.
   [Nate Woods]
 
+- Unknown file types are no longer displayed in software pane.  Unknown ZIPs
+  will now be X'ed [Nate Woods]
+
 ----------
 0.37 BETA 5
 ------------

@@ -137,24 +137,30 @@ static void SetupImageTypes(mess_image_type *types, int count, BOOL bZip)
 	types[num_extensions].ext = NULL;
 }
 
-static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes)
+static int MessDiscoverImageType(const char *filename, mess_image_type *imagetypes, BOOL bReadZip)
 {
 	int type, i;
 	char *lpExt;
 	ZIP *pZip = NULL;
 	
 	lpExt = strrchr(filename, '.');
-	type = IO_CARTSLOT;
+	type = IO_COUNT;
 
 	if (lpExt) {
 		/* Are we a ZIP file? */
 		if (!stricmp(lpExt, ".ZIP")) {
-			pZip = openzip(filename);
-			if (pZip) {
-				struct zipent *pZipEnt = readzip(pZip);
-				if (pZipEnt) {
-					lpExt = strrchr(pZipEnt->name, '.');
+			if (bReadZip) {
+				pZip = openzip(filename);
+				if (pZip) {
+					struct zipent *pZipEnt = readzip(pZip);
+					if (pZipEnt) {
+						lpExt = strrchr(pZipEnt->name, '.');
+					}
 				}
+			}
+			else {
+				/* IO_ALIAS represents uncalculated zips */
+				type = IO_ALIAS;
 			}
 		}
 
@@ -208,7 +214,7 @@ static void MessAddImage(int imagenum)
 
 	SetupImageTypes(imagetypes, sizeof(imagetypes) / sizeof(imagetypes[0]), TRUE);
 
-	options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes);
+	options.image_files[options.image_count].type = MessDiscoverImageType(filename, imagetypes, TRUE);
 	options.image_files[options.image_count].name = filename;
 	mess_image_nums[options.image_count++] = imagenum;
 }
@@ -357,7 +363,7 @@ static int WhichMessIcon(int nItem)
 		7, /* IO_SNAPSHOT */
 		7, /* IO_QUICKLOAD */
 		2, /* IO_ALIAS (actually, unknowns) */
-		1  /* IO_COUNT */
+		3  /* IO_COUNT (actually, bad files) */
 	};
 
 	int type = mess_images_index[nItem]->type;
@@ -464,6 +470,7 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 	ImageData *newimg;
 	void *d;
 	int is_dir;
+	int type;
 	size_t pathlen;
 	mess_image_type imagetypes[64];
 
@@ -479,18 +486,22 @@ static void AddImagesFromDirectory(const char *dir, BOOL bRecurse, char *buffer,
 		while(osd_dir_get_entry(d, buffer + pathlen, buffersz - pathlen, &is_dir)) {
 			if (!is_dir) {
 				/* Not a directory */
-				newimg = malloc(sizeof(ImageData));
-				if (newimg && (newimg->fullname = strdup(buffer))) {
-					newimg->name = newimg->fullname + pathlen;
-					newimg->next = NULL;
-					newimg->type = IO_ALIAS; /* We are using IO_ALIAS for unknowns */
-					**listend = newimg;
-					*listend = &newimg->next;
-				}
-				else if (newimg)
-					free(newimg);
+				type = MessDiscoverImageType(buffer, imagetypes, FALSE);
+				if (type != IO_COUNT) {
+					/* Not obviously wrong... */
+					newimg = malloc(sizeof(ImageData));
+					if (newimg && (newimg->fullname = strdup(buffer))) {
+						newimg->name = newimg->fullname + pathlen;
+						newimg->next = NULL;
+						newimg->type = type;
+						**listend = newimg;
+						*listend = &newimg->next;
+					}
+					else if (newimg)
+						free(newimg);
 
-				mess_images_count++;
+					mess_images_count++;
+				}
 			}
 			else if (bRecurse && strcmp(buffer + pathlen, ".") && strcmp(buffer + pathlen, "..")) {
 				AddImagesFromDirectory(buffer + pathlen, bRecurse, buffer, buffersz, listend);
@@ -967,7 +978,7 @@ static void OnMessIdle()
 		pImageData = mess_images_index[nIdleImageNum];
 
 		if (pImageData->type == IO_ALIAS) {
-			pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes);
+			pImageData->type = MessDiscoverImageType(pImageData->fullname, imagetypes, TRUE);
 			ListView_RedrawItems(hwndSoftware,nIdleImageNum,nIdleImageNum);
 		}
 		nIdleImageNum++;
@@ -1079,7 +1090,7 @@ void MessImageConfig(HWND hMain, char *last_directory, int image)
 
     if (CommonFileImageDialog(hMain, last_directory, GetOpenFileName, filename, imagetypes))
     {
-		options.image_files[image].type = MessDiscoverImageType(filename, imagetypes);
+		options.image_files[image].type = MessDiscoverImageType(filename, imagetypes, TRUE);
 		options.image_files[image].name = strdup(filename);
 		if (options.image_count <= image)
 			options.image_count = image + 1;
