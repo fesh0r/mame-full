@@ -21,7 +21,6 @@
 #include "devices/basicdsk.h"
 #include "vidhrdw/tms9928a.h"
 #include "cpu/z80/z80.h"
-#include "cpu/z80/z80_msx.h"
 #include "vidhrdw/v9938.h"
 #include "devices/printer.h"
 #include "devices/cassette.h"
