@@ -398,8 +398,8 @@ static const struct IODevice io_ti990_10[] =
 {
 	/* hard disk */
 	{
-		IO_CASSETTE,			/* type */
-		2,						/* count */
+		IO_HARDDISK,			/* type */
+		4,						/* count */
 		"hd\0",					/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		0,
@@ -419,7 +419,7 @@ static const struct IODevice io_ti990_10[] =
 	/* tape reader */
 	{
 		IO_CASSETTE,			/* type */
-		2,						/* count */
+		4,						/* count */
 		"tap\0",				/* file extensions */
 		IO_RESET_NONE,			/* reset if file changed */
 		0,
