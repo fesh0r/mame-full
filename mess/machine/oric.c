@@ -19,6 +19,9 @@
 #include "machine/6522via.h"
 #include "includes/mfmdisk.h"
 
+/* timer used to refresh via cb input, which will trigger ints on pulses
+from tape */
+static void *oric_tape_timer;
 /* ==0 if oric1 or oric atmos, !=0 if telestrat */
 static int oric_is_telestrat;
 
@@ -243,7 +246,7 @@ PB7
 
 /* not called yet - this will update the via with the state of the tape data.
 This allows the via to trigger on bit changes and issue interrupts */
-void    oric_refresh_tape(void)
+static void    oric_refresh_tape(int dummy)
 {
 	int data;
 
@@ -626,6 +629,8 @@ void oric_common_init_machine(void)
 	oric_irqs = 0;
 
 	oric_ram_0x0c000 = NULL;
+
+	oric_tape_timer = timer_pulse(TIME_IN_HZ(11000), 0, oric_refresh_tape);
 
 	/* disable os rom, enable microdisc rom */
 	/* 0x0c000-0x0dfff will be ram, 0x0e000-0x0ffff will be microdisc rom */
