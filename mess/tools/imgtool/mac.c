@@ -440,7 +440,7 @@ Known issues:
 	is the same letter (with different case) as the upper-case Psi, so that if
 	a program asks for a file called "90¡" on a greek HFS volume, and there is
 	a file called "90[Psi]" on this volume, file "90[Psi]" will be opened.
-	Results will probably be even weirder with 2-byte script like Japanese or
+	Results will probably be even weirder with 2-byte scripts like Japanese or
 	Chinese.  Of course, we are not going to fix this issue, since doing so
 	would break the compatibility with the original Macintosh OS.
 */
@@ -4970,6 +4970,10 @@ static imgtoolerr_t BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerat
 		node_numRecords = get_UINT16BE(((BTNodeHeader *) enumerator->BTref->node_buf)->numRecords);
 	}
 
+	/* check EOList condition */
+	if (enumerator->cur_node == 0)
+		return IMGTOOLERR_SUCCESS;
+
 	/* get current record */
 	errorcode = BT_node_get_keyed_record(enumerator->BTref, enumerator->BTref->node_buf, FALSE, enumerator->cur_rec, record_ptr, rec_len);
 	if (errorcode)
@@ -4977,10 +4981,24 @@ static imgtoolerr_t BT_leaf_rec_enumerator_read(BT_leaf_rec_enumerator *enumerat
 
 	/* iterate to next record */
 	enumerator->cur_rec++;
+	if (enumerator->cur_rec >= node_numRecords)
+	{	/* iterate to next node if last record (not required, but will improve
+		performance on next iteration) */
+		enumerator->cur_node = get_UINT32BE(((BTNodeHeader *) enumerator->BTref->node_buf)->fLink);
+		enumerator->cur_rec = 0;
+	}
 	return IMGTOOLERR_SUCCESS;
 }
 
 /*
+	B-Tree extend EOF algorithm:
+	* see if the bitmap will need to be extended
+	* extend EOF by min 1 (if bitmap is large engough) or 2 (if bitmap needs
+		to be extended) and max ClumpSiz (see extClpSiz and ctClpSiz in MDB)
+		***If we are extending the extent B-Tree, we need to defer the possible
+		creation of an additional extent record, or we might enter an endless
+		recursion loop***
+
 	Empty node alloc algorithm:
 
 	* see if there is any free node in B-tree bitmap
