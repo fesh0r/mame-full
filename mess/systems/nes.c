@@ -15,6 +15,11 @@
 #include "includes/nes.h"
 #include "cpu/m6502/m6502.h"
 
+/* drivers/nes.c */
+READ_HANDLER ( nes_mirrorram_r );
+WRITE_HANDLER ( nes_mirrorram_w );
+READ_HANDLER ( nes_bogus_r );
+
 /* machine/nes.c */
 int nes_load_rom (int id);
 int nes_load_disk (int id);
