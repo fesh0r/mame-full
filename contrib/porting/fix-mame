@@ -2,25 +2,32 @@
 #script which automates some standard things when porting mame-dos
 
 #clean up a bit
-rm -fR allegro.h allegro seal cfg hi inp obj pcx sta roms samples images artwork ym2203.opm mame.zif *.ZIP *.zip *.dif *.diff
-if [ -d src/mess/dir_list ]; then
-   mv src/mess/dir_list/crc .
-   rm -fR src/mess/dir_list
-fi
+rm -fR allegro.h allegro seal cfg hi inp obj pcx sta roms samples images artwork cheat crc bios software snap makedep ym2203.opm mame.zif sysinfo.dat *.ZIP *.zip *.dif *.diff
 
 #create doc dir and unixy
 mkdir doc
 mv readme.txt doc/readme.mame
 mv whatsnew.txt doc/changes.mame
-# mv gamelist.txt doc/gamelist.mame # no more since 0.36final
+if [ -f gamelist.txt ]; then
+  mv gamelist.txt doc/gamelist.mame
+fi
 if [ -f whatsold.txt ]; then
   mv whatsold.txt doc/old-changes.mame
 fi
 if [ -f mess.txt ]; then
   mv mess.txt doc/readme.mess
 fi
-if [ -f src/mess/docs/messnew.txt ]; then
-  mv src/mess/docs/messnew.txt doc/changes.mess
+if [ -f messnew.txt ]; then
+  mv messnew.txt doc/changes.mess
+fi
+if [ -f messold.txt ]; then
+  mv messold.txt doc/old-changes.mess
+fi
+if [ -f credits.txt ]; then
+  mv credits.txt doc/credits.mess
+fi
+if [ -f imgtool.txt ]; then
+  mv imgtool.txt doc/
 fi
 cd doc
 d2u *
@@ -28,6 +35,7 @@ rm -f *.orig *~
 cd ..
 
 #fix comments & includes
+#in src
 cd src
 fix-comments `find -name "*.c"`
 fix-comments `find -name "*.h"`
@@ -36,8 +44,23 @@ d2u `find -name "*.mak"`
 rm -f `find -name "*.orig"`
 rm -f `find -name "*.txt~"`
 cd ..
+#in mess
+if [ -d mess ]; then
+  cd mess
+  fix-comments `find -name "*.c"`
+  fix-comments `find -name "*.h"`
+  rm -f `find -name "*.orig"`
+  cd ..
+fi
 
 #mv makefile makefile.mame and unixy
 mv makefile makefile.mame
 d2u makefile.*
 rm -f makefile.*.orig makefile.*~
+
+#fix mess.mak to not do dependencies, they way it is currently done is just
+#but ugly, and guaranteed to not work on all platforms.
+if [ -f src/mess.mak ]; then
+  cat src/mess.mak | sed s/include/#include/ > src/mess.mak.new
+  mv src/mess.mak.new src/mess.mak
+fi
