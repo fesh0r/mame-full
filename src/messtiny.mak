@@ -39,7 +39,6 @@ COREOBJS +=        \
           $(OBJ)/mess/config.o           \
           $(OBJ)/mess/filemngr.o         \
           $(OBJ)/mess/tapectrl.o         \
-          $(OBJ)/mess/machine/6522via.o  \
           $(OBJ)/mess/machine/nec765.o   \
           $(OBJ)/mess/machine/dsk.o      \
           $(OBJ)/mess/machine/wd179x.o   \
