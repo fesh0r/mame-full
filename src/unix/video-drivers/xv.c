@@ -457,22 +457,16 @@ int xv_open_display(int reopen)
                   fprintf(stderr, "XvShmPutImage failed, probably due to: \"BadAlloc (insufficient resources for operation)\"\n");
                   return 1;
           }
-
-          fprintf (stderr, "Using Xv & Shared Memory Features to speed up\n");
           XSetErrorHandler (None);  /* Restore error handler to default */
-        }
- 
-	/* get a blit function */
-        if(sysdep_display_properties.palette_info.fourcc_format == FOURCC_YV12)
-        {
-          if (sysdep_display_params.orientation)
+
+          if ((xv_format == FOURCC_YV12) && sysdep_display_params.orientation)
           {
                   hwscale_yv12_rotate_buf0=malloc(
                     ((sysdep_display_params.depth+7)/8)*
-                    sysdep_display_params.max_width);
+                    ((sysdep_display_params.max_width+7)&~7));
                   hwscale_yv12_rotate_buf1=malloc(
                     ((sysdep_display_params.depth+7)/8)*
-                    sysdep_display_params.max_width);
+                    ((sysdep_display_params.max_width+7)&~7));
                   if (!hwscale_yv12_rotate_buf0 ||
                       !hwscale_yv12_rotate_buf1)
                   {
@@ -480,6 +474,13 @@ int xv_open_display(int reopen)
                     return 1;
                   }
           }
+
+          fprintf (stderr, "Using Xv & Shared Memory Features to speed up\n");
+        }
+ 
+	/* get a blit function */
+        if(sysdep_display_properties.palette_info.fourcc_format == FOURCC_YV12)
+        {
           if (sysdep_display_params.depth == 32)
           {
               if (hwscale_perfect_yuv)

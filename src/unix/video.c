@@ -731,10 +731,16 @@ void osd_update_video_and_audio(struct mame_display *display)
 				display->game_visible_area.max_x,
 				display->game_visible_area.max_y);
 
+                /* fprintf(stderr, "preresize: %dx%d\n", normal_params.width,
+                  normal_params.height); */
+
 		normal_params.width  = (display->game_visible_area.max_x + 1) -
 		   display->game_visible_area.min_x;
 		normal_params.height = (display->game_visible_area.max_y + 1) -
 		   display->game_visible_area.min_y;
+		   
+                /* fprintf(stderr, "resize: %dx%d\n", normal_params.width,
+                  normal_params.height); */
 
 		normal_params_changed |= VISIBLE_AREA_CHANGED;
 	}
@@ -873,9 +879,9 @@ void osd_update_video_and_audio(struct mame_display *display)
                     /* is this going to fit? */
                     if (normal_params.orientation & SYSDEP_DISPLAY_SWAPXY)
                     {
-                      scaled_width  = normal_params.yarbsize? normal_params.yarbsize:
-                        normal_params.height * normal_params.heightscale;
-                      scaled_height = normal_params.width * normal_params.widthscale;
+                      scaled_width  = normal_params.height * normal_params.widthscale;
+                      scaled_height = normal_params.yarbsize? normal_params.yarbsize:
+                        normal_params.width * normal_params.heightscale;
                     }
                     else
                     {

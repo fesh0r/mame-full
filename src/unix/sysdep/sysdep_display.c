@@ -323,14 +323,15 @@ void sysdep_display_orient_bounds(struct rectangle *bounds, int width, int heigh
 
 void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *vis_in_dest_out, struct rectangle *dirty_area, int x_align)
 {	
-	int old_bound, dest_max_max_x;
+	int old_bound;
 
 	/* orient the bounds */	
 	sysdep_display_orient_bounds(vis_in_dest_out, bitmap->width, bitmap->height);
 	sysdep_display_orient_bounds(dirty_area, bitmap->width, bitmap->height);
 	
-	/* get the max width before destroying the visual area info */
-	dest_max_max_x = vis_in_dest_out->max_x - vis_in_dest_out->min_x;
+	/* fprintf(stderr, "vis_area: (%d,%d) x (%d,%d)\n",
+	  vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+	  vis_in_dest_out->max_x, vis_in_dest_out->max_y); */
 	
 	/* change vis_area to destbounds */
         vis_in_dest_out->max_x = dirty_area->max_x - vis_in_dest_out->min_x;
@@ -338,6 +339,10 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
         vis_in_dest_out->min_x = dirty_area->min_x - vis_in_dest_out->min_x;
         vis_in_dest_out->min_y = dirty_area->min_y - vis_in_dest_out->min_y;
        
+	/* fprintf(stderr, "dest_area: (%d,%d) x (%d,%d)\n",
+	  vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+	  vis_in_dest_out->max_x, vis_in_dest_out->max_y); */
+	
 	/* apply X-alignment to destbounds min_x and max_x apply the same
 	   change to dirty_area */
 	old_bound = vis_in_dest_out->min_x;
@@ -345,13 +350,15 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
         dirty_area->min_x -= old_bound - vis_in_dest_out->min_x;
 
 	old_bound = vis_in_dest_out->max_x;
-	vis_in_dest_out->max_x += 1;
+	vis_in_dest_out->max_x += 1 + x_align;
 	vis_in_dest_out->max_x &= ~x_align;
 	vis_in_dest_out->max_x -= 1;
-	if (vis_in_dest_out->max_x > dest_max_max_x)
-	  vis_in_dest_out->max_x = dest_max_max_x;
         dirty_area->max_x -= old_bound - vis_in_dest_out->max_x;
 
+	/* fprintf(stderr, "aligned dest_area: (%d,%d) x (%d,%d)\n",
+	  vis_in_dest_out->min_x, vis_in_dest_out->min_y,
+	  vis_in_dest_out->max_x, vis_in_dest_out->max_y); */
+	
         /* apply scaling to dest_bounds */
 	vis_in_dest_out->min_x *= sysdep_display_params.widthscale;
 	vis_in_dest_out->max_x *= sysdep_display_params.widthscale;	
@@ -368,4 +375,3 @@ void sysdep_display_check_bounds(struct mame_bitmap *bitmap, struct rectangle *v
           vis_in_dest_out->max_y *= sysdep_display_params.heightscale;
         }
 }
-
