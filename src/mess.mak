@@ -259,7 +259,7 @@ DRVLIBS += \
 	$(OBJ)/kim1.a     \
 	$(OBJ)/sym1.a     \
 	$(OBJ)/aim65.a    \
-	#$(OBJ)/cbmshare.a \
+	$(OBJ)/cbmshare.a \
 	$(OBJ)/cbm.a      \
 #    $(OBJ)/amiga.a \
 
