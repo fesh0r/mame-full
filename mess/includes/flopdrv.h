@@ -8,8 +8,6 @@ typedef enum {
         DEN_MFM_HI
 } DENSITY;
 
-#define REAL_FDD ((void *)-1)
-
 /* sector has a deleted data address mark */
 #define ID_FLAG_DELETED_DATA	0x0001
 /* CRC error in id field */
@@ -65,7 +63,7 @@ typedef struct floppy_interface
 	/* read sector data into buffer, length = number of bytes to read */
 	void	(*read_sector_data_into_buffer)(int drive, int side,int data_id,char *, int length);
 	/* write sector data from buffer, length = number of bytes to read  */
-	void	(*write_sector_data_from_buffer)(int drive, int side,int data_id, char *, int length);
+	void	(*write_sector_data_from_buffer)(int drive, int side,int data_id, char *, int length, int ddam);
 	/* format */
 	void (*format_sector)(int drive, int side, int sector_index,int c, int h, int r, int n, int filler);
 } floppy_interface;
@@ -132,7 +130,7 @@ void floppy_drive_seek(int drive, signed int signed_tracks);
 
 void	floppy_drive_format_sector(int drive, int side, int sector_index, int c, int h, int r, int n, int filler);
 void    floppy_drive_read_sector_data(int drive, int side, int index1, char *pBuffer, int length);
-void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pBuffer, int length);
+void    floppy_drive_write_sector_data(int drive, int side, int index1, char *pBuffer, int length, int ddam);
 
 
 
