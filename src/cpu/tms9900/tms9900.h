@@ -12,6 +12,8 @@
 #include "osd_cpu.h"
 
 /*#define TI990_9_ID	0*//* early implementation, used in a few real-world applications, 1974 */
+                          /* very similar to mapper-less 990/10 and tms9900, but the Load process */
+                          /* is different */
                           /* ("ti990/9" is likely to be a nickname) */
 #define TI990_10_ID		1 /* original multi-chip implementation for minicomputer systems, 1975 */
 /*#define TI990_12_ID		2*//* multi-chip implementation, faster than 990/10. huge instruction set */
@@ -44,6 +46,7 @@ enum {
 };
 
 #if (HAS_TI990_10)
+
 extern void ti990_10_get_info(UINT32 state, union cpuinfo *info);
 
 /*
@@ -63,35 +66,86 @@ typedef struct ti990_10reset_param
 extern READ16_HANDLER(ti990_10_internal_r);
 
 /* CRU accessor for the mapper registers (R12 base 0x1fa0) */
-extern READ16_HANDLER(ti990_10_mapper_cru_r);
-extern WRITE16_HANDLER(ti990_10_mapper_cru_w);
+extern READ_HANDLER(ti990_10_mapper_cru_r);
+extern WRITE_HANDLER(ti990_10_mapper_cru_w);
 /* CRU accessor for the error interrupt register (R12 base 0x1fc0) */
-extern READ16_HANDLER(ti990_10_eir_cru_r);
-extern WRITE16_HANDLER(ti990_10_eir_cru_w);
+extern READ_HANDLER(ti990_10_eir_cru_r);
+extern WRITE_HANDLER(ti990_10_eir_cru_w);
 
 #endif
 
 #if (HAS_TMS9900)
+
 extern void tms9900_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms9900_reset.
+*/
+typedef struct tms9900reset_param
+{
+	void (*idle_callback)(int state);
+} tms9900reset_param;
+
 #endif
 
 #if (HAS_TMS9940)
+
 extern void tms9940_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms9940_reset.
+*/
+typedef struct tms9940reset_param
+{
+	void (*idle_callback)(int state);
+} tms9940reset_param;
+
 #endif
 
 #if (HAS_TMS9980)
+
 extern void tms9980a_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms9980a_reset.
+*/
+typedef struct tms9980areset_param
+{
+	void (*idle_callback)(int state);
+} tms9980areset_param;
+
 #endif
 
 #if (HAS_TMS9985)
+
 extern void tms9985_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms9985_reset.
+*/
+typedef struct tms9985reset_param
+{
+	void (*idle_callback)(int state);
+} tms9985reset_param;
+
 #endif
 
 #if (HAS_TMS9989)
+
 extern void tms9989_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms9989_reset.
+*/
+typedef struct tms9989reset_param
+{
+	void (*idle_callback)(int state);
+} tms9989reset_param;
+
 #endif
 
 #if (HAS_TMS9995)
+
 extern void tms9995_get_info(UINT32 state, union cpuinfo *info);
 
 /*
@@ -120,12 +174,46 @@ extern WRITE_HANDLER(tms9995_internal2_w);
 
 #endif
 
+#if (HAS_TMS99000)
+
+extern void tms99000_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms99000_reset.
+*/
+typedef struct tms99000reset_param
+{
+	void (*idle_callback)(int state);
+} tms99000reset_param;
+
+#endif
+
 #if (HAS_TMS99105A)
+
 extern void tms99105a_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms99105a_reset.
+*/
+typedef struct tms99105areset_param
+{
+	void (*idle_callback)(int state);
+} tms99105areset_param;
+
 #endif
 
 #if (HAS_TMS99110A)
+
 extern void tms99110a_get_info(UINT32 state, union cpuinfo *info);
+
+/*
+	structure with optional parameters for tms99110a_reset.
+*/
+typedef struct tms99110areset_param
+{
+	void (*idle_callback)(int state);
+} tms99110areset_param;
+
 #endif
 
 #ifdef MAME_DEBUG
