@@ -1,3 +1,60 @@
+0.88
+
+New System Drivers Supported (in no particular order):
+------------------------------------------------------
+- Dragon Alpha (Phill Harvey-Smith)
+
+
+
+System Driver Changes:
+----------------------
+- [COCO] Fixed a bug in DMK disk loading; games encoded with certain forms of
+  copy protection now run.  (bug #606) [Tim Lindner]
+  
+- [MICROBEE] Added natural language support.  [Nate Woods]
+
+- [MICROBEE] Added multi screen support.  [Kelby Murie]
+  
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+User Interface Changes:
+-----------------------
+(none)
+
+
+
+Imgtool Changes:
+----------------
+- [Windows] Created a new Windows GUI for Imgtool.  [Nate Woods]
+
+- Added an 'identify' command that can be used to attempt to identify the
+  type of any given image.  [Nate Woods]
+
+- Preliminary CoCo OS-9 disk image module.  [Nate Woods]
+
+
+
+Source Changes:
+----------------
+- The core is based on MAME 0.88.  This incorporates all features of the
+  update to this core.  [MAME team]
+  
+- Fixed a latent problem where part of the natural language system still
+  thought that we use 16-bit ports.  [Tim Lindner]
+
+- Fixed a bug in core floppy handling that prevented writes to CoCo DMK
+  images from working.  (bug #607) [Tim Lindner]
+
+- Removed mess/snprintf.c and mess/snprintf.h.  [Nate Woods]
+
+
+
 0.87
 
 New System Drivers Supported (in no particular order):
