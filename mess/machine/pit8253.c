@@ -927,11 +927,41 @@ void pit8253_set_clockin(int which, int timer, double new_clockin)
 
 /* ----------------------------------------------------------------------- */
 
-READ_HANDLER ( pit8253_0_r ) { return pit8253_read(0, offset); }
-READ_HANDLER ( pit8253_1_r ) { return pit8253_read(1, offset); }
+static data32_t pit8253_read32(int which, offs_t offset)
+{
+	return (((data32_t) pit8253_read(which, offset * 4 + 0)) << 0)
+		|  (((data32_t) pit8253_read(which, offset * 4 + 1)) << 8)
+		|  (((data32_t) pit8253_read(which, offset * 4 + 2)) << 16)
+		|  (((data32_t) pit8253_read(which, offset * 4 + 3)) << 24);
+}
 
-WRITE_HANDLER ( pit8253_0_w ) { pit8253_write(0, offset, data); }
-WRITE_HANDLER ( pit8253_1_w ) { pit8253_write(1, offset, data); }
+
+
+static void pit8253_write32(int which, offs_t offset, data32_t data, data32_t mem_mask)
+{
+	if ((mem_mask & 0x000000FF) == 0)
+		pit8253_write(which, offset * 4 + 0, data >> 0);
+	if ((mem_mask & 0x0000FF00) == 0)
+		pit8253_write(which, offset * 4 + 1, data >> 8);
+	if ((mem_mask & 0x00FF0000) == 0)
+		pit8253_write(which, offset * 4 + 2, data >> 16);
+	if ((mem_mask & 0xFF000000) == 0)
+		pit8253_write(which, offset * 4 + 3, data >> 24);
+}
+
+
+
+/* ----------------------------------------------------------------------- */
+
+READ8_HANDLER ( pit8253_0_r ) { return pit8253_read(0, offset); }
+READ8_HANDLER ( pit8253_1_r ) { return pit8253_read(1, offset); }
+WRITE8_HANDLER ( pit8253_0_w ) { pit8253_write(0, offset, data); }
+WRITE8_HANDLER ( pit8253_1_w ) { pit8253_write(1, offset, data); }
+
+READ32_HANDLER ( pit8253_32_0_r ) { return pit8253_read32(0, offset); }
+READ32_HANDLER ( pit8253_32_1_r ) { return pit8253_read32(1, offset); }
+WRITE32_HANDLER ( pit8253_32_0_w ) { pit8253_write32(0, offset, data, mem_mask); }
+WRITE32_HANDLER ( pit8253_32_1_w ) { pit8253_write32(1, offset, data, mem_mask); }
 
 WRITE_HANDLER ( pit8253_0_gate_w ) { pit8253_gate_write(0, offset, data); }
 WRITE_HANDLER ( pit8253_1_gate_w ) { pit8253_gate_write(1, offset, data); }
