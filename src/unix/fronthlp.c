@@ -153,7 +153,7 @@ int strwildcmp(const char *sp1, const char *sp2)
 		if (s2[i] == '?' && s1[i] != '?') s2[i] = s1[i];
 	}
 
-	return stricmp(s1, s2);
+	return strcasecmp(s1, s2);
 }
 
 static int myprintf(char *fmt, ...)

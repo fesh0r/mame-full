@@ -264,7 +264,7 @@ void romident(const char* name,int enter_dirs)
 			identify_dir(name);
 	} else {
 		unsigned l = strlen(name);
-		if (l>=4 && stricmp(name+l-4,".zip")==0)
+		if (l>=4 && strcasecmp(name+l-4,".zip")==0)
 			identify_zip(name);
 		else
 			identify_file(name);
