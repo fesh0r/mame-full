@@ -172,6 +172,14 @@ const struct IODevice *device_find(const struct GameDriver *gamedrv, int type);
 
 /* --------------------------------------------------------------------------------------------- */
 
+/* This call is used to return the next compatible driver with respect to
+ * software images.  It is usable both internally and from front ends
+ */
+const struct GameDriver *mess_next_compatible_driver(const struct GameDriver *drv);
+int mess_count_compatible_drivers(const struct GameDriver *drv);
+
+/* --------------------------------------------------------------------------------------------- */
+
 /* RAM configuration calls */
 extern UINT32 mess_ram_size;
 extern data8_t *mess_ram;

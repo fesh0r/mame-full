@@ -172,6 +172,25 @@ static void z88_rtc_timer_callback(int dummy)
 }
 
 
+
+static void z88_install_memory_handler_pair(offs_t start, offs_t size, int bank_base, void *read_addr, void *write_addr)
+{
+	read8_handler read_handler;
+	write8_handler write_handler;
+
+	read_handler  = read_addr  ? (read8_handler)  (STATIC_BANK1 + (bank_base - 1 + 0)) : MRA8_ROM;
+	write_handler = write_addr ? (write8_handler) (STATIC_BANK1 + (bank_base - 1 + 1)) : MWA8_ROM;
+
+	memory_install_read8_handler(0,  ADDRESS_SPACE_PROGRAM, start, start + size - 1, 0, read_handler);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, start, start + size - 1, 0, write_handler);
+
+	if (read_addr)
+		cpu_setbank(bank_base + 0, read_addr);
+	if (write_addr)
+		cpu_setbank(bank_base + 1, write_addr);
+}
+
+
 /* Assumption:
 
 all banks can access the same memory blocks in the same way.
@@ -193,8 +212,6 @@ static void z88_refresh_memory_bank(int bank)
 	void *read_addr;
 	void *write_addr;
 	unsigned long block;
-	read8_handler read_handler;
-	write8_handler write_handler;
 
 	assert(bank >= 0);
 	assert(bank <= 3);
@@ -211,11 +228,6 @@ static void z88_refresh_memory_bank(int bank)
 		}
 		else
 		{
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
-				(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, (read8_handler) (STATIC_BANK1 + (bank * 2 + 0)));
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
-				(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, (write8_handler) (STATIC_BANK1 + (bank * 2 + 1)));
-
 			read_addr = write_addr = mess_ram + (block<<14);
 		}
 	}
@@ -237,18 +249,7 @@ static void z88_refresh_memory_bank(int bank)
 	}
 
 	/* install the banks */
-
-	read_handler  = read_addr  ? (read8_handler)  (STATIC_BANK1 + (bank * 2 + 0)) : MRA8_ROM;
-	write_handler = write_addr ? (write8_handler) (STATIC_BANK1 + (bank * 2 + 1)) : MWA8_ROM;
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
-		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, read_handler);
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
-		(bank * 0x4000), (bank * 0x4000) + 0x3fff, 0, write_handler);
-
-	if (read_addr)
-		cpu_setbank(bank * 2 + 1, read_addr);
-	if (write_addr)
-		cpu_setbank(bank * 2 + 2, write_addr);
+	z88_install_memory_handler_pair(bank * 0x4000, 0x4000, bank * 2 + 1, read_addr, write_addr);
 
 	if (bank == 0)
 	{
@@ -268,13 +269,7 @@ static void z88_refresh_memory_bank(int bank)
 			write_addr = mess_ram;
 		}
 
-		read_handler  = read_addr  ? MRA8_BANK9  : MRA8_ROM;
-		write_handler = write_addr ? MWA8_BANK10 : MWA8_ROM;
-
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM,
-			0x0000, 0x1fff, 0, read_handler);
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM,
-			0x0000, 0x1fff, 0, write_handler);
+		z88_install_memory_handler_pair(0x0000, 0x2000, 9, read_addr, write_addr);
 	}
 }
 

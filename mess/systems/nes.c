@@ -34,7 +34,7 @@ static ADDRESS_MAP_START( nes_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x4015) AM_WRITE(NESPSG_0_w)
 	AM_RANGE(0x4015, 0x4015) AM_READ(nes_bogus_r)			/* ?? sound status ?? */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(nes_IN0_r,        nes_IN0_w)			/* IN0 - input port 1 */
-	AM_RANGE(0x4017, 0x4017) AM_READWRITE(nes_IN0_r,        nes_IN1_w)			/* IN1 - input port 2 */
+	AM_RANGE(0x4017, 0x4017) AM_READWRITE(nes_IN1_r,        nes_IN1_w)			/* IN1 - input port 2 */
 	AM_RANGE(0x4100, 0x5fff) AM_READWRITE(nes_low_mapper_r, nes_low_mapper_w)	/* Perform unholy acts on the machine */
 ADDRESS_MAP_END
 

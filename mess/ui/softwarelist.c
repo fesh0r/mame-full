@@ -616,15 +616,6 @@ static void InternalFillSoftwareList(struct SmartListView *pSoftwareListView, in
 #endif /* HAS_IDLING */
 }
 
-static const struct GameDriver *NextCompatibleDriver(const struct GameDriver *drv)
-{
-	if (drv->clone_of && !(drv->clone_of->flags && NOT_A_DRIVER))
-		return drv->clone_of;
-	if (drv->compatible_with && !(drv->compatible_with->flags && NOT_A_DRIVER))
-		return drv->compatible_with;
-	return NULL;
-}
-
 void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nBasePaths, LPCSTR *plpBasePaths, LPCSTR lpExtraPath)
 {
 	LPCSTR s;
@@ -652,11 +643,7 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 
 	nChainCount = 0;
 	drv = drivers[nGame];
-	while(drv)
-	{
-		nChainCount++;
-		drv = NextCompatibleDriver(drv);
-	}
+	nChainCount = mess_count_compatible_drivers(drv);
 
 	nTotalPaths = (nBasePaths * nChainCount + nExtraPaths);
 
@@ -676,7 +663,7 @@ void FillSoftwareList(struct SmartListView *pSoftwareListView, int nGame, int nB
 			strcpy(plpPaths[nPath], buffer);
 			nPath++;
 
-			drv = NextCompatibleDriver(drv);
+			drv = mess_next_compatible_driver(drv);
 		}
 	}
 

@@ -347,6 +347,32 @@ void machine_hard_reset(void)
 
 
 
+const struct GameDriver *mess_next_compatible_driver(const struct GameDriver *drv)
+{
+	if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
+		drv = drv->clone_of;
+	else if (drv->compatible_with && !(drv->compatible_with->flags & NOT_A_DRIVER))
+		drv = drv->compatible_with;
+	else
+		drv = NULL;
+	return drv;
+}
+
+
+
+int mess_count_compatible_drivers(const struct GameDriver *drv)
+{
+	int count = 0;
+	while(drv)
+	{
+		count++;
+		drv = mess_next_compatible_driver(drv);
+	}
+	return count;
+}
+
+
+
 /***************************************************************************
 
 	Dummy read handlers

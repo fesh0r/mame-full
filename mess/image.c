@@ -464,12 +464,7 @@ static int image_checkcrc(mess_image *img)
 		do
 		{
 			rc = read_crc_config(drv->name, img);
-			if (drv->clone_of && !(drv->clone_of->flags & NOT_A_DRIVER))
-				drv = drv->clone_of;
-			else if (drv->compatible_with && !(drv->compatible_with->flags & NOT_A_DRIVER))
-				drv = drv->compatible_with;
-			else
-				drv = NULL;
+			drv = mess_next_compatible_driver(drv);
 		}
 		while(rc && drv);
 		
@@ -810,9 +805,9 @@ static mame_file *image_fopen_custom(mess_image *img, int filetype, int read_or_
 		logerror("image_fopen: trying %s for system %s\n", img->name, sysname);
 		img->fp = file = mame_fopen(sysname, img->name, filetype, read_or_write);
 
-		gamedrv = gamedrv->clone_of ? gamedrv->clone_of : gamedrv->compatible_with;
+		gamedrv = mess_next_compatible_driver(gamedrv);
 	}
-	while(!img->fp && gamedrv && !(gamedrv->flags & NOT_A_DRIVER));
+	while(!img->fp && gamedrv);
 
 	if ((file) && ! is_effective_mode_create(read_or_write))
 	{
