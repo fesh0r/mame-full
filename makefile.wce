@@ -225,10 +225,10 @@ MAMEOS = $(OS)
 
 RCDEFS = $(MAME_NET) $(MAME_MMX) -DNDEBUG $(MAME_VERSION)
 
-RCFLAGS = -l 0x409 -I./Win32 $(MAME_DEBUG)
+RCFLAGS = -l 0x409 $(MAME_DEBUG) -Isrc/windowsui/res
 
 ifdef MESS
-RCFLAGS += -DMESS -Imess/Win32 -Isrc/Win32
+RCFLAGS += -DMESS -Imess/windowsui/res
 endif
 
 #####################################################################

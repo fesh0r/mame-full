@@ -162,44 +162,57 @@ static struct SmartListViewClass s_GameListClass =
 };
 
 /* ----------------------------------------------------------------------- *
- * Blah                                                                    *
+ * Dialogs                                                                 *
  * ----------------------------------------------------------------------- */
+
+static LRESULT CALLBACK InfoDialogProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	SHINITDLGINFO shidi;
+
+	switch (message) {
+	case WM_INITDIALOG:
+		// Create a Done button and size it.  
+		shidi.dwMask = SHIDIM_FLAGS;
+		shidi.dwFlags = SHIDIF_DONEBUTTON | SHIDIF_SIPDOWN | SHIDIF_SIZEDLGFULLSCREEN;
+		shidi.hDlg = hDlg;
+		SHInitDialog(&shidi);
+		return TRUE; 
+
+	case WM_COMMAND:
+		if (LOWORD(wParam) == IDOK) {
+			EndDialog(hDlg, LOWORD(wParam));
+			return TRUE;
+		}
+		break;
+	}
+	return FALSE;
+}
+
+static void DisplayDialog(HWND hWndParent, int nDialogResource)
+{
+	DialogBox(GetModuleHandle(NULL), (LPCTSTR) nDialogResource, hWndParent, (DLGPROC) InfoDialogProc);
+}
 
 static void Display_About(HWND hWndParent)
 {
-/*	HWND hWnd;
-
-	hWnd = CreateWindow(szAppName, TEXT("MessCE"), WS_VISIBLE,
-		CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-		NULL, NULL, hWndParent, NULL);
-	if (!hWnd)
-		return NULL;
-*/
-	TCHAR buf[] = 
-		TEXT("MessCE");
-
-	MessageBox(hWnd, buf, TEXT("About MessCE..."), MB_ICONINFORMATION | MB_OK);
+	DisplayDialog(hWndParent, IDD_ABOUTBOX);
 }
 
 
-static void Display_Instructions(HWND hWnd)
+static void Display_Instructions(HWND hWndParent)
 {
-	TCHAR buf[] = 
-		TEXT("Instructions");
-
-	MessageBox(hWnd, buf, TEXT("Instructions"), MB_ICONINFORMATION | MB_OK);
+	DisplayDialog(hWndParent, IDD_INSTRUCTIONS);
 }
 
 
-static void Display_FAQ(HWND hWnd)
+static void Display_FAQ(HWND hWndParent)
 {
-	TCHAR buf[] = 
-		TEXT("A license agreement will appear the first time you run each specific game.\r\n")
-		TEXT("Click [LEFT] then [RIGHT] on the Gamepad to agree to it.\r\n");
-
-	MessageBox(hWnd, buf, TEXT("FAQ - Top 3 Answers"), MB_ICONINFORMATION | MB_OK);
+	DisplayDialog(hWndParent, IDD_FAQ);
 }
 
+/* ----------------------------------------------------------------------- *
+ * Blah                                                                    *
+ * ----------------------------------------------------------------------- */
 
 static void SetDefaultOptions(struct ui_options *opts)
 {
@@ -235,7 +248,7 @@ int WINAPI WinMain(	HINSTANCE hInstance,
 	if (!InitInstance(nCmdShow)) 
 		return FALSE;
 
-	hAccelTable = LoadAccelerators(GetModuleHandle(NULL), (LPCTSTR)IDC_MAMECE3);
+	hAccelTable = LoadAccelerators(GetModuleHandle(NULL), (LPCTSTR)IDC_MAMECE);
 
 	// Main message loop:
 	while (GetMessage(&msg, NULL, 0, 0)) 
@@ -276,7 +289,7 @@ static ATOM MyRegisterClass(HINSTANCE hInstance, LPTSTR szWindowClass)
     wc.cbClsExtra		= 0;
     wc.cbWndExtra		= 0;
     wc.hInstance		= hInstance;
-    wc.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAMECE3));
+    wc.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MAMECE));
     wc.hCursor			= 0;
     wc.hbrBackground	= hBrush2; //Background Checkers //Was - (HBRUSH) GetStockObject(WHITE_BRUSH);
     wc.lpszMenuName		= 0;

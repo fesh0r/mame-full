@@ -28,7 +28,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_MAMECE3             ICON    DISCARDABLE     "MameCE3.ICO"
+IDI_MAMECE              ICON    DISCARDABLE     "mess32.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -61,7 +61,7 @@ END
 // Data
 //
 
-IDM_MENU RCDATA MOVEABLE PURE 
+IDM_MENU SHMENUBAR MOVEABLE PURE 
 BEGIN
     IDM_MENU, 2,
     I_IMAGENONE, IDM_MAIN_COMMAND1, TBSTATE_ENABLED, 
@@ -70,7 +70,7 @@ BEGIN
     IDS_CAP_OPTIONS, 0, 1,
 END
 
-IDM_RUNMENU RCDATA MOVEABLE PURE 
+IDM_RUNMENU SHMENUBAR MOVEABLE PURE 
 BEGIN
     IDM_RUNMENU, 2,
     I_IMAGENONE, IDM_MAIN_COMMAND1, TBSTATE_ENABLED, 
@@ -90,7 +90,7 @@ BEGIN
     BEGIN
         MENUITEM "Play Game",                   ID_TOOLS_PLAYGAME
         MENUITEM "Instructions",                ID_FILE_INSTRUCTIONS
-        MENUITEM "FAQ - Top3 Answers",          ID_FILE_FAQ
+        MENUITEM "FAQ",                         ID_FILE_FAQ
         MENUITEM "About...",                    IDM_HELP_ABOUT
         MENUITEM "",                            ID_MENUITEM40006
         MENUITEM "E&xit",                       IDOK
@@ -130,7 +130,46 @@ BEGIN
     BEGIN
         MENUITEM "Show Frame Rate",             ID_OPTIONS_SHOWFRAMERATE
         MENUITEM "Show Profiler",               ID_OPTIONS_SHOWPROFILER
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_ABOUTBOX DIALOGEX 0, 0, 140, 57
+STYLE WS_POPUP | WS_CAPTION
+EXSTYLE 0x80000000L
+CAPTION "About MessCE"
+FONT 8, "System"
+BEGIN
+    ICON            IDI_MAMECE,IDC_STATIC,11,17,20,20
+    LTEXT           "MessCE for PocketPC",IDC_STATIC,40,11,94,8,SS_NOPREFIX
+    LTEXT           "By the MESS Team",IDC_STATIC,40,21,92,10
+    LTEXT           "Based on MameCE3 by TechMaster",IDC_STATIC,42,33,87,19
 	END
+
+IDD_INSTRUCTIONS DIALOG DISCARDABLE  0, 0, 140, 57
+STYLE WS_POPUP | WS_CAPTION
+EXSTYLE 0x80000000L
+CAPTION "Instructions"
+FONT 8, "System"
+BEGIN
+    ICON            IDI_MAMECE,IDC_STATIC,11,17,20,20
+    LTEXT           "Instructions",IDC_STATIC,40,11,84,8,SS_NOPREFIX
+END
+
+IDD_FAQ DIALOGEX 0, 0, 140, 82
+STYLE WS_POPUP | WS_CAPTION
+EXSTYLE 0x80000000L
+CAPTION "FAQ"
+FONT 8, "System"
+BEGIN
+    ICON            IDI_MAMECE,IDC_STATIC,11,17,21,20
+    LTEXT           "A license agreement will appear the first time you run each specific game\r\nClick [LEFT] then [RIGHT] on the Gamepad to agree to it.",
+                    IDC_STATIC,40,11,84,60,SS_NOPREFIX
 END
 
 /////////////////////////////////////////////////////////////////////////////
@@ -155,18 +194,9 @@ GUIDELINES DESIGNINFO DISCARDABLE
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 133
-        TOPMARGIN, 5
-        BOTTOMMARGIN, 50
-    END
-
-    IDD_INSTRUCTIONBOX, DIALOG
+    IDD_FAQ, DIALOG
     BEGIN
-        LEFTMARGIN, 1
-        RIGHTMARGIN, 202
-        TOPMARGIN, 3
-        BOTTOMMARGIN, 161
+        BOTTOMMARGIN, 57
     END
 END
 #endif    // APSTUDIO_INVOKED
