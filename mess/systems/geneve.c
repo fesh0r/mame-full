@@ -1,5 +1,5 @@
 /*
-	Preliminary MESS Driver for the Myarc Geneve 9640.
+	MESS Driver for the Myarc Geneve 9640.
 	Raphael Nabet, 2003.
 
 	The Geneve has two operation modes.  One is compatible with the TI-99/4a,
@@ -11,7 +11,8 @@
 	TMS9995@12MHz (including 256 bytes of on-chip 16-bit RAM and a timer),
 	V9938, SN76496 (compatible with TMS9919), TMS9901, MM58274 RTC, 512 kbytes
 	of 1-wait-state CPU RAM (expandable to almost 2 Mbytes), 32 kbytes of
-	0-wait-state CPU RAM (expandable to 64 kbytes), 128 kbytes of VRAM.
+	0-wait-state CPU RAM (expandable to 64 kbytes), 128 kbytes of VRAM
+	(expandable to 192 kbytes).
 
 
 	Memory map:

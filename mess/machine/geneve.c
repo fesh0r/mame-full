@@ -21,9 +21,6 @@
 static void inta_callback(int state);
 static void intb_callback(int state);
 
-/*static READ16_HANDLER ( geneve_rw_rspeech );
-static WRITE16_HANDLER ( geneve_ww_wspeech );*/
-
 static void read_key_if_possible(void);
 static void poll_keyboard(void);
 static void poll_mouse(void);
