@@ -19,11 +19,10 @@
 
  ******************************************************************************/
 #include "driver.h"
+/* for 8255 ppi */
 #include "machine/8255ppi.h"
 /* for cycle tables */
 #include "cpu/z80/z80.h"
-/*#include "mess/systems/i8255.h" */
-/*#include "mess/vidhrdw/hd6845s.h"*/
 /* CRTC display */
 #include "vidhrdw/m6845.h"
 #include "includes/amstrad.h"
@@ -31,8 +30,11 @@
 #include "includes/nec765.h"
 /* for CPCEMU style disk images */
 #include "includes/dsk.h"
+
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
 /* for event list */
 #include "eventlst.h"
+#endif
 
 /*-------------------------------------------*/
 /* MULTIFACE */
@@ -45,32 +47,7 @@ int multiface_hardware_enabled(void);
 void multiface_reset(void);
 
 /*-------------------------------------------*/
-
 static void amstrad_clear_top_bit_of_int_counter(void);
-
-
-/* On the Amstrad, any part of the 64k memory can be access by the video
-hardware (GA and CRTC - the CRTC specifies the memory address to access,
-and the GA fetches 2 bytes of data for each 1us cycle.
-
-The Z80 must also access the same ram.
-
-To maintain the screen display, the Z80 is halted on each memory access.
-
-The result is that timing for opcodes, appears to fall into a nice pattern,
-where the time for each opcode can be measured in NOP cycles. NOP cycles is
-the name I give to the time taken for one NOP command to execute.
-
-This happens to be 1us.
-
-From measurement, there are 64 NOPs per line, with 312 lines per screen.
-This gives a total of 19968 NOPs per frame. */
-
-/* number of us cycles per frame (measured) */
-#define AMSTRAD_US_PER_FRAME	19968
-#define AMSTRAD_FPS 			50
-
-
 
 /* machine name is defined in bits 3,2,1.
 Names are: Isp, Triumph, Saisho, Solavox, Awa, Schneider, Orion, Amstrad.
@@ -85,6 +62,49 @@ Bits for this port:
 0: VSYNC state
 */
 
+/* cycles at end of last frame */
+static unsigned long amstrad_cycles_at_frame_end = 0;
+/* cycle count of last write */
+static unsigned long amstrad_cycles_last_write = 0;
+
+static void amstrad_update_video(void)
+{
+   int current_time;
+    int time_delta;
+
+    /* current cycles */
+    current_time = cpu_getcurrentcycles() + amstrad_cycles_at_frame_end;
+    /* time between last write and this write */
+    time_delta = (current_time - amstrad_cycles_last_write)>>2;
+	/* set new previous write */
+	amstrad_cycles_last_write = current_time;
+
+
+	if (time_delta<0)
+	{
+		logerror("x");
+	}
+
+	if (time_delta!=0)
+    {
+		amstrad_vh_execute_crtc_cycles(time_delta);
+    }
+}
+
+static void amstrad_eof_callback(void)
+{
+    if ((readinputport(11) & 0x02)!=0)
+    {
+            multiface_stop();
+    }
+
+#ifndef AMSTRAD_VIDEO_EVENT_LIST
+	amstrad_update_video();
+	// update cycle count
+	amstrad_cycles_at_frame_end += cpu_getcurrentcycles();
+#endif
+}
+
 /* psg access operation:
 0 = inactive, 1 = read register data, 2 = write register data,
 3 = write register index */
@@ -98,9 +118,8 @@ static int ppi_port_outputs[3];
 static int amstrad_keyboard_line;
 /*static int crtc_vsync_output;*/
 extern int amstrad_vsync;
-static void *amstrad_interrupt_timer;
-static void *amstrad_vsync_timer;
 
+static void *amstrad_interrupt_timer;
 
 static void update_psg(void)
 {
@@ -144,10 +163,10 @@ READ_HANDLER(amstrad_ppi_porta_r)
 }
 
 
-/* ppi port b read 
- Bit 7 = Cassette tape input 
+/* ppi port b read
+ Bit 7 = Cassette tape input
  bit 6 =
- bit 5 = 
+ bit 5 =
  bit 4 =
  bit 3,2,1 = PCB links to define computer name.
 In MESS I have used the dipswitch feature.
@@ -156,6 +175,10 @@ In MESS I have used the dipswitch feature.
 READ_HANDLER(amstrad_ppi_portb_r)
 {
 	int cassette_data;
+
+#ifndef AMSTRAD_VIDEO_EVENT_LIST
+        amstrad_update_video();
+#endif
 
 	cassette_data = 0x0;
 
@@ -175,13 +198,13 @@ WRITE_HANDLER(amstrad_ppi_porta_w)
 /*
  bit 7,6 = PSG operation
  bit 5 = cassette write bit
- bit 4 = Cassette motor control 
+ bit 4 = Cassette motor control
  bit 3-0 =  Specify keyboard line */
 
 
 /* previous value */
 static int previous_ppi_portc_w;
-           
+
 WRITE_HANDLER(amstrad_ppi_portc_w)
 {
         int changed_data;
@@ -243,11 +266,11 @@ static unsigned char *Amstrad_UpperRom;
 disabled, 3 = if zero, upper rom is enabled, otherwise disabled */
 unsigned char AmstradCPC_GA_RomConfiguration;
 
-short AmstradCPC_PenColours[18];
+static short AmstradCPC_PenColours[18];
 
 
 /* 16 colours, + 1 for border */
-unsigned short amstrad_colour_table[32] =
+static unsigned short amstrad_colour_table[32] =
 {
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
 	16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28,
@@ -402,19 +425,21 @@ void AmstradCPC_GA_Write(int Data)
 				PenIndex = AmstradCPC_GA_PenSelected & 0x0f;
 			}
 
-	
+
 			PreviousColour = AmstradCPC_PenColours[PenIndex];
 
 			AmstradCPC_PenColours[PenIndex] = Data & 0x01f;
-		
+
 			/* colour changed? */
 			if (PreviousColour!=AmstradCPC_PenColours[PenIndex])
 			{
-            //                    logerror("%d\r\n",Machine->drv->cpu[0].cpu_clock);
-              //                  logerror("%d\r\n",Machine->drv->frames_per_second);
-                //                logerror("%d\r\n",cpu_getcurrentcycles());
 
-                                EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cpu_getcurrentcycles());
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
+               EventList_AddItemOffset((EVENT_LIST_CODE_GA_COLOUR<<6) | PenIndex, AmstradCPC_PenColours[PenIndex], cpu_getcurrentcycles());
+#else
+               amstrad_update_video();
+			   amstrad_vh_update_colour(PenIndex, AmstradCPC_PenColours[PenIndex]);
+#endif
 			}
 
 		}
@@ -429,13 +454,21 @@ void AmstradCPC_GA_Write(int Data)
 			/* if bit is set, clear top bit of interrupt counter */
 			if ((Data & (1<<4))!=0)
 			{
+#ifndef AMSTRAD_VIDEO_EVENT_LIST
+				amstrad_update_video();
+#endif
 				amstrad_clear_top_bit_of_int_counter();
 			}
 
 			/* mode change? */
 			if (((Data^Previous_GA_RomConfiguration) & 0x03)!=0)
 			{
-				EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cpu_getcurrentcycles());
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
+			EventList_AddItemOffset((EVENT_LIST_CODE_GA_MODE<<6) , Data & 0x03, cpu_getcurrentcycles());
+#else
+				amstrad_update_video();
+				amstrad_vh_update_mode(Data & 0x03);
+#endif
 			}
 		}
 		break;
@@ -501,6 +534,9 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 
 		if (Index == 3)
 		{
+#ifndef AMSTRAD_VIDEO_EVENT_LIST
+            amstrad_update_video();
+#endif
 			/* CRTC Read register */
 			data = 	crtc6845_register_r(0);
 		}
@@ -552,7 +588,7 @@ READ_HANDLER ( AmstradCPC_ReadPortHandler )
 
 }
 
-static int previous_crtc_write_time = 0;
+//static int previous_crtc_write_time = 0;
 
 /* Offset handler for write */
 WRITE_HANDLER ( AmstradCPC_WritePortHandler )
@@ -577,9 +613,10 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 		{
 		case 0:
 			{
-				EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cpu_getcurrentcycles());
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
+                EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_INDEX_WRITE<<6), data, cpu_getcurrentcycles());
+#endif
 
-                               
 				///* register select */
                                 crtc6845_address_w(0,data);
 			}
@@ -587,27 +624,40 @@ WRITE_HANDLER ( AmstradCPC_WritePortHandler )
 
 		case 1:
 			{
+#if 0
                                 int current_time;
                                 int time_delta;
+								int cur_time;
 
                                 /* current time */
                                 current_time = cpu_getcurrentcycles();
+								cur_time = current_time;
+
+								if (previous_crtc_write_time>current_time)
+								{
+									cur_time += cpu_getfperiod();
+								}
 
                                 /* time between last write and this write */
-                                time_delta = (current_time - previous_crtc_write_time)>>2;
+                                time_delta = (cur_time - previous_crtc_write_time)>>2;
 
                                 /* set new previous write */
-                                previous_crtc_write_time = current_time; 
+                                previous_crtc_write_time = current_time;
 
+#ifdef AMSTRAD_VIDEO_EVENT_LIST
 				/* crtc register write */
 				{
-					
+
 					EventList_AddItemOffset((EVENT_LIST_CODE_CRTC_WRITE<<6), data, cpu_getcurrentcycles());
 				}
-#if 0	/* HJB disabled, because it is not in mess/vidhrdw/m6845.c */
+#endif
                                 /* recalc time */
                                 crtc6845_recalc(0, time_delta);
+
+#else
+                                  amstrad_update_video();
 #endif
+
                               /* write data */
                               crtc6845_register_w(0,data);
 
@@ -684,8 +734,8 @@ static unsigned long multiface_flags;
 /* when visible OUT commands are performed! */
 #define MULTIFACE_VISIBLE				0x0004
 
-/* multiface traps calls to 0x0065 when it is active. 
-This address has a RET and so executes no code. 
+/* multiface traps calls to 0x0065 when it is active.
+This address has a RET and so executes no code.
 
 It is believed that it is used to make multiface invisible to programs */
 
@@ -717,14 +767,14 @@ OPBASE_HANDLER( amstrad_multiface_opbaseoverride )
         {
             /* first call? */
             multiface_flags |= MULTIFACE_VISIBLE;
-        }                 
+        }
         else if (pc==0x0c98)
         {
           /* second call */
-        
+
           /* no longer visible */
           multiface_flags &= ~(MULTIFACE_VISIBLE|MULTIFACE_STOP_BUTTON_PRESSED);
-        
+
          /* clear op base override */
                 cpu_setOPbaseoverride(0,0);
         }
@@ -914,7 +964,7 @@ static WRITE_HANDLER(multiface_io_write)
                                   break;
 
                         }
-                        
+
                 }
                 break;
 
@@ -961,31 +1011,16 @@ static WRITE_HANDLER(multiface_io_write)
 }
 
 
-
-
-#if 0
-void    amstrad_vsync_timer_callback(int dummy)
-{
-	if ((readinputport(11) & 0x02)!=0)
-	{
-		multiface_stop();
-	}
-
-
-
-}
-#endif
-
-/* 
+/*
 
   Interrupt system:
-  
-  - The gate array counts CRTC HSYNC pulses. 
+
+  - The gate array counts CRTC HSYNC pulses.
 	(It has a internal 6-bit counter).
 
   - When the counter in the gate array reaches 52, a interrupt is generated.
-	The counter is reset to zero and the count starts again. 
-	
+	The counter is reset to zero and the count starts again.
+
   - The interrupt is held until the Z80 acknowledges it.
 
   - When the interrupt is acknowledge, and is detected by the Gate Array,
@@ -998,21 +1033,20 @@ void    amstrad_vsync_timer_callback(int dummy)
 
 /* int counter */
 static int amstrad_52_divider;
+/* reset int counter 2 scans into vsync */
+static int amstrad_52_divider_vsync_reset;
 
-extern int amstrad_52_divider_vsync_reset;
-
-void    amstrad_interrupt_timer_callback(int dummy)
+void amstrad_interrupt_timer_trigger_reset_by_vsync(void)
 {
-        if ((readinputport(11) & 0x02)!=0)
-        {
-                multiface_stop();
-        }
+	amstrad_52_divider_vsync_reset = 2;
+}
 
+void amstrad_interrupt_timer_update(void)
+{
 	/* update counter */
 	amstrad_52_divider++;
 
-#if 0
-    /* vsync synchronisation active? */
+	/* vsync synchronisation active? */
 	if (amstrad_52_divider_vsync_reset!=0)
 	{
 		amstrad_52_divider_vsync_reset--;
@@ -1032,7 +1066,7 @@ void    amstrad_interrupt_timer_callback(int dummy)
 			return;
 		}
 	}
-#endif
+
 	/* counter==52? */
     if (amstrad_52_divider == 52)
     {
@@ -1042,13 +1076,20 @@ void    amstrad_interrupt_timer_callback(int dummy)
     }
 }
 
+void    amstrad_interrupt_timer_callback(int dummy)
+{
+#ifndef AMSTRAD_VIDEO_EVENT_LIST
+	amstrad_update_video();
+#else
+	amstrad_interrupt_timer_update();
+#endif
+}
+
 static void amstrad_clear_top_bit_of_int_counter(void)
 {
     /* clear bit 5 of counter - next int will not be closer than
     32 lines */
     amstrad_52_divider &=31;
-	cpu_set_irq_line(0,0,CLEAR_LINE);
-
 }
 
 /* called when cpu acknowledges int */
@@ -1059,7 +1100,7 @@ int     amstrad_cpu_acknowledge_int(int cpu)
 	return 0x0ff;
 }
 
-#define US_TO_CPU_CYCLES(x) (x<<2)
+#define US_TO_CPU_CYCLES(x) ((x)<<2)
 
 /* the following timings have been measured! */
 static UINT8 amstrad_cycle_table_op[256]=
@@ -1257,7 +1298,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(2),	/* CP A,(HL) */
 	US_TO_CPU_CYCLES(1),	/* CP A,A */
         US_TO_CPU_CYCLES(2),    /* RET NZ 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP BC */	
+	US_TO_CPU_CYCLES(3),	/* POP BC */
 	US_TO_CPU_CYCLES(3),	/* JP NZ, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* JP  */
         US_TO_CPU_CYCLES(3),    /* CALL NZ 5 taken, 3 not taken */
@@ -1273,7 +1314,7 @@ static UINT8 amstrad_cycle_table_op[256]=
 	US_TO_CPU_CYCLES(2),	/* ADC A,n */
 	US_TO_CPU_CYCLES(4),	/* RST 8 */
         US_TO_CPU_CYCLES(2),    /* RET NC 4 taken, 2 not taken */
-	US_TO_CPU_CYCLES(3),	/* POP DE */	
+	US_TO_CPU_CYCLES(3),	/* POP DE */
 	US_TO_CPU_CYCLES(3),	/* JP NC, 3 taken, 3 not taken */
 	US_TO_CPU_CYCLES(3),	/* OUT (n), A */
         US_TO_CPU_CYCLES(3),    /* CALL NC 5 taken, 3 not taken */
@@ -1442,7 +1483,7 @@ static UINT8 amstrad_cycle_table_ed[256]=
         US_TO_CPU_CYCLES(4), /* RETN */
         US_TO_CPU_CYCLES(2), /* IM */
         US_TO_CPU_CYCLES(3), /* LD I,A */
-       
+
         US_TO_CPU_CYCLES(4), /* IN C,(C) */
         US_TO_CPU_CYCLES(4), /* OUT (C), C*/
         US_TO_CPU_CYCLES(4), /* ADC HL,BC */
@@ -1612,7 +1653,7 @@ static UINT8 amstrad_cycle_table_xy[256]=
 	US_TO_CPU_CYCLES(1),	/* illegal - time for prefix only */
 	US_TO_CPU_CYCLES(4),	/* ADD xy,xy */
 	US_TO_CPU_CYCLES(6),	/* LD HL,(nnnn) */
-	US_TO_CPU_CYCLES(2),	/* DEC xy */
+	US_TO_CPU_CYCLES(3),	/* DEC xy */
 	US_TO_CPU_CYCLES(2),	/* INC lxy */
 	US_TO_CPU_CYCLES(2),	/* DEC lxy */
 	US_TO_CPU_CYCLES(3),	/* LD lxy,n */
@@ -1830,74 +1871,74 @@ static UINT8 amstrad_cycle_table_xy[256]=
 static UINT8 amstrad_cycle_table_xycb[256]=
 {
         /* 0x00-0x03f */
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
 
         /* 0x040-0x07f */
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
-        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),  
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
+        US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6), US_TO_CPU_CYCLES(6),
 
         /* 0x080-0x0ff */
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
-        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),  
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
+        US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7), US_TO_CPU_CYCLES(7),
 };
 
 static UINT8 amstrad_cycle_table_ex[256]=
@@ -1919,7 +1960,7 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* 	DJNZ  4 taken, 3 not taken */
+	US_TO_CPU_CYCLES(4-3),	/* 	DJNZ  4 taken, 3 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
@@ -1935,7 +1976,7 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(3),	/* JR 3 if taken, 2 if not taken */
+	US_TO_CPU_CYCLES(3-2),	/* JR 3 if taken, 2 if not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
@@ -1943,7 +1984,7 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(3),	/* 	 JR Z,3 if taken, 2 if not taken */
+	US_TO_CPU_CYCLES(3-2),	/* 	 JR Z,3 if taken, 2 if not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
@@ -1951,7 +1992,7 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(3),	/* JR NZ,3 if taken, 2 if not taken */
+	US_TO_CPU_CYCLES(3-2),	/* JR NZ,3 if taken, 2 if not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
@@ -1959,7 +2000,7 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(3),		/* JR NC, 3 if taken, 2 if not taken */
+	US_TO_CPU_CYCLES(3-2),		/* JR NC, 3 if taken, 2 if not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
@@ -2086,87 +2127,87 @@ static UINT8 amstrad_cycle_table_ex[256]=
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
 
-        US_TO_CPU_CYCLES(5),    /* LDIR */
-        US_TO_CPU_CYCLES(5),    /* CPIR */
-        US_TO_CPU_CYCLES(5),    /* INIR */
-        US_TO_CPU_CYCLES(5),    /* OTIR */
+        US_TO_CPU_CYCLES(5-5),    /* LDIR */
+        US_TO_CPU_CYCLES(5-5),    /* CPIR */
+        US_TO_CPU_CYCLES(5-5),    /* INIR */
+        US_TO_CPU_CYCLES(5-5),    /* OTIR */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(5),    /* LDDR */
-        US_TO_CPU_CYCLES(5),    /* CPDR */
-        US_TO_CPU_CYCLES(5),    /* INDR */
-        US_TO_CPU_CYCLES(5),    /* OTDR */
+        US_TO_CPU_CYCLES(5-5),    /* LDDR */
+        US_TO_CPU_CYCLES(5-5),    /* CPDR */
+        US_TO_CPU_CYCLES(5-5),    /* INDR */
+        US_TO_CPU_CYCLES(5-5),    /* OTDR */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
 
-	US_TO_CPU_CYCLES(4),	/* RET NZ 4 taken, 2 not taken */
+	US_TO_CPU_CYCLES(4-2),	/* RET NZ 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL NZ 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 0 */
-	US_TO_CPU_CYCLES(4),	/* RET Z 4 taken, 2 not taken */
-        US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL NZ 5 taken, 3 not taken */
-        US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 8 */
-	US_TO_CPU_CYCLES(4),	/* RET NC 4 taken, 2 not taken */
+	US_TO_CPU_CYCLES(1),	/* RST 0 */
+	US_TO_CPU_CYCLES(4-2),	/* RET Z 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL NC 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL NZ 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 10 */
-	US_TO_CPU_CYCLES(4),	/* RET C 4 taken, 2 not taken */
+	US_TO_CPU_CYCLES(1),	/* RST 8 */
+	US_TO_CPU_CYCLES(4-2),	/* RET NC 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL C 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL NC 5 taken, 3 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(1),	/* RST 10 */
+	US_TO_CPU_CYCLES(4-2),	/* RET C 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+        US_TO_CPU_CYCLES(0),    /* not used */
+	US_TO_CPU_CYCLES(5-3),	/* CALL C 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(1),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 18 */
-	US_TO_CPU_CYCLES(4),	/* RET PO 4 taken, 2 not taken */
+	US_TO_CPU_CYCLES(1),	/* RST 18 */
+	US_TO_CPU_CYCLES(4-2),	/* RET PO 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL PO 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL PO 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 20 */
-	US_TO_CPU_CYCLES(4),	/* RET PE 4 taken, 2 not taken */
+	US_TO_CPU_CYCLES(1),	/* RST 20 */
+	US_TO_CPU_CYCLES(4-2),	/* RET PE 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL PE 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL PE 5 taken, 3 not taken */
 	US_TO_CPU_CYCLES(0),	/* ED prefix */
         US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(4),    /* RST 28 */
-	US_TO_CPU_CYCLES(4),	/* RET P 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(1),    /* RST 28 */
+	US_TO_CPU_CYCLES(4-2),	/* RET P 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL P 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL P 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-        US_TO_CPU_CYCLES(4),    /* RST 30 */
-	US_TO_CPU_CYCLES(4),	/* RET M 4 taken, 2 not taken */
+        US_TO_CPU_CYCLES(1),    /* RST 30 */
+	US_TO_CPU_CYCLES(4-2),	/* RET M 4 taken, 2 not taken */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(5),	/* CALL M 5 taken, 3 not taken */
+	US_TO_CPU_CYCLES(5-3),	/* CALL M 5 taken, 3 not taken */
         US_TO_CPU_CYCLES(1),    /* FD prefix */
         US_TO_CPU_CYCLES(0),    /* not used */
-	US_TO_CPU_CYCLES(4),	/* RST 38 */
+	US_TO_CPU_CYCLES(1),	/* RST 38 */
 };
 
 void amstrad_common_init(void)
@@ -2182,9 +2223,12 @@ void amstrad_common_init(void)
 
 	ppi8255_init(&amstrad_ppi8255_interface);
 
-        amstrad_interrupt_timer = NULL;
-        amstrad_vsync_timer = NULL;
-        amstrad_52_divider = 0;
+	AmstradCPC_GA_RomConfiguration = 0;
+	amstrad_interrupt_timer = NULL;
+    amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
+
+	amstrad_52_divider = 0;
+	amstrad_52_divider_vsync_reset = 0;
 
 	cpu_setbankhandler_r(1, MRA_BANK1);
 	cpu_setbankhandler_r(2, MRA_BANK2);
@@ -2204,6 +2248,9 @@ void amstrad_common_init(void)
 	cpu_setbankhandler_w(15, MWA_BANK15);
 	cpu_setbankhandler_w(16, MWA_BANK16);
 
+	amstrad_cycles_at_frame_end = 0;
+	amstrad_cycles_last_write = 0;
+
 	cpu_0_irq_line_vector_w(0, 0x0ff);
 
 	nec765_init(&amstrad_nec765_interface,NEC765A/*?*/);
@@ -2213,9 +2260,6 @@ void amstrad_common_init(void)
 	floppy_drive_set_flag_state(1, FLOPPY_DRIVE_PRESENT, 1);
 	floppy_drive_set_geometry(0, FLOPPY_DRIVE_SS_40);
 	floppy_drive_set_geometry(1, FLOPPY_DRIVE_SS_40);
-
-        /* more accurate but won't be perfect yet */
-        amstrad_interrupt_timer = timer_pulse(TIME_IN_USEC(64), 0,amstrad_interrupt_timer_callback);
 
         /* Juergen is a cool dude! */
         cpu_set_irq_callback(0, amstrad_cpu_acknowledge_int);
@@ -2237,6 +2281,8 @@ void amstrad_common_init(void)
         cpu_set_cycle_tbl(Z80_TABLE_xycb, amstrad_cycle_table_xycb);
         cpu_set_cycle_tbl(Z80_TABLE_ex, amstrad_cycle_table_ex);
 }
+
+
 void amstrad_init_machine(void)
 {
 	amstrad_common_init();
@@ -2580,16 +2626,13 @@ speed of 3.8Mhz */
 	50.08 fps as the tv refresh rate.
 
   There are 312 lines on a PAL screen, giving 64us per line.
-  
+
 	There is only 50us visible per line, and 35*8 lines visible on the
 	screen.
 
   This is the reason why the displayed area is not the same as
   the visible area.
 	*/
-
-#define AMSTRAD_MONITOR_SCREEN_WIDTH (64*16)
-#define AMSTRAD_MONITOR_SCREEN_HEIGHT (312)
 
 static struct MachineDriver machine_driver_amstrad =
 {
@@ -2625,7 +2668,7 @@ static struct MachineDriver machine_driver_amstrad =
 	amstrad_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-	0,								   /* MachineLayer */
+        amstrad_eof_callback,                                                                 /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,
 	amstrad_vh_screenrefresh,
@@ -2662,8 +2705,8 @@ static struct MachineDriver machine_driver_kccomp =
 			writeport_amstrad,		   /* IOWritePort */
 			0,						   /*amstrad_frame_interrupt, *//* VBlank
 										* Interrupt */
-                        0,  
-                        0, 0,  
+                        0,
+                        0, 0,
 		},
 	},
 	50, 							   /* frames per second */
@@ -2672,8 +2715,8 @@ static struct MachineDriver machine_driver_kccomp =
 	kccomp_init_machine,			   /* init machine */
 	amstrad_shutdown_machine,
 	/* video hardware */
-	AMSTRAD_SCREEN_WIDTH,			   /* screen width */
-	AMSTRAD_SCREEN_HEIGHT,			   /* screen height */
+        AMSTRAD_MONITOR_SCREEN_WIDTH,                      /* screen width */
+        AMSTRAD_MONITOR_SCREEN_HEIGHT,                     /* screen height */
 	{0, (AMSTRAD_SCREEN_WIDTH - 1), 0, (AMSTRAD_SCREEN_HEIGHT - 1)},	/* rectangle: visible_area */
 	0,								   /*amstrad_gfxdecodeinfo, 			 *//* graphics
 										* decode info */
@@ -2682,7 +2725,7 @@ static struct MachineDriver machine_driver_kccomp =
 	amstrad_init_palette,			   /* init palette */
 
 	VIDEO_TYPE_RASTER | VIDEO_PIXEL_ASPECT_RATIO_1_2,				   /* video attributes */
-	0,								   /* MachineLayer */
+        amstrad_eof_callback,                                                                 /* MachineLayer */
 	amstrad_vh_start,
 	amstrad_vh_stop,
 	amstrad_vh_screenrefresh,
