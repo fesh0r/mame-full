@@ -7,12 +7,12 @@
   Caveats:
 
   * The install_mem/port_*_handler functions are only intended to be
-    called at driver init time. Do not call them after this time.
+	called at driver init time. Do not call them after this time.
 
   * If your driver executes an opcode which crosses a bank-switched
-    boundary, it will pull the wrong data out of memory. Although not
-    a common case, you may need to revert to memcpy to work around this.
-    See machine/tnzs.c for an example.
+	boundary, it will pull the wrong data out of memory. Although not
+	a common case, you may need to revert to memcpy to work around this.
+	See machine/tnzs.c for an example.
 
 ***************************************************************************/
 
@@ -398,11 +398,11 @@ static int memory_allocate_ext (void)
 			{
 				lastend = end;
 
-				/* find the base of the lowest memory region that extends past the end */
+				/* find the end of the contiguous block of memory */
 				for (mra = Machine->drv->cpu[cpu].memory_read; mra->start != -1; mra++)
-					if (mra->start <= end && mra->end > end) end = mra->end;
+					if (mra->start <= end+1 && mra->end > end) end = mra->end;
 				for (mwa = Machine->drv->cpu[cpu].memory_write; mwa->start != -1; mwa++)
-					if (mwa->start <= end && mwa->end > end) end = mwa->end;
+					if (mwa->start <= end+1 && mwa->end > end) end = mwa->end;
 			}
 
 			/* time to allocate */
@@ -577,7 +577,7 @@ int memory_init(void)
 		memorywriteoffset[i] = 0;
 		memoryreadhandler[i] = NULL;
 		memorywritehandler[i] = NULL;
-    }
+	}
 	/* bank memory */
 	for (i = 1; i <= MAX_BANKS; i++)
 	{
@@ -946,7 +946,7 @@ READWORD(cpu_readmem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 READBYTE(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW)
 READWORD(cpu_readmem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-READBYTE(cpu_readmem24,     TYPE_8BIT,	  24)
+READBYTE(cpu_readmem24, 	TYPE_8BIT,	  24)
 
 READBYTE(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW)
 READWORD(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -955,10 +955,6 @@ READLONG(cpu_readmem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
 READBYTE(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW)
 READWORD(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
 READLONG(cpu_readmem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
-
-READBYTE(cpu_readmem27bew, TYPE_16BIT_BE, 27BEW)
-READWORD(cpu_readmem27bew, TYPE_16BIT_BE, 27BEW, CAN_BE_MISALIGNED)
-READLONG(cpu_readmem27bew, TYPE_16BIT_BE, 27BEW, CAN_BE_MISALIGNED)
 
 READBYTE(cpu_readmem29,    TYPE_16BIT_LE, 29)
 READWORD(cpu_readmem29,    TYPE_16BIT_LE, 29,	 CAN_BE_MISALIGNED)
@@ -1171,7 +1167,7 @@ WRITEWORD(cpu_writemem16bew, TYPE_16BIT_BE, 16BEW, ALWAYS_ALIGNED)
 WRITEBYTE(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW)
 WRITEWORD(cpu_writemem16lew, TYPE_16BIT_LE, 16LEW, ALWAYS_ALIGNED)
 
-WRITEBYTE(cpu_writemem24,	  TYPE_8BIT, 	24)
+WRITEBYTE(cpu_writemem24,	  TYPE_8BIT,	24)
 
 WRITEBYTE(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW)
 WRITEWORD(cpu_writemem24bew, TYPE_16BIT_BE, 24BEW, CAN_BE_MISALIGNED)
@@ -1181,11 +1177,7 @@ WRITEBYTE(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW)
 WRITEWORD(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
 WRITELONG(cpu_writemem26lew, TYPE_16BIT_LE, 26LEW, ALWAYS_ALIGNED)
 
-WRITEBYTE(cpu_writemem27bew, TYPE_16BIT_BE, 27BEW)
-WRITEWORD(cpu_writemem27bew, TYPE_16BIT_BE, 27BEW, CAN_BE_MISALIGNED)
-WRITELONG(cpu_writemem27bew, TYPE_16BIT_BE, 27BEW, CAN_BE_MISALIGNED)
-
-WRITEBYTE(cpu_writemem29,    TYPE_16BIT_LE, 29)
+WRITEBYTE(cpu_writemem29,	 TYPE_16BIT_LE, 29)
 WRITEWORD(cpu_writemem29,	 TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
 WRITELONG(cpu_writemem29,	 TYPE_16BIT_LE, 29,    CAN_BE_MISALIGNED)
 
@@ -1251,7 +1243,6 @@ SETOPBASE(cpu_setOPbase21,	  21,	 0)
 SETOPBASE(cpu_setOPbase24,	  24,	 0)
 SETOPBASE(cpu_setOPbase24bew, 24BEW, 0)
 SETOPBASE(cpu_setOPbase26lew, 26LEW, 0)
-SETOPBASE(cpu_setOPbase27bew, 27BEW, 0)
 SETOPBASE(cpu_setOPbase29,	  29,	 3)
 SETOPBASE(cpu_setOPbase32,	  32,	 0)
 SETOPBASE(cpu_setOPbase32lew, 32LEW, 0)
