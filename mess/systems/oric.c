@@ -308,21 +308,21 @@ static struct MachineDriver machine_driver_telestrat =
 ROM_START(oric1)
 	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
 	ROM_LOAD ("basic10.rom", 0x10000, 0x4000, 0xf18710b4)
-	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0x0)
+	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
 ROM_END
 
 ROM_START(orica)
 	ROM_REGION(0x10000+0x04000+0x02000,REGION_CPU1,0)
 	ROM_LOAD ("basic11b.rom", 0x10000, 0x4000, 0xc3a92bef)
-	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0x0)
+	ROM_LOAD ("microdis.rom",0x014000, 0x02000, 0xa9664a9c)
 ROM_END
 
 ROM_START(telestrat)
 	ROM_REGION(0x010000+(0x04000*4), REGION_CPU1,0)
-	ROM_LOAD ("telmatic.rom", 0x010000, 0x04000, 0x0)
-	ROM_LOAD ("teleass.rom", 0x014000, 0x04000, 0x0)
-	ROM_LOAD ("hyperbas.rom", 0x018000, 0x04000, 0x0)
-	ROM_LOAD ("telmon24.rom", 0x01c000, 0x04000, 0x0)
+	ROM_LOAD ("telmatic.rom", 0x010000, 0x04000, 0x94358dc6)
+	ROM_LOAD ("teleass.rom", 0x014000, 0x04000, 0x68b0fde6)
+	ROM_LOAD ("hyperbas.rom", 0x018000, 0x04000, 0x1d96ab50)
+	ROM_LOAD ("telmon24.rom", 0x01c000, 0x04000, 0xaa727c5d)
 ROM_END
 
 static const struct IODevice io_oric1[] = 
@@ -347,7 +347,7 @@ static const struct IODevice io_oric1[] =
 		NULL,					/* input_chunk */
 		NULL					/* output_chunk */
 	},
-	IO_PRINTER_PORT(1,"\0"),
+	IO_PRINTER_PORT(1,"prn\0"),
 	{ IO_END }
 };
 
