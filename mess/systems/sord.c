@@ -750,28 +750,37 @@ ROM_START(sordm5fd5)
 	ROM_LOAD("sordfd5.rom",0x0000, 0x04000, 0x01)
 ROM_END
 
+#define sord_m5_cart_device \
+	{ \
+		IO_CARTSLOT,\
+		1,						/* count */\
+		"rom\0",                /* file extensions */\
+		IO_RESET_NONE,			/* reset if file changed */\
+		NULL,					/* id */\
+		sord_cartslot_init,		/* init */\
+		sord_cartslot_exit,		/* exit */\
+		NULL,					/* info */\
+		NULL,					/* open */\
+		NULL,					/* close */\
+		NULL,					/* status */\
+		NULL,					/* seek */\
+		NULL,					/* tell */\
+		NULL,					/* input */\
+		NULL,					/* output */\
+		NULL,					/* input_chunk */\
+		NULL					/* output_chunk */\
+	}
+
 
 static const struct IODevice io_sordm5[] =
 {
-	{ 
-		IO_CARTSLOT,
-		1,						/* count */
-		"rom\0",                /* file extensions */
-		IO_RESET_NONE,			/* reset if file changed */
-		NULL,					/* id */
-		sord_cartslot_init,		/* init */
-		sord_cartslot_exit,		/* exit */
-		NULL,					/* info */
-		NULL,					/* open */
-		NULL,					/* close */
-		NULL,					/* status */
-		NULL,					/* seek */
-		NULL,					/* tell */
-		NULL,					/* input */
-		NULL,					/* output */
-		NULL,					/* input_chunk */
-		NULL					/* output_chunk */
-	},
+	sord_m5_cart_device,
+	{IO_END},
+};
+
+static const struct IODevice io_sordm5fd5[] = 
+{
+	sord_m5_cart_device,
 	{
 		IO_FLOPPY,				/* type */
 		4,						/* count */
@@ -795,8 +804,6 @@ static const struct IODevice io_sordm5[] =
 	{IO_END}
 };
 
-#define io_sordm5fd5 io_sordm5
-
 /*	  YEAR	NAME	  PARENT	MACHINE   INPUT 	INIT COMPANY		FULLNAME */
 COMP( 1983, sordm5,      0,            sord_m5,          sord_m5,      0,       "Sord", "Sord M5")
-COMP( 1983, sordm5fd5,	0,	sord_m5_fd5, sord_m5, 0, "Sord", "Sord M5 + FD5 disk interface")
+COMPX( 1983, sordm5fd5,	0,	sord_m5_fd5, sord_m5, 0, "Sord", "Sord M5 + FD5 disk interface", GAME_NOT_WORKING)
