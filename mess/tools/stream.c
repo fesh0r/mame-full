@@ -76,6 +76,27 @@ error:
 	return (STREAM *) NULL;
 }
 
+STREAM *stream_open_write_stream(int size)
+{
+	STREAM *imgfile;
+
+	imgfile = malloc(sizeof(STREAM));
+	if (!imgfile) return NULL;
+
+	imgfile->imgtype = IMG_MEM;
+	imgfile->write_protect = 0;
+	imgfile->u.m.pos = 0;
+
+	imgfile->u.m.bufsz = size;
+	imgfile->u.m.buf = malloc(size);
+
+	if (!imgfile->u.m.buf) {
+		free(imgfile);
+		return NULL;
+	}
+	return imgfile;
+}
+
 void stream_close(STREAM *f)
 {
 	switch(f->imgtype) {
@@ -116,6 +137,17 @@ size_t stream_write(STREAM *f, const void *buf, size_t sz)
 	size_t result = 0;
 
 	switch(f->imgtype) {
+	case IMG_MEM:
+		if (!f->write_protect) {
+			if (f->u.m.bufsz<f->u.m.pos+sz) {
+				f->u.m.buf=realloc(f->u.m.buf,f->u.m.pos+sz);
+				f->u.m.bufsz=f->u.m.pos+sz;
+			}
+			memcpy(f->u.m.buf+f->u.m.pos, buf, sz);
+			f->u.m.pos+=sz;
+			result=sz;
+		}
+		break;
 	case IMG_FILE:
 		result = fwrite(buf, 1, sz, f->u.f);
 		break;
@@ -257,4 +289,3 @@ void stream_clear(STREAM *f)
 		break;
 	}
 }
-
