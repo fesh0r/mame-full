@@ -35,6 +35,19 @@ static struct image_info images[IO_COUNT][MAX_INSTANCES];
 static int count[IO_COUNT];
 
 
+static char* dupe(const char *src)
+{
+	if( src )
+	{
+		char *dst = malloc(strlen(src) + 1);
+		if( dst )
+			strcpy(dst,src);
+		return dst;
+	}
+	return NULL;
+}
+
+
 static char* stripspace(const char *src)
 {
 	static char buff[512];
@@ -249,11 +262,11 @@ static int read_crc_config (const char *file, struct image_info *img, const char
 		if( line[0] )
 		{
 			logerror("found CRC %s= %s\n", crc, line);
-			img->longname = strdup(stripspace(strtok(line, "|")));
-			img->manufacturer = strdup(stripspace(strtok(NULL, "|")));
-			img->year = strdup(stripspace(strtok(NULL, "|")));
-			img->playable = strdup(stripspace(strtok(NULL, "|")));
-			img->extrainfo = strdup(stripspace(strtok(NULL, "|")));
+			img->longname = dupe(stripspace(strtok(line, "|")));
+			img->manufacturer = dupe(stripspace(strtok(NULL, "|")));
+			img->year = dupe(stripspace(strtok(NULL, "|")));
+			img->playable = dupe(stripspace(strtok(NULL, "|")));
+			img->extrainfo = dupe(stripspace(strtok(NULL, "|")));
 			retval = 0;
 		}
 		config_close(config);
@@ -498,10 +511,10 @@ static int distribute_images(void)
 			/* Add a filename to the arrays of names */
 			if( options.image_files[i].name )
 			{
-				images[type][count[type]].name = strdup(options.image_files[i].name);
+				images[type][count[type]].name = dupe(options.image_files[i].name);
 				if( !images[type][count[type]].name )
 				{
-					mess_printf(" ERROR - strdup() failed\n");
+					mess_printf(" ERROR - dupe() failed\n");
 					return 1;
 				}
 			}
@@ -720,7 +733,7 @@ int device_filename_change(int type, int id, const char *name)
 		img->crc = 0;
 		if( name )
 		{
-			img->name = strdup(name);
+			img->name = dupe(name);
 			if( !img->name )
 				return 1;
 		}
