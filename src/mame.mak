@@ -66,11 +66,14 @@ CPUS+=CCPU@
 CPUS+=ADSP2100@
 CPUS+=ADSP2105@
 CPUS+=PSXCPU@
+#CPUS+=SH2@
 #CPUS+=SC61860@
 #CPUS+=ARM@
 #CPUS+=G65816@
 #CPUS+=SPC700@
+#CPUS+=SATURN@
 CPUS+=ASAP@
+#CPUS+=APEXC@
 
 # uncomment the following lines to include a sound core
 SOUNDS+=CUSTOM@
