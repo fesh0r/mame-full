@@ -235,11 +235,17 @@ enum {
 #ifndef HAS_ADSP2100
 #define HAS_ADSP2100	0
 #endif
+#ifndef HAS_ADSP2105
+#define HAS_ADSP2105	0
+#endif
 #ifndef HAS_MIPS
 #define HAS_MIPS		0
 #endif
 #ifndef HAS_SC61860
 #define HAS_SC61860		0
+#endif
+#ifndef HAS_ARM
+#define HAS_ARM 		0
 #endif
 
 /* ASG 971222 -- added this generic structure */
@@ -252,7 +258,9 @@ struct cpu_interface
 	void (*burn)(int cycles);
 	unsigned (*get_context)(void *reg);
 	void (*set_context)(void *reg);
-	unsigned (*get_pc)(void);
+	void *(*get_cycle_table)(int which);
+	void (*set_cycle_table)(int which, void *new_table);
+    unsigned (*get_pc)(void);
 	void (*set_pc)(unsigned val);
 	unsigned (*get_sp)(void);
 	void (*set_sp)(unsigned val);
@@ -293,8 +301,6 @@ void machine_reset(void);
 void cpu_set_reset_line(int cpu,int state);
 /* Use this function to halt a single CPU */
 void cpu_set_halt_line(int cpu,int state);
-/* Use this function to hook into IRQ acknowledge callbacks */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int));
 
 /* This function returns CPUNUM current status (running or halted) */
 int cpu_getstatus(int cpunum);
@@ -404,6 +410,9 @@ void cpu_set_irq_line(int cpunum, int irqline, int state);
 void cpu_generate_internal_interrupt(int cpunum, int type);
 /* set the vector to be returned during a CPU's interrupt acknowledge cycle */
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
+
+/* use this function to install a driver callback for IRQ acknowledge */
+void cpu_set_irq_callback(int cpunum, int (*callback)(int));
 
 /* use these in your write memory/port handles to set an IRQ vector */
 /* offset corresponds to the irq line number here */

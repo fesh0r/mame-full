@@ -100,7 +100,7 @@
 #if (HAS_PDP1)
 #include "cpu/pdp1/pdp1.h"
 #endif
-#if (HAS_ADSP2100)
+#if (HAS_ADSP2100) || (HAS_ADSP2105)
 #include "cpu/adsp2100/adsp2100.h"
 #endif
 #if (HAS_MIPS)
@@ -259,7 +259,9 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 #define EXECUTE(index,cycles)			((*cpu[index].intf->execute)(cycles))
 #define GETCONTEXT(index,context)		((*cpu[index].intf->get_context)(context))
 #define SETCONTEXT(index,context)		((*cpu[index].intf->set_context)(context))
-#define GETPC(index)					((*cpu[index].intf->get_pc)())
+#define GETCYCLETBL(index,which)		((*cpu[index].intf->get_cycle_table)(which))
+#define SETCYCLETBL(index,which,cnts)	((*cpu[index].intf->set_cycle_table)(which,cnts))
+#define GETPC(index)                    ((*cpu[index].intf->get_pc)())
 #define SETPC(index,val)				((*cpu[index].intf->set_pc)(val))
 #define GETSP(index)					((*cpu[index].intf->get_sp)())
 #define SETSP(index,val)				((*cpu[index].intf->set_sp)(val))
@@ -289,7 +291,8 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 	{																			   \
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute, NULL,						   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, NULL, NULL, 					   \
+		name##_get_pc, name##_set_pc,											   \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,NULL,NULL, name##_info, name##_dasm,								   \
@@ -305,7 +308,9 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
 		name##_burn,															   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, 								   \
+		name##_get_cycle_table, name##_set_cycle_table, 						   \
+		name##_get_pc, name##_set_pc,											   \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		NULL,name##_state_save,name##_state_load, name##_info, name##_dasm, 	   \
@@ -321,7 +326,8 @@ static unsigned Dummy_dasm(char *buffer, unsigned pc);
 		CPU_##cpu,																   \
 		name##_reset, name##_exit, name##_execute,								   \
 		NULL,																	   \
-		name##_get_context, name##_set_context, name##_get_pc, name##_set_pc,	   \
+		name##_get_context, name##_set_context, NULL, NULL, 					   \
+        name##_get_pc, name##_set_pc,                                              \
 		name##_get_sp, name##_set_sp, name##_get_reg, name##_set_reg,			   \
 		name##_set_nmi_line, name##_set_irq_line, name##_set_irq_callback,		   \
 		name##_internal_interrupt,NULL,NULL, name##_info, name##_dasm,			   \
@@ -521,6 +527,11 @@ struct cpu_interface cpuintf[] =
 /* IMO we should rename all *_ICount to *_icount - ie. no mixed case */
 #define adsp2100_ICount adsp2100_icount
 	CPU0(ADSP2100, adsp2100, 4,  0,1.00,ADSP2100_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
+#endif
+#if (HAS_ADSP2105)
+/* IMO we should rename all *_ICount to *_icount - ie. no mixed case */
+#define adsp2105_ICount adsp2105_icount
+	CPU0(ADSP2105, adsp2105, 4,  0,1.00,ADSP2105_INT_NONE, -1,			   -1,			   16lew,-1,14,LE,2, 4,16LEW),
 #endif
 #if (HAS_MIPS)
 	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),

@@ -12,6 +12,14 @@ enum {
 	Z80_NMI_NESTING
 };
 
+enum {
+	Z80_TABLE_op,
+	Z80_TABLE_cb,
+	Z80_TABLE_ed,
+	Z80_TABLE_xy,
+	Z80_TABLE_xycb
+};
+
 extern int z80_ICount;              /* T-state count                        */
 
 #define Z80_IGNORE_INT  -1          /* Ignore interrupt                     */
@@ -27,6 +35,8 @@ extern int z80_execute(int cycles);
 extern void z80_burn(int cycles);
 extern unsigned z80_get_context (void *dst);
 extern void z80_set_context (void *src);
+extern void *z80_get_cycle_table (int which);
+extern void z80_set_cycle_table (int which, void *new_tbl);
 extern unsigned z80_get_pc (void);
 extern void z80_set_pc (unsigned val);
 extern unsigned z80_get_sp (void);
